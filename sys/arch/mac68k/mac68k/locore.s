@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.9 1994/02/06 22:06:27 briggs Exp $
+ *	$Id: locore.s,v 1.10 1994/02/22 01:32:26 briggs Exp $
  */
 
 #include "assym.s"
@@ -251,7 +251,16 @@ Lstkadj:
  * FP exceptions.
  */
 _fpfline:
-	jra	_illinst
+	clrw	sp@-		| pad SR to longword
+	moveml	#0xFFFF,sp@-	| save user registers
+	movl	usp, a0		| save the user SP
+	movl	a0, sp@(60)	|   in the save area
+	jbsr	_FPUemul	| handle it
+	movl	sp@(60), a0	| grab and restore
+	movl	a0, usp		|   user SP
+	moveml	sp@+, #0xFFFF	| restore most registers
+	addql	#6, sp		| pop ssp and align word
+	jra	rei		| all done
 
 _fpunsupp:
 	jra	_illinst
@@ -659,8 +668,6 @@ Ltimdone:
 	|jra	rei			| all done
 
 _lev7intr:
-	movl	#0xFD000020,a1
-	movb	#0x55,a1@
 	addl	#4,a1
 	clrw	sp@-			| pad SR to longword
 	moveml	#0xFFFF,sp@-		| save registers
@@ -776,9 +783,17 @@ Ldorte:
 		.data
 		.set	_kstack, USRSTACK  
 _Umap:		.long	0
+| Scratch memory.  Careful when messing with these...
 longscratch:	.long	0
+longscratch2:	.long	0
+macos_crp1:	.long	0
+macos_crp2:	.long	0
+macos_tc:	.long	0
+macos_tt0:	.long	0
+macos_tt1:	.long	0
+_bletch:	.long	0
 _esym:		.long	0
-		.globl	_kstack, _Umap, _esym
+		.globl	_kstack, _Umap, _esym, _bletch
 
 /*
  * Initialization
@@ -820,64 +835,173 @@ abouttouser:
 	.globl	_edata
 	.globl	_etext,_end
 	.globl	start
-	.globl _gray_bar,_bar_flash
+	.globl _gray_bar, _gray_bar2
 	.globl _macinit
 	.globl _root_scsi_id		| CPC - for scsi id passed in on d7 from booter
 	.globl _serial_boot_echo
-	.globl _videoaddr, _videorowbytes	| BG - flexible video code!
-	.globl _videobitdepth			|    ^---!
+	.globl _videoaddr, _videorowbytes
+	.globl _videobitdepth
 	.globl _machineid
 	.globl _videosize
+
+
 start:
-	movw	#PSL_HIGHIPL,sr		| no interrupts
-
-| Some parameters provided by MacOS
-	movl	d3,_esym		| end of symbol table.
-	movl	_end,_esym		| (fake it for now).
-	movl	d4,_machineid		| flags to machineid (from MacOS)
-	movl	d5,_videoaddr		|   and video NuBus address
-	movl	a3,_videorowbytes	|   and bytes per row
-	movl	a2,_videobitdepth	|   and bits per pixel
-	movl	a4,_videosize
-
-| Turn off the MMU
-	lea	longscratch,a0
-	movl	#0,a0@
-	pmove	a0@,tc
-
+	movw	#PSL_HIGHIPL,sr		| no interrupts.  ever.
 
 | Give ourself a stack
 	movl	#tmpstk,sp		| give ourselves a temporary stack
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 
-	jbsr	_gray_bar		| first greybar call, we needed stack
-					| that above gives us
-| store mac passed vars.
-	movl	d7,_boothowto		| save reboot flags
-	movl	d6,_root_scsi_id	|   and root device
-	movl	d6,_bootdev		|   and boot device
+| Some parameters provided by MacOS
+|
+| LAK: This section is the new way to pass information from the booter
+| to the kernel.  At A1 there is an environment variable which has
+| a bunch of stuff in ascii format, "VAR=value\0VAR=value\0\0".
+
+	.globl	_initenv, _getenvvars	| in machdep.c
+	.globl	_setmachdep		| in machdep.c
+	.globl	_printenvvars
+	.globl	_mmudebug, _gothere, _getphysical
+
+	movl	a1, sp@-		| Address of buffer
+	movl	d4, sp@-		| Some flags... (probably not used)
+	jbsr	_initenv
+	addql	#8, sp
+	jbsr	_getenvvars		| Parse the environment buffer
+	jbsr	_setmachdep		| Set some machine-dep stuff
+	movl	_end, _esym		| fake debugger symbols for now
+	jbsr	_gray_bar		| first graybar call (we need stack).
+
+
+| BG - Figure out our MMU
+	movl	#0x200, d0		| data freeze bit (??)
+	movc	d0, cacr		| only exists in 68030
+	movc	cacr, d0		| on an '851, it'll go away.
+	tstl	d0
+	jeq	Lisa68020
+	movl	#1, _mmutype		| 68030 MMU (What about 68040?)
+	bra	Lmmufigured
+Lisa68020:
+	movl	#0, _mmutype		| 68020, implies 68851, or crash.
+Lmmufigured:
+
+| LAK: (1/2/94) We need to find out if the MMU is already on.  If it is
+|  not, fine.  If it is, then we must get at it because it tells us a lot
+|  of information, such as our load address (_load_addr) and the video
+|  physical address.  The MacOS page maps are not mapped into our
+|  virtual space, so we must use the TT0 register to get to them.
+|  Of course, "gas" does not know about the "tt0" register, so we
+|  must hand-assemble the instruction.
+
+	lea	macos_tc,a0
+	pmove	tc,a0@
+	btst	#31,a0@			| Bit #31 is Enabled bit
+	jeq	mmu_off
+
+| LAK: MMU is on; find out how it is mapped.  MacOS uses the CRP.
+
+	cmpl	#0, _mmutype		| ttx instructions will break 68851
+	jeq		LnocheckTT
+	lea	macos_tt0,a0		| save it for later inspection
+	.long	0xF0100A00		| pmove tt0,a0@
+	lea	macos_tt1,a0		| save it for later inspection
+	.long	0xF0100E00		| pmove tt1,a0@
+LnocheckTT:
+	jbsr	_gray_bar		| 2 - Finished storing MacOS TTs
+
+	lea		macos_crp1,a0
+	pmove	crp,a0@			| Save MacOS 
+	cmpl	#0, _mmutype		| ttx instructions will break 68851
+	| Assume that 68851 maps are in ROMs, which we can already read.
+	jeq		LnosetTT
+					| This next line gets the second
+					| long word of the RP, the address...
+	movl	macos_crp2,d0		| address of root table
+	andl	#0xFF000000,d0		| fix up for tt0 register
+	orl		#0x00018600,d0
+	movl	d0,longscratch
+	lea		longscratch,a0
+	.long	0xF0100800		| pmove a0@,tt0
+
+LnosetTT:
+	jbsr	_gray_bar		| 3 - Finished setting TT0 for PTs
+
+	movl	#0,a0			| address to test (logical 0)
+	ptestr	#0,a0@,#7,a1		| puts last pte in a1
+	pmove	psr,longscratch2
+	movl	a1,macos_crp1		| save it for later inspection
+#if 0
+	movl	a1@,macos_crp2		| save it for later inspection
+	movl	a0,sp@-			| push test address
+	movw	longscratch2,sp@-	| push status word,
+	movw	#0,sp@-
+	movl	a1@,sp@-		| PTE,
+	movl	macos_tc,sp@-		| and TC
+	jbsr	_getphysical		| in machdep.c
+	addl	#16,sp			| physical address in d0
+	movl	d0,_load_addr		| this is our physical load address
+	jbsr	_gray_bar		| (not drawn) - got phys load addr
+
+	movl	_videoaddr,a0		| get logical address of video
+	ptestr	#0,a0@,#7,a1		| puts last pte in a1
+	pmove	psr,longscratch2
+	movl	a1,macos_crp1		| save it for later inspection
+	movl	a1@,macos_crp2		| save it for later inspection
+	movl	a0,sp@-			| push test address
+	movw	longscratch2,sp@-	| push status word,
+	movw	#0,sp@-
+	movl	a1@,sp@-		| PTE,
+	movl	macos_tc,sp@-		| and TC
+	jbsr	_getphysical		| in machdep.c
+	addl	#16,sp			| physical address in d0
+	movl	d0,_bletch		| this is physical addr of video
+#endif
+
+	jbsr	_gray_bar		| 4 - got CRP, got phys load & video
+
+| This next part is cool because on the machines we currently work
+| on, the physical and logical load addresses are both 0.  This is
+| why the CI works without external video, but to load at Bank B,
+| we will have to leave the MMU on.
+| (Or have a phys=log jump point.  Sounds like sci-fi, doesn't it?)
+| -BG
+|
+| Turn off the MMU
+#if !defined(IICI)
+	lea	longscratch,a0
+	movl	#0,a0@
+	pmove	a0@,tc
+#endif
+
+	jbsr	_gray_bar		| 5 - Turned off MMU
+	jbsr	_macserinit
+
+	jbsr	_gray_bar		| 6 - Initialized serial, no interrupts
+	movl	longscratch2, sp@-
+	movl	macos_crp1, sp@-
+	movl	macos_crp2, sp@-
+	jbsr	_mmudebug
+	lea	sp@(12), sp
+
+mmu_off:
+	movl	_bootdev, d6		| figure out boot device...
 	andl	#0xfffffff8, d6		| if not just a scsi ID.
 	bne	Lbootdevcool		|  then assume it's a good bootdev.
 	movl	_bootdev, d6		| We need to copy this again...
 	lsll	#8, d6			| Shift unit into proper location
 	lsll	#8, d6			|   8 at a time (arch. limitation)
 	orl	#0x4, d6		| Assume SCSI disk and part 0.
+	movl	d6, _bootdev		| and re-load bootdev
 
 Lbootdevcool:
-	movl	d6, _bootdev		| and re-load bootdev
 
 | A4 is passed (was) from MacOS as the very last page in physical memory
 	jsr	_get_top_of_ram		| Get amount of memory in machine
+	addl	_load_addr, d0
 	movl	d0,lastpage		| save very last page of memory
+	jbsr	_gray_bar		| 7 - got mem
 
-	movl	d4,d0
-	andl	#0x00010000,d0
-	beq	no_serial_boot
-	movb	#0x01, _serial_boot_echo
-
-no_serial_boot:
-	jbsr	_gray_bar
 	/* Start setting up the virtual memory spaces */
 
 /* initialize source/destination control registers for movs */
@@ -909,7 +1033,7 @@ no_serial_boot:
 	movl	a4,_Sysseg		| remember for pmap module
 	movl	a4,sp@-			| remember for loading MMU
 	addl	#NBPG,a4
-	jbsr	_gray_bar
+	jbsr	_gray_bar		| 8 - progress
 /* allocate initial page table pages (including internal IO map) */
 /* LAK: Sysptsize is initialized at 2 in pmap.c (from param.h)   */
 /* The IO map size and NuBus map size are defined in cpu.h.      */
@@ -948,11 +1072,12 @@ index of Sysmap will give you a PTE of the page maps which map the kernel. */
 	movl	sp@+,d4			| start of PT pages
 	movl	sp@+,a0			| ST addr (Kern segment table map)
 	lea	a0@(NBPG-4),a2		| (almost) end of ST
+	addl	_load_addr,d4		| we want physical address
 	movl	d4,d3
 	orl	#SG_RW+SG_V,d4		| create proto STE for ST
 	orl	#PG_RW+PG_CI+PG_V,d3	| create proto PTE for PT map
 
-	jbsr	_gray_bar
+	jbsr	_gray_bar		| 9 - progress
 /* ALICE LAK 6/27/92: The next two loops (which have been #ifdefed out)
 used to map all of the page tables (which had previously been allocated)
 linearly.  This is bad.  This would mean that the IO space (both internal
@@ -988,8 +1113,9 @@ List1:
 	subl	#1,d0
 	bne	List1
 /* The original HP code mapped the system page table map along with every
-thing else.  Sincy we do it seperately, we must map it here: */
-	movl	_Sysptmap,d0		| Physical address of the map
+thing else.  Since we do it seperately, we must map it here: */
+	movl	_Sysptmap,d0		| Logical address of the map
+	addl	_load_addr,d0		| we want the physical address
 	andl	#SG_FRAME,d0
 	orl	#SG_RW+SG_V,d0
 	movl	d0,a0@+			| Right after kernel in ST
@@ -1016,7 +1142,7 @@ List2:
 	movl	#(IIOMAPSIZE+NPTEPG-1)/NPTEPG,d0	| How many PT
 List3:					| map internal IO space
 	movl	d4,a0@+			| d3 and d4 are still correct
-	movl	d3,a1@+			| Really. I swear to god.
+	movl	d3,a1@+			| Really. I swear to God.
 	addl	#NBPG,d4
 	addl	#NBPG,d3
 	subl	#1,d0
@@ -1041,7 +1167,7 @@ List4:					| map Nubus space
 	movl	a2,a0			| a0 is now last entry in ST
 	movl	a3,a1			| a1 is now last entry in PM
 #endif
-	jbsr	_gray_bar
+	jbsr	_gray_bar		| 10 - progress
 /*
  * Portions of the last segment of KVA space (0xFFF00000 - 0xFFFFFFFF)
  * are mapped for a couple of purposes. 0xFFF00000 for UPAGES is used
@@ -1054,6 +1180,7 @@ List4:					| map Nubus space
  * don't need all this garbage.
  */
 	movl	a4,d1			| grab next available for PT page
+	addl	_load_addr, d1		| we want the physical address
 	andl	#SG_FRAME,d1		| mask to frame number
 	orl	#SG_RW+SG_V,d1		| RW and valid
 	movl	d1,a0@+			| store in last ST entry
@@ -1080,13 +1207,14 @@ Lispt7:
 	movl	a0,sp@-			| store that for later
 	addl	d2,a2			| add size to get end of PT
 /* text pages are read-only */
-	clrl	d1			| get load address (0)
+	movl	_load_addr,d1		| get load address
 #if defined(KGDB)
 	orl	#PG_RW+PG_V,d1		| XXX: RW for now
 #else
 	orl	#PG_RO+PG_V,d1		| create proto PTE
 #endif
 	movl	#_etext,a1		| go til end of text
+	addl	_load_addr,a1		| we want the physical address
 Lipt1:
 	movl	d1,a0@+			| load PTE
 	addl	#NBPG,d1		| increment page frame number
@@ -1097,6 +1225,7 @@ Lipt1:
 	orl	#PG_RW+PG_V,d1		| mark as valid and RW
 	movl	a4,a1			| go til end of data allocated so far
 	addl	#(UPAGES+1)*NBPG,a1	| and proc0 PT/u-area (to be allocated)
+	addl	_load_addr,a1		| we want the physical address
 Lipt2:
 	movl	d1,a0@+			| load PTE
 	addl	#NBPG,d1		| increment page frame number
@@ -1133,7 +1262,7 @@ Lipt4:
 	| BARF: intiolimit is wrong:
 	movl	d0,_intiolimit		| external base is also internal limit
 
-	jbsr	_gray_bar
+	jbsr	_gray_bar		| 11 - progress
 /* LAK: Initialize external IO PTE in kernel PT (this is the nubus space) */
 /* This section wasn't here at all.  How did they initialize their EIO */
 /* space? (BARF) */
@@ -1164,6 +1293,7 @@ Lipt5:
  */
 	movl	a4,d0
 	movl	d0,d1
+	addl	_load_addr,d1		| we want physical address
 	andl	#PG_FRAME,d1		| mask to page frame number
 	orl	#PG_RW+PG_V,d1		| RW and valid
 	movl	d1,d4			| remember for later Usrptmap load
@@ -1180,6 +1310,7 @@ Liudot1:
 	lea	a0@(UPAGES*4),a1	| end of PTEs for u-area
 	lea	a4@(-HIGHPAGES*4),a3	| u-area PTE base in Umap PT
 	movl	d0,d1			| get base of u-area
+	addl	_load_addr,d1		| we want physical address
 	andl	#PG_FRAME,d1		| mask to page frame number
 	orl	#PG_RW+PG_V,d1		| add valid and writable
 Liudot2:
@@ -1197,29 +1328,156 @@ Lclru1:
 	jcs	Lclru1			| no, keep going
 	movl	a2,a4			| save phys addr of first avail page
 
-	jbsr	_gray_bar
+	jbsr	_gray_bar		| 12 - progress
+
+
+#if defined(MACHINE_NONCONTIG)
+	jmp	foobar3
+foobar1:
+/*
+ * LAK: Before we enable the MMU, we check to see if it is already
+ *  on.  If it is, then MacOS must have mapped memory in some way;
+ *  all of the page tables that we just created are wrong, and
+ *  we must re-map them properly.  To do this, we walk through
+ *  our new page tables, find the physical address of each
+ *  of the logital addresses we've set up, and stick this physical
+ *  address in our page maps.  We've also got to do some fancy
+ *  register-tweaking to enable the MMU.
+ */
+
+	movl	#1,sp@-
+	movl	#2,sp@-
+	movl	#3,sp@-
+	jbsr	_mmudebug
+	addl	#12,sp
+
+	pmove	tc,a2@			| get the current tc
+
+	movl	a2@,sp@-
+	movl	a2@,sp@-
+	movl	a2@,sp@-
+	jbsr	_mmudebug
+	addl	#12,sp
+
+	pmove	tc,a2@			| get the current tc
+	btst	#31,a2@			| check enable bit
+	jeq	MMUoff			| if off, proceed as normal
+	jbsr	_remap_MMU		| if on, remap everything
+
+	clrl	d2			| logical address
+	movl	_Sysseg,a3		| go through system segment map
+	movl	a3,a4			| a4 = end of map
+	addl	NBPG,a4
+remap_more:
+	cmpl	a3,a4			| go until end of system seg map
+	jge	done_remap
+	movl	a3@,d3			| get system segment entry
+	btst	#1,d3			| check valid flag
+	jeq	skip_segment		| skip entire segment if not valid
+	andl	#0xFFFFFFF0,d5		| mask off DT bits and such
+	movl	d3,a5			| start inner loop of segment
+	movl	a5,a6			| a6 = end of page table
+	addl	NBPG,a6
+remap_more_pt:
+	cmpl	a5,a6			| go until end of page table
+	jge	done_remap_pt
+	movl	a5@,d3			| get page table entry
+	btst	#0,d3			| test valid bit
+	jeq	skip_page		| if not, don't do anything
+	andl	#0x000000FF,d3		| keep DT bits and such
+	movl	d2,a1			| move logical address
+
+	movl	d2,sp@-
+	movl	d2,sp@-
+	movl	d2,sp@-
+	jbsr	_mmudebug
+	addl	#12,sp
+
+	ptestr	#1,a1@,#7,a0		| get physical address
+	movl	a0,d0
+	orl	d3,d0			| replace DT bits and such
+	movl	d0,a5@			| and fix page table entry
+skip_page:
+	addl	#NBPG,d2
+	addl	#4,a5
+	jmp	remap_more_pt
+done_remap_pt:
+	jmp	dont_skip_segment
+skip_segment:
+	addl	#(NBPG*1000),d2
+dont_skip_segment:
+	addl	#4,a3
+	jmp	remap_more
+
+done_remap:
+
+MMUoff:
+	movl	#4,sp@-
+	movl	#5,sp@-
+	movl	#6,sp@-
+	jbsr	_mmudebug
+	addl	#12,sp
+
+	jmp	foobar2
+foobar3:
+#endif  /* MACHINE_NONCONTIG */
+
+	.globl	_dump_pmaps
+|	jbsr	_dump_pmaps
+
 /*
  * Prepare to enable MMU.
  */
 	lea	_protorp,a0
-	| LAK: Brad, should we set these to 0 to disable them?
-	| BG: Lawrence, The assembler doesnt recognize tt0 or tt1...
-	|   Anyway, check out pg 9-57, 68030 reference
-	| movl	#0x0, a0@		| transparent translation
-	| BG -- I would love to use these for IO spaces...
-	| pmove	a0@,tt0			| BG paranoid -- kill tt0
-	| pmove	a0@,tt1			| BG paranoid -- kill tt1
+	jbsr	_gray_bar		| #13
 	movl	_Sysseg,a1		| system segment table addr
+	addl	_load_addr,a1		| we want physical address
 	movl	#0x80000202,a0@		| nolimit + share global + 4 byte PTEs
 	movl	a1,a0@(4)		| + segtable address
 	pmove	a0@,srp			| load the supervisor root pointer
+	jbsr	_gray_bar		| #14
+	pflusha
+	jbsr	_gray_bar		| #15
 	movl	#0x80000002,a0@		| reinit upper half for CRP loads
+
+	movl	#8,sp@-
+	movl	#9,sp@-
+	movl	a1,sp@-
+	jbsr	_mmudebug
+	lea	sp@(12),sp
+
+	jbsr	_gray_bar		| #16
 /* BARF: A line which was here enabled the FPE and i-cache */
 /* LAK: a2 is at a location we can clobber: */
 	movl	#0x82c0aa00,a2@		| value to load TC with
 	pmove	a2@,tc			| load it
 
-	jbsr	_gray_bar
+| LAK: Kill the TT0 and TT1 registers so the don't screw us up later.
+	cmpl	#0, _mmutype		| ttx instructions will break 68851
+	jeq	LnokillTT
+	lea	longscratch,a0
+	movl	#0, a0@
+	.long	0xF0100800		| movl a0@,tt0
+	.long	0xF0100C00		| movl a0@,tt1
+LnokillTT:
+
+	jbsr	_gray_bar		| #17
+	movl	#5, sp@-
+	movl	#6, sp@-
+	movl	#7, sp@-
+	jbsr	_mmudebug
+	lea	sp@(12), sp
+
+	pflusha				| make sure it's clean
+
+	jbsr	_gray_bar		| #18
+
+#if defined (MACHINE_NONCONTIG)
+#if 0
+	jmp	foobar1
+#endif
+foobar2:
+#endif	/* MACHINE_NONCONTIG */
 /*
  * Should be running mapped from this point on
  */
@@ -1236,12 +1494,13 @@ Lclru1:
  * up and enable mapping here and then call the bootstrap routine to
  * get the pmap module in sync with reality.
  *
- * BARF: LAK: We do have PA == VA, but we'll leave things the way they
- * are for now.
+ * LAK: We do have PA == VA, but we'll leave things the way they
+ *      are for now.
  */
 	.globl	_avail_start
 	lea	tmpstk,sp		| temporary stack
-	movl	#0,sp@-			| phys load address
+	movl	_load_addr,sp@-		| phys load address
+	addl	_load_addr,a4		| need physical address
 	movl	a4,sp@-			| first available PA
 	jbsr	_pmap_bootstrap		| sync up pmap module
 	addql	#8,sp
@@ -1261,16 +1520,20 @@ Lclru1:
 	jbsr	_m68881_restore		| restore it (does not kill a1)
 	addql	#4,sp
 #endif
-	jbsr	_gray_bar
+	jbsr	_gray_bar		| #19
 /* flush TLB and turn on caches */
 	jbsr	_TBIA			| invalidate TLB
 	movl	#CACHE_ON,d0
 	movc	d0,cacr			| clear cache(s)
+	jbsr	_gray_bar		| #20
 /* BARF: Enable external cache here */
 /* final setup for C code */
-	movb	#0x7F,0x50001C00	| disable VIA1 interrupts
-	movb	#0x7F,0x50003C00	| disable VIA2 interrupts
+	jbsr	_gray_bar		| #21
+	jbsr	_gray_bar		| #22
+	movl	#0x7f, 0x50001C00
+	movl	#0x7f, 0x50003C00
 	movw	#PSL_LOWIPL,sr		| lower SPL ; enable interrupts
+	jbsr	_gray_bar2		| #23
 	movl	#0,a6			| LAK: so that stack_trace() works
 	jbsr	_main			| call main() ; tag Minit_main()
 
@@ -2591,6 +2854,11 @@ Lm68881rdone:
  * logical to physical so that the PC is still valid immediately after the MMU
  * is turned off.  We have conveniently mapped the last page of physical
  * memory this way.
+ *
+ * Boot and reboot are sitting in a tree.
+ * Boot falls out.  Who's left?
+ * Well, reboot.
+ * Dong!!!!
  */
 	.globl	_doboot
 _doboot:
@@ -2616,8 +2884,10 @@ tmpstk:
 _machineid:
 	.long	0		| default to 320
 	.globl	_mmutype,_protorp
+iottdata:
+	.long	0x50018600	| maps IO space in TT1 register
 _mmutype:
-	.long	0		| default to HP MMU
+	.long	0		| Are we running 68851, 68030, or 68040?
 _protorp:
 	.long	0,0		| prototype root pointer
 	.globl	_ectype
@@ -2639,6 +2909,9 @@ _intiolimit:
 	.long	0		| KVA of end of internal IO space
 _extiobase:
 	.long	0		| KVA of base of external IO space
+	.globl	_load_addr
+_load_addr:
+	.long	0		| Physical address of kernel
 lastpage:
 	.long	0		| LAK: to store the addr of last page in mem
 #ifdef DEBUG
