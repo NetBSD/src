@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.4 2002/12/08 00:50:23 manu Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.5 2002/12/08 21:53:11 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.4 2002/12/08 00:50:23 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.5 2002/12/08 21:53:11 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,14 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.4 2002/12/08 00:50:23 manu Exp 
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
-#include <arch/powerpc/include/psl.h>
-#include <arch/powerpc/include/darwin_machdep.h>
+#include <machine/psl.h>
+#include <machine/darwin_machdep.h>
+
+/* 
+ * First argument is in reg 3, duplicated from 
+ * sys/arch/powerpc/powerpc/syscall.c 
+ */
+#define FIRSTARG 3
 
 /*
  * Send a signal to a Darwin process.
@@ -238,4 +244,28 @@ darwin_sys_sigreturn(p, v, retval)
 	(void)sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
+}
+
+/*
+ * Set the return value for darwin binaries after a fork(). The userland
+ * libSystem stub expects the child pid to be in retval[0] for the parent
+ * and the child as well. It will perform the required operation to transform 
+ * it in the POSIXly correct value: zero for the child.
+ * We also need to skip the next instruction because the system call
+ * was successful (We also do this in the syscall handler, Darwin 
+ * works that way).
+ */
+void
+darwin_fork_child_return(arg)
+	void *arg;
+{
+	struct proc * const p = arg;
+	struct trapframe * const tf = trapframe(p);
+
+	child_return(arg);
+
+	tf->fixreg[FIRSTARG] = p->p_pid;
+	tf->srr0 +=4;
+
+	return;
 }

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 2002/12/08 00:50:28 manu Exp $
+	$NetBSD: syscalls.master,v 1.8 2002/12/08 21:53:18 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -65,7 +65,7 @@
 
 0	INDIR		{ int sys_syscall(int number, ...); }
 1	NOARGS		{ void sys_exit(int rval); }
-2	NOARGS		{ int sys_fork(void); }
+2	STD		{ int darwin_sys_fork(void); }
 3	NOARGS		{ ssize_t sys_read(int fd, void *buf, size_t nbyte); }
 4	NOARGS		{ ssize_t sys_write(int fd, const void *buf, \
 			    size_t nbyte); }
@@ -179,7 +179,7 @@
 63	UNIMPL
 64	NOARGS    	{ int compat_43_sys_getpagesize(void); } ogetpagesize
 65	NOARGS    	{ int compat_12_sys_msync(caddr_t addr, size_t len); }
-66	NOARGS		{ int sys_vfork(void); }
+66	STD		{ int darwin_sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
 69	NOARGS		{ int sys_sbrk(intptr_t incr); }

@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.12 2002/12/08 00:51:26 manu Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.13 2002/12/08 21:53:18 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.12 2002/12/08 00:51:26 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.13 2002/12/08 21:53:18 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -37,7 +37,7 @@ struct sysent darwin_sysent[] = {
 	{ 1, s(struct sys_exit_args), 0,
 	    sys_exit },				/* 1 = exit */
 	{ 0, 0, 0,
-	    sys_fork },				/* 2 = fork */
+	    darwin_sys_fork },			/* 2 = fork */
 	{ 3, s(struct sys_read_args), 0,
 	    sys_read },				/* 3 = read */
 	{ 3, s(struct sys_write_args), 0,
@@ -185,7 +185,7 @@ struct sysent darwin_sysent[] = {
 	{ 2, s(struct compat_12_sys_msync_args), 0,
 	    compat_12_sys_msync },		/* 65 = msync */
 	{ 0, 0, 0,
-	    sys_vfork },			/* 66 = vfork */
+	    darwin_sys_vfork },			/* 66 = vfork */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 67 = obsolete vread */
 	{ 0, 0, 0,

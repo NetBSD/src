@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscallargs.h,v 1.12 2002/12/08 00:51:25 manu Exp $ */
+/* $NetBSD: darwin_syscallargs.h,v 1.13 2002/12/08 21:53:17 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -231,7 +231,7 @@ struct darwin_sys_load_shared_file_args {
  */
 
 int	sys_exit(struct proc *, void *, register_t *);
-int	sys_fork(struct proc *, void *, register_t *);
+int	darwin_sys_fork(struct proc *, void *, register_t *);
 int	sys_read(struct proc *, void *, register_t *);
 int	sys_write(struct proc *, void *, register_t *);
 int	bsd_sys_open(struct proc *, void *, register_t *);
@@ -308,7 +308,7 @@ int	bsd_sys_chroot(struct proc *, void *, register_t *);
 int	compat_43_sys_fstat(struct proc *, void *, register_t *);
 int	compat_43_sys_getpagesize(struct proc *, void *, register_t *);
 int	compat_12_sys_msync(struct proc *, void *, register_t *);
-int	sys_vfork(struct proc *, void *, register_t *);
+int	darwin_sys_vfork(struct proc *, void *, register_t *);
 int	sys_sbrk(struct proc *, void *, register_t *);
 int	sys_sstk(struct proc *, void *, register_t *);
 int	sys_mmap(struct proc *, void *, register_t *);
