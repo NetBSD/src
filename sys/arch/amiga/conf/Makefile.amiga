@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.82 1999/07/26 05:20:45 cgd Exp $
+#	$NetBSD: Makefile.amiga,v 1.83 1999/09/07 19:40:56 is Exp $
 
 # Makefile for NetBSD
 #
@@ -53,7 +53,7 @@ CWARNFLAGS+=	-Wno-main
 .if empty(IDENT:M-DM68060)
 CMACHFLAGS=	-m68020
 .else
-CMACHFLAGS=	-m68060 -Wa,-m68030
+CMACHFLAGS=	-m68060 -Wa,-m68030 -Wa,-m68851
 .endif
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${COPTS} ${CMACHFLAGS} -msoft-float 
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
