@@ -1,4 +1,4 @@
-/*	$NetBSD: sysent.h,v 1.2 1997/06/17 18:57:06 christos Exp $	*/
+/*	$NetBSD: sysent.h,v 1.3 1998/07/06 07:05:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -77,7 +77,7 @@ extern gid_t getegid(void);
 extern int getgroups(int, int *);
 extern long gethostid(void);
 extern int sethostid(long);
-extern int gethostname(char *, int);
+extern int gethostname(char *, size_t);
 extern int sethostname(const char *, int);
 extern int getpagesize(void);
 extern int getpgrp(int);

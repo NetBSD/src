@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.12 1997/10/18 11:37:10 lukem Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.13 1998/07/06 06:58:26 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ __RCSID("$NetBSD: rwhod.c,v 1.12 1997/10/18 11:37:10 lukem Exp $");
  */
 #define AL_INTERVAL (3 * 60)
 
-char	myname[MAXHOSTNAMELEN];
+char	myname[MAXHOSTNAMELEN + 1];
 
 /*
  * We communicate with each neighbor in a list constructed at the time we're
@@ -144,6 +144,7 @@ main(argc, argv)
 		syslog(LOG_ERR, "gethostname: %m");
 		exit(1);
 	}
+	myname[sizeof(myname) - 1] = '\0';
 	if ((cp = strchr(myname, '.')) != NULL)
 		*cp = '\0';
 	strncpy(mywd.wd_hostname, myname, sizeof(myname) - 1);

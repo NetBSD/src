@@ -1,4 +1,4 @@
-/*	$NetBSD: lprm.c,v 1.7 1997/10/05 15:12:22 mrg Exp $	*/
+/*	$NetBSD: lprm.c,v 1.8 1998/07/06 07:03:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lprm.c,v 1.7 1997/10/05 15:12:22 mrg Exp $");
+__RCSID("$NetBSD: lprm.c,v 1.8 1998/07/06 07:03:29 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,7 @@ main(argc, argv)
 	seteuid(uid);	/* be safe */
 	name = argv[0];
 	gethostname(host, sizeof(host));
+	host[sizeof(host) - 1] = '\0';
 	openlog("lpd", 0, LOG_LPR);
 	if ((p = getpwuid(getuid())) == NULL)
 		fatal("Who are you?");

@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.12 1997/10/18 08:52:17 lukem Exp $	*/
+/*	$NetBSD: common.c,v 1.13 1998/07/06 07:03:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.12 1997/10/18 08:52:17 lukem Exp $");
+__RCSID("$NetBSD: common.c,v 1.13 1998/07/06 07:03:28 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ char	*bp;		/* pointer into printcap buffer. */
 char	*name;		/* program name */
 char	*printer;	/* printer name */
 			/* host machine name */
-char	host[MAXHOSTNAMELEN];
+char	host[MAXHOSTNAMELEN + 1];
 char	*from = host;	/* client's machine name */
 int	remote;		/* true if sending files to a remote host */
 char	*printcapdb[2] = { _PATH_PRINTCAP, 0 };
@@ -309,7 +309,7 @@ compar(p1, p2)
 char *
 checkremote()
 {
-	char name[MAXHOSTNAMELEN];
+	char name[MAXHOSTNAMELEN + 1];
 	struct hostent *hp;
 	static char errbuf[128];
 

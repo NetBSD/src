@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.17 1998/02/02 22:36:15 perry Exp $	*/
+/*	$NetBSD: res_init.c,v 1.18 1998/07/06 07:00:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.17 1998/02/02 22:36:15 perry Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.18 1998/07/06 07:00:46 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -344,8 +344,11 @@ res_init()
 	    (void) fclose(fp);
 	}
 	if (_res.defdname[0] == 0) {
-		if (gethostname(buf, sizeof(_res.defdname) - 1) == 0 &&
-		   (cp = strchr(buf, '.')))
+		int rv;
+
+		rv = gethostname(buf, sizeof(_res.defdname));
+		_res.defdname[sizeof(_res.defdname) - 1] = '\0';
+		if (rv == 0 && (cp = strchr(buf, '.')))
 			(void)strncpy(_res.defdname, cp + 1, sizeof(_res.defdname) - 1);
 	}
 

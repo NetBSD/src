@@ -1,4 +1,4 @@
-/*	$NetBSD: localhostname.c,v 1.5 1998/04/23 19:32:40 kleink Exp $	*/
+/*	$NetBSD: localhostname.c,v 1.6 1998/07/06 07:06:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: localhostname.c,v 1.5 1998/04/23 19:32:40 kleink Exp $");
+__RCSID("$NetBSD: localhostname.c,v 1.6 1998/07/06 07:06:39 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -56,11 +56,12 @@ localhostname(buf, buflen)
 	size_t buflen;
 {
 	struct hostent *hp;
-	char hostname[MAXHOSTNAMELEN];
+	char hostname[MAXHOSTNAMELEN + 1];
 	int i;
 
 	if (gethostname(hostname, sizeof(hostname)))
 		err(1, "gethostname");
+	hostname[sizeof(hostname) - 1] = '\0';
 
 	memset(buf, 0, buflen);
 
