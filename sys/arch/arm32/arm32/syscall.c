@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.2 1996/02/05 21:25:47 mark Exp $ */
+/* $NetBSD: syscall.c,v 1.3 1996/02/23 18:50:56 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -43,7 +43,7 @@
  * Created      : 09/11/94
  * Last updated : 28/08/95
  *
- *    $Id: syscall.c,v 1.2 1996/02/05 21:25:47 mark Exp $
+ *    $Id: syscall.c,v 1.3 1996/02/23 18:50:56 mark Exp $
  */
 
 #include <sys/param.h>
@@ -137,6 +137,7 @@ syscall(frame, code)
 /*
  * Brick wall time ... If the trap frame is not at the top of the stack then
  * we have reached "syscall in kernel mode" time.
+ * This test is scheduled for deletion.
  */
 
 	if ((u_int)frame != 0xefbfffb8) {
@@ -178,10 +179,11 @@ syscall(frame, code)
 /*
  * ARM700/ARM710 match sticks and sellotape job ...
  *
- * I know this affects GPS ARM700/ARM710 as that is what I discovered the problem on
- * Have not tested VLSI ARM700/ARM710's yet.
+ * I know this affects GPS/VLSI ARM700/ARM710.
  *
  * Not heard anything from ARM since I told them about this ...
+ * On occasion data aborts are mishandled and end up calling
+ * the swi vector.
  */
 
 	if ((ReadWord(frame->tf_pc - 4) & 0x0f000000) != 0x0f000000) {
@@ -298,9 +300,11 @@ syscall(frame, code)
 			shell_vmmap(frame->tf_r1, frame->tf_r2);
 			break;
 #endif
+#ifdef FPE
 		case 4 :
 			fpe_dump_prof();
 			break;
+#endif
 		case 5 :
 			pmap_dump_pvs();
 			break;
