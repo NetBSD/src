@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.24 1994/08/22 23:37:17 deraadt Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.25 1994/08/31 21:47:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -130,6 +130,7 @@ shm_deallocate_segment(shmseg)
 	shmseg->shm_internal = NULL;
 	shm_committed -= btoc(size);
 	shmseg->shm_perm.mode = SHMSEG_FREE;
+	shm_nused--;
 }
 
 static int
