@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.55 2003/06/26 17:17:10 dsl Exp $	*/
+/*	$NetBSD: refresh.c,v 1.56 2003/06/28 21:11:43 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.55 2003/06/26 17:17:10 dsl Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.56 2003/06/28 21:11:43 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -145,9 +145,9 @@ wnout_refresh_sub(SCREEN *screen, WINDOW *win, int begy, int begx,
 	__LINE	*wlp, *vlp;
 
 #ifdef DEBUG
-	__CTRACE("wnoutrefresh: win %p, flags 0x%08x\n", win, win->flags);
-	__CTRACE("wnoutrefresh: (%d, %d), (%d, %d), (%d, %d)\n", begy, begx,
-		wbegy, wbegx, maxy, maxx);
+	__CTRACE("wnout_refresh_sub: win %p, flags 0x%08x\n", win, win->flags);
+	__CTRACE("wnout_refresh_sub: (%d, %d), (%d, %d), (%d, %d)\n",
+	    begy, begx, wbegy, wbegx, maxy, maxx);
 #endif
 
 	if (screen->curwin)
@@ -174,7 +174,7 @@ wnout_refresh_sub(SCREEN *screen, WINDOW *win, int begy, int begx,
 	    y_off < screen->__virtscr->maxy; wy++, y_off++) {
  		wlp = win->lines[wy];
 #ifdef DEBUG
-		__CTRACE("wnoutrefresh: wy %d\tf: %d\tl:%d\tflags %x\n", wy,
+		__CTRACE("wnout_refresh_sub: wy %d\tf: %d\tl:%d\tflags %x\n", wy,
 		    *wlp->firstchp, *wlp->lastchp, wlp->flags);
 #endif
 		if ((wlp->flags & __ISDIRTY) == 0)
@@ -249,7 +249,7 @@ wnout_refresh_sub(SCREEN *screen, WINDOW *win, int begy, int begx,
 					*wlp->lastchp = win->ch_off;
 				if (*wlp->lastchp < *wlp->firstchp) {
 #ifdef DEBUG
-					__CTRACE("wnoutrefresh: line %d notdirty\n", wy);
+					__CTRACE("wnout_refresh_sub: line %d notdirty\n", wy);
 #endif
 					wlp->flags &= ~__ISDIRTY;
 				}
@@ -270,9 +270,9 @@ wnout_refresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 	if (win->orig != 0)
 		return OK;
 
-	for (sub_win = win->nextp; sub_win != win; sub_win = win->nextp) {
+	for (sub_win = win->nextp; sub_win != win; sub_win = sub_win->nextp) {
 #ifdef DEBUG
-		__CTRACE("wnoutrefresh: win %o, sub_win %o\n", win, sub_win);
+		__CTRACE("wnout_refresh: win %p, sub_win %p\n", win, sub_win);
 #endif
 		wnout_refresh_sub(screen, sub_win, 0, 0,
 		    sub_win->begy, sub_win->begx,
