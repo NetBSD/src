@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.7 1996/11/11 22:13:29 jonathan Exp $	*/
+/*	$NetBSD: profile.h,v 1.8 1997/07/19 21:30:25 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,19 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/10/93
  */
 
-#define	_MCOUNT_DECL static void __mcount
+#ifndef _MIPS_PROFILE_H_
+#define _MIPS_PROFILE_H_
+
+#ifdef _KERNEL
+#define	_KERNEL_MCOUNT_DECL \
+    extern int _splhigh __P((void)); extern int _splx __P((int));
+#else
+#define	_KERNEL_MCOUNT_DECL
+#endif	/* _KERNEL */
+
+#define	_MCOUNT_DECL \
+    _KERNEL_MCOUNT_DECL \
+    static void __mcount
 
 #define	MCOUNT \
 	asm(".globl _mcount;" \
@@ -64,7 +76,8 @@
 	"j $31;" \
 	"move $31,$1;" \
 	".set reorder;" \
-	".set at");
+	".set at"); \
+void *_mcount_ptr = (void*)__mcount;
 
 #ifdef _KERNEL
 /*
@@ -77,3 +90,5 @@
 
 #define	MCOUNT_EXIT	_splx(s)
 #endif /* _KERNEL */
+
+#endif /* _MIPS_PROFILE_H_ */
