@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.2 2001/09/26 21:49:09 thorpej Exp $ */
+/* $NetBSD: cms.c,v 1.3 2001/11/13 08:01:10 lukem Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.3 2001/11/13 08:01:10 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

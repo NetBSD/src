@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.48 2001/07/19 16:41:11 thorpej Exp $	*/
+/*	$NetBSD: isadma.c,v 1.49 2001/11/13 08:01:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * Device driver for the ISA on-board DMA controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.49 2001/11/13 08:01:22 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

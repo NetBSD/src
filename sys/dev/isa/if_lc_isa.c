@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.11 2001/07/08 17:55:50 thorpej Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.12 2001/11/13 08:01:20 lukem Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -31,6 +31,9 @@
  *
  *   This driver supports the LEMAC (DE203, DE204, and DE205) cards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.12 2001/11/13 08:01:20 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

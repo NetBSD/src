@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.14 2000/03/29 03:43:31 simonb Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.15 2001/11/13 08:01:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  *
  *	@(#)com.c	7.5 (Berkeley) 5/16/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.15 2001/11/13 08:01:11 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

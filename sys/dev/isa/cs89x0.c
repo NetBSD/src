@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.19 2001/07/18 20:52:47 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.20 2001/11/13 08:01:11 lukem Exp $	*/
 
 /*
  * Copyright 1997
@@ -184,6 +184,9 @@
 **
 **--
 */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.20 2001/11/13 08:01:11 lukem Exp $");
 
 #include "opt_inet.h"
 
