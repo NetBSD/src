@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.12 1993/06/16 04:31:37 deraadt Exp $
+ *	$Id: cd.c,v 1.13 1993/06/17 12:18:29 brezak Exp $
  */
 
 #define SPLCD splbio
@@ -135,7 +135,7 @@ cdattach(int masunit, struct scsi_switch *sw, int physid, int *unit)
 	* the drive. We cannot use interrupts yet, so the	*
 	* request must specify this.				*
 	\*******************************************************/
-	cd_get_parms(*unit,  SCSI_NOSLEEP |  SCSI_NOMASK);
+	cd_get_parms(*unit,  SCSI_NOSLEEP |  SCSI_NOMASK | SCSI_SILENT);
 	printf("cd%d at %s%d targ %d lun %d: %s\n",
 		*unit, sw->name, masunit, targ, lun,
 		dp->disksize ? "loaded" : "empty");
@@ -994,7 +994,8 @@ cd_size(unit, flags)
 			2000,
 			flags) != 0)
 	{
-		printf("cd%d: could not get size\n", unit);
+                if(!(flags & SCSI_SILENT))
+                        printf("cd%d: could not get size\n", unit);
 		return(0);
 	} else {
 		size = rdcap.addr_0 + 1 ;
