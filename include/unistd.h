@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.49 1998/02/02 21:08:14 perry Exp $	*/
+/*	$NetBSD: unistd.h,v 1.50 1998/02/14 20:39:26 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,6 +42,8 @@
 #include <sys/types.h>
 #include <sys/unistd.h>
 
+#include <sys/featuretest.h>
+
 #define	STDIN_FILENO	0	/* standard input file descriptor */
 #define	STDOUT_FILENO	1	/* standard output file descriptor */
 #define	STDERR_FILENO	2	/* standard error file descriptor */
@@ -55,7 +57,6 @@ __dead void	 _exit __P((int)) __attribute__((noreturn));
 int	 access __P((const char *, int));
 unsigned int	 alarm __P((unsigned int));
 int	 chdir __P((const char *));
-int	 chown __P((const char *, uid_t, gid_t));
 int	 close __P((int));
 size_t	 confstr __P((int, char *, size_t));
 char	*cuserid __P((char *));
@@ -114,7 +115,6 @@ int	 encrypt __P((char *, int));
 void	 endusershell __P((void));
 int	 exect __P((const char *, char * const *, char * const *));
 int	 fchdir __P((int));
-int	 fchown __P((int, uid_t, gid_t));
 int	 fsync __P((int));
 int	 ftruncate __P((int, off_t));
 int	 getdomainname __P((char *, int));
@@ -129,7 +129,6 @@ char	*getusershell __P((void));
 char	*getwd __P((char *));			/* obsoleted by getcwd() */
 int	 initgroups __P((const char *, gid_t));
 int	 iruserok __P((u_int32_t, int, const char *, const char *));
-int	 lchown __P((const char *, uid_t, gid_t));
 int	 mknod __P((const char *, mode_t, dev_t));
 int	 mkstemp __P((char *));
 char	*mktemp __P((char *));
@@ -196,6 +195,24 @@ extern	 int optreset;
 int	 getsubopt __P((char **, char * const *, char **));
 extern	 char *suboptarg;		/* getsubopt(3) external variable */
 #endif /* !_POSIX_SOURCE */
+
+#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+int	chown __P((const char *, uid_t, gid_t)) __RENAME(__posix_chown);
+int	rename __P((const char *, const char *)) __RENAME(__posix_rename);
+#else
+int	chown __P((const char *, uid_t, gid_t));
+int	rename __P((const char *, const char *));
+#endif /* defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) */
+
+#if defined(_XOPEN_SOURCE)
+int	fchown __P((int, uid_t, gid_t)) __RENAME(__posix_fchown);
+int	lchown __P((const char *, uid_t, gid_t)) __RENAME(__posix_lchown);
+#else
+#if !defined(_POSIX_C_SOURCE)
+int	fchown __P((int, uid_t, gid_t));
+int	lchown __P((const char *, uid_t, gid_t));
+#endif /* !defined(_POSIX_C_SOURCE) */
+#endif /* defined(_XOPEN_SOURCE) */
 
 #if (!defined(_POSIX_SOURCE) && !defined(_POSIX_C_SOURCE) && \
      !defined(_XOPEN_SOURCE)) || \
