@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.16 2003/01/18 10:06:37 thorpej Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.17 2003/04/16 20:00:03 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.16 2003/01/18 10:06:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.17 2003/04/16 20:00:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,6 @@ getcwd_scandir __P((struct vnode **, struct vnode **,
 static int
 getcwd_getcache __P((struct vnode **, struct vnode **,
     char **, char *));
-int
-getcwd_common __P((struct vnode *, struct vnode *,
-		   char **, char *, int, int, struct proc *));
 
 #define DIRENT_MINSIZE (sizeof(struct dirent) - (MAXNAMLEN+1) + 4)
 
@@ -370,8 +367,6 @@ getcwd_getcache(lvpp, uvpp, bpp, bufp)
 /*
  * common routine shared by sys___getcwd() and vn_isunder()
  */
-
-#define GETCWD_CHECK_ACCESS 0x0001
 
 int 
 getcwd_common (lvp, rvp, bpp, bufp, limit, flags, p)
