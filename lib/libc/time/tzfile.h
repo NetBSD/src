@@ -1,7 +1,12 @@
-/*	$NetBSD: tzfile.h,v 1.4 1996/01/20 02:31:34 jtc Exp $	*/
+/*	$NetBSD: tzfile.h,v 1.5 1996/09/10 22:04:34 jtc Exp $	*/
 
 #ifndef TZFILE_H
 #define TZFILE_H
+
+/*
+** This file is in the public domain, so clarified as of
+** June 5, 1996 by Arthur David Olson (arthur_david_olson@nih.gov).
+*/
 
 /*
 ** This header is for use ONLY with the time conversion code.
@@ -17,7 +22,7 @@
 
 #ifndef lint
 #ifndef NOID
-static char	tzfilehid[] = "@(#)tzfile.h	7.7";
+static char	tzfilehid[] = "@(#)tzfile.h	7.8";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
