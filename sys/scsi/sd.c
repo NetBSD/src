@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  *
- *      $Id: sd.c,v 1.18.2.7 1993/11/25 10:01:34 mycroft Exp $
+ *      $Id: sd.c,v 1.18.2.8 1993/11/25 10:31:56 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -462,7 +462,7 @@ sdstart(unit)
 			p = &sd->sc_dk.dk_label.d_partitions[SDPART(bp->b_dev)];
 			blkno += p->p_offset;
 		}
-		nblks = (bp->b_bcount + (sd->params.blksize = 1)) / (sd->params.blksize);
+		nblks = (bp->b_bcount + (sd->params.blksize - 1)) / (sd->params.blksize);
 
 		/*
 		 *  Fill out the scsi command
