@@ -1,4 +1,4 @@
-/*	$NetBSD: debug_subr.c,v 1.2 2002/02/13 16:25:33 uch Exp $	*/
+/*	$NetBSD: debug_subr.c,v 1.3 2002/02/22 19:56:27 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -368,7 +368,9 @@ __dbg_lcd_test8(vaddr_t fbaddr, int w, int h)
 	/*
 	 * Byte order test. (display 32x32 bitmap)
 	 */
-	/* 8-bit access (reference) */
+	/* 
+	 * 8-bit access (reference) 
+	 */
 	y_start = y_end;
 	y_end = y_start + 32;
 	i = 0;
@@ -379,8 +381,7 @@ __dbg_lcd_test8(vaddr_t fbaddr, int w, int h)
 			*fb++ = img[i++];
 
 	/* 
-	 * 16-bit access (test) 
-	 *   !HPCFB_REVORDER_BYTE test.
+	 * 16-bit access
 	 */
 	y_start = y_end;
 	y_end = y_start + 32;
@@ -394,8 +395,7 @@ __dbg_lcd_test8(vaddr_t fbaddr, int w, int h)
 			    img[i + 0];
 
 	/* 
-	 * 32-bit access (test) 
-	 *  !HPCFB_REVORDER_BYTE && !HPCFB_REVORDER_WORD test
+	 * 32-bit access
 	 */
 	y_start = y_end;
 	y_end = y_start + 32;
@@ -451,7 +451,6 @@ __dbg_lcd_test16(vaddr_t fbaddr, int w, int h)
 	 */
 	/* 
 	 * 16-bit access (reference) 
-	 *   !HPCFB_REVORDER_BYTE test.
 	 */
 	y_start = y_end;
 	y_end = y_start + 32;
@@ -464,7 +463,6 @@ __dbg_lcd_test16(vaddr_t fbaddr, int w, int h)
 
 	/* 
 	 * 32-bit access (test)
-	 *  !HPCFB_REVORDER_BYTE && !HPCFB_REVORDER_WORD test
 	 */
 	y_start = y_end;
 	y_end = y_start + 32;
