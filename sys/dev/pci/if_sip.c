@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.83 2003/10/29 03:31:22 mycroft Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.84 2003/12/03 21:58:49 cube Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.83 2003/10/29 03:31:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.84 2003/12/03 21:58:49 cube Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -424,6 +424,7 @@ void	SIP_DECL(dp83815_set_filter)(struct sip_softc *);
 void	SIP_DECL(dp83820_read_macaddr)(struct sip_softc *,
 	    const struct pci_attach_args *, u_int8_t *);
 #else
+static void	SIP_DECL(sis900_eeprom_delay)(struct sip_softc *sc);
 void	SIP_DECL(sis900_read_macaddr)(struct sip_softc *,
 	    const struct pci_attach_args *, u_int8_t *);
 void	SIP_DECL(dp83815_read_macaddr)(struct sip_softc *,
@@ -439,6 +440,8 @@ int	SIP_DECL(dp83820_mii_readreg)(struct device *, int, int);
 void	SIP_DECL(dp83820_mii_writereg)(struct device *, int, int, int);
 void	SIP_DECL(dp83820_mii_statchg)(struct device *);
 #else
+static void	SIP_DECL(sis900_mii_sync)(struct sip_softc *);
+static void	SIP_DECL(sis900_mii_send)(struct sip_softc *, u_int32_t, int);
 int	SIP_DECL(sis900_mii_readreg)(struct device *, int, int);
 void	SIP_DECL(sis900_mii_writereg)(struct device *, int, int, int);
 void	SIP_DECL(sis900_mii_statchg)(struct device *);
@@ -2678,6 +2681,7 @@ SIP_DECL(sis900_set_filter)(struct sip_softc *sc)
 		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 
 		if (SIP_SIS900_REV(sc, SIS_REV_635) ||
+		    SIP_SIS900_REV(sc, SIS_REV_960) ||
 		    SIP_SIS900_REV(sc, SIS_REV_900B)) {
 			/* Just want the 8 most significant bits. */
 			crc >>= 24;
@@ -2727,6 +2731,7 @@ SIP_DECL(sis900_set_filter)(struct sip_softc *sc)
 		FILTER_EMIT(RFCR_RFADDR_MC6, mchash[6]);
 		FILTER_EMIT(RFCR_RFADDR_MC7, mchash[7]);
 		if (SIP_SIS900_REV(sc, SIS_REV_635) ||
+		    SIP_SIS900_REV(sc, SIS_REV_960) ||
 		    SIP_SIS900_REV(sc, SIS_REV_900B)) {
 			FILTER_EMIT(RFCR_RFADDR_MC8, mchash[8]);
 			FILTER_EMIT(RFCR_RFADDR_MC9, mchash[9]);
@@ -3053,6 +3058,56 @@ SIP_DECL(dp83820_mii_bitbang_write)(struct device *self, u_int32_t val)
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_EROMAR, val);
 }
 #else /* ! DP83820 */
+
+/* SiS MII functions */
+
+#define	SIS_SET_EROMAR(x,y)	bus_space_write_4(x->sc_st, x->sc_sh, SIP_EROMAR,	\
+				    bus_space_read_4(x->sc_st, x->sc_sh, SIP_EROMAR) | (y))
+
+#define	SIS_CLR_EROMAR(x,y)	bus_space_write_4(x->sc_st, x->sc_sh, SIP_EROMAR,	\
+				    bus_space_read_4(x->sc_st, x->sc_sh, SIP_EROMAR) & ~(y))
+
+/*
+ * Sync the PHYs by setting data bit and strobing the clock 32 times.
+ */
+static void
+SIP_DECL(sis900_mii_sync)(struct sip_softc *sc)
+{
+	register int i;
+
+	SIS_SET_EROMAR(sc, EROMAR_MDDIR | EROMAR_MDIO);
+
+	for (i = 0; i < 32; i++) {
+		SIS_SET_EROMAR(sc, EROMAR_MDC);
+		DELAY(1);
+		SIS_CLR_EROMAR(sc, EROMAR_MDC);
+		DELAY(1);
+	}
+}
+
+/*
+ * Clock a series of bits through the MII.
+ */
+static void
+SIP_DECL(sis900_mii_send)(struct sip_softc *sc, u_int32_t bits, int cnt)
+{
+	int i;
+
+	SIS_CLR_EROMAR(sc, EROMAR_MDC);
+
+	/* Send first cnt bits of 'bits' */
+	for (i = (0x1 << (cnt - 1)); i; i >>= 1) {
+		if (bits & i)
+			SIS_SET_EROMAR(sc, EROMAR_MDIO);
+		else
+			SIS_CLR_EROMAR(sc, EROMAR_MDIO);
+		DELAY(1);
+		SIS_CLR_EROMAR(sc, EROMAR_MDC);
+		DELAY(1);
+		SIS_SET_EROMAR(sc, EROMAR_MDC);
+	}
+}
+
 /*
  * sip_sis900_mii_readreg:	[mii interface function]
  *
@@ -3062,23 +3117,90 @@ int
 SIP_DECL(sis900_mii_readreg)(struct device *self, int phy, int reg)
 {
 	struct sip_softc *sc = (struct sip_softc *) self;
-	u_int32_t enphy;
+	u_int32_t ack, val = 0;
+	int s, i;
 
 	/*
 	 * The SiS 900 has only an internal PHY on the MII.  Only allow
 	 * MII address 0.
 	 */
-	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 &&
-	    sc->sc_rev < SIS_REV_635 && phy != 0)
-		return (0);
+	if (sc->sc_model->sip_product != PCI_PRODUCT_SIS_900 ||
+	    sc->sc_rev < SIS_REV_635) {
+		if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 && phy != 0)
+			return (0);
 
-	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
-	    (phy << ENPHY_PHYADDR_SHIFT) | (reg << ENPHY_REGADDR_SHIFT) |
-	    ENPHY_RWCMD | ENPHY_ACCESS);
-	do {
-		enphy = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_ENPHY);
-	} while (enphy & ENPHY_ACCESS);
-	return ((enphy & ENPHY_PHYDATA) >> ENPHY_DATA_SHIFT);
+		bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
+		    (phy << ENPHY_PHYADDR_SHIFT) | (reg << ENPHY_REGADDR_SHIFT) |
+		    ENPHY_RWCMD | ENPHY_ACCESS);
+		do {
+			val = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_ENPHY);
+		} while (val & ENPHY_ACCESS);
+		return ((val & ENPHY_PHYDATA) >> ENPHY_DATA_SHIFT);
+	}
+
+	s = splnet();
+
+	/* Use mdio access from FreeBSD (apparently inspired by Linux) */
+	SIS_SET_EROMAR(sc, EROMAR_MDDIR);
+
+	SIP_DECL(sis900_mii_sync)(sc);
+
+	/*
+	 * Send command/address info.
+	 */
+	SIP_DECL(sis900_mii_send)(sc, SIS_MII_STARTDELIM, 2);
+	SIP_DECL(sis900_mii_send)(sc, SIS_MII_READOP, 2);
+	SIP_DECL(sis900_mii_send)(sc, phy, 5);
+	SIP_DECL(sis900_mii_send)(sc, reg, 5);
+ 
+	/* Idle bit */
+	SIS_CLR_EROMAR(sc, EROMAR_MDC | EROMAR_MDIO);
+	DELAY(1);
+	SIS_SET_EROMAR(sc, EROMAR_MDC);
+	DELAY(1);
+ 
+	/* Turn off xmit. */
+	SIS_CLR_EROMAR(sc, EROMAR_MDDIR);
+ 
+	/* Check for ack */
+	SIS_CLR_EROMAR(sc, EROMAR_MDC);
+	DELAY(1);
+
+	ack = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_EROMAR) & EROMAR_MDIO;
+
+	SIS_SET_EROMAR(sc, EROMAR_MDC);
+	DELAY(1);
+ 
+	/*
+	 * Now try reading data bits. If the ack failed, we still
+	 * need to clock through 16 cycles to keep the PHY(s) in sync.
+	 */
+	if (ack)
+		for (i = 0; i < 16; i++) {
+			SIS_CLR_EROMAR(sc, EROMAR_MDC);
+			DELAY(1);
+			SIS_SET_EROMAR(sc, EROMAR_MDC);
+			DELAY(1);
+		}
+	else
+		for (i = 0x8000; i; i >>= 1) {
+			SIS_CLR_EROMAR(sc, EROMAR_MDC);
+			DELAY(1);
+			if (bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_EROMAR) & EROMAR_MDIO)
+				val |= i;
+			DELAY(1);
+			SIS_SET_EROMAR(sc, EROMAR_MDC);
+			DELAY(1);
+		}
+
+	SIS_CLR_EROMAR(sc, EROMAR_MDC);
+	DELAY(1);
+	SIS_SET_EROMAR(sc, EROMAR_MDC);
+	DELAY(1);
+
+	splx(s);
+
+	return(val);
 }
 
 /*
@@ -3091,21 +3213,54 @@ SIP_DECL(sis900_mii_writereg)(struct device *self, int phy, int reg, int val)
 {
 	struct sip_softc *sc = (struct sip_softc *) self;
 	u_int32_t enphy;
+	int s;
 
 	/*
 	 * The SiS 900 has only an internal PHY on the MII.  Only allow
 	 * MII address 0.
 	 */
-	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 &&
-	    sc->sc_rev < SIS_REV_635 && phy != 0)
-		return;
+	if (sc->sc_model->sip_product != PCI_PRODUCT_SIS_900 ||
+	    sc->sc_rev < SIS_REV_635) {
+		if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900 && phy != 0)
+			return;
 
-	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
-	    (val << ENPHY_DATA_SHIFT) | (phy << ENPHY_PHYADDR_SHIFT) |
-	    (reg << ENPHY_REGADDR_SHIFT) | ENPHY_ACCESS);
-	do {
-		enphy = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_ENPHY);
-	} while (enphy & ENPHY_ACCESS);
+		bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_ENPHY,
+		    (val << ENPHY_DATA_SHIFT) | (phy << ENPHY_PHYADDR_SHIFT) |
+		    (reg << ENPHY_REGADDR_SHIFT) | ENPHY_ACCESS);
+		do {
+			enphy = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_ENPHY);
+		} while (enphy & ENPHY_ACCESS);
+		return;
+	}
+
+	s = splnet();
+
+ 	/*
+  	 * Turn on data output.
+ 	 */
+ 	SIS_SET_EROMAR(sc, EROMAR_MDDIR);
+ 
+ 	SIP_DECL(sis900_mii_sync)(sc);
+ 
+ 	SIP_DECL(sis900_mii_send)(sc, SIS_MII_STARTDELIM, 2);
+ 	SIP_DECL(sis900_mii_send)(sc, SIS_MII_WRITEOP, 2);
+ 	SIP_DECL(sis900_mii_send)(sc, phy, 5);
+ 	SIP_DECL(sis900_mii_send)(sc, reg, 5);
+ 	SIP_DECL(sis900_mii_send)(sc, SIS_MII_TURNAROUND, 2);
+ 	SIP_DECL(sis900_mii_send)(sc, val, 16);
+ 
+ 	/* Idle bit. */
+ 	SIS_SET_EROMAR(sc, EROMAR_MDC);
+ 	DELAY(1);
+ 	SIS_CLR_EROMAR(sc, EROMAR_MDC);
+ 	DELAY(1);
+ 
+ 	/*
+ 	 * Turn off xmit.
+ 	 */
+ 	SIS_CLR_EROMAR(sc, EROMAR_MDDIR);
+ 
+ 	splx(s);
 }
 
 /*
@@ -3309,6 +3464,19 @@ SIP_DECL(dp83820_read_macaddr)(struct sip_softc *sc,
 	enaddr[5] = eeprom_data[SIP_DP83820_EEPROM_PMATCH0 / 2] >> 8;
 }
 #else /* ! DP83820 */
+static void
+SIP_DECL(sis900_eeprom_delay)(struct sip_softc *sc)
+{
+	int i;
+
+	/*
+	 * FreeBSD goes from (300/33)+1 [10] to 0.  There must be
+	 * a reason, but I don't know it.
+	 */
+	for (i = 0; i < 10; i++)
+		bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CR);
+}
+
 void
 SIP_DECL(sis900_read_macaddr)(struct sip_softc *sc,
     const struct pci_attach_args *pa, u_int8_t *enaddr)
@@ -3344,6 +3512,52 @@ SIP_DECL(sis900_read_macaddr)(struct sip_softc *sc,
 		myea[2] = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_RFDR) &
 		    0xffff;
 		break;
+
+	case SIS_REV_960:
+		{
+			int waittime, i;
+
+			/* Allow to read EEPROM from LAN. It is shared
+			 * between a 1394 controller and the NIC and each
+			 * time we access it, we need to set SIS_EECMD_REQ.
+			 */
+			SIS_SET_EROMAR(sc, EROMAR_REQ);
+
+			for (waittime = 0; waittime < 1000; waittime++) { /* 1 ms max */
+				/* Force EEPROM to idle state. */
+
+				/*
+				 * XXX-cube This is ugly.  I'll look for docs about it.
+				 */
+				SIS_SET_EROMAR(sc, EROMAR_EECS);
+				SIP_DECL(sis900_eeprom_delay)(sc);
+				for (i = 0; i <= 25; i++) { /* Yes, 26 times. */
+					SIS_SET_EROMAR(sc, EROMAR_EESK);
+					SIP_DECL(sis900_eeprom_delay)(sc);
+					SIS_CLR_EROMAR(sc, EROMAR_EESK);
+					SIP_DECL(sis900_eeprom_delay)(sc);
+				}
+				SIS_CLR_EROMAR(sc, EROMAR_EECS);
+				SIP_DECL(sis900_eeprom_delay)(sc);
+				bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_EROMAR, 0);
+
+				if (bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_EROMAR) & EROMAR_GNT) {
+					SIP_DECL(read_eeprom)(sc, SIP_EEPROM_ETHERNET_ID0 >> 1,
+					    sizeof(myea) / sizeof(myea[0]), myea);
+					break;
+				}
+				DELAY(1);
+			}
+
+			/*
+			 * Set SIS_EECTL_CLK to high, so a other master
+			 * can operate on the i2c bus.
+			 */
+			SIS_SET_EROMAR(sc, EROMAR_EESK);
+
+			/* Refuse EEPROM access by LAN */
+			SIS_SET_EROMAR(sc, EROMAR_DONE);
+		} break;
 
 	default:
 		SIP_DECL(read_eeprom)(sc, SIP_EEPROM_ETHERNET_ID0 >> 1,
