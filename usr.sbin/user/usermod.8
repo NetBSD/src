@@ -1,4 +1,4 @@
-.\" $NetBSD: usermod.8,v 1.11 2001/06/05 11:31:22 wiz Exp $ */
+.\" $NetBSD: usermod.8,v 1.12 2001/09/05 21:37:32 christos Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 30, 1999
+.Dd September 5, 2001
 .Dt USERMOD 8
 .Os
 .Sh NAME
@@ -48,6 +48,7 @@
 .Oo
 .Fl g Ar gid | name | Li =uid
 .Oc
+.Op Fl L Ar login-class
 .Op Fl l Ar new-login
 .Op Fl p Ar password
 .Op Fl s Ar shell
@@ -111,12 +112,26 @@ This value can be preset for all users
 by using the
 .Ar gid
 field in the
-.Pa /usr/share/adduser/defaults
+.Pa /etc/usermgmt.conf
 file - it has the format:
 .br \" XXX Shouldn't be necessary -- mdoc bug? --bjh21
 .Bd -ragged -offset indent -compact
 .Ic group
 .Ar gid | name | Li =uid
+.Ed
+.It Fl L Ar login-class
+This option sets the login class for the user being created.  See
+.Xr login.conf 5
+for more information on user login classes. Thie value can be preset
+for all users by using the
+.Ar class
+field in the
+.Pa /etc/usermgmt.conf
+file - it has the format:
+.br \" XXX skip empty line? - HF
+.Bd -ragged -offset indent -compact
+.Ic class
+.Ar login-class
 .Ed
 .It Fl l Ar new-user
 gives the new user name.
@@ -158,7 +173,7 @@ This value can be preset for all users
 by using the
 .Ar shell
 field in the
-.Pa /usr/share/adduser/defaults
+.Pa /etc/usermgmt.conf
 file - it has the format:
 .D1 Ic shell Ar login-shell
 .It Fl u Ar uid
