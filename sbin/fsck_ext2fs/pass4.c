@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.1 1997/06/11 11:21:56 bouyer Exp $	*/
+/*	$NetBSD: pass4.c,v 1.2 1997/09/14 14:27:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -34,11 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: pass4.c,v 1.1 1997/06/11 11:21:56 bouyer Exp $";
+__RCSID("$NetBSD: pass4.c,v 1.2 1997/09/14 14:27:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,8 +57,8 @@ static char rcsid[] = "$NetBSD: pass4.c,v 1.1 1997/06/11 11:21:56 bouyer Exp $";
 void
 pass4()
 {
-	register ino_t inumber;
-	register struct zlncnt *zlnp;
+	ino_t inumber;
+	struct zlncnt *zlnp;
 	struct ext2fs_dinode *dp;
 	struct inodesc idesc;
 	int n;
@@ -116,9 +117,9 @@ pass4()
 
 int
 pass4check(idesc)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 {
-	register struct dups *dlp;
+	struct dups *dlp;
 	int nfrags, res = KEEPON;
 	daddr_t blkno = idesc->id_blkno;
 
