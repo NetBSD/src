@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.55 2003/04/02 10:39:37 fvdl Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.56 2003/04/10 20:02:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.55 2003/04/02 10:39:37 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.56 2003/04/10 20:02:36 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -329,9 +329,6 @@ ffs_truncate(v)
 			return (VOP_UPDATE(ovp, NULL, NULL, 0));
 		}
 	}
-	if (oip->i_ump->um_fstype != UFS2 &&
-	    oip->i_fs->fs_magic == FS_UFS2_MAGIC)
-		panic("fstype inconsistency (%ld)", oip->i_ump->um_fstype);
 	oip->i_size = length;
 	DIP(oip, size) = length;
 	uvm_vnp_setsize(ovp, length);
@@ -384,9 +381,6 @@ ffs_truncate(v)
 		DIP(oip, ib[i]) = oldblks[NDADDR + i];
 	}
 
-	if (oip->i_ump->um_fstype != UFS2 &&
-	    oip->i_fs->fs_magic == FS_UFS2_MAGIC)
-		panic("fstype inconsistency (%ld)", oip->i_ump->um_fstype);
 	oip->i_size = osize;
 	DIP(oip, size) = osize;
 	error = vtruncbuf(ovp, lastblock + 1, 0, 0);
@@ -456,9 +450,6 @@ ffs_truncate(v)
 		 * back as old block size minus new block size.
 		 */
 		oldspace = blksize(fs, oip, lastblock);
-	if (oip->i_ump->um_fstype != UFS2 &&
-	    oip->i_fs->fs_magic == FS_UFS2_MAGIC)
-		panic("fstype inconsistency (%ld)", oip->i_ump->um_fstype);
 		oip->i_size = length;
 		DIP(oip, size) = length;
 		newspace = blksize(fs, oip, lastblock);
@@ -491,9 +482,6 @@ done:
 	/*
 	 * Put back the real size.
 	 */
-	if (oip->i_ump->um_fstype != UFS2 &&
-	    oip->i_fs->fs_magic == FS_UFS2_MAGIC)
-		panic("fstype inconsistency (%ld)", oip->i_ump->um_fstype);
 	oip->i_size = length;
 	DIP(oip, size) = length;
 	DIP(oip, blocks) -= blocksreleased;
