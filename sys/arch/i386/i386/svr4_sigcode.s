@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.s,v 1.5 2001/09/21 14:12:51 fvdl Exp $	*/
+/*	$NetBSD: svr4_sigcode.s,v 1.6 2001/10/31 18:16:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,7 +110,6 @@
 #define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
 #endif
 
-
 /*
  * These are used on interrupt or trap entry or exit.
  */
@@ -119,15 +118,22 @@
 	pushl	%ecx		; \
 	pushl	%edx		; \
 	pushl	%ebx		; \
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	pushl	%ebp		; \
 	pushl	%esi		; \
 	pushl	%edi		; \
 	pushl	%ds		; \
 	pushl	%es		; \
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movw	%ax,%ds		; \
-	movw	%ax,%es
+	movw	%ax,%es		; \
+	pushl	%fs		; \
+	pushl	%gs		; \
+	movw	%ax,%fs		; \
+	movw	%ax,%gs		; \
+
 #define	INTRFASTEXIT \
+	popl	%gs		; \
+	popl	%fs		; \
 	popl	%es		; \
 	popl	%ds		; \
 	popl	%edi		; \
