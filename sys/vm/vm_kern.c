@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.c,v 1.22 1997/09/22 15:22:12 chuck Exp $	*/
+/*	$NetBSD: vm_kern.c,v 1.22.2.1 1998/02/08 06:46:58 mellon Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -175,7 +175,7 @@ kmem_alloc(map, size)
 
 		while ((mem = vm_page_alloc(kernel_object, offset+i)) == NULL) {
 			vm_object_unlock(kernel_object);
-			VM_WAIT;
+			vm_wait("fKmwire");
 			vm_object_lock(kernel_object);
 		}
 		vm_page_zero_fill(mem);
@@ -416,7 +416,7 @@ kmem_alloc_wait(map, size)
 		}
 		assert_wait(map, TRUE);
 		vm_map_unlock(map);
-		thread_block();
+		thread_block("mKmwait");
 	}
 	vm_map_insert(map, NULL, (vm_offset_t)0, addr, addr + size);
 	vm_map_unlock(map);
