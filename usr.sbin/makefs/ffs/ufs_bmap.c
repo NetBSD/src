@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.1.1.1 2001/10/26 06:22:21 lukem Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.2 2001/10/28 13:14:06 lukem Exp $	*/
 /* From: NetBSD: ufs_bmap.c,v 1.10 2000/11/27 08:39:57 chs Exp */
 
 /*
@@ -40,6 +40,11 @@
  *
  *	@(#)ufs_bmap.c	8.8 (Berkeley) 8/11/95
  */
+
+#include <sys/cdefs.h>
+#ifndef __lint
+__RCSID("$NetBSD: ufs_bmap.c,v 1.2 2001/10/28 13:14:06 lukem Exp $");
+#endif	/* !__lint */
 
 #include <sys/param.h>
 #include <sys/time.h>

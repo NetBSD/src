@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.1.1.1 2001/10/26 06:19:00 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.2 2001/10/28 13:14:05 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -68,6 +68,11 @@
  *
  *	@(#)ffs_alloc.c	8.19 (Berkeley) 7/13/95
  */
+
+#include <sys/cdefs.h>
+#ifndef __lint
+__RCSID("$NetBSD: ffs.c,v 1.2 2001/10/28 13:14:05 lukem Exp $");
+#endif	/* !__lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
