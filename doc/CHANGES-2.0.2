@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.2,v 1.1.2.7 2005/03/16 15:20:30 tron Exp $
+#	$NetBSD: CHANGES-2.0.2,v 1.1.2.8 2005/03/16 15:23:11 he Exp $
 
 A complete list of changes from the NetBSD 2.0.1 release to the NetBSD 2.0.2
 release.
@@ -99,10 +99,31 @@ sys/kern/vfs_lookup.c				1.57
 	parent directory node, remember that.
 	[wrstuden, ticket #1298]
 
+xsrc/xfree/xc/extras/Xpm/lib/Attrib.c		1.4
+xsrc/xfree/xc/extras/Xpm/lib/CrDatFrI.c		1.4
+xsrc/xfree/xc/extras/Xpm/lib/hashtab.c		1.4
+xsrc/xfree/xc/extras/Xpm/lib/parse.c		1.4
+xsrc/xfree/xc/extras/Xpm/lib/scan.c		1.4
+xsrc/xfree/xc/extras/Xpm/lib/CrBufFrI.c		1.3
+xsrc/xfree/xc/extras/Xpm/lib/RdFToI.c		1.3
+xsrc/xfree/xc/extras/Xpm/lib/WrFFrI.c		1.3
+xsrc/xfree/xc/extras/Xpm/lib/XpmI.h		1.3
+xsrc/xfree/xc/extras/Xpm/lib/data.c		1.3
+xsrc/xfree/xc/extras/Xpm/lib/xpm.h		1.3
+xsrc/xfree/xc/extras/Xpm/lib/Imakefile		1.2
+xsrc/xfree/xc/extras/Xpm/lib/RdFToBuf.c		1.2
+xsrc/xfree/xc/extras/Xpm/lib/WrFFrBuf.c		1.2
+xsrc/xfree/xc/extras/Xpm/lib/misc.c		1.2
+xsrc/xfree/xc/extras/Xpm/lib/create.c		1.6
+
+	Import latest Xpm sources from OpenBSD:
+	  o Changes from X.Org 6.8.2 RC1
+	  o Fix security problems reported in CAN-2005-0605
+	[tron, ticket #1304]
+
 sys/arch/xen/i386/locore.S			1.10
 
 	Sync with i386/locore.S 1.33:
 	Check the passed in address as well as determining the maximum length
 	using VM_MAXUSER_ADDRESS in copyinstr and copyoutstr.
 	[bouyer, ticket #1321]
-
