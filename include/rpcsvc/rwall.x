@@ -26,15 +26,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef lint
-%static char rcsid[] = "$Id: rwall.x,v 1.2 1993/08/03 13:18:11 mycroft Exp $";
-#endif /* not lint */
 
 /*
  * rpc protocol definition for (remote) wall protocol
  *
  * this has to be compatible with sun's definition
  */
+
+#ifndef RPC_HDR
+%#ifndef lint
+%static char rcsid[] = "$Id: rwall.x,v 1.3 1993/08/03 21:53:29 mycroft Exp $";
+%#endif /* not lint */
+#endif
 
 program WALLPROG {
 	version WALLVERS {

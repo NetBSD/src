@@ -26,11 +26,14 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-#ifndef lint
+
+#ifndef RPC_HDR
+%#ifndef lint
 %/*static char sccsid[] = "from: @(#)nfs_prot.x 1.2 87/10/12 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)nfs_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: nfs_prot.x,v 1.3 1993/08/03 13:18:06 mycroft Exp $";
-#endif /* not lint */
+%static char rcsid[] = "$Id: nfs_prot.x,v 1.4 1993/08/03 21:53:20 mycroft Exp $";
+%#endif /* not lint */
+#endif
 
 const NFS_PORT          = 2049;
 const NFS_MAXDATA       = 8192;

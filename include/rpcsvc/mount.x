@@ -26,16 +26,18 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-#ifndef lint
-%/*static char sccsid[] = "from: @(#)mount.x 1.2 87/09/18 Copyr 1987 Sun Micro";*/
-%/*static char sccsid[] = "from: @(#)mount.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: mount.x,v 1.3 1993/08/03 13:18:05 mycroft Exp $";
-#endif /* not lint */
 
 /*
  * Protocol description for the mount program
  */
 
+#ifndef RPC_HDR
+%#ifndef lint
+%/*static char sccsid[] = "from: @(#)mount.x 1.2 87/09/18 Copyr 1987 Sun Micro";*/
+%/*static char sccsid[] = "from: @(#)mount.x	2.1 88/08/01 4.0 RPCSRC";*/
+%static char rcsid[] = "$Id: mount.x,v 1.4 1993/08/03 21:53:18 mycroft Exp $";
+%#endif /* not lint */
+#endif
 
 const MNTPATHLEN = 1024;	/* maximum bytes in a pathname argument */
 const MNTNAMLEN = 255;		/* maximum bytes in a name argument */

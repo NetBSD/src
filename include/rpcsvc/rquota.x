@@ -1,13 +1,15 @@
-#ifndef lint
-%/*static char sccsid[] = "from: @(#)rquota.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
-%/*static char sccsid[] = "from: @(#)rquota.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: rquota.x,v 1.3 1993/08/03 13:18:09 mycroft Exp $";
-#endif /* not lint */
-
 /*
  * Remote quota protocol
  * Requires unix authentication
  */
+
+#ifndef RPC_HDR
+%#ifndef lint
+%/*static char sccsid[] = "from: @(#)rquota.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
+%/*static char sccsid[] = "from: @(#)rquota.x	2.1 88/08/01 4.0 RPCSRC";*/
+%static char rcsid[] = "$Id: rquota.x,v 1.4 1993/08/03 21:53:26 mycroft Exp $";
+%#endif /* not lint */
+#endif
 
 const RQ_PATHLEN = 1024;
 
