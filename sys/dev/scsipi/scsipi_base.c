@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.42 2001/05/18 12:56:28 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.43 2001/05/18 16:25:07 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -2035,10 +2035,10 @@ scsipi_print_xfer_mode(periph)
 	printf("%s: ", periph->periph_dev->dv_xname);
 	if (periph->periph_mode & PERIPH_CAP_SYNC) {
 		period = scsipi_sync_factor_to_period(periph->periph_period);
-		printf("Sync (%d.%dns offset %d)",
+		printf("sync (%d.%dns offset %d)",
 		    period / 10, period % 10, periph->periph_offset);
 	} else
-		printf("Async");
+		printf("async");
 
 	if (periph->periph_mode & PERIPH_CAP_WIDE32)
 		printf(", 32-bit");
