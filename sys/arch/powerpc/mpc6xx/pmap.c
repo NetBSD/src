@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 2001/11/05 01:25:38 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 2001/11/05 06:24:55 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1450,7 +1450,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	first = LIST_FIRST(pvo_head) == NULL;
 
 	LIST_INSERT_HEAD(pvo_head, pvo, pvo_vlink);
-	if (pvo->pvo_pte.pte_lo & PMAP_WIRED)
+	if (pvo->pvo_pte.pte_lo & PVO_WIRED)
 		pvo->pvo_pmap->pm_stats.wired_count++;
 	pvo->pvo_pmap->pm_stats.resident_count++;
 #if defined(DEBUG)
@@ -1503,7 +1503,7 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	 * Update our statistics
 	 */
 	pvo->pvo_pmap->pm_stats.resident_count--;
-	if (pvo->pvo_pte.pte_lo & PMAP_WIRED)
+	if (pvo->pvo_pte.pte_lo & PVO_WIRED)
 		pvo->pvo_pmap->pm_stats.wired_count--;
 
 	/*
