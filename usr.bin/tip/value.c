@@ -1,4 +1,4 @@
-/*	$NetBSD: value.c,v 1.7 1997/11/22 07:28:50 lukem Exp $	*/
+/*	$NetBSD: value.c,v 1.8 1997/11/23 04:03:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: value.c,v 1.7 1997/11/22 07:28:50 lukem Exp $");
+__RCSID("$NetBSD: value.c,v 1.8 1997/11/23 04:03:05 mrg Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -176,7 +176,7 @@ vtoken(s)
 		if ((p = vlookup(s)) != NULL) {
 			cp++;
 			if (p->v_type&NUMBER)
-				vassign(p, (char *)atoi(cp));
+				vassign(p, (char *)(long)atoi(cp));
 			else {
 				if (strcmp(s, "record") == 0)
 					cp = expand(cp);
@@ -347,7 +347,7 @@ vstring(s,v)
 	if (p == 0)
 		return (1);
 	if (p->v_type&NUMBER)
-		vassign(p, (char *)atoi(v));
+		vassign(p, (char *)(long)atoi(v));
 	else {
 		if (strcmp(s, "record") == 0)
 			v = expand(v);

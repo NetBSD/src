@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.16 1997/11/22 08:30:01 lukem Exp $	*/
+/*	$NetBSD: tip.c,v 1.17 1997/11/23 04:03:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.16 1997/11/22 08:30:01 lukem Exp $");
+__RCSID("$NetBSD: tip.c,v 1.17 1997/11/23 04:03:04 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -132,7 +132,7 @@ main(argc, argv)
 	 */
 	if (strlen(system) > sizeof PNbuf - 1) {
 		fprintf(stderr, "tip: phone number too long (max = %d bytes)\n",
-			sizeof PNbuf - 1);
+			(int)sizeof(PNbuf) - 1);
 		exit(1);
 	}
 	strncpy( PNbuf, system, sizeof PNbuf - 1 );
