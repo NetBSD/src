@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.26 2000/07/16 04:49:55 darrenr Exp $	*/
+/* $NetBSD: mv.c,v 1.27 2001/09/16 21:53:55 wiz Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.26 2000/07/16 04:49:55 darrenr Exp $");
+__RCSID("$NetBSD: mv.c,v 1.27 2001/09/16 21:53:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,36 +58,34 @@ __RCSID("$NetBSD: mv.c,v 1.26 2000/07/16 04:49:55 darrenr Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <locale.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <pwd.h>
-#include <grp.h>
 
 #include "pathnames.h"
 
 int fflg, iflg;
 int stdin_ok;
 
-int	copy __P((char *, char *));
-int	do_move __P((char *, char *));
-int	fastcopy __P((char *, char *, struct stat *));
-void	usage __P((void));
-int	main __P((int, char *[]));
+int copy(char *, char *);
+int do_move(char *, char *);
+int fastcopy(char *, char *, struct stat *);
+void usage(void);
+int main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
-	int baselen, len, rval;
+	int baselen, ch, len, rval;
 	char *p, *endp;
 	struct stat sb;
-	int ch;
 	char path[MAXPATHLEN + 1];
 
+	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "if")) != -1)
@@ -151,8 +149,7 @@ main(argc, argv)
 }
 
 int
-do_move(from, to)
-	char *from, *to;
+do_move(char *from, char *to)
 {
 	struct stat sb;
 	char modep[15];
@@ -247,9 +244,7 @@ do_move(from, to)
 }
 
 int
-fastcopy(from, to, sbp)
-	char *from, *to;
-	struct stat *sbp;
+fastcopy(char *from, char *to, struct stat *sbp)
 {
 	struct timeval tval[2];
 	static u_int blen;
@@ -322,8 +317,7 @@ err:		if (unlink(to))
 }
 
 int
-copy(from, to)
-	char *from, *to;
+copy(char *from, char *to)
 {
 	int pid, status;
 
@@ -367,11 +361,11 @@ copy(from, to)
 }
 
 void
-usage()
+usage(void)
 {
-
-	(void)fprintf(stderr, "usage: mv [-fi] source target\n");
-	(void)fprintf(stderr, "       mv [-fi] source ... directory\n");
+	(void)fprintf(stderr, "usage: %s [-fi] source target\n"
+	    "       %s [-fi] source ... directory\n", getprogname(),
+	    getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
