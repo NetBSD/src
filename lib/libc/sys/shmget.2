@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmget.2,v 1.8 1999/12/02 21:42:39 kleink Exp $	
+.\"	$NetBSD: shmget.2,v 1.9 2000/06/26 15:46:03 assar Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -45,6 +45,27 @@
 .Fn shmget
 returns the shared memory identifier associated with the key
 .Fa key .
+The
+.Fa shmflg
+should be a combination of the following flags:
+.Bl -tag -offset indent -width IPC_NOWAIT
+.It Dv IPC_CREAT
+create if segment does not exist
+.It Dv IPC_EXCL
+fail if segment already exists
+.It Dv IPC_NOWAIT
+return error instead of waiting
+.El
+.Pp
+and nine bits of access bits, based on:
+.Bl -tag -offset indent -width IPC_R
+.It Dv IPC_R
+read permission
+.It Dv IPC_W
+write permission
+.It Dv IPC_M
+changing control info permission
+.El
 .Pp
 A shared memory segment is created if either
 .Fa key
