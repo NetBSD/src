@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.10 1994/09/22 02:44:35 mycroft Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.11 1994/09/22 02:47:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -377,7 +377,7 @@ cd9660_deftstamp(isodir,inop,bp)
 
 int
 cd9660_tstamp_conv7(pi,pu)
-	char *pi;
+	u_char *pi;
 	struct timespec *pu;
 {
 	int i;

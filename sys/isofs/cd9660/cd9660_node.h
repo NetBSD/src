@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.7 1994/09/22 02:44:37 mycroft Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.8 1994/09/22 02:47:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -139,8 +139,8 @@ void cd9660_deftstamp __P((struct iso_directory_record *,
 struct vnode *cd9660_ihashget __P((dev_t, ino_t));
 void cd9660_ihashins __P((struct iso_node *));
 void cd9660_ihashrem __P((struct iso_node *));
-int cd9660_tstamp_conv7 __P((char *, struct timespec *));
-int cd9660_tstamp_conv17 __P((char *, struct timespec *));
+int cd9660_tstamp_conv7 __P((u_char *, struct timespec *));
+int cd9660_tstamp_conv17 __P((u_char *, struct timespec *));
 ino_t isodirino __P((struct iso_directory_record *, struct iso_mnt *));
 #ifdef	ISODEVMAP
 struct iso_dnode *iso_dmap __P((dev_t, ino_t, int));
