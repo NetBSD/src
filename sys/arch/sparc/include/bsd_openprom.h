@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.4 1996/02/13 22:43:33 pk Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.5 1996/02/22 15:04:07 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -217,7 +217,7 @@ struct promvec {
 	void	(*pv_printf)(const char *fmt, ...);
 	void	(*pv_abort)(void);	/* L1-A abort */
 	int	*pv_ticks;		/* Ticks since last reset */
-	__dead void (*pv_halt)(void);	/* Halt! */
+	__dead void (*pv_halt)(void) __attribute__((noreturn));	/* Halt! */
 	void	(**pv_synchook)(void);	/* "sync" command hook */
 
 	/*

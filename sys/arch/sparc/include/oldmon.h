@@ -1,4 +1,4 @@
-/*	$NetBSD: oldmon.h,v 1.8 1996/02/13 17:13:22 christos Exp $ */
+/*	$NetBSD: oldmon.h,v 1.9 1996/02/22 15:04:08 pk Exp $ */
 
 /*
  * Copyright (C) 1985 Regents of the University of California
@@ -74,6 +74,35 @@ struct devinfo {
 };
 
 /*
+ * A "stand alone I/O request".
+ * This is passed as the main argument to the PROM I/O routines
+ * in the `om_boottable' structure.
+ */
+struct saioreq {
+	char	si_flgs;
+	struct om_boottable *si_boottab;/* Points to boottab entry if any */
+	char	*si_devdata;		/* Device-specific data pointer */
+	int	si_ctlr;		/* Controller number or address */
+	int	si_unit;		/* Unit number within controller */
+	long	si_boff;		/* Partition number within unit */
+	long	si_cyloff;
+	long	si_offset;
+	long	si_bn;			/* Block number to R/W */
+	char	*si_ma;			/* Memory address to R/W */
+	int	si_cc;			/* Character count to R/W */
+	struct	saif *si_sif;		/* net if. pointer (set by b_open) */
+	char 	*si_devaddr;		/* Points to mapped in device */
+	char	*si_dmaaddr;		/* Points to allocated DMA space */
+};
+#define SAIO_F_READ	0x01
+#define SAIO_F_WRITE	0x02
+#define SAIO_F_ALLOC	0x04
+#define SAIO_F_FILE	0x08
+#define	SAIO_F_EOF	0x10	/* EOF on device */
+#define SAIO_F_AJAR	0x20	/* Descriptor "ajar" (stopped but not closed) */
+
+
+/*
  * The table entry that describes a device.  It exists in the PROM; a
  * pointer to it is passed in MachMonBootParam.  It can be used to locate
  * PROM subroutines for opening, reading, and writing the device.
@@ -89,9 +118,12 @@ struct om_boottable {
 	int	(*b_probe) __P((void));	/* probe() --> -1 or found controller 
 					   number */
 	int	(*b_boot) __P((void));	/* boot(bp) --> -1 or start address */
-	int	(*b_open) __P((void));	/* open(iobp) --> -1 or 0 */
-	int	(*b_close) __P((void));	/* close(iobp) --> -1 or 0 */
-	int	(*b_strategy) __P((void));/* strategy(iobp,rw) --> -1 or 0 */
+	int	(*b_open)
+		__P((struct saioreq *));/* open(iobp) --> -1 or 0 */
+	int	(*b_close)
+		__P((struct saioreq *));/* close(iobp) --> -1 or 0 */
+	int	(*b_strategy)
+		__P((struct saioreq *, int));/* strategy(iobp,rw) --> -1 or 0 */
 	char	*b_desc;		/* Printable string describing dev */
 	struct devinfo *b_devinfo;      /* info to configure device. */
 };
@@ -201,7 +233,8 @@ struct om_vector {
 	long	*resetMap;		/* pgmap entry for resetaddr */
 					/* Really struct pgmapent *  */
 
-	__dead void (*exitToMon) __P((void));/* Exit from user program */
+	__dead void (*exitToMon)
+	    __P((void)) __attribute__((noreturn));/* Exit from user program */
 	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
 	void	(*setcxsegmap)		/* Set seg in any context */
 		    __P((int, caddr_t, int));
@@ -250,33 +283,6 @@ struct om_vector {
 #define MONSHORTPAGE	0x0FFFE000
 #define MONSHORTSEG	0x0FFE0000
 
-/*
- * A "stand alone I/O request".
- * This is passed as the main argument to the PROM I/O routines
- * in the `om_boottable' structure.
- */
-struct saioreq {
-	char	si_flgs;
-	struct om_boottable *si_boottab;/* Points to boottab entry if any */
-	char	*si_devdata;		/* Device-specific data pointer */
-	int	si_ctlr;		/* Controller number or address */
-	int	si_unit;		/* Unit number within controller */
-	long	si_boff;		/* Partition number within unit */
-	long	si_cyloff;
-	long	si_offset;
-	long	si_bn;			/* Block number to R/W */
-	char	*si_ma;			/* Memory address to R/W */
-	int	si_cc;			/* Character count to R/W */
-	struct	saif *si_sif;		/* net if. pointer (set by b_open) */
-	char 	*si_devaddr;		/* Points to mapped in device */
-	char	*si_dmaaddr;		/* Points to allocated DMA space */
-};
-#define SAIO_F_READ	0x01
-#define SAIO_F_WRITE	0x02
-#define SAIO_F_ALLOC	0x04
-#define SAIO_F_FILE	0x08
-#define	SAIO_F_EOF	0x10	/* EOF on device */
-#define SAIO_F_AJAR	0x20	/* Descriptor "ajar" (stopped but not closed) */
 
 
 /*
