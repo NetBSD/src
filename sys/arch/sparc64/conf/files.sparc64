@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.11 1998/09/05 16:01:11 pk Exp $
+#	$NetBSD: files.sparc64,v 1.12 1998/09/05 17:42:28 pk Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -81,21 +81,11 @@ file dev/sun/ms.c			ms needs-flag
 #
 include "../../../dev/scsipi/files.scsipi"
 
-major { sd = 7 }
-major { vnd = 8 }
-major { cd = 18 }
-
-#device dma {}
-#attach dma at sbus
-#device ledma {}
-#attach ledma at sbus
-#file	arch/sparc64/dev/dma.c		dma | ledma
-
-#device esp: scsi, ncr53c9x
-#attach esp at sbus, dma
-#device fas: scsi, ncr53c9x
-#attach fas at sbus, dma
-#file	arch/sparc64/dev/esp.c		esp | fas
+major	{ cd = 18 }
+major	{ fd = 16 }
+major	{ md = 5 }
+major	{ sd = 7 }
+major	{ vnd = 8 }
 
 # Brooktree DAC attribute
 define bt_dac
@@ -208,5 +198,4 @@ file	arch/sparc64/sparc64/sunos_machdep.c	compat_sunos
 # Miscellaneous
 file	netns/ns_cksum.c		ns
 
-major	{md = 5}
 file	arch/sparc64/dev/md_root.c	memory_disk_hooks
