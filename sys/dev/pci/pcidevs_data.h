@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.57 1998/03/04 00:15:21 cgd Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.58 1998/03/07 16:48:47 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.52 1998/03/04 00:14:45 cgd Exp 
+ *	NetBSD: pcidevs,v 1.53 1998/03/07 16:43:46 augustss Exp 
  */
 
 /*
@@ -1178,6 +1178,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Matrox",
 	    "MGA Millennium II 2164W",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM_II_AGP,
+	    0,
+	    "Matrox",
+	    "MGA Millennium II 2164WA-B AGP",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MYSTIQUE,
