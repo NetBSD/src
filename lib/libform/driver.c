@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.14 2002/08/02 11:48:02 blymn Exp $	*/
+/*	$NetBSD: driver.c,v 1.15 2003/03/09 00:57:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -28,6 +28,9 @@
  *
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: driver.c,v 1.15 2003/03/09 00:57:17 lukem Exp $");
 
 #include <ctype.h>
 #include "form.h"

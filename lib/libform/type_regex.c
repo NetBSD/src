@@ -1,4 +1,4 @@
-/*	$NetBSD: type_regex.c,v 1.4 2002/06/19 14:12:57 blymn Exp $	*/
+/*	$NetBSD: type_regex.c,v 1.5 2003/03/09 00:57:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -28,6 +28,9 @@
  *
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: type_regex.c,v 1.5 2003/03/09 00:57:20 lukem Exp $");
 
 #include <stdlib.h>
 #include <sys/types.h>
