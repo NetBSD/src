@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.30 2005/02/14 13:29:03 fredb Exp $
+.\"	$NetBSD: audio.9,v 1.31 2005/02/20 19:46:15 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -243,7 +243,7 @@ typedef struct stream_filter_list {
 } stream_filter_list_t;
 .Ed
 .Pp
-For playing, 
+For playing,
 .Va pfil
 constructs conversions as follows:
 .Bd -literal
@@ -258,7 +258,7 @@ constructs conversions as follows:
 	(pfil->filters[0].param)  == hardware input
 .Ed
 .Pp
-For recording, 
+For recording,
 .Va rfil
 constructs conversions as follows:
 .Bd -literal
