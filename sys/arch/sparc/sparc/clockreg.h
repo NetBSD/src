@@ -42,29 +42,14 @@
  *	@(#)clockreg.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: clockreg.h,v 1.6 92/11/26 03:04:48 torek Exp  (LBL)
- * $Id: clockreg.h,v 1.3 1994/07/01 19:59:18 deraadt Exp $
+ * $Id: clockreg.h,v 1.4 1994/08/20 01:31:06 deraadt Exp $
  */
 
-/*
- * Sun-4c clock Mostek TOD clock.  This includes the ``id prom''.
- */
+#include <machine/idprom.h>
 
 /*
- * ID prom format.  The ``host id'' is set up by taking the machine
- * ID as the top byte and the hostid field as the remaining three.
- * The id_xxx0 field appears to contain some other number.  The id_xxx1
- * contains a bunch of 00's and a5's on my machines, suggesting it is
- * not actually used.  The checksum seems to include them, however.
+ * Sun-4/Sun-4c/Sun-4m clock Mostek TOD clock.
  */
-struct sun4c_idprom {
-	u_char	id_format;		/* format identifier (= 1) */
-	u_char	id_machine;		/* machine type (see cpu.h) */
-	u_char	id_ether[6];		/* ethernet address */
-	long	id_date;		/* date of manufacture */
-	u_char	id_hostid[3];		/* ``host id'' bytes */
-	u_char	id_checksum;		/* xor of everything else */
-	char	id_undef[16];		/* undefined */
-};
 
 /*
  * Mostek MK48T02 clock.
@@ -80,7 +65,7 @@ struct sun4c_idprom {
  */
 struct clockreg {
 	char	cl_nvram[2008];		/* `free' nonvolatile memory */
-	struct	sun4c_idprom cl_idprom;	/* `id prom' */
+	struct	idprom	cl_idprom;	/* `id prom' */
 	volatile u_char	cl_csr;		/* control register */
 	volatile u_char	cl_sec;		/* seconds (0..59; BCD) */
 	volatile u_char	cl_min;		/* minutes (0..59; BCD) */
