@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.6 2002/09/27 15:36:02 provos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.7 2003/07/19 16:02:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6 2002/09/27 15:36:02 provos Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.7 2003/07/19 16:02:06 tsutsui Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,8 @@ bus_space_map(t, bpa, size, flags, bshp)
 	int flags;
 	bus_space_handle_t *bshp;
 {
-	u_long kva;
+	vaddr_t kva;
+	vsize_t offset;
 	int error;
 
 	if (t == HP300_BUS_SPACE_INTIO) {
@@ -82,7 +83,8 @@ bus_space_map(t, bpa, size, flags, bshp)
 	/*
 	 * Allocate virtual address space from the extio extent map.
 	 */
-	size = m68k_round_page(size);
+	offset = m68k_page_offset(bpa);
+	size = m68k_round_page(offset + size);
 	error = extent_alloc(extio_ex, size, PAGE_SIZE, 0,
 	    EX_FAST | EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0),
 	    &kva);
@@ -97,7 +99,7 @@ bus_space_map(t, bpa, size, flags, bshp)
 	/*
 	 * All done.
 	 */
-	*bshp = (bus_space_handle_t)kva;
+	*bshp = (bus_space_handle_t)(kva + offset);
 	return (0);
 }
 
@@ -139,6 +141,8 @@ bus_space_unmap(t, bsh, size)
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
+	vaddr_t kva;
+	vsize_t offset;
 
 	if (t == HP300_BUS_SPACE_INTIO) {
 		/*
@@ -151,11 +155,11 @@ bus_space_unmap(t, bsh, size)
 	if (t != HP300_BUS_SPACE_DIO)
 		panic("bus_space_map: bad space tag");
 
-	size = m68k_round_page(size);
+	kva = m68k_trunc_page(bsh);
+	offset = m68k_page_offset(bsh);
+	size = m68k_round_page(offset + size);
 
 #ifdef DIAGNOSTIC
-	if (bsh & PGOFSET)
-		panic("bus_space_unmap: unaligned");
 	if ((caddr_t)bsh < extiobase ||
 	    (caddr_t)bsh >= (extiobase + ptoa(EIOMAPSIZE)))
 		panic("bus_space_unmap: bad bus space handle");
@@ -164,12 +168,12 @@ bus_space_unmap(t, bsh, size)
 	/*
 	 * Unmap the range.
 	 */
-	physunaccess((caddr_t)bsh, size);
+	physunaccess((caddr_t)kva, size);
 
 	/*
 	 * Free it from the extio extent map.
 	 */
-	if (extent_free(extio_ex, (u_long) bsh, size,
+	if (extent_free(extio_ex, kva, size,
 	    EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0)))
 		printf("bus_space_unmap: kva 0x%lx size 0x%lx: "
 		    "can't free region\n", (u_long) bsh, size);
