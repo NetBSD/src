@@ -36,7 +36,7 @@ Supported devices include:
 		GVP Spectrum.
 		Piccalo.
 		A2410.
-		Cybervision 64.
+		Cybervision 64 (only graphics, no text console mode).
 	Ethernet controllers:
 		A2065 Ethernet
 		Hydra Ethernet
