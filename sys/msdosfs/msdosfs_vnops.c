@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.94 2000/03/27 17:40:26 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.95 2000/03/30 12:23:20 augustss Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -912,13 +912,13 @@ msdosfs_rename(v)
 		struct componentname *a_tcnp;
 	} */ *ap = v;
 	struct vnode *tvp = ap->a_tvp;
-	register struct vnode *tdvp = ap->a_tdvp;
+	struct vnode *tdvp = ap->a_tdvp;
 	struct vnode *fvp = ap->a_fvp;
-	register struct vnode *fdvp = ap->a_fdvp;
-	register struct componentname *tcnp = ap->a_tcnp;
-	register struct componentname *fcnp = ap->a_fcnp;
+	struct vnode *fdvp = ap->a_fdvp;
+	struct componentname *tcnp = ap->a_tcnp;
+	struct componentname *fcnp = ap->a_fcnp;
 	struct proc *p = tcnp->cn_proc;
-	register struct denode *ip, *xp, *dp, *zp;
+	struct denode *ip, *xp, *dp, *zp;
 	u_char toname[11], oldname[11];
 	u_long from_diroffset, to_diroffset;
 	u_char to_count;
@@ -1364,10 +1364,10 @@ msdosfs_rmdir(v)
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct vnode *dvp = ap->a_dvp;
-	register struct componentname *cnp = ap->a_cnp;
-	register struct denode *ip, *dp;
+	struct vnode *vp = ap->a_vp;
+	struct vnode *dvp = ap->a_dvp;
+	struct componentname *cnp = ap->a_cnp;
+	struct denode *ip, *dp;
 	int error;
 
 	ip = VTODE(vp);
@@ -1846,7 +1846,7 @@ msdosfs_advlock(v)
 		struct flock *a_fl;
 		int a_flags;
 	} */ *ap = v;
-	register struct denode *dep = VTODE(ap->a_vp);
+	struct denode *dep = VTODE(ap->a_vp);
 
 	return (lf_advlock(&dep->de_lockf, dep->de_FileSize, ap->a_id, ap->a_op,
 	    ap->a_fl, ap->a_flags));
