@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 1998/03/30 09:07:08 jonathan Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 1998/08/25 01:55:40 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -33,9 +33,6 @@
 #ifndef _PMAX_INTR_H_
 #define _PMAX_INTR_H_
 
-#include <mips/intr.h>
-
-
 #define	IPL_NONE	0	/* disable only this interrupt */
 #define	IPL_BIO		1	/* disable block I/O interrupts */
 #define	IPL_NET		2	/* disable network interrupts */
@@ -46,30 +43,58 @@
 #define	IPL_DMA		7	/* disable DMA reload interrupts */
 #define	IPL_HIGH	8	/* disable all interrupts */
 
+#ifdef _KERNEL
+#ifndef _LOCORE
+
+typedef int spl_t;
+extern spl_t splx __P((spl_t));
+extern spl_t splsoftnet __P((void)), splsoftclock __P((void));
+extern spl_t splhigh __P((void));
+extern spl_t spl0 __P((void));	/* XXX should not enable TC on 3min */
+
+extern void setsoftnet __P((void)), clearsoftnet __P((void));
+extern void setsoftclock __P((void)), clearsoftclock __P((void));
+
+
+extern int (*Mach_splnet) __P((void)), (*Mach_splbio) __P((void)),
+	   (*Mach_splimp) __P((void)), (*Mach_spltty) __P((void)),
+	   (*Mach_splclock) __P((void)), (*Mach_splstatclock) __P((void)),
+	   (*Mach_splnone) __P((void));
+
+#define	splnet()	(*Mach_splnet)()
+#define	splbio()	(*Mach_splbio)()
+#define	splimp()	(*Mach_splimp)()
+#define	spltty()	(*Mach_spltty)()
+#define	splclock()	(*Mach_splclock)()
+#define	splstatclock()	(*Mach_splstatclock)()
 
 /*
  * Index into intrcnt[], which is defined in locore
  */
 extern u_long intrcnt[];
 
-typedef enum {
-	SOFTCLOCK_INTR =0,
-	SOFTNET_INTR	=1,
-	SERIAL0_INTR=2,
-	SERIAL1_INTR = 3,
-	SERIAL2_INTR = 4,
-	LANCE_INTR =5,
-	SCSI_INTR = 6,
-	ERROR_INTR=7,
-	HARDCLOCK = 8,
-  	FPU_INTR   =9,
-	SLOT0_INTR =10,
-	SLOT1_INTR =11,
-	SLOT2_INTR =12,
-	DTOP_INTR = 13, /* XXX */
-	ISDN_INTR = 14, /* XXX */
-	FLOPPY_INTR = 15,
-	STRAY_INTR = 16
-} decstation_intr_t;
+#define	SOFTCLOCK_INTR	0
+#define	SOFTNET_INTR	1
+#define	SERIAL0_INTR	2
+#define	SERIAL1_INTR	3
+#define	SERIAL2_INTR	4
+#define	LANCE_INTR	5
+#define	SCSI_INTR	6
+#define	ERROR_INTR	7
+#define	HARDCLOCK	8
+#define	FPU_INTR	9
+#define	SLOT0_INTR	10
+#define	SLOT1_INTR	11
+#define	SLOT2_INTR	12
+#define	DTOP_INTR	13
+#define	ISDN_INTR	14
+#define	FLOPPY_INTR	15
+#define	STRAY_INTR	16
+
+/* handle i/o device interrupts */
+extern int (*mips_hardware_intr) __P((unsigned, unsigned, unsigned, unsigned));
+
+#endif /* !_LOCORE */
+#endif /* _KERNEL */
 
 #endif /* !_PMAX_INTR_H_ */

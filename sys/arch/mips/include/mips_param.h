@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.8 1998/02/19 06:40:09 thorpej Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.9 1998/08/25 01:55:38 nisimura Exp $	*/
 
 /*
  * Architecture name.
@@ -77,34 +77,3 @@
 #define mips_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
 #define mips_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define mips_ptob(x)		((unsigned)(x) << PGSHIFT)
-
-#ifdef _KERNEL
-#ifndef _LOCORE
-typedef int spl_t;
-extern spl_t splx __P((spl_t));
-extern spl_t splsoftnet __P((void)), splsoftclock __P((void));
-extern spl_t splhigh __P((void));
-extern spl_t spl0 __P((void));	/* XXX should not enable TC on 3min */
-
-extern void setsoftnet __P((void)), clearsoftnet __P((void));
-extern void setsoftclock __P((void)), clearsoftclock __P((void));
-
-
-extern int (*Mach_splnet) __P((void)), (*Mach_splbio) __P((void)),
-	   (*Mach_splimp) __P((void)), (*Mach_spltty) __P((void)),
-	   (*Mach_splclock) __P((void)), (*Mach_splstatclock) __P((void)),
-	   (*Mach_splnone) __P((void));
-#define	splnet()	((*Mach_splnet)())
-#define	splbio()	((*Mach_splbio)())
-#define	splimp()	((*Mach_splimp)())
-#define	spltty()	((*Mach_spltty)())
-#define	splclock()	((*Mach_splclock)())
-#define	splstatclock()	((*Mach_splstatclock)())
-
-extern void delay __P((int n));
-extern int cpuspeed;
-#define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
-
-
-#endif	/* !_LOCORE */
-#endif	/* _KERNEL */
