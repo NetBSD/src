@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.20 2000/02/12 04:05:49 enami Exp $	*/
+/*	$NetBSD: i82557.c,v 1.21 2000/02/28 10:16:17 joda Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1276,7 +1276,15 @@ fxp_init(sc)
 	 */
 	fxp_stop(sc, 0);
 
-	sc->sc_flags = 0;
+	/* 
+	 * XXX just setting sc_flags to 0 here clears any FXPF_MII
+	 * flag, and this prevents the MII from detaching resulting in
+	 * a panic. The flags field should perhaps be split in runtime
+	 * flags and more static information. For now, just clear the
+	 * only other flag set.
+	 */
+
+	sc->sc_flags &= ~FXPF_WANTINIT;
 
 	/*
 	 * Initialize base of CBL and RFA memory. Loading with zero
