@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.33 1998/12/05 19:43:50 mjacob Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.34 1998/12/09 08:47:18 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -348,12 +348,6 @@ static void	ahc_construct_sdtr __P((struct ahc_data *ahc, int start_byte,
 static void	ahc_construct_wdtr __P((struct ahc_data *ahc, int start_byte,
 					u_int8_t bus_width));
 
-#if defined(__NetBSD__)			/* XXX */
-static void	ahc_xxx_enqueue __P((struct ahc_data *ahc,
-		    struct scsipi_xfer *xs, int infront));
-static struct scsipi_xfer *ahc_xxx_dequeue __P((struct ahc_data *ahc));
-#endif
-
 #if defined(__FreeBSD__)
 
 char *ahc_name(ahc)
@@ -650,7 +644,7 @@ ahc_attach(ahc)
 	/*
 	 * Initialize the software queue.
 	 */
-	LIST_INIT(&ahc->sc_xxxq);
+	TAILQ_INIT(&ahc->sc_q);
 #endif
 
 #ifdef AHC_BROKEN_CACHE
@@ -2116,8 +2110,8 @@ ahc_done(ahc, scb)
 	 * NOTE: ahc_scsi_cmd() relies on our calling it with
 	 * the first entry in the queue.
 	 */
-	if (ahc->sc_xxxq.lh_first != NULL)
-		(void) ahc_scsi_cmd(ahc->sc_xxxq.lh_first);
+	if ((xs = TAILQ_FIRST(&ahc->sc_q)) != NULL)
+		(void) ahc_scsi_cmd(xs);
 #endif /* __NetBSD__ */
 }
 
@@ -2506,51 +2500,6 @@ ahcminphys(bp)
 #endif
 }
 
-#if defined(__NetBSD__)			/* XXX */
-/*
- * Insert a scsipi_xfer into the software queue.  We overload xs->free_list
- * to to ensure we don't run into a queue resource shortage, and keep
- * a pointer to the last entry around to make insertion O(C).
- */
-static void
-ahc_xxx_enqueue(ahc, xs, infront)
-	struct ahc_data *ahc;
-	struct scsipi_xfer *xs;
-	int infront;
-{
-
-	if (infront || ahc->sc_xxxq.lh_first == NULL) {
-		if (ahc->sc_xxxq.lh_first == NULL)
-			ahc->sc_xxxqlast = xs;
-		LIST_INSERT_HEAD(&ahc->sc_xxxq, xs, free_list);
-		return;
-	}
-
-	LIST_INSERT_AFTER(ahc->sc_xxxqlast, xs, free_list);
-	ahc->sc_xxxqlast = xs;
-}
-
-/*
- * Pull a scsipi_xfer off the front of the software queue.  When we
- * pull the last one off, we need to clear the pointer to the last
- * entry.
- */
-static struct scsipi_xfer *
-ahc_xxx_dequeue(ahc)
-	struct ahc_data *ahc;
-{
-	struct scsipi_xfer *xs;
-
-	xs = ahc->sc_xxxq.lh_first;
-	LIST_REMOVE(xs, free_list);
-
-	if (ahc->sc_xxxq.lh_first == NULL)
-		ahc->sc_xxxqlast = NULL;
-
-	return (xs);
-}
-#endif
-
 /*
  * start a scsi operation given the command and
  * the data address, target, and lun all of which
@@ -2597,8 +2546,8 @@ ahc_scsi_cmd(xs)
 	 * Pull it off; if we can't run the job, it will get placed
 	 * back at the front.
 	 */
-	if (xs == ahc->sc_xxxq.lh_first) {
-		xs = ahc_xxx_dequeue(ahc);
+	if (xs == TAILQ_FIRST(&ahc->sc_q)) {
+		TAILQ_REMOVE(&ahc->sc_q, xs, adapter_q);
 		fromqueue = 1;
 		goto get_scb;
 	}
@@ -2610,7 +2559,7 @@ ahc_scsi_cmd(xs)
 	 * Handle situations where there's already entries in the
 	 * queue.
 	 */
-	if (ahc->sc_xxxq.lh_first != NULL) {
+	if (TAILQ_FIRST(&ahc->sc_q) != NULL) {
 		/*
 		 * If we can't queue, we have to abort, since
 		 * we have to preserve order.
@@ -2624,8 +2573,9 @@ ahc_scsi_cmd(xs)
 		/*
 		 * Swap with the first queue entry.
 		 */
-		ahc_xxx_enqueue(ahc, xs, 0);
-		xs = ahc_xxx_dequeue(ahc);
+		TAILQ_INSERT_TAIL(&ahc->sc_q, xs, adapter_q);
+		xs = TAILQ_FIRST(&ahc->sc_q);
+		TAILQ_REMOVE(&ahc->sc_q, xs, adapter_q);
 		fromqueue = 1;
 	}
 
@@ -2661,7 +2611,10 @@ ahc_scsi_cmd(xs)
 		 * back in the front, otherwise tack ourselves onto
 		 * the end.
 		 */
-		ahc_xxx_enqueue(ahc, xs, fromqueue);
+		if (fromqueue)
+			TAILQ_INSERT_HEAD(&ahc->sc_q, xs, adapter_q);
+		else
+			TAILQ_INSERT_TAIL(&ahc->sc_q, xs, adapter_q);
 
 		splx(s);
 		return (SUCCESSFULLY_QUEUED);

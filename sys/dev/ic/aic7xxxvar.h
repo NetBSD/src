@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.18 1998/11/19 21:53:00 thorpej Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.19 1998/12/09 08:47:19 thorpej Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -236,8 +236,7 @@ struct ahc_data {
 	int	sc_dmaflags;
 
 	bus_dmamap_t sc_dmamap_control;		/* Maps the control blocks */
-	LIST_HEAD(, scsipi_xfer) sc_xxxq;	/* XXX software request queue */
-	struct scsipi_xfer *sc_xxxqlast;	/* last entry in queue */
+	TAILQ_HEAD(, scsipi_xfer) sc_q;		/* XXX software request queue */
 #endif
 	ahc_type type;
 	ahc_flag flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.26 1998/12/05 19:43:48 mjacob Exp $	*/
+/*	$NetBSD: ahb.c,v 1.27 1998/12/09 08:43:30 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -114,8 +114,7 @@ struct ahb_softc {
 	struct scsipi_link sc_link;
 	struct scsipi_adapter sc_adapter;
 
-	LIST_HEAD(, scsipi_xfer) sc_queue;
-	struct scsipi_xfer *sc_queuelast;
+	TAILQ_HEAD(, scsipi_xfer) sc_queue;
 };
 
 /*
@@ -142,8 +141,6 @@ int	ahb_scsi_cmd __P((struct scsipi_xfer *));
 int	ahb_poll __P((struct ahb_softc *, struct scsipi_xfer *, int));
 void	ahb_timeout __P((void *));
 int	ahb_create_ecbs __P((struct ahb_softc *, struct ahb_ecb *, int));
-void	ahb_enqueue __P((struct ahb_softc *, struct scsipi_xfer *, int));
-struct scsipi_xfer *ahb_dequeue __P((struct ahb_softc *));
 
 integrate void ahb_reset_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 integrate int ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
@@ -241,7 +238,7 @@ ahbattach(parent, self, aux)
 		panic("ahbattach: ahb_find failed!");
 
 	TAILQ_INIT(&sc->sc_free_ecb);
-	LIST_INIT(&sc->sc_queue);
+	TAILQ_INIT(&sc->sc_queue);
 
 	if (ahb_init(sc) != 0) {
 		/* Error during initialization! */
@@ -291,47 +288,6 @@ ahbattach(parent, self, aux)
 	 * ask the adapter what subunits are present
 	 */
 	config_found(self, &sc->sc_link, scsiprint);
-}
-
-/*
- * Insert a scsipi_xfer into the software queue.  We overload xs->free_list
- * to avoid having to allocate additional resources (since we're used
- * only during resource shortages anyhow.
- */
-void
-ahb_enqueue(sc, xs, infront)
-	struct ahb_softc *sc;
-	struct scsipi_xfer *xs;
-	int infront;
-{
-
-	if (infront || sc->sc_queue.lh_first == NULL) {
-		if (sc->sc_queue.lh_first == NULL)
-			sc->sc_queuelast = xs;
-		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
-		return;
-	}
-
-	LIST_INSERT_AFTER(sc->sc_queuelast, xs, free_list);
-	sc->sc_queuelast = xs;
-}
-
-/*
- * Pull a scsipi_xfer off the front of the software queue.
- */
-struct scsipi_xfer *
-ahb_dequeue(sc)
-	struct ahb_softc *sc;
-{
-	struct scsipi_xfer *xs;
-
-	xs = sc->sc_queue.lh_first;
-	LIST_REMOVE(xs, free_list);
-
-	if (sc->sc_queue.lh_first == NULL)
-		sc->sc_queuelast = NULL;
-
-	return (xs);
 }
 
 /*
@@ -716,7 +672,7 @@ done:
 	 * NOTE: ahb_scsi_cmd() relies on our calling it with
 	 * the first entry in the queue.
 	 */
-	if ((xs = sc->sc_queue.lh_first) != NULL)
+	if ((xs = TAILQ_FIRST(&sc->sc_queue)) != NULL)
 		(void) ahb_scsi_cmd(xs);
 }
 
@@ -907,8 +863,8 @@ ahb_scsi_cmd(xs)
 	 * If we're running the queue from ahb_done(), we've been
 	 * called with the first queue entry as our argument.
 	 */
-	if (xs == sc->sc_queue.lh_first) {
-		xs = ahb_dequeue(sc);
+	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
+		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
 		fromqueue = 1;
 		goto get_ecb;
 	}
@@ -919,7 +875,7 @@ ahb_scsi_cmd(xs)
 	/*
 	 * If there are jobs in the queue, run them first.
 	 */
-	if (sc->sc_queue.lh_first != NULL) {
+	if (TAILQ_FIRST(&sc->sc_queue) != NULL) {
 		/*
 		 * If we can't queue, we have to abort, since
 		 * we have to preserve order.
@@ -933,8 +889,9 @@ ahb_scsi_cmd(xs)
 		/*
 		 * Swap with the first queue entry.
 		 */
-		ahb_enqueue(sc, xs, 0);
-		xs = ahb_dequeue(sc);
+		TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
+		xs = TAILQ_FIRST(&sc->sc_queue);
+		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
 		fromqueue = 1;
 	}
 
@@ -959,7 +916,10 @@ ahb_scsi_cmd(xs)
 		 * Stuff ourselves into the queue, in front
 		 * if we came off in the first place.
 		 */
-		ahb_enqueue(sc, xs, fromqueue);
+		if (fromqueue)
+			TAILQ_INSERT_HEAD(&sc->sc_queue, xs, adapter_q);
+		else
+			TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
 		splx(s);
 		return (SUCCESSFULLY_QUEUED);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.21 1998/12/05 19:43:49 mjacob Exp $	*/
+/*	$NetBSD: aha.c,v 1.22 1998/12/09 08:47:18 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -112,8 +112,6 @@ int aha_scsi_cmd __P((struct scsipi_xfer *));
 int aha_poll __P((struct aha_softc *, struct scsipi_xfer *, int));
 void aha_timeout __P((void *arg));
 int aha_create_ccbs __P((struct aha_softc *, struct aha_ccb *, int));
-void aha_enqueue __P((struct aha_softc *, struct scsipi_xfer *, int));
-struct scsipi_xfer *aha_dequeue __P((struct aha_softc *));
 
 /* the below structure is so we have a default dev struct for out link struct */
 struct scsipi_device aha_dev = {
@@ -125,47 +123,6 @@ struct scsipi_device aha_dev = {
 
 #define AHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
 #define	AHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
-
-/*
- * Insert a scsipi_xfer into the software queue.  We overload xs->free_list
- * to avoid having to allocate additional resources (since we're used
- * only during resource shortages anyhow.
- */
-void
-aha_enqueue(sc, xs, infront)
-	struct aha_softc *sc;
-	struct scsipi_xfer *xs;
-	int infront;
-{
-
-	if (infront || sc->sc_queue.lh_first == NULL) {
-		if (sc->sc_queue.lh_first == NULL)
-			sc->sc_queuelast = xs;
-		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
-		return;
-	}
-
-	LIST_INSERT_AFTER(sc->sc_queuelast, xs, free_list);
-	sc->sc_queuelast = xs;
-}
-
-/*
- * Pull a scsipi_xfer off the front of the software queue.
- */
-struct scsipi_xfer *
-aha_dequeue(sc)
-	struct aha_softc *sc;
-{
-	struct scsipi_xfer *xs;
-
-	xs = sc->sc_queue.lh_first;
-	LIST_REMOVE(xs, free_list);
-
-	if (sc->sc_queue.lh_first == NULL)
-		sc->sc_queuelast = NULL;
-
-	return (xs);
-}
 
 /*
  * aha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
@@ -307,7 +264,7 @@ aha_attach(sc, apd)
 
 	TAILQ_INIT(&sc->sc_free_ccb);
 	TAILQ_INIT(&sc->sc_waiting_ccb);
-	LIST_INIT(&sc->sc_queue);
+	TAILQ_INIT(&sc->sc_queue);
 
 	/*
 	 * Fill in the adapter.
@@ -837,7 +794,7 @@ aha_done(sc, ccb)
 	 * NOTE: aha_scsi_cmd() relies on our calling it with
 	 * the first entry in the queue.
 	 */
-	if ((xs = sc->sc_queue.lh_first) != NULL)
+	if ((xs = TAILQ_FIRST(&sc->sc_queue)) != NULL)
 		(void) aha_scsi_cmd(xs);
 }
 
@@ -1231,8 +1188,8 @@ aha_scsi_cmd(xs)
 	 * If we're running the queue from aha_done(), we've been
 	 * called with the first queue entry as our argument.
 	 */
-	if (xs == sc->sc_queue.lh_first) {
-		xs = aha_dequeue(sc);
+	if (xs == TAILQ_FIRST(&sc->sc_queue)) {
+		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
 		fromqueue = 1;
 		goto get_ccb;
 	}
@@ -1243,7 +1200,7 @@ aha_scsi_cmd(xs)
 	/*
 	 * If there are jobs in the queue, run them first.
 	 */
-	if (sc->sc_queue.lh_first != NULL) {
+	if (TAILQ_FIRST(&sc->sc_queue) != NULL) {
 		/*
 		 * If we can't queue, we have to abort, since
 		 * we have to preserve order.
@@ -1257,8 +1214,9 @@ aha_scsi_cmd(xs)
 		/*
 		 * Swap with the first queue entry.
 		 */
-		aha_enqueue(sc, xs, 0);
-		xs = aha_dequeue(sc);
+		TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
+		xs = TAILQ_FIRST(&sc->sc_queue);
+		TAILQ_REMOVE(&sc->sc_queue, xs, adapter_q);
 		fromqueue = 1;
 	}
 
@@ -1283,7 +1241,10 @@ aha_scsi_cmd(xs)
 		 * Stuff ourselves into the queue, in front
 		 * if we came off in the first place.
 		 */
-		aha_enqueue(sc, xs, fromqueue);
+		if (fromqueue)
+			TAILQ_INSERT_HEAD(&sc->sc_queue, xs, adapter_q);
+		else
+			TAILQ_INSERT_TAIL(&sc->sc_queue, xs, adapter_q);
 		splx(s);
 		return (SUCCESSFULLY_QUEUED);
 	}

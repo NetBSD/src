@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.6 1998/11/19 21:52:58 thorpej Exp $        */
+/*      $NetBSD: advlib.h,v 1.7 1998/12/09 08:47:17 thorpej Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -843,8 +843,7 @@ typedef struct asc_softc
 	struct scsipi_link	sc_link;     /* prototype for devs */
 	struct scsipi_adapter	sc_adapter;
 
-	LIST_HEAD(, scsipi_xfer) sc_queue;
-	struct scsipi_xfer	*sc_queuelast;
+	TAILQ_HEAD(, scsipi_xfer) sc_queue;
 
 	u_int8_t		*overrun_buf;
 
