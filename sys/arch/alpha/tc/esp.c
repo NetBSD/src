@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.13 1996/09/27 19:36:34 mycroft Exp $	*/
+/*	$NetBSD: esp.c,v 1.14 1996/09/27 19:55:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -1339,7 +1339,7 @@ esp_msgout(sc)
 			esp_sched_msgout(sc->sc_msgoutq);
 			goto new;
 		} else {
-			printf("esp at line %d: unexpected MESSAGE OUT phase", __LINE__);
+			printf("esp at line %d: unexpected MESSAGE OUT phase\n", __LINE__);
 		}
 	}
 			
@@ -1366,7 +1366,7 @@ esp_msgout(sc)
 			break;
 		case SEND_IDENTIFY:
 			if (sc->sc_state != ESP_CONNECTED) {
-				printf("esp at line %d: no nexus", __LINE__);
+				printf("esp at line %d: no nexus\n", __LINE__);
 			}
 			ecb = sc->sc_nexus;
 			sc->sc_omess[0] = MSG_IDENTIFY(ecb->xs->sc_link->lun,0);
@@ -1642,8 +1642,13 @@ espintr(sc)
 					 * disconnecting, and this is necessary
 					 * to clean up their state.
 					 */     
-					printf("%s: unexpected disconnect; sending REQUEST SENSE\n",
+					printf("%s: unexpected disconnect; ",
 					    sc->sc_dev.dv_xname);
+					if (ecb->flags & ECB_SENSE) {
+						printf("resetting\n");
+						goto reset;
+					}
+					printf("sending REQUEST SENSE\n");
 					esp_sense(sc, ecb);
 					goto out;
 				}
