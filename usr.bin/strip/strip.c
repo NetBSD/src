@@ -1,3 +1,5 @@
+/*	$NetBSD: strip.c,v 1.14 1996/10/08 22:00:22 christos Exp $	*/
+
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -38,8 +40,11 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$Id: strip.c,v 1.13 1994/03/28 02:17:50 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)strip.c	5.8 (Berkeley) 11/6/91";*/
+#else
+static char rcsid[] = "$NetBSD: strip.c,v 1.14 1996/10/08 22:00:22 christos Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,24 +57,28 @@ static char rcsid[] = "$Id: strip.c,v 1.13 1994/03/28 02:17:50 cgd Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 
 typedef struct exec EXEC;
 typedef struct nlist NLIST;
 
 #define	strx	n_un.n_strx
 
-void err __P((const char *fmt, ...));
-int s_stab __P((const char *, int, EXEC *, struct stat *));
-int s_sym __P((const char *, int, EXEC *, struct stat *));
-void usage __P((void));
+int main __P((int, char *[]));
 
-int xflag = 0;
+static int s_stab __P((const char *, int, EXEC *, struct stat *));
+static int s_sym __P((const char *, int, EXEC *, struct stat *));
+static void usage __P((void));
+
+static int xflag = 0;
+static int Xflag = 0;
         
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int fd, nb;
+	int fd, nb;
 	EXEC *ep;
 	struct stat sb;
 	int (*sfcn)__P((const char *, int, EXEC *, struct stat *));
@@ -77,10 +86,13 @@ main(argc, argv)
 	char *fn;
 
 	sfcn = s_sym;
-	while ((ch = getopt(argc, argv, "dx")) != EOF)
+	while ((ch = getopt(argc, argv, "dxX")) != EOF)
 		switch(ch) {
                 case 'x':
                         xflag = 1;
+                        /*FALLTHROUGH*/
+                case 'X':
+                        Xflag = 1;
                         /*FALLTHROUGH*/
 		case 'd':
 			sfcn = s_stab;
@@ -93,8 +105,8 @@ main(argc, argv)
 	argv += optind;
 
 	errors = 0;
-#define	ERROR(x) errors |= 1; err("%s: %s", fn, strerror(x)); continue;
-	while (fn = *argv++) {
+#define	ERROR(e) errno = e; errors |= 1; warn("%s:", fn); continue;
+	while ((fn = *argv++) != NULL) {
 		if ((fd = open(fn, O_RDWR)) < 0) {
 			ERROR(errno);
 		}
@@ -126,14 +138,14 @@ main(argc, argv)
 	exit(errors);
 }
 
-int
+static int
 s_sym(fn, fd, ep, sp)
 	const char *fn;
 	int fd;
 	register EXEC *ep;
 	struct stat *sp;
 {
-	register char *neweof, *mineof;
+	char *neweof, *mineof;
 	int zmagic;
 
 	zmagic = ep->a_data &&
@@ -185,14 +197,14 @@ s_sym(fn, fd, ep, sp)
 
 	/* Truncate the file. */
 	if (ftruncate(fd, neweof - (char *)ep)) {
-		err("%s: %s", fn, strerror(errno));
+		warn("%s:", fn);
 		return 1;
 	}
 
 	return 0;
 }
 
-int
+static int
 s_stab(fn, fd, ep, sp)
 	const char *fn;
 	int fd;
@@ -209,7 +221,7 @@ s_stab(fn, fd, ep, sp)
 		return 0;
 
 	if (N_SYMOFF(*ep) >= sp->st_size) {
-		err("%s: bad symbol table", fn);
+		warnx("%s: bad symbol table", fn);
 		return 1;
 	}
 
@@ -227,7 +239,7 @@ s_stab(fn, fd, ep, sp)
 	 */
 	strbase = (char *)ep + N_STROFF(*ep);
 	if ((nstrbase = malloc((u_int)*(u_long *)strbase)) == NULL) {
-		err("%s", strerror(ENOMEM));
+		warn("%s", "");
 		return 1;
 	}
 	nstr = nstrbase + sizeof(u_long);
@@ -242,12 +254,15 @@ s_stab(fn, fd, ep, sp)
 			*nsym = *sym;
 			nsym->strx = nstr - nstrbase;
 			p = strbase + sym->strx;
-                        if (xflag && 
-                            (!(sym->n_type & N_EXT) ||
-                             (sym->n_type & ~N_EXT) == N_FN ||
-                             strcmp(p, "gcc_compiled.") == 0 ||
+			if (Xflag &&
+                             (strcmp(p, "gcc_compiled.") == 0 ||
                              strcmp(p, "gcc2_compiled.") == 0 ||
                              strncmp(p, "___gnu_compiled_", 16) == 0)) {
+				continue;
+			}
+                        if (xflag && 
+                            (!(sym->n_type & N_EXT) ||
+                             (sym->n_type & ~N_EXT) == N_FN)) {
                                 continue;
                         }
 			len = strlen(p) + 1;
@@ -271,43 +286,17 @@ s_stab(fn, fd, ep, sp)
 
 	/* Truncate to the current length. */
 	if (ftruncate(fd, (char *)nsym + len - (char *)ep)) {
-		err("%s: %s", fn, strerror(errno));
+		warn("%s", fn);
 		return 1;
 	}
 
 	return 0;
 }
 
-void
+static void
 usage()
 {
-	(void)fprintf(stderr, "usage: strip [-dx] file ...\n");
+	extern char *__progname;
+	(void)fprintf(stderr, "Usage: %s [-dxX] file ...\n", __progname);
 	exit(1);
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "strip: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
 }
