@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.97 2001/09/17 17:26:59 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.98 2001/11/05 18:02:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1493,9 +1493,9 @@ ifconf(cmd, data)
 	int space = ifc->ifc_len, error = 0;
 
 	ifrp = ifc->ifc_req;
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		bcopy(ifp->if_xname, ifr.ifr_name, IFNAMSIZ);
-		if ((ifa = ifp->if_addrlist.tqh_first) == 0) {
+		if ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) == 0) {
 			memset((caddr_t)&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (space >= (int)sizeof (ifr)) {
 				error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
@@ -1505,7 +1505,7 @@ ifconf(cmd, data)
 			}
 			space -= sizeof (ifr), ifrp++;
 		} else 
-		    for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
+		    for (; ifa != 0; ifa = TAILQ_NEXT(ifa, ifa_list)) {
 			struct sockaddr *sa = ifa->ifa_addr;
 #if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4)
 			if (cmd == OSIOCGIFCONF) {

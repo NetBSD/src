@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.25 2001/06/03 03:24:23 thorpej Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.26 2001/11/05 18:02:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -204,11 +204,11 @@ struct ether_multistep {
 	/* struct ethercom *ec; */					\
 	/* struct ether_multi *enm; */					\
 {									\
-	for ((enm) = (ec)->ec_multiaddrs.lh_first;			\
+	for ((enm) = LIST_FIRST(&(ec)->ec_multiaddrs);			\
 	    (enm) != NULL &&						\
 	    (bcmp((enm)->enm_addrlo, (addrlo), ETHER_ADDR_LEN) != 0 ||	\
 	     bcmp((enm)->enm_addrhi, (addrhi), ETHER_ADDR_LEN) != 0);	\
-		(enm) = (enm)->enm_list.le_next);			\
+		(enm) = LIST_NEXT((enm), enm_list));			\
 }
 
 /*
@@ -223,7 +223,7 @@ struct ether_multistep {
 	/* struct ether_multi *enm; */  \
 { \
 	if (((enm) = (step).e_enm) != NULL) \
-		(step).e_enm = (enm)->enm_list.le_next; \
+		(step).e_enm = LIST_NEXT((enm), enm_list); \
 }
 
 #define ETHER_FIRST_MULTI(step, ec, enm) \
@@ -231,7 +231,7 @@ struct ether_multistep {
 	/* struct ethercom *ec; */ \
 	/* struct ether_multi *enm; */ \
 { \
-	(step).e_enm = (ec)->ec_multiaddrs.lh_first; \
+	(step).e_enm = LIST_FIRST(&(ec)->ec_multiaddrs); \
 	ETHER_NEXT_MULTI((step), (enm)); \
 }
 
