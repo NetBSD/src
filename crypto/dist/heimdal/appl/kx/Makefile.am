@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:58:30 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:16 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -68,6 +68,6 @@ LDADD = \
 	$(LIB_kafs)				\
 	$(LIB_krb5) \
 	$(LIB_krb4)				\
-	$(top_builddir)/lib/des/libdes.la	\
+	$(LIB_des)	\
 	$(LIB_roken)				\
 	$(X_LIBS) $(LIB_XauReadAuth) $(X_PRE_LIBS) $(X_EXTRA_LIBS)

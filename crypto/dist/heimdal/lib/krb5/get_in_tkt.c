@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: get_in_tkt.c,v 1.1.1.2 2000/08/02 19:59:28 assar Exp $");
+RCSID("$Id: get_in_tkt.c,v 1.1.1.3 2001/02/11 13:51:44 assar Exp $");
 
 krb5_error_code
 krb5_init_etype (krb5_context context,
@@ -85,7 +85,9 @@ decrypt_tkt (krb5_context context,
     size_t size;
     krb5_crypto crypto;
 
-    krb5_crypto_init(context, key, 0, &crypto);
+    ret = krb5_crypto_init(context, key, 0, &crypto);
+    if (ret)
+	return ret;
 
     ret = krb5_decrypt_EncryptedData (context,
 				      crypto,
@@ -321,7 +323,9 @@ make_pa_enc_timestamp(krb5_context context, PA_DATA *pa,
     if (ret)
 	return ret;
 
-    krb5_crypto_init(context, key, 0, &crypto);
+    ret = krb5_crypto_init(context, key, 0, &crypto);
+    if (ret)
+	return ret;
     ret = krb5_encrypt_EncryptedData(context, 
 				     crypto,
 				     KRB5_KU_PA_ENC_TIMESTAMP,

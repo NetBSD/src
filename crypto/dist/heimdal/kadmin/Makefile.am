@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:58:50 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:32 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -8,7 +8,7 @@ sbin_PROGRAMS = kadmin
 
 libexec_PROGRAMS = kadmind
 
-man_MANS = kadmind.8
+man_MANS = kadmin.8 kadmind.8
 
 noinst_PROGRAMS = add_random_users
 
@@ -49,13 +49,14 @@ COMMON_LDADD = \
 	$(top_builddir)/lib/hdb/libhdb.la \
 	$(LIB_openldap) \
 	$(top_builddir)/lib/krb5/libkrb5.la \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
 	$(DBLIB)
 
 kadmind_LDADD = $(KRB4LIB) $(top_builddir)/lib/kadm5/libkadm5srv.la \
 	$(COMMON_LDADD) \
+	$(LIB_pidfile) \
 	$(LIB_dlopen)
 
 kadmin_LDADD = \

@@ -34,7 +34,7 @@
 #include "test_locl.h"
 #include <gssapi.h>
 #include "gss_common.h"
-RCSID("$Id: gssapi_server.c,v 1.1.1.2 2000/08/02 19:58:13 assar Exp $");
+RCSID("$Id: gssapi_server.c,v 1.1.1.3 2001/02/11 13:51:13 assar Exp $");
 
 static int
 process_it(int sock,
@@ -105,7 +105,7 @@ static int
 proto (int sock, const char *service)
 {
     struct sockaddr_in remote, local;
-    int addrlen;
+    socklen_t addrlen;
     gss_ctx_id_t context_hdl = GSS_C_NO_CONTEXT;
     gss_buffer_desc real_input_token, real_output_token;
     gss_buffer_t input_token = &real_input_token,
@@ -144,7 +144,7 @@ proto (int sock, const char *service)
     acct_buf[2] = (local.sin_addr.s_addr >>  8) & 0xFF;
     acct_buf[3] = (local.sin_addr.s_addr >>  0) & 0xFF;
     input_chan_bindings.acceptor_address.value = acct_buf;
-    input_chan_bindings.application_data.value = malloc(4);
+    input_chan_bindings.application_data.value = emalloc(4);
 #if 0
     * (unsigned short *)input_chan_bindings.application_data.value =
                           remote.sin_port;
@@ -156,7 +156,7 @@ proto (int sock, const char *service)
     input_chan_bindings.application_data.value = NULL;
 #endif
     
-    delegated_cred_handle = malloc(sizeof(*delegated_cred_handle));
+    delegated_cred_handle = emalloc(sizeof(*delegated_cred_handle));
     memset((char*)delegated_cred_handle, 0, sizeof(*delegated_cred_handle));
     
     do {

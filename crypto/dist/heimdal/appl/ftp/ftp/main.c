@@ -36,7 +36,7 @@
  */
 
 #include "ftp_locl.h"
-RCSID("$Id: main.c,v 1.1.1.2 2000/08/02 19:58:37 assar Exp $");
+RCSID("$Id: main.c,v 1.1.1.3 2001/02/11 13:51:18 assar Exp $");
 
 int
 main(int argc, char **argv)
@@ -54,10 +54,11 @@ main(int argc, char **argv)
 	doglob = 1;
 	interactive = 1;
 	autologin = 1;
+	lineedit = 1;
 	passivemode = 0; /* passive mode not active */
         use_kerberos = 1;
 
-	while ((ch = getopt(argc, argv, "dginptvK")) != -1) {
+	while ((ch = getopt(argc, argv, "dgilnptvK")) != -1) {
 		switch (ch) {
 		case 'd':
 			options |= SO_DEBUG;
@@ -72,6 +73,9 @@ main(int argc, char **argv)
 			interactive = 0;
 			break;
 
+		case 'l':
+			lineedit = 0;
+			break;
 		case 'n':
 			autologin = 0;
 			break;
@@ -94,7 +98,7 @@ main(int argc, char **argv)
 
 		default:
 		    fprintf(stderr,
-                            "usage: ftp [-dginptvK] [host [port]]\n");
+                            "usage: ftp [-dgilnptvK] [host [port]]\n");
 		    exit(1);
 		}
 	}
@@ -206,10 +210,8 @@ tail(filename)
 }
 */
 
-#ifndef HAVE_READLINE
-
 static char *
-readline(char *prompt)
+simple_readline(char *prompt)
 {
     char buf[BUFSIZ];
     printf ("%s", prompt);
@@ -219,6 +221,14 @@ readline(char *prompt)
     if (buf[strlen(buf) - 1] == '\n')
 	buf[strlen(buf) - 1] = '\0';
     return strdup(buf);
+}
+
+#ifndef HAVE_READLINE
+
+static char *
+readline(char *prompt)
+{
+    return simple_readline (prompt);
 }
 
 static void
@@ -249,11 +259,17 @@ cmdscanner(int top)
     for (;;) {
 	if (fromatty) {
 	    char *p;
-	    p = readline("ftp> ");
-	    if(p == NULL)
+	    if (lineedit)
+		p = readline("ftp> ");
+	    else
+		p = simple_readline("ftp> ");
+	    if(p == NULL) {
+		printf("\n");
 		quit(0, 0);
+	    }
 	    strlcpy(line, p, sizeof(line));
-	    add_history(p);
+	    if (lineedit)
+		add_history(p);
 	    free(p);
 	} else{
 	    if (fgets(line, sizeof line, stdin) == NULL)

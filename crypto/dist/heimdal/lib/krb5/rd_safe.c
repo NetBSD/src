@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: rd_safe.c,v 1.1.1.2 2000/08/02 19:59:39 assar Exp $");
+RCSID("$Id: rd_safe.c,v 1.1.1.3 2001/02/11 13:51:45 assar Exp $");
 
 static krb5_error_code
 verify_checksum(krb5_context context,
@@ -65,7 +65,9 @@ verify_checksum(krb5_context context,
 			   buf_size,
 			   safe,
 			   &len);
-    krb5_crypto_init(context, auth_context->keyblock, 0, &crypto);
+    ret = krb5_crypto_init(context, auth_context->keyblock, 0, &crypto);
+    if (ret)
+	goto out;
     ret = krb5_verify_checksum (context,
 				crypto,
 				KRB5_KU_KRB_SAFE_CKSUM,
@@ -144,10 +146,16 @@ krb5_rd_safe(krb5_context context,
   }
   /* XXX - check replay cache */
 
-  /* check sequence number */
+  /* check sequence number. since MIT krb5 cannot generate a sequence
+     number of zero but instead generates no sequence number, we accept that
+  */
+
   if (auth_context->flags & KRB5_AUTH_CONTEXT_DO_SEQUENCE) {
-      if (safe.safe_body.seq_number == NULL ||
-	  *safe.safe_body.seq_number != auth_context->remote_seqnumber) {
+      if ((safe.safe_body.seq_number == NULL
+	   && auth_context->remote_seqnumber != 0)
+	  || (safe.safe_body.seq_number != NULL
+	      && *safe.safe_body.seq_number !=
+	      auth_context->remote_seqnumber)) {
 	  ret = KRB5KRB_AP_ERR_BADORDER;
 	  goto failure;
       }

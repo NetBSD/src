@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xdbm.h,v 1.1.1.2 2000/08/02 20:00:01 assar Exp $ */
+/* $Id: xdbm.h,v 1.1.1.3 2001/02/11 13:51:47 assar Exp $ */
 
 /* Generic *dbm include file */
 
@@ -46,6 +46,8 @@
 #ifndef DBM_INSERT
 #if defined(HAVE_NDBM_H)
 #include <ndbm.h>
+#elif defined(HAVE_GDBM_NDBM_H)
+#include <gdbm/ndbm.h>
 #elif defined(HAVE_DBM_H)
 #include <dbm.h>
 #elif defined(HAVE_RPCSVC_DBM_H)

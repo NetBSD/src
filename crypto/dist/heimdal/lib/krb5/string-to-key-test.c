@@ -32,7 +32,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: string-to-key-test.c,v 1.1.1.2 2000/08/02 19:59:41 assar Exp $");
+RCSID("$Id: string-to-key-test.c,v 1.1.1.3 2001/02/11 13:51:45 assar Exp $");
 
 enum { MAXSIZE = 24 };
 
@@ -74,7 +74,9 @@ main(int argc, char **argv)
     krb5_error_code ret;
     int val = 0;
 
-    krb5_init_context (&context);
+    ret = krb5_init_context (&context);
+    if (ret)
+	errx (1, "krb5_init_context failed: %d", ret);
 
     for (t = tests; t->principal_name; ++t) {
 	krb5_keyblock key;
