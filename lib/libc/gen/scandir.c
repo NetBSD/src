@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)scandir.c	8.3 (Berkeley) 1/2/94";*/
-static char rcsid[] = "$Id: scandir.c,v 1.5 1994/07/27 14:39:50 jtc Exp $";
+static char rcsid[] = "$Id: scandir.c,v 1.5.4.1 1995/04/26 01:01:16 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -43,6 +43,7 @@ static char rcsid[] = "$Id: scandir.c,v 1.5 1994/07/27 14:39:50 jtc Exp $";
  * struct dirent (through namelist). Returns -1 if there were any errors.
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>

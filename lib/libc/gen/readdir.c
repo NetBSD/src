@@ -33,9 +33,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)readdir.c	8.3 (Berkeley) 9/29/94";*/
-static char rcsid[] = "$Id: readdir.c,v 1.4 1994/12/28 03:06:06 mycroft Exp $";
+static char rcsid[] = "$Id: readdir.c,v 1.4.2.1 1995/04/26 01:01:13 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <dirent.h>
 
@@ -74,3 +75,4 @@ readdir(dirp)
 		return (dp);
 	}
 }
+__weak_reference(_readdir,readdir);

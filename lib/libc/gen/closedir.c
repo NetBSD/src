@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)closedir.c	8.1 (Berkeley) 6/10/93";*/
-static char rcsid[] = "$Id: closedir.c,v 1.2.4.1 1995/04/26 00:17:53 jtc Exp $";
+static char rcsid[] = "$Id: closedir.c,v 1.2.4.2 1995/04/26 01:01:08 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -59,3 +59,5 @@ closedir(dirp)
 	(void)free((void *)dirp);
 	return(close(fd));
 }
+__weak_reference(_closedir,closedir);
+
