@@ -1,4 +1,9 @@
-# $NetBSD: Makefile,v 1.6 2000/12/30 14:54:39 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.7 2000/12/30 15:25:19 sommerfeld Exp $
+
+NOMAN=	noman
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/com_err
 
@@ -22,8 +27,6 @@ VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
 LDADD=	-L${VERS} -lvers \
 	-lroken \
 	-lcrypt
-
-NOMAN=	noman
 
 CLEANFILES+=	lex.c parse.c parse.h
 

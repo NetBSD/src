@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.6 2000/12/30 14:54:40 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.7 2000/12/30 15:25:21 sommerfeld Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kuser
 
