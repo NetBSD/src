@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.17 1997/05/06 20:57:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.17 1997/05/06 20:57:47 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -1020,7 +1020,7 @@ Job_Touch(gn, silent)
     int		  streamID;   	/* ID of stream opened to do the touch */
     struct utimbuf times;	/* Times for utime() call */
 
-    if (gn->type & (OP_JOIN|OP_USE|OP_EXEC|OP_OPTIONAL)) {
+    if (gn->type & (OP_JOIN|OP_USE|OP_EXEC|OP_OPTIONAL|OP_PHONY)) {
 	/*
 	 * .JOIN, .USE, .ZEROTIME and .OPTIONAL targets are "virtual" targets
 	 * and, as such, shouldn't really be created.
