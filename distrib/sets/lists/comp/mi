@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.773 2005/03/30 10:17:36 wiz Exp $
+#	$NetBSD: mi,v 1.774 2005/04/01 12:12:06 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5554,14 +5554,14 @@
 ./usr/share/man/cat9/uvm_io.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_kernacc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_km_alloc.0		comp-sys-catman		.cat
-./usr/share/man/cat9/uvm_km_alloc1.0		comp-sys-catman		.cat
+./usr/share/man/cat9/uvm_km_alloc1.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/uvm_km_free.0		comp-sys-catman		.cat
-./usr/share/man/cat9/uvm_km_free_wakeup.0	comp-sys-catman		.cat
-./usr/share/man/cat9/uvm_km_kmemalloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/uvm_km_free_wakeup.0	comp-obsolete		obsolete
+./usr/share/man/cat9/uvm_km_kmemalloc.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/uvm_km_suballoc.0		comp-sys-catman		.cat
-./usr/share/man/cat9/uvm_km_valloc.0		comp-sys-catman		.cat
-./usr/share/man/cat9/uvm_km_valloc_wait.0	comp-sys-catman		.cat
-./usr/share/man/cat9/uvm_km_zalloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/uvm_km_valloc.0		comp-obsolete		obsolete
+./usr/share/man/cat9/uvm_km_valloc_wait.0	comp-obsolete		obsolete
+./usr/share/man/cat9/uvm_km_zalloc.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/uvm_loan.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_map.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_map_checkprot.0	comp-sys-catman		.cat
@@ -9391,14 +9391,14 @@
 ./usr/share/man/man9/uvm_io.9			comp-sys-man		.man
 ./usr/share/man/man9/uvm_kernacc.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_km_alloc.9		comp-sys-man		.man
-./usr/share/man/man9/uvm_km_alloc1.9		comp-sys-man		.man
+./usr/share/man/man9/uvm_km_alloc1.9		comp-obsolete		obsolete
 ./usr/share/man/man9/uvm_km_free.9		comp-sys-man		.man
-./usr/share/man/man9/uvm_km_free_wakeup.9	comp-sys-man		.man
-./usr/share/man/man9/uvm_km_kmemalloc.9		comp-sys-man		.man
+./usr/share/man/man9/uvm_km_free_wakeup.9	comp-obsolete		obsolete
+./usr/share/man/man9/uvm_km_kmemalloc.9		comp-obsolete		obsolete
 ./usr/share/man/man9/uvm_km_suballoc.9		comp-sys-man		.man
-./usr/share/man/man9/uvm_km_valloc.9		comp-sys-man		.man
-./usr/share/man/man9/uvm_km_valloc_wait.9	comp-sys-man		.man
-./usr/share/man/man9/uvm_km_zalloc.9		comp-sys-man		.man
+./usr/share/man/man9/uvm_km_valloc.9		comp-obsolete		obsolete
+./usr/share/man/man9/uvm_km_valloc_wait.9	comp-obsolete		obsolete
+./usr/share/man/man9/uvm_km_zalloc.9		comp-obsolete		obsolete
 ./usr/share/man/man9/uvm_loan.9			comp-sys-man		.man
 ./usr/share/man/man9/uvm_map.9			comp-sys-man		.man
 ./usr/share/man/man9/uvm_map_checkprot.9	comp-sys-man		.man
