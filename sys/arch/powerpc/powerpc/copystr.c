@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.c,v 1.1 1996/09/30 16:34:43 ws Exp $	*/
+/*	$NetBSD: copystr.c,v 1.2 2000/02/19 23:29:17 chs Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -46,13 +46,18 @@ copystr(kfaddr, kdaddr, len, done)
 	u_char *kfp = kfaddr;
 	u_char *kdp = kdaddr;
 	size_t l;
+	int rv;
 	
+	rv = ENAMETOOLONG;
 	for (l = 0; len-- > 0; l++) {
 		if (!(*kdp++ = *kfp++)) {
-			*done = l + 1;
-			return 0;
+			l++;
+			rv = 0;
+			break;
 		}
 	}
-	*done = l;
-	return ENAMETOOLONG;
+	if (done != NULL) {
+		*done = l;
+	}
+	return rv;
 }
