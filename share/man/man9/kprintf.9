@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.1 1998/09/02 04:39:23 jeremy Exp $
+.\"     $NetBSD: kprintf.9,v 1.2 1998/09/02 05:05:22 jeremy Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,36 +112,45 @@ the kernel functions accept the following format specifiers.
 .It Li %b
 Bit field expansion.
 This format specifier is useful for decoding bit fields in device registers.
-It displays an integer using a specified radix (base) and an interpretation of
+It displays an integer using a specified radix
+.Pq base
+and an interpretation of
 the bits within that integer as though they were flags.
-It requires two arguments from the argument vector; the first argument being 
-the bit field to be decoded (as an integer) and the second being a decoding
-directive string.
+It requires two arguments from the argument vector, the first argument being 
+the bit field to be decoded
+.Pq "as an integer"
+and the second being a decoding directive string.
 .Pp
 The decoding directive string describes how the bitfield is to be interpreted
 and displayed.
 The first character of the string is a binary character representation of the
 output numeral base in which the bitfield will be printed before it is decoded.
-To print the value in octal, use the C character escape sequence
-.Li \e10 .
-To print the value in decimal, use
-.Li \e12 .
-And finally, to print in hexadecimal, use
-.Li \e20 .
+Recognized radix values
+.Pq "in C escape\(encharacter format"
+are
+.Li \e10
+.Pq octal ,
+.Li \e12
+.Pq decimal ,
+and
+.Li \e20
+.Pq hexadecimal .
 .Pp
 The remaining characters in the decoding directive string are interpreted as a
 list of bit\(enposition\(emdescription pairs.
 A bit\(enposition\(emdescription pair begins with a binary character value
-that represents the position of the bit being described
-A Bit position value of one describes the least significant bit.
-Whereas a position value of 32 (\e40 octal, \ex20 hexadecimal)
+that represents the position of the bit being described.
+A bit position value of one describes the least significant bit.
+Whereas a position value of 32
+.Pq "octal 40, hexadecimal 20, the ASCII space character"
 describes the most significant bit.
 .Pp
 The remaining characters in a bit\(enposition\(emdescription pair are the
 characters to print should the bit being described be set.
 Description strings are delimited by the next bit position value character
-encountered (distinguishable by its <= 32 value), or the end of the decoding
-directive string itself.
+encountered
+.Pq "distinguishable by its value being \(<= 32" ,
+or the end of the decoding directive string itself.
 .It Li %:
 Inline format continuation.
 This format specifier allows for recursive formatted output.
@@ -150,7 +159,7 @@ follows it is a
 .Va va_list
 argument vector from which to obtain the data to be formatted.
 .It Li %r
-Integer value using the current
+Integer value using current
 .Tn DDB
 radix.
 .Bf -emphasis
