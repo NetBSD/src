@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.21 2001/04/25 17:53:11 bouyer Exp $	*/
+/*	$NetBSD: oak.c,v 1.1 2001/05/26 17:49:46 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,26 +52,23 @@
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
 
-#include <machine/io.h>
 #include <machine/bootconfig.h>
 
-#include <arm32/podulebus/podulebus.h>
+#include <dev/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>
 
-void oak_attach __P((struct device *, struct device *, void *));
-int  oak_match  __P((struct device *, struct cfdata *, void *));
+void oak_attach (struct device *, struct device *, void *);
+int  oak_match  (struct device *, struct cfdata *, void *);
 
 /*
  * Oak SCSI 1 softc structure.
  *
- * Contains the generic ncr5380 device node, podule information and global information
- * required by the driver.
+ * Contains the generic ncr5380 device node, podule information and
+ * global information required by the driver.
  */
 
 struct oak_softc {
 	struct ncr5380_softc	sc_ncr5380;
-	int			sc_podule_number;
-	podule_t		*sc_podule;
 };
 
 struct cfattach oak_ca = {
@@ -85,12 +82,9 @@ struct cfattach oak_ca = {
  */
 
 int
-oak_match(parent, cf, aux)
-	struct device	*parent;
-	struct cfdata	*cf;
-	void		*aux;
+oak_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct podule_attach_args *pa = aux;
+	struct podulebus_attach_args *pa = aux;
 
 	if (matchpodule(pa, MANUFACTURER_OAK, PODULE_OAK_SCSI, -1) == 0)
 		return(0);
@@ -104,23 +98,12 @@ oak_match(parent, cf, aux)
  */
 
 void
-oak_attach(parent, self, aux)
-	struct device	*parent, *self;
-	void		*aux;
+oak_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct oak_softc *sc = (struct oak_softc *)self;
-	struct podule_attach_args *pa = aux;
+	struct podulebus_attach_args *pa = aux;
 	u_char *iobase;
 	char hi_option[sizeof(sc->sc_ncr5380.sc_dev.dv_xname) + 8];
-
-	/* Note the podule number and validate */
-
-	if (pa->pa_podule_number == -1)
-		panic("Podule has disappeared !");
-
-	sc->sc_podule_number = pa->pa_podule_number;
-	sc->sc_podule = pa->pa_podule;
-	podules[sc->sc_podule_number].attached = 1;
 
 	sc->sc_ncr5380.sc_flags |= NCR5380_FORCE_POLLING;
 	sc->sc_ncr5380.sc_min_dma_len = 0;
@@ -137,7 +120,7 @@ oak_attach(parent, self, aux)
 	sc->sc_ncr5380.sc_intr_on = NULL;
 	sc->sc_ncr5380.sc_intr_off = NULL;
 
-	iobase = (u_char *)pa->pa_podule->mod_base;
+	iobase = (u_char *)pa->pa_mod_base;
 	sc->sc_ncr5380.sci_r0 = iobase + 0;
 	sc->sc_ncr5380.sci_r1 = iobase + 4;
 	sc->sc_ncr5380.sci_r2 = iobase + 8;
