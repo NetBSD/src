@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.41 2003/03/05 01:52:41 thorpej Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.42 2003/05/03 17:54:32 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.41 2003/03/05 01:52:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.42 2003/05/03 17:54:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,6 +419,42 @@ uvm_loananon(ufi, output, flags, anon)
 }
 
 /*
+ * uvm_loanuobjpages: loan pages from a uobj out (O->K)
+ *
+ * => called with uobj locked.
+ * => caller should own the pages.
+ */
+void
+uvm_loanuobjpages(pgpp, npages)
+	struct vm_page **pgpp;
+	int npages;
+{
+	int i;
+
+	for (i = 0; i < npages; i++) {
+		struct vm_page *pg = pgpp[i];
+
+		KASSERT(pg->uobject != NULL);
+		KASSERT(!(pg->flags & (PG_RELEASED|PG_PAGEOUT)));
+		LOCK_ASSERT(simple_lock_held(&pg->uobject->vmobjlock));
+		KASSERT(pg->flags & PG_BUSY);
+
+		uvm_lock_pageq();
+		if (pg->loan_count == 0) {
+			pmap_page_protect(pg, VM_PROT_READ);
+		}
+		pg->loan_count++;
+		uvm_pagedequeue(pg);
+		uvm_unlock_pageq();
+		if (pg->flags & PG_WANTED) {
+			wakeup(pg);
+		}
+		pg->flags &= ~(PG_WANTED|PG_BUSY);
+		UVM_PAGE_OWN(pg, NULL);
+	}
+}
+
+/*
  * uvm_loanuobj: loan a page from a uobj out
  *
  * => called with map, amap, uobj locked
@@ -545,18 +581,7 @@ uvm_loanuobj(ufi, output, flags, va)
 	 */
 
 	if ((flags & UVM_LOAN_TOANON) == 0) {
-		uvm_lock_pageq();
-		if (pg->loan_count == 0) {
-			pmap_page_protect(pg, VM_PROT_READ);
-		}
-		pg->loan_count++;
-		uvm_pagedequeue(pg);
-		uvm_unlock_pageq();
-		if (pg->flags & PG_WANTED) {
-			wakeup(pg);
-		}
-		pg->flags &= ~(PG_WANTED|PG_BUSY);
-		UVM_PAGE_OWN(pg, NULL);
+		uvm_loanuobjpages(&pg, 1);
 		**output = pg;
 		(*output)++;
 		return (1);
@@ -904,4 +929,76 @@ uvm_loan_init(void)
 	simple_lock_init(&uvm_loanzero_object.vmobjlock);
 	TAILQ_INIT(&uvm_loanzero_object.memq);
 	uvm_loanzero_object.pgops = &ulz_pager;
+}
+
+/*
+ * uvm_loanbreak: break loan on a uobj page
+ *
+ * => called with uobj locked
+ * => the page should be busy
+ * => return value:
+ *	newly allocated page if succeeded
+ */
+struct vm_page *
+uvm_loanbreak(struct vm_page *uobjpage)
+{
+	struct vm_page *pg;
+	struct uvm_object *uobj = uobjpage->uobject;
+	voff_t offset;
+
+	KASSERT(uobj != NULL);
+	LOCK_ASSERT(simple_lock_held(&uobj->vmobjlock));
+	KASSERT(uobjpage->flags & PG_BUSY);
+
+	/* alloc new un-owned page */
+	pg = uvm_pagealloc(NULL, 0, NULL, 0);
+	if (pg == NULL)
+		return NULL;
+
+	/*
+	 * copy the data from the old page to the new
+	 * one and clear the fake/clean flags on the
+	 * new page (keep it busy).  force a reload
+	 * of the old page by clearing it from all
+	 * pmaps.  then lock the page queues to
+	 * rename the pages.
+	 */
+
+	uvm_pagecopy(uobjpage, pg);	/* old -> new */
+	pg->flags &= ~(PG_FAKE|PG_CLEAN);
+	pmap_page_protect(uobjpage, VM_PROT_NONE);
+	if (uobjpage->flags & PG_WANTED)
+		wakeup(uobjpage);
+	/* uobj still locked */
+	uobjpage->flags &= ~(PG_WANTED|PG_BUSY);
+	UVM_PAGE_OWN(uobjpage, NULL);
+
+	uvm_lock_pageq();
+	offset = uobjpage->offset;
+	uvm_pagerealloc(uobjpage, NULL, 0);
+
+	/*
+	 * if the page is no longer referenced by
+	 * an anon (i.e. we are breaking an O->K
+	 * loan), then remove it from any pageq's.
+	 */
+	if (uobjpage->uanon == NULL)
+		uvm_pagedequeue(uobjpage);
+
+	/*
+	 * at this point we have absolutely no
+	 * control over uobjpage
+	 */
+
+	/* install new page */
+	uvm_pageactivate(pg);
+	uvm_pagerealloc(pg, uobj, offset);
+	uvm_unlock_pageq();
+
+	/*
+	 * done!  loan is broken and "pg" is
+	 * PG_BUSY.   it can now replace uobjpage.
+	 */
+
+	return pg;
 }
