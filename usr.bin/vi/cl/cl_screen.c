@@ -1,3 +1,5 @@
+/*	$NetBSD: cl_screen.c,v 1.1.1.1.2.1 1999/02/01 06:47:49 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -245,7 +247,11 @@ cl_vi_init(sp)
 	errno = 0;
 	if (newterm(ttype, stdout, stdin) == NULL) {
 		if (errno)
-			msgq(sp, M_SYSERR, "%s", ttype);
+			if (strcmp(ttype, "unknown") == 0)
+				msgq(sp, M_ERR, "terminal type unknown");
+			else
+				msgq(sp, M_ERR, "error initializing terminal");
+				/* msgq(sp, M_SYSERR, "%s", ttype); */
 		else
 			msgq(sp, M_ERR, "%s: unknown terminal type", ttype);
 		return (1);
