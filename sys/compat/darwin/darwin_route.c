@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_route.c,v 1.1 2004/07/21 01:37:57 manu Exp $ */
+/*	$NetBSD: darwin_route.c,v 1.2 2004/07/21 20:57:30 manu Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.1 2004/07/21 01:37:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_route.c,v 1.2 2004/07/21 20:57:30 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/systm.h>
@@ -142,9 +142,15 @@ darwin_ifaddrs(af, dst, sizep)
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			struct darwin_ifa_msghdr diam;
 
-			if ((af != 0) && (ifa->ifa_addr) && 
-			    (ifa->ifa_addr->sa_family != af)) 
-				continue;
+			if (ifa->ifa_addr) {
+				if ((af != 0) && 
+				    (ifa->ifa_addr->sa_family != af))
+					continue;
+				if (ifa->ifa_addr->sa_family > AF_MAX)
+					continue;
+				if (ifa->ifa_addr->sa_family == 0);
+					continue;
+			}
 
 			bzero(&diam, sizeof(diam));
 
@@ -187,84 +193,57 @@ darwin_ifaddrs(af, dst, sizep)
 
 			/* Interface netmask */
 			if (diam.diam_addrs & DARWIN_RTA_NETMASK) {
-				size_t len = ALIGN(ifa->ifa_netmask->sa_len);
-				struct sockaddr *sa;
-				unsigned char saf;
+				struct sockaddr_storage sa;
+				size_t len = ifa->ifa_netmask->sa_len;
 
-				sa = malloc(len, M_TEMP, M_WAITOK);
-				memcpy(sa, ifa->ifa_netmask, len);
-				saf = ifa->ifa_netmask->sa_family;
-				sa->sa_family = native_to_darwin_af[saf];
-
+				native_to_darwin_socket(ifa->ifa_netmask, &sa);
 #ifdef DEBUG_DARWIN
 				printf("copyout netmask 0x%x@%p\n", len, dst);
 #endif
-				error = copyout(sa, dst, len);
-				free(sa, M_TEMP);
-				if (error)
+				if ((error = copyout(&sa, dst, len)) != 0)
 					return error;
-				dst += len;
+				dst += ALIGN(len);
 			}
 
 			/* Interface address */
 			if (diam.diam_addrs & DARWIN_RTA_IFA) {
-				size_t len = ALIGN(ifa->ifa_addr->sa_len);
-				struct sockaddr *sa;
-				unsigned char saf;
+				struct sockaddr_storage sa;
+				size_t len = ifa->ifa_addr->sa_len;
 
-				sa = malloc(len, M_TEMP, M_WAITOK);
-				memcpy(sa, ifa->ifa_addr, len);
-				saf = ifa->ifa_addr->sa_family;
-				sa->sa_family = native_to_darwin_af[saf];
-
+				native_to_darwin_socket(ifa->ifa_addr, &sa);
 #ifdef DEBUG_DARWIN
 				printf("copyout ifa 0x%x@%p\n", len, dst);
 #endif
-				error = copyout(sa, dst, len);
-				free(sa, M_TEMP);
-				if (error)
+				if ((error = copyout(&sa, dst, len)) != 0)
 					return error;
-				dst += len;
+				dst += ALIGN(len);
 			}
 			
 			/* Interface remote address */
 			if (diam.diam_addrs & DARWIN_RTA_DST) {
-				size_t len = ALIGN(ifa->ifa_dstaddr->sa_len);
-				struct sockaddr *sa;
-				unsigned char saf;
+				struct sockaddr_storage sa;
+				size_t len = ifa->ifa_dstaddr->sa_len;
 
-				sa = malloc(len, M_TEMP, M_WAITOK);
-				memcpy(sa, ifa->ifa_dstaddr, len);
-				saf = ifa->ifa_dstaddr->sa_family;
-				sa->sa_family = native_to_darwin_af[saf];
-
+				native_to_darwin_socket(ifa->ifa_dstaddr, &sa);
 #ifdef DEBUG_DARWIN
 				printf("copyout dst 0x%x@%p\n", len, dst);
 #endif
-				error = copyout(sa, dst, len);
-				free(sa, M_TEMP);
-				if (error)
+				if ((error = copyout(&sa, dst, len)) != 0)
 					return error;
 				dst += len;
 			}
 			
 			/* Interface broadcast address */
 			if (diam.diam_addrs & DARWIN_RTA_BRD) {
-				size_t len = ALIGN(ifa->ifa_broadaddr->sa_len);
-				struct sockaddr *sa;
-				unsigned char saf;
+				struct sockaddr_storage sa;
+				size_t len = ifa->ifa_broadaddr->sa_len;
 
-				sa = malloc(len, M_TEMP, M_WAITOK);
-				memcpy(sa, ifa->ifa_broadaddr, len);
-				saf = ifa->ifa_broadaddr->sa_family;
-				sa->sa_family = native_to_darwin_af[saf];
-
+				native_to_darwin_socket(ifa->ifa_broadaddr, 
+				    &sa);
 #ifdef DEBUG_DARWIN
 				printf("copyout broad 0x%x@%p\n", len, dst);
 #endif
-				error = copyout(sa, dst, len);
-				free(sa, M_TEMP);
-				if (error)
+				if ((error = copyout(&sa, dst, len)) != 0)
 					return error;
 				dst += len;
 			}
