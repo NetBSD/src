@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.10 1995/12/20 23:30:57 mycroft Exp $	*/
+/*	$NetBSD: limits.h,v 1.11 1995/12/21 01:08:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,8 +38,8 @@
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	1		/* no multibyte characters */
 
-#define SCHAR_MIN	(-0x7f-1)	/* max value for a signed char */
-#define	SCHAR_MAX	0x7f		/* min value for a signed char */
+#define	SCHAR_MAX	0x7f		/* max value for a signed char */
+#define SCHAR_MIN	(-0x7f-1)	/* min value for a signed char */
 
 #define	UCHAR_MAX	0xffU		/* max value for an unsigned char */
 #define	CHAR_MAX	0x7f		/* max value for a char */
@@ -53,9 +53,9 @@
 #define	INT_MAX		0x7fffffff	/* max value for an int */
 #define	INT_MIN		(-0x7fffffff-1)	/* min value for an int */
 
-#define	ULONG_MAX	0xffffffffU	/* max value for an unsigned long */
-#define	LONG_MAX	0x7fffffff	/* max value for a long */
-#define	LONG_MIN	(-0x7fffffff-1)	/* min value for a long */
+#define	ULONG_MAX	0xffffffffUL	/* max value for an unsigned long */
+#define	LONG_MAX	0x7fffffffL	/* max value for a long */
+#define	LONG_MIN	(-0x7fffffffL-1)	/* min value for a long */
 
 #if !defined(_ANSI_SOURCE)
 #define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
