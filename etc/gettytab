@@ -1,4 +1,4 @@
-#	$NetBSD: gettytab,v 1.12 1998/12/12 19:35:48 fair Exp $
+#	$NetBSD: gettytab,v 1.13 1999/03/15 16:36:38 hubertf Exp $
 #	from: @(#)gettytab	8.2 (Berkeley) 4/20/94
 #
 # Most of the table entries here are just copies of the old getty table,
@@ -10,6 +10,7 @@
 # entries, and in cases where getty is called with no table name
 #
 default:\
+	:bf=/etc/issue:\
 	:ce:ck:np:im=\r\n%s/%m (%h) (%t)\r\n\r\n:sp#9600:
 
 #
