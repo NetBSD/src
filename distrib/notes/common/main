@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.66 2000/07/23 20:22:30 jhawk Exp $
+.\" $NetBSD: main,v 1.67 2000/07/28 22:15:19 bernie Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -980,6 +980,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Jim Wise Ta Mt jwise@NetBSD.ORG
 .It Ta Michael Wolfson Ta Mt mbw@NetBSD.ORG
 .It Ta Colin Wood Ta Mt ender@NetBSD.ORG
+.It Ta Bernardo Innocenti Ta Mt bernie@NetBSD.ORG
 .
 .El
 .
