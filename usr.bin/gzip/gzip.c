@@ -1,7 +1,7 @@
-/*	$NetBSD: gzip.c,v 1.36 2004/04/12 14:42:14 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.37 2004/04/25 16:20:33 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997, 1998, 2003 Matthew R. Green
+ * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,21 +30,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
+__COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.36 2004/04/12 14:42:14 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.37 2004/04/25 16:20:33 mrg Exp $");
 #endif /* not lint */
 
 /*
  * gzip.c -- GPL free gzip using zlib.
  *
- * very minor portions of this code are (very loosely) derived from
- * the minigzip.c in the zlib distribution.
- *
  * TODO:
  *	- handle .taz/.tgz files?
  *	- use mmap where possible
  *	- handle some signals better (remove outfile?)
+ *	- audit maybe_err()/maybe_warn() usage
  */
 
 #include <sys/param.h>
@@ -91,25 +89,25 @@ enum filetype {
 
 #define GZ_SUFFIX	".gz"
 
-#define BUFLEN		(32 * 1024)
+#define BUFLEN		(64 * 1024)
 
 #define GZIP_MAGIC0	0x1F
 #define GZIP_MAGIC1	0x8B
 #define GZIP_OMAGIC1	0x9E
 
-#define ORIG_NAME 	0x08
+#define HEAD_CRC	0x02
+#define EXTRA_FIELD	0x04
+#define ORIG_NAME	0x08
+#define COMMENT		0x10
 
-/* Define this if you have the NetBSD gzopenfull(3) extension to zlib(3) */
-#ifndef HAVE_ZLIB_GZOPENFULL
-#define HAVE_ZLIB_GZOPENFULL 1
-#endif
+#define OS_CODE		3	/* Unix */
 
-static	const char	gzip_version[] = "NetBSD gzip 2.3";
+static	const char	gzip_version[] = "NetBSD gzip 20040425";
 
-static	char	gzipflags[3];		/* `w' or `r', possible with [1-9] */
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
 static	int	lflag;			/* list mode */
+static	int	numflag = 5;		/* gzip -1..-9 value */
 
 #ifndef SMALL
 static	int	fflag;			/* force mode */
@@ -134,8 +132,8 @@ static	void	maybe_errx(int rv, const char *fmt, ...);
 static	void	maybe_warn(const char *fmt, ...);
 static	void	maybe_warnx(const char *fmt, ...);
 static	enum filetype file_gettype(u_char *);
-static	void	gz_compress(FILE *, gzFile);
-static	off_t	gz_uncompress(gzFile, FILE *);
+static	off_t	gz_compress(FILE *, int, off_t *, const char *, time_t);
+static	off_t	gz_uncompress(int, int, char *, size_t, off_t *);
 static	off_t	file_compress(char *);
 static	off_t	file_uncompress(char *);
 static	void	handle_pathname(char *);
@@ -156,12 +154,12 @@ static	void	copymodes(const char *, struct stat *);
 #endif
 
 #ifndef NO_BZIP2_SUPPORT
-static	off_t	unbzip2(int, int);
+static	off_t	unbzip2(int, int, char *, size_t, off_t *);
 #endif
 
 #ifndef NO_COMPRESS_SUPPORT
-static	FILE 	*zopen(const char *);
-static	off_t	zuncompress(FILE *, FILE *);
+static	FILE 	*zopen(const char *, FILE *);
+static	off_t	zuncompress(FILE *, FILE *, char *, size_t, off_t *);
 #endif
 
 int main(int, char *p[]);
@@ -210,9 +208,6 @@ main(int argc, char **argv)
 
 	/* XXX set up signals */
 
-	gzipflags[0] = 'w';
-	gzipflags[1] = '\0';
-
 	suffix = GZ_SUFFIX;;
 
 #ifndef SMALL
@@ -254,8 +249,7 @@ main(int argc, char **argv)
 		case '1': case '2': case '3':
 		case '4': case '5': case '6':
 		case '7': case '8': case '9':
-			gzipflags[1] = (char)ch;
-			gzipflags[2] = '\0';
+			numflag = ch;
 			break;
 #ifndef SMALL
 		case 'f':
@@ -293,8 +287,6 @@ main(int argc, char **argv)
 		}
 	argv += optind;
 	argc -= optind;
-	if (dflag)
-		gzipflags[0] = 'r';
 
 	if (argc == 0) {
 		if (dflag)	/* stdin mode */
@@ -426,72 +418,337 @@ prepend_gzip(char *gzip, int *argc, char ***argv)
 #endif
 
 /* compress input to output then close both files */
-static void
-gz_compress(FILE *in, gzFile out)
-{
-	char buf[BUFLEN];
-	ssize_t len;
-	int i;
-
-	for (;;) {
-		len = fread(buf, 1, sizeof(buf), in);
-		if (ferror(in))
-			maybe_err(1, "fread");
-		if (len == 0)
-			break;
-
-		if ((ssize_t)gzwrite(out, buf, len) != len)
-			maybe_err(1, gzerror(out, &i));
-	}
-	if (fclose(in) < 0)
-		maybe_err(1, "failed fclose");
-	if (gzclose(out) != Z_OK)
-		maybe_err(1, "failed gzclose");
-}
-
-/* uncompress input to output then close the input */
 static off_t
-gz_uncompress(gzFile in, FILE *out)
+gz_compress(FILE *in, int out, off_t *gsizep, const char *origname, time_t mtime)
 {
-	char buf[BUFLEN];
-	off_t size;
-	ssize_t len;
-	int i;
+	z_stream z;
+	char inbuf[BUFLEN], outbuf[BUFLEN];
+	off_t in_tot = 0, out_tot = 0;
+	ssize_t in_size;
+	char *str;
+	int i, error;
+	uLong crc;
 
-	for (size = 0;;) {
-		len = gzread(in, buf, sizeof(buf));
+	i = asprintf(&str, "%c%c%c%c%c%c%c%c%c%c%s", 
+		     GZIP_MAGIC0, GZIP_MAGIC1,
+		     Z_DEFLATED, origname ? ORIG_NAME : 0,
+		     (int)mtime & 0xff,
+		     (int)(mtime >> 8) & 0xff,
+		     (int)(mtime >> 16) & 0xff,
+		     (int)(mtime >> 24) & 0xff,
+		     0, OS_CODE, origname ? origname : "");
+	if (i == -1)     
+		maybe_err(1, "asprintf");
+	if (origname)
+		i++;
+	if (write(out, str, i) != i)
+		maybe_err(1, "write");
+	free(str);
 
-		if (len < 0) {
-#ifndef SMALL
-			if (tflag) {
-				print_test(infile, 0);
-				return (0);
-			} else
-#endif
-				maybe_errx(1, gzerror(in, &i));
-		} else if (len == 0) {
-#ifndef SMALL
-			if (tflag)
-				print_test(infile, 1);
-#endif
-			break;
+	memset(&z, 0, sizeof z);
+	z.next_out = outbuf;
+	z.avail_out = sizeof outbuf;
+	z.zalloc = NULL;
+	z.zfree = NULL;
+	z.opaque = 0;
+
+	error = deflateInit2(&z, numflag, Z_DEFLATED,
+			     -MAX_WBITS, 8, Z_DEFAULT_STRATEGY);
+	if (error != Z_OK)
+		maybe_errx(1, "deflateInit2 failed");
+
+	crc = crc32(0L, Z_NULL, 0);
+	for (;;) {
+		if (z.avail_out == 0) {
+			if (write(out, outbuf, sizeof outbuf) != sizeof outbuf)
+				maybe_err(1, "write");
+
+			out_tot += sizeof outbuf;
+			z.next_out = outbuf;
+			z.avail_out = sizeof outbuf;
 		}
 
-		size += len;
+		if (z.avail_in == 0) {
+			in_size = fread(inbuf, 1, sizeof inbuf, in);
+			if (ferror(in))
+				maybe_err(1, "fread");
+			if (in_size == 0)
+				break;
+
+			crc = crc32(crc, (const Bytef *)inbuf, (unsigned)in_size);
+			in_tot += in_size;
+			z.next_in = inbuf;
+			z.avail_in = in_size;
+		}
+
+		error = deflate(&z, Z_NO_FLUSH);
+		if (error != Z_OK && error != Z_STREAM_END)
+			maybe_errx(1, "deflate failed2 (%d)", error);
+	}
+
+	/* clean up */
+	for (;;) {
+		size_t len;
+
+		error = deflate(&z, Z_FINISH);
+		if (error != Z_OK && error != Z_STREAM_END)
+			maybe_errx(1, "deflate failed1 (%d)", error);
+
+		len = sizeof outbuf - z.avail_out;
+
+		if (write(out, outbuf, len) != len)
+			maybe_err(1, "write");
+		out_tot += len;
+		z.next_out = outbuf;
+		z.avail_out = sizeof outbuf;
+
+		if (error == Z_STREAM_END)
+			break;
+	}
+
+	if (deflateEnd(&z) != Z_OK)
+		maybe_errx(1, "deflateEnd failed");
+
+	i = asprintf(&str, "%c%c%c%c%c%c%c%c", 
+		 (int)crc & 0xff,
+		 (int)(crc >> 8) & 0xff,
+		 (int)(crc >> 16) & 0xff,
+		 (int)(crc >> 24) & 0xff,
+		 (int)in_tot & 0xff,
+		 (int)(in_tot >> 8) & 0xff,
+		 (int)(in_tot >> 16) & 0xff,
+		 (int)(in_tot >> 24) & 0xff);
+	if (i != 8)
+		maybe_err(1, "asprintf");
+	if (write(out, str, i) != i)
+		maybe_err(1, "write");
+	free(str);
+
+	if (fclose(in) < 0)
+		maybe_err(1, "failed fclose");
+
+	if (gsizep)
+		*gsizep = out_tot;
+	return in_tot;
+}
+
+/*
+ * uncompress input to output then close the input.  return the
+ * uncompressed size written, and put the compressed sized read
+ * into `*gsizep'.
+ */
+static off_t
+gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep)
+{
+	z_stream z;
+	char outbuf[BUFLEN], inbuf[BUFLEN];
+	off_t out_tot, in_tot;
+	enum {
+		GZSTATE_MAGIC0,
+		GZSTATE_MAGIC1,
+		GZSTATE_METHOD,
+		GZSTATE_FLAGS,
+		GZSTATE_SKIPPING,
+		GZSTATE_EXTRA,
+		GZSTATE_EXTRA2,
+		GZSTATE_EXTRA3,
+		GZSTATE_ORIGNAME,
+		GZSTATE_COMMENT,
+		GZSTATE_HEAD_CRC1,
+		GZSTATE_HEAD_CRC2,
+		GZSTATE_INIT,
+		GZSTATE_READ 
+	} state = GZSTATE_MAGIC0;
+	int flags = 0, skip_count = 0;
+	int error, done_reading = 0;
+
+#define ADVANCE()       { z.next_in++; z.avail_in--; }
+
+	memset(&z, 0, sizeof z);
+	z.avail_in = prelen;
+	z.next_in = pre;
+	z.avail_out = sizeof outbuf;
+	z.next_out = outbuf;
+	z.zalloc = NULL;
+	z.zfree = NULL;
+	z.opaque = 0;
+
+	in_tot = prelen;
+	out_tot = 0;
+
+	for (;;) {
+		if (z.avail_in == 0 && done_reading == 0) {
+			size_t in_size = read(in, inbuf, BUFLEN);
+
+			if (in_size == -1) {
+#ifndef SMALL
+				if (tflag) {
+					print_test("(stdin)", 0);
+					return 0;
+				}
+#endif
+				maybe_warn("failed to read stdin\n");
+				return -1;
+			} else if (in_size == 0)
+				done_reading = 1;
+
+			z.avail_in = in_size;
+			z.next_in = inbuf;
+
+			in_tot += in_size;
+		}
+		switch (state) {
+		case GZSTATE_MAGIC0:
+			if (*z.next_in != GZIP_MAGIC0)
+				maybe_err(1, "input not gziped\n");
+			ADVANCE();
+			state++;
+			break;
+
+		case GZSTATE_MAGIC1:
+			if (*z.next_in != GZIP_MAGIC1 &&
+			    *z.next_in != GZIP_OMAGIC1)
+				maybe_err(1, "input not gziped\n");
+			ADVANCE();
+			state++;
+			break;
+
+		case GZSTATE_METHOD:
+			if (*z.next_in != Z_DEFLATED)
+				maybe_err(1, "unknown compression method\n");
+			ADVANCE();
+			state++;
+			break;
+
+		case GZSTATE_FLAGS:
+			flags = *z.next_in;
+			ADVANCE();
+			skip_count = 6;
+			state++;
+			break;
+
+		case GZSTATE_SKIPPING:
+			if (skip_count > 0) {
+				skip_count--;
+				ADVANCE();
+			} else
+				state++;
+			break;
+
+		case GZSTATE_EXTRA:
+			if ((flags & EXTRA_FIELD) == 0) {
+				state = GZSTATE_ORIGNAME;
+				break;
+			}
+			skip_count = *z.next_in;
+			ADVANCE();
+			state++;
+			break;
+
+		case GZSTATE_EXTRA2:
+			skip_count |= ((*z.next_in) << 8);
+			ADVANCE();
+			state++;
+			break;
+
+		case GZSTATE_EXTRA3:
+			if (skip_count > 0) {
+				skip_count--;
+				ADVANCE();
+			} else
+				state++;
+			break;
+
+		case GZSTATE_ORIGNAME:
+			if ((flags & ORIG_NAME) == 0) {
+				state++;
+				break;
+			}
+			if (*z.next_in == 0)
+				state++;
+			ADVANCE();
+			break;
+
+		case GZSTATE_COMMENT:
+			if ((flags & COMMENT) == 0) {
+				state++;
+				break;
+			}
+			if (*z.next_in == 0)
+				state++;
+			ADVANCE();
+			break;
+
+		case GZSTATE_HEAD_CRC1:
+			if (flags & HEAD_CRC)
+				skip_count = 2;
+			else
+				skip_count = 0;
+			state++;
+			break;
+
+		case GZSTATE_HEAD_CRC2:
+			if (skip_count > 0) {
+				skip_count--;
+				ADVANCE();
+			} else
+				state++;
+			break;
+
+		case GZSTATE_INIT:
+			if (inflateInit2(&z, -MAX_WBITS) != Z_OK) {
+				maybe_err(1, "failed to inflateInit\n");
+				goto stop;
+			}
+			state++;
+			break;
+
+		case GZSTATE_READ:
+			error = inflate(&z, Z_FINISH);
+			if (error == Z_STREAM_END || error == Z_BUF_ERROR) {
+				size_t wr = BUFLEN - z.avail_out;
+
+				if (
+#ifndef SMALL
+				    /* don't write anything with -t */
+				    tflag == 0 &&
+#endif
+				    write(STDOUT_FILENO, outbuf, wr) != wr)
+					maybe_err(1, "error writing "
+						     "to stdout\n");
+
+				if (error == Z_STREAM_END)
+					goto stop;
+				z.next_out = outbuf;
+				z.avail_out = BUFLEN;
+
+				out_tot += wr;
+				break;
+			}
+			if (error < 0) {
+				maybe_warnx("decompression error (%d)\n", error);
+				out_tot = -1;
+				goto stop;
+			}
+			break;
+		}
+		continue;
+stop:
+		break;
+	}
+	if (state > GZSTATE_INIT)
+		inflateEnd(&z);
 
 #ifndef SMALL
-		/* don't write anything with -t */
-		if (tflag)
-			continue;
+	if (tflag) {
+		print_test("(stdin)", 1);
+		return 0;
+	}
 #endif
 
-		if (fwrite(buf, 1, (unsigned)len, out) != (ssize_t)len)
-			maybe_err(1, "failed fwrite");
-	}
-	if (gzclose(in) != Z_OK)
-		maybe_errx(1, "failed gzclose");
-
-	return (size);
+	if (gsizep)
+		*gsizep = in_tot;
+	return (out_tot);
 }
 
 #ifndef SMALL
@@ -569,12 +826,13 @@ static off_t
 file_compress(char *file)
 {
 	FILE *in;
-	gzFile out;
+	int out;
 	struct stat isb, osb;
 	char outfile[MAXPATHLEN];
 	off_t size;
 #ifndef SMALL
 	u_int32_t mtime = 0;
+	char *savename;
 #endif
 
 	if (cflag == 0) {
@@ -607,26 +865,21 @@ file_compress(char *file)
 		maybe_err(1, "can't fopen %s", file);
 
 	if (cflag == 0) {
-#if HAVE_ZLIB_GZOPENFULL && !defined(SMALL)
-		char *savename;
-
+#ifndef SMALL
 		if (nflag == 0)
 			savename = basename(file);
 		else
 			savename = NULL;
-		out = gzopenfull(outfile, gzipflags, savename, mtime);
-#else
-		out = gzopen(outfile, gzipflags);
 #endif
+		out = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
 	} else
-		out = gzdopen(STDOUT_FILENO, gzipflags);
+		out = STDOUT_FILENO;
 
-	if (out == 0)
-		maybe_err(1, "can't gz%sopen %s",
-		    cflag ? "d"         : "",
-		    cflag ? "stdout"    : outfile);
-
-	gz_compress(in, out);
+#ifdef SMALL
+	gz_compress(in, out, NULL, NULL, 0);
+#else
+	gz_compress(in, out, NULL, savename, mtime);
+#endif
 
 	/*
 	 * if we compressed to stdout, we don't know the size and
@@ -664,12 +917,10 @@ file_uncompress(char *file)
 	struct stat isb, osb;
 	char buf[PATH_MAX];
 	char *outfile = buf, *s;
-	FILE *out;
-	gzFile in;
 	off_t size;
 	ssize_t len = strlen(file);
 	int fd;
-	unsigned char header1[10], name[PATH_MAX + 1];
+	unsigned char header1[4], name[PATH_MAX + 1];
 	enum filetype method;
 
 	/* gather the old name info */
@@ -677,7 +928,7 @@ file_uncompress(char *file)
 	fd = open(file, O_RDONLY);
 	if (fd < 0)
 		maybe_err(1, "can't open %s", file);
-	if (read(fd, header1, 10) != 10) {
+	if (read(fd, header1, sizeof header1) != sizeof header1) {
 		/* we don't want to fail here. */
 #ifndef SMALL
 		if (fflag)
@@ -784,7 +1035,7 @@ close_it:
 		if (out == -1)
 			maybe_err(1, "open for write: %s", outfile);
 
-		if ((size = unbzip2(in, out)) == 0) {
+		if ((size = unbzip2(in, out, NULL, 0, NULL)) == 0) {
 			if (cflag == 0)
 				unlink(outfile);
 			goto lose;
@@ -801,7 +1052,7 @@ close_it:
 		if (lflag)
 			maybe_errx(1, "no -l with Lempel-Ziv files");
 
-		if ((in = zopen(file)) == NULL)
+		if ((in = zopen(file, NULL)) == NULL)
 			maybe_err(1, "open for read: %s", file);
 
 		if (cflag == 1)
@@ -815,7 +1066,7 @@ close_it:
 		if (out == NULL)
 			maybe_err(1, "open for write: %s", outfile);
 
-		size = zuncompress(in, out);
+		size = zuncompress(in, out, NULL, 0, NULL);
 		if (cflag == 0) {
 			if (size == 0) {
 				unlink(outfile);
@@ -833,40 +1084,35 @@ close_it:
 	} else
 #endif
 	{
-		if (lflag) {
-			int fd;
+		int fd, in;
 
+		if (lflag) {
 			if ((fd = open(file, O_RDONLY)) == -1)
 				maybe_err(1, "open");
 			print_list(fd, isb.st_size, outfile, isb.st_mtime);
 			return 0;	/* XXX */
 		}
 
-		in = gzopen(file, gzipflags);
-		if (in == NULL)
-			maybe_err(1, "can't gzopen %s", file);
+		in = open(file, O_RDONLY);
+		if (in == -1)
+			maybe_err(1, "can't open %s", file);
 
 		if (cflag == 0) {
-			int fd;
-
 			/* Use open(2) directly to get a safe file.  */
 			fd = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
 			if (fd < 0)
 				maybe_err(1, "can't open %s", outfile);
-			out = fdopen(fd, "w");
-			if (out == NULL)
-				maybe_err(1, "can't fdopen %s", outfile);
 		} else
-			out = stdout;
+			fd = STDOUT_FILENO;
 
-		size = gz_uncompress(in, out);
+		size = gz_uncompress(in, fd, NULL, 0, NULL);
 		if (cflag == 0) {
-			if (size == 0) {
+			if (size == -1) {
 				unlink(outfile);
 				goto lose;
 			}
-			if (fclose(out))
-				maybe_err(1, "failed fclose");
+			if (close(fd))
+				maybe_err(1, "failed close");
 		}
 	}
 
@@ -913,10 +1159,40 @@ lose:
 	return 0;
 }
 
+#ifndef SMALL
+static off_t
+cat_stdin(unsigned char * prepend, size_t count, off_t *gsizep)
+{
+	char buf[BUFLEN];
+	size_t rv;
+	off_t in_tot;
+
+	in_tot = count;
+	if (write(STDOUT_FILENO, prepend, count) != count)
+		maybe_err(1, "write to stdout");
+	for (;;) {
+		rv = read(STDIN_FILENO, buf, sizeof buf);
+
+		if (write(STDOUT_FILENO, buf, rv) != rv)
+			maybe_err(1, "write to stdout");
+		in_tot += rv;
+	}
+
+	if (gsizep)
+		*gsizep = in_tot;
+	return (in_tot);
+}
+#endif
+
 static void
 handle_stdin(void)
 {
-	gzFile *file;
+	unsigned char header1[4];
+	off_t usize, gsize;
+	enum filetype method;
+#ifndef NO_COMPRESS_SUPPORT
+	FILE *in;
+#endif
 
 #ifndef SMALL
 	if (fflag == 0 && lflag == 0 && isatty(STDIN_FILENO)) {
@@ -928,22 +1204,56 @@ handle_stdin(void)
 	if (lflag) {
 		struct stat isb;
 
+		/* XXX could read the whole file, etc. */
 		if (fstat(STDIN_FILENO, &isb) < 0)
 			maybe_err(1, "fstat");
 		print_list(STDIN_FILENO, isb.st_size, "stdout", isb.st_mtime);
 		return;
 	}
 
-	file = gzdopen(STDIN_FILENO, gzipflags);
-	if (file == NULL)
-		maybe_err(1, "can't gzdopen stdin");
-	gz_uncompress(file, stdout);
+	if (read(STDIN_FILENO, header1, sizeof header1) != sizeof header1)
+		maybe_err(1, "can't read stdin");
+
+	method = file_gettype(header1);
+	switch (method) {
+	default:
+#ifndef SMALL
+		if (fflag == 0)
+			maybe_errx(1, "unknown compression format");
+		usize = cat_stdin(header1, sizeof header1, &gsize);
+		break;
+#endif
+	case FT_GZIP:
+		usize = gz_uncompress(STDIN_FILENO, STDOUT_FILENO, 
+			      header1, sizeof header1, &gsize);
+		break;
+#ifndef NO_BZIP2_SUPPORT
+	case FT_BZIP2:
+		usize = unbzip2(STDIN_FILENO, STDOUT_FILENO,
+				header1, sizeof header1, &gsize);
+		break;
+#endif
+#ifndef NO_COMPRESS_SUPPORT
+	case FT_Z:
+		if ((in = zopen(NULL, stdin)) == NULL)
+			maybe_err(1, "zopen of stdin");
+
+		usize = zuncompress(in, stdout, header1, sizeof header1, &gsize);
+		break;
+#endif
+	}
+
+#ifndef SMALL
+        if (vflag && !tflag && usize != -1 && gsize != -1)
+		print_verbage(NULL, 0, usize, gsize);
+#endif 
+
 }
 
 static void
 handle_stdout(void)
 {
-	gzFile *file;
+	off_t gsize, usize;
 
 #ifndef SMALL
 	if (fflag == 0 && isatty(STDOUT_FILENO)) {
@@ -951,10 +1261,12 @@ handle_stdout(void)
 		return;
 	}
 #endif
-	file = gzdopen(STDOUT_FILENO, gzipflags);
-	if (file == NULL)
-		maybe_err(1, "can't gzdopen stdout");
-	gz_compress(stdin, file);
+	usize = gz_compress(stdin, STDOUT_FILENO, &gsize, NULL, 0);
+
+#ifndef SMALL
+        if (vflag && !tflag && usize != -1 && gsize != -1)
+		print_verbage(NULL, 0, usize, gsize);
+#endif 
 }
 
 /* do what is asked for, for the path name */
@@ -1108,8 +1420,9 @@ print_ratio(off_t in, off_t out, FILE *where)
 static void
 print_verbage(char *file, char *nfile, off_t usize, off_t gsize)
 {
-	fprintf(stderr, "%s:%s  ", file,
-	    strlen(file) < 7 ? "\t\t" : "\t");
+	if (file)
+		fprintf(stderr, "%s:%s  ", file,
+		    strlen(file) < 7 ? "\t\t" : "\t");
 	print_ratio((off_t)usize, (off_t)gsize, stderr);
 	if (nfile)
 		fprintf(stderr, " -- replaced with %s", nfile);
@@ -1170,7 +1483,7 @@ print_list(int fd, off_t out, const char *outfile, time_t ts)
 			u_int32_t usize;
 
 			if (read(fd, (char *)buf, sizeof(buf)) != sizeof(buf))
-				maybe_err(1, "read of uncompressed size");
+				maybe_warn("read of uncompressed size");
 			usize = buf[4] | buf[5] << 8 | buf[6] << 16 | buf[7] << 24;
 			in = (off_t)usize;
 #ifndef SMALL
