@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.18 2005/01/16 14:46:32 kent Exp $
+#	$NetBSD: BRANCHES,v 1.19 2005/01/25 13:14:56 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -646,6 +646,17 @@ Scope:		x11
 Notes:		Requires parts of xsrc/xfree (HEAD)
 		xsrc/local, xsrc/xfree/xc/programs/Xserver/hw/netbsd
 		Requires xorg (XORG-6_8_1)
+
+
+Branch:		yamt-km
+Description:	simplify/improve kernel memory management and bootstrap
+Status:		Active
+Start Date:	Tue Jan 25 2005
+End Date:	
+Base Tag:	yamt-km-base
+Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		kernel
+Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 
 
 # Other:
