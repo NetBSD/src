@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.18 2003/07/24 10:12:25 skrll Exp $	 */
+/*	$NetBSD: headers.c,v 1.19 2004/10/22 05:39:56 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -37,6 +37,11 @@
  *
  * John Polstra <jdp@polstra.com>.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: headers.c,v 1.19 2004/10/22 05:39:56 skrll Exp $");
+#endif /* not lint */
 
 #include <err.h>
 #include <errno.h>
