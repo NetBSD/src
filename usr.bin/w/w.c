@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.25 1997/07/07 20:30:08 phil Exp $	*/
+/*	$NetBSD: w.c,v 1.26 1997/10/20 02:49:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-static char rcsid[] = "$NetBSD: w.c,v 1.25 1997/07/07 20:30:08 phil Exp $";
+__RCSID("$NetBSD: w.c,v 1.26 1997/10/20 02:49:17 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,6 +116,7 @@ static void	 pr_header __P((time_t *, int));
 static struct stat
 		*ttystat __P((char *));
 static void	 usage __P((int));
+int	main __P((int, char **));
 
 int
 main(argc, argv)
@@ -198,7 +199,7 @@ main(argc, argv)
 		    strncmp(utmp.ut_name, sel_user, UT_NAMESIZE) != 0))
 			continue;
 		if ((ep = calloc(1, sizeof(struct entry))) == NULL)
-			err(1, NULL);
+			err(1, "%s", "");
 		*nextp = ep;
 		nextp = &(ep->next);
 		memmove(&(ep->utmp), &utmp, sizeof(struct utmp));
@@ -313,7 +314,7 @@ main(argc, argv)
 		}
 		if (x) {
 			(void)snprintf(buf, sizeof(buf), "%s:%.*s", p,
-			    ep->utmp.ut_host + UT_HOSTSIZE - x, x);
+			    (int)(ep->utmp.ut_host + UT_HOSTSIZE - x), x);
 			p = buf;
 		}
 		(void)printf("%-*.*s %-2.2s %-*.*s ",
