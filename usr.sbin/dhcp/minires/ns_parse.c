@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: ns_parse.c,v 1.1.1.1 2000/04/22 07:11:54 mellon Exp $";
+static const char rcsid[] = "$Id: ns_parse.c,v 1.1.1.1.4.1 2001/04/04 20:56:33 he Exp $";
 #endif
 
 /* Import. */
@@ -127,13 +127,13 @@ ns_initparse(const u_char *msg, unsigned msglen, ns_msg *handle) {
 	return (0);
 }
 
-int
+isc_result_t
 ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 	int b;
 
 	/* Make section right. */
 	if (section < 0 || section >= ns_s_max)
-		RETERR(ENODEV);
+		return ISC_R_NOTIMPLEMENTED;
 	if (section != handle->_sect)
 		setsection(handle, section);
 
@@ -161,7 +161,7 @@ ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 		return (-1);
 	handle->_ptr += b;
 	if (handle->_ptr + NS_INT16SZ + NS_INT16SZ > handle->_eom)
-		RETERR(EMSGSIZE);
+		return ISC_R_NOSPACE;
 	rr->type = getUShort (handle->_ptr);
 	handle -> _ptr += 2;
 	rr->rr_class = getUShort (handle->_ptr);
@@ -172,13 +172,13 @@ ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 		rr->rdata = NULL;
 	} else {
 		if (handle->_ptr + NS_INT32SZ + NS_INT16SZ > handle->_eom)
-			RETERR(EMSGSIZE);
+			return ISC_R_NOSPACE;
 		rr->ttl = getULong (handle->_ptr);
 		handle -> _ptr += 4;
 		rr->rdlength = getUShort (handle->_ptr);
 		handle -> _ptr += 2;
 		if (handle->_ptr + rr->rdlength > handle->_eom)
-			RETERR(EMSGSIZE);
+			return ISC_R_NOSPACE;
 		rr->rdata = handle->_ptr;
 		handle->_ptr += rr->rdlength;
 	}
@@ -186,7 +186,7 @@ ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 		setsection(handle, (ns_sect)((int)section + 1));
 
 	/* All done. */
-	return (0);
+	return ISC_R_SUCCESS;
 }
 
 /* Private. */
