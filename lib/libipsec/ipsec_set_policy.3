@@ -25,8 +25,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $NetBSD: ipsec_set_policy.3,v 1.5 1999/12/21 14:17:18 itojun Exp $
-.\"     KAME Id: ipsec_set_policy.3,v 1.1.2.6 1999/07/01 06:54:58 sakane Exp
+.\"     $NetBSD: ipsec_set_policy.3,v 1.6 2000/01/31 14:15:31 itojun Exp $
+.\"     KAME Id: ipsec_set_policy.3,v 1.8 2000/01/27 17:59:12 itojun Exp
 .\"
 .Dd May 5, 1998
 .Dt IPSEC_SET_POLICY 3
@@ -43,10 +43,10 @@
 .\"
 .Sh SYNOPSIS
 .Fd #include <netinet6/ipsec.h>
+.Ft "char *"
+.Fn ipsec_set_policy "char *policy" "int len"
 .Ft int
-.Fn ipsec_set_policy "char *buf" "int len" "char *policy"
-.Ft int
-.Fn ipsec_get_policylen "char *policy"
+.Fn ipsec_get_policylen "char *buf"
 .Ft "char *"
 .Fn ipsec_dump_policy "char *buf" "char *delim"
 .\"
@@ -58,21 +58,18 @@ and/or
 .Li struct sadb_x_ipsecrequest
 from human-readable policy specification.
 policy specification must be given as C string
-.Fa policy ,
-and the resulting structure will be generated at the buffer pointed to by
-.Fa buf ,
-length
-.Fa len .
-.Pp
-To obtain the required buffer size beforehand, use
-.Fn ipsec_get_policylen
-with the same
 .Fa policy
-argument.
+and length
+.Fa len
+of
+.Fa policy .
+.Fn ipsec_set_policy
+will return the buffer of IPsec policy specification structure.
+.Pp
+You may want the length of the generated buffer such when calling
+.Xr setsockopt 2 .
 .Fn ipsec_get_policylen
-will return the required buffer size,
-and you may want to allocate buffer dynamically for use with
-.Fn ipsec_set_policy .
+will return the length.
 .Pp
 .Fn ipsec_dump_policy
 converts IPsec policy structure into readable form.
@@ -95,51 +92,99 @@ returns pointer to dynamically allocated string.
 It is caller's responsibility to reclaim the region, by using
 .Xr free 3 .
 .Pp
+.\"
 .Fa policy
 is formatted as either of the following:
 .Bl -tag  -width "discard"
-.It Li discard
-.Li discard
-means the packet matching indexes will be discarded.
-.It Li none
-.Li none
-means IPsec will not be performed on the matching packets
+.It Ar direction Li entrust
+.Ar direction
+must be
+.Li in
+or
+.Li out .
+.Ar direction
+specifies which direction the policy needs to be applied.
+.Li entrust
+means to consult to SPD defined by
+.Xr setkey 8 .
+.It Ar direction Li bypass
+.Li bypass
+means to be bypassed the IPsec processing.
 .Po
 packet will be transmitted in clear
 .Pc .
-.It Xo Li ipsec
-.Ar protocol
-.Op Ar /level
-.Op Ar /peer
-.Op ...
+This is for privileged socket.
+.It Xo
+.Ar direction
+.Li ipsec
+.Ar request ...
 .Xc
 .Li ipsec
 means that the matching packets are subject to IPsec processing.
 .Li ipsec
-can be followed by multiple set of
-.Do
+can be followed by one or more
+.Ar request
+string, which is formatted as below:
+.Bl -tag  -width "discard"
+.It Xo
 .Ar protocol
+.Li /
+.Ar mode
+.Li /
+.Ar src
+.Li -
+.Ar dst
 .Op Ar /level
-.Op Ar /peer
-.Dc
-arguments.
+.Xc
 .Ar protocol
 is either
 .Li ah ,
 .Li esp
 or
 .Li ipcomp .
+.Pp
+.Ar mode
+is either
+.Li transport
+or
+.Li tunnel .
+.Pp
+.Ar src
+and
+.Ar dst
+specifies IPsec endpoint.
+.Ar src
+always means
+.Dq sending node
+and
+.Ar dst
+always means
+.Dq receiving node .
+Therefore, when
+.Ar direction
+is
+.Li in ,
+.Ar dst
+is this node
+and
+.Ar src
+is the other node
+.Pq peer .
+.Pp
 .Ar level
 must be set to one of the following:
-.Li default , use
+.Li default , use , require
 or
-.Li require .
+.Li unique .
 .Li default
 means that the kernel should consult the system default policy
 defined by
 .Xr sysctl 8 ,
 such as
 .Li net.inet.ipsec.esp_trans_deflev .
+See
+.Xr ipsec 4
+regarding the system default.
 .Li use
 means that a relevant SA can be used when available,
 since the kernel may perform IPsec operation against packets when possible.
@@ -150,14 +195,24 @@ or encrypted
 .Li require
 means that a relevant SA is required,
 since the kernel must perform IPsec operation against packets.
-.Ar peer
-is an IPv4 or IPv6 address string, and it will be used as
-a hint when IPsec system configures IPsec tunnel mode SA by using
-key management protocol.
-.Pp
-If the string is kept unambiguous,
+.Li unique
+is the same as
+.Li require ,
+but adds the restriction that the SA for outbound traffic is used
+only for this policy.
+You may need the identifier in order to relate the policy and the SA
+when you define the SA by manual keying.
+You can put the decimal number as the identifier after
+.Li unique
+like
+.Li unique : number .
+.Li number
+must be between 1 and 32767 .
+If the
+.Ar request
+string is kept unambiguous,
 .Ar level
-and slashes surrounding
+and slash prior to
 .Ar level
 can be omitted.
 However, it is encouraged to specify them explicitly
@@ -167,19 +222,31 @@ If
 is omitted, it will be interpreted as
 .Li default .
 .El
+.El
 .Pp
-Here are several examples:
+Note that there is a bit difference of specification from
+.Xr setkey 8 .
+In specification by
+.Xr setkey 8 ,
+both entrust and bypass are not used.  Refer to
+.Xr setkey 8
+for detail.
+.Pp
+Here are several examples
+.Pq long lines are wrapped for readability :
 .Bd -literal -offset indent
-discard
-ipsec esp/require
-ipsec ah/use/10.1.1.1
-ipsec esp/use ah/require
-ipsec ipcomp/use esp/use ah/require
+in discard
+out ipsec esp/transport/10.1.1.1-10.1.1.2/require
+in ipsec ah/transport/10.1.1.2-10.1.1.1/require
+out ipsec esp/transport/10.1.1.2-10.1.1.1/use
+        ah/tunnel/10.1.1.2-10.1.1.1/unique:1000
+in ipsec ipcomp/transport/10.1.1.2-10.1.1.1/use
+        esp/transport/10.1.1.2-10.1.1.1/use
 .Ed
 .\"
 .Sh RETURN VALUES
 .Fn ipsec_set_policy
-returns with 0 on success, negative value on errors.
+returns a pointer to the allocated buffer of policy specification if successful; otherwise a NULL pointer is returned.
 .Fn ipsec_get_policylen
 returns with positive value
 .Pq meaning the buffer size
@@ -192,6 +259,7 @@ on errors.
 .\"
 .Sh SEE ALSO
 .Xr ipsec_strerror 3 ,
+.Xr ispec 4 ,
 .Xr setkey 8
 .\"
 .Sh HISTORY
