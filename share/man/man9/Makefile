@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.165 2004/09/06 18:23:31 yamt Exp $
+#       $NetBSD: Makefile,v 1.166 2004/09/06 21:46:46 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -283,6 +283,19 @@ MLINKS+=mca.9 mca_intr_establish.9 \
 	mca.9 mca_intr_evcnt.9 \
 	mca.9 mca_conf_read.9 \
 	mca.9 mca_conf_write.9
+MLINKS+=m_tag.9 m_tag_copy.9 \
+	m_tag.9 m_tag_copy_chain.9 \
+	m_tag.9 m_tag_delete.9 \
+	m_tag.9 m_tag_delete_chain.9 \
+	m_tag.9 m_tag_delete_nonpersistent.9 \
+	m_tag.9 m_tag_find.9 \
+	m_tag.9 m_tag_first.9 \
+	m_tag.9 m_tag_free.9 \
+	m_tag.9 m_tag_get.9 \
+	m_tag.9 m_tag_init.9 \
+	m_tag.9 m_tag_next.9 \
+	m_tag.9 m_tag_prepend.9 \
+	m_tag.9 m_tag_unlink.9
 MLINKS+=namecache.9 cache_lookup.9 \
 	namecache.9 cache_revlookup.9 \
 	namecache.9 cache_enter.9 \
