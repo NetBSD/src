@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.4 2001/03/09 08:54:18 sato Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.5 2001/03/12 08:54:25 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.4 2001/03/09 08:54:18 sato Exp $";
+    "$Id: bivideo.c,v 1.5 2001/03/12 08:54:25 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -610,15 +610,15 @@ bivideo_get_backlight(struct bivideo_softc *sc)
 {
 	int val = -1;
 
-	if (sc->sc_max_brightness < 0) {
-		if (config_hook_call(CONFIG_HOOK_GET, 
-		     CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
-			if (val == 0)
-				sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
-			else
-				sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
-		}
-	}
+	if (config_hook_call(CONFIG_HOOK_GET, 
+	     CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
+		if (val == 0)
+			sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
+		else
+			sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
+	} else /* assume backlight is on */
+		sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
+
 }
 
 void
