@@ -1,4 +1,4 @@
-/*	$NetBSD: includes.h,v 1.6 2002/03/08 02:00:52 itojun Exp $	*/
+/*	$NetBSD: includes.h,v 1.7 2004/12/11 06:58:20 christos Exp $	*/
 /*	$OpenBSD: includes.h,v 1.17 2002/01/26 16:44:22 stevesk Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
 #define INCLUDES_H
 
 #define RCSID(msg) \
-static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
+static /**/const char *const rcsid[] = { (const char *)rcsid, "\100(#)" msg }
 
 #include <sys/types.h>
 #include <sys/socket.h>
