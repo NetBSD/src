@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.5 1999/04/24 08:01:11 simonb Exp $	*/
+/*	$NetBSD: dec_5100.c,v 1.6 1999/04/26 09:23:22 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -88,6 +88,9 @@ void	dec_5100_intr_disestablish __P((struct ibus_attach_args *ia));
 
 extern void dec_mips1_wbflush __P((void));
 
+extern unsigned nullclkread __P((void));
+extern unsigned (*clkread) __P((void));
+
 
 /*
  * Fill in platform struct.
@@ -132,6 +135,9 @@ dec_5100_os_init()
 	mcclock_addr = (volatile struct chiptime *)
 		MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_2);
+
+	/* no high resolution timer circuit; possibly never called */
+	clkread = nullclkread;
 }
 
 

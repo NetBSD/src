@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.15 1999/04/24 08:01:11 simonb Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.16 1999/04/26 09:23:23 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.15 1999/04/24 08:01:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.16 1999/04/26 09:23:23 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.15 1999/04/24 08:01:11 simonb Exp
 #include <machine/reg.h>
 #include <machine/intr.h>
 #include <machine/psl.h>
-#include <machine/locore.h>		/* wbflush() */
 #include <machine/autoconf.h>		/* intr_arg_t */
 #include <machine/sysconf.h>
 
@@ -121,6 +120,9 @@ void		dec_3maxplus_device_register __P((struct device *, void *));
 static void 	dec_3maxplus_errintr __P ((void));
 
 
+void kn03_wbflush __P((void));
+unsigned kn03_clkread __P((void));
+extern unsigned (*clkread) __P((void));
 
 /*
  * Local declarations
@@ -170,7 +172,7 @@ dec_3maxplus_os_init()
 
 	/* clear any pending memory errors. */
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
-	wbflush();
+	kn03_wbflush();
 
 	/*
 	 * Reset interrupts.
@@ -189,7 +191,6 @@ dec_3maxplus_os_init()
 		MIPS_PHYS_TO_KSEG1(KN03_SYS_CLOCK);
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 
-	ioasic_init(0);
 	/*
 	 * Initialize interrupts.
 	 */
@@ -197,13 +198,24 @@ dec_3maxplus_os_init()
 		~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2);
 	*(u_int *)IOASIC_REG_IMSK(ioasic_base) = kn03_tc3_imask;
 	*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
-	wbflush();
+	kn03_wbflush();
+
+	*(volatile u_int *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
+	*(volatile u_int *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
+#if 0
+	*(volatile u_int *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
+	*(volatile u_int *)(ioasic_base + IOASIC_SCC1_DECODE) = (0x10|6);
+	*(volatile u_int *)(ioasic_base + IOASIC_CSR) = 0x00000f00;
+#endif
 	/* XXX hard-reset LANCE */
-	 *(u_int *)IOASIC_REG_CSR(ioasic_base) |= 0x100;
+	*(u_int *)IOASIC_REG_CSR(ioasic_base) |= 0x100;
 
 	/* clear any memory errors from probes */
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
-	wbflush();
+	kn03_wbflush();
+
+	/* 3MAX+ has IOASIC free-running high resolution timer */
+	clkread = kn03_clkread;
 }
 
 
@@ -500,4 +512,23 @@ dec_3maxplus_errintr()
 
 	/* Send to kn02/kn03 memory subsystem handler */
 	dec_mtasic_err(erradr, errsyn);
+}
+
+void
+kn03_wbflush()
+{
+	/* read once IOASIC_INTR */
+	__asm __volatile("lw $0,0xbf840000");
+}
+
+/*
+ * TURBOchannel bus-cycle counter provided by IOASIC;
+ * Interpolate micro-seconds since the last RTC clock tick.  The
+ * interpolation base is the copy of the bus cycle-counter taken by
+ * the RTC interrupt handler.
+ */
+unsigned
+kn03_clkread()
+{
+	return *(u_int32_t *)(ioasic_base + IOASIC_CTR);
 }
