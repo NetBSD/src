@@ -1,4 +1,4 @@
-/* $NetBSD: qms.c,v 1.9 1996/10/13 03:06:28 christos Exp $ */
+/* $NetBSD: qms.c,v 1.10 1996/10/15 21:06:53 mark Exp $ */
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -51,6 +51,7 @@
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 
 #include <arm32/mainbus/mainbus.h>
 #include <machine/irqhandler.h>
@@ -73,12 +74,13 @@ struct quadmouse_softc {
 #define QMOUSE_OPEN 0x01
 #define QMOUSE_ASLEEP 0x02
 	int sc_state;
+	int mode;
 	int boundx, boundy, bounda, boundb;	/* Bounding box.  x,y is bottom left */
 	int origx, origy;
 	int xmult, ymult;	/* Multipliers */
 	int lastx, lasty, lastb;
-	struct proc *proc;
-	struct clist buffer;
+	struct proc *sc_proc;
+	struct clist sc_buffer;
 };
 
 int	quadmouseprobe	__P((struct device *, void *, void *));
@@ -86,9 +88,8 @@ void	quadmouseattach	__P((struct device *, struct device *, void *));
 int	quadmouseopen	__P((dev_t, int, int, struct proc *));
 int	quadmouseclose	__P((dev_t, int, int, struct proc *));
 
-int        strncmp __P((const char *, const char *, size_t));
-
-int quadmouseintr	(struct quadmouse_softc *);
+int quadmouseintr	__P((struct quadmouse_softc *sc));
+void quadmouseputbuffer	__P((struct quadmouse_softc *sc, struct mousebufrec *buf));
 
 struct cfattach quadmouse_ca = {
 	sizeof(struct quadmouse_softc), quadmouseprobe, quadmouseattach
@@ -195,15 +196,17 @@ quadmouseopen(dev, flag, mode, p)
 
 	if (sc->sc_state & QMOUSE_OPEN) return(EBUSY);
 
-	sc->proc = p;
+	sc->sc_proc = p;
     
 	sc->lastx = -1;
 	sc->lasty = -1;
 	sc->lastb = -1;
 
 	/* initialise buffer */
-	if (clalloc(&sc->buffer, QMOUSE_BSIZE, 0) == -1)
+	if (clalloc(&sc->sc_buffer, QMOUSE_BSIZE, 0) == -1)
 		return(ENOMEM);
+
+	sc->mode = MOUSEMODE_ABS;
 
 	sc->sc_state |= QMOUSE_OPEN;
 
@@ -233,10 +236,10 @@ quadmouseclose(dev, flag, mode, p)
 	if (irq_release(sc->sc_irqnum, &sc->sc_ih) != 0)
 		panic("Cannot release IRQ %d\n", sc->sc_irqnum);
 
-	sc->proc = NULL;
+	sc->sc_proc = NULL;
 	sc->sc_state = 0;
 
-	clfree(&sc->buffer);
+	clfree(&sc->sc_buffer);
 
 	return(0);
 }
@@ -256,7 +259,7 @@ quadmouseread(dev, uio, flag)
 
 	error = 0;
 	s=spltty();
-	while(sc->buffer.c_cc==0) {
+	while(sc->sc_buffer.c_cc==0) {
 		if(flag & IO_NDELAY) {
 			(void)splx(s);
 			return(EWOULDBLOCK);
@@ -269,12 +272,12 @@ quadmouseread(dev, uio, flag)
 		}
 	}
 	
-	while(sc->buffer.c_cc>0 && uio->uio_resid>0) {
-		length=min(sc->buffer.c_cc, uio->uio_resid);
+	while(sc->sc_buffer.c_cc>0 && uio->uio_resid>0) {
+		length=min(sc->sc_buffer.c_cc, uio->uio_resid);
 		if(length>sizeof(buffer))
 			length=sizeof(buffer);
 
-		(void) q_to_b(&sc->buffer, buffer, length);
+		(void) q_to_b(&sc->sc_buffer, buffer, length);
 
 		if ((error = (uiomove(buffer, length, uio))))
 			break;
@@ -327,29 +330,77 @@ quadmouseioctl(dev, cmd, data, flag, p)
 		register struct mouse_state *co = (void *)data;
 		WriteWord(IOMD_MOUSEX, co->x);
 		WriteWord(IOMD_MOUSEY, co->y);
-
-		/* Silly, but here for completeness, just incase */
-		/* the hardware supports it *giggle*  		 */
-
-/* This is not writable -- mark -- technically this should fault */
-
-/*		WriteWord ( IO_MOUSE_BUTTONS, co->buttons );*/
 		return 0;
 	}
 	case MOUSEIOC_SETBOUNDS:
 	{
 		register struct mouse_boundingbox *bo = (void *)data;
-		sc->boundx = bo->x; sc->boundy = bo->y;
-		sc->bounda = bo->a; sc->boundb = bo->b;
+		struct mousebufrec buffer;
+		int s;
+
+#ifdef MOUSE_IOC_ACK
+		s = spltty();
+#endif
+
+		sc->boundx = bo->x;
+		sc->boundy = bo->y;
+		sc->bounda = bo->a;
+		sc->boundb = bo->b;
+
+		buffer.status = IOC_ACK;
+		buffer.x = sc->origx;
+		buffer.y = sc->origy;
+#ifdef MOUSE_IOC_ACK
+		if (sc->sc_buffer.c_cc > 0)
+			printf("qms: setting bounding with non empty buffer (%d)\n", sc->sc_buffer.c_cc);
+		quadmouseputbuffer(sc, &buffer);
+		(void)splx(s);
+#endif
+		return 0;
+	}
+	case MOUSEIOC_SETMODE:
+	{
+		struct mousebufrec buffer;
+		int s;
+
+#ifdef MOUSE_IOC_ACK
+		s = spltty();
+#endif
+		sc->mode = *(u_int *)data;
+
+		buffer.status = IOC_ACK;
+		buffer.x = sc->origx;
+		buffer.y = sc->origy;
+#ifdef MOUSE_IOC_ACK
+		if (sc->sc_buffer.c_cc > 0)
+			printf("qms: setting mode with non empty buffer (%d)\n", sc->sc_buffer.c_cc);
+		quadmouseputbuffer(sc, &buffer);
+		(void)splx(s);
+#endif
 		return 0;
 	}
 	case MOUSEIOC_SETORIGIN:
 	{
 		register struct mouse_origin *oo = (void *)data;
-/*		int oldx, oldy;*/
+		struct mousebufrec buffer;
+		int s;
+
+#ifdef MOUSE_IOC_ACK
+		s = spltty();
+#endif
 		/* Need to fix up! */
 		sc->origx = oo->x;
 		sc->origy = oo->y;
+
+		buffer.status = IOC_ACK;
+		buffer.x = sc->origx;
+		buffer.y = sc->origy;
+#ifdef MOUSE_IOC_ACK
+		if (sc->sc_buffer.c_cc > 0)
+			printf("qms: setting origin with non empty buffer (%d)\n", sc->sc_buffer.c_cc);
+		quadmouseputbuffer(sc, &buffer);
+		(void)splx(s);
+#endif
 		return 0;
 	}
 	case MOUSEIOC_GETSTATE:
@@ -396,16 +447,21 @@ quadmouseintr(sc)
 	b >>= 4;
         if (x != sc->lastx || y != sc->lasty || b != sc->lastb) {
 		/* Mouse state changed */
-		buffer.status = b | ( b ^ sc->lastb) << 3 | (((x==sc->lastx) && (y==sc->lasty))?0:0x40);
+		buffer.status = b | ( b ^ sc->lastb) << 3 | (((x==sc->lastx) && (y==sc->lasty))?0:MOVEMENT);
+		if((sc->mode & MOUSEMODE_REL) == MOUSEMODE_REL) {
+			sc->origx = sc->origy = 0;
+			WriteWord(IOMD_MOUSEX, sc->origx);
+			WriteWord(IOMD_MOUSEY, sc->origy);
+		}
 		buffer.x = x;
 		buffer.y = y;
 		microtime(&buffer.event_time);
 
-		if(sc->buffer.c_cc==0)
+		if(sc->sc_buffer.c_cc==0)
 			dosignal=1;
 
 		s=spltty();
-		(void) b_to_q((char *)&buffer, sizeof(buffer), &sc->buffer);
+		(void) b_to_q((char *)&buffer, sizeof(buffer), &sc->sc_buffer);
 		(void)splx(s);
 		selwakeup(&sc->sc_rsel);
 
@@ -415,7 +471,7 @@ quadmouseintr(sc)
 		}
 
 		if(dosignal)
-			psignal(sc->proc, SIGIO);
+			psignal(sc->sc_proc, SIGIO);
 		
 		sc->lastx = x;
 		sc->lasty = y;
@@ -426,6 +482,7 @@ quadmouseintr(sc)
 	return(0);	/* Pass interrupt on down the chain */
 }
 
+#if 0
 int
 quadmouseselect(dev, rw, p)
 	dev_t dev;
@@ -440,13 +497,65 @@ quadmouseselect(dev, rw, p)
 		return 0;
 
 	s=spltty();
-	if(sc->buffer.c_cc > 0) {
+	if(sc->sc_buffer.c_cc > 0) {
 		selrecord(p, &sc->sc_rsel);
 		(void)splx(s);
 		return 0;
 	}
 	(void)splx(s);
 	return 1;
+}
+
+#else
+
+int
+quadmousepoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct quadmouse_softc *sc = quadmouse_cd.cd_devs[minor(dev)];
+	int revents = 0;
+	int s = spltty();
+
+	if (events & (POLLIN | POLLRDNORM))
+		if (sc->sc_buffer.c_cc > 0)
+			revents |= events & (POLLIN | POLLRDNORM);
+		else
+			selrecord(p, &sc->sc_rsel);
+
+	splx(s);
+	return (revents);
+}
+
+#endif
+
+void
+quadmouseputbuffer(sc, buffer)
+	struct quadmouse_softc *sc;
+	struct mousebufrec *buffer;
+{
+	int s;
+	int dosignal=0;
+
+	/* Time stamp the buffer */
+	microtime(&buffer->event_time);
+
+	if(sc->sc_buffer.c_cc==0)
+		dosignal=1;
+
+	s=spltty();
+	(void) b_to_q((char *)buffer, sizeof(*buffer), &sc->sc_buffer);
+	(void)splx(s);
+	selwakeup(&sc->sc_rsel);
+
+	if(sc->sc_state & QMOUSE_ASLEEP) {
+		sc->sc_state &= ~QMOUSE_ASLEEP;
+		wakeup((caddr_t)sc);
+	}
+
+	if(dosignal)
+		psignal(sc->sc_proc, SIGIO);
 }
 
 /* End of quadmouse.c */

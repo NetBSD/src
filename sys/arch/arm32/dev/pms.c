@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.5 1996/10/13 03:06:27 christos Exp $ */
+/* $NetBSD: pms.c,v 1.6 1996/10/15 21:06:51 mark Exp $ */
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -57,6 +57,7 @@
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/poll.h>
 
 #include <machine/cpu.h>
 #include <machine/katelib.h>
@@ -83,7 +84,7 @@ struct pms_softc {		/* driver status information */
 	struct device sc_dev;
 	irqhandler_t sc_ih;
 
-	struct proc *proc;
+	struct proc *sc_proc;
 	struct clist sc_q;
 	struct selinfo sc_rsel;
 	u_int sc_state;	/* mouse driver state */
@@ -96,11 +97,12 @@ struct pms_softc {		/* driver status information */
 	int lastx, lasty, lastb;
 };
 
-int pmsprobe __P((struct device *, void *, void *));
-void pmsattach __P((struct device *, struct device *, void *));
-int pmsintr __P((void *));
-int pmsinit __P(());
-void pmswatchdog __P((void *));
+int pmsprobe		__P((struct device *, void *, void *));
+void pmsattach		__P((struct device *, struct device *, void *));
+int pmsintr		__P((void *));
+int pmsinit		__P(());
+void pmswatchdog	__P((void *));
+void pmsputbuffer	__P((struct pms_softc *sc, struct mousebufrec *buf));
 
 struct cfattach pms_ca = {
 	sizeof(struct pms_softc), pmsprobe, pmsattach
@@ -200,7 +202,7 @@ pmsinit()
 	case RPC600_IOMD_ID:
 		return(0);
 		break;
-	case RC7500_IOC_ID:
+	case ARM7500_IOC_ID:
 		break;
 	default:
 		printf("pms: Unknown IOMD id=%04x", id);
@@ -284,7 +286,7 @@ pmsattach(parent, self, aux)
 	if (mb->mb_irq != IRQUNK)
 		sc->sc_ih.ih_num = mb->mb_irq;
 	else
-#ifdef RC7500
+#ifdef CPU_ARM7500
 		sc->sc_ih.ih_num = IRQ_MSDRX;
 #else
 		panic("pms: No IRQ specified for pms interrupt handler\n");
@@ -313,7 +315,7 @@ pmsopen(dev, flag, mode, p)
 	if (clalloc(&sc->sc_q, PMS_BSIZE, 0) == -1)
 		return ENOMEM;
 
-	sc->proc = p;
+	sc->sc_proc = p;
 	sc->sc_state |= PMS_OPEN;
 	sc->sc_status = 0;
 	sc->sc_x = sc->sc_y = 0;
@@ -343,7 +345,7 @@ pmsclose(dev, flag, mode, p)
 	if (irq_release(IRQ_INSTRUCT, &sc->sc_ih) != 0)
 		panic("Cannot release MOUSE IRQ\n");
  
-	sc->proc = NULL;
+	sc->sc_proc = NULL;
 	sc->sc_state &= ~PMS_OPEN;
 	sc->sc_x = sc->sc_y = 0;
 
@@ -427,15 +429,33 @@ pmsioctl(dev, cmd, addr, flag, p)
 	case MOUSEIOC_SETBOUNDS:
 	{
 		register struct mouse_boundingbox *bo = (void *) addr;
+		struct mousebufrec buffer;
+
 		sc->boundx = bo->x; sc->boundy = bo->y;
 		sc->bounda = bo->a; sc->boundb = bo->b;
+
+		buffer.status = IOC_ACK;
+		buffer.x = sc->origx;
+		buffer.y = sc->origy;
+#ifdef MOUSE_IOC_ACK
+		pmsputbuffer(sc, &buffer);
+#endif
 		break;
 	}
 	case MOUSEIOC_SETORIGIN:
 	{
 		register struct mouse_origin *oo = (void *) addr;
+		struct mousebufrec buffer;
+
 		sc->origx = oo->x;
 		sc->origy = oo->y;
+
+		buffer.status = IOC_ACK;
+		buffer.x = sc->origx;
+		buffer.y = sc->origy;
+#ifdef MOUSE_IOC_ACK
+		pmsputbuffer(sc, &buffer);
+#endif
 		break;
 	}
 	case MOUSEIOC_GETBOUNDS:
@@ -524,7 +544,7 @@ pmsintr(arg)
 	if ((sc->sc_state & PMS_OPEN) == 0) {
 		/* Interrupts are not expected.  Discard the byte. */
 		pms_flush();
-		return(-1);
+		return(-1);	/* Could have been ours but pass it on */
 	}
 
 	switch (state) {
@@ -585,7 +605,7 @@ pmsintr(arg)
 			/* Add this event to the queue. */
 			b = buttons & BUTSTATMASK;
 			mbuffer.status = b | (b ^ sc->lastb) << 3
-				| (((sc->sc_x==sc->lastx) && (sc->sc_y==sc->lasty))?0:0x40);
+				| (((sc->sc_x==sc->lastx) && (sc->sc_y==sc->lasty))?0:MOVEMENT);
 			mbuffer.x = sc->sc_x * 2;
 			mbuffer.y = sc->sc_y * 2;
 			microtime(&mbuffer.event_time);
@@ -602,15 +622,16 @@ pmsintr(arg)
 				wakeup((caddr_t)sc);
 			}
 			if (dosignal)
-				psignal(sc->proc, SIGIO);
+				psignal(sc->sc_proc, SIGIO);
 		}
 
 		break;
 	}
 
-	return(0);
+	return(1);	/* Claim interrupt */
 }
 
+#if 0
 int
 pmsselect(dev, rw, p)
 	dev_t dev;
@@ -635,6 +656,31 @@ pmsselect(dev, rw, p)
 	return ret;
 }
 
+#else
+
+int
+pmspoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct pms_softc *sc = pms_cd.cd_devs[PMSUNIT(dev)];
+	int revents = 0;
+	int s = spltty();
+
+	if (events & (POLLIN | POLLRDNORM))
+		if (sc->sc_q.c_cc > 0)
+			revents |= events & (POLLIN | POLLRDNORM);
+		else
+			selrecord(p, &sc->sc_rsel);
+
+	splx(s);
+	return (revents);
+}
+
+#endif
+
+
 void
 pmswatchdog(arg)
 	void *arg;
@@ -647,4 +693,32 @@ pmswatchdog(arg)
 		pmsinit();
 		splx(s);
 	}
+}
+
+void
+pmsputbuffer(sc, buffer)
+	struct pms_softc *sc;
+	struct mousebufrec *buffer;
+{
+	int s;
+	int dosignal=0;
+
+	/* Time stamp the buffer */
+	microtime(&buffer->event_time);
+
+	if (sc->sc_q.c_cc==0)
+		dosignal=1;
+
+	s=spltty();
+	(void) b_to_q((char *)buffer, sizeof(*buffer), &sc->sc_q);
+	(void)splx(s);
+	selwakeup(&sc->sc_rsel);
+
+	if (sc->sc_state & PMS_ASLP) {
+		sc->sc_state &= ~PMS_ASLP;
+		wakeup((caddr_t)sc);
+	}
+
+	if (dosignal)
+		psignal(sc->sc_proc, SIGIO);
 }
