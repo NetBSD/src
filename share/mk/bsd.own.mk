@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.336 2003/06/30 18:48:52 wiz Exp $
+#	$NetBSD: bsd.own.mk,v 1.337 2003/07/02 15:37:21 marcus Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -354,7 +354,7 @@ MKGCC:= no
 .endif
 
 # The sh3 port is incomplete.
-.if ${MACHINE_CPU} == "sh3"
+.if ${MACHINE_CPU} == "sh3" && !defined(HAVE_GCC3)
 NOPIC=		# defined
 .endif
 
