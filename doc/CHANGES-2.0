@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.385 2004/08/12 04:19:28 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.386 2004/08/12 04:21:54 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6430,3 +6430,8 @@ sys/dev/ic/mb89352.c				1.27
 	On manual transfer via TEMP register, data should be read before 
 	asserting ACK.
 	[tsutsui, ticket #747]
+
+distrib/notes/vax/hardware			1.9
+
+	Updates of supported hardware
+	[ragge, ticket #748]
