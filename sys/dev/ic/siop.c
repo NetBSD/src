@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.43 2001/04/30 02:17:55 lukem Exp $	*/
+/*	$NetBSD: siop.c,v 1.44 2001/05/23 15:51:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -937,16 +937,16 @@ end:
 	else
 		restart = 1;
 	siop_lun->siop_tag[tag].active = NULL;
-	if (sc->sc_flags & SCF_CHAN_NOSLOT) {
-		/* a command terminated, so we have free slots now */
-		sc->sc_flags &= ~SCF_CHAN_NOSLOT;
-		scsipi_channel_thaw(&sc->sc_chan, 1);
-	}
 	siop_scsicmd_end(siop_cmd);
 	if (freetarget && siop_target->status == TARST_PROBING)
 		siop_del_dev(sc, target, lun);
 	if (restart)
 		CALL_SCRIPT(Ent_script_sched);
+	if (sc->sc_flags & SCF_CHAN_NOSLOT) {
+		/* a command terminated, so we have free slots now */
+		sc->sc_flags &= ~SCF_CHAN_NOSLOT;
+		scsipi_channel_thaw(&sc->sc_chan, 1);
+	}
 		
 	return 1;
 }
