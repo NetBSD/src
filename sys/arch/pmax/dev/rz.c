@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.41 1998/11/20 06:24:02 mhitch Exp $	*/
+/*	$NetBSD: rz.c,v 1.42 1999/01/27 03:03:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.41 1998/11/20 06:24:02 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.42 1999/01/27 03:03:51 simonb Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -163,8 +163,6 @@ readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
  * Ultrix disklabel declarations
  */
  #ifdef COMPAT_ULTRIX
-#include <pmax/stand/dec_boot.h>
-
 extern char *
 compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 		  struct disklabel *lp, struct cpu_disklabel *osdep));

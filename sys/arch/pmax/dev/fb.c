@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.21 1998/11/23 04:26:15 jonathan Exp $	*/
+/*	$NetBSD: fb.c,v 1.22 1999/01/27 03:03:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -91,9 +91,6 @@
 #include <machine/fbvar.h>
 #include <pmax/dev/fbreg.h>
 #include <pmax/dev/qvssvar.h>
-
-
-#include <pmax/stand/dec_prom.h>
 
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
