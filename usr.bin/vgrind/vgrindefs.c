@@ -1,4 +1,4 @@
-/*	$NetBSD: vgrindefs.c,v 1.8 1998/10/16 22:01:57 kleink Exp $	*/
+/*	$NetBSD: vgrindefs.c,v 1.9 2003/07/14 09:25:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vgrindefs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vgrindefs.c,v 1.8 1998/10/16 22:01:57 kleink Exp $");
+__RCSID("$NetBSD: vgrindefs.c,v 1.9 2003/07/14 09:25:37 itojun Exp $");
 #endif /* not lint */
 
 #define	BUFSIZ	1024
@@ -158,7 +158,7 @@ tnchktc()
 	/* p now points to beginning of last field */
 	if (p[0] != 't' || p[1] != 'c')
 		return(1);
-	strcpy(tcname,p+3);
+	strlcpy(tcname, p + 3, sizeof(tcname));
 	q = tcname;
 	while (q && *q != ':')
 		q++;
@@ -169,14 +169,14 @@ tnchktc()
 	}
 	if (tgetent(tcbuf, tcname, filename) != 1)
 		return(0);
-	for (q=tcbuf; *q != ':'; q++)
+	for (q = tcbuf; *q != ':'; q++)
 		;
 	l = p - holdtbuf + strlen(q);
 	if (l > BUFSIZ) {
 		write(2, "Vgrind entry too long\n", 23);
-		q[BUFSIZ - (p-tbuf)] = 0;
+		q[BUFSIZ - (p - tbuf)] = 0;
 	}
-	strcpy(p, q+1);
+	strcpy(p, q + 1);
 	tbuf = holdtbuf;
 	return(1);
 }
