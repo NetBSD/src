@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.73 2000/01/25 21:58:23 soren Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.74 2000/01/26 01:06:03 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.72 2000/01/25 21:58:06 soren Exp 
+ *	NetBSD: pcmciadevs,v 1.73 2000/01/26 01:05:23 thorpej Exp 
  */
 
 /*-
@@ -246,6 +246,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Lexar Media",
 	    "Lexar Media CompactFlash"	},
+	},
+	{
+	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
+	    PCMCIA_CIS_LINKSYS_ETHERFAST,
+	    0,
+	    "Linksys Corporation",
+	    "Linksys Etherfast 10/100 Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
