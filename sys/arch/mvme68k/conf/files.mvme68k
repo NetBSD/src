@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.8 1996/08/12 00:16:25 mycroft Exp $
+#	$NetBSD: files.mvme68k,v 1.9 1996/11/09 03:52:54 chuck Exp $
 
 # config file for mvme68k
 
@@ -27,6 +27,11 @@ file arch/mvme68k/dev/zs_pcc.c			zsc_pcc needs-flag
 device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-flag
+
+# printer
+device lpt
+attach lpt at pcc with lpt_pcc
+file arch/mvme68k/dev/lpt.c			lpt needs-flag
 
 # device defined in sys/conf/files
 attach le at pcc with le_pcc
