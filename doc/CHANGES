@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.194 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.195 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -457,3 +457,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	gdb: Import gdb-5.3 and add support for i386 [christos 20030804]
 	XFree86: Reach-over build framework added under src/x11.
 		[lukem 20030912]
+	i386: Switch to GCC 3.3.1.  [mrg 20030919]
+	sparc: Switch to GCC 3.3.1.  [mrg 20030919]
+	sparc64: Switch to GCC 3.3.1.  [mrg 20030919]
+	alpha: Switch to GCC 3.3.1.  [mrg 20030919]
