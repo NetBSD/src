@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.193 2004/02/13 11:36:18 wiz Exp $	*/
+/*	$NetBSD: locore.s,v 1.194 2004/03/14 18:18:54 chs Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -108,10 +108,10 @@
 #undef	CPCB
 #undef	FPLWP
 
-#define	CURLWP	(CPUINFO_VA+CI_CURLWP)
-#define CPCB	(CPUINFO_VA+CI_CPCB)
-#define	FPLWP	(CPUINFO_VA+CI_FPLWP)
-#define	IDLE_U  (CPUINFO_VA+CI_IDLE_U)
+#define	CURLWP	(CPUINFO_VA + CI_CURLWP)
+#define	CPCB	(CPUINFO_VA + CI_CPCB)
+#define	FPLWP	(CPUINFO_VA + CI_FPLWP)
+#define	IDLE_U  (CPUINFO_VA + CI_IDLE_U)
 
 /* Let us use same syntax as C code */
 #define Debugger()	ta	1; nop
@@ -198,11 +198,7 @@
 #define ICACHE_ALIGN	.align	32
 
 /* Give this real authority: reset the machine */
-#if 1
 #define NOTREACHED	sir
-#else
-#define NOTREACHED
-#endif
 
 /*
  * This macro will clear out a cache line before an explicit
@@ -441,9 +437,12 @@ _C_LABEL(cpcb):	POINTER	_C_LABEL(u0)
 
 /*
  * romp is the prom entry pointer
+ * romtba is the prom trap table base address
  */
 	.globl	romp
 romp:	POINTER	0
+	.globl	romtba
+romtba:	POINTER	0
 
 
 /* NB:	 Do we really need the following around? */
@@ -4066,12 +4065,17 @@ interrupt_vector:
 	membar	#Sync
 	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
 	membar	#Sync			! Should not be needed due to retry
+
 #if NOT_DEBUG
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
-	mov	%g1, %o1
-	mov	%g2, %o2
+	mov	%g1, %o2
+	mov	%g2, %o3
 
-	LOAD_ASCIZ(%o0, "interrupt_vector: ASI_IRSR %lx ASI_IRDR(0x40) %lx\r\n")
+	ldxa	[%g0] ASI_MID_REG, %o1
+	srax	%o1, 17, %o1			! Isolate UPAID from CPU reg
+	and	%o1, 0x1f, %o1
+
+	LOAD_ASCIZ(%o0, "cpu%d: interrupt_vector: ASI_IRSR %lx ASI_IRDR(0x40) %lx\r\n")
 	GLOBTOLOC
 	call	prom_printf
 	 clr	%g4
@@ -4079,16 +4083,24 @@ interrupt_vector:
 	restore
 	 nop
 #endif
+
 	sethi	%hi(_C_LABEL(intrlev)), %g3
 	btst	IRSR_BUSY, %g1
 	or	%g3, %lo(_C_LABEL(intrlev)), %g3
 	bz,pn	%icc, 3f		! spurious interrupt
 	 sllx	%g2, PTRSHFT, %g5	! Calculate entry number
-	cmp	%g2, MAXINTNUM
 
-#ifdef DEBUG
-	tgeu	55
-#endif
+	brnz,pt	%g2, Lsoftint_regular	! interrupt #0 is a fast cross-call
+	 cmp	%g2, MAXINTNUM
+
+	mov	IRDR_1H, %g1
+	ldxa	[%g1] ASI_IRDR, %g1	! Get IPI handler address
+	mov	IRDR_2H, %g2
+
+	jmpl	%g1, %o7
+	 ldxa	[%g2] ASI_IRDR, %g2	! Get IPI handler argument
+
+Lsoftint_regular:
 	bgeu,pn	%xcc, 3f
 	 nop
 	LDPTR	[%g3 + %g5], %g5	! We have a pointer to the handler
@@ -4106,10 +4118,6 @@ interrupt_vector:
 	restore
 	 nop
 1:	
-#endif
-#ifdef NOT_DEBUG
-	tst	%g5
-	tz	56
 #endif
 	
 	brz,pn	%g5, 3f			! NULL means it isn't registered yet.  Skip it.
@@ -4232,6 +4240,87 @@ ret_from_intr_vector:
 97:
 	ba,a	ret_from_intr_vector
 	 nop				! XXX spitfire bug?
+
+/*
+ * IPI handler to flush single pte.
+ * void sparc64_ipi_flush_pte(void *);
+ *
+ * On Entry:
+ *
+ * %g2	- pointer to 'ipi_tlb_args' structure
+ */
+ENTRY(sparc64_ipi_flush_pte)
+	ba,a	ret_from_intr_vector
+	 nop
+
+/*
+ * IPI handler to flush single context.
+ * void sparc64_ipi_flush_ctx(void *);
+ *
+ * On Entry:
+ *
+ * %g2	- pointer to 'ipi_tlb_args' structure
+ */
+ENTRY(sparc64_ipi_flush_ctx)
+	ba,a	ret_from_intr_vector
+	 nop
+
+/*
+ * IPI handler to flush the whole TLB.
+ * void sparc64_ipi_flush_all(void *);
+ *
+ * On Entry:
+ *
+ * %g2	- pointer to 'ipi_tlb_args' structure
+ */
+ENTRY(sparc64_ipi_flush_all)
+	rdpr	%pstate, %g3
+	andn	%g3, PSTATE_IE, %g2			! disable interrupts
+	wrpr	%g2, 0, %pstate
+	set	(63 * 8), %g1				! last TLB entry
+	membar	#Sync
+
+	! %g1 = loop counter
+	! %g2 = TLB data value
+	! %g3 = saved %pstate
+
+0:
+	ldxa	[%g1] ASI_DMMU_TLB_DATA, %g2		! fetch the TLB data
+	btst	TTE_L, %g2				! locked entry?
+	bnz,pt	%icc, 1f				! if so, skip
+	 nop
+	
+	stxa	%g0, [%g1] ASI_DMMU_TLB_DATA		! zap it
+	membar	#Sync
+
+1:
+	dec	8, %g1
+	brgz,pt %g1, 0b					! loop over all entries
+	 nop
+
+	set	(63 * 8), %g1				! last TLB entry
+
+0:
+	ldxa	[%g1] ASI_IMMU_TLB_DATA, %g2		! fetch the TLB data
+	btst	TTE_L, %g2				! locked entry?
+	bnz,pt	%icc, 1f				! if so, skip
+	 nop
+
+	stxa	%g0, [%g1] ASI_IMMU_TLB_DATA		! zap it
+	membar	#Sync
+
+1:
+	dec	8, %g1
+	brgz,pt %g1, 0b					! loop over all entries
+	 nop
+
+	sethi	%hi(KERNBASE), %g4
+	membar	#Sync
+	flush	%g4
+	wrpr	%g3, %pstate
+
+	ba,a	ret_from_intr_vector
+	 nop
 
 /*
  * Ultra1 and Ultra2 CPUs use soft interrupts for everything.  What we do
@@ -5455,11 +5544,15 @@ dostart:
 1:
 #endif
 	/*
-	 * Step 1: Save rom entry pointer
+	 * Step 1: Save rom entry pointer and prom tba
 	 */
 
 	set	romp, %o5
 	STPTR	%o4, [%o5]	! It's initialized data, I hope
+
+	rdpr	%tba, %o4
+	set	romtba, %o5
+	STPTR	%o4, [%o5]
 
 	/*
 	 * Step 2: Set up a v8-like stack if we need to
@@ -5919,6 +6012,22 @@ _C_LABEL(cpu_initialize):
 	mov	%l0, %sp
 	flushw
 
+#ifdef DEBUG
+	set	_C_LABEL(pmapdebug), %o1
+	ld	[%o1], %o1
+	sethi	%hi(0x40000), %o2
+	btst	%o2, %o1
+	bz	0f
+	
+	set	1f, %o0		! Debug printf
+	call	_C_LABEL(prom_printf)
+	.data
+1:
+	.asciz	"Setting trap base...\r\n"
+	_ALIGN
+	.text
+0:	
+#endif
 	/*
 	 * Step 7: change the trap base register, and install our TSB pointers
 	 */
@@ -5960,6 +6069,22 @@ _C_LABEL(cpu_initialize):
 	wrpr	%g0, 0, %tstate
 #endif
 
+#ifdef DEBUG
+	set	_C_LABEL(pmapdebug), %o1
+	ld	[%o1], %o1
+	sethi	%hi(0x40000), %o2
+	btst	%o2, %o1
+	bz	0f
+	
+	set	1f, %o0		! Debug printf
+	call	_C_LABEL(prom_printf)
+	.data
+1:
+	.asciz	"Calling startup routine...\r\n"
+	_ALIGN
+	.text
+0:	
+#endif
 	/*
 	 * Call our startup routine.
 	 */
@@ -6086,7 +6211,6 @@ ENTRY(cpu_mp_startup)
 	membar	#Sync				! We may need more membar #Sync in here
 	stxa	%o2, [%g0] ASI_DMMU_DATA_IN	! Store TTE for DSEG
 	membar	#Sync				! We may need more membar #Sync in here
-!	flush	%o5				! Make IMMU see this too
 1:
 	add	%o1, %l6, %o1			! increment VA
 	cmp	%o1, %l4			! Next 4MB mapping....
@@ -6142,16 +6266,12 @@ ENTRY(cpu_mp_startup)
 	 * Get pointer to our cpu_info struct
 	 */
 	ldx	[%g2 + CBA_CPUINFO], %l1	! Load the interrupt stack's PA
-
 	sethi	%hi(0xa0000000), %l2		! V=1|SZ=01|NFO=0|IE=0
 	sllx	%l2, 32, %l2			! Shift it into place
-
 	mov	-1, %l3				! Create a nice mask
 	sllx	%l3, 41, %l4			! Mask off high bits
 	or	%l4, 0xfff, %l4			! We can just load this in 12 (of 13) bits
-
 	andn	%l1, %l4, %l1			! Mask the phys page number
-
 	or	%l2, %l1, %l1			! Now take care of the high bits
 #ifdef NO_VCACHE
 	or	%l1, TTE_L|TTE_CP|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=0|E=0|P=1|W=0|G=0
@@ -6166,9 +6286,9 @@ ENTRY(cpu_mp_startup)
 	set	1f, %o5
 	set	INTSTACK, %l0
 	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
-	membar	#Sync				! We may need more membar #Sync in here
+	membar	#Sync
 	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
-	membar	#Sync				! We may need more membar #Sync in here
+	membar	#Sync
 	flush	%o5
 	flush	%l0
 1:
@@ -6182,20 +6302,10 @@ ENTRY(cpu_mp_startup)
 
 !!! Make sure our stack's OK. 
 	LDPTR	[%g2 + %lo(CBA_INITSTACK)], %l0
-!	sethi   %hi(EINTSTACK), %l0
- 	add	%l0, -CC64FSZ-80-BIAS, %l0	! via syscall(boot_me_up) or somesuch
+ 	add	%l0, -CC64FSZ-80-BIAS, %l0
 	mov	%l0, %sp
-
-#if 0
-	wrpr	%g0, 0, %canrestore
-	wrpr	%g0, 0, %otherwin
-	rdpr	%ver, %l7
-	and	%l7, CWP, %l7
-	wrpr	%l7, 0, %cleanwin
-	dec	1, %l7					! NWINDOWS-1-1
-	wrpr	%l7, %cansave
-	clr	%fp			! End of stack.
-#endif
+	set	1, %fp
+	clr	%i7
 
 	/*
 	 * install our TSB pointers
@@ -6236,25 +6346,19 @@ ENTRY(cpu_mp_startup)
 	jmpl	%l1, %o7
 	 clr %g4
 
+	/* set up state required by idle */
+	set	_C_LABEL(sched_lock_idle), %l1	! Acquire sched_lock
+	jmpl	%l1, %o7
+	 nop
+	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
+	sethi	%hi(CURLWP), %l7
+
 	set	_C_LABEL(idle), %l1
 	jmpl	%l1, %g0
 	 nop
 
 	NOTREACHED
 
-#if 0
-	/*
-	 * XXX this funcltion is relocated so all calls from here has to be PIC.
-	 */
-	set	1f, %o0				! Main should never come back here
-	call	_C_LABEL(panic)
-	 nop
-	.data
-1:
-	.asciz	"mp_main() returned\r\n"
-	_ALIGN
-	.text
-#endif
 	.globl cpu_mp_startup_end
 cpu_mp_startup_end:
 #endif
@@ -6350,12 +6454,47 @@ ENTRY(openfirmware)
 	 restore	%o0, %g0, %o0
 
 /*
- * tlb_flush_pte(vaddr_t va, int ctx)
+ * void ofw_exit(cell_t args[])
+ */
+ENTRY(openfirmware_exit)
+	STACKFRAME(-CC64FSZ)			! Flush register windows
+	flushw
+
+	wrpr	%g0, PIL_HIGH, %pil		! Disable interrupts
+	set	romtba, %l5
+	wrpr	%l5, 0, %tba			! restore the ofw trap table
+
+	/* Arrange locked kernel stack as PROM stack */
+	sethi	%hi(CPUINFO_VA+CI_INITSTACK), %l5
+	LDPTR	[%l5 + %lo(CPUINFO_VA+CI_INITSTACK)], %l5
+ 	add	%l5, - CC64FSZ - 80, %l5	! via syscall(boot_me_up) or somesuch
+
+#ifdef _LP64
+	andn	%l5, 0x0f, %l5			! Needs to be 16-byte aligned
+	sub	%l5, BIAS, %l5			! and biased
+#endif
+	mov	%l5, %sp
+	flushw
+
+	set	romp, %l6
+	LDPTR	[%l6], %l6
+
+	mov     CTX_PRIMARY, %l3		! set context 0
+	stxa    %g0, [%l3] ASI_DMMU
+	membar	#Sync
+
+	wrpr	%g0, 0, %tl			! force trap level 0
+	call	%l6
+	 mov	%i0, %o0
+	NOTREACHED
+
+/*
+ * sp_tlb_flush_pte(vaddr_t va, int ctx)
  *
  * Flush tte from both IMMU and DMMU.
  */
 	.align 8
-ENTRY(tlb_flush_pte)
+ENTRY(sp_tlb_flush_pte)
 #ifdef DEBUG
 	set	DATA_START, %o4				! Forget any recent TLB misses
 	stx	%g0, [%o4]
@@ -6378,7 +6517,7 @@ ENTRY(tlb_flush_pte)
 	restore
 	.data
 1:
-	.asciz	"tlb_flush_pte:	demap ctx=%x va=%08x res=%x\r\n"
+	.asciz	"sp_tlb_flush_pte:	demap ctx=%x va=%08x res=%x\r\n"
 	_ALIGN
 	.text
 2:
@@ -6435,12 +6574,12 @@ ENTRY(tlb_flush_pte)
 #endif
 
 /*
- * tlb_flush_ctx(int ctx)
+ * sp_tlb_flush_ctx(int ctx)
  *
  * Flush entire context from both IMMU and DMMU.
  */
 	.align 8
-ENTRY(tlb_flush_ctx)
+ENTRY(sp_tlb_flush_ctx)
 #ifdef DEBUG
 	set	DATA_START, %o4				! Forget any recent TLB misses
 	stx	%g0, [%o4]
@@ -6453,7 +6592,7 @@ ENTRY(tlb_flush_ctx)
 	restore
 	.data
 1:
-	.asciz	"tlb_flush_ctx:	context flush of %d attempted\r\n"
+	.asciz	"sp_tlb_flush_ctx:	context flush of %d attempted\r\n"
 	_ALIGN
 	.text
 #endif
@@ -6465,7 +6604,7 @@ ENTRY(tlb_flush_ctx)
 	 nop
 	.data
 1:
-	.asciz	"tlb_flush_ctx:	attempted demap of NUCLEUS context\r\n"
+	.asciz	"sp_tlb_flush_ctx:	attempted demap of NUCLEUS context\r\n"
 	_ALIGN
 	.text
 2:
@@ -6512,12 +6651,12 @@ ENTRY(tlb_flush_ctx)
 #endif
 
 /*
- * tlb_flush_all(void)
+ * sp_tlb_flush_all(void)
  *
  * Flush all user TLB entries from both IMMU and DMMU.
  */
 	.align 8
-ENTRY(tlb_flush_all)
+ENTRY(sp_tlb_flush_all)
 #ifdef SPITFIRE
 	save	%sp, -CC64FSZ, %sp
 	rdpr	%pstate, %o3
@@ -7672,11 +7811,6 @@ Lcopyfault:
  */
 ENTRY(cpu_exit)
 	flushw				! We don't have anything else to run, so why not
-#ifdef DEBUG
-	save	%sp, -CC64FSZ, %sp
-	flushw
-	restore
-#endif
 	wrpr	%g0, PSTATE_KERN, %pstate ! Make sure we're on the right globals
 	mov	%o0, %l2		! save l arg for lwp_exit2() call
 
@@ -7694,25 +7828,16 @@ ENTRY(cpu_exit)
 	.text
 #endif
 	/*
-	 * Change pcb to idle u. area, i.e., set %sp to top of stack
-	 * and %psr to PSR_S|PSR_ET, and set cpcb to point to _idle_u.
-	 * Once we have left the old stack, we can call kmem_free to
-	 * destroy it.  Call it any sooner and the register windows
-	 * go bye-bye.
+	 * Change pcb to idle u. area, i.e., set %sp to top of stack and
+	 * %psr to PSR_S|PSR_ET, and set cpcb to point to curcpu()->ci_idle_u.
+	 * Once we have left the old stack, we can free it.
+	 * Free it any sooner and the register windows go bye-bye.
 	 */
-#if 0
-	XXXPETR
-	set	_C_LABEL(idle_u), %l1
-#endif
 	sethi	%hi(IDLE_U), %l1
 	LDPTR	[%l1 + %lo(IDLE_U)], %l1
 	sethi	%hi(CPCB), %l6
 
-	STPTR	%l1, [%l6 + %lo(CPCB)]	! cpcb = &idle_u
-#if 0
-	XXXPETR
-	set	_C_LABEL(idle_u) + USPACE - CC64FSZ, %o0	! set new %sp
-#endif
+	STPTR	%l1, [%l6 + %lo(CPCB)]	! cpcb = curcpu()->ci_idle_u
 	set	USPACE - CC64FSZ, %o0	! set new %sp
 	add	%l1, %o0, %o0
 #ifdef _LP64
@@ -7725,11 +7850,11 @@ ENTRY(cpu_exit)
 	rdpr	%ver, %l7
 	and	%l7, CWP, %l7
 	wrpr	%l7, 0, %cleanwin
-	dec	1, %l7					! NWINDOWS-1-1
+	dec	1, %l7				! NWINDOWS - 1 - 1
 	wrpr	%l7, %cansave
-	clr	%fp			! End of stack.
+	clr	%fp				! End of stack.
 #ifdef DEBUG
-	flushw						! DEBUG
+	flushw					! DEBUG
 	sethi	%hi(IDLE_U), %l6
 	LDPTR	[%l1 + %lo(IDLE_U)], %l6
 !	set	_C_LABEL(idle_u), %l6
@@ -7803,14 +7928,15 @@ ENTRY(cpu_exit)
  * When no processes are on the runq, switch
  * idles here waiting for something to come ready.
  * The registers are set up as noted above.
+ * We are running on this CPU's idle stack.
  */
-ENTRY(idle)
+ENTRY_NOPROFILE(idle)
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_unlock_idle)	! Release sched_lock
 #endif
 	 STPTR	%g0, [%l7 + %lo(CURLWP)] ! curlwp = NULL;
 1:					! spin reading _whichqs until nonzero
-	wrpr	%g0, PSTATE_INTR, %pstate		! Make sure interrupts are enabled
+	wrpr	%g0, PSTATE_INTR, %pstate ! Make sure interrupts are enabled
 	wrpr	%g0, 0, %pil		! (void) spl0();
 #ifdef NOTDEF_DEBUG
 	save	%sp, -CC64FSZ, %sp
@@ -7819,9 +7945,6 @@ ENTRY(idle)
 	mov	%g1, %o1
 	mov	%g2, %o2
 	mov	%g3, %o3
-	mov	%g5, %l5
-	mov	%g6, %l6
-	mov	%g7, %l7
 	call	_C_LABEL(prom_printf)
 	 mov	%g4, %o4
 	set	idlemsg1, %o0
@@ -7832,6 +7955,7 @@ ENTRY(idle)
 	LOCTOGLOB
 	restore
 #endif
+
 	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
 	brnz,pt	%o3, notidle		! Something to run
 	 nop
@@ -8011,7 +8135,6 @@ Lsw_scan:
 	sll	%o4, PTRSHFT+1, %o0
 	add	%o0, %o5, %o5
 	LDPTR	[%o5], %l3		! p = q->ph_link;
-! cpu_loadproc:		
 	cmp	%l3, %o5		! if (p == q)
 	be,pn	%icc, Lsw_panic_rq	!	panic("switch rq");
 	 EMPTY
@@ -8062,6 +8185,7 @@ cpu_loadproc:
 	 * p->p_cpu = curcpu();
 	 */
 	set	CPUINFO_VA, %o0
+	LDPTR	[%o0 + CI_SELF], %o0
 	STPTR	%o0, [%l3 + L_CPU]
 #endif
 	mov	LSONPROC, %o0			! l->l_stat = SONPROC
