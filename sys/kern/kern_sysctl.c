@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.69 2000/06/02 15:53:05 simonb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.70 2000/06/03 20:42:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -458,8 +458,10 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_CCPU:
 		return (sysctl_rdint(oldp, oldlenp, newp, ccpu));
 	case KERN_CP_TIME:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, cp_time,
-		    sizeof(cp_time)));
+		/* XXXSMP: WRONG! */
+		return (sysctl_rdstruct(oldp, oldlenp, newp,
+		    curcpu()->ci_schedstate.spc_cp_time,
+		    sizeof(curcpu()->ci_schedstate.spc_cp_time)));
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 	case KERN_SYSVIPC_INFO:
 		return (sysctl_sysvipc(name + 1, namelen - 1, oldp, oldlenp));

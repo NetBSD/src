@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.59 2000/06/02 15:53:04 simonb Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.60 2000/06/03 20:42:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -505,6 +505,15 @@ hardclock(frame)
 	 */
 	if (stathz == 0)
 		statclock(frame);
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * If we are not the primary CPU, we're not allowed to do
+	 * any more work.
+	 */
+	if (CPU_IS_PRIMARY(curcpu()) == 0)
+		return;
+#endif
 
 	/*
 	 * Increment the time-of-day.  The increment is normally just
@@ -1186,7 +1195,8 @@ statclock(frame)
 	struct gmonparam *g;
 	int i;
 #endif
-	static int schedclk;
+	struct cpu_info *ci = curcpu();
+	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	struct proc *p;
 
 	if (CLKF_USERMODE(frame)) {
@@ -1201,9 +1211,9 @@ statclock(frame)
 		 */
 		p->p_uticks++;
 		if (p->p_nice > NZERO)
-			cp_time[CP_NICE]++;
+			spc->spc_cp_time[CP_NICE]++;
 		else
-			cp_time[CP_USER]++;
+			spc->spc_cp_time[CP_USER]++;
 	} else {
 #ifdef GPROF
 		/*
@@ -1236,23 +1246,23 @@ statclock(frame)
 		if (CLKF_INTR(frame)) {
 			if (p != NULL)
 				p->p_iticks++;
-			cp_time[CP_INTR]++;
+			spc->spc_cp_time[CP_INTR]++;
 		} else if (p != NULL) {
 			p->p_sticks++;
-			cp_time[CP_SYS]++;
+			spc->spc_cp_time[CP_SYS]++;
 		} else
-			cp_time[CP_IDLE]++;
+			spc->spc_cp_time[CP_IDLE]++;
 	}
 	pscnt = psdiv;
 
 	if (p != NULL) {
 		++p->p_cpticks;
 		/*
-		 * If no schedclock is provided, call it here at ~~12-25 Hz,
-		 * ~~16 Hz is best
+		 * If no separate schedclock is provided, call it here 
+		 * at ~~12-25 Hz, ~~16 Hz is best
 		 */
-		if(schedhz == 0)
-			if ((++schedclk & 3) == 0)
+		if (schedhz == 0)
+			if ((++ci->ci_schedstate.spc_schedticks & 3) == 0)
 				schedclock(p);
 	}
 }
