@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1996/06/08 19:48:09 christos Exp $
+#	$NetBSD: Makefile,v 1.9 1996/10/18 06:17:36 thorpej Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/25/94
 
 PROG=	mail
@@ -11,9 +11,9 @@ LINKS=	${BINDIR}/mail ${BINDIR}/Mail ${BINDIR}/mail ${BINDIR}/mailx
 MLINKS=	mail.1 Mail.1 mail.1 mailx.1
 
 beforeinstall:
-	cd ${.CURDIR}/misc; install -c -o ${BINOWN} -g ${BINGRP} \
+	cd ${.CURDIR}/misc; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} \
 	    -m 444 ${SFILES} ${DESTDIR}/usr/share/misc
-	cd ${.CURDIR}/misc; install -c -o root -g wheel \
+	cd ${.CURDIR}/misc; ${INSTALL} -c -o root -g wheel \
 	    -m 644 ${EFILES} ${DESTDIR}/etc
 
 .if make(install)

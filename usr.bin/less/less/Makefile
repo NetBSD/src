@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.6 (Berkeley) 3/12/91
-#	$Id: Makefile,v 1.1.1.1 1996/01/22 03:14:17 mrg Exp $
+#	$Id: Makefile,v 1.2 1996/10/18 06:18:57 thorpej Exp $
 
 .include "../../Makefile.inc"
 
@@ -16,7 +16,7 @@ MLINKS=	less.1 more.1 less.1 page.1
 LINKS=	${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
 
 beforeinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/more.help \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/more.help \
 	    ${DESTDIR}/usr/share/misc
 
 .include <bsd.prog.mk>

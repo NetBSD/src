@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1996/05/05 12:17:15 oki Exp $
+#	$NetBSD: Makefile,v 1.2 1996/10/18 06:11:29 thorpej Exp $
 
 #G=-g
 #M=-m68020 -fall-bsr
@@ -31,7 +31,7 @@ installboot: sdboot
 .endif
 
 install: sdboot
-	install -c -o bin -g bin -m 444 sdboot ${DESTDIR}/usr/mdec
+	${INSTALL} -c -o bin -g bin -m 444 sdboot ${DESTDIR}/usr/mdec
 
 clean::
 	rm -f sdboot sdboot.o bootufs.o sdboot.x

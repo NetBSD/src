@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1996/10/15 06:50:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 1996/10/18 06:01:04 thorpej Exp $
 
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
@@ -30,14 +30,14 @@ copies:
 	@echo copies: ${LDIRS}
 	@-for i in ${LDIRS}; do \
 		rm -rf ${DESTDIR}/usr/include/$$i; \
-		install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 			${DESTDIR}/usr/include/$$i ; \
 	done
 	pax -rw -pa -L \
 	    `find ${LDIRS} -follow -type f -name '*.h' '!' -path \
 	    'netiso/xebec/*' -print` ${DESTDIR}/usr/include
 	rm -rf ${DESTDIR}/usr/include/machine
-	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+	${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 		${DESTDIR}/usr/include/machine
 	pax -rw -pa -s "|arch/${MACHINE}/include||" \
 	    arch/${MACHINE}/include/*.h \
@@ -45,7 +45,7 @@ copies:
 	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
 	if test ${MACHINE} != ${MACHINE_ARCH} -a \
 	    -d arch/${MACHINE_ARCH}/include; then \
-		install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
     	    	    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
 		pax -rw -pa -s "|arch/${MACHINE_ARCH}/include||" \
 		    arch/${MACHINE_ARCH}/include/*.h \

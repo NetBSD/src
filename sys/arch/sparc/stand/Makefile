@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1996/10/05 23:46:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 1996/10/18 06:08:53 thorpej Exp $
 
 SUBDIR= boot bootxx installboot
 
@@ -30,7 +30,7 @@ cleandir: _SUBDIRUSE
 BINDIR=/usr/mdec
 
 afterinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		${.CURDIR}/binstall.sh ${DESTDIR}${BINDIR}/binstall
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1995/10/07 21:51:42 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1996/10/18 06:04:08 thorpej Exp $
 
 ECHO	?=	echo
 
@@ -15,7 +15,7 @@ INCGRP	=	bin
 INCMODE	=	444
 
 ${INCDIR}/pcvt_ioctl.h: ${.CURDIR}/../../pcvt_ioctl.h
-	install ${COPY} -o ${INCOWN} -g ${INCGRP} -m ${INCMODE} \
+	${INSTALL} ${COPY} -o ${INCOWN} -g ${INCGRP} -m ${INCMODE} \
 	${.CURDIR}/../../pcvt_ioctl.h ${INCDIR}
 
 .depend:	${INCDIR}/pcvt_ioctl.h

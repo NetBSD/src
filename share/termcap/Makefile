@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.14 (Berkeley) 9/15/92
-#	$Id: Makefile,v 1.17 1995/07/03 23:31:17 jtc Exp $
+#	$Id: Makefile,v 1.18 1996/10/18 06:00:06 thorpej Exp $
 
 MAN=	termcap.5
 
@@ -10,11 +10,11 @@ termcap.db: termcap.src
 	cap_mkdb -f termcap ${.ALLSRC}
 
 realinstall:
-	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 termcap.db \
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 termcap.db \
 	     ${DESTDIR}${BINDIR}/misc/termcap.db
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/termcap.src \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/termcap.src \
 	     ${DESTDIR}${BINDIR}/misc/termcap
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/map3270 \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/map3270 \
 	     ${DESTDIR}${BINDIR}/misc/map3270
 
 

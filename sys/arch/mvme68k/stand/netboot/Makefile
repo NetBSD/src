@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1996/05/17 21:08:25 chuck Exp $
+#	$NetBSD: Makefile,v 1.3 1996/10/18 06:05:55 thorpej Exp $
 
 RELOC=0x3F0000
 
@@ -28,7 +28,7 @@ netboot.bin: netboot
 	dd ibs=32 skip=1 if=netboot of=$@
 
 install:
-	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	  netboot.bin ${DESTDIR}${MDEC_DIR}/netboot
 
 .include <bsd.prog.mk>
