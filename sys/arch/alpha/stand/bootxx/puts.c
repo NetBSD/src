@@ -1,4 +1,4 @@
-/*	$NetBSD: puts.c,v 1.3 1998/01/05 07:02:46 perry Exp $	*/
+/*	$NetBSD: puts.c,v 1.4 1998/10/15 00:56:56 ross Exp $	*/
 
 #include <lib/libsa/stand.h>
 
@@ -6,7 +6,7 @@
 
 void
 puts(s)
-	char *s;
+	const char *s;
 {
 
 	while (*s)
