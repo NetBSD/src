@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.7 2002/10/02 03:18:07 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.8 2002/10/02 03:25:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2002/10/02 03:18:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2002/10/02 03:25:46 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -68,7 +68,7 @@ struct cpu_softc {
 };
 
 CFATTACH_DECL(cpu_root, sizeof(struct cpu_softc),
-	cpu_match, cpu_attach, NULL, NULL);
+    cpu_match, cpu_attach, NULL, NULL);
 
 /* cf_flags bits */
 #define CFF_NOCACHE	0x00000001

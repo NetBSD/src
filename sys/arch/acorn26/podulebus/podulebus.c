@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.6 2002/10/02 02:21:21 thorpej Exp $ */
+/* $NetBSD: podulebus.c,v 1.7 2002/10/02 03:25:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.6 2002/10/02 02:21:21 thorpej Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.7 2002/10/02 03:25:47 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -75,7 +75,7 @@ struct podulebus_softc {
 };
 
 CFATTACH_DECL(podulebus, sizeof(struct podulebus_softc),
-	podulebus_match, podulebus_attach, NULL, NULL);
+    podulebus_match, podulebus_attach, NULL, NULL);
 
 /* ARGSUSED */
 static int

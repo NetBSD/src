@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.3 2002/10/02 02:21:21 thorpej Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.4 2002/10/02 03:25:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.3 2002/10/02 02:21:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.4 2002/10/02 03:25:47 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -74,7 +74,7 @@ static void eca_gotframe(void *);
 struct eca_softc *eca_fiqowner;
 
 CFATTACH_DECL(eca, sizeof(struct eca_softc),
-	eca_match, eca_attach, NULL, NULL);
+    eca_match, eca_attach, NULL, NULL);
 
 static int
 eca_match(struct device *parent, struct cfdata *cf, void *aux)

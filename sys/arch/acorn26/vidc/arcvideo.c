@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.5 2002/10/02 02:21:22 thorpej Exp $ */
+/* $NetBSD: arcvideo.c,v 1.6 2002/10/02 03:26:28 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.5 2002/10/02 02:21:22 thorpej Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.6 2002/10/02 03:26:28 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -98,7 +98,7 @@ struct arcvideo_softc {
 };
 
 CFATTACH_DECL(arcvideo, sizeof(struct arcvideo_softc),
-	arcvideo_match, arcvideo_attach, NULL, NULL);
+    arcvideo_match, arcvideo_attach, NULL, NULL);
 
 struct device *the_arcvideo;
 
