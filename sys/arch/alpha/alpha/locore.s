@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.97 2001/07/13 00:06:06 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.98 2001/08/29 20:17:08 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97 2001/07/13 00:06:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.98 2001/08/29 20:17:08 nathanw Exp $");
 
 #include "assym.h"
 
@@ -279,7 +279,7 @@ backtolocore1:
  *      a0	signal number
  *      a1	signal specific code
  *      a2	pointer to signal context frame (scp)
- *      a3	address of handler
+ *      pv	address of handler
  *      sp+0	saved hardware state
  *                      .
  *                      .
