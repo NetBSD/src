@@ -1,8 +1,8 @@
-/*	$NetBSD: reboot.c,v 1.6 1995/03/18 14:59:27 cgd Exp $	*/
+/*	$NetBSD: reboot.c,v 1.7 1995/03/18 16:11:54 cgd Exp $	*/
 
 /*
- * Copyright (c) 1980, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,123 +34,177 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980, 1986 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1986, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)reboot.c	5.11 (Berkeley) 2/27/91";
+static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: reboot.c,v 1.6 1995/03/18 14:59:27 cgd Exp $";
+static char rcsid[] = "$NetBSD: reboot.c,v 1.7 1995/03/18 16:11:54 cgd Exp $";
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/syslog.h>
-#include <sys/syscall.h>
 #include <sys/reboot.h>
-#include <sys/signal.h>
-#include <pwd.h>
-#include <stdio.h>
-#include <errno.h>
 #include <signal.h>
+#include <pwd.h>
+#include <errno.h>
+#include <syslog.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-void setalarm __P((int));
+void err __P((const char *fmt, ...));
+void usage __P((void));
+
+int dohalt;
 
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	int howto;
-	register i;
-	register qflag = 0;
-	int needlog = 1;
-	char *user, *getlogin();
+	register int i;
 	struct passwd *pw;
+	int ch, howto, lflag, nflag, qflag, sverrno;
+	char *p, *user;
 
-	openlog("reboot", 0, LOG_AUTH);
-	argc--, argv++;
-	howto = 0;
-	while (argc > 0) {
-		if (!strcmp(*argv, "-q"))
-			qflag++;
-		else if (!strcmp(*argv, "-n"))
+	if (!strcmp((p = rindex(*argv, '/')) ? p + 1 : *argv, "halt")) {
+		dohalt = 1;
+		howto = RB_HALT;
+	} else
+		howto = 0;
+	lflag = nflag = qflag = 0;
+	while ((ch = getopt(argc, argv, "lnq")) != EOF)
+		switch(ch) {
+		case 'l':		/* Undocumented; used by shutdown. */
+			lflag = 1;
+			break;
+		case 'n':
+			nflag = 1;
 			howto |= RB_NOSYNC;
-		else if (!strcmp(*argv, "-l"))
-			needlog = 0;
-		else {
-			fprintf(stderr,
-			    "usage: reboot [ -n ][ -q ]\n");
-			exit(1);
+			break;
+		case 'q':
+			qflag = 1;
+			break;
+		case '?':
+		default:
+			usage();
 		}
-		argc--, argv++;
+	argc -= optind;
+	argv += optind;
+
+	if (geteuid())
+		err("%s", strerror(EPERM));
+
+	if (qflag) {
+		reboot(howto);
+		err("%s", strerror(errno));
 	}
 
-	if (needlog) {
-		user = getlogin();
-		if (user == (char *)0 && (pw = getpwuid(getuid())))
-			user = pw->pw_name;
-		if (user == (char *)0)
-			user = "root";
-		syslog(LOG_CRIT, "rebooted by %s", user);
+	/* Log the reboot. */
+	if (!lflag)  {
+		if ((user = getlogin()) == NULL)
+			user = (pw = getpwuid(getuid())) ?
+			    pw->pw_name : "???";
+		if (dohalt) {
+			openlog("halt", 0, LOG_AUTH | LOG_CONS);
+			syslog(LOG_CRIT, "halted by %s", user);
+		} else {
+			openlog("reboot", 0, LOG_AUTH | LOG_CONS);
+			syslog(LOG_CRIT, "rebooted by %s", user);
+		}
 	}
+	logwtmp("~", "shutdown", "");
 
-	signal(SIGHUP, SIG_IGN);	/* for remote connections */
-	if (kill(1, SIGTSTP) == -1) {
-		fprintf(stderr, "reboot: can't idle init\n");
-		exit(1);
-	}
-	sleep(1);
-	(void) kill(-1, SIGTERM);	/* one chance to catch it */
-	sleep(5);
+	/*
+	 * Do a sync early on, so disks start transfers while we're off
+	 * killing processes.  Don't worry about writes done before the
+	 * processes die, the reboot system call syncs the disks.
+	 */
+	if (!nflag)
+		sync();
 
-	if (!qflag) for (i = 1; ; i++) {
+	/* Just stop init -- if we fail, we'll restart it. */
+	if (kill(1, SIGTSTP) == -1)
+		err("SIGTSTP init: %s", strerror(errno));
+
+	/* Ignore the SIGHUP we get when our parent shell dies. */
+	(void)signal(SIGHUP, SIG_IGN);
+
+	/* Send a SIGTERM first, a chance to save the buffers. */
+	if (kill(-1, SIGTERM) == -1)
+		err("SIGTERM processes: %s", strerror(errno));
+
+	/*
+	 * After the processes receive the signal, start the rest of the
+	 * buffers on their way.  Wait 5 seconds between the SIGTERM and
+	 * the SIGKILL to give everybody a chance.
+	 */
+	sleep(2);
+	if (!nflag)
+		sync();
+	sleep(3);
+
+	for (i = 1;; ++i) {
 		if (kill(-1, SIGKILL) == -1) {
-			extern int errno;
-
 			if (errno == ESRCH)
 				break;
-
-			perror("reboot: kill");
-			kill(1, SIGHUP);
-			exit(1);
+			goto restart;
 		}
 		if (i > 5) {
-			fprintf(stderr,
-			    "CAUTION: some process(es) wouldn't die\n");
+			(void)fprintf(stderr,
+			    "WARNING: some process(es) wouldn't die\n");
 			break;
 		}
-		setalarm(2 * i);
-		pause();
+		(void)sleep(2 * i);
 	}
 
-	if (!qflag && (howto & RB_NOSYNC) == 0) {
-		logwtmp("~", "shutdown", "");
-		sync();
-		setalarm(5);
-		pause();
-	}
-	syscall(SYS_reboot, howto);
-	perror("reboot");
-	kill(1, SIGHUP);
+	reboot(howto);
+	/* FALLTHROUGH */
+
+restart:
+	sverrno = errno;
+	err("%s%s", kill(1, SIGHUP) == -1 ? "(can't restart init): " : "",
+	    strerror(sverrno));
+	/* NOTREACHED */
+}
+
+void
+usage()
+{
+	(void)fprintf(stderr, "usage: %s [-nq]\n", dohalt ? "halt" : "reboot");
 	exit(1);
 }
 
-void
-dingdong()
-{
-	/* RRRIIINNNGGG RRRIIINNNGGG */
-}
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
 void
-setalarm(n)
-	int n;
+#if __STDC__
+err(const char *fmt, ...)
+#else
+err(fmt, va_alist)
+	char *fmt;
+        va_dcl
+#endif
 {
-	signal(SIGALRM, dingdong);
-	alarm(n);
+	va_list ap;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	(void)fprintf(stderr, "%s: ", dohalt ? "halt" : "reboot");
+	(void)vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	(void)fprintf(stderr, "\n");
+	exit(1);
+	/* NOTREACHED */
 }
