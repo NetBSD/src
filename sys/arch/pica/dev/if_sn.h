@@ -1,3 +1,5 @@
+/*	$NetBSD: if_sn.h,v 1.2 1996/07/16 23:24:15 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
  * You may use, copy, and modify this program so long as you retain the
