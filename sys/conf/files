@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.188.2.5 1998/07/02 08:19:36 bouyer Exp $
+#	$NetBSD: files,v 1.188.2.6 1998/07/27 19:02:47 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -20,6 +20,7 @@ defopt	opt_ntp.h	PPS_SYNC NTP
 
 defopt	opt_nfs_boot.h	NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
 			NFS_BOOT_GATEWAY
+			NFS_BOOT_TCP NFS_BOOT_OPTIONS NFS_BOOT_RWSIZE
 defopt	NFSSERVER
 
 defopt	opt_malloclog.h	MALLOCLOG MALLOCLOGSIZE
@@ -35,6 +36,20 @@ defopt	COMPAT_OSF1
 defopt	COMPAT_SUNOS
 defopt	COMPAT_SVR4
 defopt	COMPAT_ULTRIX
+defopt  opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
+				COMPAT_13 COMPAT_NOMID
+
+# networking protocols
+defopt	INET
+defopt	opt_atalk.h	NETATALK
+defopt	opt_ns.h	NS	 	# Xerox Network Services (XNS)
+defopt	opt_ns.h	NSIP	 	# XNS tunneled over IP
+defopt	opt_iso.h	ISO TPIP	# ISO network stack
+defopt	EON				# ISO clnp over IP
+defopt	CCITT				# 
+defopt	HDLC				# CCITT over HDLC
+defopt	LLC				# CCITT over LLC2 (also IEEE LLC?)
+defopt	NATM				# "native" ATM protocols
 
 # networking options
 defopt	GATEWAY
@@ -61,12 +76,17 @@ deffs	fs_nfs.h NFS
 deffs	NULLFS FDESC PORTAL UMAPFS PROCFS
 deffs	fs_kernfs.h KERNFS		# XXX
 deffs	fs_union.h UNION
+deffs	fs_cfs.h CFS
 
 # file system options
 defopt	QUOTA
 
 # Not entirely MI, but present on multiple arch's
 defopt	opt_mbr.h	COMPAT_386BSD_MBRPART
+
+# debugging options
+defopt	DDB
+defopt	opt_ddbparam.h	DDB_ONPANIC DDB_HISTORY_SIZE
 
 # device classes
 devclass disk
@@ -150,6 +170,7 @@ file	dev/ic/aha.c			aha
 # Qlogic ISP 10x0 SCSI Controllers
 device	isp: scsi
 file	dev/ic/isp.c			isp
+file	dev/ic/isp_netbsd.c		isp
 
 # UltraStor SCSI controllers
 device	uha: scsi
@@ -165,7 +186,11 @@ file	dev/ic/lemac.c			lc
 
 # LANCE and PCnet Ethernet controllers
 device	le: arp, ether, ifnet
-file	dev/ic/am7990.c			le
+define le24
+define le32
+file	dev/ic/am7990.c			le24
+file	dev/ic/am79900.c		le32
+file	dev/ic/lance.c			le24 | le32
 
 # 8390-family Ethernet controllers
 define	dp8390nic
@@ -191,6 +216,10 @@ file	dev/ic/midway.c			en
 # NCR 53x9x or Emulex ESP SCSI Controller
 define	ncr53c9x
 file	dev/ic/ncr53c9x.c		ncr53c9x
+
+# Hitachi HD64570 serial controller
+define hd64570
+file	dev/ic/hd64570.c		hd64570
 
 # Intel 82586 Ethernet Controller
 define	i82586
@@ -269,11 +298,23 @@ define	isabus { }			# ISA attachment
 define	eisabus { }			# EISA attachment
 define	pcibus {[bus = -1]}		# PCI attachment
 define	tcbus { }			# TurboChannel attachment
+define	usbus { }			# USB attachment
+
+# We need the USB bus controllers here so different busses can
+# use them in an 'attach-with'.
+# UHCI USB controller
+device	uhci: usbus
+file	dev/usb/uhci.c			uhci
+
+# OHCI USB controller
+device	ohci: usbus
+file	dev/usb/ohci.c			ohci
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk
 pseudo-device ccd: disk
 pseudo-device md: disk
+pseudo-device vcfs
 
 pseudo-device pty: tty
 pseudo-device tb: tty
@@ -292,6 +333,13 @@ file adosfs/adlookup.c			adosfs
 file adosfs/adutil.c			adosfs
 file adosfs/advfsops.c			adosfs
 file adosfs/advnops.c			adosfs
+file cfs/cfs_namecache.c		cfs
+file cfs/cfs_nbsd.c			cfs
+file cfs/cfs_psdev.c			vcfs			needs-count
+file cfs/cfs_subr.c			cfs
+file cfs/cfs_venus.c			cfs
+file cfs/cfs_vfsops.c			cfs
+file cfs/cfs_vnodeops.c			cfs
 file ddb/db_access.c			ddb | kgdb
 file ddb/db_aout.c			ddb
 file ddb/db_break.c			ddb
@@ -438,9 +486,9 @@ file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter | ppp
 file net/bsd-comp.c			ppp & ppp_bsdcomp
 file net/if.c
-file net/if_arcsubr.c			arc			needs-flag
-file net/if_atmsubr.c			atm			needs-flag
-file net/if_ethersubr.c			ether | fddi		needs-flag
+file net/if_arcsubr.c			arc
+file net/if_atmsubr.c			atm
+file net/if_ethersubr.c			ether | fddi
 file net/if_fddisubr.c			fddi
 file net/if_hippisubr.c                 hippi                   needs-flag
 file net/if_loop.c			loop			needs-count
