@@ -1,4 +1,4 @@
-/*	$NetBSD: vr4122ip.c,v 1.1 2002/02/11 09:21:47 takemura Exp $	*/
+/*	$NetBSD: vr4122ip.c,v 1.2 2002/02/11 11:44:36 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -73,16 +73,16 @@ static const struct vrip_unit vr4122ip_units[] = {
 			    VR4122_DSIUINT_REG_W,VR4122_MDSIUINT_REG_W	},
 	[VRIP_UNIT_PCIU]= { "pciu",
 			    { VRIP_INTR_PCI,	},
-			    CMUMASK_PCIU,
-			    PCIINT_REG_W,	MPCIINT_REG_W	},
+			    VR4122_CMUMSKPCIU,
+			    VR4122_PCIINT_REG_W,VR4122_MPCIINT_REG_W	},
 	[VRIP_UNIT_SCU] = { "scu",
 			    { VRIP_INTR_SCU,	},
 			    0,
-			    SCUINT_REG_W,	MSCUINT_REG_W	},
+			    VR4122_SCUINT_REG_W,VR4122_MSCUINT_REG_W	},
 	[VRIP_UNIT_CSI] = { "csi",
 			    { VRIP_INTR_CSI,	},
-			    CMUMASK_CSI,
-			    CSIINT_REG_W,	MCSIINT_REG_W	},
+			    VR4122_CMUMSKCSI,
+			    VR4122_CSIINT_REG_W,VR4122_MCSIINT_REG_W	},
 	[VRIP_UNIT_BCU] = { "bcu",
 			    { VRIP_INTR_BCU,	},
 			    0,
