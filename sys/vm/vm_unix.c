@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_unix.c 1.1 89/11/07
  *	from: @(#)vm_unix.c	7.2 (Berkeley) 4/20/91
- *	$Id: vm_unix.c,v 1.4 1993/08/01 19:26:43 mycroft Exp $
+ *	$Id: vm_unix.c,v 1.5 1993/09/04 01:29:42 cgd Exp $
  */
 
 /*
@@ -109,12 +109,12 @@ grow(p, sp)
 	/*
 	 * For common case of already allocated (from trap).
 	 */
-	if (sp >= (unsigned)vm->vm_maxsaddr + MAXSSIZ - ctob(vm->vm_ssize))
+	if (sp >= USRSTACK - ctob(vm->vm_ssize))
 		return (1);
 	/*
 	 * Really need to check vs limit and increment stack size if ok.
 	 */
-	si = clrnd(btoc(vm->vm_maxsaddr + MAXSSIZ - sp) - vm->vm_ssize);
+	si = clrnd(btoc(USRSTACK-sp) - vm->vm_ssize);
 	if (vm->vm_ssize + si > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
 		return (0);
 	vm->vm_ssize += si;
