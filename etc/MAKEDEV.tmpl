@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.40 2005/03/12 10:26:45 jdolecek Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.41 2005/04/01 21:07:01 peter Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -435,7 +435,7 @@ all)
 	makedev vnd0 vnd1 vnd2 vnd3
 	makedev bpf
 	makedev tun0 tun1 tun2 tun3
-	makedev ipl crypto random systrace
+	makedev ipl pf crypto random systrace
 	makedev lkm clockctl
 	makedev local
 	makedev atabus0 atabus1 atabus2 atabus3
