@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.32 2004/08/12 03:39:11 mycroft Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.33 2004/09/25 10:15:36 tsutsui Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.32 2004/08/12 03:39:11 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.33 2004/09/25 10:15:36 tsutsui Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -2027,9 +2027,6 @@ dophase:
 		SPC_ASSERT(sc->sc_nexus != NULL);
 		acb = sc->sc_nexus;
 
-#ifdef NO_MANUAL_XFER
-		spc_datain_pio(sc, &acb->target_stat, 1);
-#else
 		if ((bus_space_read_1(iot, ioh, PSNS) & PSNS_ATN) != 0)
 			bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ATN);
 		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) == 0)
@@ -2040,7 +2037,6 @@ dophase:
 		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
 			continue;	/* XXX needs timeout */
 		bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
-#endif
 
 		SPC_MISC(("target_stat=0x%02x  ", acb->target_stat));
 		sc->sc_prevphase = PH_STAT;
