@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.29 2000/10/30 20:57:00 jdolecek Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.30 2001/01/11 01:33:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.29 2000/10/30 20:57:00 jdolecek Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.30 2001/01/11 01:33:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -463,7 +463,7 @@ mount_nfs(argc, argv)
 			(void) close(STDERR_FILENO);
 			(void) chdir("/");
 		}
-		openlog("mount_nfs:", LOG_PID, LOG_DAEMON);
+		openlog("mount_nfs", LOG_PID, LOG_DAEMON);
 		nfssvc_flag = NFSSVC_MNTD;
 		ncd.ncd_dirp = name;
 		while (nfssvc(nfssvc_flag, (caddr_t)&ncd) < 0) {
