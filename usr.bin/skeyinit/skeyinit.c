@@ -8,16 +8,19 @@
  *
  * S/KEY initialization and seed update
  *
- * $Id: skeyinit.c,v 1.2 1994/05/29 22:38:39 deraadt Exp $
+ * $Id: skeyinit.c,v 1.3 1994/05/30 03:54:37 cgd Exp $
  */
+
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include <stdio.h>
 #include <string.h>
 #include <pwd.h>
 #include <unistd.h>
 #include <time.h>
-#include <sys/time.h>
-#include <sys/resource.h>
+
 #include "skey.h"
 
 #define NAMELEN 2
