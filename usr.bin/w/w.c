@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.44 2001/01/05 04:54:53 mjl Exp $	*/
+/*	$NetBSD: w.c,v 1.45 2001/01/05 04:59:21 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.44 2001/01/05 04:54:53 mjl Exp $");
+__RCSID("$NetBSD: w.c,v 1.45 2001/01/05 04:59:21 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,17 +116,14 @@ struct	entry {
 #endif
 } *ep, *ehead = NULL, **nextp = &ehead;
 
-static void	 pr_args __P((struct kinfo_proc2 *));
-static void	 pr_header __P((time_t *, int));
-static struct stat
-		*ttystat __P((char *, size_t));
-static void	 usage __P((int));
-int	main __P((int, char **));
+static void	 pr_args(struct kinfo_proc2 *);
+static void	 pr_header(time_t *, int);
+static struct stat *ttystat(char *, size_t);
+static void	 usage(int);
+int	main(int, char **);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	extern char *__progname;
 	struct kinfo_proc2 *kp;
@@ -385,8 +382,7 @@ main(argc, argv)
 }
 
 static void
-pr_args(kp)
-	struct kinfo_proc2 *kp;
+pr_args(struct kinfo_proc2 *kp)
 {
 	char **argv;
 	int left;
@@ -408,9 +404,7 @@ nothing:
 }
 
 static void
-pr_header(nowp, nusers)
-	time_t *nowp;
-	int nusers;
+pr_header(time_t *nowp, int nusers)
 {
 	double avenrun[3];
 	time_t uptime;
@@ -483,9 +477,7 @@ pr_header(nowp, nusers)
 }
 
 static struct stat *
-ttystat(line, sz)
-	char *line;
-	size_t sz;
+ttystat(char *line, size_t sz)
 {
 	static struct stat sb;
 	char ttybuf[MAXPATHLEN];
@@ -497,8 +489,7 @@ ttystat(line, sz)
 }
 
 static void
-usage(wcmd)
-	int wcmd;
+usage(int wcmd)
 {
 	if (wcmd)
 		(void)fprintf(stderr,
