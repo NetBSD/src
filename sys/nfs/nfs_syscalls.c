@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.43 2000/09/19 17:04:51 bjh21 Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.44 2000/09/19 22:14:42 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -620,8 +620,9 @@ nfssvc_nfsd(nsd, argp, p)
 			 */
 			lockcount = p->p_locks;
 #endif
-			if (writes_todo || (nd->nd_procnum == NFSPROC_WRITE &&
-			    nfsrvw_procrastinate > 0 && !notstarted))
+			if (writes_todo || (!(nd->nd_flag & ND_NFSV3) &&
+			     nd->nd_procnum == NFSPROC_WRITE &&
+			     nfsrvw_procrastinate > 0 && !notstarted))
 			    error = nfsrv_writegather(&nd, slp,
 				nfsd->nfsd_procp, &mreq);
 			else
