@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.15 2004/03/24 17:07:12 ws Exp $ */
+/*	$NetBSD: ffs_inode.c,v 1.16 2004/03/27 12:59:18 dsl Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ffs_inode.c,v 1.15 2004/03/24 17:07:12 ws Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.16 2004/03/27 12:59:18 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,7 +101,7 @@ fs_read_sblock(char *superblock)
                 }
 		if (!is_ufs2 && sblock_try[i] == SBLOCK_UFS2)
 			continue;
-		if (sblock->fs_old_flags & FS_FLAGS_UPDATED
+		if ((is_ufs2 || sblock->fs_old_flags & FS_FLAGS_UPDATED)
 		    && sblock_try[i] != sblock->fs_sblockloc)
 			continue;
 		break;
