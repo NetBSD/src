@@ -1,4 +1,4 @@
-/*	$NetBSD: frodovar.h,v 1.2 1997/07/17 03:16:43 jtk Exp $	*/
+/*	$NetBSD: frodovar.h,v 1.3 1997/07/19 11:19:05 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -40,6 +40,7 @@ struct frodo_attach_args {
 	int	fa_line;	/* Frodo interrupt line */
 };
 
+#include "locators.h"
 #define	frodocf_offset		cf_loc[FRODOCF_OFFSET]
 #define	FRODO_UNKNOWN_OFFSET	FRODOCF_OFFSET_DEFAULT
 
