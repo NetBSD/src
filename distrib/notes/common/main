@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.84 2000/11/01 03:42:18 tv Exp $
+.\"	$NetBSD: main,v 1.85 2000/11/08 23:12:17 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -196,8 +196,8 @@ audio, UDMA/66 support for ATA drives, USB, and wireless networking.
 .Ss2 Networking
 .
 .(bullet
-Addition of IP version 6 and IPsec to the networking stack, from the
-KAME project.
+Addition of IP version 6 (IPv6) and IPsec to the networking stack,
+from the KAME project.
 This includes addition of kernel code for IPv6/IPsec,
 IPv4/v6 dual-stack user applications and supporting libraries.
 Due to this, shlib major version for
@@ -212,10 +212,9 @@ The KAME IPv6 part includes result from unified-ipv6 effort.
 Significant Fast file system (FFS) performance enhancements via
 integration of Kirk McKusick's soft updates and trickle sync code.
 .It
-Read-only support for the
 .Tn "Windows NT"
 .Sq NTFS
-file system.
+file system support added (read-only at this stage).
 .It
 Support for the
 .Tn Linux
@@ -232,14 +231,13 @@ file system
 .Pq Pa /
 on a RAID set.
 .It
-Support for the
 .Tn Microsoft
-Joliet extensions to the ISO9660 CD file system.
+Joliet extensions to the ISO9660 CD file system supported.
 .It
 The file system vnode locking mechanisms have been improved,
 thus resolving a source of many panics in the past.
 .It
-NFS (and RPC) are supported over IPv6.
+NFS (and RPC) over IPv6 is now supported.
 .It
 The NFS locking protocol (implemented with
 .Xr rpc.lockd 8 )
@@ -251,7 +249,8 @@ now works.
 .(bullet
 Strong cryptographic libraries and applications integrated,
 including the AES cipher Rijndael, the OpenSSL library, more
-complete Kerberos IV and Kerberos V support, and an SSH client.
+complete Kerberos IV and Kerberos V support, and an SSH server
+and client.
 .It
 Provide
 .Xr sysctl 3
@@ -264,7 +263,7 @@ and remove the necessity to run setgid kmem (thus improving system
 security).
 .It
 Disable various services by default, and set the default options for
-disable daemons to a higher level of logging.
+disabled daemons to a higher level of logging.
 .bullet)
 .
 .Ss2 System administration and user tools
@@ -278,19 +277,19 @@ mechanism, with separate control scripts for each service, and
 appropriate dependency ordering provided by
 .Xr rcorder 8 .
 .It
-Provide
 .Xr postfix 1
-as an alternate mail transport agent to
+provided as alternative mail transport agent to
 .Xr sendmail 8 .
 .It
-Addition of user management tools
+User management tools
 .Xr useradd 8 ,
 .Xr usermod 8 ,
 .Xr userdel 8 ,
 .Xr groupadd 8 ,
 .Xr groupmod 8 ,
 and
-.Xr groupdel 8 .
+.Xr groupdel 8
+added to the system.
 .It
 Incorporation of a login class capability database
 .Pq Pa /etc/login.conf
