@@ -1,6 +1,9 @@
-$NetBSD: TODO,v 1.8 2000/03/04 07:09:09 nisimura Exp $
+$NetBSD: TODO,v 1.9 2000/04/15 21:57:37 soda Exp $
 
 To do list (not in any particular order).
+
+    o	XXX sudden hang up in a few minutes or dozens of minutes.
+	2000 Mar 17 -current is OK. Mar 29 is NG.
 
     o	Move the RO and WIRED attribute from the pte to the pv table.
 	This saves four instructions in the tlb miss handler.
@@ -39,6 +42,50 @@ To do list (not in any particular order).
 	-   try to interporate HZ; may be possible for R4030/R4230 system
 	    or 'hardclock() by R4000' system.  Clock resolution of 100Hz
 	    without any interporation is substandard
+
+    o	overblocking on interrupt handler, and related problems
+
+	-   SR_INT_IE should be enabled before calling hardclock().
+	    Since this is not done currently, spllowersoftclock()
+	    on hardclock() doesn't have effect, and softclock() is
+	    handled with all interrupt disabled in this case.
+		-> overblocking, possibly causes missing hardclock()
+
+	-   MIPS3_CLKF_BASEPRI() doesn't work correctly,
+	    when MIPS_INT_MASK_5 (== MIPS_INT_MASK_CLOCK) is disabled.
+		-> micro optimization on hardclock() doesn't work.
+		   but currently this may make hardclock() latency better
+		   due to above SR_INT_IE problem.
+	    s/MIPS_INT_MASK/MIPS3_INT_MASK/ makes this work, although tricky.
+
+	-   if (ipending & INT_MASK_REAL_DEV) == 0,
+	    softnet() and softclock() are handled with all interrupt disabled.
+		-> overblocking, possibly causes missing hardclock()
+
+	-   softclock() is handled with softnet() disabled.
+		-> slightly overblocking
+
+	-   `netisr' handling in netintr() implies potential race condition.
+	    `netisr' access should be protected by splnet().
+	    currently this is not real problem due to above overblocking.
+
+	    `ssir' handling on many mips ports has same problem.
+	    It should be protected by splnet() or splserial() or splhigh()
+	    (depends on the highest interrupt level which sets `ssir').
+	    Since `ssir' is accessed not only by setsoftnet() but also
+	    by setsoft(), setsoftnet() should protect `ssir' by splserial()
+	    or something. (i.e. priority level which setsoft() will be called)
+	    Probably, it is better to split `ssir' variable for each
+	    priority level.
+	    also, _clearsoftintr() should be called before `ssir' access.
+	    currently this is not real problem due to above overblocking.
+
+    o	it is better to always disable MIPS_INT_MASK_CLOCK.
+	those are the points which should be fixed:
+	mips_idle: li t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	machdep.c: curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE;
+	spl0()
+	splnone()
 
     o	fix kernel start address
 
