@@ -1,0 +1,250 @@
+.\" $NetBSD: xcu5,v 1.1.1.1 1999/06/01 02:36:07 jwise Exp $
+.de xopen
+.Tn X/Open
+..
+.de gnu
+.Tn GNU
+..
+.Sh Chapter 3 - Utilities
+Note that most (all?) of the utilities provided with NetBSD do not provide
+internationalized diagnostic messages.  This is not a violation of the
+.xopen
+standards, as
+.St -xbd5
+does not require that any locale other than the
+.Tn POSIX
+locale be available, but it is an area where much improvement is possible.
+.
+.\" ---------------------------------------------------------------------------------
+.\"  Macros for Chapter 3
+.\"
+.\" Common text for the various SCCS utilities
+.de sccs
+.Nm \\$1
+is part of the
+.Tn SCCS
+suite of tools which are not
+provided with
+.Nx ,
+or in pkgsrc.
+.Tn RCS ,
+provided with
+.Nx ,
+and
+.Tn CVS ,
+provided in pkgsrc, provide alternate forms of version
+control.
+..
+.\" ---------------------------------------------------------------------------------
+.\"
+.\" Text indicating a utility has not been checked yet
+.\"
+.de unfinished
+.Em Unfinished
+..
+.\" ---------------------------------------------------------------------------------
+.\"
+.\" Text indicating that a utility is not provided.
+.\"
+.de notprovided
+The
+.Nm \\$1
+utility is not provided by
+.Nx
+or in pkgsrc.
+..
+.\" ---------------------------------------------------------------------------------
+.\"
+.\" Text indicating that a utility is fully compliant with XCU5
+.\"
+.de compliant
+.Nm \\$1
+as provided by
+.Nx
+is fully compliant with
+.St -xcu5 .
+..
+.\" ---------------------------------------------------------------------------------
+.\"
+.\" Text indicating that a utility is not compliant with XCU5
+.\"
+.de notcompliant
+.Nm \\$1
+as provided by
+.Nx
+is not compliant with
+.St -xcu5 .
+..
+.\" ---------------------------------------------------------------------------------
+.\"
+.\" Text indicating that a utility is one of the utilities from item 1c. on page 47
+.\" and is provided as such
+.\"
+.de builtin
+Under
+.Nx ,
+.Nm \\$1
+is provided as a builtin utility by the
+.Nx
+standard shell,
+.Nm /bin/sh ,
+and is located for execution in the manner described on page 47
+of
+.St -xcu5 .
+..
+.\" ---------------------------------------------------------------------------------
+.\"
+.\" Beginning of Chapter 3
+.\"
+.\" ---- admin ----
+.Ss admin - create and administer SCCS files (DEVELOPMENT)
+.notprovided admin
+.Pp
+.sccs admin
+.
+.Ss alias - define or display aliases
+.compliant alias
+.Pp
+.builtin alias
+.
+.\" ---- ar ----
+.Ss ar - create and maintain library archives
+.Nx
+uses the
+.gnu
+version of
+.Nm ar ,
+which is not compliant with
+.St -xcu5 .
+.Pp
+In particular,
+.gnu
+.Nm ar
+assumes that all
+.Ar file
+operands are object files.  In addition, the
+.Fl r
+and
+.Fl q
+flags are synonymous, and the
+.Fl C
+and
+.Fl T
+flags of
+.xopen
+.Nm ar
+are not implemented.
+.Pp
+The
+.Fl o , S ,
+and
+.Fl V
+flags of
+.gnu
+.Nm ar
+are compatible extensions to the
+.xopen
+specification.
+.
+.\" ---- asa ----
+.Ss asa - interpret carriage-control characters
+.compliant asa
+.
+.\" ---- at ----
+.Ss at - execute commands at a later time
+.notcompliant at
+.Pp
+In particular,
+.Nx
+.Nm at
+does not implement the
+.Fl t
+flag of
+.xopen
+.Nm at ,
+and the access control files of
+.Nx at
+are stored in
+.Pa /var/at
+rather than
+.Pa /usr/lib/cron .
+.Nx
+.Nm at
+also uses a different output format at job submission time and
+when invoked with the
+.Fl l
+flag than that specified by
+.St -xcu5 .
+.Pp
+In addition, the time grammar of
+.Nx
+.Nm at
+is not completely compatible with that of
+.xopen
+.Nm at ,
+including lack of support for timezone specifications.
+As a compatible extension to the
+.xopen
+specification time grammar for
+.Nm at ,
+.Nx
+.Nm at
+allows the use of
+.Li teatime ,
+meaning 4:00 PM,
+in place of
+.Li noon
+or
+.Li midnight .
+.
+.\" ---- awk ----
+.Ss awk - pattern scanning and processing language
+.\" documentation of awk will wait for a decision to be reached
+.\" whether to stay with gawk 2.x, import gawk 3.x, or move
+.\" to a later gawk release
+.unfinished
+.
+.\" ---- basename ----
+.Ss basename - return non-directory portion of a pathname
+.unfinished
+.
+.\" ---- batch ----
+.Ss batch - execute commands when the system load permits
+.unfinished
+.
+.\" ---- bc ----
+.Ss bc - arbitrary precision arithmetic language
+.unfinished
+.
+.\" ---- bg ----
+.Ss bg - run jobs in the background
+.unfinished
+.
+.\" ---- c89 ----
+.Ss c89 - compile standard C programs
+.unfinished
+.
+.\" ---- cal ----
+.Ss cal - print a calendar
+.unfinished
+.
+.\" ---- calendar ----
+.Ss calendar - reminder service (LEGACY)
+.unfinished
+.
+.\" ---- cancel ----
+.Ss cancel - cancel printer requests (LEGACY)
+.unfinished
+.
+.\" ---- cat ----
+.Ss cat - concatenate and print files
+.unfinished
+.
+.\" ---- cc ----
+.Ss cc - a C language compilation system
+.unfinished
+.
+.\" ---- cd ----
+.Ss cd - change the working directory
+.unfinished
+.
