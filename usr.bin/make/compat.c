@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.45 2003/07/14 18:19:11 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.46 2003/08/01 00:39:52 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.45 2003/07/14 18:19:11 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.46 2003/08/01 00:39:52 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.45 2003/07/14 18:19:11 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.46 2003/08/01 00:39:52 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -259,8 +259,12 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	 * -e flag as well as -c if it's supposed to exit when it hits an
 	 * error.
 	 */
-	static const char *shargv[4] = { _PATH_BSHELL };
+	static const char *shargv[4];
 
+	shargv[0] = shellPath;
+	/*
+	 * The following work for any of the builtin shell specs.
+	 */
 	if (DEBUG(SHELL))
 		shargv[1] = (errCheck ? "-exc" : "-xc");
 	else
@@ -549,6 +553,8 @@ Compat_Run(Lst targs)
     const char    *cp;	    /* Pointer to string of shell meta-characters */
     GNode   	  *gn = NULL;/* Current root target */
     int	    	  errors;   /* Number of targets not remade due to errors */
+
+    Shell_Init();		/* setup default shell */
 
     if (signal(SIGINT, SIG_IGN) != SIG_IGN) {
 	signal(SIGINT, CompatInterrupt);
