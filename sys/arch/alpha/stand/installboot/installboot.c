@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.17 1999/09/19 03:19:00 ross Exp $ */
+/* $NetBSD: installboot.c,v 1.18 1999/09/19 04:54:57 ross Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -113,7 +113,9 @@ main(int argc, char **argv)
 			nowrite = 1;
 			break;
 		case 's':
-			/* Magically arrange for the Sun checksum overlay */
+			/*
+			 * Sun checksum and magic number overlay
+			 */
 			if (clearflag)
 				goto argdeath;
 			sunflag = 1;
