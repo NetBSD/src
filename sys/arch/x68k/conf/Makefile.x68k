@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.46 2000/11/13 14:47:14 minoura Exp $
+#	$NetBSD: Makefile.x68k,v 1.47 2000/12/15 07:16:36 itohy Exp $
 
 # Makefile for NetBSD
 #
@@ -54,7 +54,7 @@ M68060!=	( echo '\#include "opt_m680x0.h"';	\
 		  echo '\#else';			\
 		  echo '0';				\
 		  echo '\#endif' )			\
-			| ${CPP} | grep -v '^\#'
+			| ${CPP} | sed -e '/^\#/d' -e '/^$$/d'
 .if ${M68060}
 CMACHFLAGS=	-m68020-60 -Wa,-m68030 -Wa,-m68851
 .else
