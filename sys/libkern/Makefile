@@ -1,35 +1,24 @@
-#
-#	$Id: Makefile,v 1.3 1993/09/02 01:50:22 jtc Exp $
-#
+#	$Id: Makefile,v 1.4 1993/09/03 19:05:59 jtc Exp $
 
-.PATH: ${.CURDIR}/${MACHINE}
-AINC+=	-I${.CURDIR}/${MACHINE}
+LIB=	kern
+NOPROFILE=
+
+.if exists (${.CURDIR}/${MACHINE}/Makefile.inc)
+.PATH:	${.CURDIR}/${MACHINE}
+.include "${.CURDIR}/${MACHINE}/Makefile.inc"
+.endif
+
+.if defined(ARCH) && !empty(ARCH)
+.if exists (${.CURDIR}/${ARCH}/Makefile.inc)
+.PATH:	${.CURDIR}/${ARCH}
+.include "${.CURDIR}/${ARCH}/Makefile.inc"
+.endif
+.endif
 
 LIBC=	${.CURDIR}/../../lib/libc
 .PATH: ${LIBC}/string ${LIBC}/${MACHINE}/string 
 .PATH: ${LIBC}/net ${LIBC}/${MACHINE}/net 
 .PATH: ${LIBC}/gen ${LIBC}/${MACHINE}/gen
 AINC+=	-I${LIBC}/${MACHINE}
-
-LIB=	kern
-NOPROFILE=
-
-.if	(${MACHINE} == "i386")
-SRCS+=	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c 
-SRCS+=	bcmp.s bzero.s ffs.s strcat.s strcmp.s strcpy.s strlen.s strncpy.c
-SRCS+=	scanc.c skpc.c locc.c
-SRCS+=	htonl.s htons.s ntohl.s ntohs.s
-SRCS+=	setjmp.s
-.elif	(${MACHINE} == "hp300")
-SRCS+=	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c 
-SRCS+=	bcmp.s bzero.s ffs.c strcat.c strcmp.s strcpy.s strlen.s strncpy.s
-SRCS+=	scanc.c skpc.c locc.c
-SRCS+=	htonl.s htons.s ntohl.s ntohs.s
-.else
-SRCS+=	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c 
-SRCS+=	bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlen.c strncpy.c
-SRCS+=	scanc.c skpc.c locc.c
-SRCS+=	htonl.c htons.c ntohl.c ntohs.c
-.endif
 
 .include <bsd.lib.mk>
