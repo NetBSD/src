@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/11/14 06:37:07 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.5 2002/03/25 07:43:41 lukem Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -78,6 +78,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=${TOP}/../../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
+HACKOBJS+=	gethost.o
 
 mount:
 	${VNCONFIG} -v -c ${VND_CDEV} ${IMAGE} \

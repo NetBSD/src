@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2002/03/18 15:30:55 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.21 2002/03/25 07:43:44 lukem Exp $
 
 .include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
@@ -31,9 +31,6 @@ release:
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=${DISTRIBDIR}/utils/libhack
 .include "${HACKSRC}/Makefile.inc"
-
-# Turn off libhack's gethostby*() as it only supports /etc/hosts
-HACKOBJS:=	${HACKOBJS:Ngethost.o}
 
 # This is listed in "list" file but is built here.
 ${CRUNCHBIN}:	libhack.o

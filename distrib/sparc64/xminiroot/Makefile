@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/01/21 13:46:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2002/03/25 07:43:47 lukem Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -100,9 +100,6 @@ ${CBIN}: libhack.o
 
 # Use stubs to eliminate some large stuff from libc
 .include "${HACKSRC}/Makefile.inc"
-
-# turn off small gethostby* temporarily
-HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${AUXCLEAN} ${IMAGE} netbsd.INSTALL ${CBIN} \

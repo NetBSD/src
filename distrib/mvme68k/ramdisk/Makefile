@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/03/24 22:44:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2002/03/25 07:43:43 lukem Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -29,9 +29,6 @@ release:
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=${DISTRIBDIR}/utils/libhack
 .include "${HACKSRC}/Makefile.inc"
-
-# Turn off libhack's gethostby*() as it only supports /etc/hosts
-HACKOBJS:=	${HACKOBJS:Ngethost.o}
 
 # This is listed in ramdiskbin.conf but is built here.
 ${CRUNCHBIN}: libhack.o

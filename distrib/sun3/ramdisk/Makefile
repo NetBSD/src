@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2002/03/06 12:15:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 2002/03/25 07:43:48 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -78,6 +78,7 @@ ${CBIN} : libhack.o
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=${TOP}/../utils/libhack
 .include "${HACKSRC}/Makefile.inc"
+HACKOBJS+=	gethost.o
 
 clean cleandir distclean:
 	-rm -f a.out core *.core *.o *.cro *.c
