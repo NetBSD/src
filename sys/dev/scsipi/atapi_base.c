@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.19 2004/03/10 21:57:31 bouyer Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.20 2004/08/21 17:40:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.19 2004/03/10 21:57:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.20 2004/08/21 17:40:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.19 2004/03/10 21:57:31 bouyer Exp $
  * THIS IS THE DEFAULT ERROR HANDLER
  */
 int
-atapi_interpret_sense(xs)
-	struct scsipi_xfer *xs;
+atapi_interpret_sense(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
 	int key, error;
@@ -196,8 +195,7 @@ atapi_interpret_sense(xs)
  * Print out the scsi_link structure's address info.
  */
 void
-atapi_print_addr(periph)
-	struct scsipi_periph *periph;
+atapi_print_addr(struct scsipi_periph *periph)
 {
 	struct scsipi_channel *chan = periph->periph_channel;
 	struct scsipi_adapter *adapt = chan->chan_adapter;
@@ -215,17 +213,9 @@ atapi_print_addr(periph)
  * to associate with the transfer, we need that too.
  */
 int
-atapi_scsipi_cmd(periph, scsipi_cmd, cmdlen, data, datalen,
-    retries, timeout, bp, flags)
-	struct scsipi_periph *periph;
-	struct scsipi_generic *scsipi_cmd;
-	int cmdlen;
-	void *data;
-	size_t datalen;
-	int retries;
-	int timeout;
-	struct buf *bp;
-	int flags;
+atapi_scsipi_cmd(struct scsipi_periph *periph,
+    struct scsipi_generic *scsipi_cmd, int cmdlen, void *data, size_t datalen,
+    int retries, int timeout, struct buf *bp, int flags)
 {
 	struct scsipi_xfer *xs;
 	int error, s;
