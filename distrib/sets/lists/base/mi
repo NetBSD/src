@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.447 2004/01/02 16:23:02 lukem Exp $
+# $NetBSD: mi,v 1.448 2004/01/03 03:02:25 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -804,10 +804,10 @@
 ./usr/libexec/rpc.sprayd	base-rpcserver-bin
 ./usr/libexec/rshd		base-netutil-bin
 ./usr/libexec/sendmail		base-sendmail-bin
-./usr/libexec/sendmail/sendmail base-sendmail-bin
+./usr/libexec/sendmail/sendmail base-sendmail-bin	sendmail
 ./usr/libexec/sftp-server	base-secsh-bin
 ./usr/libexec/sm.bin		base-sendmail-usr
-./usr/libexec/smrsh		base-sendmail-bin
+./usr/libexec/smrsh		base-sendmail-bin	sendmail
 ./usr/libexec/ssh-keysign	base-secsh-bin
 ./usr/libexec/telnetd		base-netutil-bin
 ./usr/libexec/tftpd		base-netutil-bin
@@ -853,7 +853,7 @@
 ./usr/sbin/dumpfs		base-sysutil-bin
 ./usr/sbin/dumplfs		base-sysutil-bin
 ./usr/sbin/eaytest			base-obsolete	obsolete
-./usr/sbin/editmap		base-sendmail-bin
+./usr/sbin/editmap		base-sendmail-bin	sendmail
 ./usr/sbin/edquota		base-sysutil-bin
 ./usr/sbin/envstat		base-sysutil-bin
 ./usr/sbin/eshconfig		base-sysutil-bin
@@ -911,11 +911,11 @@
 ./usr/sbin/lpc			base-lpr-bin
 ./usr/sbin/lpd			base-lpr-bin
 ./usr/sbin/lptest		base-lpr-bin
-./usr/sbin/mailstats		base-mailwrapper-bin
+./usr/sbin/mailstats		base-mailwrapper-bin	sendmail
 ./usr/sbin/mailwrapper		base-mailwrapper-bin
 ./usr/sbin/makedbm		base-nis-bin
 ./usr/sbin/makefs		base-sysutil-bin
-./usr/sbin/makemap		base-sendmail-bin
+./usr/sbin/makemap		base-sendmail-bin	sendmail
 ./usr/sbin/map-mbone		base-netutil-bin
 ./usr/sbin/mbrlabel			base-obsolete	obsolete
 ./usr/sbin/mdconfig		base-sysutil-bin
@@ -989,7 +989,7 @@
 ./usr/sbin/pppdump		base-ppp-bin
 ./usr/sbin/pppoectl			base-obsolete	obsolete
 ./usr/sbin/pppstats		base-ppp-bin
-./usr/sbin/praliases		base-sendmail-bin
+./usr/sbin/praliases		base-sendmail-bin	sendmail
 ./usr/sbin/pstat		base-sysutil-bin
 ./usr/sbin/pvcsif		base-netutil-bin
 ./usr/sbin/pvctxctl		base-netutil-bin
