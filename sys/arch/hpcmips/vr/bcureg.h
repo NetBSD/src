@@ -1,4 +1,4 @@
-/*	$NetBSD: bcureg.h,v 1.6 2001/04/21 14:44:40 sato Exp $	*/
+/*	$NetBSD: bcureg.h,v 1.7 2001/08/21 10:31:26 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -398,12 +398,12 @@
 #define		BCU81SPD_WROMA1T	(0x0<<0)	/* 1TClock */
 
 #define	BCURFCNT_REG_W		0x00E	/* BCU Refresh Control Register(4121>=4102) */
-#define	BCU81RFCNT_REG_W	0x00E	/* BCU Refresh Control Register(=4181) */
+#define	BCU81RFCNT_REG_W	0x010	/* BCU Refresh Control Register(=4181) */
 
 #define		BCURFCNT_MASK		0x3fff		/* refresh interval MASK */
 
 #define	BCUREVID_REG_W		0x010	/* BCU Revision ID Register (4122>=4101)*/
-#define	BCU81REVID_REG_W	0x010	/* BCU Revision ID Register (=4181)*/
+#define	BCU81REVID_REG_W	0x014	/* BCU Revision ID Register (=4181)*/
 
 #define		BCUREVID_RIDMASK	(0xf<<12)	/* Revision ID */
 #define		BCUREVID_RIDSHFT	(12)		/* Revision ID */
@@ -429,7 +429,7 @@
 
 
 #define	BCUCLKSPEED_REG_W	0x014	/* Clock Speed Register (>= 4102) */
-#define	BCU81CLKSPEED_REG_W	0x014	/* Clock Speed Register (= 4181) */
+#define	BCU81CLKSPEED_REG_W	0x018	/* Clock Speed Register (= 4181) */
 
 #define		BCUCLKSPEED_DIVT2B	(1<<15)		/* (= 4102, 4111) */
 #define		BCUCLKSPEED_DIVT3B	(1<<14)		/* (= 4111) */
