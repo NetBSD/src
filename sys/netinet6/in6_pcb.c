@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.39 2001/07/25 23:28:03 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.40 2001/08/06 10:25:01 itojun Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -397,6 +397,10 @@ in6_pcbconnect(in6p, nam)
 	 * but if this line is missing, the garbage value remains.
 	 */
 	in6p->in6p_flowinfo = sin6->sin6_flowinfo;
+#ifdef IPSEC
+	if (in6p->in6p_socket->so_type == SOCK_STREAM)
+		ipsec_pcbconn(in6p->in6p_sp);
+#endif
 	return(0);
 }
 
@@ -408,6 +412,9 @@ in6_pcbdisconnect(in6p)
 	in6p->in6p_fport = 0;
 	if (in6p->in6p_socket->so_state & SS_NOFDREF)
 		in6_pcbdetach(in6p);
+#ifdef IPSEC
+	ipsec_pcbdisconn(in6p->in6p_sp);
+#endif
 }
 
 void
