@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.11 1994/10/27 04:16:23 cgd Exp $	*/
+/*	$NetBSD: reg.h,v 1.12 1995/01/26 18:12:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,20 +73,20 @@
  * is all invisible to the user.
  */
 struct reg {
-	int	r_es;
-	int	r_ds;
-	int	r_edi;
-	int	r_esi;
-	int	r_ebp;
-	int	r_ebx;
-	int	r_edx;
-	int	r_ecx;
 	int	r_eax;
-	int	r_eip;
-	int	r_cs;
-	int	r_eflags;
+	int	r_ecx;
+	int	r_edx;
+	int	r_ebx;
 	int	r_esp;
+	int	r_ebp;
+	int	r_esi;
+	int	r_edi;
+	int	r_eip;
+	int	r_eflags;
+	int	r_cs;
 	int	r_ss;
+	int	r_ds;
+	int	r_es;
 };
 
 #endif /* !_I386_REG_H_ */
