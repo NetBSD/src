@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fs.h	7.12 (Berkeley) 5/8/91
- *	$Id: fs.h,v 1.3.4.2 1993/10/01 01:51:07 mycroft Exp $
+ *	$Id: fs.h,v 1.3.4.3 1993/10/02 23:00:44 mycroft Exp $
  */
 
 #ifndef _UFS_FS_H_
@@ -214,8 +214,8 @@ struct	fs
 	short	fs_opostbl[16][8];	/* old rotation block list head */
 	long	fs_sparecon[55];	/* reserved for future constants */
 	long	fs_state;		/* validate fs_clean field */
-	quad_t	fs_qbmask;		/* ~fs_bmask - for use with quad size */
-	quad_t	fs_qfmask;		/* ~fs_fmask - for use with quad size */
+	quad	fs_qbmask;		/* ~fs_bmask - for use with quad size */
+	quad	fs_qfmask;		/* ~fs_fmask - for use with quad size */
 	long	fs_postblformat;	/* format of positional layout tables */
 	long	fs_nrpos;		/* number of rotaional positions */
 	long	fs_postbloff;		/* (short) rotation block list head */
