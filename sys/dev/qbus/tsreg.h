@@ -1,4 +1,4 @@
-/*	$NetBSD: tsreg.h,v 1.1 2001/05/13 15:30:10 ragge Exp $ */
+/*	$NetBSD: tsreg.h,v 1.2 2001/05/13 15:32:40 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,10 +42,16 @@
  * Bufffer (TSDBX). The TSDB is an 18-bit register that is ...
  */
 
+#ifdef notdef
 struct tsdevice {
 	unsigned short tsdb;/* Data Buffer (TSDB)/Bus Address Register (TSBA) */
 	unsigned short tssr;/* Status Reg. (TSSR)/Extended Data Buffer(TSDBX) */
 };
+#endif
+#define	TSDB	0
+#define	TSBA	0
+#define	TSSR	2
+#define	TSDBX	3
 
 /*
  * TSSR Register bit definitions 
@@ -83,7 +89,7 @@ struct tsdevice {
 #define TS_TC_TPL	(6<<1)	/* Tape position lost (unrecoverable) */
 #define TS_TC_FCE	(7<<1)	/* Fatal Controller Error (see FTC) */
 
-struct tscmd {			/* command packet (not all words required) */
+struct cmd {			/* command packet (not all words required) */
 	unsigned short cmdr;	/* command word */
 	unsigned short cw1;	/* low order data pointer address  (A15-00) */
 	unsigned short cw2;	/* high order data pointer address (A21-16) */
@@ -144,7 +150,7 @@ struct tscmd {			/* command packet (not all words required) */
 #define TS_CC_STAT	0x0F			/* GET STATUS */
 #define TS_CMD_STAT	TS_CMD(0,TS_CC_STAT)	/* Get Status (END) */
 
-struct tsmsg {			/* message packet */
+struct status {			/* message packet */
 	unsigned short hdr;	/* ACK, class-code, format 1, message type */
 	unsigned short dfl;	/* data field length (8 bit) */
 	unsigned short rbpcr;	/* residual b/r/tm count word */
@@ -155,6 +161,13 @@ struct tsmsg {			/* message packet */
 	unsigned short xst4;	/* total size: 16 bytes */
 };
 
+struct chr {
+	unsigned short sadrl;	/* low-word of status addr */
+	unsigned short sadrh;
+	unsigned short onesix;	/* 016/020 */
+	unsigned short chrw;	/* Characteristics word */
+	unsigned short xchrw;	/* TS05 extra word */
+};
 /*
  * Flags used in write-characteristics command
  */
@@ -162,7 +175,9 @@ struct tsmsg {			/* message packet */
 #define TS_WC_ENB	(1<<6)  /* Enable Tape Mark Stop at Bot */
 #define TS_WC_EAI	(1<<5)	/* Enable Attention interrupts */
 #define TS_WC_ERI	(1<<4)	/* Enable Message Buffer Release interrupts */
-#define TS_WC_HSP	(1<<5)	/* High Speed Select (25 in/s vs. 100 in/s) */
+#define TS_WCX_HSP	(1<<5)	/* High Speed Select (25 in/s vs. 100 in/s) */
+#define TS_WCX_RBUF	(1<<4)	/* Enable read buffering */
+#define TS_WCX_WBUF	(1<<3)	/* Enable write buffering */
 
 /*
  * Status flags
@@ -221,6 +236,7 @@ struct tsmsg {			/* message packet */
 #define TS_SF_RCE	(1<<14)	/* RAM Checksum Error */
 #define TS_SF_SBP	(1<<13)	/* TS11: Serial 08 bus parity */
 #define TS_SF_CAF	(1<<12)	/* TS11: Capstan Acceleration fail */
+#define	TS_SF_TU80	(1<<11)	/* Is a TU80 */
 #define TS_SF_WCF	(1<<10)	/* Write Clock Failure */
 #define TS_SF_PDT	(1<< 8)	/* TS11: Parity Dead Track */
 #define TS_SF_RL	0x00FF	/* Revision Level */
