@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)ktrace.1	5.5 (Berkeley) 7/26/91
-.\"	$Id: ktrace.1,v 1.2 1993/08/01 07:31:53 mycroft Exp $
+.\"	$Id: ktrace.1,v 1.3 1994/01/07 14:46:15 mycroft Exp $
 .\"
 .Dd July 26, 1991
 .Dt KTRACE 1
@@ -67,7 +67,7 @@ attempting to trace a process.
 The following command is sufficient to disable tracing on all user owned
 processes, and, if executed by root, all processes:
 .Pp
-.Dl \&$ trace -C
+.Dl \&$ ktrace -C
 .Pp
 The trace file is not human readable; use
 .Xr kdump 1
