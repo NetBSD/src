@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.91 2002/02/28 19:23:03 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.92 2002/03/05 04:13:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.91 2002/02/28 19:23:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.92 2002/03/05 04:13:00 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -594,8 +594,10 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
 		 * now (but it shouldn't ever happen, really, anyhow).
 		 * XXX Should use m_pulldown().
 		 */
+#ifdef DEBUG
 		printf("altq_etherclassify: headers span multiple mbufs: "
 		    "%d < %d\n", m->m_len, (hlen + hdrsize));
+#endif
 		goto bad;
 	}
 
