@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.55 2000/05/27 04:52:39 thorpej Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.56 2000/08/03 03:41:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -725,7 +725,7 @@ fdesc_readdir(v)
 
 		if (ap->a_ncookies) {
 			ncookies = min(ncookies, (nfdesc_targets - i));
-			MALLOC(cookies, off_t *, ncookies * sizeof(off_t),
+			cookies = malloc(ncookies * sizeof(off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
 			*ap->a_ncookies = ncookies;
@@ -762,7 +762,8 @@ fdesc_readdir(v)
 	} else {
 		if (ap->a_ncookies) {
 			ncookies = min(ncookies, (fdp->fd_nfiles + 2));
-			MALLOC(cookies, off_t *, ncookies * sizeof(off_t),				    M_TEMP, M_WAITOK);
+			cookies = malloc(ncookies * sizeof(off_t),
+			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
 			*ap->a_ncookies = ncookies;
 		}
@@ -795,7 +796,7 @@ fdesc_readdir(v)
 	}
 
 	if (ap->a_ncookies && error) {
-		FREE(*ap->a_cookies, M_TEMP);
+		free(*ap->a_cookies, M_TEMP);
 		*ap->a_ncookies = 0;
 		*ap->a_cookies = NULL;
 	}
