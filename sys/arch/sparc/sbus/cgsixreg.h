@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgsixreg.h,v 1.1 93/10/12 15:29:24 torek Exp 
- * $Id: cgsixreg.h,v 1.1 1993/11/11 03:36:54 deraadt Exp $
+ * $Id: cgsixreg.h,v 1.2 1994/05/07 01:14:45 deraadt Exp $
  */
 
 /*
@@ -57,17 +57,48 @@
  *
  * A cg6 is composed of numerous groups of control registers, all with TLAs:
  *	FBC - frame buffer control?
- *	FHC - fbc hardware configuration?
+ *	FHC - fbc hardware configuration / control? register (32 bits)
  *	DHC - ???
  *	TEC - transform engine control?
- *	THC - TEC Hardware Configuration (this is where our action goes)
+ *	THC - TEC Hardware Configuration
  *	ROM - a 64Kbyte ROM with who knows what in it.
  *	colormap - see below
  *	frame buffer memory (video RAM)
  *	possible other stuff
  *
  * Like the cg3, the cg6 uses a Brooktree Video DAC (see btreg.h).
+ *
+ * Various revisions of the cgsix have various hardware bugs.  So far,
+ * we have only seen rev 1 & 2.
  */
+
+/* bits in FHC register */
+#define	FHC_FBID_MASK	0xff000000	/* bits 24..31 are frame buffer ID */
+#define	FHC_FBID_SHIFT	24
+#define	FHC_REV_MASK	0x00f00000	/* bits 20..23 are revision */
+#define	FHC_REV_SHIFT	20
+#define	FHC_FROP_DISABLE 0x00080000	/* disable fast/font? rasterops */
+#define	FHC_ROW_DISABLE	0x00040000	/* ??? */
+#define	FHC_SRC_DISABLE	0x00020000	/* ??? */
+#define	FHC_DST_DISABLE	0x00010000	/* disable destination cache */
+#define	FHC_RESET	0x00008000	/* ??? */
+#define	FHC_XXX0	0x00004000	/* ??? */
+#define	FHC_LEBO	0x00002000	/* set little endian byte order? */
+#define	FHC_RES_MASK	0x00001800	/* bits 11&12 are resolution */
+#define	FHC_RES_1024	 0x00000000		/* res = 1024x768 */
+#define	FHC_RES_1152	 0x00000800		/* res = 1152x900 */
+#define	FHC_RES_1280	 0x00001000		/* res = 1280x1024 */
+#define	FHC_RES_1600	 0x00001800		/* res = 1600x1200 */
+#define	FHC_CPU_MASK	0x00000600	/* bits 9&10 are cpu type */
+#define	FHC_CPU_SPARC	 0x00000000		/* cpu = sparc */
+#define	FHC_CPU_68020	 0x00000200		/* cpu = 68020 */
+#define	FHC_CPU_386	 0x00000400		/* cpu = 80386 */
+#define	FHC_CPU_XXX	 0x00000600		/* ??? */
+#define	FHC_TEST	0x00000100	/* ??? test window ??? */
+#define	FHC_TESTX_MASK	0x000000f0	/* bits 4..7 are test window X */
+#define	FHC_TESTX_SHIFT	4
+#define	FHC_TESTY_MASK	0x0000000f	/* bits 0..3 are test window Y */
+#define	FHC_TESTY_SHIFT	0
 
 /*
  * The layout of the THC.
@@ -107,6 +138,15 @@ struct cg6_thc {
 #define	THC_CURSOFF	(65536-32)	/* i.e., USHRT_MAX+1-32 */
 
 /*
+ * Partial description of TEC (needed to get around FHC rev 1 bugs).
+ */
+struct cg6_tec_xxx {
+	u_int	tec_mv;		/* matrix stuff */
+	u_int	tec_clip;	/* clipping stuff */
+	u_int	tec_vdc;	/* ??? */
+};
+
+/*
  * This structure exists only to compute the layout of the CG6
  * hardware.  Each of the individual substructures lives on a
  * separate `page' (where a `page' is at least 4K), and many are
@@ -138,8 +178,9 @@ struct cg6_layout {
 		char un_pad[0x80000];
 	} cg6_alt_un;
 
-	/* FHC, whatever that is, at 0x300000 */
+	/* FHC register at 0x300000 */
 	union {
+		int un_fhc;
 		char un_pad[0x1000];
 	} cg6_fhc_un;
 
@@ -157,6 +198,7 @@ struct cg6_layout {
 	/* TEC at 0x701000 */
 	union {
 		char un_pad[0x100000 - 0x1000];
+		struct cg6_tec_xxx un_tec;
 	} cg6_tec_un;
 
 	/* Video RAM at 0x800000 */
