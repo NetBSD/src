@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.39 2001/10/15 13:25:34 blymn Exp $	*/
+/*	$NetBSD: main.c,v 1.40 2001/11/16 04:41:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.39 2001/10/15 13:25:34 blymn Exp $");
+__RCSID("$NetBSD: main.c,v 1.40 2001/11/16 04:41:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,8 +276,6 @@ main(int argc, char *argv[])
 			quit("Cannot stat %s: %s\n", argv[i], strerror(errno));
 		if (Fflag || S_ISCHR(sb.st_mode) || S_ISBLK(sb.st_mode)) {
 			disk = argv[i];
-			if (Fflag && !S_ISREG(sb.st_mode))
-				quit("%s is not a regular file", disk);
  multicheck:
 			if (dirc != 0)
 				quit(
