@@ -1,4 +1,4 @@
-$NetBSD: IMPLEMENTATION,v 1.3 1999/12/13 15:17:21 itojun Exp $
+$NetBSD: IMPLEMENTATION,v 1.4 2000/01/06 15:48:07 itojun Exp $
 
 # NOTE: this is from original KAME distribution.
 # Some portion of this document is not applicable to the code merged into
@@ -8,7 +8,7 @@ $NetBSD: IMPLEMENTATION,v 1.3 1999/12/13 15:17:21 itojun Exp $
 
 			KAME Project
 			http://www.kame.net/
-			KAME Date: 1999/11/26 15:39:27
+			Date: 2000/01/04 17:56:28
 
 1. IPv6
 
@@ -20,7 +20,7 @@ below (NOTE: this is not a complete list - this is too hard to maintain...).
 For details please refer to specific chapter in the document, RFCs, manpages
 come with KAME, or comments in the source code.
 
-Conformance tests have been performed on the previous KAME STABLE kit
+Conformance tests have been performed on the KAME STABLE kit
 at TAHI project.  Results can be viewed at http://www.tahi.org/report/KAME/.
 We also attended Univ. of New Hampshire IOL tests (http://www.iol.unh.edu/)
 in the past, with our past snapshots.
@@ -81,8 +81,8 @@ RFC2553: Basic Socket Interface Extensions for IPv6
       socket (3.8) are,
 	- supported on KAME/FreeBSD3x,
 	- supported on KAME/NetBSD,
-	- supported on KAME/OpenBSD and KAME/BSDI4,
-	- not supported on KAME/FreeBSD228 and KAME/BSDI3.
+	- supported on KAME/BSDI4,
+	- not supported on KAME/FreeBSD228, KAME/OpenBSD and KAME/BSDI3.
       see 1.12 in this document for details.
 RFC2675: IPv6 Jumbograms
     * See 1.7 in this document for details.
@@ -135,14 +135,6 @@ cache handling in the following cases:
 For (1), we implemented workaround based on discussions on IETF ipngwg mailing
 list.  For more details, see the comments in the source code and email
 thread started from (IPng 7155), dated Feb 6 1999.
-
-IPv6 address autoconfiguration assumes that a host has only single network
-interface (more precisely, single non-loopback interface).  This is because
-the spec assumes that there's no routing table on IPv6 host (an IPv6 host
-has default router list and prefix list only).
-Because of this, if you accept RAs on a node with multiple network interfaces,
-the node will not behave as you might expect.  RFC2461 Appendix A talks
-little bit about this issue.
 
 IPv6 on-link determination rule (RFC2461) is quite different from assumptions
 in BSD network code.  At this moment, KAME does not implement on-link
@@ -556,27 +548,71 @@ address.  These extensions have thus not been implemented in KAME.
 
 RFC2553 describes IPv4 mapped address (3.7) and special behavior
 of IPv6 wildcard bind socket (3.8).  The spec allows you to:
+- Accept IPv4 connections by AF_INET6 wildcard bind socket.
 - Transmit IPv4 packet over AF_INET6 socket by using special form of
   the address like ::ffff:10.1.1.1.
-- Accept IPv4 connections by AF_INET6 wildcard bind socket.
 but the spec itself is very complicated and does not specify how the
 socket layer should behave.
+Here we call the former one "listening side" and the latter one "initiating
+side", for reference purposes.
 
-We KAME team have 4 OS platforms right now, and behavior is slightly
-different between them.  To summarize:
-- All KAME implementations treat tcp/udp port number space separately
-  between IPv4 and IPv6.
-- KAME/BSDI3 and KAME/FreeBSD228 does not support IPv4 mapped address,
-  nor special wildcard bind on AF_INET6.
-- KAME/FreeBSD3x supports IPv4 mapped address, and special wildcard bind on
-  AF_INET6.  It is enabled by default.  You can disable those two by runtime
-  and kernel compile configuration.
-  (you can't enable only one of them: they come together)
-- KAME/NetBSD supports both.  This is always enabled.
-- KAME/OpenBSD and KAME/BSDI4 supports both.  This is always enabled.
+Almost all KAME implementations treat tcp/udp port number space separately
+between IPv4 and IPv6.  You can perform wildcard bind on both of the adderss
+families, on the same port.
 
-The following sections will give you the details, and how you can
+There are some OS-platform differences in KAME code, as we use tcp/udp
+code from different origin.  The following table summarizes the behavior.
+
+		listening side		initiating side
+		(AF_INET6 wildcard	(connetion to ::ffff:10.1.1.1)
+		socket gets IPv4 conn.)
+		---			---
+KAME/BSDI3	not supported		not supported
+KAME/FreeBSD228	not supported		not supported
+KAME/FreeBSD3x	configurable		supported
+		default: enabled
+KAME/NetBSD	configurable		supported
+		default: disabled 
+KAME/BSDI4	enabled			supported		(*)
+KAME/OpenBSD	not supported		not supported
+
+(*) on KAME/BSDI4, port number space is not always separated.
+
+The following sections will give you more details, and how you can
 configure the behavior.
+
+Comments on listening side:
+
+It looks that RFC2553 talks too little on wildcard bind issue,
+especially on the port space issue, failure mode and relationship
+between AF_INET/INET6 wildcard bind.  There can be several separate
+interpretation for this RFC which conform to it but behaves differently.
+So, to implement portable application you should assume nothing
+about the behavior in the kernel.  Using getaddrinfo() is the safest way.
+Port number space and wildcard bind issues were discussed in detail
+on ipv6imp mailing list, in mid March 1999 and it looks that there's
+no concrete consensus (means, up to implementers).  You may want to
+check the mailing list archives.
+We supply a tool called "bindtest" that explores the behavior of
+kernel bind(2).  The tool will not be compiled by default.
+
+If a server application would like to accept IPv4 and IPv6 connections,
+it should use AF_INET and AF_INET6 socket (you'll need two sockets).
+Use getaddrinfo() with AI_PASSIVE into ai_flags, and socket(2) and bind(2)
+to all the addresses returned.
+By opening multiple sockets, you can accept connections onto the socket with
+proper address family.  IPv4 connections will be accepted by AF_INET socket,
+and IPv6 connections will be accepted by AF_INET6 socket (NOTE: KAME/BSDI4
+kernel sometimes violate this - we will fix it).
+
+If you try to support IPv6 traffic only and would like to reject IPv4
+traffic, always check the peer address when a connection is made toward
+AF_INET6 listening socket.  If the address is IPv4 mapped address, you may
+want to reject the connection.  You can check the condition by using
+IN6_IS_ADDR_V4MAPPED() macro.  This is one of the reasons the author of
+the section (itojun) dislikes special behavior of AF_INET6 wildcard bind.
+
+Comments on initiating side:
 
 Advise to application implementers: to implement a portable IPv6 application
 (which works on multiple IPv6 kernels), we believe that the following
@@ -584,113 +620,65 @@ is the key to the success:
 - NEVER hardcode AF_INET nor AF_INET6.
 - Use getaddrinfo() and getnameinfo() throughout the system.
   Never use gethostby*(), getaddrby*(), inet_*() or getipnodeby*().
-- If you would like to listen to connections, use getaddrinfo() (maybe
-  with AI_PASSIVE), and make sockets for all the "struct addrinfo" returned.
 - If you would like to connect to destination, use getaddrinfo() and try
   all the destination returned, like telnet does.
 - Some of the IPv6 stack is shipped with buggy getaddrinfo().  Ship a minimal
   working version with your application and use that as last resort.
-- Try to avoid use of IPv4 mapped address (waiting for IPv4 connection on
-  AF_INET6 socket).  Listen to both AF_INET socket and AF_INET6 socket,
-  if you support both address families.
-It looks that RFC2553 talks too little on wildcard bind issue,
-especially on the port space issue, failure mode and relationship
-between AF_INET/INET6 wildcard bind.  There can be several separate
-interpretation for this RFC (see 1.12.2 - we have two different
-implementation for this, and RFC2553 seems to fit to both of them).
-So, to implement portable application you should assume nothing
-about the behavior in the kernel.  Using getaddrinfo() is the safest way.
-Port number space and wildcard bind issues were discussed in detail
-on ipv6imp mailing list, in mid March 1999 and it looks that there's
-no concrete consensus (means, up to implementers).  You may want to
-check the mailing list archives.
 
-We supply a tool called "bindtest" that explores the behavior of
-kernel bind(2).  The tool will not be compiled by default.
+If you would like to use AF_INET6 socket for both IPv4 and IPv6 outgoing
+connection, you will need tweaked implementation in DNS support libraries,
+as documented in RFC2553 6.1.  KAME libinet6 includes the tweak in
+getipnodebyname().  Note that getipnodebyname() itself is not recommended as
+it does not handle scoped IPv6 addresses at all.  For IPv6 name resolution
+getaddrinfo() is the preferred API.  getaddrinfo() does not implement the
+tweak.
+
+When writing applications that make outgoing connections, story goes much
+simpler if you treat AF_INET and AF_INET6 as totally seaprate address family.
+{set,get}sockopt issue goes simpler, DNS issue will be made simpler.  We do
+not recommend you to rely upon IPv4 mapped address.
 
 1.12.1 KAME/BSDI3 and KAME/FreeBSD228
 
-The platform do not support IPv4 mapped address.
-The IPv4 mapped address support needs tweaked implementation in
-DNS support libraries, as documented in RFC2553 6.1.  However, since
-the platforms do not support this, you do not need to worry about
-RFC2553 6.1 and story goes much simpler.
-(KAME library actually implements the tweaks, but it is safe to ignore that)
+The platforms do not support IPv4 mapped address at all (both listening side
+and initiating side).  AF_INET6 and AF_INET sockets are totally separated.
 
 Port number space is totally separate between AF_INET and
-AF_INET6 sockets.  You can always perform wildcard bind on both of
-the adderss families, on the same port.
-
-If a server application would like to accept IPv4 and IPv6 connections,
-it should use AF_INET and AF_INET6 socket (you'll need two sockets).
-Applicsations should use proper socket for connections.  IPv4 connections
-must be made on AF_INET socket, and IPv6 connections must be made
-on AF_INET6 socket.  getaddrinfo() library helps you in writing
-AF-independent application, and managing sockets with different AFs.
-(some of the implementers think that we should totally get rid of gethostby*
-family of the functions and migrate to get{addr,name}info, since
-it is very clean and helps you support new AFs in the future)
+AF_INET6 sockets. 
 
 1.12.2 KAME/FreeBSD3x
 
-The platform can be configured to support IPv4 mapped address/special AF_INET6
-wildcard bind (enabled by default).  If you disable it, it behaves as described
-in 1.12.1.
+KAME/FreeBSD3x uses shared tcp4/6 code (from sys/netinet/tcp*) and shared
+udp4/6 code (from sys/netinet/udp*).  It uses unified inpcb/in6pcb structure.
 
-The IPv4 mapped address support needs tweaked implementation in
-DNS support libraries.  This is documented in RFC2553 6.1.
-KAME libraries (namely libinet6.a) actually support that.
+1.12.2.1 KAME/FreeBSD3x, listening side
 
-RFC2553 does not talk about how port number space should be designed
-(i.e. should they be separate between AF_INET and AF_INET6, or
-should they be common)
-In KAME with the behavior enabled, port number space is separate
-between AF_INET and AF_INET6 sockets in most cases.  The only
-exception is wildcard bind socket, where the special behavior appears.
+The platform can be configured to support IPv4 mapped address/special
+AF_INET6 wildcard bind (enabled by default).  Kernel configuration is
+summarized as follows:
+- By default, MAPPED_ADDR_ENABLED option is defined in the kernel
+  configuration file.  In this case, AF_INET6 socket will grab IPv4
+  connections in certain condition.  You can disable it with sysctl, or
+  setsockopt.
+- If you remove MAPPED_ADDR_ENABLED option, the code to perform special
+  behavior will not be compiled.  It behaves as described in 1.12.1. 
 
-If a server application would like to accept IPv4 and IPv6 connections,
-it can use IPv6 socket with wildcard bind, or use two sockets (for
-AF_INET6 and AF_INET).  You can handle IPv4 and IPv6 connections
-by using AF_INET6 socket.  Porting of an application can be simpler in
-this case, like:
-- change AF_INET into AF_INET6
-- use gethostbyname2(hostname, AF_INET6) or getipnodebyname(), instead of
-  gethostbyname(hostname)
-- use struct sockaddr_in6 instead of sockaddr_in
+Wildcard AF_INET6 socket grabs IPv4 connection if and only if the following 
+conditions are satisfied:
+- there's no AF_INET socket that matches the IPv4 connection
+- the AF_INET6 socket is configured to accept IPv4 traffic, i.e.
+  getsockopt(IPV6_BINDV6ONLY) returns 0.
+There's no problem with open/close ordering.
 
-To provide services to both IPv4 and IPv6 clients, you will run a single
-server which binds to single AF_INET6 wildcard socket.  This server will
-accept both IPv4 and IPv6 connections to the tcp/udp port.
-If you run two daemons, which binds to AF_INET6 wildcard socket and
-AF_INET socket (say, sendmail4 and sendmail6), story start to look
-a bit complicated.  The next sections have the detail.
+(XXX need checking)
 
-Wildcard bind on AF_INET6 behaves like "wildcard bind between two
-address families".  It will grab IPv4 connection if and only if
-there is no socket that binds to more specific destination.
-Here, wildcard bind on AF_INET is regarded as "more specific bind"
-than wildcard bind on AF_INET6.
-In other words, wildcard bind on AF_INET6 is the only thing that
-has special behavior.  It will not affect wildcard bind on AF_INET.
-If the following events happen, IPv4 connection will be routed
-to application B, and IPv6 connection will be routed to application A.
-- application A perform wildcard bind on AF_INET6, port X
-- application B perform wildcard bind on AF_INET, port X
-- IPv4 connection arrives
-- IPv6 connection arrives
-If the following events happen, the behavior is the same.  IPv4
-connection will be routed to application B, and IPv6 connection
-will be routed to application A.
-- application B perform wildcard bind on AF_INET, port X
-- application A perform wildcard bind on AF_INET6, port X
-- IPv4 connection arrives
-- IPv6 connection arrives
+1.12.2.1 KAME/FreeBSD3x, initiating side
 
-If the following events happen, KAME/FreeBSD3x will behave like this:
-- sendmail4 is running.  It is doing wildcard bind on AF_INET.
-- Invoke sendmail6.  It will do a wildcard bind on AF_INET6.
-- Stop sendmail4.  Here, on KAME/FreeBSD3x, IPv4 and IPv6 conections will
-  be routed to sendmail6.  This is different from KAME/FreeBSD228.
+KAME/FreeBSD3x supports outgoing connetion to IPv4 mapped address
+(::ffff:10.1.1.1), if the node is configured to accept IPv4 connections
+by AF_INET6 socket.
+
+(XXX need checking)
 
 1.12.4 KAME/NetBSD
 
@@ -698,17 +686,51 @@ KAME/NetBSD uses shared tcp4/6 code (from sys/netinet/tcp*) and shared
 udp4/6 code (from sys/netinet/udp*).  The implementation is made differently
 from KAME/FreeBSD3x.  KAME/NetBSD uses separate inpcb/in6pcb structures,
 while KAME/FreeBSD3x uses merged inpcb structure.
-Supports for IPv4 mapped address/special AF_INET6 wildcard bind are
-enabled by default.  At this moment there is no way to disable it.
 
-1.12.5 KAME/OpenBSD and KAME/BSDI4
+1.12.4.1 KAME/NetBSD, listening side
 
-KAME/OpenBSD and KAME/BSDI4 use NRL-based TCP/UDP stack and inpcb source code,
+The platform can be configured to support IPv4 mapped address/special AF_INET6
+wildcard bind (disabled by default).  Kernel behavior can be summarized as
+follows:
+- default: special support code will be compiled in, but is disabled by
+  default.  It can be controlled by sysctl (net.inet6.ip6.bindv6only),
+  or setsockopt(IPV6_BINDV6ONLY).
+- add "INET6_BINDV6ONLY": No special support code for AF_INET6 wildcard socket
+  will be compiled in.  AF_INET6 sockets and AF_INET sockets are totally
+  separate.  The behavior is similar to what described in 1.12.1.
+
+sysctl setting will affect per-socket configuration at in6pcb creation time
+only.  In other words, per-socket configuration will be copied from sysctl
+configuration at in6pcb creation time.  To change per-socket behavior, you
+must perform setsockopt or reopen the socket.  Change in sysctl configuration
+will not change the behavior or sockets that are already opened.
+
+Wildcard AF_INET6 socket grabs IPv4 connection if and only if the following 
+conditions are satisfied:
+- there's no AF_INET socket that matches the IPv4 connection
+- the AF_INET6 socket is configured to accept IPv4 traffic, i.e.
+  getsockopt(IPV6_BINDV6ONLY) returns 0.
+There's no problem with open/close ordering.
+
+1.12.4.1 KAME/NetBSD, initiating side
+
+When you initiate a connection, you can always connect to IPv4 destination
+over AF_INET6 socket, usin IPv4 mapped address destination (::ffff:10.1.1.1).
+This is enabled independently from the configuration for listening side, and
+always enabled.
+
+1.12.5 KAME/BSDI4
+
+KAME/BSDI4 uses NRL-based TCP/UDP stack and inpcb source code,
 which was derived from NRL IPv6/IPsec stack.  I guess it supports IPv4 mapped
 address and speical AF_INET6 wildcard bind.  The implementation is, again,
 different from other KAME/*BSDs.
-Note that NRL inpcb layer has different behavior than KAME implementation,
-namely:
+
+1.12.5.1 KAME/BSDI4, listening side
+
+NRL inpcb layer supports special behavior of AF_INET6 wildcard socket.
+It grabs IPv4 connection under certain condition.  NRL inpcb layer has
+different behavior than KAME implementation, namely:
 - If you bind(2) a socket to IPv6 wildcard address (::) then bind(2)
   another socket to IPv4 wildcard address (0.0.0.0), the latter will fail
   with EADDRINUSE.
@@ -716,17 +738,70 @@ namely:
   both will success.  However, all IPv4 traffic (and IPv6 traffic) will be
   captured by IPv6 wildcard socket.
 
-1.12.6 configuration and implementation
+1.12.5.2 KAME/BSDI4, initiating side
 
-On KAME/FreeBSD3x, the behavior is configurable by following procedure.
-To enable it:
-- Add the "MAPPED_ADDR_ENABLED" kernel config option into your
-  kernel config file (see "sys/i386/conf/GENERIC.v6" sample file)
-  and build your kernel, and
-- set sysctl variable appropriately, like:
-	# sysctl -w net.inet6.ip6.mapped_addr=1
-Note that, to enable the behavior you'll need to do the both of the above.
-If you do not do the both, the behavior is disabled.
+KAME/BSDi4 supports connection initiation to IPv4 mapped address
+(like ::ffff:10.1.1.1).
+
+1.12.6 KAME/OpenBSD
+
+KAME/OpenBSD uses NRL-based TCP/UDP stack and inpcb source code,
+which was derived from NRL IPv6/IPsec stack.
+
+1.12.6.1 KAME/OpenBSD, listening side
+
+KAME/OpenBSD disables special behavior on AF_INET6 wildcard bind for
+security reasons (if IPv4 traffic toward AF_INET6 wildcard bind is allowed,
+access control will become much harder).  KAME/BSDI4 uses NRL-based TCP/UDP
+stack as well, however, the behavior is different due to OpenBSD's security
+policy.
+
+As a result the behavior of KAME/OpenBSD is similar to KAME/BSDI3 and
+KAME/FreeBSD228 (see 1.12.1 for more detail).
+
+1.12.6.2 KAME/OpenBSD, initiating side
+
+KAME/OpenBSD does not support connection initiation to IPv4 mapped address
+(like ::ffff:10.1.1.1).
+
+1.13 sockaddr_storage
+
+When RFC2553 was about to be finalized, there was discusson on how struct
+sockaddr_storage members are named.  One proposal is to prepend "__" to the
+members (like "__ss_len") as they should not be touched.  The other proposal
+was that don't prepend it (like "ss_len") as we need to touch those members
+directly.  There was no clear consensus on it.
+
+As a result, RFC2553 defines struct sockaddr_storage as follows:
+	struct sockaddr_storage {
+		u_char	__ss_len;	/* address length */
+		u_char	__ss_family;	/* address family */
+		/* and bunch of padding */
+	};
+On the contrary, XNET draft defines as follows:
+	struct sockaddr_storage {
+		u_char	ss_len;		/* address length */
+		u_char	ss_family;	/* address family */
+		/* and bunch of padding */
+	};
+
+In December 1999, it was agreed that RFC2553bis should pick the latter (XNET)
+definition.
+
+KAME kit prior to December 1999 used RFC2553 definition.  KAME kit after
+December 1999 (including December) will conform to XNET definition,
+based on RFC2553bis discusson.
+
+If you look at multiple IPv6 implementations, you will be able to see
+both definitions.  As an userland programmer, the most portable way of
+dealing with it is to:
+(1) ensure ss_family and/or ss_len are available on the platform, by using
+    GNU autoconf,
+(2) have -Dss_family=__ss_family to unify all occurences (including header
+    file) into __ss_family, or
+(3) never touch __ss_family.  cast to sockaddr * and use sa_family like:
+	struct sockaddr_storage ss;
+	family = ((struct sockaddr *)&ss)->sa_family
 
 2. Network Drivers
 
