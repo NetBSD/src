@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.19 2002/12/04 00:28:41 haya Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.20 2002/12/13 07:47:53 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ struct fwohci_handler {
 	u_int32_t	fh_tcode;	/* ARRQ   / ARRS   / IR   */
 	u_int32_t	fh_key1;	/* addrhi / srcid  / chan */
 	u_int32_t	fh_key2;	/* addrlo / tlabel / tag  */
+	u_int32_t	fh_key3;	/* for addr's a possible range. */
 	int		(*fh_handler)(struct fwohci_softc *, void *,
 	    struct fwohci_pkt *);
 	void		*fh_handarg;
