@@ -1,4 +1,4 @@
-/*	$NetBSD: tcvar.h,v 1.6 1996/09/09 16:39:44 cgd Exp $	*/
+/*	$NetBSD: tcvar.h,v 1.7 1996/10/22 21:37:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -92,7 +92,7 @@ typedef enum {
 struct tcbus_attach_args {
 	char		*tba_busname;		/* XXX should be common */
 #ifdef __alpha__ /* XXX */
-	bus_chipset_tag_t tba_bc;		/* XXX should be common */
+	bus_space_tag_t tba_memt;
 #endif
 
 	/* Bus information */
@@ -114,7 +114,7 @@ struct tcbus_attach_args {
  */
 struct tc_attach_args {
 #ifdef __alpha__ /* XXX */
-	bus_chipset_tag_t ta_bc;
+	bus_space_tag_t ta_memt;
 #endif
 
 	char		ta_modname[TC_ROM_LLEN+1];
