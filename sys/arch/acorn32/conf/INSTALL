@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.22 2004/03/13 19:27:40 bjh21 Exp $
+#	$NetBSD: INSTALL,v 1.23 2004/07/08 22:21:17 chris Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.22 $"
+#ident		"INSTALL-$Revision: 1.23 $"
 
 # estimated number of users
 maxusers	32
@@ -192,9 +192,6 @@ options 	FONT_SONY12x25		# looks like VT220 font
 #options 	FONT_VT220L8x16		# 8x(2x8) font as in Arch. cons
 #options 	FONT_VT220L8x10		# not tested
 #options 	FONT_VT220L8x20		# not tested
-
-vidcvideo0	at vidc?		# wscons driver for VIDC
-wsdisplay*	at vidcvideo? console ?	# display itself
 
 vidcvideo0	at vidc?		# wscons driver for VIDC
 wsdisplay*	at vidcvideo? console ?	# display itself
