@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.34 1997/01/17 15:03:39 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.35 1997/01/20 18:38:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -48,6 +48,7 @@
 
 #include <machine/cpu.h>
 #include <machine/pcb.h>
+#include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/control.h>
@@ -172,11 +173,11 @@ main()
 
 	/* VM structure fields */
 	def("VM_PMAP", &vms->vm_pmap);
+	def("VM_PMAP_CTX", &vms->vm_pmap.pm_ctxnum);
 
 	/* pcb offsets */
 	def("PCB_FLAGS", &pcb->pcb_flags);
 	def("PCB_PS", &pcb->pcb_ps);
-	def("PCB_MMUCTX", &pcb->pcb_mmuctx);
 	def("PCB_USP", &pcb->pcb_usp);
 	def("PCB_REGS", pcb->pcb_regs);
 	def("PCB_ONFAULT", &pcb->pcb_onfault);
