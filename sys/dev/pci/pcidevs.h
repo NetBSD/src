@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.298 2001/01/22 13:58:37 mjl Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.299 2001/01/22 14:18:42 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.292 2001/01/22 13:57:54 mjl Exp 
+ *	NetBSD: pcidevs,v 1.293 2001/01/22 14:15:24 jdolecek Exp 
  */
 
 /*
@@ -1701,6 +1701,7 @@
 #define	PCI_PRODUCT_ULSI_US201	0x0201		/* US201 */
 
 /* US Robotics products */
+#define	PCI_PRODUCT_USR_3C2884A	0x1007		/* 56K Voice Internal PCI Modem (WinModem) */
 #define	PCI_PRODUCT_USR_3CP5609	0x1008		/* 3CP5609 PCI 16550 Modem */
 
 /* V3 Semiconductor products */

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.296 2001/01/22 13:58:37 mjl Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.297 2001/01/22 14:18:42 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.292 2001/01/22 13:57:54 mjl Exp 
+ *	NetBSD: pcidevs,v 1.293 2001/01/22 14:15:24 jdolecek Exp 
  */
 
 /*
@@ -5012,6 +5012,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ULSI Systems",
 	    "US201",
+	},
+	{
+	    PCI_VENDOR_USR, PCI_PRODUCT_USR_3C2884A,
+	    0,
+	    "US Robotics (3Com)",
+	    "56K Voice Internal PCI Modem (WinModem)",
 	},
 	{
 	    PCI_VENDOR_USR, PCI_PRODUCT_USR_3CP5609,
