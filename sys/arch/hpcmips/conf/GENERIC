@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.143 2003/12/27 07:29:56 shin Exp $
+# $NetBSD: GENERIC,v 1.144 2003/12/27 07:34:21 shin Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.143 $"
+#ident 		"GENERIC-$Revision: 1.144 $"
 
 maxusers	16
 
@@ -370,8 +370,13 @@ hpcin*	at hpcioman8 evtype PCIINTR id PCIINTR_00_00_01 port 7 level 0 connect 1
 options	VRC4172PCI_MCR700_SUPPORT
 vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform NEC_MCR_700
 vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform NEC_MCR_700A
+vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform NEC_MCR_730
+vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform NEC_MCR_730A
+pci*	at vrc4172pci?
 hpcioman9 at vrgiu? platform NEC_MCR_700
 hpcioman9 at vrgiu? platform NEC_MCR_700A
+hpcioman9 at vrgiu? platform NEC_MCR_730
+hpcioman9 at vrgiu? platform NEC_MCR_730A
 hpcin*	at hpcioman9 evtype PCIINTR id PCIINTR_00_00_01 port 13 level 0 connect 1
 
 #
