@@ -1,4 +1,4 @@
-/*	$NetBSD: tpctl.h,v 1.2 2003/01/03 04:41:49 takemura Exp $	*/
+/*	$NetBSD: tpctl.h,v 1.3 2003/07/08 23:26:55 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 TAKEMRUA Shin
@@ -109,4 +109,4 @@ void fb_flush(struct fb *);
 void fb_drawline(struct fb *, int, int, int, int, fb_pixel_t);
 void fb_drawpixel(struct fb *, int, int, fb_pixel_t);
 
-#endif __TPCTL_TP_H__
+#endif /* __TPCTL_TP_H__ */
