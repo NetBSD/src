@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)installboot.c	7.2 (Berkeley) 12/16/90
- *	$Id: installboot.c,v 1.2 1993/05/22 07:59:00 cgd Exp $
+ *	$Id: installboot.c,v 1.3 1994/06/22 03:12:23 mycroft Exp $
  */
 
 #ifndef lint
@@ -42,11 +42,11 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)installboot.c	7.2 (Berkeley) 12/16/90"; */
-static char rcsid[] = "$Id: installboot.c,v 1.2 1993/05/22 07:59:00 cgd Exp $";
+static char rcsid[] = "$Id: installboot.c,v 1.3 1994/06/22 03:12:23 mycroft Exp $";
 #endif /* not lint */
 
 #include "sys/param.h"
-#include "ufs/fs.h"
+#include "ufs/ffs/fs.h"
 
 char block[1024];
 int maxbootsize = 16 * 7 * 512;		/* XXX */
