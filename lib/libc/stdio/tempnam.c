@@ -1,4 +1,4 @@
-/*	$NetBSD: tempnam.c,v 1.7 1997/03/16 05:00:39 lukem Exp $	*/
+/*	$NetBSD: tempnam.c,v 1.8 1997/07/07 17:47:01 phil Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tempnam.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: tempnam.c,v 1.7 1997/03/16 05:00:39 lukem Exp $";
+static char rcsid[] = "$NetBSD: tempnam.c,v 1.8 1997/07/07 17:47:01 phil Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -67,26 +67,26 @@ tempnam(dir, pfx)
 		pfx = "tmp.";
 
 	if (f = getenv("TMPDIR")) {
-		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXX", f,
+		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXX", f,
 		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
 		if (f = _mktemp(name))
 			return(f);
 	}
 
 	if (f = (char *)dir) {
-		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXX", f,
+		(void)snprintf(name, MAXPATHLEN, "%s%s%sXXXXXXX", f,
 		    *(f + strlen(f) - 1) == '/'? "": "/", pfx);
 		if (f = _mktemp(name))
 			return(f);
 	}
 
 	f = P_tmpdir;
-	(void)snprintf(name, MAXPATHLEN, "%s%sXXXXXX", f, pfx);
+	(void)snprintf(name, MAXPATHLEN, "%s%sXXXXXXX", f, pfx);
 	if (f = _mktemp(name))
 		return(f);
 
 	f = _PATH_TMP;
-	(void)snprintf(name, MAXPATHLEN, "%s%sXXXXXX", f, pfx);
+	(void)snprintf(name, MAXPATHLEN, "%s%sXXXXXXX", f, pfx);
 	if (f = _mktemp(name))
 		return(f);
 
