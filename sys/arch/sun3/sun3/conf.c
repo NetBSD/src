@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.54 1997/02/25 01:15:01 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.55 1997/03/26 17:29:10 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -43,6 +43,14 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
+
+/* XXX: Move this to sys/conf.h? */
+/* open, close, write, ioctl (not a tty) */
+#define	cdev_lpt_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), \
+	(dev_type_read((*))) enodev, dev_init(c,n,write), \
+	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
 
 /*
  * Device headers and declarations:
@@ -108,6 +116,13 @@ cdev_decl(mm);
 
 #include "ms.h"
 cdev_decl(ms);
+
+#ifdef	sun3x
+#include "pp.h"
+#else
+#define	NPP 0
+#endif
+cdev_decl(pp);
 
 #include "pty.h"
 #define	ptstty		ptytty
@@ -248,7 +263,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 53: (hd - N/A) */
 	cdev_disk_init(NFD,fd),		/* 54: floppy disk (3/80 only) */
 	cdev_notdef(),			/* 55: cgthree */
-	cdev_notdef(),			/* 56: (pp) */
+	cdev_lpt_init(NPP,pp),		/* 56: parallel port (3/80 only) */
 	cdev_notdef(),			/* 57: (vd) Loadable Module control */
 	cdev_disk_init(NCD,cd), 	/* 58: SCSI CD-ROM */
 	cdev_ch_init(NCH,ch),		/* 59: SCSI autochanger */
