@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 1999/01/02 13:42:17 dbj Exp $
+#	$NetBSD: genassym.cf,v 1.6 1999/03/24 23:15:58 dbj Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -46,9 +46,7 @@ include <sys/user.h>
 
 include <vm/vm.h>
 
-ifdef UVM
 include <uvm/uvm_extern.h>
-endif
 
 include <machine/cpu.h>
 include <machine/psl.h>
@@ -134,11 +132,7 @@ define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 
 # interrupt/fault metering
-ifdef UVM
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
-else
-define	V_INTR			offsetof(struct vmmeter, v_intr)
-endif
 
 # PSL values (should just include psl.h?)
 define	PSL_S			PSL_S
@@ -158,8 +152,10 @@ define	FC_USERD		FC_USERD
 define	INTIOBASE		INTIOBASE
 define	INTIOTOP		INTIOTOP
 define	IIOMAPSIZE		IIOMAPSIZE
-define	VIDEOBASE		VIDEOBASE
-define	VIDEOTOP		VIDEOTOP
+define	MONOBASE		MONOBASE
+define	MONOTOP			MONOTOP
+define	COLORBASE		COLORBASE
+define	COLORTOP		COLORTOP
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
 define	CACHE_CLR		CACHE_CLR

@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbd.c,v 1.1 1999/01/28 11:46:23 dbj Exp $ */
+/* $NetBSD: nextkbd.c,v 1.2 1999/03/24 23:15:52 dbj Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -47,7 +47,7 @@
 #include <machine/bus.h>
 
 #include <next68k/dev/nextkbdvar.h>
-#include <next68k/dev/wskbdmap_mfii.h>
+#include <next68k/dev/wskbdmap_next.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -149,7 +149,7 @@ nextkbd_attach(parent, self, aux)
 		sc->id = malloc(sizeof(struct nextkbd_internal), 
 				M_DEVBUF, M_WAITOK);
 
-		bzero(sc->id, sizeof(struct nextkbd_internal));
+		memset(sc->id, 0, sizeof(struct nextkbd_internal));
 		sc->id->iot = NEXT68K_INTIO_BUS_SPACE;
 		if (bus_space_map(sc->id->iot, NEXT_P_MON,
 				sizeof(struct mon_regs),
@@ -184,7 +184,9 @@ nextkbd_enable(v, on)
 	int on;
 {
 	/* XXX not sure if this should do anything */
+#if 0
 	printf("nextkbd_enable %d\n", on);
+#endif
 	return 0;
 }
 
@@ -210,7 +212,7 @@ nextkbd_ioctl(v, cmd, data, flag, p)
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		/* XXX */
-		*(int *)data = WSKBD_TYPE_PC_AT;
+		*(int *)data = WSKBD_TYPE_NEXT;
 		return (0);
 	case WSKBDIO_SETLEDS:
 		return (0);
@@ -230,7 +232,6 @@ nextkbdhard(arg)
 	register struct nextkbd_softc *sc = arg;
 	struct mon_regs stat;
 	unsigned char device;
-	u_int32_t scan_code;
 	int type, key;
 
 	if (!INTR_OCCURRED(NEXT_I_KYBD_MOUSE)) return 0;
@@ -252,18 +253,19 @@ nextkbdhard(arg)
 
 	bus_space_read_region_4(sc->id->iot, sc->id->ioh, 0, &stat, 3);
 	if (stat.mon_csr & CSR_INT) {
-		if (stat.mon_csr & CSR_DATA) {
+                if (stat.mon_csr & CSR_DATA) {
+                        stat.mon_csr &= ~CSR_INT;
 			sc->id->num_ints++;
-			stat.mon_csr &= ~CSR_INT;
 			bus_space_write_4(sc->id->iot, sc->id->ioh, 0, stat.mon_csr);
 			device = stat.mon_data >> 28;
-			if (device != 1) return(0);
-
-			scan_code = stat.mon_data & 0xffff;
-			if (nextkbd_decode(sc->id, scan_code, &type, &key)) {
+			if (device != 1) return(1); /* XXX: mouse */
+			if (nextkbd_decode(sc->id, stat.mon_data & 0xffff, &type, &key)) {
 				wskbd_input(sc->sc_wskbddev, type, key);
 			}
-		}
+		} else {
+                        printf("nextkbd: int but no data\n");
+                        return(1);
+                }
 	}
 
 	return(1);
@@ -279,7 +281,7 @@ nextkbd_cnattach(bst)
 			0, &bsh))
 		return (ENXIO);
 
-	bzero(&nextkbd_consdata, sizeof(nextkbd_consdata));
+	memset(&nextkbd_consdata, 0, sizeof(nextkbd_consdata));
 
 	nextkbd_consdata.iot = bst;
 	nextkbd_consdata.ioh = bsh;
@@ -338,10 +340,10 @@ nextkbd_poll_data(iot, ioh)
 	/* printf("cnstart\n"); */
 	for (i=100000; i; i--) {
 		bus_space_read_region_4(iot, ioh, 0, &stat, 3);
-		if ( (stat.mon_csr & CSR_DATA) ) {
-			stat.mon_csr &= ~CSR_INT;
+                stat.mon_csr &= ~CSR_INT;
+                if ( (stat.mon_csr & CSR_DATA) ) {
 			if ( (stat.mon_data >> 28) == 1) {
-																/* printf("cnkey %08x %08x\n", stat.mon_csr, stat.mon_data); */
+                          /* printf("cnkey %08x %08x\n", stat.mon_csr, stat.mon_data); */
 				bus_space_write_4(iot, ioh, 0, stat.mon_csr);
 				return (stat.mon_data & 0xffff);
 			}
