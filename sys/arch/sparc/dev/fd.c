@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.12 1995/10/03 17:32:12 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.13 1995/10/09 22:33:07 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -258,6 +258,7 @@ fdcmatch(parent, match, aux)
  */
 struct fdc_attach_args {
 	int fa_drive;
+	int fa_bootdev;
 	struct fd_type *fa_deftype;
 };
 
@@ -399,7 +400,9 @@ fdcattach(parent, self, aux)
 	    strcmp(ca->ca_ra.ra_bp->name, OBP_FDNAME) == 0 &&
 	    ca->ca_ra.ra_bp->val[0] == 0 && 
 	    ca->ca_ra.ra_bp->val[1] == 0)
-		bootdv = &fdc->sc_dk.dk_dev;
+		fa.fa_bootdev = 1;
+	else
+		fa.fa_bootdev = 0;
 
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
@@ -503,6 +506,12 @@ fdattach(parent, self, aux)
 	fd->sc_deftype = type;
 	fdc->sc_fd[drive] = fd;
 	fd->sc_dk.dk_driver = &fddkdriver;
+
+	/*
+	 * We're told if we're the boot device in fdcattach().
+	 */
+	if (fa->fa_bootdev)
+		bootdv = &fd->sc_dk.dk_dev;
 
 	/* XXX Need to do some more fiddling with sc_dk. */
 	dk_establish(&fd->sc_dk, &fd->sc_dk.dk_dev);
@@ -1428,7 +1437,7 @@ fdioctl(dev, cmd, addr, flag)
 				       &fd->sc_dk.dk_cpulabel);
 		return error;
 
-	case FDIOCEJECT:
+	case DIOCEJECT:
 		auxregbisc(AUXIO_FDS, AUXIO_FEJ);
 		delay(10);
 		auxregbisc(AUXIO_FEJ, AUXIO_FDS);
