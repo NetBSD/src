@@ -29,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_node.h,v 1.7 2003/10/17 21:41:52 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_node.h,v 1.10 2004/04/05 22:10:26 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_NODE_H_
 #define _NET80211_IEEE80211_NODE_H_
@@ -128,6 +128,10 @@ ieee80211_unref_node(struct ieee80211_node **ni)
 
 struct ieee80211com;
 
+#ifdef MALLOC_DECLARE
+MALLOC_DECLARE(M_80211_NODE);
+#endif
+
 extern	void ieee80211_node_attach(struct ifnet *);
 extern	void ieee80211_node_lateattach(struct ifnet *);
 extern	void ieee80211_node_detach(struct ifnet *);
@@ -140,6 +144,8 @@ extern	struct ieee80211_node *ieee80211_alloc_node(struct ieee80211com *,
 extern	struct ieee80211_node *ieee80211_dup_bss(struct ieee80211com *,
 		u_int8_t *);
 extern	struct ieee80211_node *ieee80211_find_node(struct ieee80211com *,
+		u_int8_t *);
+extern	struct ieee80211_node *ieee80211_find_txnode(struct ieee80211com *,
 		u_int8_t *);
 extern	struct ieee80211_node * ieee80211_lookup_node(struct ieee80211com *,
 		u_int8_t *macaddr, struct ieee80211_channel *);

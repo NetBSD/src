@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.13 2003/11/09 23:36:46 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 
 #include "opt_inet.h"
 
@@ -78,7 +78,7 @@ static void ieee80211_setup_node(struct ieee80211com *ic,
 static void _ieee80211_free_node(struct ieee80211com *,
 		struct ieee80211_node *);
 
-MALLOC_DEFINE(M_80211_NODE, "node", "802.11 node state");
+MALLOC_DEFINE(M_80211_NODE, "80211node", "802.11 node state");
 
 void
 ieee80211_node_attach(struct ifnet *ifp)
@@ -99,10 +99,13 @@ void
 ieee80211_node_lateattach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
+	struct ieee80211_node *ni;
 
-	ic->ic_bss = (*ic->ic_node_alloc)(ic);
-	KASSERT(ic->ic_bss != NULL, ("unable to setup inital BSS node"));
-	ic->ic_bss->ni_chan = IEEE80211_CHAN_ANYC;
+	ni = (*ic->ic_node_alloc)(ic);
+	KASSERT(ni != NULL, ("unable to setup inital BSS node"));
+	ni->ni_chan = IEEE80211_CHAN_ANYC;
+	ic->ic_bss = ni;
+	ic->ic_txpower = IEEE80211_TXPOWER_MAX;
 }
 
 void
@@ -238,6 +241,71 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 	ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 }
 
+static int
+ieee80211_match_bss(struct ifnet *ifp, struct ieee80211_node *ni)
+{
+	struct ieee80211com *ic = (void *)ifp;
+        u_int8_t rate;
+        int fail;
+
+	fail = 0;
+	if (isclr(ic->ic_chan_active, ieee80211_chan2ieee(ic, ni->ni_chan)))
+		fail |= 0x01;
+	if (ic->ic_des_chan != IEEE80211_CHAN_ANYC &&
+	    ni->ni_chan != ic->ic_des_chan)
+		fail |= 0x01;
+	if (ic->ic_opmode == IEEE80211_M_IBSS) {
+		if ((ni->ni_capinfo & IEEE80211_CAPINFO_IBSS) == 0)
+			fail |= 0x02;
+	} else {
+		if ((ni->ni_capinfo & IEEE80211_CAPINFO_ESS) == 0)
+			fail |= 0x02;
+	}
+	if (ic->ic_flags & IEEE80211_F_WEPON) {
+		if ((ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) == 0)
+			fail |= 0x04;
+	} else {
+		/* XXX does this mean privacy is supported or required? */
+		if (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY)
+			fail |= 0x04;
+	}
+	rate = ieee80211_fix_rate(ic, ni, IEEE80211_F_DONEGO);
+	if (rate & IEEE80211_RATE_BASIC)
+		fail |= 0x08;
+	if (ic->ic_des_esslen != 0 &&
+	    (ni->ni_esslen != ic->ic_des_esslen ||
+	     memcmp(ni->ni_essid, ic->ic_des_essid, ic->ic_des_esslen) != 0))
+		fail |= 0x10;
+	if ((ic->ic_flags & IEEE80211_F_DESBSSID) &&
+	    !IEEE80211_ADDR_EQ(ic->ic_des_bssid, ni->ni_bssid))
+		fail |= 0x20;
+#ifdef IEEE80211_DEBUG
+	if (ifp->if_flags & IFF_DEBUG) {
+		printf(" %c %s", fail ? '-' : '+',
+		    ether_sprintf(ni->ni_macaddr));
+		printf(" %s%c", ether_sprintf(ni->ni_bssid),
+		    fail & 0x20 ? '!' : ' ');
+		printf(" %3d%c", ieee80211_chan2ieee(ic, ni->ni_chan),
+			fail & 0x01 ? '!' : ' ');
+		printf(" %+4d", ni->ni_rssi);
+		printf(" %2dM%c", (rate & IEEE80211_RATE_VAL) / 2,
+		    fail & 0x08 ? '!' : ' ');
+		printf(" %4s%c",
+		    (ni->ni_capinfo & IEEE80211_CAPINFO_ESS) ? "ess" :
+		    (ni->ni_capinfo & IEEE80211_CAPINFO_IBSS) ? "ibss" :
+		    "????",
+		    fail & 0x02 ? '!' : ' ');
+		printf(" %3s%c ",
+		    (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) ?
+		    "wep" : "no",
+		    fail & 0x04 ? '!' : ' ');
+		ieee80211_print_essid(ni->ni_essid, ni->ni_esslen);
+		printf("%s\n", fail & 0x10 ? "!" : "");
+	}
+#endif
+	return fail;
+}
+
 /*
  * Complete a scan of potential channels.
  */
@@ -246,7 +314,6 @@ ieee80211_end_scan(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
 	struct ieee80211_node *ni, *nextbs, *selbs;
-	u_int8_t rate;
 	int i, fail;
 
 	ic->ic_flags &= ~IEEE80211_F_ASCAN;
@@ -312,59 +379,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 				ieee80211_free_node(ic, ni);
 			continue;
 		}
-		fail = 0;
-		if (isclr(ic->ic_chan_active, ieee80211_chan2ieee(ic, ni->ni_chan)))
-			fail |= 0x01;
-		if (ic->ic_des_chan != IEEE80211_CHAN_ANYC &&
-		    ni->ni_chan != ic->ic_des_chan)
-			fail |= 0x01;
-		if (ic->ic_opmode == IEEE80211_M_IBSS) {
-			if ((ni->ni_capinfo & IEEE80211_CAPINFO_IBSS) == 0)
-				fail |= 0x02;
-		} else {
-			if ((ni->ni_capinfo & IEEE80211_CAPINFO_ESS) == 0)
-				fail |= 0x02;
-		}
-		if (ic->ic_flags & IEEE80211_F_WEPON) {
-			if ((ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) == 0)
-				fail |= 0x04;
-		} else {
-			if (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY)
-				fail |= 0x04;
-		}
-		rate = ieee80211_fix_rate(ic, ni, IEEE80211_F_DONEGO);
-		if (rate & IEEE80211_RATE_BASIC)
-			fail |= 0x08;
-		if (ic->ic_des_esslen != 0 &&
-		    (ni->ni_esslen != ic->ic_des_esslen ||
-		     memcmp(ni->ni_essid, ic->ic_des_essid, ic->ic_des_esslen) != 0))
-			fail |= 0x10;
-		if ((ic->ic_flags & IEEE80211_F_DESBSSID) &&
-		    !IEEE80211_ADDR_EQ(ic->ic_des_bssid, ni->ni_bssid))
-			fail |= 0x20;
-		if (ifp->if_flags & IFF_DEBUG) {
-			printf(" %c %s", fail ? '-' : '+',
-			    ether_sprintf(ni->ni_macaddr));
-			printf(" %s%c", ether_sprintf(ni->ni_bssid),
-			    fail & 0x20 ? '!' : ' ');
-			printf(" %3d%c", ieee80211_chan2ieee(ic, ni->ni_chan),
-				fail & 0x01 ? '!' : ' ');
-			printf(" %+4d", ni->ni_rssi);
-			printf(" %2dM%c", (rate & IEEE80211_RATE_VAL) / 2,
-			    fail & 0x08 ? '!' : ' ');
-			printf(" %4s%c",
-			    (ni->ni_capinfo & IEEE80211_CAPINFO_ESS) ? "ess" :
-			    (ni->ni_capinfo & IEEE80211_CAPINFO_IBSS) ? "ibss" :
-			    "????",
-			    fail & 0x02 ? '!' : ' ');
-			printf(" %3s%c ",
-			    (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) ?
-			    "wep" : "no",
-			    fail & 0x04 ? '!' : ' ');
-			ieee80211_print_essid(ni->ni_essid, ni->ni_esslen);
-			printf("%s\n", fail & 0x10 ? "!" : "");
-		}
-		if (!fail) {
+		if (ieee80211_match_bss(ifp, ni) == 0) {
 			if (selbs == NULL)
 				selbs = ni;
 			else if (ni->ni_rssi > selbs->ni_rssi) {
@@ -388,6 +403,14 @@ ieee80211_end_scan(struct ifnet *ifp)
 			goto notfound;
 		}
 		ieee80211_unref_node(&selbs);
+		/*
+		 * Discard scan set; the nodes have a refcnt of zero
+		 * and have not asked the driver to setup private
+		 * node state.  Let them be repopulated on demand either
+		 * through transmission (ieee80211_find_txnode) or receipt
+		 * of a probe response (to be added).
+		 */
+		ieee80211_free_allnodes(ic);
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 	} else {
 		ieee80211_unref_node(&selbs);
@@ -398,14 +421,16 @@ ieee80211_end_scan(struct ifnet *ifp)
 static struct ieee80211_node *
 ieee80211_node_alloc(struct ieee80211com *ic)
 {
-	return malloc(sizeof(struct ieee80211_node), M_80211_NODE,
-		M_NOWAIT | M_ZERO);
+	struct ieee80211_node *ni;
+	MALLOC(ni, struct ieee80211_node *, sizeof(struct ieee80211_node),
+		M_80211_NODE, M_NOWAIT | M_ZERO);
+	return ni;
 }
 
 static void
 ieee80211_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-	free(ni, M_80211_NODE);
+	FREE(ni, M_80211_NODE);
 }
 
 static void
@@ -453,6 +478,8 @@ ieee80211_alloc_node(struct ieee80211com *ic, u_int8_t *macaddr)
 	struct ieee80211_node *ni = (*ic->ic_node_alloc)(ic);
 	if (ni != NULL)
 		ieee80211_setup_node(ic, ni, macaddr);
+	else
+		ic->ic_stats.is_rx_nodealloc++;
 	return ni;
 }
 
@@ -461,27 +488,87 @@ ieee80211_dup_bss(struct ieee80211com *ic, u_int8_t *macaddr)
 {
 	struct ieee80211_node *ni = (*ic->ic_node_alloc)(ic);
 	if (ni != NULL) {
-		memcpy(ni, ic->ic_bss, sizeof(struct ieee80211_node));
 		ieee80211_setup_node(ic, ni, macaddr);
-	}
+		/*
+		 * Inherit from ic_bss.
+		 */
+		IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_bss->ni_bssid);
+		ni->ni_chan = ic->ic_bss->ni_chan;
+	} else
+		ic->ic_stats.is_rx_nodealloc++;
 	return ni;
+}
+
+static struct ieee80211_node *
+_ieee80211_find_node(struct ieee80211com *ic, u_int8_t *macaddr)
+{
+	struct ieee80211_node *ni;
+	int hash;
+
+	IEEE80211_NODE_LOCK_ASSERT(ic);
+
+	hash = IEEE80211_NODE_HASH(macaddr);
+	LIST_FOREACH(ni, &ic->ic_hash[hash], ni_hash) {
+		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr)) {
+			atomic_add_int(&ni->ni_refcnt, 1);/* mark referenced */
+			return ni;
+		}
+	}
+	return NULL;
 }
 
 struct ieee80211_node *
 ieee80211_find_node(struct ieee80211com *ic, u_int8_t *macaddr)
 {
 	struct ieee80211_node *ni;
-	int hash;
 
-	hash = IEEE80211_NODE_HASH(macaddr);
 	IEEE80211_NODE_LOCK(ic);
-	LIST_FOREACH(ni, &ic->ic_hash[hash], ni_hash) {
-		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr)) {
-			atomic_add_int(&ni->ni_refcnt, 1); /* mark referenced */
-			break;
+	ni = _ieee80211_find_node(ic, macaddr);
+	IEEE80211_NODE_UNLOCK(ic);
+	return ni;
+}
+
+/*
+ * Return a reference to the appropriate node for sending
+ * a data frame.  This handles node discovery in adhoc networks.
+ */
+struct ieee80211_node *
+ieee80211_find_txnode(struct ieee80211com *ic, u_int8_t *macaddr)
+{
+	struct ieee80211_node *ni;
+
+	/*
+	 * The destination address should be in the node table
+	 * unless we are operating in station mode or this is a
+	 * multicast/broadcast frame.
+	 */
+	if (ic->ic_opmode == IEEE80211_M_STA || IEEE80211_IS_MULTICAST(macaddr))
+		return ic->ic_bss;
+
+	/* XXX can't hold lock across dup_bss 'cuz of recursive locking */
+	IEEE80211_NODE_LOCK(ic);
+	ni = _ieee80211_find_node(ic, macaddr);
+	IEEE80211_NODE_UNLOCK(ic);
+	if (ni == NULL &&
+	    (ic->ic_opmode == IEEE80211_M_IBSS ||
+	     ic->ic_opmode == IEEE80211_M_AHDEMO)) {
+		/*
+		 * Fake up a node; this handles node discovery in
+		 * adhoc mode.  Note that for the driver's benefit
+		 * we we treat this like an association so the driver
+		 * has an opportunity to setup it's private state.
+		 *
+		 * XXX need better way to handle this; issue probe
+		 *     request so we can deduce rate set, etc.
+		 */
+		ni = ieee80211_dup_bss(ic, macaddr);
+		if (ni != NULL) {
+			/* XXX no rate negotiation; just dup */
+			ni->ni_rates = ic->ic_bss->ni_rates;
+			if (ic->ic_newassoc)
+				(*ic->ic_newassoc)(ic, ni, 1);
 		}
 	}
-	IEEE80211_NODE_UNLOCK(ic);
 	return ni;
 }
 
@@ -498,7 +585,8 @@ ieee80211_lookup_node(struct ieee80211com *ic,
 	hash = IEEE80211_NODE_HASH(macaddr);
 	IEEE80211_NODE_LOCK(ic);
 	LIST_FOREACH(ni, &ic->ic_hash[hash], ni_hash) {
-		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr) && ni->ni_chan == chan) {
+		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr) &&
+		    ni->ni_chan == chan) {
 			atomic_add_int(&ni->ni_refcnt, 1);/* mark referenced */
 			break;
 		}

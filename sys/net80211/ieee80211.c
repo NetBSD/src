@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.8 2003/09/14 22:32:18 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 
 /*
  * IEEE 802.11 generic handler
@@ -84,7 +84,8 @@ static const char *ieee80211_phymode_name[] = {
 	"11a",		/* IEEE80211_MODE_11A */
 	"11b",		/* IEEE80211_MODE_11B */
 	"11g",		/* IEEE80211_MODE_11G */
-	"turbo",	/* IEEE80211_MODE_TURBO	*/
+	"FH",		/* IEEE80211_MODE_FH */
+	"turbo",	/* IEEE80211_MODE_TURBO */
 };
 
 void
@@ -129,6 +130,8 @@ ieee80211_ifattach(struct ifnet *ifp)
 				ic->ic_modecaps |= 1<<IEEE80211_MODE_11B;
 			if (IEEE80211_IS_CHAN_PUREG(c))
 				ic->ic_modecaps |= 1<<IEEE80211_MODE_11G;
+			if (IEEE80211_IS_CHAN_FHSS(c))
+				ic->ic_modecaps |= 1<<IEEE80211_MODE_FH;
 			if (IEEE80211_IS_CHAN_T(c))
 				ic->ic_modecaps |= 1<<IEEE80211_MODE_TURBO;
 		}
@@ -136,10 +139,10 @@ ieee80211_ifattach(struct ifnet *ifp)
 	/* validate ic->ic_curmode */
 	if ((ic->ic_modecaps & (1<<ic->ic_curmode)) == 0)
 		ic->ic_curmode = IEEE80211_MODE_AUTO;
+	ic->ic_des_chan = IEEE80211_CHAN_ANYC;	/* any channel is ok */
 
 	(void) ieee80211_setmode(ic, ic->ic_curmode);
 
-	ic->ic_des_chan = IEEE80211_CHAN_ANYC;	/* any channel is ok */
 	if (ic->ic_lintval == 0)
 		ic->ic_lintval = 100;		/* default sleep */
 	ic->ic_bmisstimeout = 7*ic->ic_lintval;	/* default 7 beacons */
@@ -266,10 +269,11 @@ ieee80211_media_init(struct ifnet *ifp,
 	for (mode = IEEE80211_MODE_AUTO; mode < IEEE80211_MODE_MAX; mode++) {
 		static const u_int mopts[] = { 
 			IFM_AUTO,
-			IFM_MAKEMODE(IFM_IEEE80211_11A),
-			IFM_MAKEMODE(IFM_IEEE80211_11B),
-			IFM_MAKEMODE(IFM_IEEE80211_11G),
-			IFM_MAKEMODE(IFM_IEEE80211_11A) | IFM_IEEE80211_TURBO,
+			IFM_IEEE80211_11A,
+			IFM_IEEE80211_11B,
+			IFM_IEEE80211_11G,
+			IFM_IEEE80211_FH,
+			IFM_IEEE80211_11A | IFM_IEEE80211_TURBO,
 		};
 		if ((ic->ic_modecaps & (1<<mode)) == 0)
 			continue;
@@ -384,6 +388,9 @@ ieee80211_media_change(struct ifnet *ifp)
 		break;
 	case IFM_IEEE80211_11G:
 		newphymode = IEEE80211_MODE_11G;
+		break;
+	case IFM_IEEE80211_FH:
+		newphymode = IEEE80211_MODE_FH;
 		break;
 	case IFM_AUTO:
 		newphymode = IEEE80211_MODE_AUTO;
@@ -555,16 +562,19 @@ ieee80211_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	}
 	switch (ic->ic_curmode) {
 	case IEEE80211_MODE_11A:
-		imr->ifm_active |= IFM_MAKEMODE(IFM_IEEE80211_11A);
+		imr->ifm_active |= IFM_IEEE80211_11A;
 		break;
 	case IEEE80211_MODE_11B:
-		imr->ifm_active |= IFM_MAKEMODE(IFM_IEEE80211_11B);
+		imr->ifm_active |= IFM_IEEE80211_11B;
 		break;
 	case IEEE80211_MODE_11G:
-		imr->ifm_active |= IFM_MAKEMODE(IFM_IEEE80211_11G);
+		imr->ifm_active |= IFM_IEEE80211_11G;
+		break;
+	case IEEE80211_MODE_FH:
+		imr->ifm_active |= IFM_IEEE80211_FH;
 		break;
 	case IEEE80211_MODE_TURBO:
-		imr->ifm_active |= IFM_MAKEMODE(IFM_IEEE80211_11A)
+		imr->ifm_active |= IFM_IEEE80211_11A
 				|  IFM_IEEE80211_TURBO;
 		break;
 	}
@@ -598,6 +608,7 @@ ieee80211_set11gbasicrates(struct ieee80211_rateset *rs, enum ieee80211_phymode 
 	    { 3, { 12, 24, 48 } },		/* IEEE80211_MODE_11A */
 	    { 4, { 2, 4, 11, 22 } },		/* IEEE80211_MODE_11B */
 	    { 7, { 2, 4, 11, 22, 12, 24, 48 } },/* IEEE80211_MODE_11G */
+	    { 0 },				/* IEEE80211_MODE_FH */
 	    { 0 },				/* IEEE80211_MODE_TURBO	*/
 	};
 	int i, j;
@@ -627,6 +638,7 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 		IEEE80211_CHAN_A,	/* IEEE80211_MODE_11A */
 		IEEE80211_CHAN_B,	/* IEEE80211_MODE_11B */
 		IEEE80211_CHAN_PUREG,	/* IEEE80211_MODE_11G */
+		IEEE80211_CHAN_FHSS,	/* IEEE80211_MODE_FH */
 		IEEE80211_CHAN_T,	/* IEEE80211_MODE_TURBO	*/
 	};
 	struct ieee80211_channel *c;
@@ -644,7 +656,7 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	 * Verify at least one channel is present in the available
 	 * channel list before committing to the new mode.
 	 */
-	KASSERT(mode < N(chanflags), ("Unexpected mode %u\n", mode));
+	KASSERT(mode < N(chanflags), ("Unexpected mode %u", mode));
 	modeflags = chanflags[mode];
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
 		c = &ic->ic_channels[i];
@@ -736,6 +748,8 @@ ieee80211_chan2mode(struct ieee80211com *ic, struct ieee80211_channel *chan)
 	 */
 	if (IEEE80211_IS_CHAN_5GHZ(chan))
 		return IEEE80211_MODE_11A;
+	else if (IEEE80211_IS_CHAN_FHSS(chan))
+		return IEEE80211_MODE_FH;
 	else if (chan->ic_flags & (IEEE80211_CHAN_OFDM|IEEE80211_CHAN_DYN))
 		return IEEE80211_MODE_11G;
 	else
@@ -754,31 +768,33 @@ ieee80211_rate2media(struct ieee80211com *ic, int rate, enum ieee80211_phymode m
 		u_int	m;	/* rate + mode */
 		u_int	r;	/* if_media rate */
 	} rates[] = {
-		{   2 | IFM_MAKEMODE(IFM_IEEE80211_11B), IFM_IEEE80211_DS1 },
-		{   4 | IFM_MAKEMODE(IFM_IEEE80211_11B), IFM_IEEE80211_DS2 },
-		{  11 | IFM_MAKEMODE(IFM_IEEE80211_11B), IFM_IEEE80211_DS5 },
-		{  22 | IFM_MAKEMODE(IFM_IEEE80211_11B), IFM_IEEE80211_DS11 },
-		{  44 | IFM_MAKEMODE(IFM_IEEE80211_11B), IFM_IEEE80211_DS22 },
-		{  12 | IFM_MAKEMODE(IFM_IEEE80211_11A), IFM_IEEE80211_OFDM6 },
-		{  18 | IFM_MAKEMODE(IFM_IEEE80211_11A), IFM_IEEE80211_OFDM9 },
-		{  24 | IFM_MAKEMODE(IFM_IEEE80211_11A), IFM_IEEE80211_OFDM12 },
-		{  36 | IFM_MAKEMODE(IFM_IEEE80211_11A), IFM_IEEE80211_OFDM18 },
-		{  48 | IFM_MAKEMODE(IFM_IEEE80211_11A), IFM_IEEE80211_OFDM24 },
-		{  72 | IFM_MAKEMODE(IFM_IEEE80211_11A), IFM_IEEE80211_OFDM36 },
-		{  96 | IFM_MAKEMODE(IFM_IEEE80211_11A), IFM_IEEE80211_OFDM48 },
-		{ 108 | IFM_MAKEMODE(IFM_IEEE80211_11A), IFM_IEEE80211_OFDM54 },
-		{   2 | IFM_MAKEMODE(IFM_IEEE80211_11G), IFM_IEEE80211_DS1 },
-		{   4 | IFM_MAKEMODE(IFM_IEEE80211_11G), IFM_IEEE80211_DS2 },
-		{  11 | IFM_MAKEMODE(IFM_IEEE80211_11G), IFM_IEEE80211_DS5 },
-		{  22 | IFM_MAKEMODE(IFM_IEEE80211_11G), IFM_IEEE80211_DS11 },
-		{  12 | IFM_MAKEMODE(IFM_IEEE80211_11G), IFM_IEEE80211_OFDM6 },
-		{  18 | IFM_MAKEMODE(IFM_IEEE80211_11G), IFM_IEEE80211_OFDM9 },
-		{  24 | IFM_MAKEMODE(IFM_IEEE80211_11G), IFM_IEEE80211_OFDM12 },
-		{  36 | IFM_MAKEMODE(IFM_IEEE80211_11G), IFM_IEEE80211_OFDM18 },
-		{  48 | IFM_MAKEMODE(IFM_IEEE80211_11G), IFM_IEEE80211_OFDM24 },
-		{  72 | IFM_MAKEMODE(IFM_IEEE80211_11G), IFM_IEEE80211_OFDM36 },
-		{  96 | IFM_MAKEMODE(IFM_IEEE80211_11G), IFM_IEEE80211_OFDM48 },
-		{ 108 | IFM_MAKEMODE(IFM_IEEE80211_11G), IFM_IEEE80211_OFDM54 },
+		{   2 | IFM_IEEE80211_FH, IFM_IEEE80211_FH1 },
+		{   4 | IFM_IEEE80211_FH, IFM_IEEE80211_FH2 },
+		{   2 | IFM_IEEE80211_11B, IFM_IEEE80211_DS1 },
+		{   4 | IFM_IEEE80211_11B, IFM_IEEE80211_DS2 },
+		{  11 | IFM_IEEE80211_11B, IFM_IEEE80211_DS5 },
+		{  22 | IFM_IEEE80211_11B, IFM_IEEE80211_DS11 },
+		{  44 | IFM_IEEE80211_11B, IFM_IEEE80211_DS22 },
+		{  12 | IFM_IEEE80211_11A, IFM_IEEE80211_OFDM6 },
+		{  18 | IFM_IEEE80211_11A, IFM_IEEE80211_OFDM9 },
+		{  24 | IFM_IEEE80211_11A, IFM_IEEE80211_OFDM12 },
+		{  36 | IFM_IEEE80211_11A, IFM_IEEE80211_OFDM18 },
+		{  48 | IFM_IEEE80211_11A, IFM_IEEE80211_OFDM24 },
+		{  72 | IFM_IEEE80211_11A, IFM_IEEE80211_OFDM36 },
+		{  96 | IFM_IEEE80211_11A, IFM_IEEE80211_OFDM48 },
+		{ 108 | IFM_IEEE80211_11A, IFM_IEEE80211_OFDM54 },
+		{   2 | IFM_IEEE80211_11G, IFM_IEEE80211_DS1 },
+		{   4 | IFM_IEEE80211_11G, IFM_IEEE80211_DS2 },
+		{  11 | IFM_IEEE80211_11G, IFM_IEEE80211_DS5 },
+		{  22 | IFM_IEEE80211_11G, IFM_IEEE80211_DS11 },
+		{  12 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM6 },
+		{  18 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM9 },
+		{  24 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM12 },
+		{  36 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM18 },
+		{  48 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM24 },
+		{  72 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM36 },
+		{  96 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM48 },
+		{ 108 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM54 },
 		/* NB: OFDM72 doesn't realy exist so we don't handle it */
 	};
 	u_int mask, i;
@@ -787,25 +803,24 @@ ieee80211_rate2media(struct ieee80211com *ic, int rate, enum ieee80211_phymode m
 	switch (mode) {
 	case IEEE80211_MODE_11A:
 	case IEEE80211_MODE_TURBO:
-		mask |= IFM_MAKEMODE(IFM_IEEE80211_11A);
+		mask |= IFM_IEEE80211_11A;
 		break;
 	case IEEE80211_MODE_11B:
-		mask |= IFM_MAKEMODE(IFM_IEEE80211_11B);
+		mask |= IFM_IEEE80211_11B;
+		break;
+	case IEEE80211_MODE_FH:
+		mask |= IFM_IEEE80211_FH;
 		break;
 	case IEEE80211_MODE_AUTO:
 		/* NB: ic may be NULL for some drivers */
 		if (ic && ic->ic_phytype == IEEE80211_T_FH) {
-			/* must handle these specially */
-			switch (mask) {
-			case 2:		return IFM_IEEE80211_FH1;
-			case 4:		return IFM_IEEE80211_FH2;
-			}
-			return IFM_AUTO;
+			mask |= IFM_IEEE80211_FH;
+			break;
 		}
 		/* NB: hack, 11g matches both 11b+11a rates */
 		/* fall thru... */
 	case IEEE80211_MODE_11G:
-		mask |= IFM_MAKEMODE(IFM_IEEE80211_11G);
+		mask |= IFM_IEEE80211_11G;
 		break;
 	}
 	for (i = 0; i < N(rates); i++)
@@ -873,3 +888,4 @@ static moduledata_t ieee80211_mod = {
 DECLARE_MODULE(wlan, ieee80211_mod, SI_SUB_DRIVERS, SI_ORDER_FIRST);
 MODULE_VERSION(wlan, 1);
 MODULE_DEPEND(wlan, rc4, 1, 1, 1);
+MODULE_DEPEND(wlan, ether, 1, 1, 1);

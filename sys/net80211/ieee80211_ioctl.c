@@ -31,11 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.9 2003/11/13 05:23:58 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.13 2004/03/30 22:57:57 sam Exp $");
 
 /*
  * IEEE 802.11 ioctl support (FreeBSD-specific)
  */
+
+#include "opt_inet.h"
+#include "opt_ipx.h"
 
 #include <sys/endian.h>
 #include <sys/param.h>
@@ -48,6 +51,16 @@ __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.9 2003/11/13 05:23:58
 #include <net/if_arp.h>
 #include <net/if_media.h>
 #include <net/ethernet.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#endif
+
+#ifdef IPX
+#include <netipx/ipx.h>
+#include <netipx/ipx_if.h>
+#endif
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_ioctl.h>
@@ -301,7 +314,8 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case WI_RID_SCAN_RES:			/* compatibility interface */
 		if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
-		    ic->ic_state == IEEE80211_S_SCAN) {
+		    ic->ic_state == IEEE80211_S_SCAN &&
+		    (ic->ic_flags & IEEE80211_F_ASCAN)) {
 			error = EINPROGRESS;
 			break;
 		}
@@ -755,6 +769,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	u_int8_t tmpkey[IEEE80211_KEYBUF_SIZE];
 	char tmpssid[IEEE80211_NWID_LEN];
 	struct ieee80211_channel *chan;
+	struct ifaddr *ifa;			/* XXX */
 
 	switch (cmd) {
 	case SIOCSIFMEDIA:
@@ -858,8 +873,18 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		case IEEE80211_IOC_RTSTHRESHOLD:
 			ireq->i_val = ic->ic_rtsthreshold;
 			break;
+		case IEEE80211_IOC_PROTMODE:
+			ireq->i_val = ic->ic_protmode;
+			break;
+		case IEEE80211_IOC_TXPOWER:
+			if ((ic->ic_caps & IEEE80211_C_TXPMGT) == 0)
+				error = EINVAL;
+			else
+				ireq->i_val = ic->ic_txpower;
+			break;
 		default:
 			error = EINVAL;
+			break;
 		}
 		break;
 	case SIOCS80211:
@@ -999,6 +1024,29 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ic->ic_rtsthreshold = ireq->i_val;
 			error = ENETRESET;
 			break;
+		case IEEE80211_IOC_PROTMODE:
+			if (ireq->i_val > IEEE80211_PROT_RTSCTS) {
+				error = EINVAL;
+				break;
+			}
+			ic->ic_protmode = ireq->i_val;
+			/* NB: if not operating in 11g this can wait */
+			if (ic->ic_curmode == IEEE80211_MODE_11G)
+				error = ENETRESET;
+			break;
+		case IEEE80211_IOC_TXPOWER:
+			if ((ic->ic_caps & IEEE80211_C_TXPMGT) == 0) {
+				error = EINVAL;
+				break;
+			}
+			if (!(IEEE80211_TXPOWER_MIN < ireq->i_val &&
+			      ireq->i_val < IEEE80211_TXPOWER_MAX)) {
+				error = EINVAL;
+				break;
+			}
+			ic->ic_txpower = ireq->i_val;
+			error = ENETRESET;
+			break;
 		default:
 			error = EINVAL;
 			break;
@@ -1016,6 +1064,59 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCG80211STATS:
 		ifr = (struct ifreq *)data;
 		copyout(&ic->ic_stats, ifr->ifr_data, sizeof (ic->ic_stats));
+		break;
+	case SIOCSIFMTU:
+		ifr = (struct ifreq *)data;
+		if (!(IEEE80211_MTU_MIN <= ifr->ifr_mtu &&
+		    ifr->ifr_mtu <= IEEE80211_MTU_MAX))
+			error = EINVAL;
+		else
+			ifp->if_mtu = ifr->ifr_mtu;
+		break;
+	case SIOCSIFADDR:
+		/*
+		 * XXX Handle this directly so we can supress if_init calls.
+		 * XXX This should be done in ether_ioctl but for the moment
+		 * XXX there are too many other parts of the system that
+		 * XXX set IFF_UP and so supress if_init being called when
+		 * XXX it should be.
+		 */
+		ifa = (struct ifaddr *) data;
+		switch (ifa->ifa_addr->sa_family) {
+#ifdef INET
+		case AF_INET:
+			if ((ifp->if_flags & IFF_UP) == 0) {
+				ifp->if_flags |= IFF_UP;
+				ifp->if_init(ifp->if_softc);
+			}
+			arp_ifinit(ifp, ifa);
+			break;
+#endif
+#ifdef IPX
+		/*
+		 * XXX - This code is probably wrong,
+		 *	 but has been copied many times.
+		 */
+		case AF_IPX: {
+			struct ipx_addr *ina = &(IA_SIPX(ifa)->sipx_addr);
+			struct arpcom *ac = (struct arpcom *)ifp;
+
+			if (ipx_nullhost(*ina))
+				ina->x_host = *(union ipx_host *) ac->ac_enaddr;
+			else
+				bcopy((caddr_t) ina->x_host.c_host,
+				      (caddr_t) ac->ac_enaddr,
+				      sizeof(ac->ac_enaddr));
+			/* fall thru... */
+		}
+#endif
+		default:
+			if ((ifp->if_flags & IFF_UP) == 0) {
+				ifp->if_flags |= IFF_UP;
+				ifp->if_init(ifp->if_softc);
+			}
+			break;
+		}
 		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
