@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.9 2004/11/28 07:00:53 jmc Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.10 2004/12/04 16:23:31 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -113,7 +113,8 @@ main(int argc, char *argv[])
 	int c;
 	u_int32_t *sect_offset;
 	int undefsyms;
-	
+	uint32_t tmp32;
+	uint16_t tmp16;
 
 	progname = argv[0];
 
@@ -316,14 +317,16 @@ main(int argc, char *argv[])
 			    htobe32(ra->r_addend), value));
 			switch (ELF32_R_TYPE(htobe32(ra->r_info))) {
 			case R_68K_32:
-				*((u_int32_t *)(base + htobe32(ra->r_offset))) =
-				    htobe32(value);
+				tmp32 = htobe32(value);
+				memcpy(base + htobe32(ra->r_offset), &tmp32,
+				       sizeof(tmp32));
 				relbuf[r32sz++] = (base - buffer) + htobe32(ra->r_offset);
 				break;
 			case R_68K_PC32:
 				++pcrelsz;
-				*((int32_t *)(base + htobe32(ra->r_offset))) =
-				    htobe32(value - htobe32(ra->r_offset));
+				tmp32 = htobe32(value - htobe32(ra->r_offset));
+				memcpy(base + htobe32(ra->r_offset), &tmp32,
+				       sizeof(tmp32));
 				break;
 			case R_68K_PC16:
 				++pcrelsz;
@@ -331,8 +334,9 @@ main(int argc, char *argv[])
 				if (value < -0x8000 || value > 0x7fff)
 					errx(1,  "PC-relative offset out of range: %x\n",
 					    value);
-				*((int16_t *)(base + htobe32(ra->r_offset))) =
-				    htobe16(value);
+				tmp16 = htobe16(value);
+				memcpy(base + htobe32(ra->r_offset), &tmp16,
+				       sizeof(tmp16));
 				break;
 			default:
 				errx(1, "Relocation type %d not supported",
