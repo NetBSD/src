@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1997/10/12 12:39:17 mycroft Exp $
+#	$NetBSD: Makefile,v 1.16 1997/10/12 12:54:55 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 WARNS?= 1
@@ -6,12 +6,14 @@ PROG=	login
 SRCS=	login.c
 DPADD+=	${LIBUTIL} ${LIBCRYPT}
 LDADD+=	-lutil -lcrypt
-LDSTATIC= -static
+BINOWN=	root
+BINMODE=4555
+INSTALLFLAGS=-fschg
 
-.include <bsd.own.mk>
+.include <bsd.prog.mk>
 
 .if defined(SKEY)
-CPPFLAGS+= -DSKEY
+CPPFLAGS+=-DSKEY
 DPADD+= ${LIBSKEY}
 LDADD+=	-lskey
 .endif
@@ -20,16 +22,10 @@ LDADD+=	-lskey
 SRCS+=	k5login.c
 DPADD+=	${LIBKRB5} ${LIBCRYPTO}
 LDADD+=	-lkrb5 -lcrypto -lcom_err
-CPPFLAGS+= -DKERBEROS5
+CPPFLAGS+=-DKERBEROS5
 .elif defined(KERBEROS)
 SRCS+=	klogin.c
 DPADD+=	${LIBKRB} ${LIBDES}
 LDADD+=	-lkrb -ldes
-CPPFLAGS+= -DKERBEROS
+CPPFLAGS+=-DKERBEROS
 .endif
-
-BINOWN=	root
-BINMODE=4555
-INSTALLFLAGS=-fschg
-
-.include <bsd.prog.mk>
