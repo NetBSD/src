@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.60 2002/01/07 21:47:00 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.60.8.1 2002/05/17 13:49:55 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.60 2002/01/07 21:47:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.60.8.1 2002/05/17 13:49:55 gehenna Exp $");
 
 #include "opt_compat_oldboot.h"
 
@@ -148,11 +148,11 @@ matchbiosdisks()
 	struct btinfo_biosgeom *big;
 	struct bi_biosgeom_entry *be;
 	struct device *dv;
-	struct devnametobdevmaj *d;
 	int i, ck, error, m, n;
 	struct vnode *tv;
 	char mbr[DEV_BSIZE];
 	int  dklist_size;
+	int bmajor;
 
 	big = lookup_bootinfo(BTINFO_BIOSGEOM);
 
@@ -207,13 +207,11 @@ matchbiosdisks()
 			    "%s%d", dv->dv_cfdata->cf_driver->cd_name,
 			    dv->dv_unit);
 
-			for (d = dev_name2blk; d->d_name &&
-			   strcmp(d->d_name, dv->dv_cfdata->cf_driver->cd_name);
-			   d++);
-			if (d->d_name == NULL)
+			bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
+			if (bmajor == -1)
 				return;
 
-			if (bdevvp(MAKEDISKDEV(d->d_maj, dv->dv_unit, RAW_PART),
+			if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART),
 			    &tv))
 				panic("matchbiosdisks: can't alloc vnode");
 
@@ -274,11 +272,11 @@ match_harddisk(dv, bid)
 	struct device *dv;
 	struct btinfo_bootdisk *bid;
 {
-	struct devnametobdevmaj *i;
 	struct vnode *tmpvn;
 	int error;
 	struct disklabel label;
 	int found = 0;
+	int bmajor;
 
 	/*
 	 * A disklabel is required here.  The
@@ -292,18 +290,15 @@ match_harddisk(dv, bid)
 	/*
 	 * lookup major number for disk block device
 	 */
-	i = dev_name2blk;
-	while (i->d_name &&
-	       strcmp(i->d_name, dv->dv_cfdata->cf_driver->cd_name))
-		i++;
-	if (i->d_name == NULL)
+	bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
+	if (bmajor == -1)
 		return(0); /* XXX panic() ??? */
 
 	/*
 	 * Fake a temporary vnode for the disk, open
 	 * it, and read the disklabel for comparison.
 	 */
-	if (bdevvp(MAKEDISKDEV(i->d_maj, dv->dv_unit, bid->partition), &tmpvn))
+	if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, bid->partition), &tmpvn))
 		panic("findroot can't alloc vnode");
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
 	if (error) {
@@ -439,18 +434,15 @@ found:
 		return;
 
 	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
-		if (majdev == dev_name2blk[i].d_maj)
-			break;
-	if (dev_name2blk[i].d_name == NULL)
+	name = devsw_blk2name(majdev);
+	if (name == NULL)
 		return;
 
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
 
-	sprintf(buf, "%s%d", dev_name2blk[i].d_name, unit);
-	for (dv = alldevs.tqh_first; dv != NULL;
-	    dv = dv->dv_list.tqe_next) {
+	sprintf(buf, "%s%d", name, unit);
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			booted_partition = part;
