@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.8 1996/02/02 18:07:07 mycroft Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.9 1996/05/19 05:34:25 phil Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -235,7 +235,16 @@ bad:
 	return(-1);
 }
 
-/* XXX unknown */
-int
-dk_establish()
-{}
+/*
+ * This function appears to be called by each disk driver.
+ * Aparently this is to give this MD code a chance to do
+ * additional "device registration" types of work. (?)
+ * For example, the sparc port uses this to record the
+ * device node for the PROM-specified boot device.
+ */
+void
+dk_establish(dk, dev)
+	struct disk *dk;
+	struct device *dev;
+{
+}
