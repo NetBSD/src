@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.36.2.2 2000/07/22 04:47:54 simonb Exp $	*/
+/*	$NetBSD: w.c,v 1.36.2.3 2000/09/28 15:53:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.36.2.2 2000/07/22 04:47:54 simonb Exp $");
+__RCSID("$NetBSD: w.c,v 1.36.2.3 2000/09/28 15:53:18 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,13 +180,13 @@ main(argc, argv)
 		errx(1, "%s", errbuf);
 
 	(void)time(&now);
-	if ((ut = fopen(_PATH_UTMP, "r")) == NULL)
+	if ((ut = fopen(_PATH_UTMP, "r")) == NULL && wcmd)
 		err(1, "%s", _PATH_UTMP);
 
 	if (*argv)
 		sel_user = *argv;
 
-	for (nusers = 0; fread(&utmp, sizeof(utmp), 1, ut);) {
+	for (nusers = 0; ut && fread(&utmp, sizeof(utmp), 1, ut);) {
 		if (utmp.ut_name[0] == '\0')
 			continue;
 		++nusers;
@@ -217,7 +217,10 @@ main(argc, argv)
 		if ((ep->idle = now - stp->st_atime) < 0)
 			ep->idle = 0;
 	}
-	(void)fclose(ut);
+	if (ut)
+		(void)fclose(ut);
+	else
+		nusers = 1;
 
 	if (header || wcmd == 0) {
 		pr_header(&now, nusers);
@@ -318,6 +321,13 @@ main(argc, argv)
 			(void)snprintf(buf, sizeof(buf), "%s:%.*s", p,
 			    (int)(ep->utmp.ut_host + UT_HOSTSIZE - x), x);
 			p = buf;
+		}
+		if (ep->kp == NULL) {
+		    warnx("Stale utmp entry: %.*s %.*s %.*s",
+			UT_NAMESIZE, ep->utmp.ut_name,
+			UT_LINESIZE, ep->utmp.ut_line,
+			UT_HOSTSIZE, ep->utmp.ut_host);
+		    continue;
 		}
 		(void)printf("%-*s %-2.2s %-*.*s ",
 		    lognamelen, ep->kp->p_login,
