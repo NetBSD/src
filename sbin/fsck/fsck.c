@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.39 2005/01/19 16:38:28 wiz Exp $	*/
+/*	$NetBSD: fsck.c,v 1.40 2005/01/19 17:48:15 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.39 2005/01/19 16:38:28 wiz Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.40 2005/01/19 17:48:15 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -77,8 +77,6 @@ static int maxrun = 0;
 static char *options = NULL;
 static int flags = 0;
 
-int main(int, char *[]);
-
 static int checkfs(const char *, const char *, const char *, void *, pid_t *);
 static int selected(const char *);
 static void addoption(char *);
@@ -105,7 +103,7 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&selhead);
 	TAILQ_INIT(&opthead);
 
-	while ((i = getopt(argc, argv, "dfl:npqT:t:vy")) != -1) {
+	while ((i = getopt(argc, argv, "dfl:nPpqT:t:vy")) != -1) {
 		switch (i) {
 		case 'd':
 			flags |= CHECK_DEBUG;
