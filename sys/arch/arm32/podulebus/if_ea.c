@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.29 2001/03/18 15:56:05 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.30 2001/04/05 20:31:51 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -161,7 +161,7 @@ void eaattach __P((struct device *, struct device *, void *));
 
 /* driver structure for autoconf */
 
-struct cfattach ea_ca = {
+struct cfattach oea_ca = {
 	sizeof(struct ea_softc), eaprobe, eaattach
 };
 
