@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.8 1996/09/16 05:24:21 scottr Exp $	*/
+/*	$NetBSD: zs.c,v 1.9 1996/10/11 00:25:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -218,10 +218,10 @@ zsc_print(aux, name)
 	struct zsc_attach_args *args = aux;
 
 	if (name != NULL)
-		printf("%s: ", name);
+		kprintf("%s: ", name);
 
 	if (args->channel != -1)
-		printf(" channel %d", args->channel);
+		kprintf(" channel %d", args->channel);
 
 	return UNCONF;
 }
@@ -287,7 +287,7 @@ zsc_attach(parent, self, aux)
 			zs_write_reg(cs, 9, 0);
 
 			chip = 0; /* We'll turn chip checking on post 1.2 */
-			printf(" chip type %d \n",chip);
+			kprintf(" chip type %d \n",chip);
 		}
 		cs->cs_chip = chip;
 
@@ -366,10 +366,10 @@ zstty_mdattach(zsc, zst, cs, tp)
 		zst->zst_iflag = ZSTTY_RAW_IFLAG;
 		zst->zst_lflag = ZSTTY_RAW_LFLAG;
 		zst->zst_oflag = ZSTTY_RAW_OFLAG;
-		printf(" (raw defaults)");
+		kprintf(" (raw defaults)");
 	}
 	if (theflags & ZSMAC_LOCALTALK) {
-		printf(" shielding from LocalTalk");
+		kprintf(" shielding from LocalTalk");
 		zst->zst_ospeed = tp->t_ospeed = 1;
 		zst->zst_ispeed = tp->t_ispeed = 1;
 		cs->cs_defspeed = 1;
@@ -689,7 +689,7 @@ zscninit(struct consdev * cp)
 	 * number. :-)
          */
         zscnsetup();
-        printf("\nNetBSD/mac68k console\n");
+        kprintf("\nNetBSD/mac68k console\n");
 }
 
 

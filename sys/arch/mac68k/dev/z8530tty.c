@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.5 1996/09/16 04:19:26 scottr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.6 1996/10/11 00:25:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -170,10 +170,10 @@ zstty_attach(parent, self, aux)
 	dev = makedev(ZSTTY_MAJOR, tty_unit);
 
 	if (zst->zst_swflags)
-		printf(" flags 0x%x", zst->zst_swflags);
+		kprintf(" flags 0x%x", zst->zst_swflags);
 
 	if (zst->zst_hwflags & ZS_HWFLAG_CONSOLE)
-		printf(" (console)");
+		kprintf(" (console)");
 	else {
 #ifdef KGDB
 		/*
@@ -210,18 +210,18 @@ zstty_attach(parent, self, aux)
 	zstty_mdattach(zsc, zst, cs, tp); /*let the md code customize stuff */
 
 	if (zst->zst_hwflags & (ZS_HWFLAG_IGCTS | ZS_HWFLAG_IGDCD)) {
-		printf("\n  Ignoring ");
+		kprintf("\n  Ignoring ");
 		switch (zst->zst_hwflags & (ZS_HWFLAG_IGCTS | ZS_HWFLAG_IGDCD)) {
 		case ZS_HWFLAG_IGCTS:
-			printf("CTS line "); break;
+			kprintf("CTS line "); break;
 		case ZS_HWFLAG_IGDCD:
-			printf("DCD line "); break;
+			kprintf("DCD line "); break;
 		default:
-			printf("CTS and DCD lines ");
+			kprintf("CTS and DCD lines ");
 		}
 	}
 
-	printf("\n");
+	kprintf("\n");
 	/*
 	 * Hardware init
 	 */

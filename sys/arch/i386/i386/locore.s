@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.152 1996/09/13 00:02:43 jtk Exp $	*/
+/*	$NetBSD: locore.s,v 1.153 1996/10/11 00:26:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1964,7 +1964,7 @@ calltrap:
 	INTRFASTEXIT
 3:	sti
 	pushl	$4f
-	call	_printf
+	call	_kprintf
 	addl	$4,%esp
 #ifdef DDB
 	int	$3
@@ -2031,7 +2031,7 @@ syscall1:
 	INTRFASTEXIT
 3:	sti
 	pushl	$4f
-	call	_printf
+	call	_kprintf
 	addl	$4,%esp
 #ifdef DDB
 	int	$3

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.10 1996/09/14 06:01:12 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.11 1996/10/11 00:24:36 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -107,7 +107,7 @@ adbattach(parent, dev, aux)
 	struct device *parent, *dev;
 	void   *aux;
 {
-	printf(" (ADB event device)\n");
+	kprintf(" (ADB event device)\n");
 }
 
 void 

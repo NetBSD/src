@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 1996/08/27 21:55:53 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.12 1996/10/11 00:26:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -95,7 +95,7 @@ mainbus_attach(parent, self, aux)
 {
 	union mainbus_attach_args mba;
 
-	printf("\n");
+	kprintf("\n");
 
 	/*
 	 * XXX Note also that the presence of a PCI bus should
@@ -139,8 +139,8 @@ mainbus_print(aux, pnp)
 	union mainbus_attach_args *mba = aux;
 
 	if (pnp)
-		printf("%s at %s", mba->mba_busname, pnp);
+		kprintf("%s at %s", mba->mba_busname, pnp);
 	if (!strcmp(mba->mba_busname, "pci"))
-		printf(" bus %d", mba->mba_pba.pba_bus);
+		kprintf(" bus %d", mba->mba_pba.pba_bus);
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.11 1996/05/25 14:45:37 briggs Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.12 1996/10/11 00:25:17 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -119,7 +119,7 @@
 	.text
 	.even
 	.global _panic
-	.global _printf
+	.global _kprintf
 
 /*
  * Most of the following glue just takes C function calls, converts
@@ -455,7 +455,7 @@ Laltoolbox:
 		movml	#0xC0C0, sp@-	| better save
 		pea	LalP1	        
 		jbsr	_printf
-			| printf ("Toolbox trap\n"); 
+			| kprintf ("Toolbox trap\n"); 
 		lea	sp@(4), sp	| pop
 		movml	sp@+, #0x0303	| restore
 #endif
@@ -467,7 +467,7 @@ Laltoolbox:
 		clrw	sp@-		| coerce to int
 		pea	LalP2
 		jbsr	_printf
-			| printf ("Status register 0x%x\n", sr);
+			| kprintf ("Status register 0x%x\n", sr);
 		lea	sp@(8), sp	| pop
 		movml	sp@+, #0x0303	| restore
 #endif
@@ -482,7 +482,7 @@ Lalnoauto:
 		movl	a1, sp@-
 		pea	LalP4
 		jbsr	_printf
-			| printf ("return address is 0x%x\n", new pc);
+			| kprintf ("return address is 0x%x\n", new pc);
 		lea	sp@(8), sp	| pop
 		movml	sp@+, #0x0303	| restore
 #endif
@@ -494,7 +494,7 @@ Lalnoauto:
 		movl	d0, sp@-
 		pea	LalP5
 		jbsr	_printf
-			| printf ("trap number is 0x%x\n", trapnum);
+			| kprintf ("trap number is 0x%x\n", trapnum);
 		lea	sp@(8), sp	| pop
 		movml	sp@+, #0x0303	| restore
 #endif
@@ -514,7 +514,7 @@ Laltbok:
 		movl	a0, sp@-
 		pea	LalP6
 		jbsr	_printf
-			| printf ("trap address is 0x%x\n", trapaddr);
+			| kprintf ("trap address is 0x%x\n", trapaddr);
 		lea	sp@(8), sp	| pop
 		movml	sp@+, #0x0303	| restore
 #endif
@@ -569,7 +569,7 @@ _mrg_tracetrap:
 		movml	#0xc0c0, sp@-
 		movl	d0, sp@-
 		pea	Ltraceprint
-		jbsr	_printf 	| printf("PC is %x\n", pc);
+		jbsr	_printf 	| kprintf("PC is %x\n", pc);
 		addql	#8, sp
 		movml	sp@+,#0x0303
 		tstl	d0
@@ -590,7 +590,7 @@ LPCiszero:
 	movl	sp@+, d0		| restore d0
 		movml	#0xc0c0, sp@-
 		pea	LtracePCzero
-		jbsr	_panic		| printf("PC is zero!", pc);
+		jbsr	_panic		| kprintf("PC is zero!", pc);
 		addql	#4, sp
 		movml	sp@+,#0x0303
 
