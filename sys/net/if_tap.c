@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.1 2005/01/08 22:27:54 cube Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.2 2005/01/19 10:18:40 cube Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,9 +43,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.1 2005/01/08 22:27:54 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.2 2005/01/19 10:18:40 cube Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "bpfilter.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.1 2005/01/08 22:27:54 cube Exp $");
  */
 static int tap_node;
 static int	tap_sysctl_handler(SYSCTLFN_PROTO);
+SYSCTL_SETUP_PROTO(sysctl_tap_setup);
 
 /*
  * Since we're an Ethernet device, we need the 3 following
