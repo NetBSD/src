@@ -1,4 +1,4 @@
-.\"	$NetBSD: core.5,v 1.13 2000/11/17 10:14:17 lukem Exp $
+.\"	$NetBSD: core.5,v 1.14 2001/06/19 12:34:26 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@ A small number of signals which cause abnormal termination of a process
 also cause a record of the process's in-core state to be written
 to disk for later examination by one of the available debuggers
 (see
-.Xr signal 7 ).
+.Xr signal 7 ) .
 .Pp
 This memory image is written to a file named from a per-process template;
 provided the terminated process had write permission, and provided the
@@ -59,14 +59,14 @@ variable
 (where <pid> has to be replaced by the pid in decimal format of the
 process).
 This template is either an absolute or relative path name, in which format
-characters can be used, preceeded by the percent character
+characters can be used, preceded by the percent character
 .Pq Dq \&% .
-The following characters are recognised as format and subsituted:
+The following characters are recognised as format and substituted:
 .Bl -tag -width 4n -offset indent -compact
 .It Sy n
 The process's name
 .It Sy p
-The PID of the process (in decimal) 
+The PID of the process (in decimal)
 .It Sy t
 The process's creation date (a la
 .Xr time 3 ,
@@ -96,11 +96,11 @@ The maximum size of a core file is limited by
 Files which would be larger than the limit are not created.
 .Pp
 The core file contains of a core header followed by a number of
-segments. Each segment is preceded by a core segment header. 
+segments. Each segment is preceded by a core segment header.
 Both the core header and core segment header are defined in
 .Aq Pa sys/core.h .
 
-The core header, 
+The core header,
 .Fa struct core ,
 specifies the lengths of the core header itself and
 each of the following core segment headers to allow for any machine
@@ -126,16 +126,16 @@ The fields of
 are as follows:
 .Bl -tag -width XXXc_seghdrsize
 .It c_midmag
-Core file machine ID, magic value, and flags. 
-These values may be extracted with the 
+Core file machine ID, magic value, and flags.
+These values may be extracted with the
 .Fn CORE_GETMID ,
 .Fn CORE_GETMAGIC ,
 and
 .Fn CORE_GETFLAG
-macros. The machine ID values are listed in 
+macros. The machine ID values are listed in
 .Aq Pa sys/exec_aout.h .
 For a valid core file, the magic value in the header must be
-.Dv COREMAGIC . 
+.Dv COREMAGIC .
 No flags are defined for the core header.
 .It c_hdrsize
 Size of this data structure.
@@ -144,14 +144,14 @@ Size of a segment header.
 .It c_nseg
 Number of segments that follow this header.
 .It c_name
-Process name, copied from the p_comm field of 
+Process name, copied from the p_comm field of
 .Fa struct proc .
 .It c_signo
 Signal that caused the process to dump core.
 .It c_ucode
 Code associated with the signal.
 .It c_cpusize
-Size of the segment containing CPU-specific information. 
+Size of the segment containing CPU-specific information.
 This segment will have the
 .Dv CORE_CPU
 flag set.
@@ -183,21 +183,21 @@ are as follows:
 .Bl -tag -width XXXc_midmag
 .It c_midmag
 Core segment magic value and flags.
-These values may be extracted with the 
+These values may be extracted with the
 .Fn CORE_GETMAGIC
 and
 .Fn CORE_GETFLAG
-macros. 
+macros.
 The magic value in the segment header must be
-.Dv CORESEGMAGIC . 
+.Dv CORESEGMAGIC .
 Exactly one of of the flags
 .Dv CORE_CPU ,
-.Dv CORE_DATA, 
+.Dv CORE_DATA ,
 or
 .Dv CORE_STACK
 will be set to indicate the segment type.
 .It c_addr
-Virtual address of the segment in the program image. 
+Virtual address of the segment in the program image.
 Meaningless if the segment type is
 .Dv CORE_CPU .
 .It c_size
@@ -216,6 +216,6 @@ file format appeared in
 .At v6 .
 .Sh BUGS
 There is no standard location or name for the
-CPU-dependant data structure stored in the
+CPU-dependent data structure stored in the
 .Dv CORE_CPU
 segment.

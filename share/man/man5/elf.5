@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf.5,v 1.4 2001/04/22 15:00:17 pooka Exp $
+.\"	$NetBSD: elf.5,v 1.5 2001/06/19 12:34:27 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,7 +113,7 @@ typedef struct {
 The array contains the following information in the indicated locations:
 .Bl -tag -width EI_ABIVERSION
 .It Dv ELFMAG0
-The elements ranging from 
+The elements ranging from
 .Dv ELFMAG0
 to
 .Dv ELFMAG3
@@ -209,7 +209,7 @@ symbols and is intended for the regular link editor
 .It Dv SHT_STRTAB
 Section contains a string table.
 .It Dv SHT_RELA
-Section contains relocation information with an explicit addend. 
+Section contains relocation information with an explicit addend.
 .It Dv SHT_HASH
 Section contains a symbol hash table.
 .It Dv SHT_DYNAMIC
@@ -283,7 +283,7 @@ follows:
 Section index of the section to which the relocation information applies.
 .Pp
 .It Dv SHT_SYMTAB
-.It Dv SHT_DYNSYM 
+.It Dv SHT_DYNSYM
 Contains a value one greater that the last local symbol table index.
 .El
 .It Fa sh_addralign
@@ -326,7 +326,7 @@ If
 is greater than
 .Fa p_filesz ,
 the memory range from
-.Po Fa p_vaddr 
+.Po Fa p_vaddr
 +
 .Fa p_filesz Pc
 to
