@@ -1,4 +1,4 @@
-/* $NetBSD: gtp.c,v 1.3 2002/09/30 20:37:23 thorpej Exp $ */
+/* $NetBSD: gtp.c,v 1.4 2002/10/02 16:51:16 thorpej Exp $ */
 /*	$OpenBSD: gtp.c,v 1.1 2002/06/03 16:13:21 mickey Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ struct gtp_softc {
 };
 
 CFATTACH_DECL(gtp, sizeof(struct gtp_softc),
-    gtp_match, gtp_attach, NULL, NULL)
+    gtp_match, gtp_attach, NULL, NULL);
 
 void	gtp_set_mute(struct gtp_softc *);
 void	gtp_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);

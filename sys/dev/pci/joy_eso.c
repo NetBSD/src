@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_eso.c,v 1.3 2002/09/30 20:37:49 thorpej Exp $	*/
+/*	$NetBSD: joy_eso.c,v 1.4 2002/10/02 16:51:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ static int	joy_eso_match __P((struct device *, struct cfdata *, void *));
 static void	joy_eso_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(joy_eso, sizeof (struct joy_softc),
-    joy_eso_match, joy_eso_attach, NULL, NULL)
+    joy_eso_match, joy_eso_attach, NULL, NULL);
 
 static int
 joy_eso_match(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.30 2002/09/30 20:38:06 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.31 2002/10/02 16:51:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.30 2002/09/30 20:38:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.31 2002/10/02 16:51:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ static inline u_int32_t	twe_inl(struct twe_softc *, int);
 static inline void	twe_outl(struct twe_softc *, int, u_int32_t);
 
 CFATTACH_DECL(twe, sizeof(struct twe_softc),
-    twe_match, twe_attach, NULL, NULL)
+    twe_match, twe_attach, NULL, NULL);
 
 struct {
 	const u_int	aen;	/* High byte indicates type of message */

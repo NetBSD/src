@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.33 2002/10/01 01:12:38 thorpej Exp $	*/
+/*	$NetBSD: tc.c,v 1.34 2002/10/02 16:53:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.33 2002/10/01 01:12:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.34 2002/10/02 16:53:08 thorpej Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -46,7 +46,7 @@ int	tcmatch __P((struct device *, struct cfdata *, void *));
 void	tcattach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(tc, sizeof(struct tc_softc),
-    tcmatch, tcattach, NULL, NULL)
+    tcmatch, tcattach, NULL, NULL);
 
 extern struct cfdriver tc_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.11 2002/09/30 22:33:19 thorpej Exp $	*/
+/*	$NetBSD: oak.c,v 1.12 2002/10/02 16:52:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.11 2002/09/30 22:33:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.12 2002/10/02 16:52:24 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -110,7 +110,7 @@ struct oak_softc {
 };
 
 CFATTACH_DECL(oak, sizeof(struct oak_softc),
-    oak_match, oak_attach, NULL, NULL)
+    oak_match, oak_attach, NULL, NULL);
 
 /*
  * Card probe function

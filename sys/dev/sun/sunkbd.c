@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.11 2002/10/01 01:05:50 thorpej Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.12 2002/10/02 16:52:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.11 2002/10/01 01:05:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.12 2002/10/02 16:52:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ int	sunkbdstart(struct tty *);
 int	sunkbd_bps = KBD_DEFAULT_BPS;
 
 CFATTACH_DECL(kbd, sizeof(struct kbd_softc),
-    sunkbd_match, sunkbd_attach, NULL, NULL)
+    sunkbd_match, sunkbd_attach, NULL, NULL);
 
 struct  linesw sunkbd_disc =
 	{ "sunkbd", 7, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,

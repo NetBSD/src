@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.24 2002/09/30 20:37:43 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.25 2002/10/02 16:51:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -434,7 +434,7 @@ void	wm_attach(struct device *, struct device *, void *);
 int	wm_copy_small = 0;
 
 CFATTACH_DECL(wm, sizeof(struct wm_softc),
-    wm_match, wm_attach, NULL, NULL)
+    wm_match, wm_attach, NULL, NULL);
 
 /*
  * Devices supported by this driver.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.26 2002/09/30 20:37:31 thorpej Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.27 2002/10/02 16:51:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.26 2002/09/30 20:37:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.27 2002/10/02 16:51:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ void ex_pci_disable __P((struct ex_softc *));
 void ex_pci_confreg_restore __P((struct ex_pci_softc *));
 
 CFATTACH_DECL(ex_pci, sizeof(struct ex_pci_softc),
-    ex_pci_match, ex_pci_attach, NULL, NULL)
+    ex_pci_match, ex_pci_attach, NULL, NULL);
 
 const struct ex_pci_product {
 	u_int32_t	epp_prodid;	/* PCI product ID */

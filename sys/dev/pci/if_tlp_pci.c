@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.67 2002/09/30 20:37:41 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.68 2002/10/02 16:51:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.67 2002/09/30 20:37:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.68 2002/10/02 16:51:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -113,7 +113,7 @@ int	tlp_pci_match __P((struct device *, struct cfdata *, void *));
 void	tlp_pci_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(tlp_pci, sizeof(struct tulip_pci_softc),
-    tlp_pci_match, tlp_pci_attach, NULL, NULL)
+    tlp_pci_match, tlp_pci_attach, NULL, NULL);
 
 const struct tulip_pci_product {
 	u_int32_t	tpp_vendor;	/* PCI vendor ID */

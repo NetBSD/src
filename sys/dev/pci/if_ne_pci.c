@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.23 2002/09/30 20:37:34 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.24 2002/10/02 16:51:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.23 2002/09/30 20:37:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.24 2002/10/02 16:51:27 thorpej Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -84,7 +84,7 @@ int ne_pci_match __P((struct device *, struct cfdata *, void *));
 void ne_pci_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(ne_pci, sizeof(struct ne_pci_softc),
-    ne_pci_match, ne_pci_attach, NULL, NULL)
+    ne_pci_match, ne_pci_attach, NULL, NULL);
 
 #ifdef IPKDB_NE_PCI
 static struct ne_pci_softc ipkdb_softc;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.28 2002/09/30 22:27:01 thorpej Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.29 2002/10/02 16:52:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.28 2002/09/30 22:27:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.29 2002/10/02 16:52:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ static int wi_pcmcia_find __P((struct wi_pcmcia_softc *,
 	struct pcmcia_attach_args *, struct pcmcia_config_entry *));
 
 CFATTACH_DECL(wi_pcmcia, sizeof(struct wi_pcmcia_softc),
-    wi_pcmcia_match, wi_pcmcia_attach, wi_pcmcia_detach, wi_activate)
+    wi_pcmcia_match, wi_pcmcia_attach, wi_pcmcia_detach, wi_activate);
 
 static const struct wi_pcmcia_product {
 	u_int32_t	pp_vendor;	/* vendor ID */

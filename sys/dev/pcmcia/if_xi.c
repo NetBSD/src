@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.25 2002/09/30 22:27:01 thorpej Exp $ */
+/*	$NetBSD: if_xi.c,v 1.26 2002/10/02 16:52:17 thorpej Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.25 2002/09/30 22:27:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.26 2002/10/02 16:52:17 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -183,7 +183,7 @@ struct xi_pcmcia_softc {
 };
 
 CFATTACH_DECL(xi_pcmcia, sizeof(struct xi_pcmcia_softc),
-    xi_pcmcia_match, xi_pcmcia_attach, xi_pcmcia_detach, xi_pcmcia_activate)
+    xi_pcmcia_match, xi_pcmcia_attach, xi_pcmcia_detach, xi_pcmcia_activate);
 
 static int xi_pcmcia_cis_quirks __P((struct pcmcia_function *));
 static void xi_cycle_power __P((struct xi_softc *));

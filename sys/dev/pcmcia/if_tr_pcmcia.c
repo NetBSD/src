@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.10 2002/09/30 22:27:01 thorpej Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.11 2002/10/02 16:52:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.10 2002/09/30 22:27:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.11 2002/10/02 16:52:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ static void	tr_pcmcia_disable(struct tr_softc *);
 static void	tr_pcmcia_setup(struct tr_softc *);
 
 CFATTACH_DECL(tr_pcmcia, sizeof(struct tr_pcmcia_softc),
-    tr_pcmcia_match, tr_pcmcia_attach, tr_pcmcia_detach, tr_activate)
+    tr_pcmcia_match, tr_pcmcia_attach, tr_pcmcia_detach, tr_activate);
 
 static int
 tr_pcmcia_match(parent, match, aux)

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.51 2002/09/30 20:37:39 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.52 2002/10/02 16:51:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.51 2002/09/30 20:37:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.52 2002/10/02 16:51:32 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -215,7 +215,7 @@ static int ti_gibinit		__P((struct ti_softc *));
 static int ti_ether_ioctl __P((struct ifnet *, u_long, caddr_t));
 
 CFATTACH_DECL(ti, sizeof(struct ti_softc),
-    ti_probe, ti_attach, NULL, NULL)
+    ti_probe, ti_attach, NULL, NULL);
 
 /*
  * Send an instruction or address to the EEPROM, check for ACK.

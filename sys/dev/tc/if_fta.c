@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.21 2002/10/01 01:12:36 thorpej Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.22 2002/10/02 16:53:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.21 2002/10/01 01:12:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.22 2002/10/02 16:53:03 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -121,4 +121,4 @@ pdq_tc_attach(
 }
 
 CFATTACH_DECL(fta, sizeof(pdq_softc_t),
-    pdq_tc_match, pdq_tc_attach, NULL, NULL)
+    pdq_tc_match, pdq_tc_attach, NULL, NULL);

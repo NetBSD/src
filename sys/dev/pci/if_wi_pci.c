@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.11 2002/09/30 20:37:43 thorpej Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.12 2002/10/02 16:51:37 thorpej Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.11 2002/09/30 20:37:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.12 2002/10/02 16:51:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ static const struct wi_pci_product
 	*wi_pci_lookup __P((struct pci_attach_args *));
 
 CFATTACH_DECL(wi_pci, sizeof(struct wi_pci_softc),
-    wi_pci_match, wi_pci_attach, NULL, NULL)
+    wi_pci_match, wi_pci_attach, NULL, NULL);
 
 const struct wi_pci_product {
 	pci_vendor_id_t		wpp_vendor;	/* vendor ID */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.25 2002/09/30 23:07:08 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.26 2002/10/02 16:52:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.25 2002/09/30 23:07:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.26 2002/10/02 16:52:38 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -96,7 +96,7 @@ static int lemedia[] = {
 #define NLEMEDIA	(sizeof(lemedia) / sizeof(lemedia[0]))
 
 CFATTACH_DECL(le_sbus, sizeof(struct le_softc),
-    lematch_sbus, leattach_sbus, NULL, NULL)
+    lematch_sbus, leattach_sbus, NULL, NULL);
 
 extern struct cfdriver le_cd;
 

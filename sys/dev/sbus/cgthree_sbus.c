@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.10 2002/09/30 23:07:07 thorpej Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.11 2002/10/02 16:52:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.10 2002/09/30 23:07:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.11 2002/10/02 16:52:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ static int	cgthreematch_sbus(struct device *, struct cfdata *, void *);
 static void	cgthreeattach_sbus(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cgthree_sbus, sizeof(struct cgthree_softc),
-    cgthreematch_sbus, cgthreeattach_sbus, NULL, NULL)
+    cgthreematch_sbus, cgthreeattach_sbus, NULL, NULL);
 
 /*
  * Match a cgthree.

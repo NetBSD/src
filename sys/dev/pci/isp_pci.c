@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.84 2002/09/30 20:37:47 thorpej Exp $ */
+/* $NetBSD: isp_pci.c,v 1.85 2002/10/02 16:51:40 thorpej Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.84 2002/09/30 20:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.85 2002/10/02 16:51:40 thorpej Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -308,7 +308,7 @@ struct isp_pcisoftc {
 };
 
 CFATTACH_DECL(isp_pci, sizeof (struct isp_pcisoftc),
-    isp_pci_probe, isp_pci_attach, NULL, NULL)
+    isp_pci_probe, isp_pci_attach, NULL, NULL);
 
 #ifdef	DEBUG
 const char vstring[] = 

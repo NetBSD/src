@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.16 2002/10/01 01:12:37 thorpej Exp $	*/
+/* 	$NetBSD: px.c,v 1.17 2002/10/02 16:53:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.16 2002/10/01 01:12:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.17 2002/10/02 16:53:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ struct px_softc {
 };
 
 CFATTACH_DECL(px, sizeof(struct px_softc),
-    px_match, px_attach, NULL, NULL)
+    px_match, px_attach, NULL, NULL);
 
 int
 px_match(struct device *parent, struct cfdata *match, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.23 2002/09/30 22:27:00 thorpej Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.24 2002/10/02 16:52:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.23 2002/09/30 22:27:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.24 2002/10/02 16:52:09 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -223,7 +223,7 @@ struct cnw_softc {
 };
 
 CFATTACH_DECL(cnw, sizeof(struct cnw_softc),
-    cnw_match, cnw_attach, cnw_detach, cnw_activate)
+    cnw_match, cnw_attach, cnw_detach, cnw_activate);
 
 void cnw_reset __P((struct cnw_softc *));
 void cnw_init __P((struct cnw_softc *));

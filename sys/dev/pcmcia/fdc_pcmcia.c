@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pcmcia.c,v 1.9 2002/09/30 22:26:59 thorpej Exp $	*/
+/*	$NetBSD: fdc_pcmcia.c,v 1.10 2002/10/02 16:52:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.9 2002/09/30 22:26:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.10 2002/10/02 16:52:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ void fdc_pcmcia_attach __P((struct device *, struct device *, void *));
 static void fdc_conf __P((struct fdc_softc *));
 
 CFATTACH_DECL(fdc_pcmcia, sizeof(struct fdc_pcmcia_softc),
-    fdc_pcmcia_probe, fdc_pcmcia_attach, NULL, NULL)
+    fdc_pcmcia_probe, fdc_pcmcia_attach, NULL, NULL);
 
 static void
 fdc_conf(fdc)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_pcmcia.c,v 1.8 2002/09/30 22:27:01 thorpej Exp $	*/
+/*	$NetBSD: nca_pcmcia.c,v 1.9 2002/10/02 16:52:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.8 2002/09/30 22:27:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.9 2002/10/02 16:52:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ int	nca_pcmcia_detach __P((struct device *, int));
 int	nca_pcmcia_enable __P((struct device *, int));
 
 CFATTACH_DECL(nca_pcmcia, sizeof(struct nca_pcmcia_softc),
-    nca_pcmcia_match, nca_pcmcia_attach, nca_pcmcia_detach, NULL)
+    nca_pcmcia_match, nca_pcmcia_attach, nca_pcmcia_detach, NULL);
 
 #define MIN_DMA_LEN 128
 

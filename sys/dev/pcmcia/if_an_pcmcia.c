@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.13 2002/09/30 22:26:59 thorpej Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.14 2002/10/02 16:52:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.13 2002/09/30 22:26:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.14 2002/10/02 16:52:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ struct an_pcmcia_softc {
 };
 
 CFATTACH_DECL(an_pcmcia, sizeof(struct an_pcmcia_softc),
-    an_pcmcia_match, an_pcmcia_attach, an_pcmcia_detach, an_activate)
+    an_pcmcia_match, an_pcmcia_attach, an_pcmcia_detach, an_activate);
 
 static struct an_pcmcia_product {
 	u_int32_t	app_vendor;	/* vendor ID */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.12 2002/09/30 20:37:32 thorpej Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.13 2002/10/02 16:51:25 thorpej Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.12 2002/09/30 20:37:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.13 2002/10/02 16:51:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -85,7 +85,7 @@ int	gem_match_pci __P((struct device *, struct cfdata *, void *));
 void	gem_attach_pci __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(gem_pci, sizeof(struct gem_pci_softc),
-    gem_match_pci, gem_attach_pci, NULL, NULL)
+    gem_match_pci, gem_attach_pci, NULL, NULL);
 
 /*
  * Attach routines need to be split out to different bus-specific files.

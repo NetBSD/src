@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.44 2002/10/01 01:28:03 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.45 2002/10/02 16:53:14 thorpej Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.44 2002/10/01 01:28:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.45 2002/10/02 16:53:14 thorpej Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -279,10 +279,10 @@ void xdc_md_setup()
  */
 
 CFATTACH_DECL(xdc, sizeof(struct xdc_softc),
-    xdcmatch, xdcattach, NULL, NULL)
+    xdcmatch, xdcattach, NULL, NULL);
 
 CFATTACH_DECL(xd, sizeof(struct xd_softc),
-    xdmatch, xdattach, NULL, NULL)
+    xdmatch, xdattach, NULL, NULL);
 
 extern struct cfdriver xd_cd;
 

@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.18 2002/09/30 22:27:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.19 2002/10/02 16:52:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -92,7 +92,7 @@ static int isic_pcmcia_activate(struct device *self, enum devact act);
 
 CFATTACH_DECL(isic_pcmcia, sizeof(struct pcmcia_isic_softc),
     isic_pcmcia_match, isic_pcmcia_attach,
-    isic_pcmcia_detach, isic_pcmcia_activate)
+    isic_pcmcia_detach, isic_pcmcia_activate);
 
 struct isic_pcmcia_card_entry {
 	int32_t vendor;		/* vendor ID */

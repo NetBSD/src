@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_eso.c,v 1.6 2002/09/30 20:37:55 thorpej Exp $	*/
+/*	$NetBSD: opl_eso.c,v 1.7 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_eso.c,v 1.6 2002/09/30 20:37:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_eso.c,v 1.7 2002/10/02 16:51:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ static int	opl_eso_match __P((struct device *, struct cfdata *, void *));
 static void	opl_eso_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(opl_eso, sizeof (struct opl_softc),
-    opl_eso_match, opl_eso_attach, NULL, NULL)
+    opl_eso_match, opl_eso_attach, NULL, NULL);
 
 static int
 opl_eso_match(parent, match, aux)

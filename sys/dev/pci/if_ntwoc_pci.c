@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.8 2002/09/30 20:37:34 thorpej Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.9 2002/10/02 16:51:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.8 2002/09/30 20:37:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_pci.c,v 1.9 2002/10/02 16:51:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ static	void ntwoc_pci_setup_dma __P((struct sca_softc *));
 static	void ntwoc_pci_shutdown __P((void *sc));
 
 CFATTACH_DECL(ntwoc_pci, sizeof(struct ntwoc_pci_softc),
-    ntwoc_pci_match, ntwoc_pci_attach, NULL, NULL)
+    ntwoc_pci_match, ntwoc_pci_attach, NULL, NULL);
 
 /*
  * Names for daughter card types.  These match the NTWOC_DB_* defines.

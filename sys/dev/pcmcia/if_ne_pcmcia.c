@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.98 2002/09/30 22:27:00 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.99 2002/10/02 16:52:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.98 2002/09/30 22:27:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.99 2002/10/02 16:52:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ u_int8_t *
 int	ne_pcmcia_ax88190_set_iobase __P((struct ne_pcmcia_softc *));
 
 CFATTACH_DECL(ne_pcmcia, sizeof(struct ne_pcmcia_softc),
-    ne_pcmcia_match, ne_pcmcia_attach, ne_pcmcia_detach, dp8390_activate)
+    ne_pcmcia_match, ne_pcmcia_attach, ne_pcmcia_detach, dp8390_activate);
 
 static const struct ne2000dev {
     char *name;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.10 2002/09/30 23:07:07 thorpej Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.11 2002/10/02 16:52:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.10 2002/09/30 23:07:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.11 2002/10/02 16:52:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ struct bwtwo_sbus_softc {
 };
 
 CFATTACH_DECL(bwtwo_sbus, sizeof(struct bwtwo_sbus_softc),
-    bwtwomatch_sbus, bwtwoattach_sbus, NULL, NULL)
+    bwtwomatch_sbus, bwtwoattach_sbus, NULL, NULL);
 
 static int	bwtwo_get_video (struct bwtwo_softc *);
 static void	bwtwo_set_video (struct bwtwo_softc *, int);

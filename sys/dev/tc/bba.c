@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.17 2002/10/01 01:12:35 thorpej Exp $ */
+/* $NetBSD: bba.c,v 1.18 2002/10/02 16:53:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.17 2002/10/01 01:12:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.18 2002/10/02 16:53:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ int	bba_match __P((struct device *, struct cfdata *, void *));
 void	bba_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(bba, sizeof(struct bba_softc),
-    bba_match, bba_attach, NULL, NULL)
+    bba_match, bba_attach, NULL, NULL);
 
 /*
  * Define our interface into the am7930 MI driver.

@@ -1,4 +1,4 @@
-/*	$NetBSD: viapm.c,v 1.7 2002/09/30 20:38:08 thorpej Exp $	*/
+/*	$NetBSD: viapm.c,v 1.8 2002/10/02 16:52:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.7 2002/09/30 20:38:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.8 2002/10/02 16:52:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,4 +144,4 @@ viapm_attach(struct device * parent, struct device * self, void *aux)
 }
 
 CFATTACH_DECL(viapm, sizeof(struct viapm_softc),
-    viapm_match, viapm_attach, NULL, NULL)
+    viapm_match, viapm_attach, NULL, NULL);
