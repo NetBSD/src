@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: upgrade.tmpl,v 1.1 1997/06/14 18:56:17 perry Exp $
+#	$NetBSD: upgrade.tmpl,v 1.2 1997/06/18 00:11:28 perry Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -41,6 +41,7 @@
 DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
+UARGS="-c 2"
 
 FSTAB=${FSTABDIR}/fstab
 
@@ -134,25 +135,28 @@ case "$resp" in
 		echo	"you should upgrade your file systems with 'fsck -c 2'"
 		echo	"as soon as is feasible, because the new file system"
 		echo	"code is better-tested and more performant."
+		upgrargs=""
 		upgradefs=NO
 		;;
 	*)
+		upgrargs=$UARGS
 		upgradefs=YES
 		;;
 esac
 
 if [ $upgradefs = YES ]; then
 	echo	""
-	echo	"Upgrading the file system on ${drivename}a..."
+	echo	"your file systems will be upgraded while they are checked"
+fi
+
+echo	"checking the file system on ${drivename}a..."
 	
-	fsck -p -c 2 /dev/r${drivename}a
-	if [ $? != 0 ]; then
-		echo	"FATAL ERROR: FILE SYSTEM UPGRADE FAILED."
-		echo	"You should probably reboot the machine, fsck your"
-		echo	"disk(s), and try the upgrade procedure again."
-		exit 1
-	fi
-	echo	"Done."
+fsck -f -p $upgrargs /dev/r${drivename}a
+if [ $? != 0 ]; then
+	echo	"FATAL ERROR: FILE SYSTEM UPGRADE FAILED."
+	echo	"You should probably reboot the machine, fsck your"
+	echo	"disk(s), and try the upgrade procedure again."
+	exit 1
 fi
 
 echo	""
@@ -166,66 +170,59 @@ if [ $? != 0 ]; then
 fi
 echo	"Done."
 
-if [ $upgradefs = YES ]; then
-	echo	""
-	echo -n	"Copying new fsck binary to your hard disk..."
-	if [ ! -d /mnt/sbin ]; then
-		mkdir /mnt/sbin
-	fi
-	cp /sbin/fsck /mnt/sbin/fsck
-	if [ $? != 0 ]; then
-		echo	"FATAL ERROR: COPY FAILED."
-		echo	"It in unclear why this error would occur.  It looks"
-		echo	"like you may end up having to upgrade by hand."
-		exit 1
-	fi
-	echo	" Done."
-
-	echo	""
-	echo    "Re-mounting root partition read-only..."
-	mount -u -o ro /dev/${drivename}a /mnt
-	if [ $? != 0 ]; then
-		echo	"FATAL ERROR: RE-MOUNT FAILED."
-		echo	"It in unclear why this error would occur.  It looks"
-		echo	"like you may end up having to upgrade by hand."
-		exit 1
-	fi
-	echo	"Done."
-
-	echo	""
-	echo	"Upgrading the rest of your file systems..."
-	chroot /mnt fsck -p -c 2
-	if [ $? != 0 ]; then
-		echo	"FATAL ERROR: FILE SYSTEM UPGRADE(S) FAILED."
-		echo	"You should probably reboot the machine, fsck your"
-		echo	"file system(s), and try the upgrade procedure"
-		echo	"again."
-		exit 1
-	fi
-	echo	"Done."
-
-	echo	""
-	echo    "Re-mounting root partition read-write..."
-	mount -u -o rw /dev/${drivename}a /mnt
-	if [ $? != 0 ]; then
-		echo	"FATAL ERROR: RE-MOUNT FAILED."
-		echo	"It in unclear why this error would occur.  It looks"
-		echo	"like you may end up having to upgrade by hand."
-		exit 1
-	fi
-	echo	"Done."
-fi
-
 echo	""
-echo	"Updating boot blocks on ${drivename}..."
-disklabel -r $drivename > /mnt/tmp/${drivename}.label
+echo -n	"Copying new fsck binary to your hard disk..."
+if [ ! -d /mnt/sbin ]; then
+	mkdir /mnt/sbin
+fi
+cp /sbin/fsck /mnt/sbin/fsck
 if [ $? != 0 ]; then
-	echo	"FATAL ERROR: READ OF DISK LABEL FAILED."
+	echo	"FATAL ERROR: COPY FAILED."
 	echo	"It in unclear why this error would occur.  It looks"
 	echo	"like you may end up having to upgrade by hand."
 	exit 1
 fi
-disklabel -R -B $drivename /mnt/tmp/${drivename}.label
+echo	" Done."
+
+echo	""
+echo    "Re-mounting root partition read-only..."
+mount -u -o ro /dev/${drivename}a /mnt
+if [ $? != 0 ]; then
+	echo	"FATAL ERROR: RE-MOUNT FAILED."
+	echo	"It in unclear why this error would occur.  It looks"
+	echo	"like you may end up having to upgrade by hand."
+	exit 1
+fi
+echo	"Done."
+
+echo	""
+echo	"checking the rest of your file systems..."
+chroot /mnt fsck -f -p $upgrargs
+if [ $? != 0 ]; then
+	echo	"FATAL ERROR: FILE SYSTEM UPGRADE(S) FAILED."
+	echo	"You should probably reboot the machine, fsck your"
+	echo	"file system(s), and try the upgrade procedure"
+	echo	"again."
+	exit 1
+fi
+	echo	"Done."
+
+echo	""
+echo    "Re-mounting root partition read-write..."
+mount -u -o rw /dev/${drivename}a /mnt
+if [ $? != 0 ]; then
+	echo	"FATAL ERROR: RE-MOUNT FAILED."
+	echo	"It in unclear why this error would occur.  It looks"
+	echo	"like you may end up having to upgrade by hand."
+	exit 1
+fi
+echo	"Done."
+
+echo	""
+echo	"Updating boot blocks on ${drivename}..."
+# shouldn't be needed, but...
+$DONTDOIT rm -f /mnt/boot
+$DONTDOIT /usr/mdec/installboot /usr/mdec/biosboot.sym /dev/r${drivename}a
 if [ $? != 0 ]; then
 	echo	"FATAL ERROR: UPDATE OF DISK LABEL FAILED."
 	echo	"It in unclear why this error would occur.  It looks"
