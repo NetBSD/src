@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.49 2004/05/22 22:52:14 jonathan Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.50 2004/07/17 20:53:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.49 2004/05/22 22:52:14 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.50 2004/07/17 20:53:01 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.49 2004/05/22 22:52:14 jonathan Exp
 struct fifoinfo {
 	struct socket	*fi_readsock;
 	struct socket	*fi_writesock;
-	long		fi_opencount;
 	long		fi_readers;
 	long		fi_writers;
 };
@@ -185,11 +184,9 @@ fifo_open(void *v)
 			return (error);
 		}
 		fip->fi_readers = fip->fi_writers = 0;
-		fip->fi_opencount = 0;
 		wso->so_state |= SS_CANTRCVMORE;
 		rso->so_state |= SS_CANTSENDMORE;
 	}
-	fip->fi_opencount++;
 	if (ap->a_mode & FREAD) {
 		if (fip->fi_readers++ == 0) {
 			fip->fi_writesock->so_state &= ~SS_CANTSENDMORE;
@@ -431,23 +428,28 @@ fifo_close(void *v)
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct fifoinfo	*fip;
+	int isrevoke;
 
 	vp = ap->a_vp;
 	fip = vp->v_fifoinfo;
-	if (ap->a_fflag & FREAD) {
-		if (--fip->fi_readers == 0)
+	isrevoke = (ap->a_fflag & (FREAD | FWRITE | FNONBLOCK)) == FNONBLOCK;
+	if (isrevoke) {
+		if (fip->fi_readers != 0) {
+			fip->fi_readers = 0;
 			socantsendmore(fip->fi_writesock);
-	}
-	if (ap->a_fflag & FWRITE) {
-		if (--fip->fi_writers == 0)
+		}
+		if (fip->fi_writers != 0) {
+			fip->fi_writers = 0;
+			socantrcvmore(fip->fi_readsock);
+		}
+	} else {
+		if ((ap->a_fflag & FREAD) && --fip->fi_readers == 0)
+			socantsendmore(fip->fi_writesock);
+		if ((ap->a_fflag & FWRITE) && --fip->fi_writers == 0)
 			socantrcvmore(fip->fi_readsock);
 	}
-	/*
-	 * shut down if either last close, or if close called from
-	 * vclean()
-	 */
-	if ((--fip->fi_opencount == 0)
-	    || ((ap->a_fflag & (FREAD | FWRITE | FNONBLOCK)) == FNONBLOCK)) {
+	/* Shut down if all readers and writers are gone. */
+	if ((fip->fi_readers + fip->fi_writers) == 0) {
 		(void) soclose(fip->fi_readsock);
 		(void) soclose(fip->fi_writesock);
 		FREE(fip, M_VNODE);
