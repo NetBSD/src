@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.97.2.12 2002/11/11 21:59:13 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.97.2.13 2003/01/03 23:03:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.2.12 2002/11/11 21:59:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.2.13 2003/01/03 23:03:00 thorpej Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -254,10 +254,7 @@ cpu_exit(struct lwp *l, int proc)
 	pmap_deactivate(l);
 
 	uvmexp.swtch++;
-	if (proc)
-		switch_exit(l);
-	else
-		switch_lwp_exit(l);
+	switch_exit(l, proc ? exit2 : lwp_exit2);
 }
 
 /*

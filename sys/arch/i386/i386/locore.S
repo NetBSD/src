@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1.2.7 2002/12/31 01:03:47 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.2.8 2003/01/03 23:02:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2020,7 +2020,7 @@ ENTRY(cpu_switchto)
 	jmp	switch_resume
 
 /*
- * void switch_exit(struct lwp *l);
+ * void switch_exit(struct lwp *l, void (*exit)(struct lwp *));
  * Switch to the appropriate idle context (lwp0's if uniprocessor; the cpu's 
  * if multiprocessor) and deallocate the address space and kernel stack for p. 
  * Then jump into cpu_switch(), as if we were in the idle proc all along.
@@ -2033,6 +2033,7 @@ ENTRY(cpu_switchto)
 /* LINTSTUB: Func: void switch_exit(struct lwp *l) */
 ENTRY(switch_exit)
 	movl	4(%esp),%edi		# old process
+	movl	8(%esp),%eax		# exit func
 #ifndef MULTIPROCESSOR
 	movl	$_C_LABEL(lwp0),%ebx
 	movl	L_ADDR(%ebx),%esi
@@ -2050,6 +2051,9 @@ ENTRY(switch_exit)
 	/* Restore stack pointers. */
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
+
+	/* Save exit func. */
+	pushl	%eax
 
 	/* Load TSS info. */
 #ifdef MULTIPROCESSOR
@@ -2082,80 +2086,9 @@ ENTRY(switch_exit)
 	/*
 	 * Schedule the dead process's vmspace and stack to be freed.
 	 */
-	pushl	%edi			/* exit2(l) */
-	call	_C_LABEL(exit2)
-	addl	$4,%esp
-
-	/* Jump into cpu_switch() with the right state. */
-	xorl	%esi,%esi
-	movl	%esi,CPUVAR(CURLWP)
-	jmp	idle_start
-
-/*
- * switch_lwp_exit(struct lwp *l);
- * Switch to the appropriate idle context (lwp0's if uniprocessor; the cpu's
- * if multiprocessor) and deallocate the kernel stack for l.
- * Then jump into cpu_switch(), as if we were in the idle proc all along.
- */
-#ifndef MULTIPROCESSOR
-	.globl	_C_LABEL(lwp0)
-#endif
-	.globl	_C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
-	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
-/* LINTSTUB: Func: void switch_lwp_exit(struct lwp *l) */
-ENTRY(switch_lwp_exit)
-	movl	4(%esp),%edi		# old process
-#ifndef MULTIPROCESSOR
-	movl	$_C_LABEL(lwp0),%ebx
-	movl	L_ADDR(%ebx),%esi
-	movl	L_MD_TSS_SEL(%ebx),%edx
-#else
-	movl	CPUVAR(IDLE_PCB),%esi
-	movl	CPUVAR(IDLE_TSS_SEL),%edx
-#endif
-	/* In case we fault... */
-	movl	$0,CPUVAR(CURLWP)
-
-	/* Restore the idle context. */
-	cli
-
-	/* Restore stack pointers. */
-	movl	PCB_ESP(%esi),%esp
-	movl	PCB_EBP(%esi),%ebp
-
-	/* Load TSS info. */
-#ifdef MULTIPROCESSOR
-	movl	CPUVAR(GDT),%eax
-#else	
-	/* Load TSS info. */
-	movl	_C_LABEL(gdt),%eax
-#endif
-
-	/* Switch address space. */
-	movl	PCB_CR3(%esi),%ecx
-	movl	%ecx,%cr3
-
-	/* Switch TSS. */
-	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
-	ltr	%dx
-
-	/* We're always in the kernel, so we don't need the LDT. */
-
-	/* Restore cr0 (including FPU state). */
-	movl	PCB_CR0(%esi),%ecx
-	movl	%ecx,%cr0
-
-	/* Record new pcb. */
-	SET_CURPCB(%esi)
-
-	/* Interrupts are okay again. */
-	sti
-
-	/*
-	 * Schedule the dead process's vmspace and stack to be freed.
-	 */
-	pushl	%edi			/* lwp_exit2(l) */
-	call	_C_LABEL(lwp_exit2)
+	movl	0(%esp),%eax		/* %eax = exit func */
+	movl	%edi,0(%esp)		/* {lwp_}exit2(l) */
+	call	*%eax
 	addl	$4,%esp
 
 	/* Jump into cpu_switch() with the right state. */
