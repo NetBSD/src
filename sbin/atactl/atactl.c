@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
+/*	$NetBSD: atactl.c,v 1.4.2.1 2000/10/10 22:24:34 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ struct bitinfo {
 int	main __P((int, char *[]));
 void	usage __P((void));
 void	ata_command __P((struct atareq *));
-void	print_bitinfo __P((const char *, u_int, struct bitinfo *));
+void	print_bitinfo __P((const char *, const char *, u_int, struct bitinfo *));
 
 int	fd;				/* file descriptor for device */
 const	char *dvname;			/* device name */
@@ -248,15 +248,15 @@ ata_command(req)
  */
 
 void
-print_bitinfo(f, bits, binfo)
-	const char *f;
+print_bitinfo(bf, af, bits, binfo)
+	const char *bf, *af;
 	u_int bits;
 	struct bitinfo *binfo;
 {
 
 	for (; binfo->bitmask != NULL; binfo++)
 		if (bits & binfo->bitmask)
-			printf(f, binfo->string);
+			printf("%s%s%s", bf, binfo->string, af);
 }
 
 /*
@@ -369,28 +369,28 @@ device_identify(argc, argv)
 		       inqbuf->atap_queuedepth & 0xf);
 
 	printf("Device capabilities:\n");
-	print_bitinfo("\t%s\n", inqbuf->atap_capabilities1, ata_caps);
+	print_bitinfo("\t", "\n", inqbuf->atap_capabilities1, ata_caps);
 
 	if (inqbuf->atap_ata_major != 0 && inqbuf->atap_ata_major != 0xffff) {
 		printf("Device supports following standards:\n");
-		print_bitinfo("%s ", inqbuf->atap_ata_major, ata_vers);
+		print_bitinfo("", " ", inqbuf->atap_ata_major, ata_vers);
 		printf("\n");
 	}
 
 	if (inqbuf->atap_cmd_set1 != 0 && inqbuf->atap_cmd_set1 != 0xffff &&
 	    inqbuf->atap_cmd_set2 != 0 && inqbuf->atap_cmd_set2 != 0xffff) {
 		printf("Command set support:\n");
-		print_bitinfo("\t%s\n", inqbuf->atap_cmd_set1, ata_cmd_set1);
-		print_bitinfo("\t%s\n", inqbuf->atap_cmd_set2, ata_cmd_set2);
+		print_bitinfo("\t", "\n", inqbuf->atap_cmd_set1, ata_cmd_set1);
+		print_bitinfo("\t", "\n", inqbuf->atap_cmd_set2, ata_cmd_set2);
 	}
 
 	if (inqbuf->atap_cmd_def != 0 && inqbuf->atap_cmd_def != 0xffff) {
 		printf("Command sets/features enabled:\n");
-		print_bitinfo("\t%s\n", inqbuf->atap_cmd_set1 &
+		print_bitinfo("\t", "\n", inqbuf->atap_cmd_set1 &
 			      (WDC_CMD1_SRV | WDC_CMD1_RLSE | WDC_CMD1_AHEAD |
 			       WDC_CMD1_CACHE | WDC_CMD1_SEC | WDC_CMD1_SMART),
 			       ata_cmd_set1);
-		print_bitinfo("\t%s\n", inqbuf->atap_cmd_set2 &
+		print_bitinfo("\t", "\n", inqbuf->atap_cmd_set2 &
 			      (WDC_CMD2_RMSN | ATA_CMD2_APM), ata_cmd_set2);
 	}
 
