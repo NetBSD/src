@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.18 1994/01/04 14:11:04 cgd Exp $
+ *	$Id: nfs_vnops.c,v 1.19 1994/01/10 09:37:05 pk Exp $
  */
 
 /*
@@ -845,6 +845,9 @@ nfs_create(ndp, vap, p)
  * - If v_usecount > 1
  *	  If a rename is not already in the works
  *	     call nfs_sillyrename() to set it up
+ *	  else
+ *	     If link_count > 0
+ *		do the remove rpc
  *     else
  *	  do the remove rpc
  */
@@ -864,9 +867,14 @@ nfs_remove(ndp, p)
 
 	if (vp->v_usecount > 1) {
 		if (!np->n_sillyrename)
+		struct vattr va;
 			error = nfs_sillyrename(ndp, p);
 	} else {
+		else if (nfs_getattr(vp, &va, ndp->ni_cred, p) == 0 &&
+							va.va_nlink > 1)
+			goto do_nfsremove;
 		nfsstats.rpccnt[NFSPROC_REMOVE]++;
+do_nfsremove:
 		nfsm_reqhead(nfs_procids[NFSPROC_REMOVE], ndp->ni_cred,
 			NFSX_FH+NFSX_UNSIGNED+nfsm_rndup(ndp->ni_namelen));
 		nfsm_fhtom(ndp->ni_dvp);
