@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.3 1997/10/09 15:42:51 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.4 1997/10/10 10:00:12 bouyer Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -135,7 +135,7 @@ ext2fs_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		u_long *a_cookies;
+		off_t *a_cookies;
 		int ncookies;
 	} */ *ap = v;
 	register struct uio *uio = ap->a_uio;
@@ -149,7 +149,7 @@ ext2fs_readdir(v)
 	struct iovec aiov;
 	caddr_t dirbuf;
 	off_t off = uio->uio_offset;
-	u_long *cookies = ap->a_cookies;
+	off_t *cookies = ap->a_cookies;
 	int ncookies = ap->a_ncookies;
 	int e2d_reclen;
 
