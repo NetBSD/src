@@ -1,5 +1,7 @@
-.\" Copyright (c) 1983, 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
+.\"
+.\" Copyright (c) 1983, 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)recv.2	6.11 (Berkeley) 5/1/91
-.\"	$Id: recv.2,v 1.5 1994/01/10 23:54:25 jtc Exp $
+.\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd May 1, 1991
+.Dd February 21, 1994
 .Dt RECV 2
 .Os BSD 4.3r
 .Sh NAME
@@ -43,11 +44,11 @@
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
-.Ft int
-.Fn recv "int s" "void *buf" "int len" "int flags"
-.Ft int
-.Fn recvfrom "int s" "void *buf" "int len" "int flags" "struct sockaddr *from" "int *fromlen"
-.Ft int
+.Ft ssize_t
+.Fn recv "int s" "void *buf" "size_t len" "int flags"
+.Ft ssize_t
+.Fn recvfrom "int s" "void *buf" "size_t len" "int flags" "struct sockaddr *from" "int *fromlen"
+.Ft ssize_t
 .Fn recvmsg "int s" "struct msghdr *msg" "int flags"
 .Sh DESCRIPTION
 .Fn Recvfrom
@@ -96,7 +97,7 @@ in which case the value
 -1 is returned and the external variable
 .Va errno
 set to
-.Er EWOULDBLOCK.
+.Er EAGAIN .
 The receive calls normally return any data available,
 up to the requested amount,
 rather than waiting for receipt of the full amount requested;
@@ -239,7 +240,7 @@ and
 The argument
 .Fa s
 does not refer to a socket.
-.It Bq Er EWOULDBLOCK
+.It Bq Er EAGAIN
 The socket is marked non-blocking, and the receive operation
 would block, or
 a receive timeout had been set,

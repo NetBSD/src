@@ -1,5 +1,7 @@
-.\" Copyright (c) 1980, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: getrlimit.2,v 1.7 1995/02/27 12:33:19 cgd Exp $
+.\"
+.\" Copyright (c) 1980, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)getrlimit.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: getrlimit.2,v 1.6 1994/12/08 06:49:43 jtc Exp $
+.\"     @(#)getrlimit.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 10, 1991
+.Dd June 4, 1993
 .Dt GETRLIMIT 2
 .Os BSD 4
 .Sh NAME
@@ -40,6 +41,7 @@
 .Nm setrlimit
 .Nd control maximum system resource consumption
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <sys/time.h>
 .Fd #include <sys/resource.h>
 .Ft int
@@ -58,30 +60,39 @@ The
 .Fa resource
 parameter is one of the following:
 .Bl -tag -width RLIMIT_FSIZEAA
-.It Dv RLIMIT_CPU
-the maximum amount of cpu time (in seconds) to be used by
+.It Li RLIMIT_CORE
+The largest size (in bytes)
+.Xr core
+file that may be created.
+.It Li RLIMIT_CPU
+The maximum amount of cpu time (in seconds) to be used by
 each process.
-.It Dv RLIMIT_FSIZE
-the largest size, in bytes, of any single file that may be created.
-.It Dv RLIMIT_DATA
-the maximum size, in bytes, of the data segment for a process;
+.It Li RLIMIT_DATA
+The maximum size (in bytes) of the data segment for a process;
 this defines how far a program may extend its break with the
 .Xr sbrk 2
 system call.
-.It Dv RLIMIT_STACK
-the maximum size, in bytes, of the stack segment for a process;
+.It Li RLIMIT_FSIZE
+The largest size (in bytes) file that may be created.
+.It Li RLIMIT_MEMLOCK
+The maximum size (in bytes) which a process may lock into memory
+using the
+.Xr mlock 2
+function.
+.It Li RLIMIT_NOFILE
+The maximum number of open files for this process.
+.It Li RLIMIT_NPROC
+The maximum number of simultaneous processes for this user id.
+.It Li RLIMIT_RSS
+The maximum size (in bytes) to which a process's resident set size may
+grow.
+This imposes a limit on the amount of physical memory to be given to
+a process; if memory is tight, the system will prefer to take memory
+from processes that are exceeding their declared resident set size.
+.It Li RLIMIT_STACK
+The maximum size (in bytes) of the stack segment for a process;
 this defines how far a program's stack segment may be extended.
 Stack extension is performed automatically by the system.
-.It Dv RLIMIT_CORE
-the largest size, in bytes, of a 
-.Xr core
-file that may be created.
-.It Dv RLIMIT_RSS
-the maximum size, in bytes, to which a process's resident set size may
-grow.  This imposes a limit on the amount of physical memory
-to be given to a process; if memory is tight, the system will
-prefer to take memory from processes that are exceeding their
-declared resident set size.
 .El
 .Pp
 A resource limit is specified as a soft limit and a hard limit.  When a
@@ -109,8 +120,7 @@ or (irreversibly) lower
 An
 .Dq infinite
 value for a limit is defined as
-.Dv RLIM_INFINITY
-(0x7\&f\&f\&f\&f\&f\&f\&f\&f\&f\&f\&f\&f\&f\&f\&f).
+.Dv RLIM_INFINITY .
 .Pp
 Because this information is stored in the per-process information,
 this system call must be executed directly by the shell if it
@@ -165,7 +175,8 @@ raised the maximum limit value, and the caller is not the super-user.
 .Xr csh 1 ,
 .Xr quota 2 ,
 .Xr sigaction 2 ,
-.Xr sigstack 2
+.Xr sigaltstack 2 ,
+.Xr sysctl 3
 .Sh BUGS
 There should be 
 .Ic limit

@@ -1,5 +1,7 @@
-.\" Copyright (c) 1983, 1991 Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: getpgrp.2,v 1.8 1995/02/27 12:33:09 cgd Exp $
+.\"
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,17 +31,15 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)getpgrp.2	6.4 (Berkeley) 3/10/91
-.\"	$Id: getpgrp.2,v 1.7 1994/01/31 18:36:17 jtc Exp $
+.\"     @(#)getpgrp.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 10, 1991
+.Dd June 4, 1993
 .Dt GETPGRP 2
 .Os BSD 4.2
 .Sh NAME
 .Nm getpgrp
 .Nd get process group
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
 .Fd #include <unistd.h>
 .Ft pid_t
 .Fn getpgrp "void"
@@ -59,16 +59,13 @@ to create
 process groups
 in implementing job control.
 The
-.Dv TIOCGPGRP
+.Fn tcgetpgrp
 and
-.Dv TIOCSPGRP
+.Fn tcsetpgrp
 calls
-described in
-.Xr termios 4
 are used to get/set the process group of the control terminal.
 .Sh SEE ALSO
-.Xr setpgrp 2 ,
-.Xr getuid 2 ,
+.Xr setpgid 2 ,
 .Xr termios 4
 .Sh HISTORY
 The
@@ -88,3 +85,19 @@ differs from past Berkeley versions by not taking a
 argument.
 This incompatibility is required by
 .St -p1003.1-88 .
+.Pp
+From the
+.St -p1003.1-88
+Rationale:
+.sp
+4.3BSD provides a
+.Fn getpgrp
+function that returns the process group ID for a specified process.
+Although this function is used to support job control, all known
+job-control shells always specify the calling process with this
+function.
+Thus, the simpler System V
+.Fn getpgrp
+suffices, and the added complexity of the 4.3BSD
+.Fn getpgrp
+has been omitted from POSIX.1.
