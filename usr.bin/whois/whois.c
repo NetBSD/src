@@ -1,4 +1,4 @@
-/*	$NetBSD: whois.c,v 1.12.4.2 2000/09/30 14:07:53 jhawk Exp $	*/
+/*	$NetBSD: whois.c,v 1.12.4.3 2001/04/05 19:22:10 jhawk Exp $	*/
 
 /*
  * RIPE version marten@ripe.net
@@ -61,11 +61,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-<<<<<<< whois.c
-__RCSID("$NetBSD: whois.c,v 1.12.4.2 2000/09/30 14:07:53 jhawk Exp $");
-=======
-__RCSID("$NetBSD: whois.c,v 1.12.4.2 2000/09/30 14:07:53 jhawk Exp $");
->>>>>>> 1.14
+__RCSID("$NetBSD: whois.c,v 1.12.4.3 2001/04/05 19:22:10 jhawk Exp $");
 #endif
 #endif /* not lint */
 #endif /* not RIPE */
