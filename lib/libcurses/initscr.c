@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.13 2000/04/12 21:45:04 jdc Exp $	*/
+/*	$NetBSD: initscr.c,v 1.14 2000/04/14 17:35:14 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.13 2000/04/12 21:45:04 jdc Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.14 2000/04/14 17:35:14 jdc Exp $");
 #endif
 #endif	/* not lint */
 
@@ -47,6 +47,9 @@ __RCSID("$NetBSD: initscr.c,v 1.13 2000/04/12 21:45:04 jdc Exp $");
 
 #include "curses.h"
 #include "curses_private.h"
+
+/* Window list */
+struct __winlist	*__winlistp;
 
 /*
  * initscr --
@@ -79,6 +82,8 @@ initscr()
 	/* Need either homing or cursor motion for refreshes */
 	if (!HO && !CM)
 		return (NULL);
+	
+	__winlistp = NULL;
 
 	if (curscr != NULL)
 		delwin(curscr);
