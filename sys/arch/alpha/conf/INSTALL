@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.58 2002/01/27 13:23:10 jdolecek Exp $
+# $NetBSD: INSTALL,v 1.59 2002/02/10 17:36:54 wiz Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -201,7 +201,7 @@ vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY

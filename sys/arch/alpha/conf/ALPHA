@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.160 2002/02/07 02:17:57 ross Exp $
+# $NetBSD: ALPHA,v 1.161 2002/02/10 17:36:53 wiz Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.160 $"
+ident		"ALPHA-$Revision: 1.161 $"
 
 maxusers 32
 
@@ -307,7 +307,7 @@ midi*	at	mpu?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs

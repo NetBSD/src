@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.41 2002/01/29 18:53:08 uch Exp $
+#	$NetBSD: TX3922,v 1.42 2002/02/10 17:36:56 wiz Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -226,7 +226,7 @@ ugen*	at uhub? port ?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs

@@ -1,4 +1,4 @@
-#	$NetBSD: PCCONS,v 1.16 2002/01/27 13:23:12 jdolecek Exp $
+#	$NetBSD: PCCONS,v 1.17 2002/02/10 17:36:55 wiz Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	PCCONS -- generic but pccons rather than wscons
@@ -299,7 +299,7 @@ atapibus*	at pciide? channel ?
 #### MII/PHY support
 
 exphy*		at mii? phy ?		# 3Com internal PHYs
-icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS1890
+icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
 inphy*		at mii? phy ?		# Intel 82555 PHYs
 iophy*		at mii? phy ?		# Intel 82553 PHYs
 lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs

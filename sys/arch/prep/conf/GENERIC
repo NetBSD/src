@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.40 2002/01/27 13:23:25 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.41 2002/02/10 17:37:01 wiz Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.40 $"
+#ident		"GENERIC-$Revision: 1.41 $"
 
 maxusers	32
 
@@ -307,7 +307,7 @@ sm*	at mhzc?
 # MII/PHY support
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy* at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs

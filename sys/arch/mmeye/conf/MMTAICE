@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.9 2002/01/27 13:23:21 jdolecek Exp $
+#	$NetBSD: MMTAICE,v 1.10 2002/02/10 17:37:00 wiz Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -214,7 +214,7 @@ ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs

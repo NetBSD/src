@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.54 2002/01/27 13:23:20 jdolecek Exp $
+#	$NetBSD: INSTALL,v 1.55 2002/02/10 17:37:00 wiz Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -91,7 +91,7 @@ tlp*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 
 bmtphy*	at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs

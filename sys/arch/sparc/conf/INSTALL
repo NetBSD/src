@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.29 2002/01/27 13:23:26 jdolecek Exp $
+#	$NetBSD: INSTALL,v 1.30 2002/02/10 17:37:02 wiz Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -453,7 +453,7 @@ en0	at sbus? slot ? offset ?
 
 # MII/PHY support
 #exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 #inphy*	at mii? phy ?			# Intel 82555 PHYs
 #lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 #nsphy*	at mii? phy ?			# NS83840 PHYs

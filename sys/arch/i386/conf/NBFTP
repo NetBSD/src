@@ -1,4 +1,4 @@
-#	$NetBSD: NBFTP,v 1.35 2002/01/27 13:23:18 jdolecek Exp $
+#	$NetBSD: NBFTP,v 1.36 2002/02/10 17:36:59 wiz Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	NBFTP -- ftp/sup.netbsd.org server machine
@@ -475,7 +475,7 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 
 # MII/PHY support
 #exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+#icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 #lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 #nsphy*	at mii? phy ?			# NS83840 PHYs
