@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.20 1996/05/17 22:45:32 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -322,8 +322,6 @@ sys_socketpair(p, v, retval)
 	}
 	error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, rsv),
 	    2 * sizeof (int));
-	retval[0] = sv[0];		/* XXX ??? */
-	retval[1] = sv[1];		/* XXX ??? */
 	return (error);
 free4:
 	ffree(fp2);
