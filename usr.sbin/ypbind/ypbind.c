@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.31 1997/07/18 07:57:56 thorpej Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.32 1997/07/18 23:07:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.31 1997/07/18 07:57:56 thorpej Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.32 1997/07/18 23:07:44 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1199,7 +1199,7 @@ unique_xid(ypdb)
 {
 	u_int32_t tmp_xid;
 
-	tmp_xid = (u_int32_t)ypdb & 0xffffffff;
+	tmp_xid = (u_int32_t)((u_long)ypdb) & 0xffffffff;
 	while (xid2ypdb(tmp_xid) != NULL)
 		tmp_xid++;
 
