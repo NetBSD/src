@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.137 1995/01/15 02:11:23 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.138 1995/02/02 19:42:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1117,6 +1117,12 @@ init386(first_avail)
 	 */
 	biosbasemem = (rtcin(RTC_BASEHI)<<8) | (rtcin(RTC_BASELO));
 	biosextmem = (rtcin(RTC_EXTHI)<<8) | (rtcin(RTC_EXTLO));
+
+	/*
+	 * Round down to whole pages.
+	 */
+	biosbasemem &= -(NBPG / 1024);
+	biosextmem &= -(NBPG / 1024);
 
 #ifndef BIOS_BASEMEM
 #define	BIOS_BASEMEM 640
