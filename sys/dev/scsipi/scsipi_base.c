@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.66 2002/01/12 16:37:55 tsutsui Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.67 2002/02/21 05:30:30 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.66 2002/01/12 16:37:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.67 2002/02/21 05:30:30 enami Exp $");
 
 #include "opt_scsi.h"
 
@@ -1609,7 +1609,7 @@ scsipi_complete(xs)
 		} else {
 			bp->b_error = 0;
 			bp->b_resid = xs->resid;
-																		}
+		}
 		biodone(bp);
 	}
 
