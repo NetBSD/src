@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.23 2005/01/20 15:44:59 xtraeme Exp $	*/
+/*	$NetBSD: cksum.c,v 1.24 2005/02/05 00:13:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.23 2005/01/20 15:44:59 xtraeme Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.24 2005/02/05 00:13:34 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -145,7 +145,7 @@ void	usage(void);
 int
 main(int argc, char **argv)
 {
-	register int ch, fd, rval, dosum, pflag, nohashstdin;
+	int ch, fd, rval, dosum, pflag, nohashstdin;
 	u_int32_t val;
 	off_t len;
 	char *fn;
