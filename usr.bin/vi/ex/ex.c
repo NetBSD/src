@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.12 2002/04/09 01:47:32 thorpej Exp $	*/
+/*	$NetBSD: ex.c,v 1.13 2004/11/05 19:50:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -395,7 +395,7 @@ loop:	ecp = gp->ecq.lh_first;
 		} else {
 			for (p = ecp->cp;
 			    ecp->clen > 0; --ecp->clen, ++ecp->cp)
-				if (!isalpha(*ecp->cp))
+				if (!isalpha((unsigned char)*ecp->cp))
 					break;
 			if ((namelen = ecp->cp - p) == 0) {
 				msgq(sp, M_ERR, "080|Unknown command name");
@@ -436,7 +436,7 @@ loop:	ecp = gp->ecq.lh_first;
 			break;
 		case 'E': case 'F': case 'N': case 'P': case 'T': case 'V':
 			newscreen = 1;
-			p[0] = tolower(p[0]);
+			p[0] = tolower((unsigned char)p[0]);
 			break;
 		}
 
@@ -484,7 +484,7 @@ loop:	ecp = gp->ecq.lh_first;
 				/* FALLTHROUGH */
 			default:
 unknown:			if (newscreen)
-					p[0] = toupper(p[0]);
+					p[0] = toupper((unsigned char)p[0]);
 				ex_unknown(sp, p, namelen);
 				goto err;
 			}
@@ -738,7 +738,7 @@ skip_srch:	if (ecp->cmd == &cmds[C_VISUAL_EX] && F_ISSET(sp, SC_VI))
 			if (!isblank(ecp->cp[0]))
 				break;
 
-		if (isalnum(ecp->cp[0]) || ecp->cp[0] == '|') {
+		if (isalnum((unsigned char)ecp->cp[0]) || ecp->cp[0] == '|') {
 			ecp->rcmd = cmds[C_SUBSTITUTE];
 			ecp->rcmd.fn = ex_subagain;
 			ecp->cmd = &ecp->rcmd;
@@ -1047,7 +1047,7 @@ end_case23:		break;
 			 * command "d2" would be a delete into buffer '2', and
 			 * not a two-line deletion.
 			 */
-			if (!isdigit(ecp->cp[0])) {
+			if (!isdigit((unsigned char)ecp->cp[0])) {
 				ecp->buffer = *ecp->cp;
 				++ecp->cp;
 				--ecp->clen;
@@ -1057,7 +1057,7 @@ end_case23:		break;
 		case 'c':				/* count [01+a] */
 			++p;
 			/* Validate any signed value. */
-			if (!isdigit(*ecp->cp) && (*p != '+' ||
+			if (!isdigit((unsigned char)*ecp->cp) && (*p != '+' ||
 			    (*ecp->cp != '+' && *ecp->cp != '-')))
 				break;
 			/* If a signed value, set appropriate flags. */
@@ -1950,7 +1950,7 @@ search:		mp->lno = sp->lno;
 		 * the '+' could be omitted.  (This feature is found in ed
 		 * as well.)
 		 */
-		if (ecp->clen > 1 && isdigit(ecp->cp[1]))
+		if (ecp->clen > 1 && isdigit((unsigned char)ecp->cp[1]))
 			*ecp->cp = '+';
 		else {
 			++ecp->cp;
@@ -1968,7 +1968,7 @@ search:		mp->lno = sp->lno;
 	 * is relative to ".".
 	 */
 	total = 0;
-	if (ecp->clen != 0 && (isdigit(ecp->cp[0]) ||
+	if (ecp->clen != 0 && (isdigit((unsigned char)ecp->cp[0]) ||
 	    ecp->cp[0] == '+' || ecp->cp[0] == '-' ||
 	    ecp->cp[0] == '^')) {
 		if (!*isaddrp) {
@@ -2006,12 +2006,12 @@ search:		mp->lno = sp->lno;
 		for (;;) {
 			for (; ecp->clen > 0 && isblank(ecp->cp[0]);
 			    ++ecp->cp, --ecp->clen);
-			if (ecp->clen == 0 || !isdigit(ecp->cp[0]) &&
+			if (ecp->clen == 0 || !isdigit((unsigned char)ecp->cp[0]) &&
 			    ecp->cp[0] != '+' && ecp->cp[0] != '-' &&
 			    ecp->cp[0] != '^')
 				break;
-			if (!isdigit(ecp->cp[0]) &&
-			    !isdigit(ecp->cp[1])) {
+			if (!isdigit((unsigned char)ecp->cp[0]) &&
+			    !isdigit((unsigned char)ecp->cp[1])) {
 				total += ecp->cp[0] == '+' ? 1 : -1;
 				--ecp->clen;
 				++ecp->cp;

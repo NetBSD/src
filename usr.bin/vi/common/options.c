@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.10 2004/04/05 06:59:15 aymeric Exp $	*/
+/*	$NetBSD: options.c,v 1.11 2004/11/05 19:50:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	10.51 (Berkeley) 10/14/96";
 #else
-__RCSID("$NetBSD: options.c,v 1.10 2004/04/05 06:59:15 aymeric Exp $");
+__RCSID("$NetBSD: options.c,v 1.11 2004/11/05 19:50:12 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -627,7 +627,7 @@ opts_set(sp, argv, usage)
 				break;
 			}
 
-			if (!isdigit(sep[0]))
+			if (!isdigit((unsigned char)sep[0]))
 				goto badnum;
 			if ((nret =
 			    nget_uslong(&value, sep, &endp, 10)) != NUM_OK) {
