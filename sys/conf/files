@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.560 2002/10/10 21:56:50 thorpej Exp $
+#	$NetBSD: files,v 1.561 2002/10/10 22:07:44 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -914,7 +914,6 @@ defpseudo gre:		ifnet
 defpseudo gif:		ifnet
 defpseudo faith:	ifnet
 defpseudo stf:		ifnet
-defpseudo irframetty:	irframedrv, irdasir
 
 defpseudo sequencer
 defpseudo clockctl
@@ -994,8 +993,6 @@ file	ddb/db_write_cmd.c		ddb
 file	ddb/db_xxx.c			ddb
 file	dev/auconv.c			auconv
 file	dev/audio.c			audio | midi | midibus	needs-flag
-file	dev/bluetooth/bluetooth.c	bthcidrv
-file	dev/bluetooth/bthci.c		bthcidrv		needs-flag
 file	dev/ccd.c			ccd			needs-flag
 file	dev/cgd.c			cgd			needs-flag
 file	dev/cgd_crypto.c		cgd
@@ -1003,11 +1000,6 @@ file	dev/clockctl.c			clockctl		needs-flag
 file	dev/dksubr.c			cgd
 file	dev/i2c/i2c_bus.c		i2c
 file	dev/i2c/i2c_eeprom.c		i2c_eeprom
-file	dev/ir/cir.c			cir			needs-flag
-file	dev/ir/ir.c			cir | irframedrv
-file	dev/ir/irframe.c		irframe | irframedrv	needs-flag
-file	dev/ir/irframe_tty.c		irframetty		needs-flag
-file	dev/ir/sir.c			irdasir
 file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midisyn.c			midisyn
