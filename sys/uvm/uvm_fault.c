@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.84 2003/08/11 16:45:43 pk Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.85 2004/02/10 00:40:06 dbj Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.84 2003/08/11 16:45:43 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.85 2004/02/10 00:40:06 dbj Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -937,7 +937,7 @@ ReFault:
 
 				/*
 				 * Since this page isn't the page that's
-				 * actually fauling, ignore pmap_enter()
+				 * actually faulting, ignore pmap_enter()
 				 * failures; it's not critical that we
 				 * enter these right now.
 				 */
