@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: cvs2netbsd,v 1.1 2000/10/26 16:30:38 wiz Exp $
+#	$NetBSD: cvs2netbsd,v 1.2 2003/01/16 02:35:17 wiz Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,6 +49,6 @@ cd doc && rm -f cvs-paper.ps cvs.aux cvs.info* cvs.ps \
 		cvsclient.aux cvsclient.info* cvsclient.ps && \
 echo Removed unnecessary files. You can import now.
 
-echo Path: gnusrc/gnu/dist/cvs
+echo Path: src/gnu/dist/cvs
 echo Vendor: CVSHOME
 echo Versiontag: CVS1_XX_Y
