@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.5 2003/04/23 17:50:51 matt Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.6 2003/05/16 14:25:03 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ ksem_create(struct proc *p, const char *name, struct ksem **ksret,
 			return (EINVAL);
 		}
 		ret->ks_name = malloc(len + 1, M_SEM, M_WAITOK);
-		strcpy(ret->ks_name, name);
+		strlcpy(ret->ks_name, name, len + 1);
 	} else
 		ret->ks_name = NULL;
 	ret->ks_mode = mode;

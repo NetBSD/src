@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prop.c,v 1.9 2003/02/01 06:23:44 thorpej Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.10 2003/05/16 14:25:03 itojun Exp $	*/
 
 /*  
  * Copyright (c) 2001 Eduardo Horvath.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.9 2003/02/01 06:23:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.10 2003/05/16 14:25:03 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ allocprop(const char *name, size_t len, int wait)
 		vp = (char *)&kp[1];
 		kp->kp_val = (const char *)vp;
 		np = vp + dsize;
-		strcpy(np, name);
+		strlcpy(np, name, nsize);
 		kp->kp_name = (const char *)np;
 		kp->kp_len = len;
 	}
@@ -486,8 +486,8 @@ prop_list(propdb_t db, opaque_t object, char *names, size_t len)
 {
 	struct kdbobj *obj;
 	struct kdbprop *prop = NULL;
-	size_t total_len = 0;
 	int s, i = 0;
+	char *sp, *ep;
 
 	DPRINTF(x, ("prop_list: %p, %p, %p, %lx\n", 
 		db, object, names, (unsigned long)len));
@@ -500,18 +500,19 @@ prop_list(propdb_t db, opaque_t object, char *names, size_t len)
 		return (0);
 	}
 
+	sp = names;
+	ep = names + len;
 	LIST_FOREACH(prop, &obj->ko_props, kp_link) {
 		i = strlen(prop->kp_name) + 1;
-		total_len += i;
-		if (total_len < len) {
-			strcpy(names, prop->kp_name);
+		if (names + i + 1 < ep) {
+			strlcpy(names, prop->kp_name, ep - names);
 			names += i;
 			/* Add an extra NUL */
-			names[i+1] = 0;
+			names[i + 1] = 0;
 		}
 	}
 	splx(s);
-	return (total_len);
+	return (names - sp);
 }
 
 int 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.186 2003/04/20 07:06:33 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.187 2003/05/16 14:25:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.186 2003/04/20 07:06:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.187 2003/05/16 14:25:03 itojun Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -685,12 +685,15 @@ done:
 		 * data.
 		 */
 		if (strncmp(bp, sp->f_mntonname, len) == 0) {
-			strcpy(sp->f_mntonname, &sp->f_mntonname[len]);
+			strlcpy(sp->f_mntonname, &sp->f_mntonname[len],
+			    sizeof(sp->f_mntonname));
 			if (sp->f_mntonname[0] == '\0')
-			    (void)strcpy(sp->f_mntonname, "/");
+				(void)strlcpy(sp->f_mntonname, "/",
+				    sizeof(sp->f_mntonname));
 		} else {
 			if (root)
-				(void)strcpy(sp->f_mntonname, "/");
+				(void)strlcpy(sp->f_mntonname, "/",
+				    sizeof(sp->f_mntonname));
 			else
 				error = EPERM;
 		}
