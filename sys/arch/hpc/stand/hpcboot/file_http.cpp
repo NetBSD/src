@@ -1,7 +1,7 @@
-/*	$NetBSD: file_http.cpp,v 1.7 2002/03/02 22:01:57 uch Exp $	*/
+/*	$NetBSD: file_http.cpp,v 1.8 2004/08/06 17:21:28 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,13 +39,11 @@
 #include <file.h>
 #include <file_http.h>
 #include <console.h>
+#include <libsa_string.h>
 
-// for WCE210 or earlier
-_CRTIMP int __cdecl tolower(int);
-#define wcsicmp		_wcsicmp
+#define	wcsicmp		_wcsicmp
 static int WCE210_WSAStartup(WORD, LPWSADATA);
 static int WCE210_WSACleanup(void);
-static int __stricmp(const char *, const char *);
 
 HttpFile::HttpFile(Console *&cons)
 	: File(cons),
@@ -74,7 +72,11 @@ HttpFile::HttpFile(Console *&cons)
 	_buffer = 0;
 	_reset_state();
 	DPRINTF((TEXT("FileManager: HTTP\n")));
-	
+
+#if _WIN32_WCE <= 200
+	_wsa_startup = WCE210_WSAStartup;
+	_wsa_cleanup = WCE210_WSACleanup;
+#else
 	if (WinCEVersion.dwMajorVersion > 3 ||
 	    (WinCEVersion.dwMajorVersion > 2) &&
 	    (WinCEVersion.dwMinorVersion >= 11)) {
@@ -84,6 +86,7 @@ HttpFile::HttpFile(Console *&cons)
 		_wsa_startup = WCE210_WSAStartup;
 		_wsa_cleanup = WCE210_WSACleanup;
 	}
+#endif
 }
 
 int
@@ -306,41 +309,58 @@ HttpFile::read(void *buf, size_t bytes, off_t offset)
 size_t
 HttpFile::_parse_header(size_t &header_size)
 {
+	int cnt, ret;
+	char *buf;
 	size_t sz = 0;
+
 	// reconnect.
 	Socket sock(_sockaddr);
 	SOCKET h;
-	if ((h = sock) == INVALID_SOCKET)
+	if ((h = sock) == INVALID_SOCKET) {
+		DPRINTF((TEXT("can't open socket.\n")));
 		return 0;
+	}
 
 	// HEAD request
 	strcpy(_request, _req_head);
 	_set_request();
 	send(h, _request, strlen(_request), 0);
-  
-	// receive.
-	char __buf[TMP_BUFFER_SIZE];
-	int cnt, ret;
 
-	for (cnt = 0;
-	    ret = _recv_buffer(h, __buf, TMP_BUFFER_SIZE); cnt += ret) {
+	// Receive and search Content-Length: field.
+	if ((buf = static_cast<char *>(malloc(TMP_BUFFER_SIZE))) == 0) {
+		DPRINTF((TEXT("can't allocate receive buffer.\n")));
+		return 0;
+	}
+
+	BOOL found = FALSE;
+	for (cnt = 0; ret = _recv_buffer(h, buf, TMP_BUFFER_SIZE - 1);
+	    cnt += ret) {
+		buf[ret] = '\0';
 		char sep[] = " :\r\n";
-		char *token = strtok(__buf, sep);
+		char *token = libsa::strtok(buf, sep);
 		while (token) {
-			if (__stricmp(token, "content-length") == 0) {
-				DPRINTFN(1, (TEXT("*token: %S\n"), token));
-				token = strtok(0, sep);
+			DPRINTFN(2, (TEXT("+token: %S\n"), token));
+			if (libsa::stricmp(token, "content-length") == 0) {
+				DPRINTFN(2, (TEXT("*token: %S\n"), token));
+				token = libsa::strtok(0, sep);
 				sz = atoi(token);
-				DPRINTFN(1, (TEXT("*content-length=%d\n"), sz));
-			} else
-				token = strtok(0, sep);
+				found = TRUE;
+				DPRINTFN(2, (TEXT("*content-length=%d\n"), sz));
+			} else {
+				token = libsa::strtok(0, sep);
+			}
 		}
 	}
 	header_size = cnt;
 
-	DPRINTF((TEXT
-	    ("open file http://%S%S - header %d byte contents %d byte\n"),
-	    _server_name, _ascii_filename, header_size, sz));
+	if (!found) {
+		DPRINTF((TEXT("No Content-Length.\n")));
+	} else {
+		DPRINTF((TEXT
+		    ("open http://%S%S - header %d byte contents %d byte\n"),
+		    _server_name, _ascii_filename, header_size, sz));
+	}
+	free(buf);
 
 	return sz;
 }
@@ -370,16 +390,6 @@ HttpFile::_set_request(void)
 	strcat(_request, _req_host);
 	strcat(_request, _server_name);
 	strcat(_request, _req_ua);
-}
-
-static int
-__stricmp(const char *s1, const char *s2)
-{
-
-	while (tolower(*s1) == tolower(*s2++))
-		if (*s1++ == '\0')
-			return (0);
-	return (tolower(*s1) - tolower(*--s2));
 }
 
 Socket::Socket(struct sockaddr_in &sock)

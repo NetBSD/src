@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: arch.cpp,v 1.10 2004/03/16 22:30:36 uwe Exp $	 */
+/* -*-C++-*-	$NetBSD: arch.cpp,v 1.11 2004/08/06 17:21:28 uch Exp $	 */
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -129,16 +129,17 @@ Architecture::systemInfo(void)
 {
 	u_int32_t val = 0;
 	SYSTEM_INFO si;
-	BOOL (*getVersionEx)(LPOSVERSIONINFO);
-	
+
+	DPRINTF((TEXT("_WIN32_WCE = %d\n"), _WIN32_WCE));
 	//
 	// WCE200 ... GetVersionEx
 	// WCE210 or later ... GetVersionExA or GetVersionExW
 	// see winbase.h
 	//
+	BOOL (*getVersionEx)(LPOSVERSIONINFO);
 	getVersionEx = reinterpret_cast <BOOL(*)(LPOSVERSIONINFO)>
 	    (_load_func(TEXT("GetVersionEx")));
-	
+
 	if (getVersionEx) {
 		getVersionEx(&WinCEVersion);
 		DPRINTF((TEXT("GetVersionEx\n")));
@@ -152,19 +153,20 @@ Architecture::systemInfo(void)
 
 	GetSystemInfo(&si);
 	DPRINTF((TEXT("GetSystemInfo:\n")));
+#if _WIN32_WCE >= 200
 	DPRINTF((TEXT("wProcessorArchitecture      0x%x\n"),
 	    si.wProcessorArchitecture)); 
+	DPRINTF((TEXT("wProcessorLevel             0x%x\n"),
+	    si.wProcessorLevel)); 
+	DPRINTF((TEXT("wProcessorRevision          0x%x\n"),
+	    si.wProcessorRevision)); 
+#endif
 	DPRINTF((TEXT("dwPageSize                  0x%x\n"),
 	    si.dwPageSize)); 
 	DPRINTF((TEXT("dwAllocationGranularity     0x%08x\n"),
 	    si.dwAllocationGranularity)); 
 	DPRINTF((TEXT("dwProcessorType             0x%x\n"),
 	    si.dwProcessorType)); 
-	DPRINTF((TEXT("wProcessorLevel             0x%x\n"),
-	    si.wProcessorLevel)); 
-	DPRINTF((TEXT("wProcessorRevision          0x%x\n"),
-	    si.wProcessorRevision)); 
-
 	// inquire default setting.
 	FrameBufferInfo fb(0, 0);
 	DPRINTF((TEXT("Display: %dx%d %dbpp\n"), fb.width(), fb.height(),
