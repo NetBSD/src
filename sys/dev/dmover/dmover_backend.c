@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_backend.c,v 1.2 2002/08/02 00:31:35 thorpej Exp $	*/
+/*	$NetBSD: dmover_backend.c,v 1.3 2002/12/28 23:07:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_backend.c,v 1.2 2002/08/02 00:31:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_backend.c,v 1.3 2002/12/28 23:07:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -53,7 +53,7 @@ struct lock dmover_backend_list_lock;
 
 #define	BACKEND_LIST_LOCK_READ()					\
 do {									\
-	(void) spinlockmgr(&dmover_backend_list_lock, LK_SHRED, NULL);	\
+	(void) spinlockmgr(&dmover_backend_list_lock, LK_SHARED, NULL);	\
 } while (/*CONSTCOND*/0)
 
 #define	BACKEND_LIST_UNLOCK_READ()					\
