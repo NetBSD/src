@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1997/07/23 23:39:19 augustss Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1997/09/14 07:22:27 lukem Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -39,7 +39,7 @@ __COPYRIGHT(
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.6 1997/07/23 23:39:19 augustss Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 1997/09/14 07:22:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ main(argc, argv)
 
 	red = (n = strlen(argv[0])) > 2 && argv[0][n - 3] == 'r';
 top:
-	while ((c = getopt(argc, argv, "p:sx")) != EOF)
+	while ((c = getopt(argc, argv, "p:sx")) != -1)
 		switch(c) {
 		case 'p':				/* set prompt */
 			prompt = optarg;
