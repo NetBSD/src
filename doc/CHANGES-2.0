@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.323 2004/07/10 09:37:12 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.324 2004/07/10 12:48:45 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5201,4 +5201,33 @@ sys/dev/pci/if_txp.c				1.7
 	at interupt enable time, if firmware download fails like with my 3c990B
 	card.
 	[is, ticket #626]
+
+usr.bin/rpcgen/rpc_sample.c			1.11
+
+	Fix function calls in the sample server to use the right function name.
+	From PR 4411.
+	[mycroft, ticket #615]
+
+usr.sbin/rbootd/rmpproto.c			1.14
+usr.sbin/rbootd/utils.c				1.15
+
+	Fix portability problems, per PR 5783.
+	[mycroft, ticket #615]
+
+usr.bin/m4/eval.c				1.19
+
+	Fix a core dump.
+	[mycroft, ticket #615]
+
+sbin/routed/table.c				1.22
+
+	PR 9431: if rnh_addradd() fails, total_routes will be wrong.
+	[mycroft, ticket #615]
+
+sys/netinet/in.c				1.97
+
+	Fix SIOCSIFNETMASK -- it needs to use in_ifscrub() and in_ifinit() to
+	update the interface route and various internal state. Also, it should
+	use an ifreq, not an if_aliasreq. Addresses PR 9604.
+	[mycroft, ticket #615]
 
