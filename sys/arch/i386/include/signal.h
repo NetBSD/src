@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.21 2003/09/11 20:22:30 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.22 2003/09/11 20:48:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -81,7 +81,7 @@ struct sigcontext13 {
 };
 #endif
 
-#if defined(COMPAT_16) || compat(COMPAT_IBCS2) || !defined(_KERNEL)
+#if defined(COMPAT_16) || defined(COMPAT_IBCS2) || !defined(_KERNEL)
 /*
  * We expose this to userland for legacy interfaces, but only use
  * it in the kernel for compat code.
