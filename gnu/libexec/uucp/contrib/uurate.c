@@ -84,8 +84,8 @@
  *        get knowledge of
  */
 /* $Log: uurate.c,v $
-/* Revision 1.2  1994/10/24 22:17:57  jtc
-/* Upgraded to Taylor UUCP 1.05 (Thanks to John Kohl).
+/* Revision 1.3  1995/08/24 05:19:21  jtc
+/* Upgraded to Taylor UUCP 1.06.1 (Thanks to John Kohl).
 /*
  * Revision 1.15  1994/04/07  21:47:11  kdburg
  * printed 'no data avail' while there was data; layout chnaged
@@ -142,12 +142,15 @@
  * */
 
 char version[] = "@(#) Taylor UUCP Log File Summary Filter, Version 1.2.2";
-static char rcsid[] = "$Id: uurate.c,v 1.2 1994/10/24 22:17:57 jtc Exp $";
+static char rcsid[] = "$Id: uurate.c,v 1.3 1995/08/24 05:19:21 jtc Exp $";
 #include <ctype.h>            /* Character Classification      */
 #include <math.h>
 #include "uucp.h"
 /* uucp.h includes string.h or strings.h, no include here. */
 
+#if HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
 
 #define _DEBUG_ 0
 

@@ -1,7 +1,7 @@
 /* protg.c
    The 'g' protocol.
 
-   Copyright (C) 1991, 1992, 1993, 1994 Ian Lance Taylor
+   Copyright (C) 1991, 1992, 1993, 1994, 1995 Ian Lance Taylor
 
    This file is part of the Taylor UUCP package.
 
@@ -17,16 +17,16 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
    The author of the program may be contacted at ian@airs.com or
-   c/o Cygnus Support, Building 200, 1 Kendall Square, Cambridge, MA 02139.
+   c/o Cygnus Support, 48 Grove Street, Somerville, MA 02144.
    */
 
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char protg_rcsid[] = "$Id: protg.c,v 1.2 1994/10/24 22:27:29 jtc Exp $";
+const char protg_rcsid[] = "$Id: protg.c,v 1.3 1995/08/24 05:22:53 jtc Exp $";
 #endif
 
 #include <ctype.h>
@@ -1614,7 +1614,7 @@ fgprocess_data (qdaemon, fdoacks, freturncontrol, pfexit, pcneed, pffound)
 	  && CONTROL_XXX (ab[IFRAME_CONTROL]) == RR
 	  && iGremote_ack == CONTROL_YYY (ab[IFRAME_CONTROL])
 	  && INEXTSEQ (iGremote_ack) != iGsendseq
-	  && iGretransmit_seq != -1)
+	  && iGretransmit_seq == -1)
 	{
 	  DEBUG_MESSAGE0 (DEBUG_PROTO | DEBUG_ABNORMAL,
 			  "fgprocess_data: Treating duplicate RR as RJ");
