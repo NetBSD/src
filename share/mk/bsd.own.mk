@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.44 1997/05/29 19:06:26 cjs Exp $
+#	$NetBSD: bsd.own.mk,v 1.45 1997/05/29 19:35:23 cjs Exp $
 
 # This file may be included multiple times without harm.
 
@@ -79,7 +79,7 @@ BUILDDIR= ${DESTDIR}
 # a bit of a hack; we should possibly generalise object directories so that
 # they can be used outside the BSD tree.
 .if defined(BSDSRCDIR)
-insrcdir != x=${.CURDIR}; if [ $${x\#${BSDSRCDIR}} = $$x ]; then echo no; else echo yes; fi
+insrcdir != x=${.CURDIR}; if [ "$${x\#${BSDSRCDIR}}" = $$x ]; then echo no; else echo yes; fi
 .if ${insrcdir} == "no"
 .undef OBJDIR
 .endif	# ${insrcdir}
