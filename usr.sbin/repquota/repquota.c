@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.17 2000/04/14 06:26:54 simonb Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.18 2001/03/14 19:34:37 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -236,9 +236,9 @@ repquota(fs, type, qfpathname)
 			fup->fu_dqblk.dqb_isoftlimit &&
 			    fup->fu_dqblk.dqb_curinodes >=
 			    fup->fu_dqblk.dqb_isoftlimit ? '+' : '-',
-			dbtob(fup->fu_dqblk.dqb_curblocks) / 1024,
-			dbtob(fup->fu_dqblk.dqb_bsoftlimit) / 1024,
-			dbtob(fup->fu_dqblk.dqb_bhardlimit) / 1024,
+			(int)(dbtob((u_quad_t)fup->fu_dqblk.dqb_curblocks) / 1024),
+			(int)(dbtob((u_quad_t)fup->fu_dqblk.dqb_bsoftlimit) / 1024),
+			(int)(dbtob((u_quad_t)fup->fu_dqblk.dqb_bhardlimit) / 1024),
 			fup->fu_dqblk.dqb_bsoftlimit && 
 			    fup->fu_dqblk.dqb_curblocks >= 
 			    fup->fu_dqblk.dqb_bsoftlimit ?
