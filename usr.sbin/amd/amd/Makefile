@@ -2,7 +2,6 @@
 
 PROG=	amd
 MAN8=	amd.0
-OS=	netbsd
 SRCS=	afs_ops.c am_ops.c clock.c util.c xutil.c \
 	efs_ops.c mapc.c info_file.c info_hes.c \
 	info_ndbm.c info_passwd.c info_nis.c \
