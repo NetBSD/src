@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.49 1998/01/14 23:36:33 cgd Exp $
+#	$NetBSD: files.isa,v 1.50 1998/01/15 00:35:38 cgd Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -116,7 +116,7 @@ device	scd class disk: disk
 attach	scd at isa
 file	dev/isa/scd.c			scd needs-flag
 
-# XXX THE FOLLOWING TWO BLOCKS SHOULD GO INTO conf/files, BUT CANNOT
+# XXX THE FOLLOWING BLOCK SHOULD GO INTO conf/files, BUT CANNOT
 # XXX BECAUSE NOT ALL PORTS USE THE MI DRIVER YET.
 
 # ESDI/IDE/etc. controllers
