@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacvar.h,v 1.4 2000/09/28 10:56:57 tsutsui Exp $ */
+/*      $NetBSD: lemacvar.h,v 1.5 2001/05/15 15:41:27 lukem Exp $ */
 
 /*
  * Copyright (c) 1997 Matt Thomas <matt@3am-software.com>
@@ -89,26 +89,26 @@ typedef struct {
 #define	LEMAC_IFP_TO_SOFTC(ifp)	((lemac_softc_t *)((ifp)->if_softc))
 #define	LEMAC_USE_PIO_MODE(sc)	(((sc->sc_flags & LEMAC_MODE_MASK) == LEMAC_PIO_MODE) || (sc->sc_if.if_flags & IFF_LINK0))
 
-#define	LEMAC_OUTB(sc, o, v)	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, o, v)
-#define	LEMAC_OUTSB(sc, o, l, p)	bus_space_write_multi_1((sc)->sc_iot, (sc)->sc_ioh, o, p, l)
-#define	LEMAC_INB(sc, o)	bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, o)
-#define	LEMAC_INSB(sc, o, l, p)	bus_space_read_multi_1((sc)->sc_iot, (sc)->sc_ioh, o, p, l)
+#define	LEMAC_OUTB(sc, o, v)	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (o), (v))
+#define	LEMAC_OUTSB(sc, o, l, p)	bus_space_write_multi_1((sc)->sc_iot, (sc)->sc_ioh, (o), (p), (l))
+#define	LEMAC_INB(sc, o)	bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, (o))
+#define	LEMAC_INSB(sc, o, l, p)	bus_space_read_multi_1((sc)->sc_iot, (sc)->sc_ioh, (o), (p), (l))
 
-#define	LEMAC_PUTBUF8(sc, o, l, p)	bus_space_write_region_1((sc)->sc_memt, (sc)->sc_memh, o, p, l)
-#define	LEMAC_PUTBUF16(sc, o, l, p)	bus_space_write_region_2((sc)->sc_memt, (sc)->sc_memh, o, p, l)
-#define	LEMAC_PUTBUF32(sc, o, l, p)	bus_space_write_region_4((sc)->sc_memt, (sc)->sc_memh, o, p, l)
+#define	LEMAC_PUTBUF8(sc, o, l, p)	bus_space_write_region_1((sc)->sc_memt, (sc)->sc_memh, (o), (p), (l))
+#define	LEMAC_PUTBUF16(sc, o, l, p)	bus_space_write_region_2((sc)->sc_memt, (sc)->sc_memh, (o), (p), (l))
+#define	LEMAC_PUTBUF32(sc, o, l, p)	bus_space_write_region_4((sc)->sc_memt, (sc)->sc_memh, (o), (p), (l))
 
-#define	LEMAC_PUT8(sc, o, v)	bus_space_write_1((sc)->sc_memt, (sc)->sc_memh, o, v)
-#define	LEMAC_PUT16(sc, o, v)	bus_space_write_2((sc)->sc_memt, (sc)->sc_memh, o, v)
-#define	LEMAC_PUT32(sc, o, v)	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, o, v)
+#define	LEMAC_PUT8(sc, o, v)	bus_space_write_1((sc)->sc_memt, (sc)->sc_memh, (o), (v))
+#define	LEMAC_PUT16(sc, o, v)	bus_space_write_2((sc)->sc_memt, (sc)->sc_memh, (o), (v))
+#define	LEMAC_PUT32(sc, o, v)	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, (o), (v))
 
-#define	LEMAC_GETBUF8(sc, o, l, p)	bus_space_read_region_1((sc)->sc_memt, (sc)->sc_memh, o, p, l)
-#define	LEMAC_GETBUF16(sc, o, l, p)	bus_space_read_region_2((sc)->sc_memt, (sc)->sc_memh, o, p, l)
-#define	LEMAC_GETBUF32(sc, o, l, p)	bus_space_read_region_4((sc)->sc_memt, (sc)->sc_memh, o, p, l)
+#define	LEMAC_GETBUF8(sc, o, l, p)	bus_space_read_region_1((sc)->sc_memt, (sc)->sc_memh, (o), (p), (l))
+#define	LEMAC_GETBUF16(sc, o, l, p)	bus_space_read_region_2((sc)->sc_memt, (sc)->sc_memh, (o), (p), (l))
+#define	LEMAC_GETBUF32(sc, o, l, p)	bus_space_read_region_4((sc)->sc_memt, (sc)->sc_memh, (o), (p), (l))
 
-#define	LEMAC_GET8(sc, o)	bus_space_read_1((sc)->sc_memt, (sc)->sc_memh, o)
-#define	LEMAC_GET16(sc, o)	bus_space_read_2((sc)->sc_memt, (sc)->sc_memh, o)
-#define	LEMAC_GET32(sc, o)	bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, o)
+#define	LEMAC_GET8(sc, o)	bus_space_read_1((sc)->sc_memt, (sc)->sc_memh, (o))
+#define	LEMAC_GET16(sc, o)	bus_space_read_2((sc)->sc_memt, (sc)->sc_memh, (o))
+#define	LEMAC_GET32(sc, o)	bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, (o))
 
 
 #define	LEMAC_INTR_ENABLE(sc) \
