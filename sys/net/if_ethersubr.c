@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.30 1998/04/29 21:37:53 matt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.31 1998/04/30 00:05:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -116,8 +116,8 @@ ether_output(ifp, m0, dst, rt0)
 	struct rtentry *rt0;
 {
 	u_int16_t etype;
-	int s, error = 0;
- 	u_char edst[6];
+	int s, error = 0, hdrcmplt = 0;
+ 	u_char esrc[6], edst[6];
 	struct mbuf *m = m0;
 	struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
@@ -346,6 +346,12 @@ ether_output(ifp, m0, dst, rt0)
 		} break;
 #endif /* LLC */	
 
+	case pseudo_AF_HDRCMPLT:
+		hdrcmplt = 1;
+		eh = (struct ether_header *)dst->sa_data;
+		bcopy((caddr_t)eh->ether_shost, (caddr_t)esrc, sizeof (esrc));
+		/* FALLTHROUGH */
+
 	case AF_UNSPEC:
 		eh = (struct ether_header *)dst->sa_data;
  		bcopy((caddr_t)eh->ether_dhost, (caddr_t)edst, sizeof (edst));
@@ -373,8 +379,12 @@ ether_output(ifp, m0, dst, rt0)
 	bcopy((caddr_t)&etype,(caddr_t)&eh->ether_type,
 		sizeof(eh->ether_type));
  	bcopy((caddr_t)edst, (caddr_t)eh->ether_dhost, sizeof (edst));
- 	bcopy(LLADDR(ifp->if_sadl), (caddr_t)eh->ether_shost,
-	    sizeof(eh->ether_shost));
+	if (hdrcmplt)
+		bcopy((caddr_t)esrc, (caddr_t)eh->ether_shost,
+		    sizeof(eh->ether_shost));
+	else
+	 	bcopy(LLADDR(ifp->if_sadl), (caddr_t)eh->ether_shost,
+		    sizeof(eh->ether_shost));
 	s = splimp();
 	/*
 	 * Queue message on interface, and start output if interface
