@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.4.2.1 1998/08/29 03:35:32 mellon Exp $	*/
+/*	$NetBSD: perform.c,v 1.4.2.2 1998/11/06 20:40:58 cgd Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.4.2.1 1998/08/29 03:35:32 mellon Exp $");
+__RCSID("$NetBSD: perform.c,v 1.4.2.2 1998/11/06 20:40:58 cgd Exp $");
 #endif
 #endif
 
@@ -33,23 +33,89 @@ __RCSID("$NetBSD: perform.c,v 1.4.2.1 1998/08/29 03:35:32 mellon Exp $");
 #include "lib.h"
 #include "delete.h"
 
-static int pkg_do(char *);
-static void sanity_check(char *);
-static void undepend(PackingList, char *);
+int undepend(const char *deppkgname, char *pkg2delname);
+
 static char LogDir[FILENAME_MAX];
 
+static package_t Plist;
 
-int
-pkg_perform(char **pkgs)
+static void
+sanity_check(char *pkg)
 {
-    int i, err_cnt = 0;
-
-    for (i = 0; pkgs[i]; i++)
-	err_cnt += pkg_do(pkgs[i]);
-    return err_cnt;
+    if (!fexists(CONTENTS_FNAME)) {
+	cleanup(0);
+	errx(2, "installed package %s has no %s file!", pkg, CONTENTS_FNAME);
+    }
 }
 
-static Package Plist;
+void
+cleanup(int sig)
+{
+    /* Nothing to do */
+    if(sig)	/* in case this is ever used as a signal handler */
+	exit(1);
+}
+
+/* deppkgname is the pkg from which's +REQUIRED_BY file we are
+ * about to remove pkg2delname. This function is called from
+ * findmatchingname(), deppkgname is expanded from a (possible) pattern.
+ */
+int
+undepend(const char *deppkgname, char *pkg2delname)
+{
+     char fname[FILENAME_MAX], ftmp[FILENAME_MAX];
+     char fbuf[FILENAME_MAX];
+     FILE *fp, *fpwr;
+     char *tmp;
+     int s;
+
+     (void) snprintf(fname, sizeof(fname), "%s/%s/%s",
+	     (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
+	     deppkgname, REQUIRED_BY_FNAME);
+     fp = fopen(fname, "r");
+     if (fp == NULL) {
+	 warnx("couldn't open dependency file `%s'", fname);
+	 return 0;
+     }
+     (void) snprintf(ftmp, sizeof(ftmp), "%s.XXXXXX", fname);
+     s = mkstemp(ftmp);
+     if (s == -1) {
+	 fclose(fp);
+	 warnx("couldn't open temp file `%s'", ftmp);
+	 return 0;
+     }
+     fpwr = fdopen(s, "w");
+     if (fpwr == NULL) {
+	 close(s);
+	 fclose(fp);
+	 warnx("couldn't fdopen temp file `%s'", ftmp);
+	 remove(ftmp);
+	 return 0;
+     }
+     while (fgets(fbuf, sizeof(fbuf), fp) != NULL) {
+	 if (fbuf[strlen(fbuf)-1] == '\n')
+	     fbuf[strlen(fbuf)-1] = '\0';
+	 if (strcmp(fbuf, pkg2delname))		/* no match */
+	     fputs(fbuf, fpwr), putc('\n', fpwr);
+     }
+     (void) fclose(fp);
+     if (fchmod(s, 0644) == FAIL) {
+	 warnx("error changing permission of temp file `%s'", ftmp);
+	 fclose(fpwr);
+	 remove(ftmp);
+	 return 0;
+     }
+     if (fclose(fpwr) == EOF) {
+	 warnx("error closing temp file `%s'", ftmp);
+	 remove(ftmp);
+	 return 0;
+     }
+     if (rename(ftmp, fname) == -1)
+	 warnx("error renaming `%s' to `%s'", ftmp, fname);
+     remove(ftmp);			/* just in case */
+     
+     return 0;
+}
 
 /* This is seriously ugly code following.  Written very fast! */
 static int
@@ -57,21 +123,23 @@ pkg_do(char *pkg)
 {
     FILE *cfile;
     char home[FILENAME_MAX];
-    PackingList p;
+    plist_t *p;
     char *tmp;
 
     /* Reset some state */
     if (Plist.head)
 	free_plist(&Plist);
 
-    sprintf(LogDir, "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
+    (void) snprintf(LogDir, sizeof(LogDir), "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
     	    pkg);
     if (!fexists(LogDir)) {
 	warnx("no such package '%s' installed", pkg);
 	return 1;
     }
-    if (!getcwd(home, FILENAME_MAX))
-	cleanup(0), errx(2, "unable to get current working directory!");
+    if (!getcwd(home, FILENAME_MAX)) {
+	cleanup(0);
+	errx(2, "unable to get current working directory!");
+    }
     if (chdir(LogDir) == FAIL) {
 	warnx("unable to change directory to %s! deinstall failed", LogDir);
 	return 1;
@@ -131,8 +199,10 @@ pkg_do(char *pkg)
 	    }
 	}
     }
-    if (chdir(home) == FAIL)
-	cleanup(0), errx(2, "Toto! This doesn't look like Kansas anymore!");
+    if (chdir(home) == FAIL) {
+	cleanup(0);
+	errx(2, "Toto! This doesn't look like Kansas anymore!");
+    }
     if (!Fake) {
 	/* Some packages aren't packed right, so we need to just ignore delete_package()'s status.  Ugh! :-( */
 	if (delete_package(FALSE, CleanDirs, &Plist) == FAIL)
@@ -151,79 +221,18 @@ pkg_do(char *pkg)
 	if (Verbose)
 	    printf("Attempting to remove dependency on package `%s'\n", p->name);
 	if (!Fake)
-	    undepend(p, pkg);
+	    findmatchingname((tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
+			     p->name, undepend, pkg);
     }
     return 0;
 }
 
-static void
-sanity_check(char *pkg)
+int
+pkg_perform(char **pkgs)
 {
-    if (!fexists(CONTENTS_FNAME))
-	cleanup(0), errx(2, "installed package %s has no %s file!",
-			pkg, CONTENTS_FNAME);
-}
+    int i, err_cnt = 0;
 
-void
-cleanup(int sig)
-{
-    /* Nothing to do */
-    if(sig)	/* in case this is ever used as a signal handler */
-	exit(1);
-}
-
-static void
-undepend(PackingList p, char *pkgname)
-{
-     char fname[FILENAME_MAX], ftmp[FILENAME_MAX];
-     char fbuf[FILENAME_MAX];
-     FILE *fp, *fpwr;
-     char *tmp;
-     int s;
-
-     sprintf(fname, "%s/%s/%s",
-	     (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
-	     p->name, REQUIRED_BY_FNAME);
-     fp = fopen(fname, "r");
-     if (fp == NULL) {
-	 warnx("couldn't open dependency file `%s'", fname);
-	 return;
-     }
-     sprintf(ftmp, "%s.XXXXXX", fname);
-     s = mkstemp(ftmp);
-     if (s == -1) {
-	 fclose(fp);
-	 warnx("couldn't open temp file `%s'", ftmp);
-	 return;
-     }
-     fpwr = fdopen(s, "w");
-     if (fpwr == NULL) {
-	 close(s);
-	 fclose(fp);
-	 warnx("couldn't fdopen temp file `%s'", ftmp);
-	 remove(ftmp);
-	 return;
-     }
-     while (fgets(fbuf, sizeof(fbuf), fp) != NULL) {
-	 if (fbuf[strlen(fbuf)-1] == '\n')
-	     fbuf[strlen(fbuf)-1] = '\0';
-	 if (strcmp(fbuf, pkgname))		/* no match */
-	     fputs(fbuf, fpwr), putc('\n', fpwr);
-     }
-     (void) fclose(fp);
-     if (fchmod(s, 0644) == FAIL) {
-	 warnx("error changing permission of temp file `%s'", ftmp);
-	 fclose(fpwr);
-	 remove(ftmp);
-	 return;
-     }
-     if (fclose(fpwr) == EOF) {
-	 warnx("error closing temp file `%s'", ftmp);
-	 remove(ftmp);
-	 return;
-     }
-     if (rename(ftmp, fname) == -1)
-	 warnx("error renaming `%s' to `%s'", ftmp, fname);
-     remove(ftmp);			/* just in case */
-     return;
+    for (i = 0; pkgs[i]; i++)
+	err_cnt += pkg_do(pkgs[i]);
+    return err_cnt;
 }
