@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.8 1999/01/10 00:28:21 augustss Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.9 1999/01/13 15:38:30 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -53,6 +53,7 @@ void	*wsemul_vt100_attach __P((int console, const struct wsscreen_descr *,
 void	wsemul_vt100_output __P((void *cookie, const u_char *data, u_int count,
 				 int));
 void	wsemul_vt100_detach __P((void *cookie, u_int *crowp, u_int *ccolp));
+void	wsemul_vt100_resetop __P((void *, enum wsemul_resetops));
 
 const struct wsemul_ops wsemul_vt100_ops = {
 	"vt100",
@@ -61,6 +62,7 @@ const struct wsemul_ops wsemul_vt100_ops = {
 	wsemul_vt100_output,
 	wsemul_vt100_translate,
 	wsemul_vt100_detach,
+	wsemul_vt100_resetop
 };
 
 struct wsemul_vt100_emuldata wsemul_vt100_console_emuldata;
@@ -251,6 +253,23 @@ wsemul_vt100_detach(cookie, crowp, ccolp)
 #undef f
 	if (edp != &wsemul_vt100_console_emuldata)
 		free(edp, M_DEVBUF);
+}
+
+void
+wsemul_vt100_resetop(cookie, op)
+	void *cookie;
+	enum wsemul_resetops op;
+{
+	struct wsemul_vt100_emuldata *edp = cookie;
+
+	switch (op) {
+	case WSEMUL_RESET:
+		wsemul_vt100_reset(edp);
+		break;
+	case WSEMUL_SYNCFONT:
+		vt100_initchartables(edp);
+		break;
+	}
 }
 
 void
