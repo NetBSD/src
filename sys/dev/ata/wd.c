@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.119 1994/11/23 22:00:08 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.120 1994/11/30 02:32:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -426,10 +426,10 @@ wdstrategy(bp)
 	disksort(&wd->sc_q, bp);
 	if (!wd->sc_q.b_active)
 		wdstart(wd);		/* Start drive. */
-#ifdef DIAGNOSTIC
+#if 0
 	else {
 		struct wdc_softc *wdc = (void *)wd->sc_dev.dv_parent;
-		if ((wdc->sc_flags & WDCF_ACTIVE) == 0) {
+		if ((wdc->sc_flags & (WDCF_ACTIVE|WDCF_ERROR)) == 0) {
 			printf("wdstrategy: controller inactive\n");
 			wdcstart(wdc);
 		}
@@ -1683,8 +1683,12 @@ wdctimeout(arg)
 	int s;
 
 	s = splbio();
-	wderror(wdc, NULL, "lost interrupt");
-	wdcunwedge(wdc);
+	if ((wdc->sc_flags & WDCF_ACTIVE) != 0) {
+		wdc->sc_flags &= ~WDCF_ACTIVE;
+		wderror(wdc, NULL, "lost interrupt");
+		wdcunwedge(wdc);
+	} else
+		wderror(wdc, NULL, "missing untimeout");
 	splx(s);
 }
 
