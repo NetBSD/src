@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.52.2.9 2002/07/02 04:20:04 lukem Exp $
+.\"	$NetBSD: contents,v 1.52.2.10 2002/07/09 08:13:39 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -410,32 +410,45 @@ utilities that are necessary for the
 system to run and be minimally functional.
 It includes shared library support, and excludes
 everything described below.
-.br
-.if r_acorn26 .Em 20.2 MB gzipped, ? MB uncompressed
-.if r_acorn32 .Em 20.2 MB gzipped, ? MB uncompressed
-.if r_alpha .Em 22.7 MB gzipped, 59.8 MB uncompressed
-.if r_amiga .Em 15.6 MB gzipped, 41.4 MB uncompressed
-.if r_arc .Em 19.5 MB gzipped, 61.4 MB uncompressed
-.if r_atari .Em 15.3 MB gzipped, 40.7 MB uncompressed
-.if r_cats .Em 20.4 MB gzipped, 50.6 MB uncompressed
-.if r_hp300 .Em 15.7 MB gzipped, 41.5 MB uncompressed
-.if r_hpcmips .Em 19.5 MB gzipped, 61.4 MB uncompressed
-.if r_i386 .Em 16.4 MB gzipped, 37.9 MB uncompressed
-.if r_mac68k .Em 15.7 MB gzipped, 41.6 MB uncompressed
-.if r_macppc .Em 17.1 MB gzipped, 46.2 MB uncompressed
-.if r_mvme68k .Em 15.9 MB gzipped, 37.5 MB uncompressed
-.if r_news68k .Em 15.6 MB gzipped, 41.3 MB uncompressed
-.if r_newsmips .Em 21.5 MB gzipped, 69.8 MB uncompressed
-.if r_next68k .Em 15.1 MB gzipped, 46.0 MB uncompressed
-.if r_pc532 .Em 15.9 MB gzipped, 37.9 MB uncompressed
-.if r_pmax .Em 19.0 MB gzipped, 61.2 MB uncompressed
-.if r_sparc .Em 17.5 MB gzipped, 43.7 MB uncompressed
-.if r_sparc64 .Em 18.2 MB gzipped, 50.7 MB uncompressed
-.if r_sun2 .Em 51.9 MB gzipped, 116.0 MB uncompressed
-.if r_sun3 .Em 14.5 MB gzipped, 38.1 MB uncompressed
-.if r_vax .Em 15.5 MB gzipped, 36.0 MB uncompressed
-.if r_walnut .Em 19.7 MB gzipped, ??.? MB uncompressed
-.if r_x68k .Em 12.5 MB gzipped, 34.0 MB uncompressed
+.ie r_acorn26 .setsize 21 50
+.el .ie r_acorn32 .setsize 21 50
+.el .ie r_algor .setsize 22 71
+.el .ie r_amiga .setsize 17 41
+.el .ie r_arc .setsize 22 71
+.el .ie r_atari .setsize 17 41
+.el .ie r_cats .setsize 21 50
+.el .ie r_cobalt .setsize 22 71
+.el .ie r_dreamcast .setsize 66 135
+.el .ie r_evbarm .setsize 21 50
+.el .ie r_evbmips .setsize 22 71
+.el .ie r_hp300 .setsize 17 41
+.el .ie r_hpcarm .setsize 21 50
+.el .ie r_hpcmips .setsize 22 71
+.el .ie r_hpcsh .setsize 66 135
+.el .ie r_i386 .setsize 19 45
+.el .ie r_luna68k .setsize 17 41
+.el .ie r_mac68k .setsize 17 41
+.el .ie r_macppc .setsize 20 53
+.el .ie r_mipsco .setsize 22 71
+.el .ie r_mvme68k .setsize 17 41
+.el .ie r_netwinder .setsize 21 50
+.el .ie r_news68k .setsize 17 41
+.el .ie r_newsmips .setsize 22 71
+.el .ie r_next68k .setsize 17 41
+.el .ie r_pmax .setsize 22 71
+.el .ie r_prep .setsize 21 53
+.el .ie r_sandpoint .setsize 20 53
+.el .ie r_sbmips .setsize 22 71
+.el .ie r_sgimips .setsize 22 71
+.el .ie r_shark .setsize 21 50
+.el .ie r_sparc .setsize 20 50
+.el .ie r_sparc64 .setsize 21 60
+.el .ie r_sun2 .setsize 53 118
+.el .ie r_sun3 .setsize 17 41
+.el .ie r_vax .setsize 17 40
+.el .ie r_walnut .setsize 20 53
+.el .ie r_x68k .setsize 17 41
+.el .setsize ??? ???
 .
 .It Sy comp
 Things needed for compiling programs.
@@ -448,32 +461,45 @@ set).
 This set also includes the manual pages for
 all of the utilities it contains, as well as the
 system call and library manual pages.
-.br
-.if r_acorn26 .Em 16.0 MB gzipped, ? MB uncompressed
-.if r_acorn32 .Em 16.0 MB gzipped, ? MB uncompressed
-.if r_alpha .Em 18.1 MB gzipped, 81.2 MB uncompressed
-.if r_amiga .Em 11.8 MB gzipped, 39.5 MB uncompressed
-.if r_arc .Em 13.9 MB gzipped, 59.3 MB uncompressed
-.if r_atari .Em 11.6 MB gzipped, 38.9 MB uncompressed
-.if r_cats .Em 15.7 MB gzipped, 55.4 MB uncompressed
-.if r_hp300 .Em 11.8 MB gzipped, 39.5 MB uncompressed
-.if r_hpcmips .Em 13.8 MB gzipped, 59.4 MB uncompressed
-.if r_i386 .Em 12.4 MB gzipped, 44.8 MB uncompressed
-.if r_mac68k .Em 11.8 MB gzipped, 39.7 MB uncompressed
-.if r_macppc .Em 14.4 MB gzipped, 55.4 MB uncompressed
-.if r_mvme68k .Em 12.8 MB gzipped, 48.1 MB uncompressed
-.if r_news68k .Em 11.8 MB gzipped, 39.5 MB uncompressed
-.if r_newsmips .Em 16.2 MB gzipped, 72.5 MB uncompressed
-.if r_next68k .Em 14.3 MB gzipped, 55.1 MB uncompressed
-.if r_pc532 .Em 11.6 MB gzipped, 37.7 MB uncompressed
-.if r_pmax .Em 13.4 MB gzipped, 57.2 MB uncompressed
-.if r_sparc .Em 14.1 MB gzipped, 51.9 MB uncompressed
-.if r_sparc64 .Em 16.2 MB gzipped, 68 MB uncompressed
-.if r_sun2 .Em 12.5 MB gzipped, 45.1 MB uncompressed
-.if r_sun3 .Em 9.5 MB gzipped, 32.5 MB uncompressed
-.if r_vax .Em 11.9 MB gzipped, 37.9 MB uncompressed
-.if r_walnut .Em 16.9 MB gzipped, ??.? MB uncompressed
-.if r_x68k .Em 9.4 MB gzipped, 31.8 MB uncompressed
+.ie r_acorn26 .setsize 16 57
+.el .ie r_acorn32 .setsize 16 57
+.el .ie r_algor .setsize 17 73
+.el .ie r_amiga .setsize 14 52
+.el .ie r_arc .setsize 16 73
+.el .ie r_atari .setsize 14 52
+.el .ie r_cats .setsize 16 57
+.el .ie r_cobalt .setsize 16 73
+.el .ie r_dreamcast .setsize 17 55
+.el .ie r_evbarm .setsize 16 57
+.el .ie r_evbmips .setsize 16 73
+.el .ie r_hp300 .setsize 14 52
+.el .ie r_hpcarm .setsize 16 57
+.el .ie r_hpcmips .setsize 17 73
+.el .ie r_hpcsh .setsize 17 55
+.el .ie r_i386 .setsize 15 54
+.el .ie r_luna68k .setsize 14 52
+.el .ie r_mac68k .setsize 14 52
+.el .ie r_macppc .setsize 17 64
+.el .ie r_mipsco .setsize 17 73
+.el .ie r_mvme68k .setsize 14 52
+.el .ie r_netwinder .setsize 16 57
+.el .ie r_news68k .setsize 14 52
+.el .ie r_newsmips .setsize 17 73
+.el .ie r_next68k .setsize 14 52
+.el .ie r_pmax .setsize 17 73
+.el .ie r_prep .setsize 17 64
+.el .ie r_sandpoint .setsize 17 64
+.el .ie r_sbmips .setsize 16 73
+.el .ie r_sgimips .setsize 16 73
+.el .ie r_shark .setsize 16 57
+.el .ie r_sparc .setsize 16 60
+.el .ie r_sparc64 .setsize 17 73
+.el .ie r_sun2 .setsize 13 46
+.el .ie r_sun3 .setsize 14 52
+.el .ie r_vax .setsize 12 45
+.el .ie r_walnut .setsize 17 64
+.el .ie r_x68k .setsize 14 52
+.el .setsize ??? ???
 .
 .It Sy etc
 This distribution set contains the system
@@ -485,27 +511,23 @@ This set
 be installed if you are installing the system from scratch, but should
 .Em not
 be used if you are upgrading.
-.br
 .\" Not MI, but close enough to the same size on all ports...
-.Em 0.1 MB gzipped, 0.6 MB uncompressed
+.setsize 1 1
 .
 .It Sy games
 This set includes the games and their manual pages.
-.br
 .\" Shareable within MACHINE_ARCH
-.if r_alpha .Em 3.1 MB gzipped, 7.6 MB uncompressed
-.if r_arm .Em 2.9 MB gzipped, ? MB uncompressed
-.if r_i386 .Em 2.9 MB gzipped, 7.0 MB uncompressed
-.if r_m68k .Em 2.9 MB gzipped, 6.8 MB uncompressed
-.if r_mips .Em 3.0 MB gzipped, 7.9 MB uncompressed
-.if r_newsmips .Em 2.9 MB gzipped, 7.7 MB uncompressed
-.if r_pc532 .Em 2.9 MB gzipped, 7.2 MB uncompressed
-.if r_powerpc .Em 3.0 MB gzipped, 7.2 MB uncompressed
-.if r_sh3 .Em ? MB gzipped, ? MB uncompressed
-.if r_sparc .Em 3.0 MB gzipped, 7.2 MB uncompressed
-.if r_sparc64 .Em 2.9 MB gzipped, 7.2 MB uncompressed
-.if r_sun2 .Em 5.4 MB gzipped, 12.2 MB uncompressed
-.if r_vax .Em 2.9 MB gzipped, 7.1 MB uncompressed
+.ie r_alpha .setsize ??? ???
+.el .ie r_arm .setsize 3 7
+.el .ie r_i386 .setsize 3 7
+.el .ie r_m68k .setsize 3 7
+.el .ie r_mips .setsize 3 8
+.el .ie r_powerpc .setsize 3 7
+.el .ie r_sh3 .setsize 7 14
+.el .ie r_sparc .setsize 3 7
+.el .ie r_sparc64 .setsize 3 8
+.el .ie r_vax .setsize 3 7
+.el .setsize ??? ???
 .
 .if !\n[atari]:\n[walnut] \{\
 .It Sy kern-GENERIC
@@ -522,27 +544,36 @@ This set also contains an a.out kernel named
 .Pa /netbsd.aout
 that your system may need to boot.
 .\}
-.br
-.if r_acorn26 .Em 1.0 MB gzipped, ? MB uncompressed
-.if r_acorn32 .Em 1.0 MB gzipped, ? MB uncompressed
-.if r_alpha .Em 2.1 MB gzipped, 5.0 MB uncompressed
-.if r_amiga .Em 1.1 MB gzipped, 2.4 MB uncompressed
-.if r_arc .Em 1.5 MB gzipped, 3.7 MB uncompressed
-.if r_cats .Em 3.4 MB gzipped, 7.3 MB uncompressed
-.if r_hp300 .Em 0.7 MB gzipped, 1.6 MB uncompressed
-.if r_hpcmips .Em 1.0 MB gzipped, 2.6 MB uncompressed
-.if r_i386 .Em 2.2 MB gzipped, 4.7 MB uncompressed
-.if r_macppc .Em 1.3 MB gzipped, 3.1 MB uncompressed
-.if r_mvme68k .Em 0.7 MB gzipped, 1.6 MB uncompressed
-.if r_news68k .Em 0.9 MB gzipped, 1.9 MB uncompressed
-.if r_newsmips .Em 1.1 MB gzipped, 2.9 MB uncompressed
-.if r_pc532 .Em 0.6 MB gzipped, 1.2 MB uncompressed
-.if r_pmax .Em 1.1 MB gzipped, 2.7 MB uncompressed
-.if r_sparc .Em 1.2 MB gzipped, 2.8 MB uncompressed
-.if r_sparc64 .Em 2.0 MB gzipped, 4.9 MB uncompressed
-.if r_sun2 .Em 0.4 MB gzipped, 0.9 MB uncompressed
-.if r_vax .Em 0.7 MB gzipped, 1.4 MB uncompressed
-.if r_x68k .Em 0.9 MB gzipped, 2.1 MB uncompressed
+.ie r_acorn26 .setsize 2 3
+.el .ie r_acorn32 .setsize 2 3
+.el .ie r_amiga .setsize 2 3
+.el .ie r_arc .setsize 4 8
+.el .ie r_cats .setsize 4 8
+.el .ie r_cobalt .setsize 1 3
+.el .ie r_hp300 .setsize 2 3
+.el .ie r_hpcmips .setsize 2 4
+.el .ie r_hpcsh .setsize 1 2
+.el .ie r_i386 .setsize 3 6
+.el .ie r_luna68k .setsize 1 2
+.el .ie r_mac68k .setsize 2 3
+.el .ie r_macppc .setsize 2 5
+.el .ie r_mvme68k .setsize 1 2
+.el .ie r_netwinder .setsize 2 3
+.el .ie r_news68k .setsize 1 2
+.el .ie r_newsmips .setsize 2 3
+.el .ie r_next68k .setsize 1 2
+.el .ie r_pmax .setsize 2 4
+.el .ie r_prep .setsize 2 4
+.el .ie r_sandpoint .setsize 3 8
+.el .ie r_sgimips .setsize 3 7
+.el .ie r_shark .setsize 2 4
+.el .ie r_sparc .setsize 2 4
+.el .ie r_sparc64 .setsize 3 5
+.el .ie r_sun2 .setsize 1 2
+.el .ie r_sun3 .setsize 1 2
+.el .ie r_vax .setsize 1 2
+.el .ie r_x68k .setsize 1 2
+.el .setsize ??? ???
 .\}
 .if r_atari \{\
 .It Sy kern-BOOT,kern-HADES,kern-MILAN-ISAIDE and kern-MILAN-PCIIDE
@@ -553,7 +584,6 @@ kernel, named
 .Pa /netbsd .
 .No You Em must
 install the kernel that matches your hardware.
-.br
 .\}
 .if r_walnut \{\
 .It Sy kern-WALNUT
@@ -567,8 +597,7 @@ and the same kernel in the format needed by the bootloader as
 You
 .Em must
 install this distribution set.
-.br
-.Em 3.3 MB gzipped, 7.6 MB uncompressed
+.setsize 4 8
 .\}
 .
 .It Sy man
@@ -578,17 +607,15 @@ binaries and other software contained in the
 set.
 Note that it does not include any of the manual pages
 that are included in the other sets.
-.br
 .\" MI
-.Em 6.3 MB gzipped, 25.4 MB uncompressed
+.setsize 7 27
 .
 .It Sy misc
 This set includes the (rather large) system dictionaries,
 the typesettable document set, and other files from
 .Pa /usr/share .
-.br
 .\" MI
-.Em 2.6 MB gzipped, 10.1 MB uncompressed
+r_x68k .setsize 3 8
 .
 .It Sy text
 This set includes
@@ -596,21 +623,18 @@ This set includes
 text processing tools, including
 .Xr groff 1 ,
 all related programs, and their manual pages.
-.br
 .\" Shareable within MACHINE_ARCH
-.if r_alpha .Em 1.4 MB gzipped, 5.1 MB uncompressed
-.if r_arm .Em 1.5 MB gzipped, ? MB uncompressed
-.if r_i386 .Em 1.2 MB gzipped, 4.2 MB uncompressed
-.if r_m68k .Em 1.5 MB gzipped, 5.0 MB uncompressed
-.if r_mips .Em 1.3 MB gzipped, 5.6 MB uncompressed
-.if r_newsmips .Em 1.8 MB gzipped, 7.1 MB uncompressed
-.if r_pc532 .Em 1.3 MB gzipped, 4.6 MB uncompressed
-.if r_powerpc .Em 1.2 MB gzipped, 4.6 MB uncompressed
-.if r_sh3 .Em ? MB gzipped, ? MB uncompressed
-.if r_sparc .Em 1.3 MB gzipped, 4.4 MB uncompressed
-.if r_sparc64 .Em 1.5 MB gzipped, 5.6 MB uncompressed
-.if r_sun2 .Em 2.3 MB gzipped, 6.9 MB uncompressed
-.if r_vax .Em 1.3 MB gzipped, 4.7 MB uncompressed
+.ie r_alpha .setsize ??? ???
+.el .ie r_arm .setsize 2 6
+.el .ie r_i386 .setsize 2 6
+.el .ie r_m68k .setsize 2 6
+.el .ie r_mips .setsize 2 8
+.el .ie r_powerpc .setsize 2 6
+.el .ie r_sh3 .setsize 3 8
+.el .ie r_sparc .setsize 2 6
+.el .ie r_sparc64 .setsize 2 6
+.el .ie r_vax .setsize 2 6
+.el .setsize ??? ???
 .
 .tag)
 .
@@ -630,94 +654,69 @@ The sets are:
 The basic files needed for a complete X
 client environment.
 This does not include the X servers.
-.br
 .\" Shareable within MACHINE_ARCH, except atari
-.if r_alpha .Em 3.6 MB gzipped, 13.7 MB uncompressed
-.if r_arm .Em ? MB gzipped, ? MB uncompressed
-.if r_i386 .Em 2.7 MB gzipped, 7.9 MB uncompressed
-.if r_atari .Em 2.6 MB gzipped, 8.4 MB uncompressed
-.ie r_m68k .Em 2.6 MB gzipped, 8.2 MB uncompressed
-.if r_mips .Em 3.2 MB gzipped, 11.4 MB uncompressed
-.if r_pc532 .Em ? MB gzipped, ? MB uncompressed
-.if r_powerpc .Em 2.9 MB gzipped, 8.9 MB uncompressed
-.if r_sh3 .Em ? MB gzipped, ? MB uncompressed
-.if r_sparc .Em 2.8 MB gzipped, 8.2 MB uncompressed
-.if r_sparc64 .Em 2.9 MB gzipped, 8.7 MB uncompressed
-.if r_vax .Em 2.5 MB gzipped, 7.3 MB uncompressed
+.ie r_alpha .setsize ??? ???
+.el .ie r_arm .setsize 3 8
+.el .ie r_i386 .setsize 5 12
+.el .ie r_atari .setsize 3 8
+.el .ie r_m68k .setsize 3 7
+.el .ie r_mips .setsize 4 12
+.el .ie r_powerpc .setsize ??? ???
+.el .ie r_sh3 .setsize ??? ???
+.el .ie r_sparc .setsize ??? ???
+.el .ie r_sparc64 .setsize 3 9
+.el .ie r_vax .setsize ??? ???
+.el .setsize ??? ???
 .
 .It Sy xcomp
 The extra libraries and include files needed to compile X source code.
-.br
 .\" Shareable within MACHINE_ARCH
-.if r_alpha .Em 2.6 MB gzipped, 13.9 MB uncompressed
-.if r_arm .Em ? MB gzipped, ? MB uncompressed
-.if r_i386 .Em 1.8 MB gzipped, 7.9 MB uncompressed
-.if r_m68k .Em 1.7 MB gzipped, 7.2 MB uncompressed
-.if r_mips .Em 2.1 MB gzipped, 9.5 MB uncompressed
-.if r_pc532 .Em ? MB gzipped, ? MB uncompressed
-.if r_powerppc .Em 2.0 MB gzipped, 8.7 MB uncompressed
-.if r_sh3 .Em ? MB gzipped, ? MB uncompressed
-.if r_sparc .Em 1.8 MB gzipped, 8.3 MB uncompressed
-.if r_sparc64 .Em 1.9 MB gzipped, 8.7 MB uncompressed
-.if r_vax .Em 1.6 MB gzipped, 7.0 MB uncompressed
+.ie r_alpha .setsize ??? ???
+.el .ie r_arm .setsize 2 8
+.el .ie r_i386 .setsize 4 14
+.el .ie r_m68k .setsize 2 8
+.el .ie r_mips .setsize 3 10
+.el .ie r_powerpc .setsize ??? ???
+.el .ie r_sh3 .setsize ??? ???
+.el .ie r_sparc .setsize ??? ???
+.el .ie r_sparc64 .setsize 2 10
+.el .ie r_vax .setsize ??? ???
+.el .setsize ??? ???
 .
 .It Sy xcontrib
 Programs that were contributed to X.
-.br
-.\" Shareable within MACHINE_ARCH
-.if r_alpha .Em 0.2 MB gzipped, 0.8 MB uncompressed
-.if r_arm .Em ? MB gzipped, ? MB uncompressed
-.if r_i386 .Em 0.2 MB gzipped, 0.5 MB uncompressed
-.if r_m68k .Em 0.2 MB gzipped, 0.7 MB uncompressed
-.if r_mips .Em 0.2 MB gzipped, 0.8 MB uncompressed
-.if r_pc532 .Em ? MB gzipped, ? MB uncompressed
-.if r_powerpc .Em 0.2 MB gzipped, 0.6 MB uncompressed
-.if r_sh3 .Em ? MB gzipped, ? MB uncompressed
-.if r_sparc .Em 0.2 MB gzipped, 0.6 MB uncompressed
-.if r_sparc64 .Em 0.2 MB gzipped, 0.7 MB uncompressed
-.if r_vax .Em 0.2 MB gzipped, 0.6 MB uncompressed
+.\" Shareable within MACHINE_ARCH.
+.\" Not MI, but close enough to the same size on all ports...
+.setsize 1 1
 .
 .It Sy xfont
 Fonts needed by X.
-.br
-.\" MI
-.Em 6.2 MB gzipped, 7.5 MB uncompressed
+.\" MI, except for i386 and shark
+.ie r_i386 .setsize 15 19
+.el .ie r_shark .setsize 6 8
+.el .setsize 6 7
 .
 .It Sy xmisc
 Miscellaneous X programs.
-.br
 .\" MI
 .\" Shareable within MACHINE_ARCH
-.if r_alpha .Em ? MB gzipped, ? MB uncompressed
-.if r_arm .Em ? MB gzipped, ? MB uncompressed
-.if r_i386 .Em ? MB gzipped, ? MB uncompressed
-.if r_m68k .Em ? MB gzipped, ? MB uncompressed
-.if r_mips .Em ? MB gzipped, ? MB uncompressed
-.if r_pc532 .Em ? MB gzipped, ? MB uncompressed
-.if r_powerpc .Em ? MB gzipped, ? MB uncompressed
-.if r_sh3 .Em ? MB gzipped, ? MB uncompressed
-.if r_sparc .Em ? MB gzipped, ? MB uncompressed
-.if r_sparc64 .Em 13 KB gzipped, 50 KB uncompressed
-.if r_vax .Em ? MB gzipped, ? MB uncompressed
-.
+.\" Not MI, but close enough to the same size on all ports...
+.setsize 1 1
 .
 .if r_acorn32 \{\
 .It Sy xserver
 The Xarm32VIDC and Xprt servers.
-.br
-.Em 1.8 MB gzipped, 4.6 MB uncompressed
+.setsize 2 5
 .\}
 .
 .if r_alpha \{\
 .It Sy xserver
-.br
-.Em 2.3 MB gzipped, 9.2 MB uncompressed
+.setsize ??? ???
 .\}
 .
 .if r_amiga \{\
 .It Sy xserver
-.br
-.Em 1.6 MB gzipped, 3.9 MB uncompressed
+.setsize ??? ???
 .\}
 .
 .if r_atari \{\
@@ -725,15 +724,13 @@ The Xarm32VIDC and Xprt servers.
 The Xservers and some programs not shared with the other m68k ports.
 Please consult the X specific section in the atari FAQ as to which server
 you should use.
-.br
-.Em 5.7 MB gzipped, 14.1 MB uncompressed
+.setsize 5 13
 .\}
 .
 .if r_hpcmips \{\
 .It Sy xserver
 The Xhpc server which supports 256 and 65536 colors, with man pages.
-.br
-.Em 2.0 MB gzipped, 6.0 MB uncompressed
+.setsize 2 6
 .\}
 .
 .if r_i386 \{\
@@ -743,39 +740,35 @@ Because all of them are included, this set is large.
 However, you will only need one of the servers provided in this set.
 (Typically,
 .Ic XF86_SVGA ) .
-.br
-.Em 14.9 MB gzipped, 35.2 MB uncompressed
+.setsize 8 20
 .\}
 .
 .if r_mac68k \{\
 .It Sy xserver
 The Xmac68k Em monochrome
 server with man pages.
-.br
-.Em 1.4 MB gzipped, 3.4 MB uncompressed
+.setsize ??? ???
 .\}
 .
 .if r_macppc \{\
 .It Sy xserver
 The Xmacppc
 server which supports 256 colors with man pages.
-.br
-.Em 1.7 MB gzipped, 4.6 MB uncompressed
+.setsize ??? ???
 .\}
 .
 .if r_pmax \{\
 .It Sy xserver
 .No The Xpmax
 server with man page.
-.Em 1.8 MB gzipped, 5.6 MB uncompressed
+.setsize ??? ???
 .\}
 .
 .if r_sparc \{\
 .It Sy xserver
 .No The Xsun, Xsun24, XsunMono and Xprt
 servers with man pages.
-.br
-.Em 3.3 MB gzipped, 8.5 MB uncompressed
+.setsize ??? ???
 .\}
 .
 .if r_sparc64 \{\
@@ -783,16 +776,14 @@ servers with man pages.
 The Xsun, Xsun24, XsunMono and Xprt
 servers with man pages.
 The 64-bit X server current has problems with pixmaps.
-.br
-.Em 3.4 MB gzipped, 8.9 MB uncompressed
+.setsize 4 9
 .\}
 .
 .if r_x68k \{\
 .It Sy xserver
 .No The X68k and Xprt
 servers with man pages and the runtime configuration file.
-.br
-.Em 1.5 MB gzipped, 3.6 MB uncompressed
+.setsize 2 4
 .\}
 .
 .tag)
@@ -1093,15 +1084,13 @@ The important files in this directory are as follows:
 kernel with system installer
 .Pq Ic sysinst .
 This kernel runs on Vr41xx and TX3922 CPU only.
-.br
-.Em 1.98 MB gzipped, 6.7 MB uncompressed
+.setsize 2 7
 .It Pa netbsd.TX3912.gz
 .Nx*M
 kernel with system installer
 .Pq Ic sysinst .
 This kernel runs on TX3912 CPU only.
-.br
-.Em 1.98 MB gzipped, 6.7 MB uncompressed
+.setsize 2 7
 .It Pa hpcboot.exe
 The
 .Nx*M
