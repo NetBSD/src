@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.32 1998/09/21 11:24:11 tv Exp $	*/
+/*	$NetBSD: fault.c,v 1.33 1998/09/22 01:40:28 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -776,10 +776,7 @@ prefetch_abort_handler(frame)
 		 * All the kernel code pages are loaded at boot time
 		 * and do not get paged
 		 */
-#ifdef DEBUG
-		printf("Prefetch address = %08x\n", frame->tf_pc);
 	        panic("Prefetch abort in non-USR mode (frame=%p)\n", frame);
-#endif
 	}
 
 	/* Get fault address */
