@@ -1,0 +1,68 @@
+This is binutils.info, produced by makeinfo version 4.3 from
+binutils.texi.
+
+START-INFO-DIR-ENTRY
+* Binutils: (binutils).         The GNU binary utilities.
+* ar: (binutils)ar.               Create, modify, and extract from archives
+* nm: (binutils)nm.               List symbols from object files
+* objcopy: (binutils)objcopy.	  Copy and translate object files
+* objdump: (binutils)objdump.     Display information from object files
+* ranlib: (binutils)ranlib.       Generate index to archive contents
+* readelf: (binutils)readelf.	  Display the contents of ELF format files.
+* size: (binutils)size.           List section sizes and total size
+* strings: (binutils)strings.     List printable strings from files
+* strip: (binutils)strip.         Discard symbols
+* c++filt: (binutils)c++filt.	  Filter to demangle encoded C++ symbols
+* cxxfilt: (binutils)c++filt.     MS-DOS name for c++filt
+* addr2line: (binutils)addr2line. Convert addresses to file and line
+* nlmconv: (binutils)nlmconv.     Converts object code into an NLM
+* windres: (binutils)windres.	  Manipulate Windows resources
+* dlltool: (binutils)dlltool.	  Create files needed to build and use DLLs
+END-INFO-DIR-ENTRY
+
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001,
+2002, 2003 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
+
+
+Indirect:
+binutils.info-1: 1675
+binutils.info-2: 44916
+binutils.info-3: 91081
+
+Tag Table:
+(Indirect)
+Node: Top1675
+Node: ar3160
+Node: ar cmdline5334
+Node: ar scripts13468
+Node: nm19147
+Node: objcopy26798
+Node: objdump44916
+Node: ranlib58386
+Node: size59137
+Node: strings62000
+Node: strip64346
+Node: c++filt67448
+Ref: c++filt-Footnote-170600
+Node: addr2line70706
+Node: nlmconv73300
+Node: windres75903
+Node: dlltool81633
+Node: readelf91081
+Node: Selecting The Target System95277
+Node: Target Selection96199
+Node: Architecture Selection98185
+Node: Reporting Bugs99013
+Node: Bug Criteria99789
+Node: Bug Reporting100335
+Node: GNU Free Documentation License107423
+Node: Index127129
+
+End Tag Table

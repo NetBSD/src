@@ -1,0 +1,1311 @@
+This is binutils.info, produced by makeinfo version 4.3 from
+binutils.texi.
+
+START-INFO-DIR-ENTRY
+* Binutils: (binutils).         The GNU binary utilities.
+* ar: (binutils)ar.               Create, modify, and extract from archives
+* nm: (binutils)nm.               List symbols from object files
+* objcopy: (binutils)objcopy.	  Copy and translate object files
+* objdump: (binutils)objdump.     Display information from object files
+* ranlib: (binutils)ranlib.       Generate index to archive contents
+* readelf: (binutils)readelf.	  Display the contents of ELF format files.
+* size: (binutils)size.           List section sizes and total size
+* strings: (binutils)strings.     List printable strings from files
+* strip: (binutils)strip.         Discard symbols
+* c++filt: (binutils)c++filt.	  Filter to demangle encoded C++ symbols
+* cxxfilt: (binutils)c++filt.     MS-DOS name for c++filt
+* addr2line: (binutils)addr2line. Convert addresses to file and line
+* nlmconv: (binutils)nlmconv.     Converts object code into an NLM
+* windres: (binutils)windres.	  Manipulate Windows resources
+* dlltool: (binutils)dlltool.	  Create files needed to build and use DLLs
+END-INFO-DIR-ENTRY
+
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001,
+2002, 2003 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
+
+
+File: binutils.info,  Node: objdump,  Next: ranlib,  Prev: objcopy,  Up: Top
+
+objdump
+*******
+
+     objdump [`-a'|`--archive-headers']
+             [`-b' BFDNAME|`--target=BFDNAME']
+             [`-C'|`--demangle'[=STYLE] ]
+             [`-d'|`--disassemble']
+             [`-D'|`--disassemble-all']
+             [`-z'|`--disassemble-zeroes']
+             [`-EB'|`-EL'|`--endian='{big | little }]
+             [`-f'|`--file-headers']
+             [`--file-start-context']
+             [`-g'|`--debugging']
+             [`-h'|`--section-headers'|`--headers']
+             [`-i'|`--info']
+             [`-j' SECTION|`--section='SECTION]
+             [`-l'|`--line-numbers']
+             [`-S'|`--source']
+             [`-m' MACHINE|`--architecture='MACHINE]
+             [`-M' OPTIONS|`--disassembler-options='OPTIONS]
+             [`-p'|`--private-headers']
+             [`-r'|`--reloc']
+             [`-R'|`--dynamic-reloc']
+             [`-s'|`--full-contents']
+             [`-G'|`--stabs']
+             [`-t'|`--syms']
+             [`-T'|`--dynamic-syms']
+             [`-x'|`--all-headers']
+             [`-w'|`--wide']
+             [`--start-address='ADDRESS]
+             [`--stop-address='ADDRESS]
+             [`--prefix-addresses']
+             [`--[no-]show-raw-insn']
+             [`--adjust-vma='OFFSET]
+             [`-V'|`--version']
+             [`-H'|`--help']
+             OBJFILE...
+
+   `objdump' displays information about one or more object files.  The
+options control what particular information to display.  This
+information is mostly useful to programmers who are working on the
+compilation tools, as opposed to programmers who just want their
+program to compile and work.
+
+   OBJFILE... are the object files to be examined.  When you specify
+archives, `objdump' shows information on each of the member object
+files.
+
+   The long and short forms of options, shown here as alternatives, are
+equivalent.  At least one option from the list
+`-a,-d,-D,-f,-g,-G,-h,-H,-p,-r,-R,-S,-t,-T,-V,-x' must be given.
+
+`-a'
+`--archive-header'
+     If any of the OBJFILE files are archives, display the archive
+     header information (in a format similar to `ls -l').  Besides the
+     information you could list with `ar tv', `objdump -a' shows the
+     object file format of each archive member.
+
+`--adjust-vma=OFFSET'
+     When dumping information, first add OFFSET to all the section
+     addresses.  This is useful if the section addresses do not
+     correspond to the symbol table, which can happen when putting
+     sections at particular addresses when using a format which can not
+     represent section addresses, such as a.out.
+
+`-b BFDNAME'
+`--target=BFDNAME'
+     Specify that the object-code format for the object files is
+     BFDNAME.  This option may not be necessary; OBJDUMP can
+     automatically recognize many formats.
+
+     For example,
+          objdump -b oasys -m vax -h fu.o
+
+     displays summary information from the section headers (`-h') of
+     `fu.o', which is explicitly identified (`-m') as a VAX object file
+     in the format produced by Oasys compilers.  You can list the
+     formats available with the `-i' option.  *Note Target Selection::,
+     for more information.
+
+`-C'
+`--demangle[=STYLE]'
+     Decode ("demangle") low-level symbol names into user-level names.
+     Besides removing any initial underscore prepended by the system,
+     this makes C++ function names readable.  Different compilers have
+     different mangling styles. The optional demangling style argument
+     can be used to choose an appropriate demangling style for your
+     compiler. *Note c++filt::, for more information on demangling.
+
+`-g'
+`--debugging'
+     Display debugging information.  This attempts to parse debugging
+     information stored in the file and print it out using a C like
+     syntax.  Only certain types of debugging information have been
+     implemented.  Some other types are supported by `readelf -w'.
+     *Note readelf::.
+
+`-d'
+`--disassemble'
+     Display the assembler mnemonics for the machine instructions from
+     OBJFILE.  This option only disassembles those sections which are
+     expected to contain instructions.
+
+`-D'
+`--disassemble-all'
+     Like `-d', but disassemble the contents of all sections, not just
+     those expected to contain instructions.
+
+`--prefix-addresses'
+     When disassembling, print the complete address on each line.  This
+     is the older disassembly format.
+
+`-EB'
+`-EL'
+`--endian={big|little}'
+     Specify the endianness of the object files.  This only affects
+     disassembly.  This can be useful when disassembling a file format
+     which does not describe endianness information, such as S-records.
+
+`-f'
+`--file-headers'
+     Display summary information from the overall header of each of the
+     OBJFILE files.
+
+`--file-start-context'
+     Specify that when displaying interlisted source code/disassembly
+     (assumes `-S') from a file that has not yet been displayed, extend
+     the context to the start of the file.
+
+`-h'
+`--section-headers'
+`--headers'
+     Display summary information from the section headers of the object
+     file.
+
+     File segments may be relocated to nonstandard addresses, for
+     example by using the `-Ttext', `-Tdata', or `-Tbss' options to
+     `ld'.  However, some object file formats, such as a.out, do not
+     store the starting address of the file segments.  In those
+     situations, although `ld' relocates the sections correctly, using
+     `objdump -h' to list the file section headers cannot show the
+     correct addresses.  Instead, it shows the usual addresses, which
+     are implicit for the target.
+
+`-H'
+`--help'
+     Print a summary of the options to `objdump' and exit.
+
+`-i'
+`--info'
+     Display a list showing all architectures and object formats
+     available for specification with `-b' or `-m'.
+
+`-j NAME'
+`--section=NAME'
+     Display information only for section NAME.
+
+`-l'
+`--line-numbers'
+     Label the display (using debugging information) with the filename
+     and source line numbers corresponding to the object code or relocs
+     shown.  Only useful with `-d', `-D', or `-r'.
+
+`-m MACHINE'
+`--architecture=MACHINE'
+     Specify the architecture to use when disassembling object files.
+     This can be useful when disassembling object files which do not
+     describe architecture information, such as S-records.  You can
+     list the available architectures with the `-i' option.
+
+`-M OPTIONS'
+`--disassembler-options=OPTIONS'
+     Pass target specific information to the disassembler.  Only
+     supported on some targets.
+
+     If the target is an ARM architecture then this switch can be used
+     to select which register name set is used during disassembler.
+     Specifying `-M reg-name-std' (the default) will select the
+     register names as used in ARM's instruction set documentation, but
+     with register 13 called 'sp', register 14 called 'lr' and register
+     15 called 'pc'.  Specifying `-M reg-names-apcs' will select the
+     name set used by the ARM Procedure Call Standard, whilst
+     specifying `-M reg-names-raw' will just use `r' followed by the
+     register number.
+
+     There are also two variants on the APCS register naming scheme
+     enabled by `-M reg-names-atpcs' and `-M reg-names-special-atpcs'
+     which use the ARM/Thumb Procedure Call Standard naming
+     conventions.  (Either with the normal register names or the
+     special register names).
+
+     This option can also be used for ARM architectures to force the
+     disassembler to interpret all instructions as Thumb instructions by
+     using the switch `--disassembler-options=force-thumb'.  This can be
+     useful when attempting to disassemble thumb code produced by other
+     compilers.
+
+     For the x86, some of the options duplicate functions of the `-m'
+     switch, but allow finer grained control.  Multiple selections from
+     the following may be specified as a comma separated string.
+     `x86-64', `i386' and `i8086' select disassembly for the given
+     architecture.  `intel' and `att' select between intel syntax mode
+     and AT&T syntax mode.  `addr32', `addr16', `data32' and `data16'
+     specify the default address size and operand size.  These four
+     options will be overridden if `x86-64', `i386' or `i8086' appear
+     later in the option string.  Lastly, `suffix', when in AT&T mode,
+     instructs the disassembler to print a mnemonic suffix even when the
+     suffix could be inferred by the operands.
+
+     For PPC, `booke', `booke32' and `booke64' select disassembly of
+     BookE instructions.  `32' and `64' select PowerPC and PowerPC64
+     disassembly, respectively.
+
+     For MIPS, this option controls the printing of register names in
+     disassembled instructions.  Multiple selections from the following
+     may be specified as a comma separated string, and invalid options
+     are ignored:
+
+    `gpr-names=ABI'
+          Print GPR (general-purpose register) names as appropriate for
+          the specified ABI.  By default, GPR names are selected
+          according to the ABI of the binary being disassembled.
+
+    `fpr-names=ABI'
+          Print FPR (floating-point register) names as appropriate for
+          the specified ABI.  By default, FPR numbers are printed
+          rather than names.
+
+    `cp0-names=ARCH'
+          Print CP0 (system control coprocessor; coprocessor 0)
+          register names as appropriate for the CPU or architecture
+          specified by ARCH.  By default, CP0 register names are
+          selected according to the architecture and CPU of the binary
+          being disassembled.
+
+    `hwr-names=ARCH'
+          Print HWR (hardware register, used by the `rdhwr'
+          instruction) names as appropriate for the CPU or architecture
+          specified by ARCH.  By default, HWR names are selected
+          according to the architecture and CPU of the binary being
+          disassembled.
+
+    `reg-names=ABI'
+          Print GPR and FPR names as appropriate for the selected ABI.
+
+    `reg-names=ARCH'
+          Print CPU-specific register names (CP0 register and HWR names)
+          as appropriate for the selected CPU or architecture.
+
+     For any of the options listed above, ABI or ARCH may be specified
+     as `numeric' to have numbers printed rather than names, for the
+     selected types of registers.  You can list the available values of
+     ABI and ARCH using the `--help' option.
+
+`-p'
+`--private-headers'
+     Print information that is specific to the object file format.  The
+     exact information printed depends upon the object file format.
+     For some object file formats, no additional information is printed.
+
+`-r'
+`--reloc'
+     Print the relocation entries of the file.  If used with `-d' or
+     `-D', the relocations are printed interspersed with the
+     disassembly.
+
+`-R'
+`--dynamic-reloc'
+     Print the dynamic relocation entries of the file.  This is only
+     meaningful for dynamic objects, such as certain types of shared
+     libraries.
+
+`-s'
+`--full-contents'
+     Display the full contents of any sections requested.
+
+`-S'
+`--source'
+     Display source code intermixed with disassembly, if possible.
+     Implies `-d'.
+
+`--show-raw-insn'
+     When disassembling instructions, print the instruction in hex as
+     well as in symbolic form.  This is the default except when
+     `--prefix-addresses' is used.
+
+`--no-show-raw-insn'
+     When disassembling instructions, do not print the instruction
+     bytes.  This is the default when `--prefix-addresses' is used.
+
+`-G'
+`--stabs'
+     Display the full contents of any sections requested.  Display the
+     contents of the .stab and .stab.index and .stab.excl sections from
+     an ELF file.  This is only useful on systems (such as Solaris 2.0)
+     in which `.stab' debugging symbol-table entries are carried in an
+     ELF section.  In most other file formats, debugging symbol-table
+     entries are interleaved with linkage symbols, and are visible in
+     the `--syms' output.  For more information on stabs symbols, see
+     *Note Stabs: (stabs.info)Top.
+
+`--start-address=ADDRESS'
+     Start displaying data at the specified address.  This affects the
+     output of the `-d', `-r' and `-s' options.
+
+`--stop-address=ADDRESS'
+     Stop displaying data at the specified address.  This affects the
+     output of the `-d', `-r' and `-s' options.
+
+`-t'
+`--syms'
+     Print the symbol table entries of the file.  This is similar to
+     the information provided by the `nm' program.
+
+`-T'
+`--dynamic-syms'
+     Print the dynamic symbol table entries of the file.  This is only
+     meaningful for dynamic objects, such as certain types of shared
+     libraries.  This is similar to the information provided by the `nm'
+     program when given the `-D' (`--dynamic') option.
+
+`-V'
+`--version'
+     Print the version number of `objdump' and exit.
+
+`-x'
+`--all-headers'
+     Display all available header information, including the symbol
+     table and relocation entries.  Using `-x' is equivalent to
+     specifying all of `-a -f -h -r -t'.
+
+`-w'
+`--wide'
+     Format some lines for output devices that have more than 80
+     columns.  Also do not truncate symbol names when they are
+     displayed.
+
+`-z'
+`--disassemble-zeroes'
+     Normally the disassembly output will skip blocks of zeroes.  This
+     option directs the disassembler to disassemble those blocks, just
+     like any other data.
+
+
+File: binutils.info,  Node: ranlib,  Next: readelf,  Prev: objdump,  Up: Top
+
+ranlib
+******
+
+     ranlib [`-vV'] ARCHIVE
+
+   `ranlib' generates an index to the contents of an archive and stores
+it in the archive.  The index lists each symbol defined by a member of
+an archive that is a relocatable object file.
+
+   You may use `nm -s' or `nm --print-armap' to list this index.
+
+   An archive with such an index speeds up linking to the library and
+allows routines in the library to call each other without regard to
+their placement in the archive.
+
+   The GNU `ranlib' program is another form of GNU `ar'; running
+`ranlib' is completely equivalent to executing `ar -s'.  *Note ar::.
+
+`-v'
+`-V'
+`--version'
+     Show the version number of `ranlib'.
+
+
+File: binutils.info,  Node: size,  Next: strings,  Prev: readelf,  Up: Top
+
+size
+****
+
+     size [`-A'|`-B'|`--format='COMPATIBILITY]
+          [`--help']
+          [`-d'|`-o'|`-x'|`--radix='NUMBER]
+          [`-t'|`--totals']
+          [`--target='BFDNAME] [`-V'|`--version']
+          [OBJFILE...]
+
+   The GNU `size' utility lists the section sizes--and the total
+size--for each of the object or archive files OBJFILE in its argument
+list.  By default, one line of output is generated for each object file
+or each module in an archive.
+
+   OBJFILE... are the object files to be examined.  If none are
+specified, the file `a.out' will be used.
+
+   The command line options have the following meanings:
+
+`-A'
+`-B'
+`--format=COMPATIBILITY'
+     Using one of these options, you can choose whether the output from
+     GNU `size' resembles output from System V `size' (using `-A', or
+     `--format=sysv'), or Berkeley `size' (using `-B', or
+     `--format=berkeley').  The default is the one-line format similar
+     to Berkeley's.
+
+     Here is an example of the Berkeley (default) format of output from
+     `size':
+          $ size --format=Berkeley ranlib size
+          text    data    bss     dec     hex     filename
+          294880  81920   11592   388392  5ed28   ranlib
+          294880  81920   11888   388688  5ee50   size
+
+     This is the same data, but displayed closer to System V
+     conventions:
+
+          $ size --format=SysV ranlib size
+          ranlib  :
+          section         size         addr
+          .text         294880         8192
+          .data          81920       303104
+          .bss           11592       385024
+          Total         388392
+          
+          
+          size  :
+          section         size         addr
+          .text         294880         8192
+          .data          81920       303104
+          .bss           11888       385024
+          Total         388688
+
+`--help'
+     Show a summary of acceptable arguments and options.
+
+`-d'
+`-o'
+`-x'
+`--radix=NUMBER'
+     Using one of these options, you can control whether the size of
+     each section is given in decimal (`-d', or `--radix=10'); octal
+     (`-o', or `--radix=8'); or hexadecimal (`-x', or `--radix=16').
+     In `--radix=NUMBER', only the three values (8, 10, 16) are
+     supported.  The total size is always given in two radices; decimal
+     and hexadecimal for `-d' or `-x' output, or octal and hexadecimal
+     if you're using `-o'.
+
+`-t'
+`--totals'
+     Show totals of all objects listed (Berkeley format listing mode
+     only).
+
+`--target=BFDNAME'
+     Specify that the object-code format for OBJFILE is BFDNAME.  This
+     option may not be necessary; `size' can automatically recognize
+     many formats.  *Note Target Selection::, for more information.
+
+`-V'
+`--version'
+     Display the version number of `size'.
+
+
+File: binutils.info,  Node: strings,  Next: strip,  Prev: size,  Up: Top
+
+strings
+*******
+
+     strings [`-afov'] [`-'MIN-LEN]
+             [`-n' MIN-LEN] [`--bytes='MIN-LEN]
+             [`-t' RADIX] [`--radix='RADIX]
+             [`-e' ENCODING] [`--encoding='ENCODING]
+             [`-'] [`--all'] [`--print-file-name']
+             [`--target='BFDNAME]
+             [`--help'] [`--version'] FILE...
+
+   For each FILE given, GNU `strings' prints the printable character
+sequences that are at least 4 characters long (or the number given with
+the options below) and are followed by an unprintable character.  By
+default, it only prints the strings from the initialized and loaded
+sections of object files; for other types of files, it prints the
+strings from the whole file.
+
+   `strings' is mainly useful for determining the contents of non-text
+files.
+
+`-a'
+`--all'
+`-'
+     Do not scan only the initialized and loaded sections of object
+     files; scan the whole files.
+
+`-f'
+`--print-file-name'
+     Print the name of the file before each string.
+
+`--help'
+     Print a summary of the program usage on the standard output and
+     exit.
+
+`-MIN-LEN'
+`-n MIN-LEN'
+`--bytes=MIN-LEN'
+     Print sequences of characters that are at least MIN-LEN characters
+     long, instead of the default 4.
+
+`-o'
+     Like `-t o'.  Some other versions of `strings' have `-o' act like
+     `-t d' instead.  Since we can not be compatible with both ways, we
+     simply chose one.
+
+`-t RADIX'
+`--radix=RADIX'
+     Print the offset within the file before each string.  The single
+     character argument specifies the radix of the offset--`o' for
+     octal, `x' for hexadecimal, or `d' for decimal.
+
+`-e ENCODING'
+`--encoding=ENCODING'
+     Select the character encoding of the strings that are to be found.
+     Possible values for ENCODING are: `s' = single-7-bit-byte
+     characters (ASCII, ISO 8859, etc., default), `S' =
+     single-8-bit-byte characters, `b' = 16-bit bigendian, `l' = 16-bit
+     littleendian, `B' = 32-bit bigendian, `L' = 32-bit littleendian.
+     Useful for finding wide character strings.
+
+`--target=BFDNAME'
+     Specify an object code format other than your system's default
+     format.  *Note Target Selection::, for more information.
+
+`-v'
+`--version'
+     Print the program version number on the standard output and exit.
+
+
+File: binutils.info,  Node: strip,  Next: c++filt,  Prev: strings,  Up: Top
+
+strip
+*****
+
+     strip [`-F' BFDNAME |`--target='BFDNAME ]
+           [`-I' BFDNAME |`--input-target='BFDNAME ]
+           [`-O' BFDNAME |`--output-target='BFDNAME ]
+           [`-s'|`--strip-all'] [`-S'|`-g'|`-d'|`--strip-debug']
+           [`-K' SYMBOLNAME |`--keep-symbol='SYMBOLNAME ]
+           [`-N' SYMBOLNAME |`--strip-symbol='SYMBOLNAME ]
+           [`-x'|`--discard-all' ] [`-X' |`--discard-locals']
+           [`-R' SECTIONNAME |`--remove-section='SECTIONNAME ]
+           [`-o' FILE ] [`-p'|`--preserve-dates']
+           [`-v' |`--verbose'] [`-V'|`--version']
+           [`--help'] [`--info']
+           OBJFILE...
+
+   GNU `strip' discards all symbols from object files OBJFILE.  The
+list of object files may include archives.  At least one object file
+must be given.
+
+   `strip' modifies the files named in its argument, rather than
+writing modified copies under different names.
+
+`-F BFDNAME'
+`--target=BFDNAME'
+     Treat the original OBJFILE as a file with the object code format
+     BFDNAME, and rewrite it in the same format.  *Note Target
+     Selection::, for more information.
+
+`--help'
+     Show a summary of the options to `strip' and exit.
+
+`--info'
+     Display a list showing all architectures and object formats
+     available.
+
+`-I BFDNAME'
+`--input-target=BFDNAME'
+     Treat the original OBJFILE as a file with the object code format
+     BFDNAME.  *Note Target Selection::, for more information.
+
+`-O BFDNAME'
+`--output-target=BFDNAME'
+     Replace OBJFILE with a file in the output format BFDNAME.  *Note
+     Target Selection::, for more information.
+
+`-R SECTIONNAME'
+`--remove-section=SECTIONNAME'
+     Remove any section named SECTIONNAME from the output file.  This
+     option may be given more than once.  Note that using this option
+     inappropriately may make the output file unusable.
+
+`-s'
+`--strip-all'
+     Remove all symbols.
+
+`-g'
+`-S'
+`-d'
+`--strip-debug'
+     Remove debugging symbols only.
+
+`--strip-unneeded'
+     Remove all symbols that are not needed for relocation processing.
+
+`-K SYMBOLNAME'
+`--keep-symbol=SYMBOLNAME'
+     Keep only symbol SYMBOLNAME from the source file.  This option may
+     be given more than once.
+
+`-N SYMBOLNAME'
+`--strip-symbol=SYMBOLNAME'
+     Remove symbol SYMBOLNAME from the source file. This option may be
+     given more than once, and may be combined with strip options other
+     than `-K'.
+
+`-o FILE'
+     Put the stripped output in FILE, rather than replacing the
+     existing file.  When this argument is used, only one OBJFILE
+     argument may be specified.
+
+`-p'
+`--preserve-dates'
+     Preserve the access and modification dates of the file.
+
+`-x'
+`--discard-all'
+     Remove non-global symbols.
+
+`-X'
+`--discard-locals'
+     Remove compiler-generated local symbols.  (These usually start
+     with `L' or `.'.)
+
+`-V'
+`--version'
+     Show the version number for `strip'.
+
+`-v'
+`--verbose'
+     Verbose output: list all object files modified.  In the case of
+     archives, `strip -v' lists all members of the archive.
+
+
+File: binutils.info,  Node: c++filt,  Next: addr2line,  Prev: strip,  Up: Top
+
+c++filt
+*******
+
+     c++filt [`-_'|`--strip-underscores']
+             [`-j'|`--java']
+             [`-n'|`--no-strip-underscores']
+             [`-s' FORMAT|`--format='FORMAT]
+             [`--help']  [`--version']  [SYMBOL...]
+
+   The C++ and Java languages provides function overloading, which means
+that you can write many functions with the same name (providing each
+takes parameters of different types).  All C++ and Java function names
+are encoded into a low-level assembly label (this process is known as
+"mangling"). The `c++filt' (1) program does the inverse mapping: it
+decodes ("demangles") low-level names into user-level names so that the
+linker can keep these overloaded functions from clashing.
+
+   Every alphanumeric word (consisting of letters, digits, underscores,
+dollars, or periods) seen in the input is a potential label.  If the
+label decodes into a C++ name, the C++ name replaces the low-level name
+in the output.
+
+   You can use `c++filt' to decipher individual symbols:
+
+     c++filt SYMBOL
+
+   If no SYMBOL arguments are given, `c++filt' reads symbol names from
+the standard input and writes the demangled names to the standard
+output.  All results are printed on the standard output.
+
+`-_'
+`--strip-underscores'
+     On some systems, both the C and C++ compilers put an underscore in
+     front of every name.  For example, the C name `foo' gets the
+     low-level name `_foo'.  This option removes the initial
+     underscore.  Whether `c++filt' removes the underscore by default
+     is target dependent.
+
+`-j'
+`--java'
+     Prints demangled names using Java syntax.  The default is to use
+     C++ syntax.
+
+`-n'
+`--no-strip-underscores'
+     Do not remove the initial underscore.
+
+`-s FORMAT'
+`--format=FORMAT'
+     `c++filt' can decode various methods of mangling, used by
+     different compilers.  The argument to this option selects which
+     method it uses:
+
+    `auto'
+          Automatic selection based on executable (the default method)
+
+    `gnu'
+          the one used by the GNU C++ compiler (g++)
+
+    `lucid'
+          the one used by the Lucid compiler (lcc)
+
+    `arm'
+          the one specified by the C++ Annotated Reference Manual
+
+    `hp'
+          the one used by the HP compiler (aCC)
+
+    `edg'
+          the one used by the EDG compiler
+
+    `gnu-v3'
+          the one used by the GNU C++ compiler (g++) with the V3 ABI.
+
+    `java'
+          the one used by the GNU Java compiler (gcj)
+
+    `gnat'
+          the one used by the GNU Ada compiler (GNAT).
+
+`--help'
+     Print a summary of the options to `c++filt' and exit.
+
+`--version'
+     Print the version number of `c++filt' and exit.
+
+     _Warning:_ `c++filt' is a new utility, and the details of its user
+     interface are subject to change in future releases.  In particular,
+     a command-line option may be required in the the future to decode
+     a name passed as an argument on the command line; in other words,
+
+          c++filt SYMBOL
+
+     may in a future release become
+
+          c++filt OPTION SYMBOL
+
+   ---------- Footnotes ----------
+
+   (1) MS-DOS does not allow `+' characters in file names, so on MS-DOS
+this program is named `cxxfilt'.
+
+
+File: binutils.info,  Node: addr2line,  Next: nlmconv,  Prev: c++filt,  Up: Top
+
+addr2line
+*********
+
+     addr2line [`-b' BFDNAME|`--target='BFDNAME]
+               [`-C'|`--demangle'[=STYLE]]
+               [`-e' FILENAME|`--exe='FILENAME]
+               [`-f'|`--functions'] [`-s'|`--basename']
+               [`-H'|`--help'] [`-V'|`--version']
+               [addr addr ...]
+
+   `addr2line' translates program addresses into file names and line
+numbers.  Given an address and an executable, it uses the debugging
+information in the executable to figure out which file name and line
+number are associated with a given address.
+
+   The executable to use is specified with the `-e' option.  The
+default is the file `a.out'.
+
+   `addr2line' has two modes of operation.
+
+   In the first, hexadecimal addresses are specified on the command
+line, and `addr2line' displays the file name and line number for each
+address.
+
+   In the second, `addr2line' reads hexadecimal addresses from standard
+input, and prints the file name and line number for each address on
+standard output.  In this mode, `addr2line' may be used in a pipe to
+convert dynamically chosen addresses.
+
+   The format of the output is `FILENAME:LINENO'.  The file name and
+line number for each address is printed on a separate line.  If the
+`-f' option is used, then each `FILENAME:LINENO' line is preceded by a
+`FUNCTIONNAME' line which is the name of the function containing the
+address.
+
+   If the file name or function name can not be determined, `addr2line'
+will print two question marks in their place.  If the line number can
+not be determined, `addr2line' will print 0.
+
+   The long and short forms of options, shown here as alternatives, are
+equivalent.
+
+`-b BFDNAME'
+`--target=BFDNAME'
+     Specify that the object-code format for the object files is
+     BFDNAME.
+
+`-C'
+`--demangle[=STYLE]'
+     Decode ("demangle") low-level symbol names into user-level names.
+     Besides removing any initial underscore prepended by the system,
+     this makes C++ function names readable.  Different compilers have
+     different mangling styles. The optional demangling style argument
+     can be used to choose an appropriate demangling style for your
+     compiler. *Note c++filt::, for more information on demangling.
+
+`-e FILENAME'
+`--exe=FILENAME'
+     Specify the name of the executable for which addresses should be
+     translated.  The default file is `a.out'.
+
+`-f'
+`--functions'
+     Display function names as well as file and line number information.
+
+`-s'
+`--basenames'
+     Display only the base of each file name.
+
+
+File: binutils.info,  Node: nlmconv,  Next: windres,  Prev: addr2line,  Up: Top
+
+nlmconv
+*******
+
+   `nlmconv' converts a relocatable object file into a NetWare Loadable
+Module.
+
+     _Warning:_ `nlmconv' is not always built as part of the binary
+     utilities, since it is only useful for NLM targets.
+
+     nlmconv [`-I' BFDNAME|`--input-target='BFDNAME]
+             [`-O' BFDNAME|`--output-target='BFDNAME]
+             [`-T' HEADERFILE|`--header-file='HEADERFILE]
+             [`-d'|`--debug'] [`-l' LINKER|`--linker='LINKER]
+             [`-h'|`--help'] [`-V'|`--version']
+             INFILE OUTFILE
+
+   `nlmconv' converts the relocatable `i386' object file INFILE into
+the NetWare Loadable Module OUTFILE, optionally reading HEADERFILE for
+NLM header information.  For instructions on writing the NLM command
+file language used in header files, see the `linkers' section,
+`NLMLINK' in particular, of the `NLM Development and Tools Overview',
+which is part of the NLM Software Developer's Kit ("NLM SDK"),
+available from Novell, Inc.  `nlmconv' uses the GNU Binary File
+Descriptor library to read INFILE; see *Note BFD: (ld.info)BFD, for
+more information.
+
+   `nlmconv' can perform a link step.  In other words, you can list
+more than one object file for input if you list them in the definitions
+file (rather than simply specifying one input file on the command line).
+In this case, `nlmconv' calls the linker for you.
+
+`-I BFDNAME'
+`--input-target=BFDNAME'
+     Object format of the input file.  `nlmconv' can usually determine
+     the format of a given file (so no default is necessary).  *Note
+     Target Selection::, for more information.
+
+`-O BFDNAME'
+`--output-target=BFDNAME'
+     Object format of the output file.  `nlmconv' infers the output
+     format based on the input format, e.g. for a `i386' input file the
+     output format is `nlm32-i386'.  *Note Target Selection::, for more
+     information.
+
+`-T HEADERFILE'
+`--header-file=HEADERFILE'
+     Reads HEADERFILE for NLM header information.  For instructions on
+     writing the NLM command file language used in header files, see
+     see the `linkers' section, of the `NLM Development and Tools
+     Overview', which is part of the NLM Software Developer's Kit,
+     available from Novell, Inc.
+
+`-d'
+`--debug'
+     Displays (on standard error) the linker command line used by
+     `nlmconv'.
+
+`-l LINKER'
+`--linker=LINKER'
+     Use LINKER for any linking.  LINKER can be an absolute or a
+     relative pathname.
+
+`-h'
+`--help'
+     Prints a usage summary.
+
+`-V'
+`--version'
+     Prints the version number for `nlmconv'.
+
+
+File: binutils.info,  Node: windres,  Next: dlltool,  Prev: nlmconv,  Up: Top
+
+windres
+*******
+
+   `windres' may be used to manipulate Windows resources.
+
+     _Warning:_ `windres' is not always built as part of the binary
+     utilities, since it is only useful for Windows targets.
+
+     windres [options] [input-file] [output-file]
+
+   `windres' reads resources from an input file and copies them into an
+output file.  Either file may be in one of three formats:
+
+`rc'
+     A text format read by the Resource Compiler.
+
+`res'
+     A binary format generated by the Resource Compiler.
+
+`coff'
+     A COFF object or executable.
+
+   The exact description of these different formats is available in
+documentation from Microsoft.
+
+   When `windres' converts from the `rc' format to the `res' format, it
+is acting like the Windows Resource Compiler.  When `windres' converts
+from the `res' format to the `coff' format, it is acting like the
+Windows `CVTRES' program.
+
+   When `windres' generates an `rc' file, the output is similar but not
+identical to the format expected for the input.  When an input `rc'
+file refers to an external filename, an output `rc' file will instead
+include the file contents.
+
+   If the input or output format is not specified, `windres' will guess
+based on the file name, or, for the input file, the file contents.  A
+file with an extension of `.rc' will be treated as an `rc' file, a file
+with an extension of `.res' will be treated as a `res' file, and a file
+with an extension of `.o' or `.exe' will be treated as a `coff' file.
+
+   If no output file is specified, `windres' will print the resources
+in `rc' format to standard output.
+
+   The normal use is for you to write an `rc' file, use `windres' to
+convert it to a COFF object file, and then link the COFF file into your
+application.  This will make the resources described in the `rc' file
+available to Windows.
+
+`-i FILENAME'
+`--input FILENAME'
+     The name of the input file.  If this option is not used, then
+     `windres' will use the first non-option argument as the input file
+     name.  If there are no non-option arguments, then `windres' will
+     read from standard input.  `windres' can not read a COFF file from
+     standard input.
+
+`-o FILENAME'
+`--output FILENAME'
+     The name of the output file.  If this option is not used, then
+     `windres' will use the first non-option argument, after any used
+     for the input file name, as the output file name.  If there is no
+     non-option argument, then `windres' will write to standard output.
+     `windres' can not write a COFF file to standard output.  Note, for
+     compatability with `rc' the option `-fo' is also accepted, but its
+     use is not recommended.
+
+`-J FORMAT'
+`--input-format FORMAT'
+     The input format to read.  FORMAT may be `res', `rc', or `coff'.
+     If no input format is specified, `windres' will guess, as
+     described above.
+
+`-O FORMAT'
+`--output-format FORMAT'
+     The output format to generate.  FORMAT may be `res', `rc', or
+     `coff'.  If no output format is specified, `windres' will guess,
+     as described above.
+
+`-F TARGET'
+`--target TARGET'
+     Specify the BFD format to use for a COFF file as input or output.
+     This is a BFD target name; you can use the `--help' option to see
+     a list of supported targets.  Normally `windres' will use the
+     default format, which is the first one listed by the `--help'
+     option.  *Note Target Selection::.
+
+`--preprocessor PROGRAM'
+     When `windres' reads an `rc' file, it runs it through the C
+     preprocessor first.  This option may be used to specify the
+     preprocessor to use, including any leading arguments.  The default
+     preprocessor argument is `gcc -E -xc-header -DRC_INVOKED'.
+
+`-I DIRECTORY'
+`--include-dir DIRECTORY'
+     Specify an include directory to use when reading an `rc' file.
+     `windres' will pass this to the preprocessor as an `-I' option.
+     `windres' will also search this directory when looking for files
+     named in the `rc' file.  If the argument passed to this command
+     matches any of the supported FORMATS (as descrived in the `-J'
+     option), it will issue a deprecation warning, and behave just like
+     the `-J' option.  New programs should not use this behaviour.  If a
+     directory happens to match a FORMAT, simple prefix it with `./' to
+     disable the backward compatibility.
+
+`-D TARGET'
+`--define SYM[=VAL]'
+     Specify a `-D' option to pass to the preprocessor when reading an
+     `rc' file.
+
+`-U TARGET'
+`--undefine SYM'
+     Specify a `-U' option to pass to the preprocessor when reading an
+     `rc' file.
+
+`-r'
+     Ignored for compatibility with rc.
+
+`-v'
+     Enable verbose mode.  This tells you what the preprocessor is if
+     you didn't specify one.
+
+`-l VAL'
+
+`--language VAL'
+     Specify the default language to use when reading an `rc' file.
+     VAL should be a hexadecimal language code.  The low eight bits are
+     the language, and the high eight bits are the sublanguage.
+
+`--use-temp-file'
+     Use a temporary file to instead of using popen to read the output
+     of the preprocessor. Use this option if the popen implementation
+     is buggy on the host (eg., certain non-English language versions
+     of Windows 95 and Windows 98 are known to have buggy popen where
+     the output will instead go the console).
+
+`--no-use-temp-file'
+     Use popen, not a temporary file, to read the output of the
+     preprocessor.  This is the default behaviour.
+
+`-h'
+
+`--help'
+     Prints a usage summary.
+
+`-V'
+
+`--version'
+     Prints the version number for `windres'.
+
+`--yydebug'
+     If `windres' is compiled with `YYDEBUG' defined as `1', this will
+     turn on parser debugging.
+
+
+File: binutils.info,  Node: dlltool,  Next: Selecting The Target System,  Prev: windres,  Up: Top
+
+Create files needed to build and use DLLs
+*****************************************
+
+   `dlltool' may be used to create the files needed to build and use
+dynamic link libraries (DLLs).
+
+     _Warning:_ `dlltool' is not always built as part of the binary
+     utilities, since it is only useful for those targets which support
+     DLLs.
+
+     dlltool [`-d'|`--input-def' DEF-FILE-NAME]
+             [`-b'|`--base-file' BASE-FILE-NAME]
+             [`-e'|`--output-exp' EXPORTS-FILE-NAME]
+             [`-z'|`--output-def' DEF-FILE-NAME]
+             [`-l'|`--output-lib' LIBRARY-FILE-NAME]
+             [`--export-all-symbols'] [`--no-export-all-symbols']
+             [`--exclude-symbols' LIST]
+             [`--no-default-excludes']
+             [`-S'|`--as' PATH-TO-ASSEMBLER] [`-f'|`--as-flags' OPTIONS]
+             [`-D'|`--dllname' NAME] [`-m'|`--machine' MACHINE]
+             [`-a'|`--add-indirect'] [`-U'|`--add-underscore'] [`-k'|`--kill-at']
+             [`-A'|`--add-stdcall-alias']
+             [`-x'|`--no-idata4'] [`-c'|`--no-idata5'] [`-i'|`--interwork']
+             [`-n'|`--nodelete'] [`-v'|`--verbose']
+             [`-h'|`--help'] [`-V'|`--version']
+             [object-file ...]
+
+   `dlltool' reads its inputs, which can come from the `-d' and `-b'
+options as well as object files specified on the command line.  It then
+processes these inputs and if the `-e' option has been specified it
+creates a exports file.  If the `-l' option has been specified it
+creates a library file and if the `-z' option has been specified it
+creates a def file.  Any or all of the `-e', `-l' and `-z' options can
+be present in one invocation of dlltool.
+
+   When creating a DLL, along with the source for the DLL, it is
+necessary to have three other files.  `dlltool' can help with the
+creation of these files.
+
+   The first file is a `.def' file which specifies which functions are
+exported from the DLL, which functions the DLL imports, and so on.  This
+is a text file and can be created by hand, or `dlltool' can be used to
+create it using the `-z' option.  In this case `dlltool' will scan the
+object files specified on its command line looking for those functions
+which have been specially marked as being exported and put entries for
+them in the .def file it creates.
+
+   In order to mark a function as being exported from a DLL, it needs to
+have an `-export:<name_of_function>' entry in the `.drectve' section of
+the object file.  This can be done in C by using the asm() operator:
+
+       asm (".section .drectve");
+       asm (".ascii \"-export:my_func\"");
+     
+       int my_func (void) { ... }
+
+   The second file needed for DLL creation is an exports file.  This
+file is linked with the object files that make up the body of the DLL
+and it handles the interface between the DLL and the outside world.
+This is a binary file and it can be created by giving the `-e' option to
+`dlltool' when it is creating or reading in a .def file.
+
+   The third file needed for DLL creation is the library file that
+programs will link with in order to access the functions in the DLL.
+This file can be created by giving the `-l' option to dlltool when it
+is creating or reading in a .def file.
+
+   `dlltool' builds the library file by hand, but it builds the exports
+file by creating temporary files containing assembler statements and
+then assembling these.  The `-S' command line option can be used to
+specify the path to the assembler that dlltool will use, and the `-f'
+option can be used to pass specific flags to that assembler.  The `-n'
+can be used to prevent dlltool from deleting these temporary assembler
+files when it is done, and if `-n' is specified twice then this will
+prevent dlltool from deleting the temporary object files it used to
+build the library.
+
+   Here is an example of creating a DLL from a source file `dll.c' and
+also creating a program (from an object file called `program.o') that
+uses that DLL:
+
+       gcc -c dll.c
+       dlltool -e exports.o -l dll.lib dll.o
+       gcc dll.o exports.o -o dll.dll
+       gcc program.o dll.lib -o program
+
+   The command line options have the following meanings:
+
+`-d FILENAME'
+`--input-def FILENAME'
+     Specifies the name of a .def file to be read in and processed.
+
+`-b FILENAME'
+`--base-file FILENAME'
+     Specifies the name of a base file to be read in and processed.  The
+     contents of this file will be added to the relocation section in
+     the exports file generated by dlltool.
+
+`-e FILENAME'
+`--output-exp FILENAME'
+     Specifies the name of the export file to be created by dlltool.
+
+`-z FILENAME'
+`--output-def FILENAME'
+     Specifies the name of the .def file to be created by dlltool.
+
+`-l FILENAME'
+`--output-lib FILENAME'
+     Specifies the name of the library file to be created by dlltool.
+
+`--export-all-symbols'
+     Treat all global and weak defined symbols found in the input object
+     files as symbols to be exported.  There is a small list of symbols
+     which are not exported by default; see the `--no-default-excludes'
+     option.  You may add to the list of symbols to not export by using
+     the `--exclude-symbols' option.
+
+`--no-export-all-symbols'
+     Only export symbols explicitly listed in an input .def file or in
+     `.drectve' sections in the input object files.  This is the default
+     behaviour.  The `.drectve' sections are created by `dllexport'
+     attributes in the source code.
+
+`--exclude-symbols LIST'
+     Do not export the symbols in LIST.  This is a list of symbol names
+     separated by comma or colon characters.  The symbol names should
+     not contain a leading underscore.  This is only meaningful when
+     `--export-all-symbols' is used.
+
+`--no-default-excludes'
+     When `--export-all-symbols' is used, it will by default avoid
+     exporting certain special symbols.  The current list of symbols to
+     avoid exporting is `DllMain@12', `DllEntryPoint@0', `impure_ptr'.
+     You may use the `--no-default-excludes' option to go ahead and
+     export these special symbols.  This is only meaningful when
+     `--export-all-symbols' is used.
+
+`-S PATH'
+`--as PATH'
+     Specifies the path, including the filename, of the assembler to be
+     used to create the exports file.
+
+`-f OPTIONS'
+`--as-flags OPTIONS'
+     Specifies any specific command line options to be passed to the
+     assembler when building the exports file.  This option will work
+     even if the `-S' option is not used.  This option only takes one
+     argument, and if it occurs more than once on the command line,
+     then later occurrences will override earlier occurrences.  So if
+     it is necessary to pass multiple options to the assembler they
+     should be enclosed in double quotes.
+
+`-D NAME'
+`--dll-name NAME'
+     Specifies the name to be stored in the .def file as the name of
+     the DLL when the `-e' option is used.  If this option is not
+     present, then the filename given to the `-e' option will be used
+     as the name of the DLL.
+
+`-m MACHINE'
+`-machine MACHINE'
+     Specifies the type of machine for which the library file should be
+     built.  `dlltool' has a built in default type, depending upon how
+     it was created, but this option can be used to override that.
+     This is normally only useful when creating DLLs for an ARM
+     processor, when the contents of the DLL are actually encode using
+     Thumb instructions.
+
+`-a'
+`--add-indirect'
+     Specifies that when `dlltool' is creating the exports file it
+     should add a section which allows the exported functions to be
+     referenced without using the import library.  Whatever the hell
+     that means!
+
+`-U'
+`--add-underscore'
+     Specifies that when `dlltool' is creating the exports file it
+     should prepend an underscore to the names of the exported
+     functions.
+
+`-k'
+`--kill-at'
+     Specifies that when `dlltool' is creating the exports file it
+     should not append the string `@ <number>'.  These numbers are
+     called ordinal numbers and they represent another way of accessing
+     the function in a DLL, other than by name.
+
+`-A'
+`--add-stdcall-alias'
+     Specifies that when `dlltool' is creating the exports file it
+     should add aliases for stdcall symbols without `@ <number>' in
+     addition to the symbols with `@ <number>'.
+
+`-x'
+`--no-idata4'
+     Specifies that when `dlltool' is creating the exports and library
+     files it should omit the `.idata4' section.  This is for
+     compatibility with certain operating systems.
+
+`-c'
+`--no-idata5'
+     Specifies that when `dlltool' is creating the exports and library
+     files it should omit the `.idata5' section.  This is for
+     compatibility with certain operating systems.
+
+`-i'
+`--interwork'
+     Specifies that `dlltool' should mark the objects in the library
+     file and exports file that it produces as supporting interworking
+     between ARM and Thumb code.
+
+`-n'
+`--nodelete'
+     Makes `dlltool' preserve the temporary assembler files it used to
+     create the exports file.  If this option is repeated then dlltool
+     will also preserve the temporary object files it uses to create
+     the library file.
+
+`-v'
+`--verbose'
+     Make dlltool describe what it is doing.
+
+`-h'
+`--help'
+     Displays a list of command line options and then exits.
+
+`-V'
+`--version'
+     Displays dlltool's version number and then exits.
+
