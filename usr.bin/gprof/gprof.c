@@ -38,8 +38,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: gprof.c,v 1.5 1994/06/01 11:04:33 pk Exp $";
+/*static char sccsid[] = "from: @(#)gprof.c	8.1 (Berkeley) 6/6/93";*/
+static char *rcsid = "$Id: gprof.c,v 1.6 1994/10/06 15:39:58 mycroft Exp $";
 #endif /* not lint */
 
 #include "gprof.h"
