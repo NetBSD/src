@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.72 2002/11/08 00:13:29 fvdl Exp $	*/
+/*	$NetBSD: namespace.h,v 1.73 2002/11/29 12:58:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -436,6 +436,8 @@
 #define strptime		_strptime
 #define strsep			_strsep
 #define strsignal		_strsignal
+#define strsuftoll	 	_strsuftoll
+#define strsuftollx	 	_strsuftollx
 #define strsvis			_strsvis
 #define strsvisx		_strsvisx
 #define strtok_r		_strtok_r
