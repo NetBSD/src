@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_in.c,v 1.3 1996/10/13 03:34:56 christos Exp $	*/
+/*	$NetBSD: ite_in.c,v 1.4 1997/01/18 21:07:30 oki Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Masaru Oki.
@@ -77,8 +77,6 @@ typedef struct ite_priv {
 } ipriv_t;
 
 static ipriv_t x68k_priv;
-
-extern struct itesw itesw[];
 
 #if ITEKANJI
 unsigned char kern_font[16 * 256]; /* XXX for 8x16 rom font */
@@ -178,11 +176,11 @@ ite_newsize (ip, winsz)
 }
 
 void
-view_init(ip)
+tv_init(ip)
 	register struct ite_softc *ip;
 {
 	struct itewinsize wsz;
-	struct itesw *sp = itesw;
+	struct itesw *sp = ip->isw;
 	ipriv_t *cci = ip->priv;
 
 	if (cci)
@@ -208,10 +206,10 @@ view_init(ip)
 #endif
 
 #if x68k /* XXX */
-		sp->ite_cursor = (void*)ite_8n_cursor;
-		sp->ite_putc = (void*)ite_8n_putc;
-		sp->ite_clear = (void*)view_le8n_clear;
-		sp->ite_scroll = (void*)ite_8n_scroll;
+	sp->ite_cursor = (void*)ite_8n_cursor;
+	sp->ite_putc = (void*)ite_8n_putc;
+	sp->ite_clear = (void*)view_le8n_clear;
+	sp->ite_scroll = (void*)ite_8n_scroll;
 #else
 	/* Find the correct set of rendering routines for this font.  */
 	if (ip->ftwidth <= 8) {
@@ -261,7 +259,7 @@ view_init(ip)
 }
 
 void
-view_deinit(ip)
+tv_deinit(ip)
 	struct ite_softc *ip;
 {
 	ip->flags &= ~ITE_INITED;
@@ -385,12 +383,7 @@ ite_8n_cursor(ip, flag)
 	if (flag == START_CURSOROPT || flag == END_CURSOROPT)
 		return;
 
-	/* if drawing into an overlay plane, don't xor, clr and set */
-	if (0) {
-		opclr = RR_CLEAR; opset = RR_COPY;
-	} else {
-		opclr = opset = RR_XOR;
-	}
+	opclr = opset = RR_XOR;
 
 	if (flag != DRAW_CURSOR) {
 		/* erase it */
