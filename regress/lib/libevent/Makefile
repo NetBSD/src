@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.1 2003/06/12 23:15:48 provos Exp $
+#       $NetBSD: Makefile,v 1.2 2003/06/12 23:30:58 provos Exp $
 
 NOMAN=		# defined
 
@@ -10,7 +10,9 @@ LDADD+=		-levent
 
 regress: eventtest
 	@echo Testing libevent
-	./eventtest
+	@EVENT_SHOW_METHOD="yes" EVENT_NOPOLL="yes" ./eventtest
+	@echo
+	@EVENT_SHOW_METHOD="yes" EVENT_NOKQUEUE="yes" ./eventtest
 
 .include <bsd.prog.mk>
 
