@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.58 2002/08/19 09:56:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.59 2002/09/15 00:19:22 thorpej Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -53,9 +53,9 @@ mknodes: mknodes.c
 
 .if	(${MACHINE_ARCH} == "powerpc") || \
 	(${MACHINE_CPU} == "arm")
-TARGET_CHARFLAG= -DTARGET_CHAR="u_int8_t"
+TARGET_CHARFLAG= -DTARGET_CHAR="unsigned char"
 .else
-TARGET_CHARFLAG= -DTARGET_CHAR="int8_t"
+TARGET_CHARFLAG= -DTARGET_CHAR="char"
 .endif
 
 mksyntax: mksyntax.c
