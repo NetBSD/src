@@ -1,10 +1,10 @@
-/*	$NetBSD: null.h,v 1.10 1999/07/08 01:19:03 wrstuden Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.1 1999/07/08 01:19:00 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
  * All rights reserved.
  *
- * This software was written by William Studnemund of the
+ * This software was written by William Studenmund of the
  * Numerical Aerospace Similation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
@@ -68,61 +67,52 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: lofs.h,v 1.8 1992/05/30 10:05:43 jsp Exp
- *	@(#)null.h	8.2 (Berkeley) 1/21/94
  */
-
-#include <miscfs/genfs/layer.h>
-
-struct null_args {
-	struct	layer_args	la;	/* generic layerfs args */
-};
-#define	nulla_target	la.target
-#define	nulla_export	la.export
-
-#ifdef _KERNEL
-struct null_mount {
-	struct	layer_mount	lm;	/* generic layerfs mount stuff */
-};
-#define	nullm_vfs		lm.layerm_vfs
-#define	nullm_rootvp		lm.layerm_rootvp
-#define	nullm_export		lm.layerm_export
-#define	nullm_flags		lm.layerm_flags
-#define	nullm_size		lm.layerm_size
-#define	nullm_tag		lm.layerm_tag
-#define	nullm_bypass		lm.layerm_bypass
-#define	nullm_alloc		lm.layerm_alloc
-#define	nullm_vnodeop_p		lm.layerm_vnodeop_p
-#define	nullm_node_hashtbl	lm.layerm_node_hashtbl
-#define	nullm_node_hash		lm.layerm_node_hash
-#define	nullm_hashlock		lm.layerm_hashlock
 
 /*
- * A cache of vnode references
+ * Routines defined by layerfs
  */
-struct null_node {
-	struct	layer_node	ln;
-};
-#define	null_hash	ln.layer_hash
-#define	null_lowervp	ln.layer_lowervp
-#define	null_vnode	ln.layer_vnode
-#define	null_flags	ln.layer_flags
 
-int null_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp));
+/* misc routines in layer_subr.c */
+void	layerfs_init __P((void));
+int	layer_node_alloc __P((struct mount *, struct vnode *, struct vnode **));
+int	layer_node_create __P((struct mount *, struct vnode *, struct vnode **));
+struct vnode *
+	layer_node_find __P((struct mount *, struct vnode *));
+#define LOG2_SIZEVNODE	7		/* log2(sizeof struct vnode) */
+#define LAYER_NHASH(lmp, vp) \
+	(&((lmp)->layerm_node_hashtbl[(((u_long)vp)>>LOG2_SIZEVNODE) & \
+		(lmp)->layerm_node_hash]))
 
-#define	MOUNTTONULLMOUNT(mp) ((struct null_mount *)((mp)->mnt_data))
-#define	VTONULL(vp) ((struct null_node *)(vp)->v_data)
-#define	NULLTOV(xp) ((xp)->null_vnode)
-#ifdef NULLFS_DIAGNOSTIC
-extern struct vnode *layer_checkvp __P((struct vnode *vp, char *fil, int lno));
-#define	NULLVPTOLOWERVP(vp) layer_checkvp((vp), __FILE__, __LINE__)
-#else
-#define	NULLVPTOLOWERVP(vp) (VTONULL(vp)->null_lowervp)
-#endif
+/* vfs routines */
+int	layerfs_start __P((struct mount *, int, struct proc *));
+int	layerfs_root __P((struct mount *, struct vnode **));
+int	layerfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
+			     struct proc *));
+int	layerfs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int	layerfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
+int	layerfs_vget __P((struct mount *, ino_t, struct vnode **));
+int	layerfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+int	layerfs_checkexp __P((struct mount *, struct mbuf *, int *,
+			   struct ucred **));
+int	layerfs_vptofh __P((struct vnode *, struct fid *));
+int	layerfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+			   struct proc *));
 
-extern int (**null_vnodeop_p) __P((void *));
-extern struct vfsops nullfs_vfsops;
-
-void nullfs_init __P((void));
-
-#endif /* _KERNEL */
+/* VOP routines */
+int	layer_bypass __P((void *));
+int	layer_getattr __P((void *));
+int	layer_inactive __P((void *));
+int	layer_reclaim __P((void *));
+int	layer_print __P((void *));
+int	layer_strategy __P((void *));
+int	layer_bwrite __P((void *));
+int	layer_bmap __P((void *));
+int	layer_lock __P((void *));
+int	layer_unlock __P((void *));
+int	layer_islocked __P((void *));
+int	layer_fsync __P((void *));
+int	layer_lookup __P((void *));
+int	layer_setattr __P((void *));
+int	layer_access __P((void *));
+int	layer_open __P((void *));
