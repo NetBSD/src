@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.244 2003/09/14 06:11:40 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.245 2003/09/14 06:39:11 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -59,6 +59,7 @@
 ./usr/X11R6/include/X11/bitmaps
 ./usr/X11R6/include/X11/extensions
 ./usr/X11R6/include/X11/fonts
+./usr/X11R6/include/X11/pixmaps
 ./usr/X11R6/include/fontconfig
 ./usr/X11R6/include/freetype2
 ./usr/X11R6/include/freetype2/freetype
