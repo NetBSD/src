@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_mkdb.c,v 1.12 1996/10/12 00:51:45 cgd Exp $	*/
+/*	$NetBSD: kvm_mkdb.c,v 1.13 1997/10/17 10:15:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,17 +34,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-static char *rcsid = "$NetBSD: kvm_mkdb.c,v 1.12 1996/10/12 00:51:45 cgd Exp $";
+__RCSID("$NetBSD: kvm_mkdb.c,v 1.13 1997/10/17 10:15:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,8 @@ static char *rcsid = "$NetBSD: kvm_mkdb.c,v 1.12 1996/10/12 00:51:45 cgd Exp $";
 
 #include "extern.h"
 
-static void usage __P((void));
+	int	main __P((int, char **));
+static	void	usage __P((void));
 
 HASHINFO openinfo = {
 	4096,		/* bsize */
@@ -85,7 +86,7 @@ main(argc, argv)
 	int ch;
 	char *p, *nlistpath, *nlistname, dbname[MAXPATHLEN];
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
 		case '?':
 		default:
