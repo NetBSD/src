@@ -1,8 +1,9 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
+ * $NetBSD: tcdevs.h,v 1.7 1998/01/05 19:38:41 perry Exp $
  * generated from:
- *	NetBSD: tcdevs,v 1.6 1996/08/26 23:39:34 cgd Exp 
+ *	NetBSD: tcdevs,v 1.7 1997/02/05 22:14:18 cgd Exp 
  */
 
 /*
@@ -52,7 +53,7 @@
 #define	TC_DESCRIPTION_PMAD_AA	"LANCE Ethernet"
 
 #define	TC_DEVICE_PMAF_AA	"fza"
-#define	TC_DESCRIPTION_PMAF_AA	"DEFZA FDDI"
+#define	TC_DESCRIPTION_PMAF_AA	"DEC FDDIcontroller 700 (DEFZA; fiber optic)"
 
 #define	TC_DEVICE_PMAF_F	"fta"
 #define	TC_DESCRIPTION_PMAF_F	"DEFTA FDDI"
