@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.134.2.2.2.1 1999/06/21 00:59:05 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134.2.2.2.2 1999/07/01 23:20:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134.2.2.2.1 1999/06/21 00:59:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134.2.2.2.2 1999/07/01 23:20:18 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -334,7 +334,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	db_machine_init();
 	/* init symbols if present */
 	if (esym)
-		ddb_init(*(int *)&end, ((int *)&end) + 1, (int*)esym);
+		ddb_init(esym - ssym, ssym, esym);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.2.1.2.1 1999/06/21 01:03:40 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.1.2.1.2.2 1999/07/01 23:27:16 thorpej Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -119,6 +119,7 @@ autoconf()
 
 	case VAX_BTYP_630:	/* the same for uvaxIII */
 	case VAX_BTYP_650:
+	case VAX_BTYP_660:
 	case VAX_BTYP_670:
 		nuba = 1;
 		nuda = 2;

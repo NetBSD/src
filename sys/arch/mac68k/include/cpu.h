@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.60.4.1.2.1 1999/06/21 00:51:00 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.60.4.1.2.2 1999/07/01 23:09:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -246,6 +246,10 @@ struct mac68k_machine_S {
 	int			scsi96;		/* Has NCR 53C96 */
 	int			scsi96_2;	/* Has 2nd 53C96 */
 	int			sonic;		/* Has SONIC e-net */
+
+	int			via1_ipl;
+	int			via2_ipl;
+	int			aux_interrupts;
 };
 
 	/* What kind of model is this */

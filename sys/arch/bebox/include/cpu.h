@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3.10.1 1999/06/21 00:49:06 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3.10.2 1999/07/01 23:06:28 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -35,6 +35,7 @@
 
 #include <machine/frame.h>
 #include <machine/psl.h>
+#include <machine/intr.h>
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
@@ -44,7 +45,7 @@
 #define	cpu_swapout(p)
 #define cpu_wait(p)
 
-extern void delay __P((int));
+extern void delay __P((unsigned int));
 #define	DELAY(n)		delay(n)
 
 extern volatile int want_resched;
@@ -56,7 +57,7 @@ extern volatile int astpending;
 
 extern char *bootpath;
 
-#ifdef	_KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #define	CACHELINESIZE	32
 #endif
 

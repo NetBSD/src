@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.88.2.3.2.1 1999/06/21 00:46:05 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.88.2.3.2.2 1999/07/01 23:00:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88.2.3.2.1 1999/06/21 00:46:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88.2.3.2.2 1999/07/01 23:00:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2920,18 +2920,6 @@ pmap_emulate_reference(p, v, user, write)
 
 	simple_unlock(&pvh->pvh_slock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
-
-	/* XXX XXX XXX This needs to go away! XXX XXX XXX */
-	/* because: pte/pmap is unlocked now */
-	if ((*pte & faultoff) != 0) {
-		/*
-		 * This is apparently normal.  Why? -- cgd
-		 * XXX because was being called on unmanaged pages?
-		 */
-		printf("warning: pmap_changebit didn't.");
-		*pte &= ~faultoff;
-		ALPHA_TBIS(v);
-	}
 }
 
 #ifdef DEBUG

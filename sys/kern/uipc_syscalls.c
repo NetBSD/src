@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.41.4.1 1999/06/21 01:24:06 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.41.4.2 1999/07/01 23:43:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -68,6 +68,9 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * System call interface to the socket abstraction.
@@ -183,12 +186,21 @@ sys_accept(p, v, retval)
 	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
 	    (caddr_t)&namelen, sizeof(namelen))))
 		return (error);
+	if (SCARG(uap, name) != NULL &&
+	    uvm_useracc((caddr_t)SCARG(uap, name), sizeof(struct sockaddr),
+	     B_WRITE) == FALSE)
+		return (EFAULT);
+
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	s = splsoftnet();
 	so = (struct socket *)fp->f_data;
 	FILE_UNUSE(fp, p);
+	if (!(so->so_proto->pr_flags & PR_LISTEN)) {
+		splx(s);
+		return (EOPNOTSUPP);
+	}
 	if ((so->so_options & SO_ACCEPTCONN) == 0) {
 		splx(s);
 		return (EINVAL);
@@ -242,6 +254,8 @@ sys_accept(p, v, retval)
 			error = copyout((caddr_t)&namelen,
 			    (caddr_t)SCARG(uap, anamelen),
 			    sizeof(*SCARG(uap, anamelen)));
+		if (error != 0)
+			(void) closef(fp, p);
 	}
 	m_freem(nam);
 	splx(s);
@@ -896,8 +910,8 @@ sys_getsockopt(p, v, retval)
 		syscallarg(unsigned int *) avalsize;
 	} */ *uap = v;
 	struct file *fp;
-	struct mbuf *m = NULL;
-	unsigned int valsize;
+	struct mbuf *m = NULL, *m0;
+	unsigned int op, i, valsize;
 	int error;
 
 	/* getsock() will use the descriptor for us */
@@ -913,13 +927,19 @@ sys_getsockopt(p, v, retval)
 	if ((error = sogetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), &m)) == 0 && SCARG(uap, val) && valsize &&
 	    m != NULL) {
-		if (valsize > m->m_len)
-			valsize = m->m_len;
-		error = copyout(mtod(m, caddr_t), SCARG(uap, val),
-		    valsize);
+		op = 0;
+		while (m && !error && op < valsize) {
+			i = min(m->m_len, (valsize - op));
+			error = copyout(mtod(m, caddr_t), SCARG(uap, val), i);
+			op += i;
+			SCARG(uap, val) = ((u_int8_t *)SCARG(uap, val)) + i;
+			m0 = m;
+			MFREE(m0, m);
+		}
+		valsize = op;
 		if (error == 0)
-			error = copyout((caddr_t)&valsize,
-			    (caddr_t)SCARG(uap, avalsize), sizeof(valsize));
+			error = copyout(&valsize,
+					SCARG(uap, avalsize), sizeof(valsize));
 	}
 	if (m != NULL)
 		(void) m_free(m);

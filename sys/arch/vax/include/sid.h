@@ -1,4 +1,4 @@
-/*	$NetBSD: sid.h,v 1.10 1999/03/09 12:57:58 ragge Exp $	*/
+/*	$NetBSD: sid.h,v 1.10.4.1 1999/07/01 23:27:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -78,7 +78,7 @@
 #define VAX_TYP_UV1	7	/* MicroVAX I, VAXstation I */
      /* VAX_TYP_610	7 */
  
-#define VAX_BTYP_610	0x70000000	/* generic MicroVAX-I */
+#define VAX_BTYP_610	0x07000000	/* generic MicroVAX-I */
  
 /*
  * MicroVAX II series (1985)

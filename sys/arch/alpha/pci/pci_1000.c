@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000.c,v 1.5 1999/02/12 06:25:13 thorpej Exp $ */
+/* $NetBSD: pci_1000.c,v 1.5.4.1 1999/07/01 23:00:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.5 1999/02/12 06:25:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.5.4.1 1999/07/01 23:00:57 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -190,7 +190,7 @@ dec_1000_intr_string(ccv, ih)
         if (ih >= INTRCNT_DEC_1000_IRQ_LEN)
                 panic("dec_1000_intr_string: bogus dec_1000 IRQ 0x%lx\n", ih);
 
-        sprintf(irqstr, irqmsg_fmt, ih);
+        snprintf(irqstr, sizeof irqstr, irqmsg_fmt, ih);
         return (irqstr);
 }
 

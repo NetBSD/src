@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.10.4.1 1999/06/07 04:25:35 chs Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.10.4.2 1999/07/01 23:55:14 thorpej Exp $	*/
 
 /*
  *
@@ -49,6 +49,8 @@
  * into two parts: the definition of the uvm amap interface and the
  * amap implementation-specific definitions.
  */
+
+#ifdef _KERNEL
 
 /*
  * part 1: amap interface
@@ -134,6 +136,7 @@ void		amap_wipeout	/* remove all anons from amap */
 #define AMAP_SHARED	0x1	/* amap is shared */
 #define AMAP_REFALL	0x2	/* amap_ref: reference entire amap */
 
+#endif /* _KERNEL */
 
 /**********************************************************************/
 
@@ -237,6 +240,7 @@ struct vm_amap {
 #define UVM_AMAP_LARGE	256	/* # of slots in "large" amap */
 #define UVM_AMAP_CHUNK	16	/* # of slots to chunk large amaps in */
 
+#ifdef _KERNEL
 
 /*
  * macros
@@ -278,5 +282,7 @@ void		amap_pp_establish	/* establish ppref */
 void		amap_wiperange		/* wipe part of an amap */
 			__P((struct vm_amap *, int, int));
 #endif	/* UVM_AMAP_PPREF */
+
+#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_AMAP_H_ */

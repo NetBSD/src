@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.33.6.1.2.1 1999/06/21 01:28:56 thorpej Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.33.6.1.2.2 1999/07/01 23:49:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -117,48 +117,8 @@ static void nfsd_rt __P((int, struct nfsrv_descript *, int));
 
 /*
  * NFS server system calls
- * getfh() lives here too, but maybe should move to kern/vfs_syscalls.c
  */
 
-/*
- * Get file handle system call
- */
-int
-sys_getfh(p, v, retval)
-	struct proc *p;
-	register void *v;
-	register_t *retval;
-{
-	register struct sys_getfh_args /* {
-		syscallarg(char *) fname;
-		syscallarg(fhandle_t *) fhp;
-	} */ *uap = v;
-	register struct vnode *vp;
-	fhandle_t fh;
-	int error;
-	struct nameidata nd;
-
-	/*
-	 * Must be super user
-	 */
-	error = suser(p->p_ucred, &p->p_acflag);
-	if (error)
-		return (error);
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, fname), p);
-	error = namei(&nd);
-	if (error)
-		return (error);
-	vp = nd.ni_vp;
-	memset((caddr_t)&fh, 0, sizeof(fh));
-	fh.fh_fsid = vp->v_mount->mnt_stat.f_fsid;
-	error = VFS_VPTOFH(vp, &fh.fh_fid);
-	vput(vp);
-	if (error)
-		return (error);
-	error = copyout((caddr_t)&fh, (caddr_t)SCARG(uap, fhp), sizeof (fh));
-	return (error);
-}
 
 /*
  * Nfs server pseudo system call for the nfsd's

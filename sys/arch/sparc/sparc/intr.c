@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.39.4.1 1999/06/21 01:01:47 thorpej Exp $ */
+/*	$NetBSD: intr.c,v 1.39.4.2 1999/07/01 23:22:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,13 @@
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #include <netinet/ip_var.h>
+#endif
+#ifdef INET6
+# ifndef INET
+#  include <netinet/in.h>
+# endif
+#include <netinet6/ip6.h>
+#include <netinet6/ip6_var.h>
 #endif
 #ifdef NS
 #include <netns/ns_var.h>
@@ -166,6 +173,10 @@ soft01intr(fp)
 #endif
 			if (n & (1 << NETISR_IP))
 				ipintr();
+#endif
+#ifdef INET6
+			if (n & (1 << NETISR_IPV6))
+				ip6intr();
 #endif
 #ifdef NETATALK
 			if (n & (1 << NETISR_ATALK))

@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.22.4.1 1999/06/21 01:19:28 thorpej Exp $	*/
+/*	$NetBSD: ums.c,v 1.22.4.2 1999/07/01 23:40:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,12 +108,13 @@ struct ums_softc {
 	struct hid_location *sc_loc_btn;
 
 	int sc_enabled;
-	int sc_disconnected;	/* device is gone */
 
 	int flags;		/* device configuration */
 #define UMS_Z		0x01	/* z direction available */
 	int nbuttons;
 #define MAX_BUTTONS	7	/* chosen because sc_buttons is u_char */
+
+	char revz;		/* Z-axis is reversed */
 
 #if defined(__NetBSD__)
 	u_char sc_buttons;	/* mouse button status */
@@ -137,7 +138,6 @@ struct ums_softc {
 #define MOUSE_FLAGS (HIO_RELATIVE)
 
 void ums_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
-void ums_disco __P((void *));
 
 static int	ums_enable __P((void *));
 static void	ums_disable __P((void *));
@@ -215,7 +215,6 @@ USB_ATTACH(ums)
 	int i;
 	struct hid_location loc_btn;
 	
-	sc->sc_disconnected = 1;
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
 	usbd_devinfo(uaa->device, 0, devinfo);
@@ -244,6 +243,8 @@ USB_ATTACH(ums)
 		       USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
+
+	sc->revz = (usbd_get_quirks(uaa->device)->uq_flags & UQ_MS_REVZ) != 0;
 
 	r = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);
 	if (r != USBD_NORMAL_COMPLETION)
@@ -304,15 +305,14 @@ USB_ATTACH(ums)
 				hid_input, &sc->sc_loc_btn[i-1], 0);
 
 	sc->sc_isize = hid_report_size(desc, size, hid_input, &sc->sc_iid);
-	sc->sc_ibuf = malloc(sc->sc_isize, M_USB, M_NOWAIT);
+	sc->sc_ibuf = malloc(sc->sc_isize, M_USBDEV, M_NOWAIT);
 	if (!sc->sc_ibuf) {
 		printf("%s: no memory\n", USBDEVNAME(sc->sc_dev));
-		free(sc->sc_loc_btn, M_USB);
+		free(sc->sc_loc_btn, M_USBDEV);
 		USB_ATTACH_ERROR_RETURN;
 	}
 
 	sc->sc_ep_addr = ed->bEndpointAddress;
-	sc->sc_disconnected = 0;
 	free(desc, M_TEMP);
 
 #ifdef USB_DEBUG
@@ -370,34 +370,31 @@ USB_ATTACH(ums)
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
-
-#if defined(__FreeBSD__)
-static int
-ums_detach(device_t self)
+int
+ums_activate(self, act)
+	struct device *self;
+	enum devact act;
 {
-	struct ums_softc *sc = device_get_softc(self);
-	char *devinfo = (char *) device_get_desc(self);
-
-	if (devinfo) {
-		device_set_desc(self, NULL);
-		free(devinfo, M_USB);
-	}
-	free(sc->sc_loc_btn, M_USB);
-	free(sc->sc_ibuf, M_USB);
-
-	return 0;
+	return (0);
 }
-#endif
 
-void
-ums_disco(p)
-	void *p;
+int
+ums_detach(self, flags)
+	struct device  *self;
+	int flags;
 {
-	struct ums_softc *sc = p;
+	struct ums_softc *sc = (struct ums_softc *)self;
+	int rv = 0;
 
-	DPRINTF(("ums_disco: sc=%p\n", sc));
-	usbd_abort_pipe(sc->sc_intrpipe);
-	sc->sc_disconnected = 1;
+	DPRINTF(("ums_detach: sc=%p flags=%d\n", sc, flags));
+	/* No need to do reference counting of ums, wsmouse has all the goo. */
+	if (sc->sc_wsmousedev)
+		rv = config_detach(sc->sc_wsmousedev, flags);
+	if (rv == 0) {
+		free(sc->sc_loc_btn, M_USBDEV);
+		free(sc->sc_ibuf, M_USBDEV);
+	}
+	return (rv);
 }
 
 void
@@ -440,6 +437,8 @@ ums_intr(reqh, addr, status)
 	dx =  hid_get_data(ibuf, &sc->sc_loc_x);
 	dy = -hid_get_data(ibuf, &sc->sc_loc_y);
 	dz =  hid_get_data(ibuf, &sc->sc_loc_z);
+	if (sc->revz)
+		dz = -dz;
 	for (i = 0; i < sc->nbuttons; i++)
 		if (hid_get_data(ibuf, &sc->sc_loc_btn[i]))
 			buttons |= (1 << UMS_BUT(i));
@@ -506,7 +505,6 @@ ums_intr(reqh, addr, status)
 	}
 }
 
-
 static int
 ums_enable(v)
 	void *v;
@@ -515,6 +513,7 @@ ums_enable(v)
 
 	usbd_status r;
 
+	DPRINTFN(1,("ums_enable: sc=%p\n", sc));
 	if (sc->sc_enabled)
 		return EBUSY;
 
@@ -545,7 +544,6 @@ ums_enable(v)
 		sc->sc_enabled = 0;
 		return (EIO);
 	}
-	usbd_set_disco(sc->sc_intrpipe, ums_disco, sc);
 	return (0);
 }
 
@@ -554,6 +552,14 @@ ums_disable(v)
 	void *v;
 {
 	struct ums_softc *sc = v;
+
+	DPRINTFN(1,("ums_disable: sc=%p\n", sc));
+#ifdef DIAGNOSTIC
+	if (!sc->sc_enabled) {
+		printf("ums_disable: not enabled\n");
+		return;
+	}
+#endif
 
 	/* Disable interrupts. */
 	usbd_abort_pipe(sc->sc_intrpipe);
