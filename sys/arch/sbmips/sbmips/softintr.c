@@ -1,4 +1,4 @@
-/* $NetBSD: softintr.c,v 1.3 2003/02/07 17:46:12 cgd Exp $ */
+/* $NetBSD: softintr.c,v 1.3.2.1 2004/08/03 10:40:00 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -34,11 +34,12 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.3 2003/02/07 17:46:12 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.3.2.1 2004/08/03 10:40:00 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
 
 /* XXX for uvmexp */
 #include <uvm/uvm_extern.h>
@@ -59,6 +60,14 @@ static struct sh **sh_list_tail = &sh_list_head;
 
 static void dosoftnet(void *unused);
 static void dosoftclock(void *unused);
+
+static struct evcnt softclock_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "soft", "clock");
+static struct evcnt softnet_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "soft", "net");
+
+EVCNT_ATTACH_STATIC(softclock_ev);
+EVCNT_ATTACH_STATIC(softnet_ev);
 
 void *
 softintr_establish(int level, void (*fun)(void *), void *arg)
@@ -150,7 +159,7 @@ static void
 dosoftclock(void *unused)
 {
 
-	intrcnt[SOFTCLOCK_INTR]++;
+	softclock_ev.ev_count++;
 	softclock(NULL);
 }
 
@@ -188,7 +197,7 @@ dosoftnet(void *unused)
 {
 	int n, s;
 
-	intrcnt[SOFTNET_INTR]++;
+	softnet_ev.ev_count++;
 
 	/* XXX could just use netintr! */
 

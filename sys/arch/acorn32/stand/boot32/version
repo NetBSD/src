@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.7 2003/06/03 12:53:47 reinoud Exp $
+$NetBSD: version,v 1.7.2.1 2004/08/03 10:30:56 skrll Exp $
 
 0.90:	Experimental C version
 0.91:	General cleanup
@@ -17,9 +17,11 @@ $NetBSD: version,v 1.7 2003/06/03 12:53:47 reinoud Exp $
 3.00:	acorn32 bootloader version 3 is alive
 3.01:	fixed serious non VRAM screen issues and made NC live again!
 3.02:	first small try for bootfile name fixing
-3.03:	no zeropage useage anymore
+3.03:	no zeropage usage anymore
 3.04:	fixed physical memory blocks searching; it was a sorting error
 3.05:	fixed printing of videomem useage
 3.06:	fixed non 1Mb-alignment problems for the top 1Mb in the memorymap
 3.10:	Serious loading problems fixed and cleanup code
 3.20:	Redone videomem mapping and top memory search; esp. for smaller machines
+3.30:	Use qsort to significantly speed memory sort
+3.40:	Adjust reserved heap space based on memory size

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.7 2003/02/07 04:46:10 thorpej Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.7.2.1 2004/08/03 10:39:22 skrll Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -56,11 +56,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -78,6 +74,9 @@
  *
  *	@(#)fpu.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.7.2.1 2004/08/03 10:39:22 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -274,7 +273,8 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 	union instr instr = *insn;
 	int *a;
 	vaddr_t addr;
-	int ra, rb, rc, rt, type, mask, fsr, cx, bf, setcr, cond;
+	int ra, rb, rc, rt, type, mask, fsr, cx, bf, setcr;
+	unsigned int cond;
 	struct fpreg *fs;
 
 	/* Setup work. */
@@ -289,6 +289,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 	type = FTYPE_DBL;
 	cond = instr.i_any.i_rc;
 	setcr = 0;
+	bf = 0;	/* XXX gcc */
 
 #if defined(DDB) && defined(DEBUG)
 	if (fpe_debug & FPE_EX) {

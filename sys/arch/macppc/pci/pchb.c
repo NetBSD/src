@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.8 2002/10/02 05:30:46 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.8.6.1 2004/08/03 10:37:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.8.6.1 2004/08/03 10:37:31 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,7 +115,7 @@ pchbattach(parent, self, aux)
 	 * possibly chipset-specific.
 	 */
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 }

@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.183 2003/06/01 20:30:49 martin Exp $
+# $NetBSD: ALPHA,v 1.183.2.1 2004/08/03 10:31:19 skrll Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.183 $"
+ident		"ALPHA-$Revision: 1.183.2.1 $"
 
 maxusers 32
 
@@ -111,6 +111,7 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_16
 
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
@@ -152,6 +153,7 @@ options 	FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
 options 	PCMCIAVERBOSE
 options 	USERCONF		# userconf(4) support
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	FONT_GALLANT12x22	# Console font for TC devices
 
 # The Alpha console firmware network boots using the BOOTP
@@ -292,16 +294,30 @@ isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 sf*	at	pci? dev ? function ?		# Adaptec AIC-6915 Ethernet
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
+esiop*	at	pci? dev ? function ?		# Symbios 53c875 SCSI and newer
 mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
 mpt*	at	pci? dev ? function ?		# LSI Fusion SCSI/FC
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
-pciide*	at	pci? dev ? function ?		# PCI IDE controllers
+pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide* at pci? dev ? function ?		# Acard IDE controllers
+aceride* at pci? dev ? function ?		# Acer Lab IDE controllers
+artsata* at pci? dev ? function ?		# Intel i31244 SATA controller
+cmdide* at pci? dev ? function ?		# CMD tech IDE controllers
+cypide* at pci? dev ? function ?		# Cypress IDE controllers
+hptide* at pci? dev ? function ?		# Triones/HighPoint IDE controllers
+optiide* at pci? dev ? function ?		# Opti IDE controllers
+piixide* at pci? dev ? function ?		# Intel IDE controllers
+pdcide* at pci? dev ? function ?		# Promise IDE controllers
+satalink* at pci? dev ? function ?		# SiI SATALink controllers
+siside* at pci? dev ? function ?		# SiS IDE controllers
+slide*  at pci? dev ? function ?		# Symphony Labs IDE controllers
+viaide* at pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 puc*	at 	pci? dev ? function ?		# PCI "universal" comm. cards
-rtk*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
+rtk*	at	pci? dev ? function ?		# Realtek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 stge*	at	pci? dev ? function ?		# Sundance/Tamarack TC9021 GigE
@@ -437,20 +453,7 @@ com*	at puc? port ?			# 16x50s on "universal" comm boards
 lpt*	at puc? port ?			# || ports on "universal" comm boards
 
 # SCSI bus support
-scsibus* at	adv?
-scsibus* at	adw?
-scsibus* at	aha?
-scsibus* at	ahb?
-scsibus* at	ahc?
-scsibus* at	aic?
-scsibus* at	asc?
-scsibus* at	bha?
-scsibus* at	dpt?
-scsibus* at	iha?
-scsibus* at	isp?
-scsibus* at	siop?
-scsibus* at	pcscp?
-scsibus* at	uha?
+scsibus* at	scsi?
 
 # SCSI devices
 cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
@@ -462,13 +465,14 @@ ss*	at	scsibus? target ? lun ?		# SCSI scanners
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 uk*	at	scsibus? target ? lun ?		# SCSI unknown
 
-# ST506/ESDI/IDE devices
-wd*	at	pciide? channel ?
-wd*	at	wdc? drive ?
+# ATA (IDE) bus support
+atabus* at ata?
+
+# IDE drives
+wd*	at	atabus? drive ?
 
 # ATAPI bus support
-atapibus* at	pciide? channel ?
-atapibus* at	wdc?
+atapibus* at	atapi?
 
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices
@@ -512,7 +516,7 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
+atapibus* at umass?
 scsibus* at umass? channel ?
 
 # USB audio

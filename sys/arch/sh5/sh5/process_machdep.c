@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.13 2003/03/24 14:21:27 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.13.2.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13.2.1 2004/08/03 10:40:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,15 +79,9 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_state.sf_ssr = SH5_CONREG_SR_MMU;
 	tf->tf_state.sf_flags = SF_FLAGS_CALLEE_SAVED;
 
-#ifdef SHMEDIA_ENTRY_POINT_HACK
-	if ((tf->tf_state.sf_spc & 3) == 0) {
-#ifdef DIAGNOSTIC
-		printf("setregs: warning: non-SHmedia entry point for '%s'\n",
-		    l->l_proc->p_comm);
-#endif
+	/* XXX: The original SuperH toolchain did not set the SH-Media bit... */
+	if ((tf->tf_state.sf_spc & 3) == 0)
 		tf->tf_state.sf_spc |= 1;
-	}
-#endif
 
 	tf->tf_caller.r2 = (register_t) argc;			 /* argc */
 	tf->tf_caller.r3 = (register_t) (sstack + sizeof(long)); /* argv */

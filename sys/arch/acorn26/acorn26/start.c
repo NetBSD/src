@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.3 2003/04/27 10:42:48 ragge Exp $ */
+/* $NetBSD: start.c,v 1.3.2.1 2004/08/03 10:30:47 skrll Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,12 +31,15 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.3 2003/04/27 10:42:48 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.3.2.1 2004/08/03 10:30:47 skrll Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+
+#include <dev/i2c/i2cvar.h>
+#include <acorn26/ioc/iociicvar.h>
 
 #include <arm/armreg.h>
 #include <arm/undefined.h>
@@ -61,6 +64,9 @@ extern void main __P((void)); /* XXX Should be in a header file */
 struct bootconfig bootconfig;
 
 struct user *proc0paddr;
+
+/* in machdep.h */
+extern i2c_tag_t acorn26_i2c_tag;
 
 /* We don't pass a command line yet. */
 char *boot_args = "";
@@ -87,9 +93,6 @@ void
 start(initbootconfig)
 	struct bootconfig *initbootconfig;
 {
-	size_t size;
-	caddr_t v;
-	char pbuf[9];
 	int onstack;
 
 	/*
@@ -148,23 +151,6 @@ start(initbootconfig)
 	}
 #endif
 
-	/*
-	 * Allocate space for system data structures.  These data structures
-	 * are allocated here instead of cpu_startup() because physical
-	 * memory is directly addressable.  We don't have to map these into
-	 * virtual address space.  This trick is stolen from the alpha port.
-	 */
-	size = (vsize_t)allocsys(0, NULL);
-	v = MEMC_PHYS_BASE + bootconfig.freebase;
-	bootconfig.freebase += size;
-	if (bootconfig.freebase > ptoa(physmem)) {
-		format_bytes(pbuf, sizeof(pbuf), size);
-		panic("start: out of memory (wanted %s)", pbuf);
-	}
-	bzero(v, size);
-	if ((allocsys(v, NULL) - v) != size)
-		panic("start: table size inconsistency");
-	
 	/* Tell UVM about memory */
 #if NARCVIDEO == 0
 	/*
@@ -205,6 +191,12 @@ start(initbootconfig)
 	 */
 	proc0paddr = (struct user *)(round_page((vaddr_t)&onstack) - USPACE);
 	bzero(proc0paddr, sizeof(*proc0paddr));
+
+	/*
+	 * Get a handle on the IOC's I2C interface in the event we need
+	 * it during bootstrap.
+	 */
+	acorn26_i2c_tag = iociic_bootstrap_cookie();
 
 	/* TODO: anything else? */
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -58,6 +58,9 @@
  *	Set the process's program counter.
  */
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +124,7 @@ process_read_fpregs(l, regs)
 		fpusave_lwp(l, 1);
 	} else {
 		u_int16_t cw;
+		u_int32_t mxcsr, mxcsr_mask;
 
 		/*
 		 * Fake a FNINIT.
@@ -128,10 +132,14 @@ process_read_fpregs(l, regs)
 		 * save it temporarily.
 		 */
 		cw = frame->fx_fcw;
+		mxcsr = frame->fx_mxcsr;
+		mxcsr_mask = frame->fx_mxcsr_mask;
 		memset(frame, 0, sizeof(*regs));
 		frame->fx_fcw = cw;
 		frame->fx_fsw = 0x0000;
 		frame->fx_ftw = 0xff;
+		frame->fx_mxcsr = mxcsr;
+		frame->fx_mxcsr_mask = mxcsr_mask;
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
@@ -145,14 +153,17 @@ process_write_regs(l, regp)
 	struct reg *regp;
 {
 	struct trapframe *tf = process_frame(l);
+	int error;
 	long *regs = regp->regs;
 
 	/*
 	 * Check for security violations.
+	 * Note that struct regs is compatible with
+	 * the __gregs array in mcontext_t.
 	 */
-	if (((regs[_REG_RFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(regs[_REG_CS], regs[_REG_RFL]))
-		return (EINVAL);
+	error = check_mcontext((mcontext_t *)regs, tf);
+	if (error != 0)
+		return error;
 
 	memcpy(tf, regs, sizeof (*tf));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.7 2003/02/05 00:02:35 perry Exp $	*/
+/*	$NetBSD: prom.h,v 1.7.2.1 2004/08/03 10:37:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ struct mips_prom {
 	void	(*prom_putpkt)		__P((void)); /* ??? */
 
 	/*
-	 * read-modify-write routine use special cpu board circuitry to
+	 * read-modify-write routine use special CPU board circuitry to
 	 * accomplish vme bus r-m-w cycles.
 	 */
 	void	(*prom_orw_rmw)		__P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.12 2002/10/23 09:11:33 jdolecek Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.12.6.1 2004/08/03 10:37:21 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.12.6.1 2004/08/03 10:37:21 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -44,8 +47,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-#define KEYBOARD_ARRAY
-#include <machine/keyboard.h>
 #include <machine/adbsys.h>
 
 #include <machine/autoconf.h>
@@ -83,18 +84,17 @@ const struct cdevsw macofcons_cdevsw = {
 };
 
 /* For polled ADB mode */
+#if NADB > 0
 static int polledkey;
 extern int adb_polling;
+#endif /* NADB */
 
-static void ofcstart __P((struct tty *));
-static int ofcparam __P((struct tty *, struct termios *));
-static int ofcons_probe __P((void));
+static void ofcstart(struct tty *);
+static int ofcparam(struct tty *, struct termios *);
+static int ofcons_probe(void);
 
 static int
-ofcmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ofcmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	static int attached = 0;
@@ -113,18 +113,13 @@ ofcmatch(parent, match, aux)
 }
 
 static void
-ofcattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ofcattach(struct device *parent, struct device *self, void *aux)
 {
 	printf("\n");
 }
 
 int
-ofcopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+ofcopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ofcons_softc *sc;
 	int unit = minor(dev);
@@ -157,10 +152,7 @@ ofcopen(dev, flag, mode, p)
 }
 
 int
-ofcclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+ofcclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -171,10 +163,7 @@ ofcclose(dev, flag, mode, p)
 }
 
 int
-ofcread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ofcread(dev_t dev, struct uio *uio, int flag)
 {
 	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -183,10 +172,7 @@ ofcread(dev, uio, flag)
 }
 
 int
-ofcwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ofcwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -195,10 +181,7 @@ ofcwrite(dev, uio, flag)
 }
 
 int
-ofcpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+ofcpoll(dev_t dev, int events, struct proc *p)
 {
 	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -207,12 +190,7 @@ ofcpoll(dev, events, p)
 }
 
 int
-ofcioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+ofcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -224,8 +202,7 @@ ofcioctl(dev, cmd, data, flag, p)
 }
 
 struct tty *
-ofctty(dev)
-	dev_t dev;
+ofctty(dev_t dev)
 {
 	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 
@@ -233,8 +210,7 @@ ofctty(dev)
 }
 
 static void
-ofcstart(tp)
-	struct tty *tp;
+ofcstart(struct tty *tp)
 {
 	struct clist *cl;
 	int s, len;
@@ -267,9 +243,7 @@ ofcstart(tp)
 }
 
 static int
-ofcparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+ofcparam(struct tty *tp, struct termios *t)
 {
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
@@ -278,7 +252,7 @@ ofcparam(tp, t)
 }
 
 static int
-ofcons_probe()
+ofcons_probe(void)
 {
 	int chosen;
 
@@ -298,9 +272,8 @@ ofcons_probe()
 /*
  * Console support functions
  */
-void
-ofccnprobe(cd)
-	struct consdev *cd;
+static void
+ofccnprobe(struct consdev *cd)
 {
 	int maj;
 
@@ -309,22 +282,23 @@ ofccnprobe(cd)
 
 	maj = cdevsw_lookup_major(&macofcons_cdevsw);
 
+	printf("major for ofcons: %d\n", maj);
+
 	cd->cn_dev = makedev(maj, 0);
 	cd->cn_pri = CN_INTERNAL;
 }
 
-void
-ofccninit(cd)
-	struct consdev *cd;
+static void
+ofccninit(struct consdev *cd)
 {
 }
 
-int
-ofccngetc(dev)
-	dev_t dev;
+static int
+ofccngetc(dev_t dev)
 {
 #if NADB > 0
-	int intbits, s;
+	int s;
+	extern void adb_intr_cuda(void);	/* in adb_direct.c */
 
 	s = splhigh();
 
@@ -349,20 +323,16 @@ ofccngetc(dev)
 #endif
 }
 
-void
-ofccnputc(dev, c)
-	dev_t dev;
-	int c;
+static void
+ofccnputc(dev_t dev, int c)
 {
 	char ch = c;
 	
 	OF_write(stdout, &ch, 1);
 }
 
-void
-ofccnpollc(dev, on)
-	dev_t dev;
-	int on;
+static void
+ofccnpollc(dev_t dev, int on)
 {
 }
 
@@ -376,76 +346,3 @@ struct consdev consdev_ofcons = {
 };
 
 struct consdev *cn_tab = &consdev_ofcons;
-
-
-/* For capslock key functionality */
-#define isealpha(ch) \
-  (((ch)>='A'&&(ch)<='Z')||((ch)>='a'&&(ch)<='z')||((ch)>=0xC0&&(ch)<=0xFF))
-
-int
-kbd_intr(event)
-	adb_event_t *event;
-{
-	static int shift = 0, control = 0, capslock = 0;
-
-	int key, press, val, state;
-	char str[10], *s;
-	struct ofcons_softc *sc = macofcons_cd.cd_devs[0];
-	struct tty *ite_tty = sc->of_tty;
-
-	key = event->u.k.key;
-	press = ADBK_PRESS(key);
-	val = ADBK_KEYVAL(key);
-
-	if (val == ADBK_SHIFT)
-		shift = press;
-	else if (val == ADBK_CAPSLOCK)
-		capslock = !capslock;
-	else if (val == ADBK_CONTROL)
-		control = press;
-	else if (press) {
-		switch (val) {
-		case ADBK_UP:
-			str[0] = '\e';
-			str[1] = 'O';
-			str[2] = 'A';
-			str[3] = '\0';
-			break;
-		case ADBK_DOWN:
-			str[0] = '\e';
-			str[1] = 'O';
-			str[2] = 'B';
-			str[3] = '\0';
-			break;
-		case ADBK_RIGHT:
-			str[0] = '\e';
-			str[1] = 'O';
-			str[2] = 'C';
-			str[3] = '\0';
-			break;
-		case ADBK_LEFT:
-			str[0] = '\e';
-			str[1] = 'O';
-			str[2] = 'D';
-			str[3] = '\0';
-			break;
-		default:
-			state = 0;
-			if (capslock && isealpha(keyboard[val][1]))
-				state = 1;
-			if (shift)
-				state = 1;
-			if (control)
-				state = 2;
-			str[0] = keyboard[val][state];
-			str[1] = '\0';
-			break;
-		}
-		if (adb_polling)
-			polledkey = str[0];
-		else
-			for (s = str; *s; s++)
-				(*ite_tty->t_linesw->l_rint)(*s, ite_tty);
-	}
-	return 0;
-}

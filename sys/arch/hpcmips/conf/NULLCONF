@@ -1,13 +1,15 @@
 #
-# 	$NetBSD: NULLCONF,v 1.17 2002/11/27 07:33:02 shin Exp $
+# 	$NetBSD: NULLCONF,v 1.17.6.1 2004/08/03 10:35:05 skrll Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 maxusers	8
 
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
+makeoptions	CPUFLAGS="-mips2"	# CPU codegen options
 options 	VR4102			# NEC VR4102
 options 	VR4111			# NEC VR4111
 options 	VR4121			# NEC VR4121

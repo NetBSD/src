@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.26 2003/06/29 22:28:18 fvdl Exp $	*/
+/*	$NetBSD: ppi.c,v 1.26.2.1 2004/08/03 10:34:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -48,11 +48,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -76,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.26 2003/06/29 22:28:18 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.26.2.1 2004/08/03 10:34:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +103,8 @@ struct	ppi_softc {
 };
 
 /* sc_flags values */
-#define	PPIF_ALIVE	0x01	
-#define	PPIF_OPEN	0x02	
+#define PPIF_ALIVE	0x01
+#define PPIF_OPEN	0x02
 #define PPIF_UIO	0x04
 #define PPIF_TIMO	0x08
 #define PPIF_DELAY	0x10

@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.6 2000/04/14 20:24:29 is Exp $
+# $NetBSD: Makefile,v 1.6.28.1 2004/08/03 10:36:30 skrll Exp $
+
+.include <bsd.sys.mk>		# for HOST_SH
 
 # regenerate isp.S, fpsp.S, pfpsp.S
 
@@ -8,6 +10,7 @@
 
 .PATH: dist
 
-.sa.S: ; sh asm2gas ${.IMPSRC} >${.TARGET}
+.sa.S:
+	${HOST_SH} asm2gas ${.IMPSRC} >${.TARGET}
 
 all: isp.S fpsp.S pfpsp.S

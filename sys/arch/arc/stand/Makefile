@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.1.1.1.26.1 2004/08/03 10:32:28 skrll Exp $
 #	$OpenBSD: Makefile,v 1.2 1997/05/19 09:35:24 pefo Exp $
 
 SUBDIR=	mbr

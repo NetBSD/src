@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwreal.S,v 1.4 2003/02/02 20:43:24 matt Exp $	*/
+/*	$NetBSD: ofwreal.S,v 1.4.2.1 2004/08/03 10:39:37 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -72,10 +72,10 @@ ofentry:
 ENTRY(ofwr_init)
 	mflr	%r31			/* save return address */
 
-	mr	%r13,%r6			/* save args */
-	mr	%r12,%r7			/* save argslen */
+	mr	%r13,%r6		/* save args */
+	mr	%r12,%r7		/* save argslen */
 	lis	%r8,ofentry@ha
-	stw	%r5,ofentry@l(%r8)		/* save virtual mode firmware entry */
+	stw	%r5,ofentry@l(%r8)	/* save virtual mode firmware entry */
 
 	lis	%r3,fwsave@ha		/* save the mmu values of the
 					   firmware */
@@ -85,8 +85,8 @@ ENTRY(ofwr_init)
 	lis	%r5,fwentry@ha		/* get new firmware entry */
 	addi	%r5,%r5,fwentry@l
 
-	mr	%r6,%r13			/* restore args pointer */
-	mr	%r7,%r12			/* restore args length */
+	mr	%r6,%r13		/* restore args pointer */
+	mr	%r7,%r12		/* restore args length */
 	mtlr	%r31			/* restore return address */
 	blr
 
@@ -95,9 +95,9 @@ ENTRY(ofwr_init)
  */
 fwentry:
 	mflr	%r0			/* save return address */
-	stw	%r0,4(1)
-	stwu	%r1,-16(1)		/* setup stack frame */
-	stw	%r3,8(1)			/* save arg */
+	stw	%r0,4(%r1)
+	stwu	%r1,-16(%r1)		/* setup stack frame */
+	stw	%r3,8(%r1)		/* save arg */
 
 	lis	%r3,clsave@ha		/* save mmu values of client */
 	addi	%r3,%r3,clsave@l
@@ -108,36 +108,34 @@ fwentry:
 	bl	restoremmu
 
 	lis	%r3,ofentry@ha
-	lwz	%r3,ofentry@l(%r3)		/* get actual firmware entry */
+	lwz	%r3,ofentry@l(%r3)	/* get actual firmware entry */
 	mtlr	%r3
 
 	mfmsr	%r4
+	stw	%r4,12(%r1)		/* save MSR */
 	ori	%r4,%r4,PSL_IR|PSL_DR	/* turn on MMU */
+	andi.	%r4,%r4,~PSL_EE@l	/* turn off interrupts */
 	mtmsr	%r4
 	isync
 
-	lwz	%r3,8(%r1)			/* restore arg */
+	lwz	%r3,8(%r1)		/* restore arg */
 	blrl				/* do actual firmware call */
+	stw	%r3,8(%r1)		/* save return value */
 
-	stw	%r3,8(%r1)			/* save return value */
-
-	mfmsr	%r4
-	lis	%r3,(PSL_IR|PSL_DR)@h	/* turn off MMU */
-	ori	%r3,%r3,(PSL_IR|PSL_DR)@l
-	andc	%r4,%r4,%r3
+	lwz	%r4,12(%r1)		/* get saved MSR */
 	mtmsr	%r4
 	isync
 
 	lis	%r3,fwsave@ha		/* save mmu values of firmare */
-	addi	%r3,%r3,fwsave@l		/* (might not be necessary, but... */
+	addi	%r3,%r3,fwsave@l	/* (might not be necessary, but... */
 	bl	savemmu
 
 	lis	%r3,clsave@ha		/* restore mmu values of client */
 	addi	%r3,%r3,clsave@l
 	bl	restoremmu
 
-	lwz	%r3,8(%r1)			/* restore return value */
-	lwz	%r1,0(%r1)			/* and return */
+	lwz	%r3,8(%r1)		/* restore return value */
+	lwz	%r1,0(%r1)		/* and return */
 	lwz	%r0,4(%r1)
 	mtlr	%r0
 	blr
@@ -188,13 +186,13 @@ savemmu:
 	stwu	%r5,4(%r3)
 	bne	1b
 
-	mfsprg	%r4,0			/* save SPRGs */
+	mfsprg0	%r4			/* save SPRGs */
 	stw	%r4,4(%r3)
-	mfsprg	%r4,1
+	mfsprg1	%r4
 	stw	%r4,8(%r3)
-	mfsprg	%r4,2
+	mfsprg2	%r4
 	stw	%r4,12(%r3)
-	mfsprg	%r4,3
+	mfsprg3	%r4
 	stw	%r4,16(%r3)
 
 	mfsdr1	%r4			/* save SDR1 */
@@ -301,13 +299,13 @@ restoremmu:
 	bne	1b
 
 	lwz	%r4,4(%r3)
-	mtsprg	0,%r4			/* restore SPRGs */
+	mtsprg0	%r4			/* restore SPRGs */
 	lwz	%r4,8(%r3)
-	mtsprg	1,%r4
+	mtsprg1	%r4
 	lwz	%r4,12(%r3)
-	mtsprg	2,%r4
+	mtsprg2	%r4
 	lwz	%r4,16(%r3)
-	mtsprg	3,%r4
+	mtsprg3	%r4
 
 	sync				/* remove everything from tlb */
 	lis	%r4,0x40000@ha

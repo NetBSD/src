@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.9 2002/12/22 00:17:14 gmcgarry Exp $
+# $NetBSD: INSTALL,v 1.9.2.1 2004/08/03 10:34:22 skrll Exp $
 #
 # INSTALL machine description file
 #
@@ -19,6 +19,7 @@ options 	NFS_V2_ONLY
 options 	NFS_DEFAULT_NIOTHREADS=1
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
@@ -50,6 +51,9 @@ maxusers	32
 #options 	COMPAT_12	# compatibility with NetBSD 1.2
 #options 	COMPAT_13	# compatibility with NetBSD 1.3
 #options 	COMPAT_14	# compatibility with NetBSD 1.4
+#options 	COMPAT_15	# compatibility with NetBSD 1.5
+#options 	COMPAT_16	# compatibility with NetBSD 1.6
+#options 	COMPAT_20	# compatibility with NetBSD 2.0
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	SYSVSHM		# System V-style shared memory
 #options 	SYSVSEM		# System V-style semaphores
@@ -134,7 +138,7 @@ frodo*		at intio?
 
 # 8250-like serial ports found on Frodo ASIC
 #dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
-apci*		at frodo? offset ?	# tty flavor
+com*		at frodo? offset ?	# tty flavor
 
 # Davinci framebuffer
 dvbox*		at intio?
@@ -165,8 +169,8 @@ grf*		at topcat?
 # Internal Terminal Emulator
 ite*		at grf?
 
-dca0		at dio? scode 9	flags 1	# DCA serial interfaces
-dca*		at dio? scode ?
+com*		at dio0 scode 9		# DCA serial interfaces
+com*		at dio? scode ?
 
 dcm*		at dio? scode ?	flags 0xe # DCM 4- or 8-port serial interfaces
 
@@ -186,11 +190,15 @@ ct*		at hpibbus? slave ? punit ?	# HP-IB cartridge tapes
 mt*		at hpibbus? slave ? punit ?	# HP-IB 9-track tape
 #ppi0		at hpibbus0 slave 5 punit 0	# HP-IB plotter
 
-oscsi*		at dio? scode ?		# Old HP SCSI
+spc*		at dio? scode ?			# HP 98265A SCSI
+scsibus*	at spc?
 
-sd*		at oscsi? target ? lun ?	# SCSI disks
-st*		at oscsi? target ? lun ?	# SCSI tapes
-ac*		at oscsi? target ? lun ?	# SCSI changers
+sd*		at scsibus? target ? lun ?	# SCSI disks
+st*		at scsibus? target ? lun ?	# SCSI tapes
+cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
+#ch*		at scsibus? target ? lun ?	# SCSI changer devices
+#ss*		at scsibus? target ? lun ?	# SCSI scanners
+#uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	sl		4	# SLIP network interfaces
@@ -217,4 +225,4 @@ pseudo-device	loop			# loopback network interface
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	rnd			# /dev/random and in-kernel generator

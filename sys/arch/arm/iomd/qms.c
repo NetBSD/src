@@ -1,9 +1,11 @@
-/*	$NetBSD: qms.c,v 1.4.6.1 2003/07/03 00:40:24 wrstuden Exp $	*/
+/*	$NetBSD: qms.c,v 1.4.6.2 2004/08/03 10:32:38 skrll Exp $	*/
 
-/*
- * Copyright (c) Scott Stevens 1995 All rights reserved
- * Copyright (c) Melvin Tang-Richardson 1995 All rights reserved
- * Copyright (c) Mark Brinicombe 1995 All rights reserved
+/*-
+ * Copyright (c) 2001 Reinoud Zandijk
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Reinoud Zandijk
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,517 +17,198 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *      This product includes software developed by the NetBSD
+ *      Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
-
 /*
- * Quadrature mouse driver
+ * Quadrature mouse driver for the wscons as used in the IOMD
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/conf.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/kernel.h>
-#include <sys/types.h>
+
+__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.4.6.2 2004/08/03 10:32:38 skrll Exp $");
+
+#include <sys/callout.h>
 #include <sys/device.h>
+#include <sys/errno.h> 
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/time.h>
-#include <sys/errno.h>
-#include <dev/cons.h>
-#include <sys/fcntl.h>
-#include <sys/signalvar.h>
-#include <sys/vnode.h>
-#include <sys/time.h>
-#include <sys/poll.h>
+#include <sys/tty.h>
+#include <sys/types.h>
+#include <sys/syslog.h> 
+#include <sys/systm.h>
+#include <sys/select.h>
 
 #include <machine/bus.h>
-#include <machine/mouse.h>
-#include <arm/iomd/qmsvar.h>
+#include <machine/intr.h>
 
-#define MOUSE_IOC_ACK
+#include <arm/iomd/iomdvar.h>
 
-#define QMOUSE_BSIZE 12*64
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsmousevar.h>
 
-#ifdef MOUSE_IOC_ACK
-static void qmsputbuffer	__P((struct qms_softc *sc, struct mousebufrec *buf));
-#endif
+struct qms_softc {
+	struct device  sc_dev;
+	struct device *sc_wsmousedev;
 
-extern struct cfdriver qms_cd;
+	bus_space_tag_t sc_iot;		/* bus tag */
+	bus_space_handle_t sc_ioh;	/* bus handle for XY */
+	bus_space_handle_t sc_butioh;	/* bus handle for buttons */
 
-dev_type_open(qmsopen);
-dev_type_close(qmsclose);
-dev_type_read(qmsread);
-dev_type_ioctl(qmsioctl);
-dev_type_poll(qmspoll);
-dev_type_kqfilter(qmskqfilter);
+	struct callout sc_callout;
 
-const struct cdevsw qms_cdevsw = {
-	qmsopen, qmsclose, qmsread, nowrite, qmsioctl,
-	nostop, notty, qmspoll, nommap, qmskqfilter,
+	u_int16_t lastx;
+	u_int16_t lasty;
+	int lastb;
 };
 
-/* qms device structure */
-
 /* Offsets of hardware registers */
-#define QMS_MOUSEX	0		/* 16 bit X register */
-#define QMS_MOUSEY	1		/* 16 bit Y register */
+#define QMS_MOUSEX	0		/* 16 bits X register */
+#define QMS_MOUSEY	1		/* 16 bits Y register */
+#define QMS_BUTTONS	0 		/* mouse buttons in bits 4,5,6 */
 
-#define QMS_BUTTONS	0		/* mouse buttons register */
+static int  qms_match(struct device *, struct cfdata *, void *);
+static void qms_attach(struct device *, struct device *, void *);
 
-/*
- * generic attach routine. This does the generic part of the driver
- * attachment and is called from the bus specific attach routine.
- */
+static int qms_enable(void *);
+static int qms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static void qms_disable(void *cookie);
+static void qms_intr(void *arg);
 
-void
-qmsattach(sc)
-	struct qms_softc *sc;
+CFATTACH_DECL(qms, sizeof(struct qms_softc),
+    qms_match, qms_attach, NULL, NULL);
+
+static struct wsmouse_accessops qms_accessops = {
+	qms_enable, qms_ioctl, qms_disable
+};
+
+
+static int
+qms_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	/* Set up origin and multipliers */
-	sc->origx = 0;
-	sc->origy = 0;
-	sc->xmult = 2;
-	sc->ymult = 2;
+	struct qms_attach_args *qa = aux;
 
-	/* Set up bounding box */
-	sc->boundx = -4095;
-	sc->boundy = -4095;
-	sc->bounda = 4096;
-	sc->boundb = 4096;
-
-	sc->sc_state = 0;
-
-	/* Set the mouse X & Y registers to a known state */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX, sc->origx);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX, sc->origx);
-}
-
-int
-qmsopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct lwp *l;
-{
-	struct qms_softc *sc;
-	int unit = minor(dev);
- 
- 	/* validate the unit and softc */
-	if (unit >= qms_cd.cd_ndevs)
-		return(ENXIO);
-
-	sc = qms_cd.cd_devs[unit];
-    
-	if (!sc) return(ENXIO);
-
-	/* check if we are already open */
-	if (sc->sc_state & QMOUSE_OPEN) return(EBUSY);
-
-	/* update softc */
-	sc->sc_proc = l->l_proc;
-    
-	sc->lastx = -1;
-	sc->lasty = -1;
-	sc->lastb = -1;
-
-	/* initialise buffer */
-	if (clalloc(&sc->sc_buffer, QMOUSE_BSIZE, 0) == -1)
-		return(ENOMEM);
-
-	/* set mode and state */
-	sc->sc_mode = MOUSEMODE_ABS;
-	sc->sc_state |= QMOUSE_OPEN;
-
-	/* enable interrupts */
-	sc->sc_intenable(sc, 1);
+	if (strcmp(qa->qa_name, "qms") == 0)
+		return(1);
 
 	return(0);
 }
 
 
-int
-qmsclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct lwp *l;
+static void
+qms_attach(struct device *parent, struct device *self, void *aux)
 {
-	int unit = minor(dev);
-	struct qms_softc *sc = qms_cd.cd_devs[unit];
+	struct qms_softc *sc = (void *)self;
+	struct qms_attach_args *qa = aux;
+	struct wsmousedev_attach_args wsmouseargs;
 
- 	/* disable interrupts */
-	sc->sc_intenable(sc, 0);
+	sc->sc_iot = qa->qa_iot;
+	sc->sc_ioh = qa->qa_ioh;
+	sc->sc_butioh = qa->qa_ioh_but;
 
-	/* clean up */
-	sc->sc_proc = NULL;
-	sc->sc_state = 0;
+	/* set up wsmouse attach arguments */
+	wsmouseargs.accessops = &qms_accessops;
+	wsmouseargs.accesscookie = sc;
 
-	clfree(&sc->sc_buffer);
+	printf("\n");
 
-	return(0);
-}
+	sc->sc_wsmousedev =
+	    config_found(&sc->sc_dev, &wsmouseargs, wsmousedevprint);
 
-int
-qmsread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
-{
-	int unit = minor(dev);
-	struct qms_softc *sc = qms_cd.cd_devs[unit];
-	int error;
-	int s;
-	int length;
-	u_char buffer[128];
-
-	error = 0;
-	s = spltty();
-	while (sc->sc_buffer.c_cc == 0) {
-		if (flag & IO_NDELAY) {
-			(void)splx(s);
-			return(EWOULDBLOCK);
-		}
-		sc->sc_state |= QMOUSE_ASLEEP;
-		if ((error = tsleep((caddr_t)sc, PZERO | PCATCH, "qmsread", 0))) {
-			sc->sc_state &= ~QMOUSE_ASLEEP;
-			(void)splx(s);
-			return(error);
-		}
-	}
-	
-	while (sc->sc_buffer.c_cc > 0 && uio->uio_resid > 0) {
-		length = min(sc->sc_buffer.c_cc, uio->uio_resid);
-		if(length>sizeof(buffer))
-			length=sizeof(buffer);
-
-		(void)q_to_b(&sc->sc_buffer, buffer, length);
-
-		if ((error = (uiomove(buffer, length, uio))))
-			break;
-	}
-	(void)splx(s);
-	return(error);
+	callout_init(&sc->sc_callout);
 }
 
 
-#define FMT_START								\
-	int x = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX) & 0xffff;	\
-	int y = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY) & 0xffff;	\
-	int b = bus_space_read_1(sc->sc_iot, sc->sc_butioh, QMS_BUTTONS) & 0x70;\
-	if (x & 0x8000) x |= 0xffff0000;					\
-	if (y & 0x8000) y |= 0xffff0000;					\
-	x = (x - sc->origx);							\
-	y = (y - sc->origy);							\
-	if (x < (sc->boundx)) x = sc->boundx;					\
-	if (x > (sc->bounda)) x = sc->bounda;					\
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX, x + sc->origx);	\
-	if (y < (sc->boundy)) y = sc->boundy;					\
-	if (y > (sc->boundb)) y = sc->boundb;					\
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY, y + sc->origy);	\
-	x = x * sc->xmult;							\
-	y = y * sc->ymult;
-
-#define	FMT_END
-
-
-int
-qmsioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+static int
+qms_enable(void *cookie)
 {
-	struct qms_softc *sc = qms_cd.cd_devs[minor(dev)];
+	struct qms_softc *sc = cookie;
+	int b;
+
+	/* We don't want the mouse to warp on open. */
+	sc->lastx = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX);
+	sc->lasty = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY);
+	b = bus_space_read_1(sc->sc_iot, sc->sc_butioh, QMS_BUTTONS) & 0x70;
+
+	/* patch up the buttons */
+	b >>= 4;
+	sc->lastb = ~( ((b & 1)<<2) | (b & 2) | ((b & 4)>>2));
+
+	callout_reset(&sc->sc_callout, hz / 100, qms_intr, sc);
+	return 0;
+}
+
+
+static void
+qms_disable(void *cookie)
+{
+	struct qms_softc *sc = cookie;
+
+	callout_stop(&sc->sc_callout);
+}
+
+
+static int
+qms_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
 
 	switch (cmd) {
-	case MOUSEIOC_WRITEX:
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX,
-		    *(int *)data + sc->origx);
-		return 0;
-	case MOUSEIOC_WRITEY:
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY,
-		    *(int *)data + sc->origy);
-		return 0;
-	case MOUSEIOC_SETSTATE:
-	{
-		struct mouse_state *co = (void *)data;
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX, co->x);
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY, co->y);
+	case WSMOUSEIO_GTYPE:
+		*(int *)data = WSMOUSE_TYPE_ARCHIMEDES;
 		return 0;
 	}
-	case MOUSEIOC_SETBOUNDS:
-	{
-		struct mouse_boundingbox *bo = (void *)data;
-		struct mousebufrec buffer;
-#ifdef MOUSE_IOC_ACK
-		int s;
 
-		s = spltty();
-#endif
-
-		sc->boundx = bo->x;
-		sc->boundy = bo->y;
-		sc->bounda = bo->a;
-		sc->boundb = bo->b;
-
-		buffer.status = IOC_ACK;
-		buffer.x = sc->origx;
-		buffer.y = sc->origy;
-#ifdef MOUSE_IOC_ACK
-		if (sc->sc_buffer.c_cc > 0)
-			printf("%s: setting bounding with non empty buffer (%d)\n",
-			    sc->sc_device.dv_xname, sc->sc_buffer.c_cc);
-		qmsputbuffer(sc, &buffer);
-		(void)splx(s);
-#endif
-		return 0;
-	}
-	case MOUSEIOC_SETMODE:
-	{
-		struct mousebufrec buffer;
-#ifdef MOUSE_IOC_ACK
-		int s;
-
-		s = spltty();
-#endif
-		sc->sc_mode = *(int *)data;
-
-		buffer.status = IOC_ACK;
-		buffer.x = sc->origx;
-		buffer.y = sc->origy;
-#ifdef MOUSE_IOC_ACK
-		if (sc->sc_buffer.c_cc > 0)
-			printf("%s: setting mode with non empty buffer (%d)\n",
-			    sc->sc_device.dv_xname, sc->sc_buffer.c_cc);
-		qmsputbuffer(sc, &buffer);
-		(void)splx(s);
-#endif
-		return 0;
-	}
-	case MOUSEIOC_SETORIGIN:
-	{
-		struct mouse_origin *oo = (void *)data;
-		struct mousebufrec buffer;
-#ifdef MOUSE_IOC_ACK
-		int s;
-
-		s = spltty();
-#endif
-		/* Need to fix up! */
-		sc->origx = oo->x;
-		sc->origy = oo->y;
-
-		buffer.status = IOC_ACK;
-		buffer.x = sc->origx;
-		buffer.y = sc->origy;
-#ifdef MOUSE_IOC_ACK
-		if (sc->sc_buffer.c_cc > 0)
-			printf("%s: setting origin with non empty buffer (%d)\n",
-			    sc->sc_device.dv_xname, sc->sc_buffer.c_cc);
-		qmsputbuffer(sc, &buffer);
-		(void)splx(s);
-#endif
-		return 0;
-	}
-	case MOUSEIOC_GETSTATE:
-	{
-		struct mouse_state *co = (void *)data;
-		FMT_START
-		co->x = x;
-		co->y = y;
-		co->buttons = b ^ 0x70;
-		FMT_END
-		return 0;
-	}
-	case MOUSEIOC_GETBOUNDS:
-	{
-		struct mouse_boundingbox *bo = (void *)data;
-		bo->x = sc->boundx;
-		bo->y = sc->boundy;
-		bo->a = sc->bounda;
-		bo->b = sc->boundb;
-		return 0;
-	}
-	case MOUSEIOC_GETORIGIN:
-	{
-		struct mouse_origin *oo = (void *)data;
-		oo->x = sc->origx;
-		oo->y = sc->origy;
-		return 0;
-	}
-	}   
-
-	return (EINVAL);
+	return EPASSTHROUGH;
 }
 
 
-int
-qmsintr(arg)
-	void *arg;
+static void
+qms_intr(void *arg)
 {
 	struct qms_softc *sc = arg;
-	int s;
-	struct mousebufrec buffer;
-	int dosignal=0;
+	int b;
+	u_int16_t x, y;
+	int16_t dx, dy;
 
-	FMT_START
+	x = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX);
+	y = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY);
+	b = bus_space_read_1(sc->sc_iot, sc->sc_butioh, QMS_BUTTONS) & 0x70;
 
-	b &= 0x70;
+	/* patch up the buttons */
 	b >>= 4;
-        if (x != sc->lastx || y != sc->lasty || b != sc->lastb) {
-		/* Mouse state changed */
-		buffer.status = b | ( b ^ sc->lastb) << 3 | (((x==sc->lastx) && (y==sc->lasty))?0:MOVEMENT);
-		if(sc->sc_mode == MOUSEMODE_REL) {
-			sc->origx = sc->origy = 0;
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX, sc->origx);
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY, sc->origy);
-		}
-		buffer.x = x;
-		buffer.y = y;
-		microtime(&buffer.event_time);
+	b = ~( ((b & 1)<<2) | (b & 2) | ((b & 4)>>2));
 
-		if (sc->sc_buffer.c_cc == 0)
-			dosignal = 1;
+	if ((x != sc->lastx) || (y != sc->lasty) || (b != sc->lastb)) {
+		/* This assumes that int16_t is two's complement. */
+		dx = x - sc->lastx;
+		dy = y - sc->lasty;
+		wsmouse_input(sc->sc_wsmousedev, b, dx, dy, 0,
+		    WSMOUSE_INPUT_DELTA);
 
-		s = spltty();
-		(void)b_to_q((char *)&buffer, sizeof(buffer), &sc->sc_buffer);
-		(void)splx(s);
-		selwakeup(&sc->sc_rsel);
-
-		if (sc->sc_state & QMOUSE_ASLEEP) {
-			sc->sc_state &= ~QMOUSE_ASLEEP;
-			wakeup((caddr_t)sc);
-		}
-
-/*		if (dosignal)*/
-			psignal(sc->sc_proc, SIGIO);
-		
+		/* save old values */
 		sc->lastx = x;
 		sc->lasty = y;
 		sc->lastb = b;
-	}
-
-	FMT_END
-	return(0);	/* Pass interrupt on down the chain */
+	};
+	callout_reset(&sc->sc_callout, hz / 100, qms_intr, sc);
 }
 
 
-int
-qmspoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
-{
-	struct qms_softc *sc = qms_cd.cd_devs[minor(dev)];
-	int revents = 0;
-	int s = spltty();
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (sc->sc_buffer.c_cc > 0)
-			revents |= events & (POLLIN | POLLRDNORM);
-		else
-			selrecord(l, &sc->sc_rsel);
-	}
-
-	(void)splx(s);
-	return (revents);
-}
-
-
-#ifdef MOUSE_IOC_ACK
-static void
-qmsputbuffer(sc, buffer)
-	struct qms_softc *sc;
-	struct mousebufrec *buffer;
-{
-	int s;
-	int dosignal = 0;
-
-	/* Time stamp the buffer */
-	microtime(&buffer->event_time);
-
-	if (sc->sc_buffer.c_cc == 0)
-		dosignal=1;
-
-	s = spltty();
-	(void)b_to_q((char *)buffer, sizeof(*buffer), &sc->sc_buffer);
-	(void)splx(s);
-	selwakeup(&sc->sc_rsel);
-
-	if (sc->sc_state & QMOUSE_ASLEEP) {
-		sc->sc_state &= ~QMOUSE_ASLEEP;
-		wakeup((caddr_t)sc);
-	}
-
-	if (dosignal)
-		psignal(sc->sc_proc, SIGIO);
-}
-#endif
-
-/* XXXLUKEM (jdolecek) kqueue hooks not tested */
-static void
-filt_qmsrdetach(struct knote *kn)
-{
-	struct qms_softc *sc = kn->kn_hook;
-	int s;
-
-	s = spltty();
-	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
-	splx(s);
-}
-
-static int
-filt_qmsread(struct knote *kn, long hint)
-{
-	struct qms_softc *sc = kn->kn_hook;
-
-	kn->kn_data = sc->sc_buffer.c_cc;
-	return (kn->kn_data > 0);
-}
-
-static const struct filterops qmsread_filtops =
-	{ 1, NULL, filt_qmsrdetach, filt_qmsread };
-
-int
-qmskqfilter(dev_t dev, struct knote *kn)
-{
-	struct qms_softc *sc = qms_cd.cd_devs[minor(dev)];
-	struct klist *klist;
-	int s;
-
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-		klist = &sc->sc_rsel.sel_klist;
-		kn->kn_fop = &qmsread_filtops;
-		break;
-
-	default:
-		return (1);
-	}
-
-	kn->kn_hook = sc;
-
-	s = spltty();
-	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	splx(s);
-
-	return (0);
-}
-
-/* End of qms.c */
+/* end of qms.c */

@@ -1,4 +1,4 @@
-#	$NetBSD: std.acorn32,v 1.1 2001/10/05 22:27:47 reinoud Exp $
+#	$NetBSD: std.acorn32,v 1.1.24.1 2004/08/03 10:30:49 skrll Exp $
 #
 # standard NetBSD/arm32 options
 
@@ -10,3 +10,7 @@ options 	EXEC_SCRIPT
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
+
+# Since the hardware is not capable of half-word loads/stores,
+# Acorn machines and alignment faults do not play nice together.
+options 	ARM32_DISABLE_ALIGNMENT_FAULTS

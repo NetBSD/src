@@ -1,0 +1,15 @@
+#	$NetBSD: std.ibmnws,v 1.1.4.2 2004/08/03 10:36:26 skrll Exp $
+#
+# standard, required NetBSD/ibmnws 'options'
+
+machine		ibmnws powerpc
+
+options 	EXEC_SCRIPT	# exec #! scripts
+options 	EXEC_ELF32	# exec ELF binaries
+
+options         PPC_OEA         # Support Motorola PPC60x CPUs
+makeoptions     PPCDIR="oea"    # Tell Makefile.powerpc what dir to use
+
+makeoptions     TEXTADDR=0x100000
+
+options         INTSTK=0x4000

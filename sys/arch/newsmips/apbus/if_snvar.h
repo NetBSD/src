@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.3 2000/12/03 01:42:29 matt Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.3.24.1 2004/08/03 10:38:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -91,7 +91,7 @@ struct sn_softc {
 #define sc_if	sc_ethercom.ec_if	/* network visible interface */
 
 	caddr_t		sc_hwbase;	/* hardware base address */
-	u_int16_t	*sc_regbase;	/* register base address */
+	volatile u_int16_t *sc_regbase;	/* register base address */
 
 	int		bitmode;	/* 32 bit mode == 1, 16 == 0 */
 

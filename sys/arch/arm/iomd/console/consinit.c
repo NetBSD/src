@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2 2002/03/22 13:32:51 reinoud Exp $ */
+/*	$NetBSD: consinit.c,v 1.2.12.1 2004/08/03 10:32:49 skrll Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,6 +41,9 @@
  * Updated	: 18/04/01 updated for new wscons
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2.12.1 2004/08/03 10:32:49 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -53,13 +56,16 @@
 
 #include <arm/iomd/vidc.h>
 #include <arm/iomd/iomdreg.h>
+#include <arm/iomd/iomdvar.h>
 #include <arm/iomd/rpckbdvar.h>
+#include <arm/iomd/iomdkbcvar.h>
 #include <arm/iomd/vidcvideo.h>
 
 #include "vidcvideo.h"
 #include "rpckbd.h"
+#include "iomdkbc.h"
 
-#if ((NVIDCVIDEO>0) && (NRPCKBD>0))
+#if ((NVIDCVIDEO > 0) && (NRPCKBD > 0 || NIOMDKBC > 0))
 
 extern videomemory_t videomemory;
 extern struct bus_space iomd_bs_tag;
@@ -92,7 +98,9 @@ consinit(void)
 #endif
 
 
-#if ((NVIDCVIDEO>0) && (NRPCKBD>0))
+#if ((NVIDCVIDEO > 0) && (NRPCKBD > 0 || NIOMDKBC > 0))
+	vidcvideo_cnattach(videomemory.vidm_vbase);
+#if NRPCKBD > 0
 	/* set up bus variables for attachment */
 	ksc->sc_iot	 = &iomd_bs_tag;
 	ksc->t_isconsole = 1;
@@ -102,7 +110,9 @@ consinit(void)
 	bus_space_map(ksc->sc_iot, IOMD_KBDDAT, 8, 0, &(ksc->sc_ioh));
 
 	rpckbd_cnattach((struct device *) ksc);
-	vidcvideo_cnattach(videomemory.vidm_vbase);
+#elif NIOMDKBC > 0
+	iomdkbc_cnattach(&iomd_bs_tag, IOMD_ADDRESS(IOMD_KBDDAT), 0);
+#endif
 	return;
 #else
 	/* XXX For old VIDC console. */

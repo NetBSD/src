@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2002/06/05 01:04:24 fredette Exp $
+#	$NetBSD: Makefile.inc,v 1.1.10.1 2004/08/03 10:35:37 skrll Exp $
 
 #	$OpenBSD: Makefile.inc,v 1.4 2001/03/29 03:58:17 mickey Exp $
 #
@@ -13,14 +13,15 @@ SPMATH=		${SPMATHDST}/spmath.o
 SPMATH_PROF=	${SPMATHDST}/spmath.po
 
 SPMATHMAKE= \
-	cd ${SPMATHDIR} && MAKEOBJDIR=${SPMATHDST} ${MAKE} \
+	cd ${SPMATHDIR} && MAKEOBJDIRPREFIX= && unset MAKEOBJDIRPREFIX && \
+	  MAKEOBJDIR=${SPMATHDST} ${MAKE} \
 	    CC='${CC}' CFLAGS='${CFLAGS}' \
-	    CPPFLAGS='${CPPFLAGS:S@^-I.@-I../../.@g}'\
+	    SPMATHCPPFLAGS='${CPPFLAGS:S@^-I.@-I. -I../../.@g}'\
 	    AS='${AS}' AFLAGS='${AFLAGS}' \
 	    LD='${LD}' STRIP='${STRIP}' \
 	    CPP='${CPP}' STRIP='${STRIP}' AR='${AR}' \
 	    NM='${NM}' LORDER='${LORDER}' \
-	    XMACHINE='${MACHINE}' XMACHINE_ARCH='${MACHINE_ARCH}' \
+	    XMACHINE='${MACHINE}' XMACHINE_ARCH='${MACHINE_ARCH}'
 
 ${SPMATH}:	.NOTMAIN __always_make_spmath
 	@echo making sure the spmath library is up to date...

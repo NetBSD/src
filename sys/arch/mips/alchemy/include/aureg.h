@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.3 2003/04/01 17:30:09 hpeyerl Exp $ */
+/* $NetBSD: aureg.h,v 1.3.2.1 2004/08/03 10:37:38 skrll Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -487,6 +487,8 @@
 #define	UART_MODULE_CONTROL	0x100	/* Module Control Register */
 #define	  UMC_CE		  0x2	/* Module Clock Enable */
 #define	  UMC_ME		  0x1	/* Module Enable */
+
+#define	UART_SIZE		0x104
 
 /************************************************************************/
 /*************************   SSI registers   ****************************/

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.19 2003/04/28 23:16:21 bjh21 Exp $	*/
+/*	$NetBSD: signal.h,v 1.19.2.1 2004/08/03 10:37:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -45,7 +41,16 @@
 
 #include <machine/cdefs.h>	/* for API selection */
 
+#ifdef _KERNEL
+#ifdef COMPAT_16 
+#define SIGTRAMP_VALID(vers) ((unsigned)(vers) <= 2)
+#else
+#define SIGTRAMP_VALID(vers) ((vers) == 2)
+#endif 
+#endif
+
 #if !defined(__ASSEMBLER__)
+
 
 /*
  * Machine-dependent signal definitions
@@ -89,51 +94,6 @@ struct sigcontext {
 	int	sc_xxx[8];	/* XXX reserved */
 	sigset_t sc_mask;	/* signal mask to restore (new style) */
 };
-
-/*
- * The following macros are used to convert from a ucontext to sigcontext,
- * and vice-versa.  This is for building a sigcontext to deliver to old-style
- * signal handlers, and converting back (in the event the handler modifies
- * the context).
- */
-#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
-do {									\
-	(sc)->sc_pc = (uc)->uc_mcontext.__gregs[_REG_EPC];		\
-	memcpy((sc)->sc_regs, (uc)->uc_mcontext.__gregs,		\
-	    sizeof((sc)->sc_regs));					\
-	(sc)->mullo = (uc)->uc_mcontext.__gregs[_REG_MDLO];		\
-	(sc)->mulhi = (uc)->uc_mcontext.__gregs[_REG_MDHI];		\
-									\
-	if ((uc)->uc_flags & _UC_FPU) {					\
-		memcpy(&(sc)->sc_fpregs,					\
-		    &(uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32,	\
-		    sizeof((uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32)); \
-		(sc)->sc_fpregs[32] =					\
-		    (uc)->uc_mcontext.__fpregs.__fp_csr;		\
-		(sc)->sc_fpc_eir = 0;	/* XXX */			\
-		(sc)->sc_fpused = 1;					\
-	} else								\
-		(sc)->sc_fpused = 0;					\
-} while (/*CONSTCOND*/0)
-
-#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
-do {									\
-	(uc)->uc_mcontext.__gregs[_REG_EPC] = (sc)->sc_pc;		\
-	memcpy((uc)->uc_mcontext.__gregs, (sc)->sc_regs,		\
-	    sizeof((sc)->sc_regs));					\
-	(uc)->uc_mcontext.__gregs[_REG_MDLO] = (sc)->mullo;		\
-	(uc)->uc_mcontext.__gregs[_REG_MDHI] = (sc)->mulhi;		\
-									\
-	if ((sc)->sc_fpused) {						\
-		memcpy(&(uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32,	\
-		    &(sc)->sc_fpregs,					\
-		    sizeof((uc)->uc_mcontext.__fpregs.__fp_r.__fp_regs32)); \
-		(uc)->uc_mcontext.__fpregs.__fp_csr =			\
-		    (sc)->sc_fpregs[32];				\
-		(uc)->uc_flags |= _UC_FPU;				\
-	} else								\
-		(uc)->uc_flags &= ~_UC_FPU;				\
-} while (/*CONSTCOND*/0)
 
 #endif	/* _NETBSD_SOURCE */
 

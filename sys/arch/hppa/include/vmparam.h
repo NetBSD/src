@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2003/04/02 07:35:58 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5.2.1 2004/08/03 10:35:37 skrll Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.17 2001/09/22 18:00:09 miod Exp $	*/
 
@@ -43,7 +43,7 @@
 /*
  * USRSTACK is the top (end) of the user stack.
  */
-#define	USRSTACK	0x68FF3000		/* Start of user stack */
+#define	USRSTACK	0x70000000		/* Start of user stack */
 #define	SYSCALLGATE	0xC0000000		/* syscall gateway page */
 
 /* Alignment requirement for a uspace. */
@@ -65,7 +65,7 @@
 #define	DFLSSIZ		(512*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		(UADDR-USRSTACK)	/* max stack size */
+#define	MAXSSIZ		(256*1024*1024)	/* max stack size */
 #endif
 
 #ifndef USRIOSIZE
@@ -110,4 +110,3 @@
 #define	VM_FREELIST_DEFAULT	0
 
 #endif	/* _HPPA_VMPARAM_H_ */
-

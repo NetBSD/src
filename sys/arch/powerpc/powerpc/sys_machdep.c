@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4 2003/01/18 06:23:34 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.4.2.1 2004/08/03 10:39:37 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -31,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4.2.1 2004/08/03 10:39:37 skrll Exp $");
+
 #include <sys/param.h>
 
 #include <sys/mount.h>
@@ -38,10 +41,7 @@
 #include <sys/syscallargs.h>
 
 int
-sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	/*
 	 * Currently no special system calls

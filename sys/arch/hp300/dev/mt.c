@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.23 2003/06/29 22:28:18 fvdl Exp $	*/
+/*	$NetBSD: mt.c,v 1.23.2.1 2004/08/03 10:34:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Copyright (c) 1992, The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.23 2003/06/29 22:28:18 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.23.2.1 2004/08/03 10:34:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.13 2003/05/03 18:10:44 wiz Exp $	*/
+/*	$NetBSD: btl.c,v 1.13.2.1 2004/08/03 10:32:21 skrll Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -49,6 +49,9 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.13.2.1 2004/08/03 10:32:21 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.15 2002/10/02 05:36:37 thorpej Exp $	*/
+/*	$NetBSD: akbd.c,v 1.15.6.1 2004/08/03 10:37:05 skrll Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.15.6.1 2004/08/03 10:37:05 skrll Exp $");
 
 #include "opt_adb.h"
 

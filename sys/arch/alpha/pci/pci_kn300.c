@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.24 2002/05/15 16:57:42 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.24.10.1 2004/08/03 10:31:20 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.24 2002/05/15 16:57:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.24.10.1 2004/08/03 10:31:20 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -154,7 +154,7 @@ dec_kn300_intr_map(pa, ihp)
 	if (ccp->cc_mid == 5 && device == 1) {
 		mcpcia_irq = 16;
 	} else if (device >= 2 && device <= 5) {
-		mcpcia_irq = (device - 2) * 4;
+		mcpcia_irq = (device - 2) * 4 + buspin - 1;
 	} else {
 		printf("dec_kn300_intr_map: weird device number %d\n", device);
 		return(1);

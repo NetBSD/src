@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3 2002/08/14 16:18:12 fredette Exp $	*/
+/*	$NetBSD: locore.S,v 1.3.6.1 2004/08/03 10:34:48 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -63,6 +63,7 @@
  *  suitability of this software for any purpose.
  */
 
+#include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 
@@ -84,25 +85,30 @@
 /* Some aliases for the macros in assym.h. */
 #define	TRAPFRAME_SIZEOF	trapframe_SIZEOF
 
+#define	ccr		cr10
+#define	rctr	cr0
+#define	vtop	cr25
+#define	hptmask cr24
+
 /*
  * Very crude debugging macros that write to com1.
  */
 #define	COM1_TX_REG	(0xf0823000 + 0x800)
-#define _DEBUG_PUTCHAR(reg1, reg2)	! \
-	ldil	L%COM1_TX_REG, reg1	! \
-	stb	reg2, R%COM1_TX_REG(sr1, reg1) ! \
-	ldil	L%60000000, reg1	! \
-	ldi	1, reg2			! \
-	comb,<>,n	reg1, r0, -8	! \
-	sub	reg1, reg2, reg1
-#define DEBUG_PUTCHAR(reg1, reg2, ch)	! \
-	ldi	ch, reg2		! \
-	_DEBUG_PUTCHAR(reg1, reg2)
+#define _DEBUG_PUTCHAR(reg1, reg2)		! \
+	ldil	L%COM1_TX_REG, %reg1		! \
+	stb	%reg2, R%COM1_TX_REG(%sr1, %reg1) ! \
+	ldil	L%60000000, %reg1		! \
+	ldi	1, %reg2			! \
+	comb,<>,n	%reg1, %r0, -8		! \
+	sub	%reg1, %reg2, %reg1
+#define DEBUG_PUTCHAR(reg1, reg2, ch)		! \
+	ldi	ch, %reg2			! \
+	_DEBUG_PUTCHAR(%reg1, %reg2)
 #define _DEBUG_DUMPN(reg1, reg2, reg3, p)	! \
-	extru	reg3, p, 4, reg2		! \
-	comib,>>,n	10, reg2, 0		! \
-	addi	39, reg2, reg2			! \
-	addi	48, reg2, reg2			! \
+	extru	%reg3, p, 4, %reg2		! \
+	comib,>>,n	10, %reg2, 0		! \
+	addi	39, %reg2, %reg2		! \
+	addi	48, %reg2, %reg2		! \
 	_DEBUG_PUTCHAR(reg1, reg2)
 #define DEBUG_DUMP32(reg1, reg2, reg3)		! \
 	DEBUG_PUTCHAR(reg1, reg2, 58)		! \
@@ -130,10 +136,10 @@
 	.import	boothowto, data
 	.import	bootdev, data
 	.import	esym, data
-	.import	curproc, data
+	.import	curlwp, data
 	.import	want_resched, data
 	.import virtual_avail, data
-	.import	proc0, data
+	.import	lwp0, data
 	.import	proc0paddr, data
 	.import	kpsw, data
 	.import	panic, code
@@ -143,12 +149,22 @@
 
 	.section .bss
 	.export	pdc_stack, data
-pdc_stack
-	.comm	4*NBPG
-exit_stack
-	.comm	2*NBPG
-kernelmapped			/* set when kernel is mapped */
-	.comm	4
+pdc_stack:
+	.block	4*NBPG
+exit_stack:
+	.block	2*NBPG
+kernelmapped:			/* set when kernel is mapped */
+	.block	4
+/*
+        .section .bss
+        .export pdc_stack, data
+pdc_stack:
+        .comm   4*(1 << 12)
+exit_stack:
+        .comm   2*(1 << 12)
+kernelmapped:
+        .comm   4
+*/
 
 	.text
 
@@ -171,189 +187,189 @@ ENTRY(start,0)
 	/*
 	 * save the pdc, boothowto, bootdev and esym arguments
 	 */
-	ldil	L%pdc,r1
-	stw	arg0,R%pdc(r1)
-	ldil	L%boothowto,r1
-	stw	arg1,R%boothowto(r1)
-	ldil	L%bootdev,r1
-	stw	arg2,R%bootdev(r1)
-	ldil	L%esym,r1
-	stw	arg3,R%esym(r1)
+	ldil	L%pdc,%r1
+	stw	%arg0,R%pdc(%r1)
+	ldil	L%boothowto,%r1
+	stw	%arg1,R%boothowto(%r1)
+	ldil	L%bootdev,%r1
+	stw	%arg2,R%bootdev(%r1)
+	ldil	L%esym,%r1
+	stw	%arg3,R%esym(%r1)
 
 	/* Align arg3, which is the start of available memory */
-	ldo	NBPG-1(arg3), arg3
-	dep	r0, 31, PGSHIFT, arg3
+	ldo	NBPG-1(%arg3), %arg3
+	dep	%r0, 31, PGSHIFT, %arg3
 
 	/*
 	 * disable interrupts and turn off all bits in the psw so that
 	 * we start in a known state.
 	 */
-	rsm	RESET_PSW, r0
+	rsm	RESET_PSW, %r0
 
 	/*
 	 * to keep the spl() routines consistent we need to put the correct
 	 * spl level into eiem, and reset any pending interrupts
 	 */
-	ldi	-1, r1
-	mtctl	r0, eiem	/* IPL_NONE */
-	mtctl	r1, eirr
+	ldi	-1, %r1
+	mtctl	%r0, %eiem	/* IPL_NONE */
+	mtctl	%r1, %eirr
 
 	/*
 	 * set up the dp pointer so that we can do quick references off of it
 	 */
-	ldil	L%$global$,dp
-	ldo	R%$global$(dp),dp
+	ldil	L%$global$,%dp
+	ldo	R%$global$(%dp),%dp
 
-	/* zero fake trapframe and proc0 u-area */
-	/* XXX - we should create a real trapframe for proc0 */
-	copy	arg3, t2
-	ldi	NBPG+TRAPFRAME_SIZEOF, t1
-$start_zero_tf
-	stws,ma r0, 4(t2)
-	addib,>= -8, t1, $start_zero_tf
-	stws,ma r0, 4(t2)	/* XXX could use ,bc here, but gas is broken */
+	/* zero fake trapframe and lwp0 u-area */
+	/* XXX - we should create a real trapframe for lwp0 */
+	copy	%arg3, %t2
+	ldi	NBPG+TRAPFRAME_SIZEOF, %t1
+$start_zero_tf:
+	stws,ma %r0, 4(%t2)
+	addib,>= -8, %t1, $start_zero_tf
+	stws,ma %r0, 4(%t2)	/* XXX could use ,bc here, but gas is broken */
 
 	/*
 	 * kernel stack lives here (arg3 is page-aligned esym)
 	 * initialize the pcb
 	 * arg0 will be available space for hppa_init()
 	 */
-	ldo	NBPG+TRAPFRAME_SIZEOF(arg3), sp
-	mtctl	arg3, cr30
-	stw	r0, U_PCB+PCB_ONFAULT(arg3)
-	stw	r0, U_PCB+PCB_SPACE(arg3)	/* XXX HPPA_SID_KERNEL == 0 */
-	stw	arg3, U_PCB+PCB_UVA(arg3)
-	ldil	L%USPACE, arg0
-	add	arg3, arg0, arg0
-	ldil	L%proc0paddr, t1
-	stw	arg3, R%proc0paddr(t1)
-	ldil	L%proc0, t2
-	stw	arg3, R%proc0+P_ADDR(t2)
-	ldo	NBPG(arg3), t1
-	stw	t1, R%proc0+P_MD_REGS(t2)
+	ldo	NBPG+TRAPFRAME_SIZEOF(%arg3), %sp
+	mtctl	%arg3, %cr30
+	stw	%r0, U_PCB+PCB_ONFAULT(%arg3)
+	stw	%r0, U_PCB+PCB_SPACE(%arg3)	/* XXX HPPA_SID_KERNEL == 0 */
+	stw	%arg3, U_PCB+PCB_UVA(%arg3)
+	ldil	L%USPACE, %arg0
+	add	%arg3, %arg0, %arg0
+	ldil	L%proc0paddr, %t1
+	stw	%arg3, R%proc0paddr(%t1)
+	ldil	L%lwp0, %t2
+	stw	%arg3, R%lwp0+L_ADDR(%t2)
+	ldo	NBPG(%arg3), %t1
+	stw	%t1, R%lwp0+L_MD_REGS(%t2)
 
-	ldil	L%TFF_LAST, t1
-	stw	t1, TF_FLAGS-TRAPFRAME_SIZEOF(sp)
-	stw	arg3, TF_CR30-TRAPFRAME_SIZEOF(sp)
+	ldil	L%TFF_LAST, %t1
+	stw	%t1, TF_FLAGS-TRAPFRAME_SIZEOF(%sp)
+	stw	%arg3, TF_CR30-TRAPFRAME_SIZEOF(%sp)
 
 	/*
 	 * We need to set the Q bit so that we can take TLB misses after we
 	 * turn on virtual memory.
 	 */
-	mtctl	r0, pcsq
-	mtctl	r0, pcsq
-	ldil	L%$qisnowon, t1
-	ldo	R%$qisnowon(t1), t1
-	mtctl	t1, pcoq
-	ldo	4(t1),t1
-	mtctl	t1, pcoq
-	ldi	PSW_Q|PSW_I, t1
-	mtctl	t1, ipsw
+	mtctl	%r0, %pcsq
+	mtctl	%r0, %pcsq
+	ldil	L%$qisnowon, %t1
+	ldo	R%$qisnowon(%t1), %t1
+	mtctl	%t1, %pcoq
+	ldo	4(%t1),%t1
+	mtctl	%t1, %pcoq
+	ldi	PSW_Q|PSW_I, %t1
+	mtctl	%t1, %ipsw
 	rfi
 	nop
 
-$qisnowon
+$qisnowon:
 	/*
 	 * load address of interrupt vector table
 	 */
-	ldil	L%$ivaaddr,t2
-	ldo	R%$ivaaddr(t2),t2
-	mtctl	t2,iva
+	ldil	L%$ivaaddr,%t2
+	ldo	R%$ivaaddr(%t2),%t2
+	mtctl	%t2,%iva
 
 	/*
 	 * Create a stack frame for us to call C with. Clear out the previous
 	 * sp marker to mark that this is the first frame on the stack.
 	 */
-	copy	sp, t1
-	stwm	r0, HPPA_FRAME_SIZE(sp)
-	copy	sp, r3
-	stwm	t1, HPPA_FRAME_SIZE(sp)
+	copy	%sp, %t1
+	stwm	%r0, HPPA_FRAME_SIZE(%sp)
+	copy	%sp, %r3
+	stwm	%t1, HPPA_FRAME_SIZE(%sp)
 
 	/*
 	 * disable all coprocessors
 	 */
-	mtctl	r0, ccr
+	mtctl	%r0, %ccr
 
 	/*
 	 * call C routine hppa_init() to initialize VM
 	 */
 	.import hppa_init, code
-	ldil	L%hppa_init, r1
-	ldo	R%hppa_init(r1), r1
+	ldil	L%hppa_init, %r1
+	ldo	R%hppa_init(%r1), %r1
 	.call
-	blr	r0, rp
-	bv,n	(r1)
+	blr	%r0, %rp
+	bv,n	(%r1)
 	nop
 
 	/*
 	 * go to virtual mode...
 	 * get things ready for the kernel to run in virtual mode
 	 */
-	ldi	HPPA_PID_KERNEL, r1
-	mtctl	r1, pidr1
-	mtctl	r1, pidr2
+	ldi	HPPA_PID_KERNEL, %r1
+	mtctl	%r1, %pidr1
+	mtctl	%r1, %pidr2
 #if pbably_not_worth_it
-	mtctl	r0, pidr3
-	mtctl	r0, pidr4
+	mtctl	%r0, %pidr3
+	mtctl	%r0, %pidr4
 #endif
-	mtsp	r0, sr0
-	mtsp	r0, sr1
-	mtsp	r0, sr2
-	mtsp	r0, sr3
-	mtsp	r0, sr4
-	mtsp	r0, sr5
-	mtsp	r0, sr6
-	mtsp	r0, sr7
+	mtsp	%r0, %sr0
+	mtsp	%r0, %sr1
+	mtsp	%r0, %sr2
+	mtsp	%r0, %sr3
+	mtsp	%r0, %sr4
+	mtsp	%r0, %sr5
+	mtsp	%r0, %sr6
+	mtsp	%r0, %sr7
 
 	/*
 	 * Cannot change the queues or IPSW with the Q-bit on
 	 */
-	rsm	RESET_PSW, r0
+	rsm	RESET_PSW, %r0
 
 	/*
 	 * We need to do an rfi to get the C bit set
 	 */
-	mtctl	r0, pcsq
-	mtctl	r0, pcsq
-	ldil	L%$virtual_mode, t1
-	ldo	R%$virtual_mode(t1), t1
-	mtctl	t1, pcoq
-	ldo	4(t1), t1
-	mtctl	t1, pcoq
-	ldil	L%kpsw, t1
-	ldw	R%kpsw(t1), t2
-	mtctl	t2, ipsw
+	mtctl	%r0, %pcsq
+	mtctl	%r0, %pcsq
+	ldil	L%$virtual_mode, %t1
+	ldo	R%$virtual_mode(%t1), %t1
+	mtctl	%t1, %pcoq
+	ldo	4(%t1), %t1
+	mtctl	%t1, %pcoq
+	ldil	L%kpsw, %t1
+	ldw	R%kpsw(%t1), %t2
+	mtctl	%t2, %ipsw
 	rfi
 	nop
 
-$virtual_mode
-	ldil	L%kernelmapped, t1
-	stw	t1, R%kernelmapped(t1)
+$virtual_mode:
+	ldil	L%kernelmapped, %t1
+	stw	%t1, R%kernelmapped(%t1)
 
 #ifdef DDB
 	.import	Debugger, code
 	/* have to call debugger from here, from virtual mode */
-	ldil	L%boothowto, r1
-	ldw	R%boothowto(r1), r1
-	bb,>=	r1, 25, $noddb
+	ldil	L%boothowto, %r1
+	ldw	R%boothowto(%r1), %r1
+	bb,>=	%r1, 25, $noddb
 	nop
 
 	break	HPPA_BREAK_KERNEL, HPPA_BREAK_KGDB
 	nop
-$noddb
+$noddb:
 #endif
 
 	.import main,code
-	ldil	L%main, r1
-	ldo	R%main(r1), r1
-$callmain
+	ldil	L%main, %r1
+	ldo	R%main(%r1), %r1
+$callmain:
 	.call
-	blr	r0, rp
-	bv,n	(r1)
+	blr	%r0, %rp
+	bv,n	(%r1)
 	nop
 
 	/* should never return... */
-	bv	(rp)
+	bv	(%rp)
 	nop
 EXIT(start)
 
@@ -364,119 +380,119 @@ EXIT(start)
  */
 ENTRY(pdc_call,160)
 
-	mfctl	eiem, t1
-	mtctl	r0, eiem
-	stw	rp, HPPA_FRAME_CRP(sp)
-	copy	arg0, r31
-	copy	sp, ret1
+	mfctl	%eiem, %t1
+	mtctl	%r0, %eiem
+	stw	%rp, HPPA_FRAME_CRP(%sp)
+	copy	%arg0, %r31
+	copy	%sp, %ret1
 
-	ldil	L%kernelmapped, ret0
-	ldw	R%kernelmapped(ret0), ret0
-	comb,=	r0, ret0, pdc_call_unmapped1
+	ldil	L%kernelmapped, %ret0
+	ldw	R%kernelmapped(%ret0), %ret0
+	comb,=	%r0, %ret0, pdc_call_unmapped1
 	nop
-	ldil	L%pdc_stack, ret1
-	ldo	R%pdc_stack(ret1), ret1
+	ldil	L%pdc_stack, %ret1
+	ldo	R%pdc_stack(%ret1), %ret1
 
-pdc_call_unmapped1
-	copy	sp, r1
-	ldo	HPPA_FRAME_SIZE+24*4(ret1), sp
+pdc_call_unmapped1:
+	copy	%sp, %r1
+	ldo	HPPA_FRAME_SIZE+24*4(%ret1), %sp
 
-	stw	r1, HPPA_FRAME_PSP(sp)
+	stw	%r1, HPPA_FRAME_PSP(%sp)
 
 	/* save kernelmapped and eiem */
-	stw	ret0, HPPA_FRAME_ARG(21)(sp)
-	stw	t1, HPPA_FRAME_ARG(22)(sp)
+	stw	%ret0, HPPA_FRAME_ARG(21)(%sp)
+	stw	%t1, HPPA_FRAME_ARG(22)(%sp)
 
 	/* copy arguments */
-	copy	arg2, arg0
-	copy	arg3, arg1
-	ldw	HPPA_FRAME_ARG(4)(r1), arg2
-	ldw	HPPA_FRAME_ARG(5)(r1), arg3
-	ldw	HPPA_FRAME_ARG(6)(r1), t1
-	ldw	HPPA_FRAME_ARG(7)(r1), t2
-	ldw	HPPA_FRAME_ARG(8)(r1), t3
-	ldw	HPPA_FRAME_ARG(9)(r1), t4
-	stw	t1, HPPA_FRAME_ARG(4)(sp)	/* XXX can use ,bc */
-	stw	t2, HPPA_FRAME_ARG(5)(sp)
-	stw	t3, HPPA_FRAME_ARG(6)(sp)
-	stw	t4, HPPA_FRAME_ARG(7)(sp)
-	ldw	HPPA_FRAME_ARG(10)(r1), t1
-	ldw	HPPA_FRAME_ARG(11)(r1), t2
-	ldw	HPPA_FRAME_ARG(12)(r1), t3
-	ldw	HPPA_FRAME_ARG(13)(r1), t4
-	stw	t1, HPPA_FRAME_ARG(8)(sp)
-	stw	t2, HPPA_FRAME_ARG(9)(sp)
-	stw	t3, HPPA_FRAME_ARG(10)(sp)
-	stw	t4, HPPA_FRAME_ARG(11)(sp)
+	copy	%arg2, %arg0
+	copy	%arg3, %arg1
+	ldw	HPPA_FRAME_ARG(4)(%r1), %arg2
+	ldw	HPPA_FRAME_ARG(5)(%r1), %arg3
+	ldw	HPPA_FRAME_ARG(6)(%r1), %t1
+	ldw	HPPA_FRAME_ARG(7)(%r1), %t2
+	ldw	HPPA_FRAME_ARG(8)(%r1), %t3
+	ldw	HPPA_FRAME_ARG(9)(%r1), %t4
+	stw	%t1, HPPA_FRAME_ARG(4)(%sp)	/* XXX can use ,bc */
+	stw	%t2, HPPA_FRAME_ARG(5)(%sp)
+	stw	%t3, HPPA_FRAME_ARG(6)(%sp)
+	stw	%t4, HPPA_FRAME_ARG(7)(%sp)
+	ldw	HPPA_FRAME_ARG(10)(%r1), %t1
+	ldw	HPPA_FRAME_ARG(11)(%r1), %t2
+	ldw	HPPA_FRAME_ARG(12)(%r1), %t3
+	ldw	HPPA_FRAME_ARG(13)(%r1), %t4
+	stw	%t1, HPPA_FRAME_ARG(8)(%sp)
+	stw	%t2, HPPA_FRAME_ARG(9)(%sp)
+	stw	%t3, HPPA_FRAME_ARG(10)(%sp)
+	stw	%t4, HPPA_FRAME_ARG(11)(%sp)
 
 	/* save temp control regs */
-	mfctl	cr24, t1
-	mfctl	cr25, t2
-	mfctl	cr26, t3
-	mfctl	cr27, t4
-	stw	t1, HPPA_FRAME_ARG(12)(sp)	/* XXX can use ,bc */
-	stw	t2, HPPA_FRAME_ARG(13)(sp)
-	stw	t3, HPPA_FRAME_ARG(14)(sp)
-	stw	t4, HPPA_FRAME_ARG(15)(sp)
-	mfctl	cr28, t1
-	mfctl	cr29, t2
-	mfctl	cr30, t3
-	mfctl	cr31, t4
-	stw	t1, HPPA_FRAME_ARG(16)(sp)
-	stw	t2, HPPA_FRAME_ARG(17)(sp)
-	stw	t3, HPPA_FRAME_ARG(18)(sp)
-	stw	t4, HPPA_FRAME_ARG(19)(sp)
+	mfctl	%cr24, %t1
+	mfctl	%cr25, %t2
+	mfctl	%cr26, %t3
+	mfctl	%cr27, %t4
+	stw	%t1, HPPA_FRAME_ARG(12)(%sp)	/* XXX can use ,bc */
+	stw	%t2, HPPA_FRAME_ARG(13)(%sp)
+	stw	%t3, HPPA_FRAME_ARG(14)(%sp)
+	stw	%t4, HPPA_FRAME_ARG(15)(%sp)
+	mfctl	%cr28, %t1
+	mfctl	%cr29, %t2
+	mfctl	%cr30, %t3
+	mfctl	%cr31, %t4
+	stw	%t1, HPPA_FRAME_ARG(16)(%sp)
+	stw	%t2, HPPA_FRAME_ARG(17)(%sp)
+	stw	%t3, HPPA_FRAME_ARG(18)(%sp)
+	stw	%t4, HPPA_FRAME_ARG(19)(%sp)
 
-	comb,=	r0, ret0, pdc_call_unmapped2
+	comb,=	%r0, %ret0, pdc_call_unmapped2
 	nop
 
-	copy	arg0, t4
-	ldi	PSW_Q, arg0 /* (!pdc_flag && args[0] == PDC_PIM)? PSW_M:0) */
+	copy	%arg0, %t4
+	ldi	PSW_Q, %arg0 /* (!pdc_flag && args[0] == PDC_PIM)? PSW_M:0) */
 	break	HPPA_BREAK_KERNEL, HPPA_BREAK_SET_PSW
 	nop
-	stw	ret0, HPPA_FRAME_ARG(23)(sp)
-	copy	t4, arg0
+	stw	%ret0, HPPA_FRAME_ARG(23)(%sp)
+	copy	%t4, %arg0
 
-pdc_call_unmapped2
+pdc_call_unmapped2:
 	.call
-	blr	r0, rp
-	bv,n	(r31)
+	blr	%r0, %rp
+	bv,n	(%r31)
 	nop
 
 	/* load temp control regs */
-	ldw	HPPA_FRAME_ARG(12)(sp), t1
-	ldw	HPPA_FRAME_ARG(13)(sp), t2
-	ldw	HPPA_FRAME_ARG(14)(sp), t3
-	ldw	HPPA_FRAME_ARG(15)(sp), t4
-	mtctl	t1, cr24
-	mtctl	t2, cr25
-	mtctl	t3, cr26
-	mtctl	t4, cr27
-	ldw	HPPA_FRAME_ARG(16)(sp), t1
-	ldw	HPPA_FRAME_ARG(17)(sp), t2
-	ldw	HPPA_FRAME_ARG(18)(sp), t3
-	ldw	HPPA_FRAME_ARG(19)(sp), t4
-	mtctl	t1, cr28
-	mtctl	t2, cr29
-	mtctl	t3, cr30
-	mtctl	t4, cr31
+	ldw	HPPA_FRAME_ARG(12)(%sp), %t1
+	ldw	HPPA_FRAME_ARG(13)(%sp), %t2
+	ldw	HPPA_FRAME_ARG(14)(%sp), %t3
+	ldw	HPPA_FRAME_ARG(15)(%sp), %t4
+	mtctl	%t1, %cr24
+	mtctl	%t2, %cr25
+	mtctl	%t3, %cr26
+	mtctl	%t4, %cr27
+	ldw	HPPA_FRAME_ARG(16)(%sp), %t1
+	ldw	HPPA_FRAME_ARG(17)(%sp), %t2
+	ldw	HPPA_FRAME_ARG(18)(%sp), %t3
+	ldw	HPPA_FRAME_ARG(19)(%sp), %t4
+	mtctl	%t1, %cr28
+	mtctl	%t2, %cr29
+	mtctl	%t3, %cr30
+	mtctl	%t4, %cr31
 
-	ldw	HPPA_FRAME_ARG(21)(sp), t1
-	ldw	HPPA_FRAME_ARG(22)(sp), t2
-	comb,=	r0, t1, pdc_call_unmapped3
+	ldw	HPPA_FRAME_ARG(21)(%sp), %t1
+	ldw	HPPA_FRAME_ARG(22)(%sp), %t2
+	comb,=	%r0, %t1, pdc_call_unmapped3
 	nop
 
-	copy	ret0, t3
-	ldw	HPPA_FRAME_ARG(23)(sp), arg0
+	copy	%ret0, %t3
+	ldw	HPPA_FRAME_ARG(23)(%sp), %arg0
 	break	HPPA_BREAK_KERNEL, HPPA_BREAK_SET_PSW
 	nop
-	copy	t3, ret0
+	copy	%t3, %ret0
 
-pdc_call_unmapped3
-	ldw	HPPA_FRAME_PSP(sp), sp
-	ldw	HPPA_FRAME_CRP(sp), rp
-	bv	r0(rp)
-	mtctl	t2, eiem
+pdc_call_unmapped3:
+	ldw	HPPA_FRAME_PSP(%sp), %sp
+	ldw	HPPA_FRAME_CRP(%sp), %rp
+	bv	%r0(%rp)
+	mtctl	%t2, %eiem
 EXIT(pdc_call)
 
 /*
@@ -485,10 +501,10 @@ EXIT(pdc_call)
 ENTRY(spllower,64)
 	ldil	L%ipending, %r1
 	ldw	R%ipending(%r1), %r1	; load ipending
-	ldil	L%cpl, t1
+	ldil	L%cpl, %t1
 	andcm,<> %r1, %arg0, %r1	; and with complement of new cpl
 	bv	%r0(%rp)
-	stw	%arg0, R%cpl(t1)	; store new cpl
+	stw	%arg0, R%cpl(%t1)	; store new cpl
 
 	/*
 	 * Dispatch interrupts.  There's a chance
@@ -506,7 +522,7 @@ ENTRY(spllower,64)
 	andcm,<> %r1, %arg0, %r1	; and with complement of new cpl
 	b,n	spllower_out		; branch if we got beaten
 	
-spllower_dispatch
+spllower_dispatch:
 	/* start stack calling convention */
 	stw	%rp, HPPA_FRAME_CRP(%sp)
 	copy	%r3, %r1
@@ -533,7 +549,7 @@ spllower_dispatch
 	ldo	HPPA_FRAME_SIZE(%r3), %sp
 	ldw,mb	-HPPA_FRAME_SIZE(%sp), %r3
 	
-spllower_out
+spllower_out:
 	/*
 	 * Now return, storing %eiem in the delay slot.
 	 * (hp700_intr_dispatch leaves it zero).  I think 
@@ -549,14 +565,14 @@ EXIT(spllower)
  * void hp700_intr_schedule(int mask);
  */
 ENTRY(hp700_intr_schedule,64)
-	ldil	L%ipending, t1
-	ldil	L%cpl, t2
+	ldil	L%ipending, %t1
+	ldil	L%cpl, %t2
 	mfctl	%eiem, %arg1
 	mtctl	%r0, %eiem			; disable interrupts
-	ldw	R%ipending(t1), %r1		; load ipending
+	ldw	R%ipending(%t1), %r1		; load ipending
 	or	%r1, %arg0, %r1			; or in mask
-	stw	%r1, R%ipending(t1)		; store ipending
-	ldw	R%cpl(t2), %arg0		; load cpl
+	stw	%r1, R%ipending(%t1)		; store ipending
+	ldw	R%cpl(%t2), %arg0		; load cpl
 	andcm,= %r1, %arg0, %r1			; and ipending with ~cpl
 	b,n	spllower_dispatch		; dispatch if we can
 	bv	%r0(%rp)
@@ -595,7 +611,7 @@ ENTRY(hp700_intr_ipending_new,64)
 	 * the addib runs with the mtsar in its delay slot.  
 	 * If the addib branches, the mtsar is nullified.
 	 */
-$hp700_inew_loop
+$hp700_inew_loop:
 	mtsar	%arg2
 	bvb,>=,n %arg1, $hp700_inew_loop
 	addib,<,n -1, %arg2, $hp700_inew_done
@@ -606,13 +622,13 @@ $hp700_inew_loop
 	 * register.  Otherwise, set the bit in our ipending_new
 	 * value and loop.
 	 */
-	ldbx	%arg2(%arg0), t1
-	bb,<,n	t1, (31 - INT_REG_BIT_REG_POS), $hp700_inew_descend
-	mtsar	t1
+	ldbx	%arg2(%arg0), %t1
+	bb,<,n	%t1, (31 - INT_REG_BIT_REG_POS), $hp700_inew_descend
+	mtsar	%t1
 	addib,>= -1, %arg2, $hp700_inew_loop
 	vdepi	1, 1, %ret0
 
-$hp700_inew_done
+$hp700_inew_done:
 
 	/* End stack calling convention. */
 	ldw	HPPA_FRAME_CRP(%r3), %rp
@@ -621,7 +637,7 @@ $hp700_inew_done
 	bv	%r0(%rp)
 	nop
 
-$hp700_inew_descend
+$hp700_inew_descend:
 
 	/*
 	 * If the next interrupt register index is zero,
@@ -629,7 +645,7 @@ $hp700_inew_descend
 	 * is the CPU interrupt register, which you can
 	 * never descend into since it's the root.)
 	 */
-	extru,<> t1, 31, INT_REG_BIT_REG_POS, t1
+	extru,<> %t1, 31, INT_REG_BIT_REG_POS, %t1
 	b,n	$hp700_inew_unused
 
 	/* Save our state. */
@@ -641,7 +657,7 @@ $hp700_inew_descend
 	/* Get our new interrupt register. */
 	ldil	L%hp700_int_regs, %arg0
 	ldo	R%hp700_int_regs(%arg0), %arg0
-	sh2add	t1, %arg0, %arg0
+	sh2add	%t1, %arg0, %arg0
 	ldw	0(%arg0), %arg0
 
 	/*
@@ -660,7 +676,7 @@ $hp700_inew_descend
 	ldw	HPPA_FRAME_ARG(3)(%r3), %ret1
 	or	%ret1, %ret0, %ret0
 
-$hp700_inew_unused
+$hp700_inew_unused:
 	addib,>= -1, %arg2, $hp700_inew_loop
 	nop
 	b	$hp700_inew_done
@@ -670,14 +686,14 @@ EXIT(hp700_intr_ipending_new)
  * void cpu_die(void);
  */
 ENTRY(cpu_die, 0)
-	rsm	RESET_PSW, r0
+	rsm	RESET_PSW, %r0
 	nop
 	nop
-	mtsp	r0, sr0
+	mtsp	%r0, %sr0
 	ldil	L%LBCAST_ADDR, %r25
 	ldi	CMD_RESET, %r26
 	stw	%r26, R%iomod_command(%r25)
-forever					; Loop until bus reset takes effect.
+forever:					; Loop until bus reset takes effect.
 	b,n	forever
 	nop
 	nop
@@ -690,30 +706,30 @@ EXIT(cpu_die)
 LEAF_ENTRY(microtime)
 
 	.import time, data
-	ldil	L%-1000000, t3
-	ldil	L%time, t1
-	ldo	R%-1000000(t3), t3
+	ldil	L%-1000000, %t3
+	ldil	L%time, %t1
+	ldo	R%-1000000(%t3), %t3
 
 	/* t4 = splhigh() */
-	mfctl	eiem, t4
-	mtctl	r0, eiem
+	mfctl	%eiem, %t4
+	mtctl	%r0, %eiem
 
-	ldw	R%time+4(t1), t2
-	ldw	R%time(t1), t1
+	ldw	R%time+4(%t1), %t2
+	ldw	R%time(%t1), %t1
 
-	/* splx(t4) */
-	mtctl	t4, eiem
+	/* splx(%t4) */
+	mtctl	%t4, %eiem
 
-	addi	1, t2, t2
-	addb,<,n	t2, t3, microtime_no
-	addi	1, t1, t1
+	addi	1, %t2, %t2
+	addb,<,n	%t2, %t3, microtime_no
+	addi	1, %t1, %t1
 
-	copy	t3, t2
+	copy	%t3, %t2
 
-microtime_no
-	stwm	t1, 4(arg0)
-	bv	(rp)
-	stw	t2, 0(arg0)
+microtime_no:
+	stwm	%t1, 4(%arg0)
+	bv	(%rp)
+	stw	%t2, 0(%arg0)
 
 EXIT(microtime)
 
@@ -729,50 +745,59 @@ EXIT(microtime)
 /* Include the support functions. */
 #include <hppa/hppa/support.S>
 
+/* 
+ * cpu_switchto(struct lwp *cur, struct lwp *new)
+ */
+	.align	32
+ENTRY(cpu_switchto,128)
+	b	switchto
+	copy	%arg0, %arg2
+EXIT(cpu_switchto)
+
 /*
- * cpu_switch()
- * Find the highest priority process and resume it.
+ * cpu_switch(struct lwp *curlwp)
+ * Find the highest priority LWP and resume it.
  */
 	.align	32
 ENTRY(cpu_switch,128)
 
 	/*
-	 * Clear curproc so that we don't accumulate system time while idle.
+	 * Clear curlwp so that we don't accumulate system time while idle.
 	 */
-	ldil	L%curproc, t1
-	ldw	R%curproc(t1), arg2
-	stw	r0, R%curproc(t1)
-	/* remain on the old (curproc)'s stack until we have a better choice */
+	ldil	L%curlwp, %t1
+	ldw	R%curlwp(%t1), %arg2
+	stw	%r0, R%curlwp(%t1)
+	/* remain on the old (curlwp)'s stack until we have a better choice */
 
 	/*
 	 * arg3: spl
 	 * t1:	&sched_whichqs
-	 * t2:	old curproc
+	 * t2:	old curlwp
 	 *
 	 */
 
-switch_search
+switch_search:
 	/* start stack calling convention */
 	stw	%rp, HPPA_FRAME_CRP(%sp)
 	copy	%r3, %r1
 	copy	%sp, %r3
 	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
 
-	/* save cpl and old curproc */
+	/* save cpl and old curlwp */
 	ldil	L%cpl, %arg0
 	ldw	R%cpl(%arg0), %arg0
 	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)
 	stw	%arg2, HPPA_FRAME_ARG(1)(%r3)
 
-idle_loop
+idle_loop:
 	/*
 	 * XXX - We should be at splsched(), and as
 	 * such we shouldn't have to disable interrupts.
 	 */
-	ldil	L%sched_whichqs, t1
-	ldw	R%sched_whichqs(t1), t3
+	ldil	L%sched_whichqs, %t1
+	ldw	R%sched_whichqs(%t1), %t3
 
-	comb,<>	r0, t3, gotprocs
+	comb,<>	%r0, %t3, gotprocs
 	nop
 
 #if defined(LOCKDEBUG)
@@ -805,16 +830,16 @@ idle_loop
 	b	idle_loop
 	nop
 
-gotprocs
-	/* recover old curproc */
+gotprocs:
+	/* recover old curlwp */
 	ldw	HPPA_FRAME_ARG(1)(%r3), %arg2
 
 #if 0
-	/* XXX debugging - break if old curproc is NULL */
-	comb,<>,n %arg2, %r0, curprocok
+	/* XXX debugging - break if old curlwp is NULL */
+	comb,<>,n %arg2, %r0, curlwpok
 	nop
 	break	0, 5
-curprocok
+curlwpok:
 #endif
 
 	/* end stack calling convention */
@@ -822,165 +847,208 @@ curprocok
 	ldo	HPPA_FRAME_SIZE(%r3), %sp
 	ldw,mb	-HPPA_FRAME_SIZE(%sp), %r3
 
-	ldi	0, t4
-getbit
-	mtsar	t4
-	bvb,>=,n t3, getbit
-	ldo	1(t4), t4
+	ldi	0, %t4
+getbit:
+	mtsar	%t4
+	bvb,>=,n %t3, getbit
+	ldo	1(%t4), %t4
 
-	ldil	L%sched_qs, t2
-	ldo	R%sched_qs(t2), t2
-	sh3add	t4, t2, t2
+	ldil	L%sched_qs, %t2
+	ldo	R%sched_qs(%t2), %t2
+	sh3add	%t4, %t2, %t2
 
-	ldw	P_FORW(t2), arg1
+	ldw	L_FORW(%t2), %arg1
 #ifdef DIAGNOSTIC
-	comb,<>	t2, arg1, link_ok
+	comb,<>	%t2, %arg1, link_ok
 	nop
-switch_error
-	copy	t4, arg1
-	copy	t2, arg2
-	ldil	L%panic, r1
-	ldil	L%Lcspstr, arg0
-	ldo	R%panic(r1), r1
-	ldo	R%Lcspstr(arg0), arg0
+switch_error:
+	copy	%t4, %arg1
+	copy	%t2, %arg2
+	ldil	L%panic, %r1
+	ldil	L%Lcspstr, %arg0
+	ldo	R%panic(%r1), %r1
+	ldo	R%Lcspstr(%arg0), %arg0
 	.call
-	blr	%r0, rp
-	bv,n	%r0(r1)
+	blr	%r0, %rp
+	bv,n	%r0(%r1)
 	nop
-Lcspstr
+Lcspstr:
 	.asciz	"cpu_switch: bit=%x, q/p=%p"
 	.align	8
-link_ok
+link_ok:
 #endif
-	ldw	P_FORW(arg1), arg0
-	stw	arg0, P_FORW(t2)
-	stw	t2, P_BACK(arg0)
-	stw	r0, P_BACK(arg1)
+	/* take new lwp off its runq */
+	ldw	L_FORW(%arg1), %arg0
+	stw	%arg0, L_FORW(%t2)
+	stw	%t2, L_BACK(%arg0)
+	stw	%r0, L_BACK(%arg1)
 
-	comb,<> arg0, t2, sw_qnempty
+	comb,<> %arg0, %t2, sw_qnempty
 	nop
 
-	vdepi	0, 1, t3
-	stw	t3, R%sched_whichqs(t1)
+	vdepi	0, 1, %t3
+	stw	%t3, R%sched_whichqs(%t1)
 
 	/* don't need &sched_whichqs (t1) starting here */
-sw_qnempty
-	ldil	L%want_resched, t3
-	stw	r0, R%want_resched(t3)
+	/*
+	 * register usage from here:
+	 * %arg1	new lwp
+	 * %arg2	old lwp
+	 */
+
+switchto:
+sw_qnempty:
+	ldil	L%want_resched, %t3
+	stw	%r0, R%want_resched(%t3)
 
 #ifdef DIAGNOSTIC
-	/* The new process must have no wait channel. */
-	ldw	P_WCHAN(arg1), t1
-	comb,<>,n r0, t1, switch_error
-	copy	arg1, t2
-	/* The new process' state must be SRUN. */
-	ldb	P_STAT(arg1), t1
-	comib,<>,n SRUN, t1, switch_error
-	copy	arg1, t2
+	/* The new LWP must have no wait channel. */
+	ldw	L_WCHAN(%arg1), %t1
+	comb,<>,n %r0, %t1, switch_error
+	copy	%arg1, %t2
+	/* The new LWP's state must be LSRUN. */
+	ldw	L_STAT(%arg1), %t1
+	comib,<>,n LSRUN, %t1, switch_error
+	copy	%arg1, %t2
 	/*
-	 * Either we must be switching to the same process, or
-	 * the the new process' kernel stack must be reasonable.
+	 * Either we must be switching to the same LWP, or
+	 * the new LWP's kernel stack must be reasonable.
 	 */
-	comb,=,n arg1, arg2, kstack_ok
-	ldw	P_MD_REGS(arg1), t1
-	ldw	P_ADDR(arg1), arg0
-	ldw	TF_R30(t1), t1
-	ldo	NBPG(arg0), arg0
-	comb,>>,n arg0, t1, switch_error
-	copy	arg1, t2
-	sub	t1, arg0, t1
-	ldil	L%USPACE, arg0
-	ldo	R%USPACE(arg0), arg0
-	comb,<<=,n arg0, t1, switch_error
-	copy	arg1, t2
-kstack_ok
+	comb,=,n %arg1, %arg2, kstack_ok
+	ldw	L_MD_REGS(%arg1), %t1
+	ldw	L_ADDR(%arg1), %arg0
+	ldw	PCB_KSP(%arg0), %t1
+	ldo	NBPG(%arg0), %arg0
+	comb,>>,n %arg0, %t1, switch_error
+	copy	%arg1, %t2
+	sub	%t1, %arg0, %t1
+	ldil	L%USPACE, %arg0
+	ldo	R%USPACE(%arg0), %arg0
+	comb,<<=,n %arg0, %t1, switch_error
+	copy	%arg1, %t2
+kstack_ok:
 #endif
-	ldi	SONPROC, t1
-	stb	t1, P_STAT(arg1)
-	ldil	L%curproc, t1
+	ldi	LSONPROC, %t1
+	stw	%t1, L_STAT(%arg1)
+	ldil	L%curlwp, %t1
+
 	/*
 	 * Disable interrupts while we're doing the real
 	 * switch.  Is this just being paranoid?
 	 */
-	mfctl	eiem, arg3
-	mtctl	r0, eiem
-	stw	arg1, R%curproc(t1)
+	mfctl	%eiem, %arg3
+	mtctl	%r0, %eiem
+	stw	%arg1, R%curlwp(%t1)
 
-	/* Skip context switch if same process. */
-	comb,=,n arg1, arg2, switch_return
+	/* Skip context switch if same LWP. */
+	comb,=,n %arg1, %arg2, switch_return
 
-	/* If old process exited, don't bother. */
-	comb,=,n r0, arg2, switch_exited
+	/* If old LWP exited, don't bother. */
+	comb,=,n %r0, %arg2, switch_exited
 
 	/*
 	 * 2. save old proc context
 	 *
 	 * arg2: old proc
 	 */
-	ldw	P_MD(arg2), t1
-	copy	sp, t2
-	ldo	HPPA_FRAME_SIZE+16*4(sp), sp
-	ldw	TF_R30(t1), t3
-	stw	t2, HPPA_FRAME_PSP(sp)
-	stw	rp, HPPA_FRAME_CRP(sp)
-	stw	t3, HPPA_FRAME_ARG(0)(sp)
-	stw	sp, TF_R30(t1)
-	fdc	r0(t1)
+	ldw	L_MD(%arg2), %t1
+	copy	%sp, %t2
+	ldo	HPPA_FRAME_SIZE+16*4(%sp), %sp
+	stw	%t2, HPPA_FRAME_PSP(%sp)
+	stw	%rp, HPPA_FRAME_CRP(%sp)
+	ldw	L_ADDR(%arg2), %t3
+	stw	%sp, PCB_KSP(%t3)
+	fdc	%r0(%t3)
+	fdc	%r0(%t1)
 	/* save callee-save registers */
-	stw	r3,   0*4(t2)
-	stw	r4,   1*4(t2)
-	stw	r5,   2*4(t2)
-	stw	r6,   3*4(t2)
-	stw	r7,   4*4(t2)
-	stw	r8,   5*4(t2)
-	stw	r9,   6*4(t2)
-	stw	r10,  7*4(t2)
-	stw	r11,  8*4(t2)
-	stw	r12,  9*4(t2)
-	stw	r13, 10*4(t2)
-	stw	r14, 11*4(t2)
-	stw	r15, 12*4(t2)
-	stw	r16, 13*4(t2)
-	stw	r17, 14*4(t2)
-	stw	r18, 15*4(t2)
+	stw	%r3,   0*4(%t2)
+	stw	%r4,   1*4(%t2)
+	stw	%r5,   2*4(%t2)
+	stw	%r6,   3*4(%t2)
+	stw	%r7,   4*4(%t2)
+	stw	%r8,   5*4(%t2)
+	stw	%r9,   6*4(%t2)
+	stw	%r10,  7*4(%t2)
+	stw	%r11,  8*4(%t2)
+	stw	%r12,  9*4(%t2)
+	stw	%r13, 10*4(%t2)
+	stw	%r14, 11*4(%t2)
+	stw	%r15, 12*4(%t2)
+	stw	%r16, 13*4(%t2)
+	stw	%r17, 14*4(%t2)
+	stw	%r18, 15*4(%t2)
 
-	/* don't need old curproc (arg2) starting from here */
-switch_exited
+	/* don't need old curlwp (arg2) starting from here */
+switch_exited:
 	/*
 	 * 3. restore new proc context
 	 *
 	 * arg1: new proc
 	 */
-	ldw	P_MD(arg1), t1
-	ldw	TF_CR30(t1), t2
-	ldw	TF_R30(t1), sp
-	ldw	TF_CR9(t1), t3
-	mtctl	t3, pidr2
-	mtctl	t2, cr30
-	ldw	HPPA_FRAME_ARG(0)(sp), t3
-	ldw	HPPA_FRAME_CRP(sp), rp
-	ldw	HPPA_FRAME_PSP(sp), t2
-	stw	t3, TF_R30(t1)
-	fdc	r0(t1)
-	ldw	HPPA_FRAME_ARG(1)(sp), t3 /* in case we're in trampoline */
-	ldw	HPPA_FRAME_ARG(2)(sp), arg0
-	ldw	 0*4(t2), r3
-	ldw	 1*4(t2), r4
-	ldw	 2*4(t2), r5
-	ldw	 3*4(t2), r6
-	ldw	 4*4(t2), r7
-	ldw	 5*4(t2), r8
-	ldw	 6*4(t2), r9
-	ldw	 7*4(t2), r10
-	ldw	 8*4(t2), r11
-	ldw	 9*4(t2), r12
-	ldw	10*4(t2), r13
-	ldw	11*4(t2), r14
-	ldw	12*4(t2), r15
-	ldw	13*4(t2), r16
-	ldw	14*4(t2), r17
-	ldw	15*4(t2), r18
-	copy	t2, sp
+	ldw	L_MD(%arg1), %t1
+	ldw	TF_CR30(%t1), %t2
+	ldw	L_ADDR(%arg1), %t3
+	ldw	PCB_KSP(%t3), %sp
+	fdc	%r0(%t3)
+	ldw	TF_CR9(%t1), %t3
+	mtctl	%t3, %pidr2
+	mtctl	%t2, %cr30
+	ldw	HPPA_FRAME_CRP(%sp), %rp
+	ldw	HPPA_FRAME_PSP(%sp), %t2
+	fdc	%r0(%t1)
+	ldw	HPPA_FRAME_ARG(1)(%sp), %t3 /* in case we're in trampoline */
+	ldw	HPPA_FRAME_ARG(2)(%sp), %arg0
+	ldw	 0*4(%t2), %r3
+	ldw	 1*4(%t2), %r4
+	ldw	 2*4(%t2), %r5
+	ldw	 3*4(%t2), %r6
+	ldw	 4*4(%t2), %r7
+	ldw	 5*4(%t2), %r8
+	ldw	 6*4(%t2), %r9
+	ldw	 7*4(%t2), %r10
+	ldw	 8*4(%t2), %r11
+	ldw	 9*4(%t2), %r12
+	ldw	10*4(%t2), %r13
+	ldw	11*4(%t2), %r14
+	ldw	12*4(%t2), %r15
+	ldw	13*4(%t2), %r16
+	ldw	14*4(%t2), %r17
+	ldw	15*4(%t2), %r18
+	copy	%t2, %sp
+
+	/*
+	 * Check for restartable atomic sequences (RAS)
+	 * We save and restore %arg3 (containing %eiem value)
+	 * and %arg0, %t3 (in case we're doing a trampoline).
+	 */
+
+	ldw	L_PROC(%arg1), %t1
+	ldw	P_RASLIST(%t1), %t1
+	comb,=	%r0, %t1, noras
+
+	/* start stack calling convention */
+	stw	%rp, HPPA_FRAME_CRP(%sp)
+	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)
+	stw	%t3, HPPA_FRAME_ARG(1)(%sp)
+	stw	%arg3, HPPA_FRAME_ARG(3)(%sp)
+	copy	%r3, %r1
+	copy	%sp, %r3
+	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
+
+	copy	%arg1, %arg0
+
+	.import	hppa_ras, code
+	CALL(hppa_ras, %r1)
+
+	/* end stack calling convention */
+	ldw	HPPA_FRAME_CRP(%r3), %rp
+	ldw	HPPA_FRAME_ARG(3)(%r3), %arg3
+	ldw	HPPA_FRAME_ARG(1)(%r3), %t3
+	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
+	ldo	HPPA_FRAME_SIZE(%r3), %sp
+	ldw,mb	-HPPA_FRAME_SIZE(%sp), %r3
+
+noras:
 
 	/*
 	 * As an optimization, hppa_fpu_bootstrap
@@ -991,32 +1059,31 @@ ALTENTRY(hppa_fpu_nop1)
 	b,n	switch_return
 
 	/*
-	 * We do have a hardware FPU.  If the process 
+	 * We do have a hardware FPU.  If the LWP 
 	 * that we just switched to has its state in the
 	 * FPU, enable the FPU, else disable it, so if 
-	 * the process does try to use the coprocessor 
+	 * the LWP does try to use the coprocessor 
 	 * we'll get an assist emulation trap to swap 
 	 * states.
 	 */
-	ldil	L%fpu_cur_uspace, t1
-	mfctl	ccr, %r1
-	mfctl	cr30, t2
-	ldw	R%fpu_cur_uspace(t1), t1
+	ldil	L%fpu_cur_uspace, %t1
+	mfctl	%ccr, %r1
+	mfctl	%cr30, %t2
+	ldw	R%fpu_cur_uspace(%t1), %t1
 	depi	0, 25, 2, %r1		; disables the FPU
-	comb,<>,n t1, t2, 0		; nullify if procs different
+	comb,<>,n %t1, %t2, 0		; nullify if procs different
 	depi	3, 25, 2, %r1		; enables the FPU
-	mtctl	%r1, ccr
+	mtctl	%r1, %ccr
 
-switch_return
-	bv	0(rp)
-	mtctl	arg3, eiem
+switch_return:
+	bv	0(%rp)
+	mtctl	%arg3, %eiem
 
 EXIT(cpu_switch)
 
 /*
- * switch_exit(struct proc *p)
- * restore proc0 context and go into cpu_switch to select the next runable
- * process.
+ * switch_exit(struct lwp *l, void (*)(struct lwp *)))
+ * restore lwp0 context and go into cpu_switch to select the next runable LWP.
  */
 	.import	kernel_map, data
 	.import	uvmspace_free, code
@@ -1024,38 +1091,40 @@ EXIT(cpu_switch)
 ENTRY(switch_exit,0)
 
 	/* setup kernel context */
-	mtctl	r0, sr0
-	mtctl	r0, sr1
-	mtctl	r0, sr2
-	mtctl	r0, sr3
-	mtctl	r0, sr4
-	mtctl	r0, sr5
-	mtctl	r0, sr6
-	mtctl	r0, sr7
+	mtctl	%r0, %sr0
+	mtctl	%r0, %sr1
+	mtctl	%r0, %sr2
+	mtctl	%r0, %sr3
+	mtctl	%r0, %sr4
+	mtctl	%r0, %sr5
+	mtctl	%r0, %sr6
+	mtctl	%r0, %sr7
 
-	ldi	HPPA_PID_KERNEL, t4
-	mtctl	t4, pidr2
+	ldi	HPPA_PID_KERNEL, %t4
+	mtctl	%t4, %pidr2
+
+	/* zero curlwp since it's not going to be valid anymore */
+	ldil	L%curlwp, %t4
+	ldw	R%curlwp(%t4), %arg2
+	stw	%r0, R%curlwp(%t4)
 
 	/* switch onto the temporary stack */
-	ldil	L%exit_stack, t4
-	ldo	R%exit_stack(t4), t4
-	ldo	HPPA_FRAME_SIZE(t4), t4
-	stw	r0, HPPA_FRAME_PSP(t4)
-	stw	r0, HPPA_FRAME_CRP(t4)
-	copy	t4, sp
+	ldil	L%exit_stack, %t4
+	ldo	R%exit_stack(%t4), %t4
+	ldo	HPPA_FRAME_SIZE(%t4), %t4
+	stw	%r0, HPPA_FRAME_PSP(%t4)
+	stw	%r0, HPPA_FRAME_CRP(%t4)
+	copy	%t4, %sp
 
 	/* start the stack frame for our callee */
-	copy	sp, r3
-	ldo	HPPA_FRAME_SIZE(sp), sp
-	stw	r3, HPPA_FRAME_PSP(sp)
+	copy	%sp, %r3
+	ldo	HPPA_FRAME_SIZE(%sp), %sp
+	stw	%r3, HPPA_FRAME_PSP(%sp)
 
 	/* arg0 -- oldproc */
-	.import exit2, code
-	ldil	L%exit2, t2
-	ldo	R%exit2(t2), t2
 	.call
-	blr	%r0, rp
-	bv,n	%r0(t2)
+	blr	%r0, %rp
+	bv,n	%r0(%arg1)
 	nop
 
 #if defined(LOCKDEBUG)
@@ -1067,18 +1136,18 @@ ENTRY(switch_exit,0)
 
 	.call
 	b	switch_search
-	copy	r0, arg2	/* no old proc */
+	copy	%r0, %arg2	/* no old proc */
 EXIT(switch_exit)
 
 /*
- * This is the first code run in a new process after
+ * This is the first code run in a new LWP after
  * cpu_switch() has switched to it for the first time.
- * This happens courtesy of the setup in cpu_fork(),
+ * This happens courtesy of the setup in cpu_lwp_fork(),
  * which also makes sure that %t3 is the address of
  * the first kernel function to call, and %arg0 is
  * its argument.
  */
-ENTRY(switch_trampoline,64)
+ENTRY(switch_trampoline, HPPA_FRAME_SIZE)
 
 	/* no return point */
 	copy	%r0, %rp
@@ -1091,7 +1160,7 @@ ENTRY(switch_trampoline,64)
 
 	/* save %arg0, %t3 */
 	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)
-	stw	t3, HPPA_FRAME_ARG(1)(%r3)
+	stw	%t3, HPPA_FRAME_ARG(1)(%r3)
 
 	/* new children start at spl0 */
 	.call
@@ -1100,7 +1169,7 @@ ENTRY(switch_trampoline,64)
 
 	/* restore %arg0, %t3 */
 	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
-	ldw	HPPA_FRAME_ARG(1)(%r3), t3
+	ldw	HPPA_FRAME_ARG(1)(%r3), %t3
 
 	/* end stack calling convention */
 	ldw	HPPA_FRAME_CRP(%r3), %rp
@@ -1109,20 +1178,20 @@ ENTRY(switch_trampoline,64)
 
 	/* call the first kernel function */
 	.call
-	blr	r0, rp
-	bv,n	r0(t3)
+	blr	%r0, %rp
+	bv,n	%r0(%t3)
 	nop
 
 	/*
 	 * Since the first kernel function returned,
-	 * this process was created by the fork()
+	 * this LWP was created by the fork()
 	 * syscall, which we now return from.
 	 */
-	ldil	L%curproc, t1
-	ldw	R%curproc(t1), t2
+	ldil	L%curlwp, %t1
+	ldw	R%curlwp(%t1), %t2
 	.call
 	b	$syscall_return
-	ldw	P_MD(t2), t3
+	ldw	L_MD(%t2), %t3
 EXIT(switch_trampoline)
 
 /* Include the signal code. */

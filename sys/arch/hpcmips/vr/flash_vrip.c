@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.1 2003/05/01 07:02:03 igy Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.1.2.1 2004/08/03 10:35:21 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Flash Memory Driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.1.2.1 2004/08/03 10:35:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -514,6 +517,7 @@ intel_erase(struct flash_softc *sc, bus_size_t offset)
 	bus_space_write_2(iot, ioh, offset, I28F128_BLK_ERASE_1ST);
 	bus_space_write_2(iot, ioh, offset, I28F128_BLK_ERASE_2ND);
 
+	status = 0;
 	for (i = sc->sc_max_block_erase_timo; i > 0; i--) {
 		tsleep(sc, PRIBIO, "blockerase",
 		       1 + (sc->sc_typ_block_erase_timo * hz) / 1000);
@@ -521,11 +525,14 @@ intel_erase(struct flash_softc *sc, bus_size_t offset)
 		    & I28F128_S_READY)
 			break;
 	}
+	if (i == 0) 
+		status |= FLASH_TIMEOUT; 
 
 	bus_space_write_2(iot, ioh, offset, I28F128_CLEAR_STATUS);
 	bus_space_write_2(iot, ioh, offset, I28F128_RESET);
 
-	return status & (I28F128_S_ERASE_SUSPEND
+	return status & (FLASH_TIMEOUT
+			 | I28F128_S_ERASE_SUSPEND
 			 | I28F128_S_COMSEQ_ERROR
 			 | I28F128_S_ERASE_ERROR
 			 | I28F128_S_BLOCK_LOCKED);
@@ -549,6 +556,7 @@ intel_write(struct flash_softc *sc, bus_size_t offset)
 	p = (u_int16_t *) sc->sc_buf;
 	fence = offset + sc->sc_block_size;
 	do {
+		status = 0;
 		for (timo = sc->sc_max_buffer_write_timo; timo > 0; timo--) {
 			bus_space_write_2(iot, ioh, offset,
 					  I28F128_WRITE_BUFFER);

@@ -9,7 +9,7 @@
     * 
     *  This file describes the WID register layout.
     *  
-    *  Author:  Mitch Lichtenberg (mpl@broadcom.com)
+    *  Author:  Mitch Lichtenberg
     *  
     *********************************************************************  
     *

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.10 2003/01/17 22:11:18 thorpej Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.10.2.1 2004/08/03 10:31:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.10 2003/01/17 22:11:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.10.2.1 2004/08/03 10:31:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ linux_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	const struct sysent *callp;
 	int error;
 	u_int64_t rval[2];
-	u_int64_t *args, copyargs[10];				/* XXX */
+	u_int64_t *args, copyargs[10];
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
 
@@ -297,8 +297,10 @@ linux_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	default:
 		error = copyin((caddr_t)alpha_pal_rdusp(), &copyargs[6],
 		    (nargs - 6) * sizeof(u_int64_t));
-		if (error)
+		if (error) {
+			args = copyargs;
 			goto bad;
+		}
 	case 6:	
 		copyargs[5] = framep->tf_regs[FRAME_A5];
 	case 5:	
@@ -320,7 +322,7 @@ linux_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	args += hidden;
 
 
-	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
 		goto bad;
 
 	rval[0] = 0;

@@ -1,9 +1,43 @@
-/*	$NetBSD: hil.c,v 1.59 2003/06/29 22:28:17 fvdl Exp $	*/
+/*	$NetBSD: hil.c,v 1.59.2.1 2004/08/03 10:34:23 skrll Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: hil.c 1.38 92/01/21$
+ *
+ *	@(#)hil.c	8.2 (Berkeley) 1/12/94
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -43,9 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.59 2003/06/29 22:28:17 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.59.2.1 2004/08/03 10:34:23 skrll Exp $");
 
 #include "opt_compat_hpux.h"
+#include "ite.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -255,7 +290,7 @@ hilopen(dev, flags, mode, p)
 		printf("hilopen(%d): loop %x device %x\n",
 		       p->p_pid, HILLOOP(dev), HILUNIT(dev));
 #endif
-	
+
 	if ((hilp->hl_device[HILLOOPDEV].hd_flags & HIL_ALIVE) == 0)
 		return(ENXIO);
 
@@ -546,7 +581,7 @@ hilioctl(dev, cmd, data, flag, p)
 			data[4-i] = hold;
 		}
 		break;
-		
+
 	case HILIOCRT:
 		for (i = 0; i < 4; i++) {
 			send_hil_cmd(hilp->hl_addr, (cmd & 0xFF) + i,
@@ -623,7 +658,7 @@ hilioctl(dev, cmd, data, flag, p)
         case HILIOCRESET:
 	        hilreset(hilp);
 		break;
-		
+
 #ifdef DEBUG
         case HILIOCTEST:
 		hildebug = *(int *) data;
@@ -715,7 +750,7 @@ hpuxhilioctl(dev, cmd, data, flag)
 			data[4-i] = hold;
 		}
 		break;
-		
+
 	case EFTRT:
 		for (i = 0; i < 4; i++) {
 			send_hil_cmd(hilp->hl_addr, (cmd & 0xFF) + i,
@@ -729,13 +764,13 @@ hpuxhilioctl(dev, cmd, data, flag)
 		send_hil_cmd(hilp->hl_addr, (cmd & 0xFF), NULL, 0, &hold);
 		*data = hold;
 		break;
-		
+
         case EFTSRPG:
         case EFTSRD:
         case EFTSRR:
 		send_hil_cmd(hilp->hl_addr, (cmd & 0xFF), data, 1, NULL);
 		break;
-		
+
 	case EFTSBI:
 #ifdef hp800
 		/* XXX big magic */
@@ -961,8 +996,6 @@ hilint(v)
 	return (1);
 }
 
-#include "ite.h"
-
 void
 hil_process_int(hilp, stat, c)
 	struct hil_softc *hilp;
@@ -984,7 +1017,7 @@ hil_process_int(hilp, stat, c)
 		itefilter(stat, c);
 		return;
 #endif
-		
+
 	case HIL_STATUS:			/* The status info. */
 		if (c & HIL_ERROR) {
 		  	hilp->hl_cmddone = TRUE;
@@ -1021,12 +1054,12 @@ hil_process_int(hilp, stat, c)
 			   if (hilp->hl_cmdending) {
 				hilp->hl_cmddone = TRUE;
 				hilp->hl_cmdending = FALSE;
-			   } else  
+			   } else
 				*hilp->hl_cmdbp++ = c;
 		        }
 		}
 		return;
-		
+
 	case 0:		/* force full jump table */
 	default:
 		return;
@@ -1097,7 +1130,7 @@ hilevent(hilp)
 			continue;
 		mask &= ~hilqmask(qnum);
 		hq = hilp->hl_queue[qnum].hq_eventqueue;
-		
+
 		/*
 		 * Ensure that queue fields that we rely on are valid
 		 * and that there is space in the queue.  If either
@@ -1337,7 +1370,7 @@ static struct ite_kbdops hilkbd_cn_ops = {
 	NULL,
 };
 
-extern char *us_keymap, *us_shiftmap, *us_ctrlmap;
+extern char us_keymap[], us_shiftmap[], us_ctrlmap[];
 
 /*
  * XXX: read keyboard directly and return code.
@@ -1716,7 +1749,7 @@ hiliddev(hilp)
 			send_hildev_cmd(hilp, i, HILSECURITY);
 			break;
 		}
-	}		
+	}
 	hilp->hl_cmdbp = hilp->hl_cmdbuf;
 	hilp->hl_cmddev = 0;
 #ifdef DEBUG
@@ -1872,7 +1905,7 @@ polloff(hildevice)
 	/*
 	 * Must wait til polling is really stopped
 	 */
-	do {	
+	do {
 		HILWAIT(hildevice);
 		WRITEHILCMD(hildevice, HIL_READBUSY);
 		HILDATAWAIT(hildevice);
@@ -1957,7 +1990,7 @@ hilreport(hilp)
 			printf("hil%d: sc: ", i);
 			printhilcmdbuf(hilp);
 		}
-	}		
+	}
 	hilp->hl_cmdbp = hilp->hl_cmdbuf;
 	hilp->hl_cmddev = 0;
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc_subr.S,v 1.1 2002/06/05 01:04:20 fredette Exp $	*/
+/*	$NetBSD: proc_subr.S,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -77,111 +77,115 @@
 	.import	sched_whichqs, data
 	.import	sched_qs, data
 /*
- * setrunqueue(struct proc *p);
+ * setrunqueue(struct lwp *l);
  * Insert a process on the appropriate queue.  Should be called at splclock().
  */
 	.align	32
 ENTRY(setrunqueue,0)
 #ifdef DIAGNOSTIC
-	ldw	P_BACK(arg0), t1
-	comb,<>,n r0, t1, $setrunqueue_panic
-	ldw	P_WCHAN(arg0), t1
-	comb,<>,n r0, t1, $setrunqueue_panic
-	ldb	P_STAT(arg0), t1
-	comib,=,n SRUN, t1, $setrunqueue_ok
-$setrunqueue_panic
-	copy	arg0, arg1
-	ldil	L%panic, r1
-	ldil	L%Lsrqpstr, arg0
-	ldo	R%panic(r1), r1
-	ldo	R%Lsrqpstr(arg0), arg0
+	ldi	0x1f01, %arg2
+	ldw	L_BACK(%arg0), %t1
+	comb,<>,n %r0, %t1, $setrunqueue_panic
+	ldi	0x1f02, %arg2
+	ldw	L_WCHAN(%arg0), %t1
+	comb,<>,n %r0, %t1, $setrunqueue_panic
+	ldi	0x1f03, %arg2
+	ldw	L_STAT(%arg0), %t1
+	copy	%t1, %arg3
+	comib,=,n LSRUN, %t1, $setrunqueue_ok
+$setrunqueue_panic:
+	copy	%arg0, %arg1
+	ldil	L%panic, %r1
+	ldil	L%Lsrqpstr, %arg0
+	ldo	R%panic(%r1), %r1
+	ldo	R%Lsrqpstr(%arg0), %arg0
 	.call
-	blr	%r0, rp
-	bv,n	%r0(r1)
+	blr	%r0, %rp
+	bv,n	%r0(%r1)
 	nop
-Lsrqpstr
-	.asciz	"setrunqueue(%p)"
+Lsrqpstr:
+	.asciz	"setrunqueue(%p) case 0x%x 0x%x"
 	.align	8
-$setrunqueue_ok
+$setrunqueue_ok:
 #endif
 
-	ldb	P_PRIORITY(arg0), t2
-	ldil	L%sched_qs, t4
-	extru	t2, 29, 5, t1		/* t1 = (priority / 4); (queue #) */
-	ldo	R%sched_qs(t4), t4
-	sh3add	t1, t4, t4		/* t4 = &sched_qs[t1]; */
-	ldil	L%sched_whichqs, t2
-	ldw	R%sched_whichqs(t2), t3
-	mtctl	t1, sar
-	vdepi	1, 1, t3
-	stw	t3, R%sched_whichqs(t2)	/* sched_whichqs |= (1 << t1); */
+	ldb	L_PRIORITY(%arg0), %t2
+	ldil	L%sched_qs, %t4
+	extru	%t2, 29, 5, %t1		/* t1 = (priority / 4); (queue #) */
+	ldo	R%sched_qs(%t4), %t4
+	sh3add	%t1, %t4, %t4		/* t4 = &sched_qs[t1]; */
+	ldil	L%sched_whichqs, %t2
+	ldw	R%sched_whichqs(%t2), %t3
+	mtctl	%t1, %sar
+	vdepi	1, 1, %t3
+	stw	%t3, R%sched_whichqs(%t2)	/* sched_whichqs |= (1 << t1); */
 
 #if 0
 	/* this actually trashes all the regs we use, be advised ;) */
-	copy	t1, arg1
-	copy	t4, arg2
-	ldil	L%printf, r1
-	ldil	L%Lsrqfmt, arg0
-	ldo	R%printf(r1), r1
-	ldo	R%Lsrqfmt(arg0), arg0
+	copy	%t1, %arg1
+	copy	%t4, %arg2
+	ldil	L%printf, %r1
+	ldil	L%Lsrqfmt, %arg0
+	ldo	R%printf(%r1), %r1
+	ldo	R%Lsrqfmt(%arg0), %arg0
 	.call
-	blr	%r0, rp
-	bv,n	%r0(r1)
+	blr	%r0, %rp
+	bv,n	%r0(%r1)
 	nop
 #endif
-	ldw	P_BACK(t4), t2
-	stw	t4, P_FORW(arg0)
-	stw	arg0, P_BACK(t4)
-	stw	arg0, P_FORW(t2)
-	bv	0(rp)
-	stw	t2, P_BACK(arg0)
-Lsrqfmt
+	ldw	L_BACK(%t4), %t2
+	stw	%t4, L_FORW(%arg0)
+	stw	%arg0, L_BACK(%t4)
+	stw	%arg0, L_FORW(%t2)
+	bv	0(%rp)
+	stw	%t2, L_BACK(%arg0)
+Lsrqfmt:
 	.asciz	"setrunqueue: bit=%x, sched_qs=%p\n"
 	.align	8
 EXIT(setrunqueue)
 
 /*
- * remrunqueue(struct proc *p);
+ * remrunqueue(struct lwp *l);
  * Remove a process from its queue.  Should be called at splclock().
  */
 	.align	32
 ENTRY(remrunqueue,0)
-	ldb	P_PRIORITY(arg0), t2
-	extru	t2, 29, 5, t1		/* t1 = (priority / 4); (queue #) */
-	mtsar	t1
-	ldil	L%sched_whichqs, t2
-	ldw	R%sched_whichqs(t2), t3	/* t3 = sched_whichqs; */
+	ldb	L_PRIORITY(%arg0), %t2
+	extru	%t2, 29, 5, %t1		/* t1 = (priority / 4); (queue #) */
+	mtsar	%t1
+	ldil	L%sched_whichqs, %t2
+	ldw	R%sched_whichqs(%t2), %t3	/* t3 = sched_whichqs; */
 
 #ifdef DIAGNOSTIC
-	bvb,<,n	t3, remrunqueue_ok
+	bvb,<,n	%t3, remrunqueue_ok
 
-Lremrunqueue_panic
-	copy	arg0, arg1
-	copy	t1, arg2
-	ldil	L%panic, r1
-	ldil	L%Lrrqpstr, arg0
-	ldo	R%panic(r1), r1
-	ldo	R%Lrrqpstr(arg0), arg0
+Lremrunqueue_panic:
+	copy	%arg0, %arg1
+	copy	%t1, %arg2
+	ldil	L%panic, %r1
+	ldil	L%Lrrqpstr, %arg0
+	ldo	R%panic(%r1), %r1
+	ldo	R%Lrrqpstr(%arg0), %arg0
 	.call
-	blr	%r0, rp
-	bv,n	%r0(r1)
+	blr	%r0, %rp
+	bv,n	%r0(%r1)
 
-Lrrqpstr
+Lrrqpstr:
 	.asciz	"remrunqueue(%p), bit=%x"
 	.align	8
-remrunqueue_ok
+remrunqueue_ok:
 #endif
-	ldw	P_BACK(arg0), t4
-	stw	r0, P_BACK(arg0)
-	ldw	P_FORW(arg0), arg0
-	stw	arg0, P_FORW(t4)
-	stw	t4, P_BACK(arg0)
-	comb,<>	t4, arg0, Lqnempty
+	ldw	L_BACK(%arg0), %t4
+	stw	%r0, L_BACK(%arg0)
+	ldw	L_FORW(%arg0), %arg0
+	stw	%arg0, L_FORW(%t4)
+	stw	%t4, L_BACK(%arg0)
+	comb,<>	%t4, %arg0, Lqnempty
 	nop
 
-	vdepi	0, 1, t3
-	stw	t3, R%sched_whichqs(t2)
-Lqnempty
-	bv	0(rp)
+	vdepi	0, 1, %t3
+	stw	%t3, R%sched_whichqs(%t2)
+Lqnempty:
+	bv	0(%rp)
 	nop
 EXIT(remrunqueue)

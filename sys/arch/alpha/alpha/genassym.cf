@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.8 2003/04/08 22:37:52 thorpej Exp $
+# $NetBSD: genassym.cf,v 1.8.2.1 2004/08/03 10:31:03 skrll Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -124,7 +124,7 @@ define	L_MD_PCBPADDR		offsetof(struct lwp, l_md.md_pcbpaddr)
 define	L_MD_TF			offsetof(struct lwp, l_md.md_tf)
 
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
-define	P_NRAS			offsetof(struct proc, p_nras)
+define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 define	PH_LINK			offsetof(struct prochd, ph_link)
@@ -168,7 +168,7 @@ define	ENAMETOOLONG		ENAMETOOLONG
 define	EFAULT			EFAULT
 
 # Syscalls called from sigreturn.
-define	SYS___sigreturn14	SYS___sigreturn14
+define	SYS_compat_16___sigreturn14	SYS_compat_16___sigreturn14
 define	SYS_exit		SYS_exit
 
 # CPU info

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.103 2003/01/17 22:11:18 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.103.2.1 2004/08/03 10:31:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,10 +70,11 @@
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_compat_netbsd.h"
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.103 2003/01/17 22:11:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.103.2.1 2004/08/03 10:31:04 skrll Exp $");
 
 #include "assym.h"
 
@@ -271,6 +272,7 @@ NESTED_NOPROFILE(locorestart,1,0,ra,0,0)
 backtolocore1:
 /**************************************************************************/
 
+#ifdef COMPAT_16
 /*
  * Signal "trampoline" code.
  *
@@ -282,16 +284,12 @@ backtolocore1:
 
 NESTED_NOPROFILE(sigcode,0,0,ra,0,0)
 	mov	sp, a0			/* get pointer to sigcontext */
-	CALLSYS_NOERROR(__sigreturn14)	/* and call sigreturn() with it. */
+	CALLSYS_NOERROR(compat_16___sigreturn14)	/* and call sigreturn() with it. */
 	mov	v0, a0			/* if that failed, get error code */
 	CALLSYS_NOERROR(exit)		/* and call exit() with it. */
 XNESTED(esigcode,0)
 	END(sigcode)
-
-
-	
-
-
+#endif /* COMPAT_16 */
 
 /**************************************************************************/
 
@@ -912,8 +910,8 @@ switch_resume:
 	 * Check for restartable atomic sequences (RAS).
 	 */
 	ldq	a0, L_PROC(s2)			/* first ras_lookup() arg */
-	ldl	t0, P_NRAS(a0)			/* p->p_nras == 0? */
-	beq	t0, 1f				/* yes, skip */
+	ldq	t0, P_RASLIST(a0)		/* any RAS entries? */
+	beq	t0, 1f				/* no, skip */
 	ldq	s1, L_MD_TF(s2)			/* s1 = l->l_md.md_tf */
 	ldq	a1, (FRAME_PC*8)(s1)		/* second ras_lookup() arg */
 	CALL(ras_lookup)			/* ras_lookup(p, PC) */
@@ -1081,7 +1079,7 @@ NESTED(copyinstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	stq	s0, (16-16)(sp)			/* save s0		     */
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
 	cmpult	a0, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
+	beq	t1, copyerr_efault		/* if it's not, error out.   */
 	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
 	GET_CURLWP
 	mov	v0, s0
@@ -1110,7 +1108,7 @@ NESTED(copyoutstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	stq	s0, (16-16)(sp)			/* save s0		     */
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that dest addr  */
 	cmpult	a1, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
+	beq	t1, copyerr_efault		/* if it's not, error out.   */
 	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
 	GET_CURLWP
 	mov	v0, s0
@@ -1184,7 +1182,6 @@ LEAF(kcopyerr, 0)
 	ldq	s0, (32-16)(sp)			/* restore s0.		     */
 	ldq	s1, (32-24)(sp)			/* restore s1.		     */
 	lda	sp, 32(sp)			/* kill stack frame.	     */
-	ldiq	v0, EFAULT			/* return EFAULT.	     */
 	RET
 END(kcopyerr)
 
@@ -1195,7 +1192,7 @@ NESTED(copyin, 3, 16, ra, IM_RA|IM_S0, 0)
 	stq	s0, (16-16)(sp)			/* save s0		     */
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
 	cmpult	a0, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
+	beq	t1, copyerr_efault		/* if it's not, error out.   */
 	/* Swap a0, a1, for call to memcpy(). */
 	mov	a1, v0
 	mov	a0, a1
@@ -1227,7 +1224,7 @@ NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 	stq	s0, (16-16)(sp)			/* save s0		     */
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that dest addr  */
 	cmpult	a1, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
+	beq	t1, copyerr_efault		/* if it's not, error out.   */
 	/* Swap a0, a1, for call to memcpy(). */
 	mov	a1, v0
 	mov	a0, a1
@@ -1252,12 +1249,13 @@ NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 	RET
 	END(copyout)
 
-LEAF(copyerr, 0)
+LEAF(copyerr_efault, 0)
+	ldiq	v0, EFAULT			/* return EFAULT.	     */
+XLEAF(copyerr, 0)
 	LDGP(pv)
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
 	ldq	s0, (16-16)(sp)			/* restore s0.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
-	ldiq	v0, EFAULT			/* return EFAULT.	     */
 	RET
 END(copyerr)
 

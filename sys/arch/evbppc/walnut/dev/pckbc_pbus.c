@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pbus.c,v 1.1 2002/12/09 12:16:24 scw Exp $	*/
+/*	$NetBSD: pckbc_pbus.c,v 1.1.8.1 2004/08/03 10:34:21 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pbus.c,v 1.1.8.1 2004/08/03 10:34:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.25 2003/05/10 23:12:35 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25.2.1 2004/08/03 10:38:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25.2.1 2004/08/03 10:38:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +228,7 @@ writedisklabel(dev, strat, lp, clp)
 
 #ifdef DEBUG
 	if (disksubr_debug > 0) {
-		printclp(clp, "writedisklabel: cpu label");
+		printclp(clp, "writedisklabel:cpu label");
 	}
 #endif
 

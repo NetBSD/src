@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2003/06/14 17:01:13 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.2.1 2004/08/03 10:38:16 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.2.1 2004/08/03 10:38:16 skrll Exp $");
+
 #include "opt_compat_netbsd.h"
 #include "opt_mvmetype.h"
 #include "opt_ddb.h"
@@ -62,7 +65,6 @@
 #include <net/netisr.h>
 
 #include <machine/autoconf.h>
-#include <machine/bat.h>
 #include <machine/bootinfo.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -70,6 +72,8 @@
 #include <machine/platform.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
+
+#include <powerpc/oea/bat.h>
 
 #include <dev/cons.h>
 
@@ -171,7 +175,7 @@ initppc(startkernel, endkernel, btinfo)
 	}
 
 	/*
-	 * boothowto
+	 * Setup fixed BAT registers.
 	 */
 	oea_batinit(
 	    MVMEPPC_PHYS_BASE_IO,  BAT_BL_256M,
@@ -390,9 +394,9 @@ halt_sys:
 
 	printf("rebooting...\n\n");
 
-#if 0
 	(*platform->reset)();
-#endif
+
+	printf("Oops! Board reset failed!\n");
 
 	for (;;)
 		continue;
@@ -457,7 +461,7 @@ mvmeppc_bus_space_init(void)
 
 	int error;
 
-	error = bus_space_init(&mvmeppc_pci_io_bs_tag, "bus_io",
+	error = bus_space_init(&mvmeppc_pci_io_bs_tag, "pci_io",
 	    ex_storage[MVMEPPC_BUS_SPACE_IO],
 	    sizeof(ex_storage[MVMEPPC_BUS_SPACE_IO]));
 
@@ -467,10 +471,12 @@ mvmeppc_bus_space_init(void)
 		panic("mvmeppc_bus_space_init: reserving I/O hole");
 
 	mvmeppc_isa_io_bs_tag.pbs_extent = mvmeppc_pci_io_bs_tag.pbs_extent;
+	error = bus_space_init(&mvmeppc_isa_io_bs_tag, "isa_io", NULL, 0);
 
-	error = bus_space_init(&mvmeppc_pci_mem_bs_tag, "bus_mem",
+	error = bus_space_init(&mvmeppc_pci_mem_bs_tag, "pci_mem",
 	    ex_storage[MVMEPPC_BUS_SPACE_MEM],
 	    sizeof(ex_storage[MVMEPPC_BUS_SPACE_MEM]));
 
 	mvmeppc_isa_mem_bs_tag.pbs_extent = mvmeppc_pci_mem_bs_tag.pbs_extent;
+	error = bus_space_init(&mvmeppc_isa_mem_bs_tag, "isa_mem", NULL, 0);
 }

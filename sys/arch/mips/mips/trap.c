@@ -1,9 +1,43 @@
-/*	$NetBSD: trap.c,v 1.180.2.1 2003/07/02 15:25:25 darrenr Exp $	*/
+/*	$NetBSD: trap.c,v 1.180.2.2 2004/08/03 10:37:50 skrll Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department and Ralph Campbell.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah Hdr: trap.c 1.32 91/04/06
+ *
+ *	@(#)trap.c	8.5 (Berkeley) 1/11/94
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -44,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.180.2.1 2003/07/02 15:25:25 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.180.2.2 2004/08/03 10:37:50 skrll Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -142,15 +176,14 @@ void MachFPTrap(u_int32_t, u_int32_t, u_int32_t, struct frame *);	/* XXX */
  * which will be called the very first time when child gets running.
  */
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct lwp *l = arg;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
-	frame->f_regs[V0] = 0;
-	frame->f_regs[V1] = 1;
-	frame->f_regs[A3] = 0;
+	frame->f_regs[_R_V0] = 0;
+	frame->f_regs[_R_V1] = 1;
+	frame->f_regs[_R_A3] = 0;
 	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_SYSRET))
@@ -171,21 +204,18 @@ child_return(arg)
  * interrupts as a part of real interrupt processing.
  */
 void
-trap(status, cause, vaddr, opc, frame)
-	unsigned status;
-	unsigned cause;
-	unsigned vaddr;
-	unsigned opc;
-	struct trapframe *frame;
+trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
+    struct trapframe *frame)
 {
-	int type, sig;
-	int ucode = 0;
+	int type;
 	struct lwp *l = curlwp;
-	struct proc *p;
+	struct proc *p = curproc;
 	vm_prot_t ftype;
+	ksiginfo_t ksi;
+	struct frame *fp;
 	extern void fswintrberr(void);
+	KSI_INIT_TRAP(&ksi);
 
-	p = l ? l->l_proc : NULL; 
 	uvmexp.traps++;
 	type = TRAPTYPE(cause);
 	if (USERMODE(status))
@@ -210,11 +240,11 @@ trap(status, cause, vaddr, opc, frame)
 			USERMODE(status) ? "user" : "kernel");
 		printf("status=0x%x, cause=0x%x, epc=0x%x, vaddr=0x%x\n",
 			status, cause, opc, vaddr);
-		if (curlwp != NULL)
+		if (curlwp != NULL) {
+			fp = (struct frame *)l->l_md.md_regs;
 			printf("pid=%d cmd=%s usp=0x%x ",
-			    p->p_pid, p->p_comm,
-			    (int)((struct frame *)l->l_md.md_regs)->f_regs[SP]);
-		else
+			    p->p_pid, p->p_comm, (int)fp->f_regs[_R_SP]);
+		} else
 			printf("curlwp == NULL ");
 		printf("ksp=0x%x\n", (int)&status);
 #if defined(DDB)
@@ -236,7 +266,7 @@ trap(status, cause, vaddr, opc, frame)
 			db_set_ddb_regs(type, (mips_reg_t *) frame);
 			PC_BREAK_ADVANCE(f);
 			if (kgdb_trap(type, &ddb_regs)) {
-				((mips_reg_t *)frame)[21] = f->f_regs[PC];
+				((mips_reg_t *)frame)[21] = f->f_regs[_R_PC];
 				return;
 			}
 		}
@@ -343,6 +373,11 @@ trap(status, cause, vaddr, opc, frame)
 		map = &vm->vm_map;
 		va = trunc_page(vaddr);
 
+		if (l->l_flag & L_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)vaddr;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
+
 		if (p->p_emul->e_fault)
 			rv = (*p->p_emul->e_fault)(p, va, 0, ftype);
 		else
@@ -370,6 +405,7 @@ trap(status, cause, vaddr, opc, frame)
 			else if (rv == EACCES)
 				rv = EFAULT;
 		}
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		if (rv == 0) {
 			if (type & T_USER) {
 				userret(l);
@@ -383,11 +419,19 @@ trap(status, cause, vaddr, opc, frame)
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : (uid_t) -1);
-			sig = SIGKILL;
+			ksi.ksi_signo = SIGKILL;
+			ksi.ksi_code = 0;
 		} else {
-			sig = (rv == EACCES) ? SIGBUS : SIGSEGV;
+			if (rv == EACCES) {
+				ksi.ksi_signo = SIGBUS;
+				ksi.ksi_code = BUS_OBJERR;
+			} else {
+				ksi.ksi_signo = SIGSEGV;
+				ksi.ksi_code = SEGV_MAPERR;
+			}
 		}
-		ucode = vaddr;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_addr = (void *)vaddr;
 		break; /* SIGNAL */
 	    }
 	kernelfault: ;
@@ -403,7 +447,7 @@ trap(status, cause, vaddr, opc, frame)
 	    }
 	case T_ADDR_ERR_LD:	/* misaligned access */
 	case T_ADDR_ERR_ST:	/* misaligned access */
-	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
+	case T_BUS_ERR_LD_ST:	/* BERR asserted to CPU */
 	copyfault:
 		if (l == NULL || l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
@@ -412,10 +456,12 @@ trap(status, cause, vaddr, opc, frame)
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
 	case T_ADDR_ERR_ST+T_USER:	/* misaligned or kseg access */
-	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to cpu */
-	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to cpu */
-		sig = SIGSEGV;
-		ucode = vaddr;
+	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to CPU */
+	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to CPU */
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_signo = SIGSEGV; /* XXX */
+		ksi.ksi_addr = (void *)vaddr;
+		ksi.ksi_code = SEGV_MAPERR; /* XXX */
 		break; /* SIGNAL */
 
 	case T_BREAK:
@@ -441,7 +487,7 @@ trap(status, cause, vaddr, opc, frame)
 				printf("kgdb: ignored %s\n",
 				       trap_type[TRAPTYPE(cause)]);
 			else
-				((mips_reg_t *)frame)[21] = f->f_regs[PC];
+				((mips_reg_t *)frame)[21] = f->f_regs[_R_PC];
 
 			return;
 		}
@@ -460,7 +506,10 @@ trap(status, cause, vaddr, opc, frame)
 		instr = fuiword((void *)va);
 
 		if (l->l_md.md_ss_addr != va || instr != MIPS_BREAK_SSTEP) {
-			sig = SIGTRAP;
+			ksi.ksi_trap = type & ~T_USER;
+			ksi.ksi_signo = SIGTRAP;
+			ksi.ksi_addr = (void *)va;
+			ksi.ksi_code = TRAP_TRACE;
 			break;
 		}
 		/*
@@ -486,7 +535,10 @@ trap(status, cause, vaddr, opc, frame)
 			printf("Warning: can't restore instruction at 0x%lx: 0x%x\n",
 				l->l_md.md_ss_addr, l->l_md.md_ss_instr);
 		l->l_md.md_ss_addr = 0;
-		sig = SIGTRAP;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_addr = (void *)va;
+		ksi.ksi_code = TRAP_BRKPT;
 		break; /* SIGNAL */
 	    }
 	case T_RES_INST+T_USER:
@@ -500,7 +552,7 @@ trap(status, cause, vaddr, opc, frame)
 			loadfpregs(l);          	/* load FPA */
 			fpcurlwp = l;
 			l->l_md.md_flags |= MDP_FPUSED;
-			f->f_regs[SR] |= MIPS_SR_COP_1_BIT;
+			f->f_regs[_R_SR] |= MIPS_SR_COP_1_BIT;
 		} else
 #endif
 		{
@@ -518,12 +570,17 @@ trap(status, cause, vaddr, opc, frame)
 		return; /* GEN */
 	case T_OVFLOW+T_USER:
 	case T_TRAP+T_USER:
-		sig = SIGFPE;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_signo = SIGFPE;
+		fp = (struct frame *)l->l_md.md_regs;
+		ksi.ksi_addr = (void *)fp->f_regs[_R_PC];
+		ksi.ksi_code = FPE_FLTOVF; /* XXX */
 		break; /* SIGNAL */
 	}
-	((struct frame *)l->l_md.md_regs)->f_regs[CAUSE] = cause;
-	((struct frame *)l->l_md.md_regs)->f_regs[BADVADDR] = vaddr;
-	trapsignal(l, sig, ucode);
+	fp = (struct frame *)l->l_md.md_regs;
+	fp->f_regs[_R_CAUSE] = cause;
+	fp->f_regs[_R_BADVADDR] = vaddr;
+	(*p->p_emul->e_trapsignal)(l, &ksi);
 	if ((type & T_USER) == 0)
 		panic("trapsignal");
 	userret(l);
@@ -534,7 +591,7 @@ trap(status, cause, vaddr, opc, frame)
  * Software (low priority) network interrupt. i.e. softnet().
  */
 void
-netintr()
+netintr(void)
 {
 #define DONETISR(bit, fn)			\
 	do {					\
@@ -543,7 +600,9 @@ netintr()
 	} while (0)
 
 	int n;
-	n = netisr; netisr = 0;
+
+	n = netisr;
+	netisr = 0;
 
 #ifdef SOFTNET_INTR		/* XXX TEMPORARY XXX */
 	intrcnt[SOFTNET_INTR]++;
@@ -560,8 +619,7 @@ netintr()
  * to make involuntary context switch (preemption).
  */
 void
-ast(pc)
-	unsigned pc;		/* program counter where to continue */
+ast(unsigned pc)	/* pc is program counter where to continue */
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -598,8 +656,7 @@ ast(pc)
  * resuming execution, and then restoring the old instruction.
  */
 int
-mips_singlestep(l)
-	struct lwp *l;
+mips_singlestep(struct lwp *l)
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 	struct proc *p = l->l_proc;
@@ -611,7 +668,7 @@ mips_singlestep(l)
 			p->p_comm, p->p_pid, l->l_md.md_ss_addr);
 		return EFAULT;
 	}
-	pc = (vaddr_t)f->f_regs[PC];
+	pc = (vaddr_t)f->f_regs[_R_PC];
 	if (fuiword((void *)pc) != 0) /* not a NOP instruction */
 		va = MachEmulateBranch(f, pc, PCB_FSR(&l->l_addr->u_pcb), 1);
 	else
@@ -621,7 +678,7 @@ mips_singlestep(l)
 	 * We can't single-step into a RAS.  Check if we're in
 	 * a RAS, and set the breakpoint just past it.
 	 */
-	if (p->p_nras != 0) {
+	if (!LIST_EMPTY(&p->p_raslist)) {
 		while (ras_lookup(p, (caddr_t)va) != (caddr_t)-1)
 			va += sizeof(int);
 	}
@@ -656,16 +713,16 @@ mips_singlestep(l)
 mips_reg_t kdbrpeek(vaddr_t);
 
 int
-kdbpeek(addr)
-	vaddr_t addr;
+kdbpeek(vaddr_t addr)
 {
 	int rc;
+
 	if (addr & 3) {
 		printf("kdbpeek: unaligned address %lx\n", addr);
 		/* We might have been called from DDB, so do not go there. */
 		stacktrace();
 		rc = -1 ;
-	} else if (addr == NULL) {
+	} else if (addr == 0) {
 		printf("kdbpeek: NULL\n");
 		rc = 0xdeadfeed;
 	} else {
@@ -675,16 +732,16 @@ kdbpeek(addr)
 }
 
 mips_reg_t
-kdbrpeek(addr)
-	vaddr_t addr;
+kdbrpeek(vaddr_t addr)
 {
 	mips_reg_t rc;
+
 	if (addr & (sizeof(mips_reg_t) - 1)) {
 		printf("kdbrpeek: unaligned address %lx\n", addr);
 		/* We might have been called from DDB, so do not go there. */
 		stacktrace();
 		rc = -1 ;
-	} else if (addr == NULL) {
+	} else if (addr == 0) {
 		printf("kdbrpeek: NULL\n");
 		rc = 0xdeadfeed;
 	} else {
@@ -726,10 +783,9 @@ void stacktrace_subr(int, int, int, int, u_int, u_int, u_int, u_int,
  * the console, or both.
  */
 void
-stacktrace_subr(a0, a1, a2, a3, pc, sp, fp, ra, printfn)
-	int a0, a1, a2, a3;
-	u_int  pc, sp, fp, ra;
-	void (*printfn)(const char*, ...);
+stacktrace_subr(int a0, int a1, int a2, int a3,
+    u_int pc, u_int sp, u_int fp, u_int ra,
+    void (*printfn)(const char*, ...))
 {
 	unsigned va, subr;
 	unsigned instr, mask;
@@ -915,7 +971,7 @@ static struct { void *addr; char *name;} names[] = {
 	Name(main),
 	Name(trap),
 
-#ifdef MIPS1	/*  r2000 family  (mips-I cpu) */
+#ifdef MIPS1	/*  r2000 family  (mips-I CPU) */
 	Name(mips1_KernGenException),
 	Name(mips1_UserGenException),
 	Name(mips1_SystemCall),
@@ -924,7 +980,7 @@ static struct { void *addr; char *name;} names[] = {
 #endif	/* MIPS1 */
 
 /* XXX simonb: need mips32 and mips64 checks here too */
-#if defined(MIPS3) && !defined(MIPS3_5900) /* r4000 family (mips-III cpu) */
+#if defined(MIPS3) && !defined(MIPS3_5900) /* r4000 family (mips-III CPU) */
 	Name(mips3_KernGenException),
 	Name(mips3_UserGenException),
 	Name(mips3_SystemCall),
@@ -967,5 +1023,4 @@ fn_name(unsigned addr)
 }
 
 #endif /* DEBUG */
-
 #endif /* DDB_TRACE */

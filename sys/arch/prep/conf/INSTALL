@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.23 2003/01/16 06:59:20 matt Exp $
+#	$NetBSD: INSTALL,v 1.23.2.1 2004/08/03 10:39:48 skrll Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -26,10 +26,11 @@ options 	PLATFORM_MOTOROLA_ULMB60XA	# Motorola ULMB60xA (?)
 options 	OPENPIC				# OpenPIC support (7043-140)
 
 # Compatibility options
-options 	COMPAT_13	# NetBSD 1.3,
-options 	COMPAT_14	# NetBSD 1.4,
-options 	COMPAT_15	# NetBSD 1.5,
-options 	COMPAT_43	# and 4.3BSD
+#options 	COMPAT_13	# NetBSD 1.3,
+#options 	COMPAT_14	# NetBSD 1.4,
+#options 	COMPAT_15	# NetBSD 1.5,
+#options 	COMPAT_16	# NetBSD 1.6,
+#options 	COMPAT_43	# and 4.3BSD
 
 # File systems
 file-system 	FFS		# UFS
@@ -45,8 +46,9 @@ options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
  				# immutable) behave as system flags.
 
-options 	USERCONF	# userconf(4) support
+#options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Networking options
@@ -99,17 +101,17 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 isa*	at pcib?			# ISA on PCI-ISA bridge
 
 # PCMCIA bus support
-pcmcia* at pcic? controller ? socket ?
+#pcmcia* at pcic? controller ? socket ?
 
 # ISA PCMCIA controllers
-pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
+#pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 
 #options 	PCIC_ISA_INTR_ALLOC_MASK=0x4a00 # free irq 9,11,14
 #options 	PCIC_ISA_ALLOC_IOBASE=0x0400
 #options 	PCIC_ISA_ALLOC_IOSIZE=0x0100
 
 # ISA Plug-and-Play bus support
-isapnp0 at isa?
+#isapnp0 at isa?
 
 # on-board I/O for IBM Personal Power Series 830 IDE controller
 obio0	at mainbus0
@@ -120,14 +122,11 @@ obio0	at mainbus0
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
-pms*		at pckbc?		# PS/2 mouse for wsmouse
+#pms*		at pckbc?		# PS/2 mouse for wsmouse
 vga*		at pci?
 wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
-wsmouse*	at pms? mux 0
-
-pcppi0	at isa?				# PC prog. periph. interface
-isabeep0 at pcppi?			# "keyboard" beep
+#wsmouse*	at pms? mux 0
 
 mcclock0 at isa? port 0x70		# mc146818 and compatible
 mkclock0 at isa? port 0x74		# mk48t18 and compatible
@@ -142,29 +141,29 @@ com1	at isa? port 0x2f8 irq 3
 # Parallel Printer Interfaces
 
 # ISA parallel printer interfaces
-lpt0	at isa? port 0x3bc irq 7	# standard PC parallel ports
+#lpt0	at isa? port 0x3bc irq 7	# standard PC parallel ports
 
 
 # SCSI Controllers and Devices
 
 # PCI SCSI controllers
-adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
-ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-esiop*	at pci? dev ? function ?	# Symbios 53c825/875 and newer chips
-iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
-pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+#adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
+#ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+#esiop*	at pci? dev ? function ?	# Symbios 53c825/875 and newer chips
+#iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
+#pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 
 # PCMCIA SCSI controllers
-aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
+#aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # SCSI bus support
-scsibus* at adw?
-scsibus* at ahc?
-scsibus* at aic?
-scsibus* at esiop?
-scsibus* at iha?
-scsibus* at pcscp?
+#scsibus* at adw?
+#scsibus* at ahc?
+#scsibus* at aic?
+#scsibus* at esiop?
+#scsibus* at iha?
+#scsibus* at pcscp?
 scsibus* at siop?
 
 # SCSI devices
@@ -180,10 +179,13 @@ wdc0	at obio? port 0x1f0 irq 13
 wdc1	at obio? port 0x170 irq 13
 
 # ISA Plug-and-Play IDE controllers
-wdc*	at isapnp?
+#wdc*	at isapnp?
 
 # PCMCIA IDE controllers
-wdc*	at pcmcia? function ?
+#wdc*	at pcmcia? function ?
+
+# ATA (IDE) bus support
+atabus* at ata?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -196,10 +198,10 @@ wdc*	at pcmcia? function ?
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-wd*	at wdc? channel ? drive ? flags 0x0000
+wd*	at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus* at wdc? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.
@@ -209,39 +211,39 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 # Miscellaneous mass storage devices
 
 # ISA floppy
-fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
-fd*	at fdc? drive ?
+#fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+#fd*	at fdc? drive ?
 
 # Network Interfaces
 
 # PCI network interfaces
-ep*	at pci? dev ? function ?	# 3Com 3c59x
-ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
-fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
-ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+#ep*	at pci? dev ? function ?	# 3Com 3c59x
+#ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
+#fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+#ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
-rtk*	at pci? dev ? function ?	# Realtek 8129/8139
-sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+#rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+#sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
-vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+#vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # ISA network interfaces
-ep*	at isa? port ? irq ?		# 3Com 3c509 Ethernet
+#ep*	at isa? port ? irq ?		# 3Com 3c509 Ethernet
 
 # ISA Plug-and-Play network intefaces
-ep*	at isapnp?			# 3Com 3c509 Ethernet
-ne*	at isapnp?			# NE2000-compatible Ethernet
+#ep*	at isapnp?			# 3Com 3c509 Ethernet
+#ne*	at isapnp?			# NE2000-compatible Ethernet
 
 # PCMCIA network interfaces
-ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
-ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+#ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+#ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 
 # MII/PHY support
-exphy*	at mii? phy ?			# 3Com internal PHYs
-inphy*	at mii? phy ?			# Intel 82555 PHYs
+#exphy*	at mii? phy ?			# 3Com internal PHYs
+#inphy*	at mii? phy ?			# Intel 82555 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
-qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+#qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+#sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 

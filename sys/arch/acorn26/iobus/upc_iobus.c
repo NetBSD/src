@@ -1,4 +1,4 @@
-/* $NetBSD: upc_iobus.c,v 1.5 2002/10/02 03:25:46 thorpej Exp $ */
+/* $NetBSD: upc_iobus.c,v 1.5.6.1 2004/08/03 10:30:48 skrll Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -29,10 +29,10 @@
  * upc_iobus.c - attachment of the 82C7xx to the Archimedes I/O bus
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: upc_iobus.c,v 1.5.6.1 2004/08/03 10:30:48 skrll Exp $");
+
 #include <sys/param.h>
-
-__RCSID("$NetBSD: upc_iobus.c,v 1.5 2002/10/02 03:25:46 thorpej Exp $");
-
 #include <sys/device.h>
 
 #include <arch/acorn26/iobus/iobusvar.h>

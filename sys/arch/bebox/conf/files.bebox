@@ -1,10 +1,12 @@
-#	$NetBSD: files.bebox,v 1.39 2003/03/18 16:40:19 matt Exp $
+#	$NetBSD: files.bebox,v 1.39.2.1 2004/08/03 10:33:36 skrll Exp $
 #
 # First try for bebox specific configuration info
 #
-maxpartitions 16
+maxpartitions 8
 
 maxusers 2 8 64
+
+defflag	XSERVER
 
 file	arch/bebox/bebox/autoconf.c
 file	arch/bebox/bebox/clock.c
@@ -88,8 +90,8 @@ define pckbcport { [irq = -1], [port = -1] }
 # PC console support a la "pccons"
 device	pc: tty, pckbcport
 attach	pc at isa
-device	pcconskbd
-attach	pcconskbd at pckbc
+device	pcconskbd: pckbport_machdep_cnattach
+attach	pcconskbd at pckbport
 file	arch/bebox/isa/pccons.c		pc | pcconskbd needs-flag
 
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
@@ -107,7 +109,7 @@ device	pfb: wsemuldisplaydev, wsrasteremulops
 attach	pfb at pci
 file	arch/bebox/pci/pfb.c		pfb needs-flag
 
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 # Floppy disk controller
 device	fdc {drive = -1}: isadma
@@ -118,9 +120,6 @@ file	dev/isa/fdc_isa.c		fdc_isa
 
 device	fd: disk
 attach	fd at fdc
-
-# Game adapter (joystick)
-file	arch/bebox/isa/joy_timer.c	joy
 
 # ISA Plug 'n Play support
 file	arch/bebox/isa/isapnp_machdep.c		isapnp

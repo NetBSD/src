@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.14 2003/03/20 17:45:14 tsutsui Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.14.2.1 2004/08/03 10:40:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_compat_netbsd.h"
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -45,14 +46,17 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.14.2.1 2004/08/03 10:40:16 skrll Exp $")
+
+
 	.text
 	.align 5	/* align cache line size (32B) */
 /*
- * void cpu_switch(struct lwp *):
- *	Find a runnable process and switch to it.  Wait if necessary.
+ * void cpu_switch(struct lwp *)
+ *	Find a runnable lwp and switch to it.  Wait if necessary.
  */
 ENTRY(cpu_switch)
-	/* Save current process's context to switchframe */
+	/* Save current lwp's context to switchframe */
 	mov.l	_L.SF,	r0
 	mov.l	@(r0, r4), r1
 	add	#SF_SIZE, r1
@@ -69,15 +73,16 @@ ENTRY(cpu_switch)
 	mov.l	r14,	@-r1
 	mov.l	r15,	@-r1
 
-	/* Search next process. cpu_switch_search may or may not sleep. */
+_L.find_and_switch:
+	/* Search next lwp. cpu_switch_search may or may not sleep. */
 	mov.l	_L.cpu_switch_search, r0
 	jsr	@r0
-	 mov	r4,	r8	/* save old proc */
+	 mov	r4,	r8	/* save old lwp */
 
-	/* Skip context switch if same process. */
+	/* Skip context switch if same lwp. */
 	cmp/eq	r8,	r0
 	bt/s	1f
-	 mov	r0,	r4	/* new proc */
+	 mov	r0,	r4	/* new lwp */
 
 _L.doswitch:
 	/* Setup kernel stack */
@@ -96,7 +101,7 @@ _L.doswitch:
 	/* Wire u-area */
 	MOV	(switch_resume, r0)
 	jsr	@r0
-	 mov	r4,	r8	/* save new proc */
+	 mov	r4,	r8	/* save new lwp */
 	mov	r8,	r4
 	__EXCEPTION_UNBLOCK(r0, r1)
 	/* Now OK to use kernel stack. */
@@ -108,7 +113,7 @@ _L.doswitch:
 1:	/* Return 0 indicating "didn't switch". */
 	mov	#0, r2
 
-	/* Restore new process's context from switchframe */
+	/* Restore new lwp's context from switchframe */
 	/* NOTE: r2 has return value! */
 2:	mov.l	_L.SF,	r0
 	mov.l	@(r0, r4), r1
@@ -137,7 +142,7 @@ FUNC_SYMBOL(switch_resume)
  *	Switch to the specified next LWP.
  */
 ENTRY(cpu_switchto)
-	/* Save current process's context to switchframe. */
+	/* Save current lwp's context to switchframe. */
 	mov.l	_L.SFp,	r0
 	mov.l	@(r0, r4), r1
 	add	#SF_SIZE, r1
@@ -155,19 +160,84 @@ ENTRY(cpu_switchto)
 	mov.l	r15,	@-r1
 
 	/*
+	 * curlwp = NULL;
+	 * XXX Is this necessary?  We know we won't go idle.
+	 */
+	mov.l	_L.curlwp, r0
+	mov	#0, r1
+	mov.l	r1, @r0
+
+	/* old and new lwps are already in r4, r5 */
+	mov.l	_L.cpu_switch_prepare, r0
+	jsr	@r0
+	 nop
+
+	/*
 	 * Put the incoming LWP in r4 and jump into the middle
 	 * of cpu_switch(), and let it do the work to restore the
 	 * incoming LWP's context.
 	 */
 	bra	_L.doswitch
-	 mov	r5, r4
+	 mov	r0, r4
 
 	.align	2
 _L.SFp:			.long	(L_MD_PCB)
+_L.curlwp:		.long	_C_LABEL(curlwp)
+_L.cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
+
+
+/*
+ * void cpu_exit(struct lwp *l)
+ *	Just fall-through to the switch_exit below.
+ */
+ENTRY(cpu_exit)
+	mov.l	_L.switch_exit.lwp_exit2, r5	/* exit_func to call */
+	/* FALLTHROUGH */
+
+/*
+ * switch_exit(struct lwp *l, void (*exit_func)(struct lwp *))
+ *	Called only from cpu_exit(l).  Before we call exit_func to
+ *	free lwp's resources (including kernel stack) we need to
+ *	switch to the lwp0's kernel stack.  Then we jump into the
+ *	middle of cpu_switch to find and switch to a new lwp.
+ */
+ALTENTRY(switch_exit)
+	mov.l	_L.switch_exit.lwp0_pcb, r1
+	mov.l	_L.switch_exit.curpcb, r0
+	mov.l	@r1, r1
+	mov.l	r1, @r0			/* curpcb = lwp0.l_md.md_pcb */
+
+	mov.l	@(SF_R7_BANK, r1), r0	/* stack top */
+	mov.l	@(SF_R6_BANK, r1), r2	/* current frame */
+	mov.l	@(SF_R15, r1), r3	/* current stack */
+
+	/* switch to lwp0's kernel stack */
+	__EXCEPTION_BLOCK(r1, r6)
+	ldc	r0, r7_bank
+	ldc	r2, r6_bank
+	mov	r3, r15
+	__EXCEPTION_UNBLOCK(r0, r1)
+
+	/* safe to call (*exit_func)(l); now */
+	jsr	@r5
+	 nop			/* lwp is already in r4 */
+
+	/* proceed to cpu_switch */
+	bra	_L.find_and_switch
+	 mov	#0, r4		/* no "previous" lwp */
+
+	.align 2
+_L.switch_exit.lwp_exit2:
+	.long	_C_LABEL(lwp_exit2)
+_L.switch_exit.lwp0_pcb:
+	.long	_C_LABEL(lwp0) + L_MD_PCB
+_L.switch_exit.curpcb:
+	.long	_C_LABEL(curpcb)
+
 
 #ifdef SH3
 /*
- * void sh3_switch_resume(sturct proc *p)
+ * void sh3_switch_resume(sturct lwp *l)
  *	Set current u-area PTE array to curupte.
  *	No need to flush any entries. it is depended on u-area mapping is
  *	wired, and its mapping never cause modified/reference fault.
@@ -190,16 +260,16 @@ _L.curupte:		.long	_C_LABEL(curupte)
 
 #ifdef SH4
 /*
- * void sh4_switch_resume(sturct proc *p)
+ * void sh4_switch_resume(sturct lwp *l)
  *	Wire u-area. invalidate TLB entry for kernel stack to prevent
  *	TLB multiple hit.
  */
 NENTRY(sh4_switch_resume)
 	mov.l	_L.UPTE,r0
-	add	r0,	r4	/* p->p_md.md_upte */
+	add	r0,	r4	/* l->l_md.md_upte */
 	mov	#UPAGES,r3
 	mov	#1,	r2
-	mov.l	@r4,	r0	/* if (p->p_md.md_upte[0].addr == 0) return; */
+	mov.l	@r4,	r0	/* if (l->l_md.md_upte[0].addr == 0) return; */
 	tst	r0,	r0
 	bt	2f
 
@@ -307,7 +377,7 @@ NENTRY(_cpu_intr_resume)
 	 and	r2,	r0	/* return (SR & 0xf0) */
 
 /*
- * u_int32_t _cpu_exception_suspend(void):
+ * uint32_t _cpu_exception_suspend(void):
  *	Block exception (SR.BL). if external interrupt raise, pending interrupt.
  *	if exception occur, jump to 0xa0000000 (hard reset).
  */
@@ -323,7 +393,7 @@ NENTRY(_cpu_exception_suspend)
 	 and	r1,	r0	/* r0 &= 0x10000000 */
 
 /*
- * void _cpu_exception_resume(u_int32_t s):
+ * void _cpu_exception_resume(uint32_t s):
  *	restore 's' exception mask. (SR.BL)
  */
 NENTRY(_cpu_exception_resume)
@@ -339,7 +409,7 @@ NENTRY(_cpu_exception_resume)
 	 nop
 
 /*
- * void _cpu_spin(u_int32_t count)
+ * void _cpu_spin(uint32_t count)
  *	loop 'count' * 10 cycle.
  * [...]
  * add    IF ID EX MA WB
@@ -381,6 +451,7 @@ NENTRY(proc_trampoline)
 	__EXCEPTION_RETURN
 	/* NOTREACHED */
 
+#ifdef COMPAT_16
 /*
  * sigcode:
  *	Signal trampoline. copied to top of user stack.
@@ -400,10 +471,11 @@ NENTRY(sigcode)
 	mov.l	_L.SYS_exit, r0
 	trapa	#0x80			/* exit if sigreturn fails */
 	.align	2
-_L.SYS___sigreturn14:	.long	SYS___sigreturn14
+_L.SYS___sigreturn14:	.long	SYS_compat_16___sigreturn14
 _L.SYS_exit:		.long	SYS_exit
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
+#endif /* COMPAT_16 */
 
 /*
  * void savectx(struct pcb *pcb):
@@ -704,7 +776,7 @@ ENTRY(fuword)
 3:
 	bra	1b
 	 mov	#-1,	r0
-	
+
 	.align 2
 _Lfuword.onfault:
 	.long	3b
@@ -958,7 +1030,7 @@ ENTRY(subyte)
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
 2:
-	rts	
+	rts
 	 nop
 
 3:

@@ -1,4 +1,4 @@
-/*	$NetBSD: itecons.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
+/*	$NetBSD: itecons.c,v 1.2.6.1 2004/08/03 10:34:55 skrll Exp $	*/
 
 /*	$OpenBSD: itecons.c,v 1.6 1999/04/20 20:01:02 mickey Exp $	*/
 
@@ -74,11 +74,13 @@ pz_device_t *cons_pzdev, *kbd_pzdev;
 char cnbuf[IODC_MINIOSIZ] __attribute__ ((aligned (IODC_MINIOSIZ)));
 int kycode[IODC_MAXSIZE/sizeof(int)];
 
+#if 0
 int
 cnspeed(dev_t dev, int sp)
 {
 	return 9600;
 }
+#endif
 
 void
 ite_probe(struct consdev *cn)
@@ -98,7 +100,7 @@ ite_probe(struct consdev *cn)
 		/* morse code with the LED's?!! */
 		cons_pzdev->pz_iodc_io = kbd_pzdev->pz_iodc_io = NULL;
 	} else {
-        	cn->cn_pri = CN_INTERNAL;
+		cn->cn_pri = CN_INTERNAL;
 		cn->cn_dev = makedev(0, 0);
 	}
 }

@@ -1,6 +1,7 @@
-/*	$NetBSD: pte.h,v 1.2 2003/02/05 07:05:19 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.2.2.1 2004/08/03 10:39:36 skrll Exp $	*/
 
 /*-
+ * Copyright (C) 2003 Matt Thomas
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
  * All rights reserved.
@@ -51,6 +52,14 @@ struct pteg {
 #endif	/* _LOCORE */
 
 /* High word: */
+#ifdef PPC_OEA64
+#define	PTE_VALID	0x00000001
+#define	PTE_HID		0x00000002
+#define	PTE_API		0x00000f80
+#define	PTE_API_SHFT	7
+#define	PTE_VSID_SHFT	12
+#define	PTE_VSID	(~0xfffL)
+#else
 #define	PTE_VALID	0x80000000
 #define	PTE_VSID	0x7fffff80
 #define	PTE_VSID_SHFT	7
@@ -58,8 +67,11 @@ struct pteg {
 #define	PTE_HID		0x00000040
 #define	PTE_API		0x0000003f
 #define	PTE_API_SHFT	0
+#endif	/* PPC_OEA64 */
+
+
 /* Low word: */
-#define	PTE_RPGN	0xfffff000
+#define	PTE_RPGN	(~0xfffL)
 #define	PTE_RPGN_SHFT	12
 #define	PTE_REF		0x00000100
 #define	PTE_CHG		0x00000080
@@ -77,26 +89,72 @@ struct pteg {
 #define	PTE_RW		PTE_BW
 #define	PTE_RO		PTE_BR
 
-#define	PTE_EXEC	0x00000200	/* pseudo bit in attrs; page is exec */
+#define	PTE_EXEC	0x00000200	/* pseudo bit; page is exec */
 
 /*
  * Extract bits from address
  */
+#define	ADDR_SR	        (~0x0fffffffL)
 #define	ADDR_SR_SHFT	28
 #define	ADDR_PIDX	0x0ffff000
 #define	ADDR_PIDX_SHFT	12
-#define	ADDR_API_SHFT	22
+#ifdef PPC_OEA64
+#define	ADDR_API_SHFT	23	/* API is 5 bits */
+#else
+#define	ADDR_API_SHFT	22	/* API is 6 bits */
+#endif /* PPC_OEA64 */
 #define	ADDR_POFF	0x00000fff
-#define	ADDR_SEG_WIDTH	4
+
+#ifdef PPC_OEA64
+/*
+ * Segment Table Element
+ */
+#ifndef	_LOCORE
+struct ste {
+	register_t ste_hi;
+	register_t ste_lo;
+};
+
+struct steg {
+	struct ste st[8];
+};
+#endif	/* _LOCORE */
+
+/* High Word */
+#define	STE_VALID	0x00000080
+#define	STE_TYPE	0x00000040
+#define	STE_SUKEY	0x00000020	/* Super-state protection */
+#define	STE_PRKEY	0x00000010	/* User-state protection */
+#define	STE_NOEXEC	0x00000008	/* No-execute protection bit */
+#define	STE_ESID	(~0x0fffffffL)	/* Effective Segment ID */
+#define	STE_ESID_SHFT	28
+#define	STE_ESID_MASK	0x0000001f	/* low 5 bits of the ESID */
+
+/* Low Word */
+#define	STE_VSID	(~0xfffL)	/* Virtual Segment ID */
+#define	STE_VSID_SHFT	12
+#defien	STE_VSID_WIDTH	52
+
+#define	SR_VSID_SHFT	STE_VSID_SHFT	/* compatibility with PPC_OEA */
+#define	SR_VSID_WIDTH	STE_VSID_WIDTH	/* compatibility with PPC_OEA */
+
+#define	SR_KEY_LEN	9		/* 64 groups of 8 segment entries */
+#else	/* !defined(PPC_OEA64) */
 
 /*
  * Segment registers
  */
-#define SR_KEY_LEN	4		/* key bit width */
+#define	SR_KEY_LEN	4		/* 16 segment registers */
 #define	SR_TYPE		0x80000000	/* T=0 selects memory format */
 #define	SR_SUKEY	0x40000000	/* Supervisor protection key */
 #define	SR_PRKEY	0x20000000	/* User protection key */
 #define	SR_NOEXEC	0x10000000	/* No-execute protection bit */
-#define	SR_VSID		0x00ffffff	/* Virtual segment ID */
+#define	SR_VSID_SHFT	0		/* Starts at LSB */
+#define	SR_VSID_WIDTH	24		/* Goes for 24 bits */
+
+#endif	/* PPC_OEA64 */
+
+					/* Virtual segment ID */
+#define	SR_VSID		(((1L << SR_VSID_WIDTH) - 1) << SR_VSID_SHFT)
 
 #endif	/* _POWERPC_OEA_PTE_H_ */

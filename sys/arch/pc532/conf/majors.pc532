@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pc532,v 1.4 2003/04/25 21:11:00 ragge Exp $
+#	$NetBSD: majors.pc532,v 1.4.2.1 2004/08/03 10:38:46 skrll Exp $
 #
 # Device majors for pc532
 #
@@ -26,6 +26,7 @@ device-major	ss		char 19			ss
 device-major	uk		char 20			uk
 device-major	lkm		char 21			lkm
 device-major	se		char 22			se
+device-major	ses		char 23			ses
 
 device-major	ipl		char 28			ipfilter
 device-major	rnd		char 29			rnd
@@ -35,3 +36,7 @@ device-major	clockctl	char 32			clockctl
 device-major	systrace	char 33			systrace
 device-major	cgd		char 34  block 14	cgd
 device-major	ksyms		char 35			ksyms
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in
+# sys/conf/majors.

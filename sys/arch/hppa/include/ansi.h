@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.2 2003/03/02 22:18:18 tshiozak Exp $	*/
+/*	$NetBSD: ansi.h,v 1.2.2.1 2004/08/03 10:35:37 skrll Exp $	*/
 
 /*	$OpenBSD: ansi.h,v 1.4 2000/02/22 17:29:12 millert Exp $	*/
 
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -40,6 +36,9 @@
 #ifndef	_ANSI_H_
 #define	_ANSI_H_
 
+#include <sys/cdefs.h>
+#include <machine/int_types.h>
+
 /*
  * Types which are fundamental to the implementation and may appear in
  * more than one standard header are defined here.  Standard headers
@@ -49,10 +48,10 @@
  *	#undef	_BSD_SIZE_T_
  *	#endif
  */
-#define	_BSD_CLOCK_T_	unsigned long		/* clock() */
-#define	_BSD_PTRDIFF_T_	int			/* ptr1 - ptr2 */
-#define	_BSD_SIZE_T_	unsigned int		/* sizeof() */
-#define	_BSD_SSIZE_T_	int			/* byte count or error */
+#define	_BSD_CLOCK_T_	unsigned long int	/* clock() */
+#define	_BSD_PTRDIFF_T_	long int		/* ptr1 - ptr2 */
+#define	_BSD_SIZE_T_	unsigned long int	/* sizeof() */
+#define	_BSD_SSIZE_T_	long int		/* byte count or error */
 #define	_BSD_TIME_T_	int			/* time() */
 #define	_BSD_VA_LIST_	double *		/* va_list */
 #define	_BSD_CLOCKID_T_	int

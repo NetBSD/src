@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.12 2003/04/28 23:16:21 bjh21 Exp $	*/
+/*	$NetBSD: limits.h,v 1.12.2.1 2004/08/03 10:38:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -52,7 +48,7 @@
 
 #define	USHRT_MAX	0xffff		/* max value for an unsigned short */
 #define	SHRT_MAX	0x7fff		/* max value for a short */
-#define SHRT_MIN        (-0x7fff-1)     /* min value for a short */
+#define	SHRT_MIN        (-0x7fff-1)     /* min value for a short */
 
 #define	UINT_MAX	0xffffffff	/* max value for an unsigned int */
 #define	INT_MAX		0x7fffffff	/* max value for an int */
@@ -84,16 +80,16 @@
 #endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-#define LONG_BIT	32
-#define WORD_BIT	32
+#define	LONG_BIT	32
+#define	WORD_BIT	32
 
-#define DBL_DIG		15
-#define DBL_MIN		2.2250738585072014E-308
-#define DBL_MAX		1.7976931348623157E+308
+#define	DBL_DIG		15
+#define	DBL_MIN		2.2250738585072014E-308
+#define	DBL_MAX		1.7976931348623157E+308
 
-#define FLT_DIG		6
-#define FLT_MAX		3.40282347E+38F
-#define FLT_MIN		1.17549435E-38F
+#define	FLT_DIG		6
+#define	FLT_MAX		3.40282347E+38F
+#define	FLT_MIN		1.17549435E-38F
 #endif
 
 #endif /* _MACHINE_LIMITS_H_ */

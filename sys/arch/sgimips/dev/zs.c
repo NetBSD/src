@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18 2003/01/28 12:35:35 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.18.2.1 2004/08/03 10:40:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * Plain tty/async lines use the zs_async slave.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.18.2.1 2004/08/03 10:40:00 skrll Exp $");
+
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
@@ -60,6 +63,7 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/machtype.h>
 #include <machine/autoconf.h>
 #include <machine/z8530var.h>
 
@@ -115,11 +119,11 @@ struct zsdevice {
 #define ZS_REG_DATA	1
 static int zs_chan_offset[] = {ZS_CHAN_A, ZS_CHAN_B};
 
-static void zscnprobe __P((struct consdev *));
-static void zscninit __P((struct consdev *));
-static int  zscngetc __P((dev_t));
-static void zscnputc __P((dev_t, int));
-static void zscnpollc __P((dev_t, int));
+static void zscnprobe (struct consdev *);
+static void zscninit (struct consdev *);
+static int  zscngetc (dev_t);
+static void zscnputc (dev_t, int);
+static void zscnpollc (dev_t, int);
 
 static int  cons_port;
 
@@ -164,30 +168,27 @@ static u_char zs_init_reg[16] = {
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zs_hpc_match __P((struct device *, struct cfdata *, void *));
-static void	zs_hpc_attach __P((struct device *, struct device *, void *));
-static int	zs_print __P((void *, const char *name));
+static int	zs_hpc_match (struct device *, struct cfdata *, void *);
+static void	zs_hpc_attach (struct device *, struct device *, void *);
+static int	zs_print (void *, const char *name);
 
 CFATTACH_DECL(zsc_hpc, sizeof(struct zsc_softc),
     zs_hpc_match, zs_hpc_attach, NULL, NULL);
 
 extern struct	cfdriver zsc_cd;
 
-static int	zshard __P((void *));
-void		zssoft __P((void *));
-static int	zs_get_speed __P((struct zs_chanstate *));
+static int	zshard (void *);
+void		zssoft (void *);
+static int	zs_get_speed (struct zs_chanstate *);
 struct		zschan *zs_get_chan_addr (int zs_unit, int channel);
-int		zs_getc __P((void *));
-void		zs_putc __P((void *, int));
+int		zs_getc (void *);
+void		zs_putc (void *, int);
 
 /*
  * Is the zs chip present?
  */
 static int
-zs_hpc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+zs_hpc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 
@@ -204,10 +205,7 @@ zs_hpc_match(parent, cf, aux)
  * not set up the keyboard as ttya, etc.
  */
 static void
-zs_hpc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+zs_hpc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zsc_softc *zsc = (void *) self;
 	struct hpc_attach_args *haa = aux;
@@ -322,7 +320,7 @@ zs_hpc_attach(parent, self, aux)
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
 
 			s = splhigh();
- 			zs_write_reg(cs, 9, reset);
+			zs_write_reg(cs, 9, reset);
 			splx(s);
 		}
 	}
@@ -348,9 +346,7 @@ zs_hpc_attach(parent, self, aux)
 }
 
 static int
-zs_print(aux, name)
-	void *aux;
-	const char *name;
+zs_print(void *aux, const char *name)
 {
 	struct zsc_attach_args *args = aux;
 
@@ -368,8 +364,7 @@ zs_print(aux, name)
  * so we have to look at all of them on each interrupt.
  */
 static int
-zshard(arg)
-	void *arg;
+zshard(void *arg)
 {
 	register struct zsc_softc *zsc;
 	register int rr3, unit, rval, softreq;
@@ -399,8 +394,7 @@ zshard(arg)
  * Similar scheme as for zshard (look at all of them)
  */
 void
-zssoft(arg)
-	void *arg;
+zssoft(void *arg)
 {
 	register struct zsc_softc *zsc;
 	register int s, unit;
@@ -435,8 +429,7 @@ zssoft(arg)
  * Compute the current baud rate given a ZS channel.
  */
 static int
-zs_get_speed(cs)
-	struct zs_chanstate *cs;
+zs_get_speed(struct zs_chanstate *cs)
 {
 	int tconst;
 
@@ -449,9 +442,7 @@ zs_get_speed(cs)
  * MD functions for setting the baud rate and control modes.
  */
 int
-zs_set_speed(cs, bps)
-	struct zs_chanstate *cs;
-	int bps;	/* bits per second */
+zs_set_speed(struct zs_chanstate *cs, int bps)
 {
 	int tconst, real_bps;
 
@@ -490,9 +481,7 @@ zs_set_speed(cs, bps)
 }
 
 int
-zs_set_modes(cs, cflag)
-	struct zs_chanstate *cs;
-	int cflag;	/* bits per second */
+zs_set_modes(struct zs_chanstate *cs, int cflag)
 {
 	int s;
 
@@ -536,9 +525,7 @@ zs_set_modes(cs, cflag)
  */
 
 u_char
-zs_read_reg(cs, reg)
-	struct zs_chanstate *cs;
-	u_char reg;
+zs_read_reg(struct zs_chanstate *cs, u_char reg)
 {
 	u_char val;
 	struct zs_channel *zsc = (struct zs_channel *)cs;
@@ -551,9 +538,7 @@ zs_read_reg(cs, reg)
 }
 
 void
-zs_write_reg(cs, reg, val)
-	struct zs_chanstate *cs;
-	u_char reg, val;
+zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val)
 {
 	struct zs_channel *zsc = (struct zs_channel *)cs;
 
@@ -564,8 +549,7 @@ zs_write_reg(cs, reg, val)
 }
 
 u_char
-zs_read_csr(cs)
-	struct zs_chanstate *cs;
+zs_read_csr(struct zs_chanstate *cs)
 {
 	struct zs_channel *zsc = (struct zs_channel *)cs;
 	register u_char val;
@@ -576,9 +560,7 @@ zs_read_csr(cs)
 }
 
 void
-zs_write_csr(cs, val)
-	struct zs_chanstate *cs;
-	u_char val;
+zs_write_csr(struct zs_chanstate *cs, u_char val)
 {
 	struct zs_channel *zsc = (struct zs_channel *)cs;
 
@@ -587,8 +569,7 @@ zs_write_csr(cs, val)
 }
 
 u_char
-zs_read_data(cs)
-	struct zs_chanstate *cs;
+zs_read_data(struct zs_chanstate *cs)
 {
 	struct zs_channel *zsc = (struct zs_channel *)cs;
 	register u_char val;
@@ -599,9 +580,7 @@ zs_read_data(cs)
 }
 
 void
-zs_write_data(cs, val)
-	struct zs_chanstate *cs;
-	u_char val;
+zs_write_data(struct zs_chanstate *cs, u_char val)
 {
 	struct zs_channel *zsc = (struct zs_channel *)cs;
 
@@ -610,8 +589,7 @@ zs_write_data(cs, val)
 }
 
 void
-zs_abort(cs)
-	struct zs_chanstate *cs;
+zs_abort(struct zs_chanstate *cs)
 {
 #if defined(KGDB)
 	zskgdb(cs);
@@ -626,32 +604,80 @@ zs_abort(cs)
 /*********************************************************/
 
 struct zschan *
-zs_get_chan_addr(zs_unit, channel)
-	int zs_unit, channel;
+zs_get_chan_addr(int zs_unit, int channel)
 {
 	static int dumped_addr = 0;
 	struct zsdevice *addr;
 	struct zschan *zc;
 
-	addr = (struct zsdevice *) MIPS_PHYS_TO_KSEG1(0x1fbd9830);
+	switch (mach_type) {
+	case MACH_SGI_IP12:
+		if (zs_unit == 2 && (mach_subtype == MACH_SGI_IP12_4D_3X ||
+		    		     mach_subtype == MACH_SGI_IP12_VIP12)) {
+			addr = (struct zsdevice *)
+						MIPS_PHYS_TO_KSEG1(0x1fb80d20);
+			break;
+		}
 
-	if (channel == 0) {
-		zc = &addr->zs_chan_b;
+		/* FALLTHROUGH */
+	case MACH_SGI_IP20:
+		if (zs_unit == 0) {
+			addr = (struct zsdevice *)
+						MIPS_PHYS_TO_KSEG1(0x1fb80d00);
+		} else if (zs_unit == 1) {
+			addr = (struct zsdevice *)
+						MIPS_PHYS_TO_KSEG1(0x1fb80d10);
+		} else {
+			panic("zs_get_chan_addr: bad zs_unit %d\n", zs_unit); 
+		}
+		break;
+ 
+	case MACH_SGI_IP22:
+		if (zs_unit != 0)
+			panic("zs_get_chan_addr zs_unit != 0 on IP%d",
+								mach_type);
+
+		addr = (struct zsdevice *) MIPS_PHYS_TO_KSEG1(0x1fbd9830);
+		break;
+
+	default:
+		panic("zs_get_chan_addr: unsupported IP%d", mach_type);
+	}
+
+	/*
+	 * We need to swap serial ports to match reality on
+	 * non-keyboard channels. 
+	 */
+	if (mach_type == MACH_SGI_IP22) {
+		if (channel == 0)
+			zc = &addr->zs_chan_b;
+		else
+			zc = &addr->zs_chan_a; 
 	} else {
-		zc = &addr->zs_chan_a;
+		if (zs_unit == 0) {
+			if (channel == 0)
+				zc = &addr->zs_chan_a;
+			else
+				zc = &addr->zs_chan_b;
+		} else {
+			if (channel == 0)
+				zc = &addr->zs_chan_b;
+			else
+				zc = &addr->zs_chan_a;
+		}
 	}
 
 	if (dumped_addr == 0) {
 		dumped_addr++;
-		printf("zs channel %d had address %p\n", channel, zc);
+		aprint_debug("zs unit %d, channel %d had address %p\n",
+						zs_unit, channel, zc);
 	}
 
 	return (zc);
 }
 
 int
-zs_getc(arg)
-	void *arg;
+zs_getc(void *arg)
 {
 	register volatile struct zschan *zc = arg;
 	register int s, c, rr0;
@@ -674,9 +700,7 @@ zs_getc(arg)
  * Polled output char.
  */
 void
-zs_putc(arg, c)
-	void *arg;
-	int c;
+zs_putc(void *arg, int c)
 {
 	register volatile struct zschan *zc = arg;
 	register int s, rr0;
@@ -696,8 +720,7 @@ zs_putc(arg, c)
 
 /***************************************************************/
 void
-zscnprobe(cn)
-	struct consdev *cn;
+zscnprobe(struct consdev *cn)
 {
 }
 
@@ -717,6 +740,17 @@ zscninit(cn)
 
 	cons_port = consdev[7] - '0';
 
+#if 0
+	/*
+	 * If your IP12 serial console goes missing after consinit(),
+	 * try flipping this the other way 'round.  If there are some
+	 * IP12 machines that actually require this, we'll be in for
+	 * a lot of funnies once again...
+	 */
+	if (mach_type == MACH_SGI_IP12)
+		cons_port = 1 - cons_port;
+#endif
+
 	cn->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), cons_port);
 	cn->cn_pri = CN_REMOTE;
 
@@ -731,29 +765,46 @@ zscninit(cn)
 }
 
 int
-zscngetc(dev)
-	dev_t dev;
+zscngetc(dev_t dev)
 {
 	struct zschan *zs;
 
-	zs = zs_get_chan_addr(0, cons_port);
+	switch (mach_type) {
+	case MACH_SGI_IP12:
+	case MACH_SGI_IP20:
+		zs = zs_get_chan_addr(1, cons_port);
+		break;
+
+	case MACH_SGI_IP22:
+	default:
+		zs = zs_get_chan_addr(0, cons_port);
+		break;
+	}
+
 	return zs_getc(zs);
 }
 
 void
-zscnputc(dev, c)
-	dev_t dev;
-	int c;
+zscnputc(dev_t dev, int c)
 {
 	struct zschan *zs;
 
-	zs = zs_get_chan_addr(0, cons_port);
+	switch (mach_type) {
+	case MACH_SGI_IP12:
+	case MACH_SGI_IP20:
+		zs = zs_get_chan_addr(1, cons_port);
+		break;
+
+	case MACH_SGI_IP22:
+	default:
+		zs = zs_get_chan_addr(0, cons_port);
+		break;
+	}
+
 	zs_putc(zs, c);
 }
 
 void
-zscnpollc(dev, on)
-	dev_t dev;
-	int on;
+zscnpollc(dev_t dev, int on)
 {
 }

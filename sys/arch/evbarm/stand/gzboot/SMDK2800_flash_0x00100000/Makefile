@@ -1,0 +1,21 @@
+#	$NetBSD: Makefile,v 1.3.2.2 2004/08/03 10:34:08 skrll Exp $
+
+S=	${.CURDIR}/../../../../..
+
+PLATFORM= SMDK2800
+RELOC= 0x00100000
+MAXIMAGESIZE= 0		# concatenate
+LOADADDR= 0x08200000
+
+CPPFLAGS+= -DCPU_S3C2800
+CPPFLAGS+= -DCONSPEED=115200
+CPPFLAGS+= -DCONADDR=0x10170000UL
+# CPPFLAGS+= -DCONADDR=0x10180000UL
+CPPFLAGS+= -DXTAL_CLK=6000000
+CPUFLAGS= -march=armv4
+
+LDSCRIPT= ${.CURDIR}/ldscript
+
+SRCS+=	smdk2800.c sscom.c
+
+.include "${S}/arch/evbarm/stand/gzboot/Makefile.gzboot"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.h,v 1.8 1999/02/06 18:46:21 drochner Exp $	*/
+/*	$NetBSD: pccons.h,v 1.8.44.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /*
  * pccons.h -- pccons ioctl definitions
@@ -15,10 +15,10 @@
 #define CONSOLE_SET_TYPEMATIC_RATE	_IOW('t',124,u_char)
 
 #ifdef _KERNEL
-int pccnattach __P((void));
+int pccnattach(void);
 
 #if (NPCCONSKBD > 0)
-int pcconskbd_cnattach __P((pckbc_tag_t, pckbc_slot_t));
+int pcconskbd_cnattach(pckbc_tag_t, pckbc_slot_t);
 #endif
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.16 2002/12/10 13:44:49 pk Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.16.6.1 2004/08/03 10:40:45 skrll Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.16.6.1 2004/08/03 10:40:45 skrll Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -367,12 +370,9 @@ audioamd_start_output(addr, p, cc, intr, arg)
 
 	DPRINTFN(1, ("sa_start_output: cc=%d %p (%p)\n", cc, intr, arg));
 
-	if (!sc->sc_am7930.sc_locked) {
-		audioamd_codec_iwrite(&sc->sc_am7930,
-			AM7930_IREG_INIT, AM7930_INIT_PMS_ACTIVE);
-		sc->sc_am7930.sc_locked = 1;
-		DPRINTF(("sa_start_output: started intrs.\n"));
-	}
+	audioamd_codec_iwrite(&sc->sc_am7930,
+		AM7930_IREG_INIT, AM7930_INIT_PMS_ACTIVE);
+	DPRINTF(("sa_start_output: started intrs.\n"));
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
 	sc->sc_au.au_pdata = p;
@@ -392,12 +392,9 @@ audioamd_start_input(addr, p, cc, intr, arg)
 
 	DPRINTFN(1, ("sa_start_input: cc=%d %p (%p)\n", cc, intr, arg));
 
-	if (!sc->sc_am7930.sc_locked) {
-		audioamd_codec_iwrite(&sc->sc_am7930,
-			AM7930_IREG_INIT, AM7930_INIT_PMS_ACTIVE);
-		sc->sc_am7930.sc_locked = 1;
-		DPRINTF(("sa_start_input: started intrs.\n"));
-	}
+	audioamd_codec_iwrite(&sc->sc_am7930,
+		AM7930_IREG_INIT, AM7930_INIT_PMS_ACTIVE);
+	DPRINTF(("sa_start_input: started intrs.\n"));
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
 	sc->sc_au.au_rdata = p;

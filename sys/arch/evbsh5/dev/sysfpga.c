@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.17 2003/01/01 01:32:52 thorpej Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.17.2.1 2004/08/03 10:34:22 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,6 +36,9 @@
  */
 
 /* Cayman's System FPGA Chip */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysfpga.c,v 1.17.2.1 2004/08/03 10:34:22 skrll Exp $");
 
 #include "sh5pci.h"
 #include "superio.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_space.c,v 1.2 2003/05/30 18:38:02 thorpej Exp $	*/
+/*	$NetBSD: becc_space.c,v 1.2.2.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * bus_space functions for the ADI Engineering Big Endian Companion Chip.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: becc_space.c,v 1.2.2.1 2004/08/03 10:32:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

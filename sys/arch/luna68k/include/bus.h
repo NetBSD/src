@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2001/08/25 23:08:39 chs Exp $	*/
+/*	$NetBSD: bus.h,v 1.4.22.1 2004/08/03 10:36:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -310,7 +310,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
-	1:	movb	a1@+,%%a0@				;	\
+	1:	movb	%%a1@+,%%a0@				;	\
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
@@ -324,7 +324,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
-	1:	movw	a1@+,%%a0@				;	\
+	1:	movw	%%a1@+,%%a0@				;	\
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
@@ -338,7 +338,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
-	1:	movl	a1@+,%%a0@				;	\
+	1:	movl	%%a1@+,%%a0@				;	\
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
@@ -366,7 +366,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
-	1:	movb	a1@+,%%a0@+				;	\
+	1:	movb	%%a1@+,%%a0@+				;	\
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
@@ -380,7 +380,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
-	1:	movw	a1@+,%%a0@+				;	\
+	1:	movw	%%a1@+,%%a0@+				;	\
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
@@ -394,7 +394,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		movl	%0,%%a0					;	\
 		movl	%1,%%a1					;	\
 		movl	%2,%%d0					;	\
-	1:	movl	a1@+,%%a0@+				;	\
+	1:	movl	%%a1@+,%%a0@+				;	\
 		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 2003/06/14 16:27:36 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47.2.1 2004/08/03 10:40:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47.2.1 2004/08/03 10:40:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,17 +105,9 @@ STATIC boolean_t __pmap_map_change(pmap_t, vaddr_t, paddr_t, vm_prot_t,
 void
 pmap_bootstrap()
 {
-	size_t sz;
-	caddr_t v;
 
 	/* Steal msgbuf area */
 	initmsgbuf((caddr_t)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
-
-	/* Allocate space for system data structures. */
-	sz = (size_t)allocsys(NULL, NULL);
-	v = (caddr_t)uvm_pageboot_alloc(sz);
-	if ((allocsys(v, NULL) - v) != sz)
-		panic("pmap_bootstrap: table size inconsistency");
 
 	avail_start = ptoa(vm_physmem[0].start);
 	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
@@ -437,7 +432,7 @@ __pmap_map_change(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 /*
  * void __pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t vaddr):
- *	Insert phisical-virutal map to vm_page.
+ *	Insert physical-virtual map to vm_page.
  *	Assume pre-existed mapping is already removed.
  */
 void
@@ -500,7 +495,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 /*
  * void __pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t vaddr):
- *	Remove phisical-virutal map from vm_page.
+ *	Remove physical-virtual map from vm_page.
  */
 void
 __pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t vaddr)

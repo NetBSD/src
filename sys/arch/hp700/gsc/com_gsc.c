@@ -1,4 +1,4 @@
-/*	$NetBSD: com_gsc.c,v 1.6 2003/06/14 17:01:12 thorpej Exp $	*/
+/*	$NetBSD: com_gsc.c,v 1.6.2.1 2004/08/03 10:34:48 skrll Exp $	*/
 
 /*	$OpenBSD: com_gsc.c,v 1.8 2000/03/13 14:39:59 mickey Exp $	*/
 
@@ -32,6 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_gsc.c,v 1.6.2.1 2004/08/03 10:34:48 skrll Exp $");
+
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
@@ -53,6 +56,7 @@
 
 #include <hp700/dev/cpudevs.h>
 #include <hp700/gsc/gscbusvar.h>
+#include <hp700/hp700/machdep.h>
 
 #define	COMGSC_OFFSET	0x800
 #define	COMGSC_FREQUENCY (1843200 * 4) /* 16-bit baud rate divisor */
@@ -63,76 +67,37 @@ struct com_gsc_regs {
 
 struct com_gsc_softc {
 	struct	com_softc sc_com;	/* real "com" softc */
- 
+
 	/* GSC-specific goo. */
 	void	*sc_ih;			/* interrupt handler */
-}; 
+};
 
-int	com_gsc_probe __P((struct device *, struct cfdata *, void *));
-void	com_gsc_attach __P((struct device *, struct device *, void *));
+int	com_gsc_probe(struct device *, struct cfdata *, void *);
+void	com_gsc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(com_gsc, sizeof(struct com_gsc_softc),
     com_gsc_probe, com_gsc_attach, NULL, NULL);
 
 int
-com_gsc_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+com_gsc_probe(struct device *parent, struct cfdata *match, void *aux)
 {
-	register struct gsc_attach_args *ga = aux;
-	bus_space_handle_t ioh;
-	int rv;
+	struct gsc_attach_args *ga = aux;
 
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
 	    (ga->ga_type.iodc_sv_model != HPPA_FIO_GRS232 &&
-	     (ga->ga_type.iodc_sv_model != HPPA_FIO_RS232)))
+	     ga->ga_type.iodc_sv_model != HPPA_FIO_RS232))
 		return 0;
 
-#if 1
-	/*
-	 * XXX fredette - don't match anything unless it
-	 * happens to be the KGDB port, since any other
-	 * port might be a serial console, and I haven't
-	 * done any console work yet.
-	 */
-	if (
-#ifdef KGDB
-	    ga->ga_hpa != KGDBADDR
-#else
-	    /* CONSTCOND */ 1
-#endif
-	    )
-		return 0;
-#endif
-
-	/*
-	 * If this port is the console or a KGDB port,
-	 * we definitely match, otherwise map and probe
-	 * the port.
-	 */
-	if (!com_is_console(ga->ga_iot, ga->ga_hpa + COMGSC_OFFSET, 0)) {
-		if (bus_space_map(ga->ga_iot, ga->ga_hpa + COMGSC_OFFSET, 
-				  COM_NPORTS, 0, &ioh))
-			return 0;
-		rv = comprobe1(ga->ga_iot, ioh);
-		bus_space_unmap(ga->ga_iot, ioh, COM_NPORTS);
-		if (!rv)
-			return 0;
-	}
-
-	/* Success. */
 	return 1;
 }
 
 void
-com_gsc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
-	register struct com_gsc_softc *gsc = (void *)self;
+	struct com_gsc_softc *gsc = (void *)self;
 	struct com_softc *sc = &gsc->sc_com;
-	register struct gsc_attach_args *ga = aux;
+	struct gsc_attach_args *ga = aux;
+	int pagezero_cookie;
 
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
@@ -140,26 +105,45 @@ com_gsc_attach(parent, self, aux)
 	sc->sc_iobase = (bus_addr_t)ga->ga_hpa + COMGSC_OFFSET;
 	sc->sc_frequency = COMGSC_FREQUENCY;
 
+	/* Test if this is the console.  Compare either HPA or device path. */
+	pagezero_cookie = hp700_pagezero_map();
+	if ((hppa_hpa_t)PAGE0->mem_cons.pz_hpa == ga->ga_hpa ) {
+
+		/*
+		 * This port is the console.  In this case we must call
+		 * comcnattach() and later com_is_console() to initialize
+		 * everything properly.
+		 */
+
+		if (comcnattach(sc->sc_iot, sc->sc_iobase, B9600,
+		    sc->sc_frequency, COM_TYPE_NORMAL,
+		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0) {
+			printf(": can't comcnattach\n");
+			hp700_pagezero_unmap(pagezero_cookie);
+			return;
+		}
+	}
+	hp700_pagezero_unmap(pagezero_cookie);
+
+	/*
+	 * Get the already initialized console ioh via com_is_console() if
+	 * this is the console or map the I/O space if this isn't the console.
+	 */
+
 	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase,
-			  COM_NPORTS, 0, &sc->sc_ioh)) {
-		printf(": can't map i/o space\n");
+	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
+	    &sc->sc_ioh) != 0) {
+		printf(": can't map I/O space\n");
 		return;
 	}
 
-#if notyet
-	*(volatile u_int8_t *)ga->ga_hpa = 0xd0;	/* reset */
-	DELAY(1000);
-#endif
-
 	com_attach_subr(sc);
 	gsc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_TTY,
-					  comintr, sc,
-					  ga->ga_int_reg, ga->ga_irq);
+	    comintr, sc, ga->ga_int_reg, ga->ga_irq);
 }
 
 #ifdef	KGDB
-int com_gsc_kgdb_attach __P((void));
+int com_gsc_kgdb_attach(void);
 int
 com_gsc_kgdb_attach(void)
 {
@@ -167,12 +151,10 @@ com_gsc_kgdb_attach(void)
 
 	printf("kgdb: attaching com at 0x%x at %d baud...",
 		KGDBADDR, KGDBRATE);
-	error = com_kgdb_attach(&hppa_bustag, 
-				KGDBADDR + COMGSC_OFFSET, 
-				KGDBRATE, COMGSC_FREQUENCY,
-				COM_TYPE_NORMAL,
-	   /* 8N1 */
-	   ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8));
+	error = com_kgdb_attach(&hppa_bustag, KGDBADDR + COMGSC_OFFSET,
+				KGDBRATE, COMGSC_FREQUENCY, COM_TYPE_NORMAL,
+				((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) |
+				 CS8));
 	if (error) {
 		printf(" failed (%d)\n", error);
 	} else {

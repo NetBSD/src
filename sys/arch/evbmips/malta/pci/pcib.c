@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.7 2003/01/01 01:31:04 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.7.2.1 2004/08/03 10:34:15 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7.2.1 2004/08/03 10:34:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +167,7 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 	 * Just print out a description and defer configuration
 	 * until all PCI devices have been attached.
 	 */
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf("%s: %s, (rev . 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 

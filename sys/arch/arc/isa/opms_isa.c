@@ -1,4 +1,4 @@
-/* $NetBSD: opms_isa.c,v 1.4 2002/10/02 04:59:48 thorpej Exp $ */
+/* $NetBSD: opms_isa.c,v 1.4.6.1 2004/08/03 10:32:22 skrll Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opms_isa.c,v 1.4.6.1 2004/08/03 10:32:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,9 +1,48 @@
-/*	$NetBSD: locore.s,v 1.136 2003/06/23 11:01:04 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.136.2.1 2004/08/03 10:31:37 skrll Exp $	*/
+
+/*
+ * Copyright (c) 1980, 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: locore.s 1.58 91/04/22$
+ *
+ *	@(#)locore.s	7.11 (Berkeley) 5/9/91
+ *
+ * Original (hp300) Author: unknown, maybe Mike Hibler?
+ * Amiga author: Markus Wild
+ * Other contributors: Bryan Ford (kernel reload stuff)
+ */
 
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1980, 1990 The Regents of the University of California.
- * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -699,7 +738,6 @@ ENTRY_NOPROFILE(lev7intr)
  * (profiling, scheduling) and software interrupts (network, softclock).
  * We check for ASTs first, just like the VAX.  To avoid excess overhead
  * the T_ASTFLT handling code will also check for software interrupts so we
- * do not have to do it here.
  * do not have to do it here.  After identifing that we need an AST we
  * drop the IPL to allow device interrupts.
  *
@@ -790,6 +828,7 @@ ASENTRY_NOPROFILE(start)
 
 	| save the passed parameters. "prepass" them on the stack for
 	| later catch by start_c()
+	movl	%a5,%sp@-		| pass loadbase
 	movl	%d6,%sp@-		| pass boot partition offset
 	movl	%a2,%sp@-		| pass sync inhibit flags
 	movl	%d3,%sp@-		| pass AGA mode
@@ -923,7 +962,7 @@ Lstartnot040:
 /* let the C function initialize everything */
 	RELOC(start_c, %a0)
 	jbsr	%a0@
-	addl	#28,%sp
+	lea	%sp@(4*9),%sp
 
 #ifdef DRACO
 	RELOC(machineid,%a0)
@@ -1055,20 +1094,6 @@ Lnoflush:
 	moveml	%sp@+,%d0-%d7/%a0-%a6	| load most registers (all but SSP)
 	addql	#8,%sp			| pop SSP and stack adjust count
   	rte
-
-/*
- * proc_trampoline call function in register a2 with a3 as an arg
- * and then rei.
- */
-ENTRY_NOPROFILE(proc_trampoline)
-	movl	%a3,%sp@-		| push function arg
-	jbsr	%a2@			| call function
-	addql	#4,%sp			| pop arg
-	movl	%sp@(FR_SP),%a0		| usp to a0
-	movl	%a0,%usp		| setup user stack pointer
-	moveml	%sp@+,%d0-%d7/%a0-%a6	| restore all but sp
-	addql	#8,%sp			| pop sp and stack adjust
-	jra	_ASM_LABEL(rei)		| all done
 
 /*
  * Use common m68k sigcode.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.1 2003/06/11 07:35:39 hamajima Exp $	*/
+/*	$NetBSD: kauai.c,v 1.1.4.1 2004/08/03 10:37:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.1.4.1 2004/08/03 10:37:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +58,9 @@
 
 struct kauai_softc {
 	struct wdc_softc sc_wdcdev;
-	struct channel_softc *wdc_chanptr;
-	struct channel_softc wdc_channel;
-	struct channel_queue wdc_queue;
+	struct wdc_channel *wdc_chanptr;
+	struct wdc_channel wdc_channel;
+	struct ata_queue wdc_queue;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
 	u_int sc_piotiming_r[2];
@@ -72,7 +75,7 @@ void kauai_attach __P((struct device *, struct device *, void *));
 int kauai_dma_init __P((void *, int, int, void *, size_t, int));
 void kauai_dma_start __P((void *, int, int));
 int kauai_dma_finish __P((void *, int, int, int));
-void kauai_set_modes __P((struct channel_softc *));
+void kauai_set_modes __P((struct wdc_channel *));
 static void calc_timing_kauai __P((struct kauai_softc *, int));
 static int getnodebypci(pci_chipset_tag_t, pcitag_t);
 
@@ -88,7 +91,8 @@ kauai_match(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_KAUAI)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_KAUAI ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_UNINORTH_ATA))
 		return 5;
 
 	return 0;
@@ -101,10 +105,10 @@ kauai_attach(parent, self, aux)
 {
 	struct kauai_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
-	struct channel_softc *chp = &sc->wdc_channel;
+	struct wdc_channel *chp = &sc->wdc_channel;
 	pci_intr_handle_t ih;
 	paddr_t regbase, dmabase;
-	int node, reg[5];
+	int node, reg[5], i;
 
 #ifdef DIAGNOSTIC
 	if ((vaddr_t)sc->sc_dmacmd & 0x0f) {
@@ -143,12 +147,24 @@ kauai_attach(parent, self, aux)
 
 	chp->cmd_iot = chp->ctl_iot = macppc_make_bus_space_tag(regbase, 4);
 
-	if (bus_space_map(chp->cmd_iot, 0, WDC_REG_NPORTS, 0, &chp->cmd_ioh) ||
-	    bus_space_subregion(chp->cmd_iot, chp->cmd_ioh,
+	if (bus_space_map(chp->cmd_iot, 0, WDC_REG_NPORTS, 0,
+	    &chp->cmd_baseioh) ||
+	    bus_space_subregion(chp->cmd_iot, chp->cmd_baseioh,
 			WDC_AUXREG_OFFSET, 1, &chp->ctl_ioh)) {
 		printf("%s: couldn't map registers\n", self->dv_xname);
 		return;
 	}
+	for (i = 0; i < WDC_NREG; i++) {
+		if (bus_space_subregion(chp->cmd_iot, chp->cmd_baseioh, i,
+		    i == 0 ? 4 : 1, &chp->cmd_iohs[i]) != 0) {
+			bus_space_unmap(chp->cmd_iot, chp->cmd_baseioh,
+			    WDC_REG_NPORTS);
+			printf("%s: couldn't subregion registers\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			return;
+		}
+	}
+	wdc_init_shadow_regs(chp);
 
 	if (pci_intr_establish(pa->pa_pc, ih, IPL_BIO, wdcintr, chp) == NULL) {
 		printf("%s: unable to establish interrupt\n", self->dv_xname);
@@ -172,21 +188,18 @@ kauai_attach(parent, self, aux)
 	sc->sc_calc_timing = calc_timing_kauai;
 	sc->sc_dmareg = (void *)dmabase;
 
-	chp->channel = 0;
-	chp->wdc = &sc->sc_wdcdev;
+	chp->ch_channel = 0;
+	chp->ch_wdc = &sc->sc_wdcdev;
 	chp->ch_queue = &sc->wdc_queue;
 
 	wdcattach(chp);
-
-	/* Modify access timings. */
-	kauai_set_modes(chp);
 }
 
 void
 kauai_set_modes(chp)
-	struct channel_softc *chp;
+	struct wdc_channel *chp;
 {
-	struct kauai_softc *sc = (void *)chp->wdc;
+	struct kauai_softc *sc = (void *)chp->ch_wdc;
 	struct ata_drive_datas *drvp0 = &chp->ch_drive[0];
 	struct ata_drive_datas *drvp1 = &chp->ch_drive[1];
 	struct ata_drive_datas *drvp;
@@ -201,14 +214,12 @@ kauai_set_modes(chp)
 		drvp = &chp->ch_drive[drive];
 		if (drvp->drive_flags & DRIVE) {
 			(*sc->sc_calc_timing)(sc, drive);
-			bus_space_write_4(chp->cmd_iot, chp->cmd_ioh,
+			bus_space_write_4(chp->cmd_iot, chp->cmd_baseioh,
 			    PIO_CONFIG_REG, sc->sc_piotiming_r[drive]);
-			bus_space_write_4(chp->cmd_iot, chp->cmd_ioh,
+			bus_space_write_4(chp->cmd_iot, chp->cmd_baseioh,
 			    DMA_CONFIG_REG, sc->sc_dmatiming_r[drive]);
 		}
 	}
-
-	wdc_print_modes(chp);
 }
 
 /*
@@ -243,7 +254,7 @@ calc_timing_kauai(sc, drive)
 	struct kauai_softc *sc;
 	int drive;
 {
-	struct channel_softc *chp = &sc->wdc_channel;
+	struct wdc_channel *chp = &sc->wdc_channel;
 	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 	int piomode = drvp->PIO_mode;
 	int dmamode = drvp->DMA_mode;
@@ -274,15 +285,15 @@ kauai_dma_init(v, channel, drive, databuf, datalen, flags)
 {
 	struct kauai_softc *sc = v;
 	dbdma_command_t *cmdp = sc->sc_dmacmd;
-	struct channel_softc *chp = &sc->wdc_channel;
+	struct wdc_channel *chp = &sc->wdc_channel;
 	vaddr_t va = (vaddr_t)databuf;
 	int read = flags & WDC_DMA_READ;
 	int cmd = read ? DBDMA_CMD_IN_MORE : DBDMA_CMD_OUT_MORE;
 	u_int offset;
 
-	bus_space_write_4(chp->cmd_iot, chp->cmd_ioh, DMA_CONFIG_REG,
+	bus_space_write_4(chp->cmd_iot, chp->cmd_baseioh, DMA_CONFIG_REG,
 	    read ? sc->sc_dmatiming_r[drive] : sc->sc_dmatiming_w[drive]);
-	bus_space_read_4(chp->cmd_iot, chp->cmd_ioh, DMA_CONFIG_REG);
+	bus_space_read_4(chp->cmd_iot, chp->cmd_baseioh, DMA_CONFIG_REG);
 
 	offset = va & PGOFSET;
 

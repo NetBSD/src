@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 2003/05/10 16:12:03 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.3.2.1 2004/08/03 10:32:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -53,10 +53,10 @@
 
 #include <sys/dkbad.h>
 #include <sys/disklabel_acorn.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 struct cpu_disklabel {
-	struct mbr_partition mbrparts[NMBRPART];
+	struct mbr_partition mbrparts[MBR_PART_COUNT];
 	struct dkbad bad;
 };
 

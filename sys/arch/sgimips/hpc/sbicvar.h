@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.5 2002/03/13 13:12:28 simonb Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.5.12.1 2004/08/03 10:40:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *  This product includes software developed by the University of
- *  California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -176,11 +172,11 @@ struct wd33c93_softc {
 	int	sc_minsync;		/* Minimum sync period (4ns units) */
 	int	sc_maxoffset;		/* Maximum sync ofset (bytes) */
 
-	int  (*sc_dmasetup) __P((struct wd33c93_softc *,caddr_t *,
-					    size_t *,int,size_t *));
-	int  (*sc_dmago) __P((struct wd33c93_softc *));
-	void (*sc_dmastop) __P((struct wd33c93_softc *));
-	void (*sc_reset) __P((struct wd33c93_softc *));
+	int  (*sc_dmasetup) (struct wd33c93_softc *, caddr_t *,
+					    size_t *, int, size_t *);
+	int  (*sc_dmago) (struct wd33c93_softc *);
+	void (*sc_dmastop) (struct wd33c93_softc *);
+	void (*sc_reset) (struct wd33c93_softc *);
 };
 
 /* values for sc_flags */
@@ -199,7 +195,7 @@ struct wd33c93_softc {
 #define SBIC_CONNECTED		5	/* Actively using the SCSI bus */
 #define	SBIC_DISCONNECT		6	/* MSG_DISCONNECT received */
 #define	SBIC_CMDCOMPLETE 	7	/* MSG_CMDCOMPLETE received */
-#define	SBIC_ERROR		8	/* Error has occured */
+#define	SBIC_ERROR		8	/* Error has occurred */
 #define SBIC_SELTIMEOUT		9	/* Select Timeout */
 #define	SBIC_CLEANING		10	/* Scrubbing ACB's */
 #define SBIC_BUSRESET		11	/* SCSI RST has been issued */
@@ -258,10 +254,10 @@ extern int wd33c93_debug_flags;
 struct buf;
 struct scsipi_xfer;
 
-void wd33c93_minphys __P((struct buf *bp));
-void wd33c93_scsi_request __P((struct scsipi_channel *,
-				scsipi_adapter_req_t, void *));
-void wd33c93_attach __P((struct wd33c93_softc *));
-int  wd33c93_intr __P((struct wd33c93_softc *));
+void wd33c93_minphys (struct buf *);
+void wd33c93_scsi_request (struct scsipi_channel *,
+				scsipi_adapter_req_t, void *);
+void wd33c93_attach (struct wd33c93_softc *);
+int  wd33c93_intr (struct wd33c93_softc *);
 
 #endif /* _SBICVAR_H_ */

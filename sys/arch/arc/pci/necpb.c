@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.15 2003/06/15 23:08:56 fvdl Exp $	*/
+/*	$NetBSD: necpb.c,v 1.15.2.1 2004/08/03 10:32:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.15.2.1 2004/08/03 10:32:28 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -419,6 +422,9 @@ necpb_intr_establish(pc, ih, level, func, arg)
 	n->ih_arg = arg;
 	n->ih_next = NULL;
 	n->ih_intn = ih;
+	strlcpy(n->ih_evname, necpb_intr_string(pc, ih), sizeof(n->ih_evname));
+	evcnt_attach_dynamic(&n->ih_evcnt, EVCNT_TYPE_INTR, NULL, "necpb",
+	    n->ih_evname);
 
 	if (necpb_inttbl[ih] == NULL) {
 		necpb_inttbl[ih] = n;
@@ -464,6 +470,8 @@ necpb_intr_disestablish(pc, cookie)
 	} else
 		q->ih_next = n->ih_next;
 
+	evcnt_detach(&n->ih_evcnt);
+
 	free(n, M_DEVBUF);
 }
 
@@ -492,6 +500,7 @@ necpb_intr(mask, cf)
 				p = necpb_inttbl[a];
 				while (p != NULL) {
 					(*p->ih_func)(p->ih_arg);
+					p->ih_evcnt.ev_count++;
 					p = p->ih_next;
 				}
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.4 2002/03/30 06:23:39 thorpej Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.4.12.1 2004/08/03 10:32:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -35,6 +35,8 @@
 #ifndef _ARM_SYSARCH_H_
 #define _ARM_SYSARCH_H_
 
+#include <sys/cdefs.h>
+
 /*
  * Pickup definition of uintptr_t
  */
@@ -53,9 +55,11 @@ struct arm_sync_icache_args {
 };
 
 #ifndef _KERNEL
+__BEGIN_DECLS
 int	arm_sync_icache __P((u_int addr, int len));
 int	arm_drain_writebuf __P((void));
 int	sysarch __P((int, void *));
+__END_DECLS
 #endif
 
 #endif /* !_ARM_SYSARCH_H_ */

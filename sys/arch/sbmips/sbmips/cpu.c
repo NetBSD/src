@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.11 2003/06/23 11:01:37 martin Exp $ */
+/* $NetBSD: cpu.c,v 1.11.2.1 2004/08/03 10:40:00 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -31,6 +31,9 @@
  *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *    OR OTHERWISE), EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11.2.1 2004/08/03 10:40:00 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -82,7 +85,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	int plldiv;
 	uint32_t config;
 
-	/* XXX this code must run on the target cpu */
+	/* XXX this code must run on the target CPU */
 	config = mips3_cp0_config_read();
 	config &= ~MIPS3_CONFIG_K0_MASK;
 	config |= 0x05;				/* XXX.  cacheable coherent */

@@ -1,4 +1,6 @@
-# $NetBSD: Makefile.bootprogs,v 1.2 2002/11/12 19:34:40 cgd Exp $
+# $NetBSD: Makefile.bootprogs,v 1.2.6.1 2004/08/03 10:40:00 skrll Exp $
+
+.include <bsd.sys.mk>		# for HOST_SH
 
 S=	${.CURDIR}/../../../..
 
@@ -7,9 +9,15 @@ S=	${.CURDIR}/../../../..
 STRIPFLAG=
 BINMODE= 444
 
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
+
 STRIP?=	strip
 
-CHECKSIZE_CMD=	SIZE=${SIZE} sh ${.CURDIR}/../common/checksize.sh
+CHECKSIZE_CMD=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
 
 .PHONY: machine-links
 beforedepend: machine-links
@@ -28,7 +36,7 @@ AFLAGS+=	-DASSEMBLER -D_LOCORE -mno-abicalls
 CPPFLAGS+=	-nostdinc -I${.OBJDIR} -D_STANDALONE -I${S}
 CFLAGS=		-Os -g -ffreestanding -mno-abicalls -msoft-float -G 0
 
-NETBSD_VERS!=sh ${.CURDIR}/../../../../conf/osrelease.sh
+NETBSD_VERS!=${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 
 CWARNFLAGS+=	-Wno-main 
@@ -38,7 +46,7 @@ CWARNFLAGS+=	-Wno-main
 .if exists(version)
 .PHONY: vers.c
 vers.c: version
-	sh ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "sbmips"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "sbmips"
 
 SRCS+=	vers.c
 CLEANFILES+= vers.c
@@ -140,4 +148,4 @@ LIBSA=		${SALIB}
 
 cleandir: cleandirlocal
 cleandirlocal:
-	rm -rf lib
+	-rm -rf lib

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2003/02/12 17:51:02 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.5.2.1 2004/08/03 10:39:48 skrll Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -32,6 +32,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5.2.1 2004/08/03 10:39:48 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -39,7 +42,7 @@
 
 #include <dev/clock_subr.h>
 
-#include <prep/prep/clockvar.h>
+#include <powerpc/spr.h>
 
 #define	MINYEAR	1990
 
@@ -55,21 +58,18 @@ static volatile u_long lasttb;
 
 struct device *clockdev;
 const struct clockfns *clockfns;
-int clockinitted;
+
+static todr_chip_handle_t todr_handle;
 
 void
-clockattach(dev, fns)
-        struct device *dev;
-        const struct clockfns *fns;
+todr_attach(handle)
+	todr_chip_handle_t handle;
 {
 
-	printf("\n");
+	if (todr_handle)
+		panic("todr_attach: to many todclock configured");
 
-	if (clockfns != NULL)
-		panic("clockattach: multiple clocks");
-
-	clockdev = dev;
-	clockfns = fns;
+	todr_handle = handle;
 }
 
 /*
@@ -82,7 +82,10 @@ cpu_initclocks()
 
 	ticks_per_intr = ticks_per_sec / hz;
 	cpu_timebase = ticks_per_sec;
-	asm volatile ("mftb %0" : "=r"(lasttb));
+	if ((mfpvr() >> 16) == MPC601)
+		asm volatile ("mfspr %0,%1" : "=r"(lasttb) : "n"(SPR_RTCL_R));
+	else
+		asm volatile ("mftb %0" : "=r"(lasttb));
 	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 }
 
@@ -94,72 +97,42 @@ void
 inittodr(base)
 	time_t base;
 {
-	struct clocktime ct;
-	int year;
-	struct clock_ymdhms dt;
-	time_t deltat;
-	int badbase = 0;
+	int badbase, waszero;
+
+	badbase = 0;
+	waszero = (base == 0);
 
 	if (base < (MINYEAR - 1970) * SECYR) {
-		printf("WARNING: preposterous time in file system");
+		if (base != 0)
+			printf("WARNING: preposterous time in file system\n");
 		/* read the system clock anyway */
 		base = (MINYEAR - 1970) * SECYR + 186 * SECDAY + SECDAY / 2;
 		badbase = 1;
 	}
 
-	(*clockfns->cf_get)(clockdev, base, &ct);
-#ifdef DEBUG
-	printf("readclock: %d/%d/%d/%d/%d/%d", ct.year, ct.mon, ct.day,
-	    ct.hour, ct.min, ct.sec);
-#endif
-	clockinitted = 1;
-
-	year = 1900 + ct.year;
-	if (year < 1970)
-		year += 100;
-
-	/* simple sanity checks (2037 = time_t overflow) */
-	if (year < MINYEAR || year > 2037 ||
-	    ct.mon < 1 || ct.mon > 12 || ct.day < 1 ||
-	    ct.day > 31 || ct.hour > 23 || ct.min > 59 || ct.sec > 59) {
+	if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+	    time.tv_sec == 0) {
+		printf("WARNING: bad date in battery clock");
 		/*
 		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
+		 * anything better, resetting the clock.
 		 */
 		time.tv_sec = base;
-		if (!badbase) {
-			printf("WARNING: preposterous clock chip time\n");
+		if (!badbase)
 			resettodr();
-		}
-		goto bad;
-	}
-
-	dt.dt_year = year;
-	dt.dt_mon = ct.mon;
-	dt.dt_day = ct.day;
-	dt.dt_hour = ct.hour;
-	dt.dt_min = ct.min;
-	dt.dt_sec = ct.sec;
-	time.tv_sec = clock_ymdhms_to_secs(&dt);
-#ifdef DEBUG
-	printf("=>%ld (%d)\n", (long int)time.tv_sec, (int)base);
-#endif
-
-	if (!badbase) {
+	} else {
 		/*
 		 * See if we gained/lost two or more days;
 		 * if so, assume something is amiss.
 		 */
-		deltat = time.tv_sec - base;
+		int deltat = time.tv_sec - base;
 		if (deltat < 0)
 			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
+		if (waszero || deltat < 2 * SECDAY)
 			return;
-		printf("WARNING: clock %s %ld days",
-		    time.tv_sec < base ? "lost" : "gained",
-		    (long)deltat / SECDAY);
+		printf("WARNING: clock %s %d days",
+		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
-bad:
 	printf(" -- CHECK AND RESET THE DATE!\n");
 }
 
@@ -173,28 +146,12 @@ bad:
 void
 resettodr()
 {
-	struct clock_ymdhms dt;
-	struct clocktime ct;
 
-	if (!clockinitted)
+	if (time.tv_sec == 0)
 		return;
 
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
-
-	/* rt clock wants 2 digits */
-	ct.year = dt.dt_year % 100;
-	ct.mon = dt.dt_mon;
-	ct.day = dt.dt_day;
-	ct.hour = dt.dt_hour;
-	ct.min = dt.dt_min;
-	ct.sec = dt.dt_sec;
-	ct.dow = dt.dt_wday;
-#ifdef DEBUG
-	printf("setclock: %d/%d/%d/%d/%d/%d\n", ct.year, ct.mon, ct.day,
-	    ct.hour, ct.min, ct.sec);
-#endif
-
-	(*clockfns->cf_set)(clockdev, &ct);
+	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+		printf("resettodr: cannot set time in time-of-day clock\n");
 }
 
 /*
@@ -231,7 +188,12 @@ decr_intr(frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(tick));
+	if ((mfpvr() >> 16) == MPC601) {
+		asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
+	} else {
+		asm volatile ("mftb %0" : "=r"(tb));
+	}
+	asm ("mfdec %0" : "=r"(tick));
 	for (nticks = 0; tick < 0; nticks++)
 		tick += ticks_per_intr;
 	asm volatile ("mtdec %0" :: "r"(tick));
@@ -283,7 +245,10 @@ microtime(tvp)
 	
 	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-	asm ("mftb %0" : "=r"(tb));
+	if ((mfpvr() >> 16) == MPC601)
+		asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
+	else
+		asm volatile ("mftb %0" : "=r"(tb));
 	ticks = (tb - lasttb) * ns_per_tick;
 	*tvp = time;
 	asm volatile ("mtmsr %0" :: "r"(msr));
@@ -304,12 +269,33 @@ delay(n)
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;
-	
-	tb = mftb();
-	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
-	tbh = tb >> 32;
-	tbl = tb;
-	asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
-		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
-		      : "=r"(scratch) : "r"(tbh), "r"(tbl));
+
+	if ((mfpvr() >> 16) == MPC601) {
+		u_int32_t rtc[2];
+
+		mfrtc(rtc);
+		while (n >= 1000000) {
+			rtc[0]++;
+			n -= 1000000;
+		}
+		rtc[1] += (n * 1000);
+		if (rtc[1] >= 1000000000) {
+			rtc[0]++;
+			rtc[1] -= 1000000000;
+		}
+		asm volatile ("1: mfspr %0,%3; cmplw %0,%1; blt 1b; bgt 2f;"
+		    "mfspr %0,%4; cmplw %0,%2; blt 1b; 2:"
+		    : "=&r"(scratch)
+		    : "r"(rtc[0]), "r"(rtc[1]), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R)
+		    : "cr0");
+	} else {
+		tb = mftb();
+		tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
+		tbh = tb >> 32;
+		tbl = tb;
+		asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
+			      "mftb %0; cmplw %0,%2; blt 1b; 2:"
+			      : "=&r"(scratch) : "r"(tbh), "r"(tbl)
+			      : "cr0");
+	}
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.20 2002/09/18 02:43:58 lukem Exp $
+#	$NetBSD: COMPUTEX7750,v 1.20.6.1 2004/08/03 10:34:21 skrll Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -45,6 +45,7 @@ options 	BSC_SDMR3_VAL	=0xff940110
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	HZ=64		# clock interrupt generates every 1/HZ sec
 options 	USERCONF	# userconf(4) support
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Compatibility options
 options 	COMPAT_43	# and 4.3BSD

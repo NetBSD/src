@@ -1,31 +1,27 @@
-# $NetBSD: Makefile.booters,v 1.8 2002/12/23 19:31:24 pooka Exp $
+# $NetBSD: Makefile.booters,v 1.8.2.1 2004/08/03 10:40:15 skrll Exp $
+
+.include <bsd.sys.mk>		# for HOST_SH
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
 
 BINMODE?=	444
 
-.PHONY: machine-links
-beforedepend: machine-links
-# ${MACHINE} then ${MACHINE_ARCH}
-machine-links:
-	-rm -f machine && \
-	    ln -s $S/arch/${MACHINE}/include machine
-	-rm -f mips && \
-	    ln -s $S/arch/mips/include mips
-CLEANFILES+= machine mips
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
-realall: machine-links ${PROG}
+realall: ${PROG}
 
 .PATH:		${.CURDIR}/../common
 AFLAGS+=	-D_LOCORE -D_KERNEL -mno-abicalls
-# -I${.CURDIR}/../.. done by Makefile.inc
-#CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -DHEAP_VARIABLE -I${.OBJDIR} -I${S}
 CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -I${.OBJDIR} -I${S}
 # compiler flags for smallest code size
-CFLAGS=		-ffreestanding -Os -g -mmemcpy -mno-abicalls -msoft-float -G 128
+CFLAGS=		-ffreestanding -Os -Wall -Werror -mno-abicalls -msoft-float -G 1024
 LDBUG=		-T $S/arch/mips/conf/stand.ldscript
-NETBSD_VERS!=	sh ${.CURDIR}/../../../../conf/osrelease.sh
+NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 CPPFLAGS+=	-Dsgimips
@@ -45,7 +41,7 @@ LOAD_ADDRESS_IP32?=	0x80002000
 .if exists(version)
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "sgimips"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "sgimips"
 
 SRCS+=	vers.c
 CLEANFILES+= vers.c
@@ -68,6 +64,15 @@ SAMISCMAKEFLAGS+=SA_USE_LOADFILE=yes SA_USE_CREAD=yes
 SAMISCMAKEFLAGS+=SA_INCLUDE_NET=no
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
+	@([ -h mips ] || ln -s ${S}/arch/mips/include mips)
+.NOPATH: machine mips
+.endif
+CLEANFILES+= machine mips
+
 
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 

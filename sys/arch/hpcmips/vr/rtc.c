@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.19 2003/01/06 13:05:01 wiz Exp $	*/
+/*	$NetBSD: rtc.c,v 1.19.2.1 2004/08/03 10:35:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -34,6 +34,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.19.2.1 2004/08/03 10:35:21 skrll Exp $");
 
 #include "opt_vr41xx.h"
 

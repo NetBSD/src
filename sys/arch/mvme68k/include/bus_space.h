@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.7 2000/11/29 09:18:32 scw Exp $ */
+/*	$NetBSD: bus_space.h,v 1.7.24.1 2004/08/03 10:38:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -210,38 +210,12 @@ struct mvme68k_bus_space_tag {
  * Read a 1, 2, 4, or 8 byte quantity from bus space
  * described by tag/handle/offset.
  */
-static __inline u_int8_t
-bus_space_read_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
-{
-	u_int8_t rv;
-
-	__asm __volatile("movb %1,%0" : "=dm" (rv) :
-					"g"   (*((u_int8_t *)(h + o))));
-
-	return (rv);
-}
-
-static __inline u_int16_t
-bus_space_read_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
-{
-	u_int16_t rv;
-
-	__asm __volatile("movw %1,%0" : "=dm" (rv) :
-					"g"   (*((u_int16_t *)(h + o))));
-
-	return (rv);
-}
-
-static __inline u_int32_t
-bus_space_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
-{
-	u_int32_t rv;
-
-	__asm __volatile("movl %1,%0" : "=rm" (rv) :
-					"g"   (*((u_int32_t *)(h + o))));
-
-	return (rv);
-}
+#define	bus_space_read_1(t,h,o)	\
+	    (*((volatile u_int8_t *)(intptr_t)((h) + (o))))
+#define	bus_space_read_2(t,h,o)	\
+	    (*((volatile u_int16_t *)(intptr_t)((h) + (o))))
+#define	bus_space_read_4(t,h,o)	\
+	    (*((volatile u_int32_t *)(intptr_t)((h) + (o))))
 
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
@@ -362,29 +336,18 @@ bus_space_read_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
  * Write the 1, 2, 4, or 8 byte value `value' to bus space
  * described by tag/handle/offset.
  */
-static __inline void
-bus_space_write_1(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, u_int8_t v)
-{
-	__asm __volatile("movb %0,%1" ::
-	    "dim" (v), "g" (*((u_int8_t *)(h + o))));
-}
-
-static __inline void
-bus_space_write_2(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, u_int16_t v)
-{
-	__asm __volatile("movw %0,%1" ::
-	    "dim" (v), "g" (*((u_int16_t *)(h + o))));
-}
-
-static __inline void
-bus_space_write_4(bus_space_tag_t t, bus_space_handle_t h,
-    bus_size_t o, u_int32_t v)
-{
-	__asm __volatile("movl %0,%1" ::
-	    "g" (v), "g" (*((u_int32_t *)(h + o))));
-}
+#define	bus_space_write_1(t,h,o,v)					\
+	do {								\
+		*((volatile u_int8_t *)(intptr_t)((h) + (o))) = (v);	\
+	} while (/*CONSTCOND*/0)
+#define	bus_space_write_2(t,h,o,v)					\
+	do {								\
+		*((volatile u_int16_t *)(intptr_t)((h) + (o))) = (v);	\
+	} while (/*CONSTCOND*/0)
+#define	bus_space_write_4(t,h,o,v)					\
+	do {								\
+		*((volatile u_int32_t *)(intptr_t)((h) + (o))) = (v);	\
+	} while (/*CONSTCOND*/0)
 
 /*
  *	void bus_space_write_multi_N(bus_space_tag_t tag,

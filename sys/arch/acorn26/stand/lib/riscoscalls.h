@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.1 2002/03/24 15:47:27 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.1.14.1 2004/08/03 10:30:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -40,8 +40,12 @@
 #define XOS_NewLine		0x020003
 #define OS_ReadC		0x000004
 #define XOS_ReadC		0x020004
+#define OS_CLI			0x000005
+#define XOS_CLI			0x020005
 #define OS_Byte			0x000006
 #define XOS_Byte		0x020006
+#define OS_Word			0x000007
+#define XOS_Word		0x020007
 #define OS_Args			0x000009
 #define XOS_Args		0x020009
 #define OS_GBPB			0x00000c
@@ -70,6 +74,10 @@
 #define XOS_ReadMemMapInfo	0x020051
 #define OS_ReadMemMapEntries	0x000052
 #define XOS_ReadMemMapEntries	0x020052
+#define OS_ReadSysInfo		0x000058
+#define XOS_ReadSysInfo		0x020058
+#define OS_Memory		0x000068
+#define XOS_Memory		0x020068
 
 #define Cache_Control		0x000280
 #define XCache_Control		0x020280
@@ -87,12 +95,27 @@ extern void os_new_line(void);
 extern int os_readc(void);
 #endif
 
+/* OS_CLI */
+
+#ifndef __ASSEMBLER__
+extern void os_cli(char *);
+extern os_error *xos_cli(char *);
+#endif
+
 /* OS_Byte */
 
 #define osbyte_OUTPUT_CURSOR_POSITION	165
 
 #ifndef __ASSEMBLER__
-void os_byte(int, int, int, int *, int *);
+extern void os_byte(int, int, int, int *, int *);
+#endif
+
+/* OS_Word */
+
+#define osword_WRITE_SCREEN_ADDRESS	 22
+
+#ifndef __ASSEMBLER__
+extern void os_word(int, char *);
 #endif
 
 /* OS_Args */
@@ -146,7 +169,78 @@ extern os_error *xosgbpb_read(int, char *, int, int *);
 #ifndef __ASSEMBLER__
 extern os_error *xosfind_close(int);
 extern os_error *xosfind_open(int, char const *, char const *, int *);
+#endif
 
+/* OS_ReadSysInfo */
+
+#define	OSReadSysInfo_ReadConfiguredScreenSize	0x00
+#define OSReadSysInfo_ReadMonitorInfo		0x01
+#define OSReadSysInfo_ReadChipPresenceAndId	0x02
+#define OSReadSysInfo_ReadSuperIOFeatures	0x03
+
+#define osreadsysinfo_IOEB_ASIC_PRESENT		0x01
+#define osreadsysinfo_SUPERIO_PRESENT		0x02
+#define osreadsysinfo_LCD_ASIC_PRESENT		0x04
+
+#ifndef __ASSEMBLER__
+extern void os_readsysinfo(int what, int *r0, int *r1, int *r2, int *r3, int *r4);
+#define os_readsysinfo_configured_screensize(s) \
+	os_readsysinfo(OSReadSysInfo_ReadConfiguredScreenSize, (s), 0, 0, 0, 0)
+
+#define os_readsysinfo_monitor_info(mode, type, sync) \
+	os_readsysinfo(OSReadSysInfo_ReadMonitorInfo, (mode), (type), (sync), 0, 0)
+
+#define os_readsysinfo_chip_presence(ioeb, superio, lcd) \
+	os_readsysinfo(OSReadSysInfo_ReadChipPresenceAndId, (ioeb), (superio), (lcd), 0, 0)
+
+#define os_readsysinfo_unique_id(low, high) \
+	os_readsysinfo(OSReadSysInfo_ReadChipPresenceAndId, 0, 0, 0, (low), (high))
+
+#define os_readsysinfo_superio_features(basic, extra) \
+	os_readsysinfo(OSReadSysInfo_ReadSuperIOFeatures, (basic), (extra), 0, 0, 0)
+
+#endif
+
+/* OS_Memory */
+
+#define OSMemory_PageOp				0x00
+#define OSMemory_ReadArrangementTableSize	0x06
+#define OSMemory_ReadArrangementTable		0x07
+#define OSMemory_ReadSize			0x08
+#define OSMemory_ReadController			0x09
+
+#define osmemory_GIVEN_PAGE_NO		0x0100
+#define osmemory_GIVEN_LOG_ADDR		0x0200
+#define osmemory_GIVEN_PHYS_ADDR	0x0400
+#define osmemory_RETURN_PAGE_NO		0x0800
+#define osmemory_RETURN_LOG_ADDR	0x1000
+#define osmemory_RETURN_PHYS_ADDR	0x2000
+
+#define osmemory_TYPE			0xf00
+#define osmemory_TYPE_SHIFT		8
+#define osmemory_TYPE_ABSENT		0x0
+#define osmemory_TYPE_DRAM		0x1
+#define osmemory_TYPE_VRAM		0x2
+#define osmemory_TYPE_ROM		0x3
+#define osmemory_TYPE_IO		0x4
+/* 5, 6, 7 are undefined */
+#define osmemory_TYPE_ALLOCATABLE_MASK	0x8	/* bit signaling allocatable */
+
+
+#ifndef __ASSEMBLER__
+struct page_info {
+	int	pagenumber;
+	int	logical;
+	int	physical;
+};
+
+extern void osmemory_read_arrangement_table_size(int *size, int *nbpp);
+extern void osmemory_read_arrangement_table(unsigned char *block);
+extern void osmemory_page_op(int fromto, struct page_info *block, int num_pages);
+#endif
+
+/* Misc */
+#ifndef __ASSEMBLER__
 extern char *os_get_env(caddr_t *, void **);
 
 extern void os_exit(os_error const *, int) __attribute__((noreturn));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.4 2003/04/02 07:36:02 thorpej Exp $	*/
+/*	$NetBSD: pte.h,v 1.4.2.1 2004/08/03 10:38:48 skrll Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #ifndef _NS532_PTE_H_
-#define _NS532_PTE_H_
+#define	_NS532_PTE_H_
 
 /*
  * ns32532 MMU hardware structure:
@@ -64,7 +64,7 @@
  * Each PTE in a PTP maps one 4K page (1024 * 4K = 4MB). A PTE contains
  * the physical address of the page it maps and some flag bits (described
  * below).
- * 
+ *
  * The processor has a special register, "ptb0", which points to the
  * the PDP which is currently controlling the mappings of the virtual
  * address space.
@@ -91,7 +91,7 @@
  *                                                p h y s i c a l  a d d r
  *
  * The ns32532 caches PTEs in a TLB. It is important to flush out old
- * TLB mappings when making a change to a mappings. Writing to the 
+ * TLB mappings when making a change to a mappings. Writing to the
  * ptb0 register will flush the entire TLB. The ns32532 also has an
  * instruction that will invalidate the mapping of a single page (which
  * is useful if you are changing a single page's mappings because it
@@ -113,7 +113,7 @@
  *   1		R/W	read/write bit (0=read only, 1=read-write)
  *   0		V	valid page
  *
- * notes: 
+ * notes:
  *  - Useraccessible pages (U/S == 1) are *always* writable in kernel mode.
  *    copyout and friends use the ns32532's dual address space instructions
  *    for this reason.
@@ -159,9 +159,9 @@ typedef u_int32_t pt_entry_t;		/* PTE */
 #define	PG_N		0x00000040	/* non-cacheable */
 #define	PG_U		0x00000080	/* has been used */
 #define	PG_M		0x00000100	/* has been modified */
-#define PG_AVAIL1	0x00000200	/* ignored by hardware */
-#define PG_AVAIL2	0x00000400	/* ignored by hardware */
-#define PG_AVAIL3	0x00000800	/* ignored by hardware */
+#define	PG_AVAIL1	0x00000200	/* ignored by hardware */
+#define	PG_AVAIL2	0x00000400	/* ignored by hardware */
+#define	PG_AVAIL3	0x00000800	/* ignored by hardware */
 #define	PG_FRAME	0xfffff000	/* page frame mask */
 
 /*

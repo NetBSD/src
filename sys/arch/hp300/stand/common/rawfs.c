@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.c,v 1.1 1997/02/04 03:52:46 thorpej Exp $	*/
+/*	$NetBSD: rawfs.c,v 1.1.60.1 2004/08/03 10:34:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -58,12 +58,11 @@ struct rawfs_file {
 	char		fs_buf[RAWFS_BSIZE];
 };
 
-static int
-rawfs_get_block __P((struct open_file *));
+static int rawfs_get_block(struct open_file *);
 
 int
 rawfs_open(path, f)
-	char *path;
+	const char *path;
 	struct open_file *f;
 {
 	struct rawfs_file *fs;
@@ -82,7 +81,7 @@ rawfs_open(path, f)
 #endif
 
 	f->f_fsdata = fs;
-	return (0);
+	return 0;
 }
 
 int
@@ -101,7 +100,7 @@ rawfs_close(f)
 	if (fs != (struct rawfs_file *)0)
 		free(fs, sizeof(*fs));
 
-	return (0);
+	return 0;
 }
 
 int
@@ -135,7 +134,7 @@ rawfs_read(f, start, size, resid)
 		if (csize > fs->fs_len)
 			csize = fs->fs_len;
 
-		bcopy(fs->fs_ptr, addr, csize);
+		memcpy(addr, fs->fs_ptr, csize);
 		fs->fs_ptr += csize;
 		fs->fs_len -= csize;
 		addr += csize;
@@ -143,7 +142,7 @@ rawfs_read(f, start, size, resid)
 	}
 	if (resid)
 		*resid = size;
-	return (error);
+	return error;
 }
 
 int
@@ -156,7 +155,7 @@ rawfs_write(f, start, size, resid)
 #ifdef	DEBUG_RAWFS
 	printf("rawfs_write: YOU'RE NOT SUPPOSED TO GET HERE!\n");
 #endif
-	return (EROFS);
+	return EROFS;
 }
 
 off_t
@@ -165,10 +164,11 @@ rawfs_seek(f, offset, where)
 	off_t offset;
 	int where;
 {
+
 #ifdef	DEBUG_RAWFS
 	printf("rawfs_seek: YOU'RE NOT SUPPOSED TO GET HERE!\n");
 #endif
-	return (EFTYPE);
+	return EFTYPE;
 }
 
 int
@@ -176,6 +176,7 @@ rawfs_stat(f, sb)
 	struct open_file *f;
 	struct stat *sb;
 {
+
 #ifdef	DEBUG_RAWFS
 	printf("rawfs_stat: I'll let you live only because of exec.c\n");
 #endif
@@ -183,9 +184,9 @@ rawfs_stat(f, sb)
 	 * Clear out the stat buffer so that the uid check
 	 * won't fail.  See sys/lib/libsa/exec.c
 	 */
-	bzero(sb, sizeof(*sb));
+	memset(sb, 0, sizeof(*sb));
 
-	return (EFTYPE);
+	return EFTYPE;
 }
 
 /*
@@ -217,5 +218,5 @@ rawfs_get_block(f)
 		fs->fs_nextblk += (RAWFS_BSIZE / DEV_BSIZE);
 	}
 
-	return (error);
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.10 2003/02/06 03:01:32 briggs Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.10.2.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #define	VERDE_EXTMEM_BASE		0x90020000UL
 
 #define	VERDE_PMMR_BASE			0xffffe000UL
-#define	VERDE_PMMR_SIZE			0x00000900UL
+#define	VERDE_PMMR_SIZE			0x00001700UL
 
 /*
  * Peripheral Memory Mapped Registers.  Defined as offsets
@@ -98,7 +98,10 @@
 #define	VERDE_AAU_SIZE			0x0100
 
 #define	VERDE_I2C_BASE			0x1680
+#define	VERDE_I2C_BASE0			(VERDE_I2C_BASE + 0x00)
+#define	VERDE_I2C_BASE1			(VERDE_I2C_BASE + 0x20)
 #define	VERDE_I2C_SIZE			0x0080
+#define	VERDE_I2C_CHSIZE		0x0020
 
 /*
  * Address Translation Unit
@@ -211,8 +214,8 @@
 #define	PCIXSR_SCD		(1U << 18)
 #define	PCIXSR_133_CAP		(1U << 17)
 #define	PCIXSR_32PCI		(1U << 16)	/* 0 = 32, 1 = 64 */
-#define	PCIXSR_BUSNO(x)		(((x) & 0xff) >> 8)
-#define	PCIXSR_DEVNO(x)		(((x) & 0x1f) >> 3)
+#define	PCIXSR_BUSNO(x)		(((x) & 0xff00) >> 8)
+#define	PCIXSR_DEVNO(x)		(((x) & 0xf8) >> 3)
 #define	PCIXSR_FUNCNO(x)	((x) & 0x7)
 
 /*
@@ -313,10 +316,10 @@
  *	INTSTR	cp6 c4,0	0xffffe7d4
  *	IINTSRC	cp6 c8,0	0xffffe7d8
  *	FINTSRC	cp6 c9,0	0xffffe7dc
- *	PIRSR			0xffffe2ec
+ *	PIRSR			0xffffe1ec
  */
 
-#define	ICU_PIRSR		0x02ec
+#define	ICU_PIRSR		0x01ec
 #define	ICU_GPOE		0x07c4
 #define	ICU_GPID		0x07c8
 #define	ICU_GPOD		0x07cc
@@ -436,6 +439,31 @@
 #define PBIU_MBR0		0x40	/* PBIU Memory-less Boot Reg. 0 */
 #define PBIU_MBR1		0x60	/* PBIU Memory-less Boot Reg. 1 */
 #define PBIU_MBR2		0x64	/* PBIU Memory-less Boot Reg. 2 */
+
+#define	PBIU_PBCR_PBIEN		(1 << 0)
+#define	PBIU_PBCR_PBI100	(1 << 1)
+#define	PBIU_PBCR_PBI66		(2 << 1)
+#define	PBIU_PBCR_PBI33		(3 << 1)
+#define	PBIU_PBCR_PBBEN		(1 << 3)
+
+#define	PBIU_PBARx_WIDTH8	(0 << 0)
+#define	PBIU_PBARx_WIDTH16	(1 << 0)
+#define	PBIU_PBARx_WIDTH32	(2 << 0)
+#define	PBIU_PBARx_ADWAIT4	(0 << 2)
+#define	PBIU_PBARx_ADWAIT8	(1 << 2)
+#define	PBIU_PBARx_ADWAIT12	(2 << 2)
+#define	PBIU_PBARx_ADWAIT16	(3 << 2)
+#define	PBIU_PBARx_ADWAIT20	(4 << 2)
+#define	PBIU_PBARx_RCWAIT1	(0 << 6)
+#define	PBIU_PBARx_RCWAIT4	(1 << 6)
+#define	PBIU_PBARx_RCWAIT8	(2 << 6)
+#define	PBIU_PBARx_RCWAIT12	(3 << 6)
+#define	PBIU_PBARx_RCWAIT16	(4 << 6)
+#define	PBIU_PBARx_RCWAIT20	(5 << 6)
+#define	PBIU_PBARx_FWE		(1 << 9)
+#define	PBIU_BASE_MASK		0xfffff000U
+
+#define	PBIU_PBLRx_SIZE(x)	(~((x) - 1))
 
 /*
  * Messaging Unit

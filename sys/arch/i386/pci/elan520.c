@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.5 2003/04/01 20:55:54 thorpej Exp $	*/
+/*	$NetBSD: elan520.c,v 1.5.2.1 2004/08/03 10:36:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.5 2003/04/01 20:55:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.5.2.1 2004/08/03 10:36:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ static void
 elansc_wdogctl_write(struct elansc_softc *sc, uint16_t val)
 {
 	int s;
-	uint8_t echo_mode;
+	uint8_t echo_mode = 0; /* XXX: gcc */
 
 	s = splhigh();
 
@@ -112,7 +112,7 @@ static void
 elansc_wdogctl_reset(struct elansc_softc *sc)
 {
 	int s;
-	uint8_t echo_mode;
+	uint8_t echo_mode = 0/* XXX: gcc */;
 
 	s = splhigh();
 
@@ -156,7 +156,7 @@ elansc_wdog_setmode(struct sysmon_wdog *smw)
 {
 	struct elansc_softc *sc = smw->smw_cookie;
 	int i;
-	uint16_t exp_sel;
+	uint16_t exp_sel = 0; /* XXX: gcc */
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		elansc_wdogctl_write(sc,
@@ -249,7 +249,7 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	 *
 	 * XXX The step 1.1 (B1?) in my Soekris net4501 also has this
 	 * XXX problem, so we'll just enable it for all Elan SC520s
-	 * XXX for now.  --thorpej@netbsd.org
+	 * XXX for now.  --thorpej@NetBSD.org
 	 */
 	if (1 || rev == ((PRODID_ELAN_SC520 << REVID_PRODID_SHIFT) |
 		    (0 << REVID_MAJSTEP_SHIFT) | (1)))

@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.26 2001/12/18 17:12:32 thorpej Exp $ */
+/* $NetBSD: asm.h,v 1.26.16.1 2004/08/03 10:31:19 skrll Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -187,7 +187,7 @@
  * If no fp is set up then $30 should be used instead of $15.
  * Also, gdb expects to find a <lda sp,-framesize(sp)> at the beginning
  * of a procedure. Don't use things like sub sp,framesize,sp for this
- * reason. End Note 10/31/97. ross@netbsd.org
+ * reason. End Note 10/31/97. ross@NetBSD.org
  *
  * Note that registers should be saved starting at "old_sp-8", where the
  * return address should be stored. Other registers follow at -16-24-32..

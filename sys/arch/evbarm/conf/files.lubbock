@@ -1,4 +1,4 @@
-#	$NetBSD: files.lubbock,v 1.2 2003/06/16 17:40:51 thorpej Exp $
+#	$NetBSD: files.lubbock,v 1.2.2.1 2004/08/03 10:33:55 skrll Exp $
 #
 # Intel LUBBOCK evaluation board configuration info
 #
@@ -27,21 +27,11 @@ file	arch/arm/sa11x0/sa1111.c		sacc
 file 	arch/evbarm/lubbock/sacc_obio.c  	sacc_obio
 
 # PS/2 keyboard & mouse
-# XXX: `slot' locator is bogus, but keyboard/mouse driver needs this.
-device  sackbc { [slot = -1] }
+device  sackbc: pckbport
 attach  sackbc at sacc
 file	arch/arm/sa11x0/sa1111_kbc.c	sackbc
 
-device	pckbd: wskbddev
-attach	pckbd at sackbc
-file	dev/pckbc/pckbd.c		pckbd			needs-flag
-file	dev/pckbc/wskbdmap_mfii.c	pckbd
-defparam PCKBD_LAYOUT
-
-
-# XXX: not yet.
-#attach pms at sackbc with pms_sa
-
+include "dev/pckbport/files.pckbport"
 
 # PCMCIA
 include "dev/pcmcia/files.pcmcia"
@@ -50,8 +40,9 @@ device	sacpcic: pcmciabus
 attach	sacpcic at sacc
 file	arch/arm/sa11x0/sa11x1_pcic.c	sacpcic needs-flag
 file	arch/arm/sa11x0/sa11xx_pcic.c	sacpcic
+file	arch/evbarm/lubbock/lubbock_pcic.c	sacpcic
 
 
 # LCD frame buffer
 attach lcd at obio with lcd_obio
-file arch/evbarm/lubbock/lcd.c		lcd_obio
+file arch/evbarm/lubbock/lubbock_lcd.c		lcd_obio

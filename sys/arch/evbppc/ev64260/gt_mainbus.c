@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.8 2003/06/12 19:21:09 scw Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.8.2.1 2004/08/03 10:34:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -35,7 +35,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.8.2.1 2004/08/03 10:34:16 skrll Exp $");
+
 #include "opt_ev64260.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,6 +80,8 @@ struct powerpc_bus_dma_tag gt_bus_dma_tag = {
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
+	gt_dma_phys_to_bus_mem,
+	gt_dma_bus_mem_to_phys,
 };
 
 const int gtpci_skipmask[2] = {
@@ -183,6 +189,8 @@ gtpci_bus_configure(struct gtpci_chipset *gtpc)
 		    gt_pci1_mem_bs_tag.pbs_limit-1,
 		    M_DEVBUF, NULL, 0, EX_NOWAIT);
 		break;
+	default:
+		panic("gtpci_bus_configure: unknown bus %d", gtpc->gtpc_busno);
 	}
 
 	pci_configure_bus(&gtpc->gtpc_pc, ioext, memext, NULL, 0, 32);

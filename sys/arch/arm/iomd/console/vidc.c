@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.2 2001/11/22 18:34:34 thorpej Exp $	*/
+/*	$NetBSD: vidc.c,v 1.2.20.1 2004/08/03 10:32:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -40,6 +40,9 @@
  *
  * Created      : 17/09/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vidc.c,v 1.2.20.1 2004/08/03 10:32:49 skrll Exp $");
 
 #include <sys/types.h>
 #include <arm/iomd/vidc.h>

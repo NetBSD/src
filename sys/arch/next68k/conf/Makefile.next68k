@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.next68k,v 1.25 2002/11/26 18:51:16 thorpej Exp $
+# $NetBSD: Makefile.next68k,v 1.25.6.1 2004/08/03 10:38:35 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -89,3 +89,8 @@ locore.o pmap.o trap.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.5 2002/11/24 12:12:01 scw Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.5.6.1 2004/08/03 10:34:22 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -53,6 +53,9 @@
  * confuse the code). The solution to this will be to scan the bus
  * hierarchy to check subordinate bus numbers...
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.5.6.1 2004/08/03 10:34:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

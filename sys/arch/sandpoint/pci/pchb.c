@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.5 2002/10/02 15:52:31 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.5.6.1 2004/08/03 10:39:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.5.6.1 2004/08/03 10:39:55 skrll Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,16 +51,17 @@
 
 #include <dev/pci/pcidevs.h>
 
-int	pchbmatch __P((struct device *, void *, void *));
+int	pchbmatch __P((struct device *, struct cfdata *, void *));
 void	pchbattach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(pchb, sizeof(struct device),
-    (cfmatch_t)pchbmatch, pchbattach, NULL, NULL);
+    pchbmatch, pchbattach, NULL, NULL);
 
 int
 pchbmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct pci_attach_args *pa = aux;
 
@@ -95,7 +99,7 @@ pchbattach(parent, self, aux)
 	 * possibly chipset-specific.
 	 */
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 }

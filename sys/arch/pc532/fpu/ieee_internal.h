@@ -1,21 +1,21 @@
-/*	$NetBSD: ieee_internal.h,v 1.5 2002/05/25 03:54:36 simonb Exp $	*/
+/*	$NetBSD: ieee_internal.h,v 1.5.6.1 2004/08/03 10:38:47 skrll Exp $	*/
 
-/* 
+/*
  * IEEE floating point support for NS32081 and NS32381 fpus.
  * Copyright (c) 1995 Ian Dall
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * IAN DALL ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.
  * IAN DALL DISCLAIMS ANY LIABILITY OF ANY KIND FOR ANY DAMAGES
  * WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  */
-/* 
+/*
  *	File:	ieee_internal.h
  *	Author:	Ian Dall
  *	Date:	November 1995
@@ -103,7 +103,7 @@ union t_conv {
 
 #define EXP_DBIAS 1023
 
-#define EXP_FBIAS 127 
+#define EXP_FBIAS 127
 
 enum op_type {op_type_float, op_type_int};
 

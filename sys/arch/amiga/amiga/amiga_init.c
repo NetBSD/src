@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.87 2003/06/29 22:28:06 fvdl Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.87.2.1 2004/08/03 10:31:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.87 2003/06/29 22:28:06 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.87.2.1 2004/08/03 10:31:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ int ncfdev;
 u_long scsi_nosync;
 int shift_nosync;
 
-void  start_c(int, u_int, u_int, u_int, char *, u_int, u_long, u_long);
+void  start_c(int, u_int, u_int, u_int, char *, u_int, u_long, u_long, u_int);
 void rollcolor(int);
 #ifdef DEVRELOAD
 static int kernel_image_magic_size(void);
@@ -199,13 +199,14 @@ int kernel_copyback = 1;
 
 void
 start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
-								boot_part)
+	boot_part, loadbase)
 	int id;
 	u_int fphystart, fphysize, cphysize;
 	char *esym_addr;
 	u_int flags;
 	u_long inh_sync;
 	u_long boot_part;
+	u_int loadbase;
 {
 	extern char end[];
 	extern u_int protorp[2];
@@ -217,16 +218,12 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	register pt_entry_t pg_proto, *pg;
 	u_int end_loaded, ncd, i;
 	struct boot_memlist *ml;
-	u_int loadbase = 0;	/* XXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 
 #ifdef DEBUG_KERNEL_START
 	/* XXX this only is valid if Altais is in slot 0 */
 	volatile u_int8_t *altaiscolpt = (u_int8_t *)0x200003c8;
 	volatile u_int8_t *altaiscol = (u_int8_t *)0x200003c9;
 #endif
-
-	if ((u_int)&loadbase > cphysize)
-		loadbase = fphystart;
 
 #ifdef DEBUG_KERNEL_START
 	if ((id>>24)==0x7D) {

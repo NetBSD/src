@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.24 2003/04/01 21:26:32 thorpej Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.24.2.1 2004/08/03 10:31:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.24 2003/04/01 21:26:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.24.2.1 2004/08/03 10:31:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,7 @@ alloc_bitmap(u_short width, u_short height, u_short depth, u_short flags)
 	/* Sigh, it seems for mapping to work we need the bitplane data to 1:
 	 * be aligned on a page boundry. 2: be n pages large.
 	 *
-	 * why? becuase the user gets a page aligned address, if this is before
+	 * why? because the user gets a page aligned address, if this is before
 	 * your allocation, too bad.  Also it seems that the mapping routines
 	 * do not watch to closely to the allowable length. so if you go over
 	 * n pages by less than another page, the user gets to write all over

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.11 2003/02/26 22:23:09 fvdl Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.11.2.1 2004/08/03 10:36:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.11 2003/02/26 22:23:09 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.11.2.1 2004/08/03 10:36:14 skrll Exp $");
 
 #include "opt_pcibios.h"
 
@@ -109,18 +109,32 @@ int pcibios_max_bus;
 
 struct bios32_entry pcibios_entry;
 
-void	pcibios_pir_init __P((void));
+void	pcibios_pir_init(void);
 
-int	pcibios_get_status __P((u_int32_t *, u_int32_t *, u_int32_t *,
-	    u_int32_t *, u_int32_t *, u_int32_t *, u_int32_t *));
-int	pcibios_get_intr_routing __P((struct pcibios_intr_routing *,
-	    int *, u_int16_t *));
+int	pcibios_get_status(u_int32_t *, u_int32_t *, u_int32_t *,
+	    u_int32_t *, u_int32_t *, u_int32_t *, u_int32_t *);
+int	pcibios_get_intr_routing(struct pcibios_intr_routing *,
+	    int *, u_int16_t *);
 
-int	pcibios_return_code __P((u_int16_t, const char *));
+int	pcibios_return_code(u_int16_t, const char *);
 
-void	pcibios_print_exclirq __P((void));
+void	pcibios_print_exclirq(void);
+
+#ifdef PCIBIOS_LIBRETTO_FIXUP
+/* for Libretto L2/L3 hack */
+static void	pcibios_fixup_pir_table(void);
+static void	pcibios_fixup_pir_table_mask(struct pcibios_linkmap *);
+
+struct pcibios_linkmap pir_mask[] = {
+	{ 2,	0x0040 },
+	{ 7,	0x0080 },
+	{ 8,	0x0020 },
+	{ 0,	0x0000 }
+};
+#endif
+
 #ifdef PCIINTR_DEBUG
-void	pcibios_print_pir_table __P((void));
+void	pcibios_print_pir_table(void);
 #endif
 
 #define	PCI_IRQ_TABLE_START	0xf0000
@@ -230,7 +244,7 @@ pcibios_init()
 void
 pcibios_pir_init()
 {
-	char devinfo[256];
+	char *devinfo;
 	paddr_t pa;
 	caddr_t p;
 	unsigned char cksum;
@@ -242,7 +256,7 @@ pcibios_pir_init()
 		p = (caddr_t)ISA_HOLE_VADDR(pa);
 		if (*(int *)p != BIOS32_MAKESIG('$', 'P', 'I', 'R')) {
 			/*
-			 * XXX: Some laptops (Toshiba/Libretto L series
+			 * XXX: Some laptops (Toshiba/Libretto L series)
 			 * use _PIR instead of $PIR. So we try that too.
 			 */
 			if (*(int *)p != BIOS32_MAKESIG('_', 'P', 'I', 'R'))
@@ -295,12 +309,21 @@ pcibios_pir_init()
 		    PIR_DEVFUNC_DEVICE(pcibios_pir_header.router_devfunc),
 		    PIR_DEVFUNC_FUNCTION(pcibios_pir_header.router_devfunc));
 		if (pcibios_pir_header.compat_router != 0) {
-			pci_devinfo(pcibios_pir_header.compat_router, 0, 0,
-			    devinfo);
-			printf(" (%s)", devinfo);
+			devinfo = malloc(256, M_DEVBUF, M_NOWAIT);
+			if (devinfo) {
+				pci_devinfo(pcibios_pir_header.compat_router,
+				    0, 0, devinfo, 256);
+				printf(" (%s compatible)", devinfo);
+				free(devinfo, M_DEVBUF);
+			}
 		}
 		printf("\n");
 		pcibios_print_exclirq();
+
+#ifdef PCIBIOS_LIBRETTO_FIXUP
+		/* for Libretto L2/L3 hack */
+		pcibios_fixup_pir_table();
+#endif
 #ifdef PCIINTR_DEBUG
 		pcibios_print_pir_table();
 #endif
@@ -333,15 +356,20 @@ pcibios_pir_init()
 	printf("PCI BIOS has %d Interrupt Routing table entries\n",
 	    pcibios_pir_table_nentries);
 	pcibios_print_exclirq();
+
+#ifdef PCIBIOS_LIBRETTO_FIXUP
+	/* for Libretto L2/L3 hack */
+	pcibios_fixup_pir_table();
+#endif
 #ifdef PCIINTR_DEBUG
 	pcibios_print_pir_table();
 #endif
 }
 
 int
-pcibios_get_status(rev_maj, rev_min, mech1, mech2, scmech1, scmech2, maxbus)
-	u_int32_t *rev_maj, *rev_min, *mech1, *mech2, *scmech1, *scmech2,
-	    *maxbus;
+pcibios_get_status(u_int32_t *rev_maj, u_int32_t *rev_min,
+    u_int32_t *mech1, u_int32_t *mech2, u_int32_t *scmech1, u_int32_t *scmech2,
+    u_int32_t *maxbus)
 {
 	u_int16_t ax, bx, cx;
 	u_int32_t edx;
@@ -376,10 +404,8 @@ pcibios_get_status(rev_maj, rev_min, mech1, mech2, scmech1, scmech2, maxbus)
 }
 
 int
-pcibios_get_intr_routing(table, nentries, exclirq)
-	struct pcibios_intr_routing *table;
-	int *nentries;
-	u_int16_t *exclirq;
+pcibios_get_intr_routing(struct pcibios_intr_routing *table,
+    int *nentries, u_int16_t *exclirq)
 {
 	u_int16_t ax, bx;
 	int rv;
@@ -415,9 +441,7 @@ pcibios_get_intr_routing(table, nentries, exclirq)
 }
 
 int
-pcibios_return_code(ax, func)
-	u_int16_t ax;
-	const char *func;
+pcibios_return_code(u_int16_t ax, const char *func)
 {
 	const char *errstr;
 	int rv = ax >> 8;
@@ -478,6 +502,34 @@ pcibios_print_exclirq()
 	}
 }
 
+#ifdef PCIBIOS_LIBRETTO_FIXUP
+/* for Libretto L2/L3 hack */
+static void 
+pcibios_fixup_pir_table()
+{
+	struct pcibios_linkmap *m;
+
+	for (m = pir_mask; m->link != 0; m++)
+		pcibios_fixup_pir_table_mask(m);
+}
+
+void 
+pcibios_fixup_pir_table_mask(mask)
+	struct pcibios_linkmap *mask;
+{
+	int i, j;
+
+	for (i = 0; i < pcibios_pir_table_nentries; i++) {
+		for (j = 0; j < 4; j++) {
+			if (pcibios_pir_table[i].linkmap[j].link == mask->link) {
+				pcibios_pir_table[i].linkmap[j].bitmap
+				    &= mask->bitmap; 
+			}
+		}
+	}
+}
+#endif
+
 #ifdef PCIINTR_DEBUG
 void
 pcibios_print_pir_table()
@@ -500,22 +552,15 @@ pcibios_print_pir_table()
 #endif
 
 void 
-pci_device_foreach(pc, maxbus, func, context)
-	pci_chipset_tag_t pc;
-	int maxbus;
-	void (*func) __P((pci_chipset_tag_t, pcitag_t, void *));
-	void *context;
+pci_device_foreach(pci_chipset_tag_t pc, int maxbus,
+    void (*func)(pci_chipset_tag_t, pcitag_t, void *), void *context)
 {
-  pci_device_foreach_min(pc, 0, maxbus, func, context);
+	pci_device_foreach_min(pc, 0, maxbus, func, context);
 }
 
 void
-pci_device_foreach_min(pc, minbus, maxbus, func, context)
-	pci_chipset_tag_t pc;
-	int minbus;
-	int maxbus;
-	void (*func) __P((pci_chipset_tag_t, pcitag_t, void *));
-	void *context;
+pci_device_foreach_min(pci_chipset_tag_t pc, int minbus, int maxbus,
+    void (*func)(pci_chipset_tag_t, pcitag_t, void *), void *context)
 {
 	const struct pci_quirkdata *qd;
 	int bus, device, function, maxdevs, nfuncs;

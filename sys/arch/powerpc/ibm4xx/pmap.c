@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 2003/05/10 21:10:36 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21.2.1 2004/08/03 10:39:28 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,6 +65,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21.2.1 2004/08/03 10:39:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -200,20 +203,26 @@ pte_enter(struct pmap *pm, vaddr_t va, u_int pte)
 {
 	int seg = STIDX(va);
 	int ptn = PTIDX(va);
-	paddr_t pa;
+	u_int oldpte;
 
 	if (!pm->pm_ptbl[seg]) {
 		/* Don't allocate a page to clear a non-existent mapping. */
-		if (!pte) return (1);
+		if (!pte) return (0);
 		/* Allocate a page XXXX this will sleep! */
-		pa = 0;
 		pm->pm_ptbl[seg] =
-		    (uint *)uvm_km_alloc1(kernel_map, PAGE_SIZE, 1);
+		    (uint *)uvm_km_zalloc(kernel_map, PAGE_SIZE);
 	}
+	oldpte = pm->pm_ptbl[seg][ptn];
 	pm->pm_ptbl[seg][ptn] = pte;
 
 	/* Flush entry. */
 	ppc4xx_tlb_flush(va, pm->pm_ctx);
+	if (oldpte != pte) {
+		if (pte == 0)
+			pm->pm_stats.resident_count--;
+		else
+			pm->pm_stats.resident_count++;
+	}
 	return (1);
 }
 
@@ -373,7 +382,6 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 		memmove(mp, mp + 1, (cnt - (mp - avail)) * sizeof *mp);
 #endif
 
-	printf("Loading pages\n");
 	for (mp = avail; mp->size; mp++)
 		uvm_page_physload(atop(mp->start), atop(mp->start + mp->size),
 			atop(mp->start), atop(mp->start + mp->size),
@@ -387,11 +395,10 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	nextavail = avail->start;
 
 
-	evcnt_attach_static(&tlbhit_ev);
 	evcnt_attach_static(&tlbmiss_ev);
+	evcnt_attach_static(&tlbhit_ev);
 	evcnt_attach_static(&tlbflush_ev);
 	evcnt_attach_static(&tlbenter_ev);
-	printf("Done\n");
 }
 
 /*
@@ -818,13 +825,8 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	/*
 	 * Generate TTE.
-	 *
-	 * XXXX
-	 *
-	 * Since the kernel does not handle execution privileges properly,
-	 * we will handle read and execute permissions together.
 	 */
-	tte = TTE_PA(pa) | TTE_EX;
+	tte = TTE_PA(pa);
 	/* XXXX -- need to support multiple page sizes. */
 	tte |= TTE_SZ_16K;
 #ifdef	DIAGNOSTIC
@@ -850,6 +852,9 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (flags & VM_PROT_WRITE)
 		tte |= TTE_WR;
 
+	if (flags & VM_PROT_EXECUTE)
+		tte |= TTE_EX;
+
 	/*
 	 * Now record mapping for later back-translation.
 	 */
@@ -874,7 +879,6 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 
 	s = splvm();
-	pm->pm_stats.resident_count++;
 
 	/* Insert page into page table. */
 	pte_enter(pm, va, tte);
@@ -972,7 +976,6 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	}
 
 	s = splvm();
-	pm->pm_stats.resident_count++;
 
 	/* Insert page into page table. */
 	pte_enter(pm, va, tte);
@@ -1044,21 +1047,31 @@ void
 pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	volatile u_int *ptp;
-	int s;
+	int s, bic;
 
-	if (prot & VM_PROT_READ) {
-		s = splvm();
-		while (sva < eva) {
-			if ((ptp = pte_find(pm, sva)) != NULL) {
-				*ptp &= ~TTE_WR;
-				ppc4xx_tlb_flush(sva, pm->pm_ctx);
-			}
-			sva += PAGE_SIZE;
-		}
-		splx(s);
+	if ((prot & VM_PROT_READ) == 0) {
+		pmap_remove(pm, sva, eva);
 		return;
 	}
-	pmap_remove(pm, sva, eva);
+	bic = 0;
+	if ((prot & VM_PROT_WRITE) == 0) {
+		bic |= TTE_WR;
+	}
+	if ((prot & VM_PROT_EXECUTE) == 0) {
+		bic |= TTE_EX;
+	}
+	if (bic == 0) {
+		return;
+	}
+	s = splvm();
+	while (sva < eva) {
+		if ((ptp = pte_find(pm, sva)) != NULL) {
+			*ptp &= ~bic;
+			ppc4xx_tlb_flush(sva, pm->pm_ctx);
+		}
+		sva += PAGE_SIZE;
+	}
+	splx(s);
 }
 
 boolean_t
@@ -1111,14 +1124,14 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 
 		pm = pv->pv_pm;
 		va = pv->pv_va;
-		pmap_protect(pm, va, va+PAGE_SIZE, prot);
+		pmap_protect(pm, va, va + PAGE_SIZE, prot);
 	}
 	/* Now check the head pv */
 	if (pvh->pv_pm) {
 		pv = pvh;
 		pm = pv->pv_pm;
 		va = pv->pv_va;
-		pmap_protect(pm, va, va+PAGE_SIZE, prot);
+		pmap_protect(pm, va, va + PAGE_SIZE, prot);
 	}
 }
 
@@ -1137,16 +1150,7 @@ pmap_activate(struct lwp *l)
 	 * XXX Normally performed in cpu_fork().
 	 */
 	printf("pmap_activate(%p), pmap=%p\n",l,pmap);
-	if (pcb->pcb_pm != pmap) {
-		pcb->pcb_pm = pmap;
-		(void) pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm,
-		    (paddr_t *)&pcb->pcb_pmreal);
-	}
-
-	if (l == curlwp) {
-		/* Store pointer to new current pmap. */
-		curpm = pcb->pcb_pmreal;
-	}
+	pcb->pcb_pm = pmap;
 #endif
 }
 
@@ -1167,7 +1171,6 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 	struct pmap *pm = p->p_vmspace->vm_map.pmap;
 	int msr, ctx, opid, step;
 
-
 	step = CACHELINESIZE;
 
 	/*
@@ -1180,7 +1183,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		ctx = pm->pm_ctx;
 	}
 	__asm __volatile("mfmsr %0;"
-		"li %1, 0x20;"
+		"li %1, %7;"
 		"andc %1,%0,%1;"
 		"mtmsr %1;"
 		"sync;isync;"
@@ -1197,7 +1200,8 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		"mtmsr %0;"
 		"sync; isync"
 		: "=&r" (msr), "=&r" (opid)
-		: "r" (ctx), "r" (va), "r" (len), "r" (step), "r" (-step));
+		: "r" (ctx), "r" (va), "r" (len), "r" (step), "r" (-step),
+		  "K" (PSL_IR | PSL_DR));
 }
 
 
@@ -1209,7 +1213,8 @@ ppc4xx_tlb_flush(vaddr_t va, int pid)
 	u_long msr;
 
 	/* If there's no context then it can't be mapped. */
-	if (!pid) return;
+	if (!pid)
+		return;
 
 	asm("mfpid %1;"			/* Save PID */
 		"mfmsr %2;"		/* Save MSR */
@@ -1549,7 +1554,7 @@ pmap_testout()
 	int ref, mod;
 
 	/* Allocate a page */
-	va = (vaddr_t)uvm_km_alloc1(kernel_map, PAGE_SIZE, 1);
+	va = (vaddr_t)uvm_km_zalloc(kernel_map, PAGE_SIZE);
 	loc = (int*)va;
 
 	pmap_extract(pmap_kernel(), va, &pa);

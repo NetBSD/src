@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.3 2003/04/01 23:57:01 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.3.2.1 2004/08/03 10:33:41 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,6 +34,9 @@
  *
  *	@(#)pmap_bootstrap.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.3.2.1 2004/08/03 10:33:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/msgbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_gsc.c,v 1.5 2002/10/02 05:17:50 thorpej Exp $	*/
+/*	$NetBSD: lpt_gsc.c,v 1.5.6.1 2004/08/03 10:34:48 skrll Exp $	*/
 
 /*	$OpenBSD: lpt_gsc.c,v 1.6 2000/07/21 17:41:06 mickey Exp $	*/
 
@@ -52,6 +52,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt_gsc.c,v 1.5.6.1 2004/08/03 10:34:48 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -77,25 +80,21 @@
 int lpt_isa_debug = 0;
 #endif
 
-int	lpt_gsc_probe __P((struct device *, struct cfdata *, void *));
-void	lpt_gsc_attach __P((struct device *, struct device *, void *));
+int	lpt_gsc_probe(struct device *, struct cfdata *, void *);
+void	lpt_gsc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lpt_gsc, sizeof(struct lpt_softc),
     lpt_gsc_probe, lpt_gsc_attach, NULL, NULL);
 
-int	lpt_port_test __P((bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-	    bus_size_t, u_char, u_char));
+int	lpt_port_test(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+	    bus_size_t, u_char, u_char);
 
 /*
  * Internal routine to lptprobe to do port tests of one byte value.
  */
 int
-lpt_port_test(iot, ioh, base, off, data, mask)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_addr_t base;
-	bus_size_t off;
-	u_char data, mask;
+lpt_port_test(bus_space_tag_t iot, bus_space_handle_t ioh, bus_addr_t base,
+    bus_size_t off, u_char data, u_char mask)
 {
 	int timeout;
 	u_char temp;
@@ -134,12 +133,9 @@ lpt_port_test(iot, ioh, base, off, data, mask)
  *	3) Set the data and control ports to a value of 0
  */
 int
-lpt_gsc_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+lpt_gsc_probe(struct device *parent, struct cfdata *match, void *aux)
 {
-	register struct gsc_attach_args *ga = aux;
+	struct gsc_attach_args *ga = aux;
 	bus_space_handle_t ioh;
 	bus_addr_t base;
 	u_int8_t mask, data;
@@ -200,12 +196,10 @@ lpt_gsc_probe(parent, match, aux)
 }
 
 void
-lpt_gsc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lpt_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
-	register struct lpt_softc *sc = (void *)self;
-	register struct gsc_attach_args *ga = aux;
+	struct lpt_softc *sc = (void *)self;
+	struct gsc_attach_args *ga = aux;
 
 	/* sc->sc_flags |= LPT_POLLED; */
 

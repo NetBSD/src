@@ -1,4 +1,4 @@
-/*	$NetBSD: font_8x16.c,v 1.2 1995/09/23 20:25:34 leo Exp $	*/
+/*	$NetBSD: font_8x16.c,v 1.2.66.1 2004/08/03 10:33:11 skrll Exp $	*/
 
 /*
  *  Copyright (c) 1992, 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
@@ -39,6 +39,10 @@
  * Reorganized and edited some chars to fit the iso-8859-1 fontset by 
  * Thomas Gerner
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: font_8x16.c,v 1.2.66.1 2004/08/03 10:33:11 skrll Exp $");
+
 #include <atari/dev/font.h>
 
 char fontname_8x16[64] = "vt220iso.816";

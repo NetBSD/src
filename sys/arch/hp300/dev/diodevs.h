@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs.h,v 1.9 2003/05/25 04:59:57 tsutsui Exp $	*/
+/*	$NetBSD: diodevs.h,v 1.9.2.1 2004/08/03 10:34:23 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.6 2003/05/25 04:56:36 tsutsui Exp 
+ *	NetBSD: diodevs,v 1.7 2003/11/23 01:57:35 tsutsui Exp 
  */
 
 /*-
@@ -71,7 +71,7 @@
 #define	DIO_DEVICE_ID_FHPIB	0x08
 #define	DIO_DEVICE_DESC_FHPIB	"98625A/98625B HP-IB"
 
-#define	DIO_DEVICE_ID_NHPIB	0x80
+#define	DIO_DEVICE_ID_NHPIB	0x01
 #define	DIO_DEVICE_DESC_NHPIB	"98624A HP-IB"
 
 #define	DIO_DEVICE_ID_IHPIB	0x00

@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs_data.h,v 1.9 2003/05/25 04:59:57 tsutsui Exp $	*/
+/*	$NetBSD: diodevs_data.h,v 1.9.2.1 2004/08/03 10:34:23 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.6 2003/05/25 04:56:36 tsutsui Exp 
+ *	NetBSD: diodevs,v 1.7 2003/11/23 01:57:35 tsutsui Exp 
  */
 
 /*-
@@ -54,7 +54,7 @@ struct dio_devdata dio_devdatas[] = {
 	{ 0x85,	0,	1 },
 	{ 0x15,	0,	1 },
 	{ 0x08,	0,	1 },
-	{ 0x80,	0,	1 },
+	{ 0x01,	0,	1 },
 	{ 0x00,	0,	1 },
 	{ 0x07,	0,	1 },
 	{ 0x27,	0,	1 },
@@ -104,7 +104,7 @@ struct dio_devdesc dio_devdescs[] = {
 	{ 0x85,	0,	DIO_DEVICE_DESC_DCMREM },
 	{ 0x15,	0,	DIO_DEVICE_DESC_LAN },
 	{ 0x08,	0,	DIO_DEVICE_DESC_FHPIB },
-	{ 0x80,	0,	DIO_DEVICE_DESC_NHPIB },
+	{ 0x01,	0,	DIO_DEVICE_DESC_NHPIB },
 	{ 0x00,	0,	DIO_DEVICE_DESC_IHPIB },
 	{ 0x07,	0,	DIO_DEVICE_DESC_SCSI0 },
 	{ 0x27,	0,	DIO_DEVICE_DESC_SCSI1 },

@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.17 2003/01/03 04:36:29 takemura Exp $ */
+/* $NetBSD: j720ssp.c,v 1.17.2.1 2004/08/03 10:35:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -51,11 +51,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -73,6 +69,9 @@
  *
  *	@(#)pccons.c	5.11 (Berkeley) 5/21/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: j720ssp.c,v 1.17.2.1 2004/08/03 10:35:04 skrll Exp $");
 
 #include "apm.h"
 
@@ -102,7 +101,7 @@
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wsmousevar.h>
-#include <dev/hpc/tpcalibvar.h>
+#include <dev/hpc/hpctpanelvar.h>
 
 extern const struct wscons_keydesc j720kbd_keydesctab[];
 
@@ -356,11 +355,6 @@ j720ssp_kthread(arg)
 	int ssp_status;
 
 	while (1) {
-		if (ssp_status & J720_SSP_STATUS_TP)
-			tsleep(&sc->sc_ssp_kthread, PRIBIO, "j720ssp", hz / 25);
-		else
-			tsleep(&sc->sc_ssp_kthread, PRIBIO, "j720ssp", 0);
-			
 		simple_lock(&sc->sc_ssp_status_lock);
 		ssp_status = sc->sc_ssp_status;
 		sc->sc_ssp_status &= ~J720_SSP_STATUS_KBD;
@@ -375,7 +369,9 @@ j720ssp_kthread(arg)
 				sc->sc_ssp_status &= ~J720_SSP_STATUS_TP;
 				simple_unlock(&sc->sc_ssp_status_lock);
 			}
-		}
+			tsleep(&sc->sc_ssp_kthread, PRIBIO, "j720ssp", hz / 25);
+		} else
+			tsleep(&sc->sc_ssp_kthread, PRIBIO, "j720ssp", 0);
 	}
 
 	/* NOTREACHED */
@@ -682,19 +678,7 @@ j720tp_ioctl(arg, cmd, data, flag, p)
 {
 	struct j720ssp_softc *sc = arg;
 
-	switch (cmd) {
-	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
-		return (0);
-
-	case WSMOUSEIO_SCALIBCOORDS:
-	case WSMOUSEIO_GCALIBCOORDS:
-	case WSMOUSEIO_GETID:
-		return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
-
-	default:
-		return (EPASSTHROUGH);
-	}
+	return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 }
 
 int
@@ -755,6 +739,9 @@ j720lcdparam(ctx, type, id, msg)
 		default:
 			return 0;
 		}
+
+	default:
+		return 0;
 	}
 
 	s = splbio();

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2002/11/28 05:38:41 chs Exp $	*/
+/*	$NetBSD: boot.c,v 1.2.6.1 2004/08/03 10:34:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -76,6 +72,7 @@
 #include <lib/libsa/loadfile.h>
 
 #include <machine/pdc.h>
+#include <machine/vmparam.h>
 
 #include <arch/hp700/stand/common/dev_hppa.h>
 
@@ -107,6 +104,7 @@ char *names[] = {
 
 static int bdev, badapt, bctlr, bunit, bpart;
 
+void boot(dev_t boot_dev);
 int main(void);
 void getbootdev(int *);
 void exec_hp700(char *, u_long, int);
@@ -120,13 +118,13 @@ typedef void (*startfuncp)(int, int, int, int, int, int, caddr_t)
 int howto;
 
 void
-boot(dev_t bootdev)
+boot(dev_t boot_dev)
 {
         machdep();
 #ifdef	DEBUGBUG
 	debug = 1;
 #endif
-	devboot(bootdev, devname_buffer);
+	devboot(boot_dev, devname_buffer);
 	main();
 }
 
@@ -171,7 +169,7 @@ main(void)
 }
 
 void
-getbootdev(int *howto)
+getbootdev(int *boot_howto)
 {
 	char c, *ptr = line;
 
@@ -191,7 +189,7 @@ getbootdev(int *howto)
 				return;
 			if (c == '-')
 				while ((c = *++ptr) && c != ' ')
-					BOOT_FLAG(c, *howto);
+					BOOT_FLAG(c, *boot_howto);
 			else {
 				name = ptr;
 				while ((c = *++ptr) && c != ' ');
@@ -207,7 +205,7 @@ getbootdev(int *howto)
 	(((x) + sizeof(u_long) - 1) & ~(sizeof(u_long) - 1))
 
 void
-exec_hp700(char *file, u_long loadaddr, int howto)
+exec_hp700(char *file, u_long loadaddr, int boot_howto)
 {
 #ifdef EXEC_DEBUG
 	extern int debug;
@@ -226,7 +224,7 @@ exec_hp700(char *file, u_long loadaddr, int howto)
 	marks[MARK_START] = loadaddr;
 #ifdef EXEC_DEBUG
 	printf("file=%s loadaddr=%x howto=%x\n",
-		file, loadaddr, howto);
+		file, loadaddr, boot_howto);
 #endif
 	if ((fd = loadfile(file, marks, LOAD_KERNEL)) == -1)
 		return;
@@ -263,7 +261,7 @@ exec_hp700(char *file, u_long loadaddr, int howto)
 	__asm("mtctl %r0, %cr17");
 	__asm("mtctl %r0, %cr17");
 	/* stack and the gung is ok at this point, so, no need for asm setup */
-	(*(startfuncp)(marks[MARK_ENTRY])) ((int)pdc, howto, bootdev, marks[MARK_END],
+	(*(startfuncp)(marks[MARK_ENTRY])) ((int)pdc, boot_howto, bootdev, marks[MARK_END],
 				       BOOTARG_APIVER, ac, av);
 	/* not reached */
 }

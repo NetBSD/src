@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.4 2003/01/17 21:55:25 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.4.2.1 2004/08/03 10:30:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -63,10 +63,10 @@
  * rights to redistribute these changes.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4.2.1 2004/08/03 10:30:47 skrll Exp $");
+
 #include <sys/param.h>
-
-__RCSID("$NetBSD: vm_machdep.c,v 1.4 2003/01/17 21:55:25 thorpej Exp $");
-
 #include <sys/buf.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
 #include <sys/proc.h>
@@ -159,17 +159,19 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 }
 
 void
-cpu_exit(struct lwp *l, int proc)
+cpu_lwp_free(struct lwp *l, int proc)
+{
+
+	/* Nothing to do here? */
+}
+
+void
+cpu_exit(struct lwp *l)
 {
 	int s;
 
-	/* Nothing to do here? */
-
 	/* I think this is safe on a uniprocessor machine */
-	if (proc)
-		exit2(l);
-	else
-		lwp_exit2(l);
+	lwp_exit2(l);
 	SCHED_LOCK(s);		/* expected by cpu_switch */
 	cpu_switch(l, NULL);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.alchemy,v 1.2 2003/04/01 17:31:50 hpeyerl Exp $
+#	$NetBSD: files.alchemy,v 1.2.2.1 2004/08/03 10:37:38 skrll Exp $
 
 file	arch/mips/alchemy/au_icu.c
 file	arch/mips/alchemy/au_timer.c
@@ -17,6 +17,8 @@ file	arch/mips/alchemy/dev/aurtc.c		aurtc
 # On-chip com-alike device(s)
 device	aucom { } : tty
 file	arch/mips/alchemy/dev/aucom.c		aucom		needs-flag
+defflag	opt_com.h	COM_AU1x00
+options			COM_AU1x00	# Au1x00 support in com driver
 
 attach	aucom at aubus with aucom_aubus
 file	arch/mips/alchemy/dev/aucom_aubus.c	aucom_aubus

@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1 2001/05/14 18:22:58 drochner Exp $
+$NetBSD: README,v 1.1.24.1 2004/08/03 10:33:40 skrll Exp $
 
 This is a port of NetBSD to the FIC8234 VME processor board, made by the
 swiss company CES (Geneve). These boards are (or have been) popular in
@@ -24,4 +24,4 @@ To start it:
 - jump to 0x20100400
 
 For questions and contributions, contact Matthias Drochner
-(drochner@netbsd.org).
+(drochner@NetBSD.org).

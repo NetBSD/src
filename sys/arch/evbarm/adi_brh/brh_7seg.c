@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_7seg.c,v 1.1 2003/01/25 02:00:16 thorpej Exp $	*/
+/*	$NetBSD: brh_7seg.c,v 1.1.2.1 2004/08/03 10:33:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Support for the 7-segment display on the ADI Engineering BRH board.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: brh_7seg.c,v 1.1.2.1 2004/08/03 10:33:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file.h,v 1.1 2001/02/09 18:34:36 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: file.h,v 1.1.26.1 2004/08/03 10:34:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2001 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ public:
 	virtual BOOL setRoot(TCHAR *) = 0;
 	virtual BOOL open(const TCHAR *, u_int32_t = OPEN_EXISTING) = 0;
 	virtual size_t size(void) = 0;
+	virtual size_t realsize(void) { return size(); };
 	virtual BOOL close(void) = 0;
 	virtual size_t read(void *, size_t, off_t = -1) = 0;
 	virtual size_t write(const void *, size_t, off_t = -1) = 0;
@@ -90,6 +91,7 @@ private:
 	int _get_byte(void);
 	u_int32_t _get_long(void);
 	void _check_header(void);
+	size_t _skip_compressed(off_t);
 
 	off_t _cur_ofs;
 
@@ -103,6 +105,7 @@ public:
 	BOOL setRoot(TCHAR *);
 	BOOL open(const TCHAR *, u_int32_t);
 	size_t size(void);
+	size_t realsize(void);
 	BOOL close(void);
 	size_t read(void *, size_t, off_t = -1);
 	size_t write(const void *, size_t, off_t = -1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.13 2002/10/02 05:26:50 thorpej Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.13.6.1 2004/08/03 10:35:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tx39clock.c,v 1.13.6.1 2004/08/03 10:35:20 skrll Exp $");
 
 #include "opt_tx39clock_debug.h"
 
@@ -153,21 +156,20 @@ tx39clock_cpuspeed(int *cpuclock, int *cpuspeed)
 	int elapsed;
 	
 	__tx39timer_rtcget(&t0);
-	__asm__ __volatile__("
-		.set	noreorder;
-		li	$8, 10000000;
-	1:	nop;
-		nop;
-		nop;
-		nop;
-		nop;
-		nop;
-		nop;
-		add	$8, $8, -1;
-		bnez	$8, 1b;
-		nop;
-		.set	reorder;
-	");
+	__asm__ __volatile__(
+		".set	noreorder;		\n\t"
+		"li	$8, 10000000;		\n"
+	"1:	nop;				\n\t"
+		"nop;				\n\t"
+		"nop;				\n\t"
+		"nop;				\n\t"
+		"nop;				\n\t"
+		"nop;				\n\t"
+		"nop;				\n\t"
+		"add	$8, $8, -1;		\n\t"
+		"bnez	$8, 1b;			\n\t"
+		"nop;				\n\t"
+		".set	reorder;");
 	__tx39timer_rtcget(&t1);
 
 	elapsed = t1.t_lo - t0.t_lo;
@@ -284,6 +286,8 @@ tx39clock_get(struct device *dev, time_t base, struct clock_ymdhms *t)
 		    (int)sec));
 
 		sc->sc_enabled = 1;
+		clock_secs_to_ymdhms(base, &dt);
+		sc->sc_epoch = dt;
 		base += sec;
 	} else {
 		dt.dt_year = sc->sc_year;
@@ -316,6 +320,8 @@ tx39clock_set(struct device *dev, struct clock_ymdhms *dt)
 
 	if (sc->sc_enabled) {
 		sc->sc_epoch = *dt;
+		__tx39timer_rtcreset(sc->sc_tc);
+		tx39clock_alarm_refill(sc->sc_tc);
 	}
 }
 

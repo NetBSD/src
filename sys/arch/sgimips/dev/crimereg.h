@@ -1,4 +1,4 @@
-/*	$NetBSD: crimereg.h,v 1.6 2003/01/10 20:39:22 rafal Exp $	*/
+/*	$NetBSD: crimereg.h,v 1.6.2.1 2004/08/03 10:40:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -36,30 +36,30 @@
  * O2 CRIME register definitions
  */
 
-#define CRIME_BASE		0x14000000 /* all registers 64-bit access */
+#define CRIME_BASE	0x14000000	/* all registers 64-bit access */
 
 /* Offset 0x00 -- revision register */
-#define CRIME_REV         (CRIME_BASE+0x000)
-#define CRIME_ID_IDBITS   0xf0
-#define CRIME_ID_IDSHIFT  4
-#define CRIME_ID_REV      0x0f
-#define CRIME_REV_PETTY   0x0
-#define CRIME_REV_11      0x11
-#define CRIME_REV_13      0x13
-#define CRIME_REV_14      0x14
+#define CRIME_REV		0x00
+#define CRIME_ID_IDBITS		0x000000f0
+#define CRIME_ID_IDSHIFT	4
+#define CRIME_ID_REV		0x0000000f
+#define CRIME_REV_PETTY		0x00
+#define CRIME_REV_11		0x11
+#define CRIME_REV_13		0x13
+#define CRIME_REV_14		0x14
 
-/* offset 0x08 -- control register.  Only lower 14 bits are valid*/
-#define CRIME_CONTROL			  (CRIME_BASE+0x008)
-#define CRIME_CONTROL_TRITON_SYSADC       0x2000
-#define CRIME_CONTROL_CRIME_SYSADC        0x1000
-#define CRIME_CONTROL_HARD_RESET          0x0800
-#define CRIME_CONTROL_SOFT_RESET          0x0400
-#define CRIME_CONTROL_DOG_ENABLE          0x0200
-#define CRIME_CONTROL_ENDIANESS           0x0100 /* assert for BE */
-#define CRIME_CONTROL_CQUEUE_HWM          0x000f
-#define CRIME_CONTROL_CQUEUE_SHFT         0
-#define CRIME_CONTROL_WBUF_HWM            0x00f0
-#define CRIME_CONTROL_WBUF_SHFT           8
+/* offset 0x08 -- control register.  Only lower 14 bits are valid */
+#define CRIME_CONTROL			0x08
+#define CRIME_CONTROL_TRITON_SYSADC	 0x2000
+#define CRIME_CONTROL_CRIME_SYSADC	 0x1000
+#define CRIME_CONTROL_HARD_RESET	 0x0800
+#define CRIME_CONTROL_SOFT_RESET	 0x0400
+#define CRIME_CONTROL_DOG_ENABLE	 0x0200
+#define CRIME_CONTROL_ENDIANESS		 0x0100 /* assert for BE */
+#define CRIME_CONTROL_CQUEUE_HWM	 0x000f
+#define CRIME_CONTROL_CQUEUE_SHFT	 0
+#define CRIME_CONTROL_WBUF_HWM		 0x00f0
+#define CRIME_CONTROL_WBUF_SHFT		 8
 
 /*
  * macros to manipulate CRIME High Water Mark bits in
@@ -72,18 +72,18 @@
  * CRM_CONTROL_SET_WBUF_HWM(*(__uint64_t *)CRM_CONTROL, 4)
  */
 #define CRM_CONTROL_GET_CQUEUE_HWM(x)   \
-        (((x) & CRM_CONTROL_CQUEUE_HWM) >> CRM_CONTROL_CQUEUE_SHFT)
+	(((x) & CRM_CONTROL_CQUEUE_HWM) >> CRM_CONTROL_CQUEUE_SHFT)
 #define CRM_CONTROL_SET_CQUEUE_HWM(x,v) \
-        (((v) << CRM_CONTROL_CQUEUE_SHFT) | ((x) & ~CRM_CONTROL_CQUEUE_HWM))
+	(((v) << CRM_CONTROL_CQUEUE_SHFT) | ((x) & ~CRM_CONTROL_CQUEUE_HWM))
 
 #define CRM_CONTROL_GET_WBUF_HWM(x)     \
-        (((x) & CRM_CONTROL_WBUF_HWM) >> CRM_CONTROL_WBUF_SHFT)
+	(((x) & CRM_CONTROL_WBUF_HWM) >> CRM_CONTROL_WBUF_SHFT)
 #define CRM_CONTROL_SET_WBUF_HWM(x,v)   \
-        (((v) << CRM_CONTROL_WBUF_SHFT) | ((x) & ~CRM_CONTROL_WBUF_HWM))
+	(((v) << CRM_CONTROL_WBUF_SHFT) | ((x) & ~CRM_CONTROL_WBUF_HWM))
 
 
 /* Offset 0x010 -- interrupt status register.  All 32 bits valid */
-#define CRIME_INTSTAT		(CRIME_BASE+0x010)
+#define CRIME_INTSTAT		0x10
 #define CRIME_INT_VICE		0x80000000
 #define CRIME_INT_SOFT2		0x40000000 /* Also CPU_SysCorErr */
 #define CRIME_INT_SOFT1		0x20000000
@@ -117,40 +117,40 @@
 #define CRIME_INT_VID_IN2	0x00000002
 #define CRIME_INT_VID_IN1	0x00000001
 
-/* Masks, hard interrupts, soft interrupts.  Don't know what to do with these */
-#define CRIME_INTMASK		(CRIME_BASE+0x018)
-#define CRIME_SOFTINT		(CRIME_BASE+0x020)
-#define CRIME_HARDINT		(CRIME_BASE+0x028)
+/* Masks, hard interrupts, soft interrupts.  */
+#define CRIME_INTMASK		0x18
+#define CRIME_SOFTINT		0x20
+#define CRIME_HARDINT		0x28
 
 /*
- * Offset 0x030 -- watchdog register.  33 bits are valid 
- * Bit   32:  power on reset
- * Bit	  31:  warm reset
+ * Offset 0x030 -- watchdog register.  33 bits are valid
+ * Bit 32:  power on reset
+ * Bit 31:  warm reset
  * Write zero here to reset watchdog
  */
 
-#define CRIME_DOG		(CRIME_BASE+0x030)
+#define CRIME_DOG		0x30
 #define CRIME_WATCHDOG		CRIME_DOG
-#define CRIME_TIME		(CRIME_BASE+0x038)
-#define CRIME_TIME_MASK		0x0000ffffffffffff
-#define CRIME_CPU_ERROR_ADDR	(CRIME_BASE+0x040)
-#define CRIME_CPU_ERROR_STAT	(CRIME_BASE+0x048)
-#define CRIME_CPU_ERROR_ENA	(CRIME_BASE+0x050)
-#define CRIME_VICE_ERROR_ADDR	(CRIME_BASE+0x058)
-#define CRIME_MEM_CONTROL	(CRIME_BASE+0x200)
-#define CRIME_MEM_BANK_CTRL0	(CRIME_BASE+0x208)
-#define CRIME_MEM_BANK_CTRL1	(CRIME_BASE+0x218)
-#define CRIME_MEM_BANK_CTRL2	(CRIME_BASE+0x210)
-#define CRIME_MEM_BANK_CTRL3	(CRIME_BASE+0x228)
-#define CRIME_MEM_BANK_CTRL4	(CRIME_BASE+0x220)
-#define CRIME_MEM_BANK_CTRL5	(CRIME_BASE+0x238)
-#define CRIME_MEM_BANK_CTRL6	(CRIME_BASE+0x230)
-#define CRIME_MEM_BANK_CTRL7	(CRIME_BASE+0x248)
-#define CRIME_MEM_REFRESH_CNTR	(CRIME_BASE+0x248)
-#define CRIME_MEM_ERROR_STAT	(CRIME_BASE+0x250)
-#define CRIME_MEM_ERROR_ADDR	(CRIME_BASE+0x258)
-#define CRIME_MEM_ERROR_ECC_SYN	(CRIME_BASE+0x260)
-#define CRIME_MEM_ERROR_ECC_CHK	(CRIME_BASE+0x268)
-#define CRIME_MEM_ERROR_ECC_REPL (CRIME_BASE+0x270)
+#define CRIME_TIME		0x38
+#define CRIME_TIME_MASK		0x0000ffffffffffffULL
+#define CRIME_CPU_ERROR_ADDR	0x40
+#define CRIME_CPU_ERROR_STAT	0x48
+#define CRIME_CPU_ERROR_ENA	0x50
+#define CRIME_VICE_ERROR_ADDR	0x58
+#define CRIME_MEM_CONTROL	0x0200
+#define CRIME_MEM_BANK_CTRL0	0x0208
+#define CRIME_MEM_BANK_CTRL1	0x0218
+#define CRIME_MEM_BANK_CTRL2	0x0210
+#define CRIME_MEM_BANK_CTRL3	0x0228
+#define CRIME_MEM_BANK_CTRL4	0x0220
+#define CRIME_MEM_BANK_CTRL5	0x0238
+#define CRIME_MEM_BANK_CTRL6	0x0230
+#define CRIME_MEM_BANK_CTRL7	0x0248
+#define CRIME_MEM_REFRESH_CNTR	0x0248
+#define CRIME_MEM_ERROR_STAT	0x0250
+#define CRIME_MEM_ERROR_ADDR	0x0258
+#define CRIME_MEM_ERROR_ECC_SYN	0x0260
+#define CRIME_MEM_ERROR_ECC_CHK	0x0268
+#define CRIME_MEM_ERROR_ECC_REPL 0x0270
 
 #define McGriff CRIME_DOG /* Baseball compatibility */

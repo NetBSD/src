@@ -1,4 +1,4 @@
-/*	$NetBSD: intmmu.S,v 1.5 2002/07/08 16:17:42 rearnsha Exp $ */
+/*	$NetBSD: intmmu.S,v 1.5.6.1 2004/08/03 10:34:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -122,7 +122,7 @@ Lperiph:
 	mov	r1, #CPU_CONTROL_MMU_ENABLE
 
 /*
- * This is where it might all start to go wrong if the cpu fitted to your
+ * This is where it might all start to go wrong if the CPU fitted to your
  * integrator does not have an MMU.
  */
 	/* fetch current control state */

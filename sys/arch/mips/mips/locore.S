@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.155 2003/06/23 11:01:29 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.155.2.1 2004/08/03 10:37:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -358,7 +354,7 @@ cpu_switch_queuescan:
 	 */
 	lw	t1, L_PROC(s7)
 	lw	a0, L_ADDR(s7)
-	lw	v1, P_NRAS(t1)
+	lw	v1, P_RASLIST(t1)
 
 	addu	t0, a0, USPACE - FRAME_SIZ
 	beq	v1, zero, 1f
@@ -940,10 +936,10 @@ XNESTED(MachFPTrap)
 	REG_S	a1, FRAME_CAUSE(a3)
 	REG_EPILOGUE
 
-	move	a2, a0				# code = instruction
+	move	a1, a0				# code = instruction
 	lw	a0, _C_LABEL(curlwp)		# get current process
-	jal	_C_LABEL(trapsignal)
-	li	a1, SIGILL
+	jal	_C_LABEL(mips_fpuillinst)
+	nop
 
 	b	FPReturn
 	nop
@@ -957,10 +953,13 @@ XNESTED(MachFPTrap)
 	REG_S	a1, FRAME_CAUSE(a3)
 	REG_EPILOGUE
 
-	move	a2, a0				# code = instruction
+	and	a0, t0, ~MIPS_FPU_EXCEPTION_BITS
+	ctc1	a0, MIPS_FPU_CSR
+
+	move	a1, t0				# FPU status
 	lw	a0, _C_LABEL(curlwp)		# get current process
-	jal	_C_LABEL(trapsignal)
-	li	a1, SIGFPE			# BDSLOT
+	jal	_C_LABEL(mips_fpuexcept)
+	nop
 
 	b	FPReturn
 	nop

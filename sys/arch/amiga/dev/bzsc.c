@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.33 2003/04/01 21:26:28 thorpej Exp $ */
+/*	$NetBSD: bzsc.c,v 1.33.2.1 2004/08/03 10:31:50 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.33 2003/04/01 21:26:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.33.2.1 2004/08/03 10:31:50 skrll Exp $");
 
 /*
  * Initial amiga Blizzard 1230-II driver by Daniel Widenfalk.  Conversion to
@@ -348,7 +348,7 @@ bzsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	 * DMA can be nasty for high-speed serial input, so limit the
 	 * size of this DMA operation if the serial port is running at
 	 * a high speed (higher than 19200 for now - should be adjusted
-	 * based on cpu type and speed?).
+	 * based on CPU type and speed?).
 	 * XXX - add serial speed check XXX
 	 */
 	if (ser_open_speed > 19200 && bzsc_max_dma != 0 &&

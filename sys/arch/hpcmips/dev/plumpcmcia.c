@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.15 2003/01/01 01:40:26 thorpej Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.15.2.1 2004/08/03 10:35:07 skrll Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.15.2.1 2004/08/03 10:35:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

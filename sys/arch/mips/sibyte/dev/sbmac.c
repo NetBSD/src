@@ -1,7 +1,7 @@
-/* $NetBSD: sbmac.c,v 1.9 2003/02/07 17:38:49 cgd Exp $ */
+/* $NetBSD: sbmac.c,v 1.9.2.1 2004/08/03 10:37:51 skrll Exp $ */
 
 /*
- * Copyright 2000, 2001
+ * Copyright 2000, 2001, 2004
  * Broadcom Corporation. All rights reserved.
  *
  * This software is furnished under license and may be used and copied only
@@ -31,6 +31,9 @@
  *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *    OR OTHERWISE), EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.9.2.1 2004/08/03 10:37:51 skrll Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -80,7 +83,6 @@
 #include <mips/sibyte/include/sb1250_dma.h>
 #include <mips/sibyte/include/sb1250_scd.h>
 
-
 /* Simple types */
 
 typedef u_long sbmac_port_t;
@@ -102,9 +104,9 @@ typedef enum { sbmac_state_uninit, sbmac_state_off, sbmac_state_on,
 
 /* Macros */
 
-#define	SBDMA_NEXTBUF(d, f) ((((d)->f+1) == (d)->sbdma_dscrtable_end) ? \
-			  (d)->sbdma_dscrtable : (d)->f+1)
+#define	SBMAC_EVENT_COUNTERS	/* Include counters for various events */
 
+#define	SBDMA_NEXTBUF(d, f)	((f + 1) & (d)->sbdma_dscr_mask)
 
 #define	CACHELINESIZE 32
 #define	NUMCACHEBLKS(x) (((x)+CACHELINESIZE-1)/CACHELINESIZE)
@@ -122,8 +124,9 @@ typedef enum { sbmac_state_uninit, sbmac_state_off, sbmac_state_on,
 
 #define	PKSEG1(x) ((sbmac_port_t) MIPS_PHYS_TO_KSEG1(x))
 
-#define	SBMAC_MAX_TXDESCR	64
-#define	SBMAC_MAX_RXDESCR	64
+/* These are limited to fit within one virtual page, and must be 2**N.  */
+#define	SBMAC_MAX_TXDESCR	256		/* should be 1024 */
+#define	SBMAC_MAX_RXDESCR	256		/* should be 512 */
 
 #define	ETHER_ALIGN	2
 
@@ -157,15 +160,12 @@ typedef struct sbmacdma_s {
 	/*
 	 * This stuff is for maintenance of the ring
 	 */
-
 	sbdmadscr_t	*sbdma_dscrtable;	/* base of descriptor table */
-	sbdmadscr_t	*sbdma_dscrtable_end;	/* end of descriptor table */
-
 	struct mbuf	**sbdma_ctxtable;	/* context table, one per descr */
-
+	unsigned int	sbdma_dscr_mask;	/* sbdma_maxdescr - 1 */
 	paddr_t		sbdma_dscrtable_phys;	/* and also the phys addr */
-	sbdmadscr_t	*sbdma_addptr;		/* next dscr for sw to add */
-	sbdmadscr_t	*sbdma_remptr;		/* next dscr for sw to remove */
+	unsigned int	sbdma_add_index;	/* next dscr for sw to add */
+	unsigned int	sbdma_rem_index;	/* next dscr for sw to remove */
 } sbmacdma_t;
 
 
@@ -210,8 +210,24 @@ struct sbmac_softc {
 	sbmacdma_t	sbm_rxdma;
 
 	int		sbm_pass3_dma;	/* chip has pass3 SOC DMA features */
+
+#ifdef SBMAC_EVENT_COUNTERS
+	struct evcnt	sbm_ev_rxintr;	/* Rx interrupts */
+	struct evcnt	sbm_ev_txintr;	/* Tx interrupts */
+	struct evcnt	sbm_ev_txdrop;	/* Tx dropped due to no mbuf alloc failed */
+	struct evcnt	sbm_ev_txstall;	/* Tx stalled due to no descriptors free */
+
+	struct evcnt	sbm_ev_txsplit;	/* pass3 Tx split mbuf */
+	struct evcnt	sbm_ev_txkeep;	/* pass3 Tx didn't split mbuf */
+#endif
 };
 
+
+#ifdef SBMAC_EVENT_COUNTERS
+#define	SBMAC_EVCNT_INCR(ev)	(ev).ev_count++
+#else
+#define	SBMAC_EVCNT_INCR(ev)	do { /* nothing */ } while (0)
+#endif
 
 /* Externs */
 
@@ -402,13 +418,12 @@ sbdma_initctx(sbmacdma_t *d, struct sbmac_softc *s, int chan, int txrx,
 	 */
 
 	d->sbdma_maxdescr = maxdescr;
+	d->sbdma_dscr_mask = d->sbdma_maxdescr - 1;
 
 	d->sbdma_dscrtable = (sbdmadscr_t *)
-	    KMALLOC(d->sbdma_maxdescr*sizeof(sbdmadscr_t));
+	    KMALLOC(d->sbdma_maxdescr * sizeof(sbdmadscr_t));
 
 	bzero(d->sbdma_dscrtable, d->sbdma_maxdescr*sizeof(sbdmadscr_t));
-
-	d->sbdma_dscrtable_end = d->sbdma_dscrtable + d->sbdma_maxdescr;
 
 	d->sbdma_dscrtable_phys = KVTOPHYS(d->sbdma_dscrtable);
 
@@ -451,8 +466,8 @@ sbdma_channel_start(sbmacdma_t *d)
 	 * Initialize ring pointers
 	 */
 
-	d->sbdma_addptr = d->sbdma_dscrtable;
-	d->sbdma_remptr = d->sbdma_dscrtable;
+	d->sbdma_add_index = 0;
+	d->sbdma_rem_index = 0;
 }
 
 /*
@@ -473,14 +488,13 @@ sbdma_channel_start(sbmacdma_t *d)
 static int
 sbdma_add_rcvbuffer(sbmacdma_t *d, struct mbuf *m)
 {
-	sbdmadscr_t *dsc;
-	sbdmadscr_t *nextdsc;
+	unsigned int dsc, nextdsc;
 	struct mbuf *m_new = NULL;
 
 	/* get pointer to our current place in the ring */
 
-	dsc = d->sbdma_addptr;
-	nextdsc = SBDMA_NEXTBUF(d, sbdma_addptr);
+	dsc = d->sbdma_add_index;
+	nextdsc = SBDMA_NEXTBUF(d, d->sbdma_add_index);
 
 	/*
 	 * figure out if the ring is full - if the next descriptor
@@ -488,7 +502,7 @@ sbdma_add_rcvbuffer(sbmacdma_t *d, struct mbuf *m)
 	 * the ring, the ring is full
 	 */
 
-	if (nextdsc == d->sbdma_remptr)
+	if (nextdsc == d->sbdma_rem_index)
 		return ENOSPC;
 
 	/*
@@ -525,24 +539,24 @@ sbdma_add_rcvbuffer(sbmacdma_t *d, struct mbuf *m)
 	 * fill in the descriptor
 	 */
 
-	dsc->dscr_a = KVTOPHYS(mtod(m_new, caddr_t)) |
+	d->sbdma_dscrtable[dsc].dscr_a = KVTOPHYS(mtod(m_new, caddr_t)) |
 	    V_DMA_DSCRA_A_SIZE(NUMCACHEBLKS(ETHER_ALIGN + m_new->m_len)) |
 	    M_DMA_DSCRA_INTERRUPT;
 
 	/* receiving: no options */
-	dsc->dscr_b = 0;
+	d->sbdma_dscrtable[dsc].dscr_b = 0;
 
 	/*
 	 * fill in the context
 	 */
 
-	d->sbdma_ctxtable[dsc-d->sbdma_dscrtable] = m_new;
+	d->sbdma_ctxtable[dsc] = m_new;
 
 	/*
 	 * point at next packet
 	 */
 
-	d->sbdma_addptr = nextdsc;
+	d->sbdma_add_index = nextdsc;
 
 	/*
 	 * Give the buffer to the DMA engine.
@@ -571,18 +585,15 @@ sbdma_add_rcvbuffer(sbmacdma_t *d, struct mbuf *m)
 static int
 sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 {
-	sbdmadscr_t *dsc;
-	sbdmadscr_t *nextdsc;
-	sbdmadscr_t *prevdsc;
-	sbdmadscr_t *origdesc;
+        unsigned int dsc, nextdsc, prevdsc, origdesc;
 	int length;
 	int num_mbufs = 0;
 	struct sbmac_softc *sc = d->sbdma_eth;
 
 	/* get pointer to our current place in the ring */
 
-	dsc = d->sbdma_addptr;
-	nextdsc = SBDMA_NEXTBUF(d, sbdma_addptr);
+	dsc = d->sbdma_add_index;
+	nextdsc = SBDMA_NEXTBUF(d, d->sbdma_add_index);
 
 	/*
 	 * figure out if the ring is full - if the next descriptor
@@ -590,22 +601,10 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 	 * the ring, the ring is full
 	 */
 
-	if (nextdsc == d->sbdma_remptr)
+	if (nextdsc == d->sbdma_rem_index) {
+		SBMAC_EVCNT_INCR(sc->sbm_ev_txstall);
 		return ENOSPC;
-
-#if 0
-	do {
-		struct mbuf *m0;
-
-		printf("mbuf chain: ");
-		for (m0 = m; m0 != 0; m0 = m0->m_next) {
-			printf("%d%c/%X ", m0->m_len,
-			m0->m_flags & M_EXT ? 'X' : 'N',
-			mtod(m0, u_int));
-		}
-		printf("\n");
-	} while (0);
-#endif
+	}
 
 	/*
 	 * PASS3 parts do not have buffer alignment restriction.
@@ -619,73 +618,117 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		 * Loop thru this mbuf record.
 		 * The head mbuf will have SOP set.
 		 */
-		dsc->dscr_a = KVTOPHYS(mtod(m,caddr_t)) |
-		    M_DMA_DSCRA_INTERRUPT |
+		d->sbdma_dscrtable[dsc].dscr_a = KVTOPHYS(mtod(m,caddr_t)) |
 		    M_DMA_ETHTX_SOP;
 
 		/*
 		 * transmitting: set outbound options,buffer A size(+ low 5
 		 * bits of start addr),and packet length.
 		 */
-		dsc->dscr_b =
+		d->sbdma_dscrtable[dsc].dscr_b =
 		    V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
-		    V_DMA_DSCRB_A_SIZE((m->m_len + (mtod(m,unsigned int) & 0x0000001F))) |
-		    V_DMA_DSCRB_PKT_SIZE_MSB( (m->m_pkthdr.len & 0xB000) ) |
-		    V_DMA_DSCRB_PKT_SIZE(m->m_pkthdr.len);
+		    V_DMA_DSCRB_A_SIZE((m->m_len +
+		      (mtod(m,unsigned int) & 0x0000001F))) |
+		    V_DMA_DSCRB_PKT_SIZE_MSB((m->m_pkthdr.len & 0xc000) >> 14) |
+		    V_DMA_DSCRB_PKT_SIZE(m->m_pkthdr.len & 0x3fff);
 
-		d->sbdma_addptr = nextdsc;
+		d->sbdma_add_index = nextdsc;
 		origdesc = prevdsc = dsc;
-		dsc = d->sbdma_addptr;
+		dsc = d->sbdma_add_index;
 		num_mbufs++;
 
 		/* Start with first non-head mbuf */
 		for(m_temp = m->m_next; m_temp != 0; m_temp = m_temp->m_next) {
+			int len, next_len;
+			uint64_t addr;
 
 			if (m_temp->m_len == 0)
 				continue;	/* Skip 0-length mbufs */
 
+			len = m_temp->m_len;
+			addr = KVTOPHYS(mtod(m_temp, caddr_t));
+
+			/*
+			 * Check to see if the mbuf spans a page boundary.  If
+			 * it does, and the physical pages behind the virtual
+			 * pages are not contiguous, split it so that each
+			 * virtual page uses it's own Tx descriptor.
+			 */
+			if (trunc_page(addr) != trunc_page(addr + len - 1)) {
+				next_len = (addr + len) - trunc_page(addr + len);
+
+				len -= next_len;
+
+				if (addr + len ==
+				    KVTOPHYS(mtod(m_temp, caddr_t) + len)) {
+					SBMAC_EVCNT_INCR(sc->sbm_ev_txkeep);
+					len += next_len;
+					next_len = 0;
+				} else {
+					SBMAC_EVCNT_INCR(sc->sbm_ev_txsplit);
+				}
+			} else {
+				next_len = 0;
+			}
+
+again:
 			/*
 			 * fill in the descriptor
 			 */
+			d->sbdma_dscrtable[dsc].dscr_a = addr;
 
-			dsc->dscr_a = KVTOPHYS(mtod(m_temp,caddr_t)) |
-			    M_DMA_DSCRA_INTERRUPT;
+			/*
+			 * transmitting: set outbound options,buffer A
+			 * size(+ low 5 bits of start addr)
+			 */
+			d->sbdma_dscrtable[dsc].dscr_b = V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_NOTSOP) |
+			    V_DMA_DSCRB_A_SIZE((len + (addr & 0x0000001F)));
 
-			/* transmitting: set outbound options,buffer A size(+ low 5 bits of start addr) */
-			dsc->dscr_b = V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_NOTSOP) |
-			    V_DMA_DSCRB_A_SIZE( (m_temp->m_len + (mtod(m_temp,unsigned int) & 0x0000001F)) );
-
-			d->sbdma_ctxtable[dsc-d->sbdma_dscrtable] = NULL;
+			d->sbdma_ctxtable[dsc] = NULL;
 
 			/*
 			 * point at next descriptor
 			 */
-			nextdsc = SBDMA_NEXTBUF(d,sbdma_addptr);
-			if (nextdsc == d->sbdma_remptr) {
-				d->sbdma_addptr = origdesc;
+			nextdsc = SBDMA_NEXTBUF(d, d->sbdma_add_index);
+			if (nextdsc == d->sbdma_rem_index) {
+				d->sbdma_add_index = origdesc;
+				SBMAC_EVCNT_INCR(sc->sbm_ev_txstall);
 				return ENOSPC;
 			}
-			d->sbdma_addptr = nextdsc;
+			d->sbdma_add_index = nextdsc;
 
 			prevdsc = dsc;
-			dsc = d->sbdma_addptr;
+			dsc = d->sbdma_add_index;
 			num_mbufs++;
-		}
 
-		/*Set head mbuf to last context index*/
-		d->sbdma_ctxtable[prevdsc-d->sbdma_dscrtable] = m;
+			if (next_len != 0) {
+				addr = KVTOPHYS(mtod(m_temp, caddr_t) + len);
+				len = next_len;
+
+				next_len = 0;
+				goto again;
+			}
+
+		}
+		/* Set head mbuf to last context index */
+		d->sbdma_ctxtable[prevdsc] = m;
+
+		/* Interrupt on last dscr of packet.  */
+	        d->sbdma_dscrtable[prevdsc].dscr_a |= M_DMA_DSCRA_INTERRUPT;
 	} else {
 		struct mbuf *m_new = NULL;
 		/*
 		 * [BEGIN XXX]
-		 * XXX Copy/coalesce the mbufs into a single mbuf cluster (we assume
-		 * it will fit).  This is a temporary hack to get us going.
+		 * XXX Copy/coalesce the mbufs into a single mbuf cluster (we
+		 * assume it will fit).  This is a temporary hack to get us
+		 * going.
 		 */
 
 		MGETHDR(m_new,M_DONTWAIT,MT_DATA);
 		if (m_new == NULL) {
 			printf("%s: mbuf allocation failed\n",
 			    d->sbdma_eth->sc_dev.dv_xname);
+			SBMAC_EVCNT_INCR(sc->sbm_ev_txdrop);
 			return ENOBUFS;
 		}
 
@@ -694,6 +737,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 			printf("%s: mbuf cluster allocation failed\n",
 			    d->sbdma_eth->sc_dev.dv_xname);
 			m_freem(m_new);
+			SBMAC_EVCNT_INCR(sc->sbm_ev_txdrop);
 			return ENOBUFS;
 		}
 
@@ -724,13 +768,14 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		 * fill in the descriptor
 		 */
 
-		dsc->dscr_a = KVTOPHYS(mtod(m_new,caddr_t)) |
+		d->sbdma_dscrtable[dsc].dscr_a = KVTOPHYS(mtod(m_new,caddr_t)) |
 		    V_DMA_DSCRA_A_SIZE(NUMCACHEBLKS(m_new->m_len)) |
 		    M_DMA_DSCRA_INTERRUPT |
 		    M_DMA_ETHTX_SOP;
 
 		/* transmitting: set outbound options and length */
-		dsc->dscr_b = V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
+		d->sbdma_dscrtable[dsc].dscr_b =
+		    V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
 		    V_DMA_DSCRB_PKT_SIZE(length);
 
 		num_mbufs++;
@@ -739,12 +784,12 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		 * fill in the context
 		 */
 
-		d->sbdma_ctxtable[dsc-d->sbdma_dscrtable] = m_new;
+		d->sbdma_ctxtable[dsc] = m_new;
 
 		/*
 		 * point at next packet
 		 */
-		d->sbdma_addptr = nextdsc;
+		d->sbdma_add_index = nextdsc;
 	}
 
 	/*
@@ -827,9 +872,8 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 {
 	int curidx;
 	int hwidx;
-	sbdmadscr_t *dsc;
+	sbdmadscr_t *dscp;
 	struct mbuf *m;
-	struct ether_header *eh;
 	int len;
 
 	struct ifnet *ifp = &(sc->sc_ethercom.ec_if);
@@ -843,10 +887,11 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		 * descriptor table was page-aligned and contiguous in
 		 * both virtual and physical memory -- you could then
 		 * just compare the low-order bits of the virtual address
-		 * (sbdma_remptr) and the physical address (sbdma_curdscr CSR)
+		 * (sbdma_rem_index) and the physical address
+		 * (sbdma_curdscr CSR).
 		 */
 
-		curidx = d->sbdma_remptr - d->sbdma_dscrtable;
+		curidx = d->sbdma_rem_index;
 		hwidx = (int)
 		    (((SBMAC_READCSR(d->sbdma_curdscr) & M_DMA_CURDSCR_ADDR) -
 		    d->sbdma_dscrtable_phys) / sizeof(sbdmadscr_t));
@@ -864,11 +909,11 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		 * Otherwise, get the packet's mbuf ptr back
 		 */
 
-		dsc = &(d->sbdma_dscrtable[curidx]);
+		dscp = &(d->sbdma_dscrtable[curidx]);
 		m = d->sbdma_ctxtable[curidx];
 		d->sbdma_ctxtable[curidx] = NULL;
 
-		len = (int)G_DMA_DSCRB_PKT_SIZE(dsc->dscr_b) - 4;
+		len = (int)G_DMA_DSCRB_PKT_SIZE(dscp->dscr_b) - 4;
 
 		/*
 		 * Check packet status.  If good, process it.
@@ -876,7 +921,7 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		 * receive ring.
 		 */
 
-		if (! (dsc->dscr_a & M_DMA_ETHRX_BAD)) {
+		if (! (dscp->dscr_a & M_DMA_ETHRX_BAD)) {
 
 			/*
 			 * Set length into the packet
@@ -885,7 +930,6 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 			m->m_pkthdr.len = m->m_len = len;
 
 			ifp->if_ipackets++;
-			eh = mtod(m, struct ether_header *);
 			m->m_pkthdr.rcvif = ifp;
 
 
@@ -922,7 +966,7 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		 * .. and advance to the next buffer.
 		 */
 
-		d->sbdma_remptr = SBDMA_NEXTBUF(d, sbdma_remptr);
+		d->sbdma_rem_index = SBDMA_NEXTBUF(d, d->sbdma_rem_index);
 	}
 }
 
@@ -948,7 +992,6 @@ sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 {
 	int curidx;
 	int hwidx;
-	sbdmadscr_t *dsc;
 	struct mbuf *m;
 
 	struct ifnet *ifp = &(sc->sc_ethercom.ec_if);
@@ -962,10 +1005,11 @@ sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		 * descriptor table was page-aligned and contiguous in
 		 * both virtual and physical memory -- you could then
 		 * just compare the low-order bits of the virtual address
-		 * (sbdma_remptr) and the physical address (sbdma_curdscr CSR)
+		 * (sbdma_rem_index) and the physical address
+		 * (sbdma_curdscr CSR).
 		 */
 
-		curidx = d->sbdma_remptr - d->sbdma_dscrtable;
+		curidx = d->sbdma_rem_index;
 		hwidx = (int)
 		    (((SBMAC_READCSR(d->sbdma_curdscr) & M_DMA_CURDSCR_ADDR) -
 		    d->sbdma_dscrtable_phys) / sizeof(sbdmadscr_t));
@@ -983,7 +1027,6 @@ sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		 * Otherwise, get the packet's mbuf ptr back
 		 */
 
-		dsc = &(d->sbdma_dscrtable[curidx]);
 		m = d->sbdma_ctxtable[curidx];
 		d->sbdma_ctxtable[curidx] = NULL;
 
@@ -997,7 +1040,7 @@ sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		 * .. and advance to the next buffer.
 		 */
 
-		d->sbdma_remptr = SBDMA_NEXTBUF(d, sbdma_remptr);
+		d->sbdma_rem_index = SBDMA_NEXTBUF(d, d->sbdma_rem_index);
 	}
 
 	/*
@@ -1071,7 +1114,23 @@ sbmac_initctx(struct sbmac_softc *s)
 			    SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1125 ||
 			    SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1125H ||
 			    (SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1250 &&
-			     0));
+			     G_SYS_REVISION(sysrev) >= K_SYS_REVISION_BCM1250_PASS3));
+#ifdef SBMAC_EVENT_COUNTERS
+	evcnt_attach_dynamic(&s->sbm_ev_rxintr, EVCNT_TYPE_INTR,
+	    NULL, s->sc_dev.dv_xname, "rxintr");
+	evcnt_attach_dynamic(&s->sbm_ev_txintr, EVCNT_TYPE_INTR,
+	    NULL, s->sc_dev.dv_xname, "txintr");
+	evcnt_attach_dynamic(&s->sbm_ev_txdrop, EVCNT_TYPE_MISC,
+	    NULL, s->sc_dev.dv_xname, "txdrop");
+	evcnt_attach_dynamic(&s->sbm_ev_txstall, EVCNT_TYPE_MISC,
+	    NULL, s->sc_dev.dv_xname, "txstall");
+	if (s->sbm_pass3_dma) {
+		evcnt_attach_dynamic(&s->sbm_ev_txsplit, EVCNT_TYPE_MISC,
+		    NULL, s->sc_dev.dv_xname, "pass3tx-split");
+		evcnt_attach_dynamic(&s->sbm_ev_txkeep, EVCNT_TYPE_MISC,
+		    NULL, s->sc_dev.dv_xname, "pass3tx-keep");
+	}
+#endif
 }
 
 /*
@@ -1246,7 +1305,6 @@ sbmac_channel_start(struct sbmac_softc *s)
 	txdma = &(s->sbm_txdma); 
 
 	if (s->sbm_pass3_dma) {
-
 		dma_cfg0 = SBMAC_READCSR(txdma->sbdma_config0);
 		dma_cfg0 |= V_DMA_DESC_TYPE(K_DMA_DESC_TYPE_RING_UAL_RMW) |
 		    M_DMA_TBX_EN | M_DMA_TDX_EN;
@@ -1423,8 +1481,8 @@ sbmac_init_and_start(struct sbmac_softc *sc)
 
 	s = splnet();
 
-	mii_pollstat(&sc->sc_mii);			/* poll phy for current speed */
-	sbmac_mii_statchg((struct device *) sc);	/* set state to new speed */
+	mii_pollstat(&sc->sc_mii);		/* poll phy for current speed */
+	sbmac_mii_statchg((struct device *) sc); /* set state to new speed */
 	sbmac_set_channel_state(sc, sbmac_state_on);
 
 	splx(s);
@@ -1678,6 +1736,7 @@ static void
 sbmac_intr(void *xsc, uint32_t status, uint32_t pc)
 {
 	struct sbmac_softc *sc = (struct sbmac_softc *) xsc;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint64_t isr;
 
 	for (;;) {
@@ -1695,16 +1754,23 @@ sbmac_intr(void *xsc, uint32_t status, uint32_t pc)
 		 * Transmits on channel 0
 		 */
 
-		if (isr & (M_MAC_INT_CHANNEL << S_MAC_TX_CH0))
+		if (isr & (M_MAC_INT_CHANNEL << S_MAC_TX_CH0)) {
 			sbdma_tx_process(sc, &(sc->sbm_txdma));
+			SBMAC_EVCNT_INCR(sc->sbm_ev_txintr);
+		}
 
 		/*
 		 * Receives on channel 0
 		 */
 
-		if (isr & (M_MAC_INT_CHANNEL << S_MAC_RX_CH0))
+		if (isr & (M_MAC_INT_CHANNEL << S_MAC_RX_CH0)) {
 			sbdma_rx_process(sc, &(sc->sbm_rxdma));
+			SBMAC_EVCNT_INCR(sc->sbm_ev_rxintr);
+		}
 	}
+
+	/* try to get more packets going */
+	sbmac_start(ifp);
 }
 
 
@@ -1750,8 +1816,8 @@ sbmac_start(struct ifnet *ifp)
 
 		if (rv == 0) {
 			/*
-			 * If there's a BPF listener, bounce a copy of this frame
-			 * to it.
+			 * If there's a BPF listener, bounce a copy of this
+			 * frame to it.
 			 */
 #if (NBPFILTER > 0)
 			if (ifp->if_bpf)
@@ -1759,8 +1825,9 @@ sbmac_start(struct ifnet *ifp)
 #endif
 			if (!sc->sbm_pass3_dma) {
 				/*
-				 * Don't free mbuf if we're not copying to new mbuf in sbdma_add_txbuffer.
-				 * It will be freed in sbdma_tx_process.
+				 * Don't free mbuf if we're not copying to new
+				 * mbuf in sbdma_add_txbuffer.  It will be
+				 * freed in sbdma_tx_process.
 				 */
 				m_freem(m_head);
 			}
@@ -1805,12 +1872,14 @@ sbmac_setmulti(struct sbmac_softc *sc)
 	 */
 
 	for (idx = 1; idx < MAC_ADDR_COUNT; idx++) {
-		port = PKSEG1(sc->sbm_base + R_MAC_ADDR_BASE+(idx*sizeof(uint64_t)));
+		port = PKSEG1(sc->sbm_base +
+		    R_MAC_ADDR_BASE+(idx*sizeof(uint64_t)));
 		SBMAC_WRITECSR(port, 0);
 	}
 
 	for (idx = 0; idx < MAC_HASH_COUNT; idx++) {
-		port = PKSEG1(sc->sbm_base + R_MAC_HASH_BASE+(idx*sizeof(uint64_t)));
+		port = PKSEG1(sc->sbm_base +
+		    R_MAC_HASH_BASE+(idx*sizeof(uint64_t)));
 		SBMAC_WRITECSR(port, 0);
 	}
 
@@ -1906,7 +1975,8 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)LLADDR(ifp->if_sadl);
+				ina->x_host =
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
 				    ifp->if_addrlen);
@@ -2299,7 +2369,8 @@ sbmac_attach(struct device *parent, struct device *self, void *aux)
 	ifp = &sc->sc_ethercom.ec_if;
 	ifp->if_softc = sc;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST |
+	    IFF_NOTRAILERS;
 	ifp->if_ioctl = sbmac_ioctl;
 	ifp->if_start = sbmac_start;
 	ifp->if_watchdog = sbmac_watchdog;

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.11 2003/05/03 00:47:04 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.11.2.1 2004/08/03 10:40:33 skrll Exp $
 #
 #	Shark installation kernel
 #
@@ -123,6 +123,7 @@ options 	INSECURE		# disable kernel securelevel
 #options 	KMEMSTATS	# kernel memory statistics, XXX temp required
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Development and Debugging options
@@ -143,7 +144,7 @@ config		netbsd		root on ? type ffs	# root on miniroot
 # The main bus device
 mainbus0 at root
 
-# The boot cpu
+# The boot CPU
 cpu0 at mainbus?
 
 # Open Firmware devices
@@ -160,9 +161,10 @@ ofbus*		at ofisa?
 
 # IDE/ATA disk
 wdc*		at ofisa?
-wd*		at wdc? drive ?
+atabus* 	at wdc? channel ?
+wd*		at atabus? drive ?
 
-atapibus*	at wdc?
+atapibus*	at atabus?
 cd*		at atapibus? drive?
 sd*		at atapibus? drive?
 

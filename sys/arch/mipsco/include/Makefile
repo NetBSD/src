@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/01/17 23:38:07 thorpej Exp $
+#	$NetBSD: Makefile,v 1.14.2.1 2004/08/03 10:37:53 skrll Exp $
 
 INCSDIR= /usr/include/mipsco
 
@@ -19,6 +19,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	setjmp.h signal.h stdarg.h sysconf.h \
 	trap.h types.h \
 	varargs.h vmparam.h \
+	wchar_limits.h \
 	z8530var.h
 
 .include <bsd.kinc.mk>

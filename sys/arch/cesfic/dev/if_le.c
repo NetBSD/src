@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.3 2002/10/02 05:06:54 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3.6.1 2004/08/03 10:33:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -25,6 +25,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.3.6.1 2004/08/03 10:33:45 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -112,8 +115,8 @@ leattach(parent, self, aux)
 	int i;
 	struct lance_softc *sc = (struct lance_softc *)self;
 
-	mainbus_map(0x4c000000, 0x10000, 0, (void **)&lemembase);
-	mainbus_map(0x48000000, 0x1000, 0, (void **)&lebase);
+	mainbus_map(0x4c000000, 0x10000, 0, (void *)&lemembase);
+	mainbus_map(0x48000000, 0x1000, 0, (void *)&lebase);
 
 	sc->sc_mem = lemembase;
 	sc->sc_conf3 = LE_C3_BSWP;

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.9 2002/10/09 07:28:57 jdolecek Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.9.6.1 2004/08/03 10:30:47 skrll Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.9 2002/10/09 07:28:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.9.6.1 2004/08/03 10:30:47 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -316,7 +316,7 @@ tbr_set(ifq, profile)
 	if (machclk_freq == 0)
 		init_machclk();
 	if (machclk_freq == 0) {
-		printf("tbr_set: no cpu clock available!\n");
+		printf("tbr_set: no CPU clock available!\n");
 		return (ENXIO);
 	}
 	
@@ -333,7 +333,7 @@ tbr_set(ifq, profile)
 	       M_DEVBUF, M_WAITOK);
 	if (tbr == NULL)
 		return (ENOMEM);
-	bzero(tbr, sizeof(struct tb_regulator));
+	(void)memset(tbr, 0, sizeof(struct tb_regulator));
 
 	tbr->tbr_rate = TBR_SCALE(profile->rate / 8) / machclk_freq;
 	tbr->tbr_depth = TBR_SCALE(profile->depth);
@@ -766,7 +766,7 @@ acc_add_filter(classifier, filter, class, phandle)
 	       M_DEVBUF, M_WAITOK);
 	if (afp == NULL)
 		return (ENOMEM);
-	bzero(afp, sizeof(struct acc_filter));
+	(void)memset(afp, 0, sizeof(struct acc_filter));
 
 	afp->f_filter = *filter;
 	afp->f_class = class;
@@ -1498,9 +1498,9 @@ u_int32_t machclk_per_tick = 0;
 
 #ifdef __alpha__
 #ifdef __FreeBSD__
-extern u_int32_t cycles_per_sec;	/* alpha cpu clock frequency */
+extern u_int32_t cycles_per_sec;	/* alpha CPU clock frequency */
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-extern u_int64_t cycles_per_usec;	/* alpha cpu clock frequency */
+extern u_int64_t cycles_per_usec;	/* alpha CPU clock frequency */
 #endif
 #endif /* __alpha__ */
 
@@ -1572,7 +1572,7 @@ init_machclk(void)
 /*
  * make a 64bit counter value out of the 32bit alpha processor cycle counter.
  * read_machclk must be called within a half of its wrap-around cycle
- * (about 5 sec for 400MHz cpu) to properly detect a counter wrap-around.
+ * (about 5 sec for 400MHz CPU) to properly detect a counter wrap-around.
  * tbr_timeout calls read_machclk once a second.
  */
 u_int64_t
@@ -1595,6 +1595,6 @@ init_machclk(void)
 {
 	machclk_freq = 1000000 << MACHCLK_SHIFT;
 	machclk_per_tick = machclk_freq / hz;
-	printf("altq: emulate %uHz cpu clock\n", machclk_freq);
+	printf("altq: emulate %uHz CPU clock\n", machclk_freq);
 }
 #endif /* !i386 && !alpha */

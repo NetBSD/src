@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.8 2002/04/09 13:16:09 leo Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.8.10.1 2004/08/03 10:33:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -28,6 +28,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.8.10.1 2004/08/03 10:33:26 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.11.2.1 2003/07/03 00:40:27 wrstuden Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.11.2.2 2004/08/03 10:32:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -45,6 +45,8 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vidcrender.c,v 1.11.2.2 2004/08/03 10:32:49 skrll Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1282,9 +1284,9 @@ vidc_cursor_init(vc)
 
 
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_normal,
-	    (paddr_t *)&p_cursor_normal);
+	    (void *)&p_cursor_normal);
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_transparent,
-	    (paddr_t *)&p_cursor_transparent);
+	    (void *)&p_cursor_transparent);
 
 /*
 	memset ( cursor_normal, 0x55,

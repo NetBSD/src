@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.8 2003/06/29 22:28:33 fvdl Exp $	*/
+/*	$NetBSD: apm.c,v 1.8.2.1 2004/08/03 10:37:20 skrll Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -35,6 +35,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.8.2.1 2004/08/03 10:37:20 skrll Exp $");
 
 #include "apm.h"
 
@@ -185,12 +188,18 @@ apmattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct apm_softc *sc = (struct apm_softc *) self;
 	struct pmu_battery_info info;
 
 	pm_battery_info(0, &info);
 
 	printf(": battery flags 0x%X, ", info.flags);
 	printf("%d%% charged\n", ((info.cur_charge * 100) / info.max_charge));
+
+	sc->sc_flags = 0;
+	sc->event_ptr = 0;
+	sc->event_count = 0;
+	lockinit(&sc->sc_lock, PWAIT, "apmlk", 0, 0);
 }
 
 int

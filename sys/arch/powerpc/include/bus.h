@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11 2003/06/15 23:09:04 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.11.2.1 2004/08/03 10:39:29 skrll Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -103,6 +103,14 @@
 
 #ifndef _POWERPC_BUS_H_
 #define _POWERPC_BUS_H_
+
+#if defined(_KERNEL_OPT) && !defined(BUS_DMA_COHERENT)
+#include "opt_ppcarch.h"
+#if defined(PPC_IBM4XX)
+#define BUS_DMA_COHERENT BUS_DMA_NOCACHE
+#endif /* PPC_IBM4XX */
+#endif /* _KERNEL_OPT && !BUS_DMA_COHERENT */
+
 
 /*
  * Bus access types.
@@ -714,6 +722,15 @@ struct powerpc_bus_dma_tag {
 	void	(*_dmamem_unmap) (bus_dma_tag_t, caddr_t, size_t);
 	paddr_t	(*_dmamem_mmap) (bus_dma_tag_t, bus_dma_segment_t *,
 		    int, off_t, int, int);
+
+#ifndef PHYS_TO_BUS_MEM
+	bus_addr_t (*_dma_phys_to_bus_mem)(bus_dma_tag_t, bus_addr_t);
+#define	PHYS_TO_BUS_MEM(t, addr) (*(t)->_dma_phys_to_bus_mem)((t), (addr))
+#endif
+#ifndef BUS_MEM_TO_PHYS
+	bus_addr_t (*_dma_bus_mem_to_phys)(bus_dma_tag_t, bus_addr_t);
+#define	BUS_MEM_TO_PHYS(t, addr) (*(t)->_dma_bus_mem_to_phys)((t), (addr))
+#endif
 };
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
@@ -803,5 +820,7 @@ int	_bus_dmamem_alloc_range (bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    paddr_t low, paddr_t high);
+bus_addr_t _bus_dma_phys_to_bus_mem_generic(bus_dma_tag_t, bus_addr_t);
+bus_addr_t _bus_dma_bus_mem_to_phys_generic(bus_dma_tag_t, bus_addr_t);
 #endif /* _POWERPC_BUS_DMA_PRIVATE */
 #endif /* _POWERPC_BUS_H_ */

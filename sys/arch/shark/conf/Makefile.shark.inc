@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.shark.inc,v 1.3 2003/01/03 02:34:49 thorpej Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.3.2.1 2004/08/03 10:40:33 skrll Exp $
 
 CPPFLAGS+=		-D${MACHINE}
 GENASSYM_EXTRAS+=	${THISARM}/shark/genassym.cf
@@ -13,6 +13,6 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 	echo "${DBSYM} $@ || true"; \
 	${DBSYM} $@ || true; \
 	echo \
-	 "${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs $@ $@.aout"; \
-	${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs $@ $@.aout
+	 "${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment $@ $@.aout"; \
+	${OBJCOPY} -O a.out-arm-netbsd -R .ident -R .arm.atpcs -R .comment $@ $@.aout
 .endif

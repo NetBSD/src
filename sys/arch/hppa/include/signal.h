@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.2 2003/04/28 23:16:19 bjh21 Exp $	*/
+/*	$NetBSD: signal.h,v 1.2.2.1 2004/08/03 10:35:37 skrll Exp $	*/
 
 /*	$OpenBSD: signal.h,v 1.1 1998/06/23 19:45:27 mickey Exp $	*/
 
@@ -25,6 +25,9 @@
  * 	Utah $Hdr: signal.h 1.3 94/12/16$
  */
 
+#ifndef _HPPA_SIGNAL_H__
+#define _HPPA_SIGNAL_H__
+
 /*
  * Machine-dependent signal definitions
  */
@@ -32,6 +35,8 @@
 #include <sys/featuretest.h>
 
 typedef int sig_atomic_t;
+
+#define __HAVE_SIGINFO
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #include <machine/trap.h>	/* codes for SIGILL, SIGFPE */
@@ -100,3 +105,5 @@ struct sigframe {
 };
 
 #endif /* _KERNEL */
+
+#endif /* _HPPA_SIGNAL_H__ */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2003/06/23 12:59:27 thorpej Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2004/08/03 10:38:47 skrll Exp $
 
 INCSDIR= /usr/include/pc532
 
@@ -10,7 +10,6 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	float.h fpu.h frame.h \
 	icu.h ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
-	intr.h \
 	jmpbuf.h \
 	kcore.h \
 	limits.h lock.h \
@@ -19,6 +18,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
-	varargs.h vmparam.h
+	varargs.h vmparam.h \
+	wchar_limits.h
 
 .include <bsd.kinc.mk>

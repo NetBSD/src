@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.3 2002/10/22 12:22:43 scw Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.3.8.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -316,6 +316,7 @@ ENTRY(in4_cksum)
 	ldhi.q	r4, IP_SRC+7, r20	/*       contiguous in memory */
 	or	r19, r20, r19
 	ADDC	(r19, r2, r2)		/* sum += ip->ip_{src,dst} */
+	movi	0, r3
 #endif	/* INET */
 
 

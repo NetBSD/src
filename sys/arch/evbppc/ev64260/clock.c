@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2003/03/17 23:24:41 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.4.2.1 2004/08/03 10:34:16 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,7 +31,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4.2.1 2004/08/03 10:34:16 skrll Exp $");
+
 #include "opt_ppcparam.h"
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>

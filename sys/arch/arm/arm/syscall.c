@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.18.2.1 2003/07/02 15:25:16 darrenr Exp $	*/
+/*	$NetBSD: syscall.c,v 1.18.2.2 2004/08/03 10:32:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18.2.1 2003/07/02 15:25:16 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18.2.2 2004/08/03 10:32:29 skrll Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -133,6 +133,29 @@ swi_handler(trapframe_t *frame)
 #ifdef acorn26
 	frame->tf_pc += INSN_SIZE;
 #endif
+
+	/*
+	 * Make sure the program counter is correctly aligned so we
+	 * don't take an alignment fault trying to read the opcode.
+	 */
+	if (__predict_false(((frame->tf_pc - INSN_SIZE) & 3) != 0)) {
+		ksiginfo_t ksi;
+		/* Give the user an illegal instruction signal. */
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (u_int32_t *)(intptr_t) (frame->tf_pc-INSN_SIZE);
+		KERNEL_PROC_LOCK(l->l_proc);
+#if 0
+		/* maybe one day we'll do emulations */
+		(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
+#else
+		trapsignal(l, &ksi);
+#endif
+		KERNEL_PROC_UNLOCK(l->l_proc);
+		userret(l);
+		return;
+	}
 
 	/* XXX fuword? */
 #ifdef __PROG32
@@ -206,6 +229,7 @@ syscall_plain(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 	int code, error;
 	u_int nap, nargs;
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
+	ksiginfo_t ksi;
 
 	KERNEL_PROC_LOCK(p);
 
@@ -222,7 +246,13 @@ syscall_plain(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 			break;
 		default:
 			/* Undefined so illegal instruction */
-			trapsignal(l, SIGILL, insn);
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = SIGILL;
+			/* XXX get an ILL_ILLSYSCALL assigned */
+			ksi.ksi_code = 0;
+			ksi.ksi_addr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
+			ksi.ksi_trap = insn;
+			trapsignal(l, &ksi);
 			break;
 		}
 
@@ -234,7 +264,13 @@ syscall_plain(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 		break;
 	default:
 		/* Undefined so illegal instruction */
-		trapsignal(l, SIGILL, insn);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		/* XXX get an ILL_ILLSYSCALL assigned */
+		ksi.ksi_code = 0;
+		ksi.ksi_addr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
+		ksi.ksi_trap = insn;
+		trapsignal(l, &ksi);
 		userret(l);
 		return;
 	}
@@ -321,6 +357,7 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 	int code, error;
 	u_int nap, nargs;
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
+	ksiginfo_t ksi;
 
 	KERNEL_PROC_LOCK(p);
 
@@ -337,7 +374,13 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 			break;
 		default:
 			/* Undefined so illegal instruction */
-			trapsignal(l, SIGILL, insn);
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = SIGILL;
+			/* XXX get an ILL_ILLSYSCALL assigned */
+			ksi.ksi_code = 0;
+			ksi.ksi_addr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
+			ksi.ksi_trap = insn;
+			trapsignal(l, &ksi);
 			break;
 		}
 
@@ -349,7 +392,13 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 		break;
 	default:
 		/* Undefined so illegal instruction */
-		trapsignal(l, SIGILL, insn);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		/* XXX get an ILL_ILLSYSCALL assigned */
+		ksi.ksi_code = 0;
+		ksi.ksi_addr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
+		ksi.ksi_trap = insn;
+		trapsignal(l, &ksi);
 		userret(l);
 		return;
 	}
@@ -379,14 +428,14 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 	else {
 		KASSERT(nargs <= MAXARGS);
 		memcpy(copyargs, ap, nap * sizeof(register_t));
+		args = copyargs;
 		error = copyin((void *)frame->tf_usr_sp, copyargs + nap,
 		    (nargs - nap) * sizeof(register_t));
 		if (error)
 			goto bad;
-		args = copyargs;
 	}
 
-	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
 		goto bad;
 
 	rval[0] = 0;

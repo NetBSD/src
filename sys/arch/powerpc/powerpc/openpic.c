@@ -1,4 +1,7 @@
-/*	$NetBSD: openpic.c,v 1.3 2001/02/05 19:22:24 briggs Exp $	*/
+/*	$NetBSD: openpic.c,v 1.3.26.1 2004/08/03 10:39:37 skrll Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: openpic.c,v 1.3.26.1 2004/08/03 10:39:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -7,8 +10,7 @@
 volatile unsigned char *openpic_base;
 
 void
-openpic_enable_irq(irq, type)
-	int irq, type;
+openpic_enable_irq(int irq, int type)
 {
 	u_int x;
 
@@ -22,8 +24,7 @@ openpic_enable_irq(irq, type)
 }
 
 void
-openpic_disable_irq(irq)
-	int irq;
+openpic_disable_irq(int irq)
 {
 	u_int x;
 
@@ -33,8 +34,7 @@ openpic_disable_irq(irq)
 }
 
 void
-openpic_set_priority(cpu, pri)
-	int cpu, pri;
+openpic_set_priority(int cpu, int pri)
 {
 	u_int x;
 

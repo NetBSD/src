@@ -1,4 +1,4 @@
-/*	$NetBSD: com_hpcio.c,v 1.6 2003/06/14 17:01:12 thorpej Exp $	*/
+/*	$NetBSD: com_hpcio.c,v 1.6.2.1 2004/08/03 10:35:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin. All rights reserved.
@@ -28,6 +28,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_hpcio.c,v 1.6.2.1 2004/08/03 10:35:06 skrll Exp $");
 
 #include "opt_kgdb.h"
 

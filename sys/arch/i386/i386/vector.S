@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.9 2003/06/23 11:01:22 martin Exp $	*/
+/*	$NetBSD: vector.S,v 1.9.2.1 2004/08/03 10:35:52 skrll Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -156,8 +156,6 @@ IDTVEC(recurse_lapic_ipi)
 	pushl	$0		
 	pushl	$T_ASTFLT
 	INTRENTRY		
-IDTVEC(resume_lapic_ipi)
-	cli
 	jmp	1f
 IDTVEC(intr_lapic_ipi)
 	pushl	$0		
@@ -167,6 +165,7 @@ IDTVEC(intr_lapic_ipi)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_IPI,%ebx
 	jae	2f
+IDTVEC(resume_lapic_ipi)
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_IPI,CPUVAR(ILEVEL)
@@ -208,8 +207,6 @@ IDTVEC(recurse_lapic_ltimer)
 	pushl	$0		
 	pushl	$T_ASTFLT
 	INTRENTRY		
-IDTVEC(resume_lapic_ltimer)
-	cli
 	jmp	1f
 IDTVEC(intr_lapic_ltimer)
 	pushl	$0		
@@ -219,6 +216,7 @@ IDTVEC(intr_lapic_ltimer)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_CLOCK,%ebx
 	jae	2f
+IDTVEC(resume_lapic_ltimer)
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_CLOCK,CPUVAR(ILEVEL)
@@ -235,8 +233,8 @@ IDTVEC(intr_lapic_ltimer)
 #endif /* NLAPIC > 0 */
 
 #ifdef MULTIPROCESSOR
-#define LOCK_KERNEL	call _C_LABEL(x86_intlock)
-#define UNLOCK_KERNEL	call _C_LABEL(x86_intunlock)
+#define LOCK_KERNEL	pushl %esp ; call _C_LABEL(x86_intlock) ; addl $4,%esp
+#define UNLOCK_KERNEL	pushl %esp ; call _C_LABEL(x86_intunlock) ; addl $4,%esp
 #else
 #define LOCK_KERNEL
 #define UNLOCK_KERNEL
@@ -292,10 +290,11 @@ IDTVEC(intr_/**/name/**/num)						;\
 	cmpl	%esi,%edi						;\
 	jle	7f							;\
 	pushl	IH_ARG(%ebx)						;\
+	movl	IH_FUN(%ebx),%eax					;\
 	movl	%edi,CPUVAR(ILEVEL)					;\
-	call	*IH_FUN(%ebx)		/* call it */			;\
-	addl	$4,%esp			/* toss the arg */		;\
 	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
+	call	*%eax			/* call it */			;\
+	addl	$4,%esp			/* toss the arg */		;\
 	testl	%ebx,%ebx						;\
 	jnz	6b							;\
 5:									\
@@ -624,6 +623,7 @@ _C_LABEL(eintrcnt):
 
 IDTVEC(softserial)
 	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
+	sti
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR
 	call	_C_LABEL(x86_softintlock)
@@ -642,6 +642,7 @@ IDTVEC(softserial)
 
 IDTVEC(softnet)
 	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
+	sti
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintlock)
@@ -673,6 +674,7 @@ IDTVEC(softnet)
 
 IDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
+	sti
 	incl	CPUVAR(IDEPTH)
 #ifdef MULTIPROCESSOR	
 	call	_C_LABEL(x86_softintlock)
@@ -741,7 +743,7 @@ IDTVEC(trap07)
 	ZTRAP(T_DNA)
 #endif
 IDTVEC(trap08)
-	ZTRAP(T_DOUBLEFLT)
+	TRAP(T_DOUBLEFLT)
 IDTVEC(trap09)
 	ZTRAP(T_FPOPFLT)
 IDTVEC(trap0a)
@@ -800,7 +802,7 @@ IDTVEC(trap10)
 	ZTRAP(T_ARITHTRAP)
 #endif
 IDTVEC(trap11)
-	ZTRAP(T_ALIGNFLT)
+	TRAP(T_ALIGNFLT)
 IDTVEC(trap12)
 IDTVEC(trap13)
 IDTVEC(trap14)
@@ -857,26 +859,35 @@ calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
+	pushl	%esp
 	call	_C_LABEL(trap)
-2:	/* Check for ASTs on exit to user mode. */
+	addl	$4,%esp
+	testb	$SEL_RPL,TF_CS(%esp)
+	jnz	.Lalltraps_checkast
+#ifdef VM86
+	testl	$PSL_VM,TF_EFLAGS(%esp)
+	jz	6f
+#else
+	jmp	6f
+#endif
+.Lalltraps_checkast:
+	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%eax)
-	je	1f
-	testb	$SEL_RPL,TF_CS(%esp)
-#ifdef VM86
-	jnz	5f
-	testl	$PSL_VM,TF_EFLAGS(%esp)
-#endif
-	jz	1f
+	jz	3f
 5:	CLEAR_ASTPENDING(%eax)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
+	pushl	%esp
 	call	_C_LABEL(trap)
-	jmp	2b
+	addl	$4,%esp
+	jmp	.Lalltraps_checkast	/* re-check ASTs */
+3:	CHECK_DEFERRED_SWITCH(%eax)
+	jnz	9f
 #ifndef DIAGNOSTIC
-1:	INTRFASTEXIT
+6:	INTRFASTEXIT
 #else
-1:	cmpl	CPUVAR(ILEVEL),%ebx
+6:	cmpl	CPUVAR(ILEVEL),%ebx
 	jne	3f
 	INTRFASTEXIT
 3:	sti
@@ -887,9 +898,12 @@ calltrap:
 	int	$3
 #endif /* DDB */
 	movl	%ebx,CPUVAR(ILEVEL)
-	jmp	2b
+	jmp	.Lalltraps_checkast	/* re-check ASTs */
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
+9:	sti
+	call	_C_LABEL(pmap_load)
+	jmp	.Lalltraps_checkast	/* re-check ASTs */
 
 #ifdef IPKDB
 /* LINTSTUB: Ignore */
@@ -955,17 +969,17 @@ NENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)
 /* LINTSTUB: Var: char resume_pop_ds[1]; */
 NENTRY(resume_pop_ds)
-	pushl	%es
+	movl	%es,TF_ES(%esp)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%es
 /* LINTSTUB: Var: char resume_pop_es[1]; */
 NENTRY(resume_pop_es)
-	pushl	%fs
+	movl	%fs,TF_FS(%esp)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%fs
 /* LINTSTUB: Var: char resume_pop_fs[1]; */
 NENTRY(resume_pop_fs)
-	pushl	%gs	
+	movl	%gs,TF_GS(%esp)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%gs
 /* LINTSTUB: Var: char resume_pop_gs[1]; */

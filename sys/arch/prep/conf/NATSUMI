@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.23 2003/02/16 17:35:17 augustss Exp $
+#	$NetBSD: NATSUMI,v 1.23.2.1 2004/08/03 10:39:48 skrll Exp $
 #
 #	for development
 #
@@ -35,6 +35,7 @@ options 	SHMMAXPGS=8192
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -230,6 +231,9 @@ wdc1	at obio? port 0x170 irq 13
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
 
+# ATA (IDE) bus support
+atabus* at ata?
+
 # IDE drives
 # Flags are used only with controllers that support DMA operations
 # and mode settings (e.g. some pciide controllers)
@@ -241,10 +245,10 @@ wdc*	at pcmcia? function ?
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-wd*	at wdc? channel ? drive ? flags 0x0000
+wd*	at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus* at wdc? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.
@@ -307,7 +311,7 @@ uhid*	at uhidev? reportid ?
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
 scsibus* at umass? channel ?
-atapibus* at umass? channel ?
+atapibus* at umass?
 
 # USB audio
 uaudio* at uhub? port ? configuration ?

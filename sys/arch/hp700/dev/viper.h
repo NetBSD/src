@@ -1,4 +1,4 @@
-/*	$NetBSD: viper.h,v 1.1 2002/06/06 19:48:04 fredette Exp $	*/
+/*	$NetBSD: viper.h,v 1.1.10.1 2004/08/03 10:34:48 skrll Exp $	*/
 
 /*	$OpenBSD: viper.h,v 1.2 1999/06/29 20:56:10 mickey Exp $	*/
 
@@ -238,6 +238,6 @@ struct vn_supr {
 	u_int		vns_zaddr;	/* Z Buffer Address (RO) */
 };
 
-void viper_setintrwnd __P((u_int32_t mask));
-void viper_eisa_en __P((void));
+void viper_setintrwnd(uint32_t);
+void viper_eisa_en(void);
 

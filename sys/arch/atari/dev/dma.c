@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.15 2002/09/27 15:35:52 provos Exp $	*/
+/*	$NetBSD: dma.c,v 1.15.6.1 2004/08/03 10:33:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -50,6 +50,9 @@
  *	st_dmaaddr_get:	get address of last DMA-op
  *	st_dmacomm:	program DMA, flush FIFO first
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.15.6.1 2004/08/03 10:33:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

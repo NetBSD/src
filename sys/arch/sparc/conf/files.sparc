@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.122 2002/12/07 10:27:03 pk Exp $
+#	$NetBSD: files.sparc,v 1.122.6.1 2004/08/03 10:40:44 skrll Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -74,6 +74,7 @@ file	arch/sparc/sparc/auxiotwo.c
 device clock: mk48txx
 attach clock at mainbus with clock_mainbus
 attach clock at obio with clock_obio
+attach clock at bootbus with clock_bootbus
 file	arch/sparc/sparc/mkclock.c		clock
 
 device oclock: intersil7170
@@ -94,7 +95,6 @@ attach eeprom at obio
 file	arch/sparc/sparc/eeprom.c		eeprom
 
 file	arch/sparc/sparc/clock.c
-file	dev/clock_subr.c
 
 device power
 attach power at obio
@@ -120,16 +120,16 @@ file	arch/sparc/dev/tctrl.c			tctrl needs-flag
 
 include "dev/sun/files.sun"
 
-device zs {channel = -1}
+device zs { [channel = -1] }
 attach zs at mainbus with zs_mainbus
 attach zs at obio with zs_obio
 attach zs at bootbus with zs_bootbus
-file	arch/sparc/dev/zs.c			zs needs-count
+file	arch/sparc/dev/zs.c			zs
 file	dev/ic/z8530sc.c			zs
 
 device zstty {}: tty
 attach zstty at zs
-file dev/ic/z8530tty.c				zstty needs-flag
+file dev/ic/z8530tty.c				zstty
 file arch/sparc/dev/zs_kgdb.c			kgdb
 
 device fdc {}
@@ -163,8 +163,8 @@ include "dev/ata/files.ata"
 
 file	arch/sparc/dev/kd.c				# console
 
-attach pckbc at obio with pckbc_obio
-attach pckbc at ebus with pckbc_ebus
+attach pckbc at obio with pckbc_obio: pckbport_machdep_cnattach
+attach pckbc at ebus with pckbc_ebus: pckbport_machdep_cnattach
 file	arch/sparc/dev/pckbc_js.c	pckbc_obio | pckbc_ebus
 
 
@@ -181,8 +181,8 @@ file dev/sun/kbd_zs.c			kbd_zs		# kbd lower layer
 file	dev/sun/kbdsun.c		kbd_zs | kbd_tty # kbd middle layer
 
 # PC/AT keyboard at 8042 (pckbc) for Mr.Coffee
-attach kbd at pckbc with kbd_pckbc
-file	arch/sparc/dev/kbd_pckbc.c	kbd_pckbc	# kbd mid/lower layers
+attach kbd at pckbport with kbd_pckbport
+file	arch/sparc/dev/kbd_pckbport.c	kbd_pckbport	# kbd mid/lower layers
 
 
 # sun (mouse systems) mouse at a serial port
@@ -198,8 +198,8 @@ file	dev/sun/ms_zs.c			ms_zs		# mouse lower layer
 # just one function in dev/sun/ms.c (upper layer).  Split it out?
 
 # PS/2 mouse at 8042 (pckbc) for Mr.Coffee
-attach ms at pckbc with ms_pckbc
-file	arch/sparc/dev/ms_pckbc.c	ms_pckbc	# lower/middle layers
+attach ms at pckbport with ms_pckbport
+file	arch/sparc/dev/ms_pckbport.c	ms_pckbport	# lower/middle layers
 
 
 #
@@ -267,6 +267,7 @@ file	arch/sparc/dev/sw.c		sw
 #
 
 file	dev/cons.c
+file	dev/sun/disksubr.c
 
 file	arch/sparc/fpu/fpu.c
 file	arch/sparc/fpu/fpu_add.c
@@ -300,7 +301,6 @@ file	arch/sparc/sparc/pmap.c
 file	arch/sparc/sparc/sys_machdep.c
 file	arch/sparc/sparc/trap.c
 file	arch/sparc/sparc/vm_machdep.c
-file	arch/sparc/sparc/disksubr.c
 
 file	arch/sparc/sparc/db_interface.c	ddb | kgdb
 file	arch/sparc/sparc/db_trace.c	ddb
@@ -313,7 +313,7 @@ file	arch/sparc/sparc/db_disasm.c	ddb
 include "dev/wscons/files.wscons"	# includes rcons as well
 include "dev/wsfont/files.wsfont"	# both rcons and wscons need it
 
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 
 #

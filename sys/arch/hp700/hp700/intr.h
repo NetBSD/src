@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2002/08/16 15:02:40 fredette Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.6.1 2004/08/03 10:34:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -88,12 +88,12 @@ struct hp700_int_reg {
 };
 
 extern	struct hp700_int_reg int_reg_cpu;
-void	hp700_intr_bootstrap __P((void));
-void	hp700_intr_reg_establish __P((struct hp700_int_reg *));
-void *	hp700_intr_establish __P((struct device *, int, int (*)(void *), void *,
-				  struct hp700_int_reg *, int));
-int	hp700_intr_allocate_bit __P((struct hp700_int_reg *));
-int	_hp700_intr_ipl_next __P((void));
-int	_hp700_intr_spl_mask __P((void *));
-void	hp700_intr_init __P((void));
-void	hp700_intr_dispatch __P((int, int, struct trapframe *));
+void	hp700_intr_bootstrap(void);
+void	hp700_intr_reg_establish(struct hp700_int_reg *);
+void *	hp700_intr_establish(struct device *, int, int (*)(void *), void *,
+	    struct hp700_int_reg *, int);
+int	hp700_intr_allocate_bit(struct hp700_int_reg *);
+int	_hp700_intr_ipl_next(void);
+int	_hp700_intr_spl_mask(void *);
+void	hp700_intr_init(void);
+void	hp700_intr_dispatch(int, int, struct trapframe *);

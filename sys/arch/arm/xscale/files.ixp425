@@ -1,9 +1,10 @@
-#       $NetBSD: files.ixp425,v 1.2 2003/06/01 01:49:56 ichiro Exp $
+#       $NetBSD: files.ixp425,v 1.2.2.1 2004/08/03 10:32:58 skrll Exp $
 #
-# Configuration info for Intel IXP12x0 CPU support
+# Configuration info for Intel IXP4xx CPU support
 #
 
 file    arch/arm/xscale/ixp425_intr.c
+file    arch/arm/xscale/ixp425_mem.c
 file    arch/arm/arm32/irq_dispatch.S
 
 file    arch/arm/xscale/xscale_pmc.c            perfctrs
@@ -11,21 +12,25 @@ file    arch/arm/xscale/xscale_pmc.c            perfctrs
 # IXP425 Slow peripheral devices
 device  ixpsip { [addr=-1], [size=0], [index=-1], [intr=-1] }: bus_space_generic
 file    arch/arm/xscale/ixp425_sip.c		ixpsip
-file	arch/arm/xscale/ixp425_sip_io.c	ixpsip
 
 # IXP425 Processor CPU support
 # IXP425 PCI bus
 device	ixpio: pcibus, bus_space_generic
-file    arch/arm/xscale/ixp425.c		ixpio
-file    arch/arm/xscale/ixp425_io.c		ixpio
-#file    arch/arm/xscale/ixp425_pci.c		ixpio
-#file    arch/arm/xscale/ixp425_pci_dma.c	ixpio
+file	arch/arm/xscale/ixp425.c		ixpio
+file	arch/arm/xscale/ixp425_space.c		ixpio
+file	arch/arm/xscale/ixp425_pci.c		ixpio
+file	arch/arm/xscale/ixp425_pci_space.c	ixpio
+file	arch/arm/xscale/ixp425_pci_dma.c	ixpio
+file	arch/arm/xscale/ixp425_pci_asm.S	ixpio
 
 # clock device
 device	ixpclk
 attach	ixpclk at ixpsip
 file	arch/arm/xscale/ixp425_timer.c		ixpclk needs-flag
 
-# IXDP425 serial device
-device	ixpcom: tty
-file	arch/arm/xscale/ixp425_com.c		ixpcom needs-flag
+# Serial port
+# Note: Can't call this 'ixpcom' as that clashes with another arm device.
+attach	com at ixpsip with ixsipcom
+file	arch/arm/xscale/ixp425_com.c		ixsipcom
+file	arch/arm/xscale/ixp425_a4x_space.c	ixsipcom
+file	arch/arm/xscale/ixp425_a4x_io.S		ixsipcom

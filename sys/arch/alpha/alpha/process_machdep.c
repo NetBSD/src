@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.19 2003/01/17 22:11:18 thorpej Exp $ */
+/* $NetBSD: process_machdep.c,v 1.19.2.1 2004/08/03 10:31:05 skrll Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.19 2003/01/17 22:11:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.19.2.1 2004/08/03 10:31:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

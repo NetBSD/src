@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.66 2003/06/28 08:22:02 he Exp $
+#	$NetBSD: files.hp300,v 1.66.2.1 2004/08/03 10:34:22 skrll Exp $
 #
 # hp300-specific configuration info
 
@@ -68,9 +68,8 @@ attach	frodo at intio
 file	arch/hp300/dev/frodo.c		frodo
 
 # Apollo APCI 8250-like UARTs
-device	apci: tty
-attach	apci at frodo
-file	arch/hp300/dev/apci.c		apci needs-flag
+attach	com at frodo with com_frodo
+file	arch/hp300/dev/com_frodo.c	com_frodo needs-flag
 
 # Frame buffer attribute
 define	grfdev { }
@@ -121,9 +120,8 @@ attach	rbox at dio with rbox_dio
 attach	topcat at dio with topcat_dio
 
 # DCA serial interface
-device	dca: tty
-attach	dca at dio
-file	arch/hp300/dev/dca.c		dca needs-flag
+attach	com at dio with com_dio
+file	arch/hp300/dev/com_dio.c	com_dio needs-flag
 
 # DCM serial interface
 device	dcm: tty
@@ -169,24 +167,11 @@ device	ppi
 attach	ppi at hpibbus
 file	arch/hp300/dev/ppi.c		ppi needs-flag
 
-# Old HP SCSI layer
-device	oscsi { target = -1, lun = -1 }
-attach	oscsi at dio
-file	arch/hp300/dev/scsi.c		oscsi
+# MI SCSI
+include "dev/scsipi/files.scsipi"
 
-# Old HP SCSI devices
-device	sd: disk
-attach	sd at oscsi
-file	arch/hp300/dev/sd.c		sd needs-flag
-file	arch/hp300/dev/sd_compat.c	sd		# XXX
-
-device	st: tape
-attach	st at oscsi
-file	arch/hp300/dev/st.c		st needs-flag
-
-device	ac
-attach	ac at oscsi
-file	arch/hp300/dev/ac.c		ac needs-flag
+attach	spc at dio
+file	arch/hp300/dev/spc.c		spc needs-flag
 
 # Memory Disk for ramdisk
 file	dev/md_root.c			memory_disk_hooks
@@ -215,7 +200,6 @@ file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 
-file	dev/clock_subr.c
 file	dev/cons.c
 
 #

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.37 2003/05/04 22:01:58 fvdl Exp $
+#	$NetBSD: genassym.cf,v 1.37.2.1 2004/08/03 10:35:49 skrll Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	P_FLAG			offsetof(struct proc, p_flag)
-define	P_NRAS			offsetof(struct proc, p_nras)
+define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 
@@ -225,7 +225,7 @@ ifdef COMPAT_LINUX
 define	LINUX_SIGF_HANDLER	offsetof(struct linux_sigframe, sf_handler)
 define	LINUX_SIGF_SC		offsetof(struct linux_sigframe, sf_sc)
 define	LINUX_RT_SIGF_HANDLER	offsetof(struct linux_rt_sigframe, sf_handler)
-define	LINUX_RT_SIGF_SC	offsetof(struct linux_rt_sigframe, sf_sc)
+define	LINUX_RT_SIGF_UC	offsetof(struct linux_rt_sigframe, sf_uc)
 endif
 
 ifdef COMPAT_FREEBSD
@@ -258,6 +258,9 @@ endif
 
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
+define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
+define	CPU_INFO_TLBSTATE	offsetof(struct cpu_info, ci_tlbstate)
+define	TLBSTATE_VALID		TLBSTATE_VALID
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CPU_INFO_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)

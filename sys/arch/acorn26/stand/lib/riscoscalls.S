@@ -1,7 +1,8 @@
-/*	$NetBSD: riscoscalls.S,v 1.1 2002/03/24 15:47:27 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.1.14.1 2004/08/03 10:30:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
+ * Copyright (c) 2002 Reinoud Zandijk
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,6 +52,21 @@ ENTRY(os_readc)
 	swi	OS_ReadC
 	ldmdb	fp, {fp, sp, pc}
 
+ENTRY(os_cli)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	swi	OS_CLI
+	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(xos_cli)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	swi	OS_CLI
+	movvc	r0, #0
+	ldmdb	fp, {fp, sp, pc}
+
 ENTRY(os_byte)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
@@ -61,6 +77,13 @@ ENTRY(os_byte)
 	ldr	r3, [fp, #4]
 	teq	r3, #0
 	strne	r2, [r3]
+	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(os_word)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	swi	OS_Word
 	ldmdb	fp, {fp, sp, pc}
 
 ENTRY(xosargs_read)
@@ -138,8 +161,8 @@ ENTRY(os_get_env)
 	mov	ip, sp
 	stmfd	sp!, {r4, fp, ip, lr, pc}
 	sub	fp, ip, #4
-	mov	r0, r3
-	mov	r1, r4
+	mov	r3, r0
+	mov	r4, r1
 	swi	OS_GetEnv
 	teq	r3, #0
 	strne	r1, [r3]
@@ -221,11 +244,66 @@ ENTRY(os_read_mem_map_info)
 	strne	r1, [r3]
 	ldmdb	fp, {fp, sp, pc}	
 
+ENTRY(os_readsysinfo)
+	mov	ip, sp
+	stmfd	sp!, {r4-r9, fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r9, r5
+	mov	r8, r4
+	mov	r7, r3
+	mov	r6, r2
+	mov	r5, r1
+	swi	OS_ReadSysInfo
+	teq	r5, #0
+	strne	r0, [r5]
+	teq	r6, #0
+	strne	r1, [r6]
+	teq	r7, #0
+	strne	r2, [r7]
+	ldr	r1, [ip, #0]
+	teq	r1, #0
+	strne	r3, [r1]
+	ldr	r1, [ip, #4]
+	teq	r1, #0
+	strne	r4, [r1]
+	ldmdb	fp, {r4-r9, fp, sp, pc}
+
 ENTRY(os_read_mem_map_entries)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 	swi	OS_ReadMemMapEntries
+	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(osmemory_read_arrangement_table_size)
+	mov	ip, sp
+	stmfd	sp!, {r4, fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r3, r0
+	mov	r4, r1
+	mov	r0, #OSMemory_ReadArrangementTableSize
+	swi	OS_Memory
+	cmp	r3, #0
+	strne	r1, [r3]
+	cmp	r4, #0
+	strne	r2, [r4]
+	ldmdb	fp, {r4, fp, sp, pc}
+
+ENTRY(osmemory_read_arrangement_table)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r1, r0
+	mov	r0, #OSMemory_ReadArrangementTable
+	swi	OS_Memory
+	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(osmemory_page_op)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	add	r0, r0, #OSMemory_PageOp
+	swi	OS_Memory
 	ldmdb	fp, {fp, sp, pc}
 
 ENTRY(xcache_control)

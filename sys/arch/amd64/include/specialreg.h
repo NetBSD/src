@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.1.2.1 2004/08/03 10:31:36 skrll Exp $	*/
 
 #include <x86/specialreg.h>
 
@@ -11,6 +11,7 @@
 #define EFER_SCE	0x00000001	/* SYSCALL extension */
 #define EFER_LME	0x00000100	/* Long Mode Active */
 #define EFER_LMA	0x00000400	/* Long Mode Enabled */
+#define EFER_NXE	0x00000800	/* No-Execute Enabled */
 
 #define MSR_STAR	0xc0000081		/* 32 bit syscall gate addr */
 #define MSR_LSTAR	0xc0000082		/* 64 bit syscall gate addr */

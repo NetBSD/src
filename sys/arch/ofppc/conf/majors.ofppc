@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ofppc,v 1.4 2003/04/25 21:11:00 ragge Exp $
+#	$NetBSD: majors.ofppc,v 1.4.2.1 2004/08/03 10:38:40 skrll Exp $
 #
 # Device majors for ofppc
 #
@@ -26,3 +26,18 @@ device-major	clockctl	char 19			clockctl
 device-major	systrace	char 20			systrace
 device-major	cgd		char 21  block 8	cgd
 device-major	ksyms		char 22			ksyms
+device-major	filedesc	char 23			filedesc
+device-major	ipl		char 24			ipfilter
+device-major	lkm		char 25			lkm
+device-major	vnd		char 26	 block 9	vnd
+device-major	tun		char 27			tun
+device-major	ccd		char 28  block 10	ccd
+device-major	st		char 29  block 11	st
+device-major	ch		char 30			ch
+device-major	ss		char 31			ss
+device-major	uk		char 32			uk
+device-major	ses		char 33			ses
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.

@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.29 2003/04/28 23:16:16 bjh21 Exp $ */
+/* $NetBSD: types.h,v 1.29.2.1 2004/08/03 10:31:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -58,6 +54,11 @@ typedef unsigned long	vsize_t;
 
 typedef long int	register_t;
 
+typedef	__volatile int		__cpu_simple_lock_t;
+
+#define	__SIMPLELOCK_LOCKED	1
+#define	__SIMPLELOCK_UNLOCKED	0
+
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__HAVE_NWSCONS
@@ -66,6 +67,9 @@ typedef long int	register_t;
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_AST_PERPROC
+
+#if defined(_KERNEL)
 #define	__HAVE_RAS
+#endif
 
 #endif	/* _MACHTYPES_H_ */

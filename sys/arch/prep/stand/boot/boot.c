@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2001/06/19 11:56:28 nonaka Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.24.1 2004/08/03 10:39:55 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,11 +33,13 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
+#include <lib/libkern/libkern.h>
 #include <sys/reboot.h>
 #include <sys/boot_flag.h>
 #include <machine/bootinfo.h>
 #include <machine/cpu.h>
 #include <machine/residual.h>
+#include <powerpc/spr.h>
 
 #include "boot.h"
 
@@ -61,7 +63,6 @@ struct btinfo_console btinfo_console;
 struct btinfo_clock btinfo_clock;
 
 RESIDUAL residual;
-u_long ladr;
 
 extern u_long ns_per_tick;
 extern char bootprog_name[], bootprog_rev[], bootprog_maker[], bootprog_date[];
@@ -74,10 +75,14 @@ boot(resp, loadaddr)
 	void *resp;
 	u_long loadaddr;
 {
+	extern char _end[], _edata[];
 	int n = 0;
 	int addr, speed;
+	unsigned int cpuvers;
 	char *name, *cnname, *p;
-	ladr = loadaddr;
+
+	/* Clear all of BSS */
+	memset(_edata, 0, _end - _edata);
 
 	/*
 	 * console init
@@ -110,10 +115,17 @@ boot(resp, loadaddr)
 	/*
 	 * clock
 	 */
+	__asm __volatile ("mfpvr %0" : "=r"(cpuvers));
+	cpuvers >>= 16;
 	btinfo_clock.common.next = 0;
 	btinfo_clock.common.type = BTINFO_CLOCK;
-	btinfo_clock.ticks_per_sec = resp ?
-	    residual.VitalProductData.ProcessorBusHz / 4 : TICKS_PER_SEC;
+	if (cpuvers == MPC601) {
+		btinfo_clock.ticks_per_sec = 1000000000;
+	} else {
+		btinfo_clock.ticks_per_sec = resp ?
+		    residual.VitalProductData.ProcessorBusHz/4 : TICKS_PER_SEC;
+	}
+	ns_per_tick = 1000000000 / btinfo_clock.ticks_per_sec;
 
 	p = bootinfo;
         memcpy(p, (void *)&btinfo_residual, sizeof(btinfo_residual));
@@ -123,9 +135,9 @@ boot(resp, loadaddr)
         memcpy(p, (void *)&btinfo_clock, sizeof(btinfo_clock));
 
 	/*
-	 * attached kernel check
+	 * load kernel if attached
 	 */
-	init_in();
+	init_in(loadaddr);
 
 	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);

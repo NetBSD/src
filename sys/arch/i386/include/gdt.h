@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.9 2002/10/01 12:57:05 fvdl Exp $	*/
+/*	$NetBSD: gdt.h,v 1.9.6.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,14 +41,14 @@
 struct proc;
 struct pmap;
 
-void gdt_init __P((void));
-void gdt_init_cpu __P((struct cpu_info *));
-void gdt_reload_cpu __P((struct cpu_info *));
-void gdt_alloc_cpu __P((struct cpu_info *));
-int tss_alloc __P((struct pcb *));
-void tss_free __P((int));
-void ldt_alloc __P((struct pmap *, union descriptor *, size_t));
-void ldt_free __P((struct pmap *));
+void gdt_init(void);
+void gdt_init_cpu(struct cpu_info *);
+void gdt_reload_cpu(struct cpu_info *);
+void gdt_alloc_cpu(struct cpu_info *);
+int tss_alloc(struct pcb *);
+void tss_free(int);
+void ldt_alloc(struct pmap *, union descriptor *, size_t);
+void ldt_free(struct pmap *);
 
 #endif /* LOCORE */
 

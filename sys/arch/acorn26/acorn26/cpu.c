@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.10 2003/05/28 21:35:13 kristerw Exp $ */
+/* $NetBSD: cpu.c,v 1.10.2.1 2004/08/03 10:30:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2003/05/28 21:35:13 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.2.1 2004/08/03 10:30:47 skrll Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -152,9 +152,9 @@ cpu_identify()
 	volatile register_t id;
 	void *cp0, *cp15;
 
+	cp0 = install_coproc_handler(0, cpu_undef_handler);
+	cp15 = install_coproc_handler(15, cpu_undef_handler);
 	if (setjmp(&undef_jmp) == 0) {
-		cp0 = install_coproc_handler(0, cpu_undef_handler);
-		cp15 = install_coproc_handler(15, cpu_undef_handler);
 		id = CPU_ID_ARM2;
 		/* ARM250 and ARM3 support SWP. */
 		__asm __volatile ("swp r0, r0, [%0]" : : "r" (&dummy) : "r0");
@@ -217,7 +217,12 @@ swp_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
 	/* XXX only wire one byte due to weirdness with unaligned words */
 	err = uvm_vslock(p, uaddr, 1, VM_PROT_READ | VM_PROT_WRITE);
 	if (err != 0) {
-		trapsignal(curlwp, SIGSEGV, (u_int)uaddr);
+		ksiginfo_t ksi;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_addr = uaddr;
+		ksi.ksi_code = SEGV_MAPERR;
+		trapsignal(curlwp, &ksi);
 		return 0;
 	}
 	/* I believe the uvm_vslock() guarantees the fetch/store won't fail. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_clock.c,v 1.4 2003/04/20 21:26:46 scw Exp $	*/
+/*	$NetBSD: sh5_clock.c,v 1.4.2.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -55,11 +55,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -77,6 +73,9 @@
  *
  *      @(#)clock.c     8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sh5_clock.c,v 1.4.2.1 2004/08/03 10:40:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,11 +122,11 @@ clock_config(struct device *dev, struct clock_attach_args *ca, struct evcnt *ev)
 }
 
 void
-clock_rtc_config(todr_chip_handle_t todr)
+todr_attach(todr_chip_handle_t todr)
 {
 
 	if (todr_handle)
-		panic("clock_rtc_config: rtc already configured");
+		panic("todr_attach: rtc already configured");
 
 	todr_handle = todr;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.11 2003/04/02 04:35:28 thorpej Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.11.2.1 2004/08/03 10:40:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,6 +46,9 @@
  *   (gdb) set remotebaud 19200
  *   (gdb) target remote /dev/ttyb
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.11.2.1 2004/08/03 10:40:46 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -369,7 +372,7 @@ findzs(zs)
 		while ((node = findnode(node, "zs")) != 0) {
 			int nvaddrs, *vaddrs, vstore[10];
 
-			if (PROM_getpropint(node, "slave", -1) != zs) {
+			if (prom_getpropint(node, "slave", -1) != zs) {
 				node = nextsibling(node);
 				continue;
 			}
@@ -380,8 +383,8 @@ findzs(zs)
 			 */
 			vaddrs = vstore;
 			nvaddrs = sizeof(vstore)/sizeof(vstore[0]);
-			if (PROM_getprop(node, "address", sizeof(int),
-				    &nvaddrs, (void **)&vaddrs) != 0)
+			if (prom_getprop(node, "address", sizeof(int),
+				    &nvaddrs, &vaddrs) != 0)
 				return (NULL);
 
 			return ((void *)vaddrs[0]);

@@ -1,4 +1,4 @@
-#	$NetBSD: history,v 1.1 2001/10/18 00:05:01 reinoud Exp $
+#	$NetBSD: history,v 1.1.24.1 2004/08/03 10:30:49 skrll Exp $
 ---------------------------------------------------------------------------
 This document is more included as a historical reference and nostalgia :)
 rather than a still worked on list.
@@ -124,7 +124,7 @@ rather than a still worked on list.
 	- modified primary/secondary bootstraps to reserve special boot
 	- memory for hydra board
 	- added hydra device
-	- Added cpu identification for all hydra processors
+	- Added CPU identification for all hydra processors
 	- Private stacks are allocated to all slave processors
 	- All hydra processors are halted on reboot
 	- podule code checks for chunk directories but does not try to read
@@ -290,10 +290,10 @@ rather than a still worked on list.
 	- file arm32/cpu.S renamed to arm32/cpuswitch.S
 	- created new mainbus device 'cpu' (mainbus/cpu.c)
 	- created new header file include/cpus.h to hold macros and
-	  structure definitions for cpus.
+	  structure definitions for CPUs.
 	- all identify functions for the processor and FPA have been moved
 	  to mainbus/cpu.c
-	- FPE is now attached during the cpu attachment during
+	- FPE is now attached during the CPU attachment during
 	  autoconfiguration
 	- Identification of CPU and FPU split into separate functions in
 	  mainbus/cpu.c
@@ -434,7 +434,7 @@ rather than a still worked on list.
 	- ramdisc loading code in now compiled in conditionally on
 	  RAMDISK_HOOKS
 	- Further development of hydrabus device.
-	- cpus can noe be attached to both the mainbus and the hydrabus
+	- CPUs can noe be attached to both the mainbus and the hydrabus
 	- hooks for hydrabus device updated in pmap.c syscall.c and
 	  machdep.c
 	- Extra comments added in exception.S

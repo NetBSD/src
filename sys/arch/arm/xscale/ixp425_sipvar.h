@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sipvar.h,v 1.2 2003/06/01 01:49:56 ichiro Exp $ */
+/*	$NetBSD: ixp425_sipvar.h,v 1.2.2.1 2004/08/03 10:32:58 skrll Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -47,6 +47,8 @@ struct ixpsip_softc {
 	bus_space_handle_t sc_ioh;
 };
 
+extern struct ixpsip_softc *ixpsip_softc;
+
 struct ixpsip_attach_args {
 	bus_space_tag_t		sa_iot;		/* Bus tag */
 	bus_addr_t		sa_addr;	/* i/o address  */
@@ -54,5 +56,11 @@ struct ixpsip_attach_args {
 	int			sa_index;
 	int			sa_intr;
 };
+
+#define	EXP_CSR_WRITE_4(sc, reg, data)	\
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, reg, data)
+
+#define	EXP_CSR_READ_4(sc, reg)	\
+	bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg)
 
 #endif /* _IXPSIPVAR_H_ */

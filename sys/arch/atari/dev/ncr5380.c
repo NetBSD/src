@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.45 2003/05/03 18:10:46 wiz Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.45.2.1 2004/08/03 10:33:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.45.2.1 2004/08/03 10:33:11 skrll Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown

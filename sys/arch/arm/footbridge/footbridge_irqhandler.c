@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.9 2003/06/16 20:00:57 thorpej Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.9.2.1 2004/08/03 10:32:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.9 2003/06/16 20:00:57 thorpej Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.9.2.1 2004/08/03 10:32:36 skrll Exp $");
 
 #include "opt_irqstats.h"
 
@@ -447,11 +447,20 @@ footbridge_intr_dispatch(struct clockframe *frame)
 		/* Re-enable this interrupt now that's it's cleared. */
 		intr_enabled |= ibit;
 		footbridge_set_intrmask();
+
+		/* also check for any new interrupts that may have occurred,
+		 * that we can handle at this spl level */
+		hwpend |= (footbridge_ipending & ICU_INT_HWMASK) & ~pcpl;
 	}
 
-	/* 
-	 * restore interrupts to their state on entry, this will
-	 * trigger pending interrupts, and soft and hard
-	 */
-	splx(pcpl);
+	/* Check for pendings soft intrs. */
+        if ((footbridge_ipending & INT_SWMASK) & ~current_spl_level) {
+	    /* 
+	     * XXX this feels the wrong place to enable irqs, as some
+	     * soft ints are higher priority than hardware irqs
+	     */
+                oldirqstate = enable_interrupts(I32_bit);
+                footbridge_do_pending();
+                restore_interrupts(oldirqstate);
+        }
 }

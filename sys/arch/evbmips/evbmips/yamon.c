@@ -1,4 +1,4 @@
-/*	$NetBSD: yamon.c,v 1.1 2002/03/07 14:43:59 simonb Exp $	*/
+/*	$NetBSD: yamon.c,v 1.1.18.1 2004/08/03 10:34:09 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,9 +37,13 @@
 
 /* XXX move to arch/mips/yamon/yamon.c or similar? */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: yamon.c,v 1.1.18.1 2004/08/03 10:34:09 skrll Exp $");
+
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/systm.h>
 
 #include <dev/cons.h>
 
@@ -116,4 +120,39 @@ yamon_exit(uint32_t rc)
 {
 
 	YAMON_EXIT(rc);
+}
+
+/*
+ * Ask YAMON for the CPU frequency.
+ * If "force" is set, then use a random frequency (100MHz) so
+ * that at least delay() works, even though not perfectly.
+ * Return 1 if YAMON returns a CPU frequency.
+ */
+int
+yamon_setcpufreq(int force)
+{
+	uint32_t freq;
+	int ret;
+
+	ret = YAMON_SYSCON_READ(SYSCON_BOARD_CPU_CLOCK_FREQ_ID, &freq,
+	    sizeof(freq));
+	if (!force && (ret != 0 || freq == 0))
+		return 0;
+
+	if (ret != 0 || freq == 0) {
+		freq = 100 * 1000 * 1000;
+		ret = 0;
+	} else
+		ret = 1;
+
+	curcpu()->ci_cpu_freq = freq;
+	curcpu()->ci_cycles_per_hz = (freq + hz / 2) / hz;
+	curcpu()->ci_divisor_delay = ((freq + 500000) / 1000000);
+	if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
+		curcpu()->ci_cycles_per_hz /= 2;
+		curcpu()->ci_divisor_delay /= 2;
+	}
+	MIPS_SET_CI_RECIPRICAL(curcpu());
+
+	return ret;
 }

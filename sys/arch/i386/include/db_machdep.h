@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.22 2003/06/23 11:01:22 martin Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.22.2.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,9 @@
  * Machine-dependent defines for new kernel debugger.
  */
 
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
+#endif
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
 #include <machine/trap.h>
@@ -94,8 +96,8 @@ extern db_regs_t *ddb_regp;
 	 ((user) && (addr) < VM_MAX_ADDRESS))
 
 #if 0
-boolean_t 	db_check_access __P((vaddr_t, int, task_t));
-boolean_t	db_phys_eq __P((task_t, vaddr_t, task_t, vaddr_t));
+boolean_t 	db_check_access(vaddr_t, int, task_t);
+boolean_t	db_phys_eq(task_t, vaddr_t, task_t, vaddr_t);
 #endif
 
 /* macros for printing OS server dependent task name */
@@ -120,7 +122,7 @@ void		db_task_name(/* task_t */);
 
 #define db_thread_fp_used(thread)	((thread)->pcb->ims.ifps != 0)
 
-int kdb_trap __P((int, int, db_regs_t *));
+int kdb_trap(int, int, db_regs_t *);
 
 /*
  * We define some of our own commands
@@ -134,8 +136,8 @@ int kdb_trap __P((int, int, db_regs_t *));
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	32
 
-extern void db_machine_init __P((void));
+extern void db_machine_init(void);
 
-extern void cpu_debug_dump __P((void));
+extern void cpu_debug_dump(void);
 
 #endif	/* _I386_DB_MACHDEP_H_ */

@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.16 2002/09/11 02:17:14 mycroft Exp $
+#	$NetBSD: Makefile,v 1.16.6.1 2004/08/03 10:38:39 skrll Exp $
+
+NOMAN=	# defined
 
 S=	${.CURDIR}/../../../..
 
@@ -26,7 +28,11 @@ DEFS+=		-D_STANDALONE -DMC68040 -DSUPPORT_BOOTP -DSUPPORT_DHCP  -DDEBUG -DSD_DEB
 SAMISCCPPFLAGS=	-DSUPPORT_DHCP -DSUPPORT_BOOTP -DINSECURE # -DBOOTP_DEBUG -DETHER_DEBUG -DNET_DEBUG # -DNETIF_DEBUG -DNFS_DEBUG  -DARP_DEBUG 
 WARNS=1
 CFLAGS+=	 -ffreestanding -nostdinc ${INCLUDES} ${DEFS}
+# XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 PROG=	boot
 SRCS=   boot.c machdep.c conf.c devopen.c rtc.c sd.c scsi.c en.c vers.c build.c
@@ -39,7 +45,6 @@ SRCS+=	dev_net.c
 CLEANFILES+= srt0.o boot.elf boot.raw machine ${MACHINE_ARCH} limits.h
 CLEANFILES+= vers.c build.c build	# generated dynamically
 
-NOMAN=	# defined
 BINDIR=	/usr/mdec
 #LIBS=	${SALIB} ${KERNLIB} ${ZLIB}
 LIBS=	${SALIB} ${KERNLIB}
@@ -70,10 +75,10 @@ srt0.o: ${.CURDIR}/srt0.s
 
 .PHONY: build.c
 build.c:
-	sh ${.CURDIR}/newvers.sh
+	${HOST_SH} ${.CURDIR}/newvers.sh
 
 vers.c: version
-	sh ${S}/conf/newvers_stand.sh -MD ${.CURDIR}/version "next68k"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -MD ${.CURDIR}/version "next68k"
 
 #installboot: ${.CURDIR}/installboot.sh
 #	@rm -f installboot

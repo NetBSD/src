@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.8 2002/10/23 09:11:33 jdolecek Exp $	*/
+/*	$NetBSD: nvram.c,v 1.8.6.1 2004/08/03 10:37:21 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.8.6.1 2004/08/03 10:37:21 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

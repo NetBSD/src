@@ -1,4 +1,4 @@
-/*	$NetBSD: fdvar.h,v 1.11 2003/05/03 18:11:00 wiz Exp $	*/
+/*	$NetBSD: fdvar.h,v 1.11.2.1 2004/08/03 10:40:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ struct fdcio {
 	u_int	fdcio_reg_msr;
 	u_int	fdcio_reg_fifo;
 	u_int	fdcio_reg_dor;		/* 82077 only */
+	u_int	fdcio_reg_dir;		/* 82077 only */
 
 	/*
 	 * Interrupt state.

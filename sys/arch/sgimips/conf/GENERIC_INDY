@@ -1,7 +1,0 @@
-#	$NetBSD: GENERIC_INDY,v 1.6 2002/05/14 15:42:25 pooka Exp $
-#
-# Indy
-
-include		"arch/sgimips/conf/GENERIC"
-
-makeoptions	TEXTADDR=0x88069000	# Indy

@@ -1,4 +1,4 @@
-/*	$NetBSD: pbus.c,v 1.2 2003/01/01 01:31:50 thorpej Exp $	*/
+/*	$NetBSD: pbus.c,v 1.2.2.1 2004/08/03 10:34:21 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,6 +65,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.2.2.1 2004/08/03 10:34:21 skrll Exp $");
+
 #include "locators.h"
 #include "pckbc.h"
 
@@ -81,14 +84,14 @@
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
 /*
- * The devices built in to the 405GP cpu.
+ * The external devices on the Walnut 405GP evaluation board.
  */
 const struct pbus_dev {
 	const char *name;
 	bus_addr_t addr;
 	int irq;
 } pbus_devs [] = {
-	{ "dsrtc",	NVRAM_BASE,	-1 },
+	{ "ds1743rtc",	NVRAM_BASE,	-1 },
 	{ "pckbc",	KEY_MOUSE_BASE,	25 }, /* XXX: really irq x..x+1 */
 	{ NULL }
 };
@@ -100,6 +103,13 @@ static int	pbus_print(void *, const char *);
 
 CFATTACH_DECL(pbus, sizeof(struct device),
     pbus_match, pbus_attach, NULL, NULL);
+
+static struct powerpc_bus_space pbus_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN | _BUS_SPACE_MEM_TYPE,
+	0x00000000,
+	NVRAM_BASE,
+	NVRAM_BASE + 0x0300010	/* Cover from NVRAM_BASE -> FPGA_BASE */
+};
 
 /*
  * Probe for the peripheral bus.
@@ -139,17 +149,20 @@ pbus_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 #if NPCKBC > 0
 	bus_space_handle_t ioh_fpga;
-	bus_space_tag_t iot_fpga = paa->plb_bt;
+	bus_space_tag_t iot_fpga = &pbus_tag;
 	uint8_t fpga_reg;
 #endif
 
 	printf("\n");
 
+	if (bus_space_init(&pbus_tag, "pbus", NULL, 0))
+		panic("pbus_attach: can't init tag");
+
 	for (i = 0; pbus_devs[i].name != NULL; i++) {
 		pba.pb_name = pbus_devs[i].name;
 		pba.pb_addr = pbus_devs[i].addr;
 		pba.pb_irq = pbus_devs[i].irq;
-		pba.pb_bt = paa->plb_bt;
+		pba.pb_bt = &pbus_tag;
 		pba.pb_dmat = paa->plb_dmat;
 
 		(void) config_found_sm(self, &pba, pbus_print, pbus_submatch);

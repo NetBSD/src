@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.7 2003/05/25 14:08:19 tsutsui Exp $
+#	$NetBSD: files.malta,v 1.7.2.1 2004/08/03 10:34:08 skrll Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -43,7 +43,7 @@ include "dev/wsfont/files.wsfont"
 include "dev/wscons/files.wscons"
 
 # Machine-independent PC-style keyboard controller drivers
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 # Machine-independent USB device support
 include "dev/usb/files.usb"
@@ -66,7 +66,7 @@ attach	gt at mainbus
 file	arch/evbmips/malta/dev/gt.c		gt	# XXX should be in arch/mips/galileo ?
 
 file	arch/evbmips/malta/pci/pci_machdep.c	pci
-file	arch/evbmips/malta/pci/pciide_machdep.c	pciide
+file	arch/evbmips/malta/pci/pciide_machdep.c	pciide_common
 
 device	pchb
 attach	pchb at pci

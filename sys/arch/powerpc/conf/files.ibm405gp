@@ -1,0 +1,24 @@
+#	$NetBSD: files.ibm405gp,v 1.3.4.2 2004/08/03 10:39:22 skrll Exp $
+#
+# IBM 405GPx specific configuration info
+
+# Machine-independent I2O drivers.
+include	"dev/i2o/files.i2o"
+
+# PCI bus support
+include	"dev/pci/files.pci"
+
+# On-chip PCI bridge
+device	pchb : pcibus
+attach	pchb at plb
+file	arch/powerpc/ibm4xx/pci/pchb.c		pchb
+file	arch/powerpc/ibm4xx/pci/pci_machdep.c	pci
+file	arch/powerpc/ibm4xx/dev/ibm405gp.c
+
+# On-chip IIC controller
+device	gpiic: i2cbus, i2c_bitbang
+attach	gpiic at opb
+file	arch/powerpc/ibm4xx/dev/gpiic_opb.c	gpiic
+
+# Real time clock support
+file	arch/powerpc/ibm4xx/dev/rtc.c

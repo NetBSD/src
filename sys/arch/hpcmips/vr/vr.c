@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.41 2003/04/02 03:58:13 thorpej Exp $	*/
+/*	$NetBSD: vr.c,v 1.41.2.1 2004/08/03 10:35:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.41.2.1 2004/08/03 10:35:21 skrll Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -514,7 +517,7 @@ vr_reboot(int howto, char *bootstr)
 		splhigh();
 #endif
 		__asm(".set noreorder");
-		__asm(__CONCAT(".word	",___STRING(VR_OPCODE_SUSPEND)));
+		__asm(".word	" ___STRING(VR_OPCODE_SUSPEND));
 		__asm("nop");
 		__asm("nop");
 		__asm("nop");

@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile.booters,v 1.5 2002/11/16 08:48:13 wdk Exp $
+#	$NetBSD: Makefile.booters,v 1.5.6.1 2004/08/03 10:38:02 skrll Exp $
+
+.include <bsd.sys.mk>		# for HOST_SH
+
+.include <bsd.sys.mk>		# for HOST_SH
 
 S=	${.CURDIR}/../../../..
 MIPS=	${S}/arch/mips
@@ -6,7 +10,14 @@ MIPSCO=	${S}/arch/mipsco
 
 .PATH:	${.CURDIR}/../common
 
+NOMAN=		# defined
 BINMODE?= 444
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 .PHONY:		machine-links
 beforedepend: machine-links
@@ -33,13 +44,15 @@ CPPFLAGS+=	-I${.OBJDIR} -I${S}
 CFLAGS=		-Os -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
 OFORMAT=	--oformat elf32-bigmips
 
-NETBSD_VERS!=	sh ${S}/conf/osrelease.sh
+NETBSD_VERS!=	${HOST_SH} ${S}/conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 PRIMARY_LOAD_ADDRESS?=	0x80600000
 SECONDARY_LOAD_ADDRESS?=0x80610000
 
 LDSCRIPT?=	${MIPSCO}/conf/stand.ldscript
+
+.include <bsd.own.mk>
 
 .if defined(PRIMARY_PROG)
 PROG=		${PRIMARY_PROG}
@@ -65,7 +78,9 @@ CPPFLAGS+=	-DPRIMARY_BOOTBLOCK \
 		-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
 
 
-CHECKSIZE_CMD?=	SIZE=${SIZE} sh ${.CURDIR}/../common/checksize.sh
+CHECKSIZE_CMD?=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
+
+STRIPSECTIONS?= -R .reginfo -R .mdebug.abi32 -R .comment -R .pdr
 
 .elif defined(SECONDARY_PROG)
 PROG=		${SECONDARY_PROG}
@@ -108,7 +123,7 @@ LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "mipsco"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "mipsco"
 
 ${PROG}: machine-links ${LDSCRIPT} ${OBJS} ${LIBS}
 	${LD} ${OFORMAT} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
@@ -116,7 +131,8 @@ ${PROG}: machine-links ${LDSCRIPT} ${OBJS} ${LIBS}
 	@${SIZE} ${PROG}
 .if defined(PRIMARY_PROG)
 	mv ${PROG} ${PROG}.elf
-	${OBJCOPY} --strip-all -O ecoff-bigmips -R .reginfo ${PROG}.elf ${PROG}
+	${OBJCOPY} --strip-all -O ecoff-bigmips ${STRIPSECTIONS} \
+	    ${PROG}.elf ${PROG}
 .endif
 .if defined(CHECKSIZE_CMD)
 	@${CHECKSIZE_CMD} ${PROG} ${PRIMARY_MAX_LOAD} || \
@@ -128,9 +144,6 @@ CLEANFILES+=	${PROG}.map ${PROG}.elf
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib
 
 .include <bsd.prog.mk>
-
-/usr/lib/crt0.o:
-	true

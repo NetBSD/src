@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.28 2002/10/01 12:56:49 fvdl Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.28.6.1 2004/08/03 10:35:49 skrll Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.28 2002/10/01 12:56:49 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.28.6.1 2004/08/03 10:35:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -873,9 +873,9 @@ const int db_lengths[] = {
 	} while (0)
 
 
-db_addr_t db_read_address __P((db_addr_t, int, int, struct i_addr *));
-void db_print_address __P((char *, int, struct i_addr *));
-db_addr_t db_disasm_esc __P((db_addr_t, int, int, int, char *));
+db_addr_t db_read_address(db_addr_t, int, int, struct i_addr *);
+void db_print_address(char *, int, struct i_addr *);
+db_addr_t db_disasm_esc(db_addr_t, int, int, int, char *);
 
 /*
  * Read address at location and return updated location.

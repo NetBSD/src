@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.2 2003/06/16 20:00:58 thorpej Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.2.2.1 2004/08/03 10:32:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.2 2003/06/16 20:00:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.2.2.1 2004/08/03 10:32:58 skrll Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -112,12 +112,22 @@ uint32_t intr_steer;
 
 /*
  * Map a software interrupt queue index
+ *
+ * XXX: !NOTE! :XXX
+ * We 'borrow' bits from the interrupt status register for interrupt sources
+ * which are not used by the current IXP425 port. Should any of the following
+ * interrupt sources be used at some future time, this must be revisited.
+ *
+ *  Bit#31: SW Interrupt 1
+ *  Bit#30: SW Interrupt 0
+ *  Bit#14: Timestamp Timer
+ *  Bit#11: General-purpose Timer 1
  */
 static const uint32_t si_to_irqbit[SI_NQUEUES] = {
 	IXP425_INT_bit31,		/* SI_SOFT */
 	IXP425_INT_bit30,		/* SI_SOFTCLOCK */
-	IXP425_INT_bit29,		/* SI_SOFTNET */
-	IXP425_INT_bit22,		/* SI_SOFTSERIAL */
+	IXP425_INT_bit14,		/* SI_SOFTNET */
+	IXP425_INT_bit11,		/* SI_SOFTSERIAL */
 };
 
 #define	SI_TO_IRQBIT(si)	(1U << si_to_irqbit[(si)])
@@ -160,6 +170,27 @@ ixp425_disable_irq(int irq)
 
 	intr_enabled &= ~(1U << irq);
 	ixp425_set_intrmask();
+}
+
+static __inline u_int32_t
+ixp425_irq2gpio_bit(int irq)
+{
+
+	static const u_int8_t int2gpio[32] __attribute__ ((aligned(32))) = {
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* INT#0 -> INT#5 */
+		0x00, 0x01,				/* GPIO#0 -> GPIO#1 */
+		0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* INT#8 -> INT#13 */
+		0xff, 0xff, 0xff, 0xff, 0xff,		/* INT#14 -> INT#18 */
+		0x02, 0x03, 0x04, 0x05, 0x06, 0x07,	/* GPIO#2 -> GPIO#7 */
+		0x08, 0x09, 0x0a, 0x0b, 0x0c,		/* GPIO#8 -> GPIO#12 */
+		0xff, 0xff				/* INT#30 -> INT#31 */
+	};
+
+#ifdef DEBUG
+	if (int2gpio[irq] == 0xff)
+		panic("ixp425_irq2gpio_bit: bad GPIO irq: %d\n", irq);
+#endif
+	return (1U << int2gpio[irq]);
 }
 
 /*
@@ -484,6 +515,13 @@ ixp425_intr_dispatch(struct clockframe *frame)
 		iq->iq_ev.ev_count++;
 		uvmexp.intrs++;
 		current_spl_level |= iq->iq_mask;
+
+		/* Clear down non-level triggered GPIO interrupts now */
+		if ((ibit & IXP425_INT_GPIOMASK) && iq->iq_ist != IST_LEVEL) {
+			IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) =
+			    ixp425_irq2gpio_bit(irq);
+		}
+
 		oldirqstate = enable_interrupts(I32_bit);
 		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
 		     ih = TAILQ_NEXT(ih, ih_list)) {
@@ -491,11 +529,23 @@ ixp425_intr_dispatch(struct clockframe *frame)
 		}
 		restore_interrupts(oldirqstate);
 
+		/* Clear down level triggered GPIO interrupts now */
+		if ((ibit & IXP425_INT_GPIOMASK) && iq->iq_ist == IST_LEVEL) {
+			IXPREG(IXP425_GPIO_VBASE + IXP425_GPIO_GPISR) =
+			    ixp425_irq2gpio_bit(irq);
+		}
+
 		current_spl_level = pcpl;
 
 		/* Re-enable this interrupt now that's it's cleared. */
 		intr_enabled |= ibit;
 		ixp425_set_intrmask();
+
+		/*
+		 * Don't forget to include interrupts which may have
+		 * arrived in the meantime.
+		 */
+		hwpend |= ((ixp425_ipending & IXP425_INT_HWMASK) & ~pcpl);
 	}
 
 	/* Check for pendings soft intrs. */

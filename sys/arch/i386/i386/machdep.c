@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.526.2.1 2003/07/02 15:25:21 darrenr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.526.2.2 2004/08/03 10:35:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -52,11 +52,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -76,22 +72,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.526.2.1 2003/07/02 15:25:21 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.526.2.2 2004/08/03 10:35:49 skrll Exp $");
 
+#include "opt_beep.h"
+#include "opt_compat_ibcs2.h"
+#include "opt_compat_mach.h"	/* need to get the right segment def */
+#include "opt_compat_netbsd.h"
+#include "opt_compat_svr4.h"
+#include "opt_cpureset_delay.h"
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_kgdb.h"
-#include "opt_vm86.h"
-#include "opt_user_ldt.h"
-#include "opt_compat_netbsd.h"
-#include "opt_cpureset_delay.h"
-#include "opt_compat_svr4.h"
-#include "opt_realmem.h"
-#include "opt_compat_mach.h"	/* need to get the right segment def */
 #include "opt_mtrr.h"
 #include "opt_multiprocessor.h"
-#include "opt_beep.h"
+#include "opt_realmem.h"
+#include "opt_user_ldt.h"
+#include "opt_vm86.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +200,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.526.2.1 2003/07/02 15:25:21 darrenr Ex
 #endif
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "i386";		/* cpu "architecture" */
+char machine[] = "i386";		/* CPU "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
 char bootinfo[BOOTINFO_MAXSIZE];
@@ -222,13 +219,14 @@ struct mtrr_funcs *mtrr_funcs;
 #endif
 
 #ifdef COMPAT_NOMID
-static int exec_nomid   __P((struct proc *, struct exec_package *));
-#endif  
+static int exec_nomid(struct proc *, struct exec_package *);
+#endif
 
 int	physmem;
 int	dumpmem_low;
 int	dumpmem_high;
 unsigned int cpu_feature;
+unsigned int cpu_feature2;
 int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
@@ -256,9 +254,9 @@ struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
 
-void (*delay_func) __P((int)) = i8254_delay;
-void (*microtime_func) __P((struct timeval *)) = i8254_microtime;
-void (*initclock_func) __P((void)) = i8254_initclocks;
+void (*delay_func)(int) = i8254_delay;
+void (*microtime_func)(struct timeval *) = i8254_microtime;
+void (*initclock_func)(void) = i8254_initclocks;
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -266,15 +264,15 @@ void (*initclock_func) __P((void)) = i8254_initclocks;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
-int	cpu_dump __P((void));
-int	cpu_dumpsize __P((void));
-u_long	cpu_dump_mempagecnt __P((void));
-void	dumpsys __P((void));
-void	init386 __P((paddr_t));
-void	initgdt __P((union descriptor *));
+int	cpu_dump(void);
+int	cpu_dumpsize(void);
+u_long	cpu_dump_mempagecnt(void);
+void	dumpsys(void);
+void	init386(paddr_t);
+void	initgdt(union descriptor *);
 
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
-void	add_mem_cluster	__P((u_int64_t, u_int64_t, u_int32_t));
+void	add_mem_cluster(u_int64_t, u_int64_t, u_int32_t);
 #endif /* !defnied(REALBASEMEM) && !defined(REALEXTMEM) */
 
 extern int time_adjusted;
@@ -285,10 +283,8 @@ extern int time_adjusted;
 void
 cpu_startup()
 {
-	caddr_t v;
-	int sz, x;
+	int x;
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
 	char pbuf[9];
 
 	/*
@@ -318,46 +314,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
 
-	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	sz = (int)allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-	if (allocsys(v, NULL) - v != sz)
-		panic("startup: table size inconsistency");
-
-	/*
-	 * Allocate virtual address space for the buffers.  The area
-	 * is not managed by the VM system.
-	 */
-	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != 0)
-		panic("cpu_startup: cannot allocate VM for buffers");
-	minaddr = (vaddr_t)buffers;
-	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
-		/* don't want to alloc more physical mem than needed */
-		bufpages = btoc(MAXBSIZE) * nbuf;
-	}
-
-	/*
-	 * XXX We defer allocation of physical pages for buffers until
-	 * XXX after autoconfiguration has run.  We must do this because
-	 * XXX on system with large amounts of memory or with large
-	 * XXX user-configured buffer caches, the buffer cache will eat
-	 * XXX up all of the lower 16M of RAM.  This prevents ISA DMA
-	 * XXX maps from allocating bounce pages.
-	 *
-	 * XXX Note that nothing can use buffer cache buffers until after
-	 * XXX autoconfiguration completes!!
-	 *
-	 * XXX This is a hack, and needs to be replaced with a better
-	 * XXX solution!  --thorpej@netbsd.org, December 6, 1997
-	 */
+	minaddr = 0;
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -378,15 +335,8 @@ cpu_startup()
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
 
-	/*
-	 * XXX Buffer cache pages haven't yet been allocated, so
-	 * XXX we need to account for those pages when printing
-	 * XXX the amount of free memory.
-	 */
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free - bufpages));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
@@ -427,8 +377,7 @@ i386_proc0_tss_ldt_init()
  */
 
 void
-i386_init_pcb_tss_ldt(ci)
-	struct cpu_info *ci;
+i386_init_pcb_tss_ldt(struct cpu_info *ci)
 {
 	int x;
 	struct pcb *pcb = ci->ci_idle_pcb;
@@ -445,254 +394,263 @@ i386_init_pcb_tss_ldt(ci)
 }
 
 /*
- * XXX Finish up the deferred buffer cache allocation and initialization.
+ * sysctl helper routine for machdep.tm* nodes.
  */
-void
-i386_bufinit()
+static int
+sysctl_machdep_tm_longrun(SYSCTLFN_ARGS)
 {
-	int i, base, residual;
+	struct sysctlnode node;
+	int io, error;
 
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
+	if (!tmx86_has_longrun)
+		return (EOPNOTSUPP);
 
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
+	node = *rnode;
+	node.sysctl_data = &io;
 
-		while (curbufsize) {
-			/*
-			 * Attempt to allocate buffers from the first
-			 * 16M of RAM to avoid bouncing file system
-			 * transfers.
-			 */
-			pg = uvm_pagealloc_strat(NULL, 0, NULL, 0,
-			    UVM_PGA_STRAT_FALLBACK, VM_FREELIST_FIRST16);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
+	switch (rnode->sysctl_num) {
+	case CPU_TMLR_MODE:
+		io = (int)(crusoe_longrun = tmx86_get_longrun_mode());
+		break;
+	case CPU_TMLR_FREQUENCY:
+		tmx86_get_longrun_status_all();
+		io = crusoe_frequency;
+		break;
+	case CPU_TMLR_VOLTAGE:
+		tmx86_get_longrun_status_all();
+		io = crusoe_voltage;
+		break;
+	case CPU_TMLR_PERCENTAGE:
+		tmx86_get_longrun_status_all();
+		io = crusoe_percentage;
+		break;
+	default:
+		return (EOPNOTSUPP);
 	}
-	pmap_update(pmap_kernel());
 
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (rnode->sysctl_num == CPU_TMLR_MODE) {
+		if (tmx86_set_longrun_mode(io))
+			crusoe_longrun = (u_int)io;
+		else
+			return (EINVAL);
+	}
+
+	return (0);
+}
+
+/*
+ * sysctl helper routine for machdep.booted_kernel
+ */
+static int
+sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
+{
+	struct btinfo_bootpath *bibp;
+	struct sysctlnode node;
+
+	bibp = lookup_bootinfo(BTINFO_BOOTPATH);
+	if(!bibp)
+		return(ENOENT); /* ??? */
+
+	node = *rnode;
+	node.sysctl_data = bibp->bootpath;
+	node.sysctl_size = sizeof(bibp->bootpath);
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+/*
+ * sysctl helper routine for machdep.diskinfo
+ */
+static int
+sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = i386_alldisks;
+	node.sysctl_size = sizeof(struct disklist) +
+	    (i386_ndisks - 1) * sizeof(struct nativedisk_info);
+        return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
 /*
  * machine dependent system variables.
  */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct lwp *l;
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
-	dev_t consdev;
-	struct btinfo_bootpath *bibp;
-	int error, mode;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "biosbasemem", NULL,
+		       NULL, 0, &biosbasemem, 0,
+		       CTL_MACHDEP, CPU_BIOSBASEMEM, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "biosextmem", NULL,
+		       NULL, 0, &biosextmem, 0,
+		       CTL_MACHDEP, CPU_BIOSEXTMEM, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "nkpde", NULL,
+		       NULL, 0, &nkpde, 0,
+		       CTL_MACHDEP, CPU_NKPDE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       sysctl_machdep_booted_kernel, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "diskinfo", NULL,
+		       sysctl_machdep_diskinfo, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "fpu_present", NULL,
+		       NULL, 0, &i386_fpu_present, 0,
+		       CTL_MACHDEP, CPU_FPU_PRESENT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "osfxsr", NULL,
+		       NULL, 0, &i386_use_fxsave, 0,
+		       CTL_MACHDEP, CPU_OSFXSR, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "sse", NULL,
+		       NULL, 0, &i386_has_sse, 0,
+		       CTL_MACHDEP, CPU_SSE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "sse2", NULL,
+		       NULL, 0, &i386_has_sse2, 0,
+		       CTL_MACHDEP, CPU_SSE2, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL, 
+	    	       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "cpu_brand", NULL,
+		       NULL, 0, &cpu_brand_string, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "tm_longrun_mode", NULL,
+		       sysctl_machdep_tm_longrun, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_TMLR_MODE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "tm_longrun_frequency", NULL,
+		       sysctl_machdep_tm_longrun, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_TMLR_FREQUENCY, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "tm_longrun_voltage", NULL,
+		       sysctl_machdep_tm_longrun, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_TMLR_VOLTAGE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "tm_longrun_percentage", NULL,
+		       sysctl_machdep_tm_longrun, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_TMLR_PERCENTAGE, CTL_EOL);
+}
 
-	case CPU_BIOSBASEMEM:
-		return (sysctl_rdint(oldp, oldlenp, newp, biosbasemem));
+void *
+getframe(struct lwp *l, int sig, int *onstack)
+{
+	struct proc *p = l->l_proc;
+	struct sigctx *ctx = &p->p_sigctx;
+	struct trapframe *tf = l->l_md.md_regs;
 
-	case CPU_BIOSEXTMEM:
-		return (sysctl_rdint(oldp, oldlenp, newp, biosextmem));
-
-	case CPU_NKPDE:
-		return (sysctl_rdint(oldp, oldlenp, newp, nkpde));
-
-	case CPU_FPU_PRESENT:
-		return (sysctl_rdint(oldp, oldlenp, newp, i386_fpu_present));
-
-	case CPU_BOOTED_KERNEL:
-	        bibp = lookup_bootinfo(BTINFO_BOOTPATH);
-	        if(!bibp)
-			return(ENOENT); /* ??? */
-		return (sysctl_rdstring(oldp, oldlenp, newp, bibp->bootpath));
-	case CPU_DISKINFO:
-		if (i386_alldisks == NULL)
-			return (ENOENT);
-		return (sysctl_rdstruct(oldp, oldlenp, newp, i386_alldisks,
-		    sizeof (struct disklist) +
-			(i386_ndisks - 1) * sizeof (struct nativedisk_info)));
-	case CPU_OSFXSR:
-		return (sysctl_rdint(oldp, oldlenp, newp, i386_use_fxsave));
-	case CPU_SSE:
-		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_sse));
-	case CPU_SSE2:
-		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_sse2));
-	case CPU_TMLR_MODE:
-		if (!tmx86_has_longrun)
-			return (EOPNOTSUPP);
-		mode = (int)(crusoe_longrun = tmx86_get_longrun_mode());
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &mode);
-		if (!error && (u_int)mode != crusoe_longrun) {
-			if (tmx86_set_longrun_mode(mode)) {
-				crusoe_longrun = (u_int)mode;
-			} else {
-				error = EINVAL;
-			}
-		}
-		return (error);
-	case CPU_TMLR_FREQUENCY:
-		if (!tmx86_has_longrun)
-			return (EOPNOTSUPP);
-		tmx86_get_longrun_status_all();
-		return (sysctl_rdint(oldp, oldlenp, newp, crusoe_frequency));
-	case CPU_TMLR_VOLTAGE:
-		if (!tmx86_has_longrun)
-			return (EOPNOTSUPP);
-		tmx86_get_longrun_status_all();
-		return (sysctl_rdint(oldp, oldlenp, newp, crusoe_voltage));
-	case CPU_TMLR_PERCENTAGE:
-		if (!tmx86_has_longrun)
-			return (EOPNOTSUPP);
-		tmx86_get_longrun_status_all();
-		return (sysctl_rdint(oldp, oldlenp, newp, crusoe_percentage));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	/* Do we need to jump onto the signal stack? */
+	*onstack = (ctx->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+	if (*onstack)
+		return (char *)ctx->ps_sigstk.ss_sp + ctx->ps_sigstk.ss_size;
+#ifdef VM86
+	if (tf->tf_eflags & PSL_VM)
+		return (void *)(tf->tf_esp + (tf->tf_ss << 4));
+	else
+#endif
+		return (void *)tf->tf_esp;
 }
 
 /*
- * Send an interrupt to process.
- *
- * Stack is set up to allow sigcode stored
- * in u. to call routine, followed by kcall
- * to sigreturn routine below.  After sigreturn
- * resets the signal mask, the stack, and the
- * frame pointer, it returns to the user
- * specified pc, psl.
+ * Build context to run handler in.  We invoke the handler
+ * directly, only returning via the trampoline.  Note the
+ * trampoline version numbers are coordinated with machine-
+ * dependent code in libc.
  */
 void
-sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
+{
+	struct trapframe *tf = l->l_md.md_regs;
+
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_eip = (int)catcher;
+	tf->tf_cs = GSEL(sel, SEL_UPL);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_esp = (int)fp;
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+}
+
+static void
+sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+	int sel = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
+	    GUCODEBIG_SEL : GUCODE_SEL;
 	struct sigacts *ps = p->p_sigacts;
-	struct trapframe *tf;
-	struct sigframe *fp, frame;
 	int onstack;
+	int sig = ksi->ksi_signo;
+	struct sigframe_siginfo *fp = getframe(l, sig, &onstack), frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	struct trapframe *tf = l->l_md.md_regs;
 
-	tf = l->l_md.md_regs;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-					  p->p_sigctx.ps_sigstk.ss_size);
-	else
-		fp = (struct sigframe *)tf->tf_esp;
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
-#if 1 /* COMPAT_16 */
-	case 0:		/* legacy on-stack sigtramp */
-		frame.sf_ra = (int)p->p_sigctx.ps_sigcode;
-		break;
-#endif /* COMPAT_16 */
-
-	case 1:
-		frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
-		break;
-
-	default:
-		/* Don't know what trampoline version; kill it. */
+	case 0:		/* handled by sendsig_sigcontext */
+	case 1:		/* handled by sendsig_sigcontext */
+	default:	/* unknown version */
+		printf("nsendsig: bad version %d\n",
+		    ps->sa_sigdesc[sig].sd_vers);
 		sigexit(l, SIGILL);
+	case 2:
+		break;
 	}
 
+	frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
 	frame.sf_signum = sig;
-	frame.sf_code = code;
-	frame.sf_scp = &fp->sf_sc;
+	frame.sf_sip = &fp->sf_si;
+	frame.sf_ucp = &fp->sf_uc;
+	frame.sf_si._info = ksi->ksi_info;
+	frame.sf_uc.uc_flags = _UC_SIGMASK|_UC_VM;
+	frame.sf_uc.uc_sigmask = *mask;
+	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_flags |= (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+	    ? _UC_SETSTACK : _UC_CLRSTACK;
+	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
+	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 
-	/* Save register context. */
-#ifdef VM86
-	if (tf->tf_eflags & PSL_VM) {
-		frame.sf_sc.sc_gs = tf->tf_vm86_gs;
-		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
-		frame.sf_sc.sc_es = tf->tf_vm86_es;
-		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_eflags = get_vflags(l);
+	if (tf->tf_eflags & PSL_VM)
 		(*p->p_emul->e_syscall_intern)(p);
-	} else
-#endif
-	{
-		frame.sf_sc.sc_gs = tf->tf_gs;
-		frame.sf_sc.sc_fs = tf->tf_fs;
-		frame.sf_sc.sc_es = tf->tf_es;
-		frame.sf_sc.sc_ds = tf->tf_ds;
-		frame.sf_sc.sc_eflags = tf->tf_eflags;
-	}
-	frame.sf_sc.sc_edi = tf->tf_edi;
-	frame.sf_sc.sc_esi = tf->tf_esi;
-	frame.sf_sc.sc_ebp = tf->tf_ebp;
-	frame.sf_sc.sc_ebx = tf->tf_ebx;
-	frame.sf_sc.sc_edx = tf->tf_edx;
-	frame.sf_sc.sc_ecx = tf->tf_ecx;
-	frame.sf_sc.sc_eax = tf->tf_eax;
-	frame.sf_sc.sc_eip = tf->tf_eip;
-	frame.sf_sc.sc_cs = tf->tf_cs;
-	frame.sf_sc.sc_esp = tf->tf_esp;
-	frame.sf_sc.sc_ss = tf->tf_ss;
-	frame.sf_sc.sc_trapno = tf->tf_trapno;
-	frame.sf_sc.sc_err = tf->tf_err;
-
-	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
-
-	/* Save signal mask. */
-	frame.sf_sc.sc_mask = *mask;
-
-#ifdef COMPAT_13
-	/*
-	 * XXX We always have to save an old style signal mask because
-	 * XXX we might be delivering a signal to a process which will
-	 * XXX escape from the signal in a non-standard way and invoke
-	 * XXX sigreturn() directly.
-	 */
-	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
-#endif
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
@@ -703,31 +661,29 @@ sendsig(sig, mask, code)
 		/* NOTREACHED */
 	}
 
-	/*
-	 * Build context to run handler in.  We invoke the handler
-	 * directly, only returning via the trampoline.  Note the
-	 * trampoline version numbers are coordinated with machine-
-	 * dependent code in libc.
-	 */
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)catcher;
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
-	tf->tf_esp = (int)fp;
-	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+	buildcontext(l, sel, catcher, fp);
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
-
-void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
+void
+sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
+#ifdef COMPAT_16
+	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
+		sendsig_sigcontext(ksi, mask);
+	else
+#endif
+		sendsig_siginfo(ksi, mask);
+}
+
+void
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
+    void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	struct saframe *sf, frame;
 	struct trapframe *tf;
 
@@ -740,7 +696,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 	frame.sa_interrupted = ninterrupted;
 	frame.sa_arg = ap;
 	frame.sa_ra = 0;
- 
+
 	sf = (struct saframe *)sp - 1;
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
@@ -755,105 +711,17 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
+	    GSEL(GUCODEBIG_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
-}
-
-/*
- * System call to cleanup state after a signal
- * has been taken.  Reset signal mask and
- * stack state from context left by sendsig (above).
- * Return to previous pc and psl as specified by
- * context left by sendsig. Check carefully to
- * make sure that the user has not modified the
- * psl to gain improper privileges or to cause
- * a machine fault.
- */
-int
-sys___sigreturn14(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct sys___sigreturn14_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sigcontext *scp, context;
-	struct trapframe *tf;
-
-	/*
-	 * The trampoline code hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal handler.
-	 */
-	scp = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
-		return (EFAULT);
-
-	/* Restore register context. */
-	tf = l->l_md.md_regs;
-#ifdef VM86
-	if (context.sc_eflags & PSL_VM) {
-		void syscall_vm86 __P((struct trapframe));
-
-		tf->tf_vm86_gs = context.sc_gs;
-		tf->tf_vm86_fs = context.sc_fs;
-		tf->tf_vm86_es = context.sc_es;
-		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(l, context.sc_eflags);
-		p->p_md.md_syscall = syscall_vm86;
-	} else
-#endif
-	{
-		/*
-		 * Check for security violations.  If we're returning to
-		 * protected mode, the CPU will validate the segment registers
-		 * automatically and generate a trap on violations.  We handle
-		 * the trap, rather than doing all of the checking here.
-		 */
-		if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-		    !USERMODE(context.sc_cs, context.sc_eflags))
-			return (EINVAL);
-
-		tf->tf_gs = context.sc_gs;
-		tf->tf_fs = context.sc_fs;
-		tf->tf_es = context.sc_es;
-		tf->tf_ds = context.sc_ds;
-		tf->tf_eflags = context.sc_eflags;
-	}
-	tf->tf_edi = context.sc_edi;
-	tf->tf_esi = context.sc_esi;
-	tf->tf_ebp = context.sc_ebp;
-	tf->tf_ebx = context.sc_ebx;
-	tf->tf_edx = context.sc_edx;
-	tf->tf_ecx = context.sc_ecx;
-	tf->tf_eax = context.sc_eax;
-	tf->tf_eip = context.sc_eip;
-	tf->tf_cs = context.sc_cs;
-	tf->tf_esp = context.sc_esp;
-	tf->tf_ss = context.sc_ss;
-
-	/* Restore signal stack. */
-	if (context.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
-	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
-
-	return (EJUSTRETURN);
 }
 
 int	waittime = -1;
 struct pcb dumppcb;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 	if (cold) {
@@ -889,9 +757,11 @@ haltsys:
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #if NACPI > 0
-		delay(500000);
-		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
-		printf("WARNING: powerdown failed!\n");
+		if (acpi_softc != NULL) {
+			delay(500000);
+			acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
+			printf("WARNING: ACPI powerdown failed!\n");
+		}
 #endif
 #if NAPM > 0 && !defined(APM_NO_POWEROFF)
 		/* turn off, if we can.  But try to turn disk off and
@@ -902,7 +772,7 @@ haltsys:
 		apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
 		delay(500000);
 		apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_OFF);
-		printf("WARNING: powerdown failed!\n");
+		printf("WARNING: APM powerdown failed!\n");
 		/*
 		 * RB_POWERDOWN implies RB_HALT... fall into it...
 		 */
@@ -988,7 +858,7 @@ cpu_dump_mempagecnt()
 int
 cpu_dump()
 {
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	char buf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
@@ -1083,8 +953,7 @@ cpu_dumpconf()
 static vaddr_t dumpspace;
 
 vaddr_t
-reserve_dumppages(p)
-	vaddr_t p;
+reserve_dumppages(vaddr_t p)
 {
 
 	dumpspace = p;
@@ -1094,12 +963,12 @@ reserve_dumppages(p)
 void
 dumpsys()
 {
-	u_long totalbytesleft, bytes, i, n, memseg;
+	u_long totalbytesleft, bytes, i, n, m, memseg;
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
 	const struct bdevsw *bdev;
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error;
 
 	/* Save registers. */
@@ -1160,8 +1029,9 @@ dumpsys()
 			if (n > BYTES_PER_DUMP)
 				n = BYTES_PER_DUMP;
 
-			(void) pmap_map(dumpspace, maddr, maddr + n,
-			    VM_PROT_READ);
+			for (m = 0; m < n; m += NBPG)
+				pmap_kenter_pa(dumpspace + m, maddr + m,
+				    VM_PROT_READ);
 
 			error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
 			if (error)
@@ -1218,11 +1088,9 @@ dumpsys()
  * Clear registers on exec
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
+	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf;
 
@@ -1236,7 +1104,7 @@ setregs(l, pack, stack)
 	pmap_ldt_cleanup(l);
 #endif
 
-	l->l_md.md_flags &= ~MDP_USEDFPU;
+	l->l_md.md_flags &= ~MDL_USEDFPU;
 	if (i386_use_fxsave) {
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __NetBSD_NPXCW__;
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
@@ -1256,7 +1124,8 @@ setregs(l, pack, stack)
 	tf->tf_ecx = 0;
 	tf->tf_eax = 0;
 	tf->tf_eip = pack->ep_entry;
-	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
+	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
+	    LSEL(LUCODEBIG_SEL, SEL_UPL) : LSEL(LUCODE_SEL, SEL_UPL);
 	tf->tf_eflags = PSL_USERSET;
 	tf->tf_esp = stack;
 	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
@@ -1276,10 +1145,8 @@ union	descriptor *pentium_idt;
 extern  struct user *proc0paddr;
 
 void
-setgate(gd, func, args, type, dpl, sel)
-	struct gate_descriptor *gd;
-	void *func;
-	int args, type, dpl, sel;
+setgate(struct gate_descriptor *gd, void *func, int args, int type, int dpl,
+    int sel)
 {
 
 	gd->gd_looffset = (int)func;
@@ -1293,8 +1160,7 @@ setgate(gd, func, args, type, dpl, sel)
 }
 
 void
-unsetgate(gd)
-	struct gate_descriptor *gd;
+unsetgate(struct gate_descriptor *gd)
 {
 	gd->gd_p = 0;
 	gd->gd_hioffset = 0;
@@ -1308,10 +1174,7 @@ unsetgate(gd)
 
 
 void
-setregion(rd, base, limit)
-	struct region_descriptor *rd;
-	void *base;
-	size_t limit;
+setregion(struct region_descriptor *rd, void *base, size_t limit)
 {
 
 	rd->rd_limit = (int)limit;
@@ -1319,11 +1182,8 @@ setregion(rd, base, limit)
 }
 
 void
-setsegment(sd, base, limit, type, dpl, def32, gran)
-	struct segment_descriptor *sd;
-	void *base;
-	size_t limit;
-	int type, dpl, def32, gran;
+setsegment(struct segment_descriptor *sd, void *base, size_t limit, int type,
+    int dpl, int def32, int gran)
 {
 
 	sd->sd_lolimit = (int)limit;
@@ -1339,7 +1199,7 @@ setsegment(sd, base, limit, type, dpl, def32, gran)
 }
 
 #define	IDTVEC(name)	__CONCAT(X, name)
-typedef void (vector) __P((void));
+typedef void (vector)(void);
 extern vector IDTVEC(syscall);
 extern vector IDTVEC(osyscall);
 extern vector *IDTVEC(exceptions)[];
@@ -1365,9 +1225,7 @@ void cpu_init_idt()
 
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void
-add_mem_cluster(seg_start, seg_end, type)
-	u_int64_t seg_start, seg_end;
-	u_int32_t type;
+add_mem_cluster(u_int64_t seg_start, u_int64_t seg_end, u_int32_t type)
 {
 	extern struct extent *iomem_ex;
 	int i;
@@ -1456,7 +1314,9 @@ initgdt(union descriptor *tgdt)
 	/* make gdt gates and memory segments */
 	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GUCODE_SEL].sd, 0, x86_btop(VM_MAXUSER_ADDRESS) - 1,
+	setsegment(&gdt[GUCODE_SEL].sd, 0, x86_btop(I386_MAX_EXE_ADDR) - 1,
+	    SDT_MEMERA, SEL_UPL, 1, 1);
+	setsegment(&gdt[GUCODEBIG_SEL].sd, 0, x86_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GUDATA_SEL].sd, 0, x86_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
@@ -1479,11 +1339,10 @@ initgdt(union descriptor *tgdt)
 }
 
 void
-init386(first_avail)
-	paddr_t first_avail;
+init386(paddr_t first_avail)
 {
 	union descriptor *tgdt;
-	extern void consinit __P((void));
+	extern void consinit(void);
 	extern struct extent *iomem_ex;
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	struct btinfo_memmap *bim;
@@ -1502,6 +1361,7 @@ init386(first_avail)
 
 	cpu_probe_features(&cpu_info_primary);
 	cpu_feature = cpu_info_primary.ci_feature_flags;
+	cpu_feature2 = cpu_info_primary.ci_feature2_flags;
 
 	lwp0.l_addr = proc0paddr;
 	cpu_info_primary.ci_curpcb = &lwp0.l_addr->u_pcb;
@@ -1836,11 +1696,11 @@ init386(first_avail)
 		for (x = 0; x < vm_nphysseg; x++) {
 			vps = &vm_physmem[x];
 			if (ptoa(vps->avail_end) == avail_end)
-				break;
+				goto found;
 		}
-		if (x == vm_nphysseg)
-			panic("init386: can't find end of memory");
+		panic("init386: can't find end of memory");
 
+	found:
 		/* Shrink so it'll fit in the last segment. */
 		if ((vps->avail_end - vps->avail_start) < atop(sz))
 			sz = ptoa(vps->avail_end - vps->avail_start);
@@ -1976,6 +1836,7 @@ init386(first_avail)
 	    SDT_SYS386CGT, SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
 
 	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
+	ldt[LUCODEBIG_SEL] = gdt[GUCODEBIG_SEL];
 	ldt[LUDATA_SEL] = gdt[GUDATA_SEL];
 	ldt[LSOL26CALLS_SEL] = ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];
 
@@ -2074,9 +1935,7 @@ init386(first_avail)
 
 #ifdef COMPAT_NOMID
 static int
-exec_nomid(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_nomid(struct proc *p, struct exec_package *epp)
 {
 	int error;
 	u_long midmag, magic;
@@ -2140,7 +1999,7 @@ exec_nomid(p, epp)
 
 /*
  * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
+ *	CPU-dependent a.out format hook for execve().
  *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
@@ -2149,9 +2008,7 @@ exec_nomid(p, epp)
  * if COMPAT_NOMID is given as a kernel option.
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error = ENOEXEC;
 
@@ -2164,8 +2021,7 @@ cpu_exec_aout_makecmds(l, epp)
 }
 
 void *
-lookup_bootinfo(type)
-int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *help;
 	int n = *(int*)bootinfo;
@@ -2184,6 +2040,7 @@ int type;
 void
 cpu_reset()
 {
+	struct region_descriptor region;
 
 	disable_intr();
 
@@ -2209,6 +2066,8 @@ cpu_reset()
 	 * invalid and causing a fault.
 	 */
 	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
+	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
+        lidt(&region);
 	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0));
 
 #if 0
@@ -2224,10 +2083,7 @@ cpu_reset()
 }
 
 void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	const struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
@@ -2272,7 +2128,7 @@ cpu_getmcontext(l, mcp, flags)
 	*flags |= _UC_CPU;
 
 	/* Save floating point register context, if any. */
-	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
+	if ((l->l_md.md_flags & MDL_USEDFPU) != 0) {
 #if NNPX > 0
 		/*
 		 * If this process is the current FP owner, dump its
@@ -2303,10 +2159,7 @@ cpu_getmcontext(l, mcp, flags)
 }
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
@@ -2314,12 +2167,16 @@ cpu_setmcontext(l, mcp, flags)
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {
 #ifdef VM86
-		if (tf->tf_eflags & PSL_VM) {
+		if (gr[_REG_EFL] & PSL_VM) {
 			tf->tf_vm86_gs = gr[_REG_GS];
 			tf->tf_vm86_fs = gr[_REG_FS];
 			tf->tf_vm86_es = gr[_REG_ES];
 			tf->tf_vm86_ds = gr[_REG_DS];
 			set_vflags(l, gr[_REG_EFL]);
+			if (flags & _UC_VM) {
+				void syscall_vm86(struct trapframe *);
+				l->l_proc->p_md.md_syscall = syscall_vm86;
+			}
 		} else
 #endif
 		{
@@ -2330,8 +2187,10 @@ cpu_setmcontext(l, mcp, flags)
 			 * violations.  We handle the trap, rather than doing
 			 * all of the checking here.
 			 */
-			if (!USERMODE(gr[_REG_CS], gr[_REG_EFL])) {
-				printf("cpu_setmcontext error: uc EFL: %08x  tf EFL: %08x uc CS: %d",
+			if (((gr[_REG_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) ||
+			    !USERMODE(gr[_REG_CS], gr[_REG_EFL])) {
+				printf("cpu_setmcontext error: uc EFL: 0x%08x"
+				    " tf EFL: 0x%08x uc CS: 0x%x\n",
 				    gr[_REG_EFL], tf->tf_eflags, gr[_REG_CS]);
 				return (EINVAL);
 			}
@@ -2389,13 +2248,16 @@ cpu_setmcontext(l, mcp, flags)
 			}
 		}
 		/* If not set already. */
-		l->l_md.md_flags |= MDP_USEDFPU;
+		l->l_md.md_flags |= MDL_USEDFPU;
 #if 0
 		/* Apparently unused. */
 		l->l_addr->u_pcb.pcb_saveemc = mcp->mc_fp.fp_emcsts;
 #endif
 	}
-
+	if (flags & _UC_SETSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	return (0);
 }
 
@@ -2409,9 +2271,15 @@ cpu_initclocks()
 void
 need_resched(struct cpu_info *ci)
 {
+
+	if (ci->ci_want_resched)
+		return;
+
 	ci->ci_want_resched = 1;
 	if ((ci)->ci_curlwp != NULL)
 		aston((ci)->ci_curlwp->l_proc);
+	else if (ci != curcpu())
+		x86_send_ipi(ci, 0);
 }
 #endif
 
@@ -2421,9 +2289,7 @@ need_resched(struct cpu_info *ci)
  */
 
 int
-idt_vec_alloc(low, high)
-	int low;
-	int high;
+idt_vec_alloc(int low, int high)
 {
 	int vec;
 
@@ -2440,9 +2306,7 @@ idt_vec_alloc(low, high)
 }
 
 void
-idt_vec_set(vec, function)
-	int vec;
-	void (*function) __P((void));
+idt_vec_set(int vec, void (*function)(void))
 {
 	/*
 	 * Vector should be allocated, so no locking needed.
@@ -2453,8 +2317,7 @@ idt_vec_set(vec, function)
 }
 
 void
-idt_vec_free(vec)
-	int vec;
+idt_vec_free(int vec)
 {
 	simple_lock(&idt_lock);
 	unsetgate(&idt[vec]);

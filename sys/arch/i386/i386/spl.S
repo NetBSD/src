@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.6 2003/01/17 23:10:32 thorpej Exp $	*/
+/*	$NetBSD: spl.S,v 1.6.2.1 2004/08/03 10:35:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,28 +90,27 @@ _C_LABEL(splx):
  * (see pmap_tlb_shootnow).
  */
 IDTVEC(spllower)
-#ifdef DDB
+#if defined(DDB) || defined(GPROF)
 	pushl	%ebp
 	movl	%esp,%ebp
-#endif
+	MCOUNT_ASM
+#endif /* defined(DDB) || defined(GPROF) */
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
-#ifdef DDB
+#if defined(DDB) || defined(GPROF)
 	movl	8(%ebp),%ebx
-#else
+#else /* defined(DDB) || defined(GPROF) */
 	movl	16(%esp),%ebx
-#endif
+#endif /* defined(DDB) || defined(GPROF) */
 	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax		# get cpl
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
 	cli
 	andl	CPUVAR(IPENDING),%eax		# any non-masked bits left?
 	jz	2f
-	sti
 	bsrl	%eax,%eax
 	btrl	%eax,CPUVAR(IPENDING)
-	jnc	1b
 	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
 	jmp	*IS_RECURSE(%eax)
 2:
@@ -120,9 +119,9 @@ IDTVEC(spllower)
 	popl	%edi
 	popl	%esi
 	popl	%ebx
-#ifdef DDB
+#if defined(DDB) || defined(GPROF)
 	leave
-#endif
+#endif /* defined(DDB) || defined(GPROF) */
 	ret
 
 /*
@@ -142,28 +141,40 @@ IDTVEC(doreti)
 	cli
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
-	sti
 	bsrl    %eax,%eax               # slow, but not worth optimizing
 	btrl    %eax,CPUVAR(IPENDING)
-	jnc     1b			# some intr cleared the in-memory bit
 	movl	CPUVAR(ISOURCES)(,%eax, 4),%eax
 	jmp	*IS_RESUME(%eax)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
-5:	CHECK_ASTPENDING(%eax)
-	je	3f
+5:
 	testb   $SEL_RPL,TF_CS(%esp)
+	jnz	.Ldoreti_checkast
 #ifdef VM86
-	jnz	4f
 	testl	$PSL_VM,TF_EFLAGS(%esp)
+	jz	6f
+#else
+	jmp	6f
 #endif
+.Ldoreti_checkast:
+	CHECK_ASTPENDING(%eax)
 	jz	3f
 4:	CLEAR_ASTPENDING(%eax)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	pushl	%esp
 	call	_C_LABEL(trap)
+	addl	$4,%esp
 	cli
 	jmp	5b
 3:
+	CHECK_DEFERRED_SWITCH(%eax)
+	jnz	9f
+6:
 	INTRFASTEXIT
+9:
+	sti
+	call	_C_LABEL(pmap_load)
+	cli
+	jmp	.Ldoreti_checkast	/* recheck ASTs */

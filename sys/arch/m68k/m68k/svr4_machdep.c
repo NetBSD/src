@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.11 2003/06/29 22:28:29 fvdl Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.11.2.1 2004/08/03 10:37:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.11.2.1 2004/08/03 10:37:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,30 +248,17 @@ svr4_getsiginfo(sip, sig, code, addr)
 }
 
 void
-svr4_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	unsigned long code;
+svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
+	u_long code = KSI_TRAPCODE(ksi);
+	int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	struct frame *frame;
-	struct svr4_sigframe *sfp, sf;
+	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	int onstack;
+	struct svr4_sigframe *sfp = getframe(l, sig, &onstack), sf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	frame = (struct frame *)l->l_md.md_regs;
-
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
-
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		sfp = (struct svr4_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-		    p->p_sigctx.ps_sigstk.ss_size);
-	else
-		sfp = (struct svr4_sigframe *)frame->f_regs[SP];
 	sfp--;
 
 	svr4_getcontext(l, &sf.sf_uc);
@@ -295,9 +285,7 @@ svr4_sendsig(sig, mask, code)
 		/* NOTREACHED */
 	}
 
-	/* Set up the registers to return to sigcode. */
-	frame->f_regs[SP] = (int)sfp;
-	frame->f_pc = (int)p->p_sigctx.ps_sigcode;
+	buildcontext(l, p->p_sigctx.ps_sigcode, sfp);
 
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
@@ -319,7 +307,7 @@ svr4_sys_sysarch(l, v, retval)
 	struct proc *p = l->l_proc;
 	char tmp[MAXHOSTNAMELEN];
 	size_t len;
-	int error, name;
+	int error, name[2];
 
 	switch (SCARG(uap, op)) {
 	case SVR4_SYSARCH_SETNAME:
@@ -328,9 +316,9 @@ svr4_sys_sysarch(l, v, retval)
 		if ((error = copyinstr(SCARG(uap, a1), tmp, sizeof (tmp), &len))
 		    != 0)
 			return (error);
-		name = KERN_HOSTNAME;
-		return (kern_sysctl(&name, 1, NULL, NULL, SCARG(uap, a1), len,
-		    p));
+		name[0] = CTL_KERN;
+		name[1] = KERN_HOSTNAME;
+		return (old_sysctl(&name[0], 2, NULL, NULL, tmp, len, NULL));
 	default:
 		printf("uninplemented svr4_sysarch(%d), a1 %p\n",
 		    SCARG(uap, op), SCARG(uap, a1));

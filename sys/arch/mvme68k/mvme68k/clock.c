@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.17 2002/02/12 20:38:36 scw Exp $	*/
+/*      $NetBSD: clock.c,v 1.17.16.1 2004/08/03 10:38:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,6 +39,9 @@
  *
  *      @(#)clock.c     8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17.16.1 2004/08/03 10:38:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -97,12 +96,12 @@ clock_config(dev, ca, ev)
 }
 
 void
-clock_rtc_config(todr)
+todr_attach(todr)
 	todr_chip_handle_t todr;
 {
 
 	if (todr_handle)
-		panic("clock_config: clock already configured");
+		panic("todr_attach: clock already configured");
 
 	todr_handle = todr;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmu.c,v 1.8 2003/04/01 10:23:30 scw Exp $	*/
+/*	$NetBSD: tmu.c,v 1.8.2.1 2004/08/03 10:40:23 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * SH-5 Timer Module
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tmu.c,v 1.8.2.1 2004/08/03 10:40:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

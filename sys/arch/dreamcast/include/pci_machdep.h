@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.3 2002/05/15 19:23:53 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.3.12.1 2004/08/03 10:33:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -94,6 +94,3 @@ struct dreamcast_pci_chipset {
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a))
 #define	pci_intr_disestablish(c, ih)					\
     (*(c)->pc_intr_disestablish)((v)->pc_intr_v, (ih))
-
-#define	pci_enumerate_bus(sc, m, p)					\
-	pci_enumerate_bus_generic((sc), (m), (p))

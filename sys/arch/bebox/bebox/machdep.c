@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 2003/06/14 17:01:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81.2.1 2004/08/03 10:33:36 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.2.1 2004/08/03 10:33:36 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -64,7 +67,6 @@
 
 #include <net/netisr.h>
 
-#include <powerpc/bat.h>
 #include <machine/bootinfo.h>
 #include <machine/autoconf.h>
 #define _POWERPC_BUS_DMA_PRIVATE
@@ -73,6 +75,8 @@
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
+
+#include <powerpc/oea/bat.h>
 
 #include <dev/cons.h>
 
@@ -97,6 +101,7 @@
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
+#include <dev/pckbport/pckbportvar.h>
 #endif
 
 #include "com.h"
@@ -333,7 +338,9 @@ consinit()
 #if (NPC > 0)
 		pccnattach();
 #endif
+#if (NVGA > 0)
 dokbd:
+#endif
 #if (NPCKBC > 0)
 		pckbc_cnattach(&bebox_isa_io_bs_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
@@ -363,9 +370,9 @@ dokbd:
  * mi keyboard controller driver
  */
 int
-pckbc_machdep_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
+pckbport_machdep_cnattach(kbctag, kbcslot)
+	pckbport_tag_t kbctag;
+	pckbport_slot_t kbcslot;
 {
 #if (NPC > 0)
 	return (pcconskbd_cnattach(kbctag, kbcslot));

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1 2003/04/26 18:39:44 fvdl Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1.2.1 2004/08/03 10:31:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,15 +40,10 @@
 #define _AMD64_MCONTEXT_H_
 
 /*
- * Layout of mcontext_t according to the System V Application Binary Interface,
- * Intel386(tm) Architecture Processor Supplement, Fourth Edition.
- */  
-
-/*
  * General register state
  */
 #define _NGREG		26
-typedef	long		__greg_t;
+typedef	unsigned long	__greg_t;
 typedef	__greg_t	__gregset_t[_NGREG];
 
 /*
@@ -100,8 +95,64 @@ typedef struct {
 
 #define _UC_UCONTEXT_ALIGN	(~0xf)
 
-#ifdef _KERNEL
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_URSP])
-#endif
+#define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_RIP])
+#define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_RAX])
+
+#define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
+
+/*
+ * mcontext extensions to handle signal delivery.
+ */
+#define _UC_SETSTACK	0x00010000
+#define _UC_CLRSTACK	0x00020000
+
+
+#ifdef _KERNEL
+
+/*
+ * 32bit context definitions.
+ */
+
+#define _NGREG32	19
+typedef unsigned int	__greg32_t;
+typedef __greg32_t	__gregset32_t[_NGREG32];
+
+#define _REG32_GS	0
+#define _REG32_FS	1
+#define _REG32_ES	2
+#define _REG32_DS	3
+#define _REG32_EDI	4
+#define _REG32_ESI	5
+#define _REG32_EBP	6
+#define _REG32_ESP	7
+#define _REG32_EBX	8
+#define _REG32_EDX	9
+#define _REG32_ECX	10
+#define _REG32_EAX	11
+#define _REG32_TRAPNO	12
+#define _REG32_ERR	13
+#define _REG32_EIP	14
+#define _REG32_CS	15
+#define _REG32_EFL	16
+#define _REG32_UESP	17
+#define _REG32_SS	18
+
+/*
+ * Floating point register state
+ */
+typedef struct fxsave64 __fpregset32_t;
+
+typedef struct {
+	__gregset32_t	__gregs;
+	__fpregset32_t	__fpregs;
+} mcontext32_t;
+
+#define _UC_MACHINE_PAD32	5
+
+struct trapframe;
+int check_mcontext(const mcontext_t *, struct trapframe *);
+
+#endif /* _KERNEL */
 
 #endif	/* !_AMD64_MCONTEXT_H_ */

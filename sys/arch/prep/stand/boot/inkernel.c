@@ -1,4 +1,4 @@
-/*	$NetBSD: inkernel.c,v 1.3 2003/01/30 00:36:32 matt Exp $	*/
+/*	$NetBSD: inkernel.c,v 1.3.2.1 2004/08/03 10:39:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,30 +44,22 @@
 
 #define	KERNENTRY	(RELOC - 0x200000)
 
-#ifndef	HEAD_SIZE
-#define	HEAD_SIZE	0
-#endif
-
-#ifndef	KERN_OFFSET
-#define	KERN_OFFSET	0
-#endif 
-
-u_long head_size = HEAD_SIZE;
-u_long kern_offset = KERN_OFFSET;
-
 void
-init_in()
+init_in(u_long ladr)
 {
-	extern u_long ladr;
-	u_long p = ladr + kern_offset - head_size;
+	extern char _start[], _edata[];
+	char *p = (char *)(ladr + (_edata - _start));
+	u_int i;
 
-	if (memcmp((char *)p, magic, MAGICSIZE) == 0) {
-		kern_len = *(int *)(p + MAGICSIZE);
-		memcpy((char *)KERNENTRY,
-			(char *)(p + MAGICSIZE + KERNLENSIZE),
-			kern_len);
-	} else
-		printf("magic not found.\n");
+	for (i = 0; i < 4096; i++, p++) {
+		if (memcmp(p, magic, MAGICSIZE) == 0) {
+			kern_len = *(int *)(p + MAGICSIZE);
+			memmove((char *)KERNENTRY,
+				p + MAGICSIZE + KERNLENSIZE, kern_len);
+			return;
+		}
+	}
+	printf("magic is not found.\n");
 }
 
 int
@@ -84,6 +76,7 @@ int
 inclose(p)
 	struct open_file *p;
 {
+
 	return (0);
 }
 

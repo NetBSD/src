@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.1 2002/06/06 19:48:11 fredette Exp $	*/
+/*	$NetBSD: srt0.S,v 1.1.10.1 2004/08/03 10:34:54 skrll Exp $	*/
 
 /*	$OpenBSD: srt0.S,v 1.7 2001/05/16 23:57:35 mickey Exp $	*/
 
@@ -76,7 +76,7 @@ ENTRY(begin,0)
 
 	blr	%r0,%r5			; Get address of 'boff' into 'r5',
 	ldo	begin-boff(%r5),%r5	;   and subtract to get 'begin'.
-boff
+boff:
 	ldil	L%RELOC,%r4
 	ldo	R%RELOC(%r4),%r4
 	ldo	start-begin(%r4),%rp
@@ -85,7 +85,7 @@ boff
 	ldil	L%begin,%r1
 	ldo	R%begin(%r1),%r1	; Get address of begin
 	sub	%r3,%r1,%r3		; Subtract to get # of bytes to copy
-copyloop				; do
+copyloop:				; do
 	ldwm	4(%r5),%r1		;   *r4++ = *r5++;
 	addib,>= -4,%r3,copyloop	; while (--r3 >= 0);
 	stwm	%r1,4(%r4)
@@ -95,7 +95,7 @@ copyloop				; do
 	ldo	R%__bss_start(%r4), %r4
 	ldil	L%__bss_end, %r3
 	ldo	R%__bss_end(%r3), %r3
-zeroloop
+zeroloop:
 	combf,<,n %r3,%r4, zeroloop	; while (r4 < r3);
 	stwm	%r0,4(%r4)		;	*r4++ = 0;
 
@@ -121,7 +121,7 @@ zeroloop
 	mtsp	%r0,%sr0		; Set sr0 to kernel space.
 	ldo	-1(%r21),%r21
 	fdc	%r21(0,%r22)
-loop	addib,>,n -16,%r21,loop		; Decrement by cache line size (16).
+loop:	addib,>,n -16,%r21,loop		; Decrement by cache line size (16).
 	fdc	%r21(%sr0,%r22)
 	fdc	0(%sr0,%r22)		; Flush first word at addr to handle
 	sync				;   arbitrary cache line boundary.
@@ -132,16 +132,16 @@ loop	addib,>,n -16,%r21,loop		; Decrement by cache line size (16).
 	nop
 	nop
 	nop
-	bv	0(rp)
+	bv	0(%rp)
 	nop
 EXIT(begin)				/* jump to relocated code */
 
-start
+start:
 	ldil	L%HEAP_LIMIT, %sp
 	ldo	R%HEAP_LIMIT(%sp), %sp
 
 	b	boot			; Call boot(),
-	copy	%r0, arg0		; use default boot device
+	copy	%r0, %arg0		; use default boot device
 	nop
 
 /*
@@ -151,11 +151,11 @@ LEAF_ENTRY(_rtt)
 	ldil    L%LBCAST_ADDR, %r25
 	ldi     CMD_RESET, %r26
 	stw     %r26,R%iomod_command(%r25)
-forever                                 ; Loop until bus reset takes effect.
+forever:				; Loop until bus reset takes effect.
 	b,n     forever
 
-	bv	0(rp)
-	ldo     -48(sp),sp
+	bv	0(%rp)
+	ldo     -48(%sp),%sp
 EXIT(_rtt)
 
 	.end

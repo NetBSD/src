@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 2003/01/18 23:20:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2004/08/03 10:35:29 skrll Exp $
 
 INCSDIR= /usr/include/hpcsh
 
-INCS=	ansi.h aout_machdep.h asm.h \
+INCS=	ansi.h aout_machdep.h apmvar.h asm.h \
 	bootinfo.h bswap.h bus.h \
 	cdefs.h coff_machdep.h cpu.h cputypes.h \
 	db_machdep.h disklabel.h \
@@ -17,6 +17,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h \
 	types.h \
-	varargs.h vmparam.h
+	varargs.h vmparam.h \
+	wchar_limits.h
 
 .include <bsd.kinc.mk>

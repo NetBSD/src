@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2003/03/11 10:57:55 hannken Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.1 2004/08/03 10:34:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.2.1 2004/08/03 10:34:16 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -68,4 +71,9 @@ void
 cpu_rootconf(void)
 {
 	setroot(booted_device, booted_partition);
+}
+
+void
+device_register(struct device *dev, void *aux)
+{
 }

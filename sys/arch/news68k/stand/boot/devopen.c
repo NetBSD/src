@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 2002/12/20 16:56:23 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.4.2.1 2004/08/03 10:38:28 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -34,9 +34,9 @@
 #include <machine/romcall.h>
 
 #ifdef BOOT_DEBUG
-# define DPRINTF(x) printf x
+# define DPRINTF printf
 #else
-# define DPRINTF(x)
+# define DPRINTF while (0) printf
 #endif
 
 int dkopen(struct open_file *, ...);
@@ -69,14 +69,14 @@ devopen(f, fname, file)
 	char devname[32];
 	char *cp;
 
-	DPRINTF(("devopen: %s\n", fname));
+	DPRINTF("devopen: %s\n", fname);
 
 	strcpy(devname, fname);
 	cp = strchr(devname, ')') + 1;
 	*cp = 0;
 	fd = rom_open(devname, 0);
 
-	DPRINTF(("devname = %s, fd = %d\n", devname, fd));
+	DPRINTF("devname = %s, fd = %d\n", devname, fd);
 	if (fd == -1)
 		return -1;
 
@@ -92,7 +92,7 @@ devopen(f, fname, file)
 int
 dkopen(struct open_file *f, ...)
 {
-	DPRINTF(("dkopen\n"));
+	DPRINTF("dkopen\n");
 	return 0;
 }
 
@@ -102,7 +102,7 @@ dkclose(f)
 {
 	struct romdev *dev = f->f_devdata;
 
-	DPRINTF(("dkclose\n"));
+	DPRINTF("dkclose\n");
 	rom_close(dev->fd);
 	return 0;
 }

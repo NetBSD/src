@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.15.2.1 2003/07/02 15:25:30 darrenr Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.15.2.2 2004/08/03 10:39:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15.2.2 2004/08/03 10:39:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -795,4 +798,28 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	*rsegs = curseg + 1;
 
 	return (0);
+}
+
+/*
+ * Generic form of PHYS_TO_BUS_MEM().
+ */
+bus_addr_t
+_bus_dma_phys_to_bus_mem_generic(t, addr)
+	bus_dma_tag_t t;
+	bus_addr_t addr;
+{
+
+	return (addr);
+}
+
+/*
+ * Generic form of BUS_MEM_TO_PHYS().
+ */
+bus_addr_t
+_bus_dma_bus_mem_to_phys_generic(t, addr)
+	bus_dma_tag_t t;
+	bus_addr_t addr;
+{
+
+	return (addr);
 }

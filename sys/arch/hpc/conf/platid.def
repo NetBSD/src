@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.14 2001/11/20 12:56:27 lukem Exp $	*/
+/*	$NetBSD: platid.def,v 1.14.16.1 2004/08/03 10:34:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -287,22 +287,28 @@ HP {
 #ifdef hpcsh
 	LX {
 		CPU=SH_3_7709
-			620 --"HP620LX"
-			620JP --"HP620LX (Japanese)"
+			620   --"HP 620LX"
+			620JP --"HP 620LX (Japanese)"
 	}
 #endif /* hpcsh */
 	JORNADA " Jornada" {
 #ifdef hpcsh
 		6XX {
 			CPU=SH_3_7709A
-			680
+			680   -" 680 (US/UK)"
 			680JP -" 680 (Japanese)"
-			680HU -" 680 (Hungarian)"
+			680EU -" 680 (European)"
 			680DE -" 680 (German)"
-			690
+			690   -" 690 (US/UK)"
 			690JP -" 690 (Japanese)"
-			690HU -" 690 (Hungarian)"
+			690EU -" 690 (European)"
 			690DE -" 690 (German)"
+
+			680FR -" 680 (French)"
+			690FR -" 690 (French)"
+
+			680SV -" 680 (Scandinavian)"
+			690SV -" 690 (Scandinavian)"
 		}
 #endif /* hpcsh */
 #ifdef hpcarm
@@ -326,6 +332,7 @@ HITACHI {
 		CPU=SH_3_7709
 			HPW230JC
 			HPW50PAD
+			HPW200EC
 		CPU=SH_4_7750
 			HPW650PA
 	}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/06/24 12:27:03 igy Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2004/08/03 10:35:18 skrll Exp $
 .include <bsd.own.mk>
 
 ROMICE?=	no
@@ -9,9 +9,11 @@ PROG=	lcboot.out
 SREC=	lcboot.srec
 MKMAN=	no
 WARNS=	1
-SRCS=	start.S main.c com.c conf.c dev_flash.c devopen.c i28f128.c
+SRCS=	start.S main.c com.c conf.c dev_flash.c dev_net.c \
+	devopen.c i28f128.c if_cs.c
 
-CPPFLAGS+=	-DDEBUG
+#CPPFLAGS+=	-DDEBUG -DNET_DEBUG -DNETIF_DEBUG -DARP_DEBUG \
+#		-DETHER_DEBUG -DBOOTP_DEBUG
 
 STARTOBJS=
 
@@ -28,7 +30,10 @@ AFLAGS+=	-D_LOCORE -D_KERNEL
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp -mips2 -mno-abicalls
 INCLUDES=	-I${.OBJDIR} -I${S} -I${S}/arch
 CPPFLAGS+=	${INCLUDES} -nostdinc -D_STANDALONE -DHEAP_LIMIT=0x8002ffff
-CFLAGS+=	-mips2 -EL -mno-abicalls -mno-half-pic -ffreestanding -mmemcpy
+CFLAGS+=	-mips2 -EL -mno-abicalls -ffreestanding -mmemcpy
+.if ${HAVE_GCC3} == "no"
+CFLAGS+=	-mno-half-pic
+.endif
 LD_SCRIPT=	lcboot.ldscript
 
 .if defined(ROMICE) && (${ROMICE} == "yes")
@@ -68,7 +73,7 @@ SRCS+=	vers.c
 CLEANFILES+=	vers.c
 .PHONY: vers.c
 vers.c: ${VERSIONFILE}
-	sh ${S}/conf/newvers_stand.sh ${.ALLSRC} 'hpcmips' ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.ALLSRC} 'hpcmips' ${NEWVERSWHAT}
 .endif
 
 CLEANFILES+=	${PROG}

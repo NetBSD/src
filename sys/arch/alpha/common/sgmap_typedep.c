@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.27.2.1 2003/07/02 15:25:14 darrenr Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.27.2.2 2004/08/03 10:31:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.27.2.1 2003/07/02 15:25:14 darrenr Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: sgmap_typedep.c,v 1.27.2.2 2004/08/03 10:31:18 skrll Exp $");
 
 #include "opt_ddb.h"
 

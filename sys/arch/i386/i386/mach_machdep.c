@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.9 2003/01/22 17:48:18 christos Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.9.2.1 2004/08/03 10:35:49 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.9 2003/01/22 17:48:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.9.2.1 2004/08/03 10:35:49 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.9 2003/01/22 17:48:18 christos Ex
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_host.h>
 #include <compat/mach/mach_thread.h>
+#include <compat/mach/mach_vm.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -78,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.9 2003/01/22 17:48:18 christos Ex
 #include <machine/vm86.h>
 #include <machine/vmparam.h>
 
-void mach_trap __P((struct trapframe));
+void mach_trap(struct trapframe);
 
 /*
  * Fast syscall gate trap...
@@ -90,8 +91,12 @@ mach_trap(frame)
 	extern struct emul emul_mach;
 
 	if (curproc->p_emul != &emul_mach) {
+		ksiginfo_t ksi;
 		DPRINTF(("mach trap %d on bad emulation\n", frame.tf_eax));
-		trapsignal(curlwp, SIGBUS, 0);
+		memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLTRP;
+		trapsignal(curlwp, &ksi);
 		return;
 	}
 
@@ -132,7 +137,7 @@ mach_host_basic_info(info)
 		info->cpu_subtype = MACHO_CPU_SUBTYPE_PENTPRO;
 		break;
 	default:
-		uprintf("Undefined cpu class %d",
+		uprintf("Undefined CPU class %d",
 		    cpu_info_primary.ci_cpu_class);
 		info->cpu_subtype = MACHO_CPU_SUBTYPE_I386_ALL;
 	}
@@ -198,3 +203,25 @@ mach_create_thread_child(arg)
 	printf("mach_create_thread_child %p\n", arg);
 #endif
 }
+
+int
+mach_thread_get_state_machdep(struct lwp *l, int flavor, void *state,
+    int *size)
+{
+	printf("Unimplemented thread state flavor %d\n", flavor);
+	return EINVAL;
+}
+
+int
+mach_thread_set_state_machdep(struct lwp *l, int flavor, void *state)
+{
+	printf("Unimplemented thread state flavor %d\n", flavor);
+	return EINVAL;
+}
+
+int
+mach_vm_machine_attribute_machdep(struct lwp *l, vaddr_t v, size_t s, int *ip)
+{
+	return 0;
+}
+

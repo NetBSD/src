@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_kbc.c,v 1.3 2002/10/02 04:40:08 thorpej Exp $	*/
+/*	$NetBSD: kb_kbc.c,v 1.3.6.1 2004/08/03 10:38:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kb_kbc.c,v 1.3.6.1 2004/08/03 10:38:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

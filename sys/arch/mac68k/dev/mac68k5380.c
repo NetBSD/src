@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.39 2003/06/18 08:58:38 drochner Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.39.2.1 2004/08/03 10:37:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -32,6 +32,9 @@
  * Derived from atari5380.c for the mac68k port of NetBSD.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.39.2.1 2004/08/03 10:37:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

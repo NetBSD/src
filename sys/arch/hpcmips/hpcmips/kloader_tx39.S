@@ -1,7 +1,7 @@
-/*	$NetBSD: kloader_tx39.S,v 1.1 2002/01/29 18:47:26 uch Exp $	*/
+/*	$NetBSD: kloader_tx39.S,v 1.1.20.1 2004/08/03 10:35:17 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,8 @@
  */
 EXPORT(kloader_tx_boot)
 LEAF_NOPROFILE(kloader_tx_boot)
+	lui	t0, 0x1040	# Cu0 | BEV
+	mtc0	t0, $12
 	/*
 	 * 1. load kernel image.
 	 */
@@ -125,7 +127,10 @@ LEAF_NOPROFILE(kloader_tx_boot)
 	lw	t1, 0(a0)	# kbi->entry
 	lw	a0, 4(t0)	# kbi->argc
 	lw	a1, 8(t0)	# kbi->argv
-	j	t1
-	 addiu	a2, t0, 12	# &kbi->bootinfo
+	addiu	a2, t0, 12	# &kbi->bootinfo
+	jr	t1
+	 move	sp, t1
+1:	b	1b
+	 nop
 	/* NOTREACHED */
 END(kloader_tx_boot)

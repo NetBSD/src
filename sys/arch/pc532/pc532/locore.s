@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.72 2003/06/24 04:57:59 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.72.2.1 2004/08/03 10:38:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -44,6 +44,7 @@
 #include "opt_kgdb.h"
 #include "opt_cpu30mhz.h"
 #include "opt_ns381.h"
+#include "opt_compat_netbsd.h"
 
 #include "assym.h"
 
@@ -148,7 +149,7 @@ KENTRY(delay, 4)		/* bsr  2 cycles;  80 ns */
 /*
  * Signal trampoline; copied to top of user stack.
  */
-
+#ifdef COMPAT_16
 ENTRY_NOPROFILE(sigcode)
 	/*
 	 * Handler has returned here as if we called it.  The sigcontext
@@ -156,7 +157,7 @@ ENTRY_NOPROFILE(sigcode)
 	 */
 	addr	12(sp),4(sp)		/* get pointer to sigcontext
 					   and put it in the argument slot */
-	movd	SYS___sigreturn14,r0
+	movd	SYS_compat_16___sigreturn14,r0
 	svc
 	.long	0x0000a517		/* movd	0,0 -- illegal instruction. */
 GLOBAL(esigcode)
@@ -164,6 +165,7 @@ GLOBAL(esigcode)
 #if defined(PROF) || defined(GPROF) || defined(KGDB) || defined(DDB)
 	/* Just a gap between esigcode and the next label */
 	.long	0
+#endif
 #endif
 
 /****************************************************************************/
@@ -376,13 +378,13 @@ KENTRY(copystr, 16)
 
 	/*
 	 * Terminated due to limit count.
-	 * Return ENAMETOOLONG. 
+	 * Return ENAMETOOLONG.
 	 */
 0:	movd	ENAMETOOLONG,r0
 	br	2f
 
 1:	/*
-	 * Terminated due to match. Adjust 
+	 * Terminated due to match. Adjust
 	 * count and transfer final element.
 	 */
 	addqd	-1,r1
@@ -505,7 +507,7 @@ KENTRY(fuword, 4)
 	movd	S_ARG0,r0
 	/*
 	 * MACH's locore.s code says that
-	 * due to cpu bugs the destination
+	 * due to CPU bugs the destination
 	 * of movusi can't be a register or tos.
 	 */
 	movusd	0(r0),S_ARG0
@@ -1152,11 +1154,11 @@ ASENTRY_NOPROFILE(interrupt)
 	orw	r2,_C_LABEL(Cur_pl)(pc)
 	orw	r2,@ICU_ADR+IMSK
 	movb	@ICU_ADR+HVCT,r2	/* Acknowledge Interrupt */
-	/* 
-	 * Flush pending writes and then enable CPU interrupts. 
+	/*
+	 * Flush pending writes and then enable CPU interrupts.
 	 */
 	ints_off ; ints_on
-	/* 
+	/*
 	 * Increment interrupt counters.
 	 */
 	addqd	1,_C_LABEL(intrcnt)(pc)[r1:d]
@@ -1234,7 +1236,7 @@ GLOBAL(inttab)
 /*
  * void *ram_size(void *start);
  * Determine RAM size.
- * 
+ *
  * First attempt: write-and-read-back (WRB) each page from start
  * until WRB fails or get a parity error.  This didn't work because
  * address decoding wraps around.
@@ -1256,7 +1258,7 @@ GLOBAL(inttab)
  * can be held by capacitance on the bus and can be correctly
  * read back if there is no intervening bus cycle.  Hence,
  * read and write two patterns.
- * 
+ *
  * Registers:
  *   r0 - current page, return value
  *   r1 - old config register

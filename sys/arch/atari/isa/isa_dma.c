@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_dma.c,v 1.2 2003/05/05 12:55:42 fvdl Exp $	*/
+/*	$NetBSD: isa_dma.c,v 1.2.2.1 2004/08/03 10:33:26 skrll Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -38,6 +38,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isa_dma.c,v 1.2.2.1 2004/08/03 10:33:26 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

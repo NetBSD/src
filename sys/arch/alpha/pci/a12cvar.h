@@ -1,4 +1,4 @@
-/* $NetBSD: a12cvar.h,v 1.2 1998/03/02 06:56:16 ross Exp $ */
+/* $NetBSD: a12cvar.h,v 1.2.48.1 2004/08/03 10:31:20 skrll Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -77,7 +77,7 @@ void	a12c_dma_init __P((struct a12c_config *));
 bus_space_tag_t	a12c_bus_io_init __P((void *));
 bus_space_tag_t	a12c_bus_mem_init __P((void *));
 /*
- * The following two cpu numbers are relative to the local switch;
+ * The following two CPU numbers are relative to the local switch;
  * in a multistage system these numbers will not be unique. a12_ethercpu
  * is used to route bootp packets and to mount the root FS.
  */

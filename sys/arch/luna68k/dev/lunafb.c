@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.11 2003/04/02 00:08:13 thorpej Exp $ */
+/* $NetBSD: lunafb.c,v 1.11.2.1 2004/08/03 10:36:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.11 2003/04/02 00:08:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.11.2.1 2004/08/03 10:36:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,22 +295,20 @@ omgetcmap(sc, p)
 	struct wsdisplay_cmap *p;
 {
 	u_int index = p->index, count = p->count;
-        int cmsize;
+	int cmsize, error;
 
 	cmsize = sc->sc_dc->dc_cmsize;
 	if (index >= cmsize || count > cmsize - index)
 		return (EINVAL);
 
-	if (!uvm_useracc(p->red, count, B_WRITE) ||
-	    !uvm_useracc(p->green, count, B_WRITE) ||
-	    !uvm_useracc(p->blue, count, B_WRITE))
-		return (EFAULT);
-
-	copyout(&sc->sc_cmap.r[index], p->red, count);
-	copyout(&sc->sc_cmap.g[index], p->green, count);
-	copyout(&sc->sc_cmap.b[index], p->blue, count);
-
-	return (0);
+	error = copyout(&sc->sc_cmap.r[index], p->red, count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_cmap.g[index], p->green, count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_cmap.b[index], p->blue, count);
+	return error;
 }
 
 static int
@@ -318,22 +316,27 @@ omsetcmap(sc, p)
 	struct omfb_softc *sc;
 	struct wsdisplay_cmap *p;
 {
+	struct hwcmap cmap;
 	u_int index = p->index, count = p->count;
-        int cmsize, i;
+	int cmsize, i, error;
 
 	cmsize = sc->sc_dc->dc_cmsize;
 	if (index >= cmsize || (index + count) > cmsize)
 		return (EINVAL);
 
-	if (!uvm_useracc(p->red, count, B_READ) ||
-	    !uvm_useracc(p->green, count, B_READ) ||
-	    !uvm_useracc(p->blue, count, B_READ))
-		return (EFAULT);
+	error = copyin(p->red, &cmap.r[index], count);
+	if (error)
+		return error;
+	error = copyin(p->green, &cmap.g[index], count);
+	if (error)
+		return error;
+	error = copyin(p->blue, &cmap.b[index], count);
+	if (error)
+		return error;
 
-	copyin(p->red, &sc->sc_cmap.r[index], count);
-	copyin(p->green, &sc->sc_cmap.g[index], count);
-	copyin(p->blue, &sc->sc_cmap.b[index], count);
-
+	memcpy(&sc->sc_cmap.r[index], &cmap.r[index], count);
+	memcpy(&sc->sc_cmap.g[index], &cmap.g[index], count);
+	memcpy(&sc->sc_cmap.b[index], &cmap.b[index], count);
 	if (hwplanemask == 0x0f) {
 		struct bt454 *odac = (struct bt454 *)OMFB_RAMDAC;
 		odac->bt_addr = index;

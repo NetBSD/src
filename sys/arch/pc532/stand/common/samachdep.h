@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.1 1997/05/17 13:56:08 matthias Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.1.54.1 2004/08/03 10:38:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #define	NSCSI		1
-#define NSD		8
+#define	NSD		8
 
 extern	int howto;
 extern	u_int bootdev;
@@ -44,17 +40,17 @@ extern	u_int bootdev;
 extern	char bootprog_name[], bootprog_rev[], bootprog_date[],
 	    bootprog_maker[];
 
-int	tgetchar __P((void));
-int	tgets __P((char *));
+int	tgetchar(void);
+int	tgets(char *);
 
 struct open_file;
 
-int	mdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	mdopen __P((struct open_file *, ...));
-int	mdclose __P((struct open_file *));
-#define mdioctl		noioctl
+int	mdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	mdopen(struct open_file *, ...);
+int	mdclose(struct open_file *);
+#define	mdioctl		noioctl
 
-int	sdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	sdopen __P((struct open_file *, ...));
-int	sdclose __P((struct open_file *));
+int	sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int	sdopen(struct open_file *, ...);
+int	sdclose(struct open_file *);
 #define	sdioctl		noioctl

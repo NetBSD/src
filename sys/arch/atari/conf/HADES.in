@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES.in,v 1.6 2003/02/02 18:26:23 thomas Exp $
+#	$NetBSD: HADES.in,v 1.6.2.1 2004/08/03 10:33:10 skrll Exp $
 #
 # Medusa-Hades
 #
@@ -42,9 +42,10 @@ et0		at vme0		# Crazy Dots II
 isab0		at mainbus0	# ISA-bus
 isa0		at isab0
 wdc0		at mainbus0	# IDE-bus
-wd*		at wdc? channel ? drive ?
+atabus* 	at wdc? channel ?
+wd*		at atabus? drive ?
 # ATAPI bus support
-atapibus*	at wdc? channel ?
+atapibus*	at atabus?
 
 # ATAPI devices
 cd*	at atapibus? drive ?		# ATAPI CD-ROM drives

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.34 2003/05/31 03:05:45 kristerw Exp $ */
+/*	$NetBSD: ite_cc.c,v 1.34.2.1 2004/08/03 10:31:53 skrll Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.34 2003/05/31 03:05:45 kristerw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.34.2.1 2004/08/03 10:31:53 skrll Exp $");
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -702,7 +702,7 @@ clear8(struct ite_softc *ip, int sy, int sx, int h, int w)
 	  for (i=0; i < ip->ftheight; i++) {
             bzero(ptr, bm->bytes_per_row);
             ptr += bm->bytes_per_row + bm->row_mod;			/* don't get any smart
-                                                   ideas, becuase this is for
+                                                   ideas, because this is for
                                                    interleaved bitmaps */
           }
 	  sy++;

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON.in,v 1.6 2002/09/02 12:10:46 leo Exp $
+#	$NetBSD: FALCON.in,v 1.6.6.1 2004/08/03 10:33:10 skrll Exp $
 #
 # ATARI-FALCON
 #
@@ -41,10 +41,11 @@ ser0		at mainbus0	# UART on first 68901 (ttyB0)
 #endif
 
 wdc0		at mainbus0	# IDE-bus
-wd*		at wdc? channel ? drive ?
+atabus* 	at wdc? channel ?
+wd*		at atabus? drive ?
 
  # ATAPI bus support
-atapibus* at wdc? channel ?
+atapibus* at atabus?
 
 # ATAPI devices
 cd*	at atapibus? drive ?	# ATAPI CD-ROM drives

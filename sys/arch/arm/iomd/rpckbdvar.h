@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbdvar.h,v 1.1 2001/10/05 22:27:42 reinoud Exp $	*/
+/*	$NetBSD: rpckbdvar.h,v 1.1.24.1 2004/08/03 10:32:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,6 +77,8 @@ extern int rpckbd_reset		__P((struct rpckbd_softc *sc));
 extern int rpckbd_intr		__P((void *arg));
 extern int rpckbd_init		__P((struct device *self, int isconsole, vaddr_t, vaddr_t));
 extern int rpckbd_cnattach	__P((struct device *self));
+extern void rpckbd_hookup_bell __P((void (*fn)(void *, u_int, u_int, u_int, int),
+				       void *));
 
 /* End of rpckbdvar.h */
 

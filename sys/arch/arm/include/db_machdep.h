@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.7 2003/04/29 17:06:04 scw Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.7.2.1 2004/08/03 10:32:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -64,6 +64,7 @@ db_regs_t		ddb_regs;	/* register state */
 
 /*#define FIXUP_PC_AFTER_BREAK(regs)	((regs)->tf_pc -= BKPT_SIZE)*/
 
+#define	T_FAULT				(0)
 #define T_BREAKPOINT			(1)
 
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAKPOINT)

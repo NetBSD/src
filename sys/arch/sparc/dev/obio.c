@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.63 2003/05/03 18:11:00 wiz Exp $	*/
+/*	$NetBSD: obio.c,v 1.63.2.1 2004/08/03 10:40:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.63.2.1 2004/08/03 10:40:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,28 +99,8 @@ static	int _obio_bus_map __P((bus_space_tag_t, bus_addr_t,
 			       bus_size_t, int,
 			       vaddr_t, bus_space_handle_t *));
 
-static struct sparc_bus_space_tag obio_space_tag = {
-	NULL,				/* cookie */
-	NULL,				/* parent bus tag */
-	NULL,				/* ranges */
-	0,				/* nranges */
-	_obio_bus_map,			/* bus_space_map */ 
-	NULL,				/* bus_space_unmap */
-	NULL,				/* bus_space_subregion */
-	NULL,				/* bus_space_barrier */ 
-	obio_bus_mmap,			/* bus_space_mmap */ 
-	NULL,				/* bus_intr_establish */
-#if __FULL_SPARC_BUS_SPACE
-	NULL,				/* read_1 */
-	NULL,				/* read_2 */
-	NULL,				/* read_4 */
-	NULL,				/* read_8 */
-	NULL,				/* write_1 */
-	NULL,				/* write_2 */
-	NULL,				/* write_4 */
-	NULL,				/* write_8 */
-#endif
-}; 
+/* There's at most one obio bus, so we can allocate the bus tag statically */
+static struct sparc_bus_space_tag obio_space_tag;
 #endif
 
 /*
@@ -172,8 +154,11 @@ obioattach(parent, self, aux)
 		sc->sc_bustag = ma->ma_bustag;
 		sc->sc_dmatag = ma->ma_dmatag;
 
+		memcpy(&obio_space_tag, sc->sc_bustag, sizeof(obio_space_tag));
 		obio_space_tag.cookie = sc;
 		obio_space_tag.parent = sc->sc_bustag;
+		obio_space_tag.sparc_bus_map = _obio_bus_map;
+		obio_space_tag.sparc_bus_mmap = obio_bus_mmap;
 
 		oa.ma = ma;
 
@@ -243,13 +228,12 @@ _obio_bus_map(t, ba, size, flags, va, hp)
 	vaddr_t va;
 	bus_space_handle_t *hp;
 {
-	struct obio4_softc *sc = t->cookie;
 
 	if ((flags & OBIO_BUS_MAP_USE_ROM) != 0 &&
 	     obio_find_rom_map(ba, size, hp) == 0)
 		return (0);
 
-	return (bus_space_map2(sc->sc_bustag, ba, size, flags, va, hp));
+	return (bus_space_map2(t->parent, ba, size, flags, va, hp));
 }
 
 paddr_t
@@ -260,9 +244,8 @@ obio_bus_mmap(t, ba, off, prot, flags)
 	int prot;
 	int flags;
 {
-	struct obio4_softc *sc = t->cookie;
 
-	return (bus_space_mmap(sc->sc_bustag, ba, off, prot, flags));
+	return (bus_space_mmap(t->parent, ba, off, prot, flags));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.7 2002/03/02 22:01:35 uch Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.7.14.1 2004/08/03 10:34:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -107,19 +107,19 @@ hpcboot(void *arg)
 
 	menu.progress();
 	if (!f.setup()) {
-		error_message = TEXT("architecture not supported.\n");
+		error_message = TEXT("Architecture not supported.\n");
 		goto failed_exit;
 	}
 
 	menu.progress();
 	if (!f.create()) {
-		error_message = TEXT("architexture ops. not found.\n");
+		error_message = TEXT("Architecture ops. not found.\n");
 		goto failed_exit;
 	}
 
 	menu.progress();
 	if (!f._arch->init()) {
-		error_message = TEXT("architecture initialize failed.\n");
+		error_message = TEXT("Architecture initialize failed.\n");
 		goto failed_exit;
 	}
 
@@ -128,36 +128,38 @@ hpcboot(void *arg)
 	menu.progress();
 	// kernel / file system image directory.
 	if (!f._file->setRoot(f.args.fileRoot)) {
-		error_message = TEXT("couldn't set root directory.\n");
+		error_message = TEXT("Can't set root directory.\n");
 		goto failed_exit;
 	}
 
-	// open file system image.
+	// determine the size of file system image.
 	if (f.args.loadmfs)
 	{
 		if (!f._file->open(f.args.mfsName)) {
 			error_message =
-			    TEXT("couldn't open file system image.\n");
+			    TEXT("Can't open file system image.\n");
 			goto failed_exit;
 		}
-		sz = f._file->size();
+		sz = f._file->realsize();
 		sz = f._mem->roundPage(sz);
 		f._file->close();
 	}
 
 	menu.progress();
 	if (!f._file->open(f.args.fileName)) {
-		error_message = TEXT("couldn't open kernel image.\n");
+		error_message = TEXT("Can't open kernel image.\n");
 		goto failed_exit;
 	}
 
 	menu.progress();
 	// put kernel to loader.
-	if (!f.attachLoader())
+	if (!f.attachLoader()) {
+		error_message = TEXT("Can't attach loader.\n");
 		goto file_close_exit;
+	}
 
 	if (!f._loader->setFile(f._file)) {
-		error_message = TEXT("couldn't initialize loader.\n");
+		error_message = TEXT("Can't initialize loader.\n");
 		goto file_close_exit;
 	}
 
@@ -166,20 +168,20 @@ hpcboot(void *arg)
 
 	// allocate required memory.
 	if (!f._arch->allocateMemory(sz)) {
-		error_message = TEXT("couldn't allocate memory.\n");
+		error_message = TEXT("Can't allocate memory.\n");
 		goto file_close_exit;
 	}
 
 	menu.progress();
 	// load kernel to memory.
 	if (!f._arch->setupLoader()) {
-		error_message = TEXT("couldn't set up loader.\n");
+		error_message = TEXT("Can't set up loader.\n");
 		goto file_close_exit;
 	}
 
 	menu.progress();
 	if (!f._loader->load()) {
-		error_message = TEXT("couldn't load kernel image to memory.\n");
+		error_message = TEXT("Can't load kernel image to memory.\n");
 		goto file_close_exit;
 	}
 	menu.progress();
@@ -189,12 +191,12 @@ hpcboot(void *arg)
 	if (f.args.loadmfs) {
 		if (!f._file->open(f.args.mfsName)) {
 			error_message =
-			    TEXT("couldn't open file system image.\n");
+			    TEXT("Can't open file system image.\n");
 			goto failed_exit;
 		}
 		if (!f._loader->loadExtData()) {
 			error_message =
-			    TEXT("couldn't load filesystem image to memory.\n");
+			    TEXT("Can't load file system image to memory.\n");
 			goto file_close_exit;
 		}
 		f._file->close();
@@ -210,21 +212,31 @@ hpcboot(void *arg)
 
 	// jump to kernel entry.
 	if (HPC_PREFERENCE.pause_before_boot) {
-		if (MessageBox(menu._root->_window, TEXT("Push OK to boot."),
-		    TEXT("Last chance..."), MB_YESNO) != IDYES)
+		if (MessageBox(menu._root->_window, TEXT("Push YES to boot."),
+		    TEXT("Last chance..."),
+		    MB_ICONWARNING | MB_YESNO) != IDYES)
+		{
+			error_message = TEXT("Canceled by user.\n");
 			goto failed_exit;
+		}
+		// redraw areas damaged by the dialog
+		UpdateWindow(menu._root->_window);
 	}
 
 	f._arch->jump(p, f._loader->tagStart());
 	// NOTREACHED
+	error_message = TEXT("Can't jump to the kernel.\n");
 
  file_close_exit:
-	if (error_message == 0)
-		error_message = TEXT("can't jump to kernel.\n");
 	f._file->close();
+
  failed_exit:
+	if (error_message == 0)
+		error_message = TEXT("Unknown error?\n");
 	MessageBox(menu._root->_window, error_message,
-	    TEXT("BOOT FAILED"), 0);
+	    TEXT("BOOT FAILED"), MB_ICONERROR | MB_OK);
+
+	menu.unprogress();	// rewind progress bar
 }
 
 //

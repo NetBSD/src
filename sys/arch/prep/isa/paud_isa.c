@@ -1,4 +1,4 @@
-/*	$NetBSD: paud_isa.c,v 1.5 2002/10/02 15:52:29 thorpej Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.5.6.1 2004/08/03 10:39:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.5.6.1 2004/08/03 10:39:48 skrll Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -134,13 +137,13 @@ paud_match_isa(struct device *parent, struct cfdata *cf, void *aux)
 	struct ad1848_isa_softc probesc, *sc = &probesc;
 	struct isa_attach_args *ia = aux;
 
-	if (ia->ia_iobase != 0x830)
+	if (ia->ia_io[0].ir_addr != 0x830)
 		return 0;
 
 	sc->sc_ad1848.sc_iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
-	if (ad1848_isa_mapprobe(sc, ia->ia_iobase)) {
-		ia->ia_iosize = AD1848_NPORT;
+	if (ad1848_isa_mapprobe(sc, ia->ia_io[0].ir_addr)) {
+		ia->ia_io[0].ir_size = AD1848_NPORT;
 		ad1848_isa_unmap(sc);
 		return 1;
 	}
@@ -159,13 +162,13 @@ paud_attach_isa(struct device *parent, struct device *self, void *aux)
 	sc->sc_ad1848.sc_iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
 
-	if (ad1848_isa_mapprobe(sc, ia->ia_iobase) == 0) {
+	if (ad1848_isa_mapprobe(sc, ia->ia_io[0].ir_addr) == 0) {
 		printf(": attach failed\n");
 		return;
 	}
-	sc->sc_playdrq = ia->ia_drq;
-	sc->sc_recdrq = ia->ia_drq2;
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
+	sc->sc_playdrq = ia->ia_drq[0].ir_drq;
+	sc->sc_recdrq = ia->ia_drq[1].ir_drq;
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 				       IST_EDGE, IPL_AUDIO,
 				       ad1848_isa_intr, sc);
 	ad1848_isa_attach(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: int_mwgwtypes.h,v 1.2 2001/04/26 16:25:21 kleink Exp $	*/
+/*	$NetBSD: int_mwgwtypes.h,v 1.2.26.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,8 +65,8 @@ typedef	unsigned long long int	uint_least64_t;
 
 typedef	__signed char		   int_fast8_t;
 typedef	unsigned char		  uint_fast8_t;
-typedef	short int		  int_fast16_t;
-typedef	unsigned short int	 uint_fast16_t;
+typedef	int			  int_fast16_t;
+typedef	unsigned int		 uint_fast16_t;
 typedef	int			  int_fast32_t;
 typedef	unsigned int		 uint_fast32_t;
 #ifdef __COMPILER_INT64__

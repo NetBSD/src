@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.45 2003/05/10 23:12:34 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.45.2.1 2004/08/03 10:37:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -68,12 +64,15 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.45.2.1 2004/08/03 10:37:09 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 #include <sys/syslog.h>
 
 #include <machine/bswap.h>
@@ -351,16 +350,16 @@ read_mbr_label(dlbuf, lp, match)
 	*match = 0;
 	msg = NULL;
 
-	if (MBR_MAGIC != bswap16(*(u_int16_t *)(dlbuf + MBR_MAGICOFF)))
+	if (MBR_MAGIC != bswap16(*(u_int16_t *)(dlbuf + MBR_MAGIC_OFFSET)))
 		return msg;
 
 	/* Found MBR magic number; set up disklabel */
 	*match = (-1);
-	mbr_lbl_off = MBR_BBSECTOR * lp->d_secsize + MBR_PARTOFF;
+	mbr_lbl_off = MBR_BBSECTOR * lp->d_secsize + MBR_PART_OFFSET;
 	
 	dp = (struct mbr_partition *)(dlbuf + mbr_lbl_off);
-	for (i = 0; i < NMBRPART; i++, dp++) {
-		if (dp->mbrp_typ == 0)
+	for (i = 0; i < MBR_PART_COUNT; i++, dp++) {
+		if (dp->mbrp_type == 0)
 			continue;
 		
 		slot = getFreeLabelEntry(lp);
@@ -372,7 +371,7 @@ read_mbr_label(dlbuf, lp, match)
 		pp->p_size = bswap32(dp->mbrp_size);
 		
 		for (ip = fat_types; *ip != -1; ip++) {
-			if (dp->mbrp_typ == *ip) {
+			if (dp->mbrp_type == *ip) {
 				pp->p_fstype = FS_MSDOS;
 				break;
 			}

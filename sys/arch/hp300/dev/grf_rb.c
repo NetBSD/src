@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rb.c,v 1.24 2003/04/01 20:41:37 thorpej Exp $	*/
+/*	$NetBSD: grf_rb.c,v 1.24.2.1 2004/08/03 10:34:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,9 +37,43 @@
  */
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: grf_rb.c 1.15 93/08/13$
+ *
+ *	@(#)grf_rb.c	8.4 (Berkeley) 1/12/94
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -83,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rb.c,v 1.24 2003/04/01 20:41:37 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_rb.c,v 1.24.2.1 2004/08/03 10:34:23 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -100,7 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_rb.c,v 1.24 2003/04/01 20:41:37 thorpej Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
- 
+
 #include <dev/cons.h>
 
 #include <hp300/dev/diovar.h>
@@ -439,7 +473,7 @@ rbox_init(ip)
 	REGBASE->vdrive = 0x0;
 
 	ite_fontinfo(ip);
-	
+
 	REGBASE->opwen = 0xFF;
 
 	/*
@@ -460,7 +494,7 @@ rbox_init(ip)
 	}
 
 	REGBASE->rep_rule = 0x33;
-	
+
 	/*
 	 * I cannot figure out how to make the blink planes stop. So, we
 	 * must set both colormaps so that when the planes blink, and
@@ -480,12 +514,12 @@ rbox_init(ip)
 	CM2GRN[0x01].value = 0xFF;
 	CM2BLU[0x01].value = 0xFF;
 
- 	REGBASE->blink = 0x00;
+	REGBASE->blink = 0x00;
 	REGBASE->write_enable = 0x01;
 	REGBASE->opwen = 0x00;
-	
+
 	ite_fontinit(ip);
-	
+
 	/*
 	 * Stash the inverted cursor.
 	 */
@@ -501,16 +535,16 @@ rbox_deinit(ip)
 	rbox_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
 	rb_waitbusy(ip->regbase);
 
-   	ip->flags &= ~ITE_INITED;
+	ip->flags &= ~ITE_INITED;
 }
 
 void
 rbox_putc(ip, c, dy, dx, mode)
 	struct ite_data *ip;
-        int dy, dx, c, mode;
+	int dy, dx, c, mode;
 {
-        int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
-	
+	int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
+
 	rbox_windowmove(ip, charY(ip, c), charX(ip, c),
 			dy * ip->ftheight, dx * ip->ftwidth,
 			ip->ftheight, ip->ftwidth, wrr);
@@ -519,7 +553,7 @@ rbox_putc(ip, c, dy, dx, mode)
 void
 rbox_cursor(ip, flag)
 	struct ite_data *ip;
-        int flag;
+	int flag;
 {
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
@@ -537,15 +571,15 @@ rbox_clear(ip, sy, sx, h, w)
 	int sy, sx, h, w;
 {
 	rbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			sy * ip->ftheight, sx * ip->ftwidth, 
+			sy * ip->ftheight, sx * ip->ftwidth,
 			h  * ip->ftheight, w  * ip->ftwidth,
 			RR_CLEAR);
 }
 
 void
 rbox_scroll(ip, sy, sx, count, dir)
-        struct ite_data *ip;
-        int sy, count, dir, sx;
+	struct ite_data *ip;
+	int sy, count, dir, sx;
 {
 	int dy;
 	int dx = sx;
@@ -569,7 +603,7 @@ rbox_scroll(ip, sy, sx, count, dir)
 		dy = sy;
 		dx = sx - count;
 		width = ip->cols - sx;
-	}		
+	}
 
 	rbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
 			dy * ip->ftheight, dx * ip->ftwidth,
@@ -585,7 +619,7 @@ rbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	struct rboxfb *rp = REGBASE;
 	if (h == 0 || w == 0)
 		return;
-	
+
 	rb_waitbusy(ip->regbase);
 	rp->rep_rule = func << 4 | func;
 	rp->source_y = sy;
@@ -615,7 +649,8 @@ rboxcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	va = bus_space_vaddr(bst, bsh);
 	grf = (struct grfreg *)va;
 
-	if ((grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_RENAISSANCE)) {
+	if (badaddr(va) ||
+	    (grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_RENAISSANCE)) {
 		bus_space_unmap(bst, bsh, PAGE_SIZE);
 		return (1);
 	}

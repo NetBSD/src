@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.6 2002/10/02 03:31:59 thorpej Exp $	*/
+/*	$NetBSD: csa.c,v 1.6.8.1 2004/08/03 10:30:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Cumana SCSI 1 driver using the generic NCR5380 driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: csa.c,v 1.6.8.1 2004/08/03 10:30:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

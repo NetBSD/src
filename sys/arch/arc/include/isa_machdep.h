@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.8 2003/06/14 19:11:40 tsutsui Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.8.2.1 2004/08/03 10:32:21 skrll Exp $	*/
 /*      $OpenBSD: isa_machdep.h,v 1.5 1997/04/19 17:20:00 pefo Exp $  */
 
 /*
@@ -40,7 +40,7 @@ typedef struct arc_isa_bus *isa_chipset_tag_t;
 /*
  *      I/O macros to access isa bus ports/memory.
  *      At the first glance theese macros may seem inefficient.
- *      However, the cpu executes an instruction every 7.5ns
+ *      However, the CPU executes an instruction every 7.5ns
  *      so the bus is much slower so it doesn't matter, really.
  */
 #define isa_outb(x,y)   outb(arc_bus_io.bs_vbase + (x)- arc_bus_io.bs_start, y)

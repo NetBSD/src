@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.6 2003/01/17 22:11:17 thorpej Exp $ */
+/* $NetBSD: fp_complete.c,v 1.6.2.1 2004/08/03 10:31:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.6 2003/01/17 22:11:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.6.2.1 2004/08/03 10:31:03 skrll Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -166,7 +166,7 @@ this_cannot_happen(int what_cannot_happen, int64_t bits)
 		printf("FP instruction %x\n", (unsigned int)bits);
 	printf("FP event %d/%lx/%lx\n", what_cannot_happen, reported,
 	    alpha_shadow.uop);
-	printf("Please report this to port-alpha-maintainer@netbsd.org\n");
+	printf("Please report this to port-alpha-maintainer@NetBSD.org\n");
 }
 
 static __inline void

@@ -1,4 +1,4 @@
-/*	$NetBSD: msconfig.c,v 1.3 1999/01/11 22:21:30 kleink Exp $	*/
+/*	$NetBSD: msconfig.c,v 1.3.42.1 2004/08/03 10:33:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Thomas Gerner.
@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>

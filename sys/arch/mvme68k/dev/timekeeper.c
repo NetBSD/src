@@ -1,4 +1,4 @@
-/*	$NetBSD: timekeeper.c,v 1.5 2002/10/02 05:28:14 thorpej Exp $	*/
+/*	$NetBSD: timekeeper.c,v 1.5.6.1 2004/08/03 10:38:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * userland application.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.5.6.1 2004/08/03 10:38:08 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -53,19 +56,15 @@
 
 #include <dev/mvme/clockvar.h>
 
-#include <mvme68k/dev/mainbus.h>
+#include <dev/ic/mk48txxreg.h>
+#include <dev/ic/mk48txxvar.h>
 
-struct timekeeper_softc {
-	struct device		sc_dev;
-	bus_space_tag_t		sc_bust;
-	bus_space_handle_t	sc_bush;
-	bus_size_t		sc_size;
-};
+#include <mvme68k/dev/mainbus.h>
 
 int timekeeper_match(struct device *, struct cfdata *, void *);
 void timekeeper_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(timekeeper, sizeof(struct timekeeper_softc),
+CFATTACH_DECL(timekeeper, sizeof(struct mk48txx_softc),
     timekeeper_match, timekeeper_attach, NULL, NULL);
 
 extern struct cfdriver timekeeper_cd;
@@ -90,31 +89,28 @@ timekeeper_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct timekeeper_softc *sc = (struct timekeeper_softc *)self;
+	struct mk48txx_softc *sc = (void *)self;
 	struct mainbus_attach_args *ma = aux;
-	todr_chip_handle_t todr;
-	const char *model;
+	bus_size_t size;
 
-	sc->sc_bust = ma->ma_bust;
+	sc->sc_bst = ma->ma_bust;
 
 	if (machineid == MVME_147) {
-		sc->sc_size = MK48T02_CLKSZ;
-		model = "mk48t02";
+		size = MK48T02_CLKSZ;
+		sc->sc_model = "mk48t02";
 	} else {
-		sc->sc_size = MK48T08_CLKSZ;
-		model = "mk48t08";
+		size = MK48T08_CLKSZ;
+		sc->sc_model = "mk48t08";
 	}
 
-	bus_space_map(ma->ma_bust, ma->ma_offset, sc->sc_size, 0, &sc->sc_bush);
+	bus_space_map(sc->sc_bst, ma->ma_offset, size, 0, &sc->sc_bsh);
 
-	todr = mk48txx_attach(sc->sc_bust, sc->sc_bush, model, YEAR0,
-	    NULL, NULL);
-	if (todr == NULL)
-		panic("\ntimekeeper_attach");
+	sc->sc_year0 = YEAR0;
+	mk48txx_attach(sc);
 
 	printf(" Time-Keeper RAM\n");
 	printf("%s: %ld bytes NVRAM plus Realtime Clock\n",
-	    sc->sc_dev.dv_xname, sc->sc_size);
+	    sc->sc_dev.dv_xname, sc->sc_nvramsz);
 
-	clock_rtc_config(todr);
+	todr_attach(&sc->sc_handle);
 }

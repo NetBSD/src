@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.7 2000/01/17 16:57:15 pk Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.7.28.1 2004/08/03 10:40:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -56,7 +52,7 @@
 #define FDREG77_CCR	7		/* Configuration Control (W) */
 
 /*
- * Register offsets for the 82077 controller.
+ * Register offsets for the 82072 controller.
  */
 #define FDREG72_MSR	0		/* Main Status Register (R) */
 #define FDREG72_DRS	0		/* Data Rate Select Register (W) */
@@ -80,6 +76,7 @@
 #define FDO_DEN		0x40		/* Density select */
 #define FDO_EJ		0x80		/* Eject disk */
 
+/* Digital Input Register bits */
 #define	FDI_DCHG	0x80		/*   diskette has been changed */
 
 /* XXX - find a place for these... */

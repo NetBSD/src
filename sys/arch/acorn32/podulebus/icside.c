@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.10 2002/10/02 03:31:59 thorpej Exp $	*/
+/*	$NetBSD: icside.c,v 1.10.8.1 2004/08/03 10:30:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.10 2002/10/02 03:31:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.10.8.1 2004/08/03 10:30:55 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.10 2002/10/02 03:31:59 thorpej Exp $");
 #include <acorn32/podulebus/icsidereg.h>
 
 #include <dev/ata/atavar.h>
+#include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 #include <dev/podulebus/podules.h>
 
@@ -82,9 +83,10 @@ struct icside_softc {
 	bus_space_tag_t		sc_latchiot;	/* EEPROM page latch etc */
 	bus_space_handle_t	sc_latchioh;
 	void			*sc_shutdownhook;
-	struct channel_softc *sc_chp[ICSIDE_MAX_CHANNELS];
+	struct wdc_channel *sc_chp[ICSIDE_MAX_CHANNELS];
 	struct icside_channel {
-		struct channel_softc	wdc_channel;	/* generic part */
+		struct wdc_channel	wdc_channel;	/* generic part */
+		struct ata_queue	wdc_chqueue;	/* channel queue */
 		void			*ic_ih;		/* interrupt handler */
 		struct evcnt		ic_intrcnt;	/* interrupt count */
 		u_int			ic_irqaddr;	/* interrupt flag */
@@ -174,9 +176,9 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh;
 	const struct ide_version *ide = NULL;
 	u_int iobase;
-	int channel;
+	int channel, i;
 	struct icside_channel *icp;
-	struct channel_softc *cp;
+	struct wdc_channel *cp;
 	int loop;
 	int id;
 
@@ -259,16 +261,9 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_wdcdev.channels[channel] = &icp->wdc_channel;
 		cp = &icp->wdc_channel;
 
-		cp->channel = channel;
-		cp->wdc = &sc->sc_wdcdev;
-		cp->ch_queue = malloc(sizeof(struct channel_queue), M_DEVBUF,
-		    M_NOWAIT);
-		if (cp->ch_queue == NULL) {
-			printf("%s:%d: "
-			    "can't allocate memory for command queue",
-			    sc->sc_wdcdev.sc_dev.dv_xname, channel);
-			continue;
-		}
+		cp->ch_channel = channel;
+		cp->ch_wdc = &sc->sc_wdcdev;
+		cp->ch_queue = &icp->wdc_chqueue;
 		cp->cmd_iot = &sc->sc_tag;
 		cp->ctl_iot = &sc->sc_tag;
 		if (ide->modspace)
@@ -277,8 +272,14 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 			iobase = pa->pa_podule->fast_base;
 
 		if (bus_space_map(iot, iobase + ide->ideregs[channel],
-		    IDE_REGISTER_SPACE, 0, &cp->cmd_ioh))
+		    IDE_REGISTER_SPACE, 0, &cp->cmd_baseioh))
 			return;
+		for (i = 0; i < IDE_REGISTER_SPACE; i++) {
+			if (bus_space_subregion(cp->cmd_iot, cp->cmd_baseioh,
+				i, i == 0 ? 4 : 1, &cp->cmd_iohs[i]) != 0)
+				return;
+		}
+		wdc_init_shadow_regs(cp);
 		if (bus_space_map(iot, iobase + ide->auxregs[channel],
 		    AUX_REGISTER_SPACE, 0, &cp->ctl_ioh))
 			return;
@@ -286,10 +287,6 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 		if (bus_space_map(iot, iobase + ide->irqregs[channel],
 		    IRQ_REGISTER_SPACE, 0, &icp->ic_irqioh))
 			return;
-		/* Disable interrupts */
-		(void)bus_space_read_1(iot, icp->ic_irqioh, 0);
-		/* Call common attach routines */
-		wdcattach(cp);
 		/* Disable interrupts */
 		(void)bus_space_read_1(iot, icp->ic_irqioh, 0);
 		pa->pa_podule->irq_addr = iobase + ide->irqstatregs[channel];
@@ -308,6 +305,9 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 		}
 		/* Enable interrupts */
 		bus_space_write_1(iot, icp->ic_irqioh, 0, 0);
+		/* Call common attach routines */
+		wdcattach(cp);
+
 	}
 }
 

@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.30 2003/05/10 17:19:18 wiz Exp $
+$NetBSD: README,v 1.30.2.1 2004/08/03 10:30:47 skrll Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
@@ -11,7 +11,7 @@ arc:		MIPS Advanced Risc Computing spec machines (mips, 20000123)
 atari:		Atari TT30, Falcon, and Hades (m68k, 19950326)
 bebox:		Be Inc. BeBox (powerpc, 19971014)
 cats:		Chalice Technologies, CATS motherboard (arm, 19981005)
-cesfic:  	FIC8234 VME processor board (m68k, 20010514)
+cesfic:		FIC8234 VME processor board (m68k, 20010514)
 cobalt:		Cobalt Networks Microservers (mips, 20000319)
 dreamcast:	SEGA Dreamcast (sh3, 20010107)
 evbarm:		ARM-based eval boards (arm, 20010905)
@@ -48,8 +48,7 @@ prep:		PowerPC Reference Platform machines (powerpc, 20000229)
 sandpoint:	Motorola Sandpoint reference platform (powerpc, 20010211)
 sbmips:		Broadcom's SiByte processor evaluation boards (mips, 20020306)
 sgimips:	MIPS based Silicon Graphics machines (mips, 20000614)
-shark:		Digital Network Appliance Reference Design (pronounced "Shark")
-		machines (arm, 19960131)
+shark:		Digital Network Appliance Reference Design ("Shark") (arm, 19960131)
 sparc:		Sun Microsystems SPARC (sun4, sun4c, sun4m) 32 bit machines
 		(sparc, 19931002)
 sparc64:	Sun Microsystems UltraSPARC 64 bit machines (sparc64/sparc, 19980620)
@@ -57,15 +56,16 @@ sun2:		Sun m68010 based machines (m68k, 20010328)
 sun3:		Sun m680[23]0 based machines (m68k, 19930625)
 vax:		Digital Equipment Corp. VAX machines (vax, 19940802)
 x68k:		Sharp X68000, X68030 (m68k, 19960505)
+xen:		Xen virtual machine monitor (xen, 20040311)
 
 Generic architectural features shared among multiple ports
-arm:		ARM cpu based platform files
+arm:		ARM CPU based platform files
 hpc:		Handheld PC reference platform files
-hppa:		Hewlett Packard PA-RISC cpu based platform files
-m68k:		Motorola 680x0 cpu based platform files
-m88k:		Motorola 88xxx cpu based platform files
-mips:		MIPS cpu based platform files
-powerpc:	PowerPC cpu based platform files
-sh3:		Hitachi SuperH(TM) sh3 and sh4 cpu based platform files
-sh5:		Hitachi SuperH(TM) sh5 cpu based platform files
-sun68k:		Sun Motorola 680x0 cpu based platform files
+hppa:		Hewlett Packard PA-RISC CPU based platform files
+m68k:		Motorola 680x0 CPU based platform files
+m88k:		Motorola 88xxx CPU based platform files
+mips:		MIPS CPU based platform files
+powerpc:	PowerPC CPU based platform files
+sh3:		Hitachi SuperH(TM) sh3 and sh4 CPU based platform files
+sh5:		Hitachi SuperH(TM) sh5 CPU based platform files
+sun68k:		Sun Motorola 680x0 CPU based platform files

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2003/06/23 11:01:17 martin Exp $	*/
+/*	$NetBSD: param.h,v 1.4.2.1 2004/08/03 10:35:37 skrll Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -25,7 +25,9 @@
  * 	Utah $Hdr: param.h 1.18 94/12/16$
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_hpux.h"
+#endif
 #include <sys/featuretest.h>
 
 #if defined(_NETBSD_SOURCE)
@@ -68,7 +70,6 @@
 #define	SSIZE		(1)		/* initial stack size/NBPG */
 #define	SINCR		(1)		/* increment of stack/NBPG */
 
-#define	UADDR		0x7ffe6000	/* u-area lives here */
 #define	USHIFT		(3)		/* log2(UPAGES) */
 #define	UPAGES		(1<<USHIFT)	/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)	/* pages for user struct and kstack */

@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.4 2001/10/31 17:20:46 thorpej Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.4.18.1 2004/08/03 10:36:04 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,9 +57,9 @@
 #define FREE(a, b)		free(a, b)
 #define OKMAGIC(a)		((a) == ZMAGIC)
 
-void vpbcopy __P((const void *, void *, size_t));
-void pbzero __P((void *, size_t));
-ssize_t pread __P((int, void *, size_t));
+void vpbcopy(const void *, void *, size_t);
+void pbzero(void *, size_t);
+ssize_t pread(int, void *, size_t);
 
 #else
 
@@ -74,8 +74,8 @@ ssize_t pread __P((int, void *, size_t));
 #define FREE(a, b)		free(a)
 #define OKMAGIC(a)		((a) == OMAGIC)
 
-ssize_t vread __P((int, u_long, u_long *, size_t));
-void vcopy __P((u_long, u_long, u_long *, size_t));
-void vzero __P((u_long, u_long *, size_t));
+ssize_t vread(int, u_long, u_long *, size_t);
+void vcopy(u_long, u_long, u_long *, size_t);
+void vzero(u_long, u_long *, size_t);
 
 #endif

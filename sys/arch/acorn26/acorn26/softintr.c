@@ -1,4 +1,4 @@
-/* $NetBSD: softintr.c,v 1.1 2002/03/24 15:46:47 bjh21 Exp $ */
+/* $NetBSD: softintr.c,v 1.1.14.1 2004/08/03 10:30:47 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -36,10 +36,10 @@
  * Soft interrupt and other generic interrupt functions.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1.14.1 2004/08/03 10:30:47 skrll Exp $");
+
 #include <sys/param.h>
-
-__RCSID("$NetBSD: softintr.c,v 1.1 2002/03/24 15:46:47 bjh21 Exp $");
-
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.49 2002/10/02 04:15:07 thorpej Exp $	*/
+/*	$NetBSD: mfb.c,v 1.49.6.1 2004/08/03 10:39:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -81,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.49 2002/10/02 04:15:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.49.6.1 2004/08/03 10:39:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -701,12 +697,9 @@ bt455_video_off(fi)
 {
 	int i;
 	bt455_regmap_t *regs = (bt455_regmap_t *)(fi -> fi_vdac);
-	u_char *cmap;
 
 	if (fi -> fi_blanked)
 		return 0;
-
-	cmap = (u_char *)(fi -> fi_cmap_bits);
 
 	/* Zap colormap entries 0 (background) and 1 (foreground) */
 	BT455_SELECT_ENTRY(regs, 0);

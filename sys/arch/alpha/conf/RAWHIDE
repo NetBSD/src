@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.18 2003/04/10 22:06:52 christos Exp $
+# $NetBSD: RAWHIDE,v 1.18.2.1 2004/08/03 10:31:19 skrll Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -10,6 +10,7 @@ options 	KTRACE		# System call tracing support
 options 	DEBUG		# Expensive debugging checks/support
 options 	KMEMSTATS	# Collect kmem usage statistics
 options 	USERCONF	# userconf(4) support
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DIAGNOSTIC	# Cheap kernel consistency checks
 options 	DDB		# Kernel Dynamic Debugger
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.1 2003/04/26 18:39:31 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $");
+
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -62,8 +65,8 @@
 #include <machine/userret.h>
 
 void netbsd32_syscall_intern(struct proc *);
-void netbsd32_syscall_plain(struct trapframe);
-void netbsd32_syscall_fancy(struct trapframe);
+void netbsd32_syscall_plain(struct trapframe *);
+void netbsd32_syscall_fancy(struct trapframe *);
 
 void
 netbsd32_syscall_intern(p)
@@ -86,7 +89,7 @@ netbsd32_syscall_intern(p)
 
 void
 netbsd32_syscall_plain(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	caddr_t params;
 	const struct sysent *callp;
@@ -101,9 +104,9 @@ netbsd32_syscall_plain(frame)
 	l = curlwp;
 	p = l->l_proc;
 
-	code = frame.tf_rax;
+	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame.tf_rsp + sizeof(int);
+	params = (caddr_t)frame->tf_rsp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -144,12 +147,15 @@ netbsd32_syscall_plain(frame)
 	printf("netbsd32: syscall %d (%x %x %x %x %x %x, %x)\n", code,
 	    args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
 #endif
+	KERNEL_PROC_LOCK(l);
 	error = (*callp->sy_call)(l, args, rval);
+	KERNEL_PROC_UNLOCK(l);
+
 	switch (error) {
 	case 0:
-		frame.tf_rax = rval[0];
-		frame.tf_rdx = rval[1];
-		frame.tf_rflags &= ~PSL_C;	/* carry bit */
+		frame->tf_rax = rval[0];
+		frame->tf_rdx = rval[1];
+		frame->tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -157,15 +163,15 @@ netbsd32_syscall_plain(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_rip -= frame.tf_err;
+		frame->tf_rip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
 	default:
 	bad:
-		frame.tf_rax = error;
-		frame.tf_rflags |= PSL_C;	/* carry bit */
+		frame->tf_rax = error;
+		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
@@ -177,7 +183,7 @@ netbsd32_syscall_plain(frame)
 
 void
 netbsd32_syscall_fancy(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	caddr_t params;
 	const struct sysent *callp;
@@ -196,9 +202,9 @@ netbsd32_syscall_fancy(frame)
 	l = curlwp;
 	p = l->l_proc;
 
-	code = frame.tf_rax;
+	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame.tf_rsp + sizeof(int);
+	params = (caddr_t)frame->tf_rsp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -229,6 +235,8 @@ netbsd32_syscall_fancy(frame)
 			goto bad;
 	}
 
+	KERNEL_PROC_LOCK(l);
+
 #if defined(KTRACE) || defined(SYSTRACE)
 	if (
 #ifdef KTRACE
@@ -243,19 +251,22 @@ netbsd32_syscall_fancy(frame)
 		for (i = 0; i < (argsize >> 2); i++)
 			args64[i] = args[i];
 		/* XXX we need to pass argsize << 1 here? */
-		if ((error = trace_enter(l, code, code, NULL, args64, rval)) != 0)
+		if ((error = trace_enter(l, code, code, NULL, args64)) != 0) {
+			KERNEL_PROC_UNLOCK(l);
 			goto bad;
+		}
 	}
 #endif
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
+	KERNEL_PROC_UNLOCK(l);
 	switch (error) {
 	case 0:
-		frame.tf_rax = rval[0];
-		frame.tf_rdx = rval[1];
-		frame.tf_rflags &= ~PSL_C;	/* carry bit */
+		frame->tf_rax = rval[0];
+		frame->tf_rdx = rval[1];
+		frame->tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -263,15 +274,15 @@ netbsd32_syscall_fancy(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_rip -= frame.tf_err;
+		frame->tf_rip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
 	default:
 	bad:
-		frame.tf_rax = error;
-		frame.tf_rflags |= PSL_C;	/* carry bit */
+		frame->tf_rax = error;
+		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.8 2002/10/02 04:27:52 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.8.6.1 2004/08/03 10:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8.6.1 2004/08/03 10:38:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

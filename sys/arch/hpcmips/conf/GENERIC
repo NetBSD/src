@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.138 2003/04/26 14:10:11 ragge Exp $
+# $NetBSD: GENERIC,v 1.138.2.1 2004/08/03 10:35:04 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,10 +24,11 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.138 $"
+#ident 		"GENERIC-$Revision: 1.138.2.1 $"
 
 maxusers	16
 
+makeoptions	CPUFLAGS="-mips2"	# CPU codegen options
 options 	VR4102			# NEC VR4102
 options 	VR4111			# NEC VR4111
 options 	VR4121			# NEC VR4121
@@ -67,6 +68,7 @@ options 	NTP			# network time protocol
 #options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Filesystem options
 file-system 	FFS		# fast filesystem with user and group quotas
@@ -102,8 +104,22 @@ options 	INET6		# IPV6
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
 
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
+
 # NetBSD backwards compatibility
 options 	COMPAT_43
+options 	COMPAT_16
 
 options 	LKM		# loadable kernel modules
 
@@ -152,6 +168,9 @@ vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_530
 vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
 vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_530A
 vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_700
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_700A
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_730
+vrc4172pwm*	at vr4102ip? addr 0x15003880 size 0x6 platform NEC_MCR_730A
 
 #
 # hpcmips isa? bus irq locator means:
@@ -230,6 +249,7 @@ pwctl1 at vrgiu? platform NEC_MCCS id PWCTL_LCDLIGHT port 45
 pwctl2 at vrgiu? platform NEC_MCR_3XX id PWCTL_LCD port 10
 pwctl2 at vrgiu? platform NEC_MCR_500 id PWCTL_LCD port 10
 pwctl2 at vrgiu? platform NEC_MCCS id PWCTL_LCD port 10
+pwctl3 at vrgiu? platform NEC_MCCS id PWCTL_SPEAKER port 12
 pwctl3 at vrgiu? platform NEC_MCR_3XX id PWCTL_SPEAKER port 12
 pwctl3 at vrgiu? platform NEC_MCR_430 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform NEC_MCR_500 id PWCTL_SPEAKER port 12
@@ -366,8 +386,13 @@ hpcin*	at hpcioman8 evtype PCIINTR id PCIINTR_00_00_01 port 7 level 0 connect 1
 options	VRC4172PCI_MCR700_SUPPORT
 vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform NEC_MCR_700
 vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform NEC_MCR_700A
+vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform NEC_MCR_730
+vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform NEC_MCR_730A
+pci*	at vrc4172pci?
 hpcioman9 at vrgiu? platform NEC_MCR_700
 hpcioman9 at vrgiu? platform NEC_MCR_700A
+hpcioman9 at vrgiu? platform NEC_MCR_730
+hpcioman9 at vrgiu? platform NEC_MCR_730A
 hpcin*	at hpcioman9 evtype PCIINTR id PCIINTR_00_00_01 port 13 level 0 connect 1
 
 #
@@ -377,8 +402,8 @@ txcsbus1	at tx39biu? platform SHARP_TELIOS
 
 # IO module manager (virtual bridge) DO NOT DELETE
 txioman* at txsim?
-# iochip 0 TX39 internal IO
-#	 1 TX39 internal MFIO
+# iochip 0 TX39 internal MFIO
+#	 1 TX39 internal IO
 #	 2 BETTY IO
 #	(3) ITE IO notyet
 #	(4) Plum2 IO (EXTPW[0:2]) notyet
@@ -426,7 +451,7 @@ plumpower*	at plum?
 plumvideo*	at plum?
 hpcfb*		at plumvideo?
 plumpcmcia*	at plum?
-ohci*	at plum?
+ohci*		at plum?
 
 # Workstation Console attachments
 bivideo0	at	mainbus0
@@ -464,7 +489,12 @@ pcmcia*	at pcic? controller 0 socket ?
 
 # PCMCIA IDE disk
 wdc*	at pcmcia? function ?
-wd*	at wdc? channel ? drive ? flags 0x0000
+
+# ATA (IDE) bus support
+atabus* at ata?
+
+# IDE drives
+wd*	at atabus? drive ? flags 0x0000
 
 # PCMCIA network interfaces
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
@@ -485,7 +515,7 @@ aic*	at pcmcia? function ?
 esp*	at pcmcia? function ?		# NCR53c406 SCSI
 
 # ATAPI bus support
-atapibus* at wdc? channel ?
+atapibus* at atapi?
 cd*	at atapibus? drive ? flags 0x0000 # ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000 # ATAPI disk drives
 
@@ -523,7 +553,7 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
+atapibus* at umass?
 scsibus* at umass? channel ?
 
 # USB audio
@@ -542,6 +572,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 uax*	at uhub? port ?		# ASIX AX88172 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
+udav*	at uhub? port ?		# Davicom DM9601 based adapters
 
 # MII/PHY support
 ukphy*	at mii? phy ?		# generic unknown PHYs
@@ -624,3 +655,5 @@ pseudo-device	vlan
 pseudo-device	bridge
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if

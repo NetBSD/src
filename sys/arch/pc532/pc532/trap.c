@@ -1,10 +1,42 @@
-/*	$NetBSD: trap.c,v 1.53 2003/06/24 02:48:59 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.2.1 2004/08/03 10:38:56 skrll Exp $	*/
+
+/*-
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the University of Utah, and William Jolitz.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)trap.c	7.4 (Berkeley) 5/13/91
+ */
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the University of Utah, and William Jolitz.
@@ -43,6 +75,9 @@
 /*
  * 532 Trap and System call handling
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53.2.1 2004/08/03 10:38:56 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -112,6 +147,10 @@ userret(l, pc, oticks)
 	struct proc *p = l->l_proc;
 	int sig;
 
+	/* Generate UNBLOCKED upcall. */
+	if (l->l_flag & L_SA_BLOCKING)
+		sa_unblock_userret(l);
+
 	/* take pending signals */
 	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
@@ -120,7 +159,7 @@ userret(l, pc, oticks)
 		/*
 		 * We are being preempted.
 		 */
-		preempt(NULL);
+		preempt(0);
 		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}
@@ -130,17 +169,17 @@ userret(l, pc, oticks)
 		(*p->p_userret)(l, p->p_userret_arg);
 
 	/* Invoke any pending upcalls. */
-	while (l->l_flag & L_SA_UPCALL)
+	if (l->l_flag & L_SA_UPCALL)
 		sa_upcall_userret(l);
 
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL) { 
+	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
 
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}                   
+	}
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }
@@ -194,6 +233,7 @@ trap(frame)
 #ifdef CINVSMALL
 	extern char cinvstart[], cinvend[];
 #endif
+	ksiginfo_t ksi;
 
 	uvmexp.traps++;
 
@@ -304,7 +344,12 @@ trap(frame)
 	}
 
 	case T_ILL | T_USER:		/* privileged instruction fault */
-		trapsignal(l, SIGILL, type &~ T_USER);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_code = ILL_PRVOPC;
+		ksi.ksi_addr = (void *)frame.tf_regs.r_pc;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		goto out;
 
 	case T_AST | T_USER:		/* Allow process switch */
@@ -317,7 +362,12 @@ trap(frame)
 
 	case T_OVF | T_USER:
 	case T_DVZ | T_USER:
-		trapsignal(l, SIGFPE, type &~ T_USER);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_code = ksi.ksi_trap == T_OVF ? FPE_FLTOVF : FPE_FLTDIV;
+		ksi.ksi_addr = (void *)frame.tf_regs.r_pc;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		goto out;
 
 	case T_SLAVE | T_USER: {
@@ -342,7 +392,12 @@ trap(frame)
 			restore_fpu_context(pcb);
 		}
 		sfsr(fsr);
-		trapsignal(l, sig, 0x80000000 | fsr);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_trap = 0x80000000 | fsr;
+		ksi.ksi_code = sig == SIGFPE ? FPE_FLTOVF : FPE_FLTINV;
+		ksi.ksi_addr = (void *)frame.tf_regs.r_pc;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		goto out;
 	}
 
@@ -375,7 +430,7 @@ trap(frame)
 		vaddr_t va;
 		struct vmspace *vm = p->p_vmspace;
 		struct vm_map *map;
-		int rv;
+		int rv, sig;
 		vm_prot_t ftype;
 		extern struct vm_map *kernel_map;
 		unsigned nss;
@@ -391,8 +446,14 @@ trap(frame)
 		 */
 		if (type == T_ABT && va >= KERNBASE)
 			map = kernel_map;
-		else
+		else {
 			map = &vm->vm_map;
+			if (l->l_flag & L_SA) {
+				l->l_savp->savp_faultaddr =
+				    (vaddr_t)frame.tf_tear;
+				l->l_flag |= L_SA_PAGEFAULT;
+			}
+		}
 		if ((frame.tf_msr & MSR_DDT) == DDT_WRITE ||
 		    (frame.tf_msr & MSR_STT) == STT_RMW)
 			ftype = VM_PROT_WRITE;
@@ -424,6 +485,7 @@ trap(frame)
 
 			if (type == T_ABT)
 				return;
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			goto out;
 		}
 
@@ -442,10 +504,17 @@ trap(frame)
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(l, SIGKILL, T_ABT);
+			sig = SIGKILL;
 		} else {
-			trapsignal(l, SIGSEGV, T_ABT);
+			sig = SIGSEGV;
 		}
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = sig;
+		ksi.ksi_trap = T_ABT;
+		ksi.ksi_code = sig == SIGKILL ? SI_NOINFO : SEGV_MAPERR;
+		ksi.ksi_addr = (void *)frame.tf_tear;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		break;
 	}
 
@@ -453,11 +522,16 @@ trap(frame)
 	case T_BPT | T_USER: 	/* breakpoint instruction */
 	case T_DBG | T_USER: 	/* debug trap */
 	trace:
-		trapsignal(l, SIGTRAP, type &~ T_USER);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_trap = type & ~T_USER;
+		ksi.ksi_code = ksi.ksi_trap == T_TRC ? TRAP_TRACE : TRAP_BRKPT;
+		ksi.ksi_addr = (void *)frame.tf_regs.r_pc;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		break;
 
 	case T_NMI:		/* non-maskable interrupt */
-	case T_NMI | T_USER: 
+	case T_NMI | T_USER:
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
 		printf ("NMI ... going to debugger\n");
@@ -545,7 +619,7 @@ syscall(frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
 		goto bad;
 
 	rval[0] = 0;

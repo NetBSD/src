@@ -1,4 +1,4 @@
-/*	$NetBSD: sysinfo.c,v 1.3 2002/02/24 20:51:08 leo Exp $	*/
+/*	$NetBSD: sysinfo.c,v 1.3.16.1 2004/08/03 10:33:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #include "tosdefs.h"
 #include "kparamb.h"
 /*
- * Extract memory and cpu/fpu info from system.
+ * Extract memory and CPU/FPU info from system.
  */
 void
 sys_info(od)
@@ -91,7 +91,7 @@ osdsc_t	*od;
 	}
 
 	/*
-	 * Scan cookiejar for cpu types, accellerator boards, etc.
+	 * Scan cookiejar for CPU types, accellerator boards, etc.
 	 */
 	jar = *ADDR_P_COOKIE;
 	if (jar != NULL) {

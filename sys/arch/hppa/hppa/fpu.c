@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1 2002/06/05 01:04:20 fredette Exp $	*/
+/*	$NetBSD: fpu.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1 2002/06/05 01:04:20 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $");
 
 #include <sys/param.h>       
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ u_int fpu_csw;
 paddr_t fpu_cur_uspace;
 
 /* In locore.S, this swaps states in and out of the FPU. */
-void hppa_fpu_swap __P((struct user *, struct user *));
+void hppa_fpu_swap(struct pcb *, struct pcb *);
 
 #ifdef FPEMUL
 /*
@@ -215,22 +215,26 @@ hppa_fpu_bootstrap(u_int ccr_enable)
 }
 
 /*
- * If the given process has its state in the FPU,
- * flush that state out into the process' PCB.
+ * If the given LWP has its state in the FPU,
+ * flush that state out into the LWP's PCB.
  */
 void
-hppa_fpu_flush(struct proc *p)
+hppa_fpu_flush(struct lwp *l)
 {
-	struct trapframe *tf = p->p_md.md_regs;
+	struct trapframe *tf = l->l_md.md_regs;
 
 	/*
- 	* If we have a hardware FPU, and this process'
- 	* state is currently in it, swap it out.
- 	*/
-	if (fpu_present &&
-	    fpu_cur_uspace != NULL &&
-	    fpu_cur_uspace == tf->tf_cr30)
-		hppa_fpu_swap(p->p_addr, NULL);
+	 * If we have a hardware FPU, and this process'
+	 * state is currently in it, swap it out.
+	 */
+
+	if (!fpu_present || fpu_cur_uspace == 0 ||
+	    fpu_cur_uspace != tf->tf_cr30) {
+		return;
+	}
+
+	hppa_fpu_swap(&l->l_addr->u_pcb, NULL);
+	fpu_cur_uspace = 0;
 }
 
 #ifdef FPEMUL
@@ -238,9 +242,9 @@ hppa_fpu_flush(struct proc *p)
 /*
  * This emulates a coprocessor load/store instruction.
  */
-static int hppa_fpu_ls __P((struct trapframe *, struct proc *));
+static int hppa_fpu_ls(struct trapframe *, struct lwp *);
 static int 
-hppa_fpu_ls(struct trapframe *frame, struct proc *p)
+hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
 {
 	u_int inst, inst_b, inst_x, inst_s, inst_t;
 	int log2size;
@@ -248,14 +252,15 @@ hppa_fpu_ls(struct trapframe *frame, struct proc *p)
 	u_int offset, index, im5;
 	void *fpreg;
 	u_int r0 = 0;
-	
+	int error;
+
 	/*
 	 * Get the instruction that we're emulating,
 	 * and break it down.  Using HP bit notation,
 	 * b is a five-bit field starting at bit 10, 
 	 * x is a five-bit field starting at bit 15,
 	 * s is a two-bit field starting at bit 17, 
-	 * and t is a two-bit field starting at bit 31.
+	 * and t is a five-bit field starting at bit 31.
 	 */
 	inst = frame->tf_iir;
 	__asm __volatile(
@@ -270,14 +275,14 @@ hppa_fpu_ls(struct trapframe *frame, struct proc *p)
 	 * The space must be the user's space, else we
 	 * segfault.
 	 */
-	if (inst_s != p->p_addr->u_pcb.pcb_space)
+	if (inst_s != l->l_addr->u_pcb.pcb_space)
 		return (EFAULT);
 
 	/* See whether or not this is a doubleword load/store. */
 	log2size = (inst & OPCODE_DOUBLE) ? 3 : 2;
 
 	/* Get the floating point register. */
-	fpreg = ((caddr_t) p->p_addr->u_pcb.pcb_fpregs) + (inst_t << log2size);
+	fpreg = ((caddr_t)l->l_addr->u_pcb.pcb_fpregs) + (inst_t << log2size);
 
 	/* Get the base register. */
 	base = FRAME_REG(frame, inst_b, r0);
@@ -335,26 +340,30 @@ hppa_fpu_ls(struct trapframe *frame, struct proc *p)
 	KASSERT(offset == frame->tf_ior);
 
 	/* Perform the load or store. */
-	return (inst & OPCODE_STORE) ?
+	error = (inst & OPCODE_STORE) ?
 		copyout(fpreg, (void *) offset, 1 << log2size) :
 		copyin((const void *) offset, fpreg, 1 << log2size);
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)fpreg,
+		sizeof(l->l_addr->u_pcb.pcb_fpregs));
+	return error;
 }
 
 /*
  * This is called to emulate an instruction.
  */
 void 
-hppa_fpu_emulate(struct trapframe *frame, struct proc *p)
+hppa_fpu_emulate(struct trapframe *frame, struct lwp *l, u_int inst)
 {
-	u_int inst, opcode, class, sub;
+	u_int opcode, class, sub;
 	u_int *fpregs;
 	int exception;
+	ksiginfo_t ksi;
 
 	/*
 	 * If the process' state is in any hardware FPU, 
 	 * flush it out - we need to operate on it.
 	 */
-	hppa_fpu_flush(p);
+	hppa_fpu_flush(l);
 
 	/*
 	 * Get the instruction that we're emulating,
@@ -365,7 +374,7 @@ hppa_fpu_emulate(struct trapframe *frame, struct proc *p)
 	 * is a two bit field starting at bit 16, else
 	 * it is a three bit field starting at bit 18.
 	 */
-	inst = frame->tf_iir;
+#if 0
 	__asm __volatile(
 		"	extru %3, 22, 2, %1	\n"
 		"	extru %3, 5, 6, %0	\n"
@@ -374,16 +383,31 @@ hppa_fpu_emulate(struct trapframe *frame, struct proc *p)
 		"	extru %3, 16, 2, %2	\n"
 		: "=r" (opcode), "=r" (class), "=r" (sub)
 		: "r" (inst));
+#else
+	opcode = (inst >> (31 - 5)) & 0x3f;
+	class = (inst >> (31 - 22)) & 0x3;
+	if (class == 1) {
+		sub = (inst >> (31 - 16)) & 3;
+	} else {
+		sub = (inst >> (31 - 18)) & 7;
+	}
+#endif
 
-	/* Get this process' FPU registers. */
-	fpregs = (u_int *) p->p_addr->u_pcb.pcb_fpregs;
+	/* Get this LWP's FPU registers. */
+	fpregs = (u_int *) l->l_addr->u_pcb.pcb_fpregs;
 
 	/* Dispatch on the opcode. */
 	switch (opcode) {
 	case 0x09:
 	case 0x0b:
-		if (hppa_fpu_ls(frame, p) != 0)
-			trapsignal(p, SIGSEGV, frame->tf_iioq_head);
+		if (hppa_fpu_ls(frame, l) != 0) {
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_MAPERR;
+			ksi.ksi_trap = T_DTLBMISS;
+			ksi.ksi_addr = (void *)frame->tf_iioq_head;
+			trapsignal(l, &ksi);
+		}
 		return;
 	case 0x0c:
 		exception = decode_0c(inst, class, sub, fpregs);
@@ -402,9 +426,31 @@ hppa_fpu_emulate(struct trapframe *frame, struct proc *p)
 		break;
         }
 
-	if (exception)
-		trapsignal(p, (exception & UNIMPLEMENTEDEXCEPTION) ?
-			SIGILL : SIGFPE, frame->tf_iioq_head);
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)fpregs,
+		sizeof(l->l_addr->u_pcb.pcb_fpregs));
+	if (exception) {
+		KSI_INIT_TRAP(&ksi);
+		if (exception & UNIMPLEMENTEDEXCEPTION) {
+			ksi.ksi_signo = SIGILL;
+			ksi.ksi_code = ILL_COPROC;
+		} else {
+			ksi.ksi_signo = SIGFPE;
+			if (exception & INVALIDEXCEPTION) {
+				ksi.ksi_code = FPE_FLTINV;
+			} else if (exception & DIVISIONBYZEROEXCEPTION) {
+				ksi.ksi_code = FPE_FLTDIV;
+			} else if (exception & OVERFLOWEXCEPTION) {
+				ksi.ksi_code = FPE_FLTOVF;
+			} else if (exception & UNDERFLOWEXCEPTION) {
+				ksi.ksi_code = FPE_FLTUND;
+			} else if (exception & INEXACTEXCEPTION) {
+				ksi.ksi_code = FPE_FLTRES;
+			}
+		}
+		ksi.ksi_trap = T_EMULATION;
+		ksi.ksi_addr = (void *)frame->tf_iioq_head;
+		trapsignal(l, &ksi);
+	}
 }
 
 #endif /* FPEMUL */

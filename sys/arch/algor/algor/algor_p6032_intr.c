@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.5 2002/09/27 15:35:32 provos Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.5.6.1 2004/08/03 10:31:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  * The Algorithmics P-6032's interrupts are wired to GPIO pins
  * on the BONITO system controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.5.6.1 2004/08/03 10:31:02 skrll Exp $");
 
 #include "opt_ddb.h"
 

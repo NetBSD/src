@@ -1,7 +1,7 @@
-/*	$NetBSD: darwin_machdep.h,v 1.2 2002/12/08 21:53:10 manu Exp $ */
+/*	$NetBSD: darwin_machdep.h,v 1.2.8.1 2004/08/03 10:39:29 skrll Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,55 +39,33 @@
 #ifndef	_DARWIN_MACHDEP_H_
 #define	_DARWIN_MACHDEP_H_
 
+#include <compat/darwin/darwin_signal.h>
+#include <machine/mach_machdep.h>
+
+#define DARWIN_USRSTACK		0xbfff0000
+#define DARWIN_USRSTACK32	0x00000000bfff0000L
+
+/*
+ * User context versions for newer sigreturn
+ */
+#define DARWIN_UCVERS_X2 1
+
 void darwin_fork_child_return(void *);
 
-struct darwin_ppc_exception_state {
-	unsigned long dar;
-	unsigned long dsisr;
-	unsigned long exception;
-	unsigned long pad[5];
-};
-
-struct darwin_ppc_thread_state {
-	unsigned int srr0;
-	unsigned int srr1;
-	unsigned int gpreg[32];
-	unsigned int cr;
-	unsigned int xer;
-	unsigned int lr;
-	unsigned int ctr;
-	unsigned int mq;
-	unsigned int vrsave;
-};
-
-struct darwin_ppc_float_state {
-	double  fpregs[32];
-	unsigned int fpscr_pad;
-	unsigned int fpscr;
-};
-
-struct darwin_ppc_vector_state {
-	unsigned long vr[32][4];
-	unsigned long vscr[4];
-	unsigned int pad1[4];
-	unsigned int vrvalid;
-	unsigned int pad2[7];
-};
-
 struct darwin_mcontext {
-	struct darwin_ppc_exception_state es;   
-	struct darwin_ppc_thread_state ss;
-	struct darwin_ppc_float_state fs;
-	struct darwin_ppc_vector_state vs;			
+	struct mach_ppc_exception_state es;   
+	struct mach_ppc_thread_state ss;
+	struct mach_ppc_float_state fs;
+	struct mach_ppc_vector_state vs;			
 };
 
 struct darwin_sigframe {
 	int nocopy1[30];
 	/* struct darwin_mcontext without the vs field */
 	struct darwin__mcontext {
-		struct darwin_ppc_exception_state es;
-		struct darwin_ppc_thread_state ss;
-		struct darwin_ppc_float_state fs;
+		struct mach_ppc_exception_state es;
+		struct mach_ppc_thread_state ss;
+		struct mach_ppc_float_state fs;
 	} dmc;
 	int nocopy2[144];
 	/* struct darwin_ucontext with some padding */
@@ -96,6 +74,10 @@ struct darwin_sigframe {
 		struct darwin_ucontext uctx;
 	} duc;
 	int nocopy3[56];
+};
+
+struct darwin_slock {
+	volatile unsigned int lock_data[10];
 };
 
 #endif /* !_DARWIN_MACHDEP_H_ */

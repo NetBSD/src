@@ -1,4 +1,4 @@
-/*	$NetBSD: emac3.c,v 1.1 2001/10/16 15:38:33 uch Exp $	*/
+/*	$NetBSD: emac3.c,v 1.1.22.1 2004/08/03 10:39:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 /*
  * EMAC3 (Ethernet Media Access Controller)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.1.22.1 2004/08/03 10:39:06 skrll Exp $");
+
 #include "debug_playstation2.h"
 
 #include <sys/param.h>

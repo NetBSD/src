@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 2003/03/04 07:50:59 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2.2.1 2004/08/03 10:34:16 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,6 +45,9 @@
 
 #ifdef PPC_IBM4XX
 #include <powerpc/ibm4xx/cpu.h>
+#ifdef _KERNEL
+extern int fake_mapiodev;
+#endif
 #else
 #ifdef MULTIPROCESSOR
 #define CPU_MAXNUM 2

@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpga.c,v 1.6 2002/10/02 05:10:33 thorpej Exp $ */
+/*      $NetBSD: plcom_ifpga.c,v 1.6.6.1 2004/08/03 10:33:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -31,6 +31,9 @@
 
 /* Interface to plcom (PL010) serial driver. */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.6.6.1 2004/08/03 10:33:55 skrll Exp $");
+
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -40,7 +43,6 @@
 #include <sys/termios.h>
 
 #include <machine/intr.h>
-#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
 #include <machine/bus.h>
 
 #include <evbarm/dev/plcomreg.h>
@@ -70,7 +72,6 @@ plcom_ifpga_attach(struct device *parent, struct device *self, void *aux)
 	struct plcom_ifpga_softc *isc = (struct plcom_ifpga_softc *)self;
 	struct plcom_softc *sc = &isc->sc_plcom;
 	struct ifpga_attach_args *ifa = aux;
-	char *irqname;
 
 	isc->sc_iot = ifa->ifa_iot;
 	isc->sc_ioh = ifa->ifa_sc_ioh;
@@ -89,9 +90,7 @@ plcom_ifpga_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	plcom_attach_subr(sc);
-	irqname = malloc(sizeof("uart") + 2, M_DEVBUF, M_WAITOK);
-	sprintf(irqname, "uart%d", sc->sc_dev.dv_unit);
-	isc->sc_ih = intr_claim(ifa->ifa_irq, IPL_SERIAL, irqname, plcomintr,
+	isc->sc_ih = ifpga_intr_establish(ifa->ifa_irq, IPL_SERIAL, plcomintr,
 	    sc);
 	if (isc->sc_ih == NULL)
 		panic("%s: cannot install interrupt handler",

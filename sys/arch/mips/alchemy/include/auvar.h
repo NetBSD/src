@@ -1,4 +1,4 @@
-/* $NetBSD: auvar.h,v 1.1 2002/07/29 15:39:15 simonb Exp $ */
+/* $NetBSD: auvar.h,v 1.1.12.1 2004/08/03 10:37:38 skrll Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,15 +37,6 @@
 
 #ifndef _MIPS_ALCHEMY_AUVAR_H_
 #define	_MIPS_ALCHEMY_AUVAR_H_
-
-/* Chip/board info database */
-#include <sys/properties.h>
-extern struct propdb *alchemy_prop_info;
-
-#define	alchemy_info_set(n, v, l, f, w)					\
-	    prop_set(alchemy_prop_info, 0, (n), (v), (l), (f), (w))
-#define	alchemy_info_get(n, v, l)					\
-	    prop_get(alchemy_prop_info, 0, (n), (v), (l), NULL)
 
 void	au_intr_init(void);
 void	*au_intr_establish(int, int, int, int, int (*)(void *), void *);

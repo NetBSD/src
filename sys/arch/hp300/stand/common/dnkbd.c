@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.5 2002/09/29 23:23:58 wiz Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.5.6.1 2004/08/03 10:34:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,9 +45,9 @@
 #include <sys/param.h>
 
 #include <hp300/dev/frodoreg.h>		/* for apci offsets */
-#include <hp300/dev/dcareg.h>		/* for the register bit definitions */
-#include <hp300/dev/apcireg.h>		/* for the apci registers */
 
+#include <hp300/stand/common/dcareg.h>	/* for the register bit definitions */
+#include <hp300/stand/common/apcireg.h>	/* for the apci registers */
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/kbdvar.h>
 
@@ -115,13 +115,13 @@ dnkbd_getc()
 		/* Ignoring mouse? */
 		if (dnkbd_ignore) {
 			dnkbd_ignore--;
-			return (0);
+			return 0;
 		}
 
 		/* Is this the start of a mouse packet? */
 		if (c == 0xdf) {
 			dnkbd_ignore = 3;	/* 3 bytes of junk */
-			return (0);
+			return 0;
 		}
 
 		/* It's a keyboard event. */
@@ -141,7 +141,7 @@ dnkbd_getc()
 		}
 	}
 
-	return (c);
+	return c;
 }
 #endif /* SMALL */
 
@@ -167,7 +167,7 @@ dnkbd_init()
 	case HP_433:
 		break;
 	default:
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -175,11 +175,11 @@ dnkbd_init()
 	 * is a Domain keyboard attached.
 	 */
 	if (badaddr((caddr_t)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(0))))
-		return (0);
+		return 0;
 
 	/*
 	 * XXX Any other initialization?  This appears to work ok.
 	 */
-	return (1);
+	return 1;
 }
 #endif /* ITECONSOLE && DOMAIN_KEYBOARD */

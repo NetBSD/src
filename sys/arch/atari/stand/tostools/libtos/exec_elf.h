@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.2 2001/10/11 07:07:42 leo Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.2.22.1 2004/08/03 10:33:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -255,10 +255,10 @@ typedef struct {
 #define	EM_68HC08	71	/* Motorola MC68HC08 Microcontroller */
 #define	EM_68HC05	72	/* Motorola MC68HC05 Microcontroller */
 #define	EM_SVX		73	/* Silicon Graphics SVx */
-#define	EM_ST19		74	/* STMicroelectronics ST19 8-bit cpu */
+#define	EM_ST19		74	/* STMicroelectronics ST19 8-bit CPU */
 #define	EM_VAX		75	/* Digital VAX */
 #define	EM_CRIS		76	/* Axis Communications 32-bit embedded processor */
-#define	EM_JAVELIN	77	/* Infineon Technologies 32-bit embedded cpu */
+#define	EM_JAVELIN	77	/* Infineon Technologies 32-bit embedded CPU */
 #define	EM_FIREPATH	78	/* Element 14 64-bit DSP processor */
 #define	EM_ZSP		79	/* LSI Logic's 16-bit DSP processor */
 #define	EM_MMIX		80	/* Donald Knuth's educational 64-bit processor */
@@ -535,7 +535,7 @@ typedef struct {
 #define	AT_SUN_PLATFORM	2008	/* sysinfo(SI_PLATFORM) */
 #define	AT_SUN_HWCAP	2009	/* process hardware capabilities */
 #define	AT_SUN_IFLUSH	2010	/* do we need to flush the instruction cache? */
-#define	AT_SUN_CPU	2011	/* cpu name */
+#define	AT_SUN_CPU	2011	/* CPU name */
 	/* ibcs2 emulation band aid */
 #define	AT_SUN_EMUL_ENTRY 2012	/* coff entry point */
 #define	AT_SUN_EMUL_EXECFD 2013	/* coff file descriptor */

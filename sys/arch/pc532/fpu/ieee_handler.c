@@ -1,21 +1,21 @@
-/*	$NetBSD: ieee_handler.c,v 1.14 2003/04/02 02:24:15 thorpej Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.14.2.1 2004/08/03 10:38:47 skrll Exp $	*/
 
-/* 
+/*
  * IEEE floating point support for NS32081 and NS32381 fpus.
  * Copyright (c) 1995 Ian Dall
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * IAN DALL ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.
  * IAN DALL DISCLAIMS ANY LIABILITY OF ANY KIND FOR ANY DAMAGES
  * WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  */
-/* 
+/*
  *	File:	ieee_handler.c
  *	Author:	Ian Dall
  *	Date:	November 1995
@@ -50,6 +50,9 @@
  * 14-Dec-95  Ian Dall (Ian.Dall@dsto.defence.gov.au)
  *	First release.
  * */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ieee_handler.c,v 1.14.2.1 2004/08/03 10:38:47 skrll Exp $");
 
 #include <sys/types.h>
 #include "ieee_internal.h"
@@ -144,7 +147,7 @@ const union t_conv qnan =
 
 #define COPYIN(U,K,N) ({if (copyin((AT)U, (AT)K, N) != 0) longjmp(copyin_buffer.copyfail, 1);0;})
 
-/* Adressing modes.  */
+/* Addressing modes.  */
 #define Adrmod_index_byte 0x1c
 #define Adrmod_index_word 0x1d
 #define Adrmod_index_doubleword 0x1e

@@ -1,13 +1,23 @@
-#	$NetBSD: Makefile,v 1.1 2003/06/25 17:24:21 cdi Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2004/08/03 10:33:46 skrll Exp $
+
+NOMAN= # defined
+
+.include <bsd.own.mk>
+.include <bsd.sys.mk>		# for HOST_SH
 
 S=	${.CURDIR}/../../../..
 MIPS=	${S}/arch/mips
 COBALT=	${S}/arch/cobalt
-PROG=	${BOOTPROG}
 
 # .PATH:	${.CURDIR}/../common
 
 BINMODE?= 444
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 .PHONY:		machine-links
 beforedepend:	machine-links
@@ -25,8 +35,12 @@ CLEANFILES+=	machine cobalt mips
 
 realall: machine-links ${PROG}
 
-# PRIMARY_LOAD_ADDRESS?=	0x80600000
-LOAD_ADDRESS?=0x81000000
+# Load @15Mb boundary as most (all?) of the Cobalt boxes
+# had been shipped with at least 16Mb.
+#
+# XXX The proper fix is to load at the kernel base address
+# and to relocate itself at the end of available memory.
+LOAD_ADDRESS?=0x80F00000
 
 COMPORT?=0x0
 COMBASE?=0xbc800000
@@ -46,15 +60,15 @@ CPPFLAGS+=	-DCOMSPEED=${COMSPEED} -DCOMPROBE=${COMPROBE}
 CFLAGS=		-Os -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
 OFORMAT=	--oformat elf32-littlemips
 
-NETBSD_VERS!=	sh ${S}/conf/osrelease.sh
+NETBSD_VERS!=	${HOST_SH} ${S}/conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 LDSCRIPT?=	${MIPS}/conf/stand.ldscript
 
 PROG=		boot
 # common sources
-SRCS+=		start.S boot.c devopen.c conf.c clock.c
-SRCS+=		prf.c com.c cons.c ns16550.c pciide.c wdc.c wd.c
+SRCS+=		start.S boot.c devopen.c conf.c clock.c bootinfo.c
+SRCS+=		prf.c com.c cons.c ns16550.c pciide.c tgets.c wdc.c wd.c
 
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
@@ -72,11 +86,11 @@ SA_AS=		library
 SAMISCMAKEFLAGS+=SA_USE_LOADFILE=yes SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 
-LIBS=		${KERNLIB} ${SALIB} ${ZLIB} ${KERNLIB}
+LIBS=		${KERNLIB} ${SALIB} ${ZLIB}
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "cobalt"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "cobalt"
 
 ${PROG}: machine-links ${LDSCRIPT} ${OBJS} ${LIBS}
 	${LD} ${OFORMAT} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
@@ -84,15 +98,11 @@ ${PROG}: machine-links ${LDSCRIPT} ${OBJS} ${LIBS}
 	gzip -c9 ${PROG} > ${PROG}.gz
 	@${SIZE} ${PROG}
 
-MAN=
 CLEANFILES+=	${PROG}.map ${PROG}.elf ${PROG}.gz
 
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib
 
 .include <bsd.prog.mk>
-
-/usr/lib/crt0.o:
-	true

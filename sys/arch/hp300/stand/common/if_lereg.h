@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.2 2001/05/27 05:31:58 gmcgarry Exp $	*/
+/*	$NetBSD: if_lereg.h,v 1.2.24.1 2004/08/03 10:34:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -108,10 +104,10 @@ struct init_block {
 	u_short mode;		/* mode register */
 	u_char padr[6];		/* ethernet address */
 	u_long ladrf[2];	/* logical address filter (multicast) */
-        u_short rdra;           /* low order pointer to receive ring */
-        u_short rlen;           /* high order pointer and no. rings */
-        u_short tdra;           /* low order pointer to transmit ring */
-        u_short tlen;           /* high order pointer and no rings */
+	u_short rdra;		/* low order pointer to receive ring */
+	u_short rlen;		/* high order pointer and no. rings */
+	u_short tdra;		/* low order pointer to transmit ring */
+	u_short tlen;		/* high order pointer and no rings */
 } __attribute__((__packed__));
 
 /*
@@ -127,7 +123,7 @@ struct init_block {
 #define	LE_DRX		0x0001		/* disable receiver */
 #define	LE_NORMAL	0x0000
 
-/* 
+/*
  * Message descriptor
  */
 struct mds {

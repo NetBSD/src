@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.26 2003/06/26 16:45:19 drochner Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.26.2.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,6 +52,16 @@ static __inline void
 x86_pause(void)
 {
 	__asm __volatile("pause");
+}
+
+static __inline void
+x86_lfence(void)
+{
+
+	/*
+	 * XXX it's better to use real lfence insn if available.
+	 */
+	__asm __volatile("lock; addl $0, 0(%%esp)" : : : "memory");
 }
 
 #ifdef _KERNEL
@@ -175,7 +185,7 @@ tlbflushg(void)
 
 
 #ifdef notyet
-void	setidt	__P((int idx, /*XXX*/caddr_t func, int typ, int dpl));
+void	setidt(int idx, /*XXX*/caddr_t func, int typ, int dpl);
 #endif
 
 /* debug register */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.2 2003/06/16 20:01:03 thorpej Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.2.2.1 2004/08/03 10:39:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 
 #ifndef _LOCORE
 
+#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
  * the list.  The handler is called with its (single) argument.
@@ -82,8 +83,6 @@ int  splsoftnet(void);
 
 void do_pending_int(void);
 void ext_intr(void);
-void intr_md_register(void (*)(void *, int), void (*)(void *, int),
-	int (*)(void *), void (*)(void *, int), void *);
 void *intr_establish(int, int, int, int (*)(void *), void *);
 void intr_disestablish(void *);
 void intr_init(void);
@@ -121,7 +120,7 @@ splx(newcpl)
 {
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 	cpl = newcpl;
-	if(ipending & ~newcpl)
+	if (ipending & ~newcpl)
 		do_pending_int();
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 }
@@ -135,7 +134,7 @@ spllower(newcpl)
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 	oldcpl = cpl;
 	cpl = newcpl;
-	if(ipending & ~newcpl)
+	if (ipending & ~newcpl)
 		do_pending_int();
 	__asm__ volatile("sync; eieio\n");	/* reorder protect */
 	return(oldcpl);
@@ -160,8 +159,9 @@ set_sint(pending)
 #define	IRQ_TO_MASK(x)	(0x80000000UL >> (x))
 
 /*
+ * XXX 405GP specific.
  * Interrupt bits 0-18 and 25-31 are used by hardware.  This 
- * leaves us bits 19-24 for stoftware.  
+ * leaves us bits 19-24 for software.
  */
 #define	HWINT_MASK	~0x1fc0
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.9 2002/10/13 12:20:44 bjh21 Exp $	*/
+/*	$NetBSD: iomd.c,v 1.9.8.1 2004/08/03 10:32:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -41,6 +41,9 @@
  * Created      : 10/10/95
  * Updated	: 18/03/01 for rpckbd as part of the wscons project
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iomd.c,v 1.9.8.1 2004/08/03 10:32:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,12 +272,6 @@ iomdattach(parent, self, aux)
 	ia.ia_kbd.ka_txirq = IRQ_KBDTX;
 	config_found(self, &ia, iomdprint);
 
-	/* Attach rpckbc device when configured */
-	ia.ia_kbd.ka_name = "rpckbd";
-	ia.ia_kbd.ka_rxirq = IRQ_KBDRX;
-	ia.ia_kbd.ka_txirq = IRQ_KBDTX;
-	config_found(self, &ia, iomdprint);
-
 	/* Attach iic device */
 
 	if (bus_space_subregion(iot, ioh, IOMD_IOCR, 4, &ia.ia_iic.ia_ioh))
@@ -289,7 +286,8 @@ iomdattach(parent, self, aux)
 	case ARM7500FE_IOC_ID:
 		/* Attach opms device */
 
-		if (bus_space_subregion(iot, ioh, IOMD_MSDATA, 8, &ia.ia_opms.pa_ioh))
+		if (bus_space_subregion(iot, ioh, IOMD_MSDATA, 8,
+			&ia.ia_opms.pa_ioh))
 			panic("%s: Cannot map opms registers", self->dv_xname);
 		ia.ia_opms.pa_name = "opms";
 		ia.ia_opms.pa_iot = iot;
@@ -299,7 +297,8 @@ iomdattach(parent, self, aux)
 	case RPC600_IOMD_ID:
 		/* Attach (ws)qms device */
 
-		if (bus_space_subregion(iot, ioh, IOMD_MOUSEX, 8, &ia.ia_qms.qa_ioh))
+		if (bus_space_subregion(iot, ioh, IOMD_MOUSEX, 8,
+			&ia.ia_qms.qa_ioh))
 			panic("%s: Cannot map qms registers", self->dv_xname);
 
 		if (bus_space_map(iot, IO_MOUSE_BUTTONS, 4, 0, &ia.ia_qms.qa_ioh_but))

@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_bus_mem.c,v 1.1 2001/05/28 16:22:14 thorpej Exp $	*/
+/*	$NetBSD: algor_p5064_bus_mem.c,v 1.1.24.1 2004/08/03 10:31:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Platform-specific PCI bus memory support for the Algorithmics P-5064.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_bus_mem.c,v 1.1.24.1 2004/08/03 10:31:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

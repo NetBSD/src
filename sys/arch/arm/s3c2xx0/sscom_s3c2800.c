@@ -1,8 +1,8 @@
-/*	$NetBSD: sscom_s3c2800.c,v 1.3 2003/05/13 06:29:53 bsh Exp $ */
+/*	$NetBSD: sscom_s3c2800.c,v 1.3.2.1 2004/08/03 10:32:50 skrll Exp $ */
 
 /*
- * Copyright (c) 2002 Fujitsu Component Limited
- * Copyright (c) 2002 Genetec Corporation
+ * Copyright (c) 2002, 2003 Fujitsu Component Limited
+ * Copyright (c) 2002, 2003 Genetec Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sscom_s3c2800.c,v 1.3.2.1 2004/08/03 10:32:50 skrll Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -97,29 +99,6 @@ sscom_match(struct device *parent, struct cfdata *cf, void *aux)
 	return unit == 0 || unit == 1;
 }
 
-int tx_int(void *);
-int rx_int(void *);
-int err_int(void *);
-
-int
-tx_int(void *arg)
-{
-	return sscomintr(arg);
-}
-
-int
-rx_int(void *arg)
-{
-	return sscomintr(arg);
-}
-
-int
-err_int(void *arg)
-{
-	return sscomintr(arg);
-}
-
-
 static void
 sscom_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -145,11 +124,11 @@ sscom_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	s3c2800_intr_establish(s3c2800_uart_config[unit].tx_int,
-	    IPL_SERIAL, IST_LEVEL, tx_int, sc);
+	    IPL_SERIAL, IST_LEVEL, sscomtxintr, sc);
 	s3c2800_intr_establish(s3c2800_uart_config[unit].rx_int,
-	    IPL_SERIAL, IST_LEVEL, rx_int, sc);
+	    IPL_SERIAL, IST_LEVEL, sscomrxintr, sc);
 	s3c2800_intr_establish(s3c2800_uart_config[unit].err_int,
-	    IPL_SERIAL, IST_LEVEL, err_int, sc);
+	    IPL_SERIAL, IST_LEVEL, sscomrxintr, sc);
 	sscom_disable_txrxint(sc);
 
 	sscom_attach_subr(sc);

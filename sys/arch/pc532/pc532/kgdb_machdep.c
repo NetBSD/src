@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.9 2003/04/02 02:24:15 thorpej Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.9.2.1 2004/08/03 10:38:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.9.2.1 2004/08/03 10:38:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +74,7 @@ kgdb_acc(va, len)
  * Translate a trap number into a unix compatible signal value.
  * (gdb only understands unix signal numbers).
  */
-int 
+int
 kgdb_signal(type)
 	int type;
 {
@@ -158,7 +161,7 @@ kgdb_setregs(regs, gdb_regs)
 	regs->tf_regs.r_pc  = gdb_regs[PC_REGNUM];
 	regs->tf_regs.r_psr = gdb_regs[PS_REGNUM]
 				| (regs->tf_regs.r_psr & PSL_T);
-}	
+}
 
 /*
  * Trap into kgdb to wait for debugger to connect,

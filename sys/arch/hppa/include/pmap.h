@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 2002/09/22 07:53:42 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3.6.1 2004/08/03 10:35:37 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.14 2001/05/09 15:31:24 art Exp $	*/
 
@@ -96,6 +96,9 @@ struct pmap {
 extern pmap_t	kernel_pmap;			/* The kernel's map */
 
 #ifdef _KERNEL
+
+#define PMAP_NC		0x100
+
 #define cache_align(x)	(((x) + dcache_line_mask) & ~(dcache_line_mask))
 extern int dcache_line_mask;
 
@@ -129,8 +132,12 @@ do { if (pmap) { \
 #define pmap_release(pmap)
 #define pmap_copy(dpmap,spmap,da,len,sa)
 #define	pmap_update(p)
-void	pmap_activate __P((struct proc *));
-#define	pmap_deactivate(p)
+void	pmap_activate __P((struct lwp *));
+
+static __inline void
+pmap_deactivate(struct lwp *lwp)
+{
+}
 
 #define pmap_phys_address(x)	((x) << PGSHIFT)
 #define pmap_phys_to_frame(x)	((x) >> PGSHIFT)
@@ -142,11 +149,16 @@ pmap_remove_all(struct pmap *pmap)
 }
 
 static __inline int
-pmap_prot(struct pmap *pmap, int prot)
+pmap_prot(struct pmap *pmap, vm_prot_t prot)
 {
 	extern u_int kern_prot[], user_prot[];
-	return (pmap == kernel_pmap? kern_prot: user_prot)[prot];
+
+	return (pmap == kernel_pmap ? kern_prot : user_prot)[prot];
 }
+
+#define	pmap_sid(pmap, va) \
+	((((va) & 0xc0000000) != 0xc0000000) ? \
+	 (pmap)->pmap_space : HPPA_SID_KERNEL)
 
 #endif /* _KERNEL */
 

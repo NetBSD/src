@@ -1,4 +1,4 @@
-/*	$NetBSD: cprc.c,v 1.6 2003/03/13 14:37:36 scw Exp $	*/
+/*	$NetBSD: cprc.c,v 1.6.2.1 2004/08/03 10:40:23 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * SH-5 Clock, Power and Reset Controller
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cprc.c,v 1.6.2.1 2004/08/03 10:40:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

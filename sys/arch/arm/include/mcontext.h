@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.2 2003/01/17 22:28:48 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.2.2.1 2004/08/03 10:32:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -99,8 +99,16 @@ typedef struct {
 /* Machine-dependent uc_flags */
 #define	_UC_ARM_VFP	0x00010000	/* FPU field is VFP */
 
+/* used by signal delivery to indicate status of signal stack */
+#define _UC_SETSTACK	0x00020000
+#define _UC_CLRSTACK	0x00040000
+
 #define _UC_MACHINE_PAD	3		/* Padding appended to ucontext_t */
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
+#define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
+#define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R0])
+
+#define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
 #endif	/* !_ARM_MCONTEXT_H_ */

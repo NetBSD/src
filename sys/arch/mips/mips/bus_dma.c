@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.9.2.1 2003/07/02 15:25:25 darrenr Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.9.2.2 2004/08/03 10:37:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9.2.1 2003/07/02 15:25:25 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9.2.2 2004/08/03 10:37:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
     int *segp, int first)
 {
 	bus_size_t sgsize;
-	bus_addr_t curaddr, lastaddr, baddr, bmask;
+	bus_size_t bmask;
+	paddr_t baddr, curaddr, lastaddr;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
 
@@ -587,7 +588,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {
 			printf("uvm_pglistalloc returned non-sensical"
-			    " address 0x%lx\n", curaddr);
+			    " address 0x%llx\n", (uint64_t)curaddr);
 			panic("_bus_dmamem_alloc");
 		}
 #endif
@@ -733,7 +734,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			continue;
 		}
 
-		return (mips_btop((caddr_t)segs[i].ds_addr + off));
+		return (mips_btop((paddr_t)segs[i].ds_addr + off));
 	}
 
 	/* Page not found. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.23 2003/04/02 00:44:24 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.23.2.1 2004/08/03 10:37:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * Implementation of bus_space mapping for mac68k.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.23.2.1 2004/08/03 10:37:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

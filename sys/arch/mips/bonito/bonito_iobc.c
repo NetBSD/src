@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_iobc.c,v 1.1 2002/01/09 00:43:38 thorpej Exp $	*/
+/*	$NetBSD: bonito_iobc.c,v 1.1.20.1 2004/08/03 10:37:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
  * Note: This only applies to the 32-bit BONITO; BONITO64's IOBC
  * is coherent.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bonito_iobc.c,v 1.1.20.1 2004/08/03 10:37:38 skrll Exp $");
 
 #include <sys/param.h>
 

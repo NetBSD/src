@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 2003/04/09 22:37:32 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4.2.1 2004/08/03 10:39:36 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,18 +41,32 @@
  * Pmap stuff
  */
 struct pmap {
+#ifdef PPC_OEA64
+	struct steg *pm_steg_table;		/* segment table pointer */
+	/* XXX need way to track exec pages */
+#endif
+#ifdef PPC_OEA
 	register_t pm_sr[16];			/* segments used in this pmap */
+	int pm_exec[16];			/* counts of exec mappings */
+#endif
+	register_t pm_vsid;			/* VSID bits */
 	int pm_refs;				/* ref count */
 	struct pmap_statistics pm_stats;	/* pmap statistics */
 	unsigned int pm_evictions;		/* pvo's not in page table */
+#ifdef PPC_OEA64
+	unsigned int pm_ste_evictions;
+#endif
 };
 
 typedef	struct pmap *pmap_t;
 
 #ifdef	_KERNEL
+#include <sys/param.h>
 #include <sys/systm.h>
 
+#ifdef PPC_OEA
 extern register_t iosrtable[];
+#endif
 extern int pmap_use_altivec;
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
@@ -74,7 +88,7 @@ pmap_remove_all(struct pmap *pmap)
 	/* Nothing. */
 }
 
-void pmap_bootstrap (vaddr_t kernelstart, vaddr_t kernelend);
+void pmap_bootstrap (vaddr_t, vaddr_t);
 boolean_t pmap_extract (struct pmap *, vaddr_t, paddr_t *);
 boolean_t pmap_query_bit (struct vm_page *, int);
 boolean_t pmap_clear_bit (struct vm_page *, int);
@@ -82,18 +96,21 @@ void pmap_real_memory (paddr_t *, psize_t *);
 void pmap_pinit (struct pmap *);
 boolean_t pmap_pageidlezero (paddr_t);
 void pmap_syncicache (paddr_t, psize_t);
+#ifdef PPC_OEA64
+vaddr_t pmap_setusr (vaddr_t);
+vaddr_t pmap_unsetusr (void);
+#endif
 
 #define PMAP_NEED_PROCWR
-void pmap_procwr (struct proc *, vaddr_t, size_t);
+void pmap_procwr(struct proc *, vaddr_t, size_t);
 
-int pmap_pte_spill(struct pmap *, vaddr_t);
+int pmap_pte_spill(struct pmap *, vaddr_t, boolean_t);
 
 #define	PMAP_NC			0x1000
 
 #define PMAP_STEAL_MEMORY
 static __inline paddr_t vtophys (vaddr_t);
 
-#if 1
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
  *
@@ -101,11 +118,11 @@ static __inline paddr_t vtophys (vaddr_t);
  * VA==PA all at once.  But pmap_copy_page() and pmap_zero_page() will have
  * this problem, too.
  */
+#ifndef PPC_OEA64
 #define	PMAP_MAP_POOLPAGE(pa)	(pa)
 #define	PMAP_UNMAP_POOLPAGE(pa)	(pa)
-#endif
 #define POOL_VTOPHYS(va)	vtophys((vaddr_t) va)
-
+#endif
 
 static __inline paddr_t
 vtophys(vaddr_t va)

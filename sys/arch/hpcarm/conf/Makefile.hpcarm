@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcarm,v 1.14 2002/10/05 17:12:09 chs Exp $
+#	$NetBSD: Makefile.hpcarm,v 1.14.6.1 2004/08/03 10:35:04 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -90,3 +90,8 @@ cpuswitch.o fault.o machdep.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

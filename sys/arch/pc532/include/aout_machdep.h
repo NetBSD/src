@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.9 2002/12/10 17:14:16 thorpej Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.9.6.1 2004/08/03 10:38:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,9 +37,9 @@
  */
 
 #ifndef _PC532_EXEC_H_
-#define _PC532_EXEC_H_
+#define	_PC532_EXEC_H_
 
-#define AOUT_LDPGSZ	4096
+#define	AOUT_LDPGSZ	4096
 
 /* Relocation format. */
 struct relocation_info_pc532 {
@@ -54,6 +54,6 @@ struct relocation_info_pc532 {
 			  r_disp :  2,	/* ns32k data type */
 		       r_baserel :  1;	/* linkage table relative */
 };
-#define relocation_info	relocation_info_pc532
+#define	relocation_info	relocation_info_pc532
 
 #endif  /* _PC532_EXEC_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: arckbdmap.c,v 1.2 2002/03/24 23:37:44 bjh21 Exp $ */
+/* $NetBSD: arckbdmap.c,v 1.2.14.1 2004/08/03 10:30:48 skrll Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -29,10 +29,10 @@
  * arckbdmap.c - Archimedes keyboard maps
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: arckbdmap.c,v 1.2.14.1 2004/08/03 10:30:48 skrll Exp $");
+
 #include <sys/types.h>
-
-__RCSID("$NetBSD: arckbdmap.c,v 1.2 2002/03/24 23:37:44 bjh21 Exp $");
-
 #include <sys/device.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>

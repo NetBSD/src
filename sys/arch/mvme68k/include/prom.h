@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.12 2001/11/09 18:18:19 scw Exp $	*/
+/*	$NetBSD: prom.h,v 1.12.16.1 2004/08/03 10:38:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed under OpenBSD by
- *	Theo de Raadt for Willowglen Singapore.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -156,7 +150,7 @@ struct mvmeprom_args {
 #endif
 
 #define MVMEPROM_CALL(x) \
-	__asm__ __volatile (__CONCAT("trap #15; .short ", __STRING(x)) )
+	__asm__ __volatile ("trap #15; .short " __STRING(x))
 #define MVMEPROM_NOARG() \
 	__asm__ __volatile ("clrl %sp@-")
 #define MVMEPROM_ARG1(arg) \

@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.4 2003/05/25 19:29:35 fvdl Exp $	*/
+/*	$NetBSD: limits.h,v 1.4.2.1 2004/08/03 10:31:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -84,7 +80,7 @@
 #endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-#define LONG_BIT	32
+#define LONG_BIT	64
 #define WORD_BIT	32
 
 #define DBL_DIG		15

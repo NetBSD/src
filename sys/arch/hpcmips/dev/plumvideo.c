@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.31 2002/10/02 05:26:47 thorpej Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.31.6.1 2004/08/03 10:35:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: plumvideo.c,v 1.31.6.1 2004/08/03 10:35:07 skrll Exp $");
+
 #undef PLUMVIDEODEBUG
+
 #include "plumohci.h" /* Plum2 OHCI shared memory allocated on V-RAM */
 #include "bivideo.h"
 
@@ -131,8 +135,8 @@ void	plumvideo_hpcfbinit(struct plumvideo_softc *, int);
 void	plumvideo_clut_default(struct plumvideo_softc *);
 void	plumvideo_clut_set(struct plumvideo_softc *, u_int32_t *, int, int);
 void	plumvideo_clut_get(struct plumvideo_softc *, u_int32_t *, int, int);
-void	__plumvideo_clut_access(struct plumvideo_softc *,
-	    void (*)(bus_space_tag_t, bus_space_handle_t));
+void	__plumvideo_clut_access(struct plumvideo_softc *, u_int32_t *, int, int,
+	    void (*)(bus_space_tag_t, bus_space_handle_t, u_int32_t *, int, int));
 static void _flush_cache(void) __attribute__((__unused__)); /* !!! */
 
 #ifdef PLUMVIDEODEBUG
@@ -429,71 +433,62 @@ plumvideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GETCMAP:
-		cmap = (struct wsdisplay_cmap*)data;
+		cmap = (struct wsdisplay_cmap *)data;
 		cnt = cmap->count;
 		idx = cmap->index;
 
 		if (sc->sc_fbconf.hf_class != HPCFB_CLASS_INDEXCOLOR ||
 		    sc->sc_fbconf.hf_pack_width != 8 ||
 		    !LEGAL_CLUT_INDEX(idx) ||
-		    !LEGAL_CLUT_INDEX(idx + cnt -1)) {
+		    !LEGAL_CLUT_INDEX(idx + cnt - 1)) {
 			return (EINVAL);
 		}
 
-		if (!uvm_useracc(cmap->red, cnt, B_WRITE) ||
-		    !uvm_useracc(cmap->green, cnt, B_WRITE) ||
-		    !uvm_useracc(cmap->blue, cnt, B_WRITE)) {
-			return (EFAULT);
-		}
-
 		error = cmap_work_alloc(&r, &g, &b, &rgb, cnt);
-		if (error != 0) {
-			cmap_work_free(r, g, b, rgb);
-			return  (ENOMEM);
-		}
+		if (error)
+			goto out;
 		plumvideo_clut_get(sc, rgb, idx, cnt);
 		rgb24_decompose(rgb, r, g, b, cnt);
 
-		copyout(r, cmap->red, cnt);
-		copyout(g, cmap->green,cnt);
-		copyout(b, cmap->blue, cnt);
+		error = copyout(r, cmap->red, cnt);
+		if (error)
+			goto out;
+		error = copyout(g, cmap->green, cnt);
+		if (error)
+			goto out;
+		error = copyout(b, cmap->blue, cnt);
 
+out:
 		cmap_work_free(r, g, b, rgb);
-
-		return (0);
+		return error;
 		
 	case WSDISPLAYIO_PUTCMAP:
-		cmap = (struct wsdisplay_cmap*)data;
+		cmap = (struct wsdisplay_cmap *)data;
 		cnt = cmap->count;
 		idx = cmap->index;
 
 		if (sc->sc_fbconf.hf_class != HPCFB_CLASS_INDEXCOLOR ||
 		    sc->sc_fbconf.hf_pack_width != 8 ||
 		    !LEGAL_CLUT_INDEX(idx) ||
-		    !LEGAL_CLUT_INDEX(idx + cnt -1)) {
+		    !LEGAL_CLUT_INDEX(idx + cnt - 1)) {
 			return (EINVAL);
 		}
 
-		if (!uvm_useracc(cmap->red, cnt, B_WRITE) ||
-		    !uvm_useracc(cmap->green, cnt, B_WRITE) ||
-		    !uvm_useracc(cmap->blue, cnt, B_WRITE)) {
-			return (EFAULT);
-		}
-
 		error = cmap_work_alloc(&r, &g, &b, &rgb, cnt);
-		if (error != 0) {
-			cmap_work_free(r, g, b, rgb);
-			return  (ENOMEM);
-		}
-		copyin(cmap->red,   r, cnt);
-		copyin(cmap->green, g, cnt);
-		copyin(cmap->blue,  b, cnt);
+		if (error)
+			goto out;
+		error = copyin(cmap->red, r, cnt);
+		if (error)
+			goto out;
+		error = copyin(cmap->green, g, cnt);
+		if (error)
+			goto out;
+		error = copyin(cmap->blue, b, cnt);
+		if (error)
+			goto out;
 		rgb24_compose(rgb, r, g, b, cnt);
 		plumvideo_clut_set(sc, rgb, idx, cnt);
-
-		cmap_work_free(r, g, b, rgb);
-
-		return (0);
+		goto out;
 
 	case HPCFBIO_GCONF:
 		fbconf = (struct hpcfb_fbconf *)data;
@@ -562,105 +557,103 @@ plumvideo_mmap(void *ctx, off_t offset, int prot)
 	return (mips_btop(PLUM_VIDEO_VRAM_IOBASE_PHYSICAL + offset));
 }
 
+static void __plumvideo_clut_get(bus_space_tag_t, bus_space_handle_t,
+    u_int32_t *, int, int);
+static void __plumvideo_clut_get(bus_space_tag_t iot, bus_space_handle_t ioh,
+    u_int32_t *rgb, int beg, int cnt)
+{
+	int i;
+	
+	for (i = 0, beg *= 4; i < cnt; i++, beg += 4) {
+		*rgb++ = bus_space_read_4(iot, ioh, beg) &
+		    0x00ffffff;
+	}
+}
+
 void
 plumvideo_clut_get(struct plumvideo_softc *sc, u_int32_t *rgb, int beg,
     int cnt)
 {
-	static void __plumvideo_clut_get(bus_space_tag_t,
-	    bus_space_handle_t);
-	static void __plumvideo_clut_get(iot, ioh)
-	    bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	{
-		int i;
-		
-		for (i = 0, beg *= 4; i < cnt; i++, beg += 4) {
-			*rgb++ = bus_space_read_4(iot, ioh, beg) &
-			    0x00ffffff;
-		}
-	}
-
 	KASSERT(rgb);
 	KASSERT(LEGAL_CLUT_INDEX(beg));
 	KASSERT(LEGAL_CLUT_INDEX(beg + cnt - 1));
-	__plumvideo_clut_access(sc, __plumvideo_clut_get);
+	__plumvideo_clut_access(sc, rgb, beg, cnt, __plumvideo_clut_get);
+}
+
+static void __plumvideo_clut_set(bus_space_tag_t, bus_space_handle_t,
+    u_int32_t *, int, int);
+static void __plumvideo_clut_set(bus_space_tag_t iot, bus_space_handle_t ioh,
+    u_int32_t *rgb, int beg, int cnt)
+{
+	int i;
+	
+	for (i = 0, beg *= 4; i < cnt; i++, beg +=4) {
+		bus_space_write_4(iot, ioh, beg,
+		    *rgb++ & 0x00ffffff);
+	}
 }
 
 void
 plumvideo_clut_set(struct plumvideo_softc *sc, u_int32_t *rgb, int beg,
     int cnt)
 {
-	static void __plumvideo_clut_set(bus_space_tag_t,
-	    bus_space_handle_t);
-	static void __plumvideo_clut_set(iot, ioh)
-	    bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	{
-		int i;
-		
-		for (i = 0, beg *= 4; i < cnt; i++, beg +=4) {
-			bus_space_write_4(iot, ioh, beg,
-			    *rgb++ & 0x00ffffff);
-		}
-	}
-
 	KASSERT(rgb);
 	KASSERT(LEGAL_CLUT_INDEX(beg));
 	KASSERT(LEGAL_CLUT_INDEX(beg + cnt - 1));
-	__plumvideo_clut_access(sc, __plumvideo_clut_set);
+	__plumvideo_clut_access(sc, rgb, beg, cnt, __plumvideo_clut_set);
+}
+
+static void __plumvideo_clut_default(bus_space_tag_t, bus_space_handle_t,
+    u_int32_t *, int, int);
+static void __plumvideo_clut_default(bus_space_tag_t iot, bus_space_handle_t ioh,
+    u_int32_t *rgb, int beg, int cnt)
+{
+	static const u_int8_t compo6[6] = { 0, 51, 102, 153, 204, 255 };
+	static const u_int32_t ansi_color[16] = {
+		0x000000, 0xff0000, 0x00ff00, 0xffff00,
+		0x0000ff, 0xff00ff, 0x00ffff, 0xffffff,
+		0x000000, 0x800000, 0x008000, 0x808000,
+		0x000080, 0x800080, 0x008080, 0x808080,
+	};
+	int i, r, g, b;
+
+	/* ANSI escape sequence */
+	for (i = 0; i < 16; i++) {
+		bus_space_write_4(iot, ioh, i << 2, ansi_color[i]);
+	}
+	/* 16 - 31, gray scale */
+	for ( ; i < 32; i++) {
+		int j = (i - 16) * 17;
+		bus_space_write_4(iot, ioh, i << 2, RGB24(j, j, j));
+	}
+	/* 32 - 247, RGB color */
+	for (r = 0; r < 6; r++) {
+		for (g = 0; g < 6; g++) {
+			for (b = 0; b < 6; b++) {
+				bus_space_write_4(iot, ioh, i << 2,
+				    RGB24(compo6[r],
+					compo6[g],
+					compo6[b]));
+				i++;
+			}
+		}
+	}
+	/* 248 - 245, just white */
+	for ( ; i < 256; i++) {
+		bus_space_write_4(iot, ioh, i << 2, 0xffffff);
+	}
 }
 
 void
 plumvideo_clut_default(struct plumvideo_softc *sc)
 {
-	static void __plumvideo_clut_default(bus_space_tag_t,
-	    bus_space_handle_t);
-	static void __plumvideo_clut_default(iot, ioh)
-	    bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	{
-		static const u_int8_t compo6[6] = { 0, 51, 102, 153, 204, 255 };
-		static const u_int32_t ansi_color[16] = {
-			0x000000, 0xff0000, 0x00ff00, 0xffff00,
-			0x0000ff, 0xff00ff, 0x00ffff, 0xffffff,
-			0x000000, 0x800000, 0x008000, 0x808000,
-			0x000080, 0x800080, 0x008080, 0x808080,
-		};
-		int i, r, g, b;
-
-		/* ANSI escape sequence */
-		for (i = 0; i < 16; i++) {
-			bus_space_write_4(iot, ioh, i << 2, ansi_color[i]);
-		}
-		/* 16 - 31, gray scale */
-		for ( ; i < 32; i++) {
-			int j = (i - 16) * 17;
-			bus_space_write_4(iot, ioh, i << 2, RGB24(j, j, j));
-		}
-		/* 32 - 247, RGB color */
-		for (r = 0; r < 6; r++) {
-			for (g = 0; g < 6; g++) {
-				for (b = 0; b < 6; b++) {
-					bus_space_write_4(iot, ioh, i << 2,
-					    RGB24(compo6[r],
-						compo6[g],
-						compo6[b]));
-					i++;
-				}
-			}
-		}
-		/* 248 - 245, just white */
-		for ( ; i < 256; i++) {
-			bus_space_write_4(iot, ioh, i << 2, 0xffffff);
-		}
-	}
-
-	__plumvideo_clut_access(sc, __plumvideo_clut_default);
+	__plumvideo_clut_access(sc, NULL, 0, 256, __plumvideo_clut_default);
 }
 
 void
-__plumvideo_clut_access(struct plumvideo_softc *sc, void (*palette_func)
-    (bus_space_tag_t, bus_space_handle_t))
+__plumvideo_clut_access(struct plumvideo_softc *sc, u_int32_t *rgb, int beg,
+    int cnt, void (*palette_func)(bus_space_tag_t, bus_space_handle_t,
+    u_int32_t *, int, int))
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
@@ -681,7 +674,7 @@ __plumvideo_clut_access(struct plumvideo_softc *sc, void (*palette_func)
 	bus_space_write_4(regt, regh, PLUM_VIDEO_PLGMD_REG, val);
 
 	/* palette access */
-	(*palette_func) (sc->sc_clutiot, sc->sc_clutioh);
+	(*palette_func) (sc->sc_clutiot, sc->sc_clutioh, rgb, beg, cnt);
 
 	/* change palette mode to Display */
 	val |= PLUM_VIDEO_PLGMD_MODE_DISPLAY;

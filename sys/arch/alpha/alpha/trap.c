@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.80 2003/06/23 11:01:00 martin Exp $ */
+/* $NetBSD: trap.c,v 1.80.2.1 2004/08/03 10:31:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,17 +72,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80 2003/06/23 11:01:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80.2.1 2004/08/03 10:31:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80 2003/06/23 11:01:00 martin Exp $");
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/alpha.h>
+#include <machine/fpu.h>
 #include <machine/rpb.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -125,7 +126,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80 2003/06/23 11:01:00 martin Exp $");
 #include <machine/userret.h>
 
 static int unaligned_fixup(u_long, u_long, u_long, struct lwp *);
-static int handle_opdec(struct lwp *l, u_int64_t *ucodep);
+static int handle_opdec(struct lwp *l, u_long *ucodep);
+static int alpha_ucode_to_ksiginfo(u_long ucode);
 
 struct evcnt fpevent_use;
 struct evcnt fpevent_reuse;
@@ -140,18 +142,18 @@ trap_init(void)
 	/*
 	 * Point interrupt/exception vectors to our own.
 	 */
-	alpha_pal_wrent(XentInt, ALPHA_KENTRY_INT); 
+	alpha_pal_wrent(XentInt, ALPHA_KENTRY_INT);
 	alpha_pal_wrent(XentArith, ALPHA_KENTRY_ARITH);
 	alpha_pal_wrent(XentMM, ALPHA_KENTRY_MM);
 	alpha_pal_wrent(XentIF, ALPHA_KENTRY_IF);
-	alpha_pal_wrent(XentUna, ALPHA_KENTRY_UNA); 
+	alpha_pal_wrent(XentUna, ALPHA_KENTRY_UNA);
 	alpha_pal_wrent(XentSys, ALPHA_KENTRY_SYS);
 
 	/*
 	 * Clear pending machine checks and error reports, and enable
 	 * system- and processor-correctable error reporting.
 	 */
-	alpha_pal_wrmces(alpha_pal_rdmces() & 
+	alpha_pal_wrmces(alpha_pal_rdmces() &
 	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
 
 	/*
@@ -232,21 +234,28 @@ void
 trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
     struct trapframe *framep)
 {
-	register struct lwp *l;
-	register int i;
+	struct lwp *l;
+	struct proc *p;
+	ksiginfo_t ksi;
+	vm_prot_t ftype;
 	u_int64_t ucode;
-	int user;
+	int i, user;
 #if defined(DDB)
 	int call_debugger = 1;
 #endif
 
+	uvmexp.traps++;
+
 	l = curlwp;
 
-	uvmexp.traps++;			/* XXXSMP: NOT ATOMIC */
-	ucode = 0;
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
-	if (user)
+	if (user) {
 		l->l_md.md_tf = framep;
+		p = l->l_proc;
+		(void)memset(&ksi, 0, sizeof(ksi));
+	} else {
+		p = NULL;
+	}
 
 	switch (entry) {
 	case ALPHA_KENTRY_UNA:
@@ -262,7 +271,11 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			if (i == 0)
 				goto out;
 
-			ucode = a0;		/* VA */
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = i;
+			ksi.ksi_code = BUS_ADRALN;
+			ksi.ksi_addr = (void *)a0;		/* VA */
+			ksi.ksi_trap = BUS_ADRALN;      /* XXX appropriate? */
 			break;
 		}
 
@@ -288,6 +301,16 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			i = alpha_fp_complete(a0, a1, l, &ucode);
 			if (i == 0)
 				goto out;
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = i;
+			if (i == SIGSEGV)
+				ksi.ksi_code = SEGV_MAPERR; /* just pick one */
+			else {
+				ksi.ksi_code = alpha_ucode_to_ksiginfo(ucode);
+				ksi.ksi_addr =
+					(void *)l->l_md.md_tf->tf_regs[FRAME_PC];
+				ksi.ksi_trap = (int)ucode;
+			}
 			break;
 		}
 
@@ -320,23 +343,39 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		switch (a0) {
 		case ALPHA_IF_CODE_GENTRAP:
 			if (framep->tf_regs[FRAME_A0] == -2) { /* weird! */
-				i = SIGFPE;
-				ucode =  a0;	/* exception summary */
+				KSI_INIT_TRAP(&ksi);
+				ksi.ksi_signo = SIGFPE;
+				ksi.ksi_code =  alpha_ucode_to_ksiginfo(ucode);
+				ksi.ksi_addr =
+					(void *)l->l_md.md_tf->tf_regs[FRAME_PC];
+				ksi.ksi_trap =  a0;	/* exception summary */
 				break;
 			}
 			/* FALLTHROUTH */
 		case ALPHA_IF_CODE_BPT:
 		case ALPHA_IF_CODE_BUGCHK:
-			ucode = a0;		/* trap type */
-			i = SIGTRAP;
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = SIGTRAP;
+			ksi.ksi_code = TRAP_BRKPT;
+			ksi.ksi_addr = (void *)l->l_md.md_tf->tf_regs[FRAME_PC];
+			ksi.ksi_trap = a0;		/* trap type */
 			break;
 
 		case ALPHA_IF_CODE_OPDEC:
 			KERNEL_PROC_LOCK(l);
 			i = handle_opdec(l, &ucode);
 			KERNEL_PROC_UNLOCK(l);
+			KSI_INIT_TRAP(&ksi);
 			if (i == 0)
 				goto out;
+			else if (i == SIGSEGV)
+				ksi.ksi_code = SEGV_MAPERR;
+			else if (i == SIGILL)
+				ksi.ksi_code = ILL_ILLOPC;
+			ksi.ksi_signo = i;
+			ksi.ksi_addr =
+				(void *)l->l_md.md_tf->tf_regs[FRAME_PC];
+			ksi.ksi_trap = (int)ucode;
 			break;
 
 		case ALPHA_IF_CODE_FEN:
@@ -360,8 +399,10 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			else
 				KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
-			pmap_emulate_reference(l, a0, user,
-			    a1 == ALPHA_MMCSR_FOW ? 1 : 0);
+			if (pmap_emulate_reference(l, a0, user, a1)) {
+				ftype = VM_PROT_EXECUTE;
+				goto do_fault;
+			}
 
 			if (user)
 				KERNEL_PROC_UNLOCK(l);
@@ -372,15 +413,37 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		case ALPHA_MMCSR_INVALTRANS:
 		case ALPHA_MMCSR_ACCESS:
 	    	{
-			register vaddr_t va;
-			register struct vmspace *vm = NULL;
-			register struct vm_map *map;
-			vm_prot_t ftype;
+			vaddr_t va;
+			struct vmspace *vm = NULL;
+			struct vm_map *map;
 			int rv;
 
-			if (user)
+			switch (a2) {
+			case -1:		/* instruction fetch fault */
+				ftype = VM_PROT_EXECUTE;
+				break;
+			case 0:			/* load instruction */
+				ftype = VM_PROT_READ;
+				break;
+			case 1:			/* store instruction */
+				ftype = VM_PROT_WRITE;
+				break;
+			default:
+#ifdef DIAGNOSTIC
+				panic("trap: bad fault type");
+#else
+				ftype = VM_PROT_NONE;
+				break;
+#endif
+			}
+
+			if (user) {
 				KERNEL_PROC_LOCK(l);
-			else {
+				if (l->l_flag & L_SA) {
+					l->l_savp->savp_faultaddr = (vaddr_t)a0;
+					l->l_flag |= L_SA_PAGEFAULT;
+				}
+			} else {
 				struct cpu_info *ci = curcpu();
 
 				if (l == NULL) {
@@ -427,6 +490,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			 * The last can occur during an exec() copyin where the
 			 * argument space is lazy-allocated.
 			 */
+do_fault:
 			if (user == 0 && (a0 >= VM_MIN_KERNEL_ADDRESS ||
 			    l->l_addr->u_pcb.pcb_onfault == 0))
 				map = kernel_map;
@@ -434,29 +498,12 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				vm = l->l_proc->p_vmspace;
 				map = &vm->vm_map;
 			}
-	
-			switch (a2) {
-			case -1:		/* instruction fetch fault */
-			case 0:			/* load instruction */
-				ftype = VM_PROT_READ;
-				break;
-			case 1:			/* store instruction */
-				ftype = VM_PROT_WRITE;
-				break;
-#ifdef DIAGNOSTIC
-			default:		/* XXX gcc -Wuninitialized */
-				if (user)
-					KERNEL_PROC_UNLOCK(l);
-				else
-					KERNEL_UNLOCK();
-				goto dopanic;
-#endif
-			}
-	
+
 			va = trunc_page((vaddr_t)a0);
 			rv = uvm_fault(map, va,
 			    (a1 == ALPHA_MMCSR_INVALTRANS) ?
 			    VM_FAULT_INVALID : VM_FAULT_PROTECT, ftype);
+
 			/*
 			 * If this was a stack access we keep track of the
 			 * maximum accessed stack size.  Also, if vm_fault
@@ -469,18 +516,20 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			    va < USRSTACK) {
 				if (rv == 0) {
 					unsigned nss;
-	
+
 					nss = btoc(USRSTACK -
 					    (unsigned long)va);
 					if (nss > vm->vm_ssize)
 						vm->vm_ssize = nss;
-				} else if (rv == EACCES)
+				} else if (rv == EACCES &&
+					   ftype != VM_PROT_EXECUTE)
 					rv = EFAULT;
 			}
 			if (rv == 0) {
-				if (user)
+				if (user) {
+					l->l_flag &= ~L_SA_PAGEFAULT;
 					KERNEL_PROC_UNLOCK(l);
-				else
+				} else
 					KERNEL_UNLOCK();
 				goto out;
 			}
@@ -493,21 +542,29 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				    l->l_addr->u_pcb.pcb_onfault != 0) {
 					framep->tf_regs[FRAME_PC] =
 					    l->l_addr->u_pcb.pcb_onfault;
+					framep->tf_regs[FRAME_V0] = rv;
 					l->l_addr->u_pcb.pcb_onfault = 0;
 					goto out;
 				}
 				goto dopanic;
 			}
-			ucode = a0;
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_addr = (void *)a0;
+			ksi.ksi_trap = a1; /* MMCSR VALUE */
 			if (rv == ENOMEM) {
 				printf("UVM: pid %d (%s), uid %d killed: "
-				       "out of swap\n", l->l_proc->p_pid, 
+				       "out of swap\n", l->l_proc->p_pid,
 				       l->l_proc->p_comm,
 				       l->l_proc->p_cred && l->l_proc->p_ucred ?
 				       l->l_proc->p_ucred->cr_uid : -1);
-				i = SIGKILL;
+				ksi.ksi_signo = SIGKILL;
 			} else
-				i = SIGSEGV;
+				ksi.ksi_signo = SIGSEGV;
+			if (rv == EACCES)
+				ksi.ksi_code = SEGV_ACCERR;
+			else
+				ksi.ksi_code = SEGV_MAPERR;
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		    }
@@ -526,7 +583,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 	printtrap(a0, a1, a2, entry, framep, 1, user);
 #endif
 	KERNEL_PROC_LOCK(l);
-	trapsignal(l, i, ucode);
+	(*p->p_emul->e_trapsignal)(l, &ksi);
 	KERNEL_PROC_UNLOCK(l);
 out:
 	if (user)
@@ -614,7 +671,7 @@ alpha_enable_fp(struct lwp *l, int check)
 void
 ast(struct trapframe *framep)
 {
-	register struct lwp *l;
+	struct lwp *l;
 
 	/*
 	 * We may not have a current process to do AST processing
@@ -818,14 +875,13 @@ struct unaligned_fixup_data {
 	const char *type;	/* opcode name */
 	int fixable;		/* fixable, 0 if fixup not supported */
 	int size;		/* size, 0 if unknown */
-	int acc;		/* useracc type; B_READ or B_WRITE */
 };
 
-#define	UNKNOWN()	{ "0x%lx", 0, 0, 0 }
-#define	FIX_LD(n,s)	{ n, 1, s, B_READ }
-#define	FIX_ST(n,s)	{ n, 1, s, B_WRITE }
-#define	NOFIX_LD(n,s)	{ n, 0, s, B_READ }
-#define	NOFIX_ST(n,s)	{ n, 0, s, B_WRITE }
+#define	UNKNOWN()	{ "0x%lx", 0, 0 }
+#define	FIX_LD(n,s)	{ n, 1, s }
+#define	FIX_ST(n,s)	{ n, 1, s }
+#define	NOFIX_LD(n,s)	{ n, 0, s }
+#define	NOFIX_ST(n,s)	{ n, 0, s }
 
 int
 unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
@@ -889,21 +945,6 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 		selected_tab = tab_unknown;
 
 	/*
-	 * See if the user can access the memory in question.
-	 * If it's an unknown opcode, we don't know whether to
-	 * read or write, so we don't check.
-	 *
-	 * We adjust the PC backwards so that the instruction will
-	 * be re-run.
-	 */
-	if (selected_tab->size != 0 &&
-	   !uvm_useracc((caddr_t)va, selected_tab->size, selected_tab->acc)) {
-		l->l_md.md_tf->tf_regs[FRAME_PC] -= 4;
-		signal = SIGSEGV;
-		goto out;
-	}
-
-	/*
 	 * If we're supposed to be noisy, squawk now.
 	 */
 	if (doprint) {
@@ -921,16 +962,16 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 	/*
 	 * If we should try to fix it and know how, give it a shot.
 	 *
-	 * We never allow bad data to be unknowingly used by the
-	 * user process.  That is, if we decide not to fix up an
-	 * access we cause a SIGBUS rather than letting the user
-	 * process go on without warning.
+	 * We never allow bad data to be unknowingly used by the user process.
+	 * That is, if we can't access the address needed to fix up the trap,
+	 * we cause a SIGSEGV rather than letting the user process go on
+	 * without warning.
 	 *
 	 * If we're trying to do a fixup, we assume that things
-	 * will be botched.  If everything works out OK, 
+	 * will be botched.  If everything works out OK,
 	 * unaligned_{load,store}_* clears the signal flag.
 	 */
-	signal = SIGBUS;
+	signal = SIGSEGV;
 	if (dofix && selected_tab->fixable) {
 		switch (opcode) {
 		case 0x0c:			/* ldwu */
@@ -1000,7 +1041,7 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 			panic("unaligned_fixup: can't get here");
 #endif
 		}
-	} 
+	}
 
 	/*
 	 * Force SIGBUS if requested.
@@ -1008,7 +1049,6 @@ unaligned_fixup(u_long va, u_long opcode, u_long reg, struct lwp *l)
 	if (dosigbus)
 		signal = SIGBUS;
 
-out:
 	/*
 	 * Write back USP.
 	 */
@@ -1030,7 +1070,7 @@ out:
  * and fills in *ucodep with the code to be delivered.
  */
 int
-handle_opdec(struct lwp *l, u_int64_t *ucodep)
+handle_opdec(struct lwp *l, u_long *ucodep)
 {
 	alpha_instruction inst;
 	register_t *regptr, memaddr;
@@ -1177,7 +1217,28 @@ unaligned_fixup_sig:
 	return (sig);
 }
 
-/* 
+/* map alpha fp flags to ksiginfo fp codes */
+static int
+alpha_ucode_to_ksiginfo(u_long ucode)
+{
+	long i;
+
+	static const int alpha_ksiginfo_table[] = { FPE_FLTINV,
+					     FPE_FLTDIV,
+					     FPE_FLTOVF,
+					     FPE_FLTUND,
+					     FPE_FLTRES,
+					     FPE_INTOVF };
+
+	for(i=0;i < sizeof(alpha_ksiginfo_table)/sizeof(int); i++) {
+		if (ucode & (1 << i))
+			return (alpha_ksiginfo_table[i]);
+	}
+	/* punt if the flags weren't set */
+	return (0);
+}
+
+/*
  * Start a new LWP
  */
 void
@@ -1205,6 +1266,7 @@ startlwp(arg)
 void
 upcallret(struct lwp *l)
 {
+	KERNEL_PROC_UNLOCK(l);
 
 	userret(l);
 }

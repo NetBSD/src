@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_gsc.c,v 1.3 2002/10/02 05:17:50 thorpej Exp $	*/
+/*	$NetBSD: siop_gsc.c,v 1.3.6.1 2004/08/03 10:34:48 skrll Exp $	*/
 
 /*	$OpenBSD: siop_gsc.c,v 1.1 1998/11/04 17:01:35 mickey Exp $	*/
 
@@ -32,6 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: siop_gsc.c,v 1.3.6.1 2004/08/03 10:34:48 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -49,8 +52,8 @@
 
 #include <hp700/dev/cpudevs.h>
 
-int	ncr53c7xx_gsc_probe __P((struct device *, void *, void *));
-void	ncr53c7xx_gsc_attach __P((struct device *, struct device *, void *));
+int	ncr53c7xx_gsc_probe(struct device *, void *, void *);
+void	ncr53c7xx_gsc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ncr, sizeof(struct ncr53c7xx_softc),
     ncr53c7xx_gsc_probe, ncr53c7xx_gsc_attach, NULL, NULL);
@@ -76,12 +79,10 @@ struct scsi_device ncr53c7xx_gsc_scsidev = {
 
 
 int
-ncr53c7xx_gsc_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ncr53c7xx_gsc_probe(struct device *parent, void *match, void *aux)
 {
-	register struct confargs *ca = aux;
-	register bus_space_tag_t iot;
+	struct confargs *ca = aux;
+	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int rv = 1;
 
@@ -105,12 +106,10 @@ ncr53c7xx_gsc_probe(parent, match, aux)
 }
 
 void
-ncr53c7xx_gsc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ncr53c7xx_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
-	register struct ncr53c7xx_softc *sc = (void *)self;
-	register struct confargs *ca = aux;
+	struct ncr53c7xx_softc *sc = (void *)self;
+	struct confargs *ca = aux;
 
 	sc->sc_iot = HPPA_BUS_TAG_SET_BYTE(ca->ca_iot);
 	if (bus_space_map(sc->sc_iot, ca->ca_hpa, IOMOD_HPASIZE,

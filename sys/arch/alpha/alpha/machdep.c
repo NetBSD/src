@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.270 2003/06/29 22:28:01 fvdl Exp $ */
+/* $NetBSD: machdep.c,v 1.270.2.1 2004/08/03 10:31:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.270 2003/06/29 22:28:01 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.270.2.1 2004/08/03 10:31:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ struct	user *proc0paddr;
 /* Number of machine cycles per microsecond */
 u_int64_t	cycles_per_usec;
 
-/* number of cpus in the box.  really! */
+/* number of CPUs in the box.  really! */
 int		ncpus;
 
 struct bootinfo_kernel bootinfo;
@@ -231,11 +231,9 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	struct vm_physseg *vps;
 	vaddr_t kernstart, kernend;
 	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
-	vsize_t size;
 	cpuid_t cpu_id;
 	struct cpu_info *ci;
 	char *p;
-	caddr_t v;
 	const char *bootinfo_msg;
 	const struct cpuinit *c;
 
@@ -651,17 +649,6 @@ nobootinfo:
 	    (struct user *)uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
 
 	/*
-	 * Allocate space for system data structures.  These data structures
-	 * are allocated here instead of cpu_startup() because physical
-	 * memory is directly addressable.  We don't have to map these into
-	 * virtual address space.
-	 */
-	size = (vsize_t)allocsys(NULL, NULL);
-	v = (caddr_t)uvm_pageboot_alloc(size);
-	if ((allocsys(v, NULL) - v) != size)
-		panic("alpha_init: table size inconsistency");
-
-	/*
 	 * Initialize the virtual memory system, and set the
 	 * page table base register in proc 0's PCB.
 	 */
@@ -777,7 +764,7 @@ nobootinfo:
 
 
 	/*
-	 * Figure out the number of cpus in the box, from RPB fields.
+	 * Figure out the number of CPUs in the box, from RPB fields.
 	 * Really.  We mean it.
 	 */
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
@@ -832,33 +819,10 @@ consinit()
 #endif
 }
 
-#include "pckbc.h"
-#include "pckbd.h"
-#if (NPCKBC > 0) && (NPCKBD == 0)
-
-#include <dev/ic/pckbcvar.h>
-
-/*
- * This is called by the pbkbc driver if no pckbd is configured.
- * On the i386, it is used to glue in the old, deprecated console
- * code.  On the Alpha, it does nothing.
- */
-int
-pckbc_machdep_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
-{
-
-	return (ENXIO);
-}
-#endif /* NPCKBC > 0 && NPCKBD == 0 */
-
 void
 cpu_startup()
 {
-	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
 	char pbuf[9];
 #if defined(DEBUG)
 	extern int pmapdebug;
@@ -887,45 +851,7 @@ cpu_startup()
 		printf("WARNING: %s of memory with unknown purpose\n", pbuf);
 	}
 
-	/*
-	 * Allocate virtual address space for file I/O buffers.
-	 * Note they are different than the array of headers, 'buf',
-	 * and usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != 0)
-		panic("startup: cannot allocate VM for buffers");
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-					VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(pmap_kernel());
+	minaddr = 0;
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -959,13 +885,6 @@ cpu_startup()
 		printf("stolen memory for VM structures = %s\n", pbuf);
 	}
 #endif
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
 
 	/*
 	 * Set up the HWPCB so that it's safe to configure secondary
@@ -1103,6 +1022,9 @@ cpu_reboot(howto, bootstr)
 	 * primary will spin, waiting for us to halt.
 	 */
 	alpha_broadcast_ipi(ALPHA_IPI_HALT);
+
+	/* Ensure any CPUs paused by DDB resume execution so they can halt */
+	cpus_paused = 0;
 
 	for (i = 0; i < 10000; i++) {
 		alpha_mb();
@@ -1506,111 +1428,105 @@ regdump(framep)
 }
 
 
+
+void *
+getframe(const struct lwp *l, int sig, int *onstack)
+{
+	void * frame;
+	struct proc *p;
+
+	p = l->l_proc;
+
+	/* Do we need to jump onto the signal stack? */
+	*onstack =
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+
+	if (*onstack)
+		frame = (void *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+					p->p_sigctx.ps_sigstk.ss_size);
+	else
+		frame = (void *)(alpha_pal_rdusp());
+	return (frame);
+}	
+
+void
+buildcontext(struct lwp *l, const void *catcher, const void *tramp, const void *fp)
+{
+	struct trapframe *tf = l->l_md.md_tf;
+
+	tf->tf_regs[FRAME_RA] = (u_int64_t)tramp;
+	tf->tf_regs[FRAME_PC] = (u_int64_t)catcher;
+	tf->tf_regs[FRAME_T12] = (u_int64_t)catcher;
+	alpha_pal_wrusp((unsigned long)fp);
+}
+
+
 /*
- * Send an interrupt to process.
+ * Send an interrupt to process, new style
  */
 void
-sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	struct sigcontext *scp, ksc;
-	struct trapframe *frame;
-	int onstack, fsize, rndfsize;
-	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	int onstack, sig = ksi->ksi_signo;
+	struct sigframe_siginfo *fp, frame;
+	struct trapframe *tf;
+	sig_t catcher = SIGACTION(p, ksi->ksi_signo).sa_handler;
 
-	frame = l->l_md.md_tf;
-
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+	fp = (struct sigframe_siginfo *)getframe(l,ksi->ksi_signo,&onstack);
+	tf = l->l_md.md_tf;
 
 	/* Allocate space for the signal handler context. */
-	fsize = sizeof(ksc);
-	rndfsize = ((fsize + 15) / 16) * 16;
+	fp--;
 
-	if (onstack)
-		scp = (struct sigcontext *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-					p->p_sigctx.ps_sigstk.ss_size);
-	else
-		scp = (struct sigcontext *)(alpha_pal_rdusp());
-	scp = (struct sigcontext *)((caddr_t)scp - rndfsize);
+	/* Build stack frame for signal trampoline. */
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+	case 0:		/* handled by sendsig_sigcontext */
+	case 1:		/* handled by sendsig_sigcontext */
+	default:	/* unknown version */
+		printf("nsendsig: bad version %d\n",
+		    ps->sa_sigdesc[sig].sd_vers);
+		sigexit(l, SIGILL);
+	case 2:
+		break;
+	}
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d ssp %p usp %p\n", p->p_pid,
-		    sig, &onstack, scp);
+		printf("sendsig_siginfo(%d): sig %d ssp %p usp %p\n", p->p_pid,
+		    sig, &onstack, fp);
 #endif
 
 	/* Build stack frame for signal trampoline. */
-	ksc.sc_pc = frame->tf_regs[FRAME_PC];
-	ksc.sc_ps = frame->tf_regs[FRAME_PS];
 
-	/* Save register context. */
-	frametoreg(frame, (struct reg *)ksc.sc_regs);
-	ksc.sc_regs[R_ZERO] = 0xACEDBADE;		/* magic number */
-	ksc.sc_regs[R_SP] = alpha_pal_rdusp();
+	frame.sf_si._info = ksi->ksi_info;
+	frame.sf_uc.uc_flags = _UC_SIGMASK;
+	frame.sf_uc.uc_sigmask = *mask;
+	frame.sf_uc.uc_link = NULL;
+	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
+	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 
- 	/* save the floating-point state, if necessary, then copy it. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(l, 1);
-	ksc.sc_ownedfp = l->l_md.md_flags & MDP_FPUSED;
-	memcpy((struct fpreg *)ksc.sc_fpregs, &l->l_addr->u_pcb.pcb_fp,
-	    sizeof(struct fpreg));
-	ksc.sc_fp_control = alpha_read_fp_c(l);
-	memset(ksc.sc_reserved, 0, sizeof ksc.sc_reserved);	/* XXX */
-	memset(ksc.sc_xxx, 0, sizeof ksc.sc_xxx);		/* XXX */
-
-	/* Save signal stack. */
-	ksc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
-
-	/* Save signal mask. */
-	ksc.sc_mask = *mask;
-
-#ifdef COMPAT_13
-	/*
-	 * XXX We always have to save an old style signal mask because
-	 * XXX we might be delivering a signal to a process which will
-	 * XXX escape from the signal in a non-standard way and invoke
-	 * XXX sigreturn() directly.
-	 */
-	{
-		/* Note: it's a long in the stack frame. */
-		sigset13_t mask13;
-
-		native_sigset_to_sigset13(mask, &mask13);
-		ksc.__sc_mask13 = mask13;
-	}
-#endif
-
-#ifdef COMPAT_OSF1
-	/*
-	 * XXX Create an OSF/1-style sigcontext and associated goo.
-	 */
-#endif
-
-	if (copyout(&ksc, (caddr_t)scp, fsize) != 0) {
+	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig(%d): copyout failed on sig %d\n",
+			printf("sendsig_siginfo(%d): copyout failed on sig %d\n",
 			    p->p_pid, sig);
 #endif
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
+
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): sig %d scp %p code %lx\n", p->p_pid, sig,
-		    scp, code);
+		printf("sendsig_siginfo(%d): sig %d usp %p code %x\n",
+		       p->p_pid, sig, fp, ksi->ksi_code);
 #endif
 
 	/*
@@ -1619,28 +1535,12 @@ sendsig(sig, mask, code)
 	 * the trampoline version numbers are coordinated with machine-
 	 * dependent code in libc.
 	 */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-#if 1 /* COMPAT_16 */
-	case 0:		/* legacy on-stack sigtramp */
-		frame->tf_regs[FRAME_RA] = (u_int64_t)p->p_sigctx.ps_sigcode;
-		break;
-#endif /* COMPAT_16 */
+	
+	tf->tf_regs[FRAME_A0] = sig;
+	tf->tf_regs[FRAME_A1] = (u_int64_t)&fp->sf_si;
+	tf->tf_regs[FRAME_A2] = (u_int64_t)&fp->sf_uc;
 
-	case 1:
-		frame->tf_regs[FRAME_RA] =
-		    (u_int64_t)ps->sa_sigdesc[sig].sd_tramp;
-		break;
-
-	default:
-		/* Don't know what trampoline version; kill it. */
-		sigexit(l, SIGILL);
-	}
-	frame->tf_regs[FRAME_PC] = (u_int64_t)catcher;
-	frame->tf_regs[FRAME_A0] = sig;
-	frame->tf_regs[FRAME_A1] = code;
-	frame->tf_regs[FRAME_A2] = (u_int64_t)scp;
-	frame->tf_regs[FRAME_T12] = (u_int64_t)catcher;
-	alpha_pal_wrusp((unsigned long)scp);
+	buildcontext(l,catcher,ps->sa_sigdesc[sig].sd_tramp,fp);
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
@@ -1648,14 +1548,34 @@ sendsig(sig, mask, code)
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): pc %lx, catcher %lx\n", p->p_pid,
-		    frame->tf_regs[FRAME_PC], frame->tf_regs[FRAME_A3]);
+		printf("sendsig_siginfo(%d): pc %lx, catcher %lx\n", p->p_pid,
+		    tf->tf_regs[FRAME_PC], tf->tf_regs[FRAME_A3]);
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d returns\n",
+		printf("sendsig_siginfo(%d): sig %d returns\n",
 		    p->p_pid, sig);
 #endif
 }
 
+
+void
+sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+#ifdef COMPAT_16
+	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2) {
+		sendsig_sigcontext(ksi, mask);
+	} else {
+#endif
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sendsig: sendsig called: sig %d vers %d\n",
+		       ksi->ksi_signo,
+		       curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers);
+#endif
+		sendsig_siginfo(ksi, mask);
+#ifdef COMPAT_16
+	}
+#endif
+}
 
 void 
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
@@ -1676,135 +1596,52 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 }
 
 /*
- * System call to cleanup state after a signal
- * has been taken.  Reset signal mask and
- * stack state from context left by sendsig (above).
- * Return to previous pc and psl as specified by
- * context left by sendsig. Check carefully to
- * make sure that the user has not modified the
- * psl to gain improper privileges or to cause
- * a machine fault.
- */
-/* ARGSUSED */
-int
-sys___sigreturn14(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct sys___sigreturn14_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	struct sigcontext *scp, ksc;
-	struct proc *p = l->l_proc;
-
-	/*
-	 * The trampoline code hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal handler.
-	 */
-	scp = SCARG(uap, sigcntxp);
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-	    printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
-#endif
-	if (ALIGN(scp) != (u_int64_t)scp)
-		return (EINVAL);
-
-	if (copyin((caddr_t)scp, &ksc, sizeof(ksc)) != 0)
-		return (EFAULT);
-
-	if (ksc.sc_regs[R_ZERO] != 0xACEDBADE)		/* magic number */
-		return (EINVAL);
-
-	/* Restore register context. */
-	l->l_md.md_tf->tf_regs[FRAME_PC] = ksc.sc_pc;
-	l->l_md.md_tf->tf_regs[FRAME_PS] =
-	    (ksc.sc_ps | ALPHA_PSL_USERSET) & ~ALPHA_PSL_USERCLR;
-
-	regtoframe((struct reg *)ksc.sc_regs, l->l_md.md_tf);
-	alpha_pal_wrusp(ksc.sc_regs[R_SP]);
-
-	/* XXX ksc.sc_ownedfp ? */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(l, 0);
-	memcpy(&l->l_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
-	    sizeof(struct fpreg));
-	l->l_addr->u_pcb.pcb_fp.fpr_cr = ksc.sc_fpcr;
-	l->l_md.md_flags = ksc.sc_fp_control & MDP_FP_C;
-
-	/* Restore signal stack. */
-	if (ksc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
-	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
-
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn(%d): returns\n", p->p_pid);
-#endif
-	return (EJUSTRETURN);
-}
-
-/*
  * machine dependent system variables.
  */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
-	dev_t consdev;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-			sizeof consdev));
-
-	case CPU_ROOT_DEVICE:
-		return (sysctl_rdstring(oldp, oldlenp, newp,
-		    root_device->dv_xname));
-
-	case CPU_UNALIGNED_PRINT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &alpha_unaligned_print));
-
-	case CPU_UNALIGNED_FIX:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &alpha_unaligned_fix));
-
-	case CPU_UNALIGNED_SIGBUS:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &alpha_unaligned_sigbus));
-
-	case CPU_BOOTED_KERNEL:
-		return (sysctl_rdstring(oldp, oldlenp, newp,
-		    bootinfo.booted_kernel));
-
-	case CPU_FP_SYNC_COMPLETE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &alpha_fp_sync_complete));
-
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "root_device", NULL,
+		       sysctl_root_device, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_ROOT_DEVICE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "unaligned_print", NULL,
+		       NULL, 0, &alpha_unaligned_print, 0,
+		       CTL_MACHDEP, CPU_UNALIGNED_PRINT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "unaligned_fix", NULL,
+		       NULL, 0, &alpha_unaligned_fix, 0,
+		       CTL_MACHDEP, CPU_UNALIGNED_FIX, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "unaligned_sigbus", NULL,
+		       NULL, 0, &alpha_unaligned_sigbus, 0,
+		       CTL_MACHDEP, CPU_UNALIGNED_SIGBUS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       NULL, 0, bootinfo.booted_kernel, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "fp_sync_complete", NULL,
+		       NULL, 0, &alpha_fp_sync_complete, 0,
+		       CTL_MACHDEP, CPU_FP_SYNC_COMPLETE, CTL_EOL);
 }
 
 /*
@@ -1911,7 +1748,6 @@ fpusave_proc(struct lwp *l, int save)
 #endif
 
 	KDASSERT(l->l_addr != NULL);
-	KDASSERT(l->l_flag & L_INMEM);
 
 	FPCPU_LOCK(&l->l_addr->u_pcb, s);
 
@@ -2165,6 +2001,7 @@ cpu_setmcontext(l, mcp, flags)
 		(void)memcpy(&l->l_addr->u_pcb.pcb_fp, &mcp->__fpregs,
 		    sizeof (l->l_addr->u_pcb.pcb_fp));
 		l->l_md.md_flags = mcp->__fpregs.__fp_fpcr & MDP_FP_C;
+		l->l_md.md_flags |= MDP_FPUSED;
 	}
 
 	return (0);

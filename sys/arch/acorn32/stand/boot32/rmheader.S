@@ -1,4 +1,4 @@
-/*	$NetBSD: rmheader.S,v 1.2 2003/01/08 15:29:09 reinoud Exp $	*/
+/*	$NetBSD: rmheader.S,v 1.2.2.1 2004/08/03 10:30:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -41,10 +41,19 @@ rmbase:
 	.word	rmtitle - rmbase	/* Title string */
 	.word	rmhelp - rmbase		/* Help string */
 	.word	rmcmdtbl - rmbase	/* Help and command keyword table */
+	.word	0			/* SWI chunk base number */
+	.word	0			/* SWI handler code offset */
+	.word	0			/* SWI decoding table offset */
+	.word	0			/* SWI decoding code offset */
+	.word	0			/* Messages filename offset */
+	.word	flags - rmbase		/* Module flags extension offset */
 
 rmtitle:
 	.asciz	"boot32"
 	.align
+flags:
+	.word	1			/* 32 bit compatible */
+
 rmstart:
 	/*
 	 * This entry point is called when we're started up as an application,

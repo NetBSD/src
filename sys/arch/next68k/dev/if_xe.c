@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.13 2003/05/03 18:10:55 wiz Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.13.2.1 2004/08/03 10:38:35 skrll Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.13.2.1 2004/08/03 10:38:35 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

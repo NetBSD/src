@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.103 2003/06/28 14:18:30 he Exp $
+#	$NetBSD: files.atari,v 1.103.2.1 2004/08/03 10:33:10 skrll Exp $
 
 maxpartitions 16
 
@@ -28,7 +28,6 @@ file	arch/atari/dev/dma.c		mbdma
 
 device	clock
 attach	clock at mainbus
-file	dev/clock_subr.c
 file	arch/atari/dev/clock.c
 
 # keyboard
@@ -147,7 +146,7 @@ file	arch/atari/pci/pci_hades.c	pci & _atarihw_
 file 	arch/atari/pci/pci_milan.c	pci & _milanhw_
 file	arch/atari/pci/pci_vga.c	pci
 file	arch/atari/pci/pci_tseng.c	pci
-file	arch/atari/pci/pciide_machdep.c	pciide
+file	arch/atari/pci/pciide_machdep.c	pciide_common
 
 device	pcib: pcibus
 attach	pcib at mainbus
@@ -245,7 +244,7 @@ include "compat/ossaudio/files.ossaudio"
 # network devices MII bus
 
 # Wscons related includes
-include	"dev/pckbc/files.pckbc"
+include	"dev/pckbport/files.pckbport"
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 

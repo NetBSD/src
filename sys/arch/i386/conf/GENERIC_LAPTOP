@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.74 2003/05/15 13:13:24 wiz Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.74.2.1 2004/08/03 10:35:47 skrll Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.74 $"
+#ident 		"GENERIC-$Revision: 1.74.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -22,8 +22,10 @@ options 	I686_CPU
 options 	MATH_EMULATE	# floating point emulation
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
-# eliminate delay no-ops in I/O; recommended on all but very old machines
-#options 	DUMMY_NOPS
+
+# Enhanced SpeedStep Technology in the Pentium M
+options 	ENHANCED_SPEEDSTEP
+#options 	EST_FREQ_USERWRITE	# any user can set frequency
 
 options 	MTRR		# memory-type range register syscall support
 #options 	PERFCTRS	# performance-monitoring counters support
@@ -64,11 +66,13 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -90,6 +94,7 @@ options 	COMPAT_12	# NetBSD 1.2, 386BSD, and BSDI
 options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
 options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
+options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -121,6 +126,7 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -149,8 +155,21 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
-#options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	ALTQ		# Manipulate network interfaces' output queues
+#options 	ALTQ_BLUE	# Stochastic Fair Blue
+#options 	ALTQ_CBQ	# Class-Based Queueing
+#options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+#options 	ALTQ_FIFOQ	# First-In First-Out Queue
+#options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+#options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+#options 	ALTQ_LOCALQ	# Local queueing discipline
+#options 	ALTQ_PRIQ	# Priority Queueing
+#options 	ALTQ_RED	# Random Early Detection
+#options 	ALTQ_RIO	# RED with IN/OUT
+#options 	ALTQ_WFQ	# Weighted Fair Queueing
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
@@ -171,9 +190,19 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 # builtin terminal emulations
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
-# different kernel output - see dev/wscons/wsdisplayvar.h
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
+#options 	WS_DEFAULT_FG=WSCOL_WHITE
+#options 	WS_DEFAULT_BG=WSCOL_BLACK
+#options 	WS_DEFAULT_COLATTR=""
+#options 	WS_DEFAULT_MONOATTR=""
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
+#options 	WS_KERNEL_COLATTR=""
+#options 	WS_KERNEL_MONOATTR=""
+# customization of console border color
+options 	WSDISPLAY_CUSTOM_BORDER	# border customization from wsconsctl(8)
+#options 	WSDISPLAY_BORDER_COLOR=WSCOL_BLUE	# default color
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
@@ -214,11 +243,13 @@ apm0	at mainbus0			# Advanced power management
 
 # Basic Bus Support
 
-# Advanced Control and Power Interface
+# Advanced Configuration and Power Interface
 
 #acpi0 		at mainbus0
-#options 	ACPI_PCI_FIXUP=1	# PCI interrupt routing via ACPI
-#options 	ACPI_ACTIVATE_DEV=0	# If set, activate inactive devices
+#options 	ACPI_PCI_FIXUP		# PCI interrupt routing via ACPI
+#options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
+#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
+#options 	ACPI_DISABLE_ON_POWEROFF	# disable acpi on power off
 
 # ACPI devices
 #acpiacad* 	at acpi?		# ACPI AC Adapter
@@ -284,6 +315,8 @@ options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
 # PCI bridges
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
+					# SpeedStep support
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
@@ -293,6 +326,7 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 agp* 	at pchb?
 
 # ISA bus support
+#isa0	at ichlpcib?
 isa0	at mainbus?
 isa0	at pcib?
 
@@ -338,9 +372,6 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 #options 	FINNISH_KBD
 #options 	GERMAN_KBD
 #options 	NORWEGIAN_KBD
-# pccons-specific options:
-#options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
-#options 	XSERVER		# X server support
 
 
 # wscons
@@ -444,7 +475,21 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
-pciide* at pci? dev ? function ? flags 0x0000
+pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide*	at pci? dev ? function ?	# Acard IDE controllers
+aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
+cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
+cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+#geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
+hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+optiide* 	at pci? dev ? function ?	# Opti IDE controllers
+piixide* 	at pci? dev ? function ?	# Intel IDE controllers
+pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+satalink*	at pci? dev ? function ?	# SiI SATALink controllers
+siside* 	at pci? dev ? function ?	# SiS IDE controllers
+slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
+viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # ISA Plug-and-Play IDE controllers
 wdc*	at isapnp?
@@ -459,6 +504,9 @@ wdc*	at pcmcia? function ?
 wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 wdc1	at isa? port 0x170 irq 15 flags 0x00
 
+# ATA (IDE) bus support
+atabus* at ata?
+
 # IDE drives
 # Flags are used only with controllers that support DMA operations
 # and mode settings (e.g. some pciide controllers)
@@ -470,8 +518,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-wd*	at wdc? channel ? drive ? flags 0x0000
-wd*	at pciide? channel ? drive ? flags 0x0000
+wd*	at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
 atapibus* at atapi?
@@ -496,11 +543,16 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
+ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11 
+bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
+bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
+re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 
 # PCMCIA network interfaces
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
@@ -519,18 +571,23 @@ com*	at mhzc?
 sm*	at mhzc?
 
 # CardBus network cards
+ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11
+atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
 ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 fxp*	at cardbus? dev ? function ?	# Intel i8255x
 rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 tlp*	at cardbus? dev ? function ?	# DECchip 21143
 
 # MII/PHY support
+brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+igphy*	at mii? phy ?			# Intel IGP01E1000
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
@@ -543,6 +600,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Controller and Devices
 
 # PCI USB controllers
+ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
@@ -550,6 +608,7 @@ uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 #ohci*	at cardbus? dev ? function ?	# Open Host Controller
 
 # USB bus support
+usb*	at ehci?
 usb*	at ohci?
 usb*	at uhci?
 
@@ -580,6 +639,8 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
+scsibus* at umass?
+wd*	at umass?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
@@ -792,6 +853,9 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+pseudo-device	nsmb			# experimental - SMB requester
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor

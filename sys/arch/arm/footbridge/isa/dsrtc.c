@@ -1,4 +1,4 @@
-/*	$NetBSD: dsrtc.c,v 1.5 2003/03/23 14:12:26 chris Exp $	*/
+/*	$NetBSD: dsrtc.c,v 1.5.2.1 2004/08/03 10:32:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.5 2003/03/23 14:12:26 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsrtc.c,v 1.5.2.1 2004/08/03 10:32:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ dsrtc_read(arg, rtc)
 }
 
 /* device and attach structures */
-CFATTACH_DECL(dsrtc, sizeof(struct dsrtc_softc),
+CFATTACH_DECL(ds1687rtc, sizeof(struct dsrtc_softc),
     dsrtcmatch, dsrtcattach, NULL, NULL);
 
 /*

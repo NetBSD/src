@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.h,v 1.5 2002/01/22 15:07:27 uch Exp $	*/
+/*	$NetBSD: pcibios.h,v 1.5.18.1 2004/08/03 10:36:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -64,7 +64,7 @@ struct pcibios_intr_routing {
 /*
  * $PIR header.  Reference:
  *
- *	http://www.microsoft.com/HWDEV/busbios/PCIIRQ.htm
+ *	http://www.microsoft.com/whdc/hwdev/archive/BUSBIOS/pciirq.mspx
  */
 struct pcibios_pir_header {
 	u_int32_t	signature;		/* $PIR */
@@ -82,20 +82,20 @@ struct pcibios_pir_header {
 #define	PIR_DEVFUNC_DEVICE(devfunc)	(((devfunc) >> 3) & 0x1f)
 #define	PIR_DEVFUNC_FUNCTION(devfunc)	((devfunc) & 7)
 
-void	pcibios_init __P((void));
+void	pcibios_init(void);
 
 extern struct pcibios_pir_header pcibios_pir_header;
 extern struct pcibios_intr_routing *pcibios_pir_table;
 extern int pcibios_pir_table_nentries;
 extern int pcibios_max_bus;
 
-void pci_device_foreach __P((pci_chipset_tag_t, int,
-			     void (*) (pci_chipset_tag_t, pcitag_t, void*),
-			     void *context));
+void pci_device_foreach(pci_chipset_tag_t, int,
+			void (*)(pci_chipset_tag_t, pcitag_t, void*),
+			void *);
 
-void pci_device_foreach_min __P((pci_chipset_tag_t, int, int,
-				 void (*) (pci_chipset_tag_t, pcitag_t, void*),
-				 void *context));
+void pci_device_foreach_min(pci_chipset_tag_t, int, int,
+			    void (*)(pci_chipset_tag_t, pcitag_t, void*),
+			    void *);
 
 void pci_bridge_foreach(pci_chipset_tag_t, int, int,
     void (*) (pci_chipset_tag_t, pcitag_t, void *), void *);

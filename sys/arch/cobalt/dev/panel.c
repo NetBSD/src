@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.1 2003/01/20 01:26:14 soren Exp $ */
+/* $NetBSD: panel.c,v 1.1.2.1 2004/08/03 10:33:46 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.1.2.1 2004/08/03 10:33:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +193,7 @@ panelread(dev, uio, flag)
 	int error;
 	u_int8_t b;
 	struct panel_softc *sc = device_lookup(&panel_cd, minor(dev));
- 
+
 	if (uio->uio_resid < sizeof(b))
 		return EIO;
 

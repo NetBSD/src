@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.32 2002/12/09 22:54:14 simonb Exp $
+#	$NetBSD: Makefile.mips,v 1.32.6.1 2004/08/03 10:37:38 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -20,6 +20,12 @@
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
+
+##
+## (0) toolchain settings for things that aren't part of the standard
+## toolchain
+##
+ELF2ECOFF?=	elf2ecoff
 
 ##
 ## (1) port identification
@@ -79,6 +85,11 @@ machdep.o mainbus.o trap.o: Makefile
 # depend on System V IPC/shmem options
 mips_machdep.o pmap.o: Makefile
 
+# various assembly files that depend on assym.h
+copy.o fp.o locore.o locore_mips1.o locore_mips3.o sigcode.o: assym.h
+mips32_subr.o mips3_subr.o mips5900_subr.o mips64_subr.o mipsX_subr.o: assym.h
+
+
 ##
 ## (7) misc settings
 ##
@@ -102,3 +113,8 @@ mips_machdep.o pmap.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

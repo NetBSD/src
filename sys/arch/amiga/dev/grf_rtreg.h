@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rtreg.h,v 1.11 2002/01/26 13:40:55 aymeric Exp $	*/
+/*	$NetBSD: grf_rtreg.h,v 1.11.16.1 2004/08/03 10:31:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -183,7 +183,7 @@ extern unsigned char NCRStdPalette[];
 /* The prototypes for C
    with a little explanation
 
-	unsigned char * InitNCR(volatile void * BoardAdress, struct MonDef * md = &MON_640_512_60);
+	unsigned char * InitNCR(volatile void * BoardAddress, struct MonDef * md = &MON_640_512_60);
 
    This routine initialises the Retina hardware, opens a
    text- or gfx-mode screen, depending on the value of MonDef.DEP,
@@ -270,14 +270,14 @@ extern unsigned char NCRStdPalette[];
    of code with optimization enabled.
    Text-mode only!
 
-	unsigned char * SetSegmentPtr(unsigned long adress);
+	unsigned char * SetSegmentPtr(unsigned long address);
 
    Sets the beginning of the 64k-memory segment to the
-   adress specified by the unsigned long. If adress MOD 64
+   address specified by the unsigned long. If address MOD 64
    is != 0, the return value will point to the segments
-   start in the Amiga adress space + (adress MOD 64).
+   start in the Amiga address space + (address MOD 64).
    Don't use more than (65536-64) bytes in the segment
-   you set if you aren't sure that (adress MOD 64) == 0.
+   you set if you aren't sure that (address MOD 64) == 0.
    See retina.doc from MS for further information.
 
 	void ClearScreen(unsigned char color);

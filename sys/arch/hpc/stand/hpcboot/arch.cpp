@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.cpp,v 1.7 2002/03/25 17:23:19 uch Exp $	 */
+/* -*-C++-*-	$NetBSD: arch.cpp,v 1.7.10.1 2004/08/03 10:34:58 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -112,8 +112,11 @@ Architecture::_load_func(const TCHAR * name)
 		_dll = LoadLibrary(TEXT("coredll.dll"));
 
 	if (_dll == NULL) {
-		MessageBox(HpcMenuInterface::Instance()._root->_window,
-		    TEXT("Can't load Coredll.dll"), TEXT("WARNING"), 0);
+		HWND owner = HpcMenuInterface::Instance()._root->_window;
+		MessageBox(owner,
+		    TEXT("Can't load coredll.dll."), TEXT("WARNING"),
+		    MB_ICONWARNING | MB_OK);
+		UpdateWindow(owner);
 
 		return NULL;
 	}
@@ -126,7 +129,6 @@ Architecture::systemInfo(void)
 {
 	u_int32_t val = 0;
 	SYSTEM_INFO si;
-	HDC hdc;
 	BOOL (*getVersionEx)(LPOSVERSIONINFO);
 	
 	//
@@ -167,8 +169,6 @@ Architecture::systemInfo(void)
 	FrameBufferInfo fb(0, 0);
 	DPRINTF((TEXT("Display: %dx%d %dbpp\n"), fb.width(), fb.height(),
 	    fb.bpp()));
-
-	ReleaseDC(0, hdc);
 }
 
 BOOL(*Architecture::_load_LockPages(void))(LPVOID, DWORD, PDWORD, int)

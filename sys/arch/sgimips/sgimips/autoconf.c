@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2003/04/04 04:27:29 rafal Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.2.1 2004/08/03 10:40:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -32,8 +32,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.2.1 2004/08/03 10:40:08 skrll Exp $");
+
 #include "opt_ddb.h"
-#include "opt_machtypes.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +51,6 @@
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-
-#include <sgimips/dev/crimereg.h>
-#include <sgimips/dev/macereg.h>
 
 struct device	*booted_device = NULL;
 static struct device *booted_controller = NULL;
@@ -79,24 +78,6 @@ cpu_configure()
 
 	printf("biomask %02x netmask %02x ttymask %02x clockmask %02x\n",
 	    biomask >> 8, netmask >> 8, ttymask >> 8, clockmask >> 8);
-
-	/* XXXrkb: hack until we get interrupt setup code right */
-	if (mach_type == MACH_SGI_IP32) {
-	   u_int64_t mask;
-
-	    mask = *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK);
-	    aprint_debug("MACE_ISA_MASK was %llx\n", mask);
-	    mask |= ((1UL << 20) | (1UL << 26));
-	    *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK) = mask;
-	    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(MACE_PCI_FLUSH_W) = 0xffffffff;
-	    *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK) = 0x30ff10ULL;
-
-	    aprint_debug("CRM_MASK: %llx, MACEISA_MASK (%x) %llx\n", 
-	      *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(CRIME_INTMASK),
-	      MACE_ISA_INT_MASK,
-	      *(volatile u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_ISA_INT_MASK));
-
-	}
 
 	_splnone();
 }

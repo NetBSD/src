@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.7 2003/02/01 14:48:18 dsl Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.7.2.1 2004/08/03 10:36:20 skrll Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project
- *	by Matthias Drochner.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -43,7 +37,7 @@
 #include "diskbuf.h"
 #include "dosfile.h"
 
-extern int dosopen __P((char *));
+extern int dosopen __P((const char *));
 extern void dosclose __P((int));
 extern int dosread __P((int, char *, int));
 extern int dosseek __P((int, int, int));
@@ -80,7 +74,7 @@ dos2errno()
 
 int 
 dos_open(path, f)
-	char           *path;
+	const char           *path;
 	struct open_file *f;
 {
 	struct dosfile *df;
@@ -123,7 +117,7 @@ dos_read(f, addr, size, resid)
 
 		while (lsize > 0) {
 			u_int           tsize;
-			int             tgot;
+			size_t          tgot;
 
 			tsize = lsize;
 

@@ -1,4 +1,4 @@
-# $NetBSD: files.acorn26,v 1.4 2003/05/05 22:43:38 bjh21 Exp $
+# $NetBSD: files.acorn26,v 1.4.2.1 2004/08/03 10:30:48 skrll Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -54,6 +54,9 @@ defflag	opt_fputypes.h		FPU_FPPC FPU_FPA
 file	arch/acorn26/acorn26/fpu.c		fpu		needs-flag
 file	arch/acorn26/acorn26/fpu_asm.S		fpu
 
+# Real-time clock support
+file	arch/acorn26/ioc/rtc.c
+
 # I/O bus (on the far side of the address and data latches)
 device iobus { base = -1 }
 attach iobus at root
@@ -68,15 +71,9 @@ file	arch/acorn26/iobus/ioc.c		ioc		needs-flag
 file	arch/acorn26/ioc/ioc_fiq_util.S		fiq		needs-flag
 
 # I^2C bus (bit-banged through IOC control register)
-device	iic { addr = -1 }
-attach	iic at ioc
-file	arch/acorn26/ioc/iic.c			iic
-
-# PCF8583 I^2C Clock/calendar/RAM
-device	rtc
-attach	rtc at iic
-file	arch/acorn26/ioc/rtc.c			rtc
-file	dev/clock_subr.c			rtc
+device	iociic: i2cbus, i2c_bitbang
+attach	iociic at ioc
+file	arch/acorn26/ioc/iociic.c		iociic
 
 # DS2401 Silicon Serial Number
 device	ssn
@@ -161,13 +158,6 @@ attach	arcaudio at root
 ###
 # 82C7xx Universal Peripheral Controller
 #
-
-# This section belongs in sys/conf/files, but some ports have their own
-# "lpt" devices, so it has to stay here.
-device	lpt
-file	dev/ic/lpt.c				lpt		needs-flag
-attach	lpt at upc with lpt_upc
-file	dev/ic/lpt_upc.c			lpt_upc
 
 # This section belongs here
 attach	upc at iobus with upc_iobus

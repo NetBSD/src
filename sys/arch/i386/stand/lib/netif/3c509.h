@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c509.h,v 1.3 2000/03/13 23:52:29 soren Exp $	*/
+/*	$NetBSD: 3c509.h,v 1.3.30.1 2004/08/03 10:36:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Herb Peyerl
@@ -66,7 +66,7 @@
 #define BASE 	(eth_base)
 
 /*
- * Commands to read/write EEPROM trough EEPROM command register (Window 0,
+ * Commands to read/write EEPROM through EEPROM command register (Window 0,
  * Offset 0xa)
  */
 #define EEPROM_CMD_RD    0x0080	/* Read:  Address required (5 bits) */

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.20 2003/01/17 23:18:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.20.2.1 2004/08/03 10:36:40 skrll Exp $
 
 INCSDIR= /usr/include/m68k
 
 INCS=	ansi.h aout_machdep.h asm.h asm_single.h \
 	bswap.h bus_dma.h byte_swap.h \
 	cacheops.h cacheops_20.h cacheops_30.h cacheops_40.h cacheops_60.h \
-	cdefs.h cpu.h \
+	cdefs.h cpu.h cpuframe.h \
 	db_machdep.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h \
@@ -18,6 +18,7 @@ INCS=	ansi.h aout_machdep.h asm.h asm_single.h \
 	reg.h setjmp.h signal.h stdarg.h sync_icache.h \
 	sysctl.h \
 	trap.h types.h \
-	varargs.h
+	varargs.h \
+	wchar_limits.h
 
 .include <bsd.kinc.mk>

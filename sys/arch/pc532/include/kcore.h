@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.3 1998/09/02 19:17:22 matthias Exp $	*/
+/*	$NetBSD: kcore.h,v 1.3.44.1 2004/08/03 10:38:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #ifndef _PC532_KCORE_H_
-#define _PC532_KCORE_H_
+#define	_PC532_KCORE_H_
 
 typedef struct cpu_kcore_hdr {
 	paddr_t	ptd;			/* Phys address of PTD */

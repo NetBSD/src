@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2003/04/26 11:05:12 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9.2.1 2004/08/03 10:34:16 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -66,6 +66,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9.2.1 2004/08/03 10:34:16 skrll Exp $");
+
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -109,11 +112,6 @@
 #if defined(DDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
-#endif
-
-#include "com.h"
-#if NCOM > 0
-#include <dev/ic/comreg.h>	/* For COM_FREQ */
 #endif
 
 /*
@@ -183,9 +181,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
         cpu_probe_cache();
 
 	/* Save info block */
-	if (info_block == NULL)
-		/* XXX why isn't r3 set correctly?!?!? */
-		info_block = (void *)0x8e10;		
 	memcpy(&board_data, info_block, sizeof(board_data));
 
 	memset(physmemr, 0, sizeof physmemr);
@@ -204,7 +199,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 
 	curpcb = &proc0paddr->u_pcb;
-	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
+	curpcb->pcb_pm = pmap_kernel();
 
 	/*
 	 * Set up trap vectors
@@ -300,8 +295,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-	consinit();
-
 #ifdef DEBUG
 	printf("Board config data:\n");
 	printf("  usr_config_ver = %s\n", board_data.usr_config_ver);
@@ -335,7 +328,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
 #endif
-	fake_mapiodev = 0;
 }
 
 static void
@@ -344,19 +336,18 @@ install_extint(void (*handler)(void))
 	extern int extint, extsize;
 	extern u_long extint_call;
 	u_long offset = (u_long)handler - (u_long)&extint_call;
-	int omsr, msr;
+	int msr;
 
 #ifdef	DIAGNOSTIC
 	if (offset > 0x1ffffff)
 		panic("install_extint: too far away");
 #endif
-	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
-		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
+	asm volatile ("mfmsr %0; wrteei 0" : "=r"(msr));
 	extint_call = (extint_call & 0xfc000003) | offset;
 	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
 	__syncicache((void *)&extint_call, sizeof extint_call);
 	__syncicache((void *)EXC_EXI, (int)&extsize);
-	asm volatile ("mtmsr %0" :: "r"(omsr));
+	asm volatile ("mtmsr %0" :: "r"(msr));
 }
 
 /*
@@ -368,9 +359,7 @@ char msgbuf[MSGBUFSIZE];
 void
 cpu_startup(void)
 {
-	caddr_t v;
 	vaddr_t minaddr, maxaddr;
-	u_int sz, i, base, residual;
 	char pbuf[9];
 
 	/*
@@ -390,62 +379,13 @@ cpu_startup(void)
 	initmsgbuf((caddr_t)msgbuf, round_page(MSGBUFSIZE));
 #endif
 
-
 	printf("%s", version);
 	printf("Walnut PowerPC 405GP Evaluation Board\n");
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
-	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	sz = (u_int)allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-	if (allocsys(v, NULL) - v != sz)
-		panic("startup: table size inconsistency");
-
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	sz = MAXBSIZE * nbuf;
 	minaddr = 0;
-	if (uvm_map(kernel_map, (vaddr_t *)&minaddr, round_page(sz),
-		NULL, UVM_UNKNOWN_OFFSET, 0,
-		UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-			    UVM_ADV_NORMAL, 0)) != 0)
-		panic("startup: cannot allocate VM for buffers");
-	buffers = (char *)minaddr;
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	if (base >= MAXBSIZE) {
-		/* Don't want to alloc more physical mem than ever needed */
-		base = MAXBSIZE;
-		residual = 0;
-	}
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		curbuf = (vaddr_t)buffers + i * MAXBSIZE;
-		curbufsize = PAGE_SIZE * (i < residual ? base + 1 : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ | VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -467,13 +407,6 @@ cpu_startup(void)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
-
-	/*
-	 * Set up the buffers.
-	 */
-	bufinit();
 
 	/*
 	 * Set up the board properties database.
@@ -484,23 +417,18 @@ cpu_startup(void)
 	if (board_info_set("mem-size", &board_data.mem_size, 
 		sizeof(&board_data.mem_size), PROP_CONST, 0))
 		panic("setting mem-size");
-	if (board_info_set("emac-mac-addr", &board_data.mac_address_local, 
-		sizeof(&board_data.mac_address_local), PROP_CONST, 0))
-		panic("setting emac-mac-addr");
 	if (board_info_set("sip0-mac-addr", &board_data.mac_address_pci, 
 		sizeof(&board_data.mac_address_pci), PROP_CONST, 0))
 		panic("setting sip0-mac-addr");
 	if (board_info_set("processor-frequency", &board_data.processor_speed, 
 		sizeof(&board_data.processor_speed), PROP_CONST, 0))
 		panic("setting processor-frequency");
-#if NCOM > 0
-	{
-		unsigned int comfreq = COM_FREQ * 6;
-		if (board_info_set("com-opb-frequency", &comfreq,
-			sizeof(&comfreq), 0, 0))
-			panic("setting com-opb-frequency");
-	}
-#endif
+
+	/*
+	 * Now that we have VM, malloc()s are OK in bus_space.
+	 */
+	bus_space_mallocok();
+	fake_mapiodev = 0;
 }
 
 
@@ -536,6 +464,7 @@ softnet(void)
 /*
  * Soft tty interrupts.
  */
+#include "com.h"
 void
 softserial(void)
 {

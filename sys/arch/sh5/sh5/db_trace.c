@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.10 2003/01/19 19:49:52 scw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.10.2.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10.2.1 2004/08/03 10:40:24 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -227,8 +230,8 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		 */
 		symp = NULL;
 		sym = db_search_symbol(pc - pc_adj, DB_STGY_PROC, &diff);
-		if (sym == NULL) {
-			(*pr)("0x%lx: Symbol not found\n");
+		if (sym == 0) {
+			(*pr)("0x%lx: Symbol not found\n", (long)(pc - pc_adj));
 			break;
 		}
 		symp = NULL;
@@ -254,9 +257,11 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		 * "idle" or "proc_trampoline". The former has no valid
 		 * "context" anyway, and the latter is the first function
 		 * called for each new LWP/kernel thread.
+		 * Likewise for 'Lmapped_start'.
 		 */
 		if (strcmp(symp, "idle") == 0 ||
-		    strcmp(symp, ___STRING(_C_LABEL(proc_trampoline))) == 0) {
+		    strcmp(symp, ___STRING(_C_LABEL(proc_trampoline))) == 0 ||
+		    strcmp(symp, "Lmapped_start") == 0) {
 			pc = fp = SH5_KSEG0_BASE;
 			break;
 		}
@@ -273,14 +278,15 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			 * The previous PC and FP are available from the
 			 * 'struct trapframe' saved on the stack.
 			 */
-			struct trapframe *tf = (struct trapframe *)fp;
+			struct trapframe *tf = (struct trapframe *)(intptr_t)fp;
 			pc = (db_addr_t) tf->tf_state.sf_spc & ~1;
 			fp = (db_addr_t) tf->tf_caller.r14;
 			cur_intrframe = &tf->tf_ifr;
 			pc_adj = 0;
 			(*pr)("\tTrap Type: %s\n",
 			    trap_type((int)tf->tf_state.sf_expevt));
-			(*pr)("\tSSR=0x%lx, TEA=0x%lx, TRA=0x%lx",
+			(*pr)("\tSPC=0x%lx, SSR=0x%lx, TEA=0x%lx, TRA=0x%lx",
+			    (long)tf->tf_state.sf_spc,
 			    (long)tf->tf_state.sf_ssr,
 			    (long)tf->tf_state.sf_tea,
 			    (long)tf->tf_state.sf_tra);
@@ -297,12 +303,13 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			 * and FP are available from the 'struct intrframe'
 			 * saved on the stack.
 			 */
-			struct intrframe *tf = (struct intrframe *)fp;
+			struct intrframe *tf = (struct intrframe *)(intptr_t)fp;
 			pc = (db_addr_t) tf->if_state.sf_spc & ~1;
 			fp = (db_addr_t) tf->if_caller.r14;
 			cur_intrframe = tf;
 			pc_adj = 0;
-			(*pr)("\tSSR=0x%lx, INTEVT=0x%lx",
+			(*pr)("\tSPC=0x%lx, SSR=0x%lx, INTEVT=0x%lx",
+			    (long)tf->if_state.sf_spc,
 			    (long)tf->if_state.sf_ssr,
 			    (long)tf->if_state.sf_intevt);
 			if (dump_eframe) {
@@ -367,11 +374,12 @@ find_prologue(db_addr_t addr)
 	char *symp;
 
 	addr &= ~3;
-
+#if 0
 again:
+#endif
 	symp = NULL;
 	sym = db_search_symbol(addr, DB_STGY_PROC, &diff);
-	if (sym == NULL)
+	if (sym == 0)
 		return (0);
 
 	symp = NULL;
@@ -380,6 +388,7 @@ again:
 	if (symp == NULL)
 		return (0);
 
+#if 0
 	/*
 	 * Compensate for the <handy breakpoint location after LWP "wakes">
 	 * symbol in ltsleep(), which screws up our search for the function's
@@ -389,7 +398,7 @@ again:
 		addr -= 4;
 		goto again;
 	}
-
+#endif
 	return (addr - diff);
 }
 
@@ -441,7 +450,7 @@ prev_frame(db_addr_t curfp, db_addr_t curpc,
 		/*
 		 * Fetch an opcode from the prologue.
 		 */
-		op = *((opcode_t *)prologue);
+		op = *((opcode_t *)(intptr_t)prologue);
 
 		if ((op & OP_ADDI_R15_n_R15_M) == OP_ADDI_R15_n_R15) {
 			/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.42 2003/06/15 17:45:24 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.42.2.1 2004/08/03 10:34:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -67,6 +67,9 @@
  * Created      : 24/11/97
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.42.2.1 2004/08/03 10:34:01 skrll Exp $");
+
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
 
@@ -94,7 +97,6 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>
-#include <evbarm/ifpga/irqhandler.h>	/* XXX XXX XXX */
 #include <arm/undefined.h>
 
 #include <arm/arm32/machdep.h>
@@ -139,10 +141,7 @@ char *boot_args = NULL;
 char *boot_file = NULL;
 
 vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
 vm_offset_t physical_end;
-u_int free_pages;
 vm_offset_t pagetables_start;
 int physmem = 0;
 
@@ -385,11 +384,13 @@ initarm(void *arg)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	extern int etext asm ("_etext");
-	extern int end asm ("_end");
+	extern char etext asm ("_etext");
+	extern char end asm ("_end");
 	pv_addr_t kernel_l1pt;
 	paddr_t memstart;
 	psize_t memsize;
+	vm_offset_t physical_freestart;
+	vm_offset_t physical_freeend;
 #if NPLCOM > 0 && defined(PLCONSOLE)
 	static struct bus_space plcom_bus_space;
 #endif
@@ -398,7 +399,7 @@ initarm(void *arg)
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	if (set_cpufuncs())
-		panic("cpu not recognized!");
+		panic("CPU not recognized!");
 
 #if NPLCOM > 0 && defined(PLCONSOLE)
 	/*
@@ -425,33 +426,6 @@ initarm(void *arg)
 #endif
 
 	/*
-	 * Ok we have the following memory map
-	 *
-	 * XXX NO WE DON'T
-	 *
-	 * virtual address == physical address apart from the areas:
-	 * 0x00000000 -> 0x000fffff which is mapped to
-	 * top 1MB of physical memory
-	 * 0x00100000 -> 0x0fffffff which is mapped to
-	 * physical addresses 0x00100000 -> 0x0fffffff
-	 * 0x10000000 -> 0x1fffffff which is mapped to
-	 * physical addresses 0x00000000 -> 0x0fffffff
-	 * 0x20000000 -> 0xefffffff which is mapped to
-	 * physical addresses 0x20000000 -> 0xefffffff
-	 * 0xf0000000 -> 0xf03fffff which is mapped to
-	 * physical addresses 0x00000000 -> 0x003fffff
-	 *
-	 * This means that the kernel is mapped suitably for continuing
-	 * execution, all I/O is mapped 1:1 virtual to physical and
-	 * physical memory is accessible.
-	 *
-	 * The initarm() has the responsibility for creating the kernel
-	 * page tables.
-	 * It must also set up various memory pointers that are used
-	 * by pmap etc. 
-	 */
-
-	/*
 	 * Fetch the SDRAM start/size from the CM configuration registers.
 	 */
 	integrator_sdram_bounds(&memstart, &memsize);
@@ -465,6 +439,7 @@ initarm(void *arg)
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = memstart;
 	bootconfig.dram[0].pages = memsize / PAGE_SIZE;
+	bootconfig.dram[0].flags = BOOT_DRAM_CAN_DMA | BOOT_DRAM_PREFER;
 
 	/*
 	 * Set up the variables that define the availablilty of
@@ -476,15 +451,33 @@ initarm(void *arg)
 	 * physical_freeend later to reflect what pmap_bootstrap()
 	 * wants to see.
 	 *
+	 * We assume that the kernel is loaded into bank[0].
+	 *
 	 * XXX pmap_bootstrap() needs an enema.
 	 */
 	physical_start = bootconfig.dram[0].address;
-	physical_end = physical_start + (bootconfig.dram[0].pages * PAGE_SIZE);
+	physical_end = 0;
 
-	physical_freestart = 0x00009000UL;
-	physical_freeend = 0x00200000UL;
-    
-	physmem = (physical_end - physical_start) / PAGE_SIZE;
+	/* Update the address of the first free 16KB chunk of physical memory */
+	physical_freestart = ((uintptr_t) &end - KERNEL_BASE + PGOFSET)
+	    & ~PGOFSET;
+	if (physical_freestart < bootconfig.dram[0].address)
+		physical_freestart = bootconfig.dram[0].address;
+	physical_freeend = bootconfig.dram[0].address +
+	    bootconfig.dram[0].pages * PAGE_SIZE;
+
+	for (loop = 0, physmem = 0; loop < bootconfig.dramblocks; loop++) {
+		paddr_t memoryblock_end;
+
+		memoryblock_end = bootconfig.dram[loop].address +
+		    bootconfig.dram[loop].pages * PAGE_SIZE;
+		if (memoryblock_end > physical_end)
+			physical_end = memoryblock_end;
+		if (bootconfig.dram[loop].address < physical_start)
+			physical_start = bootconfig.dram[loop].address;
+
+		physmem += bootconfig.dram[loop].pages;
+	}
 
 #ifdef VERBOSE_INIT_ARM
 	/* Tell the user about the memory */
@@ -514,31 +507,28 @@ initarm(void *arg)
 	printf("Allocating page tables\n");
 #endif
 
-	free_pages = (physical_freeend - physical_freestart) / PAGE_SIZE;
-
 #ifdef VERBOSE_INIT_ARM
-	printf("freestart = 0x%08lx, free_pages = %d (0x%08x)\n",
-	       physical_freestart, free_pages, free_pages);
+	printf("freestart = 0x%08lx, free pages = %d (0x%08x)\n",
+	       physical_freestart, physmem, physmem);
 #endif
 
 	/* Define a macro to simplify memory allocation */
 #define	valloc_pages(var, np)				\
 	alloc_pages((var).pv_pa, (np));			\
-	(var).pv_va = KERNEL_BASE + (var).pv_pa - physical_start;
+	(var).pv_va = KERNEL_BASE + (var).pv_pa;
 
 #define alloc_pages(var, np)				\
-	physical_freeend -= ((np) * PAGE_SIZE);		\
+	(var) = physical_freestart;			\
+	physical_freestart += ((np) * PAGE_SIZE);	\
 	if (physical_freeend < physical_freestart)	\
 		panic("initarm: out of memory");	\
-	(var) = physical_freeend;			\
-	free_pages -= (np);				\
 	memset((char *)(var), 0, ((np) * PAGE_SIZE));
 
 	loop1 = 0;
 	kernel_l1pt.pv_pa = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
-		if (((physical_freeend - L1_TABLE_SIZE) & (L1_TABLE_SIZE - 1)) == 0
+		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0
 		    && kernel_l1pt.pv_pa == 0) {
 			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE);
 		} else {
@@ -624,11 +614,11 @@ initarm(void *arg)
 		logical = 0x00200000;	/* offset of kernel in RAM */
 
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
-		    physical_start + logical, textsize,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		    logical, textsize, VM_PROT_READ | VM_PROT_WRITE,
+		    PTE_CACHE);
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
-		    physical_start + logical, totalsize - textsize,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		    logical, totalsize - textsize,
+		    VM_PROT_READ | VM_PROT_WRITE, PTE_CACHE);
 	}
 
 #ifdef VERBOSE_INIT_ARM
@@ -650,7 +640,7 @@ initarm(void *arg)
 
 	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
 		pmap_map_chunk(l1pagetable, kernel_pt_table[loop].pv_va,
-		    kernel_pt_table[loop].pv_va, L2_TABLE_SIZE,
+		    kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
 	}
 
@@ -674,23 +664,8 @@ initarm(void *arg)
 	 * tables.
 	 */
 
-	/*
-	 * Update the physical_freestart/physical_freeend/free_pages
-	 * variables.
-	 */
-	{
-		physical_freestart = physical_start +
-		    (((((uintptr_t) &end) + PGOFSET) & ~PGOFSET) -
-		     KERNEL_BASE);
-		physical_freeend = physical_end;
-		free_pages =
-		    (physical_freeend - physical_freestart) / PAGE_SIZE;
-	}
-
 	/* Switch tables */
 #ifdef VERBOSE_INIT_ARM
-	printf("freestart = 0x%08lx, free_pages = %d (0x%x)\n",
-	       physical_freestart, free_pages, free_pages);
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
@@ -704,10 +679,6 @@ initarm(void *arg)
 	 */
 	proc0paddr = (struct user *)kernelstack.pv_va;
 	lwp0.l_addr = proc0paddr;
-
-#ifdef VERBOSE_INIT_ARM
-	printf("done!\n");
-#endif
 
 #ifdef PLCONSOLE
 	/*
@@ -775,9 +746,27 @@ initarm(void *arg)
 	printf("page ");
 #endif
 	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
-	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
-	    atop(physical_freestart), atop(physical_freeend),
-	    VM_FREELIST_DEFAULT);
+
+	/* Round the start up and the end down to a page.  */
+	physical_freestart = (physical_freestart + PGOFSET) & ~PGOFSET;
+	physical_freeend &= ~PGOFSET;
+
+	for (loop = 0; loop < bootconfig.dramblocks; loop++) {
+		paddr_t block_start = (paddr_t) bootconfig.dram[loop].address;
+		paddr_t block_end = block_start +
+		    (bootconfig.dram[loop].pages * PAGE_SIZE);
+
+		if (loop == 0) {
+			block_start = physical_freestart;
+			block_end = physical_freeend;
+		}
+
+
+		uvm_page_physload(atop(block_start), atop(block_end),
+		    atop(block_start), atop(block_end),
+		    (bootconfig.dram[loop].flags & BOOT_DRAM_PREFER) ?
+		    VM_FREELIST_DEFAULT : VM_FREELIST_DEFAULT + 1);
+	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
 #ifdef VERBOSE_INIT_ARM
@@ -790,7 +779,7 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("irq ");
 #endif
-	irq_init();
+	ifpga_intr_init();
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
@@ -865,9 +854,15 @@ integrator_sdram_bounds(paddr_t *memstart, psize_t *memsize)
 {
 	volatile unsigned long *cm_sdram 
 	    = (volatile unsigned long *)0x10000020;
+	volatile unsigned long *cm_stat
+	    = (volatile unsigned long *)0x10000010;
 
-	*memstart = 0;
+	*memstart = *cm_stat & 0x00ff0000;
 
+	/*
+	 * Although the SSRAM overlaps the SDRAM, we can use the wrap-around
+	 * to access the entire bank.
+	 */
 	switch ((*cm_sdram >> 2) & 0x7)
 	{
 	case 0:
@@ -883,7 +878,8 @@ integrator_sdram_bounds(paddr_t *memstart, psize_t *memsize)
 		*memsize = 128 * 1024 * 1024;
 		break;
 	case 4:
-		*memsize = 256 * 1024 * 1024;
+		/* With 256M of memory there is no wrap-around.  */
+		*memsize = 256 * 1024 * 1024 - *memstart;
 		break;
 	default:
 		printf("CM_SDRAM retuns unknown value, using 16M\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.34 2003/06/29 22:28:54 fvdl Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.34.2.1 2004/08/03 10:40:45 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -76,6 +76,9 @@
  * XXX Note that the code enabled by this define is currently untested/broken.
  */
 #undef CG14_CG8
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cgfourteen.c,v 1.34.2.1 2004/08/03 10:40:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -376,6 +379,7 @@ cgfourteenioctl(dev, cmd, data, flags, p)
 	union cg14cursor_cmap tcm;
 	int v, error;
 	u_int count;
+	u_int eplane[32], cplane[32];
 
 	switch (cmd) {
 
@@ -436,12 +440,10 @@ cgfourteenioctl(dev, cmd, data, flags, p)
 		/* begin ugh ... can we lose some of this crap?? */
 		if (p->image != NULL) {
 			count = cc->cc_size.y * 32 / NBBY;
-			error = copyout((caddr_t)cc->cc_cplane,
-			    (caddr_t)p->image, count);
+			error = copyout(cc->cc_cplane, p->image, count);
 			if (error)
 				return (error);
-			error = copyout((caddr_t)cc->cc_eplane,
-			    (caddr_t)p->mask, count);
+			error = copyout(cc->cc_eplane, p->mask, count);
 			if (error)
 				return (error);
 		}
@@ -480,9 +482,12 @@ cgfourteenioctl(dev, cmd, data, flags, p)
 			if ((u_int)p->size.x > 32 || (u_int)p->size.y > 32)
 				return (EINVAL);
 			count = p->size.y * 32 / NBBY;
-			if (!uvm_useracc(p->image, count, B_READ) ||
-			    !uvm_useracc(p->mask, count, B_READ))
-				return (EFAULT);
+			error = copyin(p->mask, eplane, count);
+			if (error)
+				return error;
+			error = copyin(p->image, cplane, count);
+			if (error)
+				return error;
 		}
 
 		/* parameters are OK; do it */
@@ -502,10 +507,10 @@ cgfourteenioctl(dev, cmd, data, flags, p)
 		if (v & FB_CUR_SETSHAPE) {
 			cc->cc_size = p->size;
 			count = p->size.y * 32 / NBBY;
-			bzero((caddr_t)cc->cc_eplane, sizeof cc->cc_eplane);
-			bzero((caddr_t)cc->cc_cplane, sizeof cc->cc_cplane);
-			bcopy(p->mask, (caddr_t)cc->cc_eplane, count);
-			bcopy(p->image, (caddr_t)cc->cc_cplane, count);
+			memset(cc->cc_eplane, 0, sizeof cc->cc_eplane);
+			memcpy(cc->cc_eplane, eplane, count);
+			memset(cc->cc_cplane, 0, sizeof cc->cc_cplane);
+			memcpy(cc->cc_cplane, cplane, count);
 			cg14_loadcursor(sc);
 		}
 		break;
@@ -659,7 +664,7 @@ cg14_init(sc)
 	/*
 	 * Zero the xlut to enable direct-color mode
 	 */
-	bzero(sc->sc_xlut, CG14_CLUT_SIZE);
+	memset(sc->sc_xlut, 0, CG14_CLUT_SIZE);
 #else
 	/*
 	 * Enable the video and put it in 8 bit mode
@@ -744,28 +749,23 @@ cg14_get_cmap(p, cm, cmsize)
 {
 	u_int i, start, count;
 	u_char *cp;
+	int error;
 
 	start = p->index;
 	count = p->count;
 	if (start >= cmsize || count > cmsize - start)
-#ifdef DEBUG
-	{
-		printf("putcmaperror: start %d cmsize %d count %d\n",
-		    start,cmsize,count);
-#endif
 		return (EINVAL);
-#ifdef DEBUG
-	}
-#endif
 
-	if (!uvm_useracc(p->red, count, B_WRITE) ||
-	    !uvm_useracc(p->green, count, B_WRITE) ||
-	    !uvm_useracc(p->blue, count, B_WRITE))
-		return (EFAULT);
 	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 4, i++) {
-		p->red[i] = cp[3];
-		p->green[i] = cp[2];
-		p->blue[i] = cp[1];
+		error = copyout(&cp[3], &p->red[i], 1);
+		if (error)
+			return error;
+		error = copyout(&cp[2], &p->green[i], 1);
+		if (error)
+			return error;
+		error = copyout(&cp[1], &p->blue[i], 1);
+		if (error)
+			return error;
 	}
 	return (0);
 }
@@ -779,30 +779,28 @@ cg14_put_cmap(p, cm, cmsize)
 {
 	u_int i, start, count;
 	u_char *cp;
+	u_char cmap[256][4];
+	int error;
 
 	start = p->index;
 	count = p->count;
 	if (start >= cmsize || count > cmsize - start)
-#ifdef DEBUG
-	{
-		printf("putcmaperror: start %d cmsize %d count %d\n",
-		    start,cmsize,count);
-#endif
 		return (EINVAL);
-#ifdef DEBUG
-	}
-#endif
 
-	if (!uvm_useracc(p->red, count, B_READ) ||
-	    !uvm_useracc(p->green, count, B_READ) ||
-	    !uvm_useracc(p->blue, count, B_READ))
-		return (EFAULT);
-	for (cp = &cm->cm_map[start][0], i = 0; i < count; cp += 4, i++) {
-		cp[3] = p->red[i];
-		cp[2] = p->green[i];
-		cp[1] = p->blue[i];
+	memcpy(&cmap, &cm->cm_map, sizeof cmap);
+	for (cp = &cmap[start][0], i = 0; i < count; cp += 4, i++) {
+		error = copyin(&p->red[i], &cp[3], 1);
+		if (error)
+			return error;
+		error = copyin(&p->green[i], &cp[2], 1);
+		if (error)
+			return error;
+		error = copyin(&p->blue[i], &cp[1], 1);
+		if (error)
+			return error;
 		cp[0] = 0;	/* no alpha channel */
 	}
+	memcpy(&cm->cm_map, &cmap, sizeof cmap);
 	return (0);
 }
 

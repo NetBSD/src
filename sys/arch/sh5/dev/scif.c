@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.10 2003/03/13 13:19:01 scw Exp $	*/
+/*	$NetBSD: scif.c,v 1.10.2.1 2004/08/03 10:40:23 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -74,11 +74,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -108,6 +104,9 @@
  * The code needs some overhauling to make it truely MI so it can
  * be shared with SH-3.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.10.2.1 2004/08/03 10:40:23 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1076,6 +1075,10 @@ scif_rxsoft(struct scif_softc *sc, struct tty *tp)
 
 	end = sc->sc_ebuf;
 	get = sc->sc_rbget;
+
+	if (end == NULL || get == NULL)
+		return;
+
 	scc = cc = scif_rbuf_size - sc->sc_rbavail;
 
 	if (cc == scif_rbuf_size) {

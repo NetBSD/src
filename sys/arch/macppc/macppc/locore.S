@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.50 2003/02/03 17:09:57 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.50.2.1 2004/08/03 10:37:30 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,6 +38,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
 #include "opt_ppcparam.h"
+#include "ksyms.h"
 #include "assym.h"
 
 #include <sys/syscall.h>
@@ -46,6 +47,7 @@
 #include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
+#define _NOREGNAMES
 #include <machine/asm.h>
 #include <machine/vmparam.h>
 
@@ -99,7 +101,7 @@ __start:
 /* compute end of kernel memory */
 	lis	4,_C_LABEL(end)@ha
 	addi	4,4,_C_LABEL(end)@l
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	/* skip symbol table */
 	cmpwi	6,0
 	beq	1f

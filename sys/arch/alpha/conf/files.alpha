@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.161 2003/02/05 12:16:42 nakayama Exp $
+# $NetBSD: files.alpha,v 1.161.2.1 2004/08/03 10:31:19 skrll Exp $
 #
 # alpha-specific configuration info
 
@@ -223,7 +223,7 @@ file	arch/alpha/isa/isa_machdep.c	isa
 define	isadma_bounce
 file	arch/alpha/isa/isadma_bounce.c	isadma_bounce
 
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
 
 # ISA speaker generates keyboard beep
 device isabeep
@@ -274,7 +274,7 @@ file	arch/alpha/jensenio/pckbc_jensenio.c	pckbc_jensenio
 
 # include "dev/pci/files.pci" XXX SEE ABOVE
 
-file	arch/alpha/pci/pciide_machdep.c		pciide
+file	arch/alpha/pci/pciide_machdep.c		pciide_common
 
 define	alpha_pci_sgmap_pte32
 file	arch/alpha/pci/pci_sgmap_pte32.c	alpha_pci_sgmap_pte32
@@ -416,15 +416,6 @@ attach	pceb at pci
 file	arch/alpha/pci/sio.c		sio | pceb	needs-flag
 file	arch/alpha/pci/sio_pic.c	sio | pceb
 
-# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
-# XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
-# XXX (when the conf/files and files.isa bogons are fixed, this can
-# XXX be fixed as well.)
-
-attach	lpt at puc with lpt_puc
-file	dev/pci/lpt_puc.c		lpt_puc
-
-
 #
 # A12 if_de hack
 #
@@ -469,7 +460,6 @@ file	arch/alpha/jensenio/mcclock_jensenio.c	mcclock_jensenio
 #
 file	arch/alpha/alpha/autoconf.c
 file	arch/alpha/alpha/clock.c
-file	dev/clock_subr.c
 file	arch/alpha/alpha/cpuconf.c
 file	arch/alpha/alpha/interrupt.c
 file	arch/alpha/alpha/ipifuncs.c		multiprocessor
@@ -527,6 +517,7 @@ file	arch/alpha/alpha/kgdb_machdep.c		kgdb
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/alpha/alpha/compat_13_machdep.c	compat_13 | compat_osf1
+file	arch/alpha/alpha/compat_16_machdep.c	compat_16 | compat_osf1
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2003/06/14 17:01:11 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11.2.1 2004/08/03 10:34:09 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,9 +36,43 @@
  */
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department, The Mach Operating System project at
+ * Carnegie-Mellon University and Ralph Campbell.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)machdep.c   8.3 (Berkeley) 1/12/94
+ *	from: Utah Hdr: machdep.c 1.63 91/04/24
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -76,6 +110,9 @@
  *	@(#)machdep.c   8.3 (Berkeley) 1/12/94
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11.2.1 2004/08/03 10:34:09 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -165,9 +202,8 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	bus_space_handle_t sh;
 	caddr_t kernend, v;
         u_long first, last;
-	vsize_t size;
 	char *cp;
-	int i, howto;
+	int freqok, i, howto;
 	uint8_t *brkres = (uint8_t *)MIPS_PHYS_TO_KSEG1(MALTA_BRKRES);
 
 	extern char edata[], end[];
@@ -190,7 +226,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	cn_tab = &yamon_promcd;
 
 	/*
-	 * Set up the exception vectors and cpu-specific function
+	 * Set up the exception vectors and CPU-specific function
 	 * vectors early on.  We need the wbflush() vector set up
 	 * before comcnattach() is called (or at least before the
 	 * first printf() after that is called).
@@ -203,17 +239,24 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 
 	physmem = btoc(memsize);
 
+	/*
+	 * Use YAMON's CPU frequency if available.
+	 */
+	freqok = yamon_setcpufreq(1);
+
 	gt_pci_init(&mcp->mc_pc, &mcp->mc_gt);
 	malta_bus_io_init(&mcp->mc_iot, mcp);
 	malta_bus_mem_init(&mcp->mc_memt, mcp);
 	malta_dma_init(mcp);
 
 	/*
-	 * Calibrate the timer, delay() relies on this.
+	 * Calibrate the timer if YAMON failed to tell us.
 	 */
-	bus_space_map(&mcp->mc_iot, MALTA_RTCADR, 2, 0, &sh);
-	malta_cal_timer(&mcp->mc_iot, sh);
-	bus_space_unmap(&mcp->mc_iot, sh, 2);
+	if (!freqok) {
+		bus_space_map(&mcp->mc_iot, MALTA_RTCADR, 2, 0, &sh);
+		malta_cal_timer(&mcp->mc_iot, sh);
+		bus_space_unmap(&mcp->mc_iot, sh, 2);
+	}
 
 #if NCOM > 0
 	/*
@@ -229,8 +272,6 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 #else
 	panic("malta: not configured to use serial console");
 #endif /* NCOM > 0 */
-
-	consinit();
 
 	mem_clusters[0].start = 0;
 	mem_clusters[0].size = ctob(physmem);
@@ -274,12 +315,6 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 */
 	mips_init_msgbuf();
 
-	/*
-	 * Compute the size of system data structures.  pmap_bootstrap()
-	 * needs some of this information.
-	 */
-	size = (vsize_t)allocsys(NULL, NULL);
-
 	pmap_bootstrap();
 
 	/*
@@ -290,16 +325,6 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	/*
-	 * Allocate space for system data structures.  These data structures
-	 * are allocated here instead of cpu_startup() because physical
-	 * memory is directly addressable.  We don't have to map these into
-	 * the virtual address space.
-	 */
-	v = (caddr_t)uvm_pageboot_alloc(size); 
-	if ((allocsys(v, NULL) - v) != size)
-		panic("mach_init: table size inconsistency");
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
@@ -330,9 +355,7 @@ consinit(void)
 void
 cpu_startup()
 {
-	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
 	char pbuf[9];
 
 	/*
@@ -340,7 +363,7 @@ cpu_startup()
 	 */
 	printf(version);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("%s memory", pbuf);
+	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * Virtual memory is bootstrapped -- notify the bus spaces
@@ -348,47 +371,7 @@ cpu_startup()
 	 */
 	malta_configuration.mc_mallocsafe = 1;
 
-	/*
-	 * Allocate virtual address space for file I/O buffers.
-	 * Note they are different than the array of headers, 'buf',
-	 * and usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-		    UVM_ADV_NORMAL, 0)) != 0)
-		panic("startup: cannot allocate VM for buffers");
-	minaddr = (vaddr_t)buffers;
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base + 1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-					"buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-				       VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(pmap_kernel());
-
+	minaddr = 0;
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -408,14 +391,7 @@ cpu_startup()
 	 */
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf(", %s free", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf(", %s in %u buffers\n", pbuf, nbuf);
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
+	printf("avail memory = %s\n", pbuf);
 }
 
 int	waittime = -1;

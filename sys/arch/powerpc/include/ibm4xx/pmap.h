@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 2003/04/02 07:36:02 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6.2.1 2004/08/03 10:39:36 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -134,6 +134,7 @@
  */
 #define	PME_NOCACHE	0x100
 #define	PME_WRITETHROUG	0x200
+#define	PMAP_NC		PME_NOCACHE	/* XXX: OEA pmap compat. for bus_dma */
 
 #ifndef _LOCORE
 
@@ -167,7 +168,6 @@ void pmap_unwire(struct pmap *pm, vaddr_t va);
 void pmap_bootstrap(u_int kernelstart, u_int kernelend);
 boolean_t pmap_extract(struct pmap *, vaddr_t, paddr_t *);
 boolean_t check_attr(struct vm_page *, u_int, int);
-int ptereadonly(struct vm_page *);
 void pmap_real_memory(paddr_t *, psize_t *);
 int pmap_tlbmiss(vaddr_t va, int ctx);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.13 2002/09/18 02:43:53 lukem Exp $
+#	$NetBSD: INSTALL,v 1.13.8.1 2004/08/03 10:30:48 skrll Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.13 $"
+#ident		"INSTALL-$Revision: 1.13.8.1 $"
 
 # estimated number of users
 maxusers	32
@@ -97,6 +97,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options		COMPAT_15	# NetBSD 1.5 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.
 options 	COMPAT_13	# NetBSD 1.3 compatibility.
@@ -131,6 +132,7 @@ options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Development and Debugging options
@@ -153,7 +155,7 @@ config		netbsd	root on ? type ffs
 # The main bus device
 mainbus0 at root
 
-# The boot cpu
+# The boot CPU
 cpu0 at mainbus?
 
 # The IOMD
@@ -163,13 +165,11 @@ iomd0	at mainbus?
 clock*	at iomd?
 
 # IIC bus device
-iic*	at iomd?
+iomdiic* at iomd?
+iic0 at iomdiic?
 
 # RTC device via IIC bus
-rtc*	at iic? addr 0xa0
-
-# time-of-day device via rtc device
-todclock0	at rtc?
+pcfrtc*	at iic? addr 0x50
 
 # VIDC device
 vidc0		at mainbus?
@@ -197,11 +197,20 @@ options 	FONT_SONY12x25		# looks like VT220 font
 vidcvideo0	at vidc?		# wscons driver for VIDC
 wsdisplay*	at vidcvideo? console ?	# display itself
 
+iomdkbc*	at iomd?		# IOMD keyboard/mouse interface
+
+#pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
+#options 	PCKBD_LAYOUT=KB_UK
+#wskbd*		at pckbd?
+
+pms*		at iomdkbc? slot ?	# PS/2 mouse
+wsmouse*	at pms?
+
 rpckbd*		at iomd?		# based on old `kbd' driver
 wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
 
-wsqms*		at iomd?		# ws quadmouse driver
-wsmouse*	at wsqms?		# wsmouse on ws quadmouse
+qms*		at iomd?		# ws quadmouse driver
+wsmouse*	at qms?			# wsmouse on ws quadmouse
 
 pseudo-device	wsmux
 
@@ -210,8 +219,6 @@ pseudo-device	wsmux
 # vidcconsole PS2 mouse at IOMD
 #vidcconsole0	at vidc?		# display + vt100 emulation
 #kbd*		at iomd?		# PS/2 keyboard for vidcconsole
-#qms*		at iomd?		# RiscPC mouse for vidcconsole
-#opms*		at iomd?		# A7000/NC? mouse for vidcconsole
 
 # generic VT console device
 #vt0		at vidc?
@@ -228,8 +235,12 @@ pioc0	at mainbus? base 0x00210000
 # IDE disk controller
 wdc0	at pioc? offset 0x01f0 irq 9
 #wdc*	at pioc? offset 0x0170 irq -1
-wd*	at wdc? channel ? drive ?
-atapibus* at wdc? channel ?
+
+# ATA (IDE) bus support
+atabus* at ata?
+
+wd*	at atabus? drive ?
+atapibus* at atapi?
 cd*	at atapibus? drive ?
 sd*	at atapibus? drive ?
 
@@ -249,15 +260,9 @@ lpt*	at pioc? offset 0x0278 irq 0
 #lpt*	at pioc? offset 0x0378 irq -1
 #lpt*	at pioc? offset 0x03bc irq -1
 
-# Crude sound device
-beep0	at vidc?
-
 # Audio device
 vidcaudio0	at vidc?
 audio*		at vidcaudio0
-
-# System beep
-sysbeep0	at vidc?
 
 # Podule bus device
 podulebus0	at root
@@ -291,24 +296,14 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanner
 
 dtide*	at podulebus?			# D.T. Software IDE card
-wd*	at dtide? channel ? drive ?
-atapibus* at dtide? channel ?
 
 hcide*	at podulebus?			# HCCS IDE card
-wd*	at hcide? channel ? drive ?
-atapibus* at hcide? channel ?
 
 icside*	at podulebus?			# ICS IDE card
-wd*	at icside? channel ? drive ?
-atapibus* at icside? channel ?
 
 rapide*	at podulebus?			# Yellowstone RapIDE card
-wd*	at rapide? channel ? drive ?
-atapibus* at rapide? channel ?
 
 simide*	at podulebus?			# Simtec IDE card
-wd*	at simide? channel ? drive ?
-atapibus* at simide? channel ?
 
 amps*	at podulebus?			# Atomwide Multi-Port Serial card
 com*	at amps?

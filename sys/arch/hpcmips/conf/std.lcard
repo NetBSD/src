@@ -1,15 +1,16 @@
-#	$NetBSD: std.lcard,v 1.1 2003/05/01 07:01:58 igy Exp $
+#	$NetBSD: std.lcard,v 1.1.2.1 2004/08/03 10:35:05 skrll Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips
+makeoptions	MACHINE_ARCH="mipsel"
 
 options 	NOFPU			# No FPU
 options 	SOFTFLOAT		# emulate FPU insn
 
 options 	MIPS3			# R4000/R4400/R4600 CPUs
 options 	MIPS3_4100		# VR4100 core
+makeoptions	CPUFLAGS="-mips3"	# CPU codegen options
 options 	VR41XX			# NEC VR41xx series
-options 	MIPS3_L2CACHE_ABSENT
 options 	MIPS3_NO_PV_UNCACHED
 options		NO_SYMBOLSZ_ENTRY
 
@@ -33,5 +34,4 @@ options 	EXEC_ELF32		# native exec format
 options 	EXEC_SCRIPT		# may be unsafe
 
 makeoptions	DEFTEXTADDR="0x80040000"
-makeoptions	MACHINE_ARCH="mipsel"
 makeoptions	DEFCOPTS="-Os -mmemcpy"

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.6 2003/07/01 13:36:59 simonb Exp $
+# $NetBSD: Makefile.boot,v 1.6.2.1 2004/08/03 10:36:19 skrll Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -7,7 +7,7 @@ STRIPFLAG=
 BINDIR= /usr/mdec
 BINMODE= 0444
 PROG?= boot
-NEWVERSWHAT?= BIOS
+NEWVERSWHAT?= "BIOS Boot"
 VERSIONFILE?= ${.CURDIR}/../version
 
 SOURCES?= biosboot.S boot2.c conf.c devopen.c exec.c
@@ -33,18 +33,17 @@ LDFLAGS+= -N -e boot_start
 CPPFLAGS+= -I ${.CURDIR}/..  -I ${.CURDIR}/../../lib -I ${S}/lib/libsa
 CPPFLAGS+= -I ${.OBJDIR}
 #CPPFLAGS+= -DDEBUG_MEMSIZE
-CPPFLAGS+= -DX86_BOOT_MAGIC_1="('x' << 24 | 0x86b << 12 | 'm' << 4 | 1)"
-CPPFLAGS+= -DX86_BOOT_MAGIC_2="('x' << 24 | 0x86b << 12 | 'm' << 4 | 2)"
 
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
 
 .if ${MACHINE} == "amd64"
-LDFLAGS+=  -m elf_i386
+LD+=  -m elf_i386
 AFLAGS+=   -m32
 COPTS+=    -m32
 LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
+CPPFLAGS+= -DBOOT_ELF64
 .else
 COPTS+=    -mcpu=i386
 .endif
@@ -59,9 +58,10 @@ CPPFLAGS+= -DDIRECT_SERIAL
 CPPFLAGS+= -DSUPPORT_SERIAL=boot_params.bp_consdev
 
 CPPFLAGS+= -DCONSPEED=boot_params.bp_conspeed
+CPPFLAGS+= -DCONSOLE_KEYMAP=boot_params.bp_keymap
 
 CPPFLAGS+= -DSUPPORT_USTARFS
-#CPPFLAGS+= -DSUPPORT_DOSFS
+CPPFLAGS+= -DSUPPORT_DOSFS
 CPPFLAGS+= -DPASS_BIOSGEOM
 CPPFLAGS+= -DPASS_MEMMAP
 #CPPFLAGS+= -DBOOTPASSWD
@@ -79,11 +79,11 @@ SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 I386_STAND_DIR?= $S/arch/i386/stand
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine x86
+.BEGIN: machine x86 lib
 .NOPATH: machine x86
 .endif
 
-realdepend realall: machine x86
+realdepend realall: machine x86 lib
 CLEANFILES+= machine x86
 
 machine::
@@ -94,30 +94,35 @@ x86::
 	-rm -f $@
 	ln -s $S/arch/x86/include $@
 
-${OBJS}: machine x86
+${OBJS}: machine x86 lib
+
+lib:
+.ifdef LIBOBJ
+	-rm -f $@
+	ln -s ${LIBOBJ}/lib .
+	[ -d ${LIBOBJ}/lib ] || mkdir ${LIBOBJ}/lib
+.else
+	mkdir lib
+.endif
 
 ### find out what to use for libi386
 I386DIR= ${I386_STAND_DIR}/lib
-I386DST= ${.OBJDIR}/../lib/i386
 .include "${I386DIR}/Makefile.inc"
 LIBI386= ${I386LIB}
 
 ### find out what to use for libsa
 SA_AS= library
-SADST= ${.OBJDIR}/../lib/libsa
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
 
 ### find out what to use for libkern
 KERN_AS= library
-KERNDST= ${.OBJDIR}/../lib/libkern
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN= ${KERNLIB}
 
 ### find out what to use for libz
 Z_AS= library
-ZDST= ${.OBJDIR}/../lib/libz
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ= ${ZLIB}
 
@@ -125,15 +130,15 @@ LIBZ= ${ZLIB}
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib
 
 LIBLIST= ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} ${LIBSA}
 # LIBLIST= ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN}
 
 CLEANFILES+= ${PROG}.tmp ${PROG}.map vers.c
 
-vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
-	sh ${S}conf/newvers_stand.sh ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
+vers.c: ${VERSIONFILE} ${SOURCES} ${.CURDIR}/../Makefile.boot
+	${HOST_SH} ${S}conf/newvers_stand.sh ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
 
 # Anything that calls 'real_to_prot' must have a %pc < 0x10000.
 # We link the program, find the callers (all in libi386), then

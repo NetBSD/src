@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.65 2002/11/04 20:02:09 thorpej Exp $ */
+/* $NetBSD: locore.h,v 1.65.6.1 2004/08/03 10:37:39 skrll Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,7 +14,7 @@
  */
 
 /*
- * Jump table for MIPS cpu locore functions that are implemented
+ * Jump table for MIPS CPU locore functions that are implemented
  * differently on different generations, or instruction-level
  * archtecture (ISA) level, the Mips family.
  *
@@ -26,7 +26,6 @@
 
 #ifndef _LKM
 #include "opt_cputype.h"
-#include "opt_mips_cache.h"
 #endif
 
 #include <mips/cpuregs.h>
@@ -286,6 +285,12 @@ typedef int mips_prid_t;
 #define	    MIPS_PRID_CID_ALCHEMY	0x03	/* Alchemy Semiconductor */
 #define	    MIPS_PRID_CID_SIBYTE	0x04	/* SiByte */
 #define	    MIPS_PRID_CID_SANDCRAFT	0x05	/* SandCraft */
+#define	    MIPS_PRID_CID_PHILIPS	0x06	/* Philips */
+#define	    MIPS_PRID_CID_TOSHIBA	0x07	/* Toshiba */
+#define	    MIPS_PRID_CID_LSI		0x08	/* LSI */
+				/*	0x09	unannounced */
+				/*	0x0a	unannounced */
+#define	    MIPS_PRID_CID_LEXRA		0x0b	/* Lexra */
 #define	MIPS_PRID_COPTS(x)	(((x) >> 24) & 0x00ff)	/* Company Options */
 
 #ifdef _KERNEL

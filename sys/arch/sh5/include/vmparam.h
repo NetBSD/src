@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 2003/04/02 07:36:03 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6.2.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -116,7 +116,7 @@
  * USRSTACK is the top of user stack. 
  */
 #define USRSTACK	VM_MAXUSER_ADDRESS
-#define USRSTACK32	USRSTACK
+#define USRSTACK32	((u_int32_t)USRSTACK)
 
 /* Virtual memory resoruce limit. */
 #define MAXTSIZ                 (64 * 1024 * 1024)      /* max text size */
@@ -168,19 +168,11 @@
 #define VM_FREELIST_DEFAULT	0
 #endif
 
-#ifndef _LP64
-#define sh5_round_page(x)       ((((u_int32_t)(x)) + PGOFSET) & ~PGOFSET)
-#define sh5_trunc_page(x)       ((u_int32_t)(x) & ~PGOFSET)
-#define sh5_page_offset(x)      ((u_int32_t)(x) & PGOFSET)
-#define sh5_btop(x)             ((u_int32_t)(x) >> PGSHIFT)
-#define sh5_ptob(x)             ((u_int32_t)(x) << PGSHIFT)
-#else
-#define sh5_round_page(x)       ((((u_int64_t)(x)) + PGOFSET) & ~PGOFSET)
-#define sh5_trunc_page(x)       ((u_int64_t)(x) & ~PGOFSET)
-#define sh5_page_offset(x)      ((u_int64_t)(x) & PGOFSET)
-#define sh5_btop(x)             ((u_int64_t)(x) >> PGSHIFT)
-#define sh5_ptob(x)             ((u_int64_t)(x) << PGSHIFT)
-#endif
+#define sh5_round_page(x)       ((((uintptr_t)(x)) + PGOFSET) & ~PGOFSET)
+#define sh5_trunc_page(x)       ((uintptr_t)(x) & ~PGOFSET)
+#define sh5_page_offset(x)      ((uintptr_t)(x) & PGOFSET)
+#define sh5_btop(x)             ((uintptr_t)(x) >> PGSHIFT)
+#define sh5_ptob(x)             ((uintptr_t)(x) << PGSHIFT)
 
 /* pmap-specific data store in the vm_page structure. */
 #define __HAVE_VM_PAGE_MD

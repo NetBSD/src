@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2001/11/21 23:33:18 thorpej Exp $	*/
+/*	$NetBSD: boot.c,v 1.3.18.1 2004/08/03 10:40:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -51,11 +51,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -81,6 +77,7 @@
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/boot_flag.h>
 
 #include <dev/arcbios/arcbios.h>
 
@@ -91,150 +88,173 @@
  * We won't go overboard with gzip'd kernel names.  After all we can
  * still boot a gzip'd kernel called "netbsd.sgimips" - it doesn't need
  * the .gz suffix.
+ *
+ * For arcane reasons, the first byte of the first element of this struct will
+ * contain a zero.  We therefore start from one.
  */
-char *kernelnames[] = {
+
+char           *kernelnames[] = {
+	"placekeeper",
 	"netbsd.sgimips",
-	"netbsd",	"netbsd.gz",
+	"netbsd",
+	"netbsd.gz",
 	"netbsd.bak",
 	"netbsd.old",
 	"onetbsd",
 	"gennetbsd",
-#ifdef notyet
-	"netbsd.el",
-#endif /*notyet*/
 	NULL
 };
 
 extern const struct arcbios_fv *ARCBIOS;
+static int      debug = 0;
 
-int main __P((int, char *[]));
-
-#ifdef HEAP_VARIABLE
-void setheap(void *, void*);
-#endif
+int             main(int, char **);
 
 /* Storage must be static. */
 struct btinfo_symtab bi_syms;
 struct btinfo_bootpath bi_bpath;
 
 /*
- * This gets arguments from the first stage boot lader, calls PROM routines
- * to open and load the program to boot, and then transfers execution to
- * that new program.
+ * This gets arguments from the ARCS monitor, calls ARCS routines to open
+ * and load the program to boot, then transfers execution to the new program.
  *
- * Argv[0] should be something like "rz(0,0,0)netbsd" on a DECstation 3100.
- * Argv[0,1] should be something like "boot 5/rz0/netbsd" on a DECstation 5000.
- * The argument "-a" means netbsd should do an automatic reboot.
+ * argv[0] will be the ARCS path to the bootloader (i.e.,
+ * "pci(0)scsi(0)disk(2)rdisk(0)partition(8)/boot.ip3").
+ *
+ * argv[1] through argv[n] will contain arguments passed from the PROM, if any.
  */
+
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
-	char *name/*, **namep, *dev, *kernel*/;
-	char /*bootname[PATH_MAX],*/ bootpath[PATH_MAX];
-	void (*entry)(int, char *[], int, void *);
-	u_long marks[MARK_MAX];
-	struct arcbios_mem *mem;
-	int win;
+	char           *kernel = NULL;
+	char           *bootpath = NULL;
+	char            bootfile[PATH_MAX];
+	void            (*entry) (int, char *[], int, void *);
+	u_long          marks[MARK_MAX];
+	int             win = 0;
+	int             i;
+	int             ch;
 
 	/* print a banner */
 	printf("\n");
 	printf("NetBSD/sgimips " NETBSD_VERS " Bootstrap, Revision %s\n",
-	    bootprog_rev);
+	       bootprog_rev);
 	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
 	printf("\n");
 
-	/* Initialize heap from free memory descriptors */
-	mem = 0;
-	do {
-		mem = ARCBIOS->GetMemoryDescriptor(mem);
-		if (mem != 0)
-			printf("Mem block: type %d base 0x%x size 0x%x\n",
-			    mem->Type, mem->BasePage * 4096, mem->PageCount * 4096);
-	} while (mem != 0);
-#ifdef HEAP_VARIABLE
-	setheap((void *)0x88200000, (void *)0x88300000);	/* XXXX */
-#endif
-	printf("Local storage %x\n", (int)&mem);
-	for (win = 0; win < argc; ++win)
-		printf("argv[%d]: %s\n", win, argv[win]);
+	memset(marks, 0, sizeof marks);
 
 	/* initialise bootinfo structure early */
 	bi_init();
 
+	/* Parse arguments, if present.  */
+
+	while ((ch = getopt(argc, argv, "v")) != -1) {
+		switch (ch) {
+		case 'v':
+			debug = 1;
+			break;
+		}
+	}
+
 	/*
 	 * How to find partition and file to load?
-	 * OSLoaderPartition=scsi(n)disk(n)rdisk(n)partition(n)
-	 * OSLoadFilename=netbsd
-	 * path=???
-	 * argument passed to boot program
+	 *
+	 * If argv[0] contains the string "cdrom(", we're probably doing an
+	 * install.  The bootpath will therefore be partition 0 of whatever
+	 * device we've booted from.  Derive the install kernel name from
+	 * the bootloader name ("ip32boot", "ip22boot", or "aoutboot").
 	 */
-	bootpath[0] = 0;
-	name = ARCBIOS->GetEnvironmentVariable("OSLoadPartition");
-	if (name) {
-		strcpy(bootpath, name);
-		name = ARCBIOS->GetEnvironmentVariable("OSLoadFilename");
-		if (name)
-			strcat(bootpath, name);
+
+	if (strstr(argv[0], "cdrom("))
+	{
+		strcpy(bootfile, argv[0]);
+		i = (strrchr(bootfile, ')') - bootfile);
+		bootfile[i-1] = '0';
+		if (strstr(bootfile, "ip3x"))
+			sprintf( (strrchr(bootfile, ')') + 1), "ip3x");
 		else
-			strcat(bootpath, "netbsd");
+			sprintf( (strrchr(bootfile, ')') + 1), "ip2x");
+		if ( (loadfile(bootfile, marks, LOAD_KERNEL)) >= 0 )
+			goto finish;
 	}
-	if (strchr(argv[1], '=') == NULL) {
-		strcpy(bootpath, argv[1]);
-		if (strchr(argv[1], '(') == NULL) {
-			strcpy(bootpath,
-			    ARCBIOS->GetEnvironmentVariable("OSLoadPartition"));
-			strcat(bootpath, argv[1]);
-		}
-	}
-	printf("Boot: %s\n", bootpath);
 
-	memset(marks, 0, sizeof marks);
-#if 0
-	if (name != NULL)
-		win = (loadfile(name, marks, LOAD_KERNEL) == 0);
-	else {
-		win = 0;
-		for (namep = kernelnames, win = 0; *namep != NULL && !win;
-		    namep++) {
-			kernel = *namep;
-			strcpy(bootpath, dev);
-			strcat(bootpath, kernel);
-			printf("Loading: %s\n", bootpath);
-			win = (loadfile(bootpath, marks, LOAD_ALL) != -1);
-			if (win) {
-				name = bootpath;
-			}
-		}
-	}
-#else
-	win = loadfile(bootpath, marks, LOAD_KERNEL) == 0;
-#endif
-	if (!win)
-		goto fail;
+	bootpath = ARCBIOS->GetEnvironmentVariable("OSLoadPartition");
 
+	if (bootpath == NULL) {
+		/* XXX need to actually do the fixup */
+		printf("\nPlease set the OSLoadPartition environment variable.\n");
+		return 0;
+	}
+
+	/*
+	 * Grab OSLoadFilename from ARCS.
+	 */
+
+	kernel = ARCBIOS->GetEnvironmentVariable("OSLoadFilename");
+
+	/*
+	 * argv[1] is assumed to contain the name of the kernel to boot,
+	 * if it a) does not start with a hyphen and b) does not contain
+	 * an equals sign.
+	 */
+
+	if (((strchr(argv[1], '=')) == NULL) && (argv[1][0] != '-'))
+		kernel = argv[1];
+
+	if (kernel != NULL) {
+		/*
+		 * if the name contains parenthesis, we assume that it
+		 * contains the bootpath and ignore anything passed through
+		 * the environment
+		 */
+		if (strchr(kernel, '('))
+			win = loadfile(kernel, marks, LOAD_KERNEL);
+		else {
+			strcpy(bootfile, bootpath);
+			strcat(bootfile, kernel);
+			win = loadfile(bootfile, marks, LOAD_KERNEL);
+		}
+
+	} else {
+		i = 1;
+		while (kernelnames[i] != NULL) {
+			strcpy(bootfile, bootpath);
+			strcat(bootfile, kernelnames[i]);
+			kernel = kernelnames[i];
+			win = loadfile(bootfile, marks, LOAD_KERNEL);
+			if (win != -1)
+				break;
+			i++;
+		}
+
+	}
+
+	if (win < 0) {
+		printf("Boot failed!  Halting...\n");
+		return 0;
+	}
+
+finish:
 #if 0
 	strncpy(bi_bpath.bootpath, kernel, BTINFO_BOOTPATH_LEN);
-	bi_add(&bi_bpath, BTINFO_BOOTPATH, sizeof(bi_bpath));
-#endif
+	bi_add(&bi_bpath, BTINFO_BOOTPATH);
 
-	entry = (void *) marks[MARK_ENTRY];
 	bi_syms.nsym = marks[MARK_NSYM];
 	bi_syms.ssym = marks[MARK_SYM];
 	bi_syms.esym = marks[MARK_END];
 	bi_add(&bi_syms, BTINFO_SYMTAB);
+#endif
+	entry = (void *) marks[MARK_ENTRY];
 
-	printf("Starting at %p\n\n", entry);
-	printf("nsym 0x%lx ssym 0x%lx esym 0x%lx\n", marks[MARK_NSYM],
-	    marks[MARK_SYM], marks[MARK_END]);
-	ARCBIOS->FlushAllCaches();
-	(*entry)(argc, argv, BOOTINFO_MAGIC, bootinfo);
+	if (debug) {
+		printf("Starting at %p\n\n", entry);
+		printf("nsym 0x%lx ssym 0x%lx esym 0x%lx\n", marks[MARK_NSYM],
+		       marks[MARK_SYM], marks[MARK_END]);
+	}
+	(*entry) (argc, argv, 0 /* BOOTINFO_MAGIC */, NULL);
 
 	printf("Kernel returned!  Halting...\n");
-	return (0);
-
- fail:
-	(void)printf("Boot failed!  Halting...\n");
 	return (0);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: README,v 1.5 2001/12/04 17:56:36 wiz Exp $
+#	$NetBSD: README,v 1.5.16.1 2004/08/03 10:38:47 skrll Exp $
 
 			 IEEE handler README
 			 -------------------
@@ -238,14 +238,14 @@ Notes:
     general registers have not yet been saved in the pcb, although the
     floating point registers have been. Otherwise we could have arranged to
     pass the pcb.
-    
+
   6 If the handler returned FPC_TT_ILL generate an illegal instruction
     trap. This will ultimately cause a SIGILL.
 
   7 Default to generating an arithmetic trap which will ultimately
     cause a SIGFPE.
 
-4.4 NetBSD Kernel 
+4.4 NetBSD Kernel
 
 The integration of his FPU-handler into NetBSD/pc532 was really
 straightforward. His FPU-handler should be in sys/arch/pc532/fpu in

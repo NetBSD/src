@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.15 2003/05/24 06:21:22 gmcgarry Exp $	*/
+/*	$NetBSD: intio.c,v 1.15.2.1 2004/08/03 10:34:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,22 +41,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.15 2003/05/24 06:21:22 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.15.2.1 2004/08/03 10:34:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h> 
+#include <sys/device.h>
 
 #include <machine/hp300spu.h>
 
-#include <hp300/dev/intioreg.h> 
+#include <hp300/dev/intioreg.h>
 #include <hp300/dev/intiovar.h>
+
+struct intio_softc {
+	struct device sc_dev;
+	struct bus_space_tag sc_tag;
+};
 
 int	intiomatch(struct device *, struct cfdata *, void *);
 void	intioattach(struct device *, struct device *, void *);
 int	intioprint(void *, const char *);
 
-CFATTACH_DECL(intio, sizeof(struct device),
+CFATTACH_DECL(intio, sizeof(struct intio_softc),
     intiomatch, intioattach, NULL, NULL);
 
 #if defined(HP320) || defined(HP330) || defined(HP340) || defined(HP345) || \
@@ -107,12 +112,17 @@ intioattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct intio_softc *sc = (struct intio_softc *)self;
 	struct intio_attach_args ia;
 	const struct intio_builtins *ib;
+	bus_space_tag_t bst = &sc->sc_tag;
 	int ndevs;
 	int i;
 
 	printf("\n");
+
+	memset(bst, 0, sizeof(struct bus_space_tag));
+	bst->bustype = HP300_BUS_SPACE_INTIO;
 
 	switch (machineid) {
 #if defined(HP320) || defined(HP330) || defined(HP340) || defined(HP345) || \
@@ -146,7 +156,7 @@ intioattach(parent, self, aux)
 
 	memset(&ia, 0, sizeof(ia));
 
-	for (i=0; i<ndevs; i++) {
+	for (i = 0; i < ndevs; i++) {
 
 		/*
 		 * Internal HP-IB doesn't always return a device ID,
@@ -157,7 +167,7 @@ intioattach(parent, self, aux)
 
 		strncpy(ia.ia_modname, ib[i].ib_modname, INTIO_MOD_LEN);
 		ia.ia_modname[INTIO_MOD_LEN] = '\0';
-		ia.ia_bst = HP300_BUS_SPACE_INTIO;
+		ia.ia_bst = bst;
 		ia.ia_iobase = ib[i].ib_offset;
 		ia.ia_addr = (bus_addr_t)(intiobase + ib[i].ib_offset);
 		ia.ia_ipl = ib[i].ib_ipl;

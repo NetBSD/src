@@ -1,4 +1,4 @@
-/*	$NetBSD: pfb.c,v 1.11.6.1 2003/07/03 02:57:31 wrstuden Exp $	*/
+/*	$NetBSD: pfb.c,v 1.11.6.2 2004/08/03 10:33:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pfb.c,v 1.11.6.2 2004/08/03 10:33:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

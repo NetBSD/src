@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.2 2003/04/28 23:16:17 bjh21 Exp $	*/
+/*	$NetBSD: signal.h,v 1.2.2.1 2004/08/03 10:31:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -50,41 +46,9 @@ typedef int sig_atomic_t;
 #include <machine/fpu.h>
 #include <machine/mcontext.h>
 
-/*
- * Information pushed on stack when a signal is delivered.
- * This is used by the kernel to restore state following
- * execution of the signal handler.  It is also made available
- * to the handler to allow it to restore state properly if
- * a non-standard exit is performed.
- */
-struct sigcontext {
-	struct fxsave64 *sc_fpstate;
-	u_int64_t	sc_onstack;
-	sigset_t	sc_mask;
-	mcontext_t	sc_mcontext;
-};
-
-#define _MCONTEXT_TO_SIGCONTEXT(uc, sc) 				\
-do {									\
-	memcpy(&(sc)->sc_mcontext.__gregs, &(uc)->uc_mcontext.__gregs,	\
-	    sizeof ((uc)->uc_mcontext.__gregs));			\
-	if ((uc)->uc_flags & _UC_FPU) {					\
-		memcpy(&(sc)->sc_mcontext.__fpregs,			\
-		    &(uc)->uc_mcontext.__fpregs,			\
-		    sizeof ((uc)->uc_mcontext.__fpregs));		\
-	}								\
-} while (/*CONSTCOND*/0)
-
-#define _SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
-do {									\
-	memcpy(&(uc)->uc_mcontext.__gregs, &(sc)->sc_mcontext.__gregs,	\
-	    sizeof ((uc)->uc_mcontext.__gregs));			\
-	if ((uc)->uc_flags & _UC_FPU) {					\
-		memcpy(&(uc)->uc_mcontext.__fpregs,			\
-		    &(sc)->sc_mcontext.__fpregs,			\
-		    sizeof ((uc)->uc_mcontext.__fpregs));		\
-	}								\
-} while (/*CONSTCOND*/0)
+#ifdef _KERNEL
+#define SIGTRAMP_VALID(vers)	((vers) == 2)
+#endif
 
 #endif	/* _NETBSD_SOURCE */
 #endif	/* !_AMD64_SIGNAL_H_ */

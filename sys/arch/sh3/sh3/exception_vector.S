@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.10 2003/01/18 06:33:43 thorpej Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.10.2.1 2004/08/03 10:40:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.10.2.1 2004/08/03 10:40:16 skrll Exp $")
+
+
 /*
  * Exception vectors. following routines are copied to vector addreses.
  *	sh_vector_generic:	VBR + 0x100
@@ -68,14 +71,17 @@ _C_LABEL(sh_vector_generic):
 	mov.l	@r0,	r0
 	mov.l	r0,	@(TF_EXPEVT, r14) /* trapframe->tf_expevt = EXPEVT */
 	/* Get curlwp */
-	mov.l	3f,	r1
+	mov.l	_L.curlwp, r1
 	mov.l	@r1,	r4	/* 1st arg */
+	/* Get TEA */
+	MOV	(TEA,	r1)
+	mov.l	@r1,	r6	/* 3rd arg */
 	/* Check TLB exception or not */
 	mov.l	_L.TLB_PROT_ST, r1
 	cmp/hi	r1,	r0
 	bt	1f
-	MOV	(TEA,	r0)
-	mov.l	@r0,	r6	/* 3rd arg */
+
+	/* tlb_exception(curlwp, trapframe, trunc_page(TEA)); */
 	mov.l	_L.VPN_MASK, r1
 	and	r1,	r6	/* va = trunc_page(va) */
 	__EXCEPTION_UNBLOCK(r0, r1)
@@ -84,6 +90,8 @@ _C_LABEL(sh_vector_generic):
 	 mov	r14,	r5	/* 2nd arg */
 	bra	2f
 	 nop
+
+	/* general_exception(curlwp, trapframe, TEA); */
 1:	mov	r4,	r8
 #ifdef DDB
 	mov	#0,	r2
@@ -94,7 +102,7 @@ _C_LABEL(sh_vector_generic):
 	__EXCEPTION_UNBLOCK(r0, r1)
 	mov.l	_L.general, r0
 	jsr	@r0
-	 mov	r14,	r5
+	 mov	r14,	r5	/* 2nd arg */
 
 	/* Check for ASTs on exit to user mode. */
 	mov	r8,	r4
@@ -110,7 +118,7 @@ _C_LABEL(sh_vector_generic):
 2:	__EXCEPTION_RETURN
 	/* NOTREACHED */
 	.align	2
-3:		.long	_C_LABEL(curlwp)
+_L.curlwp:	.long	_C_LABEL(curlwp)
 REG_SYMBOL(EXPEVT)
 REG_SYMBOL(BBRA)
 REG_SYMBOL(TEA)

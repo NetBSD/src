@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.50 2003/05/05 20:49:10 fvdl Exp $
+#	$NetBSD: Makefile.booters,v 1.50.2.1 2004/08/03 10:36:14 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -22,16 +22,8 @@ COPTS+= -ffreestanding
 
 I386_STAND_DIR?= $S/arch/i386/stand
 
-.PATH: ${I386_STAND_DIR}/lib/crt/bootsect ${I386_STAND_DIR}/lib
-# ensure the stuff we need to load all of 'biosboot' in in the first few
-# sectors, and that anything that goes to real mode is in the first 64k.
-# (prot_to_real will bleat if the return address is >64k)
-BSSTART= start_bootsect.o fraglist.o bootsectmain.o biosdisk_ll.o \
-	bios_disk.o diskbuf.o \
-	biosdelay.o biosgetrtc.o biosmca.o biosmem.o biosmemx.o \
-	biosreboot.o conio.o
+.PATH: ${I386_STAND_DIR}/lib
 
-.PATH: ${I386_STAND_DIR}/lib/crt/rom
 ROMSTART= start_rom.o
 GENPROMDIR= ${I386_STAND_DIR}/genprom
 GENPROMOBJDIR!= cd ${GENPROMDIR} && ${PRINTOBJDIR}
@@ -58,11 +50,11 @@ CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
 SRCS+=	vers.c
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine x86
+.BEGIN: machine x86 lib
 .NOPATH: machine x86
 .endif
 
-realdepend realall: machine x86
+realdepend realall: machine x86 lib
 CLEANFILES+= machine x86
 
 machine:: x86
@@ -73,7 +65,16 @@ x86::
 	-rm -f $@
 	ln -s $S/arch/x86/include $@
 
-${OBJS} ${BSSTART} ${ROMSTART} ${DOSSTART} ${PXESTART}: machine x86
+${OBJS} ${ROMSTART} ${DOSSTART} ${PXESTART}: machine x86 lib
+
+lib:
+.ifdef LIBOBJ
+	-rm -f $@
+	ln -s ${LIBOBJ}/lib .
+	[ -d ${LIBOBJ}/lib ] || mkdir ${LIBOBJ}/lib
+.else
+	mkdir lib
+.endif
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -99,7 +100,7 @@ LIBI386=		${I386LIB}
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib
 
 .if ${OBJECT_FMT} == "ELF"
 LDFLAGS=-M -e start 	# -N does not work properly.
@@ -110,7 +111,7 @@ LDFLAGS=-N -M -e _start
 LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 
 vers.c: ${VERSIONFILE} ${SOURCES}
-	sh ${S}conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}conf/newvers_stand.sh ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CLEANFILES+= ${BASE}.sym
 ${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}

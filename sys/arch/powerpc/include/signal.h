@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.12 2003/04/28 23:16:22 bjh21 Exp $	*/
+/*	$NetBSD: signal.h,v 1.12.2.1 2004/08/03 10:39:29 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,6 +33,7 @@
 #ifndef	_POWERPC_SIGNAL_H_
 #define	_POWERPC_SIGNAL_H_
 
+#ifndef _LOCORE
 #include <sys/featuretest.h>
 
 typedef int sig_atomic_t;
@@ -48,6 +49,9 @@ struct sigcontext13 {
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 
+/*
+ * struct sigcontext introduced in NetBSD 1.4
+ */
 struct sigcontext {
 	int sc_onstack;			/* saved onstack flag */
 	int __sc_mask13;		/* saved signal mask (old style) */
@@ -55,44 +59,17 @@ struct sigcontext {
 	sigset_t sc_mask;		/* saved signal mask (new style) */
 };
 
-/*
- * The following macros are used to convert from a ucontext to sigcontext,
- * and vice-versa.  This is for building a sigcontext to deliver to old-style
- * signal handlers, and converting back (in the event the handler modifies
- * the context).
- */
-#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
-do {									\
-	memcpy((sc)->sc_frame.fixreg, &(uc)->uc_mcontext.__gregs[_REG_R0], \
-	    sizeof((sc)->sc_frame.fixreg));				\
-	(sc)->sc_frame.cr     = (uc)->uc_mcontext.__gregs[_REG_CR];	\
-	(sc)->sc_frame.lr     = (uc)->uc_mcontext.__gregs[_REG_LR];	\
-	(sc)->sc_frame.srr0   = (uc)->uc_mcontext.__gregs[_REG_PC];	\
-	(sc)->sc_frame.srr1   = (uc)->uc_mcontext.__gregs[_REG_MSR];	\
-	(sc)->sc_frame.ctr    = (uc)->uc_mcontext.__gregs[_REG_CTR];	\
-	(sc)->sc_frame.xer    = (uc)->uc_mcontext.__gregs[_REG_XER];	\
-	(sc)->sc_frame.mq     = (uc)->uc_mcontext.__gregs[_REG_MQ];	\
-	(sc)->sc_frame.vrsave = (uc)->uc_mcontext.__vrf.__vrsave;	\
-	(sc)->sc_frame.spare  = 0;					\
-} while (/*CONSTCOND*/0)
+#ifdef _KERNEL
+void	sendsig_sigcontext(int, const sigset_t *, u_long);
 
-#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
-do {									\
-	memcpy(&(uc)->uc_mcontext.__gregs[_REG_R0], (sc)->sc_frame.fixreg, \
-	    sizeof((sc)->sc_frame.fixreg));				\
-	(uc)->uc_mcontext.__gregs[_REG_CR] = (sc)->sc_frame.cr;		\
-	(uc)->uc_mcontext.__gregs[_REG_LR] = (sc)->sc_frame.lr;		\
-	(uc)->uc_mcontext.__gregs[_REG_PC] = (sc)->sc_frame.srr0;	\
-	(uc)->uc_mcontext.__gregs[_REG_MSR] = (sc)->sc_frame.srr1;	\
-	(uc)->uc_mcontext.__gregs[_REG_CTR] = (sc)->sc_frame.ctr;	\
-	(uc)->uc_mcontext.__gregs[_REG_XER] = (sc)->sc_frame.xer;	\
-	(uc)->uc_mcontext.__gregs[_REG_MQ] = (sc)->sc_frame.mq;		\
-	(uc)->uc_mcontext.__vrf.__vrsave  = (sc)->sc_frame.vrsave;	\
-} while (/*CONSTCOND*/0)
+#ifdef COMPAT_16
+#define	SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
+#else
+#define	SIGTRAMP_VALID(vers)	((vers) == 2)
+#endif
 
-struct sigframe {
-	struct sigcontext sf_sc;
-};
+#endif	/* _KERNEL */
 
 #endif	/* _NETBSD_SOURCE */
+#endif	/* !_LOCORE */
 #endif	/* !_POWERPC_SIGNAL_H_ */

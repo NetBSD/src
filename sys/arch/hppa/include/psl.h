@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.1 2002/06/05 01:04:23 fredette Exp $	*/
+/*	$NetBSD: psl.h,v 1.1.10.1 2004/08/03 10:35:37 skrll Exp $	*/
 
 /*	$OpenBSD: psl.h,v 1.6 1999/11/25 18:29:01 mickey Exp $	*/
 
@@ -95,7 +95,7 @@
 #define	PSW_R	(1 << (31-PSW_R_POS))	/* Recover Counter Enable */
 #define	PSW_Q	(1 << (31-PSW_Q_POS))	/* Interrupt State Collection Enable */
 #define	PSW_P	(1 << (31-PSW_P_POS))	/* Protection Identifier Validation Enable */
-#define	PSW_D	(1 << (31-PSW_D_POS))	/* Data Adress Translation Enable */
+#define	PSW_D	(1 << (31-PSW_D_POS))	/* Data Address Translation Enable */
 #define	PSW_I	(1 << (31-PSW_I_POS))	/* External Interrupt, Power Failure
 					   Interrupt, and Low-Priority Machine
 					   Check Interrupt unmask */
@@ -104,6 +104,8 @@
  * Frequently Used PSW Values
  */
 #define	RESET_PSW	(PSW_R | PSW_Q | PSW_P | PSW_D | PSW_I)
+#define PSW_MBS		(PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I)
+#define PSW_MBZ		(PSW_Y | PSW_Z | PSW_S | PSW_X | PSW_M | PSW_R)
 
 #ifdef _KERNEL
 #include <machine/intr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: int_const.h,v 1.1 2001/04/14 22:38:41 kleink Exp $	*/
+/*	$NetBSD: int_const.h,v 1.1.26.1 2004/08/03 10:38:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _NS32K_INT_CONST_H_
-#define _NS32K_INT_CONST_H_
+#define	_NS32K_INT_CONST_H_
 
 /*
  * 7.18.4 Macros for integer constants

@@ -1,22 +1,26 @@
-# $NetBSD: Makefile.booters,v 1.40 2002/12/09 12:42:18 jdolecek Exp $
+# $NetBSD: Makefile.booters,v 1.40.6.1 2004/08/03 10:39:21 skrll Exp $
+
+.include <bsd.sys.mk>		# for HOST_SH
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
 
-.BEGIN: machine pmax mips
-${PROG} realdepend realall: machine pmax mips
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	@[ -h machine ] || ln -s $S/arch/${MACHINE}/include machine
+	@[ -h pmax ] || ln -s $S/arch/${MACHINE}/include pmax
+	@[ -h mips ] || ln -s $S/arch/mips/include mips
+.NOPATH: machine pmax mips
+.endif
 CLEANFILES+= machine pmax mips
-machine:
-	-rm -f ${.TARGET}
-	ln -s $S/arch/${MACHINE}/include ${.TARGET}
-pmax:
-	-rm -f ${.TARGET}
-	ln -s $S/arch/${MACHINE}/include ${.TARGET}
-mips:
-	-rm -f ${.TARGET}
-	ln -s $S/arch/mips/include mips
 
 BINMODE?=	444
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 .PATH:		${.CURDIR}/../common
 AFLAGS+=	-D_LOCORE -D_KERNEL -mno-abicalls
@@ -28,7 +32,7 @@ CFLAGS=		-ffreestanding -Os -g -mmemcpy -mno-abicalls -G 128
 OFORMAT=	--oformat elf32-littlemips
 LDBUG=		-T $S/arch/mips/conf/stand.ldscript
 
-NETBSD_VERS!=	sh ${.CURDIR}/../../../../conf/osrelease.sh
+NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 PRIMARY_LOAD_ADDRESS?=	0x80700000
@@ -61,7 +65,7 @@ CPPFLAGS+=	-DPRIMARY_BOOTBLOCK \
 		-DALLOC_FIRST_FIT \
 		-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
 
-CHECKSIZE_CMD?=	SIZE=${SIZE} sh ${.CURDIR}/../common/checksize.sh
+CHECKSIZE_CMD?=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
 
 .elif defined(SECONDARY_PROG)
 PROG=		${SECONDARY_PROG}
@@ -103,9 +107,8 @@ LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
 .include <bsd.own.mk>
 
-.PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "pmax"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "pmax"
 
 ${PROG}: machine mips pmax ${OBJS} ${LIBS}
 	${LD} ${OFORMAT} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \
@@ -129,4 +132,4 @@ CLEANFILES+=	${PROG}.map
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib

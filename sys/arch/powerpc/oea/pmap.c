@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 2003/05/10 21:10:37 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.10.2.1 2004/08/03 10:39:37 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,6 +66,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10.2.1 2004/08/03 10:39:37 skrll Exp $");
+
+#include "opt_ppcarch.h"
 #include "opt_altivec.h"
 #include "opt_pmap.h"
 #include <sys/param.h>
@@ -89,11 +93,7 @@
 #include <machine/powerpc.h>
 #include <powerpc/spr.h>
 #include <powerpc/oea/sr_601.h>
-#if __NetBSD_Version__ > 105010000
-#include <powerpc/oea/bat.h>
-#else
 #include <powerpc/bat.h>
-#endif
 
 #if defined(DEBUG) || defined(PMAPCHECK)
 #define	STATIC
@@ -108,7 +108,11 @@ int pmap_use_altivec;
 volatile struct pteg *pmap_pteg_table;
 unsigned int pmap_pteg_cnt;
 unsigned int pmap_pteg_mask;
+#ifdef PMAP_MEMLIMIT
+paddr_t pmap_memlimit = PMAP_MEMLIMIT;
+#else
 paddr_t pmap_memlimit = -PAGE_SIZE;		/* there is no limit */
+#endif
 
 struct pmap kernel_pmap_;
 unsigned int pmap_pages_stolen;
@@ -149,6 +153,15 @@ struct pvo_entry {
 #define	PVO_WIRED		0x0010		/* PVO entry is wired */
 #define	PVO_MANAGED		0x0020		/* PVO e. for managed page */
 #define	PVO_EXECUTABLE		0x0040		/* PVO e. for executable page */
+#define	PVO_ENTER_INSERT	0		/* PVO has been removed */
+#define	PVO_SPILL_UNSET		1		/* PVO has been evicted */
+#define	PVO_SPILL_SET		2		/* PVO has been spilled */
+#define	PVO_SPILL_INSERT	3		/* PVO has been inserted */
+#define	PVO_PMAP_PAGE_PROTECT	4		/* PVO has changed */
+#define	PVO_PMAP_PROTECT	5		/* PVO has changed */
+#define	PVO_REMOVE		6		/* PVO has been removed */
+#define	PVO_WHERE_MASK		15
+#define	PVO_WHERE_SHFT		8
 };
 #define	PVO_VADDR(pvo)		((pvo)->pvo_vaddr & ~ADDR_POFF)
 #define	PVO_ISEXECUTABLE(pvo)	((pvo)->pvo_vaddr & PVO_EXECUTABLE)
@@ -158,6 +171,9 @@ struct pvo_entry {
 	((void)((pvo)->pvo_vaddr &= ~(PVO_PTEGIDX_VALID|PVO_PTEGIDX_MASK)))
 #define	PVO_PTEGIDX_SET(pvo,i)	\
 	((void)((pvo)->pvo_vaddr |= (i)|PVO_PTEGIDX_VALID))
+#define	PVO_WHERE(pvo,w)	\
+	((pvo)->pvo_vaddr &= ~(PVO_WHERE_MASK << PVO_WHERE_SHFT), \
+	 (pvo)->pvo_vaddr |= ((PVO_ ## w) << PVO_WHERE_SHFT))
 
 TAILQ_HEAD(pvo_tqhead, pvo_entry);
 struct pvo_tqhead *pmap_pvo_table;	/* pvo entries by ptegroup index */
@@ -230,6 +246,9 @@ STATIC int pmap_pvo_enter(pmap_t, struct pool *, struct pvo_head *,
 STATIC void pmap_pvo_remove(struct pvo_entry *, int);
 STATIC struct pvo_entry *pmap_pvo_find_va(pmap_t, vaddr_t, int *); 
 STATIC volatile struct pte *pmap_pvo_to_pte(const struct pvo_entry *, int);
+#define pmap_pvo_reclaim(pm)	NULL
+STATIC void pvo_set_exec(struct pvo_entry *);
+STATIC void pvo_clear_exec(struct pvo_entry *);
 
 STATIC void tlbia(void);
 
@@ -397,6 +416,7 @@ extern struct evcnt pmap_evcnt_idlezeroed_pages;
 #define	MFSRIN(va)	mfsrin(va)
 #define	MFTB()		mfrtcltbl()
 
+#ifndef PPC_OEA64
 static __inline register_t
 mfsrin(vaddr_t va)
 {
@@ -404,6 +424,7 @@ mfsrin(vaddr_t va)
 	__asm __volatile ("mfsrin %0,%1" : "=r"(sr) : "r"(va));
 	return sr;
 }
+#endif	/* PPC_OEA64 */
 
 static __inline register_t
 pmap_interrupts_off(void)
@@ -445,7 +466,7 @@ tlbia(void)
 	/*
 	 * Why not use "tlbia"?  Because not all processors implement it.
 	 *
-	 * This needs to be a per-cpu callback to do the appropriate thing
+	 * This needs to be a per-CPU callback to do the appropriate thing
 	 * for the CPU. XXX
 	 */
 	for (i = 0; i < (caddr_t)0x00040000; i += 0x00001000) {
@@ -460,7 +481,45 @@ tlbia(void)
 static __inline register_t
 va_to_vsid(const struct pmap *pm, vaddr_t addr)
 {
-	return (pm->pm_sr[addr >> ADDR_SR_SHFT] & SR_VSID);
+#ifdef PPC_OEA64
+#if 0
+	const struct ste *ste;
+	register_t hash;
+	int i;
+
+	hash = (addr >> ADDR_ESID_SHFT) & ADDR_ESID_HASH;
+
+	/*
+	 * Try the primary group first
+	 */
+	ste = pm->pm_stes[hash].stes;
+	for (i = 0; i < 8; i++, ste++) {
+		if (ste->ste_hi & STE_V) &&
+		   (addr & ~(ADDR_POFF|ADDR_PIDX)) == (ste->ste_hi & STE_ESID))
+			return ste;
+	}
+
+	/*
+	 * Then the secondary group.
+	 */
+	ste = pm->pm_stes[hash ^ ADDR_ESID_HASH].stes;
+	for (i = 0; i < 8; i++, ste++) {
+		if (ste->ste_hi & STE_V) &&
+		   (addr & ~(ADDR_POFF|ADDR_PIDX)) == (ste->ste_hi & STE_ESID))
+			return addr;
+	}
+		
+	return NULL;
+#else
+	/*
+	 * Rather than searching the STE groups for the VSID, we know
+	 * how we generate that from the ESID and so do that.
+	 */
+	return VSID_MAKE(addr >> ADDR_SR_SHFT, pm->pm_vsid) >> SR_VSID_SHFT;
+#endif
+#else
+	return (pm->pm_sr[addr >> ADDR_SR_SHFT] & SR_VSID) >> SR_VSID_SHFT;
+#endif
 }
 
 static __inline register_t
@@ -488,15 +547,21 @@ pmap_pte_to_va(volatile const struct pte *pt)
 	if (pt->pte_hi & PTE_HID)
 		ptaddr ^= (pmap_pteg_mask * sizeof(struct pteg));
 
-	/* PPC Bits 10-19 */
+	/* PPC Bits 10-19  PPC64 Bits 42-51 */
 	va = ((pt->pte_hi >> PTE_VSID_SHFT) ^ (ptaddr / sizeof(struct pteg))) & 0x3ff;
 	va <<= ADDR_PIDX_SHFT;
 
-	/* PPC Bits 4-9 */
+	/* PPC Bits 4-9  PPC64 Bits 36-41 */
 	va |= (pt->pte_hi & PTE_API) << ADDR_API_SHFT;
 
+#ifdef PPC_OEA64
+	/* PPC63 Bits 0-35 */
+	/* va |= VSID_TO_SR(pt->pte_hi >> PTE_VSID_SHFT) << ADDR_SR_SHFT; */
+#endif
+#ifdef PPC_OEA
 	/* PPC Bits 0-3 */
 	va |= VSID_TO_SR(pt->pte_hi >> PTE_VSID_SHFT) << ADDR_SR_SHFT;
+#endif
 
 	return va;
 }
@@ -708,8 +773,8 @@ pmap_pte_insert(int ptegidx, struct pte *pvo_pt)
 	int i;
 	
 #if defined(DEBUG)
-	DPRINTFN(PTE, ("pmap_pte_insert: idx 0x%x, pte 0x%lx 0x%lx\n",
-		ptegidx, pvo_pt->pte_hi, pvo_pt->pte_lo));
+	DPRINTFN(PTE, ("pmap_pte_insert: idx 0x%x, pte 0x%x 0x%x\n",
+		ptegidx, (unsigned int) pvo_pt->pte_hi, (unsigned int) pvo_pt->pte_lo));
 #endif
 	/*
 	 * First try primary hash.
@@ -745,12 +810,14 @@ pmap_pte_insert(int ptegidx, struct pte *pvo_pt)
  * kernel's pte entries.  In either case, interrupts are already
  * disabled.
  */
+
 int
-pmap_pte_spill(struct pmap *pm, vaddr_t addr)
+pmap_pte_spill(struct pmap *pm, vaddr_t addr, boolean_t exec)
 {
 	struct pvo_entry *source_pvo, *victim_pvo, *next_pvo;
 	struct pvo_entry *pvo;
-	struct pvo_tqhead *pvoh, *vpvoh;
+	/* XXX: gcc -- vpvoh is always set at either *1* or *2* */
+	struct pvo_tqhead *pvoh, *vpvoh = NULL;
 	int ptegidx, i, j;
 	volatile struct pteg *pteg;
 	volatile struct pte *pt;
@@ -759,12 +826,20 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 
 	/*
 	 * Have to substitute some entry. Use the primary hash for this.
-	 *
-	 * Use low bits of timebase as random generator
+	 * Use low bits of timebase as random generator.  Make sure we are
+	 * not picking a kernel pte for replacement.
 	 */
 	pteg = &pmap_pteg_table[ptegidx];
 	i = MFTB() & 7;
-	pt = &pteg->pt[i];
+	for (j = 0; j < 8; j++) {
+		pt = &pteg->pt[i];
+		if ((pt->pte_hi & PTE_VALID) == 0 ||
+		    VSID_TO_HASH((pt->pte_hi & PTE_VSID) >> PTE_VSID_SHFT)
+				!= KERNEL_VSIDBITS)
+			break;
+		i = (i + 1) & 7;
+	}
+	KASSERT(j < 8);
 
 	source_pvo = NULL;
 	victim_pvo = NULL;
@@ -794,6 +869,7 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 			if (j >= 0) {
 				PVO_PTEGIDX_SET(pvo, j);
 				PMAP_PVO_CHECK(pvo);	/* sanity check */
+				PVO_WHERE(pvo, SPILL_INSERT);
 				pvo->pvo_pmap->pm_evictions--;
 				PMAPCOUNT(ptes_spilled);
 				PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
@@ -822,6 +898,9 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 				return 1;
 			}
 			source_pvo = pvo;
+			if (exec && !PVO_ISEXECUTABLE(source_pvo)) {
+				return 0;
+			}
 			if (victim_pvo != NULL)
 				break;
 		}
@@ -832,7 +911,7 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 		 */
 		if ((pt->pte_hi & PTE_HID) == 0 && victim_pvo == NULL &&
 		    pmap_pte_compare(pt, &pvo->pvo_pte)) {
-			vpvoh = pvoh;
+			vpvoh = pvoh;			/* *1* */
 			victim_pvo = pvo;
 			if (source_pvo != NULL)
 				break;
@@ -853,7 +932,7 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 		 * If this is a secondary PTE, we need to search
 		 * its primary pvo bucket for the matching PVO.
 		 */
-		vpvoh = &pmap_pvo_table[ptegidx ^ pmap_pteg_mask];
+		vpvoh = &pmap_pvo_table[ptegidx ^ pmap_pteg_mask]; /* *2* */
 		TAILQ_FOREACH(pvo, vpvoh, pvo_olink) {
 			PMAP_PVO_CHECK(pvo);		/* sanity check */
 
@@ -870,6 +949,13 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 			panic("pmap_pte_spill: victim s-pte (%p) has "
 			    "no pvo entry!", pt);
 	}
+
+	/*
+	 * The victim should be not be a kernel PVO/PTE entry.
+	 */
+	KASSERT(victim_pvo->pvo_pmap != pmap_kernel());
+	KASSERT(PVO_PTEGIDX_ISSET(victim_pvo));
+	KASSERT(PVO_PTEGIDX_GET(victim_pvo) == i);
 
 	/*
 	 * We are invalidating the TLB entry for the EA for the
@@ -894,6 +980,8 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 	pmap_pte_set(pt, &source_pvo->pvo_pte);
 	victim_pvo->pvo_pmap->pm_evictions++;
 	source_pvo->pvo_pmap->pm_evictions--;
+	PVO_WHERE(victim_pvo, SPILL_UNSET);
+	PVO_WHERE(source_pvo, SPILL_SET);
 
 	PVO_PTEGIDX_CLR(victim_pvo);
 	PVO_PTEGIDX_SET(source_pvo, i);
@@ -937,14 +1025,12 @@ pmap_real_memory(paddr_t *start, psize_t *size)
 void
 pmap_init(void)
 {
-	int s;
 #ifdef __HAVE_PMAP_PHYSSEG
 	struct pvo_tqhead *pvoh;
 	int bank;
 	long sz;
 	char *attr;
 
-	s = splvm();
 	pvoh = pmap_physseg.pvoh;
 	attr = pmap_physseg.attrs;
 	for (bank = 0; bank < vm_nphysseg; bank++) {
@@ -956,10 +1042,8 @@ pmap_init(void)
 			*attr = 0;
 		}
 	}
-	splx(s);
 #endif
 
-	s = splvm();
 	pool_init(&pmap_mpvo_pool, sizeof(struct pvo_entry),
 	    sizeof(struct pvo_entry), 0, 0, "pmap_mpvopl",
 	    &pmap_pool_mallocator);
@@ -967,7 +1051,6 @@ pmap_init(void)
 	pool_setlowat(&pmap_mpvo_pool, 1008);
 
 	pmap_initialized = 1;
-	splx(s);
 
 #ifdef PMAPCOUNTERS
 	evcnt_attach_static(&pmap_evcnt_mappings);
@@ -1046,12 +1129,16 @@ pmap_create(void)
 	pmap_pinit(pm);
 	
 	DPRINTFN(CREATE,("pmap_create: pm %p:\n"
-	    "\t%06lx %06lx %06lx %06lx    %06lx %06lx %06lx %06lx\n"
-	    "\t%06lx %06lx %06lx %06lx    %06lx %06lx %06lx %06lx\n", pm,
-	    pm->pm_sr[0], pm->pm_sr[1], pm->pm_sr[2], pm->pm_sr[3], 
-	    pm->pm_sr[4], pm->pm_sr[5], pm->pm_sr[6], pm->pm_sr[7],
-	    pm->pm_sr[8], pm->pm_sr[9], pm->pm_sr[10], pm->pm_sr[11], 
-	    pm->pm_sr[12], pm->pm_sr[13], pm->pm_sr[14], pm->pm_sr[15]));
+	    "\t%06x %06x %06x %06x    %06x %06x %06x %06x\n"
+	    "\t%06x %06x %06x %06x    %06x %06x %06x %06x\n", pm,
+	    (unsigned int) pm->pm_sr[0], (unsigned int) pm->pm_sr[1],
+	    (unsigned int) pm->pm_sr[2], (unsigned int) pm->pm_sr[3], 
+	    (unsigned int) pm->pm_sr[4], (unsigned int) pm->pm_sr[5],
+	    (unsigned int) pm->pm_sr[6], (unsigned int) pm->pm_sr[7],
+	    (unsigned int) pm->pm_sr[8], (unsigned int) pm->pm_sr[9],
+	    (unsigned int) pm->pm_sr[10], (unsigned int) pm->pm_sr[11], 
+	    (unsigned int) pm->pm_sr[12], (unsigned int) pm->pm_sr[13],
+	    (unsigned int) pm->pm_sr[14], (unsigned int) pm->pm_sr[15]));
 	return pm;
 }
 
@@ -1082,15 +1169,17 @@ pmap_pinit(pmap_t pm)
 		 */
 		pmap_vsidcontext = (pmap_vsidcontext * 0x1105) + entropy;
 		hash = pmap_vsidcontext & (NPMAPS - 1);
-		if (hash == 0)			/* 0 is special, avoid it */
+		if (hash == 0) {		/* 0 is special, avoid it */
+			entropy += 0xbadf00d;
 			continue;
+		}
 		n = hash >> 5;
 		mask = 1L << (hash & (VSID_NBPW-1));
 		hash = pmap_vsidcontext;
 		if (pmap_vsid_bitmap[n] & mask) {	/* collision? */
 			/* anything free in this bucket? */
 			if (~pmap_vsid_bitmap[n] == 0) {
-				entropy = hash >> PTE_VSID_SHFT;
+				entropy = hash ^ (hash >> 16);
 				continue;
 			}
 			i = ffs(~pmap_vsid_bitmap[n]) - 1;
@@ -1098,14 +1187,14 @@ pmap_pinit(pmap_t pm)
 			hash &= ~(VSID_NBPW-1);
 			hash |= i;
 		}
-		/*
-		 * Make sure clear out SR_KEY_LEN bits because we put our
-		 * our data in those bits (to identify the segment).
-		 */
-		hash &= PTE_VSID >> (PTE_VSID_SHFT + SR_KEY_LEN);
+		hash &= PTE_VSID >> PTE_VSID_SHFT;
 		pmap_vsid_bitmap[n] |= mask;
+		pm->pm_vsid = hash;
+#ifndef PPC_OEA64
 		for (i = 0; i < 16; i++)
-			pm->pm_sr[i] = VSID_MAKE(i, hash) | SR_PRKEY;
+			pm->pm_sr[i] = VSID_MAKE(i, hash) | SR_PRKEY |
+			    SR_NOEXEC;
+#endif
 		return;
 	}
 	panic("pmap_pinit: out of segments");
@@ -1144,9 +1233,11 @@ pmap_release(pmap_t pm)
 	
 	if (pm->pm_sr[0] == 0)
 		panic("pmap_release");
-	idx = VSID_TO_HASH(pm->pm_sr[0]) & (NPMAPS-1);
+	idx = pm->pm_vsid & (NPMAPS-1);
 	mask = 1 << (idx % VSID_NBPW);
 	idx /= VSID_NBPW;
+
+	KASSERT(pmap_vsid_bitmap[idx] & mask);
 	pmap_vsid_bitmap[idx] &= ~mask;
 }
 
@@ -1261,7 +1352,7 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 #if defined(DEBUG) || defined(PMAPCHECK)
 		pmap_pte_print(pt);
 #endif
-		panic("pmap_pvo_to_pte: pvo %p: has invalid pte %p in "
+		panic("pmap_pvo_to_pte: pvo %p: has nomatching pte %p in "
 		    "pmap_pteg_table but valid in pvo", pvo, pt);
 	}
 	return NULL;
@@ -1371,15 +1462,15 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 		}
 		if (pvo->pvo_pte.pte_hi != pt->pte_hi) {
 			printf("pmap_pvo_check: pvo %p: pte_hi differ: "
-			    "%#lx/%#lx\n", pvo, pvo->pvo_pte.pte_hi, pt->pte_hi);
+			    "%#x/%#x\n", pvo, (unsigned int) pvo->pvo_pte.pte_hi, (unsigned int) pt->pte_hi);
 			failed = 1;
 		}
 		if (((pvo->pvo_pte.pte_lo ^ pt->pte_lo) &
 		    (PTE_PP|PTE_WIMG|PTE_RPGN)) != 0) {
 			printf("pmap_pvo_check: pvo %p: pte_lo differ: "
-			    "%#lx/%#lx\n", pvo,
-			    pvo->pvo_pte.pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN),
-			    pt->pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN));
+			    "%#x/%#x\n", pvo,
+			    (unsigned int) (pvo->pvo_pte.pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN)),
+			    (unsigned int) (pt->pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN)));
 			failed = 1;
 		}
 		if ((pmap_pte_to_va(pt) ^ PVO_VADDR(pvo)) & 0x0fffffff) {
@@ -1436,11 +1527,11 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 			    ((pvo->pvo_pte.pte_lo ^ (pa|pte_lo)) &
 			    ~(PTE_REF|PTE_CHG)) == 0 &&
 			   va < VM_MIN_KERNEL_ADDRESS) {
-				printf("pmap_pvo_enter: pvo %p: dup %#lx/%#lx\n",
-				    pvo, pvo->pvo_pte.pte_lo, pte_lo|pa);
-				printf("pmap_pvo_enter: pte_hi=%#lx sr=%#lx\n",
-				    pvo->pvo_pte.pte_hi,
-				    pm->pm_sr[va >> ADDR_SR_SHFT]);
+				printf("pmap_pvo_enter: pvo %p: dup %#x/%#lx\n",
+				    pvo, (unsigned int) pvo->pvo_pte.pte_lo, (unsigned int) pte_lo|pa);
+				printf("pmap_pvo_enter: pte_hi=%#x sr=%#x\n",
+				    (unsigned int) pvo->pvo_pte.pte_hi,
+				    (unsigned int) pm->pm_sr[va >> ADDR_SR_SHFT]);
 				pmap_pte_print(pmap_pvo_to_pte(pvo, -1));
 #ifdef DDBX
 				Debugger();
@@ -1460,10 +1551,8 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	pvo = pool_get(pl, poolflags);
 	msr = pmap_interrupts_off();
 	if (pvo == NULL) {
-#if 0
 		pvo = pmap_pvo_reclaim(pm);
 		if (pvo == NULL) {
-#endif
 			if ((flags & PMAP_CANFAIL) == 0)
 				panic("pmap_pvo_enter: failed");
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
@@ -1471,16 +1560,14 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 			pmap_interrupts_restore(msr);
 			return ENOMEM;
-#if 0
 		}
-#endif
 	}
 	pvo->pvo_vaddr = va;
 	pvo->pvo_pmap = pm;
 	pvo->pvo_vaddr &= ~ADDR_POFF;
 	if (flags & VM_PROT_EXECUTE) {
 		PMAPCOUNT(exec_mappings);
-		pvo->pvo_vaddr |= PVO_EXECUTABLE;
+		pvo_set_exec(pvo);
 	}
 	if (flags & PMAP_WIRED)
 		pvo->pvo_vaddr |= PVO_WIRED;
@@ -1510,11 +1597,11 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	i = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
 	if (i >= 0) {
 		PVO_PTEGIDX_SET(pvo, i);
+		PVO_WHERE(pvo, ENTER_INSERT);
 		PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
 		    ? pmap_evcnt_ptes_secondary : pmap_evcnt_ptes_primary)[i]);
 		TAILQ_INSERT_TAIL(pvoh, pvo, pvo_olink);
 	} else {
-
 		/*
 		 * Since we didn't have room for this entry (which makes it
 		 * and evicted entry), place it at the head of the list.
@@ -1522,6 +1609,13 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		TAILQ_INSERT_HEAD(pvoh, pvo, pvo_olink);
 		PMAPCOUNT(ptes_evicted);
 		pm->pm_evictions++;
+		/*
+		 * If this is a kernel page, make sure it's active.
+		 */
+		if (pm == pmap_kernel()) {
+			i = pmap_pte_spill(pm, va, FALSE);
+			KASSERT(i);
+		}
 	}
 	PMAP_PVO_CHECK(pvo);		/* sanity check */
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
@@ -1562,6 +1656,7 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	pt = pmap_pvo_to_pte(pvo, pteidx);
 	if (pt != NULL) {
 		pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
+		PVO_WHERE(pvo, REMOVE);
 		PVO_PTEGIDX_CLR(pvo);
 		PMAPCOUNT(ptes_removed);
 	} else {
@@ -1570,7 +1665,13 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	}
 
 	/*
-	 * Update our statistics
+	 * Account for executable mappings.
+	 */
+	if (PVO_ISEXECUTABLE(pvo))
+		pvo_clear_exec(pvo);
+
+	/*
+	 * Update our statistics.
 	 */
 	pvo->pvo_pmap->pm_stats.resident_count--;
 	if (pvo->pvo_pte.pte_lo & PVO_WIRED)
@@ -1604,6 +1705,54 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 }
 
 /*
+ * Mark a mapping as executable.
+ * If this is the first executable mapping in the segment,
+ * clear the noexec flag.
+ */
+STATIC void
+pvo_set_exec(struct pvo_entry *pvo)
+{
+	struct pmap *pm = pvo->pvo_pmap;
+
+	if (pm == pmap_kernel() || PVO_ISEXECUTABLE(pvo)) {
+		return;
+	}
+	pvo->pvo_vaddr |= PVO_EXECUTABLE;
+#ifdef PPC_OEA
+	{
+		int sr = PVO_VADDR(pvo) >> ADDR_SR_SHFT;
+		if (pm->pm_exec[sr]++ == 0) {
+			pm->pm_sr[sr] &= ~SR_NOEXEC;
+		}
+	}
+#endif
+}
+
+/*
+ * Mark a mapping as non-executable.
+ * If this was the last executable mapping in the segment,
+ * set the noexec flag.
+ */
+STATIC void
+pvo_clear_exec(struct pvo_entry *pvo)
+{
+	struct pmap *pm = pvo->pvo_pmap;
+
+	if (pm == pmap_kernel() || !PVO_ISEXECUTABLE(pvo)) {
+		return;
+	}
+	pvo->pvo_vaddr &= ~PVO_EXECUTABLE;
+#ifdef PPC_OEA
+	{
+		int sr = PVO_VADDR(pvo) >> ADDR_SR_SHFT;
+		if (--pm->pm_exec[sr] == 0) {
+			pm->pm_sr[sr] |= SR_NOEXEC;
+		}
+	}
+#endif
+}
+
+/*
  * Insert physical page at pa into the given pmap at virtual address va.
  */
 int
@@ -1614,7 +1763,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct vm_page *pg;
 	struct pool *pl;
 	register_t pte_lo;
-	int s;
 	int error;
 	u_int pvo_flags;
 	u_int was_exec = 0;
@@ -1673,17 +1821,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (flags & (VM_PROT_READ|VM_PROT_WRITE))
 		pte_lo |= PTE_REF;
 
-#if 0
-	if (pm == pmap_kernel()) {
-		if ((prot & (VM_PROT_READ|VM_PROT_WRITE)) == VM_PROT_READ)
-			printf("pmap_pvo_enter: Kernel RO va %#lx pa %#lx\n",
-				va, pa);
-		if ((prot & (VM_PROT_READ|VM_PROT_WRITE)) == VM_PROT_NONE)
-			printf("pmap_pvo_enter: Kernel N/A va %#lx pa %#lx\n",
-				va, pa);
-	}
-#endif
-
 	/*
 	 * We need to know if this page can be executable
 	 */
@@ -1693,9 +1830,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * Record mapping for later back-translation and pte spilling.
 	 * This will overwrite any existing mapping.
 	 */
-	s = splvm();
 	error = pmap_pvo_enter(pm, pl, pvo_head, va, pa, pte_lo, flags);
-	splx(s);
 
 	/* 
 	 * Flush the real page from the instruction cache if this page is
@@ -1733,9 +1868,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	struct mem_region *mp;
 	register_t pte_lo;
-	register_t msr;
 	int error;
-	int s;
 
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		panic("pmap_kenter_pa: attempt to enter "
@@ -1767,12 +1900,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	/*
 	 * We don't care about REF/CHG on PVOs on the unmanaged list.
 	 */
-	s = splvm();
-	msr = pmap_interrupts_off();
 	error = pmap_pvo_enter(pmap_kernel(), &pmap_upvo_pool,
 	    &pmap_pvo_kunmanaged, va, pa, pte_lo, prot|PMAP_WIRED);
-	pmap_interrupts_restore(msr);
-	splx(s);
 
 	if (error != 0)
 		panic("pmap_kenter_pa: failed to enter va %#lx pa %#lx: %d",
@@ -1799,18 +1928,15 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 	struct pvo_entry *pvo;
 	register_t msr;
 	int pteidx;
-	int s;
 
+	msr = pmap_interrupts_off();
 	for (; va < endva; va += PAGE_SIZE) {
-		s = splvm();
-		msr = pmap_interrupts_off();
 		pvo = pmap_pvo_find_va(pm, va, &pteidx);
 		if (pvo != NULL) {
 			pmap_pvo_remove(pvo, pteidx);
 		}
-		pmap_interrupts_restore(msr);
-		splx(s);
 	}
+	pmap_interrupts_restore(msr);
 }
 
 /*
@@ -1821,7 +1947,6 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 {
 	struct pvo_entry *pvo;
 	register_t msr;
-	int s;
 
 	/*
 	 * If this is a kernel pmap lookup, also check the battable
@@ -1832,18 +1957,36 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	if (pm == pmap_kernel() &&
 	    (va < VM_MIN_KERNEL_ADDRESS ||
 	     (KERNEL2_SR < 15 && VM_MAX_KERNEL_ADDRESS <= va))) {
-		register_t batu = battable[va >> ADDR_SR_SHFT].batu;
 		KASSERT((va >> ADDR_SR_SHFT) != USER_SR);
-		if (BAT_VALID_P(batu,0) && BAT_VA_MATCH_P(batu,va)) {
-			register_t batl = battable[va >> ADDR_SR_SHFT].batl;
-			register_t mask = (~(batu & BAT_BL) << 15) & ~0x1ffffL;
-			*pap = (batl & mask) | (va & ~mask);
-			return TRUE;
+		if ((MFPVR() >> 16) != MPC601) {
+			register_t batu = battable[va >> ADDR_SR_SHFT].batu;
+			if (BAT_VALID_P(batu,0) && BAT_VA_MATCH_P(batu,va)) {
+				register_t batl =
+				    battable[va >> ADDR_SR_SHFT].batl;
+				register_t mask =
+				    (~(batu & BAT_BL) << 15) & ~0x1ffffL;
+				*pap = (batl & mask) | (va & ~mask);
+				return TRUE;
+			}
+		} else {
+			register_t batu = battable[va >> 23].batu;
+			register_t batl = battable[va >> 23].batl;
+			register_t sr = iosrtable[va >> ADDR_SR_SHFT];
+			if (BAT601_VALID_P(batl) &&
+			    BAT601_VA_MATCH_P(batu, batl, va)) {
+				register_t mask =
+				    (~(batl & BAT601_BSM) << 17) & ~0x1ffffL;
+				*pap = (batl & mask) | (va & ~mask);
+				return TRUE;
+			} else if (SR601_VALID_P(sr) &&
+				   SR601_PA_MATCH_P(sr, va)) {
+				*pap = va;
+				return TRUE;
+			}
 		}
 		return FALSE;
 	}
 	
-	s = splvm();
 	msr = pmap_interrupts_off();
 	pvo = pmap_pvo_find_va(pm, va & ~ADDR_POFF, NULL);
 	if (pvo != NULL) {
@@ -1851,15 +1994,11 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		*pap = (pvo->pvo_pte.pte_lo & PTE_RPGN) | (va & ADDR_POFF);
 	}
 	pmap_interrupts_restore(msr);
-	splx(s);
 	return pvo != NULL;
 }
 
 /*
  * Lower the protection on the specified range of this pmap.
- *
- * There are only two cases: either the protection is going to 0,
- * or it is going to read-only.
  */
 void
 pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
@@ -1867,14 +2006,13 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 	struct pvo_entry *pvo;
 	volatile struct pte *pt;
 	register_t msr;
-	int s;
 	int pteidx;
 
 	/*
 	 * Since this routine only downgrades protection, we should
-	 * always be called without WRITE permisison.
+	 * always be called with at least one bit not set.
 	 */
-	KASSERT((prot & VM_PROT_WRITE) == 0);
+	KASSERT(prot != VM_PROT_ALL);
 
 	/*
 	 * If there is no protection, this is equivalent to
@@ -1885,9 +2023,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		return;
 	}
 
-	s = splvm();
 	msr = pmap_interrupts_off();
-
 	for (; va < endva; va += PAGE_SIZE) {
 		pvo = pmap_pvo_find_va(pm, va, &pteidx);
 		if (pvo == NULL)
@@ -1898,7 +2034,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		 * Revoke executable if asked to do so.
 		 */
 		if ((prot & VM_PROT_EXECUTE) == 0)
-			pvo->pvo_vaddr &= ~PVO_EXECUTABLE;
+			pvo_clear_exec(pvo);
 
 #if 0
 		/*
@@ -1925,14 +2061,13 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		 */
 		if (pt != NULL) {
 			pmap_pte_change(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
+			PVO_WHERE(pvo, PMAP_PROTECT);
 			PMAPCOUNT(ptes_changed);
 		}
 
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
-
 	pmap_interrupts_restore(msr);
-	splx(s);
 }
 
 void
@@ -1940,11 +2075,8 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 {
 	struct pvo_entry *pvo;
 	register_t msr;
-	int s;
 
-	s = splvm();
 	msr = pmap_interrupts_off();
-
 	pvo = pmap_pvo_find_va(pm, va, NULL);
 	if (pvo != NULL) {
 		if (pvo->pvo_vaddr & PVO_WIRED) {
@@ -1953,16 +2085,11 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 		}
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
-
 	pmap_interrupts_restore(msr);
-	splx(s);
 }
 
 /*
  * Lower the protection on the specified physical page.
- *
- * There are only two cases: either the protection is going to 0,
- * or it is going to read-only.
  */
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
@@ -1971,18 +2098,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	struct pvo_entry *pvo, *next_pvo;
 	volatile struct pte *pt;
 	register_t msr;
-	int s;
 
-	/*
-	 * Since this routine only downgrades protection, if the
-	 * maximal protection is desired, there isn't any change
-	 * to be made.
-	 */
-	KASSERT((prot & VM_PROT_WRITE) == 0);
-	if ((prot & (VM_PROT_READ|VM_PROT_WRITE)) == (VM_PROT_READ|VM_PROT_WRITE))
-		return;
-
-	s = splvm();
+	KASSERT(prot != VM_PROT_ALL);
 	msr = pmap_interrupts_off();
 
 	/*
@@ -2017,7 +2134,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		 * flag in the PVO.
 		 */
 		if ((prot & VM_PROT_EXECUTE) == 0)
-			pvo->pvo_vaddr &= ~PVO_EXECUTABLE;
+			pvo_clear_exec(pvo);
 
 		/*
 		 * If this entry is already RO, don't diddle with the
@@ -2038,13 +2155,12 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		pvo->pvo_pte.pte_lo |= PTE_BR;
 		if (pt != NULL) {
 			pmap_pte_change(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
+			PVO_WHERE(pvo, PMAP_PAGE_PROTECT);
 			PMAPCOUNT(ptes_changed);
 		}
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
-
 	pmap_interrupts_restore(msr);
-	splx(s);
 }
 
 /*
@@ -2063,15 +2179,12 @@ pmap_activate(struct lwp *l)
 	/*
 	 * XXX Normally performed in cpu_fork().
 	 */
-	if (pcb->pcb_pm != pmap) {
-		pcb->pcb_pm = pmap;
-		pcb->pcb_pmreal = pmap;
-	}
+	pcb->pcb_pm = pmap;
 
 	/*
-	 * In theory, the SR registers need only be valid on return
-	 * to user space wait to do them there.
-	 */
+	* In theory, the SR registers need only be valid on return
+	* to user space wait to do them there.
+	*/
 	if (l == curlwp) {
 		/* Store pointer to new current pmap. */
 		curpm = pmap;
@@ -2092,11 +2205,10 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 	struct pvo_entry *pvo;
 	volatile struct pte *pt;
 	register_t msr;
-	int s;
 
 	if (pmap_attr_fetch(pg) & ptebit)
 		return TRUE;
-	s = splvm();
+
 	msr = pmap_interrupts_off();
 	LIST_FOREACH(pvo, vm_page_to_pvoh(pg), pvo_vlink) {
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
@@ -2108,7 +2220,6 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 			pmap_attr_save(pg, ptebit);
 			PMAP_PVO_CHECK(pvo);		/* sanity check */
 			pmap_interrupts_restore(msr);
-			splx(s);
 			return TRUE;
 		}
 	}
@@ -2132,13 +2243,11 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 				pmap_attr_save(pg, ptebit);
 				PMAP_PVO_CHECK(pvo);		/* sanity check */
 				pmap_interrupts_restore(msr);
-				splx(s);
 				return TRUE;
 			}
 		}
 	}
 	pmap_interrupts_restore(msr);
-	splx(s);
 	return FALSE;
 }
 
@@ -2150,9 +2259,7 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	volatile struct pte *pt;
 	register_t msr;
 	int rv = 0;
-	int s;
 
-	s = splvm();
 	msr = pmap_interrupts_off();
 
 	/*
@@ -2200,7 +2307,7 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
 	pmap_interrupts_restore(msr);
-	splx(s);
+
 	/*
 	 * If we are clearing the modify bit and this page was marked EXEC
 	 * and the user of the page thinks the page was modified, then we
@@ -2312,8 +2419,10 @@ pmap_print_mmuregs(void)
 {
 	int i;
 	u_int cpuvers;
+#ifndef PPC_OEA64
 	vaddr_t addr;
 	register_t soft_sr[16];
+#endif
 	struct bat soft_ibat[4];
 	struct bat soft_dbat[4];
 	register_t sdr1;
@@ -2321,10 +2430,13 @@ pmap_print_mmuregs(void)
 	cpuvers = MFPVR() >> 16;
 
 	__asm __volatile ("mfsdr1 %0" : "=r"(sdr1));
+#ifndef PPC_OEA64
+	addr = 0;
 	for (i=0; i<16; i++) {
 		soft_sr[i] = MFSRIN(addr);
 		addr += (1 << ADDR_SR_SHFT);
 	}
+#endif
 
 	/* read iBAT (601: uBAT) registers */
 	__asm __volatile ("mfibatu %0,0" : "=r"(soft_ibat[0].batu));
@@ -2349,9 +2461,9 @@ pmap_print_mmuregs(void)
 		__asm __volatile ("mfdbatl %0,3" : "=r"(soft_dbat[3].batl));
 	}
 
-	printf("SDR1:\t%#lx\n", sdr1);
+	printf("SDR1:\t0x%lx\n", (long) sdr1);
+#ifndef PPC_OEA64
 	printf("SR[]:\t");
-	addr = 0;
 	for (i=0; i<4; i++)
 		printf("0x%08lx,   ", soft_sr[i]);
 	printf("\n\t");
@@ -2364,6 +2476,7 @@ pmap_print_mmuregs(void)
 	for ( ; i<16; i++)
 		printf("0x%08lx,   ", soft_sr[i]);
 	printf("\n");
+#endif
 
 	printf("%cBAT[]:\t", cpuvers == MPC601 ? 'u' : 'i');
 	for (i=0; i<4; i++) {
@@ -2983,6 +3096,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	/*
 	 * Initialize kernel pmap and hardware.
 	 */
+#ifndef PPC_OEA64
 	for (i = 0; i < 16; i++) {
 		pmap_kernel()->pm_sr[i] = EMPTY_SEGMENT;
 		__asm __volatile ("mtsrin %0,%1"
@@ -3004,7 +3118,8 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 			    :: "r"(iosrtable[i]), "r"(i << ADDR_SR_SHFT));
 		}
 	}
-		
+#endif /* !PPC_OEA64 */
+
 	__asm __volatile ("sync; mtsdr1 %0; isync"
 		      :: "r"((uintptr_t)pmap_pteg_table | (pmap_pteg_mask >> 10)));
 	tlbia();

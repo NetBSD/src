@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.9 2003/04/02 02:56:41 thorpej Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.9.2.1 2004/08/03 10:40:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.9.2.1 2004/08/03 10:40:16 skrll Exp $");
 
 #include "opt_ddb.h"
 

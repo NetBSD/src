@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1 2003/01/21 20:50:43 kleink Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1.2.1 2004/08/03 10:38:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _NS32K_MCONTEXT_H_
-#define _NS32K_MCONTEXT_H_
+#define	_NS32K_MCONTEXT_H_
 
 /*
  * Layout of mcontext_t for the ns32k architecture.  Lacking an SVR4
@@ -71,7 +71,17 @@ typedef struct {
 	__gregset_t	__gregs;
 	__fpregset_t	__fpregs;
 } mcontext_t;
+/*
+ * mcontext extensions to handle signal delivery.
+ */
+#define	_UC_SETSTACK	0x00010000
+#define	_UC_CLRSTACK	0x00020000
+
 
 #define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
+#define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
+#define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R0])
+
+#define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
 #endif /* !_NS32K_MCONTEXT_H_ */

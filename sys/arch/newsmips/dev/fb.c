@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.16 2003/05/09 13:36:39 tsutsui Exp $	*/
+/*	$NetBSD: fb.c,v 1.16.2.1 2004/08/03 10:38:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.16.2.1 2004/08/03 10:38:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -190,6 +193,7 @@ fb_common_init(dc)
 		break;
 	case 1:
 	case 2:
+	default:
 		width = 1024;
 		height = 768;
 		break;

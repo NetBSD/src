@@ -1,4 +1,4 @@
-#	$NetBSD: files.ev64260,v 1.3 2003/03/24 17:07:16 matt Exp $
+#	$NetBSD: files.ev64260,v 1.3.2.1 2004/08/03 10:34:16 skrll Exp $
 #
 # Marvell (Galileo) "EV64260" evaluation board's specific configuration info
 #
@@ -13,8 +13,6 @@ file	arch/evbppc/ev64260/machdep.c
 
 #file	arch/powerpc/marvell/bus_dma.c
 file	arch/powerpc/marvell/extintr.c
-file	arch/powerpc/powerpc/bus_dma.c
-file	arch/powerpc/powerpc/bus_space.c
 
 include "dev/marvell/files.discovery"
 
@@ -28,8 +26,6 @@ include "dev/scsipi/files.scsipi"
 #
 
 include "dev/ata/files.ata"
-
-include	"dev/usb/files.usb"
 
 #
 # Memory Disk for install floppy
@@ -90,7 +86,9 @@ file	arch/evbppc/isa/isaclock.c		isa
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"
 
-include "dev/pckbc/files.pckbc"
+include "dev/pckbport/files.pckbport"
+
+include	"dev/usb/files.usb"
 
 # Floppy disk controller
 device	fdc {drive = -1}: isadma

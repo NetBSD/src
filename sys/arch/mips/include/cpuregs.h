@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.61 2003/06/10 06:42:06 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.61.2.1 2004/08/03 10:37:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -93,6 +89,8 @@
 #define	MIPS_PHYS_TO_KSEG0(x)	((unsigned)(x) | MIPS_KSEG0_START)
 #define	MIPS_KSEG1_TO_PHYS(x)	((unsigned)(x) & MIPS_PHYS_MASK)
 #define	MIPS_PHYS_TO_KSEG1(x)	((unsigned)(x) | MIPS_KSEG1_START)
+#define	MIPS_KSEG2_TO_PHYS(x)	((unsigned)(x) & MIPS_PHYS_MASK)
+#define	MIPS_PHYS_TO_KSEG2(x)	((unsigned)(x) | MIPS_KSEG2_START)
 
 /* Map virtual address to index in mips3 r4k virtually-indexed cache */
 #define	MIPS3_VA_TO_CINDEX(x) \
@@ -366,6 +364,35 @@
 
 /* Master-Checker Mode - 1: enabled */
 #define	MIPS3_CONFIG_CM		0x80000000
+
+/*
+ * The bits in the MIPS4 config register.
+ */
+
+/* kseg0 coherency algorithm - see MIPS3_TLB_ATTR values */
+#define	MIPS4_CONFIG_K0_MASK	MIPS3_CONFIG_K0_MASK
+#define	MIPS4_CONFIG_DN_MASK	0x00000018	/* Device number */
+#define	MIPS4_CONFIG_CT		0x00000020	/* CohPrcReqTar */
+#define	MIPS4_CONFIG_PE		0x00000040	/* PreElmReq */
+#define	MIPS4_CONFIG_PM_MASK	0x00000180	/* PreReqMax */
+#define	MIPS4_CONFIG_EC_MASK	0x00001e00	/* SysClkDiv */
+#define	MIPS4_CONFIG_SB		0x00002000	/* SCBlkSize */
+#define	MIPS4_CONFIG_SK		0x00004000	/* SCColEn */
+#define	MIPS4_CONFIG_BE		0x00008000	/* MemEnd */
+#define	MIPS4_CONFIG_SS_MASK	0x00070000	/* SCSize */
+#define	MIPS4_CONFIG_SC_MASK	0x00380000	/* SCClkDiv */
+#define	MIPS4_CONFIG_RESERVED	0x03c00000	/* Reserved wired 0 */
+#define	MIPS4_CONFIG_DC_MASK	0x1c000000	/* Primary D-Cache size */
+#define	MIPS4_CONFIG_IC_MASK	0xe0000000	/* Primary I-Cache size */
+
+#define	MIPS4_CONFIG_DC_SHIFT	26
+#define	MIPS4_CONFIG_IC_SHIFT	29
+
+#define	MIPS4_CONFIG_CACHE_SIZE(config, mask, base, shift)		\
+	((base) << (((config) & (mask)) >> (shift)))
+
+#define	MIPS4_CONFIG_CACHE_L2_LSIZE(config)				\
+	(((config) & MIPS4_CONFIG_SB) ? 128 : 64)
 
 /*
  * Location of exception vectors.
@@ -719,7 +746,8 @@
 
 /* For MIPS_R4000 */
 #define	MIPS_REV_R4000_A	0x00
-#define	MIPS_REV_R4000_B	0x30
+#define	MIPS_REV_R4000_B	0x22
+#define	MIPS_REV_R4000_C	0x30
 #define	MIPS_REV_R4400_A	0x40
 #define	MIPS_REV_R4400_B	0x50
 #define	MIPS_REV_R4400_C	0x60
@@ -733,8 +761,16 @@
 #define	MIPS_4Kc	0x80	/* MIPS 4Kc			ISA 32  */
 #define	MIPS_5Kc	0x81	/* MIPS 5Kc			ISA 64  */
 #define	MIPS_20Kc	0x82	/* MIPS 20Kc			ISA 64  */
+#define	MIPS_4Kmp	0x83	/* MIPS 4Km/4Kp			ISA 32  */
 #define	MIPS_4KEc	0x84	/* MIPS 4KEc			ISA 32  */
+#define	MIPS_4KEmp	0x85	/* MIPS 4KEm/4KEp		ISA 32  */
 #define	MIPS_4KSc	0x86	/* MIPS 4KSc			ISA 32  */
+#define	MIPS_M4K	0x87	/* MIPS M4K			ISA 32  Rel 2 */
+#define	MIPS_25Kf	0x88	/* MIPS 25Kf			ISA 64  */
+#define	MIPS_5KE	0x89	/* MIPS 5KE			ISA 64  Rel 2 */
+#define	MIPS_4KEc_R2	0x90	/* MIPS 4KEc_R2			ISA 32  Rel 2 */
+#define	MIPS_4KEmp_R2	0x91	/* MIPS 4KEm/4KEp_R2		ISA 32  Rel 2 */
+#define	MIPS_4KSd	0x92	/* MIPS 4KSd			ISA 32  Rel 2 */
 
 /*
  * Alchemy (company ID 3) use the processor ID field to donote the CPU core

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.2 2003/04/03 16:41:23 hpeyerl Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.2.2.1 2004/08/03 10:37:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.2.2.1 2004/08/03 10:37:38 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -64,11 +67,6 @@ static void	ohci_aubus_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(ohci_aubus, sizeof (ohci_softc_t),
     ohci_aubus_match, ohci_aubus_attach, NULL, NULL);
 
-struct aubus_ohci_softc {
-	ohci_softc_t sc;
-	void *sc_ih;
-};
-
 int
 ohci_aubus_match(struct device *parent, struct cfdata *match, void *aux)
 {
@@ -83,20 +81,21 @@ ohci_aubus_match(struct device *parent, struct cfdata *match, void *aux)
 void
 ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct aubus_ohci_softc *sc = (struct aubus_ohci_softc *)self;
+	ohci_softc_t *sc = (ohci_softc_t *)self;
+	void *ih;
 	usbd_status r;
 	uint32_t x, tmp;
 	struct aubus_attach_args *aa = aux;
 
 	r = 0;
 
-	sc->sc.sc_size = USBH_SIZE;
-	sc->sc.iot = aa->aa_st;
-	sc->sc.sc_bus.dmatag = (bus_dma_tag_t)aa->aa_dt;
+	sc->sc_size = USBH_SIZE;
+	sc->iot = aa->aa_st;
+	sc->sc_bus.dmatag = (bus_dma_tag_t)aa->aa_dt;
 
-	if (bus_space_map(sc->sc.iot, USBH_BASE, USBH_SIZE, 0, &sc->sc.ioh)) {
+	if (bus_space_map(sc->iot, USBH_BASE, USBH_SIZE, 0, &sc->ioh)) {
 		printf("%s: Unable to map USBH registers\n",
-			sc->sc.sc_bus.bdev.dv_xname);
+			sc->sc_bus.bdev.dv_xname);
 		return;
 	}
 	/*
@@ -108,23 +107,26 @@ ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
 	 *  (3) Clear HCFS in OHCI_CONTROL.
 	 *  (4) Wait for RD bit to be set.
 	 */
-	x = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBH_ENABLE);
+	x = bus_space_read_4(sc->iot, sc->ioh, USBH_ENABLE);
 	x |= UE_CE;
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBH_ENABLE, x);
+	bus_space_write_4(sc->iot, sc->ioh, USBH_ENABLE, x);
 	delay(10);
-	x |= (UE_E);
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBH_ENABLE, x);
+	x |= UE_E;
+#ifdef __MIPSEB__
+	x |= UE_BE;
+#endif
+	bus_space_write_4(sc->iot, sc->ioh, USBH_ENABLE, x);
 	delay(10);
-	x = bus_space_read_4(sc->sc.iot, sc->sc.ioh, OHCI_CONTROL);
+	x = bus_space_read_4(sc->iot, sc->ioh, OHCI_CONTROL);
 	x &= ~(OHCI_HCFS_MASK);
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_CONTROL, x);
+	bus_space_write_4(sc->iot, sc->ioh, OHCI_CONTROL, x);
 	delay(10);
 	/*  Need to read USBH_ENABLE twice in succession according to
          *  au1500 Errata #7.
          */
 	for (x = 100; x; x--) {
-		bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBH_ENABLE);
-		tmp = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBH_ENABLE);
+		bus_space_read_4(sc->iot, sc->ioh, USBH_ENABLE);
+		tmp = bus_space_read_4(sc->iot, sc->ioh, USBH_ENABLE);
 		if (tmp&UE_RD)
 			break;
 		delay(1000);
@@ -132,26 +134,26 @@ ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
 	printf(": Au1X00 OHCI\n");
 
 	/* Disable OHCI interrupts */
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
+	bus_space_write_4(sc->iot, sc->ioh, OHCI_INTERRUPT_DISABLE,
 				OHCI_ALL_INTRS);
 	/* hook interrupt */
-	sc->sc_ih = au_intr_establish(aa->aa_irq[0], 0, IPL_USB, IST_LEVEL_LOW,
+	ih = au_intr_establish(aa->aa_irq[0], 0, IPL_USB, IST_LEVEL_LOW,
 			ohci_intr, sc);
-	if (sc->sc_ih == NULL) {
+	if (ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
-			sc->sc.sc_bus.bdev.dv_xname);
+			sc->sc_bus.bdev.dv_xname);
 	}
 
 	if (x)
-		r = ohci_init(&sc->sc);
+		r = ohci_init(sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n",
-			sc->sc.sc_bus.bdev.dv_xname, r);
+			sc->sc_bus.bdev.dv_xname, r);
+		au_intr_disestablish(ih);
 		return;
 	}
 
 	/* Attach USB device */
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-					usbctlprint);
+	sc->sc_child = config_found((void *)sc, &sc->sc_bus, usbctlprint);
 
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: xscale_pmc.c,v 1.6 2003/01/17 22:28:50 thorpej Exp $	*/
+/*	$NetBSD: xscale_pmc.c,v 1.6.2.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.6 2003/01/17 22:28:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.6.2.1 2004/08/03 10:32:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -521,6 +521,7 @@ xscale_get_counter_value(struct proc *p, int ctr, int flags, uint64_t *pval)
 		__asm __volatile("mrc p14, 0, %0, c3, c0, 0" : "=r" (val));
 		break;
 	default:
+		val = 0;
 		break;
 	}
 

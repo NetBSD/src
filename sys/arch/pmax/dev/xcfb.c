@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.38 2002/10/02 04:15:08 thorpej Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.38.6.1 2004/08/03 10:39:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -79,6 +75,9 @@
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devGraphics.c,
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.38.6.1 2004/08/03 10:39:12 skrll Exp $");
 
 #include "dtop.h"
 #if NDTOP == 0

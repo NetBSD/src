@@ -1,7 +1,3 @@
-/*	$NetBSD: ieee.h,v 1.1 2000/12/11 18:19:15 marcus Exp $	*/
-#ifndef _DREAMCAST_IEEE_H_
-#define _DREAMCAST_IEEE_H_
+/*	$NetBSD: ieee.h,v 1.1.26.1 2004/08/03 10:33:54 skrll Exp $	*/
 
 #include <sh3/ieee.h>
-
-#endif /* _DREAMCAST_IEEE_H_ */

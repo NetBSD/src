@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_pci.c,v 1.7 2002/02/08 03:28:24 briggs Exp $	*/
+/*	$NetBSD: iq80310_pci.c,v 1.7.16.1 2004/08/03 10:34:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * IQ80310 PCI interrupt support, using he i80312 Companion I/O chip.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iq80310_pci.c,v 1.7.16.1 2004/08/03 10:34:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

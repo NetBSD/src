@@ -1,10 +1,10 @@
-# $NetBSD: Makefile.bootxx,v 1.5 2003/07/01 13:36:59 simonb Exp $
+# $NetBSD: Makefile.bootxx,v 1.5.2.1 2004/08/03 10:36:19 skrll Exp $
 
 S=	${.CURDIR}/../../../../../
 
 NOMAN=
 STRIPFLAG=
-PROG= bootxx_${FS}
+PROG?= bootxx_${FS}
 BINDIR= /usr/mdec
 BINMODE= 0444
 
@@ -37,22 +37,24 @@ CPPFLAGS+= -I ${.CURDIR}/../../lib -I ${.OBJDIR}
 CPPFLAGS+= -DBOOTXX_SECTORS=${BOOTXX_SECTORS}
 CPPFLAGS+= -DPRIMARY_LOAD_ADDRESS=${PRIMARY_LOAD_ADDRESS}
 CPPFLAGS+= -DSECONDARY_LOAD_ADDRESS=${SECONDARY_LOAD_ADDRESS}
-# Magic number also known by usr.sbin/installboot/arch/i386.c
-CPPFLAGS+= -DX86_BOOT_MAGIC_1="('x' << 24 | 0x86b << 12 | 'm' << 4 | 1)"
 CPPFLAGS+= -DXXfs_open=${FS}_open
 CPPFLAGS+= -DXXfs_close=${FS}_close
 CPPFLAGS+= -DXXfs_read=${FS}_read
 CPPFLAGS+= -DXXfs_stat=${FS}_stat
+CPPFLAGS+= -DFS=${FS}
 
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
 
+CPPFLAGS+= -DNO_LBA_CHECK
+
 .if ${MACHINE} == "amd64"
-LDFLAGS+=  -m elf_i386
+LD+=  -m elf_i386
 AFLAGS+=   -m32
 COPTS+=    -m32
 LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
+CPPFLAGS+= -DBOOT_ELF64
 .else
 COPTS+=    -mcpu=i386
 .endif
@@ -84,11 +86,11 @@ CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=xxfs \
 I386_STAND_DIR?= $S/arch/i386/stand
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine x86
+.BEGIN: machine x86 lib
 .NOPATH: machine x86
 .endif
 
-realdepend realall: machine x86
+realdepend realall: machine x86 lib
 CLEANFILES+= machine x86
 
 machine::
@@ -99,24 +101,30 @@ x86::
 	-rm -f $@
 	ln -s $S/arch/x86/include $@
 
-${OBJS}: machine x86
+${OBJS}: machine x86 lib
+
+lib:
+.ifdef LIBOBJ
+	-rm -f $@
+	ln -s ${LIBOBJ}/lib .
+	[ -d ${LIBOBJ}/lib ] || mkdir ${LIBOBJ}/lib
+.else
+	mkdir lib
+.endif
 
 ### find out what to use for libi386
 I386DIR= ${I386_STAND_DIR}/lib
-I386DST= ${.OBJDIR}/../lib/i386
 .include "${I386DIR}/Makefile.inc"
 LIBI386= ${I386LIB}
 
 ### find out what to use for libsa
 SA_AS= library
-SADST= ${.OBJDIR}/../lib/libsa
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
 
 ### find out what to use for libkern
 KERN_AS=        library
-KERNDST= ${.OBJDIR}/../lib/libkern
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=        ${KERNLIB}
 
@@ -124,7 +132,7 @@ LIBKERN=        ${KERNLIB}
 cleandir distclean: cleanlibdir
 
 cleanlibdir:
-	rm -rf lib
+	-rm -rf lib
 
 LIBLIST= ${LIBI386} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 
@@ -142,7 +150,7 @@ ${PROG}: ${OBJS} ${LIBLIST}
 	else \
 		: pad to sector boundary; \
 		pad=$$(( 512 - ( $$sz & 511 ) )); \
-		[ $$pad != 512 ] && \
+		[ $$pad = 512 ] || \
 		    dd if=/dev/zero bs=1 count=$$pad >>${PROG} 2>/dev/null; \
 		echo "${PROG} size $$sz, $$((${BOOTXX_MAXSIZE} - $$sz)) free"; \
 	fi

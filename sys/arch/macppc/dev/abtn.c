@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.7 2003/03/05 16:52:16 soren Exp $	*/
+/*	$NetBSD: abtn.c,v 1.7.2.1 2004/08/03 10:37:20 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -26,10 +26,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: abtn.c,v 1.7.2.1 2004/08/03 10:37:20 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <macppc/dev/akbdvar.h>
 #include <macppc/dev/adbvar.h>
 #include <macppc/dev/pm_direct.h>
 
@@ -106,6 +110,8 @@ abtn_attach(parent, self, aux)
 	SetADBInfo(&adbinfo, sc->adbaddr);
 }
 
+extern struct cfdriver akbd_cd;
+
 void
 abtn_adbcomplete(buffer, data, adb_command)
 	caddr_t buffer, data;
@@ -113,8 +119,42 @@ abtn_adbcomplete(buffer, data, adb_command)
 {
 	struct abtn_softc *sc = (struct abtn_softc *)data;
 	u_int cmd;
+#ifdef FORCE_FUNCTION_KEYS
+	int key = 0;
+#endif
 
 	cmd = buffer[1];
+
+#ifdef FORCE_FUNCTION_KEYS
+	switch (cmd & 0x7f) {
+	case 0x0a: /* f1 */
+		key = 122;
+		break;
+	case 0x09: /* f2 */
+		key = 120;
+		break;
+	case 0x08: /* f3 */
+		key =  99;
+		break;
+	case 0x07: /* f4 */
+		key = 118;
+		break;
+	case 0x06: /* f5 */
+		key =  96;
+		break;
+	case 0x7f: /* f6 */
+		key = 97;
+		break;
+	case 0x0b: /* f12 */
+		key = 111;
+		break;
+	}
+	if (key != 0) {
+		key |= cmd & 0x80;
+		kbd_passup(akbd_cd.cd_devs[0],key);
+		return;
+	}
+#endif
 
 	if (cmd >= BUTTON_DEPRESS)
 		return;

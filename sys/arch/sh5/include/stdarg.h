@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.2 2003/04/28 23:16:24 bjh21 Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.2.2.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -48,7 +44,7 @@ typedef _BSD_VA_LIST_	va_list;
 #define	__builtin_classify_type(t)	(0)
 #define	__builtin_next_arg(t)		((t) ? 0 : 0)
 #define	__builtin_stdarg_start(a, l)	((a) = ((l) ? 0 : 0))
-#define	__builtin_va_arg(a, t)		((a) ? 0 : 0)
+#define	__builtin_va_arg(a, t)		((t)((a) ? 0 : 0))
 #define	__builtin_va_end		/* nothing */
 #define	__builtin_va_copy(d, s)		((d) = (s))
 #endif

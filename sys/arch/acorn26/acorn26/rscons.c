@@ -1,4 +1,4 @@
-/* $NetBSD: rscons.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: rscons.c,v 1.2.14.1 2004/08/03 10:30:47 skrll Exp $ */
 /*-
  * Copyright (c) 1997, 1998 Ben Harris
  * All rights reserved.
@@ -28,6 +28,9 @@
 /*
  * rscons.c - Really basic routines for the Arc serial port
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rscons.c,v 1.2.14.1 2004/08/03 10:30:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

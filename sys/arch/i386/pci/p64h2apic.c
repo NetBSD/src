@@ -1,4 +1,4 @@
-/* $NetBSD: p64h2apic.c,v 1.4 2002/10/17 22:03:40 thorpej Exp $ */
+/* $NetBSD: p64h2apic.c,v 1.4.8.1 2004/08/03 10:36:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * This driver currently does nothing useful but will eventually
  * thwak the ioapic into working correctly.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.4.8.1 2004/08/03 10:36:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +94,7 @@ p64h2attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	sc->sc_tag = pa->pa_tag;

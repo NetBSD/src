@@ -1,8 +1,42 @@
-/*	$NetBSD: process_machdep.c,v 1.22 2003/06/30 13:39:36 simonb Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.22.2.1 2004/08/03 10:37:50 skrll Exp $	*/
+
+/*
+ * Copyright (c) 1993 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Jan-Simon Pendry.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * From:
+ *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
+ */
 
 /*
  * Copyright (c) 1994 Adam Glass
- * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1993 Jan-Simon Pendry
  * All rights reserved.
  *
@@ -42,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.22 2003/06/30 13:39:36 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.22.2.1 2004/08/03 10:37:50 skrll Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -89,9 +123,9 @@ process_write_regs(struct lwp *l, struct reg *regs)
 	mips_reg_t sr;
 
 	f = (struct frame *) l->l_md.md_regs;
-	sr = f->f_regs[SR];
+	sr = f->f_regs[_R_SR];
 	memcpy(l->l_md.md_regs, regs, sizeof(struct reg));
-	f->f_regs[SR] = sr;
+	f->f_regs[_R_SR] = sr;
 	return 0;
 }
 
@@ -130,6 +164,6 @@ int
 process_set_pc(struct lwp *l, caddr_t addr)
 {
 
-	((struct frame *)l->l_md.md_regs)->f_regs[PC] = (int)addr;
+	((struct frame *)l->l_md.md_regs)->f_regs[_R_PC] = (int)addr;
 	return 0;
 }

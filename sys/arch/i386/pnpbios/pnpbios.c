@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.37 2003/05/03 18:10:50 wiz Exp $ */
+/* $NetBSD: pnpbios.c,v 1.37.2.1 2004/08/03 10:36:14 skrll Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.37 2003/05/03 18:10:50 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.37.2.1 2004/08/03 10:36:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,12 +91,13 @@ struct pnpbios_softc {
 	struct device		sc_dev;
 	isa_chipset_tag_t	sc_ic;
 	struct proc		*sc_evthread;
-
-	u_int8_t	*sc_evaddr;
 	int		sc_version;
 	int		sc_control;
+#ifdef PNPBIOSEVENTS
+	u_int8_t	*sc_evaddr;
 	int		sc_threadrun;
 	int		sc_docked;
+#endif
 };
 
 #define	PNPGET4(p)	((p)[0] + ((p)[1] << 8) + \
@@ -110,12 +111,13 @@ static int	pnpbios_setnode		__P((int flags, int idx,
     const u_int8_t *buf, size_t len));
 #endif
 
-static int	pnpbios_getdockinfo	__P((struct pnpdockinfo *di));
 static int	pnpbios_getnode		__P((int flags, int *idxp,
     u_int8_t *buf, size_t len));
 static int	pnpbios_getnumnodes	__P((int *nump, size_t *sizep));
 
 #ifdef PNPBIOSEVENTS
+static int	pnpbios_getdockinfo	__P((struct pnpdockinfo *di));
+
 static void	pnpbios_create_event_thread	__P((void *arg));
 static int	pnpbios_getevent		__P((u_int16_t *event));
 static void	pnpbios_event_thread		__P((void *arg));
@@ -143,7 +145,9 @@ static int	pnpbios_submatch	__P((struct device *parent,
 extern int	pnpbioscall		__P((int));
 
 static void	pnpbios_enumerate(struct pnpbios_softc *sc);
+#ifdef PNPBIOSEVENTS
 static int	pnpbios_update_dock_status __P((struct pnpbios_softc *sc));
+#endif
 
 /* scanning functions */
 static int pnp_compatid __P((struct pnpresources *, const void *, size_t));
@@ -362,11 +366,11 @@ pnpbios_attach(parent, self, aux)
 #ifdef PNPBIOSEVENTS
 	EDPRINTF(("%s: event flag vaddr 0x%08x\n", sc->sc_dev.dv_xname,
 	    (int)sc->sc_evaddr));
-#endif
 
 	/* Set initial dock status. */
 	sc->sc_docked = -1;
 	(void) pnpbios_update_dock_status(sc);
+#endif
 
 	/* Enumerate the device nodes. */
 	pnpbios_enumerate(sc);
@@ -388,7 +392,7 @@ static void
 pnpbios_enumerate(sc)
 	struct pnpbios_softc *sc;
 {
-	int res, num, i, size, idx;
+	int res, num, i, size, idx, dynidx;
 	struct pnpdevnode *dn;
 	u_int8_t *buf;
 
@@ -425,44 +429,38 @@ pnpbios_enumerate(sc)
 
 	idx = 0;
 	for (i = 0; i < num && idx != 0xff; i++) {
-		int node = idx;
-		int dynidx;
-
 		DPRINTF(("%s: getting info for index %d\n",
-		    sc->sc_dev.dv_xname, node));
+		    sc->sc_dev.dv_xname, idx));
+
+		dynidx = idx;
 
 		res = pnpbios_getnode(PNP_CF_DEVCONF_STATIC, &idx, buf, size);
 		if (res) {
 			printf("%s: index %d error %d "
 			    "getting static configuration\n",
-			    sc->sc_dev.dv_xname, node, res);
+			    sc->sc_dev.dv_xname, idx, res);
 			continue;
 		}
 		dn = (struct pnpdevnode *)buf;
-		if (dn->dn_handle != node)
-			printf("%s: node index mismatch (static): "
-			    "requested %d, got %d\n", sc->sc_dev.dv_xname,
-			    node, dn->dn_handle);
-		if (!pnpbios_attachnode(sc, node, buf, dn->dn_size, 1)) {
-			DPRINTF(("%s index %d: no match from static config\n",
-			    sc->sc_dev.dv_xname, node));
+		if (!pnpbios_attachnode(sc, dn->dn_handle, buf, dn->dn_size, 1)) {
+			DPRINTF(("%s handle %d: no match from static config\n",
+			    sc->sc_dev.dv_xname, dn->dn_handle));
 			continue;
 		}
-		dynidx = node;
-		res = pnpbios_getnode(PNP_CF_DEVCONF_DYNAMIC, &dynidx, buf,
-		    size);
+
+		res = pnpbios_getnode(PNP_CF_DEVCONF_DYNAMIC, &dynidx, buf, size);
 		if (res) {
 			printf("%s: index %d error %d "
 			    "getting dynamic configuration\n",
-			    sc->sc_dev.dv_xname, node, res);
+			    sc->sc_dev.dv_xname, dynidx, res);
 			continue;
 		}
 		dn = (struct pnpdevnode *)buf;
-		if (dn->dn_handle != node)
-			printf("%s: node index mismatch (dynamic): "
-			    "requested %d, got %d\n", sc->sc_dev.dv_xname,
-			    node, dn->dn_handle);
-		pnpbios_attachnode(sc, node, buf, dn->dn_size, 0);
+		if (!pnpbios_attachnode(sc, dn->dn_handle, buf, dn->dn_size, 0)) {
+			DPRINTF(("%s handle %d: no match from dynamic config\n",
+			    sc->sc_dev.dv_xname, dn->dn_handle));
+			continue;
+		}
 	}
 	if (i != num)
 		printf("%s: got only %d nodes\n", sc->sc_dev.dv_xname, i);
@@ -472,6 +470,7 @@ pnpbios_enumerate(sc)
 	free(buf, M_DEVBUF);
 }
 
+#ifdef PNPBIOSEVENTS
 static int
 pnpbios_update_dock_status(sc)
 	struct pnpbios_softc *sc;
@@ -506,6 +505,9 @@ pnpbios_update_dock_status(sc)
 			case PNP_DI_DOCK_STYLE_VCR:
 				style = "controlled";
 				break;
+			default:
+				style = "<style unknown>";
+				break;
 			}
 			switch (di.di_cap & PNP_DI_DOCK_WHEN_MASK) {
 			case PNP_DI_DOCK_WHEN_NO_POWER:
@@ -520,6 +522,9 @@ pnpbios_update_dock_status(sc)
 			case PNP_DI_DOCK_WHEN_RESERVED:
 				when = "<reserved>";
 				break;
+			default:
+				when = "<dock type unknown>";
+					break;
 			}
 			printf(", %s %s docking\n", style, when);
 		}
@@ -527,6 +532,7 @@ pnpbios_update_dock_status(sc)
 
 	return (odocked);
 }
+#endif
 
 static int
 pnpbios_getnumnodes(nump, sizep)
@@ -636,7 +642,6 @@ pnpbios_sendmessage(msg)
 
 	return (pnpbioscall(((caddr_t)help) - pnpbios_scratchbuf));
 }
-#endif /* PNPBIOSEVENTS */
 
 static int
 pnpbios_getdockinfo(di)
@@ -654,6 +659,7 @@ pnpbios_getdockinfo(di)
 	memcpy(di, pnpbios_scratchbuf, sizeof(*di));
 	return (res);
 }
+#endif /* PNPBIOSEVENTS */
 
 #if 0
 /* XXX - pnpbios_getapmtable() is not called. */
@@ -1298,7 +1304,7 @@ pnp_debugdump(r, vres, len)
 	const void *vres;
 	size_t len;
 {
-	const u_int8_t *res;
+	const u_int8_t *res = vres;
 	int type, i;
 
 	if (res[0] & ISAPNP_LARGE_TAG) {

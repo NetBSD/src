@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.1 2003/06/25 17:24:23 cdi Exp $	*/
+/*	$NetBSD: wd.c,v 1.1.2.1 2004/08/03 10:33:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ wd_get_params(wd)
 	wd->sc_params = *(struct ataparams *)buf;
 
 	/* 48-bit LBA addressing */
-	if ((wd->sc_params.atap_cmd2_en & WDC_CAP_LBA48) != 0) {
+	if ((wd->sc_params.atap_cmd2_en & ATA_CMD2_LBA48) != 0) {
 		DPRINTF(("Drive supports LBA48.\n"));
 #if defined(_ENABLE_LBA48)
 		wd->sc_flags |= WDF_LBA48;
@@ -147,7 +147,7 @@ wdgetdisklabel(wd)
 	if (wdstrategy(wd, F_READ, MBR_BBSECTOR, DEV_BSIZE, buf, &rsize))
 		return EOFFSET;
 
-	if (*(u_int16_t *)&buf[MBR_MAGICOFF] == MBR_MAGIC) {
+	if (*(u_int16_t *)&buf[MBR_MAGIC_OFFSET] == MBR_MAGIC) {
 		int i;
 		struct mbr_partition *mp;
 
@@ -155,9 +155,9 @@ wdgetdisklabel(wd)
 		 * Lookup NetBSD slice. If there is none, go ahead
 		 * and try to read the disklabel off sector #0.
 		 */
-		mp = (struct mbr_partition *)&buf[MBR_PARTOFF];
-		for (i = 0; i < NMBRPART; i++) {
-			if (mp[i].mbrp_typ == MBR_PTYPE_NETBSD) {
+		mp = (struct mbr_partition *)&buf[MBR_PART_OFFSET];
+		for (i = 0; i < MBR_PART_COUNT; i++) {
+			if (mp[i].mbrp_type == MBR_PTYPE_NETBSD) {
 				sector = mp[i].mbrp_start;
 				break;
 			}
@@ -199,12 +199,12 @@ wdopen(struct open_file *f, ...)
 {
 	int error;
 	va_list ap;
-	u_int8_t unit, part;
+	u_int unit, part;
 	struct wd_softc *wd;
 
 	va_start(ap, f);
-	unit = va_arg(ap, u_int8_t);
-	part = va_arg(ap, u_int8_t);
+	unit = va_arg(ap, u_int);
+	part = va_arg(ap, u_int);
 	va_end(ap);
 
 	DPRINTF(("wdopen: %d:%d\n", unit, part));

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2 2003/06/14 17:01:11 thorpej Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2.2.1 2004/08/03 10:34:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -26,6 +26,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.2.2.1 2004/08/03 10:34:16 skrll Exp $");
+
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
@@ -34,6 +37,7 @@
 #include <machine/bus.h>
 
 #include <powerpc/ibm4xx/ibm405gp.h>
+#include <powerpc/ibm4xx/dev/opbvar.h>
 
 #include "com.h"
 #if (NCOM > 0)
@@ -107,9 +111,10 @@ consinit(void)
 	initted = 1;
 
 #if (NCOM > 0)
-	tag = ibm4xx_make_bus_space_tag(0, 0);
+	/* We *know* the com-console attaches to opb */
+	tag = opb_get_bus_space_tag();
 
-	if (comcnattach(tag, CONADDR, CONSPEED, COM_FREQ*6,
+	if (comcnattach(tag, CONADDR, CONSPEED, COM_FREQ * 6,
 	    COM_TYPE_NORMAL, comcnmode))
 		panic("can't init serial console @%x", CONADDR);
 	else
@@ -125,7 +130,7 @@ kgdb_port_init(void)
 {
 #if (NCOM > 0)
 	if(!strcmp(kgdb_devname, "com")) {
-		bus_space_tag_t tag = ibm4xx_make_bus_space_tag(0, 2);
+		bus_space_tag_t tag = opb_get_bus_space_tag();
 		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ * 6,
 		    COM_TYPE_NORMAL, comkgdbmode);
 	}

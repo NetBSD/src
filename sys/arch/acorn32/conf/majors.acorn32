@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn32,v 1.5 2003/06/08 20:12:33 reinoud Exp $
+#	$NetBSD: majors.acorn32,v 1.5.2.1 2004/08/03 10:30:49 skrll Exp $
 #
 # Device majors for acorn32
 #
@@ -12,8 +12,7 @@ device-major	log		char 5
 device-major	ptc		char 6			pty
 device-major	pts		char 7			pty
 device-major	lpt		char 8			lpt
-device-major	qms		char 9			qms
-device-major	beep		char 10			beep
+
 device-major	kbd		char 11			kbd
 device-major	com		char 12			com
 
@@ -39,11 +38,6 @@ device-major	lkm		char 35			lkm
 device-major	audio		char 36			audio
 device-major	vidcconsole	char 37			vidcconsole
 
-device-major	opms		char 40			opms
-
-device-major	iic		char 42			iic
-device-major	rtc		char 43			rtc
-
 device-major	ipl		char 46			ipfilter
 
 device-major	rnd		char 52			rnd
@@ -55,6 +49,7 @@ device-major	wsdisplay	char 60			wsdisplay
 device-major	wskbd		char 61			wskbd
 device-major	wsmouse		char 62			wsmouse
 
+device-major	ses		char 69			ses
 device-major	scsibus		char 70			scsibus
 device-major	raid		char 71  block 71	raid
 
@@ -68,7 +63,9 @@ device-major	isdntel		char 83			isdntel
 device-major	clockctl	char 84			clockctl
 device-major	systrace	char 85			systrace
 device-major	ksyms		char 86			ksyms
-
-device-major	netsmb		char 87			netsmb
+device-major	wsfont		char 87			wsfont
 device-major	nsmb		char 88			nsmb
 
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.19 2003/04/26 11:05:23 ragge Exp $ */
+/* $NetBSD: machdep.c,v 1.19.2.1 2004/08/03 10:40:00 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -56,6 +56,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.2.1 2004/08/03 10:40:00 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -159,14 +162,13 @@ extern struct user *proc0paddr;
 void
 mach_init(long fwhandle, long magic, long bootdata, long reserved)
 {
-	caddr_t kernend, v, p0;
+	caddr_t kernend, p0;
 	u_long first, last;
-	vsize_t size;
 	extern char edata[], end[];
 	int i;
 	uint32_t config;
 
-	/* XXX this code must run on the target cpu */
+	/* XXX this code must run on the target CPU */
 	config = mips3_cp0_config_read();
 	config &= ~MIPS3_CONFIG_K0_MASK;
 	config |= 0x05;				/* XXX.  cacheable coherent */
@@ -264,6 +266,8 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		/*
 		 * Handle the case of not being called from the firmware.
 		 */
+		/* XXX hardwire to 32MB; should be kernel config option */
+		physmem = 32 * 1024 * 1024 / 4096;
 		mem_clusters[0].start = 0;
 		mem_clusters[0].size = ctob(physmem);
 		mem_cluster_cnt = 1;
@@ -326,17 +330,6 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
-	/*
-	 * Allocate space for system data structures.  These data structures
-	 * are allocated here instead of cpu_startup() because physical
-	 * memory is directly addressable.  We don't have to map these into
-	 * virtual address space.
-	 */
-	size = (vsize_t)allocsys(NULL, NULL);
-	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
-	if ((allocsys(v, NULL) - v) != size)
-		panic("mach_init: table size inconsistency");
-
 	pmap_bootstrap();
 
 	/*
@@ -360,9 +353,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 void
 cpu_startup(void)
 {
-	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
 	char pbuf[9];
 
 	/*
@@ -370,48 +361,9 @@ cpu_startup(void)
 	 */
 	printf(version);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("%s memory", pbuf);
+	printf("total memory = %s\n", pbuf);
 
-	/*
-	 * Allocate virtual address space for file I/O buffers.
-	 * Note they are different than the array of headers, 'buf',
-	 * and usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-		    UVM_ADV_NORMAL, 0)) != 0)
-		panic("startup: cannot allocate VM for buffers");
-	minaddr = (vaddr_t)buffers;
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base + 1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-					"buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-
+	minaddr = 0;
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -432,14 +384,7 @@ cpu_startup(void)
 	 */
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf(", %s free", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf(", %s in %u buffers\n", pbuf, nbuf);
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
+	printf("avail memory = %s\n", pbuf);
 }
 
 int	waittime = -1;

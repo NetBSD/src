@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_j96a.c,v 1.4 2003/01/31 22:07:52 tsutsui Exp $	*/
+/*	$NetBSD: p_nec_j96a.c,v 1.4.2.1 2004/08/03 10:32:10 skrll Exp $	*/
 
 /*-
  * Copyright (C) 2002 Izumi Tsutsui.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: p_nec_j96a.c,v 1.4.2.1 2004/08/03 10:32:10 skrll Exp $");
 
 #include <sys/param.h>
 

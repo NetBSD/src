@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.35 2003/06/29 22:28:15 fvdl Exp $	*/
+/*	$NetBSD: ct.c,v 1.35.2.1 2004/08/03 10:34:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -48,11 +48,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -86,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.35 2003/06/29 22:28:15 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.35.2.1 2004/08/03 10:34:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,10 +395,10 @@ ctopen(dev, flag, type, p)
 	else
 		sc->sc_soptc.opt = C_SPAR;
 
-	/* 
+	/*
 	 * Check the return of hpibsend() and hpibswait().
 	 * Drive could be loading/unloading a tape. If not checked,
-	 * driver hangs. 
+	 * driver hangs.
 	 */
 	cc = hpibsend(ctlr, slave, C_CMD, &sc->sc_soptc, sizeof(sc->sc_soptc));
 	if (cc != sizeof(sc->sc_soptc))
@@ -494,7 +490,7 @@ ctcommand(dev, cmd, cnt)
 #ifdef DEBUG
 			if (ctdebug & CT_BSF)
 				printf("%s: backup eof pos %d blk %d\n",
-				    sc->sc_dev.dv_xname, sc->sc_eofp, 
+				    sc->sc_dev.dv_xname, sc->sc_eofp,
 				    sc->sc_eofs[sc->sc_eofp]);
 #endif
 		}
@@ -632,7 +628,7 @@ mustio:
 			bp->b_resid = bp->b_bcount;
 			ctdone(sc, bp);
 			return;
-		}			
+		}
 		sc->sc_flags |= CTF_IO;
 		sc->sc_ioc.unit = C_SUNIT(sc->sc_punit);
 		sc->sc_ioc.saddr = C_SADDR;

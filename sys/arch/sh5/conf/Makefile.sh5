@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh5,v 1.10 2003/01/19 19:46:57 scw Exp $
+#	$NetBSD: Makefile.sh5,v 1.10.2.1 2004/08/03 10:40:23 skrll Exp $
 
 # Makefile for NetBSD/sh5
 #
@@ -61,25 +61,14 @@ SH5_ENDIAN_LD=	shelf${SH5_ABI}_nbsd
 	@false
 .endif
 
-CC=		sh5le-unknown-netbsd-gcc
-AS=		sh5le-unknown-netbsd-gcc
-LD=		sh5le-unknown-netbsd-ld -m ${SH5_ENDIAN_LD}
-AR=		sh5le-unknown-netbsd-ar
-NM=		sh5le-unknown-netbsd-nm
-RANLIB=		sh5le-unknown-netbsd-ranlib
-SIZE=		sh5le-unknown-netbsd-size
-OBJCOPY=	sh5le-unknown-netbsd-objcopy
-DBSYM=		sh5dbsym
-
 CPPFLAGS+=	-D__NetBSD__ -D${MACHINE} ${SH5_ABI_DEF}
 CFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu
 AFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
-DEFCOPTS?=	-O2
-DEFWARNINGS=	no
-CWARNFLAGS+=	-Werror -Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
-CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
-CWARNFLAGS+=	-Wno-uninitialized -Wno-sign-compare -Wno-format
+
+# The sh5 gcc version 3.3.3 (NetBSD nb2 20040502) gets an internal
+# compiler error with higher optimizations on a few files:
+CC_NOOPT=	${NORMAL_C:C/-O./-O0/}
 
 ##
 ## (3) libkern and compat
@@ -104,14 +93,9 @@ locore.o: ${THISSH5}/${MACHINE}/locore.S assym.h
 ##
 # LINKTEXT possibly set by individual sh5 port
 LINKTEXT?=	-Ttext ${SH5_TEXT_ADDR}
+LINKFORMAT?=	-m ${SH5_ENDIAN_LD}
+LD+=		${LINKFORMAT}
 
-# The following is needed until we get a bootloader.
-SYSTEM_LD_TAIL_EXTRA=	; \
-	${DBSYM} $@	; \
-	${OBJCOPY} --change-section-lma .text-0x40000000 \
-		   --change-section-lma .rodata-0x40000000 \
-		   --change-section-lma .data-0x40000000 \
-		   --set-start 0xffffffff80000001 $@ $@.bin
 
 ##
 ## (6) port specific target dependencies
@@ -143,3 +127,8 @@ locore.o machdep.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

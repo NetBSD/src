@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.46 2003/05/03 18:10:45 wiz Exp $	*/
+/*	$NetBSD: fd.c,v 1.46.2.1 2004/08/03 10:33:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -47,6 +47,9 @@
  *   - Test it with an HD-drive (Don't have that either)
  *   - Finish ioctl's
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.46.2.1 2004/08/03 10:33:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -684,7 +687,7 @@ struct fd_softc	*sc;
 
 /*
  * Called through the DMA-dispatcher. So we know we are the only ones
- * messing with the floppy-controler.
+ * messing with the floppy-controller.
  * Initialize some fields in the fdsoftc for the state-machine and get
  * it going.
  */

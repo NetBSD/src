@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 2003/03/13 17:30:38 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.30.2.1 2004/08/03 10:39:29 skrll Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -55,7 +55,6 @@ struct cache_info {
 #include <sys/device.h>
 
 #include <sys/sched.h>
-#include <dev/sysmon/sysmonvar.h>
 
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
@@ -78,14 +77,22 @@ struct cpu_info {
 	int ci_ipending;
 	int ci_intrdepth;
 	char *ci_intstk;
-	char *ci_spillstk;
-	register_t ci_tempsave[8];
-	register_t ci_ddbsave[8];
-	register_t ci_ipkdbsave[8];
-	register_t ci_disisave[4];
+#define	CPUSAVE_LEN	8
+	register_t ci_tempsave[CPUSAVE_LEN];
+	register_t ci_ddbsave[CPUSAVE_LEN];
+	register_t ci_ipkdbsave[CPUSAVE_LEN];
+#define	CPUSAVE_R28	0		/* where r28 gets saved */
+#define	CPUSAVE_R29	1		/* where r29 gets saved */
+#define	CPUSAVE_R30	2		/* where r30 gets saved */
+#define	CPUSAVE_R31	3		/* where r31 gets saved */
+#define	CPUSAVE_DAR	4		/* where SPR_DAR gets saved */
+#define	CPUSAVE_DSISR	5		/* where SPR_DSISR gets saved */
+#define	CPUSAVE_SRR0	6		/* where SRR0 gets saved */
+#define	CPUSAVE_SRR1	7		/* where SRR1 gets saved */
+#define	DISISAVE_LEN	4
+	register_t ci_disisave[DISISAVE_LEN];
 	struct cache_info ci_ci;		
-	struct sysmon_envsys ci_sysmon;
-	struct envsys_tre_data ci_tau_info;
+	void *ci_sysmon_cookie;
 	struct evcnt ci_ev_clock;	/* clock intrs */
 	struct evcnt ci_ev_softclock;	/* softclock intrs */
 	struct evcnt ci_ev_softnet;	/* softnet intrs */
@@ -94,6 +101,7 @@ struct cpu_info {
 	struct evcnt ci_ev_kdsi;	/* kernel DSI traps */
 	struct evcnt ci_ev_udsi;	/* user DSI traps */
 	struct evcnt ci_ev_udsi_fatal;	/* user DSI trap failures */
+	struct evcnt ci_ev_kisi;	/* kernel ISI traps */
 	struct evcnt ci_ev_isi;		/* user ISI traps */
 	struct evcnt ci_ev_isi_fatal;	/* user ISI trap failures */
 	struct evcnt ci_ev_pgm;		/* user PGM traps */
@@ -190,6 +198,10 @@ static __inline uint64_t
 mftb(void)
 {
 	uint64_t tb;
+
+#ifdef _LP64
+	__asm __volatile ("mftb %0" : "=r"(tb));
+#else
 	int tmp;
 
 	__asm __volatile (
@@ -205,6 +217,7 @@ mftb(void)
 "	cmplw %0,%1	\n"
 "	bne- 1b		\n"
 	: "=r" (tb), "=r"(tmp) :: "cr0");
+#endif
 
 	return tb;
 }
@@ -229,7 +242,7 @@ mfrtc(uint32_t *rtcp)
 "	mfrtcu	%2	\n"
 "	cmplw	%0,%2	\n"
 "	bne-	1b"
-	    : "=r"(*rtcp), "=r"(*(rtcp + 1)), "=r"(tmp));
+	    : "=r"(*rtcp), "=r"(*(rtcp + 1)), "=r"(tmp) :: "cr0");
 }
 
 static __inline uint32_t
@@ -241,15 +254,18 @@ mfpvr(void)
 	return (pvr);
 }
 
+/*
+ * CLKF_BASEPRI is dependent on the underlying interrupt code
+ * and can not be defined here.  It should be defined in
+ * <machine/intr.h>
+ */
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 #define	CLKF_PC(frame)		((frame)->srr0)
 #define	CLKF_INTR(frame)	((frame)->depth > 0)
 
 #define	LWP_PC(l)		(trapframe(l)->srr0)
 
 #define	cpu_swapout(p)
-#define cpu_wait(p)
 #define	cpu_proc_fork(p1, p2)
 
 extern int powersave;
@@ -266,6 +282,7 @@ void dcache_flush_page(vaddr_t);
 void icache_flush_page(vaddr_t);
 void dcache_flush(vaddr_t, vsize_t);
 void icache_flush(vaddr_t, vsize_t);
+void *mapiodev(paddr_t, psize_t);
 
 #define	DELAY(n)		delay(n)
 
@@ -278,7 +295,6 @@ void oea_init(void (*)(void));
 void oea_startup(const char *);
 void oea_dumpsys(void);
 void oea_install_extint(void (*)(void));
-void *mapiodev(paddr_t, psize_t);
 paddr_t kvtop(caddr_t); 
 void softnet(int);
 

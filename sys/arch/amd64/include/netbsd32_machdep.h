@@ -1,7 +1,9 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.1 2003/04/26 18:39:45 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.1.2.1 2004/08/03 10:31:36 skrll Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
+
+#include <sys/ucontext.h>
 
 typedef	u_int32_t netbsd32_pointer_t;
 #define	NETBSD32PTR64(p32)	((void *)(u_long)(u_int)(p32))
@@ -9,55 +11,55 @@ typedef	u_int32_t netbsd32_pointer_t;
 typedef netbsd32_pointer_t netbsd32_sigcontextp_t;
 
 struct netbsd32_sigcontext13 {
-	int	sc_gs;
-	int	sc_fs;
-	int	sc_es;
-	int	sc_ds;
-	int	sc_edi;
-	int	sc_esi;
-	int	sc_ebp;
-	int	sc_ebx;
-	int	sc_edx;
-	int	sc_ecx;
-	int	sc_eax;
+	uint32_t	sc_gs;
+	uint32_t	sc_fs;
+	uint32_t	sc_es;
+	uint32_t	sc_ds;
+	uint32_t	sc_edi;
+	uint32_t	sc_esi;
+	uint32_t	sc_ebp;
+	uint32_t	sc_ebx;
+	uint32_t	sc_edx;
+	uint32_t	sc_ecx;
+	uint32_t	sc_eax;
 	/* XXX */
-	int	sc_eip;
-	int	sc_cs;
-	int	sc_eflags;
-	int	sc_esp;
-	int	sc_ss;
+	uint32_t	sc_eip;
+	uint32_t	sc_cs;
+	uint32_t	sc_eflags;
+	uint32_t	sc_esp;
+	uint32_t	sc_ss;
 
-	int	sc_onstack;		/* sigstack state to restore */
-	int	sc_mask;		/* signal mask to restore (old style) */
+	uint32_t	sc_onstack;	/* sigstack state to restore */
+	uint32_t	sc_mask;	/* signal mask to restore (old style) */
 
-	int	sc_trapno;		/* XXX should be above */
-	int	sc_err;
+	uint32_t	sc_trapno;	/* XXX should be above */
+	uint32_t	sc_err;
 };
 
 struct netbsd32_sigcontext {
-	int	sc_gs;
-	int	sc_fs;
-	int	sc_es;
-	int	sc_ds;
-	int	sc_edi;
-	int	sc_esi;
-	int	sc_ebp;
-	int	sc_ebx;
-	int	sc_edx;
-	int	sc_ecx;
-	int	sc_eax;
+	uint32_t	sc_gs;
+	uint32_t	sc_fs;
+	uint32_t	sc_es;
+	uint32_t	sc_ds;
+	uint32_t	sc_edi;
+	uint32_t	sc_esi;
+	uint32_t	sc_ebp;
+	uint32_t	sc_ebx;
+	uint32_t	sc_edx;
+	uint32_t	sc_ecx;
+	uint32_t	sc_eax;
 	/* XXX */
-	int	sc_eip;
-	int	sc_cs;
-	int	sc_eflags;
-	int	sc_esp;
-	int	sc_ss;
+	uint32_t	sc_eip;
+	uint32_t	sc_cs;
+	uint32_t	sc_eflags;
+	uint32_t	sc_esp;
+	uint32_t	sc_ss;
 
-	int	sc_onstack;		/* sigstack state to restore */
-	int	__sc_mask13;		/* signal mask to restore (old style) */
+	uint32_t	sc_onstack;	/* sigstack state to restore */
+	uint32_t	__sc_mask13;	/* signal mask to restore (old style) */
 
-	int	sc_trapno;		/* XXX should be above */
-	int	sc_err;
+	uint32_t	sc_trapno;	/* XXX should be above */
+	uint32_t	sc_err;
 
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
@@ -67,12 +69,21 @@ struct netbsd32_sigcontext {
 #define sc_pc sc_eip
 #define sc_ps sc_eflags
 
-struct netbsd32_sigframe {
-	uint32_t sf_ra;
-	int	sf_signum;
-	int	sf_code;
-	uint32_t sf_scp;
-	struct	netbsd32_sigcontext sf_sc;
+struct netbsd32_sigframe_sigcontext {
+	uint32_t	sf_ra;
+	int32_t		sf_signum;
+	int32_t		sf_code;
+	uint32_t	sf_scp;
+	struct netbsd32_sigcontext sf_sc;
+};
+
+struct netbsd32_sigframe_siginfo {
+	uint32_t	sf_ra;
+	int32_t		sf_signum;
+	uint32_t	sf_sip;
+	uint32_t	sf_ucp;
+	siginfo32_t	sf_si;
+	ucontext32_t	sf_uc;
 };
 
 struct reg32 {
@@ -117,11 +128,6 @@ struct x86_64_set_mtrr_args32 {
 	uint32_t n;
 };
 
-struct exec_package;
-void netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack);
-int netbsd32_sigreturn(struct lwp *l, void *v, register_t *retval);
-void netbsd32_sendsig(int sig, sigset_t *mask, u_long code);
-
-extern char netbsd32_sigcode[], netbsd32_esigcode[];
+#define NETBSD32_MID_MACHINE MID_I386
 
 #endif /* _MACHINE_NETBSD32_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_7seg.c,v 1.7 2003/05/14 19:46:40 thorpej Exp $	*/
+/*	$NetBSD: iq80310_7seg.c,v 1.7.2.1 2004/08/03 10:34:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Support for the 7-segment display on the Intel IQ80310.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iq80310_7seg.c,v 1.7.2.1 2004/08/03 10:34:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

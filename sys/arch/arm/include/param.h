@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 2002/02/26 15:13:20 simonb Exp $	*/
+/*	$NetBSD: param.h,v 1.6.18.1 2004/08/03 10:32:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -48,25 +48,34 @@
  *	measure while we're finishing the conversion to ELF.
  *
  * For non-KERNEL code:
- *	If ELF, MACHINE and MACHINE_ARCH are forced to "arm".
+ *	If ELF, MACHINE and MACHINE_ARCH are forced to "arm/armeb".
  */
 
 #if defined(_KERNEL)
 #ifndef MACHINE_ARCH			/* XXX For now */
+#ifndef __ARMEB__
 #define	_MACHINE_ARCH	arm
 #define	MACHINE_ARCH	"arm"
-#endif
+#else
+#define	_MACHINE_ARCH	armeb
+#define	MACHINE_ARCH	"armeb"
+#endif /* __ARMEB__ */
+#endif /* MACHINE_ARCH */
 #elif defined(__ELF__)
 #undef _MACHINE
-#define	_MACHINE	arm
 #undef MACHINE
-#define	MACHINE		"arm"
-
 #undef _MACHINE_ARCH
-#define	_MACHINE_ARCH	arm
 #undef MACHINE_ARCH
+#define	_MACHINE	arm
+#define	MACHINE		"arm"
+#ifndef __ARMEB__
+#define	_MACHINE_ARCH	arm
 #define	MACHINE_ARCH	"arm"
-#endif /* _KERNEL */
+#else
+#define	_MACHINE_ARCH	armeb
+#define	MACHINE_ARCH	"armeb"
+#endif /* __ARMEB__ */
+#endif /* __ELF__ */
 
 #define	MID_MACHINE	MID_ARM6
 
@@ -134,5 +143,14 @@
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+
+/*
+ * Compatibility /dev/zero mapping.
+ */
+#ifdef _KERNEL
+#ifdef COMPAT_16
+#define	COMPAT_ZERODEV(x)	(x == makedev(0, _DEV_ZERO_oARM))
+#endif
+#endif /* _KERNEL */
 
 #endif /* _ARM_PARAM_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.14 2003/04/25 21:54:29 fvdl Exp $ */
+/* $NetBSD: cpu.c,v 1.14.2.1 2004/08/03 10:35:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14.2.1 2004/08/03 10:35:49 skrll Exp $");
+
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -115,16 +118,16 @@
 #include <i386/isa/nvram.h>
 #include <dev/isa/isareg.h>
 
-int     cpu_match __P((struct device *, struct cfdata *, void *));
-void    cpu_attach __P((struct device *, struct device *, void *));
+int     cpu_match(struct device *, struct cfdata *, void *);
+void    cpu_attach(struct device *, struct device *, void *);
 
 struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
 
-int mp_cpu_start __P((struct cpu_info *)); 
-void mp_cpu_start_cleanup __P((struct cpu_info *));
+int mp_cpu_start(struct cpu_info *); 
+void mp_cpu_start_cleanup(struct cpu_info *);
 struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 				      mp_cpu_start_cleanup };
 
@@ -160,10 +163,10 @@ struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary };
 
 u_int32_t cpus_running = 0;
 
-void    	cpu_hatch __P((void *));
-static void    	cpu_boot_secondary __P((struct cpu_info *ci));
-static void    	cpu_start_secondary __P((struct cpu_info *ci));
-static void	cpu_copy_trampoline __P((void));
+void    	cpu_hatch(void *);
+static void    	cpu_boot_secondary(struct cpu_info *ci);
+static void    	cpu_start_secondary(struct cpu_info *ci);
+static void	cpu_copy_trampoline(void);
 
 /*
  * Runs once per boot once multiprocessor goo has been detected and
@@ -268,7 +271,7 @@ cpu_attach(parent, self, aux)
 		ci = &cpu_info_primary;
 #if defined(MULTIPROCESSOR)
 		if (cpunum != lapic_cpu_number()) {
-			panic("%s: running cpu is at apic %d"
+			panic("%s: running CPU is at apic %d"
 			    " instead of at expected %d",
 			    sc->sc_dev.dv_xname, lapic_cpu_number(), cpunum);
 		}
@@ -311,10 +314,12 @@ cpu_attach(parent, self, aux)
 	    kstack + USPACE - 16 - sizeof (struct trapframe);
 	pcb->pcb_tss.tss_esp =
 	    kstack + USPACE - 16 - sizeof (struct trapframe);
-	pcb->pcb_pmap = pmap_kernel();
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;
+	pcb->pcb_cr3 = pmap_kernel()->pm_pdirpa;
 #endif
+	pmap_reference(pmap_kernel());
+	ci->ci_pmap = pmap_kernel();
+	ci->ci_tlbstate = TLBSTATE_STALE;
 
 	/* further PCB init done later. */
 
@@ -551,7 +556,7 @@ cpu_boot_secondary(ci)
 		delay(10);
 	}
 	if (! (ci->ci_flags & CPUF_RUNNING)) {
-		printf("cpu failed to start\n");
+		printf("CPU failed to start\n");
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -562,7 +567,7 @@ cpu_boot_secondary(ci)
 /*
  * The CPU ends up here when its ready to run
  * This is called from code in mptramp.s; at this point, we are running
- * in the idle pcb/idle stack of the new cpu.  When this function returns,
+ * in the idle pcb/idle stack of the new CPU.  When this function returns,
  * this processor will enter the idle loop and start looking for work.
  *
  * XXX should share some of this with init386 in machdep.c
@@ -575,6 +580,7 @@ cpu_hatch(void *v)
 
 	cpu_probe_features(ci);
 	cpu_feature &= ci->ci_feature_flags;
+	cpu_feature2 &= ci->ci_feature2_flags;
 
 #ifdef DEBUG
 	if (ci->ci_flags & CPUF_PRESENT)
@@ -622,7 +628,7 @@ cpu_hatch(void *v)
 #include <machine/db_machdep.h>
 
 /*
- * Dump cpu information from ddb.
+ * Dump CPU information from ddb.
  */
 void
 cpu_debug_dump(void)

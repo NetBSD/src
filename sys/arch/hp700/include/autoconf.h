@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2 2002/08/16 15:02:41 fredette Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2.6.1 2004/08/03 10:34:54 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.h,v 1.10 2001/05/05 22:33:42 art Exp $	*/
 
@@ -38,14 +38,21 @@
 #include <machine/pdc.h>
 
 struct confargs {
+	struct iodc_data ca_type PDC_ALIGNMENT;	/* iodc-specific type descrition */
+	struct device_path ca_dp;	/* device_path as found by pdc_scan */
+	struct pdc_iodc_read *ca_pdc_iodc_read;
+	struct {
+		hppa_hpa_t addr;
+		u_int   size;
+	}		ca_addrs[16];	/* 16 is ought to be enough */
 	const char	*ca_name;	/* device name/description */
 	bus_space_tag_t	ca_iot;		/* io tag */
 	int		ca_mod;		/* module number on the bus */
-	struct iodc_data ca_type;	/* iodc-specific type descrition */
 	hppa_hpa_t	ca_hpa;		/* module HPA */
+	u_int		ca_hpasz;	/* module HPA size (if avail) */
 	bus_dma_tag_t	ca_dmatag;	/* DMA tag */
 	int		ca_irq;		/* module IRQ */
-	struct pdc_iodc_read *ca_pdc_iodc_read;
+	int		ca_naddrs;	/* number of valid addr ents */
 }; 
 
 #define	HP700CF_IRQ_UNDEF	(-1)
@@ -64,7 +71,12 @@ struct hppa_mod_info {
 struct device;
 
 const char *hppa_mod_info __P((int, int));
-void	pdc_scanbus __P((struct device *, int bus, int, void (*)(struct device *, struct confargs *)));
+void pdc_scanbus_memory_map __P((struct device *, struct confargs *, 
+    void (*)(struct device *, struct confargs *)));
+void pdc_scanbus_system_map __P((struct device *, struct confargs *, 
+    void (*)(struct device *, struct confargs *)));
+void	(*pdc_scanbus) __P((struct device *, struct confargs *,
+    void (*)(struct device *, struct confargs *)));
 int	mbprint __P((void *, const char *));
 int	mbsubmatch __P((struct device *, struct cfdata *, void *));
 int	clock_intr __P((void *));

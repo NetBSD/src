@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2003/06/23 11:01:15 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11.2.1 2004/08/03 10:34:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,6 +69,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11.2.1 2004/08/03 10:34:48 skrll Exp $");
+
+#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_compat_hpux.h"
@@ -99,6 +103,7 @@
 #include <sys/ksyms.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_page.h>
@@ -144,7 +149,7 @@ caddr_t msgbufaddr;
 /*
  * cache configuration, for most machines is the same
  * numbers, so it makes sense to do defines w/ numbers depending
- * on cofigured cpu types in the kernel
+ * on cofigured CPU types in the kernel
  */
 int icache_stride, icache_line_mask;
 int dcache_stride, dcache_line_mask;
@@ -210,8 +215,8 @@ int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
 /*
  * exported methods for cpus
  */
-int (*cpu_desidhash) __P((void));
-int (*cpu_hpt_init) __P((vaddr_t hpt, vsize_t hptsize));
+int (*cpu_desidhash)(void);
+int (*cpu_hpt_init)(vaddr_t, vsize_t);
 
 dev_t	bootdev;
 int	totalphysmem, physmem, esym;
@@ -253,9 +258,9 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 
-void delay_init __P((void));
-static __inline void fall __P((int, int, int, int, int));
-void dumpsys __P((void));
+void delay_init(void);
+static __inline void fall(int, int, int, int, int);
+void dumpsys(void);
 
 /*
  * wide used hardware params
@@ -279,12 +284,12 @@ extern const u_int itlb_x[], dtlb_x[], dtlbna_x[], tlbd_x[];
 extern const u_int itlb_s[], dtlb_s[], dtlbna_s[], tlbd_s[];
 extern const u_int itlb_t[], dtlb_t[], dtlbna_t[], tlbd_t[];
 extern const u_int itlb_l[], dtlb_l[], dtlbna_l[], tlbd_l[];
-int hpti_g __P((vaddr_t, vsize_t));
-int desidhash_x __P((void));
-int desidhash_s __P((void));
-int desidhash_t __P((void));
-int desidhash_l __P((void));
-int desidhash_g __P((void));
+int hpti_g(vaddr_t, vsize_t);
+int desidhash_x(void);
+int desidhash_s(void);
+int desidhash_t(void);
+int desidhash_l(void);
+int desidhash_g(void);
 #define _HPPA_CPU_UNSUPP \
 	  NULL, \
 	  NULL, 0, \
@@ -413,13 +418,11 @@ const struct hppa_cpu_info hppa_cpu_pa8600 = {
 };
 
 void
-hppa_init(start)
-	paddr_t start;
+hppa_init(paddr_t start)
 {
 	vaddr_t vstart, vend;
-	register int error;
+	int error;
 	int hptsize;	/* size of HPT table if supported */
-	int sz;
 	u_int *p, *q;
 	struct pdc_cpuid pdc_cpuid PDC_ALIGNMENT;
 	const char *model;
@@ -433,7 +436,7 @@ hppa_init(start)
 	pdc_init();	/* init PDC iface, so we can call em easy */
 
 	cpu_hzticks = (PAGE0->mem_10msec * 100) / hz;
-	delay_init();	/* calculate cpu clock ratio */
+	delay_init();	/* calculate CPU clock ratio */
 
 	/* cache parameters */
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_CACHE, PDC_CACHE_DFLT,
@@ -652,7 +655,7 @@ hptsize=256;	/* XXX one page for now */
 
 	/*
 	 * Ptrs to various tlb handlers, to be filled
-	 * based on cpu features.
+	 * based on CPU features.
 	 * from locore.S
 	 */
 	extern u_int trap_ep_T_TLB_DIRTY[];
@@ -697,12 +700,6 @@ hptsize=256;	/* XXX one page for now */
 	 */
 
 	physmem = totalphysmem;
-	sz = (int)allocsys(NULL, NULL);
-	memset((void *)vstart, 0, sz);
-	if (allocsys((caddr_t)vstart, NULL) - (caddr_t)vstart != sz)
-		panic("startup: table size inconsistency");
-	vstart += sz;
-	vstart = hppa_round_page(vstart);
 
 	/* Allocate the msgbuf. */
 	msgbufaddr = (caddr_t) vstart;
@@ -811,7 +808,7 @@ do {									\
 	hp700_kgdb_attached = FALSE;
 #if NCOM > 0
 	if (!strcmp(KGDB_DEVNAME, "com")) {
-		int com_gsc_kgdb_attach __P((void));
+		int com_gsc_kgdb_attach(void);
 		if (com_gsc_kgdb_attach() == 0)
 			hp700_kgdb_attached = TRUE;
 	}
@@ -830,11 +827,9 @@ do {									\
 }
 
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
-	u_int i, base, residual;
 	char pbuf[3][9];
 #ifdef PMAPDEBUG
 	extern int pmapdebug;
@@ -864,44 +859,7 @@ cpu_startup()
 	printf("real mem = %s (%s reserved for PROM, %s used by NetBSD)\n",
 	    pbuf[0], pbuf[1], pbuf[2]);
 
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-	    UVM_INH_NONE, UVM_ADV_NORMAL, 0)) != 0)
-		panic("cpu_startup: cannot allocate VM for buffers");
-	minaddr = (vaddr_t)buffers;
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * First <residual> buffers get (base+1) physical pages
-		 * allocated for them.  The rest get (base) physical pages.
-		 *
-		 * The rest of each buffer occupies virtual space,
-		 * but has no physical memory allocated for it.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
-
-		while (curbufsize) {
-			if ((pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-				VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-
+	minaddr = 0;
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -922,10 +880,7 @@ cpu_startup()
 	pmapdebug = opmapdebug;
 #endif
 	format_bytes(pbuf[0], sizeof(pbuf[0]), ptoa(uvmexp.free));
-	format_bytes(pbuf[1], sizeof(pbuf[1]), bufpages * PAGE_SIZE);
 	printf("avail mem = %s\n", pbuf[0]);
-	printf("using %u buffers containing %s of memory\n",
-	    nbuf, pbuf[1]);
 
 	/*
 	 * Allocate a virtual page (for use by /dev/mem)
@@ -933,23 +888,17 @@ cpu_startup()
 	 * it has to be in the normal kernel VA range.
 	 */
 	vmmap = uvm_km_valloc_wait(kernel_map, PAGE_SIZE);
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
-
 }
 
 /*
- * compute cpu clock ratio such as:
+ * compute CPU clock ratio such as:
  *	cpu_ticksnum / cpu_ticksdenom = t + delta
  *	delta -> 0
  */
 void
 delay_init(void)
 {
-	register u_int num, denom, delta, mdelta;
+	u_int num, denom, delta, mdelta;
 
 	mdelta = UINT_MAX;
 	for (denom = 1; denom < 1000; denom++) {
@@ -967,10 +916,9 @@ delay_init(void)
 }
 
 void
-delay(us)
-	u_int us;
+delay(u_int us)
 {
-	register u_int start, end, n;
+	u_int start, end, n;
 
 	mfctl(CR_ITMR, start);
 	while (us) {
@@ -993,10 +941,9 @@ delay(us)
 }
 
 static __inline void
-fall(c_base, c_count, c_loop, c_stride, data)
-	int c_base, c_count, c_loop, c_stride, data;
+fall(int c_base, int c_count, int c_loop, int c_stride, int data)
 {
-	register int loop;
+	int loop;
 
 	for (; c_count--; c_base += c_stride)
 		for (loop = c_loop; loop--; )
@@ -1007,7 +954,7 @@ fall(c_base, c_count, c_loop, c_stride, data)
 }
 
 void
-fcacheall()
+fcacheall(void)
 {
 	/*
 	 * Flush the instruction, then data cache.
@@ -1021,15 +968,15 @@ fcacheall()
 }
 
 void
-ptlball()
+ptlball(void)
 {
-	register pa_space_t sp;
-	register int i, j, k;
+	pa_space_t sp;
+	int i, j, k;
 
 	/* instruction TLB */
 	sp = pdc_cache.it_sp_base;
 	for (i = 0; i < pdc_cache.it_sp_count; i++) {
-		register vaddr_t off = pdc_cache.it_off_base;
+		vaddr_t off = pdc_cache.it_off_base;
 		for (j = 0; j < pdc_cache.it_off_count; j++) {
 			for (k = 0; k < pdc_cache.it_loop; k++)
 				pitlbe(sp, off);
@@ -1041,7 +988,7 @@ ptlball()
 	/* data TLB */
 	sp = pdc_cache.dt_sp_base;
 	for (i = 0; i < pdc_cache.dt_sp_count; i++) {
-		register vaddr_t off = pdc_cache.dt_off_base;
+		vaddr_t off = pdc_cache.dt_off_base;
 		for (j = 0; j < pdc_cache.dt_off_count; j++) {
 			for (k = 0; k < pdc_cache.dt_loop; k++)
 				pdtlbe(sp, off);
@@ -1052,7 +999,7 @@ ptlball()
 }
 
 int
-desidhash_g()
+desidhash_g(void)
 {
 	/* TODO call PDC to disable SID hashing in the cache index */
 
@@ -1060,10 +1007,9 @@ desidhash_g()
 }
 
 int
-hpti_g(hpt, hptsize)
-	vaddr_t hpt;
-	vsize_t hptsize;
+hpti_g(vaddr_t hpt, vsize_t hptsize)
 {
+
 	return pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_CONFIG,
 	    &pdc_hwtlb, hpt, hptsize, PDC_TLB_CURRPDE);
 }
@@ -1071,7 +1017,7 @@ hpti_g(hpt, hptsize)
 /*
  * This inserts a recorded BTLB slot.
  */
-static int _hp700_btlb_insert __P((struct btlb_slot *));
+static int _hp700_btlb_insert(struct btlb_slot *);
 static int
 _hp700_btlb_insert(struct btlb_slot *btlb_slot)
 {
@@ -1128,8 +1074,8 @@ _hp700_btlb_insert(struct btlb_slot *btlb_slot)
  * This records and inserts a new BTLB entry.
  */
 int
-hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, 
-		vsize_t *sizep, u_int tlbprot)
+hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *sizep,
+    u_int tlbprot)
 {
 	struct btlb_slot *btlb_slot, *btlb_slot_best, *btlb_slot_end;
 	vsize_t frames;
@@ -1192,6 +1138,7 @@ hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa,
 	 */
 	btlb_slot_end = btlb_slots + btlb_slots_count;
 	total_mapped_frames = 0;
+	btlb_slot_best_score = 0;
 	while (need_dbtlb || need_ibtlb) {
 
 		/*
@@ -1444,7 +1391,7 @@ long	dumplo = 0;		/* blocks */
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
  */
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	int size;
 
@@ -1589,7 +1536,7 @@ do {							\
 }
 
 int
-cpu_dump()
+cpu_dump(void)
 {
 	long buf[dbtob(1) / sizeof (long)];
 	kcore_seg_t	*segp;
@@ -1623,14 +1570,14 @@ cpu_dump()
 #define	BYTES_PER_DUMP	PAGE_SIZE
 
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	int psize, bytes, i, n;
-	register caddr_t maddr;
-	register daddr_t blkno;
-	register int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-	register int error;
+	caddr_t maddr;
+	daddr_t blkno;
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int error;
 
 	if (dumpdev == NODEV)
 		return;
@@ -1696,16 +1643,13 @@ dumpsys()
 
 /* bcopy(), error on fault */
 int
-kcopy(from, to, size)
-	const void *from;
-	void *to;
-	size_t size;
+kcopy(const void *from, void *to, size_t size)
 {
-	register u_int oldh = curproc->p_addr->u_pcb.pcb_onfault;
+	u_int oldh = curlwp->l_addr->u_pcb.pcb_onfault;
 
-	curproc->p_addr->u_pcb.pcb_onfault = (u_int)&copy_on_fault;
+	curlwp->l_addr->u_pcb.pcb_onfault = (u_int)&copy_on_fault;
 	bcopy(from, to, size);
-	curproc->p_addr->u_pcb.pcb_onfault = oldh;
+	curlwp->l_addr->u_pcb.pcb_onfault = oldh;
 
 	return 0;
 }
@@ -1714,26 +1658,29 @@ kcopy(from, to, size)
  * Set registers on exec.
  */
 void
-setregs(p, pack, stack)
-	register struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
-	register struct trapframe *tf = p->p_md.md_regs;
-	/* register struct pcb *pcb = &p->p_addr->u_pcb; */
-#ifdef PMAPDEBUG
-	extern int pmapdebug;
-	pmapdebug = 0x180d;
-	pmapdebug = -1;
-	printf("setregs(%p, %p, %x), ep=%x, cr30=%x\n",
-	    p, pack, (u_int)stack, (u_int)pack->ep_entry, tf->tf_cr30);
-#endif
+	struct proc *p = l->l_proc;
+	struct trapframe *tf = l->l_md.md_regs;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 
 	tf->tf_iioq_tail = 4 +
 	    (tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER);
 	tf->tf_rp = 0;
 	tf->tf_arg0 = (u_long)p->p_psstr;
 	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
+
+	/* reset any of the pending FPU exceptions */
+	pcb->pcb_fpregs[0] = ((uint64_t)HPPA_FPU_INIT) << 32;
+	pcb->pcb_fpregs[1] = 0;
+	pcb->pcb_fpregs[2] = 0;
+	pcb->pcb_fpregs[3] = 0;
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs, 8 * 4);
+	if (tf->tf_cr30 == fpu_cur_uspace) {
+		fpu_cur_uspace = 0;
+		/* force an fpu ctxsw, we'll not be hugged by the cpu_switch */
+		mtctl(0, CR_CCR);
+	}
 
 	/* setup terminal stack frame */
 	stack = (u_long)STACK_ALIGN(stack, 63);
@@ -1745,41 +1692,28 @@ setregs(p, pack, stack)
 /*
  * machine dependent system variables.
  */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
-	dev_t consdev;
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);	/* overloaded */
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
-}
 
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+}
 
 /*
  * consinit:
  * initialize the system console.
  */
 void
-consinit()
+consinit(void)
 {
 	static int initted = 0;
 

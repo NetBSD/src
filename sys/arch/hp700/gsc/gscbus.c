@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.6 2002/10/02 05:17:49 thorpej Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.6.6.1 2004/08/03 10:34:48 skrll Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -71,6 +71,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.6.6.1 2004/08/03 10:34:48 skrll Exp $");
+
 #define GSCDEBUG
 
 #include "opt_kgdb.h"
@@ -90,8 +93,8 @@
 #include <hp700/gsc/gscbusvar.h>
 #include <hp700/hp700/machdep.h>
 
-int	gscmatch __P((struct device *, struct cfdata *, void *));
-void	gscattach __P((struct device *, struct device *, void *));
+int	gscmatch(struct device *, struct cfdata *, void *);
+void	gscattach(struct device *, struct device *, void *);
 
 struct gsc_softc {
 	struct device sc_dev;
@@ -108,7 +111,7 @@ CFATTACH_DECL(gsc, sizeof(struct gsc_softc),
  * to fix up the module's attach arguments, then we match
  * and attach it.
  */
-static void gsc_module_callback __P((struct device *, struct confargs *));
+static void gsc_module_callback(struct device *, struct confargs *);
 static void
 gsc_module_callback(struct device *self, struct confargs *ca)
 {
@@ -126,10 +129,7 @@ gsc_module_callback(struct device *self, struct confargs *ca)
 }
 
 int
-gscmatch(parent, cf, aux)   
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+gscmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 
@@ -137,13 +137,10 @@ gscmatch(parent, cf, aux)
 }
 
 void
-gscattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+gscattach(struct device *parent, struct device *self, void *aux)
 {
-	register struct gsc_softc *sc = (struct gsc_softc *)self;
-	register struct gsc_attach_args *ga = aux;
+	struct gsc_softc *sc = (struct gsc_softc *)self;
+	struct gsc_attach_args *ga = aux;
 
 	sc->sc_ga = *ga;
 
@@ -158,13 +155,12 @@ gscattach(parent, self, aux)
 					 NULL, ga->ga_int_reg,
 					 &int_reg_cpu, ga->ga_irq);
 
-	pdc_scanbus(self, ga->ga_mod, MAXMODBUS, gsc_module_callback);
+	pdc_scanbus(self, &ga->ga_ca, gsc_module_callback);
 }
 
 int
-gscprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+gscprint(void *aux, const char *pnp)
 {
+
 	return (UNCONF);
 }

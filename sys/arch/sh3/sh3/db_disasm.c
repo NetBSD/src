@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.6 2002/05/10 15:27:05 uch Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.6.12.1 2004/08/03 10:40:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Internet Initiative Japan Inc.
@@ -27,6 +27,9 @@
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.6.12.1 2004/08/03 10:40:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,10 +137,10 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
 	void *pc = (void *)loc;
 
 	get_opcode(pc, line);
-	get_ascii(pc, ascii);
-	if (altfmt)
+	if (altfmt) {
+		get_ascii(pc, ascii);
 		db_printf("%-32s ! %s\n", line, ascii);
-	else
+	} else
 		db_printf("%s\n", line);
 
 	return (loc + 2);

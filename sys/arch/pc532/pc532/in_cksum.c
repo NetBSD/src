@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.8 1998/08/15 10:18:17 mycroft Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.8.44.1 2004/08/03 10:38:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,11 +48,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -72,6 +68,9 @@
  *	@(#)in_cksum.c	1.3 (Berkeley) 1/19/91
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.8.44.1 2004/08/03 10:38:56 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -83,7 +82,7 @@
  *
  * This routine is very heavily used in the network
  * code and should be modified for each CPU to be as fast as possible.
- * 
+ *
  * This implementation is the ns32k version.
  */
 
@@ -208,4 +207,3 @@ in_cksum(m, len)
 	ADDCARRY;
 	return (sum ^ 0xffff);
 }
-

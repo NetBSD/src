@@ -1,4 +1,4 @@
-/*	$NetBSD: isabeep.c,v 1.5 2002/10/02 15:52:28 thorpej Exp $	*/
+/*	$NetBSD: isabeep.c,v 1.5.6.1 2004/08/03 10:39:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isabeep.c,v 1.5.6.1 2004/08/03 10:39:48 skrll Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 

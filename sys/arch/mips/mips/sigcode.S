@@ -1,9 +1,11 @@
-/*	$NetBSD: sigcode.S,v 1.1 2002/11/09 02:02:33 nisimura Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.1.8.1 2004/08/03 10:37:50 skrll Exp $	*/
 
+#include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
 #include "opt_compat_linux.h"
 #include "opt_compat_irix.h"
 
+#include <mips/signal.h>
 #include <sys/syscall.h>
 #ifdef COMPAT_ULTRIX
 #include <compat/ultrix/ultrix_syscall.h>
@@ -20,6 +22,7 @@
 
 	.set	noreorder
 
+#ifdef COMPAT_16
 /*
  * This code is copied the user's stack for returning from signal handlers
  * (see sendsig() and sigreturn()). We have to compute the address
@@ -29,11 +32,12 @@
  */
 LEAF_NOPROFILE(sigcode)
 	move	a0, sp			# address of sigcontext
-	li	v0, SYS___sigreturn14	# sigreturn(scp)
+	li	v0, SYS_compat_16___sigreturn14	# sigreturn(scp)
 	syscall
 	break	0			# just in case sigreturn fails
 END(sigcode)
 XLEAF(esigcode)
+#endif
 
 #ifdef COMPAT_ULTRIX
 LEAF_NOPROFILE(ultrix_sigcode)

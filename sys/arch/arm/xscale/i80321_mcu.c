@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_mcu.c,v 1.1 2002/03/27 21:45:47 thorpej Exp $	*/
+/*	$NetBSD: i80321_mcu.c,v 1.1.16.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Intel i80321 I/O Processor memory controller support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80321_mcu.c,v 1.1.16.1 2004/08/03 10:32:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

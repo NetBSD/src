@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.61 2003/06/29 22:28:16 fvdl Exp $	*/
+/*	$NetBSD: dcm.c,v 1.61.2.1 2004/08/03 10:34:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,9 +37,43 @@
  */
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from Utah: $Hdr: dcm.c 1.29 92/01/21$
+ *
+ *	@(#)dcm.c	8.4 (Berkeley) 1/12/94
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -89,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.61 2003/06/29 22:28:16 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.61.2.1 2004/08/03 10:34:22 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -118,7 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.61 2003/06/29 22:28:16 fvdl Exp $");
 #define DEFAULT_BAUD_RATE 9600
 #endif
 
-struct speedtab dcmspeedtab[] = {
+const struct speedtab dcmspeedtab[] = {
 	{	0,	BR_0		},
 	{	50,	BR_50		},
 	{	75,	BR_75		},
@@ -311,16 +345,16 @@ static	int dcmconsinit;			/* has been initialized */
 /* static	int dcm_lastcnpri = CN_DEAD; */	/* XXX last priority */
 
 static struct consdev dcm_cons = {
-       NULL,
-       NULL,
-       dcmcngetc,
-       dcmcnputc,
-       nullcnpollc,
-       NULL,
-       NULL,
-       NULL,
-       NODEV,
-       CN_REMOTE
+	NULL,
+	NULL,
+	dcmcngetc,
+	dcmcnputc,
+	nullcnpollc,
+	NULL,
+	NULL,
+	NULL,
+	NODEV,
+	CN_REMOTE
 };
 int	dcmconscode;
 int	dcmdefaultrate = DEFAULT_BAUD_RATE;
@@ -583,7 +617,7 @@ dcmopen(dev, flag, mode, p)
  bad:
 	return (error);
 }
- 
+
 /*ARGSUSED*/
 int
 dcmclose(dev, flag, mode, p)
@@ -594,7 +628,7 @@ dcmclose(dev, flag, mode, p)
 	int s, unit, board, port;
 	struct dcm_softc *sc;
 	struct tty *tp;
- 
+
 	unit = DCMUNIT(dev);
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
@@ -623,7 +657,7 @@ dcmclose(dev, flag, mode, p)
 #endif
 	return (0);
 }
- 
+
 int
 dcmread(dev, uio, flag)
 	dev_t dev;
@@ -643,7 +677,7 @@ dcmread(dev, uio, flag)
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
- 
+
 int
 dcmwrite(dev, uio, flag)
 	dev_t dev;
@@ -680,7 +714,7 @@ dcmpoll(dev, events, p)
 
 	sc = dcm_cd.cd_devs[board];
 	tp = sc->sc_tty[port];
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
@@ -699,7 +733,7 @@ dcmtty(dev)
 
 	return (sc->sc_tty[port]);
 }
- 
+
 int
 dcmintr(arg)
 	void *arg;
@@ -738,7 +772,7 @@ dcmintr(arg)
 	if (dcmdebug & DDB_INTR) {
 		printf("%s: dcmintr: iir %x pc %x/%x/%x/%x ",
 		       sc->sc_dev.dv_xname, code, pcnd[0], pcnd[1],
-		       pcnd[2], pcnd[3]); 
+		       pcnd[2], pcnd[3]);
 		printf("miir %x mc %x/%x/%x/%x\n",
 		       mcode, mcnd[0], mcnd[1], mcnd[2], mcnd[3]);
 	}
@@ -1010,7 +1044,7 @@ dcmioctl(dev, cmd, data, flag, p)
 	sc = dcm_cd.cd_devs[board];
 	dcm = sc->sc_dcm;
 	tp = sc->sc_tty[port];
- 
+
 #ifdef DEBUG
 	if (dcmdebug & DDB_IOCTL)
 		printf("%s port %d: dcmioctl: cmd %lx data %x flag %x\n",
@@ -1188,7 +1222,7 @@ dcmparam(tp, t)
 	DELAY(16 * DCM_USPERCH(tp->t_ospeed));
 	return (0);
 }
- 
+
 void
 dcmstart(tp)
 	struct tty *tp;
@@ -1315,7 +1349,7 @@ out:
 #endif
 	splx(s);
 }
- 
+
 /*
  * Stop output on a line.
  */
@@ -1334,7 +1368,7 @@ dcmstop(tp, flag)
 	}
 	splx(s);
 }
- 
+
 /*
  * Modem control
  */
@@ -1514,7 +1548,7 @@ dcmselftest(sc)
 	s = splhigh();
 	dcm->dcm_rsid = DCMRS;
 	DELAY(50000);	/* 5000 is not long enough */
-	dcm->dcm_rsid = 0; 
+	dcm->dcm_rsid = 0;
 	dcm->dcm_ic = IC_IE;
 	dcm->dcm_cr = CR_SELFT;
 	while ((dcm->dcm_ic & IC_IR) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11 2003/03/19 11:37:57 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.11.2.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11.2.1 2004/08/03 10:40:24 skrll Exp $");
 
 #include "opt_ddb.h"
 

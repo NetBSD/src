@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.5.6.1 2003/07/03 00:40:23 wrstuden Exp $	*/
+/*	$NetBSD: kbd.c,v 1.5.6.2 2004/08/03 10:32:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -42,6 +42,9 @@
  *
  * Created      : 09/10/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.5.6.2 2004/08/03 10:32:38 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"

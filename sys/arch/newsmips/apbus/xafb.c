@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.5 2002/10/02 04:27:51 thorpej Exp $	*/
+/*	$NetBSD: xafb.c,v 1.5.6.1 2004/08/03 10:38:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,6 +27,9 @@
  */
 
 /* "xa" frame buffer driver.  Currently supports 1280x1024x8 only. */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.5.6.1 2004/08/03 10:38:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -400,25 +403,31 @@ xafb_putcmap(sc, cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
-	int i;
+	int i, error;
+	u_char rbuf[256], gbuf[256], bbuf[256];
 	u_char *r, *g, *b;
 
-	if (index >= 256 || count > 256 || index + count > 256)
+	if (cm->index >= 256 || cm->count > 256 ||
+	    (cm->index + cm->count) > 256)
 		return EINVAL;
-	if (!uvm_useracc(cm->red,   count, B_READ) ||
-	    !uvm_useracc(cm->green, count, B_READ) ||
-	    !uvm_useracc(cm->blue,  count, B_READ))
-		return EFAULT;
-	copyin(cm->red,   &sc->sc_cmap_red[index],   count);
-	copyin(cm->green, &sc->sc_cmap_green[index], count);
-	copyin(cm->blue,  &sc->sc_cmap_blue[index],  count);
+	error = copyin(cm->red, &rbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->green, &gbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->blue, &bbuf[index], count);
+	if (error)
+		return error;
+
+	memcpy(&sc->sc_cmap_red[index], &rbuf[index], count);
+	memcpy(&sc->sc_cmap_green[index], &gbuf[index], count);
+	memcpy(&sc->sc_cmap_blue[index], &bbuf[index], count);
 
 	r = &sc->sc_cmap_red[index];
 	g = &sc->sc_cmap_green[index];
 	b = &sc->sc_cmap_blue[index];
-
 	for (i = 0; i < count; i++)
 		xafb_setcolor(sc->sc_dc, index++, *r++, *g++, *b++);
-
 	return 0;
 }

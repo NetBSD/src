@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/12/12 12:24:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.8.16.1 2004/08/03 10:39:55 skrll Exp $
 
 NOMAN= # defined
 
@@ -21,11 +21,13 @@ SRCS+= boot.c clock.c com.c conf.c cons.c devopen.c fd.c
 SRCS+= filesystem.c inkernel.c io.c tgets.c prf.c monitor.c
 SRCS+= kbd.c ns16550.c vers.c vreset.c vga.c video.c
 
+CFLAGS= -Os -mmultiple -ffreestanding
 AFLAGS= -x assembler-with-cpp -traditional-cpp
 
 CPPFLAGS= -nostdinc -I${.OBJDIR} -I${.CURDIR}/../mkbootimage -I${S}
 CPPFLAGS+= -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 CPPFLAGS+= -D_STANDALONE -DDBMONITOR -DRELOC=${RELOC} -DUSE_SCAN
+CPPFLAGS+= -D__daddr_t=int32_t
 
 .if (${BASE} == "boot")
 CPPFLAGS+= -DCONS_VGA
@@ -34,13 +36,16 @@ CPPFLAGS+= -DCONS_VGA
 CPPFLAGS+= -DCONS_SERIAL -DCOMSPEED=9600 -DCOMPORT=0x3f8
 .endif
 
-OBJDUMP?= objdump
 STRIPFLAG=
 BINMODE= 444
 
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
+
 RELOC= 0x800000
-HEAD_SIZE= `${OBJDUMP} -h ${.OBJDIR}/${PROG} | grep \.text | awk '{print $$6}'`
-KERN_OFFSET= `ls -l ${.OBJDIR}/${PROG} | awk '{print $$5}'`
 
 CLEANFILES+= vers.c machine powerpc
 
@@ -59,13 +64,9 @@ powerpc::
 	ln -s ${S}/arch/powerpc/include $@
 
 vers.c: ${.CURDIR}/../boot/version
-	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/../boot/version "prep" ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/../boot/version "prep" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} machine powerpc
-	${LD} -o ${PROG} -s -N -T ${.CURDIR}/../boot/ld.script \
-		-Ttext ${RELOC} ${OBJS} ${LIBS}
-	${COMPILE.c} -DKERN_OFFSET=${KERN_OFFSET} -DHEAD_SIZE=0x${HEAD_SIZE} \
-		${.CURDIR}/../boot/inkernel.c
 	${LD} -o ${PROG} -s -N -T ${.CURDIR}/../boot/ld.script \
 		-Ttext ${RELOC} ${OBJS} ${LIBS}
 

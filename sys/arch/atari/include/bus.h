@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.30 2003/06/15 23:08:57 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.30.2.1 2004/08/03 10:33:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -607,7 +607,7 @@ struct atari_bus_dma_tag {
 
 	/*
 	 * The next value can be used to compensate for a constant
-	 * displacement between the adress space view of the CPU
+	 * displacement between the address space view of the CPU
 	 * and the devices on the bus.
 	 */
 	int32_t		_displacement;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.36 2003/06/23 11:01:07 martin Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.36.2.1 2004/08/03 10:32:29 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,37 +192,65 @@ _C_LABEL(curpcb):
  */
 /* LINTSTUB: Ignore */
 ASENTRY_NP(idle)
+	ldr	r6, .Lcpu_do_powersave
+	IRQenable			/* Enable interrupts */
+	ldr	r6, [r6]		/* r6 = cpu_do_powersave */
+
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
-	ldr	r3, .Lcpu_do_powersave
 
-	/* Enable interrupts */
-	IRQenable
+	/* Drop to spl0 (returns the current spl level in r0). */
+#ifdef __NEWINTR
+	mov	r0, #(IPL_NONE)
+	bl	_C_LABEL(_spllower)
+#else /* ! __NEWINTR */
+	mov	r0, #(_SPL_0)
+	bl	_C_LABEL(splx)
+#endif /* __NEWINTR */
 
-	/* If we don't want to sleep, use a simpler loop. */
-	ldr	r3, [r3]		/* r3 = cpu_do_powersave */
+	teq	r6, #0			/* cpu_do_powersave non zero? */
+	ldrne	r6, .Lcpufuncs
+	mov	r4, r0			/* Old interrupt level to r4 */
+	ldrne	r6, [r6, #(CF_SLEEP)]
+
+	/*
+	 * Main idle loop.
+	 * r6 points to power-save idle function if required, else NULL.
+	 */
+1:	ldr	r3, [r7]		/* r3 = sched_whichqs */
 	teq	r3, #0
-	bne	2f
+	bne	2f			/* We have work to do */
+	teq	r6, #0			/* Powersave idle? */
+	beq	1b			/* Nope. Just sit-n-spin. */
 
-	/* Non-powersave idle. */
-1:	/* should maybe do uvm pageidlezero stuff here */
-	ldr	r3, [r7]		/* r3 = whichqs */
-	teq	r3, #0x00000000
-	bne	.Lswitch_search
-	b	1b
-
-2:	/* Powersave idle. */
-	ldr	r4, .Lcpufuncs
-3:	ldr	r3, [r7]		/* r3 = whichqs */
-	teq	r3, #0x00000000
-	bne	.Lswitch_search
-
-	/* if saving power, don't want to pageidlezero */
+	/*
+	 * Before going into powersave idle mode, disable interrupts
+	 * and check sched_whichqs one more time.
+	 */
+	IRQdisableALL
+	ldr	r3, [r7]
 	mov	r0, #0
-	adr	lr, 3b
-	ldr	pc, [r4, #(CF_SLEEP)]
-	/* loops back around */
+	teq	r3, #0			/* sched_whichqs still zero? */
+	moveq	lr, pc
+	moveq	pc, r6			/* If so, do powersave idle */
+	IRQenableALL
+	b	1b			/* Back around */
+
+	/*
+	 * sched_whichqs indicates that at least one lwp is ready to run.
+	 * Restore the original interrupt priority level, grab the
+	 * scheduler lock if necessary, and jump back into cpu_switch.
+	 */
+2:	mov	r0, r4
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(splx)
+	adr	lr, .Lswitch_search
+	b	_C_LABEL(sched_lock_idle)
+#else
+	adr	lr, .Lswitch_search
+	b	_C_LABEL(splx)
+#endif
 
 
 /*
@@ -259,25 +287,7 @@ ENTRY(cpu_switch)
 	/* stash the old proc while we call functions */
 	mov	r5, r0
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/* release the sched_lock before handling interrupts */
-	bl	_C_LABEL(sched_unlock_idle)
-#endif
-
-	/* Lower the spl level to spl0 and get the current spl level. */
-#ifdef __NEWINTR
-	mov	r0, #(IPL_NONE)
-	bl	_C_LABEL(_spllower)
-#else /* ! __NEWINTR */
-	mov	r0, #(_SPL_0)
-	bl	_C_LABEL(splx)
-#endif /* __NEWINTR */
-
-	/* Push the old spl level onto the stack */
-	str	r0, [sp, #-0x0004]!
-
 	/* First phase : find a new lwp */
-
 	ldr	r7, .Lwhichqs
 
 	/* rem: r5 = old lwp */
@@ -285,9 +295,6 @@ ENTRY(cpu_switch)
 
 .Lswitch_search:
 	IRQdisable
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	bl	_C_LABEL(sched_lock_idle)
-#endif
 
 	/* Do we have any active queues  */
 	ldr	r3, [r7]
@@ -303,28 +310,34 @@ ENTRY(cpu_switch)
 	/* rem: r3 = whichqs */
 	/* rem: interrupts are disabled */
 
+	/* used further down, saves SA stall */
+	ldr	r6, .Lqs
+
 	/*
 	 * We have found an active queue. Currently we do not know which queue
 	 * is active just that one of them is.
 	 */
-	/* this is the ffs algorithm devised by d.seal and posted to
-	 * comp.sys.arm on 16 Feb 1994.
+	/* Non-Xscale version of the ffs algorithm devised by d.seal and
+	 * posted to comp.sys.arm on 16 Feb 1994.
 	 */
  	rsb	r5, r3, #0
  	ands	r0, r3, r5
-	
+
+#ifndef __XSCALE__
 	adr	r5, .Lcpu_switch_ffs_table
-	
+
 				    /* X = R0 */
 	orr	r4, r0, r0, lsl #4  /* r4 = X * 0x11 */ 
 	orr	r4, r4, r4, lsl #6  /* r4 = X * 0x451 */
 	rsb	r4, r4, r4, lsl #16 /* r4 = X * 0x0450fbaf */
 	
-	/* used further down, saves SA stall */
-	ldr	r6, .Lqs
-              
 	/* now lookup in table indexed on top 6 bits of a4 */
 	ldrb	r4, [ r5, r4, lsr #26 ]
+
+#else	/* __XSCALE__ */
+	clz	r4, r0
+	rsb	r4, r4, #31
+#endif	/* __XSCALE__ */
 
 	/* rem: r0 = bit mask of chosen queue (1 << r4) */
 	/* rem: r1 = old lwp */
@@ -341,6 +354,11 @@ ENTRY(cpu_switch)
 	 * the head of the queue.
 	 */
 	ldr	r6, [r5, #(L_FORW)]
+
+#ifdef DIAGNOSTIC
+	cmp	r6, r5
+	beq	.Lswitch_bogons
+#endif
 
 	/* rem: r6 = new lwp */
 	ldr	r7, [r6, #(L_FORW)]
@@ -363,8 +381,8 @@ ENTRY(cpu_switch)
 	str	r0, [r7, #(L_BACK)]
 
 	/* Update the RAM copy of the queue not empty flags word. */
-	ldr	r7, .Lwhichqs
-	str	r3, [r7]
+	ldreq	r7, .Lwhichqs
+	streq	r3, [r7]
 
 	/* rem: r1 = old lwp */
 	/* rem: r3 = whichqs - NOT NEEDED ANY MORE */
@@ -392,7 +410,13 @@ ENTRY(cpu_switch)
 	mov	r1, r7
 #endif
 
+
 .Lswitch_resume:
+	/* rem: r1 = old lwp */
+	/* rem: r4 = return value [not used if came from cpu_switchto()] */
+	/* rem: r6 = new process */
+	/* rem: interrupts are disabled */
+
 #ifdef MULTIPROCESSOR
 	/* XXX use curcpu() */
 	ldr	r0, .Lcpu_info_store
@@ -462,8 +486,14 @@ ENTRY(cpu_switch)
 	ldr	r1, [r0, #(L_ADDR)]
 
 	/* Save all the registers in the old lwp's pcb */
+#ifndef __XSCALE__
 	add	r7, r1, #(PCB_R8)
 	stmia	r7, {r8-r13}
+#else
+	strd	r8, [r1, #(PCB_R8)]
+	strd	r10, [r1, #(PCB_R10)]
+	strd	r12, [r1, #(PCB_R12)]
+#endif
 
 	/*
 	 * NOTE: We can now use r8-r13 until it is time to restore
@@ -692,10 +722,20 @@ ENTRY(cpu_switch)
         msr	cpsr_c, r3		/* Restore the old mode */
 
 	/* Restore all the save registers */
+#ifndef __XSCALE__
 	add	r7, r9, #PCB_R8
 	ldmia	r7, {r8-r13}
 
 	sub	r7, r7, #PCB_R8		/* restore PCB pointer */
+#else
+	mov	r7, r9
+	ldr	r8, [r7, #(PCB_R8)]
+	ldr	r9, [r7, #(PCB_R9)]
+	ldr	r10, [r7, #(PCB_R10)]
+	ldr	r11, [r7, #(PCB_R11)]
+	ldr	r12, [r7, #(PCB_R12)]
+	ldr	r13, [r7, #(PCB_SP)]
+#endif
 
 	ldr	r5, [r6, #(L_PROC)]	/* fetch the proc for below */
 
@@ -722,17 +762,12 @@ ENTRY(cpu_switch)
 	 * Check for restartable atomic sequences (RAS).
 	 */
 
-	ldr	r2, [r5, #(P_NRAS)]
-	ldr	r4, [r7, #(PCB_TF)]	/* r4 = trapframe (used below) */
+	ldr	r2, [r5, #(P_RASLIST)]
+	ldr	r1, [r7, #(PCB_TF)]	/* r1 = trapframe (used below) */
 	teq	r2, #0			/* p->p_nras == 0? */
 	bne	.Lswitch_do_ras		/* no, check for one */
 
 .Lswitch_return:
-
-	/* Get the spl level from the stack and update the current spl level */
-	ldr	r0, [sp], #0x0004
-	bl	_C_LABEL(splx)
-
 	/* cpu_switch returns 1 == switched, 0 == didn't switch */
 	mov	r0, r4
 
@@ -743,11 +778,12 @@ ENTRY(cpu_switch)
 	ldmfd	sp!, {r4-r7, pc}
 
 .Lswitch_do_ras:
-	ldr	r1, [r4, #(TF_PC)]	/* second ras_lookup() arg */
+	ldr	r1, [r1, #(TF_PC)]	/* second ras_lookup() arg */
 	mov	r0, r5			/* first ras_lookup() arg */
 	bl	_C_LABEL(ras_lookup)
 	cmn	r0, #1			/* -1 means "not in a RAS" */
-	strne	r0, [r4, #(TF_PC)]
+	ldrne	r1, [r7, #(PCB_TF)]
+	strne	r0, [r1, #(TF_PC)]
 	b	.Lswitch_return
 
 .Lswitch_exited:
@@ -765,6 +801,18 @@ ENTRY(cpu_switch)
 	ldr	r11, [r9, #(PCB_PAGEDIR)]	/* r11 = new L1 */
 	b	.Lcs_cache_purge_skipped
 
+
+#ifdef DIAGNOSTIC
+.Lswitch_bogons:
+	adr	r0, .Lswitch_panic_str
+	bl	_C_LABEL(panic)
+1:	nop
+	b	1b
+
+.Lswitch_panic_str:
+	.asciz	"cpu_switch: sched_qs empty with non-zero sched_whichqs!\n"
+#endif
+
 /*
  * cpu_switchto(struct lwp *current, struct lwp *next)
  * Switch to the specified next LWP
@@ -776,55 +824,25 @@ ENTRY(cpu_switch)
 ENTRY(cpu_switchto)
 	stmfd	sp!, {r4-r7, lr}
 
-	/* Lower the spl level to spl0 and get the current spl level. */
-	mov	r6, r0		/* save old lwp */
-	mov	r5, r1		/* save new lwp */
+	mov	r6, r1		/* save new lwp */
 
 #if defined(LOCKDEBUG)
-	/* release the sched_lock before handling interrupts */
+	mov	r5, r0		/* save old lwp */
 	bl	_C_LABEL(sched_unlock_idle)
-#endif
-
-#ifdef __NEWINTR
-	mov	r0, #(IPL_NONE)
-	bl	_C_LABEL(_spllower)
-#else /* ! __NEWINTR */
-#ifdef spl0
-	mov	r0, #(_SPL_0)
-	bl	_C_LABEL(splx)
+	mov	r1, r5
 #else
-	bl	_C_LABEL(spl0)
-#endif /* spl0 */
-#endif /* __NEWINTR */
-
-	/* Push the old spl level onto the stack */
-	str	r0, [sp, #-0x0004]!
+	mov	r1, r0
+#endif
 
 	IRQdisable
-#if defined(LOCKDEBUG)
-	bl	_C_LABEL(sched_lock_idle)
-#endif
-
-	mov	r0, r6		/* restore old lwp */
-	mov	r1, r5		/* restore new lwp */
-
-	/* rem: r0 = old lwp */
-	/* rem: r1 = new lwp */
-	/* rem: interrupts are disabled */
 
 	/*
 	 * Okay, set up registers the way cpu_switch() wants them,
 	 * and jump into the middle of it (where we bring up the
 	 * new process).
+	 *
+	 * r1 = old lwp (r6 = new lwp)
 	 */
-	mov	r6, r1			/* r6 = new lwp */
-#if defined(LOCKDEBUG)
-	mov	r5, r0			/* preserve old lwp */
-	bl	_C_LABEL(sched_unlock_idle)
-	mov	r1, r5			/* r1 = old lwp */
-#else
-	mov	r1, r0			/* r1 = old lwp */
-#endif
 	b	.Lswitch_resume
 
 /*
@@ -936,9 +954,17 @@ ENTRY(switch_exit)
 	ldr	r0, .Lcurpcb
    
 	/* Restore all the save registers */
+#ifndef __XSCALE__
 	add	r1, r7, #PCB_R8
 	ldmia	r1, {r8-r13}
-
+#else
+	ldr	r8, [r7, #(PCB_R8)]
+	ldr	r9, [r7, #(PCB_R9)]
+	ldr	r10, [r7, #(PCB_R10)]
+	ldr	r11, [r7, #(PCB_R11)]
+	ldr	r12, [r7, #(PCB_R12)]
+	ldr	r13, [r7, #(PCB_SP)]
+#endif
 	str	r7, [r0]	/* curpcb = lwp0's PCB */
 
 	IRQenableALL
@@ -949,6 +975,10 @@ ENTRY(switch_exit)
 	mov	r0, r4			/* {lwp_}exit2(l) */
 	mov	lr, pc
 	mov	pc, r6
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 
 	ldr	r7, .Lwhichqs		/* r7 = &whichqs */
 	mov	r5, #0x00000000		/* r5 = old lwp = NULL */
@@ -964,13 +994,27 @@ ENTRY(savectx)
 	stmfd	sp!, {r4-r7, lr}
 
 	/* Store all the registers in the process's pcb */
+#ifndef __XSCALE__
 	add	r2, r0, #(PCB_R8)
 	stmia	r2, {r8-r13}
+#else
+	strd	r8, [r0, #(PCB_R8)]
+	strd	r10, [r0, #(PCB_R10)]
+	strd	r12, [r0, #(PCB_R12)]
+#endif
 
 	/* Pull the regs of the stack */
 	ldmfd	sp!, {r4-r7, pc}
 
 ENTRY(proc_trampoline)
+#ifdef __NEWINTR
+	mov	r0, #(IPL_NONE)
+	bl	_C_LABEL(_spllower)
+#else /* ! __NEWINTR */
+	mov	r0, #(_SPL_0)
+	bl	_C_LABEL(splx)
+#endif /* __NEWINTR */
+
 #ifdef MULTIPROCESSOR
 	bl	_C_LABEL(proc_trampoline_mp)
 #endif
@@ -988,6 +1032,7 @@ ENTRY(proc_trampoline)
 
 	movs	pc, lr			/* Exit */
 
+#ifndef __XSCALE__
 	.type .Lcpu_switch_ffs_table, _ASM_TYPE_OBJECT;
 .Lcpu_switch_ffs_table:
 /* same as ffs table but all nums are -1 from that */
@@ -1000,3 +1045,4 @@ ENTRY(proc_trampoline)
 	.byte	 9,  0,  0, 24,  0,  0, 20, 26  /* 40-47 */
 	.byte	30,  0,  0,  0,  0, 23,  0, 19  /* 48-55 */
 	.byte   29,  0, 22, 18, 28, 17, 16,  0  /* 56-63 */
+#endif	/* !__XSCALE_ */

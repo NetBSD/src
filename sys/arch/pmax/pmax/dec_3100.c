@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.35 2001/09/18 16:15:19 tsutsui Exp $ */
+/* $NetBSD: dec_3100.c,v 1.35.22.1 2004/08/03 10:39:13 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,9 +31,42 @@
  */
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department, The Mach Operating System project at
+ * Carnegie-Mellon University and Ralph Campbell.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -71,6 +104,9 @@
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.35.22.1 2004/08/03 10:39:13 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -81,14 +117,24 @@
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
+#include <dev/tc/tcvar.h>		/* tc_addr_t */
+
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn01.h>
-#include <pmax/dev/pmvar.h>
-#include <pmax/dev/dcvar.h>
 
 #include <pmax/ibus/ibusvar.h>
 
+#ifdef WSCONS
+#include <dev/dec/dzreg.h>
+#include <dev/dec/dzvar.h>
+#include <dev/dec/dzkbdvar.h>
+#include <pmax/pmax/cons.h>
+#else
+#include <pmax/dev/pmvar.h>
+#include <pmax/dev/dcvar.h>
 #include "rasterconsole.h"
+#endif
+
 #include "pm.h"
 
 void		dec_3100_init __P((void));		/* XXX */
@@ -151,7 +197,13 @@ dec_3100_cons_init()
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if NRASTERCONSOLE > 0 && NPM > 0
+#if defined(WSCONS) && NPM > 0
+ 		if (pm_cnattach() > 0) {
+			dz_ibus_cnsetup(KN01_SYS_DZ);
+			dzkbd_cnattach(NULL);
+ 			return;
+ 		}
+#elif NRASTERCONSOLE > 0 && NPM > 0
 		if (pm_cnattach() > 0) {
 			dckbd_cnattach(KN01_SYS_DZ);
 			return;
@@ -168,7 +220,12 @@ dec_3100_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
+#ifdef WSCONS
+	dz_ibus_cnsetup(KN01_SYS_DZ);
+	dz_ibus_cnattach(kbd);
+#else
 	dc_cnattach(KN01_SYS_DZ, kbd);
+#endif
 }
 
 #define CALLINTR(vvv, cp0)					\

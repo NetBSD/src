@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.49 2003/04/10 22:06:57 christos Exp $
+#	$NetBSD: TX3922,v 1.49.2.1 2004/08/03 10:35:05 skrll Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -10,6 +10,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 maxusers	16
 
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
+makeoptions	CPUFLAGS="-mips2"	# CPU codegen options
 options 	TX392X			# Toshiba TX3922
 
 options 	TX39_DEBUG
@@ -20,6 +21,7 @@ options 	TX39_DEBUG
 #options 	TX39POWER_DEBUG
 #options 	TX39UART_DEBUG
 
+options 	KLOADER
 options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 options		KLOADER_DEBUG
 
@@ -42,6 +44,7 @@ options 	NTP			# network time protocol
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # File systems
 file-system 	FFS		# UFS
@@ -100,8 +103,8 @@ txcsbus2	at tx39biu? platform VICTOR_INTERLINK
 
 # IO module manager (virtual bridge) DO NOT DELETE
 txioman* at txsim?
-# iochip 0 TX39 internal IO
-#	 1 TX39 internal MFIO
+# iochip 0 TX39 internal MFIO
+#	 1 TX39 internal IO
 #	 2 BETTY IO
 #	(3) ITE IO notyet
 #	(4) Plum2 IO (EXTPW[0:2]) notyet
@@ -198,7 +201,7 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
+atapibus* at umass?
 scsibus* at umass? channel ?
 
 # USB audio
@@ -265,10 +268,15 @@ pcmcia* at plumpcmcia? controller ? socket ?
 
 # PCMCIA IDE disk
 wdc*	at pcmcia? function ?
-wd*	at wdc? channel ? drive ? flags 0x0000
+
+# ATA (IDE) bus support
+atabus* at ata?
+
+# IDE drives
+wd*	at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus* at wdc? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.

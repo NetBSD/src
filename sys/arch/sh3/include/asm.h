@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.10 2002/04/28 17:10:33 uch Exp $	*/
+/*	$NetBSD: asm.h,v 1.10.12.1 2004/08/03 10:40:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -84,7 +80,18 @@
 	x:
 #endif /* __ELF__ */
 
+#ifdef GPROF
+#define	_PROF_PROLOGUE				  \
+	mov.l	1f,r1				; \
+	mova	2f,r0				; \
+	jmp	@r1				; \
+	 nop					; \
+	.align	2				; \
+1:	.long	__mcount			; \
+2:
+#else  /* !GPROF */
 #define	_PROF_PROLOGUE
+#endif /* !GPROF */
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y))				;\
 	_PROF_PROLOGUE
@@ -103,7 +110,17 @@
 
 #define	ASMSTR		.asciz
 
+#ifdef __ELF__
+#define RCSID(x)	.section .ident; .asciz x; .previous
+#else
 #define	RCSID(x)	.text; .asciz x
+#endif
+
+#ifdef NO_KERNEL_RCSIDS
+#define	__KERNEL_RCSID(_n, _s)	/* nothing */
+#else
+#define	__KERNEL_RCSID(_n, _s)	RCSID(_s)
+#endif
 
 #ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.8 2002/09/27 15:36:36 provos Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.8.6.1 2004/08/03 10:39:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysconf.c,v 1.8.6.1 2004/08/03 10:39:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

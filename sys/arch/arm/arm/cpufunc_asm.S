@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.11 2001/11/10 23:14:08 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.11.20.1 2004/08/03 10:32:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -66,6 +66,10 @@ ENTRY(cpufunc_id)
 
 ENTRY(cpu_get_control)
 	mrc	p15, 0, r0, c1, c0, 0
+	mov	pc, lr
+
+ENTRY(cpu_read_cache_config)
+	mrc	p15, 0, r0, c0, c0, 1
 	mov	pc, lr
 
 ENTRY(cpufunc_faultstatus)

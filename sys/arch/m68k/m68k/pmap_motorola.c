@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.5 2003/05/10 21:10:32 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.5.2.1 2004/08/03 10:36:59 skrll Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -52,11 +52,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -128,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.5 2003/05/10 21:10:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.5.2.1 2004/08/03 10:36:59 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -421,7 +417,7 @@ pmap_init()
 		panic("pmap_init: can't allocate data structures");
 
 	Segtabzero = (st_entry_t *) addr;
-	(void) pmap_extract(pmap_kernel(), addr, (paddr_t *)&Segtabzeropa);
+	(void) pmap_extract(pmap_kernel(), addr, (paddr_t *)(void *)&Segtabzeropa);
 	addr += M68K_STSIZE;
 
 	pv_table = (struct pv_entry *) addr;
@@ -916,7 +912,7 @@ pmap_do_remove(pmap, sva, eva, remove_wired)
 	pt_entry_t *pte;
 	int flags;
 #ifdef M68K_MMU_HP
-	boolean_t firstpage, needcflush;
+	boolean_t firstpage = TRUE, needcflush = FALSE;
 #endif
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
@@ -973,6 +969,7 @@ pmap_do_remove(pmap, sva, eva, remove_wired)
 						needcflush = TRUE;
 
 				}
+				firstpage = FALSE;
 #endif
 				pmap_remove_mapping(pmap, sva, pte, flags);
 			}
@@ -1679,7 +1676,6 @@ pmap_extract(pmap, va, pap)
 	vaddr_t va;
 	paddr_t *pap;
 {
-	boolean_t rv = FALSE;
 	paddr_t pa;
 	u_int pte;
 
@@ -1692,18 +1688,18 @@ pmap_extract(pmap, va, pap)
 			pa = (pte & PG_FRAME) | (va & ~PG_FRAME);
 			if (pap != NULL)
 				*pap = pa;
-			rv = TRUE;
+#ifdef DEBUG
+			if (pmapdebug & PDB_FOLLOW)
+				printf("%lx\n", pa);
+#endif
+			return (TRUE);
 		}
 	}
 #ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW) {
-		if (rv)
-			printf("%lx\n", pa);
-		else
-			printf("failed\n");
-	}
+	if (pmapdebug & PDB_FOLLOW)
+		printf("failed\n");
 #endif
-	return (rv);
+	return (FALSE);
 }
 
 /*

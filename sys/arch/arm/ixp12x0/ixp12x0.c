@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.8 2003/06/15 23:08:56 fvdl Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.8.2.1 2004/08/03 10:32:49 skrll Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.8 2003/06/15 23:08:56 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.8.2.1 2004/08/03 10:32:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,26 +60,24 @@ ixp12x0_attach(sc)
 	ixp12x0_softc = sc;
 
 	printf("\n");
+
+	sc->sc_iot = &ixp12x0_bs_tag;
+
 	/*
-	 * Subregion for PCI Configuration Spase Registers
+	 * Mapping for PCI Configuration Spase Registers
 	 */
-	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
-		IXP12X0_PCI_VBASE - IXP12X0_IO_VBASE,
-		IXP12X0_PCI_SIZE, &sc->sc_pci_ioh))
-			panic("%s: unable to subregion PCI registers",
-			       sc->sc_dev.dv_xname); 
+	if (bus_space_map(sc->sc_iot, IXP12X0_PCI_HWBASE, IXP12X0_PCI_SIZE,
+			  0, &sc->sc_pci_ioh))
+		panic("%s: unable to map PCI registers", sc->sc_dev.dv_xname); 
+	if (bus_space_map(sc->sc_iot, IXP12X0_PCI_TYPE0_HWBASE,
+			  IXP12X0_PCI_TYPE0_SIZE, 0, &sc->sc_conf0_ioh))
+		panic("%s: unable to map PCI Configutation 0\n",
+		      sc->sc_dev.dv_xname);
+	if (bus_space_map(sc->sc_iot, IXP12X0_PCI_TYPE1_HWBASE,
+			  IXP12X0_PCI_TYPE0_SIZE, 1, &sc->sc_conf1_ioh))
+		panic("%s: unable to map PCI Configutation 1\n",
+		      sc->sc_dev.dv_xname);
 
-	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
-		IXP12X0_PCI_TYPE0_VBASE - IXP12X0_IO_VBASE,
-		IXP12X0_PCI_TYPE0_SIZE, &sc->sc_conf0_ioh))
-			panic("%s: unable to subregion PCI Configutation 0\n",
-			       sc->sc_dev.dv_xname);
-
-	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
-		IXP12X0_PCI_TYPE1_VBASE - IXP12X0_IO_VBASE,
-		IXP12X0_PCI_TYPE1_SIZE, &sc->sc_conf1_ioh))
-			panic("%s: unable to subregion PCI Configutation 1\n",
-			       sc->sc_dev.dv_xname);
 	/*
 	 * PCI bus reset
 	 */
@@ -145,7 +143,7 @@ ixp12x0_attach(sc)
 		SA_CONTROL) | 0x1;
 	bus_space_write_4(sc->sc_iot, sc->sc_pci_ioh,
 		SA_CONTROL, reg);
-#if DEBUG
+#ifdef PCI_DEBUG
 	printf("SA_CONTROL = 0x%08x\n",
 		bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh, SA_CONTROL));
 #endif 
@@ -165,10 +163,8 @@ ixp12x0_attach(sc)
 		bus_space_read_4(sc->sc_iot, sc->sc_pci_ioh, PCI_COMMAND_STATUS_REG));
 #endif
 	/*
-	 * Initialize the bus space and DMA tags and the PCI chipset tag.
+	 * Initialize the PCI chipset tag.
 	 */
-	ixp12x0_io_bs_init(&sc->ia_pci_iot, sc);
-	ixp12x0_mem_bs_init(&sc->ia_pci_memt, sc);
 	ixp12x0_pci_init(&sc->ia_pci_chipset, sc);
 
 	/*
@@ -181,8 +177,8 @@ ixp12x0_attach(sc)
 	 */
 	pba.pba_busname = "pci";
 	pba.pba_pc = &sc->ia_pci_chipset;
-	pba.pba_iot = &sc->ia_pci_iot;
-	pba.pba_memt = &sc->ia_pci_memt;
+	pba.pba_iot = &ixp12x0_bs_tag;
+	pba.pba_memt = &ixp12x0_bs_tag;
 	pba.pba_dmat = &sc->ia_pci_dmat;
 	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;	/* bus number = 0 */
@@ -204,75 +200,6 @@ ixp12x0_pcibus_print(void *aux, const char *pnp)
 	aprint_normal(" bus %d", pba->pba_bus);
 
 	return (UNCONF);
-}
-
-/*
- * IXP12x0 specific I/O registers mapping table
- */
-static struct pmap_ent	map_tbl_ixp12x0[] = {
-	{ "StrongARM System and Peripheral Registers",
-	  IXP12X0_SYS_VBASE, IXP12X0_SYS_HWBASE,
-	  IXP12X0_SYS_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-
-	{ "PCI Registers Accessible Through StrongARM Core",
-	  IXP12X0_PCI_VBASE, IXP12X0_PCI_HWBASE,
-	  IXP12X0_PCI_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-
-	{ "PCI Registers Accessible Through I/O Cycle Access",
-	  IXP12X0_PCI_IO_VBASE, IXP12X0_PCI_IO_HWBASE,
-	  IXP12X0_PCI_IO_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-
-	{ "PCI Registers Accessible Through Memory Cycle Access",
-	  IXP12X0_PCI_MEM_VBASE, IXP12X0_PCI_MEM_HWBASE,
-	  IXP12X0_PCI_MEM_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-
-	{ "PCI Type0 Configuration Space",
-	  IXP12X0_PCI_TYPE0_VBASE, IXP12X0_PCI_TYPE0_HWBASE,
-	  IXP12X0_PCI_TYPE0_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-
-	{ "PCI Type1 Configuration Space",
-	  IXP12X0_PCI_TYPE1_VBASE, IXP12X0_PCI_TYPE1_HWBASE,
-	  IXP12X0_PCI_TYPE1_SIZE,
-	  VM_PROT_READ|VM_PROT_WRITE,
-	  PTE_NOCACHE, },
-
-	{ NULL, 0, 0, 0, 0, 0 },
-};
-
-/*
- * mapping virtual memories
- */
-void
-ixp12x0_pmap_chunk_table(vaddr_t l1pt, struct pmap_ent* m)
-{
-	int loop;
-
-	loop = 0;
-	while (m[loop].msg) {
-		printf("mapping %s...\n", m[loop].msg);
-		pmap_map_chunk(l1pt, m[loop].va, m[loop].pa,
-			       m[loop].sz, m[loop].prot, m[loop].cache);
-		++loop;
-	}
-}
-
-/*
- * mapping I/O registers
- */
-void
-ixp12x0_pmap_io_reg(vaddr_t l1pt)
-{
-	ixp12x0_pmap_chunk_table(l1pt, map_tbl_ixp12x0);
 }
 
 void

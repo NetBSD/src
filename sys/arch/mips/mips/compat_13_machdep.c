@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.10 2003/01/17 23:36:10 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.10.2.1 2004/08/03 10:37:47 skrll Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.10 2003/01/17 23:36:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.10.2.1 2004/08/03 10:37:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,14 +65,14 @@ compat_13_sys_sigreturn(l, v, retval)
 	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
 		return (error);
 
-	if ((u_int)ksc.sc_regs[ZERO] != 0xacedbadeU)	/* magic number */
+	if ((u_int)ksc.sc_regs[_R_ZERO] != 0xacedbadeU)/* magic number */
 		return (EINVAL);
 
 	/* Resture the register context. */
 	f = (struct frame *)l->l_md.md_regs;
-	f->f_regs[PC] = ksc.sc_pc;
-	f->f_regs[MULLO] = ksc.mullo;
-	f->f_regs[MULHI] = ksc.mulhi;
+	f->f_regs[_R_PC] = ksc.sc_pc;
+	f->f_regs[_R_MULLO] = ksc.mullo;
+	f->f_regs[_R_MULHI] = ksc.mulhi;
 	memcpy(&f->f_regs[1], &scp->sc_regs[1],
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
 	if (scp->sc_fpused)

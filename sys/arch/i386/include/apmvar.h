@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.17 2003/04/02 07:35:59 thorpej Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.17.2.1 2004/08/03 10:36:04 skrll Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,10 @@
 #define __I386_APM_H__
 
 #include <dev/apm/apmbios.h>
+
+#ifndef _LOCORE
 #include <dev/apm/apmio.h>
+#endif /* _LCORE */
 
 /*
  * virtual & physical address of the trampoline
@@ -46,6 +49,7 @@
  */
 #define APM_BIOSTRAMP	PAGE_SIZE
 
+#ifndef _LOCORE
 /* filled in by apmcall */ 
 
 struct apm_connect_info {
@@ -68,12 +72,13 @@ struct apm_attach_args {
 #ifdef _KERNEL
 extern struct apm_connect_info apminfo;	/* in locore */
 extern int apmpresent;
-int apmcall __P((int function, struct bioscallregs *regs));
-void bioscall __P((int function, struct bioscallregs *regs));
-void apm_cpu_busy __P((void));
-void apm_cpu_idle __P((void));
-void apminit __P((void));
-int apm_set_powstate __P((u_int devid, u_int powstate));
-int apm_busprobe __P((void));
+int apmcall(int function, struct bioscallregs *regs);
+void bioscall(int function, struct bioscallregs *regs);
+void apm_cpu_busy(void);
+void apm_cpu_idle(void);
+void apminit(void);
+int apm_set_powstate(u_int devid, u_int powstate);
+int apm_busprobe(void);
 #endif /* _KERNEL */
+#endif /* _LOCORE */
 #endif /* __i386_apm_h__ */

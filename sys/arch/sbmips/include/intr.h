@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.2 2003/02/07 17:46:12 cgd Exp $ */
+/* $NetBSD: intr.h,v 1.2.2.1 2004/08/03 10:39:56 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -94,10 +94,5 @@ extern int		_splget(void);
 extern void		_splnone(void);
 extern void		_setsoftintr(int);
 extern void		_clrsoftintr(int);
-
-/* XXX */
-extern u_long	intrcnt[];
-#define	SOFTCLOCK_INTR	0
-#define	SOFTNET_INTR	1
 
 #endif /* _SBMIPS_INTR_H_ */

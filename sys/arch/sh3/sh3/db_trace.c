@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.10 2003/04/13 04:07:34 tsutsui Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.10.2.1 2004/08/03 10:40:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10.2.1 2004/08/03 10:40:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +95,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
 		db_symbol_values(sym, &name, NULL);
 
-		if (lastframe == 0 && sym == NULL) {
+		if (lastframe == 0 && sym == 0) {
 			printf("symbol not found\n");
 			break;
 		}
@@ -180,8 +183,10 @@ db_nextframe(
 			}
 		}
 
+#ifdef TRACE_DEBUG
 		printf("unknown instruction in prologue\n");
 		db_disasm(pc - 2, 0);
+#endif
 	}
 
  out:

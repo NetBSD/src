@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.5 2002/07/18 16:02:42 rafal Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.5.6.1 2004/08/03 10:40:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/disklabel.h>
 #include <sys/stat.h>
+#include <sys/disklabel.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -48,6 +48,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <util.h>
+#include <sys/endian.h>
 
 /*
  * Some IRIX man pages refer to the size being a multiple of whole cylinders.
@@ -56,7 +57,66 @@
  * that "whole cylinder" multiples are not required.
  */
 
-#define SGI_SIZE_VOLHDR	3135	/* XXX This is really arbitrary */
+#define SGI_SIZE_VOLHDR	3135	/* Can be overridden via -h parameter */
+
+struct local_devparms {
+	u_int8_t        dp_skew;
+	u_int8_t        dp_gap1;
+	u_int8_t        dp_gap2;
+	u_int8_t        dp_spares_cyl;
+	u_int16_t       dp_cyls;
+	u_int16_t       dp_shd0;
+	u_int16_t       dp_trks0;
+	u_int8_t        dp_ctq_depth;
+	u_int8_t        dp_cylshi;
+	u_int16_t       dp_unused;
+	u_int16_t       dp_secs;
+	u_int16_t       dp_secbytes;
+	u_int16_t       dp_interleave;
+	u_int32_t       dp_flags;
+	u_int32_t       dp_datarate;
+	u_int32_t       dp_nretries;
+	u_int32_t       dp_mspw;
+	u_int16_t       dp_xgap1;
+	u_int16_t       dp_xsync;
+	u_int16_t       dp_xrdly;
+	u_int16_t       dp_xgap2;
+	u_int16_t       dp_xrgate;
+	u_int16_t       dp_xwcont;
+}               __attribute__((__packed__));
+
+struct local_sgilabel {
+#define SGILABEL_MAGIC  0xbe5a941
+	u_int32_t       magic;
+	int16_t         root;
+	int16_t         swap;
+	char            bootfile[16];
+	struct local_devparms dp;
+	struct {
+		char            name[8];
+		int32_t         block;
+		int32_t         bytes;
+	}               voldir[15];
+	struct {
+		int32_t         blocks;
+		int32_t         first;
+		int32_t         type;
+	}               partitions[MAXPARTITIONS];
+	int32_t         checksum;
+	int32_t         _pad;
+}               __attribute__((__packed__));
+
+#define SGI_PTYPE_VOLHDR        0
+#define SGI_PTYPE_RAW           3
+#define SGI_PTYPE_BSD           4
+#define SGI_PTYPE_VOLUME        6
+#define SGI_PTYPE_EFS           7
+#define SGI_PTYPE_LVOL          8
+#define SGI_PTYPE_RLVOL         9
+#define SGI_PTYPE_XFS           10
+#define SGI_PTYPE_XFSLOG        11
+#define SGI_PTYPE_XLV           12
+#define SGI_PTYPE_XVM           13
 
 int	fd;
 int	opt_i;			/* Initialize volume header */
@@ -67,8 +127,9 @@ int	opt_p;			/* Modify a partition */
 int	opt_q;			/* quiet mode */
 int	opt_f;			/* Don't ask, just do what you're told */
 int	partno, partfirst, partblocks, parttype;
-struct sgilabel *volhdr;
+struct local_sgilabel *volhdr;
 int32_t	checksum;
+u_int32_t	volhdr_size = SGI_SIZE_VOLHDR;
 
 const char *vfilename = "";
 const char *ufilename = "";
@@ -111,7 +172,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
-	while ((ch = getopt(argc, argv, "irwpdqf")) != -1) {
+	while ((ch = getopt(argc, argv, "irwpdqfh:")) != -1) {
 		switch (ch) {
 		/* -i, -r, -w, -d and -p override each other */
 		/* -q implies -f */
@@ -125,6 +186,9 @@ main(int argc, char *argv[])
 		case 'i':
 			++opt_i;
 			opt_r = opt_w = opt_d = opt_p = 0;
+			break;
+		case 'h':
+			volhdr_size = atoi(optarg);
 			break;
 		case 'r':
 			++opt_r;
@@ -202,14 +266,14 @@ main(int argc, char *argv[])
 		perror("DIOCGDINFO");
 		exit(1);
 	}
-	volhdr = (struct sgilabel *)buf;
+	volhdr = (struct local_sgilabel *) buf;
 	if (opt_i) {
 		init_volhdr();
 		exit(0);
 	}
-	if (volhdr->magic != SGILABEL_MAGIC) {
+	if (be32toh(volhdr->magic) != SGILABEL_MAGIC) {
 		printf("No Volume Header found, magic=%x.  Use -i first.\n", 
-			volhdr->magic);
+		       be32toh(volhdr->magic));
 		exit(1);
 	}
 	if (opt_r) {
@@ -245,27 +309,27 @@ display_vol(void)
 	l = (int32_t *)buf;
 	checksum = 0;
 	for (i = 0; i < 512 / 4; ++i)
-		checksum += l[i];
+		checksum += be32toh(l[i]);
 	printf("checksum: %08x%s\n", checksum, checksum == 0 ? "" : " *ERROR*");
-	printf("root part: %d\n", volhdr->root);
-	printf("swap part: %d\n", volhdr->swap);
+	printf("root part: %d\n", be16toh(volhdr->root));
+	printf("swap part: %d\n", be16toh(volhdr->swap));
 	printf("bootfile: %s\n", volhdr->bootfile);
 	/* volhdr->devparams[0..47] */
 	printf("\nVolume header files:\n");
 	for (i = 0; i < 15; ++i)
 		if (volhdr->voldir[i].name[0])
 			printf("%-8s offset %4d blocks, length %8d bytes (%d blocks)\n",
-			    volhdr->voldir[i].name, volhdr->voldir[i].block,
-			    volhdr->voldir[i].bytes, (volhdr->voldir[i].bytes + 511 ) / 512);
+			       volhdr->voldir[i].name, be32toh(volhdr->voldir[i].block),
+			       be32toh(volhdr->voldir[i].bytes), (be32toh(volhdr->voldir[i].bytes) + 511) / 512);
 	printf("\nSGI partitions:\n");
 	for (i = 0; i < MAXPARTITIONS; ++i) {
-		if (volhdr->partitions[i].blocks) {
+		if (be32toh(volhdr->partitions[i].blocks)) {
 			printf("%2d:%c blocks %8d first %8d type %2d (%s)\n",
-			    i, i + 'a', volhdr->partitions[i].blocks,
-			    volhdr->partitions[i].first,
-			    volhdr->partitions[i].type,
-			    volhdr->partitions[i].type > 13 ? "???" :
-			    sgi_types[volhdr->partitions[i].type]);
+			  i, i + 'a', be32toh(volhdr->partitions[i].blocks),
+			       be32toh(volhdr->partitions[i].first),
+			       be32toh(volhdr->partitions[i].type),
+			  be32toh(volhdr->partitions[i].type) > 13 ? "???" :
+			    sgi_types[be32toh(volhdr->partitions[i].type)]);
 		}
 	}
 }
@@ -274,29 +338,29 @@ void
 init_volhdr(void)
 {
 	memset(buf, 0, sizeof(buf));
-	volhdr->magic = SGILABEL_MAGIC;
-	volhdr->root = 0;
-	volhdr->swap = 1;
+	volhdr->magic = htobe32(SGILABEL_MAGIC);
+	volhdr->root = htobe16(0);
+	volhdr->swap = htobe16(1);
 	strcpy(volhdr->bootfile, "/netbsd");
 	volhdr->dp.dp_skew = lbl.d_trackskew;
 	volhdr->dp.dp_gap1 = 1; /* XXX */
 	volhdr->dp.dp_gap2 = 1; /* XXX */
-	volhdr->dp.dp_cyls = lbl.d_ncylinders;
+	volhdr->dp.dp_cyls = htobe16(lbl.d_ncylinders);
 	volhdr->dp.dp_shd0 = 0;
-	volhdr->dp.dp_trks0 = lbl.d_ntracks;
-	volhdr->dp.dp_secs = lbl.d_nsectors;
-	volhdr->dp.dp_secbytes = lbl.d_secsize;
-	volhdr->dp.dp_interleave = lbl.d_interleave;
-	volhdr->dp.dp_nretries = 22;
-	volhdr->partitions[10].blocks = lbl.d_secperunit;
+	volhdr->dp.dp_trks0 = htobe16(lbl.d_ntracks);
+	volhdr->dp.dp_secs = htobe16(lbl.d_nsectors);
+	volhdr->dp.dp_secbytes = htobe16(lbl.d_secsize);
+	volhdr->dp.dp_interleave = htobe16(lbl.d_interleave);
+	volhdr->dp.dp_nretries = htobe32(22);
+	volhdr->partitions[10].blocks = htobe32(lbl.d_secperunit);
 	volhdr->partitions[10].first = 0;
-	volhdr->partitions[10].type = SGI_PTYPE_VOLUME;
-	volhdr->partitions[8].blocks = SGI_SIZE_VOLHDR;
+	volhdr->partitions[10].type = htobe32(SGI_PTYPE_VOLUME);
+	volhdr->partitions[8].blocks = htobe32(volhdr_size);
 	volhdr->partitions[8].first = 0;
-	volhdr->partitions[8].type = SGI_PTYPE_VOLHDR;
-	volhdr->partitions[0].blocks = lbl.d_secperunit - SGI_SIZE_VOLHDR;
-	volhdr->partitions[0].first = SGI_SIZE_VOLHDR;
-	volhdr->partitions[0].type = SGI_PTYPE_BSD;
+	volhdr->partitions[8].type = htobe32(SGI_PTYPE_VOLHDR);
+	volhdr->partitions[0].blocks = htobe32(lbl.d_secperunit - volhdr_size);
+	volhdr->partitions[0].first = htobe32(volhdr_size);
+	volhdr->partitions[0].type = htobe32(SGI_PTYPE_BSD);
 	write_volhdr();
 }
 
@@ -310,7 +374,7 @@ read_file(void)
 		printf("Reading file %s\n", vfilename);
 	for (i = 0; i < 15; ++i) {
 		if (strncmp(vfilename, volhdr->voldir[i].name,
-		    sizeof(volhdr->voldir[i].name)) == NULL)
+			    strlen(volhdr->voldir[i].name)) == 0)
 			break;
 	}
 	if (i >= 15) {
@@ -318,13 +382,13 @@ read_file(void)
 		exit(1);
 	}
 	/* XXX assumes volume header starts at 0? */
-	lseek(fd, volhdr->voldir[i].block * 512, SEEK_SET);
+	lseek(fd, be32toh(volhdr->voldir[i].block) * 512, SEEK_SET);
 	fp = fopen(ufilename, "w");
 	if (fp == NULL) {
 		perror("open write");
 		exit(1);
 	}
-	i = volhdr->voldir[i].bytes;
+	i = be32toh(volhdr->voldir[i].bytes);
 	while (i > 0) {
 		if (read(fd, buf, sizeof(buf)) != sizeof(buf)) {
 			perror("read file");
@@ -368,7 +432,7 @@ write_file(void)
 		exit(1);
 	}
 	/* -w can overwrite, -a won't overwrite */
-	if (volhdr->voldir[slot].block > 0) {
+	if (be32toh(volhdr->voldir[slot].block) > 0) {
 		if (!opt_q)
 			printf("File %s exists, removing old file\n", 
 				vfilename);
@@ -404,8 +468,8 @@ write_file(void)
 	/* Then copy the name */
 	memcpy(volhdr->voldir[slot].name, vfilename, namelen);
 
-	volhdr->voldir[slot].block = block;
-	volhdr->voldir[slot].bytes = st.st_size;
+	volhdr->voldir[slot].block = htobe32(block);
+	volhdr->voldir[slot].bytes = htobe32(st.st_size);
 
 	write_volhdr();
 
@@ -433,7 +497,7 @@ delete_file(void)
 	int i;
 
 	for (i = 0; i < 15; ++i) {
-		if (strcmp(vfilename, volhdr->voldir[i].name) == NULL) {
+		if (strcmp(vfilename, volhdr->voldir[i].name) == 0) {
 			break;
 		}
 	}
@@ -458,9 +522,9 @@ modify_partition(void)
 		printf("Invalid partition number: %d\n", partno);
 		exit(1);
 	}
-	volhdr->partitions[partno].blocks = partblocks;
-	volhdr->partitions[partno].first = partfirst;
-	volhdr->partitions[partno].type = parttype;
+	volhdr->partitions[partno].blocks = htobe32(partblocks);
+	volhdr->partitions[partno].first = htobe32(partfirst);
+	volhdr->partitions[partno].type = htobe32(parttype);
 	write_volhdr();
 }
 
@@ -479,7 +543,7 @@ write_volhdr(void)
 		if (i != 'Y' && i != 'y')
 			exit(1);
 	}
-	i = lseek(fd, 0 , SEEK_SET);
+	i = lseek(fd, 0, SEEK_SET);
 	if (i < 0) {
 		perror("lseek 0");
 		exit(1);
@@ -500,16 +564,16 @@ allocate_space(int size)
 	n = 0;
 	while (n < 15) {
 		if (volhdr->voldir[n].name[0]) {
-			if (first < (volhdr->voldir[n].block +
-			    (volhdr->voldir[n].bytes + 511) / 512) &&
-			    (first + blocks) > volhdr->voldir[n].block) {
-				first = volhdr->voldir[n].block +
-				    (volhdr->voldir[n].bytes + 511) / 512;
+			if (first < (be32toh(volhdr->voldir[n].block) +
+			  (be32toh(volhdr->voldir[n].bytes) + 511) / 512) &&
+			    (first + blocks) > be32toh(volhdr->voldir[n].block)) {
+				first = be32toh(volhdr->voldir[n].block) +
+					(be32toh(volhdr->voldir[n].bytes) + 511) / 512;
 #if 0
-printf("allocate: n=%d first=%d blocks=%d size=%d\n", n, first, blocks, size);
-printf("%s %d %d\n", volhdr->voldir[n].name, volhdr->voldir[n].block, volhdr->voldir[n].bytes);
-printf("first=%d block=%d last=%d end=%d\n", first, volhdr->voldir[n].block,
-    first + blocks - 1, volhdr->voldir[n].block + (volhdr->voldir[n].bytes + 511)/512);
+				printf("allocate: n=%d first=%d blocks=%d size=%d\n", n, first, blocks, size);
+				printf("%s %d %d\n", volhdr->voldir[n].name, volhdr->voldir[n].block, volhdr->voldir[n].bytes);
+				printf("first=%d block=%d last=%d end=%d\n", first, volhdr->voldir[n].block,
+				       first + blocks - 1, volhdr->voldir[n].block + (volhdr->voldir[n].bytes + 511) / 512);
 #endif
 				n = 0;
 				continue;
@@ -521,9 +585,9 @@ printf("first=%d block=%d last=%d end=%d\n", first, volhdr->voldir[n].block,
 		first = -1;
 	/* XXX assumes volume header is partition 8 */
 	/* XXX assumes volume header starts at 0? */
-	if (first + blocks >= volhdr->partitions[8].blocks)
+	if (first + blocks >= be32toh(volhdr->partitions[8].blocks))
 		first = -1;
-	return(first);
+	return (first);
 }
 
 void
@@ -535,14 +599,14 @@ checksum_vol(void)
 	volhdr->checksum = checksum = 0;
 	l = (int32_t *)buf;
 	for (i = 0; i < 512 / 4; ++i)
-		checksum += l[i];
-	volhdr->checksum = -checksum;
+		checksum += be32toh(l[i]);
+	volhdr->checksum = htobe32(-checksum);
 }
 
 void
 usage(void)
 {
-	printf("Usage:	sgivol [-qf] [-i] device\n"
+	printf("Usage:	sgivol [-qf] [-i] [-h vhsize] device\n"
 	       "	sgivol [-qf] [-r vhfilename diskfilename] device\n"
 	       "	sgivol [-qf] [-w vhfilename diskfilename] device\n"
 	       "	sgivol [-qf] [-d vhfilename] device\n"

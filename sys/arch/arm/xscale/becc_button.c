@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_button.c,v 1.1 2003/04/20 20:50:50 thorpej Exp $	*/
+/*	$NetBSD: becc_button.c,v 1.1.2.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -43,6 +43,9 @@
  * of the system.  Shorter presses result in an interrupt being generated,
  * which the operating system can use to trigger a graceful reboot.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: becc_button.c,v 1.1.2.1 2004/08/03 10:32:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

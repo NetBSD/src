@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.1 2003/04/26 18:39:36 fvdl Exp $
+#	$NetBSD: majors.amd64,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $
 #
 # Device majors for amd64
 #
@@ -80,3 +80,18 @@ device-major	agp		char 82			agp
 device-major	pci		char 83			pci
 device-major	irframe		char 84			irframe
 device-major	ksyms		char 85			ksyms
+device-major	wsfont		char 86			wsfont
+device-major	mly		char 87			mly
+device-major	dpti		char 88			dpti
+device-major	joy		char 89			joy
+device-major	cir		char 90			cir
+device-major	radio		char 91			radio
+device-major	kttcp		char 92			kttcp
+
+device-major	dpt		char 96			dpt
+device-major	twe		char 97			twe
+device-major	nsmb		char 98			nsmb		
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.

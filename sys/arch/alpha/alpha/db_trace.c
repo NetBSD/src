@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.10 2003/01/17 22:11:17 thorpej Exp $ */
+/* $NetBSD: db_trace.c,v 1.10.2.1 2004/08/03 10:31:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10 2003/01/17 22:11:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10.2.1 2004/08/03 10:31:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ static struct special_symbol {
 	{ (vaddr_t)&XentSys,		"syscall" },
 	{ (vaddr_t)&XentUna,		"unaligned access fault" },
 	{ (vaddr_t)&XentRestart,	"console restart" },
-	{ NULL }
+	{ 0 }
 };
 
 /*
@@ -130,13 +130,21 @@ do {									\
 			 *	lda	sp, -64(sp)
 			 */
 			signed_immediate = (long)ins.mem_format.displacement;
-#if 1
-			if (signed_immediate > 0)
-				(*pr)("prologue botch: displacement %ld\n",
-				    signed_immediate);
-#endif
-			CHECK_FRAMESIZE;
-			pi->pi_frame_size += -signed_immediate;
+			/*
+			 * The assumption here is that a positive
+			 * stack offset is the function epilogue,
+			 * which may come before callpc when an
+			 * agressive optimizer (like GCC 3.3 or later)
+			 * has moved part of the function "out of
+			 * line", past the epilogue. Therefore, ignore
+			 * the positive offset so that
+			 * pi->pi_frame_size has the correct value
+			 * when we reach callpc.
+			 */
+			if (signed_immediate <= 0) {
+				CHECK_FRAMESIZE;
+				pi->pi_frame_size += -signed_immediate;
+			}
 		} else if (ins.operate_lit_format.opcode == op_arit &&
 			   ins.operate_lit_format.function == op_subq &&
 			   ins.operate_lit_format.ra == 30 &&
@@ -164,7 +172,7 @@ sym_is_trapsymbol(vaddr_t v)
 {
 	int i;
 
-	for (i = 0; special_symbols[i].ss_val != NULL; ++i)
+	for (i = 0; special_symbols[i].ss_val != 0; ++i)
 		if (v == special_symbols[i].ss_val)
 			return 1;
 	return 0;
@@ -192,12 +200,10 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	char c, *cp = modif;
 	struct trapframe *tf;
 	boolean_t ra_from_tf;
-	boolean_t ra_from_pcb;
 	u_long last_ipl = ~0L;
 	struct proc *p = NULL;
 	struct lwp *l = NULL;
 	boolean_t trace_thread = FALSE;
-	boolean_t have_trapframe = FALSE;
 
 	while ((c = *cp++) != 0)
 		trace_thread |= c == 't';
@@ -206,7 +212,9 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		p = curproc;
 		addr = DDB_REGS->tf_regs[FRAME_SP] - FRAME_SIZE * 8;
 		tf = (struct trapframe *)addr;
-		have_trapframe = 1;
+		callpc = tf->tf_regs[FRAME_PC];
+		frame = (db_addr_t)tf + FRAME_SIZE * 8;
+		ra_from_tf = TRUE;
 	} else {
 		if (trace_thread) {
 			(*pr)("trace: pid %d ", (int)addr);
@@ -229,15 +237,11 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			return;
 		}
 		frame = addr;
+		tf = NULL;
+		ra_from_tf = FALSE;
 	}
 
 	while (count--) {
-		if (have_trapframe) {
-			frame = (db_addr_t)tf + FRAME_SIZE * 8;
-			callpc = tf->tf_regs[FRAME_PC];
-			ra_from_tf = TRUE;
-			have_trapframe = 0;
-		}
 		sym = db_search_symbol(callpc, DB_STGY_ANY, &diff);
 		if (sym == DB_SYM_NULL)
 			break;
@@ -288,7 +292,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		if (sym_is_trapsymbol(symval)) {
 			tf = (struct trapframe *)frame;
 
-			for (i = 0; special_symbols[i].ss_val != NULL; ++i)
+			for (i = 0; special_symbols[i].ss_val != 0; ++i)
 				if (symval == special_symbols[i].ss_val)
 					(*pr)("--- %s",
 					    special_symbols[i].ss_note);
@@ -306,7 +310,9 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 				(*pr)("--- user mode ---\n");
 				break;	/* Terminate search.  */
 			}
-			have_trapframe = 1;
+			callpc = tf->tf_regs[FRAME_PC];
+			frame = (db_addr_t)tf + FRAME_SIZE * 8;
+			ra_from_tf = TRUE;
 			continue;
 		}
 
@@ -332,14 +338,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			}
 		} else
 			callpc = *(u_long *)(frame + pi.pi_reg_offset[26]);
-		ra_from_tf = ra_from_pcb = FALSE;
-#if 0
-		/*
-		 * The call was actually made at RA - 4; the PC is
-		 * updated before being stored in RA.
-		 */
-		callpc -= 4;
-#endif
 		frame += pi.pi_frame_size;
+		ra_from_tf = FALSE;
 	}
 }

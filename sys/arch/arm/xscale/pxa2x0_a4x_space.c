@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_a4x_space.c,v 1.1 2002/10/19 19:31:39 bsh Exp $ */
+/*	$NetBSD: pxa2x0_a4x_space.c,v 1.1.8.1 2004/08/03 10:32:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -37,6 +37,9 @@
  * Bus space tag for 8/16-bit devices on 32-bit bus.
  * all registers are located at the address of multiple of 4.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_a4x_space.c,v 1.1.8.1 2004/08/03 10:32:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.12 2003/04/02 02:34:13 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.12.2.1 2004/08/03 10:38:39 skrll Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -25,11 +25,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -47,6 +43,9 @@
  *
  *	@(#)pmap_bootstrap.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.12.2.1 2004/08/03 10:38:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -345,7 +344,7 @@ pmap_bootstrap(nextpa, firstpa)
 	while (pte < epte)
 		*pte++ = PG_NV;
 #ifdef MAXADDR
-	/* tmp double-map for cpu's with physmem at the end of memory */
+	/* tmp double-map for CPUs with physmem at the end of memory */
 	*pte = MAXADDR | PG_RW | PG_CI | PG_U | PG_V;
 #endif
 	/*
@@ -407,7 +406,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	pte = (u_int *)iiopa;
 	epte = (u_int *)eiiopa;
-	protopte = INTIOBASE | PG_RW | PG_CI | PG_U | PG_V;
+	protopte = INTIOBASE | PG_RW | PG_CI | PG_U | PG_M | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
@@ -416,7 +415,7 @@ pmap_bootstrap(nextpa, firstpa)
 	/* validate the mono fb space PTEs */
 	pte = (u_int *)monopa;
 	epte = (u_int *)emonopa;
-	protopte = MONOBASE | PG_RW | PG_CI | PG_U | PG_V;
+	protopte = MONOBASE | PG_RW | PG_CWT | PG_U | PG_M | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
@@ -425,7 +424,7 @@ pmap_bootstrap(nextpa, firstpa)
 	/* validate the color fb space PTEs */
 	pte = (u_int *)colorpa;
 	epte = (u_int *)ecolorpa;
-	protopte = COLORBASE | PG_RW | PG_CI | PG_U | PG_V;
+	protopte = COLORBASE | PG_RW | PG_CWT | PG_U | PG_M | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
@@ -456,30 +455,30 @@ pmap_bootstrap(nextpa, firstpa)
 	 * COLORMAPSIZE pages prior to external IO space at end of static
 	 * kernel page table.
 	 */
-	RELOC(colorbase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE - COLORMAPSIZE);
-	RELOC(colorlimit, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE);
+	RELOC(colorbase, vaddr_t) =
+		m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE - COLORMAPSIZE);
+	RELOC(colorlimit, vaddr_t) =
+		m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE);
 
 	/*
 	 * monobase, monolimit: base and end of mono fb space.
 	 * MONOMAPSIZE pages prior to external IO space at end of static
 	 * kernel page table.
 	 */
-	RELOC(monobase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE);
-	RELOC(monolimit, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE);
+	RELOC(monobase, vaddr_t) =
+		m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE);
+	RELOC(monolimit, vaddr_t) =
+		m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE);
 
 	/*
 	 * intiobase, intiolimit: base and end of internal IO space.
 	 * IIOMAPSIZE pages prior to external IO space at end of static
 	 * kernel page table.
 	 */
-	RELOC(intiobase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE);
-	RELOC(intiolimit, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG);
+	RELOC(intiobase, vaddr_t) =
+		m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE);
+	RELOC(intiolimit, vaddr_t) =
+		m68k_ptob(nptpages*NPTEPG);
 
 	/*
 	 * Setup u-area for process 0.
@@ -653,24 +652,20 @@ pmap_bootstrap(nextpa, firstpa)
 void
 pmap_init_md(void)
 {
-	vaddr_t addr;
 
-	addr = (vaddr_t) intiobase;
-	if (uvm_map(kernel_map, &addr, m68k_ptob(IIOMAPSIZE),
+	if (uvm_map(kernel_map, &intiobase, m68k_ptob(IIOMAPSIZE),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != 0)
 		goto failed;
-	addr = (vaddr_t) monobase;
-	if (uvm_map(kernel_map, &addr, m68k_ptob(MONOMAPSIZE),
+	if (uvm_map(kernel_map, &monobase, m68k_ptob(MONOMAPSIZE),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != 0)
 		goto failed;
-	addr = (vaddr_t) colorbase;
-	if (uvm_map(kernel_map, &addr, m68k_ptob(COLORMAPSIZE),
+	if (uvm_map(kernel_map, &colorbase, m68k_ptob(COLORMAPSIZE),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,

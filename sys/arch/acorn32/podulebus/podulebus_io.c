@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io.c,v 1.2 2002/09/27 15:35:31 provos Exp $	*/
+/*	$NetBSD: podulebus_io.c,v 1.2.8.1 2004/08/03 10:30:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,6 +35,9 @@
 /*
  * bus_space I/O functions for podulebus
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: podulebus_io.c,v 1.2.8.1 2004/08/03 10:30:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

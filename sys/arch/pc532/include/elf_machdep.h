@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.1 2003/06/23 12:59:27 thorpej Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.1.2.1 2004/08/03 10:38:47 skrll Exp $	*/
 
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -11,6 +11,6 @@
 
 #define	ELF32_MACHDEP_ID		EM_NS32K
 
-#define ARCH_ELFSIZE		32	/* MD native binary size */
+#define	ARCH_ELFSIZE		32	/* MD native binary size */
 
 /* XXX relocations */

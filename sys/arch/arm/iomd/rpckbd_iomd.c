@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd_iomd.c,v 1.7 2002/10/02 15:45:13 thorpej Exp $	*/
+/*	$NetBSD: rpckbd_iomd.c,v 1.7.8.1 2004/08/03 10:32:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rpckbd_iomd.c,v 1.7.8.1 2004/08/03 10:32:38 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -77,8 +80,8 @@ rpckbd_iomd_probe(parent, cf, aux)
 {
 	struct kbd_attach_args *ka = aux;
 
-	if (strcmp(ka->ka_name, "rpckbd") == 0)
-		return(1);
+	if (strcmp(ka->ka_name, "kbd") == 0)
+		return(5);
 
 	return(0);
 }

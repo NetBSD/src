@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.9 2003/04/02 02:47:19 thorpej Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.9.2.1 2004/08/03 10:39:37 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.9.2.1 2004/08/03 10:39:37 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
@@ -102,7 +105,7 @@ void
 pmap_zero_page(paddr_t pa)
 {
 	size_t linewidth;
-	register_t msr;
+	register_t msr = 0; /* XXX: gcc */
 
 #if defined(PPC_OEA)
 	{

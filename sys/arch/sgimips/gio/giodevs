@@ -8,7 +8,7 @@ product XPI_M0	0x0a	XPI mez. FDDI device 0
 product XPI_M1	0x0b	XPI mez. FDDI device 1
 product EP	0x0e	E-Plex 8-port Ethernet
 product IVAS	0x30	Lyon Lamb IVAS
-
+product PHOBOS_G130	0x36	Phobos G130 10/100 Ethernet
 product ATM	0x85	ATM board
 product SCSI	0x87	16 bit SCSI Card
 product SMPTE	0x8c	SMPTE 259M Video

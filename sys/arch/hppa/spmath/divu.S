@@ -1,4 +1,4 @@
-/*	$NetBSD: divu.S,v 1.1 2002/06/05 01:04:25 fredette Exp $	*/
+/*	$NetBSD: divu.S,v 1.1.10.1 2004/08/03 10:35:38 skrll Exp $	*/
 
 /*	$OpenBSD: divu.S,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -51,24 +51,24 @@
 /*
  *	General registers
  */
-gr0	.reg		%r0	/* General register zero */
-rem	.reg		%r3	/* remainder and upper part of dividend */
-quo	.reg		%r4	/* quotient and lower part of dividend */
-dvr	.reg		%r5	/* divisor */
-tp	.reg		%r6	/* temp. reg. */
+gr0:	.reg		%r0	/* General register zero */
+rem:	.reg		%r3	/* remainder and upper part of dividend */
+quo:	.reg		%r4	/* quotient and lower part of dividend */
+dvr:	.reg		%r5	/* divisor */
+tp:	.reg		%r6	/* temp. reg. */
 
 	.text
 
 /*****************************************************************************/
 ENTRY(divu,16)
-	stws,ma		rem,4(sp)		; save registers on stack
-	stws,ma		quo,4(sp)		; save registers on stack
-	stws,ma		dvr,4(sp)		; save registers on stack
-	stws,ma		tp,4(sp)		; save registers on stack
+	stws,ma		rem,4(%sp)		; save registers on stack
+	stws,ma		quo,4(%sp)		; save registers on stack
+	stws,ma		dvr,4(%sp)		; save registers on stack
+	stws,ma		tp,4(%sp)		; save registers on stack
 
-	addi		0,arg2,dvr		; get divisor
-	addi		0,arg1,quo		; get lower dividend
-	addi		0,arg0,rem		; get upper dividend
+	addi		0,%arg2,dvr		; get divisor
+	addi		0,%arg1,quo		; get lower dividend
+	addi		0,%arg0,rem		; get upper dividend
 
 	comib,>,n	0,dvr,hibit		; check for dvr >= 2**31
 	addi		-1,gr0,tp		; set V-bit to 1
@@ -146,29 +146,29 @@ ENTRY(divu,16)
 ;
 ;	end of divide routine
 ;
-finish	stws		rem,0(arg3)		; save remainder in high part
+finish:	stws		rem,0(%arg3)		; save remainder in high part
 						;   of result
-	stws		quo,4(arg3)		; save quotient in low part
+	stws		quo,4(%arg3)		; save quotient in low part
 						;   of result
-	ldws,mb		-4(sp),tp		; restore registers
-	ldws,mb		-4(sp),dvr		; restore registers
-	ldws,mb		-4(sp),quo		; restore registers
-	bv		0(rp)			; return
-	ldws,mb		-4(sp),rem		; restore registers
+	ldws,mb		-4(%sp),tp		; restore registers
+	ldws,mb		-4(%sp),dvr		; restore registers
+	ldws,mb		-4(%sp),quo		; restore registers
+	bv		0(%rp)			; return
+	ldws,mb		-4(%sp),rem		; restore registers
 ;
-hibit	ldo		32(0),tp		; initialize loop counter
+hibit:	ldo		32(0),tp		; initialize loop counter
 	add		quo,quo,quo		; shift high bit into carry
-loop	addc		rem,rem,rem		; shift in high bit of dvdl
+loop:	addc		rem,rem,rem		; shift in high bit of dvdl
 	addc,<>		0,0,0			; if bit shifted out of dvdu,
 						;   want to do subtract
 	comb,<<,n	rem,dvr,nosub		; if upper dividend > dvr,
 	sub		rem,dvr,rem		;   subtract and
 	add,tr		dvr,dvr,0		;   set carry
-nosub	addi		0,0,0			; otherwise clear carry
+nosub:	addi		0,0,0			; otherwise clear carry
 	addib,>		-1,tp,loop		; inc. counter; finished?
 	addc		quo,quo,quo		; shift bit of result into dvdl
 	b		finish+4		; finish up
-	stws		rem,0(arg3)		; save remainder in high part
+	stws		rem,0(%arg3)		; save remainder in high part
 						;   of result
 
 EXIT(divu)

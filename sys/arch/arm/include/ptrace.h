@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.2 2001/10/19 00:18:20 bjh21 Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.2.22.1 2004/08/03 10:32:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou.
+ *      This product includes software developed by TooLs GmbH.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *

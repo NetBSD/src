@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.7 2003/04/06 03:22:50 mhitch Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.7.2.1 2004/08/03 10:32:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ main(int argc, char *argv[])
 		errx(1, "%s isn't M68K, machine=%d", argv[0],
 		    htobe16(eh->e_machine));
 
+	/* Calculate sizes from section headers. */
 	tsz = dsz = bsz = trsz = pcrelsz = r32sz = 0;
 	sh = (Elf32_Shdr *)(image + htobe32(eh->e_shoff));
 	shstrtab = (char *)(image + htobe32(sh[htobe16(eh->e_shstrndx)].sh_offset));
@@ -170,18 +171,21 @@ main(int argc, char *argv[])
 		    htobe32(sh[i].sh_addralign)));
 		sh_size = (htobe32(sh[i].sh_size) + htobe32(sh[i].sh_addralign) - 1) &
 		    -htobe32(sh[i].sh_addralign);
-		if (htobe32(sh[i].sh_type) == SHT_PROGBITS) {
-			if (htobe32(sh[i].sh_flags) & SHF_WRITE)
-				dsz += sh_size;
-			else
-				tsz += sh_size;
-		} else if (htobe32(sh[i].sh_type) == SHT_NOBITS &&
-		    htobe32(sh[i].sh_flags) == (SHF_ALLOC | SHF_WRITE)) {
-			bsz += sh_size;
+		/* If section allocates memory, add to text, data, or bss size. */
+		if (htobe32(sh[i].sh_flags) & SHF_ALLOC) {
+			if (htobe32(sh[i].sh_type) == SHT_PROGBITS) {
+				if (htobe32(sh[i].sh_flags) & SHF_WRITE)
+					dsz += sh_size;
+				else
+					tsz += sh_size;
+			} else
+				bsz += sh_size;
+		/* If it's relocations, add to relocation count */
 		} else if (htobe32(sh[i].sh_type) == SHT_RELA) {
 			trsz += htobe32(sh[i].sh_size);
 		}
 		/* Check for SHT_REL? */
+		/* Get symbol table location. */
 		else if (htobe32(sh[i].sh_type) == SHT_SYMTAB) {
 			symtab = (Elf32_Sym *)(image + htobe32(sh[i].sh_offset));
 		} else if (strcmp(".strtab", shstrtab + htobe32(sh[i].sh_name)) == 0) {
@@ -210,15 +214,15 @@ main(int argc, char *argv[])
 	 * We have one contiguous area allocated by the ROM to us.
 	 */
 	if (tsz+dsz+bsz > bbsize)
-		errx(1, "%s: resulting image too big", argv[0]);
+		errx(1, "%s: resulting image too big %d+%d+%d=%d", argv[0],
+		    tsz, dsz, bsz, tsz + dsz + bsz);
 
 	memset(buffer, 0, bbsize);
 
 	/* Allocate and load loadable sections */
 	sect_offset = (u_int32_t *)malloc(htobe16(eh->e_shnum) * sizeof(u_int32_t));
 	for (i = 0, l = 0; i < htobe16(eh->e_shnum); ++i) {
-		if (htobe32(sh[i].sh_type) == SHT_PROGBITS ||
-		    htobe32(sh[i].sh_type) == SHT_NOBITS) {
+		if (htobe32(sh[i].sh_flags) & SHF_ALLOC) {
 			dprintf(("vaddr 0x%04x size 0x%04x offset 0x%04x section %s\n",
 			    l, htobe32(sh[i].sh_size), htobe32(sh[i].sh_offset),
 			    shstrtab + htobe32(sh[i].sh_name)));

@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1_locore.S,v 1.11 2003/03/28 09:48:07 scw Exp $	*/
+/*	$NetBSD: stb1_locore.S,v 1.11.2.1 2004/08/03 10:40:24 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -51,6 +51,7 @@
  */
 #define	STB1_TLB_IDX_STEP	16
 #define	STB1_TLB_IDX_SHIFT	4
+#define	STB1_xTLB_BIT		23
 #define	STB1_DTLB(idx)		(0x00800000 + (STB1_TLB_IDX_STEP * (idx)))
 #define	STB1_ITLB(idx)		(0x00000000 + (STB1_TLB_IDX_STEP * (idx)))
 
@@ -157,14 +158,14 @@ Lsh5_stb1_init:
 /*
  * TLB cookies are used to keep track of which TLB slot a particular mapping
  * was inserted into. This provides a quick way to invalidate the mapping
- * since we don't need to search the TLB (The sh5 cpu provides no h/w
+ * since we don't need to search the TLB (The sh5 CPU provides no h/w
  * assistance for invalidating specific mappings).
  *
  * There are 16-bits available in the cookie. We split that into two 8-bit
  * fields; one for the instruction TLB, the other for the data TLB.
  *
  * Each field is comprised of a "valid" bit and a TLB "index". The index
- * can range from 0-127. Since this cpu has only 64 TLB slots, values from
+ * can range from 0-127. Since this CPU has only 64 TLB slots, values from
  * 64-127 are not used.
  */
 
@@ -322,74 +323,96 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbinv_all)
  * For example, an Instruction TLB miss for a non-executable page.
  */
 ENTRY_NOPROFILE(_sh5_stb1_tlbload)
-	LEAF(Ltlbmiss_dotrap, r3)
 	ptabs/u	r2, tr1			/* Stash the return address */
+	LEAF(Ltlbmiss_dotrap, r3)
 	ptabs/u	r3, tr0
+
+	getcon	expevt, r2		/* Fetch TLB miss trap number */
 	add.l	r0, r63, r0		/* Sign-extend PTEH */
+	ori	r0, SH5_PTEH_V, r0	/* Ensure PTEH Valid bit is set */
 	add.l	r1, r63, r1		/* Sign-extend PTEL */
 
-	/* For "write" misses, verify the page is actually writable */
+	/*
+	 * Determine what kind of TLB miss we're dealing with.
+	 */
+	addi	r2, -T_WTLBMISS, r2
 
-	getcon	expevt, r2		/* Test for Write TLB Miss.. */
-	addi	r2, -T_WTLBMISS, r2	/* r2 == 0 for write miss */
-	andi	r1, SH5_PTEL_PR_W, r3	/* r3 == `W' bit of PTEL */
-	or	r2, r3, r3		/* r3 == 0 if WR to RO page */
-	beq/u	r3, r63, tr0		/* Read-only page. Trap it. */
+	/*
+	 *  r2 = 0: DTLB miss (write)	[0x0000000000000000]
+	 *  r2 > 0: ITLB miss		[0x00000000000009e0]
+	 *  r2 < 0: DTLB miss (read)	[0xffffffffffffffe0]
+	 */
 
-	/* Determine which TLB to load (Data or Instruction) */
+	/*
+	 * For "write" misses, verify the page is actually writable
+	 */
+	andi	r1, SH5_PTEL_PR_W, r3	/* r3 == 0 if read-only page */
+	beq/u	r2, r3, tr0		/* Writing to read-only page. Trap it */
 
-	getcon	expevt, r2		/* Test for Instruction TLB miss */
-	movi	T_ITLBMISS, r3
-	sub	r2, r3, r2		/* r2 == 0 for ITLB miss */
-	LDC32(STB1_DTLB(0), r3)		/* Presume DLTB miss */
-	cmveq	r2, r63, r3		/* If it was the ITLB, r3 = 0 */
+	/*
+	 * Simplify the TLB miss type to just DTLB or ITLB
+	 */
+	addi	r2, -1, r2		/* DTLB: r2 < 0. ITLB r2 > 0 */
+	cmpgt	r63, r2, r2		/* r2 == 0 for ITLB, r2 == 1 for DTLB */
 
-	/* Assume DTLB */
+	/*
+	 * For ITLB misses, verify the page is actually executable
+	 */
+	andi	r1, SH5_PTEL_PR_X, r3	/* r3 == 0 if page not executable */
+	beq/u	r2, r3, tr0		/* Executing non-exec page. Trap it */
 
-	pta/l	2f, tr0
-	movi	SH5_PTEL_PR_X, r2
-	bne/l	r3, r63, tr0
+	/*
+	 * If ITLB miss, clear PTEL read/write bits
+	 */
+	movi	SH5_PTEL_PR_R | SH5_PTEL_PR_W, r3
+	cmvne	r2, r63, r3		/* If DTLB miss, r3 == 0 */
+	andc	r1, r3, r1		/* This is a no-op if DTLB miss */
 
-	/* It's the ITLB. Ensure the Execute bit is set for ITLB misses */
+	/*
+	 * If DTLB miss, clear PTEL execute bit
+	 */
+	movi	SH5_PTEL_PR_X, r3
+	cmveq	r2, r63, r3		/* If ITLB miss, r3 == 0 */
+	andc	r1, r3, r1		/* This is a no-op if ITLB miss */
 
-1:	andi	r1, SH5_PTEL_PR_X, r2
-	pta/l	50f, tr0
-	bne/l	r2, r63, tr0
-
-	LEAF(Ltlbmiss_dotrap, r0)
-	ptabs/l	r0, tr0
-	blink	tr0, r63
-
-50:
-	movi	SH5_PTEL_PR_R | SH5_PTEL_PR_W, r2
+	/*
+	 * Determine which TLB to load
+	 */
+	shlli	r2, STB1_xTLB_BIT, r2	/* Magic! */
 
 	/*
 	 * r0 == PTEH
-	 * r1 == PTEL
-	 * r2 == Mask of protection bits to clear out of PTEL
-	 * r3 == 0x00800000 for DTLB, or 0x00000000 for ITLB
+	 * r1 == PTEL, with unecessary bits masked off
+	 * r2 == 0x00800000 for DTLB, or 0x00000000 for ITLB
 	 */
 
-2:	andc	r1, r2, r1		/* Clear unwanted bits of PTEL */
-	ori	r0, SH5_PTEH_V, r0	/* Ensure mapping is Valid */
-	getcon	ctc, r2			/* Fetch free-running counter */
-	pta/l	3f, tr0
-	shlri	r2, 2, r2		/* The 2 LSBs tend not to be random */
-	andi	r2, STB1_TLB_NSLOTS-1, r2	/* Generate random TLB index */
-	bne/l	r2, r63, tr0		/* Don't trash KSEG0 TLB slot! */
-	addi	r2, 1, r2		/* FIX ME! Overloads TLB slot 1 */
-3:	shlli	r2, STB1_TLB_IDX_SHIFT, r2	/* Index *= STB1_TLB_IDX_STEP */
-	add	r2, r3, r2		/* Point to target TLB slot */
+	/*
+	 * Pick a pseudo-random TLB slot.
+	 * Note: If we pick TLB slot zero, bump the slot index to 1.
+	 * This tends to put a slightly higher load on slot 1, but it's
+	 * by far the quickest way to protect slot 0.
+	 */
+	getcon	ctc, r3			/* Fetch free-running counter */
+	shlri	r3, 2, r3		/* The 2 LSBs tend not to be random */
+	andi	r3, STB1_TLB_NSLOTS-1, r3	/* Generate random TLB index */
+	shlli	r3, STB1_TLB_IDX_SHIFT, r3	/* Index *= STB1_TLB_IDX_STEP */
+	or	r2, r3, r2		/* Point to target TLB slot */
+	cmpeq	r3, r63, r3		/* TLB slot #0? */
+	shlli	r3, STB1_TLB_IDX_SHIFT, r3
+	or	r2, r3, r2		/* Don't trash TLB slot #0 ! */
 
-	/* r2 == pseudo-random [ID]TLB index */
-
+	/*
+	 * r2 == pseudo-random [ID]TLB index
+	 */
 	putcfg	r2, 0, r63		/* Make sure PTEH.V is clear */
 	synci
 	putcfg	r2, 1, r1		/* Store PTEL */
 	putcfg	r2, 0, r0		/* Store PTEH */
 
-	/* Generate TLB cookie */
-
+	/*
+	 * Generate TLB cookie
+	 */
+	ld.w	r4, SH5_PTE_TLBCOOKIE, r3	/* Pre-fetch TLB cookie */
 	shlri	r2, STB1_TLB_IDX_SHIFT, r0	/* Get TLB index */
 	movi	TLBCOOKIE_IDX_MASK, r1
 	shlri	r0, 16, r2
@@ -398,10 +421,9 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbload)
 	ori	r0, TLBCOOKIE_IDX_VALID, r0	/* Mark it as valid */
 	shlld	r0, r2, r0
 	shlld	r1, r2, r1
-	ld.w	r4, SH5_PTE_TLBCOOKIE, r2
-	andc	r2, r1, r2
-	or	r2, r0, r2
-	st.w	r4, SH5_PTE_TLBCOOKIE, r2
+	andc	r3, r1, r3			/* Clear out old cookie value */
+	or	r3, r0, r3			/* Insert new cookie */
+	st.w	r4, SH5_PTE_TLBCOOKIE, r3
 	blink	tr1, r63
 
 
@@ -413,7 +435,7 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbload)
  * Very Important Note: These Cache Ops MUST NOT CAUSE A TLB MISS EXCEPTION.
  *
  * The SH-5's cache can be somewhat painful to manage, at least the
- * implementation of this particular cpu's cache is.
+ * implementation of this particular CPU's cache is.
  *
  * The instruction cache is virtually indexed and tagged, therefore it needs
  * to be invalidated on each and every context switch. We also provide hooks

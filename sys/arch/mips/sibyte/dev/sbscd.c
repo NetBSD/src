@@ -1,4 +1,4 @@
-/* $NetBSD: sbscd.c,v 1.7 2003/02/07 17:38:49 cgd Exp $ */
+/* $NetBSD: sbscd.c,v 1.7.2.1 2004/08/03 10:37:51 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -31,6 +31,9 @@
  *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *    OR OTHERWISE), EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbscd.c,v 1.7.2.1 2004/08/03 10:37:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

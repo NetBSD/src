@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.3 2002/10/05 17:12:10 chs Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.3.8.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -55,11 +55,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -78,6 +74,9 @@
  *	@(#)isa.c	7.2 (Berkeley) 5/13/91
  */
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.3.8.1 2004/08/03 10:32:58 skrll Exp $");
 
 #include "opt_irqstats.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.20 2003/05/03 18:10:51 wiz Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.20.2.1 2004/08/03 10:37:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.20.2.1 2004/08/03 10:37:20 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -141,7 +144,8 @@ gmac_match(parent, match, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2))
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC3))
 		return 1;
 
 	return 0;

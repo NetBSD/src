@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.14 2003/06/02 04:03:04 gmcgarry Exp $
+#	$NetBSD: majors.i386,v 1.14.2.1 2004/08/03 10:35:48 skrll Exp $
 #
 # Device majors for i386
 #
@@ -87,7 +87,7 @@ device-major	dpti		char 84			dpti
 device-major	irframe		char 85			irframedrv
 device-major	cir		char 86			cir
 device-major	radio		char 87			radio
-device-major	netsmb		char 88			netsmb
+# major 88 free
 device-major	clockctl	char 89			clockctl
 device-major	systrace	char 90			systrace
 device-major	kttcp		char 91			kttcp
@@ -107,3 +107,7 @@ device-major	ppi		char 104		ppi
 device-major	rd		char 105 block 22	rd
 device-major	ct		char 106 block 23	ct
 device-major	mt		char 107 block 24	mt
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.

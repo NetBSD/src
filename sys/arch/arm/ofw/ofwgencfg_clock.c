@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.3 2002/09/27 15:35:49 provos Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.3.8.1 2004/08/03 10:32:50 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,6 +34,9 @@
  */
 
 /* Include header files */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_clock.c,v 1.3.8.1 2004/08/03 10:32:50 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: tabwindow.h,v 1.2 2001/05/08 18:51:24 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: tabwindow.h,v 1.2.24.1 2004/08/03 10:34:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,6 +61,8 @@ public:
 	static LRESULT CALLBACK
 	_tab_proc(HWND h, UINT msg, WPARAM param, LPARAM lparam);
 	virtual BOOL create(LPCREATESTRUCT aux);
+
+	BOOL focusManagerHook(WORD, UINT, HWND);
 
 	// setup child instance.
 	TabWindow *boot(int id);

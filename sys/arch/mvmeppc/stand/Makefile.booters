@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.2 2002/05/31 13:46:00 bjh21 Exp $
+#	$NetBSD: Makefile.booters,v 1.2.8.1 2004/08/03 10:38:16 skrll Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -17,7 +17,8 @@ NOLINT=# defined
 
 INCPATH=-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
         -I${.CURDIR}/../../include -I${S} -I${S}/lib/libsa
-CFLAGS= -nostdinc -D_STANDALONE \
+CFLAGS= -nostdinc -ffreestanding
+CPPFLAGS= -D_STANDALONE \
 	-DLIBSA_USE_MEMSET -DLIBSA_USE_MEMCPY ${INCPATH} ${DEFS}
 BINDIR= ${MDEC_DIR}
 
@@ -26,7 +27,7 @@ SRCS+= vers.c
 CLEANFILES+= vers.c
 
 vers.c: version
-	sh ${S}/conf/newvers_stand.sh -DM ${.CURDIR}/version "mvmeppc"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.CURDIR}/version "mvmeppc"
 .endif
 
 CLEANFILES+= machine powerpc

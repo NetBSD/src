@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_jazziovar.h,v 1.1 2001/06/13 15:02:15 soda Exp $	*/
+/*	$NetBSD: mcclock_jazziovar.h,v 1.1.26.1 2004/08/03 10:32:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,8 @@
 struct mcclock_jazzio_config {
 	bus_addr_t mjc_iobase;
 	bus_size_t mjc_iosize;
-	struct mcclock_busfns mjc_mcbusfns;
+	u_int (*mjc_mc_read)(struct mc146818_softc *, u_int);
+	void  (*mjc_mc_write)(struct mc146818_softc *, u_int, u_int);
 };
 
-struct mcclock_jazzio_config *mcclock_jazzio_conf;
+extern struct mcclock_jazzio_config *mcclock_jazzio_conf;

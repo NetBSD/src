@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137 2003/06/23 11:01:07 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137.2.1 2004/08/03 10:32:29 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,12 +212,11 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137 2003/06/23 11:01:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.1 2004/08/03 10:32:29 skrll Exp $");
 
 #ifdef PMAP_DEBUG
-#define	PDEBUG(_lev_,_stat_) \
-	if (pmap_debug_level >= (_lev_)) \
-        	((_stat_))
+
+/* XXX need to get rid of all refs to this */
 int pmap_debug_level = 0;
 
 /*
@@ -249,7 +248,6 @@ int pmapdebug = 0;
         	((_stat_))
     
 #else	/* PMAP_DEBUG */
-#define	PDEBUG(_lev_,_stat_) /* Nothing */
 #define NPDEBUG(_lev_,_stat_) /* Nothing */
 #endif	/* PMAP_DEBUG */
 
@@ -3197,9 +3195,34 @@ pmap_destroy(pmap_t pm)
 	 */
 
 	if (vector_page < KERNEL_BASE) {
+		struct pcb *pcb = &lwp0.l_addr->u_pcb;
+
+		if (pmap_is_current(pm)) {
+			/*
+			 * Frob the L1 entry corresponding to the vector
+			 * page so that it contains the kernel pmap's domain
+			 * number. This will ensure pmap_remove() does not
+			 * pull the current vector page out from under us.
+			 */
+			disable_interrupts(I32_bit | F32_bit);
+			*pcb->pcb_pl1vec = pcb->pcb_l1vec;
+			cpu_domains(pcb->pcb_dacr);
+			cpu_setttb(pcb->pcb_pagedir);
+			enable_interrupts(I32_bit | F32_bit);
+		}
+
 		/* Remove the vector page mapping */
 		pmap_remove(pm, vector_page, vector_page + PAGE_SIZE);
 		pmap_update(pm);
+
+		/*
+		 * Make sure cpu_switch(), et al, DTRT. This is safe to do
+		 * since this process has no remaining mappings of its own.
+		 */
+		curpcb->pcb_pl1vec = pcb->pcb_pl1vec;
+		curpcb->pcb_l1vec = pcb->pcb_l1vec;
+		curpcb->pcb_dacr = pcb->pcb_dacr;
+		curpcb->pcb_pagedir = pcb->pcb_pagedir;
 	}
 
 	LIST_REMOVE(pm, pm_list);
@@ -3884,7 +3907,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 
 		/*
 		 * Make sure the descriptor itself has the correct cache mode.
-		 * If not, fix it, but bitch about the problem. Port-meisters
+		 * If not, fix it, but whine about the problem. Port-meisters
 		 * should consider this a clue to fix up their initarm()
 		 * function. :)
 		 */
@@ -3923,9 +3946,9 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)csrc_pte);
 	pmap_alloc_specials(&virtual_avail, 1, &cdstp, &cdst_pte);
 	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)cdst_pte);
-	pmap_alloc_specials(&virtual_avail, 1, (vaddr_t *)&memhook, NULL);
+	pmap_alloc_specials(&virtual_avail, 1, (void *)&memhook, NULL);
 	pmap_alloc_specials(&virtual_avail, round_page(MSGBUFSIZE) / PAGE_SIZE,
-	    (vaddr_t *)&msgbufaddr, NULL);
+	    (void *)&msgbufaddr, NULL);
 
 	/*
 	 * Allocate a range of kernel virtual address space to be used
@@ -4667,7 +4690,7 @@ pmap_pte_init_arm8(void)
 }
 #endif /* CPU_ARM8 */
 
-#if defined(CPU_ARM9)
+#if defined(CPU_ARM9) && defined(ARM9_CACHE_WRITE_THROUGH)
 void
 pmap_pte_init_arm9(void)
 {
@@ -4688,6 +4711,28 @@ pmap_pte_init_arm9(void)
 }
 #endif /* CPU_ARM9 */
 #endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
+
+#if defined(CPU_ARM10)
+void
+pmap_pte_init_arm10(void)
+{
+
+	/*
+	 * ARM10 is compatible with generic, but we want to use
+	 * write-through caching for now.
+	 */
+	pmap_pte_init_generic();
+
+	pte_l1_s_cache_mode = L1_S_B | L1_S_C;
+	pte_l2_l_cache_mode = L2_B | L2_C;
+	pte_l2_s_cache_mode = L2_B | L2_C;
+
+	pte_l1_s_cache_mode_pt = L1_S_C;
+	pte_l2_l_cache_mode_pt = L2_C;
+	pte_l2_s_cache_mode_pt = L2_C;
+
+}
+#endif /* CPU_ARM10 */
 
 #if ARM_MMU_SA1 == 1
 void
@@ -4711,6 +4756,10 @@ pmap_pte_init_sa1(void)
 #endif /* ARM_MMU_SA1 == 1*/
 
 #if ARM_MMU_XSCALE == 1
+#if (ARM_NMMUS > 1)
+static u_int xscale_use_minidata;
+#endif
+
 void
 pmap_pte_init_xscale(void)
 {
@@ -4785,6 +4834,10 @@ pmap_pte_init_xscale(void)
 		pte_l2_s_cache_mode = L2_C;
 	}
 
+#if (ARM_NMMUS > 1)
+	xscale_use_minidata = 1;
+#endif
+
 	pte_l2_s_prot_u = L2_S_PROT_U_xscale;
 	pte_l2_s_prot_w = L2_S_PROT_W_xscale;
 	pte_l2_s_prot_mask = L2_S_PROT_MASK_xscale;
@@ -4799,12 +4852,9 @@ pmap_pte_init_xscale(void)
 	/*
 	 * Disable ECC protection of page table access, for now.
 	 */
-	__asm __volatile("mrc p15, 0, %0, c1, c0, 1"
-		: "=r" (auxctl));
+	__asm __volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
 	auxctl &= ~XSCALE_AUXCTL_P;
-	__asm __volatile("mcr p15, 0, %0, c1, c0, 1"
-		:
-		: "r" (auxctl));
+	__asm __volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
 }
 
 /*
@@ -4863,17 +4913,53 @@ xscale_setup_minidata(vaddr_t l1pt, vaddr_t va, paddr_t pa)
 	 */
 
 	/* Invalidate data and mini-data. */
-	__asm __volatile("mcr p15, 0, %0, c7, c6, 0"
-		:
-		: "r" (auxctl));
-
-
-	__asm __volatile("mrc p15, 0, %0, c1, c0, 1"
-		: "=r" (auxctl));
+	__asm __volatile("mcr p15, 0, %0, c7, c6, 0" : : "r" (0));
+	__asm __volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
 	auxctl = (auxctl & ~XSCALE_AUXCTL_MD_MASK) | XSCALE_AUXCTL_MD_WB_RWA;
-	__asm __volatile("mcr p15, 0, %0, c1, c0, 1"
-		:
-		: "r" (auxctl));
+	__asm __volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
+}
+
+/*
+ * Change the PTEs for the specified kernel mappings such that they
+ * will use the mini data cache instead of the main data cache.
+ */
+void
+pmap_uarea(vaddr_t va)
+{
+	struct l2_bucket *l2b;
+	pt_entry_t *ptep, *sptep, pte;
+	vaddr_t next_bucket, eva;
+
+#if (ARM_NMMUS > 1)
+	if (xscale_use_minidata == 0)
+		return;
+#endif
+
+	eva = va + USPACE;
+
+	while (va < eva) {
+		next_bucket = L2_NEXT_BUCKET(va);
+		if (next_bucket > eva)
+			next_bucket = eva;
+
+		l2b = pmap_get_l2_bucket(pmap_kernel(), va);
+		KDASSERT(l2b != NULL);
+
+		sptep = ptep = &l2b->l2b_kva[l2pte_index(va)];
+
+		while (va < next_bucket) {
+			pte = *ptep;
+			if (!l2pte_minidata(pte)) {
+				cpu_dcache_wbinv_range(va, PAGE_SIZE);
+				cpu_tlb_flushD_SE(va);
+				*ptep = pte & ~L2_B;
+			}
+			ptep++;
+			va += PAGE_SIZE;
+		}
+		PTE_SYNC_RANGE(sptep, (u_int)(ptep - sptep));
+	}
+	cpu_cpwait();
 }
 #endif /* ARM_MMU_XSCALE == 1 */
 
@@ -4908,7 +4994,6 @@ pmap_dump(pmap_t pm)
 	pt_entry_t *ptep, pte;
 	vaddr_t l2_va, l2b_va, va;
 	int i, j, k, occ, rows = 0;
-	char ch;
 
 	if (pm == pmap_kernel())
 		printf("pmap_kernel (%p): ", pm);
@@ -4940,6 +5025,7 @@ pmap_dump(pmap_t pm)
 			occ = l2b->l2b_occupancy;
 			va = l2b_va + (k * 4096);
 			for (; k < 256; k++, va += 0x1000) {
+				char ch = ' ';
 				if ((k % 64) == 0) {
 					if ((rows % 8) == 0) {
 						printf(
@@ -4962,7 +5048,10 @@ pmap_dump(pmap_t pm)
 						ch = 'B'; /* No cache buff */
 						break;
 					case 0x08:
-						ch = 'C'; /* Cache No buff */
+						if (pte & 0x40)
+							ch = 'm';
+						else
+						   ch = 'C'; /* Cache No buff */
 						break;
 					case 0x0c:
 						ch = 'F'; /* Cache Buff */

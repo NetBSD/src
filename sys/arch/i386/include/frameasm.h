@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.2 2003/01/17 23:10:29 thorpej Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.2.2.1 2004/08/03 10:36:04 skrll Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -48,23 +48,26 @@
 	subl	$TF_PUSHSIZE,%esp	; \
 	movl	%gs,TF_GS(%esp)	; \
 	movl	%fs,TF_FS(%esp) ; \
+	movl	%eax,TF_EAX(%esp)	; \
 	movl	%es,TF_ES(%esp) ; \
 	movl	%ds,TF_DS(%esp) ; \
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movl	%edi,TF_EDI(%esp)	; \
 	movl	%esi,TF_ESI(%esp)	; \
-	movl	%eax,TF_EAX(%esp)	; \
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movl	%eax,%ds	; \
 	movl	%ebp,TF_EBP(%esp)	; \
 	movl	%eax,%es	; \
 	movl	%ebx,TF_EBX(%esp)	; \
 	movl	%eax,%gs	; \
-	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
 	movl	%edx,TF_EDX(%esp)	; \
-	movl	%eax,%fs	; \
+	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
 	movl	%ecx,TF_ECX(%esp)	; \
+	movl	%eax,%fs	; \
 	TLOG
 
+/*
+ * INTRFASTEXIT should be in sync with trap(), resume_iret and friends.
+ */
 #define	INTRFASTEXIT \
 	movl	TF_GS(%esp),%gs	; \
 	movl	TF_FS(%esp),%fs	; \
@@ -79,6 +82,15 @@
 	movl	TF_EAX(%esp),%eax	; \
 	addl	$(TF_PUSHSIZE+8),%esp	; \
 	iret
+
+#define	DO_DEFERRED_SWITCH(reg) \
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)		; \
+	jz	1f					; \
+	call	_C_LABEL(pmap_load)			; \
+	1:
+
+#define	CHECK_DEFERRED_SWITCH(reg) \
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
 
 #define	CHECK_ASTPENDING(reg)	movl	CPUVAR(CURLWP),reg	; \
 				cmpl	$0, reg			; \

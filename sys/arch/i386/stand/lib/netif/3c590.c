@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c590.c,v 1.11 1999/11/05 22:57:39 drochner Exp $	*/
+/*	$NetBSD: 3c590.c,v 1.11.30.1 2004/08/03 10:36:25 skrll Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -46,7 +46,7 @@ Author: Martin Renters.
 #define EP_W3_INTERNAL_CONFIG	0x00	/* 32 bits */
 #define EP_W3_RESET_OPTIONS	0x08	/* 16 bits */
 
-int ether_medium;
+unsigned ether_medium;
 unsigned short eth_base;
 
 extern void epreset __P((void));

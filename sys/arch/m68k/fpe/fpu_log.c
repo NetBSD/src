@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_log.c,v 1.7 2000/09/22 19:47:59 is Exp $	*/
+/*	$NetBSD: fpu_log.c,v 1.7.24.1 2004/08/03 10:36:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -30,6 +30,9 @@
  *
  *	@(#)fpu_log.c	10/8/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.7.24.1 2004/08/03 10:36:40 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

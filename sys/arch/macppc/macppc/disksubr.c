@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28 2003/05/10 23:12:34 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28.2.1 2004/08/03 10:37:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -100,7 +96,7 @@
 
 /* rewritten, 2-5-93 MLF */
 /* its alot cleaner now, and adding support for new partition types
- * isn't a bitch anymore
+ * is possible without causing serious brain-damage
  * known bugs:
  * 1) when only an HFS_PART part exists on a drive it gets assigned to "B"
  * this is because of line 623 of sd.c, I think this line should go.
@@ -108,13 +104,17 @@
  * "C" (I think) and we don't set that position in the disklabel structure
  * as used.  Again, not my fault.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28.2.1 2004/08/03 10:37:30 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 #include <sys/syslog.h>
 
 #include <machine/bswap.h>
@@ -438,10 +438,10 @@ read_dos_label(dev, strat, lp, osdep)
 		goto done;
 	}
 	/* XXX */
-	dp = (struct mbr_partition *)(bp->b_data + MBR_PARTOFF);
+	dp = (struct mbr_partition *)(bp->b_data + MBR_PART_OFFSET);
 	bsdp = NULL;
-	for (i = 0; i < NMBRPART; i++, dp++) {
-		switch (dp->mbrp_typ) {
+	for (i = 0; i < MBR_PART_COUNT; i++, dp++) {
+		switch (dp->mbrp_type) {
 		case MBR_PTYPE_NETBSD:
 			bsdp = dp;
 			break;
@@ -454,9 +454,9 @@ read_dos_label(dev, strat, lp, osdep)
 	}
 	if (!bsdp) {
 		/* generate fake disklabel */
-		dp = (struct mbr_partition *)(bp->b_data + MBR_PARTOFF);
-		for (i = 0; i < NMBRPART; i++, dp++) {
-			if (!dp->mbrp_typ)
+		dp = (struct mbr_partition *)(bp->b_data + MBR_PART_OFFSET);
+		for (i = 0; i < MBR_PART_COUNT; i++, dp++) {
+			if (!dp->mbrp_type)
 				continue;
 			slot = getFreeLabelEntry(lp);
 			if (slot < 0)
@@ -467,7 +467,7 @@ read_dos_label(dev, strat, lp, osdep)
 			lp->d_partitions[slot].p_offset = bswap32(dp->mbrp_start);
 			lp->d_partitions[slot].p_size = bswap32(dp->mbrp_size);
 
-			switch (dp->mbrp_typ) {
+			switch (dp->mbrp_type) {
 			case MBR_PTYPE_FAT12:
 			case MBR_PTYPE_FAT16S:
 			case MBR_PTYPE_FAT16B:
@@ -608,7 +608,7 @@ readdisklabel(dev, strat, lp, osdep)
 			/* it ignores labelsector/offset */
 			msg = read_mac_label(dev, strat, lp, osdep);
 			/* the disklabel is fictious */
-		} else if (bswap16(*(u_int16_t *)(bp->b_data + MBR_MAGICOFF))
+		} else if (bswap16(*(u_int16_t *)(bp->b_data + MBR_MAGIC_OFFSET))
 			   == MBR_MAGIC) {
 			/* read_dos_label figures out labelsector/offset */
 			msg = read_dos_label(dev, strat, lp, osdep);

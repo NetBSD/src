@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11 2003/06/16 20:00:57 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.11.2.1 2004/08/03 10:32:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -34,6 +34,9 @@
  *
  * Soft interrupt and other generic interrupt functions.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11.2.1 2004/08/03 10:32:29 skrll Exp $");
 
 #include "opt_irqstats.h"
 

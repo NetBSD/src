@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.6 2002/09/27 15:35:46 provos Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.6.8.1 2004/08/03 10:32:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -38,6 +38,9 @@
  *
  *	from: irqhandler.c,v 1.14 1997/04/02 21:52:19 christos Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.6.8.1 2004/08/03 10:32:38 skrll Exp $");
 
 #include "opt_irqstats.h"
 
@@ -143,6 +146,7 @@ irq_claim(irq, handler)
 {
 	int level;
 	int loop;
+	u_int oldirqstate;
 
 #ifdef DIAGNOSTIC
 	/* Sanity check */
@@ -166,6 +170,8 @@ irq_claim(irq, handler)
 	/* Make sure the level is valid */
 	if (handler->ih_level < 0 || handler->ih_level >= IPL_LEVELS)
     	        return(-1);
+
+	oldirqstate = disable_interrupts(I32_bit);
 
 	/* Attach handler at top of chain */
 	handler->ih_next = irqhandlers[irq];
@@ -271,6 +277,7 @@ irq_claim(irq, handler)
 
 	enable_irq(irq);
 	set_spl_masks();
+	restore_interrupts(oldirqstate);
 
 	return(0);
 }

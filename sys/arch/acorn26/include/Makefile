@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/01/17 21:55:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2004/08/03 10:30:48 skrll Exp $
 
 INCSDIR= /usr/include/acorn26
 
@@ -17,6 +17,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h sysarch.h \
 	trap.h types.h \
-	varargs.h vmparam.h
+	varargs.h vmparam.h \
+	wchar_limits.h
 
 .include <bsd.kinc.mk>

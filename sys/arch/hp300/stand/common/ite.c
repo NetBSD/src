@@ -1,9 +1,43 @@
-/*	$NetBSD: ite.c,v 1.1 1997/02/04 03:52:30 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.1.60.1 2004/08/03 10:34:37 skrll Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah $Hdr: ite.c 1.24 93/06/25$
+ *
+ *	@(#)ite.c	8.1 (Berkeley) 7/8/93
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -55,10 +89,14 @@
 
 #include <hp300/stand/common/device.h>
 #include <hp300/stand/common/itevar.h>
+#include <hp300/stand/common/kbdvar.h>
 #include <hp300/stand/common/consdefs.h>
 #include <hp300/stand/common/samachdep.h>
 
-void	ite_deinit_noop __P((struct ite_data *));
+static void iteconfig(void);
+static void ite_deinit_noop(struct ite_data *);
+static void ite_clrtoeol(struct ite_data *, struct itesw *, int, int);
+static void itecheckwrap(struct ite_data *, struct itesw *);
 
 struct itesw itesw[] = {
 	{ GID_TOPCAT,
@@ -97,12 +135,13 @@ int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 
 /* these guys need to be in initialized data */
 int itecons = -1;
-struct  ite_data ite_data[NITE] = { 0 };
+struct  ite_data ite_data[NITE] = { { 0 } };
 int	ite_scode[NITE] = { 0 };
 
 /*
  * Locate all bitmapped displays
  */
+static void
 iteconfig()
 {
 	extern struct hp_hw sc_table[];
@@ -131,7 +170,7 @@ iteconfig()
 		ip->isw = &itesw[dtype];
 		ip->regbase = (caddr_t) gr;
 		fboff = (gr->gr_fbomsb << 8) | gr->gr_fbolsb;
-		ip->fbbase = (caddr_t) (*((u_char *)ip->regbase+fboff) << 16);
+		ip->fbbase = (caddr_t)(*((u_char *)ip->regbase + fboff) << 16);
 		/* DIO II: FB offset is relative to select code space */
 		if (ip->regbase >= (caddr_t)DIOIIBASE)
 			ip->fbbase += (int)ip->regbase;
@@ -167,8 +206,8 @@ void
 iteprobe(cp)
 	struct consdev *cp;
 {
-	register int ite;
-	register struct ite_data *ip;
+	int ite;
+	struct ite_data *ip;
 	int unit, pri;
 
 #ifdef CONSDEBUG
@@ -231,10 +270,10 @@ iteinit(cp)
 void
 iteputchar(dev, c)
 	dev_t dev;
-	register int c;
+	int c;
 {
-	register struct ite_data *ip = &ite_data[itecons];
-	register struct itesw *sp = ip->isw;
+	struct ite_data *ip = &ite_data[itecons];
+	struct itesw *sp = ip->isw;
 
 	c &= 0x7F;
 	switch (c) {
@@ -271,9 +310,10 @@ iteputchar(dev, c)
 	}
 }
 
+static void
 itecheckwrap(ip, sp)
-     register struct ite_data *ip;
-     register struct itesw *sp;
+	struct ite_data *ip;
+	struct itesw *sp;
 {
 	if (++ip->curx == ip->cols) {
 		ip->curx = 0;
@@ -287,10 +327,11 @@ itecheckwrap(ip, sp)
 	(*sp->ite_cursor)(ip, MOVE_CURSOR);
 }
 
+static void
 ite_clrtoeol(ip, sp, y, x)
-     register struct ite_data *ip;
-     register struct itesw *sp;
-     register int y, x;
+	struct ite_data *ip;
+	struct itesw *sp;
+	int y, x;
 {
 	(*sp->ite_clear)(ip, y, x, 1, ip->cols - x);
 	(*sp->ite_cursor)(ip, DRAW_CURSOR);
@@ -301,16 +342,17 @@ int
 itegetchar(dev)
 	dev_t dev;
 {
+
 #ifdef SMALL
-	return (0);
+	return 0;
 #else
-	return (kbdgetc());
+	return kbdgetc();
 #endif
 }
 #endif
 
 /* ARGSUSED */
-void
+static void
 ite_deinit_noop(ip)
 	struct ite_data *ip;
 {

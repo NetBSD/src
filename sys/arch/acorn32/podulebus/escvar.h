@@ -1,4 +1,4 @@
-/* $NetBSD: escvar.h,v 1.4 2003/04/09 01:54:43 thorpej Exp $ */
+/* $NetBSD: escvar.h,v 1.4.2.1 2004/08/03 10:30:55 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -51,8 +51,8 @@
 
 /*
  * DMA chain block. If flg == ESC_CHAIN_PRG or flg == ESC_CHAIN_BUMP then
- * ptr is a VIRTUAL adress. If flg == ESC_CHAIN_DMA then ptr is a PHYSICAL
- * adress.
+ * ptr is a VIRTUAL address. If flg == ESC_CHAIN_DMA then ptr is a PHYSICAL
+ * address.
  */
 struct	esc_dma_chain {
 	void		*ptr;
@@ -88,13 +88,13 @@ struct nexus {
 	short			 max_link;	/* Maximum used of above */
 	short			 cur_link;	/* Currently handled block */
 
-	u_char			*buf;		/* Virtual adress of data */
+	u_char			*buf;		/* Virtual address of data */
 	int			 len;		/* Bytes left to transfer */
 
-	void			*dma_buf;	/* Current DMA adress */
+	void			*dma_buf;	/* Current DMA address */
 	int			 dma_len;	/* Current DMA length */
 
-	void			*dma_blk_ptr;	/* Current chain adress */
+	void			*dma_blk_ptr;	/* Current chain address */
 	int			 dma_blk_len;	/* Current chain length */
 	u_char			 dma_blk_flg;	/* Current chain flags */
 

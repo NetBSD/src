@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.2 2003/06/23 11:01:02 martin Exp $	*/
+/*	$NetBSD: gdt.c,v 1.2.2.1 2004/08/03 10:31:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * can be hidden in macros.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.2.2.1 2004/08/03 10:31:30 skrll Exp $");
+
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -54,9 +57,6 @@
 #include <uvm/uvm.h>
 
 #include <machine/gdt.h>
-
-#define	MINGDTSIZ	2048
-#define	MAXGDTSIZ	65536
 
 int gdt_size;		/* size of GDT in bytes */
 int gdt_dyncount;	/* number of dyn. allocated GDT entries in use */
@@ -177,7 +177,7 @@ gdt_init()
 }
 
 /*
- * Allocate shadow GDT for a slave cpu.
+ * Allocate shadow GDT for a slave CPU.
  */
 void
 gdt_alloc_cpu(struct cpu_info *ci)
@@ -193,7 +193,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 
 /*
  * Load appropriate gdt descriptor; we better be running on *ci
- * (for the most part, this is how a cpu knows who it is).
+ * (for the most part, this is how a CPU knows who it is).
  */
 void
 gdt_init_cpu(struct cpu_info *ci)

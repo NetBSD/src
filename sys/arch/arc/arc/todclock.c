@@ -1,14 +1,17 @@
-/* $NetBSD: todclock.c,v 1.3 2002/12/06 17:57:28 tsutsui Exp $ */
-/* NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp  */
+/* $NetBSD: todclock.c,v 1.3.6.1 2004/08/03 10:32:10 skrll Exp $ */
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+ *      The Regents of the University of California.  All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department and Ralph Campbell.
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgement:
+ *      This product includes software developed by the University of
+ *      California, Lawrence Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -18,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,170 +37,96 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah Hdr: clock.c 1.18 91/01/21
- *
- *	@(#)clock.c	8.1 (Berkeley) 6/10/93
+ *      @(#)clock.c     8.1 (Berkeley) 6/11/93
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.3 2002/12/06 17:57:28 tsutsui Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.3.6.1 2004/08/03 10:32:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <dev/clock_subr.h>
 
-#include <arc/arc/todclockvar.h>
+static	todr_chip_handle_t todr_handle;
 
-#define MINYEAR 2002 /* "today" */
-
-struct device *todclockdev;
-const struct todclockfns *todclockfns;
-int todclock_year_offset;
-int todclockinitted;
-
+/*
+ * Common parts of todclock autoconfiguration.
+ */
 void
-todclockattach(dev, fns, year_offset)
-	struct device *dev;
-	const struct todclockfns *fns;
-	int year_offset;
+todr_attach(handle)
+	todr_chip_handle_t handle;
 {
 
-	/*
-	 * Just bookkeeping.
-	 */
-	if (todclockfns != NULL)
-		panic("todclockattach: multiple todclocks");
+	if (todr_handle)
+		panic("todr_attach: too many todclocks configured");
 
-	todclockdev = dev;
-	todclockfns = fns;
-	todclock_year_offset = year_offset;
+	todr_handle = handle;
 }
 
 /*
- * Machine-dependent real-time clock routines.
- *
- * Inittodr initializes the time of day hardware which provides
- * date functions.  Its primary function is to use some file
- * system information in case the hardare clock lost state.
- *
- * Resettodr restores the time of day hardware after a time change.
- */
-
-/*
- * Initialze the time of day register, based on the time base which is, e.g.
- * from a filesystem.  Base provides the time to within six months,
- * and the time of year clock (if any) provides the rest.
+ * Set up the system's time, given a `reasonable' time value.
  */
 void
 inittodr(base)
 	time_t base;
 {
-	struct todclocktime ct;
-	int year;
-	struct clock_ymdhms dt;
-	time_t deltat;
-	int badbase;
+	int badbase, waszero;
 
-	if (todclockfns == NULL)
-		panic("inittodr: no real time clock attached");
+	badbase = 0;
+	waszero = (base == 0);
 
-	if (base < (MINYEAR - POSIX_BASE_YEAR) * SECYR) {
-		printf("WARNING: preposterous time in file system");
-		/* read the system clock anyway */
-		base = (MINYEAR - POSIX_BASE_YEAR) * SECYR;
+	if (base < 5 * SECYR) {
+		/*
+		 * If base is 0, assume filesystem time is just unknown
+		 * in stead of preposterous. Don't bark.
+		 */
+		if (base != 0)
+			printf("WARNING: preposterous time in file system\n");
+		/* not going to use it anyway, if the chip is readable */
+		/* 2002/7/1	12:00:00 */
+		base = 32*SECYR + 186*SECDAY + SECDAY/2;
 		badbase = 1;
-	} else
-		badbase = 0;
+	}
 
-	(*todclockfns->tcf_get)(todclockdev, base, &ct);
-#ifdef DEBUG
-	printf("readclock: %02d/%02d/%02d/%02d/%02d/%02d",
-	    ct.year, ct.mon, ct.day, ct.hour, ct.min, ct.sec);
-#endif
-	todclockinitted = 1;
-
-	year = 1900 + todclock_year_offset + ct.year;
-	if (year < POSIX_BASE_YEAR)
-		year += 100;
-	/* simple sanity checks (2037 = time_t overflow) */
-	if (year < MINYEAR || year > 2037 ||
-	    ct.mon < 1 || ct.mon > 12 || ct.day < 1 || ct.day > 31 ||
-	    ct.hour >= 24 || ct.min >= 60 || ct.sec >= 60) {
+	if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
+	    time.tv_sec == 0) {
+		printf("WARNING: bad date in battery clock");
 		/*
 		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
+		 * anything better, resetting the clock.
 		 */
 		time.tv_sec = base;
-		if (!badbase) {
-			printf("WARNING: preposterous clock chip time\n");
+		if (!badbase)
 			resettodr();
-		}
-		goto bad;
-	}
+	} else {
+		int deltat = time.tv_sec - base;
 
-	dt.dt_year = year;
-	dt.dt_mon  = ct.mon;
-	dt.dt_day  = ct.day;
-	dt.dt_hour = ct.hour;
-	dt.dt_min  = ct.min;
-	dt.dt_sec  = ct.sec;
-	time.tv_sec = clock_ymdhms_to_secs(&dt);
-#ifdef DEBUG
-	printf("=>%ld (%ld)\n", time.tv_sec, base);
-#endif
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days;
-		 * if so, assume something is amiss.
-		 */
-		deltat = time.tv_sec - base;
 		if (deltat < 0)
 			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
+		if (waszero || deltat < 2 * SECDAY)
 			return;
-		printf("WARNING: clock %s %ld days",
-		    time.tv_sec < base ? "lost" : "gained",
-		    (long)deltat / SECDAY);
+		printf("WARNING: clock %s %d days",
+		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
- bad:
 	printf(" -- CHECK AND RESET THE DATE!\n");
 }
 
 /*
- * Reset the TODR based on the time value; used when the TODR
- * has a preposterous value and also when the time is reset
- * by the stime system call.  Also called when the TODR goes past
- * TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
- * to wrap the TODR around.
+ * Reset the clock based on the current time.
+ * Used when the current clock is preposterous, when the time is changed,
+ * and when rebooting.  Do nothing if the time is not yet known, e.g.,
+ * when crashing during autoconfig.
  */
 void
 resettodr()
 {
-	struct clock_ymdhms dt;
-	struct todclocktime ct;
 
-	if (!todclockinitted)
+	if (time.tv_sec == 0)
 		return;
 
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
-
-	/* rt clock wants 2 digits */
-	ct.year = (dt.dt_year - todclock_year_offset) % 100;
-	ct.mon  = dt.dt_mon;
-	ct.day  = dt.dt_day;
-	ct.hour = dt.dt_hour;
-	ct.min  = dt.dt_min;
-	ct.sec  = dt.dt_sec;
-	ct.dow  = dt.dt_wday;
-#ifdef DEBUG
-	printf("setclock: %02d/%02d/%02d/%02d/%02d/%02d\n",
-	    ct.year, ct.mon, ct.day,
-	       ct.hour, ct.min, ct.sec);
-#endif
-
-	(*todclockfns->tcf_set)(todclockdev, &ct);
+	if (todr_settime(todr_handle, (struct timeval *)&time) != 0)
+		printf("resettodr: cannot set time in time-of-day clock\n");
 }

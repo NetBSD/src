@@ -1,9 +1,43 @@
-/*	$NetBSD: vm_machdep.c,v 1.97.2.1 2003/07/03 02:01:20 wrstuden Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.97.2.2 2004/08/03 10:37:51 skrll Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department and Ralph Campbell.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah Hdr: vm_machdep.c 1.21 91/04/06
+ *
+ *	@(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -45,7 +79,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.2.1 2003/07/03 02:01:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.2.2 2004/08/03 10:37:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,12 +123,8 @@ paddr_t kvtophys(vaddr_t);	/* XXX */
  * accordingly.
  */
 void
-cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
-	struct lwp *l1, *l2;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
 	struct pcb *pcb;
 	struct frame *f;
@@ -136,11 +166,13 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 * If specified, give the child a different stack.
 	 */
 	if (stack != NULL)
-		f->f_regs[SP] = (u_int)stack + stacksize;
+		f->f_regs[_R_SP] = (u_int)stack + stacksize;
 
 	l2->l_md.md_regs = (void *)f;
 	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;
-	x = (MIPS_HAS_R4K_MMU) ? (MIPS3_PG_G|MIPS3_PG_RO|MIPS3_PG_WIRED) : MIPS1_PG_G;
+	x = (MIPS_HAS_R4K_MMU) ?
+	    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
+	    MIPS1_PG_G;
 	pte = kvtopte(l2->l_addr);
 	for (i = 0; i < UPAGES; i++)
 		l2->l_md.md_upte[i] = pte[i].pt_entry &~ x;
@@ -161,10 +193,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
  * proc_trampoline.
  */
 void
-cpu_setfunc(l, func, arg)
-	struct lwp *l;
-	void (*func) __P((void *));
-	void *arg;
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	struct pcb *pcb;
 	struct frame *f;
@@ -175,7 +204,7 @@ cpu_setfunc(l, func, arg)
 	pcb = &l->l_addr->u_pcb;
 	pcb->pcb_context[0] = (int)func;		/* S0 */
 	pcb->pcb_context[1] = (int)arg;			/* S1 */
-	pcb->pcb_context[8] = (int)f - 24;		/* SP */
+	pcb->pcb_context[8] = (int)f;			/* SP */
 	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
 	pcb->pcb_context[11] |= PSL_LOWIPL;		/* SR */
 #ifdef IPL_ICU_MASK
@@ -189,8 +218,7 @@ cpu_setfunc(l, func, arg)
  * machine dependent part of the proc structure.
  */
 void
-cpu_swapin(l)
-	struct lwp *l;
+cpu_swapin(struct lwp *l)
 {
 	pt_entry_t *pte;
 	int i, x;
@@ -200,10 +228,20 @@ cpu_swapin(l)
 	 * part of the proc struct so cpu_switch() can quickly map in
 	 * the user struct and kernel stack.
 	 */
-	x = (MIPS_HAS_R4K_MMU) ? (MIPS3_PG_G|MIPS3_PG_RO|MIPS3_PG_WIRED) : MIPS1_PG_G;
+	x = (MIPS_HAS_R4K_MMU) ?
+	    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
+	    MIPS1_PG_G;
 	pte = kvtopte(l->l_addr);
 	for (i = 0; i < UPAGES; i++)
 		l->l_md.md_upte[i] = pte[i].pt_entry &~ x;
+}
+
+void
+cpu_lwp_free(struct lwp *l, int proc)
+{
+
+	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
+		fpcurlwp = (struct lwp *)0;
 }
 
 /*
@@ -215,18 +253,12 @@ cpu_swapin(l)
  * into the middle of cpu_switch(), as if it were switching from proc0.
  */
 void
-cpu_exit(l, proc)
-	struct lwp *l;
-	int proc;
+cpu_exit(struct lwp *l)
 {
 	void switch_exit(struct lwp *, void (*)(struct lwp *));
 
-	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		fpcurlwp = (struct lwp *)0;
-
-	uvmexp.swtch++;
 	(void)splhigh();
-	switch_exit(l, proc ? exit2 : lwp_exit2);
+	switch_exit(l, lwp_exit2);
 	/* NOTREACHED */
 }
 
@@ -234,11 +266,8 @@ cpu_exit(l, proc)
  * Dump the machine specific segment at the start of a core dump.
  */
 int
-cpu_coredump(l, vp, cred, chdr)
-	struct lwp *l;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
+cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
+    struct core *chdr)
 {
 	int error;
 	struct coreseg cseg;
@@ -284,9 +313,7 @@ cpu_coredump(l, vp, cred, chdr)
  * and size must be a multiple of PAGE_SIZE.
  */
 void
-pagemove(from, to, size)
-	caddr_t from, to;
-	size_t size;
+pagemove(caddr_t from, caddr_t to, size_t size)
 {
 	pt_entry_t *fpte, *tpte;
 	paddr_t invalid;
@@ -317,9 +344,7 @@ pagemove(from, to, size)
  * Map a user I/O request into kernel virtual address space.
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	struct pmap *upmap;
 	vaddr_t uva;	/* User VA (map from) */
@@ -353,9 +378,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t kva;
 	vsize_t off;
@@ -383,8 +406,7 @@ vunmapbuf(bp, len)
  * - kseg2 normal kernel "virtual address" mapped via the TLB.
  */
 paddr_t
-kvtophys(kva)
-	vaddr_t kva;
+kvtophys(vaddr_t kva)
 {
 	pt_entry_t *pte;
 	paddr_t phys;

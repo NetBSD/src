@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlb.c,v 1.8 2003/01/19 10:06:15 tsutsui Exp $	*/
+/*	$NetBSD: jazzdmatlb.c,v 1.8.2.1 2004/08/03 10:32:22 skrll Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*-
@@ -31,6 +31,9 @@
  * Jazz derived system dma driver. Handles resource allocation and
  * logical (virtual) address remaping.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.8.2.1 2004/08/03 10:32:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +87,7 @@ jazz_dmatlb_init(iot, ioaddr)
 	mips_dcache_wbinv_all();/* Make sure no map entries are cached */
 	bzero((char *)dma_tlb, JAZZ_DMATLB_SIZE);
 
-	dmatlbmap = extent_create("dmatlb", 0, NDMATLB, M_DEVBUF, NULL, NULL,
+	dmatlbmap = extent_create("dmatlb", 0, NDMATLB, M_DEVBUF, NULL, 0,
 	    EX_NOWAIT);
 	if (dmatlbmap == NULL)
 		panic("jazz_dmatlb_init: cannot create extent map");

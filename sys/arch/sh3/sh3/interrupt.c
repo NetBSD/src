@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.5 2002/11/10 04:30:10 tsutsui Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.5.6.1 2004/08/03 10:40:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.5.6.1 2004/08/03 10:40:16 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 
@@ -58,6 +61,7 @@ void tmu1_oneshot(void);
 int tmu1_intr(void *);
 void tmu2_oneshot(void);
 int tmu2_intr(void *);
+
 /*
  * EVTCODE to intc_intrhand mapper.
  * max #60 is SH7709_INTEVT2_ADC_ADI (0x980)
@@ -134,7 +138,7 @@ intc_intr_disestablish(void *arg)
 	struct intc_intrhand *ih = arg;
 	int evtcode = ih->ih_evtcode;
 
-	/* Mask interrupt if IPR can manage it. if not, cascated ICU will do */
+	/* Mask interrupt if IPR can manage it. if not, cascaded ICU will do */
 	intc_intr_priority(evtcode, 0);
 
 	/* Unmap interrupt handler */
@@ -143,8 +147,34 @@ intc_intr_disestablish(void *arg)
 	intc_free_ih(ih);
 }
 
+void
+intc_intr_disable(int evtcode)
+{
+	int s;
+
+	s = _cpu_intr_suspend();
+	KASSERT(EVTCODE_TO_IH_INDEX(evtcode) != 0); /* there is a handler */
+	intc_intr_priority(evtcode, 0);
+	_cpu_intr_resume(s);
+}
+
+void
+intc_intr_enable(int evtcode)
+{
+	struct intc_intrhand *ih;
+	int s;
+
+	s = _cpu_intr_suspend();
+	KASSERT(EVTCODE_TO_IH_INDEX(evtcode) != 0); /* there is a handler */
+	ih = EVTCODE_IH(evtcode);
+	/* ih_level is in the SR.IMASK format */
+	intc_intr_priority(evtcode, (ih->ih_level >> 4));
+	_cpu_intr_resume(s);
+}
+
+
 /*
- * void intc_intr_priority(int evtcode, int level)
+ * int intc_intr_priority(int evtcode, int level)
  *	Setup interrupt priority register.
  *	SH7708, SH7708S, SH7708R, SH7750, SH7750S ... evtcode is INTEVT
  *	SH7709, SH7709A				  ... evtcode is INTEVT2
@@ -152,59 +182,117 @@ intc_intr_disestablish(void *arg)
 void
 intc_intr_priority(int evtcode, int level)
 {
-#define	SET_LEVEL(r, pos, level)					\
-	r = (r & ~(0xf << (pos))) | (level << (pos))
-#define	__SH_IPR(sh, x, pos, level)					\
-do {									\
-	r = _reg_read_2(SH ## sh ## _IPR ## x);				\
-	SET_LEVEL(r, pos, level);					\
-	_reg_write_2(SH ## sh ## _IPR ## x, r);				\
-} while (/*CONSTCOND*/0)
-#define	SH3_IPR(x, pos, level)		__SH_IPR(3, x, pos, level)
-#define	SH4_IPR(x, pos, level)		__SH_IPR(4, x, pos, level)
-#define	SH7709_IPR(x, pos, level)	__SH_IPR(7709, x, pos, level)
-#define	SH_IPR(x, pos, level)						\
-do {									\
-	if (CPU_IS_SH3)							\
-		SH3_IPR(x, pos, level);					\
-	else								\
-		SH4_IPR(x, pos, level);					\
-} while (/*CONSTCOND*/0)
+	volatile uint16_t *iprreg;
+	int pos;
+	uint16_t r;
 
-	u_int16_t r;
+#define	__SH_IPR(_sh, _ipr, _pos)					   \
+	do {								   \
+		iprreg = (volatile uint16_t *)(SH ## _sh ## _IPR ## _ipr); \
+		pos = (_pos);						   \
+	} while (/*CONSTCOND*/0)
+
+#define	SH3_IPR(_ipr, _pos)		__SH_IPR(3, _ipr, _pos)
+#define	SH4_IPR(_ipr, _pos)		__SH_IPR(4, _ipr, _pos)
+#define	SH7709_IPR(_ipr, _pos)		__SH_IPR(7709, _ipr, _pos)
+
+#define	SH_IPR(_ipr, _pos)						\
+	do {								\
+		if (CPU_IS_SH3)						\
+			SH3_IPR(_ipr, _pos);				\
+		else							\
+			SH4_IPR(_ipr, _pos);				\
+	} while (/*CONSTCOND*/0)
+
+	iprreg = 0;
+	pos = -1;
 
 	switch (evtcode) {
 	case SH_INTEVT_TMU0_TUNI0:
-		SH_IPR(A, 12, level);
+		SH_IPR(A, 12);
 		break;
 	case SH_INTEVT_TMU1_TUNI1:
-		SH_IPR(A, 8, level);
+		SH_IPR(A, 8);
 		break;
 	case SH_INTEVT_TMU2_TUNI2:
-		SH_IPR(A, 4, level);
+		SH_IPR(A, 4);
 		break;
 	case SH_INTEVT_SCI_ERI:
 	case SH_INTEVT_SCI_RXI:
 	case SH_INTEVT_SCI_TXI:
 	case SH_INTEVT_SCI_TEI:
-		SH_IPR(B, 4, level);
-		break;
-	case SH7709_INTEVT2_SCIF_ERI:
-	case SH7709_INTEVT2_SCIF_RXI:
-	case SH7709_INTEVT2_SCIF_BRI:
-	case SH7709_INTEVT2_SCIF_TXI:
-		SH7709_IPR(E, 4, level);
-		break;
-	case SH7709_INTEVT2_IRQ4:
-		SH7709_IPR(D, 0, level);
-		break;
-	case SH4_INTEVT_SCIF_ERI:
-	case SH4_INTEVT_SCIF_RXI:
-	case SH4_INTEVT_SCIF_BRI:
-	case SH4_INTEVT_SCIF_TXI:
-		SH4_IPR(C, 4, level);
+		SH_IPR(B, 4);
 		break;
 	}
+
+	if (CPU_IS_SH3)
+		switch (evtcode) {
+		case SH7709_INTEVT2_IRQ3:
+			SH7709_IPR(C, 12);
+			break;
+		case SH7709_INTEVT2_IRQ2:
+			SH7709_IPR(C, 8);
+			break;
+		case SH7709_INTEVT2_IRQ1:
+			SH7709_IPR(C, 4);
+			break;
+		case SH7709_INTEVT2_IRQ0:
+			SH7709_IPR(C, 0);
+			break;
+		case SH7709_INTEVT2_PINT07:
+			SH7709_IPR(D, 12);
+			break;
+		case SH7709_INTEVT2_PINT8F:
+			SH7709_IPR(D, 8);
+			break;
+		case SH7709_INTEVT2_IRQ5:
+			SH7709_IPR(D, 4);
+			break;
+		case SH7709_INTEVT2_IRQ4:
+			SH7709_IPR(D, 0);
+			break;
+		case SH7709_INTEVT2_DEI0:
+		case SH7709_INTEVT2_DEI1:
+		case SH7709_INTEVT2_DEI2:
+		case SH7709_INTEVT2_DEI3:
+			SH7709_IPR(E, 12);
+			break;
+		case SH7709_INTEVT2_IRDA_ERI:
+		case SH7709_INTEVT2_IRDA_RXI:
+		case SH7709_INTEVT2_IRDA_BRI:
+		case SH7709_INTEVT2_IRDA_TXI:
+			SH7709_IPR(E, 8);
+			break;
+		case SH7709_INTEVT2_SCIF_ERI:
+		case SH7709_INTEVT2_SCIF_RXI:
+		case SH7709_INTEVT2_SCIF_BRI:
+		case SH7709_INTEVT2_SCIF_TXI:
+			SH7709_IPR(E, 4);
+			break;
+		case SH7709_INTEVT2_ADC:
+			SH7709_IPR(E, 0);
+			break;
+		}
+	else
+		switch (evtcode) {
+		case SH4_INTEVT_SCIF_ERI:
+		case SH4_INTEVT_SCIF_RXI:
+		case SH4_INTEVT_SCIF_BRI:
+		case SH4_INTEVT_SCIF_TXI:
+			SH4_IPR(C, 4);
+			break;
+		}
+
+	/*
+	 * XXX: This function gets called even for interrupts that
+	 * don't have their priority defined by IPR registers.
+	 */
+	if (pos < 0)
+		return;
+
+	r = _reg_read_2(iprreg);
+	r = (r & ~(0xf << (pos))) | (level << (pos));
+	_reg_write_2(iprreg, r);
 }
 
 /*
@@ -218,7 +306,7 @@ intc_alloc_ih()
 	int i;
 
 	for (i = 1; i <= _INTR_N; i++, ih++)
-		if (ih->ih_idx == 0) {	/* no driver use this. */
+		if (ih->ih_idx == 0) {	/* no driver uses this. */
 			ih->ih_idx = i;	/* register myself */
 			return (ih);
 		}

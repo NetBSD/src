@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
+/*	$NetBSD: spl.S,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -136,10 +136,8 @@ IDTVEC(spllower)
 	cli
 	andl	CPUVAR(IPENDING),%eax		# any non-masked bits left?
 	jz	2f
-	sti
 	bsrl	%eax,%eax
 	btrl	%eax,CPUVAR(IPENDING)
-	jnc	1b
 	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
 	jmp	*IS_RECURSE(%rax)
 2:
@@ -166,10 +164,8 @@ IDTVEC(doreti)
 	cli
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
-	sti
 	bsrl    %eax,%eax               # slow, but not worth optimizing
 	btrl    %eax,CPUVAR(IPENDING)
-	jnc     1b			# some intr cleared the in-memory bit
 	movq	CPUVAR(ISOURCES)(,%rax, 8),%rax
 	jmp	*IS_RESUME(%rax)
 2:	/* Check for ASTs on exit to user mode. */
@@ -182,6 +178,7 @@ IDTVEC(doreti)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	cli
 	jmp	5b

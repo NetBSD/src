@@ -1,4 +1,4 @@
-/*	$NetBSD: consdefs.h,v 1.2 1997/05/12 07:45:41 thorpej Exp $	*/
+/*	$NetBSD: consdefs.h,v 1.2.56.1 2004/08/03 10:34:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,26 +39,26 @@ extern	int cons_scode;
  * Console routine prototypes.
  */
 #ifdef ITECONSOLE
-void	iteprobe __P((struct consdev *));
-void	iteinit __P((struct consdev *));
-int	itegetchar __P((dev_t));
-void	iteputchar __P((dev_t, int));
+void	iteprobe(struct consdev *);
+void	iteinit(struct consdev *);
+int	itegetchar(dev_t);
+void	iteputchar(dev_t, int);
 #endif
 #ifdef DCACONSOLE
-void	dcaprobe __P((struct consdev *));
-void	dcainit __P((struct consdev *));
-int	dcagetchar __P((dev_t));
-void	dcaputchar __P((dev_t, int));
+void	dcaprobe(struct consdev *);
+void	dcainit(struct consdev *);
+int	dcagetchar(dev_t);
+void	dcaputchar(dev_t, int);
 #endif
 #ifdef APCICONSOLE
-void	apciprobe __P((struct consdev *));
-void	apciinit __P((struct consdev *));
-int	apcigetchar __P((dev_t));
-void	apciputchar __P((dev_t, int));
+void	apciprobe(struct consdev *);
+void	apciinit(struct consdev *);
+int	apcigetchar(dev_t);
+void	apciputchar(dev_t, int);
 #endif
 #ifdef DCMCONSOLE
-void	dcmprobe __P((struct consdev *));
-void	dcminit __P((struct consdev *));
-int	dcmgetchar __P((dev_t));
-void	dcmputchar __P((dev_t, int));
+void	dcmprobe(struct consdev *);
+void	dcminit(struct consdev *);
+int	dcmgetchar(dev_t);
+void	dcmputchar(dev_t, int);
 #endif

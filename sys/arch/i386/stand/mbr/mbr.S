@@ -1,11 +1,11 @@
-/*	$NetBSD: mbr.S,v 1.2 2003/04/29 10:24:24 dsl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.2.2.1 2004/08/03 10:36:25 skrll Exp $	*/
 
 /*
- * Copyright (c) 1999-2003 The NetBSD Foundation, Inc. 
+ * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
  * All rights reserved.
  *     
  * This code is derived from software contributed to The NetBSD Foundation
- * by Frank van der Linden.
+ * by Frank van der Linden, based on an earlier work by Wolfgang Solfrank.
  * Major surgery performed by David Laight.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,20 +18,23 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by TooLs GmbH.
- * 4. The name of TooLs GmbH may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -46,20 +49,30 @@
  * NO_LBA_CHECK	- no check if bios supports LBA reads
  */
 
+#ifdef BOOT_EXTENDED
+#define NO_CHS	1
+#define BOOTSEL	1
+#endif
+
 #include <machine/asm.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 #define BOOTADDR	0x7c00
 #define LOADADDR	0x0600		/* address were are linked to */
 
-#define TABENTRYSIZE	(PARTNAMESIZE + 1)
-#define NAMETABSIZE	(NMBRPART * TABENTRYSIZE)
+#define TABENTRYSIZE	(MBR_BS_PARTNAMESIZE + 1)
+#define NAMETABSIZE	(MBR_PART_COUNT * TABENTRYSIZE)
+
+/* Scan values for the various keys we use, as returned by the BIOS */
+#define	SCAN_ENTER	0x1c
+#define	SCAN_F1		0x3b
+#define	SCAN_1		0x2
 
 /*
  * Minimum and maximum drive number that is considered to be valid.
  */
 #define MINDRV		0x80
-#define MAXDRV		0x87
+#define MAXDRV		0x8f
 
 #ifdef TERSE_ERROR
 /*
@@ -112,7 +125,6 @@ mbr:
 	push	%dx			/* save drive number */
 	push	%dx			/* twice - for err_msg loop */
 
-#ifdef BOOTSEL
 /*
  * Walk through the selector (name) table printing used entries.
  */
@@ -126,8 +138,9 @@ next_extended:
 	lea	parttab - nametab(%bx), %bp
 next_ptn:
 	movb	4(%bp), %al		/* partition type */
-#ifdef BOOT_EXTENDED
+#ifdef NO_CHS
 	movl	8(%bp), %edi		/* partition sector number */
+#ifdef BOOT_EXTENDED
 	cmpb	$MBR_PTYPE_EXT, %al	/* Extended partition */
 	je	1f
 	cmpb	$MBR_PTYPE_EXT_LBA, %al	/* Extended LBA partition */
@@ -135,14 +148,26 @@ next_ptn:
 	cmpb	$MBR_PTYPE_EXT_LNX, %al	/* Linux extended partition */
 	jne	2f
 1:	movl	%edi, %edx		/* save next extended ptn */
-	jmp	3f
+	jmp	4f
 2:
 #endif
+	addl	lba_sector, %edi	/* add in extended ptn base */
+#endif
 	test	%al, %al		/* undefined partition */
-	je	3f
+	je	4f
+	cmpb	$0x80, (%bp)		/* check for active partition */
+	jne	3f			/* jump if not... */
+#define	ENTER	(4 * ((SCAN_ENTER - SCAN_F1) & 0xff))
+#ifdef NO_CHS
+	movl	%edi, ptn_list + ENTER	/* save location of active ptn */
+#else
+	mov	%bp, ptn_list + ENTER
+#endif
+#undef ENTER
+3:
+#ifdef BOOTSEL
 	cmpb	$0, (%bx)		/* check for prompt */
-	jz	3f
-
+	jz	4f
 	/* output menu item */
 	movw	$prefix, %si
 	incb	(%si)
@@ -151,7 +176,6 @@ next_ptn:
 	shl	$2, %si			/* const + count * 4 */
 #define	CONST	(4 * ((':' << 8) + '1' - ((SCAN_1 - SCAN_F1) & 0xff)))
 #ifdef NO_CHS
-	addl	lba_sector, %edi
 	movl	%edi, ptn_list - CONST(%si)	/* sector to read */
 #else
 	mov	%bp, ptn_list - CONST(%si)	/* partition info */
@@ -161,7 +185,8 @@ next_ptn:
 	call	message			/* prompt */
 	movw	$crlf, %si
 	call	message
-3:
+#endif
+4:
 	add	$0x10, %bp
 	add	$TABENTRYSIZE, %bx
 	cmpb	$(nametab - start - 0x100) + 4 * TABENTRYSIZE, %bl
@@ -184,11 +209,26 @@ next_ptn:
 	push	%dx			/* save drive */
 	int	$0x13
 	jc	wait_key		/* abort menu on read fail */
-	cmpw	$MBR_MAGIC, LOADADDR + MBR_MAGICOFF
+	cmpw	$MBR_MAGIC, LOADADDR + MBR_MAGIC_OFFSET
 	movw	$nametab - LOADADDR + BOOTADDR, %bx
 	je	next_extended
 #endif
 
+/*
+ * If we haven't output any menu entries, then the system sits waiting
+ * for a keypress with the user looking at a blank screen wondering
+ * why nothing is happening.
+ * To stop this we generate <ENTER> - to boot the active partition
+ * if we haven't output any menu texts.
+ * The non-bootsel code also traverses this code path.
+ */
+
+#ifndef BOOTSEL
+	movb	$SCAN_ENTER - SCAN_F1, %al
+#else
+	movb	$SCAN_ENTER, %al	/* default to active partition */
+	cmpb	$'0', prefix		/* did we output a menu ? */
+	je	check_key		/* Nope - process SCAN_ENTER */
 /*
  * Get the initial time value for the timeout comparison. It is returned
  * by int 1a in cx:dx. We do sums modulo 2^16 so it doesn't matter if
@@ -226,41 +266,12 @@ get_key:
  */
 check_key:
 /*
- * <enter> -> boot active partition.
- */
-	cmpb	$SCAN_ENTER, %al
-	jne	boot_disk
-#endif	/* BOOTSEL */
-
-/*
- * Scan MBR for first active partition, and boot it.
- */
-	mov	$NMBRPART, %cx
-	mov	$parttab, %si
-1:
-	cmpb	$0x80, (%si)
-#ifdef NO_CHS
-	jne	10f			/* not active */
-	movl	8(%si), %ebp		/* sector number of ptn */
-	jmp	boot_lba
-10:
-#else
-	je	boot_si
-#endif
-	add	$0x10, %si
-	loop	1b
-	set_err(ERR_INVPART)
-	jmp	err_msg
-
-#ifdef BOOTSEL
-/*
  * F1-F10 -> boot disk 0-9. Check if the requested disk isn't above
  * the number of disks actually in the system as stored in 0:0475 by
  * the BIOS.
  * If we trust loc 475, we needn't check the upper bound on the keystroke
  * This is always sector 0, so always read using chs.
  */
-boot_disk:
 	subb	$SCAN_F1, %al
 	cmpb	0x0475, %al
 	jae	boot_ptn
@@ -274,6 +285,7 @@ boot_disk:
 	movw	$chs_zero, %si		/* chs read sector zero info */
 	jmp	read_chs
 #endif
+#endif	/* BOOTSEL */
 
 /*
  * Boot requested partition.
@@ -295,9 +307,12 @@ boot_ptn:
 	test	%si, %si
 	jnz	boot_si
 #endif
+#ifdef BOOTSEL
 	set_err(ERR_KEY)
+#else
+	set_err(ERR_INVPART)
+#endif
   /*	jmp	err_msg */
-#endif	/* BOOTSEL */
 
 /* Something went wrong...
  * Output error code,
@@ -353,7 +368,7 @@ err_msg:
 boot_si:
 	movl	8(%si), %ebp		/* get sector # */
 
-	testb	$BFL_READ_LBA, flags
+	testb	$MBR_BS_READ_LBA, flags
 	jnz	boot_lba		/* fdisk forced LBA read */
 
 	pop	%dx			/* collect saved drive... */
@@ -430,7 +445,7 @@ do_read:
 	movb	BOOTADDR, %al		/* first byte non-zero */
 	test	%al, %al
 	jz	1f
-	movw	BOOTADDR + MBR_MAGICOFF, %ax
+	movw	BOOTADDR + MBR_MAGIC_OFFSET, %ax
 1:	cmp	$MBR_MAGIC, %ax
 	set_err(ERR_NOOS)
 	jnz	err_msg
@@ -515,7 +530,7 @@ ERR_KEY:	.asciz	"bad key"
  * (Unfortunately I can't seem to get the value reported when it is -ve)
  */
 mbr_space	= defkey - .
-	. = start + MBR_BOOTSELOFF
+	. = start + MBR_BS_OFFSET
 /*
  * Default action, as a keyvalue we'd normally read from the BIOS.
  */
@@ -524,7 +539,7 @@ defkey:
 #ifndef BOOTSEL_FLAGS
 #define	BOOTSEL_FLAGS	0
 #endif
-flags:	.byte	BFL_NEWMBR | BOOTSEL_FLAGS
+flags:	.byte	MBR_BS_NEWMBR | BOOTSEL_FLAGS
 /*
  * Timeout value. ~65536 ticks per hour, which is ~18.2 times per second.
  * 0xffff means never timeout.
@@ -532,19 +547,27 @@ flags:	.byte	BFL_NEWMBR | BOOTSEL_FLAGS
 timeout:
 	.word	182			/* default to 10 seconds */
 /*
- * Space for name/select table and partition table.
+ * mbr_bootsel
  */
 nametab:
-	.fill	NMBRPART * (PARTNAMESIZE + 1), 0x01, 0x00
+	.fill	MBR_PART_COUNT * (MBR_BS_PARTNAMESIZE + 1), 0x01, 0x00
 
-	. = start + MBR_PARTOFF - 2
-	.word	MBR_MAGIC
+/* space for mbr_dsn */
+	. = start + MBR_DSN_OFFSET
+	.long	0
 
-	. = start + MBR_PARTOFF
+/* mbr_bootsel_magic */
+	. = start + MBR_BS_MAGIC_OFFSET
+	.word	MBR_BS_MAGIC
+
+/*
+ * MBR partition table
+ */
+	. = start + MBR_PART_OFFSET
 parttab:
 	.fill	0x40, 0x01, 0x00
 
-	. = start + MBR_MAGICOFF
+	. = start + MBR_MAGIC_OFFSET
 	.word	MBR_MAGIC
 
 /* zeroed data space */

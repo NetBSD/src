@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.5 2002/06/01 23:50:55 lukem Exp $	*/
+/*	$NetBSD: iop.c,v 1.5.6.1 2004/08/03 10:37:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -30,6 +30,9 @@
 /*
  *	This code handles VIA, RBV, and OSS functionality.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.5.6.1 2004/08/03 10:37:09 skrll Exp $");
 
 #include "opt_mac68k.h"
 
@@ -360,6 +363,8 @@ receive_iop_message(iop, chan)
 	IOPHW		*ioph;
 	struct iop_msg	*msg;
 	int		offset;
+
+	ioph = iop->iop;
 
 	msg = SIMPLEQ_FIRST(&iop->recvq[chan]);
 	if (msg) {

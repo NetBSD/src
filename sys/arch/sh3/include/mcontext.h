@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.2 2003/01/18 06:33:41 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.2.2.1 2004/08/03 10:40:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,9 +72,15 @@ typedef __greg_t	__gregset_t[_NGREG];
 /* Convenience synonym */
 #define	_REG_SP		_REG_R15
 
+/*
+ * FPU state description.
+ * XXX: kernel doesn't support FPU yet, so this is just a placeholder.
+ */
 typedef struct {
 	int		__fpr_fpscr;
-	double		__fpr_regs[8];
+	int		__fpr_fpul;
+	/* XXX: redefine as a union when we do support FPU */
+	int		__fpr_regs[32];	/* SH3E has 16, SH4 has 32 */
 } __fpregset_t;
 
 typedef struct {
@@ -83,5 +89,16 @@ typedef struct {
 } mcontext_t;
 
 #define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
+#define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
+#define	_UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_R0])
+
+#define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
+
+/*
+ * Machine dependent uc_flags
+ */
+#define	_UC_SETSTACK		0x10000
+#define	_UC_CLRSTACK		0x20000
+
 
 #endif /* !_SH3_MCONTEXT_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cesfic,v 1.9 2002/10/05 16:25:34 chs Exp $
+#	$NetBSD: Makefile.cesfic,v 1.9.6.1 2004/08/03 10:33:45 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -34,11 +34,7 @@ GENASSYM=	${CESFIC}/cesfic/genassym.cf
 CPPFLAGS+=	-Dcesfic
 CWARNFLAGS+=	-Wno-format
 CFLAGS+=	-msoft-float
-.if defined(HAVE_GCC3)
-AFLAGS+=	-x assembler-with-cpp -Wa,-m68030 -Wa,-m68851 -Wa,-m68040
-.else
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp -Wa,-m68030 -Wa,-m68851 -Wa,-m68040
-.endif
 
 ##
 ## (3) libkern and compat
@@ -91,3 +87,8 @@ TEXTADDR?=	2000
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

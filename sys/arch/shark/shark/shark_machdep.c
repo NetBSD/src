@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.15 2003/05/03 18:25:36 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.15.2.1 2004/08/03 10:40:34 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -36,6 +36,9 @@
 /*
  *  Kernel setup for the SHARK Configuration
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.15.2.1 2004/08/03 10:40:34 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -81,7 +84,6 @@
 
 #if NWD > 0 || NSD > 0 || NCD > 0
 #include <dev/ata/atavar.h>
-#include <dev/ata/wdvar.h>
 #endif
 #if NSD > 0 || NCD > 0
 #include <dev/scsipi/scsi_all.h>
@@ -426,7 +428,8 @@ ofw_device_register(struct device *dev, void *aux)
 		struct ofisa_attach_args *aa = aux;
 		oba = &aa->oba;
 #if NWD > 0 || NSD > 0 || NCD > 0
-	} else if (parent == dev->dv_parent
+	} else if (dev->dv_parent->dv_parent != NULL
+		   && parent == dev->dv_parent->dv_parent
 		   && !strcmp(parent->dv_cfdata->cf_name, "wdc")) {
 #if NSD > 0 || NCD > 0
 		if (!strcmp(cd_name, "atapibus")) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.7 2003/01/01 01:57:16 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.7.2.1 2004/08/03 10:38:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Autoconfiguration support for next68k internal i/o space.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.7.2.1 2004/08/03 10:38:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.21 2002/11/03 11:04:36 shiba Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.21.6.1 2004/08/03 10:37:07 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -30,6 +30,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.21.6.1 2004/08/03 10:37:07 skrll Exp $");
 
 #include "opt_adb.h"
 

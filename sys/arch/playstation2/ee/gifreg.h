@@ -1,11 +1,11 @@
-/*	$NetBSD: gifreg.h,v 1.1 2001/10/16 15:38:37 uch Exp $	*/
+/*	$NetBSD: gifreg.h,v 1.1.22.1 2004/08/03 10:39:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Takuya SHIOZAKI (tshiozak@netbsd.org).
+ * by Takuya SHIOZAKI (tshiozak@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

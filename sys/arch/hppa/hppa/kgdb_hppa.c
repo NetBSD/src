@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_hppa.c,v 1.1 2002/06/05 01:04:20 fredette Exp $	*/
+/*	$NetBSD: kgdb_hppa.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -48,6 +44,9 @@
  * Machine-dependent (hppa) part of the KGDB remote "stub"
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/kgdb.h>
 
@@ -58,9 +57,7 @@
  * Determine if the memory at va..(va+len) is valid.
  */
 int
-kgdb_acc(va, ulen)
-	vaddr_t va;
-	size_t ulen;
+kgdb_acc(vaddr_t va, size_t ulen)
 {
 
 	/* Just let the trap handler deal with it. */
@@ -72,8 +69,7 @@ kgdb_acc(va, ulen)
  * (gdb only understands unix signal numbers).
  */
 int 
-kgdb_signal(type)
-	int type;
+kgdb_signal(int type)
 {
 	int sigval;
 
@@ -219,9 +215,7 @@ kgdb_signal(type)
 	KGDB_MOVEREG(63, tf_cr30)	/* uaddr */
 
 void
-kgdb_getregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 #define	KGDB_MOVEREG(i, f) gdb_regs[i] = regs->f
 	KGDB_MOVEREGS;
@@ -229,9 +223,7 @@ kgdb_getregs(regs, gdb_regs)
 }
 
 void
-kgdb_setregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 #define	KGDB_MOVEREG(i, f) regs->f = gdb_regs[i]
 	KGDB_MOVEREGS;
@@ -243,8 +235,7 @@ kgdb_setregs(regs, gdb_regs)
  * noting on the console why nothing else is going on.
  */
 void
-kgdb_connect(verbose)
-	int verbose;
+kgdb_connect(int verbose)
 {
 
 	if (kgdb_dev < 0)
@@ -267,7 +258,7 @@ kgdb_connect(verbose)
  * (This is called by panic, like Debugger())
  */
 void
-kgdb_panic()
+kgdb_panic(void)
 { 
 	if (kgdb_dev >= 0 && kgdb_debug_panic) {
 		printf("entering kgdb\n");

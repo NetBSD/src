@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.28 2003/01/05 08:41:54 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.28.2.1 2004/08/03 10:35:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -32,6 +32,9 @@
  * A/D polling part written by SATO Kazumi.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.28.2.1 2004/08/03 10:35:21 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -47,7 +50,7 @@
 #include <machine/platid_mask.h>
 #include <machine/config_hook.h>
 
-#include <dev/hpc/tpcalibvar.h>
+#include <dev/hpc/hpctpanelvar.h>
 
 #include <dev/hpc/hpcbatteryvar.h>
 #include <dev/hpc/hpcbatterytable.h>
@@ -205,7 +208,7 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 	bus_space_tag_t iot = va->va_iot;
 	struct platid_data *p;
 
-	if (va->va_parent_ioh != NULL)
+	if (va->va_parent_ioh != 0)
 		res = bus_space_subregion(iot, va->va_parent_ioh, va->va_addr,
 		    va->va_size, &sc->sc_ioh);
 	else
@@ -215,7 +218,7 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 		printf(": can't map bus space\n");
 		return;
 	}
-	if (va->va_parent_ioh != NULL)
+	if (va->va_parent_ioh != 0)
 		res = bus_space_subregion(iot, va->va_parent_ioh, va->va_addr2,
 		    va->va_size2, &sc->sc_buf_ioh);
 	else
@@ -271,6 +274,13 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 			      { 912,  80, 799,   0 },
 			      { 912, 966, 799, 599 } } } },
 			{ &platid_mask_MACH_NEC_MCR_730,
+			  { 0, 0, 799, 599,
+			    4,
+			    { { 115,  80,   0,   0 },
+			      { 115, 966,   0, 599 },
+			      { 912,  80, 799,   0 },
+			      { 912, 966, 799, 599 } } } },
+			{ &platid_mask_MACH_NEC_MCR_730A,
 			  { 0, 0, 799, 599,
 			    4,
 			    { { 115,  80,   0,   0 },
@@ -508,10 +518,6 @@ vrpiu_tp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	DPRINTF(("%s(%d): vrpiu_tp_ioctl(%08lx)\n", __FILE__, __LINE__, cmd));
 
 	switch (cmd) {
-	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = WSMOUSE_TYPE_TPANEL;
-		break;
-		
 	case WSMOUSEIO_SRES:
 	{
 		int tp_enable;
@@ -542,15 +548,10 @@ vrpiu_tp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	}
 	break;
 
-	case WSMOUSEIO_SCALIBCOORDS:
-	case WSMOUSEIO_GCALIBCOORDS:
-	case WSMOUSEIO_GETID:
-		return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
-		
 	default:
-		return (EPASSTHROUGH);
+		return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -605,6 +606,8 @@ vrpiu_tp_intr(struct vrpiu_softc *sc)
 	unsigned int intrstat, page;
 	int tpx0, tpx1, tpy0, tpy1;
 	int x, y, xraw, yraw;
+
+	tpx0 = tpx1 = tpy0 = tpy1 = 0;	/* XXX: gcc -Wuninitialized */
 
 	intrstat = vrpiu_read(sc, PIUINT_REG_W);
 

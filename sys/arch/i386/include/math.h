@@ -1,3 +1,3 @@
-/*	$NetBSD: math.h,v 1.4 2002/02/19 13:08:14 simonb Exp $	*/
+/*	$NetBSD: math.h,v 1.4.18.1 2004/08/03 10:36:04 skrll Exp $	*/
 
-#define	__HAVE_NANF
+#include <x86/math.h>

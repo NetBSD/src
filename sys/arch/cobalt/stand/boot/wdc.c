@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.1 2003/06/25 17:24:23 cdi Exp $	*/
+/*	$NetBSD: wdc.c,v 1.1.2.1 2004/08/03 10:33:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 #include <lib/libsa/stand.h>
 #include <machine/param.h>
@@ -49,17 +49,17 @@
 #define WDCDELAY	100
 #define WDCNDELAY_RST	31000 * 10
 
-static int  wdcprobe(struct channel_softc *chp);
-static int  wdc_wait_for_ready(struct channel_softc *chp);
+static int  wdcprobe(struct wdc_channel *chp);
+static int  wdc_wait_for_ready(struct wdc_channel *chp);
 static int  wdc_read_block(struct wd_softc *sc, struct wdc_command *wd_c);
-static int  __wdcwait_reset(struct channel_softc *chp, int drv_mask);
+static int  __wdcwait_reset(struct wdc_channel *chp, int drv_mask);
 
 /*
  * Reset the controller.
  */
 static int
 __wdcwait_reset(chp, drv_mask)
-	struct channel_softc *chp;
+	struct wdc_channel *chp;
 	int drv_mask;
 {
 	int timeout;
@@ -119,7 +119,7 @@ end:
  */
 static int
 wdcprobe(chp)
-	struct channel_softc *chp;
+	struct wdc_channel *chp;
 {
 	u_int8_t st0, st1, sc, sn, cl, ch;
 	u_int8_t ret_value = 0x03;
@@ -181,7 +181,7 @@ wdcprobe(chp)
 int
 wdc_init(sc, unit)
 	struct wd_softc *sc;
-	u_int8_t *unit;
+	u_int *unit;
 {
 	if (pciide_init(&sc->sc_channel, unit) != 0)
 		return (ENXIO);
@@ -195,7 +195,7 @@ wdc_init(sc, unit)
  */
 int
 wdc_wait_for_ready(chp)
-	struct channel_softc *chp;
+	struct wdc_channel *chp;
 {
 	u_int timeout;
 	for (timeout = WDC_TIMEOUT; timeout > 0; --timeout) {
@@ -215,7 +215,7 @@ wdc_read_block(sc, wd_c)
 	struct wdc_command *wd_c;
 {
 	int i;
-	struct channel_softc *chp = &sc->sc_channel;
+	struct wdc_channel *chp = &sc->sc_channel;
 	u_int16_t *ptr = (u_int16_t*)wd_c->data;
 
 	if (ptr == NULL)
@@ -228,7 +228,7 @@ wdc_read_block(sc, wd_c)
 }
 
 /*
- * Send a command to the device (CHS and LBA adressing).
+ * Send a command to the device (CHS and LBA addressing).
  */
 int
 wdccommand(sc, wd_c)
@@ -236,7 +236,7 @@ wdccommand(sc, wd_c)
 	struct wdc_command *wd_c;
 {
 	u_int8_t err;
-	struct channel_softc *chp = &sc->sc_channel;
+	struct wdc_channel *chp = &sc->sc_channel;
 
 #if 0
 	DPRINTF(("wdccommand(%d, %d, %d, %d, %d, %d, %d)\n",
@@ -274,7 +274,7 @@ wdccommandext(wd, wd_c)
 	struct wdc_command *wd_c;
 {
 	u_int8_t err;
-	struct channel_softc *chp = &wd->sc_channel;
+	struct wdc_channel *chp = &wd->sc_channel;
 
 	/* Select drive, head, and addressing mode. */
 	chp->c_base[wd_sdh] = (wd_c->drive << 4) | WDSD_LBA;

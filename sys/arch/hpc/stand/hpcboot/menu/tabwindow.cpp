@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: tabwindow.cpp,v 1.2 2001/05/08 18:51:24 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: tabwindow.cpp,v 1.2.24.1 2004/08/03 10:34:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,53 @@ TabWindowBase::_load_bitmap(HIMAGELIST img, const TCHAR *name)
 	ImageList_Add(img, bmp, 0);
 	DeleteObject(bmp);
 }
+
+BOOL
+TabWindowBase::focusManagerHook(WORD vk, UINT flags, HWND prev)
+{
+	int direction = 0;
+
+	// NB: VK_UP/VK_DOWN move between tabs
+	switch (vk) {
+	case VK_RIGHT:
+		direction = 1;	// next
+		break;
+
+	case VK_LEFT:
+		direction = -1;	// prev
+		break;
+
+	case VK_TAB:
+		if (GetKeyState(VK_SHIFT) & 0x8000) // Shift-Tab
+			direction = -1;	// prev
+		else
+			direction = 1; // next
+		break;
+	}
+
+	if (!direction)
+		return FALSE;
+
+	HWND dst;
+
+	if (direction > 0) {	// next - into the current dialog
+		int tab_id = TabCtrl_GetCurSel(_window);
+
+		TC_ITEM tc_item;
+		tc_item.mask = TCIF_PARAM;
+		TabCtrl_GetItem(_window, tab_id, &tc_item);
+		TabWindow *tab = reinterpret_cast <TabWindow *>
+		    (tc_item.lParam);
+
+		dst = GetNextDlgTabItem(tab->_window, NULL, FALSE);
+	} else {		// prev - to the button in the root
+		dst = prev;
+	}
+
+	SetFocus(dst);
+	return TRUE;
+}
+
 
 //
 // Child of TabControl(Dialog)

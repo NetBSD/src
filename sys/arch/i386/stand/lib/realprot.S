@@ -1,4 +1,4 @@
-/*	$NetBSD: realprot.S,v 1.2 2003/04/24 17:41:03 dsl Exp $	*/
+/*	$NetBSD: realprot.S,v 1.2.2.1 2004/08/03 10:36:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ gdt_fixup:
 /*
  * real_to_prot()
  *
- * Switch cpu to 32bit protected mode to execute C.
+ * Switch CPU to 32bit protected mode to execute C.
  *
  * NB: Call with the 32bit calll instruction so that a 32 bit
  *     return address is pushed.
@@ -176,7 +176,7 @@ ENTRY(real_to_prot)
 /*
  * prot_to_real()
  *
- * Switch cpu back to 16bit real mode in order to call system bios functions.
+ * Switch CPU back to 16bit real mode in order to call system bios functions.
  *
  * All registers are preserved, except that %sp may be changed so that
  * %ss:%sp points to the same memory.
@@ -218,7 +218,7 @@ ENTRY(prot_to_real)
 	ljmp	*%cs:toreal
 xreal:
 	/*
-	 * Cpu is now in real mode, load the other segment registers
+	 * CPU is now in real mode, load the other segment registers
 	 * with their correct base addresses.
 	 */
 	mov	%cs, %ax

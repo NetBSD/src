@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.1 2000/02/29 15:21:50 nonaka Exp $	*/
+/*	$NetBSD: monitor.c,v 1.1.30.1 2004/08/03 10:39:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 #include "boot.h"
 
 #define NULL	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.25 2003/06/29 22:28:56 fvdl Exp $	*/
+/*	$NetBSD: kd.c,v 1.25.2.1 2004/08/03 10:40:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  * allows another device to serve console input. This will normally
  * be a keyboard driver (see sys/dev/sun/kbd.c)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.25.2.1 2004/08/03 10:40:45 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -97,8 +100,8 @@ static struct kd_softc kd_softc;
 
 static int kdparam(struct tty *, struct termios *);
 static void kdstart(struct tty *);
-static void kd_init __P((struct kd_softc *));
-static void kd_cons_input __P((int));
+static void kd_init(struct kd_softc *);
+static void kd_cons_input(int);
 
 dev_type_open(kdopen);
 dev_type_close(kdclose);
@@ -142,7 +145,7 @@ kd_init(kd)
 
 	/* else, consult the PROM */
 	switch (prom_version()) {
-	char *prop;
+	char prop[6+1];		/* Enough for six digits */
 	struct eeprom *ep;
 	case PROM_OLDMON:
 		if ((ep = (struct eeprom *)eeprom_va) == NULL)
@@ -152,27 +155,19 @@ kd_init(kd)
 		if (kd->cols == 0)
 			kd->cols = (u_short)ep->eeTtyCols;
 		break;
+
 	case PROM_OBP_V0:
 	case PROM_OBP_V2:
 	case PROM_OBP_V3:
 	case PROM_OPENFIRM:
-
 		if (kd->rows == 0 &&
-		    (prop = PROM_getpropstring(optionsnode, "screen-#rows"))) {
-			int i = 0;
+		    prom_getoption("screen-#rows", prop, sizeof prop) == 0)
+			kd->rows = strtoul(prop, NULL, 10);
 
-			while (*prop != '\0')
-				i = i * 10 + *prop++ - '0';
-			kd->rows = (unsigned short)i;
-		}
 		if (kd->cols == 0 &&
-		    (prop = PROM_getpropstring(optionsnode, "screen-#columns"))) {
-			int i = 0;
+		    prom_getoption("screen-#columns", prop, sizeof prop) == 0)
+			kd->cols = strtoul(prop, NULL, 10);
 
-			while (*prop != '\0')
-				i = i * 10 + *prop++ - '0';
-			kd->cols = (unsigned short)i;
-		}
 		break;
 	}
 
@@ -497,18 +492,26 @@ kd_attach_input(cc)
  * Since the PROM does not notify us when data is available on the
  * input channel these functions periodically poll the PROM.
  */
-static int kd_rom_iopen __P((struct cons_channel *));
-static int kd_rom_iclose __P((struct cons_channel *));
-static void kd_rom_intr __P((void *));
+static int kd_rom_iopen(struct cons_channel *);
+static int kd_rom_iclose(struct cons_channel *);
+static void kd_rom_intr(void *);
 
-static struct cons_channel prom_cons_channel;
+static struct cons_channel prom_cons_channel = {
+	NULL,			/* no private data */
+	kd_rom_iopen,
+	kd_rom_iclose,
+	NULL			/* will be set by kd driver */
+};
+
+static struct callout prom_cons_callout = CALLOUT_INITIALIZER;
 
 int
 kd_rom_iopen(cc)
 	struct cons_channel *cc;
 {
+
 	/* Poll for ROM input 4 times per second */
-	callout_reset(&cc->cc_callout, hz / 4, kd_rom_intr, cc);
+	callout_reset(&prom_cons_callout, hz / 4, kd_rom_intr, cc);
 	return (0);
 }
 
@@ -517,7 +520,7 @@ kd_rom_iclose(cc)
 	struct cons_channel *cc;
 {
 
-	callout_stop(&cc->cc_callout);
+	callout_stop(&prom_cons_callout);
 	return (0);
 }
 
@@ -531,8 +534,7 @@ kd_rom_intr(arg)
 	struct cons_channel *cc = arg;
 	int s, c;
 
-	/* Re-schedule */
-	callout_reset(&cc->cc_callout, hz / 4, kd_rom_intr, cc);
+	callout_schedule(&prom_cons_callout, hz / 4);
 
 	s = spltty();
 
@@ -549,11 +551,11 @@ int prom_stdout_node;
 char prom_stdin_args[16];
 char prom_stdout_args[16];
 
-extern void prom_cnprobe __P((struct consdev *));
-static void prom_cninit __P((struct consdev *));
-static int  prom_cngetc __P((dev_t));
-static void prom_cnputc __P((dev_t, int));
-extern void prom_cnpollc __P((dev_t, int));
+extern void prom_cnprobe(struct consdev *);
+static void prom_cninit(struct consdev *);
+static int  prom_cngetc(dev_t);
+static void prom_cnputc(dev_t, int);
+extern void prom_cnpollc(dev_t, int);
 
 /*
  * The console is set to this one initially,
@@ -634,7 +636,7 @@ prom_cnputc(dev, c)
 
 /*****************************************************************/
 
-static void prom_get_device_args __P((const char *, char *, unsigned int));
+static void prom_get_device_args(const char *, char *, unsigned int);
 
 void
 prom_get_device_args(prop, args, sz)
@@ -644,7 +646,7 @@ prom_get_device_args(prop, args, sz)
 {
 	char *cp, buffer[128];
 
-	cp = PROM_getpropstringA(findroot(), (char *)prop, buffer, sizeof buffer);
+	cp = prom_getpropstringA(findroot(), (char *)prop, buffer, sizeof buffer);
 
 	/*
 	 * Extract device-specific arguments from a PROM device path (if any)
@@ -712,9 +714,6 @@ consinit()
 	cn_tab->cn_pri = CN_INTERNAL;
 
 	/* Set up initial PROM input channel for /dev/console */
-	prom_cons_channel.cc_dev = NULL;
-	prom_cons_channel.cc_iopen = kd_rom_iopen;
-	prom_cons_channel.cc_iclose = kd_rom_iclose;
 	cons_attach_input(&prom_cons_channel, cn_tab);
 
 #ifdef	KGDB

@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_intr.c,v 1.4 2003/05/12 07:48:37 bsh Exp $ */
+/* $NetBSD: s3c2800_intr.c,v 1.4.2.1 2004/08/03 10:32:50 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -36,6 +36,10 @@
  * IRQ handler for Samsung S3C2800 processor.
  * It has integrated interrupt controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_intr.c,v 1.4.2.1 2004/08/03 10:32:50 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -56,7 +60,8 @@ struct s3c2xx0_intr_dispatch handler[ICU_LEN];
 __volatile int softint_pending;
 
 __volatile int current_spl_level;
-__volatile int intr_mask;
+__volatile int intr_mask;    /* XXX: does this need to be volatile? */
+__volatile int global_intr_mask = 0; /* mask some interrupts at all spl level */
 
 /* interrupt masks for each level */
 int s3c2xx0_imask[NIPL];
@@ -97,36 +102,38 @@ s3c2800_irq_handler(struct clockframe *frame)
 
 	saved_spl_level = current_spl_level;
 
-	/* get pending IRQs */
-	irqbits = icreg(INTCTL_IRQPND) & ICU_INT_HWMASK;
+	while ((irqbits = icreg(INTCTL_IRQPND) & ICU_INT_HWMASK) != 0) {
 
-	for (irqno = 0; irqbits; ++irqno) {
-		if ((irqbits & (1 << irqno)) == 0)
-			continue;
+		for (irqno = ICU_LEN-1; irqno >= 0; --irqno)
+			if (irqbits & (1<<irqno))
+				break;
+
+		if (irqno < 0)
+			break;
+
 		/* raise spl to stop interrupts of lower priorities */
 		if (saved_spl_level < handler[irqno].level)
 			s3c2xx0_setipl(handler[irqno].level);
 
 		/* clear pending bit */
 		icreg(INTCTL_SRCPND) = PENDING_CLEAR_MASK & (1 << irqno);
-#ifdef notyet
-		/* Enable interrupt */
-#endif
+
+		enable_interrupts(I32_bit); /* allow nested interrupts */
+
 		(*handler[irqno].func) (
 		    handler[irqno].cookie == 0
 		    ? frame : handler[irqno].cookie);
-#ifdef notyet
-		/* Disable interrupt */
-#endif
 
-		irqbits &= ~(1 << irqno);
+		disable_interrupts(I32_bit);
+
+		/* restore spl to that was when this interrupt happen */
+		s3c2xx0_setipl(saved_spl_level);
 	}
 
-	/* restore spl to that was when this interrupt happen */
-	s3c2xx0_setipl(saved_spl_level);
 
 	if (softint_pending & intr_mask)
-		s3c2xx0_do_pending();
+		s3c2xx0_do_pending(1);
+
 }
 
 static const u_char s3c2800_ist[] = {
@@ -177,14 +184,46 @@ s3c2800_intr_establish(int irqno, int level, int type,
 				  GPIO_EXTINTR, reg);
 	}
 
-	intr_mask = s3c2xx0_imask[current_spl_level];
-	*s3c2xx0_intr_mask_reg = intr_mask;
+	s3c2xx0_setipl(current_spl_level);
 
 	restore_interrupts(save);
 
 	return (&handler[irqno]);
 }
 
+
+static void
+init_interrupt_masks(void)
+{
+	int i;
+
+	s3c2xx0_imask[IPL_NONE] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
+		SI_TO_IRQBIT(SI_SOFTNET) | SI_TO_IRQBIT(SI_SOFTCLOCK) |
+		SI_TO_IRQBIT(SI_SOFT);
+
+	s3c2xx0_imask[IPL_SOFT] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
+		SI_TO_IRQBIT(SI_SOFTNET) | SI_TO_IRQBIT(SI_SOFTCLOCK);
+
+	/*
+	 * splsoftclock() is the only interface that users of the
+	 * generic software interrupt facility have to block their
+	 * soft intrs, so splsoftclock() must also block IPL_SOFT.
+	 */
+	s3c2xx0_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
+		SI_TO_IRQBIT(SI_SOFTNET);
+
+	/*
+	 * splsoftnet() must also block splsoftclock(), since we don't
+	 * want timer-driven network events to occur while we're
+	 * processing incoming packets.
+	 */
+	s3c2xx0_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTSERIAL);
+
+	for (i = IPL_BIO; i < IPL_SOFTSERIAL; ++i)
+		s3c2xx0_imask[i] = SI_TO_IRQBIT(SI_SOFTSERIAL);
+	for (; i < NIPL; ++i)
+		s3c2xx0_imask[i] = 0;
+}
 
 void
 s3c2800_intr_init(struct s3c2800_softc *sc)
@@ -196,6 +235,8 @@ s3c2800_intr_init(struct s3c2800_softc *sc)
 
 	/* clear all pending interrupt */
 	icreg(INTCTL_SRCPND) = 0xffffffff;
+
+	init_interrupt_masks();
 
 	s3c2xx0_intr_init(handler, ICU_LEN);
 

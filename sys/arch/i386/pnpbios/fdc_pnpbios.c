@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pnpbios.c,v 1.6 2002/10/02 05:47:16 thorpej Exp $	*/
+/*	$NetBSD: fdc_pnpbios.c,v 1.6.6.1 2004/08/03 10:36:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.6 2002/10/02 05:47:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.6.6.1 2004/08/03 10:36:14 skrll Exp $");
 
 #include "rnd.h"
 

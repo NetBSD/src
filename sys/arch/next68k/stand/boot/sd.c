@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.3 2002/07/11 16:03:19 christos Exp $        */
+/*      $NetBSD: sd.c,v 1.3.6.1 2004/08/03 10:38:40 skrll Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -118,9 +118,9 @@ sdgetinfo(struct sd_softc *ss)
     struct scsipi_read_capacity cdb;
     struct scsipi_read_cap_data cap;
     struct sdminilabel *pi = &ss->sc_pinfo;
-    struct nextstep_disklabel *label;
+    struct next68k_disklabel *label;
     int error, i, blklen;
-    char io_buf[LABELSIZE+LABELOFFSET];
+    char io_buf[NEXT68K_LABEL_SIZE+NEXT68K_LABEL_OFFSET];
     int count;
     int sc_blkshift = 0;
 
@@ -136,13 +136,13 @@ sdgetinfo(struct sd_softc *ss)
     ss->sc_dev_bsize = blklen;
 
     ss->sc_pinfo.offset[ss->sc_part] = 0; /* read absolute sector */
-    error = sdstrategy(ss, F_READ, LABELSECTOR,
-		       LABELSIZE+LABELOFFSET, io_buf, &i);
+    error = sdstrategy(ss, F_READ, NEXT68K_LABEL_SECTOR,
+		       NEXT68K_LABEL_SIZE+NEXT68K_LABEL_OFFSET, io_buf, &i);
     if (error != 0) {
 	DPRINTF(("sdgetinfo: sdstrategy error %d\n", error));
         return(ERDLAB);
     }
-    label = (struct nextstep_disklabel *)(io_buf+LABELOFFSET);
+    label = (struct next68k_disklabel *)(io_buf+NEXT68K_LABEL_OFFSET);
 
     if (!IS_DISKLABEL(label)) /*  || (label->cd_flags & CD_UNINIT)!=0) */
 	return EUNLAB;		/* bad magic */

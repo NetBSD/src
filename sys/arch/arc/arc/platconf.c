@@ -1,4 +1,4 @@
-/*	$NetBSD: platconf.c,v 1.2 2002/11/30 19:23:45 tsutsui Exp $	*/
+/*	$NetBSD: platconf.c,v 1.2.6.1 2004/08/03 10:32:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: platconf.c,v 1.2.6.1 2004/08/03 10:32:10 skrll Exp $");
 
 #include "opt_platform.h"
 

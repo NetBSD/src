@@ -1,4 +1,4 @@
-/*	$NetBSD: superhyway.c,v 1.7 2003/01/01 02:11:57 thorpej Exp $	*/
+/*	$NetBSD: superhyway.c,v 1.7.2.1 2004/08/03 10:40:23 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * SH-5 SuperHyway Bus Abstraction
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: superhyway.c,v 1.7.2.1 2004/08/03 10:40:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

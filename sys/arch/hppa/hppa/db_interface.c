@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.1 2002/06/05 01:04:19 fredette Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -32,6 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $");
+
 #define DDB_DEBUG
 
 #include <sys/param.h>
@@ -52,7 +55,7 @@
 
 #include <dev/cons.h>
 
-void kdbprinttrap __P((int, int));
+void kdbprinttrap(int, int);
 
 extern label_t *db_recover;
 extern int db_active;
@@ -131,7 +134,7 @@ const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_
 int db_active = 0;
 
 void
-Debugger()
+Debugger(void)
 {
 	__asm __volatile ("break	%0, %1"
 			  :: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_KGDB));
@@ -141,8 +144,7 @@ Debugger()
  * Print trap reason.
  */
 void
-kdbprinttrap(type, code)
-	int type, code;
+kdbprinttrap(int type, int code)
 {
 	db_printf("kernel: ");
 	if (type >= trap_types || type < 0)
@@ -156,9 +158,7 @@ kdbprinttrap(type, code)
  *  kdb_trap - field a BPT trap
  */
 int
-kdb_trap(type, code, regs)
-	int type, code;
-	db_regs_t *regs;
+kdb_trap(int type, int code, db_regs_t *regs)
 {
 	int s;
 
@@ -190,7 +190,6 @@ kdb_trap(type, code, regs)
 	splx(s);
 
 	*regs = ddb_regs;
-	
 	return (1);
 }
 
@@ -199,19 +198,14 @@ kdb_trap(type, code, regs)
  *  Any address is allowed for now.
  */
 int
-db_valid_breakpoint(addr)
-	db_addr_t addr;
+db_valid_breakpoint(db_addr_t addr)
 {
 	return (1);
 }
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char		*modif;
-	void		(*pr) __P((const char *, ...));
+db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif, void (*pr)(const char *, ...))
 {
 	register_t fp, pc, rp, nargs, *argp;
 	db_sym_t sym;

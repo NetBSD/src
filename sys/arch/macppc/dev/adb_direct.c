@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.24 2002/05/05 18:36:03 tsutsui Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.24.10.1 2004/08/03 10:37:20 skrll Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -58,6 +58,9 @@
  *    the actual cause of this bug, the calls to timeout and the 
  *    adb_cuda_tickle routine can be removed.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.24.10.1 2004/08/03 10:37:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
@@ -1232,7 +1235,7 @@ adb_reinit(void)
 	u_char send_string[ADB_MAX_MSG_LENGTH];
 	ADBDataBlock data;	/* temp. holder for getting device info */
 	volatile int i, x;
-	int s;
+	int s = 0;		/* XXX: gcc */
 	int command;
 	int result;
 	int saveptr;		/* point to next free relocation address */
@@ -1891,9 +1894,6 @@ adb_read_date_time(unsigned long *time)
 
 		while (0 == flag)	/* wait for result */
 			;
-
-		/* XXX to avoid wrong reordering by gcc 2.95.x with -fgcse */
-		__asm volatile ("" ::: "memory");
 
 		memcpy(time, output + 1, 4);
 		return 0;

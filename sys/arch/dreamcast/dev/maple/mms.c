@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.7 2002/12/10 13:19:10 itohy Exp $	*/
+/*	$NetBSD: mms.c,v 1.7.6.1 2004/08/03 10:33:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.7.6.1 2004/08/03 10:33:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -246,6 +249,6 @@ mms_intr(void *arg, struct maple_response *response, int size, int flags)
 			buttons |= 0x08;
 
 		wsmouse_input(sc->sc_wsmousedev, buttons,
-		    dx, dy, dz, WSMOUSE_INPUT_DELTA);
+		    dx, -dy, dz, WSMOUSE_INPUT_DELTA);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.30 2003/04/03 21:02:08 jklos Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.30.2.1 2004/08/03 10:32:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -597,7 +597,7 @@ get_cpuid(void)
 {
 	cpuid |= SysBase->AttnFlags;	/* get FPU and CPU flags */
 	if ((cpuid & AFB_68020) == 0)
-		err(20, "cpu not supported");
+		err(20, "CPU not supported");
 	if (cpuid & 0xffff0000) {
 		if ((cpuid >> 24) == 0x7D)
 			return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.7 2002/10/02 05:26:46 thorpej Exp $ */
+/*	$NetBSD: plumohci.c,v 1.7.6.1 2004/08/03 10:35:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -33,6 +33,9 @@
  * OHCI spec: ftp://ftp.compaq.com/pub/supportinformation/papers/hcir1_0a.exe
  * USB spec: http://www.usb.org/developers/data/usb11.pdf
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.7.6.1 2004/08/03 10:35:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +240,7 @@ __plumohci_dmamem_alloc(bus_dma_tag_t tx, bus_size_t size,
 	error = bus_space_alloc(sc->sc.iot, PLUM_OHCI_SHMEMBASE,
 	    PLUM_OHCI_SHMEMBASE + PLUM_OHCI_SHMEMSIZE - 1,
 	    size, OHCI_PAGE_SIZE, OHCI_PAGE_SIZE, 0,
-	    (bus_addr_t*)&caddr, &bsh);
+	    (bus_addr_t *)(void *)&caddr, &bsh);
 	if (error)
 		return (1);
 

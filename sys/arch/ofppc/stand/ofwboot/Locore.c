@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.9 2003/06/26 20:43:48 aymeric Exp $	*/
+/*	$NetBSD: Locore.c,v 1.9.2.1 2004/08/03 10:38:46 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,33 +37,33 @@
 
 #include <machine/cpu.h>
 
-static int (*openfirmware_entry) __P((void *));
-static int openfirmware __P((void *));
+static int (*openfirmware_entry)(void *);
+static int openfirmware(void *);
 
-static void setup __P((void));
+static void setup(void);
 
 static int stack[8192/4 + 4];
 
-asm("
-	.text
-	.globl	_start
-_start:
-	li	8,0
-	li	9,0x100
-	mtctr	9
-1:
-	dcbf	0,8
-	icbi	0,8
-	addi	8,8,0x20
-	bdnz	1b
-	sync
-	isync
+asm(
+"	.text					\n"
+"	.globl	_start				\n"
+"_start:					\n"
+"	li	8,0				\n"
+"	li	9,0x100				\n"
+"	mtctr	9				\n"
+"1:						\n"
+"	dcbf	0,8				\n"
+"	icbi	0,8				\n"
+"	addi	8,8,0x20			\n"
+"	bdnz	1b				\n"
+"	sync					\n"
+"	isync					\n"
 
-	lis	1,stack@ha
-	addi	1,1,stack@l
-	addi	1,1,8192
-	b	startup
-");
+"	lis	1,stack@ha			\n"
+"	addi	1,1,stack@l			\n"
+"	addi	1,1,8192			\n"
+"	b	startup				\n"
+);
 
 static int
 openfirmware(void *arg)
@@ -81,7 +81,6 @@ static void
 startup(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 {
 	extern char _end[], _edata[];
-	extern int main();
 
 	memset(_edata, 0, (_end - _edata));
 	openfirmware_entry = openfirm;
@@ -490,7 +489,7 @@ OF_chain(void *virt, u_int size, void (*entry)(), void *arg, u_int len)
 }
 #else
 void
-OF_chain(void *virt, u_int size, void (*entry)(), void *arg, u_int len)
+OF_chain(void *virt, u_int size, boot_entry_t entry, void *arg, u_int len)
 {
 	/*
 	 * This is a REALLY dirty hack till the firmware gets this going

@@ -1,19 +1,12 @@
+#	$NetBSD: Makefile,v 1.6.16.1 2004/08/03 10:32:28 skrll Exp $
 #	$OpenBSD: Makefile,v 1.2 1997/08/01 12:32:10 pefo Exp $
 
-CLEANFILES=	mbr msdos5mb.gz
-UUDECODE?=	uudecode
+UUDECODE_FILES	= mbr msdos5mb.gz
 
-realall: mbr msdos5mb.gz
-
-mbr: mbr.uu
-	${UUDECODE} ${.CURDIR}/mbr.uu
-
-msdos5mb.gz: msdos5mb.gz.uu
-	${UUDECODE} ${.CURDIR}/msdos5mb.gz.uu
-
-realinstall:
+realinstall: ${UUDECODE_FILES}
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 444 \
-		mbr msdos5mb.gz ${DESTDIR}/usr/mdec
+		${UUDECODE_FILES} ${DESTDIR}/usr/mdec
 
-
-.include <bsd.prog.mk>
+.include <bsd.files.mk>
+.include <bsd.obj.mk>
+.include <bsd.inc.mk>

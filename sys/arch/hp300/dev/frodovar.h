@@ -1,4 +1,4 @@
-/*	$NetBSD: frodovar.h,v 1.4 1997/10/04 09:59:53 thorpej Exp $	*/
+/*	$NetBSD: frodovar.h,v 1.4.50.1 2004/08/03 10:34:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,8 +71,19 @@
  */
 struct frodo_attach_args {
 	const char *fa_name;	/* device name */
+	bus_space_tag_t fa_bst;	/* bus space tag */
+	int	fa_base;	/* Frodo base address */
 	int	fa_offset;	/* offset from Frodo base */
 	int	fa_line;	/* Frodo interrupt line */
+};
+
+/*
+ * Structure used to describe a device for autoconfiguration purposes.
+ */
+struct frodo_device {
+	const char *fd_name;	/* device name */
+	int	fd_offset;	/* offset from Frodo base */
+	int	fd_line;	/* Frodo interrupt line */
 };
 
 #include "locators.h"
@@ -82,3 +93,4 @@ struct frodo_attach_args {
 void	frodo_intr_establish __P((struct device *, int (*func)(void *),
 	    void *, int, int));
 void	frodo_intr_disestablish __P((struct device *, int));
+void	frodo_init_bus_space __P((bus_space_tag_t));

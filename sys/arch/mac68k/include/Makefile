@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2003/01/17 23:21:39 thorpej Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2004/08/03 10:37:08 skrll Exp $
 
 INCSDIR= /usr/include/mac68k
 
@@ -21,6 +21,7 @@ INCS=	adbsys.h ansi.h aout_machdep.h asm.h autoconf.h \
 	scsi_5380.h setjmp.h signal.h stdarg.h \
 	trap.h types.h \
 	varargs.h viareg.h vmparam.h \
+	wchar_limits.h \
 	z8530var.h
 
 .include <bsd.kinc.mk>

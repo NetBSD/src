@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.booters,v 1.10 2003/02/27 20:38:34 scw Exp $
+#	$NetBSD: Makefile.booters,v 1.10.2.1 2004/08/03 10:38:16 skrll Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
 RELOC?=		0x3F0000
-COPTS?=		-O2 -Wall -Wno-main -Wmissing-prototypes -Wstrict-prototypes
+COPTS?=		-O2 -Wall -Wno-main -Wmissing-prototypes -Wstrict-prototypes \
+		-ffreestanding
 DEFS?= 
 STRIPFLAG?=
 CPPFLAGS+=	-D__daddr_t=int32_t
@@ -27,7 +28,7 @@ SRCS+= vers.c
 CLEANFILES+= vers.c
 
 vers.c: version
-	sh ${S}/conf/newvers_stand.sh -DM ${.CURDIR}/version "mvme68k"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.CURDIR}/version "mvme68k"
 .endif
 
 CLEANFILES+= machine m68k

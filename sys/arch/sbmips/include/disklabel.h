@@ -1,4 +1,4 @@
-/* $NetBSD: disklabel.h,v 1.2 2003/02/07 17:46:12 cgd Exp $ */
+/* $NetBSD: disklabel.h,v 1.2.2.1 2004/08/03 10:39:56 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -74,12 +74,12 @@
 
 #ifdef __NetBSD__
 /* Pull in MBR partition definitions. */
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 #ifndef __ASSEMBLER__
 #include <sys/dkbad.h>
 struct cpu_disklabel {
-	struct mbr_partition dosparts[NMBRPART];
+	struct mbr_partition dosparts[MBR_PART_COUNT];
 	struct dkbad bad;
 };
 #endif
@@ -115,13 +115,13 @@ struct cpu_disklabel {
 
 
 struct boot_block {
-	uint64_t bb_data[64];		/* data (disklabel, also as below) */
+	uint64_t cfe_bb_data[64];	/* data (disklabel, also as below) */
 };
-#define	bb_magic	bb_data[59]	/* magic number */
-#define	bb_hdrinfo	bb_data[60]	/* header checksum, ver, flags */
-#define	bb_secstart	bb_data[61]	/* secondary start (bytes) */
-#define	bb_secsize	bb_data[62]	/* secondary size (bytes) */
-#define	bb_archinfo	bb_data[63]	/* architecture info */
+#define	cfe_bb_magic	cfe_bb_data[59]	/* magic number */
+#define	cfe_bb_hdrinfo	cfe_bb_data[60]	/* header checksum, ver, flags */
+#define	cfe_bb_secstart	cfe_bb_data[61]	/* secondary start (bytes) */
+#define	cfe_bb_secsize	cfe_bb_data[62]	/* secondary size (bytes) */
+#define	cfe_bb_archinfo	cfe_bb_data[63]	/* architecture info */
 
 #define	BOOT_BLOCK_OFFSET	0	/* offset of boot block. */
 #define	BOOT_BLOCK_BLOCKSIZE	512	/* block size for sec. size/start,

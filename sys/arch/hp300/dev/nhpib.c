@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.27 2003/05/24 06:21:22 gmcgarry Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.27.2.1 2004/08/03 10:34:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -48,11 +48,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -76,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.27 2003/05/24 06:21:22 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.27.2.1 2004/08/03 10:34:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +118,7 @@ void	nhpibifc __P((struct nhpibdevice *));
 void	nhpibreadtimo __P((void *));
 int	nhpibwait __P((struct nhpibdevice *, int));
 
-void	nhpibreset __P((struct hpibbus_softc *)); 
+void	nhpibreset __P((struct hpibbus_softc *));
 int	nhpibsend __P((struct hpibbus_softc *, int, int, void *, int));
 int	nhpibrecv __P((struct hpibbus_softc *, int, int, void *, int));
 int	nhpibppoll __P((struct hpibbus_softc *));
@@ -209,15 +205,15 @@ nhpib_intio_attach(parent, self, aux)
 {
 	struct nhpib_softc *sc = (struct nhpib_softc *)self;
 	struct intio_attach_args *ia = aux;
+	bus_space_tag_t bst = ia->ia_bst;
 	const char *desc = "internal HP-IB";
 
-	sc->sc_bst = ia->ia_bst;
-	if (bus_space_map(ia->ia_bst, ia->ia_iobase, INTIO_DEVSIZE, 0,
-	    &sc->sc_bsh)) {
+	if (bus_space_map(bst, ia->ia_iobase, INTIO_DEVSIZE, 0, &sc->sc_bsh)) {
 		printf(": can't map registers\n");
 		return;
 	}
 
+	sc->sc_bst = bst;
 	sc->sc_myaddr = HPIBA_BA;
 	sc->sc_type = HPIBA;
 
@@ -234,15 +230,15 @@ nhpib_dio_attach(parent, self, aux)
 {
 	struct nhpib_softc *sc = (struct nhpib_softc *)self;
 	struct dio_attach_args *da = aux;
+	bus_space_tag_t bst = da->da_bst;
 	const char *desc = DIO_DEVICE_DESC_NHPIB;
 
-	sc->sc_bst = da->da_bst;
-	if (bus_space_map(sc->sc_bst, da->da_addr, da->da_size, 0,
-	    &sc->sc_bsh)) {
+	if (bus_space_map(bst, da->da_addr, da->da_size, 0, &sc->sc_bsh)) {
 		printf(": can't map registers\n");
 		return;
 	}
 
+	sc->sc_bst = bst;
 	/* read address off switches */
 	sc->sc_myaddr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, 5);
 	sc->sc_type = HPIBB;
@@ -258,7 +254,7 @@ nhpib_common_attach(sc, desc)
 	struct nhpib_softc *sc;
 	const char *desc;
 {
-	struct hpibdev_attach_args ha; 
+	struct hpibdev_attach_args ha;
 
 	printf(": %s\n", desc);
 

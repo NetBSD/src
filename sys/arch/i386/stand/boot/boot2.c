@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.1 2003/04/16 22:36:14 dsl Exp $	*/
+/*	$NetBSD: boot2.c,v 1.1.2.1 2004/08/03 10:36:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -59,7 +59,7 @@ int errno;
 extern int boot_biosdev;
 extern int boot_biossector;	/* may be wrong... */
 
-extern struct i386_boot_params boot_params;
+extern struct x86_boot_params boot_params;
 
 extern	const char bootprog_name[], bootprog_rev[], bootprog_date[],
 	bootprog_maker[];
@@ -229,7 +229,7 @@ boot2(uint32_t boot_biosdev, uint32_t boot_biossector)
 #endif
 	gateA20();
 
-	if (boot_params.bp_flags & BP_RESET_VIDEO)
+	if (boot_params.bp_flags & X86_BP_FLAGS_RESET_VIDEO)
 		biosvideomode();
 
 	print_banner();
@@ -249,7 +249,7 @@ boot2(uint32_t boot_biosdev, uint32_t boot_biossector)
 
 		c = awaitkey(boot_params.bp_timeout, 1);
 		if ((c != '\r') && (c != '\n') && (c != '\0') &&
-		    ((boot_params.bp_flags & BP_PASSWORD) == 0
+		    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0
 		    || check_password(boot_params.bp_password))) {
 			printf("type \"?\" or \"help\" for help.\n");
 			bootmenu(); /* does not return */
@@ -263,7 +263,7 @@ boot2(uint32_t boot_biosdev, uint32_t boot_biossector)
 		/* since it failed, try compressed bootfile. */
 		bootit(names[currname][1], 0, 1);
 		/* since it failed, try switching bootfile. */
-		currname = ++currname % NUMNAMES;
+		currname = (currname + 1) % NUMNAMES;
 	}
 }
 

@@ -1,6 +1,6 @@
-/*	$NetBSD: icu.h,v 1.10 1997/03/20 12:02:40 matthias Exp $	*/
+/*	$NetBSD: icu.h,v 1.10.54.1 2004/08/03 10:38:47 skrll Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
  *
@@ -36,55 +36,55 @@
 /* icu.h: defines for use with the ns32532 icu. */
 
 #ifndef _NS532_ICU_H_
-#define _NS532_ICU_H_
+#define	_NS532_ICU_H_
 
 /* We don't use vector interrupts, but make it right anyway */
-#define VEC_ICU		0x10
+#define	VEC_ICU		0x10
 
 /* The address of the ICU! */
-#define ICU_ADR		0xfffffe00
+#define	ICU_ADR		0xfffffe00
 
 /* ICU clock speed. */
-#define ICU_CLK_HZ	(3686400/4)	/* raw ICU clock speed */
+#define	ICU_CLK_HZ	(3686400/4)	/* raw ICU clock speed */
 
 /* ICU registers
  */
-#define HVCT	0
-#define SVCT	1
-#define ELTG	2
-#define TPL	4
-#define IPND	6
-#define ISRV	8
-#define IMSK	10
-#define CSRC	12
-#define FPRT	14
-#define MCTL	16
-#define OCASN	17
-#define CIPTR	18
-#define PDAT	19
-#define IPS	20
-#define PDIR	21
-#define CCTL	22
-#define CICTL	23
-#define LCSV	24
-#define HCSV	26
-#define LCCV	28
-#define HCCV	30
+#define	HVCT	0
+#define	SVCT	1
+#define	ELTG	2
+#define	TPL	4
+#define	IPND	6
+#define	ISRV	8
+#define	IMSK	10
+#define	CSRC	12
+#define	FPRT	14
+#define	MCTL	16
+#define	OCASN	17
+#define	CIPTR	18
+#define	PDAT	19
+#define	IPS	20
+#define	PDIR	21
+#define	CCTL	22
+#define	CICTL	23
+#define	LCSV	24
+#define	HCSV	26
+#define	LCCV	28
+#define	HCCV	30
 
 /* Byte and Word access to ICU registers
  */
-#define ICUB(n)	*((unsigned char  *)(ICU_ADR + n))
-#define ICUW(n)	*((unsigned short *)(ICU_ADR + n))
+#define	ICUB(n)	*((unsigned char  *)(ICU_ADR + n))
+#define	ICUW(n)	*((unsigned short *)(ICU_ADR + n))
 
 /*
  * ICU IPND register;
  * induce h/w interrupt condition atomicly by poking magic value
  * into IPND (Interrupt pending register).
  */
-#define IPND_SET	0x80
-#define IPND_CLR	0x00
-#define setsofticu(ir)	(ICUB(IPND + (((ir) < 8) ? 0 : 1)) = (IPND_SET + (ir)))
-#define clrsofticu(ir)	(ICUB(IPND + (((ir) < 8) ? 0 : 1)) = (IPND_CLR + (ir)))
+#define	IPND_SET	0x80
+#define	IPND_CLR	0x00
+#define	setsofticu(ir)	(ICUB(IPND + (((ir) < 8) ? 0 : 1)) = (IPND_SET + (ir)))
+#define	clrsofticu(ir)	(ICUB(IPND + (((ir) < 8) ? 0 : 1)) = (IPND_CLR + (ir)))
 
 #ifndef _LOCORE
 /* Interrupt trigger modes
@@ -94,26 +94,26 @@ enum {HIGH_LEVEL, LOW_LEVEL, RISING_EDGE, FALLING_EDGE} int_modes;
 
 /* Hardware interrupt request lines.
  */
-#define IR_CLK		2		/* highest priority */
-#define IR_SCSI0	5		/* Adaptec 6250 */
-#define IR_SCSI1	4		/* NCR DP8490 */
-#define IR_TTY0		13
-#define IR_TTY0RDY	12
-#define IR_TTY1		11
-#define IR_TTY1RDY	10
-#define IR_TTY2		9
-#define IR_TTY2RDY	8
-#define IR_TTY3		7
-#define IR_TTY3RDY	6
-#define IR_SOFT		14
+#define	IR_CLK		2		/* highest priority */
+#define	IR_SCSI0	5		/* Adaptec 6250 */
+#define	IR_SCSI1	4		/* NCR DP8490 */
+#define	IR_TTY0		13
+#define	IR_TTY0RDY	12
+#define	IR_TTY1		11
+#define	IR_TTY1RDY	10
+#define	IR_TTY2		9
+#define	IR_TTY2RDY	8
+#define	IR_TTY3		7
+#define	IR_TTY3RDY	6
+#define	IR_SOFT		14
 
-#define ints_off	bicpsrw	PSL_I ; nop
-#define ints_on		bispsrw	PSL_I
+#define	ints_off	bicpsrw	PSL_I ; nop
+#define	ints_on		bispsrw	PSL_I
 
 /* SCSI controllers */
-#define AIC6250		0
-#define DP8490		1
-#define ICU_SCSI_BIT	0x80
+#define	AIC6250		0
+#define	DP8490		1
+#define	ICU_SCSI_BIT	0x80
 
 #ifndef _LOCORE
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: be_bus.c,v 1.4 2000/01/19 13:12:54 leo Exp $	*/
+/*	$NetBSD: be_bus.c,v 1.4.28.1 2004/08/03 10:33:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.4.28.1 2004/08/03 10:33:09 skrll Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +405,7 @@ beb_bus_space_write_8(t, h, o, v)
  *
  * Read 'count' 1, 2, 4, or 8 byte values from the bus_space described by
  * tag/handle at `offset' and store them in the address range starting at
- * 'address'. The values are converted to cpu endian order before being
+ * 'address'. The values are converted to CPU endian order before being
  * being stored.
  */
 static void

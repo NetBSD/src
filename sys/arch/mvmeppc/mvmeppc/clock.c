@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2003/02/12 18:01:17 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.3.2.1 2004/08/03 10:38:16 skrll Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -32,6 +32,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3.2.1 2004/08/03 10:38:16 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -51,7 +54,6 @@ static volatile u_long lasttb;
 static todr_chip_handle_t clock_handle;
 
 void decr_intr __P((struct clockframe *)); /* Called from trap_subr.S */
-void clock_rtc_config(todr_chip_handle_t);
 
 void
 decr_intr(frame)
@@ -163,7 +165,7 @@ delay(n)
 	tbl = tb;
 	asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
 		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
-		      : "=r"(scratch) : "r"(tbh), "r"(tbl));
+		      : "=&r"(scratch) : "r"(tbh), "r"(tbl));
 }
 
 /*
@@ -177,11 +179,11 @@ setstatclockrate(arg)
 }
 
 void
-clock_rtc_config(todr)
+todr_attach(todr)
 	todr_chip_handle_t todr;
 {
 	if (clock_handle)
-		panic("clock_rtc_config: multiple clocks!");
+		panic("todr_attach: multiple clocks!");
 
 	clock_handle = todr;
 }

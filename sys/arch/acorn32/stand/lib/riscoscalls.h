@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.1 2002/12/28 23:57:38 reinoud Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.1.4.1 2004/08/03 10:30:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -82,6 +82,9 @@
 #define Cache_Control		0x000280
 #define XCache_Control		0x020280
 
+#define Wimp_SlotSize		0x0400ec
+#define XWimp_SlotSize		0x0600ec
+
 #ifndef __ASSEMBLER__
 typedef struct os_error {
 	u_int32_t errnum;
@@ -98,8 +101,8 @@ extern int os_readc(void);
 /* OS_CLI */
 
 #ifndef __ASSEMBLER__
-extern void os_CLI(char *);
-extern os_error *xos_CLI(char *);
+extern void os_cli(char *);
+extern os_error *xos_cli(char *);
 #endif
 
 /* OS_Byte */

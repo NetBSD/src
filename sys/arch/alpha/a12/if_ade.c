@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.21 2003/04/01 02:17:17 thorpej Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.21.2.1 2004/08/03 10:31:03 skrll Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -79,6 +79,9 @@
  */
 #define	TULIP_HDR_DATA
 #define	LCLDMA 1
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.21.2.1 2004/08/03 10:31:03 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

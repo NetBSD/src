@@ -1,9 +1,43 @@
-/*	$NetBSD: vm_machdep.c,v 1.36 2003/04/02 02:56:42 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36.2.1 2004/08/03 10:40:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
- * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department, and William Jolitz.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
+ */
+
+/*-
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1989, 1990 William Jolitz
  * All rights reserved.
  *
@@ -45,6 +79,9 @@
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.36.2.1 2004/08/03 10:40:18 skrll Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -97,7 +134,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 	vaddr_t spbase, fptop;
 #define	P1ADDR(x)	(SH3_PHYS_TO_P1SEG(*__pmap_kpte_lookup(x) & PG_PPN))
 
-	KDASSERT(!(l1 != curlwp && l1 != &lwp0));
+	KDASSERT(l1 == curlwp || l1 == &lwp0);
 
 	/* Copy flags */
 	l2->l_md.md_flags = l1->l_md.md_flags;
@@ -265,41 +302,11 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	sf->sf_sr = PSL_MD;		/* kernel mode, interrupt enable */
 }
 
-/*
- * void cpu_exit(struct lwp *l):
- *	+ Change kernel context to lwp0's one.
- *	+ Schedule freeing process 'l' resources.
- *	+ switch to another process.
- */
 void
-cpu_exit(struct lwp *l, int proc)
+cpu_lwp_free(struct lwp *l, int proc)
 {
-	struct switchframe *sf;
 
-	splsched();
-	uvmexp.swtch++;
-
-	/* Switch to lwp0 stack */
-	curlwp = 0;
-	curpcb = lwp0.l_md.md_pcb;
-	sf = &curpcb->pcb_sf;
-	__asm__ __volatile__(
-		"mov	%0, r15;"	/* current stack */
-		"ldc	%1, r6_bank;"	/* current frame pointer */
-		"ldc	%2, r7_bank;"	/* stack top */
-		::
-		"r"(sf->sf_r15),
-		"r"(sf->sf_r6_bank),
-		"r"(sf->sf_r7_bank));
-
-	/* Schedule freeing process resources */
-	if (proc)
-		exit2(l);
-	else
-		lwp_exit2(l);
-
-	cpu_switch(l, NULL);
-	/* NOTREACHED */
+	/* Nothing to do */
 }
 
 /*

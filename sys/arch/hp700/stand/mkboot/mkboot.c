@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.3 2002/11/28 05:51:02 chs Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.3.6.1 2004/08/03 10:34:55 skrll Exp $	*/
 
 /*	$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp $	*/
 
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -49,6 +45,13 @@ static char rcsid[] = "$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp
 #endif /* not lint */
 #endif
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#include "../../sys/sys/bootblock.h"
+#else
+#include <sys/bootblock.h>
+#endif
+
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -58,20 +61,47 @@ static char rcsid[] = "$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp
 #include <time.h>
 #include <err.h>
 
-#include <sys/exec_aout.h>
-#include <sys/exec_elf.h>
-
-#ifndef hppa
-/* hack for cross compile XXX */
-#include "../../include/disklabel.h"
-#else
-#include <sys/disklabel.h>
-#endif
+/* BFD ELF headers */
+#include <elf/common.h>
+#include <elf/external.h>
 
 #define IS_ELF(ehdr) ((ehdr).e_ident[EI_MAG0] == ELFMAG0 && \
 		      (ehdr).e_ident[EI_MAG1] == ELFMAG1 && \
 		      (ehdr).e_ident[EI_MAG2] == ELFMAG2 && \
 		      (ehdr).e_ident[EI_MAG3] == ELFMAG3)
+
+/*
+ * Macros to get values from multi-byte ELF header fields.  These assume
+ * a big-endian image.
+ */
+#define ELFGET16(x)	(((x)[0] << 8) | (x)[1])
+
+#define ELFGET32(x)	(((x)[0] << 24) | ((x)[1] << 16) |		\
+			 ((x)[2] <<  8) |  (x)[3])
+
+/*
+ * Header prepended to each a.out file.
+ */
+struct exec {
+	u_long	a_midmag;	/* htonl(flags<<26 | mid<<16 | magic) */
+	u_long	a_text;		/* text segment size */
+	u_long	a_data;		/* initialized data size */
+	u_long	a_bss;		/* uninitialized data size */
+	u_long	a_syms;		/* symbol table size */
+	u_long	a_entry;	/* entry point */
+	u_long	a_trsize;	/* text relocation size */
+	u_long	a_drsize;	/* data relocation size */
+};
+
+/* a_magic */
+#define	OMAGIC		0407	/* old impure format */
+#define	NMAGIC		0410	/* read-only text */
+#define	ZMAGIC		0413	/* demand load format */
+#define	QMAGIC		0314	/* "compact" demand load format; deprecated */
+
+#define N_GETMAGIC(ex) \
+    ((((ex).a_midmag)&0xffff0000) ? \
+    (ntohl((u_int32_t)((ex).a_midmag))&0xffff) : ((ex).a_midmag))
 
 #include <stdio.h>
 #include <ctype.h>
@@ -106,9 +136,9 @@ int
 main(int argc, char **argv)
 {
 	int to, n, pos, c;
-	char buf[LIF_FILESTART];
-	struct lifvol *lifv = (struct lifvol *)buf;
-	struct lifdir *lifd = (struct lifdir *)(buf + LIF_DIRSTART);
+	char buf[HP700_LIF_FILESTART];
+	struct hp700_lifvol *lifv = (struct hp700_lifvol *)buf;
+	struct hp700_lifdir *lifd = (struct hp700_lifdir *)(buf + HP700_LIF_DIRSTART);
 
 	while ((c = getopt(argc, argv, "vl:")) != -1) {
 		switch (c) {
@@ -134,35 +164,35 @@ main(int argc, char **argv)
 	bzero(buf, sizeof(buf));
 
 	/* record volume info */
-	lifv->vol_id = htobe16(LIF_VOL_ID);
+	lifv->vol_id = htobe16(HP700_LIF_VOL_ID);
 	strncpy(lifv->vol_label, "MKBOOT", 6);
-	lifv->vol_addr = htobe32(btolifs(LIF_DIRSTART));
-	lifv->vol_oct = htobe16(LIF_VOL_OCT);
-	lifv->vol_dirsize = htobe32(btolifs(LIF_DIRSIZE));
+	lifv->vol_addr = htobe32(hp700_btolifs(HP700_LIF_DIRSTART));
+	lifv->vol_oct = htobe16(HP700_LIF_VOL_OCT);
+	lifv->vol_dirsize = htobe32(hp700_btolifs(HP700_LIF_DIRSIZE));
 	lifv->vol_version = htobe16(1);
 	lifv->vol_number = htobe32(1);
 	lifv->vol_lastvol = htobe32(1);
-	lifv->vol_length = LIF_FILESTART;	/* ... so far. */
+	lifv->vol_length = HP700_LIF_FILESTART;	/* ... so far. */
 	bcddate(to_file, lifv->vol_toc);
-	lifv->ipl_addr = htobe32(LIF_FILESTART);
+	lifv->ipl_addr = htobe32(HP700_LIF_FILESTART);
 
 	argv += optind;
 	argc -= optind;
 	optind = 0;
-	for (pos = LIF_FILESTART; optind < argc; optind++) {
+	for (pos = HP700_LIF_FILESTART; optind < argc; optind++) {
 
 		/* output bootfile */
 		if (lseek(to, pos, SEEK_SET) < 0)
 			err(1, "%s: lseek", to_file);
-		lifd[optind].dir_addr = htobe32(btolifs(pos));
-		n = btolifs(putfile(argv[optind], to));
+		lifd[optind].dir_addr = htobe32(hp700_btolifs(pos));
+		n = hp700_btolifs(putfile(argv[optind], to));
 		if (lifv->ipl_entry == 0) {
 			lifv->ipl_entry = htobe32(loadpoint + entry);
-			lifv->ipl_size = htobe32(lifstob(n));
-			lifd[optind].dir_type = htobe16(LIF_DIR_ISL);
+			lifv->ipl_size = htobe32(hp700_lifstob(n));
+			lifd[optind].dir_type = htobe16(HP700_LIF_DIR_ISL);
 			lifd[optind].dir_implement = 0;
 		} else {
-			lifd[optind].dir_type = htobe16(LIF_DIR_TYPE);
+			lifd[optind].dir_type = htobe16(HP700_LIF_DIR_TYPE);
 			lifd[optind].dir_implement = htobe32(loadpoint + entry);
 		}
 
@@ -170,10 +200,10 @@ main(int argc, char **argv)
 			sizeof(lifd[optind].dir_name));
 		lifd[optind].dir_length = htobe32(n);
 		bcddate(argv[optind], lifd[optind].dir_toc);
-		lifd[optind].dir_flag = htobe16(LIF_DIR_FLAG);
+		lifd[optind].dir_flag = htobe16(HP700_LIF_DIR_FLAG);
 
 		lifv->vol_length += n;
-		pos += lifstob(n);
+		pos += hp700_lifstob(n);
 	}
 
 	/* terminate the directory */
@@ -183,7 +213,7 @@ main(int argc, char **argv)
 	lifv->vol_length = htobe32(lifv->vol_length);
 
 	/* output volume/directory header info */
-	if (lseek(to, LIF_VOLSTART, SEEK_SET) < 0)
+	if (lseek(to, HP700_LIF_VOLSTART, SEEK_SET) < 0)
 		err(1, "%s: lseek", to_file);
 	if (write(to, buf, sizeof(buf)) != sizeof(buf))
 		err(1, "%s: write LIF volume", to_file);
@@ -202,9 +232,9 @@ putfile(char *from_file, int to)
 	char buf[2048];
 	int n, total;
 	int from, check_sum = 0;
-	struct lif_load load;
-	Elf32_Ehdr elf_header;
-	Elf32_Phdr *elf_segments;
+	struct hp700_lifload load;
+	Elf32_External_Ehdr elf_header;
+	Elf32_External_Phdr *elf_segments;
 	int i, header_count, memory_needed, elf_load_image_segment;
 
 	if ((from = open(from_file, O_RDONLY)) < 0)
@@ -217,27 +247,27 @@ putfile(char *from_file, int to)
 	entry = ex.a_entry;
 	if (N_GETMAGIC(ex) == OMAGIC || N_GETMAGIC(ex) == NMAGIC)
 		entry += sizeof(ex);
-	else if (IS_ELF(*(Elf32_Ehdr *)&ex)) {
+	else if (IS_ELF(*(Elf32_External_Ehdr *)&ex)) {
 
 		if (lseek(from, 0, SEEK_SET) < 0)
 			err(1, "lseek");
 		n = read(from, &elf_header, sizeof (elf_header));
 		if (n != sizeof (elf_header))
 			err(1, "%s: reading ELF header", from_file);
-		header_count = be16toh(elf_header.e_phnum);
-		memory_needed = header_count * sizeof (Elf32_Phdr);
+		header_count = ELFGET16(elf_header.e_phnum);
+		memory_needed = header_count * sizeof (Elf32_External_Phdr);
 		elf_segments = malloc(memory_needed);
 		if (elf_segments == NULL)
 			err(1, "malloc");
-		if (lseek(from, be32toh(elf_header.e_phoff), SEEK_SET) < 0)
+		if (lseek(from, ELFGET32(elf_header.e_phoff), SEEK_SET) < 0)
 			err(1, "lseek");
 		n = read(from, elf_segments, memory_needed);
 		if (n != memory_needed)
 			err(1, "%s: reading ELF segments", from_file);
 		elf_load_image_segment = -1;
 		for (i = 0; i < header_count; i++) {
-			if (elf_segments[i].p_filesz &&
-			    be32toh(elf_segments[i].p_flags) & PF_X) {
+			if (ELFGET32(elf_segments[i].p_filesz) &&
+			    ELFGET32(elf_segments[i].p_flags) & PF_X) {
 				if (elf_load_image_segment != -1)
 					errx(1, "%s: more than one ELF program "
 					     "segment", from_file);
@@ -247,9 +277,9 @@ putfile(char *from_file, int to)
 		if (elf_load_image_segment == -1)
 			errx(1, "%s: no suitable ELF program segment",
 			     from_file);
-		entry = be32toh(elf_header.e_entry) +
-			be32toh(elf_segments[elf_load_image_segment].p_offset) -
-			be32toh(elf_segments[elf_load_image_segment].p_vaddr);
+		entry = ELFGET32(elf_header.e_entry) +
+			ELFGET32(elf_segments[elf_load_image_segment].p_offset) -
+			ELFGET32(elf_segments[elf_load_image_segment].p_vaddr);
 	} else if (*(uint8_t *)&ex == 0x1f && ((uint8_t *)&ex)[1] == 0x8b) {
 		entry = 0;
 	} else

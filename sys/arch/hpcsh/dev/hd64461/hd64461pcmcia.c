@@ -1,7 +1,7 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.21 2003/01/01 01:41:33 thorpej Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.21.2.1 2004/08/03 10:35:28 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.21.2.1 2004/08/03 10:35:28 skrll Exp $");
+
 #include "debug_hpcsh.h"
 
 #include <sys/param.h>
@@ -64,8 +67,8 @@
 #include "locators.h"
 
 #ifdef	HD64461PCMCIA_DEBUG
-#define DPRINTF_ENABLE
-#define DPRINTF_DEBUG	hd64461pcmcia_debug
+#define	DPRINTF_ENABLE
+#define	DPRINTF_DEBUG	hd64461pcmcia_debug
 #endif
 #include <machine/debug.h>
 
@@ -86,21 +89,21 @@ enum memory_window_16 {
 	MEMWIN_16M_COMMON_2,
 	MEMWIN_16M_COMMON_3,
 };
-#define MEMWIN_16M_MAX	4
+#define	MEMWIN_16M_MAX	4
 
 enum memory_window_32 {
 	MEMWIN_32M_ATTR,
 	MEMWIN_32M_COMMON_0,
 	MEMWIN_32M_COMMON_1,
 };
-#define MEMWIN_32M_MAX	3
+#define	MEMWIN_32M_MAX	3
 
 enum hd64461pcmcia_event_type {
 	EVENT_NONE,
 	EVENT_INSERT,
 	EVENT_REMOVE,
 };
-#define EVENT_QUEUE_MAX		5
+#define	EVENT_QUEUE_MAX		5
 
 struct hd64461pcmcia_softc; /* forward declaration */
 
@@ -211,10 +214,8 @@ STATIC int hd64461pcmcia_channel0_intr(void *);
 STATIC int hd64461pcmcia_channel1_intr(void *);
 /* card status */
 STATIC enum hd64461pcmcia_event_type detect_card(enum controller_channel);
-STATIC void hd64461pcmcia_power_off(enum controller_channel)
-	__attribute__((__unused__));
-STATIC void hd64461pcmcia_power_on(enum controller_channel)
-	__attribute__((__unused__));
+STATIC void hd64461pcmcia_power_off(enum controller_channel);
+STATIC void hd64461pcmcia_power_on(enum controller_channel);
 /* memory window access ops */
 STATIC void hd64461pcmcia_memory_window_mode(enum controller_channel,
     enum memory_window_mode)__attribute__((__unused__));
@@ -227,7 +228,7 @@ STATIC void hd64461pcmcia_info(struct hd64461pcmcia_softc *);
 #endif
 /* fix SH3 Area[56] bug */
 STATIC void fixup_sh3_pcmcia_area(bus_space_tag_t);
-#define _BUS_SPACE_ACCESS_HOOK()					\
+#define	_BUS_SPACE_ACCESS_HOOK()					\
 do {									\
 	u_int8_t dummy __attribute__((__unused__)) =			\
 	 *(volatile u_int8_t *)0xba000000;				\
@@ -238,7 +239,7 @@ _BUS_SPACE_WRITE_REGION(_sh3_pcmcia_bug, 1, 8)
 _BUS_SPACE_SET_MULTI(_sh3_pcmcia_bug, 1, 8)
 #undef _BUS_SPACE_ACCESS_HOOK
 
-#define DELAY_MS(x)	delay((x) * 1000)
+#define	DELAY_MS(x)	delay((x) * 1000)
 
 int
 hd64461pcmcia_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -255,7 +256,7 @@ hd64461pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	struct hd64461pcmcia_softc *sc = (struct hd64461pcmcia_softc *)self;
 
 	sc->sc_module_id = ha->ha_module_id;
-	
+
 	printf("\n");
 
 #ifdef HD64461PCMCIA_DEBUG
@@ -265,8 +266,13 @@ hd64461pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	SIMPLEQ_INIT (&sc->sc_event_head);
 	kthread_create(hd64461pcmcia_create_event_thread, sc);
 
+#if !defined(HD64461PCMCIA_REORDER_ATTACH)
 	hd64461pcmcia_attach_channel(sc, CHANNEL_0);
 	hd64461pcmcia_attach_channel(sc, CHANNEL_1);
+#else
+	hd64461pcmcia_attach_channel(sc, CHANNEL_1);
+	hd64461pcmcia_attach_channel(sc, CHANNEL_0);
+#endif
 }
 
 void
@@ -287,7 +293,7 @@ hd64461pcmcia_event_thread(void *arg)
 	struct hd64461pcmcia_softc *sc = arg;
 	struct hd64461pcmcia_event *pe;
 	int s;
-	
+
 	while (!sc->sc_shutdown) {
 		tsleep(sc, PWAIT, "CSC wait", 0);
 		s = splhigh();
@@ -355,15 +361,15 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 {
 	struct device *parent = (struct device *)sc;
 	struct hd64461pcmcia_channel *ch = &sc->sc_ch[channel];
-	struct pcmciabus_attach_args paa;	
+	struct pcmciabus_attach_args paa;
 	bus_addr_t membase;
 	int i;
 
 	ch->ch_parent = sc;
 	ch->ch_channel = channel;
 
-	/* 
-	 * Continuous 16-MB Area Mode 
+	/*
+	 * Continuous 16-MB Area Mode
 	 */
 	/* Attibute/Common memory extent */
 	membase = (channel == CHANNEL_0)
@@ -391,7 +397,7 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 	if (channel == CHANNEL_0) {
 		ch->ch_iobase = 0;
 		ch->ch_iosize = HD64461_PCC0_IOSIZE;
-		ch->ch_iot = bus_space_create(0, "PCMCIA I/O port", 
+		ch->ch_iot = bus_space_create(0, "PCMCIA I/O port",
 		    HD64461_PCC0_IOBASE,
 		    ch->ch_iosize);
 		fixup_sh3_pcmcia_area(ch->ch_iot);
@@ -616,7 +622,7 @@ hd64461pcmcia_chip_mem_map(pcmcia_chipset_handle_t pch, int kind,
 		if (bus_space_subregion(ch->ch_memt, ch->ch_memh, card_addr,
 		    size, &cookie->wc_handle) != 0)
 			goto bad;
-		
+
 		*offsetp = card_addr;
 		cookie->wc_window = -1;
 	} else {
@@ -628,7 +634,7 @@ hd64461pcmcia_chip_mem_map(pcmcia_chipset_handle_t pch, int kind,
 		if (bus_space_map(cookie->wc_tag, ofs, size, 0,
 		    &cookie->wc_handle) != 0)
 			goto bad;
-		
+
 		/* XXX bogus. check window per common memory access. */
 		hd64461pcmcia_memory_window_16(ch->ch_channel, window);
 		*offsetp = ofs + 0x01000000; /* skip attribute area */
@@ -679,7 +685,7 @@ hd64461pcmcia_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
 	} else {
 		if (bus_space_alloc(ch->ch_iot, ch->ch_iobase,
 		    ch->ch_iobase + ch->ch_iosize - 1,
-		    size, align, 0, 0, &pcihp->addr, 
+		    size, align, 0, 0, &pcihp->addr,
 		    &pcihp->ioh)) {
 			DPRINTF("couldn't allocate %#lx\n", size);
 			return (1);
@@ -690,7 +696,7 @@ hd64461pcmcia_chip_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
 
 	pcihp->iot = ch->ch_iot;
 	pcihp->size = size;
-	
+
 	return (0);
 }
 
@@ -707,6 +713,9 @@ hd64461pcmcia_chip_io_map(pcmcia_chipset_handle_t pch, int width,
 		return (1);
 
 	hd64461_set_bus_width(CHANNEL_0, width);
+
+	/* fake.  drivers init that to -1 and check if it was changed. */
+	*windowp = 0;
 
 	DPRINTF("%#lx:%#lx+%#lx %s\n", pcihp->ioh, offset, size,
 	    width_names[width]);
@@ -744,7 +753,7 @@ hd64461pcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 	int channel = ch->ch_channel;
 	bus_addr_t isr, gcr;
 	u_int8_t r;
-	int cardtype;
+	int i, cardtype;
 
 	DPRINTF("enable channel %d\n", channel);
 	isr = HD64461_PCCISR(channel);
@@ -752,44 +761,42 @@ hd64461pcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 
 	hd64461pcmcia_power_off(channel);
 	hd64461pcmcia_power_on(channel);
-#if notyet
-	{
-		int i;
-		/* assert reset */
-		r = hd64461_reg_read_1(gcr);
-		r |= HD64461_PCCGCR_PCCR;
-		hd64461_reg_write_1(gcr, r);
 
-		/*
-		 * hold RESET at least 10us.
-		 */
-		DELAY_MS(20);
-	
-		/* clear the reset flag */
-		r &= ~HD64461_PCCGCR_PCCR;
-		hd64461_reg_write_1(gcr, r);
-		DELAY_MS(2000);
 
-		/* wait for the chip to finish initializing */	
-		for (i = 0; i < 10000; i++) {
-			if ((hd64461_reg_read_1(isr) & HD64461_PCCISR_READY))
-				goto reset_ok;
-			DELAY_MS(500);
-			
-			if ((i > 5000) && (i % 100 == 99))
-				printf(".");
-		}
-		printf("reset failed.\n");
-		hd64461pcmcia_power_off(channel);
-		return;
-	reset_ok:
+	/* assert reset */
+	r = hd64461_reg_read_1(gcr);
+	r |= HD64461_PCCGCR_PCCR;
+	hd64461_reg_write_1(gcr, r);
+
+	/*
+	 * hold RESET at least 10us.
+	 */
+	DELAY_MS(20);
+
+	/* clear the reset flag */
+	r &= ~HD64461_PCCGCR_PCCR;
+	hd64461_reg_write_1(gcr, r);
+	DELAY_MS(2000);
+
+	/* wait for the chip to finish initializing */
+	for (i = 0; i < 10000; i++) {
+		if ((hd64461_reg_read_1(isr) & HD64461_PCCISR_READY))
+			goto reset_ok;
+		DELAY_MS(500);
+
+		if ((i > 5000) && (i % 100 == 99))
+			printf(".");
 	}
-#endif /* notyet */
+	printf("reset failed.\n");
+	hd64461pcmcia_power_off(channel);
+	return;
+
+ reset_ok:
 	/* set Continuous 16-MB Area Mode */
 	ch->ch_memory_window_mode = MEMWIN_16M_MODE;
 	hd64461pcmcia_memory_window_mode(channel, ch->ch_memory_window_mode);
 
-	/* 
+	/*
 	 * set Common memory area.
 	 */
 	hd64461pcmcia_memory_window_16(channel, MEMWIN_16M_COMMON_0);
@@ -804,7 +811,7 @@ hd64461pcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 			r &= ~HD64461_PCC0GCR_P0PCCT;
 	} else {
 		/* reserved bit must be 0 */
- 		r &= ~HD64461_PCC1GCR_RESERVED;		
+ 		r &= ~HD64461_PCC1GCR_RESERVED;
 	}
 	hd64461_reg_write_1(gcr, r);
 
@@ -831,11 +838,10 @@ hd64461pcmcia_chip_socket_disable(pcmcia_chipset_handle_t pch)
 void
 hd64461pcmcia_power_off(enum controller_channel channel)
 {
-#if notyet
 	u_int8_t r;
 	u_int16_t r16;
 	bus_addr_t scr, gcr;
-	
+
 	gcr = HD64461_PCCGCR(channel);
 	scr = HD64461_PCCSCR(channel);
 
@@ -851,7 +857,7 @@ hd64461pcmcia_power_off(enum controller_channel channel)
 	r = hd64461_reg_read_1(gcr);
 	r |= HD64461_PCCGCR_VCC0; /* VCC0 high */
 	hd64461_reg_write_1(gcr, r);
-	/* 
+	/*
 	 * wait 300ms until power fails (Tpf).  Then, wait 100ms since
 	 * we are changing Vcc (Toff).
 	 */
@@ -862,15 +868,6 @@ hd64461pcmcia_power_off(enum controller_channel channel)
 	r16 |= (channel == CHANNEL_0 ? HD64461_SYSSTBCR_SPC0ST :
 	    HD64461_SYSSTBCR_SPC1ST);
 	hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, r16);
-
-	if (channel == CHANNEL_0) {
-		/* GPIO Port A XXX Jornada690 specific? */
-		r16 = hd64461_reg_read_2(HD64461_GPADR_REG16);
-		r16 |= 0xf;
-		hd64461_reg_write_2(HD64461_GPADR_REG16, r16);
-	}
-
-#endif /* notyet */
 }
 
 void
@@ -879,12 +876,12 @@ hd64461pcmcia_power_on(enum controller_channel channel)
 	u_int8_t r;
 	u_int16_t r16;
 	bus_addr_t scr, gcr, isr;
-	
+
 	isr = HD64461_PCCISR(channel);
 	gcr = HD64461_PCCGCR(channel);
 	scr = HD64461_PCCSCR(channel);
 
-	/* 
+	/*
 	 * XXX to access attribute memory, this is required.
 	 */
 	if (channel == CHANNEL_0) {
@@ -896,7 +893,9 @@ hd64461pcmcia_power_on(enum controller_channel channel)
 	}
 
 	if (channel == CHANNEL_1) {
-		/* GPIO Port C, Port D XXX HP620LX specific? */
+		/* GPIO Port C, Port D -> PCC1 pin
+		 *  I assume SYSCR[1:0] == 0
+		 */
 		hd64461_reg_write_2(HD64461_GPCCR_REG16, 0xa800);
 		hd64461_reg_write_2(HD64461_GPDCR_REG16, 0xaa0a);
 	}
@@ -964,7 +963,7 @@ detect_card(enum controller_channel channel)
 		return EVENT_REMOVE;
 	}
 	if (r == 0) {
-		DPRINTF("insert\n");		
+		DPRINTF("insert\n");
 		return EVENT_INSERT;
 	}
 	DPRINTF("transition\n");
@@ -981,7 +980,7 @@ hd64461pcmcia_memory_window_mode(enum controller_channel channel,
 {
 	bus_addr_t a = HD64461_PCCGCR(channel);
 	u_int8_t r = hd64461_reg_read_1(a);
-	
+
 	r &= ~HD64461_PCCGCR_MMOD;
 	r |= (mode == MEMWIN_16M_MODE) ? HD64461_PCCGCR_MMOD_16M :
 	    HD64461_PCCGCR_MMOD_32M;
@@ -1081,15 +1080,15 @@ hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 	printf("PCC0 Interface Status Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC0ISR_REG8);
 
-#define _(m)	dbg_bitmask_print(r8, HD64461_PCC0ISR_##m, #m)
+#define	_(m)	dbg_bitmask_print(r8, HD64461_PCC0ISR_##m, #m)
 	_(P0READY);_(P0MWP);_(P0VS2);_(P0VS1);_(P0CD2);_(P0CD1);
 	_(P0BVD2);_(P0BVD1);
 #undef _
 	printf("\n");
 
 	printf("PCC0 General Control Register\n");
-	r8 = hd64461_reg_read_1(HD64461_PCC0GCR_REG8);	
-#define _(m)	dbg_bitmask_print(r8, HD64461_PCC0GCR_##m, #m)
+	r8 = hd64461_reg_read_1(HD64461_PCC0GCR_REG8);
+#define	_(m)	dbg_bitmask_print(r8, HD64461_PCC0GCR_##m, #m)
 	_(P0DRVE);_(P0PCCR);_(P0PCCT);_(P0VCC0);_(P0MMOD);
 	_(P0PA25);_(P0PA24);_(P0REG);
 #undef _
@@ -1097,14 +1096,14 @@ hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 
 	printf("PCC0 Card Status Change Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC0CSCR_REG8);
-#define _(m)	dbg_bitmask_print(r8, HD64461_PCC0CSCR_##m, #m)
+#define	_(m)	dbg_bitmask_print(r8, HD64461_PCC0CSCR_##m, #m)
 	_(P0SCDI);_(P0IREQ);_(P0SC);_(P0CDC);_(P0RC);_(P0BW);_(P0BD);
 #undef _
 	printf("\n");
 
 	printf("PCC0 Card Status Change Interrupt Enable Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC0CSCIER_REG8);
-#define _(m)	dbg_bitmask_print(r8, HD64461_PCC0CSCIER_##m, #m)
+#define	_(m)	dbg_bitmask_print(r8, HD64461_PCC0CSCIER_##m, #m)
 	_(P0CRE);_(P0SCE);_(P0CDE);_(P0RE);_(P0BWE);_(P0BDE);
 #undef _
 	printf("\ninterrupt type: ");
@@ -1125,8 +1124,8 @@ hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 
 	printf("PCC0 Software Control Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC0SCR_REG8);
-#define _(m)	dbg_bitmask_print(r8, HD64461_PCC0SCR_##m, #m)
-	_(P0VCC1);_(P0SWP);	
+#define	_(m)	dbg_bitmask_print(r8, HD64461_PCC0SCR_##m, #m)
+	_(P0VCC1);_(P0SWP);
 #undef _
 	printf("\n");
 
@@ -1136,7 +1135,7 @@ hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 	printf("[PCC1 memory card only (SH3 Area 5)]\n");
 	printf("PCC1 Interface Status Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC1ISR_REG8);
-#define _(m)	dbg_bitmask_print(r8, HD64461_PCC1ISR_##m, #m)
+#define	_(m)	dbg_bitmask_print(r8, HD64461_PCC1ISR_##m, #m)
 	_(P1READY);_(P1MWP);_(P1VS2);_(P1VS1);_(P1CD2);_(P1CD1);
 	_(P1BVD2);_(P1BVD1);
 #undef _
@@ -1144,28 +1143,28 @@ hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 
 	printf("PCC1 General Contorol Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC1GCR_REG8);
-#define _(m)	dbg_bitmask_print(r8, HD64461_PCC1GCR_##m, #m)
+#define	_(m)	dbg_bitmask_print(r8, HD64461_PCC1GCR_##m, #m)
 	_(P1DRVE);_(P1PCCR);_(P1VCC0);_(P1MMOD);_(P1PA25);_(P1PA24);_(P1REG);
 #undef _
 	printf("\n");
 
 	printf("PCC1 Card Status Change Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC1CSCR_REG8);
-#define _(m)	dbg_bitmask_print(r8, HD64461_PCC1CSCR_##m, #m)
+#define	_(m)	dbg_bitmask_print(r8, HD64461_PCC1CSCR_##m, #m)
 	_(P1SCDI);_(P1CDC);_(P1RC);_(P1BW);_(P1BD);
 #undef _
 	printf("\n");
 
 	printf("PCC1 Card Status Change Interrupt Enable Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC1CSCIER_REG8);
-#define _(m)	dbg_bitmask_print(r8, HD64461_PCC1CSCIER_##m, #m)
+#define	_(m)	dbg_bitmask_print(r8, HD64461_PCC1CSCIER_##m, #m)
 	_(P1CRE);_(P1CDE);_(P1RE);_(P1BWE);_(P1BDE);
 #undef _
 	printf("\n");
 
 	printf("PCC1 Software Control Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC1SCR_REG8);
-#define _(m)	dbg_bitmask_print(r8, HD64461_PCC1SCR_##m, #m)
+#define	_(m)	dbg_bitmask_print(r8, HD64461_PCC1SCR_##m, #m)
 	_(P1VCC1);_(P1SWP);
 #undef _
 	printf("\n");
@@ -1176,21 +1175,21 @@ hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 	printf("[General Control]\n");
 	printf("PCC0 Output pins Control Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCCP0OCR_REG8);
-#define _(m)	dbg_bitmask_print(r8, HD64461_PCCP0OCR_##m, #m)
+#define	_(m)	dbg_bitmask_print(r8, HD64461_PCCP0OCR_##m, #m)
 	_(P0DEPLUP);_(P0AEPLUP);
 #undef _
 	printf("\n");
 
 	printf("PCC1 Output pins Control Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCCP1OCR_REG8);
-#define _(m)	dbg_bitmask_print(r8, HD64461_PCCP1OCR_##m, #m)
+#define	_(m)	dbg_bitmask_print(r8, HD64461_PCCP1OCR_##m, #m)
 	_(P1RST8MA);_(P1RST4MA);_(P1RAS8MA);_(P1RAS4MA);
 #undef _
 	printf("\n");
 
 	printf("PC Card General Control Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCCPGCR_REG8);
-#define _(m)	dbg_bitmask_print(r8, HD64461_PCCPGCR_##m, #m)
+#define	_(m)	dbg_bitmask_print(r8, HD64461_PCCPGCR_##m, #m)
 	_(PSSDIR);_(PSSRDWR);
 #undef _
 	printf("\n");

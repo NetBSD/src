@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.67 2003/01/17 23:10:32 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.67.2.1 2004/08/03 10:35:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.67 2003/01/17 23:10:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.67.2.1 2004/08/03 10:35:52 skrll Exp $");
 
-#include "opt_vm86.h"
-#include "opt_user_ldt.h"
-#include "opt_perfctrs.h"
+#include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
+#include "opt_perfctrs.h"
+#include "opt_user_ldt.h"
+#include "opt_vm86.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,16 +82,16 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.67 2003/01/17 23:10:32 thorpej Exp
 
 extern struct vm_map *kernel_map;
 
-int i386_iopl __P((struct lwp *, void *, register_t *));
-int i386_get_ioperm __P((struct lwp *, void *, register_t *));
-int i386_set_ioperm __P((struct lwp *, void *, register_t *));
-int i386_get_mtrr __P((struct lwp *, void *, register_t *));
-int i386_set_mtrr __P((struct lwp *, void *, register_t *));
+int i386_iopl(struct lwp *, void *, register_t *);
+int i386_get_ioperm(struct lwp *, void *, register_t *);
+int i386_set_ioperm(struct lwp *, void *, register_t *);
+int i386_get_mtrr(struct lwp *, void *, register_t *);
+int i386_set_mtrr(struct lwp *, void *, register_t *);
 
 #ifdef USER_LDT
 
 #ifdef LDT_DEBUG
-static void i386_print_ldt __P((int, const struct segment_descriptor *));
+static void i386_print_ldt(int, const struct segment_descriptor *);
 
 static void
 i386_print_ldt(i, d)
@@ -198,9 +199,9 @@ i386_set_ldt(l, args, retval)
 
 	if ((error = copyin(ua.desc, descv, sizeof (*descv) * ua.num)) != 0)
 		goto out;
-	
+
 	/* Check descriptors for access violations. */
-	for (i = 0, n = ua.start; i < ua.num; i++, n++) {
+	for (i = 0; i < ua.num; i++) {
 		union descriptor *desc = &descv[i];
 
 		switch (desc->sd.sd_type) {
@@ -271,7 +272,6 @@ i386_set_ldt(l, args, retval)
 	/* allocate user ldt */
 	simple_lock(&pmap->pm_lock);
 	if (pmap->pm_ldt == 0 || (ua.start + ua.num) > pmap->pm_ldt_len) {
-		old_ldt = pmap->pm_ldt;
 		if (pmap->pm_flags & PMF_USER_LDT)
 			ldt_len = pmap->pm_ldt_len;
 		else
@@ -302,7 +302,6 @@ i386_set_ldt(l, args, retval)
 
 		if (old_ldt != NULL) {
 			old_len = pmap->pm_ldt_len * sizeof(union descriptor);
-			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len);
 		} else {
 			old_len = NLDT * sizeof(union descriptor);
 			old_ldt = ldt;
@@ -503,6 +502,11 @@ sys_sysarch(struct lwp *l, void *v, register_t *retval)
 	case I386_VM86:
 		error = i386_vm86(l, SCARG(uap, parms), retval);
 		break;
+#ifdef COMPAT_16
+	case I386_OLD_VM86:
+		error = compat_16_i386_vm86(l, SCARG(uap, parms), retval);
+		break;
+#endif
 #endif
 #ifdef MTRR
 	case I386_GET_MTRR:

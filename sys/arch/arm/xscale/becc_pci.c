@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.3 2003/05/23 05:21:26 briggs Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.3.2.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -39,6 +39,9 @@
  * PCI configuration support for the ADI Engineering Big Endian Companion
  * Chip.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.3.2.1 2004/08/03 10:32:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,7 +347,9 @@ becc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 			}
 			break;
 		default:
-			break;
+			printf("becc_pci_intr_map: bogus device: %d\n",
+			    pa->pa_device);
+			return (1);
 		}
 	} else {
 		switch (pa->pa_intrpin) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.1 1997/05/17 13:56:12 matthias Exp $	*/
+/*	$NetBSD: srt0.S,v 1.1.54.1 2004/08/03 10:38:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 Philip L. Budne.
@@ -36,7 +36,7 @@
  * Phil Budne, May 10, 1994
  */
 
-#define _LOCORE
+#define	_LOCORE
 #include <machine/asm.h>
 #include <machine/psl.h>
 

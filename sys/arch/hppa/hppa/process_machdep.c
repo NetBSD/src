@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.1 2002/06/05 01:04:20 fredette Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $	*/
 
 /*	$OpenBSD: process_machdep.c,v 1.3 1999/06/18 05:19:52 mickey Exp $	*/
 
@@ -32,6 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,60 +41,55 @@
 #include <sys/ptrace.h>
 #include <sys/user.h>
 
+#include <machine/cpufunc.h>
+
 int
-process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_read_regs(struct lwp *l, struct reg *regs)
 {
-	bcopy (p->p_md.md_regs, regs, sizeof(*regs));
+	bcopy(l->l_md.md_regs, regs, sizeof(*regs));
 	regs->r_regs[0] = 0;
 	return 0;
 }
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_write_regs(struct lwp *l, struct reg *regs)
 {
-	bcopy (&regs[1], &p->p_md.md_regs->tf_r1, sizeof(*regs) - sizeof(*regs));
+	bcopy(&regs[1], &l->l_md.md_regs->tf_r1,
+	    sizeof(*regs) - sizeof(*regs));
 	return 0;
 }
 
 int
-process_read_fpregs(p, fpregs)
-	struct proc *p;
-	struct fpreg *fpregs;
+process_read_fpregs(struct lwp *l, struct fpreg *fpregs)
 {
-	bcopy (p->p_addr->u_pcb.pcb_fpregs, fpregs, sizeof(*fpregs));
+	bcopy(l->l_addr->u_pcb.pcb_fpregs, fpregs, sizeof(*fpregs));
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)&l->l_addr->u_pcb.pcb_fpregs,
+		sizeof(*fpregs));
 	return 0;
 }
 
 int
-process_write_fpregs(p, fpregs)
-	struct proc *p;
-	struct fpreg *fpregs;
+process_write_fpregs(struct lwp *l, struct fpreg *fpregs)
 {
-	bcopy (fpregs, p->p_addr->u_pcb.pcb_fpregs, sizeof(*fpregs));
+	bcopy(fpregs, l->l_addr->u_pcb.pcb_fpregs, sizeof(*fpregs));
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)&l->l_addr->u_pcb.pcb_fpregs,
+		sizeof(*fpregs));
 	return 0;
 }
 
 int
-process_sstep(p, sstep)
-	struct proc *p;
-	int sstep;
+process_sstep(struct lwp *l, int sstep)
 {
 	/* TODO */
 	return EINVAL;
 }
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
-	caddr_t addr;
+process_set_pc(struct lwp *l, caddr_t addr)
 {
 	if (!USERMODE(addr))	/* XXX */
 		return EINVAL;
-	p->p_md.md_regs->tf_iioq_head = (register_t)addr;
+	l->l_md.md_regs->tf_iioq_head = (register_t)addr;
 	return 0;
 }
 

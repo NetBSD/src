@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425reg.h,v 1.2 2003/05/24 01:59:32 ichiro Exp $ */
+/*	$NetBSD: ixdp425reg.h,v 1.2.2.1 2004/08/03 10:34:03 skrll Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -35,37 +35,54 @@
 #ifndef	_IXDP425REG_H_
 #define	_IXDP425REG_H_
 
+#include "opt_evbarm_boardtype.h"
+
+#define	ixdp425	1
+#define	zao425	2
+
 /*
- * GPIO  
+ * Interrupt & GPIO  
  */
 
-#if BOARDTYPE == ixdp425
-#define	PCI_CLK		14
-#define	PCI_RESET	13
-#define	PCI_INT_D	IXP425_INT_GPIO_11
-#define	PCI_INT_C	IXP425_INT_GPIO_10
-#define	PCI_INT_B	IXP425_INT_GPIO_9
-#define	PCI_INT_A	IXP425_INT_GPIO_8
-#define	I2C_SDA		IXP425_INT_GPIO_7
-#define	I2C_SCL		IXP425_INT_GPIO_6
-#endif /* BOARDTYPE == ixdp425 */
+#if EVBARM_BOARDTYPE == ixdp425
+/* GPIOs */
+#define	GPIO_PCI_CLK	14
+#define	GPIO_PCI_RESET	13
+#define	GPIO_PCI_INTA	11
+#define	GPIO_PCI_INTB	10
+#define	GPIO_PCI_INTC	9
+#define	GPIO_PCI_INTD	8
+#define	GPIO_I2C_SDA	7
+#define	GPIO_I2C_SCL	6
+/* Interrupt */
+#define	PCI_INT_A	IXP425_INT_GPIO_11
+#define	PCI_INT_B	IXP425_INT_GPIO_10
+#define	PCI_INT_C	IXP425_INT_GPIO_9
+#define	PCI_INT_D	IXP425_INT_GPIO_8
+#endif /* EVBARM_BOARDTYPE == ixdp425 */
 
-#if BOARDTYPE == zao425		/* conf/ZAO425 */
-#define	PCI_CLK		14
-#define	PCI_RESET	13
+#if EVBARM_BOARDTYPE == zao425		/* conf/ZAO425 */
+/* GPIOs */
+#define	GPIO_PCI_CLK	14
+#define	GPIO_PCI_RESET	13
+#define	GPIO_PCI_INTA	11
+#define	GPIO_PCI_INTB	10
+#define	GPIO_PCI_INTC	9
+#define	GPIO_PCI_INTD	8
+#define	GPIO_I2C_SDA	7
+#define	GPIO_I2C_SCL	6
+/* Interrupt */
 #define	MPCI_GPIO0	IXP425_INT_GPIO_12
-#define	PCI_INT_D	IXP425_INT_GPIO_11
-#define	PCI_INT_C	IXP425_INT_GPIO_10
-#define	PCI_INT_B	IXP425_INT_GPIO_9
-#define	PCI_INT_A	IXP425_INT_GPIO_8
-#define	I2C_SDA		IXP425_INT_GPIO_7
-#define	I2C_SCL		IXP425_INT_GPIO_6
+#define	PCI_INT_A	IXP425_INT_GPIO_11
+#define	PCI_INT_B	IXP425_INT_GPIO_10
+#define	PCI_INT_C	IXP425_INT_GPIO_9
+#define	PCI_INT_D	IXP425_INT_GPIO_8
 #define	MPCI_GPIO3	IXP425_INT_GPIO_5
 #define	HSS0_INT	IXP425_INT_GPIO_4
 #define	HSS0_SCLK	IXP425_INT_GPIO_3
 #define	HSS0_SDI	IXP425_INT_GPIO_2
 #define	HSS0_SDO	IXP425_INT_GPIO_1
 #define	HSS0_CS		IXP425_INT_GPIO_0
-#endif /* BOARDTYPE == zao425 */
+#endif /* EVBARM_BOARDTYPE == zao425 */
 
 #endif	/* _IXDP425REG_H_ */

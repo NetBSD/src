@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13 2003/06/28 14:32:02 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.13.2.1 2004/08/03 10:39:28 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,6 +66,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13.2.1 2004/08/03 10:39:28 skrll Exp $");
+
 #include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -87,6 +90,7 @@
 #ifdef SYSTRACE
 #include <sys/systrace.h>
 #endif
+#include <sys/userret.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -133,6 +137,7 @@ trap(struct trapframe *frame)
 	struct proc *p = l ? l->l_proc : NULL;
 	int type = frame->exc;
 	int ftype, rv;
+	ksiginfo_t ksi;
 
 	KASSERT(l == 0 || (l->l_stat == LSONPROC));
 
@@ -159,9 +164,13 @@ trap(struct trapframe *frame)
 		 * DEBUG intr -- probably single-step.
 		 */
 	case EXC_TRC|EXC_USER:
-		KERNEL_PROC_LOCK(l);
 		frame->srr1 &= ~PSL_SE;
-		trapsignal(l, SIGTRAP, EXC_TRC);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_trap = EXC_TRC;
+		ksi.ksi_addr = (void *)frame->srr0;
+		KERNEL_PROC_LOCK(l);
+		trapsignal(l, &ksi);
 		KERNEL_PROC_UNLOCK(l);
 		break;
 
@@ -183,6 +192,10 @@ trap(struct trapframe *frame)
 				map = kernel_map;
 			} else {
 				map = &p->p_vmspace->vm_map;
+				if (l->l_flag & L_SA) {
+					l->l_savp->savp_faultaddr = va;
+					l->l_flag |= L_SA_PAGEFAULT;
+				}
 			}
 
 			if (frame->tf_xtra[TF_ESR] & (ESR_DST|ESR_DIZ))
@@ -195,6 +208,8 @@ trap(struct trapframe *frame)
 			    (void *)va, frame->tf_xtra[TF_ESR]));
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
 			KERNEL_UNLOCK();
+			if (map != kernel_map)
+				l->l_flag &= ~L_SA_PAGEFAULT;
 			if (rv == 0)
 				goto done;
 			if ((fb = l->l_addr->u_pcb.pcb_onfault) != NULL) {
@@ -225,39 +240,59 @@ trap(struct trapframe *frame)
 		    frame->srr0, (ftype & VM_PROT_WRITE) ? "write" : "read",
 		    frame->dar, frame->tf_xtra[TF_ESR]));
 		KASSERT(l == curlwp && (l->l_stat == LSONPROC));
+		if (l->l_flag & L_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)frame->dar;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
 		    0, ftype);
 		if (rv == 0) {
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_trap = EXC_DSI;
+		ksi.ksi_addr = (void *)frame->dar;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s) lid %d, uid %d killed: "
 			    "out of swap\n",
 			    p->p_pid, p->p_comm, l->l_lid,
 			    p->p_cred && p->p_ucred ?
 			    p->p_ucred->cr_uid : -1);
-			trapsignal(l, SIGKILL, EXC_DSI);
-		} else {
-			trapsignal(l, SIGSEGV, EXC_DSI);
+			ksi.ksi_signo = SIGKILL;
 		}
+		trapsignal(l, &ksi);
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
 		break;
+
 	case EXC_ITMISS|EXC_USER:
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(l);
-		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
+		if (l->l_flag & L_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)frame->srr0;
+			l->l_flag |= L_SA_PAGEFAULT;
+		}
+		ftype = VM_PROT_EXECUTE;
 		DBPRINTF(TDB_ALL,
-		    ("trap(EXC_ISI|EXC_USER) at %lx %s fault on %lx tf %p\n",
-		    frame->srr0, (ftype & VM_PROT_WRITE) ? "write" : "read",
+		    ("trap(EXC_ISI|EXC_USER) at %lx execute fault tf %p\n",
 		    frame->srr0, frame));
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
 		    0, ftype);
 		if (rv == 0) {
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
-		trapsignal(l, SIGSEGV, EXC_ISI);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_trap = EXC_ISI;
+		ksi.ksi_addr = (void *)frame->srr0;
+		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
+		trapsignal(l, &ksi);
+		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
 		break;
 
@@ -278,9 +313,13 @@ trap(struct trapframe *frame)
 
 	case EXC_ALI|EXC_USER:
 		KERNEL_PROC_LOCK(l);
-		if (fix_unaligned(l, frame) != 0)
-			trapsignal(l, SIGBUS, EXC_ALI);
-		else
+		if (fix_unaligned(l, frame) != 0) {
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = SIGBUS;
+			ksi.ksi_trap = EXC_ALI;
+			ksi.ksi_addr = (void *)frame->dar;
+			trapsignal(l, &ksi);
+		} else
 			frame->srr0 += 4;
 		KERNEL_PROC_UNLOCK(l);
 		break;
@@ -300,8 +339,12 @@ trap(struct trapframe *frame)
 
 		if ((rv = fpu_emulate(frame,
 			(struct fpreg *)&l->l_addr->u_pcb.pcb_fpu))) {
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = rv;
+			ksi.ksi_trap = EXC_PGM;
+			ksi.ksi_addr = (void *)frame->srr0;
 			KERNEL_PROC_LOCK(l);
-			trapsignal(l, rv, EXC_PGM);
+			trapsignal(l, &ksi);
 			KERNEL_PROC_UNLOCK(l);
 		}
 		break;
@@ -338,21 +381,8 @@ trap(struct trapframe *frame)
 		panic("trap");
 	}
 
-	/* Take pending signals. */
-	{
-		int sig;
-
-		while ((sig = CURSIG(l)) != 0)
-			postsig(sig);
-	}
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
-
-	/* Invoke any pending upcalls */
-	while (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
+	/* Invoke MI userret code */
+	mi_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
  done:
@@ -681,19 +711,9 @@ void
 upcallret(l)
 	struct lwp *l;
 {
-	int sig;
 
-	/* Take pending signals. */
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (l->l_proc->p_userret)
-		(l->l_proc->p_userret)(l, l->l_proc->p_userret_arg);
-
-	/* Invoke any pending upcalls */
-	while (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
+	/* Invoke MI userret code */
+	mi_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2003/05/23 21:56:41 leo Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2004/08/03 10:33:35 skrll Exp $
 
 BTYPE=	STD
 PROG=	wdboot
-SRCS=	wdboot.s
+SRCS=	wdboot.S
 NOMAN=	# defined
 LIBCRT0=
 

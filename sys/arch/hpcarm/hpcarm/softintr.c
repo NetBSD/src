@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.7 2002/10/05 17:12:10 chs Exp $	*/
+/*	$NetBSD: softintr.c,v 1.7.6.1 2004/08/03 10:35:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.7.6.1 2004/08/03 10:35:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

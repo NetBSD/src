@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.2 2003/04/20 14:38:00 bjh21 Exp $
+#	$NetBSD: Makefile.buildboot,v 1.2.2.1 2004/08/03 10:30:56 skrll Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -10,37 +10,35 @@ BINDIR=/usr/mdec
 BINMODE=444
 FILESDIR=/usr/mdec
 
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
+
 RISCOSTYPE ?= ff8
 
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
 
 CPPFLAGS+=	-D_STANDALONE 
-CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. 
+CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
 CFLAGS=		-O2
+CFLAGS+=	-ffreestanding
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine ${MACHINE_ARCH}
-.NOPATH: machine ${MACHINE_ARCH}
+.BEGIN:
+	-rm -f machine ${MACHINE_ARCH}
+	ln -s $S/arch/${MACHINE}/include machine
+	ln -s $S/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
 .endif
 
-realdepend realall: machine ${MACHINE_ARCH}
 CLEANFILES+= machine ${MACHINE_ARCH}
-
-machine::
-	-rm -f $@
-	ln -s $S/arch/acorn32/include $@
-
-${MACHINE_ARCH}::
-	-rm -f $@
-	ln -s $S/arch/${MACHINE_ARCH}/include $@
-
-${OBJS}: machine ${MACHINE_ARCH}
 
 ### find out what to use for libkern
 KERN_AS=	library

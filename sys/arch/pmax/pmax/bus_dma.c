@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.37.2.1 2003/07/02 15:25:29 darrenr Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.37.2.2 2004/08/03 10:39:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.37.2.2 2004/08/03 10:39:13 skrll Exp $");
 
 #include "opt_cputype.h"
 

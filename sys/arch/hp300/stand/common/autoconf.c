@@ -1,9 +1,43 @@
-/*	$NetBSD: autoconf.c,v 1.2 1999/07/31 00:45:28 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.36.1 2004/08/03 10:34:37 skrll Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * from: Utah Hdr: autoconf.c 1.16 92/05/29
+ *
+ *	@(#)autoconf.c	8.1 (Berkeley) 6/10/93
+ */
+/*
+ * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -48,6 +82,9 @@
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/rominfo.h>
 #include <hp300/stand/common/device.h>
+#include <hp300/stand/common/hpibvar.h>
+#include <hp300/stand/common/scsireg.h>
+#include <hp300/stand/common/scsivar.h>
 
 #include <hp300/dev/grfreg.h>
 
@@ -55,7 +92,7 @@
  * Mapping of ROM MSUS types to BSD major device numbers
  * WARNING: major numbers must match bdevsw indices in hp300/conf.c.
  */
-char rom2mdev[] = {
+static const char rom2mdev[] = {
 	0, 0, 						/* 0-1: none */
 	6,	/* 2: network device; special */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,		/* 3-13: none */
@@ -69,9 +106,11 @@ char rom2mdev[] = {
 struct hp_hw sc_table[MAXCTLRS];
 int cpuspeed;
 
-extern int internalhpib;
+static u_long msustobdev(void);
+static void find_devs(void);
 
 #ifdef PRINTROMINFO
+void
 printrominfo()
 {
 	struct rominfo *rp = (struct rominfo *)ROMADDR;
@@ -83,9 +122,9 @@ printrominfo()
 }
 #endif
 
+void
 configure()
 {
-	u_long msustobdev();
 
 	switch (machineid) {
 	case HP_320:
@@ -134,12 +173,12 @@ configure()
  *	ADAPTER comes from SCSI/HPIB driver logical unit number
  *		(passed back via unused hw_pa field)
  */
-u_long
+static u_long
 msustobdev()
 {
 	struct rominfo *rp = (struct rominfo *) ROMADDR;
 	u_long bdev = 0;
-	register struct hp_hw *hw;
+	struct hp_hw *hw;
 	int sc, type, ctlr, slave, punit;
 
 	sc = (rp->msus >> 8) & 0xFF;
@@ -157,21 +196,23 @@ msustobdev()
 #ifdef PRINTROMINFO
 	printf("msus %x -> bdev %x\n", rp->msus, bdev);
 #endif
-	return (bdev);
+	return bdev;
 }
 
+int
 sctoaddr(sc)
 	int sc;
 {
+
 	if (sc == -1)
-		return(GRFIADDR);
+		return GRFIADDR ;
 	if (sc == 7 && internalhpib)
-		return(internalhpib);
+		return internalhpib ;
 	if (sc < 32)
-		return(DIOBASE + sc * DIOCSIZE);
+		return DIOBASE + sc * DIOCSIZE ;
 	if (sc >= 132)
-		return(DIOIIBASE + (sc - 132) * DIOIICSIZE);
-	return(sc);
+		return DIOIIBASE + (sc - 132) * DIOIICSIZE ;
+	return sc;
 }
 
 /*
@@ -180,12 +221,13 @@ sctoaddr(sc)
  *
  * Note that we only care about displays, LANCEs, SCSIs and HP-IBs.
  */
+static void
 find_devs()
 {
 	short sc, sctop;
 	u_char *id_reg;
-	register caddr_t addr;
-	register struct hp_hw *hw;
+	caddr_t addr;
+	struct hp_hw *hw;
 
 	hw = sc_table;
 	sctop = machineid == HP_320 ? 32 : 256;

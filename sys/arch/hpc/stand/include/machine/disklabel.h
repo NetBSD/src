@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 2001/02/09 18:35:25 uch Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.1.26.1 2004/08/03 10:34:59 skrll Exp $	*/
 
 /* Windows CE architecture */
 
@@ -8,4 +8,16 @@
 #define	RAW_PART	3		/* raw partition: XX?d (XXX) */
 
 /* Pull in MBR partition definitions. */
-#include <sys/disklabel_mbr.h>
+
+#if !defined(__GNUC__)
+#include <sys/cdefs.h>		/* force <sys/cdefs.h> to be read */
+#undef __packed			/* so that we can undo the damage */
+#define __packed
+#pragma pack(push, _sys_bootblock_h, 1)
+#endif
+
+#include <sys/bootblock.h>
+
+#if !defined(__GNUC__)
+#pragma pack(pop, _sys_bootblock_h)
+#endif

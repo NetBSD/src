@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.21 2002/08/06 22:54:00 itojun Exp $	*/
+/*	$NetBSD: mq200.c,v 1.21.6.1 2004/08/03 10:35:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -28,6 +28,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mq200.c,v 1.21.6.1 2004/08/03 10:35:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -474,7 +477,7 @@ mq200_ioctl(v, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GETCMAP:
-		cmap = (struct wsdisplay_cmap*)data;
+		cmap = (struct wsdisplay_cmap *)data;
 
 		if (sc->sc_fbconf.hf_class != HPCFB_CLASS_INDEXCOLOR ||
 		    sc->sc_fbconf.hf_pack_width != 8 ||
@@ -482,18 +485,10 @@ mq200_ioctl(v, cmd, data, flag, p)
 		    256 - cmap->index < cmap->count)
 			return (EINVAL);
 
-#if 0
-		if (!uvm_useracc(cmap->red, cmap->count, B_WRITE) ||
-		    !uvm_useracc(cmap->green, cmap->count, B_WRITE) ||
-		    !uvm_useracc(cmap->blue, cmap->count, B_WRITE))
-			return (EFAULT);
-
-		copyout(&bivideo_cmap_r[cmap->index], cmap->red, cmap->count);
-		copyout(&bivideo_cmap_g[cmap->index], cmap->green,cmap->count);
-		copyout(&bivideo_cmap_b[cmap->index], cmap->blue, cmap->count);
-#endif
-
-		return (0);
+		/*
+		 * This driver can't get color map.
+		 */
+		return (EINVAL);
 
 	case WSDISPLAYIO_PUTCMAP:
 		/*

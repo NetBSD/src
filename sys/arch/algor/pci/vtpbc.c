@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc.c,v 1.3 2001/06/14 18:52:27 thorpej Exp $	*/
+/*	$NetBSD: vtpbc.c,v 1.3.24.1 2004/08/03 10:31:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  *
  * Some help was provided by the Algorithmics PMON sources.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vtpbc.c,v 1.3.24.1 2004/08/03 10:31:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

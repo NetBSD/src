@@ -1,4 +1,4 @@
-/* $NetBSD: eeprom.c,v 1.1 2001/05/14 18:23:00 drochner Exp $ */
+/* $NetBSD: eeprom.c,v 1.1.24.1 2004/08/03 10:33:40 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1999
@@ -25,6 +25,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.1.24.1 2004/08/03 10:33:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

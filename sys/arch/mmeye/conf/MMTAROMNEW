@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.21 2003/04/10 22:07:00 christos Exp $
+#	$NetBSD: MMTAROMNEW,v 1.21.2.1 2004/08/03 10:38:02 skrll Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -47,6 +47,7 @@ options 	HZ=10		# clock interrupt generates every 1/10 sec
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -160,11 +161,14 @@ pcmcia*	at mmeyepcmcia? controller ? socket ?
 
 wdc* at pcmcia? function ?
 
+# ATA (IDE) bus support
+atabus* at ata?
+
 # IDE drives
-wd*	at wdc? drive ?			# the drives themselves
+wd*	at atabus? drive ?
 
 # ATAPI bus support
-#atapibus* at wdc?
+#atapibus* at atapi?
 
 # ATAPI devices
 #cd*	at atapibus? drive ?		# ATAPI CD-ROM drives

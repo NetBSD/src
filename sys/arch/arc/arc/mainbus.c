@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 2002/10/02 04:59:47 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.17.6.1 2004/08/03 10:32:10 skrll Exp $	*/
 /*	$OpenBSD: mainbus.c,v 1.4 1998/10/15 21:30:15 imp Exp $	*/
 /*	NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp 	*/
 
@@ -29,6 +29,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17.6.1 2004/08/03 10:32:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

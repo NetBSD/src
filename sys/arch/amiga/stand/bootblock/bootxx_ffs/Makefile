@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/02/03 07:17:13 mhitch Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2004/08/03 10:32:09 skrll Exp $
 
 ### what we need:
 
@@ -23,7 +23,7 @@ COBJS+=  ufs.o ustarfs.o panic.o vers.o files.o
 
 SOBJS = alloc.o ashrdi3.o ashldi3.o bcopy.o muldi3.o printf.o startit.o
 SOBJS += strlen.o strcmp.o fstat.o
-SOBJS += libstubs.o  memset.o strncmp.o
+SOBJS += libstubs.o memcmp.o memmove.o memset.o strncmp.o
 
 OBJS=	$(SOBJS) $(COBJS)
 
@@ -48,10 +48,10 @@ INCPATH += -I${.CURDIR}/../aout2bb -I$(.CURDIR) -I${DESTDIR}/usr/include
 AFLAGS += -m68030 -l
 CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH} -D_PRIMARY_BOOT
 
-COPTIM= -O -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
+COPTIM= -Os -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
 CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 
-NETBSD_VERS!=	sh ${.CURDIR}/../../../../../conf/osrelease.sh
+NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../../conf/osrelease.sh
 DEFS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 # Use small daddr_t to avoid code bloat
@@ -95,7 +95,7 @@ libboot.a: ${OBJS}
 
 .PHONY:	vers.c
 vers.c:	${.CURDIR}/../boot/version
-	sh ${DIR_TOP}/conf/newvers_stand.sh -NDM ${.CURDIR}/../boot/version "amiga"
+	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh -NDM ${.CURDIR}/../boot/version "amiga"
 
 machine:
 	-rm -f $@

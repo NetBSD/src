@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2003/04/26 11:05:15 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.1 2004/08/03 10:38:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -52,11 +52,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -74,6 +70,9 @@
  *
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.1 2004/08/03 10:38:02 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -137,45 +136,46 @@ cpu_startup()
 /*
  * machine dependent system variables.
  */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+static int
+sysctl_machdep_loadandreset(SYSCTLFN_ARGS)
 {
-	dev_t consdev;
 	char *osimage;
+	int error;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	if (error || newp == NULL)
+		return (error);
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-		    sizeof consdev));
+	osimage = (char *)(*(u_long *)newp);
+	LoadAndReset(osimage);
+	/* not reach here */
+	return (0);
+}
 
-	case CPU_LOADANDRESET:
-		if (newp != NULL) {
-			osimage = (char *)(*(u_long *)newp);
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
 
-			LoadAndReset(osimage);
-			/* not reach here */
-		}
-		return (0);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
 
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+/*
+<atatat> okay...your turn to play.  
+<atatat> pick a number.
+<kjk> 98752.
+*/
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "load_and_reset", NULL,
+		       sysctl_machdep_loadandreset, 98752, NULL, 0,
+		       CTL_MACHDEP, CPU_LOADANDRESET, CTL_EOL);
 }
 
 int waittime = -1;
@@ -293,7 +293,7 @@ consinit()
 
 /*
  * InitializeBsc
- * : BSC(Bus State Controler)
+ * : BSC(Bus State Controller)
  */
 void
 InitializeBsc()

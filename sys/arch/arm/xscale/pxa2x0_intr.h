@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.3 2003/06/05 13:48:28 scw Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.3.2.1 2004/08/03 10:32:58 skrll Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -174,8 +174,8 @@ void pxa2x0_irq_handler(void *);
 void *pxa2x0_intr_establish(int irqno, int level,
 			    int (*func)(void *), void *cookie);
 void pxa2x0_update_intr_masks(int irqno, int level);
-extern int current_spl_level;
+extern __volatile int current_spl_level;
 
 #endif /* ! _LOCORE */
 
-#endif _PXA2X0_INTR_H_
+#endif /* _PXA2X0_INTR_H_ */

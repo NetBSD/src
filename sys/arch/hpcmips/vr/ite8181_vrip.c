@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181_vrip.c,v 1.7 2002/10/02 05:26:53 thorpej Exp $	*/
+/*	$NetBSD: ite8181_vrip.c,v 1.7.6.1 2004/08/03 10:35:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -28,6 +28,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite8181_vrip.c,v 1.7.6.1 2004/08/03 10:35:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

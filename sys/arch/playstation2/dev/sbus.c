@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.5 2002/10/02 04:17:21 thorpej Exp $	*/
+/*	$NetBSD: sbus.c,v 1.5.6.1 2004/08/03 10:39:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * PlayStation 2 internal PCMCIA/USB interface unit.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.5.6.1 2004/08/03 10:39:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

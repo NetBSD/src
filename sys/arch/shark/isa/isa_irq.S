@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.2 2002/10/14 22:32:55 bjh21 Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.2.6.1 2004/08/03 10:40:33 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -133,6 +133,7 @@ ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
+	ENABLE_ALIGNMENT_FAULTS
 
 	/* Load r8 with the ISA 8259 irqs */
 	/* r8 <- irq's pending [15:0] */
@@ -286,17 +287,6 @@ nextirq:
 
 	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
 
-	/* Manage AST's. Maybe this should be done as a soft interrupt ? */
-	ldr	r0, [sp]		/* Get the SPSR from stack */
-
-	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the IRQ */
-	teq	r0, #(PSR_USR32_MODE)
-	ldreq	r0, Lastpending		/* Do we have an AST pending ? */
-	ldreq	r1, [r0]
-	teqeq	r1, #0x00000001
-
-	beq	irqast			/* call the AST handler */
-
 	/* Kill IRQ's in preparation for exit */
         mrs     r0, cpsr_all
         orr     r0, r0, #(I32_bit)
@@ -308,56 +298,20 @@ nextirq:
 	sub	r1, r1, #1
 	str	r1, [r0]
 
+	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT
 
 	/* NOT REACHED */
 	b	. - 8
-
-	/*
-	 * Ok, snag with current intr depth ...
-	 * If ast() calls mi_sleep() the current_intr_depth will not be
-	 * decremented until the process is woken up. This can result
-	 * in the system believing it is still in the interrupt handler.
-	 * If we are calling ast() then correct the current_intr_depth
-	 * before the call.
-	 */
-irqast:
-	mov	r1, #0x00000000		/* Clear ast_pending */
-	str	r1, [r0]
-
-	/* Kill IRQ's so we atomically decrement current_intr_depth */
-        mrs     r2, cpsr_all
-        orr     r3, r2, #(I32_bit)
-        msr     cpsr_all, r3
-
-	/* Decrement the nest count */
-	ldr	r0, Lcurrent_intr_depth
-	ldr	r1, [r0]
-	sub	r1, r1, #1
-	str	r1, [r0]
-
-	/* Restore IRQ's */
-        msr     cpsr_all, r2
-
-	mov	r0, sp
-	bl	_C_LABEL(ast)
-
-	/* Kill IRQ's in preparation for exit */
-        mrs     r0, cpsr_all
-        orr     r0, r0, #(I32_bit)
-        msr     cpsr_all, r0
-
-	PULLFRAMEFROMSVCANDEXIT
-
-	/* NOT REACHED */
-	b	. - 8
-	
 
 Lspl_mask:
 	.word	_C_LABEL(spl_mask)	/* irq's allowed at current spl level */
 
 Lcurrent_mask:
 	.word	_C_LABEL(current_mask)	/* irq's that are usable */
+
+AST_ALIGNMENT_FAULT_LOCALS
+
 
 ENTRY(irq_setmasks)
 	/* Disable interrupts */
@@ -443,9 +397,6 @@ Li8259_mask:
 
 Lirqhandlers:
 	.word	_C_LABEL(irqhandlers)	/* Pointer to array of irqhandlers */
-
-Lastpending:
-	.word	_C_LABEL(astpending)
 
 #ifdef IRQSTATS
 /* These symbols are used by vmstat */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_dbgreg.S,v 1.1 2002/11/22 15:01:16 fvdl Exp $	*/
+/*	$NetBSD: db_dbgreg.S,v 1.1.8.1 2004/08/03 10:35:49 skrll Exp $	*/
 
 /* 
  * Mach Operating System
@@ -58,7 +58,7 @@ ENTRY(outb)
  */
 ENTRY(inb)
 	movl	S_ARG0,%edx		/* IO port address */
-	xor	%eax,%eax		/* clear high bits of register */
+	xorl	%eax,%eax		/* clear high bits of register */
 	inb	%dx,%al			/* get the byte */
 	ret
 
@@ -81,7 +81,7 @@ ENTRY(outw)
  */
 ENTRY(inw)
 	movl	S_ARG0,%edx		/* IO port address */
-	xor	%eax,%eax		/* clear high bits of register */
+	xorl	%eax,%eax		/* clear high bits of register */
 	inw	%dx,%ax			/* get the word */
 	ret
 

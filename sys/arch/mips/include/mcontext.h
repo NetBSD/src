@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.2 2003/01/17 23:36:07 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.2.2.1 2004/08/03 10:37:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -96,31 +96,36 @@ typedef	long            __greg_t;
 typedef	__greg_t	__gregset_t[_NGREG];
 
 /*
+ * For the O32 ABI, there are 16 doubles, one at each even FP reg
+ * number.  The FP registers themselves are 32-bits.
+ *
+ * For 64-bit ABIs (include N32), each FP register is a 64-bit double.
+ */
+typedef	__greg_t	__freg_t;
+
+/*
  * Floating point register state
  */
+#if defined(__mips_n32) || defined(_LP64)
 typedef struct {
 	union {
-		/*
-		 * For the o32 ABI, there are 16 doubles, one at each
-		 * even FP reg number.  For 64-bit ABIs, each FP register
-		 * is a 64-bit double.
-		 *
-		 * The FR bit in the SR indicates which FP mode is
-		 * in use.
-		 */
-		union {
-			double	__fp32_dregs[16];
-			float	__fp32_fregs[32];
-			unsigned int __fp32_regs[32];
-		} __fp_regs32;
-		union {
-			double	__fp64_dregs[32];
-			unsigned long long __fp64_regs[32];
-		} __fp_regs64;
+		double	__fp64_dregs[32];
+		__freg_t __fp_regs[32];
 	} __fp_r;
 	unsigned int	__fp_csr;
 	unsigned int	__fp_pad;
 } __fpregset_t;
+#else /* !(__mips_n32 || _LP64) */
+typedef struct {
+	union {
+		double	__fp_dregs[16];
+		float	__fp_fregs[32];
+		__freg_t __fp_regs[32];
+	} __fp_r;
+	unsigned int	__fp_csr;
+	unsigned int	__fp_pad;
+} __fpregset_t;
+#endif /* !(__mips_n32 || _LP64) */
 
 typedef struct {
 	__gregset_t	__gregs;
@@ -140,6 +145,13 @@ typedef struct {
 #define _OFFSETOF_UC_GREGS	56
 #endif
 
+#define	_UC_SETSTACK	0x00010000
+#define	_UC_CLRSTACK	0x00020000
+
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
+#define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_EPC])
+#define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_V0])
+
+#define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
 #endif	/* _MIPS_MCONTEXT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2001/06/10 05:26:58 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.24.1 2004/08/03 10:31:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.24.1 2004/08/03 10:31:02 skrll Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"

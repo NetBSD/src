@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.60 2002/10/26 13:50:33 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.60.6.1 2004/08/03 10:37:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,6 +32,9 @@
  * Derived a long time ago from
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.60.6.1 2004/08/03 10:37:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

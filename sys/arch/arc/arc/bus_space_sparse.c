@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.8 2003/04/01 22:37:26 thorpej Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.8.2.1 2004/08/03 10:32:10 skrll Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -44,6 +44,9 @@
  * This bus_space uses KSEG2 mapping, if the physical address is not
  * accessible via KSEG0/KSEG1.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.8.2.1 2004/08/03 10:32:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +130,7 @@ arc_sparse_bus_space_compose_handle(bst, addr, size, flags, bshp)
 		vaddr_t va,
 		    vaddr = uvm_km_valloc(kernel_map, (vsize_t)(end - start));
 
-		if (vaddr == NULL)
+		if (vaddr == 0)
 			panic("arc_sparse_bus_space_compose_handle: "
 			      "cannot allocate KVA 0x%llx..0x%llx",
 			      start, end);

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2002/11/09 06:20:41 cgd Exp $
+# $NetBSD: Makefile,v 1.1.8.1 2004/08/03 10:40:00 skrll Exp $
 
 PROG = netboot
 
@@ -28,4 +28,3 @@ ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} 
 	${SIZE} ${PROG}.sym
-

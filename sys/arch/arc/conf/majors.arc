@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arc,v 1.4 2003/04/25 21:10:48 ragge Exp $
+#	$NetBSD: majors.arc,v 1.4.2.1 2004/08/03 10:32:21 skrll Exp $
 #
 # Device majors for arc
 #
@@ -37,7 +37,7 @@ device-major	ipl		char 31			ipfilter
 device-major	uk		char 32			uk
 device-major	rnd		char 33			rnd
 device-major	ss		char 34			ss
-
+device-major	ses		char 35			ses
 device-major	ch		char 36			ch
 device-major	isdn		char 37			isdn
 device-major	isdnctl		char 38			isdnctl
@@ -45,7 +45,13 @@ device-major	isdnbchan	char 39			isdnbchan
 device-major	isdntrc		char 40			isdntrc
 device-major	isdntel		char 41			isdntel
 
+device-major	lkm		char 51			lkm
 device-major	clockctl	char 52			clockctl
 device-major	systrace	char 53			systrace
 device-major	cgd		char 54  block 10	cgd
 device-major	ksyms		char 55			ksyms
+device-major	wsfont		char 56			wsfont
+
+# Majors up to 143 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/conf/majors.

@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
+/*	$NetBSD: userret.h,v 1.1.2.1 2004/08/03 10:31:36 skrll Exp $	*/
 
 /*
  * XXXfvdl same as i386 counterpart, but should probably be independent.
@@ -55,11 +55,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -77,6 +73,8 @@
  *
  */
 
+#include <sys/userret.h>
+
 static __inline void userret __P((register struct lwp *));
 
 /*
@@ -87,17 +85,9 @@ static __inline void
 userret(l)
 	register struct lwp *l;
 {
-	int sig;
-	struct proc *p = l->l_proc;
 
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
-
-	while (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
+	/* Invoke MI userret code */
+	mi_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }

@@ -1,3 +1,4 @@
+/*	$NetBSD: vidmodes.c,v 1.1.14.1 2004/08/03 10:30:48 skrll Exp $	*/
 /*
  * XFree86 modes are:
  * Modeline "name" dotclock hdisp hsyncstart hsyncend htotal \
@@ -9,6 +10,9 @@
  * hcr  = htotal
  * Same for vertical.  XFree doesn't do borders.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vidmodes.c,v 1.1.14.1 2004/08/03 10:30:48 skrll Exp $");
 
 /* RISC OS Mode 0 etc (I think) 640x256 @ 50Hz, 15.6kHz hsync */
 struct arcvideo_timings timing_std640x256 = {

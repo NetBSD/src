@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.4 2003/06/16 20:00:58 thorpej Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.4.2.1 2004/08/03 10:32:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -37,6 +37,10 @@
  * IRQ handler for the Intel PXA2X0 processor.
  * It has integrated interrupt controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.4.2.1 2004/08/03 10:32:58 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>

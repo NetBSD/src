@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2003/04/20 21:18:50 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15.2.1 2004/08/03 10:34:22 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15.2.1 2004/08/03 10:34:22 skrll Exp $");
 
 #include "opt_sh5_debug.h"
 #include "opt_sh5_cpu.h"
@@ -179,8 +182,6 @@ evbsh5_init(void *symtab, vaddr_t endkernel)
 #endif
 	struct boot_params *bp;
 	u_long ksize;
-	vsize_t size;
-	caddr_t v;
 	paddr_t kseg0_phys;
 	int i, j;
 
@@ -259,15 +260,6 @@ evbsh5_init(void *symtab, vaddr_t endkernel)
 #endif
 
 	boothowto = bp->bp_flags;
-
-	/*
-	 * Call allocsys() now so we can steal pages from KSEG0.
-	 */
-	size = (vsize_t)allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_pageboot_alloc(round_page(size))) == 0)
-		panic("startup: no room for tables");
-	if ((allocsys(v, NULL) - v) != size)
-		panic("startup: table size inconsistency");
 }
 
 #ifndef SH5_CPU_SPEED
@@ -291,7 +283,7 @@ compute_ctc_tick_per_us(void)
 	bus_space_write_1(bt, bh, RTC_REG_RCR2, RTC_RCR2_START|RTC_RCR2_RTCEN);
 
 	/*
-	 * Set the cpu cycle counter to a reasonably high value such that
+	 * Set the CPU cycle counter to a reasonably high value such that
 	 * it won't wrap around in the loop
 	 */
 	ctcstart = 0xffffffff;
@@ -329,50 +321,10 @@ compute_ctc_tick_per_us(void)
 void
 cpu_startup(void)
 {
-	u_int i, base, residual;
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
 	char pbuf[16];
 
-	/*
-	 * Now allocate buffers proper.
-	 */
-	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (void *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != 0)
-		panic("startup: cannot allocate VM for buffers");
-	minaddr = (vaddr_t)buffers;
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
-		 * that MAXBSIZE space, we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: not enough memory for "
-				      "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-				       VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(pmap_kernel());
-
+	minaddr = 0;
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -400,25 +352,6 @@ cpu_startup(void)
 	printf("total memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %u buffers containing %s bytes of memory\n", nbuf, pbuf);
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
-}
-
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
-{
-
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	return (EOPNOTSUPP);
 }
 
 void

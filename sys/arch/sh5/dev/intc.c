@@ -1,4 +1,4 @@
-/*	$NetBSD: intc.c,v 1.8 2002/10/14 14:19:27 scw Exp $	*/
+/*	$NetBSD: intc.c,v 1.8.6.1 2004/08/03 10:40:23 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * SH-5 Interrupt Controller
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intc.c,v 1.8.6.1 2004/08/03 10:40:23 skrll Exp $");
 
 #include "opt_sh5_intc.h"
 

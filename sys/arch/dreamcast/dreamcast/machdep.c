@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2003/06/14 16:15:17 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24.2.1 2004/08/03 10:33:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -52,11 +52,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -74,6 +70,9 @@
  *
  *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24.2.1 2004/08/03 10:33:53 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -187,28 +186,28 @@ cpu_startup()
 	sh_startup();
 }
 
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
-		    sizeof cn_tab->cn_dev));
-	default:
-		break;
-	}
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
 
-	return (EOPNOTSUPP);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
 
 void
 cpu_reboot(int howto, char *bootstr)
 {
+#ifdef KLOADER
+	struct kloader_bootinfo kbi;
+#endif
 	static int waittime = -1;
 
 	if (cold) {
@@ -217,6 +216,8 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 #ifdef KLOADER
+	/* No bootinfo is required. */
+	kloader_bootinfo_set(&kbi, 0, NULL, NULL, TRUE);
 	if ((howto & RB_HALT) == 0) {
 		if ((howto & RB_STRING) && bootstr != NULL) {
 			printf("loading a new kernel: %s\n", bootstr);

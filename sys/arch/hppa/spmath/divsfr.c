@@ -1,4 +1,4 @@
-/*	$NetBSD: divsfr.c,v 1.1 2002/06/05 01:04:24 fredette Exp $	*/
+/*	$NetBSD: divsfr.c,v 1.1.10.1 2004/08/03 10:35:38 skrll Exp $	*/
 
 /*	$OpenBSD: divsfr.c,v 1.4 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -41,6 +41,8 @@
  * suitability of this software for any purpose.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: divsfr.c,v 1.1.10.1 2004/08/03 10:35:38 skrll Exp $");
 
 #include "md.h"
 

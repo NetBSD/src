@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.1 2002/06/18 07:25:13 tshiozak Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.1.14.1 2004/08/03 10:35:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 
 #include <machine/specialreg.h>
 #include <machine/param.h>
+#include <machine/segments.h>
 
 	.code16
 	.org 0	/* ACPI spec says: cs==(phys>>8), ip==(phys&0x000F) */
@@ -122,13 +123,13 @@ wakeup_32:
 
 	nop
 	/* Set up segment registers for protected mode */
-	movw	$0x10,%ax		/* KDSEL to segment registers */
+	movw	$GSEL(GDATA_SEL,SEL_KPL),%ax
 	movw	%ax,%ds
 	movw	%ax,%es
 	movw	%ax,%gs
 	movw	%ax,%ss
 	movw	%ax,%fs
-	
+
 	/* Fixup TSS type field; 386 busy TSS (11) -> 386 available TSS (9) */
 #define TSS_TYPEFIX_MASK	0xf9
 	movl	physical_gdt+2(%esi),%ebx
@@ -171,7 +172,7 @@ wakeup_32:
         movw	%ax,%ds
         jmp	*%ebx
 
-        
+
 	.align	8
 tmp_gdt:
 	.word	0xffff

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.48 2002/10/26 13:50:28 jdolecek Exp $
+#	$NetBSD: files.hpcarm,v 1.48.6.1 2004/08/03 10:35:04 skrll Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -34,6 +34,12 @@ file	arch/hpcarm/hpcarm/hpc_machdep.c
 # Include hpcarm/StrongARM config definitions.
 include "arch/arm/conf/files.sa11x0"
 
+# SA11[01]1 companion chips
+file	arch/hpcarm/dev/sacc_hpcarm.c		sacc
+
+# platform dependent part of PCMCIA support.
+file	arch/hpcarm/dev/j720pcic.c	sacpcic
+
 # XXX iPAQ Virtual bus
 device	ipaqbus {}
 attach	ipaqbus at saip
@@ -63,7 +69,7 @@ device	sed: hpcfbif
 attach	sed at saip
 file	arch/hpcarm/dev/sed_saip.c		sed
 
-device	j720ssp {}: wskbddev, wsmousedev, tpcalib
+device	j720ssp {}: wskbddev, wsmousedev, hpctpanel
 attach	j720ssp at saip
 file	arch/hpcarm/dev/j720ssp.c		j720ssp
 file	arch/hpcarm/dev/j720kbdmap.c		j720ssp

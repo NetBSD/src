@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.4 2002/10/02 20:13:48 jdolecek Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.4.6.1 2004/08/03 10:37:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -26,6 +26,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.4.6.1 2004/08/03 10:37:21 skrll Exp $");
+
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -37,8 +40,11 @@
 #ifdef INET
 #include <net/if.h>
 #include <net/if_ether.h>
-#include <net/if_ieee80211.h>
 #include <net/if_media.h>
+#include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_compat.h>
+#include <net80211/ieee80211_radiotap.h>
+#include <net80211/ieee80211_rssadapt.h>
 #endif
 
 #include <machine/autoconf.h>

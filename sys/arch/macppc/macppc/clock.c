@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 2003/02/12 17:49:56 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.21.2.1 2004/08/03 10:37:30 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21.2.1 2004/08/03 10:37:30 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -52,6 +55,7 @@ static u_long ticks_per_sec = 50*1000*1000/4;
 static u_long ns_per_tick = 80;
 long ticks_per_intr;
 static int clockinitted;
+static int clockrunning;
 
 #ifdef TIMEBASE_FREQ
 u_int timebase_freq = TIMEBASE_FREQ;
@@ -164,16 +168,18 @@ decr_intr(struct clockframe *frame)
 		 */
 		asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
-		
-		/*
-		 * Do standard timer interrupt stuff.
-		 * Do softclock stuff only on the last iteration.
-		 */
-		frame->pri = pri | (1 << SIR_CLOCK);
-		while (--nticks > 0)
+
+		if (clockrunning) {
+			/*
+			 * Do standard timer interrupt stuff.
+			 * Do softclock stuff only on the last iteration.
+			 */
+			frame->pri = pri | (1 << SIR_CLOCK);
+			while (--nticks > 0)
+				hardclock(frame);
+			frame->pri = pri;
 			hardclock(frame);
-		frame->pri = pri;
-		hardclock(frame);
+		}
 	}
 	splx(pri);
 }
@@ -181,6 +187,7 @@ decr_intr(struct clockframe *frame)
 void
 cpu_initclocks(void)
 {
+	clockrunning = 1;	/* we can now start calling hardclock */
 }
 
 void
@@ -270,7 +277,7 @@ delay(n)
 	tbl = tb;
 	asm volatile ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
 		      "mftb %0; cmplw %0,%2; blt 1b; 2:"
-		      : "=r"(scratch) : "r"(tbh), "r"(tbl));
+		      : "=&r"(scratch) : "r"(tbh), "r"(tbl));
 }
 
 /*

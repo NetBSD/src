@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.7 2002/12/10 13:44:50 pk Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.7.6.1 2004/08/03 10:40:45 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -27,6 +27,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.7.6.1 2004/08/03 10:40:45 skrll Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -39,11 +42,16 @@
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h> 
-#include <dev/pckbc/pckbdvar.h>
+#include <dev/pckbport/pckbportvar.h>
 
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 
+#ifdef __GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
+#define	IPL_JSCKBD	IPL_TTY
+#else
+#define	IPL_JSCKBD	IPL_SOFTSERIAL
+#endif
 
 struct pckbc_js_softc {
 	struct pckbc_softc jsc_pckbc;	/* real "pckbc" softc */
@@ -51,6 +59,7 @@ struct pckbc_js_softc {
 	/* kbd and mouse share interrupt in both mr.coffee and krups */
 	u_int32_t jsc_intr;
 	int jsc_establised;
+	void *jsc_int_cookie;
 };
 
 
@@ -62,7 +71,8 @@ static void	pckbc_ebus_attach(struct device *, struct device *, void *);
 
 static void	pckbc_js_attach_common(	struct pckbc_js_softc *,
 					bus_space_tag_t, bus_addr_t, int, int);
-static void	pckbc_js_intr_establish(struct pckbc_softc *, pckbc_slot_t);
+static void	pckbc_js_intr_establish(struct pckbc_softc *, pckbport_slot_t);
+static int	jsc_pckbdintr(void *vsc);
 
 /* Mr.Coffee */
 CFATTACH_DECL(pckbc_obio, sizeof(struct pckbc_js_softc),
@@ -210,14 +220,14 @@ pckbc_js_attach_common(jsc, iot, ioaddr, intr, isconsole)
 		t->t_cmdbyte = KC8_CPU; /* initial command: enable ports */
 		callout_init(&t->t_cleanup);
 
-		(void) pckbc_poll_data1(t, PCKBC_KBD_SLOT, 0); /* flush */
+		(void) pckbc_poll_data1(t, PCKBC_KBD_SLOT); /* flush */
 
 		if (pckbc_send_cmd(iot, ioh_c, KBC_SELFTEST) == 0)
 			printf(": unable to request self test");
 		else {
 			int response;
 
-			response = pckbc_poll_data1(t, PCKBC_KBD_SLOT, 0);
+			response = pckbc_poll_data1(t, PCKBC_KBD_SLOT);
 			if (response == 0x55)
 				printf(": selftest ok");
 			else
@@ -242,7 +252,7 @@ pckbc_js_attach_common(jsc, iot, ioaddr, intr, isconsole)
 static void
 pckbc_js_intr_establish(sc, slot)
 	struct pckbc_softc *sc;
-	pckbc_slot_t slot;
+	pckbport_slot_t slot;
 {
 	struct pckbc_js_softc *jsc = (struct pckbc_js_softc *)sc;
 	void *res;
@@ -255,8 +265,19 @@ pckbc_js_intr_establish(sc, slot)
 		return;
 	}
 
+	/*
+	 * We can not choose the devic class interruptlevel freely,
+	 * so we debounce via a softinterrupt.
+	 */
+	jsc->jsc_int_cookie = softintr_establish(IPL_JSCKBD,
+	    pckbcintr_soft, &jsc->jsc_pckbc);
+	if (jsc->jsc_int_cookie == NULL) {
+		printf("%s: unable to establish %s soft interrupt\n",
+		       sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
+		return;
+	}
 	res = bus_intr_establish(sc->id->t_iot, jsc->jsc_intr,
-				 IPL_TTY, pckbcintr, sc);
+				 IPL_SERIAL, jsc_pckbdintr, jsc);
 	if (res == NULL)
 		printf("%s: unable to establish %s slot interrupt\n",
 		       sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
@@ -264,21 +285,30 @@ pckbc_js_intr_establish(sc, slot)
 		jsc->jsc_establised = 1;
 }
 
+static int
+jsc_pckbdintr(void *vsc)
+{
+	struct pckbc_js_softc *jsc = vsc;
+
+	softintr_schedule(jsc->jsc_int_cookie);
+	pckbcintr_hard(&jsc->jsc_pckbc);
+	/*
+	 * This interrupt is not shared on javastations, avoid "stray"
+	 * warnings. XXX - why do "stray interrupt" warnings happen if
+	 * we don't claim the interrupt always?
+	 */
+	return 1;
+}
 
 /*
  * MD hook for use without MI wscons.
  * Called by pckbc_cnattach().
  */
 int
-pckbc_machdep_cnattach(constag, slot)
-    pckbc_tag_t constag;
-    pckbc_slot_t slot;
+pckbport_machdep_cnattach(constag, slot)
+    pckbport_tag_t constag;
+    pckbport_slot_t slot;
 {
 
-#if !defined(__HAVE_NWSCONS) && defined(MSIIEP)
-	/* we do use wscons on krups! */
-	return (pckbd_cnattach(constag, slot));
-#else
 	return (0);
-#endif
 }

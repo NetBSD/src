@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.32 2003/02/26 22:23:09 fvdl Exp $	*/
+/*	$NetBSD: pcib.c,v 1.32.2.1 2004/08/03 10:36:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.32 2003/02/26 22:23:09 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.32.2.1 2004/08/03 10:36:14 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -184,7 +184,7 @@ pcibattach(parent, self, aux)
 	 * Just print out a description and defer configuration
 	 * until all PCI devices have been attached.
 	 */
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 

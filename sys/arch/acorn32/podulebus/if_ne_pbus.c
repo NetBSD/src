@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.9 2002/10/02 03:31:59 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.9.8.1 2004/08/03 10:30:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@
  *
  * EtherM - Needs proper media support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.9.8.1 2004/08/03 10:30:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -189,7 +192,7 @@ struct ne_clone {
 	},
 	/* Irlam EtherN podule. (supplied with NC) */
 	{
-	  PODULE_ETHERN ,EN_REGSHIFT,
+	  PODULE_ETHERN, EN_REGSHIFT,
 	  EN_NIC_OFFSET, EN_NIC_SIZE, EN_ASIC_OFFSET, EN_ASIC_SIZE,
 	  0,0, NE_SPACE_EASI,
 	  NE_SPACE_EASI, NE_SPACE_EASI, 0,
@@ -199,7 +202,7 @@ struct ne_clone {
 	},
 	/* Acorn EtherI podule. (supplied with NC) */
 	{
-	  PODULE_ETHERI ,EN_REGSHIFT,
+	  PODULE_ETHERI, EN_REGSHIFT,
 	  EN_NIC_OFFSET, EN_NIC_SIZE, EN_ASIC_OFFSET, EN_ASIC_SIZE,
 	  0,0, NE_SPACE_EASI,
 	  NE_SPACE_EASI, NE_SPACE_EASI, 0,

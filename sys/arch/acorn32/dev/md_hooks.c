@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.4 2002/05/06 21:18:25 jdolecek Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.4.12.1 2004/08/03 10:30:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: md_hooks.c,v 1.4.12.1 2004/08/03 10:30:49 skrll Exp $");
 
 #include "opt_md.h"
 

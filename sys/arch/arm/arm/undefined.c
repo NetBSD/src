@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.17 2003/04/28 01:54:49 briggs Exp $	*/
+/*	$NetBSD: undefined.c,v 1.17.2.1 2004/08/03 10:32:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.17 2003/04/28 01:54:49 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.17.2.1 2004/08/03 10:32:29 skrll Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.17 2003/04/28 01:54:49 briggs Exp $"
 #ifdef FAST_FPE
 #include <sys/acct.h>
 #endif
+#include <sys/userret.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -77,6 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.17 2003/04/28 01:54:49 briggs Exp $"
 #include <machine/trap.h>
 
 #include <arch/arm/arm/disassem.h>
+
+#ifdef DDB
+#include <ddb/db_output.h>
+#include <machine/db_machdep.h>
+#endif
 
 #ifdef acorn26
 #include <machine/machdep.h>
@@ -126,10 +132,21 @@ remove_coproc_handler(void *cookie)
 static int
 gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 {
+	struct lwp *l;
+	l = (curlwp == NULL) ? &lwp0 : curlwp;
 
 	if (insn == GDB_BREAKPOINT || insn == GDB5_BREAKPOINT) {
 		if (code == FAULT_USER) {
-			trapsignal(curlwp, SIGTRAP, 0);
+			ksiginfo_t ksi;
+
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = SIGTRAP;
+			ksi.ksi_code = TRAP_BRKPT;
+			ksi.ksi_addr = (u_int32_t *)addr;
+			ksi.ksi_trap = 0;
+			KERNEL_PROC_LOCK(l->l_proc);
+			trapsignal(l, &ksi);
+			KERNEL_PROC_UNLOCK(l->l_proc);
 			return 0;
 		}
 #ifdef KGDB
@@ -159,7 +176,6 @@ undefined_init()
 void
 undefinedinstruction(trapframe_t *frame)
 {
-	struct proc *p;
 	struct lwp *l;
 	u_int fault_pc;
 	int fault_instruction;
@@ -189,6 +205,27 @@ undefinedinstruction(trapframe_t *frame)
 	fault_pc = frame->tf_pc;
 #endif
 
+	/* Get the current lwp/proc structure or lwp0/proc0 if there is none. */
+	l = curlwp == NULL ? &lwp0 : curlwp;
+
+	/*
+	 * Make sure the program counter is correctly aligned so we
+	 * don't take an alignment fault trying to read the opcode.
+	 */
+	if (__predict_false((fault_pc & 3) != 0)) {
+		ksiginfo_t ksi;
+		/* Give the user an illegal instruction signal. */
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (u_int32_t *)(intptr_t) fault_pc;
+		KERNEL_PROC_LOCK(l);
+		trapsignal(l, &ksi);
+		KERNEL_PROC_UNLOCK(l);
+		userret(l);
+		return;
+	}
+
 	/*
 	 * Should use fuword() here .. but in the interests of squeezing every
 	 * bit of speed we will just use ReadWord(). We know the instruction
@@ -216,10 +253,6 @@ undefinedinstruction(trapframe_t *frame)
 	else
 		coprocessor = 0;
 
-	/* Get the current lwp/proc structure or lwp0/proc0 if there is none. */
-	l = curlwp == NULL ? &lwp0 : curlwp;
-	p = l->l_proc;
-
 #ifdef __PROG26
 	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR) {
 #else
@@ -242,6 +275,7 @@ undefinedinstruction(trapframe_t *frame)
 
 	if (uh == NULL) {
 		/* Fault has not been handled */
+		ksiginfo_t ksi; 
 		
 #ifdef VERBOSE_ARM32
 		s = spltty();
@@ -265,13 +299,21 @@ undefinedinstruction(trapframe_t *frame)
 #endif
         
 		if ((fault_code & FAULT_USER) == 0) {
-			printf("Undefined instruction in kernel\n");
 #ifdef DDB
-			Debugger();
+			db_printf("Undefined instruction in kernel\n");
+			kdb_trap(T_FAULT, frame);
+#else
+			panic("undefined instruction in kernel");
 #endif
 		}
-
-		trapsignal(l, SIGILL, fault_instruction);
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (u_int32_t *)fault_pc;
+		ksi.ksi_trap = fault_instruction;
+		KERNEL_PROC_LOCK(l);
+		trapsignal(l, &ksi);
+		KERNEL_PROC_UNLOCK(l);
 	}
 
 	if ((fault_code & FAULT_USER) == 0)
@@ -280,7 +322,6 @@ undefinedinstruction(trapframe_t *frame)
 #ifdef FAST_FPE
 	/* Optimised exit code */
 	{
-		int sig;
 
 		/*
 		 * Check for reschedule request, at the moment there is only
@@ -294,18 +335,8 @@ undefinedinstruction(trapframe_t *frame)
 			preempt(0);
 		}
 
-		/* take pending signals */
-		while ((sig = (CURSIG(l))) != 0) {
-			postsig(sig);
-		}
-
-		/* Invoke per-process kernel-exit handling, if any */
-		if (p->p_userret)
-			(p->p_userret)(l, p->p_userret_arg);
-
-		/* Invoke any pending upcalls. */
-		while (l->l_flag & L_SA_UPCALL)
-			sa_upcall_userret(l);
+		/* Invoke MI userret code */
+		mi_userret(l);
 
 		l->l_priority = l->l_usrpri;
 
@@ -313,6 +344,6 @@ undefinedinstruction(trapframe_t *frame)
 	}
 
 #else
-	userret(p);
+	userret(l);
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbusvar.h,v 1.3 2002/08/25 20:20:00 fredette Exp $	*/
+/*	$NetBSD: gscbusvar.h,v 1.3.6.1 2004/08/03 10:34:48 skrll Exp $	*/
 
 /*	$OpenBSD: gscbusvar.h,v 1.3 1999/08/16 02:48:39 mickey Exp $	*/
 
@@ -49,7 +49,7 @@ struct gsc_attach_args {
 	struct hp700_int_reg *ga_int_reg;
 
 	/* This fixes a module's attach arguments. */
-	void (*ga_fix_args) __P((void *, struct gsc_attach_args *));
+	void (*ga_fix_args)(void *, struct gsc_attach_args *);
 	void *ga_fix_args_cookie;
 
 	/* The SCSI target for the host adapter. */
@@ -59,5 +59,4 @@ struct gsc_attach_args {
 	u_int8_t ga_ether_address[6];
 }; 
 
-int gscprint __P((void *, const char *));
-
+int gscprint(void *, const char *);
