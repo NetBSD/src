@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxkivar.h,v 1.4 2003/02/18 18:47:06 wiz Exp $	*/
+/*	$NetBSD: emuxkivar.h,v 1.5 2003/04/26 22:08:28 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #define	EMU_PCI_CBIO		0x10
 
 /*
- * dma memory managment
+ * dma memory management
  */
 
 struct dmamem {
@@ -76,7 +76,7 @@ struct dmamem {
 #define	EMU_DMAMEM_NSEG	1
 
 /*
- * Emu10k1 memory managment
+ * Emu10k1 memory management
  */
 
 struct emuxki_mem {
