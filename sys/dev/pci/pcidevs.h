@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.102 1998/12/09 23:57:58 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.103 1998/12/18 21:08:37 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.96 1998/12/09 23:57:35 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.97 1998/12/18 21:08:19 thorpej Exp 
  */
 
 /*
@@ -1149,6 +1149,9 @@
 /* Winbond Electronics products */
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
 #define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* W89C940F */
+
+/* Yamaha products */
+#define	PCI_PRODUCT_YAMAHA_YMF724E_V	0x0004		/* 724 Audio */
 
 /* Zeinet products */
 #define	PCI_PRODUCT_ZEINET_1221	0x0001		/* 1221 */
