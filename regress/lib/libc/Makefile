@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2003/12/11 22:45:06 matt Exp $
+#	$NetBSD: Makefile,v 1.42 2003/12/17 05:36:43 jmc Exp $
 
 SUBDIR+= _setjmp atexit basename clone convfp db dirname div divrem \
 	gen getaddrinfo hsearch int_fmtio locale md5sha popen randomid \
@@ -13,7 +13,9 @@ SUBDIR+= ieeefp
 SUBDIR+= ldexp
 .endif
 
+.if !make(obj)
 HAVE_SIGINFO != if (echo "\#include <signal.h>" && echo "SA_SIGINFO") | ${CC} -E -I${DESTDIR}/usr/include - | grep -sq 0x0040; then echo yes; else echo no; fi
+.endif
 
 .if make(obj) || (${HAVE_SIGINFO} == "yes")
 SUBDIR+= siginfo
