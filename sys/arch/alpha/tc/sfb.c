@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.6 1996/11/19 05:23:11 cgd Exp $	*/
+/*	$NetBSD: sfb.c,v 1.7 1996/12/05 01:39:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -54,7 +54,11 @@
 #include <machine/autoconf.h>
 #include <machine/pte.h>
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	sfbmatch __P((struct device *, void *, void *));
+#else
+int	sfbmatch __P((struct device *, struct cfdata *, void *));
+#endif
 void	sfbattach __P((struct device *, struct device *, void *));
 int	sfbprint __P((void *, const char *));
 
@@ -89,7 +93,12 @@ void	sfb_unblank __P((struct sfb_devconfig *));
 int
 sfbmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct tc_attach_args *ta = aux;
 
