@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.24 2004/01/05 01:19:07 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.25 2004/01/10 00:56:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -163,6 +163,9 @@ struct RF_Raid_s {
 	TAILQ_HEAD(iodone_q,RF_DiskQueueData_s) iodone; 
 	/* and a lock to protect it */
 	struct simplelock iodone_lock;
+
+	/* DAG Node Pool - a pool that contains "arrays" of RF_DagNode_t's */
+	struct pool dag_node_pool;
 
 	/*
          * Cleanup stuff

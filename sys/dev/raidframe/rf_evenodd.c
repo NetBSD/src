@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.12 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.13 2004/01/10 00:56:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.12 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.13 2004/01/10 00:56:28 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -387,7 +387,7 @@ rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 					 * dead.  return w/ good status */
 		blockNode->succedents[i]->params[0].p = pda;
 		blockNode->succedents[i]->params[2].v = psID;
-		blockNode->succedents[i]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		blockNode->succedents[i]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 	}
 
 	RF_ASSERT(!asmap->parityInfo->next);
@@ -470,7 +470,7 @@ rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		wrUnblock = wrBlock->succedents[0]->succedents[0];
 		wrBlock->succedents[0]->params[0].p = asmap->parityInfo;
 		wrBlock->succedents[0]->params[2].v = psID;
-		wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		memset((char *) &tracerec, 0, sizeof(tracerec));
 		wr_dag_h->tracerec = &tracerec;
 #if RF_DEBUG_VALIDATE_DAG
@@ -501,7 +501,7 @@ rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		wrUnblock = wrBlock->succedents[0]->succedents[0];
 		wrBlock->succedents[0]->params[0].p = asmap->qInfo;
 		wrBlock->succedents[0]->params[2].v = psID;
-		wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
+		wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		memset((char *) &tracerec, 0, sizeof(tracerec));
 		wr_dag_h->tracerec = &tracerec;
 #if RF_DEBUG_VALIDATE_DAG
