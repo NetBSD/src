@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: printf.c,v 1.10 1993/12/31 01:46:16 jtc Exp $";
+static char rcsid[] = "$Id: printf.c,v 1.11 1994/02/03 00:16:11 jtc Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -50,6 +50,7 @@ static char rcsid[] = "$Id: printf.c,v 1.10 1993/12/31 01:46:16 jtc Exp $";
 #include <string.h>
 #include <limits.h>
 #include <locale.h>
+#include <errno.h>
 #include <err.h>
 
 static int	 print_escape_str __P((const char *));
@@ -59,6 +60,7 @@ static int	 getchr __P((void));
 static double	 getdouble __P((void));
 static int	 getint __P((void));
 static long	 getlong __P((void));
+static unsigned long getulong __P ((void));
 static char	*getstr __P((void));
 static char	*mklong __P((char *, int)); 
 static void	 usage __P((void)); 
@@ -215,13 +217,18 @@ main(argc, argv)
 					break;
 				}
 				case 'd':
-				case 'i':
+				case 'i': {
+					char *f = mklong(start, convch);
+					long p = getlong();
+					PF(f, p);
+					break;
+				}
 				case 'o':
 				case 'u':
 				case 'x':
 				case 'X': {
 					char *f = mklong(start, convch);
-					long p = getlong();
+					unsigned long p = getulong();
 					PF(f, p);
 					break;
 				}
@@ -456,9 +463,48 @@ getlong()
 		return val;
 	}
 
+	errno = 0;
 	val = strtol (*gargv, &ep, 0);
 	if (*ep) {
-		warnx ("incompletely converted argument: %s", *gargv);
+		if (ep == *gargv)
+			warnx ("%s: expected numeric value", *gargv);
+		else
+			warnx ("%s: not completely converted", *gargv);
+		rval = 1;
+	} else if (errno == ERANGE) {
+		warnx ("%s: %s", *gargv, strerror(ERANGE));
+		rval = 1;
+	}
+
+	gargv++;
+	return val;
+}
+
+static unsigned long
+getulong()
+{
+	unsigned long val;
+	char *ep;
+
+	if (!*gargv)
+		return(0L);
+
+	if (**gargv == '\"' || **gargv == '\'') {
+		val = gargv[0][1];
+		gargv++;
+		return val;
+	}
+
+	errno = 0;
+	val = strtoul (*gargv, &ep, 0);
+	if (*ep) {
+		if (ep == *gargv)
+			warnx ("%s: expected numeric value", *gargv);
+		else
+			warnx ("%s: not completely converted", *gargv);
+		rval = 1;
+	} else if (errno == ERANGE) {
+		warnx ("%s: %s", *gargv, strerror(ERANGE));
 		rval = 1;
 	}
 
@@ -481,9 +527,16 @@ getdouble()
 		return val;
 	}
 
+	errno = 0;
 	val = strtod (*gargv, &ep);
 	if (*ep) {
-		warnx ("incompletely converted argument: %s", *gargv);
+		if (ep == *gargv)
+			warnx ("%s: expected numeric value", *gargv);
+		else
+			warnx ("%s: not completely converted", *gargv);
+		rval = 1;
+	} else if (errno == ERANGE) {
+		warnx ("%s: %s", *gargv, strerror(ERANGE));
 		rval = 1;
 	}
 
