@@ -1,3 +1,5 @@
+/*	$NetBSD: zdump.c,v 1.2 1995/03/10 18:12:43 jtc Exp $	*/
+
 #ifndef lint
 #ifndef NOID
 static char	elsieid[] = "@(#)zdump.c	7.20";
