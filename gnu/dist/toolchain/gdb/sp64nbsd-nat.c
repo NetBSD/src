@@ -121,17 +121,16 @@ fetch_inferior_registers (regno)
       register_valid[CCR_REGNUM] = 1;
       register_valid[CWP_REGNUM] = 1;
 
-#if 0
-      /* If we don't set these valid, read_register_bytes() rereads
-	 all the regs every time it is called!  FIXME.  */
-      register_valid[TBR_REGNUM] = 1;	/* Not true yet, FIXME */
-      register_valid[CPS_REGNUM] = 1;	/* Not true yet, FIXME */
-#endif
+      /* If we don't set these valid, read_register_bytes()
+	 thinks we can't store to these regs and calling functions 
+	 does not work. */
+      for (i=TPC_REGNUM; i<NUM_REGS; i++)
+	      register_valid[i] = 1;	/* Not true yet, FIXME */
     }
 
   /* Floating point registers */
   if (regno == -1 || regno == FSR_REGNUM ||
-      (regno >= FP0_REGNUM && regno <= FP0_REGNUM + 31))
+      (regno >= FP0_REGNUM && regno <= FP0_REGNUM + 63))
     {
       if (0 != ptrace (PT_GETFPREGS, inferior_pid,
 		       (PTRACE_ARG3_TYPE) &inferior_fp_registers,
@@ -143,7 +142,7 @@ fetch_inferior_registers (regno)
       memcpy (&registers[REGISTER_BYTE (FSR_REGNUM)],
 	      &inferior_fp_registers.fr_fsr,
 	      sizeof (inferior_fp_registers.fr_fsr));
-      for (i = FP0_REGNUM; i <= FP0_REGNUM+31; i++)
+      for (i = FP0_REGNUM; i <= FP0_REGNUM+63; i++)
 	register_valid[i] = 1;
       register_valid[FSR_REGNUM] = 1;
     }
@@ -191,7 +190,7 @@ store_inferior_registers (regno)
   /* First decide which pieces of machine-state we need to modify.  
      Default for regno == -1 case is all pieces.  */
   if (regno >= 0)
-    if (FP0_REGNUM <= regno && regno < FP0_REGNUM + 32)
+    if (FP0_REGNUM <= regno && regno < FP0_REGNUM + 63)
       {
 	wanna_store = FP_REGS;
       }
@@ -264,17 +263,18 @@ store_inferior_registers (regno)
 	      sizeof(inferior_registers.r_out));
 
       inferior_registers.r_tstate =
-	*(int *)&registers[REGISTER_BYTE (TSTATE_REGNUM)];
+	*(long *)&registers[REGISTER_BYTE (TSTATE_REGNUM)];
       inferior_registers.r_pc =
-	*(int *)&registers[REGISTER_BYTE (PC_REGNUM)];
+	*(long *)&registers[REGISTER_BYTE (PC_REGNUM)];
       inferior_registers.r_npc =
-	*(int *)&registers[REGISTER_BYTE (NPC_REGNUM)];
+	*(long *)&registers[REGISTER_BYTE (NPC_REGNUM)];
       inferior_registers.r_y =
 	*(int *)&registers[REGISTER_BYTE (Y_REGNUM)];
 
       if (0 != ptrace (PT_SETREGS, inferior_pid,
 		       (PTRACE_ARG3_TYPE) &inferior_registers, 0))
 	perror("ptrace_setregs");
+printf("ptrace: wrote pc %p npc %p\n", inferior_registers.r_pc, inferior_registers.r_npc);
     }
 
   if (wanna_store & FP_REGS)

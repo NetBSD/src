@@ -1881,9 +1881,20 @@ sparc_fix_call_dummy (dummy, pc, fun, value_type, using_gcc)
      int using_gcc;
 {
   int i;
+#ifdef GDB_TARGET_IS_SPARC64
+
+  /* 
+   * XXXXXXXXX
+   * 
+   * We'll use jmpl %g1, %o7, so we just overwrite %g1 with the
+   * pointer to the function we want to call.
+   */
+  write_register (G0_REGNUM + 1, fun);
+#else
 
   /* Store the relative adddress of the target function into the
      'call' instruction. */
+
   store_unsigned_integer (dummy + CALL_DUMMY_CALL_OFFSET, 4,
 			  (0x40000000
 			   | (((fun - (pc + CALL_DUMMY_CALL_OFFSET)) >> 2)
@@ -1897,6 +1908,7 @@ sparc_fix_call_dummy (dummy, pc, fun, value_type, using_gcc)
     store_unsigned_integer (dummy + CALL_DUMMY_CALL_OFFSET + 8, 4,
 			    TYPE_LENGTH (value_type) & 0x1fff);
 
+#endif
 #ifndef GDB_TARGET_IS_SPARC64
   /* If this is not a simulator target, change the first four instructions
      of the call dummy to NOPs.  Those instructions include a 'save'
