@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4.4.1 2000/12/24 07:18:24 jhawk Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4.4.2 2001/03/13 20:48:58 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,7 +58,6 @@
  */
 #include <m68k/cpu.h>
 
-#ifdef news1700
 /*
  * XXX news1700 L2 cache would be corrupted with DC_BE and IC_BE...
  * XXX Should these be defined in machine/cpu.h?
@@ -74,8 +73,6 @@
 
 #define DCIC_CLR	(DC_CLR|IC_CLR)
 #define CACHE_BE	(DC_BE|IC_BE)
-
-#endif
 
 /*
  * Get interrupt glue.
