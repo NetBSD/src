@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.44 2002/05/26 14:48:19 wiz Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.45 2002/06/26 02:40:46 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.44 2002/05/26 14:48:19 wiz Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.45 2002/06/26 02:40:46 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -652,7 +652,7 @@ gethostbyname2(name, af)
 	hp = (struct hostent *)NULL;
 	h_errno = NETDB_INTERNAL;
 	if (nsdispatch(&hp, dtab, NSDB_HOSTS, "gethostbyname",
-	    default_dns_files, name, len, af) != NS_SUCCESS)
+	    default_dns_files, name, strlen(name), af) != NS_SUCCESS)
 		return (struct hostent *)NULL;
 	h_errno = NETDB_SUCCESS;
 	return (hp);
