@@ -1,4 +1,4 @@
-/*	$NetBSD: awd.c,v 1.4 1997/06/18 20:41:45 pk Exp $	*/
+/*	$NetBSD: awd.c,v 1.5 1997/06/18 22:25:53 pk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1541,22 +1541,21 @@ wdsize(dev)
 	if (unit >= awd_cd.cd_ndevs)
 		return -1;
 	wd = awd_cd.cd_devs[unit];
-	if (wd == 0)
-		return -1;
+	if (wd == NULL)
+		return (-1);
 
 	part = WDPART(dev);
 	omask = wd->sc_dk.dk_openmask & (1 << part);
 
 	if (omask == 0 && wdopen(dev, 0, S_IFBLK, NULL) != 0)
-		return -1;
-	wd = awd_cd.cd_devs[WDUNIT(dev)];
+		return (-1);
 	if (wd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
-		size = -1;
+		size = (-1);
 	else
 		size = wd->sc_dk.dk_label->d_partitions[part].p_size;
 	if (omask == 0 && wdclose(dev, 0, S_IFBLK, NULL) != 0)
-		return -1;
-	return size;
+		return (-1);
+	return (size);
 }
 
 
