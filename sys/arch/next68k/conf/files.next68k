@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.5 1999/01/02 13:30:45 dbj Exp $
+# $NetBSD: files.next68k,v 1.6 1999/01/27 11:27:16 dbj Exp $
 
 # next68k-specific configuration info
 
@@ -54,6 +54,8 @@ file    arch/next68k/dev/nextdma.c
 
 file	dev/cons.c
 file	dev/cninit.c
+
+file    dev/clock_subr.c
 
 include "dev/scsipi/files.scsipi"
 
