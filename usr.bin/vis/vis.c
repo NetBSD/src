@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.6 2000/07/05 00:35:28 itohy Exp $	*/
+/*	$NetBSD: vis.c,v 1.7 2002/12/23 01:45:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vis.c,v 1.6 2000/07/05 00:35:28 itohy Exp $");
+__RCSID("$NetBSD: vis.c,v 1.7 2002/12/23 01:45:54 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: vis.c,v 1.6 2000/07/05 00:35:28 itohy Exp $");
 #include <vis.h>
 
 int eflags, fold, foldwidth=80, none, markeol, debug;
+char *extra;
 
 int foldit __P((char *, int, int));
 int main __P((int, char **));
@@ -68,7 +69,7 @@ main(argc, argv)
 	int ch;
 	int rval;
 
-	while ((ch = getopt(argc, argv, "nwctsobfF:ld")) != -1)
+	while ((ch = getopt(argc, argv, "nwctsobe:fF:ld")) != -1)
 		switch((char)ch) {
 		case 'n':
 			none++;
@@ -91,6 +92,9 @@ main(argc, argv)
 		case 'b':
 			eflags |= VIS_NOSLASH;
 			break;
+		case 'e':
+			extra = optarg;
+			break;
 		case 'F':
 			if ((foldwidth = atoi(optarg))<5) {
 				errx(1, "can't fold lines to less than 5 cols");
@@ -111,7 +115,7 @@ main(argc, argv)
 		case '?':
 		default:
 			fprintf(stderr, 
-		"usage: vis [-nwctsobf] [-F foldwidth]\n");
+		    "Usage: vis [-nwctsobf] [-e extra] [-F foldwidth]\n");
 			exit(1);
 		}
 	argc -= optind;
@@ -161,7 +165,9 @@ process(fp, filename)
 			*cp++ = '$';
 			*cp++ = '\n';
 			*cp = '\0';
-		} else 
+		} else if (extra)
+			(void) svis(buff, (char)c, eflags, (char)rachar, extra);
+		else
 			(void) vis(buff, (char)c, eflags, (char)rachar);
 
 		cp = buff;
