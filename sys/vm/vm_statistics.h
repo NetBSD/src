@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_statistics.h	7.2 (Berkeley) 4/21/91
+ *	from: @(#)vm_statistics.h	7.2 (Berkeley) 4/21/91
+ *	$Id: vm_statistics.h,v 1.3 1993/05/20 03:59:46 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

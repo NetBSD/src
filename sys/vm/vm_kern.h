@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_kern.h	7.2 (Berkeley) 4/21/91
+ *	from: @(#)vm_kern.h	7.2 (Berkeley) 4/21/91
+ *	$Id: vm_kern.h,v 1.3 1993/05/20 03:59:26 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

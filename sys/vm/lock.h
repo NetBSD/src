@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lock.h	7.3 (Berkeley) 4/21/91
+ *	from: @(#)lock.h	7.3 (Berkeley) 4/21/91
+ *	$Id: lock.h,v 1.3 1993/05/20 03:59:12 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

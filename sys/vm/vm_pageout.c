@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_pageout.c	7.4 (Berkeley) 5/7/91
+ *	from: @(#)vm_pageout.c	7.4 (Berkeley) 5/7/91
+ *	$Id: vm_pageout.c,v 1.4 1993/05/20 03:59:40 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -60,14 +61,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00007
- * --------------------         -----   ----------------------
- *
- * 20 Aug 92	David Greenman		Removed un-necessary call to
- *					swapout_thread
  */
 
 /*
