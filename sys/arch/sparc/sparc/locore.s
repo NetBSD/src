@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.13 2002/08/27 23:45:42 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.14 2002/11/28 01:14:34 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4179,11 +4179,17 @@ _C_LABEL(sigcode):
 	! sigreturn does not return unless it fails
 	mov	SYS_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
+	/* NOTREACHED */
+
+	/*
+	 * Upcall for scheduler activations.
+	 */
 _C_LABEL(upcallcode):
-	! not yet implemented
-	mov	101, %o0
-	mov	SYS_exit, %g1		! exit(101)
+	call	%g1
+	 nop
+	mov	SYS_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
+	/* NOTREACHED */
 _C_LABEL(esigcode):
 
 /*

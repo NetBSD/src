@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.17 2002/10/18 02:39:59 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.18 2002/11/28 01:14:35 uwe Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -717,7 +717,8 @@ struct saframe {
  *	Send an an upcall to userland.
  */
 void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+	   void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct proc *p = l->l_proc;
 	struct saframe *sf, frame;
@@ -731,18 +732,28 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 	tf = l->l_md.md_tf;
 	oldsp = tf->tf_out[6];
 
-	/* Finally, copy out the rest of the frame. */
-	sf = (struct saframe *)sp - 1;
+	/* Ensure stack is double-word aligned. */
+	sp = (void *)((u_int32_t)sp & ~0x7);
 
+	/* Space for outgoing args, but at least 7 words */
+	sf = (struct saframe *)((u_int32_t)sp - max(sizeof(frame), 7*4));
+
+	/* Above the arguments: space for struct pointer word and rwindow */
+	newsp = (int)sf - 4 - sizeof(struct rwindow);
+
+	/* Arguments to the upcall... */
 	frame.sa_type = type;
 	frame.sa_sas = sas;
 	frame.sa_events = nevents;
 	frame.sa_interrupted = ninterrupted;
 	frame.sa_arg = ap;
 
-	newsp = (int)sf - sizeof(struct rwindow);
+	/* ... first 6 args are in the out registers */
+	memcpy(tf->tf_out, &frame, min(sizeof(frame), 6*4));
+
 	write_user_windows();
 
+	/* ... the rest are on the stack */
 	if (rwindow_save(l) || copyout(&frame, sf, sizeof frame) ||
 	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
 		/* Copying onto the stack didn't work. Die. */
