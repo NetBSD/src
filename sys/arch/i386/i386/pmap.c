@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108 2000/09/28 18:31:36 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.109 2000/10/08 22:59:38 thorpej Exp $	*/
 
 /*
  *
@@ -2109,16 +2109,11 @@ void
 pmap_zero_page(pa)
 	paddr_t pa;
 {
-	simple_lock(&pmap_zero_page_lock);
-#ifdef DIAGNOSTIC
-	if (*zero_pte)
-		panic("pmap_zero_page: lock botch");
-#endif
 
+	simple_lock(&pmap_zero_page_lock);
 	*zero_pte = (pa & PG_FRAME) | PG_V | PG_RW;	/* map in */
+	pmap_update_pg((vaddr_t)zerop);			/* flush TLB */
 	memset(zerop, 0, NBPG);				/* zero */
-	*zero_pte = 0;				/* zap! */
-	pmap_update_pg((vaddr_t)zerop);		/* flush TLB */
 	simple_unlock(&pmap_zero_page_lock);
 }
 
@@ -2136,13 +2131,11 @@ pmap_zero_page_uncached(pa)
 	int i, *ptr;
 
 	simple_lock(&pmap_zero_page_lock);
-#ifdef DIAGNOSTIC
-	if (*zero_pte)
-		panic("pmap_zero_page_uncached: lock botch");
-#endif
 
 	*zero_pte = (pa & PG_FRAME) | PG_V | PG_RW |	/* map in */
 	    ((cpu_class != CPUCLASS_386) ? PG_N : 0);
+	pmap_update_pg((vaddr_t)zerop);			/* flush TLB */
+
 	for (i = 0, ptr = (int *) zerop; i < NBPG / sizeof(int); i++) {
 		if (sched_whichqs != 0) {
 			/*
@@ -2156,8 +2149,7 @@ pmap_zero_page_uncached(pa)
 		}
 		*ptr++ = 0;
 	}
-	*zero_pte = 0;					/* zap! */
-	pmap_update_pg((vaddr_t)zerop);			/* flush TLB */
+
 	simple_unlock(&pmap_zero_page_lock);
 
 	return (rv);
