@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the American National Standards Committee X3, on Information
@@ -33,9 +33,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)setjmp.3	6.8 (Berkeley) 7/30/91
+.\"     @(#)setjmp.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd July 30, 1991
+.Dd June 4, 1993
 .Dt SETJMP 3
 .Os BSD 4
 .Sh NAME
@@ -95,12 +95,12 @@ and
 and
 .Fn longjmp
 combinations may be used in the same program, however, individual
-calls may not, i.e. the
+calls may not, e.g. the
 .Fa env
 argument to
-.Fn sigsetjmp
+.Fn setjmp
 may not be passed to
-.Fn longjmp .
+.Fn siglongjmp .
 .Pp
 The
 .Fn longjmp
@@ -155,7 +155,7 @@ versions of
 .Fn longjmperror .
 .Sh SEE ALSO
 .Xr sigaction 2 ,
-.Xr sigstack 2 ,
+.Xr sigaltstack 2 ,
 .Xr signal 3
 .Sh STANDARDS
 The
@@ -164,3 +164,9 @@ and
 .Fn longjmp
 functions conform to
 .St -ansiC .
+The
+.Fn sigsetjmp
+and
+.Fn siglongjmp
+functions conform to
+.St -p1003.1-88 .

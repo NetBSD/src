@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)psignal.c	5.6 (Berkeley) 2/23/91";
+static char sccsid[] = "@(#)psignal.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -48,7 +48,7 @@ psignal(sig, s)
 	unsigned int sig;
 	const char *s;
 {
-	register char *c;
+	register const char *c;
 	register int n;
 
 	if (sig < NSIG)
