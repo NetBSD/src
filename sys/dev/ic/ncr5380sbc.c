@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.14 1996/12/10 21:28:00 thorpej Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.15 1996/12/15 10:02:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -81,6 +81,10 @@
 #include <scsi/scsi_message.h>
 #include <scsi/scsiconf.h>
 
+#ifdef DDB
+#include <ddb/db_output.h>
+#endif
+
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
 
@@ -128,7 +132,12 @@ int ncr5380_debug = 0;
 	do { if (ncr5380_debug & NCR_DBG_BREAK) Debugger(); } while (0)
 static void ncr5380_show_scsi_cmd __P((struct scsi_xfer *));
 static void ncr5380_show_sense __P((struct scsi_xfer *));
-
+#ifdef DDB
+void	ncr5380_clear_trace __P((void));
+void	ncr5380_show_trace __P((void));
+void	ncr5380_show_req __P((struct sci_req *));
+void	ncr5380_show_state __P((void));
+#endif	/* DDB */
 #else	/* NCR5380_DEBUG */
 
 #define	NCR_BREAK() 		/* nada */
@@ -2494,8 +2503,8 @@ ncr5380_show_req(sr)
 
 	db_printf("TID=%d ",	sr->sr_target);
 	db_printf("LUN=%d ",	sr->sr_lun);
-	db_printf("dh=0x%x ",	sr->sr_dma_hand);
-	db_printf("dptr=0x%x ",	sr->sr_dataptr);
+	db_printf("dh=%p ",	sr->sr_dma_hand);
+	db_printf("dptr=%p ",	sr->sr_dataptr);
 	db_printf("dlen=0x%x ",	sr->sr_datalen);
 	db_printf("flags=%d ",	sr->sr_flags);
 	db_printf("stat=%d ",	sr->sr_status);
@@ -2533,7 +2542,7 @@ ncr5380_show_state()
 		if (sr->sr_xs) {
 			if (sr == sc->sc_current)
 				k = i;
-			db_printf("req %d: (sr=0x%x)", i, (long)sr);
+			db_printf("req %d: (sr=%p)", i, sr);
 			ncr5380_show_req(sr);
 		}
 	}
@@ -2544,14 +2553,14 @@ ncr5380_show_state()
 		for (j = 0; j < 8; j++) {	/* LUN */
 			sr = sc->sc_matrix[i][j];
 			if (sr) {
-				db_printf("TID=%d LUN=%d sr=0x%x\n", i, j, (long)sr);
+				db_printf("TID=%d LUN=%d sr=%p\n", i, j, sr);
 			}
 		}
 	}
 
 	db_printf("sc_state=0x%x\n",	sc->sc_state);
-	db_printf("sc_current=0x%x\n",	sc->sc_current);
-	db_printf("sc_dataptr=0x%x\n",	sc->sc_dataptr);
+	db_printf("sc_current=%p\n",	sc->sc_current);
+	db_printf("sc_dataptr=%p\n",	sc->sc_dataptr);
 	db_printf("sc_datalen=0x%x\n",	sc->sc_datalen);
 
 	db_printf("sc_prevphase=%d\n",	sc->sc_prevphase);
