@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.23 2000/06/26 04:56:27 simonb Exp $ */
+/* $NetBSD: mfb.c,v 1.24 2000/06/28 17:05:22 mrg Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.23 2000/06/26 04:56:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.24 2000/06/28 17:05:22 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.23 2000/06/26 04:56:27 simonb Exp $");
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
-#include <vm/vm.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

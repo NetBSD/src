@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.16 2000/06/26 14:21:13 mrg Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.17 2000/06/28 17:05:21 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -55,8 +55,6 @@
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/ic/pdqvar.h>

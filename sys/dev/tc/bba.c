@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.7 2000/06/26 04:56:27 simonb Exp $ */
+/* $NetBSD: bba.c,v 1.8 2000/06/28 17:05:20 mrg Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
-#include <vm/vm.h>	/* for PAGE_SIZE */
+#include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
