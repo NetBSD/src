@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.12 2001/02/01 08:29:46 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.13 2001/02/01 08:43:46 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -351,8 +351,10 @@ get_request(WINDOW *w)			/* virtual key mapping */
 		return REQ_RIGHT_CHAR;
 	case 0x0f:		/* ^O */
 		return REQ_INS_LINE;
+	case KEY_DC:
 	case 0x16:		/* ^V */
 		return REQ_DEL_CHAR;
+	case KEY_BACKSPACE:
 	case 0x08:		/* ^H */
 		return REQ_DEL_PREV;
 	case 0x19:		/* ^Y */
