@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.4 1997/02/24 22:08:25 christos Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.4.2.1 1997/05/13 03:45:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -804,6 +804,7 @@ isapnp_attach(parent, self, aux)
 			lpa->ipa_ic = ia->ia_ic;
 			lpa->ipa_iot = ia->ia_iot;
 			lpa->ipa_memt = ia->ia_memt;
+			ipa->ipa_dmat = ia->ia_dmat;
 
 			isapnp_write_reg(sc, ISAPNP_ACTIVATE, 1);
 #ifdef _KERNEL
