@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.1.1.1.2.2 2000/07/30 05:38:49 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.1.1.1.2.3 2000/08/16 14:14:17 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.28 2000/07/30 04:28:55 itojun Exp $	*/
 
 /*
@@ -395,6 +395,7 @@ noreplaycheck:
 		s = splimp();
 		if (IF_QFULL(&ipintrq)) {
 			ipsecstat.in_inval++;
+			splx(s);
 			goto bad;
 		}
 		IF_ENQUEUE(&ipintrq, m);
@@ -761,6 +762,7 @@ noreplaycheck:
 		s = splimp();
 		if (IF_QFULL(&ip6intrq)) {
 			ipsec6stat.in_inval++;
+			splx(s);
 			goto bad;
 		}
 		IF_ENQUEUE(&ip6intrq, m);
