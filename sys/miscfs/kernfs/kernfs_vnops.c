@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vnops.c,v 1.8 1993/05/28 14:12:17 cgd Exp $
+ *	$Id: kernfs_vnops.c,v 1.9 1993/05/28 16:47:05 cgd Exp $
  */
 
 /*
@@ -56,48 +56,27 @@
 
 #include "../ufs/dir.h"		/* For readdir() XXX */
 
-#define KSTRING	256		/* Largest I/O available via this filesystem */
-#define	UIO_MX 32
-
-struct kern_target {
-	char *kt_name;
-	void *kt_data;
-#define	KTT_NULL 1
-#define	KTT_TIME 5
-#define KTT_INT	17
-#define	KTT_STRING 31
-#define KTT_HOSTNAME 47
-#define KTT_AVENRUN 53
-	int kt_tag;
-#define	KTM_RO	0
-#define	KTM_RO_MODE		(S_IRUSR|S_IRGRP|S_IROTH)
-#define	KTM_RW	43
-#define	KTM_RW_MODE		(S_IWUSR|S_IRUSR|S_IRGRP|S_IROTH)
-#define KTM_DIR_MODE (S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
-	int kt_rw;
-	int kt_vtype;
-} kern_targets[] = {
+struct kernfs_target kernfs_targets[] = {
 /* NOTE: The name must be less than UIO_MX-16 chars in length */
-	/* name		data		tag		ro/rw */
-	{ ".",		0,		KTT_NULL,	KTM_RO,	VDIR },
-	{ "..",		0,		KTT_NULL,	KTM_RO,	VDIR },
-	{ "copyright",	copyright,	KTT_STRING,	KTM_RO,	VREG },
-	{ "hostname",	0,		KTT_HOSTNAME,	KTM_RW,	VREG },
-	{ "hz",		&hz,		KTT_INT,	KTM_RO,	VREG },
-	{ "loadavg",	0,		KTT_AVENRUN,	KTM_RO,	VREG },
-	{ "physmem",	&physmem,	KTT_INT,	KTM_RO,	VREG },
-	{ "root",	0,		KTT_NULL,	KTM_RO,	VDIR },
-	{ "rootdev",	0,		KTT_NULL,	KTM_RO,	VBLK },
-	{ "rrootdev",	0,		KTT_NULL,	KTM_RO,	VCHR },
-	{ "time",	0,		KTT_TIME,	KTM_RO,	VREG },
-	{ "version",	version,	KTT_STRING,	KTM_RO,	VREG },
+DIR_TARGET(".",		0,		KTT_NULL,	KTM_DIR_PERMS	)
+DIR_TARGET("..",	0,		KTT_NULL,	KTM_DIR_PERMS	)
+REG_TARGET("copyright",	copyright,	KTT_STRING,	KTM_RO_PERMS	)
+REG_TARGET("hostname",	0,		KTT_HOSTNAME,	KTM_RW_PERMS	)
+REG_TARGET("hz",	&hz,		KTT_INT,	KTM_RO_PERMS	)
+REG_TARGET("loadavg",	0,		KTT_AVENRUN,	KTM_RO_PERMS	)
+REG_TARGET("physmem",	&physmem,	KTT_INT,	KTM_RO_PERMS	)
+DIR_TARGET("root",	0,		KTT_NULL,	KTM_DIR_PERMS	)
+BLK_TARGET("rootdev",	0,		KTT_NULL,	KTM_RO_PERMS	)
+CHR_TARGET("rrootdev",	0,		KTT_NULL,	KTM_RO_PERMS	)
+REG_TARGET("time",	0,		KTT_TIME,	KTM_RO_PERMS	)
+REG_TARGET("version",	version,	KTT_STRING,	KTM_RO_PERMS	)
 };
 
-static int nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
+static int nkernfs_targets = sizeof(kernfs_targets) / sizeof(kernfs_targets[0]);
 
 static int
 kernfs_xread(kt, buf, len, lenp)
-	struct kern_target *kt;
+	struct kernfs_target *kt;
 	char *buf;
 	int len;
 	int *lenp;
@@ -160,7 +139,7 @@ kernfs_xread(kt, buf, len, lenp)
 
 static int
 kernfs_xwrite(kt, buf, len)
-	struct kern_target *kt;
+	struct kernfs_target *kt;
 	char *buf;
 	int len;
 {
@@ -239,8 +218,8 @@ kernfs_lookup(dvp, ndp, p)
 		return (0);
 	}
 
-	for (i = 0; i < nkern_targets; i++) {
-		struct kern_target *kt = &kern_targets[i];
+	for (i = 0; i < nkernfs_targets; i++) {
+		struct kernfs_target *kt = &kernfs_targets[i];
 		if (ndp->ni_namelen == strlen(kt->kt_name) &&
 		    bcmp(kt->kt_name, pname, ndp->ni_namelen) == 0) {
 			error = 0;
@@ -261,7 +240,7 @@ kernfs_lookup(dvp, ndp, p)
 	error = getnewvnode(VT_UFS, dvp->v_mount, &kernfs_vnodeops, &fvp);
 	if (error)
 		goto bad;
-	VTOKERN(fvp)->kf_kt = &kern_targets[i];
+	VTOKERN(fvp)->kf_kt = &kernfs_targets[i];
 	fvp->v_type = VTOKERN(fvp)->kf_kt->kt_vtype;
 	ndp->ni_dvp = dvp;
 	ndp->ni_vp = fvp;
@@ -285,29 +264,7 @@ kernfs_open(vp, mode, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
-	int error;
-	struct filedesc *fdp;
-	struct file *fp;
-	int dfd;
-	int fd;
-
-#ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_open\n");
-#endif
-
-	/*
-	 * Can always open the root (modulo perms)
-	 */
-	if (vp->v_flag & VROOT)
-		return (0);
-
-#ifdef KERNFS_DIAGNOSTIC
-	printf("kernfs_open, mode = %x, file = %s\n",
-			mode, VTOKERN(vp)->kf_kt->kt_name);
-#endif
-
-	if ((mode & FWRITE) && VTOKERN(vp)->kf_kt->kt_rw != KTM_RW)
-		return (EPERM);
+	/* if access succeeded, this always does, too */
 
 	return (0);
 }
@@ -318,44 +275,44 @@ kernfs_open(vp, mode, cred, p)
  * super user is granted all permissions.
  */
 kernfs_access(vp, mode, cred, p)
-        struct vnode *vp;
-        register int mode;
-        struct ucred *cred;
-        struct proc *p;
+	struct vnode *vp;
+	register int mode;
+	struct ucred *cred;
+	struct proc *p;
 {
-        struct kern_target *kt = VTOKERN(vp)->kf_kt;
-        register gid_t *gp;
-        int i, error;
+	struct kernfs_target *kt = VTOKERN(vp)->kf_kt;
+	register gid_t *gp;
+	int i, error;
 
 #ifdef KERN_DIAGNOSTIC
-        if (!VOP_ISLOCKED(vp)) {
-                vprint("kernfs_access: not locked", vp);
-                panic("kernfs_access: not locked");
-        }
+	if (!VOP_ISLOCKED(vp)) {
+		vprint("kernfs_access: not locked", vp);
+		panic("kernfs_access: not locked");
+	}
 #endif
-        /*
-         * If you're the super-user, you always get access.
-         */
-        if (cred->cr_uid == 0)
-                return (0);
-        /*
-         * Access check is based on only one of owner, group, public.
-         * If not owner, then check group. If not a member of the
-         * group, then check public access.
-         */
-        if (cred->cr_uid != /* kt->kt_uid XXX */ 0) {
-                mode >>= 3;
-                gp = cred->cr_groups;
-                for (i = 0; i < cred->cr_ngroups; i++, gp++)
-                        if (/* kt->kt_gid XXX */ 0 == *gp)
-                                goto found;
-                mode >>= 3;
+	/*
+	 * If you're the super-user, you always get access.
+	 */
+	if (cred->cr_uid == 0)
+		return (0);
+	/*
+	 * Access check is based on only one of owner, group, public.
+	 * If not owner, then check group. If not a member of the
+	 * group, then check public access.
+	 */
+	if (cred->cr_uid != /* kt->kt_uid XXX */ 0) {
+		mode >>= 3;
+		gp = cred->cr_groups;
+		for (i = 0; i < cred->cr_ngroups; i++, gp++)
+			if (/* kt->kt_gid XXX */ 0 == *gp)
+				goto found;
+		mode >>= 3;
 found:
-                ;
-        }
-        if (((vp->v_flag & VROOT ? KTM_DIR_MODE : kt->kt_rw) & mode) == mode)
-                return (0);
-        return (EACCES);
+		;
+	}
+	if ((kt->kt_perms & mode) == mode)
+		return (0);
+	return (EACCES);
 }
 
 kernfs_getattr(vp, vap, cred, p)
@@ -366,12 +323,12 @@ kernfs_getattr(vp, vap, cred, p)
 {
 	int error = 0;
 	char strbuf[KSTRING];
-	struct kern_target *kt = VTOKERN(vp)->kf_kt;
+	struct kernfs_target *kt = VTOKERN(vp)->kf_kt;
 
 	bzero((caddr_t) vap, sizeof(*vap));
 	vattr_null(vap);
-	vap->va_uid = 0;
-	vap->va_gid = 0;
+	vap->va_uid = kt->kt_uid;
+	vap->va_gid = kt->kt_gid;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 	/* vap->va_qsize = 0; */
 	vap->va_blocksize = DEV_BSIZE;
@@ -383,13 +340,13 @@ kernfs_getattr(vp, vap, cred, p)
 	vap->va_rdev = 0;
 	/* vap->va_qbytes = 0; */
 	vap->va_bytes = 0;
+	vap->va_type = kt->kt_vtype;
+	vap->va_mode = kt->kt_perms;
 
 	if (vp->v_flag & VROOT) {
 #ifdef KERNFS_DIAGNOSTIC
 		printf("kernfs_getattr: stat rootdir\n");
 #endif
-		vap->va_type = VDIR;
-		vap->va_mode = KTM_DIR_MODE;
 		vap->va_nlink = 2;
 		vap->va_fileid = 2;
 		vap->va_size = DEV_BSIZE;
@@ -397,10 +354,8 @@ kernfs_getattr(vp, vap, cred, p)
 #ifdef KERNFS_DIAGNOSTIC
 		printf("kernfs_getattr: stat target %s\n", kt->kt_name);
 #endif
-		vap->va_type = kt->kt_vtype;
-		vap->va_mode = (kt->kt_rw ? KTM_RW_MODE : KTM_RO_MODE);
 		vap->va_nlink = 1;
-		vap->va_fileid = 3 + (kt - kern_targets) / sizeof(*kt);
+		vap->va_fileid = 3 + (kt - kernfs_targets) / sizeof(*kt);
 		error = kernfs_xread(kt, strbuf, sizeof(strbuf), &vap->va_size);
 	}
 
@@ -411,20 +366,140 @@ kernfs_getattr(vp, vap, cred, p)
 	return (error);
 }
 
+
+/*
+ * Change the mode on a file.
+ */
+kernfs_chmod1(vp, mode, p)
+	register struct vnode *vp;
+	register int mode;
+	struct proc *p;
+{
+	register struct ucred *cred = p->p_ucred;
+	register struct kernfs_target *kt = VTOKERN(vp)->kf_kt;
+	int error;
+
+	if ((mode & kt->kt_maxperms) != mode)	/* can't set ro var to rw */
+		return (EPERM);
+
+	if (cred->cr_uid != kt->kt_uid &&
+	    (error = suser(cred, &p->p_acflag)))
+		return (error);
+	if (cred->cr_uid) {
+		if (vp->v_type != VDIR && (mode & S_ISVTX))
+			return (EFTYPE);
+		if (!groupmember(kt->kt_gid, cred) && (mode & S_ISGID))
+			return (EPERM);
+	}
+	kt->kt_perms &= ~07777;
+	kt->kt_perms |= mode & 07777;
+/*	ip->i_flag |= ICHG;*/
+	return (0);
+}
+
+/*
+ * Perform chown operation on kernfs_target kt
+ */
+kernfs_chown1(vp, uid, gid, p)
+	register struct vnode *vp;
+	uid_t uid;
+	gid_t gid;
+	struct proc *p;
+{
+	register struct kernfs_target *kt = VTOKERN(vp)->kf_kt;
+	register struct ucred *cred = p->p_ucred;
+	uid_t ouid;
+	gid_t ogid;
+	int error = 0;
+
+	if (uid == (u_short)VNOVAL)
+		uid = kt->kt_uid;
+	if (gid == (u_short)VNOVAL)
+		gid = kt->kt_gid;
+	/*
+	 * If we don't own the file, are trying to change the owner
+	 * of the file, or are not a member of the target group,
+	 * the caller must be superuser or the call fails.
+	 */
+	if ((cred->cr_uid != kt->kt_uid || uid != kt->kt_uid ||
+	    !groupmember((gid_t)gid, cred)) &&
+	    (error = suser(cred, &p->p_acflag)))
+		return (error);
+	ouid = kt->kt_uid;
+	ogid = kt->kt_gid;
+
+	kt->kt_uid = uid;
+	kt->kt_gid = gid;
+
+/*	if (ouid != uid || ogid != gid)
+		ip->i_flag |= ICHG;*/
+	if (ouid != uid && cred->cr_uid != 0)
+		kt->kt_perms &= ~S_ISUID;
+	if (ogid != gid && cred->cr_uid != 0)
+		kt->kt_perms &= ~S_ISGID;
+	return (0);
+}
+
+/*
+ * Set attribute vnode op. called from several syscalls
+ */
 kernfs_setattr(vp, vap, cred, p)
 	struct vnode *vp;
 	struct vattr *vap;
 	struct ucred *cred;
 	struct proc *p;
 {
+	int error = 0;
 
 	/*
-	 * Silently ignore attribute changes.
-	 * This allows for open with truncate to have no
-	 * effect until some data is written.  I want to
-	 * do it this way because all writes are atomic.
+	 * Check for unsetable attributes.
 	 */
-	return (0);
+	if ((vap->va_type != VNON) || (vap->va_nlink != VNOVAL) ||
+	    (vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
+	    (vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
+	    ((int)vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
+		return (EINVAL);
+	}
+	/*
+	 * Go through the fields and update iff not VNOVAL.
+	 */
+	if (vap->va_uid != (u_short)VNOVAL || vap->va_gid != (u_short)VNOVAL)
+		if (error = kernfs_chown1(vp, vap->va_uid, vap->va_gid, p))
+			return (error);
+	if (vap->va_size != VNOVAL) {
+		if (vp->v_type == VDIR)
+			return (EISDIR);
+		/* else just nod and smile... */
+	}
+	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
+/*		if (cred->cr_uid != ip->i_uid &&
+		    (error = suser(cred, &p->p_acflag)))
+			return (error);
+		if (vap->va_atime.tv_sec != VNOVAL)
+			ip->i_flag |= IACC;
+		if (vap->va_mtime.tv_sec != VNOVAL)
+			ip->i_flag |= IUPD;
+		ip->i_flag |= ICHG;
+		if (error = iupdat(ip, &vap->va_atime, &vap->va_mtime, 1))
+			return (error);
+*/
+	}
+	if (vap->va_mode != (u_short)VNOVAL)
+		error = kernfs_chmod1(vp, (int)vap->va_mode, p);
+	if (vap->va_flags != VNOVAL) {
+/*		if (cred->cr_uid != ip->i_uid &&
+		    (error = suser(cred, &p->p_acflag)))
+			return (error);
+		if (cred->cr_uid == 0) {
+			ip->i_flags = vap->va_flags;
+		} else {
+			ip->i_flags &= 0xffff0000;
+			ip->i_flags |= (vap->va_flags & 0xffff);
+		}
+		ip->i_flag |= ICHG;
+*/
+	}
+	return (error);
 }
 
 static int
@@ -434,7 +509,7 @@ kernfs_read(vp, uio, ioflag, cred)
 	int ioflag;
 	struct ucred *cred;
 {
-	struct kern_target *kt = VTOKERN(vp)->kf_kt;
+	struct kernfs_target *kt = VTOKERN(vp)->kf_kt;
 	char strbuf[KSTRING];
 	int off = uio->uio_offset;
 	int len = 0;
@@ -459,7 +534,7 @@ kernfs_write(vp, uio, ioflag, cred)
 	int ioflag;
 	struct ucred *cred;
 {
-	struct kern_target *kt = VTOKERN(vp)->kf_kt;
+	struct kernfs_target *kt = VTOKERN(vp)->kf_kt;
 	char strbuf[KSTRING];
 	int len = uio->uio_resid;
 	char *cp = strbuf;
@@ -497,14 +572,14 @@ kernfs_readdir(vp, uio, cred, eofflagp)
 #ifdef KERNFS_DIAGNOSTIC
 		printf("kernfs_readdir: i = %d\n", i);
 #endif
-		if (i >= nkern_targets) {
+		if (i >= nkernfs_targets) {
 			*eofflagp = 1;
 			break;
 		}
 		{
 			struct direct d;
 			struct direct *dp = &d;
-			struct kern_target *kt = &kern_targets[i];
+			struct kernfs_target *kt = &kernfs_targets[i];
 
 			bzero((caddr_t) dp, UIO_MX);
 
