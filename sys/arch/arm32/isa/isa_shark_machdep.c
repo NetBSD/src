@@ -1,3 +1,5 @@
+/*	$NetBSD: isa_shark_machdep.c,v 1.2 1998/06/08 18:18:58 tv Exp $	*/
+
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
