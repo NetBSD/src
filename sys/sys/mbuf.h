@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.70 2003/01/17 10:07:23 itojun Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.71 2003/01/31 04:55:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@ struct	pkthdr {
 struct m_ext {
 	caddr_t	ext_buf;		/* start of buffer */
 	void	(*ext_free)		/* free routine if not the usual */
-		__P((struct mbuf *, caddr_t, u_int, void *));
+		(struct mbuf *, caddr_t, u_int, void *);
 	void	*ext_arg;		/* argument for ext_free */
 	u_int	ext_size;		/* size of buffer, for ext_free */
 	int	ext_type;		/* malloc type */
@@ -632,28 +632,28 @@ extern struct pool mclpool;
 extern struct pool_cache mbpool_cache;
 extern struct pool_cache mclpool_cache;
 
-struct	mbuf *m_copym __P((struct mbuf *, int, int, int));
-struct	mbuf *m_copypacket __P((struct mbuf *, int));
-struct	mbuf *m_devget __P((char *, int, int, struct ifnet *,
-			    void (*copy)(const void *, void *, size_t)));
-struct	mbuf *m_dup __P((struct mbuf *, int, int, int));
-struct	mbuf *m_free __P((struct mbuf *));
-struct	mbuf *m_get __P((int, int));
-struct	mbuf *m_getclr __P((int, int));
-struct	mbuf *m_gethdr __P((int, int));
-struct	mbuf *m_prepend __P((struct mbuf *,int,int));
-struct	mbuf *m_pulldown __P((struct mbuf *, int, int, int *));
-struct	mbuf *m_pullup __P((struct mbuf *, int));
-struct	mbuf *m_copyup __P((struct mbuf *, int, int));
-struct	mbuf *m_split __P((struct mbuf *,int,int));
-void	m_adj __P((struct mbuf *, int));
-void	m_cat __P((struct mbuf *,struct mbuf *));
-int	m_mballoc __P((int, int));
-void	m_copyback __P((struct mbuf *, int, int, caddr_t));
-void	m_copydata __P((struct mbuf *, int, int, caddr_t));
-void	m_freem __P((struct mbuf *));
-void	m_reclaim __P((void *, int));
-void	mbinit __P((void));
+struct	mbuf *m_copym(struct mbuf *, int, int, int);
+struct	mbuf *m_copypacket(struct mbuf *, int);
+struct	mbuf *m_devget(char *, int, int, struct ifnet *,
+			    void (*copy)(const void *, void *, size_t));
+struct	mbuf *m_dup(struct mbuf *, int, int, int);
+struct	mbuf *m_free(struct mbuf *);
+struct	mbuf *m_get(int, int);
+struct	mbuf *m_getclr(int, int);
+struct	mbuf *m_gethdr(int, int);
+struct	mbuf *m_prepend(struct mbuf *,int,int);
+struct	mbuf *m_pulldown(struct mbuf *, int, int, int *);
+struct	mbuf *m_pullup(struct mbuf *, int);
+struct	mbuf *m_copyup(struct mbuf *, int, int);
+struct	mbuf *m_split(struct mbuf *,int,int);
+void	m_adj(struct mbuf *, int);
+void	m_cat(struct mbuf *,struct mbuf *);
+int	m_mballoc(int, int);
+void	m_copyback(struct mbuf *, int, int, caddr_t);
+void	m_copydata(struct mbuf *, int, int, caddr_t);
+void	m_freem(struct mbuf *);
+void	m_reclaim(void *, int);
+void	mbinit(void);
 
 /* Packet tag routines */
 struct	m_tag *m_tag_get(int, int, int);
