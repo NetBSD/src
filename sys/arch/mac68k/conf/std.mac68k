@@ -1,4 +1,4 @@
-#	$NetBSD: std.mac68k,v 1.16 1996/11/19 00:38:07 scottr Exp $
+#	$NetBSD: std.mac68k,v 1.17 1997/02/12 04:26:05 scottr Exp $
 #
 # standard Macintosh information.
 # roughly copied from std.sparc 14 Oct 1993.
@@ -11,7 +11,6 @@ mainbus0 at root
 obio0 at mainbus?
 
 adb0	at obio?
-asc0	at obio?
 fpu0	at obio?
 zsc0	at obio?
 zstty*	at zsc? channel ?
