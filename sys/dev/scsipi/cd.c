@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.9 1993/05/20 22:48:57 deraadt Exp $
+ *	$Id: cd.c,v 1.10 1993/05/25 07:27:31 deraadt Exp $
  */
 
 #define SPLCD splbio
@@ -1519,9 +1519,9 @@ struct	scsi_xfer *xs;
 				if(sense->valid)
 				{
 			  		printf("block no. %d (decimal)",
-			  		(sense->ext.extended.info[0] <<24),
-			  		(sense->ext.extended.info[1] <<16),
-			  		(sense->ext.extended.info[2] <<8),
+			  		(sense->ext.extended.info[0] <<24) |
+			  		(sense->ext.extended.info[1] <<16) |
+			  		(sense->ext.extended.info[2] <<8) |
 			  		(sense->ext.extended.info[3] ));
 				}
 				printf("\n");
@@ -1538,9 +1538,9 @@ struct	scsi_xfer *xs;
 				if(sense->valid)
 				{
 			  		printf("block no. %d (decimal)",
-			  		(sense->ext.extended.info[0] <<24),
-			  		(sense->ext.extended.info[1] <<16),
-			  		(sense->ext.extended.info[2] <<8),
+			  		(sense->ext.extended.info[0] <<24) |
+			  		(sense->ext.extended.info[1] <<16) |
+			  		(sense->ext.extended.info[2] <<8) |
 			  		(sense->ext.extended.info[3] ));
 				}
 				printf("\n");
@@ -1570,9 +1570,9 @@ struct	scsi_xfer *xs;
 				if(sense->valid)
 			  	{
 					printf("block no. %d (decimal)\n",
-			  		(sense->ext.extended.info[0] <<24),
-			  		(sense->ext.extended.info[1] <<16),
-			  		(sense->ext.extended.info[2] <<8),
+			  		(sense->ext.extended.info[0] <<24) |
+			  		(sense->ext.extended.info[1] <<16) |
+			  		(sense->ext.extended.info[2] <<8) |
 			  		(sense->ext.extended.info[3] ));
 				}
 				printf("\n");
@@ -1586,9 +1586,9 @@ struct	scsi_xfer *xs;
 				if(sense->valid)
 				{
 			  		printf("block no. %d (decimal)\n",
-			  		(sense->ext.extended.info[0] <<24),
-			  		(sense->ext.extended.info[1] <<16),
-			  		(sense->ext.extended.info[2] <<8),
+			  		(sense->ext.extended.info[0] <<24) |
+			  		(sense->ext.extended.info[1] <<16) |
+			  		(sense->ext.extended.info[2] <<8) |
 			  		(sense->ext.extended.info[3] ));
 				}
 				printf("\n");
@@ -1614,9 +1614,9 @@ struct	scsi_xfer *xs;
 				if(sense->valid)
 				{
 			  		printf("block no. %d (decimal)\n",
-			  		(sense->ext.extended.info[0] <<24),
-			  		(sense->ext.extended.info[1] <<16),
-			  		(sense->ext.extended.info[2] <<8),
+			  		(sense->ext.extended.info[0] <<24) |
+			  		(sense->ext.extended.info[1] <<16) |
+			  		(sense->ext.extended.info[2] <<8) |
 			  		(sense->ext.extended.info[3] ));
 				}
 				printf("\n");
@@ -1634,9 +1634,9 @@ struct	scsi_xfer *xs;
 				if(sense->valid)
 				{
 			  		printf("block no. %d (decimal)\n",
-			  		(sense->ext.extended.info[0] <<24),
-			  		(sense->ext.extended.info[1] <<16),
-			  		(sense->ext.extended.info[2] <<8),
+			  		(sense->ext.extended.info[0] <<24) |
+			  		(sense->ext.extended.info[1] <<16) |
+			  		(sense->ext.extended.info[2] <<8) |
 			  		(sense->ext.extended.info[3] ));
 				}
 				printf("\n");
@@ -1663,8 +1663,8 @@ struct	scsi_xfer *xs;
 				sense->error_code);
 		if(sense->valid)
 			if(!silent)printf("block no. %d (decimal)\n",
-			(sense->ext.unextended.blockhi <<16),
-			+ (sense->ext.unextended.blockmed <<8),
+			(sense->ext.unextended.blockhi <<16)
+			+ (sense->ext.unextended.blockmed <<8)
 			+ (sense->ext.unextended.blocklow ));
 		}
 		return(EIO);
