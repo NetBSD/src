@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.67 2003/07/02 13:40:52 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.68 2003/07/02 13:41:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.67 2003/07/02 13:40:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.68 2003/07/02 13:41:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -528,7 +528,7 @@ lfs_flush(struct lfs *fs, int flags)
 			continue;
 		}
 		if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS, MFSNAMELEN) == 0)
-			lfs_flush_fs(((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs, flags);
+			lfs_flush_fs(VFSTOUFS(mp)->um_lfs, flags);
 		simple_lock(&mountlist_slock);
 		nmp = mp->mnt_list.cqe_next;
 		vfs_unbusy(mp);
