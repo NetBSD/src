@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.114 2003/12/07 21:15:46 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.115 2004/01/10 14:52:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.114 2003/12/07 21:15:46 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.115 2004/01/10 14:52:53 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -967,7 +967,7 @@ nfs_doio_write(bp, uiop)
 	boolean_t stalewriteverf = FALSE;
 	int i, npages = (bp->b_bcount + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	struct vm_page *pgs[npages];
-	boolean_t needcommit = TRUE;
+	boolean_t needcommit = TRUE; /* need only COMMIT RPC */
 	boolean_t pageprotected;
 	struct uvm_object *uobj = &vp->v_uobj;
 	int error;
@@ -991,8 +991,20 @@ again:
 			 * this page belongs to our object.
 			 */
 			simple_lock(&uobj->vmobjlock);
+			/*
+			 * write out the page stably if it's about to
+			 * be released because we can't resend it
+			 * on the server crash.
+			 *
+			 * XXX assuming PG_RELEASE|PG_PAGEOUT won't be
+			 * changed until unbusy the page.
+			 */
 			if (pgs[i]->flags & (PG_RELEASED|PG_PAGEOUT))
 				iomode = NFSV3WRITE_FILESYNC;
+			/*
+			 * if we met a page which hasn't been sent yet,
+			 * we need do WRITE RPC.
+			 */
 			if ((pgs[i]->flags & PG_NEEDCOMMIT) == 0)
 				needcommit = FALSE;
 			simple_unlock(&uobj->vmobjlock);
