@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.30 1999/12/15 14:44:32 ad Exp $	*/
+/*	$NetBSD: fb.c,v 1.31 1999/12/15 14:48:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -140,18 +140,6 @@ extern void fbScreenInit __P (( struct fbinfo *fi));
  * for glass-tty fb console output.
  */
 struct fbinfo *firstfi = NULL;
-
-/*
- * The default cursor.
- */
-u_short defCursor[32] = {
-/* plane A */ 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
-	      0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
-/* plane B */ 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF,
-              0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF
-
-};
-
 
 /*
  * Pro-tem framebuffer pseudo-device driver
