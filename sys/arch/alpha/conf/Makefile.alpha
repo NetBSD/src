@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.21 1996/08/12 00:51:24 mycroft Exp $
+#	$NetBSD: Makefile.alpha,v 1.22 1996/08/20 22:23:01 cgd Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,7 @@ ALPHA=	$S/arch/alpha
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dalpha
-CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
+CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -mno-fp-regs
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext fffffc0000230000 -e __start -G 4
@@ -166,6 +166,3 @@ locore.o: ${ALPHA}/alpha/locore.s assym.h
 	${NORMAL_S}
 
 %RULES
-
-### add microcode dependencies
-.include "$S/dev/microcode/Makefile.inc"
