@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.183 2003/08/22 19:17:00 dsl Exp $
+#	$NetBSD: bsd.prog.mk,v 1.184 2003/09/12 07:44:11 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -57,11 +57,30 @@ __bsd_prog_mk_system_libs?= \
 .for _n in ${__bsd_prog_mk_system_libs}
 .ifndef LIB${_n}
 LIB${_n}= ${DESTDIR}/usr/lib/lib${_n:tl}.a
-# XXX - note that ${DESTDIR} will be expanded in the following rule
+# Note: ${DESTDIR} will be expanded in the following rule
 .MADE: ${LIB${_n}}
 .endif
 .endfor
 .undef __bsd_prog_mk_system_libs
+
+##### Installed X11R6 library definitions
+#     E.g. LIBX11?=${DESTDIR}/usr/X11R6/lib/libX11.a
+#     etc..
+#
+__bsd_prog_mk_x11r6_libs?= \
+	dps expat fntstubs fontcache fontconfig fontenc freetype FS \
+	GL GLU ICE lbxutil SM X11 Xau Xaw Xdmcp Xext Xfont Xft \
+	Xi Xinerama xkbfile Xmu Xmuu Xpm Xrandr Xrender Xss Xt \
+	XTrap Xtst Xv Xxf86dga Xxf86misc Xxf86vm
+
+.for _n in ${__bsd_prog_mk_x11r6_libs}
+.ifndef LIB${_n:tu}
+LIB${_n:tu}= ${DESTDIR}/usr/X11R6/lib/lib${_n}.a
+# Note: ${DESTDIR} will be expanded in the following rule
+.MADE: ${LIB${_n:tu}}
+.endif
+.endfor
+.undef __bsd_prog_mk_x11r6_libs
 
 ##### Build and install rules
 .if defined(SHAREDSTRINGS)
