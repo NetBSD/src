@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.4.2.6 2001/04/23 22:07:19 he Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.4.2.7 2001/04/25 09:07:03 he Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -71,7 +71,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-#options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
