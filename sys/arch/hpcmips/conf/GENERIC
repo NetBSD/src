@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.153 2004/07/15 03:53:46 atatat Exp $
+# $NetBSD: GENERIC,v 1.154 2004/08/07 02:40:56 mycroft Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.153 $"
+#ident 		"GENERIC-$Revision: 1.154 $"
 
 maxusers	16
 
@@ -506,6 +506,9 @@ wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 awi*	at pcmcia? function ?		# WLI-PCM
 an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
+mhzc*	at pcmcia? function ?
+com*	at mhzc?
+sm*	at mhzc?
 
 # PCMCIA Serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
@@ -513,6 +516,7 @@ com*	at pcmcia? function ?		# Modems and serial cards
 # PCMCIA SCSI interfaces
 aic*	at pcmcia? function ?
 esp*	at pcmcia? function ?		# NCR53c406 SCSI
+spc*	at pcmcia? function ?
 
 # ATAPI bus support
 atapibus* at atapi?
@@ -522,6 +526,7 @@ sd*	at atapibus? drive ? flags 0x0000 # ATAPI disk drives
 # SCSI bus support
 scsibus* at aic?
 scsibus* at esp?
+scsibus* at spc?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
