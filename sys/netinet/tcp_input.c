@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.24 1997/07/11 08:29:04 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.25 1997/07/13 21:45:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -2187,7 +2187,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 	sc->sc_iss = tcp_iss;
 	tcp_iss += TCP_ISSINCR/2;
 	sc->sc_peermaxseg = oi->maxseg;
-	sc->sc_tstmp = (tb.t_flags & TF_RCVD_TSTMP) ? 1 : 0;
+	sc->sc_tstmp = (tcp_do_rfc1323 && (tb.t_flags & TF_RCVD_TSTMP)) ? 1 : 0;
 	if ((tb.t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
 	    (TF_RCVD_SCALE|TF_REQ_SCALE)) {
 		sc->sc_requested_s_scale = tb.requested_s_scale;
