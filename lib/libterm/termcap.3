@@ -1,4 +1,4 @@
-.\"	$NetBSD: termcap.3,v 1.20 2000/05/28 09:58:15 blymn Exp $
+.\"	$NetBSD: termcap.3,v 1.21 2001/01/05 23:05:08 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -466,7 +466,7 @@ in the
 .Fa args
 argument.  The interpretation of the contents of
 .Fa args
-is dependent soley on the implementation of
+is dependent solely on the implementation of
 .Fa outc.
 .Pp
 The
@@ -516,6 +516,10 @@ user's terminal capability data base
 .Xr termcap 5
 .Sh HISTORY
 The
+.Nm termcap
+t_*() functions appeared in
+.Nx 1.5 .
+The rest of the 
 .Nm termcap
 functions appeared in
 .Bx 4.0 .
