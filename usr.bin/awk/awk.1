@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.13 2003/02/25 10:35:36 wiz Exp $
+.\"	$NetBSD: awk.1,v 1.13.2.1 2004/06/06 06:53:16 jdc Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd January 3, 1998
+.Dd June 5, 2004
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -730,6 +730,14 @@ ISBN 0-201-07981-X
 .Pp
 .Em AWK Language Programming ,
 Edition 1.0, published by the Free Software Foundation, 1995
+.Sh HISTORY
+.Nm nawk
+has been the default system
+.Nm
+since
+.Nx 2.0 ,
+replacing previously used GNU
+.Nm .
 .Sh BUGS
 There are no explicit conversions between numbers and strings.
 To force an expression to be treated as a number add 0 to it;
