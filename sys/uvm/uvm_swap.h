@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.6 2002/03/18 11:43:01 manu Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.7 2003/07/21 00:54:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -39,13 +39,12 @@
 
 struct swapent;
 
-int			uvm_swap_get __P((struct vm_page *, int, int));
-int			uvm_swap_put __P((int, struct vm_page **, int, int));
-int			uvm_swap_alloc __P((int *, boolean_t));
-void			uvm_swap_free __P((int, int));
-void			uvm_swap_markbad __P((int, int));
-void			uvm_swap_stats __P((int, struct swapent *,
-			    int, register_t *));
+int	uvm_swap_get(struct vm_page *, int, int);
+int	uvm_swap_put(int, struct vm_page **, int, int);
+int	uvm_swap_alloc(int *, boolean_t);
+void	uvm_swap_free(int, int);
+void	uvm_swap_markbad(int, int);
+void	uvm_swap_stats(int, struct swapent *, int, register_t *);
 
 #endif /* _KERNEL */
 
