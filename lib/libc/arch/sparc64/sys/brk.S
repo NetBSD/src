@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.11 2003/08/07 16:42:29 agc Exp $	*/
+/*	$NetBSD: brk.S,v 1.12 2003/12/26 11:21:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: brk.S,v 1.11 2003/08/07 16:42:29 agc Exp $")
+	RCSID("$NetBSD: brk.S,v 1.12 2003/12/26 11:21:48 martin Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -68,7 +68,7 @@ ENTRY(_brk)
 	ldx	[%o5 + %o4], %o4
 	ldx	[%o4], %o1		/* %o1 = minbrk */
 	cmp	%o1, %o0		/* if (minbrk > %o0) */
-	movg	%xcc, %o1, %o0		/*	%o0 = minbrk */
+	movgu	%xcc, %o1, %o0		/*	%o0 = minbrk */
 	mov	%o0, %o2		/* save argument to syscall */
 	mov	SYS_break, %g1
 	t	ST_SYSCALL
@@ -84,7 +84,7 @@ ENTRY(_brk)
 	ldx	[%o5 + _C_LABEL(__minbrk)], %o4
 	ldx	[%o4], %o1		/* %o1 = minbrk */
 	cmp	%o1, %o0		/* if (minbrk > %o0) */
-	movg	%xcc, %o1, %o0		/*	%o0 = minbrk */
+	movgu	%xcc, %o1, %o0		/*	%o0 = minbrk */
 	mov	%o0, %o2		/* save argument to syscall */
 	mov	SYS_break, %g1
 	t	ST_SYSCALL
@@ -99,7 +99,7 @@ ENTRY(_brk)
 	sethi	%hi(_C_LABEL(__minbrk)), %o1	/* %o1 = minbrk */
 	ldx	[%o1 + %lo(_C_LABEL(__minbrk))], %o1
 	cmp	%o1, %o0		/* if (minbrk > %o0) */
-	movg	%xcc, %o1, %o0		/*	%o0 = minbrk */
+	movgu	%xcc, %o1, %o0		/*	%o0 = minbrk */
 	mov	%o0, %o2		/* save argument to syscall */
 	mov	SYS_break, %g1
 	t	ST_SYSCALL

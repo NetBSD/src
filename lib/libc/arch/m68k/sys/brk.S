@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.14 2003/08/07 16:42:14 agc Exp $	*/
+/*	$NetBSD: brk.S,v 1.15 2003/12/26 11:21:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)brk.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: brk.S,v 1.14 2003/08/07 16:42:14 agc Exp $")
+	RCSID("$NetBSD: brk.S,v 1.15 2003/12/26 11:21:48 martin Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,7 +72,7 @@ ENTRY(_brk)
 	movl	_C_LABEL(__minbrk),%d0
 #endif
 	cmpl	%sp@(4),%d0
-	jle	ok
+	jls	ok
 	movl	%d0,%sp@(4)
 ok:
 	movl	#SYS_break,%d0
