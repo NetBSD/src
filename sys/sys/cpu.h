@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 1996/02/14 21:49:49 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 1996/02/16 17:25:46 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -44,7 +44,7 @@ __BEGIN_DECLS
 void	consinit __P((void));
 void	boot __P((int));
 void	pagemove __P((caddr_t, caddr_t, size_t));
-void	delay __P((unsigned));
+/* delay() is declared in <machine/param.h> */
 int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
 int	dk_establish __P((struct disk *, struct device *));
 
