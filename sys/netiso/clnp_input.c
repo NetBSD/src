@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.16 1998/01/28 02:38:44 thorpej Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.17 1998/07/05 04:37:42 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,8 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

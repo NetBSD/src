@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.3 1998/07/05 02:12:26 jonathan Exp $	*/
+/*	$NetBSD: isr.c,v 1.4 1998/07/05 04:37:38 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_ccitt.h"
+#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

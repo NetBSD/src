@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.31 1998/07/05 00:51:15 jonathan Exp $	*/
+/*	$NetBSD: if_de.c,v 1.32 1998/07/05 04:37:40 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -46,6 +46,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
