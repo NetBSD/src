@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.4 2000/01/13 08:46:46 joda Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.5 2000/06/07 09:02:47 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -75,6 +75,7 @@
 
 
 /* PCI_BCR_INTR bits for generic PCI-CardBus bridge */
+#define CB_BCR_RESET_ENABLE     0x00400000
 #define CB_BCR_INTR_IREQ_ENABLE 0x00800000
 #define CB_BCR_PREFETCH_MEMWIN0 0x01000000
 #define CB_BCR_PREFETCH_MEMWIN1 0x02000000
