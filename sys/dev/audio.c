@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.116 1999/09/09 10:24:39 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.117 1999/09/23 11:53:13 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -234,7 +234,7 @@ audioattach(parent, self, aux)
 	    hwp->get_port == 0 ||
 	    hwp->query_devinfo == 0 ||
 	    hwp->get_props == 0) {
-		printf("audio: missing method\n");
+		printf(": missing method\n");
 		sc->hw_if = 0;
 		return;
         }
