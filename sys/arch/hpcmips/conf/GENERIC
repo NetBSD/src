@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.48 2000/05/04 08:18:59 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.49 2000/05/04 10:32:47 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.48 $"
+#ident 		"GENERIC-$Revision: 1.49 $"
 
 maxusers	8
 
@@ -277,9 +277,6 @@ pcmcia*	at pcic? controller 0 socket ?
 wdc*	at pcmcia? function ?
 wd*	at wdc? channel ? drive ? flags 0x0000
 
-# ATAPI bus support
-atapibus* at wdc? channel ?
-
 # PCMCIA network interfaces
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
@@ -288,11 +285,23 @@ sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 awi*	at pcmcia? function ?		# WLI-PCM
 
+# PCMCIA Serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
 
+# PCMCIA SCSI interfaces
 aic*	at pcmcia? function ?
+esp*	at pcmcia? function ?		# NCR53c406 SCSI
+
+# ATAPI bus support
+atapibus* at wdc? channel ?
+cd*	at atapibus? drive ? flags 0x0000 # ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000 # ATAPI disk drives
+
+# SCSI bus support
 scsibus* at aic?
+scsibus* at esp?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp		2	# serial-line IP ports
@@ -306,6 +315,10 @@ pseudo-device   rnd                     # /dev/random and in-kernel generator
 
 pseudo-device	biconsdev	1	# build-in console device
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor
+#pseudo-device	md		1	# memory disk device (ramdisk)
+
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
 # for IPv6
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
