@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.47 1998/06/03 09:21:45 hubertf Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.48 1998/06/03 13:21:42 mouse Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.47 1998/06/03 09:21:45 hubertf Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.48 1998/06/03 13:21:42 mouse Exp $");
 #endif
 #endif /* not lint */
 
@@ -1498,7 +1498,8 @@ pwd()
 	char path[MAXPATHLEN + 1];
 
 	if (getcwd(path, sizeof(path) - 1) == NULL)
-		reply(550, "Can't get the current directory.");
+		reply(550, "Can't get the current directory: %s.",
+							strerror(errno));
 	else
 		replydirname(path, "is the current directory.");
 }
