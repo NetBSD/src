@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.11 2002/05/02 17:11:38 martti Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.11.2.1 2002/10/24 09:33:28 lukem Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -69,8 +69,10 @@
 #include "netinet/ip_state.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipmon.c,v 2.12.2.34 2002/03/22 10:27:16 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)ipmon.c	1.21 6/5/96 (C)1993-2000 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: ipmon.c,v 2.12.2.36 2002/08/22 15:12:23 darrenr Exp";
 #endif
 
 
@@ -668,10 +670,12 @@ int	blen;
 	struct	tm	*tm;
 	int	res, i, len;
 	char	*proto;
+	time_t  ipl_time;
 
 	nl = (struct natlog *)((char *)ipl + IPLOG_SIZE);
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
-	tm = localtime((time_t *)&ipl->ipl_sec);
+	ipl_time = (time_t) ipl->ipl_time.tv_sec;
+	tm = localtime(&ipl_time);
 	len = sizeof(line);
 	if (!(opts & OPT_SYSLOG)) {
 		(void) strftime(t, len, "%d/%m/%Y ", tm);
@@ -681,7 +685,7 @@ int	blen;
 	}
 	(void) strftime(t, len, "%T", tm);
 	t += strlen(t);
-	(void) sprintf(t, ".%-.6ld @%hd ", ipl->ipl_usec, nl->nl_rule + 1);
+	(void) sprintf(t, ".%-.6ld @%hd ", ipl->ipl_time.tv_usec, nl->nl_rule + 1);
 	t += strlen(t);
 
 	if (nl->nl_type == NL_NEWMAP)
@@ -742,10 +746,12 @@ int	blen;
 	char	*t = line, *proto;
 	struct	tm	*tm;
 	int	res, i, len;
+	time_t  ipl_time;
 
 	sl = (struct ipslog *)((char *)ipl + IPLOG_SIZE);
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
-	tm = localtime((time_t *)&ipl->ipl_sec);
+	ipl_time = (time_t) ipl->ipl_time.tv_sec;
+	tm = localtime(&ipl_time);
 	len = sizeof(line);
 	if (!(opts & OPT_SYSLOG)) {
 		(void) strftime(t, len, "%d/%m/%Y ", tm);
@@ -755,7 +761,7 @@ int	blen;
 	}
 	(void) strftime(t, len, "%T", tm);
 	t += strlen(t);
-	(void) sprintf(t, ".%-.6ld ", ipl->ipl_usec);
+	(void) sprintf(t, ".%-.6ld ", ipl->ipl_time.tv_usec);
 	t += strlen(t);
 
 	if (sl->isl_type == ISL_NEW)
@@ -891,6 +897,7 @@ int	blen;
 #ifdef	USE_INET6
 	ip6_t *ip6;
 #endif
+	time_t  ipl_time;
 
 	ipl = (iplog_t *)buf;
 	ipf = (ipflog_t *)((char *)buf + IPLOG_SIZE);
@@ -899,7 +906,8 @@ int	blen;
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	t = line;
 	*t = '\0';
-	tm = localtime((time_t *)&ipl->ipl_sec);
+	ipl_time = (time_t) ipl->ipl_time.tv_sec;
+	tm = localtime(&ipl_time);
 #ifdef	linux
 	if (v == 4)
 		ip->ip_len = ntohs(ip->ip_len);
@@ -914,7 +922,7 @@ int	blen;
 	}
 	(void) strftime(t, len, "%T", tm);
 	t += strlen(t);
-	(void) sprintf(t, ".%-.6ld ", ipl->ipl_usec);
+	(void) sprintf(t, ".%-.6ld ", ipl->ipl_time.tv_usec);
 	t += strlen(t);
 	if (ipl->ipl_count > 1) {
 		(void) sprintf(t, "%dx ", ipl->ipl_count);
@@ -961,13 +969,13 @@ int	blen;
 		*t++ = 'S';
 		lvl = LOG_ERR;
 	} else if (ipf->fl_flags & FR_PASS) {
-		if (ipf->fl_flags & FR_LOGP)
+		if (ipf->fl_flags & FR_LOG)
 			*t++ = 'p';
 		else
 			*t++ = 'P';
 		lvl = LOG_NOTICE;
 	} else if (ipf->fl_flags & FR_BLOCK) {
-		if (ipf->fl_flags & FR_LOGB)
+		if (ipf->fl_flags & FR_LOG)
 			*t++ = 'b';
 		else
 			*t++ = 'B';
@@ -1254,14 +1262,15 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-	struct	stat	sb;
-	FILE	*log = stdout;
-	int	fd[3], doread, n, i;
-	int	tr, nr, regular[3], c;
 	int	fdt[3], devices = 0, make_daemon = 0;
 	char	buf[IPLLOGSIZE], *iplfile[3], *s;
-	extern	int	optind;
+	int	fd[3], doread, n, i;
 	extern	char	*optarg;
+	extern	int	optind;
+	int	regular[3], c;
+	FILE	*log = stdout;
+	struct	stat	sb;
+	size_t	nr, tr;
 
 	fd[0] = fd[1] = fd[2] = -1;
 	fdt[0] = fdt[1] = fdt[2] = -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipt.c,v 1.7 2002/05/02 17:11:38 martti Exp $	*/
+/*	$NetBSD: ipt.c,v 1.7.2.1 2002/10/24 09:33:29 lukem Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -65,8 +65,10 @@
 #include "ipt.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipt.c,v 2.6.2.21 2002/03/26 15:54:40 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)ipt.c	1.19 6/3/96 (C) 1993-2000 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: ipt.c,v 2.6.2.22 2002/06/04 14:52:58 darrenr Exp";
 #endif
 
 extern	char	*optarg;
@@ -78,6 +80,7 @@ extern	ipnat_t	*natparse __P((char *, int));
 extern	int	fr_running;
 
 int	opts = 0;
+int	rremove = 0;
 int	use_inet6 = 0;
 int	main __P((int, char *[]));
 int	loadrules __P((char *));
@@ -113,7 +116,7 @@ char *argv[];
 	ipflog_init();
 	fr_running = 1;
 
-	while ((c = getopt(argc, argv, "6bdDEHi:I:l:NoPr:STvxX")) != -1)
+	while ((c = getopt(argc, argv, "6bdDEHi:I:l:NoPr:RSTvxX")) != -1)
 		switch (c)
 		{
 		case '6' :
@@ -164,6 +167,9 @@ char *argv[];
 			break;
 		case 'P' :
 			r = &pcap;
+			break;
+		case 'R' :
+			rremove = 1;
 			break;
 		case 'S' :
 			r = &snoop;
@@ -332,20 +338,44 @@ char *file;
 			if (!(fr = natparse(line, linenum)))
 				continue;
 
-			i = IPL_EXTERN(ioctl)(IPL_LOGNAT, SIOCADNAT,
-					      (caddr_t)&fr, FWRITE|FREAD);
-			if (opts & OPT_DEBUG)
-				fprintf(stderr, "iplioctl(ADNAT,%p,1) = %d\n",
-					fr, i);
+			if (rremove == 0) {
+				i = IPL_EXTERN(ioctl)(IPL_LOGNAT, SIOCADNAT,
+						      (caddr_t)&fr,
+						      FWRITE|FREAD);
+				if (opts & OPT_DEBUG)
+					fprintf(stderr,
+						"iplioctl(ADNAT,%p,1) = %d\n",
+						fr, i);
+			} else {
+				i = IPL_EXTERN(ioctl)(IPL_LOGNAT, SIOCRMNAT,
+						      (caddr_t)&fr,
+						      FWRITE|FREAD);
+				if (opts & OPT_DEBUG)
+					fprintf(stderr,
+						"iplioctl(RMNAT,%p,1) = %d\n",
+						fr, i);
+			}
 		} else {
 			if (!(fr = parse(line, linenum)))
 				continue;
 
-			i = IPL_EXTERN(ioctl)(0, SIOCADAFR, (caddr_t)&fr,
-					      FWRITE|FREAD);
-			if (opts & OPT_DEBUG)
-				fprintf(stderr, "iplioctl(ADAFR,%p,1) = %d\n",
-					fr, i);
+			if (rremove == 0) {
+				i = IPL_EXTERN(ioctl)(0, SIOCADAFR,
+						      (caddr_t)&fr,
+						      FWRITE|FREAD);
+				if (opts & OPT_DEBUG)
+					fprintf(stderr,
+						"iplioctl(ADAFR,%p,1) = %d\n",
+						fr, i);
+			} else {
+				i = IPL_EXTERN(ioctl)(0, SIOCRMAFR,
+						      (caddr_t)&fr,
+						      FWRITE|FREAD);
+				if (opts & OPT_DEBUG)
+					fprintf(stderr,
+						"iplioctl(RMAFR,%p,1) = %d\n",
+						fr, i);
+			}
 		}
 	}
 	(void)fclose(fp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.44 2002/05/02 17:12:04 martti Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.44.4.1 2002/10/24 09:33:55 lukem Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.29.2.32 2002/04/10 04:57:14 darrenr Exp
+ * Id: ip_fil.h,v 2.29.2.33 2002/06/04 14:46:28 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FIL_H_
@@ -416,8 +416,7 @@ typedef	struct frgroup {
 typedef	struct	iplog	{
 	u_32_t	ipl_magic;
 	u_int	ipl_count;
-	u_long	ipl_sec;
-	u_long	ipl_usec;
+	struct timeval ipl_time;
 	size_t	ipl_dsize;
 	struct	iplog	*ipl_next;
 } iplog_t;
@@ -510,6 +509,7 @@ extern	int	send_reset __P((ip_t *, fr_info_t *));
 extern	int	send_icmp_err __P((ip_t *, int, fr_info_t *, int));
 extern	int	ipf_log __P((void));
 extern	struct	ifnet *get_unit __P((char *, int));
+extern	int	mbuflen __P((mb_t *));
 # if defined(__NetBSD__) || defined(__OpenBSD__) || \
 	  (_BSDI_VERSION >= 199701) || (__FreeBSD_version >= 300000)
 extern	int	iplioctl __P((dev_t, u_long, caddr_t, int));
@@ -643,7 +643,7 @@ extern	int	fr_minttllog;
 extern	fr_info_t	frcache[2];
 extern	char	ipfilter_version[];
 extern	iplog_t	**iplh[IPL_LOGMAX+1], *iplt[IPL_LOGMAX+1];
-extern	size_t	iplused[IPL_LOGMAX + 1];
+extern	int	iplused[IPL_LOGMAX + 1];
 extern	struct frentry *ipfilter[2][2], *ipacct[2][2];
 #ifdef	USE_INET6
 extern	struct frentry *ipfilter6[2][2], *ipacct6[2][2];
