@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.7 1994/03/20 08:58:41 pk Exp $
+ * $Id: pmap.c,v 1.8 1994/03/20 09:11:54 pk Exp $
  */
 
 /*
@@ -913,6 +913,10 @@ if(pm==NULL)panic("pv_changepte 1");
 			if (pm->pm_ctx) {
 				extern vm_offset_t pager_sva, pager_eva;
 
+				/*
+				 * Bizarreness:  we never clear PG_W on
+				 * pager pages, nor PG_NC on DVMA pages.
+				 */
 				if (bic == PG_W &&
 				    va >= pager_sva && va < pager_eva)
 					continue;
