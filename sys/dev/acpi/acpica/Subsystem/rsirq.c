@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsirq - IRQ resource descriptors
- *              $Revision: 1.2.10.1 $
+ *              $Revision: 1.2.10.2 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsirq.c,v 1.2.10.1 2002/06/20 16:32:44 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsirq.c,v 1.2.10.2 2002/08/29 05:22:21 gehenna Exp $");
 
 #define __RSIRQ_C__
 
@@ -193,12 +193,14 @@ AcpiRsIrqResource (
         }
     }
 
+#if 0
     if (i == 0)
     {
         /* Zero interrupts is invalid! */
 
         return_ACPI_STATUS (AE_BAD_DATA);
     }
+#endif
     OutputStruct->Data.Irq.NumberOfInterrupts = i;
 
     /*

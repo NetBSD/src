@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.16.2.1 2002/05/16 04:19:18 gehenna Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.16.2.2 2002/08/29 05:22:10 gehenna Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.16.2.1 2002/05/16 04:19:18 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.16.2.2 2002/08/29 05:22:10 gehenna Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -219,7 +219,7 @@ coda_mount(vfsp, path, data, ndp, p)
     }
     
     /* No initialization (here) of mi_vcomm! */
-    vfsp->mnt_data = (qaddr_t)mi;
+    vfsp->mnt_data = mi;
     vfsp->mnt_stat.f_fsid.val[0] = 0;
     vfsp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_CODA);
     mi->mi_vfsp = vfsp;

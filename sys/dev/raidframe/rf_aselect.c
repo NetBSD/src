@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.5 2001/11/13 07:11:12 lukem Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.5.8.1 2002/08/29 05:22:48 gehenna Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.5 2001/11/13 07:11:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.5.8.1 2002/08/29 05:22:48 gehenna Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.5 2001/11/13 07:11:12 lukem Exp $")
 static void TransferDagMemory(RF_DagHeader_t *, RF_DagHeader_t *);
 #endif
 
-static int InitHdrNode(RF_DagHeader_t **, RF_Raid_t *, int);
+static int InitHdrNode(RF_DagHeader_t **, RF_Raid_t *);
 static void UpdateNodeHdrPtr(RF_DagHeader_t *, RF_DagNode_t *);
 int     rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
 
@@ -63,10 +63,9 @@ int     rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
  *
  *****************************************************************************/
 static int 
-InitHdrNode(hdr, raidPtr, memChunkEnable)
+InitHdrNode(hdr, raidPtr)
 	RF_DagHeader_t **hdr;
 	RF_Raid_t *raidPtr;
-	int     memChunkEnable;
 {
 	/* create and initialize dag hdr */
 	*hdr = rf_AllocDAGHeader();
@@ -81,73 +80,6 @@ InitHdrNode(hdr, raidPtr, memChunkEnable)
 	(*hdr)->next = NULL;
 	return (0);
 }
-/******************************************************************************
- *
- * Transfer allocation list and mem chunks from one dag to another
- *
- *****************************************************************************/
-#if defined(__NetBSD__) && defined(_KERNEL)
-/* the function below is not used... so don't define it! */
-#else
-static void 
-TransferDagMemory(daga, dagb)
-	RF_DagHeader_t *daga;
-	RF_DagHeader_t *dagb;
-{
-	RF_AccessStripeMapHeader_t *end;
-	RF_AllocListElem_t *p;
-	int     i, memChunksXfrd = 0, xtraChunksXfrd = 0;
-
-	/* transfer allocList from dagb to daga */
-	for (p = dagb->allocList; p; p = p->next) {
-		for (i = 0; i < p->numPointers; i++) {
-			rf_AddToAllocList(daga->allocList, p->pointers[i], p->sizes[i]);
-			p->pointers[i] = NULL;
-			p->sizes[i] = 0;
-		}
-		p->numPointers = 0;
-	}
-
-	/* transfer chunks from dagb to daga */
-	while ((memChunksXfrd + xtraChunksXfrd < dagb->chunkIndex + dagb->xtraChunkIndex) && (daga->chunkIndex < RF_MAXCHUNKS)) {
-		/* stuff chunks into daga's memChunk array */
-		if (memChunksXfrd < dagb->chunkIndex) {
-			daga->memChunk[daga->chunkIndex++] = dagb->memChunk[memChunksXfrd];
-			dagb->memChunk[memChunksXfrd++] = NULL;
-		} else {
-			daga->memChunk[daga->xtraChunkIndex++] = dagb->xtraMemChunk[xtraChunksXfrd];
-			dagb->xtraMemChunk[xtraChunksXfrd++] = NULL;
-		}
-	}
-	/* use escape hatch to hold excess chunks */
-	while (memChunksXfrd + xtraChunksXfrd < dagb->chunkIndex + dagb->xtraChunkIndex) {
-		if (memChunksXfrd < dagb->chunkIndex) {
-			daga->xtraMemChunk[daga->xtraChunkIndex++] = dagb->memChunk[memChunksXfrd];
-			dagb->memChunk[memChunksXfrd++] = NULL;
-		} else {
-			daga->xtraMemChunk[daga->xtraChunkIndex++] = dagb->xtraMemChunk[xtraChunksXfrd];
-			dagb->xtraMemChunk[xtraChunksXfrd++] = NULL;
-		}
-	}
-	RF_ASSERT((memChunksXfrd == dagb->chunkIndex) && (xtraChunksXfrd == dagb->xtraChunkIndex));
-	RF_ASSERT(daga->chunkIndex <= RF_MAXCHUNKS);
-	RF_ASSERT(daga->xtraChunkIndex <= daga->xtraChunkCnt);
-	dagb->chunkIndex = 0;
-	dagb->xtraChunkIndex = 0;
-
-	/* transfer asmList from dagb to daga */
-	if (dagb->asmList) {
-		if (daga->asmList) {
-			end = daga->asmList;
-			while (end->next)
-				end = end->next;
-			end->next = dagb->asmList;
-		} else
-			daga->asmList = dagb->asmList;
-		dagb->asmList = NULL;
-	}
-}
-#endif				/* __NetBSD__ */
 
 /*****************************************************************************************
  *
@@ -384,7 +316,7 @@ rf_SelectAlgorithm(desc, flags)
 						for (k = 0; k < physPtr->numSector; k++) {
 							/* create a dag for
 							 * this block */
-							InitHdrNode(&tempdag_h, raidPtr, rf_useMemChunks);
+							InitHdrNode(&tempdag_h, raidPtr);
 							desc->dagArray[i].numDags++;
 							if (dag_h == NULL) {
 								dag_h = tempdag_h;
@@ -401,7 +333,7 @@ rf_SelectAlgorithm(desc, flags)
 						stripeUnitNum++;
 					} else {
 						/* create a dag for this unit */
-						InitHdrNode(&tempdag_h, raidPtr, rf_useMemChunks);
+						InitHdrNode(&tempdag_h, raidPtr);
 						desc->dagArray[i].numDags++;
 						if (dag_h == NULL) {
 							dag_h = tempdag_h;
@@ -420,7 +352,7 @@ rf_SelectAlgorithm(desc, flags)
 				stripeNum++;
 			} else {
 				/* Create a dag for this parity stripe */
-				InitHdrNode(&tempdag_h, raidPtr, rf_useMemChunks);
+				InitHdrNode(&tempdag_h, raidPtr);
 				desc->dagArray[i].numDags++;
 				if (dag_h == NULL) {
 					dag_h = tempdag_h;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.11.2.1 2002/05/16 12:08:18 gehenna Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.11.2.2 2002/08/29 05:22:36 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.11.2.1 2002/05/16 12:08:18 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.11.2.2 2002/08/29 05:22:36 gehenna Exp $");
 
 #include "rnd.h"
 #include "locators.h"
@@ -165,7 +165,7 @@ ed_mca_attach(parent, self, aux)
 	ed->sc_devno  = eda->edc_drive;
 	edc_add_disk(sc, ed);
 
-	BUFQ_INIT(&ed->sc_q);
+	bufq_alloc(&ed->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 	simple_lock_init(&ed->sc_q_lock);
 	snprintf(lckname, sizeof(lckname), "%slck", ed->sc_dev.dv_xname);
 	lockinit(&ed->sc_lock, PRIBIO | PCATCH, lckname, 0, 0);
@@ -263,7 +263,7 @@ edmcastrategy(bp)
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	simple_lock(&ed->sc_q_lock);
-	disksort_blkno(&ed->sc_q, bp);
+	BUFQ_PUT(&ed->sc_q, bp);
 	simple_unlock(&ed->sc_q_lock);
 
 	/* Ring the worker thread */

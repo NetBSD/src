@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.49.8.2 2002/07/15 10:36:10 gehenna Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.49.8.3 2002/08/29 05:22:59 gehenna Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.49.8.2 2002/07/15 10:36:10 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.49.8.3 2002/08/29 05:22:59 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,18 +286,19 @@ USB_ATTACH(ulpt)
 		}
 	}
 	if (sc->sc_out == -1) {
-		printf("%s: could not find bulk endpoint\n",
+		printf("%s: could not find bulk out endpoint\n",
 		    USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
-	printf("%s: using %s-directional mode\n", USBDEVNAME(sc->sc_dev),
-	       sc->sc_in >= 0 ? "bi" : "uni");
 
 	if (usbd_get_quirks(dev)->uq_flags & UQ_BROKEN_BIDIR) {
 		/* This device doesn't handle reading properly. */
 		sc->sc_in = -1;
 	}
+
+	printf("%s: using %s-directional mode\n", USBDEVNAME(sc->sc_dev),
+	       sc->sc_in >= 0 ? "bi" : "uni");
 
 	DPRINTFN(10, ("ulpt_attach: bulk=%d\n", sc->sc_out));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.47.2.1 2002/07/15 10:36:32 gehenna Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.47.2.2 2002/08/29 05:23:07 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.47.2.1 2002/07/15 10:36:32 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.47.2.2 2002/08/29 05:23:07 gehenna Exp $");
 
 #include "opt_kstack.h"
 
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.47.2.1 2002/07/15 10:36:32 gehenna E
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
+#include <sys/ras.h>
 
 /*
  * Structure associated with user cacheing.
@@ -151,6 +152,7 @@ struct pool pcred_pool;
 struct pool plimit_pool;
 struct pool pgrp_pool;
 struct pool rusage_pool;
+struct pool ras_pool;
 
 /*
  * The process list descriptors, used during pid allocation and
@@ -200,6 +202,8 @@ procinit()
 	pool_init(&plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
 	    &pool_allocator_nointr);
 	pool_init(&rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
+	    &pool_allocator_nointr);
+	pool_init(&ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
 	    &pool_allocator_nointr);
 }
 
@@ -337,7 +341,8 @@ pgfind(pgid)
 {
 	struct pgrp *pgrp;
 
-	for (pgrp = PGRPHASH(pgid)->lh_first; pgrp != 0; pgrp = pgrp->pg_hash.le_next)
+	for (pgrp = PGRPHASH(pgid)->lh_first; pgrp != NULL;
+	    pgrp = pgrp->pg_hash.le_next)
 		if (pgrp->pg_id == pgid)
 			return (pgrp);
 	return (NULL);
@@ -371,8 +376,10 @@ enterpgrp(p, pgid, mksess)
 			panic("enterpgrp: new pgrp and pid != pgid");
 #endif
 		pgrp = pool_get(&pgrp_pool, PR_WAITOK);
-		if ((np = pfind(savepid)) == NULL || np != p)
+		if ((np = pfind(savepid)) == NULL || np != p) {
+			pool_put(&pgrp_pool, pgrp);
 			return (ESRCH);
+		}
 		if (mksess) {
 			struct session *sess;
 
@@ -381,6 +388,11 @@ enterpgrp(p, pgid, mksess)
 			 */
 			MALLOC(sess, struct session *, sizeof(struct session),
 			    M_SESSION, M_WAITOK);
+			if ((np = pfind(savepid)) == NULL || np != p) {
+				FREE(sess, M_SESSION);
+				pool_put(&pgrp_pool, pgrp);
+				return (ESRCH);
+			}
 			sess->s_sid = p->p_pid;
 			sess->s_leader = p;
 			sess->s_count = 1;
@@ -539,13 +551,11 @@ p_sugid(p)
 			newlim = limcopy(p->p_limit);
 			limfree(p->p_limit);
 			p->p_limit = newlim;
-		} else {
-			free(p->p_limit->pl_corename, M_TEMP);
 		}
+		free(p->p_limit->pl_corename, M_TEMP);
 		p->p_limit->pl_corename = defcorename;
 	}
 }
-
 
 #ifdef DEBUG
 void
@@ -559,7 +569,8 @@ pgrpdump()
 		if ((pgrp = pgrphashtbl[i].lh_first) != NULL) {
 			printf("\tindx %d\n", i);
 			for (; pgrp != 0; pgrp = pgrp->pg_hash.le_next) {
-				printf("\tpgrp %p, pgid %d, sess %p, sesscnt %d, mem %p\n",
+				printf("\tpgrp %p, pgid %d, sess %p, "
+				    "sesscnt %d, mem %p\n",
 				    pgrp, pgrp->pg_id, pgrp->pg_session,
 				    pgrp->pg_session->s_count,
 				    pgrp->pg_members.lh_first);
@@ -581,7 +592,8 @@ pgrpdump()
 
 /* XXX should be per process basis? */
 int kstackleftmin = KSTACK_SIZE;
-int kstackleftthres = KSTACK_SIZE / 8; /* warn if remaining stack is less than this */
+int kstackleftthres = KSTACK_SIZE / 8; /* warn if remaining stack is
+					  less than this */
 
 void
 kstack_setup_magic(const struct proc *p)
@@ -639,7 +651,7 @@ kstack_check_magic(const struct proc *p)
 		kstackleftmin = stackleft;
 		if (stackleft < kstackleftthres)
 			printf("warning: kernel stack left %d bytes(pid %u)\n",
-				stackleft, p->p_pid);
+			    stackleft, p->p_pid);
 	}
 
 	if (stackleft <= 0) {
@@ -647,4 +659,4 @@ kstack_check_magic(const struct proc *p)
 		    "maybe kernel stack overflow\n", p->p_pid);
 	}
 }
-#endif /*KSTACK_CHECK_MAGIC*/
+#endif /* KSTACK_CHECK_MAGIC */
