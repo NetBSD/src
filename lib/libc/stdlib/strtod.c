@@ -86,7 +86,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: strtod.c,v 1.10 1993/12/21 18:59:11 jtc Exp $";
+static char *rcsid = "$Id: strtod.c,v 1.11 1993/12/21 19:24:09 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef i386
@@ -115,6 +115,7 @@ static char *rcsid = "$Id: strtod.c,v 1.10 1993/12/21 18:59:11 jtc Exp $";
 #ifndef KR_headers
 #include "stdlib.h"
 #include "string.h"
+#include "locale.h"
 #else
 #include "malloc.h"
 #include "memory.h"
@@ -1194,8 +1195,16 @@ strtod
 	Long L;
 	unsigned Long y, z;
 	Bigint *bb, *bb1, *bd, *bd0, *bs, *delta;
+
+#ifndef KR_headers
+	CONST char decimal_point = localeconv()->decimal_point[0];
+#else
+	CONST char decimal_point = '.';
+#endif
+
 	sign = nz0 = nz = 0;
 	rv = 0.;
+
 
 	for(s = s00; isspace(*s); s++)
 		;
@@ -1226,7 +1235,7 @@ strtod
 		else if (nd < 16)
 			z = 10*z + c - '0';
 	nd0 = nd;
-	if (c == '.') {
+	if (c == decimal_point) {
 		c = *++s;
 		if (!nd) {
 			for(; c == '0'; c = *++s)
