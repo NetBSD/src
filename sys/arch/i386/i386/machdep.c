@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.537 2003/09/10 19:48:49 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.538 2003/09/10 21:38:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,23 +72,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.537 2003/09/10 19:48:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.538 2003/09/10 21:38:40 christos Exp $");
 
+#include "opt_beep.h"
+#include "opt_compat_ibcs2.h"
+#include "opt_compat_mach.h"	/* need to get the right segment def */
+#include "opt_compat_netbsd.h"
+#include "opt_compat_svr4.h"
+#include "opt_cpureset_delay.h"
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_kgdb.h"
-#include "opt_vm86.h"
-#include "opt_user_ldt.h"
-#include "opt_compat_netbsd.h"
-#include "opt_cpureset_delay.h"
-#include "opt_compat_svr4.h"
-#include "opt_compat_ibcs2.h"
-#include "opt_realmem.h"
-#include "opt_compat_mach.h"	/* need to get the right segment def */
 #include "opt_mtrr.h"
 #include "opt_multiprocessor.h"
-#include "opt_beep.h"
+#include "opt_realmem.h"
+#include "opt_user_ldt.h"
+#include "opt_vm86.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
