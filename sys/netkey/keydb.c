@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.c,v 1.7 2002/06/12 01:47:37 itojun Exp $	*/
+/*	$NetBSD: keydb.c,v 1.8 2002/06/12 17:56:46 itojun Exp $	*/
 /*	$KAME: keydb.c,v 1.64 2000/05/11 17:02:30 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.7 2002/06/12 01:47:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.8 2002/06/12 17:56:46 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.7 2002/06/12 01:47:37 itojun Exp $");
 
 #include <net/net_osdep.h>
 
+extern TAILQ_HEAD(_sptailq, secpolicy) sptailq;
+
 static void keydb_delsecasvar __P((struct secasvar *));
 
 /*
@@ -63,12 +65,34 @@ static void keydb_delsecasvar __P((struct secasvar *));
 struct secpolicy *
 keydb_newsecpolicy()
 {
-	struct secpolicy *p;
+	struct secpolicy *p, *np;
 
 	p = (struct secpolicy *)malloc(sizeof(*p), M_SECA, M_NOWAIT);
 	if (!p)
 		return p;
 	bzero(p, sizeof(*p));
+	if (TAILQ_EMPTY(&sptailq)) {
+		p->id = 1;
+		TAILQ_INSERT_HEAD(&sptailq, p, tailq);
+		return p;
+	} else if (TAILQ_LAST(&sptailq, _sptailq)->id < 0xffffffff) {
+		p->id = TAILQ_LAST(&sptailq, _sptailq)->id + 1;
+		TAILQ_INSERT_TAIL(&sptailq, p, tailq);
+		return p;
+	} else {
+		TAILQ_FOREACH(np, &sptailq, tailq) {
+			if (np->id + 1 != TAILQ_NEXT(np, tailq)->id) {
+				p->id = np->id + 1;
+				TAILQ_INSERT_AFTER(&sptailq, np, p, tailq);
+				break;
+			}
+		}
+		if (!np) {
+			free(p, M_SECA);
+			return NULL;
+		}
+	}
+
 	return p;
 }
 
@@ -77,6 +101,7 @@ keydb_delsecpolicy(p)
 	struct secpolicy *p;
 {
 
+	TAILQ_REMOVE(&sptailq, p, tailq);
 	if (p->spidx)
 		free(p->spidx, M_SECA);
 	free(p, M_SECA);
