@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1996/05/08 19:24:04 pk Exp $
+#	$NetBSD: Makefile,v 1.17 1996/05/10 05:03:06 cgd Exp $
 
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
@@ -17,18 +17,20 @@ beforedepend:	${HDRS}
 
 includes:	${HDRS}
 	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
-		${DESTDIR}/usr/include/rpcsvc
+	    ${DESTDIR}/usr/include/rpcsvc
 	@for i in $(HDRS); do \
-	    cmp -s $$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
-		{ j="install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+	    j="cmp -s $$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include/rpcsvc"; \
-		echo $$j; $$j; } \
+	    echo $$j; \
+	    eval "$$j"; \
 	done
 	@cd ${.CURDIR}; for i in $(RPCSRCS); do \
-	    cmp -s $(.CURDIR)/$$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
-		{ j="install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+	    j="cmp -s $(.CURDIR)/$$i ${DESTDIR}/usr/include/rpcsvc/$$i || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
 		${DESTDIR}/usr/include/rpcsvc"; \
-		echo $$j; $$j; } \
+	    echo $$j; \
+	    eval "$$j"; \
 	done
 
 # new suffixes have to go afterwards, because bsd.lib.mk clears them
