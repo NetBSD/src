@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.28 2000/05/31 16:24:24 mycroft Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.28.2.1 2001/06/17 22:28:55 he Exp $	*/
 
 /* 
  * Mach Operating System
@@ -43,8 +43,10 @@
  * Machine register set.
  */
 struct db_variable db_regs[] = {
-	{ "es",		(long *)&ddb_regs.tf_es,     FCN_NULL },
 	{ "ds",		(long *)&ddb_regs.tf_ds,     FCN_NULL },
+	{ "es",		(long *)&ddb_regs.tf_es,     FCN_NULL },
+	{ "fs",		(long *)&ddb_regs.tf_fs,     FCN_NULL },
+	{ "gs",		(long *)&ddb_regs.tf_gs,     FCN_NULL },
 	{ "edi",	(long *)&ddb_regs.tf_edi,    FCN_NULL },
 	{ "esi",	(long *)&ddb_regs.tf_esi,    FCN_NULL },
 	{ "ebp",	(long *)&ddb_regs.tf_ebp,    FCN_NULL },
