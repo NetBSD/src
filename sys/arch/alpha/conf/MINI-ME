@@ -1,6 +1,6 @@
-# $NetBSD: CANE,v 1.7 2000/03/22 00:58:16 cgd Exp $
+# $NetBSD: MINI-ME,v 1.1 2000/05/22 16:38:25 thorpej Exp $
 #
-# cane.nas.nasa.gov - thorpej's Multia
+# mini-me.shagadelic.org - thorpej's Multia
 #
 
 include	"arch/alpha/conf/std.alpha"
