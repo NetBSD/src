@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.15 2001/10/09 04:50:01 lukem Exp $	*/
+/*	$NetBSD: mtree.h,v 1.16 2001/10/22 07:07:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,10 +38,6 @@
 #ifndef _MTREE_H_
 #define _MTREE_H_
 
-#include <string.h>
-#include <stdlib.h>
-#include <sys/time.h>
-
 #define	KEYDEFAULT	(F_GID | F_MODE | F_NLINK | F_SIZE | F_SLINK | \
 			F_TIME | F_TYPE | F_UID | F_FLAGS)
 
@@ -74,7 +70,7 @@ typedef struct _node {
 #define	F_NLINK	0x00000080			/* number of links */
 #define	F_OPT	0x00000100			/* existence optional */
 #define	F_SIZE	0x00000200			/* size */
-#define	F_SLINK	0x00000400			/* link count */
+#define	F_SLINK	0x00000400			/* symbolic link */
 #define	F_TIME	0x00000800			/* modification time */
 #define	F_TYPE	0x00001000			/* file type */
 #define	F_UID	0x00002000			/* uid */
@@ -103,6 +99,10 @@ typedef struct {
 	char  **list;
 	int	count;
 } slist_t;
+
+
+NODE	*spec(FILE *);
+u_int	 nodetoino(u_int);
 
 
 #define	RP(p)	\

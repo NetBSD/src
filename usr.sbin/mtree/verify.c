@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.21 2001/10/18 05:06:02 lukem Exp $	*/
+/*	$NetBSD: verify.c,v 1.22 2001/10/22 07:07:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.21 2001/10/18 05:06:02 lukem Exp $");
+__RCSID("$NetBSD: verify.c,v 1.22 2001/10/22 07:07:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: verify.c,v 1.21 2001/10/18 05:06:02 lukem Exp $");
 #include <fnmatch.h>
 #include <fts.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "mtree.h"
@@ -66,7 +67,7 @@ verify(void)
 {
 	int rval;
 
-	root = spec();
+	root = spec(stdin);
 	rval = vwalk();
 	miss(root, path);
 	return (rval);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.20 2001/10/05 01:03:24 lukem Exp $	*/
+/*	$NetBSD: mtree.c,v 1.21 2001/10/22 07:07:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.20 2001/10/05 01:03:24 lukem Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.21 2001/10/22 07:07:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: mtree.c,v 1.20 2001/10/05 01:03:24 lukem Exp $");
 #include <fts.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "mtree.h"
@@ -62,9 +63,7 @@ __RCSID("$NetBSD: mtree.c,v 1.20 2001/10/05 01:03:24 lukem Exp $");
 int	ftsoptions = FTS_PHYSICAL;
 int	cflag, dflag, Dflag, eflag, iflag, lflag, mflag,
     	rflag, sflag, tflag, uflag, Uflag;
-int	keys;
 char	fullpath[MAXPATHLEN];
-slist_t	excludetags, includetags;
 
 	int	main(int, char **);
 static	void	usage(void);
@@ -78,7 +77,6 @@ main(int argc, char **argv)
 	setprogname(argv[0]);
 
 	dir = NULL;
-	keys = KEYDEFAULT;
 	while ((ch = getopt(argc, argv, "cdDeE:f:I:iK:k:lmp:rR:s:tUux")) != -1)
 		switch((char)ch) {
 		case 'c':
@@ -182,7 +180,7 @@ main(int argc, char **argv)
 		exit(0);
 	}
 	if (Dflag) {
-		dump_nodes("", spec());
+		dump_nodes("", spec(stdin));
 		exit(0);
 	}
 	status = verify();
