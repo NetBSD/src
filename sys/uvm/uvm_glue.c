@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.4 2001/06/21 20:10:30 nathanw Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.5 2001/07/03 03:09:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -609,7 +609,6 @@ uvm_swapout(l)
 	 * Mark it as (potentially) swapped out.
 	 */
 	SCHED_LOCK(s);
-	s = splstatclock();
 	l->l_flag &= ~L_INMEM;
 	if (l->l_stat == LSRUN)
 		remrunqueue(l);
