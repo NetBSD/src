@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.171 2000/06/29 12:03:09 mrg Exp $
+# $NetBSD: mi,v 1.172 2000/06/30 18:07:16 thorpej Exp $
 .
 ./altroot
 ./bin
@@ -578,7 +578,6 @@
 ./usr/sbin/fixmount
 ./usr/sbin/fsinfo
 ./usr/sbin/getencstat
-./usr/sbin/gifconfig
 ./usr/sbin/greconfig
 ./usr/sbin/group
 ./usr/sbin/groupadd
