@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.20 2002/10/02 05:30:45 thorpej Exp $	*/
+/*	$NetBSD: bandit.c,v 1.21 2003/01/01 01:47:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -138,8 +138,8 @@ bandit_print(aux, pnp)
 	struct pcibus_attach_args *pa = aux;
 
 	if (pnp)
-		printf("%s at %s", pa->pba_busname, pnp);
-	printf(" bus %d", pa->pba_bus);
+		aprint_normal("%s at %s", pa->pba_busname, pnp);
+	aprint_normal(" bus %d", pa->pba_bus);
 	return UNCONF;
 }
 
