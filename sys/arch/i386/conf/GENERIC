@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.587 2003/12/17 09:18:45 tls Exp $
+# $NetBSD: GENERIC,v 1.588 2003/12/23 10:11:42 kochi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.587 $"
+#ident 		"GENERIC-$Revision: 1.588 $"
 
 maxusers	32		# estimated number of users
 
@@ -275,6 +275,7 @@ cpu* at mainbus?
 #acpi0 		at mainbus0
 #options 	ACPI_PCI_FIXUP		# PCI interrupt routing via ACPI
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
+#options	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
 # ACPI devices
 #acpiacad* 	at acpi?		# ACPI AC Adapter
