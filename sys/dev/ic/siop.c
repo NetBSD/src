@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.20 2000/06/12 20:13:41 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.21 2000/06/13 13:59:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -144,7 +144,7 @@ siop_attach(sc)
 	int rseg;
 
 	/*
-	 * Allocate DMA-safe memory for the script and script sheduler
+	 * Allocate DMA-safe memory for the script and script scheduler
 	 * and map it.
 	 */
 	if ((sc->features & SF_CHIP_RAM) == 0) {
@@ -182,37 +182,37 @@ siop_attach(sc)
 	error = bus_dmamem_alloc(sc->sc_dmat, NBPG, 
 	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to allocate sheduler DMA memory, "
+		printf("%s: unable to allocate scheduler DMA memory, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		return;
 	}
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
 	    (caddr_t *)&sc->sc_shed, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
-		printf("%s: unable to map sheduler DMA memory, error = %d\n",
+		printf("%s: unable to map scheduler DMA memory, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 	error = bus_dmamap_create(sc->sc_dmat, NBPG, 1,
 	    NBPG, 0, BUS_DMA_NOWAIT, &sc->sc_sheddma);
 	if (error) {
-		printf("%s: unable to create sheduler DMA map, error = %d\n",
+		printf("%s: unable to create scheduler DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_sheddma, sc->sc_shed,
 	    NBPG, NULL, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to load sheduler DMA map, error = %d\n",
+		printf("%s: unable to load scheduler DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 	TAILQ_INIT(&sc->free_list);
 	TAILQ_INIT(&sc->cmds);
-	/* compute number of sheduler slots */
+	/* compute number of scheduler slots */
 	sc->sc_nshedslots = (
-	    NBPG /* memory size allocated for sheduler */
-	    - sizeof(endslot_script) /* memory needed at end of sheduler */
+	    NBPG /* memory size allocated for scheduler */
+	    - sizeof(endslot_script) /* memory needed at end of scheduler */
 	    ) / (sizeof(slot_script) - 8);
 	sc->sc_currshedslot = 0;
 #ifdef DEBUG
@@ -297,7 +297,7 @@ siop_reset(sc)
 				htole32(sc->sc_sheddma->dm_segs[0].ds_addr);
 		}
 	}
-	/* copy and init the sheduler slots script */
+	/* copy and init the scheduler slots script */
 	for (i = 0; i < sc->sc_nshedslots; i++) {
 		scr = &sc->sc_shed[(Ent_nextslot / 4) * i];
 		physaddr = sc->sc_sheddma->dm_segs[0].ds_addr +
@@ -1307,7 +1307,7 @@ siop_start(sc)
 			if (siop_cmd->status != CMDST_READY &&
 			    siop_cmd->status != CMDST_SENSE)
 				continue;
-			/* find a free sheduler slot and load it */
+			/* find a free scheduler slot and load it */
 			for (; slot < sc->sc_nshedslots; slot++) {
 				scr = &sc->sc_shed[(Ent_nextslot / 4) * slot];
 				/*
