@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.40 2004/03/27 14:52:36 simonb Exp $	*/
+/*	$NetBSD: keyword.c,v 1.40.2.1 2004/07/28 11:33:57 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.40 2004/03/27 14:52:36 simonb Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.40.2.1 2004/07/28 11:33:57 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ VAR var[] = {
 	PVAR("jobc", "JOBC", 0, p_jobc, SHORT, "d"),
 	PVAR("ktrace", "KTRACE", 0, p_traceflag, INT, "x"),
 /*XXX*/	PVAR("ktracep", "KTRACEP", 0, p_tracep, KPTR, PRIx64),
-	LVAR("lid", "LID", 0, l_lid, ULONG, "d"),
+	LVAR("lid", "LID", 0, l_lid, INT32, "d"),
 	{"lim", "LIM", 0, maxrss},
 	{"login", "LOGIN", LJUST, logname},
 	{"logname", "login", ALIAS},
