@@ -1,6 +1,6 @@
-.\"	$NetBSD: audio.9,v 1.13 1999/06/16 14:19:27 kleink Exp $
+.\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 19, 1997
+.Dd February 11, 2000
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -87,6 +87,11 @@ struct audio_hw_if {
 	int	(*mappage)__P((void *, void *, int, int));
 
 	int 	(*get_props)__P((void *));
+
+	int	(*trigger_output)__P((void *, void *, void *, int,
+			void (*)(void *), void *, struct audio_params *));
+	int	(*trigger_input)__P((void *, void *, void *, int,
+			void (*)(void *), void *, struct audio_params *));
 };
 
 struct audio_params {
@@ -108,16 +113,13 @@ This call should be
     void
     audio_attach_mi(ahwp, mhwp, hdl, dev)
 	struct audio_hw_if *ahwp;
-	struct midi_hw_if *mhwp;
 	void *hdl;
 	struct device *dev;
 .Ed
 .Pp
 The 
 .Va audio_hw_if
-struct is as shown above and the
-.Va midi_hw_if
-is unused (at the moment).  The 
+struct is as shown above.  The
 .Va hdl 
 argument is a handle to some low level data structure.
 It is sent as the first argument to all the functions
@@ -359,6 +361,54 @@ on success.
 .It Dv int get_props(void *hdl)
 Should return the device properties; i.e. a combination of
 AUDIO_PROP_xxx.
+.It Dv int trigger_output(void *hdl, void *start, void *end,
+.Dv "int blksize, void (*intr)(void*), void *intrarg,"
+.br
+.Dv "stuct audio_params *param)"
+.br
+optional, is called to start the transfer of data from the circular buffer
+delimited by
+.Va start
+and
+.Va end
+to the audio hardware, parameterized as in
+.Va param .
+The call should return when the data transfer has been initiated
+(normally with DMA).  When the hardware is finished transferring
+each
+.Va bsize
+sized block, the function
+.Va intr
+should be called with the argument
+.Va intrarg
+(typically from the audio hardware interrupt service routine).
+Once started the transfer may be stopped using
+.Va halt_output .
+Return 0 on success, otherwise an error code.
+.It Dv int trigger_input(void *hdl, void *start, void *end,
+.Dv "int blksize, void (*intr)(void*), void *intrarg,"
+.br
+.Dv "stuct audio_params *param)"
+.br
+optional, is called to start the transfer of data from the audio hardware,
+parameterized as in
+.Va param ,
+to the circular buffer delimited by
+.Va start
+and
+.Va end .
+The call should return when the data transfer has been initiated
+(normally with DMA).  When the hardware is finished transferring
+each
+.Va bsize
+sized block, the function
+.Va intr
+should be called with the argument
+.Va intrarg
+(typically from the audio hardware interrupt service routine).
+Once started the transfer may be stopped using
+.Va halt_input .
+Return 0 on success, otherwise an error code.
 .El
 .Pp
 The
