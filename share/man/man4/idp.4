@@ -1,4 +1,4 @@
-.\"	$NetBSD: idp.4,v 1.3 1994/11/30 16:22:15 jtc Exp $
+.\"	$NetBSD: idp.4,v 1.4 1998/04/30 08:50:06 fair Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,14 +50,14 @@
 is a simple, unreliable datagram protocol which is used
 to support the
 .Dv SOCK_DGRAM
-abstraction for the Internet
-protocol family.
+abstraction for the
+.Tn Xerox
+Internet protocol family.
 .Tn IDP
-sockets are connectionless, and are
-normally used with the
-.Xr sendto
+sockets are connectionless, and are normally used with the
+.Xr sendto 2
 and
-.Xr recvfrom
+.Xr recvfrom 2
 calls, though the
 .Xr connect 2
 call may also be used to fix the destination for future
@@ -71,7 +71,8 @@ or
 .Xr write 2
 system calls may be used).
 .Pp
-Xerox protocols are built vertically on top of
+.Tn Xerox
+protocols are built vertically on top of
 .Tn IDP .
 Thus,
 .Tn IDP
@@ -79,24 +80,19 @@ address formats are identical to those used by
 .Tn SPP .
 Note that the
 .Tn IDP
-port
-space is the same as the
+port space is the same as the
 .Tn SPP
 port space (i.e. a
 .Tn IDP
-port
-may be
+port may be
 .Dq connected
 to a
 .Tn SPP
-port, with certain
-options enabled below).
-In addition broadcast packets may be sent
-(assuming the underlying network supports
-this) by using a reserved
+port, with certain options enabled below).
+In addition broadcast packets may be sent (assuming the underlying
+network supports this) by using a reserved
 .Dq broadcast address ;
-this address
-is network interface dependent.
+this address is network interface dependent.
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
 .Bl -tag -width [EADDRNOTAVAIL]
@@ -116,9 +112,8 @@ when an attempt
 is made to create a socket with a port which has already been
 allocated;
 .It Bq Er EADDRNOTAVAIL
-when an attempt is made to create a 
-socket with a network address for which no network interface
-exists.
+when an attempt is made to create a socket with a network address
+for which no network interface exists.
 .El
 .Sh SOCKET OPTIONS
 .Bl -tag -width [SO_HEADERS_ON_OUTPUT]
@@ -128,19 +123,16 @@ and Sequence Protocol packets.
 .It Bq Dv SO_DEFAULT_HEADERS
 The user provides the kernel an
 .Tn IDP
-header, from which
-it gleans the Packet Type.
+header, from which it gleans the Packet Type.
 When requested, the kernel will provide an
 .Tn IDP
-header, showing
-the default packet type, and local and foreign addresses, if
-connected.
+header, showing the default packet type, and local and foreign
+addresses, if connected.
 .It Bq Dv SO_HEADERS_ON_INPUT
 When set, the first 30 bytes of any data returned from a read
 or recv from will be the initial 30 bytes of the
 .Tn IDP
-packet,
-as described by
+packet, as described by
 .Bd -literal -offset indent
 struct idp {
 	u_short		idp_sum;
@@ -163,9 +155,8 @@ When set, the first 30 bytes of any data sent
 will be the initial 30 bytes of the
 .Tn IDP
 packet.
-This allows the user to determine the packet type, and whether
-the packet should be multi-cast packet or directed specifically at
-the local host.
+This allows the user to determine the packet type, and whether the packet
+should be multi-cast packet or directed specifically at the local host.
 You can also misrepresent the sender of the packet.
 When requested, gives the current state of the option.
 .Pf ( Dv NSP_RAWOUT

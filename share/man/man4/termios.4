@@ -1,4 +1,4 @@
-.\"	$NetBSD: termios.4,v 1.11 1998/02/13 21:53:44 kleink Exp $
+.\"	$NetBSD: termios.4,v 1.12 1998/04/30 08:50:11 fair Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,30 +46,32 @@ This describes a general terminal line discipline that is
 supported on tty asynchronous communication ports.
 .Ss Opening a Terminal Device File
 When a terminal file is opened, it normally causes the process to wait
-until a connection is established.  For most hardware, the presence
+until a connection is established.
+For most hardware, the presence
 of a connection is indicated by the assertion of the hardware
-.Dv CARRIER line.
-If the termios structure associated with the terminal file has the
+.Em CARRIER DETECT
+(CD) line.
+If the
+.Nm
+structure associated with the terminal file has the
 .Dv CLOCAL
 flag set in the cflag, or if the
 .Dv O_NONBLOCK
-flag is set
-in the
+flag is set in the
 .Xr open 2
-call, then the open will succeed even without
-a connection being present.
-In practice, applications
-seldom open these files; they are opened by special programs, such
-as
-.Xr getty 2
+call, then the open will succeed even without a connection being present.
+.Pp
+In practice, applications seldom open these files; they are opened
+by special programs, such as
+.Xr getty 8
 or
-.Xr rlogind 2 ,
-and become
-an application's standard input, output, and error files.
+.Xr rlogind 8 ,
+and become an application's standard input, output, and error files.
 .Ss Job Control in a Nutshell
 Every process is associated with a particular process group and session.
 The grouping is hierarchical: every member of a particular process group is a
-member of the same session.  This structuring is used in managing groups
+member of the same session.
+This structuring is used in managing groups
 of related processes for purposes of
 .\" .Gw "job control" ;
 .Em "job control" ;
@@ -77,62 +79,82 @@ that is, the
 ability from the keyboard (or from program control) to simultaneously
 stop or restart
 a complex command (a command composed of one or more related
-processes).  The grouping into process groups allows delivering
+processes).
+.Pp
+The grouping into process groups allows delivering
 of signals that stop or start the group as a whole, along with
 arbitrating which process group has access to the single controlling
-terminal.  The grouping at a higher layer into sessions is to restrict
-the job control related signals and system calls to within processes
-resulting from a particular instance of a "login".  Typically, a session
-is created when a user logs in, and the login terminal is setup
-to be the controlling terminal; all processes spawned from that
-login shell are in the same session, and inherit the controlling
 terminal.
-A job control shell
-operating interactively (that is, reading commands from a terminal)
-normally groups related processes together by placing them into the
-same process group.  A set of processes in the same process group
-is collectively referred to as a "job". When the foreground process
-group of the terminal is the same as the process group of a particular
-job, that job is said to be in the "foreground".  When the process
-group of the terminal is different than the process group of
-a job (but is still the controlling terminal), that job is said
-to be in the "background".  Normally the
-shell reads a command and starts the job that implements that
-command.  If the command is to be started in the foreground (typical), it
+The grouping at a higher layer into sessions is to restrict
+the job control related signals and system calls to within processes
+resulting from a particular instance of a "login".
+.Pp
+Typically, a session is created when a user logs in, and the login
+terminal is setup to be the controlling terminal; all processes
+spawned from that login shell are in the same session, and inherit
+the controlling terminal.
+A job control shell operating interactively (that is, reading
+commands from a terminal) normally groups related processes together
+by placing them into the same process group.
+A set of processes in the same process group
+is collectively referred to as a "job".
+.Pp
+When the foreground process group of the terminal is the same as
+the process group of a particular job, that job is said to be in the
+.Em foreground .
+When the process group of the terminal is different than the process
+group of a job (but is still the controlling terminal), that job
+is said to be in the
+.Em background .
+.Pp
+Normally the shell reads a command and starts the job that implements
+that command.
+If the command is to be started in the foreground (typical), it
 sets the process group of the terminal to the process group
 of the started job, waits for the job to complete, and then
 sets the process group of the terminal back to its own process
-group (it puts itself into the foreground).  If the job is to
-be started in the background (as denoted by the shell operator "&"),
-it never changes the process group of the terminal and doesn't
-wait for the job to complete (that is, it immediately attempts to read the next
-command).  If the job is started in the foreground, the user may
-type a key (usually
+group (it puts itself into the foreground).
+.Pp
+If the job is to be started in the background (as denoted by the
+shell operator "&"), it never changes the process group of the
+terminal and doesn't wait for the job to complete (that is, it
+immediately attempts to read the next command).
+.Pp
+If the job is started in the foreground, the user may
+type a character (usually
 .Ql \&^Z )
 which generates the terminal stop signal
 .Pq Dv SIGTSTP
 and has the affect of stopping the entire job.
-The shell will notice that the job stopped, and will resume running after
-placing itself in the foreground.
+The shell will notice that the job stopped (see
+.Xr wait 2 ) ,
+and will resume running after placing itself in the foreground.
+.Pp
 The shell also has commands for placing stopped jobs in the background,
 and for placing stopped or background jobs into the foreground.
 .Ss Orphaned Process Groups
 An orphaned process group is a process group that has no process
 whose parent is in a different process group, yet is in the same
-session.  Conceptually it means a process group that doesn't have
-a parent that could do anything if it were to be stopped.  For example,
+session.
+Conceptually it means a process group that doesn't have
+a parent that could do anything if it were to be stopped.
+For example,
 the initial login shell is typically in an orphaned process group.
 Orphaned process groups are immune to keyboard generated stop
 signals and job control signals resulting from reads or writes to the
 controlling terminal.
 .Ss The Controlling Terminal
-A terminal may belong to a process as its controlling terminal.  Each
+A terminal may belong to a process as its controlling terminal.
+Each
 process of a session that has a controlling terminal has the same
-controlling terminal.  A terminal may be the controlling terminal for at
-most one session.  The controlling terminal for a session is allocated by
+controlling terminal.
+A terminal may be the controlling terminal for at
+most one session.
+The controlling terminal for a session is allocated by
 the session leader by issuing the
 .Dv TIOCSCTTY
-ioctl.  A controlling terminal
+ioctl.
+A controlling terminal
 is never acquired by merely opening a terminal device file.
 When a controlling terminal becomes
 associated with a session, its foreground process group is set to
@@ -140,7 +162,8 @@ the process group of the session leader.
 .Pp
 The controlling terminal is inherited by a child process during a
 .Xr fork 2
-function call.  A process relinquishes its controlling terminal when it
+function call.
+A process relinquishes its controlling terminal when it
 creates a new session with the
 .Xr setsid 2
 function; other processes
@@ -153,7 +176,8 @@ have it open.
 .Pp
 When a controlling process terminates, the controlling terminal is
 disassociated from the current session, allowing it to be acquired by a
-new session leader.  Subsequent access to the terminal by other processes
+new session leader.
+Subsequent access to the terminal by other processes
 in the earlier session will be denied, with attempts to access the
 terminal treated as if modem disconnect had been sensed.
 .Ss Terminal Access Control
@@ -174,8 +198,8 @@ process is orphaned, the
 returns -1 with
 .Va errno set to
 .Er Dv EIO
-and no
-signal is sent.  The default action of the
+and no signal is sent.
+The default action of the
 .Dv SIGTTIN
 signal is to stop the
 process to which it is sent.
@@ -194,14 +218,15 @@ is set and the process is ignoring or blocking the
 .Dv SIGTTOU
 signal, the process is allowed to write to the terminal and the
 .Dv SIGTTOU
-signal is not sent.  If
+signal is not sent.
+If
 .Dv TOSTOP
 is set, and the process group of
 the writing process is orphaned, and the writing process is not ignoring
 or blocking
 .Dv SIGTTOU ,
 the
-.Xr write
+.Xr write 2
 returns -1 with
 errno set to
 .Er Dv EIO
@@ -219,33 +244,38 @@ A terminal device associated with a terminal device file may operate in
 full-duplex mode, so that data may arrive even while output is occurring.
 Each terminal device file has associated with it an input queue, into
 which incoming data is stored by the system before being read by a
-process.  The system imposes a limit,
+process.
+The system imposes a limit,
 .Pf \&{ Dv MAX_INPUT Ns \&} ,
 on the number of
-bytes that may be stored in the input queue.  The behavior of the system
+bytes that may be stored in the input queue.
+The behavior of the system
 when this limit is exceeded depends on the setting of the
 .Dv IMAXBEL
-flag in the termios
+flag in the
+.Nm
 .Fa c_iflag .
 If this flag is set, the terminal
 is sent an
 .Tn ASCII
 .Dv BEL
 character each time a character is received
-while the input queue is full.  Otherwise, the input queue is flushed
+while the input queue is full.
+Otherwise, the input queue is flushed
 upon receiving the character.
 .Pp
 Two general kinds of input processing are available, determined by
-whether the terminal device file is in canonical mode or noncanonical
-mode. Additionally,
+whether the terminal device file is in canonical mode or noncanonical mode.
+Additionally,
 input characters are processed according to the
 .Fa c_iflag
 and
 .Fa c_lflag
-fields.  Such processing can include echoing, which
+fields.
+Such processing can include echoing, which
 in general means transmitting input characters immediately back to the
-terminal when they are received from the terminal.  This is useful for
-terminals that can operate in full-duplex mode.
+terminal when they are received from the terminal.
+This is useful for terminals that can operate in full-duplex mode.
 .Pp
 The manner in which data is provided to a process reading from a terminal
 device file is dependent on whether the terminal device file is in
@@ -254,13 +284,14 @@ canonical or noncanonical mode.
 Another dependency is whether the
 .Dv O_NONBLOCK
 flag is set by
-.Xr open()
+.Xr open 2
 or
-.Xr fcntl() .
+.Xr fcntl 2 .
 If the
 .Dv O_NONBLOCK
 flag is clear, then the read request is
-blocked until data is available or a signal has been received.  If the
+blocked until data is available or a signal has been received.
+If the
 .Dv O_NONBLOCK
 flag is set, then the read request is completed, without
 blocking, in one of three ways:
@@ -283,13 +314,15 @@ When data is available depends on whether the input processing mode is
 canonical or noncanonical.
 .Ss Canonical Mode Input Processing
 In canonical mode input processing, terminal input is processed in units
-of lines.  A line is delimited by a newline
+of lines.
+A line is delimited by a newline
 .Ql \&\en
 character, an end-of-file
 .Pq Dv EOF
 character, or an end-of-line
 .Pq Dv EOL
-character.  See the
+character.
+See the
 .Sx "Special Characters"
 section for
 more information on
@@ -298,8 +331,10 @@ and
 .Dv EOL .
 This means that a read request will
 not return until an entire line has been typed, or a signal has been
-received.  Also, no matter how many bytes are requested in the read call,
-at most one line is returned.  It is not, however, necessary to
+received.
+Also, no matter how many bytes are requested in the read call,
+at most one line is returned.
+It is not, however, necessary to
 read a whole line at once; any number of bytes, even one, may be
 requested in a read without losing information.
 .Pp
@@ -325,14 +360,16 @@ delimited by a newline
 .Dv EOF ,
 or
 .Dv EOL
-character.  This un-delimited
-data makes up the current line.  The
+character.
+This un-delimited data makes up the current line.
+The
 .Dv ERASE
 character deletes the last
-character in the current line, if there is any.  The
+character in the current line, if there is any.
+The
 .Dv KILL
-character
-deletes all data in the current line, if there is any.  The
+character deletes all data in the current line, if there is any.
+The
 .Dv ERASE
 and
 .Dv KILL
@@ -345,7 +382,8 @@ characters themselves are not placed in the input
 queue.
 .Ss Noncanonical Mode Input Processing
 In noncanonical mode input processing, input bytes are not assembled into
-lines, and erase and kill processing does not occur.  The values of the
+lines, and erase and kill processing does not occur.
+The values of the
 .Dv VMIN
 and
 .Dv VTIME
@@ -355,19 +393,20 @@ array are used to determine how to
 process the bytes received.
 .Pp
 .Dv VMIN
-represents the minimum number of bytes that should be received when
-the
-.Xr read
-function successfully returns.
+represents the minimum number of bytes that should be received when the
+.Xr read 2
+system call successfully returns.
 .Dv VTIME
 is a timer of 0.1 second
 granularity that is used to time out bursty and short term data
-transmissions.  If
+transmissions.
+If
 .Dv VMIN
 is greater than
 .Dv \&{ Dv MAX_INPUT Ns \&} ,
 the response to the
-request is undefined.  The four possible values for
+request is undefined.
+The four possible values for
 .Dv VMIN
 and
 .Dv VTIME
@@ -377,24 +416,30 @@ their interactions are described below.
 In this case
 .Dv VTIME
 serves as an inter-byte timer and is activated after
-the first byte is received.  Since it is an inter-byte timer, it is reset
-after a byte is received.  The interaction between
+the first byte is received.
+Since it is an inter-byte timer, it is reset
+after a byte is received.
+The interaction between
 .Dv VMIN
 and
 .Dv VTIME
 is as
 follows:  as soon as one byte is received, the inter-byte timer is
-started.  If
+started.
+If
 .Dv VMIN
 bytes are received before the inter-byte timer expires
 (remember that the timer is reset upon receipt of each byte), the read is
-satisfied.  If the timer expires before
+satisfied.
+If the timer expires before
 .Dv VMIN
 bytes are received, the
-characters received to that point are returned to the user.  Note that if
+characters received to that point are returned to the user.
+Note that if
 .Dv VTIME
 expires at least one byte is returned because the timer would
-not have been enabled unless a byte was received.  In this case
+not have been enabled unless a byte was received.
+In this case
 .Pf \&( Dv VMIN
 > 0,
 .Dv VTIME
@@ -403,21 +448,25 @@ not have been enabled unless a byte was received.  In this case
 and
 .Dv VTIME
 mechanisms are
-activated by the receipt of the first byte, or a signal is received.  If
-data is in the buffer at the time of the read(), the result is as
-if data had been received immediately after the read().
+activated by the receipt of the first byte, or a signal is received.
+If data is in the buffer at the time of the 
+.Xr read 2 ,
+the result is as if data had been received immediately after the 
+.Xr read 2 .
 .Ss "Case B: VMIN > 0, VTIME = 0"
 In this case, since the value of
 .Dv VTIME
 is zero, the timer plays no role
 and only
 .Dv VMIN
-is significant.  A pending read is not satisfied until
+is significant.
+A pending read is not satisfied until
 .Dv VMIN
 bytes are received (i.e., the pending read blocks until
 .Dv VMIN
 bytes
-are received), or a signal is received.  A program that uses this case to
+are received), or a signal is received.
+A program that uses this case to
 read record-based terminal
 .Dv I/O
 may block indefinitely in the read
@@ -427,23 +476,26 @@ In this case, since
 .Dv VMIN
 = 0,
 .Dv VTIME
-no longer represents an inter-byte
-timer.  It now serves as a read timer that is activated as soon as the
-read function is processed.  A read is satisfied as soon as a single
-byte is received or the read timer expires.  Note that in this case if
-the timer expires, no bytes are returned.  If the timer does not
+no longer represents an inter-byte timer.
+It now serves as a read timer that is activated as soon as the
+read function is processed.
+A read is satisfied as soon as a single byte is received or the
+read timer expires.
+Note that in this case if the timer expires, no bytes are returned.
+If the timer does not
 expire, the only way the read can be satisfied is if a byte is received.
-In this case the read will not block indefinitely waiting for a byte; if
-no byte is received within
+In this case the read will not block indefinitely waiting for a
+byte; if no byte is received within
 .Dv VTIME Ns *0.1
-seconds after the read is initiated,
-the read returns a value of zero, having read no data.  If data is
-in the buffer at the time of the read, the timer is started as if
-data had been received immediately after the read.
+seconds after the read is initiated, the read returns a value of
+zero, having read no data.
+If data is in the buffer at the time of the read, the timer is
+started as if data had been received immediately after the read.
 .Ss Case D: VMIN = 0, VTIME = 0
 The minimum of either the number of bytes requested or the number of
 bytes currently available is returned without waiting for more
-bytes to be input.  If no characters are available, read returns a
+bytes to be input.
+If no characters are available, read returns a
 value of zero, having read no data.
 .Ss Writing Data and Output Processing
 When a process writes one or more bytes to a terminal device file, they
@@ -451,9 +503,11 @@ are processed according to the
 .Fa c_oflag
 field (see the
 .Sx "Output Modes"
-section).  The
-implementation may provide a buffering mechanism; as such, when a call to
-write() completes, all of the bytes written have been scheduled for
+section).
+The implementation may provide a buffering mechanism; as such, when
+a call to 
+.Xr write 2
+completes, all of the bytes written have been scheduled for
 transmission to the device, but the transmission will not necessarily
 have been completed.
 .\" See also .Sx "6.4.2" for the effects of
@@ -468,11 +522,13 @@ Special character on input and is recognized if the
 .Dv ISIG
 flag (see the
 .Sx "Local Modes"
-section) is enabled.  Generates a
+section) is enabled.
+Generates a
 .Dv SIGINT
 signal which is sent to all processes in the foreground
 process group for which the terminal is the controlling
-terminal.  If
+terminal.
+If
 .Dv ISIG
 is set, the
 .Dv INTR
@@ -481,11 +537,13 @@ discarded when processed.
 .It Dv QUIT
 Special character on input and is recognized if the
 .Dv ISIG
-flag is enabled.  Generates a
+flag is enabled.
+Generates a
 .Dv SIGQUIT
 signal which is
 sent to all processes in the foreground process group
-for which the terminal is the controlling terminal.  If
+for which the terminal is the controlling terminal.
+If
 .Dv ISIG
 is set, the
 .Dv QUIT
@@ -494,7 +552,8 @@ processed.
 .It Dv ERASE
 Special character on input and is recognized if the
 .Dv ICANON
-flag is set.  Erases the last character in the
+flag is set.
+Erases the last character in the
 current line; see
 .Sx "Canonical Mode Input Processing" .
 It does not erase beyond
@@ -503,7 +562,8 @@ the start of a line, as delimited by an
 .Dv EOF ,
 or
 .Dv EOL
-character.  If
+character.
+If
 .Dv ICANON
 is set, the
 .Dv ERASE
@@ -512,13 +572,15 @@ discarded when processed.
 .It Dv KILL
 Special character on input and is recognized if the
 .Dv ICANON
-flag is set.  Deletes the entire line, as
+flag is set.
+Deletes the entire line, as
 delimited by a
 .Dv NL ,
 .Dv EOF ,
 or
 .Dv EOL
-character.  If
+character.
+If
 .Dv ICANON
 is set, the
 .Dv KILL
@@ -526,16 +588,20 @@ character is discarded when processed.
 .It Dv EOF
 Special character on input and is recognized if the
 .Dv ICANON
-flag is set.  When received, all the bytes
+flag is set.
+When received, all the bytes
 waiting to be read are immediately passed to the
 process, without waiting for a newline, and the
 .Dv EOF
-is discarded.  Thus, if there are no bytes waiting (that
+is discarded.
+Thus, if there are no bytes waiting (that
 is, the
 .Dv EOF
 occurred at the beginning of a line), a byte
-count of zero is returned from the read(),
-representing an end-of-file indication.  If
+count of zero is returned from the
+.Xr read 2 ,
+representing an end-of-file indication.
+If
 .Dv ICANON
 is
 set, the
@@ -544,12 +610,14 @@ character is discarded when processed.
 .Dv NL
 Special character on input and is recognized if the
 .Dv ICANON
-flag is set.  It is the line delimiter
+flag is set.
+It is the line delimiter
 .Ql \&\en .
 .It Dv EOL
 Special character on input and is recognized if the
 .Dv ICANON
-flag is set.  Is an additional line delimiter,
+flag is set.
+Is an additional line delimiter,
 like
 .Dv NL .
 .It Dv SUSP
@@ -571,9 +639,9 @@ recognized if the
 .Dv IXON
 (output control) or
 .Dv IXOFF
-(input
-control) flag is set.  Can be used to temporarily
-suspend output.  It is useful with fast terminals to
+(input control) flag is set.
+Can be used to temporarily suspend output.
+It is useful with fast terminals to
 prevent output from disappearing before it can be read.
 If
 .Dv IXON
@@ -588,10 +656,12 @@ recognized if the
 (output control) or
 .Dv IXOFF
 (input
-control) flag is set.  Can be used to resume output that
+control) flag is set.
+Can be used to resume output that
 has been suspended by a
 .Dv STOP
-character.  If
+character.
+If
 .Dv IXON
 is set, the
 .Dv START
@@ -603,7 +673,8 @@ flag is set; it is the
 .Ql \&\er ,
 as denoted in the
 .Tn \&C
-Standard {2}.  When
+Standard {2}.
+When
 .Dv ICANON
 and
 .Dv ICRNL
@@ -618,35 +689,40 @@ character.
 .El
 .Pp
 The following special characters are extensions defined by this
-system and are not a part of 1003.1 termios.
+system and are not a part of
+.St -p1003.1
+.Nm "" .
 .Bl -tag -width indent
 .It Dv EOL2
 Secondary
 .Dv EOL
-character.  Same function as
+character.
+Same function as
 .Dv EOL.
 .It Dv WERASE
 Special character on input and is recognized if the
 .Dv ICANON
-flag is set.  Erases the last word in the current
-line according to one of two algorithms.  If the
+flag is set.
+Erases the last word in the current
+line according to one of two algorithms.
+If the
 .Dv ALTWERASE
 flag is not set, first any preceding whitespace is
 erased, and then the maximal sequence of non-whitespace
-characters.  If
+characters.
+If
 .Dv ALTWERASE
-is set, first any preceding
-whitespace is erased, and then the maximal sequence
-of alphabetic/underscores or non alphabetic/underscores.
+is set, first any preceding whitespace is erased, and then the
+maximal sequence of alphabetic/underscores or non alphabetic/underscores.
 As a special case in this second algorithm, the first previous
-non-whitespace character is skipped in determining
-whether the preceding word is a sequence of
-alphabetic/undercores.  This sounds confusing but turns
-out to be quite practical.
+non-whitespace character is skipped in determining whether the
+preceding word is a sequence of alphabetic/undercores.
+This sounds confusing but turns out to be quite practical.
 .It Dv REPRINT
 Special character on input and is recognized if the
 .Dv ICANON
-flag is set.  Causes the current input edit line
+flag is set.
+Causes the current input edit line
 to be retyped.
 .It Dv DSUSP
 Has similar actions to the
@@ -655,25 +731,30 @@ character, except that
 the
 .Dv SIGTSTP
 signal is delivered when one of the processes
-in the foreground process group issues a read() to the
-controlling terminal.
+in the foreground process group issues a 
+.Xr read 2
+to the controlling terminal.
 .It Dv LNEXT
 Special character on input and is recognized if the
 .Dv IEXTEN
-flag is set.  Receipt of this character causes the next
+flag is set.
+Receipt of this character causes the next
 character to be taken literally.
 .It Dv DISCARD
 Special character on input and is recognized if the
 .Dv IEXTEN
-flag is set.  Receipt of this character toggles the flushing
+flag is set.
+Receipt of this character toggles the flushing
 of terminal output.
 .It Dv STATUS
 Special character on input and is recognized if the
 .Dv ICANON
-flag is set.  Receipt of this character causes a
+flag is set.
+Receipt of this character causes a
 .Dv SIGINFO
 signal to be sent to the foreground process group of the
-terminal.  Also, if the
+terminal.
+Also, if the
 .Dv NOKERNINFO
 flag is not set, it
 causes the kernel to write a status message to the terminal
@@ -712,12 +793,14 @@ field for
 the terminal, the
 .Dv SIGHUP
 signal is sent to the controlling
-process associated with the terminal.  Unless other arrangements have
+process associated with the terminal.
+Unless other arrangements have
 been made, this causes the controlling process to terminate.
-Any subsequent call to the read() function returns the value zero,
-indicating end of file.  Thus, processes that read a terminal
-file and test for end-of-file can terminate appropriately after a
-disconnect.
+Any subsequent call to the 
+.Xr read 2
+function returns the value zero, indicating end of file.
+Thus, processes that read a terminal file and test for end-of-file
+can terminate appropriately after a disconnect.
 .\" If the
 .\" .Er EIO
 .\" condition specified in 6.1.1.4 that applies
@@ -727,8 +810,9 @@ disconnect.
 .\" condition or the
 .\" .Pf [ Dv EIO
 .\" ] is returned.
-Any
-subsequent write() to the terminal device returns -1, with
+Any subsequent 
+.Xr write 2
+to the terminal device returns -1, with
 .Va errno
 set to
 .Er EIO ,
@@ -737,7 +821,8 @@ until the device is closed.
 .Pp
 .Ss Closing a Terminal Device File
 The last process to close a terminal device file causes any output
-to be sent to the device and any input to be discarded.  Then, if
+to be sent to the device and any input to be discarded.
+Then, if
 .Dv HUPCL
 is set in the control modes, and the communications port supports a
 disconnect function, the terminal device performs a disconnect.
@@ -745,11 +830,13 @@ disconnect function, the terminal device performs a disconnect.
 Routines that need to control certain terminal
 .Tn I/O
 characteristics
-do so by using the termios structure as defined in the header
+do so by using the
+.Nm
+structure as defined in the header
 .Aq Pa termios.h .
 This structure contains minimally four scalar elements of bit flags
-and one array of special characters.  The scalar flag elements are
-named:
+and one array of special characters.
+The scalar flag elements are named:
 .Fa c_iflag ,
 .Fa c_oflag ,
 .Fa c_cflag ,
@@ -797,16 +884,19 @@ following masks:
 .Pp
 In the context of asynchronous serial data transmission, a break
 condition is defined as a sequence of zero-valued bits that continues for
-more than the time to send one byte.  The entire sequence of zero-valued
+more than the time to send one byte.
+The entire sequence of zero-valued
 bits is interpreted as a single break condition, even if it continues for
-a time equivalent to more than one byte.  In contexts other than
+a time equivalent to more than one byte.
+In contexts other than
 asynchronous serial data transmission the definition of a break condition
 is implementation defined.
 .Pp
 If
 .Dv IGNBRK
 is set, a break condition detected on input is ignored, that
-is, not put on the input queue and therefore not read by any process.  If
+is, not put on the input queue and therefore not read by any process.
+If
 .Dv IGNBRK
 is not set and
 .Dv BRKINT
@@ -815,7 +905,8 @@ input and output queues and if the terminal is the controlling terminal
 of a foreground process group, the break condition generates a
 single
 .Dv SIGINT
-signal to that foreground process group.  If neither
+signal to that foreground process group.
+If neither
 .Dv IGNBRK
 nor
 .Dv BRKINT
@@ -847,7 +938,8 @@ X, where
 .Ql \&\e0
 is a two-character
 flag preceding each sequence and X is the data of the character received
-in error.  To avoid ambiguity in this case, if
+in error.
+To avoid ambiguity in this case, if
 .Dv ISTRIP
 is not set, a valid
 character of
@@ -866,11 +958,12 @@ break) is given to the application as a single character
 .Pp
 If
 .Dv INPCK
-is set, input parity checking is enabled.  If
+is set, input parity checking is enabled.
+If
 .Dv INPCK
-is not set,
-input parity checking is disabled, allowing output parity generation
-without input parity errors.  Note that whether input parity checking is
+is not set, input parity checking is disabled, allowing output
+parity generation without input parity errors.
+Note that whether input parity checking is
 enabled or disabled is independent of whether parity detection is enabled
 or disabled (see
 .Sx "Control Modes" ) .
@@ -890,12 +983,14 @@ is set, a received
 .Dv NL
 character is translated into a
 .Dv CR
-character.  If
+character.
+If
 .Dv IGNCR
 is set, a received
 .Dv CR
 character is ignored (not
-read).  If
+read).
+If
 .Dv IGNCR
 is not set and
 .Dv ICRNL
@@ -908,22 +1003,25 @@ character.
 .Pp
 If
 .Dv IXON
-is set, start/stop output control is enabled.  A received
+is set, start/stop output control is enabled.
+A received
 .Dv STOP
 character suspends output and a received
 .Dv START
 character
-restarts output. If
+restarts output.
+If
 .Dv IXANY
-is also set, then any character may
-restart output. When
+is also set, then any character may restart output.
+When
 .Dv IXON
 is set,
 .Dv START
 and
 .Dv STOP
 characters are not
-read, but merely perform flow control functions.  When
+read, but merely perform flow control functions.
+When
 .Dv IXON
 is not set,
 the
@@ -934,8 +1032,8 @@ characters are read.
 .Pp
 If
 .Dv IXOFF
-is set, start/stop input control is enabled.  The system shall
-transmit one or more
+is set, start/stop input control is enabled.
+The system shall transmit one or more
 .Dv STOP
 characters, which are intended to cause the
 terminal device to stop transmitting data, as needed to prevent the input
@@ -946,7 +1044,8 @@ and shall transmit one or more
 characters, which are
 intended to cause the terminal device to resume transmitting data, as
 soon as the device can continue transmitting data without risk of
-overflowing the input queue.  The precise conditions under which
+overflowing the input queue.
+The precise conditions under which
 .Dv STOP
 and
 START
@@ -959,7 +1058,9 @@ is set and the input queue is full, subsequent input shall cause an
 .Dv BEL
 character to be transmitted to the output queue.
 .Pp
-The initial input control value after open() is implementation defined.
+The initial input control value after 
+.Xr open 2
+is implementation defined.
 .Ss Output Modes
 Values of the
 .Fa c_oflag
@@ -1070,7 +1171,8 @@ flow control of output */
 The
 .Dv CSIZE
 bits specify the byte size in bits for both transmission and
-reception.  The
+reception.
+The
 .Fa c_cflag
 is masked with
 .Dv CSIZE
@@ -1081,51 +1183,54 @@ values
 .Dv CS7 ,
 or
 .Dv CS8 .
-This size does not include the parity bit, if any.  If
+This size does not include the parity bit, if any.
+If
 .Dv CSTOPB
-is set, two stop bits are used, otherwise one stop bit.  For example, at
-110 baud, two stop bits are normally used.
+is set, two stop bits are used, otherwise one stop bit.
+For example, at 110 baud, two stop bits are normally used.
 .Pp
 If
 .Dv CREAD
-is set, the receiver is enabled.  Otherwise, no character is
-received. 
-Not all hardware supports this bit.  In fact, this flag
-is pretty silly and if it were not part of the
-.Nm termios
-specification
-it would be omitted.
+is set, the receiver is enabled.
+Otherwise, no character is received.
+Not all hardware supports this bit.
+In fact, this flag is pretty silly and if it were not part of the
+.Nm
+specification it would be omitted.
 .Pp
 If
 .Dv PARENB
 is set, parity generation and detection are enabled and a parity
-bit is added to each character.  If parity is enabled,
+bit is added to each character.
+If parity is enabled,
 .Dv PARODD
-specifies
-odd parity if set, otherwise even parity is used.
+specifies odd parity if set, otherwise even parity is used.
 .Pp
 If
 .Dv HUPCL
-is set, the modem control lines for the port are lowered
-when the last process with the port open closes the port or the process
-terminates.  The modem connection is broken.
+is set, the modem control lines for the port are lowered when the
+last process with the port open closes the port or the process terminates.
+The modem connection is broken.
 .Pp
 If
 .Dv CLOCAL
 is set, a connection does not depend on the state of the modem
-status lines.  If
+status lines.
+If
 .Dv CLOCAL
-is clear, the modem status lines are
-monitored.
+is clear, the modem status lines are monitored.
 .Pp
-Under normal circumstances, a call to the open() function waits for
-the modem connection to complete.  However, if the
+Under normal circumstances, a call to the 
+.Xr open 2
+function waits for the modem connection to complete.
+However, if the
 .Dv O_NONBLOCK
 flag is set
 or if
 .Dv CLOCAL
-has been set, the open() function returns
-immediately without waiting for the connection.
+has been set, the 
+.Xr open 2
+function returns immediately without waiting for the connection.
 .Pp
 The
 .Dv CCTS_OFLOW
@@ -1203,7 +1308,8 @@ and
 .Pp
 If
 .Dv ECHO
-is set, input characters are echoed back to the terminal.  If
+is set, input characters are echoed back to the terminal.
+If
 .Dv ECHO
 is not set, input characters are not echoed.
 .Pp
@@ -1213,9 +1319,9 @@ and
 .Dv ICANON
 are set, the
 .Dv ERASE
-character causes the terminal
-to erase the last character in the current line from the display, if
-possible.  If there is no character to erase, an implementation may echo
+character causes the terminal to erase the last character in the
+current line from the display, if possible.
+If there is no character to erase, an implementation may echo
 an indication that this was the case or do nothing.
 .Pp
 If
@@ -1277,7 +1383,8 @@ is not set.
 .Pp
 If
 .Dv ICANON
-is set, canonical processing is enabled.  This enables the
+is set, canonical processing is enabled.
+This enables the
 erase and kill edit functions, and the assembly of input characters into
 lines delimited by
 .Dv NL,
@@ -1290,13 +1397,15 @@ as described in
 If
 .Dv ICANON
 is not set, read requests are satisfied directly from the input
-queue.  A read is not satisfied until at least
+queue.
+A read is not satisfied until at least
 .Dv VMIN
 bytes have been
 received or the timeout value
 .Dv VTIME
-expired between bytes.  The time value
-represents tenths of seconds.  See
+expired between bytes.
+The time value represents tenths of seconds.
+See
 .Sx "Noncanonical Mode Input Processing"
 for more details.
 .Pp
@@ -1308,23 +1417,23 @@ control characters
 .Dv QUIT ,
 and
 .Dv SUSP
-(job control only).  If an input
-character matches one of these control characters, the function
-associated with that character is performed.  If
+(job control only).
+If an input character matches one of these control characters, the
+function associated with that character is performed.
+If
 .Dv ISIG
-is not set, no
-checking is done.  Thus these special input functions are possible only
-if
+is not set, no checking is done.
+Thus these special input functions are possible only if
 .Dv ISIG
 is set.
 .Pp
 If
 .Dv IEXTEN
 is set, implementation-defined functions are recognized
-from the input data.  How
+from the input data.
+How
 .Dv IEXTEN
-being set
-interacts with
+being set interacts with
 .Dv ICANON ,
 .Dv ISIG ,
 .Dv IXON ,
@@ -1359,9 +1468,11 @@ is set, the signal
 .Dv SIGTTOU
 is sent to the process group of a process that tries to write to
 its controlling terminal if it is not in the foreground process group for
-that terminal.  This signal, by default, stops the members of the process
-group.  Otherwise, the output generated by that process is output to the
-current output stream.  Processes that are blocking or ignoring
+that terminal.
+This signal, by default, stops the members of the process group.
+Otherwise, the output generated by that process is output to the
+current output stream.
+Processes that are blocking or ignoring
 .Dv SIGTTOU
 signals are excepted and allowed to produce output and the
 .Dv SIGTTOU
@@ -1379,7 +1490,8 @@ characters (see
 The special control characters values are defined by the array
 .Fa c_cc .
 This table lists the array index, the corresponding special character,
-and the system default value.  For an accurate list of
+and the system default value.
+For an accurate list of
 the system defaults, consult the header file
 .Aq Pa ttydefaults.h .
 .Pp
@@ -1426,8 +1538,9 @@ entries of the
 array.
 .Pp
 The initial values of the flags and control characters
-after open() is set according to
-the values in the header
+after 
+.Xr open 2
+is set according to the values in the header
 .Aq Pa sys/ttydefaults.h .
 .Sh SEE ALSO
 .Xr tcsetattr 3 ,

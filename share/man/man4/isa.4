@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.8 1997/11/11 05:48:16 thorpej Exp $
+.\"	$NetBSD: isa.4,v 1.9 1998/04/30 08:50:07 fair Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -37,47 +37,71 @@
 .Nd introduction to machine-independent ISA bus support and drivers
 .Sh SYNOPSIS
 .Pp
-Attachmens are machine-dependent and depend on the bus topology and
-ISA bus interface of your system.  See
+Attachments are machine-dependent and depend on the bus topology and
+.Tn ISA
+bus interface of your system.
+See
 .Xr intro 4
 for your system for details.
 .Sh INTRODUCTION
 .Nx
-includes a machine-independent ISA bus subsystem and several
-machine-independent ISA device drivers.
+includes a machine-independent
+.Tn ISA
+bus subsystem and several machine-independent
+.Tn ISA
+device drivers.
 .Pp
-Your system may support additional ISA devices.  Drivers for ISA
+Your system may support additional
+.Tn ISA
+devices.
+Drivers for
+.Tn ISA
 device not listed here are machine-dependent.
 Consult your system's
 .Xr intro 4
 for additional information.
 .Sh SUPPORTED DEVICES
 .Nx
-includes machine-independent ISA drivers, sorted by device type
-and driver name:
+includes machine-independent
+.Tn ISA
+drivers, sorted by device type and driver name:
 .Pp
 .Ss Disk and tape controllers
 .Bl -tag -width speaker -offset indent
 .It aha
 Adaptec AHA-154x family (154xA, 154xB, 154xC, and 154xCF) and the
-BusLogic BT54x SCSI interfaces.
+BusLogic BT54x
+.Tn SCSI
+interfaces.
 .It aic
-Adaptec AIC-6260 and Adaptec AIC-6360 based SCSI interfaces, including
-the Adaptec 152x, SoundBlaster SCSI interfaces, and a variety of compatibles.
+Adaptec AIC-6260 and Adaptec AIC-6360 based
+.Tn SCSI
+interfaces, including
+the Adaptec 152x, SoundBlaster
+.Tn SCSI
+interfaces, and a variety of compatibles.
 .It bha
-BusLogic BT-445 SCSI interfaces.
+BusLogic BT-445
+.Tn SCSI
+interfaces.
 .It mcd
 Mitsumi CD-ROM drives.
 .It sea
-Seagate/Future Domain SCSI cards.  ST01/02, Future Domain TMC-885, and
-Future Domain TMC-950.
+Seagate/Future Domain
+.Tn SCSI
+cards.
+ST01/02, Future Domain TMC-885, and Future Domain TMC-950.
 .It uha
-Ultrastor 14f SCSI interfaces.
+Ultrastor 14f
+.Tn SCSI
+interfaces.
 .It wdc
 Standard Western Digital type hard drive controllers: MFM, RLL, ESDI,
 and IDE/ATAPI.
 .It wds
-WD-7000 family of bus-mastering SCSI interfaces.
+WD-7000 family of bus-mastering
+.Tn SCSI
+interfaces.
 .It wt
 Wangtek and compatible QIC-02 and QIC-36 tape drives.
 .El
@@ -85,13 +109,15 @@ Wangtek and compatible QIC-02 and QIC-36 tape drives.
 .Ss Serial and parallel interfaces
 .Bl -tag -width speaker -offset indent
 .It ast
-Multi-port serial communications card first made by AST. 
+Multi-port serial communications card first made by AST.
 .It boca
 Boca BB100[48] and BB2016 multiplexing serial communications cards.
 .It cy
 Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications cards.
 .It lpt
-Standard ISA parallel port interface.
+Standard
+.Tn ISA
+parallel port interface.
 .It rtfps
 IBM RT four-port serial cards.
 .El
@@ -99,35 +125,56 @@ IBM RT four-port serial cards.
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent
 .It ec
-3Com Etherlink II (3c503) Ethernet interfaces.
+3Com Etherlink II (3c503)
+.Tn Ethernet
+interfaces.
 .It eg
-3Com Etherlink Plus (3c505) Ethernet interfaces.
+3Com Etherlink Plus (3c505)
+.Tn Ethernet
+interfaces.
 .It el
-3Com Etherlink (3c501) Ethernet interfaces.
+3Com Etherlink (3c501)
+.Tn Ethernet
+interfaces.
 .It ep
-3Com Etherlink III (3c509) Ethernet interfaces.
+3Com Etherlink III (3c509)
+.Tn Ethernet
+interfaces.
 .It fe
 Ethernet interfaces based on the Fujitsu MB86960A/MB86965A chipset,
 including Fujitsu FMV-181, FMV-182, Allied Telesis AT1700 series,
 and RE2000 series.
 .\".It hp
-.\" Broken driver for HP -relabelled Ethernet cards.
+.\" Broken driver for HP -relabelled
+.\" .Tn Ethernet
+.\" cards.
 .It ie
-Ethernet interfaces based on Intel 82586 Ethernet chip,
+Ethernet interfaces based on Intel 82586
+.Tn Ethernet
+chip,
 including AT&T Starlan-10, AT&T EN100, AT&T Starlan Fibre, and 3Com 3c507.
 .It iy
-Intel i82595-based Ethernet interfaces, including the EtherExpress Pro/10.
+Intel i82595-based
+.Tn Ethernet
+interfaces, including the EtherExpress Pro/10.
 .It lc
-DEC EtherWORKS III Ethernet interfaces (DE203, DE204, and DE205).
+DEC EtherWORKS III
+.Tn Ethernet
+interfaces (DE203, DE204, and DE205).
 .It le
 Ethernet interfaces based on the AMD LANCE chip,
 including BICC Isolan, Novell NE2100, Digital DEPCA, and PCnet-ISA.
 .It ne
-Novel NE2000 and compatible Ethernet interfaces.
+Novel NE2000 and compatible
+.Tn Ethernet
+interfaces.
 .It sm
-SMC91C9x-based Ethernet interfaces.
+SMC91C9x-based
+.Tn Ethernet
+interfaces.
 .It we
-Western Digital/SMC 80x3, SMC Elite Ultra, and SMC EtherEZ Ethernet
+Western Digital/SMC 80x3, SMC Elite Ultra, and SMC EtherEZ
+.Tn Ethernet
 interfaces.
 .El
 .Ss Sound cards
@@ -146,8 +193,12 @@ Windows Sound System-compatible sound cards based on the AD1848 and
 compatible chips.
 .El
 .Pp
-Note that some ISA devices also have newer ISA Plug-and-Play variants.
-These are listed in 
+Note that some
+.Tn ISA
+devices also have newer
+.Tn ISA
+Plug-and-Play variants.
+These are listed in
 .Xr isapnp 4 .
 .Sh SEE ALSO
 .Xr aha 4 ,
@@ -181,5 +232,7 @@ These are listed in
 .Xr wss 4 ,
 .Xr wt 4
 .Sh HISTORY
-The machine-independent ISA subsystem appeared in
+The machine-independent
+.Tn ISA
+subsystem appeared in
 .Nx 1.2 .

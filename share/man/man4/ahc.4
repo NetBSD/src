@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.7 1998/02/06 06:06:44 perry Exp $
+.\"	$NetBSD: ahc.4,v 1.8 1998/04/30 08:50:04 fair Exp $
 .\"
 .\" Copyright (c) 1995, 1996 
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -61,15 +61,20 @@ To enable SCB paging:
 .Cd options AHC_SCBPAGING_ENABLE
 .Pp
 .ie 0 \{
-For one or more SCSI busses:
+For one or more
+.Tn SCSI
+busses:
 .Cd controller scbus0 at ahc0
 \}
-\{For SCSI busses:
+\{For
+.Tn SCSI
+busses:
 .Cd scsibus* at ahc?\}
 .Sh DESCRIPTION
 This driver provides access to the
 .Tn SCSI
-bus connected to an Adaptec 
+bus connected to an
+.Tn Adaptec 
 274x, 284x, 2940, 3940, or controllers based on the
 .Tn AIC7770,
 .Tn AIC7850,
@@ -78,11 +83,9 @@ bus connected to an Adaptec
 or
 .Tn AIC7880
 host adapter chips.
-Features include support for twin and wide busses,
-ultra
-.Tn SCSI,
-two active commands at a time per non-tagged queueing target,
-tagged queuing,
+Features include support for twin and wide busses, ultra
+.Tn SCSI ,
+two active commands at a time per non-tagged queueing target, tagged queuing,
 and SCB paging which allows up to 255 active commands on all adapters
 except those using 
 .Tn AIC7770
@@ -96,8 +99,7 @@ configuration option.
 .Pp
 Per target configuration performed in the 
 .Tn SCSI-Select
-menu, accesible at boot
-in 
+menu, accesible at boot in 
 .No non- Ns Tn EISA
 models or through an 
 .Tn EISA
@@ -108,53 +110,54 @@ is honored by this driver with the stipulation that the
 .Tn BIOS
 must be enabled for 
 .Tn EISA
-adaptors.  This includes synchronous/asynchronous transfers,
-maximum synchronous negotiation rate,
-disconnection,
-and the host adapter's SCSI ID.
+adaptors.
+This includes synchronous/asynchronous transfers, maximum synchronous
+negotiation rate, disconnection, and the host adapter's SCSI ID.
 .Pp
 Note that I/O addresses are determined automatically by the probe routines,
 but care should be taken when using a 284x
 .Pq Tn VESA No local bus controller
 in an
 .Tn EISA 
-system.  Ensure that the jumpers setting the I/O area for the 284x match the 
+system.
+Ensure that the jumpers setting the I/O area for the 284x match the 
 .Tn EISA
 slot into which the card is inserted to prevent conflicts with other
 .Tn EISA
 cards.
 .Sh BUGS
-Some Quantum drives (at least the Empire 2100 and 1080s) will not run on an
+Some
+.Tn Quantum
+drives (at least the Empire 2100 and 1080s) will not run on an
 .Tn AIC7870
-Rev B in synchronous mode at 10MHz.  Controllers with this problem have a
-42 MHz clock crystal on them and run slightly above 10MHz, causing the
-drive much confusion.  Setting a maximum synchronous negotiation rate of 8MHz
-in the 
+Rev B in synchronous mode at 10MHz.
+Controllers with this problem have a 42 MHz clock crystal on them
+and run slightly above 10MHz, causing the drive much confusion.
+Setting a maximum synchronous negotiation rate of 8MHz in the 
 .Tn SCSI-Select
-utility
-will allow normal function.
+utility will allow normal function.
 .if 1 \{
 .Pp
-SCSI residual handling is not complete on
+.Tn SCSI
+residual handling is not complete on
 .Nx
 version of this driver.
 \}
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr aha 4 ,
 .Xr ahb 4 ,
 .Xr cd 4 ,
-.if 0 \{
 .Xr scsi 4 ,
-\}
 .Xr sd 4 ,
 .Xr st 4
 .Sh AUTHOR
 The
 .Nm
-driver was written by Justin Gibbs.  The
+driver was written by Justin Gibbs.
+The
 .Tn AIC7xxx
-sequencer-code assembler was
-written by John Aycock.
+sequencer-code assembler was written by John Aycock.
 .Nx 
 porting is done by Stefan Grefen, Charles M. Hannum,
 Michael Graff, Jason R. Thorpe, Pete Bentley and Noriyuki Soda.

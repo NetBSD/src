@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnd.4,v 1.4 1997/11/13 09:29:43 thorpej Exp $
+.\"	$NetBSD: vnd.4,v 1.5 1998/04/30 08:50:15 fair Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,9 +45,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides a disk-like interface to a file.  This is useful for
-a variety of applications, including swap files and building miniroot
-or floppy disk images.
+driver provides a disk-like interface to a file.
+This is useful for a variety of applications, including swap files
+and building miniroot or floppy disk images.
 .Pp
 This document assumes that you're familiar with how to generate kernels,
 how to properly configure disks and pseudo-devices in a kernel
@@ -63,7 +63,8 @@ The
 .Ar count
 argument is how many
 .Nm vnd Ns s
-memory is allocated for at boot time.  In this example, no more than 4
+memory is allocated for at boot time.
+In this example, no more than 4
 .Nm vnd Ns s
 may be configured.
 .Pp
