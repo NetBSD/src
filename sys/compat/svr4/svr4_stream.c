@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.11 1996/02/10 00:48:12 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.12 1996/03/30 22:38:19 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -227,7 +227,7 @@ svr4_sockmod(fp, ioc, p)
 		return 0;
 
 	default:
-		DPRINTF(("Unknown sockmod ioctl %x\n", ioc->cmd));
+		DPRINTF(("Unknown sockmod ioctl %lx\n", ioc->cmd));
 		return 0;
 
 	}
@@ -323,7 +323,7 @@ svr4_timod(fp, ioc, p)
 		return 0;
 
 	default:
-		DPRINTF(("Unknown timod ioctl %x\n", ioc->cmd));
+		DPRINTF(("Unknown timod ioctl %lx\n", ioc->cmd));
 		return 0;
 	}
 }
@@ -339,7 +339,7 @@ svr4_showioc(str, ioc)
 	int error;
 	int i;
 
-	printf("%s cmd = %d, timeout = %d, len = %d, buf = %p { ",
+	printf("%s cmd = %ld, timeout = %d, len = %d, buf = %p { ",
 	       str, ioc->cmd, ioc->timeout, ioc->len, ioc->buf);
 
 	if ((error = copyin(ioc->buf, ptr, ioc->len)) != 0) {
@@ -429,7 +429,7 @@ svr4_streamioctl(fp, cmd, dat, p, retval)
 			break;
 
 		default:
-			DPRINTF(("Unimplemented module %c %d\n",
+			DPRINTF(("Unimplemented module %c %ld\n",
 				 (char) (cmd >> 8), cmd & 0xff));
 			return 0;
 		}
@@ -550,7 +550,7 @@ svr4_streamioctl(fp, cmd, dat, p, retval)
 		return 0;
 
 	default:
-		DPRINTF(("unimpl cmd = %x\n", cmd));
+		DPRINTF(("unimpl cmd = %lx\n", cmd));
 		break;
 	}
 
@@ -750,7 +750,7 @@ svr4_sys_putmsg(p, v, retval)
 			return error;
 		}
 	default:
-		DPRINTF(("putmsg: Unimplemented command %x\n", sc.cmd));
+		DPRINTF(("putmsg: Unimplemented command %lx\n", sc.cmd));
 		return ENOSYS;
 	}
 }
