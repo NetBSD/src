@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_lcdvar.h,v 1.3 2001/07/02 13:52:30 ichiro Exp $ */
+/*	$NetBSD: ipaq_lcdvar.h,v 1.1 2001/07/10 18:09:33 ichiro Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,11 +43,11 @@
 #include <dev/hpc/hpcfbvar.h>
 #include <dev/hpc/hpcfbio.h>
 
-struct salcd_softc {
+struct ipaqlcd_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	struct sa11x0_softc     *sc_parent;
+	struct ipaq_softc	*sc_parent;
 
 	struct hpcfb_fbconf	sc_fbconf;
 	struct hpcfb_dspconf	sc_dspconf;
