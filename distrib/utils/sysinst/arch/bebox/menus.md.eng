@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.3 1999/03/31 00:44:49 fvdl Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.4 1999/06/20 01:23:34 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,11 +38,11 @@
 
 /* Menu definitions for sysinst. bebox version, machine dependent. */
 
-menu fullpart, title  "  Select your choice";
+menu fullpart, title  "Select your choice";
 	option "Use only part of the disk", exit, action  {usefull = 0;};
 	option "Use the entire disk", 	    exit, action  {usefull = 1;};
 
-menu wdtype, title  "  Select type";
+menu wdtype, title  "Select type";
 	display action { msg_display (MSG_wdtype, diskdev); };
 	option "IDE", 	exit;
 	option "ESDI", 	exit, action
@@ -59,7 +59,7 @@ menu wdtype, title  "  Select type";
 		};
 
 
-menu dlgeom, title "  Choose an option";
+menu dlgeom, title "Choose an option";
 	display action { msg_display (MSG_dlgeom, diskdev, dlcyl, dlhead,
 				dlsec, disk->dd_cyl, disk->dd_head,
 				disk->dd_sec);
@@ -75,7 +75,7 @@ menu dlgeom, title "  Choose an option";
 			disk->dd_sec = dlsec;
 		};
 
-menu editparttable, title  "  Choose your partition", exit;
+menu editparttable, title  "Choose your partition", exit;
 	display action  { msg_display (MSG_editparttable);
 			  disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF], activepart,-1);
 			};
@@ -90,7 +90,7 @@ menu editparttable, title  "  Choose your partition", exit;
 	option "Reselect size specification",
 		action  { reask_sizemult(); }; 
 
-menu editpart, title  "  Select to change";
+menu editpart, title  "Select to change";
 	display action { msg_display (MSG_editpart, editpart);
 			   disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
 ], activepart,editpart);
@@ -119,7 +119,7 @@ menu editpart, title  "  Select to change";
 	option "Set active", action { activepart = editpart; };
 	option "Partition OK", exit;
 
-menu chooseid, title  "  Partition Kind? ";
+menu chooseid, title  "Partition Kind?";
 	option "NetBSD", 	exit,	action
 	{
 		part[editpart].mbrp_typ = 165;
@@ -178,7 +178,7 @@ menu editfsparts, y=12, exit;
 	option "Set new allocation size", action { reask_sizemult(); };
  
 
-menu md_distcustom, x=30, y=3, exit, title " Selection toggles inclusion";
+menu md_distcustom, x=30, y=3, exit, title "Selection toggles inclusion";
 	display action { show_cur_distsets (); };
 	option  "Compiler Tools", 	 action { toggle_getit (3); };
 	option  "Games", 		 action { toggle_getit (4); };

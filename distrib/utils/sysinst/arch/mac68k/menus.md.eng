@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.1 1999/03/22 08:37:33 ender Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.2 1999/06/20 01:23:35 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,11 +38,11 @@
 
 /* Menu definitions for sysinst. mac68k version, machine dependent. */
 
-menu fullpart, title  "  Select your choice";
+menu fullpart, title  "Select your choice";
 	option "Use only part of the disk", exit, action  {usefull = 0;};
 	option "Use the entire disk", 	    exit, action  {usefull = 1;};
 
-menu nodiskmap, title "  Choose an option", y=16;
+menu nodiskmap, title "Choose an option", y=16;
 	display action { msg_display (MSG_nodiskmap, diskdev); };
 	option "Abort install",
 		action (endwin)  { exit(1); };
@@ -65,7 +65,7 @@ menu nodiskmap, title "  Choose an option", y=16;
 			 sizeof(struct part_map_entry));
  	};
 
-menu editparttable, title  "  Choose your partition", exit, y=15;
+menu editparttable, title  "Choose your partition", exit, y=15;
 	display action  { msg_display (MSG_editparttable);
 			  sortmerge();
 			  if (map.selected >= map.usable_cnt)
@@ -143,11 +143,11 @@ menu editparttable, title  "  Choose your partition", exit, y=15;
                 };
 
 
-menu okabort, title " What do you want to do? ";
+menu okabort, title "What do you want to do?";
 	option "OK", exit, action { yesno = 1; };
 	option "Abort install", exit, action { yesno = 0; };
 
-menu chooseid, title  "  Partition Type? ";
+menu chooseid, title  "Partition Type?";
 	option "NetBSD Root", exit, action {
 		int i, j;
 		char fstyp[16], use[16], name[64];
@@ -249,7 +249,7 @@ menu chooseid, title  "  Partition Type? ";
 		bzb->mount_point[0] = '\0';
 		strcpy (map.blk[j].pmPartType, "Apple_Free"); };
 
-menu mount_point, title  "  Mount Point? ";
+menu mount_point, title  "Mount Point?";
 	option "/usr", exit, action {
 		int j;
 		EBZB *bzb;
@@ -301,7 +301,7 @@ menu mount_point, title  "  Mount Point? ";
 		    strcat(bzb->mount_point, buf);
 		} };
 
-menu sanity, title " Choose an option";
+menu sanity, title "Choose an option";
 	display action {msg_display (MSG_sanity_check);
 		report_errors(); };
 	option "Abort installation", exit, action {yesno = -1; };
@@ -326,7 +326,7 @@ menu editfsparts, y=13, exit;
 	option "Change h", action { editpart = H;}, sub menu edfspart;
 	option "Set new allocation size", action { reask_sizemult(); };
 
-menu md_distcustom, x=30, y=3, exit, title " Selection toggles inclusion";
+menu md_distcustom, x=30, y=3, exit, title "Selection toggles inclusion";
 	display action { show_cur_distsets (); };
 	option	"Kernel",		 action { toggle_getit (0); };
 	option  "Kernel (SBC)",		 action { toggle_getit (1); };

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.21 1999/06/19 01:23:52 cgd Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.22 1999/06/20 01:23:34 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,11 +38,11 @@
 
 /* Menu definitions for sysinst. i386 version, machine dependent. */
 
-menu fullpart, title  "  Select your choice";
+menu fullpart, title  "Select your choice";
 	option "Use only part of the disk", exit, action  {usefull = 0;};
 	option "Use the entire disk", 	    exit, action  {usefull = 1;};
 
-menu wdtype, title  "  Select type";
+menu wdtype, title  "Select type";
 	display action { msg_display (MSG_wdtype, diskdev); };
 	option "IDE", 	exit;
 	option "ESDI", 	exit, action
@@ -59,7 +59,7 @@ menu wdtype, title  "  Select type";
 		};
 
 
-menu dlgeom, title "  Choose an option";
+menu dlgeom, title "Choose an option";
 	display action { msg_display (MSG_dlgeom, diskdev, dlcyl, dlhead,
 				dlsec, disk->dd_cyl, disk->dd_head,
 				disk->dd_sec);
@@ -75,7 +75,7 @@ menu dlgeom, title "  Choose an option";
 			disk->dd_sec = dlsec;
 		};
 
-menu editparttable, title  "  Choose your partition", exit;
+menu editparttable, title  "Choose your partition", exit;
 	display action  { msg_display (MSG_editparttable);
 			  disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
 ], activepart,-1);
@@ -91,7 +91,7 @@ menu editparttable, title  "  Choose your partition", exit;
 	option "Reselect size specification",
 		action  { reask_sizemult(); }; 
 
-menu editpart, title  "  Select to change";
+menu editpart, title  "Select to change";
 	display action { msg_display (MSG_editpart, editpart);
 			   disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
 ], activepart,editpart);
@@ -120,7 +120,7 @@ menu editpart, title  "  Select to change";
 	option "Set active", action { activepart = editpart; };
 	option "Partition OK", exit;
 
-menu chooseid, title  "  Partition Kind? ";
+menu chooseid, title  "Partition Kind?";
 	option "NetBSD", 	exit,	action
 	{
 		part[editpart].mbrp_typ = 169;
@@ -179,7 +179,7 @@ menu editfsparts, y=13, exit;
 	option "Set new allocation size", action { reask_sizemult(); };
  
 
-menu md_distcustom, x=30, y=3, exit, title " Selection toggles inclusion";
+menu md_distcustom, x=30, y=3, exit, title "Selection toggles inclusion";
 	display action { show_cur_distsets (); };
 	option  "Compiler Tools", 	 action { toggle_getit (3); };
 	option  "Games", 		 action { toggle_getit (4); };
@@ -235,7 +235,7 @@ menu biosmultmatch;
 		biosdisk = NULL;
 	};
 
-menu configbootsel, title  "  Change a bootmenu item", exit;
+menu configbootsel, title  "Change a bootmenu item", exit;
         display action  { msg_display(MSG_configbootsel);
                           disp_bootsel((struct mbr_partition *)&mbr[MBR_PARTOFF], mbs);
 			  msg_display_add(MSG_bootseltimeout, (1000 * mbs->timeo) / 18200);
@@ -289,7 +289,7 @@ menu configbootsel, title  "  Change a bootmenu item", exit;
 		};
 	option "Set default option", sub menu defaultbootsel;
 
-menu defaultbootsel, title "  Pick a default partition/disk to boot ";
+menu defaultbootsel, title "Pick a default partition/disk to boot";
 	option "Partition 0", exit,
 		action {
 			if (mbs->nametab[0][0] != 0 && part[0].mbrp_typ != 0)
