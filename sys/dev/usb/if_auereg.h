@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.1 2000/01/16 13:45:57 augustss Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.2 2000/01/19 00:25:23 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -263,3 +263,4 @@ struct aue_softc {
 //#define AUE_CUTOFF		1536
 #define AUE_MIN_FRAMELEN	60
 #define AUE_TX_TIMEOUT		10000 /* ms */
+#define AUE_INTR_INTERVAL	100 /* ms */
