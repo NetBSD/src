@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.6 2000/01/16 15:43:24 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.7 2000/01/16 15:52:03 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -145,8 +145,6 @@
 #endif
 
 #include <dev/usb/if_auereg.h>
-
-#define AUE_DEBUG
 
 #ifdef AUE_DEBUG
 #define DPRINTF(x)	if (auedebug) logprintf x
@@ -1252,10 +1250,11 @@ aue_rxeof(xfer, priv, status)
 
 	/* Setup new transfer. */
 	usbd_setup_xfer(xfer, sc->aue_ep[AUE_ENDPT_RX],
-	    c, c->aue_buf, AUE_CUTOFF, 
+	    c, c->aue_buf, AUE_CUTOFF,
 	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
 	    USBD_NO_TIMEOUT, aue_rxeof);
 	usbd_transfer(xfer);
+
 	DPRINTFN(10,("%s: %s: start rx\n", USBDEVNAME(sc->aue_dev),
 		    __FUNCTION__));
 }
@@ -1281,6 +1280,9 @@ aue_txeof(xfer, priv, status)
 	DPRINTFN(10,("%s: %s: enter status=%d\n", USBDEVNAME(sc->aue_dev),
 		    __FUNCTION__, status));
 
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
 			splx(s);
@@ -1294,9 +1296,6 @@ aue_txeof(xfer, priv, status)
 		splx(s);
 		return;
 	}
-
-	ifp->if_timer = 0;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	ifp->if_opackets++;
 
