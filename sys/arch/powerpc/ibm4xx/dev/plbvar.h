@@ -1,10 +1,10 @@
-/*	$NetBSD: com_mainbus.c,v 1.4 2002/03/13 19:13:10 eeh Exp $	*/
+/* $NetBSD: plbvar.h,v 1.1 2002/08/12 02:06:21 simonb Exp $ */
 
 /*
- * Copyright 2001 Wasabi Systems, Inc.
+ * Copyright 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
- * Written by Eduardo Horvath and Simon Burge for Wasabi Systems, Inc.
+ * Written by Simon Burge for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,67 +35,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/device.h>
-#include <sys/tty.h>
-#include <sys/systm.h>
-
-#include <lib/libkern/libkern.h>
-
-#include <machine/autoconf.h>
 #include <machine/bus.h>
 
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-
-struct com_mainbus_softc {
-	struct com_softc sc_com;
-	void *sc_ih;
+struct plb_dev {
+        const char *plb_name;
 };
 
-static int	com_mainbus_probe(struct device *, struct cfdata *, void *);
-static void	com_mainbus_attach(struct device *, struct device *, void *);
-
-struct cfattach com_mainbus_ca = {
-	sizeof(struct com_mainbus_softc), com_mainbus_probe, com_mainbus_attach
+struct plb_attach_args {
+	const char *plb_name;
+	bus_space_tag_t plb_bt;	/* Bus space tag */
+	bus_dma_tag_t plb_dmat;	/* DMA tag */
 };
-
-int comfound = 0;
-
-int
-com_mainbus_probe(struct device *parent, struct cfdata *cf, void *aux)
-{
-	struct mainbus_attach_args *maa = aux;
-
-	/* match only com devices */
-	if (strcmp(maa->mb_name, cf->cf_driver->cd_name) != 0)
-		return 0;
-
-	return (comfound < 2);
-}
-
-struct com_softc *com0; /* XXX */
-
-void
-com_mainbus_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct com_mainbus_softc *msc = (void *)self;
-	struct com_softc *sc = &msc->sc_com;
-	struct mainbus_attach_args *maa = aux;
-	int addr = maa->mb_addr;
-	int irq = maa->mb_irq;
-	
-	sc->sc_iot = galaxy_make_bus_space_tag(0, 0);
-	sc->sc_iobase = sc->sc_ioh = addr;
-	/* UART is clocked externally @ 11.0592MHz == COM_FREQ*6 */
-	sc->sc_frequency = COM_FREQ * 6;
-
-	comfound ++;
-
-	/* XXX console check */
-	/* XXX map */
-
-	com_attach_subr(sc);
-
-	intr_establish(irq, IST_LEVEL, IPL_SERIAL, comintr, sc);
-}

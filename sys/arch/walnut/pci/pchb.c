@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.3 2002/05/16 01:01:42 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.4 2002/08/12 02:06:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,8 +46,7 @@
 #include <sys/malloc.h>
 
 #define _GALAXY_BUS_DMA_PRIVATE
-#include <machine/autoconf.h>
-#include <machine/bus.h>
+#include <walnut/dev/pbusvar.h>
 #include <machine/walnut.h>
 
 #include <powerpc/ibm4xx/ibm405gp.h>
@@ -70,14 +69,14 @@ int pcifound = 0;
 static int
 pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct mainbus_attach_args *mba = (struct mainbus_attach_args *)aux;
+	struct pbus_attach_args *paa = aux;
 	/* XXX chipset tag unused by walnut, so just pass 0 */
 	pci_chipset_tag_t pc = 0;
 	pcitag_t tag; 
 	int class, id;
 
 	/* match only pchb devices */
-	if (strcmp(mba->mb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->pb_name, cf->cf_driver->cd_name) != 0)
 		return 0;
 
 	pci_machdep_init();
@@ -106,7 +105,6 @@ pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
 static void
 pchbattach(struct device *parent, struct device *self, void *aux)
 {
-/*	struct mainbus_attach_args *mba = (struct mainbus_attach_args *)aux; */
 	struct pcibus_attach_args pba;
 	char devinfo[256];
 #ifdef PCI_NETBSD_CONFIGURE
