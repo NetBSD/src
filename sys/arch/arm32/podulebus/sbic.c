@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.1 1996/03/06 23:44:06 mark Exp $ */
+/* $NetBSD: sbic.c,v 1.2 1996/04/19 20:09:50 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  *
  *	from: sbic.c,v 1.21 1996/01/07 22:01:54
  */
-
+#define DEBUG
 /*#define SBIC_DEBUG*/
 /*
  * AMIGA AMD 33C93 scsi adaptor driver
@@ -154,7 +154,7 @@ void sbic_dump __P((struct sbic_softc *dev));
 	int s = splbio(); \
 	csr_trace[csr_traceptr].whr = (w); csr_trace[csr_traceptr].csr = (c); \
 	csr_trace[csr_traceptr].asr = (a); csr_trace[csr_traceptr].xtn = (x); \
-	dma_cachectl(&csr_trace[csr_traceptr], sizeof(csr_trace[0])); \
+/*	dma_cachectl(&csr_trace[csr_traceptr], sizeof(csr_trace[0]));*/ \
 	csr_traceptr = (csr_traceptr + 1) & (CSR_TRACE_SIZE - 1); \
 /*	dma_cachectl(&csr_traceptr, sizeof(csr_traceptr));*/ \
 	splx(s); \
@@ -179,9 +179,9 @@ struct {
 	sbic_trace[sbic_traceptr].line = __LINE__; \
 	sbic_trace[sbic_traceptr].sr = s; \
 	sbic_trace[sbic_traceptr].csr = csr_traceptr; \
-	dma_cachectl(&sbic_trace[sbic_traceptr], sizeof(sbic_trace[0])); \
+/*	dma_cachectl(&sbic_trace[sbic_traceptr], sizeof(sbic_trace[0]));*/ \
 	sbic_traceptr = (sbic_traceptr + 1) & (SBIC_TRACE_SIZE - 1); \
-	dma_cachectl(&sbic_traceptr, sizeof(sbic_traceptr)); \
+/*	dma_cachectl(&sbic_traceptr, sizeof(sbic_traceptr));*/ \
 	if (dev) dma_cachectl(dev, sizeof(*dev)); \
 	splx(s); \
 } while (0)
@@ -623,8 +623,8 @@ sbic_scsidone(acb, stat)
 		xs->error = XS_SENSE;
 #ifdef DEBUG
 		if (report_sense)
-			printf(" => %02x %02x\n", xs->sense.extended_flags,
-			    xs->sense.extended_extra_bytes[3]);
+			printf(" => %02x %02x\n", xs->sense.flags,
+			    xs->sense.extra_bytes[3]);
 #endif
 	} else {
 		xs->resid = 0;		/* XXXX */
