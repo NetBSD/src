@@ -1,6 +1,6 @@
-# $NetBSD: shlib_version,v 1.2 1997/09/26 02:43:34 gwr Exp $
+# $NetBSD: shlib_version,v 1.3 1998/05/25 20:24:37 tv Exp $
 # We can not make this agree with $(srcdir)/VERSION
 # because the developers change the BFD interfaces
 # too often without maintaining compatibility.
 major=0
-minor=0
+minor=1
