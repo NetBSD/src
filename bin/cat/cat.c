@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.39 2003/08/25 16:38:55 kleink Exp $	*/
+/* $NetBSD: cat.c,v 1.40 2003/08/27 18:36:19 uwe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,9 +43,13 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.39 2003/08/25 16:38:55 kleink Exp $");
+__RCSID("$NetBSD: cat.c,v 1.40 2003/08/27 18:36:19 uwe Exp $");
 #endif
 #endif /* not lint */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/stat.h>
