@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2002/10/14 22:32:54 bjh21 Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2002/10/19 12:22:35 bsh Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -185,34 +185,5 @@ _C_LABEL(esym):	.word	_C_LABEL(end)
 ENTRY_NP(abort)
 	b	_C_LABEL(abort)
 
-
-/*
- * Atomic bit set and clear functions
- */
-
-ENTRY(atomic_set_bit)
-	mrs	r2, cpsr
-	orr	r3, r2, #(I32_bit)
-	msr	cpsr, r3
-
-	ldr	r3, [r0]
-	orr	r3, r3, r1
-	str	r3, [r0]
-
-	msr	cpsr, r2
-	mov	pc, lr
-
-
-ENTRY(atomic_clear_bit)
-	mrs	r2, cpsr
-	orr	r3, r2, #(I32_bit)
-	msr	cpsr, r3
-
-	ldr	r3, [r0]
-	bic	r3, r3, r1
-	str	r3, [r0]
-
-	msr	cpsr, r2
-	mov	pc, lr
 
 /* End of locore.S */

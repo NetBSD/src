@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.6 2002/10/05 17:12:10 chs Exp $	*/
+/*	$NetBSD: intr.c,v 1.7 2002/10/19 12:22:35 bsh Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,6 +44,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/atomic.h>
 #include <machine/intr.h>
 #include <machine/cpu.h>
 
