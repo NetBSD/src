@@ -430,6 +430,7 @@
 ./usr/share/man/cat8/mail.local.0
 ./usr/share/man/cat8/makekey.0
 ./usr/share/man/cat8/makemap.0
+./usr/share/man/cat8/mailstats.0
 ./usr/share/man/cat8/map-mbone.0
 ./usr/share/man/cat8/mfs.0
 ./usr/share/man/cat8/mk-amd-map.0
@@ -477,6 +478,7 @@
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/pppd.0
 ./usr/share/man/cat8/pppstats.0
+./usr/share/man/cat8/praliases.0
 ./usr/share/man/cat8/pstat.0
 ./usr/share/man/cat8/pwd_mkdb.0
 ./usr/share/man/cat8/quot.0

@@ -41,6 +41,7 @@
 ./usr/include/dev/ccdvar.h
 ./usr/include/dev/cons.h
 ./usr/include/dev/eisa
+./usr/include/dev/eisa/ahbreg.h
 ./usr/include/dev/eisa/eisadevs.h
 ./usr/include/dev/eisa/eisadevs_data.h
 ./usr/include/dev/eisa/eisareg.h
@@ -108,6 +109,9 @@
 ./usr/include/dev/isa/wdsreg.h
 ./usr/include/dev/isa/wssreg.h
 ./usr/include/dev/isa/wtreg.h
+./usr/include/dev/microcode
+./usr/include/dev/microcode/aic7xxx
+./usr/include/dev/microcode/aic7xxx/aic7xxx_seq.h
 ./usr/include/dev/mulaw.h
 ./usr/include/dev/pci
 ./usr/include/dev/pci/if_levar.h
@@ -1018,6 +1022,8 @@
 ./usr/share/man/cat2/setpgid.0
 ./usr/share/man/cat2/setpgrp.0
 ./usr/share/man/cat2/setpriority.0
+./usr/share/man/cat2/setregid.0
+./usr/share/man/cat2/setreuid.0
 ./usr/share/man/cat2/setrlimit.0
 ./usr/share/man/cat2/setsid.0
 ./usr/share/man/cat2/setsockopt.0
@@ -1523,8 +1529,6 @@
 ./usr/share/man/cat3/setprotoent.0
 ./usr/share/man/cat3/setpwent.0
 ./usr/share/man/cat3/setpwfile.0
-./usr/share/man/cat3/setregid.0
-./usr/share/man/cat3/setreuid.0
 ./usr/share/man/cat3/setrgid.0
 ./usr/share/man/cat3/setrpcent.0
 ./usr/share/man/cat3/setruid.0
