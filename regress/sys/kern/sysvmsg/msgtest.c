@@ -1,4 +1,4 @@
-/*	$NetBSD: msgtest.c,v 1.1 1999/08/24 22:08:56 thorpej Exp $	*/
+/*	$NetBSD: msgtest.c,v 1.2 1999/08/24 22:26:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -283,13 +283,13 @@ print_msqid_ds(mp, mode)
 	 */
 
 	if (mp->msg_perm.uid != uid || mp->msg_perm.cuid != uid)
-		err(1, "uid mismatch");
+		errx(1, "uid mismatch");
 
 	if (mp->msg_perm.gid != gid || mp->msg_perm.cgid != gid)
-		err(1, "gid mismatch");
+		errx(1, "gid mismatch");
 
 	if (mp->msg_perm.mode != mode)
-		err(1, "mode mismatch");
+		errx(1, "mode mismatch");
 }
 
 void
