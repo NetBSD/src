@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.80 2002/06/19 23:32:01 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.81 2002/06/25 17:37:03 eeh Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -1966,8 +1966,7 @@ syscall(tf, code, pc)
 				temp[j] = args.i[j];
 			ktrsyscall(p, code, (register_t *)temp);
 #else
-			ktrsyscall(p, code,
-				   callp->sy_argsize, (register_t *)args.i);
+			ktrsyscall(p, code, (register_t *)&args.i);
 #endif
 		}
 		if (error) {
