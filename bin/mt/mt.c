@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.5 1995/03/21 06:57:47 cgd Exp $	*/
+/*	$NetBSD: mt.c,v 1.6 1995/06/01 16:25:04 ragge Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mt.c,v 1.5 1995/03/21 06:57:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: mt.c,v 1.6 1995/06/01 16:25:04 ragge Exp $";
 #endif
 #endif /* not lint */
 
@@ -145,16 +145,6 @@ main(argc, argv)
 	/* NOTREACHED */
 }
 
-#ifdef vax
-#include <vax/mba/mtreg.h>
-#include <vax/mba/htreg.h>
-
-#include <vax/uba/utreg.h>
-#include <vax/uba/tmreg.h>
-#undef b_repcnt		/* argh */
-#include <vax/uba/tsreg.h>
-#endif
-
 #ifdef sun
 #include <sundev/tmreg.h>
 #include <sundev/arreg.h>
@@ -170,13 +160,6 @@ struct tape_desc {
 	char	*t_dsbits;	/* "drive status" register */
 	char	*t_erbits;	/* "error" register */
 } tapes[] = {
-#ifdef vax
-	{ MT_ISTS,	"ts11",		0,		TSXS0_BITS },
-	{ MT_ISHT,	"tm03",		HTDS_BITS,	HTER_BITS },
-	{ MT_ISTM,	"tm11",		0,		TMER_BITS },
-	{ MT_ISMT,	"tu78",		MTDS_BITS,	0 },
-	{ MT_ISUT,	"tu45",		UTDS_BITS,	UTER_BITS },
-#endif
 #ifdef sun
 	{ MT_ISCPC,	"TapeMaster",	TMS_BITS,	0 },
 	{ MT_ISAR,	"Archive",	ARCH_CTRL_BITS,	ARCH_BITS },
