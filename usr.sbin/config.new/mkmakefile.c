@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mkmakefile.c	8.1 (Berkeley) 6/6/93
- *	$Id: mkmakefile.c,v 1.5 1994/06/22 10:44:18 pk Exp $
+ *	$Id: mkmakefile.c,v 1.6 1994/06/22 11:39:05 pk Exp $
  */
 
 #include <sys/param.h>
@@ -257,13 +257,9 @@ emitfiles(fp, suffix)
 	if (suffix == 'c') {
 		for (cf = allcf; cf != NULL; cf = cf->cf_next) {
 			if (cf->cf_root == NULL)
-			    if (cf->cf_swap->nv_str == s_generic)
 				(void)sprintf(swapname,
 				    "$S/arch/%s/%s/swapgeneric.c",
 				    machine, machine);
-			    else
-				(void)sprintf(swapname,
-				    "$S/nfs/swapnfs.c");
 			else
 				(void)sprintf(swapname, "swap%s.c",
 				    cf->cf_name);
@@ -342,8 +338,7 @@ emitload(fp)
 	for (first = 1, cf = allcf; cf != NULL; cf = cf->cf_next) {
 		nm = cf->cf_name;
 		swname =
-		    cf->cf_root != NULL ? cf->cf_name :
-			(cf->cf_swap->nv_str == s_generic ? "generic" : "nfs");
+		    cf->cf_root != NULL ? cf->cf_name : "generic";
 		if (fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o", nm, swname) < 0)
 			return (1);
 		if (first) {
@@ -362,13 +357,8 @@ swap%s.o: ", swname, swname) < 0)
 			if (fprintf(fp, "swap%s.c\n", nm) < 0)
 				return (1);
 		} else {
-		    if (cf->cf_swap->nv_str == s_generic) {
 			if (fprintf(fp, "$S/arch/%s/%s/swapgeneric.c\n",
 			    machine, machine) < 0)
-				return (1);
-		    }
-		    else 
-			if (fprintf(fp, "$S/nfs/swapnfs.c\n") < 0)
 				return (1);
 		}
 		if (fputs("\t${NORMAL_C}\n\n", fp) < 0)
