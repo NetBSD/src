@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: fdesc_vnops.c,v 1.6.2.1 1993/11/14 22:34:41 mycroft Exp $
+ *	$Id: fdesc_vnops.c,v 1.6.2.2 1993/12/28 16:35:14 pk Exp $
  */
 
 /*
@@ -449,7 +449,7 @@ fdesc_print(vp)
  */
 fdesc_enotsupp()
 {
-	return (EOPNOTSUPP);
+	return (ENODEV);
 }
 
 /*

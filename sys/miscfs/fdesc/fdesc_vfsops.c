@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: fdesc_vfsops.c,v 1.5.2.1 1993/11/14 22:34:39 mycroft Exp $
+ *	$Id: fdesc_vfsops.c,v 1.5.2.2 1993/12/28 16:35:12 pk Exp $
  */
 
 /*
@@ -85,7 +85,7 @@ fdesc_mount(mp, path, data, ndp, p)
 	 * Update is a no-op
 	 */
 	if (mp->mnt_flag & MNT_UPDATE)
-		return (EOPNOTSUPP);
+		return (ENODEV);
 
 	error = getnewvnode(VT_FDESC, mp, &fdesc_vnodeops, &rvp);
 	if (error)
@@ -212,7 +212,7 @@ fdesc_quotactl(mp, cmd, uid, arg, p)
 	caddr_t arg;
 	struct proc *p;
 {
-	return (EOPNOTSUPP);
+	return (ENODEV);
 }
 
 fdesc_statfs(mp, sbp, p)
@@ -280,14 +280,14 @@ fdesc_fhtovp(mp, fhp, vpp)
 	struct fid *fhp;
 	struct vnode **vpp;
 {
-	return (EOPNOTSUPP);
+	return (ENODEV);
 }
 
 fdesc_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
-	return (EOPNOTSUPP);
+	return (ENODEV);
 }
 
 struct vfsops fdesc_vfsops = {
