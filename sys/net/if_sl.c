@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.47 1998/03/01 02:25:05 fvdl Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.48 1998/03/23 04:41:17 fair Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -405,6 +405,7 @@ sloutput(ifp, m, dst, rtp)
 	if ((sc->sc_ttyp->t_state & TS_CARR_ON) == 0 &&
 	    (sc->sc_ttyp->t_cflag & CLOCAL) == 0) {
 		m_freem(m);
+		printf("%s: no carrier and not local\n" sc->sc_if.if_xname);
 		return (EHOSTUNREACH);
 	}
 	ifq = &sc->sc_if.if_snd;
