@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.30 2005/03/21 14:06:46 xtraeme Exp $
+#	$NetBSD: files.acpi,v 1.31 2005/03/25 23:06:19 cube Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -76,3 +76,7 @@ file	dev/acpi/joy_acpi.c		joy_acpi
 # AT-style speaker sound
 attach	pcppi at acpi with pcppi_acpi
 file	dev/acpi/pcppi_acpi.c		pcppi_acpi
+
+# AT Timer
+attach	attimer at acpi with attimer_acpi
+file	dev/acpi/attimer_acpi.c		attimer_acpi
