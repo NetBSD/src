@@ -1,4 +1,4 @@
-.\"	$NetBSD: dump.8,v 1.38 2001/08/14 06:51:36 lukem Exp $
+.\"	$NetBSD: dump.8,v 1.39 2001/10/15 13:25:33 blymn Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	 Regents of the University of California.
@@ -43,7 +43,7 @@
 .Nd file system backup
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl 0123456789ceFnSu
+.Op Fl 0123456789ceFnStu
 .Op Fl B Ar records
 .Op Fl b Ar blocksize
 .Op Fl d Ar density
@@ -227,6 +227,12 @@ The default tape length is 2300 feet.
 .It Fl S
 Display an estimate of the backup size and the number of tapes
 required, and exit without actually performing the dump.
+.It Fl t
+All informational log messages printed by
+.Nm
+will have the time prepended to them.  Also, the completion time
+interval estimations will have the estimated time at which the dump
+will complete printed at the end of the line.
 .It Fl T Ar date
 Use the specified date as the starting time for the dump
 instead of the time determined from looking in
@@ -419,6 +425,24 @@ rather than
 to invoke
 .Xr rmt 8
 on the remote machine.
+.It Ev TIMEFORMAT
+can be used to control the format of the timestamps produced by the
+.Fl t
+option.  
+.Ev TIMEFORMAT
+is a string containing embedded formatting commands for
+.Xr strftime 3 .
+The total formatted string is limited to about 80 characters, if this
+limit is exceeded then 
+.Qo
+ERROR: TIMEFORMAT too long, reverting to default
+.Qc
+will be printed and the time format will revert to the default one.  If 
+.Ev TIMEFORMAT
+is not set then the format string defaults to
+.Qo
+%T %Z
+.Qc
 .El
 .Sh FILES
 .Bl -tag -width /etc/dumpdates -compact
@@ -444,7 +468,8 @@ to find group
 .Xr fstab 5 ,
 .Xr restore 8 ,
 .Xr rmt 8 ,
-.Xr st 4
+.Xr st 4 ,
+.Xr environ 7
 .Sh DIAGNOSTICS
 Many, and verbose.
 .Pp

@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.18 2001/08/08 16:49:54 david Exp $	*/
+/*	$NetBSD: optr.c,v 1.19 2001/10/15 13:25:34 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.18 2001/08/08 16:49:54 david Exp $");
+__RCSID("$NetBSD: optr.c,v 1.19 2001/10/15 13:25:34 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,10 @@ struct fstab *allocfsent(struct fstab *);
 int	datesort(const void *, const void *);
 static	void sendmes(char *, char *);
 extern  gid_t egid;
+extern  char *time_string;
+extern  char default_time_string[];
+
+static void do_timestamp(time_t time, char *msg);
 
 /*
  *	Query the operator; This previously-fascist piece of code
@@ -305,6 +309,29 @@ DUMP: NEEDS ATTENTION: ",
 }
 
 /*
+ *      print out the timestamp string to stderr.
+ */
+#define STAMP_LENGTH 80
+
+static void
+do_timestamp(time_t time, char *msg)
+{
+	struct tm tm_time;
+	char then[STAMP_LENGTH + 1];
+	
+	(void) localtime_r(&time, &tm_time);
+	if (strftime(then, STAMP_LENGTH, time_string, &tm_time) == 0) {
+		time_string = default_time_string;
+		strftime(then, STAMP_LENGTH, time_string, &tm_time);
+		fprintf(stderr,
+		   "DUMP: ERROR: TIMEFORMAT too long, reverting to default\n");
+	}
+	
+	fprintf(stderr, msg, then);
+}
+
+			
+/*
  *	print out an estimate of the amount of time left to do the dump
  */
 
@@ -323,18 +350,31 @@ timeest(void)
 		deltat = tstart_writing - tnow +
 			(1.0 * (tnow - tstart_writing))
 			/ blockswritten * tapesize;
-		msg("%3.2f%% done, finished in %ld:%02ld\n",
+
+		msg("%3.2f%% done, finished in %ld:%02ld",
 		    (blockswritten * 100.0) / tapesize,
 		    (long)(deltat / 3600), (long)((deltat % 3600) / 60));
+		
+		if (timestamp == 1)
+			do_timestamp(tnow + deltat, " (at %s)");
+
+		fprintf(stderr, "\n");
 	}
 }
 
 void
 msg(const char *fmt, ...)
 {
+        time_t  tnow;
 	va_list ap;
 
-	(void) fprintf(stderr,"  DUMP: ");
+	fprintf(stderr, "  ");
+        if (timestamp == 1) {
+                (void) time((time_t *) &tnow);
+		do_timestamp(tnow, "[%s] ");
+        }
+
+	(void) fprintf(stderr,"DUMP: ");
 #ifdef TDEBUG
 	(void) fprintf(stderr, "pid=%d ", getpid());
 #endif
