@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.37 2003/09/06 04:20:58 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.38 2003/09/07 15:50:43 itojun Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -352,7 +352,7 @@ struct inpcb;
 #ifdef INET6
 struct in6pcb;
 #endif
-extern int ipsec_init_pcbpolicy __P((struct socket *so, struct inpcbpolicy **));
+extern int ipsec_init_pcbpolicy __P((struct socket *, struct inpcbpolicy **));
 extern int ipsec_copy_pcbpolicy
 	__P((struct inpcbpolicy *, struct inpcbpolicy *));
 extern u_int ipsec_get_reqlevel __P((struct ipsecrequest *, int));
