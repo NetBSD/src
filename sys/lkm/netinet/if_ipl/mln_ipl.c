@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.24.2.4 2002/04/01 07:48:14 nathanw Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.24.2.5 2002/05/04 20:06:01 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.24.2.4 2002/04/01 07:48:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.24.2.5 2002/05/04 20:06:01 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -181,21 +181,22 @@ int cmd;
 
 static int ipl_remove()
 {
+	struct proc *p = curproc->l_proc;
 	char *name;
 	struct nameidata nd;
 	int error, i;
 
         for (i = 0; (name = ipf_devfiles[i]); i++) {
-		NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, name, curproc);
+		NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, name, p);
 		if ((error = namei(&nd)))
 			return (error);
-		VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
+		VOP_LEASE(nd.ni_vp, p, p->p_ucred, LEASE_WRITE);
 #ifdef OpenBSD
 		VOP_LOCK(nd.ni_vp, LK_EXCLUSIVE | LK_RETRY, curproc);
 #else
 		vn_lock(nd.ni_vp, LK_EXCLUSIVE | LK_RETRY);
 #endif
-		VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
+		VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 		(void) VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 	}
 	return 0;
@@ -220,6 +221,7 @@ static int ipl_unload()
 
 static int ipl_load()
 {
+	struct proc *p = curproc->l_proc;
 	struct nameidata nd;
 	struct vattr vattr;
 	int error = 0, fmode = S_IFCHR|0600, i;
@@ -237,7 +239,7 @@ static int ipl_load()
 		return error;
 
 	for (i = 0; (name = ipf_devfiles[i]); i++) {
-		NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, name, curproc);
+		NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, name, p);
 		if ((error = namei(&nd)))
 			return error;
 		if (nd.ni_vp != NULL) {
@@ -253,7 +255,7 @@ static int ipl_load()
 		vattr.va_type = VCHR;
 		vattr.va_mode = (fmode & 07777);
 		vattr.va_rdev = (ipl_major << 8) | i;
-		VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
+		VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 		if (error)
 			return error;
