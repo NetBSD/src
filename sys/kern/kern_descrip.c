@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.123 2004/01/07 09:26:29 jdolecek Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.124 2004/04/05 10:10:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.123 2004/01/07 09:26:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.124 2004/04/05 10:10:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,9 +155,14 @@ fd_used(struct filedesc *fdp, int fd)
 {
 	u_int off = fd >> NDENTRYSHIFT;
 
+	KDASSERT((fdp->fd_lomap[off] & (1 << (fd & NDENTRYMASK))) == 0);
+
 	fdp->fd_lomap[off] |= 1 << (fd & NDENTRYMASK);
-	if (fdp->fd_lomap[off] == ~0)
+	if (fdp->fd_lomap[off] == ~0) {
+		KDASSERT((fdp->fd_himap[off >> NDENTRYSHIFT] &
+		    (1 << (off & NDENTRYMASK))) == 0);
 		fdp->fd_himap[off >> NDENTRYSHIFT] |= 1 << (off & NDENTRYMASK);
+	}
 
 	if (fd > fdp->fd_lastfile)
 		fdp->fd_lastfile = fd;
@@ -171,8 +176,13 @@ fd_unused(struct filedesc *fdp, int fd)
 	if (fd < fdp->fd_freefile)
 		fdp->fd_freefile = fd;
 
-	if (fdp->fd_lomap[off] == ~0)
-		fdp->fd_himap[off >> NDENTRYSHIFT] &= ~(1 << (off & NDENTRYMASK));
+	if (fdp->fd_lomap[off] == ~0) {
+		KDASSERT((fdp->fd_himap[off >> NDENTRYSHIFT] &
+		    (1 << (off & NDENTRYMASK))) != 0);
+		fdp->fd_himap[off >> NDENTRYSHIFT] &=
+		    ~(1 << (off & NDENTRYMASK));
+	}
+	KDASSERT((fdp->fd_lomap[off] & (1 << (fd & NDENTRYMASK))) != 0);
 	fdp->fd_lomap[off] &= ~(1 << (fd & NDENTRYMASK));
 
 #ifdef DIAGNOSTIC
@@ -547,6 +557,7 @@ finishdup(struct proc *p, int old, int new, register_t *retval)
 	delfp = fdp->fd_ofiles[new];
 
 	fp = fdp->fd_ofiles[old];
+	KDASSERT(fp != NULL);
 	fdp->fd_ofiles[new] = fp;
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] &~ UF_EXCLOSE;
 	fp->f_count++;
@@ -917,6 +928,7 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 		LIST_INSERT_HEAD(&filehead, fp, f_list);
 	}
 	simple_unlock(&filelist_slock);
+	KDASSERT(p->p_fd->fd_ofiles[i] == NULL);
 	p->p_fd->fd_ofiles[i] = fp;
 	simple_lock_init(&fp->f_slock);
 	fp->f_count = 1;
