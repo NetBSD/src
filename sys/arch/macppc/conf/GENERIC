@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.153 2003/02/27 19:22:42 perseant Exp $
+# $NetBSD: GENERIC,v 1.154 2003/03/14 17:29:05 mjacob Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.153 $"
+#ident 		"GENERIC-$Revision: 1.154 $"
 
 maxusers	32
 
@@ -298,6 +298,7 @@ scsibus* at esp?
 scsibus* at mesh?
 scsibus* at pcscp?
 scsibus* at siop?
+scsibus* at esiop?
 scsibus* at trm?
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
