@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.67.2.4 2002/08/10 00:42:45 itojun Exp $	*/
+/*	$NetBSD: util.c,v 1.67.2.5 2002/08/10 00:43:22 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1082,7 +1082,7 @@ set_crypt_type(void)
 		    "  ypcipher = md5\n");
 		fclose(pwc);
 		break;
-	case 3:	/* blowfish,7 */
+	case 3:	/* bcrypt,2^7 */
 		rename(fn, target_expand("/etc/passwd.conf.pre-sysinst"));
 		pwc = fopen(fn, "w");
 		fprintf(pwc,
