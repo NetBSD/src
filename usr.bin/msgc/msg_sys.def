@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.7 1999/06/23 09:19:33 cgd Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.8 1999/06/23 17:32:32 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,6 +41,11 @@ static char *cbuffer;
 static size_t cbuffersize;
 static int do_echo = 1;
 
+#if defined(DYNAMIC_MESSAGE_LAYOUT)
+static int last_i_was_nl, last_i_was_space;
+static int last_o_was_punct, last_o_was_space;
+#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
+
 
 /* Routines */
 
@@ -78,6 +83,10 @@ void msg_clear(void)
 {
 	wclear (msg_win);
 	wrefresh (msg_win);
+#if defined(DYNAMIC_MESSAGE_LAYOUT)
+	last_o_was_punct = 0;
+	last_o_was_space = 1;
+#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
 }
 
 void msg_standout(void)
@@ -92,10 +101,118 @@ void msg_standend(void)
 
 int msg_vprintf (char *fmt, va_list ap)
 {
+#if defined(DYNAMIC_MESSAGE_LAYOUT)
+	const char *wstart, *afterw;
+	int wordlen, nspaces;
+#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
 	int ret;
 
 	ret = vsnprintf (cbuffer, cbuffersize, fmt, ap);
+
+#if defined(DYNAMIC_MESSAGE_LAYOUT)
+	for (wstart = afterw = cbuffer; *wstart; wstart = afterw) {
+
+		/* eat one space, or a whole word of non-spaces */
+		if (isspace(*afterw))
+			afterw++;
+		else
+			while (*afterw && !isspace(*afterw))
+				afterw++;
+
+		/* last was an nl, this is an nl: paragraph break */
+		/* this is an nl: special formatting necessary */
+		if (*wstart == '\n') {
+			if (last_i_was_nl || last_i_was_space) {
+
+				if (getcurx(msg_win) != 0)
+					waddch(msg_win, '\n');
+				if (last_i_was_nl) {
+					/* last was an nl: paragraph break */
+					waddch(msg_win, '\n');
+				} else {
+					/* last was space: line break */
+				}
+				last_o_was_punct = 0;
+				last_o_was_space = 1;
+			} else {
+				/* last_o_was_punct unchanged */
+				/* last_o_was_space unchanged */
+			}
+			last_i_was_space = 1;
+			last_i_was_nl = 1;
+			continue;
+		}
+
+		/* this is a tab: special formatting necessary. */
+		if (*wstart == '\t') {
+			if (last_i_was_nl) {
+				/* last was an nl: list indent */
+				if (getcurx(msg_win) != 0)
+					waddch(msg_win, '\n');
+			} else {
+				/* last was not an nl: columns */
+			}
+			waddch(msg_win, '\t');
+			last_i_was_nl = 0;
+			last_i_was_space = 1;
+			last_o_was_punct = 0;
+			last_o_was_space = 1;
+			continue;
+		}
+
+		/* this is a space: ignore it but set flags */
+		last_i_was_nl = 0;	/* all newlines handled above */
+		last_i_was_space = isspace(*wstart);
+		if (last_i_was_space)
+			continue;
+
+		/*
+		 * we have a real "word," i.e. a sequence of non-space
+		 * characters.  wstart is now the start of the word,
+		 * afterw is the next character after the end.
+		 */
+		wordlen = afterw - wstart;
+		nspaces = last_o_was_space ? 0 : (last_o_was_punct ? 2 : 1);
+		if ((getcurx(msg_win) + nspaces + wordlen) >=
+		      getmaxx(msg_win) &&
+		    wordlen < (getmaxx(msg_win) / 3)) {
+			/* wrap the line */
+			waddch(msg_win, '\n');
+			nspaces = 0;
+		}
+
+		/* output the word, preceded by spaces if necessary */
+		while (nspaces-- > 0)
+			waddch(msg_win, ' ');
+		waddbytes(msg_win, wstart, wordlen);
+
+		/* set up the 'last' state for the next time around */
+		switch (afterw[-1]) {
+		case '.':
+		case '?':
+		case '!':
+			last_o_was_punct = 1;
+			break;
+		default:
+			last_o_was_punct = 0;
+			break;
+		}
+		last_o_was_space = 0;
+
+		/* ... and do it all again! */
+	}
+
+	/* String ended with a newline.  They really want a line break. */
+	if (last_i_was_nl) {
+		if (getcurx(msg_win) != 0)
+			waddch(msg_win, '\n');
+		last_o_was_punct = 0;
+		last_o_was_space = 1;
+	}
+#else /* defined(DYNAMIC_MESSAGE_LAYOUT) */
 	waddstr (msg_win, cbuffer);
+#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
+
 	wrefresh (msg_win);
 	return ret;
 }
@@ -193,8 +310,13 @@ static void msg_vprompt (char *msg, char *def, char *val, int max_chars,
 		if (do_echo)
 			wrefresh(msg_win);
 	}
-	if (do_echo)
+	if (do_echo) {
 		waddch(msg_win, '\n');
+#if defined(DYNAMIC_MESSAGE_LAYOUT)
+		last_o_was_punct = 0;
+		last_o_was_space = 1;
+#endif /* defined(DYNAMIC_MESSAGE_LAYOUT) */
+	}
 
 	/* copy the appropriate string to the output */
 	if (count != 0) {
