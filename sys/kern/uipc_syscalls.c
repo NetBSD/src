@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.36 1998/08/04 04:03:18 perry Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.37 1998/08/04 12:19:15 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -387,7 +387,7 @@ sys_sendmsg(p, v, retval)
 	if (error)
 		return (error);
 	if ((u_int)msg.msg_iovlen > UIO_SMALLIOV) {
-		if ((u_int)msg.msg_iovlen > UIO_MAXIOV)
+		if ((u_int)msg.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
 		MALLOC(iov, struct iovec *,
 		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
@@ -582,7 +582,7 @@ sys_recvmsg(p, v, retval)
 	if (error)
 		return (error);
 	if ((u_int)msg.msg_iovlen > UIO_SMALLIOV) {
-		if ((u_int)msg.msg_iovlen > UIO_MAXIOV)
+		if ((u_int)msg.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
 		MALLOC(iov, struct iovec *,
 		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
