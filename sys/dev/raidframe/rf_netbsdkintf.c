@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.92.2.6 2000/10/18 02:45:41 tv Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.92.2.7 2000/10/20 17:48:32 tv Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -142,6 +142,7 @@
 #include "rf_copyback.h"
 #include "rf_dag.h"
 #include "rf_dagflags.h"
+#include "rf_desc.h"
 #include "rf_diskqueue.h"
 #include "rf_acctrace.h"
 #include "rf_etimer.h"
@@ -1671,12 +1672,13 @@ raidstart(raidPtr)
 		 */
 		do_async = 1;
 		
-		/* don't ever condition on bp->b_flags & B_WRITE.  
-		 * always condition on B_READ instead */
-		
+		disk_busy(&rs->sc_dkdev);
+
 		/* XXX we're still at splbio() here... do we *really* 
 		   need to be? */
 
+		/* don't ever condition on bp->b_flags & B_WRITE.  
+		 * always condition on B_READ instead */
 		
 		retcode = rf_DoAccess(raidPtr, (bp->b_flags & B_READ) ?
 				      RF_IO_TYPE_READ : RF_IO_TYPE_WRITE,
@@ -1723,9 +1725,6 @@ rf_DispatchKernelIO(queue, req)
 		panic("Invalid Unit number in rf_DispatchKernelIO\n");
 	}
 	rs = &raid_softc[unit];
-
-	/* XXX is this the right place? */
-	disk_busy(&rs->sc_dkdev);
 
 	bp = req->bp;
 #if 1
@@ -1880,12 +1879,6 @@ KernelWakeupFunc(vbp)
 
 	rs = &raid_softc[unit];
 	RAIDPUTBUF(rs, raidbp);
-
-
-	if (bp->b_resid == 0) {
-		/* XXX is this the right place for a disk_unbusy()??!??!?!? */
-		disk_unbusy(&rs->sc_dkdev, (bp->b_bcount - bp->b_resid));
-	} 
 
 	rf_DiskIOComplete(queue, req, (bp->b_flags & B_ERROR) ? 1 : 0);
 	(req->CompleteFunc) (req->argument, (bp->b_flags & B_ERROR) ? 1 : 0);
@@ -3291,4 +3284,15 @@ rf_auto_config_set(cset,unit)
 	
 	*unit = raidID;
 	return(retcode);
+}
+
+void
+rf_disk_unbusy(desc)
+	RF_RaidAccessDesc_t *desc;
+{
+	struct buf *bp;
+
+	bp = (struct buf *)desc->bp;
+	disk_unbusy(&raid_softc[desc->raidPtr->raidid].sc_dkdev, 
+			    (bp->b_bcount - bp->b_resid));
 }
