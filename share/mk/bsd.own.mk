@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.182 2001/09/25 01:43:36 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.183 2001/09/26 12:45:56 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -26,7 +26,7 @@ USETOOLS?=	yes
 
 # Temporary; all USE_NEW_TOOLCHAIN conditionals will be dropped when
 # all platforms have migrated.
-.if ${MACHINE_ARCH} == "i386"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "sparc64"
 USE_NEW_TOOLCHAIN=	# set
 .endif
 
