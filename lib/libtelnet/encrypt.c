@@ -1,4 +1,4 @@
-/*	$NetBSD: encrypt.c,v 1.7 2000/06/22 06:47:43 thorpej Exp $	*/
+/*	$NetBSD: encrypt.c,v 1.8 2001/01/06 23:36:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)encrypt.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: encrypt.c,v 1.7 2000/06/22 06:47:43 thorpej Exp $");
+__RCSID("$NetBSD: encrypt.c,v 1.8 2001/01/06 23:36:36 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -97,9 +97,6 @@ static int autodecrypt = 0;
 static int havesessionkey = 0;
 static int Server = 0;
 static const char *Name = "Noname";
-
-/* XXX This should be prototyped in some header file! */
-extern	char **genget __P((char *, char **, int));
 
 #define	typemask(x)	((x) > 0 ? 1 << ((x)-1) : 0)
 
