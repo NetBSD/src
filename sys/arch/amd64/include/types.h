@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.7 2004/01/20 20:30:41 jdolecek Exp $	*/
+/*	$NetBSD: types.h,v 1.8 2004/01/21 11:31:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,7 +54,6 @@ typedef unsigned long	vsize_t;
 
 typedef long int		register_t;
 typedef int			register32_t;
-typedef long int		register64_t;
 
 typedef	__volatile int		__cpu_simple_lock_t;
 
