@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.9 2002/05/02 17:17:29 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.9.2.1 2002/05/30 14:44:48 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.9 2002/05/02 17:17:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.9.2.1 2002/05/30 14:44:48 gehenna Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.9 2002/05/02 17:17:29 manu Exp $");
 #include <compat/svr4/svr4_types.h>
 
 #include <compat/irix/irix_types.h>
+#include <compat/irix/irix_exec.h>
 #include <compat/irix/irix_prctl.h>
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_syscallargs.h>
@@ -112,17 +113,23 @@ irix_sys_prctl(p, v, retval)
 		break;
 	}
 		
-	case IRIX_PR_LASTSHEXIT:	/* "Last sproc exit" */
+	case IRIX_PR_LASTSHEXIT: 	/* "Last sproc exit" */
 		/* We do nothing */
 		break;
+
 	case IRIX_PR_GETNSHARE:		/* Number of sproc share group memb.*/
 		/* XXX This only gives threads that share VM space ... */
 		*retval = p->p_vmspace->vm_refcnt;
 		break;
-	case IRIX_PR_TERMCHILD:		/* Send SIGHUP to parrent on exit */
-		p->p_exitsig = SIGHUP;
-		*retval = 0;
+
+	case IRIX_PR_TERMCHILD: {	/* Send SIGHUP to children on exit */
+		struct irix_emuldata *ied;
+
+		ied = (struct irix_emuldata *)(p->p_emuldata);
+		ied->ied_pptr = p->p_pptr;
 		break;
+	}
+
 	default:
 		printf("Warning: call to unimplemented prctl() command %d\n",
 		    option);

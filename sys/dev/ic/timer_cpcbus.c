@@ -1,11 +1,11 @@
-/*	$NetBSD: irix_usync.h,v 1.1 2002/04/29 14:40:23 manu Exp $ */
+/*	$NetBSD: timer_cpcbus.c,v 1.1.4.2 2002/05/30 14:46:01 gehenna Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus.
+ * by Lennart Augustsson (lennart@augustsson.net) at Sandburst Corp.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,18 +36,42 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IRIX_USYNCL_H_
-#define _IRIX_USYNCL_H_
+#include <sys/param.h>
+#include <sys/device.h>
+#include <sys/systm.h>
 
-/* usync_fcntl() commands, undocumented in IRIX */
-#define IRIX_USYNC_BLOCK		1
-#define IRIX_USYNC_INTR_BLOCK		2
-#define IRIX_USYNC_UNBLOCK_ALL		3
-#define IRIX_USYNC_UNBLOCK		4
-#define IRIX_USYNC_NOTIFY_REGISTER	5
-#define IRIX_USYNC_NOTIFY		6
-#define IRIX_USYNC_NOTIFY_DELETE	7
-#define IRIX_USYNC_NOTIFY_CLEAR		8
-#define IRIX_USYNC_GET_STATE		11
+#include <machine/bus.h>
+#include <dev/ic/cpc700var.h>
 
-#endif /* _IRIX_USYNC_H */
+struct cpctim_softc {
+	struct device sc_dev;
+	void *sc_ih;
+};
+
+static int	cpctim_match(struct device *, struct cfdata *, void *);
+static void	cpctim_attach(struct device *, struct device *, void *);
+
+struct cfattach cpctim_ca = {
+	sizeof(struct cpctim_softc), cpctim_match, cpctim_attach
+};
+
+int
+cpctim_match(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct cpcbus_attach_args *caa = aux;
+
+	return (strcmp(caa->cpca_name, "timer") == 0);
+}
+
+void
+cpctim_attach(struct device *parent, struct device *self, void *aux)
+{
+#if 0
+	struct cpcbus_attach_args *caa = aux;
+	struct cpctim_softc *sc = (struct cpctim_softc *)self;
+	int addr = caa->cpca_addr;
+	int irq = caa->cpca_irq;
+
+#endif
+	printf(": driver not implemented\n");
+}

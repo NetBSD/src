@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.167 2002/05/07 09:36:50 onoe Exp $
+$NetBSD: pcmciadevs,v 1.167.2.1 2002/05/30 14:46:42 gehenna Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -436,6 +436,7 @@ product PLANET SMARTCOM2000	{ "PCMCIA", "UE2212", NULL, NULL } Planet SmartCOM 2
  */
 product PLANEX FNW3600T		-1 Planex FNW-3600-T
 product PLANEX FNW3700T		-1 Planex FNW-3700-T
+product PLANEX GWNS11H		{ "PLANEX", "GW-NS11H&spWireless&spLAN&spPC&spCard", NULL, NULL } PLANEX GW-NS11H Wireless LAN PC Card
 product RPTI EP400		{ "RPTI&spLTD.", "EP400", "CISV100", NULL } RPTI EP400
 product RPTI EP401		{ "RPTI", "EP401&spEthernet&spNE2000&spCompatible", NULL, NULL } RPTI EP401
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200

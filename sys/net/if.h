@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.75 2002/03/17 10:21:42 simonb Exp $	*/
+/*	$NetBSD: if.h,v 1.75.4.1 2002/05/30 13:52:24 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -286,6 +286,8 @@ struct ifnet {				/* and the entries */
 	 */
 	int	if_csum_flags_tx;	/* M_CSUM_* flags for Tx */
 	int	if_csum_flags_rx;	/* M_CSUM_* flags for Rx */
+
+	void	*if_afdata[AF_MAX];
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -543,6 +545,11 @@ struct ifaliasreq {
 	struct	sockaddr ifra_mask;
 };
 
+struct ifdatareq {
+	char	ifdr_name[IFNAMSIZ];		/* if name, e.g. "en0" */
+	struct	if_data ifdr_data;
+};
+
 struct ifmediareq {
 	char	ifm_name[IFNAMSIZ];		/* if name, e.g. "en0" */
 	int	ifm_current;			/* current media options */
@@ -742,6 +749,8 @@ char	*ether_sprintf __P((const u_char *));
 void	if_alloc_sadl __P((struct ifnet *));
 void	if_free_sadl __P((struct ifnet *));
 void	if_attach __P((struct ifnet *));
+void	if_attachdomain __P((void));
+void	if_attachdomain1 __P((struct ifnet *));
 void	if_deactivate __P((struct ifnet *));
 void	if_detach __P((struct ifnet *));
 void	if_down __P((struct ifnet *));

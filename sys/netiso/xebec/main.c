@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2001/11/13 01:10:52 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.8.8.1 2002/05/30 13:52:39 gehenna Exp $	*/
 
 /*
  * TODO:
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.8 2001/11/13 01:10:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.8.8.1 2002/05/30 13:52:39 gehenna Exp $");
 
 #include <stdio.h>
 #include <strings.h>
@@ -110,16 +110,16 @@ openfiles(proto)
 	IFDEBUG(X)
 #ifdef DEBUG
 		DOIT(astringfile);
-#endif DEBUG
+#endif /* DEBUG */
 		fprintf(astringfile, 
-				"#ifndef _NFILE\n#include <stdio.h>\n#endif _NFILE\n" );
+				"#ifndef _NFILE\n#include <stdio.h>\n#endif /* _NFILE */\n" );
 	ENDDEBUG
 
 	DOIT(statevalfile);
 	DOIT(statefile);
 	DOIT(actfile);
 	fprintf(actfile,
-		"#ifndef lint\nstatic char *rcsid = \"$Header/**/$\";\n#endif lint\n");
+		"#ifndef lint\nstatic char *rcsid = \"$Header/**/$\";\n#endif /* lint */\n");
 
 	if(pgoption)
 		putdriver(actfile, 15);
@@ -213,7 +213,7 @@ char *argv[];
 			actfile_name =  (char *)strcpy(actfile_name,name);
 #ifdef LINT
 			name =
-#endif LINT
+#endif /* LINT */
 			strcat(actfile_name, ".c");
 			fprintf(stdout, "debugging file is %s\n",actfile_name);
 			break;
@@ -229,7 +229,7 @@ char *argv[];
 			astringfile_name =  (char *)strcpy(astringfile_name,name);
 #ifdef LINT
 			name =
-#endif LINT
+#endif /* LINT */
 			strcat(astringfile_name, ".c");
 			fprintf(OUT, "option %c, astringfile name %s\n",c, name);
 			break;
@@ -239,7 +239,7 @@ char *argv[];
 			eventfile_h_name =  (char *)strcpy(eventfile_h_name,name);
 #ifdef LINT
 			name =
-#endif LINT
+#endif /* LINT */
 			strcat(eventfile_h_name, ".h");
 			fprintf(stdout, "event files is %s\n",eventfile_h_name);
 			break;
@@ -249,7 +249,7 @@ char *argv[];
 			statevalfile_name =  (char *)strcpy(statevalfile_name,name);
 #ifdef LINT
 			name =
-#endif LINT
+#endif /* LINT */
 			strcat(statevalfile_name, ".init");
 			fprintf(stdout, "state table initial values file is %s\n",statevalfile_name);
 			break;
@@ -259,7 +259,7 @@ char *argv[];
 			statefile_name =  (char *)strcpy(statefile_name,name);
 #ifdef LINT
 			name =
-#endif LINT
+#endif /* LINT */
 			strcat(statefile_name, ".h");
 			fprintf(stdout, "state file is %s\n",statefile_name);
 			break;
@@ -308,7 +308,7 @@ char *argv[];
 			fprintf(OUT, "Option K overrides option X\n");
 			debug['X'] = 0;
 		}
-#endif notdef
+#endif /* notdef */
 		if(strlen(kerneldirname)<1) {
 			fprintf(OUT, "K option: dir name too short!\n");
 			exit(1);

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.167 2002/05/07 09:37:28 onoe Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.167.2.1 2002/05/30 14:46:44 gehenna Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.167 2002/05/07 09:36:50 onoe Exp 
+ *	NetBSD: pcmciadevs,v 1.168 2002/05/26 14:35:10 tshiozak Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -795,6 +795,9 @@
 #define	PCMCIA_CIS_PLANEX_FNW3700T	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_PLANEX_FNW3700T	-1
 #define	PCMCIA_STR_PLANEX_FNW3700T	"Planex FNW-3700-T"
+#define	PCMCIA_CIS_PLANEX_GWNS11H	{ "PLANEX", "GW-NS11H Wireless LAN PC Card", NULL, NULL }
+#define	PCMCIA_PRODUCT_PLANEX_GWNS11H	-1
+#define	PCMCIA_STR_PLANEX_GWNS11H	"PLANEX GW-NS11H Wireless LAN PC Card"
 #define	PCMCIA_CIS_RPTI_EP400	{ "RPTI LTD.", "EP400", "CISV100", NULL }
 #define	PCMCIA_PRODUCT_RPTI_EP400	-1
 #define	PCMCIA_STR_RPTI_EP400	"RPTI EP400"

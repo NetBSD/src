@@ -27,7 +27,7 @@
  *	i4b_l4if.c - Layer 3 interface to Layer 4
  *	-------------------------------------------
  *
- *	$Id: i4b_l4if.c,v 1.11 2002/05/02 18:56:56 martin Exp $ 
+ *	$Id: i4b_l4if.c,v 1.11.2.1 2002/05/30 13:52:38 gehenna Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.11 2002/05/02 18:56:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.11.2.1 2002/05/30 13:52:38 gehenna Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -89,54 +89,51 @@ void n_mgmt_command(struct isdn_l3_driver *drv, int cmd, void *parm);
  *	i4b_mdl_status_ind - status indication from lower layers
  *---------------------------------------------------------------------------*/
 int
-i4b_mdl_status_ind(int bri, int status, int parm)
+i4b_mdl_status_ind(struct isdn_l3_driver *d, int status, int parm)
 {
-	struct isdn_l3_driver *d = NULL;
 	int sendup, update_leds = 0;
 	int i;
 	
-	NDBGL3(L3_MSG, "bri = %d, status = %d, parm = %d", bri, status, parm);
+	NDBGL3(L3_MSG, "bri = %d, status = %d, parm = %d", d->bri, status, parm);
 
 	switch(status)
 	{
 		case STI_ATTACH:
 			if (parm) {
-				NDBGL3(L3_MSG, "STI_ATTACH: attaching bri %d", bri);
+				NDBGL3(L3_MSG, "STI_ATTACH: attaching bri %d", d->bri);
 			} else {
-				NDBGL3(L3_MSG, "STI_ATTACH: dettaching bri %d", bri);
+				NDBGL3(L3_MSG, "STI_ATTACH: dettaching bri %d", d->bri);
 			}
 			break;
 
 		case STI_L1STAT:
-			i4b_l4_l12stat(bri, 1, parm);
+			i4b_l4_l12stat(d, 1, parm);
 			update_leds = 1;
-			NDBGL3(L3_MSG, "STI_L1STAT: bri %d layer 1 = %s", bri, status ? "up" : "down");
+			NDBGL3(L3_MSG, "STI_L1STAT: bri %d layer 1 = %s", d->bri, status ? "up" : "down");
 			break;
 			
 		case STI_L2STAT:
-			i4b_l4_l12stat(bri, 2, parm);
+			i4b_l4_l12stat(d, 2, parm);
 			update_leds = 1;
-			NDBGL3(L3_MSG, "STI_L2STAT: bri %d layer 2 = %s", bri, status ? "up" : "down");
+			NDBGL3(L3_MSG, "STI_L2STAT: bri %d layer 2 = %s", d->bri, status ? "up" : "down");
 			break;
 
 		case STI_TEIASG:
-			d = isdn_find_l3_by_bri(bri);
 			d->tei = parm;
-			i4b_l4_teiasg(bri, parm);
+			i4b_l4_teiasg(d, parm);
 			update_leds = 1;
-			NDBGL3(L3_MSG, "STI_TEIASG: bri %d TEI = %d = 0x%02x", bri, parm, parm);
+			NDBGL3(L3_MSG, "STI_TEIASG: bri %d TEI = %d = 0x%02x", d->bri, parm, parm);
 			break;
 
 		case STI_PDEACT:	/* L1 T4 timeout */
-			NDBGL3(L3_ERR, "STI_PDEACT: bri %d TEI = %d = 0x%02x", bri, parm, parm);
-			d = isdn_find_l3_by_bri(bri);
+			NDBGL3(L3_ERR, "STI_PDEACT: bri %d TEI = %d = 0x%02x", d->bri, parm, parm);
 
 			update_leds = 1;
 			sendup = 0;
 
 			for(i=0; i < num_call_desc; i++)
 			{
-				if(call_desc[i].bri == bri)
+				if(call_desc[i].bri == d->bri)
                 		{
 					i4b_l3_stop_all_timers(&(call_desc[i]));
 					if(call_desc[i].cdid != CDID_UNUSED)
@@ -151,19 +148,18 @@ i4b_mdl_status_ind(int bri, int status, int parm)
 
 			if(sendup)
 			{
-				i4b_l4_pdeact(bri, sendup);
+				i4b_l4_pdeact(d, sendup);
 				call_desc[i].cdid = CDID_UNUSED;
 			}
 			break;
 
 		case STI_NOL1ACC:	/* no outgoing access to S0 */
-			NDBGL3(L3_ERR, "STI_NOL1ACC: bri %d no outgoing access to S0", bri);
-			d = isdn_find_l3_by_bri(bri);
+			NDBGL3(L3_ERR, "STI_NOL1ACC: bri %d no outgoing access to S0", d->bri);
 			update_leds = 1;
 
 			for(i=0; i < num_call_desc; i++)
 			{
-				if(call_desc[i].bri == bri)
+				if(call_desc[i].bri == d->bri)
                 		{
 					if(call_desc[i].cdid != CDID_UNUSED)
 					{
@@ -181,7 +177,7 @@ i4b_mdl_status_ind(int bri, int status, int parm)
 			break;
 
 		default:
-			NDBGL3(L3_ERR, "ERROR, bri %d, unknown status value %d!", bri, status);
+			NDBGL3(L3_ERR, "ERROR, bri %d, unknown status value %d!", d->bri, status);
 			break;
 	}
 
@@ -292,11 +288,10 @@ n_connect_response(struct call_desc *cd, int response, int cause)
 			break;
 	}
 
-	printf("bri %d channel %d -> chstate = %d\n", cd->bri, cd->channelid, chstate);
 	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 	{
 		d->bch_state[cd->channelid] = chstate;
-		i4b_l2_channel_set_state(cd->bri, cd->channelid, chstate);
+		i4b_l2_channel_set_state(cd->l3drv, cd->channelid, chstate);
 		update_controller_leds(d);
 	}
 	else

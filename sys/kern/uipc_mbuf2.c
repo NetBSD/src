@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.9 2002/04/28 00:53:34 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.9.2.1 2002/05/30 14:48:04 gehenna Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.9 2002/04/28 00:53:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.9.2.1 2002/05/30 14:48:04 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,6 +298,7 @@ m_aux_delete(m, victim)
 				m->m_pkthdr.aux = n->m_next;
 			n->m_next = NULL;
 			m_free(n);
+			return;
 		} else
 			prev = n;
 		n = next;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.34 2002/03/15 09:36:27 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.34.4.1 2002/05/30 13:52:35 gehenna Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.34 2002/03/15 09:36:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.34.4.1 2002/05/30 13:52:35 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -657,7 +657,7 @@ nd6_na_input(m, off, icmp6len)
 			ln->ln_byhint = 0;
 			if (ln->ln_expire)
 				ln->ln_expire = time_second +
-				    nd_ifinfo[rt->rt_ifp->if_index].reachable;
+				    ND_IFINFO(rt->rt_ifp)->reachable;
 		} else {
 			ln->ln_state = ND6_LLINFO_STALE;
 			ln->ln_expire = time_second + nd6_gctimer;
@@ -738,7 +738,7 @@ nd6_na_input(m, off, icmp6len)
 				ln->ln_byhint = 0;
 				if (ln->ln_expire) {
 					ln->ln_expire = time_second +
-					    nd_ifinfo[ifp->if_index].reachable;
+					    ND_IFINFO(ifp)->reachable;
 				}
 			} else {
 				if (lladdr && llchange) {
@@ -1094,14 +1094,14 @@ nd6_dad_start(ifa, tick)
 	if (tick == NULL) {
 		nd6_dad_ns_output(dp, ifa);
 		nd6_dad_starttimer(dp, 
-		    nd_ifinfo[ifa->ifa_ifp->if_index].retrans * hz / 1000);
+		    ND6_RETRANS_SEC(ND_IFINFO(ifa->ifa_ifp)->retrans) * hz);
 	} else {
 		int ntick;
 
 		if (*tick == 0)
-			ntick = random() % (MAX_RTR_SOLICITATION_DELAY * hz);
+			ntick = arc4random() % (MAX_RTR_SOLICITATION_DELAY * hz);
 		else
-			ntick = *tick + random() % (hz / 2);
+			ntick = *tick + arc4random() % (hz / 2);
 		*tick = ntick;
 		nd6_dad_starttimer(dp, ntick);
 	}
@@ -1186,7 +1186,7 @@ nd6_dad_timer(ifa)
 		 */
 		nd6_dad_ns_output(dp, ifa);
 		nd6_dad_starttimer(dp, 
-		    nd_ifinfo[ifa->ifa_ifp->if_index].retrans * hz / 1000);
+		    ND6_RETRANS_SEC(ND_IFINFO(ifa->ifa_ifp)->retrans) * hz);
 	} else {
 		/*
 		 * We have transmitted sufficient number of DAD packets.

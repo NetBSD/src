@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.49 2002/05/03 16:08:36 nathanw Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.49.2.1 2002/05/30 14:46:14 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.49 2002/05/03 16:08:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.49.2.1 2002/05/30 14:46:14 gehenna Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -156,7 +156,7 @@ const struct pci_class pci_subclass_communications[] = {
 };
 
 const struct pci_class pci_subclass_system[] = {
-	{ "8259 PIC",		PCI_SUBCLASS_SYSTEM_PIC,		},
+	{ "interrupt",		PCI_SUBCLASS_SYSTEM_PIC,		},
 	{ "8237 DMA",		PCI_SUBCLASS_SYSTEM_DMA,		},
 	{ "8254 timer",		PCI_SUBCLASS_SYSTEM_TIMER,		},
 	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,		},

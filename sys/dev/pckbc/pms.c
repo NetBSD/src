@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.3 2002/05/13 21:18:51 jdolecek Exp $ */
+/* $NetBSD: pms.c,v 1.3.2.1 2002/05/30 14:46:40 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,13 +24,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.3 2002/05/13 21:18:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.3.2.1 2002/05/30 14:46:40 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/callout.h>
+#include <sys/kthread.h>
 
 #include <machine/bus.h>
 
@@ -75,14 +75,14 @@ struct pms_softc {		/* driver status information */
 #ifndef PMS_DISABLE_POWERHOOK
 	void *sc_powerhook;	/* cookie from power hook */
 #endif /* !PMS_DISABLE_POWERHOOK */
-	int inputstate;
+	int inputstate;		/* number of bytes received for this packet */
 	u_int buttons;		/* mouse button status */
 	enum pms_type protocol;
 	unsigned char packet[4];
 	struct timeval last, current;
 
 	struct device *sc_wsmousedev;
-	struct callout sc_rst;
+	struct proc *sc_event_thread;
 };
 
 int pmsprobe __P((struct device *, struct cfdata *, void *));
@@ -94,9 +94,10 @@ struct cfattach pms_ca = {
 };
 
 static int	pms_protocol __P((pckbc_tag_t, pckbc_slot_t));
-static void	do_enable __P((struct pms_softc *, int));
-static void	do_disable __P((struct pms_softc *, int));
-static void	pms_reset __P((void*));
+static void	do_enable __P((struct pms_softc *));
+static void	do_disable __P((struct pms_softc *));
+static void	pms_reset_thread __P((void*));
+static void	pms_spawn_reset_thread __P((void*));
 int	pms_enable __P((void *));
 int	pms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 void	pms_disable __P((void *));
@@ -126,13 +127,13 @@ pms_protocol(tag, slot)
 		cmd[0] = PMS_SET_SAMPLE;
 		for (i = 0; i < 3; i++) {
 			cmd[1] = p->rates[i];
-			res = pckbc_poll_cmd(tag, slot, cmd, 2, 0, 0, 0);
+			res = pckbc_enqueue_cmd(tag, slot, cmd, 2, 0, 1, 0);
 			if (res)
 				return PMS_STANDARD;
 		}
 
 		cmd[0] = PMS_SEND_DEV_ID;
-		res = pckbc_poll_cmd(tag, slot, cmd, 1, 1, resp, 0);
+		res = pckbc_enqueue_cmd(tag, slot, cmd, 1, 1, 1, resp);
 		if (res)
 			return 0;
 		if (resp[0] == p->response) {
@@ -216,6 +217,7 @@ pmsattach(parent, self, aux)
 #endif
 	sc->inputstate = 0;
 	sc->buttons = 0;
+	sc->protocol = PMS_UNKNOWN;
 
 	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
 			       pmsinput, sc, sc->sc_dev.dv_xname);
@@ -231,9 +233,6 @@ pmsattach(parent, self, aux)
 	 */
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 
-	/* Reset callout */
-	callout_init(&sc->sc_rst);
-
 	/* no interrupts until enabled */
 	cmd[0] = PMS_DEV_DISABLE;
 	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, 0, 0);
@@ -241,15 +240,16 @@ pmsattach(parent, self, aux)
 		printf("pmsattach: disable error\n");
 	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 
+	kthread_create(pms_spawn_reset_thread, sc);
+
 #ifndef PMS_DISABLE_POWERHOOK
 	sc->sc_powerhook = powerhook_establish(pms_power, sc);
 #endif /* !PMS_DISABLE_POWERHOOK */
 }
 
 static void
-do_enable(sc, poll)
+do_enable(sc)
 	struct pms_softc *sc;
-	int poll;
 {
 	u_char cmd[1];
 	int res;
@@ -263,17 +263,12 @@ do_enable(sc, poll)
 	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 1);
 
 	cmd[0] = PMS_DEV_ENABLE;
-	if (poll) {
-		res = pckbc_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot,
-			cmd, 1, 0, 0, 1);
-	} else {
-		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot,
-			cmd, 1, 0, 1, 0);
-	}
+	res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1, 0, 1, 0);
 	if (res)
 		printf("pms_enable: command error %d\n", res);
 
-	sc->protocol = pms_protocol(sc->sc_kbctag, sc->sc_kbcslot);
+	if (sc->protocol == PMS_UNKNOWN)
+		sc->protocol = pms_protocol(sc->sc_kbctag, sc->sc_kbcslot);
 	DPRINTF(("pms_enable: using %s protocol\n",
 	    pms_protocols[sc->protocol].name));
 #if 0
@@ -304,21 +299,14 @@ do_enable(sc, poll)
 }
 
 static void
-do_disable(sc, poll)
+do_disable(sc)
 	struct pms_softc *sc;
-	int poll;
 {
 	u_char cmd[1];
 	int res;
 
 	cmd[0] = PMS_DEV_DISABLE;
-	if (poll) {
-		res = pckbc_poll_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd,
-			1, 0, 0, 1);
-	} else {
-		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd,
-			1, 0, 1, 0);
-	}
+	res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1, 0, 1, 0);
 	if (res)
 		printf("pms_disable: command error\n");
 
@@ -330,13 +318,16 @@ pms_enable(v)
 	void *v;
 {
 	struct pms_softc *sc = v;
+	int s;
 
 	if (sc->sc_enabled)
 		return EBUSY;
 
-	sc->sc_enabled = 1;
+	do_enable(sc);
 
-	do_enable(sc, 0);
+	s = spltty();
+	sc->sc_enabled = 1;
+	splx(s);
 
 	return 0;
 }
@@ -346,10 +337,13 @@ pms_disable(v)
 	void *v;
 {
 	struct pms_softc *sc = v;
+	int s;
 
-	do_disable(sc, 0);
+	do_disable(sc);
 
+	s = spltty();
 	sc->sc_enabled = 0;
+	splx(s);
 }
 
 #ifndef PMS_DISABLE_POWERHOOK
@@ -364,11 +358,13 @@ pms_power(why, v)
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
 		if (sc->sc_enabled)
-			do_disable(sc, 0);
+			do_disable(sc);
 		break;
 	case PWR_RESUME:
-		if (sc->sc_enabled)
-			do_enable(sc, 0);
+		if (sc->sc_enabled) {
+			sc->protocol = PMS_UNKNOWN;	/* recheck protocol & init mouse */
+			do_enable(sc);
+		}
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
 	case PWR_SOFTRESUME:
@@ -419,26 +415,42 @@ pms_ioctl(v, cmd, data, flag, p)
 }
 
 static void
-pms_reset(arg)
+pms_spawn_reset_thread(arg)
 	void *arg;
 {
 	struct pms_softc *sc = arg;
-	int s;
 
+	kthread_create1(pms_reset_thread, sc, &sc->sc_event_thread,
+	    sc->sc_dev.dv_xname);
+}
+
+static void
+pms_reset_thread(arg)
+	void *arg;
+{
+	struct pms_softc *sc = arg;
+	u_char cmd[1], resp[2];
+	int res;
+
+	for (;;) {
+		tsleep(&sc->sc_enabled, PWAIT, "pmsreset", 0);
 #ifdef PMSDEBUG
-	if (pmsdebug)
+		if (pmsdebug)
 #endif
 #if defined(PMSDEBUG) || defined(DIAGNOSTIC)
-		printf("%s: resetting mouse interface\n", 
-		    sc->sc_dev.dv_xname);
+			printf("%s: resetting mouse interface\n", 
+			    sc->sc_dev.dv_xname);
 #endif
-
-	s = spltty();
-	sc->sc_enabled = 0;
-	do_disable(sc, 1);
-	do_enable(sc, 1);
-	sc->sc_enabled = 1;
-	splx(s);
+		pms_disable(sc);
+		cmd[0] = PMS_RESET;
+		res = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd, 1,
+		    2, 1, resp);
+		if (res)
+			DPRINTF(("%s: reset error %d\n", sc->sc_dev.dv_xname, 
+			    res));
+		sc->protocol = PMS_UNKNOWN;	/* reprobe protocol */
+		pms_enable(sc);
+	}
 }
 
 /* Masks for the first byte of a packet */
@@ -464,7 +476,7 @@ pmsinput(vsc, data)
 	}
 
 	microtime(&sc->current);
-	if (sc->inputstate != 0) {
+	if (sc->inputstate > 0) {
 		struct timeval diff;
 
 		timersub(&sc->current, &sc->last, &diff);
@@ -486,12 +498,22 @@ pmsinput(vsc, data)
 			    (long)diff.tv_sec, (long)diff.tv_usec));
 			sc->inputstate = 0;
 			sc->sc_enabled = 0;
-			/* Schedule reset */
-			callout_reset(&sc->sc_rst, 0, pms_reset, sc);
+			wakeup(&sc->sc_enabled);
 			return;
 		}
 	}
 	sc->last = sc->current;
+
+	if (sc->inputstate == 0) {
+		/*
+		 * Some devices (seen on trackballs anytime, and on some mice shortly after
+		 * reset) output garbage bytes between packets.
+		 * Just ignore them.
+		 */
+		if ((data & 0xc0) != 0)
+			return;	/* not in sync yet, discard input */
+	}
+
 	sc->packet[sc->inputstate++] = data & 0xff;
 	switch (sc->inputstate) {
 	case 0:
@@ -499,15 +521,26 @@ pmsinput(vsc, data)
 		break;
 
 	case 1:
+		/*
+		 * Why should we test for bit 0x8 and insist on it here?
+		 * The old (psm.c and psm_intelli.c) drivers didn't do
+		 * it, and there are devices where it does harm (that's
+		 * why it is not used if using PMS_STANDARD protocol).
+		 * Anyway, it does not to cause any harm to accept packets
+		 * without this bit.
+		 */
+#if 0
+		if (sc->protocol == PMS_STANDARD)
+			break;
 		if (!(sc->packet[0] & 0x8)) {
 			DPRINTF(("pmsinput: 0x8 not set in first byte "
 			    "[0x%02x], resetting\n", sc->packet[0]));
 			sc->inputstate = 0;
 			sc->sc_enabled = 0;
-			/* Schedule reset */
-			callout_reset(&sc->sc_rst, 0, pms_reset, sc);
+			wakeup(&sc->sc_enabled);
 			return;
 		}
+#endif
 		break;
 
 	case 2:
@@ -589,8 +622,7 @@ pmsinput(vsc, data)
 		printf("pmsinput: very confused.  resetting.\n");
 		sc->inputstate = 0;
 		sc->sc_enabled = 0;
-		/* Schedule reset */
-		callout_reset(&sc->sc_rst, 0, pms_reset, sc);
+		wakeup(&sc->sc_enabled);
 		return;
 	}
 }
