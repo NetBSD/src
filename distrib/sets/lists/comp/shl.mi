@@ -1,6 +1,7 @@
-# $NetBSD: shl.mi,v 1.29 2003/03/25 23:55:37 pooka Exp $
+# $NetBSD: shl.mi,v 1.30 2003/04/22 20:35:23 elric Exp $
 ./usr/lib/libasn1_pic.a		comp-c-piclib
 ./usr/lib/libbz2_pic.a		comp-c-piclib
+./usr/lib/libbsdmalloc_pic.a	comp-c-piclib
 ./usr/lib/libc_pic.a		comp-c-piclib
 ./usr/lib/libcdk_pic.a		comp-c-piclib
 ./usr/lib/libcom_err_pic.a	comp-c-piclib

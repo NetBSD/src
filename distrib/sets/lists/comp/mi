@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.561 2003/04/19 23:10:33 christos Exp $
+#	$NetBSD: mi,v 1.562 2003/04/22 20:35:21 elric Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -923,6 +923,8 @@
 ./usr/lib/i18n/libUTF8.a	comp-i18n-lib
 ./usr/lib/libasn1.a		comp-c-lib
 ./usr/lib/libasn1_p.a		comp-c-proflib
+./usr/lib/libbsdmalloc.a	comp-c-lib
+./usr/lib/libbsdmalloc_p.a	comp-c-proflib
 ./usr/lib/libbz2.a		comp-c-lib
 ./usr/lib/libbz2_p.a		comp-c-proflib
 ./usr/lib/libc.a		comp-c-lib
