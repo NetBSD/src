@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.44 2001/08/22 06:59:40 nisimura Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.45 2001/08/24 15:33:16 mhitch Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.44 2001/08/22 06:59:40 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.45 2001/08/24 15:33:16 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ dec_3maxplus_init()
 	platform.cons_init = dec_3maxplus_cons_init;
 	platform.iointr = dec_3maxplus_intr;
 	platform.intr_establish = dec_3maxplus_intr_establish;
-	platform.memsize = memsize_scan;
+	platform.memsize = memsize_bitmap;
 	platform.clkread = kn03_clkread;
 	/* 3MAX+ has IOASIC free-running high resolution timer */
 
