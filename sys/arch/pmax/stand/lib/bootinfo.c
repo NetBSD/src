@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.c,v 1.3 1999/11/12 01:37:43 simonb Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.4 1999/11/13 21:33:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <machine/types.h>
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include "bootinfo.h"
 
