@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 1998/10/19 22:09:18 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 1998/11/17 12:11:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -605,12 +605,13 @@ allocsys(v)
 	 * i/o buffers.
 	 */
 
-	if (bufpages == 0)
+	if (bufpages == 0) {
 		if (physmem < arm_byte_to_page(2 * 1024 * 1024))
 			bufpages = physmem / (10 * CLSIZE);
 		else
 			bufpages = (arm_byte_to_page(2 * 1024 * 1024)
 			         + physmem) / (20 * CLSIZE);
+	}
 
 #ifdef DIAGNOSTIC
 	if (bufpages == 0)
