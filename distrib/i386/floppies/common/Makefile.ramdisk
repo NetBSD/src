@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.6 2002/03/04 04:49:26 lukem Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.7 2002/03/06 04:29:35 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -30,7 +30,7 @@ realall: ${IMAGE}
 
 
 # Use stubs to eliminate some large stuff from libc
-HACKSRC=${_SRC_TOP_}/distrib/utils/libhack
+HACKSRC=${DISTRIBDIR}/utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
 # Turn off libhack's gethostby*() as it only supports /etc/hosts

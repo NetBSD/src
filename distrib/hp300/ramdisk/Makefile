@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.6 2002/02/24 09:57:18 lukem Exp $
+#       $NetBSD: Makefile,v 1.7 2002/03/06 04:31:50 lukem Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -24,7 +24,7 @@ MAKEDEVTARGETS+=std md0
 realall: ${IMAGE}
 
 # Use stubs to eliminate some large stuff from libc
-HACKSRC=${_SRC_TOP_}/distrib/utils/libhack
+HACKSRC=${DISTRIBDIR}/utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 # turn off small gethostby* temporarily
 HACKOBJS:=	${HACKOBJS:Ngethost.o}
