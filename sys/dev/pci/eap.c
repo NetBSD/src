@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.48 2001/11/13 07:48:42 lukem Exp $	*/
+/*	$NetBSD: eap.c,v 1.48.10.1 2002/12/15 16:27:34 he Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.48 2001/11/13 07:48:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.48.10.1 2002/12/15 16:27:34 he Exp $");
 
 #include "midi.h"
 
@@ -662,7 +662,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 		if (ct5880) {
 			EWRITE4(sc, EAP_ICSS, EAP_CT5880_AC97_RESET);
 			/* Let codec wake up */
-			tsleep(sc, PRIBIO, "eapcdc", hz / 20);
+			delay(20000);
 		}
 
                 /* Reset from es1371's perspective */
