@@ -1,3 +1,4 @@
+/* NetBSD $Id: vm_unix.c,v 1.12 1994/06/27 04:55:46 cgd Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1991, 1993
@@ -37,8 +38,7 @@
  *
  * from: Utah $Hdr: vm_unix.c 1.1 89/11/07$
  *
- *	from: @(#)vm_unix.c	8.1 (Berkeley) 6/11/93
- *	$Id: vm_unix.c,v 1.11 1994/05/25 10:56:56 pk Exp $
+ *	@(#)vm_unix.c	8.1 (Berkeley) 6/11/93
  */
 
 /*

@@ -1,3 +1,4 @@
+/* NetBSD $Id: swap_pager.c,v 1.22 1994/06/27 04:55:46 cgd Exp $ */
 /*
  * Copyright (c) 1990 University of Utah.
  * Copyright (c) 1991, 1993
@@ -37,8 +38,7 @@
  *
  * from: Utah $Hdr: swap_pager.c 1.4 91/04/30$
  *
- *	from: @(#)swap_pager.c        8.9 (Berkeley) 3/21/94
- *	$Id: swap_pager.c,v 1.21 1994/05/23 03:11:32 cgd Exp $
+ *	@(#)swap_pager.c	8.9 (Berkeley) 3/21/94
  */
 
 /*
