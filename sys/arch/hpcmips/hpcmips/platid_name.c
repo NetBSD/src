@@ -1,4 +1,4 @@
-/* $Id: platid_name.c,v 1.9 2000/09/21 03:18:04 sato Exp $ */
+/* $Id: platid_name.c,v 1.10 2000/10/21 07:30:34 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000
@@ -145,7 +145,11 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_CASIO_CASSIOPEIAE_E15,
 	  "CASIO Cassiopeia E15" },
 	{ &platid_mask_MACH_CASIO_CASSIOPEIAE_E55,
-	  "CASIO Cassiopeia E55" },
+	  "CASIO Cassiopeia E-55" },
+	{ &platid_mask_MACH_CASIO_CASSIOPEIAE_FORDOCOMO,
+	  "CASIO Cassiopeia for DoCoMo" },
+	{ &platid_mask_MACH_CASIO_CASSIOPEIAE_E65,
+	  "CASIO Cassiopeia E-65" },
 	{ &platid_mask_MACH_CASIO_CASSIOPEIAE_EXXX,
 	  "CASIO Cassiopeia EXXX" },
 	{ &platid_mask_MACH_CASIO_CASSIOPEIAE_E100,
@@ -261,4 +265,4 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_VADEM_CLIO_C1050,
 	  "VADEM CLIO C-1050" },
 };
-int platid_name_table_size = 110;
+int platid_name_table_size = 112;

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.22 2000/09/21 03:16:10 sato Exp $	*/
+/*	$NetBSD: platid.def,v 1.23 2000/10/21 07:30:34 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000
@@ -104,7 +104,10 @@ Everex {
 CASIO {
   CassiopeiaE " Cassiopeia" {
     EXX {
-      CPU=MIPS_VR_4111 E10 E11 E15 E55
+      CPU=MIPS_VR_4111 E10 E11 E15
+                       E55 -" E-55"
+                       forDoCoMo -" for DoCoMo"
+                       E65 -" E-65"
     }
     EXXX {
       CPU=MIPS_VR_4121 E100 E105 E500 E507
