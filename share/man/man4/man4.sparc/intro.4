@@ -27,9 +27,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: intro.4,v 1.18 2003/05/06 07:44:55 wiz Exp $
+.\"	$NetBSD: intro.4,v 1.19 2004/03/31 07:54:19 mrg Exp $
 .\"
-.Dd February 2, 2002
+.Dd March 31, 2004
 .Dt INTRO 4 sparc
 .Os
 .Sh NAME
@@ -217,9 +217,11 @@ The devices listed below are supported in this incarnation of
 the system.  Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -width cgfourteen
+.Bl -tag -width le/lebuffer
 .It audio
 AMD 79C30 obio (sun4c) audio controller
+.It bpp
+Bi-directional Parallel port
 .It bwtwo
 black and white obio frame buffer
 .It cgeight
@@ -281,8 +283,6 @@ Zilog 8530 serial controller
 The following devices are not supported, due to unavailability of
 either documentation or sample hardware:
 .Bl -tag -width speaker
-.It bpp
-Bi-directional Parallel port
 .It dbri
 Dual Basic Rate Interface (BRI) ISDN (SPARC LX \*[Am] SPARCstation 10)
 .It audio
