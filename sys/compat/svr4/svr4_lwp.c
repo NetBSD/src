@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_lwp.c,v 1.1 1999/09/07 06:24:56 christos Exp $	*/
+/*	$NetBSD: svr4_lwp.c,v 1.2 2000/04/09 05:30:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -96,8 +96,29 @@ svr4_sys__lwp_create(p, v, retval)
 	if (SCARG(uap, flags) & SVR4_LWP_SUSPENDED)
 	    pt->p_stat = SSTOP;
 
-	if (SCARG(uap, flags) & SVR4___LWP_ASLWP)
-		uprintf("svr4_lwp_create: ASLWP not supported");
+	if (SCARG(uap, flags) & SVR4___LWP_ASLWP) {
+		/*
+		 * XXX: This does not really work, we don't have
+		 *	the facility to deliver all async signals
+		 *	to a single lwp, and also we don't keep
+		 *	track of having only one ASLWP. For now
+		 *	we just block all signals as we are supposed
+		 *	to.
+		 */
+		sigset_t ss;
+		sigfillset(&ss);
+		(void)sigprocmask1(pt, SIG_BLOCK, &ss, 0);
+	} else {
+		/*
+		 * XXX: We block all signals to the rest of the of
+		 * 	the lwp's, so that they don't get confused
+		 *	as of the above. Will that work? What does
+		 *	sharing s
+		 */
+		sigset_t ss;
+		sigfillset(&ss);
+		(void)sigprocmask1(pt, SIG_BLOCK, &ss, 0);
+	}
 
 	if ((error = copyin(SCARG(uap, uc), &uc, sizeof(uc))) != 0)
 		return error;
