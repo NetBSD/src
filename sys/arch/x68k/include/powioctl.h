@@ -1,4 +1,4 @@
-/*	$NetBSD: powioctl.h,v 1.1 1996/05/05 12:17:14 oki Exp $	*/
+/*	$NetBSD: powioctl.h,v 1.2 2004/05/08 08:40:08 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -32,6 +32,9 @@
 
 /* Power switch device driver. */
 
+#ifndef _X68K_POWIOCTL_H_
+#define _X68K_POWIOCTL_H_
+
 #include <sys/time.h>
 
 enum x68k_powerswitch {
@@ -59,3 +62,5 @@ struct x68k_alarminfo {
 #define POWIOCGALARMINFO	_IOR('p', 1, struct x68k_alarminfo)
 #define POWIOCSALARMINFO	_IOW('p', 2, struct x68k_alarminfo)
 #define POWIOCSSIGNAL		_IOW('p', 3, int)
+
+#endif
