@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.2.6.2 2001/11/15 06:39:20 thorpej Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.2.6.3 2001/11/16 16:58:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.2 2001/11/15 06:39:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.3 2001/11/16 16:58:37 thorpej Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -264,10 +264,9 @@ cpu_upcall(struct lwp *l)
 	frame.sa_arg = sau->sau_arg;
 	frame.sa_upcall = sd->sa_upcall;
 
-	pool_put(&saupcall_pool, sau);
-
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
+		pool_put(&saupcall_pool, sau);
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
@@ -282,4 +281,6 @@ cpu_upcall(struct lwp *l)
 #ifndef arm26
 	cpu_cache_syncI();	/* XXX really necessary? */
 #endif
+
+	pool_put(&saupcall_pool, sau);
 }
