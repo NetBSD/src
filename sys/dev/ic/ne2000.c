@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.14 1998/10/28 00:13:48 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.15 1998/12/18 21:50:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -88,7 +88,8 @@ void	ne2000_read_hdr __P((struct dp8390_softc *, int, struct dp8390_ring *));
 int	ne2000_test_mem __P((struct dp8390_softc *));
 
 void	ne2000_writemem __P((bus_space_tag_t, bus_space_handle_t,
-	    bus_space_tag_t, bus_space_handle_t, u_int8_t *, int, size_t, int));
+	    bus_space_tag_t, bus_space_handle_t, u_int8_t *, int, size_t, 
+	    int, int));
 void	ne2000_readmem __P((bus_space_tag_t, bus_space_handle_t,
 	    bus_space_tag_t, bus_space_handle_t, int, u_int8_t *, size_t, int));
 
@@ -163,7 +164,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 		/* Search for the start of RAM. */
 		for (x = 1; x < 256; x++) {
 			ne2000_writemem(nict, nich, asict, asich, pbuf0,
-			    x << ED_PAGE_SHIFT, ED_PAGE_SIZE, useword);
+			    x << ED_PAGE_SHIFT, ED_PAGE_SIZE, useword, 0);
 			ne2000_readmem(nict, nich, asict, asich,
 			    x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE, useword);
 			if (bcmp(pbuf0, tbuf, ED_PAGE_SIZE) == 0) {
@@ -171,7 +172,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 					pbuf[i] = 255 - x;
 				ne2000_writemem(nict, nich, asict, asich,
 				    pbuf, x << ED_PAGE_SHIFT, ED_PAGE_SIZE,
-				    useword);
+				    useword, 0);
 				ne2000_readmem(nict, nich, asict, asich,
 				    x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE,
 				    useword);
@@ -192,7 +193,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 		/* Search for the end of RAM. */
 		for (++x; x < 256; x++) {
 			ne2000_writemem(nict, nich, asict, asich, pbuf0,
-			    x << ED_PAGE_SHIFT, ED_PAGE_SIZE, useword);
+			    x << ED_PAGE_SHIFT, ED_PAGE_SIZE, useword, 0);
 			ne2000_readmem(nict, nich, asict, asich,
 			    x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE, useword);
 			if (bcmp(pbuf0, tbuf, ED_PAGE_SIZE) == 0) {
@@ -200,7 +201,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 					pbuf[i] = 255 - x;
 				ne2000_writemem(nict, nich, asict, asich,
 				    pbuf, x << ED_PAGE_SHIFT, ED_PAGE_SIZE,
-				    useword);
+				    useword, 0);
 				ne2000_readmem(nict, nich, asict, asich,
 				    x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE,
 				    useword);
@@ -362,7 +363,7 @@ ne2000_detect(nict, nich, asict, asich)
 	 * board is an NE2000.
 	 */
 	ne2000_writemem(nict, nich, asict, asich, test_pattern, 8192,
-	    sizeof(test_pattern), 0);
+	    sizeof(test_pattern), 0, 1);
 	ne2000_readmem(nict, nich, asict, asich, 8192, test_buffer,
 	    sizeof(test_buffer), 0);
 
@@ -380,7 +381,7 @@ ne2000_detect(nict, nich, asict, asich)
 		 * then we don't know what this board is.
 		 */
 		ne2000_writemem(nict, nich, asict, asich, test_pattern, 16384,
-		    sizeof(test_pattern), 1);
+		    sizeof(test_pattern), 1, 0);
 		ne2000_readmem(nict, nich, asict, asich, 16384, test_buffer,
 		    sizeof(test_buffer), 1);
 
@@ -660,7 +661,7 @@ ne2000_readmem(nict, nich, asict, asich, src, dst, amount, useword)
  * used in the probe routine to test the memory.  'len' must be even.
  */
 void
-ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword)
+ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword, quiet)
 	bus_space_tag_t nict;
 	bus_space_handle_t nich;
 	bus_space_tag_t asict;
@@ -669,6 +670,7 @@ ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword)
 	int dst;
 	size_t len;
 	int useword;
+	int quiet;
 {
 	int maxwait = 100;	/* about 120us */
 
@@ -708,6 +710,6 @@ ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword)
 	while (((bus_space_read_1(nict, nich, ED_P0_ISR) & ED_ISR_RDC) !=
 	    ED_ISR_RDC) && --maxwait);
 
-	if (maxwait == 0)
+	if (!quiet && maxwait == 0)
 		printf("ne2000_writemem: failed to complete\n");
 }
