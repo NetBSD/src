@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.15 1998/02/09 10:53:07 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.16 1998/04/29 01:02:44 thorpej Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -1038,6 +1038,8 @@ aha_init(sc)
 	initial_ccbs *= sc->sc_link.openings;
 	if (initial_ccbs > AHA_CCB_MAX)
 		initial_ccbs = AHA_CCB_MAX;
+	if (initial_ccbs == 0)	/* yes, this can happen */
+		initial_ccbs = sc->sc_link.openings;
 
 	/* Obtain setup information from. */
 	setup.cmd.opcode = AHA_INQUIRE_SETUP;
