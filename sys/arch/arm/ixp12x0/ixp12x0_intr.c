@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.9 2003/07/13 08:56:16 igy Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.10 2003/07/21 06:17:32 igy Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.9 2003/07/13 08:56:16 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.10 2003/07/21 06:17:32 igy Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.9 2003/07/13 08:56:16 igy Exp $")
 #include <arm/ixp12x0/ixp12x0_comvar.h> 
 #include <arm/ixp12x0/ixp12x0_pcireg.h> 
 
+
 extern u_int32_t	ixpcom_cr;	/* current cr from *_com.c */
 extern u_int32_t	ixpcom_imask;	/* tell mask to *_com.c */
 
@@ -72,7 +73,8 @@ static u_int32_t imask[NIPL];
 static u_int32_t pci_imask[NIPL];
 
 /* Current interrupt priority level. */
-__volatile int current_spl_level;  
+__volatile int current_spl_level;
+__volatile int hardware_spl_level;
 
 /* Software copy of the IRQs we have enabled. */
 __volatile u_int32_t intr_enabled;
@@ -385,12 +387,13 @@ splx(int new)
 	int	old;
 	u_int	oldirqstate;
 
-	if (current_spl_level == new)
-		return;
 	oldirqstate = disable_interrupts(I32_bit);
 	old = current_spl_level;
 	current_spl_level = new;
-	ixp12x0_set_intrmask(imask[new], pci_imask[new]);
+	if (new != hardware_spl_level) {
+		hardware_spl_level = new;
+		ixp12x0_set_intrmask(imask[new], pci_imask[new]);
+	}
 	restore_interrupts(oldirqstate);
 
 	/* If there are software interrupts to process, do it. */
@@ -401,11 +404,13 @@ splx(int new)
 int
 _splraise(int ipl)
 {
-	int	old = current_spl_level;
+	int	old;
+	u_int	oldirqstate;
 
-	if (old >= ipl)
-		return (old);
-	splx(ipl);
+	oldirqstate = disable_interrupts(I32_bit);
+	old = current_spl_level;
+	current_spl_level = ipl;
+	restore_interrupts(oldirqstate);
 	return (old);
 }
 
@@ -459,6 +464,7 @@ ixp12x0_intr_init(void)
 	}
 	current_intr_depth = 0;
 	current_spl_level = 0;
+	hardware_spl_level = 0;
 
 	ixp12x0_intr_calculate_masks();
 
@@ -531,6 +537,13 @@ ixp12x0_intr_dispatch(struct clockframe *frame)
 	hwpend = ixp12x0_irq_read();
 	pci_hwpend = ixp12x0_pci_irq_read();
 
+	hardware_spl_level = pcpl;
+	ixp12x0_set_intrmask(imask[pcpl] | hwpend,
+			     pci_imask[pcpl] | pci_hwpend);
+
+	hwpend &= ~imask[pcpl];
+	pci_hwpend &= ~pci_imask[pcpl];
+
 	while (hwpend) {
 		irq = ffs(hwpend) - 1;
 		ibit = (1U << irq);
@@ -540,10 +553,9 @@ ixp12x0_intr_dispatch(struct clockframe *frame)
 		uvmexp.intrs++;
 		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
 		     ih = TAILQ_NEXT(ih, ih_list)) {
-			int ipl;
+			int	ipl;
+
 			current_spl_level = ipl = ih->ih_ipl;
-			ixp12x0_set_intrmask(imask[ipl] | hwpend,
-					     pci_imask[ipl] | pci_hwpend);
 			oldirqstate = enable_interrupts(I32_bit);
 			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 			restore_interrupts(oldirqstate);
@@ -562,8 +574,6 @@ ixp12x0_intr_dispatch(struct clockframe *frame)
 			int	ipl;
 
 			current_spl_level = ipl = ih->ih_ipl;
-			ixp12x0_set_intrmask(imask[ipl] | hwpend,
-					     pci_imask[ipl] | pci_hwpend);
 			oldirqstate = enable_interrupts(I32_bit);
 			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 			restore_interrupts(oldirqstate);
@@ -571,7 +581,9 @@ ixp12x0_intr_dispatch(struct clockframe *frame)
 		}
 	}
 
-	splx(pcpl);
+	current_spl_level = pcpl;
+	hardware_spl_level = pcpl;
+	ixp12x0_set_intrmask(imask[pcpl], pci_imask[pcpl]);
 
 	/* Check for pendings soft intrs. */
 	if ((ipending & INT_SWMASK) & ~imask[pcpl]) {
