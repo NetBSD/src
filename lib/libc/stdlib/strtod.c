@@ -1,4 +1,4 @@
-/*	$NetBSD: strtod.c,v 1.29 1998/11/15 17:13:52 christos Exp $	*/
+/*	$NetBSD: strtod.c,v 1.30 1998/11/16 17:43:32 christos Exp $	*/
 
 /****************************************************************
  *
@@ -93,9 +93,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strtod.c,v 1.29 1998/11/15 17:13:52 christos Exp $");
+__RCSID("$NetBSD: strtod.c,v 1.30 1998/11/16 17:43:32 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#define Unsigned_Shifts
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
     defined(__mips__) || defined(__ns32k__) || defined(__alpha__) || \
     defined(__powerpc__)
