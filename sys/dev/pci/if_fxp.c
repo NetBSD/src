@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.30 1999/02/18 01:24:29 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.31 1999/02/18 19:24:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1421,6 +1421,7 @@ int
 fxp_mii_mediachange(ifp)
 	struct ifnet *ifp;
 {
+	struct fxp_softc *sc = ifp->if_softc;
 
 	if (ifp->if_flags & IFF_UP)
 		mii_mediachg(&sc->sc_mii);
