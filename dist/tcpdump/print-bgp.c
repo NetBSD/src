@@ -1,4 +1,4 @@
-/*	$NetBSD: print-bgp.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
+/*	$NetBSD: print-bgp.c,v 1.3 2002/02/18 09:37:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -37,9 +37,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-     "@(#) Header: /tcpdump/master/tcpdump/print-bgp.c,v 1.22 2001/01/28 09:52:47 itojun Exp";
+     "@(#) Header: /tcpdump/master/tcpdump/print-bgp.c,v 1.27 2001/10/18 09:52:17 itojun Exp";
 #else
-__RCSID("$NetBSD: print-bgp.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+__RCSID("$NetBSD: print-bgp.c,v 1.3 2002/02/18 09:37:05 itojun Exp $");
 #endif
 #endif
 
@@ -82,12 +82,14 @@ struct bgp_open {
 	u_int8_t bgpo_optlen;
 	/* options should follow */
 };
+#define BGP_OPEN_SIZE		29	/* unaligned */
 
 struct bgp_opt {
 	u_int8_t bgpopt_type;
 	u_int8_t bgpopt_len;
 	/* variable length */
 };
+#define BGP_OPT_SIZE		2	/* some compilers may pad to 4 bytes */
 
 struct bgp_notification {
 	u_int8_t bgpn_marker[16];
@@ -97,6 +99,7 @@ struct bgp_notification {
 	u_int8_t bgpn_minor;
 	/* data should follow */
 };
+#define BGP_NOTIFICATION_SIZE		21	/* unaligned */
 
 struct bgp_attr {
 	u_int8_t bgpa_flags;
@@ -135,7 +138,7 @@ static const char *bgptype[] = {
 #define bgp_type(x) num_or_str(bgptype, sizeof(bgptype)/sizeof(bgptype[0]), (x))
 
 static const char *bgpopt_type[] = {
-	NULL, "Authentication Information",
+	NULL, "Authentication Information", "Capabilities Advertisement",
 };
 #define bgp_opttype(x) \
 	num_or_str(bgpopt_type, sizeof(bgpopt_type)/sizeof(bgpopt_type[0]), (x))
@@ -277,10 +280,10 @@ bgp_notify_minor(int major, int minor)
 }
 
 static int
-decode_prefix4(const u_char *pd, char *buf, int buflen)
+decode_prefix4(const u_char *pd, char *buf, u_int buflen)
 {
 	struct in_addr addr;
-	int plen;
+	u_int plen;
 
 	plen = pd[0];
 	if (plen < 0 || 32 < plen)
@@ -298,10 +301,10 @@ decode_prefix4(const u_char *pd, char *buf, int buflen)
 
 #ifdef INET6
 static int
-decode_prefix6(const u_char *pd, char *buf, int buflen)
+decode_prefix6(const u_char *pd, char *buf, u_int buflen)
 {
 	struct in6_addr addr;
-	int plen;
+	u_int plen;
 
 	plen = pd[0];
 	if (plen < 0 || 128 < plen)
@@ -313,7 +316,7 @@ decode_prefix6(const u_char *pd, char *buf, int buflen)
 		addr.s6_addr[(plen + 7) / 8 - 1] &=
 			((0xff00 >> (plen % 8)) & 0xff);
 	}
-	snprintf(buf, buflen, "%s/%d", getname6((char *)&addr), plen);
+	snprintf(buf, buflen, "%s/%d", getname6((u_char *)&addr), plen);
 	return 1 + (plen + 7) / 8;
 }
 #endif
@@ -353,9 +356,9 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			if (p[0] == 3 || p[0] == 4)
 				printf("confed");
 			printf("%s", (p[0] & 1) ? "{" : "");
-			for (i = 0; i < p[1]; i += 2) {
+			for (i = 0; i < p[1] * 2; i += 2) {
 				printf("%s%u", i == 0 ? "" : " ",
-					ntohs(*(u_int16_t *)&p[2 + i]));
+					EXTRACT_16BITS(&p[2 + i]));
 			}
 			printf("%s", (p[0] & 1) ? "}" : "");
 			p += 2 + p[1] * 2;
@@ -372,7 +375,7 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 		if (len != 4)
 			printf(" invalid len");
 		else
-			printf(" %u", (u_int32_t)ntohl(*(u_int32_t *)p));
+			printf(" %u", EXTRACT_32BITS(p));
 		break;
 	case BGPTYPE_ATOMIC_AGGREGATE:
 		if (len != 0)
@@ -383,7 +386,7 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			printf(" invalid len");
 			break;
 		}
-		printf(" AS #%u, origin %s", ntohs(*(u_int16_t *)p),
+		printf(" AS #%u, origin %s", EXTRACT_16BITS(p),
 			getname(p + 2));
 		break;
 	case BGPTYPE_COMMUNITIES:
@@ -393,7 +396,7 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 		}
 		for (i = 0; i < len; i += 4) {
 			u_int32_t comm;
-			comm = (u_int32_t)ntohl(*(u_int32_t *)&p[i]);
+			comm = EXTRACT_32BITS(&p[i]);
 			switch (comm) {
 			case BGP_COMMUNITY_NO_EXPORT:
 				printf(" NO_EXPORT");
@@ -412,7 +415,7 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 		}
 		break;
 	case BGPTYPE_MP_REACH_NLRI:
-		af = ntohs(*(u_int16_t *)p);
+		af = EXTRACT_16BITS(p);
 		safi = p[2];
 		if (safi >= 128)
 			printf(" %s vendor specific,", af_name(af));
@@ -494,7 +497,7 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 		break;
 
 	case BGPTYPE_MP_UNREACH_NLRI:
-		af = ntohs(*(u_int16_t *)p);
+		af = EXTRACT_16BITS(p);
 		safi = p[2];
 		if (safi >= 128)
 			printf(" %s vendor specific,", af_name(af));
@@ -541,8 +544,8 @@ bgp_open_print(const u_char *dat, int length)
 	const u_char *opt;
 	int i;
 
-	TCHECK2(dat[0], sizeof(bgpo));
-	memcpy(&bgpo, dat, sizeof(bgpo));
+	TCHECK2(dat[0], BGP_OPEN_SIZE);
+	memcpy(&bgpo, dat, BGP_OPEN_SIZE);
 	hlen = ntohs(bgpo.bgpo_len);
 
 	printf(": Version %d,", bgpo.bgpo_version);
@@ -552,11 +555,13 @@ bgp_open_print(const u_char *dat, int length)
 	printf(" Option length %u", bgpo.bgpo_optlen);
 
 	/* ugly! */
-	opt = &((struct bgp_open *)dat)->bgpo_optlen;
+	opt = &((const struct bgp_open *)dat)->bgpo_optlen;
 	opt++;
 
-	for (i = 0; i < bgpo.bgpo_optlen; i++) {
-		memcpy(&bgpopt, &opt[i], sizeof(bgpopt));
+	i = 0;
+	while (i < bgpo.bgpo_optlen) {
+		TCHECK2(opt[i], BGP_OPT_SIZE);
+		memcpy(&bgpopt, &opt[i], BGP_OPT_SIZE);
 		if (i + 2 + bgpopt.bgpopt_len > bgpo.bgpo_optlen) {
 			printf(" [|opt %d %d]", bgpopt.bgpopt_len, bgpopt.bgpopt_type);
 			break;
@@ -564,7 +569,7 @@ bgp_open_print(const u_char *dat, int length)
 
 		printf(" (option %s, len=%d)", bgp_opttype(bgpopt.bgpopt_type),
 			bgpopt.bgpopt_len);
-		i += sizeof(bgpopt) + bgpopt.bgpopt_len;
+		i += BGP_OPT_SIZE + bgpopt.bgpopt_len;
 	}
 	return;
 trunc:
@@ -582,8 +587,8 @@ bgp_update_print(const u_char *dat, int length)
 	int i;
 	int newline;
 
-	TCHECK2(dat[0], sizeof(bgp));
-	memcpy(&bgp, dat, sizeof(bgp));
+	TCHECK2(dat[0], BGP_SIZE);
+	memcpy(&bgp, dat, BGP_SIZE);
 	hlen = ntohs(bgp.bgp_len);
 	p = dat + BGP_SIZE;	/*XXX*/
 	printf(":");
@@ -688,8 +693,8 @@ bgp_notification_print(const u_char *dat, int length)
 	struct bgp_notification bgpn;
 	int hlen;
 
-	TCHECK2(dat[0], sizeof(bgpn));
-	memcpy(&bgpn, dat, sizeof(bgpn));
+	TCHECK2(dat[0], BGP_NOTIFICATION_SIZE);
+	memcpy(&bgpn, dat, BGP_NOTIFICATION_SIZE);
 	hlen = ntohs(bgpn.bgpn_len);
 
 	printf(": error %s,", bgp_notify_major(bgpn.bgpn_major));
@@ -705,8 +710,8 @@ bgp_header_print(const u_char *dat, int length)
 {
 	struct bgp bgp;
 
-	TCHECK2(dat[0], sizeof(bgp));
-	memcpy(&bgp, dat, sizeof(bgp));
+	TCHECK2(dat[0], BGP_SIZE);
+	memcpy(&bgp, dat, BGP_SIZE);
 	printf("(%s", bgp_type(bgp.bgp_type));		/* ) */
 
 	switch (bgp.bgp_type) {
@@ -767,8 +772,8 @@ bgp_print(const u_char *dat, int length)
 		}
 
 		/* found BGP header */
-		TCHECK2(p[0], sizeof(bgp));	/*XXX*/
-		memcpy(&bgp, p, sizeof(bgp));
+		TCHECK2(p[0], BGP_SIZE);	/*XXX*/
+		memcpy(&bgp, p, BGP_SIZE);
 
 		if (start != p)
 			printf(" [|BGP]");
