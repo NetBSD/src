@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.41 2001/03/16 10:47:25 hubertf Exp $ */
+/*	$NetBSD: sbus.c,v 1.42 2001/05/18 21:35:23 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -340,6 +340,20 @@ sbus_attach(parent, self, aux)
 	intr_establish(ipl, ih);
 	*(ih->ih_map) |= INTMAP_V;
 	
+	/*
+	 * Note: the stupid SBUS IOMMU ignores the high bits of an address, so a
+	 * NULL DMA pointer will be translated by the first page of the IOTSB.
+	 * To avoid bugs we'll alloc and ignore the first entry in the IOTSB.
+	 */
+	{
+		u_long dummy;
+
+		if (extent_alloc_subregion(sc->sc_is.is_dvmamap,
+		    sc->sc_is.is_dvmabase, sc->sc_is.is_dvmabase + NBPG, NBPG,
+		    NBPG, 0, EX_NOWAIT|EX_BOUNDZERO, (u_long *)&dummy) != 0)
+			panic("sbus iommu: can't toss first dvma page");
+	}
+
 	/*
 	 * Loop through ROM children, fixing any relative addresses
 	 * and then configuring each device.
