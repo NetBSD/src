@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.86 2000/03/26 10:31:19 itojun Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.87 2000/04/12 21:13:12 scw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.86 2000/03/26 10:24:51 itojun Exp 
+ *	NetBSD: pcmciadevs,v 1.87 2000/04/12 21:07:55 scw Exp 
  */
 
 /*-
@@ -479,3 +479,6 @@
 #define	PCMCIA_CIS_BILLIONTON_LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL }
 #define	PCMCIA_PRODUCT_BILLIONTON_LNT10TN	-1
 #define	PCMCIA_STR_BILLIONTON_LNT10TN	"Billionton Systems Inc. LNT-10TN NE2000 Compatible Card"
+#define	PCMCIA_CIS_NDC_ND5100_E	{ "NDC", "Ethernet", "A", NULL }
+#define	PCMCIA_PRODUCT_NDC_ND5100_E	-1
+#define	PCMCIA_STR_NDC_ND5100_E	"Sohoware ND5100E NE2000 Compatible Card"
