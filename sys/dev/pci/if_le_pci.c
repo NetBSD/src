@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.27 2000/06/26 14:21:11 mrg Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.28 2000/06/28 16:08:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -85,8 +85,6 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
-
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
@@ -95,8 +93,6 @@
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.72 2000/06/27 05:57:05 tron Exp $	*/
+/*	$NetBSD: pciide.c,v 1.73 2000/06/28 16:08:49 mrg Exp $	*/
 
 
 /*
@@ -97,8 +97,6 @@ int wdcdebug_pciide_mask = 0;
 #include <sys/malloc.h>
 
 #include <machine/endian.h>
-
-#include <vm/vm.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
