@@ -1,6 +1,6 @@
 /**************************************************************************
 **
-**  $Id: ncr.c,v 1.3 1994/10/27 02:02:00 andrew Exp $
+**  $Id: ncr.c,v 1.4 1994/10/27 02:04:18 andrew Exp $
 **
 **  Device driver for the   NCR 53C810   PCI-SCSI-Controller.
 **
@@ -89,7 +89,7 @@
 */
 
 #ifndef SCSI_NCR_MAX_SYNC
-#define SCSI_NCR_MAX_SYNC   (0)
+#define SCSI_NCR_MAX_SYNC   (10000)
 #endif /* SCSI_NCR_MAX_SYNC */
 
 /*
@@ -98,7 +98,7 @@
 */
 
 #ifndef SCSI_NCR_MAX_WIDE
-#define SCSI_NCR_MAX_WIDE   (0)
+#define SCSI_NCR_MAX_WIDE   (1)
 #endif /* SCSI_NCR_MAX_WIDE */
 
 /*
@@ -107,7 +107,7 @@
 */
 
 #ifndef SCSI_NCR_MAX_TAGS
-#define SCSI_NCR_MAX_TAGS    (0)
+#define SCSI_NCR_MAX_TAGS    (8)
 #endif /* SCSI_NCR_MAX_TAGS */
 
 /*==========================================================
@@ -1327,7 +1327,7 @@ static	u_long	getirr (void)
 
 
 static char ident[] =
-	"\n$Id: ncr.c,v 1.3 1994/10/27 02:02:00 andrew Exp $\n";
+	"\n$Id: ncr.c,v 1.4 1994/10/27 02:04:18 andrew Exp $\n";
 
 u_long	ncr_version = NCR_VERSION
 	+ (u_long) sizeof (struct ncb)
@@ -3434,7 +3434,7 @@ static	int ncr_attach (pcici_t config_id)
 		ncr_name (np));
 	DELAY (1000000);
 #endif
-	printf ("%s scanning for targets 0..%d ($Revision: 1.3 $)\n",
+	printf ("%s scanning for targets 0..%d ($Revision: 1.4 $)\n",
 		ncr_name (np), MAX_TARGET-1);
 
 	/*
