@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.h,v 1.6 2003/06/29 22:32:22 fvdl Exp $ */
+/*      $NetBSD: clockctl.h,v 1.7 2003/09/11 14:38:18 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,15 +43,17 @@
 #ifndef SYS_CLOCKCTL_H
 #define SYS_CLOCKCTL_H
 
+#if defined(NTP) || !defined(_KERNEL)
 struct clockctl_ntp_adjtime_args {
 	struct sys_ntp_adjtime_args uas;
 	register_t retval;
 };
+#define CLOCKCTL_NTP_ADJTIME _IOWR('C', 0x4, struct clockctl_ntp_adjtime_args)
+#endif
 
 #define CLOCKCTL_SETTIMEOFDAY _IOW('C', 0x1, struct sys_settimeofday_args)
 #define CLOCKCTL_ADJTIME _IOWR('C', 0x2, struct sys_adjtime_args)
 #define CLOCKCTL_CLOCK_SETTIME _IOW('C', 0x3, struct sys_clock_settime_args)
-#define CLOCKCTL_NTP_ADJTIME _IOWR('C', 0x4, struct clockctl_ntp_adjtime_args)
 
 #ifdef _KERNEL
 void    clockctlattach __P((int));
