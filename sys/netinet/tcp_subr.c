@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.79 1999/08/27 02:56:14 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.80 1999/09/23 02:21:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1297,13 +1297,20 @@ tcp6_mtudisc(in6p, errno)
  * on which the SYN packet arrived.  If we are the client (we 
  * initiated connection), we are called with a pointer to the
  * interface out which this connection should go.
+ *
+ * NOTE: Do not subtract IP option/extension header size nor IPsec
+ * header size from MSS advertisement.  MSS option must hold the maximum
+ * segment size we can accept, so it must always be:
+ *	 max(if mtu) - ip header - tcp header
  */
 u_long
-tcp_mss_to_advertise(ifp)
+tcp_mss_to_advertise(ifp, af)
 	const struct ifnet *ifp;
+	int af;
 {
 	extern u_long in_maxmtu;
 	u_long mss = 0;
+	u_long hdrsiz;
 
 	/*
 	 * In order to avoid defeating path MTU discovery on the peer,
@@ -1326,8 +1333,20 @@ tcp_mss_to_advertise(ifp)
 	if (tcp_mss_ifmtu == 0)
 		mss = max(in_maxmtu, mss);
 
-	if (mss > sizeof(struct tcpiphdr))
-		mss -= sizeof(struct tcpiphdr);
+	switch (af) {
+	case AF_INET:
+		hdrsiz = sizeof(struct ip);
+		break;
+	case AF_INET6:
+		hdrsiz = sizeof(struct ip6_hdr);
+		break;
+	default:
+		hdrsiz = 0;
+		break;
+	}
+	hdrsiz += sizeof(struct tcphdr);
+	if (mss > hdrsiz)
+		mss -= hdrsiz;
 
 	mss = max(tcp_mssdflt, mss);
 	return (mss);
