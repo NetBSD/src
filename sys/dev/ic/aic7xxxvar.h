@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.34 2003/04/20 11:17:20 fvdl Exp $
+ * $Id: aic7xxxvar.h,v 1.35 2003/04/20 16:04:54 fvdl Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -48,7 +48,7 @@
 #ifndef _AIC7XXXVAR_H_
 #define _AIC7XXXVAR_H_
 
-#define AHC_DEBUG
+#undef AHC_DEBUG
 
 /* Register Definitions */
 #include <dev/microcode/aic7xxx/aic7xxx_reg.h>
