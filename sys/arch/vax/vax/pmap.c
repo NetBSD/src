@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.106 2001/09/10 21:19:30 chris Exp $	   */
+/*	$NetBSD: pmap.c,v 1.107 2001/09/24 01:48:16 chs Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -596,6 +596,9 @@ rensa(clp, ptp)
 		pv->pv_pte = 0;
 		simple_lock(&pv->pv_pmap->pm_lock);
 		pv->pv_pmap->pm_stats.resident_count--;
+		if (g[0] & PG_W) {
+			pv->pv_pmap->pm_stats.wired_count--;
+		}
 		simple_unlock(&pv->pv_pmap->pm_lock);
 		pv->pv_pmap = 0;
 		PVTABLE_UNLOCK;
@@ -613,6 +616,9 @@ rensa(clp, ptp)
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
 			simple_lock(&pf->pv_pmap->pm_lock);
 			pf->pv_pmap->pm_stats.resident_count--;
+			if (g[0] & PG_W) {
+				pf->pv_pmap->pm_stats.wired_count--;
+			}
 			simple_unlock(&pf->pv_pmap->pm_lock);
 			free_pventry(pf);
 			PVTABLE_UNLOCK;
@@ -808,9 +814,10 @@ if (startpmapdebug)
 	oldpte = patch[i] & ~(PG_V|PG_M);
 	pv = pv_table + (p >> PGSHIFT);
 
-	/* wiring change? */
+	/* just a wiring change? */
 	if (newpte == (oldpte | PG_W)) {
-		patch[i] |= PG_W; /* Just wiring change */
+		patch[i] |= PG_W;
+		pmap->pm_stats.wired_count++;
 		RECURSEEND;
 		return 0;
 	}
@@ -822,14 +829,20 @@ if (startpmapdebug)
 	}
 
 	/* Changing mapping? */
-	oldpte &= PG_FRAME;
-	if ((newpte & PG_FRAME) == oldpte) {
+	
+	if ((newpte & PG_FRAME) == (oldpte & PG_FRAME)) {
 		/* prot change. resident_count will be increased later */
 		pmap->pm_stats.resident_count--;
+		if (oldpte & PG_W) {
+			pmap->pm_stats.wired_count--;
+		}
 	} else {
+
 		/*
 		 * Mapped before? Remove it then.
 		 */
+
+		oldpte &= PG_FRAME;
 		if (oldpte) {
 			RECURSEEND;
 			rensa(oldpte >> LTOHPS, (struct pte *)&patch[i]);
@@ -840,7 +853,7 @@ if (startpmapdebug)
 		s = splvm();
 		PVTABLE_LOCK;
 		if (pv->pv_pte == 0) {
-			pv->pv_pte = (struct pte *) & patch[i];
+			pv->pv_pte = (struct pte *)&patch[i];
 			pv->pv_pmap = pmap;
 		} else {
 			tmp = get_pventry();
@@ -853,6 +866,9 @@ if (startpmapdebug)
 		splx(s);
 	}
 	pmap->pm_stats.resident_count++;
+	if (flags & PMAP_WIRED) {
+		pmap->pm_stats.wired_count++;
+	}
 
 	PVTABLE_LOCK;
 	if (flags & VM_PROT_READ) {
@@ -1332,13 +1348,16 @@ if(startpmapdebug) printf("pa %lx\n",pa);
 		s = splvm();
 		g = (int *)pv->pv_pte;
 		if (g) {
+			simple_lock(&pv->pv_pmap->pm_lock);
+			pv->pv_pmap->pm_stats.resident_count--;
+			if (g[0] & PG_W) {
+				pv->pv_pmap->pm_stats.wired_count--;
+			}
+			simple_unlock(&pv->pv_pmap->pm_lock);
 			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
 				pv->pv_attr |= 
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
 			bzero(g, sizeof(struct pte) * LTOHPN);
-			simple_lock(&pv->pv_pmap->pm_lock);
-			pv->pv_pmap->pm_stats.resident_count--;
-			simple_unlock(&pv->pv_pmap->pm_lock);
 			pmap_decpteref(pv->pv_pmap, pv->pv_pte);
 			pv->pv_pte = 0;
 		}
@@ -1347,13 +1366,16 @@ if(startpmapdebug) printf("pa %lx\n",pa);
 		pv->pv_next = 0;
 		while (pl) {
 			g = (int *)pl->pv_pte;
+			simple_lock(&pl->pv_pmap->pm_lock);
+			pl->pv_pmap->pm_stats.resident_count--;
+			if (g[0] & PG_W) {
+				pl->pv_pmap->pm_stats.wired_count--;
+			}
+			simple_unlock(&pl->pv_pmap->pm_lock);
 			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
 				pv->pv_attr |=
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
 			bzero(g, sizeof(struct pte) * LTOHPN);
-			simple_lock(&pl->pv_pmap->pm_lock);
-			pl->pv_pmap->pm_stats.resident_count--;
-			simple_unlock(&pl->pv_pmap->pm_lock);
 			pmap_decpteref(pl->pv_pmap, pl->pv_pte);
 			opv = pl;
 			pl = pl->pv_next;
@@ -1433,7 +1455,8 @@ if(startpmapdebug) printf("pmap_unwire: pmap %p v %lx\n", pmap, v);
 		else
 			pte = (int *)&pmap->pm_p1br[PG_PFNUM(v)];
 	}
-	pte[0] &= ~PG_W; /* Informational, only first page */
+	pte[0] &= ~PG_W;
+	pmap->pm_stats.wired_count--;
 }
 
 /*
