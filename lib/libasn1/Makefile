@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2003/08/01 17:03:46 lukem Exp $
+# $NetBSD: Makefile,v 1.24 2004/07/12 20:44:56 jonathan Exp $
 
 NOLINT=		# defined
 
@@ -47,6 +47,7 @@ gen_files =				\
 	asn1_Authenticator.x		\
 	asn1_AuthorizationData.x	\
 	asn1_CKSUMTYPE.x		\
+	asn1_ChangePasswdDataMS.x	\
 	asn1_Checksum.x			\
 	asn1_ENCTYPE.x			\
 	asn1_ETYPE_INFO.x		\

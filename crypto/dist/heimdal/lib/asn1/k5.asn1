@@ -1,4 +1,5 @@
--- $Id: k5.asn1,v 1.5 2003/05/15 20:44:15 lha Exp $
+-- $Id: k5.asn1,v 1.6 2004/07/12 20:44:56 jonathan Exp $
+-- setpw changes from: $Id: k5.asn1,v 1.6 2004/07/12 20:44:56 jonathan Exp $
 
 KERBEROS5 DEFINITIONS ::=
 BEGIN
@@ -438,6 +439,12 @@ KRB-ERROR ::= [APPLICATION 30] SEQUENCE {
 	sname[10]		PrincipalName, -- Correct name
 	e-text[11]		GeneralString OPTIONAL,
 	e-data[12]		OCTET STRING OPTIONAL
+}
+
+ChangePasswdDataMS ::= SEQUENCE {
+       newpasswd[0]            OCTET STRING,
+       targname[1]             PrincipalName OPTIONAL,
+       targrealm[2]            Realm OPTIONAL
 }
 
 pvno INTEGER ::= 5 -- current Kerberos protocol version number
