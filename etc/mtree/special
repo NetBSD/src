@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.57 2002/04/29 08:23:35 lukem Exp $
+#	$NetBSD: special,v 1.57.2.1 2002/11/30 14:17:00 he Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -179,6 +179,7 @@
 ./etc/rc.d/quota		type=file mode=0555
 ./etc/rc.d/racoon		type=file mode=0555
 ./etc/rc.d/raidframe		type=file mode=0555
+./etc/rc.d/raidframeparity	type=file mode=0555
 ./etc/rc.d/rarpd		type=file mode=0555
 ./etc/rc.d/rbootd		type=file mode=0555
 ./etc/rc.d/root			type=file mode=0555
