@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.37 2002/05/07 02:29:52 enami Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.37.4.1 2002/06/01 22:43:35 tv Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.37 2002/05/07 02:29:52 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.37.4.1 2002/06/01 22:43:35 tv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -523,7 +523,9 @@ uvm_loanuobj(ufi, output, flags, va)
 				wakeup(pg);
 			}
 			if (pg->flags & PG_RELEASED) {
+				uvm_lock_pageq();
 				uvm_pagefree(pg);
+				uvm_unlock_pageq();
 				return (0);
 			}
 			uvm_lock_pageq();
