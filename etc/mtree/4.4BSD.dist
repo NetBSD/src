@@ -1,4 +1,4 @@
-#	$NetBSD: 4.4BSD.dist,v 1.24 1996/05/22 15:49:45 oki Exp $
+#	$NetBSD: 4.4BSD.dist,v 1.25 1996/06/21 22:13:54 is Exp $
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -843,6 +843,17 @@ generate
 ..
 
 # ./usr/share/groff_font
+..
+
+# ./usr/share/keymaps
+keymap		gname=bin uname=bin
+
+# ./usr/share/keymaps/amiga
+amiga		gname=bin uname=bin
+# ./usr/share/keymaps/amiga
+..
+
+# ./usr/share/keymaps
 ..
 
 # ./usr/share/lkm
