@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.8 1999/03/24 14:07:38 minoura Exp $	*/
+/*	$NetBSD: kbd.c,v 1.9 1999/12/03 00:14:06 itohy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@ struct cfattach kbd_ca = {
 
 
 static int
-kbdmatch (parent, cf, aux)
+kbdmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -117,14 +117,14 @@ kbdattach(parent, self, aux)
 	int s = spltty();
 
 	/* MFP interrupt #12 is for USART recieve buffer full */
-	intio_intr_establish (mfp->sc_intr + 12, "kbd", kbdintr, self);
+	intio_intr_establish(mfp->sc_intr + 12, "kbd", kbdintr, self);
 
 	kbdenable(1);
 	k->sc_event_mode = 0;
 	k->sc_events.ev_io = 0;
 	splx(s);
 
-	printf ("\n");
+	printf("\n");
 }
 
 
@@ -137,7 +137,7 @@ kbdenable(mode)
 	int mode;		/* 1: interrupt, 0: poll */
 {
 	intio_set_sysport_keyctrl(8);
-	mfp_bit_clear_iera (MFP_INTR_RCV_FULL | MFP_INTR_TIMER_B);
+	mfp_bit_clear_iera(MFP_INTR_RCV_FULL | MFP_INTR_TIMER_B);
 	mfp_set_tbcr(MFP_TIMERB_RESET | MFP_TIMERB_STOP);
 	mfp_set_tbdr(13);	/* Timer B interrupt interval */
 	mfp_set_tbcr(1);	/* 1/4 delay mode */
@@ -145,9 +145,16 @@ kbdenable(mode)
 	mfp_set_rsr(MFP_RSR_RE); /* USART receive enable */
 	mfp_set_tsr(MFP_TSR_TE); /* USART transmit enable */
 
-	if (mode)
+	if (mode) {
 		mfp_bit_set_iera(MFP_INTR_RCV_FULL);
-			     
+		/*
+		 * Perform null read in case that an input byte is in the
+		 * receiver buffer, which prevents further interrupts.
+		 * We could save the input, but probably not so valuable.
+		 */
+		(void) mfp_get_udr();
+	}
+
 	kbdled = 0;		/* all keyboard LED turn off. */
 	kbd_setLED();
 
@@ -336,7 +343,7 @@ kbdintr(arg)
 	/* Keyboard is generating events.  Turn this keystroke into an
 	   event and put it in the queue.  If the queue is full, the
 	   keystroke is lost (sorry!). */
-  
+
 	put = k->sc_events.ev_put;
 	fe = &k->sc_events.ev_q[put];
 	put = (put + 1) % EV_QSIZE;
@@ -414,17 +421,18 @@ kbd_send_command(cmd)
 int
 kbdcngetc()
 {
-	int s = splhigh();
-	u_char ints, c, in;
+	int s;
+	u_char ints, c;
 
+	s = splhigh();
 	ints = mfp_get_iera();
 
 	mfp_bit_clear_iera(MFP_INTR_RCV_FULL);
 	mfp_set_rsr(mfp_get_rsr() | MFP_RSR_RE);
-	in = c = mfp_recieve_usart();
+	c = mfp_recieve_usart();
 
 	mfp_set_iera(ints);
-	splx (s);
+	splx(s);
 
 	return c;
 }
