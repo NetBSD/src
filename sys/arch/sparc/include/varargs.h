@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.6 1994/11/20 20:53:37 deraadt Exp $ */
+/*	$NetBSD: varargs.h,v 1.7 1995/12/25 22:24:56 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,24 +54,21 @@
 
 #include <machine/stdarg.h>
 
-/* See <machine/stdarg.h> for comments. */
 #if __GNUC__ == 1
-#define __extension__
-#define	va_dcl	int va_alist;
-#else /* gcc2 */
-#ifdef __GCC_NEW_VARARGS__	/* gcc 2.4.5 */
-#define va_alist __builtin_va_alist
-#define	va_dcl	int __builtin_va_alist;
-#else				/* gcc 2.3.3 */
-#define	va_dcl	int va_alist; ...
+#define	__va_ellipsis
+#else
+#define	__va_ellipsis	...
 #endif
-#endif
+
+#define	va_dcl		va_list va_alist; __va_ellipsis
 
 #undef va_start
 #ifdef __GCC_NEW_VARARGS__
-#define	va_start(ap)	((ap) = (va_list)__builtin_saveregs())
+#define	va_start(ap) \
+	((ap) = (va_list)__builtin_saveregs())
 #else
-#define	va_start(ap)	(__builtin_saveregs(), (ap) = (va_list)&va_alist)
+#define	va_start(ap) \
+	(__builtin_saveregs(), (ap) = (va_list)&va_alist)
 #endif
 
 #endif /* !_SPARC_VARARGS_H_ */
