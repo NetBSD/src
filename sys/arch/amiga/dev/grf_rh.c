@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.6 1995/02/16 21:57:36 chopps Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.7 1995/08/20 02:54:34 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -50,12 +50,25 @@
 #include <amiga/dev/grf_rhreg.h>
 #include <amiga/dev/zbusvar.h>
 
+enum mode_type { MT_TXTONLY, MT_GFXONLY, MT_BOTH };
+
 int rh_mondefok __P((struct MonDef *));
 
 u_short CompFQ __P((u_int fq));
 int rh_load_mon __P((struct grf_softc *gp, struct MonDef *md));
 int rh_getvmode __P((struct grf_softc *gp, struct grfvideo_mode *vm));
-int rh_setvmode __P((struct grf_softc *gp, unsigned int mode, int txtonly));
+int rh_setvmode __P((struct grf_softc *gp, unsigned int mode, 
+                     enum mode_type type));
+
+/* make it patchable, and settable by kernel config option */
+#ifndef RH_MEMCLK
+#define RH_MEMCLK 61000000  /* this is the memory clock value, you shouldn't
+                               set it to less than 61000000, higher values may
+                               speed up blits a little bit, if you raise this
+                               value too much, some trash will appear on your
+                               screen. */
+#endif
+int rh_memclk = RH_MEMCLK;
 
 
 extern unsigned char kernel_font_8x8_width, kernel_font_8x8_height;
@@ -95,6 +108,8 @@ extern unsigned char kernel_font_8x11[];
 #define MDF_LACE 2
 #define MDF_CLKDIV2 4
 
+/* set this as an option in your kernel config file! */
+/* #define RZ3_64BIT_SPRITE */
 
 /* -------------- START OF CODE -------------- */
 
@@ -145,7 +160,11 @@ RZ3SetupHWC(gp, col1, col2, hsx, hsy, data)
 	unsigned long *c = (unsigned long *)(ba + LM_OFFSET + HWC_MEM_OFF);
 	const unsigned long *s = data;
 	struct MonDef *MonitorDef = (struct MonDef *) gp->g_data;
+#ifdef RZ3_64BIT_SPRITE
 	short x = (HWC_MEM_SIZE / (4*4)) - 1;
+#else
+        short x = (HWC_MEM_SIZE / (4*4*2)) - 1;
+#endif
 	/* copy only, if there is a data pointer. */
 	if (data) do {
 		*c++ = *s++;
@@ -156,10 +175,27 @@ RZ3SetupHWC(gp, col1, col2, hsx, hsy, data)
 
 	WSeq(ba, SEQ_ID_CURSOR_COLOR1, col1);
 	WSeq(ba, SEQ_ID_CURSOR_COLOR0, col2);
-	if (MonitorDef->DEP < 16)
+        if (MonitorDef->DEP <= 8) {
+#ifdef RZ3_64BIT_SPRITE
 		WSeq(ba, SEQ_ID_CURSOR_CONTROL, 0x85);
-	else
+#else
+                WSeq(ba, SEQ_ID_CURSOR_CONTROL, 0x03);
+#endif
+        }
+        else if (MonitorDef->DEP <= 16) {
+#ifdef RZ3_64BIT_SPRITE
 		WSeq(ba, SEQ_ID_CURSOR_CONTROL, 0xa5);
+#else
+                WSeq(ba, SEQ_ID_CURSOR_CONTROL, 0x23);
+#endif
+        }
+        else {
+#ifdef RZ3_64BIT_SPRITE
+                WSeq(ba, SEQ_ID_CURSOR_CONTROL, 0xc5);
+#else
+                WSeq(ba, SEQ_ID_CURSOR_CONTROL, 0x43);
+#endif
+        }
 	WSeq(ba, SEQ_ID_CURSOR_X_LOC_HI, 0x00);
 	WSeq(ba, SEQ_ID_CURSOR_X_LOC_LO, 0x00);
 	WSeq(ba, SEQ_ID_CURSOR_Y_LOC_HI, 0x00);
@@ -413,6 +449,91 @@ RZ3BitBlit16 (gp, gbb)
 }
 
 void
+RZ3BitBlit24 (gp, gbb)
+     struct grf_softc *gp;
+     struct grf_bitblt * gbb;
+{
+        volatile unsigned char *ba = gp->g_regkva;
+        volatile unsigned char *lm = ba + LM_OFFSET;
+        volatile unsigned long * acm = (unsigned long *) (ba + ACM_OFFSET);
+        const struct MonDef * md = (struct MonDef *) gp->g_data;
+        unsigned short mod;
+
+
+        { 
+                unsigned long * pt = (unsigned long *) (lm + PAT_MEM_OFF);
+                unsigned long tmp  = gbb->mask | ((unsigned long)gbb->mask << 16);
+                *pt++ = tmp;
+                *pt++ = tmp;
+                *pt++ = tmp;
+                *pt++ = tmp;
+                *pt++ = tmp;
+                *pt   = tmp;
+        }
+        
+        {
+                
+                unsigned long tmp = optab[ gbb->op ] << 8;
+                *(acm + ACM_RASTEROP_ROTATION/4) = tmp;
+        }
+        
+        mod = 0xc0c2;
+        
+        {
+                unsigned long pat = 8 * PAT_MEM_OFF;
+                unsigned long dst = 8 * 3 * (gbb->dst_x + gbb->dst_y * md->TX);
+                
+                if (optabs[gbb->op]) {
+                        unsigned long src = 8 * 3 * (gbb->src_x + gbb->src_y * md->TX);
+                        
+                        if (gbb->dst_x > gbb->src_x ) {
+                                mod &= ~0x8000;
+                                src += 8 * 3 * (gbb->w);
+                                dst += 8 * 3 * (gbb->w);
+                                pat += 8 * 3 * 2;
+                        }
+                        if (gbb->dst_y > gbb->src_y) {
+                                mod &= ~0x4000;
+                                src += 8 * 3 * (gbb->h - 1) * md->TX;
+                                dst += 8 * 3 * (gbb->h - 1) * md->TX;
+                                pat += 8 * 4 * 3;
+                        }
+                        
+                        M2I(src);
+                        *(acm + ACM_SOURCE/4) = src;
+                }
+                
+                
+                M2I(pat);
+                *(acm + ACM_PATTERN/4) = pat;
+                
+                
+                M2I(dst);
+                *(acm + ACM_DESTINATION/4) = dst;
+        }
+        {
+                
+                unsigned long tmp = mod << 16;
+                *(acm + ACM_CONTROL/4) = tmp;
+        }
+        {
+                
+                unsigned long tmp  = gbb->w | (gbb->h << 16);
+                M2I(tmp);
+                *(acm + ACM_BITMAP_DIMENSION/4) = tmp;
+        }
+        
+        
+        *(((volatile unsigned char *)acm) + ACM_START_STATUS) = 0x00; 
+        *(((volatile unsigned char *)acm) + ACM_START_STATUS) = 0x01; 
+        
+        while ( (*(((volatile unsigned char *)acm) 
+                   + (ACM_START_STATUS+ 2)) & 1) == 0 ) {};
+        
+}
+
+
+void
 RZ3SetCursorPos (gp, pos)
 	struct grf_softc *gp;
 	unsigned short pos;
@@ -486,8 +607,8 @@ RZ3SetPanning (gp, xoff, yoff)
 	ypan = yoff;
 
 
-	if (md->DEP > 8)
-		xoff *= 2;
+        if (md->DEP > 8 && md->DEP <= 16) xoff *= 2;
+        else if (md->DEP > 16) xoff *= 3;
 
 	vgar(ba, ACT_ADDRESS_RESET);
 	WAttr(ba, ACT_ID_HOR_PEL_PANNING, (unsigned char)((xoff << 1) & 0x07));
@@ -496,17 +617,14 @@ RZ3SetPanning (gp, xoff, yoff)
 
 	if (md->DEP == 8)
 		off = ((yoff * md->TX)/ 4) + (xoff >> 2);
-	else
+        else if (md->DEP == 16) 
 		off = ((yoff * md->TX * 2)/ 4) + (xoff >> 2);
-
+        else 
+                off = ((yoff * md->TX * 3)/ 4) + (xoff >> 2);
 	WCrt(ba, CRT_ID_START_ADDR_LOW, ((unsigned char)off));
-
 	off >>= 8;
-
 	WCrt(ba, CRT_ID_START_ADDR_HIGH, ((unsigned char)off));
-
 	off >>= 8;
-
 	WCrt(ba, CRT_ID_EXT_START_ADDR,
 	    ((RCrt(ba, CRT_ID_EXT_START_ADDR) & 0xf0) | (off & 0x0f)));
 
@@ -604,6 +722,7 @@ rh_mondefok(mdp)
 	switch(mdp->DEP) {
 	case 8:
 	case 16:
+        case 24:
 		return(1);
 	case 4:
 		if (mdp->FX == 4 || (mdp->FX >= 7 && mdp->FX <= 16))
@@ -706,12 +825,10 @@ rh_load_mon(gp, md)
 		}
 	}
 
-	if (md->DEP == 4)
-		HDE = (md->MW+md->FX-1)/md->FX;
-	else if (md->DEP == 8)
-		HDE = (md->MW+3)/4;
-	else if (md->DEP == 16)
-		HDE = (md->MW*2+3)/4;
+        if      (md->DEP == 4)  HDE = (md->MW+md->FX-1)/md->FX;
+        else if (md->DEP == 8)  HDE = (md->MW+3)/4;
+        else if (md->DEP == 16) HDE = (md->MW*2+3)/4;
+        else if (md->DEP == 24) HDE = (md->MW*3+3)/4;
 
 	VDE = md->MH-1;
 
@@ -744,13 +861,19 @@ rh_load_mon(gp, md)
 	if (md->DEP == 4) {
 	  	/* 8bit pixel, no gfx byte path */
 		WSeq(ba, SEQ_ID_EXT_PIXEL_CNTL, 0x00);
-	} else if (md->DEP == 8) {
+        }
+        else if (md->DEP == 8) {
 	  	/* 8bit pixel, gfx byte path */
 		WSeq(ba, SEQ_ID_EXT_PIXEL_CNTL, 0x01);
-	} else if (md->DEP == 16) {
+        }
+        else if (md->DEP == 16) {
 	  	/* 16bit pixel, gfx byte path */
 		WSeq(ba, SEQ_ID_EXT_PIXEL_CNTL, 0x11);
 	}
+        else if (md->DEP == 24) {
+                /* 24bit pixel, gfx byte path */
+                WSeq(ba, SEQ_ID_EXT_PIXEL_CNTL, 0x21);  
+        }
 	WSeq(ba, SEQ_ID_BUS_WIDTH_FEEDB, 0x04);
 	WSeq(ba, SEQ_ID_COLOR_EXP_WFG, 0x01);
 	WSeq(ba, SEQ_ID_COLOR_EXP_WBG, 0x00);
@@ -822,12 +945,17 @@ rh_load_mon(gp, md)
 	WCrt(ba, CRT_ID_END_VER_RETR, (md->VSE & 0xf) | 0x80 | 0x20);
 	WCrt(ba, CRT_ID_VER_DISP_ENA_END, VDE  & 0xff);
 
-	if (md->DEP == 4)
-		WCrt(ba, CRT_ID_OFFSET, (HDE / 2) & 0xff);
-	else if (md->DEP == 8)
-		WCrt(ba, CRT_ID_OFFSET, (md->TX / 8) & 0xff);
-	else
-		WCrt(ba, CRT_ID_OFFSET, (md->TX / 4) & 0xff);
+        if (md->DEP == 4) {
+                WCrt(ba, CRT_ID_OFFSET, (HDE / 2) & 0xff );       
+        }
+        /* all gfx-modes are in byte-mode, means values are multiplied by 8 */
+        else if (md->DEP == 8) {
+                WCrt(ba, CRT_ID_OFFSET, (md->TX / 8) & 0xff );       
+        } else if (md->DEP == 16) {
+                WCrt(ba, CRT_ID_OFFSET, (md->TX / 4) & 0xff );       
+        } else {
+                WCrt(ba, CRT_ID_OFFSET, (md->TX * 3 / 8) & 0xff );       
+        }
 
 	WCrt(ba, CRT_ID_UNDERLINE_LOC, (md->FY-1) & 0x1f);
 	WCrt(ba, CRT_ID_START_VER_BLANK, md->VBS & 0xff);
@@ -843,15 +971,16 @@ rh_load_mon(gp, md)
 		    ((md->HBS & 0x100) / 0x100 * 4)             |
 		    ((md->HSS & 0x100) / 0x100 * 8));
 
-	if (md->DEP == 4)
-		WCrt(ba, CRT_ID_EXT_START_ADDR,
-		    (((HDE / 2) & 0x100)/0x100 * 16));
-	else if (md->DEP == 8)
-		WCrt(ba, CRT_ID_EXT_START_ADDR,
-		    (((md->TX / 8) & 0x100)/0x100 * 16));
-	else
-		WCrt(ba, CRT_ID_EXT_START_ADDR,
-		    (((md->TX / 4) & 0x100)/0x100 * 16));
+        if (md->DEP == 4) {
+                WCrt(ba, CRT_ID_EXT_START_ADDR, (((HDE / 2) & 0x100)/0x100 * 16)); 
+        }
+        else if (md->DEP == 8) {
+                WCrt(ba, CRT_ID_EXT_START_ADDR, (((md->TX / 8) & 0x100)/0x100 * 16)); 
+        } else if (md->DEP == 16) {
+                WCrt(ba, CRT_ID_EXT_START_ADDR, (((md->TX / 4) & 0x100)/0x100 * 16)); 
+        } else {
+                WCrt(ba, CRT_ID_EXT_START_ADDR, (((md->TX * 3 / 8) & 0x100)/0x100 * 16)); 
+        }
 
 	WCrt(ba, CRT_ID_EXT_HOR_TIMING2,
 		    ((md->HT  & 0x200)/ 0x200)       |
@@ -874,7 +1003,7 @@ rh_load_mon(gp, md)
 	{
 		unsigned short tmp = CompFQ(md->FQ);
 		WPLL(ba, 2   , tmp);
-		tmp = CompFQ(MEMCLK);
+                tmp = CompFQ(rh_memclk);
 		WPLL(ba,10   , tmp);
 		WPLL(ba,14   , 0x22);
 	}
@@ -925,12 +1054,18 @@ rh_load_mon(gp, md)
 	vgaw(ba, ACT_ADDRESS_W, 0x20);
 
 	vgaw(ba, VDAC_MASK, 0xff);
-	if (md->DEP < 16)
-	  	/* well... probably the PLL chip */
-		vgaw(ba, 0x83c6, ((0 & 7) << 5));
-	else if (md->DEP == 16)
+        /* probably some PLL timing stuff here. The value
+           for 24bit was found by trial&error :-) */
+        if (md->DEP < 16) {
+                vgaw(ba, 0x83c6, ((0 & 7) << 5) ); 
+        }
+        else if (md->DEP == 16) {
 	  	/* well... */
-		vgaw(ba, 0x83c6, ((3 & 7) << 5));
+                vgaw(ba, 0x83c6, ((3 & 7) << 5) ); 
+        }
+        else if (md->DEP == 24) {
+                vgaw(ba, 0x83c6, 0xe0);
+        }
 	vgaw(ba, VDAC_ADDRESS_W, 0x00);
 
 	if (md->DEP < 16) {
@@ -1035,6 +1170,22 @@ rh_load_mon(gp, md)
 		ypan = 0;
 
 		return(1);
+        } else if (md->DEP == 24) {
+                struct grf_bitblt bb = {
+                        GRFBBOPset,
+                        0, 0,
+                        0, 0,
+                        md->TX, md->TY,
+                        0x0000
+                };
+                WSeq(ba, SEQ_ID_MAP_MASK, 0x0f );  
+                
+                RZ3BitBlit24(gp, &bb );
+                
+                xpan = 0;
+                ypan = 0;
+                
+                return 1;
 	} else
 		return(0);
 }
@@ -1089,116 +1240,136 @@ unsigned char RZ3StdPalette[16*3] = {
  *  FQ     FLG    MW   MH   HBS HSS HSE HBE  HT  VBS  VSS  VSE  VBE   VT
  * Depth,          PAL, TX,  TY,    XY,FontX, FontY,    FontData,  FLo,  Fhi
  */
+#ifdef KFONT_8X11
+#define KERNEL_FONT kernel_font_8x11
+#define FY 11
+#define FX  8
+#else
+#define KERNEL_FONT kernel_font_8x8
+#define FY  8
+#define FX  8
+#endif
+
+
 static struct MonDef monitor_defs[] = {
   /* Text-mode definitions */
 
   /* horizontal 31.5 kHz */
-#ifdef KFONT_8X11
-  { 50000000,  28,  640, 506,   81, 86, 93, 98, 95, 513, 513, 521, 535, 535,
-      4, RZ3StdPalette, 80,  46,  3680,    8,    11, kernel_font_8x11, 32,  255},
-#else
   { 50000000,  28,  640, 512,   81, 86, 93, 98, 95, 513, 513, 521, 535, 535,
-      4, RZ3StdPalette, 80,  64,  5120,    8,     8, kernel_font_8x8,   32,  255},
-#endif
+      4, RZ3StdPalette, 80,  64,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
 
   /* horizontal 38kHz */
-#ifdef KFONT_8X11
-  { 75000000,  28,  768, 594,   97, 99,107,120,117, 601, 615, 625, 638, 638,
-      4, RZ3StdPalette, 96,  54,  5184,    8,     11, kernel_font_8x11,   32,  255},
-#else
   { 75000000,  28,  768, 600,   97, 99,107,120,117, 601, 615, 625, 638, 638,
-      4, RZ3StdPalette, 96,  75,  7200,    8,     8, kernel_font_8x8,   32,  255},
-#endif
+      4, RZ3StdPalette, 96,  75,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
 
   /* horizontal 64kHz */
-#ifdef KFONT_8X11
-  { 50000000, 24,  768, 594,   97,104,112,122,119, 601, 606, 616, 628, 628,
-      4, RZ3StdPalette, 96,  54,  5184,    8,     8, kernel_font_8x8,   32,  255},
-#else
   { 50000000, 24,  768, 600,   97,104,112,122,119, 601, 606, 616, 628, 628,
-      4, RZ3StdPalette, 96,  75,  7200,    8,     8, kernel_font_8x8,   32,  255},
-#endif
+      4, RZ3StdPalette, 96,  75,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
 
   /* 8-bit gfx-mode definitions */
 
-  /*
-   * IMPORTANT: the "logical" screen size can be up to 2048x2048 pixels,
-   * independent from the "physical" screen size. If your code does NOT
-   * support panning, please adjust the "logical" screen sizes below to
-   * match the physical ones
+  /* IMPORTANT: the "logical" screen size can be up to 2048x2048 pixels,
+     independent from the "physical" screen size. If your code does NOT
+     support panning, please adjust the "logical" screen sizes below to
+     match the physical ones
    */
 
   /* 640 x 480, 8 Bit, 31862 Hz, 63 Hz */
   { 26000000,  0,  640, 480,  161,175,188,200,199, 481, 483, 491, 502, 502,
-      8, RZ3StdPalette,1280,1024,  5120,    8,     8, kernel_font_8x8,   32,  255},
+      8, RZ3StdPalette,1280,1024,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
   /* This is the logical ^    ^    screen size */
 
   /* 640 x 480, 8 Bit, 38366 Hz, 76 Hz */
  { 31000000,  0,  640, 480,  161,169,182,198,197, 481, 482, 490, 502, 502,
-     8, RZ3StdPalette,1280,1024,  5120,    8,     8, kernel_font_8x8,   32,  255},
+     8, RZ3StdPalette,1280,1024,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
 
-  /* 800 x 600, 8 Bit, 31620 Hz, 50 Hz (1950) */
-  { 32000000,  0,  800, 600,  201,202,218,249,248, 601, 602, 612, 628, 628,
-      8, RZ3StdPalette,1280,1024,  5120,    8,     8, kernel_font_8x8,   32,  255},
   /* 800 x 600, 8 Bit, 38537 Hz, 61 Hz */
   { 39000000,  0,  800, 600,  201,211,227,249,248, 601, 603, 613, 628, 628,
-      8, RZ3StdPalette,1280,1024,  5120,    8,     8, kernel_font_8x8,   32,  255},
+      8, RZ3StdPalette,1280,1024,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
 
   /* 1024 x 768, 8 Bit, 63862 Hz, 79 Hz */
   { 82000000,  0, 1024, 768,  257,257,277,317,316, 769, 771, 784, 804, 804,
-      8, RZ3StdPalette,1280,1024,  5120,    8,     8, kernel_font_8x8,   32,  255},
+      8, RZ3StdPalette,1280,1024,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
 
   /* 1120 x 896, 8 Bit, 64000 Hz, 69 Hz */
   { 97000000,  0, 1120, 896,  281,283,306,369,368, 897, 898, 913, 938, 938,
-      8, RZ3StdPalette,1280,1024,  5120,    8,     8, kernel_font_8x8,   32,  255},
+      8, RZ3StdPalette,1280,1024,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
 
   /* 1152 x 910, 8 Bit, 76177 Hz, 79 Hz */
   {110000000,  0, 1152, 910,  289,310,333,357,356, 911, 923, 938, 953, 953,
-      8, RZ3StdPalette,1280,1024,  5120,    8,     8, kernel_font_8x8,   32,  255},
+      8, RZ3StdPalette,1280,1024,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
 
   /* 1184 x 848, 8 Bit, 73529 Hz, 82 Hz */
   {110000000,  0, 1184, 848,  297,319,342,370,369, 849, 852, 866, 888, 888,
-      8, RZ3StdPalette,1280,1024,  5120,    8,     8, kernel_font_8x8,   32,  255},
+      8, RZ3StdPalette,1280,1024,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
 
   /* 1280 x 1024, 8 Bit, 64516 Hz, 60 Hz */
   {104000000, 0, 1280,1024,  321,323,348,399,398,1025,1026,1043,1073,1073,
-     8, RZ3StdPalette,1280,1024,  5120,    8,     8, kernel_font_8x8,   32,  255},
+     8, RZ3StdPalette,1280,1024,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
 
 /* WARNING: THE FOLLOWING MONITOR MODE EXCEEDS THE 110-MHz LIMIT THE PROCESSOR
             HAS BEEN SPECIFIED FOR. USE AT YOUR OWN RISK (AND THINK ABOUT
             MOUNTING SOME COOLING DEVICE AT THE PROCESSOR AND RAMDAC)!     */
   /* 1280 x 1024, 8 Bit, 75436 Hz, 70 Hz */
   {121000000, 0, 1280,1024,  321,322,347,397,396,1025,1026,1043,1073,1073,
-     8, RZ3StdPalette,1280,1024,  5120,    8,     8, kernel_font_8x8,   32,  255},
+     8, RZ3StdPalette,1280,1024,  5120,   FX,    FY, KERNEL_FONT,   32,  255},
 
 
   /* 16-bit gfx-mode definitions */
 
   /* 640 x 480, 16 Bit, 31795 Hz, 63 Hz */
   { 51000000, 0,  640, 480,  321,344,369,397,396, 481, 482, 490, 502, 502,
-      16,           0,1280, 1024,  7200,    8,     8, kernel_font_8x8,   32,  255},
+      16,           0,1280, 1024,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
 
   /* 800 x 600, 16 Bit, 38500 Hz, 61 Hz */
   { 77000000, 0,  800, 600,  401,418,449,496,495, 601, 602, 612, 628, 628,
-      16,           0,1280, 1024,  7200,    8,     8, kernel_font_8x8,   32,  255},
+      16,           0,1280, 1024,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
 
   /* 1024 x 768, 16 Bit, 42768 Hz, 53 Hz */
   {110000000,  0, 1024, 768,  513,514,554,639,638, 769, 770, 783, 804, 804,
-      16,           0,1280, 1024,  7200,    8,     8, kernel_font_8x8,   32,  255},
+      16,           0,1280, 1024,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
 
   /* 864 x 648, 16 Bit, 50369 Hz, 74 Hz */
   {109000000,  0,  864, 648,  433,434,468,537,536, 649, 650, 661, 678, 678,
-      16,           0,1280, 1024,  7200,    8,     8, kernel_font_8x8,   32,  255},
+      16,           0,1280, 1024,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
 
-/*
- * WARNING: THE FOLLOWING MONITOR MODE EXCEEDS THE 110-MHz LIMIT THE PROCESSOR
- *          HAS BEEN SPECIFIED FOR. USE AT YOUR OWN RISK (AND THINK ABOUT
- *          MOUNTING SOME COOLING DEVICE AT THE PROCESSOR AND RAMDAC)!
- */
+/* WARNING: THE FOLLOWING MONITOR MODE EXCEEDS THE 110-MHz LIMIT THE PROCESSOR
+            HAS BEEN SPECIFIED FOR. USE AT YOUR OWN RISK (AND THINK ABOUT
+            MOUNTING SOME COOLING DEVICE AT THE PROCESSOR AND RAMDAC)!     */
   /* 1024 x 768, 16 Bit, 48437 Hz, 60 Hz */
   {124000000,  0, 1024, 768,  513,537,577,636,635, 769, 770, 783, 804, 804,
-      16,           0,1280, 1024,  7200,    8,     8, kernel_font_8x8,   32,  255},
+      16,           0,1280, 1024,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+
+  /* 24-bit gfx-mode definitions */
+
+  /* 320 x 200, 24 Bit, 35060 Hz, 83 Hz d */
+  { 46000000,  1,  320, 200,  241,268,287,324,323, 401, 405, 412, 418, 418,
+      24,           0,1280, 1024,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 640 x 400, 24 Bit, 31404 Hz, 75 Hz */
+  { 76000000,  0,  640, 400,  481,514,552,601,600, 401, 402, 409, 418, 418,
+      24,           0,1280, 1024,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 724 x 482, 24 Bit, 36969 Hz, 73 Hz */
+  {101000000,  0,  724, 482,  544,576,619,682,678, 483, 487, 495, 495, 504,
+      24,           0,1280, 1024,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 800 x 600, 24 Bit, 37826 Hz, 60 Hz */
+  {110000000,  0,  800, 600,  601,602,647,723,722, 601, 602, 612, 628, 628,
+      24,           0,1280, 1024,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /* 800 x 600, 24 Bit, 43824 Hz, 69 Hz */
+  {132000000,  0,  800, 600,  601,641,688,749,748, 601, 611, 621, 628, 628,
+      24,           0,1280, 1024,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
+
+  /*1024 x 768, 24 Bit, 32051 Hz, 79 Hz i */
+  {110000000,  2, 1024, 768,  769,770,824,854,853, 385, 386, 392, 401, 401,
+      24,           0,1280, 1024,  7200,   FX,    FY, KERNEL_FONT,   32,  255},
 };
+#undef KERNEL_FONT
+#undef FX
+#undef FY
 
 static const char *monitor_descr[] = {
 #ifdef KFONT_8X11
@@ -1213,7 +1384,6 @@ static const char *monitor_descr[] = {
 
   "GFX-8 (640x480) 31.5kHz",
   "GFX-8 (640x480) 38kHz",
-  "GFX-8 (800x600) 31.6kHz",
   "GFX-8 (800x600) 38.5kHz",
   "GFX-8 (1024x768) 64kHz",
   "GFX-8 (1120x896) 64kHz",
@@ -1227,13 +1397,20 @@ static const char *monitor_descr[] = {
   "GFX-16 (1024x768) 42.8kHz",
   "GFX-16 (864x648) 50kHz",
   "GFX-16 (1024x768) 48.5kHz ***EXCEEDS CHIP LIMIT!!!***",
+
+  "GFX-24 (320x200 d) 35kHz",
+  "GFX-24 (640x400) 31.4kHz",
+  "GFX-24 (724x482) 37kHz",
+  "GFX-24 (800x600) 38kHz",
+  "GFX-24 (800x600) 44kHz ***EXCEEDS CHIP LIMIT!!!***",
+  "GFX-24 (1024x768) 32kHz-i",
 };
 
 int rh_mon_max = sizeof (monitor_defs)/sizeof (monitor_defs[0]);
 
 /* patchable */
-int rh_default_mon = 0;
-int rh_default_gfx = 4;
+int rh_default_mon = 2;
+int rh_default_gfx = 8;
 
 static struct MonDef *current_mon;
 
@@ -1355,8 +1532,8 @@ rh_getvmode(gp, vm)
 	strncpy (vm->mode_descr, monitor_descr + (vm->mode_num - 1),
 	   sizeof (vm->mode_descr));
 	vm->pixel_clock  = md->FQ;
-	vm->disp_width   = md->MW;
-	vm->disp_height  = md->MH;
+        vm->disp_width   = (md->DEP == 4) ? md->MW : md->TX;
+        vm->disp_height  = (md->DEP == 4) ? md->MH : md->TY;
 	vm->depth        = md->DEP;
 	vm->hblank_start = md->HBS;
 	vm->hblank_stop  = md->HBE;
@@ -1374,10 +1551,10 @@ rh_getvmode(gp, vm)
 
 
 int
-rh_setvmode(gp, mode, txtonly)
+rh_setvmode(gp, mode, type)
 	struct grf_softc *gp;
 	unsigned mode;
-	int txtonly;
+        enum mode_type type;
 {
 	struct MonDef *md;
 	int error;
@@ -1385,7 +1562,8 @@ rh_setvmode(gp, mode, txtonly)
 	if (!mode || mode > rh_mon_max)
 		return(EINVAL);
 
-	if (txtonly && monitor_defs[mode-1].DEP != 4)
+        if ((type == MT_TXTONLY && monitor_defs[mode-1].DEP != 4)
+            || (type == MT_GFXONLY && monitor_defs[mode-1].DEP == 4))
 		return(EINVAL);
 
 	current_mon = monitor_defs + (mode - 1);
@@ -1406,15 +1584,13 @@ rh_mode(gp, cmd, arg, a2, a3)
 	void *arg;
 	int a2, a3;
 {
-  /* implement these later... */
-
 	switch (cmd) {
 	case GM_GRFON:
-		rh_setvmode (gp, rh_default_gfx + 1, 0);
+                rh_setvmode (gp, rh_default_gfx + 1, MT_GFXONLY);
 		return(0);
 
 	case GM_GRFOFF:
-		rh_setvmode (gp, rh_default_mon + 1, 0);
+                rh_setvmode (gp, rh_default_mon + 1, MT_TXTONLY);
 		return(0);
 
 	case GM_GRFCONFIG:
@@ -1424,7 +1600,8 @@ rh_mode(gp, cmd, arg, a2, a3)
 		return(rh_getvmode (gp, (struct grfvideo_mode *) arg));
 
 	case GM_GRFSETVMODE:
-		return(rh_setvmode (gp, *(unsigned *) arg, 1));
+                return(rh_setvmode (gp, *(unsigned *) arg, 
+                                    (gp->g_flags & GF_GRFON) ? MT_GFXONLY : MT_TXTONLY));
 
 	case GM_GRFGETNUMVM:
 		*(int *)arg = rh_mon_max;
@@ -1635,6 +1812,7 @@ rh_getspriteinfo (gp, info)
 		 * hope I got these bool-eqs right below..
 		 */
 
+#ifdef RZ3_64BIT_SPRITE
 		info->size.x = 64;
 		info->size.y = 64;
 		for (row = 0, hwp = (u_long *)(ba + LM_OFFSET + HWC_MEM_OFF),
@@ -1655,6 +1833,22 @@ rh_getspriteinfo (gp, info)
 			*mp++  = (~bp10) | (bp10 & ~bp11);
 			*mp++  = (~bp20) & (bp20 & ~bp21);
 		}
+#else
+                info->size.x = 32;
+                info->size.y = 32;
+                for (row = 0, hwp = (u_long *)(ba + LM_OFFSET + HWC_MEM_OFF),
+                    mp = mask, imp = image;
+                    row < 32;
+                    row++) {
+                        u_long bp10, bp11;
+                        bp10 = *hwp++;
+                        bp11 = *hwp++;
+                        M2I (bp10);
+                        M2I (bp11);
+                        *imp++ = (~bp10) & bp11;
+                        *mp++  = (~bp10) | (bp10 & ~bp11);
+                }
+#endif
 		copyout (image, info->image, sizeof (image));
 		copyout (mask, info->mask, sizeof (mask));
 	}
@@ -1684,10 +1878,17 @@ rh_setspriteinfo (gp, info)
 		u_char *imp, *mp;
 		short row;
 
+#ifdef RZ3_64BIT_SPRITE
 		if (info->size.y > 64)
 			info->size.y = 64;
 		if (info->size.x > 64)
 			info->size.x = 64;
+#else
+                if (info->size.y > 32)
+                        info->size.y = 32;
+                if (info->size.x > 32)
+                        info->size.x = 32;
+#endif
 
 		if (info->size.x < 32)
 			info->size.x = 32;
@@ -1715,6 +1916,7 @@ rh_setspriteinfo (gp, info)
 			imp += 4;
 			m1  = *(unsigned long *)mp;
 			mp  += 4;
+#ifdef RZ3_64BIT_SPRITE
 			if (info->size.x > 32) {
 	      			im2 = *(unsigned long *)imp;
 				imp += 4;
@@ -1722,6 +1924,7 @@ rh_setspriteinfo (gp, info)
 				mp  += 4;
 			}
 			else
+#endif
 				im2 = m2 = 0;
 
 			M2I(im1);
@@ -1730,16 +1933,27 @@ rh_setspriteinfo (gp, info)
 			M2I(m2);
 
 			*hwp++ = ~m1;
+#ifdef RZ3_64BIT_SPRITE
 			*hwp++ = ~m2;
+#endif
 			*hwp++ = m1 & im1;
+#ifdef RZ3_64BIT_SPRITE
 			*hwp++ = m2 & im2;
+#endif
 		}
+#ifdef RZ3_64BIT_SPRITE
 		for (; row < 64; row++) {
 			*hwp++ = 0xffffffff;
 			*hwp++ = 0xffffffff;
 			*hwp++ = 0x00000000;
 			*hwp++ = 0x00000000;
 		}
+#else
+                for (; row < 32; row++) {
+                        *hwp++ = 0xffffffff;
+                        *hwp++ = 0x00000000;
+                }
+#endif
 
 		free(image, M_TEMP);
 		RZ3SetupHWC(gp, 1, 0, 0, 0, 0);
@@ -1750,11 +1964,13 @@ rh_setspriteinfo (gp, info)
 		WSeq(ba, SEQ_ID_CURSOR_COLOR1, 1);
 	}
 	if (info->set & GRFSPRSET_ENABLE) {
+#if 0
 		if (info->enable)
 			control = 0x85;
 		else
 			control = 0;
 		WSeq(ba, SEQ_ID_CURSOR_CONTROL, control);
+#endif
 	}
 	if (info->set & GRFSPRSET_POS)
 		rh_setspritepos(gp, &info->pos);
@@ -1771,8 +1987,13 @@ rh_getspritemax (gp, pos)
 	struct grf_softc *gp;
 	struct grf_position *pos;
 {
+#ifdef RZ3_64BIT_SPRITE
 	pos->x = 64;
 	pos->y = 64;
+#else
+        pos->x = 32;
+        pos->y = 32;
+#endif
 
 	return(0);
 }
@@ -1784,9 +2005,11 @@ rh_bitblt (gp, bb)
 	struct grf_bitblt *bb;
 {
 	struct MonDef *md = (struct MonDef *)gp->g_data;
-	if (md->DEP < 16)
+        if (md->DEP <= 8)
 		RZ3BitBlit(gp, bb);
-	else
+        else if (md->DEP <= 16)
 		RZ3BitBlit16(gp, bb);
+        else
+                RZ3BitBlit24(gp, bb);
 }
 #endif	/* NGRF */
