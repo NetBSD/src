@@ -1,4 +1,4 @@
-# $NetBSD: CP.part,v 1.1 2003/06/27 08:40:00 tshiozak Exp $
+# $NetBSD: CP.part,v 1.2 2004/09/28 06:51:37 tshiozak Exp $
 
 037
 038
@@ -32,6 +32,7 @@
 863
 864
 865
+866
 868
 869
 870
