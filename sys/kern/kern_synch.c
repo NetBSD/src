@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.7 2001/11/14 19:16:38 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.8 2001/11/17 01:07:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.7 2001/11/14 19:16:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.8 2001/11/17 01:07:59 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -779,7 +779,7 @@ preempt(struct lwp *newl)
 	l->l_proc->p_stats->p_ru.ru_nivcsw++;
 	r = mi_switch(l, newl);
 	if (r && (l->l_flag & L_SA))
-		sa_upcall(l, SA_UPCALL_PREEMPTED, l, NULL, 0, 0, NULL);
+		sa_upcall(l, SA_UPCALL_PREEMPTED, l, NULL, 0, NULL);
 	SCHED_ASSERT_UNLOCKED();
 	splx(s);
 }
