@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.12 1997/07/06 05:10:41 thorpej Exp $	*/
+/*	$NetBSD: fil.c,v 1.13 1997/07/06 05:29:13 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: fil.c,v 1.12 1997/07/06 05:10:41 thorpej Exp $";
+static	char	rcsid[] = "Id: fil.c,v 2.0.2.26 1997/07/05 04:38:38 darrenr Exp";
 #endif
 
 #include <sys/errno.h>
