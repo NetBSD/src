@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.52 2001/06/21 13:36:24 onoe Exp $
+.\"	$NetBSD: ifconfig.8,v 1.53 2001/09/17 17:36:06 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -477,6 +477,18 @@ support it.
 .It Cm -udp6csum
 Disable hardware-assisted UDP/IPv6 checksums on interfaces that
 support it.
+.It Cm tcp4csum-rx
+Enable hardware-assisted TCP/IPv4 checksums on interfaces that
+support it only for the in-bound direction.
+.It Cm -tcp4csum-rx
+Disable hardware-assisted TCP/IPv4 checksums on interfaces that
+support it only for the in-bound direction.
+.It Cm udp4csum-rx
+Enable hardware-assisted UDP/IPv4 checksums on interfaces that
+support it only for the in-bound direction.
+.It Cm -udp4csum-rx
+Disable hardware-assisted UDP/IPv4 checksums on interfaces that
+support it only for the in-bound direction.
 .El
 .Pp
 .Nm
