@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.7 1995/01/09 01:04:21 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.8 1995/02/01 01:37:34 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -310,6 +310,40 @@ svr4_to_bsd_sigaction(ssa, bsa)
 }
 
 
+void
+bsd_to_svr4_sigaltstack(bs, ss)
+	const struct sigaltstack *bs;
+	svr4_stack_t *ss;
+{
+	ss->ss_sp = bs->ss_base;
+	ss->ss_size = bs->ss_size;
+	ss->ss_flags = 0;
+
+	if (bs->ss_flags & SA_DISABLE)
+		ss->ss_flags |= SVR4_SS_DISABLE;
+
+	if (bs->ss_flags & SA_ONSTACK)
+		ss->ss_flags |= SVR4_SS_ONSTACK;
+}
+
+
+void
+svr4_to_bsd_sigaltstack(ss, bs)
+	const svr4_stack_t *ss;
+	struct sigaltstack *bs;
+{
+	bs->ss_base = ss->ss_sp;
+	bs->ss_size = ss->ss_size;
+	bs->ss_flags = 0;
+
+	if (ss->ss_flags & SVR4_SS_DISABLE)
+		bs->ss_flags |= SA_DISABLE;
+
+	if (ss->ss_flags & SVR4_SS_ONSTACK)
+		bs->ss_flags |= SA_ONSTACK;
+}
+
+
 /*
  * Stolen from the ibcs2 one
  */
@@ -438,6 +472,27 @@ svr4_signal(p, uap, retval)
 	default:
 		return ENOSYS;
 	}
+}
+
+
+int
+svr4_sigsuspend(p, uap, retval)
+	register struct proc			*p;
+	register struct svr4_sigsuspend_args	*uap;
+	register_t				*retval;
+{
+	svr4_sigset_t ss;
+	sigset_t bs;
+	struct sigsuspend_args sa;
+	int error;
+
+	if ((error = copyin(SCARG(uap, ss), &ss, sizeof(ss))) != 0)
+		return error;
+
+	svr4_to_bsd_sigset_t(&ss, &bs);
+
+	SCARG(&sa, mask) = bs;
+	return sigsuspend(p, &sa, retval);
 }
 
 
@@ -623,6 +678,51 @@ svr4_context(p, uap, retval)
 		DPRINTF(("context(%d, %x)\n", SCARG(uap, func),
 			SCARG(uap, uc)));
 		return ENOSYS;
+	}
+	return 0;
+}
+
+
+int 
+svr4_sigaltstack(p, uap, retval)
+	register struct proc			*p;
+	register struct svr4_sigaltstack_args	*uap;
+	register_t				*retval;
+{
+	svr4_stack_t ss;
+	struct sigaltstack bs;
+	struct sigaltstack_args sa;
+	int error;
+	caddr_t sg = stackgap_init();
+
+	if (SCARG(uap, nss)) {
+		if ((error = copyin(SCARG(uap, nss), &ss, sizeof(ss))) != 0)
+			return error;
+		svr4_to_bsd_sigaltstack(&ss, &bs);
+		SCARG(&sa, nss) = stackgap_alloc(&sg,
+						 sizeof(struct sigaltstack));
+		if ((error = copyout(&bs, SCARG(&sa, nss), sizeof(bs))) != 0)
+			return error;
+	}
+	else
+		SCARG(&sa, nss) = NULL;
+
+	if (SCARG(uap, oss))
+		SCARG(&sa, oss) = stackgap_alloc(&sg,
+						 sizeof(struct sigaltstack));
+	else
+		SCARG(&sa, oss) = NULL;
+
+
+	if ((error = sigaltstack(p, &sa, retval)) != 0)
+		return error;
+
+	if (SCARG(&sa, oss)) {
+		if ((error = copyin(SCARG(&sa, oss), &bs, sizeof(bs))) != 0)
+			return error;
+		bsd_to_svr4_sigaltstack(&bs, &ss);
+		if ((error = copyout(&ss, SCARG(uap, oss), sizeof(ss))) != 0)
+			return error;
 	}
 	return 0;
 }

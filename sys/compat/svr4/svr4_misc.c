@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.17 1995/01/25 04:17:06 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.18 1995/02/01 01:37:33 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -499,18 +499,6 @@ svr4_setrlimit(p, uap, retval)
 	return compat_43_setrlimit(p, uap, retval);
 }
 
-
-int
-svr4_syssun(p, uap, retval)
-	register struct proc			*p;
-	register struct svr4_syssun_args	*uap;
-	register_t				*retval;
-{
-#ifdef DEBUG_SVR4
-	printf("syssun(%d)\n", SCARG(uap, gate));
-#endif
-	return 0;
-}
 
 /* ARGSUSED */
 int
