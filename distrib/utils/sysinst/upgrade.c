@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.28 2000/12/22 10:12:13 mrg Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.29 2000/12/31 13:08:06 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -107,8 +107,9 @@ do_upgrade()
 		return;
 
 	/* Done with disks. Ready to get and unpack tarballs. */
-	msg_display(MSG_disksetupdone);
+	msg_display(MSG_disksetupdoneupdate);
 	getchar();
+	clearok(stdscr, TRUE);
 	wmove(stdscr, 0, 0);
 	wclear(stdscr);
 	wrefresh(stdscr);
@@ -239,7 +240,7 @@ merge_X()
 }
 
 /*
- * Unpacks sets,  clobbering existintg contents.
+ * Unpacks sets,  clobbering existing contents.
  */
 void
 do_reinstall_sets()
@@ -266,6 +267,7 @@ do_reinstall_sets()
 		return;
 
 	fflush(stdout);
+	clearok(stdscr, TRUE);
 	wmove(stdscr, 0, 0);
 	touchwin(stdscr);
 	wclear(stdscr);
