@@ -1,7 +1,7 @@
-/*	$NetBSD: ehci_pci.c,v 1.7 2002/01/09 22:56:22 augustss Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.8 2002/02/14 21:58:30 augustss Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.7 2002/01/09 22:56:22 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.8 2002/02/14 21:58:30 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
