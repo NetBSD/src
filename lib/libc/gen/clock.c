@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 1997/07/13 19:45:39 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 1998/03/30 14:27:17 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,13 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)clock.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: clock.c,v 1.6 1997/07/13 19:45:39 christos Exp $");
+__RCSID("$NetBSD: clock.c,v 1.7 1998/03/30 14:27:17 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+
+#include <time.h>
 
 /*
  * Convert usec to clock ticks; could do (usec * CLOCKS_PER_SEC) / 1000000,
