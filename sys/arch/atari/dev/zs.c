@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.28 1998/01/12 18:04:17 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.29 1998/03/25 09:46:10 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -224,6 +224,7 @@ static int	zsparam __P((struct tty *, struct termios *));
 static int	zsbaudrate __P((int, int, int *, int *, int *, int *));
 static int	zs_modem __P((struct zs_chanstate *, int, int));
 static void	zs_loadchannelregs __P((volatile struct zschan *, u_char *));
+static void	zs_shutdown __P((struct zs_chanstate *));
 
 static int zsshortcuts;	/* number of "shortcut" software interrupts */
 
@@ -360,9 +361,17 @@ struct proc	*p;
 		tp->t_param = zsparam;
 	}
 
+	if ((tp->t_state & TS_ISOPEN) &&
+	    (tp->t_state & TS_XCLUDE) &&
+	    p->p_ucred->cr_uid != 0)
+		return (EBUSY);
+
 	s  = spltty();
-	if((tp->t_state & TS_ISOPEN) == 0) {
-		ttychars(tp);
+
+	/*
+	 * Do the following iff this is a first open.
+	 */
+	if (!(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
 		if(tp->t_ispeed == 0) {
 			tp->t_iflag = TTYDEF_IFLAG;
 			tp->t_oflag = TTYDEF_OFLAG;
@@ -370,43 +379,45 @@ struct proc	*p;
 			tp->t_lflag = TTYDEF_LFLAG;
 			tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		}
-		(void)zsparam(tp, &tp->t_termios);
+		ttychars(tp);
 		ttsetwater(tp);
-	}
-	else if(tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
-			splx(s);
-			return (EBUSY);
-	}
-	error = 0;
-	for(;;) {
-		/* loop, turning on the device, until carrier present */
-		zs_modem(cs, ZSWR5_RTS|ZSWR5_DTR, DMSET);
 
+		(void)zsparam(tp, &tp->t_termios);
+
+		/*
+		 * Turn on DTR.  We must always do this, even if carrier is not
+		 * present, because otherwise we'd have to use TIOCSDTR
+		 * immediately after setting CLOCAL, which applications do not
+		 * expect.  We always assert DTR while the device is open
+		 * unless explicitly requested to deassert it.
+		 */
+		zs_modem(cs, ZSWR5_RTS|ZSWR5_DTR, DMSET);
 		/* May never get a status intr. if DCD already on. -gwr */
 		if((cs->cs_rr0 = cs->cs_zc->zc_csr) & ZSRR0_DCD)
 			tp->t_state |= TS_CARR_ON;
 		if(cs->cs_softcar)
 			tp->t_state |= TS_CARR_ON;
-		if(flags & O_NONBLOCK || tp->t_cflag & CLOCAL ||
-		    tp->t_state & TS_CARR_ON)
-			break;
-		tp->t_state |= TS_WOPEN;
-		if((error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0)) != 0) {
-			if(!(tp->t_state & TS_ISOPEN)) {
-				zs_modem(cs, 0, DMSET);
-				tp->t_state &= ~TS_WOPEN;
-				ttwakeup(tp);
-			}
-			splx(s);
-			return error;
-		}
 	}
+
 	splx(s);
-	if(error == 0)
-		error = linesw[tp->t_line].l_open(dev, tp);
+
+	error = ttyopen(tp, ZS_DIALOUT(dev), (flags & O_NONBLOCK));
+	if (error)
+		goto bad;
+	
+	error = linesw[tp->t_line].l_open(dev, tp);
 	if(error)
-		zs_modem(cs, 0, DMSET);
+		goto bad;
+	return (0);
+
+bad:
+	if (!(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
+		/*
+		 * We failed to open the device, and nobody else had it opened.
+		 * Clean up the state as appropriate.
+		 */
+		zs_shutdown(cs);
+	}
 	return(error);
 }
 
@@ -424,33 +435,22 @@ struct proc	*p;
 	register struct tty		*tp;
 		 struct zs_softc	*zi;
 		 int			unit = ZS_UNIT(dev);
-		 int			s;
 
 	zi = zs_cd.cd_devs[unit >> 1];
 	cs = &zi->zi_cs[unit & 1];
 	tp = cs->cs_ttyp;
+
 	linesw[tp->t_line].l_close(tp, flags);
-	if(tp->t_cflag & HUPCL || tp->t_state & TS_WOPEN ||
-	    (tp->t_state & TS_ISOPEN) == 0) {
-		zs_modem(cs, 0, DMSET);
-		/* hold low for 1 second */
-		(void)tsleep((caddr_t)cs, TTIPRI, ttclos, hz);
-	}
-	if(cs->cs_creg[5] & ZSWR5_BREAK) {
-		s = splzs();
-		cs->cs_preg[5] &= ~ZSWR5_BREAK;
-		cs->cs_creg[5] &= ~ZSWR5_BREAK;
-		ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
-		splx(s);
-	}
 	ttyclose(tp);
 
-	/*
-	 * Drop all lines and cancel interrupts
-	 */
-	s = splzs();
-	zs_loadchannelregs(cs->cs_zc, zs_init_regs);
-	splx(s);
+	if (!(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
+		/*
+		 * Although we got a last close, the device may still be in
+		 * use; e.g. if this was the dialout node, and there are still
+		 * processes waiting for carrier on the non-dialout node.
+		 */
+		zs_shutdown(cs);
+	}
 	return (0);
 }
 
@@ -999,6 +999,38 @@ register struct tty	*tp;
 		if ((tp->t_state & TS_TTSTOP) == 0)
 			tp->t_state |= TS_FLUSH;
 	}
+	splx(s);
+}
+
+static void
+zs_shutdown(cs)
+	struct zs_chanstate	*cs;
+{
+	struct tty	*tp = cs->cs_ttyp;
+	int		s;
+
+	s = splzs();
+
+	/*
+	 * Hang up if necessary.  Wait a bit, so the other side has time to
+	 * notice even if we immediately open the port again.
+	 */
+	if(tp->t_cflag & HUPCL) {
+		zs_modem(cs, 0, DMSET);
+		(void)tsleep((caddr_t)cs, TTIPRI, ttclos, hz);
+	}
+
+	/* Clear any break condition set with TIOCSBRK. */
+	if(cs->cs_creg[5] & ZSWR5_BREAK) {
+		cs->cs_preg[5] &= ~ZSWR5_BREAK;
+		cs->cs_creg[5] &= ~ZSWR5_BREAK;
+		ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
+	}
+
+	/*
+	 * Drop all lines and cancel interrupts
+	 */
+	zs_loadchannelregs(cs->cs_zc, zs_init_regs);
 	splx(s);
 }
 
