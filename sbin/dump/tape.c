@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)tape.c	5.25 (Berkeley) 7/16/92"; */
-static char *rcsid = "$Id: tape.c,v 1.1 1993/12/22 10:24:56 cgd Exp $";
+static char *rcsid = "$Id: tape.c,v 1.2 1994/03/09 01:14:43 cgd Exp $";
 #endif /* not lint */
 
 #ifdef sunos
@@ -75,7 +75,7 @@ char	*nexttape;
 #ifdef RDUMP
 int	rmtopen(), rmtwrite();
 void	rmtclose();
-#endif RDUMP
+#endif
 void	rollforward();
 int	atomic();
 void	doslave(), enslave(), flushtape(), killall();
@@ -639,6 +639,9 @@ dumpabort(signo)
 		killall();
 		msg("The ENTIRE dump is aborted.\n");
 	}
+#ifdef RDUMP
+	rmtclose();
+#endif
 	Exit(X_ABORT);
 }
 
