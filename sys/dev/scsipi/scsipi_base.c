@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.10 1998/09/16 05:35:50 scottr Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.11 1998/09/18 05:53:07 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -316,13 +316,13 @@ scsipi_done(xs)
 		 * returned SUCCESSFULLY_QUEUED when the command was
 		 * submitted), we need to free the scsipi_xfer here.
 		 */
-		if (xs->flags & SCSI_ASYNCREQ)
+		if (SCSIPI_XFER_ASYNC(xs))
 			scsipi_free_xs(xs, SCSI_NOSLEEP);
 		SC_DEBUG(sc_link, SDEV_DB3, ("returning to adapter\n"));
 		return;
 	}
 
-	if (!((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)) {
+	if (!SCSIPI_XFER_ASYNC(xs)) {
 		/*
 		 * if it's a normal upper level request, then ask
 		 * the upper level code to handle error checking
@@ -374,7 +374,7 @@ retry:
 	 * returned SUCCESSFULLY_QUEUED when the command was
 	 * submitted), we need to free the scsipi_xfer here.
 	 */
-	if (xs->flags & SCSI_ASYNCREQ)
+	if (SCSIPI_XFER_ASYNC(xs))
 		scsipi_free_xs(xs, SCSI_NOSLEEP);
 	if (bp)
 		biodone(bp);
@@ -384,10 +384,11 @@ int
 scsipi_execute_xs(xs)
 	struct scsipi_xfer *xs;
 {
+	int async;
 	int error;
 	int s;
 
-	xs->flags &= ~(ITSDONE|SCSI_ASYNCREQ);
+	xs->flags &= ~ITSDONE;
 	xs->error = XS_NOERROR;
 	xs->resid = xs->datalen;
 	xs->status = 0;
@@ -415,32 +416,18 @@ retry:
 		printf("\n");
 	}
 #endif
+	async = SCSIPI_XFER_ASYNC(xs);
 	switch (scsipi_command_direct(xs)) {
 	case SUCCESSFULLY_QUEUED:
-		s = splbio();
-		if (xs->flags & ITSDONE) {
-			/*
-			 * The request has already completed, probably due
-			 * to an interrupt arriving between the time the
-			 * request was scheduled and when we arrived at this
-			 * point.
-			 */
-			splx(s);
-			return (0);
-		}
-		if ((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP) {
-			/*
-			 * The request will complete asynchronously.  In this
-			 * case, we need scsipi_done() to free the scsipi_xfer.
-			 */
-			xs->flags |= SCSI_ASYNCREQ;
-			splx(s);
+		if (async) {
+			/* scsipi_done() will free the scsipi_xfer. */
 			return (EJUSTRETURN);
 		}
 #ifdef DIAGNOSTIC
 		if (xs->flags & SCSI_NOSLEEP)
 			panic("scsipi_execute_xs: NOSLEEP and POLL");
 #endif
+		s = splbio();
 		while ((xs->flags & ITSDONE) == 0)
 			tsleep(xs, PRIBIO + 1, "scsipi_cmd", 0);
 		splx(s);
