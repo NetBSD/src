@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.15 1995/06/07 16:28:03 cgd Exp $	*/
+/*	$NetBSD: input.c,v 1.16 1995/06/09 01:53:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)input.c	8.2 (Berkeley) 5/4/95";
+static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.15 1995/06/07 16:28:03 cgd Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.16 1995/06/09 01:53:54 christos Exp $";
 #endif
 #endif /* not lint */
 
