@@ -1,4 +1,4 @@
-.\" $NetBSD: opl.4,v 1.14 2001/03/30 14:34:27 minoura Exp $
+.\" $NetBSD: opl.4,v 1.15 2001/09/22 01:44:55 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,8 +64,6 @@ The
 .Nm
 driver usually attaches to a sound card, but it can also sit
 directly on the ISA bus.
-.Sh BUGS
-The OPL3 chip is operated in OPL2 mode despite being more capable.
 .Sh SEE ALSO
 .Xr eso 4 ,
 .Xr ess 4 ,
@@ -82,3 +80,5 @@ The
 .Nm
 device driver appeared in
 .Nx 1.4 .
+.Sh BUGS
+The OPL3 chip is operated in OPL2 mode despite being more capable.
