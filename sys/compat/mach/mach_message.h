@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.16 2003/06/03 06:48:48 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.17 2003/07/01 19:15:47 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -205,6 +205,9 @@ typedef struct {
 typedef struct {
 	mach_msg_size_t	msgh_descriptor_count;
 } mach_msg_body_t;
+
+#define MACH_REQMSG_OVERFLOW(args, test) \
+    (((u_long)&test - (u_long)args->smsg + sizeof(test)) > args->ssize)
 
 struct mach_short_reply {
 	mach_msg_header_t sr_header;

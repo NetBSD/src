@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.10 2003/05/22 22:07:38 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.11 2003/07/01 19:15:49 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.10 2003/05/22 22:07:38 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.11 2003/07/01 19:15:49 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,6 +125,10 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_outcount = 0;
+
+	/* Sanity check req->req_incount */
+	if (MACH_REQMSG_OVERFLOW(args, req->req_in[req->req_incount]))
+		return mach_msg_error(args, EINVAL);
 
 	maxoutcount = req->req_in[req->req_incount];
 
@@ -296,6 +300,10 @@ darwin_ioframebuffer_connect_method_scalari_structo(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_outcount = 0;
 
+	/* Sanity check req->req_incount */
+	if (MACH_REQMSG_OVERFLOW(args, req->req_in[req->req_incount]))
+		return mach_msg_error(args, EINVAL);
+
 	maxoutcount = req->req_in[req->req_incount];
 
 	switch(req->req_selector) {
@@ -463,6 +471,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 #endif
 		break;
 
+	case DARWIN_IOFRAMEBUFFER_VRAM_MEMORY:
 	case DARWIN_IOFRAMEBUFFER_SYSTEM_APERTURE: {
 		struct device *dv;
 		int major, minor;
@@ -539,7 +548,6 @@ darwin_ioframebuffer_connect_map_memory(args)
 		break;
 	}
 
-	case DARWIN_IOFRAMEBUFFER_VRAM_MEMORY:
 	default:
 #ifdef DEBUG_DARWIN
 		printf("unimplemented memtype %d\n", req->req_memtype);
@@ -581,37 +589,62 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 	mach_io_connect_method_scalari_structi_request_t *req = args->smsg;
 	mach_io_connect_method_scalari_structi_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	int scalar_len;
+	int struct_len;
+	char *struct_data;
 
 #ifdef DEBUG_DARWIN
 	printf("darwin_ioframebuffer_connect_method_scalari_structi()\n");
 #endif
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_trailer.msgh_trailer_size = 8;
+	scalar_len = req->req_incount; 
+	if (MACH_REQMSG_OVERFLOW(args, req->req_in[scalar_len]))
+		return mach_msg_error(args, EINVAL);
+	struct_len = req->req_in[scalar_len];
+
+	struct_data = (char *)&req->req_in[scalar_len + 1];	
+	if (MACH_REQMSG_OVERFLOW(args, struct_data[struct_len - 1]))
+		return mach_msg_error(args, EINVAL);
 
 	switch (req->req_selector) {
+	case DARWIN_IOFBSETCOLORCONVERTTABLE: {
+		int select;
+		int *data;
+		size_t tablelen;
+		int i;
+
+		select = req->req_in[0];
+		tablelen = struct_len / sizeof(*data);
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOFBSETCOLORCONVERTTABLE: select = %d, "
+		    "tablelen = %d\n", select, tablelen);
+#endif
+		if (tablelen == 0)
+			break;
+
+		data = (int *)struct_data;
+#ifdef DEBUG_DARWIN
+		for (i = 0; i < tablelen; i++)
+			printf("table entry %d: 0x%08x\n", i, data[i]);
+#endif
+		break;
+	}
+
 	case DARWIN_IOFBSETCLUTWITHENTRIES: {
 		int index;
 		int option;
 		struct darwin_iocolorentry *clut; 
 		size_t clutlen;
-		int offset;
 
 		index = req->req_in[0];
 		option = req->req_in[1];
-		offset = req->req_incount;
-		clutlen = req->req_in[offset] / sizeof(*clut);
+		clutlen = struct_len / sizeof(*clut);
+		clut = (struct darwin_iocolorentry *)struct_data;
+
 		if (clutlen == 0)
 			break;	
 		if (clutlen >= 256)
 			return mach_msg_error(args, EINVAL);
-
-		offset += sizeof(req->req_instructcount);
-		clut = (struct darwin_iocolorentry *)&req->req_in[offset];
+	
 #ifdef DEBUG_DARWIN
 		printf("DARWIN_IOFBSETCLUTWITHENTRIES: index = %d, "
 		    "option = %d, clutlen = %d\n", index, option, clutlen);
@@ -633,6 +666,14 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 		return mach_msg_error(args, EINVAL);
 		break;
 	}
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep); 
 
