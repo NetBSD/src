@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.21 2001/12/31 19:33:58 thorpej Exp $	*/
+/*	$NetBSD: apmd.c,v 1.22 2002/01/11 04:35:52 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -396,17 +396,19 @@ main(int argc, char *argv[])
 	}
     argc -= optind;
     argv += optind;
-    if ((ctl_fd = open(fname, O_RDWR)) == -1) {
-	(void)err(1, "cannot open device file `%s'", fname);
-    } 
     if (debug) {
 	openlog("apmd", 0, LOG_LOCAL1);
     } else {
+	daemon(0, 0);
 	openlog("apmd", 0, LOG_DAEMON);
 	setlogmask(LOG_UPTO(LOG_NOTICE));
-	daemon(0, 0);
 	pidfile(NULL);
     }
+    if ((ctl_fd = open(fname, O_RDWR)) == -1) {
+	syslog(LOG_ERR, "cannot open device file `%s'", fname);
+	exit(1);
+    } 
+
     if (statonly) {
         power_status(ctl_fd, 1, 0);
 	exit(0);
