@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.25 2000/01/26 09:44:13 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.26 2000/11/14 19:34:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,6 +32,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * We use 8K pages on both the sun3 and sun3x.  Override PAGE_*
+ * to be compile-time constants.
+ */
+#define	PAGE_SHIFT	13
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 #ifdef	_SUN3_
 #include <machine/vmparam3.h>
