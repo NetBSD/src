@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.2 1998/07/20 07:33:54 christos Exp $
+$NetBSD: pcmciadevs,v 1.3 1998/07/22 11:47:13 christos Exp $
 
 /*
  * Copyright (c) 1998, Christos Zoulas
@@ -92,6 +92,14 @@ product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
 product TDK DFL9610		0x0d0a TDK DFL9610 Ethernet & Digital Cellular
 
 /* Cards we know only by their cis */
+vendor PREMAX			-1 	Premax
+vendor PLANET			-1 	Planet
+vendor DLINK			-1 	D-Link
+vendor RPTI			-1 	RPTI
+vendor ACCTON			-1 	ACCTON
+vendor YEDATA			-1 	Y-E DATA
+vendor DIGITAL			-1 	Digital Equipment Corporation
+
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
 product PLANET SMARTCOM2000	{ "PCMCIA", "UE2212", NULL, NULL } Planet SmartCOM 2000

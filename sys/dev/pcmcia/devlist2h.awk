@@ -1,6 +1,7 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.1 1998/07/19 17:28:16 christos Exp $
+#	$NetBSD: devlist2h.awk,v 1.2 1998/07/22 11:47:13 christos Exp $
 #
+# Copyright (c) 1998, Christos Zoulas
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
 #
@@ -15,7 +16,8 @@
 # 3. All advertising materials mentioning features or use of this software
 #    must display the following acknowledgement:
 #      This product includes software developed by Christopher G. Demetriou.
-# 4. The name of the author may not be used to endorse or promote products
+#      This product includes software developed by Christos Zoulas
+# 4. The name of the author(s) may not be used to endorse or promote products
 #    derived from this software without specific prior written permission
 #
 # THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -29,6 +31,32 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+function collectline(f, line) {
+	oparen = 0
+	line = ""
+	while (f <= NF) {
+		if ($f == "#") {
+			line = line "("
+			oparen = 1
+			f++
+			continue
+		}
+		if (oparen) {
+			line = line $f
+			if (f < NF)
+				line = line " "
+			f++
+			continue
+		}
+		line = line $f
+		if (f < NF)
+			line = line " "
+		f++
+	}
+	if (oparen)
+		line = line ")"
+	return line
+}
 BEGIN {
 	nproducts = nvendors = 0
 	dfile="pcmciadevs_data.h"
@@ -66,41 +94,8 @@ $1 == "vendor" {
 	vendors[nvendors, 2] = $3;		# id
 	printf("#define\tPCMCIA_VENDOR_%s\t%s\t", vendors[nvendors, 1],
 	    vendors[nvendors, 2]) > hfile
-
-	i = 3; f = 4;
-
-	# comments
-	ocomment = oparen = 0
-	if (f <= NF) {
-		printf("\t/* ") > hfile
-		ocomment = 1;
-	}
-	while (f <= NF) {
-		if ($f == "#") {
-			printf("(") > hfile
-			oparen = 1
-			f++
-			continue
-		}
-		if (oparen) {
-			printf("%s", $f) > hfile
-			if (f < NF)
-				printf(" ") > hfile
-			f++
-			continue
-		}
-		vendors[nvendors, i] = $f
-		printf("%s", vendors[nvendors, i]) > hfile
-		if (f < NF)
-			printf(" ") > hfile
-		i++; f++;
-	}
-	if (oparen)
-		printf(")") > hfile
-	if (ocomment)
-		printf(" */") > hfile
-	printf("\n") > hfile
-
+	vendors[nvendors, 3] = collectline(4, line)
+	printf("/* %s */\n", vendors[nvendors, 3]) > hfile
 	next
 }
 $1 == "product" {
@@ -142,32 +137,7 @@ $1 == "product" {
 	printf("#define\tPCMCIA_PRODUCT_%s_%s\t%s\n", products[nproducts, 1],
 	    products[nproducts, 2], products[nproducts, 3]) > hfile
 
-	# comments
-	oparen = 0
-	z = ""
-	while (f <= NF) {
-		if ($f == "#") {
-			z = z "("
-			oparen = 1
-			f++
-			continue
-		}
-		if (oparen) {
-			z = z $f
-			if (f < NF)
-				z = z " "
-			f++
-			continue
-		}
-		z = z $f
-		if (f < NF)
-			z = z " "
-		f++
-	}
-	if (oparen)
-		z = z ")"
-
-	products[nproducts, 5] = z
+	products[nproducts, 5] = collectline(f, line)
 
 	printf("#define\tPCMCIA_STR_%s_%s\t\"%s\"\n",
 	    products[nproducts, 1], products[nproducts, 2],
@@ -204,24 +174,8 @@ END {
 		printf(",\n") > dfile
 
 		vendi = vendorindex[products[i, 1]];
-		printf("\t    \"") > dfile
-		j = 3;
-		needspace = 0;
-		while (vendors[vendi, j] != "") {
-			if (needspace)
-				printf(" ") > dfile
-			printf("%s", vendors[vendi, j]) > dfile
-			needspace = 1
-			j++
-		}
-		printf("\",\n") > dfile
-
-		if (products[i, 3] == -1) {
-			s = products[i, 5];
-		} else {
-			s = products[vendi, 5];
-		}
-		printf("\t    \"%s\"\t},\n", s) > dfile
+		printf("\t    \"%s\",\n", vendors[vendi, 3]) > dfile
+		printf("\t    \"%s\"\t},\n", products[i, 5]) > dfile
 		printf("\t},\n") > dfile
 	}
 	for (i = 1; i <= nvendors; i++) {
@@ -229,17 +183,7 @@ END {
 		printf("\t    PCMCIA_VENDOR_%s, 0,\n", vendors[i, 1]) > dfile
 		printf("\t    PCMCIA_KNOWNDEV_NOPROD,\n") > dfile
 		printf("\t    PCMCIA_CIS_INVALID,\n") > dfile
-		printf("\t    \"") > dfile
-		j = 3;
-		needspace = 0;
-		while (vendors[i, j] != "") {
-			if (needspace)
-				printf(" ") > dfile
-			printf("%s", vendors[i, j]) > dfile
-			needspace = 1
-			j++
-		}
-		printf("\",\n") > dfile
+		printf("\t    \"%s\",\n", vendors[i, 3]) > dfile
 		printf("\t    NULL,\n") > dfile
 		printf("\t},\n") > dfile
 	}
