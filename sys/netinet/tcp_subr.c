@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.45 1998/03/28 19:39:57 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.46 1998/03/31 22:49:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -535,7 +535,7 @@ tcp_quench(inp, errno)
 	struct tcpcb *tp = intotcpcb(inp);
 
 	if (tp)
-		tp->snd_cwnd = tp->t_segsz;
+		tp->snd_cwnd = TCP_INITIAL_WINDOW(1, tp->t_segsz);
 }
 
 /*
@@ -569,7 +569,8 @@ tcp_mtudisc(inp, errno)
 			 */
 			if (rt->rt_rmx.rmx_mtu != 0)
 				tp->snd_cwnd =
-				    TCP_INITIAL_WINDOW(rt->rt_rmx.rmx_mtu);
+				    TCP_INITIAL_WINDOW(tcp_init_win,
+				    rt->rt_rmx.rmx_mtu);
 		}
 	    
 		/*
@@ -665,9 +666,6 @@ tcp_mss_from_peer(tp, offer)
 	}
 	tp->t_peermss = mss;
 	tp->t_segsz = mss;
-
-	/* Initialize the initial congestion window. */
-	tp->snd_cwnd = TCP_INITIAL_WINDOW(mss);
 
 #ifdef RTV_SSTHRESH
 	if (rt != NULL && rt->rt_rmx.rmx_ssthresh) {

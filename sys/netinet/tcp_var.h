@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.36 1998/03/17 23:50:30 kml Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.37 1998/03/31 22:49:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@ struct tcpcb {
 #define	TF_REQ_TSTMP	0x0080		/* have/will request timestamps */
 #define	TF_RCVD_TSTMP	0x0100		/* a timestamp was received in SYN */
 #define	TF_SACK_PERMIT	0x0200		/* other side said I could SACK */
+#define	TF_SYN_REXMT	0x0400		/* rexmit timer fired on SYN */
 
 	struct	tcpiphdr *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
@@ -223,6 +224,10 @@ struct syn_cache {
 	struct in_addr sc_dst;
 	tcp_seq sc_irs;
 	tcp_seq sc_iss;
+	int sc_flags;
+
+#define	SCF_SYNACK_REXMT	0x0001		/* SYN,ACK was retransmitted */
+
 	u_int16_t sc_sport;
 	u_int16_t sc_dport;
 	u_int16_t sc_peermaxseg;
@@ -276,9 +281,9 @@ struct syn_cache_head {
  * Compute the initial window for slow start.
  */
 extern int tcp_init_win;
-#define	TCP_INITIAL_WINDOW(segsz) \
-	((tcp_init_win == 0) ? (min(4 * (segsz), max(2 * (segsz), 4380))) : \
-	 ((segsz) * tcp_init_win))
+#define	TCP_INITIAL_WINDOW(iw, segsz) \
+	(((iw) == 0) ? (min(4 * (segsz), max(2 * (segsz), 4380))) : \
+	 ((segsz) * (iw)))
 #endif /* _KERNEL */
 
 /*
