@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.47 2003/10/20 06:00:26 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.48 2003/10/20 15:33:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.47 2003/10/20 06:00:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.48 2003/10/20 15:33:48 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2366,6 +2366,31 @@ wm_eeprom_sendbits(struct wm_softc *sc, uint32_t bits, int nbits)
 }
 
 /*
+ * wm_eeprom_recvbits:
+ *
+ *	Receive a series of bits from the EEPROM.
+ */
+static void
+wm_eeprom_recvbits(struct wm_softc *sc, uint32_t *valp, int nbits)
+{
+	uint32_t reg, val;
+	int x;
+
+	reg = CSR_READ(sc, WMREG_EECD) & ~EECD_DI;
+
+	val = 0;
+	for (x = nbits; x > 0; x--) {
+		CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
+		delay(2);
+		if (CSR_READ(sc, WMREG_EECD) & EECD_DO)
+			val |= (1U << (x - 1));
+		CSR_WRITE(sc, WMREG_EECD, reg);
+		delay(2);
+	}
+	*valp = val;
+}
+
+/*
  * wm_read_eeprom:
  *
  *	Read data from the serial EEPROM.
@@ -2373,8 +2398,8 @@ wm_eeprom_sendbits(struct wm_softc *sc, uint32_t bits, int nbits)
 static void
 wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 {
-	uint32_t reg;
-	int i, x;
+	uint32_t reg, val;
+	int i;
 
 	for (i = 0; i < wordcnt; i++) {
 		if (wm_acquire_eeprom(sc)) {
@@ -2383,10 +2408,8 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 			continue;
 		}
 
-		reg = CSR_READ(sc, WMREG_EECD);
-
 		/* Clear SK and DI. */
-		reg &= ~(EECD_SK | EECD_DI);
+		reg = CSR_READ(sc, WMREG_EECD) & ~(EECD_SK | EECD_DI);
 		CSR_WRITE(sc, WMREG_EECD, reg);
 
 		/* Set CHIP SELECT. */
@@ -2401,19 +2424,11 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		wm_eeprom_sendbits(sc, word + i, sc->sc_ee_addrbits);
 
 		/* Shift out the data. */
-		reg = CSR_READ(sc, WMREG_EECD) & ~EECD_DI;
-		data[i] = 0;
-		for (x = 16; x > 0; x--) {
-			CSR_WRITE(sc, WMREG_EECD, reg | EECD_SK);
-			delay(2);
-			if (CSR_READ(sc, WMREG_EECD) & EECD_DO)
-				data[i] |= (1 << (x - 1));
-			CSR_WRITE(sc, WMREG_EECD, reg);
-			delay(2);
-		}
+		wm_eeprom_recvbits(sc, &val, 16);
+		data[i] = val & 0xffff;
 
 		/* Clear CHIP SELECT. */
-		reg &= ~EECD_CS;
+		reg = CSR_READ(sc, WMREG_EECD) & ~EECD_CS;
 		CSR_WRITE(sc, WMREG_EECD, reg);
 		delay(2);
 
