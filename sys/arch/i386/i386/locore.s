@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.56 1994/04/05 15:08:46 mycroft Exp $
+ *	$Id: locore.s,v 1.57 1994/04/05 19:47:45 mycroft Exp $
  */
 
 /*
@@ -430,6 +430,9 @@ begin: /* now running relocated at KERNBASE where the system is linked to run */
 	movl	%esi,PCB_CR3(%eax)
 
 #ifdef BDB
+	cmpl	$0,_bdb_exists
+	jz	1f
+
 	/* relocate debugger gdt entries */
 	movl	$(_gdt+8*9),%eax	# adjust slots 9-17
 	movl	$9,%ecx
@@ -438,8 +441,6 @@ reloc_gdt:
 	addl	$8,%eax			# now KERNBASE>>24
 	loop	reloc_gdt
 
-	cmpl	$0,_bdb_exists
-	jz	1f
 	int	$3
 1:
 #endif
@@ -584,8 +585,7 @@ ENTRY(bcopyb)
 	ret
 
 	ALIGN_TEXT
-1:
-	addl	%ecx,%edi	/* copy backwards. */
+1:	addl	%ecx,%edi	/* copy backwards. */
 	addl	%ecx,%esi
 	std
 	decl	%edi
@@ -617,8 +617,7 @@ ENTRY(bcopyw)
 	ret
 
 	ALIGN_TEXT
-1:
-	addl	%ecx,%edi	/* copy backwards */
+1:	addl	%ecx,%edi	/* copy backwards */
 	addl	%ecx,%esi
 	std
 	andl	$1,%ecx		/* any fractional bytes? */
@@ -663,8 +662,7 @@ ALTENTRY(bcopy)
 	ret
 
 	ALIGN_TEXT
-1:
-	addl	%ecx,%edi	/* copy backwards */
+1:	addl	%ecx,%edi	/* copy backwards */
 	addl	%ecx,%esi
 	std
 	andl	$3,%ecx		/* any fractional bytes? */
@@ -686,7 +684,7 @@ ALTENTRY(bcopy)
 /* copyout(kernel addr, user addr, len) */
 ENTRY(copyout)
 	movl	_curpcb,%eax
-	movl	$copyout_fault,PCB_ONFAULT(%eax)
+	movl	$_copyout_fault,PCB_ONFAULT(%eax)
 	pushl	%esi
 	pushl	%edi
 	pushl	%ebx
@@ -705,9 +703,9 @@ ENTRY(copyout)
 	 */
 	movl	%edi,%eax
 	addl	%ebx,%eax
-	jc	copyout_fault
+	jc	_copyout_fault
 	cmpl	$VM_MAXUSER_ADDRESS,%eax
-	ja	copyout_fault
+	ja	_copyout_fault
 
 #if defined(I386_CPU)
 #if defined(I486_CPU) || defined(I586_CPU)
@@ -746,7 +744,7 @@ ENTRY(copyout)
 	popl	%edx
 
 	testl	%eax,%eax	/* if not ok, return EFAULT */
-	jnz	copyout_fault
+	jnz	_copyout_fault
 
 2:	incl	%edx
 	decl	%ecx
@@ -773,8 +771,7 @@ done_copyout:
 	movl	%eax,PCB_ONFAULT(%edx)
 	ret
 
-	ALIGN_TEXT
-copyout_fault:
+ENTRY(copyout_fault)
 	popl	%ebx
 	popl	%edi
 	popl	%esi
@@ -786,7 +783,7 @@ copyout_fault:
 /* copyin(user addr, kernel addr, len) */
 ENTRY(copyin)
 	movl	_curpcb,%eax
-	movl	$copyin_fault,PCB_ONFAULT(%eax)
+	movl	$_copyin_fault,PCB_ONFAULT(%eax)
 	pushl	%esi
 	pushl	%edi
 	movl	12(%esp),%esi
@@ -812,7 +809,7 @@ ENTRY(copyin)
 	movl	%eax,PCB_ONFAULT(%edx)
 	ret
 
-copyin_fault:
+ENTRY(copyin_fault)
 	popl	%edi
 	popl	%esi
 	movl	_curpcb,%edx
@@ -831,7 +828,7 @@ ENTRY(copyoutstr)
 	pushl	%esi
 	pushl	%edi
 	movl	_curpcb,%ecx
-	movl	$copystr_fault,PCB_ONFAULT(%ecx)
+	movl	$_copystr_fault,PCB_ONFAULT(%ecx)
 
 	movl	12(%esp),%esi			/* %esi = from */
 	movl	16(%esp),%edi			/* %edi = to */
@@ -847,7 +844,7 @@ ENTRY(copyoutstr)
 	 * Only need to check this once per page.
 	 */
 	cmpl	$VM_MAXUSER_ADDRESS,%edi
-	jae	copyout_fault
+	jae	_copyout_fault
 
 	movl	%edi,%eax
 	shrl	$PGSHIFT,%eax
@@ -863,7 +860,7 @@ ENTRY(copyoutstr)
 	addl	$4,%esp		/* clear argument from stack */
 	popl	%edx
 	testl	%eax,%eax
-	jnz	copystr_fault
+	jnz	_copystr_fault
 
 2:	/* copy up to end of this page */
 	movl	%edi,%eax
@@ -947,7 +944,7 @@ ENTRY(copyinstr)
 	pushl	%esi
 	pushl	%edi
 	movl	_curpcb,%ecx
-	movl	$copystr_fault,PCB_ONFAULT(%ecx)
+	movl	$_copystr_fault,PCB_ONFAULT(%ecx)
 
 	movl	12(%esp),%esi			# %esi = from
 	movl	16(%esp),%edi			# %edi = to
@@ -988,7 +985,7 @@ ENTRY(copyinstr)
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 
-copystr_fault:
+ENTRY(copystr_fault)
 	movl	$EFAULT,%eax
 
 copystr_return:	
@@ -1053,7 +1050,7 @@ ENTRY(copystr)
 ENTRY(fuword)
 ALTENTRY(fuiword)
 	movl	_curpcb,%ecx
-	movl	$fusufault,PCB_ONFAULT(%ecx)
+	movl	$_fusufault,PCB_ONFAULT(%ecx)
 	movl	4(%esp),%edx
 	gs
 	movl	(%edx),%eax
@@ -1062,7 +1059,7 @@ ALTENTRY(fuiword)
 	
 ENTRY(fusword)
 	movl	_curpcb,%ecx
-	movl	$fusufault,PCB_ONFAULT(%ecx)
+	movl	$_fusufault,PCB_ONFAULT(%ecx)
 fusword1:
 	movl	4(%esp),%edx
 	gs
@@ -1079,25 +1076,22 @@ ENTRY(fuswintr)
 ENTRY(fubyte)
 ALTENTRY(fuibyte)
 	movl	_curpcb,%ecx
-	movl	$fusufault,PCB_ONFAULT(%ecx)
+	movl	$_fusufault,PCB_ONFAULT(%ecx)
 	movl	4(%esp),%edx
 	gs
 	movzbl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
 	
-	ALIGN_TEXT
-fusufault:
+ENTRY(fusufault)
 	movl	_curpcb,%ecx
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
 	decl	%eax
 	ret
 
-	.globl	_fusubail
-	ALIGN_TEXT
 /* used by trap() */
-_fusubail:
+ENTRY(fusubail)
 	movl	_curpcb,%ecx
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
@@ -1107,7 +1101,7 @@ _fusubail:
 ENTRY(suword)
 ALTENTRY(suiword)
 	movl	_curpcb,%ecx
-	movl	$fusufault,PCB_ONFAULT(%ecx) #in case we page/protection violate
+	movl	$_fusufault,PCB_ONFAULT(%ecx) #in case we page/protection violate
 	movl	4(%esp),%edx
 
 #if defined(I386_CPU)
@@ -1129,14 +1123,13 @@ ALTENTRY(suiword)
 	addl	$4,%esp		/* clear parameter from the stack */
 	movl	_curpcb,%ecx
 	testl	%eax,%eax
-	jnz	fusufault
-1:
-	/* XXX also need to check the following 3 bytes for validity! */
+	jnz	_fusufault
+
+1:	/* XXX also need to check the following 3 bytes for validity! */
 	movl	4(%esp),%edx
 #endif
 
-2:
-	movl	8(%esp),%eax
+2:	movl	8(%esp),%eax
 	gs
 	movl	%eax,(%edx)
 	xorl	%eax,%eax
@@ -1145,7 +1138,7 @@ ALTENTRY(suiword)
 	
 ENTRY(susword)
 	movl	_curpcb,%ecx
-	movl	$fusufault,PCB_ONFAULT(%ecx)
+	movl	$_fusufault,PCB_ONFAULT(%ecx)
 susword1:
 	movl	4(%esp),%edx
 
@@ -1168,21 +1161,20 @@ susword1:
 	addl	$4,%esp		/* clear parameter from the stack */
 	movl	_curpcb,%ecx
 	testl	%eax,%eax
-	jnz	fusufault
-1:
-	/* XXX also need to check the following byte for validity! */
+	jnz	_fusufault
+
+1:	/* XXX also need to check the following byte for validity! */
 	movl	4(%esp),%edx
 #endif
 
-2:
-	movl	8(%esp),%eax
+2:	movl	8(%esp),%eax
 	gs
 	movw	%ax,(%edx)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx) #in case we page/protection violate
 	ret
 
-/* same as susword, but uses fusubail rather than fusufault */
+/* same as susword, but uses fusubail rather than _fusufault */
 ENTRY(suswintr)
 	movl	_curpcb,%ecx
 	movl	$_fusubail,PCB_ONFAULT(%ecx) #in case we page/protection violate
@@ -1191,7 +1183,7 @@ ENTRY(suswintr)
 ENTRY(subyte)
 ALTENTRY(suibyte)
 	movl	_curpcb,%ecx
-	movl	$fusufault,PCB_ONFAULT(%ecx)
+	movl	$_fusufault,PCB_ONFAULT(%ecx)
 	movl	4(%esp),%edx
 
 #if defined(I386_CPU)
@@ -1213,13 +1205,12 @@ ALTENTRY(suibyte)
 	addl	$4,%esp		/* clear parameter from the stack */
 	movl	_curpcb,%ecx
 	testl	%eax,%eax
-	jnz	fusufault
-1:
-	movl	4(%esp),%edx
+	jnz	_fusufault
+
+1:	movl	4(%esp),%edx
 #endif
 
-2:
-	movb	8(%esp),%al
+2:	movb	8(%esp),%al
 	gs
 	movb	%al,(%edx)
 	xorl	%eax,%eax
@@ -1236,8 +1227,8 @@ ENTRY(lgdt)
 	/* flush the prefetch q */
 	jmp	1f
 	nop
-1:
-	/* reload "stale" selectors */
+
+1:	/* reload "stale" selectors */
 	movl	$(KDSEL),%eax
 	movl	%ax,%ds
 	movl	%ax,%es
@@ -1631,6 +1622,7 @@ ENTRY(savectx)
 	pushl	%edi
 	pushl	_cpl
 
+	/* Save the context. */
 	movl	20(%esp),%esi		/* esi = p2->p_addr */
 
 	movl	%esp,PCB_ESP(%esi)
@@ -1672,6 +1664,7 @@ ENTRY(savectx)
 1:
 #endif
 
+	/* Copy the stack if requested. */
 	cmpl	$0,24(%esp)
 	je	1f
 	movl	%esp,%eax		# eax = stack pointer
@@ -1698,40 +1691,40 @@ ENTRY(savectx)
  * update profiling information for the user process.
  */
 ENTRY(addupc)
-	pushl %ebp
-	movl %esp,%ebp
-	movl 12(%ebp),%edx		/* up */
-	movl 8(%ebp),%eax		/* pc */
+	pushl	%ebp
+	movl	%esp,%ebp
+	movl	12(%ebp),%edx		/* up */
+	movl	8(%ebp),%eax		/* pc */
 
-	subl PR_OFF(%edx),%eax		/* pc -= up->pr_off */
-	jl L1				/* if (pc < 0) return */
+	subl	PR_OFF(%edx),%eax	/* pc -= up->pr_off */
+	jc	1f			/* if (pc < 0) return */
 
-	shrl $1,%eax			/* praddr = pc >> 1 */
-	imull PR_SCALE(%edx),%eax	/* praddr *= up->pr_scale */
-	shrl $15,%eax			/* praddr = praddr << 15 */
-	andl $-2,%eax			/* praddr &= ~1 */
+	shrl	$1,%eax			/* praddr = pc >> 1 */
+	imull	PR_SCALE(%edx),%eax	/* praddr *= up->pr_scale */
+	shrl	$15,%eax		/* praddr = praddr << 15 */
+	andl	$-2,%eax		/* praddr &= ~1 */
 
-	cmpl PR_SIZE(%edx),%eax		/* if (praddr > up->pr_size) return */
-	ja L1
+	cmpl	PR_SIZE(%edx),%eax	/* if (praddr > up->pr_size) return */
+	ja	1f
 
-/*	addl %eax,%eax			 * praddr -> word offset */
-	addl PR_BASE(%edx),%eax		/* praddr += up-> pr_base */
-	movl 16(%ebp),%ecx		/* ticks */
+/*	addl	%eax,%eax		 * praddr -> word offset */
+	addl	PR_BASE(%edx),%eax	/* praddr += up-> pr_base */
+	movl	16(%ebp),%ecx		/* ticks */
 
-	movl _curpcb,%edx
-	movl $proffault,PCB_ONFAULT(%edx)
-	addl %ecx,(%eax)		/* storage location += ticks */
-	movl $0,PCB_ONFAULT(%edx)
-L1:
-	leave
+	movl	_curpcb,%edx
+	movl	$_proffault,PCB_ONFAULT(%edx)
+	addl	%ecx,(%eax)		/* storage location += ticks */
+	movl	$0,PCB_ONFAULT(%edx)
+
+1:	leave
 	ret
 
-	ALIGN_TEXT
-proffault:
-	/* if we get a fault, then kill profiling all together */
+ENTRY(proffault)
+	/* If we get a fault, then kill profiling all together. */
 	movl $0,PCB_ONFAULT(%edx)	/* squish the fault handler */
 	movl 12(%ebp),%ecx
 	movl $0,PR_SCALE(%ecx)		/* up->pr_scale = 0 */
+
 	leave
 	ret
 
