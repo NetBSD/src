@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.h,v 1.1 1998/12/17 11:34:10 pk Exp $	*/
+/*	$NetBSD: ld.h,v 1.2 1998/12/17 23:36:38 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
  * Definitions and functions prototypes shared between the
  * link-editor, ld(1), and the run-time linker, ld.so(1).
  */
+
+#define SUN_COMPAT
 
 #include "md.h"
 #include "link.h"
@@ -139,17 +141,19 @@
 #define N_ISWEAK(p)		(N_BIND(p) & BIND_WEAK)
 
 /* Functions that must be provided by arch/md.c: */
-void	md_init_header __P((struct exec *, int, int));
-long	md_get_addend __P((struct relocation_info *, unsigned char *));
-void	md_relocate __P((struct relocation_info *, long, unsigned char *, int));
-int	md_make_reloc __P((struct relocation_info *, int));
+void	md_init_header	  __P((struct exec *, int, int));
+long	md_get_addend	  __P((struct relocation_info *, unsigned char *));
+void	md_relocate	  __P((struct relocation_info *, long,
+			       unsigned char *, int));
+int	md_make_reloc	  __P((struct relocation_info *,
+			       struct relocation_info *, int));
 void	md_set_breakpoint __P((long, long *));
-void	md_make_jmpslot __P((jmpslot_t *, long, long));
-void	md_fix_jmpslot __P((jmpslot_t *, long, u_long, int));
-void	md_make_jmpreloc __P((struct relocation_info *,
-			      struct relocation_info *, int));
-void	md_make_gotreloc __P((struct relocation_info *,
-			      struct relocation_info *, int));
-void	md_make_cpyreloc __P((struct relocation_info *,
-			      struct relocation_info *));
-int	md_midcompat __P((struct exec *));
+void	md_make_jmpslot	  __P((jmpslot_t *, long, long));
+void	md_fix_jmpslot	  __P((jmpslot_t *, long, u_long, int));
+void	md_make_jmpreloc  __P((struct relocation_info *,
+			       struct relocation_info *, int));
+void	md_make_gotreloc  __P((struct relocation_info *,
+			       struct relocation_info *, int));
+void	md_make_cpyreloc  __P((struct relocation_info *,
+			       struct relocation_info *));
+int	md_midcompat	  __P((struct exec *));
