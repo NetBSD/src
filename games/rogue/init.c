@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.9 1999/09/09 17:27:59 jsm Exp $	*/
+/*	$NetBSD: init.c,v 1.10 1999/09/12 09:02:23 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.9 1999/09/09 17:27:59 jsm Exp $");
+__RCSID("$NetBSD: init.c,v 1.10 1999/09/12 09:02:23 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,8 @@ __RCSID("$NetBSD: init.c,v 1.9 1999/09/09 17:27:59 jsm Exp $");
  *         gain or profit.
  *
  */
+
+#include <fcntl.h>
 
 #include "rogue.h"
 
@@ -72,6 +74,7 @@ boolean no_skull = 0;
 boolean passgo = 0;
 const char *error_file = "rogue.esave";
 const char *byebye_string = "Okay, bye bye!";
+gid_t gid, egid;
 
 int
 init(argc, argv)
@@ -80,6 +83,16 @@ init(argc, argv)
 {
 	const char *pn;
 	int seed;
+	int fd;
+
+	gid = getgid();
+	egid = getegid();
+	setegid(gid);
+	/* Check for dirty tricks with closed fds 0, 1, 2 */
+	fd = open("/dev/null", O_RDONLY);
+	if (fd < 3)
+		exit(1);
+	close(fd);
 
 	seed = 0;
 	pn = md_gln();

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1997/10/13 22:18:32 cjs Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1999/09/12 09:02:24 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.6 1997/10/13 22:18:32 cjs Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 1999/09/12 09:02:24 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,6 +174,9 @@ char	**argv;
 	int		ac;
 	char		**av;
 	struct	termios		argp;
+
+	/* Revoke setgid privileges */
+	setregid(getgid(), getgid());
 
 	av = argv;
 	ac = argc;

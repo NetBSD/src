@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.14 1999/09/09 17:30:19 jsm Exp $	*/
+/*	$NetBSD: canfield.c,v 1.15 1999/09/12 09:02:20 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: canfield.c,v 1.14 1999/09/09 17:30:19 jsm Exp $");
+__RCSID("$NetBSD: canfield.c,v 1.15 1999/09/12 09:02:20 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -1683,8 +1683,14 @@ initall()
 	if (uid < 0)
 		uid = 0;
 	dbfd = open(_PATH_SCORE, O_RDWR);
+
+	/* Revoke setgid privileges */
+	setregid(getgid(), getgid());
+
 	if (dbfd < 0)
 		return;
+	if (dbfd < 3)
+		exit(1);
 	i = lseek(dbfd, uid * sizeof(struct betinfo), SEEK_SET);
 	if (i < 0) {
 		close(dbfd);

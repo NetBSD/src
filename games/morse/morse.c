@@ -1,4 +1,4 @@
-/*	$NetBSD: morse.c,v 1.7 1999/09/08 21:17:53 jsm Exp $	*/
+/*	$NetBSD: morse.c,v 1.8 1999/09/12 09:02:22 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morse.c,v 1.7 1999/09/08 21:17:53 jsm Exp $");
+__RCSID("$NetBSD: morse.c,v 1.8 1999/09/12 09:02:22 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,9 @@ main(argc, argv)
 {
 	int ch;
 	char *s, *p;
+
+	/* Revoke setgid privileges */
+	setregid(getgid(), getgid());
 
 	while ((ch = getopt(argc, argv, "ds")) != -1)
 		switch((char)ch) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1999/09/08 21:45:29 jsm Exp $	*/
+/*	$NetBSD: main.c,v 1.11 1999/09/12 09:02:22 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.10 1999/09/08 21:45:29 jsm Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 1999/09/12 09:02:22 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,17 @@ main(ac, av)
 	bool	show_only;
 	extern const char	*Scorefile;
 	extern int	Max_per_uid;
+	int		score_wfd; /* high score writable file descriptor */
+	int		score_err = 0; /* hold errno from score file open */
+
+	score_wfd = open(Scorefile, O_RDWR);
+	if (score_wfd < 0)
+		score_err = errno;
+	else if (score_wfd < 3)
+		exit(1);
+
+	/* Revoke setgid privileges */
+	setregid(getgid(), getgid());
 
 	show_only = FALSE;
 	Num_games = 1;
@@ -71,9 +82,12 @@ main(ac, av)
 				if (isdigit(av[0][0]))
 					Max_per_uid = atoi(av[0]);
 				else {
-					setuid(getuid());
-					setgid(getgid());
 					Scorefile = av[0];
+					if (score_wfd >= 0)
+						close(score_wfd);
+					score_wfd = open(Scorefile, O_RDWR);
+					if (score_wfd < 0)
+						score_err = errno;
 # ifdef	FANCY
 					sp = strrchr(Scorefile, '/');
 					if (sp == NULL)
@@ -128,6 +142,13 @@ main(ac, av)
 		/* NOTREACHED */
 	}
 
+	if (score_wfd < 0) {
+		errno = score_err;
+		warn("%s", Scorefile);
+		warnx("High scores will not be recorded!");
+		sleep(2);
+	}
+
 	initscr();
 	signal(SIGINT, quit);
 	crmode();
@@ -161,7 +182,7 @@ main(ac, av)
 			refresh();
 			if (Auto_bot)
 				sleep(1);
-			score();
+			score(score_wfd);
 			if (Auto_bot)
 				sleep(1);
 			refresh();

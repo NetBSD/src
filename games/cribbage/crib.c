@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.11 1999/09/08 21:17:47 jsm Exp $	*/
+/*	$NetBSD: crib.c,v 1.12 1999/09/12 09:02:21 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,12 +43,13 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: crib.c,v 1.11 1999/09/08 21:17:47 jsm Exp $");
+__RCSID("$NetBSD: crib.c,v 1.12 1999/09/12 09:02:21 jsm Exp $");
 #endif
 #endif /* not lint */
 
 #include <curses.h>
 #include <err.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,6 +70,28 @@ main(argc, argv)
 	BOOLEAN playing;
 	FILE *f;
 	int ch;
+	int fd;
+	int flags;
+
+	f = fopen(_PATH_LOG, "a");
+	if (f == NULL)
+		warn("fopen %s", _PATH_LOG);
+	if (f != NULL && fileno(f) < 3)
+		exit(1);
+
+	/* Revoke setgid privileges */
+	setregid(getgid(), getgid());
+
+	/* Set close-on-exec flag on log file */
+	if (f != NULL) {
+		fd = fileno(f);
+		flags = fcntl(fd, F_GETFD);
+		if (flags < 0)
+			err(1, "fcntl F_GETFD");
+		flags |= FD_CLOEXEC;
+		if (fcntl(fd, F_SETFD, flags) == -1)
+			err(1, "fcntl F_SETFD");
+	}
 
 	while ((ch = getopt(argc, argv, "eqr")) != -1)
 		switch (ch) {
@@ -129,14 +152,12 @@ main(argc, argv)
 		playing = (getuchar() == 'Y');
 	} while (playing);
 
-	if ((f = fopen(_PATH_LOG, "a")) != NULL) {
+	if (f != NULL) {
 		(void)fprintf(f, "%s: won %5.5d, lost %5.5d\n",
 		    getlogin(), cgames, pgames);
 		(void) fclose(f);
 	}
 	bye();
-	if (!f)
-		errx(1, "can't open %s", _PATH_LOG);
 	exit(0);
 }
 

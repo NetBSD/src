@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.h,v 1.6 1999/09/08 21:18:01 jsm Exp $	*/
+/*	$NetBSD: tetris.h,v 1.7 1999/09/12 09:02:24 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,6 +37,8 @@
  *
  *	@(#)tetris.h	8.1 (Berkeley) 5/31/93
  */
+
+#include <sys/types.h>
 
 /*
  * Definitions for Tetris.
@@ -166,6 +168,7 @@ long	fallrate;		/* less than 1 million; smaller => faster */
  * still be moved or rotated).
  */
 int	score;			/* the obvious thing */
+extern gid_t	gid, egid;
 
 char	key_msg[100];
 int	showpreview;

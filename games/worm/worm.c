@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.15 1999/09/09 17:28:00 jsm Exp $	*/
+/*	$NetBSD: worm.c,v 1.16 1999/09/12 09:02:24 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.15 1999/09/09 17:28:00 jsm Exp $");
+__RCSID("$NetBSD: worm.c,v 1.16 1999/09/12 09:02:24 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,6 +101,9 @@ main(argc, argv)
 	char **argv;
 {
 	char ch;
+
+	/* Revoke setgid privileges */
+	setregid(getgid(), getgid());
 
 	if (argc == 2)
 		start_len = atoi(argv[1]);

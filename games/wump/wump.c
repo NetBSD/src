@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.11 1999/09/10 10:47:56 kleink Exp $	*/
+/*	$NetBSD: wump.c,v 1.12 1999/09/12 09:02:24 jsm Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: wump.c,v 1.11 1999/09/10 10:47:56 kleink Exp $");
+__RCSID("$NetBSD: wump.c,v 1.12 1999/09/12 09:02:24 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,6 +146,9 @@ main(argc, argv)
 	char **argv;
 {
 	int c;
+
+	/* Revoke setgid privileges */
+	setregid(getgid(), getgid());
 
 #ifdef DEBUG
 	while ((c = getopt(argc, argv, "a:b:hp:r:t:d")) != -1)

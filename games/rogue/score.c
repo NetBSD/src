@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.7 1998/11/10 13:01:32 hubertf Exp $	*/
+/*	$NetBSD: score.c,v 1.8 1999/09/12 09:02:23 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.7 1998/11/10 13:01:32 hubertf Exp $");
+__RCSID("$NetBSD: score.c,v 1.8 1999/09/12 09:02:23 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,11 +213,14 @@ put_scores(monster, other)
 
 	md_lock(1);
 
+	setegid(egid);
 	if ((fp = fopen(_PATH_SCOREFILE, "r+")) == NULL &&
 	    (fp = fopen(_PATH_SCOREFILE, "w+")) == NULL) {
+		setegid(gid);
 		message("cannot read/write/create score file", 0);
 		sf_error();
 	}
+	setegid(gid);
 	rewind(fp);
 	(void) xxx(1);
 

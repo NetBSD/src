@@ -1,4 +1,4 @@
-/*	$NetBSD: ppt.c,v 1.5 1997/10/10 16:48:39 lukem Exp $	*/
+/*	$NetBSD: ppt.c,v 1.6 1999/09/12 09:02:22 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,11 +43,12 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ppt.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: ppt.c,v 1.5 1997/10/10 16:48:39 lukem Exp $");
+__RCSID("$NetBSD: ppt.c,v 1.6 1999/09/12 09:02:22 jsm Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
+#include <unistd.h>
 
 	int	main __P((int, char *[]));
 static void	putppt __P((int));
@@ -59,6 +60,9 @@ main(argc, argv)
 {
 	int c;
 	char *p;
+
+	/* Revoke setgid privileges */
+	setregid(getgid(), getgid());
 
 	(void) puts("___________");
 	if (argc > 1)
