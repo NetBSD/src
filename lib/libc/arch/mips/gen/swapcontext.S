@@ -1,11 +1,11 @@
-/*	$NetBSD: swapcontext.S,v 1.1.2.1 2001/11/20 07:59:05 wdk Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.1.2.2 2001/11/21 08:52:41 wdk Exp $	*/
 
-/*
+/*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Wayne Knowles
+ * by Klaus Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,37 +37,41 @@
  */
 
 #include "SYS.h"
-#include <mips/asm.h>
-#include <mips/cpuregs.h>
+#include <machine/mcontext.h>
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("$NetBSD: swapcontext.S,v 1.1.2.1 2001/11/20 07:59:05 wdk Exp $")
-#endif /* LIBC_SCCS && !lint */
+#if defined(SYSLIBC_SCCS) && !defined(lint)
+	ASMSTR("$NetBSD: swapcontext.S,v 1.1.2.2 2001/11/21 08:52:41 wdk Exp $")
+#endif /* SYSLIBC_SCCS && !lint */
 
-NESTED(swapcontext, CALLFRAME_SIZ+24, ra)
+NESTED(swapcontext, CALLFRAME_SIZ, ra)
+	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	PIC_PROLOGUE(swapcontext, t9)
-	
-	subu	sp, sp, CALLFRAME_SIZ+24
-	sw	a0, 16(sp)
-	sw	a1, 20(sp)
-	sw	ra, 24(sp)
 
-	PIC_CALL(getcontext, t9)
+	subu	sp, sp, CALLFRAME_SIZ
+#ifdef ABICALLS
+	.cprestore 16
+#endif
+	sw	ra, CALLFRAME_RA(sp)	# save ra
+	sw	a0, CALLFRAME_SIZ(sp)	# stash away oucp
+	jal	_C_LABEL(_getcontext)	# getcontext(oucp)
+	 sw	a1, CALLFRAME_SIZ+4(sp)	# stash away ucp
 	bne	v0, zero, 1f
+	 nop
+
+	lw	v1, CALLFRAME_SIZ(sp)	# load oucp again for adjustment
+	lw	ra, CALLFRAME_RA(sp)
+	lw	a0, CALLFRAME_SIZ+4(sp)	# load ucp
+	addiu	v0, sp, CALLFRAME_SIZ
+	REG_PROLOGUE
+	REG_S	zero, (_OFFSETOF_UC_GREGS + _REG_V0 * SZREG)(v1)
+	REG_S	ra, (_OFFSETOF_UC_GREGS + _REG_EPC * SZREG)(v1)
+	REG_S	v0, (_OFFSETOF_UC_GREGS + _REG_SP * SZREG)(v1)
+	REG_EPILOGUE
 	
-	/* XXX:	 Offsets are totally wrong! */
-	lw	a0, 16(sp)		/* a0 = old_uc */
-	lw	ra, 24(sp)
-	sw	ra, (40 + 31 * 4)(a0)	/* fixup saved RA */
-	la	t0, CALLFRAME_SIZ+24(sp)
-	sw	t0, (40 + 29 * 4)(a0)	/* fixup saved SP */
-
-	lw	a0, 20(sp)		/* a0 = new_uc */
-	PIC_CALL(setcontext, t9)
-
-	/* don't check for an error; if we got here, something broke. */
-1:	lw	ra, 24(sp)
-	addu	sp, sp, CALLFRAME_SIZ+24
+	jal	_C_LABEL(setcontext)	# setcontext(ucp)
+	 nop
+1:
+	lw	ra, CALLFRAME_RA(sp)
 	j	ra
-	nop
+	 addiu	sp, sp, CALLFRAME_SIZ
 END(swapcontext)

@@ -1,7 +1,7 @@
-/*	$NetBSD: makecontext.c,v 1.1.2.1 2001/11/20 07:59:04 wdk Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.1.2.2 2001/11/21 08:52:41 wdk Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1.2.1 2001/11/20 07:59:04 wdk Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.1.2.2 2001/11/21 08:52:41 wdk Exp $");
 #endif
 
 #include <inttypes.h>
@@ -46,50 +46,35 @@ __RCSID("$NetBSD: makecontext.c,v 1.1.2.1 2001/11/20 07:59:04 wdk Exp $");
 #include <ucontext.h>
 #include "extern.h"
 
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 
 void
-#if __STDC__
 makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
-#else
-makecontext(ucp, func, argc, va_alist)
-	ucontext_t *ucp;
-	void (*func)();
-	int argc;
-	va_dcl
-#endif
 {
 	__greg_t *gr = ucp->uc_mcontext.__gregs;
-	unsigned int *sp;
+	uintptr_t *sp;
+	int i;
 	va_list ap;
 
 	/* LINTED uintptr_t is safe */
-	sp  = (int *)
+	sp  = (uintptr_t *)
 	    ((uintptr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
 	/* LINTED uintptr_t is safe */
-	sp  = (int *)((uintptr_t)sp & ~0x3);	/* Align on word boundary. */
-	sp -= argc + 1;			/* Make room for ret and args. */
-	gr[_REG_SP] = (__greg_t)sp;
-	gr[_REG_S8] = (__greg_t)0;	/* Wipe out frame pointer. */
+	sp -= (argc >= 4 ? argc : 4);	/* Make room for >=4 arguments. */
+	sp  = (uintptr_t)
+	      ((u_int)sp & ~0x7);	/* Align on double-word boundary. */
 
-	/* Arrange for return via the trampoline code. */
+	gr[_REG_SP]  = (__greg_t)sp;
+	gr[_REG_RA]  = (__greg_t)_resumecontext;
 	gr[_REG_EPC] = (__greg_t)func;
-	gr[_REG_RA] = (__greg_t)_resumecontext;
 
 	/* Construct argument list. */
-#if __STDC__
 	va_start(ap, argc);
-#else
-	va_start(ap);
-#endif
-	while (argc-- > 0) {
-		/* LINTED uintptr_t is safe */
+	/* Up to the first four arguments are passed in $a0-3. */
+	for (i = 0; i < argc && i < 4; i++)
+		gr[_REG_A0 + i] = va_varg(ap, uintptr_t);
+	/* Pass remaining arguments on the stack above the $a0-3 gap. */
+	for (sp += 4; i < argc; i++)
 		*sp++ = va_arg(ap, uintptr_t);
-	}
 	va_end(ap);
 }

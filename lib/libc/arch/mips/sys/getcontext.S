@@ -1,11 +1,11 @@
-/*	$NetBSD: getcontext.S,v 1.1.2.1 2001/11/20 07:59:06 wdk Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.1.2.2 2001/11/21 08:52:42 wdk Exp $	*/
 
-/*
+/*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Wayne Knowles
+ * by Klaus Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,10 +37,11 @@
  */
 
 #include "SYS.h"
+#include <machine/mcontext.h>
 
-#if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("$NetBSD: getcontext.S,v 1.1.2.1 2001/11/20 07:59:06 wdk Exp $")
-#endif /* LIBC_SCCS && !lint */
+#if defined(SYSLIBC_SCCS) && !defined(lint)
+	ASMSTR("$NetBSD: getcontext.S,v 1.1.2.2 2001/11/21 08:52:42 wdk Exp $")
+#endif /* SYSLIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(getcontext, _getcontext)
@@ -48,13 +49,15 @@ WEAK_ALIAS(getcontext, _getcontext)
 
 LEAF(_getcontext)
 	PIC_PROLOGUE(_getcontext, t9)
-	move	s7, a0
 	SYSTRAP(getcontext)
 	bne	a3, zero, 1f
-	sw	ra,   (40 + 31*4)(s7)	/* saved PC <- RA */
-	sw	zero, (40 +  2*4)(s7)	/* saved V0 <- 0 (Return 0) */
+	REG_PROLOGUE
+	REG_S	zero, (_OFFSETOF_UC_GREGS + _REG_V0 * SZREG)(a0)
+	REG_S	ra, (_OFFSETOF_UC_GREGS + _REG_EPC * SZREG)(a0)
+	REG_EPILOGUE
 	j	ra
-	nop
+	 nop
 1:
-        PIC_CALL(__cerror,t9)
-END(getcontext)
+	PIC_CALL(__cerror, t9)
+	 nop
+END(_getcontext)
