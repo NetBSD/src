@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.7 1999/05/20 09:52:35 augustss Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.8 1999/08/21 21:35:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,6 +97,9 @@ uhci_pci_attach(parent, self, aux)
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+
+	/* Disable interrupts, so we don't can any spurious ones. */
+	bus_space_write_2(sc->iot, sc->ioh, UHCI_INTR, 0);
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
