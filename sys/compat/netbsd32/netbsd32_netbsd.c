@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.52 2001/02/04 06:35:08 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.53 2001/02/04 07:08:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -4270,6 +4270,7 @@ netbsd32_ftruncate(p, v, retval)
 }
 
 int uvm_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+int kern_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
 /*
  * uvm_sysctl32: sysctl hook into UVM system, handling special 32-bit
@@ -4296,6 +4297,51 @@ uvm_sysctl32(name, namelen, oldp, oldlenp, newp, newlen, p)
 		netbsd32_from_loadavg(&av32, &averunnable);
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &av32,
 		    sizeof(av32)));
+
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
+
+/*
+ * kern_sysctl32: sysctl hook into KERN system, handling special 32-bit
+ * sensitive calls.
+ */
+int
+kern_sysctl32(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	struct netbsd32_timeval bt32;
+
+	/* All sysctl names at this level, except for a few, are terminal. */
+	switch (name[0]) {
+#if 0
+	case KERN_PROC:
+	case KERN_PROC2:
+	case KERN_PROF:
+	case KERN_MBUF:
+	case KERN_PROC_ARGS:
+	case KERN_SYSVIPC_INFO:
+		/* Not terminal. */
+		break;
+#endif
+	default:
+		if (namelen != 1)
+			return (ENOTDIR);	/* overloaded */
+	}
+
+	switch (name[0]) {
+	case KERN_BOOTTIME:
+		netbsd32_from_timeval(&boottime, &bt32);
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &bt32,
+		    sizeof(struct netbsd32_timeval)));
 
 	default:
 		return (EOPNOTSUPP);
@@ -4344,7 +4390,19 @@ netbsd32___sysctl(p, v, retval)
 
 	switch (name[0]) {
 	case CTL_KERN:
-		fn = kern_sysctl;
+		switch (name[1]) {
+#if 0
+		case KERN_FILE:
+		case KERN_NTPTIME:
+		case KERN_SYSVIPC_INFO:
+#endif
+		case KERN_BOOTTIME:
+			fn = kern_sysctl32;
+			break;
+		default:
+			fn = kern_sysctl;
+			break;
+		}
 		break;
 	case CTL_HW:
 		fn = hw_sysctl;
