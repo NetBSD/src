@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.4 2003/06/11 04:56:58 msaitoh Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.5 2003/07/28 23:54:24 lukem Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -20,7 +20,7 @@ OBJHOSTMACHINE=	# set
 
 ##### Build rules
 .if defined(HOSTLIB)
-DPSRCS+=	${SRCS:M*.[ly]:C/\..$/.c/}
+DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
 CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 .endif	# defined(HOSTLIB)
 
