@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.h,v 1.7 1998/09/21 20:28:48 mark Exp $	*/
+/*	$NetBSD: isapnpdevs.h,v 1.8 1998/10/04 18:31:15 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.7 1998/09/21 20:25:52 mark Exp 
+ *	NetBSD: isapnpdevs,v 1.8 1998/10/04 18:30:50 christos Exp 
  */
 
 
