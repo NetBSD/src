@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 1999/07/31 01:26:04 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.17 1999/07/31 20:50:48 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -115,6 +115,7 @@ define	HP_433			HP_433
 # values for mmuid
 define	MMUID_345		MMUID_345
 define	MMUID_375		MMUID_375
+define	MMUID_385		MMUID_385
 define	MMUID_425_T		MMUID_425_T
 define	MMUID_425_S		MMUID_425_S
 define	MMUID_433_T		MMUID_433_T
