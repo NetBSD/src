@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.44 2001/11/04 23:14:35 atatat Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.45 2002/01/12 02:42:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.44 2001/11/04 23:14:35 atatat Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.45 2002/01/12 02:42:58 yamt Exp $");
 #endif
 #endif
 
@@ -1052,6 +1052,11 @@ wait_for_reply(register int sock, register struct sockaddr_in *fromp,
 	wait.tv_usec = tp->tv_usec;
 	(void)gettimeofday(&now, &tz);
 	tvsub(&wait, &now);
+
+	if (wait.tv_sec < 0) {
+		wait.tv_sec = 0;
+		wait.tv_usec = 0;
+	}
 
 	retval = select(sock + 1, fdsp, NULL, NULL, &wait);
 	free(fdsp);
