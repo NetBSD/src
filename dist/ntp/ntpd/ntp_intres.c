@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.c,v 1.4 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: ntp_intres.c,v 1.5 2005/01/10 02:14:46 lukem Exp $	*/
 
 /*
  * ripped off from ../ntpres/ntpres.c by Greg Troxel 4/2/92
@@ -28,6 +28,10 @@
 #include "ntp_request.h"
 #include "ntp_stdlib.h"
 #include "ntp_syslog.h"
+
+/* Don't include ISC's version of IPv6 variables and structures */
+#define ISC_IPV6_H 1
+#include <isc/net.h>
 
 #include <stdio.h>
 #include <ctype.h>
