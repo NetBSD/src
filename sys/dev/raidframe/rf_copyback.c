@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.6 1999/02/27 03:43:20 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.7 1999/03/02 03:18:49 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -82,13 +82,17 @@ rf_ConfigureCopyback(listp)
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 
+/* XXX these should be in a .h file somewhere */
 int raidlookup __P((char *, struct proc *, struct vnode **));
+int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
+int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
 
 /* do a complete copyback */
 void 
 rf_CopybackReconstructedData(raidPtr)
 	RF_Raid_t *raidPtr;
 {
+	RF_ComponentLabel_t c_label;
 	int     done, retcode;
 	RF_CopybackDesc_t *desc;
 	RF_RowCol_t frow, fcol;
@@ -227,6 +231,26 @@ rf_CopybackReconstructedData(raidPtr)
 	printf("COPYBACK: Beginning\n");
 	RF_GETTIME(desc->starttime);
 	rf_ContinueCopyback(desc);
+
+	/* Data has been restored.  Fix up the component label. */
+	/* Don't actually need the read here.. */
+	raidread_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
+				  raidPtr->raid_cinfo[frow][fcol].ci_vp,
+				  &c_label);
+		
+	c_label.version = RF_COMPONENT_LABEL_VERSION; 
+	c_label.mod_counter = raidPtr->mod_counter;
+	c_label.serial_number = raidPtr->serial_number;
+	c_label.row = frow;
+	c_label.column = fcol;
+	c_label.num_rows = raidPtr->numRow;
+	c_label.num_columns = raidPtr->numCol;
+	c_label.clean = RF_RAID_DIRTY;
+	c_label.status = rf_ds_optimal;
+	
+	raidwrite_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
+				   raidPtr->raid_cinfo[frow][fcol].ci_vp,
+				   &c_label);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.3 1999/02/05 00:06:16 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.4 1999/03/02 03:18:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -181,6 +181,9 @@ rf_ReconstructFailedDisk(RF_Raid_t * raidPtr, RF_RowCol_t row,
 int 
 rf_ReconstructFailedDiskBasic(RF_Raid_t * raidPtr, RF_RowCol_t row,
     RF_RowCol_t col);
+
+int 
+rf_ReconstructInPlace(RF_Raid_t * raidPtr, RF_RowCol_t row, RF_RowCol_t col);
 
 int     rf_ContinueReconstructFailedDisk(RF_RaidReconDesc_t * reconDesc);
 

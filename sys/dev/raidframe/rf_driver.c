@@ -1,4 +1,40 @@
-/*	$NetBSD: rf_driver.c,v 1.8 1999/02/27 03:43:20 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.9 1999/03/02 03:18:49 oster Exp $	*/
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Greg Oster
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -113,6 +149,10 @@ static void rf_ShutdownRDFreeList(void *);
 static int rf_ConfigureRDFreeList(RF_ShutdownList_t **);
 void rf_UnconfigureVnodes( RF_Raid_t * );
 
+/* XXX move these to their own .h file! */
+int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
+int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
+int raidmarkclean(dev_t dev, struct vnode *b_vp,int);
 
 RF_DECLARE_MUTEX(rf_printf_mutex)	/* debug only:  avoids interleaved
 					 * printfs by different stripes */
@@ -141,15 +181,15 @@ RF_DECLARE_GLOBAL_THREADID	/* declarations for threadid.h */
 }
 #endif				/* DKUSAGE > 0 */
 
-	static int configureCount = 0;	/* number of active configurations */
-	static int isconfigged = 0;	/* is basic raidframe (non per-array)
-					 * stuff configged */
+static int configureCount = 0;	/* number of active configurations */
+static int isconfigged = 0;	/* is basic raidframe (non per-array)
+				 * stuff configged */
 RF_DECLARE_STATIC_MUTEX(configureMutex)	/* used to lock the configuration
 					 * stuff */
-	static RF_ShutdownList_t *globalShutdown;	/* non array-specific
-							 * stuff */
+static RF_ShutdownList_t *globalShutdown;	/* non array-specific
+						 * stuff */
 
-	static int rf_ConfigureRDFreeList(RF_ShutdownList_t ** listp);
+static int rf_ConfigureRDFreeList(RF_ShutdownList_t ** listp);
 
 /* called at system boot time */
 int     
@@ -236,6 +276,125 @@ rf_UnconfigureArray()
 	}
 	RF_UNLOCK_MUTEX(configureMutex);
 }
+
+
+static void rf_update_component_labels( RF_Raid_t *);
+static void
+rf_update_component_labels( raidPtr )
+	RF_Raid_t *raidPtr;
+{
+	RF_ComponentLabel_t c_label;
+	int sparecol;
+	int r,c;
+	int i,j;
+	int srow, scol;
+
+	srow = -1;
+	scol = -1;
+
+	/* XXX should do extra checks to make sure things really are clean, 
+	   rather than blindly setting the clean bit... */
+
+	raidPtr->mod_counter++;
+
+	for (r = 0; r < raidPtr->numRow; r++) {
+		for (c = 0; c < raidPtr->numCol; c++) {
+			if (raidPtr->Disks[r][c].status == rf_ds_optimal) {
+				raidread_component_label(
+					raidPtr->Disks[r][c].dev,
+					raidPtr->raid_cinfo[r][c].ci_vp,
+					&c_label);
+				/* make sure status is noted */
+				c_label.status = rf_ds_optimal;
+				raidwrite_component_label( 
+					raidPtr->Disks[r][c].dev,
+					raidPtr->raid_cinfo[r][c].ci_vp,
+					&c_label);
+				if (raidPtr->parity_good == RF_RAID_CLEAN) {
+					raidmarkclean( 
+					      raidPtr->Disks[r][c].dev, 
+					      raidPtr->raid_cinfo[r][c].ci_vp,
+					      raidPtr->mod_counter);
+				}
+			} 
+			/* else we don't touch it.. */
+#if 0
+			else if (raidPtr->Disks[r][c].status !=
+				   rf_ds_failed) {
+				raidread_component_label(
+					raidPtr->Disks[r][c].dev,
+					raidPtr->raid_cinfo[r][c].ci_vp,
+					&c_label);
+				/* make sure status is noted */
+				c_label.status = 
+					raidPtr->Disks[r][c].status;
+				raidwrite_component_label( 
+					raidPtr->Disks[r][c].dev,
+					raidPtr->raid_cinfo[r][c].ci_vp,
+					&c_label);
+				if (raidPtr->parity_good == RF_RAID_CLEAN) {
+					raidmarkclean( 
+					      raidPtr->Disks[r][c].dev, 
+					      raidPtr->raid_cinfo[r][c].ci_vp,
+					      raidPtr->mod_counter);
+				}
+			}
+#endif
+		} 
+	}
+
+	for( c = 0; c < raidPtr->numSpare ; c++) {
+		sparecol = raidPtr->numCol + c;
+		if (raidPtr->Disks[0][sparecol].status == rf_ds_used_spare) {
+			/* 
+			   
+			   we claim this disk is "optimal" if it's 
+			   rf_ds_used_spare, as that means it should be 
+			   directly substitutable for the disk it replaced. 
+			   We note that too...
+
+			 */
+
+			for(i=0;i<raidPtr->numRow;i++) {
+				for(j=0;j<raidPtr->numCol;j++) {
+					if ((raidPtr->Disks[i][j].spareRow == 
+					     0) &&
+					    (raidPtr->Disks[i][j].spareCol ==
+					     sparecol)) {
+						srow = i;
+						scol = j;
+						break;
+					}
+				}
+			}
+			
+			raidread_component_label( 
+				      raidPtr->Disks[0][sparecol].dev,
+				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
+				      &c_label);
+			/* make sure status is noted */
+			c_label.version = RF_COMPONENT_LABEL_VERSION; 
+			c_label.mod_counter = raidPtr->mod_counter;
+			c_label.serial_number = raidPtr->serial_number;
+			c_label.row = srow;
+			c_label.column = scol;
+			c_label.num_rows = raidPtr->numRow;
+			c_label.num_columns = raidPtr->numCol;
+			c_label.clean = RF_RAID_DIRTY; /* changed in a bit*/
+			c_label.status = rf_ds_optimal;
+			raidwrite_component_label(
+				      raidPtr->Disks[0][sparecol].dev,
+				      raidPtr->raid_cinfo[0][sparecol].ci_vp,
+				      &c_label);
+			if (raidPtr->parity_good == RF_RAID_CLEAN) {
+				raidmarkclean( raidPtr->Disks[0][sparecol].dev,
+			              raidPtr->raid_cinfo[0][sparecol].ci_vp,
+					       raidPtr->mod_counter);
+			}
+		}
+	}
+}
+
 /*
  * Called to shut down an array.
  */
@@ -269,6 +428,7 @@ rf_Shutdown(raidPtr)
 
 	raidPtr->valid = 0;
 
+	rf_update_component_labels(raidPtr);
 
 	rf_UnconfigureVnodes(raidPtr);
 
