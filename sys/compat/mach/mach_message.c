@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.35 2003/12/08 12:02:24 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.36 2003/12/08 19:27:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.35 2003/12/08 12:02:24 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.36 2003/12/08 19:27:38 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -55,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.35 2003/12/08 12:02:24 manu Exp $
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif 
+
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_map.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -845,17 +848,202 @@ mach_trade_rights_complex(l, mm)
 	}
 
 	for (i = 0; i < count; i++) {
-		if (mcm->mcm_desc[i].type != MACH_MSG_PORT_DESCRIPTOR) {
-#ifdef DEBUG_MACH
-			printf("OOL data in task to task message\n");
-#endif
-			continue;
+		switch (mcm->mcm_desc[i].type) {
+		case MACH_MSG_PORT_DESCRIPTOR:
+			mach_trade_rights(l, mm->mm_l, 
+			    &mcm->mcm_port_desc[i].name, 
+			    mcm->mcm_port_desc[i].disposition);
+			break;
+
+		case MACH_MSG_OOL_PORTS_DESCRIPTOR: {	/* XXX untested */
+			struct proc *rp;	/* remote process */
+			struct proc *lp;	/* local process */
+			void *lumnp;		/* local user address */
+			void *rumnp;		/* remote user address */
+			int disp;		/* disposition*/
+			size_t size;		/* data size */
+			int count;		/* descriptor count */
+			mach_port_t *kmnp;
+			void *kaddr;
+			int error;	
+			int j;
+			
+			rp = mm->mm_l->l_proc;
+			lp = l->l_proc;
+			disp = mcm->mcm_ool_ports_desc[i].disposition;
+			rumnp = mcm->mcm_ool_ports_desc[i].address;
+			count = mcm->mcm_ool_ports_desc[i].count;
+			size = count * sizeof(*kmnp);
+			kaddr = NULL;
+			lumnp = NULL;
+
+			/* This allocates kmnp */
+			error = mach_ool_copyin(rp, rumnp, &kaddr, size, 0);
+			if (error != 0)
+				return MACH_SEND_INVALID_DATA;
+
+			kmnp = (mach_port_t *)kaddr;
+			for (j = 0; j < count; j++) 
+				mach_trade_rights(l, mm->mm_l, &kmnp[j], disp);
+
+			/* This frees kmnp */
+			if ((error = mach_ool_copyout(lp, kmnp, &lumnp, 
+			    size, MACH_OOL_FREE|MACH_OOL_TRACE)) != 0)
+				return MACH_SEND_INVALID_DATA;
+
+			mcm->mcm_ool_ports_desc[i].address = lumnp;
+			break;
 		}
-		mach_trade_rights(l, mm->mm_l, &mcm->mcm_port_desc[i].name, 
-		    mcm->mcm_port_desc[i].disposition);
+
+		case MACH_MSG_OOL_VOLATILE_DESCRIPTOR:
+#ifdef DEBUG_MACH
+			printf("MACH_MSG_OOL_VOLATILE_DESCRIPTOR\n");
+#endif
+			/* FALLTHROUGH */
+		case MACH_MSG_OOL_DESCRIPTOR: {	/* XXX untested */
+			struct proc *rp;	/* remote process */
+			struct proc *lp;	/* local process */
+			void *ludata;		/* local user address */
+			void *rudata;		/* remote user address */
+			size_t size;		/* data size */
+			void *kdata;
+			int error;	
+			
+			rp = mm->mm_l->l_proc;
+			lp = l->l_proc;
+			rudata = mcm->mcm_ool_desc[i].address;
+			size = mcm->mcm_ool_desc[i].size;
+			kdata = NULL;
+			ludata = NULL;
+
+			/* 
+			 * XXX This is unefficient for large chunk of OOL
+			 * memory. Think about remapping COW when possible
+			 */ 
+
+			/* This allocates kdata */
+			error = mach_ool_copyin(rp, rudata, &kdata, size, 0);
+			if (error != 0)
+				return MACH_SEND_INVALID_DATA;
+
+			/* This frees kdata */
+			if ((error = mach_ool_copyout(lp, kdata, &ludata, 
+			    size, MACH_OOL_FREE|MACH_OOL_TRACE)) != 0)
+				return MACH_SEND_INVALID_DATA;
+
+			mcm->mcm_ool_ports_desc[i].address = ludata;
+			break;
+		}
+		default:
+#ifdef DEBUG_MACH
+			printf("unknown descriptor type %d\n",
+			    mcm->mcm_desc[i].type);
+#endif
+			break;
+		}
 	}
 
 	return MACH_MSG_SUCCESS;
+}
+
+inline int
+mach_ool_copyin(p, uaddr, kaddr, size, flags)
+	struct proc *p;
+	const void *uaddr;
+	void **kaddr;
+	size_t size;
+	int flags;
+{
+	int error;
+	void *kbuf;
+
+	/* 
+	 * Sanity check OOL size to avoid DoS on malloc: useless once
+	 * we remap data instead of copying it. In the meantime, 
+	 * disabled since it makes some OOL transfer fail 
+	 */
+#if 0
+	if (size > MACH_MAX_OOL_LEN)
+		return ENOMEM;
+#endif
+
+	if (*kaddr == NULL)
+		kbuf = malloc(size, M_EMULDATA, M_WAITOK);
+	else
+		kbuf = *kaddr;
+
+	if ((error = copyin_proc(p, (void *)uaddr, kbuf, size)) != 0) {
+		if (*kaddr == NULL)
+			free(kbuf, M_EMULDATA);
+		return error;
+	}
+
+#ifdef KTRACE
+	if (size > PAGE_SIZE)
+		size = PAGE_SIZE;
+	if ((flags & MACH_OOL_TRACE) && KTRPOINT(p, KTR_MOOL))
+		ktrmool(p, kaddr, size, uaddr);
+#endif
+
+	*kaddr = kbuf;
+	return 0;
+}
+
+inline int
+mach_ool_copyout(p, kaddr, uaddr, size, flags)
+	struct proc *p;
+	void *kaddr;
+	void **uaddr;
+	size_t size;
+	int flags;
+{
+	vaddr_t ubuf;
+	int error = 0; 
+
+	/* 
+	 * Sanity check OOL size to avoid DoS on malloc: useless once
+	 * we remap data instead of copying it. In the meantime, 
+	 * disabled since it makes some OOL transfer fail 
+	 */
+#if 0
+	if (size > MACH_MAX_OOL_LEN) {
+		error = ENOMEM;
+		goto out;
+	}
+#endif
+
+	if (*uaddr == NULL)
+		ubuf = (vaddr_t)vm_map_min(&p->p_vmspace->vm_map);
+	else
+		ubuf = (vaddr_t)*uaddr;
+
+	/* Never map anything at address zero: this is a red zone */
+	if (ubuf == (vaddr_t)NULL)
+		ubuf += PAGE_SIZE; 
+	
+	if ((error = uvm_map(&p->p_vmspace->vm_map, &ubuf,
+	    round_page(size), NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL,
+	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
+		goto out;
+
+	if ((error = copyout_proc(p, kaddr, (void *)ubuf, size)) != 0) 
+		goto out;
+
+#ifdef KTRACE
+	if (size > PAGE_SIZE)
+		size = PAGE_SIZE;
+	if ((flags & MACH_OOL_TRACE) && KTRPOINT(p, KTR_MOOL))
+		ktrmool(p, kaddr, size, (void *)ubuf);
+#endif
+
+out:
+	if (flags & MACH_OOL_FREE)
+		free(kaddr, M_EMULDATA);
+
+	if (error == 0)
+		*uaddr = (void *)ubuf;
+	return error;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.47 2003/12/08 12:03:16 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.48 2003/12/08 19:27:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.47 2003/12/08 12:03:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.48 2003/12/08 19:27:38 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,10 +139,11 @@ mach_ports_lookup(args)
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct lwp *tl = args->tl;
+	struct proc *p = l->l_proc;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 	mach_port_name_t mnp[7];
-	vaddr_t va;
+	void *uaddr;
 	int error;
 
 	/* 
@@ -151,12 +152,6 @@ mach_ports_lookup(args)
 	 * filled. We have to see more of this in order to fully understand
 	 * how this trap works.
 	 */
-	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
-	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, PAGE_SIZE,
-	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL,
-	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
-		return mach_msg_error(args, error);
-
 	med = (struct mach_emuldata *)tl->l_proc->p_emuldata;
 	mnp[0] = (mach_port_name_t)MACH_PORT_DEAD;
 	mnp[3] = (mach_port_name_t)MACH_PORT_DEAD;
@@ -173,13 +168,11 @@ mach_ports_lookup(args)
 	/*
 	 * On Darwin, the data seems always null...
 	 */
-	if ((error = copyout(mnp, (void *)va, sizeof(mnp))) != 0)
+	uaddr = NULL;
+	if ((error = mach_ool_copyout(p, &mnp[0], 
+	    &uaddr, sizeof(mnp), MACH_OOL_TRACE)) != 0)
 		return mach_msg_error(args, error);
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0) 
-		ktrmool(l->l_proc, mnp, sizeof(mnp), (void *)va);
-#endif
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;
@@ -187,7 +180,7 @@ mach_ports_lookup(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_msgh_body.msgh_descriptor_count = 1;
-	rep->rep_init_port_set.address = (void *)va;
+	rep->rep_init_port_set.address = uaddr;
 	rep->rep_init_port_set.count = 3; /* XXX should be 7? */
 	rep->rep_init_port_set.copy = MACH_MSG_ALLOCATE;
 	rep->rep_init_port_set.disposition = MACH_MSG_TYPE_MOVE_SEND;
@@ -301,39 +294,27 @@ mach_task_threads(args)
 	struct proc *tp = tl->l_proc;
 	struct mach_emuldata *med;
 	int error;
-	vaddr_t va;
+	void *uaddr;
 	size_t size;
 	int i;
 	struct mach_right *mr;
 	mach_port_name_t *mnp;
 
 	med = tp->p_emuldata;
-
 	size = tp->p_nlwps * sizeof(*mnp);
-	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
-
-	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, 
-	    round_page(size), NULL, UVM_UNKNOWN_OFFSET, 0, 
-	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL, UVM_INH_COPY, 
-	    UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
-		return mach_msg_error(args, error);
-
 	mnp = malloc(size, M_TEMP, M_WAITOK);
-	for (i = 0; i < l->l_proc->p_nlwps; i++) {
+	uaddr = NULL;
+
+	for (i = 0; i < tp->p_nlwps; i++) {
 		/* XXX each thread should have a kernel port */
 		mr = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
 		mnp[i] = mr->mr_name;
 	}
-	if ((error = copyout(mnp, (void *)va, size)) != 0) {
-		free(mnp, M_TEMP);
-		return mach_msg_error(args, error);
-	}
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0)
-		ktrmool(l->l_proc, mnp, size, (void *)va);
-#endif
-	free(mnp, M_TEMP);
+	/* This will free mnp */
+	if ((error = mach_ool_copyout(l->l_proc, mnp, &uaddr, 
+	    size, MACH_OOL_TRACE|MACH_OOL_FREE)) != 0)
+		return mach_msg_error(args, error);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
@@ -342,7 +323,7 @@ mach_task_threads(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
-	rep->rep_list.address = (void *)va;
+	rep->rep_list.address = uaddr;
 	rep->rep_list.count = tp->p_nlwps;
 	rep->rep_list.copy = MACH_MSG_ALLOCATE;
 	rep->rep_list.disposition = MACH_MSG_TYPE_MOVE_SEND;
