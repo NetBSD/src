@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.54 2003/03/06 18:24:52 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.55 2003/05/24 06:21:22 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.54 2003/03/06 18:24:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.55 2003/05/24 06:21:22 gmcgarry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -101,14 +101,10 @@ __KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.54 2003/03/06 18:24:52 thorpej Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
 
 #include <dev/cons.h>
 
-#include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/dcareg.h>
@@ -119,6 +115,9 @@ struct	dca_softc {
 	struct tty		*sc_tty;	/* our tty instance */
 	int			sc_oflows;	/* overflow counter */
 	short			sc_flags;	/* state flags */
+
+	bus_space_tag_t		sc_bst;
+	bus_space_handle_t	sc_bsh;
 
 	/*
 	 * Bits for sc_flags.
@@ -182,8 +181,8 @@ static struct consdev dca_cons = {
        NODEV,
        CN_REMOTE
 };
-static struct dcadevice *dca_cn = NULL;        /* pointer to hardware */
-static int dcaconsinit;                        /* has been initialized */
+static struct dcadevice *dca_cn = NULL;	/* pointer to hardware */
+static int dcaconsinit;			/* has been initialized */
 static int dcaconscode;
 
 struct speedtab dcaspeedtab[] = {
@@ -255,7 +254,6 @@ dcaattach(parent, self, aux)
 	struct dcadevice *dca;
 	int unit = self->dv_unit;
 	int scode = da->da_scode;
-	int ipl;
 
 	if (scode == dcaconscode) {
 		dca = dca_cn;
@@ -269,19 +267,20 @@ dcaattach(parent, self, aux)
 		cn_tab->cn_dev = makedev(cdevsw_lookup_major(&dca_cdevsw),
 					 unit);
 	} else {
-		dca = (struct dcadevice *)iomap(dio_scodetopa(da->da_scode),
-		    da->da_size);
-		if (dca == NULL) {
+
+		sc->sc_bst = da->da_bst;
+		if (bus_space_map(da->da_bst, da->da_addr, da->da_size,
+		     BUS_SPACE_MAP_LINEAR, &sc->sc_bsh)) {
 			printf("\n%s: can't map registers\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
+		dca = (struct dcadevice *)bus_space_vaddr(sc->sc_bst,
+		    sc->sc_bsh);
+
 	}
 
 	sc->sc_dca = dca;
-
-	ipl = DIO_IPL(dca);
-	printf(" ipl %d", ipl);
 
 	DELAY(1000);
 	dca->dca_reset = 0xFF;
@@ -294,7 +293,7 @@ dcaattach(parent, self, aux)
 		sc->sc_flags |= DCA_HASFIFO;
 
 	/* Establish interrupt handler. */
-	(void) dio_intr_establish(dcaintr, sc, ipl,
+	(void) dio_intr_establish(dcaintr, sc, da->da_ipl,
 	    (sc->sc_flags & DCA_HASFIFO) ? IPL_TTY : IPL_TTYNOBUF);
 
 	sc->sc_flags |= DCA_ACTIVE;
@@ -401,8 +400,8 @@ dcaopen(dev, flag, mode, p)
 
 		/* Set the FIFO threshold based on the receive speed. */
 		if (sc->sc_flags & DCA_HASFIFO)
-                        dca->dca_fifo = FIFO_ENABLE | FIFO_RCV_RST |
-                            FIFO_XMT_RST |
+			dca->dca_fifo = FIFO_ENABLE | FIFO_RCV_RST |
+			    FIFO_XMT_RST |
 			    (tp->t_ispeed <= 1200 ? FIFO_TRIGGER_1 :
 			    FIFO_TRIGGER_14);   
 
@@ -812,8 +811,8 @@ dcaparam(tp, t)
 	int s;
  
 	/* check requested parameters */
-        if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
-                return (EINVAL);
+	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
+		return (EINVAL);
 
 	switch (cflag & CSIZE) {
 	case CS5:
@@ -1015,47 +1014,47 @@ dcainit(dca, rate)
 int
 dcacnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 {
-        bus_space_handle_t bsh;
-        caddr_t va;
-        struct dcadevice *dca;
+	bus_space_handle_t bsh;
+	caddr_t va;
+	struct dcadevice *dca;
 #ifdef KGDB
 	extern const struct cdevsw ctty_cdevsw;
 #endif
 
-        if (bus_space_map(bst, addr, DIOCSIZE, 0, &bsh))
-                return (1);
+	if (bus_space_map(bst, addr, DIOCSIZE, 0, &bsh))
+		return (1);
 
-        va = bus_space_vaddr(bst, bsh);
+	va = bus_space_vaddr(bst, bsh);
 	dca = (struct dcadevice *)va;
 
-        switch (dca->dca_id) {
+	switch (dca->dca_id) {
 #ifdef CONSCODE
-        case DCAID0:
-        case DCAID1:
+	case DCAID0:
+	case DCAID1:
 #endif
-        case DCAREMID0:
-        case DCAREMID1:
-                break;
-        default:
-	        bus_space_unmap(bst, bsh, DIOCSIZE);
-	        return (1);
-        }
+	case DCAREMID0:
+	case DCAREMID1:
+		break;
+	default:
+		bus_space_unmap(bst, bsh, DIOCSIZE);
+		return (1);
+	}
 
-        dcainit(dca, dcadefaultrate);
-        dcaconsinit = 1;
+	dcainit(dca, dcadefaultrate);
+	dcaconsinit = 1;
 	dcaconscode = scode;
-        dca_cn = dca;
+	dca_cn = dca;
 
-        /* initialize required fields */
-        cn_tab = &dca_cons;
-        cn_tab->cn_dev = makedev(cdevsw_lookup_major(&dca_cdevsw), 0);
+	/* initialize required fields */
+	cn_tab = &dca_cons;
+	cn_tab->cn_dev = makedev(cdevsw_lookup_major(&dca_cdevsw), 0);
 
 #ifdef KGDB
 	if (cdevsw_lookup(kgdb_dev) == &ctty_cdevsw)
 		kgdb_dev = makedev(maj, minor(kgdb_dev));
 #endif
 
-        return (0);
+	return (0);
 }
 
 /* ARGSUSED */

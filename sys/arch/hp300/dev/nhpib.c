@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.26 2002/10/02 05:15:53 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.27 2003/05/24 06:21:22 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.26 2002/10/02 05:15:53 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.27 2003/05/24 06:21:22 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,13 +85,11 @@ __KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.26 2002/10/02 05:15:53 thorpej Exp $");
 #include <sys/buf.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
-#include <machine/intr.h>
+#include <machine/bus.h>
 
-#include <hp300/dev/dioreg.h>
+#include <hp300/dev/intiovar.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
-
 #include <hp300/dev/dmavar.h>
 
 #include <hp300/dev/nhpibreg.h>
@@ -149,75 +147,132 @@ struct	hpib_controller nhpib_controller = {
 
 struct nhpib_softc {
 	struct device sc_dev;		/* generic device glue */
+
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
+
 	struct nhpibdevice *sc_regs;	/* device registers */
 	struct hpibbus_softc *sc_hpibbus; /* XXX */
+
+	int sc_myaddr;
+	int sc_type;
+
 	struct callout sc_read_ch;
 	struct callout sc_ppwatch_ch;
 };
 
-int	nhpibmatch __P((struct device *, struct cfdata *, void *));
-void	nhpibattach __P((struct device *, struct device *, void *));
+int	nhpib_dio_match __P((struct device *, struct cfdata *, void *));
+void	nhpib_dio_attach __P((struct device *, struct device *, void *));
+int	nhpib_intio_match __P((struct device *, struct cfdata *, void *));
+void	nhpib_intio_attach __P((struct device *, struct device *, void *));
 
-CFATTACH_DECL(nhpib, sizeof(struct nhpib_softc),
-    nhpibmatch, nhpibattach, NULL, NULL);
+void	nhpib_common_attach(struct nhpib_softc *, const char *);
+
+CFATTACH_DECL(nhpib_dio, sizeof(struct nhpib_softc),
+    nhpib_dio_match, nhpib_dio_attach, NULL, NULL);
+
+CFATTACH_DECL(nhpib_intio, sizeof(struct nhpib_softc),
+    nhpib_intio_match, nhpib_intio_attach, NULL, NULL);
 
 int
-nhpibmatch(parent, match, aux)
+nhpib_intio_match(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
+{
+	struct intio_attach_args *ia = aux;
+
+	if (strcmp("hpib", ia->ia_modname) == 0)
+		return (1);
+
+	return (0);
+}
+
+int
+nhpib_dio_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
 	struct dio_attach_args *da = aux;
 
-	if (da->da_id == DIO_DEVICE_ID_NHPIB ||
-	    da->da_id == DIO_DEVICE_ID_IHPIB)
+	if (da->da_id == DIO_DEVICE_ID_NHPIB)
 		return (1);
 
 	return (0);
 }
 
 void
-nhpibattach(parent, self, aux)
+nhpib_intio_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct nhpib_softc *sc = (struct nhpib_softc *)self;
+	struct intio_attach_args *ia = aux;
+	const char *desc = "internal HP-IB";
+
+	sc->sc_bst = ia->ia_bst;
+	if (bus_space_map(ia->ia_bst, ia->ia_iobase, INTIO_DEVSIZE, 0,
+	    &sc->sc_bsh)) {
+		printf(": can't map registers\n");
+		return;
+	}
+
+	sc->sc_myaddr = HPIBA_BA;
+	sc->sc_type = HPIBA;
+
+	nhpib_common_attach(sc, desc);
+
+	/* establish the interrupt handler */
+	(void) intio_intr_establish(nhpibintr, sc, ia->ia_ipl, IPL_BIO);
+}
+
+void
+nhpib_dio_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct nhpib_softc *sc = (struct nhpib_softc *)self;
 	struct dio_attach_args *da = aux;
-	struct hpibdev_attach_args ha; 
-	const char *desc;
-	int ipl, type = HPIBA;
+	const char *desc = DIO_DEVICE_DESC_NHPIB;
 
-	sc->sc_regs = (struct nhpibdevice *)iomap(dio_scodetopa(da->da_scode),
-	    da->da_size);
-	if (sc->sc_regs == NULL) {
-		printf("\n%s: can't map registers\n", self->dv_xname);
+	sc->sc_bst = da->da_bst;
+	if (bus_space_map(sc->sc_bst, da->da_addr, da->da_size, 0,
+	    &sc->sc_bsh)) {
+		printf(": can't map registers\n");
 		return;
 	}
 
-	ipl = DIO_IPL(sc->sc_regs);
+	/* read address off switches */
+	sc->sc_myaddr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, 5);
+	sc->sc_type = HPIBB;
 
-	if (da->da_scode == 7 && internalhpib)
-		desc = DIO_DEVICE_DESC_IHPIB;
-	else if (da->da_id == DIO_DEVICE_ID_NHPIB) {
-		type = HPIBB;
-		desc = DIO_DEVICE_DESC_NHPIB;
-	} else
-		desc = "unknown HP-IB!";
+	nhpib_common_attach(sc, desc);
 
-	printf(" ipl %d: %s\n", ipl, desc);
+	/* establish the interrupt handler */
+	(void)dio_intr_establish(nhpibintr, sc, da->da_ipl, IPL_BIO);
+}
 
-	/* Establish the interrupt handler. */
-	(void) dio_intr_establish(nhpibintr, sc, ipl, IPL_BIO);
+void
+nhpib_common_attach(sc, desc)
+	struct nhpib_softc *sc;
+	const char *desc;
+{
+	struct hpibdev_attach_args ha; 
+
+	printf(": %s\n", desc);
+
+	sc->sc_regs = (struct nhpibdevice *)bus_space_vaddr(sc->sc_bst,
+	    sc->sc_bsh);
 
 	callout_init(&sc->sc_read_ch);
 	callout_init(&sc->sc_ppwatch_ch);
 
 	ha.ha_ops = &nhpib_controller;
-	ha.ha_type = type;			/* XXX */
-	ha.ha_ba = (type == HPIBA) ? HPIBA_BA :
-	    (sc->sc_regs->hpib_csa & CSA_BA);
-	ha.ha_softcpp = &sc->sc_hpibbus;	/* XXX */
-	(void)config_found(self, &ha, hpibdevprint);
+	ha.ha_type = sc->sc_type;			/* XXX */
+	ha.ha_ba = sc->sc_myaddr;
+	ha.ha_softcpp = &sc->sc_hpibbus;		/* XXX */
+	(void)config_found((void *)sc, &ha, hpibdevprint);
 }
 
 void

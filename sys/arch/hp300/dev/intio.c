@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.14 2003/01/01 01:34:46 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.15 2003/05/24 06:21:22 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.14 2003/01/01 01:34:46 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.15 2003/05/24 06:21:22 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ CFATTACH_DECL(intio, sizeof(struct device),
 const struct intio_builtins intio_3xx_builtins[] = {
 	{ "rtc",	0x020000,	-1},
 	{ "hil",	0x028000,	1},
+	{ "hpib",	0x078000,	3},
 	{ "dma",	0x100000,	1},
 	{ "fb",		0x160000,	-1},
 };
@@ -77,6 +78,7 @@ const struct intio_builtins intio_4xx_builtins[] = {
 	{ "rtc",	0x020000,	-1},
 	{ "frodo",	0x01c000,	5},
 	{ "hil",	0x028000,	1},
+	{ "hpib",	0x078000,	3},
 	{ "dma",	0x100000,	1},
 };
 #define nintio_4xx_builtins \
@@ -84,6 +86,7 @@ const struct intio_builtins intio_4xx_builtins[] = {
 #endif
 
 static int intio_matched = 0;
+extern caddr_t internalhpib;
 
 int
 intiomatch(parent, match, aux)
@@ -144,6 +147,14 @@ intioattach(parent, self, aux)
 	memset(&ia, 0, sizeof(ia));
 
 	for (i=0; i<ndevs; i++) {
+
+		/*
+		 * Internal HP-IB doesn't always return a device ID,
+		 * so we rely on the sysflags.
+		 */
+		if (ib[i].ib_offset == 0x078000 && !internalhpib)
+			continue;
+
 		strncpy(ia.ia_modname, ib[i].ib_modname, INTIO_MOD_LEN);
 		ia.ia_modname[INTIO_MOD_LEN] = '\0';
 		ia.ia_bst = HP300_BUS_SPACE_INTIO;
@@ -163,9 +174,9 @@ intioprint(aux, pnp)
 
 	if (pnp != NULL)
 		aprint_normal("%s at %s", ia->ia_modname, pnp);
-	if (ia->ia_iobase != 0) {
-                aprint_normal(" addr 0x%lx", INTIOBASE + ia->ia_iobase);
-		if (ia->ia_ipl != -1 && pnp != NULL)
+	if (ia->ia_iobase != 0 && pnp == NULL) {
+		aprint_normal(" addr 0x%lx", INTIOBASE + ia->ia_iobase);
+		if (ia->ia_ipl != -1)
 			aprint_normal(" ipl %d", ia->ia_ipl);
 	}
 	return (UNCONF);

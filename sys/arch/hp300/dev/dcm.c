@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.58 2003/05/04 02:10:07 gmcgarry Exp $	*/
+/*	$NetBSD: dcm.c,v 1.59 2003/05/24 06:21:22 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.58 2003/05/04 02:10:07 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.59 2003/05/24 06:21:22 gmcgarry Exp $");
 
 #include "opt_kgdb.h"
 
@@ -106,13 +106,10 @@ __KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.58 2003/05/04 02:10:07 gmcgarry Exp $");
 #include <sys/time.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
+#include <machine/bus.h>
 
 #include <dev/cons.h>
 
-#include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/dcmreg.h>
@@ -249,6 +246,10 @@ static char iconv[16] = {
 
 struct	dcm_softc {
 	struct	device sc_dev;		/* generic device glue */
+
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
+
 	struct	dcmdevice *sc_dcm;	/* pointer to hardware */
 	struct	tty *sc_tty[NDCMPORT];	/* our tty instances */
 	struct	modemreg *sc_modem[NDCMPORT]; /* modem control */
@@ -368,7 +369,7 @@ dcmattach(parent, self, aux)
 	struct dcmdevice *dcm;
 	int brd = self->dv_unit;
 	int scode = da->da_scode;
-	int i, mbits, code, ipl;
+	int i, mbits, code;
 
 	sc->sc_flags = 0;
 
@@ -384,19 +385,18 @@ dcmattach(parent, self, aux)
 		cn_tab->cn_dev = makedev(cdevsw_lookup_major(&dcm_cdevsw),
 					 (brd << 2) | DCMCONSPORT);
 	} else {
-		dcm = (struct dcmdevice *)iomap(dio_scodetopa(da->da_scode),
-		    da->da_size);
-		if (dcm == NULL) {
+		sc->sc_bst = da->da_bst;
+		if (bus_space_map(sc->sc_bst, da->da_addr, da->da_size,
+		    BUS_SPACE_MAP_LINEAR, &sc->sc_bsh)) {
 			printf("\n%s: can't map registers\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
+		dcm = (struct dcmdevice *)bus_space_vaddr(sc->sc_bst,
+		    sc->sc_bsh);
 	}
 
 	sc->sc_dcm = dcm;
-
-	ipl = DIO_IPL(dcm);
-	printf(" ipl %d", ipl);
 
 	/*
 	 * XXX someone _should_ fix this; the self test screws
@@ -415,7 +415,7 @@ dcmattach(parent, self, aux)
 	sc->sc_flags |= DCM_ACTIVE;
 
 	/* Establish the interrupt handler. */
-	(void) dio_intr_establish(dcmintr, sc, ipl, IPL_TTY);
+	(void) dio_intr_establish(dcmintr, sc, da->da_ipl, IPL_TTY);
 
 	if (dcmistype == DIS_TIMER)
 		dcmsetischeme(brd, DIS_RESET|DIS_TIMER);
@@ -1128,12 +1128,12 @@ dcmparam(tp, t)
 	dcm = sc->sc_dcm;
 
 	/* check requested parameters */
-        if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
-                return (EINVAL);
-        /* and copy to tty */
-        tp->t_ispeed = t->c_ispeed;
-        tp->t_ospeed = t->c_ospeed;
-        tp->t_cflag = cflag;
+	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
+		return (EINVAL);
+	/* and copy to tty */
+	tp->t_ispeed = t->c_ispeed;
+	tp->t_ospeed = t->c_ospeed;
+	tp->t_cflag = cflag;
 	if (ospeed == 0) {
 		(void) dcmmctl(DCMUNIT(tp->t_dev), MO_OFF, DMSET);
 		return (0);
@@ -1552,15 +1552,15 @@ dcmselftest(sc)
 int
 dcmcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 {
-        bus_space_handle_t bsh;
-        caddr_t va;
-        struct dcmdevice *dcm;
+	bus_space_handle_t bsh;
+	caddr_t va;
+	struct dcmdevice *dcm;
 	int maj;
 
-        if (bus_space_map(bst, addr, DIOCSIZE, 0, &bsh))
-                return (1);
+	if (bus_space_map(bst, addr, DIOCSIZE, 0, &bsh))
+		return (1);
 
-        va = bus_space_vaddr(bst, bsh);
+	va = bus_space_vaddr(bst, bsh);
 	dcm = (struct dcmdevice *)va;
 
 	switch (dcm->dcm_rsid) {
@@ -1574,16 +1574,16 @@ dcmcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	}
 
 	dcminit(dcm, DCMCONSPORT, dcmdefaultrate);
-        dcmconsinit = 1;
+	dcmconsinit = 1;
 	dcmconscode = scode;
-        dcm_cn = dcm;
+	dcm_cn = dcm;
 
-        /* locate the major number */
-        maj = cdevsw_lookup_major(&dcm_cdevsw);
+	/* locate the major number */
+	maj = cdevsw_lookup_major(&dcm_cdevsw);
 
-        /* initialize required fields */
-        cn_tab = &dcm_cons;
-        cn_tab->cn_dev = makedev(maj, 0);
+	/* initialize required fields */
+	cn_tab = &dcm_cons;
+	cn_tab->cn_dev = makedev(maj, 0);
 
 #ifdef KGDB_CHEAT
 	/* XXX this needs to be fixed. */
@@ -1608,11 +1608,11 @@ dcmcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 #endif
 
 
-        return (0);
+	return (0);
 
 error:
-        bus_space_unmap(bst, bsh, DIOCSIZE);
-        return (1);
+	bus_space_unmap(bst, bsh, DIOCSIZE);
+	return (1);
 }
 
 /* ARGSUSED */

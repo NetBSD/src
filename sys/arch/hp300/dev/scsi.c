@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.35 2003/05/03 18:10:47 wiz Exp $	*/
+/*	$NetBSD: scsi.c,v 1.36 2003/05/24 06:21:23 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi.c,v 1.35 2003/05/03 18:10:47 wiz Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: scsi.c,v 1.36 2003/05/24 06:21:23 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: scsi.c,v 1.35 2003/05/03 18:10:47 wiz Exp $");
 #include <machine/intr.h>
 #include <machine/hp300spu.h>
 
-#include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 
@@ -329,7 +328,7 @@ scsiattach(parent, self, aux)
 	struct scsi_softc *hs = (struct scsi_softc *)self;
 	struct dio_attach_args *da = aux;
 	struct scsidevice *hd;
-	int ipl, unit = self->dv_unit;
+	int unit = self->dv_unit;
 
 	/*
 	 * Set up DMA job queue entry.
@@ -348,14 +347,11 @@ scsiattach(parent, self, aux)
 		printf("\n%s: can't map registers\n", self->dv_xname);
 		return;
 	}
-	ipl = DIO_IPL(hd);
-
-	printf(" ipl %d", ipl);
 
 	hs->sc_regs = hd;
 
 	/* Establish the interrupt handler. */
-	(void) dio_intr_establish(scsiintr, hs, ipl, IPL_BIO);
+	(void) dio_intr_establish(scsiintr, hs, da->da_ipl, IPL_BIO);
 
 	/* Reset the controller. */
 	scsireset(unit);
