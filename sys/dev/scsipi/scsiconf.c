@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.67 1996/10/23 07:25:39 matthias Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.68 1996/11/06 05:50:31 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -305,6 +305,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "IMS     ", "CDD521/10       ", "2.06"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
+	 "MATSHITA", "CD-ROM CR-5XX   ", "1.0b"}, SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
 	 "MEDIAVIS", "CDR-H93MV       ", "1.31"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:55 ", ""},     SDEV_NOLUNS},
@@ -330,7 +332,6 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "TEXEL   ", "CD-ROM DM-XX24 K", "1.10"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,  
 	 "ShinaKen", "CD-ROM DM-3x1S", "1.04"}, SDEV_NOLUNS},  
-
 
 	{{T_OPTICAL, T_REMOV,
 	 "EPSON   ", "OMD-5010        ", "3.08"}, SDEV_NOLUNS},
@@ -385,7 +386,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "iomega", "jaz 1GB", 		 ""},	  SDEV_NOMODESENSE},
 	{{T_DIRECT, T_REMOV,
 	 "IOMEGA", "ZIP 100",		 ""},	  SDEV_NOMODESENSE},
-	/* Letting the motor running kills floppy drives and disks quit fast. */
+	/* Letting the motor run kills floppy drives and disks quit fast. */
 	{{T_DIRECT, T_REMOV,
 	 "TEAC", "FC-1",		 ""},	  SDEV_NOSTARTUNIT},
 
