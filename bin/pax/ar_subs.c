@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.29.2.1 2004/04/21 04:20:07 jmc Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.29.2.2 2004/08/25 02:44:52 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.29.2.1 2004/04/21 04:20:07 jmc Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.29.2.2 2004/08/25 02:44:52 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,6 +202,8 @@ extract(void)
 	 * says it is done
 	 */
 	while (next_head(arcn) == 0) {
+		int write_to_hard_link = 0;
+
 		if (arcn->type == PAX_GLL || arcn->type == PAX_GLF) {
 			/*
 			 * we need to read, to get the real filename
@@ -316,26 +318,29 @@ extract(void)
 		/*
 		 * all ok, extract this member based on type
 		 */
-		if ((arcn->type != PAX_REG) && (arcn->type != PAX_CTG)) { 
+		if ((arcn->type != PAX_REG) && (arcn->type != PAX_CTG)) {
 			/*
 			 * process archive members that are not regular files.
 			 * throw out padding and any data that might follow the
 			 * header (as determined by the format).
 			 */
-			if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG))
-				res = lnk_creat(arcn);
+			if ((arcn->type == PAX_HLK) ||
+			    (arcn->type == PAX_HRG))
+				res = lnk_creat(arcn, &write_to_hard_link);
 			else
 				res = node_creat(arcn);
 
-			(void)rd_skip(arcn->skip + arcn->pad);
-			if (res < 0)
-				purg_lnk(arcn);
+			if (!write_to_hard_link) {
+				(void)rd_skip(arcn->skip + arcn->pad);
+				if (res < 0)
+					purg_lnk(arcn);
 
-			if (vflag && vfpart) {
-				(void)putc('\n', listf);
-				vfpart = 0;
+				if (vflag && vfpart) {
+					(void)putc('\n', listf);
+					vfpart = 0;
+				}
+				continue;
 			}
-			continue;
 		}
 		if (to_stdout)
 			fd = STDOUT_FILENO;
@@ -345,7 +350,7 @@ extract(void)
 			 * it, skip over the data and purge the name from hard
 			 * link table.
 			 */
-			if ((fd = file_creat(arcn)) < 0) {
+			if ((fd = file_creat(arcn, write_to_hard_link)) < 0) {
 				(void)fflush(listf);
 				(void)rd_skip(arcn->skip + arcn->pad);
 				purg_lnk(arcn);
@@ -933,10 +938,14 @@ copy(void)
 			/*
 			 * create a link or special file
 			 */
-			if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG))
-				res = lnk_creat(arcn);
-			else
+			if ((arcn->type == PAX_HLK) ||
+			    (arcn->type == PAX_HRG)) {
+				int payload;
+
+				res = lnk_creat(arcn, &payload);
+			} else {
 				res = node_creat(arcn);
+			}
 			if (res < 0)
 				purg_lnk(arcn);
 			if (vflag && vfpart) {
@@ -956,7 +965,7 @@ copy(void)
 			purg_lnk(arcn);
 			continue;
 		}
-		if ((fddest = file_creat(arcn)) < 0) {
+		if ((fddest = file_creat(arcn, 0)) < 0) {
 			rdfile_close(arcn, &fdsrc);
 			purg_lnk(arcn);
 			continue;
