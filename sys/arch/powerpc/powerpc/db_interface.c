@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.31 2003/09/27 04:44:42 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.32 2003/10/09 07:12:24 matt Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.31 2003/09/27 04:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.32 2003/10/09 07:12:24 matt Exp $");
 
 #define USERACC
 
@@ -76,9 +76,11 @@ ddb_trap_glue(struct trapframe *frame)
 		return kdb_trap(frame->exc, frame);
 #else /* PPC_OEA */
 	if ((frame->srr1 & PSL_PR) == 0 &&
-	    (frame->exc == EXC_TRC || frame->exc == EXC_RUNMODETRC ||
+	    (frame->exc == EXC_TRC ||
+	     frame->exc == EXC_RUNMODETRC ||
 	     (frame->exc == EXC_PGM && (frame->srr1 & 0x20000)) ||
-	     frame->exc == EXC_BPT)) {
+	     frame->exc == EXC_BPT ||
+	     frame->exc == EXC_DSI)) {
 		int type = frame->exc;
 		if (type == EXC_PGM && (frame->srr1 & 0x20000)) {
 			type = T_BREAKPOINT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.49 2003/08/12 15:40:02 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.50 2003/10/09 07:12:24 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -804,6 +804,35 @@ disitrap:
 	mfdsisr	%r31
 	streg	%r30,(CI_TEMPSAVE+CPUSAVE_DAR)(%r1)
 	streg	%r31,(CI_TEMPSAVE+CPUSAVE_DSISR)(%r1)
+
+#ifdef DDB
+	mfsrr1	%r31
+	mtcr	%r31
+	bt	17,trapstart		/* branch is user mode */
+	mfsprg1	%r31			/* get old SP */
+#if 0
+	subf	%r30,%r30,%r31		/* subtract DAR from it */
+	addi	%r30,%r30,2048		/* offset result 1/2 page */
+	cmplwi	%cr0,%r30,4096		/* is DAR +- 1/2 page of SP? */
+#else
+	xor.	%r30,%r30,%r31		/* try xor most significant bits */
+	cmplwi	%cr0,%r30,4096		/* is DAR on same page as SP? */
+#endif
+	bge	%cr0,trapstart		/* no, too far away. */
+	/* Now convert this DSI into a DDB trap.  */
+	GET_CPUINFO(%r1)
+	ldreg	%r30,(CI_DISISAVE+CPUSAVE_R28)(%r1) /* get  r28 */
+	streg	%r30,(CI_DDBSAVE +CPUSAVE_R28)(%r1) /* save r28 */
+	ldreg	%r31,(CI_DISISAVE+CPUSAVE_R29)(%r1) /* get  r29 */
+	streg	%r31,(CI_DDBSAVE +CPUSAVE_R29)(%r1) /* save r29 */
+	ldreg	%r30,(CI_DISISAVE+CPUSAVE_R30)(%r1) /* get  r30 */
+	streg	%r30,(CI_DDBSAVE +CPUSAVE_R30)(%r1) /* save r30 */
+	ldreg	%r31,(CI_DISISAVE+CPUSAVE_R31)(%r1) /* get  r31 */
+	streg	%r31,(CI_DDBSAVE +CPUSAVE_R31)(%r1) /* save r31 */
+	lis	%r1,ddbstk+INTSTK@ha	/* get new SP */
+	addi	%r1,%r1,ddbstk+INTSTK@l
+	b	ddbtrap
+#endif
 
 	.globl	_C_LABEL(trapstart)
 	.type	_C_LABEL(trapstart),@function
