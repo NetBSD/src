@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.15 1998/10/11 23:18:20 chuck Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.16 1999/03/04 06:48:15 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -241,7 +241,8 @@ sys_mmap(p, v, retval)
 	 */
 	if (pos + size > (vaddr_t)-PAGE_SIZE) {
 #ifdef DEBUG
-		printf("mmap: pos=%qx, size=%x too big\n", pos, (int)size);
+		printf("mmap: pos=%qx, size=%lx too big\n", (long long)pos,
+		       (long)size);
 #endif
 		return (EINVAL);
 	}
