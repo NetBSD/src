@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.h,v 1.9 1999/08/31 01:12:51 simonb Exp $	*/
+/*	$NetBSD: scsi.h,v 1.10 1999/10/11 16:08:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -517,6 +517,10 @@ typedef struct ScsiTapeModeSelectHdr {
 #define SCSI_SYNCHRONOUS_XFER		0x01
 #define SCSI_EXTENDED_IDENTIFY		0x02 /* only in SCSI I */
 #define SCSI_WIDE_XFER			0x03
+
+/* from old scsipiconf.h */
+#define	SCSI_SILENT	0x0020	/* don't announce NOT READY or MEDIA CHANGE */
+#define	SCSI_DATA_IN	0x0800	/* expect data to come INTO memory	*/
 
 /*
  * Driver ioctl's for various scsi operations.
