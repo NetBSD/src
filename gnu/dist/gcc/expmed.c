@@ -1,6 +1,6 @@
 /* Medium-level subroutines: convert bit-field store and extract
    and shifts, multiplies and divides to rtl instructions.
-   Copyright (C) 1987, 88, 89, 92-6, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 89, 92-97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -21,6 +21,7 @@ Boston, MA 02111-1307, USA.  */
 
 
 #include "config.h"
+#include "system.h"
 #include "rtl.h"
 #include "tree.h"
 #include "flags.h"
@@ -40,6 +41,8 @@ static rtx mask_rtx			PROTO((enum machine_mode, int,
 static rtx lshift_value			PROTO((enum machine_mode, rtx,
 					       int, int));
 static rtx extract_split_bit_field	PROTO((rtx, int, int, int, int));
+static void do_cmp_and_jump		PROTO((rtx, rtx, enum rtx_code,
+					       enum machine_mode, rtx));
 
 #define CEIL(x,y) (((x) + (y) - 1) / (y))
 
@@ -79,7 +82,7 @@ init_expmed ()
   char *free_point;
   /* This is "some random pseudo register" for purposes of calling recog
      to see what insns exist.  */
-  rtx reg = gen_rtx (REG, word_mode, 10000);
+  rtx reg = gen_rtx_REG (word_mode, 10000);
   rtx shift_insn, shiftadd_insn, shiftsub_insn;
   int dummy;
   int m;
@@ -90,34 +93,37 @@ init_expmed ()
   /* Since we are on the permanent obstack, we must be sure we save this
      spot AFTER we call start_sequence, since it will reuse the rtl it
      makes.  */
-
   free_point = (char *) oballoc (0);
 
+  reg = gen_rtx (REG, word_mode, 10000);
+
   zero_cost = rtx_cost (const0_rtx, 0);
-  add_cost = rtx_cost (gen_rtx (PLUS, word_mode, reg, reg), SET);
+  add_cost = rtx_cost (gen_rtx_PLUS (word_mode, reg, reg), SET);
 
-  shift_insn = emit_insn (gen_rtx (SET, VOIDmode, reg,
-				   gen_rtx (ASHIFT, word_mode, reg,
-					    const0_rtx)));
+  shift_insn = emit_insn (gen_rtx_SET (VOIDmode, reg,
+				       gen_rtx_ASHIFT (word_mode, reg,
+						       const0_rtx)));
 
-  shiftadd_insn = emit_insn (gen_rtx (SET, VOIDmode, reg,
-				      gen_rtx (PLUS, word_mode,
-					       gen_rtx (MULT, word_mode,
-							reg, const0_rtx),
-					       reg)));
+  shiftadd_insn
+    = emit_insn (gen_rtx_SET (VOIDmode, reg,
+			      gen_rtx_PLUS (word_mode,
+					    gen_rtx_MULT (word_mode,
+							  reg, const0_rtx),
+					    reg)));
 
-  shiftsub_insn = emit_insn (gen_rtx (SET, VOIDmode, reg,
-				      gen_rtx (MINUS, word_mode,
-					       gen_rtx (MULT, word_mode,
-							 reg, const0_rtx),
-						reg)));
+  shiftsub_insn
+    = emit_insn (gen_rtx_SET (VOIDmode, reg,
+			      gen_rtx_MINUS (word_mode,
+					     gen_rtx_MULT (word_mode,
+							   reg, const0_rtx),
+					     reg)));
 
   init_recog ();
 
   shift_cost[0] = 0;
   shiftadd_cost[0] = shiftsub_cost[0] = add_cost;
 
-  for (m = 1; m < BITS_PER_WORD; m++)
+  for (m = 1; m < MAX_BITS_PER_WORD; m++)
     {
       shift_cost[m] = shiftadd_cost[m] = shiftsub_cost[m] = 32000;
 
@@ -136,37 +142,39 @@ init_expmed ()
 	shiftsub_cost[m] = rtx_cost (SET_SRC (PATTERN (shiftsub_insn)), SET);
     }
 
-  negate_cost = rtx_cost (gen_rtx (NEG, word_mode, reg), SET);
+  negate_cost = rtx_cost (gen_rtx_NEG (word_mode, reg), SET);
 
   sdiv_pow2_cheap
-    = (rtx_cost (gen_rtx (DIV, word_mode, reg, GEN_INT (32)), SET)
+    = (rtx_cost (gen_rtx_DIV (word_mode, reg, GEN_INT (32)), SET)
        <= 2 * add_cost);
   smod_pow2_cheap
-    = (rtx_cost (gen_rtx (MOD, word_mode, reg, GEN_INT (32)), SET)
+    = (rtx_cost (gen_rtx_MOD (word_mode, reg, GEN_INT (32)), SET)
        <= 2 * add_cost);
 
   for (mode = GET_CLASS_NARROWEST_MODE (MODE_INT);
        mode != VOIDmode;
        mode = GET_MODE_WIDER_MODE (mode))
     {
-      reg = gen_rtx (REG, mode, 10000);
-      div_cost[(int) mode] = rtx_cost (gen_rtx (UDIV, mode, reg, reg), SET);
-      mul_cost[(int) mode] = rtx_cost (gen_rtx (MULT, mode, reg, reg), SET);
+      reg = gen_rtx_REG (mode, 10000);
+      div_cost[(int) mode] = rtx_cost (gen_rtx_UDIV (mode, reg, reg), SET);
+      mul_cost[(int) mode] = rtx_cost (gen_rtx_MULT (mode, reg, reg), SET);
       wider_mode = GET_MODE_WIDER_MODE (mode);
       if (wider_mode != VOIDmode)
 	{
 	  mul_widen_cost[(int) wider_mode]
-	    = rtx_cost (gen_rtx (MULT, wider_mode,
-				 gen_rtx (ZERO_EXTEND, wider_mode, reg),
-				 gen_rtx (ZERO_EXTEND, wider_mode, reg)),
+	    = rtx_cost (gen_rtx_MULT (wider_mode,
+				      gen_rtx_ZERO_EXTEND (wider_mode, reg),
+				      gen_rtx_ZERO_EXTEND (wider_mode, reg)),
 			SET);
 	  mul_highpart_cost[(int) mode]
-	    = rtx_cost (gen_rtx (TRUNCATE, mode,
-				 gen_rtx (LSHIFTRT, wider_mode,
-					  gen_rtx (MULT, wider_mode,
-						   gen_rtx (ZERO_EXTEND, wider_mode, reg),
-						   gen_rtx (ZERO_EXTEND, wider_mode, reg)),
-					  GEN_INT (GET_MODE_BITSIZE (mode)))),
+	    = rtx_cost (gen_rtx_TRUNCATE
+			(mode,
+			 gen_rtx_LSHIFTRT
+			 (wider_mode,
+			  gen_rtx_MULT (wider_mode,
+					gen_rtx_ZERO_EXTEND (wider_mode, reg),
+					gen_rtx_ZERO_EXTEND (wider_mode, reg)),
+			  GEN_INT (GET_MODE_BITSIZE (mode)))),
 			SET);
 	}
     }
@@ -272,7 +280,7 @@ store_bit_field (str_rtx, bitsize, bitnum, fieldmode, value, align, total_size)
       if (GET_MODE (op0) != fieldmode)
 	{
 	  if (GET_CODE (op0) == REG)
-	    op0 = gen_rtx (SUBREG, fieldmode, op0, offset);
+	    op0 = gen_rtx_SUBREG (fieldmode, op0, offset);
 	  else
 	    op0 = change_address (op0, fieldmode,
 				  plus_constant (XEXP (op0, 0), offset));
@@ -307,7 +315,7 @@ store_bit_field (str_rtx, bitsize, bitnum, fieldmode, value, align, total_size)
 	  if(! (*insn_operand_predicate[icode][1]) (value, fieldmode))
 	    value = copy_to_mode_reg (fieldmode, value);
 	  emit_insn (GEN_FCN (icode)
-		   (gen_rtx (SUBREG, fieldmode, op0, offset), value));
+		   (gen_rtx_SUBREG (fieldmode, op0, offset), value));
 	}
       return value;
     }
@@ -364,7 +372,7 @@ store_bit_field (str_rtx, bitsize, bitnum, fieldmode, value, align, total_size)
     {
       if (offset != 0
 	  || GET_MODE_SIZE (GET_MODE (op0)) > UNITS_PER_WORD)
-	op0 = gen_rtx (SUBREG, TYPE_MODE (type_for_size (BITS_PER_WORD, 0)),
+	op0 = gen_rtx_SUBREG (TYPE_MODE (type_for_size (BITS_PER_WORD, 0)),
 		       op0, offset);
       offset = 0;
     }
@@ -381,7 +389,7 @@ store_bit_field (str_rtx, bitsize, bitnum, fieldmode, value, align, total_size)
     {
       if (GET_CODE (value) != REG)
 	value = copy_to_reg (value);
-      value = gen_rtx (SUBREG, word_mode, value, 0);
+      value = gen_rtx_SUBREG (word_mode, value, 0);
     }
 
   /* Now OFFSET is nonzero only if OP0 is memory
@@ -464,9 +472,9 @@ store_bit_field (str_rtx, bitsize, bitnum, fieldmode, value, align, total_size)
       if (GET_CODE (xop0) == SUBREG)
 	/* We can't just change the mode, because this might clobber op0,
 	   and we will need the original value of op0 if insv fails.  */
-	xop0 = gen_rtx (SUBREG, maxmode, SUBREG_REG (xop0), SUBREG_WORD (xop0));
+	xop0 = gen_rtx_SUBREG (maxmode, SUBREG_REG (xop0), SUBREG_WORD (xop0));
       if (GET_CODE (xop0) == REG && GET_MODE (xop0) != maxmode)
-	xop0 = gen_rtx (SUBREG, maxmode, xop0, 0);
+	xop0 = gen_rtx_SUBREG (maxmode, xop0, 0);
 
       /* On big-endian machines, we count bits from the most significant.
 	 If the bit field insn does not, we must invert.  */
@@ -496,7 +504,7 @@ store_bit_field (str_rtx, bitsize, bitnum, fieldmode, value, align, total_size)
 		  /* Avoid making subreg of a subreg, or of a mem.  */
 		  if (GET_CODE (value1) != REG)
 		value1 = copy_to_reg (value1);
-		  value1 = gen_rtx (SUBREG, maxmode, value1, 0);
+		  value1 = gen_rtx_SUBREG (maxmode, value1, 0);
 		}
 	      else
 		value1 = gen_lowpart (maxmode, value1);
@@ -602,7 +610,7 @@ store_fixed_bit_field (op0, offset, bitsize, bitpos, value, struct_align)
       total_bits = GET_MODE_BITSIZE (mode);
 
       /* Make sure bitpos is valid for the chosen mode.  Adjust BITPOS to
-	 be be in the range 0 to total_bits-1, and put any excess bytes in
+	 be in the range 0 to total_bits-1, and put any excess bytes in
 	 OFFSET.  */
       if (bitpos >= total_bits)
 	{
@@ -747,6 +755,8 @@ store_split_bit_field (op0, bitsize, bitpos, value, align)
 					       ? GET_MODE (value)
 					       : word_mode, value));
     }
+  else if (GET_CODE (value) == ADDRESSOF)
+    value = copy_to_reg (value);
 
   while (bitsdone < bitsize)
     {
@@ -900,6 +910,8 @@ extract_bit_field (str_rtx, bitsize, bitnum, unsignedp,
 
       offset += SUBREG_WORD (op0);
 
+      inner_size = MIN (inner_size, BITS_PER_WORD);
+
       if (BYTES_BIG_ENDIAN && (outer_size < inner_size))
 	{
 	  bitpos += inner_size - outer_size;
@@ -951,7 +963,7 @@ extract_bit_field (str_rtx, bitsize, bitnum, unsignedp,
       if (mode1 != GET_MODE (op0))
 	{
 	  if (GET_CODE (op0) == REG)
-	    op0 = gen_rtx (SUBREG, mode1, op0, offset);
+	    op0 = gen_rtx_SUBREG (mode1, op0, offset);
 	  else
 	    op0 = change_address (op0, mode1,
 				  plus_constant (XEXP (op0, 0), offset));
@@ -977,7 +989,7 @@ extract_bit_field (str_rtx, bitsize, bitnum, unsignedp,
 	target = gen_reg_rtx (mode);
 
       /* Indicate for flow that the entire target reg is being set.  */
-      emit_insn (gen_rtx (CLOBBER, VOIDmode, target));
+      emit_insn (gen_rtx_CLOBBER (VOIDmode, target));
 
       for (i = 0; i < nwords; i++)
 	{
@@ -1046,7 +1058,7 @@ extract_bit_field (str_rtx, bitsize, bitnum, unsignedp,
     {
       if (offset != 0
 	  || GET_MODE_SIZE (GET_MODE (op0)) > UNITS_PER_WORD)
-	op0 = gen_rtx (SUBREG, TYPE_MODE (type_for_size (BITS_PER_WORD, 0)),
+	op0 = gen_rtx_SUBREG (TYPE_MODE (type_for_size (BITS_PER_WORD, 0)),
 		       op0, offset);
       offset = 0;
     }
@@ -1069,7 +1081,7 @@ extract_bit_field (str_rtx, bitsize, bitnum, unsignedp,
 	{
 	  int xbitpos = bitpos, xoffset = offset;
 	  rtx bitsize_rtx, bitpos_rtx;
-	  rtx last = get_last_insn();
+	  rtx last = get_last_insn ();
 	  rtx xop0 = op0;
 	  rtx xtarget = target;
 	  rtx xspec_target = spec_target;
@@ -1133,9 +1145,9 @@ extract_bit_field (str_rtx, bitsize, bitnum, unsignedp,
 	  /* If op0 is a register, we need it in MAXMODE (which is usually
 	     SImode). to make it acceptable to the format of extzv.  */
 	  if (GET_CODE (xop0) == SUBREG && GET_MODE (xop0) != maxmode)
-	    abort ();
+	    goto extzv_loses;
 	  if (GET_CODE (xop0) == REG && GET_MODE (xop0) != maxmode)
-	    xop0 = gen_rtx (SUBREG, maxmode, xop0, 0);
+	    xop0 = gen_rtx_SUBREG (maxmode, xop0, 0);
 
 	  /* On big-endian machines, we count bits from the most significant.
 	     If the bit field insn does not, we must invert.  */
@@ -1209,7 +1221,7 @@ extract_bit_field (str_rtx, bitsize, bitnum, unsignedp,
 	{
 	  int xbitpos = bitpos, xoffset = offset;
 	  rtx bitsize_rtx, bitpos_rtx;
-	  rtx last = get_last_insn();
+	  rtx last = get_last_insn ();
 	  rtx xop0 = op0, xtarget = target;
 	  rtx xspec_target = spec_target;
 	  rtx xspec_target_subreg = spec_target_subreg;
@@ -1267,9 +1279,9 @@ extract_bit_field (str_rtx, bitsize, bitnum, unsignedp,
 	  /* If op0 is a register, we need it in MAXMODE (which is usually
 	     SImode) to make it acceptable to the format of extv.  */
 	  if (GET_CODE (xop0) == SUBREG && GET_MODE (xop0) != maxmode)
-	    abort ();
+	    goto extv_loses;
 	  if (GET_CODE (xop0) == REG && GET_MODE (xop0) != maxmode)
-	    xop0 = gen_rtx (SUBREG, maxmode, xop0, 0);
+	    xop0 = gen_rtx_SUBREG (maxmode, xop0, 0);
 
 	  /* On big-endian machines, we count bits from the most significant.
 	     If the bit field insn does not, we must invert.  */
@@ -1348,7 +1360,7 @@ extract_bit_field (str_rtx, bitsize, bitnum, unsignedp,
 				    target, unsignedp);
 	  if (GET_CODE (target) != REG)
 	    target = copy_to_reg (target);
-	  return gen_rtx (SUBREG, tmode, target, 0);
+	  return gen_rtx_SUBREG (tmode, target, 0);
 	}
       else
 	return convert_to_mode (tmode, target, unsignedp);
@@ -1413,7 +1425,7 @@ extract_fixed_bit_field (tmode, op0, offset, bitsize, bitpos,
       total_bits = GET_MODE_BITSIZE (mode);
 
       /* Make sure bitpos is valid for the chosen mode.  Adjust BITPOS to
-	 be be in the range 0 to total_bits-1, and put any excess bytes in
+	 be in the range 0 to total_bits-1, and put any excess bytes in
 	 OFFSET.  */
       if (bitpos >= total_bits)
 	{
@@ -1603,7 +1615,7 @@ extract_split_bit_field (op0, bitsize, bitpos, unsignedp, align)
 {
   int unit;
   int bitsdone = 0;
-  rtx result;
+  rtx result = NULL_RTX;
   int first = 1;
 
   /* Make sure UNIT isn't larger than BITS_PER_WORD, we can only handle that
@@ -1749,11 +1761,16 @@ expand_shift (code, mode, shifted, amount, target, unsignedp)
   op1 = expand_expr (amount, NULL_RTX, VOIDmode, 0);
 
 #ifdef SHIFT_COUNT_TRUNCATED
-  if (SHIFT_COUNT_TRUNCATED
-      && GET_CODE (op1) == CONST_INT
-      && (unsigned HOST_WIDE_INT) INTVAL (op1) >= GET_MODE_BITSIZE (mode))
-    op1 = GEN_INT ((unsigned HOST_WIDE_INT) INTVAL (op1)
-		   % GET_MODE_BITSIZE (mode));
+  if (SHIFT_COUNT_TRUNCATED)
+    {
+      if (GET_CODE (op1) == CONST_INT
+          && (unsigned HOST_WIDE_INT) INTVAL (op1) >= GET_MODE_BITSIZE (mode))
+        op1 = GEN_INT ((unsigned HOST_WIDE_INT) INTVAL (op1)
+		       % GET_MODE_BITSIZE (mode));
+      else if (GET_CODE (op1) == SUBREG
+	       && SUBREG_WORD (op1) == 0)
+	op1 = SUBREG_REG (op1);
+    }
 #endif
 
   if (op1 == const0_rtx)
@@ -1900,6 +1917,15 @@ struct algorithm
   char log[MAX_BITS_PER_WORD];
 };
 
+static void synth_mult			PROTO((struct algorithm *,
+					       unsigned HOST_WIDE_INT,
+					       int));
+static unsigned HOST_WIDE_INT choose_multiplier PROTO((unsigned HOST_WIDE_INT,
+						       int, int,
+						       unsigned HOST_WIDE_INT *,
+						       int *, int *));
+static unsigned HOST_WIDE_INT invert_mod2n	PROTO((unsigned HOST_WIDE_INT,
+						       int));
 /* Compute and return the best algorithm for multiplying by T.
    The algorithm must cost less than cost_limit
    If retval.cost >= COST_LIMIT, no algorithm was found and all
@@ -1980,10 +2006,16 @@ synth_mult (alg_out, t, cost_limit)
 
       for (w = 1; (w & t) != 0; w <<= 1)
 	;
-      if (w > 2
-	  /* Reject the case where t is 3.
-	     Thus we prefer addition in that case.  */
-	  && t != 3)
+      /* If T was -1, then W will be zero after the loop.  This is another
+	 case where T ends with ...111.  Handling this with (T + 1) and 
+	 subtract 1 produces slightly better code and results in algorithm
+	 selection much faster than treating it like the ...0111 case
+	 below.  */
+      if (w == 0
+	  || (w > 2
+	      /* Reject the case where t is 3.
+		 Thus we prefer addition in that case.  */
+	      && t != 3))
 	{
 	  /* T ends with ...111.  Multiply by (T + 1) and subtract 1.  */
 
@@ -2189,7 +2221,7 @@ expand_mult (mode, op0, op1, target, unsignedp)
 	 and then negate, do the multiplication directly, or do multiplication
 	 by OP1 - 1.  */
 
-      mult_cost = rtx_cost (gen_rtx (MULT, mode, op0, op1), SET);
+      mult_cost = rtx_cost (gen_rtx_MULT (mode, op0, op1), SET);
       mult_cost = MIN (12 * add_cost, mult_cost);
 
       synth_mult (&alg, val, mult_cost);
@@ -2246,7 +2278,8 @@ expand_mult (mode, op0, op1, target, unsignedp)
 	      rtx shift_subtarget = preserve ? 0 : accum;
 	      rtx add_target
 		= (opno == alg.ops - 1 && target != 0 && variant != add_variant
-		  ? target : 0);
+		   && ! preserve)
+		  ? target : 0;
 	      rtx accum_target = preserve ? 0 : accum;
 	      
 	      switch (alg.op[opno])
@@ -2260,7 +2293,7 @@ expand_mult (mode, op0, op1, target, unsignedp)
 		case alg_add_t_m2:
 		  tem = expand_shift (LSHIFT_EXPR, mode, op0,
 				      build_int_2 (log, 0), NULL_RTX, 0);
-		  accum = force_operand (gen_rtx (PLUS, mode, accum, tem),
+		  accum = force_operand (gen_rtx_PLUS (mode, accum, tem),
 					 add_target ? add_target : accum_target);
 		  val_so_far += (HOST_WIDE_INT) 1 << log;
 		  break;
@@ -2268,7 +2301,7 @@ expand_mult (mode, op0, op1, target, unsignedp)
 		case alg_sub_t_m2:
 		  tem = expand_shift (LSHIFT_EXPR, mode, op0,
 				      build_int_2 (log, 0), NULL_RTX, 0);
-		  accum = force_operand (gen_rtx (MINUS, mode, accum, tem),
+		  accum = force_operand (gen_rtx_MINUS (mode, accum, tem),
 					 add_target ? add_target : accum_target);
 		  val_so_far -= (HOST_WIDE_INT) 1 << log;
 		  break;
@@ -2277,7 +2310,7 @@ expand_mult (mode, op0, op1, target, unsignedp)
 		  accum = expand_shift (LSHIFT_EXPR, mode, accum,
 					build_int_2 (log, 0), shift_subtarget,
 					0);
-		  accum = force_operand (gen_rtx (PLUS, mode, accum, op0),
+		  accum = force_operand (gen_rtx_PLUS (mode, accum, op0),
 					 add_target ? add_target : accum_target);
 		  val_so_far = (val_so_far << log) + 1;
 		  break;
@@ -2286,7 +2319,7 @@ expand_mult (mode, op0, op1, target, unsignedp)
 		  accum = expand_shift (LSHIFT_EXPR, mode, accum,
 					build_int_2 (log, 0), shift_subtarget,
 					0);
-		  accum = force_operand (gen_rtx (MINUS, mode, accum, op0),
+		  accum = force_operand (gen_rtx_MINUS (mode, accum, op0),
 					 add_target ? add_target : accum_target);
 		  val_so_far = (val_so_far << log) - 1;
 		  break;
@@ -2294,7 +2327,7 @@ expand_mult (mode, op0, op1, target, unsignedp)
 		case alg_add_factor:
 		  tem = expand_shift (LSHIFT_EXPR, mode, accum,
 				      build_int_2 (log, 0), NULL_RTX, 0);
-		  accum = force_operand (gen_rtx (PLUS, mode, accum, tem),
+		  accum = force_operand (gen_rtx_PLUS (mode, accum, tem),
 					 add_target ? add_target : accum_target);
 		  val_so_far += val_so_far << log;
 		  break;
@@ -2302,7 +2335,7 @@ expand_mult (mode, op0, op1, target, unsignedp)
 		case alg_sub_factor:
 		  tem = expand_shift (LSHIFT_EXPR, mode, accum,
 				      build_int_2 (log, 0), NULL_RTX, 0);
-		  accum = force_operand (gen_rtx (MINUS, mode, tem, accum),
+		  accum = force_operand (gen_rtx_MINUS (mode, tem, accum),
 					 (add_target ? add_target
 					  : preserve ? 0 : tem));
 		  val_so_far = (val_so_far << log) - val_so_far;
@@ -2317,9 +2350,9 @@ expand_mult (mode, op0, op1, target, unsignedp)
 
 	      insn = get_last_insn ();
 	      REG_NOTES (insn)
-		= gen_rtx (EXPR_LIST, REG_EQUAL,
-			   gen_rtx (MULT, mode, op0, GEN_INT (val_so_far)),
-			   REG_NOTES (insn));
+		= gen_rtx_EXPR_LIST (REG_EQUAL,
+				     gen_rtx_MULT (mode, op0, GEN_INT (val_so_far)),
+				     REG_NOTES (insn));
 	    }
 
 	  if (variant == negate_variant)
@@ -2330,7 +2363,7 @@ expand_mult (mode, op0, op1, target, unsignedp)
 	  else if (variant == add_variant)
 	    {
 	      val_so_far = val_so_far + 1;
-	      accum = force_operand (gen_rtx (PLUS, mode, accum, op0), target);
+	      accum = force_operand (gen_rtx_PLUS (mode, accum, op0), target);
 	    }
 
 	  if (val != val_so_far)
@@ -2521,14 +2554,16 @@ expand_mult_highpart_adjust (mode, adj_operand, op0, op1, target, unsignedp)
 		      build_int_2 (GET_MODE_BITSIZE (mode) - 1, 0),
 		      NULL_RTX, 0);
   tem = expand_and (tem, op1, NULL_RTX);
-  adj_operand = force_operand (gen_rtx (adj_code, mode, adj_operand, tem),
-			       adj_operand);
+  adj_operand
+    = force_operand (gen_rtx_fmt_ee (adj_code, mode, adj_operand, tem),
+		     adj_operand);
 
   tem = expand_shift (RSHIFT_EXPR, mode, op1,
 		      build_int_2 (GET_MODE_BITSIZE (mode) - 1, 0),
 		      NULL_RTX, 0);
   tem = expand_and (tem, op0, NULL_RTX);
-  target = force_operand (gen_rtx (adj_code, mode, adj_operand, tem), target);
+  target = force_operand (gen_rtx_fmt_ee (adj_code, mode, adj_operand, tem),
+			  target);
 
   return target;
 }
@@ -2713,6 +2748,7 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
   optab optab1, optab2;
   int op1_is_constant, op1_is_pow2;
   int max_cost, extra_cost;
+  static HOST_WIDE_INT last_div_const = 0;
 
   op1_is_constant = GET_CODE (op1) == CONST_INT;
   op1_is_pow2 = (op1_is_constant
@@ -2822,8 +2858,15 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
   size = GET_MODE_BITSIZE (mode);
 #endif
 
+  /* Only deduct something for a REM if the last divide done was
+     for a different constant.   Then set the constant of the last
+     divide.  */
   max_cost = div_cost[(int) compute_mode]
-    - (rem_flag ? mul_cost[(int) compute_mode] + add_cost : 0);
+    - (rem_flag && ! (last_div_const != 0 && op1_is_constant
+		      && INTVAL (op1) == last_div_const)
+       ? mul_cost[(int) compute_mode] + add_cost : 0);
+
+  last_div_const = ! rem_flag && op1_is_constant ? INTVAL (op1) : 0;
 
   /* Now convert to the best mode to use.  */
   if (compute_mode != mode)
@@ -2831,13 +2874,13 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
       op0 = convert_modes (compute_mode, mode, op0, unsignedp);
       op1 = convert_modes (compute_mode, mode, op1, unsignedp);
 
-      /* convert_modes may have tossed op1 into a register, so we
-	 absolutely must recompute the following.  */
+      /* convert_modes may have placed op1 into a register, so we
+	 must recompute the following.  */
       op1_is_constant = GET_CODE (op1) == CONST_INT;
       op1_is_pow2 = (op1_is_constant
 		     && ((EXACT_POWER_OF_2_OR_ZERO_P (INTVAL (op1))
 			  || (! unsignedp
-			      && EXACT_POWER_OF_2_OR_ZERO_P (-INTVAL (op1))))));
+			      && EXACT_POWER_OF_2_OR_ZERO_P (-INTVAL (op1)))))) ;
     }
 
   /* If one of the operands is a volatile MEM, copy it into a register.  */
@@ -2941,13 +2984,13 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 						       max_cost - extra_cost);
 			    if (t1 == 0)
 			      goto fail1;
-			    t2 = force_operand (gen_rtx (MINUS, compute_mode,
-							 op0, t1),
+			    t2 = force_operand (gen_rtx_MINUS (compute_mode,
+							       op0, t1),
 						NULL_RTX);
 			    t3 = expand_shift (RSHIFT_EXPR, compute_mode, t2,
 					       build_int_2 (1, 0), NULL_RTX,1);
-			    t4 = force_operand (gen_rtx (PLUS, compute_mode,
-							 t1, t3),
+			    t4 = force_operand (gen_rtx_PLUS (compute_mode,
+							      t1, t3),
 						NULL_RTX);
 			    quotient
 			      = expand_shift (RSHIFT_EXPR, compute_mode, t4,
@@ -2983,9 +3026,9 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 		    && (set = single_set (insn)) != 0
 		    && SET_DEST (set) == quotient)
 		  REG_NOTES (insn)
-		    = gen_rtx (EXPR_LIST, REG_EQUAL,
-			       gen_rtx (UDIV, compute_mode, op0, op1),
-			       REG_NOTES (insn));
+		    = gen_rtx_EXPR_LIST (REG_EQUAL,
+					 gen_rtx_UDIV (compute_mode, op0, op1),
+					 REG_NOTES (insn));
 	      }
 	    else		/* TRUNC_DIV, signed */
 	      {
@@ -3026,9 +3069,8 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 			rtx t1;
 
 			t1 = copy_to_mode_reg (compute_mode, op0);
-			emit_cmp_insn (t1, const0_rtx, GE, 
-				       NULL_RTX, compute_mode, 0, 0);
-			emit_jump_insn (gen_bge (label));
+			do_cmp_and_jump (t1, const0_rtx, GE,
+					 compute_mode, label);
 			expand_inc (t1, GEN_INT (abs_d - 1));
 			emit_label (label);
 			quotient = expand_shift (RSHIFT_EXPR, compute_mode, t1,
@@ -3044,8 +3086,8 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 			t2 = expand_shift (RSHIFT_EXPR, compute_mode, t1,
 					   build_int_2 (size - lgup, 0),
 					   NULL_RTX, 1);
-			t3 = force_operand (gen_rtx (PLUS, compute_mode,
-						     op0, t2),
+			t3 = force_operand (gen_rtx_PLUS (compute_mode,
+							  op0, t2),
 					    NULL_RTX);
 			quotient = expand_shift (RSHIFT_EXPR, compute_mode, t3,
 						 build_int_2 (lgup, 0),
@@ -3061,9 +3103,10 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 			    && (set = single_set (insn)) != 0
 			    && SET_DEST (set) == quotient)
 			  REG_NOTES (insn)
-			    = gen_rtx (EXPR_LIST, REG_EQUAL,
-				       gen_rtx (DIV, compute_mode, op0,
-						GEN_INT (abs_d)),
+			    = gen_rtx_EXPR_LIST (REG_EQUAL,
+						 gen_rtx_DIV (compute_mode,
+							      op0,
+							      GEN_INT (abs_d)),
 				       REG_NOTES (insn));
 
 			quotient = expand_unop (compute_mode, neg_optab,
@@ -3090,10 +3133,10 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 			t3 = expand_shift (RSHIFT_EXPR, compute_mode, op0,
 					   build_int_2 (size - 1, 0), NULL_RTX, 0);
 			if (d < 0)
-			  quotient = force_operand (gen_rtx (MINUS, compute_mode, t3, t2),
+			  quotient = force_operand (gen_rtx_MINUS (compute_mode, t3, t2),
 						    tquotient);
 			else
-			  quotient = force_operand (gen_rtx (MINUS, compute_mode, t2, t3),
+			  quotient = force_operand (gen_rtx_MINUS (compute_mode, t2, t3),
 						    tquotient);
 		      }
 		    else
@@ -3108,17 +3151,17 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 						   max_cost - extra_cost);
 			if (t1 == 0)
 			  goto fail1;
-			t2 = force_operand (gen_rtx (PLUS, compute_mode, t1, op0),
+			t2 = force_operand (gen_rtx_PLUS (compute_mode, t1, op0),
 					    NULL_RTX);
 			t3 = expand_shift (RSHIFT_EXPR, compute_mode, t2,
 					   build_int_2 (post_shift, 0), NULL_RTX, 0);
 			t4 = expand_shift (RSHIFT_EXPR, compute_mode, op0,
 					   build_int_2 (size - 1, 0), NULL_RTX, 0);
 			if (d < 0)
-			  quotient = force_operand (gen_rtx (MINUS, compute_mode, t4, t3),
+			  quotient = force_operand (gen_rtx_MINUS (compute_mode, t4, t3),
 						    tquotient);
 			else
-			  quotient = force_operand (gen_rtx (MINUS, compute_mode, t3, t4),
+			  quotient = force_operand (gen_rtx_MINUS (compute_mode, t3, t4),
 						    tquotient);
 		      }
 		  }
@@ -3130,9 +3173,9 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 		    && (set = single_set (insn)) != 0
 		    && SET_DEST (set) == quotient)
 		  REG_NOTES (insn)
-		    = gen_rtx (EXPR_LIST, REG_EQUAL,
-			       gen_rtx (DIV, compute_mode, op0, op1),
-			       REG_NOTES (insn));
+		    = gen_rtx_EXPR_LIST (REG_EQUAL,
+					 gen_rtx_DIV (compute_mode, op0, op1),
+					 REG_NOTES (insn));
 	      }
 	    break;
 	  }
@@ -3200,13 +3243,13 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 	    else
 	      {
 		rtx nsign, t1, t2, t3, t4;
-		t1 = force_operand (gen_rtx (PLUS, compute_mode,
-					     op0, constm1_rtx), NULL_RTX);
+		t1 = force_operand (gen_rtx_PLUS (compute_mode,
+						  op0, constm1_rtx), NULL_RTX);
 		t2 = expand_binop (compute_mode, ior_optab, op0, t1, NULL_RTX,
 				   0, OPTAB_WIDEN);
 		nsign = expand_shift (RSHIFT_EXPR, compute_mode, t2,
 				      build_int_2 (size - 1, 0), NULL_RTX, 0);
-		t3 = force_operand (gen_rtx (MINUS, compute_mode, t1, nsign),
+		t3 = force_operand (gen_rtx_MINUS (compute_mode, t1, nsign),
 				    NULL_RTX);
 		t4 = expand_divmod (0, TRUNC_DIV_EXPR, compute_mode, t3, op1,
 				    NULL_RTX, 0);
@@ -3215,8 +3258,8 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 		    rtx t5;
 		    t5 = expand_unop (compute_mode, one_cmpl_optab, nsign,
 				      NULL_RTX, 0);
-		    quotient = force_operand (gen_rtx (PLUS, compute_mode,
-						       t4, t5),
+		    quotient = force_operand (gen_rtx_PLUS (compute_mode,
+							    t4, t5),
 					      tquotient);
 		  }
 	      }
@@ -3254,13 +3297,10 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 	       Save that for later.  */
 	    rtx tem;
 	    rtx label = gen_label_rtx ();
-	    emit_cmp_insn (remainder, const0_rtx, EQ, NULL_RTX,
-			   compute_mode, 0, 0);
-	    emit_jump_insn (gen_beq (label));
+	    do_cmp_and_jump (remainder, const0_rtx, EQ, compute_mode, label);
 	    tem = expand_binop (compute_mode, xor_optab, op0, op1,
 				NULL_RTX, 0, OPTAB_WIDEN);
-	    emit_cmp_insn (tem, const0_rtx, GE, NULL_RTX, compute_mode, 0, 0);
-	    emit_jump_insn (gen_bge (label));
+	    do_cmp_and_jump (tem, const0_rtx, GE, compute_mode, label);
 	    expand_dec (quotient, const1_rtx);
 	    expand_inc (remainder, op1);
 	    emit_label (label);
@@ -3281,11 +3321,8 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 	  label3 = gen_label_rtx ();
 	  label4 = gen_label_rtx ();
 	  label5 = gen_label_rtx ();
-	  emit_cmp_insn (op1, const0_rtx, LT, NULL_RTX, compute_mode, 0, 0);
-	  emit_jump_insn (gen_blt (label2));
-	  emit_cmp_insn (adjusted_op0, const0_rtx, LT, NULL_RTX,
-			 compute_mode, 0, 0);
-	  emit_jump_insn (gen_blt (label1));
+	  do_cmp_and_jump (op1, const0_rtx, LT, compute_mode, label2);
+	  do_cmp_and_jump (adjusted_op0, const0_rtx, LT, compute_mode, label1);
 	  tem = expand_binop (compute_mode, sdiv_optab, adjusted_op0, op1,
 			      quotient, 0, OPTAB_LIB_WIDEN);
 	  if (tem != quotient)
@@ -3297,9 +3334,7 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 	  emit_jump_insn (gen_jump (label4));
 	  emit_barrier ();
 	  emit_label (label2);
-	  emit_cmp_insn (adjusted_op0, const0_rtx, GT, NULL_RTX,
-			 compute_mode, 0, 0);
-	  emit_jump_insn (gen_bgt (label3));
+	  do_cmp_and_jump (adjusted_op0, const0_rtx, GT, compute_mode, label3);
 	  tem = expand_binop (compute_mode, sdiv_optab, adjusted_op0, op1,
 			      quotient, 0, OPTAB_LIB_WIDEN);
 	  if (tem != quotient)
@@ -3339,16 +3374,14 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 		  {
 		    rtx lab;
 		    lab = gen_label_rtx ();
-		    emit_cmp_insn (t2, const0_rtx, EQ, NULL_RTX,
-				   compute_mode, 0, 0);
-		    emit_jump_insn (gen_beq (lab));
+		    do_cmp_and_jump (t2, const0_rtx, EQ, compute_mode, lab);
 		    expand_inc (t1, const1_rtx);
 		    emit_label (lab);
 		    quotient = t1;
 		  }
 		else
-		  quotient = force_operand (gen_rtx (PLUS, compute_mode,
-						     t1, t3),
+		  quotient = force_operand (gen_rtx_PLUS (compute_mode,
+							  t1, t3),
 					    tquotient);
 		break;
 	      }
@@ -3380,9 +3413,8 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 		/* This could be computed with a branch-less sequence.
 		   Save that for later.  */
 		rtx label = gen_label_rtx ();
-		emit_cmp_insn (remainder, const0_rtx, EQ, NULL_RTX,
-			       compute_mode, 0, 0);
-		emit_jump_insn (gen_beq (label));
+		do_cmp_and_jump (remainder, const0_rtx, EQ,
+				 compute_mode, label);
 		expand_inc (quotient, const1_rtx);
 		expand_dec (remainder, op1);
 		emit_label (label);
@@ -3399,9 +3431,8 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 	      adjusted_op0 = copy_to_mode_reg (compute_mode, op0);
 	      label1 = gen_label_rtx ();
 	      label2 = gen_label_rtx ();
-	      emit_cmp_insn (adjusted_op0, const0_rtx, NE, NULL_RTX,
-			     compute_mode, 0, 0);
-	      emit_jump_insn (gen_bne (label1));
+	      do_cmp_and_jump (adjusted_op0, const0_rtx, NE,
+			       compute_mode, label1);
 	      emit_move_insn  (quotient, const0_rtx);
 	      emit_jump_insn (gen_jump (label2));
 	      emit_barrier ();
@@ -3441,16 +3472,14 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 		  {
 		    rtx lab;
 		    lab = gen_label_rtx ();
-		    emit_cmp_insn (t2, const0_rtx, EQ, NULL_RTX,
-				   compute_mode, 0, 0);
-		    emit_jump_insn (gen_beq (lab));
+		    do_cmp_and_jump (t2, const0_rtx, EQ, compute_mode, lab);
 		    expand_inc (t1, const1_rtx);
 		    emit_label (lab);
 		    quotient = t1;
 		  }
 		else
-		  quotient = force_operand (gen_rtx (PLUS, compute_mode,
-						     t1, t3),
+		  quotient = force_operand (gen_rtx_PLUS (compute_mode,
+							  t1, t3),
 					    tquotient);
 		break;
 	      }
@@ -3482,14 +3511,11 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 		   Save that for later.  */
 		rtx tem;
 		rtx label = gen_label_rtx ();
-		emit_cmp_insn (remainder, const0_rtx, EQ, NULL_RTX,
-			       compute_mode, 0, 0);
-		emit_jump_insn (gen_beq (label));
+		do_cmp_and_jump (remainder, const0_rtx, EQ,
+				 compute_mode, label);
 		tem = expand_binop (compute_mode, xor_optab, op0, op1,
 				    NULL_RTX, 0, OPTAB_WIDEN);
-		emit_cmp_insn (tem, const0_rtx, LT, NULL_RTX,
-			       compute_mode, 0, 0);
-		emit_jump_insn (gen_blt (label));
+		do_cmp_and_jump (tem, const0_rtx, LT, compute_mode, label);
 		expand_inc (quotient, const1_rtx);
 		expand_dec (remainder, op1);
 		emit_label (label);
@@ -3510,12 +3536,9 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 	      label3 = gen_label_rtx ();
 	      label4 = gen_label_rtx ();
 	      label5 = gen_label_rtx ();
-	      emit_cmp_insn (op1, const0_rtx, LT, NULL_RTX,
-			     compute_mode, 0, 0);
-	      emit_jump_insn (gen_blt (label2));
-	      emit_cmp_insn (adjusted_op0, const0_rtx, GT, NULL_RTX,
-			     compute_mode, 0, 0);
-	      emit_jump_insn (gen_bgt (label1));
+	      do_cmp_and_jump (op1, const0_rtx, LT, compute_mode, label2);
+	      do_cmp_and_jump (adjusted_op0, const0_rtx, GT,
+			       compute_mode, label1);
 	      tem = expand_binop (compute_mode, sdiv_optab, adjusted_op0, op1,
 				  quotient, 0, OPTAB_LIB_WIDEN);
 	      if (tem != quotient)
@@ -3527,9 +3550,8 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 	      emit_jump_insn (gen_jump (label4));
 	      emit_barrier ();
 	      emit_label (label2);
-	      emit_cmp_insn (adjusted_op0, const0_rtx, LT, NULL_RTX,
-			     compute_mode, 0, 0);
-	      emit_jump_insn (gen_blt (label3));
+	      do_cmp_and_jump (adjusted_op0, const0_rtx, LT,
+			       compute_mode, label3);
 	      tem = expand_binop (compute_mode, sdiv_optab, adjusted_op0, op1,
 				  quotient, 0, OPTAB_LIB_WIDEN);
 	      if (tem != quotient)
@@ -3567,10 +3589,11 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 
 	    insn = get_last_insn ();
 	    REG_NOTES (insn)
-	      = gen_rtx (EXPR_LIST, REG_EQUAL,
-			 gen_rtx (unsignedp ? UDIV : DIV, compute_mode,
-				  op0, op1),
-			 REG_NOTES (insn));
+	      = gen_rtx_EXPR_LIST (REG_EQUAL,
+				   gen_rtx_fmt_ee (unsignedp ? UDIV : DIV,
+						   compute_mode,
+						   op0, op1),
+				   REG_NOTES (insn));
 	  }
 	break;
 
@@ -3595,8 +3618,7 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 	    tem = plus_constant (op1, -1);
 	    tem = expand_shift (RSHIFT_EXPR, compute_mode, tem,
 				build_int_2 (1, 0), NULL_RTX, 1);
-	    emit_cmp_insn (remainder, tem, LEU, NULL_RTX, compute_mode, 0, 0);
-	    emit_jump_insn (gen_bleu (label));
+	    do_cmp_and_jump (remainder, tem, LEU, compute_mode, label);
 	    expand_inc (quotient, const1_rtx);
 	    expand_dec (remainder, op1);
 	    emit_label (label);
@@ -3621,8 +3643,7 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 	    abs_op1 = expand_abs (compute_mode, op1, NULL_RTX, 0, 0);
 	    tem = expand_shift (LSHIFT_EXPR, compute_mode, abs_rem,
 				build_int_2 (1, 0), NULL_RTX, 1);
-	    emit_cmp_insn (tem, abs_op1, LTU, NULL_RTX, compute_mode, 0, 0);
-	    emit_jump_insn (gen_bltu (label));
+	    do_cmp_and_jump (tem, abs_op1, LTU, compute_mode, label);
 	    tem = expand_binop (compute_mode, xor_optab, op0, op1,
 				NULL_RTX, 0, OPTAB_WIDEN);
 	    mask = expand_shift (RSHIFT_EXPR, compute_mode, tem,
@@ -3640,6 +3661,9 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
 	    emit_label (label);
 	  }
 	return gen_lowpart (mode, rem_flag ? remainder : quotient);
+	
+      default:
+	abort ();
       }
 
   if (quotient == 0)
@@ -3955,6 +3979,8 @@ emit_store_flag (target, code, op0, op1, mode, unsignedp, normalizep)
     case LTU:
       if (op1 == const1_rtx)
 	op1 = const0_rtx, code = EQ;
+      break;
+    default:
       break;
     }
 
@@ -4321,4 +4347,77 @@ emit_store_flag_force (target, code, op0, op1, mode, unsignedp, normalizep)
   emit_label (label);
 
   return target;
+}
+
+/* Perform possibly multi-word comparison and conditional jump to LABEL
+   if ARG1 OP ARG2 true where ARG1 and ARG2 are of mode MODE
+
+   The algorithm is based on the code in expr.c:do_jump.
+
+   Note that this does not perform a general comparison.  Only variants
+   generated within expmed.c are correctly handled, others abort (but could
+   be handled if needed).  */
+
+static void
+do_cmp_and_jump (arg1, arg2, op, mode, label)
+     rtx arg1, arg2, label;
+    enum rtx_code op;
+    enum machine_mode mode;
+{
+  /* If this mode is an integer too wide to compare properly,
+     compare word by word.  Rely on cse to optimize constant cases.  */
+
+  if (GET_MODE_CLASS (mode) == MODE_INT && !can_compare_p (mode))
+    {
+      rtx label2 = gen_label_rtx ();
+
+      switch (op)
+	{
+	case LTU:
+	  do_jump_by_parts_greater_rtx (mode, 1, arg2, arg1, label2, label);
+	  break;
+
+	case LEU:
+	  do_jump_by_parts_greater_rtx (mode, 1, arg1, arg2, label, label2);
+	  break;
+
+	case LT:
+	  do_jump_by_parts_greater_rtx (mode, 0, arg2, arg1, label2, label);
+	  break;
+
+	case GT:
+	  do_jump_by_parts_greater_rtx (mode, 0, arg1, arg2, label2, label);
+	  break;
+
+	case GE:
+	  do_jump_by_parts_greater_rtx (mode, 0, arg2, arg1, label, label2);
+	  break;
+
+	  /* do_jump_by_parts_equality_rtx compares with zero.  Luckily
+	     that's the only equality operations we do */
+	case EQ:
+	  if (arg2 != const0_rtx || mode != GET_MODE(arg1))
+	    abort();
+	  do_jump_by_parts_equality_rtx (arg1, label2, label);
+	  break;
+
+	case NE:
+	  if (arg2 != const0_rtx || mode != GET_MODE(arg1))
+	    abort();
+	  do_jump_by_parts_equality_rtx (arg1, label, label2);
+	  break;
+
+	default:
+	  abort();
+	}
+
+      emit_label (label2);
+    }
+  else
+    {
+      emit_cmp_insn(arg1, arg2, op, NULL_RTX, mode, 0, 0);
+      if (bcc_gen_fctn[(int) op] == 0)
+	abort ();
+      emit_jump_insn ((*bcc_gen_fctn[(int) op]) (label));
+    }
 }

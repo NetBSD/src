@@ -811,7 +811,7 @@ enum reg_class {
     as the "next arg register" to be passed to gen_call.  */
 
 #define FUNCTION_ARG(CUM, MODE, TYPE, NAMED) \
-  ((MODE) == VOIDmode ? gen_rtx (CONST_INT, VOIDmode, (CUM)) : 0)
+  ((MODE) == VOIDmode ? GEN_INT ((CUM)) : 0)
 
 /* This macro generates the assembly code for function entry.
    FILE is a stdio stream to output the code to.
@@ -1029,10 +1029,11 @@ enum reg_class {
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE SImode
 
-/* Define this if the case instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
-/* #define CASE_VECTOR_PC_RELATIVE */
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+/* #define CASE_VECTOR_PC_RELATIVE 1 */
 
 /* Define this if the case instruction drops through after the table
    when the index is out of range.  Don't define it if the case insn
@@ -1401,7 +1402,7 @@ extern double atof();
 /* This is how to output an element of a case-vector that is relative.  
    (not used on Convex) */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
   fprintf (FILE, "\tds.w L%d-L%d\n", VALUE, REL)
 
 /* This is how to output an assembler line

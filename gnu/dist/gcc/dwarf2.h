@@ -1,6 +1,6 @@
 /* Declarations and definitions of codes relating to the DWARF2 symbolic
    debugging information format.
-   Copyright (C) 1992, 1993, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1993, 1995, 1996, 1997 Free Software Foundation, Inc.
    Contributed by Gary Funck (gary@intrepid.com).  Derived from the
    DWARF 1 implementation written by Ron Guilmette (rfg@monkeys.com).
 
@@ -25,6 +25,9 @@
    Programming Languages Special Interest Group (UI/PLSIG) and distributed
    by UNIX International.  Copies of this specification are available from
    UNIX International, 20 Waterview Boulevard, Parsippany, NJ, 07054.  */
+
+/* This file is shared between GCC and GDB, and should not contain
+   prototypes.  */
 
 /* Tag names and codes.  */
 
@@ -441,8 +444,8 @@ enum dwarf_inline_attribute
     DW_INL_declared_inlined = 3
   };
 
-/* descriminant lists */
-enum dwarf_descrim_list
+/* discriminant lists */
+enum dwarf_discrim_list
   {
     DW_DSC_label = 0,
     DW_DSC_range = 1

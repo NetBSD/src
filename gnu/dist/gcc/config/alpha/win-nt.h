@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler, for DEC Alpha
    running Windows/NT.
-   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1996, 1998 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
 This file is part of GNU CC.
@@ -20,13 +20,17 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT (MASK_FP | MASK_FPREGS)
+
+#undef TARGET_WINDOWS_NT
+#define TARGET_WINDOWS_NT 1
+
 /* Names to predefine in the preprocessor for this target machine.  */
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-DWIN32 -D_WIN32 -DWINNT -D__STDC__=0 -DALMOST_STDC\
-  -D_M_ALPHA -D_ALPHA_ -D__alpha -D__alpha__\
-  -D_LONGLONG -D__unaligned= -D__stdcall= \
-  -Asystem(winnt) -Acpu(alpha) -Amachine(alpha)"
+#define CPP_PREDEFINES "-DWIN32 -D_WIN32 -DWINNT -D__STDC__=0 -DALMOST_STDC \
+-D_M_ALPHA -D_ALPHA_ -D_LONGLONG -D__unaligned= -D__stdcall= -Asystem(winnt)"
 
 #undef ASM_SPEC
 #undef ASM_FINAL_SPEC
@@ -82,8 +86,8 @@ Boston, MA 02111-1307, USA.  */
 #define TRAMPOLINE_TEMPLATE(FILE)			\
 {							\
   fprintf (FILE, "\tbr $27,$LTRAMPP\n");		\
-  fprintf (FILE, "$LTRAMPP:\n\tldl $1,16($27)\n");	\
-  fprintf (FILE, "\tldl $27,12($27)\n");		\
+  fprintf (FILE, "$LTRAMPP:\n\tldl $1,12($27)\n");	\
+  fprintf (FILE, "\tldl $27,16($27)\n");		\
   fprintf (FILE, "\tjmp $31,($27),0\n");		\
   fprintf (FILE, "\t.long 0,0\n");			\
 }
@@ -95,34 +99,31 @@ Boston, MA 02111-1307, USA.  */
 
 /* Emit RTL insns to initialize the variable parts of a trampoline.
    FNADDR is an RTX for the address of the function's pure code.
-   CXT is an RTX for the static chain value for the function. 
-
-   This differs from the standard version in that:
-
-   We are not passed the current address in any register, and so have to 
-   load it ourselves.
-
-   We do not initialize the "hint" field because it only has an 8k
-   range and so the target is in range of something on the stack. 
-   Omitting the hint saves a bogus branch-prediction cache line load.
-
-   Always have an executable stack -- no need for a system call.
- */
+   CXT is an RTX for the static chain value for the function.   */
 
 #undef INITIALIZE_TRAMPOLINE
-#define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT)			\
-{									\
-  rtx _addr, _val;							\
+#define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT) \
+  alpha_initialize_trampoline (TRAMP, FNADDR, CXT, 16, 20, 12)
+
+/* Output code to add DELTA to the first argument, and then jump to FUNCTION.
+   Used for C++ multiple inheritance.  */
+
+#define ASM_OUTPUT_MI_THUNK(FILE, THUNK_FNDECL, DELTA, FUNCTION)	\
+do {									\
+  char *op, *fn_name = XSTR (XEXP (DECL_RTL (FUNCTION), 0), 0);		\
+  int reg;								\
 									\
-  _addr = memory_address (Pmode, plus_constant ((TRAMP), 16));		\
-  _val = force_reg(Pmode, (FNADDR));					\
-  emit_move_insn (gen_rtx (MEM, SImode, _addr),				\
-		  gen_rtx (SUBREG, SImode, _val, 0));			\
-  _addr = memory_address (Pmode, plus_constant ((TRAMP), 20));		\
-  _val = force_reg(Pmode, (CXT));					\
-  emit_move_insn (gen_rtx (MEM, SImode, _addr),				\
-		  gen_rtx (SUBREG, SImode, _val, 0));			\
+  /* Mark end of prologue.  */						\
+  output_end_prologue (FILE);						\
 									\
-  emit_insn (gen_rtx (UNSPEC_VOLATILE, VOIDmode,			\
-                      gen_rtvec (1, const0_rtx), 0));			\
-}
+  /* Rely on the assembler to macro expand a large delta.  */		\
+  reg = aggregate_value_p (TREE_TYPE (TREE_TYPE (FUNCTION))) ? 17 : 16; \
+  fprintf (FILE, "\tlda $%d,%ld($%d)\n", reg, (long)(DELTA), reg);      \       
+									\
+  op = "jsr";								\
+  if (current_file_function_operand (XEXP (DECL_RTL (FUNCTION), 0)))	\
+    op = "br";								\
+  fprintf (FILE, "\t%s $31,", op);					\
+  assemble_name (FILE, fn_name);					\
+  fputc ('\n', FILE);							\
+} while (0)

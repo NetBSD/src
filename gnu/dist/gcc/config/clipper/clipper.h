@@ -777,10 +777,11 @@ do									      \
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE SImode
 
-/* Define this if the case instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
-/* #define CASE_VECTOR_PC_RELATIVE */
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+/* #define CASE_VECTOR_PC_RELATIVE 1 */
 
 /* Define this if the case instruction drops through after the table
    when the index is out of range.  Don't define it if the case insn
@@ -1044,7 +1045,7 @@ do									      \
 
 /* This is how to output an element of a case-vector that is relative.  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
   fprintf (FILE, "\t.word .L%d-.L%d\n", VALUE, REL)
 
 /* This is how to output an assembler line

@@ -1,4 +1,3 @@
-/* CYGNUS LOCAL: whole file jason */
 /* hash.c -- hash table routines
    Copyright (C) 1993, 94 Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>
@@ -20,10 +19,11 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include "config.h"
+#include "system.h"
 #include "hash.h"
 #include "obstack.h"
-
-extern void free PARAMS ((PTR));
+#include "gansidecl.h"
+#include "toplev.h"
 
 /* Obstack allocation and deallocation routines.  */
 #define obstack_chunk_alloc xmalloc
@@ -33,10 +33,6 @@ extern char * xmalloc ();
 
 /* The default number of entries to use when creating a hash table.  */
 #define DEFAULT_SIZE (1009)
-
-#ifndef NULL
-#define NULL 0
-#endif
 
 /* Create a new hash table, given a number of entries.  */
 

@@ -1,6 +1,6 @@
 /* bad.c -- Implementation File (module.c template V1.0)
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -37,9 +37,10 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 /* Include files. */
 
 #include "proj.h"
-#include <ctype.h>
 #include "bad.h"
+#include "flags.j"
 #include "com.h"
+#include "toplev.j"
 #include "where.h"
 
 /* Externals defined here. */
@@ -456,7 +457,7 @@ ffebad_finish ()
   if (ffebad_places_ == 0)
     {
       /* Didn't output "warning:" string, capitalize it for message.  */
-      if ((s[0] != '\0') && isalpha (s[0]) && islower (s[0]))
+      if ((s[0] != '\0') && ISALPHA (s[0]) && ISLOWER (s[0]))
 	{
 	  char c;
 
@@ -485,7 +486,7 @@ ffebad_finish ()
       if (c == '%')
 	{
 	  c = ffebad_message_[++i];
-	  if (isalpha (c) && isupper (c))
+	  if (ISALPHA (c) && ISUPPER (c))
 	    {
 	      index = c - 'A';
 
@@ -503,7 +504,7 @@ ffebad_finish ()
 		    bufi = ffebad_bufputs_ (buf, bufi, s);
 		}
 	    }
-	  else if (isdigit (c))
+	  else if (ISDIGIT (c))
 	    {
 	      index = c - '0';
 

@@ -1,5 +1,5 @@
 /* Analyze RTL for C-Compiler
-   Copyright (C) 1987, 88, 9-6, 1998 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 92-97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -20,12 +20,12 @@ Boston, MA 02111-1307, USA.  */
 
 
 #include "config.h"
+#include "system.h"
 #include "rtl.h"
 
-extern int optimize;
-
-void note_stores ();
-int reg_set_p ();
+static int rtx_addr_can_trap_p	PROTO((rtx));
+static void reg_set_p_1		PROTO((rtx, rtx));
+static void reg_set_last_1	PROTO((rtx, rtx));
 
 
 /* Forward declarations */
@@ -105,12 +105,15 @@ rtx_varies_p (x)
 	 eliminated the frame and/or arg pointer and are using it
 	 for pseudos.  */
       return ! (x == frame_pointer_rtx || x == hard_frame_pointer_rtx
-		|| x == arg_pointer_rtx);
+		|| x == arg_pointer_rtx || x == pic_offset_table_rtx);
 
     case LO_SUM:
       /* The operand 0 of a LO_SUM is considered constant
 	 (in fact is it related specifically to operand 1).  */
       return rtx_varies_p (XEXP (x, 1));
+      
+    default:
+      break;
     }
 
   fmt = GET_RTX_FORMAT (code);
@@ -123,7 +126,7 @@ rtx_varies_p (x)
 
 /* Return 0 if the use of X as an address in a MEM can cause a trap.  */
 
-int
+static int
 rtx_addr_can_trap_p (x)
      register rtx x;
 {
@@ -155,6 +158,9 @@ rtx_addr_can_trap_p (x)
 
     case LO_SUM:
       return rtx_addr_can_trap_p (XEXP (x, 1));
+      
+    default:
+      break;
     }
 
   /* If it isn't one of the case above, it can cause a trap.  */
@@ -280,6 +286,9 @@ reg_mentioned_p (reg, in)
     case CONST_DOUBLE:
       /* These are kept unique for a given value.  */
       return 0;
+      
+    default:
+      break;
     }
 
   if (GET_CODE (reg) == code && rtx_equal_p (reg, in))
@@ -370,13 +379,13 @@ reg_referenced_p (x, body)
 			 + (UNITS_PER_WORD - 1)) / UNITS_PER_WORD)))
 	  && reg_overlap_mentioned_p (x, SET_DEST (body)))
 	return 1;
-      break;
+      return 0;
 
     case ASM_OPERANDS:
       for (i = ASM_OPERANDS_INPUT_LENGTH (body) - 1; i >= 0; i--)
 	if (reg_overlap_mentioned_p (x, ASM_OPERANDS_INPUT (body, i)))
 	  return 1;
-      break;
+      return 0;
 
     case CALL:
     case USE:
@@ -391,10 +400,11 @@ reg_referenced_p (x, body)
       for (i = XVECLEN (body, 0) - 1; i >= 0; i--)
 	if (reg_referenced_p (x, XVECEXP (body, 0, i)))
 	  return 1;
-      break;
+      return 0;
+      
+    default:
+      return 0;
     }
-
-  return 0;
 }
 
 /* Nonzero if register REG is referenced in an insn between
@@ -446,6 +456,7 @@ static int reg_set_flag;
 static void
 reg_set_p_1 (x, pat)
      rtx x;
+     rtx pat ATTRIBUTE_UNUSED;
 {
   /* We don't want to return 1 if X is a MEM that contains a register
      within REG_SET_REG.  */
@@ -523,6 +534,9 @@ modified_between_p (x, start, end)
 
     case REG:
       return reg_set_between_p (x, start, end);
+      
+    default:
+      break;
     }
 
   fmt = GET_RTX_FORMAT (code);
@@ -575,6 +589,9 @@ modified_in_p (x, insn)
 
     case REG:
       return reg_set_p (x, insn);
+
+    default:
+      break;
     }
 
   fmt = GET_RTX_FORMAT (code);
@@ -755,6 +772,9 @@ refers_to_regno_p (regno, endregno, x, loc)
 	return 0;
       x = SET_SRC (x);
       goto repeat;
+
+    default:
+      break;
     }
 
   /* X does not match, so try its subexpressions.  */
@@ -797,7 +817,14 @@ reg_overlap_mentioned_p (x, in)
 {
   int regno, endregno;
 
-  if (GET_CODE (x) == SUBREG)
+  /* Overly conservative.  */
+  if (GET_CODE (x) == STRICT_LOW_PART)
+    x = XEXP (x, 0);
+
+  /* If either argument is a constant, then modifying X can not affect IN.  */
+  if (CONSTANT_P (x) || CONSTANT_P (in))
+    return 0;
+  else if (GET_CODE (x) == SUBREG)
     {
       regno = REGNO (SUBREG_REG (x));
       if (regno < FIRST_PSEUDO_REGISTER)
@@ -805,8 +832,6 @@ reg_overlap_mentioned_p (x, in)
     }
   else if (GET_CODE (x) == REG)
     regno = REGNO (x);
-  else if (CONSTANT_P (x))
-    return 0;
   else if (GET_CODE (x) == MEM)
     {
       char *fmt;
@@ -1239,6 +1264,10 @@ find_reg_note (insn, kind, datum)
 {
   register rtx link;
 
+  /* Ignore anything that is not an INSN, JUMP_INSN or CALL_INSN.  */
+  if (GET_RTX_CLASS (GET_CODE (insn)) != 'i')
+    return 0;
+
   for (link = REG_NOTES (insn); link; link = XEXP (link, 1))
     if (REG_NOTE_KIND (link) == kind
 	&& (datum == 0 || datum == XEXP (link, 0)))
@@ -1258,6 +1287,10 @@ find_regno_note (insn, kind, regno)
      int regno;
 {
   register rtx link;
+
+  /* Ignore anything that is not an INSN, JUMP_INSN or CALL_INSN.  */
+  if (GET_RTX_CLASS (GET_CODE (insn)) != 'i')
+    return 0;
 
   for (link = REG_NOTES (insn); link; link = XEXP (link, 1))
     if (REG_NOTE_KIND (link) == kind
@@ -1421,6 +1454,9 @@ volatile_insn_p (x)
     case ASM_OPERANDS:
       if (MEM_VOLATILE_P (x))
 	return 1;
+
+    default:
+      break;
     }
 
   /* Recursively scan the operands of this expression.  */
@@ -1484,6 +1520,9 @@ volatile_refs_p (x)
     case ASM_OPERANDS:
       if (MEM_VOLATILE_P (x))
 	return 1;
+
+    default:
+      break;
     }
 
   /* Recursively scan the operands of this expression.  */
@@ -1556,6 +1595,9 @@ side_effects_p (x)
     case ASM_OPERANDS:
       if (MEM_VOLATILE_P (x))
 	return 1;
+
+    default:
+      break;
     }
 
   /* Recursively scan the operands of this expression.  */
@@ -1624,16 +1666,20 @@ may_trap_p (x)
     case MOD:
     case UDIV:
     case UMOD:
-      if (! CONSTANT_P (XEXP (x, 1)))
+      if (! CONSTANT_P (XEXP (x, 1))
+	  || GET_MODE_CLASS (GET_MODE (x)) == MODE_FLOAT)
 	return 1;
       /* This was const0_rtx, but by not using that,
 	 we can link this file into other programs.  */
       if (GET_CODE (XEXP (x, 1)) == CONST_INT && INTVAL (XEXP (x, 1)) == 0)
 	return 1;
+      break;
+
     case EXPR_LIST:
       /* An EXPR_LIST is used to represent a function call.  This
 	 certainly may trap.  */
       return 1;
+
     default:
       /* Any floating arithmetic may trap.  */
       if (GET_MODE_CLASS (GET_MODE (x)) == MODE_FLOAT)
@@ -1692,6 +1738,9 @@ inequality_comparisons_p (x)
     case GE:
     case GEU:
       return 1;
+      
+    default:
+      break;
     }
 
   len = GET_RTX_LENGTH (code);
@@ -1716,7 +1765,8 @@ inequality_comparisons_p (x)
   return 0;
 }
 
-/* Replace any occurrence of FROM in X with TO.
+/* Replace any occurrence of FROM in X with TO.  The function does
+   not enter into CONST_DOUBLE for the replace.
 
    Note that copying is not done so X must not be shared unless all copies
    are to be modified.  */
@@ -1727,6 +1777,11 @@ replace_rtx (x, from, to)
 {
   register int i, j;
   register char *fmt;
+
+  /* The following prevents loops occurrence when we change MEM in
+     CONST_DOUBLE onto the same CONST_DOUBLE. */
+  if (x != 0 && GET_CODE (x) == CONST_DOUBLE)
+    return x;
 
   if (x == from)
     return to;
@@ -1847,6 +1902,9 @@ replace_regs (x, reg_map, nregs, replace_dest)
 
       SET_SRC (x) = replace_regs (SET_SRC (x), reg_map, nregs, 0);
       return x;
+      
+    default:
+      break;
     }
 
   fmt = GET_RTX_FORMAT (code);
@@ -1864,7 +1922,6 @@ replace_regs (x, reg_map, nregs, replace_dest)
     }
   return x;
 }
-
 
 /* Return 1 if X, the SRC_SRC of  SET of (pc) contain a REG or MEM that is
    not in the constant pool and not in the condition of an IF_THEN_ELSE.  */
@@ -1898,6 +1955,9 @@ jmp_uses_reg_or_mem (x)
     case PLUS:  case MINUS:  case MULT:
       return (jmp_uses_reg_or_mem (XEXP (x, 0))
 	      || jmp_uses_reg_or_mem (XEXP (x, 1)));
+
+    default:
+      break;
     }
 
   fmt = GET_RTX_FORMAT (code);
@@ -1929,7 +1989,6 @@ computed_jump_p (insn)
   if (GET_CODE (insn) == JUMP_INSN)
     {
       rtx pat = PATTERN (insn);
-      int computed_jump = 0;
 
       if (GET_CODE (pat) == PARALLEL)
 	{

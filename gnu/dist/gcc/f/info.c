@@ -1,6 +1,6 @@
 /* info.c -- Implementation File (module.c template V1.0)
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -256,7 +256,6 @@ ffeinfo_type (ffeinfoBasictype basictype, ffeinfoKindtype kindtype)
 {
   assert (basictype < FFEINFO_basictype);
   assert (kindtype < FFEINFO_kindtype);
-  assert (ffeinfo_types_[basictype][kindtype] != NULL);
 
   return ffeinfo_types_[basictype][kindtype];
 }

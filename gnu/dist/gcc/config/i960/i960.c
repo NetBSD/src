@@ -1,5 +1,5 @@
 /* Subroutines used for code generation on intel 80960.
-   Copyright (C) 1992, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Contributed by Steven McGeady, Intel Corp.
    Additional Work by Glenn Colon-Bonet, Jonathan Shapiro, Andy Wilson
    Converted to GCC 2.0 by Jim Wilson and Michael Tiemann, Cygnus Support.
@@ -21,9 +21,8 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#include <stdio.h>
-
 #include "config.h"
+#include <stdio.h>
 #include "rtl.h"
 #include "regs.h"
 #include "hard-reg-set.h"
@@ -36,7 +35,6 @@ Boston, MA 02111-1307, USA.  */
 #include "flags.h"
 #include "tree.h"
 #include "insn-codes.h"
-#include "assert.h"
 #include "expr.h"
 #include "except.h"
 #include "function.h"
@@ -533,6 +531,12 @@ i960_address_cost (x)
   if (GET_CODE (x) == REG)
     return 1;
 #endif
+  /* This is a MEMA operand -- it's free.  */
+  if (GET_CODE (x) == CONST_INT
+      && INTVAL (x) >= 0
+      && INTVAL (x) < 4096)
+    return 0;
+
   if (GET_CODE (x) == PLUS)
     {
       rtx base = XEXP (x, 0);
@@ -591,8 +595,13 @@ emit_move_sequence (operands, mode)
      adding 4 to the memory address may not yield a valid insn.  */
   /* ??? We don't always need the scratch, but that would complicate things.
      Maybe later.  */
+  /* ??? We must also handle stores to pseudos here, because the pseudo may be
+     replaced with a MEM later.  This would be cleaner if we didn't have
+     a separate pattern for unaligned DImode/TImode stores.  */
   if (GET_MODE_SIZE (mode) > UNITS_PER_WORD
-      && GET_CODE (operands[0]) == MEM
+      && (GET_CODE (operands[0]) == MEM
+	  || (GET_CODE (operands[0]) == REG
+	      && REGNO (operands[0]) >= FIRST_PSEUDO_REGISTER))
       && GET_CODE (operands[1]) == REG
       && REGNO (operands[1]) < FIRST_PSEUDO_REGISTER
       && ! HARD_REGNO_MODE_OK (REGNO (operands[1]), mode))
@@ -825,7 +834,7 @@ i960_output_ldconst (dst, src)
 
       output_asm_insn ("# ldconst	%1,%0",operands);
       operands[0] = gen_rtx (REG, SImode, REGNO (dst));
-      operands[1] = gen_rtx (CONST_INT, VOIDmode, value);
+      operands[1] = GEN_INT (value);
       output_asm_insn (i960_output_ldconst (operands[0], operands[1]),
 		      operands);
       return "";
@@ -896,7 +905,7 @@ i960_output_ldconst (dst, src)
 	{
 	  if (i960_last_insn_type == I_TYPE_REG && TARGET_C_SERIES)
 	    return "lda	%1,%0";
-	  operands[1] = gen_rtx (CONST_INT, VOIDmode, rsrc1 - 31);
+	  operands[1] = GEN_INT (rsrc1 - 31);
 	  output_asm_insn ("addo\t31,%1,%0\t# ldconst %3,%0", operands);
 	  return "";
 	}
@@ -907,7 +916,7 @@ i960_output_ldconst (dst, src)
       if (rsrc1 >= -31)
 	{
 	  /* return 'sub -(%1),0,%0' */
-	  operands[1] = gen_rtx (CONST_INT, VOIDmode, - rsrc1);
+	  operands[1] = GEN_INT (- rsrc1);
 	  output_asm_insn ("subo\t%1,0,%0\t# ldconst %3,%0", operands);
 	  return "";
 	}
@@ -915,7 +924,7 @@ i960_output_ldconst (dst, src)
       /* ldconst	-32		->	not	31,X  */
       if (rsrc1 == -32)
 	{
-	  operands[1] = gen_rtx (CONST_INT, VOIDmode, ~rsrc1);
+	  operands[1] = GEN_INT (~rsrc1);
 	  output_asm_insn ("not\t%1,%0	# ldconst %3,%0", operands);
 	  return "";
 	}
@@ -924,7 +933,7 @@ i960_output_ldconst (dst, src)
   /* If const is a single bit.  */
   if (bitpos (rsrc1) >= 0)
     {
-      operands[1] = gen_rtx (CONST_INT, VOIDmode, bitpos (rsrc1));
+      operands[1] = GEN_INT (bitpos (rsrc1));
       output_asm_insn ("setbit\t%1,0,%0\t# ldconst %3,%0", operands);
       return "";
     }
@@ -937,8 +946,8 @@ i960_output_ldconst (dst, src)
       if (bitstr (rsrc1, &s, &e) < 6)
 	{
 	  rsrc2 = ((unsigned int) rsrc1) >> s;
-	  operands[1] = gen_rtx (CONST_INT, VOIDmode, rsrc2);
-	  operands[2] = gen_rtx (CONST_INT, VOIDmode, s);
+	  operands[1] = GEN_INT (rsrc2);
+	  operands[2] = GEN_INT (s);
 	  output_asm_insn ("shlo\t%2,%1,%0\t# ldconst %3,%0", operands);
 	  return "";
 	}
@@ -2064,40 +2073,57 @@ i960_alignment (size, align)
 }
 #endif
 
-/* Modes for condition codes.  */
-#define C_MODES		\
-  ((1 << (int) CCmode) | (1 << (int) CC_UNSmode) | (1<< (int) CC_CHKmode))
 
-/* Modes for single-word (and smaller) quantities.  */
-#define S_MODES						\
- (~C_MODES						\
-  & ~ ((1 << (int) DImode) | (1 << (int) TImode)	\
-       | (1 << (int) DFmode) | (1 << (int) XFmode)))
+int
+hard_regno_mode_ok (regno, mode)
+     int regno;
+     enum machine_mode mode;
+{
+  if (regno < 32)
+    {
+      switch (mode)
+	{
+	case CCmode: case CC_UNSmode: case CC_CHKmode:
+	  return 0;
 
-/* Modes for double-word (and smaller) quantities.  */
-#define D_MODES					\
-  (~C_MODES					\
-   & ~ ((1 << (int) TImode) | (1 << (int) XFmode)))
+	case DImode: case DFmode:
+	  return (regno & 1) == 0;
 
-/* Modes for quad-word quantities.  */
-#define T_MODES (~C_MODES)
+	case TImode: case XFmode:
+	  return (regno & 3) == 0;
 
-/* Modes for single-float quantities.  */
-#define SF_MODES ((1 << (int) SFmode))
+	default:
+	  return 1;
+	}
+    }
+  else if (regno >= 32 && regno < 36)
+    {
+      switch (mode)
+	{
+	case SFmode: case DFmode: case XFmode:
+	case SCmode: case DCmode:
+	  return 1;
 
-/* Modes for double-float quantities.  */
-#define DF_MODES (SF_MODES | (1 << (int) DFmode) | (1 << (int) SCmode))
+	default:
+	  return 0;
+	}
+    }
+  else if (regno == 36)
+    {
+      switch (mode)
+	{
+	case CCmode: case CC_UNSmode: case CC_CHKmode:
+	  return 1;
 
-/* Modes for quad-float quantities.  */
-#define XF_MODES (DF_MODES | (1 << (int) XFmode) | (1 << (int) DCmode))
+	default:
+	  return 0;
+	}
+    }
+  else if (regno == 37)
+    return 0;
 
-unsigned int hard_regno_mode_ok[FIRST_PSEUDO_REGISTER] = {
-  T_MODES, S_MODES, D_MODES, S_MODES, T_MODES, S_MODES, D_MODES, S_MODES,
-  T_MODES, S_MODES, D_MODES, S_MODES, T_MODES, S_MODES, D_MODES, S_MODES,
-  T_MODES, S_MODES, D_MODES, S_MODES, T_MODES, S_MODES, D_MODES, S_MODES,
-  T_MODES, S_MODES, D_MODES, S_MODES, T_MODES, S_MODES, D_MODES, S_MODES,
-
-  XF_MODES, XF_MODES, XF_MODES, XF_MODES, C_MODES};
+  abort ();
+}
 
 
 /* Return the minimum alignment of an expression rtx X in bytes.  This takes
@@ -2242,7 +2268,8 @@ i960_arg_size_and_align (mode, type, size_out, align_out)
   else if (mode == VOIDmode)
     {
       /* End of parm list.  */
-      assert (type != 0 && TYPE_MODE (type) == VOIDmode);
+      if (type == 0 || TYPE_MODE (type) != VOIDmode)
+	abort ();
       size = 1;
     }
   else

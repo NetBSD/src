@@ -1,6 +1,6 @@
 /* top.c -- Implementation File (module.c template V1.0)
    Copyright (C) 1995-1997 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -30,7 +30,6 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 
 /* Include files. */
 
-#include <ctype.h>
 #include "proj.h"
 #include "top.h"
 #include "bad.h"
@@ -56,12 +55,13 @@ the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA
 #include "where.h"
 #if FFECOM_targetCURRENT == FFECOM_targetGCC
 #include "flags.j"
+#include "toplev.j"
 #endif
 
 /* Externals defined here. */
 
 int flag_traditional;		/* Shouldn't need this (C front end only)! */
-bool ffe_is_do_internal_checks_ = TRUE;
+bool ffe_is_do_internal_checks_ = FALSE;
 bool ffe_is_90_ = FFETARGET_defaultIS_90;
 bool ffe_is_automatic_ = FFETARGET_defaultIS_AUTOMATIC;
 bool ffe_is_backslash_ = FFETARGET_defaultIS_BACKSLASH;
@@ -80,6 +80,7 @@ bool ffe_is_ident_ = TRUE;
 bool ffe_is_init_local_zero_ = FFETARGET_defaultIS_INIT_LOCAL_ZERO;
 bool ffe_is_mainprog_;		/* TRUE if current prog unit known to be
 				   main. */
+bool ffe_is_null_version_ = FALSE;
 bool ffe_is_onetrip_ = FALSE;
 bool ffe_is_silent_ = TRUE;
 bool ffe_is_typeless_boz_ = FALSE;
@@ -150,7 +151,7 @@ ffe_is_digit_string_ (char *s)
 {
   char *p;
 
-  for (p = s; isdigit (*p); ++p)
+  for (p = s; ISDIGIT (*p); ++p)
     ;
 
   return (p != s) && (*p == '\0');
@@ -160,29 +161,22 @@ ffe_is_digit_string_ (char *s)
    recognized and handled.  */
 
 int
-ffe_decode_option (char *opt)
+ffe_decode_option (argc, argv)
+     int argc;
+     char **argv;
 {
+  char *opt = argv[0];
   if (opt[0] != '-')
     return 0;
   if (opt[1] == 'f')
     {
       if (strcmp (&opt[2], "version") == 0)
-	ffe_set_is_version (TRUE);
-      else if (strcmp (&opt[2], "null-version") == 0)
-	;			/* Someday generate program to print version
-				   info.  */
-      else if (strcmp (&opt[2], "set-g77-defaults") == 0)
 	{
-	  ffe_is_do_internal_checks_ = 0;
-#if BUILT_FOR_270	/* User must have applied patch (circa 2.7.2 and beyond). */
-#if 0
-	  flag_rerun_loop_opt = 1;
-#endif
-	  flag_move_all_movables = 1;
-	  flag_reduce_all_givs = 1;
-	  flag_argument_noalias = 2;
-#endif
+	  ffe_set_is_version (TRUE);
+	  ffe_set_is_do_internal_checks (TRUE);
 	}
+      else if (strcmp (&opt[2], "null-version") == 0)
+	ffe_set_is_null_version (TRUE);
       else if (strcmp (&opt[2], "ident") == 0)
 	ffe_set_is_ident (TRUE);
       else if (strcmp (&opt[2], "no-ident") == 0)

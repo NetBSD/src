@@ -1,6 +1,6 @@
 /* malloc.c -- Implementation File (module.c template V1.0)
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -51,7 +51,7 @@ struct _malloc_root_ malloc_root_
     (mallocArea_) &malloc_root_.malloc_pool_image_.first,
     0,
 #if MALLOC_DEBUG
-    0, 0, 0, 0, 0, 0, 0, '/'
+    0, 0, 0, 0, 0, 0, 0, { '/' }
 #endif
   },
 };

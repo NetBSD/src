@@ -1,6 +1,6 @@
 /* top.h -- Public #include File (module.h template V1.0)
    Copyright (C) 1995-1997 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -95,6 +95,7 @@ extern bool ffe_is_globals_;
 extern bool ffe_is_ident_;
 extern bool ffe_is_init_local_zero_;
 extern bool ffe_is_mainprog_;
+extern bool ffe_is_null_version_;
 extern bool ffe_is_onetrip_;
 extern bool ffe_is_silent_;
 extern bool ffe_is_typeless_boz_;
@@ -141,7 +142,7 @@ extern bool ffe_in_4;
 
 /* Declare functions with prototypes. */
 
-int ffe_decode_option (char *opt);
+int ffe_decode_option (int argc, char **argv);
 void ffe_file (ffewhereFile wf, FILE *f);
 void ffe_init_0 (void);
 void ffe_init_1 (void);
@@ -182,6 +183,7 @@ void ffe_terminate_4 (void);
 #define ffe_is_ident() ffe_is_ident_
 #define ffe_is_init_local_zero() ffe_is_init_local_zero_
 #define ffe_is_mainprog() ffe_is_mainprog_
+#define ffe_is_null_version() ffe_is_null_version_
 #define ffe_is_onetrip() ffe_is_onetrip_
 #define ffe_is_pedantic() ffe_is_pedantic_
 #define ffe_is_pedantic_not_90() (ffe_is_pedantic_ && !ffe_is_90_)
@@ -222,7 +224,7 @@ void ffe_terminate_4 (void);
 #define ffe_set_is_automatic(f) (ffe_is_automatic_ = (f))
 #define ffe_set_is_backslash(f) (ffe_is_backslash_ = (f))
 #define ffe_set_is_debug_kludge(f) (ffe_is_debug_kludge_ = (f))
-#define ffe_set_is_do_internal_checks(f) (ffe_set_is_do_internal_checks_ = (f))
+#define ffe_set_is_do_internal_checks(f) (ffe_is_do_internal_checks_ = (f))
 #define ffe_set_is_dollar_ok(f) (ffe_is_dollar_ok_ = (f))
 #define ffe_set_is_emulate_complex(f) (ffe_is_emulate_complex_ = (f))
 #define ffe_set_is_f2c(f) (ffe_is_f2c_ = (f))
@@ -233,6 +235,7 @@ void ffe_terminate_4 (void);
 #define ffe_set_is_ident(f) (ffe_is_ident_ = (f))
 #define ffe_set_is_init_local_zero(f) (ffe_is_init_local_zero_ = (f))
 #define ffe_set_is_mainprog(f) (ffe_is_mainprog_ = (f))
+#define ffe_set_is_null_version(f) (ffe_is_null_version_ = (f))
 #define ffe_set_is_onetrip(f) (ffe_is_onetrip_ = (f))
 #define ffe_set_is_pedantic(f) (ffe_is_pedantic_ = (f))
 #define ffe_set_is_saveall(f) (ffe_is_saveall_ = (f))

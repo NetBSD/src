@@ -1,5 +1,5 @@
 /* Implement classes and message passing for Objective C.
-   Copyright (C) 1992, 1993, 1994, 1995, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93-95, 97, 1998 Free Software Foundation, Inc.
    Contributed by Steve Naroff.
 
 This file is part of GNU CC.
@@ -38,8 +38,8 @@ Boston, MA 02111-1307, USA.  */
 
    - OBJC_INT_SELECTORS  */
 
-#include <stdio.h>
 #include "config.h"
+#include "system.h"
 #include "tree.h"
 #include "c-tree.h"
 #include "c-lex.h"
@@ -48,7 +48,15 @@ Boston, MA 02111-1307, USA.  */
 #include "input.h"
 #include "except.h"
 #include "function.h"
+#include "output.h"
+#include "toplev.h"
 
+#if USE_CPPLIB
+#include "cpplib.h"
+extern cpp_reader  parse_in;
+extern cpp_options parse_options;
+static int cpp_initialized;
+#endif
 
 /* This is the default way of generating a method name.  */
 /* I am not sure it is really correct.
@@ -85,8 +93,8 @@ Boston, MA 02111-1307, USA.  */
 
 #define DEFTREECODE(SYM, NAME, TYPE, LENGTH) TYPE,
 
-char *objc_tree_code_type[] = {
-  "x",
+char objc_tree_code_type[] = {
+  'x',
 #include "objc-tree.def"
 };
 #undef DEFTREECODE
@@ -184,12 +192,20 @@ static tree generate_protocol_list		PROTO((tree));
 static void generate_forward_declaration_to_string_table PROTO((void));
 static void build_protocol_reference		PROTO((tree));
 
+#if 0
 static tree init_selector			PROTO((int));
+#endif
 static tree build_keyword_selector		PROTO((tree));
 static tree synth_id_with_class_suffix		PROTO((char *, tree));
 
-/* From expr.c */
-extern int apply_args_register_offset           PROTO((int));
+static void generate_static_references		PROTO((void));
+static int check_methods_accessible		PROTO((tree, tree,
+						       int));
+static void encode_aggregate_within		PROTO((tree, int, int,
+					               int, int));
+
+/* We handle printing method names ourselves for ObjC */
+extern char *(*decl_printable_name) ();
 
 /* Misc. bookkeeping */
 
@@ -226,6 +242,8 @@ enum string_section
 };
 
 static tree add_objc_string			PROTO((tree,
+						       enum string_section));
+static tree get_objc_string_decl		PROTO((tree,
 						       enum string_section));
 static tree build_objc_string_decl		PROTO((tree,
 						       enum string_section));
@@ -279,7 +297,9 @@ static tree init_objc_symtab			PROTO((tree));
 static void forward_declare_categories		PROTO((void));
 static void generate_objc_symtab_decl		PROTO((void));
 static tree build_selector			PROTO((tree));
+#if 0
 static tree build_msg_pool_reference		PROTO((int));
+#endif
 static tree build_typed_selector_reference     	PROTO((tree, tree));
 static tree build_selector_reference		PROTO((tree));
 static tree build_class_reference_decl		PROTO((tree));
@@ -502,6 +522,80 @@ int flag_warn_protocol = 1;
 
 static int generating_instance_variables = 0;
 
+/* Tells the compiler that this is a special run.  Do not perform
+   any compiling, instead we are to test some platform dependent
+   features and output a C header file with appropriate definitions. */
+
+static int print_struct_values = 0;
+
+/* Some platforms pass small structures through registers versus through
+   an invisible pointer.  Determine at what size structure is the 
+   transition point between the two possibilities. */
+
+void
+generate_struct_by_value_array ()
+{
+  tree type;
+  tree field_decl, field_decl_chain;
+  int i, j;
+  int aggregate_in_mem[32];
+  int found = 0;
+
+  /* Presumbaly no platform passes 32 byte structures in a register. */
+  for (i = 1; i < 32; i++)
+    {
+      char buffer[5];
+
+      /* Create an unnamed struct that has `i' character components */
+      type = start_struct (RECORD_TYPE, NULL_TREE);
+
+      strcpy (buffer, "c1");
+      field_decl = create_builtin_decl (FIELD_DECL,
+					char_type_node,
+					buffer);
+      field_decl_chain = field_decl;
+
+      for (j = 1; j < i; j++)
+	{
+	  sprintf (buffer, "c%d", j + 1);
+	  field_decl = create_builtin_decl (FIELD_DECL,
+					    char_type_node,
+					    buffer);
+	  chainon (field_decl_chain, field_decl);
+	}
+      finish_struct (type, field_decl_chain, NULL_TREE);
+ 
+      aggregate_in_mem[i] = aggregate_value_p (type);
+      if (!aggregate_in_mem[i])
+	found = 1;
+    }
+ 
+  /* We found some structures that are returned in registers instead of memory
+     so output the necessary data. */
+  if (found)
+    {
+      for (i = 31; i >= 0;  i--)
+	if (!aggregate_in_mem[i])
+	  break;
+      printf ("#define OBJC_MAX_STRUCT_BY_VALUE %d\n\n", i);
+ 
+      /* The first member of the structure is always 0 because we don't handle
+	 structures with 0 members */
+      printf ("static int struct_forward_array[] = {\n  0");
+ 
+      for (j = 1; j <= i; j++)
+	printf (", %d", aggregate_in_mem[j]);
+      printf ("\n};\n");
+    }
+ 
+  exit (0);
+}
+
+void
+lang_init_options ()
+{
+}
+
 void
 lang_init ()
 {
@@ -550,6 +644,9 @@ lang_init ()
 
   if (doing_objc_thang)
     init_objc ();
+
+  if (print_struct_values)
+    generate_struct_by_value_array ();
 }
 
 static void
@@ -580,9 +677,20 @@ lang_identify ()
 }
 
 int
-lang_decode_option (p)
-     char *p;
+lang_decode_option (argc, argv)
+     int argc;
+     char **argv;
 {
+  char *p = argv[0];
+#if USE_CPPLIB
+  if (! cpp_initialized)
+    {
+      cpp_reader_init (&parse_in);
+      parse_in.data = &parse_options;
+      cpp_options_init (&parse_options);
+      cpp_initialized = 1;
+    }
+#endif
   if (!strcmp (p, "-lang-objc"))
     doing_objc_thang = 1;
   else if (!strcmp (p, "-gen-decls"))
@@ -603,11 +711,24 @@ lang_decode_option (p)
     flag_next_runtime = 1;
   else if (!strcmp (p, "-fnext-runtime"))
     flag_next_runtime = 1;
+  else if (!strcmp (p, "-print-objc-runtime-info"))
+    print_struct_values = 1;
   else
-    return c_decode_option (p);
+    return c_decode_option (argc, argv);
 
   return 1;
 }
+
+/* used by print-tree.c */
+
+void
+lang_print_xnode (file, node, indent)
+     FILE *file ATTRIBUTE_UNUSED;
+     tree node ATTRIBUTE_UNUSED;
+     int indent ATTRIBUTE_UNUSED;
+{
+}
+
 
 static tree
 define_decl (declarator, declspecs)
@@ -665,7 +786,9 @@ lookup_method_in_protocol_list (rproto_list, sel_name, class_meth)
 						    sel_name, class_meth);
 	  }
 	else
-	  ; /* An identifier...if we could not find a protocol.  */
+          {
+	    ; /* An identifier...if we could not find a protocol.  */
+          }
 
 	if (fnd)
 	  return fnd;
@@ -703,7 +826,9 @@ lookup_protocol_in_reflist (rproto_list, lproto)
 	 }
      }
    else
-     ; /* An identifier...if we could not find a protocol.  */
+     {
+       ; /* An identifier...if we could not find a protocol.  */
+     }
 
    return 0;
 }
@@ -1266,7 +1391,7 @@ objc_add_static_instance (constructor, class_decl)
      tree constructor, class_decl;
 {
   static int num_static_inst;
-  tree *chain, decl, decl_spec, decl_expr;
+  tree *chain, decl;
   char buf[256];
 
   push_obstacks_nochange ();
@@ -1643,7 +1768,6 @@ build_module_descriptor ()
   {
     tree parms, function_decl, decelerator, void_list_node;
     tree function_type;
-    extern tree get_file_function_name ();
     tree init_function_name = get_file_function_name ('I');
 
     /* Declare void __objc_execClass (void *); */
@@ -1723,7 +1847,7 @@ get_objc_string_decl (ident, section)
      tree ident;
      enum string_section section;
 {
-  tree chain, decl;
+  tree chain;
 
   if (section == class_names)
     chain = class_names_chain;
@@ -1743,11 +1867,11 @@ get_objc_string_decl (ident, section)
 /* Output references to all statically allocated objects.  Return the DECL
    for the array built.  */
 
-static tree
+static void
 generate_static_references ()
 {
   tree decls = NULL_TREE, ident, decl_spec, expr_decl, expr = NULL_TREE;
-  tree class_name, class, decl, instance, idecl, initlist;
+  tree class_name, class, decl, initlist;
   tree cl_chain, in_chain, type;
   int num_inst, num_class;
   char buf[256];
@@ -1920,6 +2044,7 @@ build_selector (ident)
    grok.m: warning: initialization of non-const * pointer from const *
    grok.m: warning: initialization between incompatible pointer types.  */
 
+#if 0
 static tree
 build_msg_pool_reference (offset)
      int offset;
@@ -1945,6 +2070,7 @@ init_selector (offset)
   TREE_TYPE (expr) = selector_type;
   return expr;
 }
+#endif
 
 static void
 build_selector_translation_table ()
@@ -5946,7 +6072,9 @@ check_protocols (proto_list, type, name)
 
 	}
       else
-	; /* An identifier if we could not find a protocol.  */
+        {
+	  ; /* An identifier if we could not find a protocol.  */
+        }
 
       /* Check protocols recursively.  */
       if (PROTOCOL_LIST (p))
@@ -6321,7 +6449,7 @@ start_protocol (code, name, list)
 
 void
 finish_protocol (protocol)
-	tree protocol;
+	tree protocol ATTRIBUTE_UNUSED;
 {
 }
 
@@ -6435,9 +6563,9 @@ encode_array (type, curtype, format)
       return;
     }
 
-  sprintf (buffer, "[%d",
-	   (TREE_INT_CST_LOW (an_int_cst)
-	    / TREE_INT_CST_LOW (TYPE_SIZE (array_of))));
+  sprintf (buffer, "[%ld",
+	   (long) (TREE_INT_CST_LOW (an_int_cst)
+		   / TREE_INT_CST_LOW (TYPE_SIZE (array_of))));
 
   obstack_grow (&util_obstack, buffer, strlen (buffer));
   encode_type (array_of, curtype, format);
@@ -6450,8 +6578,8 @@ encode_aggregate_within (type, curtype, format, left, right)
      tree type;
      int curtype;
      int format;
-     char left;
-     char right;
+     int left;
+     int right;
 {
   if (obstack_object_size (&util_obstack) > 0
       && *(obstack_next_free (&util_obstack) - 1) == '^')
@@ -6584,6 +6712,9 @@ encode_aggregate (type, curtype, format)
 
     case ENUMERAL_TYPE:
       obstack_1grow (&util_obstack, 'i');
+      break;
+
+    default:
       break;
     }
 }
@@ -7193,6 +7324,7 @@ finish_method_def ()
   method_context = NULL_TREE;
 }
 
+#if 0
 int
 lang_report_error_function (decl)
       tree decl;
@@ -7207,6 +7339,7 @@ lang_report_error_function (decl)
   else
     return 0;
 }
+#endif
 
 static int
 is_complex_decl (type)
@@ -7234,7 +7367,8 @@ adorn_decl (decl, str)
       tree an_int_cst = TREE_OPERAND (decl, 1);
 
       if (an_int_cst && TREE_CODE (an_int_cst) == INTEGER_CST)
-	sprintf (str + strlen (str), "[%d]", TREE_INT_CST_LOW (an_int_cst));
+	sprintf (str + strlen (str), "[%ld]",
+		 (long) TREE_INT_CST_LOW (an_int_cst));
       else
 	strcat (str, "[]");
     }
@@ -7245,9 +7379,9 @@ adorn_decl (decl, str)
       tree array_of = TREE_TYPE (decl);
 
       if (an_int_cst && TREE_CODE (an_int_cst) == INTEGER_TYPE)
-	sprintf (str + strlen (str), "[%d]",
-		 (TREE_INT_CST_LOW (an_int_cst)
-		  / TREE_INT_CST_LOW (TYPE_SIZE (array_of))));
+	sprintf (str + strlen (str), "[%ld]",
+		 (long) (TREE_INT_CST_LOW (an_int_cst)
+			 / TREE_INT_CST_LOW (TYPE_SIZE (array_of))));
       else
 	strcat (str, "[]");
     }
@@ -7399,6 +7533,9 @@ gen_declarator (decl, buf, name)
 	  /* Will only happen if we are processing a "raw" expr-decl.  */
 	  strcpy (buf, IDENTIFIER_POINTER (decl));
 	  return buf;
+
+	default:
+	  break;
 	}
 
       return str;
@@ -7656,6 +7793,10 @@ gen_declspecs (declspecs, buf, raw)
 		strcat (buf, ">");
 	      }
 	  }
+	  break;
+	  
+	default:
+	  break;
 	}
     }
 }
@@ -7863,6 +8004,71 @@ dump_interface (fp, chain)
   fprintf (fp, "\n@end");
 }
 
+/* Demangle function for Objective-C */
+static const char *
+objc_demangle (mangled)
+     const char *mangled;
+{
+  char *demangled, *cp;
+
+  if (mangled[0] == '_' &&
+      (mangled[1] == 'i' || mangled[1] == 'c') &&
+      mangled[2] == '_')
+    {
+      cp = demangled = xmalloc(strlen(mangled) + 2);
+      if (mangled[1] == 'i')
+	*cp++ = '-';            /* for instance method */
+      else
+	*cp++ = '+';            /* for class method */
+      *cp++ = '[';              /* opening left brace */
+      strcpy(cp, mangled+3);    /* tack on the rest of the mangled name */
+      while (*cp && *cp == '_')
+	cp++;                   /* skip any initial underbars in class name */
+      cp = strchr(cp, '_');     /* find first non-initial underbar */
+      if (cp == NULL)
+	{
+	  free(demangled);      /* not mangled name */
+	  return mangled;
+	}
+      if (cp[1] == '_')  /* easy case: no category name */
+	{
+	  *cp++ = ' ';            /* replace two '_' with one ' ' */
+	  strcpy(cp, mangled + (cp - demangled) + 2);
+	}
+      else
+	{
+	  *cp++ = '(';            /* less easy case: category name */
+	  cp = strchr(cp, '_');
+	  if (cp == 0)
+	    {
+	      free(demangled);    /* not mangled name */
+	      return mangled;
+	    }
+	  *cp++ = ')';
+	  *cp++ = ' ';            /* overwriting 1st char of method name... */
+	  strcpy(cp, mangled + (cp - demangled)); /* get it back */
+	}
+      while (*cp && *cp == '_')
+	cp++;                   /* skip any initial underbars in method name */
+      for (; *cp; cp++)
+	if (*cp == '_')
+	  *cp = ':';            /* replace remaining '_' with ':' */
+      *cp++ = ']';              /* closing right brace */
+      *cp++ = 0;                /* string terminator */
+      return demangled;
+    }
+  else
+    return mangled;             /* not an objc mangled name */
+}
+
+static const char *
+objc_printable_name (decl, kind)
+     tree decl;
+     char **kind;
+{
+  return objc_demangle (IDENTIFIER_POINTER (DECL_NAME (decl)));
+}
+
 static void
 init_objc ()
 {
@@ -7873,19 +8079,9 @@ init_objc ()
   gcc_obstack_init (&util_obstack);
   util_firstobj = (char *) obstack_finish (&util_obstack);
 
-  tree_code_type
-    = (char **) xrealloc (tree_code_type,
-			  sizeof (char *) * LAST_OBJC_TREE_CODE);
-  tree_code_length
-    = (int *) xrealloc (tree_code_length,
-			sizeof (int) * LAST_OBJC_TREE_CODE);
-  tree_code_name
-    = (char **) xrealloc (tree_code_name,
-			  sizeof (char *) * LAST_OBJC_TREE_CODE);
-  bcopy ((char *) objc_tree_code_type,
-	 (char *) (tree_code_type + (int) LAST_CODE),
-	 (((int) LAST_OBJC_TREE_CODE - (int) LAST_CODE)
-	  * sizeof (char *)));
+  bcopy (objc_tree_code_type,
+	 tree_code_type + (int) LAST_CODE,
+	 (int) LAST_OBJC_TREE_CODE - (int) LAST_CODE);
   bcopy ((char *) objc_tree_code_length,
 	 (char *) (tree_code_length + (int) LAST_CODE),
 	 (((int) LAST_OBJC_TREE_CODE - (int) LAST_CODE)
@@ -7898,6 +8094,9 @@ init_objc ()
   errbuf = (char *)xmalloc (BUFSIZE);
   hash_init ();
   synth_module_prologue ();
+
+  /* Change the default error function */
+  decl_printable_name = (char* (*)()) objc_printable_name;
 }
 
 static void
@@ -7917,7 +8116,7 @@ finish_objc ()
 #endif
 
   /* Process the static instances here because initialization of objc_symtab
-     dependens on them. */
+     depends on them. */
   if (objc_static_instances)
     generate_static_references ();
 
