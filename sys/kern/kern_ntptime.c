@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.14 2001/09/16 06:50:06 manu Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.15 2001/09/16 09:55:26 jmc Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -210,14 +210,18 @@ sys_ntp_adjtime(p, v, retval)
 	if (ntv.modes != 0 && (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	return (ntp_adjtime1(&ntv, retval));
+	return (ntp_adjtime1(&ntv, v, retval));
 }
 
 int
-ntp_adjtime1(struct timex *, register_t*)
+ntp_adjtime1(ntv, v, retval)
 	struct timex *ntv;
+	void *v;
 	register_t	*retval;
 {
+	struct sys_ntp_adjtime_args /* {
+		syscallarg(struct timex *) tp;
+	} */ *uap = v;
 	int error = 0;
 	int modes;
 	int s;
@@ -227,58 +231,58 @@ ntp_adjtime1(struct timex *, register_t*)
 	 * checking here on the assumption the superuser should know 
 	 * what it is doing.
 	 */
-	modes = ntv.modes;
+	modes = ntv->modes;
 	s = splclock();
 	if (modes & MOD_FREQUENCY)
 #ifdef PPS_SYNC
-		time_freq = ntv.freq - pps_freq;
+		time_freq = ntv->freq - pps_freq;
 #else /* PPS_SYNC */
-		time_freq = ntv.freq;
+		time_freq = ntv->freq;
 #endif /* PPS_SYNC */
 	if (modes & MOD_MAXERROR)
-		time_maxerror = ntv.maxerror;
+		time_maxerror = ntv->maxerror;
 	if (modes & MOD_ESTERROR)
-		time_esterror = ntv.esterror;
+		time_esterror = ntv->esterror;
 	if (modes & MOD_STATUS) {
 		time_status &= STA_RONLY;
-		time_status |= ntv.status & ~STA_RONLY;
+		time_status |= ntv->status & ~STA_RONLY;
 	}
 	if (modes & MOD_TIMECONST)
-		time_constant = ntv.constant;
+		time_constant = ntv->constant;
 	if (modes & MOD_OFFSET)
-		hardupdate(ntv.offset);
+		hardupdate(ntv->offset);
 
 	/*
 	 * Retrieve all clock variables
 	 */
 	if (time_offset < 0)
-		ntv.offset = -(-time_offset >> SHIFT_UPDATE);
+		ntv->offset = -(-time_offset >> SHIFT_UPDATE);
 	else
-		ntv.offset = time_offset >> SHIFT_UPDATE;
+		ntv->offset = time_offset >> SHIFT_UPDATE;
 #ifdef PPS_SYNC
-	ntv.freq = time_freq + pps_freq;
+	ntv->freq = time_freq + pps_freq;
 #else /* PPS_SYNC */
-	ntv.freq = time_freq;
+	ntv->freq = time_freq;
 #endif /* PPS_SYNC */
-	ntv.maxerror = time_maxerror;
-	ntv.esterror = time_esterror;
-	ntv.status = time_status;
-	ntv.constant = time_constant;
-	ntv.precision = time_precision;
-	ntv.tolerance = time_tolerance;
+	ntv->maxerror = time_maxerror;
+	ntv->esterror = time_esterror;
+	ntv->status = time_status;
+	ntv->constant = time_constant;
+	ntv->precision = time_precision;
+	ntv->tolerance = time_tolerance;
 #ifdef PPS_SYNC
-	ntv.shift = pps_shift;
-	ntv.ppsfreq = pps_freq;
-	ntv.jitter = pps_jitter >> PPS_AVG;
-	ntv.stabil = pps_stabil;
-	ntv.calcnt = pps_calcnt;
-	ntv.errcnt = pps_errcnt;
-	ntv.jitcnt = pps_jitcnt;
-	ntv.stbcnt = pps_stbcnt;
+	ntv->shift = pps_shift;
+	ntv->ppsfreq = pps_freq;
+	ntv->jitter = pps_jitter >> PPS_AVG;
+	ntv->stabil = pps_stabil;
+	ntv->calcnt = pps_calcnt;
+	ntv->errcnt = pps_errcnt;
+	ntv->jitcnt = pps_jitcnt;
+	ntv->stbcnt = pps_stbcnt;
 #endif /* PPS_SYNC */
 	(void)splx(s);
 
-	error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, tp), sizeof(ntv));
+	error = copyout((caddr_t)ntv, (caddr_t)SCARG(uap, tp), sizeof(*ntv));
 	if (!error) {
 
 		/*
