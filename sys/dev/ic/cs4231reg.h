@@ -1,4 +1,4 @@
-/* $NetBSD: cs4231reg.h,v 1.3 1996/02/05 02:18:48 jtc Exp $ */
+/* $NetBSD: cs4231reg.h,v 1.4 1996/02/16 08:12:33 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,12 +74,6 @@
  *						 v        v
  *     	       	       	       	       	       	  Pc BUS (DISK) ???
  *
- */
-
-
-/*
- * The CS4231 mixer is write-only--it cannot be queried for current
- * settings.  Drivers must keep track of current values themselves.
  */
 
 /* CS4231/AD1845 mode2 registers; added to AD1848 registers */
