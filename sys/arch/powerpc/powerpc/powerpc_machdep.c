@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.9 2002/03/06 13:10:23 tsutsui Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.10 2002/03/13 00:38:14 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -107,6 +107,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	switch (name[0]) {
 	case CPU_CACHELINE:
+		/* Deprecated */
 		return sysctl_rdint(oldp, oldlenp, newp, CACHELINESIZE);
 	case CPU_TIMEBASE:
 		if (cpu_timebase)
@@ -115,6 +116,11 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_PRINTFATALTRAPS:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &cpu_printfataltraps);
+	case CPU_CACHEINFO:
+		/* Use this instead of CPU_CACHELINE */
+		return sysctl_rdstruct(oldp, oldlenp, newp,
+			&curcpu()->ci_ci, 
+			sizeof(curcpu()->ci_ci));
 	default:
 		break;
 	}
