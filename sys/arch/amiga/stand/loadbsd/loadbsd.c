@@ -1,19 +1,54 @@
 /*
- *	$Id: loadbsd.c,v 1.11 1994/06/13 08:13:16 chopps Exp $
+ * Copyright (c) 1994 Michael L. Hitch
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Michael L. Hitch.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *	$Id: loadbsd.c,v 1.12 1994/06/15 19:17:36 chopps Exp $
  */
 
 #include <sys/types.h>
 #include <a.out.h>
 #include <stdio.h>
 #include <unistd.h>
-
+#include <errno.h>
+#include <stdarg.h>
+#include <signal.h>
+#ifdef __NetBSD__
+#include <err.h>
+#endif
 #include <exec/types.h>
 #include <exec/execbase.h>
 #include <exec/memory.h>
 #include <exec/resident.h>
-#include <libraries/configregs.h>
-#include <libraries/expansionbase.h>
 #include <graphics/gfxbase.h>
+#include <libraries/configregs.h>
+#include <libraries/configvars.h>
+#include <libraries/expansion.h>
+#include <libraries/expansionbase.h>
 
 #include <inline/exec.h>
 #include <inline/expansion.h>
@@ -22,50 +57,22 @@
 /* Get definitions for boothowto */
 #include "reboot.h"
 
-static char usage[] =
-"
-NAME
-\t%s - loads NetBSD from amiga dos.
-SYNOPSIS
-\t%s some-vmunix [-a] [-b] [-k] [-m memory] [-p] [-t] [-V]
-OPTIONS
-\t-a  Boot up to multiuser mode.
-\t-b  Ask for which root device.
-\t    Its possible to have multiple roots and choose between them.
-\t-k  Reserve the first 4M of fast mem [Some one else
-\t    is going to have to answer what that it is used for].
-\t-m  Tweak amount of available memory, for finding minimum amount
-\t    of memory required to run. Sets fastmem size to specified
-\t    size in Kbytes.
-\t-p  Use highest priority fastmem segement instead of the largest
-\t    segment. The higher priority segment is usually faster
-\t    (i.e. 32 bit memory), but some people have smaller amounts
-\t    of 32 bit memory.
-\t-t  This is a *test* option.  It prints out the memory
-\t    list information being passed to the kernel and also
-\t    exits without actually starting NetBSD.
-\t-S  Include kernel symbol table.
-\t-D  Enter debugger
-\t-V  Version of loadbsd program.
-\t-c  Set machine type.
-HISTORY
-      This version supports Kernel version 720 +
-";
-
-struct ExpansionBase *ExpansionBase;
-struct GfxBase *GfxBase;
-
 #undef __LDPGSZ
 #define __LDPGSZ 8192
 
-#define MAX_MEM_SEG	16
-
-/*
- * Kernel parameter passing version
- *	1:	first version of loadbsd
- *	2:	needs esym location passed in a4
- */
-#define KERNEL_PARAMETER_VERSION	2
+#ifndef __NetBSD__
+#ifndef __P
+#ifdef __STDC__
+#define __P(x) x
+#else
+#define __P(x)
+#endif
+#endif
+void err __P((int, const char *, ...));
+void errx __P((int, const char *, ...));
+void warn __P((const char *, ...));
+void warnx __P((const char *, ...));
+#endif
 
 /*
  *	Version history:
@@ -82,354 +89,334 @@ struct GfxBase *GfxBase;
  *		Also check if CPU is capable of running NetBSD.
  *	2.5	05/17/94 - Add check for "A3000 bonus".
  *	2.6	06/05/94 - Added -c option to override machine type.
+ *	2.7	06/15/94 - Pass E clock frequency.
  */
+static const char _version[] = "$VER: LoadBSD 2.7 (15.6.94)";
 
-struct MEM_LIST {
-	u_long	num_mem;
-	struct MEM_SEG {
-		u_long	mem_start;
-		u_long	mem_size;
-		u_short	mem_attrib;
-		short	mem_prio;
-	} mem_seg[MAX_MEM_SEG];
-} mem_list, *kmem_list;
+/*
+ * Kernel parameter passing version
+ *	1:	first version of loadbsd
+ *	2:	needs esym location passed in a4
+ */
+#define KERNEL_PARAMETER_VERSION	2
 
-int k_opt;
-int a_opt;
-int b_opt;
-int p_opt;
-int t_opt;
-int m_opt;
-int S_opt;
-int D_opt;
+#define MAXMEMSEG	16
+struct boot_memlist {
+	u_int	m_nseg; /* num_mem; */
+	struct boot_memseg {
+		u_int	ms_start;
+		u_int	ms_size;
+		u_short	ms_attrib;
+		short	ms_pri;
+	} m_seg[MAXMEMSEG];
+};
+struct boot_memlist memlist;
+struct boot_memlist *kmemlist;
 
-u_long cpuid;
 
+void get_mem_config __P((void **, u_long *, u_long *));
+void get_cpuid __P((void));
+void get_eclock __P((void));
+void usage __P((void));
+void verbose_usage __P((void));
+void Version __P((void));
+
+extern struct ExecBase *SysBase;
 extern char *optarg;
 extern int optind;
 
-void get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size);
-void get_cpuid (void);
-void Usage (char *program_name);
-void Version (void);
+int k_flag;
+int p_flag;
+int t_flag;
+int reqmemsz;
+int S_flag;
+u_long cpuid;
+long eclock_freq;
+char *program_name;
+char *kname;
+struct ExpansionBase *ExpansionBase;
+struct GfxBase *GfxBase;
 
-static const char _version[] = "$VER: LoadBSD 2.6 (5.6.94)";
 
 int
-main (int argc, char *argv[])
+main(argc, argv)
+	int argc;
+	char **argv;
 {
-  struct exec e;
-  int fd;
-  int boothowto = RB_SINGLE;
+	struct exec e;
+	struct ConfigDev *cd, *kcd;
+	u_long fmemsz, cmemsz;
+	int fd, boothowto, ksize, textsz, stringsz, ncd, i, mem_ix, ch;
+	u_short *kvers;
+	int *nkcd;
+	u_char *kp;
+	void *fmem;
+	char *esym;
 
-  if (argc >= 2)
-    {
-      if ((fd = open (argv[1], 0)) >= 0)
-	{
-	  if (read (fd, &e, sizeof (e)) == sizeof (e))
-	    {
-	      if (e.a_magic == NMAGIC)
-		{
-		  u_char *kernel;
-		  int kernel_size;
-		  int text_size;
-		  struct ConfigDev *cd;
-		  int num_cd;
-		  void *fastmem_start;
-		  u_long fastmem_size, chipmem_size;
-		  int i;
-		  u_short *kern_vers;
-		  char *esym;
-		  int string_size;
+	program_name = argv[0];
+	boothowto = RB_SINGLE;
 
-		  GfxBase = (struct GfxBase *) OpenLibrary ("graphics.library", 0);
-		  if (! GfxBase)	/* not supposed to fail... */
-		    abort();
-		  ExpansionBase= (struct ExpansionBase *) OpenLibrary ("expansion.library", 0);
-		  if (! ExpansionBase)	/* not supposed to fail... */
-		    abort();
-		  optind = 2;
-		  while ((i = getopt (argc, argv, "kabptVm:SDc:")) != EOF)
-		    switch (i) {
-		    case 'k':
-		      k_opt = 1;
-		      break;
-		    case 'a':
-		      a_opt = 1;
-		      break;
-		    case 'b':
-		      b_opt = 1;
-		      break;
-		    case 'p':
-		      p_opt = 1;
-		      break;
-		    case 't':
-		      t_opt = 1;
-		      break;
-		    case 'm':
-		      m_opt = atoi (optarg) * 1024;
-		      break;
-		    case 'V':
-		      Version();
-		      break;
-		    case 'S':
-		      S_opt = 1;
-		      break;
-		    case 'D':
-		      D_opt = 1;
-		      break;
-		    case 'c':
-		      cpuid = atoi (optarg) << 16;
-		      break;
-		    default:
-		      Usage(argv[0]);
-		      fprintf(stderr,"Unrecognized option \n");
-		      exit(-1);
-		    }
+	if (argc < 2)
+		usage();
+	if ((GfxBase = (void *)OpenLibrary(GRAPHICSNAME, 0)) == NULL)
+		err(20, "can't open graphics library");
+	if ((ExpansionBase=(void *)OpenLibrary(EXPANSIONNAME, 0)) == NULL)
+		err(20, "can't open expansion library");
 
-		  for (cd = 0, num_cd = 0; cd = FindConfigDev (cd, -1, -1); num_cd++) ;
-		  get_mem_config (&fastmem_start, &fastmem_size, &chipmem_size);
-		  get_cpuid ();
-
-		  text_size = (e.a_text + __LDPGSZ - 1) & (-__LDPGSZ);
-		  esym = NULL;
-		  kernel_size = text_size + e.a_data + e.a_bss
-		      + num_cd*sizeof(*cd) + 4
-		      + mem_list.num_mem*sizeof(struct MEM_SEG) + 4;
-		  /*
-		   * get symbol table size & string size
-		   * (should check kernel version to see if it will handle it)
-		   */
-		  if (S_opt && e.a_syms) {
-		    S_opt = 0;			/* prepare for failure */
-		    if (lseek(fd, e.a_text + e.a_data + e.a_syms, SEEK_CUR) > 0) {
-		      if (read (fd, &string_size, 4) == 4) {
-			if (lseek(fd, sizeof(e), SEEK_SET) < 0) {
-		      	  printf ("Error repositioning to text\n");
-		      	  exit(0);		/* Give up! */
-			}
-			kernel_size += e.a_syms + 4 + string_size;
-			S_opt = 1;		/* sucess!  Keep -S option */
-		      }
-		    }
-		  }
-
-		  kernel = (u_char *) malloc (kernel_size);
-
-		  if (t_opt)
-		    for (i = 0; i < mem_list.num_mem; ++i) {
-		      printf ("mem segment %d: start=%08lx size=%08lx attribute=%04lx pri=%d\n",
-			i + 1, mem_list.mem_seg[i].mem_start,
-			mem_list.mem_seg[i].mem_size,
-			mem_list.mem_seg[i].mem_attrib,
-			mem_list.mem_seg[i].mem_prio);
-		    }
-
-		  if (kernel)
-		    {
-		      if (read (fd, kernel, e.a_text) == e.a_text
-			  && read (fd, kernel + text_size, e.a_data) == e.a_data)
-			{
-			  int *knum_cd;
-			  struct ConfigDev *kcd;
-			  int mem_ix;
-
-			  if (k_opt)
-			    {
-			      fastmem_start += 4*1024*1024;
-			      fastmem_size  -= 4*1024*1024;
-			    }
-
-			  if (m_opt && m_opt <= fastmem_size)
-			    {
-			      fastmem_size = m_opt;
-			    }
-
-			  if (a_opt)
-			    {
-			      printf("Autobooting...");
-			      boothowto = RB_AUTOBOOT;
-			    }
-
-			  if (b_opt)
-			    {
-			      printf("Askboot...");
-			      boothowto |= RB_ASKNAME;
-			    }
-
-			  if (D_opt)
-			    {
-			      boothowto |= RB_KDB;
-			    }
-
-			  printf ("Using %d%c FASTMEM at 0x%x, %dM CHIPMEM\n",
-				(fastmem_size & 0xfffff) ? fastmem_size>>10 :
-				fastmem_size>>20,
-				(fastmem_size & 0xfffff) ? 'K' : 'M',
-				  fastmem_start, chipmem_size>>20);
-			  kern_vers = (u_short *) (kernel + e.a_entry - 2);
-			  if (*kern_vers > KERNEL_PARAMETER_VERSION &&
-			      *kern_vers != 0x4e73)
-			    {
-			      printf ("This kernel requires a newer version of loadbsd: %d\n", *kern_vers);
-			      exit (0);
-			    }
-			  if ((cpuid & AFB_68020) == 0)
-			    {
-			      printf ("Hmmm... You don't seem to have a CPU capable\n");
-			      printf ("        of running NetBSD.  You need a 68020\n");
-			      printf ("        or better\n");
-			      exit (0);
-			    }
-			  /* give them a chance to read the information... */
-			  sleep(2);
-
-			  bzero (kernel + text_size + e.a_data, e.a_bss);
-			  /*
-			   * If symbols wanted (and kernel can handle them),
-			   * load symbol table & strings and set esym to end.
-			   */
-			  knum_cd = (int *) (kernel + text_size + e.a_data + e.a_bss);
-			  if (*kern_vers != 0x4e73 && *kern_vers > 1 && S_opt && e.a_syms) {
-			    *knum_cd++ = e.a_syms;
-			    read(fd, (char *)knum_cd, e.a_syms);
-			    knum_cd = (int *)((char *)knum_cd + e.a_syms);
-			    read(fd, (char *)knum_cd, string_size);
-			    knum_cd = (int*)((char *)knum_cd + string_size);
-			    esym = (char *) (text_size + e.a_data + e.a_bss
-			      + e.a_syms + 4 + string_size);
-			  }
-			  *knum_cd = num_cd;
-			  for (kcd = (struct ConfigDev *) (knum_cd+1);
-			       cd = FindConfigDev (cd, -1, -1);
-			       *kcd++ = *cd)
-				;
-			  kmem_list = (struct MEM_LIST *)kcd;
-			  kmem_list->num_mem = mem_list.num_mem;
-			  for (mem_ix = 0; mem_ix < mem_list.num_mem; mem_ix++)
-			  	kmem_list->mem_seg[mem_ix] = mem_list.mem_seg[mem_ix];
-			  if (t_opt)		/* if test option */
-			    exit (0);		/*   don't start kernel */
-			  /* AGA startup - may need more */
-			  LoadView (NULL);
-			  startit (kernel, kernel_size,
-				   e.a_entry, fastmem_start,
-				   fastmem_size, chipmem_size,
-				   boothowto, esym, cpuid );
-			}
-		      else
-			fprintf (stderr, "Executable corrupt!\n");
-		    }
-		  else
-		    fprintf (stderr, "Out of memory! (%d)\n", text_size + e.a_data + e.a_bss
-				   + num_cd*sizeof(*cd) + 4
-				   + mem_list.num_mem*sizeof(struct MEM_SEG) + 4);
+	while ((ch = getopt(argc, argv, "abc:Dkm:ptSV")) != EOF) {
+		switch (ch) {
+		case 'k':
+			k_flag = 1;
+			break;
+		case 'a':
+			boothowto &= ~(RB_SINGLE);
+			boothowto |= RB_AUTOBOOT;
+			break;
+		case 'b':
+			boothowto |= RB_ASKNAME;
+			break;
+		case 'p':
+			p_flag = 1;
+			break;
+		case 't':
+			t_flag = 1;
+			break;
+		case 'm':
+			reqmemsz = atoi(optarg) * 1024;
+			break;
+		case 'V':
+			fprintf(stderr,"%s\n",_version + 6);
+			break;
+		case 'S':
+			S_flag = 1;
+			break;
+		case 'D':
+			boothowto |= RB_KDB;
+			break;
+		case 'c':
+			cpuid = atoi(optarg) << 16;
+			break;
+		case 'h':
+			verbose_usage();
+		default:
+			usage();
 		}
-	      else
-		fprintf (stderr, "Unsupported executable: %o\n", e.a_magic);
-	    }
-	  else
-	    fprintf (stderr, "Can't read header of %s\n", argv[1]);
-
-	  close (fd);
 	}
-      else
-	perror ("open");
-    }
-  else
-    Usage(argv[0]);
-  Version();
-}/* main() */
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
+		usage();
+	kname = argv[0];
+	
+	if ((fd = open(kname, 0)) < 0)
+		err(20, "open");
+	if (read(fd, &e, sizeof(e)) != sizeof(e))
+		err(20, "reading exec");
+	if (e.a_magic != NMAGIC)
+		err(20, "unknown binary");
+
+	for (cd = 0, ncd = 0; cd = FindConfigDev(cd, -1, -1); ncd++)
+		;
+	get_mem_config(&fmem, &fmemsz, &cmemsz);
+	get_cpuid();
+	get_eclock();
+
+	textsz = (e.a_text + __LDPGSZ - 1) & (-__LDPGSZ);
+	esym = NULL;
+	ksize = textsz + e.a_data + e.a_bss + ncd * sizeof(*cd)
+	    + 4 + memlist.m_nseg * sizeof(struct boot_memseg) + 4;
+
+	/*
+	 * get symbol table size & string size
+	 * (should check kernel version to see if it will handle it)
+	 */
+	if (S_flag && e.a_syms) {
+		if (lseek(fd, e.a_text + e.a_data + e.a_syms, SEEK_CUR) <= 0
+		    || read(fd, &stringsz, 4) != 4
+		    || lseek(fd, sizeof(e), SEEK_SET) < 0)
+			err(20, "lseek for symbols");
+		ksize += e.a_syms + 4 + stringsz;
+	}
+
+	kp = (u_char *)malloc(ksize);
+	if (t_flag) {
+		for (i = 0; i < memlist.m_nseg; ++i) {
+			printf("mem segment %d: start=%08lx size=%08lx"
+			    " attribute=%04lx pri=%d\n",
+			    i + 1, memlist.m_seg[i].ms_start,
+			    memlist.m_seg[i].ms_size,
+			    memlist.m_seg[i].ms_attrib,
+			    memlist.m_seg[i].ms_pri);
+		}
+	}
+	if (kp == NULL)
+		err(20, "failed malloc %d\n", ksize);
+
+	if (read(fd, kp, e.a_text) != e.a_text 
+	    || read(fd, kp + textsz, e.a_data) != e.a_data)
+		err(20, "unable to read kernel image\n");
+
+	if (k_flag) {
+		fmem += 4 * 1024 * 1024;
+		fmemsz -= 4 * 1024 * 1024;
+	}
+
+	if (reqmemsz && reqmemsz <= fmemsz)
+		fmemsz = reqmemsz;
+	if (boothowto & RB_AUTOBOOT)
+		printf("Autobooting...");
+	if (boothowto & RB_ASKNAME)
+		printf("Askboot...");
+
+	printf("Using %d%c FASTMEM at 0x%x, %dM CHIPMEM\n",
+	    (fmemsz & 0xfffff) ? fmemsz >> 10 : fmemsz >> 20,
+	    (fmemsz & 0xfffff) ? 'K' : 'M', fmem, cmemsz >> 20);
+	kvers = (u_short *)(kp + e.a_entry - 2);
+	if (*kvers > KERNEL_PARAMETER_VERSION && *kvers != 0x4e73)
+		err(20, "newer loadbsd required: %d\n", *kvers);
+	if ((cpuid & AFB_68020) == 0)
+		err(20, "cpu not supported");
+	/*
+	 * give them a chance to read the information...
+	 */
+	sleep(2);
+
+	bzero(kp + textsz + e.a_data, e.a_bss);
+	/*
+	 * If symbols wanted (and kernel can handle them),
+	 * load symbol table & strings and set esym to end.
+	 */
+	nkcd = (int *)(kp + textsz + e.a_data + e.a_bss);
+	if (*kvers != 0x4e73 && *kvers > 1 && S_flag && e.a_syms) {
+		*nkcd++ = e.a_syms;
+		read(fd, (char *)nkcd, e.a_syms);
+		nkcd = (int *)((char *)nkcd + e.a_syms);
+		read(fd, (char *)nkcd, stringsz);
+		    nkcd = (int*)((char *)nkcd + stringsz);
+		    esym = (char *)(textsz + e.a_data + e.a_bss
+		    + e.a_syms + 4 + stringsz);
+	}
+	*nkcd = ncd;
+
+	kcd = (struct ConfigDev *)(nkcd + 1); 
+	while(cd = FindConfigDev(cd, -1, -1))
+		*kcd++ = *cd;
+
+	kmemlist = (struct boot_memlist *)kcd;
+	kmemlist->m_nseg = memlist.m_nseg;
+	for (mem_ix = 0; mem_ix < memlist.m_nseg; mem_ix++)
+		kmemlist->m_seg[mem_ix] = memlist.m_seg[mem_ix];
+	/*
+	 * if test option set, done
+	 */
+	if (t_flag)
+		exit(0);
+		
+	/*
+	 * XXX AGA startup - may need more
+	 */
+	LoadView(NULL);
+	startit(kp, ksize, e.a_entry, fmem, fmemsz, cmemsz, boothowto, esym,
+	    cpuid, eclock_freq);
+	/*NOTREACHED*/
+}
 
 void
-get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size)
+get_mem_config(fmem, fmemsz, cmemsz)
+	void **fmem;
+	u_long *fmemsz, *cmemsz;
 {
-  extern struct ExecBase *SysBase;
-  struct MemHeader *mh, *nmh;
-  int num_mem = 0;
-  u_int seg_size;
-  u_int seg_start;
-  u_int seg_end;
-  char mem_pri = -128;
+	struct MemHeader *mh, *nmh;
+	u_int segsz, seg, eseg, nmem;
+	char mempri;
 
-  *fastmem_size = 0;
-  *chipmem_size = 0;
+	nmem = 0;
+	mempri = -128;
+	*fmemsz = 0;
+	*cmemsz = 0;
 
-  /* walk thru the exec memory list */
-  Forbid ();
-  for (mh  = (struct MemHeader *) SysBase->MemList.lh_Head;
-       nmh = (struct MemHeader *) mh->mh_Node.ln_Succ;
-       mh  = nmh, num_mem++)
-    {
-      mem_list.mem_seg[num_mem].mem_attrib = mh->mh_Attributes;
-      mem_list.mem_seg[num_mem].mem_prio = mh->mh_Node.ln_Pri;
-      seg_start = (u_int)mh->mh_Lower;
-      seg_end = (u_int)mh->mh_Upper;
-      seg_size = seg_end - seg_start;
-      mem_list.mem_seg[num_mem].mem_size = seg_size;
-      mem_list.mem_seg[num_mem].mem_start = seg_start;
+	/*
+	 * walk thru the exec memory list
+	 */
+	Forbid();
+	for (mh  = (void *) SysBase->MemList.lh_Head; 
+	    nmh = (void *) mh->mh_Node.ln_Succ; mh = nmh, nmem++) {
+		memlist.m_seg[nmem].ms_attrib = mh->mh_Attributes;
+		memlist.m_seg[nmem].ms_pri = mh->mh_Node.ln_Pri;
+		seg = (u_int)mh->mh_Lower;
+		eseg = (u_int)mh->mh_Upper;
+		segsz = eseg - seg;
+		memlist.m_seg[nmem].ms_size = segsz;
+		memlist.m_seg[nmem].ms_start = seg;
 
-      if (mh->mh_Attributes & MEMF_CHIP)
-	{
-	  /* there should hardly be more than one entry for chip mem, but
-	     handle it the same nevertheless */
-	  /* chipmem always starts at 0, so include vector area */
-	  mem_list.mem_seg[num_mem].mem_start = seg_start = 0;
-	  /* round to multiple of 512K */
-	  seg_size = (seg_size + 512*1024 - 1) & -(512*1024);
-	  mem_list.mem_seg[num_mem].mem_size = seg_size;
-	  if (seg_size > *chipmem_size)
-	    {
-	      *chipmem_size = seg_size;
-	    }
+		if (mh->mh_Attributes & MEMF_CHIP) {
+			/* 
+			 * there should hardly be more than one entry for 
+			 * chip mem, but handle it the same nevertheless 
+			 * cmem always starts at 0, so include vector area
+			 */
+			memlist.m_seg[nmem].ms_start = seg = 0;
+			/*
+			 * round to multiple of 512K
+			 */
+			segsz = (segsz + 512 * 1024 - 1) & -(512 * 1024);
+			memlist.m_seg[nmem].ms_size = segsz;
+			if (segsz > *cmemsz)
+				*cmemsz = segsz;
+			continue;
+		}
+		/* 
+		 * some heuristics..
+		 */
+		seg &= -__LDPGSZ;
+		eseg = (eseg + __LDPGSZ - 1) & -__LDPGSZ;
+
+		/*
+		 * get the mem back stolen by incore kickstart on 
+		 * A3000 with V36 bootrom.
+		 */
+		if (eseg == 0x07f80000)
+			eseg = 0x08000000;
+
+		/*
+		 * or by zkick on a A2000.
+		 */
+		if (seg == 0x280000 &&
+		    strcmp(mh->mh_Node.ln_Name, "zkick memory") == 0)
+			seg = 0x200000;
+
+		segsz = eseg - seg;
+		memlist.m_seg[nmem].ms_start = seg;
+		memlist.m_seg[nmem].ms_size = segsz;
+		/*
+		 *  If this segment is smaller than 2M,
+		 *  don't use it to load the kernel
+		 */
+		if (segsz < 2 * 1024 * 1024)
+			continue;
+		/*
+		 * if p_flag is set, select memory by priority 
+		 * instead of size
+		 */
+		if ((!p_flag && segsz > *fmemsz) || (p_flag &&
+		   mempri <= mh->mh_Node.ln_Pri && segsz > *fmemsz)) {
+			*fmemsz = segsz;
+			*fmem = (void *)seg;
+			mempri = mh->mh_Node.ln_Pri;
+		}
 	}
-      else
-	{
-	  /* some heuristics.. */
-	  seg_start &= -__LDPGSZ;
-	  seg_end = (seg_end + __LDPGSZ - 1) & -__LDPGSZ;
-	  /* get the mem back stolen by incore kickstart on A3000 with
-	     V36 bootrom. */
-	  if (seg_end == 0x07f80000)
-	    seg_end = 0x08000000;
-
-	  /* or by zkick on a A2000.  */
-	  if (seg_start == 0x280000
-	    && strcmp (mh->mh_Node.ln_Name, "zkick memory") == 0)
-	      seg_start = 0x200000;
-
-	  seg_size = seg_end - seg_start;
-	  mem_list.mem_seg[num_mem].mem_start = seg_start;
-	  mem_list.mem_seg[num_mem].mem_size = seg_size;
-	  /*
-	   *  If this segment is smaller than 2M,
-	   *  don't use it to load the kernel
-	   */
-	  if (seg_size < 2 * 1024 * 1024)
-	    continue;
-/* if p_opt is set, select memory by priority instead of size */
-	  if ((!p_opt && seg_size > *fastmem_size) ||
-	    (p_opt && mem_pri <= mh->mh_Node.ln_Pri && seg_size > *fastmem_size))
-	    {
-	      *fastmem_size = seg_size;
-	      *fastmem_start = (void *)seg_start;
-	      mem_pri = mh->mh_Node.ln_Pri;
-	    }
-	}
-    }
-  mem_list.num_mem = num_mem;
-  Permit();
+	memlist.m_nseg = nmem;
+	Permit();
 }
 
 /*
  * Try to determine the machine ID by searching the resident module list
  * for modules only present on specific machines.  (Thanks, Bill!)
  */
-
 void
-get_cpuid ()
+get_cpuid()
 {
-	extern struct ExecBase *SysBase;
 	u_long *rl;
 	struct Resident *rm;
 
@@ -445,39 +432,49 @@ get_cpuid ()
 		case 4000:
 			return;
 		default:
-			printf ("Machine type Amiga %d is not valid\n",
+			printf("machine Amiga %d is not recognized\n",
 			    cpuid >> 16);
-			exit (1);
+			exit(1);
 		}
 	}
-	rl = (u_long *) SysBase->ResModules;
+	rl = (u_long *)SysBase->ResModules;
 	if (rl == NULL)
 		return;
 
 	while (*rl) {
 		rm = (struct Resident *) *rl;
-		if (strcmp (rm->rt_Name, "A4000 Bonus") == 0 ||
-		    strcmp (rm->rt_Name, "A1000 Bonus") == 0) {
+		if (strcmp(rm->rt_Name, "A4000 Bonus") == 0 ||
+		    strcmp(rm->rt_Name, "A1000 Bonus") == 0) {
 			cpuid |= 4000 << 16;
 			break;
 		}
-		if (strcmp (rm->rt_Name, "A3000 bonus") == 0 ||
-		    strcmp (rm->rt_Name, "A3000 Bonus") == 0) {
+		if (strcmp(rm->rt_Name, "A3000 bonus") == 0 ||
+		    strcmp(rm->rt_Name, "A3000 Bonus") == 0) {
 			cpuid |= 3000 << 16;
 			break;
 		}
-		if (strcmp (rm->rt_Name, "card.resource") == 0) {
+		if (strcmp(rm->rt_Name, "card.resource") == 0) {
 			cpuid |= 1200 << 16;	/* or A600 :-) */
 			break;
 		}
 		++rl;
 	}
-	if (*rl == 0)		/* Nothing found, it's probably an A2000 or A500 */
+	/*
+	 * Nothing found, it's probably an A2000 or A500
+	 */
+	if (*rl == 0)
 		cpuid |= 2000 << 16;
 }
 
+void
+get_eclock()
+{
+	/* Fix for 1.3 startups? */
+	eclock_freq = SysBase->ex_EClockFrequency;
+}
 
-asm ("
+
+asm("
 	.set	ABSEXECBASE,4
 
 	.text
@@ -496,6 +493,7 @@ start_super:
 	| a0:  fastmem-start
 	| d0:  fastmem-size
 	| d1:  chipmem-size
+	| d4:  E clock frequency
 	| d5:  AttnFlags (cpuid)
 	| d7:  boothowto
 	| a4:  esym location
@@ -510,6 +508,7 @@ start_super:
 	movel	a3@(28),d7		| boothowto
 	movel	a3@(32),a4		| esym
 	movel	a3@(36),d5		| cpuid
+	movel	a3@(40),d4		| E clock frequency
 	subl	a5,a5			| target, load to 0
 
 	btst	#3,(ABSEXECBASE)@(0x129) | AFB_68040,SysBase->AttnFlags
@@ -553,7 +552,6 @@ L0:
 
 	moveq	#0,d2			| zero out unused registers
 	moveq	#0,d3			| (might make future compatibility
-	moveq	#0,d4			|  a little easier, since all registers
 	moveq	#0,d6			|  would have known contents)
 	movel	d6,a1
 	movel	d6,a2
@@ -571,12 +569,106 @@ zero:	.long	0
 
 ");
 
-void Usage(char *program_name)
+void
+usage()
 {
-   fprintf(stderr,usage,program_name,program_name);
+	fprintf(stderr, "usage: %s [-abkptDSV] [-c machine] [-m mem] kernel\n",
+	    program_name);
+	exit(1);
 }
 
-void Version()
+
+void
+verbose_usage()
 {
-  fprintf(stderr,"%s\n",_version + 6);
+	fprintf(stderr, "
+NAME
+\t%s - loads NetBSD from amiga dos.
+SYNOPSIS
+\t%s [-abkptDSV] [-c machine] [-m mem] kernel
+OPTIONS
+\t-a  Boot up to multiuser mode.
+\t-b  Ask for which root device.
+\t    Its possible to have multiple roots and choose between them.
+\t-c  Set machine type. [e.g 3000]
+\t-k  Reserve the first 4M of fast mem [Some one else
+\t    is going to have to answer what that it is used for].
+\t-m  Tweak amount of available memory, for finding minimum amount
+\t    of memory required to run. Sets fastmem size to specified
+\t    size in Kbytes.
+\t-p  Use highest priority fastmem segement instead of the largest
+\t    segment. The higher priority segment is usually faster
+\t    (i.e. 32 bit memory), but some people have smaller amounts
+\t    of 32 bit memory.
+\t-t  This is a *test* option.  It prints out the memory
+\t    list information being passed to the kernel and also
+\t    exits without actually starting NetBSD.
+\t-S  Include kernel symbol table.
+\t-D  Enter debugger
+\t-V  Version of loadbsd program.
+HISTORY
+\tThis version supports Kernel version 720 +\n",
+      program_name, program_name);
+      exit(1);
+}
+
+
+void
+_Vdomessage(doexit, eval, doerrno, fmt, args)
+	int doexit, doerrno, eval;
+	const char *fmt;
+	va_list args;
+{
+	fprintf(stderr, "%s: ", program_name);
+	if (fmt) {
+		vfprintf(stderr, fmt, args);
+		fprintf(stderr, ": ");
+	}
+	if (doerrno && errno < sys_nerr) {
+		fprintf(stderr, "%s", strerror(errno));
+		if (errno == EINTR || errno == 0) {
+			int  sigs;
+			sigpending((sigset_t *)&sigs);
+			printf("%x\n", sigs);
+		}
+	}
+	fprintf(stderr, "\n");
+	if (doexit)
+		exit(eval);
+}
+
+void
+err(int eval, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	_Vdomessage(1, eval, 1, fmt, ap);
+	/*NOTREACHED*/
+}
+
+void
+errx(int eval, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	_Vdomessage(1, eval, 0, fmt, ap);
+	/*NOTREACHED*/
+}
+
+void
+warn(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	_Vdomessage(0, 0, 1, fmt, ap);
+	va_end(ap);
+}
+
+void
+warnx(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	_Vdomessage(0, 0, 0, fmt, ap);
+	va_end(ap);
 }
