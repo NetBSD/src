@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.156 2004/02/18 13:35:46 yamt Exp $
+#       $NetBSD: Makefile,v 1.157 2004/03/20 21:28:59 bjh21 Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -23,7 +23,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	malloc.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memmove.9 memset.9 \
 	microtime.9 mstohz.9 namecache.9 namei.9 need_resched.9 \
 	opencrypto.9 \
-	panic.9 pci.9 pci_configure_bus.9 pci_intr.9 \
+	panic.9 pci.9 pci_configure_bus.9 pci_intr.9 pckbport.9 \
 	pcmcia.9 pfil.9 physio.9 pmap.9 pmatch.9 pmc.9 \
 	pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
 	properties.9 preempt.9 \
@@ -327,6 +327,18 @@ MLINKS+=pci.9 pci_conf_read.9 \
 	pci.9 PCI_REVISION.9
 MLINKS+=pci_configure_bus.9 pci_conf_hook.9 \
 	pci_configure_bus.9 pci_conf_interrupt.9
+MLINKS+=pckbport.9 pckbport_attach.9 \
+	pckbport.9 pckbport_attach_slot.9 \
+	pckbport.9 pckbport_cnattach.9 \
+	pckbport.9 pckbportintr.9 \
+	pckbport.9 pckbport_set_inputhandle.9 \
+	pckbport.9 pckbport_flush.9 \
+	pckbport.9 pckbport_poll_cmd.9 \
+	pckbport.9 pckbport_enqueue_cmd.9 \
+	pckbport.9 pckbport_poll_data.9 \
+	pckbport.9 pckbport_set_poll.9 \
+	pckbport.9 pckbport_xt_translation.9 \
+	pckbport.9 pckbport_slot_enable.9
 MLINKS+=pcmcia.9 pcmcia_function_init.9 \
 	pcmcia.9 pcmcia_function_enable.9 \
 	pcmcia.9 pcmcia_function_disable.9 \
