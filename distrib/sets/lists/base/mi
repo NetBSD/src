@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.249 2001/04/17 14:43:07 jdolecek Exp $
+# $NetBSD: mi,v 1.250 2001/04/19 23:22:51 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -910,9 +910,14 @@
 ./usr/share/groff_font/devascii		base-groff-font
 ./usr/share/groff_font/devdvi		base-groff-font
 ./usr/share/groff_font/devdvi/generate	base-groff-font
+./usr/share/groff_font/devhtml		base-groff-font
 ./usr/share/groff_font/devlatin1	base-groff-font
+./usr/share/groff_font/devlbp		base-groff-font
+./usr/share/groff_font/devlj4		base-groff-font
+./usr/share/groff_font/devlj4/generate	base-groff-font
 ./usr/share/groff_font/devps		base-groff-font
 ./usr/share/groff_font/devps/generate	base-groff-font
+./usr/share/groff_font/devutf8		base-groff-font
 ./usr/share/info			base-texinfo-share
 ./usr/share/keymaps			base-sys-share
 ./usr/share/keymaps/amiga			base-sys-share
