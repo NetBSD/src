@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.1.2.3 2001/08/06 20:51:41 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.1.2.4 2001/08/07 22:39:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr)
 	cond->ptc_magic = _PT_COND_MAGIC;
 	pthread_lockinit(&cond->ptc_lock);
 	PTQ_INIT(&cond->ptc_waiters);
+	cond->ptc_mutex = NULL;
 
 	return 0;
 }
