@@ -1,7 +1,7 @@
-# $NetBSD: obsolete.pmax,v 1.2 1999/06/08 07:42:13 simonb Exp $
+# $NetBSD: obsolete.pmax,v 1.3 2000/08/09 10:34:37 tv Exp $
 /etc/ld.so.conf
 /sbin/ldconfig
-/usr/include/pmax
+/usr/include/machine
 /usr/include/machine/_G_config.h
 /usr/include/machine/ansi.h
 /usr/include/machine/aout_machdep.h
@@ -50,4 +50,4 @@
 /usr/include/machine/types.h
 /usr/include/machine/varargs.h
 /usr/include/machine/vmparam.h
-/usr/include/machine
+/usr/include/pmax
