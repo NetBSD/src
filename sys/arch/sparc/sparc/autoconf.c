@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.132 2000/01/14 15:25:28 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.133 2000/01/31 15:08:25 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1526,6 +1526,8 @@ static struct {
 	{ "ledma",	BUSCLASS_SBUS },
 	{ "lebuffer",	BUSCLASS_SBUS },
 	{ "vme",	BUSCLASS_VME },
+	{ "si",		BUSCLASS_VME },
+	{ "sw",		BUSCLASS_OBIO },
 	{ "xdc",	BUSCLASS_XDC },
 	{ "xyc",	BUSCLASS_XYC },
 	{ "fdc",	BUSCLASS_FDC },
