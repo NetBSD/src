@@ -1,4 +1,4 @@
-/*	$NetBSD: aout.c,v 1.2 2001/10/11 07:07:42 leo Exp $	*/
+/*	$NetBSD: aout.c,v 1.3 2001/10/13 19:50:36 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,16 +36,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+#ifdef TOSTOOLS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-
-#ifdef TOSTOOLS
 #include <a_out.h>
+
+#define	MALLOC(x)	malloc(x)
+
 #else
+
+#include <stand.h>
+#include <atari_stand.h>
+#include <string.h>
+#include <libkern.h>
 #include <sys/exec_aout.h>
+
+#define	MALLOC(x)	alloc(x)
 #endif
+
 #include "tosdefs.h"
 #include "kparamb.h"
 #include "libtos.h"
@@ -63,12 +74,7 @@
 
 #define __LDPGSZ	(8*1024)	/* Page size for NetBSD		*/
 
-#ifndef N_MAGIC
-#define	N_MAGIC(hdr)	(hdr.a_magic & 0xffff)
-#endif
-
 #endif /* TOSTOOLS */
-
 
 /*
  * Load an a.out image.
@@ -94,8 +100,13 @@ int	loadsyms;
 	if (read(fd, (char *)&ehdr, sizeof(ehdr)) != sizeof(ehdr))
 		return -1;
 
-	if (N_MAGIC(ehdr) != NMAGIC)
+#ifdef TOSTOOLS
+	if ((ehdr.a_magic & 0xffff) != NMAGIC)
 		return -1;
+#else
+	if ((N_GETMAGIC(ehdr) != NMAGIC) && (N_GETMAGIC(ehdr) != OMAGIC))
+		return -1;
+#endif
 
 	/*
 	 * Extract various sizes from the kernel executable
@@ -120,7 +131,7 @@ int	loadsyms;
 	}
 
 	err = 4;
-	if ((od->kstart = (u_char *)malloc(od->ksize)) == NULL)
+	if ((od->kstart = (u_char *)MALLOC(od->ksize)) == NULL)
 		goto error;
 
 	/*
