@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_bmap.c,v 1.2 1998/08/14 18:04:05 mark Exp $	*/
+/*	$NetBSD: filecore_bmap.c,v 1.3 1998/10/29 23:18:57 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -131,6 +131,7 @@ filecore_map(fcmp, addr, lbn, bnp)
 		zaddr = 0;
 	if (sect > 0)
 		sect--;
+	sect <<= fcmp->drec.share_size;
 	do {
 		error=bread(fcmp->fc_devvp, fcmp->map + zone,
 			    1 << fcmp->drec.log2secsize, NOCRED, &bp);
