@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.7 1996/03/14 19:29:13 christos Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.8 1996/03/30 22:41:02 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -48,6 +48,7 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 
 #include <compat/svr4/svr4_types.h>
@@ -56,7 +57,6 @@
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_ioctl.h>
 #include <compat/svr4/svr4_stropts.h>
-#include <compat/svr4/svr4_conf.h>
 
 /*
  * Device minor numbers
