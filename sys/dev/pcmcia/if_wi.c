@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.59 2001/03/18 21:13:12 ichiro Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.60 2001/04/29 20:12:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -403,10 +403,10 @@ wi_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname);
 		goto ioalloc_failed;
 	}
+	printf("%s:", sc->sc_dev.dv_xname);
 	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO16, 0,
 	    WI_IOSIZ, &sc->sc_pcioh, &sc->sc_iowin) != 0) {
-		printf("%s: can't map i/o space\n",
-		    sc->sc_dev.dv_xname);
+		printf(" can't map i/o space\n");
 		goto iomap_failed;
 	}
 	sc->wi_btag = sc->sc_pcioh.iot;
@@ -447,8 +447,7 @@ wi_attach(parent, self, aux)
 		goto bad_enaddr;
 	}
 
-	printf("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_macaddr));
+	printf(", 802.11 address %s\n", ether_sprintf(sc->sc_macaddr));
 
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
