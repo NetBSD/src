@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.6 1999/08/01 21:30:21 thorpej Exp $	*/
+/*	$NetBSD: apci.c,v 1.7 1999/09/10 22:49:33 bad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -709,7 +709,7 @@ apciparam(tp, t)
 		apci->ap_ier = (ospeed >> 8) & 0xff;
 		apci->ap_cfcr = cfcr;
 	} else
-		apci->ap_cfcr;
+		apci->ap_cfcr = cfcr;
 
 	/* and copy to tty */
 	tp->t_ispeed = t->c_ispeed;
