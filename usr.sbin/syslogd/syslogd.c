@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.22 2004/11/17 06:45:12 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.23 2004/11/17 07:11:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.22 2004/11/17 06:45:12 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.23 2004/11/17 07:11:10 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,6 +219,7 @@ struct	filed consfile;
 int	Debug;			/* debug flag */
 int	daemonized = 0;		/* we are not daemonized yet */
 char	LocalHostName[MAXHOSTNAMELEN];	/* our hostname */
+char	oldLocalHostName[MAXHOSTNAMELEN];/* previous hostname */
 char	*LocalDomain;		/* our local domain name */
 size_t	LocalDomainLen;		/* length of LocalDomain */
 int	*finet = NULL;		/* Internet datagram sockets */
@@ -272,7 +273,7 @@ main(int argc, char *argv[])
 	struct sockaddr_storage frominet;
 	struct sigaction sact;
 	sigset_t mask;
-	char *p, *line, **pp;
+	char *line, **pp;
 	struct pollfd *readfds;
 	uid_t uid = 0;
 	gid_t gid = 0;
@@ -398,14 +399,6 @@ getgroup:
 	consfile.f_type = F_CONSOLE;
 	(void)strlcpy(consfile.f_un.f_fname, ctty,
 	    sizeof(consfile.f_un.f_fname));
-	(void)gethostname(LocalHostName, sizeof(LocalHostName));
-	LocalHostName[sizeof(LocalHostName) - 1] = '\0';
-	if ((p = strchr(LocalHostName, '.')) != NULL) {
-		*p++ = '\0';
-		LocalDomain = p;
-	} else
-		LocalDomain = "";
-	LocalDomainLen = strlen(LocalDomain);
 	linesize = getmsgbufsize();
 	if (linesize < MAXLINE)
 		linesize = MAXLINE;
@@ -1428,8 +1421,19 @@ init(void)
 	char cline[LINE_MAX];
 	char prog[NAME_MAX + 1];
 	char host[MAXHOSTNAMELEN];
+	char hostMsg[2*MAXHOSTNAMELEN + 40];
 
 	dprintf("init\n");
+
+	(void)strlcpy(oldLocalHostName, LocalHostName,
+		      sizeof(oldLocalHostName));
+	(void)gethostname(LocalHostName, sizeof(LocalHostName));
+	if ((p = strchr(LocalHostName, '.')) != NULL) {
+		*p++ = '\0';
+		LocalDomain = p;
+	} else
+		LocalDomain = "";
+	LocalDomainLen = strlen(LocalDomain);
 
 	/*
 	 *  Close all open log files.
@@ -1619,6 +1623,18 @@ init(void)
 
 	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: restart", LocalHostName, ADDDATE);
 	dprintf("syslogd: restarted\n");
+	/*
+	 * Log a change in hostname, but only on a restart (we detect this
+	 * by looking for an empty oldLocalHostName).
+	 */
+	if (oldLocalHostName[0] == '\0' &&
+	    strcmp(oldLocalHostName, LocalHostName) != 0) {
+		(void)snprintf(hostMsg, sizeof(hostMsg),
+		    "syslogd: host name changed, \"%s\" to \"%s\"",
+		    oldLocalHostName, LocalHostName);
+		logmsg(LOG_SYSLOG|LOG_INFO, hostMsg, LocalHostName, ADDDATE);
+		dprintf("%s\n", hostMsg);
+	}
 }
 
 /*
