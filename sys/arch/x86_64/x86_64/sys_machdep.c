@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4 2002/06/18 08:35:14 fvdl Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5 2002/07/04 10:44:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,10 +77,10 @@
 extern struct vm_map *kernel_map;
 
 #if 0
-int x86_64_iopl __P((struct proc *, void *, register_t *));
 int x86_64_get_ioperm __P((struct proc *, void *, register_t *));
 int x86_64_set_ioperm __P((struct proc *, void *, register_t *));
 #endif
+int x86_64_iopl __P((struct proc *, void *, register_t *));
 int x86_64_get_mtrr __P((struct proc *, void *, register_t *));
 int x86_64_set_mtrr __P((struct proc *, void *, register_t *));
 
@@ -285,7 +285,6 @@ out:
 }
 #endif	/* USER_LDT */
 
-#if 0
 int
 x86_64_iopl(p, args, retval)
 	struct proc *p;
@@ -312,6 +311,8 @@ x86_64_iopl(p, args, retval)
 
 	return 0;
 }
+
+#if 0
 
 int
 x86_64_get_ioperm(p, args, retval)
@@ -429,11 +430,11 @@ sys_sysarch(p, v, retval)
 		error = x86_64_set_ldt(p, SCARG(uap, parms), retval);
 		break;
 #endif
-#if 0
 	case X86_64_IOPL: 
 		error = x86_64_iopl(p, SCARG(uap, parms), retval);
 		break;
 
+#if 0
 	case X86_64_GET_IOPERM: 
 		error = x86_64_get_ioperm(p, SCARG(uap, parms), retval);
 		break;
