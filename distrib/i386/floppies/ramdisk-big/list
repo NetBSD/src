@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2002/06/19 03:47:18 itojun Exp $
+#	$NetBSD: list,v 1.14 2002/06/26 13:37:52 itojun Exp $
 #
 
 SRCDIRS	usr.bin/less
@@ -64,6 +64,7 @@ PROG	usr/mdec/installboot
 PROG	usr/sbin/bad144
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
+PROG	usr/sbin/wiconfig
 
 SPECIAL	dhclient	srcdir	distrib/utils/x_dhclient
 SPECIAL	ftp		srcdir	distrib/utils/x_ftp
