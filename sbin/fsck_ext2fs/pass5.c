@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.3 1997/09/14 14:27:29 lukem Exp $	*/
+/*	$NetBSD: pass5.c,v 1.4 1997/10/09 13:19:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.3 1997/09/14 14:27:29 lukem Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.4 1997/10/09 13:19:39 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,17 +93,17 @@ pass5()
 		ndirs = 0;
 
 		if (blk_bitmap == NULL) {
-			blk_bitmap = getdatablk(fs->e2fs_gd[c].ext2bgd_b_bitmap,
+			blk_bitmap = getdatablk(fs2h32(fs->e2fs_gd[c].ext2bgd_b_bitmap),
 				fs->e2fs_bsize);
 		} else {
-			getblk(blk_bitmap, fs->e2fs_gd[c].ext2bgd_b_bitmap,
+			getblk(blk_bitmap, fs2h32(fs->e2fs_gd[c].ext2bgd_b_bitmap),
 				fs->e2fs_bsize);
 		}
 		if (ino_bitmap == NULL) {
-			ino_bitmap = getdatablk(fs->e2fs_gd[c].ext2bgd_i_bitmap,
+			ino_bitmap = getdatablk(fs2h32(fs->e2fs_gd[c].ext2bgd_i_bitmap),
 				fs->e2fs_bsize);
 		} else {
-			getblk(ino_bitmap, fs->e2fs_gd[c].ext2bgd_i_bitmap,
+			getblk(ino_bitmap, fs2h32(fs->e2fs_gd[c].ext2bgd_i_bitmap),
 				fs->e2fs_bsize);
 		}
 		memset(bbmap, 0, fs->e2fs_bsize);
@@ -173,26 +173,26 @@ pass5()
 		cs_nifree += nifree;
 		cs_ndir += ndirs;
 
-		if (debug && (fs->e2fs_gd[c].ext2bgd_nbfree != nbfree ||
-					  fs->e2fs_gd[c].ext2bgd_nifree != nifree ||
-					  fs->e2fs_gd[c].ext2bgd_ndirs != ndirs)) {
+		if (debug && (fs2h16(fs->e2fs_gd[c].ext2bgd_nbfree) != nbfree ||
+					  fs2h16(fs->e2fs_gd[c].ext2bgd_nifree) != nifree ||
+					  fs2h16(fs->e2fs_gd[c].ext2bgd_ndirs) != ndirs)) {
 			printf("summary info for cg %d is %d, %d, %d,"
 					"should be %d, %d, %d\n", c,
-					fs->e2fs_gd[c].ext2bgd_nbfree,
-					fs->e2fs_gd[c].ext2bgd_nifree,
-					fs->e2fs_gd[c].ext2bgd_ndirs,
+					fs2h16(fs->e2fs_gd[c].ext2bgd_nbfree),
+					fs2h16(fs->e2fs_gd[c].ext2bgd_nifree),
+					fs2h16(fs->e2fs_gd[c].ext2bgd_ndirs),
 					nbfree,
 					nifree,
 					ndirs);
 		}
 		snprintf(msg, 255, "SUMMARY INFORMATIONS WRONG FOR CG #%d", c);
-		if ((fs->e2fs_gd[c].ext2bgd_nbfree != nbfree ||
-			fs->e2fs_gd[c].ext2bgd_nifree != nifree ||
-			fs->e2fs_gd[c].ext2bgd_ndirs != ndirs) &&
+		if ((fs2h16(fs->e2fs_gd[c].ext2bgd_nbfree) != nbfree ||
+			fs2h16(fs->e2fs_gd[c].ext2bgd_nifree) != nifree ||
+			fs2h16(fs->e2fs_gd[c].ext2bgd_ndirs) != ndirs) &&
 			dofix(&idesc[0], msg)) {
-			fs->e2fs_gd[c].ext2bgd_nbfree = nbfree;
-			fs->e2fs_gd[c].ext2bgd_nifree = nifree;
-			fs->e2fs_gd[c].ext2bgd_ndirs = ndirs;
+			fs->e2fs_gd[c].ext2bgd_nbfree = h2fs16(nbfree);
+			fs->e2fs_gd[c].ext2bgd_nifree = h2fs16(nifree);
+			fs->e2fs_gd[c].ext2bgd_ndirs = h2fs16(ndirs);
 			sbdirty();
 		}
 
