@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.7 1997/10/14 09:54:35 mark Exp $	*/
+/*	$NetBSD: copystr.S,v 1.8 1998/04/01 23:00:14 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -43,11 +43,6 @@
 #include "assym.h"
 #include <machine/asm.h>
 #include <sys/errno.h>
-
-ip	.req	r12
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
 
 	.text
 Lcurpcb:
