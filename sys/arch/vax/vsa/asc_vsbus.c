@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.24 2001/05/16 05:36:56 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.25 2002/09/13 03:00:18 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.24 2001/05/16 05:36:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.25 2002/09/13 03:00:18 chuck Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -300,7 +300,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	 * formula: 4 * period = (1000 / freq) * 4
 	 */
 	sc->sc_minsync = (1000 / sc->sc_freq);
-	sc->sc_maxxfer = 63 * 1024;
+	sc->sc_maxxfer = 64 * 1024;
 
 	printf("\n%s", self->dv_xname);	/* Pretty print */
 
