@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.7 1998/09/02 08:24:51 drochner Exp $	 */
+/* $NetBSD: installboot.c,v 1.8 1998/12/19 19:17:23 he Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -64,7 +64,11 @@
 char *loadprotoblocks __P((char *, size_t *));
 static int devread __P((int, void *, daddr_t, size_t, char *));
 static int add_fsblk __P((struct fs *, daddr_t, int));
-int loadblocknums __P((char *, ino_t));
+int setup_ffs_blks __P((char *, ino_t));
+int setup_contig_blocks __P((char *, int, char *, unsigned int));
+int save_contig_sec_boot __P((char *, int, char *, unsigned int));
+ino_t save_ffs __P((char *, char *, char *, unsigned int));
+ino_t save_passthru __P((char *, char *, char *, unsigned int));
 static void usage __P((void));
 int main __P((int, char **));
 
@@ -77,6 +81,7 @@ struct nlist nl[] = {
 };
 
 int verbose = 0;
+int conblockmode, conblockstart;
 
 char *
 loadprotoblocks(fname, size)
@@ -224,7 +229,7 @@ static union {
 } sblock;
 
 int
-loadblocknums(diskdev, inode)
+setup_ffs_blks(diskdev, inode)
 	char *diskdev;
 	ino_t inode;
 {
@@ -307,11 +312,126 @@ out:
 	return (!allok);
 }
 
+
+ino_t
+save_ffs(diskdev, bootblkname, bp, size)
+	char *diskdev, *bootblkname, *bp;
+	unsigned int size;
+{
+	ino_t inode;
+
+	/* do we need the fraglist? */
+	if (size > fraglist->loadsz * DEV_BSIZE) {
+
+		inode = createfileondev(diskdev, bootblkname, bp, size);
+		if (inode == (ino_t) - 1)
+			return inode;
+
+		/* paranoia */
+		sync();
+		(void) sleep(3);
+
+		if (setup_ffs_blks(diskdev, inode))
+			return (-1);
+	}
+	return inode;
+}
+
+int
+setup_contig_blocks(diskdev, blkno, bp, size) 
+	char *diskdev, *bp;
+	int blkno;
+	unsigned int size;
+{
+	int i, ndb, rdb, db;
+	int tableblksize = 8;
+
+	ndb = howmany(size, tableblksize * DEV_BSIZE);
+	rdb = howmany(size, DEV_BSIZE);
+	
+	if (verbose)
+		printf("%s: block number %d, size %u table blocks: %d/%d\n",
+		       diskdev, blkno, size, ndb, fraglist->maxentries);
+	if (ndb > fraglist->maxentries) {
+		errx(1, "not enough fragment space in bootcode\n");
+		return (-1);
+	}
+
+	if (verbose)
+		printf("%s: block numbers:", diskdev);
+	for (i = 0; i < ndb; i++) {
+		db = tableblksize;
+		if (rdb < tableblksize)
+			db = rdb;
+		rdb -= tableblksize;
+
+		fraglist->numentries = i+1;
+		fraglist->entries[i].offset = blkno;
+		fraglist->entries[i].num = db;
+		if (verbose)
+			printf(" %d", blkno);
+
+		blkno += tableblksize;
+	}
+	if (verbose)
+		printf("\n");
+
+	return 0;
+}
+
+int
+save_contig_sec_boot(diskdev, off, bp, size)
+	char *diskdev, *bp;
+	unsigned int size;
+	int off;
+{
+	int fd;
+
+	fd = open(diskdev, O_RDWR, 0444);
+	if (fd < 0) {
+		warn("open %s", diskdev);
+		return (-1);
+	}
+	if (lseek(fd, (off_t)off, SEEK_SET) == (off_t)-1) {
+		warn("lseek %s", diskdev);
+		return (-1);
+	}
+	if (write(fd, bp, size) < 0) {
+		warn("write %s", diskdev);
+		return (-1);
+	}
+	if (fsync(fd) != 0) {
+		warn("fsync: %s", diskdev);
+		return -1;
+	}
+	(void) close(fd);
+
+	return 0;
+}
+
+ino_t
+save_passthru(diskdev, bootblkname, bp, size)
+	char *diskdev, *bootblkname, *bp;
+	unsigned int size;
+{
+
+	if (save_contig_sec_boot(diskdev,
+				 conblockstart * DEV_BSIZE,
+				 bp, size) != 0)
+		return (ino_t)(-1);
+
+	if (setup_contig_blocks(diskdev, conblockstart, bp, size) != 0)
+		return (ino_t)(-1);
+
+	return (ino_t)(-2);
+}
+
+
 static void
 usage()
 {
 	(void) fprintf(stderr,
-		       "usage: installboot [-n] [-v] [-f] <boot> <device>\n");
+	       "usage: installboot [-b bno] [-n] [-v] [-f] <boot> <device>\n");
 	exit(1);
 }
 
@@ -332,9 +452,15 @@ main(argc, argv)
 	char *bootblkname = DEFBBLKNAME;
 	int nowrite = 0;
 	int allok = 0;
+	ino_t (*save_func) __P((char *, char *, char *, unsigned int));
 
-	while ((c = getopt(argc, argv, "vnf")) != -1) {
+	while ((c = getopt(argc, argv, "b:vnf")) != -1) {
 		switch (c) {
+		case 'b':
+			/* generic override, supply starting block # */
+			conblockmode = 1;
+			conblockstart = atoi(optarg);
+			break;
 		case 'n':
 			/* Do not actually write the bootblock to disk */
 			nowrite = 1;
@@ -362,25 +488,20 @@ main(argc, argv)
 
 	fraglist->numentries = 0;
 
-	/* do we need the fraglist? */
-	if (size > fraglist->loadsz * DEV_BSIZE) {
+	if (conblockmode)
+		save_func = save_passthru;
+	else
+		save_func = save_ffs;
 
-		inode = createfileondev(argv[optind + 1], bootblkname,
-					bp + fraglist->loadsz * DEV_BSIZE,
-					size - fraglist->loadsz * DEV_BSIZE);
-		if (inode == (ino_t) - 1)
-			goto out;
+	if ((inode = (*save_func)(argv[optind + 1],
+				  bootblkname,
+				  bp + fraglist->loadsz * DEV_BSIZE,
+				  size - fraglist->loadsz * DEV_BSIZE))
+	    == (ino_t)-1)
+		goto out;
 
-		/* paranoia */
-		sync();
-		(void) sleep(3);
-
-		if (loadblocknums(argv[optind + 1], inode))
-			goto out;
-
-		size = fraglist->loadsz * DEV_BSIZE;
-		/* size to be written to bootsect */
-	}
+	size = fraglist->loadsz * DEV_BSIZE;
+	/* size to be written to bootsect */
 
 	devfd = open(argv[optind + 1], O_RDWR, 0);
 	if (devfd < 0) {
@@ -443,7 +564,8 @@ out:
 		(void) close(devfd);
 	if (bp)
 		free(bp);
-	if (inode != (ino_t) - 1) {
+	if (inode != (ino_t)-1
+	    && !conblockmode) {
 		cleanupfileondev(argv[optind + 1], bootblkname, !allok || nowrite);
 	}
 	return (!allok);
