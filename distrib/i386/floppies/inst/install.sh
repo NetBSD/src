@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.1.1.1 1994/08/29 15:30:21 cgd Exp $
+#	$Id: install.sh,v 1.2 1994/08/30 23:48:23 cgd Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -209,10 +209,9 @@ done
 
 if [ $sizeunit = "sectors" ]; then
 	echo	""
-	echo	"For best disk performance, partitions should being and end on"
+	echo	"For best disk performance, partitions should begin and end on"
 	echo	"cylinder boundaries.  Wherever possible, pick sizes that are"
-	echo -n	"multiples are multiples of the cylinder size ($cylindersize"
-	echo	"sectors)."
+	echo	"multiples of the cylinder size ($cylindersize sectors)."
 fi
 
 echo -n ""

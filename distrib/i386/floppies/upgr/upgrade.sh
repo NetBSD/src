@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: upgrade.sh,v 1.1.1.1 1994/08/29 15:30:20 cgd Exp $
+#	$Id: upgrade.sh,v 1.2 1994/08/30 23:48:25 cgd Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -86,7 +86,7 @@ esac
 driveunits=`ls /dev/[sw]d?a | sed -e 's,/dev/\(...\)a,\1,g'`
 if [ "X${driveunits}" = "X" ]; then
 	echo	"FATAL ERROR:"
-	echo	"No disk edvices."
+	echo	"No disk devices."
 	echo	"This is probably a bug in the install disks."
 	echo	"Exiting install program."
 	exit
