@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.next68k,v 1.6 1999/01/08 19:26:14 augustss Exp $
+# $NetBSD: Makefile.next68k,v 1.7 1999/01/15 23:21:26 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -51,7 +51,7 @@ NEXT68K=	$S/arch/next68k
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-undef -Dmc68020 -Dnext68k -D__NetBSD__
+		-undef -Dnext68k -D__NetBSD__
 #		-U__NeXT__ -UNeXT -U__NeXT -U_NEXT_SOURCE -U__MACH__ \
 #		-DCROSS_COMPILE_NEXTSTEP
 CWARNFLAGS=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wno-format \
