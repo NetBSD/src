@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.18 2001/11/13 07:26:33 lukem Exp $ */
+/*	$NetBSD: if_xi.c,v 1.19 2001/12/15 11:45:11 soren Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.18 2001/11/13 07:26:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.19 2001/12/15 11:45:11 soren Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -155,7 +155,7 @@ struct xi_softc {
 
 	bus_space_tag_t		sc_bst;		/* Bus cookie */
 	bus_space_handle_t	sc_bsh;		/* Bus I/O handle */
-	bus_addr_t		sc_offset;	/* Offset of registers */
+	bus_size_t		sc_offset;	/* Offset of registers */
 
 	u_int8_t	sc_rev;			/* Chip revision */
 	u_int32_t	sc_flags;		/* Misc. flags */
@@ -1075,7 +1075,7 @@ xi_mdi_probe(sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	bus_addr_t offset = sc->sc_offset;
+	bus_size_t offset = sc->sc_offset;
 	u_int8_t x;
 
 	/* Pull clock bit MDCK low... */
