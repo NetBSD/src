@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.3 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: expr.c,v 1.4 1999/10/20 15:49:15 hubertf Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -127,8 +127,6 @@ struct expr_state {
 
 enum error_type { ET_UNEXPECTED, ET_BADLIT, ET_RECURSIVE,
 		  ET_LVALUE, ET_RDONLY, ET_STR };
-
-static Expr_state *es;
 
 static void        evalerr  ARGS((Expr_state *es, enum error_type type,
 				  const char *str)) GCC_FUNC_ATTR(noreturn);
