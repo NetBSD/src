@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.29 2000/03/09 12:50:36 hubertf Exp $
+.\"	$NetBSD: disklabel.8,v 1.30 2000/05/31 14:13:48 fvdl Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,6 +55,11 @@
 .Oo Ar packid Oc
 .Nm ""
 .Fl e
+.Op Fl r
+.Op Fl C
+.Ar disk
+.Nm ""
+.Fl I
 .Op Fl r
 .Op Fl C
 .Ar disk
@@ -318,6 +323,11 @@ editing the file, and replacing the label with
 Read the on-disk label for sd0, edit it and reinstall in-core as well
 as on-disk.
 Existing bootstrap code is unaffected.
+.Pp
+.Dl disklabel -e -I sd0
+.Pp
+As previous, but don't fail if there was no label on the disk yet;
+provide some default values instead.
 .Pp
 .Dl disklabel -R sd0 mylabel
 .Pp
