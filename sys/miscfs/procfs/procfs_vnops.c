@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_vnops.c,v 4.2 1994/01/02 15:28:44 jsp Exp
  *
- *	$Id: procfs_vnops.c,v 1.10 1994/01/05 08:00:09 cgd Exp $
+ *	$Id: procfs_vnops.c,v 1.11 1994/01/05 21:56:02 cgd Exp $
  */
 
 /*
@@ -56,6 +56,8 @@
 #include <sys/resourcevar.h>
 #include <miscfs/procfs/procfs.h>
 #include <vm/vm.h>	/* for page_size */
+
+#include <machine/reg.h>
 
 /*
  * Vnode Operations.
@@ -362,6 +364,8 @@ procfs_getattr(vp, vap, cred, p)
 		break;
 
 	case Pregs:
+		vap->va_bytes = vap->va_size = sizeof(struct reg);
+		/* fall through */
 	case Pctl:
 	case Pstatus:
 	case Pnote:
