@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.32 2000/01/28 16:00:23 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.33 2000/01/31 11:34:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -521,10 +521,6 @@ ext2fs_mountfs(devvp, mp, p)
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
-	if (fs2h16(fs->e2fs_magic) != E2FS_MAGIC) {
-		error = EINVAL;		/* XXX needs translation */
-		goto out;
-	}
 	error = ext2fs_checksb(fs, ronly);
 	if (error)
 		goto out;
@@ -1060,10 +1056,15 @@ ext2fs_checksb(fs, ronly)
 		return (EIO);	   /* XXX needs translation */
 	}
 	if (fs2h32(fs->e2fs_rev) > E2FS_REV0) {
+		if (fs2h32(fs->e2fs_first_ino) != EXT2_FIRSTINO ||
+		    fs2h16(fs->e2fs_inode_size) != EXT2_DINODE_SIZE) {
+			printf("Ext2 fs: unsupported inode size\n");
+			return (EINVAL);      /* XXX needs translation */
+		}
 		if (fs2h32(fs->e2fs_features_incompat) &
 		    ~EXT2F_INCOMPAT_SUPP) {
 			printf("Ext2 fs: unsupported optionnal feature\n");
-			return (EIO);      /* XXX needs translation */
+			return (EINVAL);      /* XXX needs translation */
 		}
 		if (!ronly && fs2h32(fs->e2fs_features_rocompat) &
 		    ~EXT2F_ROCOMPAT_SUPP) {
