@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.52 2004/12/18 08:43:08 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.53 2005/02/12 23:14:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -169,7 +169,7 @@ int	fsetown(struct proc *, pid_t *, int, const void *);
 int	fgetown(struct proc *, pid_t, int, void *);
 void	fownsignal(pid_t, int, int, int, void *);
 
-int	fdclone(struct proc *, struct file *, int, const struct fileops *,
+int	fdclone(struct proc *, struct file *, int, int, const struct fileops *,
     void *);
 
 /* Commonly used fileops */
