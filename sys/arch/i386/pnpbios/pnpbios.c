@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.16 2000/05/11 05:54:49 jhawk Exp $ */
+/* $NetBSD: pnpbios.c,v 1.17 2000/05/11 15:26:23 jhawk Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -128,7 +128,7 @@ static void	pnpbios_printres	__P((struct pnpresources *r));
 static int	pnpbios_print		__P((void *aux, const char *pnp));
 static void	pnpbios_id_to_string	__P((u_int32_t pnpid, char *s));
 static int	pnpbios_attachnode	__P((struct pnpbios_softc *sc,
-    int idx, const u_int8_t *buf, size_t len, int attachonly));
+    int idx, const u_int8_t *buf, size_t len, int matchonly));
 
 static int	pnp_scan		__P((const u_int8_t **bufp,
     size_t maxlen, struct pnpresources *pnpresources, int in_depends));
@@ -785,12 +785,12 @@ pnpbios_submatch(parent, match, aux)
 }
 
 static int
-pnpbios_attachnode(sc, idx, buf, len, attachonly)
+pnpbios_attachnode(sc, idx, buf, len, matchonly)
 	struct pnpbios_softc *sc;
 	int idx;
 	const u_int8_t *buf;
 	size_t len;
-	int attachonly;
+	int matchonly;
 {
 	struct pnpdevnode *dn;
 	const u_int8_t *p;
@@ -806,7 +806,7 @@ pnpbios_attachnode(sc, idx, buf, len, attachonly)
 
 	DPRINTF(("%s (%s): type 0x%02x subtype "
 	    "0x%02x dpi 0x%02x attr 0x%04x:\n",
-	    idstr, attachonly ? "static" : "dynamic", dn->dn_type,
+	    idstr, matchonly ? "static" : "dynamic", dn->dn_type,
 	    dn->dn_subtype, dn->dn_dpi, dn->dn_attr));
 	DPRINTF(("%s: allocated config scan:\n", idstr));
 	res = pnp_scan(&p, len - 12, &r, 0);
@@ -866,7 +866,7 @@ pnpbios_attachnode(sc, idx, buf, len, attachonly)
 
 	/* first try the specific device ID */
 	aa.idstr = idstr;
-	if (attachonly
+	if (matchonly
 	    ? config_search(pnpbios_submatch, (struct device *)sc, &aa) != NULL
 	    : config_found_sm((struct device *)sc, &aa, pnpbios_print,
 		pnpbios_submatch) != NULL)
@@ -876,7 +876,7 @@ pnpbios_attachnode(sc, idx, buf, len, attachonly)
 	compatid = s.compatids;
 	while (compatid) {
 		aa.idstr = compatid->idstr;
-		if (attachonly
+		if (matchonly
 		    ? config_search(pnpbios_submatch, (struct device *)sc,
 			&aa) != NULL
 		    : config_found_sm((struct device *)sc, &aa, pnpbios_print,
