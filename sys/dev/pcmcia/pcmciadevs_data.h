@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.88 2000/04/17 12:01:21 joda Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.89 2000/05/11 19:24:36 is Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -549,6 +549,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "WLAN Adapter"	},
 	},
 	{
+	    PCMCIA_VENDOR_RATOC, PCMCIA_PRODUCT_RATOC_REX_R280,
+	    PCMCIA_CIS_RATOC_REX_R280,
+	    0,
+	    "RATOC System Inc.",
+	    "RATOC REX-R280"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
 	    PCMCIA_CIS_MEGAHERTZ_XJ2288,
 	    0,
@@ -1001,6 +1008,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Hagiwara SYS-COM",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_RATOC, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "RATOC System Inc.",
 	    NULL,
 	},
 	{

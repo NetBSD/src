@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.88 2000/04/17 12:00:35 joda Exp $
+$NetBSD: pcmciadevs,v 1.89 2000/05/11 19:24:35 is Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@ vendor CONTEC			0xc001	Contec
 vendor COREGA			0xc00f	Corega K.K.
 vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
+vendor RATOC			0xc015  RATOC System Inc.
 
 /*
  * List of known products.  Grouped by vendor.
@@ -217,6 +218,9 @@ product BAY STACK_660		0x0807 BayStack 660 Wireless LAN
 
 /* Raylink/WebGear */
 product RAYTHEON WLAN		0x0000 WLAN Adapter
+
+/* RATOC System Inc. Products */
+product RATOC REX_R280		0x1	RATOC REX-R280
 
 /* Cards we know only by their cis */
 vendor PREMAX			-1 	Premax

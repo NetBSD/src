@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.88 2000/04/17 12:01:20 joda Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.89 2000/05/11 19:24:36 is Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -82,6 +82,7 @@
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_ALLIEDTELESIS	0xc00f	/* Allied Telesis K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
+#define	PCMCIA_VENDOR_RATOC	0xc015	/* RATOC System Inc. */
 
 /*
  * List of known products.  Grouped by vendor.
@@ -368,6 +369,11 @@
 #define	PCMCIA_CIS_RAYTHEON_WLAN	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_RAYTHEON_WLAN	0x0000
 #define	PCMCIA_STR_RAYTHEON_WLAN	"WLAN Adapter"
+
+/* RATOC System Inc. Products */
+#define	PCMCIA_CIS_RATOC_REX_R280	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_RATOC_REX_R280	0x1
+#define	PCMCIA_STR_RATOC_REX_R280	"RATOC REX-R280"
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
