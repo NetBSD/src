@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: str.c,v 1.5 1994/03/23 00:52:13 jtc Exp $";
+static char *rcsid = "$Id: str.c,v 1.6 1994/05/17 15:55:42 jtc Exp $";
 #endif				/* not lint */
 
 #include "make.h"
@@ -139,8 +139,14 @@ brk_string(str, store_argc)
 					inquote = '\0';
 				else
 					break;
-			else
+			else {
 				inquote = (char) ch;
+				/* Don't miss "" or '' */
+				if (start == NULL && p[1] == inquote) {
+					start = t + 1;
+					break;
+				}
+			}
 			continue;
 		case ' ':
 		case '\t':
