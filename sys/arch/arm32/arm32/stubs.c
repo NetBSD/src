@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.17 1997/03/26 22:42:29 gwr Exp $	*/
+/*	$NetBSD: stubs.c,v 1.17.4.1 1997/10/15 05:27:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -62,61 +62,20 @@
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
 #include <machine/irqhandler.h>
-#include <machine/vidc.h>
 #include <machine/bootconfig.h>
 #include <machine/katelib.h>
 #include <machine/psl.h>
 #include <machine/pcb.h>
 
+#ifdef HYDRA
 #include "hydrabus.h"
-
-extern u_int soft_interrupts;
+#endif
 
 extern int msgbufmapped;
 extern dev_t dumpdev;
 extern BootConfig bootconfig;
-#ifdef notyet
-extern videomemory_t videomemory;
-#endif
 
-/* Eventually this will become macros */
-
-void
-setsoftintr(intrmask)
-	u_int intrmask;
-{
-	atomic_set_bit(&soft_interrupts, intrmask);
-}
-
-void
-setsoftclock()
-{
-	atomic_set_bit(&soft_interrupts, IRQMASK_SOFTCLOCK);
-}
-
-void
-setsoftnet()
-{
-	atomic_set_bit(&soft_interrupts, IRQMASK_SOFTNET);
-}
-
-int astpending;
-
-void
-setsoftast()
-{
-	astpending = 1;
-}
-
-extern int want_resched;
-
-void
-need_resched(void)
-{
-	want_resched = 1;
-	setsoftast();
-}
-
+/* These queue functions are candiates for arm32/machdep.c */
 
 struct queue {
 	struct queue *q_next, *q_prev;
@@ -158,7 +117,6 @@ _remque(v)
 	prev->q_next = next;
 	elem->q_prev = 0;
 }
-
 
 
 /*
@@ -208,6 +166,7 @@ cpu_dumpconf()
 		dumplo = nblks - ctod(dumpsize);
 }
 
+/* This should be moved to machdep.c */
 
 extern pagehook_t page_hook0;
 
@@ -276,22 +235,6 @@ dumpsys()
 		}
 	}
 
-#ifdef notyet
-	if (error == 0 && videomemory.vidm_type == VIDEOMEM_TYPE_VRAM) {
-		for (addr = videomemory.vidm_pbase; addr < videomemory.vidm_pbase
-		    + videomemory.vidm_size; addr += NBPG) {
-		    	if ((len % (1024*1024)) == 0)
-		    		printf("%d ", len / (1024*1024));
-			pmap_map(dumpspace, addr, addr + NBPG, VM_PROT_READ);
-			error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev,
-			    blkno, (caddr_t) dumpspace, NBPG);
-			if (error) break;
-			blkno += btodb(NBPG);
-			len += NBPG;
-		}
-	}                         
-#endif
-
 	switch (error) {
 	case ENXIO:
 		printf("device bad\n");
@@ -348,7 +291,7 @@ void
 set_spl_masks()
 {
 	spl_masks[SPL_0]	= 0xffffffff;
-	spl_masks[SPL_SOFT]	= ~(IRQMASK_SOFTNET | IRQMASK_SOFTCLOCK | IRQMASK_SOFTPLIP);
+	spl_masks[SPL_SOFT]	= ~(IRQMASK_ALLSOFT);
 	spl_masks[SPL_BIO]	= irqmasks[IPL_BIO];
 	spl_masks[SPL_NET]	= irqmasks[IPL_NET];
 	spl_masks[SPL_TTY]	= irqmasks[IPL_TTY];

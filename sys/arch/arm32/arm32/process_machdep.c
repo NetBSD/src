@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.5 1997/01/06 04:47:55 mark Exp $ */
+/* $NetBSD: process_machdep.c,v 1.5.10.1 1997/10/15 05:27:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -107,7 +107,7 @@ process_read_regs(p, regs)
 	regs->r_pc = tf->tf_pc;
 	regs->r_cpsr = tf->tf_spsr;
 
-	return (0);
+	return(0);
 }
 
 int
@@ -115,18 +115,22 @@ process_read_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-#ifndef ARMFPE
+#ifdef ARMFPE
+	arm_fpe_getcontext(p, regs);
+	return(0);
+#else
+	bzero(regs, sizeof(struct fpreg));
+	return(0);
+#if 0
 #error "Non ARMFPE configs need debugging"
 	struct fpe_sp_state *statep;
 
 	/* NOTE: struct fpreg == struct fpstate */
 	statep = process_fpframe(p);
 	bcopy(statep, regs, sizeof(struct fpreg));
-	return (0);
-#else
-	arm_fpe_getcontext(p, regs);
-	return (0);
+	return(0);
 #endif
+#endif	/* ARMFPE */
 }
 
 int
@@ -143,7 +147,7 @@ process_write_regs(p, regs)
 	tf->tf_spsr &=  ~PSR_FLAGS;
 	tf->tf_spsr |= regs->r_cpsr & PSR_FLAGS;
 
-	return (0);
+	return(0);
 }
 
 int
@@ -151,18 +155,21 @@ process_write_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-#ifndef ARMFPE
+#ifdef ARMFPE
+	arm_fpe_setcontext(p, regs);
+	return(0);
+#else
+	return(0);
+#if 0
 #error "Non ARMFPE configs need debugging"
         struct fpe_sp_state *statep;
 
 	/* NOTE: struct fpreg == struct fpstate */
 	statep = process_fpframe(p);
 	bcopy(regs, statep, sizeof(struct fpreg));
-	return (0);
-#else
-	arm_fpe_setcontext(p, regs);
-	return (0);
+	return(0);
 #endif
+#endif	/* ARMFPE */
 }
 
 int

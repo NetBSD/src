@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.45.2.2 1997/10/14 10:22:51 thorpej Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.45.2.3 1997/10/15 05:36:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -58,7 +58,7 @@
 
 struct lpt_softc {
 	struct device sc_dev;
-	
+	void *sc_ih;
 	size_t sc_count;
 	struct buf *sc_inbuf;
 	u_char *sc_cp;
@@ -76,6 +76,15 @@ struct lpt_softc {
 	u_char sc_control;
 	u_char sc_laststatus;
 };
+
+#define LPS_INVERT      (LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK)
+#define LPS_MASK        (LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK|LPS_NOPAPER)
+#define NOT_READY()     ((bus_space_read_1(iot, ioh, lpt_status) ^ LPS_INVERT) & LPS_MASK)
+#define NOT_READY_ERR() lptnotready(bus_space_read_1(iot, ioh, lpt_status), sc)
+
+int lptnotready __P((u_char, struct lpt_softc *));
+void lptwakeup __P((void *arg));
+int lptpushbytes __P((struct lpt_softc *));
 
 void lpt_attach_subr __P((struct lpt_softc *));
 int lptintr __P((void *));

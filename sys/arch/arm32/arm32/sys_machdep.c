@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.6 1997/02/10 03:19:36 mark Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.6.6.1 1997/10/15 05:28:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -75,6 +75,22 @@ arm32_sync_icache(p, args, retval)
 	return(0);
 }
 
+static int
+arm32_drain_writebuf(p, args, retval)
+	struct proc *p;
+	char *args;
+	register_t *retval;
+{
+	int error;
+
+	/* No args. */
+
+	cpu_drain_writebuf();
+
+	*retval = 0;
+	return(0);
+}
+
 int
 sys_sysarch(p, v, retval)
 	struct proc *p;
@@ -90,6 +106,10 @@ sys_sysarch(p, v, retval)
 	switch(SCARG(uap, op)) {
 	case ARM32_SYNC_ICACHE : 
 		error = arm32_sync_icache(p, SCARG(uap, parms), retval);
+		break;
+
+	case ARM32_DRAIN_WRITEBUF : 
+		error = arm32_drain_writebuf(p, SCARG(uap, parms), retval);
 		break;
 
 	default:

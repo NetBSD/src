@@ -1,0 +1,1 @@
+#define BIOSTRAMP_BASE	NBPG
