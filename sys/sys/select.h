@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.11 2001/02/26 16:26:54 lukem Exp $	*/
+/*	$NetBSD: select.h,v 1.11.4.1 2001/07/10 13:26:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,12 +38,15 @@
 #ifndef _SYS_SELECT_H_
 #define	_SYS_SELECT_H_
 
+#include <sys/event.h>		/* for struct klist */
+
 /*
  * Used to maintain information about processes that wish to be
  * notified when I/O becomes possible.
  */
 struct selinfo {
 	pid_t		si_pid;		/* process to be notified */
+	struct klist	si_klist;	/* knotes attached to this process */
 	short		si_flags;	/* see below */
 };
 #define	SI_COLL		0x0001		/* collision occurred */
