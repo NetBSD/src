@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.90 2000/06/05 23:04:04 gmcgarry Exp $
+$NetBSD: pcmciadevs,v 1.91 2000/06/06 17:19:59 soren Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ vendor XIRCOM			0x0105	Xircom
 vendor SMC			0x0108	Standard Microsystems Corporation
 vendor USROBOTICS		0x0115	US Robotics Corporation
 vendor MEGAHERTZ2		0x0128	Megahertz Corporation
+vendor OLICOM			0x0121	Olicom
 vendor ADAPTEC			0x012f	Adaptec Corporation
 vendor COMPAQ			0x0138	Compaq
 vendor LINKSYS			0x0149	Linksys Corporation
@@ -159,6 +160,9 @@ product MELCO LPC3_TX	 	0xc1ab Melco LPC3-TX
 
 /* Nokia Products */
 product NOKIA C020_WLAN		0x20c0 Nokia C020 WLAN Card
+
+/* Olicom Products */
+product OLICOM TR		0x2132 GoCard Token Ring 16/4
 
 /* Panasonic Products */
 product PANASONIC KXLC002	0x0304 Panasonic 4X CD-ROM Interface Card
