@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 1998/05/15 10:15:58 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 1998/05/30 06:13:03 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -75,6 +75,8 @@
 #include <machine/trap.h>
 
 #include <dev/cons.h>
+
+#include "adb.h"
 
 /*
  * Global variables used here and there
@@ -822,7 +824,9 @@ cpu_reboot(howto, what)
 	*ap++ = 0;
 	if (ap[-2] == '-')
 		*ap1 = 0;
+#if NADB > 0
 	powermac_restart();	/* not return */
+#endif
 	ppc_boot(str);
 }
 
