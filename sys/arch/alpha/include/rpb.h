@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.20 1998/04/15 00:47:33 mjacob Exp $ */
+/* $NetBSD: rpb.h,v 1.21 1998/04/29 02:39:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -73,6 +73,7 @@ struct rpb {
 #define	ST_EB164		26		/* EB164 (PCI/ISA) */
 #define	ST_DEC_1000A		27		/* "Noritake" (?) */
 #define	ST_DEC_ALPHAVME_224	28		/* "Cortex" (?) */
+#define	ST_DEC_550		30		/* "Miata" (PCI/ISA) */
 #define	ST_DEC_EV56_PBP		32		/* "Takara" (?) */
 #define	ST_DEC_ALPHAVME_320	33		/* "Yukon" (VME?) */
 
