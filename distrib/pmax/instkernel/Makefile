@@ -1,54 +1,47 @@
-#	$NetBSD: Makefile,v 1.24 2002/04/03 06:38:26 lukem Exp $
+#	$NetBSD: Makefile,v 1.25 2002/04/12 13:52:12 lukem Exp $
 
-.include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
+
 .include <bsd.kernobj.mk>
 
-DISKBINDIR=	/installation/diskimage
-KERNBINDIR=	/binary/kernel
-
-KERN=		${KERNOBJDIR}/RAMDISK/netbsd
-RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
-RAMDISK=	${RAMDISKDIR}/ramdisk.fs
-
 IMAGE=		diskimage
-IMAGESIZE=	4096b
-# MAKEFS_FLAGS=	-o density=32k			# XXXDISTRIB
-
+IMAGESIZE=	2m
 LISTS=		${.CURDIR}/list
 IMAGEENDIAN=	le
-IMAGEDEPENDS=	netbsd.gz ${DESTDIR}/usr/mdec/boot.pmax
+IMAGEDEPENDS=	netbsd.gz ${DESTDIR}/usr/mdec/boot
 
-CLEANFILES+=	netbsd netbsd.gz netbsd.ecoff netbsd.ecoff.gz \
-		${IMAGE} ${IMAGE}.gz
+RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
+RAMDISK=	${RAMDISKDIR}/ramdisk.fs
+MDSETTARGETS=	RAMDISK ${RAMDISK} netbsd
 
+netbsd.post=	${ELF2ECOFF} netbsd.tmp netbsd.ecoff && gzip -9f netbsd.ecoff
 
-netbsd.gz: ${KERN} ${RAMDISK}
-	cp ${KERN} netbsd
-	${MDSETIMAGE} -v netbsd ${RAMDISK}
-	elf2ecoff netbsd netbsd.ecoff		# XXXDISTRIB
-	rm -f netbsd.ecoff.gz
-	gzip -9 netbsd.ecoff
-	rm -f netbsd.gz
-	gzip -9 netbsd
+CLEANFILES+=	netbsd.ecoff netbsd.ecoff.gz
 
-${IMAGE}.gz:	${IMAGE}
-	${INSTALLBOOT} -m ${MACHINE} ${IMAGE} ${DESTDIR}/usr/mdec/bootxx_ffs
-	rm -f ${IMAGE}.gz
-	gzip -9 ${IMAGE}
+PRIMARYBOOT=	${DESTDIR}/usr/mdec/bootxx_ffs
+
+${IMAGE}.gz:	${IMAGE} ${PRIMARYBOOT}
+	${INSTALLBOOT} -m ${MACHINE} ${IMAGE} ${PRIMARYBOOT}
+	gzip -9f ${IMAGE}
+
+CLEANFILES+=	${IMAGE}.gz
 
 
-realall: netbsd.gz ${IMAGE}.gz
+realall: ${KERNELS} ${IMAGE}.gz
 
-release: check_RELEASEDIR .WAIT netbsd.gz ${IMAGE}.gz
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE} \
-		${IMAGE}.gz ${RELEASEDIR}${DISKBINDIR}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE} \
-		netbsd.gz ${RELEASEDIR}${KERNBINDIR}/install.gz
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE} \
-		netbsd.ecoff.gz ${RELEASEDIR}${KERNBINDIR}/install.ecoff.gz
+
+DISKBINDIR=	${RELEASEDIR}/installation/diskimage
+KERNBINDIR=	${RELEASEDIR}/binary/kernel
+
+release: check_RELEASEDIR .WAIT ${KERNELS} ${IMAGE}.gz
+	-mkdir -p ${DISKBINDIR} ${KERNBINDIR}
+	${RELINSTALL} ${IMAGE}.gz ${DISKBINDIR}
+	${RELINSTALL} netbsd.gz ${KERNBINDIR}/install.gz
+	${RELINSTALL} netbsd.ecoff.gz ${KERNBINDIR}/install.ecoff.gz
 
 
 .include "${DISTRIBDIR}/common/Makefile.image"
+.include "${DISTRIBDIR}/common/Makefile.mdset"
 
 .include <bsd.prog.mk>
