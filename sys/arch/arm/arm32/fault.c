@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.30 2003/05/21 18:04:43 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.31 2003/07/09 20:14:15 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.30 2003/05/21 18:04:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.31 2003/07/09 20:14:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,7 +411,7 @@ we_re_toast:
 #if defined(DDB) || defined(KGDB)
 		printf("Unhandled trap (frame = %p)\n", frame);
 		report_abort(NULL, fault_status, fault_address, fault_pc);
-		kdb_trap(-1, frame);
+		kdb_trap(T_FAULT, frame);
 		return;
 #else
 		panic("Unhandled trap (frame = %p)", frame);
@@ -515,7 +515,7 @@ we_re_toast:
 #if defined(DDB) || defined(KGDB)
 		printf("Non-emulated page fault with intr_depth > 0\n");
 		report_abort(NULL, fault_status, fault_address, fault_pc);
-		kdb_trap(-1, frame);
+		kdb_trap(T_FAULT, frame);
 		return;
 #else
 		panic("Fault with intr_depth > 0");
@@ -658,7 +658,7 @@ prefetch_abort_handler(frame)
 	if (current_intr_depth > 0) {
 #ifdef DDB
 		printf("Non-emulated prefetch abort with intr_depth > 0\n");
-		kdb_trap(-1, frame);
+		kdb_trap(T_FAULT, frame);
 		return;
 #else
 		panic("Prefetch Abort with intr_depth > 0");

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30 2003/06/06 10:07:07 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.31 2003/07/09 20:14:14 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -139,8 +139,8 @@ kdb_trap(int type, db_regs_t *regs)
 	case -1:		/* keyboard interrupt */
 		break;
 	default:
-		db_printf("kernel: trap");
 		if (db_recover != 0) {
+			/* This will longjmp back into db_command_loop() */
 			db_error("Faulted in DDB; continuing...\n");
 			/*NOTREACHED*/
 		}
