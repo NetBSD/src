@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.15 2002/09/20 20:58:12 mycroft Exp $	*/
+/*	$NetBSD: hunt.c,v 1.16 2002/12/06 01:50:56 thorpej Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.15 2002/09/20 20:58:12 mycroft Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.16 2002/12/06 01:50:56 thorpej Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -446,7 +446,7 @@ list_drivers()
 
 # ifdef BROADCAST
 	if (initial)
-		brdc = broadcast_vec(test_socket, (struct sockaddr **) &brdv);
+		brdc = broadcast_vec(test_socket, (void *) &brdv);
 
 # ifdef SO_BROADCAST
 	/* Sun's will broadcast even though this option can't be set */
