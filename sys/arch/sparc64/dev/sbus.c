@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.40 2001/03/14 00:52:19 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.41 2001/03/16 10:47:25 hubertf Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -558,13 +558,18 @@ sbusreset(sbus)
 
 /*
  * Handle an overtemp situation.
+ *
+ * SPARCs have temperature sensors which generate interrupts
+ * if the machine's temperature exceeds a certain threshold.
+ * This handles the interrupt and powers off the machine.
+ * The same needs to be done to PCI controller drivers.
  */
 int
 sbus_overtemp(arg)
 	void *arg;
 {
 	/* Should try a clean shutdown first */
-	printf("DANGER: OVERTEMP detected\nShutting down...\n");
+	printf("DANGER: OVER TEMPERATURE detected\nShutting down...\n");
 	delay(20);
 	cpu_reboot(RB_POWERDOWN|RB_HALT, NULL);
 }
