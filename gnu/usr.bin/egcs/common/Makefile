@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2000/07/02 12:31:25 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.30 2001/01/04 10:43:24 itojun Exp $
 
 MKLINKLIB=no
 MKMAN=	no
@@ -13,6 +13,8 @@ YHEADER=1
 # GNU (gcc,gas) uses "mips" as arch-dependent filename for mipsel and mipseb
 .if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
 GCC_ARCH?=	mips
+.elif ${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb"
+GCC_ARCH?=	sh
 .elif (${MACHINE_ARCH} == "sparc64")
 GCC_ARCH?=	sparc
 # GCC uses "arm", not "armv2" internally.

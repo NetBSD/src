@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2000/08/02 22:25:13 pooka Exp $
+#	$NetBSD: Makefile,v 1.43 2001/01/04 10:43:25 itojun Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -57,7 +57,7 @@ SER_HARDWIRE= ser-unix.c
 NATDEPFILES= infptrace.c inftarg.c fork-child.c corelow.c \
 	${NATDEPFILES.${MACHINE_ARCH}}
 .if (${MACHINE_ARCH} != "arm32") && (${MACHINE_ARCH} != "powerpc") \
-	&& (${MACHINE_ARCH} != "sh3")
+	&& (${MACHINE_ARCH} != "sh3eb") && (${MACHINE_ARCH} != "sh3el")
 NATDEPFILES+= kcore-nbsd.c
 .endif
 NATDEPFILES+= solib.c
@@ -86,8 +86,11 @@ TDEPFILES.ns32k=	ns32k-tdep.c
 NATDEPFILES.powerpc=	ppcnbsd-nat.c
 TDEPFILES.powerpc=	rs6000-tdep.c
 
-NATDEPFILES.sh3=	shnbsd-nat.c
-TDEPFILES.sh3=		sh-tdep.c
+NATDEPFILES.sh3eb=	shnbsd-nat.c
+TDEPFILES.sh3eb=	sh-tdep.c
+
+NATDEPFILES.sh3el=	shnbsd-nat.c
+TDEPFILES.sh3el=	sh-tdep.c
 
 NATDEPFILES.sparc=	sparcnbsd-nat.c
 TDEPFILES.sparc=	sparc-tdep.c
@@ -113,7 +116,7 @@ init.o: ${OBJS:Ninit.o} Makefile
 
 ${OBJS}: nm.h tm.h xm.h
 
-ARCHSUBDIR= ${MACHINE_GNU_ARCH:C/mipse[bl]/mips/:C/sparc64/sparc/}
+ARCHSUBDIR= ${MACHINE_GNU_ARCH:C/mipse[bl]/mips/:C/sparc64/sparc/:C/sh3e[bl]/sh3/}
 
 nm.h: ${DIST}/gdb/config/${ARCHSUBDIR}/nm-nbsd.h
 	@-rm -f $@
