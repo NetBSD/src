@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.10 2002/03/16 16:01:47 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.11 2002/03/17 19:53:07 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -230,17 +230,17 @@ kfilter_register(const char *name, const struct filterops *filtops,
 	if (user_kfilterc > 0xffffffff - EVFILT_SYSCOUNT)
 		return (EINVAL);	/* too many */
 
-					/* need to grow user_kfilters */
+	/* check if need to grow user_kfilters */
 	if (user_kfilterc + 1 > user_kfiltermaxc) {
-					/*
-					 * grow in KFILTER_EXTENT chunks. use
-					 * malloc(9), because we want to
-					 * traverse user_kfilters as an array.
-					 */
+		/*
+		 * Grow in KFILTER_EXTENT chunks. Use malloc(9), because we
+		 * want to traverse user_kfilters as an array.
+		 */
 		user_kfiltermaxc += KFILTER_EXTENT;
 		kfilter = malloc(user_kfiltermaxc * sizeof(struct filter *),
 		    M_KEVENT, M_WAITOK);
-					/* copy existing user_kfilters */
+
+		/* copy existing user_kfilters */
 		if (user_kfilters != NULL)
 			memcpy((caddr_t)kfilter, (caddr_t)user_kfilters,
 			    user_kfilterc * sizeof(struct kfilter *));
@@ -251,7 +251,7 @@ kfilter_register(const char *name, const struct filterops *filtops,
 		    sizeof(struct kfilter *));
 					/* switch to new kfilter */
 		if (user_kfilters != NULL)
-			FREE(user_kfilters, M_KEVENT);
+			free(user_kfilters, M_KEVENT);
 		user_kfilters = kfilter;
 	}
 	len = strlen(name) + 1;		/* copy name */
@@ -384,18 +384,18 @@ filt_procattach(struct knote *kn)
  * exits, the knote is marked as DETACHED and also flagged as ONESHOT so
  * it will be deleted when read out.  However, as part of the knote deletion,
  * this routine is called, so a check is needed to avoid actually performing
- * a detach, because the original process does not exist any more.
+ * a detach, because the original process might not exist any more.
  */
 static void
 filt_procdetach(struct knote *kn)
 {
 	struct proc *p;
 
-	p = kn->kn_ptr.p_proc;
 	if (kn->kn_status & KN_DETACHED)
 		return;
 
-	KASSERT(pfind(kn->kn_id) == p);
+	p = kn->kn_ptr.p_proc;
+	KASSERT(p->p_stat == SDEAD || pfind(kn->kn_id) == p);
 
 	/* XXXSMP lock the process? */
 	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
@@ -704,7 +704,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 		goto done;
 	}
 
-						/* disable knote */
+	/* disable knote */
 	if ((kev->flags & EV_DISABLE) &&
 	    ((kn->kn_status & KN_DISABLED) == 0)) {
 		s = splhigh();
@@ -712,7 +712,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 		splx(s);
 	}
 
-						/* enable knote */
+	/* enable knote */
 	if ((kev->flags & EV_ENABLE) && (kn->kn_status & KN_DISABLED)) {
 		s = splhigh();
 		kn->kn_status &= ~KN_DISABLED;
@@ -802,8 +802,9 @@ kqueue_scan(struct file *fp, int maxevents, struct kevent *ulistp,
 		goto done;
 	}
 
+	/* mark end of knote list */
 	TAILQ_INSERT_TAIL(&kq->kq_head, &marker, kn_tqe); 
-						/* mark end of knote list */
+
 	while (count) {				/* while user wants data ... */
 		kn = TAILQ_FIRST(&kq->kq_head);	/* get next knote */
 		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe); 
@@ -814,17 +815,17 @@ kqueue_scan(struct file *fp, int maxevents, struct kevent *ulistp,
 			goto done;
 		}
 		if (kn->kn_status & KN_DISABLED) {
-						/* don't want disabled events */
+			/* don't want disabled events */
 			kn->kn_status &= ~KN_QUEUED;
 			kq->kq_count--;
 			continue;
 		}
 		if ((kn->kn_flags & EV_ONESHOT) == 0 &&
 		    kn->kn_fop->f_event(kn, 0) == 0) {
-					/*
-					 * non-ONESHOT event that hasn't
-					 * triggered again, so de-queue.
-					 */
+			/*
+			 * non-ONESHOT event that hasn't
+			 * triggered again, so de-queue.
+			 */
 			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
 			kq->kq_count--;
 			continue;
@@ -833,7 +834,7 @@ kqueue_scan(struct file *fp, int maxevents, struct kevent *ulistp,
 		kevp++;
 		nkev++;
 		if (kn->kn_flags & EV_ONESHOT) {
-				/* delete ONESHOT events after retrieval */
+			/* delete ONESHOT events after retrieval */
 			kn->kn_status &= ~KN_QUEUED;
 			kq->kq_count--;
 			splx(s);
@@ -841,18 +842,18 @@ kqueue_scan(struct file *fp, int maxevents, struct kevent *ulistp,
 			knote_drop(kn, p);
 			s = splhigh();
 		} else if (kn->kn_flags & EV_CLEAR) {
-				/* clear state after retrieval */
+			/* clear state after retrieval */
 			kn->kn_data = 0;
 			kn->kn_fflags = 0;
 			kn->kn_status &= ~(KN_QUEUED | KN_ACTIVE);
 			kq->kq_count--;
 		} else {
-				/* add event back on list */
+			/* add event back on list */
 			TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe); 
 		}
 		count--;
 		if (nkev == KQ_NEVENTS) {
-					/* do copyouts in KQ_NEVENTS chunks */
+			/* do copyouts in KQ_NEVENTS chunks */
 			splx(s);
 			error = copyout((caddr_t)&kq->kq_kev, (caddr_t)ulistp,
 			    sizeof(struct kevent) * nkev);
@@ -864,14 +865,18 @@ kqueue_scan(struct file *fp, int maxevents, struct kevent *ulistp,
 				break;
 		}
 	}
-					/* remove marker */
+
+	/* remove marker */
 	TAILQ_REMOVE(&kq->kq_head, &marker, kn_tqe); 
 	splx(s);
  done:
-	if (nkev != 0)			/* copyout remaining events */
+	if (nkev != 0) {
+		/* copyout remaining events */
 		error = copyout((caddr_t)&kq->kq_kev, (caddr_t)ulistp,
 		    sizeof(struct kevent) * nkev);
+	}
 	*retval = maxevents - count;
+
 	return (error);
 }
 
