@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.59 2004/03/26 20:07:47 enami Exp $	*/
+/*	$NetBSD: df.c,v 1.60 2004/03/26 20:19:03 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.59 2004/03/26 20:07:47 enami Exp $");
+__RCSID("$NetBSD: df.c,v 1.60 2004/03/26 20:19:03 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ void	 maketypelist(char *);
 long	 regetmntinfo(struct statfs **, long);
 void	 usage(void);
 void	 prthumanval(int64_t, char *);
-void	 prthuman(struct statfs *, long);
+void	 prthuman(struct statfs *, int64_t, int64_t);
 
 int	aflag, gflag, hflag, iflag, kflag, lflag, mflag, nflag, Pflag;
 char	**typelist = NULL;
@@ -304,11 +304,12 @@ prthumanval(int64_t bytes, char *pad)
 }
 
 void
-prthuman(struct statfs *sfsp, long used)
+prthuman(struct statfs *sfsp, int64_t used, int64_t bavail)
 {
-       prthumanval((int64_t)(sfsp->f_blocks) * (int64_t)(sfsp->f_bsize), "");
-       prthumanval((int64_t)(used) * (int64_t)(sfsp->f_bsize), "  ");
-       prthumanval((int64_t)(sfsp->f_bavail) * (int64_t)(sfsp->f_bsize), "   ");
+
+	prthumanval((int64_t)(u_long)sfsp->f_blocks * sfsp->f_bsize, "");
+	prthumanval(used * sfsp->f_bsize, "  ");
+	prthumanval(bavail * sfsp->f_bsize, "   ");
 }
 
 
@@ -333,6 +334,7 @@ prtstat(struct statfs *sfsp, int maxwidth)
 	static const char full[] = "100%";
 	static const char empty[] = "  0%";
 	long used, availblks, inodes;
+	int64_t bavail;
 
 	if (maxwidth < 11)
 		maxwidth = 11;
@@ -364,13 +366,19 @@ prtstat(struct statfs *sfsp, int maxwidth)
 	(void)printf("%-*.*s", maxwidth, maxwidth, sfsp->f_mntfromname);
 	used = sfsp->f_blocks - sfsp->f_bfree;
 	availblks = sfsp->f_bavail + used;
-	if (hflag)
-		prthuman(sfsp, used);
+	if ((u_long)availblks > (u_long)used)
+		bavail = (u_long)sfsp->f_bavail;
 	else
-		(void)printf(" %*" PRId64 " %8" PRId64 " %9" PRId64, headerlen,
-		    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
-		    fsbtoblk(used, sfsp->f_bsize, blocksize),
-		    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
+		bavail = sfsp->f_bavail;
+	if (hflag)
+		prthuman(sfsp, (u_long)used, bavail);
+	else {
+		(void)printf(" %*" PRId64 " %8" PRId64, headerlen,
+		    fsbtoblk((u_long)sfsp->f_blocks, sfsp->f_bsize, blocksize),
+		    fsbtoblk((u_long)used, sfsp->f_bsize, blocksize));
+		(void)printf(" %9" PRId64, fsbtoblk(bavail,
+		    sfsp->f_bsize, blocksize));
+	}
 	(void)printf("%7s",
 	    availblks == 0 ? full : strpct((u_long)used, (u_long)availblks, 0));
 	if (iflag) {
