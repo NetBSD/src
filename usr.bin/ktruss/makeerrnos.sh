@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makeerrnos.sh,v 1.2 2001/01/16 02:46:25 cgd Exp $
+#	$NetBSD: makeerrnos.sh,v 1.3 2001/02/18 18:38:18 kim Exp $
 
 if [ $# -ne 3 ]; then
 	echo "usage: makeerrnos.sh errno.h signal.h output"
@@ -20,7 +20,7 @@ cat <<__EOF__ > $CFILE
 
 struct systab errnos[] = {
 __EOF__
-cat ${DESTDIR}/usr/include/sys/errno.h | ${CPP} ${CPPFLAGS} -dM |
+cat ${ERRNOH} | ${CPP} ${CPPFLAGS} -dM |
 awk '
 /^#[ 	]*define[ 	]*E[A-Z0-9]*[ 	]*[0-9-][0-9]*[ 	]*.*/ {
 	for (i = 1; i <= NF; i++)
@@ -44,7 +44,7 @@ cat <<__EOF__ >> $CFILE
 
 struct systab signals[] = {
 __EOF__
-cat ${DESTDIR}/usr/include/sys/signal.h | ${CPP} ${CPPFLAGS} -dM |
+cat ${SIGNALH} | ${CPP} ${CPPFLAGS} -dM |
 awk '
 /^#[ 	]*define[ 	]*S[A-Z0-9]*[ 	]*[0-9-][0-9]*[ 	]*.*/ {
 	for (i = 1; i <= NF; i++)
