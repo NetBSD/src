@@ -1,4 +1,4 @@
-/* $NetBSD: tcvar.h,v 1.18 2004/04/27 12:35:26 yamt Exp $ */
+/* $NetBSD: tcvar.h,v 1.19 2004/08/26 17:57:00 drochner Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -144,16 +144,6 @@ const struct evcnt *tc_intr_evcnt(struct device *, void *);
 void	tc_intr_establish(struct device *, void *, int, int (*)(void *),
 	    void *);
 void	tc_intr_disestablish(struct device *, void *);
-
-#include "locators.h"
-/*
- * Easy to remember names for TURBOchannel device locators.
- */
-#define	tccf_slot	cf_loc[TCCF_SLOT]		/* slot */
-#define	tccf_offset	cf_loc[TCCF_OFFSET]		/* offset */
-
-#define	TCCF_SLOT_UNKNOWN	TCCF_SLOT_DEFAULT
-#define	TCCF_OFFSET_UNKNOWN	TCCF_OFFSET_DEFAULT
 
 /*
  * Miscellaneous definitions.
