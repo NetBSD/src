@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5 2003/10/10 15:07:43 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.6 2004/01/05 08:59:55 jdolecek Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -1033,7 +1033,7 @@ switch_return:
 EXIT(cpu_switch)
 
 /*
- * switch_exit(struct proc *p)
+ * switch_exit(struct lwp *l, void (*)(struct lwp *)))
  * restore lwp0 context and go into cpu_switch to select the next runable
  * LWP.
  */
@@ -1069,9 +1069,9 @@ ENTRY(switch_exit,0)
 	stw	%r3, HPPA_FRAME_PSP(%sp)
 
 	/* arg0 -- oldproc */
-	.import exit2, code
-	ldil	L%exit2, %t2
-	ldo	R%exit2(%t2), %t2
+	.import lwp_exit2, code
+	ldil	L%lwp_exit2, %t2
+	ldo	R%lwp_exit2(%t2), %t2
 	.call
 	blr	%r0, %rp
 	bv,n	%r0(%t2)
