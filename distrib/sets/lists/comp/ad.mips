@@ -4,6 +4,7 @@
 ./usr/include/mips/ansi.h
 ./usr/include/mips/aout_machdep.h
 ./usr/include/mips/asm.h
+./usr/include/mips/bswap.h
 ./usr/include/mips/bsd-aout.h
 ./usr/include/mips/cachectl.h
 ./usr/include/mips/cdefs.h

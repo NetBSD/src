@@ -4,6 +4,7 @@
 ./usr/include/x68k/aout_machdep.h
 ./usr/include/x68k/asm.h
 ./usr/include/x68k/bsd_audioio.h
+./usr/include/x68k/bswap.h
 ./usr/include/x68k/cdefs.h
 ./usr/include/x68k/cpu.h
 ./usr/include/x68k/cpufunc.h
