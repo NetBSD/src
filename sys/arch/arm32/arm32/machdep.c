@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75 2000/03/06 03:15:47 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76 2000/03/24 17:05:30 ws Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -78,7 +78,7 @@
 #include <machine/pte.h>
 #include <machine/bootconfig.h>
 
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 #include "md.h"
 #include "opt_mdsize.h"
 

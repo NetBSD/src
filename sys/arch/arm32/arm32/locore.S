@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.33 1999/10/26 06:53:41 cgd Exp $	*/
+/*	$NetBSD: locore.S,v 1.34 2000/03/24 17:05:30 ws Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -31,7 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 #include "assym.h"
 #include <sys/syscall.h>
 #include <sys/errno.h>
@@ -235,7 +235,7 @@ ENTRY_NP(sigcode)
         .global _C_LABEL(esigcode)
 _C_LABEL(esigcode):
 
-#if	NIPKDB > 0
+#ifdef IPKDB
 #if	0
 /*
  * ipkdbfbyte and ipkdbsbyte are now in ipkdb_glue.c and do not tweak
