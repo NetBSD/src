@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1998/05/08 00:36:07 enami Exp $
+#	$NetBSD: Makefile,v 1.9 1998/07/27 02:29:25 tv Exp $
 
 LIB=	gcc
 NOLINT=		nolint (gcc private fns library)
@@ -6,7 +6,7 @@ NOPROFILE=
 NOPIC=
 
 CPPFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
-	-I${.CURDIR}/../arch/${MACHINE_ARCH}
+	-I${.CURDIR}/../arch/${MACHINE_ARCH:C/^mips.*/mips/}
 
 #LIB1OBJS= _mulsi3.o _udivsi3.o _divsi3.o _umodsi3.o _modsi3.o _lshrsi3.o \
 #	  _lshlsi3.o _ashrsi3.o _ashlsi3.o _divdf3.o _muldf3.o _negdf2.o \

@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile.cc1,v 1.8 1998/04/09 00:32:34 tv Exp $
+#	$NetBSD: Makefile.cc1,v 1.9 1998/07/27 02:29:24 tv Exp $
 
 NOMAN=
+
+# XXX temporary for mips -> mipsel migration
+TARGET_ARCH=${MACHINE_ARCH:C/^mips.*/mips/}
 
 BINDIR=	/usr/libexec
 
@@ -8,7 +11,7 @@ COMMON!=cd $(.CURDIR)/../common; \
 	 printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
 CPPFLAGS+=-I. -I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
-	-I${.CURDIR}/../arch/$(MACHINE_ARCH) -I$(COMMON)
+	-I${.CURDIR}/../arch/$(TARGET_ARCH) -I$(COMMON)
 
 LDADD+=	-L${COMMON} -lcc1 -lgnumalloc
 DPADD+=	${COMMON}/libcc1.a ${LIBGNUMALLOC}
