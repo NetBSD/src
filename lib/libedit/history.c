@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.10 1998/12/03 17:51:16 cgd Exp $	*/
+/*	$NetBSD: history.c,v 1.11 1998/12/12 19:52:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.10 1998/12/03 17:51:16 cgd Exp $");
+__RCSID("$NetBSD: history.c,v 1.11 1998/12/12 19:52:51 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -150,6 +150,7 @@ private void	history_def_delete __P((history_t *, HistEvent *, hentry_t *));
 /* error messages */
 static const char *const he_errlist[] = {
     "OK",
+    "unknown error"
     "malloc() failed",
     "first event not found",
     "last event not found",
@@ -361,6 +362,7 @@ history_def_add(p, ev, str)
     }
     (void)strcpy(s, h->cursor->ev.str);		/* XXX strcpy is safe */
     (void)strcat(s, str);			/* XXX strcat is safe */
+    /* LINTED const cast */
     h_free((ptr_t) h->cursor->ev.str);
     h->cursor->ev.str = s;
     *ev = h->cursor->ev;
@@ -371,6 +373,7 @@ history_def_add(p, ev, str)
 /* history_def_delete():
  *	Delete element hp of the h list
  */
+/* ARGSUSED */
 private void
 history_def_delete(h, ev, hp)
     history_t *h;
@@ -381,6 +384,7 @@ history_def_delete(h, ev, hp)
 	abort();
     hp->prev->next = hp->next;
     hp->next->prev = hp->prev;
+    /* LINTED const cast */
     h_free((ptr_t) hp->ev.str);
     h_free(hp);
     h->cur--;
@@ -443,6 +447,7 @@ history_def_enter(p, ev, str)
 /* history_def_init():
  *	Default history initialization function
  */
+/* ARGSUSED */
 private void
 history_def_init(p, ev, n)
     ptr_t *p;
