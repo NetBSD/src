@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29 2000/09/28 13:09:10 is Exp $	*/
+/*	$NetBSD: pmap.h,v 1.30 2001/01/22 14:33:29 matthias Exp $	*/
 
 /*
  *
@@ -182,25 +182,6 @@
 				/* largest value (-2 for APTP and i/o space) */
 
 /*
- * various address macros
- *
- *  vtopte: return a pointer to the PTE mapping a VA
- *  kvtopte: same as above (takes a KVA, but doesn't matter with this pmap)
- *  ptetov: given a pointer to a PTE, return the VA that it maps
- *  vtophys: translate a VA to the PA mapped to it
- *
- * plus alternative versions of the above
- */
-
-#define vtopte(VA)	(PTE_BASE + ns532_btop(VA))
-#define kvtopte(VA)	vtopte(VA)
-#define ptetov(PT)	(ns532_ptob(PT - PTE_BASE))
-#define	vtophys(VA) ((*vtopte(VA) & PG_FRAME) | ((unsigned)(VA) & ~PG_FRAME))
-#define	avtopte(VA)	(APTE_BASE + ns532_btop(VA))
-#define	ptetoav(PT)	(ns532_ptob(PT - APTE_BASE))
-#define	avtophys(VA) ((*avtopte(VA) & PG_FRAME) | ((unsigned)(VA) & ~PG_FRAME))
-
-/*
  * pdei/ptei: generate index into PDP/PTP from a VA
  */
 #define	pdei(VA)	(((VA) & PD_MASK) >> PDSHIFT)
@@ -252,6 +233,7 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
 
 struct pmap {
 	struct uvm_object pm_obj;	/* object (lck by object lock) */
+#define	pm_lock	pm_obj.vmobjlock
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
 	u_int32_t pm_pdirpa;		/* PA of PD (read-only after create) */
@@ -324,18 +306,6 @@ struct pmap_remove_record {
 };
 
 /*
- * pmap_transfer_location: used to pass the current location in the
- * pmap between pmap_transfer and pmap_transfer_ptes [e.g. during
- * a pmap_copy].
- */
-
-struct pmap_transfer_location {
-	vaddr_t addr;			/* the address (page-aligned) */
-	pt_entry_t *pte;		/* the PTE that maps address */
-	struct vm_page *ptp;		/* the PTP that the PTE lives in */
-};
-
-/*
  * global kernel variables
  */
 
@@ -352,14 +322,14 @@ extern int nkpde;			/* current # of PDEs for kernel */
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-#define	pmap_update()			tlbflush()
+#define	pmap_update()			/* nothing (yet) */
 
 #define pmap_clear_modify(pg)		pmap_change_attrs(pg, 0, PG_M)
 #define pmap_clear_reference(pg)	pmap_change_attrs(pg, 0, PG_U)
-#define pmap_copy(DP,SP,D,L,S)		pmap_transfer(DP,SP,D,L,S, FALSE)
+#define pmap_copy(DP,SP,D,L,S)		
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
-#define pmap_move(DP,SP,D,L,S)		pmap_transfer(DP,SP,D,L,S, TRUE)
+#define pmap_move(DP,SP,D,L,S)		
 #define pmap_phys_address(ppn)		ns532_ptob(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
@@ -378,8 +348,6 @@ static void	pmap_protect __P((struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t));
 void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
 boolean_t	pmap_test_attrs __P((struct vm_page *, int));
-void		pmap_transfer __P((struct pmap *, struct pmap *, vaddr_t,
-				   vsize_t, vaddr_t, boolean_t));
 static void	pmap_update_pg __P((vaddr_t));
 static void	pmap_update_2pg __P((vaddr_t,vaddr_t));
 void		pmap_write_protect __P((struct pmap *, vaddr_t,
@@ -388,6 +356,12 @@ void		pmap_write_protect __P((struct pmap *, vaddr_t,
 vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
+
+/*
+ * Do idle page zero'ing uncached to avoid polluting the cache.
+ */
+boolean_t	pmap_zero_page_uncached __P((paddr_t));
+#define	PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
 
 /*
  * inline functions
@@ -463,6 +437,36 @@ pmap_protect(pmap, sva, eva, prot)
 	}
 }
 
+/*
+ * various address inlines
+ *
+ *  vtopte: return a pointer to the PTE mapping a VA, works only for
+ *  user and PT addresses
+ *
+ *  kvtopte: return a pointer to the PTE mapping a kernel VA
+ */
+
+#include <lib/libkern/libkern.h>
+
+static __inline pt_entry_t *
+vtopte(vaddr_t va)
+{
+
+	KASSERT(va < (PDSLOT_KERN << PDSHIFT));
+
+	return (PTE_BASE + ns532_btop(va));
+}
+
+static __inline pt_entry_t *
+kvtopte(vaddr_t va)
+{
+
+	KASSERT(va >= (PDSLOT_KERN << PDSHIFT));
+
+	return (PTE_BASE + ns532_btop(va));
+}
+
+paddr_t vtophys __P((vaddr_t));
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
 
 #endif /* _KERNEL */
