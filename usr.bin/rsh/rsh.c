@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.4.2.2 1997/02/16 14:15:35 mrg Exp $	*/
+/*	$NetBSD: rsh.c,v 1.4.2.3 1997/02/16 14:40:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,13 +41,14 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$NetBSD: rsh.c,v 1.4.2.2 1997/02/16 14:15:35 mrg Exp $";
+static char rcsid[] = "$NetBSD: rsh.c,v 1.4.2.3 1997/02/16 14:40:11 mrg Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
+#include <poll.h>
 
 #include <netinet/in.h>
 #include <netdb.h>
@@ -89,7 +90,7 @@ main(argc, argv)
 	struct servent *sp;
 	long omask;
 	int argoff, asrsh, ch, dflag, nflag, one, pid, rem, uid;
-	register char *p;
+	char *p;
 	char *args, *host, *user, *copyargs();
 #ifdef IN_RCMD
 	char	*locuser = 0;
@@ -350,11 +351,11 @@ try_connect:
 talk(nflag, omask, pid, rem)
 	int nflag, pid;
 	long omask;
-	register int rem;
+	int rem;
 {
-	register int cc, wc;
-	register char *bp;
-	int readfrom, ready, rembits;
+	int cc, wc, nfds;
+	char *bp;
+	struct pollfd fds[2], *fdp = &fds[0];
 	char buf[BUFSIZ];
 
 	if (!nflag && pid == 0) {
@@ -365,13 +366,14 @@ reread:		errno = 0;
 			goto done;
 		bp = buf;
 
-rewrite:	rembits = 1 << rem;
-		if (select(16, 0, &rembits, 0, 0) < 0) {
+rewrite:	fdp->events = POLLOUT;
+		fds->fd = rem;
+		if (poll(fdp, 1, 0) < 0) {
 			if (errno != EINTR)
-				err(1, "select");
+				err(1, "poll");
 			goto rewrite;
 		}
-		if ((rembits & (1 << rem)) == 0)
+		if (fdp->revents & POLLOUT)
 			goto rewrite;
 #ifdef KERBEROS
 #ifdef CRYPT
@@ -397,15 +399,18 @@ done:
 	}
 
 	(void)sigsetmask(omask);
-	readfrom = (1 << rfd2) | (1 << rem);
+	fds[0].events = fds[1].events = POLLIN;
+	fds[0].fd = rfd2;
+	fds[1].fd = rem;
+	fdp = &fds[0];
+	nfds = 2;
 	do {
-		ready = readfrom;
-		if (select(16, &ready, 0, 0, 0) < 0) {
+		if (poll(fdp, nfds, 0) < 0) {
 			if (errno != EINTR)
-				err(1, "select");
+				err(1, "poll");
 			continue;
 		}
-		if (ready & (1 << rfd2)) {
+		if (fds[0].revents & POLLIN) {
 			errno = 0;
 #ifdef KERBEROS
 #ifdef CRYPT
@@ -416,12 +421,14 @@ done:
 #endif
 				cc = read(rfd2, buf, sizeof buf);
 			if (cc <= 0) {
-				if (errno != EWOULDBLOCK)
-					readfrom &= ~(1 << rfd2);
+				if (errno != EWOULDBLOCK) {
+					nfds--;
+					fdp = &fds[1];
+				}
 			} else
 				(void)write(2, buf, cc);
 		}
-		if (ready & (1 << rem)) {
+		if (fds[1].revents & POLLIN) {
 			errno = 0;
 #ifdef KERBEROS
 #ifdef CRYPT
@@ -433,11 +440,11 @@ done:
 				cc = read(rem, buf, sizeof buf);
 			if (cc <= 0) {
 				if (errno != EWOULDBLOCK)
-					readfrom &= ~(1 << rem);
+					nfds--;
 			} else
 				(void)write(1, buf, cc);
 		}
-	} while (readfrom);
+	} while (nfds);
 }
 
 void
@@ -475,8 +482,8 @@ char *
 copyargs(argv)
 	char **argv;
 {
-	register int cc;
-	register char **ap, *p;
+	int cc;
+	char **ap, *p;
 	char *args;
 
 	cc = 0;
