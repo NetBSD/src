@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.23 1999/09/27 23:19:12 enami Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.24 2000/02/02 10:00:06 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -731,4 +731,11 @@ ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword, quiet)
 
 	if (!quiet && maxwait == 0)
 		printf("ne2000_writemem: failed to complete\n");
+}
+
+int
+ne2000_detach(sc)
+	struct ne2000_softc *sc;
+{
+	return dp8390_detach(&sc->sc_dp8390);
 }
