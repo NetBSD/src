@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1994/10/17 00:11:18 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1994/10/31 05:01:45 cgd Exp $
 
 M?=	${MACHINE}
 
@@ -10,7 +10,7 @@ DEP=	${SRC} ${.CURDIR}/mirrors ${.CURDIR}/$M/whatis ${.CURDIR}/$M/contents \
 	${.CURDIR}/legal.common ${.CURDIR}/$M/legal
 
 ${TARG}: ${DEP}
-	cpp -I${.CURDIR}/$M -DMACHINE=$M -U$M -C -P ${SRC} > $@
+	cpp -I${.CURDIR}/$M -DMACHINE=$M -Uunix -U$M -C -P ${SRC} > $@
 
 clean cleandir:
 	/bin/rm INSTALL.*
