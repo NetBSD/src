@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.100 2004/01/04 11:33:30 jdolecek Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.101 2004/02/28 15:44:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.100 2004/01/04 11:33:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.101 2004/02/28 15:44:34 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,12 +123,8 @@ paddr_t kvtophys(vaddr_t);	/* XXX */
  * accordingly.
  */
 void
-cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
-	struct lwp *l1, *l2;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
 	struct pcb *pcb;
 	struct frame *f;
@@ -174,7 +170,9 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 
 	l2->l_md.md_regs = (void *)f;
 	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;
-	x = (MIPS_HAS_R4K_MMU) ? (MIPS3_PG_G|MIPS3_PG_RO|MIPS3_PG_WIRED) : MIPS1_PG_G;
+	x = (MIPS_HAS_R4K_MMU) ?
+	    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
+	    MIPS1_PG_G;
 	pte = kvtopte(l2->l_addr);
 	for (i = 0; i < UPAGES; i++)
 		l2->l_md.md_upte[i] = pte[i].pt_entry &~ x;
@@ -195,10 +193,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
  * proc_trampoline.
  */
 void
-cpu_setfunc(l, func, arg)
-	struct lwp *l;
-	void (*func) __P((void *));
-	void *arg;
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	struct pcb *pcb;
 	struct frame *f;
@@ -223,8 +218,7 @@ cpu_setfunc(l, func, arg)
  * machine dependent part of the proc structure.
  */
 void
-cpu_swapin(l)
-	struct lwp *l;
+cpu_swapin(struct lwp *l)
 {
 	pt_entry_t *pte;
 	int i, x;
@@ -234,7 +228,9 @@ cpu_swapin(l)
 	 * part of the proc struct so cpu_switch() can quickly map in
 	 * the user struct and kernel stack.
 	 */
-	x = (MIPS_HAS_R4K_MMU) ? (MIPS3_PG_G|MIPS3_PG_RO|MIPS3_PG_WIRED) : MIPS1_PG_G;
+	x = (MIPS_HAS_R4K_MMU) ?
+	    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
+	    MIPS1_PG_G;
 	pte = kvtopte(l->l_addr);
 	for (i = 0; i < UPAGES; i++)
 		l->l_md.md_upte[i] = pte[i].pt_entry &~ x;
@@ -257,8 +253,7 @@ cpu_lwp_free(struct lwp *l, int proc)
  * into the middle of cpu_switch(), as if it were switching from proc0.
  */
 void
-cpu_exit(l)
-	struct lwp *l;
+cpu_exit(struct lwp *l)
 {
 	void switch_exit(struct lwp *, void (*)(struct lwp *));
 
@@ -271,11 +266,8 @@ cpu_exit(l)
  * Dump the machine specific segment at the start of a core dump.
  */
 int
-cpu_coredump(l, vp, cred, chdr)
-	struct lwp *l;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
+cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
+    struct core *chdr)
 {
 	int error;
 	struct coreseg cseg;
@@ -322,9 +314,7 @@ cpu_coredump(l, vp, cred, chdr)
  * and size must be a multiple of PAGE_SIZE.
  */
 void
-pagemove(from, to, size)
-	caddr_t from, to;
-	size_t size;
+pagemove(caddr_t from, caddr_t to, size_t size)
 {
 	pt_entry_t *fpte, *tpte;
 	paddr_t invalid;
@@ -355,9 +345,7 @@ pagemove(from, to, size)
  * Map a user I/O request into kernel virtual address space.
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	struct pmap *upmap;
 	vaddr_t uva;	/* User VA (map from) */
@@ -391,9 +379,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t kva;
 	vsize_t off;
@@ -421,8 +407,7 @@ vunmapbuf(bp, len)
  * - kseg2 normal kernel "virtual address" mapped via the TLB.
  */
 paddr_t
-kvtophys(kva)
-	vaddr_t kva;
+kvtophys(vaddr_t kva)
 {
 	pt_entry_t *pte;
 	paddr_t phys;
