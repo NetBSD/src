@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.170 2004/07/22 19:56:55 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.171 2004/07/22 20:06:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.170 2004/07/22 19:56:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.171 2004/07/22 20:06:05 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -128,7 +128,7 @@ STATIC void wi_node_free(struct ieee80211com *, struct ieee80211_node *);
 
 STATIC void wi_raise_rate(struct ieee80211com *, struct ieee80211_rssdesc *);
 STATIC void wi_lower_rate(struct ieee80211com *, struct ieee80211_rssdesc *);
-STATIC void wi_choose_rate(struct ieee80211com *, struct ieee80211_node *,
+STATIC int wi_choose_rate(struct ieee80211com *, struct ieee80211_node *,
     struct ieee80211_frame *, u_int);
 STATIC void wi_rssadapt_updatestats_cb(void *, struct ieee80211_node *);
 STATIC void wi_rssadapt_updatestats(void *);
@@ -866,7 +866,7 @@ wi_stop(struct ifnet *ifp, int disable)
  *
  * TBD Adapt fragmentation threshold.
  */
-STATIC void
+STATIC int
 wi_choose_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_frame *wh, u_int len)
 {
@@ -885,6 +885,8 @@ wi_choose_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    ((ic->ic_if.if_flags & IFF_DEBUG) == 0) ? NULL : ic->ic_if.if_xname,
 	    do_not_adapt);
 
+	ni->ni_txrate = rateidx;
+
 	if (ic->ic_opmode != IEEE80211_M_HOSTAP) {
 		/* choose the slowest pending rate so that we don't
 		 * accidentally send a packet on the MAC's queue
@@ -892,11 +894,11 @@ wi_choose_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 		 * packets w/ rate when enqueued or dequeued.
 		 */   
 		for (i = 0; i < rateidx && sc->sc_txpending[i] == 0; i++);
-		ni->ni_txrate = i;
-	} else
-		ni->ni_txrate = rateidx;
+		rateidx = i;
+	}
+
 	splx(s);
-	return;
+	return (rateidx);
 }
 
 STATIC void
@@ -944,7 +946,7 @@ wi_start(struct ifnet *ifp)
 	struct ieee80211_rssdesc *id;
 	struct mbuf *m0;
 	struct wi_frame frmhdr;
-	int cur, fid, off;
+	int cur, fid, off, rateidx;
 
 	if (!sc->sc_enabled || sc->sc_invalid)
 		return;
@@ -1041,7 +1043,8 @@ wi_start(struct ifnet *ifp)
 			frmhdr.wi_tx_ctl |= htole16(WI_TXCNTL_NOCRYPT);
 		}
 
-		wi_choose_rate(ic, ni, wh, m0->m_pkthdr.len);
+		rateidx = wi_choose_rate(ic, ni, wh, m0->m_pkthdr.len);
+		rs = &ni->ni_rates;
 
 #if NBPFILTER > 0
 		if (sc->sc_drvbpf) {
@@ -1049,7 +1052,7 @@ wi_start(struct ifnet *ifp)
 
 			struct wi_tx_radiotap_header *tap = &sc->sc_txtap;
 
-			tap->wt_rate = ni->ni_rates.rs_rates[ni->ni_txrate];
+			tap->wt_rate = rs->rs_rates[ni->ni_txrate];
 			tap->wt_chan_freq =
 			    htole16(ic->ic_bss->ni_chan->ic_freq);
 			tap->wt_chan_flags =
@@ -1065,20 +1068,20 @@ wi_start(struct ifnet *ifp)
 			bpf_mtap(sc->sc_drvbpf, &mb);
 		}
 #endif
-		rs = &ni->ni_rates;
+
 		rd = SLIST_FIRST(&sc->sc_rssdfree);
 		id = &rd->rd_desc;
 		id->id_len = m0->m_pkthdr.len;
-		sc->sc_txd[cur].d_rate = id->id_rateidx = ni->ni_txrate;
+		id->id_rateidx = ni->ni_txrate;
 		id->id_rssi = ni->ni_rssi;
 
 		frmhdr.wi_tx_idx = rd - sc->sc_rssd;
 
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
-			frmhdr.wi_tx_rate = 5 * (rs->rs_rates[ni->ni_txrate] &
+			frmhdr.wi_tx_rate = 5 * (rs->rs_rates[rateidx] &
 			    IEEE80211_RATE_VAL);
 		else if (sc->sc_flags & WI_FLAGS_RSSADAPTSTA)
-			(void)wi_write_txrate(sc, rs->rs_rates[ni->ni_txrate]);
+			(void)wi_write_txrate(sc, rs->rs_rates[rateidx]);
 
 		m_copydata(m0, 0, sizeof(struct ieee80211_frame),
 		    (caddr_t)&frmhdr.wi_whdr);
@@ -1096,6 +1099,7 @@ wi_start(struct ifnet *ifp)
 		}
 		m_freem(m0);
 		sc->sc_txd[cur].d_len = off;
+		sc->sc_txpending[ni->ni_txrate]++;
 		if (sc->sc_txcur == cur) {
 			if (wi_cmd(sc, WI_CMD_TX | WI_RECLAIM, fid, 0, 0)) {
 				printf("%s: xmit failed\n",
@@ -1103,7 +1107,6 @@ wi_start(struct ifnet *ifp)
 				sc->sc_txd[cur].d_len = 0;
 				goto next;
 			}
-			sc->sc_txpending[ni->ni_txrate]++;
 			sc->sc_tx_timer = 5;
 			ifp->if_timer = 1;
 		}
@@ -1663,7 +1666,6 @@ wi_txalloc_intr(struct wi_softc *sc)
 			printf("%s: xmit failed\n", sc->sc_dev.dv_xname);
 			sc->sc_txd[cur].d_len = 0;
 		} else {
-			sc->sc_txpending[sc->sc_txd[cur].d_rate]++;
 			sc->sc_tx_timer = 5;
 			ifp->if_timer = 1;
 		}
