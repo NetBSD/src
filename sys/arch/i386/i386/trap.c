@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.83 1995/05/01 08:06:51 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.84 1995/06/11 20:24:42 fvdl Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -500,7 +500,7 @@ syscall(frame)
 	extern struct emul emul_ibcs2;
 #endif
 #ifdef COMPAT_LINUX
-	extern struct emul emul_linux;
+	extern struct emul emul_linux_aout, emul_linux_elf;
 #endif
 
 	cnt.v_syscall++;
@@ -526,7 +526,8 @@ syscall(frame)
 	case SYS_syscall:
 #ifdef COMPAT_LINUX
 		/* Linux has a special system setup call as number 0 */
-		if (p->p_emul == &emul_linux)
+		if (p->p_emul == &emul_linux_aout ||
+		    p->p_emul == &emul_linux_elf)
 			break;
 #endif
 		/*
@@ -555,7 +556,7 @@ syscall(frame)
 	argsize = callp->sy_argsize;
 #ifdef COMPAT_LINUX
 	/* XXX extra if() for every emul type.. */
-	if (p->p_emul == &emul_linux) {
+	if (p->p_emul == &emul_linux_aout || p->p_emul == &emul_linux_elf) {
 		/*
 		 * Linux passes the args in ebx, ecx, edx, esi, edi, in
 		 * increasing order.
