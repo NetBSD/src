@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.47 1998/03/07 01:43:54 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.48 1998/03/07 03:15:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.47 1998/03/07 01:43:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.48 1998/03/07 03:15:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,6 +271,11 @@ int	protection_codes[2][8];
  */
 pt_entry_t	*Lev1map, *Lev2map, *Lev3map;
 vm_size_t	Lev2mapsize, Lev3mapsize;
+
+/*
+ * Virtual Page Table.
+ */
+pt_entry_t	*VPT;
 
 /*
  * Segtabzero is an empty segment table which all processes share til they
@@ -514,7 +519,8 @@ pmap_bootstrap(ptaddr)
 	    << PG_SHIFT;
 	pte |= PG_V | PG_KRE | PG_KWE; /* NOTE NO ASM */
 	Lev1map[l1pte_index(VPTBASE)] = pte;
-	
+	VPT = (pt_entry_t *)VPTBASE;
+
 	/*
 	 * Set up level 2 page table.
 	 */

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.23 1998/03/06 23:41:02 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.24 1998/03/07 03:15:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -173,8 +173,8 @@ struct pv_page {
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-extern	pt_entry_t *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
+extern	pt_entry_t *VPT;		/* Virtual Page Table */
 
 #define	PMAP_STEAL_MEMORY		/* enable pmap_steal_memory() */
 
