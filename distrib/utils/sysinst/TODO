@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.20 2001/12/13 14:02:02 mrg Exp $
+#	$NetBSD: TODO,v 1.21 2002/08/27 00:22:53 grant Exp $
 
 Things to do ....  in no specific order.
 
@@ -103,8 +103,6 @@ Things to do ....  in no specific order.
            from /etc.old?
 
 	-- Full configuration of rc.conf?
-
-	-- Set root's shell
 
 	-- If we're doing a fresh install and there's already a label
 	   on the disk, maybe use that instead of the compiled-in default
