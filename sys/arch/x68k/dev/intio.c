@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.3 1999/03/18 12:31:58 minoura Exp $	*/
+/*	$NetBSD: intio.c,v 1.4 1999/03/22 03:21:35 minoura Exp $	*/
 
 /*
  *
@@ -144,6 +144,9 @@ static struct cfdata *cfdata_intiobus = NULL;
 
 /* other static functions */
 static int scan_intrnames __P((const char *));
+#ifdef DEBUG
+int intio_debug = 0;
+#endif
 
 static int
 intio_match(parent, cf, aux)
@@ -269,7 +272,8 @@ intio_map_allocate_region(parent, ia, flag)
 
 	r = extent_alloc_region (map, ia->ia_addr, ia->ia_size, 0);
 #ifdef DEBUG
-	extent_print (map);
+	if (intio_debug)
+		extent_print (map);
 #endif
 	if (r == 0) {
 		if (flag != INTIO_MAP_ALLOCATE)
@@ -290,7 +294,8 @@ intio_map_free_region(parent, ia)
 
 	extent_free (map, ia->ia_addr, ia->ia_size, 0);
 #ifdef DEBUG
-	extent_print (map);
+	if (intio_debug)
+		extent_print (map);
 #endif
 	return 0;
 }
