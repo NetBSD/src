@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.43 1997/05/24 08:19:49 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.44 1997/05/31 20:33:35 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,7 +112,10 @@ struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
 
 
+#ifdef DS3100
 static void pmax_errintr __P((void));
+#endif
+
 static void kn02_errintr __P((void)), kn02ba_errintr __P((void));
 
 #ifdef DS5000_240
