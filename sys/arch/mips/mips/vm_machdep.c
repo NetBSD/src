@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.105 2005/01/01 03:25:46 simonb Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.106 2005/03/26 09:51:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.105 2005/01/01 03:25:46 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.106 2005/03/26 09:51:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,18 +130,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct frame *f;
 	pt_entry_t *pte;
 	int i, x;
-
-#ifdef MIPS3_PLUS
-	/*
-	 * To eliminate virtual aliases created by pmap_zero_page(),
-	 * this cache flush operation is necessary.
-	 * VCED on kernel stack is not allowed.
-	 * XXXJRT Confirm that this is necessry, and/or fix
-	 * XXXJRT pmap_zero_page().
-	 */
-	if (CPUISMIPS3 && mips_sdcache_line_size)
-		mips_dcache_wbinv_range((vaddr_t) l2->l_addr, USPACE);
-#endif
 
 #ifdef DIAGNOSTIC
 	/*
