@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.1 1995/06/24 20:16:10 christos Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.2 1995/09/19 22:01:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -50,14 +50,15 @@
 
 /* ARGSUSED */
 int
-compat_09_getdomainname(p, uap, retval)
+compat_09_getdomainname(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct compat_09_getdomainname_args /* {
 		syscallarg(char *) domainname;
 		syscallarg(int) len;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int name;
 
 	name = KERN_DOMAINNAME;
@@ -68,14 +69,15 @@ compat_09_getdomainname(p, uap, retval)
 
 /* ARGSUSED */
 int
-compat_09_setdomainname(p, uap, retval)
+compat_09_setdomainname(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct compat_09_setdomainname_args /* {
 		syscallarg(char *) domainname;
 		syscallarg(int) len;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int name;
 	int error;
 
@@ -96,13 +98,14 @@ struct outsname {
 
 /* ARGSUSED */
 int
-compat_09_uname(p, uap, retval)
+compat_09_uname(p, v, retval)
 	struct proc *p;
-	struct compat_09_uname_args /* {
-		syscallarg(struct outsname *) name;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct compat_09_uname_args /* {
+		syscallarg(struct outsname *) name;
+	} */ *uap = v;
 	struct outsname outsname;
 	char *cp, *dp, *ep;
 	extern char ostype[], osrelease[];
