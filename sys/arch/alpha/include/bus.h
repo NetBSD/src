@@ -1,7 +1,7 @@
-/* $NetBSD: bus.h,v 1.32 2000/02/06 01:23:34 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.33 2000/02/25 00:45:04 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -100,6 +100,8 @@
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 #endif /* BUS_SPACE_DEBUG */
 
+struct alpha_bus_space_translation;
+
 /*
  * Addresses (in bus space).
  */
@@ -123,6 +125,10 @@ struct alpha_bus_space {
 			    bus_size_t, int));
 	int		(*abs_subregion) __P((void *, bus_space_handle_t,
 			    bus_size_t, bus_size_t, bus_space_handle_t *));
+
+	/* ALPHA SPECIFIC MAPPING METHOD */
+	int		(*abs_translate) __P((void *, bus_addr_t, bus_size_t,
+			    int, struct alpha_bus_space_translation *));
 
 	/* allocation/deallocation */
 	int		(*abs_alloc) __P((void *, bus_addr_t, bus_addr_t,
@@ -226,6 +232,21 @@ struct alpha_bus_space {
 			    bus_space_handle_t, bus_size_t, bus_size_t));
 };
 
+/*
+ * Translation of an Alpha bus address; INTERNAL USE ONLY.
+ */
+struct alpha_bus_space_translation {
+	bus_addr_t	abst_bus_start;	/* start of bus window */
+	bus_addr_t	abst_bus_end;	/* end of bus window */
+	paddr_t		abst_sys_start;	/* start of sysBus window */
+	paddr_t		abst_sys_end;	/* end of sysBus window */
+	int		abst_addr_shift;/* address shift */
+	int		abst_size_shift;/* size shift */
+	int		abst_flags;	/* flags; see below */
+};
+
+#define	ABST_BWX		0x01	/* use BWX to access the bus */
+#define	ABST_DENSE		0x02	/* space is dense */
 
 /*
  * Utility macros; INTERNAL USE ONLY.
@@ -277,6 +298,10 @@ do {									\
 	(*(t)->abs_unmap)((t)->abs_cookie, (h), (s), 0)
 #define	bus_space_subregion(t, h, o, s, hp)				\
 	(*(t)->abs_subregion)((t)->abs_cookie, (h), (o), (s), (hp))
+
+#define	alpha_bus_space_translate(t, a, s, d, bs, be, ss, se, sh)	\
+	(*(t)->abs_translate)((t)->abs_cookie, (a), (s), (d), (bs), (be), \
+	    (ss), (se), (sh))
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02

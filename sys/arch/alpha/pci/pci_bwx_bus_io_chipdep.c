@@ -1,7 +1,7 @@
-/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.6 1999/12/02 19:44:49 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.7 2000/02/25 00:45:05 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -96,6 +96,9 @@ void		__C(CHIP,_io_unmap) __P((void *, bus_space_handle_t,
 		    bus_size_t, int));
 int		__C(CHIP,_io_subregion) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_size_t, bus_space_handle_t *));
+
+int		__C(CHIP,_io_translate) __P((void *, bus_addr_t, bus_size_t,
+		    int, struct alpha_bus_space_translation *));
 
 /* allocation/deallocation */
 int		__C(CHIP,_io_alloc) __P((void *, bus_addr_t, bus_addr_t,
@@ -224,6 +227,8 @@ __C(CHIP,_bus_io_init)(t, v)
 	t->abs_unmap =		__C(CHIP,_io_unmap);
 	t->abs_subregion =	__C(CHIP,_io_subregion);
 
+	t->abs_translate =	__C(CHIP,_io_translate);
+
 	/* allocation/deallocation */
 	t->abs_alloc =		__C(CHIP,_io_alloc);
 	t->abs_free = 		__C(CHIP,_io_free);
@@ -293,6 +298,32 @@ __C(CHIP,_bus_io_init)(t, v)
 }
 
 int
+__C(CHIP,_io_translate)(v, ioaddr, iolen, flags, abst)
+	void *v;
+	bus_addr_t ioaddr; 
+	bus_size_t iolen;
+	int flags;
+	struct alpha_bus_space_translation *abst;
+{
+	int linear = flags & BUS_SPACE_MAP_LINEAR;
+
+	/*
+	 * Can't map i/o space linearly.
+	 */
+	if (linear)
+		return (EOPNOTSUPP);
+
+	abst->abst_bus_start = 0;
+	abst->abst_bus_end = 0xffffffffUL;
+	abst->abst_sys_start = CHIP_IO_SYS_START(v);
+	abst->abst_sys_end = CHIP_IO_SYS_START(v) + abst->abst_bus_end;
+	abst->abst_addr_shift = 0;
+	abst->abst_size_shift = 0;
+	abst->abst_flags = ABST_DENSE|ABST_BWX;
+	return (0);
+}
+
+int
 __C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp, acct)
 	void *v;
 	bus_addr_t ioaddr;
@@ -301,14 +332,15 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp, acct)
 	bus_space_handle_t *iohp;
 	int acct;
 {
-	int linear = flags & BUS_SPACE_MAP_LINEAR;
+	struct alpha_bus_space_translation abst;
 	int error;
 
 	/*
-	 * Can't map i/o space linearly.
+	 * Get the translation for this address.
 	 */
-	if (linear)
-		return (EOPNOTSUPP);
+	error = __C(CHIP,_io_translate)(v, ioaddr, iosize, flags, &abst);
+	if (error)
+		return (error);
 
 	if (acct == 0)
 		goto mapit;
@@ -327,7 +359,7 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp, acct)
 	}
 
  mapit:
-	*iohp = ALPHA_PHYS_TO_K0SEG(CHIP_IO_SYS_START(v)) + ioaddr;
+	*iohp = ALPHA_PHYS_TO_K0SEG(abst.abst_sys_start + ioaddr);
 
 	return (0);
 }
@@ -386,6 +418,7 @@ __C(CHIP,_io_alloc)(v, rstart, rend, size, align, boundary, flags,
 	int flags;
 	bus_space_handle_t *bshp;
 {
+	struct alpha_bus_space_translation abst;
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
 	bus_addr_t ioaddr;
 	int error; 
@@ -418,8 +451,15 @@ __C(CHIP,_io_alloc)(v, rstart, rend, size, align, boundary, flags,
 	printf("io: allocated 0x%lx to 0x%lx\n", ioaddr, ioaddr + size - 1);
 #endif
 
+	error = __C(CHIP,_io_translate)(v, ioaddr, size, flags, &abst);
+	if (error) {
+		(void) extent_free(CHIP_IO_EXTENT(v), ioaddr, size,
+		    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+		return (error);
+	}
+
 	*addrp = ioaddr;
-	*bshp = ALPHA_PHYS_TO_K0SEG(CHIP_IO_SYS_START(v)) + ioaddr;
+	*bshp = ALPHA_PHYS_TO_K0SEG(abst.abst_sys_start + ioaddr);
 
 	return (0);
 }
