@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.32 1995/02/15 02:12:02 mycroft Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.33 1995/03/08 01:20:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -100,7 +100,8 @@ fd_unused(fdp, fd)
  * System calls on descriptors.
  */
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_ULTRIX) || defined(COMPAT_HPUX)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_ULTRIX) || \
+    defined(COMPAT_HPUX) || defined(COMPAT_OSF1)
 /* ARGSUSED */
 compat_43_getdtablesize(p, uap, retval)
 	struct proc *p;
