@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75 1996/10/19 21:11:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76 1996/10/20 23:23:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -415,6 +415,16 @@ again:
 	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
+
+	/*
+	 * Tell the VM system that page 0 isn't mapped.
+	 *
+	 * XXX This is bogus; should just fix KERNBASE and
+	 * XXX VM_MIN_KERNEL_ADDRESS, but not right now.
+	 */
+	if (vm_map_protect(kernel_map, 0, NBPG, VM_PROT_NONE, TRUE)
+	    != KERN_SUCCESS)
+		panic("can't mark page 0 off-limits");
 
 	/*
 	 * Tell the VM system that writing to kernel text isn't allowed.
