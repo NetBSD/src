@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2001/09/19 16:32:04 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19 2002/01/16 01:19:22 ross Exp $
 
 KDIR=	/sys/arch/alpha/include
 INCSDIR= /usr/include/alpha
@@ -8,7 +8,7 @@ INCS=	alpha_cpu.h ansi.h aout_machdep.h asm.h atomic.h autoconf.h \
 	cdefs.h cfbreg.h conf.h cpu.h cpuconf.h \
 	db_machdep.h disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
-	float.h frame.h \
+	float.h fpu.h frame.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
