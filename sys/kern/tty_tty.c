@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_tty.c	7.15 (Berkeley) 5/28/91
- *	$Id: tty_tty.c,v 1.5.4.1 1993/11/14 21:18:09 mycroft Exp $
+ *	$Id: tty_tty.c,v 1.5.4.2 1993/11/24 03:42:36 deraadt Exp $
  */
 
 /*
@@ -118,6 +118,8 @@ cttyioctl(dev, cmd, addr, flag, p)
 
 	if (ttyvp == NULL)
 		return (EIO);
+	if (cmd == TIOCSCTTY)
+		return (EINVAL);
 	if (cmd == TIOCNOTTY) {
 		if (!SESS_LEADER(p)) {
 			p->p_flag &= ~SCTTY;
