@@ -1,35 +1,38 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.16 1994/03/31 18:39:41 mycroft Exp $
+#	$Id: Makefile.inc,v 1.17 1994/04/02 05:38:15 cgd Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S lseek.S pipe.S ptrace.S \
+SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S \
 	reboot.S sbrk.S setlogin.S sigpending.S sigprocmask.S sigreturn.S \
 	sigsuspend.S syscall.S
+
+SRCS+=  ftruncate.c lseek.c mmap.c truncate.c
 
 # modules with default implementations on all architectures:
 ASM=	accept.o access.o acct.o adjtime.o async_daemon.o bind.o chdir.o \
 	chflags.o chmod.o chown.o chroot.o close.o connect.o dup.o dup2.o \
 	execve.o fchdir.o fchflags.o fchmod.o fchown.o fcntl.o flock.o \
-	fstat.o fstatfs.o fsync.o ftruncate.o getdirentries.o getdomainname.o \
+	fstat.o fstatfs.o fsync.o getdirentries.o getdomainname.o \
 	getdtablesize.o getegid.o geteuid.o getfh.o getfsstat.o getgid.o \
 	getgroups.o gethostid.o gethostname.o getitimer.o getkerninfo.o \
 	getpagesize.o getpeername.o getpgrp.o getpid.o getppid.o \
 	getpriority.o getrlimit.o getrusage.o getsockname.o getsockopt.o \
 	gettimeofday.o getuid.o ioctl.o kill.o ktrace.o link.o listen.o \
 	lstat.o madvise.o mincore.o mkdir.o mkfifo.o mknod.o \
-	mmap.o mount.o mprotect.o msgsys.o msync.o munmap.o nfssvc.o open.o \
+	mount.o mprotect.o msgsys.o msync.o munmap.o nfssvc.o open.o \
 	profil.o quotactl.o read.o readlink.o readv.o recvfrom.o recvmsg.o \
 	rename.o revoke.o rmdir.o select.o semsys.o sendmsg.o sendto.o \
 	setdomainname.o setegid.o seteuid.o setgid.o setgroups.o sethostid.o \
 	sethostname.o setitimer.o setpgid.o setpriority.o setregid.o \
 	setreuid.o setrlimit.o setsid.o setsockopt.o settimeofday.o setuid.o \
 	shmsys.o shutdown.o sigaction.o sigstack.o socket.o socketpair.o \
-	stat.o statfs.o swapon.o symlink.o sync.o sysarch.o truncate.o \
+	stat.o statfs.o swapon.o symlink.o sync.o sysarch.o \
 	umask.o uname.o unlink.o unmount.o utimes.o vadvise.o wait4.o write.o \
-	writev.o
+	writev.o __syscall.o
+
 PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
 
