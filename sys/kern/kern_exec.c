@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.59 1995/02/04 14:22:13 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.60 1995/02/04 14:44:48 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -403,8 +403,8 @@ execve(p, uap, retval)
 	/* XXX don't copy them out, remap them! */
 	arginfo.ps_argvstr = dp; /* remember location of argv for later */
 	for (; --argc >= 0; sp += len, dp += len) {
-		len = strlen(sp) + 1;
-		if (copyout(&dp, cpp++, sizeof(dp)) || copyout(sp, dp, len))
+		if (copyout(&dp, cpp++, sizeof(dp)) ||
+		    copyoutstr(sp, dp, ARG_MAX, &len))
 			goto exec_abort;
 	}
 	if (copyout(&np, cpp++, sizeof(np)))
@@ -412,8 +412,8 @@ execve(p, uap, retval)
 
 	arginfo.ps_envstr = dp;	/* remember location of envp for later */
 	for (; --envc >= 0; sp += len, dp += len) {
-		len = strlen(sp) + 1;
-		if (copyout(&dp, cpp++, sizeof(dp)) || copyout(sp, dp, len))
+		if (copyout(&dp, cpp++, sizeof(dp)) ||
+		    copyoutstr(sp, dp, ARG_MAX, &len))
 			goto exec_abort;
 	}
 	if (copyout(&np, cpp++, sizeof(np)))
