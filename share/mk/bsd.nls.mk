@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.32 2001/11/02 18:10:00 tv Exp $
+#	$NetBSD: bsd.nls.mk,v 1.33 2001/11/06 10:59:15 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -37,15 +37,7 @@ nlsinstall::	${DESTDIR}${NLSDIR}
 .PRECIOUS:	${DESTDIR}${NLSDIR}
 .PHONY:		${DESTDIR}${NLSDIR}
 
-${DESTDIR}${NLSDIR}:
-	@if [ ! -d ${.TARGET} ] || [ -h ${.TARGET} ] ; then \
-		echo creating ${.TARGET}; \
-		/bin/rm -rf ${.TARGET}; \
-		${INSTALL_DIR} -o ${NLSOWN} -g ${NLSGRP} -m 755 ${.TARGET}; \
-	fi
-
 __nlsinstall: .USE
-	${INSTALL_DIR} -o ${NLSOWN} -g ${NLSGRP} ${.TARGET:H}
 	${INSTALL_FILE} -o ${NLSOWN} -g ${NLSGRP} -m ${NLSMODE} \
 		${.ALLSRC} ${.TARGET}
 
