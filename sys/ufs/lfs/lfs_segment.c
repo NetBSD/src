@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.12 1998/09/11 21:27:12 pk Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.13 1998/10/23 00:32:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -467,14 +467,14 @@ lfs_writeinode(fs, sp, ip)
 	    !(daddr >= fs->lfs_lastpseg && daddr <= bp->b_blkno)) {
 		LFS_SEGENTRY(sup, fs, datosn(fs, daddr), bp);
 #ifdef DIAGNOSTIC
-		if (sup->su_nbytes < sizeof(struct dinode)) {
+		if (sup->su_nbytes < DINODE_SIZE) {
 			/* XXX -- Change to a panic. */
 			printf("lfs: negative bytes (segment %d)\n",
 			    datosn(fs, daddr));
 			panic("negative bytes");
 		}
 #endif
-		sup->su_nbytes -= sizeof(struct dinode);
+		sup->su_nbytes -= DINODE_SIZE;
 		redo_ifile =
 		    (ino == LFS_IFILE_INUM && !(bp->b_flags & B_GATHERED));
 		error = VOP_BWRITE(bp);
@@ -824,7 +824,7 @@ lfs_writeseg(fs, sp)
 	ssp = (SEGSUM *)sp->segsum;
 
 	ninos = (ssp->ss_ninos + INOPB(fs) - 1) / INOPB(fs);
-	sup->su_nbytes += ssp->ss_ninos * sizeof(struct dinode);
+	sup->su_nbytes += ssp->ss_ninos * DINODE_SIZE;
 	sup->su_nbytes += LFS_SUMMARY_SIZE;
 	sup->su_lastmod = time.tv_sec;
 	sup->su_ninos += ninos;

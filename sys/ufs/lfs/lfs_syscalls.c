@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.19 1998/09/15 10:53:22 pk Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.20 1998/10/23 00:32:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -534,7 +534,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp)
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	if (dinp) {
-		error = copyin(dinp, &ip->i_din.ffs_din, sizeof(struct dinode));
+		error = copyin(dinp, &ip->i_din.ffs_din, DINODE_SIZE);
 		if (error)
 			return (error);
 	}

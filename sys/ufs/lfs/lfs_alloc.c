@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.15 1998/09/01 03:26:05 thorpej Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.16 1998/10/23 00:32:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -135,7 +135,7 @@ lfs_valloc(v)
 
 	ip = VTOI(vp);
 	/* Zero out the direct and indirect block addresses. */
-	bzero(&ip->i_din.ffs_din, sizeof(struct dinode));
+	bzero(&ip->i_din, sizeof(ip->i_din));
 	ip->i_din.ffs_din.di_inumber = new_ino;
 
 	/* Set a new generation number for this inode. */
@@ -251,11 +251,11 @@ lfs_vfree(v)
 	if (old_iaddr != LFS_UNUSED_DADDR) {
 		LFS_SEGENTRY(sup, fs, datosn(fs, old_iaddr), bp);
 #ifdef DIAGNOSTIC
-		if (sup->su_nbytes < sizeof(struct dinode))
+		if (sup->su_nbytes < DINODE_SIZE)
 			panic("lfs_vfree: negative byte count (segment %d)\n",
 			    datosn(fs, old_iaddr));
 #endif
-		sup->su_nbytes -= sizeof(struct dinode);
+		sup->su_nbytes -= DINODE_SIZE;
 		(void) VOP_BWRITE(bp);
 	}
 
