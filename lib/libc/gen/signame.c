@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)siglist.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: signame.c,v 1.2 1993/08/26 00:45:09 jtc Exp $";
+static char *rcsid = "$Id: signame.c,v 1.3 1993/09/08 18:43:05 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <signal.h>
@@ -41,35 +41,35 @@ static char *rcsid = "$Id: signame.c,v 1.2 1993/08/26 00:45:09 jtc Exp $";
 
 char	*sys_signame[NSIG] = {
 	"Signal 0",
-	"hup",		/* SIGHUP */
-	"int",		/* SIGINT */
-	"quit",		/* SIGQUIT */
-	"ill",		/* SIGILL */
-	"trap",		/* SIGTRAP */
-	"abrt",		/* SIGABRT */
-	"emt",		/* SIGEMT */
-	"fpe",		/* SIGFPE */
-	"kill",		/* SIGKILL */
-	"bus",		/* SIGBUS */
-	"segv",		/* SIGSEGV */
-	"sys",		/* SIGSYS */
-	"pipe",		/* SIGPIPE */
-	"alrm",		/* SIGALRM */
-	"term",		/* SIGTERM */
-	"urg",		/* SIGURG */
-	"stop",		/* SIGSTOP */
-	"tstp",		/* SIGTSTP */
-	"cont",		/* SIGCONT */
-	"chld",		/* SIGCHLD */
-	"ttin",		/* SIGTTIN */
-	"ttou",		/* SIGTTOU */
-	"io",		/* SIGIO */
-	"xcpu",		/* SIGXCPU */
-	"xfsz",		/* SIGXFSZ */
-	"vtalrm",	/* SIGVTALRM */
-	"prof",		/* SIGPROF */
-	"winch",	/* SIGWINCH */
-	"info",		/* SIGINFO */
-	"usr1",		/* SIGUSR1 */
-	"usr2"		/* SIGUSR2 */
+	"HUP",		/* SIGHUP */
+	"INT",		/* SIGINT */
+	"QUIT",		/* SIGQUIT */
+	"ILL",		/* SIGILL */
+	"TRAP",		/* SIGTRAP */
+	"ABRT",		/* SIGABRT */
+	"EMT",		/* SIGEMT */
+	"FPE",		/* SIGFPE */
+	"KILL",		/* SIGKILL */
+	"BUS",		/* SIGBUS */
+	"SEGV",		/* SIGSEGV */
+	"SYS",		/* SIGSYS */
+	"PIPE",		/* SIGPIPE */
+	"ALRM",		/* SIGALRM */
+	"TERM",		/* SIGTERM */
+	"URG",		/* SIGURG */
+	"STOP",		/* SIGSTOP */
+	"TSTP",		/* SIGTSTP */
+	"CONT",		/* SIGCONT */
+	"CHLD",		/* SIGCHLD */
+	"TTIN",		/* SIGTTIN */
+	"TTOU",		/* SIGTTOU */
+	"IO",		/* SIGIO */
+	"XCPU",		/* SIGXCPU */
+	"XFSZ",		/* SIGXFSZ */
+	"VTALRM",	/* SIGVTALRM */
+	"PROF",		/* SIGPROF */
+	"WINCH",	/* SIGWINCH */
+	"INFO",		/* SIGINFO */
+	"USR1",		/* SIGUSR1 */
+	"USR2"		/* SIGUSR2 */
 };
