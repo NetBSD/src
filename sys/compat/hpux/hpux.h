@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux.h,v 1.7 1994/10/26 02:45:13 cgd Exp $	*/
+/*	$NetBSD: hpux.h,v 1.8 1995/05/10 16:45:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,7 @@
  *	@(#)hpux.h	8.4 (Berkeley) 2/13/94
  */
 
-#include <hp300/hpux/hpux_exec.h>
+#include <compat/hpux/hpux_exec.h>
 
 /* HP-UX style UTSNAME struct used by uname syscall */
 
@@ -117,6 +117,28 @@ struct	hpux_stat {
 	long	hst_spare4[9];
 };
 
+/* from old timeb.h */
+struct hpux_otimeb {
+	time_t	time;
+	u_short	millitm;
+	short	timezone;
+	short	dstflag;
+};
+
+/* ye ole stat structure */
+struct	hpux_ostat {
+	u_short	hst_dev;
+	u_short	hst_ino;
+	u_short hst_mode;
+	short  	hst_nlink;
+	short  	hst_uid;
+	short  	hst_gid;
+	u_short	hst_rdev;
+	int	hst_size;
+	int	hst_atime;
+	int	hst_mtime;
+	int	hst_ctime;
+};
 /*
  * Skeletal 6.X HP-UX user structure info for ptrace() mapping.
  * Yes, this is as bogus as it gets...

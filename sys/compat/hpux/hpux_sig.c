@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.11 1994/10/26 02:45:18 cgd Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.12 1995/05/10 16:45:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,8 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 
-#include <hp300/hpux/hpux.h>
+#include <compat/hpux/hpux.h>
+#include <compat/hpux/hpux_syscallargs.h>
 
 /* indexed by HPUX signal number - 1 */
 char hpuxtobsdsigmap[NSIG] = {
@@ -79,11 +80,7 @@ char bsdtohpuxsigmap[NSIG] = {
  * swell foop.  I suspect we can get away with this since I
  * doubt any program of interest mixes the two semantics.
  */
-struct hpux_sigvec_args {
-	int	signo;
-	struct	sigvec *nsv;
-	struct	sigvec *osv;
-};
+int
 hpux_sigvec(p, uap, retval)
 	struct proc *p;
 	register struct hpux_sigvec_args *uap;
@@ -136,9 +133,7 @@ hpux_sigvec(p, uap, retval)
 	return (0);
 }
 
-struct hpux_sigblock_args {
-	int	mask;
-};
+int
 hpux_sigblock(p, uap, retval)
 	register struct proc *p;
 	struct hpux_sigblock_args *uap;
@@ -152,9 +147,7 @@ hpux_sigblock(p, uap, retval)
 	return (0);
 }
 
-struct hpux_sigsetmask_args {
-	int	mask;
-};
+int
 hpux_sigsetmask(p, uap, retval)
 	struct proc *p;
 	struct hpux_sigsetmask_args *uap;
@@ -168,9 +161,7 @@ hpux_sigsetmask(p, uap, retval)
 	return (0);
 }
 
-struct hpux_sigpause_args {
-	int	mask;
-};
+int
 hpux_sigpause(p, uap, retval)
 	struct proc *p;
 	struct hpux_sigpause_args *uap;
@@ -182,10 +173,7 @@ hpux_sigpause(p, uap, retval)
 }
 
 /* not totally correct, but close enuf' */
-struct hpux_kill_args {
-	int	pid;
-	int	signo;
-};
+int
 hpux_kill(p, uap, retval)
 	struct proc *p;
 	struct hpux_kill_args *uap;
@@ -212,11 +200,7 @@ hpux_kill(p, uap, retval)
  * and return old mask as return value;
  * the library stub does the rest.
  */
-struct hpux_sigprocmask_args {
-	int		how;
-	hpux_sigset_t	*set;
-	hpux_sigset_t	*oset;
-};
+int
 hpux_sigprocmask(p, uap, retval)
 	register struct proc *p;
 	struct hpux_sigprocmask_args *uap;
@@ -261,9 +245,7 @@ hpux_sigprocmask(p, uap, retval)
 	return (error);
 }
 
-struct hpux_sigpending_args {
-	hpux_sigset_t	*set;
-};
+int
 hpux_sigpending(p, uap, retval)
 	register struct proc *p;
 	struct hpux_sigpending_args *uap;
@@ -276,9 +258,7 @@ hpux_sigpending(p, uap, retval)
 	    sizeof(sigset)));
 }
 
-struct hpux_sigsuspend_args {
-	hpux_sigset_t	*set;
-};
+int
 hpux_sigsuspend(p, uap, retval)
 	register struct proc *p;
 	struct hpux_sigsuspend_args *uap;
@@ -299,11 +279,7 @@ hpux_sigsuspend(p, uap, retval)
 	return (EINTR);
 }
 
-struct hpux_sigaction_args {
-	int	signo;
-	struct	hpux_sigaction *nsa;
-	struct	hpux_sigaction *osa;
-};
+int
 hpux_sigaction(p, uap, retval)
 	struct proc *p;
 	register struct hpux_sigaction_args *uap;
@@ -367,14 +343,11 @@ hpux_sigaction(p, uap, retval)
 	return (0);
 }
 
-#ifdef COMPAT_OHPUX
-struct ohpux_ssig_args {
-	int	signo;
-	sig_t	fun;
-};
-ohpux_ssig(p, uap, retval)
+#ifdef COMPAT_HPUX_6X
+int
+compat_hpux_6x_ssig(p, uap, retval)
 	struct proc *p;
-	struct ohpux_ssig_args *uap;
+	struct compat_hpux_6x_ssig_args *uap;
 	register_t *retval;
 {
 	register int a;
@@ -408,6 +381,7 @@ ohpux_ssig(p, uap, retval)
 #endif
 
 /* signal numbers: convert from HPUX to BSD */
+int
 hpuxtobsdsig(sig)
 	register int sig;
 {
@@ -417,6 +391,7 @@ hpuxtobsdsig(sig)
 }
 
 /* signal numbers: convert from BSD to HPUX */
+int
 bsdtohpuxsig(sig)
 	register int sig;
 {
@@ -426,6 +401,7 @@ bsdtohpuxsig(sig)
 }
 
 /* signal masks: convert from HPUX to BSD (not pretty or fast) */
+int
 hpuxtobsdmask(mask)
 	register int mask;
 {
@@ -440,6 +416,7 @@ hpuxtobsdmask(mask)
 	return(nmask);
 }
 
+int
 bsdtohpuxmask(mask)
 	register int mask;
 {
