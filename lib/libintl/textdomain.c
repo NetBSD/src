@@ -1,4 +1,4 @@
-/*	$NetBSD: textdomain.c,v 1.2 2000/10/31 15:23:04 itojun Exp $	*/
+/*	$NetBSD: textdomain.c,v 1.3 2000/11/01 03:39:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: textdomain.c,v 1.2 2000/10/31 15:23:04 itojun Exp $");
+__RCSID("$NetBSD: textdomain.c,v 1.3 2000/11/01 03:39:21 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -89,6 +89,9 @@ bindtextdomain(domainname, dirname)
 	__domainpath = dpath;
 	strlcpy(dname, domainname, sizeof(dname));
 	__domainname = dname;
+
+	/* perform a dummy lookup, to map message file into memory */
+	gettext("");
 
 	/* LINTED const cast */
 	return (char *)domainname;
