@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.39 1999/01/11 21:31:03 thorpej Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.40 1999/02/01 15:09:46 mycroft Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -462,7 +462,9 @@ ip_mrouter_done()
 			expire_mfc(rt);
 		}
 	}
+
 	free(mfchashtbl, M_MRTABLE);
+	mfchashtbl = 0;
 	
 	/* Reset de-encapsulation cache. */
 	have_encap_tunnel = 0;
