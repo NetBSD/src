@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.5 1997/10/20 01:15:53 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.6 1997/11/11 06:35:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -604,7 +604,7 @@ fxp_attach_common(sc, enaddr)
 	struct fxp_softc *sc;
 	u_int8_t *enaddr;
 {
-	u_int16_t data;
+	u_int16_t data, myea[3];
 	int i, nmedia, defmedia;
 	const int *media;
 
@@ -640,7 +640,7 @@ fxp_attach_common(sc, enaddr)
 	/*
 	 * Get info about the primary PHY
 	 */
-	fxp_read_eeprom(sc, (u_int16_t *)&data, 6, 1);
+	fxp_read_eeprom(sc, &data, 6, 1);
 	sc->phy_primary_addr = data & 0xff;
 	sc->phy_primary_device = (data >> 8) & 0x3f;
 	sc->phy_10Mbps_only = data >> 15;
@@ -648,7 +648,8 @@ fxp_attach_common(sc, enaddr)
 	/*
 	 * Read MAC address.
 	 */
-	fxp_read_eeprom(sc, (u_int16_t *)enaddr, 0, 3);
+	fxp_read_eeprom(sc, myea, 0, 3);
+	bcopy(myea, enaddr, ETHER_ADDR_LEN);
 
 	/*
 	 * Initialize the media structures.
@@ -701,7 +702,7 @@ fxp_attach_common(sc, enaddr)
 static void
 fxp_read_eeprom(sc, data, offset, words)
 	struct fxp_softc *sc;
-	u_short *data;
+	u_int16_t *data;
 	int offset;
 	int words;
 {
