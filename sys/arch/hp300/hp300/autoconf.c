@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1996/04/07 18:21:08 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 1996/05/17 15:19:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -79,7 +79,6 @@
  * the machine.
  */
 int	cold;		    /* if 1, still working on cold-start */
-int	cpuspeed = 0;	    /* relative cpu speed -- can be patched */	
 struct	hp_hw sc_table[MAXCTLRS];
 
 /* XXX must be allocated statically because of early console init */
