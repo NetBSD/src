@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.61 1996/02/28 02:02:44 cgd Exp $
+#	$NetBSD: TRINITY,v 1.62 1996/03/04 03:26:09 cgd Exp $
 #
 #	TRINITY -- Mycroft's 386 box
 #
@@ -73,9 +73,11 @@ options		INET		# IP + ICMP + TCP + UDP
 config		netbsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3 and wd0 and wd1
 #options	GENERIC
 
-isa0	at root
-#eisa0 at root
-#pci0	at root
+mainbus0 at root
+
+isa0	at mainbus0
+#eisa0	at mainbus0
+#pci0	at mainbus0
 
 #ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 #pci*	at ppb? bus ?

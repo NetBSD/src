@@ -1,4 +1,4 @@
-#	$NetBSD: TDR,v 1.56 1996/02/28 02:02:43 cgd Exp $
+#	$NetBSD: TDR,v 1.57 1996/03/04 03:26:07 cgd Exp $
 #
 #	TDR -- Theo Deraadt's 486
 #
@@ -71,9 +71,11 @@ options		INET		# IP + ICMP + TCP + UDP
 config		netbsd	root on sd0 swap on sd0 and sd1 and wd0
 #options	GENERIC
 
-isa0	at root
-#eisa0	at root
-#pci0	at root
+mainbus0 at root
+
+isa0	at mainbus0
+#eisa0	at mainbus0
+#pci0	at mainbus0
 
 #ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 #pci*	at ppb? bus ?

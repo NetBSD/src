@@ -1,4 +1,4 @@
-#	$NetBSD: PAIN,v 1.57 1996/02/28 02:02:38 cgd Exp $
+#	$NetBSD: PAIN,v 1.58 1996/03/04 03:26:03 cgd Exp $
 #
 #	PAIN -- mail server and test machine
 #
@@ -72,9 +72,11 @@ options		INET		# IP + ICMP + TCP + UDP
 config		netbsd	swap generic
 options		GENERIC
 
-isa0	at root
-eisa0	at root
-#pci0	at root
+mainbus0 at root
+
+isa0	at mainbus0
+eisa0	at mainbus0
+#pci0	at mainbus0
 
 #ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 #pci*	at ppb? bus ?
