@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.490 2002/10/08 20:17:09 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.491 2002/10/18 00:51:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.490 2002/10/08 20:17:09 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.491 2002/10/18 00:51:22 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -302,6 +302,7 @@ intel_cpuid_cache_info[] = {
 	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64 },
 	{ CAI_L2CACHE,  0x7c,  8, 1 * 1024 * 1024, 64 },
 	{ CAI_L2CACHE,  0x82,  8,      256 * 1024, 32 },
+	{ CAI_L2CACHE,  0x83,  8,      512 * 1024, 32 },
 	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32 },
 	{ CAI_L2CACHE,  0x85,  8, 2 * 1024 * 1024, 32 },
 	{ 0,               0,  0,	        0,  0 },
