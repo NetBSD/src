@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.73 2004/07/02 16:58:36 bouyer Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.74 2004/09/28 11:35:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.73 2004/07/02 16:58:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.74 2004/09/28 11:35:21 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1763,14 +1763,14 @@ ex_add_rxbuf(sc, rxd)
 			if (oldm == NULL)
 				return 1;
 			m = oldm;
-			m->m_data = m->m_ext.ext_buf;
+			MRESETDATA(m);
 			rval = 1;
 		}
 	} else {
 		if (oldm == NULL)
 			return 1;
 		m = oldm;
-		m->m_data = m->m_ext.ext_buf;
+		MRESETDATA(m);
 		rval = 1;
 	}
 
