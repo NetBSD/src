@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.19 2000/02/24 18:47:55 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.20 2000/02/29 11:14:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.19 2000/02/24 18:47:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.20 2000/02/29 11:14:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,9 +173,9 @@ dpt_intr(xxx_sc)
 			 * Ack the interrupt and process the CCB. If this
 			 * is a private CCB it's up to dpt_poll() to notice.
 			 */
-			junk = dpt_inb(sc, HA_STATUS);
 			sp->sp_ccbid = -1;
 			ccb->ccb_flg |= CCB_INTR;
+			junk = dpt_inb(sc, HA_STATUS);
 			if ((ccb->ccb_flg & CCB_PRIVATE) == 0)
 				dpt_done_ccb(sc, ccb);
 		} else {
@@ -183,8 +183,8 @@ dpt_intr(xxx_sc)
 			    sc->sc_dv.dv_xname, sp->sp_ccbid);
 
 			/* Ack the interrupt */
-			junk = dpt_inb(sc, HA_STATUS);
 			sp->sp_ccbid = -1;
+			junk = dpt_inb(sc, HA_STATUS);
 		}
 	}
 
