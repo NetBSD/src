@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.29 2003/08/07 10:04:35 agc Exp $	*/
+/*	$NetBSD: lfs.c,v 1.30 2003/08/12 08:41:37 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.29 2003/08/07 10:04:35 agc Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.30 2003/08/12 08:41:37 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,7 +196,7 @@ static void make_dir( void *, struct direct *, int);
 static void put(int, off_t, void *, size_t);
 
 int
-make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
+make_lfs(int fd, uint secsize, struct partition *partp, int minfree,
 	 int block_size, int frag_size, int seg_size, int minfreeseg,
 	 int version, daddr_t start, int ibsize, int interleave,
 	 u_int32_t roll_id)
@@ -213,7 +213,6 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	SEGUSE *segtable;	/* Segment usage table */
 	SEGSUM summary;		/* Segment summary structure */
 	SEGSUM *sp;		/* Segment summary pointer */
-	daddr_t	last_sb_addr;	/* Address of superblocks */
 	daddr_t	sb_addr;	/* Address of superblocks */
 	daddr_t	seg_addr;	/* Address of current segment */
 	char *ipagep;		/* Pointer to the page we use to write stuff */
@@ -291,7 +290,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	if (version == 1) {
 		if (start)
 			warnx("filesystem offset ignored for version 1 filesystem");
-		start = LFS_LABELPAD / lp->d_secsize;
+		start = LFS_LABELPAD / secsize;
 	}
 
     tryagain:
@@ -345,7 +344,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	lfsp->lfs_minfree = minfree;
 
 	if (version > 1) {
-		lfsp->lfs_inopf = lp->d_secsize/DINODE1_SIZE;
+		lfsp->lfs_inopf = secsize/DINODE1_SIZE;
 		lfsp->lfs_interleave = interleave;
 		if (roll_id == 0) {
 			/* Pick one; even time(NULL) would almost do */
@@ -359,9 +358,9 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	 * Fill in parts of superblock that can be computed from file system
 	 * size, disk geometry and current time.
 	 */
-	db_per_blk = bsize/lp->d_secsize;
+	db_per_blk = bsize/secsize;
 	lfsp->lfs_blktodb = log2(db_per_blk);
-	lfsp->lfs_fsbtodb = log2(fsize / lp->d_secsize);
+	lfsp->lfs_fsbtodb = log2(fsize / secsize);
 	if (version == 1) {
 		lfsp->lfs_sushift = log2(lfsp->lfs_sepb);
 		lfsp->lfs_fsbtodb = 0;
@@ -369,7 +368,7 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	}
 	label_fsb = btofsb(lfsp, roundup(LFS_LABELPAD, fsize));
 	sb_fsb = btofsb(lfsp, roundup(LFS_SBPAD, fsize));
-	lfsp->lfs_fsbpseg = dbtofsb(lfsp, ssize / lp->d_secsize);
+	lfsp->lfs_fsbpseg = dbtofsb(lfsp, ssize / secsize);
 	lfsp->lfs_size = partp->p_size >> lfsp->lfs_fsbtodb;
 	lfsp->lfs_dsize = dbtofsb(lfsp, partp->p_size) -
 		MAX(label_fsb, dbtofsb(lfsp, start));
@@ -484,7 +483,6 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 		      "superblock.\nPlease decrease the segment size.\n");
 	}
 
-	last_sb_addr = lfsp->lfs_sboffs[i - 1];
 	lfsp->lfs_lastseg = sntod(lfsp, 0);
 	lfsp->lfs_nextseg = sntod(lfsp, 1);
 	lfsp->lfs_curseg = lfsp->lfs_lastseg;
@@ -896,23 +894,24 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 	lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
 	printf("super-block backups (for fsck -b #) at:\n");
 	curw = 0;
-	ww = 0;
 	for (i = 0; i < LFS_MAXNUMSB; i++) {
 		seg_addr = lfsp->lfs_sboffs[i];
+		if (seg_addr == 0)
+			break;
 
-		snprintf(tbuf, sizeof(tbuf), "%lld%s ",
-		    (long long)fsbtodb(lfsp, seg_addr),
-		    (i == LFS_MAXNUMSB - 1 ? "" : ","));
-		ww = strlen(tbuf);
+		if (i != 0)
+			curw += printf(", ");
+		ww = snprintf(tbuf, sizeof(tbuf), "%lld",
+		    (long long)fsbtodb(lfsp, seg_addr));
 		curw += ww;
-		if (curw + ww > 78) {
-			printf("%s\n", tbuf);
-			curw = 0;
+		if (curw >= 78) {
+			printf("\n%s", tbuf);
+			curw = ww;
 		} else
 			printf("%s", tbuf);
 
 		/* Leave the time stamp on the alt sb, zero the rest */
-		if(i == 2) {
+		if (i == 2) {
 			lfsp->lfs_tstamp = 0;
 			lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
 		}

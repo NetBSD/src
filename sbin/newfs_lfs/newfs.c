@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.12 2003/08/07 10:04:35 agc Exp $	*/
+/*	$NetBSD: newfs.c,v 1.13 2003/08/12 08:41:37 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.12 2003/08/07 10:04:35 agc Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.13 2003/08/12 08:41:37 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -163,6 +163,7 @@ main(int argc, char **argv)
 	struct disklabel *lp;
 	struct stat st;
 	int debug, force, fsi, fso, segsize, maxpartitions;
+	uint secsize = 0;
 	daddr_t start;
 	char *cp, *opstring;
 
@@ -177,7 +178,7 @@ main(int argc, char **argv)
 	if (maxpartitions > 26)
 		fatal("insane maxpartitions value %d", maxpartitions);
 
-	opstring = "AB:b:DFf:I:i:LM:m:NO:r:s:v:";
+	opstring = "AB:b:DFf:I:i:LM:m:NO:r:Ss:v:";
 
 	debug = force = segsize = start = 0;
 	while ((ch = getopt(argc, argv, opstring)) != -1)
@@ -208,6 +209,11 @@ main(int argc, char **argv)
 			break;
 		case 'O':
 			start = atoi(optarg);
+			break;
+		case 'S':
+			secsize = atoi(optarg);
+			if (secsize <= 0 || (secsize & (secsize - 1)))
+				fatal("%s: bad sector size", optarg);
 			break;
 #ifdef COMPAT
 		case 'T':
@@ -282,39 +288,54 @@ main(int argc, char **argv)
 		fatal("%s: %s", special, strerror(errno));
 
 
-	if (!debug && !S_ISCHR(st.st_mode))
-		(void)printf("%s: %s: not a character-special device\n",
-		    progname, special);
-	cp = strchr(argv[0], '\0') - 1;
-	if (!debug
-	    && (cp == 0 || ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
-	    && !isdigit(*cp))))
-		fatal("%s: can't figure out file system partition", argv[0]);
+	if (!S_ISCHR(st.st_mode)) {
+		if (debug) {
+			lp = debug_readlabel(fsi);
+			pp = &lp->d_partitions[0];
+		} else {
+			static struct partition dummy_pp;
+			lp = NULL;
+			pp = &dummy_pp;
+			pp->p_fstype = FS_BSDLFS;
+			if (secsize == 0)
+				secsize = 512;
+			pp->p_size = st.st_size / secsize;
+		}
+	} else {
+		cp = strchr(argv[0], '\0') - 1;
+		if (!debug
+		    && ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
+		    && !isdigit(*cp)))
+			fatal("%s: can't figure out file system partition", argv[0]);
 
 #ifdef COMPAT
-	if (disktype == NULL)
-		disktype = argv[1];
+		if (disktype == NULL)
+			disktype = argv[1];
 #endif
-	if (debug)
-		lp = debug_readlabel(fsi);
-	else
 		lp = getdisklabel(special, fsi);
 
-	if (isdigit(*cp))
-		pp = &lp->d_partitions[0];
-	else
-		pp = &lp->d_partitions[*cp - 'a'];
-	if (pp->p_size == 0)
-		fatal("%s: `%c' partition is unavailable", argv[0], *cp);
+		if (isdigit(*cp))
+			pp = &lp->d_partitions[0];
+		else
+			pp = &lp->d_partitions[*cp - 'a'];
+		if (pp->p_size == 0)
+			fatal("%s: `%c' partition is unavailable", argv[0], *cp);
+	}
+
+	if (secsize == 0)
+		secsize = lp->d_secsize;
 
 	/* If force, make the partition look like an LFS */
-	if(force) {
+	if (force) {
 		pp->p_fstype = FS_BSDLFS;
+		pp->p_size = fssize;
 		/* 0 means to use defaults */
 		pp->p_fsize  = 0;
 		pp->p_frag   = 0;
 		pp->p_sgs    = 0;
-	}
+	} else
+		if (fssize != 0 && fssize < pp->p_size)
+			pp->p_size = fssize;
 
 	/* Try autoconfiguring segment size, if asked to */
 	if (segsize == -1) {
@@ -326,7 +347,7 @@ main(int argc, char **argv)
 	}
 
 	/* If we're making a LFS, we break out here */
-	exit(make_lfs(fso, lp, pp, minfree, bsize, fsize, segsize,
+	exit(make_lfs(fso, secsize, pp, minfree, bsize, fsize, segsize,
 		      minfreeseg, version, start, ibsize, interleave,
                       roll_id));
 }
