@@ -1,7 +1,7 @@
 #
 # KICKME -- 486Cx-33 development machine.
 #
-#	$Id: KICKME,v 1.13 1994/07/16 21:46:47 cgd Exp $
+#	$Id: KICKME,v 1.14 1994/10/25 21:31:39 cgd Exp $
 #
 
 machine		"i386"
@@ -18,6 +18,7 @@ options		SCSI
 options		"MATH_EMULATE"
 options 	"COMPAT_NOMID"
 options 	"COMPAT_09"
+options 	"COMPAT_10"
 options		"MACHINE_NONCONTIG"
 options		KTRACE
 options		DDB
