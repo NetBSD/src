@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.6 1994/10/14 18:26:22 cgd Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.7 1994/12/15 20:48:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -172,7 +172,6 @@ adosfs_mountfs(mp, path, bdvp, args, p)
 		goto fail;
 	vput(rvp);
 
-	(void)adosfs_statfs(mp, &mp->mnt_stat, p);
 	return(0);
 fail:
 	VOP_CLOSE(bdvp, FREAD, NOCRED, p);
