@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.134 1999/07/12 15:02:46 kleink Exp $
+$NetBSD: pcidevs,v 1.135 1999/07/14 23:02:01 fvdl Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -618,9 +618,11 @@ product ADP 389XU	0x8378	AHA-389X Ultra
 product ADP 2944U	0x8478	AHA-2944 Ultra
 
 product ADP2 2940U2	0x0010	AHA-2940 Ultra2
-product ADP2 7890	0x001f	AIC-7890/1
-product ADP2 3940U2	0x0050	AHA-3940 Ultra2
-product ADP2 7896	0x005f	AIC-7896/7
+product ADP2 2930U2	0x0011	AHA-2930 Ultra2
+product ADP2 AIC7890	0x001f	AIC-7890/1
+product ADP2 3950U2B	0x0050	AHA-3950 Ultra2
+product ADP2 3950U2D	0x0051	AHA-3950 Ultra2
+product ADP2 AIC7896	0x005f	AIC-7896/7
 
 /* Addtron Products */
 product ADDTRON 8139	0x1360	8139 Ethernet
