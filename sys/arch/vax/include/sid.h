@@ -1,4 +1,4 @@
-/*	$NetBSD: sid.h,v 1.9 1997/02/12 17:50:38 ragge Exp $	*/
+/*	$NetBSD: sid.h,v 1.10 1999/03/09 12:57:58 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -167,7 +167,7 @@
 #define VAX_TYP_V14	20
  
 #define VAX_BTYP_660	0x14000001	/* VAX 4000 model 200 */
-#define VAX_BTYP_440	0x14000004	/* VS 4000/30, 3100/30, 3100/40 */
+#define VAX_BTYP_48	0x14000004	/* VAXstation 4000 VLC */
 #define VAX_BTYP_550	0x14000007	/* VAXft model 410, 610 */
  
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.7 1999/02/02 18:37:21 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.8 1999/03/09 12:57:58 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -131,7 +131,8 @@ dz_vsbus_attach(parent, self, aux)
 
         dzattach(sc);
 
-	if ((vax_confdata & 0x80) == 0) /* workstation, have lkc */
+	if (((vax_confdata & 0x80) == 0) ||/* workstation, have lkc */
+	    (vax_boardtype == VAX_BTYP_48))
 		config_found(self, 0, dz_print);
 }
 
@@ -199,6 +200,7 @@ dzcnprobe(cndev)
 	case VAX_BTYP_420:
 	case VAX_BTYP_43:
 	case VAX_BTYP_46:
+	case VAX_BTYP_48:
 		cndev->cn_dev = makedev(DZMAJOR, 3);
 		dz_regs = iospace;
 		ioaccess(iospace, 0x200A0000, 1);

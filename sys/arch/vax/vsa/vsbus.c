@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.14 1999/02/02 18:37:21 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.15 1999/03/09 12:57:58 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -147,6 +147,10 @@ vsbus_attach(parent, self, aux)
 	/* Always have serial line */
 	va.va_type = inr_sr;
 	config_found(self, &va, vsbus_print);
+
+	/* XXX - Detecting smg on 4000 VLC crashes, SCSI is 53c94 */
+	if (vax_boardtype == VAX_BTYP_48)
+		return;
 
 	/* If sm_addr is set, a monochrome graphics adapter is found */
 	/* XXX - fixa! */
