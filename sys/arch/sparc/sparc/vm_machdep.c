@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.31 1997/09/27 17:49:33 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -149,6 +149,8 @@ dvma_free(dva, len, kaddr)
 	free((void *)kva, M_DEVBUF);
 }
 
+u_long dvma_cachealign = 0;
+
 /*
  * Map a range [va, va+len] of wired virtual addresses in the given map
  * to a kernel address in DVMA space.
@@ -177,10 +179,37 @@ dvma_mapin(map, va, len, canwait)
 	s = splimp();
 	for (;;) {
 
-		pn = rmalloc(dvmamap, npf);
+		if (dvma_cachealign) {
+			int m = (dvma_cachealign >> PGSHIFT);
+			int palign = (va >> PGSHIFT) & (m - 1);
+			long basepn;
 
-		if (pn != 0)
-			break;
+			/*
+			 * Find a DVMA address that's congruent to VA
+			 * modulo the cache size.  This needs only be
+			 * done on machines with virtually indexed
+			 * caches capable of DVMA coherency (eg. Hypersparc)
+			 *
+			 * XXX - there should be a better way..
+			 */
+			basepn = pn = rmalloc(dvmamap, npf + m - 1);
+			if (pn != 0) {
+				pn += (palign + 1 + m - pn) & (m - 1);
+
+				/* Free excess resources */
+				if (pn != basepn)
+					rmfree(dvmamap, pn - basepn, basepn);
+				if (pn != basepn + (m - 1))
+					rmfree(dvmamap, m - 1 - (pn - basepn),
+						pn + npf);
+				break;
+			}
+
+		} else {
+			pn = rmalloc(dvmamap, npf);
+			if (pn != 0)
+				break;
+		}
 		if (canwait) {
 			(void)tsleep(dvmamap, PRIBIO+1, "physio", 0);
 			continue;
