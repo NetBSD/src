@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.h,v 1.4 1995/06/27 15:29:56 gwr Exp $	*/
+/*	$NetBSD: rpc.h,v 1.5 1995/09/14 23:45:38 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -49,7 +49,7 @@
 #define	PMAPPROC_CALLIT		5
 
 /* RPC functions: */
-size_t	rpc_call __P((struct iodesc *d, n_long prog, n_long ver, n_long func,
+ssize_t	rpc_call __P((struct iodesc *d, n_long prog, n_long ver, n_long func,
 	    void *sdata, size_t slen, void *rdata, size_t rlen));
 int 	rpc_getport __P((struct iodesc *d, n_long prog, n_long vers));
 void	rpc_fromaddr(void *pkt, n_long *addr, u_short *port);

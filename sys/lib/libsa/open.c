@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.7 1995/09/06 19:53:27 pk Exp $	*/
+/*	$NetBSD: open.c,v 1.8 1995/09/14 23:45:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -138,13 +138,13 @@ int	null_close(struct open_file *f)
 	return 0;
 }
 
-int	null_read (struct open_file *f, char *buf, u_int size, u_int *resid)
+ssize_t	null_read (struct open_file *f, void *buf, size_t size, size_t *resid)
 {
 	errno = EIO;
 	return -1;
 }
 
-int	null_write (struct open_file *f, char *buf, u_int size, u_int *resid)
+ssize_t	null_write (struct open_file *f, void *buf, size_t size, size_t *resid)
 {
 	errno = EIO;
 	return -1;

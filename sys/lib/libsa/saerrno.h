@@ -1,4 +1,4 @@
-/*	$NetBSD: saerrno.h,v 1.4 1995/02/21 07:52:45 mycroft Exp $	*/
+/*	$NetBSD: saerrno.h,v 1.5 1995/09/14 23:45:39 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -66,3 +66,4 @@ extern	int errno;	/* just like unix */
 #define	EROFS	26	/* Read-only file system */
 #define	ENODEV	27	/* Operation not supported by device */
 #define	EFTYPE	28	/* Inappropriate file type or format */
+#define	EBADRPC	29	/* RPC struct is bad */
