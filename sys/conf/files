@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.116 1997/02/18 21:14:03 mrg Exp $
+#	$NetBSD: files,v 1.117 1997/02/27 01:13:45 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -85,6 +85,10 @@ file	dev/ic/cy.c		cy needs-flag
 # Efficient Networks, Inc. ATM interface
 device	en: atm, ifnet
 file	dev/ic/midway.c		en
+
+# NCR 53x9x or Emulex ESP SCSI Controller
+define	ncr53c9x
+file	dev/ic/ncr53c9x.c	ncr53c9x
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
