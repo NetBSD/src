@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.s,v 1.1.2.3 2001/01/03 17:02:06 thorpej Exp $	*/
+/*	$NetBSD: mptramp.s,v 1.1.2.4 2001/01/07 18:18:44 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,6 +98,8 @@
 
 #define _TRMP_LABEL(a)  a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
 
+#ifdef MPDEBUG
+
 /*
  * Debug code to stop aux. processors in various stages based on the
  * value in cpu_trace.
@@ -106,9 +108,7 @@
  * cpu_trace[1] is the point which the cpu has reached.
  * cpu_trace[2] is the last value stored by HALTT.
  */
-	
-	
-#ifdef MPDEBUG
+
 #define HALT(x)	1: movl (%edi),%ebx;cmpl $ x,%ebx ; jle 1b ; movl $x,4(%edi)
 #define HALTT(x,y)	movl y,8(%edi); HALT(x)
 #else
