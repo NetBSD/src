@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.139 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.140 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -358,3 +358,10 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	kernel: SMBFS uses low-overhead NT Directory Change Notify SMB to watch
 		for vnode kqueue(2) events on directories [jdolecek 20030407]
 	kernel: hostap power saving mode support [kml 20030407]
+	kernel: pool caches now have the ability to cache physical addresses
+		of objects. [thorpej 20030409]
+	kernel: mbufs use new cached physical address feature of pools,
+		and can provide other information about external buffers
+		to save work for bus_dma back-ends.  Use this information
+		in the ARM and x86 bus_dma back-ends to improve network
+		performance.
