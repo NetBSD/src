@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.3 2003/07/30 18:25:50 bsh Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.4 2003/08/04 12:34:08 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -99,8 +99,8 @@ static __inline void
 s3c2xx0_mask_interrupts(int mask)
 {
 	int save = disable_interrupts(I32_bit);
-	global_intr_mask |= mask;
-	*s3c2xx0_intr_mask_reg = intr_mask & ~global_intr_mask;
+	global_intr_mask &= ~mask;
+	s3c2xx0_update_hw_mask();
 	restore_interrupts(save);
 }
 
@@ -108,8 +108,8 @@ static __inline void
 s3c2xx0_unmask_interrupts(int mask)
 {
 	int save = disable_interrupts(I32_bit);
-	global_intr_mask &= ~mask;
-	*s3c2xx0_intr_mask_reg = intr_mask & ~global_intr_mask;
+	global_intr_mask |= mask;
+	s3c2xx0_update_hw_mask();
 	restore_interrupts(save);
 }
 
@@ -118,7 +118,8 @@ s3c2xx0_setipl(int new)
 {
 	current_spl_level = new;
 	intr_mask = s3c2xx0_imask[current_spl_level];
-	*s3c2xx0_intr_mask_reg = intr_mask & ~global_intr_mask;
+	s3c2xx0_update_hw_mask();
+	update_softintr_mask();
 }
 
 
@@ -132,7 +133,7 @@ s3c2xx0_splx(int new)
 	restore_interrupts(psw);
 
 	/* If there are software interrupts to process, do it. */
-	if (softint_pending & intr_mask)
+	if (get_pending_softint())
 		s3c2xx0_do_pending(0);
 }
 
@@ -165,11 +166,13 @@ s3c2xx0_spllower(int ipl)
 static __inline void
 s3c2xx0_setsoftintr(int si)
 {
+
 	atomic_set_bit( (u_int *)&softint_pending, SI_TO_IRQBIT(si) );
 
 	/* Process unmasked pending soft interrupts. */
-	if ( softint_pending & intr_mask )
+	if (get_pending_softint())
 		s3c2xx0_do_pending(0);
+
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_intr.h,v 1.2 2003/08/01 00:40:18 bsh Exp $	*/
+/*	$NetBSD: s3c2800_intr.h,v 1.3 2003/08/04 12:34:08 bsh Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -49,6 +49,8 @@
 
 #define	get_pending_softint()	(softint_pending & intr_mask)
 #define	update_softintr_mask()	/* empty */
+#define	s3c2xx0_update_hw_mask()	\
+	(*s3c2xx0_intr_mask_reg = intr_mask & global_intr_mask)
 
 #include <arm/s3c2xx0/s3c2xx0_intr.h>
 
