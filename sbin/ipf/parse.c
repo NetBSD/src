@@ -35,7 +35,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: parse.c,v 1.1.1.1 1997/01/05 13:06:38 mrg Exp $";
+static	char	rcsid[] = "$Id: parse.c,v 1.2 1997/01/14 06:47:10 cgd Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -452,7 +452,7 @@ char *tag;
 frdest_t *fdp;
 {
 	(void)printf("%s %s%s", tag, fdp->fd_ifname,
-		     (fdp->fd_ifp || (int)fdp->fd_ifp == -1) ? "" : "(!)");
+		     (fdp->fd_ifp || (long)fdp->fd_ifp == -1) ? "" : "(!)");
 	if (fdp->fd_ip.s_addr)
 		(void)printf(":%s", inet_ntoa(fdp->fd_ip));
 	putchar(' ');
@@ -1115,7 +1115,7 @@ struct	frentry	*fp;
 
 	if (*fp->fr_ifname) {
 		(void)printf("on %s%s ", fp->fr_ifname,
-			(fp->fr_ifa || (int)fp->fr_ifa == -1) ? "" : "(!)");
+			(fp->fr_ifa || (long)fp->fr_ifa == -1) ? "" : "(!)");
 		if (*fp->fr_dif.fd_ifname)
 			print_toif("dup-to", &fp->fr_dif);
 		if (*fp->fr_tif.fd_ifname)
