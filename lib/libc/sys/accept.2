@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)accept.2	6.6 (Berkeley) 4/29/91
-.\"	$Id: accept.2,v 1.4 1993/11/29 21:24:57 jtc Exp $
+.\"	$Id: accept.2,v 1.5 1994/01/10 23:54:08 jtc Exp $
 .\"
 .Dd April 29, 1991
 .Dt ACCEPT 2
@@ -108,10 +108,10 @@ or
 .Tn DATAKIT ,
 .Fn accept
 can be thought of
-as merely dequeueing the next connection
+as merely dequeuing the next connection
 request and not implying confirmation.
 Confirmation can be implied by a normal read or write on the new
-file desciptor, and rejection can be implied by closing the
+file descriptor, and rejection can be implied by closing the
 new socket.
 .Pp
 One can obtain user connection request data without confirming

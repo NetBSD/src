@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lseek.2	6.5 (Berkeley) 3/10/91
-.\"	$Id: lseek.2,v 1.4 1993/11/29 21:25:20 jtc Exp $
+.\"	$Id: lseek.2,v 1.5 1994/01/10 23:54:23 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt LSEEK 2
@@ -93,7 +93,7 @@ The
 function allows the file offset to be set beyond the end
 of the existing end-of-file of the file. If data is later written
 at this point, subsequent reads of the data in the gap return
-bytes of zeros (until data is actualy written into the gap).
+bytes of zeros (until data is actually written into the gap).
 .Pp
 Some devices are incapable of seeking.  The value of the pointer
 associated with such a device is undefined.
@@ -101,7 +101,7 @@ associated with such a device is undefined.
 Upon successful completion,
 .Fn lseek
 returns the resulting offset location as measured in bytes from the
-begining of the file.
+beginning of the file.
 Otherwise,
 a value of -1 is returned and
 .Va errno
