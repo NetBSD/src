@@ -1,10 +1,10 @@
-.\"	$NetBSD: ld.elf_so.1,v 1.1 2001/10/31 18:26:23 skrll Exp $
+.\"	$NetBSD: ld.elf_so.1,v 1.2 2001/11/01 01:10:59 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Nick Hudson
+.\" by Nick Hudson.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -44,36 +44,33 @@
 .Nm
 is a self-contained, position independent program image providing run-time
 support for loading and link-editing shared objects into a process'
-address space. It uses information stored in data structures within the
-binary
-.Po
-see
-.Xr elf 5
-.Pc
+address space.  It uses information stored in data structures within the
+binary (see
+.Xr elf 5 )
 and environment variables to determine which shared objects are needed.
 These shared objects are loaded at a convenient virtual address using the
 .Xr mmap 2
-system call. After all shared objects have been successfully loaded,
+system call.  After all shared objects have been successfully loaded,
 .Nm
 proceeds to resolve external references from both the main program and
-all objects loaded. Once all required references are resolved control is
+all objects loaded.  Once all required references are resolved control is
 passed to the program via its entry point.
 .Ss Startup
 On the execution of a dynamically linked binary the kernel will load
 the program and its run-time linker as specified in the PT_INTERP
-section in the program header. At this point, instead of passing control
+section in the program header.  At this point, instead of passing control
 directly to the program, the kernel passes control to the specified
-linker. An auxiliary vector of information is passed that includes
+linker.  An auxiliary vector of information is passed that includes
 the address of the program header, the size of each entry in the header,
-and the number of entries. The entry point of the program and the base
+and the number of entries.  The entry point of the program and the base
 address of where
 .Nm
 is loaded is also supplied.
 .Pp
 Careful use of code allows
 .Nm
-to relocate itself before proceeding. Specifically the use of global
-variables and large switch statements is not allowed. The later can
+to relocate itself before proceeding.  Specifically the use of global
+variables and large switch statements is not allowed.  The later can
 cause the output of a jump table that can use the equivalent of a
 global variable.
 .Ss Finding objects
@@ -82,20 +79,20 @@ Each
 object file may contain information in its dynamic (PT_DYNAMIC) section
 about which shared objects it requires (often referred to as dependencies).
 These dependencies are specified in the optional DT_NEEDED entry within
-the dynamic section. Each DT_NEEDED entry refers to a filename string of
+the dynamic section.  Each DT_NEEDED entry refers to a filename string of
 the shared object that is to be searched for.
 .Pp
 The linker will search for libraries in three lists of paths:
 .Bl -enum
 .It
 A user defined list of paths as specified in LD_LIBRARY_PATH and
-.Xr ld.so.conf 1 .
+.Xr ld.so.conf 5 .
 .Pp
 The use of ld.so.conf should be avoided as the setting of a global search
 path can present a security risk.
 .It
 A list of paths specified within a shared object using a DT_RPATH entry in
-the dynamic section. This is defined at shared object link time.
+the dynamic section.  This is defined at shared object link time.
 .It
 The list of default paths which is set to
 .Pa /usr/lib .
@@ -110,20 +107,20 @@ This name and another of the form lib<name>.so are normally symbolic links
 to the real shared object which has a filename of the form
 lib<name>.so.<major>.<minor>[.<teeny>].
 This naming convention allows a versioning scheme similar to
-.Xr a.out 5
+.Xr a.out 5 .
 .Ss Relocation
 .Nm
 will perform all necessary relocations immediately except for relocations
-relating to the Procedure Linkage Table (PLT). The PLT is used as a
-indirection method for procedure calls to globally defined functions. It
+relating to the Procedure Linkage Table (PLT).  The PLT is used as a
+indirection method for procedure calls to globally defined functions.  It
 allows, through the use of intermediate code, the delayed binding of a call
-to a globally defined function to be performed at procedure call time. This
+to a globally defined function to be performed at procedure call time.  This
 .Sq lazy
 method is the default (see LD_BIND_NOW).
 .Ss Initialization
 A mechanism is provided for initialization and termination routines
 to be called, on a per-object basis before execution of the program proper
-begins or after the program has completed. This gives a shared object an
+begins or after the program has completed.  This gives a shared object an
 opportunity to perform any extra set-up or completion work.
 .Pp
 The DT_INIT and DT_FINI entries in the dynamic section specify the addresses
@@ -172,15 +169,13 @@ error of an dynamically linked executed when it is run.
 .It Pa /etc/ld.so.conf
 library location hints supplied by the system administrator.
 .El
-.Pp
 .Sh SEE ALSO
-.Xr elf 5 ,
 .Xr ld 1 ,
 .Xr ld.aout_so 1 ,
-.Xr dlfcn 3
+.Xr dlfcn 3 ,
+.Xr elf 5
 .Sh HISTORY
 The ELF shared library model employed first appeared in Sys V R4.
-.Pp
 .Sh SECURITY CONSIDERATIONS
 The environment variables
 .Ev LD_LIBRARY_PATH
