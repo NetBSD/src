@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.12 2003/03/26 17:36:56 mycroft Exp $	*/
+/*	$NetBSD: locore.S,v 1.13 2003/04/20 15:42:51 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -125,18 +125,14 @@ ENTRY_NP(cpu_reset)
 	ldr	r1, .Lcpu_reset_needs_v4_MMU_disable
 	ldr	r1, [r1]
 	cmp	r1, #0
-	moveq	pc, r4
 
 	/*
  	 * MMU & IDC off, 32 bit program & data space
 	 * Hurl ourselves into the ROM
 	 */
-	mrc	15, 0, r0, c1, c0, 0
-	bic	r0, r0, #(CPU_CONTROL_DC_ENABLE|CPU_CONTROL_WBUF_ENABLE)
-	bic	r0, r0, #(CPU_CONTROL_SYST_ENABLE|CPU_CONTROL_IC_ENABLE)
+	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
 	mcr     15, 0, r0, c1, c0, 0
-	mov	r0, #0
-	mcr     15, 0, r0, c8, c7, 0 	/* nail I+D TLB on ARMv4 and greater */
+	mcrne   15, 0, r0, c8, c7, 0 	/* nail I+D TLB on ARMv4 and greater */
 	mov     pc, r4
 
 	/*
