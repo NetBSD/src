@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.27 1994/06/29 01:51:06 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.28 1994/06/29 01:54:09 mycroft Exp $
  */
 
 /*
@@ -380,7 +380,7 @@ vmapbuf(bp, len)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-	off = bp->b_data - faddr;
+	off = (vm_offset_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = kmem_alloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
@@ -410,7 +410,7 @@ vunmapbuf(bp, len)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 	addr = trunc_page(bp->b_data);
-	off = bp->b_data - addr;
+	off = (vm_offset_t)bp->b_data - addr;
 	len = round_page(off + len);
 	kmem_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
