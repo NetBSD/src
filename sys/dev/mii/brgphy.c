@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.14 2002/12/27 03:15:52 matt Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.15 2003/01/16 18:43:40 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.14 2002/12/27 03:15:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.15 2003/01/16 18:43:40 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,8 @@ void	brgphy_status(struct mii_softc *);
 
 void	brgphy_5401_reset(struct mii_softc *);
 void	brgphy_5411_reset(struct mii_softc *);
+void	brgphy_5703_reset(struct mii_softc *);
+void	brgphy_5704_reset(struct mii_softc *);
 
 const struct mii_phy_funcs brgphy_funcs = {
 	brgphy_service, brgphy_status, mii_phy_reset,
@@ -115,6 +117,15 @@ const struct mii_phy_funcs brgphy_5401_funcs = {
 const struct mii_phy_funcs brgphy_5411_funcs = {
 	brgphy_service, brgphy_status, brgphy_5411_reset,
 };
+
+const struct mii_phy_funcs brgphy_5703_funcs = {
+	brgphy_service, brgphy_status, brgphy_5703_reset,
+};
+
+const struct mii_phy_funcs brgphy_5704_funcs = {
+	brgphy_service, brgphy_status, brgphy_5704_reset,
+};
+
 
 const struct mii_phydesc brgphys[] = {
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5400,
@@ -135,12 +146,17 @@ const struct mii_phydesc brgphys[] = {
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5703,
 	  MII_STR_BROADCOM_BCM5703 },
 
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5704,
+	  MII_STR_BROADCOM_BCM5704 },
+
 	{ 0,				0,
 	  NULL },
 };
 
 static void bcm5401_load_dspcode(struct mii_softc *);
 static void bcm5411_load_dspcode(struct mii_softc *);
+static void bcm5703_load_dspcode(struct mii_softc *);
+static void bcm5704_load_dspcode(struct mii_softc *);
 
 int
 brgphymatch(struct device *parent, struct cfdata *match, void *aux)
@@ -188,6 +204,18 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 	case MII_MODEL_BROADCOM_BCM5411:
 		sc->mii_funcs = &brgphy_5411_funcs;
 		printf("%s: using BCM5411 DSP patch\n", sc->mii_dev.dv_xname);
+		break;
+
+#ifdef notyet /* unverified, untested */
+	case MII_MODEL_BROADCOM_BCM5703:
+		sc->mii_funcs = &brgphy_5703_funcs;
+		printf("%s: using BCM5703 DSP patch\n", sc->mii_dev.dv_xname);
+		break;
+#endif
+
+	case MII_MODEL_BROADCOM_BCM5704:
+		sc->mii_funcs = &brgphy_5704_funcs;
+		printf("%s: using BCM5704 DSP patch\n", sc->mii_dev.dv_xname);
 		break;
 
 	default:
@@ -377,6 +405,23 @@ brgphy_5411_reset(struct mii_softc *sc)
 	bcm5411_load_dspcode(sc);
 }
 
+
+void
+brgphy_5703_reset(struct mii_softc *sc)
+{
+
+	mii_phy_reset(sc);
+	bcm5703_load_dspcode(sc);
+}
+
+void
+brgphy_5704_reset(struct mii_softc *sc)
+{
+
+	mii_phy_reset(sc);
+	bcm5704_load_dspcode(sc);
+}
+
 static void
 bcm5401_load_dspcode(struct mii_softc *sc)
 {
@@ -413,6 +458,41 @@ bcm5411_load_dspcode(struct mii_softc *sc)
 		{ 0x1c,				0x8c23 },
 		{ 0x1c,				0x8ca3 },
 		{ 0x1c,				0x8c23 },
+		{ 0,				0 },
+	};
+	int i;
+
+	for (i = 0; dspcode[i].reg != 0; i++)
+		PHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
+}
+
+static void
+bcm5703_load_dspcode(struct mii_softc *sc)
+{
+	static const struct {
+		int		reg;
+		uint16_t	val;
+	} dspcode[] = {
+		{ BRGPHY_MII_AUXCTL,		0x0c00 },
+		{ BRGPHY_MII_DSP_ADDR_REG,	0x201f },
+		{ BRGPHY_MII_DSP_RW_PORT,	0x2aaa },
+		{ 0,				0 },
+	};
+	int i;
+
+	for (i = 0; dspcode[i].reg != 0; i++)
+		PHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
+}
+
+static void
+bcm5704_load_dspcode(struct mii_softc *sc)
+{
+	static const struct {
+		int		reg;
+		uint16_t	val;
+	} dspcode[] = {
+		{ 0x1c,				0x8d68 },
+   		{ 0x1c,				0x8d68 },
 		{ 0,				0 },
 	};
 	int i;
