@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.30 2003/03/22 19:57:14 matt Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.31 2003/05/09 23:51:29 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.30 2003/03/22 19:57:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.31 2003/05/09 23:51:29 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,6 +212,13 @@ wdc_isa_dma_setup(sc)
 	if ((maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq)) < MAXPHYS) {
 		printf("%s: max DMA size %lu is less than required %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, (u_long)maxsize, MAXPHYS);
+		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
+		return;
+	}
+
+	if (isa_drq_alloc(sc->sc_ic, sc->sc_drq) != 0) {
+		printf("%s: can't reserve drq %d\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, sc->sc_drq);
 		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
 		return;
 	}

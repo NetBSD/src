@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.111 2003/05/03 18:11:28 wiz Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.112 2003/05/09 23:51:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.111 2003/05/03 18:11:28 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.112 2003/05/09 23:51:29 fvdl Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -369,7 +369,7 @@ sbdsp_attach(sc)
 	struct sbdsp_softc *sc;
 {
 	struct audio_params pparams, rparams;
-	int i;
+	int i, error;
 	u_int v;
 
 	pparams = audio_default;
@@ -423,13 +423,30 @@ sbdsp_attach(sc)
 	    sc->sc_drq8 != -1 && sc->sc_drq16 != -1 &&
 	    sc->sc_drq8 != sc->sc_drq16;
 
-	if (sc->sc_drq8 != -1)
+	if (sc->sc_drq8 != -1) {
 		sc->sc_drq8_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_drq8);
+		error = isa_dmamap_create(sc->sc_ic, sc->sc_drq8,
+		    sc->sc_drq8_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW);
+		if (error) {
+			printf("%s: can't create map for drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq8);
+			return;
+		}
+	}
 
-	if (sc->sc_drq16 != -1 && sc->sc_drq16 != sc->sc_drq8)
+	if (sc->sc_drq16 != -1 && sc->sc_drq16 != sc->sc_drq8) {
 		sc->sc_drq16_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_drq16);
+		error = isa_dmamap_create(sc->sc_ic, sc->sc_drq16,
+		    sc->sc_drq16_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW);
+		if (error) {
+			printf("%s: can't create map for drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq16);
+			isa_dmamap_destroy(sc->sc_ic, sc->sc_drq8);
+			return;
+		}
+	}
 
 	powerhook_establish (sbdsp_powerhook, sc);
 }
@@ -911,25 +928,19 @@ sbdsp_open(addr, flags)
 	state = 0;
 
 	if (sc->sc_drq8 != -1) {
-		error = isa_dmamap_create(sc->sc_ic, sc->sc_drq8,
-		    sc->sc_drq8_maxsize, BUS_DMA_NOWAIT);
-		if (error) {
-			printf("%s: can't create map for drq %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_drq8);
+		error = isa_drq_alloc(sc->sc_ic, sc->sc_drq8);
+		if (error != 0)
 			goto bad;
-		}
 		state |= 1;
 	}
+
 	if (sc->sc_drq16 != -1 && sc->sc_drq16 != sc->sc_drq8) {
-		error = isa_dmamap_create(sc->sc_ic, sc->sc_drq16,
-		    sc->sc_drq16_maxsize, BUS_DMA_NOWAIT);
-		if (error) {
-			printf("%s: can't create map for drq %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_drq16);
+		error = isa_drq_alloc(sc->sc_ic, sc->sc_drq16);
+		if (error != 0)
 			goto bad;
-		}
 		state |= 2;
 	}
+
 
 	if (sbdsp_reset(sc) != 0) {
 		error = EIO;
@@ -954,9 +965,9 @@ sbdsp_open(addr, flags)
 
 bad:
 	if (state & 1)
-		isa_dmamap_destroy(sc->sc_ic, sc->sc_drq8);
+		isa_drq_free(sc->sc_ic, sc->sc_drq8);
 	if (state & 2)
-		isa_dmamap_destroy(sc->sc_ic, sc->sc_drq16);
+		isa_drq_free(sc->sc_ic, sc->sc_drq16);
 
 	sc->sc_open = SB_CLOSED;
 	return (error);
@@ -980,9 +991,9 @@ sbdsp_close(addr)
 	sc->sc_intr16 = 0;
 
 	if (sc->sc_drq8 != -1)
-		isa_dmamap_destroy(sc->sc_ic, sc->sc_drq8);
+		isa_drq_free(sc->sc_ic, sc->sc_drq8);
 	if (sc->sc_drq16 != -1 && sc->sc_drq16 != sc->sc_drq8)
-		isa_dmamap_destroy(sc->sc_ic, sc->sc_drq16);
+		isa_drq_free(sc->sc_ic, sc->sc_drq16);
 
 	sc->sc_open = SB_CLOSED;
 	DPRINTF(("sbdsp_close: closed\n"));

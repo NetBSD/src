@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.41 2003/02/26 20:48:48 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.42 2003/05/09 23:51:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.41 2003/02/26 20:48:48 leo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.42 2003/05/09 23:51:28 fvdl Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -305,6 +305,12 @@ fdcattach(fdc)
 	TAILQ_INIT(&fdc->sc_drives);
 
 	fdc->sc_maxiosize = isa_dmamaxsize(fdc->sc_ic, fdc->sc_drq);
+
+	if (isa_drq_alloc(fdc->sc_ic, fdc->sc_drq) != 0) {
+		printf("%s: can't reserve drq %d\n",
+		    fdc->sc_dev.dv_xname, fdc->sc_drq);
+		return;
+	}
 
 	if (isa_dmamap_create(fdc->sc_ic, fdc->sc_drq, fdc->sc_maxiosize,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {

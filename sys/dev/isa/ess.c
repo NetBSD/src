@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.57 2003/05/03 18:11:26 wiz Exp $	*/
+/*	$NetBSD: ess.c,v 1.58 2003/05/09 23:51:28 fvdl Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.57 2003/05/03 18:11:26 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.58 2003/05/09 23:51:28 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -908,6 +908,13 @@ essattach(sc)
 	} else
 		printf("%s: audio1 polled\n", sc->sc_dev.dv_xname);
 	sc->sc_audio1.maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_audio1.drq);
+
+	if (isa_drq_alloc(sc->sc_ic, sc->sc_audio1.drq) != 0) {
+		printf("%s: can't reserve drq %d\n",
+		    sc->sc_dev.dv_xname, sc->sc_audio1.drq);
+		return;
+	}
+
 	if (isa_dmamap_create(sc->sc_ic, sc->sc_audio1.drq,
 	    sc->sc_audio1.maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create map for drq %d\n",
@@ -927,6 +934,13 @@ essattach(sc)
 			printf("%s: audio2 polled\n", sc->sc_dev.dv_xname);
 		sc->sc_audio2.maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_audio2.drq);
+
+		if (isa_drq_alloc(sc->sc_ic, sc->sc_audio2.drq) != 0) {
+			printf("%s: can't reserve drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_audio2.drq);
+			return;
+		}
+			
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_audio2.drq,
 		    sc->sc_audio2.maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",
