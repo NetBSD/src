@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165 2000/05/23 11:39:58 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.166 2000/06/24 22:47:45 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1089,6 +1089,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
+	map->_dm_align = PAGE_SIZE;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
