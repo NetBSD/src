@@ -1,4 +1,8 @@
 #
+# Sample aliases file. Install in the location as specified by the
+# output from the command "postconf alias_maps". Typical path names
+# are /etc/aliases or /etc/mail/aliases.
+#
 #	>>>>>>>>>>      The program "newaliases" must be run after
 #	>> NOTE >>      this file is updated for any changes to
 #	>>>>>>>>>>      show through to Postfix.
@@ -68,11 +72,13 @@ decode:		root
 # 
 #                    name: value1, value2, ...
 # 
-#        o      Lines that begin with whitespace continue the  pre-
-#               vious line.
+#        o      Empty lines and whitespace-only lines are  ignored,
+#               as  are  lines whose first non-whitespace character
+#               is a `#'.
 # 
-#        o      Blank  lines  are  ignored,  as are lines beginning
-#               with `#'.
+#        o      A logical line starts with non-whitespace  text.  A
+#               line  that starts with whitespace continues a logi-
+#               cal line.
 # 
 #        The name is a local address (no domain part).  Use  double
 #        quotes  when the name contains any special characters such
@@ -88,10 +94,6 @@ decode:		root
 #        the originator of the undelivered mail.
 # 
 #        The value contains one or more of the following:
-# 
-#                                                                 1
-# 
-# ALIASES(5)                                             ALIASES(5)
 # 
 #        address
 #               Mail  is  forwarded to address, which is compatible
@@ -146,10 +148,6 @@ decode:		root
 #               Restrict  the  usage  of  mail delivery to external
 #               command.
 # 
-#                                                                 2
-# 
-# ALIASES(5)                                             ALIASES(5)
-# 
 #        allow_mail_to_files
 #               Restrict the usage of  mail  delivery  to  external
 #               file.
@@ -185,5 +183,5 @@ decode:		root
 #        P.O. Box 704
 #        Yorktown Heights, NY 10598, USA
 # 
-#                                                                 3
+#                                                                 1
 # 

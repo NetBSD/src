@@ -142,10 +142,14 @@ int     vbounce_append(int flags, const char *id, const char *recipient,
     why = vstring_alloc(100);
     delay = time((time_t *) 0) - entry;
     vstring_vsprintf(why, fmt, ap);
-    if (mail_command_write(MAIL_CLASS_PRIVATE, var_soft_bounce ?
-			   MAIL_SERVICE_DEFER : MAIL_SERVICE_BOUNCE,
-			   "%d %d %s %s %s", BOUNCE_CMD_APPEND,
-			   flags, id, recipient, vstring_str(why)) == 0) {
+    if (mail_command_client(MAIL_CLASS_PRIVATE, var_soft_bounce ?
+			    MAIL_SERVICE_DEFER : MAIL_SERVICE_BOUNCE,
+			    ATTR_TYPE_NUM, MAIL_ATTR_NREQ, BOUNCE_CMD_APPEND,
+			    ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
+			    ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
+			    ATTR_TYPE_STR, MAIL_ATTR_RECIP, recipient,
+			    ATTR_TYPE_STR, MAIL_ATTR_WHY, vstring_str(why),
+			    ATTR_TYPE_END) == 0) {
 	msg_info("%s: to=<%s>, relay=%s, delay=%d, status=%s (%s)",
 		 id, recipient, relay, delay, var_soft_bounce ? "deferred" :
 		 "bounced", vstring_str(why));
@@ -172,9 +176,13 @@ int     bounce_flush(int flags, const char *queue, const char *id,
      */
     if (var_soft_bounce)
 	return (-1);
-    if (mail_command_write(MAIL_CLASS_PRIVATE, MAIL_SERVICE_BOUNCE,
-			   "%d %d %s %s %s", BOUNCE_CMD_FLUSH,
-			   flags, queue, id, sender) == 0) {
+    if (mail_command_client(MAIL_CLASS_PRIVATE, MAIL_SERVICE_BOUNCE,
+			    ATTR_TYPE_NUM, MAIL_ATTR_NREQ, BOUNCE_CMD_FLUSH,
+			    ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
+			    ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue,
+			    ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
+			    ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
+			    ATTR_TYPE_END) == 0) {
 	return (0);
     } else if ((flags & BOUNCE_FLAG_CLEAN) == 0) {
 	msg_info("%s: status=deferred (bounce failed)", id);

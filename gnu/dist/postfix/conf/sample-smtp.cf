@@ -65,6 +65,14 @@ smtp_never_send_ehlo = no
 # 
 #smtp_bind_address=111.222.333.444
 
+# The smtp_break_lines parameter controls whether the SMTP client
+# will break lines longer than $line_length_limit characters.
+# 
+# By default, line breaking is turned on, because some fragile SMTP
+# server implementations cannot receive mail with long lines.
+# 
+#smtp_break_lines = yes
+
 # The smtp_skip_4xx_greeting parameter controls what happens when
 # an SMTP server greets us with a 4XX status code (go away, try
 # again later).
@@ -90,6 +98,29 @@ smtp_skip_5xx_greeting = yes
 # to not wait.
 # 
 smtp_skip_quit_response = yes
+
+# The smtp_pix_workaround_sleep_time parameter specifies how long
+# the Postfix SMTP client pauses before sending .<CR><LF>, in order
+# to work around the PIX firewall <CR><LF>.<CR><LF> bug.
+#
+# The default delay is 10 seconds.  Choosing a too short time makes
+# this workaround ineffective while sending large messages over slow
+# network connections.
+#
+smtp_pix_workaround_delay_time = 10s
+
+# The smtp_pix_workaround_threshold_time parameter specifies how
+# long a message must be queued before the PIX firewall <CR><LF>.<CR><LF>
+# bug workaround is turned on.
+# 
+# By default, the workaround is turned off for mail that is queued
+# for less than 500 seconds. In other words, the workaround is normally
+# turned off for the first delivery attempt.
+# 
+# Specify 0 to enable the PIX firewall <CR><LF>.<CR><LF> bug workaround
+# upon the first delivery attempt.
+# 
+smtp_pix_workaround_threshold_time = 500s
 
 #
 # RATE CONTROLS
@@ -130,7 +161,7 @@ smtp_destination_recipient_limit = $default_destination_recipient_limit
 # Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 # The default time unit is s (seconds).
 #
-# smtp_connect_timeout = 30s
+#smtp_connect_timeout = 30s
 smtp_connect_timeout = 0s
 
 # The smtp_helo_timeout parameter specifies the SMTP client timeout

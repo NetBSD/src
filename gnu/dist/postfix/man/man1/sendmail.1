@@ -25,11 +25,9 @@ Sendmail command-line options are recognized but silently ignored.
 
 By default, \fBsendmail\fR reads a message from standard input
 until EOF or until it reads a line with only a \fB.\fR character,
-and arranges for delivery.  \fBsendmail\fR attempts to create
-a queue file in the \fBmaildrop\fR directory. If that directory
-is not world-writable, the message is piped through the
-\fBpostdrop\fR(1) command, which is expected to execute with
-suitable privileges.
+and arranges for delivery.  \fBsendmail\fR relies on the
+\fBpostdrop\fR(1) command to create a queue file in the \fBmaildrop\fR
+directory.
 
 Specific command aliases are provided for other common modes of
 operation:
@@ -38,14 +36,15 @@ List the mail queue. Each entry shows the queue file ID, message
 size, arrival time, sender, and the recipients that still need to
 be delivered.  If mail could not be delivered upon the last attempt,
 the reason for failure is shown. This mode of operation is implemented
-by connecting to the \fBshowq\fR(8) daemon.
+by executing the \fBpostqueue\fR(1) command.
 .IP \fBnewaliases\fR
-Initialize the alias database. If no alias database type is
-specified, the program uses the type specified in the
-\fBdatabase_type\fR configuration parameter; if no input file
-is specified, the program processes the file(s) specified with the
-\fBalias_database\fR configuration parameter. This mode of operation
-is implemented by running the \fBpostalias\fR(1) command.
+Initialize the alias database.  If no input file is specified (with
+the \fB-oA\fR option, see below), the program processes the file(s)
+specified with the \fBalias_database\fR configuration parameter.
+If no alias database type is specified, the program uses the type
+specified with the \fBdatabase_type\fR configuration parameter.
+This mode of operation is implemented by running the \fBpostalias\fR(1)
+command.
 .sp
 Note: it may take a minute or so before an alias database update
 becomes visible. Use the \fBpostfix reload\fR command to eliminate
@@ -70,6 +69,9 @@ Gateway (relay) submission, as opposed to initial user submission.
 .IP \fB-I\fR
 Initialize alias database. See the \fBnewaliases\fR
 command above.
+.IP "\fB-L \fIlabel\fR (ignored)"
+The logging label. Use the \fBsyslog_name\fR configuration
+parameter instead.
 .IP "\fB-N \fIdsn\fR (ignored)"
 Delivery status notification control. Currently, Postfix does
 not implement \fBDSN\fR.
@@ -81,6 +83,20 @@ Log mailer traffic. Use the \fBdebug_peer_list\fR and
 \fBdebug_peer_level\fR configuration parameters instead.
 .IP "\fB-U\fR (ignored)"
 Initial user submission.
+.IP \fB-V\fR
+Variable Envelope Return Path. Given an envelope sender address
+of the form \fIowner-listname\fR@\fIorigin\fR, each recipient
+\fIuser\fR@\fIdomain\fR receives mail with a personalized envelope
+sender address.
+.sp
+By default, the personalized envelope sender address is
+\fIowner-listname\fB+\fIuser\fB=\fIdomain\fR@\fIorigin\fR. The default
+\fB+\fR and \fB=\fR characters are configurable with the
+\fBdefault_verp_delimiters\fR configuration parameter.
+.IP \fB-V\fIxy\fR
+As \fB-V\fR, but uses \fIx\fR and \fIy\fR as the VERP delimiter
+characters, instead of the characters specified with the
+\fBdefault_verp_delimiters\fR configuration parameter.
 .IP \fB-bd\fR
 Go into daemon mode. This mode of operation is implemented by
 executing the \fBpostfix start\fR command.
@@ -132,17 +148,17 @@ Set the envelope sender address. This is the address where
 delivery problems are sent to, unless the message contains an
 \fBErrors-To:\fR message header.
 .IP \fB-q\fR
-Attempt to deliver all queued mail. This is implemented by kicking the
-\fBqmgr\fR(8) daemon.
+Attempt to deliver all queued mail. This is implemented by
+executing the \fBpostqueue\fR(1) command.
 .IP "\fB-q\fIinterval\fR (ignored)"
 The interval between queue runs. Use the \fBqueue_run_delay\fR
 configuration parameter instead.
 .IP \fB-qR\fIsite\fR
 Schedule immediate delivery of all mail that is queued for the named
-\fIsite\fR. Depending on the destination, this uses "fast flush"
-service, or it has the same effect as \fBsendmail -q\fR.
-This is implemented by connecting to the local SMTP server.
-See \fBsmtpd\fR(8) for more information about the "fast flush"
+\fIsite\fR. This option accepts only \fIsite\fR names that are
+eligible for the "fast flush" service, and is implemented by
+executing the \fBpostqueue\fR(1) command.
+See \fBflush\fR(8) for more information about the "fast flush"
 service.
 .IP \fB-qS\fIsite\fR
 This command is not implemented. Use the slower \fBsendmail -q\fR
@@ -210,12 +226,14 @@ pattern in the \fBdebug_peer_list\fR parameter.
 List of domain or network patterns. When a remote host matches
 a pattern, increase the verbose logging level by the amount
 specified in the \fBdebug_peer_level\fR parameter.
+.IP \fBdefault_verp_delimiters\fR
+The VERP delimiter characters that are used when the \fB-V\fR
+command line option is specified without delimiter characters.
 .IP \fBfast_flush_domains\fR
 List of domains that will receive "fast flush" service (default: all
-domains that this system is willing to relay mail to). This greatly
-improves the performance of the SMTP \fBETRN\fR request, and of the
-\fBsendmail -qR\fR command. For domains not in the list, Postfix simply
-attempts to deliver all queued mail.
+domains that this system is willing to relay mail to). This list
+specifies the domains that Postfix accepts in the SMTP \fBETRN\fR
+request and in the \fBsendmail -qR\fR command.
 .IP \fBfork_attempts\fR
 Number of attempts to \fBfork\fR() a process before giving up.
 .IP \fBfork_delay\fR
@@ -235,18 +253,19 @@ Top-level directory of the Postfix queue. This is also the root
 directory of Postfix daemons that run chrooted.
 .IP \fBqueue_run_delay\fR
 The time between successive scans of the deferred queue.
+.IP \fBverp_delimiter_filter\fR
+The characters that Postfix accepts as VERP delimiter characters.
 .SH SEE ALSO
 .na
 .nf
 pickup(8) mail pickup daemon
 postalias(1) maintain alias database
-postdrop(1) privileged posting agent
+postdrop(1) mail posting utility
 postfix(1) mail system control
-postkick(1) kick a Postfix daemon
+postqueue(1) mail queue control
 qmgr(8) queue manager
-showq(8) list mail queue
 smtpd(8) SMTP server
-flushd(8) fast flush service
+flush(8) fast flush service
 syslogd(8) system logging
 .SH LICENSE
 .na

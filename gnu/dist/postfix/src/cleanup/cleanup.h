@@ -59,6 +59,7 @@ typedef struct CLEANUP_STATE {
     off_t   xtra_offset;		/* start of extra segment */
     int     end_seen;			/* REC_TYPE_END seen */
     int     rcpt_count;			/* recipient count */
+    char   *reason;			/* failure reason */
 } CLEANUP_STATE;
 
  /*
@@ -71,6 +72,15 @@ extern MAPS *cleanup_header_checks;
 extern MAPS *cleanup_body_checks;
 extern MAPS *cleanup_virtual_maps;
 extern ARGV *cleanup_masq_domains;
+extern int cleanup_masq_flags;
+
+ /*
+  * Address masquerading fine control.
+  */
+#define CLEANUP_MASQ_FLAG_ENV_FROM	(1<<0)	/* envelope sender */
+#define CLEANUP_MASQ_FLAG_ENV_RCPT	(1<<1)	/* envelope recipient */
+#define CLEANUP_MASQ_FLAG_HDR_FROM	(1<<2)	/* header sender */
+#define CLEANUP_MASQ_FLAG_HDR_RCPT	(1<<3)	/* header recipient */
 
  /*
   * Restrictions on extension propagation.
@@ -94,7 +104,8 @@ extern void cleanup_state_free(CLEANUP_STATE *);
   */
 extern CLEANUP_STATE *cleanup_open(void);
 extern void cleanup_control(CLEANUP_STATE *, int);
-extern int cleanup_close(CLEANUP_STATE *);
+extern int cleanup_flush(CLEANUP_STATE *);
+extern void cleanup_free(CLEANUP_STATE *);
 extern void cleanup_all(void);
 extern void cleanup_pre_jail(char *, char **);
 extern void cleanup_post_jail(char *, char **);

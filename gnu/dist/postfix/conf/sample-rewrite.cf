@@ -7,7 +7,7 @@
 # The allow_percent_hack parameter controls the rewriting of the form
 # "user%domain" to "user@domain". This is enabled by default.
 #
-# allow_percent_hack = no
+#allow_percent_hack = no
 allow_percent_hack = yes
 
 # The append_at_myorigin controls the rewriting of the form "user" to
@@ -18,7 +18,7 @@ append_at_myorigin = yes
 # The append_dot_mydomain controls the rewriting of the form
 # "user@host" to "user@host.$mydomain". This is enabled by default.
 #
-# append_dot_mydomain = no
+#append_dot_mydomain = no
 append_dot_mydomain = yes
 
 # The empty_address_recipient specifies the destination for mail from
@@ -27,12 +27,25 @@ append_dot_mydomain = yes
 #
 empty_address_recipient = MAILER-DAEMON
 
+# The masquerade_classes parameter controls what addresses are
+# subject to address masquerading.
+# 
+# By default, address masquerading is limited to envelope recipient
+# addresses, and to header sender and header recipient addresses.
+# This allows you to use address masquerading on a mail gateway while
+# still being able to forward mail to users on individual machines.
+# 
+# Specify zero or more of: envelope_sender, envelope_recipient,
+# header_sender, header_recipient
+#
+masquerade_classes = envelope_sender, header_sender, header_recipient
+
 # The masquerade_domains parameter gives an optional list of domains
 # that must have their subdomain structure stripped off.
 #
 # By default, address masquerading is disabled.
 #
-# masquerade_domains = $mydomain
+#masquerade_domains = $mydomain
 masquerade_domains = 
 
 # The masquerade_exceptions parameter gives an optional list of user
@@ -48,5 +61,5 @@ masquerade_exceptions =
 # "site!user" to "user@site".  This is necessary if your machine is
 # connected to UUCP networks. It is enabled by default.
 #
-# swap_bangpath = no
+#swap_bangpath = no
 swap_bangpath = yes

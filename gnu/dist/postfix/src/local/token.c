@@ -148,7 +148,12 @@ int     deliver_token(LOCAL_STATE state, USER_ATTR usr_attr, TOK822 *addr)
     } else if (*STR(addr_buf) == '~') {
 	status = deliver_token_home(state, usr_attr, STR(addr_buf));
     } else if (*STR(addr_buf) == '|') {
-	status = deliver_command(state, usr_attr, STR(addr_buf) + 1);
+	if ((local_cmd_deliver_mask & state.msg_attr.exp_type) == 0)
+	    status = bounce_append(BOUNCE_FLAG_KEEP,
+				   BOUNCE_ATTR(state.msg_attr),
+				   "mail to command is restricted");
+	else
+	    status = deliver_command(state, usr_attr, STR(addr_buf) + 1);
     } else if (strncasecmp(STR(addr_buf), include, sizeof(include) - 1) == 0) {
 	path = STR(addr_buf) + sizeof(include) - 1;
 	status = deliver_include(state, usr_attr, path);

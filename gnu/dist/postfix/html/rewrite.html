@@ -226,7 +226,7 @@ send mail to the those ugly address without creating a mailer loop.
 
 <a name="masquerade"> <h2> Address masquerading</h2>
 
-Address masquerading is a method to hide all hosts below a domain
+Address masquerading is a method to hide all hosts inside a domain
 behind their mail gateway, and to make it appear as if the mail
 comes from the gateway itself, instead of from individual machines.
 
@@ -263,12 +263,32 @@ For example,
 
 <p>
 
-
 By default, Postfix makes no exceptions.
+
 <p>
 
-Subtle point: address masquerading is applied only to message
-headers and envelope sender addresses, not to envelope recipients.
+Subtle point: by default, address masquerading is applied only to
+message headers and to envelope sender addresses, but not to envelope
+recipients. This allows you to use address masquerading on a mail
+gateway machine, while still being able to forward mail from outside
+to users on individual machines.
+
+<p>
+
+In order to subject envelope recipient addresses to masquerading,
+too, specify (only available with Postfix versions after 20010802):
+
+<dl>
+
+<dd><b>masquerade_classes = envelope_sender, envelope_recipient,
+header_sender, header_recipient</b>
+
+</dl>
+
+<p>
+
+If you do this, Postfix will no longer be able to send mail to
+individual machines.
 
 <a name="virtual"> <h2> Virtual address mapping</h2>
 

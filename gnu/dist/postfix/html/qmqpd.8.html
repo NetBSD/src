@@ -1,0 +1,122 @@
+<html> <head> </head> <body> <pre>
+
+QMQPD(8)                                                 QMQPD(8)
+
+<b>NAME</b>
+       qmqpd - Postfix QMQP server
+
+<b>SYNOPSIS</b>
+       <b>qmqpd</b> [generic Postfix daemon options]
+
+<b>DESCRIPTION</b>
+       The  Postfix  QMQP server receives one message per connec-
+       tion.  Each message is piped through the  <a href="cleanup.8.html"><b>cleanup</b>(8)</a>  dae-
+       mon,  and  is placed into the <b>incoming</b> queue as one single
+       queue file.  The program expects to be run from  the  <a href="master.8.html"><b>mas-</b></a>
+       <a href="master.8.html"><b>ter</b>(8)</a> process manager.
+
+       The QMQP server implements one access policy: only explic-
+       itly authorized client hosts are allowed to use  the  ser-
+       vice.
+
+<b>SECURITY</b>
+       The QMQP server is moderately security-sensitive. It talks
+       to QMQP clients and to DNS servers  on  the  network.  The
+       QMQP server can be run chrooted at fixed low privilege.
+
+<b>DIAGNOSTICS</b>
+       Problems and transactions are logged to <b>syslogd</b>(8).
+
+<b>BUGS</b>
+       The  QMQP protocol provides only one server reply per mes-
+       sage delivery. It is  therefore  not  possible  to  reject
+       individual recipients.
+
+       The  QMQP  protocol  requires  the  server  to receive the
+       entire message before replying. If a message is malformed,
+       or  if  any netstring component is longer than acceptable,
+       Postfix replies immediately and closes the connection.  It
+       is left up to the client to handle the situation.
+
+<b>CONFIGURATION</b> <b>PARAMETERS</b>
+       The  following  <b>main.cf</b> parameters are especially relevant
+       to this program. See the Postfix <b>main.cf</b> file  for  syntax
+       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
+       command after a configuration change.
+
+<b>Miscellaneous</b>
+       <b>always</b><i>_</i><b>bcc</b>
+              Address to send a copy of each message that  enters
+              the system.
+
+       <b>debug</b><i>_</i><b>peer</b><i>_</i><b>level</b>
+              Increment  in  verbose  logging level when a remote
+              host  matches  a  pattern  in  the  <b>debug</b><i>_</i><b>peer</b><i>_</i><b>list</b>
+              parameter.
+
+       <b>debug</b><i>_</i><b>peer</b><i>_</i><b>list</b>
+              List  of  domain or network patterns. When a remote
+              host matches a pattern, increase the  verbose  log-
+              ging   level   by   the  amount  specified  in  the
+              <b>debug</b><i>_</i><b>peer</b><i>_</i><b>level</b> parameter.
+
+       <b>hopcount</b><i>_</i><b>limit</b>
+              Limit the number of <b>Received:</b> message headers.
+
+       <b>qmqpd</b><i>_</i><b>authorized</b><i>_</i><b>clients</b>
+              A list of domain or network patterns that specifies
+              what clients are allowed to use the service.
+
+       <b>qmqpd</b><i>_</i><b>timeout</b>
+              Limit  the  time  to  send a server response and to
+              receive a client request.
+
+       <b>soft</b><i>_</i><b>bounce</b>
+              Change hard (D)  reject  responses  into  soft  (Z)
+              reject  responses.   This can be useful for testing
+              purposes.
+
+<b>Content</b> <b>inspection</b> <b>controls</b>
+       <b>content</b><i>_</i><b>filter</b>
+              The name of a mail delivery transport that  filters
+              mail and that either bounces mail or re-injects the
+              result back into Postfix.  This parameter uses  the
+              same  syntax  as  the  right-hand side of a Postfix
+              transport table.
+
+<b>Resource</b> <b>controls</b>
+       <b>line</b><i>_</i><b>length</b><i>_</i><b>limit</b>
+              Limit the amount of memory in bytes  used  for  the
+              handling  of partial input lines, and the length of
+              sender and recipient addresses  that  are  received
+              from client.
+
+       <b>message</b><i>_</i><b>size</b><i>_</i><b>limit</b>
+              Limit the total size in bytes of a message, includ-
+              ing  on-disk  storage  for  sender  and   recipient
+              address information.
+
+<b>Tarpitting</b>
+       <b>qmqpd</b><i>_</i><b>error</b><i>_</i><b>sleep</b><i>_</i><b>time</b>
+              Time to wait in seconds before informing the client
+              of a problem. This slows down run-away errors.
+
+<b>SEE</b> <b>ALSO</b>
+       <a href="http://cr.yp.to/proto/qmqp.html">http://cr.yp.to/proto/qmqp.html</a>, QMQP protocol
+       <a href="cleanup.8.html">cleanup(8)</a> message canonicalization
+       <a href="master.8.html">master(8)</a> process manager
+       syslogd(8) system logging
+
+<b>LICENSE</b>
+       The Secure Mailer license must be  distributed  with  this
+       software.
+
+<b>AUTHOR(S)</b>
+       Wietse Venema
+       IBM T.J. Watson Research
+       P.O. Box 704
+       Yorktown Heights, NY 10598, USA
+
+                                                                1
+
+</pre> </body> </html>

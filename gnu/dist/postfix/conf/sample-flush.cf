@@ -4,26 +4,28 @@
 # This file contains example settings of Postfix parameters that
 # control the fast flush service, which is the code that implements
 # fast ETRN and fast "sendmail -qR".
-
-# The fast_flush_domains parameter specifies what destinations are
-# eligible for per-destination logfiles with mail that is queued to
-# those destinations.
 # 
-# When a destination is eligible for "fast flush" logfiles, ETRN and
+# When a destination is eligible for "fast flush" service, ETRN and
 # "sendmail -qR" are implemented by delivering only messages that
 # are listed in the logfile for that destination (in fact, Postfix
 # will deliver to all recipients of those messages, regardless of
 # their destination, but that is not an issue when you relay mail
 # for an eligible site).
-# 
-# When a destination is not eligible for "fast flush" logfiles, ETRN
-# and "sendmail -qR" are implemented simply by attempting to deliver
-# all queued mail. That's the slow service that Postfix used to
-# implement before 20001005.
+
+# The fast_flush_domains parameter specifies what destinations are
+# eligible for per-destination logfiles with mail that is queued to
+# those destinations.
 # 
 # By default, Postfix maintains "fast flush" logfiles only for
 # destinations that the Postfix SMTP server is willing to relay to
-# (see the relay_domains parameter in sample-smtpd.cf).
+# (i.e. the default is: "fast_flush_domains = $relay_domains"; see
+# the relay_domains parameter in sample-smtpd.cf).
+#
+# Specify a list of hosts or domains, /file/name patterns or type:name
+# lookup tables, separated by commas and/or whitespace.  Continue
+# long lines by starting the next line with whitespace. A file name
+# is replaced by its contents; a type:name table is matched when a
+# (parent) domain appears as lookup key.
 #
 # Specify "fast_flush_domains =" to disable the feature altogether.
 #

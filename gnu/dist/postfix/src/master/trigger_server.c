@@ -99,6 +99,9 @@
 /*	Function to be executed prior to accepting a new request.
 /* .sp
 /*	Only the last instance of this parameter type is remembered.
+/* .IP "MAIL_SERVER_IN_FLOW_DELAY (none)"
+/*	Pause $in_flow_delay seconds when no "mail flow control token"
+/*	is available. A token is consumed for each connection request.
 /* .PP
 /*	The var_use_limit variable limits the number of clients that
 /*	a server can service before it commits suicide.
@@ -169,6 +172,7 @@
 #include <debug_process.h>
 #include <mail_conf.h>
 #include <resolve_local.h>
+#include <mail_flow.h>
 
 /* Process manager. */
 
@@ -190,6 +194,7 @@ static void (*trigger_server_accept) (int, char *);
 static void (*trigger_server_onexit) (char *, char **);
 static void (*trigger_server_pre_accept) (char *, char **);
 static VSTREAM *trigger_server_lock;
+static int trigger_server_in_flow_delay;
 
 /* trigger_server_exit - normal termination */
 
@@ -230,6 +235,8 @@ static void trigger_server_wakeup(int fd)
      */
     if (master_notify(var_pid, MASTER_STAT_TAKEN) < 0)
 	trigger_server_abort(EVENT_NULL_TYPE, EVENT_NULL_CONTEXT);
+    if (trigger_server_in_flow_delay && mail_flow_get(1) < 0)
+	doze(var_in_flow_delay * 1000000);
     if ((len = read(fd, buf, sizeof(buf))) >= 0)
 	trigger_server_service(buf, len, trigger_server_name,
 			       trigger_server_argv);
@@ -469,6 +476,9 @@ NORETURN trigger_server_main(int argc, char **argv, TRIGGER_SERVER_FN service,..
 	case MAIL_SERVER_PRE_ACCEPT:
 	    trigger_server_pre_accept = va_arg(ap, MAIL_SERVER_ACCEPT_FN);
 	    break;
+	case MAIL_SERVER_IN_FLOW_DELAY:
+	    trigger_server_in_flow_delay = 1;
+	    break;
 	default:
 	    msg_panic("%s: unknown argument type: %d", myname, key);
 	}
@@ -593,6 +603,8 @@ NORETURN trigger_server_main(int argc, char **argv, TRIGGER_SERVER_FN service,..
     }
     event_enable_read(MASTER_STATUS_FD, trigger_server_abort, (char *) 0);
     close_on_exec(MASTER_STATUS_FD, CLOSE_ON_EXEC);
+    close_on_exec(MASTER_FLOW_READ, CLOSE_ON_EXEC);
+    close_on_exec(MASTER_FLOW_WRITE, CLOSE_ON_EXEC);
     watchdog = watchdog_create(1000, (WATCHDOG_FN) 0, (char *) 0);
 
     /*

@@ -80,7 +80,7 @@
 /* .fi
 /* .IP \fBlocal_transport\fR
 /*	Where to deliver mail for destinations that match $\fBmydestination\fR
-/*	or $\fBinet_interfaces\fR. 
+/*	or $\fBinet_interfaces\fR.
 /*	The default transport is \fBlocal\fR.
 /* .sp
 /*	Syntax is \fItransport\fR:\fInexthop\fR; see \fBtransport\fR(5)
@@ -92,6 +92,10 @@
 /* .sp
 /*	Syntax is \fItransport\fR:\fInexthop\fR; see \fBtransport\fR(5)
 /*	for details. The :\fInexthop\fR part is optional.
+/* .IP \fBparent_domain_matches_subdomains\fR
+/*	List of Postfix features that use \fIdomain.name\fR patterns
+/*	to match \fIsub.domain.name\fR (as opposed to
+/*	requiring \fI.domain.name\fR patterns).
 /* .IP \fBrelayhost\fR
 /*	The default host to send non-local mail to when no entry is matched
 /*	in the \fBtransport\fR(5) table.
@@ -181,7 +185,9 @@ static void rewrite_service(VSTREAM *stream, char *unused_service, char **argv)
      * dedicated to address rewriting. All connection-management stuff is
      * handled by the common code in multi_server.c.
      */
-    if (mail_scan(stream, "%s", command) == 1) {
+    if (attr_scan(stream, ATTR_FLAG_STRICT | ATTR_FLAG_MORE,
+		  ATTR_TYPE_STR, MAIL_ATTR_REQ, command,
+		  ATTR_TYPE_END) == 1) {
 	if (strcmp(vstring_str(command), REWRITE_ADDR) == 0) {
 	    status = rewrite_proto(stream);
 	} else if (strcmp(vstring_str(command), RESOLVE_ADDR) == 0) {

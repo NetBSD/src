@@ -132,6 +132,7 @@ lmtp_connect.o: ../../include/timed_connect.h
 lmtp_connect.o: ../../include/stringops.h
 lmtp_connect.o: ../../include/mail_params.h
 lmtp_connect.o: ../../include/mail_proto.h
+lmtp_connect.o: ../../include/attr.h
 lmtp_connect.o: ../../include/dns.h
 lmtp_connect.o: lmtp.h
 lmtp_connect.o: ../../include/argv.h
@@ -175,6 +176,8 @@ lmtp_sasl_glue.o: ../../include/split_at.h
 lmtp_sasl_glue.o: ../../include/name_mask.h
 lmtp_sasl_glue.o: ../../include/mail_params.h
 lmtp_sasl_glue.o: ../../include/string_list.h
+lmtp_sasl_glue.o: ../../include/match_list.h
+lmtp_sasl_glue.o: ../../include/match_ops.h
 lmtp_sasl_glue.o: ../../include/maps.h
 lmtp_sasl_glue.o: ../../include/dict.h
 lmtp_sasl_glue.o: ../../include/vstream.h

@@ -79,9 +79,31 @@
 #include <ctype.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
 #ifndef INADDR_NONE
 #define INADDR_NONE 0xffffffff
+#endif
+
+ /*
+  * Older systems don't have h_errno. Even modern systems don't have
+  * hstrerror().
+  */
+#ifdef NO_HERRNO
+
+static int h_errno = TRY_AGAIN;
+
+#define  HSTRERROR(err) "Host not found"
+
+#else
+
+#define  HSTRERROR(err) (\
+        err == TRY_AGAIN ? "Host not found, try again" : \
+        err == HOST_NOT_FOUND ? "Host not found" : \
+        err == NO_DATA ? "Host name has no address" : \
+        err == NO_RECOVERY ? "Name server failure" : \
+        strerror(errno) \
+    )
 #endif
 
 /* Utility library. */
@@ -91,6 +113,7 @@
 #include <mymalloc.h>
 #include <inet_addr_list.h>
 #include <stringops.h>
+#include <myrand.h>
 
 /* Global library. */
 
@@ -157,8 +180,8 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRI
     if (var_disable_dns) {
 	memset((char *) &fixed, 0, sizeof(fixed));
 	if ((hp = gethostbyname(host)) == 0) {
-	    vstring_sprintf(why, "%s: host not found", host);
-	    smtp_errno = SMTP_FAIL;
+	    vstring_sprintf(why, "%s: %s", host, HSTRERROR(h_errno));
+	    smtp_errno = (h_errno == TRY_AGAIN ? SMTP_RETRY : SMTP_FAIL);
 	} else if (hp->h_addrtype != AF_INET) {
 	    vstring_sprintf(why, "%s: host not found", host);
 	    msg_warn("%s: unknown address family %d for %s",
@@ -206,6 +229,11 @@ static DNS_RR *smtp_addr_list(DNS_RR *mx_names, VSTRING *why)
     /*
      * As long as we are able to look up any host address, we ignore problems
      * with DNS lookups.
+     * 
+     * XXX 2821: update smtp_errno (0->FAIL upon unrecoverable lookup error,
+     * any->RETRY upon temporary lookup error) so that we can correctly
+     * handle the case of no resolvable MX host. Currently this is always
+     * treated as a soft error. RFC 2821 wants a more precise response.
      */
     for (rr = mx_names; rr; rr = rr->next) {
 	if (rr->type != T_MX)
@@ -271,9 +299,9 @@ static DNS_RR *smtp_truncate_self(DNS_RR *addr_list, unsigned pref)
     return (addr_list);
 }
 
-/* smtp_compare_mx - compare resource records by preference */
+/* smtp_compare_pref - compare resource records by preference */
 
-static int smtp_compare_mx(DNS_RR *a, DNS_RR *b)
+static int smtp_compare_pref(DNS_RR *a, DNS_RR *b)
 {
     return (a->pref - b->pref);
 }
@@ -319,6 +347,19 @@ DNS_RR *smtp_domain_addr(char *name, VSTRING *why, int *found_myself)
      * as we're looking up all the hosts, it would be better to look up the
      * least preferred host first, so that DNS lookup error messages make
      * more sense.
+     * 
+     * XXX 2821: RFC 2821 says that the sender must shuffle equal-preference MX
+     * hosts, whereas multiple A records per hostname must be used in the
+     * order as received. They make the bogus assumption that a hostname with
+     * multiple A records corresponds to one machine with multiple network
+     * interfaces.
+     * 
+     * XXX 2821: Postfix recognizes the local machine by looking for its own IP
+     * address in the list of mail exchangers. RFC 2821 says one has to look
+     * at the mail exchanger hostname as well, making the bogus assumption
+     * that an IP address is listed only under one hostname. However, looking
+     * at hostnames provides a partial solution for MX hosts behind a NAT
+     * gateway.
      */
     switch (dns_lookup(name, T_MX, 0, &mx_names, (VSTRING *) 0, why)) {
     default:
@@ -332,7 +373,7 @@ DNS_RR *smtp_domain_addr(char *name, VSTRING *why, int *found_myself)
 	    addr_list = smtp_host_addr(name, why);
 	break;
     case DNS_OK:
-	mx_names = dns_rr_sort(mx_names, smtp_compare_mx);
+	mx_names = dns_rr_sort(mx_names, smtp_compare_pref);
 	best_pref = (mx_names ? mx_names->pref : IMPOSSIBLE_PREFERENCE);
 	addr_list = smtp_addr_list(mx_names, why);
 	dns_rr_free(mx_names);
@@ -362,6 +403,10 @@ DNS_RR *smtp_domain_addr(char *name, VSTRING *why, int *found_myself)
 		}
 	    }
 	}
+	if (addr_list && addr_list->next && var_smtp_rand_addr) {
+	    addr_list = dns_rr_shuffle(addr_list);
+	    addr_list = dns_rr_sort(addr_list, smtp_compare_pref);
+	}
 	break;
     case DNS_NOTFOUND:
 	addr_list = smtp_host_addr(name, why);
@@ -387,6 +432,8 @@ DNS_RR *smtp_host_addr(char *host, VSTRING *why)
      */
 #define PREF0	0
     addr_list = smtp_addr_one((DNS_RR *) 0, host, PREF0, why);
+    if (addr_list && addr_list->next && var_smtp_rand_addr)
+	addr_list = dns_rr_shuffle(addr_list);
     if (msg_verbose)
 	smtp_print_addr(host, addr_list);
     return (addr_list);

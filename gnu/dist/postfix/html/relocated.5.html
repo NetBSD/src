@@ -1,9 +1,6 @@
 <html> <head> </head> <body> <pre>
 
-
-
 RELOCATED(5)                                         RELOCATED(5)
-
 
 <b>NAME</b>
        relocated - format of Postfix relocated table
@@ -37,17 +34,19 @@ RELOCATED(5)                                         RELOCATED(5)
 <b>TABLE</b> <b>FORMAT</b>
        The format of the table is as follows:
 
-       <b>o</b>      Blank  lines  are  ignored,  as are lines beginning
-              with `#'.
-
-       <b>o</b>      Lines that begin with whitespace continue the  pre-
-              vious line.
-
        <b>o</b>      An entry has one of the following form:
                    <i>key</i>  <i>new_location</i>
               Where  <i>new_location</i>  specifies  contact information
               such as an  email  address,  or  perhaps  a  street
               address or telephone number.
+
+       <b>o</b>      Empty  lines and whitespace-only lines are ignored,
+              as are lines whose first  non-whitespace  character
+              is a `#'.
+
+       <b>o</b>      A  logical  line starts with non-whitespace text. A
+              line that starts with whitespace continues a  logi-
+              cal line.
 
        With lookups from indexed files such as DB or DBM, or from
        networked tables such as NIS, LDAP or SQL, the  <i>key</i>  field
@@ -59,18 +58,6 @@ RELOCATED(5)                                         RELOCATED(5)
 
        <i>user</i>   Matches <i>user</i>@<i>site</i> when <i>site</i> is $<b>myorigin</b>, when <i>site</i>
               is listed in $<b>mydestination</b>, or when <i>site</i> is listed
-
-
-
-                                                                1
-
-
-
-
-
-RELOCATED(5)                                         RELOCATED(5)
-
-
               in $<b>inet</b><i>_</i><b>interfaces</b>.
 
        @<i>domain</i>
@@ -78,10 +65,10 @@ RELOCATED(5)                                         RELOCATED(5)
               lowest precedence.
 
 <b>ADDRESS</b> <b>EXTENSION</b>
-       When  the search fails, and the address localpart contains
-       the optional recipient delimiter (e.g.,  <i>user+foo</i>@<i>domain</i>),
-       the  search  is  repeated for the unextended address (e.g.
-       <i>user</i>@<i>domain</i>).
+       When a mail address localpart contains the optional recip-
+       ient delimiter (e.g., <i>user+foo</i>@<i>domain</i>), the  lookup  order
+       becomes: <i>user+foo</i>@<i>domain</i>, <i>user</i>@<i>domain</i>, <i>user+foo</i>, <i>user</i>, and
+       @<i>domain</i>.
 
 <b>REGULAR</b> <b>EXPRESSION</b> <b>TABLES</b>
        This section describes how the table lookups  change  when
@@ -99,17 +86,17 @@ RELOCATED(5)                                         RELOCATED(5)
        table, until a pattern is found that  matches  the  search
        string.
 
-       Results  are the same as with normal indexed file lookups,
-       with the additional feature that parenthesized  substrings
-       from  the pattern can be interpolated as <b>$1</b>, <b>$2</b> and so on.
+       Results  are  the  same as with indexed file lookups, with
+       the additional feature that parenthesized substrings  from
+       the pattern can be interpolated as <b>$1</b>, <b>$2</b> and so on.
 
 <b>BUGS</b>
-       The table format does not understand quoting  conventions.
+       The  table format does not understand quoting conventions.
 
 <b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The  following  <b>main.cf</b> parameters are especially relevant
-       to this topic. See the Postfix  <b>main.cf</b>  file  for  syntax
-       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
+       The following <b>main.cf</b> parameters are  especially  relevant
+       to  this  topic.  See  the Postfix <b>main.cf</b> file for syntax
+       details and for default values.  Use  the  <b>postfix</b>  <b>reload</b>
        command after a configuration change.
 
        <b>relocated</b><i>_</i><b>maps</b>
@@ -118,24 +105,12 @@ RELOCATED(5)                                         RELOCATED(5)
        Other parameters of interest:
 
        <b>inet</b><i>_</i><b>interfaces</b>
-              The  network  interface  addresses that this system
+              The network interface addresses  that  this  system
               receives mail on.
 
        <b>mydestination</b>
-              List of domains that  this  mail  system  considers
+              List  of  domains  that  this mail system considers
               local.
-
-
-
-
-                                                                2
-
-
-
-
-
-RELOCATED(5)                                         RELOCATED(5)
-
 
        <b>myorigin</b>
               The domain that is appended to locally-posted mail.
@@ -146,7 +121,7 @@ RELOCATED(5)                                         RELOCATED(5)
        <a href="regexp_table.5.html">regexp_table(5)</a> format of POSIX regular expression tables
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>
@@ -155,46 +130,6 @@ RELOCATED(5)                                         RELOCATED(5)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                3
-
+                                                                1
 
 </pre> </body> </html>

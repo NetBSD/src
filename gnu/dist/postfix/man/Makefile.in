@@ -5,11 +5,11 @@ SHELL	= /bin/sh
 DAEMONS	= man8/bounce.8 man8/defer.8 man8/cleanup.8 man8/error.8 man8/local.8 \
 	man8/lmtp.8 man8/master.8 man8/pickup.8 man8/pipe.8 man8/qmgr.8 \
 	man8/showq.8 man8/smtp.8 man8/smtpd.8 man8/trivial-rewrite.8 \
-	man8/spawn.8 man8/flush.8 # man8/nqmgr.8 man8/virtual.8
+	man8/nqmgr.8 man8/spawn.8 man8/flush.8 man8/virtual.8 man8/qmqpd.8
 COMMANDS= man1/postalias.1 man1/postcat.1 man1/postconf.1 man1/postfix.1 \
 	man1/postkick.1 man1/postlock.1 man1/postlog.1 man1/postdrop.1 \
 	man1/postmap.1 man1/sendmail.1 man1/mailq.1 man1/newaliases.1 \
-	man1/postsuper.1
+	man1/postqueue.1 man1/postsuper.1
 CONFIG	= man5/access.5 man5/aliases.5 man5/canonical.5 man5/relocated.5 \
 	man5/transport.5 man5/virtual.5 man5/pcre_table.5 man5/regexp_table.5
 
@@ -65,6 +65,9 @@ man8/pipe.8: ../src/pipe/pipe.c
 man8/qmgr.8: ../src/qmgr/qmgr.c
 	../mantools/srctoman $? >$@
 
+man8/qmqpd.8: ../src/qmqpd/qmqpd.c
+	../mantools/srctoman $? >$@
+
 man8/showq.8: ../src/showq/showq.c
 	../mantools/srctoman $? >$@
 
@@ -108,6 +111,9 @@ man1/postlog.1: ../src/postlog/postlog.c
 	../mantools/srctoman $? >$@
 
 man1/postmap.1: ../src/postmap/postmap.c
+	../mantools/srctoman $? >$@
+
+man1/postqueue.1: ../src/postqueue/postqueue.c
 	../mantools/srctoman $? >$@
 
 man1/postsuper.1: ../src/postsuper/postsuper.c

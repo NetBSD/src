@@ -32,12 +32,13 @@
 /* STANDARDS
 /*	RFC 821 (SMTP protocol)
 /*	RFC 1123 (Host requirements)
-/*	RFC 1651 (SMTP service extensions)
 /*	RFC 1652 (8bit-MIME transport)
+/*	RFC 1869 (SMTP service extensions)
 /*	RFC 1854 (SMTP Pipelining)
 /*	RFC 1870 (Message Size Declaration)
 /*	RFC 1985 (ETRN command)
 /*	RFC 2554 (AUTH command)
+/*	RFC 2821 (SMTP protocol)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*
@@ -55,12 +56,16 @@
 /* .ad
 /* .fi
 /* .IP \fBstrict_rfc821_envelopes\fR
-/*	Disallow non-RFC 821 style addresses in envelopes. For example,
-/*	allow RFC822-style address forms with comments, like Sendmail does.
+/*	Disallow non-RFC 821 style addresses in SMTP commands. For example,
+/*	the RFC822-style address forms with comments that Sendmail allows.
 /* .IP \fBbroken_sasl_auth_clients\fR
 /*	Support older Microsoft clients that mis-implement the AUTH
 /*	protocol, and that expect an EHLO response of "250 AUTH=list"
 /*	instead of "250 AUTH list".
+/* .IP \fBsmtpd_noop_commands\fR
+/*	List of commands that are treated as NOOP (no operation) commands,
+/*	without any parameter syntax checking and without any state change.
+/*	This list overrides built-in command definitions.
 /* .SH "Content inspection controls"
 /* .IP \fBcontent_filter\fR
 /*	The name of a mail delivery transport that filters mail and that
@@ -88,6 +93,10 @@
 /* .IP \fBnoanonymous\fR
 /*	Disallow anonymous logins.
 /* .RE
+/* .IP \fBsmtpd_sender_login_maps\fR
+/*	Maps that specify the SASL login name that owns a MAIL FROM sender
+/*	address. Used by the \fBreject_sender_login_mismatch\fR sender
+/*	anti-spoofing restriction.
 /* .SH Miscellaneous
 /* .ad
 /* .fi
@@ -103,6 +112,9 @@
 /*	List of domain or network patterns. When a remote host matches
 /*	a pattern, increase the verbose logging level by the amount
 /*	specified in the \fBdebug_peer_level\fR parameter.
+/* .IP \fBdefault_verp_delimiters\fR
+/*	The default VERP delimiter characters that are used when the
+/*	XVERP command is specified without explicit delimiters.
 /* .IP \fBerror_notice_recipient\fR
 /*	Recipient of protocol/policy/resource/software error notices.
 /* .IP \fBhopcount_limit\fR
@@ -133,6 +145,8 @@
 /* .IP \fBsoft_bounce\fR
 /*	Change hard (5xx) reject responses into soft (4xx) reject responses.
 /*	This can be useful for testing purposes.
+/* .IP \fBverp_delimiter_filter\fR
+/*	The characters that Postfix accepts as VERP delimiter characters.
 /* .SH "Resource controls"
 /* .ad
 /* .fi
@@ -145,6 +159,9 @@
 /* .IP \fBqueue_minfree\fR
 /*	Minimal amount of free space in bytes in the queue file system
 /*	for the SMTP server to accept any mail at all.
+/* .IP \fBsmtpd_history_flush_threshold\fR
+/*	Flush the command history to postmaster after receipt of RSET etc.
+/*	only if the number of history lines exceeds the given threshold.
 /* .SH Tarpitting
 /* .ad
 /* .fi
@@ -163,6 +180,10 @@
 /* .SH "UCE control restrictions"
 /* .ad
 /* .fi
+/* .IP \fBparent_domain_matches_subdomains\fR
+/*	List of Postfix features that use \fIdomain.name\fR patterns
+/*	to match \fIsub.domain.name\fR (as opposed to
+/*	requiring \fI.domain.name\fR patterns).
 /* .IP \fBsmtpd_client_restrictions\fR
 /*	Restrict what clients may connect to this mail system.
 /* .IP \fBsmtpd_helo_required\fR
@@ -186,9 +207,15 @@
 /*	Declares the name of zero or more parameters that contain a
 /*	list of UCE restrictions. The names of these parameters can
 /*	then be used instead of the restriction lists that they represent.
+/* .IP \fBsmtpd_null_access_lookup_key\fR
+/*	The lookup key to be used in SMTPD access tables instead of the
+/*	null sender address. A null sender address cannot be looked up.
 /* .IP \fBmaps_rbl_domains\fR
 /*	List of DNS domains that publish the addresses of blacklisted
 /*	hosts.
+/* .IP \fBpermit_mx_backup_networks\fR
+/*	Only domains whose primary MX hosts match the listed networks
+/*	are eligible for the \fBpermit_mx_backup\fR feature.
 /* .IP \fBrelay_domains\fR
 /*	Restrict what domains or networks this mail system will relay
 /*	mail from or to.
@@ -283,6 +310,8 @@
 #include <mail_stream.h>
 #include <mail_queue.h>
 #include <tok822.h>
+#include <verp_sender.h>
+#include <string_list.h>
 
 /* Single-threaded server skeleton. */
 
@@ -311,8 +340,6 @@ int     var_smtpd_soft_erlim;
 int     var_smtpd_hard_erlim;
 int     var_queue_minfree;		/* XXX use off_t */
 char   *var_smtpd_banner;
-char   *var_debug_peer_list;
-int     var_debug_peer_level;
 char   *var_notify_classes;
 char   *var_client_checks;
 char   *var_helo_checks;
@@ -340,6 +367,7 @@ bool    var_disable_vrfy_cmd;
 char   *var_canonical_maps;
 char   *var_rcpt_canon_maps;
 char   *var_virtual_maps;
+char   *var_virt_mailbox_maps;
 char   *var_relocated_maps;
 char   *var_alias_maps;
 char   *var_local_rcpt_maps;
@@ -350,12 +378,11 @@ char   *var_smtpd_sasl_opts;
 char   *var_smtpd_sasl_realm;
 char   *var_filter_xport;
 bool    var_broken_auth_clients;
-
- /*
-  * Global state, for stand-alone mode queue file cleanup. When this is
-  * non-null at cleanup time, the named file is removed.
-  */
-char   *smtpd_path;
+char   *var_perm_mx_networks;
+char   *var_smtpd_snd_auth_maps;
+char   *var_smtpd_noop_cmds;
+char   *var_smtpd_null_key;
+int     var_smtpd_hist_thrsh;
 
  /*
   * Silly little macros.
@@ -364,11 +391,18 @@ char   *smtpd_path;
 #define LEN(x)	VSTRING_LEN(x)
 
  /*
+  * VERP command name.
+  */
+#define VERP_CMD	"XVERP"
+#define VERP_CMD_LEN	5
+
+ /*
   * Forward declarations.
   */
 static void helo_reset(SMTPD_STATE *);
 static void mail_reset(SMTPD_STATE *);
 static void rcpt_reset(SMTPD_STATE *);
+static void chat_reset(SMTPD_STATE *, int);
 
 /* collapse_args - put arguments together again */
 
@@ -416,6 +450,11 @@ static int ehlo_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 {
     char   *err;
 
+    /*
+     * XXX 2821 new feature: Section 4.1.4 specifies that a server must clear
+     * all buffers and reset the state exactly as if a RSET command had been
+     * issued.
+     */
     if (argc < 2) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "501 Syntax: EHLO hostname");
@@ -423,7 +462,8 @@ static int ehlo_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     }
     if (state->helo_name != 0)
 	helo_reset(state);
-#if 0
+#ifndef RFC821_SYNTAX
+    chat_reset(state, var_smtpd_hist_thrsh);
     mail_reset(state);
     rcpt_reset(state);
 #endif
@@ -444,6 +484,8 @@ static int ehlo_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 			 (unsigned long) var_message_limit);	/* XXX */
     else
 	smtpd_chat_reply(state, "250-SIZE");
+    if (var_disable_vrfy_cmd == 0)
+	smtpd_chat_reply(state, "250-VRFY");
     smtpd_chat_reply(state, "250-ETRN");
 #ifdef USE_SASL_AUTH
     if (var_smtpd_sasl_enable) {
@@ -452,6 +494,7 @@ static int ehlo_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	    smtpd_chat_reply(state, "250-AUTH=%s", state->sasl_mechanism_list);
     }
 #endif
+    smtpd_chat_reply(state, "250-%s", VERP_CMD);
     smtpd_chat_reply(state, "250 8BITMIME");
     return (0);
 }
@@ -472,27 +515,30 @@ static void mail_open_stream(SMTPD_STATE *state)
     char   *postdrop_command;
 
     /*
+     * XXX 2821: An SMTP server is not allowed to "clean up" mail except in
+     * the case of original submissions. Presently, Postfix always runs all
+     * mail through the cleanup server.
+     * 
+     * We could approximate the RFC as follows: Postfix rewrites mail if it
+     * comes from a source that we are willing to relay for. This way, we
+     * avoid rewriting most mail that comes from elsewhere. However, that
+     * requires moving functionality away from the cleanup daemon elsewhere,
+     * such as virtual address expansion, and header/body pattern matching.
+     */
+
+    /*
      * If running from the master or from inetd, connect to the cleanup
      * service.
      */
     if (SMTPD_STAND_ALONE(state) == 0) {
-	state->dest = mail_stream_service(MAIL_CLASS_PRIVATE,
+	state->dest = mail_stream_service(MAIL_CLASS_PUBLIC,
 					  MAIL_SERVICE_CLEANUP);
 	if (state->dest == 0
-	 || mail_print(state->dest->stream, "%d", CLEANUP_FLAG_FILTER) != 0)
+	    || attr_print(state->dest->stream, ATTR_FLAG_NONE,
+			ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, CLEANUP_FLAG_FILTER,
+			  ATTR_TYPE_END) != 0)
 	    msg_fatal("unable to connect to the %s %s service",
-		      MAIL_CLASS_PRIVATE, MAIL_SERVICE_CLEANUP);
-    }
-
-    /*
-     * Otherwise, if the maildrop is writable, create a maildrop file.
-     * Arrange for pickup service notification. Make a copy of the pathname
-     * so that the file can be deleted in case of a fatal run-time error.
-     */
-    else if (access(MAIL_QUEUE_MAILDROP, W_OK) == 0) {
-	state->dest = mail_stream_file(MAIL_QUEUE_MAILDROP,
-				    MAIL_CLASS_PUBLIC, MAIL_SERVICE_PICKUP);
-	smtpd_path = mystrdup(VSTREAM_PATH(state->dest->stream));
+		      MAIL_CLASS_PUBLIC, MAIL_SERVICE_CLEANUP);
     }
 
     /*
@@ -607,12 +653,18 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     char   *err;
     int     narg;
     char   *arg;
+    char   *verp_delims = 0;
 
     state->msg_size = 0;
 
     /*
-     * Sanity checks. XXX Ignore bad SIZE= values until we can reliably and
-     * portably detect overflows while converting from string to off_t.
+     * Sanity checks.
+     * 
+     * XXX 2821 pedantism: Section 4.1.2 says that SMTP servers that receive a
+     * command in which invalid character codes have been employed, and for
+     * which there are no other reasons for rejection, MUST reject that
+     * command with a 501 response. So much for the principle of "be liberal
+     * in what you accept, be strict in what you send".
      */
     if (var_helo_required && state->helo_name == 0) {
 	state->error_mask |= MAIL_ERROR_POLICY;
@@ -646,8 +698,18 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	    || strcasecmp(arg, "BODY=7BIT") == 0) {
 	     /* void */ ;
 	} else if (strncasecmp(arg, "SIZE=", 5) == 0) {
-	    if ((state->msg_size = off_cvt_string(arg + 5)) < 0)
-		state->msg_size = 0;
+	    /* Reject non-numeric size. */
+	    if (!alldig(arg + 5)) {
+		state->error_mask |= MAIL_ERROR_PROTOCOL;
+		smtpd_chat_reply(state, "501 Bad message size syntax");
+		return (-1);
+	    }
+	    /* Reject size overflow. */
+	    if ((state->msg_size = off_cvt_string(arg + 5)) < 0) {
+		smtpd_chat_reply(state, "552 Message size exceeds file system imposed limit");
+		state->error_mask |= MAIL_ERROR_POLICY;
+		return (-1);
+	    }
 #ifdef USE_SASL_AUTH
 	} else if (var_smtpd_sasl_enable && strncasecmp(arg, "AUTH=", 5) == 0) {
 	    if ((err = smtpd_sasl_mail_opt(state, arg + 5)) != 0) {
@@ -655,11 +717,26 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 		return (-1);
 	    }
 #endif
+	} else if (strcasecmp(arg, VERP_CMD) == 0) {
+	    verp_delims = var_verp_delims;
+	} else if (strncasecmp(arg, VERP_CMD, VERP_CMD_LEN) == 0
+		   && arg[VERP_CMD_LEN] == '=') {
+	    verp_delims = arg + VERP_CMD_LEN + 1;
+	    if (verp_delims_verify(verp_delims) != 0) {
+		state->error_mask |= MAIL_ERROR_PROTOCOL;
+		smtpd_chat_reply(state, "501 %s needs two characters from %s",
+				 VERP_CMD, var_verp_filter);
+		return (-1);
+	    }
 	} else {
 	    state->error_mask |= MAIL_ERROR_PROTOCOL;
 	    smtpd_chat_reply(state, "555 Unsupported option: %s", arg);
 	    return (-1);
 	}
+    }
+    if (verp_delims && argv[2].strval[0] == 0) {
+	smtpd_chat_reply(state, "503 Error: XVERP requires non-null sender");
+	return (-1);
     }
     state->time = time((time_t *) 0);
     if (SMTPD_STAND_ALONE(state) == 0
@@ -693,6 +770,8 @@ static int mail_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     if (*var_filter_xport)
 	rec_fprintf(state->cleanup, REC_TYPE_FILT, "%s", var_filter_xport);
     rec_fputs(state->cleanup, REC_TYPE_FROM, argv[2].strval);
+    if (verp_delims)
+	rec_fputs(state->cleanup, REC_TYPE_VERP, verp_delims);
     state->sender = mystrdup(argv[2].strval);
     smtpd_chat_reply(state, "250 Ok");
     return (0);
@@ -718,14 +797,6 @@ static void mail_reset(SMTPD_STATE *state)
 	myfree(state->queue_id);
 	state->queue_id = 0;
     }
-    if (smtpd_path) {
-	if (remove(smtpd_path))
-	    msg_warn("remove %s: %m", smtpd_path);
-	else if (msg_verbose)
-	    msg_info("remove %s", smtpd_path);
-	myfree(smtpd_path);
-	smtpd_path = 0;
-    }
     if (state->sender) {
 	myfree(state->sender);
 	state->sender = 0;
@@ -746,6 +817,12 @@ static int rcpt_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 
     /*
      * Sanity checks.
+     * 
+     * XXX 2821 pedantism: Section 4.1.2 says that SMTP servers that receive a
+     * command in which invalid character codes have been employed, and for
+     * which there are no other reasons for rejection, MUST reject that
+     * command with a 501 response. So much for the principle of "be liberal
+     * in what you accept, be strict in what you send".
      */
     if (state->cleanup == 0) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
@@ -823,6 +900,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
     int     curr_rec_type;
     int     prev_rec_type;
     int     first = 1;
+    VSTRING *why = 0;
 
     /*
      * Sanity checks. With ESMTP command pipelining the client can send DATA
@@ -861,6 +939,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 		    "\tby %s (%s) with %s id %s",
 		    var_myhostname, var_mail_name,
 		    state->protocol, state->queue_id);
+	/* XXX Should RFC 822 externalize recipient address */
 	rec_fprintf(state->cleanup, REC_TYPE_NORM,
 		"\tfor <%s>; %s", state->recipient, mail_date(state->time));
     } else {
@@ -871,6 +950,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 		    "\tid %s; %s", state->queue_id, mail_date(state->time));
     }
 #ifdef RECEIVED_ENVELOPE_FROM
+    /* XXX Should RFC 822 externalize sender address */
     rec_fprintf(state->cleanup, REC_TYPE_NORM,
 		"\t(envelope-from %s)", state->sender);
 #endif
@@ -929,30 +1009,18 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
      * Finish the queue file or finish the cleanup conversation.
      */
     if (state->err == 0)
-	state->err |= mail_stream_finish(state->dest);
+	state->err = mail_stream_finish(state->dest, why = vstring_alloc(10));
     else
 	mail_stream_cleanup(state->dest);
     state->dest = 0;
     state->cleanup = 0;
 
     /*
-     * Delete the queue file or disable delete on fatal error or interrupt.
-     */
-    if (smtpd_path) {
-	if (state->err != 0) {
-	    if (remove(smtpd_path))
-		msg_warn("remove %s: %m", smtpd_path);
-	    else if (msg_verbose)
-		msg_info("remove %s", smtpd_path);
-	}
-	myfree(smtpd_path);
-	smtpd_path = 0;
-    }
-
-    /*
      * Handle any errors. One message may suffer from multiple errors, so
      * complain only about the most severe error. Forgive any previous client
      * errors when a message was received successfully.
+     * 
+     * See also: qmqpd.c
      */
     if (state->err == CLEANUP_STAT_OK) {
 	state->error_count = 0;
@@ -970,15 +1038,14 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	smtpd_chat_reply(state, "554 Error: too many hops");
     } else if ((state->err & CLEANUP_STAT_CONT) != 0) {
 	state->error_mask |= MAIL_ERROR_POLICY;
-	smtpd_chat_reply(state, "552 Error: content rejected");
+	smtpd_chat_reply(state, "552 Error: %s", LEN(why) ?
+			 STR(why) : "content rejected");
     } else if ((state->err & CLEANUP_STAT_WRITE) != 0) {
 	state->error_mask |= MAIL_ERROR_RESOURCE;
 	smtpd_chat_reply(state, "451 Error: queue file write error");
-    } else if ((state->err & CLEANUP_STAT_RCPT) != 0) {
+    } else {
 	state->error_mask |= MAIL_ERROR_SOFTWARE;
 	smtpd_chat_reply(state, "451 Error: internal error %d", state->err);
-    } else {
-	msg_panic("data_cmd: unknown status %d", state->err);
     }
 
     /*
@@ -988,23 +1055,13 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
     state->where = SMTPD_AFTER_DOT;
 
     /*
-     * Notify the postmaster if there were errors. This usually indicates a
-     * client configuration problem, or that someone is trying nasty things.
-     * Either is significant enough to bother the postmaster. XXX Can't
-     * report problems when running in stand-alone mode: postmaster notices
-     * require availability of the cleanup service.
-     */
-    if (state->history != 0 && state->client != VSTREAM_IN
-	&& (state->error_mask & state->notify_mask))
-	smtpd_chat_notify(state);
-    state->error_mask = 0;
-    smtpd_chat_reset(state);
-
-    /*
      * Cleanup. The client may send another MAIL command.
      */
+    chat_reset(state, var_smtpd_hist_thrsh);
     mail_reset(state);
     rcpt_reset(state);
+    if (why)
+	vstring_free(why);
     return (state->err);
 }
 
@@ -1023,21 +1080,9 @@ static int rset_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
     }
 
     /*
-     * Notify the postmaster if there were errors. This usually indicates a
-     * client configuration problem, or that someone is trying nasty things.
-     * Either is significant enough to bother the postmaster. XXX Can't
-     * report problems when running in stand-alone mode: postmaster notices
-     * require availability of the cleanup service.
-     */
-    if (state->history != 0 && state->client != VSTREAM_IN
-	&& (state->error_mask & state->notify_mask))
-	smtpd_chat_notify(state);
-    state->error_mask = 0;
-    smtpd_chat_reset(state);
-
-    /*
      * Restore state to right after HELO/EHLO command.
      */
+    chat_reset(state, var_smtpd_hist_thrsh);
     mail_reset(state);
     rcpt_reset(state);
     smtpd_chat_reply(state, "250 Ok");
@@ -1050,6 +1095,15 @@ static int noop_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 {
 
     /*
+     * XXX 2821 incompatibility: Section 4.1.1.9 says that NOOP can have a
+     * parameter string which is to be ignored. NOOP instructions with
+     * parameters? Go figure.
+     * 
+     * RFC 2821 violates RFC 821, which says that NOOP takes no parameters.
+     */
+#ifdef RFC821_SYNTAX
+
+    /*
      * Sanity checks.
      */
     if (argc != 1) {
@@ -1057,6 +1111,7 @@ static int noop_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	smtpd_chat_reply(state, "501 Syntax: NOOP");
 	return (-1);
     }
+#endif
     smtpd_chat_reply(state, "250 Ok");
     return (0);
 }
@@ -1077,6 +1132,17 @@ static int vrfy_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
      * address forms. Therefore we must parse out the address, or we must
      * stop doing recipient restriction checks and lose the opportunity to
      * say "user unknown" at the SMTP port.
+     * 
+     * XXX 2821 incompatibility and brain damage: Section 4.5.1 requires that
+     * VRFY is implemented. RFC 821 specifies that VRFY is optional. It gets
+     * even worse: section 3.5.3 says that a 502 (command recognized but not
+     * implemented) reply is not fully compliant.
+     * 
+     * Thus, an RFC 2821 compliant implementation cannot refuse to supply
+     * information in reply to VRFY queries. That is simply bogus. The only
+     * reply we could supply is a generic 252 reply. This causes spammers to
+     * add tons of bogus addresses to their mailing lists (spam harvesting by
+     * trying out large lists of potential recipient names with VRFY).
      */
 #define SLOPPY	0
 
@@ -1102,7 +1168,17 @@ static int vrfy_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "%s", err);
 	return (-1);
     }
-    smtpd_chat_reply(state, "252 <%s>", argv[1].strval);
+
+    /*
+     * XXX 2821 new feature: Section 3.5.1 requires that the VRFY response is
+     * either "full name <user@domain>" or "user@domain". Postfix replies
+     * with the address that was provided by the client, whether or not it is
+     * in fully qualified domain form or not.
+     * 
+     * Reply code 250 is reserved for the case where the address is verified;
+     * reply code 252 should be used when no definitive certainty exists.
+     */
+    smtpd_chat_reply(state, "252 %s", argv[1].strval);
     return (0);
 }
 
@@ -1157,6 +1233,12 @@ static int etrn_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
     case FLUSH_STAT_OK:
 	smtpd_chat_reply(state, "250 Queuing started");
 	return (0);
+    case FLUSH_STAT_DENY:
+	msg_warn("reject: ETRN %.100s... from %s",
+		 argv[1].strval, state->namaddr);
+	smtpd_chat_reply(state, "459 <%s>: service unavailable",
+			 argv[1].strval);
+	return (-1);
     case FLUSH_STAT_BAD:
 	msg_warn("bad ETRN %.100s... from %s", argv[1].strval, state->namaddr);
 	smtpd_chat_reply(state, "458 Unable to queue messages");
@@ -1178,6 +1260,27 @@ static int quit_cmd(SMTPD_STATE *state, int unused_argc, SMTPD_TOKEN *unused_arg
      */
     smtpd_chat_reply(state, "221 Bye");
     return (0);
+}
+
+/* chat_reset - notify postmaster and reset conversation log */
+
+static void chat_reset(SMTPD_STATE *state, int threshold)
+{
+
+    /*
+     * Notify the postmaster if there were errors. This usually indicates a
+     * client configuration problem, or that someone is trying nasty things.
+     * Either is significant enough to bother the postmaster. XXX Can't
+     * report problems when running in stand-alone mode: postmaster notices
+     * require availability of the cleanup service.
+     */
+    if (state->history != 0 && state->history->argc > threshold) {
+	if (SMTPD_STAND_ALONE(state) == 0
+	    && (state->error_mask & state->notify_mask))
+	    smtpd_chat_notify(state);
+	state->error_mask = 0;
+	smtpd_chat_reset(state);
+    }
 }
 
  /*
@@ -1211,6 +1314,8 @@ static SMTPD_CMD smtpd_cmd_table[] = {
     "QUIT", quit_cmd, 0,
     0,
 };
+
+static STRING_LIST *smtpd_noop_cmds;
 
 /* smtpd_proto - talk the SMTP protocol */
 
@@ -1272,6 +1377,13 @@ static void smtpd_proto(SMTPD_STATE *state)
 		state->error_count++;
 		continue;
 	    }
+	    if (*var_smtpd_noop_cmds
+		&& string_list_match(smtpd_noop_cmds, argv[0].strval)) {
+		smtpd_chat_reply(state, "250 Ok");
+		if (state->junk_cmds++ > var_smtpd_junk_cmd_limit)
+		    state->error_count++;
+		continue;
+	    }
 	    for (cmdp = smtpd_cmd_table; cmdp->name != 0; cmdp++)
 		if (strcasecmp(argv[0].strval, cmdp->name) == 0)
 		    break;
@@ -1282,7 +1394,8 @@ static void smtpd_proto(SMTPD_STATE *state)
 		continue;
 	    }
 	    if (state->access_denied && cmdp->action != quit_cmd) {
-		smtpd_chat_reply(state, "%s", state->access_denied);
+		smtpd_chat_reply(state, "503 Error: access denied for %s",
+				 state->namaddr);	/* RFC 2821 Sec 3.1 */
 		state->error_count++;
 		continue;
 	    }
@@ -1310,18 +1423,6 @@ static void smtpd_proto(SMTPD_STATE *state)
 		 state->reason, state->where, state->name, state->addr);
 
     /*
-     * Notify the postmaster if there were errors but no message was
-     * collected. This usually indicates a client configuration problem, or
-     * that someone is trying nasty things. Either is significant enough to
-     * bother the postmaster. XXX Can't report problems when running in
-     * stand-alone mode: postmaster notices require availability of the
-     * cleanup service.
-     */
-    if (state->history != 0 && state->client != VSTREAM_IN
-	&& (state->error_mask & state->notify_mask))
-	smtpd_chat_notify(state);
-
-    /*
      * Cleanup whatever information the client gave us during the SMTP
      * dialog.
      */
@@ -1330,9 +1431,9 @@ static void smtpd_proto(SMTPD_STATE *state)
     if (var_smtpd_sasl_enable)
 	smtpd_sasl_auth_reset(state);
 #endif
+    chat_reset(state, 0);
     mail_reset(state);
     rcpt_reset(state);
-    smtpd_chat_reset(state);
 }
 
 /* smtpd_service - service one client */
@@ -1389,33 +1490,6 @@ static void smtpd_service(VSTREAM *stream, char *unused_service, char **argv)
     debug_peer_restore();
 }
 
-/* smtpd_cleanup - stand-alone mode queue file cleanup */
-
-static void smtpd_cleanup(void)
-{
-    char   *myname = "smtpd_cleanup";
-
-    /*
-     * This routine is called by the run-time error handler, right before
-     * program exit.
-     */
-    if (smtpd_path) {
-	if (remove(smtpd_path))
-	    msg_warn("%s: remove %s: %m", myname, smtpd_path);
-	else if (msg_verbose)
-	    msg_info("%s: remove %s", myname, smtpd_path);
-	smtpd_path = 0;
-    }
-}
-
-/* smtpd_sig - signal handler */
-
-static void smtpd_sig(int sig)
-{
-    smtpd_cleanup();
-    exit(sig);
-}
-
 /* pre_accept - see if tables have changed */
 
 static void pre_accept(char *unused_name, char **unused_argv)
@@ -1424,20 +1498,6 @@ static void pre_accept(char *unused_name, char **unused_argv)
 	msg_info("lookup table has changed -- exiting");
 	exit(0);
     }
-}
-
-/* post_jail_init - post-jail initialization */
-
-static void post_jail_init(char *unused_name, char **unused_argv)
-{
-
-    /*
-     * Set up signal handlers so that we clean up in stand-alone mode.
-     */
-    signal(SIGHUP, smtpd_sig);
-    signal(SIGINT, smtpd_sig);
-    signal(SIGQUIT, smtpd_sig);
-    signal(SIGTERM, smtpd_sig);
 }
 
 /* pre_jail_init - pre-jail initialization */
@@ -1449,9 +1509,9 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
      * Initialize blacklist/etc. patterns before entering the chroot jail, in
      * case they specify a filename pattern.
      */
+    smtpd_noop_cmds = string_list_init(MATCH_FLAG_NONE, var_smtpd_noop_cmds);
     smtpd_check_init();
     debug_peer_init();
-    msg_cleanup(smtpd_cleanup);
 
     if (var_smtpd_sasl_enable)
 #ifdef USE_SASL_AUTH
@@ -1471,7 +1531,6 @@ int     main(int argc, char **argv)
 	VAR_SMTPD_SOFT_ERLIM, DEF_SMTPD_SOFT_ERLIM, &var_smtpd_soft_erlim, 1, 0,
 	VAR_SMTPD_HARD_ERLIM, DEF_SMTPD_HARD_ERLIM, &var_smtpd_hard_erlim, 1, 0,
 	VAR_QUEUE_MINFREE, DEF_QUEUE_MINFREE, &var_queue_minfree, 0, 0,
-	VAR_DEBUG_PEER_LEVEL, DEF_DEBUG_PEER_LEVEL, &var_debug_peer_level, 1, 0,
 	VAR_UNK_CLIENT_CODE, DEF_UNK_CLIENT_CODE, &var_unk_client_code, 0, 0,
 	VAR_BAD_NAME_CODE, DEF_BAD_NAME_CODE, &var_bad_name_code, 0, 0,
 	VAR_UNK_NAME_CODE, DEF_UNK_NAME_CODE, &var_unk_name_code, 0, 0,
@@ -1482,6 +1541,7 @@ int     main(int argc, char **argv)
 	VAR_REJECT_CODE, DEF_REJECT_CODE, &var_reject_code, 0, 0,
 	VAR_NON_FQDN_CODE, DEF_NON_FQDN_CODE, &var_non_fqdn_code, 0, 0,
 	VAR_SMTPD_JUNK_CMD, DEF_SMTPD_JUNK_CMD, &var_smtpd_junk_cmd_limit, 1, 0,
+	VAR_SMTPD_HIST_THRSH, DEF_SMTPD_HIST_THRSH, &var_smtpd_hist_thrsh, 1, 0,
 	0,
     };
     static CONFIG_TIME_TABLE time_table[] = {
@@ -1501,7 +1561,6 @@ int     main(int argc, char **argv)
     };
     static CONFIG_STR_TABLE str_table[] = {
 	VAR_SMTPD_BANNER, DEF_SMTPD_BANNER, &var_smtpd_banner, 1, 0,
-	VAR_DEBUG_PEER_LIST, DEF_DEBUG_PEER_LIST, &var_debug_peer_list, 0, 0,
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
 	VAR_CLIENT_CHECKS, DEF_CLIENT_CHECKS, &var_client_checks, 0, 0,
 	VAR_HELO_CHECKS, DEF_HELO_CHECKS, &var_helo_checks, 0, 0,
@@ -1515,12 +1574,17 @@ int     main(int argc, char **argv)
 	VAR_CANONICAL_MAPS, DEF_CANONICAL_MAPS, &var_canonical_maps, 0, 0,
 	VAR_RCPT_CANON_MAPS, DEF_RCPT_CANON_MAPS, &var_rcpt_canon_maps, 0, 0,
 	VAR_VIRTUAL_MAPS, DEF_VIRTUAL_MAPS, &var_virtual_maps, 0, 0,
+	VAR_VIRT_MAILBOX_MAPS, DEF_VIRT_MAILBOX_MAPS, &var_virt_mailbox_maps, 0, 0,
 	VAR_RELOCATED_MAPS, DEF_RELOCATED_MAPS, &var_relocated_maps, 0, 0,
 	VAR_ALIAS_MAPS, DEF_ALIAS_MAPS, &var_alias_maps, 0, 0,
 	VAR_LOCAL_RCPT_MAPS, DEF_LOCAL_RCPT_MAPS, &var_local_rcpt_maps, 0, 0,
 	VAR_SMTPD_SASL_OPTS, DEF_SMTPD_SASL_OPTS, &var_smtpd_sasl_opts, 0, 0,
 	VAR_SMTPD_SASL_REALM, DEF_SMTPD_SASL_REALM, &var_smtpd_sasl_realm, 1, 0,
 	VAR_FILTER_XPORT, DEF_FILTER_XPORT, &var_filter_xport, 0, 0,
+	VAR_PERM_MX_NETWORKS, DEF_PERM_MX_NETWORKS, &var_perm_mx_networks, 0, 0,
+	VAR_SMTPD_SND_AUTH_MAPS, DEF_SMTPD_SND_AUTH_MAPS, &var_smtpd_snd_auth_maps, 0, 0,
+	VAR_SMTPD_NOOP_CMDS, DEF_SMTPD_NOOP_CMDS, &var_smtpd_noop_cmds, 0, 0,
+	VAR_SMTPD_NULL_KEY, DEF_SMTPD_NULL_KEY, &var_smtpd_null_key, 0, 0,
 	0,
     };
 
@@ -1533,7 +1597,6 @@ int     main(int argc, char **argv)
 		       MAIL_SERVER_BOOL_TABLE, bool_table,
 		       MAIL_SERVER_TIME_TABLE, time_table,
 		       MAIL_SERVER_PRE_INIT, pre_jail_init,
-		       MAIL_SERVER_POST_INIT, post_jail_init,
 		       MAIL_SERVER_PRE_ACCEPT, pre_accept,
 		       0);
 }

@@ -242,13 +242,13 @@ MASTER_SERV *get_master_ent()
      * Skip blank lines and comment lines.
      */
     do {
-	if (readlline(buf, master_fp, &master_line, READLL_STRIPNL) == 0) {
+	if (readlline(buf, master_fp, &master_line) == 0) {
 	    vstring_free(buf);
 	    vstring_free(junk);
 	    return (0);
 	}
 	bufp = vstring_str(buf);
-    } while ((cp = mystrtok(&bufp, master_blanks)) == 0 || *cp == '#');
+    } while ((cp = mystrtok(&bufp, master_blanks)) == 0);
 
     /*
      * Parse one logical line from the configuration file. Initialize service

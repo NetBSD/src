@@ -73,7 +73,9 @@
 /* System library. */
 
 #include <sys_defs.h>
+#include <unistd.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* Utility library. */
 
@@ -84,11 +86,54 @@
 #include <dict.h>
 #include <safe.h>
 #include <stringops.h>
+#include <readlline.h>
 
 /* Global library. */
 
 #include "mail_params.h"
 #include "mail_conf.h"
+
+/* mail_conf_checkdir - authorize non-default directory */
+
+static void mail_conf_checkdir(const char *config_dir)
+{
+    VSTRING *buf;
+    VSTREAM *fp;
+    char   *path;
+    char   *name;
+    char   *value;
+    char   *cp;
+    int     found = 0;
+
+    /*
+     * If running set-[ug]id, require that a non-default configuration
+     * directory name is blessed as a bona fide configuration directory in
+     * the default main.cf file.
+     */
+    path = concatenate(DEF_CONFIG_DIR, "/", "main.cf", (char *) 0);
+    if ((fp = vstream_fopen(path, O_RDONLY, 0)) == 0)
+	msg_fatal("open file %s: %m", path);
+
+    buf = vstring_alloc(1);
+    while (found == 0 && readlline(buf, fp, (int *) 0)) {
+	if (split_nameval(vstring_str(buf), &name, &value) == 0
+	    && strcmp(name, VAR_CONFIG_DIRS) == 0) {
+	    while (found == 0 && (cp = mystrtok(&value, ", \t\r\n")) != 0)
+		if (strcmp(cp, config_dir) == 0)
+		    found = 1;
+	}
+    }
+    if (vstream_fclose(fp))
+	msg_fatal("read file %s: %m", path);
+    vstring_free(buf);
+
+    if (found == 0) {
+	msg_error("untrusted configuration directory name: %s", config_dir);
+	msg_fatal("specify \"%s = %s\" in %s",
+		  VAR_CONFIG_DIRS, config_dir, path);
+    }
+    myfree(path);
+}
 
 /* mail_conf_read - read global configuration file */
 
@@ -114,9 +159,19 @@ void    mail_conf_suck(void)
     dict_unknown_allowed = 1;
     if (var_config_dir)
 	myfree(var_config_dir);
-    var_config_dir = mystrdup((config_dir = safe_getenv(CONF_ENV_PATH)) != 0 ?
-			      config_dir : DEF_CONFIG_DIR);	/* XXX */
+    if ((config_dir = getenv(CONF_ENV_PATH)) == 0)
+	config_dir = DEF_CONFIG_DIR;
+    var_config_dir = mystrdup(config_dir);
     set_mail_conf_str(VAR_CONFIG_DIR, var_config_dir);
+
+    /*
+     * If the configuration directory name comes from a different trust
+     * domain, require that it is listed in the default main.cf file.
+     */
+    if (strcmp(var_config_dir, DEF_CONFIG_DIR) != 0	/* non-default */
+	&& safe_getenv(CONF_ENV_PATH) == 0	/* non-default */
+	&& geteuid() != 0)			/* untrusted */
+	mail_conf_checkdir(var_config_dir);
     path = concatenate(var_config_dir, "/", "main.cf", (char *) 0);
     dict_load_file(CONFIG_DICT, path);
     myfree(path);

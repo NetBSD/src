@@ -94,6 +94,12 @@ domains with "relay access denied"</a>
 <li><a href="#broken_transport">Mail delivery fails with: "unknown
 mail transport error"</a>
 
+<li><a href="#msql_limit">Too many connections</a>
+
+<li><a href="#reiser_bugs">write queue file: No such file or directory</a>
+
+<li><a href="#reiser_bugs">write queue file: Unknown error 4294967289</a>
+
 </ul>
 
 <p>
@@ -152,6 +158,10 @@ distribution list</a>
 <li><a href="#moby-freebsd">Running hundreds of Postfix processes on FreeBSD</a>
 
 <li><a href="#moby-linux">Running hundreds of Postfix processes on Linux</a>
+
+<li><a href="#moby-sun">Running hundreds of Postfix processes on Solaris</a>
+
+<li><a href="#moby-postfix">Running thousands of Postfix delivery agents</a>
 
 </ul>
 
@@ -286,6 +296,9 @@ domains with "relay access denied"</a>
 <li><a href="#domain_mailbox">Receiving a virtual domain in a
 mailbox</a>
 
+<li><a href="#virtual_logging">Postfix logs delivery to virtual
+address with the wrong name</a>
+
 </ul>
 
 <a name="address_rewriting"><h3>Address rewriting</h3>
@@ -307,6 +320,8 @@ mailbox</a>
 <a name="other_transports"><h3>Other transports: UUCP, FAX, etc.</h3>
 
 <ul>
+
+<li><a href="#uucp-tcp">Using UUCP over TCP</a>
 
 <li><a href="#internet-uucp">Setting up an Internet to UUCP gateway</a>
 
@@ -394,7 +409,7 @@ implements its own private mail database system. Not for beginners.
 <p>
 
 <li><a href="http://www.inter7.com/courierimap/">Courier-Imap</a>
-provides POP3, IMAP, POP3 and IMAP, and supports access over SSL.
+provides POP3 and IMAP, and supports access over SSL.
 This software supports the maildir-style mailbox format only
 (one message per file, same format as qmail).
 
@@ -656,6 +671,7 @@ to send mail only to <i>user@domain.com</i>.
     transport_maps = hash:/etc/postfix/transport
     mynetworks = 12.34.56.0/24
     smtpd_recipient_restrictions = permit_mynetworks reject_unauth_destination
+    local_transport = error:local mail delivery is disabled on this machine
 
 /etc/postfix/transport:
     domain.com   smtp:inside-gateway.domain.com   (forwards user@domain)
@@ -1120,35 +1136,42 @@ run out of file handles; after that, it will run out of sockets.
 
 <p>
 
-To set kernel parameters at boot time, add the following lines to
-the <b>/boot/loader.conf</b> file (this is specific to FreeBSD 4.x):
+To set the following kernel parameters at boot time, add the
+following lines to the <b>/boot/loader.conf</b> file (this is
+verified with FreeBSD 4.4):
 
 <p>
 
 <blockquote>
 <pre>
 kern.ipc.maxsockets="5000"
+kern.ipc.nmbclusters="65536"
+kern.maxproc="2048"
 kern.maxfiles="16384"
 kern.maxfilesperproc="16384"
-kern.ipc.nmbclusters="65536"
 </pre>
 </blockquote>
 
 <p>
 
-To set kernel parameters at run time execute the following commands
-as root (this is specific to FreeBSD 4.x):
+With FreeBSD 4.2, the last three parameters cannot be set from
+<b>/boot/loader.conf</b>. To set the open file limits, execute the
+following commands as root:
 
 <p>
 
 <blockquote>
 <pre>
-# sysctl -w kern.ipc.maxsockets=5000
 # sysctl -w kern.maxfiles=16384
 # sysctl -w kern.maxfilesperproc=16384
-# sysctl -w kern.ipc.nmbclusters=65536
 </pre>
 </blockquote>
+
+<p>
+
+With FreeBSD 4.2, <b>kern.maxproc</b> can be set only by recompiling
+the kernel with a different <b>maxusers</b> setting in the kernel
+configuration file.
 
 <hr>
 
@@ -1187,6 +1210,42 @@ commands as <b>root</b>:
 <pre>
 # echo 16384 > /proc/sys/fs/file-max
 # echo 2048 > /proc/sys/kernel/threads-max
+</pre>
+</blockquote>
+
+<hr>
+
+<a name="moby-sun"><h3>Running hundreds of Postfix processes on Solaris</h3></a>
+
+In order to run hundreds of processes you may have to adjust the
+per-process open file limit. According to the <a
+href="http://www.science.uva.nl/pub/solaris/solaris2.html#q3.45">Solaris
+FAQ</a>, add the following lines to /etc/system on Solaris 2.4 and later: 
+
+<p> 
+<blockquote>
+<pre>
+* set hard limit on file descriptors
+set rlim_fd_max = 4096
+* set soft limit on file descriptors
+set rlim_fd_cur = 2048
+</pre>
+</blockquote>
+
+<hr>
+
+<a name="moby-postfix"><h3>Running thousands of Postfix delivery agents</h3></a>
+
+In order to run Postfix with more than a thousand delivery agents you
+need to recompile the software with an appropriate value of the
+<b>FD_SETSIZE</b> constant.
+
+<p>
+<blockquote>
+<pre>
+% make tidy
+% make makefiles "CCARGS=-DFD_SETSIZE=2048"
+% make
 </pre>
 </blockquote>
 
@@ -1456,7 +1515,11 @@ href="uce.html#reject_unauth_destination">reject_unauth_destination</a>:
 reject when the destination is not local.
 
 <li> <a href="uce.html#permit_mx_backup">permit_mx_backup</a>:
-reject when the destination is not local.
+permit if the local system is listed as MX host for the recipient
+domain. Use the optional <a
+href="#permit_mx_backup_networks">permit_mx_backup_networks</a>
+parameter to also require that the primary MX hosts match a list
+of network blocks (Postfix versions 20011008 and later).
 
 <li> Other UCE restrictions (e.g., SMTPD access maps) are not aware
 of sender-provided routing information.
@@ -1809,9 +1872,9 @@ like:
 
 A little background is in order. With the SMTP protocol, the HELO,
 MAIL FROM and RCPT TO commands and responses are relatively short.
-When you're talking to sendmail, every command and every response
-is sent as a separate packet, because sendmail cannot implement
-ESMTP command pipelining.
+When you're talking to old versions of sendmail, every command and
+every response is sent as a separate packet, because sendmail didn't
+implement ESMTP command pipelining until recently.
 
 <p>
 
@@ -2599,7 +2662,9 @@ that the mail was sent to.
 Answer: I hope we all agree that delivering a domain to a mailbox
 is disgusting practice. Forwarding mail via SMTP or UUCP would be
 a much better choice.  Unfortunately, neither SMTP nor UUCP are a
-usable alternative for legions of windows users.
+usable alternative for legions of windows users. However, if this
+is an option for you see the <a href="#uucp-tcp">UUCP over TCP</a>
+guide below.
 
 <p>
 
@@ -2649,6 +2714,44 @@ Instead of <b>regexp </b> maps your Postfix system may also support
 your system supports, use the command <b>postconf -m</b>.
 
 </ul>
+
+<hr>
+
+<a name="virtual_logging"><h3>Postfix logs delivery to virtual
+address with the wrong name</h3></a>
+
+When Postfix delivers mail for a virtual address <i>vuser@vdomain.name</i>
+that is aliased to a local user, then Postfix logs the local username
+instead of the virtual one.
+
+<p>
+
+Changing this requires non-trivial changes, because Postfix only
+remembers the address that it delivers to, not the address that
+was original specified in, for example, the SMTP MAIL FROM command.
+
+<p>
+
+A workaround exists. It uses regular expressions. This
+can be expensive if you have many virtual domains.
+
+<p>
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    virtual_maps = regexp:/etc/postfix/virtual_regexp
+    recipient_delimiter = +
+
+/etc/postfix/virtual_regexp:
+    /^vdomain\.name$/            whatever
+    /(.*)@vdomain\.name$/        localuser+$1=vdomain.name
+</pre>
+</blockquote>
+
+<p>
+
+This delivers the mail as
+<i>localuser+vuser=vdomain.name@your.domain</i>.
 
 <hr>
 
@@ -2784,6 +2887,28 @@ See examples in <b>master.cf</b>.
 
 <hr>
 
+<a name="uucp-tcp"><h3>Using UUCP over TCP</h3>
+
+This subject comes up whenever someone asks about a "domain in
+a mailbox" solution. For first-hand information, see the guides
+listed below.
+
+<ul>
+
+<li>Jim Seymour's guide for using <a
+href="http://jimsun.LinxNet.com/jdp/uucp_over_tcp/index.html"> UUCP
+over TCP</a>.
+
+<p>
+
+<li>Craig Sanders's guide for using <a
+href="http://taz.net.au/postfix/uucp/"> SSL-encrypted UUCP over
+tcp using stunnel</a>.
+
+</ul>
+
+<hr>
+
 <a name="internet-uucp"><h3>Setting up an Internet to UUCP gateway</h3> </a>
 
 Here is how to set up a machine that sits on the Internet and that
@@ -2889,7 +3014,7 @@ changes effective.
 
 Here is how to relay all your mail over a UUCP link.  See the <a
 href="#internet-uucp">Internet to UUCP</a> FAQ entry for setting
-up a machine that gateways between UUCP and SMTP.
+up a machine that gateways between UUCP and SMTP. 
 
 <p>
 
@@ -2988,41 +3113,59 @@ Note: be sure to not advertise <b>fax.your.domain</b> in the DNS :-)
 
 <a name="deleting"><h3>Deleting a message from the Postfix queue</h3></a>
 
-To delete ONE message with queue id ABCDEF (e.g., from <b>mailq</b>
-output) from the Postfix queue, it is not necessary to stop Postfix.
+As of Postfix version 20010502, the <b>postsuper</b> command
+has an option to delete Postfix message queue files. To delete
+the message with queue id ABCDEF, perhaps obtained from <b>mailq</b>
+output, one would use:
 
 <p>
 
+<blockquote>
 <pre>
-    # cd /var/spool/postfix
-    # find incoming active deferred -name ABCDEF -print | sed 1q | xargs rm
+# postsuper -d ABCDEF
 </pre>
+</blockquote>
 
 <p>
 
-The above command is safe because it deletes at most one file.
-There is no risk of deleting newly arrived mail that happens to get
-the same queue file name.
+To delete a large number of files one would use:
 
 <p>
 
-If you have to delete a large amount of mail, you must stop Postfix
-first.
-
-<p>
+<blockquote>
 <pre>
-    # postfix stop
-    # cd /var/spool/postfix
-    # find incoming active deferred defer -type f -print |
-	fgrep -xf /file/with/queue-ids | xargs rm
-    # postfix start
+# postsuper -d - < <i>filename-with-queue-ids</i>
 </pre>
+</blockquote>
 
 <p>
 
-Do not use the above <b>find</b> command on a running Postfix
-system, because it can delete files that belong to new mail that
-arrives while you are deleting queue files.
+It is usually safe to do this while the Postfix system is running.
+However, there is a small chance of deleting the wrong queue
+file. The scenario goes like this:
+
+<p>
+
+<ul>
+
+<li>The Postfix queue manager deletes the file that <b>postsuper</b>
+was supposed to delete, because Postfix was finished with the
+message.
+
+<p>
+
+<li>New mail arrives, and the new message is given the same queue
+ID as the message that <b>postsuper</b> was supposed to delete.
+The probability for reusing a deleted queue ID is about 1 in
+2<sup>15</sup> (the number of different microsecond values that
+the system clock can distinguish).
+
+<p>
+
+<li><b>postsuper</b> deletes the new message file, instead of the
+old file that should have been deleted.
+
+</ul>
 
 <hr>
 
@@ -3045,34 +3188,109 @@ that the file name will collide with another queue file.
 
 <p>
 
-To avoid queue file name collisions when copying queue files,
-restore the incoming, active and deferred queue files under the
-maildrop directory instead.
+The text below describes two different procedures to restore
+queue files from another machine or from backup.
+
+<h4> Procedure 1: Your Postfix queue is empty, and you run Postfix
+release 20010525 or later</h4>
+
+<ul>
+
+<li> Stop Postfix, if it was running.
+
+<blockquote>
+<pre>
+# postfix stop
+</pre>
+</blockquote>
 
 <p>
 
-As of late 2000, Postfix queues are all hashed (for example, file
+<li> Execute the <b>mailq</b> command. If there is any output, do
+not complete this procedure, but use <b>procedure 2</b> instead.
+
+<blockquote>
+<pre>
+# mailq
+</pre>
+</blockquote>
+
+<p>
+
+<li> Copy or restore the queue to the usual place.
+
+<blockquote>
+<pre>
+# cd /var/spool/postfix
+<i>...restore maildrop, incoming, active, deferred, defer, bounce here...</i>
+</pre>
+</blockquote>
+
+<p>
+
+<li> Run the <b>postsuper</b> command. This command will rename
+queue files so that the file names match their message file inode
+numbers.
+
+<blockquote>
+<pre>
+# postsuper
+</pre>
+</blockquote>
+
+</ul>
+
+<h4> Procedure 2: Your Postfix queue is not empty, or you are
+running a Postfix release prior to 20010525</h4>
+
+<ul>
+
+<li>Stop Postfix, if it was running.
+
+<blockquote>
+<pre>
+# postfix stop
+</pre>
+</blockquote>
+
+<p>
+
+<li> To avoid queue file name collisions when restoring queue files,
+copy or restore the incoming, active and deferred queue files under
+the maildrop directory instead.
+
+<blockquote>
+<pre>
+# cd /var/spool/postfix/maildrop
+<i>...restore incoming, active, deferred here...</i>
+</pre>
+</blockquote>
+
+<p>
+
+<li>While the next step is going on, don't submit new mail locally,
+because that could collide with the files you are restoring under
+the maildrop directory.
+
+<p>
+
+<li>As of late 2000, Postfix queues are all hashed (for example, file
 ABCDEF is stored as A/B/ABCDEF), so you need an additional step to
 move files down from their subdirectories.
 
 <p>
 <pre>
-    # postfix stop
-    # cd /var/spool/postfix/maildrop
-    ... restore incoming/active/deferred queue files under the maildrop directory...
     # find incoming active deferred -type f -exec mv '{}' . ';'
     # rm -rf incoming active deferred
     # postfix start
 </pre>
 
-While all this is going on, don't submit new mail locally, because
-that could collide with the files you are restoring under the
-maildrop directory.
-
 <p>
 
-When Postfix is started, it will pick up queue files from the
+<li>When Postfix is started, it will pick up queue files from the
 maildrop directory and will give them proper queue file names.
+
+</ul>
 
 <hr>
 
@@ -3205,6 +3423,27 @@ bit, but that might equally well fail on other systems. Another
 possibility is to allow non-superusers to set the execute bit on
 files, and to mount the Postfix queue file system with the
 <b>noexec</b> option or equivalent.
+
+<hr>
+
+<a name="msql_limit"><h3>Too many connections</h3></a>
+
+This message is produced by the MYQSL server. You need to increase
+the number of connections that it can handle.  Things to bear in
+mind: the <b>virtual</b> and <b>canonical</b> maps are accessed by
+every <b>smtpd</b> and <b>cleanup</b> process.
+
+<hr>
+
+<a name="reiser_bugs"><h3>write queue file: No such file or directory</h3></a>
+
+<h3>write queue file: Unknown error 4294967289</h3>
+
+Reiserfs reports the wrong error code when a message exceeds the
+<b>message_size_limit</b> setting. As a result, the Postfix SMTP
+server reports a "queue file write error" to the SMTP client, rather
+than reporting a "file too large" condition. The client will keep
+sending the same email again and again until the mail is too old.
 
 <hr>
 

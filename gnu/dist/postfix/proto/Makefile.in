@@ -6,6 +6,8 @@ CONFIG	= ../conf/access ../conf/aliases ../conf/canonical ../conf/relocated \
 	../conf/transport ../conf/virtual ../conf/pcre_table \
 	../conf/regexp_table
 
+AWK	= awk '{ print; if (NR == 1) print ".pl 9999" }'
+
 update:	$(CONFIG)
 
 Makefile: Makefile.in
@@ -20,25 +22,25 @@ clobber:
 	rm -f $(CONFIG)
 
 ../conf/access: access
-	srctoman - $? | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
+	srctoman - $? | $(AWK) | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
 
 ../conf/aliases: aliases0 aliases
-	(cat aliases0; srctoman - aliases | nroff -man | col -bx | uniq | sed 's/^/# /') >$@
+	(cat aliases0; srctoman - aliases | $(AWK) | nroff -man | col -bx | uniq | sed 's/^/# /') >$@
 
 ../conf/canonical: canonical
-	srctoman - $? | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
+	srctoman - $? | $(AWK) | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
 
 ../conf/pcre_table: pcre_table
-	srctoman - $? | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
+	srctoman - $? | $(AWK) | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
 
 ../conf/regexp_table: regexp_table
-	srctoman - $? | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
+	srctoman - $? | $(AWK) | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
 
 ../conf/relocated: relocated
-	srctoman - $? | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
+	srctoman - $? | $(AWK) | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
 
 ../conf/transport: transport
-	srctoman - $? | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
+	srctoman - $? | $(AWK) | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
 
 ../conf/virtual: virtual
-	srctoman - $? | nroff -man | col -bx | uniq | sed 's/^/# /' >$@
+	srctoman - $? | $(AWK) | nroff -man | col -bx | uniq | sed 's/^/# /' >$@

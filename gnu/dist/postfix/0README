@@ -103,6 +103,7 @@ wietse@porcupine.org to avoid duplication of effort.
 
 Documentation:
 
+    README_FILES/	Instructions for specific Postfix features
     html/		HTML format
     man/		UNIX on-line manual page format
 
@@ -127,6 +128,7 @@ Command-line utilities:
     src/postlock/	Postfix locking for shell scripts
     src/postlog/	Postfix logging for shell scripts
     src/postmap/	Postfix lookup table management
+    src/postqueue/	Postfix queue control program
     src/postsuper/	Postfix house keeping program
     src/sendmail/	Sendmail compatibility interface
 
@@ -151,7 +153,7 @@ Postfix daemons:
 Test programs:
 
     src/fsstone/	Measure file system overhead
-    src/smtpstone/	SMTP server torture test
+    src/smtpstone/	SMTP and QMQP server torture test
 
 Miscellaneous:
 
