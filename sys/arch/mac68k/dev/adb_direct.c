@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.18 1998/11/14 03:01:31 briggs Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.19 1998/11/14 03:20:47 briggs Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -70,12 +70,6 @@
 #include <machine/param.h>
 #include <machine/cpu.h>
 #include <machine/adbsys.h>			/* required for adbvar.h */
-
-#ifdef DEBUG
-#ifndef ADB_DEBUG
-#define ADB_DEBUG
-#endif
-#endif
 
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
