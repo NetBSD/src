@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.2 1999/10/23 14:40:38 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.3 2000/04/16 01:41:23 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -92,8 +92,9 @@ Xmain()
         case VAX_TYP_UV2:
         case VAX_TYP_CVAX:
 	case VAX_TYP_RIGEL:
-	case VAX_TYP_NVAX:
 	case VAX_TYP_SOC:
+	case VAX_TYP_MARIAH:
+	case VAX_TYP_NVAX:
 		/*
 		 * now relocate rpb/bqo (which are used by ROM-routines)
 		 */
@@ -138,6 +139,9 @@ getbootdev()
 	case VAX_TYP_UV2:
 	case VAX_TYP_CVAX:
 	case VAX_TYP_RIGEL:
+	case VAX_TYP_SOC:
+	case VAX_TYP_MARIAH:
+	case VAX_TYP_NVAX:
 		if (rpb->devtyp == BDEV_SD) {
 			unit = rpb->unit / 100;
 			controller = (rpb->csrphy & 0x100 ? 1 : 0);
@@ -167,8 +171,8 @@ getbootdev()
 	case BDEV_TK:		/* TK50 boot */
 	case BDEV_CNSL:		/* Console storage boot */
 	case BDEV_RD:		/* RD/RX on HDC9224 (MV2000) */
-	case BDEV_ST:		/* SCSI-tape on NCR5380 (MV2000) */
-	case BDEV_SD:		/* SCSI-disk on NCR5380 (3100/76) */
+	case BDEV_ST:		/* SCSI-tape on NCR53xx (MV2000) */
+	case BDEV_SD:		/* SCSI-disk on NCR53xx (3100/76, 4000) */
 		break;
 
 	case BDEV_KDB:		/* DSA disk on KDB50 (VAXBI VAXen) */
