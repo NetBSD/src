@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.2 2002/05/02 22:01:47 mycroft Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.3 2002/09/27 15:35:49 provos Exp $	*/
 
 /*
  * Copyright 1997
@@ -124,7 +124,7 @@ cpu_initclocks()
         clockirq = intr_claim(IRQ_TIMER0, IPL_CLOCK, "tmr0 hard clk",
             clockhandler, 0);
         if (clockirq == NULL)
-                panic("Cannot installer timer 0 IRQ handler\n");
+                panic("Cannot installer timer 0 IRQ handler");
 
 	/* Notify callback handler that it can start processing ticks. */
 	ofw_handleticks = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.22 2002/03/23 03:40:24 gmcgarry Exp $	*/
+/*	$NetBSD: an.c,v 1.23 2002/09/27 15:37:15 provos Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.22 2002/03/23 03:40:24 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.23 2002/09/27 15:37:15 provos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1590,7 +1590,7 @@ an_seek(struct an_softc *sc, int id, int off, int chan)
 		offreg = AN_OFF1;
 		break;
 	default:
-		panic("%s: invalid chan: %x\n", sc->an_dev.dv_xname, chan);
+		panic("%s: invalid chan: %x", sc->an_dev.dv_xname, chan);
 	}
 
 	CSR_WRITE_2(sc, selreg, id);

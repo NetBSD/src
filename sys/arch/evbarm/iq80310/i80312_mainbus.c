@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mainbus.c,v 1.6 2002/09/27 02:24:11 thorpej Exp $	*/
+/*	$NetBSD: i80312_mainbus.c,v 1.7 2002/09/27 15:36:00 provos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -113,7 +113,7 @@ i80312_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_space_subregion(sc->sc_st, sc->sc_sh, I80312_MEM_BASE,
 	    I80312_MEM_SIZE, &sc->sc_mem_sh))
-		panic("%s: unable to subregion MEM registers\n",
+		panic("%s: unable to subregion MEM registers",
 		    sc->sc_dev.dv_xname);
 
 	/*

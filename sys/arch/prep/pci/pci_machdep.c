@@ -151,7 +151,7 @@ prep_pci_intr_string(void *v, pci_intr_handle_t ih)
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
 	if (ih == 0 || ih >= ICU_LEN || ih == IRQ_SLAVE)
-		panic("pci_intr_string: bogus handle 0x%x\n", ih);
+		panic("pci_intr_string: bogus handle 0x%x", ih);
 
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
@@ -172,7 +172,7 @@ prep_pci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 {
 
 	if (ih == 0 || ih >= ICU_LEN || ih == IRQ_SLAVE)
-		panic("pci_intr_establish: bogus handle 0x%x\n", ih);
+		panic("pci_intr_establish: bogus handle 0x%x", ih);
 
 	return isa_intr_establish(NULL, ih, IST_LEVEL, level, func, arg);
 }

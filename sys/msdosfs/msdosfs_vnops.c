@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.121 2002/03/17 23:58:09 chs Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.122 2002/09/27 15:37:49 provos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.121 2002/03/17 23:58:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.122 2002/09/27 15:37:49 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1109,7 +1109,7 @@ abortit:
 		cn = ip->de_StartCluster;
 		if (cn == MSDOSFSROOT) {
 			/* this should never happen */
-			panic("msdosfs_rename: updating .. in root directory?\n");
+			panic("msdosfs_rename: updating .. in root directory?");
 		} else
 			bn = cntobn(pmp, cn);
 		error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster,

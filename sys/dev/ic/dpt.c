@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.31 2001/11/13 13:14:36 lukem Exp $	*/
+/*	$NetBSD: dpt.c,v 1.32 2002/09/27 15:37:16 provos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.31 2001/11/13 13:14:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.32 2002/09/27 15:37:16 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -596,7 +596,7 @@ dpt_ccb_poll(struct dpt_softc *sc, struct dpt_ccb *ccb)
 
 #ifdef DEBUG
 	if ((ccb->ccb_flg & CCB_PRIVATE) == 0)
-		panic("dpt_ccb_poll: called for non-CCB_PRIVATE request\n");
+		panic("dpt_ccb_poll: called for non-CCB_PRIVATE request");
 #endif
 
 	s = splbio();

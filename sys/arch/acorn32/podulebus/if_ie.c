@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.6 2002/05/22 22:43:18 bjh21 Exp $ */
+/* $NetBSD: if_ie.c,v 1.7 2002/09/27 15:35:30 provos Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -61,7 +61,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ie.c,v 1.6 2002/05/22 22:43:18 bjh21 Exp $");
+__RCSID("$NetBSD: if_ie.c,v 1.7 2002/09/27 15:35:30 provos Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -486,7 +486,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	if (irq_claim(sc->sc_podule->interrupt, &sc->sc_ih)) {
 		sc->sc_irqmode = 0;
 		printf(" POLLED");
-		panic("%s: Cannot install IRQ handler\n", sc->sc_dev.dv_xname);
+		panic("%s: Cannot install IRQ handler", sc->sc_dev.dv_xname);
 	} else {
 		sc->sc_irqmode = 1;
 		printf(" IRQ");

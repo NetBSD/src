@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.c,v 1.6 2002/08/13 05:43:25 simonb Exp $	*/
+/*	$NetBSD: ibm405gp.c,v 1.7 2002/09/27 15:37:00 provos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@ static void setup_pcicfg_window(void)
 	if (pcicfg_ioh)
 		return;
 	if (bus_space_map(pcicfg_iot, IBM405GP_PCIL0_BASE, 0x40 , 0, &pcicfg_ioh))
-		panic("Cannot map PCI configuration registers\n");
+		panic("Cannot map PCI configuration registers");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.7 2002/09/11 01:46:31 mycroft Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.8 2002/09/27 15:36:30 provos Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -210,7 +210,7 @@ findchannel_defer(self)
 				  (MCLBYTES/MSIZE), MCLBYTES, 0, BUS_DMA_ALLOCNOW,
 				  &xsc->sc_tx_dmamap);
 	if (error) {
-		panic("%s: can't create tx DMA map, error = %d\n",
+		panic("%s: can't create tx DMA map, error = %d",
 		      sc->sc_dev.dv_xname, error);
 	}
 
@@ -219,7 +219,7 @@ findchannel_defer(self)
 					  (MCLBYTES/MSIZE), MCLBYTES, 0, BUS_DMA_ALLOCNOW,
 					  &xsc->sc_rx_dmamap[i]);
 		if (error) {
-			panic("%s: can't create rx DMA map, error = %d\n",
+			panic("%s: can't create rx DMA map, error = %d",
 			      sc->sc_dev.dv_xname, error);
 		}
 		xsc->sc_rx_mb_head[i] = NULL;
@@ -274,14 +274,14 @@ xe_attach(parent, self, aux)
 	xsc->sc_bst = ia->ia_bst;
 	if (bus_space_map(xsc->sc_bst, NEXT_P_ENET,
 			  XE_DEVICE_SIZE, 0, &xsc->sc_bsh)) {
-		panic("\n%s: can't map mb8795 registers\n",
+		panic("\n%s: can't map mb8795 registers",
 		      sc->sc_dev.dv_xname);
 	}
 
 	sc->sc_bmap_bst = ia->ia_bst;
 	if (bus_space_map(sc->sc_bmap_bst, NEXT_P_BMAP,
 			  BMAP_SIZE, 0, &sc->sc_bmap_bsh)) {
-		panic("\n%s: can't map bmap registers\n",
+		panic("\n%s: can't map bmap registers",
 		      sc->sc_dev.dv_xname);
 	}
 
@@ -645,7 +645,7 @@ xe_dma_rx_completed(map, arg)
 		
 #if (defined(DIAGNOSTIC))
 		if (map != xsc->sc_rx_dmamap[xsc->sc_rx_completed_idx]) {
-			panic("%s: Unexpected rx dmamap completed\n",
+			panic("%s: Unexpected rx dmamap completed",
 			      sc->sc_dev.dv_xname);
 		}
 #endif
@@ -707,7 +707,7 @@ xe_dma_rxmap_load(sc,map)
 		/* @@@ Handle this gracefully by reusing a scratch buffer
 		 * or something.
 		 */
-		panic("Unable to get memory for incoming ethernet\n");
+		panic("Unable to get memory for incoming ethernet");
 	}
 
 	/* Align buffer, @@@ next specific.
@@ -738,7 +738,7 @@ xe_dma_rxmap_load(sc,map)
 		DPRINTF(("DEBUG: MCLBYTES = %d, map->_dm_size = %ld\n",
 				MCLBYTES, map->_dm_size));
 
-		panic("%s: can't load rx mbuf chain, error = %d\n",
+		panic("%s: can't load rx mbuf chain, error = %d",
 				sc->sc_dev.dv_xname, error);
 		m_freem(m);
 		m = NULL;
@@ -776,7 +776,7 @@ xe_dma_rx_continue(arg)
 	}
 #ifdef DIAGNOSTIC
 	else
-		panic("%s: Unexpected rx dma continue while if not running\n",
+		panic("%s: Unexpected rx dma continue while if not running",
 		      sc->sc_dev.dv_xname);
 #endif
 	

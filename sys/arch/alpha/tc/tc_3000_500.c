@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $ */
+/* $NetBSD: tc_3000_500.c,v 1.25 2002/09/27 15:35:39 provos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_500.c,v 1.25 2002/09/27 15:35:39 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ tc_3000_500_intrnull(val)
 	void *val;
 {
 
-	panic("tc_3000_500_intrnull: uncaught TC intr for cookie %ld\n",
+	panic("tc_3000_500_intrnull: uncaught TC intr for cookie %ld",
 	    (u_long)val);
 }
 

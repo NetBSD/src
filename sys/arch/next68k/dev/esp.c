@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.39 2002/09/21 16:18:30 mycroft Exp $	*/
+/*	$NetBSD: esp.c,v 1.40 2002/09/27 15:36:30 provos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -803,7 +803,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 			(esc->sc_main_dmamap->dm_mapsize != 0) ||
 			(esc->sc_tail_dmamap->dm_mapsize != 0) ||
 			(esc->sc_dmasize != 0)) {			
-		panic("%s: map already loaded in esp_dma_setup\n"
+		panic("%s: map already loaded in esp_dma_setup"
 				"\tdatain = %d\n\tmain_mapsize=%ld\n\tail_mapsize=%ld\n\tdmasize = %d",
 				sc->sc_dev.dv_xname, esc->sc_datain,
 				esc->sc_main_dmamap->dm_mapsize,
@@ -1230,7 +1230,7 @@ esp_dma_stop(sc)
 	esp_dma_print(sc);
 #endif
 #if 1
-	panic("%s: stop not yet implemented\n",sc->sc_dev.dv_xname);
+	panic("%s: stop not yet implemented",sc->sc_dev.dv_xname);
 #endif
 }
 
@@ -1536,7 +1536,7 @@ esp_dmacb_completed(map, arg)
 					printf("%s: map->dm_segs[%d].ds_len = %d\n",
 							sc->sc_dev.dv_xname,i,map->dm_segs[i].ds_len);
 				}
-				panic("%s: incomplete dma transfer\n",sc->sc_dev.dv_xname);
+				panic("%s: incomplete dma transfer",sc->sc_dev.dv_xname);
 			}
 		}
 	}
@@ -1546,7 +1546,7 @@ esp_dmacb_completed(map, arg)
 #ifdef DIAGNOSTIC
 		if ((esc->sc_loaded & ESP_UNLOADED_MAIN) ||
 				!(esc->sc_loaded & ESP_LOADED_MAIN)) {
-			panic("%s: unexpected completed call for main map\n",sc->sc_dev.dv_xname);
+			panic("%s: unexpected completed call for main map",sc->sc_dev.dv_xname);
 		}
 #endif
 		esc->sc_loaded |= ESP_UNLOADED_MAIN;
@@ -1554,7 +1554,7 @@ esp_dmacb_completed(map, arg)
 #ifdef DIAGNOSTIC
 		if ((esc->sc_loaded & ESP_UNLOADED_TAIL) ||
 				!(esc->sc_loaded & ESP_LOADED_TAIL)) {
-			panic("%s: unexpected completed call for tail map\n",sc->sc_dev.dv_xname);
+			panic("%s: unexpected completed call for tail map",sc->sc_dev.dv_xname);
 		}
 #endif
 		esc->sc_loaded |= ESP_UNLOADED_TAIL;

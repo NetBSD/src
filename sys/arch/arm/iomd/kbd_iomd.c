@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_iomd.c,v 1.2 2001/11/27 01:03:53 thorpej Exp $	*/
+/*	$NetBSD: kbd_iomd.c,v 1.3 2002/09/27 15:35:46 provos Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -109,7 +109,7 @@ kbd_iomd_attach(parent, self, aux)
 
 	sc->sc_ih = intr_claim(ka->ka_rxirq, IPL_TTY, "kbd rx", kbdintr, sc);
 	if (!sc->sc_ih)
-		panic("%s: Cannot claim RX interrupt\n", sc->sc_device.dv_xname);
+		panic("%s: Cannot claim RX interrupt", sc->sc_device.dv_xname);
 
 	if (sc->sc_device.dv_unit == 0)
 		console_kbd = sc;

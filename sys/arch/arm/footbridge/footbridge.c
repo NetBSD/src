@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.7 2002/05/16 01:01:33 thorpej Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.8 2002/09/27 15:35:43 provos Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -166,14 +166,14 @@ footbridge_attach(parent, self, aux)
 	/* Map the Footbridge */
 	if (bus_space_map(sc->sc_iot, DC21285_ARMCSR_VBASE,
 	     DC21285_ARMCSR_VSIZE, 0, &sc->sc_ioh))
-		panic("%s: Cannot map registers\n", self->dv_xname);
+		panic("%s: Cannot map registers", self->dv_xname);
 
 	/* Read the ID to make sure it is what we think it is */
 	vendor = bus_space_read_2(sc->sc_iot, sc->sc_ioh, VENDOR_ID);
 	device = bus_space_read_2(sc->sc_iot, sc->sc_ioh, DEVICE_ID);
 	rev = bus_space_read_1(sc->sc_iot, sc->sc_ioh, REVISION);
 	if (vendor != DC21285_VENDOR_ID && device != DC21285_DEVICE_ID)
-		panic("%s: Unrecognised ID\n", self->dv_xname);
+		panic("%s: Unrecognised ID", self->dv_xname);
 
 	printf(": DC21285 rev %d\n", rev);
 

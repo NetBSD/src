@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.3 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: cir.c,v 1.4 2002/09/27 15:37:22 provos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ cir_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_methods->im_read == NULL ||
 	    sc->sc_methods->im_write == NULL ||
 	    sc->sc_methods->im_setparams == NULL)
-		panic("%s: missing methods\n", sc->sc_dev.dv_xname);
+		panic("%s: missing methods", sc->sc_dev.dv_xname);
 #endif
 	printf("\n");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.1 2001/05/14 18:23:01 drochner Exp $	*/
+/*	$NetBSD: isr.c,v 1.2 2002/09/27 15:35:56 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ isrdispatch(evec)
 
 	vec = (evec & 0xfff) >> 2;
 	if ((vec < ISRLOC) || (vec >= (ISRLOC + NISR)))
-		panic("isrdispatch: bad vec 0x%x\n", vec);
+		panic("isrdispatch: bad vec 0x%x", vec);
 	ipl = vec - ISRLOC;
 
 	intrcnt[ipl]++;

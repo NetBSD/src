@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_bchan.c,v 1.1 2002/09/24 22:05:19 pooka Exp $	*/
+/*	$NetBSD: iwic_bchan.c,v 1.2 2002/09/27 15:37:27 provos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_bchan.c,v 1.1 2002/09/24 22:05:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_bchan.c,v 1.2 2002/09/27 15:37:27 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -139,7 +139,7 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 			if(chan->in_mbuf == NULL)
 			{
 				if((chan->in_mbuf = i4b_Bgetmbuf(BCH_MAX_DATALEN)) == NULL)
-					panic("L1 iwic_bchan_irq: RME, cannot allocate mbuf!\n");
+					panic("L1 iwic_bchan_irq: RME, cannot allocate mbuf!");
 				chan->in_cbptr = chan->in_mbuf->m_data;
 				chan->in_len = 0;
 			}
@@ -214,7 +214,7 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 		if(chan->in_mbuf == NULL)
 		{
 			if((chan->in_mbuf = i4b_Bgetmbuf(BCH_MAX_DATALEN)) == NULL)
-				panic("L1 iwic_bchan_irq: RMR, cannot allocate mbuf!\n");
+				panic("L1 iwic_bchan_irq: RMR, cannot allocate mbuf!");
 			chan->in_cbptr = chan->in_mbuf->m_data;
 			chan->in_len = 0;
 		}
@@ -274,7 +274,7 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 				/* alloc new buffer */
 				
 				if((chan->in_mbuf = i4b_Bgetmbuf(BCH_MAX_DATALEN)) == NULL)
-					panic("L1 iwic_bchan_irq: RMR, cannot allocate new mbuf!\n");
+					panic("L1 iwic_bchan_irq: RMR, cannot allocate new mbuf!");
 	
 				/* setup new data ptr */
 				

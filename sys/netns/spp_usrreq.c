@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.29 2002/08/08 15:08:56 itojun Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.30 2002/09/27 15:37:59 provos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.29 2002/08/08 15:08:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.30 2002/09/27 15:37:59 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ spp_input(m, va_alist)
 
 	sppstat.spps_rcvtotal++;
 	if (nsp == 0) {
-		panic("No nspcb in spp_input\n");
+		panic("No nspcb in spp_input");
 		return;
 	}
 

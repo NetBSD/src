@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.2 2002/03/18 10:10:16 simonb Exp $	*/
+/*	$NetBSD: pcib.c,v 1.3 2002/09/27 15:36:01 provos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -158,7 +158,7 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	if (my_sc != NULL)
-		panic("pcib_attach: already attached!\n");
+		panic("pcib_attach: already attached!");
 	my_sc = (void *)self;
 
 	/*
@@ -443,7 +443,7 @@ pcib_isa_intr_string(void *v, int irq)
 	static char irqstr[12];		/* 8 + 2 + NULL + sanity */
 
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
-		panic("pcib_isa_intr_string: bogus isa irq 0x%x\n", irq);
+		panic("pcib_isa_intr_string: bogus isa irq 0x%x", irq);
 
 	sprintf(irqstr, "isa irq %d", irq);
 	return (irqstr);
@@ -454,7 +454,7 @@ pcib_isa_intr_evcnt(void *v, int irq)
 {
 
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
-		panic("pcib_isa_intr_evcnt: bogus isa irq 0x%x\n", irq);
+		panic("pcib_isa_intr_evcnt: bogus isa irq 0x%x", irq);
 
 	return (&my_sc->sc_intrtab[irq].intr_count);
 }

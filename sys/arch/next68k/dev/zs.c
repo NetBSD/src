@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.17 2002/09/11 01:46:33 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.18 2002/09/27 15:36:31 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ zs_attach(parent, self, aux)
 	}
 
 	if (zsaddr[zs_unit] == NULL)
-		panic("zs_attach: zs%d not mapped\n", zs_unit);
+		panic("zs_attach: zs%d not mapped", zs_unit);
 
 	/*
 	 * Initialize software state for each channel.

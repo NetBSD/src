@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_mbmem.c,v 1.2 2001/06/27 17:37:04 fredette Exp $	*/
+/*	$NetBSD: sc_mbmem.c,v 1.3 2002/09/27 15:36:52 provos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -175,13 +175,13 @@ sunsc_mbmem_attach(parent, self, args)
 	sc->sc_dma_handles = (sunscpal_dma_handle_t)
 		malloc(i, M_DEVBUF, M_WAITOK);
 	if (sc->sc_dma_handles == NULL)
-		panic("sc: dma handles malloc failed\n");
+		panic("sc: dma handles malloc failed");
 	for (i = 0; i < SUNSCPAL_OPENINGS; i++)
 		if (bus_dmamap_create(sc->sunscpal_dmat, SUNSCPAL_MAX_DMA_LEN,
 				      1, SUNSCPAL_MAX_DMA_LEN,
 				      0, BUS_DMA_WAITOK, &sc->sc_dma_handles[i].
 dh_dmamap) != 0)
-			panic("sc: dma map create failed\n");
+			panic("sc: dma map create failed");
 
 	/* Miscellaneous. */
 	sc->sc_min_dma_len = MIN_DMA_LEN;

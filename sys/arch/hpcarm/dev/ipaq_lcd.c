@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcd.c,v 1.7 2002/03/17 19:40:38 atatat Exp $	*/
+/*	$NetBSD: ipaq_lcd.c,v 1.8 2002/09/27 15:36:03 provos Exp $	*/
 #define IPAQ_LCD_DEBUG
 
 /*
@@ -147,7 +147,7 @@ ipaqlcd_init(sc)
 
 	if (bus_space_map(sc->sc_iot, SALCD_BASE, SALCD_NPORTS,
 			  0, &sc->sc_ioh))
-                panic("ipaqlcd_init:Cannot map registers\n");
+                panic("ipaqlcd_init:Cannot map registers");
 
 	(u_long)bootinfo->fb_addr =
 		bus_space_read_4(sc->sc_iot, sc->sc_ioh, SALCD_BA1);

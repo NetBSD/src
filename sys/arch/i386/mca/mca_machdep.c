@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.14 2001/12/04 20:00:16 sommerfeld Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.15 2002/09/27 15:36:11 provos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.14 2001/12/04 20:00:16 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.15 2002/09/27 15:36:11 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -246,7 +246,7 @@ mca_intr_establish(mc, ih, level, func, arg)
 	void *arg;
 {
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("mca_intr_establish: bogus handle 0x%x\n", ih);
+		panic("mca_intr_establish: bogus handle 0x%x", ih);
 
 	/* MCA interrupts are always level-triggered */
 	return isa_intr_establish(NULL, ih, IST_LEVEL, level, func, arg);

@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.7 2002/03/04 02:19:10 simonb Exp $ */
+/* $NetBSD: btvmei.c,v 1.8 2002/09/27 15:37:24 provos Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.7 2002/03/04 02:19:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.8 2002/09/27 15:37:24 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ b3_617_slaveconfig(dev, va)
 
 #ifdef DIAGNOSTIC
 	if (vmect != va->va_vct)
-		panic("pcivme_slaveconfig: chipset tag?\n");
+		panic("pcivme_slaveconfig: chipset tag?");
 #endif
 
 	for (i = 0; i < va->numcfranges; i++) {

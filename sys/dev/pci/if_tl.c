@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.52 2002/04/17 09:16:27 wiz Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.53 2002/09/27 15:37:26 provos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.52 2002/04/17 09:16:27 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.53 2002/09/27 15:37:26 provos Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1309,7 +1309,7 @@ tbdinit:
 	if (size < ETHER_MIN_TX) {
 #ifdef DIAGNOSTIC
 		if (segment >= TL_NSEG) {
-			panic("tl_ifstart: to much segmets (%d)\n", segment);
+			panic("tl_ifstart: to much segmets (%d)", segment);
 		}
 #endif
 		/*

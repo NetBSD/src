@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower_intr.c,v 1.2 2002/09/18 01:43:07 chs Exp $	*/
+/*	$NetBSD: firepower_intr.c,v 1.3 2002/09/27 15:36:33 provos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -429,7 +429,7 @@ firepower_setsoft(int ipl)
 		break;
 
 	default:
-		panic("firepower_setsoft: unknown soft IPL %d\n", ipl);
+		panic("firepower_setsoft: unknown soft IPL %d", ipl);
 	}
 
 #if 0

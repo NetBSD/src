@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.81 2002/09/22 19:32:55 jdolecek Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.82 2002/09/27 15:38:06 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.81 2002/09/22 19:32:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.82 2002/09/27 15:38:06 provos Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1149,7 +1149,7 @@ lfs_updatemeta(struct segment *sp)
 	vp = sp->vp;
 	nblocks = &sp->fip->fi_blocks[sp->fip->fi_nblocks] - sp->start_lbp;
 	if (nblocks < 0)
-		panic("This is a bad thing\n");
+		panic("This is a bad thing");
 	if (vp == NULL || nblocks == 0) 
 		return;
 	
@@ -1201,7 +1201,7 @@ lfs_updatemeta(struct segment *sp)
 		 * is of a smaller size!)
 		 */
 		if (sbp->b_bcount < fs->lfs_bsize && i != 0)
-			panic("lfs_updatemeta: fragment is not last block\n");
+			panic("lfs_updatemeta: fragment is not last block");
 
 		bb = fragstofsb(fs, numfrags(fs, sbp->b_bcount));
 		fs->lfs_offset += bb;
@@ -2217,7 +2217,7 @@ lfs_cluster_aiodone(struct buf *bp)
 	}
 #ifdef DIAGNOSTIC
 	if (fs->lfs_iocount == 0)
-		panic("lfs_cluster_aiodone: zero iocount\n");
+		panic("lfs_cluster_aiodone: zero iocount");
 #endif
 	if (--fs->lfs_iocount < LFS_THROTTLE)
 		wakeup(&fs->lfs_iocount);

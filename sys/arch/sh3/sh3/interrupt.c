@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.2 2002/04/28 17:10:38 uch Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.3 2002/09/27 15:36:42 provos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -223,7 +223,7 @@ intc_alloc_ih()
 			return (ih);
 		}
 
-	panic("increase _INTR_N greater than %d\n", _INTR_N);
+	panic("increase _INTR_N greater than %d", _INTR_N);
 	return (NULL);
 }
 
