@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.65.2.1 2005/01/02 16:12:37 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.65.2.2 2005/01/02 16:19:55 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.65.2.1 2005/01/02 16:12:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.65.2.2 2005/01/02 16:19:55 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,15 +88,15 @@ static int	ac97_get_portnum_by_name(struct ac97_codec_if *, const char *,
 static void	ac97_restore_shadow(struct ac97_codec_if *);
 static int	ac97_set_rate(struct ac97_codec_if *, int, u_int *);
 static void	ac97_set_clock(struct ac97_codec_if *, unsigned int);
-static u_int16_t ac97_get_extcaps(struct ac97_codec_if *);
+static uint16_t ac97_get_extcaps(struct ac97_codec_if *);
 static int	ac97_add_port(struct ac97_softc *,
 			      const struct ac97_source_info *);
 static int	ac97_str_equal(const char *, const char *);
 static int	ac97_check_capability(struct ac97_softc *, int);
 static void	ac97_setup_source_info(struct ac97_softc *);
-static void	ac97_read(struct ac97_softc *, u_int8_t, u_int16_t *);
+static void	ac97_read(struct ac97_softc *, uint8_t, uint16_t *);
 static void	ac97_setup_defaults(struct ac97_softc *);
-static int	ac97_write(struct ac97_softc *, u_int8_t, u_int16_t);
+static int	ac97_write(struct ac97_softc *, uint8_t, uint16_t);
 
 static void	ac97_ad198x_init(struct ac97_softc *);
 static void	ac97_alc650_init(struct ac97_softc *);
@@ -148,12 +148,12 @@ static const struct ac97_source_info {
 	const void *info;
 	int  info_size;
 
-	u_int8_t  reg;
-	u_int16_t default_value;
-	u_int8_t  bits:3;
-	u_int8_t  ofs:4;
-	u_int8_t  mute:1;
-	u_int8_t  polarity:1;   /* Does 0 == MAX or MIN */
+	uint8_t  reg;
+	uint16_t default_value;
+	uint8_t  bits:3;
+	uint8_t  ofs:4;
+	uint8_t  mute:1;
+	uint8_t  polarity:1;   /* Does 0 == MAX or MIN */
 	enum {
 		CHECK_NONE = 0,
 		CHECK_SURROUND,
@@ -1490,9 +1490,9 @@ ac97_set_rate(struct ac97_codec_if *codec_if, int target, u_int *rate)
 	ac97_read(as, AC97_REG_POWER, &power);
 	ac97_write(as, AC97_REG_POWER, power | power_bit);
 
-	ac97_write(as, target, (u_int16_t)value);
+	ac97_write(as, target, (uint16_t)value);
 	ac97_read(as, target, &actual);
-	actual = (u_int32_t)actual * as->ac97_clock / AC97_STANDARD_CLOCK;
+	actual = (uint32_t)actual * as->ac97_clock / AC97_STANDARD_CLOCK;
 
 	ac97_write(as, AC97_REG_POWER, power);
 	if (ext_stat & AC97_EXT_AUDIO_DRA) {
@@ -1512,7 +1512,7 @@ ac97_set_clock(struct ac97_codec_if *codec_if, unsigned int clock)
 	as->ac97_clock = clock;
 }
 
-static u_int16_t
+static uint16_t
 ac97_get_extcaps(struct ac97_codec_if *codec_if)
 {
 	struct ac97_softc *as;
