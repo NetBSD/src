@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.67 2003/07/15 02:15:04 lukem Exp $	*/
+/*	$NetBSD: locore.c,v 1.68 2004/02/13 11:36:20 wiz Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.67 2003/07/15 02:15:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.68 2004/02/13 11:36:20 wiz Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -65,8 +65,8 @@ paddr_t esym;
 struct user *proc0paddr;
 
 /*
- * The strict cpu-dependent information is set up here, in
- * form of a pointer to a struct that is specific for each cpu.
+ * The strict CPU-dependent information is set up here, in
+ * form of a pointer to a struct that is specific for each CPU.
  */
 extern struct cpu_dep ka780_calls;
 extern struct cpu_dep ka750_calls;

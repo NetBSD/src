@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.156 2004/01/23 04:44:20 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.157 2004/02/13 11:36:16 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2004/01/23 04:44:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2004/02/13 11:36:16 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -885,7 +885,7 @@ map(pd, virtual, physical, protection, size)
  * The intbase register is initialized to point to the interrupt
  * vector table in locore.s.
  *
- * The cpu config register gets set.
+ * The CPU config register gets set.
  *
  * avail_start, avail_end, physmem and proc0paddr are set
  * to the correct values.
@@ -1041,7 +1041,7 @@ init532()
 
 /*
  * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
+ *	CPU-dependent a.out format hook for execve().
  *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.

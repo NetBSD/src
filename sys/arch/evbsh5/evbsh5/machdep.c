@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2003/12/30 12:33:16 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2004/02/13 11:36:12 wiz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2003/12/30 12:33:16 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2004/02/13 11:36:12 wiz Exp $");
 
 #include "opt_sh5_debug.h"
 #include "opt_sh5_cpu.h"
@@ -284,7 +284,7 @@ compute_ctc_tick_per_us(void)
 	bus_space_write_1(bt, bh, RTC_REG_RCR2, RTC_RCR2_START|RTC_RCR2_RTCEN);
 
 	/*
-	 * Set the cpu cycle counter to a reasonably high value such that
+	 * Set the CPU cycle counter to a reasonably high value such that
 	 * it won't wrap around in the loop
 	 */
 	ctcstart = 0xffffffff;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2003/08/07 16:29:33 agc Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 2004/02/13 11:36:17 wiz Exp $	*/
 
 /*
  * Copyright 1997
@@ -154,7 +154,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2003/08/07 16:29:33 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2004/02/13 11:36:17 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,7 @@ void
 startrtclock()
 {
 	findcpuspeed();		/* use the clock (while it's free)
-					to find the cpu speed */
+					to find the CPU speed */
 
 	init_isa_timer_tables(); 
 

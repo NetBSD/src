@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.10 2003/08/18 21:30:51 eeh Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.11 2004/02/13 11:36:12 wiz Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ __start:
 	mtdcr	DCR_OCM0_DSCNTL, %r0  	/* Disable Data access to OCM */
 	mtdcr	DCR_OCM0_ISCNTL, %r0  	/* Disable Instruction access to OCM. Just in case */
 /*
- * Cpu detect.
+ * CPU detect.
  *
  */
 __start_cpu0:

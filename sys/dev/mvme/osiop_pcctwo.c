@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_pcctwo.c,v 1.6 2003/11/26 14:29:37 scw Exp $	*/
+/*	$NetBSD: osiop_pcctwo.c,v 1.7 2004/02/13 11:36:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.6 2003/11/26 14:29:37 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.7 2004/02/13 11:36:22 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,8 +125,8 @@ osiop_pcctwo_attach(parent, self, args)
 	sc = (struct osiop_pcctwo_softc *) self;
 
 	/*
-	 * On the '17x the siop's clock is the same as the cpu clock.
-	 * On the other boards, the siop runs at twice the cpu clock.
+	 * On the '17x the siop's clock is the same as the CPU clock.
+	 * On the other boards, the siop runs at twice the CPU clock.
 	 * Also, the 17x cannot do proper bus-snooping (the 68060 is
 	 * lame in this repspect) so don't enable it on that board.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.49 2003/09/06 12:58:48 rearnsha Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.50 2004/02/13 11:36:12 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.49 2003/09/06 12:58:48 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.50 2004/02/13 11:36:12 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -399,7 +399,7 @@ initarm(void *arg)
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	if (set_cpufuncs())
-		panic("cpu not recognized!");
+		panic("CPU not recognized!");
 
 #if NPLCOM > 0 && defined(PLCONSOLE)
 	/*

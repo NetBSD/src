@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.23 2004/02/09 13:11:21 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.24 2004/02/13 11:36:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.23 2004/02/09 13:11:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.24 2004/02/13 11:36:23 wiz Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -486,7 +486,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	l2->l_cpu = l1->l_cpu;
 #else
 	/*
-	 * zero child's cpu pointer so we don't get trash.
+	 * zero child's CPU pointer so we don't get trash.
 	 */
 	l2->l_cpu = NULL;
 #endif /* ! MULTIPROCESSOR */

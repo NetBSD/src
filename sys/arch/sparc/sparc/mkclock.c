@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.9 2003/11/02 12:59:18 tsutsui Exp $ */
+/*	$NetBSD: mkclock.c,v 1.10 2004/02/13 11:36:18 wiz Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.9 2003/11/02 12:59:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.10 2004/02/13 11:36:18 wiz Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -149,7 +149,7 @@ clockattach_mainbus(parent, self, aux)
 	 * this read-only and make it read-write only temporarily,
 	 * whenever we read or write the clock chip.  The clock also
 	 * contains the ID ``PROM'', and I have already had the pleasure
-	 * of reloading the cpu type, Ethernet address, etc, by hand from
+	 * of reloading the CPU type, Ethernet address, etc, by hand from
 	 * the console FORTH interpreter.  I intend not to enjoy it again.
 	 */
 	if (bus_space_map(sc->sc_bst,

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.30 2003/07/15 00:25:04 lukem Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.31 2004/02/13 11:36:12 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.30 2003/07/15 00:25:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.31 2004/02/13 11:36:12 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -425,7 +425,7 @@ initarm(void *arg)
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	if (set_cpufuncs())
-		panic("cpu not recognized!");
+		panic("CPU not recognized!");
 
 	/*
 	 * We are currently running with the MMU enabled and the

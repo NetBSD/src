@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.189 2004/01/22 01:20:16 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.190 2004/02/13 11:36:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -203,7 +203,7 @@ struct proc {
 
 	/* scheduling */
 	u_int		p_estcpu;	/* Time averaged value of p_cpticks XXX belongs in p_startcopy section */
-	int		p_cpticks;	/* Ticks of cpu time */
+	int		p_cpticks;	/* Ticks of CPU time */
 	fixpt_t		p_pctcpu;	/* %cpu for this process during p_swtime */
 
 	struct proc	*p_opptr;	/* Save parent during ptrace. */

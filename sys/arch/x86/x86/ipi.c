@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.4 2003/10/26 11:30:42 yamt Exp $	*/
+/*	$NetBSD: ipi.c,v 1.5 2004/02/13 11:36:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.4 2003/10/26 11:30:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.5 2004/02/13 11:36:20 wiz Exp $");
 
 #include <sys/param.h> 
 #include <sys/device.h>
@@ -59,7 +59,7 @@ x86_send_ipi(struct cpu_info *ci, int ipimask)
 
 	x86_atomic_setbits_l(&ci->ci_ipis, ipimask);
 
-	/* Don't send IPI to cpu which isn't (yet) running. */
+	/* Don't send IPI to CPU which isn't (yet) running. */
 	if (!(ci->ci_flags & CPUF_RUNNING))
 		return ENOENT;
 

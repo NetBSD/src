@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.74 2004/01/23 04:12:39 simonb Exp $	*/
+/*	$NetBSD: locore.s,v 1.75 2004/02/13 11:36:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -507,7 +507,7 @@ KENTRY(fuword, 4)
 	movd	S_ARG0,r0
 	/*
 	 * MACH's locore.s code says that
-	 * due to cpu bugs the destination
+	 * due to CPU bugs the destination
 	 * of movusi can't be a register or tos.
 	 */
 	movusd	0(r0),S_ARG0

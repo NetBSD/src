@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.5 2003/07/15 03:35:59 lukem Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.6 2004/02/13 11:36:17 wiz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5 2003/07/15 03:35:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6 2004/02/13 11:36:17 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,7 @@ _bus_space_alloc(void *cookie, bus_addr_t reg_start, bus_addr_t reg_end,
     int flags, bus_addr_t *addrp, bus_space_handle_t *bushp)
 {
 
-	/* Not required for the cpu bus */
+	/* Not required for the CPU bus */
 	return (EIO);
 }
 

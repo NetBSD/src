@@ -1,4 +1,4 @@
-/*	$NetBSD: le_bus.c,v 1.7 2003/07/15 01:19:44 lukem Exp $	*/
+/*	$NetBSD: le_bus.c,v 1.8 2004/02/13 11:36:11 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.7 2003/07/15 01:19:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.8 2004/02/13 11:36:11 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -558,7 +558,7 @@ leb_bus_space_write_stream_8(t, h, o, v)
  *
  * Read 'count' 1, 2, 4, or 8 byte values from the bus_space described by
  * tag/handle at `offset' and store them in the address range starting at
- * 'address'. The values are converted to cpu endian order before being
+ * 'address'. The values are converted to CPU endian order before being
  * being stored.
  */
 static void
