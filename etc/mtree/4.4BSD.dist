@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.12 1995/11/28 05:40:30 jtc Exp $
+#	$Id: 4.4BSD.dist,v 1.13 1995/11/30 16:34:26 pk Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -19,7 +19,7 @@ bin
 dev
 
 # ./dev/fd
-fd
+fd		gname=bin uname=bin mode=0555
 # ./dev/fd
 ..
 
@@ -112,18 +112,18 @@ hide            gname=games uname=games mode=0700
 ..
 
 # ./usr/include
-include
+include		gname=bin uname=bin mode=0555
 
 # ./usr/include/arpa
-arpa
+arpa		gname=bin uname=bin mode=0555
 # ./usr/include/arpa
 ..
 
 # ./usr/include/g++
-g++
+g++		gname=bin uname=bin mode=0555
 
 # ./usr/include/g++/gen
-gen
+gen		gname=bin uname=bin mode=0555
 # ./usr/include/g++/gen
 ..
 
@@ -131,22 +131,22 @@ gen
 ..
 
 # ./usr/include/kerberosIV
-kerberosIV
+kerberosIV		gname=bin uname=bin mode=0555
 # ./usr/include/kerberosIV
 ..
 
 # ./usr/include/protocols
-protocols
+protocols		gname=bin uname=bin mode=0555
 # ./usr/include/protocols
 ..
 
 # ./usr/include/rpc
-rpc
+rpc		gname=bin uname=bin mode=0555
 # ./usr/include/rpc
 ..
 
 # ./usr/include/rpcsvc
-rpcsvc
+rpcsvc		gname=bin uname=bin mode=0555
 # ./usr/include/rpcsvc
 ..
 
@@ -841,15 +841,15 @@ generate
 ..
 
 # ./usr/share/lkm
-lkm
+l		gname=bin uname=bin mode=0555km
 
 # ./usr/share/lkm/misc
-misc
+misc		gname=bin uname=bin mode=0555
 # ./usr/share/lkm/misc
 ..
 
 # ./usr/share/lkm/syscall
-syscall
+syscall		gname=bin uname=bin mode=0555
 # ./usr/share/lkm/syscall
 ..
 
@@ -1223,40 +1223,40 @@ mm
 ..
 
 # ./usr/share/zoneinfo
-zoneinfo         mode=0555
+zoneinfo         gname=bin uname=bin mode=0555
 
 # ./usr/share/zoneinfo/Australia
-Australia        mode=0555
+Australia        gname=bin uname=bin mode=0555
 # ./usr/share/zoneinfo/Australia
 ..
 
 # ./usr/share/zoneinfo/Brazil
-Brazil           mode=0555
+Brazil           gname=bin uname=bin mode=0555
 # ./usr/share/zoneinfo/Brazil
 ..
 
 # ./usr/share/zoneinfo/Canada
-Canada           mode=0555
+Canada           gname=bin uname=bin mode=0555
 # ./usr/share/zoneinfo/Canada
 ..
 
 # ./usr/share/zoneinfo/Chile
-Chile            mode=0555
+Chile            gname=bin uname=bin mode=0555
 # ./usr/share/zoneinfo/Chile
 ..
 
 # ./usr/share/zoneinfo/Mexico
-Mexico           mode=0555
+Mexico           gname=bin uname=bin mode=0555
 # ./usr/share/zoneinfo/Mexico
 ..
 
 # ./usr/share/zoneinfo/SystemV
-SystemV          mode=0555
+SystemV          gname=bin uname=bin mode=0555
 # ./usr/share/zoneinfo/SystemV
 ..
 
 # ./usr/share/zoneinfo/US
-US               mode=0555
+US               gname=bin uname=bin mode=0555
 # ./usr/share/zoneinfo/US
 ..
 
