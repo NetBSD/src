@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.101 2001/11/14 20:18:11 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.102 2001/12/02 22:44:33 bouyer Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.101 2001/11/14 20:18:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.102 2001/12/02 22:44:33 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.101 2001/11/14 20:18:11 bouyer Exp $");
 #define bus_space_read_multi_stream_4	bus_space_read_multi_4
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
+#include <dev/ata/wdvar.h>
 #include <dev/ata/atavar.h>
 #include <dev/ata/atareg.h>
 #include <dev/ic/wdcreg.h>
@@ -114,6 +115,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.101 2001/11/14 20:18:11 bouyer Exp $");
 #endif
 
 struct pool wdc_xfer_pool;
+
+const struct ata_bustype wdc_ata_bustype = {SCSIPI_BUSTYPE_ATA};
 
 static void  __wdcerror	  __P((struct channel_softc*, char *));
 static int   __wdcwait_reset  __P((struct channel_softc *, int));
@@ -143,23 +146,11 @@ wdprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	struct ata_atapi_attach *aa_link = aux;
+	struct ata_device *adev = aux;
 	if (pnp)
 		printf("drive at %s", pnp);
-	printf(" channel %d drive %d", aa_link->aa_channel,
-	    aa_link->aa_drv_data->drive);
-	return (UNCONF);
-}
-
-int
-atapiprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct ata_atapi_attach *aa_link = aux;
-	if (pnp)
-		printf("atapibus at %s", pnp);
-	printf(" channel %d", aa_link->aa_channel);
+	printf(" channel %d drive %d", adev->adev_channel,
+	    adev->adev_drv_data->drive);
 	return (UNCONF);
 }
 
@@ -295,7 +286,6 @@ wdcattach(chp)
 	struct channel_softc *chp;
 {
 	int channel_flags, ctrl_flags, i, error;
-	struct ata_atapi_attach aa_link;
 	struct ataparams params;
 	static int inited = 0;
 
@@ -423,32 +413,26 @@ wdcattach(chp)
 		wdc_atapibus_attach(chp);
 #else
 		/*
-		 * Fills in a fake aa_link and call config_found, so that
-		 * the config machinery will print
-		 * "atapibus at xxx not configured"
+		 * Fake the autoconfig "not configured" message
 		 */
-		memset(&aa_link, 0, sizeof(struct ata_atapi_attach));
-		aa_link.aa_type = T_ATAPI;
-		aa_link.aa_channel = chp->channel;
-		aa_link.aa_openings = 1;
-		aa_link.aa_drv_data = 0;
-		aa_link.aa_bus_private = NULL;
-		chp->atapibus = config_found(&chp->wdc->sc_dev,
-		    (void *)&aa_link, atapiprint);
+		printf("atapibus at %s channel %s not configured\n",
+		    chp->wdc->sc_dev.dv_xname, chp->channel);
+		chp->atapibus = NULL;
 #endif
 	}
 
 	for (i = 0; i < 2; i++) {
+		struct ata_device adev;
 		if ((chp->ch_drive[i].drive_flags &
 		    (DRIVE_ATA | DRIVE_OLD)) == 0) {
 			continue;
 		}
-		memset(&aa_link, 0, sizeof(struct ata_atapi_attach));
-		aa_link.aa_type = T_ATA;
-		aa_link.aa_channel = chp->channel;
-		aa_link.aa_openings = 1;
-		aa_link.aa_drv_data = &chp->ch_drive[i];
-		if (config_found(&chp->wdc->sc_dev, (void *)&aa_link, wdprint))
+		memset(&adev, 0, sizeof(struct ata_device));
+		adev.adev_bustype = &wdc_ata_bustype;
+		adev.adev_channel = chp->channel;
+		adev.adev_openings = 1;
+		adev.adev_drv_data = &chp->ch_drive[i];
+		if (config_found(&chp->wdc->sc_dev, (void *)&adev, wdprint))
 			wdc_probe_caps(&chp->ch_drive[i]);
 	}
 
@@ -583,6 +567,8 @@ wdcdetach(self, flags)
 		 * Detach our other children.
 		 */
 		for (j = 0; j < 2; j++) {
+			if (chp->ch_drive[j].drive_flags & DRIVE_ATAPI)
+				continue;
 			sc = chp->ch_drive[j].drv_softc;
 			WDCDEBUG_PRINT(("wdcdetach: %s: detaching %s\n",
 			    wdc->sc_dev.dv_xname,

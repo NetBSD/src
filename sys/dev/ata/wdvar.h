@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.7 2001/07/08 18:06:45 wiz Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.8 2001/12/02 22:44:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -59,6 +59,30 @@ struct ata_bio {
 #define ERR_NODEV 5 /* device has been gone */
     u_int8_t r_error; /* copy of error register */
     daddr_t badsect[127];    /* 126 plus trailing -1 marker */
+};
+
+/*
+ * ata_bustype. The first field has to be compatible with scsipi_bustype,
+ * as it's used for autoconfig by both ata and atapi drivers
+ */
+  
+struct ata_bustype {
+	int bustype_type;	/* symbolic name of type */
+};
+/* bustype_type */
+/* #define SCSIPI_BUSTYPE_SCSI	0 */
+/* #define SCSIPI_BUSTYPE_ATAPI	1 */
+#define SCSIPI_BUSTYPE_ATA	2
+
+/*
+ * describe an ATA device. Has to be compatible with scsipi_channel, so start
+ * with a pointer to ata_bustype
+ */
+struct ata_device {
+	const struct ata_bustype *adev_bustype;
+	int adev_channel;
+	int adev_openings;
+	struct ata_drive_datas *adev_drv_data;
 };
 
 int wdc_ata_bio __P((struct ata_drive_datas*, struct ata_bio*)); 

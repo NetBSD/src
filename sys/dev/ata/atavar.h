@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.20 2001/12/01 00:00:30 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.21 2001/12/02 22:44:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -89,24 +89,6 @@ struct ata_drive_datas {
 
     struct device *drv_softc; /* ATA drives softc, if any */
     void* chnl_softc; /* channel softc */
-};
-
-/* ATA/ATAPI common attachement datas */
-/*
- * XXX Small hack alert
- * NOTE:  The first field of struct ata_atapi_attach is shared with 
- * dev/scspi/scsipiconf.h's struct scsipi_channel.  This allows
- * atapibus and scsibus to attach to the same device.
- */
-struct ata_atapi_attach {
-    u_int8_t aa_type; /* Type of device */
-/*#define T_SCSI 0*/
-#define T_ATAPI 1
-#define T_ATA 2
-    u_int8_t aa_channel; /* controller's channel */
-    u_int8_t aa_openings; /* Number of simultaneous commands possible */
-    struct ata_drive_datas *aa_drv_data;
-    void *aa_bus_private; /* infos specifics to this bus */
 };
 
 /* User config flags that force (or disable) the use of a mode */

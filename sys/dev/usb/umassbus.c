@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.14 2001/11/25 19:05:23 augustss Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.15 2001/12/02 22:44:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umassbus.c,v 1.14 2001/11/25 19:05:23 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umassbus.c,v 1.15 2001/12/02 22:44:34 bouyer Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -131,7 +131,6 @@ umass_attach_bus(struct umass_softc *sc)
 		sc->bus.sc_channel.chan_ntargets = UMASS_SCSIID_DEVICE + 1;
 		sc->bus.sc_channel.chan_nluns = sc->maxlun + 1;
 		sc->bus.sc_channel.chan_id = UMASS_SCSIID_HOST;
-		sc->bus.sc_channel.type = BUS_SCSI;
 		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n",
 				     USBDEVNAME(sc->sc_dev)));
 		sc->bus.sc_child =
@@ -148,17 +147,12 @@ umass_attach_bus(struct umass_softc *sc)
 		sc->bus.sc_channel.chan_ntargets = 2;
 		sc->bus.sc_channel.chan_nluns = 1;
 
-		sc->bus.aa.sc_aa.aa_type = T_ATAPI;
-		sc->bus.aa.sc_aa.aa_channel = 0;
-		sc->bus.aa.sc_aa.aa_openings = 1;
-		sc->bus.aa.sc_aa.aa_drv_data = &sc->bus.aa.sc_aa_drive;
-		sc->bus.aa.sc_aa.aa_bus_private = &sc->bus.sc_channel;
 		if (sc->quirks & NO_TEST_UNIT_READY)
 			sc->bus.sc_channel.chan_defquirks |= PQUIRK_NOTUR;
 		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n",
 				     USBDEVNAME(sc->sc_dev)));
 		sc->bus.sc_child =
-		    config_found(&sc->sc_dev, &sc->bus.aa.sc_aa, scsipiprint);
+		    config_found(&sc->sc_dev, &sc->bus.sc_channel, scsipiprint);
 #else
 		printf("%s: atapibus not configured\n", USBDEVNAME(sc->sc_dev));
 #endif
@@ -193,14 +187,12 @@ scsipiprint(void *aux, const char *pnp)
 #endif
 	} else {
 #if NATAPIBUS > 0
-		struct ata_atapi_attach *aa_link = aux;
-#endif
+		return (atapiprint(aux, pnp));
+#else
 		if (pnp)
 			printf("atapibus at %s", pnp);
-#if NATAPIBUS > 0
-		printf(" channel %d", aa_link->aa_channel);
-#endif
 		return (UNCONF);
+#endif
 	}
 }
 
@@ -557,7 +549,6 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 	struct scsipi_channel *chan = atapi->sc_channel;
 	struct scsipi_periph *periph;
 	struct scsipibus_attach_args sa;
-	struct ata_drive_datas *drvp = &atapi->sc_drvs[target];
 	char vendor[33], product[65], revision[17];
 	struct scsipi_inquiry_data inqbuf;
 
@@ -611,7 +602,7 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 
 	DPRINTF(UDMASS_SCSI, ("umass_atapi_probedev: doing atapi_probedev on "
 			      "'%s' '%s' '%s'\n", vendor, product, revision));
-	drvp->drv_softc = atapi_probe_device(atapi, target, periph, &sa);
+	atapi_probe_device(atapi, target, periph, &sa);
 	/* atapi_probe_device() frees the periph when there is no device.*/
 }
 #endif
