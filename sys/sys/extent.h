@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.7 1998/01/21 22:33:51 thorpej Exp $	*/
+/*	$NetBSD: extent.h,v 1.8 1998/06/06 02:25:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #ifndef _SYS_EXTENT_H_
 #define _SYS_EXTENT_H_
 
+#include <sys/lock.h>
 #include <sys/queue.h>
 
 struct extent_region {
@@ -53,6 +54,7 @@ struct extent_region {
 
 struct extent {
 	const char *ex_name;		/* name of extent */
+	struct simplelock ex_slock;	/* lock on this extent */
 					/* allocated regions in extent */
 	LIST_HEAD(, extent_region) ex_regions;
 	u_long	ex_start;		/* start of extent */
