@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.283 2005/02/19 14:32:51 jdolecek Exp $
+#	$NetBSD: 3RDPARTY,v 1.284 2005/02/19 16:55:04 thorpej Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -310,6 +310,16 @@ Mailing List:	ipfilter@postbox.anu.edu.au
 Responsible:	darrenr, mike, martti
 Notes:
 ipf2netbsd should be used on a virgin ipfilter source tree.
+
+Package:	ipsec-tools
+Version:	0.6-base
+Current Vers:	0.4
+Maintainer:	IPsec-Tools project <ipsec-tools-core@lists.sourceforge.net>
+Archive Site:	http://ipsec-tools.sf.net
+Mailing List:	ipsec-tools-devel@lists.sourceforge.net
+Responsible:	manu
+Notes:
+Don't forget to remove .cvsignore files when importing newer versions
 
 Package:	KAME IPv6
 Version:	KAME/NetBSD SNAP kit

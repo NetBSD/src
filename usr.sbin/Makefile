@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.197 2005/01/11 18:31:12 skrll Exp $
+#	$NetBSD: Makefile,v 1.198 2005/02/19 16:55:04 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -43,7 +43,7 @@ SUBDIR+=faithd ifmcstat mld6query ndp \
 SUBDIR+=pvcsif pvctxctl
 
 .if (${MKCRYPTO} != "no")
-SUBDIR+= racoon
+SUBDIR+= racoon racoonctl
 .endif
 
 # PF
