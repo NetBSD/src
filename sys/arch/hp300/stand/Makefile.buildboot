@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.7 1999/11/13 21:19:27 thorpej Exp $
+#	$NetBSD: Makefile.buildboot,v 1.8 1999/12/14 20:54:04 thorpej Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -15,6 +15,9 @@ CLEANFILES+=	${PROGAOUT} vers.c vers.o
 
 CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CFLAGS=		-O3 -msoft-float
+
+CPPFLAGS+=	-DBOOT_AOUT
+#CPPFLAGS+=	-DBOOT_ELF
 
 ${PROG}: ${PROGAOUT} ${MKBOOT_PROG}
 	${MKBOOT_PROG} ${PROGAOUT} ${PROG}
@@ -33,7 +36,8 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
-SAMISCMAKEFLAGS= SA_USE_CREAD=yes
+SAMISCMAKEFLAGS+="SA_USE_CREAD=yes"
+SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
