@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.14 2002/11/10 18:10:26 thorpej Exp $	*/
+/*	$NetBSD: brk.S,v 1.15 2003/05/23 06:36:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)brk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: brk.S,v 1.14 2002/11/10 18:10:26 thorpej Exp $")
+	ASMSTR("$NetBSD: brk.S,v 1.15 2003/05/23 06:36:10 simonb Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 	.globl	_C_LABEL(__minbrk)
@@ -75,4 +75,4 @@ LEAF(_brk)
 2:
 	la	t9, _C_LABEL(__cerror)
 	jr	t9
-END(brk)
+END(_brk)
