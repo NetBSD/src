@@ -10,8 +10,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_tan.c,v 1.7 1995/05/10 20:48:18 jtc Exp $";
+__RCSID("$NetBSD: s_tan.c,v 1.8 1997/10/09 11:33:35 lukem Exp $");
 #endif
 
 /* tan(x)
