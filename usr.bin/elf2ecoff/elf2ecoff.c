@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.14 2000/03/13 23:22:51 soren Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.15 2002/03/19 09:29:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -288,7 +288,16 @@ usage:
 	memset(&ep.a.cprmask, 0, sizeof ep.a.cprmask);
 	ep.a.gp_value = 0;	/* unused. */
 
-	ep.f.f_magic = ECOFF_MAGIC_MIPSEL;
+	if (ex.e_ident[EI_DATA] == ELFDATA2LSB)
+		ep.f.f_magic = ECOFF_MAGIC_MIPSEL;
+	else if (ex.e_ident[EI_DATA] == ELFDATA2MSB)
+		ep.f.f_magic = ECOFF_MAGIC_MIPSEB;
+	else {
+		fprintf(stderr, "invalid ELF byte order %d\n",
+		    ex.e_ident[EI_DATA]);
+		exit(1);
+	}
+
 	ep.f.f_nscns = 6;
 	ep.f.f_timdat = 0;	/* bogus */
 	ep.f.f_symptr = 0;
