@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.83 1998/08/07 06:59:31 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.84 1998/08/26 14:18:26 dante Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -248,7 +248,7 @@
 #define	PCI_VENDOR_FUJITSU	0x10ca		/* Fujitsu */
 #define	PCI_VENDOR_OMRON	0x10cb		/* Omron */
 #define	PCI_VENDOR_MENTOR	0x10cc		/* Mentor ARC */
-#define	PCI_VENDOR_ADVSYSPROD	0x10cd		/* Advanced System Products */
+#define	PCI_VENDOR_ADVSYS	0x10cd		/* Advanced System Products */
 #define	PCI_VENDOR_RADIUS	0x10ce		/* Radius */
 #define	PCI_VENDOR_CITICORP	0x10cf		/* Citicorp TTI */
 #define	PCI_VENDOR_FUJITSU2	0x10d0		/* Fujitsu Limited (2nd PCI Vendor ID) */
@@ -587,6 +587,12 @@
 #define	PCI_PRODUCT_ADP_2940U	0x8178		/* AHA-2940 Ultra */
 #define	PCI_PRODUCT_ADP_3940U	0x8278		/* AHA-3940 Ultra */
 #define	PCI_PRODUCT_ADP_2944U	0x8478		/* AHA-2944 Ultra */
+
+/* Advanced System Products */
+#define	PCI_PRODUCT_ADVSYS_1200A	0x1100	
+#define	PCI_PRODUCT_ADVSYS_1200B	0x1200	
+#define	PCI_PRODUCT_ADVSYS_ULTRA	0x1300		/* ABP-930/40UA */
+#define	PCI_PRODUCT_ADVSYS_2300	0x2300	
 
 /* Alliance products */
 #define	PCI_PRODUCT_ALLIANCE_AT24	0x6424		/* AT24 */

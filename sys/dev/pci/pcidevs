@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.76 1998/08/07 06:58:57 thorpej Exp $
+$NetBSD: pcidevs,v 1.77 1998/08/26 14:18:26 dante Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -241,7 +241,7 @@ vendor DATAEXPERT	0x10c9	Dataexpert
 vendor FUJITSU		0x10ca	Fujitsu
 vendor OMRON		0x10cb	Omron
 vendor MENTOR		0x10cc	Mentor ARC
-vendor ADVSYSPROD	0x10cd	Advanced System Products
+vendor ADVSYS		0x10cd	Advanced System Products
 vendor RADIUS		0x10ce	Radius
 vendor CITICORP		0x10cf	Citicorp TTI
 vendor FUJITSU2		0x10d0	Fujitsu Limited (2nd PCI Vendor ID)
@@ -580,6 +580,12 @@ product ADP AIC7880	0x8078	AIC-7880 Ultra
 product ADP 2940U	0x8178	AHA-2940 Ultra
 product ADP 3940U	0x8278	AHA-3940 Ultra
 product ADP 2944U	0x8478	AHA-2944 Ultra
+
+/* Advanced System Products */
+product ADVSYS 1200A	0x1100
+product ADVSYS 1200B	0x1200
+product ADVSYS ULTRA	0x1300	ABP-930/40UA
+product ADVSYS 2300	0x2300
 
 /* Alliance products */
 product ALLIANCE AT24	0x6424	AT24

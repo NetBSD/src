@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.82 1998/08/07 06:59:31 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.83 1998/08/26 14:18:26 dante Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -314,6 +314,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec",
 	    "AHA-2944 Ultra",
+	},
+	{
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
+	    0,
+	    "Advanced System Products",
+	    "",
+	},
+	{
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200B,
+	    0,
+	    "Advanced System Products",
+	    "",
+	},
+	{
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_ULTRA,
+	    0,
+	    "Advanced System Products",
+	    "ABP-930/40UA",
+	},
+	{
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_2300,
+	    0,
+	    "Advanced System Products",
+	    "",
 	},
 	{
 	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT24,
@@ -3478,7 +3502,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_ADVSYSPROD, 0,
+	    PCI_VENDOR_ADVSYS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Advanced System Products",
 	    NULL,
