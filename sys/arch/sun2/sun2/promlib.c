@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.4 2001/06/14 13:21:39 fredette Exp $	*/
+/*	$NetBSD: promlib.c,v 1.5 2001/08/16 01:47:45 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -167,8 +167,19 @@ PROMLIB_FUNC(int, prom_stdin, (void), inSource, + 0, return(rc))
 PROMLIB_FUNC(int, prom_stdout, (void), outSink, + 0, return(rc))
 PROMLIB_FUNC(int, prom_getchar, (void), getChar, (), return(rc))
 PROMLIB_FUNC(int, prom_peekchar, (void), mayGet, (), return(rc))
-PROMLIB_FUNC(void, prom_putchar, (int c), fbWriteChar, (c), return)
-PROMLIB_FUNC(void, prom_putstr, (char *buf, int len), fbWriteStr, (buf, len), return)
+PROMLIB_FUNC(void, prom_putchar, (int c), putChar, (c), return)
+
+void prom_putstr(buf, len)
+	char *buf;
+	int len;
+{
+	struct kernel_state state;
+	_mode_monitor(&state, 0);
+	for(; len > 0; buf++, len--) {
+		(*(romVectorPtr->putChar))((int) (*buf));
+	}
+	_mode_kernel(&state, 0);
+}
 
 /*
  * printf is difficult, because it's a varargs function.
