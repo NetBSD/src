@@ -1,4 +1,4 @@
-/*	$NetBSD: sf_isinf.c,v 1.1.1.1 1999/09/16 12:18:26 takemura Exp $	*/
+/*	$NetBSD: sf_isinf.c,v 1.2 2000/01/22 22:45:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -38,8 +38,8 @@
 #include <math.h>
 
 #ifdef __weak_alias
-__weak_alias(isnan,_isnan);
-__weak_alias(isinf,_isinf);
+__weak_alias(isnan,_isnan)
+__weak_alias(isinf,_isinf)
 #endif
 
 int
