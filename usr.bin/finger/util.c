@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.17 2001/02/05 01:56:51 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.18 2002/08/02 00:10:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.17 2001/02/05 01:56:51 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.18 2002/08/02 00:10:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,8 @@ __RCSID("$NetBSD: util.c,v 1.17 2001/02/05 01:56:51 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <utmp.h>
+
+#include "utmpentry.h"
 
 #include "finger.h"
 #include "extern.h"
@@ -172,28 +174,27 @@ enter_lastlog(pn)
 	if (doit) {
 		w = walloc(pn);
 		w->info = LASTLOG;
-		memcpy(w->tty, ll.ll_line, UT_LINESIZE);
-		w->tty[UT_LINESIZE] = 0;
-		memcpy(w->host, ll.ll_host, UT_HOSTSIZE);
-		w->host[UT_HOSTSIZE] = 0;
+		memcpy(w->tty = malloc(UT_LINESIZE + 1),
+		    ll.ll_line, UT_LINESIZE);
+		w->tty[UT_LINESIZE + 1] = '\0';
+		memcpy(w->host = malloc(UT_HOSTSIZE + 1),
+		    ll.ll_host, UT_HOSTSIZE);
+		w->host[UT_HOSTSIZE + 1] = '\0';
 		w->loginat = ll.ll_time;
 	}
 }
 
 void
-enter_where(ut, pn)
-	struct utmp *ut;
+enter_where(ep, pn)
+	struct utmpentry *ep;
 	PERSON *pn;
 {
-	WHERE *w;
+	WHERE *w = walloc(pn);
 
-	w = walloc(pn);
 	w->info = LOGGEDIN;
-	memcpy(w->tty, ut->ut_line, UT_LINESIZE);
-	w->tty[UT_LINESIZE] = 0;
-	memcpy(w->host, ut->ut_host, UT_HOSTSIZE);
-	w->host[UT_HOSTSIZE] = 0;
-	w->loginat = (time_t)ut->ut_time;
+	w->tty = ep->line;
+	w->host = ep->host;
+	w->loginat = (time_t)ep->tv.tv_sec;;
 	find_idle_and_ttywrite(w);
 }
 
@@ -240,16 +241,11 @@ find_person(name)
 	int cnt;
 	DBT data, key;
 	PERSON *p;
-	char buf[UT_NAMESIZE + 1];
 
 	if (!db)
 		return(NULL);
 
-	/* Name may be only UT_NAMESIZE long and not NUL terminated. */
-	for (cnt = 0; cnt < UT_NAMESIZE && *name; ++name, ++cnt)
-		buf[cnt] = *name;
-	buf[cnt] = '\0';
-	key.data = buf;
+	key.data = name;
 	key.size = cnt;
 
 	if ((*db->get)(db, &key, &data, 0))

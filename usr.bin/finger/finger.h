@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.h,v 1.7 2001/02/05 01:56:38 christos Exp $	*/
+/*	$NetBSD: finger.h,v 1.8 2002/08/02 00:10:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -67,6 +67,6 @@ typedef struct where {
 	short writable;			/* tty is writable */
 	time_t loginat;			/* time of (last) login */
 	time_t idletime;		/* how long idle (if logged in) */
-	char tty[UT_LINESIZE+1];	/* null terminated tty line */
-	char host[UT_HOSTSIZE+1];	/* null terminated remote host name */
+	char *tty;			/* tty line */
+	char *host;			/* remote host name */
 } WHERE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sprint.c,v 1.10 1998/12/19 16:01:01 christos Exp $	*/
+/*	$NetBSD: sprint.c,v 1.11 2002/08/02 00:10:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sprint.c,v 1.10 1998/12/19 16:01:01 christos Exp $");
+__RCSID("$NetBSD: sprint.c,v 1.11 2002/08/02 00:10:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,8 @@ __RCSID("$NetBSD: sprint.c,v 1.10 1998/12/19 16:01:01 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "utmpentry.h"
 
 #include "finger.h"
 #include "extern.h"
