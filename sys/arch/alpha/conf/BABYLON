@@ -1,4 +1,4 @@
-# $NetBSD: BABYLON,v 1.12 1999/01/23 16:10:47 drochner Exp $
+# $NetBSD: BABYLON,v 1.13 1999/02/18 20:39:04 thorpej Exp $
 #
 #	BABYLON -- babylon.netbsd.org, the new mail server
 #
@@ -194,6 +194,7 @@ spkr*	at	pcppi?
 com0	at	isa? port 0x3f8 irq 4		# standard serial ports
 com1	at	isa? port 0x2f8 irq 3
 #ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
+fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 #lc*	at	isa? port ? iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #le*	at	isa? port 0x320 irq 10 drq 7	# IsoLan, NE2100, DEPCA (unt.)
 lpt0	at	isa? port 0x3bc irq 7		# standard parallel port
@@ -251,6 +252,9 @@ atapibus* at	pciide? channel ?
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices
 cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
+
+# Floppy drives
+fd*	at	fdc? drive ?
 
 # Workstation Console attachments
 #wsdisplay*	at	cfb?

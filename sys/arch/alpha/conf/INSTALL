@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.21 1999/01/25 07:55:32 ross Exp $
+# $NetBSD: INSTALL,v 1.22 1999/02/18 20:39:05 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -150,6 +150,7 @@ pms*	at	pckbc?				# PS/2-style mouse (aux port)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
+fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 lc*	at	isa? port ? iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #le*	at	isa? port 0x320 irq 10 drq 7	# IsoLan, NE2100, DEPCA (unt.)
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
@@ -186,6 +187,9 @@ atapibus* at	wdc?
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices
 cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
+
+# Floppy drives
+fd*	at	fdc? drive ?
 
 # Workstation Console attachments
 wsdisplay*	at	vga?
