@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 1997/02/04 03:53:06 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 1999/12/14 20:55:28 thorpej Exp $
 
 PROGAOUT=	uboot
 PROGSOURCE=	uboot.c tgets.c
 NEWVERSWHAT=	"Primary Boot"
+
+CPPFLAGS+=	-DSUPPORT_ETHERNET -DSUPPORT_TAPE -DSUPPORT_DISK
 
 install:
 	${INSTALL} -d -m 755 -o ${BINOWN} -g ${BINGRP} \
