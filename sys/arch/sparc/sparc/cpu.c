@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.40 1997/04/18 19:51:05 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.41 1997/05/06 21:00:54 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -867,7 +867,7 @@ struct module_info module_cypress = {		/* UNTESTED */
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	cypress_pcache_flush_line
+	srmmu_pcache_flush_line
 };
 
 void
@@ -889,14 +889,14 @@ struct module_info module_turbosparc = {	/* UNTESTED */
 	0,
 	0,
 	turbosparc_cache_enable,
-	4096,
+	256,
 	srmmu_get_fltstatus,
 	srmmu_cache_flush,
 	srmmu_vcache_flush_page,
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	noop_pcache_flush_line
+	srmmu_pcache_flush_line
 };
 
 void
@@ -905,7 +905,6 @@ cpumatch_turbosparc(sc, mp, node)
 	struct module_info *mp;
 	int	node;
 {
-	sc->flags |= CPUFLG_CACHEPAGETABLES;
 	sc->cpu_type = CPUTYP_MS2;
 }
 

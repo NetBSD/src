@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.26 1997/04/11 20:06:53 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.27 1997/05/06 21:00:56 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -640,9 +640,6 @@ viking_cache_flush(base, len)
 	 * (in case of write-back caches) DMA operations.
 	 */
 
-	/* XXX investigate other methods instead of blowing the entire cache */
-	sta(0x80000000, ASI_DCACHECLR, 0);	/* Unlock */
-	sta(0, ASI_DCACHECLR, 0);
 }
 
 void
@@ -696,7 +693,7 @@ viking_pcache_flush_line(va, pa)
 }
 
 void
-cypress_pcache_flush_line(va, pa)
+srmmu_pcache_flush_line(va, pa)
 	int va;
 	int pa;
 {
@@ -704,8 +701,6 @@ cypress_pcache_flush_line(va, pa)
 	 * Flush cache line corresponding to virtual address `va'
 	 * which is mapped at physical address `pa'.
 	 */
-
-	/* NOT YET IMPLEMENTED */
 	sta(va, ASI_IDCACHELFP, 0);
 }
 #endif /* SUN4M */
