@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.5 1995/02/11 21:01:18 gwr Exp $
+#	$NetBSD: DISKLESS,v 1.6 1995/03/26 19:17:48 gwr Exp $
 
 #
 # DISKLESS -- config file for a diskless Sun3/50 or Sun3/60
@@ -9,7 +9,7 @@ include "std.sun3"
 # Machines to be supported by this kernel
 options		"SUN3_50"
 options		"SUN3_60"
-options 	FPCOPROC
+options 	FPU_EMULATE
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	4
@@ -22,15 +22,19 @@ options		KTRACE				# system call tracing support
 #makeoptions	DEBUG="-g"			# symbols for kgdb + nm
 # I use DDB by copying in the symbols with dbsym.
 options		DDB
-options		SYMTAB_SPACE=89000
+options		SYMTAB_SPACE=92000
 
 # Filesystem options
 options 	NFSSERVER			# nfs server support
 options 	NFSCLIENT			# nfs client support
 options 	FFS				# ufs file system
+options		KERNFS		# /kern
+options		PROCFS		# /proc
 
 # Networking options
 options		INET				# IP prototol stack support
+# XXX - Work-around for slow SunOS/Sun3 servers (sigh...)
+options 	NFS_BOOT_RWSIZE=1024
 
 # Compatability options
 options		COMPAT_SUNOS	# can run SunOS 4.1.1 executables
@@ -52,8 +56,19 @@ config		netbsd swap nfs
 
 # Devices
 
-#ie0 at obio? addr ? level ?
-le0 at obio? addr ? level ?
+bwtwo0 at obmem? addr ?
+cgfour0 at obmem? addr ?
 
-pseudo-device	loop
-pseudo-device	pty
+ie0 at obio0 addr ? level ?
+#ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75
+
+le0 at obio0 addr ? level ?
+
+pseudo-device	loop	1		# network loopback
+pseudo-device	bpfilter 4		# packet filter
+pseudo-device	sl	2		# CSLIP
+pseudo-device	ppp	2		# PPP
+pseudo-device	tun	2		# network tunneling over tty
+
+pseudo-device	pty	32		# pseudo-terminals
+#pseudo-device	vnd	4		# paging to files
