@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.7 1997/07/13 18:02:16 christos Exp $	*/
+/*	$NetBSD: string.h,v 1.8 1997/10/16 23:26:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,10 +86,8 @@ void	*memccpy __P((void *, const void *, int, size_t));
 char	*rindex __P((const char *, int));
 int	 strcasecmp __P((const char *, const char *));
 char	*strdup __P((const char *));
-void	 strmode __P((int, char *));
 int	 strncasecmp __P((const char *, const char *, size_t));
 char	*strsep __P((char **, const char *));
-char	*strsignal __P((int));
 void	 swab __P((const void *, void *, size_t));
 #endif 
 __END_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.41 1997/10/08 05:44:22 mikel Exp $	*/
+/*	$NetBSD: unistd.h,v 1.42 1997/10/16 23:26:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -164,6 +164,8 @@ int	 setreuid __P((uid_t, uid_t));
 int	 setrgid __P((gid_t));
 int	 setruid __P((uid_t));
 void	 setusershell __P((void));
+void	 strmode __P((mode_t, char *));
+char	*strsignal __P((int));
 int	 swapctl __P((int, const void *, int));
 int	 swapon __P((const char *));		/* obsoleted by swapctl() */
 int	 symlink __P((const char *, const char *));
