@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.c,v 1.1 2002/04/04 13:45:26 lukem Exp $	*/
+/*	$NetBSD: sparc64.c,v 1.2 2002/04/04 14:00:55 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc64.c,v 1.1 2002/04/04 13:45:26 lukem Exp $");
+__RCSID("$NetBSD: sparc64.c,v 1.2 2002/04/04 14:00:55 mrg Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -77,6 +77,7 @@ __RCSID("$NetBSD: sparc64.c,v 1.1 2002/04/04 13:45:26 lukem Exp $");
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "installboot.h"
@@ -122,7 +123,7 @@ sparc64_clearboot(ib_params *params)
 	}
 
 	/* now clear it out to nothing */
-	memset(bb, 0, sizeof bb);
+	memset(&bb, 0, sizeof bb);
 
 	if (params->flags & IB_VERBOSE)
 		printf("%slearing boot block\n",
@@ -177,11 +178,11 @@ sparc64_setboot(ib_params *params)
 		startblock = params->startblock;
 	else
 		startblock = SPARC64_BOOT_BLOCK_OFFSET /
-		    SPARC64_BOOT_BLOCK_BLOCKSIZE + 1;
+		    SPARC64_BOOT_BLOCK_BLOCKSIZE;
 
 	if (params->flags & IB_VERBOSE) {
 		printf("Bootstrap start sector: %#x\n", startblock);
-		printf("Bootstrap byte count:   %#x\n", bblen);
+		printf("Bootstrap byte count:   %#x\n", (unsigned)bblen);
 		printf("%sriting bootstrap\n",
 		    (params->flags & IB_NOWRITE) ? "Not w" : "W");
 	}
