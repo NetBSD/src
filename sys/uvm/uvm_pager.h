@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.27 2003/08/07 16:34:49 agc Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.28 2004/03/24 07:55:01 junyoung Exp $	*/
 
 /*
  *
@@ -127,7 +127,7 @@ struct uvm_faultinfo;
 struct uvm_pagerops {
 
 	/* init pager */
-	void	(*pgo_init) __P((void));
+	void	(*pgo_init)(void);
 
 	/* add reference to obj */
 	void	(*pgo_reference)(struct uvm_object *);
@@ -180,10 +180,10 @@ struct uvm_pagerops {
  * prototypes
  */
 
-void	uvm_pager_init __P((void));
-PAGER_INLINE struct vm_page *uvm_pageratop __P((vaddr_t));
-vaddr_t	uvm_pagermapin __P((struct vm_page **, int, int));
-void	uvm_pagermapout __P((vaddr_t, int));
+void	uvm_pager_init(void);
+PAGER_INLINE struct vm_page *uvm_pageratop(vaddr_t);
+vaddr_t	uvm_pagermapin(struct vm_page **, int, int);
+void	uvm_pagermapout(vaddr_t, int);
 
 /* Flags to uvm_pagermapin() */
 #define	UVMPAGER_MAPIN_WAITOK	0x01	/* it's okay to wait */
