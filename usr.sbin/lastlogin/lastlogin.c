@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.10 2004/11/13 00:11:03 he Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.11 2004/11/19 21:43:40 christos Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.10 2004/11/13 00:11:03 he Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.11 2004/11/19 21:43:40 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: lastlogin.c,v 1.10 2004/11/13 00:11:03 he Exp $");
 #include <utmpx.h>
 #endif
 #include <unistd.h>
+#include <util.h>
 
 struct output {
 	struct timeval	 o_tv;
@@ -417,26 +418,9 @@ gethost(struct output *o)
 		return o->o_host;
 	else {
 		static char buf[512];
-		const char *p;
-		struct sockaddr_storage *ss = &o->o_ss;
-		void *a;
-		switch (ss->ss_family) {
-		default:
-			(void)snprintf(buf, sizeof(buf), "%d: unknown family",
-				ss->ss_family);
-			return buf;
-		case 0:	/* reboot etc. entries */
-			return "";
-		case AF_INET:
-			a = &((struct sockaddr_in *)(void *)ss)->sin_addr;
-			break;
-		case AF_INET6:
-			a = &((struct sockaddr_in6 *)(void *)ss)->sin6_addr;
-			break;
-		}
-		if ((p = inet_ntop(ss->ss_family, a, buf, ss->ss_len)) != NULL)
-			return p;
-		(void)snprintf(buf, sizeof(buf), "%s", strerror(errno));
+		buf[0] = '\0';
+		(void)sockaddr_snprintf(buf, sizeof(buf), "%a",
+		    (struct sockaddr *)&o->o_ss);
 		return buf;
 	}
 }
