@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.19 2002/09/17 21:22:19 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.20 2002/09/17 22:14:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993 Jan-Simon Pendry.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.19 2002/09/17 21:22:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.20 2002/09/17 22:14:17 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,7 @@ sys_ptrace(l, v, retval)
 
 		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)SCARG(uap, addr) != (int *)1)
-			if ((error = process_set_pc(t, SCARG(uap, addr))) != 0)
+			if ((error = process_set_pc(lt, SCARG(uap, addr))) != 0)
 				goto relebad;
 
 #ifdef PT_STEP
