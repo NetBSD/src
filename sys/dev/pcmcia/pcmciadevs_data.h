@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.33 1999/01/01 19:30:52 christos Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.34 1999/02/19 00:44:16 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -113,6 +113,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Digital Equipment Corporation",
 	    "Digital Mobile Media CD-ROM"	},
+	},
+	{
+	    PCMCIA_VENDOR_FUJUTSU, PCMCIA_PRODUCT_FUJUTSU_SCSI600,
+	    PCMCIA_CIS_FUJUTSU_SCSI600,
+	    0,
+	    "",
+	    "Fujitsu SCSI 600 Interface"	},
 	},
 	{
 	    PCMCIA_VENDOR_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_POWER144,
@@ -386,6 +393,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "SVEC/Hawking Technology",
 	    "SVEC PCMCIA Lan Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_FUJITSU, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Fujitsu Corporation",
+	    NULL,
 	},
 	{
 	    PCMCIA_VENDOR_SANDISK, 0,
