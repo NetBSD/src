@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.3 1998/06/05 12:22:44 tsubai Exp $	*/
+/*	$NetBSD: esp.c,v 1.4 1998/06/19 14:11:32 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -291,14 +291,14 @@ espattach(parent, self, aux)
 	intr_establish(esc->sc_pri, IST_LEVEL, IPL_BIO, (void *)ncr53c9x_intr,
 	    sc);
 
+	/* Reset SCSI bus when halt. */
+	shutdownhook_establish(esp_shutdownhook, sc);
+
 	/* Do the common parts of attachment. */
 	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
 
 	/* Turn on target selection using the `dma' method */
 	ncr53c9x_dmaselect = 1;
-
-	/* Reset SCSI bus when halt. */
-	shutdownhook_establish(esp_shutdownhook, sc);
 }
 
 /*
