@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2000/01/10 15:17:30 pk Exp $
+#	$NetBSD: Makefile,v 1.25 2000/03/06 21:43:36 is Exp $
 
 .include <bsd.own.mk>
 
@@ -75,8 +75,11 @@ release:
 	@false
 .else
 release: $(IMAGE)
+	mkdir -p $(RELEASEDIR)/installation/miniroot
 	gzip -c -9 < $(.OBJDIR)/miniroot.fs \
 		> $(RELEASEDIR)/installation/miniroot/miniroot.fs.gz
+	../sets/makesums -t $(RELEASEDIR)/installation/miniroot miniroot.fs
+		
 .endif	# RELEASEDIR check
 .endif	# DESTDIR check
 
