@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.7 1997/10/19 03:47:50 explorer Exp $	*/
+/*	$NetBSD: rnd.h,v 1.8 1997/10/20 15:06:04 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -53,15 +53,21 @@
 #define RND_DEV_RANDOM	0	/* minor devices for random and kinda random */
 #define RND_DEV_URANDOM	1
 
+/*
+ * size of entropy pool in 32-bit words.  This _MUST_ be a power of 2.  Don't
+ * change this unless you really know what you are doing...
+ */
 #ifndef RND_POOLWORDS
-#define RND_POOLWORDS	128	/* size of entropy pool in 32-bit words */
+#define RND_POOLWORDS	128
 #endif
-
-#ifndef RND_EVENTQSIZE
-#define RND_EVENTQSIZE	250	/* size of event queue */
-#endif
-
 #define RND_POOLBITS     (RND_POOLWORDS * 32)
+
+/*
+ * size of the event queue.  This _MUST_ be a power of 2.
+ */
+#ifndef RND_EVENTQSIZE
+#define RND_EVENTQSIZE	128
+#endif
 
 typedef struct {
 	u_int32_t	cursor;		/* current add point in the pool */
@@ -127,6 +133,7 @@ void		rnd_add_data __P((rndsource_element_t *, void *, u_int32_t,
 int		rnd_extract_data __P((void *, u_int32_t, u_int32_t));
 void		rnd_attach_source __P((rndsource_element_t *, char *,
 				       u_int32_t));
+void		rnd_detach_source __P((rndsource_element_t *));
 
 #endif /* _KERNEL */
 
