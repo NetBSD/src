@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.9 1999/03/22 05:02:39 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.9.2.1 1999/08/22 17:27:23 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.9 1999/03/22 05:02:39 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.9.2.1 1999/08/22 17:27:23 he Exp $");
 #endif
 #endif
 
@@ -123,7 +123,7 @@ main(int argc, char **argv)
 	for (ch = 0; *argv; ch++, argv++) {
 	    if (!strcmp(*argv, "-"))	/* stdin? */
 		lpp = alloc_lpkg("-");
-	    else if (isURL(*argv))	/* preserve URLs */
+	    else if (URLlength(*argv) > 0)	/* preserve URLs */
 		lpp = alloc_lpkg(*argv);
 	    else {			/* expand all pathnames to fullnames */
 		char *s;
