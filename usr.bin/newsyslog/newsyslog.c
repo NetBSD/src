@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.39 2001/03/18 16:34:08 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.40 2001/03/22 17:54:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.39 2001/03/18 16:34:08 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.40 2001/03/22 17:54:54 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -376,9 +376,11 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 		log->pidfile[0] = '\0';
 
 	/* sigtype */
-	if (*ap != NULL && (log->signum = getsig(*ap++)) < 0) {
-		warnx("config line %d: bad signal type", lineno);
-		goto bad;
+	if (*ap != NULL) {
+		if ((log->signum = getsig(*ap++)) < 0) {
+			warnx("config line %d: bad signal type", lineno);
+			goto bad;
+		}
 	} else
 		log->signum = SIGHUP;
 
