@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.14 1997/03/12 20:17:21 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.15 1997/03/13 18:23:19 cgd Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -38,7 +38,7 @@
 #if 0
 static char rcsid[] = "Id: auth.c,v 1.30 1997/03/04 03:37:21 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: auth.c,v 1.14 1997/03/12 20:17:21 christos Exp $";
+static char rcsid[] = "$NetBSD: auth.c,v 1.15 1997/03/13 18:23:19 cgd Exp $";
 #endif
 #endif
 
@@ -1140,7 +1140,7 @@ ip_addr_check(addr, addrs)
 	if (ptr_mask != NULL)
 	    *ptr_mask = '/';
 
-	if (a == -1L)
+	if (a == (u_int32_t)-1L)
 	    syslog (LOG_WARNING,
 		    "unknown host %s in auth. address list",
 		    addrs->word);
