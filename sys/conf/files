@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.263 1998/12/27 21:14:56 thorpej Exp $
+#	$NetBSD: files,v 1.264 1999/01/11 21:33:02 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -377,6 +377,7 @@ pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
 pseudo-device strip: ifnet
 pseudo-device ipfilter: ifnet
+pseudo-device ipip: ifnet
 pseudo-device gre: ifnet
 
 pseudo-device sequencer
@@ -660,6 +661,7 @@ file netinet/in_proto.c			inet
 file netinet/ip_gre.c			inet
 file netinet/ip_flow.c			inet & gateway
 file netinet/ip_icmp.c			inet
+file netinet/ip_ipip.c			ipip			needs-count
 file netinet/ip_input.c			inet
 file netinet/ip_mroute.c		inet & mrouting
 file netinet/ip_output.c		inet
