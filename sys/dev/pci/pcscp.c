@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.5 1999/09/30 23:04:42 thorpej Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.6 1999/12/12 02:50:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -52,9 +52,7 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#if BYTE_ORDER == BIG_ENDIAN
-#include <machine/bswap.h>
-#endif
+#include <machine/endian.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -596,21 +594,15 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 	s_addr = dmap->dm_segs[seg].ds_addr - s_offset;
 	rest = MDL_SEG_SIZE - s_offset;
 
-#if BYTE_ORDER == BIG_ENDIAN
-#define	htopci(addr)	bswap32(addr)
-#else
-#define	htopci(addr)	(addr)
-#endif
-
 	/* set the first MDL and offset */
 	WRITE_DMAREG(esc, DMA_SPA, s_offset); 
-	*mdl++ = htopci(s_addr);
+	*mdl++ = htole32(s_addr);
 	count -= rest;
 	
 	/* rests of the first dmamap segment */
 	while (count > 0) {
 		s_addr += MDL_SEG_SIZE;
-		*mdl++ = htopci(s_addr);
+		*mdl++ = htole32(s_addr);
 		count -= MDL_SEG_SIZE;
 	}
 
@@ -620,18 +612,16 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 		s_addr = dmap->dm_segs[seg].ds_addr;
 
 		/* first 4kbyte of each dmamap segment */
-		*mdl++ = htopci(s_addr);
+		*mdl++ = htole32(s_addr);
 		count -= MDL_SEG_SIZE;
 
 		/* trailing contiguous 4k frames of each dmamap segments */
 		while (count > 0) {
 			s_addr += MDL_SEG_SIZE;
-			*mdl++ = htopci(s_addr);
+			*mdl++ = htole32(s_addr);
 			count -= MDL_SEG_SIZE;
 		}
 	}
-
-#undef htopci
 
 	return 0;
 }
