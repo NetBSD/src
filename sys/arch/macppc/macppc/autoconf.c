@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 2002/09/22 03:04:31 dbj Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 2002/09/22 03:10:14 dbj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -97,7 +97,7 @@ canonicalize_bootpath()
 	 * an OFW path and probably is an alias, so look up the alias
 	 * and regenerate the full bootpath so device_register will work.
 	 */
-	if (cbootpath[0] != '/' && cbootpath[0] != '\0') {
+	if (bootpath[0] != '/' && bootpath[0] != '\0') {
 		int aliases = OF_finddevice("/aliases");
 		char tmpbuf[100];
 		char aliasbuf[256];
@@ -105,8 +105,8 @@ canonicalize_bootpath()
 			char *cp1, *cp2, *cp;
 			char saved_ch = 0;
 			int len;
-			cp1 = strchr(cbootpath, ':');
-			cp2 = strchr(cbootpath, ',');
+			cp1 = strchr(bootpath, ':');
+			cp2 = strchr(bootpath, ',');
 			cp = cp1;
 			if (cp1 == NULL || (cp2 != NULL && cp2 < cp1))
 				cp = cp2;
@@ -116,13 +116,13 @@ canonicalize_bootpath()
 				saved_ch = *cp;
 				*cp = '\0';
 			}
-			len = OF_getprop(aliases, cbootpath, aliasbuf,
+			len = OF_getprop(aliases, bootpath, aliasbuf,
 			    sizeof(aliasbuf));
 			if (len > 0) {
 				if (aliasbuf[len-1] == '\0')
 					len--;
-				memcpy(cbootpath, aliasbuf, len);
-				strcpy(&cbootpath[len], tmpbuf);
+				memcpy(bootpath, aliasbuf, len);
+				strcpy(&bootpath[len], tmpbuf);
 			} else {
 				*cp = saved_ch;
 			}
