@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.64 2000/10/19 14:37:43 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.65 2000/11/26 17:44:11 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -57,7 +57,7 @@
 # Disks:
 #	ccd*	concatenated disk driver
 #	cd*	SCSI CD-ROM
-#	lsu*	Logical storage unit (e.g. hardware RAID arrays)
+#	ld*	Logical disk devices (e.g. hardware RAID)
 #	md*	memory pseudo-disk devices
 #	raid*	RAIDframe disk driver
 #	sd*	ATAPI and SCSI disks
@@ -120,7 +120,7 @@ all)
 	sh $0 std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1 pty2 pty3
 	sh $0 st0 st1 ch0 cd0 cd1 vnd0 vnd1 vnd2 vnd3
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 md1 ss0 ss1 uk0 uk1
-	sh $0 raid0 raid1 raid2 raid3 lsu0 lsu1 lsu2 lsu3
+	sh $0 raid0 raid1 raid2 raid3 ld0 ld1 ld2 ld3
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 tun0 tun1 tun2 tun3
 	sh $0 ttyB0 ttyB1 ttyC0 ttyC1 lkm
@@ -287,12 +287,12 @@ md*)
 	chmod 640 md${unit}? #rmd${unit}?
 	;;      
 
-ccd*|cd*|fd*|lsu*|raid*|sd*|vnd*|wd*)
+ccd*|cd*|fd*|ld*|raid*|sd*|vnd*|wd*)
 	case $i in
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=7; chr=27;;
 	cd*)	name=cd;	unit=${i#cd};	blk=3; chr=13;;
 	fd*)	name=fd;	unit=${i#fd};	blk=0; chr=34;;
-	lsu*)	name=lsu;	unit=${i#lsu};	blk=17; chr=59;;
+	ld*)	name=ld;	unit=${i#ld};	blk=17; chr=59;;
 	raid*)	name=raid;	unit=${i#raid};	blk=16; chr=43;;
 	sd*)	name=sd;	unit=${i#sd};	blk=8; chr=8;;
 	vnd*)	name=vnd;	unit=${i#vnd};	blk=9; chr=9;;

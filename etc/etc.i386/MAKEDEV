@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.126 2000/11/05 02:13:35 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.127 2000/11/26 17:44:11 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -53,7 +53,7 @@
 #	md*	memory pseudo-disk devices
 #	ccd*	contatenated disk devices
 #	raid*	RAIDframe disk devices
-#	lsu*	Logical storage units (e.g., hardware RAID arrays)
+#	ld*	Logical disk devices (e.g., hardware RAID)
 #
 # Console ports:
 #	ttyv0	pccons
@@ -148,7 +148,7 @@ all)
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 wscons
-	sh $0 lsu0 lsu1 lsu2 lsu3
+	sh $0 ld0 ld1 ld2 ld3
 	sh $0 sysmon
 	sh $0 bktr
 	sh $0 ttyCZ0
@@ -164,7 +164,7 @@ audio)
 
 floppy)
 	sh $0 std wt0 fd0 fd1 wd0 wd1 wd2 wd3 sd0 sd1 sd2 tty0 tty1 tty2
-	sh $0 st0 st1 cd0 cd1 mcd0 ttyv0 pty0 lsu0 lsu1 lsu2 lsu3
+	sh $0 st0 st1 cd0 cd1 mcd0 ttyv0 pty0 ld0 ld1 ld2 ld3
 	;;
 
 ramdisk)
@@ -394,12 +394,12 @@ ss*)
 	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
-ccd*|fd*|lsu*|raid*|sd*|vnd*|wd*)
+ccd*|fd*|ld*|raid*|sd*|vnd*|wd*)
 	case $i in
 	ccd*) name=ccd;	unit=${i#ccd};	blk=16;	chr=18;;
 	fd*) name=fd;	unit=${i#fd};	blk=2;	chr=9;;
 	raid*) name=raid; unit=${i#raid}; blk=18; chr=62;;
-	lsu*) name=lsu;	unit=${i#lsu};	blk=19;	chr=69;;
+	ld*) name=ld;	unit=${i#ld};	blk=19;	chr=69;;
 	sd*) name=sd;	unit=${i#sd};	blk=4;	chr=13;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=14;	chr=41;;
 	wd*) name=wd;	unit=${i#wd};	blk=0;	chr=3;;

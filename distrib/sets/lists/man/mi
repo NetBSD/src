@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.286 2000/11/22 00:40:09 bjh21 Exp $
+# $NetBSD: mi,v 1.287 2000/11/26 17:44:10 ad Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -619,12 +619,12 @@
 ./usr/share/man/cat4/iy.0
 ./usr/share/man/cat4/kue.0
 ./usr/share/man/cat4/lc.0
+./usr/share/man/cat4/ld.0
 ./usr/share/man/cat4/le.0
 ./usr/share/man/cat4/lkm.0
 ./usr/share/man/cat4/lm.0
 ./usr/share/man/cat4/lmc.0
 ./usr/share/man/cat4/lo.0
-./usr/share/man/cat4/lsu.0
 ./usr/share/man/cat4/lxtphy.0
 ./usr/share/man/cat4/mac68k/adb.0
 ./usr/share/man/cat4/mac68k/ae.0
@@ -2043,12 +2043,12 @@
 ./usr/share/man/man4/iy.4
 ./usr/share/man/man4/kue.4
 ./usr/share/man/man4/lc.4
+./usr/share/man/man4/ld.4
 ./usr/share/man/man4/le.4
 ./usr/share/man/man4/lkm.4
 ./usr/share/man/man4/lm.4
 ./usr/share/man/man4/lmc.4
 ./usr/share/man/man4/lo.4
-./usr/share/man/man4/lsu.4
 ./usr/share/man/man4/lxtphy.4
 ./usr/share/man/man4/mac68k/adb.4
 ./usr/share/man/man4/mac68k/ae.4

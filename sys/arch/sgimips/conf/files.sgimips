@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.6 2000/11/21 00:17:33 soren Exp $
+#	$NetBSD: files.sgimips,v 1.7 2000/11/26 17:44:10 ad Exp $
 
 maxpartitions 16
 
@@ -66,7 +66,7 @@ file dev/md_root.c			memory_disk_hooks
 major {md = 2}
 
 major {raid = 5} 
-major {lsu = 14}
+major {ld = 14}
 
 file dev/clock_subr.c
 file dev/cons.c
