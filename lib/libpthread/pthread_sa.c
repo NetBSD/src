@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.10 2003/06/12 21:49:42 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.11 2003/06/25 23:23:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.10 2003/06/12 21:49:42 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.11 2003/06/25 23:23:27 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -643,8 +643,13 @@ pthread__sa_start(void)
 		rr = atoi(value);
 
 	ret = sa_register(pthread__upcall, NULL, flags);
-	if (ret)
-		abort();
+	if (ret) {
+		if (errno == ENOSYS)
+			errx(1,
+			    "libpthread: SA system calls are not avaliable.\n"
+				);
+		err(1, "libpthread: sa_register failed\n");
+	}
 
 	self = pthread__self();
 	for (i = 0; i < PT_UPCALLSTACKS; i++) {
