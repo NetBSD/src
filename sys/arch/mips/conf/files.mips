@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.42 2002/07/06 23:59:18 gmcgarry Exp $
+#	$NetBSD: files.mips,v 1.43 2002/11/08 00:50:49 simonb Exp $
 #
 
 defflag	opt_cputype.h		NOFPU	# and the rest...
@@ -6,6 +6,7 @@ defflag	opt_cputype.h		NOFPU	# and the rest...
 					# MIPS32 MIPS64
 					# MIPS3_4100
 					# MIPS3_5900
+					# MIPS64_SB1
 					# ENABLE_MIPS_TX3900
 					# ENABLE_MIPS_R4700
 					# ENABLE_MIPS_R3NKK
