@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.13 (Berkeley) 6/17/91
- *	$Id: unistd.h,v 1.15 1994/01/25 23:17:06 cgd Exp $
+ *	$Id: unistd.h,v 1.16 1994/03/29 02:44:37 jtc Exp $
  */
 
 #ifndef _UNISTD_H_
@@ -72,7 +72,7 @@ char	*getcwd __P((char *, size_t));
 gid_t	 getegid __P((void));
 uid_t	 geteuid __P((void));
 gid_t	 getgid __P((void));
-int	 getgroups __P((int, int *));		/* XXX (gid_t *) */
+int	 getgroups __P((int, gid_t *));
 char	*getlogin __P((void));
 pid_t	 getpgrp __P((void));
 pid_t	 getpid __P((void));
@@ -151,7 +151,7 @@ int	 select __P((int, fd_set *, fd_set *, fd_set *, struct timeval *));
 int	 setdomainname __P((const char *, int));
 int	 setegid __P((gid_t));
 int	 seteuid __P((uid_t));
-int	 setgroups __P((int, const int *));
+int	 setgroups __P((int, const gid_t *));
 void	 sethostid __P((long));
 int	 sethostname __P((const char *, int));
 int	 setkey __P((const char *));
