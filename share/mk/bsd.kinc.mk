@@ -1,10 +1,5 @@
-#	$NetBSD: bsd.kinc.mk,v 1.3 1998/12/31 15:28:52 castor Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.4 1999/01/15 10:57:36 castor Exp $
 
-# Notes:
-#	* no obj dir support
-#	* kernel headers are supposed to exist, i.e. they're not
-#	  expected to be built.
-#
 # System configuration variables:
 #
 # SYS_INCLUDE	"symlinks": symlinks to include directories are created.
@@ -23,6 +18,8 @@
 #		for the directory if SYS_INCLUDE is symlinks.
 #
 # INCS		Headers to install, if SYS_INCLUDE is copies.
+#
+# DEPINCS	Headers to install which are built dynamically.
 #
 # SUBDIR	Subdirectories to enter
 #
@@ -80,6 +77,23 @@ incinstall:: ${DESTDIR}${INCSDIR}
 
 .if defined(INCS)
 .for I in ${INCS}
+incinstall:: ${DESTDIR}${INCSDIR}/$I
+
+.PRECIOUS: ${DESTDIR}${INCSDIR}/$I
+.if !defined(UPDATE)
+.PHONY: ${DESTDIR}${INCSDIR}/$I
+.endif
+${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I 
+	@cmp -s ${.CURDIR}/$I ${.TARGET} > /dev/null 2>&1 || \
+	    (echo "${INSTALL} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
+		-m ${NONBINMODE} ${.CURDIR}/$I ${.TARGET}" && \
+	     ${INSTALL} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
+		-m ${NONBINMODE} ${.CURDIR}/$I ${.TARGET})
+.endfor
+.endif
+
+.if defined(DEPINCS)
+.for I in ${DEPINCS}
 incinstall:: ${DESTDIR}${INCSDIR}/$I
 
 .PRECIOUS: ${DESTDIR}${INCSDIR}/$I
