@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 1994/11/20 20:54:30 deraadt Exp $ */
+/*	$NetBSD: mem.c,v 1.4 1994/12/06 08:34:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,7 @@
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sparc/sparc/vaddrs.h>
 
 #include <vm/vm.h>
 
@@ -115,10 +116,15 @@ mmrw(dev, uio, flags)
 /* minor device 1 is kernel memory */
 		case 1:
 			va = (caddr_t)(int)uio->uio_offset;
-			c = min(iov->iov_len, MAXPHYS);
-			if (!kernacc(va, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
+			if (va >= (caddr_t)MSGBUF_VA &&
+			    va < ((caddr_t)MSGBUF_VA)+NBPG) {
+				c = min(iov->iov_len, 4096);
+			} else {
+				c = min(iov->iov_len, MAXPHYS);
+				if (!kernacc(va, c,
+				uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+					return (EFAULT);
+			}
 			error = uiomove(va, (int)c, uio);
 			continue;
 

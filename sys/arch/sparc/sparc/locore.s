@@ -223,11 +223,26 @@ sun4_notsup:
 	.text
 
 /*
- * The remaining two physical pages are currently unused.  We need to
- * map the interrupt enable register very early on in the boot process,
- * so that we can handle NMIs (parity errors) halfway sensibly during
- * boot.  We use virtual address f8002000 (`page 2') for this, wasting
- * 4096 bytes of physical memory.
+ * The first thing in the real text segment is the trap vector table,
+ * which must be aligned on a 4096 byte boundary.  The text segment
+ * starts beyond page 0 of KERNBASE so that there is a red zone
+ * between user and kernel space.  Since the boot ROM loads us at
+ * 0x4000, it is far easier to start at KERNBASE+0x4000 than to
+ * buck the trend.  This is two or four pages in (depending on if
+ * pagesize is 8192 or 4096).    We place two items in this area:
+ * the message buffer (phys addr 0) and the IE_reg (phys addr 0x2000).
+ * because the message buffer is in our "red zone" between user and
+ * kernel space we remap it in configure() to another location and
+ * invalidate the mapping at KERNBASE.
+ */
+	.globl _msgbuf
+_msgbuf = KERNBASE
+
+/*
+ * We need to map the interrupt enable register very early on in the
+ * boot process, so that we can handle NMIs (parity errors) halfway
+ * sensibly during boot.  We use virtual address f8002000 (`page 2')
+ * for this, wasting a page of physical memory.
  */
 IE_reg_addr = KERNBASE + 8192		! this page not used; points to IEreg
 
@@ -566,18 +581,10 @@ _trapbase:
 	STRAP(0xff)
 
 /*
- * put the message buffer after the trap table.
+ * pad the trap table to max page size
  * trap table size is 0x100 * 4instr * 4byte/instr = 4096 bytes
  * need to .skip 4096 to pad to page size
  */
-	.skip	4096
-
-	.globl	_msgbuf
-msgbufsize = 4096			! 1 page for msg buffer
-_msgbuf:
-	.skip msgbufsize
-
-/* and let's not put anything else in that page, on a sun4 */
 	.skip	4096
 
 	/* the message buffer is always mapped */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1994/11/23 07:02:36 deraadt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.19 1994/12/06 08:34:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -166,8 +166,17 @@ bootstrap()
 
 #if defined(SUN4)
 	extern void oldmon_w_cmd();
+	extern struct msgbuf *msgbufp;
 
 	if (cputyp == CPU_SUN4) {
+		/*
+		 * XXX
+		 * Some boot programs mess up physical page 0, which
+		 * is where we want to put the msgbuf. There's some
+		 * room, so shift it over half a page.
+		 */
+		msgbufp = (struct msgbuf *)((caddr_t) msgbufp + 4096);
+
 		/*
 		 * XXX:
 		 * The promvec is bogus. We need to build a
