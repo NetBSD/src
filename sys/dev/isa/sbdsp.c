@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.14 1995/11/10 05:01:06 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.15 1996/02/16 08:07:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -87,8 +87,8 @@ sb_printsc(struct sbdsp_softc *sc)
 {
 	int i;
     
-	printf("open %d dmachan %d iobase %x locked %d\n", sc->sc_open, sc->sc_drq,
-		sc->sc_iobase, sc->sc_locked);
+	printf("open %d dmachan %d iobase %x\n", sc->sc_open, sc->sc_drq,
+		sc->sc_iobase);
 	printf("hispeed %d irate %d orate %d encoding %x\n",
 		sc->sc_adacmode, sc->sc_irate, sc->sc_orate, sc->encoding);
 	printf("outport %d inport %d spkron %d nintr %d\n",
@@ -133,8 +133,6 @@ sbdsp_attach(sc)
 	struct sbdsp_softc *sc;
 {
 	register int iobase = sc->sc_iobase;
-
-	sc->sc_locked = 0;
 
 	/* Set defaults */
 	if (ISSBPROCLASS(sc))
@@ -223,9 +221,9 @@ sbdsp_set_in_sr_real(addr, sr)
 	if (rval = sbdsp_set_sr(sc, &sr, SB_INPUT_RATE))
 		return rval;
 	sc->sc_irate = sr;
-	sc->sc_dmain_inprogress = 0;		/* do it again on next DMA out */
-	sc->sc_dmaout_inprogress = 0;
-	return(0);
+	if (sc->sc_dmadir == SBP_DMA_IN)
+		sc->sc_dmadir = SBP_DMA_NONE;	/* do it again on next DMA in */
+	return 0;
 }
 
 u_long
@@ -259,8 +257,9 @@ sbdsp_set_out_sr_real(addr, sr)
 	if (rval = sbdsp_set_sr(sc, &sr, SB_OUTPUT_RATE))
 		return rval;
 	sc->sc_orate = sr;
-	sc->sc_dmain_inprogress = 0;		/* do it again on next DMA out */
-	return(0);
+	if (sc->sc_dmadir == SBP_DMA_OUT)
+		sc->sc_dmadir = SBP_DMA_NONE;	/* do it again on next DMA out */
+	return 0;
 }
 
 u_long
@@ -511,7 +510,7 @@ sbdsp_round_blocksize(addr, blk)
 {
 	register struct sbdsp_softc *sc = addr;
 
-	sc->sc_last_hsr_size = sc->sc_last_hsw_size = 0;
+	sc->sc_last_hs_size = 0;
 
 	/* Higher speeds need bigger blocks to avoid popping and silence gaps. */
 	if ((sc->sc_orate > 8000 || sc->sc_irate > 8000) &&
@@ -539,8 +538,7 @@ sbdsp_commit_settings(addr)
 	sbdsp_set_out_sr_real(addr, sc->sc_orate);
 	sbdsp_set_in_sr_real(addr, sc->sc_irate);
 
-	sc->sc_last_hsw_size = sc->sc_last_hsr_size = 0;
-	return(0);
+	return 0;
 }
 
 
@@ -557,16 +555,11 @@ sbdsp_open(sc, dev, flags)
 
 	sc->sc_open = 1;
 	sc->sc_mintr = 0;
-	sc->sc_intr = 0;
-	sc->sc_arg = 0;
-	sc->sc_locked = 0;
 	if (ISSBPROCLASS(sc) &&
 	    sbdsp_wdsp(sc->sc_iobase, SB_DSP_RECORD_MONO) < 0) {
 		DPRINTF(("sbdsp_open: can't set mono mode\n"));
 		/* we'll readjust when it's time for DMA. */
 	}
-	sc->sc_dmain_inprogress = 0;
-	sc->sc_dmaout_inprogress = 0;
 
 	/*
 	 * Leave most things as they were; users must change things if
@@ -590,10 +583,8 @@ sbdsp_close(addr)
 	sc->sc_open = 0;
 	sbdsp_spkroff(sc);
 	sc->spkr_state = SPKR_OFF;
-	sc->sc_intr = 0;
 	sc->sc_mintr = 0;
-	/* XXX this will turn off any dma */
-	sbdsp_reset(sc);
+	sbdsp_haltdma(sc);
 
 	DPRINTF(("sbdsp_close: closed\n"));
 }
@@ -612,20 +603,25 @@ sbdsp_reset(sc)
 {
 	register int iobase = sc->sc_iobase;
 
-	/*
-	 * erase any memory of last transfer size.
-	 */
-	sc->sc_last_hsr_size = sc->sc_last_hsw_size = 0;
+	sc->sc_intr = 0;
+	if (sc->sc_dmadir != SBP_DMA_NONE) {
+		isa_dmaabort(sc->sc_drq);
+		sc->sc_dmadir = SBP_DMA_NONE;
+	}
+	sc->sc_last_hs_size = 0;
+
 	/*
 	 * See SBK, section 11.3.
 	 * We pulse a reset signal into the card.
 	 * Gee, what a brilliant hardware design.
 	 */
 	outb(iobase + SBP_DSP_RESET, 1);
-	delay(3);
+	delay(10);
 	outb(iobase + SBP_DSP_RESET, 0);
+	delay(30);
 	if (sbdsp_rdsp(iobase) != SB_MAGIC)
 		return -1;
+
 	return 0;
 }
 
@@ -640,10 +636,13 @@ sbdsp_wdsp(int iobase, int v)
 	register int i;
 
 	for (i = SBDSP_NPOLL; --i >= 0; ) {
-		if ((inb(iobase + SBP_DSP_WSTAT) & SB_DSP_BUSY) != 0) {
-			delay(10); continue;
-		}
+		register u_char x;
+		x = inb(iobase + SBP_DSP_WSTAT);
+		delay(10);
+		if ((x & SB_DSP_BUSY) != 0)
+			continue;
 		outb(iobase + SBP_DSP_WRITE, v);
+		delay(10);
 		return 0;
 	}
 	++sberr.wdsp;
@@ -659,9 +658,14 @@ sbdsp_rdsp(int iobase)
 	register int i;
 
 	for (i = SBDSP_NPOLL; --i >= 0; ) {
-		if ((inb(iobase + SBP_DSP_RSTAT) & SB_DSP_READY) == 0)
+		register u_char x;
+		x = inb(iobase + SBP_DSP_RSTAT);
+		delay(10);
+		if ((x & SB_DSP_READY) == 0)
 			continue;
-		return inb(iobase + SBP_DSP_READ);
+		x = inb(iobase + SBP_DSP_READ);
+		delay(10);
+		return x;
 	}
 	++sberr.rdsp;
 	return -1;
@@ -747,18 +751,8 @@ sbdsp_haltdma(addr)
 
 	DPRINTF(("sbdsp_haltdma: sc=0x%x\n", sc));
 
-	if (sc->sc_locked)
-		sbdsp_reset(sc);
-	else
-		(void)sbdsp_wdsp(sc->sc_iobase, SB_DSP_HALT);
-
-	isa_dmaabort(sc->sc_drq);
-	sc->dmaaddr = 0;
-	sc->dmacnt = 0;
-	sc->sc_locked = 0;
-	sc->dmaflags = 0;
-	sc->sc_dmain_inprogress = sc->sc_dmaout_inprogress = 0;
-	return(0);
+	sbdsp_reset(sc);
+	return 0;
 }
 
 int
@@ -950,30 +944,25 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 		DPRINTF(("sbdsp_dma_input: stereo input, odd bytecnt\n"));
 		return EIO;
 	}
+
 	iobase = sc->sc_iobase;
-	if (ISSBPROCLASS(sc) && !sc->sc_dmain_inprogress) {
+	if (ISSBPROCLASS(sc) && sc->sc_dmadir != SBP_DMA_IN) {
 		if (sc->sc_chans == 2) {
 			if (sbdsp_wdsp(iobase, SB_DSP_RECORD_STEREO) < 0)
 				goto badmode;
-			sbdsp_mix_write(sc, SBP_STEREO,
-					sbdsp_mix_read(sc, SBP_STEREO) & ~SBP_PLAYMODE_MASK);
 			sbdsp_mix_write(sc, SBP_INFILTER,
 					sbdsp_mix_read(sc, SBP_INFILTER) | SBP_FILTER_OFF);
 		}
 		else {
 			if (sbdsp_wdsp(iobase, SB_DSP_RECORD_MONO) < 0)
 				goto badmode;
-			sbdsp_mix_write(sc, SBP_STEREO,
-					sbdsp_mix_read(sc, SBP_STEREO) & ~SBP_PLAYMODE_MASK);
 			sbdsp_mix_write(sc, SBP_INFILTER,
 					sc->sc_irate <= 8000 ? 
 					sbdsp_mix_read(sc, SBP_INFILTER) & ~SBP_FILTER_MASK :
 					sbdsp_mix_read(sc, SBP_INFILTER) | SBP_FILTER_OFF);
 		}
-		sc->sc_dmain_inprogress = 1;
-		sc->sc_last_hsr_size = 0;	/* restarting */
+		sc->sc_dmadir = SBP_DMA_IN;
 	}
-	sc->sc_dmaout_inprogress = 0;
 
 	isa_dmastart(B_READ, p, cc, sc->sc_drq);
 	sc->sc_intr = intr;
@@ -981,33 +970,36 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 	sc->dmaflags = B_READ;
 	sc->dmaaddr = p;
 	sc->dmacnt = --cc;		/* DMA controller is strange...? */
+
 	if (sc->sc_adacmode == SB_ADAC_LS) {
 		if (sbdsp_wdsp(iobase, SB_DSP_RDMA) < 0 ||
 		    sbdsp_wdsp(iobase, cc) < 0 ||
 		    sbdsp_wdsp(iobase, cc >> 8) < 0) {
+		        DPRINTF(("sbdsp_dma_input: LS DMA start failed\n"));
 			goto giveup;
 		}
 	}
 	else {
-		if (cc != sc->sc_last_hsr_size) {
+		if (cc != sc->sc_last_hs_size) {
 			if (sbdsp_wdsp(iobase, SB_DSP_BLOCKSIZE) < 0 ||
 			    sbdsp_wdsp(iobase, cc) < 0 ||
-			    sbdsp_wdsp(iobase, cc >> 8) < 0)
+			    sbdsp_wdsp(iobase, cc >> 8) < 0) {
+				DPRINTF(("sbdsp_dma_input: HS DMA start failed\n"));
 				goto giveup;
+			}
+			sc->sc_last_hs_size = cc;
 		}
-		if (sbdsp_wdsp(iobase, SB_DSP_HS_INPUT) < 0)
+		if (sbdsp_wdsp(iobase, SB_DSP_HS_INPUT) < 0) {
+			DPRINTF(("sbdsp_dma_input: HS DMA restart failed\n"));
 			goto giveup;
-		sc->sc_last_hsr_size = cc;
-		sc->sc_locked = 1;
+		}
 	}
 	return 0;
 
 giveup:
-	isa_dmaabort(sc->sc_drq);
 	sbdsp_reset(sc);
-	sc->sc_intr = 0;
-	sc->sc_arg = 0;
 	return EIO;
+
 badmode:
 	DPRINTF(("sbdsp_dma_input: can't set %s mode\n",
 		 sc->sc_chans == 2 ? "stereo" : "mono"));
@@ -1029,22 +1021,22 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 	if (sbdspdebug > 1)
 		Dprintf("sbdsp_dma_output: cc=%d 0x%x (0x%x)\n", cc, intr, arg);
 #endif
-	if (sc->sc_chans == 2 && cc & 1) {
+	if (sc->sc_chans == 2 && (cc & 1)) {
 		DPRINTF(("stereo playback odd bytes (%d)\n", cc));
 		return EIO;
 	}
 
-	if (ISSBPROCLASS(sc) && !sc->sc_dmaout_inprogress) {
+	iobase = sc->sc_iobase;
+	if (ISSBPROCLASS(sc) && sc->sc_dmadir != SBP_DMA_OUT) {
 		/* make sure we re-set stereo mixer bit when we start
 		   output. */
 		sbdsp_mix_write(sc, SBP_STEREO,
 				(sbdsp_mix_read(sc, SBP_STEREO) & ~SBP_PLAYMODE_MASK) |
 				(sc->sc_chans == 2 ?
 				 SBP_PLAYMODE_STEREO : SBP_PLAYMODE_MONO));
-		sc->sc_dmaout_inprogress = 1;
-		sc->sc_last_hsw_size = 0;	/* restarting */
+		sc->sc_dmadir = SBP_DMA_OUT;
 	}
-	sc->sc_dmain_inprogress = 0;
+
 	isa_dmastart(B_WRITE, p, cc, sc->sc_drq);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
@@ -1052,7 +1044,6 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 	sc->dmaaddr = p;
 	sc->dmacnt = --cc;	/* a vagary of how DMA works, apparently. */
 
-	iobase = sc->sc_iobase;
 	if (sc->sc_adacmode == SB_ADAC_LS) {
 		if (sbdsp_wdsp(iobase, SB_DSP_WDMA) < 0 ||
 		    sbdsp_wdsp(iobase, cc) < 0 ||
@@ -1062,39 +1053,24 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 		}
 	}
 	else {
-		if (cc != sc->sc_last_hsw_size) {
-			if (sbdsp_wdsp(iobase, SB_DSP_BLOCKSIZE) < 0) {
-				/* sometimes fails initial startup?? */
-				delay(100);
-				if (sbdsp_wdsp(iobase, SB_DSP_BLOCKSIZE) < 0) {
-					DPRINTF(("sbdsp_dma_output: BLOCKSIZE failed\n"));
-					goto giveup;
-				}
-			}
-			if (sbdsp_wdsp(iobase, cc) < 0 ||
+		if (cc != sc->sc_last_hs_size) {
+			if (sbdsp_wdsp(iobase, SB_DSP_BLOCKSIZE) < 0 ||
+			    sbdsp_wdsp(iobase, cc) < 0 ||
 			    sbdsp_wdsp(iobase, cc >> 8) < 0) {
 				DPRINTF(("sbdsp_dma_output: HS DMA start failed\n"));
 				goto giveup;
 			}
-			sc->sc_last_hsw_size = cc;
+			sc->sc_last_hs_size = cc;
 		}
 		if (sbdsp_wdsp(iobase, SB_DSP_HS_OUTPUT) < 0) {
-			delay(100);
-			if (sbdsp_wdsp(iobase, SB_DSP_HS_OUTPUT) < 0) {
-				DPRINTF(("sbdsp_dma_output: HS DMA restart failed\n"));
-				goto giveup;
-			}
+			DPRINTF(("sbdsp_dma_output: HS DMA restart failed\n"));
+			goto giveup;
 		}
-		sc->sc_locked = 1;
 	}
-
 	return 0;
 
- giveup:
-	isa_dmaabort(sc->sc_drq);
+giveup:
 	sbdsp_reset(sc);
-	sc->sc_intr = 0;
-	sc->sc_arg = 0;
 	return EIO;
 }
 
@@ -1110,36 +1086,40 @@ sbdsp_intr(arg)
 	void *arg;
 {
 	register struct sbdsp_softc *sc = arg;
+	u_char x;
 
 #ifdef AUDIO_DEBUG
 	if (sbdspdebug > 1)
 		Dprintf("sbdsp_intr: intr=0x%x\n", sc->sc_intr);
 #endif
 	sc->sc_interrupts++;
-	sc->sc_locked = 0;
 	/* clear interrupt */
-	inb(sc->sc_iobase + SBP_DSP_RSTAT);
+	x = inb(sc->sc_iobase + SBP_DSP_RSTAT);
+	delay(10);
+#if 0
+	if ((x & SB_DSP_READY) == 0) {
+		printf("sbdsp_intr: still busy\n");
+		return 0;
+	}
+#endif
 #if 0
 	if (sc->sc_mintr != 0) {
-		int c = sbdsp_rdsp(sc->sc_iobase);
-		(*sc->sc_mintr)(sc->sc_arg, c);
+		x = sbdsp_rdsp(sc->sc_iobase);
+		(*sc->sc_mintr)(sc->sc_arg, x);
 	} else
 #endif
 	if (sc->sc_intr != 0) {
-	    /*
-	     * The SBPro used to develop and test this driver often
-	     * generated dma underruns--it interrupted to signal
-	     * completion of the DMA input recording block, but the
-	     * ISA DMA controller didn't think the channel was
-	     * finished.  Maybe this is just a bus speed issue, I dunno,
-	     * but it seems strange and leads to channel-flipping with stereo
-	     * recording.  Sigh.
-	     */
+		/*
+		 * The SBPro used to develop and test this driver often
+		 * generated dma underruns--it interrupted to signal
+		 * completion of the DMA input recording block, but the
+		 * ISA DMA controller didn't think the channel was
+		 * finished.  Maybe this is just a bus speed issue, I dunno,
+		 * but it seems strange and leads to channel-flipping with
+		 * stereo recording.  Sigh.
+		 */
 		isa_dmadone(sc->dmaflags, sc->dmaaddr, sc->dmacnt,
 			    sc->sc_drq);
-		sc->dmaflags = 0;
-		sc->dmaaddr = 0;
-		sc->dmacnt = 0;
 		(*sc->sc_intr)(sc->sc_arg);
 	}
 	else
