@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.4 1996/10/13 03:35:29 christos Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.5 1997/01/13 14:05:01 oki Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -40,7 +40,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/msgbuf.h>
 #include <machine/pte.h>
 #include <x68k/x68k/iodevice.h>
@@ -191,7 +190,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * working.  The 224mb of address space that this allows will most
 	 * likely be insufficient in the future (at least for the kernel).
 	 */
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 	if (RELOC(mmutype, int) == MMU_68040) {
 		register int num;
 
@@ -266,13 +265,13 @@ pmap_bootstrap(nextpa, firstpa)
 		while (pte < epte) {
 			*pte++ = PG_NV;
 		}
-                /*
-		 * Initialize the last to point to point to the page
+		/*
+		 * Initialize the last to point to the page
 		 * table page allocated earlier.
 		 */
 		*pte = lkptpa | PG_RW | PG_CI | PG_V;
 	} else
-#endif /* M68040 */
+#endif /* M68040 || M68060 */
 	{
 		/*
 		 * Map the page table pages in both the HW segment table
@@ -342,13 +341,28 @@ pmap_bootstrap(nextpa, firstpa)
 	 * by us so far (nextpa - firstpa bytes), and pages for proc0
 	 * u-area and page table allocated below (RW).
 	 */
-	epte = &((u_int *)kptpa)[x68k_btop(nextpa - firstpa)];
+	epte = &((u_int *)kptpa)[x68k_btop(kstpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 	/*
 	 * Enable copy-back caching of data pages
 	 */
 	if (RELOC(mmutype, int) == MMU_68040)
 		protopte |= PG_CCB;
+	while (pte < epte) {
+		*pte++ = protopte;
+		protopte += NBPG;
+	}
+	/*
+	 * map the kernel segment table cache invalidated for 
+	 * these machines (for the 68040 not strictly necessary, but
+	 * recommended by Motorola; for the 68060 mandatory)
+	 */
+	epte = &((u_int *)kptpa)[x68k_btop(nextpa - firstpa)];
+	protopte = (protopte & ~PG_PROT) | PG_RW;
+	if (RELOC(mmutype, int) == MMU_68040) {
+		protopte &= ~PG_CCB;
+		protopte |= PG_CIN;
+	}
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
@@ -503,6 +517,7 @@ int i;
 		simple_lock_init(&kpm->pm_lock);
 		kpm->pm_count = 1;
 		kpm->pm_stpa = (st_entry_t *)kstpa;
+#if defined(M68040) || defined(M68060)
 		/*
 		 * For the 040 we also initialize the free level 2
 		 * descriptor mask noting that we have used:
@@ -524,6 +539,7 @@ int i;
 			     num++)
 				kpm->pm_stfree &= ~l2tobm(num);
 		}
+#endif
 	}
 
 	/*
@@ -545,22 +561,56 @@ int i;
 }
 
 #ifdef MACHINE_NONCONTIG
+static struct {
+	caddr_t base;
+	vm_size_t min;
+	vm_size_t max;
+} memlist[] = {
+	(caddr_t)0x01000000, 0x01000000, 0x01000000, /* TS-6BE16 16MB memory */
+	(caddr_t)0x10000000, 0x00400000, 0x02000000, /* 060turbo SIMM slot (4--32MB) */
+};
+
 static void
 setmemrange()
 {
-	u_long p;
-	numranges = 1;
-	low[0]  = 0;
-	high[0] = *(u_long *)0x00ED0008;
+	int p, i;
+	vm_size_t s, min, max;
+	const volatile caddr_t base = 0x00000000;
 
-	p = *(u_long *)0x00000000;
-	*(u_long *)0x00000000 = 0;
-	*(u_long *)0x01000000 = 1;
-	if (*(volatile u_long *)0x00000000 == 0) {
-		numranges++;
-		low[1]  = 0x01000000;
-		high[1] = 0x02000000;
+	/* first, x68k base memory */
+	numranges = 0;
+	low[numranges]  = 0;
+	high[numranges] = *(u_long *)0x00ED0008;
+	numranges++;
+
+	p = *base;
+
+	/* second, discover extended memory */
+	for (i = 0; i < sizeof(memlist) / sizeof(memlist[0]); i++) {
+		min = memlist[i].min;
+		max = memlist[i].max;
+		/*
+		 * Normally, x68k hardware is NOT 32bit-clean.
+		 * But some type of extended memory is in 32bit address space.
+		 * Check weather.
+		 */
+		if (badaddr(memlist[i].base))
+			continue;
+		*base = 0;
+		*(volatile caddr_t)memlist[i].base = 1;
+		if (*base == 0) {
+			low[numranges] = (u_long)memlist[i].base;
+			high[numranges] = 0;
+			/* range check */
+			for (s = min; s <= max; s += 0x00100000)
+				if (!badaddr(low[numranges] + s - 4))
+					high[numranges] = low[numranges] + s;
+			if (low[numranges] < high[numranges]) {
+				numranges++;
+			}
+		}
 	}
-	*(u_long *)0x00000000 = p;
+
+	*base = p;
 }
 #endif
