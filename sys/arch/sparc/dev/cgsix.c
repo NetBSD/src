@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.25 1996/04/01 17:30:00 christos Exp $ */
+/*	$NetBSD: cgsix.c,v 1.26 1996/10/04 20:34:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -121,11 +121,10 @@ struct cgsix_softc {
 /* autoconfiguration driver */
 static void	cgsixattach __P((struct device *, struct device *, void *));
 static int	cgsixmatch __P((struct device *, void *, void *));
-int		cgsixopen __P((dev_t, int, int, struct proc *));
-int		cgsixclose __P((dev_t, int, int, struct proc *));
-int		cgsixioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int		cgsixmmap __P((dev_t, int, int));
 static void	cg6_unblank __P((struct device *));
+
+/* cdevsw prototypes */
+cdev_decl(cgsix);
 
 struct cfattach cgsix_ca = {
 	sizeof(struct cgsix_softc), cgsixmatch, cgsixattach
@@ -137,7 +136,7 @@ struct cfdriver cgsix_cd = {
 
 /* frame buffer generic driver */
 static struct fbdriver cg6_fbdriver = {
-	cg6_unblank, cgsixopen, cgsixclose, cgsixioctl, cgsixmmap
+	cg6_unblank, cgsixopen, cgsixclose, cgsixioctl, cgsixpoll, cgsixmmap
 };
 
 /*
@@ -540,6 +539,16 @@ cgsixioctl(dev, cmd, data, flags, p)
 		return (ENOTTY);
 	}
 	return (0);
+}
+
+int
+cgsixpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+
+	return (seltrue(dev, events, p));
 }
 
 /*
