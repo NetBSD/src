@@ -1,4 +1,4 @@
-/* $NetBSD: chio.c,v 1.18 2002/05/02 13:07:01 enami Exp $ */
+/* $NetBSD: chio.c,v 1.19 2002/06/11 05:33:51 itojun Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.18 2002/05/02 13:07:01 enami Exp $");
+__RCSID("$NetBSD: chio.c,v 1.19 2002/06/11 05:33:51 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -599,7 +599,7 @@ do_status(const char *cname, int argc, char **argv)
 		}
 
 		if ((unit + ucount) > count)
-			errx(1, "%s: unvalid unit/count %d/%d\n",
+			errx(1, "%s: unvalid unit/count %d/%d",
 			    cname, unit, ucount);
 
 		size = ucount * sizeof(struct changer_element_status);
