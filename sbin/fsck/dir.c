@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dir.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: dir.c,v 1.9 1994/07/29 02:31:50 mycroft Exp $";
+static char *rcsid = "$Id: dir.c,v 1.10 1994/09/20 23:31:39 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -329,20 +329,28 @@ mkentry(idesc)
 	dirp->d_reclen = oldlen;
 	dirp = (struct direct *)(((char *)dirp) + oldlen);
 	dirp->d_ino = idesc->id_parent;	/* ino to be entered is in id_parent */
-	if (newinofmt) {
+	if (newinofmt)
 		dirp->d_type = typemap[idesc->id_parent];
-		dirp->d_namlen = newent.d_namlen;
-	} else {
-#		if (BYTE_ORDER == LITTLE_ENDIAN)
-			dirp->d_type = newent.d_namlen;
-			dirp->d_namlen = 0;
-#		else
-			dirp->d_type = 0;
-			dirp->d_namlen = newent.d_namlen;
-#		endif
-	}
+	else
+		dirp->d_type = 0;
 	dirp->d_reclen = newent.d_reclen;
-	bcopy(idesc->id_name, dirp->d_name, (size_t)newent.d_namlen + 1);
+	dirp->d_namlen = newent.d_namlen;
+	bcopy(idesc->id_name, dirp->d_name, (size_t)dirp->d_namlen + 1);
+#	if (BYTE_ORDER == LITTLE_ENDIAN)
+		/*
+		 * If the entry was split, dirscan() will only reverse the byte
+		 * order of the original entry, and not the new one, before
+		 * writing it back out.  So, we reverse the byte order here if
+		 * necessary.
+		 */
+		if (oldlen != 0 && !newinofmt && !doinglevel2) {
+			u_char tmp;
+
+			tmp = dirp->d_namlen;
+			dirp->d_namlen = dirp->d_type;
+			dirp->d_type = tmp;
+		}
+#	endif
 	return (ALTERED|STOP);
 }
 
