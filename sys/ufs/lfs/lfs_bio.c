@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.61 2003/02/20 04:27:23 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.62 2003/02/25 20:35:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.61 2003/02/20 04:27:23 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.62 2003/02/25 20:35:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -646,7 +646,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	bp = pool_get(&bufpool, PR_WAITOK);
 	splx(s);
 	memset(bp, 0, sizeof(struct buf));
-	simple_lock_init(&bp->b_interlock);
+	BUF_INIT(bp);
 	if (nbytes) {
 		bp->b_data = lfs_malloc(fs, nbytes, type);
 		/* memset(bp->b_data, 0, nbytes); */
@@ -657,7 +657,6 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	if (bp == NULL)
 		panic("bp is NULL after malloc in lfs_newbuf");
 #endif
-	simple_lock_init(&bp->b_interlock);
 	s = splbio();
 	bgetvp(vp, bp);
 	splx(s);

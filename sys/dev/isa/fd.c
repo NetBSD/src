@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.38 2003/02/05 22:14:01 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.39 2003/02/25 20:35:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.38 2003/02/05 22:14:01 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.39 2003/02/25 20:35:35 thorpej Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1491,7 +1491,7 @@ fdformat(dev, finfo, p)
 		return ENOBUFS;
 
 	memset((void *)bp, 0, sizeof(struct buf));
-	simple_lock_init(&bp->b_interlock);
+	BUF_INIT(bp);
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
 	bp->b_dev = dev;
