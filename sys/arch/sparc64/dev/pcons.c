@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.1 2000/05/20 14:23:12 eeh Exp $	*/
+/*	$NetBSD: pcons.c,v 1.2 2000/06/24 16:51:36 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -58,7 +58,6 @@
 
 #include <dev/cons.h>
 
-#include <sparc64/sparc64/vaddrs.h>
 #include <sparc64/dev/cons.h>
 
 static int pconsmatch __P((struct device *, struct cfdata *, void *));
@@ -274,8 +273,13 @@ pcons_poll(aux)
 	struct pconssoftc *sc = aux;
 	struct tty *tp = sc->of_tty;
 	char ch;
+static int nas = 0;
+
 	
 	while (OF_read(stdin, &ch, 1) > 0) {
+		if (ch == 'a') {
+			if (nas++ > 3) Debugger();
+		} else nas = 0;
 		if (tp && (tp->t_state & TS_ISOPEN))
 			(*linesw[tp->t_line].l_rint)(ch, tp);
 	}
