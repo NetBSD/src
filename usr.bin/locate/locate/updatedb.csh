@@ -56,7 +56,8 @@ set errs = $TMPDIR/locate.errs.$$
 
 # search locally or everything
 # find ${SRCHPATHS} -print | \
-find ${SRCHPATHS} ! -fstype local -a -prune -o -print | \
+find ${SRCHPATHS} \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \) -a \
+		-prune -o -print | \
 	tr '/' '\001' | \
 	(sort -T /var/tmp -f; echo $status > $errs) | tr '\001' '/' > $filelist
 
