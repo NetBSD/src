@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.57 2002/07/29 03:24:47 grant Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.58 2002/07/31 12:44:14 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -282,7 +282,6 @@ menu ftpsource, title "Change";
 		{ msg_prompt (MSG_dir, ftp_dir, ftp_dir, 255); };
 	option "User", action
 		{ msg_prompt (MSG_user, ftp_user, ftp_user, 255);
-		  if (strcmp(ftp_user, "ftp") == 0)
 			ftp_pass[0] = '\0';
 		};
 	option "Password", action
