@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.5 1996/09/16 20:08:57 oki Exp $
+#	$NetBSD: ALL,v 1.6 1996/10/27 08:52:04 oki Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -6,6 +6,9 @@
 
 # architecture type and name of kernel; REQUIRED
 machine		x68k m68k
+
+options		EXEC_SCRIPT		# Support #!
+options		EXEC_AOUT		# a.out format executables
 
 # different CPU types; you must have at least the correct one; REQUIRED
 options		M68030
