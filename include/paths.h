@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.10 1997/04/23 09:41:38 lukem Exp $	*/
+/*	$NetBSD: paths.h,v 1.11 1998/04/07 21:09:31 fair Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,11 +38,18 @@
 #ifndef _PATHS_H_
 #define	_PATHS_H_
 
-/* Default search path. */
-#define	_PATH_DEFPATH	"/usr/bin:/bin"
-/* All standard utilities path. */
+/* Default user search path.
+** set by login(1), rshd(8), rexecd(8)
+** used by execvp(3) absent PATH from the environ(7)
+*/
+#define	_PATH_DEFPATH	"/usr/bin:/bin:/usr/pkg/bin:/usr/local/bin"
+
+/* All standard utilities path.
+** set by init(8) for system programs & scripts (e.g. /etc/rc)
+** used by ttyaction(3)
+*/
 #define	_PATH_STDPATH \
-	"/usr/bin:/bin:/usr/sbin:/sbin:/usr/contrib/bin:/usr/old/bin"
+	"/usr/bin:/bin:/usr/sbin:/sbin:/usr/pkg/bin:/usr/pkg/sbin:/usr/local/bin:/usr/local/sbin"
 
 #define	_PATH_BSHELL	"/bin/sh"
 #define	_PATH_CONSOLE	"/dev/console"
@@ -64,7 +71,9 @@
 #define	_PATH_UNIX	"/netbsd"
 #define	_PATH_VI	"/usr/bin/vi"
 
-/* Provide trailing slash, since mostly used for building pathnames. */
+/* Provide trailing slash, since mostly used for building pathnames.
+** see the __CONCAT() macro from <sys/cdefs.h> for cpp examples.
+*/
 #define	_PATH_DEV	"/dev/"
 #define	_PATH_TMP	"/tmp/"
 #define	_PATH_VARDB	"/var/db/"
