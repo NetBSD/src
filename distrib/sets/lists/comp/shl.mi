@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.23 2001/09/13 23:15:08 thorpej Exp $
+# $NetBSD: shl.mi,v 1.24 2002/01/01 19:05:15 chs Exp $
 ./usr/lib/libasn1_pic.a		comp-c-piclib
 ./usr/lib/libbz2_pic.a		comp-c-piclib
 ./usr/lib/libc_pic.a		comp-c-piclib
@@ -40,7 +40,7 @@
 ./usr/lib/libtelnet_pic.a	comp-c-piclib
 ./usr/lib/libtermcap_pic.a	comp-c-piclib
 ./usr/lib/libtermlib_pic.a	comp-c-piclib
-./usr/lib/libusb_pic.a		comp-c-piclib
+./usr/lib/libusbhid_pic.a	comp-c-piclib
 ./usr/lib/libutil_pic.a		comp-c-piclib
 ./usr/lib/libwrap_pic.a		comp-c-piclib
 ./usr/lib/libz_pic.a		comp-c-piclib
