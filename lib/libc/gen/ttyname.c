@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)ttyname.c	5.10 (Berkeley) 5/6/91";*/
-static char *rcsid = "$Id: ttyname.c,v 1.5 1993/08/26 00:45:19 jtc Exp $";
+static char *rcsid = "$Id: ttyname.c,v 1.6 1993/12/28 19:46:35 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -42,6 +42,7 @@ static char *rcsid = "$Id: ttyname.c,v 1.5 1993/08/26 00:45:19 jtc Exp $";
 #include <dirent.h>
 #include <sgtty.h>
 #include <db.h>
+#include <string.h>
 #include <unistd.h>
 #include <paths.h>
 
