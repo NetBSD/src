@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.3 2000/12/28 22:59:14 sommerfeld Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.4 2001/03/20 13:21:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 
 #include <dev/i2o/i2o.h>
 #include <dev/i2o/iopreg.h>
+#include <dev/i2o/iopio.h>
 #include <dev/i2o/iopvar.h>
 
 #define	PCI_INTERFACE_I2O_POLLED		0x00
