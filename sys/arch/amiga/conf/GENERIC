@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.126 1999/06/18 05:58:25 is Exp $
+#	$NetBSD: GENERIC,v 1.127 1999/07/28 05:55:19 is Exp $
 
 #
 #if 0
@@ -292,10 +292,10 @@ qn*		at zbus0		# Quicknet
 # Arcnet
 bah*		at zbus0		# C=/Ameristar A2060 / 560
 
+#ifdef AMIGA_CONFIGURATION
 # Greater Valley Product Bus
 gvpbus* 	at zbus0
 
-#ifdef AMIGA_CONFIGURATION
 # scsi stuff, all possible
 gtsc0		at gvpbus?		# GVP series II scsi
 scsibus*	at gtsc0
