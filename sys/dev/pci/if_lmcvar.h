@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmcvar.h,v 1.5 2000/12/12 18:00:25 thorpej Exp $	*/
+/*	$NetBSD: if_lmcvar.h,v 1.6 2001/04/12 07:50:54 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -127,6 +127,9 @@
 #include <sys/rnd.h>
 #endif
 
+#endif /* NetBSD */
+
+#if defined(__NetBSD__)
 #define LMC_CSR_READ(sc, csr) \
     bus_space_read_4((sc)->lmc_bustag, (sc)->lmc_bushandle, (sc)->lmc_csrs.csr)
 #define LMC_CSR_WRITE(sc, csr, val) \
@@ -137,22 +140,6 @@
 #define LMC_CSR_WRITEBYTE(sc, csr, val) \
     bus_space_write_1((sc)->lmc_bustag, (sc)->lmc_bushandle, (sc)->lmc_csrs.csr, (val))
 #endif /* __NetBSD__ */
-
-#ifdef LMC_IOMAPPED
-#define	LMC_EISA_CSRSIZE	16
-#define	LMC_EISA_CSROFFSET	0
-#define	LMC_PCI_CSRSIZE	8
-#define	LMC_PCI_CSROFFSET	0
-
-#if !defined(__NetBSD__)
-#define	LMC_CSR_READ(sc, csr)			(inl((sc)->lmc_csrs.csr))
-#define	LMC_CSR_WRITE(sc, csr, val)   	outl((sc)->lmc_csrs.csr, val)
-
-#define	LMC_CSR_READBYTE(sc, csr)		(inb((sc)->lmc_csrs.csr))
-#define	LMC_CSR_WRITEBYTE(sc, csr, val)	outb((sc)->lmc_csrs.csr, val)
-#endif /* __NetBSD__ */
-
-#else /* LMC_IOMAPPED */
 
 #define	LMC_PCI_CSRSIZE	8
 #define	LMC_PCI_CSROFFSET	0
@@ -166,8 +153,6 @@
 #define	LMC_CSR_READ(sc, csr)		(0 + *(sc)->lmc_csrs.csr)
 #define	LMC_CSR_WRITE(sc, csr, val)	((void)(*(sc)->lmc_csrs.csr = (val)))
 #endif /* __NetBSD__ */
-
-#endif /* LMC_IOMAPPED */
 
 /*
  * This structure contains "pointers" for the registers on
@@ -255,11 +240,8 @@ struct lmc_ringinfo {
 
 #define	LMC_RX_BUFLEN		((MCLBYTES < 2048 ? MCLBYTES : 2048) - 16)
 
-/*
- * The various controllers support.  Technically the DE425 is just
- * a 21040 on EISA.  But since it remarkably difference from normal
- * 21040s, we give it its own chip id.
- */
+#define	LMC_LINK_UP		1
+#define	LMC_LINK_DOWN		0
 
 typedef enum {
     LMC_21140, LMC_21140A,
@@ -368,6 +350,13 @@ struct lmc___softc {
 #if defined(__NetBSD__) && NRND > 0
     rndsource_element_t    lmc_rndsource;
 #endif
+
+    u_int32_t   lmc_crcSize;
+    u_int32_t   tx_clockState;
+    char	lmc_yel, lmc_blue, lmc_red;	/* for T1 and DS3 */
+    char	lmc_timing;			/* for HSSI and SSI */
+    u_int16_t   t1_alarm1_status;
+    u_int16_t   t1_alarm2_status;
 };
 
 /*
@@ -483,7 +472,7 @@ static lmc_softc_t *tulips[LMC_MAX_DEVICES];
 #define	LMC_EADDR_ARGS(addr)	addr, ":"
 #else
 extern int bootverbose;
-#define LMC_IFP_TO_SOFTC(ifp)         (LMC_UNIT_TO_SOFTC((ifp)->if_unit))
+#define LMC_IFP_TO_SOFTC(ifp)	(LMC_UNIT_TO_SOFTC((ifp)->if_unit))
 #include <sys/devconf.h>
 #define	LMC_DEVCONF
 #endif
@@ -513,7 +502,7 @@ typedef u_long ioctl_cmd_t;
 extern struct cfattach de_ca;
 extern struct cfdriver de_cd;
 #define	LMC_UNIT_TO_SOFTC(unit)	((lmc_softc_t *) de_cd.cd_devs[unit])
-#define LMC_IFP_TO_SOFTC(ifp)         ((lmc_softc_t *)((ifp)->if_softc))
+#define LMC_IFP_TO_SOFTC(ifp)	((lmc_softc_t *)((ifp)->if_softc))
 #define	lmc_unit			lmc_dev.dv_unit
 #define	lmc_xname			lmc_if.if_xname
 #define	LMC_RAISESPL()		splnet()
@@ -578,7 +567,7 @@ extern struct cfdriver de_cd;
 #if !defined(LMC_BPF_MTAP) && NBPFILTER > 0
 #define	LMC_BPF_MTAP(sc, m)	bpf_mtap((sc)->lmc_bpf, m)
 #define	LMC_BPF_TAP(sc, p, l)	bpf_tap((sc)->lmc_bpf, p, l)
-#define	LMC_BPF_ATTACH(sc)	bpfattach(&(sc)->lmc_sppp.pp_if, DLT_PPP_SERIAL, PPP_HEADER_LEN)
+#define	LMC_BPF_ATTACH(sc)	bpfattach(&(sc)->lmc_sppp.pp_if, DLT_HDLC, PPP_HEADER_LEN)
 #endif
 
 /*
