@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.9 2003/02/26 06:31:18 matt Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.10 2003/02/26 19:31:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.9 2003/02/26 06:31:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.10 2003/02/26 19:31:33 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 		goto retry;
 	}
 	l->l_flag &= ~L_SELECT;
-	error = tsleep((caddr_t)&selwait, PSOCK, "nbssn_rselect", timo);
+	error = tsleep((caddr_t)&selwait, PSOCK, "smbsel", timo);
 	splx(s);
 
 	if (error == 0)
@@ -296,7 +296,7 @@ nb_connect_in(struct nbpcb *nbp, struct sockaddr_in *to, struct proc *p)
 		goto bad;
 	s = splnet();
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-		tsleep(&so->so_timeo, PSOCK, "nbcon", 2 * hz);
+		tsleep(&so->so_timeo, PSOCK, "smbcon", 2 * hz);
 		if ((so->so_state & SS_ISCONNECTING) && so->so_error == 0 &&
 			(error = nb_intr(nbp, p)) != 0) {
 			so->so_state &= ~SS_ISCONNECTING;
