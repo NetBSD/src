@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.16 1999/07/30 16:23:43 nisimura Exp $ */
+/* $NetBSD: mfb.c,v 1.17 1999/08/02 06:00:40 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.16 1999/07/30 16:23:43 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.17 1999/08/02 06:00:40 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ struct mfb_softc {
 #define	MX_MAGIC_Y	36
 
 #define	MX_FB_OFFSET	0x200000
-#define	MX_FB_SIZE	 0x40000
+#define	MX_FB_SIZE	0x200000
 #define	MX_BT455_OFFSET	0x100000
 #define	MX_BT431_OFFSET	0x180000
 #define	MX_IREQ_OFFSET	0x080000	/* Interrupt req. control */
@@ -327,6 +327,7 @@ mfbattach(parent, self, aux)
 	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, mfbintr, sc);
 
 	mfbbase = (caddr_t)sc->sc_dc->dc_vaddr;
+	*(u_int8_t *)(mfbbase + MX_IREQ_OFFSET) = 0;
 	junk = *(u_int8_t *)(mfbbase + MX_IREQ_OFFSET);
 	*(u_int8_t *)(mfbbase + MX_IREQ_OFFSET) = 1;
 
@@ -493,14 +494,14 @@ mfbintr(arg)
 	volatile register int junk;
 	
 	junk = *(u_int8_t *)(mfbbase + MX_IREQ_OFFSET);
-	/* *(u_int8_t *)(mfbbase + MX_IREQ_OFFSET) = 0; */
-
+#if 0
+	*(u_int8_t *)(mfbbase + MX_IREQ_OFFSET) = 0;
+#endif
 	if (sc->sc_changed == 0)
 		return (1);
 
 	vdac = (void *)(mfbbase + MX_BT455_OFFSET);
 	curs = (void *)(mfbbase + MX_BT431_OFFSET);
-
 	v = sc->sc_changed;
 	sc->sc_changed = 0;	
 	if (v & DATA_ENB_CHANGED) {
