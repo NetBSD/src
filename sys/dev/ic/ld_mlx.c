@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_mlx.c,v 1.3 2001/11/13 13:14:40 lukem Exp $	*/
+/*	$NetBSD: ld_mlx.c,v 1.3.10.1 2003/07/28 18:07:46 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.3 2001/11/13 13:14:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.3.10.1 2003/07/28 18:07:46 he Exp $");
 
 #include "rnd.h"
 
@@ -188,7 +188,7 @@ ld_mlx_dobio(struct ld_mlx_softc *sc, void *data, int datasize, int blkno,
 	sgphys = mlx->mlx_sgls_paddr + (MLX_SGL_SIZE * mc->mc_ident);
 	datasize /= MLX_SECTOR_SIZE;
 
-	if (mlx->mlx_iftype == 2)
+	if (mlx->mlx_ci.ci_iftype <= 2)
 		mlx_make_type1(mc,
 		    dowrite ? MLX_CMD_WRITESG_OLD : MLX_CMD_READSG_OLD,
 		    datasize & 0xff, blkno, sc->sc_hwunit, sgphys,
