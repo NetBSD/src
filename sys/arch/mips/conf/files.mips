@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.35 2001/11/28 10:21:16 lukem Exp $
+#	$NetBSD: files.mips,v 1.36 2001/12/02 10:37:25 uch Exp $
 #
 
 defflag	opt_cputype.h		NOTYET	# MIPS1	MIPS2 MIPS3 MIPS4 MIPS5
@@ -14,10 +14,13 @@ defflag	opt_mips_cache.h		MIPS3_L2CACHE_ABSENT
 					MIPS3_NO_PV_UNCACHED
 
 file	arch/mips/mips/cache.c
-file	arch/mips/mips/cache_r3k.c	mips1
-file	arch/mips/mips/cache_r3k_subr.S	mips1
-file	arch/mips/mips/cache_r4k.c	mips3
-file	arch/mips/mips/cache_r5k.c	mips3
+file	arch/mips/mips/cache_r3k.c		mips1
+file	arch/mips/mips/cache_r3k_subr.S		mips1
+file	arch/mips/mips/cache_tx39.c		mips1 & enable_mips_tx3900
+file	arch/mips/mips/cache_tx39_subr.S	mips1 & enable_mips_tx3900
+file	arch/mips/mips/cache_r4k.c		mips3
+file	arch/mips/mips/cache_r5k.c		mips3
+file	arch/mips/mips/cache_r5900.c		mips3 & mips3_5900
 
 file	arch/mips/mips/db_disasm.c	ddb
 file	arch/mips/mips/db_interface.c	ddb | kgdb
