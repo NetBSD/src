@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.91 1997/09/27 15:52:54 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.92 1997/09/29 20:52:05 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -964,7 +964,7 @@ Lunshadow:
 	movl	#CACHE40_ON,d0
 #ifdef M68060
 	cmpl	#CPU_68060,_cputype
-	jeq	Lcacheon
+	jne	Lcacheon
 	movl	#CACHE60_ON,d0
 #endif
 Lcacheon:
@@ -1247,7 +1247,7 @@ Lsw2:
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
 	cmpl	#CPU_68060,_cputype
-	jne	Lsavfp60
+	jeq	Lsavfp60
 #endif
 	tstb	a2@				| null state frame?
 	jeq	Lswnofpsave			| yes, all done
@@ -1308,7 +1308,7 @@ Lres2:
 |	movc	d0,cacr				| invalidate cache(s)
 #ifdef M68060
 	cmpl	#CPU_68060,_cputype
-	jeq	Lres3
+	jne	Lres3
 	movc	cacr,d2
 	orl	#IC60_CUBC,d2			| clear user btc
 	movc	d2,cacr
@@ -1343,7 +1343,7 @@ Lresnonofpatall:
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
 	cmpl	#CPU_68060,_cputype
-	jne	Lresfp60rest1
+	jeq	Lresfp60rest1
 #endif
 	tstb	a0@				| null state frame?
 	jeq	Lresfprest2			| yes, easy
@@ -1393,7 +1393,7 @@ ENTRY(savectx)
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
 	cmpl	#CPU_68060,_cputype
-	jne	Lsavctx60
+	jeq	Lsavctx60
 #endif
 	tstb	a0@				| null state frame?
 	jeq	Lsavedone			| yes, all done
@@ -1519,7 +1519,7 @@ Ltbia040:
 	.word	0xf518				| pflusha
 #ifdef M68060
 	cmpl	#CPU_68060,_cputype
-	jeq	Ltbiano60
+	jne	Ltbiano60
 	movc	cacr,d0
 	orl	#IC60_CABC,d0			| and clear all btc entries
 	movc	d0,cacr
@@ -1556,7 +1556,7 @@ Ltbis040:
 	.word	0xf508				| pflush a0@
 #ifdef M68060
 	cmpl	#CPU_68060,_cputype
-	jeq	Ltbisno60
+	jne	Ltbisno60
 	movc	cacr,d0
 	orl	#IC60_CABC,d0			| and clear all btc entries
 	movc	d0,cacr
@@ -1588,7 +1588,7 @@ Ltbias040:
 	.word	0xf518				| pflusha
 #ifdef M68060
 	cmpl	#CPU_68060,_cputype
-	jeq	Ltbiasno60
+	jne	Ltbiasno60
 	movc	cacr,d0
 	orl	#IC60_CABC,d0			| and clear all btc entries
 	movc	d0,cacr
@@ -1620,7 +1620,7 @@ Ltbiau040:
 	.word	0xf518				| pflusha
 #ifdef M68060
 	cmpl	#CPU_68060,_cputype
-	jeq	Ltbiauno60
+	jne	Ltbiauno60
 	movc	cacr,d0
 	orl	#IC60_CUBC,d0			| but only user btc entries
 	movc	d0,cacr
@@ -1787,7 +1787,7 @@ ENTRY(loadustp)
 	lsll	d1,d0				| convert to addr
 #ifdef M68060
 	cmpl	#CPU_68060,_cputype
-	jne	Lldustp060
+	jeq	Lldustp060
 #endif
 	cmpl	#MMU_68040,_mmutype
 	jeq	Lldustp040
@@ -1815,7 +1815,7 @@ Lldustp040:
 ENTRY(flushustp)
 #ifdef M68060
 	cmpl	#CPU_68060,_cputype
-	jne	Lflustp060
+	jeq	Lflustp060
 #endif
 	cmpl	#MMU_68040,_mmutype
 	jeq	Lnot68851
@@ -1857,7 +1857,7 @@ ENTRY(m68881_save)
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
 	cmpl	#CPU_68060,_cputype
-	jne	Lm68060fpsave
+	jeq	Lm68060fpsave
 #endif
 	tstb	a0@				| null state frame?
 	jeq	Lm68881sdone			| yes, all done
@@ -1884,7 +1884,7 @@ ENTRY(m68881_restore)
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
 	cmpl	#CPU_68060,_cputype
-	jne	Lm68060fprestore
+	jeq	Lm68060fprestore
 #endif
 	tstb	a0@				| null state frame?
 	jeq	Lm68881rdone			| yes, easy
