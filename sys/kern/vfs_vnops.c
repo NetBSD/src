@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.81 2004/11/06 02:03:20 wrstuden Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.82 2004/11/06 07:34:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.81 2004/11/06 02:03:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.82 2004/11/06 07:34:53 christos Exp $");
 
 #include "fs_union.h"
 
@@ -692,7 +692,7 @@ vn_ioctl(fp, com, data, p)
 			*(int *)data = vattr.va_size - fp->f_offset;
 			return (0);
 		}
-		if ((com == FIONWRITE) || (comm == FIONSPACE)) {
+		if ((com == FIONWRITE) || (com == FIONSPACE)) {
 			/*
 			 * Files don't have send queues, so there never
 			 * are any bytes in them, nor is there any
