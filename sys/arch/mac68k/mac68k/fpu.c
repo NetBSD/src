@@ -142,6 +142,9 @@ FPUemul(frame)
   id = (int)((buf[0] >> 9) & 0x7);
   if (id != 1) {
     printf ("Unsupported co-processor (%d).\n", id);
+#ifdef DDB
+    Debugger();
+#endif
     return;
   }
 
