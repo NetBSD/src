@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.173 2004/07/05 07:28:45 pk Exp $	*/
+/*	$NetBSD: systm.h,v 1.174 2004/10/23 21:27:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -465,5 +465,12 @@ void	_kernel_lock_acquire_count(int);
 #define	KERNEL_LOCK_ACQUIRE_COUNT(count) /* nothing */
 
 #endif /* MULTIPROCESSOR */
+
+#if defined(MULTIPROCESSOR) && defined(DEBUG)
+#define	KERNEL_LOCK_ASSERT_LOCKED()	_kernel_lock_assert_locked()
+void _kernel_lock_assert_locked(void);
+#else
+#define	KERNEL_LOCK_ASSERT_LOCKED()	/* nothing */
+#endif
 
 #endif	/* !_SYS_SYSTM_H_ */
