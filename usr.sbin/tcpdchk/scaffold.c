@@ -1,4 +1,4 @@
-/*	$NetBSD: scaffold.c,v 1.3 1997/11/16 21:30:25 christos Exp $	*/
+/*	$NetBSD: scaffold.c,v 1.4 1999/05/09 16:05:35 christos Exp $	*/
 
  /*
   * Routines for testing only. Not really industrial strength.
@@ -11,7 +11,7 @@
 #if 0
 static char sccs_id[] = "@(#) scaffold.c 1.5 95/01/03 09:13:48";
 #else
-__RCSID("$NetBSD: scaffold.c,v 1.3 1997/11/16 21:30:25 christos Exp $");
+__RCSID("$NetBSD: scaffold.c,v 1.4 1999/05/09 16:05:35 christos Exp $");
 #endif
 #endif
 
@@ -95,7 +95,7 @@ char   *host;
     /*
      * Host address: translate it to internal form.
      */
-    if ((addr.s_addr = dot_quad_addr(host)) != INADDR_NONE) {
+    if (dot_quad_addr(host, &addr) == 0) {
 	h.h_addr_list = addr_list;
 	h.h_addr_list[0] = (char *) &addr;
 	h.h_length = sizeof(addr);
