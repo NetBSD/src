@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.17 2004/04/20 08:48:03 pk Exp $ */
+/*	$NetBSD: lock.h,v 1.18 2005/02/03 16:17:21 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ static __inline__ int __ldstub(__cpu_simple_lock_t *addr)
 	int v;
 
 	__asm __volatile("ldstub [%1],%0"
-	    : "=r" (v)
+	    : "=&r" (v)
 	    : "r" (addr)
 	    : "memory");
 
