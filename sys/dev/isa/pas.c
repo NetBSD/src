@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.42 1998/06/22 17:21:34 augustss Exp $	*/
+/*	$NetBSD: pas.c,v 1.43 1998/08/10 00:20:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -126,10 +126,10 @@ struct audio_hw_if pas_hw_if = {
 	sbdsp_set_params,
 	sbdsp_round_blocksize,
 	0,
-	sbdsp_dma_init_output,
-	sbdsp_dma_init_input,
-	sbdsp_dma_output,
-	sbdsp_dma_input,
+	0,
+	0,
+	0,
+	0,
 	sbdsp_haltdma,
 	sbdsp_haltdma,
 	sbdsp_speaker_ctl,
@@ -143,6 +143,8 @@ struct audio_hw_if pas_hw_if = {
 	sb_round,
         sb_mappage,
 	sbdsp_get_props,
+	sbdsp_trigger_output,
+	sbdsp_trigger_input,
 };
 
 /* The Address Translation code is used to convert I/O register addresses to

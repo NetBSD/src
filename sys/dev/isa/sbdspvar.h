@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.36 1998/08/07 00:01:00 augustss Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.37 1998/08/10 00:20:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -129,20 +129,25 @@ struct sbdsp_softc {
 		struct	sbmode *modep;
 		u_char	bmode;
 		int	dmachan;	/* DMA channel */
+		int	blksize;	/* Block size, preadjusted */
 		u_char	run;
 #define SB_NOTRUNNING 0		/* Not running, not initialized */
-#define SB_DMARUNNING 1		/* DMA has been initialized */
-#define SB_PCMRUNNING 2		/* DMA&PCM running (looping mode) */
 #define SB_RUNNING 3		/* non-looping mode */
+#define SB_LOOPING 2		/* DMA&PCM running (looping mode) */
 	} sc_i, sc_o;			/* Input and output state */
 
 	u_long	sc_interrupts;		/* number of interrupts taken */
-	void	(*sc_intr8)(void*);	/* dma completion intr handler */
+
+	int	(*sc_intr8)(void*);	/* dma completion intr handler */
 	void	*sc_arg8;		/* arg for sc_intr8() */
-	void	(*sc_intr16)(void*);	/* dma completion intr handler */
+	int	(*sc_intr16)(void*);	/* dma completion intr handler */
 	void	*sc_arg16;		/* arg for sc_intr16() */
+	void	(*sc_intrp)(void*);	/* PCM output intr handler */
+	void	*sc_argp;		/* arg for sc_intrp() */
+	void	(*sc_intrr)(void*);	/* PCM input intr handler */
+	void	*sc_argr;		/* arg for sc_intrr() */
 	void	(*sc_intrm)(void*, int);/* midi input intr handler */
-	void	*sc_argm;		/* arg for sc_mintr() */
+	void	*sc_argm;		/* arg for sc_intrm() */
 
 	u_int	sc_mixer_model;
 #define SBM_NONE	0
@@ -202,10 +207,10 @@ int	sbdsp_get_avail_out_ports __P((void *));
 int	sbdsp_speaker_ctl __P((void *, int));
 
 int	sbdsp_commit __P((void *));
-int	sbdsp_dma_init_input __P((void *, void *, int));
-int	sbdsp_dma_init_output __P((void *, void *, int));
-int	sbdsp_dma_output __P((void *, void *, int, void (*)(void *), void*));
-int	sbdsp_dma_input __P((void *, void *, int, void (*)(void *), void*));
+int	sbdsp_trigger_output __P((void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *));
+int	sbdsp_trigger_input __P((void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *));
 
 int	sbdsp_haltdma __P((void *));
 
