@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/01/15 13:31:25 bouyer Exp $
+#	$NetBSD: Makefile,v 1.4 1999/01/31 01:01:12 castor Exp $
 
 KDIR=	/sys/arch/newsmips/include
 INCSDIR= /usr/include/newsmips
@@ -11,23 +11,4 @@ INCS=	adrsmap.h ansi.h aout_machdep.h autoconf.h bswap.h bsd-aout.h cdefs.h
 	reg.h regdef.h regnum.h reloc.h setjmp.h signal.h stdarg.h trap.h \
 	types.h va-mips.h varargs.h vmparam.h z8530var.h
 
-DEPINCS= pubassym.h
-
-.ifndef	S
-S=	${.CURDIR}/../../..
-.endif
-MIPS=$S/arch/mips
-
-CFLAGS+= -I. -D_LKM
-
-pubassym.h:	${MIPS}/mips/genpubassym.cf
-	ln -sf ${MIPS}/include mips && \
-	ln -sf ${S}/sys sys  && \
-	ln -sf ${S}/uvm uvm  && \
-	ln -sf ${S}/arch/${MACHINE}/include machine && \
-	sh ${S}/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-		< ${.ALLSRC} > pubassym.h.tmp && \
-	mv -f pubassym.h.tmp pubassym.h
-
 .include <bsd.kinc.mk>
-.include <bsd.obj.mk>
