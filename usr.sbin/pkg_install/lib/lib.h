@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.69 2004/04/11 06:13:46 rh Exp $ */
+/* $NetBSD: lib.h,v 1.70 2004/11/02 00:38:23 erh Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -300,7 +300,7 @@ void    delete_plist(package_t *, Boolean, pl_ent_t, char *);
 void    write_plist(package_t *, FILE *, char *);
 void    read_plist(package_t *, FILE *);
 int     plist_cmd(char *, char **);
-int     delete_package(Boolean, Boolean, package_t *);
+int     delete_package(Boolean, Boolean, package_t *, Boolean);
 
 /* Package Database */
 int     pkgdb_open(int);
