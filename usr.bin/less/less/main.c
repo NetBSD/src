@@ -103,6 +103,7 @@ main(argc, argv)
 	if (more_mode) {
 		scan_option("-E");
 		scan_option("-m");
+		scan_option("-G");
 		scan_option(getenv("MORE"));
 	} else
 		scan_option(getenv("LESS"));
