@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.8 2000/12/03 01:18:15 christos Exp $	*/
+/*	$NetBSD: job.h,v 1.9 2000/12/04 20:13:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -91,6 +91,12 @@
  * parents of the node which was just remade. This takes care of the upward
  * traversal of the dependency graph.
  */
+#ifndef RMT_WILL_WATCH
+#ifndef USE_SELECT
+struct pollfd;
+#endif
+#endif
+
 #define JOB_BUFSIZE	1024
 typedef struct Job {
     int       	pid;	    /* The child's process ID */
@@ -120,6 +126,11 @@ typedef struct Job {
 	struct {
 	    int	  	op_inPipe;	/* Input side of pipe associated
 					 * with job's output channel */
+#ifndef RMT_WILL_WATCH
+#ifndef USE_SELECT
+	    struct pollfd *op_inPollfd;	/* pollfd associated with inPipe */
+#endif
+#endif
 	    int   	op_outPipe;	/* Output side of pipe associated with
 					 * job's output channel */
 	    char  	op_outBuf[JOB_BUFSIZE + 1];
@@ -144,6 +155,7 @@ typedef struct Job {
 
 #define outPipe	  	output.o_pipe.op_outPipe
 #define inPipe	  	output.o_pipe.op_inPipe
+#define inPollfd	output.o_pipe.op_inPollfd
 #define outBuf		output.o_pipe.op_outBuf
 #define curPos		output.o_pipe.op_curPos
 #define outFile		output.o_file.of_outFile
