@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.240.2.26 2002/06/06 19:44:57 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.240.2.27 2004/04/07 07:13:01 jmc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -3014,6 +3014,36 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "National Semiconductor",
 	    "NS87410",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_ISA,
+	    0,
+	    "National Semiconductor",
+	    "SC1100 PCI-ISA bridge",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_ACPI,
+	    0,
+	    "National Semiconductor",
+	    "SC1100 SMI/ACPI",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_IDE,
+	    0,
+	    "National Semiconductor",
+	    "SC1100 PCI IDE",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_AUDIO,
+	    0,
+	    "National Semiconductor",
+	    "SC1100 XpressAUDIO",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_XBUS,
+	    0,
+	    "National Semiconductor",
+	    "SC1100 X-Bus",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810,
