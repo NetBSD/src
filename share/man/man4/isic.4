@@ -1,4 +1,4 @@
-.\" $NetBSD: isic.4,v 1.5 2001/06/05 13:45:10 wiz Exp $
+.\" $NetBSD: isic.4,v 1.6 2001/09/11 00:08:28 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isic.4,v 1.5 2001/06/05 13:45:10 wiz Exp $
+.\"	$Id: isic.4,v 1.6 2001/09/11 00:08:28 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -303,7 +303,7 @@ if an AmigaOS driver did lock the interrupt priority level of the card, your
 system might hang soon after boot. In this case, boot using the boot block,
 or without enabling the AmigaOS driver if you use loadbsd.
 .El
-.Sh CAVEATS
+.Sh BUGS
 Note that all of the boards with I/O ports actually use several ranges
 of port addresses; Teles happen to refer to the 0xd80 range in their
 documentation (the board also uses 0x180 etc.), while AVM happen to refer
@@ -311,14 +311,14 @@ to the 0x200 range in their documentation (the board also uses 0x600 etc.)
 The driver matches the manufacturers' description for the purposes of
 configuration, but of course makes use of all the ports in order to
 operate the card.
-.Sh BUGS
+.Pp
 Since there is no hardware documentation available from several manufacturers
 for their boards, it is likely that there are many, many bugs left.
 .Sh STANDARDS
 CCITT Recommendation I.430
 .Sh SEE ALSO
 .Xr isdnd 8
-.Sh AUTHOR
+.Sh AUTHORS
 The
 .Nm
 driver and this manpage were written by
