@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.2 1999/07/06 13:13:03 itojun Exp $	*/
+/*	$NetBSD: parse.y,v 1.3 2000/01/31 14:22:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* KAME Id: parse.y,v 1.1.2.18.2.7.4.12 1999/07/01 20:19:03 sakane Exp */
+/* KAME Id: parse.y,v 1.14 1999/12/30 15:13:27 sakane Exp */
 
 %{
 #include <sys/types.h>
@@ -55,9 +55,10 @@
 
 u_int p_type;
 u_int32_t p_spi;
-struct sockaddr *p_src, *p_dst, *p_proxy;
-u_int p_ports, p_portd, p_prefs, p_prefd, p_upper;
-u_int p_satype, p_ext, p_alg_enc, p_alg_auth, p_replay;
+struct sockaddr *p_src, *p_dst;
+u_int p_prefs, p_prefd, p_upper;
+u_int p_satype, p_ext, p_alg_enc, p_alg_auth, p_replay, p_mode;
+u_int32_t p_reqid;
 u_int p_key_enc_len, p_key_auth_len;
 caddr_t p_key_enc, p_key_auth;
 time_t p_lt_hard, p_lt_soft;
@@ -67,8 +68,8 @@ char *p_policy;
 
 /* temporary buffer */
 static struct sockaddr *pp_addr;
-static u_int pp_prefix = ~0;
-static u_int pp_port = 0;
+static u_int pp_prefix;
+static u_int pp_port;
 static caddr_t pp_key;
 
 extern u_char m_buf[BUFSIZ];
@@ -95,19 +96,29 @@ extern void yyerror __P((char *));
 
 %token EOT
 %token ADD GET DELETE FLUSH DUMP
-%token IP4_ADDRESS IP6_ADDRESS PREFIX PORT HOSTNAME
+%token IP4_ADDRESS IP6_ADDRESS PREFIX PORT PORTANY
 %token UP_PROTO PR_ESP PR_AH PR_IPCOMP
-%token DECSTRING QUOTEDSTRING HEXSTRING
 %token F_PROTOCOL F_AUTH F_ENC F_REPLAY F_COMP F_RAWCPI
-%token ALG_AUTH ALG_ENC ALG_ENC_DESDERIV ALG_ENC_DES32IV ALG_COMP EXTENSION
+%token F_MODE MODE F_REQID
+%token F_EXT EXTENSION NOCYCLICSEQ
+%token ALG_AUTH ALG_ENC ALG_ENC_DESDERIV ALG_ENC_DES32IV ALG_COMP
 %token F_LIFETIME_HARD F_LIFETIME_SOFT
+%token DECSTRING QUOTEDSTRING HEXSTRING ANY
 	/* SPD management */
 %token SPDADD SPDDELETE SPDDUMP SPDFLUSH
 %token F_POLICY PL_REQUESTS
 
+%type <num> PORT PREFIX EXTENSION MODE
+%type <num> UP_PROTO PR_ESP PR_AH PR_IPCOMP
+%type <num> ALG_AUTH ALG_ENC ALG_ENC_DESDERIV ALG_ENC_DES32IV ALG_COMP
+%type <num> DECSTRING
+%type <val> IP4_ADDRESS IP6_ADDRESS PL_REQUESTS
+%type <val> key_string policy_requests
+%type <val> QUOTEDSTRING HEXSTRING
+
 %%
-commands:
-		/* empty */
+commands
+	:	/*NOTHING*/
 	|	commands command
 		{
 			if (f_debug) {
@@ -121,8 +132,8 @@ commands:
 		}
 	;
 
-command:
-		add_command
+command
+	:	add_command
 	|	get_command
 	|	delete_command
 	|	flush_command
@@ -135,120 +146,79 @@ command:
 	/* commands concerned with management, there is in tail of this file. */
 
 	/* add command */
-add_command:
-		ADD
-		{
-			p_type = yylval.num;
-		}
-		selector_spec protocol_spec lifetime_hard lifetime_soft EOT
+add_command
+	:	ADD { p_type = SADB_ADD; }
+		sa_selector_spec extension_spec algorithm_spec EOT
 	;
 
 	/* delete */
-delete_command:
-		DELETE
-		{
-			p_type = yylval.num;
-		}
-		selector_spec protocol_spec0 EOT
+delete_command
+	:	DELETE { p_type = SADB_DELETE; }
+		sa_selector_spec extension_spec EOT
 	;
 
 	/* get command */
-get_command:
-		GET
-		{
-			p_type = yylval.num;
-		}
-		selector_spec protocol_spec0 EOT
+get_command
+	:	GET { p_type = SADB_GET; }
+		sa_selector_spec extension_spec EOT
 	;
 
 	/* flush */
-flush_command:
-		FLUSH
-		{
-			p_type = yylval.num;
-		}
-		protocol_spec0 EOT
+flush_command
+	:	FLUSH { p_type = SADB_FLUSH; }
+		protocol_spec EOT
 	;
 
 	/* dump */
-dump_command:
-		DUMP
-		{
-			p_type = yylval.num;
-		}
-		protocol_spec0 EOT
+dump_command
+	:	DUMP { p_type = SADB_DUMP; }
+		protocol_spec EOT
 	;
 
-	/* selector_spec */
-selector_spec:
-		src_spec dst_spec upper_spec spi proxy_spec
+	/* sa_selector_spec */
+sa_selector_spec
+	:	ipaddress { p_src = pp_addr; }
+		ipaddress { p_dst = pp_addr; }
+		protocol_spec spi
 	;
 
-src_spec:
-		ip_address
+protocol_spec
+	:	/*NOTHING*/ { p_satype = SADB_SATYPE_UNSPEC; }
+	|	PR_ESP
 		{
-			p_src = pp_addr;
+			p_satype = SADB_SATYPE_ESP;
+			if ($1 == 1)
+				p_ext |= SADB_X_EXT_OLD;
+			else
+				p_ext &= ~SADB_X_EXT_OLD;
 		}
-		prefix
+	|	PR_AH
 		{
-			p_prefs = pp_prefix;
-			/* initialize */
-			pp_prefix = ~0;
+			p_satype = SADB_SATYPE_AH;
+			if ($1 == 1)
+				p_ext |= SADB_X_EXT_OLD;
+			else
+				p_ext &= ~SADB_X_EXT_OLD;
 		}
-		port
+	|	PR_IPCOMP
 		{
-			_INPORTBYSA(p_src) = pp_port;
-			p_ports = pp_port;
-
-			/* initialize */
-			pp_port = 0;
-		}
-	;
-
-dst_spec:
-		ip_address
-		{
-			p_dst = pp_addr;
-		}
-		prefix
-		{
-			p_prefd = pp_prefix;
-			/* initialize */
-			pp_prefix = ~0;
-		}
-		port
-		{
-			_INPORTBYSA(p_dst) = pp_port;
-			p_portd = pp_port;
-
-			/* initialize */
-			pp_port = 0;
+			p_satype = SADB_X_SATYPE_IPCOMP;
 		}
 	;
-
-upper_spec:
-		DECSTRING { p_upper = $1.num; }
-	|	UP_PROTO { p_upper = $1.num; }
-	|	PR_ESP { p_upper = IPPROTO_ESP; };
-	|	PR_AH { p_upper = IPPROTO_AH; };
-	|	PR_IPCOMP { p_upper = IPPROTO_IPCOMP; };
-	;
-
-spi:
-		DECSTRING
-		{
-			p_spi = yylval.num;
-		}
+	
+spi
+	:	DECSTRING { p_spi = $1; }
 	|	HEXSTRING
 		{
 			caddr_t bp;
-			caddr_t yp = yylval.val.buf;
+			caddr_t yp = $1.buf;
 			char buf0[4], buf[4];
 			int i, j;
 
 			/* sanity check */
-			if (yylval.val.len > 4) {
+			if ($1.len > 4) {
 				yyerror("SPI too big.");
+				free($1.buf);
 				return -1;
 			}
 
@@ -261,114 +231,42 @@ spi:
 			/* initialize */
 			for (i = 0; i < 4; i++) buf[i] = 0;
 
-			for (j = yylval.val.len - 1, i = 3; j >= 0; j--, i--)
+			for (j = $1.len - 1, i = 3; j >= 0; j--, i--)
 				buf[i] = buf0[j];
 
 			/* XXX: endian */
 			p_spi = ntohl(*(u_int32_t *)buf);
+
+			free($1.buf);
 		}
 	;
 
-proxy_spec:
-		/* empty */
-	|	ip_address
-		{
-			p_proxy = pp_addr;
-		}
+algorithm_spec
+	:	esp_spec
+	|	ah_spec
+	|	ipcomp_spec
 	;
 
-protocol_spec0:
-		/* empty */
-	|	F_PROTOCOL PR_ESP
-		{
-			p_satype = SADB_SATYPE_ESP;
-		}
-	|	F_PROTOCOL PR_AH
-		{
-			p_satype = SADB_SATYPE_AH;
-		}
-	|	F_PROTOCOL PR_IPCOMP
-		{
-			p_satype = SADB_X_SATYPE_IPCOMP;
-		}
+esp_spec
+	:	F_ENC enc_alg enc_key F_AUTH auth_alg auth_key
+	|	F_ENC enc_alg enc_key
 	;
 
-protocol_spec:
-		F_PROTOCOL PR_ESP
-		{
-			p_satype = SADB_SATYPE_ESP;
-			if (yylval.num == 1)
-				p_ext |= SADB_X_EXT_OLD;
-			else
-				p_ext &= ~SADB_X_EXT_OLD;
-		}
-		extensions esp_specification
-	|	F_PROTOCOL PR_AH
-		{
-			p_satype = SADB_SATYPE_AH;
-			if (yylval.num == 1)
-				p_ext |= SADB_X_EXT_OLD;
-			else
-				p_ext &= ~SADB_X_EXT_OLD;
-		}
-		ah_specification
-	|	F_PROTOCOL PR_IPCOMP
-		{
-			p_satype = SADB_X_SATYPE_IPCOMP;
-		}
-		ipcomp_specification
-	;
-	
-extensions:
-		/* empty */
-	|	extensions extension
+ah_spec
+	:	F_AUTH auth_alg auth_key
 	;
 
-extension:
-		EXTENSION
-		{
-			p_ext |= yylval.num;
-		}
+ipcomp_spec
+	:	F_COMP ALG_COMP { p_alg_enc = $2; }
+	|	F_COMP ALG_COMP { p_alg_enc = $2; }
+		F_RAWCPI { p_ext |= SADB_X_EXT_RAWCPI; }
 	;
 
-esp_specification:
-		/* empty */
-	|	esp_specification esp_spec
-	;
-
-esp_spec:
-		F_ENC alg_enc
-		enc_keys
-	|	F_AUTH ALG_AUTH
-		{
-			if (p_ext & SADB_X_EXT_OLD) {
-				yyerror("algorithm mismatched.");
-				return -1;
-			}
-
-			p_alg_auth = yylval.num;
-		}
-		auth_key
-	|	F_REPLAY DECSTRING
-		{
-			if (p_ext & SADB_X_EXT_OLD) {
-				yyerror("algorithm mismatched.");
-				return -1;
-			}
-
-			p_replay = yylval.num;
-		}
-	;
-
-	/* XXX: I wanna delete it. */
-alg_enc:
-		ALG_ENC
-		{
-			p_alg_enc = yylval.num;
-		}
+enc_alg
+	:	ALG_ENC { p_alg_enc = $1; }
 	|	ALG_ENC_DESDERIV
 		{
-			p_alg_enc = yylval.num;
+			p_alg_enc = $1;
 			if (p_ext & SADB_X_EXT_OLD) {
 				yyerror("algorithm mismatched.");
 				return -1;
@@ -377,7 +275,7 @@ alg_enc:
 		}
 	|	ALG_ENC_DES32IV
 		{
-			p_alg_enc = yylval.num;
+			p_alg_enc = $1;
 			if (!(p_ext & SADB_X_EXT_OLD)) {
 				yyerror("algorithm mismatched.");
 				return -1;
@@ -386,52 +284,17 @@ alg_enc:
 		}
 	;
 
-ah_specification:
-		/* empty */
-	|	ah_specification ah_spec
-	;
-
-ah_spec:
-		F_AUTH ALG_AUTH
+enc_key
+	:	/*NOTHING*/
 		{
-			p_alg_auth = yylval.num;
-		} auth_key
-	|	F_REPLAY DECSTRING
-		{
-			if (p_ext & SADB_X_EXT_OLD) {
-				yyerror("algorithm mismatched.");
+			if (p_alg_enc != SADB_EALG_NULL) {
+				yyerror("no key found.");
 				return -1;
 			}
-
-			p_replay = yylval.num;
 		}
-	;
-
-ipcomp_specification
-	:	/* empty */
-	|	ipcomp_specification ipcomp_spec
-	;
-
-ipcomp_spec
-	:	F_COMP ALG_COMP
+	|	key_string
 		{
-			p_alg_enc = yylval.num;
-		}
-	|	F_RAWCPI
-		{
-			p_ext |= SADB_X_EXT_RAWCPI;
-		}
-	;
-
-enc_keys:
-		/* empty */
-	|	enc_keys enc_key
-	;
-
-enc_key:
-		key_string
-		{
-			p_key_enc_len = yylval.val.len;
+			p_key_enc_len = $1.len;
 			p_key_enc = pp_key;
 
 			if (ipsec_check_keylen(SADB_EXT_SUPPORTED_ENCRYPT,
@@ -443,11 +306,21 @@ enc_key:
 		}
 	;
 
-auth_key:
-		/* empty */
+auth_alg
+	:	ALG_AUTH { p_alg_auth = $1; }
+	;
+
+auth_key
+	:	/*NOTHING*/
+		{
+			if (p_alg_auth != SADB_AALG_NULL) {
+				yyerror("no key found.");
+				return -1;
+			}
+		}
 	|	key_string
 		{
-			p_key_auth_len = yylval.val.len;
+			p_key_auth_len = $1.len;
 			p_key_auth = pp_key;
 
 			if (ipsec_check_keylen(SADB_EXT_SUPPORTED_AUTH,
@@ -459,156 +332,82 @@ auth_key:
 		}
 	;
 
-key_string:
-		QUOTEDSTRING
+key_string
+	:	QUOTEDSTRING
 		{
-			if ((pp_key = malloc(yylval.val.len)) == 0)
-				return -1;
-			memcpy(pp_key, yylval.val.buf, yylval.val.len);
+			pp_key = $1.buf;
+			/* free pp_key later */
 		}
 	|	HEXSTRING
 		{
 			caddr_t bp;
-			caddr_t yp = yylval.val.buf;
+			caddr_t yp = $1.buf;
 
-			if ((pp_key = malloc(yylval.val.len)) == 0)
+			if ((pp_key = malloc($1.len)) == 0) {
+				free($1.buf);
+				yyerror(strerror(errno));
 				return -1;
-			memset(pp_key, 0, yylval.val.len);
+			}
+			memset(pp_key, 0, $1.len);
 
 			bp = pp_key;
 			while (*yp) {
 				*bp = (ATOX(yp[0]) << 4) | ATOX(yp[1]);
 				yp += 2, bp++;
 			}
+
+			free($1.buf);
 		}
 	;
 
-	/* lifetime */
-lifetime_hard:
-		/* empty */
-	|	F_LIFETIME_HARD DECSTRING
-		{
-			p_lt_hard = yylval.num;
-		}
+extension_spec
+	:	/*NOTHING*/
+	|	extension_spec extension
 	;
 
-lifetime_soft:
-		/* empty */
-	|	F_LIFETIME_SOFT DECSTRING
+extension
+	:	F_EXT EXTENSION { p_ext |= $2; }
+	|	F_EXT NOCYCLICSEQ { p_ext ^= SADB_X_EXT_CYCSEQ; }
+	|	F_MODE MODE { p_mode = $2; }
+	|	F_MODE ANY { p_mode = IPSEC_MODE_ANY; }
+	|	F_REQID DECSTRING { p_reqid = $2; }
+	|	F_REPLAY DECSTRING
 		{
-			p_lt_soft = yylval.num;
-		}
-	;
-
-ip_address:
-		IP4_ADDRESS
-		{
-			struct sockaddr_in *in;
-			u_int sa_len = yylval.val.len;
-
-			if ((in = (struct sockaddr_in *)malloc(sa_len)) == 0)
+			if (p_ext & SADB_X_EXT_OLD) {
+				yyerror("replay prevention "
+				        "only use on new spec.");
 				return -1;
-			memset((caddr_t)in, 0, sa_len);
-
-			in->sin_family = PF_INET;
-			in->sin_len = sa_len;
-			(void)inet_pton(PF_INET, yylval.val.buf, &in->sin_addr);
-
-			pp_addr = (struct sockaddr *)in;
+			}
+			p_replay = $2;
 		}
-	|	IP6_ADDRESS
-		{
-#ifdef INET6
-			struct sockaddr_in6 *in6;
-			u_int sa_len = yylval.val.len;
-
-			if ((in6 = (struct sockaddr_in6 *)malloc(sa_len)) == 0)
-				return -1;
-			memset((caddr_t)in6, 0, sa_len);
-
-			in6->sin6_family = PF_INET6;
-			in6->sin6_len = sa_len;
-			(void)inet_pton(PF_INET6, yylval.val.buf,
-					&in6->sin6_addr);
-
-			pp_addr = (struct sockaddr *)in6;
-#else
-			yyerror("IPv6 address not supported");
-#endif
-		}
-	;
-
-prefix:
-		/* empty */
-	|	PREFIX
-		{
-			pp_prefix = yylval.num;
-		}
-	;
-
-port:
-		/* empty */
-	|	PORT
-		{
-			pp_port = htons(yylval.num);
-		}
+	|	F_LIFETIME_HARD DECSTRING { p_lt_hard = $2; }
+	|	F_LIFETIME_SOFT DECSTRING { p_lt_soft = $2; }
 	;
 
 	/* definition about command for SPD management */
 	/* spdadd */
-spdadd_command:
-		SPDADD
+spdadd_command
+	:	SPDADD
 		{
-			p_type = yylval.num;
+			p_type = SADB_X_SPDADD;
 			p_satype = SADB_SATYPE_UNSPEC;
 		}
-		src_spec dst_spec upper_spec policy_spec EOT
-	;
-
-policy_spec:
-		F_POLICY policy_requests
-		{
-			int len;
-
-			if ((len = ipsec_get_policylen($2.val.buf)) < 0) {
-				yyerror(ipsec_strerror());
-				return -1;
-			}
-
-			if ((p_policy = malloc(len)) == NULL) {
-				yyerror("malloc");
-				return -1;
-			}
-
-			if ((len = ipsec_set_policy(p_policy, len, $2.val.buf)) < 0) {
-				yyerror(ipsec_strerror());
-				free(p_policy);
-				p_policy = NULL;
-				return -1;
-			}
-
-			p_policy_len += len;
-		}
-	;
-
-policy_requests:
-		/* empty */
-	|	PL_REQUESTS { $$ = $1; }
+		sp_selector_spec policy_spec EOT
 	;
 
 spddelete_command:
 		SPDDELETE
 		{
-			p_type = yylval.num;
+			p_type = SADB_X_SPDDELETE;
 			p_satype = SADB_SATYPE_UNSPEC;
 		}
-		src_spec dst_spec upper_spec EOT
+		sp_selector_spec EOT
 	;
 
 spddump_command:
 		SPDDUMP
 		{
-			p_type = yylval.num;
+			p_type = SADB_X_SPDDUMP;
 			p_satype = SADB_SATYPE_UNSPEC;
 		}
 		EOT
@@ -617,10 +416,124 @@ spddump_command:
 spdflush_command:
 		SPDFLUSH
 		{
-			p_type = yylval.num;
+			p_type = SADB_X_SPDFLUSH;
 			p_satype = SADB_SATYPE_UNSPEC;
 		}
 		EOT
+	;
+
+	/* sp_selector_spec */
+sp_selector_spec
+	:	ipaddress { p_src = pp_addr; }
+		prefix { p_prefs = pp_prefix; }
+		port { _INPORTBYSA(p_src) = htons(pp_port); }
+		ipaddress { p_dst = pp_addr; }
+		prefix { p_prefd = pp_prefix; }
+		port { _INPORTBYSA(p_dst) = htons(pp_port); }
+		upper_spec
+		{
+			switch (p_upper) {
+			case IPPROTO_ICMP:
+			case IPPROTO_ICMPV6:
+				if (_INPORTBYSA(p_src) != IPSEC_PORT_ANY
+				 || _INPORTBYSA(p_dst) != IPSEC_PORT_ANY) {
+					yyerror("port number must be \"any\".");
+					return -1;
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	;
+
+ipaddress
+	:	IP4_ADDRESS
+		{
+			struct sockaddr_in *in;
+			u_int sa_len = $1.len;
+
+			if ((in = (struct sockaddr_in *)malloc(sa_len)) == 0) {
+				yyerror(strerror(errno));
+				free($1.buf);
+				return -1;
+			}
+			memset((caddr_t)in, 0, sa_len);
+
+			in->sin_family = PF_INET;
+			in->sin_len = sa_len;
+			in->sin_port = IPSEC_PORT_ANY;
+			(void)inet_pton(PF_INET, $1.buf, &in->sin_addr);
+
+			pp_addr = (struct sockaddr *)in;
+			free($1.buf);
+		}
+	|	IP6_ADDRESS
+		{
+#ifdef INET6
+			struct sockaddr_in6 *in6;
+			u_int sa_len = $1.len;
+
+			if ((in6 = (struct sockaddr_in6 *)malloc(sa_len)) == 0) {
+				free($1.buf);
+				yyerror(strerror(errno));
+				return -1;
+			}
+			memset((caddr_t)in6, 0, sa_len);
+
+			in6->sin6_family = PF_INET6;
+			in6->sin6_len = sa_len;
+			in6->sin6_port = IPSEC_PORT_ANY;
+			(void)inet_pton(PF_INET6, $1.buf,
+					&in6->sin6_addr);
+
+			pp_addr = (struct sockaddr *)in6;
+#else
+			yyerror("IPv6 address not supported");
+#endif
+			free($1.buf);
+		}
+	;
+
+prefix
+	:	/*NOTHING*/ { pp_prefix = ~0; }
+	|	PREFIX { pp_prefix = $1; }
+	;
+
+port
+	:	/*NOTHING*/ { pp_port = IPSEC_PORT_ANY; }
+	|	PORT { pp_port = $1; }
+	|	PORTANY { pp_port = IPSEC_PORT_ANY; }
+	;
+
+upper_spec
+	:	DECSTRING { p_upper = $1; }
+	|	UP_PROTO { p_upper = $1; }
+	|	PR_ESP { p_upper = IPPROTO_ESP; };
+	|	PR_AH { p_upper = IPPROTO_AH; };
+	|	PR_IPCOMP { p_upper = IPPROTO_IPCOMP; };
+	|	ANY { p_upper = IPSEC_ULPROTO_ANY; }
+	;
+
+policy_spec
+	:	F_POLICY policy_requests
+		{
+			p_policy = ipsec_set_policy($2.buf, $2.len);
+			if (p_policy == NULL) {
+				free($2.buf);
+				p_policy = NULL;
+				yyerror(ipsec_strerror());
+				return -1;
+			}
+
+			p_policy_len = ipsec_get_policylen(p_policy);
+
+			free($2.buf);
+		}
+	;
+
+policy_requests
+	:	PL_REQUESTS { $$ = $1; }
 	;
 
 %%
@@ -634,9 +547,12 @@ setkeymsg()
 	m_msg.sadb_msg_type = p_type;
 	m_msg.sadb_msg_errno = 0;
 	m_msg.sadb_msg_satype = p_satype;
-	m_msg.sadb_msg_reserved = 0;
+	m_msg.sadb_msg_mode = p_mode;
+	m_msg.sadb_msg_reserved1 = 0;
 	m_msg.sadb_msg_seq = 0;
 	m_msg.sadb_msg_pid = getpid();
+	m_msg.sadb_msg_reqid = p_reqid;
+	m_msg.sadb_msg_reserved2 = 0;
 
 	m_len = sizeof(struct sadb_msg);
 	memcpy(m_buf, &m_msg, m_len);
@@ -732,31 +648,14 @@ setkeymsg()
 		memcpy(m_buf + m_len, &m_sa, len);
 		m_len += len;
 
-		/* set proxy, if present. */
-		if (p_proxy != 0) {
-			m_addr.sadb_address_len =
-				PFKEY_UNIT64(sizeof(m_addr)
-				           + PFKEY_ALIGN8(p_proxy->sa_len));
-			m_addr.sadb_address_exttype = SADB_EXT_ADDRESS_PROXY;
-			m_addr.sadb_address_proto = 0;
-			m_addr.sadb_address_prefixlen =
-				(p_proxy->sa_family == PF_INET ? 32 : 128);
-			m_addr.sadb_address_reserved = 0;
-
-			setvarbuf(&m_len,
-				(struct sadb_ext *)&m_addr, sizeof(m_addr),
-				(caddr_t)p_proxy, p_proxy->sa_len);
-		}
-
 		/* set src */
 		m_addr.sadb_address_len =
 			PFKEY_UNIT64(sizeof(m_addr)
 			           + PFKEY_ALIGN8(p_src->sa_len));
 		m_addr.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
-		m_addr.sadb_address_proto = p_upper;
+		m_addr.sadb_address_proto = IPSEC_ULPROTO_ANY;
 		m_addr.sadb_address_prefixlen =
-			(p_prefs != ~0 ?
-			  p_prefs : (p_src->sa_family == PF_INET ? 32 : 128));
+			_INALENBYAF(p_src->sa_family) << 3;
 		m_addr.sadb_address_reserved = 0;
 
 		setvarbuf(&m_len,
@@ -768,10 +667,9 @@ setkeymsg()
 			PFKEY_UNIT64(sizeof(m_addr)
 			           + PFKEY_ALIGN8(p_dst->sa_len));
 		m_addr.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
-		m_addr.sadb_address_proto = p_upper;
+		m_addr.sadb_address_proto = IPSEC_ULPROTO_ANY;
 		m_addr.sadb_address_prefixlen =
-			(p_prefd != ~0 ?
-			  p_prefd : (p_dst->sa_family == PF_INET ? 32 : 128));
+			_INALENBYAF(p_dst->sa_family) << 3;
 		m_addr.sadb_address_reserved = 0;
 
 		setvarbuf(&m_len,
@@ -787,9 +685,6 @@ setkeymsg()
 
 	case SADB_X_SPDADD:
 	    {
-		((struct sadb_x_policy *)p_policy)->sadb_x_policy_len =
-			PFKEY_UNIT64(p_policy_len);
-
 		memcpy(m_buf + m_len, p_policy, p_policy_len);
 		m_len += p_policy_len;
 		free(p_policy);
@@ -808,8 +703,8 @@ setkeymsg()
 		m_addr.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
 		m_addr.sadb_address_proto = p_upper;
 		m_addr.sadb_address_prefixlen =
-			(p_prefs != ~0 ?
-			  p_prefs : (p_src->sa_family == PF_INET ? 32 : 128));
+		    (p_prefs != ~0 ? p_prefs :
+		                     _INALENBYAF(p_src->sa_family) << 3);
 		m_addr.sadb_address_reserved = 0;
 
 		setvarbuf(&m_len,
@@ -823,8 +718,8 @@ setkeymsg()
 		m_addr.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 		m_addr.sadb_address_proto = p_upper;
 		m_addr.sadb_address_prefixlen =
-			(p_prefd != ~0 ?
-			  p_prefd : (p_dst->sa_family == PF_INET ? 32 : 128));
+		    (p_prefd != ~0 ? p_prefd :
+		                     _INALENBYAF(p_dst->sa_family) << 3);
 		m_addr.sadb_address_reserved = 0;
 
 		setvarbuf(&m_len,
@@ -859,16 +754,18 @@ parse_init()
 	p_type = 0;
 	p_spi = 0;
 
-	p_src = 0, p_dst = 0, p_proxy = 0;
-	p_ports = p_portd = 0;
-	p_prefs = p_prefd = 0;
+	p_src = 0, p_dst = 0;
+	pp_prefix = p_prefs = p_prefd = ~0;
+	pp_port = IPSEC_PORT_ANY;
 	p_upper = 0;
 
 	p_satype = 0;
-	p_ext = SADB_X_EXT_NONE;
+	p_ext = SADB_X_EXT_CYCSEQ;
 	p_alg_enc = SADB_EALG_NONE;
 	p_alg_auth = SADB_AALG_NONE;
-	p_replay = 0;
+	p_mode = IPSEC_MODE_ANY;
+	p_reqid = 0;
+	p_replay = 4;
 	p_key_enc_len = p_key_auth_len = 0;
 	p_key_enc = p_key_auth = 0;
 	p_lt_hard = p_lt_soft = 0;
@@ -886,7 +783,6 @@ free_buffer()
 {
 	if (p_src) free(p_src);
 	if (p_dst) free(p_dst);
-	if (p_proxy) free(p_proxy);
 	if (p_key_enc) free(p_key_enc);
 	if (p_key_auth) free(p_key_auth);
 
