@@ -1,6 +1,6 @@
 #ifndef lint
 /*static char yysccsid[] = "from: @(#)yaccpar	1.9 (Berkeley) 02/21/93";*/
-static char rcsid[] = "$Id: ftp.tab.c,v 1.4 1994/03/27 09:08:58 cgd Exp $";
+static char rcsid[] = "$Id: ftp.tab.c,v 1.5 1996/04/08 19:10:47 jtc Exp $";
 #endif
 #define YYBYACC 1
 #define YYMAJOR 1
@@ -1468,8 +1468,9 @@ case 44:
 					struct tm *gmtime();
 					t = gmtime(&stbuf.st_mtime);
 					reply(213,
-					    "19%02d%02d%02d%02d%02d%02d",
-					    t->tm_year, t->tm_mon+1, t->tm_mday,
+					    "%04d%02d%02d%02d%02d%02d",
+					    1900 + t->tm_year,
+					    t->tm_mon+1, t->tm_mday,
 					    t->tm_hour, t->tm_min, t->tm_sec);
 				}
 			}
