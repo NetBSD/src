@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1993 Jan-Simon Pendry
- * All rights reserved.
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry.
@@ -34,10 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * From:
- *	Id: procfs_vfsops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
- *
- *	$Id: procfs_vfsops.c,v 1.15 1994/04/23 07:55:03 cgd Exp $
+ *	from: Id: procfs_vfsops.c,v 3.1 1993/12/15 09:40:17 jsp Exp
+ *	from: @(#)procfs_vfsops.c	8.4 (Berkeley) 1/21/94
+ *	$Id: procfs_vfsops.c,v 1.16 1994/06/08 11:33:43 mycroft Exp $
  */
 
 /*
@@ -48,14 +47,13 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/resourcevar.h>
 #include <sys/buf.h>
 #include <sys/syslog.h>
 #include <sys/mount.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <miscfs/procfs/procfs.h>
-#include <vm/vm.h>
+#include <vm/vm.h>			/* for PAGE_SIZE */
 
 /*
  * VFS Operations.
@@ -71,7 +69,6 @@ procfs_mount(mp, path, data, ndp, p)
 	struct proc *p;
 {
 	u_int size;
-	int error;
 
 	if (UIO_MX & (UIO_MX-1)) {
 		log(LOG_ERR, "procfs: invalid directory entry size");
@@ -81,17 +78,14 @@ procfs_mount(mp, path, data, ndp, p)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	/* mp->mnt_flag |= MNT_LOCAL; */
+	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = 0;
 	getnewfsid(mp, makefstype(MOUNT_PROCFS));
 
-	(void) copyinstr(path, (caddr_t)mp->mnt_stat.f_mntonname, MNAMELEN, &size);
+	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
-
-	size = sizeof("proc") - 1;
-	bcopy("proc", mp->mnt_stat.f_mntfromname, size);
-	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
-
+	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
+	bcopy("procfs", mp->mnt_stat.f_mntfromname, sizeof("procfs"));
 	return (0);
 }
 
@@ -114,16 +108,6 @@ procfs_unmount(mp, mntflags, p)
 		flags |= FORCECLOSE;
 	}
 
-	/*
-	 * Clear out buffer cache.  I don't think we
-	 * ever get anything cached at this level at the
-	 * moment, but who knows...
-	 */
-	mntflushbuf(mp, 0); 
-
-	if (mntinvalbuf(mp, 1))
-		return (EBUSY);
-
 	if (error = vflush(mp, 0, flags))
 		return (error);
 
@@ -134,19 +118,10 @@ procfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
 {
-	struct vnode *vp;
-	int error;
 
-	error = procfs_allocvp(mp, &vp, (pid_t) 0, Proot);
-	if (error)
-		return (error);
-
-	*vpp = vp;
-	return (0);
+	return (procfs_allocvp(mp, vpp, 0, Proot));
 }
 
-/*
- */
 /* ARGSUSED */
 procfs_start(mp, flags, p)
 	struct mount *mp;
@@ -165,19 +140,19 @@ procfs_statfs(mp, sbp, p)
 	struct statfs *sbp;
 	struct proc *p;
 {
+
 #ifdef COMPAT_09
 	sbp->f_type = 10;
 #else
 	sbp->f_type = 0;
 #endif
-	sbp->f_bsize = PAGE_SIZE >> 2;
+	sbp->f_bsize = PAGE_SIZE;
 	sbp->f_iosize = PAGE_SIZE;
 	sbp->f_blocks = 1;	/* avoid divide by zero in some df's */
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;
 	sbp->f_files = maxproc;			/* approx */
 	sbp->f_ffree = maxproc - nprocs;	/* approx */
-
 	if (sbp != &mp->mnt_stat) {
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
@@ -185,10 +160,8 @@ procfs_statfs(mp, sbp, p)
 	}
 	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
 	sbp->f_fstypename[MFSNAMELEN] = '\0';
-
 	return (0);
 }
-
 
 procfs_quotactl(mp, cmds, uid, arg, p)
 	struct mount *mp;
@@ -209,29 +182,30 @@ procfs_sync(mp, waitfor)
 	return (0);
 }
 
+procfs_vget(mp, ino, vpp)
+	struct mount *mp;
+	ino_t ino;
+	struct vnode **vpp;
+{
+
+	return (EOPNOTSUPP);
+}
+
 procfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
 {
-	/*
-	 * NFS mounting of procfs doesn't work correctly.
-	 * The files in procfs are more similar to devices
-	 * than to regular files.
-	 */
-	return EOPNOTSUPP;
+
+	return (EINVAL);
 }
 
 procfs_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
-	/*
-	 * NFS mounting of procfs doesn't work correctly.
-	 * The files in procfs are more similar to devices
-	 * than to regular files.
-	 */
-	return EOPNOTSUPP;
+
+	return (EINVAL);
 }
 
 procfs_init()
@@ -249,6 +223,7 @@ struct vfsops procfs_vfsops = {
 	procfs_quotactl,
 	procfs_statfs,
 	procfs_sync,
+	procfs_vget,
 	procfs_fhtovp,
 	procfs_vptofh,
 	procfs_init,
