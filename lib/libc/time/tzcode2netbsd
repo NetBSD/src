@@ -1,18 +1,18 @@
 #! /bin/sh
 
 #
-# $NetBSD: tzcode2netbsd,v 1.1 1998/10/05 19:44:53 kleink Exp $
+# $NetBSD: tzcode2netbsd,v 1.2 2000/12/12 15:36:49 kleink Exp $
 #
 # Convert an extracted tzcode distribution into the format suitable
 # for importing it into the NetBSD source tree.
-# Last updated for: tzcode1998h.
+# Last updated for: tzcode2000g.
 # 
 
 NOIMPORT="Makefile
 	date.1 date.c
 	gccdiffs
 	logwtmp.c
-	newstrftime.3 strftime.c
+	newstrftime.3
 	usno1988 usno1989 usno1989a usno1995 usno1997 usno1998"
 
 NEWTONORMAL="ctime.3
