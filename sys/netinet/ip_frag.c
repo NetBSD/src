@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.21.4.5 2002/04/01 07:48:35 nathanw Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.21.4.6 2002/05/04 19:51:49 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -93,10 +93,10 @@ extern struct timeout ipfr_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.21.4.5 2002/04/01 07:48:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.21.4.6 2002/05/04 19:51:49 thorpej Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.20 2002/03/06 09:44:11 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.21 2002/04/10 04:56:10 darrenr Exp";
 #endif
 #endif
 
@@ -591,9 +591,9 @@ void ipfr_slowtimer()
 
 	if (fr_running <= 0) 
 		return;
+	READ_ENTER(&ipf_solaris);
 #endif
 
-	READ_ENTER(&ipf_solaris);
 #if defined(__sgi) && defined(_KERNEL)
 	ipfilter_sgi_intfsync();
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.45.2.6 2002/04/01 07:48:28 nathanw Exp $	*/
+/*	$NetBSD: fil.c,v 1.45.2.7 2002/05/04 19:51:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -100,10 +100,10 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.45.2.6 2002/04/01 07:48:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.45.2.7 2002/05/04 19:51:46 thorpej Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.58 2002/03/13 02:23:13 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.60 2002/04/26 10:20:34 darrenr Exp";
 #endif
 #endif
 
@@ -151,6 +151,9 @@ fr_info_t	frcache[2];
 static	int	frflushlist __P((int, minor_t, int *, frentry_t **));
 #ifdef	_KERNEL
 static	void	frsynclist __P((frentry_t *));
+#endif
+#ifndef	_KERNEL
+int		mbuflen(mb_t *);
 #endif
 
 
@@ -218,9 +221,7 @@ fr_info_t *fin;
 	fin->fin_data[1] = 0;
 	fin->fin_rule = -1;
 	fin->fin_group = -1;
-#ifdef	_KERNEL
 	fin->fin_icode = ipl_unreach;
-#endif
 	v = fin->fin_v;
 	fi->fi_v = v;
 	fin->fin_hlen = hlen;
@@ -270,6 +271,7 @@ fr_info_t *fin;
 	fin->fin_off = off;
 	fin->fin_plen = plen;
 	fin->fin_dp = (char *)tcp;
+	fin->fin_misc = 0;
 	off <<= 3;
 
 	switch (p)
@@ -302,7 +304,7 @@ fr_info_t *fin;
 			}
 		}
 
-		if (!(plen >= hlen + minicmpsz))
+		if (!(plen >= minicmpsz))
 			fi->fi_fl |= FI_SHORT;
 
 		break;
@@ -1462,7 +1464,13 @@ nodata:
 #  endif /*  defined(BSD) || defined(sun) */
 # endif /* SOLARIS */
 #else /* KERNEL */
-	sum2 = 0;
+	for (; slen > 1; slen -= 2)
+		sum += *sp++;
+	if (slen)
+		sum += ntohs(*(u_char *)sp << 8);
+	while (sum > 0xffff)
+		sum = (sum & 0xffff) + (sum >> 16);
+	sum2 = (u_short)(~sum & 0xffff);
 #endif /* KERNEL */
 	tcp->th_sum = ts;
 	return sum2;
@@ -1503,7 +1511,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.35.2.58 2002/03/13 02:23:13 darrenr Exp
+ * Id: fil.c,v 2.35.2.60 2002/04/26 10:20:34 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
@@ -2167,4 +2175,16 @@ int	icmptoicmp6unreach[ICMP_MAX_UNREACH] = {
 	-1,				/* 12: ICMP_UNREACH_TOSHOST */
 	ICMP6_DST_UNREACH_ADMIN,	/* 13: ICMP_UNREACH_ADMIN_PROHIBIT */
 };
+#endif
+
+
+#ifndef	_KERNEL
+int mbuflen(buf)
+mb_t *buf;
+{
+	ip_t *ip;
+
+	ip = (ip_t *)buf;
+	return ip->ip_len;
+}
 #endif
