@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.33 1996/12/07 09:24:37 matthias Exp $
+#	$NetBSD: Makefile.pc532,v 1.34 1996/12/22 19:14:14 veego Exp $
 
 # Makefile for NetBSD
 #
@@ -36,7 +36,7 @@ PC532=	$S/arch/pc532
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL
 CWARNFLAGS=	-Werror
-CFLAGS=		${DEBUG} ${COPT} ${CWARNFLAGS}
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-z -Ttext F8002000 -e start
 STRIPFLAGS=	-d
