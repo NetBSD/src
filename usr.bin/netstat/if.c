@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.47 2001/02/19 23:03:50 cgd Exp $	*/
+/*	$NetBSD: if.c,v 1.48 2001/04/06 05:10:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.47 2001/02/19 23:03:50 cgd Exp $");
+__RCSID("$NetBSD: if.c,v 1.48 2001/04/06 05:10:28 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -295,7 +295,8 @@ intpr(interval, ifnetaddr, pfunc)
 						    sin6.sin6_len, hbuf,
 						    sizeof(hbuf), NULL, 0,
 						    niflag) != 0) {
-							strcpy(hbuf, "??");
+							strlcpy(hbuf, "??",
+							    sizeof(hbuf));
 						}
 						cp = hbuf;
 						if (vflag)
@@ -325,7 +326,7 @@ intpr(interval, ifnetaddr, pfunc)
 				char netnum[8];
 
 				*(union ns_net *)&net = sns->sns_addr.x_net;
-				(void)sprintf(netnum, "%xH",
+				(void)snprintf(netnum, sizeof(netnum), "%xH",
 				    (u_int32_t)ntohl(net));
 				upHex(netnum);
 				printf("ns:%-10s ", netnum);

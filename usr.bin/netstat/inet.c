@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.44 2001/03/20 17:00:08 itojun Exp $	*/
+/*	$NetBSD: inet.c,v 1.45 2001/04/06 05:10:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.44 2001/03/20 17:00:08 itojun Exp $");
+__RCSID("$NetBSD: inet.c,v 1.45 2001/04/06 05:10:28 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -608,7 +608,7 @@ inetname(inp)
 		if (gethostname(domain, sizeof domain) == 0) {
 			domain[sizeof(domain) - 1] = '\0';
 			if ((cp = strchr(domain, '.')))
-				(void) strcpy(domain, cp + 1);
+				(void) strlcpy(domain, cp + 1, sizeof(domain));
 			else
 				domain[0] = 0;
 		} else

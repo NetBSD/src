@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.54 2001/03/08 03:47:04 enami Exp $	*/
+/*	$NetBSD: route.c,v 1.55 2001/04/06 05:10:28 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.54 2001/03/08 03:47:04 enami Exp $");
+__RCSID("$NetBSD: route.c,v 1.55 2001/04/06 05:10:28 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -422,6 +422,7 @@ p_sockaddr(sa, mask, flags, width)
 {
 	char workbuf[128], *cplim;
 	char *cp = workbuf;
+	char *ep = workbuf + sizeof(workbuf);
 
 	switch(sa->sa_family) {
 	case AF_INET:
@@ -510,7 +511,8 @@ p_sockaddr(sa, mask, flags, width)
 			cplim = "";
 			for (i = 0; i < alen; i++, lla++) {
 				/* XXX */
-				cp += sprintf(cp, "%s%02x", cplim, *lla);
+				cp += snprintf(cp, ep - cp,
+				    "%s%02x", cplim, *lla);
 				cplim = ":";
 			}
 			cp = workbuf;
@@ -529,11 +531,11 @@ p_sockaddr(sa, mask, flags, width)
 
 		slim =  sa->sa_len + (u_char *) sa;
 		cplim = cp + sizeof(workbuf) - 6;
-		cp += sprintf(cp, "(%d)", sa->sa_family);
+		cp += snprintf(cp, ep - cp, "(%d)", sa->sa_family);
 		while (s < slim && cp < cplim) {
-			cp += sprintf(cp, " %02x", *s++);
+			cp += snprintf(cp, ep - cp, " %02x", *s++);
 			if (s < slim)
-			    cp += sprintf(cp, "%02x", *s++);
+			    cp += snprintf(cp, ep - cp, "%02x", *s++);
 		}
 		cp = workbuf;
 	    }
@@ -661,7 +663,7 @@ routename(in)
 		if (gethostname(domain, MAXHOSTNAMELEN) == 0) {
 			domain[sizeof(domain) - 1] = '\0';
 			if ((cp = strchr(domain, '.')))
-				(void)strcpy(domain, cp + 1);
+				(void)strlcpy(domain, cp + 1, sizeof(domain));
 			else
 				domain[0] = 0;
 		} else
@@ -894,10 +896,11 @@ netname6(sa6, mask)
 	error = getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
 			line, sizeof(line), NULL, 0, flag);
 	if (error)
-		strcpy(line, "invalid");
+		strlcpy(line, "invalid", sizeof(line));
 
 	if (nflag)
-		sprintf(&line[strlen(line)], "/%d", masklen);
+		snprintf(&line[strlen(line)], sizeof(line) - strlen(line),
+		    "/%d", masklen);
 
 	return line;
 }
@@ -928,7 +931,7 @@ routename6(sa6)
 	error = getnameinfo((struct sockaddr *)&sa6_local, sa6_local.sin6_len,
 			line, sizeof(line), NULL, 0, flag);
 	if (error)
-		strcpy(line, "invalid");
+		strlcpy(line, "invalid", sizeof(line));
 
 	return line;
 }
