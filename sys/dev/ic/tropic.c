@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.9 2000/06/06 16:26:57 soren Exp $	*/
+/*	$NetBSD: tropic.c,v 1.10 2000/06/06 16:41:33 soren Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -435,9 +435,8 @@ tr_attach(sc)
 
 	token_ifattach(ifp, myaddr);
 
-	printf("\n%s: address %s ring speed %d Mbps\n",
-		sc->sc_dev.dv_xname, token_sprintf(myaddr),
-		(sc->sc_init_status & RSP_16) ? 16 : 4);
+	printf("%s: address %s ring speed %d Mbps\n", sc->sc_dev.dv_xname,
+	    token_sprintf(myaddr), (sc->sc_init_status & RSP_16) ? 16 : 4);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_IEEE802, sizeof(struct token_header));
@@ -465,8 +464,8 @@ u_int8_t speed;
 	tr_sleep(sc);
 
 	if ((SRB_INB(sc, sc->sc_srb, SRB_RETCODE) != 0)) {
-		printf("set default ringspeed returned: %02x\n",
-			SRB_INB(sc, sc->sc_srb, SRB_RETCODE));
+		printf("%s: set default ringspeed returned: 0x%02x\n",
+		    sc->sc_dev.dv_xname, SRB_INB(sc, sc->sc_srb, SRB_RETCODE));
 		return 1;
 	}
 	return 0;
@@ -528,7 +527,8 @@ struct tr_softc *sc;
 	}
 
 	if (i == 35000 && sc->sc_srb == 0) {
-		printf("No response from adapter after reset\n");
+		printf("%s: no response from adapter after reset\n",
+		    sc->sc_dev.dv_xname);
 		return 1;
 	}
 
@@ -537,12 +537,12 @@ struct tr_softc *sc;
 	ACA_OUTB(sc, ACA_RRR_e, (sc->sc_maddr >> 12));
 	sc->sc_srb = ACA_RDW(sc, ACA_WRBR);
 	if (SRB_INB(sc, sc->sc_srb, SRB_CMD) != 0x80) {
-		printf("Initialization incomplete, status: %02x\n",
-			SRB_INB(sc, sc->sc_srb, SRB_CMD));
+		printf("%s: initialization incomplete, status: 0x%02x\n",
+		    sc->sc_dev.dv_xname, SRB_INB(sc, sc->sc_srb, SRB_CMD));
 		return 1;
 	}
 	if (SRB_INB(sc, sc->sc_srb, SRB_INIT_BUC) != 0) {
-		printf("Bring Up Code %02x\n",
+		printf("%s: Bring Up Code %02x\n", sc->sc_dev.dv_xname,
 		    SRB_INB(sc, sc->sc_srb, SRB_INIT_BUC));
 		return 1;
 	}
@@ -559,7 +559,7 @@ struct tr_softc *sc;
 }
 
 /*
- * tr_stop - stop interface (issue a DIR CLOSE ADAPTER command)
+ * tr_stop - stop interface (issue a DIR.CLOSE.ADAPTER command)
  */
 void
 tr_stop(sc)
@@ -624,7 +624,7 @@ tr_init(arg)
 	s = splimp();
 
 	ifp->if_flags &= ~IFF_OACTIVE;
-	sc->sc_xmit_head = sc->sc_xmit_tail = 0; /* XXX tr_reset() */
+	sc->sc_xmit_head = sc->sc_xmit_tail = 0;	/* XXX tr_reset() */
 
 	open_srb = sc->sc_srb;
 
@@ -858,8 +858,9 @@ tr_intr(arg)
 			case XMIT_UI_FRM:	/* Response to xmit request */
 				/* Response not valid? */
 				if (retcode != 0xff)
-					printf("%s: error on xmit request =%x\n",
-					    sc->sc_dev.dv_xname, retcode);
+					printf("%s: error on xmit request = "
+					    "0x%x\n", sc->sc_dev.dv_xname,
+					    retcode);
 				break;
 
 			case DIR_OPEN_ADAPTER:	/* open-adapter-cmd response */
@@ -883,11 +884,13 @@ tr_intr(arg)
 					if (sc->sc_init_status &
 					    FAST_PATH_TRANSMIT) {
 						sc->sc_xmit_buffers =
-						    TXCA_INW(sc, TXCA_BUFFER_COUNT);
+						    TXCA_INW(sc,
+							TXCA_BUFFER_COUNT);
 						sc->sc_nbuf =
 						    sc->sc_xmit_buffers;
 #ifdef TROPICDEBUG
-						printf("buffers = %d\n",
+						printf("%s: buffers = %d\n",
+						    sc->sc_dev.dv_xname,
 						    sc->sc_xmit_buffers);
 #endif
 						sc->sc_xmit_correlator = 0;
@@ -897,7 +900,7 @@ tr_intr(arg)
 						tr_opensap(sc, LLC_SNAP_LSAP); 
 				}
 				else {
-					printf("%s: Open error = %x\n",
+					printf("%s: open error = 0x%x\n",
 					    sc->sc_dev.dv_xname,
 					    SRB_INB(sc, srb, SRB_RETCODE));
 					ifp->if_flags &= ~IFF_RUNNING;
@@ -914,7 +917,7 @@ tr_intr(arg)
 			case DIR_CLOSE:	/* Response to close adapter command */
 				/* Close not successful? */
 				if (retcode != 0)
-					printf("%s: close error = %x\n",
+					printf("%s: close error = 0x%x\n",
 					    sc->sc_dev.dv_xname, retcode);
 				else {
 					ifp->if_flags &= ~IFF_RUNNING;
@@ -944,8 +947,9 @@ tr_intr(arg)
 			case DIR_READ_LOG:   /* Response to read log */
 				/* Cmd not successful? */
 				if (retcode != 0)
-					printf("%s: read error log cmd err =%x\n",
-					    sc->sc_dev.dv_xname, retcode);
+					printf("%s: read error log cmd err = "
+					    "0x%x\n", sc->sc_dev.dv_xname,
+					    retcode);
 #ifdef TROPICDEBUG
 				log_srb = sc->sc_srb;
 				printf("%s: ERROR LOG:\n",sc->sc_dev.dv_xname);
@@ -970,7 +974,7 @@ tr_intr(arg)
 				ifp->if_flags &= ~IFF_OACTIVE;
 				break;
 			default:
-				printf("%s: bad SRB command encountered %x\n",
+				printf("%s: bad SRB command encountered 0x%x\n",
 				    sc->sc_dev.dv_xname, command);
 				break;
 			}
@@ -994,18 +998,18 @@ tr_intr(arg)
 			case REC_DATA:		/* Receive */
 				/* Response not valid? */
 				if (retcode != 0xff)
-				printf("%s: ASB bad receive response =%x\n",
+				printf("%s: ASB bad receive response = 0x%x\n",
 				    sc->sc_dev.dv_xname, retcode);
 				break;
 			case XMIT_DIR_FRAME:	/* Transmit */
 			case XMIT_UI_FRM:   	/* Transmit */
 				/* Response not valid? */
 				if (retcode != 0xff)
-				printf("%s: ASB response err on xmit =%x\n",
+				printf("%s: ASB response err on xmit = 0x%x\n",
 				    sc->sc_dev.dv_xname, retcode);
 				break;
 			default:
-				printf("%s: Invalid command in ASB =%x\n",
+				printf("%s: invalid command in ASB = 0x%x\n",
 				    sc->sc_dev.dv_xname, command);
 				break;
 			}
@@ -1018,7 +1022,7 @@ tr_intr(arg)
 			command = ARB_INB(sc, arb, ARB_CMD);
 			switch (command) {
 			case DLC_STATUS:    /* DLC status change */	
-				printf("%s: ARB new DLC  status = 0x%x\n",
+				printf("%s: ARB new DLC status = 0x%x\n",
 				    sc->sc_dev.dv_xname,
 				    ARB_INW(sc, arb, ARB_DLCSTAT_STATUS));
 				break;
@@ -1030,7 +1034,7 @@ tr_intr(arg)
 			case RING_STAT_CHANGE:	/* Ring status change */
 				if (ARB_INW(sc, arb, ARB_RINGSTATUS) &
 				    (SIGNAL_LOSS + LOBE_FAULT)){
-					printf("%s: SIGNAL LOSS/LOBE FAULT\n",
+					printf("%s: signal loss / lobe fault\n",
 					    sc->sc_dev.dv_xname);
 					ifp->if_flags &= ~IFF_RUNNING;
 					ifp->if_flags &= ~IFF_UP;
@@ -1042,8 +1046,8 @@ tr_intr(arg)
 #ifdef TROPICDEBUG
 					if (ARB_INW(sc, arb, ARB_RINGSTATUS) &
 					    ~(SOFT_ERR))
-						printf(
-					"%s: ARB new ring status = 0x%x\n",
+						printf("%s: ARB new ring status"
+						    " = 0x%x\n",
 						    sc->sc_dev.dv_xname,
 						    ARB_INW(sc, arb,
 							ARB_RINGSTATUS));
@@ -1068,7 +1072,7 @@ tr_intr(arg)
 				break;
 
 			default:
-				printf("%s: Invalid command in ARB =%x\n",
+				printf("%s: invalid command in ARB = 0x%x\n",
 				    sc->sc_dev.dv_xname, command);
 				break;
 			}
@@ -1091,13 +1095,14 @@ tr_intr(arg)
 			case XMIT_DIR_FRAME:  /* SSB response to SRB xmit cmd */
 				/* collect status on last packet */
 				if (retcode != 0) {
-					printf("xmit return code = 0x%x\n",
-					    retcode);
+					printf("%s: xmit return code = 0x%x\n",
+					    sc->sc_dev.dv_xname, retcode);
 					/* XXXchb */
 					if (retcode == 0x22) {
-						printf("FS = 0x%2x\n",
+						printf("%s: FS = 0x%2x\n",
+						    sc->sc_dev.dv_xname,
 						    SSB_INB(sc, ssb,
-						        SSB_XMITERR));
+							SSB_XMITERR));
 					}
 					ifp->if_oerrors++;
 				}
@@ -1409,7 +1414,7 @@ struct tr_softc *sc;
 		txbuf = TXB_INW(sc, txbuf, XMIT_NEXTBUF) - XMIT_NEXTBUF;
 		if (TXB_INB(sc, txbuf, XMIT_RETCODE) != 0) {
 			ifp->if_oerrors++;
-			printf("tx: retcode = %x\n",
+			printf("%s: xmit error = %x\n", sc->sc_dev.dv_xname,
 			    TXB_INB(sc, txbuf, XMIT_RETCODE));
 		}
 		sc->sc_xmit_buffers +=
