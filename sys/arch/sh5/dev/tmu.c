@@ -1,4 +1,4 @@
-/*	$NetBSD: tmu.c,v 1.7 2002/10/02 15:52:37 thorpej Exp $	*/
+/*	$NetBSD: tmu.c,v 1.8 2003/04/01 10:23:30 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@ struct tmu_softc {
 	struct clock_attach_args sc_ca;
 	void *sc_clkih;
 	void *sc_statih;
-	u_int sc_period;
+	u_int sc_ticksperms;
 };
 
 static int tmumatch(struct device *, struct cfdata *, void *);
@@ -139,14 +139,15 @@ tmuattach(struct device *parent, struct device *self, void *args)
 	    pa->pa_ipl, tmu_statint, NULL);
 
 	/*
-	 * Calculate the number of nano-seconds per timer tick.
+	 * Calculate the number of timer ticks per millisecond
 	 * This will be used in tmu_microtime() to return the
 	 * number of micro-seconds since the last underflow.
 	 */
-	sc->sc_period = 1000000000 / (cprc_clocks.cc_peripheral / 4);
+	sc->sc_ticksperms = cprc_clocks.cc_peripheral / 4000;
 
 	printf(": Timer Unit\n");
-	printf("%s: Tick period: %d nS\n", sc->sc_dev.dv_xname, sc->sc_period);
+	printf("%s: Ticks per uS: %d.%03d\n", sc->sc_dev.dv_xname,
+	    sc->sc_ticksperms / 1000, sc->sc_ticksperms % 1000);
 
 	/*
 	 * Calculate the delay constant.
@@ -160,9 +161,8 @@ tmuattach(struct device *parent, struct device *self, void *args)
 	delay(100000);
 	tcnt = 0 - bus_space_read_4(sc->sc_bust, sc->sc_bush, TMU_REG_TCNT(0));
 	bus_space_write_1(sc->sc_bust, sc->sc_bush, TMU_REG_TSTR, 0);
-	/* How many nanoseconds per loop iteration */
-	tcnt = (tcnt * sc->sc_period) / 100000;
-	_sh5_delay_constant = 1000 / tcnt;
+	tcnt = (tcnt * 1000) / sc->sc_ticksperms;
+	_sh5_delay_constant = (100000 / tcnt) + 1;
 
 	printf("%s: Delay constant: %d\n", sc->sc_dev.dv_xname,
 	    _sh5_delay_constant);
@@ -226,12 +226,20 @@ static long
 tmu_microtime(void *arg)
 {
 	struct tmu_softc *sc = arg;
-	u_int32_t tcnt, tcor;
+	u_int32_t tcnt, d;
 
 	tcnt = bus_space_read_4(sc->sc_bust, sc->sc_bush, TMU_REG_TCNT(0));
-	tcor = bus_space_read_4(sc->sc_bust, sc->sc_bush, TMU_REG_TCOR(0));
+	d = bus_space_read_4(sc->sc_bust, sc->sc_bush, TMU_REG_TCOR(0)) - tcnt;
 
-	return ((long)(((tcor - tcnt) * sc->sc_period) / 1000));
+	/*
+	 * Catch the common case of a 64MHz peripheral bus clock.
+	 * This turns an expensive integer division into a simple shift.
+	 */
+	if (sc->sc_ticksperms == 16000)
+		return ((long)(d >> 4));
+
+	/* Otherwise, need to do things the hard way */
+	return ((long)((d * 1000) / sc->sc_ticksperms));
 }
 
 static int
