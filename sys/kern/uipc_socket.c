@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket.c	7.28 (Berkeley) 5/4/91
- *	$Id: uipc_socket.c,v 1.13 1994/04/25 08:47:50 mycroft Exp $
+ *	$Id: uipc_socket.c,v 1.14 1994/05/04 11:24:06 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -780,6 +780,7 @@ release:
 	return (error);
 }
 
+int
 soshutdown(so, how)
 	register struct socket *so;
 	register int how;
@@ -795,6 +796,7 @@ soshutdown(so, how)
 	return (0);
 }
 
+void
 sorflush(so)
 	register struct socket *so;
 {
@@ -816,6 +818,7 @@ sorflush(so)
 	sbrelease(&asb);
 }
 
+int
 sosetopt(so, level, optname, m0)
 	register struct socket *so;
 	int level, optname;
@@ -926,6 +929,7 @@ bad:
 	return (error);
 }
 
+int
 sogetopt(so, level, optname, mp)
 	register struct socket *so;
 	int level, optname;
@@ -1009,6 +1013,7 @@ sogetopt(so, level, optname, mp)
 	}
 }
 
+void
 sohasoutofband(so)
 	register struct socket *so;
 {
