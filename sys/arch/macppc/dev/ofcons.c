@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.7.4.1 2001/10/10 11:56:17 fvdl Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.7.4.2 2001/10/13 17:42:39 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -132,7 +132,7 @@ ofcopen(devvp, flag, mode, p)
 		sc->of_tty = tp = ttymalloc();
 	tp->t_oproc = ofcstart;
 	tp->t_param = ofcparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 	if (!(tp->t_state & TS_ISOPEN)) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -213,7 +213,7 @@ ofcioctl(devvp, cmd, data, flag, p)
 	
 	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
 		return error;
-	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = ttioctl(tp, devvp, cmd, data, flag, p)) >= 0)
 		return error;
 	return ENOTTY;
 }

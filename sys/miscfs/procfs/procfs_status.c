@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.16.6.1 2001/09/07 04:45:40 thorpej Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.16.6.2 2001/10/13 17:42:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -88,8 +88,8 @@ procfs_dostatus(curp, p, pfs, uio)
 	ps += sprintf(ps, " %d %d %d %d ", pid, ppid, pgid, sid);
 
 	if ((p->p_flag&P_CONTROLT) && (tp = sess->s_ttyp))
-		ps += sprintf(ps, "%d,%d ", major(tp->t_devvp->v_rdev),
-		    minor(tp->t_devvp->v_rdev));
+		ps += sprintf(ps, "%d,%d ", major(tp->t_dev),
+		    minor(tp->t_dev));
 	else
 		ps += sprintf(ps, "%d,%d ", -1, -1);
 

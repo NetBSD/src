@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.21.4.1 2001/10/10 11:56:46 fvdl Exp $	*/
+/*	$NetBSD: com.c,v 1.21.4.2 2001/10/13 17:42:44 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -462,7 +462,7 @@ comopen(devvp, flag, mode, p)
 
 	tp->t_oproc = comstart;
 	tp->t_param = comparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
@@ -677,7 +677,7 @@ comioctl(devvp, cmd, data, flag, p)
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 
@@ -780,7 +780,7 @@ comparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct com_softc *sc = vdev_privdata(tp->t_devvp);
+	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(tp->t_dev)];
 	int iobase = sc->sc_iobase;
 	int ospeed = comspeed(t->c_ospeed);
 	u_char lcr;
@@ -892,7 +892,7 @@ static void
 comstart(tp)
 	struct tty *tp;
 {
-	struct com_softc *sc = vdev_privdata(tp->t_devvp);
+	struct com_softc *sc = xcom_cd.cd_devs[COMUNIT(tp->t_dev)];
 	int iobase = sc->sc_iobase;
 	int s;
 

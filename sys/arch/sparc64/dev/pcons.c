@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.7.4.2 2001/10/11 00:01:54 fvdl Exp $	*/
+/*	$NetBSD: pcons.c,v 1.7.4.3 2001/10/13 17:42:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -130,7 +130,7 @@ pconsopen(devvp, flag, mode, p)
 		sc->of_tty = tp = ttymalloc();
 	tp->t_oproc = pconsstart;
 	tp->t_param = pconsparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = rdev;
 	cn_tab->cn_dev = rdev;
 	if (!(tp->t_state & TS_ISOPEN)) {
 		ttychars(tp);
@@ -233,7 +233,7 @@ pconsioctl(devvp, cmd, data, flag, p)
 	
 	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
 		return error;
-	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = ttioctl(tp, devvp, cmd, data, flag, p)) >= 0)
 		return error;
 	return ENOTTY;
 }
@@ -309,9 +309,11 @@ pcons_poll(aux)
 	char ch;
 	
 	while (OF_read(stdin, &ch, 1) > 0) {
-		cn_check_magic(vdev_rdev(tp->t_devvp), ch, pcons_cnm_state);
-		if (tp && (tp->t_state & TS_ISOPEN))
-			(*tp->t_linesw->l_rint)(ch, tp);
+		if (tp != NULL) {
+			cn_check_magic(tp->t_dev, ch, pcons_cnm_state);
+			if (tp->t_state & TS_ISOPEN)
+				(*tp->t_linesw->l_rint)(ch, tp);
+		}
 	}
 	callout_reset(&sc->sc_poll_ch, 1, pcons_poll, sc);
 }

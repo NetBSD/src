@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.188.2.4 2001/10/01 12:45:31 fvdl Exp $	*/
+/*	$NetBSD: com.c,v 1.188.2.5 2001/10/13 17:42:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -814,7 +814,7 @@ comopen(devvp, flag, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 
-		tp->t_devvp = devvp;
+		tp->t_dev = rdev;
 
 		s2 = splserial();
 		COM_LOCK(sc);
@@ -1051,7 +1051,7 @@ comioctl(devvp, cmd, data, flag, p)
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -1387,7 +1387,7 @@ comparam(tp, t)
 	u_char lcr;
 	int s;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
@@ -1644,7 +1644,7 @@ comhwiflow(tp, block)
 	struct com_softc *sc;
 	int s;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
 
 	if (COM_ISALIVE(sc) == 0)
 		return (0);
@@ -1709,7 +1709,7 @@ comstart(tp)
 	bus_space_handle_t ioh;
 	int s;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
@@ -1785,7 +1785,7 @@ comstop(tp, flag)
 	struct com_softc *sc;
 	int s;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
 
 	s = splserial();
 	COM_LOCK(sc);
@@ -2057,15 +2057,9 @@ comintr(arg)
 	u_char *put, *end;
 	u_int cc;
 	u_char lsr, iir;
-	dev_t rdev;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (0);
-
-	if (sc->sc_tty->t_devvp->v_type == VBAD)
-		return (0);
-
-	rdev = vdev_rdev(sc->sc_tty->t_devvp);
 
 	COM_LOCK(sc);
 	iir = bus_space_read_1(iot, ioh, com_iir);
@@ -2084,7 +2078,8 @@ again:	do {
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
 		if (ISSET(lsr, LSR_BI)) {
 			int cn_trapped = 0;
-			cn_check_magic(rdev, CNC_BREAK, com_cnm_state);
+			cn_check_magic(sc->sc_tty->t_dev,
+				       CNC_BREAK, com_cnm_state);
 			if (cn_trapped)
 				continue;
 #if defined(KGDB)
@@ -2101,7 +2096,8 @@ again:	do {
 				int cn_trapped = 0;
 				put[0] = bus_space_read_1(iot, ioh, com_data);
 				put[1] = lsr;
-				cn_check_magic(rdev, put[0], com_cnm_state);
+				cn_check_magic(sc->sc_tty->t_dev,
+					       put[0], com_cnm_state);
 				if (cn_trapped) {
 					lsr = bus_space_read_1(iot, ioh, com_lsr);
 					if (!ISSET(lsr, LSR_RCV_MASK))

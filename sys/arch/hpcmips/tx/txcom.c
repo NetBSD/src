@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.14.4.1 2001/10/10 11:56:10 fvdl Exp $ */
+/*	$NetBSD: txcom.c,v 1.14.4.2 2001/10/13 17:42:38 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -801,7 +801,7 @@ txcomopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 		
-		tp->t_devvp = devvp;
+		tp->t_dev = dev;
 
 		t.c_ispeed = 0;
 		if (ISSET(chip->sc_hwflags, TXCOM_HW_CONSOLE)) {
@@ -941,7 +941,7 @@ txcomioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag, struct proc 
 		return err;
 	}
 
-	err = ttioctl(tp, cmd, data, flag, p);
+	err = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (err >= 0) {
 		return err;
 	}
@@ -996,7 +996,7 @@ txcomstop(struct tty *tp, int flag)
 	struct txcom_softc *sc;
 	int s;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = txcom_cd.cd_devs[minor(tp->t_dev)];
 
 	s = spltty();
 
@@ -1014,7 +1014,7 @@ txcomstop(struct tty *tp, int flag)
 void
 txcomstart(struct tty *tp)
 {
-	struct txcom_softc *sc = vdev_privdata(tp->t_devvp);
+	struct txcom_softc *sc = txcom_cd.cd_devs[minor(tp->t_dev)];
 	struct txcom_chip *chip = sc->sc_chip;
 	tx_chipset_tag_t tc = chip->sc_tc;
 	int slot = chip->sc_slot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.56.4.1 2001/10/10 11:55:50 fvdl Exp $	*/
+/*	$NetBSD: ite.c,v 1.56.4.2 2001/10/13 17:42:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -464,7 +464,7 @@ iteopen(devvp, mode, devtype, p)
 	}
 	tp->t_oproc = itestart;
 	tp->t_param = ite_param;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -602,7 +602,7 @@ iteioctl(devvp, cmd, addr, flag, p)
 	error = tp->t_linesw->l_ioctl(tp, cmd, addr, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, addr, flag, p);
+	error = ttioctl(tp, devvp, cmd, addr, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -667,7 +667,7 @@ itestart(tp)
 	int s, len;
 	dev_t dev;
 
-	dev = vdev_rdev(tp->t_devvp);
+	dev = tp->t_dev;
 	ip = getitesp(dev);
 
 	KDASSERT(tp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.2.2.1 2001/10/10 11:55:54 fvdl Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.2.2.2 2001/10/13 17:42:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -244,9 +244,9 @@ fcomopen(devvp, flag, mode, p)
 			panic("%s: Cannot allocate rx buffer memory",
 			    sc->sc_dev.dv_xname);
 	}
+	tp->t_dev = dev;
 	tp->t_oproc = fcomstart;
 	tp->t_param = fcomparam;
-	tp->t_devvp = devvp;
 	if (!(tp->t_state & TS_ISOPEN && tp->t_wopen == 0)) {
 		ttychars(tp);
 		tp->t_cflag = TTYDEF_CFLAG;
@@ -365,7 +365,7 @@ fcomioctl(devvp, cmd, data, flag, p)
 	
 	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
 		return error;
-	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = ttioctl(tp, devvp, cmd, data, flag, p)) >= 0)
 		return error;
 
 	switch (cmd) {
@@ -410,7 +410,7 @@ fcomstart(tp)
 	int s, len;
 	u_char buf[64];
 	int loop;
-	struct fcom_softc *sc = vdev_privdata(tp->t_devvp);
+	struct fcom_softc *sc = fcom_cd.cd_devs[minor(tp->t_dev)];
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int timo;
@@ -473,7 +473,7 @@ fcomparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct fcom_softc *sc = vdev_privdata(tp->t_devvp);
+	struct fcom_softc *sc = fcom_cd.cd_devs[minor(tp->t_dev)];
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int baudrate;

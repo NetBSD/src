@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.35.4.1 2001/10/10 11:56:45 fvdl Exp $	*/
+/*	$NetBSD: gencons.c,v 1.35.4.2 2001/10/13 17:42:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -101,7 +101,7 @@ gencnopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 
 	tp->t_oproc = gencnstart;
 	tp->t_param = gencnparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -176,7 +176,7 @@ gencnioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
  
@@ -202,7 +202,7 @@ gencnstart(struct tty *tp)
 	if(cl->c_cc){
 		tp->t_state |= TS_BUSY;
 		ch = getc(cl);
-		mtpr(ch, pr_txdb[minor(vdev_rdev(tp->t_devvp))]);
+		mtpr(ch, pr_txdb[minor(tp->t_dev)]);
 	} else {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
@@ -227,7 +227,7 @@ gencnrint(void *arg)
 	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
 #ifdef DDB
-	if (vdev_rdev(tp->t_devvp) == cn_tab->cn_dev) {
+	if (tp->t_dev == cn_tab->cn_dev) {
 		int j = kdbrint(i);
 
 		if (j == 1) {	/* Escape received, just return */

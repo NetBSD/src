@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.16.4.2 2001/09/26 15:28:14 fvdl Exp $	*/
+/*	$NetBSD: cz.c,v 1.16.4.3 2001/10/13 17:42:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -437,6 +437,8 @@ cz_attach(struct device *parent,
 		callout_init(&sc->sc_diag_ch);
 
 		tp = ttymalloc();
+		tp->t_dev = makedev(cztty_major,
+		    (cz->cz_dev.dv_unit * ZFIRM_MAX_CHANNELS) + i);
 		tp->t_oproc = czttystart;
 		tp->t_param = czttyparam;
 		tty_attach(tp);
@@ -1000,7 +1002,7 @@ czttyopen(struct vnode *devvp, int flags, int mode, struct proc *p)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && (tp->t_wopen == 0)) {
 		struct termios t;
 
-		tp->t_devvp = devvp;
+		tp->t_dev = rdev;
 
 		/* If we're turning things on, enable interrupts */
 		if ((cz->cz_nopenchan++ == 0) && (cz->cz_ih == NULL)) {
@@ -1191,7 +1193,7 @@ czttyioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -1381,7 +1383,7 @@ czttyparam(struct tty *tp, struct termios *t)
 	u_int32_t rs_status;
 	int ospeed, cflag;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = CZTTY_SOFTC(tp->t_dev);
 	cz = CZTTY_CZ(sc);
 	ospeed = t->c_ospeed;
 	cflag = t->c_cflag;
@@ -1520,7 +1522,7 @@ czttystart(struct tty *tp)
 	struct cztty_softc *sc;
 	int s;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = CZTTY_SOFTC(tp->t_dev);
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))

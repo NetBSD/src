@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.15.4.2 2001/10/10 11:56:30 fvdl Exp $ */
+/* $NetBSD: sci.c,v 1.15.4.3 2001/10/13 17:42:41 fvdl Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -491,7 +491,7 @@ static void
 scistart(tp)
 	struct tty *tp;
 {
-	struct sci_softc *sc = vdev_privdata(tp->t_devvp);
+	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(tp->t_dev)];
 	int s;
 
 	s = spltty();
@@ -553,7 +553,7 @@ sciparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct sci_softc *sc = vdev_privdata(tp->t_devvp);
+	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(tp->t_dev)];
 	int ospeed = t->c_ospeed;
 	int s;
 
@@ -730,7 +730,7 @@ sciopen(devvp, flag, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 
-		tp->t_devvp = devvp;
+		tp->t_dev = dev;
 
 		s2 = splserial();
 
@@ -891,7 +891,7 @@ sciioctl(devvp, cmd, data, flag, p)
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -982,7 +982,7 @@ scistop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct sci_softc *sc = vdev_privdata(tp->t_devvp);
+	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(tp->t_dev)];
 	int s;
 
 	s = splserial();

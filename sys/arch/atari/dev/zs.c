@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.34 2001/05/02 10:32:15 scw Exp $	*/
+/*	$NetBSD: zs.c,v 1.34.4.1 2001/10/13 17:42:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -327,18 +327,19 @@ void		*aux;
  * Open a zs serial port.
  */
 int
-zsopen(dev, flags, mode, p)
-dev_t		dev;
+zsopen(devvp, flags, mode, p)
+struct vnode	*devvp;
 int		flags;
 int		mode;
 struct proc	*p;
 {
 	register struct tty		*tp;
 	register struct zs_chanstate	*cs;
-		 struct zs_softc	*zi;
-		 int			unit = ZS_UNIT(dev);
-		 int			zs = unit >> 1;
-		 int			error, s;
+	struct zs_softc	*zi;
+	dev_t dev		= vdev_rdev(devvp);
+	int			unit = ZS_UNIT(dev);
+	int			zs = unit >> 1;
+	int			error, s;
 
 	if(zs >= zs_cd.cd_ndevs || (zi = zs_cd.cd_devs[zs]) == NULL)
 		return (ENXIO);
@@ -409,7 +410,7 @@ struct proc	*p;
 	if (error)
 		goto bad;
 	
-	error = tp->t_linesw->l_open(dev, tp);
+	error = tp->t_linesw->l_open(devvp, tp);
 	if(error)
 		goto bad;
 	return (0);
@@ -429,16 +430,17 @@ bad:
  * Close a zs serial port.
  */
 int
-zsclose(dev, flags, mode, p)
-dev_t		dev;
+zsclose(devvp, flags, mode, p)
+struct vnode	*devvp;
 int		flags;
 int		mode;
 struct proc	*p;
 {
 	register struct zs_chanstate	*cs;
 	register struct tty		*tp;
-		 struct zs_softc	*zi;
-		 int			unit = ZS_UNIT(dev);
+	struct zs_softc	*zi;
+	dev_t dev = vdev_rdev(devvp);
+	int			unit = ZS_UNIT(dev);
 
 	zi = zs_cd.cd_devs[unit >> 1];
 	cs = &zi->zi_cs[unit & 1];
@@ -462,16 +464,18 @@ struct proc	*p;
  * Read/write zs serial port.
  */
 int
-zsread(dev, uio, flags)
-dev_t		dev;
+zsread(devvp, uio, flags)
+struct vnode	*devvp;
 struct uio	*uio;
 int		flags;
 {
 	register struct zs_chanstate	*cs;
 	register struct zs_softc	*zi;
 	register struct tty		*tp;
-		 int			unit;
+	int			unit;
+	dev_t			dev;
 
+	dev = vdev_rdev(devvp);
 	unit = ZS_UNIT(dev);
 	zi   = zs_cd.cd_devs[unit >> 1];
 	cs   = &zi->zi_cs[unit & 1];
@@ -481,16 +485,18 @@ int		flags;
 }
 
 int
-zswrite(dev, uio, flags)
-dev_t		dev;
+zswrite(devvp, uio, flags)
+struct vnode	*devvp;
 struct uio	*uio;
 int		flags;
 {
 	register struct zs_chanstate	*cs;
 	register struct zs_softc	*zi;
 	register struct tty		*tp;
-		 int			unit;
+	int			unit;
+	dev_t			dev;
 
+	dev = vdev_rdev(devvp);
 	unit = ZS_UNIT(dev);
 	zi   = zs_cd.cd_devs[unit >> 1];
 	cs   = &zi->zi_cs[unit & 1];
@@ -500,16 +506,18 @@ int		flags;
 }
 
 int
-zspoll(dev, events, p)
-dev_t		dev;
+zspoll(devvp, events, p)
+struct vnode	*devvp;
 int		events;
 struct proc	*p;
 {
 	register struct zs_chanstate	*cs;
 	register struct zs_softc	*zi;
 	register struct tty		*tp;
-		 int			unit;
+	int			unit;
+	dev_t			dev;
 
+	dev = vdev_rdev(devvp);
 	unit = ZS_UNIT(dev);
 	zi   = zs_cd.cd_devs[unit >> 1];
 	cs   = &zi->zi_cs[unit & 1];
@@ -519,13 +527,15 @@ struct proc	*p;
 }
 
 struct tty *
-zstty(dev)
-dev_t	dev;
+zstty(devvp)
+struct vnode *devvp;
 {
 	register struct zs_chanstate	*cs;
 	register struct zs_softc	*zi;
-		 int			unit;
+	int			unit;
+	dev_t			dev;
 
+	dev = vdev_rdev(devvp);
 	unit = ZS_UNIT(dev);
 	zi   = zs_cd.cd_devs[unit >> 1];
 	cs   = &zi->zi_cs[unit & 1];
@@ -821,15 +831,16 @@ again:
 }
 
 int
-zsioctl(dev, cmd, data, flag, p)
-dev_t		dev;
+zsioctl(devvp, cmd, data, flag, p)
+struct vnode	*devvp;
 u_long		cmd;
 caddr_t		data;
 int		flag;
 struct proc	*p;
 {
-		 int			unit = ZS_UNIT(dev);
-		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
+	dev_t				dev = vdev_rdev(devvp);
+	int			unit = ZS_UNIT(dev);
+	struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
 	register struct tty		*tp = zi->zi_cs[unit & 1].cs_ttyp;
 	register int			error, s;
 	register struct zs_chanstate	*cs = &zi->zi_cs[unit & 1];
@@ -837,7 +848,7 @@ struct proc	*p;
 	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p);
 	if(error >= 0)
 		return(error);
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if(error >= 0)
 		return (error);
 
@@ -949,8 +960,8 @@ register struct tty *tp;
 {
 	register struct zs_chanstate	*cs;
 	register int			s, nch;
-		 int			unit = ZS_UNIT(tp->t_dev);
-		 struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
+	int			unit = ZS_UNIT(tp->t_dev);
+	struct zs_softc	*zi = zs_cd.cd_devs[unit >> 1];
 
 	cs = &zi->zi_cs[unit & 1];
 	s  = spltty();

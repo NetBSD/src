@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.11.4.1 2001/10/10 11:56:08 fvdl Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.11.4.2 2001/10/13 17:42:38 fvdl Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -512,7 +512,7 @@ sacomopen(devvp, flag, mode, p)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 
-		tp->t_devvp = devvp;
+		tp->t_dev = dev;
 
 		s2 = splserial();
 		COM_LOCK(sc);
@@ -742,7 +742,7 @@ sacomioctl(devvp, cmd, data, flag, p)
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -900,7 +900,7 @@ sacomparam(tp, t)
 	u_int cr0;
 	int s;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = device_lookup(&sacom_cd, COMUNIT(tp->t_dev));
 
 	if (sc == NULL || COM_ISALIVE(sc) == 0)
 		return (EIO);
@@ -1049,7 +1049,7 @@ sacomhwiflow(tp, block)
 	struct sacom_softc *sc;
 	int s;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = device_lookup(&sacom_cd, COMUNIT(tp->t_dev));
 
 	if (sc == NULL || COM_ISALIVE(sc) == 0)
 		return (0);
@@ -1107,7 +1107,7 @@ sacomstart(tp)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int s;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = device_lookup(&sacom_cd, COMUNIT(tp->t_dev));
 
 	if (sc == NULL || COM_ISALIVE(sc) == 0)
 		return;
@@ -1192,7 +1192,7 @@ sacomstop(tp, flag)
 	struct sacom_softc *sc;
 	int s;
 
-	sc = vdev_privdata(tp->t_devvp);
+	sc = device_lookup(&sacom_cd, COMUNIT(tp->t_dev));
 
 	s = splserial();
 	COM_LOCK(sc);

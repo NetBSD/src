@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.6.4.2 2001/10/11 00:02:27 fvdl Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.6.4.3 2001/10/13 17:42:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -140,6 +140,7 @@ sunkbd_attach(parent, self, aux)
 		panic("sunkbd_attach: sunkbd_disc");
 	tp->t_linesw = &sunkbd_disc;
 	tp->t_oflag &= ~OPOST;
+	tp->t_dev = args->kmta_dev;
 
 	/* link the structures together. */
 	k->k_priv = tp;
@@ -238,7 +239,6 @@ sunkbdiopen(dev, flags, devvp)
 
 	/* Now configure it for the console. */
 	tp->t_ospeed = 0;
-	tp->t_devvp = k->k_devvp;
 	t.c_ispeed = KBD_BPS;
 	t.c_ospeed = KBD_BPS;
 	t.c_cflag =  CLOCAL|CS8;

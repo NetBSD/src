@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.25.4.1 2001/10/10 11:56:47 fvdl Exp $	*/
+/*	$NetBSD: ite.c,v 1.25.4.2 2001/10/13 17:42:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -396,7 +396,7 @@ iteopen(devvp, mode, devtype, p)
 	}
 	tp->t_oproc = itestart;
 	tp->t_param = NULL;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 	if ((tp->t_state&TS_ISOPEN) == 0) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -497,7 +497,7 @@ iteioctl(devvp, cmd, addr, flag, p)
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, addr, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, addr, flag, p);
+	error = ttioctl(tp, devvp, cmd, addr, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -552,10 +552,8 @@ itestart(tp)
 	struct ite_softc *ip;
 	u_char buf[ITEBURST];
 	int s, len;
-	dev_t dev;
 
-	dev = vdev_rdev(tp->t_devvp);
-	ip = getitesp(dev);
+	ip = getitesp(tp->t_dev);
 	/*
 	 * (Potentially) lower priority.  We only need to protect ourselves
 	 * from keyboard interrupts since that is all that can affect the
@@ -570,7 +568,7 @@ itestart(tp)
 	/*splx(s);*/
 
 	/* Here is a really good place to implement pre/jumpscroll() */
-	ite_putstr(buf, len, dev);
+	ite_putstr(buf, len, tp->dev);
 
 	/*s = spltty();*/
 	tp->t_state &= ~TS_BUSY;

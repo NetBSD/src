@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.24.4.1 2001/10/10 11:55:51 fvdl Exp $ */
+/*	$NetBSD: mfc.c,v 1.24.4.2 2001/10/13 17:42:33 fvdl Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -487,7 +487,7 @@ mfcsopen(devvp, flag, mode, p)
 
 	tp->t_oproc = (void (*) (struct tty *)) mfcsstart;
 	tp->t_param = mfcsparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 	tp->t_hwiflow = mfcshwiflow;
 
 	vdev_setprivdata(devvp, sc);
@@ -558,7 +558,7 @@ done:
 	 * Reset the tty pointer, as there could have been a dialout
 	 * use of the tty with a dialin open waiting.
 	 */
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 	return tp->t_linesw->l_open(devvp, tp);
 }
 
@@ -692,7 +692,7 @@ mfcsioctl(devvp, cmd, data, flag, p)
 	if (error >= 0)
 		return(error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return(error);
 
@@ -754,11 +754,11 @@ mfcsparam(tp, t)
 	struct termios *t;
 {
 	int cflag, unit, ospeed;
-	struct mfcs_softc *sc = vdev_privdata(tp->t_devvp);
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
 	struct mfc_softc *scc= sc->sc_mfc;
 
 	cflag = t->c_cflag;
-	unit = vdev_rdev(tp->t_devvp) & 31;
+	unit = tp->t_dev & 31;
 	if (sc->flags & CT_USED) {
 		--scc->ct_usecnt;
 		sc->flags &= ~CT_USED;
@@ -806,13 +806,13 @@ mfcsparam(tp, t)
 	    t->c_ospeed, ospeed, scc->ct_val, scc->imask, cflag);
 #endif
 	if (ospeed == 0)
-		(void)mfcsmctl(tp->t_devvp, 0, DMSET);	/* hang up line */
+		(void)mfcsmctl(tp->t_dev, 0, DMSET);	/* hang up line */
 	else {
 		/*
 		 * (re)enable DTR
 		 * and set baud rate. (8 bit mode)
 		 */
-		(void)mfcsmctl(tp->t_devvp, TIOCM_DTR | TIOCM_RTS, DMSET);
+		(void)mfcsmctl(tp->t_dev, TIOCM_DTR | TIOCM_RTS, DMSET);
 		sc->sc_duart->ch_csr = ospeed;
 	}
 	return(0);
@@ -823,8 +823,8 @@ mfcshwiflow(tp, flag)
         struct tty *tp;
         int flag;
 {
-	struct mfcs_softc *sc = vdev_privdata(tp->t_devvp);
-	int unit = vdev_rdev(tp->t_devvp) & 1;
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
+	int unit = tp->t_dev & 1;
 
         if (flag)
 		sc->sc_regs->du_btrst = 1 << unit;
@@ -838,13 +838,13 @@ mfcsstart(tp)
 	struct tty *tp;
 {
 	int cc, s, unit;
-	struct mfcs_softc *sc = vdev_privdata(tp->t_devvp);
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[tp->t_dev & 31];
 	struct mfc_softc *scc= sc->sc_mfc;
 
 	if ((tp->t_state & TS_ISOPEN) == 0)
 		return;
 
-	unit = vdev_rdev(tp->t_devvp) & 1;
+	unit = tp->t_dev & 1;
 
 	s = splser();
 	if (tp->t_state & (TS_TIMEOUT | TS_TTSTOP))
@@ -1194,7 +1194,7 @@ mfcsmint(unit)
 	istat = stat ^ last;
 
 	if ((istat & (0x10 << (unit & 1))) && 		/* CD changed */
-	    (SWFLAGS(vdev_rdev(tp->t_devvp)) & TIOCFLAG_SOFTCAR) == 0) {
+	    (SWFLAGS(tp->t_dev) & TIOCFLAG_SOFTCAR) == 0) {
 		if (stat & (0x10 << (unit & 1)))
 			tp->t_linesw->l_modem(tp, 1);
 		else if (tp->t_linesw->l_modem(tp, 0) == 0) {

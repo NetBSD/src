@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.18.6.3 2001/10/10 11:55:48 fvdl Exp $ */
+/* $NetBSD: promcons.c,v 1.18.6.4 2001/10/13 17:42:32 fvdl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.18.6.3 2001/10/10 11:55:48 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.18.6.4 2001/10/13 17:42:32 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.18.6.3 2001/10/10 11:55:48 fvdl Exp $
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
-
-#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -69,7 +67,8 @@ struct callout prom_ch = CALLOUT_INITIALIZER;
 int
 promopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	int unit = minor(vdev_rdev(devvp));
+	dev_t dev = vdev_rdev(devvp);
+	int unit = minor(dev);
 	struct tty *tp;
 	int s;
 	int error = 0, setuptimeout = 0;
@@ -89,7 +88,7 @@ promopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 
 	tp->t_oproc = promstart;
 	tp->t_param = promparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_CARR_ON;
 		ttychars(tp);
@@ -172,7 +171,7 @@ promioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 
@@ -203,7 +202,7 @@ promstart(struct tty *tp)
 	}
 	tp->t_state |= TS_BUSY;
 	while (tp->t_outq.c_cc != 0)
-		promcnputc(vdev_rdev(tp->t_devvp), getc(&tp->t_outq));
+		promcnputc(tp->t_dev, getc(&tp->t_outq));
 	tp->t_state &= ~TS_BUSY;
 out:
 	splx(s);
@@ -230,7 +229,7 @@ promtimeout(void *v)
 	struct tty *tp = v;
 	u_char c;
 
-	while (promcnlookc(vdev_rdev(tp->t_devvp), &c)) {
+	while (promcnlookc(tp->t_dev, &c)) {
 		if (tp->t_state & TS_ISOPEN)
 			(*tp->t_linesw->l_rint)(c, tp);
 	}

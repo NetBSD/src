@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.40.4.4 2001/09/26 15:28:09 fvdl Exp $	*/
+/*	$NetBSD: cons.c,v 1.40.4.5 2001/10/13 17:42:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,6 +58,7 @@
 #include <dev/cons.h>
 
 struct	tty *constty = NULL;	/* virtual console output device */
+struct vnode *consvp = NULL;	/* virtual console output vnode */
 struct	consdev *cn_tab;	/* physical console device info */
 
 int
@@ -183,13 +184,15 @@ cnwrite(devvp, uio, flag)
 	 * If there's no real console, return ENXIO.
 	 */
 	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		vp = constty->t_devvp;
+		vp = consvp;
 	else if (cn_tab == NULL)
 		return ENXIO;
 	else
 		vp = vdev_privdata(devvp);
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (error != 0)
+		return error;
 	error = VOP_WRITE(vp, uio, flag, p->p_ucred);
 	VOP_UNLOCK(vp, 0);
 	return error;
@@ -223,6 +226,8 @@ cnioctl(devvp, cmd, data, flag, p)
 		if (error)
 			return (error);
 		constty = NULL;
+		vrele(consvp);
+		consvp = NULL;
 		return (0);
 	}
 
@@ -233,7 +238,7 @@ cnioctl(devvp, cmd, data, flag, p)
 	 * out from under it.
 	 */
 	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		vp = constty->t_devvp;
+		vp = consvp;
 	else if (cn_tab == NULL)
 		return ENXIO;
 	else
@@ -257,7 +262,7 @@ cnpoll(devvp, events, p)
 	 * of console redirection here.
 	 */
 	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		vp = constty->t_devvp;
+		vp = consvp;
 	else if (cn_tab == NULL)
 		return ENXIO;
 	else

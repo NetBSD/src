@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.7 2001/07/28 18:12:45 chris Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.7.2.1 2001/10/13 17:42:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -1599,7 +1599,8 @@ int vidcrender_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
 		ws.ws_row=vc->ychars;
 		ws.ws_col=vc->xchars;
 		error = (*tp->t_linesw->l_ioctl)(tp, TIOCSWINSZ, (char *)&ws, flag, p);
-		error = ttioctl(tp, TIOCSWINSZ, (char *)&ws, flag, p);
+		/* XXX NULL devvp argument */
+		error = ttioctl(tp, NULL, TIOCSWINSZ, (char *)&ws, flag, p);
 		return 0;
 		break;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.57.2.3 2001/10/10 11:55:48 fvdl Exp $ */
+/* $NetBSD: scc.c,v 1.57.2.4 2001/10/13 17:42:32 fvdl Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.57.2.3 2001/10/10 11:55:48 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.57.2.4 2001/10/13 17:42:32 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dec_3000_300.h"
@@ -481,7 +481,7 @@ sccopen(devvp, flag, mode, p)
 	}
 	tp->t_oproc = sccstart;
 	tp->t_param = sccparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = rdev;
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
 		ttychars(tp);
 		firstopen = 1;
@@ -624,7 +624,7 @@ sccioctl(devvp, cmd, data, flag, p)
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -682,10 +682,9 @@ sccparam(tp, t)
 {
 	register struct scc_softc *sc;
 
-	sc = vdev_privdata(tp->t_devvp);
-
 	/* Extract the softc and call cold_sccparam to do all the work. */
-	return cold_sccparam(tp, t, sc, SCCLINE(vdev_rdev(tp->t_devvp)));
+	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
+	return cold_sccparam(tp, t, sc, SCCLINE(tp->t_dev));
 }
 
 
@@ -950,11 +949,10 @@ sccstart(tp)
 	register int cc, chan;
 	u_char temp;
 	int s, sendone;
-	dev_t rdev;
 
-	rdev = vdev_rdev(tp->t_devvp);
-	sc = vdev_privdata(tp->t_devvp);
-	dp = &sc->scc_pdma[SCCLINE(rdev)];
+	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
+	dp = &sc->scc_pdma[SCCLINE(tp->t_dev)];
+
 	regs = (scc_regmap_t *)dp->p_addr;
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
@@ -1010,12 +1008,9 @@ sccstop(tp, flag)
 	register struct pdma *dp;
 	register struct scc_softc *sc;
 	register int s;
-	dev_t rdev;
 
-	sc = vdev_privdata(tp->t_devvp);
-	rdev = vdev_rdev(tp->t_devvp);
-
-	dp = &sc->scc_pdma[SCCLINE(rdev)];
+	sc = scc_cd.cd_devs[SCCUNIT(tp->t_dev)];
+	dp = &sc->scc_pdma[SCCLINE(tp->t_dev)];
 	s = spltty();
 	if (tp->t_state & TS_BUSY) {
 		dp->p_end = dp->p_mem;

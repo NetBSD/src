@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.26.2.1 2001/09/07 04:45:42 thorpej Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.26.2.2 2001/10/13 17:42:53 fvdl Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -180,9 +180,12 @@ pppopen(devvp, tp)
     struct proc *p = curproc;		/* XXX */
     struct ppp_softc *sc;
     int error, s;
+    dev_t dev;
 
     if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 	return (error);
+
+    dev = vdev_rdev(devvp);
 
     s = spltty();
 
@@ -214,6 +217,7 @@ pppopen(devvp, tp)
     sc->sc_asyncmap[3] = 0x60000000;
     sc->sc_rasyncmap = 0;
     sc->sc_devp = (void *) tp;
+    sc->sc_devvp = devvp;
     sc->sc_start = pppasyncstart;
     sc->sc_ctlp = pppasyncctlp;
     sc->sc_relinq = pppasyncrelinq;
@@ -253,6 +257,7 @@ pppclose(tp, flag)
 	    pppasyncrelinq(sc);
 	    pppdealloc(sc);
 	}
+	vrele(sc->sc_devvp);
     }
     splx(s);
     return 0;
@@ -633,7 +638,6 @@ static void
 pppsyncstart(sc)
 	struct ppp_softc *sc;
 {
-	struct tty *tp = (struct tty *) sc->sc_devp;
 	struct mbuf *m, *n;
 	int len;
     
@@ -649,8 +653,8 @@ pppsyncstart(sc)
 			len += n->m_len;
 			
 		/* call device driver IOCTL to transmit a frame */
-		if ((*cdevsw[major(tp->t_devvp->v_rdev)].d_ioctl)
-			(tp->t_devvp, TIOCXMTFRAME, (caddr_t)&m, 0, 0)) {
+		if (VOP_IOCTL(sc->sc_devvp, TIOCXMTFRAME, (caddr_t)&m, 0,
+		    NOCRED, curproc) != 0) {
 			/* busy or error, set as current packet */
 			sc->sc_outm = m;
 			break;
@@ -984,7 +988,7 @@ pppinput(c, tp)
 	if (c == tp->t_cc[VSTOP] && tp->t_cc[VSTOP] != _POSIX_VDISABLE) {
 	    if ((tp->t_state & TS_TTSTOP) == 0) {
 		tp->t_state |= TS_TTSTOP;
-		(*cdevsw[major(tp->t_devvp->v_rdev)].d_stop)(tp, 0);
+		(*cdevsw[major(tp->t_dev)].d_stop)(tp, 0);
 	    }
 	    return 0;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.4.4.2 2001/10/11 00:02:27 fvdl Exp $	*/
+/*	$NetBSD: sunms.c,v 1.4.4.3 2001/10/13 17:42:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,6 +133,7 @@ sunms_attach(parent, self, aux)
 	cf = ms->ms_dev.dv_cfdata;
 	ms_unit = ms->ms_dev.dv_unit;
 	tp->t_sc  = ms;
+	tp->t_dev = args->kmta_dev;
 	ms->ms_cs = (struct zs_chanstate *)tp;
         ms->ms_deviopen = sunmsiopen;
         ms->ms_deviclose = sunmsiclose;
@@ -185,7 +186,6 @@ sunmsiopen(dev, flags, devvp)
 
 	/* Now configure it for the console. */
 	tp->t_ospeed = 0;
-	tp->t_devvp = ms->ms_devvp;
 	t.c_ispeed = sunms_bps;
 	t.c_ospeed = sunms_bps;
 	t.c_cflag =  CLOCAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.56.4.2 2001/10/10 11:56:24 fvdl Exp $	*/
+/*	$NetBSD: dtop.c,v 1.56.4.3 2001/10/13 17:42:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.56.4.2 2001/10/10 11:56:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.56.4.3 2001/10/13 17:42:40 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -315,7 +315,7 @@ dtopopen(devvp, flag, mode, p)
 	}
 	tp->t_oproc = dtopstart;
 	tp->t_param = dtopparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 
 	vdev_setprivdata(devvp, tp);
 
@@ -431,7 +431,7 @@ dtopioctl(devvp, cmd, data, flag, p)
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 

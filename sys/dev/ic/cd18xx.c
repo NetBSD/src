@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.1.4.2 2001/10/11 00:02:02 fvdl Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.1.4.3 2001/10/13 17:42:46 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -113,6 +113,8 @@
 #include <sys/kernel.h>
 #include <sys/tty.h>
 #include <sys/fcntl.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <machine/bus.h>
 
@@ -387,8 +389,8 @@ cdtty_shutdown(sc, p)
  * cdttyopen:  open syscall for cdtty terminals..
  */
 int
-cdttyopen(dev, flag, mode, p)
-	dev_t dev;
+cdttyopen(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
@@ -397,9 +399,12 @@ cdttyopen(dev, flag, mode, p)
 	struct cd18xx_softc *sc;
 	struct cdtty_port *port;
 	int channel, instance, s, error;
+	dev_t rdev;
 
-	channel = CD18XX_CHANNEL(dev);
-	instance = CD18XX_INSTANCE(dev);
+	rdev = vdev_rdev(devvp);
+
+	channel = CD18XX_CHANNEL(rdev);
+	instance = CD18XX_INSTANCE(rdev);
 
 	/* ensure instance is valid */
 	if (instance >= clcd_cd.cd_ndevs)
@@ -423,6 +428,8 @@ cdttyopen(dev, flag, mode, p)
 	    ISSET(tp->t_state, TS_XCLUDE) &&
 	    (p->p_ucred->cr_uid != 0)))
 		return (EBUSY);
+
+	vdev_setprivdata(devvp, port);
 
 	s = spltty();
 
@@ -465,7 +472,7 @@ cdttyopen(dev, flag, mode, p)
 		(void)splserial();
 
 		/* turn on rx and modem interrupts */
-		cd18xx_set_car(sc, CD18XX_CHANNEL(dev));
+		cd18xx_set_car(sc, channel);
 		SET(port->p_srer, CD18xx_SRER_Rx |
 				  CD18xx_SRER_RxSC |
 				  CD18xx_SRER_CD);
@@ -484,9 +491,9 @@ cdttyopen(dev, flag, mode, p)
 	/* drop spl back before going into the line open */
 	splx(s);
 
-	error = ttyopen(tp, CD18XX_DIALOUT(dev), ISSET(flag, O_NONBLOCK));
+	error = ttyopen(tp, CD18XX_DIALOUT(rdev), ISSET(flag, O_NONBLOCK));
 	if (error == 0)
-		error = (*tp->t_linesw->l_open)(dev, tp);
+		error = (*tp->t_linesw->l_open)(devvp, tp);
 
 	return (error);
 }
@@ -495,8 +502,8 @@ cdttyopen(dev, flag, mode, p)
  * cdttyclose:  close syscall for cdtty terminals..
  */
 int
-cdttyclose(dev, flag, mode, p)
-	dev_t dev;
+cdttyclose(devvp, flag, mode, p)
+	struct vnode *devvp;
 	int flag;
 	int mode;
 	struct proc *p;
@@ -504,19 +511,13 @@ cdttyclose(dev, flag, mode, p)
 	struct cd18xx_softc *sc;
 	struct cdtty_port *port;
 	struct tty *tp;
-	int channel, instance;
+	int channel;
 
-	channel = CD18XX_CHANNEL(dev);
-	instance = CD18XX_INSTANCE(dev);
-
-	/* ensure instance is valid */
-	if (instance >= clcd_cd.cd_ndevs)
-		return (ENXIO);
-
-	/* get softc and port */
-	sc = clcd_cd.cd_devs[instance];
+	channel = CD18XX_CHANNEL(vdev_rdev(devvp));
+	sc = vdev_privdata(devvp);
 	if (sc == NULL)
 		return (ENXIO);
+
 	port = &sc->sc_ports[channel];
 
 	tp = port->p_tty;
@@ -540,13 +541,13 @@ cdttyclose(dev, flag, mode, p)
  * cdttyread:  read syscall for cdtty terminals..
  */
 int
-cdttyread(dev, uio, flag)
-	dev_t dev;
+cdttyread(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct cd18xx_softc *sc = clcd_cd.cd_devs[CD18XX_INSTANCE(dev)];
-	struct cdtty_port *port = &sc->sc_ports[CD18XX_CHANNEL(dev)];
+	struct cd18xx_softc *sc = vdev_privdata(devvp);
+	struct cdtty_port *port = &sc->sc_ports[CD18XX_CHANNEL(vdev_rdev(devvp))];
 	struct tty *tp = port->p_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
@@ -556,26 +557,26 @@ cdttyread(dev, uio, flag)
  * cdttywrite:  write syscall for cdtty terminals..
  */
 int
-cdttywrite(dev, uio, flag)
-	dev_t dev;
+cdttywrite(devvp, uio, flag)
+	struct vnode *devvp;
 	struct uio *uio;
 	int flag;
 {
-	struct cd18xx_softc *sc = clcd_cd.cd_devs[CD18XX_INSTANCE(dev)];
-	struct cdtty_port *port = &sc->sc_ports[CD18XX_CHANNEL(dev)];
+	struct cd18xx_softc *sc = vdev_privdata(devvp);
+	struct cdtty_port *port = &sc->sc_ports[CD18XX_CHANNEL(vdev_rdev(devvp))];
 	struct tty *tp = port->p_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-cdttypoll(dev, events, p)
-	dev_t dev;
+cdttypoll(devvp, events, p)
+	struct vnode *devvp;
 	int events;
 	struct proc *p;
 {
-	struct cd18xx_softc *sc = clcd_cd.cd_devs[CD18XX_INSTANCE(dev)];
-	struct cdtty_port *port = &sc->sc_ports[CD18XX_CHANNEL(dev)];
+	struct cd18xx_softc *sc = vdev_privdata(devvp);
+	struct cdtty_port *port = &sc->sc_ports[CD18XX_CHANNEL(vdev_rdev(devvp))];
 	struct tty *tp = port->p_tty;
 
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
@@ -585,11 +586,11 @@ cdttypoll(dev, events, p)
  * cdttytty:  return a pointer to our (cdtty) tp.
  */
 struct tty *
-cdttytty(dev)
-	dev_t dev;
+cdttytty(devvp)
+	struct vnode *devvp;
 {
-	struct cd18xx_softc *sc = clcd_cd.cd_devs[CD18XX_INSTANCE(dev)];
-	struct cdtty_port *port = &sc->sc_ports[CD18XX_CHANNEL(dev)];
+	struct cd18xx_softc *sc = vdev_privdata(devvp);
+	struct cdtty_port *port = &sc->sc_ports[CD18XX_CHANNEL(vdev_rdev(devvp))];
 
 	return (port->p_tty);
 }
@@ -598,15 +599,15 @@ cdttytty(dev)
  * cdttyioctl:  ioctl syscall for cdtty terminals..
  */
 int
-cdttyioctl(dev, cmd, data, flag, p)
-	dev_t dev;
+cdttyioctl(devvp, cmd, data, flag, p)
+	struct vnode *devvp;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct cd18xx_softc *sc = clcd_cd.cd_devs[CD18XX_INSTANCE(dev)];
-	struct cdtty_port *port = &sc->sc_ports[CD18XX_CHANNEL(dev)];
+	struct cd18xx_softc *sc = vdev_privdata(devvp);
+	struct cdtty_port *port = &sc->sc_ports[CD18XX_CHANNEL(vdev_rdev(devvp))];
 	struct tty *tp = port->p_tty;
 	int error, s;
 
@@ -614,7 +615,7 @@ cdttyioctl(dev, cmd, data, flag, p)
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -667,8 +668,9 @@ static void
 cdttystart(tp)
 	struct tty *tp;
 {
-	struct cd18xx_softc *sc = clcd_cd.cd_devs[CD18XX_INSTANCE(tp->t_dev)];
-	struct cdtty_port *p = &sc->sc_ports[CD18XX_CHANNEL(tp->t_dev)];
+	dev_t rdev = tp->t_dev;
+	struct cd18xx_softc *sc = clcd_cd.cd_devs[CD18XX_INSTANCE(rdev)];
+	struct cdtty_port *p = &sc->sc_ports[CD18XX_CHANNEL(rdev)];
 	int s;
 
 	s = spltty();
@@ -706,7 +708,7 @@ cdttystart(tp)
 
 	/* turn on tx interrupts */
 	if ((p->p_srer & CD18xx_SRER_Tx) == 0) {
-		cd18xx_set_car(sc, CD18XX_CHANNEL(tp->t_dev));
+		cd18xx_set_car(sc, CD18XX_CHANNEL(rdev));
 		SET(p->p_srer, CD18xx_SRER_Tx);
 		cd18xx_write(sc, CD18xx_SRER, p->p_srer);
 	}
@@ -728,8 +730,9 @@ cdttystop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct cd18xx_softc *sc = clcd_cd.cd_devs[CD18XX_INSTANCE(tp->t_dev)];
-	struct cdtty_port *p = &sc->sc_ports[CD18XX_CHANNEL(tp->t_dev)];
+	dev_t rdev = tp->t_dev;
+	struct cd18xx_softc *sc = clcd_cd.cd_devs[CD18XX_INSTANCE(rdev)];
+	struct cdtty_port *p = &sc->sc_ports[CD18XX_CHANNEL(rdev)];
 	int s;
 
 	s = splserial();
@@ -788,8 +791,9 @@ cdttyparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct cd18xx_softc *sc = clcd_cd.cd_devs[CD18XX_INSTANCE(tp->t_dev)];
-	struct cdtty_port *p = &sc->sc_ports[CD18XX_CHANNEL(tp->t_dev)];
+	dev_t rdev = tp->t_dev;
+	struct cd18xx_softc *sc = clcd_cd.cd_devs[CD18XX_INSTANCE(rdev)];
+	struct cdtty_port *p = &sc->sc_ports[CD18XX_CHANNEL(rdev)];
 	int s;
 
 	/* Check requested parameters. */
@@ -1038,8 +1042,9 @@ cdttyhwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	struct cd18xx_softc *sc = clcd_cd.cd_devs[CD18XX_INSTANCE(tp->t_dev)];
-	struct cdtty_port *p = &sc->sc_ports[CD18XX_CHANNEL(tp->t_dev)];
+	dev_t rdev = tp->t_dev;
+	struct cd18xx_softc *sc = clcd_cd.cd_devs[CD18XX_INSTANCE(rdev)];
+	struct cdtty_port *p = &sc->sc_ports[CD18XX_CHANNEL(rdev)];
 	int s;
 
 	if (p->p_msvr_rts == 0)
@@ -1348,7 +1353,7 @@ cd18xx_hardintr(v)
 
 		if (sc == NULL)
 			continue;
-
+		
 		DPRINTF(CDD_INTR, ("%s:", sc->sc_dev.dv_xname));
 		while (count-- &&
 		    (status = (cd18xx_read(sc, CD18xx_SRSR) &

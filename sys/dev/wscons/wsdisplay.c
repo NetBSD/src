@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.52.2.2 2001/09/26 15:28:20 fvdl Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.52.2.3 2001/10/13 17:42:51 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.52.2.2 2001/09/26 15:28:20 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.52.2.3 2001/10/13 17:42:51 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -717,7 +717,7 @@ wsdisplayopen(devvp, flag, mode, p)
 		tp = scr->scr_tty;
 		tp->t_oproc = wsdisplaystart;
 		tp->t_param = wsdisplayparam;
-		tp->t_devvp = devvp;
+		tp->t_dev = dev;
 		newopen = (tp->t_state & TS_ISOPEN) == 0;
 		if (newopen) {
 			ttychars(tp);
@@ -946,7 +946,7 @@ wsdisplayioctl(devvp, cmd, data, flag, p)
 
 /* printf("tty\n"); */
 		/* then the tty ioctls */
-		error = ttioctl(tp, cmd, data, flag, p);
+		error = ttioctl(tp, devvp, cmd, data, flag, p);
 		if (error >= 0)
 			return (error);
 	}
@@ -1208,9 +1208,8 @@ wsdisplaystart(tp)
 		splx(s);
 		return;
 	}
-	sc = vdev_privdata(tp->t_devvp);
-
-	scr = sc->sc_scr[WSDISPLAYSCREEN(vdev_rdev(tp->t_devvp))];
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(tp->t_dev));
+	scr = sc->sc_scr[WSDISPLAYSCREEN(tp->t_dev)];
 	if (scr->scr_hold_screen) {
 		tp->t_state |= TS_TIMEOUT;
 		splx(s);

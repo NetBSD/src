@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.13 2001/01/15 16:33:31 thorpej Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.13.6.1 2001/10/13 17:42:52 fvdl Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -64,6 +64,7 @@ struct ppp_softc {
 	int	sc_unit;		/* XXX unit number */
 	u_int	sc_flags;		/* control/status bits; see if_ppp.h */
 	void	*sc_devp;		/* pointer to device-dep structure */
+	void	*sc_devvp;		/* pointer to device vnode */
 	void	(*sc_start) __P((struct ppp_softc *));	/* start output proc */
 	void	(*sc_ctlp) __P((struct ppp_softc *)); /* rcvd control pkt */
 	void	(*sc_relinq) __P((struct ppp_softc *)); /* relinquish ifunit */

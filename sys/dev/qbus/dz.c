@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.28.4.1 2001/10/10 11:56:58 fvdl Exp $	*/
+/*	$NetBSD: dz.c,v 1.28.4.2 2001/10/13 17:42:49 fvdl Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -293,7 +293,7 @@ dzopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 
 	tp->t_oproc   = dzstart;
 	tp->t_param   = dzparam;
-	tp->t_devvp = devvp;
+	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
 		if (tp->t_ispeed == 0) {
@@ -418,7 +418,7 @@ dzioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, devvp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -490,7 +490,7 @@ dzstart(struct tty *tp)
 	char state;
 	dev_t dev;
 
-	dev = vdev_rdev(tp->t_devvp); 
+	dev = tp->t_dev; 
 	unit = DZ_I2C(minor(dev));
 	line = DZ_PORT(minor(dev));
 	sc = dz_cd.cd_devs[unit];
@@ -531,7 +531,7 @@ dzparam(struct tty *tp, struct termios *t)
 	int s;
 	dev_t dev;
 
-	dev = vdev_rdev(tp->t_devvp);
+	dev = tp->t_dev;
 	unit = DZ_I2C(minor(dev));
 	line = DZ_PORT(minor(dev));
 	sc = dz_cd.cd_devs[unit];
