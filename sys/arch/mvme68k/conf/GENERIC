@@ -1,11 +1,12 @@
-#	$NetBSD: GENERIC,v 1.12 2000/08/13 01:31:19 itojun Exp $
+#	$NetBSD: GENERIC,v 1.13 2000/09/06 19:51:42 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.12 $"
+#ident 		"GENERIC-$Revision: 1.13 $"
 
 # Boards this kernel supports
 options 	MVME147
+options 	MVME162
 options 	MVME167
 
 maxusers	4
@@ -72,24 +73,30 @@ mainbus0	at root
 # MVME147 specific devices
 pcc0		at mainbus0
 vmepcc0 	at pcc?
+vme0		at vmepcc0
 zsc*		at pcc? ipl 4
-zstty*		at zsc? channel ?
 clock0		at pcc? ipl 5
 le0		at pcc? ipl 3
 wdsc0		at pcc? ipl 2
 lpt*		at pcc? ipl 1
 
-# MVME167 specific devices
+# MVME162 and MVME167 shared devices
 pcctwo0		at mainbus0
 vmetwo0 	at mainbus0
+vme0		at vmetwo0
 clock0		at pcctwo? ipl 5
-clmpcc0		at pcctwo? ipl 4
 ie0		at pcctwo? ipl 3
 ncrsc0		at pcctwo? ipl 2
+
+# MVME162 specific devices
+zsc*		at pcctwo? ipl 4
+
+# MVME167 specific devices
+clmpcc0		at pcctwo? ipl 4
 lpt*		at pcctwo? ipl 1
 
-vme0		at vmepcc0
-vme0		at vmetwo0
+# Common front-end for MVME147 and MVME162 `zs' device
+zstty*		at zsc? channel ?
 
 # Example VMEbus device
 #foo0		at vme0 addr 0x00ef0000 irq 3 vect 0x80

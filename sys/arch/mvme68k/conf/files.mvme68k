@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.34 2000/08/13 17:00:51 scw Exp $
+#	$NetBSD: files.mvme68k,v 1.35 2000/09/06 19:51:43 scw Exp $
 
 # config file for mvme68k
 
@@ -48,6 +48,9 @@ file dev/ic/z8530sc.c				zsc
 
 attach zsc at pcc with zsc_pcc
 file arch/mvme68k/dev/zs_pcc.c			zsc_pcc needs-flag
+
+attach zsc at pcctwo with zsc_pcctwo
+file arch/mvme68k/dev/zs_pcctwo.c		zsc_pcctwo needs-flag
 
 device zstty: tty
 attach zstty at zsc

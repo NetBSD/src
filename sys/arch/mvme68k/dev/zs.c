@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.21 2000/07/21 20:18:35 scw Exp $	*/
+/*	$NetBSD: zs.c,v 1.22 2000/09/06 19:51:44 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ u_char zs_init_reg[16] = {
 	ZSWR9_MASTER_IE,
 	0,	/*10: Misc. TX/RX control bits */
 	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD,
-	((PCLK/32)/9600)-2,	/*12: BAUDLO (default=9600) */
+	0,			/*12: BAUDLO (default=9600) */
 	0,			/*13: BAUDHI (default=9600) */
 	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
 	ZSWR15_BREAK_IE,
@@ -132,21 +132,18 @@ cons_decl(zsc_pcc);
  * Configure children of an SCC.
  */
 void
-zs_config(zsc, bust, bush)
+zs_config(zsc, zs, vector, pclk)
 	struct zsc_softc *zsc;
-	bus_space_tag_t bust;
-	bus_space_handle_t bush;
+	struct zsdevice *zs;
+	int vector, pclk;
 {
 	struct zsc_attach_args zsc_args;
-	struct zsdevice *zs;
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
 	int zsc_unit, channel, s;
 
 	zsc_unit = zsc->zsc_dev.dv_unit;
-	printf(": Zilog 8530 SCC\n");
-
-	zs = (struct zsdevice *) bush;	/* XXXXXXXX */
+	printf(": Zilog 8530 SCC at vector 0x%x\n", vector);
 
 	/*
 	 * Initialize software state for each channel.
@@ -166,12 +163,14 @@ zs_config(zsc, bust, bush)
 			zs_conschan = cs;
 		} else {
 			zc = (channel == 0) ? &zs->zs_chan_a : &zs->zs_chan_b;
-			cs->cs_reg_csr  = &zc->zc_csr;
-			cs->cs_reg_data = &zc->zc_data;
+			cs->cs_reg_csr  = zc->zc_csr;
+			cs->cs_reg_data = zc->zc_data;
 			bcopy(zs_init_reg, cs->cs_creg, 16);
 			bcopy(zs_init_reg, cs->cs_preg, 16);
 			cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
 		}
+		cs->cs_creg[2] = cs->cs_preg[2] = vector;
+		cs->cs_creg[12] = cs->cs_preg[12] = ((pclk / 32) / 9600) - 1;
 		cs->cs_defcflag = zs_def_cflag;
 
 		/* Make these correspond to cs_defcflag (-crtscts) */
@@ -183,15 +182,17 @@ zs_config(zsc, bust, bush)
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
-		cs->cs_brg_clk = PCLK / 16;
+		cs->cs_brg_clk = pclk / 16;
 
 		/*
 		 * Clear the master interrupt enable.
 		 * The INTENA is common to both channels,
 		 * so just do it on the A channel.
+		 * Write the interrupt vector while we're at it.
 		 */
 		if (channel == 0) {
 			zs_write_reg(cs, 9, 0);
+			zs_write_reg(cs, 2, vector);
 		}
 
 		/*
@@ -234,12 +235,34 @@ zsc_print(aux, name)
 	return UNCONF;
 }
 
+#ifdef MVME162
 /*
- * Our ZS chips all share a common, autovectored interrupt,
+ * Our ZS chips each have their own interrupt vector.
+ */
+int
+zshard_unshared(arg)
+	void *arg;
+{
+	struct zsc_softc *zsc = arg;
+	int rval;
+
+	rval = zsc_intr_hard(zsc);
+
+	if ((zsc->zsc_cs[0]->cs_softreq) ||
+	    (zsc->zsc_cs[1]->cs_softreq))
+		softintr_schedule(zsc->zsc_softintr_cookie);
+
+	return (rval);
+}
+#endif
+
+#ifdef MVME147
+/*
+ * Our ZS chips all share a common, PCC-vectored interrupt,
  * so we have to look at all of them on each interrupt.
  */
 int
-zshard(arg)
+zshard_shared(arg)
 	void *arg;
 {
 	struct zsc_softc *zsc;
@@ -257,6 +280,7 @@ zshard(arg)
 	}
 	return (rval);
 }
+#endif
 
 
 #if 0
@@ -482,16 +506,14 @@ zs_putc(arg, c)
  * Common parts of console init.
  */
 void
-zs_cnconfig(zsc_unit, channel, bust, bush)
+zs_cnconfig(zsc_unit, channel, zs, pclk)
 	int zsc_unit, channel;
-	bus_space_tag_t bust;
-	bus_space_handle_t bush;
+	struct zsdevice *zs;
+	int pclk;
 {
 	struct zs_chanstate *cs;
-	struct zsdevice *zs;
 	struct zschan *zc;
 
-	zs = (struct zsdevice *) bush;	/* XXXXXXXX */
 	zc = (channel == 0) ? &zs->zs_chan_a : &zs->zs_chan_b;
 
 	/*
@@ -503,12 +525,13 @@ zs_cnconfig(zsc_unit, channel, bust, bush)
 	zs_hwflags[zsc_unit][channel] = ZS_HWFLAG_CONSOLE;
 
 	/* Setup temporary chanstate. */
-	cs->cs_reg_csr  = &zc->zc_csr;
-	cs->cs_reg_data = &zc->zc_data;
+	cs->cs_reg_csr  = zc->zc_csr;
+	cs->cs_reg_data = zc->zc_data;
 
 	/* Initialize the pending registers. */
 	bcopy(zs_init_reg, cs->cs_preg, 16);
 	cs->cs_preg[5] |= (ZSWR5_DTR | ZSWR5_RTS);
+	cs->cs_preg[12] = ((pclk / 32) / 9600) - 1;
 
 #if 0
 	/* XXX: Preserve BAUD rate from boot loader. */
