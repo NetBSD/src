@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.28 2003/01/18 06:55:25 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.29 2003/01/24 16:54:34 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -30,6 +30,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#include "firm_events.h"
 #endif
 
 #include <sys/param.h>
@@ -74,7 +75,9 @@
 /* Provide a the name of the architecture we're emulating */
 char	machine_arch32[] = "sparc";	
 
+#if NFIRM_EVENTS > 0
 static int ev_out32 __P((struct firm_event *, int, struct uio *));
+#endif
 
 void netbsd32_upcall(struct lwp *, int, int, int, void *, void *, void *, sa_upcall_t);
 
@@ -102,8 +105,10 @@ netbsd32_setregs(l, pack, stack)
 	p->p_flag |= P_32;
 
 	/* Setup the ev_out32 hook */
+#if NFIRM_EVENTS > 0
 	if (ev_out32_hook == NULL)
 		ev_out32_hook = ev_out32;
+#endif
 
 	/*
 	 * Set the registers to 0 except for:
@@ -848,6 +853,7 @@ netbsd32_cpu_setmcontext(l, mcp, flags)
 	return (0);
 }
 
+#if NFIRM_EVENTS > 0
 /*
  * Write out a series of 32-bit firm_events.
  */
@@ -870,6 +876,7 @@ ev_out32(e, n, uio)
 	}
 	return (error);
 }
+#endif
 
 /*
  * ioctl code

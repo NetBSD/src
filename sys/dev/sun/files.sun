@@ -1,4 +1,4 @@
-# $NetBSD: files.sun,v 1.6 2002/10/26 19:11:13 martin Exp $
+# $NetBSD: files.sun,v 1.7 2003/01/24 16:54:35 nakayama Exp $
 #
 # Configuration file for devices found on Sun machines.
 #
@@ -9,7 +9,7 @@
 #
 
 define	firm_events
-file	dev/sun/event.c			firm_events
+file	dev/sun/event.c			firm_events needs-flag
 
 
 # upper layer of sun kbd driver
