@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.42 2002/09/19 22:41:51 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.43 2002/09/19 22:52:52 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.42 2002/09/19 22:41:51 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.43 2002/09/19 22:52:52 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -1688,8 +1688,10 @@ rf_UnblockRecon(raidPtr, asmap)
 	if (!pssPtr) {
 		/* printf("Warning: no pss descriptor upon unblock on psid %ld
 		 * RU %d\n",psid,which_ru); */
+#if (RF_DEBUG_RECON > 0) || (RF_DEBUG_PSS > 0)
 		if (rf_reconDebug || rf_pssDebug)
 			printf("Warning: no pss descriptor upon unblock on psid %ld RU %d\n", (long) psid, which_ru);
+#endif
 		goto out;
 	}
 	pssPtr->blockCount--;

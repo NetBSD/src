@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.9 2002/09/14 17:53:58 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.10 2002/09/19 22:52:52 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.9 2002/09/14 17:53:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.10 2002/09/19 22:52:52 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -48,9 +48,15 @@ __KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.9 2002/09/14 17:53:58 oster Exp $"
 #include "rf_psstatus.h"
 #include "rf_shutdown.h"
 
+#if RF_DEBUG_PSS
 #define Dprintf1(s,a)         if (rf_pssDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf2(s,a,b)       if (rf_pssDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf3(s,a,b,c)     if (rf_pssDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),NULL,NULL,NULL,NULL,NULL)
+#else
+#define Dprintf1(s,a)
+#define Dprintf2(s,a,b)
+#define Dprintf3(s,a,b,c)
+#endif
 
 static void 
 RealPrintPSStatusTable(RF_Raid_t * raidPtr,
@@ -150,8 +156,10 @@ rf_FreeParityStripeStatusTable(raidPtr, pssTable)
 {
 	int     i;
 
+#if RF_DEBUG_PSS
 	if (rf_pssDebug)
 		RealPrintPSStatusTable(raidPtr, pssTable);
+#endif
 	for (i = 0; i < raidPtr->pssTableSize; i++) {
 		if (pssTable[i].chain) {
 			printf("ERROR: pss hash chain not null at recon shutdown\n");
