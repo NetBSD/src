@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.3 2000/01/24 02:40:33 matt Exp $ */
+/*	$NetBSD: ibus.c,v 1.4 2000/02/12 15:58:45 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -66,7 +66,7 @@ ibus_match(parent, cf, aux)
 	struct cfdata *cf;
 	void	*aux;
 {
-	if (cf->cf_unit == 0 && vax_bustype == VAX_IBUS)
+	if (vax_bustype == VAX_IBUS)
 		return 1;
 	return 0;
 }
