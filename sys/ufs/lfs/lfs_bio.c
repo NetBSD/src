@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.17 2000/03/30 12:41:13 augustss Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.18 2000/05/05 20:59:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -393,6 +393,19 @@ lfs_check(vp, blkno, flags)
 #endif
 		error = tsleep(&locked_queue_count, PCATCH | PUSER,
 			       "buffers", hz * LFS_BUFWAIT);
+		/*
+		 * lfs_flush might not flush all the buffers, if some of the
+		 * inodes were locked.  Try flushing again to keep us from
+		 * blocking indefinitely.
+		 */
+		if (locked_queue_count > LFS_MAX_BUFS
+		    || locked_queue_bytes > LFS_MAX_BYTES)
+		{
+			++fs->lfs_writer;
+			lfs_flush(fs, flags);
+			if(--fs->lfs_writer==0)
+				wakeup(&fs->lfs_dirops);
+		}
 	}
 	return (error);
 }
