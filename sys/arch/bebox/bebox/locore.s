@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.10 1999/03/25 00:41:46 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.10.2.1 2000/01/20 21:22:24 he Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -373,8 +373,8 @@ GLOBAL(intr_depth)
 
 /*
  * This code gets copied to all the trap vectors
- * (except ISI/DSI, the interrupts, and possibly the debugging traps when
- * using IPKDB).
+ * (except ISI/DSI, ALI, the interrupts, and possibly the debugging 
+ * traps when using IPKDB).
  */
 	.text
 	.globl	_C_LABEL(trapcode),_C_LABEL(trapsize)
@@ -393,6 +393,29 @@ _C_LABEL(trapcode):
 1:
 	bla	s_trap
 _C_LABEL(trapsize) = .-_C_LABEL(trapcode)
+
+/*
+ * For ALI: has to save DSISR and DAR
+ */
+	.globl	_C_LABEL(alitrap),_C_LABEL(alisize)
+_C_LABEL(alitrap):
+	mtsprg	1,1			/* save SP */
+	stmw	28,tempsave(0)		/* free r28-r31 */
+	mfdar	30
+	mfdsisr	31
+	stmw	30,tempsave+16(0)
+	mflr	28			/* save LR */
+	mfcr	29			/* save CR */
+/* Test whether we already had PR set */
+	mfsrr1	31
+	mtcr	31
+	bc	4,17,1f			/* branch if PSL_PR is clear */
+	lis	1,_C_LABEL(curpcb)@ha
+	lwz	1,_C_LABEL(curpcb)@l(1)
+	addi	1,1,USPACE		/* stack is top of user struct */
+1:
+	bla	s_trap
+_C_LABEL(alisize) = .-_C_LABEL(alitrap)
 
 /*
  * Similar to the above for DSI
