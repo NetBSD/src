@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.28 1993/11/12 15:20:38 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.29 1993/11/13 06:25:46 mycroft Exp $
  */
 
 
@@ -107,11 +107,13 @@
         .globl	_esym
 _esym:	.long	0		# ptr to end of syms
 
-	.globl	_cpu,_cold,_boothowto,_bootdev,_cyloffset,_atdevbase
+	.globl	_cpu,_cold,_boothowto,_bootdev,_cyloffset,_atdevbase,_proc0paddr,_curpcb
 _cpu:	.long	0		# are we 386, 386sx, or 486
 _cold:	.long	1		# cold till we are not
 _atdevbase:	.long	0	# location of start of iomem in virtual
 _atdevphys:	.long	0	# location of device mapping ptes (phys)
+_cyloffset:	.long	0
+_proc0paddr:	.long	0
 
 	.globl	_IdlePTD,_KPTphys
 _IdlePTD:	.long	0
@@ -297,7 +299,7 @@ start:	jmp	1f
  * (of page directory elements - pde's)
  */
 	/* install a pde for temporary double map of kernel text */
-	lea	((UPAGES+2)*NBPG)(%esi),%eax	# physical address of kernel page tables
+	movl	_KPTphys-KERNBASE,%eax	# physical address of kernel page tables
 	orl     $(PG_V|PG_UW),%eax	# pde entry is valid
 	movl	%eax,(%esi)		# which is where temp maps!
 
@@ -322,8 +324,6 @@ start:	jmp	1f
 	jne	1f
 	movb	$1,_bdb_exists-KERNBASE
 1:
-#endif
-
 	pushal
 	subl	$2*6,%esp
 
@@ -339,7 +339,6 @@ start:	jmp	1f
 
 	sidt	6(%esp)
 	movl	6+2(%esp),%esi		# base address of current idt
-#ifdef BDB
 	movl	8+4(%esi),%eax		# convert dbg descriptor to ...
 	movw	8(%esi),%ax
 	movl	%eax,bdb_dbg_ljmp+1-KERNBASE	# ... immediate offset ...
@@ -350,7 +349,7 @@ start:	jmp	1f
 	movl	%eax,bdb_bpt_ljmp+1-KERNBASE
 	movl	24+2(%esi),%eax
 	movw	%ax,bdb_bpt_ljmp+5-KERNBASE
-#endif
+
 	movl	$(_idt-KERNBASE),%edi
 	movl	%edi,6+2(%esp)
 	movl	$8*4/4,%ecx
@@ -362,6 +361,7 @@ start:	jmp	1f
 
 	addl	$2*6,%esp
 	popal
+#endif
 
 	/* load base of page directory and enable mapping */
 	movl	%esi,%eax		# phys address of ptd in proc 0
@@ -389,6 +389,7 @@ begin: /* now running relocated at KERNBASE where the system is linked to run */
 	movl	_proc0paddr,%eax
 	movl	%esi,PCB_CR3(%eax)
 
+#ifdef BDB
 	/* relocate debugger gdt entries */
 	movl	$(_gdt+8*9),%eax	# adjust slots 9-17
 	movl	$9,%ecx
@@ -397,7 +398,6 @@ reloc_gdt:
 	addl	$8,%eax			# now KERNBASE>>24
 	loop	reloc_gdt
 
-#ifdef BDB
 	cmpl	$0,_bdb_exists
 	jz	1f
 	int	$3
@@ -437,7 +437,7 @@ reloc_gdt:
 	movl	%cx,%es
 	movl	%ax,%fs		# double map cs to fs
 	movl	%cx,%gs		# and ds to gs
-	lret	# goto user!
+	lret			# goto user!
 
 #ifdef DIAGNOSTIC
 	pushl	$lretmsg1	/* "should never get here!" */
@@ -466,10 +466,10 @@ ENTRY(icode)
 	pushl	%eax		/* fname for execve() */
 	pushl	%eax		/* dummy return address */
 	movl	$(SYS_execve),%eax
-	LCALL(0x7,0x0)
+	LCALL(7,0)
 	/* exit if something botches up in the above exec */
 	movl	$(SYS_exit),%eax
-	LCALL(0x7,0x0)
+	LCALL(7,0)
 
 init:
 	.asciz	"/sbin/init"
@@ -491,9 +491,9 @@ ENTRY(sigcode)
 	pushl	%eax
 	pushl	%eax			# junk to fake return address
 	movl	$(SYS_sigreturn),%eax
-	LCALL(0x7,0)			# enter kernel with args on stack
+	LCALL(7,0)			# enter kernel with args on stack
 	movl	$(SYS_exit),%eax
-	LCALL(0x7,0)			# exit if sigreturn fails
+	LCALL(7,0)			# exit if sigreturn fails
 
 	.globl	_esigcode
 _esigcode:
@@ -1282,6 +1282,7 @@ ENTRY(longjmp)
 	incl	%eax
 	ret
 
+
 /*
  * The following primitives manipulate the run queues.
  * _whichqs tells which of the 32 queues _qs
@@ -1599,14 +1600,8 @@ ENTRY(savectx)
 1:
 	xorl	%eax,%eax		# return 0
 	ret
-
-	.data
-	ALIGN_DATA
-	.globl	_cyloffset, _curpcb
-_cyloffset:	.long	0
-	.globl	_proc0paddr
-_proc0paddr:	.long	0
 	
+
 /*
  * Trap and fault vector routines
  *
@@ -1633,16 +1628,25 @@ _proc0paddr:	.long	0
 #define	TRAP(a)		pushl $(a) ; jmp alltraps
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
 #ifdef KGDB
-#define	BPTTRAP(a)	pushl $0 ; pushl $(a) ; jmp bpttraps
+#define	BPTTRAP(a)	pushl $(a) ; jmp bpttraps
 #else
-#define	BPTTRAP(a)	ZTRAP(a)
+#define	BPTTRAP(a)	TRAP(a)
 #endif
 
 	.text
 IDTVEC(div)
 	ZTRAP(T_DIVIDE)
 IDTVEC(dbg)
-#ifdef BDBTRAP
+	subl	$4,%esp
+	pushl	%eax
+#	movl	%dr6,%eax	/* XXX stupid assembler! */
+	.byte	0x0f, 0x21, 0xf0
+	movl	%eax,4(%esp)
+	andb	$~15,%al
+#	movl	%eax,%dr6	/* XXX stupid assembler! */
+	.byte	0x0f, 0x23, 0xf0
+	popl	%eax	
+#ifdef BDB
 	BDBTRAP(dbg)
 #endif
 	BPTTRAP(T_TRCTRAP)
@@ -1652,6 +1656,7 @@ IDTVEC(bpt)
 #ifdef BDBTRAP
 	BDBTRAP(bpt)
 #endif
+	pushl	$0
 	BPTTRAP(T_BPTFLT)
 IDTVEC(ofl)
 	ZTRAP(T_OFLOW)
