@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 1999/09/12 01:17:18 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 1999/09/14 17:11:45 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1264,8 +1264,8 @@ ptemodify(pg, mask, val)
 }
 
 int
-ptebits(pa, bit)
-	paddr_t pa;
+ptebits(pg, bit)
+	struct vm_page *pg;
 	int bit;
 {
 	struct pv_entry *pv;
@@ -1273,6 +1273,7 @@ ptebits(pa, bit)
 	struct pte_ovfl *po;
 	int i, s, bits = 0;
 	char *attr;
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 	/*
 	 * First try the cache.
@@ -1341,7 +1342,7 @@ pmap_page_protect(pg, prot)
 
 	pa &= ~ADDR_POFF;
 	if (prot & VM_PROT_READ) {
-		ptemodify(pa, PTE_PP, PTE_RO);
+		ptemodify(pg, PTE_PP, PTE_RO);
 		return;
 	}
 
