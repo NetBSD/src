@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_comreg.h,v 1.4 2002/12/03 09:28:28 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_comreg.h,v 1.5 2003/02/17 20:51:52 ichiro Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -44,7 +44,6 @@
 #define IXPCOMSPEED2BRD(b)	(IXPCOMSPEED(b) << 16)
 
 /* size of I/O space */
-#define	IXPCOM_UART_HWBASE	0x90000000UL
 #define IXPCOM_UART_SIZE	0x00004000UL
 
 /* Register base virtual addresses mapped by initarm() */
