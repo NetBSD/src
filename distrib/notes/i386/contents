@@ -9,11 +9,14 @@ out as follows:
 		sets/		i386 binary distribution sets;
 				see below.
 
+			Split/	Split i386 binary distribution
+				sets; see below.
+
 		security/	i386 security distribution;
 				see below;
 	installation/
 
-		floppies/	i386 boot and installation
+		floppy/		i386 boot and installation
 				floppies; see below.
 
 
@@ -22,7 +25,7 @@ out as follows:
 				installation section, below.
 
 There are two i386 floppy images, named "boot.fs" and "boot-small.fs",
-in the "i386/installation/floppies" subdirectory of the NetBSD _VER
+in the "i386/installation/floppy" subdirectory of the NetBSD _VER
 distribution. These are 1.44M and 1.2M floppy disk images
 (respectively). These floppies are bootable, and are used both for
 installations and for upgrades.  They are described in more detail
