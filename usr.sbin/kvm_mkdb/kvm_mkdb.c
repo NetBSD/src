@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kvm_mkdb.c	5.11 (Berkeley) 4/27/91";*/
-static char rcsid[] = "$Id: kvm_mkdb.c,v 1.4 1993/08/01 17:59:21 mycroft Exp $";
+static char rcsid[] = "$Id: kvm_mkdb.c,v 1.5 1993/12/02 20:55:47 pk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -51,9 +51,16 @@ static char rcsid[] = "$Id: kvm_mkdb.c,v 1.4 1993/08/01 17:59:21 mycroft Exp $";
 #include <string.h>
 #include <paths.h>
 
-char *tmp;
+static int	laundry;
+static char	dbtemp[MAXPATHLEN], dbname[MAXPATHLEN];
+
+static char *tmp;
 #define basename(cp)	((tmp=rindex((cp), '/')) ? tmp+1 : (cp))
 
+static void	usage();
+void		cleanup();
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -61,7 +68,7 @@ main(argc, argv)
 	extern int optind;
 	DB *db;
 	int ch;
-	char *nlistpath, *nlistname, dbtemp[MAXPATHLEN], dbname[MAXPATHLEN];
+	char *nlistpath, *nlistname;
 
 	while ((ch = getopt(argc, argv, "")) != EOF)
 		switch((char)ch) {
@@ -85,6 +92,7 @@ main(argc, argv)
 		    "kvm_mkdb: %s: %s\n", dbtemp, strerror(errno));
 		exit(1);
 	}
+	laundry = 1;
 	create_knlist(nlistpath, db);
 	(void)(db->close)(db);
 	if (rename(dbtemp, dbname)) {
@@ -92,9 +100,10 @@ main(argc, argv)
 		    dbtemp, dbname, strerror(errno));
 		exit(1);
 	}
-	exit(0);
+	return(0);
 }
 
+void
 error(n)
 	char *n;
 {
@@ -105,9 +114,18 @@ error(n)
 	if (n)
 		(void)fprintf(stderr, "%s: ", n);
 	(void)fprintf(stderr, "%s\n", strerror(sverr));
+	cleanup();
 	exit(1);
 }
 
+void
+cleanup()
+{
+	if (laundry)
+		(void)unlink(dbtemp);
+}
+
+static void
 usage()
 {
 	(void)fprintf(stderr, "usage: kvm_mkdb [file]\n");
