@@ -29,6 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
+ * $Id: fd.h,v 1.3 1994/02/07 22:02:29 proven Exp $ $provenid: fd.h,v 1.17 1994/02/07 03:31:54 proven Exp $
+ *
  * Description : Basic fd header.
  *
  *  1.00 93/08/14 proven
@@ -58,9 +60,9 @@ struct fd_ops {
 	int 					(*read)();
 	int						(*close)();
 	int						(*fcntl)();
-
 	int						(*writev)();
 	int						(*readv)();
+	int						(*seek)();
 };
 
 union fd_data {
