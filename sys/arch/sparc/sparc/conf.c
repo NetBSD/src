@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1994/11/20 20:54:09 deraadt Exp $ */
+/*	$NetBSD: conf.c,v 1.17 1994/12/05 13:54:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -291,6 +291,15 @@ cdev_decl(lkm);
 	((dev_type_open((*)))lkmenodev), dev_init(0,no,close), \
 	error_read, error_write, error_ioctl, 0, 0, 0, error_select, 0, 0 }
 
+#include "ch.h"
+cdev_decl(ch);
+/* open, close, ioctl */
+#define	cdev_ch_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
+	(dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev, 0 }
+
 #include "cgsix.h"
 cdev_decl(cgsix);
 
@@ -336,7 +345,7 @@ struct cdevsw	cdevsw[] =
 	cdev_log_init(1,log),		/* 16: /dev/klog */
 	cdev_disk_init(NSD,sd),		/* 17: scsi disk */
 	cdev_tape_init(NST,st),		/* 18: scsi tape */
-	cdev_notdef(),			/* 19 */
+	cdev_ch_init(NCH,ch),		/* 19: SCSI autochanger */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
 	cdev_fb_init(1,fb),		/* 22: /dev/fb indirect driver */
