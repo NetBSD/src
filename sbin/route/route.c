@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.47 2001/07/20 08:28:25 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.48 2001/07/20 08:31:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.47 2001/07/20 08:28:25 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.48 2001/07/20 08:31:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1184,7 +1184,7 @@ prefixlen(s)
 	}
 
 	rtm_addrs |= RTA_NETMASK;	
-	if (len < -1 || len > max + 1) {
+	if (len < -1 || len > max) {
 		(void) fprintf(stderr, "%s: bad value\n", s);
 		exit(1);
 	}
