@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.10 1995/04/11 10:04:37 mellon Exp $
+#       $NetBSD: files.vax,v 1.11 1995/06/16 15:09:56 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -24,6 +24,9 @@ file	arch/vax/mba/mba.c		mba needs-flag
 device  hp at mba
 file    arch/vax/mba/hp.c		hp needs-flag
 major	{hp = 0}
+
+device	ht at mba
+file	arch/vax/mba/ht.c		ht needs-flag
 
 device	uba at sbi, bi { csr }
 file	arch/vax/uba/uba.c		uba needs-count
@@ -210,6 +213,7 @@ file	netinet/in_cksum.c		inet
 file	arch/vax/vax/random.s		inet
 file	arch/vax/vax/disksubr.c		ffs
 file	arch/vax/if/if_uba.c		de qe
+file	arch/vax/vax/db_machdep.c	ddb
 
 # Dom h{ra f}r vara kvar s} l{nge f}r vi se vilka vi beh|ver...
 #arch/vax/vax/crl.c           standard
