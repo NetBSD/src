@@ -111,12 +111,10 @@ int	hpux_advise();
 int	hpux_getcontext();
 int	hpux_getaccess();
 int	hpux_waitpid();
-int	getdirentries();
 int	hpux_sigaction();
 int	hpux_sigprocmask();
 int	hpux_sigpending();
 int	hpux_sigsuspend();
-int	getdtablesize();
 int	fchdir();
 int	bind();
 int	connect();
@@ -170,8 +168,10 @@ int	osetrlimit();
 #ifdef SYSVSHM
 #else
 #endif
+int	ogetdirentries();
 int	ogetdomainname();
 int	osetdomainname();
+int	ogetdtablesize();
 int	oaccept();
 int	ogetpeername();
 int	ogetsockname();
@@ -446,7 +446,7 @@ struct sysent hpux_sysent[] = {
 	{ 0, nosys },			/* 228 = nosys */
 	{ 0, notimp },			/* 229 = async_daemon (unimplemented) */
 	{ 3, notimp },			/* 230 = nfs_fcntl (unimplemented) */
-	{ 4, getdirentries },			/* 231 = getdirentries */
+	{ compat(4,getdirentries) },		/* 231 = old getdirentries */
 	{ compat(2,getdomainname) },		/* 232 = old getdomainname */
 	{ 2, notimp },			/* 233 = nfs_getfh (unimplemented) */
 	{ 4, notimp },			/* 234 = vfsmount (unimplemented) */
@@ -483,7 +483,7 @@ struct sysent hpux_sysent[] = {
 	{ 0, nosys },			/* 265 = nosys */
 	{ 0, nosys },			/* 266 = nosys */
 	{ 0, nosys },			/* 267 = nosys */
-	{ 0, getdtablesize },			/* 268 = getnumfds */
+	{ compat(0,getdtablesize) },		/* 268 = old getnumfds */
 	{ 0, nosys },			/* 269 = nosys */
 	{ 0, nosys },			/* 270 = nosys */
 	{ 0, nosys },			/* 271 = nosys */
