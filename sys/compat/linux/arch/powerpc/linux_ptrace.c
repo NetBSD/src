@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.3 2001/02/04 22:59:26 christos Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.4 2001/05/22 21:09:20 manu Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@
 
 struct linux_user {
 	struct linux_pt_regs regs;		
+#define lusr_startgdb regs
 	size_t u_tsize;	 
 	size_t u_dsize;	 
 	size_t u_ssize;	 
@@ -97,9 +98,9 @@ struct linux_user {
 	struct linux_pt_regs *u_ar0;		/* help gdb find registers */
 	unsigned long magic;		  
 	char u_comm[32];	 
+#define lu_comm_end u_comm[31]
 };
 
-#define lusr_startgdb regs
 #define LUSR_OFF(member) offsetof(struct linux_user, member)
 #define ISSET(t, f) ((t) & (f))
 
@@ -123,7 +124,6 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 	double *linux_fpreg = NULL;  /* it's an array, not a struct */
 	int addr;
 	int i;
-
 
 	switch (request = SCARG(uap, request)) {
 	case LINUX_PTRACE_PEEKUSR:
@@ -262,7 +262,8 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 
 		PHOLD(t);	/* need full process info */
 		error = 0;
-		 if (addr < LUSR_OFF(lusr_startgdb)) { 
+		if ((addr < LUSR_OFF(lusr_startgdb)) || 
+		    (addr > LUSR_OFF(lu_comm_end))) { 
 		 	error = 1;
 		} else if (addr == LUSR_OFF(u_tsize))
 			*retval = p->p_vmspace->vm_tsize;
@@ -274,7 +275,7 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 			*retval = (register_t) p->p_vmspace->vm_taddr;
 		else if (addr == LUSR_OFF(start_stack))
 			*retval = (register_t) p->p_vmspace->vm_minsaddr;
-		else if (addr == LUSR_OFF(u_ar0))
+		else if ((addr >=0 ) && (addr < LUSR_OFF(u_tsize)))
 			*retval = LUSR_OFF(regs);
 		else if (addr == LUSR_OFF(signal)) {
 			error = 1;
@@ -306,7 +307,6 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		/* never reached */
 		break;
 	}
-
 	return EIO;
 
 	 out:
