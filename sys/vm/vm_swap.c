@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.1 1997/05/04 15:20:22 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.2 1997/05/05 22:21:02 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -156,8 +156,8 @@ sys_swapon(p, v, retval)
 	} */ *uap = (struct sys_swapon_args *)v;
 	struct vnode *vp;
 	struct nameidata nd;
-	struct swappri *spp, *nspp = NULL, *pspp = swap_priority.lh_first;
-	struct swapdev *sdp = NULL, *nsdp = NULL;
+	struct swappri *spp;
+	struct swapdev *sdp = NULL;
 	struct swapinfo si;
 	struct swapent *sep;
 	int	count = 0, error, misc;
@@ -210,25 +210,39 @@ sys_swapon(p, v, retval)
 	}
 	
 	if ((error = suser(p->p_ucred, &p->p_acflag)))
-		goto out;
+		return (error);
 
 	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, UIO_USERSPACE, SCARG(uap, arg), p);
 	if ((error = namei(&nd)))
-		goto out;
+		return (error);
 
 	vp = nd.ni_vp;
-
-	if (vp == NULL)
 
 	switch(SCARG(uap, cmd)) {
 	case SWAP_ON:
 	{
 		int	priority = SCARG(uap, misc);
+		struct swappri *nspp = NULL;
+		struct swapdev *nsdp = NULL;
+		struct swappri *pspp;
 
 #ifdef SWAPDEBUG
 		if (vmswapdebug & VMSDB_SWFLOW)
 			printf("sw: doing SWAP_ON...\n");
 #endif /* SWAPDEBUG */
+
+		pspp = swap_priority.lh_first;
+
+		/* Check for duplicates */
+		for (spp = pspp; spp != NULL; spp = spp->spi_swappri.le_next) {
+			for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
+			     sdp = sdp->swd_next.cqe_next)
+				if (sdp->swd_vp == vp) {
+					error = EBUSY;
+					goto bad;
+				}
+		}
+
 		for (spp = pspp; spp != NULL; spp = spp->spi_swappri.le_next) {
 			if (spp->spi_priority <= priority)
 				break;
@@ -236,8 +250,8 @@ sys_swapon(p, v, retval)
 		}
 
 		if (spp == NULL || spp->spi_priority != priority) {
-			nspp = (struct swappri *)malloc(sizeof *nspp,
-			   M_VMSWAP, M_WAITOK);
+			nspp = (struct swappri *)
+				malloc(sizeof *nspp, M_VMSWAP, M_WAITOK);
 
 #ifdef SWAPDEBUG
 			if (vmswapdebug & VMSDB_SWFLOW)
@@ -250,26 +264,34 @@ sys_swapon(p, v, retval)
 		}
 
 		nsdp = (struct swapdev *)malloc(sizeof *nsdp, M_VMSWAP,
-		    M_WAITOK);
+					        M_WAITOK);
 		if (vp->v_type == VBLK)
 			nsdp->swd_dev = (dev_t)vp->v_rdev;
+
 		nsdp->swd_flags = 0;
 		nsdp->swd_priority = priority;
 		nsdp->swd_vp = vp;
-		if ((error = swap_on(p, nsdp)) != 0)
-			goto bad;
+		if ((error = swap_on(p, nsdp)) != 0) {
+			free((caddr_t)nsdp, M_VMSWAP);
+			if (nspp)
+				free((caddr_t)nspp, M_VMSWAP);
+			break;
+		}
+
 		if (nspp) {
 			if (pspp) {
 				LIST_INSERT_AFTER(pspp, nspp, spi_swappri);
 			} else {
 				LIST_INSERT_HEAD(&swap_priority, nspp,
-				    spi_swappri);
+						 spi_swappri);
 			}
 		}
 		CIRCLEQ_INIT(&nspp->spi_swapdev);
 		CIRCLEQ_INSERT_TAIL(&nspp->spi_swapdev, nsdp, swd_next);
-		goto out;
+		vref(vp);
+		break;
 	}
+
 	case SWAP_OFF:
 #ifdef SWAPDEBUG
 		if (vmswapdebug & VMSDB_SWFLOW)
@@ -277,9 +299,9 @@ sys_swapon(p, v, retval)
 #endif /* SWAPDEBUG */
 #ifdef SWAP_OFF_WORKS
 		for (spp = swap_priority.lh_first; spp != NULL;
-		    spp = spp->spi_swappri.le_next) {
+		     spp = spp->spi_swappri.le_next) {
 			for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
-			    sdp = sdp->swd_next.cqe_next) {
+			     sdp = sdp->swd_next.cqe_next) {
 				if (sdp->swd_vp != vp)
 					continue;
 				/*
@@ -290,7 +312,7 @@ sys_swapon(p, v, retval)
 					error = EBUSY;
 					goto bad;
 				}
-				if ((error = swap_off(p, sdp)))
+				if ((error = swap_off(p, sdp)) != 0)
 					goto bad;
 				CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
 				free((caddr_t)sdp, M_VMSWAP);
@@ -303,12 +325,14 @@ sys_swapon(p, v, retval)
 		printf("swap SWAP_OFF attempted\n");
 #endif
 #endif
-		goto out2;
+		break;
+
 	case SWAP_CTL:
 #ifdef SWAPDEBUG
 		if (vmswapdebug & VMSDB_SWFLOW)
 			printf("doing SWAP_CTL...\n");
 #endif /* SWAPDEBUG */
+
 	default:
 #ifdef SWAPDEBUG
 		if (vmswapdebug & VMSDB_SWFLOW)
@@ -316,15 +340,10 @@ sys_swapon(p, v, retval)
 #endif /* SWAPDEBUG */
 		error = EINVAL;
 	}
+
 bad:
-	if (nspp)
-		free((caddr_t)nspp, M_VMSWAP);
-	if (nsdp)
-		free((caddr_t)nsdp, M_VMSWAP);
-	if (vp)
-out2:
-		vput(vp);
-out:
+	vput(vp);
+
 #ifdef SWAPDEBUG
 	if (vmswapdebug & VMSDB_SWFLOW)
 		printf("leaving sys_swapon:  error %d\n", error);
@@ -370,10 +389,12 @@ swap_on(p, sdp)
 	if (vmswapdebug & VMSDB_INFO)
 		printf("swap_on: dev = %d, major(dev) = %d\n", dev, major(dev));
 #endif /* SWAPDEBUG */
-	if (vp->v_type == VBLK && (bdevsw[major(dev)].d_psize == 0 ||
-	    (nblks = (*bdevsw[major(dev)].d_psize)(dev)) == -1)) {
-		error = ENXIO;
-		goto bad;
+	if (vp->v_type == VBLK) {
+		if (bdevsw[major(dev)].d_psize == 0 ||
+		    (nblks = (*bdevsw[major(dev)].d_psize)(dev)) == -1) {
+			error = ENXIO;
+			goto bad;
+		}
 	} else {
 #ifdef SWAP_TO_FILES
 		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
@@ -394,9 +415,13 @@ swap_on(p, sdp)
 	}
 	sdp->swd_nblks = nblks;
 
+#if 0
 	/* XXX should redo the dmmax stuff here and in swap_pager.c */
 	for (blk = 0; blk < nblks; blk += dmmax)
 		;
+#else
+	blk = nblks;
+#endif
 
 	/*
 	 * skip over first cluster of a device incase of labels or
