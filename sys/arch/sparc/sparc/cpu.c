@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.181 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.182 2004/04/03 17:42:27 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.181 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.182 2004/04/03 17:42:27 chs Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -487,8 +487,8 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 
 	if (ncpu > 1) {
 		printf(": mid %d", mid);
-		if (mid == 0)
-			printf("[WARNING: mid should not be 0]");
+		if (mid == 0 && !CPU_ISSUN4D)
+			printf(" [WARNING: mid should not be 0]");
 	}
 
 
