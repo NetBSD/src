@@ -1,16 +1,24 @@
 Important things to make ACPI useful on more machines:
 
+* Split the Region initialization into two passes -- one that fills in
+  AddressSpace pointers, and one that calls _REG methods.  Right now we
+  can lose due to a _REG method for one Region calling a method that
+  accesses another Region that hasn't been fixed up yet.  (Affects
+  Sverre Froyen's HP Omnibook 6000.)
+
 * Fix problems with ACPI_PCI_FIXUP.  CardBus slots do not work in some
-  machines currently.
+  machines currently.  (Affects many machines.)
 
 * Add support for attaching acpiec devices early using the ECDT.  Some
   systems need this because otherwise their _INI methods try to access
-  regions in the EC space before it's initialized.
+  regions in the EC space before it's initialized.  (Affects Steve
+  Rumble's Thinkpad T23.)
+
+* Deal with the "implicit return" problem for older laptops.  (Mostly
+  affects older Toshiba laptops, like the Portege 7140.)
 
 * Fix the locking protocol in acpiec.
 
 * Support thermal levels and fan control in acpitz.
-
-* Deal with the "implicit" return problem for older laptops.
 
 - mycroft, 2003/11/02
