@@ -221,4 +221,4 @@ $ SIGUSR1
 $ SIGUSR2
 31 Användardefinierad signal 2
 $ SIGPWR
-32 Kraftbortfall eller -omstart
+32 Kraftbortfall/omstart
