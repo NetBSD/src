@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.7 2004/01/08 15:29:20 nonaka Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.8 2004/03/29 01:15:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -51,8 +51,8 @@ ENTRY_NOPROFILE(out8)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsw1_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int8_t v) */
-/* LINTSTUB: Func: void bsw1(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int8_t v) */
+/* LINTSTUB: Func: void bsw1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v) */
+/* LINTSTUB: Func: void bsw1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t v) */
 
 ENTRY_NOPROFILE(bsw1_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -71,8 +71,8 @@ ENTRY_NOPROFILE(out16)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsw2_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int16_t v) */
-/* LINTSTUB: Func: void bsw2(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int16_t v) */
+/* LINTSTUB: Func: void bsw2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t v) */
+/* LINTSTUB: Func: void bsw2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t v) */
 
 ENTRY_NOPROFILE(bsw2_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -91,8 +91,8 @@ ENTRY_NOPROFILE(out32)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsw4_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int32_t v) */
-/* LINTSTUB: Func: void bsw4(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int32_t v) */
+/* LINTSTUB: Func: void bsw4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t v) */
+/* LINTSTUB: Func: void bsw4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t v) */
 
 ENTRY_NOPROFILE(bsw4_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -103,8 +103,8 @@ ENTRY_NOPROFILE(bsw4)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsw8_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int64_t v) */
-/* LINTSTUB: Func: void bsw8(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int64_t v) */
+/* LINTSTUB: Func: void bsw8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t v) */
+/* LINTSTUB: Func: void bsw8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t v) */
 ENTRY_NOPROFILE(bsw8_s)
 	lwz	0,0(3)		/* get log2(stride) */
 	rotlw	5,5,0		/* shift offset */
@@ -126,8 +126,8 @@ ENTRY_NOPROFILE(out16rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsw2rb_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int16_t v) */
-/* LINTSTUB: Func: void bsw2rb(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int16_t v) */
+/* LINTSTUB: Func: void bsw2rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t v) */
+/* LINTSTUB: Func: void bsw2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t v) */
 
 
 ENTRY_NOPROFILE(bsw2rb_s)
@@ -147,8 +147,8 @@ ENTRY_NOPROFILE(out32rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsw4rb_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int32_t v) */
-/* LINTSTUB: Func: void bsw4rb(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int32_t v) */
+/* LINTSTUB: Func: void bsw4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t v) */
+/* LINTSTUB: Func: void bsw4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t v) */
 
 ENTRY_NOPROFILE(bsw4rb_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -159,8 +159,8 @@ ENTRY_NOPROFILE(bsw4rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: void bsw8rb_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int64_t v) */
-/* LINTSTUB: Func: void bsw8rb(bus_space_tag_t t, bus_addr_t h, bus_size_t o, u_int64_t v) */
+/* LINTSTUB: Func: void bsw8rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t v) */
+/* LINTSTUB: Func: void bsw8rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t v) */
 
 ENTRY_NOPROFILE(bsw8rb_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -183,8 +183,8 @@ ENTRY_NOPROFILE(in8)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: int bsr1_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
-/* LINTSTUB: Func: int bsr1(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
+/* LINTSTUB: Func: int bsr1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o) */
+/* LINTSTUB: Func: int bsr1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o) */
 
 ENTRY_NOPROFILE(bsr1_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -203,8 +203,8 @@ ENTRY_NOPROFILE(in16)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: int bsr2_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
-/* LINTSTUB: Func: int bsr2(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
+/* LINTSTUB: Func: int bsr2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o) */
+/* LINTSTUB: Func: int bsr2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o) */
 
 ENTRY_NOPROFILE(bsr2_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -223,8 +223,8 @@ ENTRY_NOPROFILE(in32)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: int bsr4_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
-/* LINTSTUB: Func: int bsr4(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
+/* LINTSTUB: Func: int bsr4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o) */
+/* LINTSTUB: Func: int bsr4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o) */
 
 ENTRY_NOPROFILE(bsr4_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -235,8 +235,8 @@ ENTRY_NOPROFILE(bsr4)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: u_int64_t bsr8_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
-/* LINTSTUB: Func: u_int64_t bsr8(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
+/* LINTSTUB: Func: u_int64_t bsr8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o) */
+/* LINTSTUB: Func: u_int64_t bsr8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o) */
 
 ENTRY_NOPROFILE(bsr8_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -259,8 +259,8 @@ ENTRY_NOPROFILE(in16rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: int bsr2rb_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
-/* LINTSTUB: Func: int bsr2rb(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
+/* LINTSTUB: Func: int bsr2rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o) */
+/* LINTSTUB: Func: int bsr2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o) */
 
 ENTRY_NOPROFILE(bsr2rb_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -279,8 +279,8 @@ ENTRY_NOPROFILE(in32rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: int bsr4rb_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
-/* LINTSTUB: Func: int bsr4rb(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
+/* LINTSTUB: Func: int bsr4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o) */
+/* LINTSTUB: Func: int bsr4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o) */
 
 ENTRY_NOPROFILE(bsr4rb_s)
 	lwz	0,0(3)		/* get log2(stride) */
@@ -291,8 +291,8 @@ ENTRY_NOPROFILE(bsr4rb)
 	DBGSYNC			/* force exceptions */
 	blr			/* return */
 
-/* LINTSTUB: Func: u_int64_t bsr8rb_s(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
-/* LINTSTUB: Func: u_int64_t bsr8rb(bus_space_tag_t t, bus_addr_t h, bus_size_t o) */
+/* LINTSTUB: Func: u_int64_t bsr8rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o) */
+/* LINTSTUB: Func: u_int64_t bsr8rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o) */
 
 ENTRY_NOPROFILE(bsr8rb_s)
 	lwz	0,0(3)		/* get log2(stride) */
