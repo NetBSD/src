@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 2003/07/15 01:37:38 lukem Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3 2003/07/25 14:34:33 scw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2 2003/07/15 01:37:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3 2003/07/25 14:34:33 scw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,18 +66,23 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.2 2003/07/15 01:37:38 lukem Exp $"
 #include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/dev/pcicreg.h>
 
-static bus_space_tag_t pci_iot;
+static struct powerpc_bus_space pci_iot = {
+	_BUS_SPACE_LITTLE_ENDIAN | _BUS_SPACE_MEM_TYPE,
+	0x00000000,
+	IBM405GP_PCIC0_BASE,		/* extent base */
+	IBM405GP_PCIC0_BASE + 7,	/* extent limit */
+};
+
 static bus_space_handle_t pci_ioh;
 
-void pci_machdep_init(void)
+void
+pci_machdep_init(void)
 {
 
-	if (pci_ioh == 0) {
-		pci_iot = 0;
-		if (bus_space_map(pci_iot, IBM405GP_PCIC0_BASE, 8, 0, &pci_ioh)){
-			panic("Cannot map PCI registers");
-		}
-	}
+	if (pci_ioh == 0 &&
+	   (bus_space_init(&pci_iot, "pcicfg", NULL, 0) ||
+	    bus_space_map(&pci_iot, IBM405GP_PCIC0_BASE, 8, 0, &pci_ioh)))
+		panic("Cannot map PCI registers");
 }
 
 void
@@ -138,9 +143,10 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	pcireg_t data;
 
 	/* 405GT BIOS disables interrupts here. Should we? --Art */
-	bus_space_write_4(pci_iot, pci_ioh, PCIC_CFGADDR, tag | reg);
-	data = bus_space_read_4(pci_iot, pci_ioh, PCIC_CFGDATA);
-	bus_space_write_4(pci_iot, pci_ioh, PCIC_CFGADDR, 0); /* 405GP pass2 errata #6 */
+	bus_space_write_4(&pci_iot, pci_ioh, PCIC_CFGADDR, tag | reg);
+	data = bus_space_read_4(&pci_iot, pci_ioh, PCIC_CFGDATA);
+	/* 405GP pass2 errata #6 */
+	bus_space_write_4(&pci_iot, pci_ioh, PCIC_CFGADDR, 0);
 	return data;
 }
 
@@ -148,9 +154,10 @@ void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 
-	bus_space_write_4(pci_iot, pci_ioh, PCIC_CFGADDR, tag | reg);
-	bus_space_write_4(pci_iot, pci_ioh, PCIC_CFGDATA, data);
-	bus_space_write_4(pci_iot, pci_ioh, PCIC_CFGADDR, 0); /* 405GP pass2 errata #6 */
+	bus_space_write_4(&pci_iot, pci_ioh, PCIC_CFGADDR, tag | reg);
+	bus_space_write_4(&pci_iot, pci_ioh, PCIC_CFGDATA, data);
+	/* 405GP pass2 errata #6 */
+	bus_space_write_4(&pci_iot, pci_ioh, PCIC_CFGADDR, 0);
 }
 
 
