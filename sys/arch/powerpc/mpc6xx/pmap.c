@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 2001/06/21 18:03:37 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 2001/06/21 22:05:50 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1025,8 +1025,9 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 	LIST_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
 #ifdef DIAGNOSTIC
 		if ((uintptr_t) pvo >= SEGMENT_LENGTH)
-			panic("pmap_pvo_find_va: invalid pvo %p on list %#x",
-			    pvo, ptegidx);
+			panic("pmap_pvo_find_va: invalid pvo %p on "
+			    "list %#x (%p)", pvo, ptegidx,
+			     &pmap_pvo_table[ptegidx]);
 #endif
 		if (pvo->pvo_pmap == pm && PVO_VADDR(pvo) == va) {
 			if (pteidx_p)
@@ -1499,6 +1500,16 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	else
 		pte_lo |= PTE_BR;
 
+#if 0
+	if (pm == pmap_kernel()) {
+		if ((prot & (VM_PROT_READ|VM_PROT_WRITE)) == VM_PROT_READ)
+			printf("pmap_pvo_enter: Kernel RO va %#lx pa %#lx\n",
+				va, pa);
+		if ((prot & (VM_PROT_READ|VM_PROT_WRITE)) == VM_PROT_NONE)
+			printf("pmap_pvo_enter: Kernel N/A va %#lx pa %#lx\n",
+				va, pa);
+	}
+#endif
 	/*
 	 * Record mapping for later back-translation and pte spilling.
 	 * This will overwrite any existing mapping.
