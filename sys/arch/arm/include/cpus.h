@@ -1,4 +1,4 @@
-/*	$NetBSD: cpus.h,v 1.3 2001/02/26 14:52:11 bjh21 Exp $	*/
+/*	$NetBSD: cpus.h,v 1.4 2001/02/26 16:04:22 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -40,10 +40,6 @@
  *
  * Created      : 26/12/95
  */
-
-#ifndef _LOCORE
-#include <sys/param.h>
-#endif
 
 #define MAX_CPUS		2
 #define MAX_SLAVE_CPUS		0
