@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.29.4.1 1999/06/07 04:25:34 chs Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.29.4.2 1999/07/11 05:43:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -292,7 +292,6 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	bno = (ufs_daddr_t)ffs_hashalloc(ip, cg, (long)bpref, request,
 	    			     ffs_alloccg);
 	if (bno > 0) {
-		(void) uvm_vnp_uncache(ITOV(ip));
 		ffs_blkfree(ip, bprev, (long)osize);
 		if (nsize < request)
 			ffs_blkfree(ip, bno + numfrags(fs, nsize),

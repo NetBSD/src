@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.36.4.1 1999/06/07 04:25:31 chs Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.36.4.2 1999/07/11 05:43:56 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -178,10 +178,9 @@ vn_writechk(vp)
 
 	/*
 	 * If there's shared text associated with
-	 * the vnode, try to free it up once.  If
-	 * we fail, we can't allow writing.
+	 * the vnode, we can't allow writing.
 	 */
-	if ((vp->v_flag & VTEXT) && !uvm_vnp_uncache(vp))
+	if (vp->v_flag & VTEXT)
 		return (ETXTBSY);
 	return (0);
 }
