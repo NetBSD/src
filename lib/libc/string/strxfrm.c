@@ -1,11 +1,7 @@
-/*	$NetBSD: strxfrm.c,v 1.9 1999/09/20 04:39:49 lukem Exp $	*/
-
 /*-
- * Copyright (c) 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Chris Torek.
+ * Copyright (c) 1995 Alex Tatmanjants <alex@elvisti.kiev.ua>
+ *		at Electronni Visti IA, Kiev, Ukraine.
+ *			All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,18 +11,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -34,44 +23,63 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $Id: strxfrm.c,v 1.9.6.1 2000/05/28 22:41:11 minoura Exp $
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)strxfrm.c	8.1 (Berkeley) 6/4/93";
-#else
-__RCSID("$NetBSD: strxfrm.c,v 1.9 1999/09/20 04:39:49 lukem Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
-
-#include <assert.h>
+#include <stdlib.h>
 #include <string.h>
+#include "collate.h"
 
-/*
- * Transform src, storing the result in dst, such that
- * strcmp() on transformed strings returns what strcoll()
- * on the original untransformed strings would return.
- */
 size_t
-strxfrm(dst, src, n)
-	char *dst;
+strxfrm(dest, src, len)
+	char *dest;
 	const char *src;
-	size_t n;
+	size_t len;
 {
-	size_t srclen, copysize;
+	int prim, sec, l;
+	size_t slen;
+	char *s, *ss;
 
-	_DIAGASSERT(src != NULL);
-	_DIAGASSERT(dst != NULL);
-
-	/*
-	 * Since locales are unimplemented, this is just a copy.
-	 */
-	srclen = strlen(src);
-	if (n != 0) {
-		copysize = srclen < n ? srclen : n - 1;
-		(void)memcpy(dst, src, copysize);
-		dst[copysize] = 0;
+	if (!*src) {
+		if (len > 0)
+			*dest = '\0';
+		return 0;
 	}
-	return (srclen);
+
+	if (__collate_load_error) {
+		slen = strlen(src);
+		if (len > 0) {
+			if (slen < len)
+				strcpy(dest, src);
+			else {
+				strncpy(dest, src, len - 1);
+				dest[len - 1] = '\0';
+			}
+		}
+		return slen;
+	}
+
+	slen = 0;
+	prim = sec = 0;
+	ss = s = __collate_substitute(src);
+	while (*s) {
+		while (*s && !prim) {
+			__collate_lookup(s, &l, &prim, &sec);
+			s += l;
+		}
+		if (prim) {
+			if (len > 1) {
+				*dest++ = (char)prim;
+				len--;
+			}
+			slen++;
+			prim = 0;
+		}
+	}
+	free(ss);
+	if (len > 0)
+		*dest = '\0';
+
+	return slen;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nl_langinfo.c,v 1.6 1998/11/13 15:49:04 christos Exp $	*/
+/*	$NetBSD: nl_langinfo.c,v 1.6.8.1 2000/05/28 22:41:04 minoura Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -7,7 +7,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nl_langinfo.c,v 1.6 1998/11/13 15:49:04 christos Exp $");
+#ifndef __RCSID
+#define __RCSID(a)
+#endif
+__RCSID("$NetBSD: nl_langinfo.c,v 1.6.8.1 2000/05/28 22:41:04 minoura Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>

@@ -1,5 +1,0 @@
-#	$NetBSD: Makefile.m68k,v 1.6 1997/10/25 10:10:40 lukem Exp $
-#	from: @(#)Makefile.hp300	6.1 (Berkeley) 3/3/91
-
-CPPFLAGS+=	-DPIC
-SRCS+=		tc-m68k.c atof-ieee.c
