@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwreal.S,v 1.2 1997/04/16 22:43:46 thorpej Exp $	*/
+/*	$NetBSD: ofwreal.S,v 1.3 2001/10/23 02:59:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -71,7 +71,8 @@ ofentry:
 ENTRY(ofwr_init)
 	mflr	31			/* save return address */
 
-	mr	13,6			/* save args (only pointer used) */
+	mr	13,6			/* save args */
+	mr	12,7			/* save argslen */
 	lis	8,ofentry@ha
 	stw	5,ofentry@l(8)		/* save virtual mode firmware entry */
 
@@ -84,6 +85,7 @@ ENTRY(ofwr_init)
 	addi	5,5,fwentry@l
 
 	mr	6,13			/* restore args pointer */
+	mr	7,12			/* restore args length */
 	mtlr	31			/* restore return address */
 	blr
 
