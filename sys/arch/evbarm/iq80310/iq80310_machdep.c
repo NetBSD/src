@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.28 2002/02/22 04:49:21 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.29 2002/02/22 17:23:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -666,7 +666,7 @@ initarm(void *arg)
 	    NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map the page table that maps the kernel pages */
-	pmap_map_entry(l1pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
+	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
