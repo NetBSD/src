@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.6 1998/02/23 03:21:40 mycroft Exp $	*/
+/*	$NetBSD: types.h,v 1.7 1998/06/14 20:09:23 kleink Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -36,11 +36,7 @@
 
 #include <sys/cdefs.h>
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-typedef struct _physadr {
-	int r[1];
-} *physadr;
-
+#if defined(_KERNEL)
 typedef struct label_t {
         int val[40]; /* double check this XXX */
 } label_t;
