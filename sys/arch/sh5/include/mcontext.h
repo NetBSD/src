@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.5 2003/10/08 22:43:01 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.6 2003/12/07 20:01:58 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -58,11 +58,7 @@
 #define	_REG_SP		_REG_R(15)
 
 #ifndef __ASSEMBLER__
-#ifdef _LP64
-typedef	long		__greg_t;
-#else
-typedef long long	__greg_t;
-#endif
+typedef	__int64_t	__greg_t;
 typedef __greg_t	__gregset_t[_NGREG];
 
 /*
