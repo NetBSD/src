@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2001/11/14 06:16:08 tv Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 2001/11/14 14:57:04 tv Exp $	*/
 /*	$OpenBSD: extern.h,v 1.28 2001/10/10 18:12:00 espie Exp $	*/
 
 /*-
@@ -86,7 +86,7 @@ extern void	pbstr __P((const char *));
 extern void	putback __P((int));
 extern void	*xalloc __P((size_t));
 extern char	*xstrdup __P((const char *));
-extern void	usage __P((void));
+extern void	usage __P((const char *));
 extern void	resizedivs __P((int));
 extern size_t	buffer_mark __P((void));
 extern void	dump_buffer __P((FILE *, size_t));
