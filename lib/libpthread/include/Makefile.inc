@@ -7,7 +7,7 @@
 
 
 FILES= cond.h copyright.h fd.h fd_pipe.h kernel.h mutex.h posix.h \
-	   pthread.h pthread_attr.h queue.h util.h engine.h
+	   pthread.h pthread_attr.h queue.h util.h engine.h pthread_once.h
 
 realinstall:
 	if [ ! -d ${DESTDIR}/usr/include/pthread ]; then \

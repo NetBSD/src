@@ -29,6 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
+ * $Id: fd_pipe.h,v 1.3 1994/02/07 22:02:29 proven Exp $ $provenid: fd_pipe.h,v 1.17 1994/02/07 03:31:56 proven Exp $
+ *
  * Description : The new fast ITC pipe header.
  *
  *  1.00 93/08/14 proven

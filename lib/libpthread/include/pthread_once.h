@@ -1,4 +1,4 @@
-/* ==== queue.h ============================================================
+/* ==== pthread_once.h ========================================================
  * Copyright (c) 1993 by Chris Provenzano, proven@mit.edu
  * All rights reserved.
  *
@@ -29,39 +29,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $Id: queue.h,v 1.3 1994/02/07 22:02:36 proven Exp $ $provenid: queue.h,v 1.17 1994/02/07 03:39:52 proven Exp $
+ * $Id: pthread_once.h,v 1.1 1994/02/07 22:02:35 proven Exp $ $provenid: pthread_once.h,v 1.17 1994/02/07 03:32:04 proven Exp $
  *
  * Description : mutex header.
  *
- *  1.00 93/07/20 proven
+ *  1.00 93/12/12 proven
  *      -Started coding this file.
  */
+ 
+/* New pthread_once structures */
+typedef	 int				pthread_once_t;
 
-/*
- * New queue structures
- */
-struct pthread_queue {
-    struct pthread  *q_next;
-    struct pthread  *q_last;
-    void            *q_data;
-};
+/* Static pthread_once_t initialization value. */
+#define PTHREAD_ONCE_INIT	0
 
-/*
- * Static queue initialization values.
- */
-#define PTHREAD_QUEUE_INITIALIZER	{ NULL, NULL, NULL }
-
-/*
- * New functions
- * Should make pthread_queue_get a macro
- */
+/* New functions */
 
 __BEGIN_DECLS
 
-void    pthread_queue_init  	__P((struct pthread_queue *));
-void    pthread_queue_enq		__P((struct pthread_queue *, struct pthread *));
-void    pthread_queue_remove 	__P((struct pthread_queue *, struct pthread *));
-struct pthread *pthread_queue_get    __P((struct pthread_queue *));
-struct pthread *pthread_queue_deq    __P((struct pthread_queue *));
+int     pthread_once  		__P((pthread_once_t *, void (*init_routine)(void)));
 
 __END_DECLS
+	

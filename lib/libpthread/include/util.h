@@ -1,5 +1,5 @@
 /* ==== util.h ============================================================
- * Copyright (c) 1991, 1992, 1993 by Chris Provenzano, proven@mit.edu	
+ * Copyright (c) 1991, 1992, 1993 by Chris Provenzano, proven@mit.edu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
+ * $Id: util.h,v 1.3 1994/02/07 22:02:38 proven Exp $ $provenid: util.h,v 1.15 1994/02/07 03:32:07 proven Exp $
+ *
  * Description : Header file for generic utility functions.
  *
  * 91/08/31 proven - Added exchange.
@@ -39,9 +41,15 @@
  * 91/03/06 proven - Added getint. 
  */
 
+#ifndef _PTHREAD_UTIL_H
+#define _PTHREAD_UTIL_H
+
 #ifndef	NULL
 #define NULL	0
 #endif
+
+/* Stuff only pthread internals really uses */
+#if defined(PTHREAD_KERNEL)
 
 #undef FALSE
 #undef TRUE
@@ -74,4 +82,8 @@ typedef enum Boolean {
 #define	DEBUG1(s)	
 #define	DEBUG2(s)	
 #define	DEBUG3(s)	
+#endif
+
+#endif
+
 #endif

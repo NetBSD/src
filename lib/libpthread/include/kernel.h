@@ -29,12 +29,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
+ * $Id: kernel.h,v 1.3 1994/02/07 22:02:30 proven Exp $ $provenid: kernel.h,v 1.17 1994/02/07 03:31:57 proven Exp $
+ *
  * Description : mutex header.
  *
  *  1.00 93/07/22 proven
  *      -Started coding this file.
  */
-
+ 
 /*
  * Defines only for the pthread user kernel.
  */
