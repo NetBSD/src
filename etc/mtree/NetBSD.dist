@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.194 2002/06/03 09:21:24 itojun Exp $
+#	$NetBSD: NetBSD.dist,v 1.195 2002/06/18 13:22:25 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -433,11 +433,15 @@
 ./usr/share/man/cat8/atari
 ./usr/share/man/cat8/bebox
 ./usr/share/man/cat8/cats
+./usr/share/man/cat8/cesfic
 ./usr/share/man/cat8/cobalt
 ./usr/share/man/cat8/dreamcast
 ./usr/share/man/cat8/evbarm
+./usr/share/man/cat8/evbmips
 ./usr/share/man/cat8/evbsh3
 ./usr/share/man/cat8/hp300
+./usr/share/man/cat8/hp700
+./usr/share/man/cat8/hpcarm
 ./usr/share/man/cat8/hpcmips
 ./usr/share/man/cat8/hpcsh
 ./usr/share/man/cat8/i386
@@ -458,6 +462,7 @@
 ./usr/share/man/cat8/pmppc
 ./usr/share/man/cat8/prep
 ./usr/share/man/cat8/sandpoint
+./usr/share/man/cat8/sbmips
 ./usr/share/man/cat8/sgimips
 ./usr/share/man/cat8/shark
 ./usr/share/man/cat8/sparc
@@ -520,11 +525,15 @@
 ./usr/share/man/man8/atari
 ./usr/share/man/man8/bebox
 ./usr/share/man/man8/cats
+./usr/share/man/man8/cesfic
 ./usr/share/man/man8/cobalt
 ./usr/share/man/man8/dreamcast
 ./usr/share/man/man8/evbarm
+./usr/share/man/man8/evbmips
 ./usr/share/man/man8/evbsh3
 ./usr/share/man/man8/hp300
+./usr/share/man/man8/hp700
+./usr/share/man/man8/hpcarm
 ./usr/share/man/man8/hpcmips
 ./usr/share/man/man8/hpcsh
 ./usr/share/man/man8/i386
@@ -545,6 +554,7 @@
 ./usr/share/man/man8/pmppc
 ./usr/share/man/man8/prep
 ./usr/share/man/man8/sandpoint
+./usr/share/man/man8/sbmips
 ./usr/share/man/man8/sgimips
 ./usr/share/man/man8/shark
 ./usr/share/man/man8/sparc
@@ -607,11 +617,15 @@
 ./usr/share/man/html8/atari
 ./usr/share/man/html8/bebox
 ./usr/share/man/html8/cats
+./usr/share/man/html8/cesfic
 ./usr/share/man/html8/cobalt
 ./usr/share/man/html8/dreamcast
 ./usr/share/man/html8/evbarm
+./usr/share/man/html8/evbmips
 ./usr/share/man/html8/evbsh3
 ./usr/share/man/html8/hp300
+./usr/share/man/html8/hp700
+./usr/share/man/html8/hpcarm
 ./usr/share/man/html8/hpcmips
 ./usr/share/man/html8/hpcsh
 ./usr/share/man/html8/i386
@@ -632,6 +646,7 @@
 ./usr/share/man/html8/pmppc
 ./usr/share/man/html8/prep
 ./usr/share/man/html8/sandpoint
+./usr/share/man/html8/sbmips
 ./usr/share/man/html8/sgimips
 ./usr/share/man/html8/shark
 ./usr/share/man/html8/sparc
