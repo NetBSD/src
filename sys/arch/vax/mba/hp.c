@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.21 2000/02/07 20:16:54 thorpej Exp $ */
+/*	$NetBSD: hp.c,v 1.22 2000/02/12 16:09:33 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -225,7 +225,6 @@ hpstart(md)
 	struct	disklabel *lp = sc->sc_disk.dk_label;
 	struct	buf *bp = BUFQ_FIRST(&md->md_q);
 	unsigned bn, cn, sn, tn;
-	int	part = DISKPART(bp->b_dev);
 
 	/*
 	 * Collect statistics.
