@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.23 2003/10/25 15:05:00 simonb Exp $
+# $NetBSD: GENERIC,v 1.24 2004/06/16 15:07:41 christos Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.23 $"
+#ident 		"GENERIC-$Revision: 1.24 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 options 	DEBUG		# extra kernel debugging support
@@ -163,6 +163,7 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	ptm			# pseudo-terminal multiplexor
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random & kernel generator

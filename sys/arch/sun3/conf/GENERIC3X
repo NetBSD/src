@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.58 2003/09/22 14:11:29 cl Exp $
+# $NetBSD: GENERIC3X,v 1.59 2004/06/16 15:07:42 christos Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -238,6 +238,7 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	ptm			# pseudo-terminal multiplexor
 pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	cgd		4	# cryptographic disk devices
