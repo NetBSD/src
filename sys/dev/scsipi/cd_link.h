@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_link.h,v 1.1.2.1 1997/07/01 16:52:11 bouyer Exp $	*/
+/*	$NetBSD: cd_link.h,v 1.1.2.2 1997/07/01 21:49:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -32,31 +32,33 @@
 #define	CDOUTSTANDING	4
 #define	CDRETRIES	1
 
+struct cd_ops;
+
 struct cd_softc {
 	struct device sc_dev;
 	struct disk sc_dk;
 
 	int flags;
-#define CDF_LOCKED  0x01
-#define CDF_WANTED  0x02
-#define CDF_WLABEL  0x04        /* label is writable */
-#define CDF_LABELLING   0x08        /* writing label */
-#define CDF_ANCIENT 0x10        /* disk is ancient; for minphys */
-	struct scsipi_link *sc_link;    /* contains our targ, lun, etc. */
+#define	CDF_LOCKED	0x01
+#define	CDF_WANTED	0x02
+#define	CDF_WLABEL	0x04		/* label is writable */
+#define	CDF_LABELLING	0x08		/* writing label */
+#define	CDF_ANCIENT	0x10		/* disk is ancient; for minphys */
+	struct scsipi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct cd_parms {
 		int blksize;
-		u_long disksize;    /* total number sectors */
+		u_long disksize;	/* total number sectors */
 	} params;
 	struct buf buf_queue;
-};  
+	const struct cd_ops *sc_ops;	/* our bus-dependent ops vector */
+};
 
+struct cd_ops {
+	int	(*cdo_setchan) __P((struct cd_softc *, int, int, int, int));
+	int	(*cdo_getvol) __P((struct cd_softc *, struct ioc_vol *));
+	int	(*cdo_setvol) __P((struct cd_softc *, const struct ioc_vol *));
+	int	(*cdo_set_pa_immed) __P((struct cd_softc *));
+};
 
-void cdattach __P((struct device *, struct cd_softc *, struct scsipi_link *));
-int scsi_cd_setchan __P((struct cd_softc *, int, int, int, int));
-int scsi_cd_getvol __P(( struct cd_softc *, struct ioc_vol *));
-int scsi_cd_setvol __P(( struct cd_softc *, struct ioc_vol *));
-int scsi_cd_set_pa_immed __P((struct cd_softc *));
-int acd_setchan __P((struct cd_softc *, int, int, int, int));
-int acd_getvol __P(( struct cd_softc *, struct ioc_vol *));
-int acd_setvol __P(( struct cd_softc *, struct ioc_vol *));
-
+void cdattach __P((struct device *, struct cd_softc *, struct scsipi_link *,
+    const struct cd_ops *));
