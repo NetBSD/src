@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.5 2001/01/08 02:03:46 fvdl Exp $	*/
+/*	$NetBSD: ld.c,v 1.6 2001/01/08 06:57:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -282,8 +282,9 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 	struct ld_softc *sc;
 	int part, unit, error;
 #ifdef __HAVE_OLD_DISKLABEL
-	struct disklabel newlabel, *lp;
+	struct disklabel newlabel;
 #endif
+	struct disklabel *lp;
 
 	unit = DISKUNIT(dev);
 	part = DISKPART(dev);
