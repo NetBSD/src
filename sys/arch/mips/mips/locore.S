@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 1994/11/14 23:50:45 dean Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 1994/11/23 17:47:57 dean Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,7 +98,7 @@ start:
 	la	sp, start - START_FRAME
  #	la	gp, _gp
 	sw	zero, START_FRAME - 4(sp)	# Zero out old ra for debugger
-	jal	mach_init			# mach_init(argc, argv, envp)
+	jal	_mach_init			# mach_init(argc, argv, envp)
 	sw	zero, START_FRAME - 8(sp)	# Zero out old fp for debugger
 
 	li	t0, MACH_SR_COP_1_BIT		# Disable interrupts and
@@ -106,9 +106,9 @@ start:
 	li	sp, KERNELSTACK - START_FRAME	# switch to standard stack
 	mfc0	t0, MACH_COP_0_PRID		# read processor ID register
 	cfc1	t1, MACH_FPC_ID			# read FPU ID register
-	sw	t0, cpu				# save PRID register
-	sw	t1, fpu				# save FPU ID register
-	jal	main				# main(regs)
+	sw	t0, _cpu			# save PRID register
+	sw	t1, _fpu			# save FPU ID register
+	jal	_main				# main(regs)
 	move	a0, zero
 /*
  * proc[1] == /etc/init now running here.
@@ -161,14 +161,14 @@ start:
  * (see sendsig() and sigreturn()). We have to compute the address
  * of the sigcontext struct for the sigreturn call.
  */
-	.globl	sigcode
-sigcode:
+	.globl	_sigcode
+_sigcode:
 	addu	a0, sp, 16		# address of sigcontext
 	li	v0, SYS_sigreturn	# sigreturn(scp)
 	syscall
 	break	0			# just in case sigreturn fails
-	.globl	esigcode
-esigcode:
+	.globl	_esigcode
+_esigcode:
 
 /*
  * Primitives
@@ -179,19 +179,19 @@ esigcode:
  * The reason for using this table rather than storing an address in
  * u.u_pcb.pcb_onfault is simply to make the code faster.
  */
-	.globl	onfault_table
+	.globl	_onfault_table
 	.data
 	.align	2
-onfault_table:
+_onfault_table:
 	.word	0		# invalid index number
 #define BADERR		1
 	.word	baderr
 #define COPYERR		2
-	.word	copyerr
+	.word	_copyerr
 #define FSWBERR		3
-	.word	fswberr
+	.word	_fswberr
 #define FSWINTRBERR	4
-	.word	fswintrberr
+	.word	_fswintrberr
 #ifdef KADB
 #define KADBERR		5
 	.word	kadberr
@@ -556,9 +556,9 @@ NON_LEAF(_copyinstr, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 	sw	ra, STAND_RA_OFFSET(sp)
-	blt	a0, zero, copyerr	# make sure address is in user space
+	blt	a0, zero, _copyerr	# make sure address is in user space
 	li	v0, COPYERR
-	jal	copystr
+	jal	_copystr
 	sw	v0, UADDR+U_PCB_ONFAULT
 	lw	ra, STAND_RA_OFFSET(sp)
 	sw	zero, UADDR+U_PCB_ONFAULT
@@ -581,9 +581,9 @@ NON_LEAF(_copyoutstr, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 	sw	ra, STAND_RA_OFFSET(sp)
-	blt	a1, zero, copyerr	# make sure address is in user space
+	blt	a1, zero, _copyerr	# make sure address is in user space
 	li	v0, COPYERR
-	jal	copystr
+	jal	_copystr
 	sw	v0, UADDR+U_PCB_ONFAULT
 	lw	ra, STAND_RA_OFFSET(sp)
 	sw	zero, UADDR+U_PCB_ONFAULT
@@ -603,9 +603,9 @@ NON_LEAF(_copyin, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 	sw	ra, STAND_RA_OFFSET(sp)
-	blt	a0, zero, copyerr	# make sure address is in user space
+	blt	a0, zero, _copyerr	# make sure address is in user space
 	li	v0, COPYERR
-	jal	bcopy
+	jal	_bcopy
 	sw	v0, UADDR+U_PCB_ONFAULT
 	lw	ra, STAND_RA_OFFSET(sp)
 	sw	zero, UADDR+U_PCB_ONFAULT
@@ -625,9 +625,9 @@ NON_LEAF(_copyout, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 	sw	ra, STAND_RA_OFFSET(sp)
-	blt	a1, zero, copyerr	# make sure address is in user space
+	blt	a1, zero, _copyerr	# make sure address is in user space
 	li	v0, COPYERR
-	jal	bcopy
+	jal	_bcopy
 	sw	v0, UADDR+U_PCB_ONFAULT
 	lw	ra, STAND_RA_OFFSET(sp)
 	sw	zero, UADDR+U_PCB_ONFAULT
@@ -786,12 +786,12 @@ NON_LEAF(_setrunqueue, STAND_FRAME_SIZE, ra)
 	li	t1, 1			# compute corresponding bit
 	srl	t0, t0, 2		# compute index into 'whichqs'
 	sll	t1, t1, t0
-	lw	t2, whichqs		# set corresponding bit
+	lw	t2, _whichqs		# set corresponding bit
 	nop
 	or	t2, t2, t1
-	sw	t2, whichqs
+	sw	t2, _whichqs
 	sll	t0, t0, 3		# compute index into 'qs'
-	la	t1, qs
+	la	t1, _qs
 	addu	t0, t0, t1		# t0 = qp = &qs[pri >> 2]
 	lw	t1, P_BACK(t0)		# t1 = qp->ph_rlink
 	sw	t0, P_FORW(a0)		# p->p_forw = qp
@@ -813,7 +813,7 @@ NON_LEAF(_remrq, STAND_FRAME_SIZE, ra)
 	lbu	t0, P_PRIORITY(a0)	# get from p->p_priority / 4 queue
 	li	t1, 1			# compute corresponding bit
 	srl	t0, t0, 2		# compute index into 'whichqs'
-	lw	t2, whichqs		# check corresponding bit
+	lw	t2, _whichqs		# check corresponding bit
 	sll	t1, t1, t0
 	and	v0, t2, t1
 	sw	ra, STAND_RA_OFFSET(sp)	##
@@ -826,14 +826,14 @@ NON_LEAF(_remrq, STAND_FRAME_SIZE, ra)
 	sw	v1, P_FORW(v0)		# p->p_back->p_forw = p->p_forw;
 	sw	v0, P_BACK(v1)		# p->p_forw->p_back = p->r_rlink
 	sll	t0, t0, 3		# compute index into 'qs'
-	la	v0, qs
+	la	v0, _qs
 	addu	t0, t0, v0		# t0 = qp = &qs[pri >> 2]
 	lw	v0, P_FORW(t0)		# check if queue empty
 	nop
 	bne	v0, t0, 2f		# No. qp->ph_link != qp
 	nop
 	xor	t2, t2, t1		# clear corresponding bit in 'whichqs'
-	sw	t2, whichqs
+	sw	t2, _whichqs
 2:
 	sw	zero, P_BACK(a0)	## for firewall checking
 	j	ra
@@ -849,7 +849,7 @@ END(_remrq)
  * All interrupts should be blocked at this point.
  */
 LEAF(_switch_exit)
-	la	v1, nullproc			# save state into garbage proc
+	la	v1, _nullproc			# save state into garbage proc
 	lw	t0, P_UPTE+0(v1)		# t0 = first u. pte
 	lw	t1, P_UPTE+4(v1)		# t1 = 2nd u. pte
 	li	v0, UADDR			# v0 = first HI entry
@@ -862,9 +862,9 @@ LEAF(_switch_exit)
 	mtc0	t0, MACH_COP_0_TLB_INDEX	# set the index register
 	mtc0	v0, MACH_COP_0_TLB_HI		# init high entry
 	mtc0	t1, MACH_COP_0_TLB_LOW		# init low entry
-	sw	zero, curproc
+	sw	zero, _curproc
 	tlbwi					# Write the TLB entry.
-	b	cpu_switch
+	b	_cpu_switch
 	li	sp, KERNELSTACK - START_FRAME	# switch to standard stack
 END(_switch_exit)
 
@@ -877,9 +877,9 @@ END(_switch_exit)
 LEAF(_idle)
 	li	t0, (MACH_INT_MASK | MACH_SR_INT_ENA_CUR)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# enable all interrupts
-	sw	zero, curproc			# set curproc NULL for stats
+	sw	zero, _curproc			# set curproc NULL for stats
 1:
-	lw	t0, whichqs			# look for non-empty queue
+	lw	t0, _whichqs			# look for non-empty queue
 	nop
 	beq	t0, zero, 1b
 	nop
@@ -896,8 +896,8 @@ NON_LEAF(_cpu_switch, STAND_FRAME_SIZE, ra)
 	subu	sp, sp, STAND_FRAME_SIZE
 	sw	ra, STAND_RA_OFFSET(sp)
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
-	lw	t2, cnt+V_SWTCH			# for statistics
-	lw	t1, whichqs			# look for non-empty queue
+	lw	t2, _cnt+V_SWTCH			# for statistics
+	lw	t1, _whichqs			# look for non-empty queue
 	sw	s0, UADDR+U_PCB_CONTEXT+0	# do a 'savectx()'
 	sw	s1, UADDR+U_PCB_CONTEXT+4
 	sw	s2, UADDR+U_PCB_CONTEXT+8
@@ -911,15 +911,15 @@ NON_LEAF(_cpu_switch, STAND_FRAME_SIZE, ra)
 	sw	ra, UADDR+U_PCB_CONTEXT+40	# save return address
 	sw	t0, UADDR+U_PCB_CONTEXT+44	# save status register
 	addu	t2, t2, 1
-	sw	t2, cnt+V_SWTCH
-	beq	t1, zero, idle			# if none, idle
+	sw	t2, _cnt+V_SWTCH
+	beq	t1, zero, _idle			# if none, idle
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable all interrupts
 sw1:
 	nop					# wait for intrs disabled
 	nop
-	lw	t0, whichqs			# look for non-empty queue
+	lw	t0, _whichqs			# look for non-empty queue
 	li	t2, -1				# t2 = lowest bit set
-	beq	t0, zero, idle			# if none, idle
+	beq	t0, zero, _idle			# if none, idle
 	move	t3, t0				# t3 = saved whichqs
 1:
 	addu	t2, t2, 1
@@ -930,7 +930,7 @@ sw1:
  * Remove process from queue.
  */
 	sll	t0, t2, 3
-	la	t1, qs
+	la	t1, _qs
 	addu	t0, t0, t1			# t0 = qp = &qs[highbit]
 	lw	a0, P_FORW(t0)			# a0 = p = highest pri process
 	nop
@@ -945,15 +945,15 @@ sw1:
 	li	v1, 1				# compute bit in 'whichqs'
 	sll	v1, v1, t2
 	xor	t3, t3, v1			# clear bit in 'whichqs'
-	sw	t3, whichqs
+	sw	t3, _whichqs
 3:
 /*
  * Switch to new context.
  */
-	sw	zero, want_resched
-	jal	pmap_alloc_tlbpid		# v0 = TLB PID
+	sw	zero, _want_resched
+	jal	_pmap_alloc_tlbpid		# v0 = TLB PID
 	move	s0, a0				# BDSLOT: save p
-	sw	s0, curproc			# set curproc
+	sw	s0, _curproc			# set curproc
 	sll	v0, v0, VMMACH_TLB_PID_SHIFT	# v0 = aligned PID
 	lw	t0, P_UPTE+0(s0)		# t0 = first u. pte
 	lw	t1, P_UPTE+4(s0)		# t1 = 2nd u. pte
@@ -1003,7 +1003,7 @@ END(_cpu_switch)
  */
 LEAF(_fuword)
 ALEAF(_fuiword)
-	blt	a0, zero, fswberr	# make sure address is in user space
+	blt	a0, zero, _fswberr	# make sure address is in user space
 	li	v0, FSWBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	lw	v0, 0(a0)		# fetch word
@@ -1013,7 +1013,7 @@ END(_fuword)
 
 LEAF(_fusword)
 ALEAF(_fuisword)
-	blt	a0, zero, fswberr	# make sure address is in user space
+	blt	a0, zero, _fswberr	# make sure address is in user space
 	li	v0, FSWBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	lhu	v0, 0(a0)		# fetch short
@@ -1023,7 +1023,7 @@ END(_fusword)
 
 LEAF(_fubyte)
 ALEAF(_fuibyte)
-	blt	a0, zero, fswberr	# make sure address is in user space
+	blt	a0, zero, _fswberr	# make sure address is in user space
 	li	v0, FSWBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	lbu	v0, 0(a0)		# fetch byte
@@ -1032,7 +1032,7 @@ ALEAF(_fuibyte)
 END(_fubyte)
 
 LEAF(_suword)
-	blt	a0, zero, fswberr	# make sure address is in user space
+	blt	a0, zero, _fswberr	# make sure address is in user space
 	li	v0, FSWBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	sw	a1, 0(a0)		# store word
@@ -1045,13 +1045,13 @@ END(_suword)
  * Have to flush instruction cache afterwards.
  */
 LEAF(_suiword)
-	blt	a0, zero, fswberr	# make sure address is in user space
+	blt	a0, zero, _fswberr	# make sure address is in user space
 	li	v0, FSWBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	sw	a1, 0(a0)		# store word
 	sw	zero, UADDR+U_PCB_ONFAULT
 	move	v0, zero
-	b	MachFlushICache		# NOTE: this should not clobber v0!
+	b	_MachFlushICache	# NOTE: this should not clobber v0!
 	li	a1, 4			# size of word
 END(_suiword)
 
@@ -1060,7 +1060,7 @@ END(_suiword)
  */
 LEAF(_susword)
 ALEAF(_suisword)
-	blt	a0, zero, fswberr	# make sure address is in user space
+	blt	a0, zero, _fswberr	# make sure address is in user space
 	li	v0, FSWBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	sh	a1, 0(a0)		# store short
@@ -1071,7 +1071,7 @@ END(_susword)
 
 LEAF(_subyte)
 ALEAF(_suibyte)
-	blt	a0, zero, fswberr	# make sure address is in user space
+	blt	a0, zero, _fswberr	# make sure address is in user space
 	li	v0, FSWBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	sb	a1, 0(a0)		# store byte
@@ -1091,7 +1091,7 @@ END(_fswberr)
  * The important thing is to prevent sleep() and switch().
  */
 LEAF(_fuswintr)
-	blt	a0, zero, fswintrberr	# make sure address is in user space
+	blt	a0, zero, _fswintrberr	# make sure address is in user space
 	li	v0, FSWINTRBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	lhu	v0, 0(a0)		# fetch short
@@ -1100,7 +1100,7 @@ LEAF(_fuswintr)
 END(_fuswintr)
 
 LEAF(_suswintr)
-	blt	a0, zero, fswintrberr	# make sure address is in user space
+	blt	a0, zero, _fswintrberr	# make sure address is in user space
 	li	v0, FSWINTRBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	sh	a1, 0(a0)		# store short
@@ -1147,8 +1147,8 @@ END(__remque)
  * handle user level TLB translation misses.
  * NOTE: This code must be relocatable!!!
  */
-	.globl	MachUTLBMiss
-MachUTLBMiss:
+	.globl	_MachUTLBMiss
+_MachUTLBMiss:
 	.set	noat
 	mfc0	k0, MACH_COP_0_BAD_VADDR	# get the virtual address
 	lw	k1, UADDR+U_PCB_SEGTAB		# get the current segment table
@@ -1179,16 +1179,24 @@ MachUTLBMiss:
 	j	SlowFault			# handle the rest
 	nop
 	.set	at
-	.globl	MachUTLBMissEnd
-MachUTLBMissEnd:
+	.globl	_MachUTLBMissEnd
+_MachUTLBMissEnd:
 
 /*
+ * GCC2 seems to want to call __main in main() for some reason.
+ */
+LEAF(___main)
+	j	ra
+	nop
+END(___main)
+
+	/*
  * This code is copied to the general exception vector address to
  * handle all execptions except RESET and UTLBMiss.
  * NOTE: This code must be relocatable!!!
  */
-	.globl	MachException
-MachException:
+	.globl	_MachException
+_MachException:
 /*
  * Find out what mode we came from and jump to the proper handler.
  */
@@ -1200,7 +1208,7 @@ MachException:
 	and	k1, k1, MACH_CR_EXC_CODE	# Mask out the cause bits.
 	or	k1, k1, k0			# change index to user table
 1:
-	la	k0, machExceptionTable		# get base of the jump table
+	la	k0, _machExceptionTable		# get base of the jump table
 	addu	k0, k0, k1			# Get the address of the
 						#  function entry.  Note that
 						#  the cause is already
@@ -1211,8 +1219,8 @@ MachException:
 	j	k0				# Jump to the function.
 	nop
 	.set	at
-	.globl	MachExceptionEnd
-MachExceptionEnd:
+	.globl	_MachExceptionEnd
+_MachExceptionEnd:
 
 /*
  * We couldn't find a TLB entry.
@@ -1223,7 +1231,7 @@ SlowFault:
 	mfc0	k0, MACH_COP_0_STATUS_REG
 	nop
 	and	k0, k0, MACH_SR_KU_PREV
-	bne	k0, zero, MachUserGenException
+	bne	k0, zero, _MachUserGenException
 	nop
 	.set	at
 /*
@@ -1310,7 +1318,7 @@ NNON_LEAF(_MachKernGenException, KERN_EXC_FRAME_SIZE, ra)
 /*
  * Call the exception handler.
  */
-	jal	trap
+	jal	_trap
 	sw	a3, STAND_RA_OFFSET(sp)		# for debugging
 /*
  * Restore registers and return from the exception.
@@ -1415,7 +1423,7 @@ NNON_LEAF(_MachUserGenException, STAND_FRAME_SIZE, ra)
 /*
  * Call the exception handler.
  */
-	jal	trap
+	jal	_trap
 	mtc0	t0, MACH_COP_0_STATUS_REG
 /*
  * Restore user registers and return. NOTE: interrupts are enabled.
@@ -1521,7 +1529,7 @@ NNON_LEAF(_MachKernIntr, KINTR_FRAME_SIZE, ra)
 /*
  * Call the interrupt handler.
  */
-	jal	interrupt
+	jal	_interrupt
 	sw	a2, STAND_RA_OFFSET(sp)		# for debugging
 /*
  * Restore registers and return from the interrupt.
@@ -1622,13 +1630,13 @@ NNON_LEAF(_MachUserIntr, STAND_FRAME_SIZE, ra)
 /*
  * Call the interrupt handler.
  */
-	jal	interrupt
+	jal	_interrupt
 	sw	a2, STAND_RA_OFFSET(sp)		# for debugging
 /*
  * Restore registers and return from the interrupt.
  */
 	lw	a0, UADDR+U_PCB_REGS+(SR * 4)
-	lw	v0, astpending			# any pending interrupts?
+	lw	v0, _astpending			# any pending interrupts?
 	mtc0	a0, MACH_COP_0_STATUS_REG	# Restore the SR, disable intrs
 	bne	v0, zero, 1f			# dont restore, call softintr
 	lw	t0, UADDR+U_PCB_REGS+(MULLO * 4)
@@ -1676,7 +1684,7 @@ NNON_LEAF(_MachUserIntr, STAND_FRAME_SIZE, ra)
 /*
  * Call the software interrupt handler.
  */
-	jal	softintr
+	jal	_softintr
 	mtc0	t0, MACH_COP_0_STATUS_REG	# enable interrupts (spl0)
 /*
  * Restore user registers and return. NOTE: interrupts are enabled.
@@ -1787,19 +1795,19 @@ NLEAF(_MachTLBMissException)
 	mfc0	k0, MACH_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
 	subu	k0, k0, k1
-	lw	k1, Sysmapsize			# index within range?
+	lw	k1, _Sysmapsize			# index within range?
 	srl	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
 	beq	k1, zero, 1f			# No. check for valid stack
 	nop
-	lw	k1, Sysmap
+	lw	k1, _Sysmap
 	sll	k0, k0, 2			# compute offset from index
 	addu	k1, k1, k0
 	lw	k0, 0(k1)			# get PTE entry
 	mfc0	k1, MACH_COP_0_EXC_PC		# get return address
 	mtc0	k0, MACH_COP_0_TLB_LOW		# save PTE entry
 	and	k0, k0, PG_V			# check for valid entry
-	beq	k0, zero, MachKernGenException	# PTE invalid
+	beq	k0, zero, _MachKernGenException	# PTE invalid
 	nop
 	tlbwr					# update TLB
 	j	k1
@@ -1808,7 +1816,7 @@ NLEAF(_MachTLBMissException)
 1:
 	subu	k0, sp, UADDR + 0x200		# check to see if we have a
 	sltiu	k0, UPAGES*NBPG - 0x200		#  valid kernel stack
-	bne	k0, zero, MachKernGenException	# Go panic
+	bne	k0, zero, _MachKernGenException	# Go panic
 	nop
 
 	la	a0, start - START_FRAME - 8	# set sp to a valid place
@@ -1822,7 +1830,7 @@ NLEAF(_MachTLBMissException)
 	sw	a3, 20(sp)
 	sw	sp, 24(sp)
 	move	a2, ra
-	jal	printf
+	jal	_printf
 	mfc0	a3, MACH_COP_0_BAD_VADDR
 	.data
 1:
@@ -2517,7 +2525,7 @@ LEAF(_MachSaveCurFPState)
 	mfc0	t1, MACH_COP_0_STATUS_REG	# Disable interrupts and
 	li	t0, MACH_SR_COP_1_BIT		#  enable the coprocessor
 	mtc0	t0, MACH_COP_0_STATUS_REG
-	sw	zero, machFPCurProcPtr		# indicate state has been saved
+	sw	zero, _machFPCurProcPtr		# indicate state has been saved
 /*
  * First read out the status register to make sure that all FP operations
  * have completed.
@@ -2619,7 +2627,7 @@ NON_LEAF(_MachFPInterrupt, STAND_FRAME_SIZE, ra)
 	li	a0, UADDR+U_PCB_REGS	# first arg is ptr to CPU registers
 	move	a1, a2			# second arg is instruction PC
 	move	a2, t1			# third arg is floating point CSR
-	jal	MachEmulateBranch	# compute PC after branch
+	jal	_MachEmulateBranch	# compute PC after branch
 	move	a3, zero		# fourth arg is FALSE
 /*
  * Now load the floating-point instruction in the branch delay slot
@@ -2647,10 +2655,10 @@ NON_LEAF(_MachFPInterrupt, STAND_FRAME_SIZE, ra)
  * Send a floating point exception signal to the current process.
  */
 3:
-	lw	a0, curproc			# get current process
+	lw	a0, _curproc			# get current process
 	cfc1	a2, MACH_FPC_CSR		# code = FP execptions
 	ctc1	zero, MACH_FPC_CSR		# Clear exceptions
-	jal	trapsignal
+	jal	_trapsignal
 	li	a1, SIGFPE
 	b	FPReturn
 	nop
@@ -2659,7 +2667,7 @@ NON_LEAF(_MachFPInterrupt, STAND_FRAME_SIZE, ra)
  * Finally, we can call MachEmulateFP() where a0 is the instruction to emulate.
  */
 4:
-	jal	MachEmulateFP
+	jal	_MachEmulateFP
 	nop
 
 /*
@@ -2705,9 +2713,9 @@ NON_LEAF(_MachConfigCache, STAND_FRAME_SIZE, ra)
  * linker still thinks SizeCache is in the cached region so it computes
  * the correct address without complaining.
  */
-	jal	SizeCache			# Get the size of the d-cache.
+	jal	_SizeCache			# Get the size of the d-cache.
 	nop
-	sw	v0, machDataCacheSize
+	sw	v0, _machDataCacheSize
 	nop					# Make sure sw out of pipe
 	nop
 	nop
@@ -2718,14 +2726,14 @@ NON_LEAF(_MachConfigCache, STAND_FRAME_SIZE, ra)
 	nop
 	nop
 	nop
-	jal	SizeCache			# Get the size of the i-cache.
+	jal	_SizeCache			# Get the size of the i-cache.
 	nop
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Swap back caches and enable.
 	nop
 	nop
 	nop
 	nop
-	sw	v0, machInstCacheSize
+	sw	v0, _machInstCacheSize
 	la	t0, 1f
 	j	t0				# Back to cached mode
 	nop
@@ -2809,8 +2817,8 @@ END(_SizeCache)
  *----------------------------------------------------------------------------
  */
 LEAF(_MachFlushCache)
-	lw	t1, machInstCacheSize		# Must load before isolating
-	lw	t2, machDataCacheSize		# Must load before isolating
+	lw	t1, _machInstCacheSize		# Must load before isolating
+	lw	t2, _machDataCacheSize		# Must load before isolating
 	mfc0	t3, MACH_COP_0_STATUS_REG 	# Save the status register.
 	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
 	la	v0, 1f
