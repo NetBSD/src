@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.26 2000/01/28 22:23:59 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.27 2000/01/28 23:23:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -359,6 +359,9 @@ struct tulip_softc {
 	int	sc_txnext;		/* next ready Tx descriptor */
 	int	sc_ntxsegs;		/* number of transmit segs per pkt */
 
+	u_int32_t sc_tdctl_ch;		/* conditional desc chaining */
+	u_int32_t sc_tdctl_er;		/* conditional desc end-of-ring */
+
 	struct tulip_txsq sc_txfreeq;	/* free Tx descsofts */
 	struct tulip_txsq sc_txdirtyq;	/* dirty Tx descsofts */
 
@@ -446,7 +449,8 @@ do {									\
 	    htole32(TULIP_CDRXADDR((sc), TULIP_NEXTRX((x))));		\
 	__rxd->td_ctl =							\
 	    htole32(((__m->m_ext.ext_size - 1) << TDCTL_SIZE1_SHIFT) |	\
-	    TDCTL_CH);							\
+	    (sc)->sc_tdctl_ch |						\
+	    ((x) == (TULIP_NRXDESC - 1) ? sc->sc_tdctl_er : 0));	\
 	__rxd->td_status = htole32(TDSTAT_OWN|TDSTAT_Rx_FS|TDSTAT_Rx_LS); \
 	TULIP_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
