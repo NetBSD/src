@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.24 2001/01/18 20:28:25 jdolecek Exp $	*/
+/*	$NetBSD: eisa.c,v 1.25 2001/11/13 12:47:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -37,6 +37,9 @@
  * Makes sure an EISA bus is present, and finds and attaches devices
  * living on it.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.25 2001/11/13 12:47:33 lukem Exp $");
 
 #include "opt_eisaverbose.h"
 
