@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.6 2001/02/02 07:41:54 mrg Exp $	*/
+/*	$NetBSD: setemul.c,v 1.7 2001/02/16 23:28:44 manu Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.6 2001/02/02 07:41:54 mrg Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.7 2001/02/16 23:28:44 manu Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -160,6 +160,7 @@ struct emulation_ctx {
 };
 
 const struct emulation *current;
+const struct emulation *previous;
 
 static const struct emulation *default_emul=NULL;
 
@@ -195,6 +196,11 @@ setemul(name, pid, update_ectx)
 
 	if (!default_emul)
 		default_emul = match;
+
+	if (current != NULL) 
+		previous = current;
+	else
+		previous = match;
 
 	current = match;
 }
