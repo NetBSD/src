@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_denode.c,v 1.2 1993/12/18 00:50:51 mycroft Exp $
+ *	$Id: msdosfs_denode.c,v 1.3 1994/03/03 00:51:34 paulus Exp $
  */
 
 #include <sys/param.h>
@@ -96,7 +96,7 @@ deget(pmp, dirclust, diroffset, direntptr, depp)
 	 * canonical form
 	 */
 	if (direntptr && (direntptr->deAttributes & ATTR_DIRECTORY)) {
-		dirclust = direntptr->deStartCluster;
+		dirclust = getushort(direntptr->deStartCluster);
 		if (dirclust == MSDOSFSROOT)
 			diroffset = MSDOSFSROOT_OFS;
 		else
@@ -185,7 +185,8 @@ loop:
 		 * denode
 		 */
 		ldep->de_Time = 0x0000;	/* 00:00:00	 */
-		ldep->de_Date = (0 << 9) | (1 << 5) | (1 << 0);
+		ldep->de_Date = (0 << DD_YEAR_SHIFT) | (1 << DD_MONTH_SHIFT)
+		    | (1 << DD_DAY_SHIFT);
 		/* Jan 1, 1980	 */
 		/* leave the other fields as garbage */
 	}
@@ -193,11 +194,11 @@ loop:
 		bp = NULL;
 		if (!direntptr) {
 			error = readep(pmp, dirclust, diroffset, &bp,
-			    &direntptr);
+				       &direntptr);
 			if (error)
 				return error;
 		}
-		ldep->de_de = *direntptr;
+		DE_INTERNALIZE(ldep, direntptr);
 		if (bp)
 			brelse(bp);
 	}
@@ -291,15 +292,14 @@ deupdat(dep, tp, waitfor)
 	/*
 	 * Put the passed in time into the directory entry.
 	 */
-	unix2dostime(&time, (union dosdate *) & dep->de_Date,
-	    (union dostime *) & dep->de_Time);
+	unix2dostime(&time, &dep->de_Date, &dep->de_Time);
 	dep->de_flag &= ~DEUPD;
 
 	/*
 	 * Copy the directory entry out of the denode into the cluster it
 	 * came from.
 	 */
-	*dirp = dep->de_de;	/* structure copy */
+	DE_EXTERNALIZE(dirp, dep);
 
 	/*
 	 * Write the cluster back to disk.  If they asked for us to wait
