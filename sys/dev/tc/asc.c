@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.36 1997/04/07 03:21:14 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.37 1997/05/24 09:48:53 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -980,7 +980,7 @@ again:
 		}
 
 		if (state->script) {
-			printf("asc_intr: target %d, incomplete script 0x%x\n", 
+			printf("asc_intr: target %d, incomplete script %p\n", 
 			  	asc->target, state->script);
 			goto abort;
 		}
@@ -1878,7 +1878,7 @@ asc_msg_in(asc, status, ss, ir)
 			return (1);
 		}
 		if (state->msgcnt >= state->msglen) {
-		  	printf("asc: msg_in too big, msgcnt %d msglen %\n",
+		  	printf("asc: msg_in too big, msgcnt %d msglen %d\n",
 			       state->msgcnt, state->msglen);
 			goto abort;
 		}
@@ -2083,6 +2083,7 @@ asc_timeout(arg)
 #else
 	cpu_reboot(RB_NOSYNC, NULL); /* XXX */
 #endif
+	splx(s);
 }
 
 
