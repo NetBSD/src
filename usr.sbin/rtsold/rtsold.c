@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.21 2002/09/23 12:48:10 mycroft Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.22 2003/05/15 00:19:30 itojun Exp $	*/
 /*	$KAME: rtsold.c,v 1.55 2002/09/08 01:26:03 itojun Exp $	*/
 
 /*
@@ -785,11 +785,11 @@ autoifprobe(void)
 		if (a == NULL)
 			err(1, "realloc");
 		argv = a;
-		argv[n] = (char *)malloc(1 + strlen(ifa->ifa_name));
+		argv[n] = strdup(ifa->ifa_name);
 		if (!argv[n])
-			err(1, "malloc");
-		strcpy(argv[n], ifa->ifa_name);
+			err(1, "strdup");
 		n++;
+		argv[n] = NULL;
 	}
 
 	if (n) {
