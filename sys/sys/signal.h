@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.40 1998/12/10 17:41:02 mycroft Exp $	*/
+/*	$NetBSD: signal.h,v 1.41 1998/12/19 16:27:09 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -110,14 +110,6 @@
 #include <sys/cdefs.h>
 #endif
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_compat_sunos.h"
-#endif
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_compat_linux.h"
-#endif
-
 #define	SIG_DFL		((void (*) __P((int)))  0)
 #define	SIG_IGN		((void (*) __P((int)))  1)
 #define	SIG_ERR		((void (*) __P((int))) -1)
@@ -207,12 +199,12 @@ struct	sigaction {
 #define SA_RESTART	0x0002	/* restart system on signal return */
 #define SA_RESETHAND	0x0004	/* reset to SIG_DFL when taking signal */
 #define SA_NODEFER	0x0010	/* don't mask the signal we're delivering */
-#if (defined(_KERNEL) || defined(_LKM))
+#if defined(_KERNEL) && defined(COMPAT_LINUX)
 #define SA_SIGINFO	0x0040
-#endif /* (_KERNEL || _LKM) && COMPAT_LINUX */
-#if (defined(_KERNEL) || defined(_LKM))
+#endif /* (_KERNEL && linux) */
+#if defined(_KERNEL) && defined(COMPAT_SUNOS)
 #define	SA_USERTRAMP	0x0100	/* do not bounce off kernel's sigtramp */
-#endif /* (_KERNEL || _LKM) && COMPAT_SUNOS */
+#endif /* (_KERNEL && sunos) */
 #endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
 /* Only valid for SIGCHLD. */
 #define SA_NOCLDSTOP	0x0008	/* do not generate SIGCHLD on child stop */

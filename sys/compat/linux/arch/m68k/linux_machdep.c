@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.1 1998/12/15 19:25:40 itohy Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.2 1998/12/19 16:27:10 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define COMPAT_LINUX 1
 
 #include <sys/param.h>
 #include <sys/systm.h>
