@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.15 2004/03/31 12:00:57 tron Exp $ */
+/*	$NetBSD: apm.c,v 1.16 2005/01/23 20:55:57 cube Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ void
 usage(void)
 {
 
-	fprintf(stderr,"usage: %s [-v] [-z | -S] [-slmba] [-f socket]\n",
+	fprintf(stderr,"usage: %s [-v] [-z | -S] [-abdlms] [-f socket]\n",
 	    getprogname());
 	exit(1);
 }
@@ -164,7 +164,7 @@ main(int argc, char *argv[])
 
 	doac = dobstate = domin = dopct = dostatus = nodaemon =
 	    verbose = FALSE;
-	while ((ch = getopt(argc, argv, "lmbvadsSzf:")) != -1)
+	while ((ch = getopt(argc, argv, "Sabdf:lmsvz")) != -1)
 		switch (ch) {
 		case 'v':
 			verbose = TRUE;
