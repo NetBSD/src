@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.24 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.25 2003/12/07 10:25:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.24 2003/11/13 13:40:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.25 2003/12/07 10:25:38 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -623,9 +623,6 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 		int select;
 		int *data;
 		size_t tablelen;
-#ifdef DEBUG_DARWIN
-		int i;
-#endif
 
 		select = req->req_in[0];
 		tablelen = struct_len / sizeof(*data);
@@ -637,10 +634,6 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 			break;
 
 		data = (int *)struct_data;
-#ifdef DEBUG_DARWIN
-		for (i = 0; i < tablelen; i++)
-			printf("table entry %d: 0x%08x\n", i, data[i]);
-#endif
 		break;
 	}
 
