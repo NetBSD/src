@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 1999/03/28 19:01:03 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31.2.1 1999/04/16 16:24:41 chs Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF
 /* #define BOOT_DEBUG */
@@ -3343,7 +3343,7 @@ vm_page_t
 vm_page_alloc1()
 {
 #if 1
-	return uvm_pagealloc(NULL,0,NULL);
+	return uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 #else
 	register vm_page_t	mem;
 	int		spl;
