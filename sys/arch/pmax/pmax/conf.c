@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 1995/08/17 17:40:58 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.18 1995/09/12 07:43:58 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -160,17 +160,17 @@ struct cdevsw	cdevsw[] =
         cdev_ptc_init(NPTY,ptc),        /* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_fd_init(1,fd),		/* 7: file descriptor pseudo-dev */
-	cdev_fbm_init(NPM,pm),		/* 8: 2100/3100 frame buffer */
+	cdev_notdef(),			/* 8: old 2100/3100 frame buffer */
 	cdev_notdef(),			/* 9: old slot for SCSI disk */
 	cdev_tape_init(NTZ,tz),		/* 10: SCSI tape */
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 12: Berkeley packet filter */
-	cdev_fbm_init(NCFB,cfb),	/* 13: color frame buffer */
-	cdev_fbm_init(NXCFB,xcfb),	/* 14: maxine color frame buffer */
+	cdev_notdef(),			/* 13: color frame buffer */
+	cdev_notdef(),			/* 14: maxine color frame buffer */
 	cdev_tty_init(NDTOP,dtop),	/* 15: desktop bus interface */
 	cdev_tty_init(NDC,dc),		/* 16: dc7085 serial interface */
 	cdev_tty_init(NSCC,scc),	/* 17: scc 82530 serial interface */
-	cdev_fbm_init(NMFB,mfb),	/* 18: mono frame buffer */
+	cdev_notdef(),			/* 18: mono frame buffer */
         cdev_notdef(),		        /* 19: mt */
 	cdev_tty_init(NPTY,pts),	/* 20: pty slave  */
         cdev_ptc_init(NPTY,ptc),        /* 21: pty master */
