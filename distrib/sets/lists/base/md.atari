@@ -1,4 +1,5 @@
 ./sbin/binpatch
+./sbin/bootpref
 ./sbin/edahdi
 ./sbin/edlabel
 ./usr/bin/fdformat
