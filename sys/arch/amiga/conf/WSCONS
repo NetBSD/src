@@ -1,9 +1,9 @@
-# $NetBSD: WSCONS,v 1.5 2002/05/30 19:45:49 thorpej Exp $
+# $NetBSD: WSCONS,v 1.6 2002/06/17 05:28:00 lukem Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.180 2002/05/30 19:45:15 thorpej Exp $
+# Created from: #NetBSD: GENERIC,v 1.181 2002/06/17 05:14:05 lukem Exp $
 
 #GENERIC machine description file
 
@@ -26,7 +26,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident  		"GENERIC-$Revision: 1.5 $"
+#ident  		"GENERIC-$Revision: 1.6 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -429,6 +429,7 @@ pseudo-device	bridge			# simple inter-network bridging
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
