@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.14 2002/11/12 00:47:10 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.15 2002/11/12 00:49:08 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -179,7 +179,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 */
 
 	if (magic == BOOTINFO_MAGIC)
-		bcopy((struct bootinfo_v1 *)bootdata, &bootinfo,
+		memcpy(&bootinfo, (struct bootinfo_v1 *)bootdata,
 		    sizeof bootinfo);
 	else if (reserved == CFE_EPTSEAL) {
 		magic = BOOTINFO_MAGIC;
