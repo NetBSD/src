@@ -2,9 +2,9 @@
 ; and rsim).
 ;  You may need to remove some from here as new insns emerge.
 ; Just test a few basic cases, to check that the insn table does
-; not contain duplicate entries.  No compelling need for complete
-; coverage.
+; not contain duplicate entries.  No compelling need for complete coverage.
  .text
+ .syntax no_register_prefix
 start:
  bmod [r11],r2
  bmod [r11+r3.b],r2

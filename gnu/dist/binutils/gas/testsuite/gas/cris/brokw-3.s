@@ -1,6 +1,6 @@
 ; Tests the broken-word function, one more word than fits in a
 ; single branch.
-
+	.syntax no_register_prefix
 start:	moveq 0,r0
 
 ; Take the opportunity to (rudimentally) test case-recognition,

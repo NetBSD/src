@@ -1,5 +1,5 @@
 ; Tests the broken-word function, two words.
-
+	.syntax no_register_prefix
 sym2:	moveq 0,r0
 
 	.word	sym1 - sym2

@@ -6,15 +6,15 @@ ELF Header:
   OS/ABI:                            UNIX - System V
   ABI Version:                       0
   Type:                              EXEC \(Executable file\)
-  Machine:                           SuperH SH
+  Machine:                           Renesas / SuperH SH
   Version:                           0x1
   Entry point address:               0x10c4
   Start of program headers:          52 \(bytes into file\)
-  Start of section headers:          500 \(bytes into file\)
+  Start of section headers:          664 \(bytes into file\)
   Flags:                             0xa
   Size of this header:               52 \(bytes\)
   Size of program headers:           32 \(bytes\)
-  Number of program headers:         2
+  Number of program headers:         3
   Size of section headers:           40 \(bytes\)
   Number of section headers:         13
   Section header string table index: 10
@@ -22,18 +22,18 @@ ELF Header:
 Section Headers:
   \[Nr\] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al
   \[ 0\]                   NULL            00000000 000000 000000 00      0   0  0
-  \[ 1\] \.init             PROGBITS        00001000 000080 000004 00 AXp  0   0  4
-  \[ 2\] \.text             PROGBITS        00001004 000084 0000d8 00 AXp  0   0  4
-  \[ 3\] \.data             PROGBITS        00001160 000160 000000 00  WA  0   0  1
-  \[ 4\] \.ctors            PROGBITS        00001160 000160 000000 00   W  0   0  1
-  \[ 5\] \.dtors            PROGBITS        00001160 000160 000000 00   W  0   0  1
-  \[ 6\] \.sbss             PROGBITS        00001160 000160 000000 00   W  0   0  1
-  \[ 7\] \.bss              NOBITS          00001160 000160 000000 00  WA  0   0  1
-  \[ 8\] \.stack            PROGBITS        00080000 000160 000000 00   W  0   0  1
-  \[ 9\] \.cranges          LOUSER\+1        00000000 000160 00003c 00   W  0   0  1
-  \[10\] \.shstrtab         STRTAB          00000000 00019c 000056 00      0   0  1
-  \[11\] \.symtab           SYMTAB          00000000 0003fc 0001b0 10     12  10  4
-  \[12\] \.strtab           STRTAB          00000000 0005ac 000078 00      0   0  1
+  \[ 1\] \.init             PROGBITS        00001000 000100 000004 00 AXp  0   0  4
+  \[ 2\] \.text             PROGBITS        00001004 000104 0000d8 00 AXp  0   0  4
+  \[ 3\] \.data             PROGBITS        00001160 0001e0 000000 00  WA  0   0  1
+  \[ 4\] \.ctors            PROGBITS        00001160 000204 000000 00   W  0   0  1
+  \[ 5\] \.dtors            PROGBITS        00001160 000204 000000 00   W  0   0  1
+  \[ 6\] \.sbss             PROGBITS        00001160 000204 000000 00   W  0   0  1
+  \[ 7\] \.bss              NOBITS          00001160 0001e0 000000 00  WA  0   0  1
+  \[ 8\] \.stack            PROGBITS        00080000 000200 000004 00  WA  0   0  1
+  \[ 9\] \.cranges          LOUSER\+1        00000000 000204 00003c 00   W  0   0  1
+  \[10\] \.shstrtab         STRTAB          00000000 000240 000056 00      0   0  1
+  \[11\] \.symtab           SYMTAB          00000000 0004a0 0001b0 10     12  10  4
+  \[12\] \.strtab           STRTAB          00000000 000650 000078 00      0   0  1
 Key to Flags:
   W \(write\), A \(alloc\), X \(execute\), M \(merge\), S \(strings\)
   I \(info\), L \(link order\), G \(group\), x \(unknown\)

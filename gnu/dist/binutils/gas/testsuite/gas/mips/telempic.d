@@ -131,12 +131,9 @@ Contents of section \.text:
  00d0 33000010 0000033c 0c0163[26]4 0000033c  .*
  00e0 1c0163[26]4 cc000000 34000000 00000000  .*
  00f0 cc000000 00000000 34000000 00000000  .*
-Contents of section \.data:
 Contents of section \.reginfo:
  0000 08000080 00000000 00000000 00000000  .*
  0010 00000000 00000000                    .*
-Contents of section \.(mdebug|pdr):
-#...
 Contents of section \.foo:
  0000 00000000 0000033c 040063[26]4 0000033c  .*
  0010 0c0163[26]4 0000033c 180063[26]4 0000033c  .*

@@ -99,7 +99,7 @@ off8s (func_arg * arg, insn_data * data)
     {
       val = - val;
       val &= ~3;
-      sprintf (value, ", -#%i", val);
+      sprintf (value, ", #-%i", val);
       data->dis_out = strdup (value);
       sprintf (value, ", #-%i", val);
       data->as_in = strdup (value);
@@ -360,8 +360,8 @@ MVfxa (am32, 32am, 1);
 MVfxa (ah32, 32ah, 2);
 MVfxa (a32, 32a, 3);
 MVdxa (a64, 64a, 4);
-MCRC2 (mvsc32, 6, 0, 1, 5, dspsc, mvreg ("fx", 16));
-MCRC2 (mv32sc, 6, 0, 0, 5, mvreg ("fx", 0), dspsc);
+MCRC2 (mvsc32, 4, 1, 0, 7, dspsc, mvreg ("dx", 12));
+MCRC2 (mv32sc, 4, 0, 1, 7, mvreg ("dx", 12), dspsc);
 CDP2 (cpys, , 4, 0, 0, "f", "f");
 CDP2 (cpyd, , 4, 0, 1, "d", "d");
 

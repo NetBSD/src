@@ -18,29 +18,13 @@
 # Written by Catherine Moore (clm@cygnus.com)
 # Make sure that constructors are handled correctly.
 
-
-# AOUT based ports do not support selective linking
-if {[istarget "*-*-*aout*"] \
-    || [istarget "*-*-*bout*"] \
-    || [istarget "vax-*-ultrix*"]} {
+# Only ELF based ports support selective linking
+if ![is_elf_format] {
     return
 }
 
-# COFF based ports do not support selective linking
-if {[istarget "*-*-coff"]} {
-    return
-}
-if {[istarget "*-*-pe"]} {
-    return
-}
-
-# Alpha does not support selective linking
-if {[istarget "alpha*-*-*"]} {
-    return
-}
-
-# s390 does not support selective linking
-if {[istarget "s390*-*-*"]} {
+# IA64 does not support selective linking
+if {[istarget "ia64-*-*"]} {
     return
 }
 
@@ -55,11 +39,11 @@ if {[istarget "s390*-*-*"]} {
 #
 # FIXME: Instead of table, read settings from each source-file.
 set seltests {
-  {selective1 C   1.c  {}       {}    {dropme1 dropme2} {alpha*-*}}
-  {selective2 C   2.c  {}       {}    {foo} {alpha*-* mips*-*}}
+  {selective1 C   1.c  {}       {}    {dropme1 dropme2} {}}
+  {selective2 C   2.c  {}       {}    {foo} {mips*-*}}
   {selective3 C   2.c  {-u foo} {foo} {{foo 0}} {mips*-*}}
-  {selective4 C++ 3.cc {}       {start a A::foo() B::foo()} {A::bar()} {alpha*-*  mips*-*}}
-  {selective5 C++ 4.cc {}       {start a A::bar()} {A::foo() B::foo()} {alpha*-*  mips*-*}}
+  {selective4 C++ 3.cc {}       {start a A::foo() B::foo()} {A::bar()} {mips*-*}}
+  {selective5 C++ 4.cc {}       {start a A::bar()} {A::foo() B::foo()} {mips*-*}}
   {selective6 C++ 5.cc {}       {start a A::bar()}
     {A::foo() B::foo() dropme1() dropme2()} {*-*-*}}
 }
@@ -99,6 +83,8 @@ foreach testitem $seltests {
     foreach xfail_target $xfails {
 	setup_xfail $xfail_target
     }
+    setup_xfail "alpha*-*" "arc*-*" "d30v*-*" "dlx*-*" "i370*-*" "i860*-*"
+    setup_xfail "i960*-*" "mn10200-*" "or32-*" "pj-*" "sparc64*-*"
 
     # It's either C or C++ at the moment.
     if { $testtype == "C++" } {

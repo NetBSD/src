@@ -18,7 +18,7 @@ Section Headers:
   \[ 6\] \.plt +.*
   \[ 7\] \.text +PROGBITS +0+[0-9a-f]+ .*
   \[ 8\] \.data +.*
-  \[ 9\] \.tdata +PROGBITS +0+[0-9a-f]+ [0-9a-f]+ 0+018 00 WAT  0   0  1
+  \[ 9\] \.tdata +PROGBITS +0+[0-9a-f]+ [0-9a-f]+ 0+018 00 WAT  0   0  4
   \[10\] \.tbss +NOBITS +0+[0-9a-f]+ [0-9a-f]+ 0+008 00 WAT  0   0  1
   \[11\] \.dynamic +DYNAMIC +0+[0-9a-f]+ .*
 #...
@@ -43,7 +43,7 @@ Program Headers:
   LOAD.*
   LOAD.*
   DYNAMIC.*
-  TLS +0x[0-9a-f]+ 0x[0-9a-f]+ 0x[0-9a-f]+ 0x0+18 0x0+20 R +0x1
+  TLS +0x[0-9a-f]+ 0x[0-9a-f]+ 0x[0-9a-f]+ 0x0+18 0x0+20 R +0x4
 
  Section to Segment mapping:
   Segment Sections\.\.\.

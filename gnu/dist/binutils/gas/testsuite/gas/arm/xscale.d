@@ -26,7 +26,7 @@ Disassembly of section .text:
 0+40 <[^>]*> e1c100d0 	ldrd	r0, \[r1\]
 0+44 <[^>]*> 01c327d8 	ldreqd	r2, \[r3, #120\]
 0+48 <[^>]*> b10540d6 	ldrltd	r4, \[r5, -r6\]
-0+4c <[^>]*> e16a88f9 	strd	r8, \[sl, -#137\]!
+0+4c <[^>]*> e16a88f9 	strd	r8, \[sl, #-137\]!
 0+50 <[^>]*> e1ac00fd 	strd	r0, \[ip, sp\]!
 0+54 <[^>]*> 30ce21f0 	strccd	r2, \[lr\], #16
 0+58 <[^>]*> 708640f8 	strvcd	r4, \[r6\], r8

@@ -5,7 +5,7 @@
 
 Disassembly of section \.text:
 
-0000000000000000 <_start>:
+0+000 <_start>:
        0:	01 08 00 00 00 21 	\[MII\]       mov r1=r0
        6:	00 00 00 02 00 00 	            nop\.i 0x0
        c:	00 00 04 00       	            nop\.i 0x0;;

@@ -6,7 +6,7 @@
 
 Disassembly of section \.text:
 
-0000000000000000 <\.text>:
+0+000 <\.text>:
    0:	d0 08 00 10 18 90 	\[MIB\] \(p06\) ld8 r1=\[r8\]
    6:	61 10 04 80 03 03 	      \(p06\) mov b6=r2
    c:	68 00 80 10       	      \(p06\) br\.call\.sptk\.many b0=b6

@@ -45,11 +45,11 @@ nudiv:
 	.text
 	.global smul
 smul:
-	smul sp,sp,sp
+	smul fp,fp,fp
 	.text
 	.global umul
 umul:
-	umul sp,sp,sp
+	umul fp,fp,fp
 	.text
 	.global sll
 sll:
@@ -97,7 +97,7 @@ cnot:
 	.text
 	.global csmul
 csmul:
-	csmul sp,sp,sp,cc0,0
+	csmul fp,fp,fp,cc0,0
 	.text
 	.global csdiv
 csdiv:
@@ -153,11 +153,11 @@ sracc:
 	.text
 	.global smulcc
 smulcc:
-	smulcc sp,sp,sp,icc0
+	smulcc fp,fp,fp,icc0
 	.text
 	.global umulcc
 umulcc:
-	umulcc sp,sp,sp,icc0
+	umulcc fp,fp,fp,icc0
 	.text
 	.global caddcc
 caddcc:
@@ -169,7 +169,7 @@ csubcc:
 	.text
 	.global csmulcc
 csmulcc:
-	csmulcc sp,sp,sp,cc0,0
+	csmulcc fp,fp,fp,cc0,0
 	.text
 	.global candcc
 candcc:
@@ -249,11 +249,11 @@ nudivi:
 	.text
 	.global smuli
 smuli:
-	smuli sp,0,sp
+	smuli fp,0,fp
 	.text
 	.global umuli
 umuli:
-	umuli sp,0,sp
+	umuli fp,0,fp
 	.text
 	.global slli
 slli:
@@ -293,11 +293,11 @@ xoricc:
 	.text
 	.global smulicc
 smulicc:
-	smulicc sp,0,sp,icc0
+	smulicc fp,0,fp,icc0
 	.text
 	.global umulicc
 umulicc:
-	umulicc sp,0,sp,icc0
+	umulicc fp,0,fp,icc0
 	.text
 	.global sllicc
 sllicc:
@@ -409,7 +409,7 @@ nldf:
 	.text
 	.global ldd
 ldd:
-	ldd @(sp,sp),sp
+	ldd @(sp,sp),fp
 	.text
 	.global lddf
 lddf:
@@ -421,7 +421,7 @@ lddc:
 	.text
 	.global nldd
 nldd:
-	nldd @(sp,sp),sp
+	nldd @(sp,sp),fp
 	.text
 	.global nlddf
 nlddf:
@@ -517,11 +517,11 @@ nldfu:
 	.text
 	.global lddu
 lddu:
-	lddu @(sp,sp),sp
+	lddu @(sp,sp),fp
 	.text
 	.global nlddu
 nlddu:
-	nlddu @(sp,sp),sp
+	nlddu @(sp,sp),fp
 	.text
 	.global lddfu
 lddfu:
@@ -621,7 +621,7 @@ nldfi:
 	.text
 	.global lddi
 lddi:
-	lddi @(sp,0),sp
+	lddi @(sp,0),fp
 	.text
 	.global lddfi
 lddfi:
@@ -629,7 +629,7 @@ lddfi:
 	.text
 	.global nlddi
 nlddi:
-	nlddi @(sp,0),sp
+	nlddi @(sp,0),fp
 	.text
 	.global nlddfi
 nlddfi:
@@ -643,9 +643,9 @@ ldqi:
 ldqfi:
 	ldqfi @(sp,0),fr0
 	.text
-	.global nldqi
-nldqi:
-	nldqi @(sp,0),sp
+	.global nop
+nop:
+	nop
 	.text
 	.global nldqfi
 nldqfi:
@@ -705,7 +705,7 @@ rstf:
 	.text
 	.global std
 std:
-	std sp,@(sp,sp)
+	std fp,@(sp,sp)
 	.text
 	.global stdf
 stdf:
@@ -717,7 +717,7 @@ stdc:
 	.text
 	.global rstd
 rstd:
-	rstd sp,@(sp,sp)
+	rstd fp,@(sp,sp)
 	.text
 	.global rstdf
 rstdf:
@@ -773,7 +773,7 @@ stcu:
 	.text
 	.global stdu
 stdu:
-	stdu sp,@(sp,sp)
+	stdu fp,@(sp,sp)
 	.text
 	.global stdfu
 stdfu:
@@ -829,7 +829,7 @@ cldf:
 	.text
 	.global cldd
 cldd:
-	cldd @(sp,sp),sp,cc0,0
+	cldd @(sp,sp),fp,cc0,0
 	.text
 	.global clddf
 clddf:
@@ -873,7 +873,7 @@ cldfu:
 	.text
 	.global clddu
 clddu:
-	clddu @(sp,sp),sp,cc0,0
+	clddu @(sp,sp),fp,cc0,0
 	.text
 	.global clddfu
 clddfu:
@@ -909,7 +909,7 @@ cstf:
 	.text
 	.global cstd
 cstd:
-	cstd sp,@(sp,sp),cc0,0
+	cstd fp,@(sp,sp),cc0,0
 	.text
 	.global cstdf
 cstdf:
@@ -945,7 +945,7 @@ cstfu:
 	.text
 	.global cstdu
 cstdu:
-	cstdu sp,@(sp,sp),cc0,0
+	cstdu fp,@(sp,sp),cc0,0
 	.text
 	.global cstdfu
 cstdfu:
@@ -977,7 +977,7 @@ stfi:
 	.text
 	.global stdi
 stdi:
-	stdi sp,@(sp,0)
+	stdi fp,@(sp,0)
 	.text
 	.global stdfi
 stdfi:

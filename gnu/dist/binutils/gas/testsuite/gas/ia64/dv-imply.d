@@ -6,7 +6,7 @@
 
 Disassembly of section \.text:
 
-0000000000000000 <L-0xc0>:
+0+000 <L-0xc0>:
    0:	3c 20 08 00 00 21 	\[MFB\] \(p01\) mov r4=2
    6:	00 00 00 02 00 01 	            nop\.f 0x0
    c:	c0 00 00 40       	      \(p02\) br\.cond\.sptk\.few c0 <L>

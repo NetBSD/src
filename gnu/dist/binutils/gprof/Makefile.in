@@ -192,7 +192,7 @@ TODO acinclude.m4 aclocal.m4 configure configure.in gconfig.in
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
-TAR = tar
+TAR = gtar
 GZIP_ENV = --best
 SOURCES = $(gprof_SOURCES)
 OBJECTS = $(gprof_OBJECTS)
@@ -718,7 +718,7 @@ diststuff: $(BUILT_SOURCES) info $(man_MANS)
 	    FUNCTION=`(echo $*|sed -e 's,.*/,,g' -e 's/_bl//')`_blurb \
 	    FILE=$*.m $(srcdir)/$*.m
 po/POTFILES.in: @MAINT@ Makefile
-	for file in $(POTFILES); do echo $$file; done | sort > tmp \
+	for f in $(POTFILES); do echo $$f; done | LC_COLLATE= sort > tmp \
 	  && mv tmp $(srcdir)/po/POTFILES.in
 
 # Build the man page from the texinfo file

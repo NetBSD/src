@@ -50,7 +50,7 @@ _rcall:
 	jbra	200
   2e:	7e 00 c8    	jmp	c8 <_rcall\+0xc8>
 	jbsr	1923
-  31:	bd 07 83    	jsr	783 <.L0\+0x602>
+  31:	bd 07 83    	jsr	783 <L0\+0x602>
 	bne	Lend		; -> to a beq\+jmp
   34:	27 03       	beq	39 <_rcall\+0x39>
   36:	7e 00 00    	jmp	0 <_rcall>

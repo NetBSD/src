@@ -13,4 +13,3 @@ Disassembly of section .text:
 01014100 <_start>:
  1014100:	6f 00 4a c0 	nop		->	brf0f.s	1014000 <foo>
  1014104:	26 0d 5e 00 	jmp	r13	||	nop	
-Disassembly of section .data:

@@ -11,4 +11,3 @@ Disassembly of section .text:
    8:	6f 00 5e 00 	nop		->	nop	
    c:	6f 00 5e 00 	nop		->	nop	
   10:	6f 00 5e 00 	nop		->	nop	
-Disassembly of section .data:

@@ -32,6 +32,7 @@ proc gas_m68hc11_opcode_list { flags expect_count } {
 
 gas_m68hc11_opcode_list "-m68hc11" 149
 gas_m68hc11_opcode_list "-m68hc12" 192
+gas_m68hc11_opcode_list "-m68hcs12" 192
 
 
 # Test for a message produced when assembling a file
@@ -139,6 +140,21 @@ gas_m68hc11_error "-m68hc12" "movb 200,x,3,y\n" \
     "Offset out of 5-bit range for movw/movb insn: 200"
 gas_m68hc11_error "-m68hc12" "movb 2,x,300,y\n" \
     "Offset out of 5-bit range for movw/movb insn: 300"
+gas_m68hc11_error "-m68hc12" "movb 2,x,bar,y\nbar=300\n" \
+    "Offset out of 5-bit range for movw/movb insn: 300"
+gas_m68hc11_error "-m68hc12" "movb bar,y,2,x\nbar=300\n" \
+    "Offset out of 5-bit range for movw/movb insn: 300"
+gas_m68hc11_error "-m68hc12" "movb 200,pc,3,y\n" \
+    "Offset out of 5-bit range for movw/movb insn: 200"
+gas_m68hc11_error "-m68hc12" "movb 2,x,300,pc\n" \
+    "Offset out of 5-bit range for movw/movb insn: 300"
+gas_m68hc11_error "-m68hc12" "movb 2,x,bar,pc\nbar=300\n" \
+    "Offset out of 5-bit range for movw/movb insn: 300"
+gas_m68hc11_error "-m68hc12" "movb bar,pc,2,x\nbar=300\n" \
+    "Offset out of 5-bit range for movw/movb insn: 300"
+
+setup_xfail m6811-*-*
+setup_xfail m6812-*-*
 
 # ------------------
 # Specific commands
@@ -153,6 +169,9 @@ run_dump_test lbranch
 run_dump_test all_insns
 run_dump_test insns-dwarf2
 run_dump_test lbranch-dwarf2
+run_dump_test abi-m68hc11-16-64
+run_dump_test abi-m68hc11-16-32
+run_dump_test abi-m68hc11-32-64
 
 # Compliance with Motorola Assembly Language Input Standard
 run_dump_test malis
@@ -164,3 +183,4 @@ run_dump_test branchs12
 run_dump_test insns12
 run_dump_test indexed12
 run_dump_test bug-1825
+run_dump_test movb

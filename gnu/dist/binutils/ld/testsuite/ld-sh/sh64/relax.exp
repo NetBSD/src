@@ -35,6 +35,8 @@ if ![istarget sh64-*-*] {
 
 if [istarget sh64*-*-linux*] {
     set emul32 "shlelf32_linux"
+} elseif { [istarget sh64*-*-netbsd*] || [istarget sh5*-*-netbsd*] } {
+    set emul32 "shelf32_nbsd"
 } else {
     set emul32 "shelf32"
 }

@@ -48,4 +48,3 @@ Disassembly of section .text:
 00000050 <test10>:
   50:	2f b0 5e 00 	rtd		||	nop	
   54:	20 01 de 00 	ldi.s	r0, 0x1	||	nop	
-Disassembly of section .data:

@@ -1,6 +1,6 @@
 #objdump: -dz --prefix-addresses -m mips:4120
-#as: -32 -march=vr4120 -mtune=vr4120 -mfix-vr4122-bugs
-#name: MIPS vr4122 workarounds
+#as: -32 -march=vr4120 -mfix-vr4120
+#name: MIPS vr4120 workarounds
 
 .*: +file format .*mips.*
 
