@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.51 1999/07/13 16:53:14 kleink Exp $	
+.\"	$NetBSD: hardware,v 1.52 1999/08/16 22:27:08 augustss Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -218,6 +218,7 @@ Supported devices include:
 		Keyboards using the boot protocol [*] [+]
 		Mice [*] [+]
 		Printers [*] [+]
+		Modems using Abstract Control Model [*] [+]
 		Generic support for HID devices [*] [+]
 	PCMCIA Controllers:
 		ISA, PCI, and ISA Plug\*&Play attachments for:
