@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.8 1998/08/16 02:14:15 mark Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.9 1998/12/12 17:28:05 mycroft Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -254,7 +254,7 @@ ENTRY(sa110_setttb)
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
 ENTRY(arm67_tlb_flush)
 	mcr	15, 0, r0, c5, c0, 0
-	mov	pc, r14
+	mov	pc, lr
 
 ENTRY(arm67_tlb_purge)
 	mcr	15, 0, r0, c6, c0, 0
@@ -743,7 +743,7 @@ ENTRY(arm67_context_switch)
 	/* Make sure that pipeline is emptied */
 	mov     r0, r0
 	mov     r0, r0
-	mov     pc, r14
+	mov     pc, lr
 #endif
 
 #ifdef CPU_ARM8
@@ -765,7 +765,7 @@ ENTRY(arm8_context_switch)
 	/* Make sure that pipeline is emptied */
 	mov     r0, r0
 	mov     r0, r0
-	mov     pc, r14
+	mov     pc, lr
 #endif	/* CPU_ARM8 */
 
 #ifdef CPU_SA110
@@ -788,7 +788,7 @@ ENTRY(sa110_context_switch)
 	/* Make sure that pipeline is emptied */
 	mov     r0, r0
 	mov     r0, r0
-	mov     pc, r14
+	mov     pc, lr
 #endif
 
 /*
