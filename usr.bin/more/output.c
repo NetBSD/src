@@ -34,7 +34,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)output.c	5.10 (Berkeley) 7/24/91"; */
-static char *rcsid = "$Id: output.c,v 1.2 1993/11/09 05:11:53 cgd Exp $";
+static char *rcsid = "$Id: output.c,v 1.3 1994/04/06 17:54:35 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -205,15 +205,17 @@ error(s)
 		 * edit() makes sure these messages can be seen before they
 		 * are overwritten or scrolled away.
 		 */
-		(void)write(2, s, strlen(s));
-		(void)write(2, "\n", 1);
+		if (s != NULL) {
+			(void)write(2, s, strlen(s));
+			(void)write(2, "\n", 1);
+		}
 		return;
 	}
 
 	lower_left();
 	clear_eol();
 	so_enter();
-	if (s) {
+	if (s != NULL) {
 		putstr(s);
 		putstr("  ");
 	}
@@ -227,7 +229,7 @@ error(s)
 	}
 	lower_left();
 
-	if (strlen(s) + sizeof(return_to_continue) + 
+	if ((s != NULL ? strlen(s) : 0) + sizeof(return_to_continue) + 
 		so_width + se_width + 1 > sc_width)
 		/*
 		 * Printing the message has probably scrolled the screen.
