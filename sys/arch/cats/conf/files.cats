@@ -1,25 +1,16 @@
-#	$NetBSD: files.cats,v 1.16 2002/02/09 12:14:02 chris Exp $
+#	$NetBSD: files.cats,v 1.17 2002/02/10 10:37:52 tsutsui Exp $
 #
-# First try for arm-specific configuration info
+# CATS-specific configuration info
 #
 
 maxpartitions	8
 maxusers 2 8 64
-
-# COMPAT_OLD_OFW for SHARKs
-defflag	COMPAT_OLD_OFW
 
 # Maintain Interrupt statistics
 defflag	IRQSTATS
 
 # X server support in console drivers
 defflag	XSERVER
-
-# Bootloader options (COMPAT... to be dropped ASAP)
-#defflag	COMPAT_OLD_BOOTLOADER
-
-# Architectures and core logic
-defflag	NETWINDER
 
 define todservice {}
 
