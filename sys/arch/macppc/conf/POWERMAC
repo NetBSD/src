@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.15 1998/10/14 12:31:34 tsubai Exp $
+#	$NetBSD: POWERMAC,v 1.16 1998/10/18 09:52:16 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -70,13 +70,13 @@ obio0	at pci? dev ? function ?
 nvram0	at obio0			# nvram
 
 adb0	at obio0			# Apple Desktop Bus
-aed*	at adb?				# ADB Event Device
 akbd*	at adb?				# ADB keyboard
 ams*	at adb?				# ADB mouse
 
 ofb0	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 wsdisplay* at ofb? console ?
 wskbd*	at akbd? console ?
+wsmouse* at ams?
 
 mc0	at obio0			# MACE ethernet
 esp0	at obio0 flags 0x0		# 53c9x SCSI
