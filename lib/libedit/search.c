@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.16 2003/10/16 21:41:26 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.17 2003/10/17 18:49:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.16 2003/10/16 21:41:26 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.17 2003/10/17 18:49:11 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -523,11 +523,15 @@ ce_search_line(EditLine *el, char *pattern, int dir)
 	char *cp;
 
 	if (dir == ED_SEARCH_PREV_HISTORY) {
+		char oc = el->el_line.cursor[1];
+		el->el_line.cursor[1] = '\0';
 		for (cp = el->el_line.cursor; cp >= el->el_line.buffer; cp--)
 			if (el_match(cp, pattern)) {
+				el->el_line.cursor[1] = oc;
 				el->el_line.cursor = cp;
 				return (CC_NORM);
 			}
+		el->el_line.cursor[1] = oc;
 		return (CC_ERROR);
 	} else {
 		for (cp = el->el_line.cursor; *cp != '\0' &&
