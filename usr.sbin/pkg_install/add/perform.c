@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.63.2.9 2002/11/24 22:34:38 tron Exp $	*/
+/*	$NetBSD: perform.c,v 1.63.2.10 2002/11/24 22:36:37 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.63.2.9 2002/11/24 22:34:38 tron Exp $");
+__RCSID("$NetBSD: perform.c,v 1.63.2.10 2002/11/24 22:36:37 tron Exp $");
 #endif
 #endif
 
@@ -422,7 +422,7 @@ pkg_do(const char *pkg)
 					}
 
 					if (Force) {
-						warnx("Proceeding anyways.");
+						warnx("Proceeding anyway.");
 					} else {	
 						warnx("Please resolve this conflict!");
 						errc = 1;
