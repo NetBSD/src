@@ -78,7 +78,7 @@ enum {
 Software IEC/IEEE floating-point rounding mode.
 -------------------------------------------------------------------------------
 */
-extern int8 float_rounding_mode;
+extern fp_rnd float_rounding_mode;
 enum {
     float_round_nearest_even = FP_RN,
     float_round_to_zero      = FP_RZ,
@@ -91,7 +91,7 @@ enum {
 Software IEC/IEEE floating-point exception flags.
 -------------------------------------------------------------------------------
 */
-extern int8 float_exception_flags;
+extern fp_except float_exception_flags;
 enum {
     float_flag_inexact   = FP_X_IMP,
     float_flag_underflow = FP_X_UFL,
