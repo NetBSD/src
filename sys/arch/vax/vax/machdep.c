@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.113 2001/04/24 04:31:15 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.114 2001/04/30 04:26:19 matt Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -233,6 +233,10 @@ cpu_startup()
 	 */
 
 	bufinit();
+#ifdef DDB
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
 }
 
 long	dumplo = 0;
@@ -301,10 +305,6 @@ consinit()
 #ifdef DEBUG
 	if (sizeof(struct user) > REDZONEADDR)
 		panic("struct user inside red zone");
-#endif
-#ifdef donotworkbyunknownreason
-	if (boothowto & RB_KDB)
-		Debugger();
 #endif
 #endif
 }
