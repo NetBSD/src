@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.5 1997/10/19 03:17:12 lukem Exp $	*/
+/*	$NetBSD: args.c,v 1.6 1998/12/19 17:00:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: args.c,v 1.5 1997/10/19 03:17:12 lukem Exp $");
+__RCSID("$NetBSD: args.c,v 1.6 1998/12/19 17:00:08 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -416,7 +416,7 @@ indent: set_option: internal error: p_special %d\n", p->p_special);
 		break;
 
 	case PRO_INT:
-		if (!isdigit(*param_start)) {
+		if (!isdigit((unsigned char)*param_start)) {
 	need_param:
 			fprintf(stderr, "indent: %s: ``%s'' requires a parameter\n",
 			    option_source, arg - 1);
