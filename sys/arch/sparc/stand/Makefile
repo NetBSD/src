@@ -1,8 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1994/11/20 20:54:49 deraadt Exp $
-
-#	@(#)Makefile	8.1 (Berkeley) 6/10/93
-
-DESTDIR=
+#	$NetBSD: Makefile,v 1.5 1994/11/25 23:09:34 deraadt Exp $
 
 RELOC_SUN4=	240000
 RELOC_SUN4C=	340000
@@ -34,7 +30,7 @@ LIBS=	${LIBSA} ${LIBKERN}
 BOOTS=	boot bootxx
 ALL=	${BOOTS} installboot
 
-all: ${ALL}
+all:	${ALL}
 
 ${BOOTS}: ${LIBS} .NOTMAIN
 
@@ -73,6 +69,4 @@ clean cleandir:
 	rm -f *.o errs make.out
 	rm -f a.out boot cat ls fixhdr
 
-.include <bsd.dep.mk>
-.include <bsd.obj.mk>
-
+.include <bsd.prog.mk>
