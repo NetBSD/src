@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.9 1997/11/21 23:04:38 is Exp $
+#	$NetBSD: install.md,v 1.10 1999/06/29 16:08:10 is Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -138,6 +138,12 @@ md_prep_disklabel() {
 		echo ""
 		echo -n "Available are "${_DKDEVS}". Look at which? [done] "
 	done
+	cat << \__prep_disklabel_1
+
+As a reminder: the 'c' partition is assigned to the whole disk and can't
+normally be used for a any file system!
+
+__prep_disklabel_1
 }
 
 md_labeldisk() {
