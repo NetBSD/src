@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.4 1999/10/19 09:29:46 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.5 1999/10/27 00:48:36 haya Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -426,7 +426,9 @@ pccbbattach(parent, self, aux)
 			 &sockbase, NULL)) {
 	printf("%s: can't map socket base address 0x%lx: io mode\n",
 	       sc->sc_dev.dv_xname, sockbase);
-	return;
+	/* give up... allocate register space via rbus. */
+	sc->sc_base_memh = 0;
+	pci_conf_write(pc, pa->pa_tag, PCI_SOCKBASE, 0);
       }
     } else {
       DPRINTF(("%s: socket base address 0x%lx",sc->sc_dev.dv_xname, sockbase));
