@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.h,v 1.1 2003/10/26 07:56:41 dyoung Exp $ */
+/* $NetBSD: ieee80211_rssadapt.h,v 1.2 2004/03/17 17:00:35 dyoung Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -46,6 +46,18 @@
 #define	ieee80211_rssadapt_avgrssi_new \
     (ieee80211_rssadapt_avgrssi_denom - ieee80211_rssadapt_avgrssi_old)
 
+struct ieee80211_rssadapt_expavgctl {
+	/* RSS threshold decay. */
+	u_int rc_decay_denom;
+	u_int rc_decay_old;
+	/* RSS threshold update. */
+	u_int rc_thresh_denom;
+	u_int rc_thresh_old;
+	/* RSS average update. */
+	u_int rc_avgrssi_denom;
+	u_int rc_avgrssi_old;
+};
+
 struct ieee80211_rssadapt {
 	/* exponential average RSSI << 8 */
 	u_int16_t		ra_avg_rssi;
@@ -80,4 +92,6 @@ void	ieee80211_rssadapt_lower_rate(struct ieee80211com *,
 	    struct ieee80211_rssdesc *);
 void	ieee80211_rssadapt_raise_rate(struct ieee80211com *,
 	    struct ieee80211_rssadapt *, struct ieee80211_rssdesc *);
-
+int	ieee80211_rssadapt_choose(struct ieee80211_rssadapt *,
+	    struct ieee80211_rateset *, struct ieee80211_frame *, u_int, int,
+	    const char *, int);
