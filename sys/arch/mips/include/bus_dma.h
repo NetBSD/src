@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.1 2002/03/18 00:32:21 simonb Exp $ */
+/* $NetBSD: bus_dma.h,v 1.2 2002/03/18 01:01:54 simonb Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@
 
 #include <sys/types.h>
 
+#ifdef _KERNEL
 /*
  * Bus DMA methods.
  */
