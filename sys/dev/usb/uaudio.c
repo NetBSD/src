@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.53 2002/03/17 16:14:22 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.54 2002/03/18 14:06:08 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.53 2002/03/17 16:14:22 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.54 2002/03/18 14:06:08 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,8 +251,9 @@ Static usbd_status	uaudio_chan_alloc_buffers(struct uaudio_softc *,
 						  struct chan *);
 Static void		uaudio_chan_free_buffers(struct uaudio_softc *,
 						 struct chan *);
-Static void		uaudio_chan_set_param(struct chan *ch,
-			    struct audio_params *param, u_char *start, 
+Static void		uaudio_chan_init(struct chan *, int,
+					 const struct audio_params *);
+Static void		uaudio_chan_set_param(struct chan *ch, u_char *start,
 			    u_char *end, int blksize);
 Static void		uaudio_chan_ptransfer(struct chan *ch);
 Static void		uaudio_chan_pintr(usbd_xfer_handle xfer, 
@@ -1521,6 +1522,8 @@ uaudio_round_blocksize(void *addr, int blk)
 	struct uaudio_softc *sc = addr;
 	int bpf;
 
+	DPRINTF(("uaudio_round_blocksize: p.bpf=%d r.bpf=%d\n",
+		sc->sc_playchan.bytes_per_frame, sc->sc_recchan.bytes_per_frame));
 	if (sc->sc_playchan.bytes_per_frame > sc->sc_recchan.bytes_per_frame) {
 		bpf = sc->sc_playchan.bytes_per_frame
 		    + sc->sc_playchan.sample_size;
@@ -1785,7 +1788,7 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	DPRINTFN(3,("uaudio_trigger_input: sc=%p start=%p end=%p "
 		    "blksize=%d\n", sc, start, end, blksize));
 
-	uaudio_chan_set_param(ch, param, start, end, blksize);
+	uaudio_chan_set_param(ch, start, end, blksize);
 	DPRINTFN(3,("uaudio_trigger_input: sample_size=%d bytes/frame=%d "
 		    "fraction=0.%03d\n", ch->sample_size, ch->bytes_per_frame,
 		    ch->fraction));
@@ -1827,7 +1830,7 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	DPRINTFN(3,("uaudio_trigger_output: sc=%p start=%p end=%p "
 		    "blksize=%d\n", sc, start, end, blksize));
 
-	uaudio_chan_set_param(ch, param, start, end, blksize);
+	uaudio_chan_set_param(ch, start, end, blksize);
 	DPRINTFN(3,("uaudio_trigger_output: sample_size=%d bytes/frame=%d "
 		    "fraction=0.%03d\n", ch->sample_size, ch->bytes_per_frame,
 		    ch->fraction));
@@ -2154,11 +2157,11 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 void
-uaudio_chan_set_param(struct chan *ch, struct audio_params *param,
-		      u_char *start, u_char *end, int blksize)
+uaudio_chan_init(struct chan *ch, int altidx, const struct audio_params *param)
 {
 	int samples_per_frame, sample_size;
 
+	ch->altidx = altidx;
 	sample_size = param->precision * param->factor * param->hw_channels / 8;
 	samples_per_frame = param->hw_sample_rate / USB_FRAMES_PER_SECOND;
 	ch->fraction = param->hw_sample_rate % USB_FRAMES_PER_SECOND;
@@ -2166,7 +2169,11 @@ uaudio_chan_set_param(struct chan *ch, struct audio_params *param,
 	ch->sample_rate = param->hw_sample_rate;
 	ch->bytes_per_frame = samples_per_frame * sample_size;
 	ch->residue = 0;
+}
 
+void
+uaudio_chan_set_param(struct chan *ch, u_char *start, u_char *end, int blksize)
+{
 	ch->start = start;
 	ch->end = end;
 	ch->cur = start;
@@ -2272,7 +2279,6 @@ uaudio_match_alt_chan(int nalts, const struct as_info *alts,
 	if (i >= 0)
 		return i;
 
-	DPRINTF(("uaudio_match_alt_chan: get min-max rates.\n"));
 	uaudio_get_minmax_rates(nalts, alts, p, mode, &min, &max);
 	DPRINTF(("uaudio_match_alt_chan: min=%lu max=%lu\n", min, max));
 	if (max <= 0)
@@ -2491,13 +2497,13 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 		}
 	}
 
-	if ((usemode & AUMODE_PLAY) && paltidx != sc->sc_playchan.altidx) {
+	if ((usemode & AUMODE_PLAY) /*&& paltidx != sc->sc_playchan.altidx*/) {
 		/* XXX abort transfer if currently happening? */
-		sc->sc_playchan.altidx = paltidx;
+		uaudio_chan_init(&sc->sc_playchan, paltidx, play);
 	}
-	if ((usemode & AUMODE_RECORD) && raltidx != sc->sc_recchan.altidx) {
+	if ((usemode & AUMODE_RECORD) /*&& raltidx != sc->sc_recchan.altidx*/) {
 		/* XXX abort transfer if currently happening? */
-		sc->sc_recchan.altidx = raltidx;
+		uaudio_chan_init(&sc->sc_playchan, raltidx, play);
 	}
 
 	DPRINTF(("uaudio_set_params: use altidx=p%d/r%d, altno=p%d/r%d\n", 
