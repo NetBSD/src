@@ -1,4 +1,4 @@
-/*	$NetBSD: chk.c,v 1.7 1998/07/27 13:50:49 mycroft Exp $	*/
+/*	$NetBSD: chk.c,v 1.8 1998/07/28 05:12:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: chk.c,v 1.7 1998/07/27 13:50:49 mycroft Exp $");
+__RCSID("$NetBSD: chk.c,v 1.8 1998/07/28 05:12:00 mycroft Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1185,7 +1185,7 @@ chkrvu(hte, def)
 		/* function has return value */
 		used = ignored = 0;
 		for (call = hte->h_calls; call != NULL; call = call->f_nxt) {
-			used |= call->f_rused;
+			used |= call->f_rused || call->f_rdisc;
 			ignored |= !call->f_rused && !call->f_rdisc;
 		}
 		/*
