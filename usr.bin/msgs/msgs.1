@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)msgs.1	6.9 (Berkeley) 7/30/91
-.\"	$Id: msgs.1,v 1.3 1993/08/17 20:02:27 jtc Exp $
+.\"	$Id: msgs.1,v 1.4 1994/01/07 16:22:15 mycroft Exp $
 .\"
 .Dd July 30, 1991
 .Dt MSGS 1
@@ -40,7 +40,7 @@
 .Nd system messages and junk mail program
 .Sh SYNOPSIS
 .Nm msgs
-.Op Fl fhlpq
+.Op Fl fhlpqr
 .Op Ar number
 .Op Ar \-number
 .Nm msgs
@@ -95,8 +95,12 @@ A copy of the specified message is placed in a temporary
 mailbox and
 .Xr mail  1
 is invoked on that mailbox.
-Both `m' and `s' accept a numeric argument in place of the `\-'.
+.It Fl p
+The specified message is piped through $PAGER, or, if $PAGER is not defined,
+.Xr more  1  .
 .El
+.Pp
+The commands `m', `p', and `s' all accept a numeric argument in place of the `\-'.
 .Pp
 .Nm Msgs
 keeps track of the next message you will see by a number in the file
@@ -157,6 +161,9 @@ Queries whether there are messages, printing
 The command ``msgs \-q'' is often used in login scripts.
 .It Fl h
 Print the first part of messages only.
+.It Fl r
+Disables the ability to save messages or enter the mailer.  It is
+assumed that $PAGER is set to something secure.
 .It Fl l
 Option causes only locally originated messages to be reported.
 .It Ar num
@@ -179,7 +186,7 @@ messages back from the one indicated in the
 .Pa \&.msgsrc
 file, useful for reviews of recent messages.
 .It Fl p
-Pipe long messages through
+Pipe long messages through $PAGER, or, if $PAGER is not defined,
 .Xr more  1  .
 .El
 .Pp
