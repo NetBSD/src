@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.127 2001/11/20 21:37:50 manu Exp $	*/
+/*	$NetBSD: locore.S,v 1.128 2001/11/26 13:16:17 shin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1114,7 +1114,7 @@ XLEAF(baderr)
 	sw	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	li	v0, -1
-END(fswintrberr)
+END(fswberr)
 
 #if defined(NS) || defined(ISO) || defined(CCITT) || defined(CODA)
 /*
