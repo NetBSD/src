@@ -1,4 +1,4 @@
-/*	$NetBSD: lt_LT.ISO8859-13.src,v 1.1 2003/07/21 17:41:19 tshiozak Exp $	*/
+/*	$NetBSD: lt_LT.ISO8859-13.src,v 1.2 2003/07/23 06:52:32 tshiozak Exp $	*/
 
 /*
  * LOCALE_CTYPE for the iso_8859_13 Locale
@@ -9,9 +9,9 @@
 ENCODING	"NONE"
 VARIABLE        ISO 8859-13 Latin-7 character set, CODESET=ISO8859-13
 
-#
-# This is a comment
-#
+//
+// This is a comment
+//
 ALPHA		'A' - 'Z' 'a' - 'z' 
 ALPHA		0xaa 0xba 0xc0 - 0xd6 0xd8 - 0xde 0xe0 - 0xf6 0xf8 - 0xfe
 CONTROL		0x00 - 0x1f 0x7f - 0x9f
