@@ -1,4 +1,4 @@
-.\" $NetBSD: moused.8,v 1.1 2001/10/29 23:23:42 augustss Exp $
+.\" $NetBSD: moused.8,v 1.2 2001/10/29 23:27:14 wiz Exp $
 .\" Copyright (c) 1996
 .\"	Mike Pritchard <mpp@FreeBSD.org>.  All rights reserved.
 .\"
@@ -398,14 +398,6 @@ command is normally enabled by setting
 .Pa moused=YES
 in
 .Pa /etc/rc.conf .
-.Sh CAVEATS
-Many pad devices behave as if the first (left) button were pressed if
-the user `taps' the surface of the pad.
-In contrast, some ALPS GlidePoint and Interlink VersaPad models
-treat the tapping action
-as fourth button events.
-Use the option ``-m 1=4'' for these models
-to obtain the same effect as the other pad devices.
 .Sh SEE ALSO
 .Xr wsmouse 4 ,
 .Xr wsmux 4
@@ -421,6 +413,13 @@ standard.
 Even with this less strict approach,
 it may not always determine an appropriate protocol type
 for the given serial mouse.
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Fx 2.2
+and
+.Nx 1.6 .
 .Sh AUTHORS
 The
 .Nm
@@ -434,10 +433,10 @@ The
 .Nx
 port was done by
 .An Lennart Augustsson Aq augustss@NetBSD.org .
-.Sh HISTORY
-The
-.Nm
-command first appeared in
-.Fx 2.2
-and
-.Nx 1.6 .
+.Sh BUGS
+Many pad devices behave as if the first (left) button were pressed if
+the user `taps' the surface of the pad.
+In contrast, some ALPS GlidePoint and Interlink VersaPad models
+treat the tapping action as fourth button events.
+Use the option ``-m 1=4'' for these models
+to obtain the same effect as the other pad devices.
