@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_cardbus.c,v 1.2.2.3 2004/08/30 09:54:17 tron Exp $	*/
+/*	$NetBSD: njs_cardbus.c,v 1.2.2.4 2004/08/30 14:08:06 tron Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.2.2.3 2004/08/30 09:54:17 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.2.2.4 2004/08/30 14:08:06 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.2.2.3 2004/08/30 09:54:17 tron Exp
 #include <dev/scsipi/scsiconf.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/pci/pcidevs.h>
+#include <dev/cardbus/cardbusdevs.h>
 
 #include <dev/ic/ninjascsi32reg.h>
 #include <dev/ic/ninjascsi32var.h>
@@ -85,13 +85,13 @@ static const struct njsc32_cardbus_product {
 	njsc32_model_t		p_model;
 	int			p_clk;		/* one of NJSC32_CLK_* */
 } njsc32_cardbus_products[] = {
-	{ PCI_VENDOR_IODATA,	PCI_PRODUCT_IODATA_CBSCII,
+	{ CARDBUS_VENDOR_IODATA,	CARDBUS_PRODUCT_IODATA_CBSCII,
 	  NJSC32_MODEL_32BI,	NJSC32_CLK_40M },
-	{ PCI_VENDOR_WORKBIT,	PCI_PRODUCT_WORKBIT_NJSC32BI,
+	{ CARDBUS_VENDOR_WORKBIT,	CARDBUS_PRODUCT_WORKBIT_NJSC32BI,
 	  NJSC32_MODEL_32BI,	NJSC32_CLK_40M },
-	{ PCI_VENDOR_WORKBIT,	PCI_PRODUCT_WORKBIT_NJSC32UDE,
+	{ CARDBUS_VENDOR_WORKBIT,	CARDBUS_PRODUCT_WORKBIT_NJSC32UDE,
 	  NJSC32_MODEL_32UDE | NJSC32_FLAG_DUALEDGE,	NJSC32_CLK_40M },
-	{ PCI_VENDOR_WORKBIT,	PCI_PRODUCT_WORKBIT_NJSC32BI_KME,
+	{ CARDBUS_VENDOR_WORKBIT,	CARDBUS_PRODUCT_WORKBIT_NJSC32BI_KME,
 	  NJSC32_MODEL_32BI,	NJSC32_CLK_40M },
 
 	{ 0,				0,
