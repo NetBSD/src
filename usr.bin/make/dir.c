@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.13 1997/03/27 17:20:18 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: dir.c,v 1.13 1997/03/27 17:20:18 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -288,8 +288,7 @@ DirFindName (p, dname)
  *	XXX: This code is not 100% correct. ([^]] fails etc.) 
  *	I really don't think that make(1) should be expanding
  *	patterns, because then you have to set a mechanism for
- *	escaping the expansion! Posix does not say that we have
- *	to glob filenames, so this code is conditional to POSIX
+ *	escaping the expansion!
  *
  * Results:
  *	returns TRUE if the word should be expanded, FALSE otherwise
@@ -302,7 +301,6 @@ Boolean
 Dir_HasWildcards (name)
     char          *name;	/* name to check */
 {
-#ifndef POSIX
     register char *cp;
     int wild = 0, brace = 0, bracket = 0;
 
@@ -331,9 +329,6 @@ Dir_HasWildcards (name)
 	}
     }
     return wild && bracket == 0 && brace == 0;
-#else
-    return FALSE;
-#endif
 }
 
 /*-
