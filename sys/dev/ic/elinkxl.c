@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.34 2000/05/29 17:37:13 jhawk Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.34.2.1 2000/09/01 00:54:06 haya Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -218,9 +218,16 @@ ex_config(sc)
 	printf("%s: MAC address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(macaddr));
 
-	if (sc->intr_ack) { /* 3C575BTX specific */
+	if (sc->intr_ack != NULL) { /* CardBus card specific */
 	    GO_WINDOW(2);
-	    bus_space_write_2(sc->sc_iot, ioh, 12, 0x10|bus_space_read_2(sc->sc_iot, ioh, 12));
+	    if (sc->ex_conf & EX_CONF_INV_LED_POLARITY) {
+		    bus_space_write_2(sc->sc_iot, ioh, 12,
+			0x10|bus_space_read_2(sc->sc_iot, ioh, 12));
+	    }
+	    if (sc->ex_conf & EX_CONF_PHY_POWER) {
+		    bus_space_write_2(sc->sc_iot, ioh, 12,
+			0x4000|bus_space_read_2(sc->sc_iot, ioh, 12));
+	    }
 	}
 
 	attach_stage = 0;
@@ -659,6 +666,22 @@ ex_init(sc)
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, RX_ENABLE);
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, ELINK_UPUNSTALL);
 
+	if (sc->ex_conf & (EX_CONF_PHY_POWER | EX_CONF_INV_LED_POLARITY)) {
+		u_int16_t cbcard_config;
+
+		GO_WINDOW(2);
+		cbcard_config = bus_space_read_2(sc->sc_iot, sc->sc_ioh, 0x0c);
+		if (sc->ex_conf & EX_CONF_PHY_POWER) {
+			cbcard_config |= 0x4000; /* turn on PHY power */
+		}
+		if (sc->ex_conf & EX_CONF_INV_LED_POLARITY) {
+			cbcard_config |= 0x0020; /* invert LED polarity */
+		}
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, 0x0c, cbcard_config);
+
+		GO_WINDOW(3);
+	}
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ex_start(ifp);
@@ -774,7 +797,7 @@ ex_set_media(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int config0, config1;
+	u_int32_t configreg;
 
 	if (((sc->ex_conf & EX_CONF_MII) &&
 	    (sc->ex_mii.mii_media_active & IFM_FDX))
@@ -793,16 +816,12 @@ ex_set_media(sc)
 	if (sc->ex_conf & EX_CONF_MII) {
 		GO_WINDOW(3);
 
-		config0 = (u_int)bus_space_read_2(iot, ioh,
-		    ELINK_W3_INTERNAL_CONFIG);
-		config1 = (u_int)bus_space_read_2(iot, ioh,
-		    ELINK_W3_INTERNAL_CONFIG + 2);
+		configreg = bus_space_read_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG);
 
-		config1 = config1 & ~CONFIG_MEDIAMASK;
-		config1 |= (ELINKMEDIA_MII << CONFIG_MEDIAMASK_SHIFT);
+		configreg &= ~(CONFIG_MEDIAMASK << 16);
+		configreg |= (ELINKMEDIA_MII << (CONFIG_MEDIAMASK_SHIFT + 16));
 
-		bus_space_write_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG, config0);
-		bus_space_write_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG + 2, config1);
+		bus_space_write_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG, configreg);
 		mii_mediachg(&sc->ex_mii);
 		return;
 	}
@@ -850,15 +869,13 @@ ex_set_media(sc)
 	}
 
 	GO_WINDOW(3);
-	config0 = (u_int)bus_space_read_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG);
-	config1 = (u_int)bus_space_read_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG + 2);
+	configreg = bus_space_read_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG);
 
-	config1 = config1 & ~CONFIG_MEDIAMASK;
-	config1 |= (sc->ex_mii.mii_media.ifm_cur->ifm_data <<
-	    CONFIG_MEDIAMASK_SHIFT);
+	configreg &= ~(CONFIG_MEDIAMASK << 16);
+	configreg |= (sc->ex_mii.mii_media.ifm_cur->ifm_data <<
+	    (CONFIG_MEDIAMASK_SHIFT + 16));
 
-	bus_space_write_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG, config0);
-	bus_space_write_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG + 2, config1);
+	bus_space_write_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG, configreg);
 }
 
 /*
