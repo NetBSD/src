@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.209 2004/09/23 10:46:44 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.210 2004/10/01 01:08:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.209 2004/09/23 10:46:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.210 2004/10/01 01:08:01 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1560,6 +1560,7 @@ retry:
 			}
 		}
 	}
+nfsmout:
 	if (pageprotected) {
 		/*
 		 * wait until mbufs go away.
@@ -1576,7 +1577,6 @@ retry:
 		splx(s);
 		PRELE(l);
 	}
-nfsmout:
 	*iomode = committed;
 	if (error)
 		uiop->uio_resid = tsiz;
