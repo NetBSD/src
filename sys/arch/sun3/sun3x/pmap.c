@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 1998/07/08 04:43:22 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 1998/12/12 05:25:01 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -129,6 +129,13 @@
 #include <uvm/uvm.h>
 /* XXX - Gratuitous name changes... */
 #define vm_set_page_size uvm_setpagesize
+/* XXX - Pager hacks... (explain?) */
+#define PAGER_SVA (uvm.pager_sva)
+#define PAGER_EVA (uvm.pager_eva)
+#else	/* UVM */
+extern vm_offset_t pager_sva, pager_eva;
+#define PAGER_SVA (pager_sva)
+#define PAGER_EVA (pager_eva)
 #endif	/* UVM */
 
 #include <machine/cpu.h>
@@ -592,9 +599,9 @@ boolean_t   pmap_is_referenced __P((vm_offset_t));
 boolean_t   pmap_is_modified __P((vm_offset_t));
 void   pmap_clear_modify __P((vm_offset_t));
 vm_offset_t pmap_extract __P((pmap_t, vm_offset_t));
-int    pmap_page_index __P((vm_offset_t));
 u_int  pmap_free_pages __P((void));
 #endif /* INCLUDED_IN_PMAP_H */
+int    pmap_page_index __P((vm_offset_t));
 void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
 
@@ -623,7 +630,7 @@ pmap_bootstrap(nextva)
 	struct pmap_physmem_struct *pmap_membank;
 	vm_offset_t va, pa, eva;
 	int b, c, i, j;	/* running table counts */
-	int size;
+	int size, resvmem;
 
 	/*
 	 * This function is called by __bootstrap after it has
@@ -656,63 +663,50 @@ pmap_bootstrap(nextva)
 	 * 1. There is always at least one bank of memory.
 	 * 2. There is always a last bank of memory, and its
 	 *    pmem_next member must be set to NULL.
-	 * XXX - Use: do { ... } while (membank->next) instead?
-	 * XXX - Why copy this stuff at all? -gwr
-	 *     - It is needed in pa2pv().
 	 */
 	membank = romVectorPtr->v_physmemory;
 	pmap_membank = avail_mem;
 	total_phys_mem = 0;
 
-	while (membank->next) {
+	for (;;) { /* break on !membank */
 		pmap_membank->pmem_start = membank->address;
 		pmap_membank->pmem_end = membank->address + membank->size;
 		total_phys_mem += membank->size;
+		membank = membank->next;
+		if (!membank)
+			break;
 		/* This silly syntax arises because pmap_membank
 		 * is really a pre-allocated array, but it is put into
 		 * use as a linked list.
 		 */
 		pmap_membank->pmem_next = pmap_membank + 1;
 		pmap_membank = pmap_membank->pmem_next;
-		membank = membank->next;
 	}
-
-	/*
-	 * XXX The last bank of memory should be reduced to exclude the
-	 * physical pages needed by the PROM monitor from being used
-	 * in the VM system.  XXX - See below - Fix!
-	 */
-	pmap_membank->pmem_start = membank->address;
-	pmap_membank->pmem_end = membank->address + membank->size;
+	/* This is the last element. */
 	pmap_membank->pmem_next = NULL;
 
-#if 0	/* XXX - Need to integrate this! */
 	/*
-	 * The last few pages of physical memory are "owned" by
-	 * the PROM.  The total amount of memory we are allowed
-	 * to use is given by the romvec pointer. -gwr
-	 *
-	 * We should dedicate different variables for 'useable'
-	 * and 'physically available'.  Most users are used to the
-	 * kernel reporting the amount of memory 'physically available'
-	 * as opposed to 'useable by the kernel' at boot time. -j
+	 * Note: total_phys_mem, physmem represent
+	 * actual physical memory, including that
+	 * reserved for the PROM monitor.
 	 */
-	total_phys_mem = *romVectorPtr->memoryAvail;
-#endif	/* XXX */
-
-	total_phys_mem += membank->size;	/* XXX see above */
 	physmem = btoc(total_phys_mem);
+
+	/*
+	 * The last bank of memory should be reduced to prevent the
+	 * physical pages needed by the PROM monitor from being used
+	 * in the VM system.
+	 */
+	resvmem = total_phys_mem - *(romVectorPtr->memoryAvail);
+	resvmem = m68k_round_page(resvmem);
+	pmap_membank->pmem_end -= resvmem;
 
 	/*
 	 * Avail_end is set to the first byte of physical memory
 	 * after the end of the last bank.  We use this only to
 	 * determine if a physical address is "managed" memory.
-	 *
-	 * XXX - The setting of avail_end is a temporary ROM saving hack.
 	 */
-	avail_end = pmap_membank->pmem_end -
-		(total_phys_mem - *romVectorPtr->memoryAvail);
-	avail_end = m68k_trunc_page(avail_end);
+	avail_end = pmap_membank->pmem_end;
 
 	/*
 	 * First allocate enough kernel MMU tables to map all
@@ -972,11 +966,6 @@ pmap_alloc_pv()
 		if (avail_mem[i].pmem_next == NULL)
 			break;
 	}
-#ifdef	PMAP_DEBUG
-	if (total_mem != total_phys_mem)
-		panic("pmap_alloc_pv did not arrive at correct page count");
-#endif
-	
 	pvbase = (pv_t *) pmap_bootstrap_alloc(sizeof(pv_t) *
 		m68k_btop(total_phys_mem));
 }
@@ -2808,13 +2797,20 @@ pmap_page_protect(pa, prot)
 			case VM_PROT_EXECUTE:
 			case VM_PROT_READ:
 			case VM_PROT_READ|VM_PROT_EXECUTE:
-				pte->attr.raw |= MMU_SHORT_PTE_WP;
-
 				/*
 				 * Determine the virtual address mapped by
 				 * the PTE and flush ATC entries if necessary.
 				 */
 				va = pmap_get_pteinfo(idx, &pmap, &c_tbl);
+				/* XXX don't write protect pager mappings */
+				if (va >= PAGER_SVA && va < PAGER_EVA) {
+#ifdef	PMAP_DEBUG
+					/* XXX - Does this actually happen? */
+					printf("pmap_page_protect: in pager!\n");
+					Debugger();
+#endif
+				} else
+					pte->attr.raw |= MMU_SHORT_PTE_WP;
 				if (pmap == curpmap || pmap == pmap_kernel())
 					TBIS(va);
 				break;
