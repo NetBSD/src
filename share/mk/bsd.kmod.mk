@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.63 2003/05/07 22:36:06 fvdl Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.64 2003/07/18 04:04:03 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -60,7 +60,7 @@ ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 .if exists($S/lkm/arch/${MACHINE_ARCH}/lkmhide.awk)
 	${OBJCOPY} \
 		`${NM} tmp.o | awk -f $S/lkm/arch/${MACHINE_ARCH}/lkmhide.awk` \
-		tmp.o tmp1.o 
+		tmp.o tmp1.o
 	mv tmp1.o tmp.o
 .endif
 	mv tmp.o ${.TARGET}

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.45 2003/06/11 18:05:40 wiz Exp $
+#	$NetBSD: bsd.dep.mk,v 1.46 2003/07/18 04:06:18 lukem Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -60,7 +60,7 @@ SRCS_M = ${SRCS:M*.m} ${DPSRCS:M*.m}
 SRCS_X = ${SRCS:M*.C} ${DPSRCS:M*.C} \
          ${SRCS:M*.cc} ${DPSRCS:M*.cc} \
          ${SRCS:M*.cpp} ${DPSRCS:M*.cpp} \
-	 ${SRCS:M*.cxx} ${DPSRCS:M*.cxx} 
+	 ${SRCS:M*.cxx} ${DPSRCS:M*.cxx}
 
 .depend: ${SRCS} ${DPSRCS} \
 	 ${SRCS_S:C/(.*)/\1.dep/g:S/^.dep$//g} \

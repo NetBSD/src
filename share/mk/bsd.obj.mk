@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.40 2002/03/14 18:26:32 thorpej Exp $
+#	$NetBSD: bsd.obj.mk,v 1.41 2003/07/18 04:06:18 lukem Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
@@ -24,7 +24,7 @@ obj:
 	@if [ ! -d ${MAKEOBJDIRPREFIX} ]; then \
 		echo "MAKEOBJDIRPREFIX ${MAKEOBJDIRPREFIX} does not exist, bailing..."; \
 		exit 1; \
-	fi; 
+	fi;
 .endif
 	@if [ ! -d ${__objdir} ]; then \
 		mkdir -p ${__objdir}; \
