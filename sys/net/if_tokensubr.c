@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.8 2000/02/27 03:04:09 soren Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -692,4 +692,12 @@ token_ifattach(ifp, lla)
 		sdl->sdl_alen = ifp->if_addrlen;
 		bcopy(lla, LLADDR(sdl), ifp->if_addrlen);
 	}
+}
+
+void    
+token_ifdetach(ifp)
+        struct ifnet *ifp;
+{
+
+        /* Nothing. */
 }
