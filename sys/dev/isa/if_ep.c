@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.11 1994/01/28 23:44:36 jtc Exp $
+ *	$Id: if_ep.c,v 1.12 1994/02/04 02:06:04 hpeyerl Exp $
  */
 /*
  * TODO:
@@ -303,19 +303,24 @@ epinit(unit)
 	 * you can `ifconfig (link0|-link0) ep0' to get the following
 	 * behaviour:
 	 *	-link0	disable AUI/UTP. enable BNC.
-	 *	link0	disable BNC. enable AUI. if the card has a UTP
-	 *		connector, that is enabled too. not sure, but it
-	 * 		seems you have to be careful to not plug things
-	 *		into both AUI & UTP.
+	 *	link0	disable BNC. enable AUI.
+	 *	link1	if the card has a UTP connector, and link0 is
+	 *		set too, then you get the UTP port.
 	 */
+	GO_WINDOW(4);
+	outw(BASE + EP_W4_MEDIA_TYPE, DISABLE_UTP);
+	GO_WINDOW(1);
 	if (!(ifp->if_flags & IFF_LINK0) && (sc->ep_connectors & BNC)) {
 		outw(BASE + EP_COMMAND, START_TRANSCEIVER);
 		DELAY(1000);
 	}
-	if ((ifp->if_flags & IFF_LINK0) && (sc->ep_connectors & UTP)) {
-		GO_WINDOW(4);
-		outw(BASE + EP_W4_MEDIA_TYPE, ENABLE_UTP);
-		GO_WINDOW(1);
+	if (ifp->if_flags & IFF_LINK0) {
+		outw(BASE + EP_COMMAND, STOP_TRANSCEIVER);
+		if((ifp->if_flags & IFF_LINK1) && (sc->ep_connectors & UTP)) {
+			GO_WINDOW(4);
+			outw(BASE + EP_W4_MEDIA_TYPE, ENABLE_UTP);
+			GO_WINDOW(1);
+		}
 	}
 
 	outw(BASE + EP_COMMAND, RX_ENABLE);
