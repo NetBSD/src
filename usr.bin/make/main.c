@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.58 2000/12/30 02:05:21 sommerfeld Exp $	*/
+/*	$NetBSD: main.c,v 1.59 2000/12/30 02:52:03 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.58 2000/12/30 02:05:21 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.59 2000/12/30 02:52:03 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.58 2000/12/30 02:05:21 sommerfeld Exp $");
+__RCSID("$NetBSD: main.c,v 1.59 2000/12/30 02:52:03 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -240,7 +240,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			Var_Append(MAKEFLAGS, "-S", VAR_GLOBAL);
 			break;
 		case 'T':
-			tracefile = optarg;
+			tracefile = estrdup(optarg);
 			Var_Append(MAKEFLAGS, "-T", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
