@@ -1,4 +1,4 @@
-/*	$NetBSD: snmp.c,v 1.10 2003/03/05 21:12:26 wiz Exp $	*/
+/*	$NetBSD: snmp.c,v 1.11 2003/05/16 18:10:38 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 2001 Xerox Corporation.  All rights reserved.
@@ -216,7 +216,8 @@ o_scalar(vp, name, length, exact, var_len, write_method)
     case dvmrpVersion: {
        static char buff[15];
 
-       sprintf(buff, "mrouted%d.%d", PROTOCOL_VERSION, MROUTED_VERSION);
+       snprintf(buff, sizeof(buff), "mrouted%d.%d", PROTOCOL_VERSION,
+	       MROUTED_VERSION);
        *var_len = strlen(buff);
        return (u_char *)buff;
     }
@@ -498,7 +499,7 @@ o_dvmrpNeighborTable(vp, name, length, exact, var_len, write_method)
    case dvmrpNeighborVersion: {
        static char buff[15];
 
-       sprintf(buff, "%d.%d", neighbor->al_pv, neighbor->al_mv);
+       snprintf(buff, sizeof(buff), "%d.%d", neighbor->al_pv, neighbor->al_mv);
        *var_len = strlen(buff);
        return (u_char *)buff;
    }

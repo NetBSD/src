@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.c,v 1.12 2003/03/05 21:05:41 wiz Exp $	*/
+/*	$NetBSD: vif.c,v 1.13 2003/05/16 18:10:38 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -40,7 +40,7 @@ static void start_vif2(vifi_t vifi);
 static void stop_vif(vifi_t vifi);
 static void age_old_hosts(void);
 static void send_probe_on_vif(struct uvif *v);
-static int info_version(char *p);
+static int info_version(char *p, size_t);
 static void DelVif(void *arg);
 static int SetTimer(vifi_t vifi, struct listaddr *g);
 static int DeleteTimer(int id);
@@ -108,11 +108,11 @@ init_vifs(void)
 	    if (!(v->uv_flags & VIFF_DOWN)) {
 		if (v->uv_flags & VIFF_TUNNEL)
 		    logit(LOG_INFO, 0, "vif #%d, tunnel %s -> %s", vifi,
-				inet_fmt(v->uv_lcl_addr, s1),
-				inet_fmt(v->uv_rmt_addr, s2));
+				inet_fmt(v->uv_lcl_addr, s1, sizeof(s1)),
+				inet_fmt(v->uv_rmt_addr, s2, sizeof(s2)));
 		else
 		    logit(LOG_INFO, 0, "vif #%d, phyint %s", vifi,
-				inet_fmt(v->uv_lcl_addr, s1));
+				inet_fmt(v->uv_lcl_addr, s1, sizeof(s1)));
 		start_vif2(vifi);
 	    } else logit(LOG_INFO, 0,
 		     "%s is not yet up; vif #%u not in service",
@@ -137,11 +137,11 @@ init_installvifs(void)
 	    if (!(v->uv_flags & VIFF_DOWN)) {
 		if (v->uv_flags & VIFF_TUNNEL)
 		    logit(LOG_INFO, 0, "vif #%d, tunnel %s -> %s", vifi,
-				inet_fmt(v->uv_lcl_addr, s1),
-				inet_fmt(v->uv_rmt_addr, s2));
+				inet_fmt(v->uv_lcl_addr, s1, sizeof(s1)),
+				inet_fmt(v->uv_rmt_addr, s2, sizeof(s2)));
 		else
 		    logit(LOG_INFO, 0, "vif #%d, phyint %s", vifi,
-				inet_fmt(v->uv_lcl_addr, s1));
+				inet_fmt(v->uv_lcl_addr, s1, sizeof(s1)));
 		k_add_vif(vifi, &uvifs[vifi]);
 	    } else logit(LOG_INFO, 0,
 		     "%s is not yet up; vif #%u not in service",
@@ -504,7 +504,7 @@ accept_membership_query(u_int32_t src, u_int32_t dst, u_int32_t group, int tmo)
 	(uvifs[vifi].uv_flags & VIFF_TUNNEL)) {
 	logit(LOG_INFO, 0,
 	    "ignoring group membership query from non-adjacent host %s",
-	    inet_fmt(src, s1));
+	    inet_fmt(src, s1, sizeof(s1)));
 	return;
     }
 
@@ -541,7 +541,7 @@ accept_group_report(u_int32_t src, u_int32_t dst, u_int32_t group, int r_type)
 	(uvifs[vifi].uv_flags & VIFF_TUNNEL)) {
 	logit(LOG_INFO, 0,
 	    "ignoring group membership report from non-adjacent host %s",
-	    inet_fmt(src, s1));
+	    inet_fmt(src, s1, sizeof(s1)));
 	return;
     }
 
@@ -615,7 +615,7 @@ accept_leave_message(u_int32_t src, u_int32_t dst, u_int32_t group)
 	(uvifs[vifi].uv_flags & VIFF_TUNNEL)) {
 	logit(LOG_INFO, 0,
 	    "ignoring group leave report from non-adjacent host %s",
-	    inet_fmt(src, s1));
+	    inet_fmt(src, s1, sizeof(s1)));
 	return;
     }
 
@@ -901,7 +901,8 @@ accept_info_request(u_int32_t src, u_int32_t dst, u_char *p, int datalen)
 	len = 0;
 	switch (*p) {
 	    case DVMRP_INFO_VERSION:
-		len = info_version(q);
+		len = info_version(q,
+		    send_buflen - MIN_IP_HEADER_LEN - IGMP_MINLEN);
 		break;
 
 	    case DVMRP_INFO_NEIGHBORS:
@@ -926,16 +927,18 @@ accept_info_request(u_int32_t src, u_int32_t dst, u_char *p, int datalen)
  * Information response -- return version string
  */
 static int
-info_version(char *p)
+info_version(char *p, size_t l)
 {
     int len;
     extern char versionstring[];
 
-    *p++ = DVMRP_INFO_VERSION;
-    p++;	/* skip over length */
-    *p++ = 0;	/* zero out */
-    *p++ = 0;	/* reserved fields */
-    strcpy(p, versionstring);	/* XXX strncpy!!! */
+    if (l < 4 + strlen(versionstring) + 1)
+       return -1;
+    p[0] = DVMRP_INFO_VERSION;
+    /* skip over length */
+    p[2] = 0;	/* zero out */
+    p[3] = 0;	/* reserved fields */
+    strlcpy(p + 4, versionstring, l - 4);	/* XXX strncpy!!! */
 
     len = strlen(versionstring);
     return ((len + 3) / 4);
@@ -949,7 +952,7 @@ accept_neighbors(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 		 u_int32_t level)
 {
     logit(LOG_INFO, 0, "ignoring spurious DVMRP neighbor list from %s to %s",
-	inet_fmt(src, s1), inet_fmt(dst, s2));
+	inet_fmt(src, s1, sizeof(s1)), inet_fmt(dst, s2, sizeof(s2)));
 }
 
 
@@ -961,7 +964,7 @@ accept_neighbors2(u_int32_t src, u_int32_t dst, u_char *p, int datalen,
 		  u_int32_t level)
 {
     logit(LOG_INFO, 0, "ignoring spurious DVMRP neighbor list2 from %s to %s",
-	inet_fmt(src, s1), inet_fmt(dst, s2));
+	inet_fmt(src, s1, sizeof(s1)), inet_fmt(dst, s2, sizeof(s2)));
 }
 
 /*
@@ -971,7 +974,7 @@ void
 accept_info_reply(u_int32_t src, u_int32_t dst, u_char *p, int datalen)
 {
     logit(LOG_INFO, 0, "ignoring spurious DVMRP info reply from %s to %s",
-	inet_fmt(src, s1), inet_fmt(dst, s2));
+	inet_fmt(src, s1, sizeof(s1)), inet_fmt(dst, s2, sizeof(s2)));
 }
 
 
@@ -1010,7 +1013,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p, int datalen, 
 	 addr == v->uv_subnet )) {
 	logit(LOG_WARNING, 0,
 	    "received DVMRP message from 'the unknown host' or self: %s",
-	    inet_fmt(addr, s1));
+	    inet_fmt(addr, s1, sizeof(s1)));
 	return (FALSE);
     }
 
@@ -1040,7 +1043,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p, int datalen, 
 	    do_reset = TRUE;
 	    logit(LOG_DEBUG, 0,
 		"version change neighbor %s [old:%d.%d, new:%d.%d]",
-		inet_fmt(addr, s1),
+		inet_fmt(addr, s1, sizeof(s1)),
 		n->al_pv, n->al_mv, level&0xff, (level >> 8) & 0xff);
 	    
 	    n->al_pv = level & 0xff;
@@ -1052,8 +1055,8 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p, int datalen, 
 	 * IP address than me, yield querier duties to it.
 	 */
 	logit(LOG_DEBUG, 0, "New neighbor %s on vif %d v%d.%d nf 0x%02x",
-	    inet_fmt(addr, s1), vifi, level & 0xff, (level >> 8) & 0xff,
-	    (level >> 16) & 0xff);
+	    inet_fmt(addr, s1, sizeof(s1)), vifi,
+	    level & 0xff, (level >> 8) & 0xff, (level >> 16) & 0xff);
 
 	n = (struct listaddr *)malloc(sizeof(struct listaddr));
 	if (n == NULL)
@@ -1105,7 +1108,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p, int datalen, 
 	    if (datalen < 4) {
 		logit(LOG_WARNING, 0,
 		    "received truncated probe message from %s (len %d)",
-		    inet_fmt(addr, s1), datalen);
+		    inet_fmt(addr, s1, sizeof(s1)), datalen);
 		return (FALSE);
 	    }
 
@@ -1118,7 +1121,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p, int datalen, 
 	    else if (n->al_genid != genid) {
 		logit(LOG_DEBUG, 0,
 		    "new genid neigbor %s on vif %d [old:%x, new:%x]",
-		    inet_fmt(addr, s1), vifi, n->al_genid, genid);
+		    inet_fmt(addr, s1, sizeof(s1)), vifi, n->al_genid, genid);
 
 		n->al_genid = genid;
 		do_reset = TRUE;
@@ -1134,7 +1137,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p, int datalen, 
 		if (datalen < 4) {
 		    logit(LOG_WARNING, 0,
 			"received truncated probe message from %s (len %d)",
-			inet_fmt(addr, s1), datalen);
+			inet_fmt(addr, s1, sizeof(s1)), datalen);
 		    return (FALSE);
 		}
 		for (i = 0; i < 4; i++)
@@ -1278,13 +1281,13 @@ dump_vifs(FILE *fp)
 	fprintf(fp, "%2u %6s  %-15s %6s: %-18s %2u %3u  %5u  ",
 		vifi,
 		v->uv_name,
-		inet_fmt(v->uv_lcl_addr, s1),
+		inet_fmt(v->uv_lcl_addr, s1, sizeof(s1)),
 		(v->uv_flags & VIFF_TUNNEL) ?
 			"tunnel":
 			"subnet",
 		(v->uv_flags & VIFF_TUNNEL) ?
-			inet_fmt(v->uv_rmt_addr, s2) :
-			inet_fmts(v->uv_subnet, v->uv_subnetmask, s3),
+			inet_fmt(v->uv_rmt_addr, s2, sizeof(s2)) :
+			inet_fmts(v->uv_subnet, v->uv_subnetmask, s3, sizeof(s3)),
 		v->uv_metric,
 		v->uv_threshold,
 		v->uv_rate_limit);
@@ -1300,41 +1303,45 @@ dump_vifs(FILE *fp)
 
 	if (v->uv_addrs != NULL) {
 	    fprintf(fp, "                alternate subnets: %s\n",
-		    inet_fmts(v->uv_addrs->pa_subnet, v->uv_addrs->pa_subnetmask, s1));
+		    inet_fmts(v->uv_addrs->pa_subnet,
+		    v->uv_addrs->pa_subnetmask, s1, sizeof(s1)));
 	    for (p = v->uv_addrs->pa_next; p; p = p->pa_next) {
 		fprintf(fp, "                                   %s\n",
-			inet_fmts(p->pa_subnet, p->pa_subnetmask, s1));
+			inet_fmts(p->pa_subnet, p->pa_subnetmask, s1,
+			sizeof(s1)));
 	    }
 	}
 
 	if (v->uv_neighbors != NULL) {
 	    fprintf(fp, "                            peers: %s (%d.%d) (0x%x)\n",
-		    inet_fmt(v->uv_neighbors->al_addr, s1),
+		    inet_fmt(v->uv_neighbors->al_addr, s1, sizeof(s1)),
 		    v->uv_neighbors->al_pv, v->uv_neighbors->al_mv,
 		    v->uv_neighbors->al_flags);
 	    for (a = v->uv_neighbors->al_next; a != NULL; a = a->al_next) {
 		fprintf(fp, "                                   %s (%d.%d) (0x%x)\n",
-			inet_fmt(a->al_addr, s1), a->al_pv, a->al_mv,
-			a->al_flags);
+			inet_fmt(a->al_addr, s1, sizeof(s1)), a->al_pv,
+			a->al_mv, a->al_flags);
 	    }
 	}
 
 	if (v->uv_groups != NULL) {
 	    fprintf(fp, "                           groups: %-15s\n",
-		    inet_fmt(v->uv_groups->al_addr, s1));
+		    inet_fmt(v->uv_groups->al_addr, s1, sizeof(s1)));
 	    for (a = v->uv_groups->al_next; a != NULL; a = a->al_next) {
 		fprintf(fp, "                                   %-15s\n",
-			inet_fmt(a->al_addr, s1));
+			inet_fmt(a->al_addr, s1, sizeof(s1)));
 	    }
 	}
 	if (v->uv_acl != NULL) {
 	    struct vif_acl *acl;
 
 	    fprintf(fp, "                       boundaries: %-18s\n",
-		    inet_fmts(v->uv_acl->acl_addr, v->uv_acl->acl_mask, s1));
+		    inet_fmts(v->uv_acl->acl_addr, v->uv_acl->acl_mask, s1,
+		    sizeof(s1)));
 	    for (acl = v->uv_acl->acl_next; acl != NULL; acl = acl->acl_next) {
 		fprintf(fp, "                                 : %-18s\n",
-			inet_fmts(acl->acl_addr, acl->acl_mask, s1));
+			inet_fmts(acl->acl_addr, acl->acl_mask, s1,
+			sizeof(s1)));
 	    }
 	}
 	v_req.vifi = vifi;

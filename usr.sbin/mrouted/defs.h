@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.11 2003/03/05 21:05:38 wiz Exp $	*/
+/*	$NetBSD: defs.h,v 1.12 2003/05/16 18:10:38 itojun Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -101,6 +101,7 @@ typedef void (*ihfunc_t)(int, fd_set *);
 #define RECV_BUF_SIZE 8192
 extern char		*recv_buf;
 extern char		*send_buf;
+extern size_t		send_buflen;
 extern int		igmp_socket;
 #ifdef RSRR
 extern int              rsrr_socket;
@@ -125,10 +126,10 @@ extern int		vifs_down;
 extern int		udp_socket;
 extern int		vifs_with_neighbors;
 
-extern char		s1[];
-extern char		s2[];
-extern char		s3[];
-extern char		s4[];
+extern char		s1[19];
+extern char		s2[19];
+extern char		s3[19];
+extern char		s4[19];
 
 #if !(defined(BSD) && (BSD >= 199103))
 extern int		errno;
@@ -225,8 +226,8 @@ extern void		config_vifs_from_file(void);
 extern int		inet_valid_host(u_int32_t naddr);
 extern int		inet_valid_mask(u_int32_t mask);
 extern int		inet_valid_subnet(u_int32_t nsubnet, u_int32_t nmask);
-extern char *		inet_fmt(u_int32_t addr, char *s);
-extern char *		inet_fmts(u_int32_t addr, u_int32_t mask, char *s);
+extern char *		inet_fmt(u_int32_t addr, char *s, size_t);
+extern char *		inet_fmts(u_int32_t addr, u_int32_t mask, char *s, size_t);
 extern u_int32_t	inet_parse(char *s);
 extern int		inet_cksum(u_short *addr, u_int len);
 
