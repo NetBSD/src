@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -33,8 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)input.h	5.1 (Berkeley) 3/7/91
- *	$Id: input.h,v 1.4 1993/08/01 18:58:27 mycroft Exp $
+ *	@(#)input.h	8.1 (Berkeley) 5/31/93
  */
 
 /* PEOF (the end of file marker) is defined in syntax.h */
@@ -47,6 +46,7 @@
 extern int plinno;
 extern int parsenleft;		/* number of characters left in input buffer */
 extern char *parsenextc;	/* next character in input buffer */
+extern int init_editline;	/* 0 == not setup, 1 == OK, -1 == failed */
 
 
 #ifdef __STDC__
@@ -54,7 +54,7 @@ char *pfgets(char *, int);
 int pgetc(void);
 int preadbuffer(void);
 void pungetc(void);
-void ppushback(char *, int);
+void pushstring(char *, int, void *);
 void setinputfile(char *, int);
 void setinputfd(int, int);
 void setinputstring(char *, int);
@@ -66,12 +66,12 @@ char *pfgets();
 int pgetc();
 int preadbuffer();
 void pungetc();
-void ppushback();
 void setinputfile();
 void setinputfd();
 void setinputstring();
 void popfile();
 void popallfiles();
+void pushstring();
 void closescript();
 #endif
 

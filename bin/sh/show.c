@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -35,8 +35,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)show.c	5.2 (Berkeley) 4/12/91";*/
-static char rcsid[] = "$Id: show.c,v 1.4 1993/08/01 18:58:00 mycroft Exp $";
+static char sccsid[] = "@(#)show.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -353,14 +352,18 @@ opentrace() {
 #ifdef DEBUG
 	if (!debug)
 		return;
+#ifdef not_this_way
 	if ((p = getenv("HOME")) == NULL) {
-		if (getuid() == 0)
+		if (geteuid() == 0)
 			p = "/";
 		else
 			p = "/tmp";
 	}
 	scopy(p, s);
 	strcat(s, "/trace");
+#else
+	scopy("./trace", s);
+#endif /* not_this_way */
 	if ((tracefile = fopen(s, "a")) == NULL) {
 		fprintf(stderr, "Can't open %s\n", s);
 		return;
@@ -371,5 +374,5 @@ opentrace() {
 #endif
 	fputs("\nTracing started.\n", tracefile);
 	fflush(tracefile);
-#endif
+#endif /* DEBUG */
 }

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -33,8 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)exec.h	5.1 (Berkeley) 3/7/91
- *	$Id: exec.h,v 1.4 1993/08/01 18:58:30 mycroft Exp $
+ *	@(#)exec.h	8.1 (Berkeley) 5/31/93
  */
 
 /* values of cmdtype */
@@ -63,7 +62,7 @@ int find_builtin(char *);
 void hashcd(void);
 void changepath(char *);
 void defun(char *, union node *);
-void unsetfunc(char *);
+int unsetfunc(char *);
 #else
 void shellexec();
 char *padvance();
@@ -72,5 +71,5 @@ int find_builtin();
 void hashcd();
 void changepath();
 void defun();
-void unsetfunc();
+int unsetfunc();
 #endif
