@@ -1,4 +1,4 @@
-/* $NetBSD: tramptest.c,v 1.1 2003/12/10 13:24:59 drochner Exp $ */
+/* $NetBSD: tramptest.c,v 1.2 2004/02/19 16:49:43 drochner Exp $ */
 
 #include <stdlib.h>
 #include <signal.h>
@@ -21,8 +21,11 @@ __enable_execute_stack()
 }
 
 void
-buserr(int s)
+buserr(int s, siginfo_t *si, void *ctx)
 {
+
+	if (s != SIGSEGV || si->si_code != SEGV_ACCERR)
+		exit(2);
 
 	exit(0);
 }
@@ -38,6 +41,7 @@ void do_f()
 int
 main()
 {
+	struct sigaction sa;
 
 	void mist()
 	{
@@ -45,7 +49,10 @@ main()
 		return;
 	}
 
-	signal(SIGBUS, buserr);
+	sa.sa_sigaction = buserr;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_SIGINFO;
+	sigaction(SIGSEGV, &sa, 0);
 
 	f = mist;
 	do_f();
