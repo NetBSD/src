@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.15 2002/10/15 18:14:42 junyoung Exp $ */
+/* $NetBSD: vgavar.h,v 1.16 2003/01/27 14:46:11 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -116,6 +116,7 @@ _vga_attr_read(struct vga_handle *vh, int reg)
 static inline void
 _vga_attr_write(struct vga_handle *vh, int reg, u_int8_t val)
 {
+
 	/* reset state */
 	(void) bus_space_read_1(vh->vh_iot, vh->vh_ioh_6845, 10);
 
@@ -132,6 +133,7 @@ _vga_attr_write(struct vga_handle *vh, int reg, u_int8_t val)
 static inline u_int8_t
 _vga_ts_read(struct vga_handle *vh, int reg)
 {
+
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_TS_INDEX, reg);
 	return (bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, VGA_TS_DATA));
 }
@@ -139,6 +141,7 @@ _vga_ts_read(struct vga_handle *vh, int reg)
 static inline void
 _vga_ts_write(struct vga_handle *vh, int reg, u_int8_t val)
 {
+
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_TS_INDEX, reg);
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_TS_DATA, val);
 }
@@ -146,6 +149,7 @@ _vga_ts_write(struct vga_handle *vh, int reg, u_int8_t val)
 static inline u_int8_t
 _vga_gdc_read(struct vga_handle *vh, int reg)
 {
+
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_GDC_INDEX, reg);
 	return (bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, VGA_GDC_DATA));
 }
@@ -153,6 +157,7 @@ _vga_gdc_read(struct vga_handle *vh, int reg)
 static inline void
 _vga_gdc_write(struct vga_handle *vh, int reg, u_int8_t val)
 {
+
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_GDC_INDEX, reg);
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_GDC_DATA, val);
 }
@@ -160,6 +165,7 @@ _vga_gdc_write(struct vga_handle *vh, int reg, u_int8_t val)
 static inline u_int8_t
 _vga_crtc_read(struct vga_handle *vh, int reg)
 {
+
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_CRTC_INDEX, reg);
 	return (bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, VGA_CRTC_DATA));
 }
@@ -167,6 +173,7 @@ _vga_crtc_read(struct vga_handle *vh, int reg)
 static inline void
 _vga_crtc_write(struct vga_handle *vh, int reg, u_int8_t val)
 {
+
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_CRTC_INDEX, reg);
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_CRTC_DATA, val);
 }
