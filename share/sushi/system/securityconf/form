@@ -1,4 +1,4 @@
-# $NetBSD: form,v 1.1 2001/03/06 21:24:12 garbled Exp $
+# $NetBSD: form,v 1.2 2001/08/01 01:31:23 garbled Exp $
 script:script1,check_passwd	Check the passwd file for inconsistancies?
 script:script1,check_group	Check the group file for inconsistancies?
 script:script1,check_rootdotfiles	Check root users for sane $PATH/umask?
@@ -12,6 +12,8 @@ script:script1,check_devices	Check for changes to devices and setuid files?
 script:script1,check_mtree	Check all system binaries?
 script:script1,check_disklabels	Backup disklabels and display changes?
 script:script1,check_changelist	Backup config files and display changes?
-script:script1,run_skeyaudit	Check for expiring S/Keys?
+escript:script2,backup_dir	Directory to backup config files to:
+script:script1,backup_uses_rcs	Backup config files using RCS?
 iscript:2,1,99,script2,max_loginlen	Maximum permitted length of login names:
+iscript:2,1,99,script2,max_grouplen	Maximum permitted length of group names:
 
