@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.7 1997/06/18 15:23:54 christos Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.8 1997/07/08 04:37:11 mikel Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -93,8 +93,8 @@ prtime ()
 	twhen = getwhen(thisC->Cname,relsufix);
 	(void) strcpy (buf,ctime (&twhen));
 	buf[strlen(buf)-1] = '\0';
-	loginfo ("Last update occurred at %s for collection %s",
-		buf,thisC->Cname);
+	loginfo ("Last update occurred at %s for collection %s%s",
+		buf,thisC->Cname,relsufix);
 }
 
 int establishdir (fname)
