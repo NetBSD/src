@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.54 1999/11/28 04:50:41 simonb Exp $
+#	$NetBSD: bsd.README,v 1.55 1999/11/30 16:16:43 sommerfeld Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -89,7 +89,11 @@ MKMAN		If "no", don't build or install the man or catman pages.
 
 MKNLS		If "no", don't build or install the NLS files.
 
-MKOBJ		If "no", don't create objdirs.
+MKOBJ		If "no", don't enable the rule which creates objdirs.
+		"yes" by default.
+
+MKOBJDIRS	If "no", don't create objdirs during a "make build".
+		"no" by default.
 
 MKPIC		If "no", don't build or install shared libraries.
 
