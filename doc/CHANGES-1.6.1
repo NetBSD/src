@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.6 2002/10/02 03:43:03 lukem Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.7 2002/10/03 03:39:04 lukem Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -187,4 +187,17 @@ usr.sbin/lpr/lpd/lpd.c				1.43 (via patch)
 	Set IPV6_V6ONLY socket option on AF_INET6 sockets, to avoid
 	complicated access control issues due to IPv4 mapped address.
 	[itojun, ticket #857]
+
+crypto/dist/kame/racoon/missing/crypto/rijndael/rijndael-api-fst.c 1.2
+
+	Turn on strict alignment #define's, because racoon reliably core
+	dumps on machines which require strict alignment such as sparc64.
+	[elric, ticket #897]
+
+gnu/dist/sendmail/smrsh/smrsh.c			1.9
+
+	More strict checking on command invocation.
+	Refer to http://www.sendmail.org/smrsh.adv.txt.
+	Resolves PR#18516.
+	[itojun, ticket #898]
 
