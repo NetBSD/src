@@ -1,11 +1,11 @@
-# $NetBSD: rsh,v 1.3 2005/02/27 03:40:14 thorpej Exp $
+# $NetBSD: rsh,v 1.4 2005/03/04 15:30:59 christos Exp $
 #
 # PAM configuration for the "rsh" service
 #
 
 # auth
 auth		required	pam_nologin.so		no_warn
-auth		required	pam_rhosts.so		no_warn
+auth		required	pam_rhosts.so		no_warn allow_root
 
 # account
 account		required	pam_unix.so
