@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.1 2003/04/21 00:14:52 fvdl Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.2 2003/04/21 16:52:07 fvdl Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -389,7 +389,7 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		} else
 			first = 0;
 
-		if (xm->xm_mode & PERIPH_CAP_WIDE16)
+		if (xm->xm_mode & (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT))
 			width = MSG_EXT_WDTR_BUS_16_BIT;
 		else
 			width = MSG_EXT_WDTR_BUS_8_BIT;
@@ -399,7 +399,7 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 			width = tinfo->user.width;
 		tinfo->goal.width = width;
 
-		if (!(xm->xm_mode & PERIPH_CAP_SYNC)) {
+		if (!(xm->xm_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT))) {
 			tinfo->goal.period = 0;
 			tinfo->goal.offset = 0;
 			tinfo->goal.ppr_options = 0;
