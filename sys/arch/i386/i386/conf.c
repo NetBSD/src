@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.96 1998/07/12 19:51:57 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.97 1998/07/24 15:40:42 rvb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -206,6 +206,8 @@ cdev_decl(uhid);
 cdev_decl(ugen);
 #include "ulpt.h"
 cdev_decl(ulpt);
+#include "vcfs.h"
+cdev_decl(vc_nb_);
 
 #include "ipfilter.h"
 #include "satlink.h"
@@ -347,6 +349,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NULPT,ulpt),	/* 57: USB printer */
 	cdev_mouse_init(NUMS,ums),	/* 58: USB mouse */
 	cdev_mouse_init(NUKBD,ukbd),	/* 59: USB keyboard */
+	cdev_vc_nb_init(NVCFS,vc_nb_),  /* 60: coda file system psdev */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
