@@ -1,4 +1,4 @@
-.\"	$NetBSD: bha.4,v 1.9 1999/03/16 01:19:15 garbled Exp $
+.\"	$NetBSD: bha.4,v 1.10 1999/12/17 16:23:21 abs Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Cd "bha* at eisa? slot ?"
 .Cd "bha* at pci? dev ? function ?"
 .Cd "scsibus* at bha?"
-.Sh DESCRIPTION
+.Sh HARDWARE
 The
 .Nm bha
 driver supports the following
@@ -43,9 +43,9 @@ driver supports the following
 adapters:
 .Pp
 .Bl -tag -width -offset indent -compact
-.It Tn Buslogic BT-445
-.It Tn Buslogic BT-74x 
-.It Tn Buslogic BT-9[45][68]
+.It Tn Buslogic ISA BT-445
+.It Tn Buslogic EISA BT-74x 
+.It Tn Buslogic PCI BT-9[45][68]
 .El
 .Sh BUGS
 The
