@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.2 1995/02/16 02:33:09 cgd Exp $	*/
+/*	$NetBSD: disk.c,v 1.3 1995/06/28 00:59:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,6 +86,8 @@ diskstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	return (0);
 }
 
+int diskdev;
+
 static inline int
 diskopen(f, ctlr, unit, part)
 	struct open_file *f;
@@ -111,15 +113,13 @@ diskopen(f, ctlr, unit, part)
 	devlen = ret.u.retval;
 
 	ret.bits = prom_open(devname, devlen);
-	if (ret.u.status == 2)
-		return (ENXIO);
-	if (ret.u.status == 3)
+	if (ret.u.status)
 		return (EIO);
 
 	sc = alloc(sizeof(struct disk_softc));
 	f->f_devdata = (void *)sc;
 
-	sc->sc_fd = ret.u.retval;
+	diskdev = sc->sc_fd = ret.u.retval;
 #if 0
 	sc->sc_ctlr = ctlr;
 	sc->sc_unit = unit;
