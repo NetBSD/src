@@ -1,3 +1,5 @@
+/*	$NetBSD: amq_subr.c,v 1.1.1.5 1997/10/26 00:02:34 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq_subr.c,v 1.1.1.4 1997/09/26 16:06:31 christos Exp $
+ * Id: amq_subr.c,v 5.2.2.1 1992/02/09 15:08:18 jsp beta 
  *
  */
 /*

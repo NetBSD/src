@@ -1,3 +1,5 @@
+/*	$NetBSD: amd.c,v 1.1.1.5 1997/10/26 00:02:33 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amd.c,v 1.1.1.4 1997/09/26 16:06:26 christos Exp $
+ * Id: amd.c,v 5.2.2.1 1992/02/09 15:08:15 jsp beta 
  *
  */
 
@@ -63,8 +65,6 @@ char *endian = ARCH_ENDIAN;	/* Big or Little endian */
 char *cpu = HOST_CPU;		/* CPU type */
 char *PrimNetName;		/* name of primary network */
 char *PrimNetNum;		/* number of primary network */
-char *SubsNetName;		/* name of subsidiary network */
-char *SubsNetNum;		/* number of subsidiary network */
 
 int foreground = 1;		/* This is the top-level server */
 int immediate_abort;		/* Should close-down unmounts be retried */
@@ -192,31 +192,7 @@ daemon_mode(void)
   /*
    * Dissociate from the controlling terminal
    */
-#ifdef HAVE_SETPGID
-  /*
-   * XXX: does setpgid() work the same as setsid()?
-   * I cannot use setsid here because linux had defined setsid and
-   * setpgid to be the same functions, with two arguments instead of none,
-   * and that causes compile time errors on linux.
-   *
-   * Note: on some systems setpgid(0,0) behaves the same as setsid().
-   * Maybe I should use that instead? -Erez.
-   */
-  setpgid(mypid, mypid);
-#else /* not HAVE_SETPGID */
-  {
-    int t = open("/dev/tty", O_RDWR);
-    if (t < 0) {
-      /* not an error if already no controlling tty */
-      if (errno != ENXIO)
-	plog(XLOG_WARNING, "Could not open controlling tty: %m");
-    } else {
-      if (ioctl(t, TIOCNOTTY, 0) < 0 && errno != ENOTTY)
-	plog(XLOG_WARNING, "Could not disassociate tty (TIOCNOTTY): %m");
-      close(t);
-    }
-  }
-#endif /* not HAVE_SETPGID */
+  amu_release_controlling_tty();
 
   return getppid();
 }
@@ -453,7 +429,7 @@ main(int argc, char *argv[])
   /*
    * Figure out primary network name
    */
-  getwire(&PrimNetName, &PrimNetNum, &SubsNetName, &SubsNetNum);
+  getwire(&PrimNetName, &PrimNetNum);
 
   /*
    * Determine command-line arguments

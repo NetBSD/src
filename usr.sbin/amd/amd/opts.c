@@ -1,3 +1,5 @@
+/*	$NetBSD: opts.c,v 1.1.1.4 1997/10/26 00:03:02 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: opts.c,v 1.1.1.3 1997/09/26 16:07:20 christos Exp $
+ * Id: opts.c,v 5.2.2.4 1992/08/02 10:42:21 jsp Exp 
  *
  */
 
@@ -91,6 +93,7 @@ struct functable {
 /*
  * FORWARD DEFINITSION:
  */
+static int f_in_network(char *);
 static int f_netgrp(char *);
 static int f_exists(char *);
 static int f_false(char *);
@@ -143,10 +146,6 @@ static struct opt opt_fields[] = {
   { S("wire"),		0,				&PrimNetName },
   { S("network"),	0,				&PrimNetName },
   { S("netnumber"),	0,				&PrimNetNum },
-  { S("primnetname"),	0,				&PrimNetName },
-  { S("primnetnum"),	0,				&PrimNetNum },
-  { S("subsnetname"),	0,				&SubsNetName },
-  { S("subsnetnum"),	0,				&SubsNetNum },
   { S("byte"),		0,				&endian },
   { S("os"),		0,				&gopt.op_sys },
   { S("osver"),		0,				&gopt.op_sys_ver },
@@ -171,6 +170,7 @@ static struct opt opt_fields[] = {
 };
 
 static struct functable functable[] = {
+  { "in_network", f_in_network },
   { "netgrp", f_netgrp },
   { "exists", f_exists },
   { "false", f_false },
@@ -632,8 +632,25 @@ strip_selectors(char *opts, char *mapkey)
 
 
 /*****************************************************************************
- *** MONADIC FUNCTIONS:
+ *** MONADIC FUNCTIONS (return 0 if false, 1 if true):                     ***
  *****************************************************************************/
+
+/* test if arg is any of this host's network names or numbers */
+static int
+f_in_network(char *arg)
+{
+  int status;
+
+  if (!arg)
+    return FALSE;
+
+  status = is_network_member(arg);
+#ifdef DEBUG
+  plog(XLOG_USER, "%s is on a local network", arg);
+#endif /* DEBUG */
+  return status;
+}
+
 
 /* test if this host is in netgroup (arg) */
 static int
@@ -647,6 +664,7 @@ f_netgrp(char *arg)
 #endif /* DEBUG */
   return status;
 }
+
 
 /* test if file (arg) exists via lstat */
 static int

@@ -1,3 +1,5 @@
+/*	$NetBSD: mapc.c,v 1.1.1.5 1997/10/26 00:02:45 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mapc.c,v 1.1.1.4 1997/09/26 16:06:52 christos Exp $
+ * Id: mapc.c,v 5.2.2.2 1992/08/02 10:42:21 jsp Exp 
  *
  */
 
