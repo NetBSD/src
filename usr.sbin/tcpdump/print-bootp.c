@@ -1,4 +1,4 @@
-/*	$NetBSD: print-bootp.c,v 1.6.8.1 2000/10/17 19:50:31 tv Exp $	*/
+/*	$NetBSD: print-bootp.c,v 1.6.8.2 2002/06/06 17:10:37 he Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: print-bootp.c,v 1.45 97/06/15 13:20:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-bootp.c,v 1.6.8.1 2000/10/17 19:50:31 tv Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.6.8.2 2002/06/06 17:10:37 he Exp $");
 #endif
 #endif
 
@@ -351,7 +351,7 @@ rfc1048_print(register const u_char *bp, register u_int length)
 				if (c == 'i')
 					printf("%s", ipaddr_string(&ul));
 				else
-					printf("%u", ul);
+					printf("%u", ntohl(ul));
 				bp += sizeof(ul);
 				size -= sizeof(ul);
 				first = 0;
@@ -364,7 +364,7 @@ rfc1048_print(register const u_char *bp, register u_int length)
 				if (!first)
 					putchar(',');
 				memcpy((char *)&us, (char *)bp, sizeof(us));
-				printf("%d", us);
+				printf("%d", ntohs(us));
 				bp += sizeof(us);
 				size -= sizeof(us);
 				first = 0;
