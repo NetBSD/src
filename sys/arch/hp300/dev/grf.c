@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.17 1996/02/24 00:55:07 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.18 1996/09/12 01:22:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,6 +58,8 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/mman.h>
+#include <sys/poll.h>
+#include <sys/conf.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -86,6 +88,9 @@ extern struct emul emul_hpux;
 #define	iteoff(u,f)
 #endif /* NITE > 0 */
 
+/* prototypes for the devsw entry points */
+cdev_decl(grf);
+
 struct	grf_softc grf_softc[NGRF];
 
 /*
@@ -103,6 +108,7 @@ int grfdebug = 0;
 #endif
 
 /*ARGSUSED*/
+int
 grfopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
@@ -152,6 +158,7 @@ grfopen(dev, flags, mode, p)
 }
 
 /*ARGSUSED*/
+int
 grfclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
@@ -179,9 +186,11 @@ grfclose(dev, flags, mode, p)
 }
 
 /*ARGSUSED*/
+int
 grfioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd, flag;
+	u_long cmd;
+	int flag;
 	caddr_t data;
 	struct proc *p;
 {
@@ -234,16 +243,18 @@ grfioctl(dev, cmd, data, flag, p)
 }
 
 /*ARGSUSED*/
-grfselect(dev, rw)
+int
+grfpoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
+	struct proc *p;
 {
-	if (rw == FREAD)
-		return(0);
-	return(1);
+
+	return (events & (POLLOUT | POLLWRNORM));
 }
 
 /*ARGSUSED*/
+int
 grfmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
@@ -321,6 +332,7 @@ grfaddr(sc, off)
 #ifdef COMPAT_HPUX
 
 /*ARGSUSED*/
+int
 hpuxgrfioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	int cmd, flag;
@@ -479,6 +491,7 @@ grflock(gp, block)
 	return(0);
 }
 
+int
 grfunlock(gp)
 	struct grf_data *gp;
 {
@@ -515,6 +528,7 @@ grfunlock(gp)
  * XXX: This may give the wrong result for remote stats of other
  * machines where device 10 exists.
  */
+int
 grfdevno(dev)
 	dev_t dev;
 {
@@ -545,6 +559,7 @@ grfdevno(dev)
 
 #endif	/* COMPAT_HPUX */
 
+int
 grfmap(dev, addrp, p)
 	dev_t dev;
 	caddr_t *addrp;
@@ -601,6 +616,7 @@ grfunmap(dev, addr, p)
 }
 
 #ifdef COMPAT_HPUX
+int
 iommap(dev, addrp)
 	dev_t dev;
 	caddr_t *addrp;
@@ -613,6 +629,7 @@ iommap(dev, addrp)
 	return(EINVAL);
 }
 
+int
 iounmmap(dev, addr)
 	dev_t dev;
 	caddr_t addr;
