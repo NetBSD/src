@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.23 2001/11/22 18:34:31 thorpej Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.24 2001/11/23 19:46:35 thorpej Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -50,7 +50,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <machine/cpus.h>
+#include <arm/cpus.h>
 #include <arm/arm32/katelib.h>
 #include <machine/frame.h>
 
