@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4 2002/07/11 14:09:34 scw Exp $	*/
+/*	$NetBSD: asm.h,v 1.5 2002/07/12 15:42:27 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -86,64 +86,80 @@
  */
 #if __STDC__
 #define _C_LABEL(x)	_ ## x
-#define _ASM_LABEL(x)	_ ## x
 #else
 #define _C_LABEL(x)	_/**/x
-#define _ASM_LABEL(x)	_/**/x
 #endif
+
+#define _ASM_LABEL(x)	x
 
 /* let kernels and others override entrypoint alignment */
 #ifndef _ALIGN_TEXT
-# define _ALIGN_TEXT .align 3
+# define _ALIGN_TEXT .align 5
 #endif
 
-#ifndef _IPL64
-#define	_ENTRY(x)							\
-	.section .text..SHmedia32,"ax"					;\
-	_ALIGN_TEXT							;\
-	.globl x							;\
-	.type x,@function						;\
-	x:
-
-#define	_ASENTRY(x)							\
-	.section .text..SHmedia32,"ax"					;\
-	_ALIGN_TEXT							;\
-	.globl x							;\
-	.type x,@function						;\
-	x:
+/* The text sections for 32 and 64 bit code are different ... */
+#ifndef _LP64
+#define	_TEXT_SECTION	.section .text..SHmedia32,"ax"
 #else
-#define	_ENTRY(x)							\
-	.text								;\
-	_ALIGN_TEXT							;\
-	.globl x							;\
-	.type x,@function						;\
-	x:
-
-#define	_ASENTRY(x)							\
-	.text								;\
-	_ALIGN_TEXT							;\
-	.globl x							;\
-	.type x,@function						;\
-	x:
+#define	_TEXT_SECTION	.text
 #endif
 
+/*
+ * Building block for C-callable entry points
+ */
+#define	_ENTRY(x)							\
+	_TEXT_SECTION							;\
+	_ALIGN_TEXT							;\
+	.globl x							;\
+	.type x,@function						;\
+	x:
+
+/*
+ * Building block for Assembly-callable entry points
+ */
+#define	_ASENTRY(x)							\
+	_TEXT_SECTION							;\
+	_ALIGN_TEXT							;\
+	.globl x							;\
+	x:
+
+/*
+ * When profiling, the following instructions are included in
+ * the function prologue...
+ */
 #ifdef GPROF
 #define	_PROF_PROLOGUE	pta/l	_mcount, tr0; blink tr0, r0
 #else
 #define	_PROF_PROLOGUE
 #endif
 
-#define	ENTRY(y)	_ENTRY(_C_LABEL(y))				;\
-	_PROF_PROLOGUE
-#define	ASENTRY(y)	_ASENTRY(_ASM_LABEL(y))				;\
-	_PROF_PROLOGUE
+/*
+ * C-callable entry point, with profiling enabled.
+ */
+#define	ENTRY(y)		_ENTRY(_C_LABEL(y))			;\
+				_PROF_PROLOGUE
 
+/*
+ * C-callable entry point, without profiling.
+ */
 #define	ENTRY_NOPROFILE(y)	_ENTRY(_C_LABEL(y))
-#define	ASENTRY_NOPROFILE(y)	_ENTRY(_ASM_LABEL(y))
 
-#define	ALTENTRY(name)	.globl _C_LABEL(name)				;\
-	.type _C_LABEL(name),@function					;\
-	_C_LABEL(name):
+/*
+ * Alternative name for a C-callable entry point.
+ */
+#define	ALTENTRY(y)		_ENTRY(_C_LABEL(y))
+
+/*
+ * Profiled entry point, callable only from assembly code
+ */
+#define	ASENTRY(y)		_ASENTRY(_ASM_LABEL(y))			;\
+				_PROF_PROLOGUE
+
+/*
+ * Non-profiled entry point, callable only from assembly code
+ */
+#define	ASENTRY_NOPROFILE(y)	_ASENTRY(_ASM_LABEL(y))
+
 
 /*
  * Global variables
@@ -292,6 +308,7 @@
  *
  * XXX: should really be in <sh5/pte.h>
  */
+#ifdef _KERNEL
 #if SH5_NEFF_BITS == 32
 #define	HASH_TO_PTEG_IDX(r,t)	\
 	shlli	r, 5, t		/* t = r * 32 */	;\
@@ -307,5 +324,6 @@
 #define	LDPTE	ld.q
 #define	STPTE	st.q
 #endif
+#endif	/* _KERNEL */
 
 #endif /* _SH5_ASM_H */

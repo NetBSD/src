@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.1 2002/07/05 13:32:05 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.2 2002/07/12 15:42:29 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -43,9 +43,8 @@
  *
  * ##########
  */
-
-	.section .text..SHmedia32,"ax"
-	.align 3
+	_TEXT_SECTION
+	_ALIGN_TEXT
 
 /******************************************************************************
  *

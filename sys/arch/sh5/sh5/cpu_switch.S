@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.2 2002/07/10 15:49:33 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.3 2002/07/12 15:42:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -43,10 +43,6 @@
  *
  * ##########
  */
-
-	.section .text..SHmedia32,"ax"
-	.align 3
-
 
 /*
  * Helper macro for SAVE_CTX which skips 8 FP register saves if the USR
@@ -223,7 +219,7 @@
  *
  * We don't need to preserve caller-save registers.
  */
-ENTRY(idle)
+ASENTRY_NOPROFILE(idle)
 	/* Deactivate the old process' pmap */
 	getcon	kcr0, r0
 	LDPTR	r0, CI_CURPROC, r2
@@ -288,7 +284,7 @@ Lno_simclockint:
  * XXX: Still needs to be optimised to avoid saving/restoring state if
  *      resuming curproc.
  */
-ENTRY(cpu_switch)
+ENTRY_NOPROFILE(cpu_switch)
 	getcon	kcr0, r0
 	LDPTR	r0, CI_CURPCB, r2	/* Fetch curpcb */
 	LDPTR	r0, CI_CURPROC, r0	/* Fetch curproc */
@@ -301,7 +297,7 @@ ENTRY(cpu_switch)
 	st.l	r0, P_MD_FLAGS, r3	/* Save FP state */
 
 Lsw1:
-	pta/u	_C_LABEL(idle), tr0
+	pta/u	_ASM_LABEL(idle), tr0
 	LEA(_C_LABEL(sched_whichqs), r11)
 	ld.l	r11, 0, r0		/* Fetch sched_whichqs */
 	beq/u	r0, r63, tr0		/* Go to sleep if nobody's around */
