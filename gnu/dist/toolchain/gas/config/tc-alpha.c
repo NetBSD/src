@@ -34,7 +34,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  *
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  *
@@ -2960,8 +2960,10 @@ load_expression (targreg, exp, pbasereg, poffset, explicit_reloc)
 	/* XXX: Disable this .got minimizing optimization so that we can get
 	   better instruction offset knowledge in the compiler.  This happens
 	   very infrequently anyway.  */
-	if (1 || (!range_signed_32 (addend)
-	    && (alpha_noat_on || targreg == AXP_REG_AT)))
+	/* XXX: This causes addends to be added to ELF_LITERALs, which
+	   do not yet work.  Reverted for NetBSD. */
+	if (!range_signed_32 (addend)
+	    && (alpha_noat_on || targreg == AXP_REG_AT))
 	  {
 	    newtok[1] = *exp;
 	    addend = 0;
@@ -5610,11 +5612,7 @@ alpha_align (n, pfill, label, force)
       if (n > 2
 	  && (bfd_get_section_flags (stdoutput, now_seg) & SEC_CODE) != 0)
 	{
-	  static char const unop[4] = { 0x00, 0x00, 0xe0, 0x2f };
-	  static char const nopunop[8] = {
-		0x1f, 0x04, 0xff, 0x47,
-		0x00, 0x00, 0xe0, 0x2f
-	  };
+	  static char const nop[4] = { 0x1f, 0x04, 0xff, 0x47 };
 
 	  /* First, make sure we're on a four-byte boundary, in case
 	     someone has been putting .byte values into the text
@@ -5623,10 +5621,7 @@ alpha_align (n, pfill, label, force)
 	     with proper alignment.  */
 	  if (alpha_current_align < 2)
 	    frag_align (2, 0, 0);
-	  if (alpha_current_align < 3)
-	    frag_align_pattern (3, unop, sizeof unop, 0);
-	  if (n > 3)
-	    frag_align_pattern (n, nopunop, sizeof nopunop, 0);
+	  frag_align_pattern (n, nop, sizeof nop, 0);
 	}
       else
 	frag_align (n, 0, 0);
