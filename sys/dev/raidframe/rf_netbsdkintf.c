@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.24 1999/08/10 22:46:59 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.25 1999/08/13 03:27:46 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1816,14 +1816,6 @@ InitBP(
 }
 /* Extras... */
 
-unsigned int 
-rpcc()
-{
-	/* XXX no clue what this is supposed to do.. my guess is that it's
-	 * supposed to read the CPU cycle counter... */
-	/* db1_printf("this is supposed to do something useful too!??\n"); */
-	return (0);
-}
 #if 0
 int 
 rf_GetSpareTableFromDaemon(req)
