@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/09/22 01:08:42 ross Exp $
+#	$NetBSD: Makefile,v 1.2 1998/09/25 00:33:53 ross Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -40,6 +40,9 @@ CLEANFILES+=	netbsd
 
 all:	netbsd
 	dd if=/dev/zero of=${IMAGE} count=2880
+	@ls -l netbsd | (read mode links uid gid size junk;	\
+		bytes=$$((2880 * 512 - $$size - 8192));		\
+		echo There are $$bytes \($$(($$bytes / 1024))K\) bytes free.)
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	tar cvf - ${SECONDARYBOOT} netbsd | dd bs=8k seek=1 of=${VND_CDEV}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
