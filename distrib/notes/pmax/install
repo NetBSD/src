@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.18.2.2 1999/06/25 20:43:17 perry Exp $	
+.\"	$NetBSD: install,v 1.18.2.3 1999/10/20 22:58:07 he Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -283,7 +283,8 @@ Here's an example for a Unix system running bootpd:
 myhost.mydom.com:\e
 	 :ht=ethernet:ha=08002b123456:\e
 	 :ip=192.168.1.2:sm=255.255.255.0:\e
-	 :sa=192.168.1.1:bf=install:
+	 :sa=192.168.1.1:bf=install:\e
+	 :rp=/usr/export/pmax:
 .Ed
 And here's an example for a Unix system running the ISC dhcpd:
 .Bd -literal -offset indent
@@ -295,6 +296,7 @@ host pmax {
 	option domain-name-servers 192.168.1.1;
 	option broadcast-address 255.255.255.0;
 	option domain-name "my.domain";
+	option root-path "/usr/export/pmax";
 }
 .Ed
 .Pp
