@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_util.c,v 1.5.2.5 1993/11/26 22:56:31 mycroft Exp $
+ *	$Id: isofs_util.c,v 1.5.2.6 1993/11/26 22:58:38 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -186,7 +186,7 @@ isofncmp(fn, fnlen, isofn, isolen)
  * translate a filename
  */
 void
-isofntrans(infn, infnlen, outfn, outfnlen, original, assoc);
+isofntrans(infn, infnlen, outfn, outfnlen, original, assoc)
 	unsigned char *infn, *outfn;
 	int infnlen;
 	unsigned short *outfnlen;
