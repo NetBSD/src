@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.34 2004/06/24 19:42:27 martin Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.35 2004/07/01 14:57:46 heas Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -50,7 +50,7 @@
 #define	ASI_PHYS_NON_CACHED		0x15	/* [4u] MMU bypass to I/O location */
 
 #define	ASI_AS_IF_USER_PRIMARY_LITTLE	0x18	/* [4u] primary user address space, little endian  */
-#define	ASI_AS_IF_USER_SECONDARY_LITTIE	0x19	/* [4u] secondary user address space, little endian  */
+#define	ASI_AS_IF_USER_SECONDARY_LITTLE	0x19	/* [4u] secondary user address space, little endian  */
 
 #define	ASI_PHYS_CACHED_LITTLE		0x1c	/* [4u] MMU bypass to main memory, little endian */
 #define	ASI_PHYS_NON_CACHED_LITTLE	0x1d	/* [4u] MMU bypass to I/O location, little endian */
