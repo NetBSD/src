@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.72 2001/10/18 16:08:24 lukem Exp $
+#	$NetBSD: security,v 1.73 2001/11/09 09:01:20 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -843,7 +843,7 @@ for file in $special_files; do
 	mtree -D -k type -f $file -I nodiff |
 	    sed '/^type=file/!d ; s/type=file \.//'
 done >> $TMP1
-sort -u $TMP1 > $TMP2
+grep -v '^$' $TMP1 | sort -u > $TMP2
 
 while read file; do
 	backup_and_diff "$file" no
@@ -851,7 +851,7 @@ done < $TMP2
 
 
 if [ -n "$CHANGELIST" ]; then
-	cat $CHANGELIST | sort -u > $TMP1
+	grep -h -v '^$' $CHANGELIST | sort -u > $TMP1
 	comm -23 $TMP1 $TMP2 | while read file; do
 		backup_and_diff "$file" yes
 	done
