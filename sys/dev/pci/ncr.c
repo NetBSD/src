@@ -1,8 +1,8 @@
-/*	$NetBSD: ncr.c,v 1.17 1995/10/01 20:51:34 mycroft Exp $	*/
+/*	$NetBSD: ncr.c,v 1.18 1995/10/02 16:48:36 mycroft Exp $	*/
 
 /**************************************************************************
 **
-**  $Id: ncr.c,v 1.17 1995/10/01 20:51:34 mycroft Exp $
+**  $Id: ncr.c,v 1.18 1995/10/02 16:48:36 mycroft Exp $
 **
 **  Device driver for the   NCR 53C810   PCI-SCSI-Controller.
 **
@@ -1246,7 +1246,7 @@ void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$Id: ncr.c,v 1.17 1995/10/01 20:51:34 mycroft Exp $\n";
+	"\n$Id: ncr.c,v 1.18 1995/10/02 16:48:36 mycroft Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
@@ -3105,30 +3105,15 @@ void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 **	Reduce the transfer length to the max value
 **	we can transfer safely.
 **
-**      Reading a block greater then MAX_SIZE from the
-**	raw (character) device exercises a memory leak
-**	in the vm subsystem. This is common to ALL devices.
-**	We have submitted a description of this bug to
-**	<FreeBSD-bugs@freefall.cdrom.com>.
-**	It should be fixed in the current release.
-**
 **----------------------------------------------------------
 */
 
-#ifndef __NetBSD__
-void ncr_minphys (struct  buf *bp)
+void ncr_minphys (struct buf *bp)
 {
 	if (bp->b_bcount > MAX_SIZE)
 		bp->b_bcount = MAX_SIZE;
-}
-#else
-void ncr_minphys (struct buf *bp)
-{
-	if(bp->b_bcount > MAX_SIZE)
-		bp->b_bcount = MAX_SIZE;
 	minphys(bp);
 }
-#endif
 
 /*----------------------------------------------------------
 **
