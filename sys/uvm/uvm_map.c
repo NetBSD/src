@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.70 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.71 2000/04/10 02:21:26 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2784,7 +2784,7 @@ uvmspace_exec(p)
 	vm_map_t map = &ovm->vm_map;
 	int s;
 
-#ifdef sparc
+#ifdef __sparc__
 	/* XXX cgd 960926: the sparc #ifdef should be a MD hook */
 	kill_user_windows(p);   /* before stack addresses go away */
 #endif
@@ -3269,21 +3269,35 @@ uvm_object_printit(uobj, full, pr)
 	struct vm_page *pg;
 	int cnt = 0;
 
-	(*pr)("OBJECT %p: pgops=%p, npages=%d, ", uobj, uobj->pgops,
-	    uobj->uo_npages);
+	(*pr)("OBJECT %p: locked=%d, pgops=%p, npages=%d, ",
+	    uobj, uobj->vmobjlock.lock_data, uobj->pgops, uobj->uo_npages);
 	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
 		(*pr)("refs=<SYSTEM>\n");
 	else
 		(*pr)("refs=%d\n", uobj->uo_refs);
 
-	if (!full) return;
-	(*pr)("  PAGES <pg,offset>:\n  ");
-	for (pg = uobj->memq.tqh_first ; pg ; pg = pg->listq.tqe_next, cnt++) {
-		(*pr)("<%p,0x%lx> ", pg, pg->offset);
-		if ((cnt % 3) == 2) (*pr)("\n  ");
+	if (!full) {
+		return;
 	}
-	if ((cnt % 3) != 2) (*pr)("\n");
+	(*pr)("  PAGES <pg,offset>:\n  ");
+	for (pg = TAILQ_FIRST(&uobj->memq);
+	     pg != NULL;
+	     pg = TAILQ_NEXT(pg, listq), cnt++) {
+		(*pr)("<%p,0x%lx> ", pg, pg->offset);
+		if ((cnt % 3) == 2) {
+			(*pr)("\n  ");
+		}
+	}
+	if ((cnt % 3) != 2) {
+		(*pr)("\n");
+	}
 } 
+
+const char page_flagbits[] =
+	"\20\4CLEAN\5BUSY\6WANTED\7TABLED\12FAKE\13FILLED\14DIRTY\15RELEASED"
+	"\16FAULTING\17CLEANCHK";
+const char page_pqflagbits[] =
+	"\20\1FREE\2INACTIVE\3ACTIVE\4LAUNDRY\5ANON\6AOBJ";
 
 /*
  * uvm_page_print: print out a page
@@ -3311,12 +3325,16 @@ uvm_page_printit(pg, full, pr)
 	struct vm_page *lcv;
 	struct uvm_object *uobj;
 	struct pglist *pgl;
+	char pgbuf[128];
+	char pqbuf[128];
 
 	(*pr)("PAGE %p:\n", pg);
-	(*pr)("  flags=0x%x, pqflags=0x%x, vers=%d, wire_count=%d, pa=0x%lx\n", 
-	pg->flags, pg->pqflags, pg->version, pg->wire_count, (long)pg->phys_addr);
+	bitmask_snprintf(pg->flags, page_flagbits, pgbuf, sizeof(pgbuf));
+	bitmask_snprintf(pg->pqflags, page_pqflagbits, pqbuf, sizeof(pqbuf));
+	(*pr)("  flags=%s, pqflags=%s, vers=%d, wire_count=%d, pa=0x%lx\n",
+	    pgbuf, pqbuf, pg->version, pg->wire_count, (long)pg->phys_addr);
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%lx loan_count=%d\n", 
-	pg->uobject, pg->uanon, pg->offset, pg->loan_count);
+	    pg->uobject, pg->uanon, pg->offset, pg->loan_count);
 #if defined(UVM_PAGE_TRKOWN)
 	if (pg->flags & PG_BUSY)
 		(*pr)("  owning process = %d, tag=%s\n",
