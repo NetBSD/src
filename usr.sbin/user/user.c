@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.10.2.4 2000/07/05 21:08:32 he Exp $ */
+/* $NetBSD: user.c,v 1.10.2.5 2000/09/12 22:12:06 he Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 __COPYRIGHT(
 	"@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.10.2.4 2000/07/05 21:08:32 he Exp $");
+__RCSID("$NetBSD: user.c,v 1.10.2.5 2000/09/12 22:12:06 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -705,8 +705,10 @@ adduser(char *login, user_t *up)
 		(void) pw_abort();
 		errx(EXIT_FAILURE, "already a `%s' user", login);
 	}
-	/* if home directory hasn't been given, make it up */
-	if (!up->u_homeset) {
+	if (up->u_homeset) {
+		(void) strlcpy(home, up->u_home, sizeof(home));
+	} else {
+		/* if home directory hasn't been given, make it up */
 		(void) snprintf(home, sizeof(home), "%s/%s", up->u_basedir, login);
 	}
 	expire = 0;
