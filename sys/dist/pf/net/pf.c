@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.2 2004/06/22 14:17:07 itojun Exp $	*/
+/*	$NetBSD: pf.c,v 1.3 2004/06/22 18:37:49 martin Exp $	*/
 /*	$OpenBSD: pf.c,v 1.433 2004/03/26 22:20:57 dhartmei Exp $ */
 
 /*
@@ -684,7 +684,7 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *state)
 			    betoh64(state->id), ntohl(state->creatorid));
 #else
 			printf("pf: state insert failed: "
-			    "id: %016llx creatorid: %08x",
+			    "id: %016" PRIx64 " creatorid: %08x",
 			    be64toh(state->id), ntohl(state->creatorid));
 #endif
 			if (state->sync_flags & PFSTATE_FROMSYNC)
@@ -2237,7 +2237,7 @@ pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, struct pf_pdesc *pd)
 	u_int16_t		 sport, dport;
 	struct inpcbtable	*tb;
 	struct inpcb		*inp = NULL;
-#ifdef __NetBSD__
+#if defined(__NetBSD__) && defined(INET6)
 	struct in6pcb		*in6p = NULL;
 #endif
 
