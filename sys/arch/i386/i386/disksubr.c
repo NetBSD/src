@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.38 1999/01/27 20:54:56 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.39 1999/01/27 21:20:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -45,9 +45,6 @@
 
 #define	b_cylin	b_resid
 
-#define MBRSIGOFS 0x1fe
-static char mbrsig[2] = {0x55, 0xaa};
-
 int fat_types[] = { MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
 		    MBR_PTYPE_FAT16B, MBR_PTYPE_FAT32,
 		    MBR_PTYPE_FAT32L, MBR_PTYPE_FAT16L,
@@ -65,16 +62,18 @@ mbr_findslice __P((struct mbr_partition* dp, struct buf *bp));
  * partition is found, return a pointer to it; else return  NULL.
  */
 static
-struct mbr_partition*
+struct mbr_partition *
 mbr_findslice(dp, bp)
 	struct mbr_partition *dp;
 	struct buf *bp;
 {
 	struct mbr_partition *ourdp = NULL;
+	u_int16_t *mbrmagicp;
 	int i;
 
-	/* XXX "there has to be a better check than this." */
-	if (memcmp(bp->b_data + MBRSIGOFS, mbrsig, sizeof(mbrsig)))
+	/* Note: Magic number is little-endian. */
+	mbrmagicp = (u_int16_t *)(bp->b_data + MBR_MAGICOFF);
+	if (*mbrmagicp != MBR_MAGIC)
 		return (NO_MBR_SIGNATURE);
 
 	/* XXX how do we check veracity/bounds of this? */
