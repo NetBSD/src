@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.95 2000/01/28 17:19:36 bouyer Exp $
+.\"	$NetBSD: options.4,v 1.96 2000/02/12 18:14:37 thorpej Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1230,23 +1230,36 @@ for exact default information.
 Increase this value if you get
 .Dq mb_map full
 messages.
-.It Cd options NKMEMCLUSTERS=value
+.It Cd options NKMEMPAGES=value
+.It Cd options NKMEMPAGES_MIN=value
+.It Cd options NKMEMPAGES_MAX=value
 Size of kernel VM map
 .Em kmem_map ,
-in NBPG-sized chunks (the VM page size; this value may be read
+in PAGE_SIZE-sized chunks (the VM page size; this value may be read
 from the
 .Xr sysctl 8
 variable
 .Em hw.pagesize
 ).
 This VM map is used to map the kernel malloc arena.
+The kernel attempts to auto-size this map based on the amount of
+physical memory in the system.  Platform-specific code may place
+bounds on this computed size, which may be viewed with the
+.Xr sysctl 8
+variable
+.Em vm.nkmempages .
 See
 .Pa /usr/include/machine/param.h
-for the default value, which is port specific.
-Increase this value if you get
+for the default upper and lower bounds.
+The related options
+.Sq NKMEMPAGES_MIN
+and
+.Sq NKMEMPAGES_MAX
+allow the bounds to be overridden in the kernel configuration file.
+These options are provided in the event the computed value is
+insufficient resulting in an
 .Dq out of space in kmem_map
-panics.
-.\" , which mean you have run out of mallocable kernel memory.
+panic.
 .It Cd options BUFCACHE=value
 Size of the buffer cache as a percentage of total available
 .Tn RAM .
