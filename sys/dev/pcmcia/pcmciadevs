@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.93 2000/06/13 02:18:00 soren Exp $
+$NetBSD: pcmciadevs,v 1.94 2000/06/30 16:33:17 joda Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@ product ADAPTEC APA1460		0x0001 Adaptec APA-1460 SlimSCSI
 product ADAPTEC APA1460A	0x0002 Adaptec APA-1460A SlimSCSI
 
 /* 3COM Products */
+product 3COM 3CRWE737A		0x0001 3Com AirConnect Wireless LAN
 product 3COM 3C1		0x0cf1 3Com Megahertz 3C1 10Mbps LAN CF+ Card
 product 3COM 3C562		0x0562 3Com 3c562 33.6 Modem/10Mbps Ethernet
 product 3COM 3C589		0x0589 3Com 3c589 10Mbps Ethernet
