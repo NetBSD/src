@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.25 2002/09/23 12:44:34 mycroft Exp $	*/
+/*	$NetBSD: apmd.c,v 1.26 2003/06/24 09:41:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -558,7 +558,8 @@ do_etc_file(const char *file)
 	return;
     case 0:
 	/* We are the child. */
-	execl(file, prog, NULL);
+	if (execl(file, prog, NULL) == -1)
+		syslog(LOG_ERR, "could not execute \"%s\": %m", file);
 	_exit(1);
 	/* NOTREACHED */
     default:
