@@ -91,7 +91,7 @@ main(argc, argv)
 		  case '?':
 		  default:
   usage:
-			fputs("usage: mailstats [-C cffile] [-f stfile]\n", stderr);
+			fputs("usage: mailstats [-C cffile] [-f stfile] [-o]\n", stderr);
 			exit(EX_USAGE);
 		}
 	}
