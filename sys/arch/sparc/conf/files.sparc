@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.115 2002/08/24 05:26:56 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.116 2002/08/25 16:10:35 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -84,7 +84,10 @@ device timer
 attach timer at mainbus with timer_mainbus
 attach timer at obio with timer_obio
 attach timer at msiiep with timer_msiiep
-file	arch/sparc/sparc/timer.c		timer
+file	arch/sparc/sparc/timer.c		timer & !msiiep
+file	arch/sparc/sparc/timer_sun4.c		timer & (sun4 | sun4c)
+file	arch/sparc/sparc/timer_sun4m.c		timer & sun4m & !msiiep
+file	arch/sparc/sparc/timer_msiiep.c		timer & msiiep
 
 device eeprom
 attach eeprom at obio
