@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,17 +29,17 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)statfs.2	6.5 (Berkeley) 7/23/91
-.\"	$Id: statfs.2,v 1.7 1994/04/25 18:47:04 cgd Exp $
+.\"	from: @(#)statfs.2	8.3 (Berkeley) 2/11/94
+.\"	$Id: statfs.2,v 1.8 1994/08/26 12:55:25 mycroft Exp $
 .\"
-.Dd July 23, 1991
+.Dd February 11, 1994
 .Dt STATFS 2
 .Os
 .Sh NAME
 .Nm statfs
 .Nd get file system statistics
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
+.Fd #include <sys/param.h>
 .Fd #include <sys/mount.h>
 .Ft int
 .Fn statfs "const char *path" "struct statfs *buf"
@@ -63,8 +63,8 @@ typedef struct { long val[2]; } fsid_t;
 struct statfs {
 	short	f_type;		  /* type of filesystem (unused; zero) */
 	short	f_flags;	  /* copy of mount flags */
-	long	f_fsize;	  /* fundamental file system block size */
-	long	f_bsize;	  /* optimal transfer block size */
+	long	f_bsize;	  /* fundamental file system block size */
+	long	f_iosize;	  /* optimal transfer block size */
 	long	f_blocks;	  /* total data blocks in file system */
 	long	f_bfree;	  /* free blocks in fs */
 	long	f_bavail;	  /* free blocks avail to non-superuser */
@@ -127,7 +127,7 @@ error occurred while reading from or writing to the file system.
 .El
 .Pp
 .Fn Fstatfs
-fails if one or both of the following are true:
+fails if one or more of the following are true:
 .Bl -tag -width Er
 .It Bq Er EBADF
 .Fa Fd
@@ -143,5 +143,4 @@ error occurred while reading from or writing to the file system.
 .Sh HISTORY
 The
 .Fn statfs
-function call is
-.Ud .
+function first appeared in 4.4BSD.
