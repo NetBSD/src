@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.3 1997/10/13 10:24:21 veego Exp $	*/
+/*	$NetBSD: rnd.h,v 1.4 1997/10/13 18:34:29 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Michael Graff <explorer@flame.org>.  This code is derived from the
- * random driver written by Ted Tyso.
+ * random driver written by Ted Ts'o.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
