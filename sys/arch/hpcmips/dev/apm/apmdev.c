@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.4 2000/12/29 08:12:09 sato Exp $ */
+/*	$NetBSD: apmdev.c,v 1.5 2001/01/24 09:29:25 sato Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -189,6 +189,8 @@ int	apm_standbys, apm_userstandbys, apm_suspends, apm_battlow;
 int	apm_damn_fool_bios, apm_op_inprog;
 int	apm_evindex;
 
+static int apm_spl;		/* saved spl while suspended */
+
 static const char *
 apm_strerror(code)
 	int code;
@@ -323,6 +325,11 @@ apm_suspend(sc)
 	}
 	sc->sc_power_state = PWR_SUSPEND;
 
+	dopowerhooks(PWR_SOFTSUSPEND);
+	(void) tsleep(sc, PWAIT, "apmsuspend",  hz/2);
+
+	apm_spl = splhigh();
+
 	dopowerhooks(PWR_SUSPEND);
 
 	/* XXX cgd */
@@ -343,8 +350,12 @@ apm_standby(sc)
 	}
 	sc->sc_power_state = PWR_STANDBY;
 
-	dopowerhooks(PWR_STANDBY);
+	dopowerhooks(PWR_SOFTSTANDBY);
+	(void) tsleep(sc, PWAIT, "apmstandby",  hz/2);
 
+	apm_spl = splhigh();
+
+	dopowerhooks(PWR_STANDBY);
 	/* XXX cgd */
 	(void)sc->ops->set_powstate(sc->cookie, APM_DEV_ALLDEVS, APM_SYS_STANDBY);
 }
@@ -373,6 +384,11 @@ apm_resume(sc, event_type, event_info)
 
 	inittodr(time.tv_sec);
 	dopowerhooks(PWR_RESUME);
+
+	splx(apm_spl);
+
+	dopowerhooks(PWR_SOFTRESUME);
+
 	apm_record_event(sc, event_type);
 }
 
