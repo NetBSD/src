@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.75 2004/01/14 09:35:33 agc Exp $ */
+/* $NetBSD: user.c,v 1.76 2004/07/02 12:01:00 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.75 2004/01/14 09:35:33 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.76 2004/07/02 12:01:00 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -898,6 +898,7 @@ typedef struct passwd_type_t {
 } passwd_type_t;
 
 static passwd_type_t	passwd_types[] = {
+	{ "$sha1",	5,	28,	"\\$[^$]+\\$[^$]+\\$[^$]+\\$(.*)", 1 },	/* SHA1 */
 	{ "$2a",	3,	54,	"\\$[^$]+\\$[^$]+\\$(.*)",	1 },	/* Blowfish */
 	{ "$1",		2,	34,	NULL,				0 },	/* MD5 */
 	{ "",		0,	DES_Len,NULL,				0 },	/* standard DES */
