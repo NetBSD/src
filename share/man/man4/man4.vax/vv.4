@@ -1,4 +1,4 @@
-.\"	$NetBSD: vv.4,v 1.9 2001/08/18 14:37:50 wiz Exp $
+.\"	$NetBSD: vv.4,v 1.10 2002/01/15 02:11:48 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -112,7 +112,7 @@ token will be recreated.
 The hardware indicated an error
 in reading a packet off the ring.
 .Pp
-.It en%d: can't handle af%d.
+.It vv%d: can't handle af%d.
 The interface was handed
 a message with addresses formatted in an unsuitable address
 family; the packet was dropped.
@@ -124,8 +124,8 @@ an immediate
 .Em panic: vs_olen .
 .El
 .Sh SEE ALSO
-.Xr netintro 4 ,
-.Xr inet 4
+.Xr inet 4 ,
+.Xr netintro 4
 .Sh HISTORY
 The
 .Nm
