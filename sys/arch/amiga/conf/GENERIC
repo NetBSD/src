@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.111 1998/11/25 20:30:45 hwr Exp $
+#	$NetBSD: GENERIC,v 1.112 1998/11/28 12:19:44 is Exp $
 
 #
 # GENERIC AMIGA
@@ -209,7 +209,7 @@ mfcs1		at mfc0 unit 1		# MFC serial
 #mfcp1		at mfc1 unit 0
 
 hyper*		at zbus?		# zbus HyperCom3 + HyperCom4
-hyper*		at mainbus0		# HyperCom1 + HyperCom3
+#hyper*		at mainbus0		# not yet: HyperCom1 + HyperCom3
 com*		at hyper? port ?	# Hypercom3/4 serial ports
 #lpt*		at hyper? port ?	# not yet: Hypercom3 parallel port
 
