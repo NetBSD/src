@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.45 1997/04/06 23:03:02 cgd Exp $
+# $NetBSD: ALPHA,v 1.46 1997/04/06 23:11:22 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -56,6 +56,7 @@ options		INET		# Internet protocol suite
 options		NS		# Xerox NS protocol suite
 options		ISO,TPIP,EON	# ISO protocol suite
 options		CCITT,LLC,HDLC	# CCITT protocol suite
+options		NETATALK	# AppleTalk networking protocols
 #options	GATEWAY		# packet forwarding and more mbuf space
 options		PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options		PPP_DEFLATE	# Deflate compression support for PPP
