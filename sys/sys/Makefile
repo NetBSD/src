@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 2003/10/26 20:48:17 kleink Exp $
+#	$NetBSD: Makefile,v 1.62 2003/11/18 23:00:04 lukem Exp $
 
 INCSDIR= /usr/include/sys
 
@@ -42,5 +42,7 @@ INCSYMLINKS=\
 	sys/sha1.h /usr/include/sha1.h \
 	sys/md4.h /usr/include/md4.h \
 	sys/md5.h /usr/include/md5.h
+
+INCSYMLINKS+=	../soundcard.h ${INCSDIR}/soundcard.h
 
 .include <bsd.kinc.mk>
