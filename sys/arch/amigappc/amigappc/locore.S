@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.10 2003/12/04 13:05:15 keihan Exp $   */
+/*      $NetBSD: locore.S,v 1.11 2004/01/04 20:19:15 jdolecek Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -314,10 +314,10 @@ ENTRY(switchexit)
 	stw	6,_C_LABEL(curpcb)@l(7)
 	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
 	/*
-	 * Schedule the vmspace and stack to be freed (the proc arg is
+	 * Schedule the stack to be freed (the lwp arg is
 	 * already in r3).
 	 */
-	bl	_C_LABEL(exit2)
+	bl	_C_LABEL(lwp_exit2)
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
