@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.18 1999/04/18 19:40:06 ws Exp $	 */
+/*	$NetBSD: rtld.c,v 1.19 1999/05/31 14:48:16 kleink Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -392,6 +392,14 @@ _rtld(sp)
 	*_rtld_objtail = _rtld_objmain;
 	_rtld_objtail = &_rtld_objmain->next;
 	++_rtld_objmain->refcount;
+
+	/*
+	 * Pre-load user-specified objects after the main program but before
+	 * any shared object dependencies.
+	 */
+	dbg(("preloading objects"));
+	if (_rtld_trust && _rtld_preload(getenv("LD_PRELOAD"), true) == -1)
+		_rtld_die();
 
 	dbg(("loading needed objects"));
 	if (_rtld_load_needed_objects(_rtld_objmain) == -1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.3 1999/03/01 16:40:07 christos Exp $	 */
+/*	$NetBSD: load.c,v 1.4 1999/05/31 14:48:16 kleink Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -142,3 +142,28 @@ _rtld_load_needed_objects(first)
 
 	return status;
 }
+
+#ifdef RTLD_LOADER
+int
+_rtld_preload(preload_path, dodebug)
+	const char *preload_path;
+	bool dodebug;
+{
+	const char *path;
+	char *cp, *buf;
+	int status = 0;
+
+	if (preload_path != NULL) {
+		cp = buf = xstrdup(preload_path);
+		while ((path = strsep(&cp, " ")) != NULL && status == 0) {
+			if (_rtld_load_object(xstrdup(path), dodebug) == NULL)
+				status = -1;
+			else if (dodebug)
+				dbg((" preloaded \"%s\"", path));
+		}
+		free(buf);
+	}
+
+	return (status);
+}
+#endif
