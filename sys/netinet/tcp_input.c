@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.176 2003/08/21 14:49:49 jonathan Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.177 2003/08/22 20:20:11 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.176 2003/08/21 14:49:49 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.177 2003/08/22 20:20:11 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3638,6 +3638,7 @@ syn_cache_respond(sc, m)
 #ifdef INET6
 	struct ip6_hdr *ip6 = NULL;
 #endif
+	struct tcpcb *tp;
 	struct tcphdr *th;
 	u_int hlen;
 
@@ -3690,7 +3691,6 @@ syn_cache_respond(sc, m)
 	m->m_len = m->m_pkthdr.len = tlen;
 #ifdef IPSEC
 	if (sc->sc_tp) {
-		struct tcpcb *tp;
 		struct socket *so;
 
 		tp = sc->sc_tp;
@@ -3808,12 +3808,16 @@ syn_cache_respond(sc, m)
 #endif
 	}
 
+	/* XXX use IPsec policy on listening socket, on SYN ACK */
+	tp = sc->sc_tp;
+
 	switch (sc->sc_src.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
 		error = ip_output(m, sc->sc_ipopts, ro,
 		    (ip_mtudisc ? IP_MTUDISC : 0), 
-		    (struct ip_moptions *)0, (struct inpcb *)0);
+		    (struct ip_moptions *)0,
+		    (struct inpcb *)0 /* XXX tp->t_in6pcb */);
 		break;
 #endif
 #ifdef INET6
@@ -3821,8 +3825,9 @@ syn_cache_respond(sc, m)
 		ip6->ip6_hlim = in6_selecthlim(NULL,
 				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
 
-		error = ip6_output(m, NULL /*XXX*/, (struct route_in6 *)ro,
-			0, NULL, NULL);
+		error = ip6_output(m, NULL /*XXX*/, (struct route_in6 *)ro, 0,
+			(struct ip6_moptions *)0,
+		        (tp == NULL ? NULL : tp->t_in6pcb), NULL);
 		break;
 #endif
 	default:

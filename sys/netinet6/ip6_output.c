@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.62 2003/08/07 16:33:28 agc Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.63 2003/08/22 20:20:09 jonathan Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.62 2003/08/07 16:33:28 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.63 2003/08/22 20:20:09 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -139,12 +139,13 @@ extern struct ifnet loif[NLOOP];
  * which is rt_rmx.rmx_mtu.
  */
 int
-ip6_output(m0, opt, ro, flags, im6o, ifpp)
+ip6_output(m0, opt, ro, flags, im6o, in6pcb, ifpp)
 	struct mbuf *m0;
 	struct ip6_pktopts *opt;
 	struct route_in6 *ro;
 	int flags;
 	struct ip6_moptions *im6o;
+	struct in6pcb *in6pcb;
 	struct ifnet **ifpp;		/* XXX: just for statistics */
 {
 	struct ip6_hdr *ip6, *mhip6;
@@ -168,7 +169,8 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	struct secpolicy *sp = NULL;
 
 	/* for AH processing. stupid to have "socket" variable in IP layer... */
-	so = ipsec_getsocket(m);
+	/* so = ipsec_getsocket(m); */
+	so = in6pcb->in6p_socket;
 	(void)ipsec_setsocket(m, NULL);
 	ip6 = mtod(m, struct ip6_hdr *);
 #endif /* IPSEC */

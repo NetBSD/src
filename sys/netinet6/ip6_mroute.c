@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.53 2003/08/07 16:33:27 agc Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.54 2003/08/22 20:20:09 jonathan Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.53 2003/08/07 16:33:27 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.54 2003/08/22 20:20:09 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1548,8 +1548,8 @@ phyint_send(ip6, mifp, m)
 		/* XXX: ip6_output will override ip6->ip6_hlim */
 		im6o.im6o_multicast_hlim = ip6->ip6_hlim;
 		im6o.im6o_multicast_loop = 1;
-		error = ip6_output(mb_copy, NULL, &ro,
-				   IPV6_FORWARDING, &im6o, NULL);
+		error = ip6_output(mb_copy, NULL, &ro, IPV6_FORWARDING,
+				   &im6o, (struct in6pcb *)0, NULL);
 
 #ifdef MRT6DEBUG
 		if (mrt6debug & DEBUG_XMIT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.98 2003/08/15 03:42:04 jonathan Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.99 2003/08/22 20:20:11 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.98 2003/08/15 03:42:04 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.99 2003/08/22 20:20:11 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1187,7 +1187,8 @@ send:
 		else
 			opts = NULL;
 		error = ip6_output(m, opts, (struct route_in6 *)ro,
-			so->so_options & SO_DONTROUTE, 0, NULL);
+			so->so_options & SO_DONTROUTE, 
+			(struct ip6_moptions *)0, sotoin6pcb(so), NULL);
 		break;
 	    }
 #endif
