@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32.2.1 1997/11/08 15:12:44 lukem Exp $
+#	$NetBSD: Makefile,v 1.32.2.2 1997/11/10 05:50:06 thorpej Exp $
 #
 #  NetBSD Makefile
 #
