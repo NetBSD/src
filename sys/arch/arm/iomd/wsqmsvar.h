@@ -1,4 +1,4 @@
-/* $NetBSD: wsqmsvar.h,v 1.3 2002/06/19 23:05:07 bjh21 Exp $ */
+/* $NetBSD: wsqmsvar.h,v 1.4 2002/06/19 23:49:14 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -46,7 +46,7 @@
 /* softc structure for the wsqms device */
 
 struct wsqms_softc {
-	struct device  sc_device;
+	struct device  sc_dev;
 	struct device *sc_wsmousedev;
 
 	bus_space_tag_t sc_iot;		/* bus tag */
@@ -55,9 +55,6 @@ struct wsqms_softc {
 
 	struct callout sc_callout;
 
-#define WSQMS_ENABLED 0x01
-	int sc_flags;
-
 	int lastx;
 	int lasty;
 	int lastb;
@@ -65,7 +62,7 @@ struct wsqms_softc {
 
 
 /* function prototypes */
-extern void wsqms_attach(struct wsqms_softc *sc, struct device *);
+extern void wsqms_attach(struct wsqms_softc *sc);
 
 
 /* End of wsqmsvar.h */

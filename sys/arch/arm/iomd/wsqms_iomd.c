@@ -1,4 +1,4 @@
-/*	$NetBSD: wsqms_iomd.c,v 1.4 2002/06/19 23:12:14 bjh21 Exp $	*/
+/*	$NetBSD: wsqms_iomd.c,v 1.5 2002/06/19 23:49:14 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -41,6 +41,9 @@
 
 
 #include <sys/param.h>
+
+__KERNEL_RCSID(0, "$NetBSD: wsqms_iomd.c,v 1.5 2002/06/19 23:49:14 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/types.h>
@@ -68,7 +71,7 @@ wsqms_iomd_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct qms_attach_args *qa = aux;
 
-	if (strcmp(qa->qa_name, "wsqms") == 0)
+	if (strcmp(qa->qa_name, "qms") == 0)
 		return(1);
 
 	return(0);
@@ -85,7 +88,7 @@ wsqms_iomd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ioh = qa->qa_ioh;
 	sc->sc_butioh = qa->qa_ioh_but;
 
-	wsqms_attach(sc, self);
+	wsqms_attach(sc);
 }
 
 /* End of wsqms_iomd.c */
