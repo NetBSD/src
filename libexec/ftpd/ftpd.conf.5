@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.1 1999/12/16 01:16:04 lukem Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.2 1999/12/16 06:56:49 lukem Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 13, 1999
+.Dd December 16, 1999
 .Dt FTPD.CONF 5
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ The
 .Nm
 file specifies various configuration options for
 .Xr ftpd 8
-that applies once a user has authenticated their connection.
+that apply once a user has authenticated their connection.
 .Pp
 Each authenticated user is a member of a
 .Sy class ,
@@ -57,7 +57,8 @@ which is determined by
 is used to determine which
 .Nm
 entries apply to the user.
-The following special classes exist:
+The following special classes exist when parsing entries in
+.Nm "" :
 .Bl -tag -width "chroot" -compact -offset indent
 .It Sy all
 Matches any class.
@@ -67,7 +68,7 @@ Matches no class.
 .Pp
 .Nm
 consists of a series of lines, each of which may contain a
-configuration directive, a comment, or be a blank line.
+configuration directive, a comment, or a blank line.
 Directives that appear later in the file override settings by previous
 directives.
 This allows
@@ -117,7 +118,7 @@ to
 .Ar type .
 .Ar type
 may be one of:
-.Bl -tag -width "chroot" -offset indent
+.Bl -tag -width "CHROOT" -offset indent
 .It Sy GUEST
 Guests (as per the
 .Dq anonymous
@@ -128,7 +129,10 @@ A
 .Xr chroot 2
 is performed after login.
 .It Sy CHROOT
-Chroot-ed users (as per
+.Xr chroot 2 ed
+users (as per
+.Xr ftpusers 5
+and
 .Pa /etc/ftpchroot ) .
 A
 .Xr chroot 2
@@ -161,19 +165,20 @@ Valid types are:
 .It Ar disable
 The name of file that will prevent conversion if it exists.
 A filename of
-.Pa \&.
-will prevent this disabling action.
+.Dq Pa \&.
+will prevent this disabling action
+(i.e., the conversion is always permitted.)
 .It Ar command
 The command to run for the conversion.
 The first word should be the full path name
 of the command, as
 .Xr execv 3
 is used to execute the command.
-The first instance of
-.Sq %s
+All instances of the word
+.Dq %s
 in
 .Ar command
-is replaced with the requested file (sans
+are replaced with the requested file (sans
 .Ar suffix ) .
 .El
 .Pp
@@ -190,6 +195,11 @@ disable this.
 Otherwise, each time the user enters a new directory, check if
 .Ar file
 exists, and if so, display its contents to the user.
+Escape sequences are supported; refer to
+.Sx Display file escape sequences
+in 
+.Xr ftpd 8
+for more information.
 .It Sy maxtimeout Ar class Ar time
 Set the maximum timeout period that a client may request,
 defaulting to two hours.
@@ -219,6 +229,11 @@ disable this.
 Otherwise, use
 .Ar file
 as the message of the day file to display after login.
+Escape sequences are supported; refer to
+.Sx Display file escape sequences
+in 
+.Xr ftpd 8
+for more information.
 .It Sy notify Ar class Op Ar fileglob
 If
 .Ar fileglob
