@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2003/07/28 15:25:05 lukem Exp $
+# $NetBSD: Makefile,v 1.21 2003/07/29 01:45:33 lukem Exp $
 
 NOLINT=		# defined
 
@@ -89,8 +89,8 @@ CPPFLAGS+=	-DNO_DLOPEN
 
 ${SRCS:.c=.o}: kadm5_err.h
 
-${DEPENDSRCS}:	kadm5_err.h
-
 CLEANFILES=	kadm5_err.h kadm5_err.c
 
 .include <bsd.lib.mk>
+
+${DEPENDSRCS}:	kadm5_err.h
