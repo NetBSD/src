@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.23.4.7 2000/11/28 18:48:07 tv Exp $
+.\"	$NetBSD: install,v 1.23.4.8 2002/01/05 18:31:38 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -417,7 +417,7 @@ Your client will need a kernel to boot (use
 Your client will need installation tools (use
 .Pa installation/netboot/rootfs.tgz ) .
 .Pp
-.Dl # Ic "gunzip < rootfs.tgz | (cd /export/client/root && tar -xpf -)"
+.Dl # Ic "gunzip \*< rootfs.tgz | (cd /export/client/root && tar -xpf -)"
 .Pp
 Now, netboot your Sparc from the server by entering the appropriate
 .Ic boot command at the monitor prompt.
@@ -457,7 +457,7 @@ Now you can transfer the
 distribution sets from
 .Pq Pa binary/sets
 to the tape by using a series of additional
-.Dl # Ic "dd if=<aset>.tgz of=/dev/nrst0 bs=4k"
+.Dl # Ic "dd if=\*<aset\*>.tgz of=/dev/nrst0 bs=4k"
 commands.  See also the section
 .Sx Getting the NetBSD System on to Useful Media.
 Be sure to mark the location of these files on the tape; you'll need them
@@ -468,7 +468,7 @@ Boot the installer by typing the appropriate command at the PROM prompt:
 .Pp
 .(tag OpenBoot\ PROM\ 2\ (alternate) -offset indent -compact
 .It sunmon
-.Li > Ic "b st()"
+.Li \*> Ic "b st()"
 .It OpenBoot PROM 1
 .Li ok Ic "boot st()"
 .It OpenBoot PROM 2
