@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.15 2000/03/23 06:35:15 thorpej Exp $ */
+/* $NetBSD: sbic.c,v 1.15.4.1 2000/11/03 18:42:09 tv Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -533,11 +533,10 @@ sbic_sched(dev)
 	dev->target = slp->scsipi_scsi.target;
 	dev->lun = slp->scsipi_scsi.lun;
 	if ( flags & XS_CTL_POLL || ( !sbic_parallel_operations
-				   && (/*phase == STATUS_PHASE ||*/
-				       sbicdmaok(dev, xs) == 0) ) )
+				 && (sbicdmaok(dev, xs) == 0) ) )
 		stat = sbicicmd(dev, slp->scsipi_scsi.target, slp->scsipi_scsi.lun, &acb->cmd,
 		    acb->clen, acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
-	else if (sbicgo(dev, xs) == 0) {
+	else if (sbicgo(dev, xs) == 0 && xs->error != XS_SELTIMEOUT) {
 		SBIC_TRACE(dev);
 		return;
 	} else
@@ -722,7 +721,7 @@ sbicdmaok(dev, xs)
 	struct sbic_softc *dev;
 	struct scsipi_xfer *xs;
 {
-	if (sbic_no_dma || xs->datalen & 0x1 || (u_int)xs->data & 0x3)
+	if (sbic_no_dma || !xs->datalen || xs->datalen & 0x1 || (u_int)xs->data & 0x3)
 		return(0);
 	/*
 	 * controller supports dma to any addresses?
