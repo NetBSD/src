@@ -1247,7 +1247,7 @@ update_solib_list (int from_tty, struct target_ops *target)
 		  "Error reading attached process's symbol file.\n",
 		  RETURN_MASK_ALL);
 
-#endif SVR4_SHARED_LIBS
+#endif /* SVR4_SHARED_LIBS */
 
   /* Since this function might actually add some elements to the
      so_list_head list, arrange for it to be cleaned up when
