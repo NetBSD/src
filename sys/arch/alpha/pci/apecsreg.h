@@ -1,7 +1,7 @@
-/*	$NetBSD: apecsreg.h,v 1.1 1995/06/28 01:25:36 cgd Exp $	*/
+/*	$NetBSD: apecsreg.h,v 1.2 1995/08/03 01:17:04 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
