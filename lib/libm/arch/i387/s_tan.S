@@ -5,15 +5,19 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_tan.S,v 1.5 1995/05/09 00:30:00 jtc Exp $")
+#include "abi.h"
+
+RCSID("$NetBSD: s_tan.S,v 1.6 2001/06/19 00:26:31 fvdl Exp $")
 
 ENTRY(tan)
-	fldl	4(%esp)
+	XMM_ONE_ARG_DOUBLE_PROLOGUE
+	fldl	ARG_DOUBLE_ONE
 	fptan
 	fnstsw	%ax
 	andw	$0x400,%ax
 	jnz	1f
 	fstp	%st(0)
+	XMM_DOUBLE_EPILOGUE
 	ret
 1:	fldpi
 	fadd	%st(0)
@@ -25,4 +29,5 @@ ENTRY(tan)
 	fstp	%st(1)
 	fptan
 	fstp	%st(0)
+	XMM_DOUBLE_EPILOGUE
 	ret
