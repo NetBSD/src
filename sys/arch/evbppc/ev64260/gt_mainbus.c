@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.4 2003/03/16 07:07:19 matt Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.5 2003/03/18 14:56:48 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -86,8 +86,6 @@ extern struct cfdriver gt_cd;
 extern bus_space_handle_t gt_memh;
 
 static int gt_found;
-
-vaddr_t gtbase = 0xf8000000;	/* default address */
 
 int
 gt_match(struct device *parent, struct cfdata *cf, void *aux)
