@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.10 2002/10/29 22:22:31 manu Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.11 2002/10/30 15:04:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.10 2002/10/29 22:22:31 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.11 2002/10/30 15:04:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -98,9 +98,9 @@ static void
 exec_macho_print_fat_arch(struct exec_macho_fat_arch *arch) {
 	printf("arch.cputype %x\n", be32toh(arch->cputype));
 	printf("arch.cpusubtype %d\n", be32toh(arch->cpusubtype));
-	printf("arch.offset 0x%lx\n", be32toh(arch->offset));
-	printf("arch.size %ld\n", be32toh(arch->size));
-	printf("arch.align 0x%lx\n", be32toh(arch->align));
+	printf("arch.offset 0x%x\n", be32toh(arch->offset));
+	printf("arch.size %d\n", be32toh(arch->size));
+	printf("arch.align 0x%x\n", be32toh(arch->align));
 }
 
 static void
