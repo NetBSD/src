@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.29 2004/03/13 19:27:40 bjh21 Exp $
+#	$NetBSD: NC_WSCONS,v 1.29.2.1 2004/07/15 20:20:09 he Exp $
 #
 #	NC - with wscons
 #
@@ -108,6 +108,7 @@ options 	IRQSTATS	# manage IRQ statistics
 options 	KMEMSTATS	# kernel memory statistics
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Development and Debugging options
 
