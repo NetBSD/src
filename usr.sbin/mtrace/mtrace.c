@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.8 1997/10/17 11:25:37 lukem Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.9 1998/05/09 17:22:09 kleink Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.8 1997/10/17 11:25:37 lukem Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.9 1998/05/09 17:22:09 kleink Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1720,10 +1720,8 @@ log(severity, syserr, format, va_alist)
 	    vfprintf(stderr, fmt, ap);
 	    if (syserr == 0)
 		fprintf(stderr, "\n");
-	    else if(syserr < sys_nerr)
-		fprintf(stderr, ": %s\n", sys_errlist[syserr]);
 	    else
-		fprintf(stderr, ": errno %d\n", syserr);
+		fprintf(stderr, ": %s\n", strerror(syserr));
     }
     if (severity <= LOG_ERR) exit(-1);
 }

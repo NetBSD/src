@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1998/03/30 02:33:23 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.11 1998/05/09 17:22:08 kleink Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("@(#) $NetBSD: main.c,v 1.10 1998/03/30 02:33:23 mrg Exp $");
+__RCSID("@(#) $NetBSD: main.c,v 1.11 1998/05/09 17:22:08 kleink Exp $");
 #endif
 
 extern char *configfilename;
@@ -713,10 +713,8 @@ log(severity, syserr, format, va_alist)
 	    fprintf(stderr, "%s", msg);
 	    if (syserr == 0)
 		fprintf(stderr, "\n");
-	    else if (syserr < sys_nerr)
-		fprintf(stderr, ": %s\n", sys_errlist[syserr]);
 	    else
-		fprintf(stderr, ": errno %d\n", syserr);
+		fprintf(stderr, ": %s\n", strerror(syserr));
     }
 
     if (severity <= LOG_NOTICE) {
