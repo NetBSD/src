@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.98 1998/11/29 02:00:33 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.99 1998/11/30 19:47:53 jtk Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.93 1998/11/29 02:00:13 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.94 1998/11/30 19:47:16 jtk Exp 
  */
 
 /*
@@ -664,10 +664,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "CL-GD5446",
 	},
 	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD6729,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6729,
 	    0,
 	    "Cirrus Logic",
-	    "CL-GD6729",
+	    "CL-PD6729",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7542,
