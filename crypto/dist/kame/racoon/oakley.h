@@ -1,4 +1,4 @@
-/*	$KAME: oakley.h,v 1.29 2003/06/27 12:02:41 sakane Exp $	*/
+/*	$KAME: oakley.h,v 1.30 2003/12/14 04:13:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -76,11 +76,11 @@
 #define   OAKLEY_ATTR_GRP_DESC_EC2N155		3
 #define   OAKLEY_ATTR_GRP_DESC_EC2N185		4
 #define   OAKLEY_ATTR_GRP_DESC_MODP1536		5
-#define   OAKLEY_ATTR_GRP_DESC_MODP2048		42048	/* these value are */
-#define   OAKLEY_ATTR_GRP_DESC_MODP3072		43072	/* make consensus  */
-#define   OAKLEY_ATTR_GRP_DESC_MODP4096		44096	/* at the bake off */
-#define   OAKLEY_ATTR_GRP_DESC_MODP8192		48192	/* in helsinki     */
-#define   OAKLEY_ATTR_GRP_DESC_MODP6144		46144	/* XXX */
+#define   OAKLEY_ATTR_GRP_DESC_MODP2048		14
+#define   OAKLEY_ATTR_GRP_DESC_MODP3072		15
+#define   OAKLEY_ATTR_GRP_DESC_MODP4096		16
+#define   OAKLEY_ATTR_GRP_DESC_MODP6144		17
+#define   OAKLEY_ATTR_GRP_DESC_MODP8192		18
 					/*	32768 - 65535 Private Use */
 #define OAKLEY_ATTR_GRP_TYPE		5 /* B */
 #define   OAKLEY_ATTR_GRP_TYPE_MODP		1

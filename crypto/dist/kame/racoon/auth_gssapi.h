@@ -1,4 +1,4 @@
-/*	$KAME: gssapi.h,v 1.5 2002/05/07 18:13:25 sakane Exp $	*/
+/*	$KAME: auth_gssapi.h,v 1.1 2004/03/18 00:27:56 sakane Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifdef __FreeBSD__
-#include "/usr/include/gssapi.h"
+#include <gssapi.h>
 #else
 #include <gssapi/gssapi.h>
 #endif

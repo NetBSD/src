@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2002/11/24 21:54:38 fvdl Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2004/06/17 12:38:10 tron Exp $
 
-NOPIC=		# defined
-NOPROFILE=	# defined
-NOLINT=		# defined
+MKPRIVATELIB=	yes
 
 .include <bsd.own.mk>
 
@@ -19,9 +17,6 @@ SRCS+=	key_debug.c
 #MAN=	ipsec_set_policy.3 ipsec_strerror.3
 #MLINKS+=ipsec_set_policy.3 ipsec_get_policylen.3 \
 #	ipsec_set_policy.3 ipsec_dump_policy.3
-
-# don't install it into public place!
-libinstall::
 
 .include <bsd.lib.mk>
 

@@ -1,4 +1,4 @@
-/*	$KAME: grabmyaddr.c,v 1.35 2003/01/14 07:07:36 sakane Exp $	*/
+/*	$KAME: grabmyaddr.c,v 1.37 2004/04/15 08:22:14 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: grabmyaddr.c,v 1.6 2003/07/12 09:37:09 itojun Exp $");
+__RCSID("$NetBSD: grabmyaddr.c,v 1.6.2.1 2004/06/17 12:38:09 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -159,6 +159,8 @@ grab_myaddrs()
 	old = lcconf->myaddrs;
 
 	for (ifap = ifa0; ifap; ifap = ifap->ifa_next) {
+		if (!ifap->ifa_addr)
+			continue;
 
 		if (ifap->ifa_addr->sa_family != AF_INET
 #ifdef INET6
@@ -395,8 +397,9 @@ suitable_ifaddr6(ifname, ifaddr)
 
 	close(s);
 
-	if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DUPLICATED
-	 || ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DETACHED)
+	if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DUPLICATED ||
+	    ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DETACHED ||
+	    ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_ANYCAST)
 		return 0;
 
 	/* suitable */

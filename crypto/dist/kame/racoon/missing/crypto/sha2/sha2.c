@@ -1,4 +1,4 @@
-/*	$KAME: sha2.c,v 1.5 2001/11/08 04:38:28 sakane Exp $	*/
+/*	$KAME: sha2.c,v 1.6 2003/09/04 00:12:12 itojun Exp $	*/
 
 /*
  * sha2.c
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sha2.c,v 1.5 2003/09/04 00:12:56 itojun Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.5.2.1 2004/06/17 12:38:10 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
