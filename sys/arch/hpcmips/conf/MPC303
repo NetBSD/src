@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.6 2002/01/05 06:45:31 takemura Exp $
+# 	$NetBSD: MPC303,v 1.7 2002/01/13 14:18:31 takemura Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -7,7 +7,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 maxusers	16
 
@@ -160,6 +160,32 @@ usb*	at ohci?
 # USB Hubs
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
+
+# USB HID device
+#uhidev*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+#ums*	at uhidev? reportid ?
+#wsmouse*	at ums? mux 0
+
+# USB Keyboards
+#ukbd*	at uhidev? reportid ?
+#wskbd*	at ukbd? console ? mux 1
+
+# USB Generic HID devices
+#uhid*	at uhidev? reportid ?
+
+# USB Printer
+#ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Modem
+#umodem*	at uhub? port ? configuration ?
+#ucom*	at umodem?
+
+# USB Mass Storage
+#umass*	at uhub? port ? configuration ? interface ?
+#atapibus* at umass? channel ?
+#scsibus* at umass? channel ?
 
 # USB Generic driver
 ugen*	at uhub? port ?
@@ -379,6 +405,15 @@ vrisab6	at vrgiu? platform NEC_MCR_SIGMARION2 isaportoffset 0xf780f800
 isa6	at vrisab6
 ne*	at isa6 port 0x300 irq  0x00090003 # port 9, active high and thorough
 #wdc*	at isa6 port 0x170 irq 0x00090003 flags 0x0002  # single drive
+hpcioman6 at vrgiu? platform NEC_MCR_SIGMARION2
+hpcin*	at hpcioman6 evtype PCIINTR id PCIINTR_00_12_00 port 0 level 1 connect 1
+
+#
+# MP-C303/304
+#
+hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC303
+hpcioman7 at vrgiu? platform VICTOR_INTERLINK_MPC304
+hpcin*	at hpcioman7 evtype PCIINTR id PCIINTR_00_19_00 port 1 level 0 hold 1 connect 1
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller 0 socket ?
