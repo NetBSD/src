@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: spl.S,v 1.2 2004/05/07 13:52:37 cl Exp $	*/
 /*	NetBSD: spl.S,v 1.8 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -168,6 +168,7 @@ IDTVEC(doreti)
 #else
 	jmp	6f
 #endif
+	.globl doreti_checkast
 doreti_checkast:
 	CHECK_ASTPENDING(%eax)
 	jz	3f
