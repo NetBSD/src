@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.12 1997/10/16 17:20:41 gwr Exp $
+# $NetBSD: GENERIC,v 1.13 1997/10/17 02:55:40 gwr Exp $
 
 # GENERIC Sun3x (3/80, 3/470)
 # Supports root on: le0, sd*
@@ -39,6 +39,8 @@ options 	DDB
 # Compatability options
 options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 options 	COMPAT_43	# and 4.3BSD and ...
+options 	COMPAT_10	# NetBSD 1.0
+options 	COMPAT_11	# NetBSD 1.1
 options 	COMPAT_12	# NetBSD 1.2
 
 # Filesystem options
