@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.16 1995/01/06 13:16:15 pk Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.17 1995/01/15 08:55:59 mycroft Exp $";
 #endif
 
 #include <sys/param.h>
@@ -101,37 +101,37 @@ SVCXPRT *udptransp, *tcptransp;
 
 void *
 ypbindproc_null_2(transp, argp, clnt)
-SVCXPRT *transp;
-void *argp;
-CLIENT *clnt;
+	SVCXPRT *transp;
+	void *argp;
+	CLIENT *clnt;
 {
 	static char res;
 
-	bzero((char *)&res, sizeof(res));
+	memset(&res, 0, sizeof(res));
 	return (void *)&res;
 }
 
 struct ypbind_resp *
 ypbindproc_domain_2(transp, argp, clnt)
-SVCXPRT *transp;
-char *argp;
-CLIENT *clnt;
+	SVCXPRT *transp;
+	char *argp;
+	CLIENT *clnt;
 {
 	static struct ypbind_resp res;
 	struct _dom_binding *ypdb;
 	char path[MAXPATHLEN];
 	time_t now;
 
-	bzero((char *)&res, sizeof res);
+	memset(&res, 0, sizeof res);
 	res.ypbind_status = YPBIND_FAIL_VAL;
 
-	for(ypdb=ypbindlist; ypdb; ypdb=ypdb->dom_pnext)
-		if( strcmp(ypdb->dom_domain, argp) == 0)
+	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext)
+		if (!strcmp(ypdb->dom_domain, argp))
 			break;
 
-	if(ypdb==NULL) {
+	if (ypdb == NULL) {
 		ypdb = (struct _dom_binding *)malloc(sizeof *ypdb);
-		bzero((char *)ypdb, sizeof *ypdb);
+		memset(ypdb, 0, sizeof *ypdb);
 		strncpy(ypdb->dom_domain, argp, sizeof ypdb->dom_domain);
 		ypdb->dom_vers = YPVERS;
 		ypdb->dom_alive = 0;
@@ -144,7 +144,7 @@ CLIENT *clnt;
 		return NULL;
 	}
 
-	if(ypdb->dom_alive==0)
+	if (ypdb->dom_alive == 0)
 		return NULL;
 
 #ifdef HEURISTIC
@@ -178,19 +178,19 @@ answer:
 
 bool_t *
 ypbindproc_setdom_2(transp, argp, clnt)
-SVCXPRT *transp;
-struct ypbind_setdom *argp;
-CLIENT *clnt;
+	SVCXPRT *transp;
+	struct ypbind_setdom *argp;
+	CLIENT *clnt;
 {
 	struct sockaddr_in *fromsin, bindsin;
 	static bool_t res;
 
-	bzero((char *)&res, sizeof(res));
+	memset(&res, 0, sizeof(res));
 	fromsin = svc_getcaller(transp);
 
-	switch(ypsetmode) {
+	switch (ypsetmode) {
 	case YPSET_LOCAL:
-		if( fromsin->sin_addr.s_addr != htonl(INADDR_LOOPBACK))
+		if (fromsin->sin_addr.s_addr != htonl(INADDR_LOOPBACK))
 			return (bool_t *)NULL;
 		break;
 	case YPSET_ALL:
@@ -200,15 +200,16 @@ CLIENT *clnt;
 		return (bool_t *)NULL;
 	}
 
-	if(ntohs(fromsin->sin_port) >= IPPORT_RESERVED)
+	if (ntohs(fromsin->sin_port) >= IPPORT_RESERVED)
 		return &res;
 
-	if(argp->ypsetdom_vers != YPVERS)
+	if (argp->ypsetdom_vers != YPVERS)
 		return &res;
 
-	bzero((char *)&bindsin, sizeof bindsin);
+	memset(&bindsin, 0, sizeof bindsin);
 	bindsin.sin_family = AF_INET;
-	bindsin.sin_addr.s_addr = argp->ypsetdom_addr.s_addr;
+	bindsin.sin_len = sizeof(bindsin);
+	bindsin.sin_addr = argp->ypsetdom_addr;
 	bindsin.sin_port = argp->ypsetdom_port;
 	rpc_received(argp->ypsetdom_domain, &bindsin, 1);
 
@@ -218,8 +219,8 @@ CLIENT *clnt;
 
 static void
 ypbindprog_2(rqstp, transp)
-struct svc_req *rqstp;
-register SVCXPRT *transp;
+	struct svc_req *rqstp;
+	register SVCXPRT *transp;
 {
 	union {
 		char ypbindproc_domain_2_arg[MAXHOSTNAMELEN];
@@ -244,10 +245,10 @@ register SVCXPRT *transp;
 		break;
 
 	case YPBINDPROC_SETDOM:
-		switch(rqstp->rq_cred.oa_flavor) {
+		switch (rqstp->rq_cred.oa_flavor) {
 		case AUTH_UNIX:
 			creds = (struct authunix_parms *)rqstp->rq_clntcred;
-			if( creds->aup_uid != 0) {
+			if (creds->aup_uid != 0) {
 				svcerr_auth(transp, AUTH_BADCRED);
 				return;
 			}
@@ -266,7 +267,7 @@ register SVCXPRT *transp;
 		svcerr_noproc(transp);
 		return;
 	}
-	bzero((char *)&argument, sizeof(argument));
+	memset(&argument, 0, sizeof(argument));
 	if (!svc_getargs(transp, xdr_argument, (caddr_t)&argument)) {
 		svcerr_decode(transp);
 		return;
@@ -279,7 +280,8 @@ register SVCXPRT *transp;
 }
 
 main(argc, argv)
-char **argv;
+	int argc;
+	char *argv[];
 {
 	char path[MAXPATHLEN];
 	struct timeval tv;
@@ -288,29 +290,27 @@ char **argv;
 	int i;
 
 	yp_get_default_domain(&domainname);
-	if( domainname[0] == '\0') {
+	if (domainname[0] == '\0') {
 		fprintf(stderr, "domainname not set. Aborting.\n");
 		exit(1);
 	}
 
-	for(i=1; i<argc; i++) {
-		if( strcmp("-ypset", argv[i]) == 0)
+	for (i = 1; i < argc; i++) {
+		if (!strcmp("-ypset", argv[i]))
 			ypsetmode = YPSET_ALL;
-		else if (strcmp("-ypsetme", argv[i]) == 0)
+		else if (!strcmp("-ypsetme", argv[i]))
 			ypsetmode = YPSET_LOCAL;
 	}
 
 	/* blow away everything in BINDINGDIR */
 
 #ifdef O_SHLOCK
-	lockfd = open(YPBINDLOCK, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644);
-	if (lockfd == -1) {
+	if ((lockfd = open(YPBINDLOCK, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644)) == -1) {
 		fprintf(stderr, "ypbind: cannot create %s\n", YPBINDLOCK);
 		exit(1);
 	}
 #else
-	lockfd = open(YPBINDLOCK, O_CREAT|O_RDWR|O_TRUNC, 0644);
-	if (lockfd == -1) {
+	if ((lockfd = open(YPBINDLOCK, O_CREAT|O_RDWR|O_TRUNC, 0644)) == -1) {
 		fprintf(stderr, "ypbind: cannot create %s\n", YPBINDLOCK);
 		exit(1);
 	}
@@ -318,7 +318,7 @@ char **argv;
 #endif
 
 #ifdef DAEMON
-	switch(fork()) {
+	switch (fork()) {
 	case 0:
 		break;
 	case -1:
@@ -348,18 +348,17 @@ char **argv;
 		fprintf(stderr, "cannot create tcp service.");
 		exit(1);
 	}
-
 	if (!svc_register(tcptransp, YPBINDPROG, YPBINDVERS, ypbindprog_2,
 	    IPPROTO_TCP)) {
 		fprintf(stderr, "unable to register (YPBINDPROG, YPBINDVERS, tcp).");
 		exit(1);
 	}
 
-	if( (rpcsock=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+	if ((rpcsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		perror("socket");
 		return -1;
 	}
-	if( (pingsock=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+	if ((pingsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		perror("socket");
 		return -1;
 	}
@@ -379,7 +378,7 @@ char **argv;
 
 	/* build initial domain binding, make it "unsuccessful" */
 	ypbindlist = (struct _dom_binding *)malloc(sizeof *ypbindlist);
-	bzero((char *)ypbindlist, sizeof *ypbindlist);
+	memset(ypbindlist, 0, sizeof *ypbindlist);
 	strncpy(ypbindlist->dom_domain, domainname, sizeof ypbindlist->dom_domain);
 	ypbindlist->dom_vers = YPVERS;
 	ypbindlist->dom_alive = 0;
@@ -390,21 +389,21 @@ char **argv;
 
 	checkwork();
 
-	while(1) {
-
+	while (1) {
 		width = svc_maxfd;
 		if (rpcsock > width)
 			width = rpcsock;
 		if (pingsock > width)
 			width = pingsock;
 		width++;
+
 		fdsr = svc_fdset;
 		FD_SET(rpcsock, &fdsr);
 		FD_SET(pingsock, &fdsr);
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 
-		switch(select(width, &fdsr, NULL, NULL, &tv)) {
+		switch (select(width, &fdsr, NULL, NULL, &tv)) {
 		case 0:
 			checkwork();
 			break;
@@ -442,8 +441,8 @@ checkwork()
 	check = 0;
 
 	time(&t);
-	for(ypdb=ypbindlist; ypdb; ypdb=ypdb->dom_pnext) {
-		if(ypdb->dom_check_t < t) {
+	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext) {
+		if (ypdb->dom_check_t < t) {
 			if (ypdb->dom_alive == 1)
 				ping(ypdb);
 			else
@@ -458,44 +457,44 @@ ping(ypdb)
 	struct _dom_binding *ypdb;
 {
 	char *dom = ypdb->dom_domain;
-	struct rpc_msg rpcmsg;
+	struct rpc_msg msg;
 	char buf[1400];
 	enum clnt_stat st;
 	int outlen;
 	AUTH *rpcua;
-	XDR rpcxdr;
+	XDR xdr;
 
-	bzero((char *)&rpcxdr, sizeof rpcxdr);
-	bzero((char *)&rpcmsg, sizeof rpcmsg);
+	memset(&xdr, 0, sizeof xdr);
+	memset(&msg, 0, sizeof msg);
 
 	rpcua = authunix_create_default();
-	if( rpcua == (AUTH *)NULL) {
+	if (rpcua == (AUTH *)NULL) {
 		/*printf("cannot get unix auth\n");*/
 		return RPC_SYSTEMERROR;
 	}
-	rpcmsg.rm_direction = CALL;
-	rpcmsg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
-	rpcmsg.rm_call.cb_prog = YPPROG;
-	rpcmsg.rm_call.cb_vers = YPVERS;
-	rpcmsg.rm_call.cb_proc = YPPROC_DOMAIN_NONACK;
-	rpcmsg.rm_call.cb_cred = rpcua->ah_cred;
-	rpcmsg.rm_call.cb_verf = rpcua->ah_verf;
+	msg.rm_direction = CALL;
+	msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
+	msg.rm_call.cb_prog = YPPROG;
+	msg.rm_call.cb_vers = YPVERS;
+	msg.rm_call.cb_proc = YPPROC_DOMAIN_NONACK;
+	msg.rm_call.cb_cred = rpcua->ah_cred;
+	msg.rm_call.cb_verf = rpcua->ah_verf;
 
-	rpcmsg.rm_xid = (long)dom;
-	xdrmem_create(&rpcxdr, buf, sizeof buf, XDR_ENCODE);
-	if( (!xdr_callmsg(&rpcxdr, &rpcmsg)) ) {
+	msg.rm_xid = (long)dom;
+	xdrmem_create(&xdr, buf, sizeof buf, XDR_ENCODE);
+	if (!xdr_callmsg(&xdr, &msg)) {
 		st = RPC_CANTENCODEARGS;
 		AUTH_DESTROY(rpcua);
 		return st;
 	}
-	if( (!xdr_domainname(&rpcxdr, dom)) ) {
+	if (!xdr_domainname(&xdr, dom)) {
 		st = RPC_CANTENCODEARGS;
 		AUTH_DESTROY(rpcua);
 		return st;
 	}
-	outlen = (int)xdr_getpos(&rpcxdr);
-	xdr_destroy(&rpcxdr);
-	if(outlen<1) {
+	outlen = (int)xdr_getpos(&xdr);
+	xdr_destroy(&xdr);
+	if (outlen < 1) {
 		st = RPC_CANTENCODEARGS;
 		AUTH_DESTROY(rpcua);
 		return st;
@@ -515,59 +514,59 @@ broadcast(ypdb)
 	struct _dom_binding *ypdb;
 {
 	char *dom = ypdb->dom_domain;
-	struct rpc_msg rpcmsg;
+	struct rpc_msg msg;
 	char buf[1400], inbuf[8192];
 	char path[MAXPATHLEN];
 	enum clnt_stat st;
 	int outlen, i, sock, len;
-	struct sockaddr_in bsin;
+	struct sockaddr_in bindsin;
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
 	struct in_addr in;
 	AUTH *rpcua;
-	XDR rpcxdr;
+	XDR xdr;
 
 	rmtca.xdr_args = xdr_domainname;
 	rmtca.args_ptr = dom;
 
-	bzero((char *)&rpcxdr, sizeof rpcxdr);
-	bzero((char *)&rpcmsg, sizeof rpcmsg);
+	memset(&xdr, 0, sizeof xdr);
+	memset(&msg, 0, sizeof msg);
 
 	rpcua = authunix_create_default();
-	if( rpcua == (AUTH *)NULL) {
+	if (rpcua == (AUTH *)NULL) {
 		/*printf("cannot get unix auth\n");*/
 		return RPC_SYSTEMERROR;
 	}
-	rpcmsg.rm_direction = CALL;
-	rpcmsg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
-	rpcmsg.rm_call.cb_prog = PMAPPROG;
-	rpcmsg.rm_call.cb_vers = PMAPVERS;
-	rpcmsg.rm_call.cb_proc = PMAPPROC_CALLIT;
-	rpcmsg.rm_call.cb_cred = rpcua->ah_cred;
-	rpcmsg.rm_call.cb_verf = rpcua->ah_verf;
+	msg.rm_direction = CALL;
+	msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
+	msg.rm_call.cb_prog = PMAPPROG;
+	msg.rm_call.cb_vers = PMAPVERS;
+	msg.rm_call.cb_proc = PMAPPROC_CALLIT;
+	msg.rm_call.cb_cred = rpcua->ah_cred;
+	msg.rm_call.cb_verf = rpcua->ah_verf;
 
-	rpcmsg.rm_xid = (long)dom;
-	xdrmem_create(&rpcxdr, buf, sizeof buf, XDR_ENCODE);
-	if( (!xdr_callmsg(&rpcxdr, &rpcmsg)) ) {
+	msg.rm_xid = (long)dom;
+	xdrmem_create(&xdr, buf, sizeof buf, XDR_ENCODE);
+	if (!xdr_callmsg(&xdr, &msg)) {
 		st = RPC_CANTENCODEARGS;
 		AUTH_DESTROY(rpcua);
 		return st;
 	}
-	if( (!xdr_rmtcall_args(&rpcxdr, &rmtca)) ) {
+	if (!xdr_rmtcall_args(&xdr, &rmtca)) {
 		st = RPC_CANTENCODEARGS;
 		AUTH_DESTROY(rpcua);
 		return st;
 	}
-	outlen = (int)xdr_getpos(&rpcxdr);
-	xdr_destroy(&rpcxdr);
-	if(outlen<1) {
+	outlen = (int)xdr_getpos(&xdr);
+	xdr_destroy(&xdr);
+	if (outlen < 1) {
 		st = RPC_CANTENCODEARGS;
 		AUTH_DESTROY(rpcua);
 		return st;
 	}
 	AUTH_DESTROY(rpcua);
 
-	if(ypdb->dom_lockfd!=-1) {
+	if (ypdb->dom_lockfd != -1) {
 		close(ypdb->dom_lockfd);
 		ypdb->dom_lockfd = -1;
 		sprintf(path, "%s/%s.%d", BINDINGDIR,
@@ -575,9 +574,10 @@ broadcast(ypdb)
 		unlink(path);
 	}
 
-	bzero((char *)&bsin, sizeof bsin);
-	bsin.sin_family = AF_INET;
-	bsin.sin_port = htons(PMAPPORT);
+	memset(&bindsin, 0, sizeof bindsin);
+	bindsin.sin_family = AF_INET;
+	bindsin.sin_len = sizeof(bindsin);
+	bindsin.sin_port = htons(PMAPPORT);
 
 	if (ypdb->dom_alive == 2) {
 		/*
@@ -585,50 +585,50 @@ broadcast(ypdb)
 		 * ypserver on other subnet was once bound,
 		 * but rebooted and is now using a different port
 		 */
-		bsin.sin_addr = ypdb->dom_server_addr.sin_addr;
-		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bsin,
-			   sizeof bsin) < 0)
+		bindsin.sin_addr = ypdb->dom_server_addr.sin_addr;
+		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
+			   sizeof bindsin) < 0)
 			perror("sendto");
 	}
 	/* find all networks and send the RPC packet out them all */
-	if( (sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		perror("socket");
 		return -1;
 	}
 	
 	ifc.ifc_len = sizeof inbuf;
 	ifc.ifc_buf = inbuf;
-	if( ioctl(sock, SIOCGIFCONF, &ifc) < 0) {
+	if (ioctl(sock, SIOCGIFCONF, &ifc) < 0) {
 		close(sock);
 		perror("ioctl(SIOCGIFCONF)");
 		return -1;
 	}
 	ifr = ifc.ifc_req;
 	ifreq.ifr_name[0] = '\0';
-	for(i=0; i<ifc.ifc_len; i+=len, ifr=(struct ifreq *)((caddr_t)ifr+len)) {
+	for (i = 0; i < ifc.ifc_len; i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
 #if defined(BSD) && BSD >= 199103
 		len = sizeof ifr->ifr_name + ifr->ifr_addr.sa_len;
 #else
 		len = sizeof ifc.ifc_len / sizeof(struct ifreq);
 #endif
 		ifreq = *ifr;
-		if( ifreq.ifr_addr.sa_family != AF_INET)
+		if (ifreq.ifr_addr.sa_family != AF_INET)
 			continue;
-		if( ioctl(sock, SIOCGIFFLAGS, &ifreq) < 0) {
+		if (ioctl(sock, SIOCGIFFLAGS, &ifreq) < 0) {
 			perror("ioctl(SIOCGIFFLAGS)");
 			continue;
 		}
-		if( (ifreq.ifr_flags & IFF_UP) == 0)
+		if ((ifreq.ifr_flags & IFF_UP) == 0)
 			continue;
 
 		ifreq.ifr_flags &= (IFF_LOOPBACK | IFF_BROADCAST);
-		if( ifreq.ifr_flags==IFF_BROADCAST ) {
-			if( ioctl(sock, SIOCGIFBRDADDR, &ifreq) < 0 ) {
+		if (ifreq.ifr_flags == IFF_BROADCAST) {
+			if (ioctl(sock, SIOCGIFBRDADDR, &ifreq) < 0) {
 				perror("ioctl(SIOCGIFBRDADDR)");
 				continue;
 			}
-		} else if( ifreq.ifr_flags==IFF_LOOPBACK ) {
-			if( ioctl(sock, SIOCGIFADDR, &ifreq) < 0 ) {
+		} else if (ifreq.ifr_flags == IFF_LOOPBACK) {
+			if (ioctl(sock, SIOCGIFADDR, &ifreq) < 0) {
 				perror("ioctl(SIOCGIFADDR)");
 				continue;
 			}
@@ -636,9 +636,9 @@ broadcast(ypdb)
 			continue;
 
 		in = ((struct sockaddr_in *)&ifreq.ifr_addr)->sin_addr;
-		bsin.sin_addr = in;
-		if( sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bsin,
-			   sizeof bsin) < 0 )
+		bindsin.sin_addr = in;
+		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
+			   sizeof bindsin) < 0)
 			perror("sendto");
 	}
 	close(sock);
@@ -655,8 +655,8 @@ handle_replies()
 	XDR xdr;
 
 recv_again:
-	bzero((char *)&xdr, sizeof(xdr));
-	bzero((char *)&msg, sizeof(msg));
+	memset(&xdr, 0, sizeof(xdr));
+	memset(&msg, 0, sizeof(msg));
 	msg.acpted_rply.ar_verf = _null_auth;
 	msg.acpted_rply.ar_results.where = (caddr_t)&rmtcr;
 	msg.acpted_rply.ar_results.proc = xdr_rmtcallres;
@@ -665,12 +665,12 @@ try_again:
 	fromlen = sizeof (struct sockaddr);
 	inlen = recvfrom(rpcsock, buf, sizeof buf, 0,
 		(struct sockaddr *)&raddr, &fromlen);
-	if(inlen<0) {
-		if(errno==EINTR)
+	if (inlen < 0) {
+		if (errno == EINTR)
 			goto try_again;
 		return RPC_CANTRECV;
 	}
-	if(inlen<sizeof(u_int32_t))
+	if (inlen < sizeof(u_int32_t))
 		goto recv_again;
 
 	/*
@@ -678,9 +678,9 @@ try_again:
 	 * If so, decode the results.
 	 */
 	xdrmem_create(&xdr, buf, (u_int)inlen, XDR_DECODE);
-	if( xdr_replymsg(&xdr, &msg)) {
-		if( (msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
-		   (msg.acpted_rply.ar_stat == SUCCESS)) {
+	if (xdr_replymsg(&xdr, &msg)) {
+		if ((msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
+		    (msg.acpted_rply.ar_stat == SUCCESS)) {
 			raddr.sin_port = htons((u_short)rmtcr_port);
 			rpc_received(msg.rm_xid, &raddr, 0);
 		}
@@ -703,8 +703,8 @@ handle_ping()
 	bool_t res;
 
 recv_again:
-	bzero((char *)&xdr, sizeof(xdr));
-	bzero((char *)&msg, sizeof(msg));
+	memset(&xdr, 0, sizeof(xdr));
+	memset(&msg, 0, sizeof(msg));
 	msg.acpted_rply.ar_verf = _null_auth;
 	msg.acpted_rply.ar_results.where = (caddr_t)&res;
 	msg.acpted_rply.ar_results.proc = xdr_bool;
@@ -713,12 +713,12 @@ try_again:
 	fromlen = sizeof (struct sockaddr);
 	inlen = recvfrom(pingsock, buf, sizeof buf, 0,
 		(struct sockaddr *)&raddr, &fromlen);
-	if(inlen<0) {
-		if(errno==EINTR)
+	if (inlen < 0) {
+		if (errno == EINTR)
 			goto try_again;
 		return RPC_CANTRECV;
 	}
-	if(inlen<sizeof(u_int32_t))
+	if (inlen < sizeof(u_int32_t))
 		goto recv_again;
 
 	/*
@@ -726,9 +726,9 @@ try_again:
 	 * If so, decode the results.
 	 */
 	xdrmem_create(&xdr, buf, (u_int)inlen, XDR_DECODE);
-	if( xdr_replymsg(&xdr, &msg)) {
-		if( (msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
-		   (msg.acpted_rply.ar_stat == SUCCESS)) {
+	if (xdr_replymsg(&xdr, &msg)) {
+		if ((msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
+		    (msg.acpted_rply.ar_stat == SUCCESS)) {
 			rpc_received(msg.rm_xid, &raddr, 0);
 		}
 	}
@@ -757,18 +757,18 @@ int force;
 
 	/*printf("returned from %s about %s\n", inet_ntoa(raddrp->sin_addr), dom);*/
 
-	if(dom==NULL)
+	if (dom == NULL)
 		return;
 
-	for(ypdb=ypbindlist; ypdb; ypdb=ypdb->dom_pnext)
-		if( strcmp(ypdb->dom_domain, dom) == 0)
+	for (ypdb = ypbindlist; ypdb; ypdb = ypdb->dom_pnext)
+		if (!strcmp(ypdb->dom_domain, dom))
 			break;
 
-	if(ypdb==NULL) {
-		if(force==0)
+	if (ypdb == NULL) {
+		if (force == 0)
 			return;
 		ypdb = (struct _dom_binding *)malloc(sizeof *ypdb);
-		bzero((char *)ypdb, sizeof *ypdb);
+		memset(ypdb, 0, sizeof *ypdb);
 		strncpy(ypdb->dom_domain, dom, sizeof ypdb->dom_domain);
 		ypdb->dom_lockfd = -1;
 		ypdb->dom_pnext = ypbindlist;
@@ -776,36 +776,35 @@ int force;
 	}
 
 	/* soft update, alive */
-	if(ypdb->dom_alive==1 && force==0) {
-		if (bcmp((char *)raddrp, (char *)&ypdb->dom_server_addr,
-			 sizeof ypdb->dom_server_addr) == 0) {
+	if (ypdb->dom_alive == 1 && force == 0) {
+		if (!memcmp(&ypdb->dom_server_addr, raddrp,
+			    sizeof ypdb->dom_server_addr)) {
 			ypdb->dom_alive = 1;
 			ypdb->dom_check_t = time(NULL) + 60; /* recheck binding in 60 sec */
 		}
 		return;
 	}
 	
-	bcopy((char *)raddrp, (char *)&ypdb->dom_server_addr,
-		sizeof ypdb->dom_server_addr);
+	memcpy(&ypdb->dom_server_addr, raddrp, sizeof ypdb->dom_server_addr);
 	ypdb->dom_check_t = time(NULL) + 60;	/* recheck binding in 60 seconds */
 	ypdb->dom_vers = YPVERS;
 	ypdb->dom_alive = 1;
 
-	if(ypdb->dom_lockfd != -1)
+	if (ypdb->dom_lockfd != -1)
 		close(ypdb->dom_lockfd);
 
 	sprintf(path, "%s/%s.%d", BINDINGDIR,
 		ypdb->dom_domain, ypdb->dom_vers);
 #ifdef O_SHLOCK
-	if( (fd=open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644)) == -1) {
+	if ((fd = open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644)) == -1) {
 		(void)mkdir(BINDINGDIR, 0755);
-		if( (fd=open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644)) == -1)
+		if ((fd = open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644)) == -1)
 			return;
 	}
 #else
-	if( (fd=open(path, O_CREAT|O_RDWR|O_TRUNC, 0644)) == -1) {
+	if ((fd = open(path, O_CREAT|O_RDWR|O_TRUNC, 0644)) == -1) {
 		(void)mkdir(BINDINGDIR, 0755);
-		if( (fd=open(path, O_CREAT|O_RDWR|O_TRUNC, 0644)) == -1)
+		if ((fd = open(path, O_CREAT|O_RDWR|O_TRUNC, 0644)) == -1)
 			return;
 	}
 	flock(fd, LOCK_SH);
@@ -822,12 +821,12 @@ int force;
 	iov[1].iov_base = (caddr_t)&ybr;
 	iov[1].iov_len = sizeof ybr;
 
-	bzero(&ybr, sizeof ybr);
+	memset(&ybr, 0, sizeof ybr);
 	ybr.ypbind_status = YPBIND_SUCC_VAL;
 	ybr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_addr = raddrp->sin_addr;
 	ybr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_port = raddrp->sin_port;
 
-	if( writev(ypdb->dom_lockfd, iov, 2) != iov[0].iov_len + iov[1].iov_len) {
+	if (writev(ypdb->dom_lockfd, iov, 2) != iov[0].iov_len + iov[1].iov_len) {
 		perror("write");
 		close(ypdb->dom_lockfd);
 		unlink(path);
