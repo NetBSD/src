@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.123 2000/08/27 06:39:25 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.124 2000/08/28 12:06:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.123 2000/08/27 06:39:25 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.124 2000/08/28 12:06:11 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -196,7 +196,7 @@ auth_url(const char *challenge, char **response, const char *guser,
  * Encode len bytes starting at clear using base64 encoding into encoded,
  * which should be at least ((len + 2) * 4 / 3 + 1) in size.
  */
-void
+static void
 base64_encode(const char *clear, size_t len, char *encoded)
 {
 	static const char enc[] =
