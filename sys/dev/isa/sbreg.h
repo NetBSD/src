@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.26 1998/08/17 21:16:15 augustss Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.27 1999/02/18 07:08:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -212,10 +212,12 @@
 #define	SB_DSP16_RDMA_16	0xBE	/* begin 16-bit linear input */
 #define	SB_DSP16_WDMA_8		0xC6	/* begin 8-bit linear output */
 #define	SB_DSP16_RDMA_8		0xCE	/* begin 8-bit linear input */
-#define SB_DSP_HALT		0xd0	/* temporarilty suspend DMA */
+#define SB_DSP_HALT		0xd0	/* suspend 8-bit DMA */
 #define SB_DSP_SPKR_ON		0xd1	/* turn speaker on */
 #define SB_DSP_SPKR_OFF		0xd3	/* turn speaker off */
-#define SB_DSP_CONT		0xd4	/* continue suspended DMA */
+#define SB_DSP_CONT		0xd4	/* continue 8-bit DMA */
+#define	SB_DSP16_HALT		0xd5	/* suspend 16-bit DMA */
+#define	SB_DSP16_CONT		0xd6	/* continue 16-bit DMA */
 #define SB_DSP_RD_SPKR		0xd8	/* get speaker status */
 #define 	SB_SPKR_OFF	0x00
 #define 	SB_SPKR_ON	0xff
