@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.9 2002/03/25 16:39:57 martin Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.10 2002/03/29 15:01:27 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.9 2002/03/25 16:39:57 martin Exp $ 
+ *	$Id: i4b_l2.c,v 1.10 2002/03/29 15:01:27 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.9 2002/03/25 16:39:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.10 2002/03/29 15:01:27 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -251,6 +251,7 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, int status, int parm)
 			{
 				NDBGL2(L2_ERROR, "bri %d, persistent deactivation!", l2sc->bri);
 				i4b_l2_unit_init(l2sc);
+				parm = -1;
 			}
 			else
 			{
