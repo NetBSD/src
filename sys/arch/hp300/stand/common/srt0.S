@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.5 1999/02/08 10:45:11 he Exp $	*/
+/*	$NetBSD: srt0.S,v 1.5.4.1 1999/08/02 19:46:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,6 +77,9 @@ GLOBAL(lowram)
 GLOBAL(machineid)
 	.long	0
 
+GLOBAL(mmuid)
+	.long	0
+
 	.text
 ASENTRY_NOPROFILE(begin)
 	movl	#STACK,sp
@@ -86,8 +89,16 @@ ASENTRY_NOPROFILE(begin)
 	movl	#_ASM_LABEL(__trap),a0@	| make it direct to __trap
 	addql	#6,a0			| move to next vector addr
 	dbf	d0,1b			| go til done
+#ifdef ITECONSOLE
 	movl	#NMIRESET,a0		| NMI keyboard reset addr
 	movl	#nmi,a0@		| catch in reset routine
+#else
+	/*
+	 * Built without ITE console support; leave the ROM's NMI
+	 * vector in place, so the system will still reset if a
+	 * keyboard NMI is issued.
+	 */
+#endif
 
 /*
  * Determine our SPU type and look for internal HP-IB
@@ -126,8 +137,11 @@ not370:
 	movl	MMUCMD,d0		| read it back
 	btst	#16,d0			| still on?
 	jeq	ihpibcheck		| no, a 360
+	lea	_C_LABEL(mmuid),a0
 	lsrl	#MMUID_SHIFT,d0		| save MMU ID
 	andl	#MMUID_MASK,d0
+	movl	d0,a0@
+	lea	_C_LABEL(machineid),a0
 	cmpb	#MMUID_345,d0		| are we a 345?
 	jeq	isa345
 	cmpb	#MMUID_375,d0		| how about a 375?
@@ -164,17 +178,24 @@ not68030:
 	 * 68040 models
 	 */
 
+	lea	_C_LABEL(mmuid),a0
 	movl	MMUCMD,d0		| get MMU ID
 	lsrl	#MMUID_SHIFT,d0
 	andl	#MMUID_MASK,d0
+	movl	d0,a0@			| save it
+	lea	_C_LABEL(machineid),a0
 	cmpb	#MMUID_425_T,d0		| are we a 425t?
 	jeq	isa425
 	cmpb	#MMUID_425_S,d0		| how about 425s?
 	jeq	isa425
+	cmpb	#MMUID_425_E,d0		| or maybe a 425e?
+	jeq	isa425
 	cmpb	#MMUID_433_T,d0		| or a 433t?
 	jeq	isa433
-	cmpb	#MMUID_433_S,d0		| last chance...
+	cmpb	#MMUID_433_S,d0		| or a 433s?
 	jeq	isa433
+	cmpb	#MMUID_385,d0		| or a 385?
+	jeq	isa385
 	movl	#HP_380,a0@		| guess we are a 380
 	jra	ihpibcheck
 isa425:
@@ -182,6 +203,9 @@ isa425:
 	jra	ihpibcheck
 isa433:
 	movl	#HP_433,a0@
+	jra	ihpibcheck
+isa385:
+	movl	#HP_385,a0@
 	jra	ihpibcheck
 
 	/*
@@ -301,11 +325,13 @@ ASENTRY_NOPROFILE(__trap)
 Lstop:
 	stop	#0x2700			| stop cold
 
+#ifdef ITECONSOLE
 ASENTRY_NOPROFILE(nmi)
 	movw	#18,BOOTTYPE		| mark as system switch
 	jsr	_C_LABEL(kbdnmi)	| clear the interrupt, and
 					|   reset the system
 	stop	#0			| SCREEEECH!
+#endif
 
 ENTRY_NOPROFILE(call_req_reboot)
 	jmp	0x1A4			| call ROM reboot function

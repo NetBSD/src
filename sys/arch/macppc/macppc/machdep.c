@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.2.2.2.2 1999/07/01 23:12:06 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.2.2.2.3 1999/08/02 19:55:13 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -81,14 +81,9 @@
 #endif
 
 #include <machine/bat.h>
-#include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
-
 #include <machine/bus.h>
-
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
 
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
@@ -196,9 +191,15 @@ initppc(startkernel, endkernel, args)
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
 
 	/* BAT1 statically maps obio devices */
-	/* 0xf0000000-0xf7ffffff (128MB) --> 0xf0000000- */
-	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
-		      :: "r"(0xf0000002 | BAT_I), "r"(0xf0000ffe));
+	if (OF_finddevice("/pci") != -1) {
+		/* 0xfe000000-0xfeffffff (16MB) --> 0xfe000000- */
+		asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
+			      :: "r"(0xfe000002 | BAT_I), "r"(0xfe0001fe));
+	} else {
+		/* 0xf0000000-0xf7ffffff (128MB) --> 0xf0000000- */
+		asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
+			      :: "r"(0xf0000002 | BAT_I), "r"(0xf0000ffe));
+	}
 
 	chosen = OF_finddevice("/chosen");
 	save_ofw_mapping();
@@ -602,6 +603,7 @@ setregs(p, pack, stack)
 {
 	struct trapframe *tf = trapframe(p);
 	struct ps_strings arginfo;
+	paddr_t pa;
 
 	bzero(tf, sizeof *tf);
 	tf->fixreg[1] = -roundup(-stack + 8, 16);
@@ -638,9 +640,10 @@ setregs(p, pack, stack)
 	p->p_addr->u_pcb.pcb_flags = 0;
 
 	/* sync I-cache for signal trampoline code */
-	__syncicache((void *)pmap_extract(p->p_addr->u_pcb.pcb_pm,
-					  (vaddr_t)p->p_sigacts->ps_sigcode),
-		     pack->ep_emul->e_esigcode - pack->ep_emul->e_sigcode);
+	(void) pmap_extract(p->p_addr->u_pcb.pcb_pm,
+	    (vaddr_t)p->p_sigacts->ps_sigcode, &pa);
+	__syncicache((void *)pa,
+	    pack->ep_emul->e_esigcode - pack->ep_emul->e_sigcode);
 }
 
 /*
@@ -978,8 +981,7 @@ kvtop(addr)
 	va = trunc_page(addr);
 	off = (int)addr - va;
 
-	pa = pmap_extract(pmap_kernel(), va);
-	if (pa == 0) {
+	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE) {
 		/*printf("kvtop: zero page frame (va=0x%x)\n", addr);*/
 		return (int)addr;
 	}

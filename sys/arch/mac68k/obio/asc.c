@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.30.4.1.2.2 1999/07/01 23:10:03 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.30.4.1.2.3 1999/08/02 19:53:17 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -296,7 +296,7 @@ ascmmap(dev, off, prot)
 
 	sc = asc_cd.cd_devs[unit];
 	if ((u_int)off < MAC68K_ASC_LEN) {
-		pa = pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_handle);
+		(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_handle, &pa);
 		return m68k_btop(pa + off);
 	}
 

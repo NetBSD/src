@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.349.2.1.2.1 1999/06/21 00:49:58 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.349.2.1.2.2 1999/08/02 19:50:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -624,9 +624,11 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_586,
 			{
-				0, "Pentium", "Pentium (P54C)",
-				"Pentium (P24T)", "Pentium/MMX", "Pentium", 0,
-				"Pentium (P54C)", 0, 0, 0, 0, 0, 0, 0, 0,
+				"Pentium (P5 A-step)", "Pentium (P5)",
+				"Pentium (P54C)", "Pentium (P24T)", 
+				"Pentium/MMX", "Pentium", 0,
+				"Pentium (P54C)", "Pentium/MMX (Tillamook)",
+				0, 0, 0, 0, 0, 0, 0,
 				"Pentium"	/* Default */
 			},
 			NULL
@@ -635,8 +637,9 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, "Pentium Pro", 0, "Pentium II",
-				"Pentium Pro", "Pentium II",
+				"Pentium Pro (A-step)", "Pentium Pro", 0,
+				"Pentium II (Klamath)", "Pentium Pro",
+				"Pentium II (Deschutes)",
 				"Pentium II (Celeron)",
 				"Pentium III", 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro, II or III"	/* Default */
@@ -2334,7 +2337,8 @@ i386_memio_unmap(t, bsh, size)
 			panic("i386_memio_unmap: overflow");
 #endif
 
-		bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
+		(void) pmap_extract(pmap_kernel(), va, &bpa);
+		bpa += (bsh & PGOFSET);
 
 		/*
 		 * Free the kernel virtual mapping.
@@ -2811,7 +2815,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		curaddr = pmap_extract(pmap, vaddr);
+		(void) pmap_extract(pmap, vaddr, &curaddr);
 
 		/*
 		 * If we're beyond the bounce threshold, notify
