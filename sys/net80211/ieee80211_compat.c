@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_compat.c,v 1.2 2003/09/14 01:14:54 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_compat.c,v 1.3 2003/09/23 15:57:25 dyoung Exp $	*/
 /*-
  * Copyright (c) 2003, 2004 David Young
  * All rights reserved.
@@ -27,20 +27,21 @@
  */
 #include <net/if.h>
 #include <sys/systm.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_compat.c,v 1.2 2003/09/14 01:14:54 dyoung Exp $");
+#include <machine/stdarg.h>
+#include <net80211/ieee80211_compat.h>
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_compat.c,v 1.3 2003/09/23 15:57:25 dyoung Exp $");
 
 #ifdef __NetBSD__
-int
+void
 if_printf(struct ifnet *ifp, const char *fmt, ...)
 {
-	int rc;
 	va_list ap;
-
 	va_start(ap, fmt);
-	if (printf("%s: ", ifp->if_xname) == -1)
-		return -1;
-	rc = vprintf(fmt, ap);
+
+	printf("%s: ", ifp->if_xname);
+	vprintf(fmt, ap);
+
 	va_end(ap);
-	return rc;
+	return;
 }
 #endif /* __NetBSD__ */
