@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.27 2005/04/04 17:34:57 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.28 2005/04/04 18:18:35 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -573,4 +573,94 @@ share/examples/fstab/fstab.wd0.cobalt		1.2
 	(/proc, ...) and mfs-based /tmp into their own files. Hint at them
 	in the existing files. (fstab needs an #include statement :)
 	[hubertf, ticket #95]
+
+lib/libpam/modules/pam_chroot/pam_chroot.c	1.3
+lib/libpam/modules/pam_ftpusers/pam_ftpusers.c	1.3
+lib/libpam/modules/pam_group/pam_group.c	1.6
+lib/libpam/modules/pam_krb5/pam_krb5.c		1.7
+lib/libpam/modules/pam_lastlog/pam_lastlog.c	1.7
+lib/libpam/modules/pam_nologin/pam_nologin.c	1.4
+lib/libpam/modules/pam_radius/pam_radius.c	1.3
+lib/libpam/modules/pam_rhosts/pam_rhosts.c	1.3
+lib/libpam/modules/pam_securetty/pam_securetty.c 1.3
+lib/libpam/modules/pam_self/pam_self.c		1.3
+lib/libpam/modules/pam_ssh/pam_ssh.c		1.10
+lib/libpam/modules/pam_unix/pam_unix.c		1.7
+
+	Use getpwnam_r().
+	[thorpej, ticket #96]
+
+lib/libc/gen/__glob13.c				1.26
+lib/libc/net/rcmd.c				1.59
+
+	Use re-entrant versions of getpw*(). In libc only pwcache remains and
+	this cannot be changed easily because it involves an API change.
+	[thorpej, ticket #97]
+
+lib/libc/gen/__glob13.c				1.27
+
+	Detect when this is used as a tool and don't use the _r getpw
+	functions.
+	[thorpej, ticket #98]
+
+distrib/utils/libhack/getpwent.c		1.8
+
+	Add re-entrant versions of the password routines. Well, not really,
+	but close.
+	[thorpej, ticket #99]
+
+lib/libc/gen/getpwent.3				1.26
+
+	Document the return values of the _r functions.
+	[thorpej, ticket #100]
+
+lib/libc/net/rcmd.3				1.26
+
+	Remove the bugs section. It has been fixed.
+	[thorpej, ticket #101]
+
+gnu/dist/gcc/libstdc++-v3/acinclude.m4		1.2
+gnu/dist/gcc/libstdc++-v3/include/c_std/std_cwchar.h 1.2
+gnu/lib/libstdc++-v3/arch/alpha/c++config.h	1.6
+gnu/lib/libstdc++-v3/arch/alpha/config.h	1.5
+gnu/lib/libstdc++-v3/arch/arm/c++config.h	1.7
+gnu/lib/libstdc++-v3/arch/arm/config.h		1.5
+gnu/lib/libstdc++-v3/arch/armeb/c++config.h	1.6
+gnu/lib/libstdc++-v3/arch/armeb/config.h	1.5
+gnu/lib/libstdc++-v3/arch/i386/c++config.h	1.7
+gnu/lib/libstdc++-v3/arch/i386/config.h		1.5
+gnu/lib/libstdc++-v3/arch/hppa/c++config.h	1.5
+gnu/lib/libstdc++-v3/arch/hppa/config.h		1.4
+gnu/lib/libstdc++-v3/arch/m68000/c++config.h	1.7
+gnu/lib/libstdc++-v3/arch/m68000/config.h	1.4
+gnu/lib/libstdc++-v3/arch/m68k/c++config.h	1.6
+gnu/lib/libstdc++-v3/arch/m68k/config.h		1.4
+gnu/lib/libstdc++-v3/arch/mipseb/c++config.h	1.7
+gnu/lib/libstdc++-v3/arch/mipseb/config.h	1.5
+gnu/lib/libstdc++-v3/arch/mipsel/c++config.h	1.6
+gnu/lib/libstdc++-v3/arch/mipsel/config.h	1.4
+gnu/lib/libstdc++-v3/arch/ns32k/c++config.h	1.3
+gnu/lib/libstdc++-v3/arch/ns32k/config.h	1.3
+gnu/lib/libstdc++-v3/arch/powerpc/c++config.h	1.5
+gnu/lib/libstdc++-v3/arch/powerpc/config.h	1.4
+gnu/lib/libstdc++-v3/arch/sh3eb/c++config.h	1.4
+gnu/lib/libstdc++-v3/arch/sh3eb/config.h	1.2
+gnu/lib/libstdc++-v3/arch/sh3el/c++config.h	1.5
+gnu/lib/libstdc++-v3/arch/sh3el/config.h	1.3
+gnu/lib/libstdc++-v3/arch/sh5el/c++config.h	1.4
+gnu/lib/libstdc++-v3/arch/sh5el/config.h	1.4
+gnu/lib/libstdc++-v3/arch/sparc/c++config.h	1.8
+gnu/lib/libstdc++-v3/arch/sparc/config.h	1.6
+gnu/lib/libstdc++-v3/arch/sparc64/c++config.h	1.7
+gnu/lib/libstdc++-v3/arch/sparc64/config.h	1.5
+gnu/lib/libstdc++-v3/arch/vax/c++config.h	1.3
+gnu/lib/libstdc++-v3/arch/vax/config.h		1.3
+gnu/lib/libstdc++-v3/arch/x86_64/c++config.h	1.5
+gnu/lib/libstdc++-v3/arch/x86_64/config.h	1.4
+include/wchar.h					1.22
+lib/libc/locale/Makefile.inc			1.46
+lib/libc/locale/wcsftime.c			1.1
+
+	Add support for wide strings in C++.
+	[christos, ticket #102]
 
