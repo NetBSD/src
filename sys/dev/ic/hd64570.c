@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.4 1998/12/09 23:25:41 tls Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.5 1999/03/16 21:29:23 erh Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -771,11 +771,6 @@ sca_output(ifp, m, dst, rt0)
 		goto bad;
 	}
 
-	if (dst->sa_family != AF_INET) {
-		error = EAFNOSUPPORT;
-		goto bad;
-	}
-
 #ifdef SCA_USE_FASTQ
 	highpri = 0;
 #endif
@@ -935,7 +930,7 @@ sca_start(ifp)
 	struct sca_softc *sc = scp->sca;
 	struct mbuf *m, *mb_head;
 	sca_desc_t *desc;
-	u_int8_t *buf, *obuf;
+	u_int8_t *buf;
 	u_int32_t buf_p;
 	int trigger_xmit;
 
@@ -965,11 +960,11 @@ sca_start(ifp)
 
 	desc = &scp->txdesc[scp->txcur];
 	if (scp->txinuse != 0) {
+		/* Kill EOT interrupts on the previous packet. */
 		desc->stat &= ~SCA_DESC_EOT;
-		desc = &scp->txdesc[scp->txcur];
+		desc = &scp->txdesc[scp->txcur+1];
 	}
 	buf = scp->txbuf + SCA_BSIZE * scp->txcur;
-	obuf = buf;
 	buf_p = scp->txbuf_p + SCA_BSIZE * scp->txcur;
 
 	desc->bp = (u_int16_t)(buf_p & 0x0000ffff);
