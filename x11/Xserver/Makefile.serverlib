@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile.serverlib,v 1.6 2004/07/13 09:29:45 sekiya Exp $
+#	$NetBSD: Makefile.serverlib,v 1.7 2004/07/14 09:44:26 agc Exp $
 
 NOLINT=         1
 NOPROFILE=      1
 
 .if ${MACHINE_ARCH} != "mipseb" && ${MACHINE_ARCH} != "mipsel"
-.if !defined(XMODULEDIR)
 NOPIC=		1
-.endif
 .endif
 
 .include <bsd.own.mk>		# for NETBSDSRCDIR
