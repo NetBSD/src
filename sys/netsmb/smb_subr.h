@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.8 2003/03/03 21:16:02 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.9 2003/03/15 02:54:24 kristerw Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -93,22 +93,18 @@ void m_dumpm(struct mbuf *m);
  * function, but we'll avoid it to maintain portability.
  */
 #define itry		{						\
-				__label__ _finlab, _catchlab;		\
 				int _tval;				\
 
 #define icatch(var)							\
 				goto _finlab;				\
-				(void)&&_catchlab;			\
 				_catchlab:				\
 				var = _tval;
 
-#define ifinally		(void)&&_finlab;			\
-				_finlab:				
+#define ifinally		_finlab:
 #define iendtry		}
 
 #define inocatch							\
 				goto _finlab;				\
-				(void)&&_catchlab;			\
 				_catchlab:				\
 
 #define ithrow(t)	do {						\
