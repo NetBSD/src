@@ -1,9 +1,9 @@
-#	$Id: Makefile,v 1.14 1994/06/30 20:17:47 deraadt Exp $
+#	$Id: Makefile,v 1.15 1994/09/16 01:27:58 deraadt Exp $
 
 LIB=	kern
 NOPIC=
 OBJMACHINE=
-CFLAGS+= -I${.CURDIR} -Imachine/.. -I. -I${.CURDIR}/../..
+CFLAGS= -O3 -I${.CURDIR} -Imachine/.. -I. -I${.CURDIR}/../..
 
 machine-links:
 	-rm -f machine && \
