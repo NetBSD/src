@@ -1,49 +1,22 @@
-# Makefile.inc
-#
-# Copyright (c) 1996, 1997 The Internet Software Consortium.
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-# 3. Neither the name of The Internet Software Consortium nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE INTERNET SOFTWARE CONSORTIUM AND
-# CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
-# BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
-# THE INTERNET SOFTWARE CONSORTIUM OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-# OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# $NetBSD: Makefile.inc,v 1.10.4.3 2001/08/16 18:53:26 tv Exp $
 
 WARNS?=	0
 
-COBJDIR!=cd $(.CURDIR)/../common; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-OMOBJDIR!=cd $(.CURDIR)/../omapip; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-MROBJDIR!=cd $(.CURDIR)/../minires; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-DSTOBJDIR!=cd $(.CURDIR)/../dst; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+.include <bsd.own.mk>
 
-CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
-LDADD=  ${OMOBJDIR}/libomapi.a ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a ${DSTOBJDIR}/libdst.a
-DPADD=  ${OMOBJDIR}/libomapi.a ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a ${DSTOBJDIR}/libdst.a
+DIST=	${.CURDIR}/../../../dist/dhcp
+.PATH:	${DIST}/${DHCPSRCDIR}
+
+COBJDIR!=cd $(.CURDIR)/../common && ${PRINTOBJDIR}
+OMOBJDIR!=cd $(.CURDIR)/../omapip && ${PRINTOBJDIR}
+MROBJDIR!=cd $(.CURDIR)/../minires && ${PRINTOBJDIR}
+DSTOBJDIR!=cd $(.CURDIR)/../dst && ${PRINTOBJDIR}
+
+CPPFLAGS+= -I${DIST} -I${DIST}/includes
+LDADD+= ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a
+LDADD+= ${OMOBJDIR}/libomapi.a ${DSTOBJDIR}/libdst.a
+DPADD+= ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a
+DPADD+= ${OMOBJDIR}/libomapi.a ${DSTOBJDIR}/libdst.a
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
