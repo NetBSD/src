@@ -1,14 +1,14 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: pcap2netbsd,v 1.1 1997/10/03 16:01:32 christos Exp $
+#	$NetBSD: pcap2netbsd,v 1.2 1997/10/03 16:40:57 christos Exp $
 #
-#  Perl script to convert a standard distribution directory for libpcap into
+#  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
 #
 #  This is done as a script so that as each distribution is released,
 #	only changes from the previous one need to be dealt with as
 #	modifications to this script and related files.  This should
-#	reduce the cost of updating from a new release of libpcap by an
+#	reduce the cost of updating from a new release of xntp by an
 #	order of magnitude (or more?)
 #
 #  This script requires two environment variables set:
@@ -23,6 +23,8 @@ $version = "0.4a3";
 # definitions ...
 
 @subdirs = ("lib/libpcap");
+
+
 
 @libpcapf = ("bpf_image.c", "etherent.c", "gencode.c",
 	     "grammar.y", "inet.c", "nametoaddr.c", "optimize.c",
@@ -214,11 +216,14 @@ while ($line = <DATA>) {
 	    }
 	    print ODATA "MAN=\t";
 	    &dumpsrcs (@libpcapmf);
+	} elsif ($cmd[1] eq "version") {
+	    print "  Defining VERSION\n";
+	    print ODATA "char pcap_version[] = \"$version\";";
 	} elsif ($cmd[1] eq "NetBSD") {
 	    if ($first) {
 		die "Data section must start with a %% file!";
 	    }
-	    print ODATA "$cmd[2]	\$"."NetBSD".": \$\n";
+	    print ODATA "$cmd[2]	\$"."NetBSD".": \$	$cmd[3]\n";
 	}
     } else {
 	if ($first) {
@@ -262,7 +267,7 @@ LFLAGS+=-olex.yy.c -Ppcap_
 YFLAGS+=-ppcap_
 
 %% srcs
-SRCS+=	bpf_filter.c
+SRCS+=	bpf_filter.c version.c
 
 .PATH:	${.CURDIR}/../../sys/net
 
@@ -275,3 +280,6 @@ CLEANFILES+= y.tab.h
 %% file lib/libpcap/shlib_version
 major=0
 minor=0
+%% file lib/libpcap/version.c
+%% NetBSD /* */
+%% version

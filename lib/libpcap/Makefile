@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/10/03 15:53:01 christos Exp $
+#	$NetBSD: Makefile,v 1.13 1997/10/03 16:40:56 christos Exp $	
 
 WARNS?=	1
 LIB=	pcap
@@ -15,7 +15,7 @@ YFLAGS+=-ppcap_
 
 SRCS=	scanner.l savefile.c pcap.c pcap-bpf.c optimize.c nametoaddr.c \
 inet.c grammar.y gencode.c etherent.c bpf_image.c 
-SRCS+=	bpf_filter.c
+SRCS+=	bpf_filter.c version.c
 
 .PATH:	${.CURDIR}/../../sys/net
 
