@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.23 2003/01/10 11:55:45 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2003/06/05 13:15:44 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 2003/01/10 11:55:45 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2003/06/05 13:15:44 agc Exp $");
 #endif
 #endif
 
@@ -74,6 +74,7 @@ main(int argc, char **argv)
 	lpkg_head_t pkgs;
 	lpkg_t *lpp;
 
+	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, Options)) != -1)
 		switch (ch) {
 		case 'v':
