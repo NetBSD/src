@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.26 2003/01/05 06:19:05 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.27 2003/01/05 22:33:21 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.26 2003/01/05 06:19:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.27 2003/01/05 22:33:21 christos Exp $");
+
+#include "opt_acpi.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.26 2003/01/05 06:19:05 jmcneill Exp $");
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_osd.h>
+#ifdef ACPIVERBOSE
+#include <dev/acpi/acpidevs_data.h>
+#endif
 
 #ifndef ACPI_PCI_FIXUP
 #define ACPI_PCI_FIXUP 1
@@ -558,29 +563,44 @@ int
 acpi_print(void *aux, const char *pnp)
 {
 	struct acpi_attach_args *aa = aux;
-	char *uid;
-#if 0
-	char *str;
-#endif
 
 	if (pnp) {
-		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_HID)
-			aprint_normal("%s ",
-			    aa->aa_node->ad_devinfo.HardwareId);
-		else /* XXX print something more meaningful.. */
+		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_HID) {
+			char *pnpstr = aa->aa_node->ad_devinfo.HardwareId;
+			char *str;
+
+			aprint_normal("%s ", pnpstr);
+			if (acpi_eval_string(aa->aa_node->ad_handle,
+			    "_STR", &str) == AE_OK) {
+				aprint_normal("[%s] ", str);
+				AcpiOsFree(str);
+			}
+#ifdef ACPIVERBOSE
+			else {
+				int i;
+
+				for (i = 0; i < sizeof(acpi_knowndevs) /
+				    sizeof(acpi_knowndevs[0]); i++) {
+					if (strcmp(acpi_knowndevs[i].pnp,
+					    pnpstr) == 0) {
+						printf("[%s] ",
+						    acpi_knowndevs[i].str);
+					}
+				}
+			}
+			    
+#endif
+		} else {
+			/* XXX print something more meaningful.. */
 			aprint_normal("ACPI Object Type 0x%02x ",
 			   aa->aa_node->ad_devinfo.Type);
-#if 0 /* Not until we fix acpi_eval_string */
-		if (acpi_eval_string(aa->aa_node->ad_handle,
-		    "_STR", &str) == AE_OK) {
-			aprint_normal("[%s] ", str);
-			AcpiOsFree(str);
 		}
-#endif
 		aprint_normal("at %s", pnp);
 	} else {
 		aprint_normal(" (%s", aa->aa_node->ad_devinfo.HardwareId);
 		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_UID) {
+			char *uid;
+
 			if (aa->aa_node->ad_devinfo.UniqueId[0] == '\0')
 				uid = "<null>";
 			else
@@ -707,12 +727,10 @@ acpi_eval_integer(ACPI_HANDLE handle, char *path, int *valp)
 	return (rv);
 }
 
-#if 0
 /*
  * acpi_eval_string:
  *
  *	Evaluate a (Unicode) string object.
- * XXX current API may leak memory, so don't use this.
  */
 ACPI_STATUS
 acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
@@ -739,17 +757,24 @@ acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
 	param = (ACPI_OBJECT *)buf.Pointer;
 	if (rv == AE_OK) {
 		if (param->Type == ACPI_TYPE_STRING) {
-			/* XXX may leak buf.Pointer!! */
-			*stringp = param->String.Pointer;
-			return (AE_OK);
+			char *ptr = param->String.Pointer;
+			size_t len;
+			while (*ptr++)
+				continue;
+			len = ptr - param->String.Pointer;
+			if ((*stringp = AcpiOsAllocate(len)) == NULL) {
+				rv = AE_NO_MEMORY;
+				goto done;
+			}
+			(void)memcpy(*stringp, param->String.Pointer, len);
+			goto done;
 		}
 		rv = AE_TYPE;
 	}
-
+done:
 	AcpiOsFree(buf.Pointer);
 	return (rv);
 }
-#endif
 
 
 /*
