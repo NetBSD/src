@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.32 2000/07/27 14:13:50 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.33 2000/09/28 15:38:49 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -130,7 +130,9 @@ int
 softintr(fp)
 	void *fp;
 {
+	extern void pcons_dopoll __P((void));
 
+	pcons_dopoll();
 	return (1);
 }
 
