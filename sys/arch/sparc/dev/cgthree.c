@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgthree.c,v 1.8 93/10/31 05:09:24 torek Exp
- * $Id: cgthree.c,v 1.3 1993/11/11 03:36:55 deraadt Exp $
+ * $Id: cgthree.c,v 1.4 1994/04/12 07:46:13 deraadt Exp $
  */
 
 /*
@@ -129,7 +129,7 @@ cgthreeattach(parent, self, args)
 	sc->sc_fb.fb_type.fb_width = getpropint(node, "width", 1152);
 	sc->sc_fb.fb_type.fb_height = getpropint(node, "height", 900);
 	sc->sc_fb.fb_linebytes = getpropint(node, "linebytes", 1152);
-	ramsize = sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes;
+	ramsize = round_page(sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes);
 	sc->sc_fb.fb_type.fb_depth = 8;
 	sc->sc_fb.fb_type.fb_cmsize = 256;
 	sc->sc_fb.fb_type.fb_size = ramsize;
@@ -329,6 +329,9 @@ cgthreeloadcmap(sc, start, ncolors)
  * map the whole thing, so we repeatedly map the first 256K to the
  * first page of the color screen.  If someone tries to use the overlay
  * and enable regions, they will get a surprise....
+ * 
+ * As well, mapping at an offset of 0x04000000 causes the cg3 to be
+ * mapped in flat mode without the cg4 emulation.
  */
 int
 cgthreemap(dev, off, prot)
@@ -336,14 +339,17 @@ cgthreemap(dev, off, prot)
 	int off, prot;
 {
 	register struct cgthree_softc *sc = cgthreecd.cd_devs[minor(dev)];
-#define	START	(128*1024 + 128*1024)
+#define START		(128*1024 + 128*1024)
+#define NOOVERLAY	(0x04000000)
 
 	if (off & PGOFSET)
 		panic("cgthreemap");
-	if ((unsigned)off < START)
-		off = 0;
-	else
+	if ((u_int)off >= NOOVERLAY)
+		off -= NOOVERLAY;
+	else if ((u_int)off >= START)
 		off -= START;
+	else
+		off = 0;
 	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 	/*
