@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.44 2000/11/04 15:54:36 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.45 2000/12/08 02:33:44 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -3235,6 +3235,13 @@ umass_scsipi_cmd(struct scsipi_xfer *xs)
 Static void
 umass_scsipi_minphys(struct buf *bp)
 {
+#ifdef DIAGNOSTIC
+	if (bp->b_bcount <= 0) {
+		printf("umass_scsipi_minphys count(%ld) <= 0\n",
+		       bp->b_bcount);
+		bp->b_bcount = UMASS_MAX_TRANSFER_SIZE;
+	}
+#endif
 	if (bp->b_bcount > UMASS_MAX_TRANSFER_SIZE)
 		bp->b_bcount = UMASS_MAX_TRANSFER_SIZE;
 	minphys(bp);
