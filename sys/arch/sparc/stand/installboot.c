@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.9 1995/09/27 09:03:15 pk Exp $ */
+/*	$NetBSD: installboot.c,v 1.10 1995/11/07 11:45:24 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -133,7 +133,7 @@ main(argc, argv)
 	if (sysctl(mib, 2, cpumodel, &size, NULL, 0) == -1)
 		err(1, "sysctl");
 
-	if (size < 5 || strncmp(cpumodel, "SUN/4", 5) != 0) /*XXX*/ 
+	if (size < 5 || strncmp(cpumodel, "SUN-4", 5) != 0) /*XXX*/ 
 		/* Assume a sun4c/sun4m */
 		hflag = 1;
 
