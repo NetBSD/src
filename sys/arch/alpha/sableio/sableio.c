@@ -1,4 +1,4 @@
-/* $NetBSD: sableio.c,v 1.7 2004/08/30 15:05:16 drochner Exp $ */
+/* $NetBSD: sableio.c,v 1.8 2004/09/13 14:57:31 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.7 2004/08/30 15:05:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.8 2004/09/13 14:57:31 drochner Exp $");
 
 #include "isadma.h"
 
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.7 2004/08/30 15:05:16 drochner Exp $")
 #include <dev/pci/pcivar.h>
 
 #include <alpha/sableio/sableiovar.h>
+
+#include "locators.h"
 
 /*
  * The devices built-in to the Sable STDIO module.
@@ -109,7 +111,8 @@ CFATTACH_DECL(sableio, sizeof(struct sableio_softc),
     sableio_match, sableio_attach, NULL, NULL);
 
 int	sableio_print(void *, const char *);
-int	sableio_submatch(struct device *, struct cfdata *, void *);
+int	sableio_submatch(struct device *, struct cfdata *,
+			 const locdesc_t *, void *);
 
 struct sableio_softc *sableio_attached;
 
@@ -122,8 +125,8 @@ sableio_match(struct device *parent, struct cfdata *cf, void *aux)
 	 * These are really ISA devices, and thus must be on
 	 * PCI bus 0.
 	 */
-	if (cf->pcibuscf_bus != PCIBUS_UNK_BUS &&
-	    cf->pcibuscf_bus != pba->pba_bus)
+	if (cf->cf_loc[SABLEIOBUSCF_BUS] != SABLEIOBUSCF_BUS_DEFAULT &&
+	    cf->cf_loc[SABLEIOBUSCF_BUS] != pba->pba_bus)
 		return (0);
 
 	/* sanity */
@@ -145,6 +148,8 @@ sableio_attach(struct device *parent, struct device *self, void *aux)
 	struct sableio_attach_args sa;
 	bus_dma_tag_t dmat;
 	int i;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	printf(": Sable STDIO module\n");
 
@@ -171,18 +176,21 @@ sableio_attach(struct device *parent, struct device *self, void *aux)
 		sa.sa_ic = &sc->sc_isa_chipset;
 		sa.sa_pc = pba->pba_pc;
 
-		(void) config_found_sm(self, &sa, sableio_print,
-		    sableio_submatch);
+		ldesc->len = 1;
+		ldesc->locs[SABLEIOCF_PORT] = sableio_devs[i].sd_ioaddr;
+
+		(void) config_found_sm_loc(self, "sableio", ldesc, &sa,
+					   sableio_print, sableio_submatch);
 	}
 }
 
 int
-sableio_submatch(struct device *parent, struct cfdata *cf, void *aux)
+sableio_submatch(struct device *parent, struct cfdata *cf,
+		 const locdesc_t *ldesc, void *aux)
 {
-	struct sableio_attach_args *sa = aux;
 
 	if (cf->cf_loc[SABLEIOCF_PORT] != SABLEIOCF_PORT_DEFAULT &&
-	    cf->cf_loc[SABLEIOCF_PORT] != sa->sa_ioaddr)
+	    cf->cf_loc[SABLEIOCF_PORT] != ldesc->locs[SABLEIOCF_PORT])
 		return (0);
 
 	return (config_match(parent, cf, aux));

@@ -1,4 +1,4 @@
-/* $NetBSD: sbgbus.c,v 1.7 2003/07/15 02:43:39 lukem Exp $ */
+/* $NetBSD: sbgbus.c,v 1.8 2004/09/13 14:57:31 drochner Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.7 2003/07/15 02:43:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.8 2004/09/13 14:57:31 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,8 @@ static void	sbgbus_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(sbgbus, sizeof(struct device),
     sbgbus_match, sbgbus_attach, NULL, NULL);
 
-static int	sbgbussearch(struct device *, struct cfdata *, void *);
+static int	sbgbussearch(struct device *, struct cfdata *,
+			     const locdesc_t *, void *);
 static int	sbgbusprint(void *, const char *);
 
 static int
@@ -72,7 +73,7 @@ sbgbus_attach(struct device *parent, struct device *self, void *aux)
 {
 
 	/* Configure children using indirect configuration. */
-	config_search(sbgbussearch, self, NULL);
+	config_search_ia(sbgbussearch, self, "sbgbus", NULL);
 }
 
 static int
@@ -94,7 +95,8 @@ sbgbusprint(void *aux, const char *pnp)
 }
 
 static int
-sbgbussearch(struct device *parent, struct cfdata *cf, void *aux)
+sbgbussearch(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *ldesc, void *aux)
 {
 	struct sbgbus_attach_args sga;
 	int tryagain;
