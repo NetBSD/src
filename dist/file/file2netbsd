@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: file2netbsd,v 1.8 2004/03/23 08:40:36 pooka Exp $
+#	$NetBSD: file2netbsd,v 1.9 2004/04/08 12:30:24 pooka Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,7 +41,7 @@
 #
 
 # edit this
-file_vers='4.08'
+file_vers='4.09'
 
 #
 # (usually) NO NEED TO EDIT BELOW THIS LINE
@@ -103,14 +103,12 @@ done
 mv magic/Magdir magic/magdir
 
 #### Make building easier, don't build magic and doc
-echo '/SUBDIRS/t.
+echo '/^SUBDIRS/
+t.
 s/^/#/
 -
 s/ magic.*//
-wq' | ed Makefile.am >/dev/null 2>&1 
-automake
-autoconf
-rm -rf autom4te.cache
+wq' | ed Makefile.in > /dev/null 2>&1
 
 #### No python in the base system
 rm -rf python
