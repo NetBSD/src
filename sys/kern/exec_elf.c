@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.1 1995/06/22 21:29:53 fvdl Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.2 1995/06/30 02:57:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -72,7 +72,6 @@ static void elf_load_psection __P((struct exec_vmcmd_set *,
 	struct vnode *, Elf32_Phdr *, u_long *, u_long *, int *));
 
 #define ELF_ALIGN(a, b) ((a) & ~((b) - 1))
-#define ELF_AUX_ARGSIZ (sizeof(AuxInfo) * 8 / sizeof(char *))
 
 /*
  * Copy arguments onto the stack in the normal way, but add some
