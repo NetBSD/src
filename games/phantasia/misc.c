@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.13 2005/02/15 12:56:20 jsm Exp $	*/
+/*	$NetBSD: misc.c,v 1.14 2005/02/15 12:58:21 jsm Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -65,7 +65,7 @@ movelevel()
 const char   *
 descrlocation(playerp, shortflag)
 	struct player *playerp;
-	bool    shortflag;
+	phbool  shortflag;
 {
 	double  circle;		/* corresponding circle for coordinates */
 	int     quadrant;	/* quandrant of grid */
@@ -447,7 +447,7 @@ allstatslist()
 const char   *
 descrtype(playerp, shortflag)
 	struct player *playerp;
-	bool    shortflag;
+	phbool  shortflag;
 {
 	int     type;		/* for caluculating result subscript */
 	static const char *const results[] =/* description table */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gamesupport.c,v 1.8 2004/04/11 13:35:06 he Exp $	*/
+/*	$NetBSD: gamesupport.c,v 1.9 2005/02/15 12:58:21 jsm Exp $	*/
 
 /*
  * gamesupport.c - auxiliary routines for support of Phantasia
@@ -10,7 +10,7 @@
 
 void
 changestats(ingameflag)
-	bool    ingameflag;
+	phbool  ingameflag;
 {
 	static char flag[2] =	/* for printing values of bools */
 	{'F', 'T'};
@@ -22,7 +22,7 @@ changestats(ingameflag)
 	long    loc;		/* location in player file */
 	time_t  now;		/* time now */
 	double  dtemp;		/* temporary variable */
-	bool   *bptr;		/* pointer to bool item to change */
+	phbool *bptr;		/* pointer to bool item to change */
 	double *dptr;		/* pointer to double item to change */
 	short  *sptr;		/* pointer to short item to change */
 
