@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_mem.c,v 1.12 1998/07/26 11:38:24 mycroft Exp $	*/
+/*	$NetBSD: xdr_mem.c,v 1.13 1998/07/26 12:47:38 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_mem.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_mem.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_mem.c,v 1.12 1998/07/26 11:38:24 mycroft Exp $");
+__RCSID("$NetBSD: xdr_mem.c,v 1.13 1998/07/26 12:47:38 mycroft Exp $");
 #endif
 #endif
 
@@ -67,11 +67,11 @@ __weak_alias(xdrmem_create,_xdrmem_create);
 
 static void xdrmem_destroy __P((XDR *));
 static bool_t xdrmem_getlong_aligned __P((XDR *, long *));
-static bool_t xdrmem_putlong_aligned __P((XDR *, long *));
+static bool_t xdrmem_putlong_aligned __P((XDR *, const long *));
 static bool_t xdrmem_getlong_unaligned __P((XDR *, long *));
-static bool_t xdrmem_putlong_unaligned __P((XDR *, long *));
-static bool_t xdrmem_getbytes __P((XDR *, caddr_t, u_int));
-static bool_t xdrmem_putbytes __P((XDR *, caddr_t, u_int));
+static bool_t xdrmem_putlong_unaligned __P((XDR *, const long *));
+static bool_t xdrmem_getbytes __P((XDR *, char *, u_int));
+static bool_t xdrmem_putbytes __P((XDR *, const char *, u_int));
 /* XXX: w/64-bit pointers, u_int not enough! */
 static u_int xdrmem_getpos __P((XDR *));
 static bool_t xdrmem_setpos __P((XDR *, u_int));
@@ -107,7 +107,7 @@ static const struct	xdr_ops xdrmem_ops_unaligned = {
 void
 xdrmem_create(xdrs, addr, size, op)
 	XDR *xdrs;
-	caddr_t addr;
+	char *addr;
 	u_int size;
 	enum xdr_op op;
 {
@@ -143,7 +143,7 @@ xdrmem_getlong_aligned(xdrs, lp)
 static bool_t
 xdrmem_putlong_aligned(xdrs, lp)
 	XDR *xdrs;
-	long *lp;
+	const long *lp;
 {
 
 	if ((xdrs->x_handy -= sizeof(int32_t)) < 0)
@@ -171,7 +171,7 @@ xdrmem_getlong_unaligned(xdrs, lp)
 static bool_t
 xdrmem_putlong_unaligned(xdrs, lp)
 	XDR *xdrs;
-	long *lp;
+	const long *lp;
 {
 	int32_t l;
 
@@ -186,7 +186,7 @@ xdrmem_putlong_unaligned(xdrs, lp)
 static bool_t
 xdrmem_getbytes(xdrs, addr, len)
 	XDR *xdrs;
-	caddr_t addr;
+	char *addr;
 	u_int len;
 {
 
@@ -200,7 +200,7 @@ xdrmem_getbytes(xdrs, addr, len)
 static bool_t
 xdrmem_putbytes(xdrs, addr, len)
 	XDR *xdrs;
-	caddr_t addr;
+	const char *addr;
 	u_int len;
 {
 
@@ -225,8 +225,8 @@ xdrmem_setpos(xdrs, pos)
 	XDR *xdrs;
 	u_int pos;
 {
-	caddr_t newaddr = xdrs->x_base + pos;
-	caddr_t lastaddr = xdrs->x_private + xdrs->x_handy;
+	char *newaddr = xdrs->x_base + pos;
+	char *lastaddr = xdrs->x_private + xdrs->x_handy;
 
 	if ((long)newaddr > (long)lastaddr)
 		return (FALSE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.10 1998/01/06 05:01:20 perry Exp $	*/
+/*	$NetBSD: herror.c,v 1.11 1998/07/26 12:50:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1993
@@ -59,7 +59,7 @@
 static char rcsid[] = "Id: herror.c,v 8.3 1996/08/05 08:31:35 vixie Exp ";
 static char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: herror.c,v 1.10 1998/01/06 05:01:20 perry Exp $");
+__RCSID("$NetBSD: herror.c,v 1.11 1998/07/26 12:50:47 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,14 +69,14 @@ __RCSID("$NetBSD: herror.c,v 1.10 1998/01/06 05:01:20 perry Exp $");
 #include <unistd.h>
 #include <string.h>
 
-const char	*h_errlist[] = {
+const char	*const h_errlist[] = {
 	"Resolver Error 0 (no error)",
 	"Unknown host",				/* 1 HOST_NOT_FOUND */
 	"Host name lookup failure",		/* 2 TRY_AGAIN */
 	"Unknown server error",			/* 3 NO_RECOVERY */
 	"No address associated with name",	/* 4 NO_ADDRESS */
 };
-int	h_nerr = { sizeof h_errlist / sizeof h_errlist[0] };
+const int h_nerr = { sizeof h_errlist/sizeof h_errlist[0] };
 
 extern int	h_errno;
 

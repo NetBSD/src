@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_stdio.c,v 1.10 1998/07/26 11:38:24 mycroft Exp $	*/
+/*	$NetBSD: xdr_stdio.c,v 1.11 1998/07/26 12:47:39 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_stdio.c 1.16 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_stdio.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_stdio.c,v 1.10 1998/07/26 11:38:24 mycroft Exp $");
+__RCSID("$NetBSD: xdr_stdio.c,v 1.11 1998/07/26 12:47:39 mycroft Exp $");
 #endif
 #endif
 
@@ -62,9 +62,9 @@ __weak_alias(xdrstdio_create,_xdrstdio_create);
 
 static void xdrstdio_destroy __P((XDR *));
 static bool_t xdrstdio_getlong __P((XDR *, long *));
-static bool_t xdrstdio_putlong __P((XDR *, long *));
-static bool_t xdrstdio_getbytes __P((XDR *, caddr_t, u_int));
-static bool_t xdrstdio_putbytes __P((XDR *, caddr_t, u_int));
+static bool_t xdrstdio_putlong __P((XDR *, const long *));
+static bool_t xdrstdio_getbytes __P((XDR *, char *, u_int));
+static bool_t xdrstdio_putbytes __P((XDR *, const char *, u_int));
 static u_int xdrstdio_getpos __P((XDR *));
 static bool_t xdrstdio_setpos __P((XDR *, u_int));
 static int32_t *xdrstdio_inline __P((XDR *, u_int));
@@ -97,7 +97,7 @@ xdrstdio_create(xdrs, file, op)
 
 	xdrs->x_op = op;
 	xdrs->x_ops = &xdrstdio_ops;
-	xdrs->x_private = (caddr_t)file;
+	xdrs->x_private = (char *)file;
 	xdrs->x_handy = 0;
 	xdrs->x_base = 0;
 }
@@ -120,7 +120,7 @@ xdrstdio_getlong(xdrs, lp)
 	long *lp;
 {
 
-	if (fread((caddr_t)lp, sizeof(int32_t), 1,
+	if (fread((char *)lp, sizeof(int32_t), 1,
 	    (FILE *)xdrs->x_private) != 1)
 		return (FALSE);
 	*lp = (long)ntohl((int32_t)*lp);
@@ -130,11 +130,11 @@ xdrstdio_getlong(xdrs, lp)
 static bool_t
 xdrstdio_putlong(xdrs, lp)
 	XDR *xdrs;
-	long *lp;
+	const long *lp;
 {
 	long mycopy = (long)htonl((int32_t)*lp);
 
-	if (fwrite((caddr_t)&mycopy, sizeof(int32_t), 1,
+	if (fwrite((char *)&mycopy, sizeof(int32_t), 1,
 	    (FILE *)xdrs->x_private) != 1)
 		return (FALSE);
 	return (TRUE);
@@ -143,7 +143,7 @@ xdrstdio_putlong(xdrs, lp)
 static bool_t
 xdrstdio_getbytes(xdrs, addr, len)
 	XDR *xdrs;
-	caddr_t addr;
+	char *addr;
 	u_int len;
 {
 
@@ -155,7 +155,7 @@ xdrstdio_getbytes(xdrs, addr, len)
 static bool_t
 xdrstdio_putbytes(xdrs, addr, len)
 	XDR *xdrs;
-	caddr_t addr;
+	const char *addr;
 	u_int len;
 {
 
