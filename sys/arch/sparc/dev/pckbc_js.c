@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.8 2003/07/15 00:04:56 lukem Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.9 2003/12/12 14:31:39 martin Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.8 2003/07/15 00:04:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.9 2003/12/12 14:31:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.8 2003/07/15 00:04:56 lukem Exp $");
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 
+#ifdef __GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
+#define	IPL_JSCKBD	IPL_TTY
+#else
+#define	IPL_JSCKBD	IPL_SOFTSERIAL
+#endif
 
 struct pckbc_js_softc {
 	struct pckbc_softc jsc_pckbc;	/* real "pckbc" softc */
@@ -54,6 +59,7 @@ struct pckbc_js_softc {
 	/* kbd and mouse share interrupt in both mr.coffee and krups */
 	u_int32_t jsc_intr;
 	int jsc_establised;
+	void *jsc_int_cookie;
 };
 
 
@@ -66,6 +72,7 @@ static void	pckbc_ebus_attach(struct device *, struct device *, void *);
 static void	pckbc_js_attach_common(	struct pckbc_js_softc *,
 					bus_space_tag_t, bus_addr_t, int, int);
 static void	pckbc_js_intr_establish(struct pckbc_softc *, pckbc_slot_t);
+static int	jsc_pckbdintr(void *vsc);
 
 /* Mr.Coffee */
 CFATTACH_DECL(pckbc_obio, sizeof(struct pckbc_js_softc),
@@ -258,8 +265,19 @@ pckbc_js_intr_establish(sc, slot)
 		return;
 	}
 
+	/*
+	 * We can not choose the devic class interruptlevel freely,
+	 * so we debounce via a softinterrupt.
+	 */
+	jsc->jsc_int_cookie = softintr_establish(IPL_JSCKBD,
+	    pckbcintr_soft, &jsc->jsc_pckbc);
+	if (jsc->jsc_int_cookie == NULL) {
+		printf("%s: unable to establish %s soft interrupt\n",
+		       sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
+		return;
+	}
 	res = bus_intr_establish(sc->id->t_iot, jsc->jsc_intr,
-				 IPL_TTY, pckbcintr, sc);
+				 IPL_SERIAL, jsc_pckbdintr, jsc);
 	if (res == NULL)
 		printf("%s: unable to establish %s slot interrupt\n",
 		       sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
@@ -267,6 +285,20 @@ pckbc_js_intr_establish(sc, slot)
 		jsc->jsc_establised = 1;
 }
 
+static int
+jsc_pckbdintr(void *vsc)
+{
+	struct pckbc_js_softc *jsc = vsc;
+
+	softintr_schedule(jsc->jsc_int_cookie);
+	pckbcintr_hard(&jsc->jsc_pckbc);
+	/*
+	 * This interrupt is not shared on javastations, avoid "stray"
+	 * warnings. XXX - why do "stray interrupt" warnings happen if
+	 * we don't claim the interrupt always?
+	 */
+	return 1;
+}
 
 /*
  * MD hook for use without MI wscons.
