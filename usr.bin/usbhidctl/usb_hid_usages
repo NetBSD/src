@@ -1,0 +1,92 @@
+#
+# USB HID usage table
+# Syntax:
+#  * lines that do not start with a white space give the number and name of
+#    a usage page.
+#  * lines that start with a white space give the number and name of
+#    a usage with the last given page.
+#
+
+1	Generic Desktop Controls
+	0x01	Pointer
+	0x02	Mouse
+	0x04	Joystick
+	0x05	Game Pad
+	0x06	Keyboard
+	0x07	Keyboard
+	0x30	X
+	0x31	Y
+	0x32	Z
+	0x35	Rz
+	0x36	Slider
+	0x38	Wheel
+	0x39	Hat switch
+2	Simulation Controls
+3	VR Controls
+4	Sport Controls
+5	Game Controls
+7	Keyboard/Keypad
+8	LEDs
+	0x01	Num Lock
+	0x02	Caps Lock
+	0x03	Scroll Lock
+	0x04	Compose
+9	Button
+	1	Button 1
+	2	Button 2
+	3	Button 3
+	4	Button 4
+	5	Button 5
+	6	Button 6
+	7	Button 7
+	8	Button 8
+	9	Button 9
+	10	Button 10
+	11	Button 11
+	12	Button 12
+	13	Button 13
+	14	Button 14
+	15	Button 15
+	16	Button 16
+	17	Button 17
+	18	Button 18
+	19	Button 19
+	20	Button 20
+	21	Button 21
+	22	Button 22
+	23	Button 23
+	24	Button 24
+	25	Button 25
+	26	Button 26
+	27	Button 27
+	28	Button 28
+	29	Button 29
+	30	Button 30
+	31	Button 31
+	32	Button 32
+	33	Button 33
+	34	Button 34
+	35	Button 35
+	36	Button 36
+	37	Button 37
+	38	Button 38
+	39	Button 39
+	40	Button 40
+	41	Button 41
+	42	Button 42
+	43	Button 43
+	44	Button 44
+	45	Button 45
+	46	Button 46
+	47	Button 47
+	48	Button 48
+	49	Button 49
+	50	Button 50
+10	Ordinal
+11	Telephony
+12	Consumer
+	0x01	Consumer Control
+	0xe5	Bass Boost
+	0xe9	Volume Increment
+	0xea	Volume Decrement
+13	Digitizer
