@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.9 1998/08/03 13:09:01 leo Exp $	*/
+/*	$NetBSD: bus.c,v 1.10 1998/09/02 14:58:01 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,14 +52,14 @@
 #include <machine/bus.h>
 
 static int  _bus_dmamap_load_buffer __P((bus_dma_tag_t tag, bus_dmamap_t,
-		void *, bus_size_t, struct proc *, int, vm_offset_t *,
+		void *, bus_size_t, struct proc *, int, paddr_t *,
 		int *, int));
 static int  _bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 		bus_size_t alignment, bus_size_t boundary,
 		bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-		vm_offset_t low, vm_offset_t high));
+		paddr_t low, paddr_t high));
 
-extern vm_offset_t avail_end;
+extern paddr_t avail_end;
 
 int
 bus_space_map(t, bpa, size, flags, mhp)
@@ -69,8 +69,8 @@ bus_size_t		size;
 int			flags;
 bus_space_handle_t	*mhp;
 {
-	vm_offset_t	va;
-	u_long		pa, endpa;
+	vaddr_t	va;
+	paddr_t	pa, endpa;
 
 	pa    = m68k_trunc_page(bpa + t->base);
 	endpa = m68k_round_page((bpa + t->base + size) - 1);
@@ -90,7 +90,7 @@ bus_space_handle_t	*mhp;
 	*mhp = (caddr_t)(va + (bpa & PGOFSET));
 
 	for(; pa < endpa; pa += NBPG, va += NBPG) {
-		pmap_enter(pmap_kernel(), (vm_offset_t)va, pa,
+		pmap_enter(pmap_kernel(), (vaddr_t)va, pa,
 				VM_PROT_READ|VM_PROT_WRITE, TRUE);
 		if (!(flags & BUS_SPACE_MAP_CACHEABLE))
 			pmap_changebit(pa, PG_CI, TRUE);
@@ -104,7 +104,7 @@ bus_space_tag_t		t;
 bus_space_handle_t	memh;
 bus_size_t		size;
 {
-	vm_offset_t	va, endva;
+	vaddr_t	va, endva;
 
 	va = m68k_trunc_page(memh);
 	endva = m68k_round_page((memh + size) - 1);
@@ -115,7 +115,7 @@ bus_size_t		size;
 #endif
 
 #if defined(UVM)
-	uvm_km_free(kernel_map, (vm_offset_t)va, endva - va);
+	uvm_km_free(kernel_map, va, endva - va);
 #else
 	kmem_free(kernel_map, va, endva - va);
 #endif
@@ -210,7 +210,7 @@ bus_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error;
 
 	/*
@@ -242,7 +242,7 @@ bus_dmamap_load_mbuf(t, map, m0, flags)
 	struct mbuf *m0;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, error, first;
 	struct mbuf *m;
 
@@ -285,7 +285,7 @@ bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	vm_offset_t lastaddr;
+	paddr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct proc *p = NULL;
@@ -502,7 +502,7 @@ bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	bus_addr_t addr, offset;
 	int curseg;
 
@@ -561,9 +561,9 @@ bus_dmamem_unmap(t, kva, size)
 	size = round_page(size);
 
 #if defined(UVM)
-	uvm_km_free(kernel_map, (vm_offset_t)kva, size);
+	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 #else
-	kmem_free(kernel_map, (vm_offset_t)kva, size);
+	kmem_free(kernel_map, (vaddr_t)kva, size);
 #endif
 }
 
@@ -623,13 +623,13 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 	bus_size_t buflen;
 	struct proc *p;
 	int flags;
-	vm_offset_t *lastaddrp;
+	paddr_t *lastaddrp;
 	int *segp;
 	int first;
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, offset, baddr, bmask;
-	vm_offset_t vaddr = (vm_offset_t)buf;
+	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
 	pmap_t pmap;
 
@@ -721,10 +721,10 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	int nsegs;
 	int *rsegs;
 	int flags;
-	vm_offset_t low;
-	vm_offset_t high;
+	paddr_t low;
+	paddr_t high;
 {
-	vm_offset_t curaddr, lastaddr;
+	paddr_t curaddr, lastaddr;
 	bus_addr_t offset;
 	vm_page_t m;
 	struct pglist mlist;

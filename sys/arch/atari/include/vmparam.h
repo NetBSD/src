@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 1998/07/08 04:35:24 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7 1998/09/02 15:01:55 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -142,11 +142,11 @@
 /*
  * user/kernel map constants
  */
-#define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAX_ADDRESS		((vm_offset_t)(USRSTACK))
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)(VM_MAX_ADDRESS))
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)(0-NBPG))
+#define VM_MIN_ADDRESS		((vaddr_t)0)
+#define VM_MAX_ADDRESS		((vaddr_t)(USRSTACK))
+#define VM_MAXUSER_ADDRESS	((vaddr_t)(VM_MAX_ADDRESS))
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-NBPG))
 
 /*
  * virtual sizes (bytes) for various kernel submaps
@@ -177,5 +177,5 @@ struct pmap_physseg {
 /*
  * number of kernel PT pages (initial only, can grow dynamically)
  */
-#define VM_KERNEL_PT_PAGES	((vm_size_t)2)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vsize_t)2)		/* XXX: SYSPTSIZE */
 #endif /* !_MACHINE_VMPARAM_H_ */
