@@ -1,4 +1,4 @@
-/* $NetBSD: latchvar.h,v 1.1 2001/04/22 00:26:36 bjh21 Exp $ */
+/* $NetBSD: latchvar.h,v 1.2 2001/04/22 15:00:13 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,5 +29,10 @@
 
 #ifndef _LATCHVAR_H_
 #define _LATCHVAR_H_
+
 extern struct device *the_latches;
+
+extern void latcha_update(u_int8_t mask, u_int8_t value);
+extern void latchb_update(u_int8_t mask, u_int8_t value);
+
 #endif
