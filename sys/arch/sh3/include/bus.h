@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2000/01/25 22:13:23 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 2000/02/24 23:32:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,6 +86,11 @@
  */
 #define	SH3_BUS_SPACE_IO	0	/* space is i/o space */
 #define SH3_BUS_SPACE_MEM	1	/* space is mem space */
+#ifdef SH4_PCMCIA
+#define SH3_BUS_SPACE_PCMCIA_IO 2	/* PCMCIA IO space */
+#define SH3_BUS_SPACE_PCMCIA_MEM 3	/* PCMCIA Mem space */
+#define SH3_BUS_SPACE_PCMCIA_ATT 4	/* PCMCIA Attr space */
+#endif
 
 /*
  * Bus address and size types
@@ -107,10 +112,24 @@ typedef	u_long bus_space_handle_t;
  */
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02
-#define	BUS_SPACE_MAP_PREFETCHABLE	0x04
 
 int bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t size,
 	int, bus_space_handle_t *));
+
+#ifdef SH4_PCMCIA
+int shpcmcia_memio_map __P((bus_space_tag_t, bus_addr_t, bus_size_t size,
+	int, bus_space_handle_t *));
+
+int shpcmcia_mem_add_mapping __P((bus_addr_t, bus_size_t, int, 
+				  bus_space_handle_t *));
+void shpcmcia_memio_unmap __P((bus_space_tag_t, bus_space_handle_t,
+			       bus_size_t));
+void shpcmcia_memio_free __P((bus_space_tag_t, bus_space_handle_t,
+			      bus_size_t));
+int shpcmcia_memio_subregion __P((bus_space_tag_t, bus_space_handle_t,
+				  bus_size_t, bus_size_t,
+				  bus_space_handle_t *));
+#endif
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,

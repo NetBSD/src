@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.7 2000/02/24 19:01:26 msaitoh Exp $	*/
+/*	$NetBSD: shb.c,v 1.8 2000/02/24 23:32:33 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -45,6 +45,7 @@
 #include <sys/proc.h>
 
 #include <machine/intr.h>
+#include <sh3/cpufunc.h>
 #include <sh3/intcreg.h>
 #include <sh3/trapreg.h>
 #include <machine/shbvar.h>
@@ -379,7 +380,7 @@ fakeintr(arg)
 }
 
 
-#define	IRQ_BIT(irq_num)	(1 << (irq_num) )
+#define	IRQ_BIT(irq_num)	(1 << (irq_num))
 
 
 /*ARGSUSED*/
@@ -612,7 +613,8 @@ mask_irq(irq)
 }
 
 void
-unmask_irq(int irq)
+unmask_irq(irq)
+	int irq;
 {
 
 	switch (irq) {
@@ -743,7 +745,7 @@ sh_intr_alloc(mask, type, irq)
 	mask &= 0xefbf;
 
 	for (i = 0; i < SHB_MAX_HARDINTR; i++) {
-		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
+		if (LEGAL_IRQ(i) == 0 || (mask & (1 << i)) == 0)
 			continue;
 
 		switch(intrtype[i]) {

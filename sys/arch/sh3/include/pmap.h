@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 2000/01/14 21:02:40 msaitoh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4 2000/02/24 23:32:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -357,7 +357,11 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#ifdef SH4
+#define	pmap_update()			(cacheflush(), tlbflush())
+#else
 #define	pmap_update()			tlbflush()
+#endif
 
 #define pmap_clear_modify(pg)		pmap_change_attrs(pg, 0, PG_M)
 #define pmap_clear_reference(pg)	pmap_change_attrs(pg, 0, PG_U)
@@ -410,12 +414,25 @@ __inline static void
 pmap_update_pg(va)
 	vaddr_t va;
 {
+#ifdef SH4
+#if 1
+	tlbflush();
+	cacheflush();
+#else
+	u_int32_t *addr, data;
+
+	addr = (void *)(0xf6000080 | (va & 0x00003f00)); /* 13-8 */
+	data =         (0x00000000 | (va & 0xfffff000)); /* 31-17, 11-10 */
+	*addr = data;
+#endif
+#else
 	u_int32_t *addr, data;
 
 	addr = (void *)(0xf2000080 | (va & 0x0001f000)); /* 16-12 */
 	data =         (0x00000000 | (va & 0xfffe0c00)); /* 31-17, 11-10 */
 
 	*addr = data;
+#endif
 }
 
 /*
@@ -426,8 +443,13 @@ __inline static void
 pmap_update_2pg(va, vb)
 	vaddr_t va, vb;
 {
+#ifdef SH4
+	tlbflush();
+	cacheflush();
+#else
 	pmap_update_pg(va);
 	pmap_update_pg(vb);
+#endif
 }
 
 /*

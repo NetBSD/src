@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2000/02/24 19:42:36 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2000/02/24 23:32:32 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -184,6 +184,9 @@ void sh3_cache_on __P((void));
 void LoadAndReset __P((char *));
 void XLoadAndReset __P((char *));
 void Sh3Reset __P((void));
+#ifdef SH4
+void sh4_cache_flush __P((vaddr_t));
+#endif
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -289,7 +292,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 int waittime = -1;
-int cold = 1;
 struct pcb dumppcb;
 
 void
@@ -954,7 +956,9 @@ InitializeBsc()
 	 * Refresh Timer Counter
 	 * Initialize to 0
 	 */
+#ifdef BSC_RTCNT_VAL
 	SHREG_RTCNT = BSC_RTCNT_VAL;
+#endif
 
 	/* set Refresh Time Constant Register */
 	SHREG_RTCOR = BSC_RTCOR_VAL;
@@ -984,6 +988,34 @@ sh3_cache_on(void)
 	SHREG_CCR = CCR_CE;		/* cache on */
 #endif
 }
+
+#ifdef SH4
+void
+sh4_cache_flush(addr)
+	vaddr_t addr;
+{
+#if 1
+#define SH_ADDR_ARRAY_BASE_ADDR 0xf4000000
+#define WRITE_ADDR_ARRAY( entry ) \
+	(*(volatile u_int32_t *)(SH_ADDR_ARRAY_BASE_ADDR|(entry)|0x00))
+
+	int entry;
+
+	entry = ((u_int32_t)addr) & 0x3fe0;
+
+	WRITE_ADDR_ARRAY(entry) = 0;
+#else
+	volatile int *p = (int *)IOM_RAM_BEGIN;
+	int i;
+	/* volatile */int d;
+
+	for(i = 0; i < 512; i++){
+		d = *p;
+		p += 8;
+	}
+#endif
+}
+#endif
 
 #include <machine/mmeye.h>
 
