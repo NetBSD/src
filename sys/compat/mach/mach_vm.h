@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.23 2003/11/27 23:44:49 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.24 2003/11/29 23:56:09 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -316,6 +316,74 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_vm_copy_reply_t;
 
+/* vm_read */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_vm_address_t req_addr;
+	mach_vm_size_t req_size;
+} mach_vm_read_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_ool_descriptor_t rep_data;
+	mach_ndr_record_t rep_ndr;
+	mach_msg_type_number_t rep_count;
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_read_reply_t;
+
+/* vm_write */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_body;
+	mach_msg_ool_descriptor_t req_data;
+	mach_ndr_record_t req_ndr;
+	mach_vm_address_t req_addr;
+	mach_msg_type_number_t req_count;
+} mach_vm_write_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_msg_type_number_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_write_reply_t;
+
+/* vm_machine_attribute */
+
+#define MACH_MATTR_CACHE		1
+#define MACH_MATTR_MIGRATE		2
+#define MACH_MATTR_REPLICATE		4
+
+#define MACH_MATTR_VAL_OFF		0
+#define MACH_MATTR_VAL_ON		1
+#define MACH_MATTR_VAL_GET		2
+#define MACH_MATTR_VAL_CACHE_FLUSH	6
+#define MACH_MATTR_VAL_DCACHE_FLUSH	7
+#define MACH_MATTR_VAL_ICACHE_FLUSH	8
+#define MACH_MATTR_VAL_CACHE_SYNC	9
+#define MACH_MATTR_VAL_GET_INFO		10
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_vm_address_t req_addr;
+	mach_vm_address_t req_size;
+	mach_vm_machine_attribute_t req_attribute;
+	mach_vm_machine_attribute_val_t req_value;
+} mach_vm_machine_attribute_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_msg_type_number_t rep_retval;
+	mach_vm_machine_attribute_val_t rep_value;
+	mach_msg_trailer_t rep_trailer;
+} mach_vm_machine_attribute_reply_t;
+
 /* Kernel-private structures */
 
 struct mach_memory_entry {
@@ -323,4 +391,8 @@ struct mach_memory_entry {
 	vaddr_t	mme_offset;
 	size_t mme_size;
 };
+
+/* Theses are machine dependent functions */
+int mach_vm_machine_attribute_machdep(struct lwp *, vaddr_t, size_t, int *);
+
 #endif /* _MACH_VM_H_ */

@@ -1,14 +1,14 @@
-/* $NetBSD: mach_services_names.c,v 1.4 2003/11/18 01:40:18 manu Exp $ */
+/* $NetBSD: mach_services_names.c,v 1.5 2003/11/29 23:56:08 manu Exp $ */
 
 /*
  * Mach services names. This file is not built
  * by the kernel, it is included by kdump sources.
  *
- * created from  $NetBSD: mach_services_names.c,v 1.4 2003/11/18 01:40:18 manu Exp $
+ * created from  $NetBSD: mach_services_names.c,v 1.5 2003/11/29 23:56:08 manu Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_services_names.c,v 1.4 2003/11/18 01:40:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_services_names.c,v 1.5 2003/11/29 23:56:08 manu Exp $");
 
 struct mach_service_name {
 	int srv_id;
@@ -268,15 +268,15 @@ struct mach_service_name mach_services_names[] = {
 	{3802, "vm_deallocate"},
 	{3803, "vm_protect"},
 	{3804, "vm_inherit"},
-	{3805, "unimpl. vm_read"},
+	{3805, "vm_read"},
 	{3806, "unimpl. vm_read_list"},
-	{3807, "unimpl. vm_write"},
+	{3807, "vm_write"},
 	{3808, "vm_copy"},
 	{3809, "unimpl. vm_read_overwrite"},
 	{3810, "vm_msync"},
 	{3811, "unimpl. vm_behavior_set"},
 	{3812, "vm_map"},
-	{3813, "unimpl. vm_machine_attribute"},
+	{3813, "vm_machine_attribute"},
 	{3814, "unimpl. vm_remap"},
 	{3815, "unimpl. task_wire"},
 	{3816, "unimpl. make_memory_entry"},

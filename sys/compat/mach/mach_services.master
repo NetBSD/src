@@ -1,4 +1,4 @@
- $NetBSD: mach_services.master,v 1.5 2003/11/18 01:40:18 manu Exp $
+ $NetBSD: mach_services.master,v 1.6 2003/11/29 23:56:08 manu Exp $
 ;
 ; Mach services list. 
 ;
@@ -361,15 +361,15 @@
 3802	STD	vm_deallocate
 3803	STD	vm_protect
 3804	STD	vm_inherit
-3805	UNIMPL	vm_read
+3805	STD	vm_read
 3806	UNIMPL	vm_read_list
-3807	UNIMPL	vm_write
+3807	STD	vm_write
 3808	STD	vm_copy
 3809	UNIMPL	vm_read_overwrite
 3810	STD	vm_msync
 3811	UNIMPL	vm_behavior_set
 3812	STD	vm_map
-3813	UNIMPL	vm_machine_attribute
+3813	STD	vm_machine_attribute
 3814	UNIMPL	vm_remap
 3815	UNIMPL	task_wire
 3816	UNIMPL	make_memory_entry

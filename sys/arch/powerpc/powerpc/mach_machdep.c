@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.17 2003/11/11 18:12:40 manu Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.18 2003/11/29 23:56:09 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.17 2003/11/11 18:12:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.18 2003/11/29 23:56:09 manu Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.17 2003/11/11 18:12:40 manu Exp $
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_host.h>
 #include <compat/mach/mach_thread.h>
+#include <compat/mach/mach_vm.h>
 
 #include <machine/cpu.h>
 #include <machine/psl.h>
@@ -226,3 +227,46 @@ mach_thread_set_state_machdep(l, flavor, state)
 
 	return 0;
 }
+
+int 
+mach_vm_machine_attribute_machdep(l, addr, size, valp)
+	struct lwp *l;
+	vaddr_t addr;
+	size_t size;
+	int *valp;
+{
+	int error = 0;
+
+	switch (*valp) {
+	case MACH_MATTR_VAL_CACHE_FLUSH:
+#ifdef DEBUG_MACH
+		printf("MACH_MATTR_VAL_CACHE_FLUSH\n");
+#endif
+		break;
+
+	case MACH_MATTR_VAL_DCACHE_FLUSH:
+#ifdef DEBUG_MACH
+		printf("MACH_MATTR_VAL_DCACHE_FLUSH\n");
+#endif
+		break;
+
+	case MACH_MATTR_VAL_ICACHE_FLUSH:
+#ifdef DEBUG_MACH
+		printf("MACH_MATTR_VAL_ICACHE_FLUSH\n");
+#endif
+		break;
+
+	case MACH_MATTR_VAL_CACHE_SYNC:
+#ifdef DEBUG_MACH
+		printf("MACH_MATTR_VAL_CACHE_SYNC\n");
+#endif
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	return error;
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.39 2003/11/28 08:03:14 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.40 2003/11/29 23:56:08 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.39 2003/11/28 08:03:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.40 2003/11/29 23:56:08 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -575,7 +575,8 @@ mach_vm_region(args)
 	rep->rep_obj.copy = 0; 
 	rep->rep_obj.pad1 = 0x11; 
 	rep->rep_obj.type = 0;
-	rep->rep_size = PAGE_SIZE; /* XXX Why? */
+	rep->rep_addr = vme->start;
+	rep->rep_size = vme->end - vme->start;
 	rep->rep_count = req->req_count;
 
 	rbi = (struct mach_vm_region_basic_info *)&rep->rep_info[0];
@@ -741,6 +742,181 @@ mach_vm_copy(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_retval = 0;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_vm_read(args)
+	struct mach_trap_args *args;
+{
+	mach_vm_read_request_t *req = args->smsg;
+	mach_vm_read_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
+	char *buf;
+	void *addr;
+	vaddr_t va;
+	size_t size;
+	int error;
+
+	size = req->req_size;
+	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
+	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va,
+	    round_page(size), NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL,
+	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0) {
+		printf("uvm_map error = %d\n", error);
+		return mach_msg_error(args, EFAULT);
+	}
+
+	/* 
+	 * Copy the data from the target process to the current process
+	 * This is reasonnable for small chunk of data, but we should 
+	 * remap COW for areas bigger than a page.
+	 */
+	buf = malloc(size, M_EMULDATA, M_WAITOK);
+	
+	addr = (void *)req->req_addr;
+	if ((error = copyin_proc(tl->l_proc, addr, buf, size)) != 0) {
+		printf("copyin_proc error = %d, addr = %p, size = %x\n", error, addr, size);
+		free(buf, M_WAITOK);
+		return mach_msg_error(args, EFAULT);
+	}
+
+	if ((error = copyout(buf, (void *)va, size)) != 0) {
+		printf("copyout error = %d\n", error);
+		free(buf, M_WAITOK);
+		return mach_msg_error(args, EFAULT);
+	}
+
+	free(buf, M_WAITOK);
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_data.address = (void *)va;
+	rep->rep_data.size = size;
+	rep->rep_data.deallocate = 0; /* XXX */
+	rep->rep_data.copy = 2; /* XXX */
+	rep->rep_data.type = 1; /* XXX */
+	rep->rep_count = size;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_vm_write(args)
+	struct mach_trap_args *args;
+{
+	mach_vm_write_request_t *req = args->smsg;
+	mach_vm_write_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *tl = args->tl;
+	size_t size;
+	void *addr;
+	char *buf;
+	int error;
+
+#ifdef DEBUG_MACH
+	if (req->req_body.msgh_descriptor_count != 1)
+		printf("mach_vm_write: OOL descriptor count is not 1\n");
+#endif
+
+	/* 
+	 * Copy the data from the current process to the target process
+	 * This is reasonnable for small chunk of data, but we should 
+	 * remap COW for areas bigger than a page.
+	 */
+	size = req->req_data.size;
+	buf = malloc(size, M_EMULDATA, M_WAITOK);
+	
+	if ((error = copyin(req->req_data.address, buf, size)) != 0) {
+		printf("copyin error = %d\n", error);
+		free(buf, M_WAITOK);
+		return mach_msg_error(args, EFAULT);
+	}
+
+	addr = (void *)req->req_addr;
+	if ((error = copyout_proc(tl->l_proc, buf, addr, size)) != 0) {
+		printf("copyout_proc error = %d\n", error);
+		free(buf, M_WAITOK);
+		return mach_msg_error(args, EFAULT);
+	}
+
+	free(buf, M_WAITOK);
+	
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_vm_machine_attribute(args)
+	struct mach_trap_args *args;
+{
+	mach_vm_machine_attribute_request_t *req = args->smsg;
+	mach_vm_machine_attribute_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *tl = args->tl;
+	int error = 0;
+	int attribute, value;
+
+	attribute = req->req_attribute;
+	value = req->req_value;
+
+	switch (attribute) {
+	case MACH_MATTR_CACHE:
+		switch(value) {
+		case MACH_MATTR_VAL_CACHE_FLUSH:
+		case MACH_MATTR_VAL_DCACHE_FLUSH:
+		case MACH_MATTR_VAL_ICACHE_FLUSH:
+		case MACH_MATTR_VAL_CACHE_SYNC: 
+			error = mach_vm_machine_attribute_machdep(tl,
+			    req->req_addr, req->req_size, &value);
+			break;
+		default:
+#ifdef DEBUG_MACH
+			printf("unimplemented value %d\n", req->req_value);
+#endif
+			error = EINVAL;
+			break;
+		}
+		break;
+
+	case MACH_MATTR_MIGRATE:
+	case MACH_MATTR_REPLICATE:
+	default:
+#ifdef DEBUG_MACH
+		printf("unimplemented attribute %d\n", req->req_attribute);
+#endif
+		error = EINVAL;
+		break;
+	}
+	
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_retval = error;
+	if (error != 0)
+		rep->rep_value = value;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
