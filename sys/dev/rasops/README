@@ -1,0 +1,21 @@
+$NetBSD: README,v 1.1 1999/04/13 00:17:57 ad Exp $
+
+This directory contains 'rasops', a set of raster operations intended to
+replace the dev/rcons/raster stuff for both wscons and rcons. It yields
+significantly improved performance, supports multiple depths and color.
+
+The stamp_mutex used by some of the colordepths is not fully atomic. It's
+designed to stop stamp corruption in the event that text is printed at
+interrupt time. Even if it fails, >99% of the time text will be white on
+black, so it doesn't really matter. Going to splhigh for each character is
+a Bad Thing.
+
+Status of the various depths. Feel free to complete/test:
+
+	8	tested, complete
+	15/16	untested, complete (endainness issues exist?)
+	32	untested, complete (endainness issues exist?)
+	1	untested, incomplete for non 8,16 pel fonts
+	24	untested, incomplete, assumes RGB order
+
+- Andy Doran <ad@NetBSD.org>, April 1999
