@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.157 2004/12/26 17:34:39 dbj Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.158 2005/01/02 16:08:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.157 2004/12/26 17:34:39 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.158 2005/01/02 16:08:31 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -108,6 +108,7 @@ struct vfsops ffs_vfsops = {
 	ffs_mountroot,
 	ufs_check_export,
 	ffs_snapshot,
+	vfs_stdextattrctl,
 	ffs_vnodeopv_descs,
 };
 
