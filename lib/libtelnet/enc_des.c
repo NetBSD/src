@@ -1,4 +1,4 @@
-/*	$NetBSD: enc_des.c,v 1.8 2002/08/29 14:40:52 itojun Exp $	*/
+/*	$NetBSD: enc_des.c,v 1.9 2002/08/29 14:53:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)enc_des.c	8.3 (Berkeley) 5/30/95"; */
 #else
-__RCSID("$NetBSD: enc_des.c,v 1.8 2002/08/29 14:40:52 itojun Exp $");
+__RCSID("$NetBSD: enc_des.c,v 1.9 2002/08/29 14:53:21 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: enc_des.c,v 1.8 2002/08/29 14:40:52 itojun Exp $");
 #include <string.h>
 #include <stdlib.h>
 
-#include <openssl/des.h>
+#include <des.h>
 #include "encrypt.h"
 #include "key-proto.h"
 #include "misc-proto.h"
