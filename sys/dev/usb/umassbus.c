@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.1 2001/04/13 12:24:10 augustss Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.2 2001/04/13 12:42:40 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -300,7 +300,7 @@ umass_scsipi_cmd(struct scsipi_xfer *xs)
 			     xs->data, xs->datalen, dir, 0, xs);
 		sc->sc_xfer_flags = 0;
 		DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: done err=%d\n", 
-				      sc->sc_sync_status));
+				      sc->bus.sc_sync_status));
 		switch (sc->bus.sc_sync_status) {
 		case USBD_NORMAL_COMPLETION:
 			xs->error = XS_NOERROR;
