@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.12 1994/12/16 10:01:23 mycroft Exp $
+#	$NetBSD: Makefile,v 1.13 1994/12/22 09:49:15 cgd Exp $
 
 LIB=	compat
 CFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS
@@ -21,7 +21,7 @@ SRCS=	gtty.c ftime.c stty.c
 # missing: (for vax) reset.s
 .endif
 
-MAN3+=	ftime.0 getpw.0 stty.0 vlimit.0 vtimes.0
+MAN+=	ftime.3 getpw.3 stty.3 vlimit.3 vtimes.3
 
 MLINKS+=stty.3 gtty.3
 
@@ -36,7 +36,7 @@ SRCS+=	insque.c remque.c
 .endif
 
 # missing: ecvt.0
-MAN3+=	insque.0 lsearch.0 re_comp.0 rexec.0
+MAN+=	insque.3 lsearch.3 re_comp.3 rexec.3
 
 #MLINKS+=ecvt.3 fcvt.3 ecvt.3 gcvt.3
 MLINKS+=insque.3 remque.3
@@ -46,11 +46,11 @@ MLINKS+=re_comp.3 re_exec.3
 
 # compat 4.4 sources
 SRCS+=	cuserid.c
-MAN3+=	cuserid.0
+MAN+=	cuserid.3
 
 
 # regexp sources
 SRCS+=	regerror.c regexp.c regsub.c
-MAN3+=	regexp.0
+MAN+=	regexp.3
 
-.include <bsd.lib.mk>
+<bsd.lib.m

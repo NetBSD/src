@@ -1,7 +1,6 @@
-#	$Id: Makefile,v 1.4 1993/08/02 17:44:19 mycroft Exp $
+#	$Id: Makefile,v 1.5 1994/12/22 09:44:59 cgd Exp $
 
-MAN5=	groff_font.0 groff_out.0
-MAN7=	groff_char.0
+MAN=	groff_char.7 groff_font.5 groff_out.5
 
 .include "../Makefile.cfg"
 .include <bsd.prog.mk>

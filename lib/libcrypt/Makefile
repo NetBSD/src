@@ -3,7 +3,7 @@
 # into this directory to make distribution of exportable and non-exportable
 # systems easier.
 #
-#	$Id: Makefile,v 1.4 1993/10/07 01:36:21 cgd Exp $
+#	$Id: Makefile,v 1.5 1994/12/22 09:49:34 cgd Exp $
 
 LIB=	crypt
 
@@ -13,7 +13,7 @@ SRCS=	crypt.c
 SRCS=	crypt_dummy.c
 .endif
 
-MAN3=	crypt.0
+MAN=	crypt.3
 MLINKS= crypt.3 encrypt.3 crypt.3 setkey.3
 
 .include <bsd.lib.mk>

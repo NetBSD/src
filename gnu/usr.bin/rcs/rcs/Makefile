@@ -1,12 +1,11 @@
-#	$Id: Makefile,v 1.3 1993/11/03 16:09:31 cgd Exp $
+#	$Id: Makefile,v 1.4 1994/12/22 09:45:30 cgd Exp $
 
 PROG=	rcs
 CFLAGS+= -I${.CURDIR}/../lib
 LDADD=	${LIBRCS} -lgnumalloc
 DPADD=	${LIBRCS} /usr/lib/libgnumalloc.a
 
-MAN1=	rcs.0 rcsintro.0
-MAN5=   rcsfile.0
+MAN=	rcs.1 rcsfile.5 rcsintro.1
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
