@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.8 1995/06/24 20:19:00 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.9 1995/09/19 22:19:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -105,11 +105,12 @@
 
 
 int
-ibcs2_ulimit(p, uap, retval)
+ibcs2_ulimit(p, v, retval)
 	struct proc *p;
-	struct ibcs2_ulimit_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_ulimit_args *uap = v;
 	int error;
 	struct rlimit rl;
 	struct setrlimit_args {
@@ -152,11 +153,12 @@ ibcs2_ulimit(p, uap, retval)
 }
 
 int
-ibcs2_waitsys(p, uap, retval)
+ibcs2_waitsys(p, v, retval)
 	struct proc *p;
-	struct ibcs2_waitsys_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_waitsys_args *uap = v;
 	int error, status;
 	struct wait4_args w4;
 #define WAITPID_EFLAGS	0x8c4	/* OF, SF, ZF, PF */
@@ -182,11 +184,12 @@ ibcs2_waitsys(p, uap, retval)
 }
 
 int
-ibcs2_execv(p, uap, retval)
+ibcs2_execv(p, v, retval)
 	struct proc *p;
-	struct ibcs2_execv_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_execv_args *uap = v;
 	struct execve_args ea;
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -198,11 +201,12 @@ ibcs2_execv(p, uap, retval)
 }
 
 int
-ibcs2_execve(p, uap, retval) 
+ibcs2_execve(p, v, retval) 
         struct proc *p;
-        struct execve_args *uap;
+	void *v;
         int *retval;
 {
+	struct execve_args *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
         IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
@@ -210,11 +214,12 @@ ibcs2_execve(p, uap, retval)
 }
 
 int
-ibcs2_umount(p, uap, retval)
+ibcs2_umount(p, v, retval)
 	struct proc *p;
-	struct ibcs2_umount_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_umount_args *uap = v;
 	struct unmount_args um;
 
 	SCARG(&um, path) = SCARG(uap, name);
@@ -223,11 +228,12 @@ ibcs2_umount(p, uap, retval)
 }
 
 int
-ibcs2_mount(p, uap, retval)
+ibcs2_mount(p, v, retval)
 	struct proc *p;
-	struct ibcs2_mount_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_mount_args *uap = v;
 #ifdef notyet
 	int oflags = SCARG(uap, flags), nflags, error;
 	char fsname[MFSNAMELEN];
@@ -297,11 +303,12 @@ ibcs2_mount(p, uap, retval)
  */
 
 int
-ibcs2_getdents(p, uap, retval)
+ibcs2_getdents(p, v, retval)
 	struct proc *p;
-	register struct ibcs2_getdents_args *uap;
+	void *v;
 	int *retval;
 {
+	register struct ibcs2_getdents_args *uap = v;
 	register struct vnode *vp;
 	register caddr_t inp, buf;	/* BSD-format */
 	register int len, reclen;	/* BSD-format */
@@ -394,11 +401,12 @@ out:
 }
 
 int
-ibcs2_read(p, uap, retval)
+ibcs2_read(p, v, retval)
 	struct proc *p;
-	struct ibcs2_read_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_read_args *uap = v;
 	register struct vnode *vp;
 	register caddr_t inp, buf;	/* BSD-format */
 	register int len, reclen;	/* BSD-format */
@@ -503,11 +511,12 @@ out:
 }
 
 int
-ibcs2_mknod(p, uap, retval)
+ibcs2_mknod(p, v, retval)
 	struct proc *p;
-	struct ibcs2_mknod_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_mknod_args *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
         IBCS2_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
@@ -526,11 +535,12 @@ ibcs2_mknod(p, uap, retval)
 }
 
 int
-ibcs2_getgroups(p, uap, retval)
+ibcs2_getgroups(p, v, retval)
 	struct proc *p;
-	struct ibcs2_getgroups_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_getgroups_args *uap = v;
 	int error, i;
 	ibcs2_gid_t igid, *iset;
 	struct getgroups_args sa;
@@ -556,11 +566,12 @@ ibcs2_getgroups(p, uap, retval)
 }
 
 int
-ibcs2_setgroups(p, uap, retval)
+ibcs2_setgroups(p, v, retval)
 	struct proc *p;
-	struct ibcs2_setgroups_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_setgroups_args *uap = v;
 	int error, i;
 	ibcs2_gid_t igid, *iset;
 	struct setgroups_args sa;
@@ -584,11 +595,12 @@ ibcs2_setgroups(p, uap, retval)
 }
 
 int
-ibcs2_setuid(p, uap, retval)
+ibcs2_setuid(p, v, retval)
 	struct proc *p;
-	struct ibcs2_setuid_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_setuid_args *uap = v;
 	struct setuid_args sa;
 
 	SCARG(&sa, uid) = (uid_t)SCARG(uap, uid);
@@ -596,11 +608,12 @@ ibcs2_setuid(p, uap, retval)
 }
 
 int
-ibcs2_setgid(p, uap, retval)
+ibcs2_setgid(p, v, retval)
 	struct proc *p;
-	struct ibcs2_setgid_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_setgid_args *uap = v;
 	struct setgid_args sa;
 
 	SCARG(&sa, gid) = (gid_t)SCARG(uap, gid);
@@ -608,11 +621,12 @@ ibcs2_setgid(p, uap, retval)
 }
 
 int
-xenix_ftime(p, uap, retval)
+xenix_ftime(p, v, retval)
 	struct proc *p;
-	struct xenix_ftime_args *uap;
+	void *v;
 	int *retval;
 {
+	struct xenix_ftime_args *uap = v;
 	struct timeval tv;
 	extern struct timezone tz;
 	struct xenix_timeb itb;
@@ -626,11 +640,12 @@ xenix_ftime(p, uap, retval)
 }
 
 int
-ibcs2_time(p, uap, retval)
+ibcs2_time(p, v, retval)
 	struct proc *p;
-	struct ibcs2_time_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_time_args *uap = v;
 	struct timeval tv;
 
 	microtime(&tv);
@@ -643,31 +658,34 @@ ibcs2_time(p, uap, retval)
 }
 
 int
-ibcs2_pathconf(p, uap, retval)
+ibcs2_pathconf(p, v, retval)
 	struct proc *p;
-	struct ibcs2_pathconf_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_pathconf_args *uap = v;
 	SCARG(uap, name)++;	/* iBCS2 _PC_* defines are offset by one */
         return pathconf(p, uap, retval);
 }
 
 int
-ibcs2_fpathconf(p, uap, retval)
+ibcs2_fpathconf(p, v, retval)
 	struct proc *p;
-	struct ibcs2_fpathconf_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_fpathconf_args *uap = v;
 	SCARG(uap, name)++;	/* iBCS2 _PC_* defines are offset by one */
         return fpathconf(p, uap, retval);
 }
 
 int
-ibcs2_sysconf(p, uap, retval)
+ibcs2_sysconf(p, v, retval)
 	struct proc *p;
-	struct ibcs2_sysconf_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_sysconf_args *uap = v;
 	int mib[2], value, len, error;
 	struct __sysctl_args sa;
 	struct getrlimit_args ga;
@@ -748,11 +766,12 @@ ibcs2_sysconf(p, uap, retval)
 }
 
 int
-ibcs2_alarm(p, uap, retval)
+ibcs2_alarm(p, v, retval)
 	struct proc *p;
-	struct ibcs2_alarm_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_alarm_args *uap = v;
 	int error;
         struct itimerval *itp, *oitp;
 	struct setitimer_args sa;
@@ -777,29 +796,34 @@ ibcs2_alarm(p, uap, retval)
 }
 
 int
-ibcs2_getmsg(p, uap, retval)
+ibcs2_getmsg(p, v, retval)
 	struct proc *p;
-	struct ibcs2_getmsg_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_getmsg_args *uap = v;
+
 	return 0;
 }
 
 int
-ibcs2_putmsg(p, uap, retval)
+ibcs2_putmsg(p, v, retval)
 	struct proc *p;
-	struct ibcs2_putmsg_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_putmsg_args *uap = v;
+
 	return 0;
 }
 
 int
-ibcs2_times(p, uap, retval)
+ibcs2_times(p, v, retval)
 	struct proc *p;
-	struct ibcs2_times_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_times_args *uap = v;
 	int error;
 	struct getrusage_args ga;
 	struct tms tms;
@@ -831,11 +855,12 @@ ibcs2_times(p, uap, retval)
 }
 
 int
-ibcs2_stime(p, uap, retval)
+ibcs2_stime(p, v, retval)
 	struct proc *p;
-	struct ibcs2_stime_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_stime_args *uap = v;
 	int error;
 	struct settimeofday_args sa;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -852,11 +877,12 @@ ibcs2_stime(p, uap, retval)
 }
 
 int
-ibcs2_utime(p, uap, retval)
+ibcs2_utime(p, v, retval)
 	struct proc *p;
-	struct ibcs2_utime_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_utime_args *uap = v;
 	int error;
 	struct utimes_args sa;
 	struct timeval *tp;
@@ -884,11 +910,12 @@ ibcs2_utime(p, uap, retval)
 }
 
 int
-ibcs2_nice(p, uap, retval)
+ibcs2_nice(p, v, retval)
 	struct proc *p;
-	struct ibcs2_nice_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_nice_args *uap = v;
 	int error, cur_nice = p->p_nice;
 	struct setpriority_args sa;
 
@@ -906,11 +933,12 @@ ibcs2_nice(p, uap, retval)
  */
 
 int
-ibcs2_pgrpsys(p, uap, retval)
+ibcs2_pgrpsys(p, v, retval)
 	struct proc *p;
-	struct ibcs2_pgrpsys_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_pgrpsys_args *uap = v;
 	switch (SCARG(uap, type)) {
 	case 0:			/* getpgrp */
 		*retval = p->p_pgrp->pg_id;
@@ -949,11 +977,12 @@ ibcs2_pgrpsys(p, uap, retval)
  */
 
 int
-ibcs2_plock(p, uap, retval)
+ibcs2_plock(p, v, retval)
 	struct proc *p;
-	struct ibcs2_plock_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_plock_args *uap = v;
 	int error;
 #define IBCS2_UNLOCK	0
 #define IBCS2_PROCLOCK	1
@@ -974,11 +1003,14 @@ ibcs2_plock(p, uap, retval)
 }
 
 int
-ibcs2_uadmin(p, uap, retval)
+ibcs2_uadmin(p, v, retval)
 	struct proc *p;
-	struct ibcs2_uadmin_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_uadmin_args *uap = v;
+	int error;
+
 #define SCO_A_REBOOT        1
 #define SCO_A_SHUTDOWN      2
 #define SCO_A_REMOUNT       4
@@ -997,6 +1029,10 @@ ibcs2_uadmin(p, uap, retval)
 #define SCO_AD_GETBMAJ      0
 #define SCO_AD_GETCMAJ      1
 
+	/* XXX: is this the right place for this call? */
+	if (error = suser(p->p_ucred, &p->p_acflag))
+		return (error);
+
 	switch(SCARG(uap, cmd)) {
 	case SCO_A_REBOOT:
 	case SCO_A_SHUTDOWN:
@@ -1004,10 +1040,10 @@ ibcs2_uadmin(p, uap, retval)
 		case SCO_AD_HALT:
 		case SCO_AD_PWRDOWN:
 		case SCO_AD_PWRNAP:
-			reboot(RB_HALT);
+			boot(RB_HALT);
 		case SCO_AD_BOOT:
 		case SCO_AD_IBOOT:
-			reboot(RB_AUTOBOOT);
+			boot(RB_AUTOBOOT);
 		}
 		return EINVAL;
 	case SCO_A_REMOUNT:
@@ -1021,11 +1057,13 @@ ibcs2_uadmin(p, uap, retval)
 }
 
 int
-ibcs2_sysfs(p, uap, retval)
+ibcs2_sysfs(p, v, retval)
 	struct proc *p;
-	struct ibcs2_sysfs_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_sysfs_args *uap = v;
+
 #define IBCS2_GETFSIND        1
 #define IBCS2_GETFSTYP        2
 #define IBCS2_GETNFSTYP       3
@@ -1039,20 +1077,23 @@ ibcs2_sysfs(p, uap, retval)
 }
 
 int
-ibcs2_poll(p, uap, retval)
+ibcs2_poll(p, v, retval)
 	struct proc *p;
-	struct ibcs2_poll_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_poll_args *uap = v;
+
 	return EINVAL;		/* XXX - TODO */
 }
 
 int
-xenix_rdchk(p, uap, retval)
+xenix_rdchk(p, v, retval)
 	struct proc *p;
-	struct xenix_rdchk_args *uap;
+	void *v;
 	int *retval;
 {
+	struct xenix_rdchk_args *uap = v;
 	int error;
 	struct ioctl_args sa;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -1067,11 +1108,12 @@ xenix_rdchk(p, uap, retval)
 }
 
 int
-xenix_chsize(p, uap, retval)
+xenix_chsize(p, v, retval)
 	struct proc *p;
-	struct xenix_chsize_args *uap;
+	void *v;
 	int *retval;
 {
+	struct xenix_chsize_args *uap = v;
 	struct ftruncate_args sa;
 
 	SCARG(&sa, fd) = SCARG(uap, fd);
@@ -1081,20 +1123,23 @@ xenix_chsize(p, uap, retval)
 }
 
 int
-xenix_nap(p, uap, retval)
+xenix_nap(p, v, retval)
 	struct proc *p;
-	struct xenix_nap_args *uap;
+	void *v;
 	int *retval;
 {
+	struct xenix_nap_args *uap = v;
+
 	return ENOSYS;
 }
 
 int
-ibcs2_unlink(p, uap, retval)
+ibcs2_unlink(p, v, retval)
 	struct proc *p;
-	struct ibcs2_unlink_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_unlink_args *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
@@ -1102,11 +1147,12 @@ ibcs2_unlink(p, uap, retval)
 }
 
 int
-ibcs2_chdir(p, uap, retval)
+ibcs2_chdir(p, v, retval)
 	struct proc *p;
-	struct ibcs2_chdir_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_chdir_args *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
@@ -1114,11 +1160,12 @@ ibcs2_chdir(p, uap, retval)
 }
 
 int
-ibcs2_chmod(p, uap, retval)
+ibcs2_chmod(p, v, retval)
 	struct proc *p;
-	struct ibcs2_chmod_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_chmod_args *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
@@ -1126,11 +1173,12 @@ ibcs2_chmod(p, uap, retval)
 }
 
 int
-ibcs2_chown(p, uap, retval)
+ibcs2_chown(p, v, retval)
 	struct proc *p;
-	struct ibcs2_chown_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_chown_args *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
@@ -1138,11 +1186,12 @@ ibcs2_chown(p, uap, retval)
 }
 
 int
-ibcs2_rmdir(p, uap, retval)
+ibcs2_rmdir(p, v, retval)
 	struct proc *p;
-	struct ibcs2_rmdir_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_rmdir_args *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
@@ -1150,11 +1199,12 @@ ibcs2_rmdir(p, uap, retval)
 }
 
 int
-ibcs2_mkdir(p, uap, retval)
+ibcs2_mkdir(p, v, retval)
 	struct proc *p;
-	struct ibcs2_mkdir_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_mkdir_args *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
@@ -1162,11 +1212,12 @@ ibcs2_mkdir(p, uap, retval)
 }
 
 int
-ibcs2_symlink(p, uap, retval)
+ibcs2_symlink(p, v, retval)
 	struct proc *p;
-	struct ibcs2_symlink_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_symlink_args *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
@@ -1175,11 +1226,12 @@ ibcs2_symlink(p, uap, retval)
 }
 
 int
-ibcs2_rename(p, uap, retval)
+ibcs2_rename(p, v, retval)
 	struct proc *p;
-	struct ibcs2_rename_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_rename_args *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
@@ -1188,11 +1240,12 @@ ibcs2_rename(p, uap, retval)
 }
 
 int
-ibcs2_readlink(p, uap, retval)
+ibcs2_readlink(p, v, retval)
 	struct proc *p;
-	struct ibcs2_readlink_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_readlink_args *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));

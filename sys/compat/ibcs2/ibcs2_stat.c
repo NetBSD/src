@@ -93,11 +93,12 @@ cvt_statfs(sp, buf, len)
 }	
 
 int
-ibcs2_statfs(p, uap, retval)
+ibcs2_statfs(p, v, retval)
 	struct proc *p;
-	struct ibcs2_statfs_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_statfs_args *uap = v;
 	register struct mount *mp;
 	register struct statfs *sp;
 	int error;
@@ -118,11 +119,12 @@ ibcs2_statfs(p, uap, retval)
 }
 
 int
-ibcs2_fstatfs(p, uap, retval)
+ibcs2_fstatfs(p, v, retval)
 	struct proc *p;
-	struct ibcs2_fstatfs_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_fstatfs_args *uap = v;
 	struct file *fp;
 	struct mount *mp;
 	register struct statfs *sp;
@@ -139,11 +141,12 @@ ibcs2_fstatfs(p, uap, retval)
 }
 
 int
-ibcs2_stat(p, uap, retval)
+ibcs2_stat(p, v, retval)
 	struct proc *p;
-	struct ibcs2_stat_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_stat_args *uap = v;
 	struct ostat st;
 	struct ibcs2_stat ibcs2_st;
 	struct compat_43_stat_args cup;
@@ -163,11 +166,12 @@ ibcs2_stat(p, uap, retval)
 }
 
 int
-ibcs2_lstat(p, uap, retval)
+ibcs2_lstat(p, v, retval)
 	struct proc *p;
-	struct ibcs2_lstat_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_lstat_args *uap = v;
 	struct ostat st;
 	struct ibcs2_stat ibcs2_st;
 	struct compat_43_lstat_args cup;
@@ -187,11 +191,12 @@ ibcs2_lstat(p, uap, retval)
 }
 
 int
-ibcs2_fstat(p, uap, retval)
+ibcs2_fstat(p, v, retval)
 	struct proc *p;
-	struct ibcs2_fstat_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_fstat_args *uap = v;
 	struct ostat st;
 	struct ibcs2_stat ibcs2_st;
 	struct compat_43_fstat_args cup;
@@ -210,11 +215,13 @@ ibcs2_fstat(p, uap, retval)
 }
 
 int
-ibcs2_utssys(p, uap, retval)
+ibcs2_utssys(p, v, retval)
 	struct proc *p;
-	struct ibcs2_utssys_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_utssys_args *uap = v;
+
 	switch (SCARG(uap, flag)) {
 	case 0:			/* uname(2) */
 	{

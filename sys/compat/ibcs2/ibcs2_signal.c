@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.5 1995/08/14 01:11:52 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.6 1995/09/19 22:19:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -186,15 +186,16 @@ bsd_to_ibcs2_sigaction(bsa, isa)
 }
 
 int
-ibcs2_sigaction(p, uap, retval)
+ibcs2_sigaction(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct ibcs2_sigaction_args /* {
 		syscallarg(int) sig;
 		syscallarg(struct ibcs2_sigaction *) act;
 		syscallarg(struct ibcs2_sigaction *) oact;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct ibcs2_sigaction *nisa, *oisa, tmpisa;
 	struct sigaction *nbsa, *obsa, tmpbsa;
 	struct sigaction_args sa;
@@ -239,14 +240,15 @@ ibcs2_sigaction(p, uap, retval)
 }
 
 int
-ibcs2_sigsys(p, uap, retval)
+ibcs2_sigsys(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct ibcs2_sigsys_args /* {
 		syscallarg(int) sig;
 		syscallarg(ibcs2_sig_t) fp;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int signum = ibcs2_to_bsd_sig[IBCS2_SIGNO(SCARG(uap, sig))];
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -364,15 +366,16 @@ ibcs2_sigsys(p, uap, retval)
 }
 
 int
-ibcs2_sigprocmask(p, uap, retval)
+ibcs2_sigprocmask(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct ibcs2_sigprocmask_args /* {
 		syscallarg(int) how;
 		syscallarg(ibcs2_sigset_t *) set;
 		syscallarg(ibcs2_sigset_t *) oset;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	ibcs2_sigset_t iss;
 	sigset_t bss;
 	int error = 0;
@@ -419,13 +422,14 @@ ibcs2_sigprocmask(p, uap, retval)
 }
 
 int
-ibcs2_sigpending(p, uap, retval)
+ibcs2_sigpending(p, v, retval)
 	register struct proc *p;
-	struct ibcs2_sigpending_args /* {
-		syscallarg(ibcs2_sigset_t *) mask;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct ibcs2_sigpending_args /* {
+		syscallarg(ibcs2_sigset_t *) mask;
+	} */ *uap = v;
 	sigset_t bss;
 	ibcs2_sigset_t iss;
 
@@ -436,13 +440,14 @@ ibcs2_sigpending(p, uap, retval)
 }
 
 int
-ibcs2_sigsuspend(p, uap, retval)
+ibcs2_sigsuspend(p, v, retval)
 	register struct proc *p;
-	struct ibcs2_sigsuspend_args /* {
-		syscallarg(ibcs2_sigset_t *) mask;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct ibcs2_sigsuspend_args /* {
+		syscallarg(ibcs2_sigset_t *) mask;
+	} */ *uap = v;
 	ibcs2_sigset_t sss;
 	sigset_t bss;
 	struct sigsuspend_args sa;
@@ -470,14 +475,15 @@ ibcs2_pause(p, uap, retval)
 }
 
 int
-ibcs2_kill(p, uap, retval)
+ibcs2_kill(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct ibcs2_kill_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) signo;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct kill_args ka;
 
 	SCARG(&ka, pid) = SCARG(uap, pid);

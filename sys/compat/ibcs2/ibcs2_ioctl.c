@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.6 1995/03/14 15:12:28 scottb Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.7 1995/09/19 22:19:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -312,11 +312,12 @@ stio2stios(t, ts)
 }
 
 int
-ibcs2_ioctl(p, uap, retval)
+ibcs2_ioctl(p, v, retval)
 	struct proc *p;
-	struct ibcs2_ioctl_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_ioctl_args *uap = v;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	int (*ctl)();
