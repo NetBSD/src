@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.9 2003/01/31 00:07:39 thorpej Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.10 2004/10/20 21:47:13 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.9 2003/01/31 00:07:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.10 2004/10/20 21:47:13 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,6 +160,7 @@ agp_amd_match(const struct pci_attach_args *pa)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_SC751_SC:
+	case PCI_PRODUCT_AMD_SC761_SC:
 	case PCI_PRODUCT_AMD_SC762_NB:
 		return 1;
 	}
