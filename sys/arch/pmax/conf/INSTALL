@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.19 1999/04/13 18:53:28 ad Exp $
+# 	$NetBSD: INSTALL,v 1.20 1999/04/20 05:56:52 simonb Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -70,6 +70,8 @@ options		FONT_LUCIDA16x29	# Font for px devices
 
 # pmax specific
 options 	"HZ=256"	# RTC rate required
+
+options 	NFS_BOOT_DHCP	# superset of BOOTP
 
 config		netbsd		root on ? type ?
 config		nfsnetbsd	root on ? type nfs
