@@ -139,7 +139,7 @@ list_supported_targets (name, f)
      const char *name;
      FILE *f;
 {
-  extern bfd_target *bfd_target_vector[];
+  extern bfd_target **bfd_target_vector;
   int t;
 
   if (name == NULL)

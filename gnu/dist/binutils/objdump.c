@@ -2428,7 +2428,7 @@ endian_string (endian)
 static void
 display_target_list ()
 {
-  extern bfd_target *bfd_target_vector[];
+  extern bfd_target **bfd_target_vector;
   char *dummy_name;
   int t;
 
@@ -2474,7 +2474,7 @@ display_info_table (first, last)
      int first;
      int last;
 {
-  extern bfd_target *bfd_target_vector[];
+  extern bfd_target **bfd_target_vector;
   int t, a;
   char *dummy_name;
 
@@ -2541,7 +2541,7 @@ static void
 display_target_tables ()
 {
   int t, columns;
-  extern bfd_target *bfd_target_vector[];
+  extern bfd_target **bfd_target_vector;
   char *colum;
 
   columns = 0;
