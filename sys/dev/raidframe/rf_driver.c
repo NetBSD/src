@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.31 2000/02/24 23:39:21 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.32 2000/02/25 17:14:18 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -308,6 +308,7 @@ rf_UnconfigureVnodes( raidPtr )
 							FREAD | FWRITE, p->p_ucred, p);
 				}
 				raidPtr->raid_cinfo[r][c].ci_vp = NULL;
+				raidPtr->Disks[r][c].auto_configured = 0;
 			} else {
 				printf("vnode was NULL\n");
 			}
@@ -317,7 +318,7 @@ rf_UnconfigureVnodes( raidPtr )
 	for (r = 0; r < raidPtr->numSpare; r++) {
 		printf("Closing vnode for spare: %d\n", r);
 		if (raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp) {
-			if (raidPtr->Disks[r][c].auto_configured == 1) {
+			if (raidPtr->Disks[0][raidPtr->numCol + r].auto_configured == 1) {
 				VOP_CLOSE(raidPtr->raid_cinfo[0][raidPtr->numCol +r].ci_vp, 
 					  FREAD, NOCRED, 0);
 				vput(raidPtr->raid_cinfo[0][raidPtr->numCol +r].ci_vp);
@@ -327,7 +328,8 @@ rf_UnconfigureVnodes( raidPtr )
 				(void) vn_close(raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp,
 						FREAD | FWRITE, p->p_ucred, p);
 			}
-			raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp = NULL;
+			raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp = NULL;			
+			raidPtr->Disks[0][raidPtr->numCol + r].auto_configured = 0;
 		} else {
 			printf("vnode was NULL\n");
 		}
