@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.25 2002/07/10 21:28:13 wiz Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.26 2002/08/09 11:06:43 soren Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1278,7 +1278,7 @@ copyfile(char *to, char *from)
 		av[ac++] = "gzip";
 		av[ac++] = "-d";
 		av[ac++] = NULL;
-		if ((infd = open(tname, O_RDONLY)) == -1 ||
+		if ((infd = open(tname, O_RDONLY, 0)) == -1 ||
 		    unlink(tname) == -1 ||
 		    (outfd = open(tname, O_WRONLY | O_CREAT | O_TRUNC)) == -1 ||
 		    runiofd(av, infd, outfd, 2) != 0) {
