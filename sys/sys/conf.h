@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.47 1997/03/18 01:39:43 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.48 1997/03/18 05:04:33 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -367,57 +367,59 @@ int	chrtoblk __P((dev_t));
 int	iskmemdev __P((dev_t));
 int	iszerodev __P((dev_t));
 
-cdev_decl(filedesc);
+/*
+ * [bc]dev_decl()s for 'fake' tty devices.
+ */
+cdev_decl(cn);
 
-cdev_decl(log);
-
-#ifndef LKM
-# define	NLKM	0
-#else
-# define	NLKM	1
-#endif
-cdev_decl(lkm);
-
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
+cdev_decl(ctty);
 
 #define	ptctty		ptytty
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
 
-cdev_decl(ctty);
+#define	ptstty		ptytty
+#define	ptsioctl	ptyioctl
+cdev_decl(pts);
 
-cdev_decl(audio);
+/*
+ * [bc]dev_decl()s for 'fake' disk devices.
+ */
+bdev_decl(ccd);
+cdev_decl(ccd);
 
-cdev_decl(cn);
+bdev_decl(md);
+cdev_decl(md);
 
 bdev_decl(vnd);
 cdev_decl(vnd);
 
-bdev_decl(ccd);
-cdev_decl(ccd);
+/*
+ * [bc]dev_decl()s for SCSI devices.
+ */
+bdev_decl(cd);
+cdev_decl(cd);
 
 cdev_decl(ch);
-
-bdev_decl(ss);
-cdev_decl(ss);
 
 bdev_decl(sd);
 cdev_decl(sd);
 
+cdev_decl(se);
+
 bdev_decl(st);
 cdev_decl(st);
 
-bdev_decl(cd);
-cdev_decl(cd);
+bdev_decl(ss);
+cdev_decl(ss);
 
 bdev_decl(uk);
 cdev_decl(uk);
 
+/*
+ * [bc]dev_decl()s for 'fake' network devices.
+ */
 cdev_decl(bpf);
-
-cdev_decl(tun);
 
 cdev_decl(ipl);
 
@@ -427,6 +429,24 @@ cdev_decl(ipl);
 # define NSVR4_NET	0
 #endif
 cdev_decl(svr4_net);
+
+cdev_decl(tun);
+
+/*
+ * [bc]dev_decl()s for miscellaneous 'fake' devices. 
+ */
+cdev_decl(audio);
+
+cdev_decl(filedesc);
+
+#ifndef LKM
+# define	NLKM	0
+#else
+# define	NLKM	1
+#endif
+cdev_decl(lkm);
+
+cdev_decl(log);
 
 #endif /* _KERNEL */
 
