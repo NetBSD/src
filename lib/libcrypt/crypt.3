@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.5 1998/02/05 18:51:33 perry Exp $
+.\"	$NetBSD: crypt.3,v 1.6 1998/06/01 20:24:46 kleink Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,13 +50,14 @@
 .Ft char
 .Fn *crypt "const char *key" "const char *setting"
 .Ft int
-.Fn setkey "const char *key"
-.Ft int
 .Fn encrypt "char *block" "int flag"
 .Ft int
 .Fn des_setkey "const char *key"
 .Ft int
 .Fn des_cipher "const char *in" "char *out" "long salt" "int count"
+.Fd #include <stdlib.h>
+.Ft int
+.Fn setkey "const char *key"
 .Sh DESCRIPTION
 The
 .Fn crypt
