@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.32 2002/07/22 05:23:32 lukem Exp $
+.\"	$NetBSD: xfer,v 1.33 2002/07/22 14:07:52 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .
 .\" ---------- MD instructions on setting up boot media
 .
-.if r_acorn26 \{\
+.if \n[acorn26] \{\
 To boot
 .Nx ,
 you will need the bootloader
@@ -43,15 +43,15 @@ and the kernel you wish to boot on a RISC OS file system somewhere.
 .Ic boot26
 can boot gzipped kernels, so there's no need to gunzip it.
 .Pp
-.\} \" r_acorn26
+.\} \" \n[acorn26]
 .
-.if r_cats \{\
+.if \n[cats] \{\
 You will need to create a CD with an install kernel on it or have another
 machine available to allow net booting.
 .Pp
-.\} \" r_cats
+.\} \" \n[cats]
 .
-.if r_i386 \{\
+.if \n[i386] \{\
 If you are not booting off a CD-ROM, you will need to have some floppy
 disks to boot off;
 either two 1.44 MB floppies or one 1.2 MB floppy.
@@ -118,7 +118,7 @@ A
 is also available that runs under
 .Tn MS Windows .
 .Pp
-.\} \" r_i386
+.\} \" \n[i386]
 .
 .if \n[hp300]:\n[macppc] \{\
 You should wait to decide where to put the
@@ -128,7 +128,7 @@ your system.
 Refer back to this section after you have done so.
 .Pp
 .\}
-.if r_macppc \{\
+.if \n[macppc] \{\
 .(Note
 Some
 .Tn Mac OS
@@ -144,9 +144,9 @@ Make sure to set your ftp program to download in
 mode.
 .Note)
 .Pp
-.\} \" r_macppc
+.\} \" \n[macppc]
 .
-.if r_news68k \{\
+.if \n[news68k] \{\
 .(Note
 .Nx*M
 \*V does not support any framebuffers (yet) so
@@ -223,9 +223,9 @@ After the boot floppy is prepared, just type
 .Ic "bo fh"
 on the PROM prompt to boot it.
 .Pp
-.\} \" r_news68k
+.\} \" \n[news68k]
 .
-.if r_newsmips \{\
+.if \n[newsmips] \{\
 .(Note
 .Nx*M
 \*V does not support any framebuffers other than NWB-253 on NWS-3470D and
@@ -313,9 +313,9 @@ After the boot floppy is prepared, just type
 .Ic "bo fh"
 (NWS-3xxx) on the PROM prompt to boot it.
 .Pp
-.\} \" r_newsmips
+.\} \" \n[newsmips]
 .
-.if r_pmax \{\
+.if \n[pmax] \{\
 First-time installation on a bare machine is not supported, because most
 DECstations do not have any suitable load device.
 Some versions of the DECstation PROM are buggy and will not boot via
@@ -334,9 +334,9 @@ or to use a
 system to write a miniroot diskimage onto a disk, move that
 disk to the target installation system, and then boot the miniroot.
 .Pp
-.\} \" r_pmax
+.\} \" \n[pmax]
 .
-.if r_vax \{\
+.if \n[vax] \{\
 Installing on a
 .Sq bare
 machine requires some bootable
@@ -348,9 +348,9 @@ machine running
 can use both BOOTP/DHCP and
 BOOTPARAMS for netboot installations.
 .Pp
-.\} \" r_vax
+.\} \" \n[vax]
 .
-.if r_x68k \{\
+.if \n[x68k] \{\
 You will have to prepare the `ramdisk-root' installation system.
 There are two ways to invoke the
 .Nx
@@ -453,7 +453,7 @@ to report access errors, most of which are corrected and can be ignored.
 With the latter installation system the floppy disk is not used once the
 system has booted off and can be removed from the drive.
 .Pp
-.\} \" r_x68k
+.\} \" \n[x68k]
 .
 .ig
 XXXX
@@ -473,10 +473,10 @@ Installation is supported from several media types, including:
 .Pp
 .(bullet -offset indent -compact
 .
-.if r_amiga \{\
+.if \n[amiga] \{\
 .Tn AmigaDOS
 .It
-.\} \" r_amiga
+.\} \" \n[amiga]
 .
 CD-ROM
 .
@@ -488,10 +488,10 @@ CD-ROM
 .It
 FTP
 .
-.if r_x68k \{\
+.if \n[x68k] \{\
 .It
 Magneto-Optical (M-O) or other removable SCSI disk
-.\} \" r_x68k
+.\} \" \n[x68k]
 .
 .It
 Remote NFS partition
@@ -517,7 +517,7 @@ The steps for the various media are outlined below.
 .
 .(tag MS-DOS\ floppy
 .
-.if r_amiga \{\
+.if \n[amiga] \{\
 .It Em AmigaDOS partition
 To install
 .Nx
@@ -538,10 +538,10 @@ Note where you place the files as you will need this later.
 .Pp
 Once you have done this, you can proceed to the next
 step in the installation process, preparing your hard disk.
-.\} \" r_amiga
+.\} \" \n[amiga]
 .
 .It Em CD-ROM
-.if r_amiga \{\
+.if \n[amiga] \{\
 To install
 .Nx
 from a CD-ROM drive, make sure it is a SCSI CD-ROM on a SCSI bus currently
@@ -558,7 +558,7 @@ If your SCSI CD-ROM is connected to a supported SCSI host adapter,
 or it is an ATAPI cd-rom connected to the A1200/A4000 internal IDE
 connector, simply put the CD into the drive before installation.
 .Pp
-.\} \" r_amiga
+.\} \" \n[amiga]
 Find out where the distribution set files are on the CD-ROM.
 .Pp
 Proceed to the instruction on installation.
@@ -569,15 +569,15 @@ Count the number of
 .Pa set_name. Ns Ar xx
 files that make up the
 distribution sets you want to install or upgrade.
-.ie r_i386 \{\
+.ie \n[i386] \{\
 You will need one fifth that number of 1.2 MB floppies, or one sixth that
 number of 1.44 MB floppies.
 You should only use one size of floppy for the install or upgrade
 procedure; you can't use some 1.2 MB floppies and some 1.44 MB floppies.
-.\} \" r_i386
+.\} \" \n[i386]
 .el \{\
 You will need one sixth that number of 1.44 MB floppies.
-\} \" ! r_i386
+\} \" ! \n[i386]
 .Pp
 Format all of the floppies with
 .Tn MS-DOS .
