@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.3 1995/07/02 00:30:30 briggs Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.4 1995/07/04 18:55:23 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -57,9 +57,10 @@ grfiv_probe(sc, slotinfo)
 	struct grf_softc *sc;
 	nubus_slot *slotinfo;
 {
-	extern unsigned long	int_video_start;
+	extern u_long		int_video_start;
+	extern u_int32_t	mac68k_vidlog;
 
-	if (int_video_start == 0) {
+	if (int_video_start == 0 && mac68k_vidlog == 0) {
 		return 0;
 	}
 	if (slotinfo->slot < 0xe) {
@@ -104,5 +105,16 @@ grfiv_mode(sc, cmd, arg)
 	int cmd;
 	void *arg;
 {
-	return 0;
+	switch (cmd) {
+	case GM_GRFON:
+	case GM_GRFOFF:
+		return 0;
+	case GM_CURRMODE:
+		break;
+	case GM_NEWMODE:
+		break;
+	case GM_LISTMODES:
+		break;
+	}
+	return EINVAL;
 }

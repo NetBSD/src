@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.4 1995/06/28 04:09:40 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.5 1995/07/04 18:55:18 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -69,12 +69,17 @@ extern vm_offset_t reserve_dumppages __P((vm_offset_t));
  * These are used to map the RAM:
  */
 int		numranges; /* = 0 == don't use the ranges */
-unsigned long	low[8];
-unsigned long	high[8];
+u_long	low[8];
+u_long	high[8];
 extern int		nbnumranges;
-extern unsigned long	nbphys[];
-extern unsigned long	nblog[];
+extern u_long	nbphys[];
+extern u_long	nblog[];
 extern   signed long	nblen[];
+#define VIDMAPSIZE	btoc(mac68k_vidlen)
+extern u_int32_t	mac68k_vidlen;
+extern u_int32_t	mac68k_vidlog;
+extern u_int32_t	mac68k_vidphys;
+
 extern caddr_t	ROMBase;
 
 /*
@@ -100,7 +105,8 @@ pmap_bootstrap(nextpa, firstpa)
 	vm_offset_t nextpa;
 	register vm_offset_t firstpa;
 {
-	vm_offset_t kstpa, kptpa, iiopa, eiopa, rompa, kptmpa, lkptpa, p0upa;
+	vm_offset_t kstpa, kptpa, vidpa, iiopa, eiopa, rompa;
+	vm_offset_t kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
 	caddr_t oldROMBase;
 	int i;
@@ -143,9 +149,11 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += kstsize * NBPG;
 	kptpa = nextpa;
 	nptpages = Sysptsize +
-		(IIOMAPSIZE + NBMAPSIZE + ROMMAPSIZE + NPTEPG - 1) / NPTEPG;
+		(IIOMAPSIZE + NBMAPSIZE + ROMMAPSIZE + VIDMAPSIZE
+		 + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * NBPG;
-	eiopa = nextpa - NBMAPSIZE  * sizeof(pt_entry_t);
+	vidpa = nextpa - VIDMAPSIZE * sizeof(pt_entry_t);
+	eiopa = vidpa  - NBMAPSIZE  * sizeof(pt_entry_t);
 	rompa = eiopa  - ROMMAPSIZE * sizeof(pt_entry_t);
 	iiopa = rompa  - IIOMAPSIZE * sizeof(pt_entry_t);
 	kptmpa = nextpa;
@@ -363,6 +371,16 @@ pmap_bootstrap(nextpa, firstpa)
 		protopte += NBPG;
 	}
 
+	if (mac68k_vidlog) {
+		pte = PA2VA(vidpa, u_int *);
+		epte = pte + VIDMAPSIZE;
+		protopte = mac68k_vidphys | PG_RW | PG_V | PG_CI;
+		while (pte < epte) {
+			*pte++ = protopte;
+			protopte += NBPG;
+		}
+	}
+
 	/*
 	 * Calculate important exported kernel virtual addresses
 	 */
@@ -385,21 +403,26 @@ pmap_bootstrap(nextpa, firstpa)
 	 * IIOMAPSIZE pages prior to external IO space at end of static
 	 * kernel page table. XXX update me.
 	 */
-	IOBase = (unsigned long)mac68k_ptob(nptpages*NPTEPG -
-					(IIOMAPSIZE + ROMMAPSIZE + NBMAPSIZE));
+	IOBase = (u_long)mac68k_ptob(nptpages*NPTEPG -
+			(IIOMAPSIZE + ROMMAPSIZE + NBMAPSIZE + VIDMAPSIZE));
 
 	mac68k_set_io_offsets(IOBase);
 
 	oldROMBase = ROMBase;
 	ROMBase = (char *)mac68k_ptob(nptpages*NPTEPG -
-					(ROMMAPSIZE + NBMAPSIZE));
+					(ROMMAPSIZE + NBMAPSIZE + VIDMAPSIZE));
 
 	mrg_fixupROMBase(oldROMBase, ROMBase);
 
-	NuBusBase = (unsigned long)mac68k_ptob(nptpages*NPTEPG - NBMAPSIZE);
+	NuBusBase = (u_long)mac68k_ptob(nptpages*NPTEPG -
+						(NBMAPSIZE + VIDMAPSIZE));
+
+	if (mac68k_vidlog)
+		mac68k_vidlog = (u_int32_t)
+				mac68k_ptob(nptpages*NPTEPG - NBMAPSIZE);
 {
 	int		len;
-	unsigned long	offset;
+	u_long	offset;
 
 	for (i = 0; i < nbnumranges; i++) {
 		pte = (PA2VA(eiopa, u_int *)) + mac68k_btop(nblog[i] - NBBASE);
@@ -550,7 +573,7 @@ bootstrap_mac68k(tc)
 	int	tc;
 {
 	extern caddr_t	esym;
-	extern unsigned long	videoaddr;
+	extern u_long	videoaddr;
 	vm_offset_t	nextpa;
 
 	if (tc & 0x80000000) {
@@ -571,5 +594,8 @@ bootstrap_mac68k(tc)
 
 	pmap_bootstrap(nextpa, load_addr);
 
-	videoaddr = videoaddr - NBBASE + NuBusBase;
+	if (mac68k_vidlog)
+		videoaddr = mac68k_vidlog;
+	else
+		videoaddr = videoaddr - NBBASE + NuBusBase;
 }
