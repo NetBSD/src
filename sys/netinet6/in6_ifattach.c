@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_ifattach.c,v 1.30 2000/05/05 08:03:12 itojun Exp $	*/
-/*	$KAME: in6_ifattach.c,v 1.56 2000/05/05 06:54:33 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.31 2000/10/01 10:56:02 itojun Exp $	*/
+/*	$KAME: in6_ifattach.c,v 1.67 2000/10/01 10:51:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -269,7 +269,7 @@ get_ifid(ifp0, altifp, in6)
 	if (altifp && get_hw_ifid(altifp, in6) == 0) {
 #ifdef ND6_DEBUG
 		printf("%s: got interface identifier from %s\n",
-		    if_name(ifp0), ifname(altifp));
+		    if_name(ifp0), if_name(altifp));
 #endif
 		goto success;
 	}
@@ -305,7 +305,7 @@ get_ifid(ifp0, altifp, in6)
 		goto success;
 	}
 
-	printf("%s: failed to get interface identifier", if_name(ifp0));
+	printf("%s: failed to get interface identifier\n", if_name(ifp0));
 	return -1;
 
 success:
@@ -661,7 +661,7 @@ in6_ifattach(ifp, altifp)
 		ia = in6ifa_ifpforlinklocal(ifp, 0);
 
 		if (ia == NULL) {
-			printf("%s: failed to add link-local address",
+			printf("%s: failed to add link-local address\n",
 			    if_name(ifp));
 
 			/* we can't initialize multicasts without link-local */
