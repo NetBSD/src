@@ -2,8 +2,6 @@ Some things that need to be done in no particular order:
 
 Implement request timeout and abort in ohci.c.
 
-Implement request abort in uhci.c.
-
 Implement isochronous transfer mode.
 
 Implement audio driver.
@@ -13,3 +11,7 @@ Do bandwidth accounting.
 Use lock manager locks.
 
 Implement a modem driver for the Abstract Control Model.
+
+Use the pool allocator for TDs et al.
+
+Merge soft_td and td in uhci.c.
