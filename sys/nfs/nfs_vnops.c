@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.113.4.3 2000/12/14 23:37:18 he Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.113.4.4 2002/01/29 22:21:44 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -663,6 +663,8 @@ nfs_setattr(v)
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
  			uvm_vnp_setsize(vp, vap->va_size);
+ 			tsize = np->n_size;
+			np->n_size = vap->va_size;
  			if (vap->va_size == 0)
  				error = nfs_vinvalbuf(vp, 0,
  				     ap->a_cred, ap->a_p, 1);
@@ -670,11 +672,10 @@ nfs_setattr(v)
 				error = nfs_vinvalbuf(vp, V_SAVE,
 				     ap->a_cred, ap->a_p, 1);
 			if (error) {
-				uvm_vnp_setsize(vp, np->n_size);
+				uvm_vnp_setsize(vp, tsize);
 				return (error);
 			}
- 			tsize = np->n_size;
- 			np->n_size = np->n_vattr->va_size = vap->va_size;
+ 			np->n_vattr->va_size = vap->va_size;
   		}
   	} else if ((vap->va_mtime.tv_sec != VNOVAL ||
 		vap->va_atime.tv_sec != VNOVAL) &&
