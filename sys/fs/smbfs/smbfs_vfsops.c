@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.37 2004/04/26 17:08:34 christos Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.38 2004/04/26 20:38:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.37 2004/04/26 17:08:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.38 2004/04/26 20:38:22 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -200,7 +200,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	    mp, p);
 	if (error)
 		goto bad;
-	sbp->mnt_stat.f_namemax = MAXNAMLEN;
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
 	snprintf(mp->mnt_stat.f_mntfromname, MNAMELEN,
 	    "//%s@%s/%s", vcp->vc_username, vcp->vc_srvname, ssp->ss_name);
