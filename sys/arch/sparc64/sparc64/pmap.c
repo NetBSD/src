@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.150 2003/11/25 05:14:58 cdi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.151 2003/12/03 17:58:47 petrov Exp $	*/
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.150 2003/11/25 05:14:58 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.151 2003/12/03 17:58:47 petrov Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -198,18 +198,6 @@ tsb_invalidate(int ctx, vaddr_t va)
 	}
 }
 
-struct pmap_stats {
-	int	ps_unlink_pvfirst;	/* # of pv_unlinks on head */
-	int	ps_unlink_pvsearch;	/* # of pv_unlink searches */
-	int	ps_changeprots;		/* # of calls to changeprot */
-	int	ps_useless_changeprots;	/* # of changeprots for wiring */
-	int	ps_enter_firstpv;	/* pv heads entered */
-	int	ps_enter_secondpv;	/* pv nonheads entered */
-	int	ps_useless_changewire;	/* useless wiring changes */
-	int	ps_npg_prot_all;	/* # of active pages protected */
-	int	ps_npg_prot_actual;	/* # pages actually affected */
-} pmap_stats;
-
 struct prom_map *prom_map;
 int prom_map_size;
 
@@ -378,9 +366,7 @@ pmap_enter_kpage(va, data)
 
 	newp = 0UL;
 	while (pseg_set(pmap_kernel(), va, data, newp) & 1) {
-		newp = 0UL;
-		pmap_get_page(&newp);
-		if (!newp) {
+		if (!pmap_get_page(&newp)) {
 			prom_printf("pmap_enter_kpage: out of pages\n");
 			panic("pmap_enter_kpage");
 		}
@@ -1278,7 +1264,8 @@ remap_data:
 		while (vmmap < u0[1]) {
 			int64_t data;
 
-			pmap_get_page(&pa);
+			if (!pmap_get_page(&pa))
+				panic("pmap_bootstrap: no pages");
 			prom_map_phys(pa, PAGE_SIZE, vmmap, -1);
 			data = TSB_DATA(0 /* global */,
 				PGSZ_8K,
@@ -1500,10 +1487,8 @@ pmap_create()
 	pm->pm_refs = 1;
 	TAILQ_INIT(&pm->pm_obj.memq);
 	if (pm != pmap_kernel()) {
-		pmap_get_page(&pm->pm_physaddr);
-		while (pm->pm_physaddr == 0UL) {
+		while (!pmap_get_page(&pm->pm_physaddr)) {
 			uvm_wait("pmap_create");
-			pmap_get_page(&pm->pm_physaddr);
 		}
 		pm->pm_segs = (paddr_t *)(u_long)pm->pm_physaddr;
 	}
@@ -1725,7 +1710,6 @@ pmap_kenter_pa(va, pa, prot)
 
  retry:
 	i = pseg_set(pm, va, tte.data, ptp);
-	KASSERT((i & 6) == 0);
 	if (i & 1) {
 		KASSERT((i & 4) == 0);
 		ptp = 0;
