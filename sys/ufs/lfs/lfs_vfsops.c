@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.110 2003/03/21 06:26:37 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.111 2003/03/21 23:11:30 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.110 2003/03/21 06:26:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.111 2003/03/21 23:11:30 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -344,7 +344,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		vfs_showexport(mp, &args.export, &ump->um_export);
 		return copyout(&args, data, sizeof(args));
 	}
-	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
+	error = copyin(data, &args, sizeof (struct ufs_args));
 	if (error)
 		return (error);
 
@@ -916,7 +916,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
 	if (error)
 		return (error);
-	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)
+	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, p) != 0)
 		secsize = DEV_BSIZE;
 	else
 		secsize = dpart.disklab->d_secsize;
@@ -1957,7 +1957,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		}
 		VOP_BWRITE(bp);
 		while (lfs_gatherblock(sp, bp, NULL))
-			;
+			continue;
 	}
 
 	if (skipbytes) {

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.8 2003/02/25 20:35:34 thorpej Exp $ */
+/* $NetBSD: cgd.c,v 1.9 2003/03/21 23:11:22 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.8 2003/02/25 20:35:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.9 2003/03/21 23:11:22 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -590,7 +590,7 @@ cgdinit(struct cgd_softc *cs, char *cpath, struct vnode *vp,
 
 	cs->sc_tdev = va.va_rdev;
 
-	ret = VOP_IOCTL(vp, DIOCGPART, (caddr_t)&dpart, FREAD, p->p_ucred, p);
+	ret = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, p->p_ucred, p);
 	if (ret)
 		goto bail;
 

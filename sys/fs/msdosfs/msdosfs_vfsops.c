@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.2 2003/02/01 06:23:41 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.3 2003/03/21 23:11:25 dsl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.2 2003/02/01 06:23:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.3 2003/03/21 23:11:25 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -261,7 +261,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 		vfs_showexport(mp, &args.export, &pmp->pm_export);
 		return copyout(&args, data, sizeof(args));
 	}
-	error = copyin(data, (caddr_t)&args, sizeof(struct msdosfs_args));
+	error = copyin(data, &args, sizeof(struct msdosfs_args));
 	if (error)
 		return (error);
 	/*
@@ -430,8 +430,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		 * that the size of a disk block will always be 512 bytes.
 		 * Let's check it...
 		 */
-		error = VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart,
-				  FREAD, NOCRED, p);
+		error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, p);
 		if (error)
 			goto error_exit;
 		tmp   = dpart.part->p_fstype;
@@ -464,7 +463,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	}
 
 	pmp = malloc(sizeof *pmp, M_MSDOSFSMNT, M_WAITOK);
-	memset((caddr_t)pmp, 0, sizeof *pmp);
+	memset(pmp, 0, sizeof *pmp);
 	pmp->pm_mountp = mp;
 
 	/*
