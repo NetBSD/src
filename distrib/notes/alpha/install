@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.22 2002/01/02 21:12:15 he Exp $
+.\"	$NetBSD: install,v 1.23 2002/02/16 18:17:04 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -331,9 +331,9 @@ system running
 .Ic bootpd :
 .(disp
 myhost.mydom.com:\
-	 :ht=ethernet:ha=0000c0391ae4:\e
-	 :ip=192.168.1.2:sm=255.255.255.0:\e
-	 :sa=192.168.1.1:bf=boot.netbsd.\*M:rp=/usr/export/\*M:
+        :ht=ethernet:ha=0000c0391ae4:\e
+        :ip=192.168.1.2:sm=255.255.255.0:\e
+        :sa=192.168.1.1:bf=boot.netbsd.\*M:rp=/usr/export/\*M:
 .disp)
 .Pp
 And here's an example for a
@@ -342,14 +342,14 @@ system running the ISC
 .Ic dhcpd :
 .(disp
 host axp {
-	hardware ethernet 0:0:c0:39:1a:e4;
-	fixed-address 192.168.1.2;
-	option host-name "myhost.mydom.com";
-	filename "boot.netbsd.\*M";
-	option root-path "/usr/export/\*M";
-	option domain-name-servers 192.168.1.1;
-	option broadcast-address 255.255.255.0;
-	option domain-name "my.domain";
+        hardware ethernet 0:0:c0:39:1a:e4;
+        fixed-address 192.168.1.2;
+        option host-name "myhost.mydom.com";
+        filename "boot.netbsd.\*M";
+        option root-path "/usr/export/\*M";
+        option domain-name-servers 192.168.1.1;
+        option broadcast-address 255.255.255.0;
+        option domain-name "my.domain";
 }
 .disp)
 .Pp
