@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbppc,v 1.5 2003/03/13 17:02:53 matt Exp $
+#	$NetBSD: majors.evbppc,v 1.6 2003/03/16 07:07:18 matt Exp $
 #
 # Device majors for evbppc
 # (When possible, make entries the same as macppc)
@@ -14,7 +14,7 @@ device-major	swap		char 6   block 1
 
 device-major	bpf		char 10			bpfilter
 device-major	tun		char 11			tun
-#device-major	gtmpsc		char 12			gtmpsc
+device-major	gtmpsc		char 12			gtmpsc
 device-major	sd		char 13  block 4	sd
 device-major	st		char 14  block 5	st
 device-major	cd		char 15  block 6	cd

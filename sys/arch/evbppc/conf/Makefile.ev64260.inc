@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.ev64260.inc,v 1.1 2003/03/05 22:08:24 matt Exp $
+#	$NetBSD: Makefile.ev64260.inc,v 1.2 2003/03/16 07:07:17 matt Exp $
 
-TEXTADDR?=	100000
+MKIMG?=	${THISPPC}/compile/walnut-mkimg.sh
+
+TEXTADDR?=	300000
 
 SYSTEM_FIRST_OBJ=	${BOARDTYPE}_locore.o
 SYSTEM_FIRST_SFILE=	${THISPPC}/${BOARDTYPE}/${BOARDTYPE}_locore.S
@@ -10,3 +12,8 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 	echo "${DBSYM} $@ || true"; \
 	${DBSYM} $@ || true
 .endif
+
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${MKIMG} netbsd netbsd.img ; \
+	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; export OBJDUMP OBJCOPY; \
+		${MKIMG} $@ $@.img
