@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.15 1996/06/11 07:07:56 mycroft Exp $	*/
+/*	$NetBSD: pass2.c,v 1.16 1996/09/23 16:18:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: pass2.c,v 1.15 1996/06/11 07:07:56 mycroft Exp $";
+static char rcsid[] = "$NetBSD: pass2.c,v 1.16 1996/09/23 16:18:37 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,12 +50,15 @@ static char rcsid[] = "$NetBSD: pass2.c,v 1.15 1996/06/11 07:07:56 mycroft Exp $
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "fsck.h"
+#include "util.h"
 #include "extern.h"
 
 #define MINDIRSIZE	(sizeof (struct dirtemplate))
 
-int	pass2check(), blksort();
+static int pass2check __P((struct inodesc *));
+static int blksort __P((const void *, const void *));
 
 void
 pass2()
@@ -72,7 +75,7 @@ pass2()
 	case USTATE:
 		pfatal("ROOT INODE UNALLOCATED");
 		if (reply("ALLOCATE") == 0)
-			errexit("");
+			errexit("%s", "");
 		if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
 			errexit("CANNOT ALLOCATE ROOT INODE\n");
 		break;
@@ -86,7 +89,7 @@ pass2()
 			break;
 		}
 		if (reply("CONTINUE") == 0)
-			errexit("");
+			errexit("%s", "");
 		break;
 
 	case FSTATE:
@@ -99,7 +102,7 @@ pass2()
 			break;
 		}
 		if (reply("FIX") == 0)
-			errexit("");
+			errexit("%s", "");
 		dp = ginode(ROOTINO);
 		dp->di_mode &= ~IFMT;
 		dp->di_mode |= IFDIR;
@@ -195,7 +198,7 @@ pass2()
 	propagate();
 }
 
-int
+static int
 pass2check(idesc)
 	struct inodesc *idesc;
 {
@@ -451,10 +454,10 @@ again:
 /*
  * Routine to sort disk blocks.
  */
-int
+static int
 blksort(inpp1, inpp2)
-	struct inoinfo **inpp1, **inpp2;
+	const void *inpp1, *inpp2;
 {
-
-	return ((*inpp1)->i_blks[0] - (*inpp2)->i_blks[0]);
+	return ((* (struct inoinfo **) inpp1)->i_blks[0] -
+		(* (struct inoinfo **) inpp2)->i_blks[0]);
 }
