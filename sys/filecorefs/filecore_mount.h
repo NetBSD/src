@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_mount.h,v 1.2 1998/08/14 18:04:05 mark Exp $	*/
+/*	$NetBSD: filecore_mount.h,v 1.3 2002/09/21 18:11:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Andrew McMurry
@@ -53,3 +53,7 @@ struct filecore_args {
 #define	FILECOREMNT_OWNREAD	4	/* All files have Owner read access */
 #define	FILECOREMNT_USEUID	8	/* Use uid of mount process */
 #define	FILECOREMNT_FILETYPE	16	/* Include filetype in filename */
+
+#define FILECOREMNT_BITS "\177\20" \
+    "b\00root\0b\01ownaccess\0b\02allaccess\0b\03ownread\0" \
+    "b\04useuid\0b\05filetype"
