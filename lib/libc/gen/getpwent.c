@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.17 1997/05/20 15:59:59 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.18 1997/05/21 01:51:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpwent.c,v 1.17 1997/05/20 15:59:59 lukem Exp $";
+static char rcsid[] = "$NetBSD: getpwent.c,v 1.18 1997/05/21 01:51:40 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -292,12 +292,16 @@ again:
 		case YPMODE_FULL:
 			data = NULL;
 			if(__ypcurrent) {
+				key = NULL;
 				r = yp_next(__ypdomain, "passwd.byname",
 					__ypcurrent, __ypcurrentlen,
 					&key, &keylen, &data, &datalen);
 				free(__ypcurrent);
-				if(r != 0)
+				if(r != 0) {
 					__ypcurrent = NULL;
+					if (key)
+						free(key);
+				}
 				else {
 					__ypcurrent = key;
 					__ypcurrentlen = keylen;

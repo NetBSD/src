@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.16 1997/05/20 15:46:03 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.17 1997/05/21 01:51:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: getgrent.c,v 1.16 1997/05/20 15:46:03 lukem Exp $";
+static char rcsid[] = "$NetBSD: getgrent.c,v 1.17 1997/05/21 01:51:39 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -189,12 +189,16 @@ grscan(search, gid, name)
 			case YPMODE_FULL:
 				data = NULL;
 				if (__ypcurrent) {
+					key = NULL;
 					r = yp_next(__ypdomain, "group.byname",
 						__ypcurrent, __ypcurrentlen,
 						&key, &keylen, &data, &datalen);
 					free(__ypcurrent);
-					if (r != 0)
+					if (r != 0) {
 						__ypcurrent = NULL;
+						if (key)
+							free(key);
+					}
 					else {
 						__ypcurrent = key;
 						__ypcurrentlen = keylen;
