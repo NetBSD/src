@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.34 2000/06/14 22:02:21 veego Exp $
+#	$NetBSD: SHARK,v 1.35 2000/06/17 06:19:03 matt Exp $
 # From:  NetBSD: GENERIC,v 1.61 2000/01/20 19:12:29 wrstuden Exp
 #
 #	SHARK
@@ -214,4 +214,3 @@ pseudo-device	rnd			# /dev/random and /dev/urandom
 #pseudo-device	md	1		# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device
 pseudo-device	sequencer 1		# MIDI sequencer
-
