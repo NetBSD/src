@@ -1,4 +1,4 @@
-/*	$NetBSD: sun68k.c,v 1.3 2002/04/22 23:24:10 bjh21 Exp $ */
+/*	$NetBSD: sun68k.c,v 1.4 2002/04/24 01:35:25 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sun68k.c,v 1.3 2002/04/22 23:24:10 bjh21 Exp $");
+__RCSID("$NetBSD: sun68k.c,v 1.4 2002/04/24 01:35:25 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -52,12 +52,9 @@ __RCSID("$NetBSD: sun68k.c,v 1.3 2002/04/22 23:24:10 bjh21 Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "installboot.h"
-#include "sun68k_bbinfo.h"
+#include <dev/sun/sun_boot.h>
 
-#define SUN68K_BOOT_BLOCK_OFFSET	DEV_BSIZE
-#define SUN68K_BOOT_BLOCK_BLOCKSIZE	DEV_BSIZE
-#define SUN68K_BOOT_BLOCK_MAX_SIZE	(DEV_BSIZE * 15)
+#include "installboot.h"
 
 int
 sun68k_clearboot(ib_params *params)
@@ -113,7 +110,7 @@ sun68k_setboot(ib_params *params)
 	int		retval;
 	ssize_t		rv;
 	size_t		bbi;
-	struct bbinfo	*bbinfop;	/* bbinfo in prototype image */
+	struct sun68k_bbinfo	*bbinfop;	/* bbinfo in prototype image */
 	uint32_t	maxblk, nblk, blk_i;
 	ib_block	*blocks = NULL;
 
@@ -123,6 +120,7 @@ sun68k_setboot(ib_params *params)
 	assert(params->fstype != NULL);
 	assert(params->s1fd != -1);
 	assert(params->stage1 != NULL);
+	assert(SUN68K_BBINFO_MAGICSIZE == 32);
 
 	if (params->stage2 == NULL) {
 		warnx("You must provide a secondary bootstrap");
@@ -165,8 +163,8 @@ sun68k_setboot(ib_params *params)
 	/* Look for the bbinfo structure. */
 	for (bbi = 0; bbi < sizeof(bb); bbi += sizeof(uint32_t)) {
 		bbinfop = (void *) (bb + bbi);
-		if (memcmp(bbinfop->bbi_magic, BBINFO_MAGIC,
-			    BBINFO_MAGICSIZE) == 0)
+		if (memcmp(bbinfop->bbi_magic, SUN68K_BBINFO_MAGIC,
+			    SUN68K_BBINFO_MAGICSIZE) == 0)
 			break;
 	}
 	if (bbi >= sizeof(bb)) {
