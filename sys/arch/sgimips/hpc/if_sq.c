@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.17 2003/07/15 03:35:53 lukem Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.18 2003/10/04 09:19:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.17 2003/07/15 03:35:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.18 2003/10/04 09:19:23 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -547,7 +547,7 @@ sq_start(struct ifnet *ifp)
 				memset(mtod(m, char *) + m0->m_pkthdr.len, 0,
 				    ETHER_PAD_LEN - m0->m_pkthdr.len);
 				m->m_pkthdr.len = m->m_len = ETHER_PAD_LEN;
-			} else 
+			} else
 				m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 
 			if ((err = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip32.c,v 1.17 2003/07/15 03:35:55 lukem Exp $	*/
+/*	$NetBSD: ip32.c,v 1.18 2003/10/04 09:19:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip32.c,v 1.17 2003/07/15 03:35:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip32.c,v 1.18 2003/10/04 09:19:23 tsutsui Exp $");
 
 #include "opt_machtypes.h"
 
@@ -70,13 +70,13 @@ u_int32_t missed_clk_intrs;
 static unsigned long last_clk_intr;
 
 static struct evcnt mips_int0_evcnt =
-	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 0 (CRIME)");
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 0 (CRIME)");
 
 static struct evcnt mips_int5_evcnt =
-	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
 
 static struct evcnt mips_spurint_evcnt =
-	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
 
 void
 ip32_init(void)
@@ -84,7 +84,7 @@ ip32_init(void)
 	u_int64_t baseline;
 	u_int32_t cps;
 
-	/* 
+	/*
 	 * NB: don't enable watchdog here as we do on IP22, since the
 	 * fixed -- and overly short -- duration of the IP32 watchdog
 	 * means that more likely than not it will reset the machine
@@ -130,7 +130,7 @@ ip32_init(void)
 	evcnt_attach_static(&mips_int5_evcnt);
 	evcnt_attach_static(&mips_spurint_evcnt);
 
-	printf("CPU clock speed = %lu.%02luMhz\n", 
+	printf("CPU clock speed = %lu.%02luMhz\n",
 				curcpu()->ci_cpu_freq / 1000000,
 			    	(curcpu()->ci_cpu_freq / 10000) % 100);
 }
@@ -158,12 +158,12 @@ ip32_intr(status, cause, pc, ipending)
 	u_int64_t crime_intstat, crime_intmask, crime_ipending;
 
 	/* enable watchdog timer, clear it */
-	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_CONTROL) |= 
+	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_CONTROL) |=
 		CRIME_CONTROL_DOG_ENABLE;
 	*(volatile u_int64_t *) MIPS_PHYS_TO_KSEG1(CRIME_WATCHDOG) = 0;
 
 #if 1
-	/* 
+	/*
 	 * XXXrkb: Even if this code makes sense (which I'm not sure of;
 	 * the magic number of "6" seems to correspond to capability bits
 	 * of the card/slot in question -- not 66 Mhz capable, fast B2B
@@ -189,8 +189,8 @@ ip32_intr(status, cause, pc, ipending)
 		mips3_cp0_compare_write(next_clk_intr);
 		newcnt = mips3_cp0_count_read();
 
-		/* 
-		 * Missed one or more clock interrupts, so let's start 
+		/*
+		 * Missed one or more clock interrupts, so let's start
 		 * counting again from the current value.
 		 */
 		if ((next_clk_intr - newcnt) & 0x80000000) {
@@ -242,7 +242,7 @@ ip32_intr(status, cause, pc, ipending)
 		cause &= ~MIPS_INT_MASK_0;
 	}
 
-	if (cause & status & MIPS_HARD_INT_MASK) 
+	if (cause & status & MIPS_HARD_INT_MASK)
 		mips_spurint_evcnt.ev_count++;
 }
 
@@ -259,16 +259,17 @@ ip32_clkread(void)
 void
 ip32_intr_establish(int level, int ipl, int (*func)(void *), void *arg)
 {
-	/* 
+
+	/*
 	 * XXXrkb: should use level to determine if this is a MACE,
 	 * CRIME, MACEISA, etc. device and then vector to the right
 	 * interrupt table.
-	 * 
+	 *
 	 * Once that's done, then all IP32 drivers should use the
 	 * cpu_intr_establish() function rather than calling into
 	 * the individual CRIME/MACE/... interrupt establishment
 	 * functions.
-	 * 
+	 *
 	 * Finally, since interrupt handlers should always have the
 	 * level associated with them, the interrupt dispatch code
 	 * can map from CRIME interrupt register bits to the right
