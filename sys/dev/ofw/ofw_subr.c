@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.2 1998/01/28 00:01:01 cgd Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.3 1998/02/02 21:56:16 cgd Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,12 +38,17 @@
 #include <sys/malloc.h>
 #include <dev/ofw/openfirm.h>
 
+#define	OFW_MAX_STACK_BUF_SIZE	256
+#define	OFW_PATH_BUF_SIZE	512
+
 /*
- *  This routine converts OFW encoded-int datums
- *  into the integer format of the host machine.
+ * int of_decode_int(p)
  *
- *  It is primarily used to convert integer properties
- *  returned by the OF_getprop routine.
+ * This routine converts OFW encoded-int datums
+ * into the integer format of the host machine.
+ *
+ * It is primarily used to convert integer properties
+ * returned by the OF_getprop routine.
  *
  * Arguments:
  *	p		pointer to unsigned char array which is an
@@ -51,6 +56,9 @@
  *
  * Return Value:
  *	Decoded integer value of argument p.
+ *
+ * Side Effects:
+ *	None.
  */
 int
 of_decode_int(p)
@@ -63,12 +71,13 @@ of_decode_int(p)
 }
 
 /*
+ * int of_compatible(phandle, strings)
+ *
  * This routine checks an OFW node's "compatible" entry to see if
  * it matches any of the provided strings.
  *
  * It should be used when determining whether a driver can drive
  * a partcular device.
- *
  *
  * Arguments:
  *	phandle		OFW phandle of device to be checked for
@@ -81,6 +90,9 @@ of_decode_int(p)
  *	-1 if none of the strings are found in phandle's "compatiblity"
  *	property, or the index of the string in "strings" of the first
  *	string found in phandle's "compatibility" property.
+ *
+ * Side Effects:
+ *	None.
  */
 int
 of_compatible(phandle, strings)
@@ -95,7 +107,7 @@ of_compatible(phandle, strings)
 	if (len <= 0)
 		return (-1);
 
-	if (len > 256) {
+	if (len > OFW_MAX_STACK_BUF_SIZE) {
 		buf = malloc(len, M_TEMP, M_WAITOK);
 		allocated = 1;
 	} else {
@@ -127,4 +139,70 @@ out:
 		free(buf, M_TEMP);
 	return (rv);
 	
+}
+
+/*
+ * int of_nodename(phandle, buf, bufsize)
+ *
+ * This routine places the last component of an OFW node's name
+ * into a user-provided buffer.
+ *
+ * It can be used during autoconfiguration to make printing of
+ * device names more informative.
+ *
+ * Arguments:
+ *	phandle		OFW phandle of device whose name name is
+ *			desired.
+ *	buf		Buffer to contain device name, provided by
+ *			caller.  (For now, must be at least 4
+ *			bytes long.)
+ *	bufsize		Length of buffer referenced by 'buf', in
+ *			bytes.
+ *
+ * Return Value:
+ *	-1 if the device path name could not be obtained or would
+ *	not fit in the allocated temporary buffer, or zero otherwise
+ *	(meaning the the leaf node name was successfully extracted).
+ *
+ * Side Effects:
+ *	If the leaf node name was successfully extracted, 'buf' is
+ *	filled in with at most 'bufsize' bytes of the leaf node
+ *	name.  If the leaf node was not successfully extracted, a
+ *	somewhat meaningful string is placed in the buffer.  In
+ *	either case, the contents of 'buf' will be NUL-terminated.
+ */
+int
+of_nodename(phandle, buf, bufsize)
+	int phandle;
+	char *buf;
+	int bufsize;
+{
+	char *pbuf;
+	const char *lastslash;
+	int l, rv;
+
+	pbuf = malloc(OFW_PATH_BUF_SIZE, M_TEMP, M_WAITOK);
+	l = OF_package_to_path(phandle, pbuf, OFW_PATH_BUF_SIZE);
+
+	/* check that we could get the name, and that it's not too long. */
+	if (l < 0 ||
+	    (l == OFW_PATH_BUF_SIZE && pbuf[OFW_PATH_BUF_SIZE - 1] != '\0')) {
+		/* XXX should use snprintf! */
+		if (bufsize >= 25)
+			sprintf(buf, "??? (phandle 0x%x)", phandle);
+		else if (bufsize >= 4)
+			strcpy(buf, "???");
+		else
+			panic("of_nodename: bufsize = %d is silly", bufsize);
+		rv = -1;
+	} else {
+		lastslash = strrchr(pbuf, '/');
+		strncpy(buf, (lastslash == NULL) ? pbuf : (lastslash + 1),
+		    bufsize);
+		buf[bufsize - 1] = '\0'; /* in case it's fills the buffer. */
+		rv = 0;
+	}
+
+	free(pbuf, M_TEMP);
+	return (rv);
 }
