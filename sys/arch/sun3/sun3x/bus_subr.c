@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.9 1997/10/16 16:13:21 gwr Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.9.4.1 1998/01/27 19:46:54 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,11 +50,12 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/pte.h>
-#include <machine/pmap.h>
-#include <machine/machdep.h>
 #include <machine/mon.h>
-#include <machine/vme.h>
+#include <machine/pmap.h>
+#include <machine/pte.h>
+
+#include <sun3/sun3/machdep.h>
+#include <sun3/sun3x/vme.h>
 
 /*
  * bus_scan:
@@ -137,15 +138,22 @@ label_t *nofault;
 extern vm_offset_t tmp_vpages[];
 extern int tmp_vpages_inuse;
 
-static const int
-bus_physbase[BUS_NTYPES] = {
-	0,		/* OBIO   */
-	0,		/* OBMEM  */
-	VME32D32_BASE,
-	VME24D32_BASE,
-	VME24D16_BASE,
-	VME16D32_BASE,
-	VME16D16_BASE };
+static const struct {
+	long base;
+	long mask;
+} bus_info[BUS__NTYPES] = {
+	{ /* OBIO  */ 0, ~0 },
+	{ /* OBMEM */ 0, ~0 },
+	/* VME A16 */
+	{ VME16D16_BASE, VME16_MASK },
+	{ VME16D32_BASE, VME16_MASK },
+	/* VME A24 */
+	{ VME24D16_BASE, VME24_MASK },
+	{ VME24D32_BASE, VME24_MASK },
+	/* VME A32 */
+	{ VME32D16_BASE, VME32_MASK },
+	{ VME32D32_BASE, VME32_MASK },
+};
 
 /*
  * Read addr with size len (1,2,4) into val.
@@ -163,12 +171,14 @@ bus_peek(bustype, pa, sz)
 	vm_offset_t pgva;
 	caddr_t va;
 
-	if ((bustype < 0) || (bustype >= BUS_NTYPES))
+	if ((bustype < 0) || (bustype >= BUS__NTYPES))
 		panic("bus_peek: bustype");
+
+	pa &= bus_info[bustype].mask;
+	pa |= bus_info[bustype].base;
 
 	off = pa & PGOFSET;
 	pa -= off;
-	pa |= bus_physbase[bustype];
 	pa |= PMAP_NC;
 
 	s = splimp();
@@ -204,34 +214,43 @@ bus_peek(bustype, pa, sz)
 	return (rv);
 }
 
-
 void *
 bus_mapin(bustype, pa, sz)
 	int bustype, pa, sz;
 {
-	vm_offset_t va, retval;
+	void *rv;
+	vm_offset_t va;
 	int off;
 
-	if ((bustype < 0) || (bustype >= BUS_NTYPES))
+	if ((bustype < 0) || (bustype >= BUS__NTYPES))
 		panic("bus_mapin: bustype");
+
+	/* Borrow PROM mappings if we can. */
+	if (bustype == BUS_OBIO) {
+		rv = obio_find_mapping(pa, sz);
+		if (rv)
+			return (rv);
+	}
+
+	pa &= bus_info[bustype].mask;
+	pa |= bus_info[bustype].base;
 
 	off = pa & PGOFSET;
 	pa -= off;
 	sz += off;
 	sz = m68k_round_page(sz);
 
-	pa |= bus_physbase[bustype];
 	pa |= PMAP_NC;	/* non-cached */
 
 	/* Get some kernel virtual address space. */
 	va = kmem_alloc_wait(kernel_map, sz);
 	if (va == 0)
 		panic("bus_mapin");
-	retval = va + off;
+	rv = (void*)(va + off);
 
 	/* Map it to the specified bus. */
 #if 0
-	/* This has a problem with wrap-around... (on the sun3x? -j) */
+	/* XXX: This has a problem with wrap-around... (on the sun3x? -j) */
 	pmap_map((int)va, pa, pa + sz, VM_PROT_ALL);
 #else
 	do {
@@ -242,7 +261,7 @@ bus_mapin(bustype, pa, sz)
 	} while (sz > 0);
 #endif
 
-	return ((void*)retval);
+	return (rv);
 }
 
 /* from hp300: badbaddr() */
@@ -254,11 +273,11 @@ peek_byte(addr)
 	register int x;
 
 	nofault = &faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return(-1);
-	}
-	x = *(volatile u_char *)addr;
+	if (setjmp(&faultbuf))
+		x = -1;
+	else
+		x = *(volatile u_char *)addr;
+
 	nofault = NULL;
 	return(x);
 }
@@ -271,11 +290,11 @@ peek_word(addr)
 	register int x;
 
 	nofault = &faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return(-1);
-	}
-	x = *(volatile u_short *)addr;
+	if (setjmp(&faultbuf))
+		x = -1;
+	else
+		x = *(volatile u_short *)addr;
+
 	nofault = NULL;
 	return(x);
 }
@@ -288,11 +307,16 @@ peek_long(addr)
 	register int x;
 
 	nofault = &faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return(-1);
+	if (setjmp(&faultbuf))
+		x = -1;
+	else {
+		x = *(volatile int *)addr;
+		if (x == -1) {
+			printf("peek_long: uh-oh, actually read -1!\n");
+			x &= 0x7FFFffff; /* XXX */
+		}
 	}
-	x = *(volatile int *)addr;
+
 	nofault = NULL;
 	return(x);
 }

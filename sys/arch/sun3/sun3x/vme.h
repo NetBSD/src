@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.h,v 1.1 1997/10/16 15:39:36 gwr Exp $	*/
+/*	$NetBSD: vme.h,v 1.1.4.1 1998/01/27 19:41:26 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,29 +41,19 @@
  * The vme unit number selects one of these.
  */
 
-/* vme0 */
-#define	VME32D32_BASE	0x80000000
-#define	VME32D32_SIZE	(1<<31)
-#define	VME32D32_MASK	(VME32D32_SIZE-1)
-
-/* vme1 */
-#define	VME24D32_BASE	0x7F000000
-#define	VME24D32_SIZE	(1<<24)
-#define	VME24D32_MASK	(VME24D32_SIZE-1)
-
-/* vme2 */
-#define	VME24D16_BASE	0x7E000000
-#define	VME24D16_SIZE	(1<<24)
-#define	VME24D16_MASK	(VME24D16_SIZE-1)
-
-/* vme3 */
-#define	VME16D32_BASE	0x7D000000
-#define	VME16D32_SIZE	(1<<16)
-#define	VME16D32_MASK	(VME16D32_SIZE-1)
-
-/* vme4 */
+#define	VME16_SIZE  	(1<<16)
+#define	VME16_MASK  	(VME16_SIZE-1)
 #define	VME16D16_BASE	0x7C000000
-#define	VME16D16_SIZE	(1<<16)
-#define	VME16D16_MASK	(VME16D16_SIZE-1)
+#define	VME16D32_BASE	0x7D000000
 
-#define VME_UNITS	5
+#define	VME24_SIZE  	(1<<24)
+#define	VME24_MASK  	(VME24_SIZE-1)
+#define	VME24D16_BASE	0x7E000000
+#define	VME24D32_BASE	0x7F000000
+
+/* NB: Really a 31-bit space! */
+#define VME32_SIZE  	0x80000000
+#define VME32_MASK  	0x7FFFFFFF
+#define	VME32D16_BASE	0x80000000
+#define	VME32D32_BASE	0x80000000
+
