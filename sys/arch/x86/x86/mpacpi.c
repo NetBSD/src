@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.8 2003/07/22 12:10:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.7 2003/07/14 22:32:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.8 2003/07/22 12:10:20 simonb Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -290,12 +290,7 @@ mpacpi_config_cpu(APIC_HEADER *hdrp, void *aux)
 	if (hdrp->Type == APIC_PROC) {
 		p = (PROCESSOR_APIC *)hdrp;
 		if (p->ProcessorEnabled) {
-			/*
-			 * Assume ACPI Id 0 == BSP.
-			 * XXX check if that's correct.
-			 * XXX field name in structure is wrong.
-			 */
-			if (p->ProcessorApicId == 0)
+			if (p->LocalApicId == lapic_cpu_number())
 				caa.cpu_role = CPU_ROLE_BP;
 			else
 				caa.cpu_role = CPU_ROLE_AP;
