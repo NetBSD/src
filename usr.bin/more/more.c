@@ -410,13 +410,7 @@ magic(f, fs)
 	struct exec ex;
 
 	if (fread(&ex, sizeof(ex), 1, f) == 1)
-		switch(ex.a_magic) {
-		case OMAGIC:
-		case NMAGIC:
-		case ZMAGIC:
-		case 0405:
-		case 0411:
-		case 0177545:
+		if(!N_BADMAG(ex)) {
 			prtf("\n******** %s: Not a text file ********\n\n", fs);
 			(void)fclose(f);
 			return(1);
