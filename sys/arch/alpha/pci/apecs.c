@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.15.2.3 1997/06/01 04:12:59 cgd Exp $ */
+/* $NetBSD: apecs.c,v 1.15.2.4 1997/06/07 04:43:06 cgd Exp $ */
 
 /*
  * Copyright Notice:
@@ -97,7 +97,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.15.2.3 1997/06/01 04:12:59 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.15.2.4 1997/06/07 04:43:06 cgd Exp $");
 __KERNEL_COPYRIGHT(0, \
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -178,11 +178,6 @@ apecs_init(acp, mallocsafe)
 	acp->ac_haxr1 = REGVAL(EPIC_HAXR1);
 	acp->ac_haxr2 = REGVAL(EPIC_HAXR2);
 
-	/*
-	 * Can't set up SGMAP data here; can be called before malloc().
-	 * XXX THIS COMMENT NO LONGER MAKES SENSE.
-	 */
-
 	if (!acp->ac_initted) {
 		/* don't do these twice since they set up extents */
 		acp->ac_iot = apecs_bus_io_init(acp);
@@ -192,18 +187,7 @@ apecs_init(acp, mallocsafe)
 
 	apecs_pci_init(&acp->ac_pc, acp);
 
-	/* Turn off DMA window enables in PCI Base Reg 1. */
-	REGVAL(EPIC_PCI_BASE_1) = 0;
-	alpha_mb();
-
-	/* XXX SGMAP? */
-
-	/* XXX XXX BEGIN XXX XXX */
-	{							/* XXX */
-		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
-		alpha_XXX_dmamap_or = 0x40000000;		/* XXX */
-	}							/* XXX */
-	/* XXX XXX END XXX XXX */
+	apecs_dma_init(acp);
 
 	acp->ac_initted = 1;
 }
@@ -222,12 +206,11 @@ apecsattach(parent, self, aux)
 
 	/*
 	 * set up the chipset's info; done once at console init time
-	 * (maybe), but doesn't hurt to do twice.
+	 * (maybe), but we must do it here as well to take care of things
+	 * that need to use memory allocation.
 	 */
 	acp = sc->sc_acp = &apecs_configuration;
 	apecs_init(acp, 1);
-
-	/* XXX SGMAP FOO */
 
 	printf(": DECchip %s Core Logic chipset\n",
 	    acp->ac_memwidth == 128 ? "21072" : "21071");
@@ -260,6 +243,7 @@ apecsattach(parent, self, aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = acp->ac_iot;
 	pba.pba_memt = acp->ac_memt;
+	pba.pba_dmat = &acp->ac_dmat_direct;
 	pba.pba_pc = &acp->ac_pc;
 	pba.pba_bus = 0;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;

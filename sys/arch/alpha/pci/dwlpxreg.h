@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxreg.h,v 1.4.2.3 1997/06/06 00:14:08 cgd Exp $ */
+/* $NetBSD: dwlpxreg.h,v 1.4.2.4 1997/06/07 04:43:25 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -132,3 +132,46 @@
 #define	PCIA_TBIT	0x380A00000LL	/* PCI TBIT */
 #define	PCIA_MCTL	0x380C00000LL	/* PCI Module Control */
 #define	PCIA_IBR	0x380E00000LL	/* PCI Information Base Repair */
+
+/*
+ * Location of the DWLPx SGMAP page table SRAM.
+ */
+#define	PCIA_SGMAP_PT	0x381000000UL
+
+/*
+ * Values for PCIA_WMASK_x
+ */
+#define	PCIA_WMASK_MASK	0xffff0000	/* mask of valid bits */
+#define	PCIA_WMASK_64K	0x00000000
+#define	PCIA_WMASK_128K	0x00010000
+#define	PCIA_WMASK_256K	0x00030000
+#define	PCIA_WMASK_512K	0x00070000
+#define	PCIA_WMASK_1M	0x000f0000
+#define	PCIA_WMASK_2M	0x001f0000
+#define	PCIA_WMASK_4M	0x003f0000
+#define	PCIA_WMASK_8M	0x007f0000
+#define	PCIA_WMASK_16M	0x00ff0000
+#define	PCIA_WMASK_32M	0x01ff0000
+#define	PCIA_WMASK_64M	0x03ff0000
+#define	PCIA_WMASK_128M	0x07ff0000
+#define	PCIA_WMASK_256M	0x0fff0000
+#define	PCIA_WMASK_512M	0x1fff0000
+#define	PCIA_WMASK_1G	0x3fff0000
+#define	PCIA_WMASK_2G	0x7fff0000
+#define	PCIA_WMASK_4G	0xffff0000
+
+/*
+ * Values for PCIA_WBASE_x
+ */
+#define	PCIA_WBASE_MASK	 0xffff0000	/* mask of valid bits in address */
+#define	PCIA_WBASE_W_EN	 0x00000002	/* window enable */
+#define	PCIA_WBASE_SG_EN 0x00000001	/* SGMAP enable */
+
+/*
+ * Values for PCIA_TBASE_x
+ *
+ * NOTE: Translated Base is only used on direct-mapped DMA on the
+ * DWLPx!!
+ */
+#define	PCIA_TBASE_MASK	 0x00fffffe
+#define	PCIA_TBASE_SHIFT 15
