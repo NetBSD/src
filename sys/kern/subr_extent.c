@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.5 1996/10/13 02:32:38 christos Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.6 1996/10/17 08:27:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,12 +47,18 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 
-static	int extent_insert_and_optimize __P((struct extent *, u_long, u_long,
-	    int, struct extent_region *));
+static	void extent_insert_and_optimize __P((struct extent *, u_long, u_long,
+	    int, struct extent_region *, struct extent_region *));
 static	struct extent_region *extent_alloc_region_descriptor
 	    __P((struct extent *, int));
 static	void extent_free_region_descriptor __P((struct extent *,
 	    struct extent_region *));
+
+/*
+ * Macro to align to an arbitrary power-of-two boundary.
+ */
+#define EXTENT_ALIGN(_start, _align)			\
+	(((_start) + ((_align) - 1)) & (-(_align)))
 
 /*
  * Allocate and initialize an extent map.
@@ -72,6 +78,7 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 	struct extent_region *rp;
 	int fixed_extent = (storage != NULL);
 
+#ifdef DIAGNOSTIC
 	/* Check arguments. */
 	if (name == NULL)
 		panic("extent_create: name == NULL");
@@ -83,6 +90,9 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 	if (fixed_extent && (storagesize < sizeof(struct extent_fixed)))
 		panic("extent_create: fixed extent, bad storagesize 0x%x",
 		    storagesize);
+	if (fixed_extent == 0 && (storagesize != 0 || storage != NULL))
+		panic("extent_create: storage provided for non-fixed");
+#endif
 
 	/* Allocate extent descriptor. */
 	if (fixed_extent) {
@@ -95,8 +105,8 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 		 */
 		fex = (struct extent_fixed *)cp;
 		ex = (struct extent *)fex;
-		cp += EXTENT_ALIGN(sizeof(struct extent_fixed), sizeof(long));
-		sz -= EXTENT_ALIGN(sizeof(struct extent_fixed), sizeof(long));
+		cp += ALIGN(sizeof(struct extent_fixed));
+		sz -= ALIGN(sizeof(struct extent_fixed));
 		fex->fex_storage = storage;
 		fex->fex_storagesize = storagesize;
 
@@ -105,12 +115,10 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 		 * descriptors and place them in the extent's freelist.
 		 */
 		LIST_INIT(&fex->fex_freelist);
-		while (sz >= sizeof(struct extent_region)) {
+		while (sz >= ALIGN(sizeof(struct extent_region))) {
 			rp = (struct extent_region *)cp;
-			cp += EXTENT_ALIGN(sizeof(struct extent_region),
-			    sizeof(long));
-			sz -= EXTENT_ALIGN(sizeof(struct extent_region),
-			    sizeof(long));
+			cp += ALIGN(sizeof(struct extent_region));
+			sz -= ALIGN(sizeof(struct extent_region));
 			LIST_INSERT_HEAD(&fex->fex_freelist, rp, er_link);
 		}
 	} else {
@@ -129,8 +137,8 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 	ex->ex_flags = 0;
 	if (fixed_extent)
 		ex->ex_flags |= EXF_FIXED;
-	if (flags & EX_NOBLOB)
-		ex->ex_flags |= EXF_NOBLOB;
+	if (flags & EX_NOCOALESCE)
+		ex->ex_flags |= EXF_NOCOALESCE;
 	return (ex);
 }
 
@@ -142,13 +150,12 @@ extent_destroy(ex)
 	struct extent *ex;
 {
 	struct extent_region *rp, *orp;
-	int mtype;
 
+#ifdef DIAGNOSTIC
 	/* Check arguments. */
 	if (ex == NULL)
 		panic("extent_destroy: NULL extent");
-
-	mtype = ex->ex_mtype;
+#endif
 
 	/* Free all region descriptors in extent. */
 	for (rp = ex->ex_regions.lh_first; rp != NULL; ) {
@@ -160,21 +167,23 @@ extent_destroy(ex)
 
 	/* If we're not a fixed extent, free the extent descriptor itself. */
 	if ((ex->ex_flags & EXF_FIXED) == 0)
-		free(ex, mtype);
+		free(ex, ex->ex_mtype);
 }
 
 /*
  * Insert a region descriptor into the sorted region list after the
  * entry "after" or at the head of the list (if "after" is NULL).
+ * The region descriptor we insert is passed in "rp".  We must
+ * allocate the region descriptor before calling this function!
+ * If we don't need the region descriptor, it will be freed here.
  */
-static int
-extent_insert_and_optimize(ex, start, size, flags, after)
+static void
+extent_insert_and_optimize(ex, start, size, flags, after, rp)
 	struct extent *ex;
 	u_long start, size;
 	int flags;
-	struct extent_region *after;
+	struct extent_region *after, *rp;
 {
-	struct extent_region *rp;
 	int appended = 0;
 
 	if (after == NULL) {
@@ -183,39 +192,32 @@ extent_insert_and_optimize(ex, start, size, flags, after)
 		 * a region after us, attempt to coalesce to save
 		 * descriptor overhead.
 		 */
-		if (((ex->ex_flags & EXF_NOBLOB) == 0) &&
+		if (((ex->ex_flags & EXF_NOCOALESCE) == 0) &&
 		    (ex->ex_regions.lh_first != NULL) &&
 		    ((start + size) == ex->ex_regions.lh_first->er_start)) {
 			/*
 			 * We can coalesce.  Prepend us to the first region.
 			 */
 			ex->ex_regions.lh_first->er_start = start;
-			return (0);
+			extent_free_region_descriptor(ex, rp);
+			return;
 		}
 
 		/*
-		 * Can't coalesce.  Allocate a region descriptor, fill it
+		 * Can't coalesce.  Fill in the region descriptor
 		 * in, and insert us at the head of the region list.
 		 */
-		rp = extent_alloc_region_descriptor(ex, flags);
-		if (rp == NULL) {
-#if defined(DEBUG) || defined(DIAGNOSTIC)
-			printf("extent `%s': can't alloc region descriptor.\n",
-			    ex->ex_name);
-#endif
-			return (ENOMEM);
-		}
 		rp->er_start = start;
 		rp->er_end = start + (size - 1);
 		LIST_INSERT_HEAD(&ex->ex_regions, rp, er_link);
-		return (0);
+		return;
 	}
 
 	/*
-	 * If EXF_NOBLOB is set, coalescing is disallowed.
+	 * If EXF_NOCOALESCE is set, coalescing is disallowed.
 	 */
-	if (ex->ex_flags & EXF_NOBLOB)
-		goto allocate_region_descriptor;
+	if (ex->ex_flags & EXF_NOCOALESCE)
+		goto cant_coalesce;
 
 	/*
 	 * Attempt to coalesce with the region before us.
@@ -253,7 +255,9 @@ extent_insert_and_optimize(ex, start, size, flags, after)
 			 */
 			after->er_link.le_next->er_start = start;
 		}
-		return (0);
+
+		extent_free_region_descriptor(ex, rp);
+		return;
 	}
 
 	/*
@@ -261,27 +265,20 @@ extent_insert_and_optimize(ex, start, size, flags, after)
 	 * we don't need to allocate a region descriptor if we
 	 * appended ourselves to the previous region.
 	 */
-	if (appended)
-		return (0);
+	if (appended) {
+		extent_free_region_descriptor(ex, rp);
+		return;
+	}
 
- allocate_region_descriptor:
+ cant_coalesce:
 
 	/*
-	 * Allocate a region descriptor and insert ourselves
+	 * Fill in the region descriptor and insert ourselves
 	 * into the region list.
 	 */
-	rp = extent_alloc_region_descriptor(ex, flags);
-	if (rp == NULL) {
-#if defined(DEBUG) || defined(DIAGNOSTIC)
-		printf("extent `%s': can't allocate region descriptor.\n",
-		    ex->ex_name);
-#endif
-		return (ENOMEM);
-	}
 	rp->er_start = start;
 	rp->er_end = start + (size - 1);
 	LIST_INSERT_AFTER(after, rp, er_link);
-	return (0);
 }
 
 /*
@@ -293,10 +290,11 @@ extent_alloc_region(ex, start, size, flags)
 	u_long start, size;
 	int flags;
 {
-	struct extent_region *rp, *last;
+	struct extent_region *rp, *last, *myrp;
 	u_long end = start + (size - 1);
 	int error;
 
+#ifdef DIAGNOSTIC
 	/* Check arguments. */
 	if (ex == NULL)
 		panic("extent_alloc_region: NULL extent");
@@ -311,16 +309,35 @@ extent_alloc_region(ex, start, size, flags)
 		 ex->ex_name, start, size);
 		panic("extent_alloc_region: overflow");
 	}
+#endif
+
 	/*
 	 * Make sure the requested region lies within the
 	 * extent.
 	 */
 	if ((start < ex->ex_start) || (end > ex->ex_end)) {
+#ifdef DIAGNOSTIC
 		printf("extent_alloc_region: extent `%s' (0x%lx - 0x%lx)\n",
 		    ex->ex_name, ex->ex_start, ex->ex_end);
 		printf("extent_alloc_region: start 0x%lx, end 0x%lx\n",
 		    start, end);
 		panic("extent_alloc_region: region lies outside extent");
+#else
+		return (EINVAL);
+#endif
+	}
+
+	/*
+	 * Allocate the region descriptor.  It will be freed later
+	 * if we can coalesce with another region.
+	 */
+	myrp = extent_alloc_region_descriptor(ex, flags);
+	if (myrp == NULL) {
+#ifdef DIAGNOSTIC
+		printf(
+		    "extent_alloc_region: can't allocate region descriptor\n");
+#endif
+		return (ENOMEM);
 	}
 
  alloc_start:
@@ -356,9 +373,10 @@ extent_alloc_region(ex, start, size, flags)
 		 */
 		if (rp->er_end >= start) {
 			/*
-			 * We conflict.  If we can wait, do so.
+			 * We conflict.  If we can (and want to) wait,
+			 * do so.
 			 */
-			if (flags & EX_WAITOK) {
+			if (flags & EX_WAITSPACE) {
 				ex->ex_flags |= EXF_WANTED;
 				error = tsleep(ex,
 				    PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
@@ -367,9 +385,9 @@ extent_alloc_region(ex, start, size, flags)
 					return (error);
 				goto alloc_start;
 			}
+			extent_free_region_descriptor(ex, myrp);
 			return (EAGAIN);
 		}
-
 		/*
 		 * We don't conflict, but this region lies before
 		 * us.  Keep a pointer to this region, and keep
@@ -383,7 +401,8 @@ extent_alloc_region(ex, start, size, flags)
 	 * to the region we fall after, or is NULL if we belong
 	 * at the beginning of the region list.  Insert ourselves.
 	 */
-	return (extent_insert_and_optimize(ex, start, size, flags, last));
+	extent_insert_and_optimize(ex, start, size, flags, last, myrp);
+	return (0);
 }
 
 /*
@@ -410,11 +429,12 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 	int flags;
 	u_long *result;
 {
-	struct extent_region *rp, *last, *bestlast;
+	struct extent_region *rp, *myrp, *last, *bestlast;
 	u_long newstart, newend, beststart, bestovh, ovh;
 	u_long dontcross, odontcross;
 	int error;
 
+#ifdef DIAGNOSTIC
 	/* Check arguments. */
 	if (ex == NULL)
 		panic("extent_alloc_subregion: NULL extent");
@@ -441,6 +461,20 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 		    boundary 0x%lx\n", ex->ex_name, size, boundary);
 		panic("extent_alloc_subregion: bad boundary");
 	}
+#endif
+
+	/*
+	 * Allocate the region descriptor.  It will be freed later
+	 * if we can coalesce with another region.
+	 */
+	myrp = extent_alloc_region_descriptor(ex, flags);
+	if (myrp == NULL) {
+#ifdef DIAGNOSTIC
+		printf(
+		 "extent_alloc_subregion: can't allocate region descriptor\n");
+#endif
+		return (ENOMEM);
+	}
 
  alloc_start:
 	/*
@@ -457,10 +491,13 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 	 * that a region should not cross.  If the boundary lies
 	 * before the region starts, we add the "boundary" argument
 	 * until we get a meaningful comparison.
+	 *
+	 * Start the boundary lines at 0 if the caller requests it.
 	 */
 	dontcross = 0;
 	if (boundary) {
-		dontcross = ex->ex_start + boundary;
+		dontcross =
+		    ((flags & EX_BOUNDZERO) ? 0 : ex->ex_start) + boundary;
 		while (dontcross < substart)
 			dontcross += boundary;
 	}
@@ -488,10 +525,15 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 	 */
 	newstart = EXTENT_ALIGN(substart, alignment);
 	if (newstart < ex->ex_start) {
+#ifdef DIAGNOSTIC
 		printf(
       "extent_alloc_subregion: extent `%s' (0x%lx - 0x%lx), alignment 0x%lx\n",
 		 ex->ex_name, ex->ex_start, ex->ex_end, alignment);
 		panic("extent_alloc_subregion: overflow after alignment");
+#else
+		extent_free_region_descriptor(ex, myrp);
+		return (EINVAL);
+#endif
 	}
 
 	for (rp = ex->ex_regions.lh_first; rp != NULL;
@@ -631,7 +673,7 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 	 * No space currently available.  Wait for it to free up,
 	 * if possible.
 	 */
-	if (flags & EX_WAITOK) {
+	if (flags & EX_WAITSPACE) {
 		ex->ex_flags |= EXF_WANTED;
 		error = tsleep(ex,
 		    PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0), "extnt", 0);
@@ -640,16 +682,16 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 		goto alloc_start;
 	}
 
+	extent_free_region_descriptor(ex, myrp);
 	return (EAGAIN);
 
  found:
 	/*
 	 * Insert ourselves into the region list.
 	 */
-	error = extent_insert_and_optimize(ex, newstart, size, flags, last);
-	if (error == 0)
-		*result = newstart;
-	return (error);
+	extent_insert_and_optimize(ex, newstart, size, flags, last, myrp);
+	*result = newstart;
+	return (0);
 }
 
 int
@@ -661,6 +703,7 @@ extent_free(ex, start, size, flags)
 	struct extent_region *rp;
 	u_long end = start + (size - 1);
 
+#ifdef DIAGNOSTIC
 	/* Check arguments. */
 	if (ex == NULL)
 		panic("extent_free: NULL extent");
@@ -678,6 +721,7 @@ extent_free(ex, start, size, flags)
 		    ex->ex_name, start, size);
 		panic("extent_free: overflow");
 	}
+#endif
 
 	/*
 	 * Find region and deallocate.  Several possibilities:
@@ -694,7 +738,7 @@ extent_free(ex, start, size, flags)
 	 *	4. (start > er_start) && (end < er_end):
 	 *	   Fragment region.  Requires descriptor alloc.
 	 *
-	 * Cases 2, 3, and 4 require that the EXF_NOBLOB flag
+	 * Cases 2, 3, and 4 require that the EXF_NOCOALESCE flag
 	 * is not set.
 	 */
 	for (rp = ex->ex_regions.lh_first; rp != NULL;
@@ -724,10 +768,10 @@ extent_free(ex, start, size, flags)
 		}
 
 		/*
-		 * The following cases all require that EXF_NOBLOB
+		 * The following cases all require that EXF_NOCOALESCE
 		 * is not set.
 		 */
-		if (ex->ex_flags & EXF_NOBLOB)
+		if (ex->ex_flags & EXF_NOCOALESCE)
 			continue;
 
 		/* Case 2. */
@@ -783,7 +827,6 @@ extent_alloc_region_descriptor(ex, flags)
 	int flags;
 {
 	struct extent_region *rp;
-	int s;
 
 	if (ex->ex_flags & EXF_FIXED) {
 		struct extent_fixed *fex = (struct extent_fixed *)ex;
@@ -800,13 +843,15 @@ extent_alloc_region_descriptor(ex, flags)
 			    "extnt", 0))
 				return (NULL);
 		}
-		/* Atomic. */
-		s = splhigh();
 		rp = fex->fex_freelist.lh_first;
 		LIST_REMOVE(rp, er_link);
-		splx(s);
 
-		rp->er_flags = 0;
+		/*
+		 * Don't muck with flags after pulling it off the
+		 * freelist; it may be a dynamiclly allocated
+		 * region pointer that was kindly given to us,
+		 * and we need to preserve that information.
+		 */
 
 		return (rp);
 	}
@@ -827,16 +872,42 @@ extent_free_region_descriptor(ex, rp)
 	struct extent_region *rp;
 {
 
-	if ((rp->er_flags & ER_ALLOC) == 0) {
+	if (ex->ex_flags & EXF_FIXED) {
 		struct extent_fixed *fex = (struct extent_fixed *)ex;
 
-		LIST_INSERT_HEAD(&fex->fex_freelist, rp, er_link);
+		/*
+		 * If someone's waiting for a region descriptor,
+		 * be nice and give them this one, rather than
+		 * just free'ing it back to the system.
+		 */
+		if (rp->er_flags & ER_ALLOC) {
+			if (ex->ex_flags & EXF_FLWANTED) {
+				/* Clear all but ER_ALLOC flag. */
+				rp->er_flags = ER_ALLOC;
+				LIST_INSERT_HEAD(&fex->fex_freelist, rp,
+				    er_link);
+				goto wake_em_up;
+			} else {
+				free(rp, ex->ex_mtype);
+			}
+		} else {
+			/* Clear all flags. */
+			rp->er_flags = 0;
+			LIST_INSERT_HEAD(&fex->fex_freelist, rp, er_link);
+		}
+
 		if (ex->ex_flags & EXF_FLWANTED) {
+ wake_em_up:
 			ex->ex_flags &= ~EXF_FLWANTED;
 			wakeup(&fex->fex_freelist);
 		}
-	} else
-		free(rp, ex->ex_mtype);
+		return;
+	}
+
+	/*
+	 * We know it's dynamically allocated if we get here.
+	 */
+	free(rp, ex->ex_mtype);
 }
 
 void
