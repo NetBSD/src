@@ -1,4 +1,4 @@
-/*	$NetBSD: a.out.c,v 1.5 2004/02/11 18:42:37 jdolecek Exp $	*/
+/*	$NetBSD: a.out.c,v 1.6 2005/02/06 06:17:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: a.out.c,v 1.5 2004/02/11 18:42:37 jdolecek Exp $");
+__RCSID("$NetBSD: a.out.c,v 1.6 2005/02/06 06:17:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -204,7 +204,7 @@ a_out_mod_symload(int strtablen)
 
 	for (nlp = (struct nlist *)symbuf;
 	    (char *)nlp < symbuf + info_buf.a_syms; nlp++) {
-		register int strx;
+		int strx;
 
 		strx = nlp->n_un.n_strx;
 		if (strx != 0) {
