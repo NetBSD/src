@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.81 2003/08/07 16:33:51 agc Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.82 2003/10/15 11:29:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.81 2003/08/07 16:33:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.82 2003/10/15 11:29:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,9 +236,13 @@ nfsrv_setattr(nfsd, slp, procp, mrq)
 	struct mbuf *mb, *mreq;
 	u_quad_t frev;
 	struct timespec guard;
+	struct mount *mp = NULL;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
+	if ((mp = vfs_getvfs(&fhp->fh_fsid)) == NULL)
+		return (ESTALE);
+	vn_start_write(NULL, &mp, V_WAIT);
 	VATTR_NULL(&va);
 	if (v3) {
 		nfsm_srvsattr(&va);
@@ -287,6 +291,7 @@ nfsrv_setattr(nfsd, slp, procp, mrq)
 	if (error) {
 		nfsm_reply(2 * NFSX_UNSIGNED);
 		nfsm_srvwcc_data(preat_ret, &preat, postat_ret, &va);
+		vn_finished_write(mp, 0);
 		return (0);
 	}
 	nqsrv_getl(vp, ND_WRITE);
@@ -300,6 +305,7 @@ nfsrv_setattr(nfsd, slp, procp, mrq)
 			vput(vp);
 			nfsm_reply(NFSX_WCCDATA(v3));
 			nfsm_srvwcc_data(preat_ret, &preat, postat_ret, &va);
+			vn_finished_write(mp, 0);
 			return (0);
 		}
 	}
@@ -327,6 +333,7 @@ nfsrv_setattr(nfsd, slp, procp, mrq)
 		error = postat_ret;
 out:
 	vput(vp);
+	vn_finished_write(mp, 0);
 	nfsm_reply(NFSX_WCCORFATTR(v3));
 	if (v3) {
 		nfsm_srvwcc_data(preat_ret, &preat, postat_ret, &va);
@@ -863,6 +870,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	struct uio io, *uiop = &io;
 	off_t off;
 	u_quad_t frev;
+	struct mount *mntp = NULL;
 
 	if (mrep == NULL) {
 		*mrq = NULL;
@@ -870,6 +878,9 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	}
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
+	if ((mntp = vfs_getvfs(&fhp->fh_fsid)) == NULL)
+		return (ESTALE);
+	vn_start_write(NULL, &mntp, V_WAIT);
 	if (v3) {
 		nfsm_dissect(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
 		off = fxdr_hyper(tl);
@@ -917,6 +928,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 		error = EIO;
 		nfsm_reply(2 * NFSX_UNSIGNED);
 		nfsm_srvwcc_data(forat_ret, &forat, aftat_ret, &va);
+		vn_finished_write(mntp, 0);
 		return (0);
 	}
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam,
@@ -924,6 +936,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	if (error) {
 		nfsm_reply(2 * NFSX_UNSIGNED);
 		nfsm_srvwcc_data(forat_ret, &forat, aftat_ret, &va);
+		vn_finished_write(mntp, 0);
 		return (0);
 	}
 	if (v3)
@@ -942,6 +955,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 		vput(vp);
 		nfsm_reply(NFSX_WCCDATA(v3));
 		nfsm_srvwcc_data(forat_ret, &forat, aftat_ret, &va);
+		vn_finished_write(mntp, 0);
 		return (0);
 	}
 
@@ -983,6 +997,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	}
 	aftat_ret = VOP_GETATTR(vp, &va, cred, procp);
 	vput(vp);
+	vn_finished_write(mntp, 0);
 	if (!error)
 		error = aftat_ret;
 	nfsm_reply(NFSX_PREOPATTR(v3) + NFSX_POSTOPORFATTR(v3) +
@@ -1044,6 +1059,7 @@ nfsrv_writegather(ndp, slp, procp, mrq)
 	struct vnode *vp;
 	struct uio io, *uiop = &io;
 	u_quad_t frev, cur_usec;
+	struct mount *mntp = NULL;
 
 	*mrq = NULL;
 	if (*ndp) {
@@ -1236,8 +1252,16 @@ loop1:
 			mp = mp->m_next;
 		    }
 		    if (!error) {
-			error = VOP_WRITE(vp, uiop, ioflags, cred);
-			nfsstats.srvvop_writes++;
+			if (vn_start_write(vp, &mntp, V_NOWAIT) != 0) {
+			    VOP_UNLOCK(vp, 0);
+			    error = vn_start_write(NULL, &mntp, V_WAIT);
+			    vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			}
+			if (!error) {
+			    error = VOP_WRITE(vp, uiop, ioflags, cred);
+			    nfsstats.srvvop_writes++;
+			    vn_finished_write(mntp, 0);
+			}
 		    }
 		    free((caddr_t)iov, M_TEMP);
 		}
@@ -1404,10 +1428,14 @@ nfsrv_create(nfsd, slp, procp, mrq)
 	fhandle_t *fhp;
 	u_quad_t frev, tempsize;
 	u_char cverf[NFSX_V3CREATEVERF];
+	struct mount *mp = NULL;
 
 	nd.ni_cnd.cn_nameiop = 0;
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
+	if ((mp = vfs_getvfs(&fhp->fh_fsid)) == NULL)
+		return (ESTALE);
+	vn_start_write(NULL, &mp, V_WAIT);
 	nfsm_srvnamesiz(len);
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
@@ -1428,6 +1456,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
 		if (dirp)
 			vrele(dirp);
+		vn_finished_write(mp, 0);
 		return (0);
 	}
 	VATTR_NULL(&va);
@@ -1502,6 +1531,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				vput(nd.ni_dvp);
 				nfsm_reply(0);
+				vn_finished_write(mp, 0);
 				return (error);
 			} else
 				va.va_rdev = (dev_t)rdev;
@@ -1573,6 +1603,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 		nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
 		nfsm_srvfillattr(&va, fp);
 	}
+	vn_finished_write(mp, 0);
 	return (0);
 nfsmout:
 	if (dirp)
@@ -1584,6 +1615,7 @@ nfsmout:
 		vput(nd.ni_dvp);
 	if (nd.ni_vp)
 		vput(nd.ni_vp);
+	vn_finished_write(mp, 0);
 	return (error);
 }
 
@@ -1615,10 +1647,14 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	u_quad_t frev;
+	struct mount *mp = NULL;
 
 	nd.ni_cnd.cn_nameiop = 0;
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
+	if ((mp = vfs_getvfs(&fhp->fh_fsid)) == NULL)
+		return (ESTALE);
+	vn_start_write(NULL, &mp, V_WAIT);
 	nfsm_srvnamesiz(len);
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
@@ -1632,6 +1668,7 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
 		if (dirp)
 			vrele(dirp);
+		vn_finished_write(mp, 0);
 		return (0);
 	}
 	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
@@ -1711,6 +1748,7 @@ out:
 		nfsm_srvpostop_attr(0, &va);
 	}
 	nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
+	vn_finished_write(mp, 0);
 	return (0);
 nfsmout:
 	if (dirp)
@@ -1722,6 +1760,7 @@ nfsmout:
 		vput(nd.ni_dvp);
 	if (nd.ni_vp)
 		vput(nd.ni_vp);
+	vn_finished_write(mp, 0);
 	return (error);
 }
 
@@ -1752,12 +1791,16 @@ nfsrv_remove(nfsd, slp, procp, mrq)
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	u_quad_t frev;
+	struct mount *mp = NULL;
 
 #ifndef nolint
 	vp = (struct vnode *)0;
 #endif
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
+	if ((mp = vfs_getvfs(&fhp->fh_fsid)) == NULL)
+		return (ESTALE);
+	vn_start_write(NULL, &mp, V_WAIT);
 	nfsm_srvnamesiz(len);
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = DELETE;
@@ -1804,8 +1847,10 @@ out:
 	nfsm_reply(NFSX_WCCDATA(v3));
 	if (v3) {
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
+		vn_finished_write(mp, 0);
 		return (0);
 	}
+	vn_finished_write(mp, 0);
 	nfsm_srvdone;
 }
 
@@ -1840,6 +1885,7 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 	fhandle_t *ffhp, *tfhp;
 	u_quad_t frev;
 	uid_t saved_uid;
+	struct mount *mp = NULL;
 
 #ifndef nolint
 	fvp = (struct vnode *)0;
@@ -1849,6 +1895,9 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 	fromnd.ni_cnd.cn_nameiop = 0;
 	tond.ni_cnd.cn_nameiop = 0;
 	nfsm_srvmtofh(ffhp);
+	if ((mp = vfs_getvfs(&ffhp->fh_fsid)) == NULL)
+		return (ESTALE);
+	vn_start_write(NULL, &mp, V_WAIT);
 	nfsm_srvnamesiz(len);
 	/*
 	 * Remember our original uid so that we can reset cr_uid before
@@ -1875,6 +1924,7 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 		nfsm_srvwcc_data(tdirfor_ret, &tdirfor, tdiraft_ret, &tdiraft);
 		if (fdirp)
 			vrele(fdirp);
+		vn_finished_write(mp, 0);
 		return (0);
 	}
 	fvp = fromnd.ni_vp;
@@ -2004,6 +2054,7 @@ out1:
 		nfsm_srvwcc_data(fdirfor_ret, &fdirfor, fdiraft_ret, &fdiraft);
 		nfsm_srvwcc_data(tdirfor_ret, &tdirfor, tdiraft_ret, &tdiraft);
 	}
+	vn_finished_write(mp, 0);
 	return (0);
 
 nfsmout:
@@ -2052,10 +2103,14 @@ nfsrv_link(nfsd, slp, procp, mrq)
 	nfsfh_t nfh, dnfh;
 	fhandle_t *fhp, *dfhp;
 	u_quad_t frev;
+	struct mount *mp = NULL;
 
 	fhp = &nfh.fh_generic;
 	dfhp = &dnfh.fh_generic;
 	nfsm_srvmtofh(fhp);
+	if ((mp = vfs_getvfs(&fhp->fh_fsid)) == NULL)
+		return (ESTALE);
+	vn_start_write(NULL, &mp, V_WAIT);
 	nfsm_srvmtofh(dfhp);
 	nfsm_srvnamesiz(len);
 	error = nfsrv_fhtovp(fhp, FALSE, &vp, cred, slp, nam,
@@ -2064,6 +2119,7 @@ nfsrv_link(nfsd, slp, procp, mrq)
 		nfsm_reply(NFSX_POSTOPATTR(v3) + NFSX_WCCDATA(v3));
 		nfsm_srvpostop_attr(getret, &at);
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
+		vn_finished_write(mp, 0);
 		return (0);
 	}
 	if (vp->v_type == VDIR && (error = suser(cred, (u_short *)0)) != 0)
@@ -2118,8 +2174,10 @@ out1:
 	if (v3) {
 		nfsm_srvpostop_attr(getret, &at);
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
+		vn_finished_write(mp, 0);
 		return (0);
 	}
+	vn_finished_write(mp, 0);
 	nfsm_srvdone;
 }
 
@@ -2153,10 +2211,14 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	u_quad_t frev;
+	struct mount *mp = NULL;
 
 	nd.ni_cnd.cn_nameiop = 0;
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
+	if ((mp = vfs_getvfs(&fhp->fh_fsid)) == NULL)
+		return (ESTALE);
+	vn_start_write(NULL, &mp, V_WAIT);
 	nfsm_srvnamesiz(len);
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
@@ -2247,6 +2309,7 @@ out:
 		}
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
 	}
+	vn_finished_write(mp, 0);
 	return (0);
 nfsmout:
 	if (dirp)
@@ -2260,6 +2323,7 @@ nfsmout:
 		vrele(nd.ni_vp);
 	if (pathcp)
 		free(pathcp, M_TEMP);
+	vn_finished_write(mp, 0);
 	return (error);
 }
 
@@ -2292,9 +2356,13 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	u_quad_t frev;
+	struct mount *mp = NULL;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
+	if ((mp = vfs_getvfs(&fhp->fh_fsid)) == NULL)
+		return (ESTALE);
+	vn_start_write(NULL, &mp, V_WAIT);
 	nfsm_srvnamesiz(len);
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
@@ -2315,6 +2383,7 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
 		if (dirp)
 			vrele(dirp);
+		vn_finished_write(mp, 0);
 		return (0);
 	}
 	VATTR_NULL(&va);
@@ -2364,6 +2433,7 @@ out:
 		nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
 		nfsm_srvfillattr(&va, fp);
 	}
+	vn_finished_write(mp, 0);
 	return (0);
 nfsmout:
 	if (dirp)
@@ -2375,6 +2445,7 @@ nfsmout:
 		vput(nd.ni_dvp);
 	if (nd.ni_vp)
 		vrele(nd.ni_vp);
+	vn_finished_write(mp, 0);
 	return (error);
 }
 
@@ -2405,9 +2476,13 @@ nfsrv_rmdir(nfsd, slp, procp, mrq)
 	fhandle_t *fhp;
 	struct nameidata nd;
 	u_quad_t frev;
+	struct mount *mp = NULL;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
+	if ((mp = vfs_getvfs(&fhp->fh_fsid)) == NULL)
+		return (ESTALE);
+	vn_start_write(NULL, &mp, V_WAIT);
 	nfsm_srvnamesiz(len);
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = DELETE;
@@ -2428,6 +2503,7 @@ nfsrv_rmdir(nfsd, slp, procp, mrq)
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
 		if (dirp)
 			vrele(dirp);
+		vn_finished_write(mp, 0);
 		return (0);
 	}
 	vp = nd.ni_vp;
@@ -2467,8 +2543,10 @@ out:
 	nfsm_reply(NFSX_WCCDATA(v3));
 	if (v3) {
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
+		vn_finished_write(mp, 0);
 		return (0);
 	}
+	vn_finished_write(mp, 0);
 	nfsm_srvdone;
 }
 
@@ -3109,12 +3187,16 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	char *cp2;
 	struct mbuf *mb, *mreq;
 	u_quad_t frev, off, end;
+	struct mount *mp = NULL;
 
 #ifndef nolint
 	cache = 0;
 #endif
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
+	if ((mp = vfs_getvfs(&fhp->fh_fsid)) == NULL)
+		return (ESTALE);
+	vn_start_write(NULL, &mp, V_WAIT);
 	nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
 
 	off = fxdr_hyper(tl);
@@ -3125,6 +3207,7 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	if (error) {
 		nfsm_reply(2 * NFSX_UNSIGNED);
 		nfsm_srvwcc_data(for_ret, &bfor, aft_ret, &aft);
+		vn_finished_write(mp, 0);
 		return (0);
 	}
 	for_ret = VOP_GETATTR(vp, &bfor, cred, procp);
@@ -3142,8 +3225,11 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 		nfsm_build(tl, u_int32_t *, NFSX_V3WRITEVERF);
 		*tl++ = txdr_unsigned(boottime.tv_sec);
 		*tl = txdr_unsigned(boottime.tv_usec);
-	} else
+	} else {
+		vn_finished_write(mp, 0);
 		return (0);
+	}
+	vn_finished_write(mp, 0);
 	nfsm_srvdone;
 }
 
