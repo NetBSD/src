@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.357 2003/09/12 07:44:10 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.358 2003/09/13 19:08:28 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -531,7 +531,7 @@ dependall:	.NOTMAIN realdepend .MAKE
 # regardless of user's mk.conf setting).
 #
 .for var in CRYPTO DOC HTML LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PROFILE \
-	SHARE
+	SHARE STATICLIB
 .if defined(NO${var})
 MK${var}:=	no
 .endif
@@ -551,7 +551,7 @@ MK${var}:=	yes
 #
 .for var in BFD CATPAGES CRYPTO DOC GCC GDB HESIOD HTML IEEEFP INFO KERBEROS \
 	KERBEROS4 LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PICLIB PROFILE \
-	SHARE SKEY YP
+	SHARE STATICLIB SKEY YP
 MK${var}?=	yes
 .endfor
 
