@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.34 2002/06/09 03:50:13 yamt Exp $	*/
+/*	$NetBSD: str.c,v 1.35 2002/06/09 10:40:47 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.34 2002/06/09 03:50:13 yamt Exp $");
+__RCSID("$NetBSD: str.c,v 1.35 2002/06/09 10:40:47 yamt Exp $");
 #endif
 #endif
 
@@ -574,33 +574,34 @@ strnncpy(char *to, size_t tosize, char *from, size_t cc)
 void
 strip_txz(char *buf, char *sfx, const char *fname)
 {
-	char *s;
+	static const char *const suffixes[] = {
+		".tgz", ".tbz", ".t[bg]z", 0};
+	const char *const *suffixp;
+	size_t len;
 
-	assert(strlen(fname) < PKG_PATTERN_MAX);
+	len = strlen(fname);
+	assert(len < PKG_PATTERN_MAX);
 
-	strcpy(buf, fname);
-	if (sfx) sfx[0] = '\0';
-	
-	s = strstr(buf, ".tgz");
-	if (s) {
-		*s = '\0'; 		/* strip off any ".tgz" */
-		if (sfx) strcpy(sfx, s - buf + fname);
-	}
-	
-	s = strstr(buf, ".tbz");
-	if (s) {
-		*s = '\0'; 		/* strip off any ".tbz" */
-		if (sfx) strcpy(sfx, s - buf + fname);
-	}
-	
-	s = strstr(buf, ".t[bg]z");
-	if (s) {
-		*s = '\0'; 		/* strip off any ".t[bg]z" */
+	if (sfx)
+		sfx[0] = '\0';
+
+	for (suffixp = suffixes; *suffixp; suffixp++) {
+		size_t suffixlen = strlen(*suffixp);
+
+		if (memcmp(&fname[len - suffixlen], *suffixp, suffixlen))
+			continue;
+
+		/* matched! */
+		memcpy(buf, fname, len - suffixlen);
+		buf[len - suffixlen] = 0;
 		if (sfx) {
-			const char *p = s - buf + fname;
-			if (strlen(p) >= PKG_SUFFIX_MAX)
+			if (suffixlen >= PKG_SUFFIX_MAX)
 				errx(1, "too long suffix '%s'", fname);
-			strcpy(sfx, p);
+			memcpy(sfx, *suffixp, suffixlen+1);
+			return;
 		}
 	}
+
+	/* not found */
+	memcpy(buf, fname, len+1);
 }
