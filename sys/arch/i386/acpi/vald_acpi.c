@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.10 2003/06/19 10:13:14 kanaoka Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.11 2003/07/01 20:24:46 kanaoka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,11 +83,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.10 2003/06/19 10:13:14 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.11 2003/07/01 20:24:46 kanaoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>		/* for hz */
 #include <sys/device.h>
 #include <sys/malloc.h>
 
