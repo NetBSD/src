@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 1996/10/13 03:39:50 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 1996/10/13 04:26:49 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -225,6 +225,9 @@ void	kn03_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
     defined(DS5000_240)
 volatile u_int *Mach_reset_addr;
 #endif /* DS5000_200 || DS5000_25 || DS5000_100 || DS5000_240 */
+
+
+void	prom_halt __P((int, char *))   __attribute__((__noreturn__));
 
 
 /*
@@ -1123,6 +1126,9 @@ dumpsys()
 {
 	int error;
 
+	/* Save registers. */
+	savectx(&dumppcb, 0);
+
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
 		return;
@@ -1169,10 +1175,11 @@ dumpsys()
 	}
 }
 
+
 /*
  * call PROM to halt or reboot.
  */
-void
+volatile void
 prom_halt(howto, bootstr)
 	int howto;
 	char *bootstr;
@@ -1219,13 +1226,17 @@ boot(howto, bootstr)
 		goto haltsys;
 	}
 
+	/* If "always halt" was specified as a boot flag, obey. */
+	if ((boothowto & RB_HALT) != 0)
+		howto |= RB_HALT;
+
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		/*
 		 * Synchronize the disks....
 		 */
 		waittime = 0;
-		vfs_shutdown ();
+		vfs_shutdown();
 
 		/*
 		 * If we've been adjusting the clock, the todr
@@ -1234,14 +1245,16 @@ boot(howto, bootstr)
 		resettodr();
 	}
 
-	/* disable interrupts. */
-	(void) splhigh();		/* extreme priority */
+	/* Disable interrupts. */
+	splhigh();
 
 	/* If rebooting and a dump is requested do it. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
-		savectx(&dumppcb, 0);
+#if 0
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+#else
+	if (howto & RB_DUMP)
+#endif
 		dumpsys();
-	}
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
@@ -1251,11 +1264,8 @@ haltsys:
 	/* Finally, halt/reboot the system. */
 	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
 	prom_halt(howto & RB_HALT, bootstr);
-
-	while(1) ;	/* fool gcc */
 	/*NOTREACHED*/
 }
-
 
 
 /*
