@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.28 1998/03/01 02:22:31 fvdl Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.29 1998/06/09 18:46:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,6 +85,16 @@ struct matchinfo {
 static char *number __P((char *, int));
 static void mapply __P((struct matchinfo *, struct cfdata *));
 
+struct deferred_config {
+	TAILQ_ENTRY(deferred_config) dc_queue;
+	struct device *dc_dev;
+	void (*dc_func) __P((struct device *));
+};
+
+TAILQ_HEAD(, deferred_config) deferred_config_queue;
+
+static void config_process_deferred_children __P((struct device *));
+
 struct devicelist alldevs;		/* list of all devices */
 struct evcntlist allevents;		/* list of all event counters */
 
@@ -95,6 +105,7 @@ void
 config_init()
 {
 
+	TAILQ_INIT(&deferred_config_queue);
 	TAILQ_INIT(&alldevs);
 	TAILQ_INIT(&allevents);
 }
@@ -410,6 +421,7 @@ config_attach(parent, match, aux, print)
 	device_register(dev, aux);
 #endif
 	(*ca->ca_attach)(parent, dev, aux);
+	config_process_deferred_children(dev);
 	return (dev);
 }
 
@@ -527,6 +539,7 @@ config_attach(parent, cf, aux, print)
 	bcopy(cd->cd_name, dev->dv_xname, lname);
 	bcopy(xunit, dev->dv_xname + lname, lunit);
 	dev->dv_parent = parent;
+
 	if (parent == ROOT)
 		printf("%s (root)", dev->dv_xname);
 	else {
@@ -581,9 +594,60 @@ config_attach(parent, cf, aux, print)
 	device_register(dev, aux);
 #endif
 	(*ca->ca_attach)(parent, dev, aux);
+	config_process_deferred_children(dev);
 	return (dev);
 }
 #endif /* __BROKEN_INDIRECT_CONFIG */
+
+/*
+ * Defer the configuration of the specified device until all
+ * of its parent's devices have been attached.
+ */
+void
+config_defer(dev, func)
+	struct device *dev;
+	void (*func) __P((struct device *));
+{
+	struct deferred_config *dc;
+
+	if (dev->dv_parent == NULL)
+		panic("config_defer: can't defer config of a root device");
+
+#ifdef DIAGNOSTIC
+	for (dc = TAILQ_FIRST(&deferred_config_queue); dc != NULL;
+	     dc = TAILQ_NEXT(dc, dc_queue)) {
+		if (dc->dc_dev == dev)
+			panic("config_defer: deferred twice");
+	}
+#endif
+
+	if ((dc = malloc(sizeof(*dc), M_DEVBUF, M_NOWAIT)) == NULL)
+		panic("config_defer: can't allocate defer structure");
+
+	dc->dc_dev = dev;
+	dc->dc_func = func;
+	TAILQ_INSERT_TAIL(&deferred_config_queue, dc, dc_queue);
+}
+
+/*
+ * Process the deferred configuration queue for a device.
+ */
+static void
+config_process_deferred_children(parent)
+	struct device *parent;
+{
+	struct deferred_config *dc, *ndc;
+
+	for (dc = TAILQ_FIRST(&deferred_config_queue);
+	     dc != NULL; dc = ndc) {
+		ndc = TAILQ_NEXT(dc, dc_queue);
+		if (dc->dc_dev->dv_parent == parent) {
+			TAILQ_REMOVE(&deferred_config_queue, dc, dc_queue);
+			(*dc->dc_func)(dc->dc_dev);
+			free(dc, M_DEVBUF);
+		}
+	}
+}
 
 /*
  * Attach an event.  These must come from initially-zero space (see
