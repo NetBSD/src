@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.6 1995/08/03 00:09:25 cgd Exp $
+#	$NetBSD: files.alpha,v 1.7 1995/09/20 00:20:18 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -174,12 +174,6 @@ file	netinet/in_cksum.c
 
 file	netns/ns_cksum.c		ns
 
-file	compat/osf1/osf1_ioctl.c	compat_osf1
-file	compat/osf1/osf1_misc.c		compat_osf1
-file	compat/osf1/osf1_mount.c	compat_osf1
-file	compat/osf1/osf1_syscalls.c	compat_osf1
-file	compat/osf1/osf1_sysent.c	compat_osf1
-
 file	arch/alpha/alpha/clock.c	clock
 file	arch/alpha/alpha/clock_mc.c	dec_3000_500 dec_2000_300 dec_3000_300
 					dec_2100_a50
@@ -191,3 +185,6 @@ file	arch/alpha/alpha/promcons.c
 file	arch/alpha/alpha/dec_3000_500.c	dec_3000_500
 file	arch/alpha/alpha/dec_3000_300.c	dec_3000_300
 file	arch/alpha/alpha/dec_2100_a50.c	dec_2100_a50
+
+# OSF/1 Binary Compatibility (COMPAT_OSF1)
+include "../../../compat/osf1/files.osf1"
