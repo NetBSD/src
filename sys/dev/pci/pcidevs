@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.159 1999/10/11 17:31:52 hannken Exp $
+$NetBSD: pcidevs,v 1.160 1999/10/29 07:57:38 haya Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1134,12 +1134,12 @@ product REALTEK	RT8129	0x8129	8129 10/100 Ethernet
 product REALTEK RT8139	0x8139	8139 10/100 Ethernet
 
 /* RICOH products */
-product RICOH RF5C465	0x0465 5C465 PCI-CardBus bridge
-product RICOH RF5C466	0x0466 5C466 PCI-CardBus bridge
-product RICOH RF5C475	0x0475 5C475 PCI-CardBus bridge
-product RICOH RF5C476	0x0476 5C476 PCI-CardBus bridge
-product RICOH RF5C477	0x0477 5C477 PCI-CardBus bridge
-product RICOH RF5C478	0x0478 5C478 PCI-CardBus bridge
+product RICOH Rx5C465	0x0465 5C465 PCI-CardBus bridge
+product RICOH Rx5C466	0x0466 5C466 PCI-CardBus bridge
+product RICOH Rx5C475	0x0475 5C475 PCI-CardBus bridge
+product RICOH RL5C476	0x0476 5C476 PCI-CardBus bridge
+product RICOH Rx5C477	0x0477 5C477 PCI-CardBus bridge
+product RICOH Rx5C478	0x0478 5C478 PCI-CardBus bridge
 
 /* RISCom (SDL Communications, Inc?) products */
 product RISCOM N2	0x5568	N2
