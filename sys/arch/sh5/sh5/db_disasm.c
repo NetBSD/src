@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.7 2002/09/04 13:56:09 scw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.8 2002/09/19 10:03:11 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -52,7 +52,6 @@
 #include <ddb/db_output.h>
 #include <ddb/ddbvar.h>
 
-typedef u_int32_t opcode_t;
 typedef const char *(*format_func_t)(opcode_t, db_addr_t,
     char *, char *, char *);
 
