@@ -27,6 +27,8 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "objc/sarray.h"
 #include "encoding.h"
 
+#include <string.h>
+
 /* Initial selector hash table size. Value doesn't matter much */
 #define SELECTOR_HASH_SIZE 128
 
