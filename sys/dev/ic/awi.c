@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.11 2000/03/23 05:19:44 mycroft Exp $	*/
+/*	$NetBSD: awi.c,v 1.12 2000/03/23 05:26:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -689,7 +689,6 @@ awi_drvget(ifp, cmd, data)
 	struct awi_softc *sc = ifp->if_softc;
 	struct ifdrv *ifd = (struct ifdrv *)data;
 	u_int8_t buf[AWICTL_BUFSIZE];
-	u_int8_t *essid;
 	int error = 0;
 
 	switch (ifd->ifd_cmd) {
