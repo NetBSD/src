@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.10 2000/12/21 15:37:18 onoe Exp $	*/
+/*	$NetBSD: an.c,v 1.11 2001/03/08 16:33:43 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -402,6 +402,10 @@ static void an_rxeof(sc)
 	}
 
 	m->m_pkthdr.rcvif = ifp;
+
+	/* Align the data after the ethernet header */
+	m->m_data = (caddr_t) ALIGN(m->m_data + sizeof(struct ether_header)) -
+	    sizeof(struct ether_header);
 
 	eh = mtod(m, struct ether_header *);
 
