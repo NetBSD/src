@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.10 1998/09/14 09:29:08 hubertf Exp $	*/
+/*	$NetBSD: io.c,v 1.11 1999/02/10 00:11:28 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.10 1998/09/14 09:29:08 hubertf Exp $");
+__RCSID("$NetBSD: io.c,v 1.11 1999/02/10 00:11:28 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +89,9 @@ getin(wrd1, wrd2)		/* get command from user        */
 				*s = 0;
 				return;
 			}
+		case EOF:
+			printf("user closed input stream, quitting...\n");
+			exit(0);
 		default:
 			if (++numch >= MAXSTR) {	/* string too long */
 				printf("Give me a break!!\n");
@@ -106,14 +109,17 @@ yes(x, y, z)			/* confirm with rspeak          */
 	int     x, y, z;
 {
 	int     result = TRUE;	/* pacify gcc */
-	char    ch;
+	int    ch;
 	for (;;) {
 		rspeak(x);	/* tell him what we want */
 		if ((ch = getchar()) == 'y')
 			result = TRUE;
-		else
-			if (ch == 'n')
-				result = FALSE;
+		else if (ch == 'n')
+			result = FALSE;
+		else if (ch == EOF) {
+			printf("user closed input stream, quitting...\n");
+			exit(0);
+		}
 		FLUSHLINE;
 		if (ch == 'y' || ch == 'n')
 			break;
@@ -131,14 +137,17 @@ yesm(x, y, z)			/* confirm with mspeak          */
 	int     x, y, z;
 {
 	int     result = TRUE;	/* pacify gcc */
-	char    ch;
+	int    ch;
 	for (;;) {
 		mspeak(x);	/* tell him what we want */
 		if ((ch = getchar()) == 'y')
 			result = TRUE;
-		else
-			if (ch == 'n')
-				result = FALSE;
+		else if (ch == 'n')
+			result = FALSE;
+		else if (ch == EOF) {
+			printf("user closed input stream, quitting...\n");
+			exit(0);
+		}
 		FLUSHLINE;
 		if (ch == 'y' || ch == 'n')
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdr.h,v 1.5 1998/08/29 20:19:56 hubertf Exp $	*/
+/*	$NetBSD: hdr.h,v 1.6 1999/02/10 00:11:28 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,7 +64,7 @@ extern char data_file[];	/* Virtual data file */
 
 #define TAB     011
 #define LF      012
-#define FLUSHLINE while (getchar()!='\n')
+#define FLUSHLINE do { int flushline_ch; while ((flushline_ch = getchar()) != EOF && flushline_ch != '\n'); } while (0)
 #define FLUSHLF   while (next()!=LF)
 
 int     loc, newloc, oldloc, oldlc2, wzdark, gaveup, kq, k, k2;
