@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.68 2004/03/17 14:26:59 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.69 2004/03/17 14:35:53 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.68 2004/03/17 14:26:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.69 2004/03/17 14:35:53 pk Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.68 2004/03/17 14:26:59 pk Exp $");
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
 #include <machine/cpu.h>
-#include <machine/idprom.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>
@@ -145,9 +144,8 @@ CFATTACH_DECL(rtc_ebus, sizeof(struct mc146818_softc),
 
 extern struct cfdriver clock_cd;
 
-/* Global TOD clock handle & idprom pointer */
+/* Global TOD clock handle */
 static todr_chip_handle_t todr_handle = NULL;
-static struct idprom *idprom;
 
 static int	timermatch __P((struct device *, struct cfdata *, void *));
 static void	timerattach __P((struct device *, struct device *, void *));
@@ -330,8 +328,6 @@ clockattach(sc, node)
 	struct mk48txx_softc *sc;
 	int node;
 {
-	struct idprom *idp;
-	int h;
 
 	sc->sc_model = PROM_getpropstring(node, "model");
 
@@ -344,18 +340,7 @@ clockattach(sc, node)
 	sc->sc_year0 = 1968;
 	mk48txx_attach(sc);
 
-#define IDPROM_OFFSET (8*1024 - 40)	/* XXX - get nvram sz from driver */
-	idp = (struct idprom *)((vaddr_t)bus_space_vaddr(sc->sc_bst,
-	    sc->sc_bsh) + IDPROM_OFFSET);
-
-	h = idp->id_machine << 24;
-	h |= idp->id_hostid[0] << 16;
-	h |= idp->id_hostid[1] << 8;
-	h |= idp->id_hostid[2];
-	hostid = h;
-	printf(": hostid %x\n", (u_int)hostid);
-
-	idprom = idp;
+	printf("\n");
 
 	/* XXX should be done by todr_attach() */
 	todr_handle = &sc->sc_handle;
