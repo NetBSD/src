@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.2 2002/07/11 19:32:43 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3 2002/07/28 07:05:53 chs Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -70,7 +70,100 @@
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((caddr_t)((uintptr_t)(sp) + 8)) /* more args go here */
 
-static void syscall_fancy(struct trapframe *frame);
+void syscall_plain(struct trapframe *frame);
+void syscall_fancy(struct trapframe *frame);
+
+void
+syscall_plain(struct trapframe *frame)
+{
+	struct proc *p = curproc;
+	const struct sysent *callp;
+	size_t argsize;
+	register_t code;
+	register_t *params, rval[2];
+	register_t args[10];
+	int error;
+	int n;
+
+	curcpu()->ci_ev_scalls.ev_count++;
+	uvmexp.syscalls++;
+
+	code = frame->fixreg[0];
+	callp = p->p_emul->e_sysent;
+	params = frame->fixreg + FIRSTARG;
+	n = NARGREG;
+
+	switch (code) {
+	case SYS_syscall:
+		/*
+		 * code is first argument,
+		 * followed by actual args.
+		 */
+		code = *params++;
+		n -= 1;
+		break;
+	case SYS___syscall:
+		params++;
+		code = *params++;
+		n -= 2;
+		break;
+	default:
+		break;
+	}
+
+	code &= (SYS_NSYSENT - 1);
+	callp += code;
+	argsize = callp->sy_argsize;
+
+	if (argsize > n * sizeof(register_t)) {
+		memcpy(args, params, n * sizeof(register_t));
+		KERNEL_PROC_LOCK(p);
+		error = copyin(MOREARGS(frame->fixreg[1]),
+		       args + n,
+		       argsize - n * sizeof(register_t));
+		KERNEL_PROC_UNLOCK(p);
+		if (error)
+			goto syscall_bad;
+		params = args;
+	}
+
+	rval[0] = 0;
+	rval[1] = 0;
+
+	if ((callp->sy_flags & SYCALL_MPSAFE) == 0) {
+		KERNEL_PROC_LOCK(p);
+	}
+
+	error = (*callp->sy_call)(p, params, rval);
+
+	if ((callp->sy_flags & SYCALL_MPSAFE) == 0) {
+		KERNEL_PROC_UNLOCK(p);
+	}
+
+	switch (error) {
+	case 0:
+		frame->fixreg[FIRSTARG] = rval[0];
+		frame->fixreg[FIRSTARG + 1] = rval[1];
+		frame->cr &= ~0x10000000;
+		break;
+	case ERESTART:
+		/*
+		 * Set user's pc back to redo the system call.
+		 */
+		frame->srr0 -= 4;
+		break;
+	case EJUSTRETURN:
+		/* nothing to do */
+		break;
+	default:
+syscall_bad:
+		if (p->p_emul->e_errno)
+			error = p->p_emul->e_errno[error];
+		frame->fixreg[FIRSTARG] = error;
+		frame->cr |= 0x10000000;
+		break;
+	}
+}
 
 void
 syscall_fancy(struct trapframe *frame)
@@ -163,7 +256,19 @@ syscall_bad:
 void
 syscall_intern(struct proc *p)
 {
-	p->p_md.md_syscall = syscall_fancy;
+#ifdef KTRACE
+	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
+		p->p_md.md_syscall = syscall_fancy;
+		return;
+	}
+#endif
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
+		p->p_md.md_syscall = syscall_fancy;
+		return;
+	} 
+#endif
+	p->p_md.md_syscall = syscall_plain;
 }
 
 #ifdef COMPAT_LINUX
