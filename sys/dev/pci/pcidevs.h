@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.302 2001/01/31 07:24:58 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.303 2001/02/02 03:56:20 hubertf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.296 2001/01/31 07:24:32 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.297 2001/02/02 03:51:52 hubertf Exp 
  */
 
 /*
@@ -654,6 +654,7 @@
 #define	PCI_PRODUCT_ALI_M4803	0x5215		/* M4803 */
 #define	PCI_PRODUCT_ALI_M5229	0x5229		/* M5229 UDMA IDE Controller */
 #define	PCI_PRODUCT_ALI_M5237	0x5237		/* M5237 USB Host Controller */
+#define	PCI_PRODUCT_ALI_M5243	0x5243		/* M5243 PCI-AGP Bridge */
 #define	PCI_PRODUCT_ALI_M7101	0x7101		/* M7101 Power Management Controller */
 
 /* Adaptec products */
