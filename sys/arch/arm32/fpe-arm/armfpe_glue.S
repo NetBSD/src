@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_glue.S,v 1.7 1996/08/21 20:16:30 mark Exp $ */
+/* $NetBSD: armfpe_glue.S,v 1.8 1996/10/15 01:37:50 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -39,20 +39,25 @@
  *
  * Created      : 21/12/95
  */
-
-/*#define CHECK_BEFORE_USERRET*/
+#define CHECK_BEFORE_USERRET
 #include "assym.h"
 #include <machine/cpu.h>
 
+ip	.req	r12
 sp	.req	r13
 lr	.req	r14
 pc	.req	r15
 
 	.text
 	.align	0
+
 	.global	_arm_fpe_core_disable
 _arm_fpe_core_disable:
 	stmfd	sp!, {r0-r7, lr}
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
 	bl	_fpe_arm_core_disable
 	ldmfd	sp!, {r0-r7, pc}
 
@@ -60,6 +65,10 @@ _arm_fpe_core_disable:
 	.global	_arm_fpe_core_enable
 _arm_fpe_core_enable:
 	stmfd	sp!, {r0-r7, lr}
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
 	bl	_fpe_arm_core_enable
 	ldmfd	sp!, {r0-r7, pc}
 
@@ -67,6 +76,10 @@ _arm_fpe_core_enable:
 	.global	_arm_fpe_core_initws
 _arm_fpe_core_initws:
 	stmfd	sp!, {r10, lr}
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
 	mov	r10, r0
 	bl	_fpe_arm_core_initws
 	ldmfd	sp!, {r10, pc}
@@ -75,6 +88,10 @@ _arm_fpe_core_initws:
 	.global	_arm_fpe_core_abort
 _arm_fpe_core_abort:
 	stmfd	sp!, {r1-r7, r10, lr}
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
 	mov	r10, r0
 	mov	r0, r1
 	mov	r1, r2
@@ -87,6 +104,10 @@ _arm_fpe_core_abort:
 	.global	_arm_fpe_core_initcontext
 _arm_fpe_core_initcontext:
 	stmfd	sp!, {r0-r7, r10, lr}
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
 	mov	r10, r0
 	bl	_fpe_arm_core_initcontext
 	ldmfd	sp!, {r0-r7, r10, pc}
@@ -97,6 +118,10 @@ _arm_fpe_core_initcontext:
 	.global	_arm_fpe_core_changecontext
 _arm_fpe_core_changecontext:
 	stmfd	sp!, {r1-r7, r10, lr}
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
 	mov	r10, r0
 	bl	_fpe_arm_core_changecontext
 	ldmfd	sp!, {r1-r7, r10, pc}
@@ -107,6 +132,10 @@ _arm_fpe_core_changecontext:
 	.global	_arm_fpe_core_shutdown
 _arm_fpe_core_shutdown:
 	stmfd	sp!, {r0-r7, r10, lr}
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
 	bl	_fpe_arm_core_shutdown
 	ldmfd	sp!, {r0-r7, r10, pc}
 
@@ -115,6 +144,10 @@ _arm_fpe_core_shutdown:
 	.global	_arm_fpe_core_savecontext
 _arm_fpe_core_savecontext:
 	stmfd	sp!, {r1-r7, r10, lr}
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
 	mov	r10, r0
 	mov	r0, r1
 	mov	r1, r2
@@ -127,6 +160,10 @@ _arm_fpe_core_savecontext:
 	.global	_arm_fpe_core_loadcontext
 _arm_fpe_core_loadcontext:
 	stmfd	sp!, {r0-r7, r10, lr}
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
 	mov	r10, r0
 	mov	r0, r1
 	bl	_fpe_arm_core_loadcontext
@@ -138,6 +175,10 @@ _arm_fpe_core_loadcontext:
 	.global	_arm_fpe_core_activatecontext
 _arm_fpe_core_activatecontext:
 	stmfd	sp!, {r0-r7, r10, lr}
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
 	mov	r10, r0
 	bl	_fpe_arm_core_activatecontext
 	ldmfd	sp!, {r0-r7, r10, pc}
@@ -148,6 +189,10 @@ _arm_fpe_core_activatecontext:
 	.global	_arm_fpe_core_deactivatecontext
 _arm_fpe_core_deactivatecontext:
 	stmfd	sp!, {r1-r7, r10, lr}
+#if defined(GPROF) && defined(PROFILE_ASM)
+	mov	ip, lr
+	bl	mcount
+#endif
 	bl	_fpe_arm_core_deactivatecontext
 	ldmfd	sp!, {r1-r7, r10, pc}
 
@@ -161,7 +206,6 @@ _arm_fpe_panic:
 fpe_panic_text:
 	.asciz	"armfpe: we are panicing"
 	.align	0
-
 
 /*
  * Call back routine from FPE on completion of an instruction
@@ -198,6 +242,10 @@ Lcurpriority:
 	.global	_arm_fpe_post_proc_glue
 _arm_fpe_post_proc_glue:
 	stmfd	sp!, {r0-r3, lr}
+#if defined(GPROF) && defined(PROFILE_ASM) && 0
+	mov	ip, lr
+	bl	mcount
+#endif
 
 #ifdef CHECK_BEFORE_USERRET
 
@@ -346,7 +394,13 @@ Lwe_need_userret:
 
 	.global	_arm_fpe_exception_glue
 _arm_fpe_exception_glue:
-	stmfd	sp!, {r0-r5, r10-r12, lr}
+	stmfd	sp!, {r0-r6, r10-r12, lr}
+#if defined(GPROF) && defined(PROFILE_ASM) && 0
+	mov	ip, lr
+	bl	mcount
+#endif
+
+	mov	r10, r0
 
 /* This could be optimised as we are going from UND32->SVC32 mode */
 
@@ -355,18 +409,74 @@ _arm_fpe_exception_glue:
         orr     r3, r3, #(PSR_SVC32_MODE)
         msr     cpsr_all, r3
 
-	ldr	r1, [r12, #15*4]
-	mov	r2, r12
+	mov	r0, r12
+
+/* Reserve a trapframe on the SVC stack */
+
+	sub	sp, sp, #(TRAPFRAMESIZE)
+	mov	r1, sp
+
+	ldr	r2, [r0, #-0x0008]	/* Copy spsr */
+	str	r2, [r1], #0x0004
+
+	ldmia	r0!, {r2, r3, r5, r6}	/* copy r0-r5 */
+	stmia	r1!, {r2, r3, r5, r6}
+
+	ldmia	r0!, {r2, r3, r5, r6}	/* copy r6-r11 */
+	stmia	r1!, {r2, r3, r5, r6}
+
+	ldmia	r0!, {r2, r3, r5, r6}	/* copy r6-r11 */
+	stmia	r1!, {r2, r3, r5, r6}
+
+	ldmia	r0!, {r2, r3, r5, r6}	/* copy r12, r13, r14, r15 */
+	stmia	r1!, {r2, r3, r5, r14}
+	str	r6, [r1, #0x0000]
+
+	mov	r0, r10		/* exception */
+	mov	r1, r12		/* fpframe */
+	mov	r2, sp		/* trapframe */
+
+/*
+ * OK Question Time ...
+ *
+ * Do I need to save SVC r14 ? 
+ * It only needs saving if this routine can interrupt something already
+ * running in SVC mode. Since FP is only valid from USR32 mode this
+ * should not happen.
+ */
 
 	mov	r5, r14
+	mov	r6, r12
+
+/* More optimisation ... Need to code an assembly version of userret() */
 
 	bl	_arm_fpe_exception
 
+/* Release the trapframe on the SVC stack */
 	mov	r14, r5
+
+	mov	r0, sp
+
+	ldr	r2, [r0], #0x0004	/* Copy spsr */
+	str	r2, [r6, #-0x0008]
+
+	ldmia	r0!, {r1, r2, r3, r5, r10, r11}	/* copy r0-r5 */
+	stmia	r6!, {r1, r2, r3, r5, r10, r11}
+
+	ldmia	r0!, {r1, r2, r3, r5, r10, r11}	/* copy r6-r11 */
+	stmia	r6!, {r1, r2, r3, r5, r10, r11}
+
+	ldmia	r0!, {r1, r2, r3}	/* copy r12, r13, r14 */
+	stmia	r6!, {r1, r2, r3}
+
+	ldr	r1, [r0, #0x0004]
+	str	r1, [r6]
+
+	add	sp, sp, #(TRAPFRAMESIZE)
 
 	msr	cpsr_all, r4
 
-	ldmfd	sp!, {r0-r5, r10-r12, lr}
+	ldmfd	sp!, {r0-r6, r10-r12, lr}
 
 /* Now pull the original trapframe that the FPE pushed off the stack */
 
@@ -381,6 +491,7 @@ _arm_fpe_exception_glue:
 	mov	r0, r0
 	add	sp, sp, #15*4
 	ldmfd	sp!, {pc}^
+
 
 	.global _fpe_nexthandler
 _fpe_nexthandler:
