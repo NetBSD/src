@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.154 2001/12/23 09:10:39 ichiro Exp $
+$NetBSD: pcmciadevs,v 1.155 2001/12/29 08:31:01 ichiro Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -198,6 +198,7 @@ product IBM SCSI		0x0026 IBM SCSI PCMCIA
 product IBM PORTABLE_CDROM	0x002d IBM PCMCIA Portable CD-ROM Drive
 product IBM HOME_AND_AWAY	0x002e IBM Home and Away Modem
 product IBM WIRELESS_LAN_ENTRY	0x0032 IBM Wireless LAN Entry 
+product IBM SMART_CAPTURE_II	0x003c IBM Smart Capture Card II
 product IBM ETHERJET		0x003f IBM EtherJet Ethernet
 
 /* Intel Products */
