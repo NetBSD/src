@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 1996/10/01 14:38:28 cgd Exp $
+#	$NetBSD: Makefile,v 1.25 1996/11/09 23:22:19 pk Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -11,6 +11,7 @@ SUBDIR=	csu libarch libc libcompat libcrypt libcurses libedit libl \
 .if	(${MACHINE} == "alpha") || \
 	(${MACHINE} == "amiga") || \
 	(${MACHINE} == "atari") || \
+	(${MACHINE} == "sparc") || \
 	(${MACHINE} == "sun3")
 SUBDIR+=        libkvm
 .else
