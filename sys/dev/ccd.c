@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.55 1998/11/13 00:35:57 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.56 1998/11/13 01:00:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -108,6 +108,7 @@
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/conf.h>
+#include <sys/queue.h>
 
 #include <dev/ccdvar.h>
 
@@ -131,6 +132,7 @@ struct ccdbuf {
 	struct buf	*cb_obp;	/* ptr. to original I/O buf */
 	int		cb_unit;	/* target unit */
 	int		cb_comp;	/* target component */
+	SIMPLEQ_ENTRY(ccdbuf) cb_q;	/* fifo of component buffers */
 };
 
 /* XXX Safe to wait? */
@@ -625,6 +627,8 @@ ccdstrategy(bp)
 	s = splbio();
 	ccdstart(cs, bp);
 	splx(s);
+	if (bp->b_flags & B_ERROR)
+		goto done;
 	return;
 done:
 	biodone(bp);
@@ -640,6 +644,7 @@ ccdstart(cs, bp)
 	caddr_t addr;
 	daddr_t bn;
 	struct partition *pp;
+	SIMPLEQ_HEAD(, ccdbuf) cbufq;
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
@@ -659,17 +664,36 @@ ccdstart(cs, bp)
 	}
 
 	/*
-	 * Allocate component buffers and fire off the requests
+	 * Allocate the component buffers.
 	 */
+	SIMPLEQ_INIT(&cbufq);
 	addr = bp->b_data;
 	for (bcount = bp->b_bcount; bcount > 0; bcount -= rcount) {
 		cbp = ccdbuffer(cs, bp, bn, addr, bcount);
+		if (cbp == NULL) {
+			/* Free the already allocated component buffers. */
+			while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
+				SIMPLEQ_REMOVE_HEAD(&cbufq, cbp, cb_q);
+				CCD_PUTBUF(cs, cbp);
+			}
+
+			/* Notify the upper layer we are out of memory. */
+			bp->b_error = ENOMEM;
+			bp->b_flags |= B_ERROR;
+			return;
+		}
+		SIMPLEQ_INSERT_TAIL(&cbufq, cbp, cb_q);
 		rcount = cbp->cb_buf.b_bcount;
+		bn += btodb(rcount);
+		addr += rcount;
+	}
+
+	/* Now fire off the requests. */
+	while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&cbufq, cbp, cb_q);
 		if ((cbp->cb_buf.b_flags & B_READ) == 0)
 			cbp->cb_buf.b_vp->v_numoutput++;
 		VOP_STRATEGY(&cbp->cb_buf);
-		bn += btodb(rcount);
-		addr += rcount;
 	}
 }
 
