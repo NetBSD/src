@@ -1,4 +1,4 @@
-/*	$NetBSD: zh_TW.BIG5.src,v 1.3 2005/01/16 20:15:35 tnozaki Exp $	*/
+/*	$NetBSD: zh_TW.BIG5.src,v 1.4 2005/02/04 18:35:45 tnozaki Exp $	*/
 
 /*
  * big5   first byte:   A1-FE
@@ -290,8 +290,8 @@ SPECIAL         0xc77b - 0xc77e 0xc7a1 - 0xc7f2
 SWIDTH2         0xc77b - 0xc77e 0xc7a1 - 0xc7f2
 
 /* ZIP code (in Japan) */
-SPECIAL         0xc8a5 - 0x08cc
-SWIDTH2         0xc8a5 - 0x08cc
+SPECIAL         0xc8a5 - 0xc8cc
+SWIDTH2         0xc8a5 - 0xc8cc
 
 /* various Japanese symbols */
 SPECIAL         0xc8cd - 0xc8d3
