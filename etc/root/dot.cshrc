@@ -1,4 +1,4 @@
-#	$NetBSD: dot.cshrc,v 1.9 1998/01/10 00:51:56 perry Exp $
+#	$NetBSD: dot.cshrc,v 1.10 1999/06/15 05:44:22 abs Exp $
 
 set history=1000
 set path=(/sbin /usr/sbin /bin /usr/bin /usr/pkg/sbin /usr/pkg/bin /usr/X11R6/bin /usr/local/sbin /usr/local/bin)
@@ -24,7 +24,7 @@ alias	pd3	pushd +3
 alias	pd4	pushd +4
 alias	tset	'set noglob histchars=""; eval `\tset -s \!*`; unset noglob histchars'
 
-if ($?prompt) then
+if ($?prompt && -x /usr/bin/id ) then
 	if (`/usr/bin/id -u` == 0) then
 		set prompt="`hostname -s`# "
 	else
