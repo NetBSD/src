@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.27 1999/05/10 01:58:37 cgd Exp $
+	$NetBSD: syscalls.master,v 1.28 1999/05/10 02:54:57 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -183,7 +183,7 @@
 104	NOARGS		{ int sys_bind(int s, caddr_t name, int namelen); }
 105	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
 			    caddr_t val, int valsize); }
-106	UNIMPL		listen
+106	NOARGS		{ int sys_listen(int s, int backlog); }
 107	UNIMPL		plock
 108	UNIMPL		old sigvec
 109	UNIMPL		old sigblock
