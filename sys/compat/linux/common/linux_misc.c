@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.106 2002/04/03 10:17:01 fvdl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.107 2002/04/10 18:19:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.106 2002/04/03 10:17:01 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.107 2002/04/10 18:19:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -683,7 +683,7 @@ linux_sys_getdents(p, v, retval)
 
 	nbytes = SCARG(uap, count);
 	if (nbytes == 1) {	/* emulating old, broken behaviour */
-		nbytes = sizeof (struct linux_dirent);
+		nbytes = sizeof (idb);
 		buflen = max(va.va_blocksize, nbytes);
 		oldcall = 1;
 	} else {
@@ -742,7 +742,7 @@ again:
 		 * we have to worry about touching user memory outside of
 		 * the copyout() call).
 		 */
-		idb.d_ino = (linux_ino_t)bdp->d_fileno;
+		idb.d_ino = bdp->d_fileno;
 		/*
 		 * The old readdir() call misuses the offset and reclen fields.
 		 */
@@ -750,7 +750,7 @@ again:
 			idb.d_off = (linux_off_t)linux_reclen;
 			idb.d_reclen = (u_short)bdp->d_namlen;
 		} else {
-			if (sizeof (linux_off_t) < 4 && (off >> 32) != 0) {
+			if (sizeof (idb.d_off) < 4 && (off >> 32) != 0) {
 				compat_offseterr(vp, "linux_getdents");
 				error = EINVAL;
 				goto out;
@@ -786,7 +786,177 @@ out:
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
- out1:
+out1:
+	FILE_UNUSE(fp, p);
+	return error;
+}
+
+/*
+ * Linux 'readdir' call. This code is mostly taken from the
+ * SunOS getdents call (see compat/sunos/sunos_misc.c), though
+ * an attempt has been made to keep it a little cleaner (failing
+ * miserably, because of the cruft needed if count 1 is passed).
+ *
+ * The d_off field should contain the offset of the next valid entry,
+ * but in Linux it has the offset of the entry itself. We emulate
+ * that bug here.
+ *
+ * Read in BSD-style entries, convert them, and copy them out.
+ *
+ * Note that this doesn't handle union-mounted filesystems.
+ */
+int
+linux_sys_getdents64(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_getdents_args /* {
+		syscallarg(int) fd;
+		syscallarg(struct linux_dirent64 *) dent;
+		syscallarg(unsigned int) count;
+	} */ *uap = v;
+	struct dirent *bdp;
+	struct vnode *vp;
+	caddr_t	inp, buf;		/* BSD-format */
+	int len, reclen;		/* BSD-format */
+	caddr_t outp;			/* Linux-format */
+	int resid, linux_reclen = 0;	/* Linux-format */
+	struct file *fp;
+	struct uio auio;
+	struct iovec aiov;
+	struct linux_dirent64 idb;
+	off_t off;		/* true file offset */
+	int buflen, error, eofflag, nbytes, oldcall;
+	struct vattr va;
+	off_t *cookiebuf = NULL, *cookie;
+	int ncookies;
+
+	/* getvnode() will use the descriptor for us */
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto out1;
+	}
+
+	vp = (struct vnode *)fp->f_data;
+	if (vp->v_type != VDIR) {
+		error = EINVAL;
+		goto out1;
+	}
+
+	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
+		goto out1;
+
+	nbytes = SCARG(uap, count);
+	if (nbytes == 1) {	/* emulating old, broken behaviour */
+		nbytes = sizeof (idb);
+		buflen = max(va.va_blocksize, nbytes);
+		oldcall = 1;
+	} else {
+		buflen = min(MAXBSIZE, nbytes);
+		if (buflen < va.va_blocksize)
+			buflen = va.va_blocksize;
+		oldcall = 0;
+	}
+	buf = malloc(buflen, M_TEMP, M_WAITOK);
+
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	off = fp->f_offset;
+again:
+	aiov.iov_base = buf;
+	aiov.iov_len = buflen;
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_rw = UIO_READ;
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_procp = p;
+	auio.uio_resid = buflen;
+	auio.uio_offset = off;
+	/*
+         * First we read into the malloc'ed buffer, then
+         * we massage it into user space, one record at a time.
+         */
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, &cookiebuf,
+	    &ncookies);
+	if (error)
+		goto out;
+
+	inp = buf;
+	outp = (caddr_t)SCARG(uap, dent);
+	resid = nbytes;
+	if ((len = buflen - auio.uio_resid) == 0)
+		goto eof;
+
+	for (cookie = cookiebuf; len > 0; len -= reclen) {
+		bdp = (struct dirent *)inp;
+		reclen = bdp->d_reclen;
+		if (reclen & 3)
+			panic("linux_readdir");
+		if (bdp->d_fileno == 0) {
+			inp += reclen;	/* it is a hole; squish it out */
+			off = *cookie++;
+			continue;
+		}
+		linux_reclen = LINUX_RECLEN(&idb, bdp->d_namlen);
+		if (reclen > len || resid < linux_reclen) {
+			/* entry too big for buffer, so just stop */
+			outp++;
+			break;
+		}
+		/*
+		 * Massage in place to make a Linux-shaped dirent (otherwise
+		 * we have to worry about touching user memory outside of
+		 * the copyout() call).
+		 */
+		idb.d_ino = bdp->d_fileno;
+		idb.d_type = bdp->d_type;
+		/*
+		 * The old readdir() call misuses the offset and reclen fields.
+		 */
+		if (oldcall) {
+			idb.d_off = linux_reclen;
+			idb.d_reclen = (u_short)bdp->d_namlen;
+		} else {
+			if (sizeof (idb.d_off) < 4 && (off >> 32) != 0) {
+				compat_offseterr(vp, "linux_getdents");
+				error = EINVAL;
+				goto out;
+			}
+			idb.d_off = off;
+			idb.d_reclen = (u_short)linux_reclen;
+		}
+		strcpy(idb.d_name, bdp->d_name);
+		if ((error = copyout((caddr_t)&idb, outp, linux_reclen)))
+			goto out;
+		/* advance past this real entry */
+		inp += reclen;
+		off = *cookie++;	/* each entry points to itself */
+		/* advance output past Linux-shaped entry */
+		outp += linux_reclen;
+		resid -= linux_reclen;
+		if (oldcall)
+			break;
+	}
+
+	/* if we squished out the whole block, try again */
+	if (outp == (caddr_t)SCARG(uap, dent))
+		goto again;
+	fp->f_offset = off;	/* update the vnode offset */
+
+	if (oldcall)
+		nbytes = resid + linux_reclen;
+
+eof:
+	*retval = nbytes - resid;
+out:
+	VOP_UNLOCK(vp, 0);
+	if (cookiebuf)
+		free(cookiebuf, M_TEMP);
+	free(buf, M_TEMP);
+out1:
 	FILE_UNUSE(fp, p);
 	return error;
 }
