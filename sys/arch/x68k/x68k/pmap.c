@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 1999/05/31 14:39:13 minoura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37 1999/06/03 14:43:33 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -2596,7 +2596,11 @@ pmap_changebit(pa, set, mask)
 	    ("pmap_changebit(%lx, %x, %x)\n", pa, set, mask));
 
 	if (!PAGE_IS_MANAGED(pa))
+#if defined(PMAP_NEW)
 		return (r);
+#else
+		return;
+#endif
 
 	pv = pa_to_pvh(pa);
 	s = splimp();
