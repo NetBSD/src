@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)iso_pcb.c	7.10 (Berkeley) 6/27/91
- *	$Id: iso_pcb.c,v 1.3 1993/12/18 00:43:21 mycroft Exp $
+ *	$Id: iso_pcb.c,v 1.4 1994/01/06 23:57:36 mycroft Exp $
  */
 
 /***********************************************************
@@ -345,7 +345,7 @@ iso_pcbconnect(isop, nam)
 		totlen = tlen + nlen + _offsetof(struct sockaddr_iso, siso_data[0]);
 		if ((siso == &isop->isop_sladdr) &&
 			(totlen > sizeof(isop->isop_sladdr))) {
-			struct mbuf *m = m_get(MT_SONAME, M_DONTWAIT);
+			struct mbuf *m = m_get(M_DONTWAIT, MT_SONAME);
 			if (m == 0)
 					return ENOBUFS;
 			m->m_len = totlen;
@@ -376,7 +376,7 @@ iso_pcbconnect(isop, nam)
 		if (siso->siso_len <= sizeof(isop->isop_sfaddr))
 			isop->isop_faddr = &isop->isop_sfaddr;
 		else {
-			struct mbuf *m = m_get(MT_SONAME, M_DONTWAIT);
+			struct mbuf *m = m_get(M_DONTWAIT, MT_SONAME);
 			if (m == 0)
 				return ENOBUFS;
 			isop->isop_faddr = mtod(m, struct sockaddr_iso *);
