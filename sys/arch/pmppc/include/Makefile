@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2002/05/30 15:34:36 gehenna Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2002/05/31 01:11:16 gehenna Exp $
 
 KDIR=	/sys/arch/pmppc/include
 INCSDIR= /usr/include/pmppc
 
 INCS=   ansi.h aout_machdep.h asm.h \
 	bswap.h bus.h \
-	cdefs.h conf.h cpu.h cpufunc.h \
+	cdefs.h cpu.h cpufunc.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h fpu.h frame.h \
