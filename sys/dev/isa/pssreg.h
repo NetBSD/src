@@ -1,4 +1,4 @@
-/*	$NetBSD: pssreg.h,v 1.1 1995/02/21 04:15:04 brezak Exp $	*/
+/*	$NetBSD: pssreg.h,v 1.2 1995/05/08 22:02:09 brezak Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pssreg.h,v 1.1 1995/02/21 04:15:04 brezak Exp $
  */
 /*
  * Copyright (c) 1993 Analog Devices Inc. All rights reserved
