@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.50 2000/05/23 03:50:12 soren Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.51 2000/05/25 11:41:05 fvdl Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -326,7 +326,7 @@ static __inline struct scsipi_xfer *ahc_first_xs(struct ahc_softc *);
 static __inline void ahc_swap_hscb(struct hardware_scb *);
 static __inline void ahc_swap_sg(struct ahc_dma_seg *);
 static void ahc_check_tags(struct ahc_softc *, struct scsipi_xfer *);
-static int ahc_istagged_device(struct ahc_softc *, struct scsipi_xfer *);
+static int ahc_istagged_device(struct ahc_softc *, struct scsipi_xfer *, int);
 
 #if defined(AHC_DEBUG) && 0
 static void ahc_dumptinfo(struct ahc_softc *, struct ahc_initiator_tinfo *);
@@ -355,7 +355,7 @@ ahc_first_xs(struct ahc_softc *ahc)
 	while (xs != NULL) {
 		target = xs->sc_link->scsipi_scsi.target;
 		if (ahc->devqueue_blocked[target] == 0 &&
-		    (!ahc_istagged_device(ahc, xs) &&
+		    (!ahc_istagged_device(ahc, xs, 0) &&
 		     ahc_index_busy_tcl(ahc, XS_TCL(ahc, xs), FALSE) ==
 		    SCB_LIST_NULL))
 			break;
@@ -3900,7 +3900,7 @@ ahc_action(struct scsipi_xfer *xs)
 	
 	if (ahc->queue_blocked ||
 	    ahc->devqueue_blocked[xs->sc_link->scsipi_scsi.target] ||
-	    (!ahc_istagged_device(ahc, xs) &&
+	    (!ahc_istagged_device(ahc, xs, 0) &&
 	     ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL)) {
 		if (dontqueue) {
 			splx(s);
@@ -3976,7 +3976,7 @@ get_scb:
 	tcl = XS_TCL(ahc, xs);
 
 #ifdef DIAGNOSTIC
-	if (!ahc_istagged_device(ahc, xs) &&
+	if (!ahc_istagged_device(ahc, xs, 0) &&
 	    ahc_index_busy_tcl(ahc, tcl, FALSE) != SCB_LIST_NULL)
 		panic("ahc: queuing for busy target");
 #endif
@@ -3985,7 +3985,7 @@ get_scb:
 	hscb = scb->hscb;
 	hscb->tcl = tcl;
 
-	if (ahc_istagged_device(ahc, xs))
+	if (ahc_istagged_device(ahc, xs, 0))
 		scb->hscb->control |= MSG_SIMPLE_Q_TAG;
 	else
 		ahc_busy_tcl(ahc, scb);
@@ -4090,7 +4090,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	 * be aborted.
 	 */
 	if (xs->xs_status & XS_STS_DONE) {
-		if (!ahc_istagged_device(ahc, xs))
+		if (!ahc_istagged_device(ahc, xs, 0))
 			ahc_index_busy_tcl(ahc, scb->hscb->tcl, TRUE);
 		if (nsegments != 0)
 			bus_dmamap_unload(ahc->parent_dmat, scb->dmamap);
@@ -4221,7 +4221,7 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 			    (xs->xs_control & XS_CTL_NOSLEEP) ?
 			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 		if (error) {
-			if (!ahc_istagged_device(ahc, xs))
+			if (!ahc_istagged_device(ahc, xs, 0))
 				ahc_index_busy_tcl(ahc, hscb->tcl, TRUE);
 			return (TRY_AGAIN_LATER);	/* XXX fvdl */
 		}
@@ -5614,7 +5614,7 @@ ahc_check_tags(struct ahc_softc *ahc, struct scsipi_xfer *xs)
 	 * should really be done by the higher level drivers.
 	 */
 	inq = (struct scsipi_inquiry_data *)xs->data;
-	if ((inq->flags3 & SID_CmdQue) && !(ahc_istagged_device(ahc, xs))) {
+	if ((inq->flags3 & SID_CmdQue) && !(ahc_istagged_device(ahc, xs, 1))) {
 	        printf("%s: target %d using tagged queuing\n",
 			ahc_name(ahc), xs->sc_link->scsipi_scsi.target);
 
@@ -5639,7 +5639,8 @@ ahc_check_tags(struct ahc_softc *ahc, struct scsipi_xfer *xs)
 }
 
 static int
-ahc_istagged_device(struct ahc_softc *ahc, struct scsipi_xfer *xs)
+ahc_istagged_device(struct ahc_softc *ahc, struct scsipi_xfer *xs,
+		    int nocmdcheck)
 {
 	char channel;
 	u_int our_id, target;
@@ -5647,6 +5648,15 @@ ahc_istagged_device(struct ahc_softc *ahc, struct scsipi_xfer *xs)
 	struct ahc_devinfo devinfo;
 
 	if (xs->sc_link->quirks & SDEV_NOTAG)
+		return 0;
+
+	/*
+	 * XXX never do these commands with tags. Should really be
+	 * in a higher layer.
+	 */
+	if (!nocmdcheck && (xs->cmd->opcode == INQUIRY ||
+	     xs->cmd->opcode == TEST_UNIT_READY ||
+	     xs->cmd->opcode == REQUEST_SENSE))
 		return 0;
 
 	channel = SIM_CHANNEL(ahc, xs->sc_link);
