@@ -53,6 +53,8 @@
 
 #define	ssize_t		int
 
+#define SOCKLEN_T	int
+
 /* No endian.h either. */
 /*
  * Definitions for byte order, according to byte significance from low

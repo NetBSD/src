@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: stables.c,v 1.1.1.4 2000/09/04 23:10:52 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: stables.c,v 1.1.1.5 2000/10/17 15:10:52 taca Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -710,8 +710,13 @@ void initialize_server_option_spaces()
 	/* Set up the Relay Agent Information Option suboption space... */
 	agent_universe.name = "agent";
 	agent_universe.option_state_dereference =
-		agent_option_state_dereference;
-	agent_universe.get_func = agent_option_get;
+		linked_option_state_dereference;
+	agent_universe.lookup_func = lookup_linked_option;
+	agent_universe.save_func = save_linked_option;
+	agent_universe.delete_func = delete_linked_option;
+	agent_universe.encapsulate = linked_option_space_encapsulate;
+	agent_universe.foreach = linked_option_space_foreach;
+	agent_universe.decode = parse_option_buffer;
 	agent_universe.index = universe_count++;
 	agent_universe.length_size = 1;
 	agent_universe.tag_size = 1;
@@ -727,17 +732,18 @@ void initialize_server_option_spaces()
 				 agent_options [i].name, 0,
 				 &agent_options [i], MDL);
 	}
+	agent_universe.enc_opt = &dhcp_options [DHO_DHCP_AGENT_OPTIONS];
+
 
 	/* Set up the server option universe... */
 	server_universe.name = "server";
 	server_universe.lookup_func = lookup_hashed_option;
 	server_universe.option_state_dereference =
 		hashed_option_state_dereference;
-	server_universe.get_func = hashed_option_get;
-	server_universe.set_func = hashed_option_set;
 	server_universe.save_func = save_hashed_option;
 	server_universe.delete_func = delete_hashed_option;
 	server_universe.encapsulate = hashed_option_space_encapsulate;
+	server_universe.foreach = hashed_option_space_foreach;
 	server_universe.length_size = 1;
 	server_universe.tag_size = 1;
 	server_universe.store_tag = putUChar;
@@ -762,4 +768,5 @@ void initialize_server_option_spaces()
 
 	/* Make the server universe the configuration option universe. */
 	config_universe = &server_universe;
+	vendor_cfg_option = &server_options [SV_VENDOR_OPTION_SPACE];
 }

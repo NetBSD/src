@@ -75,7 +75,7 @@ int main (argc, argv)
 	for (i = 1; i < argc; i++) {
 		if (!strcmp (argv[i], "-u")) {
 			mode = up;
-		} else if (!strcmp (argv [1], "-d")) {
+		} else if (!strcmp (argv [i], "-d")) {
 			mode = down;
 		} else if (!strcmp (argv[i], "-n")) {
 			if (++i == argc)
