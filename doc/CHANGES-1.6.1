@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.22 2002/11/06 21:29:49 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.23 2002/11/07 08:40:12 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -870,4 +870,18 @@ sys/net/if_gre.c				1.27
 	Do not limit the MTU when set by the admin with ifconfig, per
 	discussion on tech-net. This fixes PR 16761 from Jasper Wallace.
 	[martin, ticket #226]
+
+sys/dev/audio.c					1.156
+
+	When audio recording was paused or dropping samples, the "outp" of the
+	recording ring buffer could overrun the end of the buffer.  When
+	recording resumed, memory after the end of the buffer would be read,
+	sometimes causing a system crash.
+	[gson, ticket #972]
+
+sys/dev/pci/pcidevs				1.451
+
+	Clean up Intel i8254x product names, and add i82540, i82545, and i82546
+	product IDs.
+	[thorpej, ticket #452]
 
