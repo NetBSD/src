@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.51 1999/07/09 22:57:21 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.52 1999/09/23 02:21:31 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -240,32 +240,34 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 	 */
 	if (inp) {
 #ifdef IPSEC
-		size_t t = ipsec4_hdrsiz_tcp(tp);
-		if (t < size)
-			size -= t;
+		size -= ipsec4_hdrsiz_tcp(tp);
 #endif
 		size -= ip_optlen(inp);
 	}
 #ifdef INET6
 	else if (in6p && tp->t_family == AF_INET) {
 #ifdef IPSEC
-		size_t t = ipsec4_hdrsiz_tcp(tp);
-		if (t < size)
-			size -= t;
+		size -= ipsec4_hdrsiz_tcp(tp);
 #endif
 		/* XXX size -= ip_optlen(in6p); */
 	}
 	else if (in6p && tp->t_family == AF_INET6) {
 #if defined(IPSEC) && !defined(TCP6)
-		size_t t = ipsec6_hdrsiz_tcp(tp);
-		if (t < size)
-			size -= t;
+		size -= ipsec6_hdrsiz_tcp(tp);
 #endif
 		size -= ip6_optlen(in6p);
 	}
 #endif
 
  out:
+	/*
+	 * *rxsegsizep holds *estimated* inbound segment size (estimation
+	 * assumes that path MTU is the same for both ways).  this is only
+	 * for silly window avoidance, do not use the value for other purposes.
+	 *
+	 * ipseclen is subtracted from both sides, this may not be right.
+	 * I'm not quite sure about this (could someone comment).
+	 */
 	*txsegsizep = min(tp->t_peermss, size);
 	*rxsegsizep = min(tp->t_ourmss, size);
 
@@ -604,24 +606,7 @@ send:
 
 		tp->snd_nxt = tp->iss;
 		tp->t_ourmss = tcp_mss_to_advertise(rt != NULL ? 
-						    rt->rt_ifp : NULL);
-#ifdef IPSEC
-	    {
-		size_t t;
-		switch (af) {
-		case AF_INET:
-			t = ipsec4_hdrsiz_tcp(tp);
-			break;
-#if defined(INET6) && !defined(TCP6)
-		case AF_INET6:
-			t = ipsec6_hdrsiz_tcp(tp);
-			break;
-#endif
-		}
-		if (t < tp->t_ourmss)
-			tp->t_ourmss -= t;
-	    }
-#endif
+						    rt->rt_ifp : NULL, af);
 		if ((tp->t_flags & TF_NOOPT) == 0) {
 			opt[0] = TCPOPT_MAXSEG;
 			opt[1] = 4;
