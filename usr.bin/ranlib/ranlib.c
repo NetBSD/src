@@ -1,4 +1,4 @@
-/*	$NetBSD: ranlib.c,v 1.6 1997/10/19 13:40:27 lukem Exp $	*/
+/*	$NetBSD: ranlib.c,v 1.7 1998/02/03 04:30:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,15 +46,16 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ranlib.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ranlib.c,v 1.6 1997/10/19 13:40:27 lukem Exp $");
+__RCSID("$NetBSD: ranlib.c,v 1.7 1998/02/03 04:30:47 perry Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+
 #include <dirent.h>
 #include <archive.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <unistd.h>
 
 #include "extern.h"
 
