@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.32 2002/04/11 18:16:05 mycroft Exp $	*/
+/*	$NetBSD: md.h,v 1.33 2002/05/29 20:36:41 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,16 +89,6 @@ EXTERN distinfo dist_list[]
     {"xcomp",			1, "ah", "X programming : "},
     {"xmisc",			1, "aa", "X11 Misc.     : "},
     {NULL, 0, NULL, NULL }
-}
-#endif
-;
-
-EXTERN distinfo special_kernel_list[]
-#ifdef MAIN
-= {
-    {"kern-laptop",	1, "ah", "Laptop Kernel : "},
-    {"kern-tiny",	1, "ac", "Small Kernel  : "},
-    {"kern-ps2tiny",	1, "af", "IBM PS/2 Kern : "},
 }
 #endif
 ;
