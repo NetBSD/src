@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.22 1999/06/26 08:30:18 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.23 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #if defined(KERNEL)
 MALLOC_DECLARE(M_USB);
 MALLOC_DECLARE(M_USBDEV);
+MALLOC_DECLARE(M_USBHC);
 
 #include <dev/usb/usb_port.h>
 #endif /* KERNEL */

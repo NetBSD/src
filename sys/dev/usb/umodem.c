@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.6 1999/01/10 11:13:36 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.7 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,10 +62,9 @@
 #include <sys/poll.h>
 
 #include <dev/usb/usb.h>
-#include <dev/usb/usbcdc.h>
-
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbcdc.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 
@@ -124,22 +123,6 @@ USB_ATTACH(umodem)
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
-
-#if defined(__FreeBSD__)
-static int
-umodem_detach(device_t self)
-{
-	struct umodem_softc *sc = device_get_softc(self);
-	char *devinfo = (char *) device_get_desc(self);
-
-	if (devinfo) {
-		device_set_desc(self, NULL);
-		free(devinfo, M_USB);
-}
-
-	return 0;
-}
-#endif
 
 #if defined(__FreeBSD__)
 DRIVER_MODULE(umodem, usb, umodem_driver, umodem_devclass, usbd_driver_load,0);

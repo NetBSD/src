@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.7 1999/01/10 19:13:15 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.8 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,21 +118,6 @@ USB_ATTACH(ucom)
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
-
-#if defined(__FreeBSD__)
-static int
-ucom_detach(device_t self)
-{       
-        struct ucom_softc *sc = device_get_softc(self);
-	char *devinfo = (char *) device_get_desc(self);
-
-	if (devinfo) {
-		device_set_desc(self, NULL);
-		free(devinfo, M_USB);
-	}
-	return 0;
-}
-#endif
 
 #if defined(__FreeBSD__)
 DRIVER_MODULE(ucom, usb, ucom_driver, ucom_devclass, usbd_driver_load, 0);
