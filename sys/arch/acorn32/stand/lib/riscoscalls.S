@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.1 2002/12/28 23:57:38 reinoud Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.2 2003/11/19 00:11:55 gavan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -162,8 +162,8 @@ ENTRY(os_get_env)
 	mov	ip, sp
 	stmfd	sp!, {r4, fp, ip, lr, pc}
 	sub	fp, ip, #4
-	mov	r0, r3
-	mov	r1, r4
+	mov	r3, r0
+	mov	r4, r1
 	swi	OS_GetEnv
 	teq	r3, #0
 	strne	r1, [r3]
