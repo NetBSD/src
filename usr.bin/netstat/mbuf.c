@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: mbuf.c,v 1.6 1995/08/17 03:23:40 mycroft Exp $";
+static char *rcsid = "$Id: mbuf.c,v 1.7 1995/08/17 03:24:54 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,7 +60,6 @@ static struct mbtypes {
 	{ MT_FTABLE,	"fragment reassembly queue headers" },	/* XXX */
 	{ MT_SONAME,	"socket names and addresses" },
 	{ MT_SOOPTS,	"socket options" },
-	{ MT_RIGHTS,	"access rights" },
 	{ 0, 0 }
 };
 
