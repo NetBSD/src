@@ -49,8 +49,6 @@ Supported devices include:
 			Tyan Yorktown
 		Ultrastor 14f, 34f, and (possibly) 24f
 		Western Digital WD7000 SCSI host adapters (ISA cards only)
-		[NOTE: The WD7000 driver is not present on the "small"
-		 floppies.]
 
 	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
 		all of the display adapters NetBSD/i386 can work with
