@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: routed,v 1.5 2000/09/19 13:04:39 lukem Exp $
+# $NetBSD: routed,v 1.6 2001/04/06 09:38:54 wiz Exp $
 #
 
 # PROVIDE: routed
-# REQUIRE: DAEMON gated
+# REQUIRE: DAEMON
 
 . /etc/rc.subr
 
