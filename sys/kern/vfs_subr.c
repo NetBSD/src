@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.237 2004/12/18 03:07:40 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.238 2005/01/02 16:08:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.237 2004/12/18 03:07:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.238 2005/01/02 16:08:29 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.237 2004/12/18 03:07:40 christos Exp 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/device.h>
+#include <sys/extattr.h>
 #include <sys/dirent.h>
 #include <sys/filedesc.h>
 
@@ -3044,6 +3045,51 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 		    sizeof(sfs->f_mntfromname) - size);
 	}
 	return 0;
+}
+
+/*
+ * Default vfs_extattrctl routine for file systems that do not support
+ * it.
+ */
+/*ARGSUSED*/
+int
+vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
+    int attrnamespace, const char *attrname, struct proc *p)
+{
+
+	if (vp != NULL)
+		VOP_UNLOCK(vp, 0);
+	return (EOPNOTSUPP);
+}
+
+/*
+ * Credential check based on process requesting service, and per-attribute
+ * permissions.
+ *
+ * NOTE: Vnode must be locked.
+ */
+int
+extattr_check_cred(struct vnode *vp, int attrnamespace,
+    struct ucred *cred, struct proc *p, int access)
+{
+
+	if (cred == NOCRED)
+		return (0);
+
+	switch (attrnamespace) {
+	case EXTATTR_NAMESPACE_SYSTEM:
+		/*
+		 * Do we really want to allow this, or just require that
+		 * these requests come from kernel code (NOCRED case above)?
+		 */
+		return (suser(cred, &p->p_acflag));
+	
+	case EXTATTR_NAMESPACE_USER:
+		return (VOP_ACCESS(vp, access, cred, p));
+	
+	default:
+		return (EPERM);
+	}
 }
 
 #ifdef DDB

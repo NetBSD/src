@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.125 2004/11/10 17:30:56 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.126 2005/01/02 16:08:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -247,6 +247,9 @@ struct vfsops {
 				    struct ucred **));
 	int	(*vfs_snapshot)	__P((struct mount *, struct vnode *,
 				    struct timespec *));
+	int	(*vfs_extattrctl) __P((struct mount *, int,
+				    struct vnode *, int, const char *,
+				    struct proc *));
 	const struct vnodeopv_desc * const *vfs_opv_descs;
 	int	vfs_refcount;
 	LIST_ENTRY(vfsops) vfs_list;
@@ -266,6 +269,8 @@ struct vfsops {
 	(*(MP)->mnt_op->vfs_checkexp)(MP, NAM, EXFLG, CRED)
 #define	VFS_VPTOFH(VP, FIDP)	  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP)
 #define VFS_SNAPSHOT(MP, VP, TS)  (*(MP)->mnt_op->vfs_snapshot)(MP, VP, TS)
+#define	VFS_EXTATTRCTL(MP, C, VP, AS, AN, P) \
+	(*(MP)->mnt_op->vfs_extattrctl)(MP, C, VP, AS, AN, P)
 #endif /* _KERNEL */
 
 #ifdef _KERNEL
@@ -342,6 +347,9 @@ int	vfs_attach __P((struct vfsops *));
 int	vfs_detach __P((struct vfsops *));
 void	vfs_reinit __P((void));
 struct vfsops *vfs_getopsbyname __P((const char *));
+
+int	vfs_stdextattrctl __P((struct mount *, int, struct vnode *,
+	    int, const char *, struct proc *));
 
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
