@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.17 1998/08/29 17:01:14 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.18 1998/08/30 03:08:43 enami Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -522,7 +522,8 @@ sys_swapctl(p, v, retval)
 	struct swapdev *sdp;
 	struct swapent *sep;
 	char	userpath[PATH_MAX + 1];
-	int	count, error, misc, len;
+	size_t	len;
+	int	count, error, misc;
 	int	priority;
 	UVMHIST_FUNC("sys_swapctl"); UVMHIST_CALLED(pdhist);
 
