@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.24 2001/08/16 19:17:29 tv Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.25 2001/08/18 13:16:53 he Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -288,3 +288,10 @@ distrib/atari/miniroot/install.md		1.15
 distrib/mvme68k/miniroot/install.md		1.3
 
   Use "-t ffs" when remounting rootdev read/write.
+
+distrib/utils/x_dhclient/Makefile		1.8-1.9
+distrib/utils/x_dhclient/Src-common		1.6
+distrib/utils/x_dhclient/Src-omapip		1.5-1.6
+
+  Adapt boot media dhclient build to new source layout, and make 
+  it smaller.
