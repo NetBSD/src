@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.165 2000/03/23 06:30:07 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.166 2000/03/24 11:57:14 enami Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -207,14 +207,11 @@ main()
 
 	uvm_init();
 
-	/* Initialize callouts. */
-	callout_startup();
-
 	/* Do machine-dependent initialization. */
 	cpu_startup();
 
-	/* Finish initializing callouts. */
-	callout_startup1();
+	/* Initialize callouts. */
+	callout_startup();
 
 	/*
 	 * Initialize mbuf's.  Do this now because we might attempt to

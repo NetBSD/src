@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.13 2000/03/23 06:31:51 thorpej Exp $	*/
+/*	$NetBSD: callout.h,v 1.14 2000/03/24 11:57:16 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -105,8 +105,8 @@ extern int ncallout;
 extern int *callwheel_sizes;		/* for allocsys() */
 #endif
 
+void	callout_setsize __P((void));
 void	callout_startup __P((void));
-void	callout_startup1 __P((void));
 void	callout_init __P((struct callout *));
 void	callout_reset __P((struct callout *, int, void (*)(void *), void *));
 void	callout_stop __P((struct callout *));

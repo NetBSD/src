@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.9 2000/03/23 06:30:10 thorpej Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.10 2000/03/24 11:57:15 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -132,6 +132,10 @@ allocsys(v, mdcallback)
 	caddr_t	v;
 	caddr_t (*mdcallback) __P((caddr_t));
 {
+
+	/* Calculate the number of callwheels if necessary. */
+	if (callwheelsize == 0)
+		callout_setsize();
 
 	ALLOCSYS(v, callwheel, struct callout_queue, callwheelsize);
 #ifdef CALLWHEEL_STATS

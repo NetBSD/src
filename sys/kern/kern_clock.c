@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.53 2000/03/23 20:51:09 thorpej Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.54 2000/03/24 11:57:15 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -860,15 +860,13 @@ softclock()
 }
 
 /*
- * callout_startup:
+ * callout_setsize:
  *
- *	Initialize the callout subsystem.  Called from main().
- *
- *	This must be called before cpu_startup(), which calls
- *	allocsys(), which is what actually allocates the callwheel.
+ *	Determine how many callwheels are necessary and
+ *	set hash mask.  Called from allocsys().
  */
 void
-callout_startup()
+callout_setsize()
 {
 
 	for (callwheelsize = 1; callwheelsize < ncallout; callwheelsize <<= 1)
@@ -877,12 +875,12 @@ callout_startup()
 }
 
 /*
- * callout_startup1:
+ * callout_startup:
  *
  *	Initialize the callwheel buckets.
  */
 void
-callout_startup1()
+callout_startup()
 {
 	int i;
 
