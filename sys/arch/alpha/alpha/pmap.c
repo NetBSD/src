@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.46 1998/05/23 22:23:09 ross Exp $ */
+/* $NetBSD: pmap.c,v 1.47 1998/05/24 20:59:49 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 1998/05/23 22:23:09 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 1998/05/24 20:59:49 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2946,7 +2946,7 @@ pmap_pv_enter(pmap, pa, va, dolock)
 	boolean_t dolock;
 {
 	struct pv_head *pvh;
-	pv_entry_t pv, newpv;
+	pv_entry_t newpv;
 
 	/*
 	 * Allocate and fill in the new pv_entry.
@@ -2961,8 +2961,10 @@ pmap_pv_enter(pmap, pa, va, dolock)
 		simple_lock(&pvh->pvh_slock);
 
 #ifdef DEBUG
+	{
+	pv_entry_t pv;
 	/*
-	 * Make sure the entry doens't already exist.
+	 * Make sure the entry doesn't already exist.
 	 */
 	for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL;
 	     pv = LIST_NEXT(pv, pv_list))
@@ -2970,6 +2972,7 @@ pmap_pv_enter(pmap, pa, va, dolock)
 			printf("pmap = %p, va = 0x%lx\n", pmap, va);
 			panic("pmap_pv_enter: already in pv table");
 		}
+	}
 #endif
 
 	/*
