@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 1999/09/12 01:17:27 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50 1999/09/19 19:05:44 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2920,7 +2920,7 @@ pmap_clear_reference(pg)
 	boolean_t rv;
 
 	if (!is_managed(pa))
-		return;
+		return FALSE;
 	rv = pmap_is_referenced(pg);
 	pmap_clear_pv(pa, PV_FLAGS_USED);
 	return rv;
