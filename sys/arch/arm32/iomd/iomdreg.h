@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdreg.h,v 1.9 1998/03/26 20:05:49 mark Exp $	*/
+/*	$NetBSD: iomdreg.h,v 1.10 1998/04/10 06:53:08 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -108,8 +108,8 @@
 #define IOMD_MOUSEX	0x00000028
 #define IOMD_MOUSEY	0x00000029
 
-#define IOMD_MSDATA	0x000000a8	/* ARM7500 */
-#define IOMD_MSCR	0x000000ac	/* ARM7500 */
+#define IOMD_MSDATA	0x0000002a	/* ARM7500 */
+#define IOMD_MSCR	0x0000002b	/* ARM7500 */
 
 #define IOMD_DMATCR	0x00000030
 #define IOMD_IOTCR	0x00000031
