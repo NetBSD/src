@@ -1,4 +1,4 @@
-/*	$NetBSD: rxp.c,v 1.8 2002/08/06 03:39:44 dbj Exp $	*/
+/*	$NetBSD: rxp.c,v 1.9 2002/08/06 11:39:53 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)rxp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rxp.c,v 1.8 2002/08/06 03:39:44 dbj Exp $");
+__RCSID("$NetBSD: rxp.c,v 1.9 2002/08/06 11:39:53 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,7 +213,6 @@ rxp__match(s, first, j_succ, j_fail, sp_fail)
 	static const char *sp;
 	int ch;
 	Rxp_t *grp_end = NULL;
-	int err;
 
 	if (first) {
 		rp = rxpbuf;
