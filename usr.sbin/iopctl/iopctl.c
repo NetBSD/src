@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.8 2001/03/20 13:07:51 ad Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.9 2001/03/21 14:27:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.8 2001/03/20 13:07:51 ad Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.9 2001/03/21 14:27:29 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -341,6 +341,7 @@ showddmid(char **argv)
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
 		struct	i2o_param_ddm_identity di;
+		char padding[128];
 	} __attribute__ ((__packed__)) p;
 	char ident[128];
 
@@ -364,6 +365,7 @@ showdevid(char **argv)
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
 		struct	i2o_param_device_identity di;
+		char padding[128];
 	} __attribute__ ((__packed__)) p;
 	char ident[128];
 
