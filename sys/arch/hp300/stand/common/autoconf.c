@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2003/08/07 16:27:40 agc Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,6 +82,9 @@
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/rominfo.h>
 #include <hp300/stand/common/device.h>
+#include <hp300/stand/common/hpibvar.h>
+#include <hp300/stand/common/scsireg.h>
+#include <hp300/stand/common/scsivar.h>
 
 #include <hp300/dev/grfreg.h>
 
@@ -89,7 +92,7 @@
  * Mapping of ROM MSUS types to BSD major device numbers
  * WARNING: major numbers must match bdevsw indices in hp300/conf.c.
  */
-char rom2mdev[] = {
+static const char rom2mdev[] = {
 	0, 0, 						/* 0-1: none */
 	6,	/* 2: network device; special */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,		/* 3-13: none */
@@ -103,9 +106,11 @@ char rom2mdev[] = {
 struct hp_hw sc_table[MAXCTLRS];
 int cpuspeed;
 
-extern int internalhpib;
+static u_long msustobdev(void);
+static void find_devs(void);
 
 #ifdef PRINTROMINFO
+void
 printrominfo()
 {
 	struct rominfo *rp = (struct rominfo *)ROMADDR;
@@ -117,9 +122,9 @@ printrominfo()
 }
 #endif
 
+void
 configure()
 {
-	u_long msustobdev();
 
 	switch (machineid) {
 	case HP_320:
@@ -168,12 +173,12 @@ configure()
  *	ADAPTER comes from SCSI/HPIB driver logical unit number
  *		(passed back via unused hw_pa field)
  */
-u_long
+static u_long
 msustobdev()
 {
 	struct rominfo *rp = (struct rominfo *) ROMADDR;
 	u_long bdev = 0;
-	register struct hp_hw *hw;
+	struct hp_hw *hw;
 	int sc, type, ctlr, slave, punit;
 
 	sc = (rp->msus >> 8) & 0xFF;
@@ -191,21 +196,23 @@ msustobdev()
 #ifdef PRINTROMINFO
 	printf("msus %x -> bdev %x\n", rp->msus, bdev);
 #endif
-	return (bdev);
+	return bdev;
 }
 
+int
 sctoaddr(sc)
 	int sc;
 {
+
 	if (sc == -1)
-		return(GRFIADDR);
+		return GRFIADDR ;
 	if (sc == 7 && internalhpib)
-		return(internalhpib);
+		return internalhpib ;
 	if (sc < 32)
-		return(DIOBASE + sc * DIOCSIZE);
+		return DIOBASE + sc * DIOCSIZE ;
 	if (sc >= 132)
-		return(DIOIIBASE + (sc - 132) * DIOIICSIZE);
-	return(sc);
+		return DIOIIBASE + (sc - 132) * DIOIICSIZE ;
+	return sc;
 }
 
 /*
@@ -214,12 +221,13 @@ sctoaddr(sc)
  *
  * Note that we only care about displays, LANCEs, SCSIs and HP-IBs.
  */
+static void
 find_devs()
 {
 	short sc, sctop;
 	u_char *id_reg;
-	register caddr_t addr;
-	register struct hp_hw *hw;
+	caddr_t addr;
+	struct hp_hw *hw;
 
 	hw = sc_table;
 	sctop = machineid == HP_320 ? 32 : 256;

@@ -1,4 +1,4 @@
-/*	$NetBSD: consdefs.h,v 1.3 2003/08/07 16:27:40 agc Exp $	*/
+/*	$NetBSD: consdefs.h,v 1.4 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -39,26 +39,26 @@ extern	int cons_scode;
  * Console routine prototypes.
  */
 #ifdef ITECONSOLE
-void	iteprobe __P((struct consdev *));
-void	iteinit __P((struct consdev *));
-int	itegetchar __P((dev_t));
-void	iteputchar __P((dev_t, int));
+void	iteprobe(struct consdev *);
+void	iteinit(struct consdev *);
+int	itegetchar(dev_t);
+void	iteputchar(dev_t, int);
 #endif
 #ifdef DCACONSOLE
-void	dcaprobe __P((struct consdev *));
-void	dcainit __P((struct consdev *));
-int	dcagetchar __P((dev_t));
-void	dcaputchar __P((dev_t, int));
+void	dcaprobe(struct consdev *);
+void	dcainit(struct consdev *);
+int	dcagetchar(dev_t);
+void	dcaputchar(dev_t, int);
 #endif
 #ifdef APCICONSOLE
-void	apciprobe __P((struct consdev *));
-void	apciinit __P((struct consdev *));
-int	apcigetchar __P((dev_t));
-void	apciputchar __P((dev_t, int));
+void	apciprobe(struct consdev *);
+void	apciinit(struct consdev *);
+int	apcigetchar(dev_t);
+void	apciputchar(dev_t, int);
 #endif
 #ifdef DCMCONSOLE
-void	dcmprobe __P((struct consdev *));
-void	dcminit __P((struct consdev *));
-int	dcmgetchar __P((dev_t));
-void	dcmputchar __P((dev_t, int));
+void	dcmprobe(struct consdev *);
+void	dcminit(struct consdev *);
+int	dcmgetchar(dev_t);
+void	dcmputchar(dev_t, int);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.6 2003/11/08 12:02:33 tsutsui Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.7 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -115,13 +115,13 @@ dnkbd_getc()
 		/* Ignoring mouse? */
 		if (dnkbd_ignore) {
 			dnkbd_ignore--;
-			return (0);
+			return 0;
 		}
 
 		/* Is this the start of a mouse packet? */
 		if (c == 0xdf) {
 			dnkbd_ignore = 3;	/* 3 bytes of junk */
-			return (0);
+			return 0;
 		}
 
 		/* It's a keyboard event. */
@@ -141,7 +141,7 @@ dnkbd_getc()
 		}
 	}
 
-	return (c);
+	return c;
 }
 #endif /* SMALL */
 
@@ -167,7 +167,7 @@ dnkbd_init()
 	case HP_433:
 		break;
 	default:
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -175,11 +175,11 @@ dnkbd_init()
 	 * is a Domain keyboard attached.
 	 */
 	if (badaddr((caddr_t)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(0))))
-		return (0);
+		return 0;
 
 	/*
 	 * XXX Any other initialization?  This appears to work ok.
 	 */
-	return (1);
+	return 1;
 }
 #endif /* ITECONSOLE && DOMAIN_KEYBOARD */

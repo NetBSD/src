@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.2 2003/08/07 16:27:41 agc Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -54,4 +54,29 @@ struct	hpib_softc {
 	char	*sc_addr;
 };
 
-extern	struct hpib_softc hpib_softc[];
+extern struct hpib_softc hpib_softc[];
+extern int internalhpib;
+
+/* hpib.c */
+void hpibinit(void);
+int hpibalive(int);
+int hpibid(int, int);
+int hpibsend(int, int, int, char *, int);
+int hpibrecv(int, int, int, char *, int);
+int hpibswait(int, int);
+void hpibgo(int, int, int, char *, int, int);
+
+/* fhpib.c */
+int fhpibinit(int);
+void fhpibreset(int);
+int fhpibsend(int, int, int, char *, int);
+int fhpibrecv(int, int, int, char *, int);
+int fhpibppoll(int);
+
+/* nhpib.c */
+int nhpibinit(int);
+void nhpibreset(int);
+int nhpibsend(int, int, int, char *, int);
+int nhpibrecv(int, int, int, char *, int);
+int nhpibppoll(int);
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_subr.c,v 1.2 2003/08/07 16:27:41 agc Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -85,6 +85,7 @@
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
 
+void
 ite_fontinfo(ip)
 	struct ite_data *ip;
 {
@@ -117,8 +118,9 @@ ite_fontinfo(ip)
 	}
 }
 
+void
 ite_fontinit(ip)
-	register struct ite_data *ip;
+	struct ite_data *ip;
 {
 	int bytewidth = (((ip->ftwidth - 1) / 8) + 1);
 	int glyphsize = bytewidth * ip->ftheight;
@@ -149,16 +151,17 @@ ite_readbyte(ip, disp)
 	struct ite_data *ip;
 	int disp;
 {
-	return((u_char) *(((u_char *)ip->regbase) + disp));
+
+	return (u_char)*(((u_char *)ip->regbase) + disp);
 }
 
 void
 ite_writeglyph(ip, fbmem, glyphp)
-	register struct ite_data *ip;
-	register u_char *fbmem, *glyphp;
+	struct ite_data *ip;
+	u_char *fbmem, *glyphp;
 {
-	register int bn;
-	int c, l, b;
+	int bn;
+	int l, b;
 
 	for (l = 0; l < ip->ftheight; l++) {
 		bn = 7;

@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.2 2003/08/07 16:27:42 agc Exp $	*/
+/*	$NetBSD: prf.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -31,11 +31,15 @@
  *	@(#)prf.c	8.1 (Berkeley) 6/10/93
  */
 
+#include <lib/libsa/stand.h>
+#include <hp300/stand/common/samachdep.h>
+
+int
 getchar()
 {
-	register int c;
+	int c;
 
-	while((c = cngetc()) == 0)
+	while ((c = cngetc()) == 0)
 		;
 	if (c == '\r')
 		c = '\n';
@@ -43,15 +47,16 @@ getchar()
 		panic("^C");
 		/* NOTREACHED */
 	}
-	return(c);
+	return c;
 }
 
+int
 tgetchar()
 {
-	register int c;
+	int c;
 
 	if ((c = cngetc()) == 0)
-        	return(0);
+        	return 0;
         
 	if (c == '\r')
 		c = '\n';
@@ -59,11 +64,12 @@ tgetchar()
 		panic("^C");
 		/* NOTREACHED */
 	}
-	return(c);
+	return c;
 }
 
+void
 putchar(c)
-	register int c;
+	int c;
 {
 	cnputc(c);
 	if (c == '\n')

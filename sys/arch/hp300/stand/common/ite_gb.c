@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_gb.c,v 1.2 2003/08/07 16:27:41 agc Exp $	*/
+/*	$NetBSD: ite_gb.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -86,48 +86,48 @@
 #include <hp300/stand/common/samachdep.h>
 #include <hp300/stand/common/itevar.h>
 
-#define REGBASE     	((struct gboxfb *)(ip->regbase))
 #define WINDOWMOVER 	gbox_windowmove
 
-void	gbox_windowmove __P((struct ite_data *, int, int, int, int,
-	    int, int, int));
+void gbox_windowmove(struct ite_data *, int, int, int, int, int, int, int);
 
 void
 gbox_init(ip)
-	register struct ite_data *ip;
+	struct ite_data *ip;
 {
-	REGBASE->write_protect = 0x0;
-	REGBASE->interrupt = 0x4;
-	REGBASE->rep_rule = RR_COPY;
-	REGBASE->blink1 = 0xff;
-	REGBASE->blink2 = 0xff;
-	REGBASE->sec_interrupt = 0x01;
+	struct gboxfb *regbase = (void *)ip->regbase;
+
+	regbase->write_protect = 0x0;
+	regbase->interrupt = 0x4;
+	regbase->rep_rule = RR_COPY;
+	regbase->blink1 = 0xff;
+	regbase->blink2 = 0xff;
+	regbase->sec_interrupt = 0x01;
 
 	/*
 	 * Set up the color map entries. We use three entries in the
 	 * color map. The first, is for black, the second is for
 	 * white, and the very last entry is for the inverted cursor.
 	 */
-	REGBASE->creg_select = 0x00;
-	REGBASE->cmap_red    = 0x00;
-	REGBASE->cmap_grn    = 0x00;
-	REGBASE->cmap_blu    = 0x00;
-	REGBASE->cmap_write  = 0x00;
-	gbcm_waitbusy(ip->regbase);
-	
-	REGBASE->creg_select = 0x01;
-	REGBASE->cmap_red    = 0xFF;
-	REGBASE->cmap_grn    = 0xFF;
-	REGBASE->cmap_blu    = 0xFF;
-	REGBASE->cmap_write  = 0x01;
-	gbcm_waitbusy(ip->regbase);
+	regbase->creg_select = 0x00;
+	regbase->cmap_red    = 0x00;
+	regbase->cmap_grn    = 0x00;
+	regbase->cmap_blu    = 0x00;
+	regbase->cmap_write  = 0x00;
+	gbcm_waitbusy(regbase);
 
-	REGBASE->creg_select = 0xFF;
-	REGBASE->cmap_red    = 0xFF;
-	REGBASE->cmap_grn    = 0xFF;
-	REGBASE->cmap_blu    = 0xFF;
-	REGBASE->cmap_write  = 0x01;
-	gbcm_waitbusy(ip->regbase);
+	regbase->creg_select = 0x01;
+	regbase->cmap_red    = 0xFF;
+	regbase->cmap_grn    = 0xFF;
+	regbase->cmap_blu    = 0xFF;
+	regbase->cmap_write  = 0x01;
+	gbcm_waitbusy(regbase);
+
+	regbase->creg_select = 0xFF;
+	regbase->cmap_red    = 0xFF;
+	regbase->cmap_grn    = 0xFF;
+	regbase->cmap_blu    = 0xFF;
+	regbase->cmap_write  = 0x01;
+	gbcm_waitbusy(regbase);
 
 	ite_fontinfo(ip);
 	ite_fontinit(ip);
@@ -137,7 +137,7 @@ gbox_init(ip)
 	 * but it crashes. Figure it out later.
 	 */
 	gbox_windowmove(ip, 0, 0, 0, 0, ip->dheight, ip->dwidth, RR_CLEAR);
-	tile_mover_waitbusy(ip->regbase);
+	tile_mover_waitbusy(regbase);
 
 	/*
 	 * Stash the inverted cursor.
@@ -149,8 +149,8 @@ gbox_init(ip)
 
 void
 gbox_putc(ip, c, dy, dx, mode)
-	register struct ite_data *ip;
-        register int dy, dx;
+	struct ite_data *ip;
+	int dy, dx;
 	int c, mode;
 {
 	gbox_windowmove(ip, charY(ip, c), charX(ip, c),
@@ -160,26 +160,25 @@ gbox_putc(ip, c, dy, dx, mode)
 
 void
 gbox_cursor(ip, flag)
-	register struct ite_data *ip;
-        register int flag;
+	struct ite_data *ip;
+	int flag;
 {
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
 	else if (flag == MOVE_CURSOR) {
 		erase_cursor(ip)
 		draw_cursor(ip)
-	}
-	else
+	} else
 		erase_cursor(ip)
 }
 
 void
 gbox_clear(ip, sy, sx, h, w)
 	struct ite_data *ip;
-	register int sy, sx, h, w;
+	int sy, sx, h, w;
 {
 	gbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
-			sy * ip->ftheight, sx * ip->ftwidth, 
+			sy * ip->ftheight, sx * ip->ftwidth,
 			h  * ip->ftheight, w  * ip->ftwidth,
 			RR_CLEAR);
 }
@@ -196,14 +195,15 @@ gbox_clear(ip, sy, sx, h, w)
 
 void
 gbox_scroll(ip, sy, sx, count, dir)
-        register struct ite_data *ip;
-        register int sy;
-        int dir, sx, count;
+	struct ite_data *ip;
+	int sy;
+	int dir, sx, count;
 {
-	register int height, dy, i;
-	
-	tile_mover_waitbusy(ip->regbase);
-	REGBASE->write_protect = 0x0;
+	struct gboxfb *regbase = (void *)ip->regbase;
+	int height, dy, i;
+
+	tile_mover_waitbusy(regbase);
+	regbase->write_protect = 0x0;
 
 	gbox_cursor(ip, ERASE_CURSOR);
 
@@ -215,22 +215,23 @@ gbox_scroll(ip, sy, sx, count, dir)
 
 void
 gbox_windowmove(ip, sy, sx, dy, dx, h, w, mask)
-     register struct ite_data *ip;
-     int sy, sx, dy, dx, mask;
-     register int h, w;
+	struct ite_data *ip;
+	int sy, sx, dy, dx, mask;
+	int h, w;
 {
-	register int src, dest;
+	struct gboxfb *regbase = (void *)ip->regbase;
+	int src, dest;
 
 	src  = (sy * 1024) + sx;	/* upper left corner in pixels */
 	dest = (dy * 1024) + dx;
 
-	tile_mover_waitbusy(ip->regbase);
-	REGBASE->width = -(w / 4);
-	REGBASE->height = -(h / 4);
+	tile_mover_waitbusy(regbase);
+	regbase->width = -(w / 4);
+	regbase->height = -(h / 4);
 	if (src < dest)
-		REGBASE->rep_rule = MOVE_DOWN_RIGHT|mask;
+		regbase->rep_rule = MOVE_DOWN_RIGHT|mask;
 	else {
-		REGBASE->rep_rule = MOVE_UP_LEFT|mask;
+		regbase->rep_rule = MOVE_UP_LEFT|mask;
 		/*
 		 * Adjust to top of lower right tile of the block.
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.3 2003/08/07 16:27:40 agc Exp $	*/
+/*	$NetBSD: dcm.c,v 1.4 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -90,9 +90,8 @@ void
 dcmprobe(cp)
 	struct consdev *cp;
 {
-	extern struct hp_hw sc_table[];
-	register struct hp_hw *hw;
-	register struct dcmdevice *dcm;
+	struct hp_hw *hw;
+	struct dcmdevice *dcm;
 
 	for (hw = sc_table; hw < &sc_table[MAXCTLRS]; hw++)
 		if (HW_ISDEV(hw, D_COMMDCM) && !badaddr((caddr_t)hw->hw_kva))
@@ -127,8 +126,8 @@ void
 dcminit(cp)
 	struct consdev *cp;
 {
-	register struct dcmdevice *dcm = dcmcnaddr;
-	register int port = DCMCONUNIT;
+	struct dcmdevice *dcm = dcmcnaddr;
+	int port = DCMCONUNIT;
 
 	dcm->dcm_ic = IC_ID;
 	while (dcm->dcm_thead[port].ptr != dcm->dcm_ttail[port].ptr)
@@ -148,17 +147,17 @@ int
 dcmgetchar(dev)
 	dev_t dev;
 {
-	register struct dcmdevice *dcm = dcmcnaddr;
-	register struct dcmrfifo *fifo;
-	register struct dcmpreg *pp;
-	register unsigned head;
+	struct dcmdevice *dcm = dcmcnaddr;
+	struct dcmrfifo *fifo;
+	struct dcmpreg *pp;
+	unsigned int head;
 	int c, stat, port;
 
 	port = DCMCONUNIT;
 	pp = dcm_preg(dcm, port);
 	head = pp->r_head & RX_MASK;
 	if (head == (pp->r_tail & RX_MASK))
-		return(0);
+		return 0;
 	fifo = &dcm->dcm_rfifos[3-port][head>>1];
 	c = fifo->data_char;
 	stat = fifo->data_stat;
@@ -166,14 +165,15 @@ dcmgetchar(dev)
 	SEM_LOCK(dcm);
 	stat = dcm->dcm_iir;
 	SEM_UNLOCK(dcm);
-	return(c);
+	return c;
 }
 #else
 int
 dcmgetchar(dev)
 	dev_t dev;
 {
-	return(0);
+
+	return 0;
 }
 #endif
 
@@ -181,12 +181,12 @@ dcmgetchar(dev)
 void
 dcmputchar(dev, c)
 	dev_t dev;
-	register int c;
+	int c;
 {
-	register struct dcmdevice *dcm = dcmcnaddr;
-	register struct dcmpreg *pp;
-	register int timo;
-	unsigned tail;
+	struct dcmdevice *dcm = dcmcnaddr;
+	struct dcmpreg *pp;
+	int timo;
+	unsigned int tail;
 	int port, stat;
 
 	port = DCMCONUNIT;

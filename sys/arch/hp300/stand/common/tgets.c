@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.2 2003/08/07 16:27:43 agc Exp $	*/
+/*	$NetBSD: tgets.c,v 1.3 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,58 +31,64 @@
  *	@(#)gets.c	8.1 (Berkeley) 6/11/93
  */
 
+#include <sys/param.h>
+
+#include <lib/libsa/stand.h>
+
+#include <hp300/stand/common/samachdep.h>
+
 int
 tgets(buf)
-    char *buf;
+	char *buf;
 {
-    register int c;
-    int i;
-    register char *lp = buf;
+	int c;
+	int i;
+	char *lp = buf;
 
-    for (i = 240000; i > 0; i--) {
-        c = tgetchar() & 0177;
-        if (c) {
-            for (;;) {
-                switch (c) {
-                case '\n':
-                case '\r':
-                    *lp = '\0';
-                    putchar('\n');
-                    return (1);
-                case '\b':
-                case '\177':
-                    if (lp > buf) {
-                        lp--;
-                        putchar('\b');
-                        putchar(' ');
-                        putchar('\b');
-                    }
-                    break;
-                case '#':
-                    if (lp > buf)
-                        --lp;
-                    break;
-                case 'r'&037: {
-                    register char *p;
+	for (i = 240000; i > 0; i--) {
+		c = tgetchar() & 0177;
+		if (c) {
+			for (;;) {
+				switch (c) {
+				case '\n':
+				case '\r':
+					*lp = '\0';
+					putchar('\n');
+					return 1;
+				case '\b':
+				case '\177':
+					if (lp > buf) {
+						lp--;
+						putchar('\b');
+						putchar(' ');
+						putchar('\b');
+					}
+					break;
+				case '#':
+					if (lp > buf)
+						--lp;
+					break;
+				case 'r' & 037: {
+					char *p;
 
-                    putchar('\n');
-                    for (p = buf; p < lp; ++p)
-                        putchar(*p);
-                    break;
-                }
-                case '@':
-                case 'u'&037:
-                case 'w'&037:
-                    lp = buf;
-                    putchar('\n');
-                    break;
-                default:
-                    *lp++ = c;
-                    putchar(c);
-                }
-                c = getchar() & 0177;
-            }
-        }
-    }
-    return (0);
+					putchar('\n');
+					for (p = buf; p < lp; ++p)
+						putchar(*p);
+					break;
+				}
+				case '@':
+				case 'u'&037:
+				case 'w'&037:
+					lp = buf;
+					putchar('\n');
+					break;
+				default:
+					*lp++ = c;
+					putchar(c);
+				}
+				c = getchar() & 0177;
+			}
+		}
+	}
+	return 0;
 }

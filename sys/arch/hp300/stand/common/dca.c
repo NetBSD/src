@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.3 2003/11/08 12:02:33 tsutsui Exp $	*/
+/*	$NetBSD: dca.c,v 1.4 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -94,7 +94,7 @@ void
 dcaprobe(cp)
 	struct consdev *cp;
 {
-	register struct dcadevice *dca;
+	struct dcadevice *dca;
 
 	dcacnaddr = (struct dcadevice *) sctoaddr(DCACONSCODE);
 	if (badaddr((char *)dcacnaddr)) {
@@ -127,7 +127,7 @@ void
 dcainit(cp)
 	struct consdev *cp;
 {
-	register struct dcadevice *dca = dcacnaddr;
+	struct dcadevice *dca = dcacnaddr;
 
 	dca->dca_reset = 0xFF;
 	DELAY(100);
@@ -147,21 +147,22 @@ int
 dcagetchar(dev)
 	dev_t dev;
 {
-	register struct dcadevice *dca = dcacnaddr;
+	struct dcadevice *dca = dcacnaddr;
 	short stat;
 	int c;
 
 	if (((stat = dca->dca_lsr) & LSR_RXRDY) == 0)
-		return(0);
+		return 0;
 	c = dca->dca_data;
-	return(c);
+	return c;
 }
 #else
 int
 dcagetchar(dev)
 	dev_t dev;
 {
-	return(0);
+
+	return 0;
 }
 #endif
 
@@ -169,10 +170,10 @@ dcagetchar(dev)
 void
 dcaputchar(dev, c)
 	dev_t dev;
-	register int c;
+	int c;
 {
-	register struct dcadevice *dca = dcacnaddr;
-	register int timo;
+	struct dcadevice *dca = dcacnaddr;
+	int timo;
 	short stat;
 
 	/* wait a reasonable time for the transmitter to come ready */

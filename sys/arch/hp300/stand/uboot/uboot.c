@@ -1,4 +1,4 @@
-/*	$NetBSD: uboot.c,v 1.10 2003/08/07 16:27:44 agc Exp $	*/
+/*	$NetBSD: uboot.c,v 1.11 2003/11/14 16:52:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -35,6 +35,7 @@
 #include <sys/boot_flag.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include <hp300/stand/common/samachdep.h>
 
