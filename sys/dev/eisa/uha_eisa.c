@@ -1,7 +1,7 @@
-/*	$NetBSD: uha_eisa.c,v 1.6 1996/11/15 22:53:39 jonathan Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.7 1997/03/29 02:32:30 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,11 +64,12 @@ struct cfattach uha_eisa_ca = {
 #endif /* ! DDB */
 #define KVTOPHYS(x)	vtophys(x)
 
-int u24_find __P((bus_space_tag_t, bus_space_handle_t, struct uha_softc *));
-void u24_start_mbox __P((struct uha_softc *, struct uha_mscp *));
-int u24_poll __P((struct uha_softc *, struct scsi_xfer *, int));
-int u24_intr __P((void *));
-void u24_init __P((struct uha_softc *));
+int	u24_find __P((bus_space_tag_t, bus_space_handle_t,
+	    struct uha_probe_data *));
+void	u24_start_mbox __P((struct uha_softc *, struct uha_mscp *));
+int	u24_poll __P((struct uha_softc *, struct scsi_xfer *, int));
+int	u24_intr __P((void *));
+void	u24_init __P((struct uha_softc *));
 
 /*
  * Check the slots looking for a board we recognise
@@ -112,6 +113,7 @@ uha_eisa_attach(parent, self, aux)
 	struct uha_softc *sc = (void *)self;
 	bus_space_tag_t iot = ea->ea_iot;
 	bus_space_handle_t ioh;
+	struct uha_probe_data upd;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
 	const char *model, *intrstr;
@@ -124,16 +126,16 @@ uha_eisa_attach(parent, self, aux)
 
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
 	    UHA_EISA_SLOT_OFFSET, UHA_EISA_IOSIZE, 0, &ioh))
-		panic("uha_attach: could not map I/O addresses");
+		panic("uha_eisa_attach: could not map I/O addresses");
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
-	if (!u24_find(iot, ioh, sc))
-		panic("uha_attach: u24_find failed!");
+	if (!u24_find(iot, ioh, &upd))
+		panic("uha_eisa_attach: u24_find failed!");
 
-	if (eisa_intr_map(ec, sc->sc_irq, &ih)) {
+	if (eisa_intr_map(ec, upd.sc_irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",
-		    sc->sc_dev.dv_xname, sc->sc_irq);
+		    sc->sc_dev.dv_xname, upd.sc_irq);
 		return;
 	}
 	intrstr = eisa_intr_string(ec, ih);
@@ -154,14 +156,14 @@ uha_eisa_attach(parent, self, aux)
 	sc->poll = u24_poll;
 	sc->init = u24_init;
 
-	uha_attach(sc);
+	uha_attach(sc, &upd);
 }
 
 int
 u24_find(iot, ioh, sc)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	struct uha_softc *sc;
+	struct uha_probe_data *sc;
 {
 	u_int8_t config0, config1, config2;
 	int irq, drq;
@@ -208,7 +210,7 @@ u24_find(iot, ioh, sc)
 	}
 
 	/* if we want to fill in softc, do so now */
-	if (sc != NULL) {
+	if (sc) {
 		sc->sc_irq = irq;
 		sc->sc_drq = drq;
 		sc->sc_scsi_dev = config2 & U24_HOSTID_MASK;
