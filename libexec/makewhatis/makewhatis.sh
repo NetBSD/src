@@ -1,6 +1,10 @@
 #! /bin/sh
 #
 # Written by J.T. Conklin <jtc@netbsd.org>.
+#
+# Little addons to handle also linked and unformated man pages
+# by Thorsten Frueauf <frueauf@ira.uka.de>.
+#
 # Public domain.
 #
 
@@ -12,19 +16,29 @@ if test ! -d "$MANDIR"; then
 	exit 1
 fi
 
-find $MANDIR -type f -name '*.0' -print | while read file
+find $MANDIR \( -type f -or -type l \) -name '*.0' -print | while read file
 do
 	sed -n -f /usr/share/man/makewhatis.sed $file;
 done > /tmp/whatis$$
 
-find $MANDIR -type f -name '*.0.Z' -print | while read file
+find $MANDIR \( -type f -or -type l \) -name '*.[1-9]' -print | while read file
+do
+	nroff -man $file | sed -n -f /usr/share/man/makewhatis.sed;
+done >> /tmp/whatis$$
+
+find $MANDIR \( -type f -or -type l \) -name '*.[1-9]?' -print | while read file
+do
+	nroff -man $file | sed -n -f /usr/share/man/makewhatis.sed;
+done >> /tmp/whatis$$
+	
+find $MANDIR \( -type f -or -type l \) -name '*.0.Z' -print | while read file
 do
 	zcat $file | sed -n -f /usr/share/man/makewhatis.sed;
 done >> /tmp/whatis$$
 
-find $MANDIR -type f -name '*.0.gz' -print | while read file
+find $MANDIR \( -type f -or -type l \) -name '*.0.gz' -print | while read file
 do
-	gzip -dc $file | sed -n -f /usr/share/man/makewhatis.sed;
+	gzip -fdc $file | sed -n -f /usr/share/man/makewhatis.sed;
 done >> /tmp/whatis$$
 
 sort -u -o /tmp/whatis$$ /tmp/whatis$$
