@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.13 1997/08/23 07:32:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.13 1997/08/23 07:32:55 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -357,7 +357,7 @@ remglob(argv, doswitch, errbuf)
                 return (cp);
         }
         if (ftemp == NULL) {
-                (void)snprintf(temp, sizeof(temp), "%s%s", _PATH_TMP, TMPFILE);
+                (void)snprintf(temp, sizeof(temp), "%s/%s", tmpdir, TMPFILE);
                 if ((fd = mkstemp(temp)) < 0) {
                         warn("unable to create temporary file %s", temp);
                         return (NULL);

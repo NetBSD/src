@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.19 1997/08/23 07:32:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -115,6 +115,7 @@ int	bytesize;		/* local byte size in binary */
 int	anonftp;		/* automatic anonymous login */
 int	dirchange;		/* remote directory changed by cd command */
 int	ttywidth;		/* width of tty */
+char   *tmpdir;			/* temporary directory */
 
 #ifndef SMALL
 int	  editing;		/* command line editing enabled */
