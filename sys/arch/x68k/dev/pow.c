@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: pow.c,v 1.2 1996/05/15 16:12:51 oki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -39,11 +39,13 @@
 
 #include <string.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
+#include <sys/signalvar.h>
 
 #include <machine/powioctl.h>
 #include <x68k/dev/powvar.h>
@@ -53,11 +55,10 @@
 #define sramtop (IODEVbase->io_sram)
 #define rtc (IODEVbase->io_rtc)
 
-static int powinit ();
-
 struct pow_softc pows[NPOW];
 
 /* ARGSUSED */
+void
 powattach(num)
 	int num;
 {
@@ -70,11 +71,11 @@ powattach(num)
 	mfp.aer &= ~7;
 
 	for (minor = 0; minor < num; minor++) {
-		if (minor == 0) {
+		if (minor == 0)
 			pows[minor].status = POW_FREE;
-		} else {
+		else
 			pows[minor].status = POW_ANY;
-		}
+
 		pows[minor].sw = sw;
 
 		if (sw) {
@@ -82,7 +83,7 @@ powattach(num)
 			mfp.ierb |= sw;
 		}
 
-		printf ("pow%d: started by ", minor);
+		printf("pow%d: started by ", minor);
 		if ((sw & POW_ALARMSW) && sramtop[0x26] == 0)
 			printf ("RTC alarm.\n");
 		else if (sw & POW_EXTERNALSW)
@@ -92,8 +93,6 @@ powattach(num)
 		else
 			printf ("???.\n");
 	}
-
-	return 1;
 }
 
 /*ARGSUSED*/
@@ -195,8 +194,7 @@ setalarm (bp)
 		RTCWAIT;
 		rtc.bank1.mode = 0x08;
 	}
-
-	splx (s);
+	splx(s);
 
 	return 0;
 }
@@ -216,7 +214,7 @@ powioctl (dev, cmd, addr, flag, p)
 	switch (cmd) {
 	case POWIOCGPOWERINFO:
 		{
-			struct x68k_powerinfo *bp = (struct x68k_powerinfo*) addr;
+			struct x68k_powerinfo *bp = (struct x68k_powerinfo*)addr;
 			if (!(sc->rw & FREAD))
 				return EBADF;
 			bp->pow_switch_boottime = sc->sw;
@@ -268,19 +266,19 @@ powioctl (dev, cmd, addr, flag, p)
 }
 
 void
-powintr ()
+powintr()
 {
 	int sw;
 	int s;
 
-	s = spl6 ();
+	s = spl6();
 
 	sw = ~mfp.gpip & 6;
 	mfp.aer &= ~sw;
 	mfp.ierb |= sw;
 
 	if (pows[0].status == POW_BUSY && pows[0].pid != 0)
-		psignal (pows[0].proc, pows[0].signum);
+		psignal(pows[0].proc, pows[0].signum);
 
-	splx (s);
+	splx(s);
 }
