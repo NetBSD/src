@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.29 1994/12/01 17:24:44 chopps Exp $
+#	$NetBSD: GENERIC,v 1.30 1994/12/28 09:13:40 chopps Exp $
 
 #
 # GENERIC AMIGA
@@ -110,8 +110,8 @@ options		GRF_AGA		# AGA Chip Set
 #options	"KFONT_8X11"	# 8x11 font
 
 grfcc0		at mainbus0		# custom chips
-grfrt0		at ztwobus0		# retina II
-grfrh0		at zthreebus0		# retina III
+grfrt0		at zbus0		# retina II
+grfrh0		at zbus0		# retina III
 
 grf0		at grfcc0
 grf1		at grfrt0
@@ -121,36 +121,48 @@ ite0		at grf0			# terminal emulators for grf's
 ite1		at grf1			# terminal emulators for grf's
 ite2		at grf2			# terminal emulators for grf's
 
-le0		at ztwobus0		# Lance ethernet.
-ed0		at ztwobus0		# dp8390 ethernet
+mfc0		at zbus0		# MultiFaceCard I/O board
+mfcs0		at mfc0 unit 0		# MFC serial
+mfcs1		at mfc0 unit 1		# MFC serial
+#mfcp0		at mfc0 unit 0		# MFC parallel
+#mfc1		at zbus0		# MultiFaceCard 2nd I/O board
+#mfcs2		at mfc1 unit 0
+#mfcs3		at mfc1 unit 1
+#mfcp1		at mfc1 unit 0
+
+le0		at zbus0		# Lance ethernet.
+ed0		at zbus0		# dp8390 ethernet
 
 # scsi stuff, all possible
-gvpbus0		at ztwobus0
+gvpbus0		at zbus0
 gtsc0		at gvpbus0		# GVP series II scsi
 ahsc0		at mainbus0		# A3000 scsi
-atzsc0		at ztwobus0
-wstsc0		at ztwobus0		# Wordsync II scsi
-ivsc0		at ztwobus0		# IVS scsi
-mlhsc0		at ztwobus0		# Hacker scsi
-otgsc0		at ztwobus0		# 12 gauge scsi
-zssc0		at ztwobus0		# Zeus scsi
-mgnsc0		at ztwobus0		# Magnum scsi
-wesc0		at zthreebus0		# Warp Engine scsi
+atzsc0		at zbus0
+wstsc0		at zbus0		# Wordsync II scsi
+ivsc0		at zbus0		# IVS scsi
+mlhsc0		at zbus0		# Hacker scsi
+otgsc0		at zbus0		# 12 gauge scsi
+zssc0		at zbus0		# Zeus scsi
+mgnsc0		at zbus0		# Magnum scsi
+wesc0		at zbus0		# Warp Engine scsi
 idesc0		at mainbus0		# A4000 & A1200 IDE
-afsc0		at zthreebus0		# 4091 scsi
+afsc0		at zbus0		# A4091 scsi
+flz3sc0		at zbus0		# FastlaneZ3 scsi
 
-scsibus0	at gtsc0
-scsibus1	at ahsc0
-scsibus2	at atzsc0
-scsibus3	at wstsc0
-scsibus4	at ivsc0
-scsibus5	at mlhsc0
-scsibus6	at otgsc0
-scsibus7	at zssc0
-scsibus8	at mgnsc0
-scsibus9	at wesc0
-scsibus10	at idesc0
-scsibus11	at afsc0
+scsibus*	at gtsc0
+scsibus*	at ahsc0
+scsibus*	at atzsc0
+scsibus*	at wstsc0
+scsibus*	at ivsc0
+scsibus*	at mlhsc0
+scsibus*	at otgsc0
+scsibus*	at zssc0
+scsibus*	at mgnsc0
+scsibus*	at wesc0
+scsibus*	at idesc0
+scsibus*	at afsc0
+scsibus*	at flz3sc0
+
 # each hard drive from low target to high
 # will configure to the next available sd unit number
 sd*	at scsibus? target ? lun ?	# scsi disks

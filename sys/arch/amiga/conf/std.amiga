@@ -1,4 +1,4 @@
-#	$NetBSD: std.amiga,v 1.4 1994/10/26 02:02:31 cgd Exp $
+#	$NetBSD: std.amiga,v 1.5 1994/12/28 09:13:45 chopps Exp $
 
 # standard amiga information
 
@@ -12,7 +12,7 @@ par0	at mainbus0
 kbd0	at mainbus0
 fdc0	at mainbus0
 fd0	at fdc0 unit 0
-ztwobus0	at mainbus0
-zthreebus0	at mainbus0
+zbus0	at mainbus0
+# zthreebus0	at mainbus0
 
 pseudo-device mouse 2
