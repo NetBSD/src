@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.27 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.28 2004/03/04 02:49:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.27 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.28 2004/03/04 02:49:58 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -351,9 +351,11 @@ rf_CopybackOne(RF_CopybackDesc_t *desc, int typ, RF_RaidAddr_t addr,
 
 	RF_LOCK_MUTEX(desc->mcpair->mutex);
 	desc->mcpair->flag = 0;
+	RF_UNLOCK_MUTEX(desc->mcpair->mutex);
 
 	rf_DiskIOEnqueue(&raidPtr->Queues[spCol], desc->readreq, RF_IO_NORMAL_PRIORITY);
 
+	RF_LOCK_MUTEX(desc->mcpair->mutex);
 	while (!desc->mcpair->flag) {
 		RF_WAIT_MCPAIR(desc->mcpair);
 	}
