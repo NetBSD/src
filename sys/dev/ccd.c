@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.35 1996/10/13 01:37:06 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.36 1996/12/18 19:22:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -743,6 +743,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 	register struct ccdcinfo *ci, *ci2 = NULL;
 	register struct ccdbuf *cbp;
 	register daddr_t cbn, cboff;
+	int ccdisk;
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
@@ -762,7 +763,9 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 		register daddr_t sblk;
 
 		sblk = 0;
-		for (ci = cs->sc_cinfo; cbn >= sblk + ci->ci_size; ci++)
+		for (ccdisk = 0, ci = &cs->sc_cinfo[ccdisk];
+		    cbn >= sblk + ci->ci_size;
+		    ccdisk++, ci = &cs->sc_cinfo[ccdisk])
 			sblk += ci->ci_size;
 		cbn -= sblk;
 	}
@@ -771,7 +774,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 	 */
 	else {
 		register struct ccdiinfo *ii;
-		int ccdisk, off;
+		int off;
 
 		cboff = cbn % cs->sc_ileave;
 		cbn /= cs->sc_ileave;
@@ -825,8 +828,8 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 	 * context for ccdiodone
 	 */
 	cbp->cb_obp = bp;
-	cbp->cb_unit = cs - ccd_softc;
-	cbp->cb_comp = ci - cs->sc_cinfo;
+	cbp->cb_unit = cs->sc_unit;
+	cbp->cb_comp = ccdisk;
 
 	/* First buffer is dealt with. */
 	cbpp[0] = cbp;
