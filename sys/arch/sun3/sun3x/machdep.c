@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2001/09/11 20:37:13 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2002/03/06 13:10:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -556,7 +556,7 @@ cpu_reboot(howto, user_boot_string)
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
