@@ -22,11 +22,11 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/dkstat.h>
-
 
 #include <machine/autoconf.h>
 #include <pmax/dev/device.h>
@@ -89,7 +89,7 @@ struct pmax_scsi_device scsi_dinit[] = {
 { &tzdriver,	&ascdriver,	1,	0,	6,	0,	0,	0x0 },
 #endif /* NASC */
 
-0
+ { 0 }
 };
 
 
@@ -156,10 +156,10 @@ configure_scsi()
 	register struct pmax_driver *drp;
 
 	/* probe and initialize SCSI buses */
-	for (cp = &pmax_scsi_table[0]; drp = cp->pmax_driver; cp++) {
+	for (cp = &pmax_scsi_table[0]; (drp = cp->pmax_driver) != NULL; cp++) {
 
 		/* probe and initialize devices connected to controller */
-		for (dp = scsi_dinit; drp = dp->sd_driver; dp++) {
+		for (dp = scsi_dinit; (drp = dp->sd_driver) != NULL; dp++) {
 			/* might want to get fancier later */
 			if (dp->sd_cdriver != cp->pmax_driver ||
 			    dp->sd_ctlr != cp->pmax_unit)
@@ -186,9 +186,10 @@ nomatch(parent, cfdata, aux)
 	void *cfdata;
 	void *aux;
 {
+#if /*def DEBUG*/ 0
 	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
-#if /*def DEBUG*/ 0
+
 	printf("nomatch  %s: %s: %s offset 0x%lx not yet done: %x\n",
 	        parent->dv_cfdata->cf_driver->cd_name,
 	       parent->dv_xname,
