@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.10 2003/06/23 13:05:52 agc Exp $	*/
+/*	$NetBSD: display.c,v 1.11 2003/10/03 15:32:06 christos Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -47,7 +47,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: display.c,v 1.10 2003/06/23 13:05:52 agc Exp $");
+__RCSID("$NetBSD: display.c,v 1.11 2003/10/03 15:32:06 christos Exp $");
 #endif
 
 #include "os.h"
@@ -75,6 +75,7 @@ static int lmpid = 0;
 static int last_hi = 0;		/* used in u_process and u_endscreen */
 static int lastline = 0;
 static int display_width = MAX_COLS;
+static int ncpu = 0;
 
 #define lineindex(l) ((l)*display_width)
 
@@ -154,6 +155,7 @@ struct statics *statics;
     register int *ip;
     register int i;
 
+    ncpu = statics->ncpu;
     /* call resize to do the dirty work */
     lines = display_resize();
 
@@ -167,7 +169,7 @@ struct statics *statics;
 
 	cpustate_names = statics->cpustate_names;
 	num_cpustates = string_count(cpustate_names);
-	lcpustates = (int *)malloc(num_cpustates * sizeof(int));
+	lcpustates = (int *)malloc(num_cpustates * sizeof(int) * ncpu);
 	cpustate_columns = (int *)malloc(num_cpustates * sizeof(int));
 
 	memory_names = statics->memory_names;
@@ -403,12 +405,13 @@ char *cpustates_tag()
 {
     register char *use;
 
-    static char *short_tag = "CPU: ";
-    static char *long_tag = "CPU states: ";
+    char *short_tag = ncpu > 1 ? "\nCPU%d: " : "\nCPU: ";
+    char *long_tag = ncpu > 1 ? "\nCPU%d states: " : "\nCPU states: ";
 
     /* if length + strlen(long_tag) >= screen_width, then we have to
        use the shorter tag (we subtract 2 to account for ": ") */
-    if (cpustate_total_length + (int)strlen(long_tag) - 2 >= screen_width)
+    if (cpustate_total_length + (int)strlen(long_tag) - 
+	(ncpu > 1 ? 5 : 2) >= screen_width)
     {
 	use = short_tag;
     }
@@ -418,7 +421,7 @@ char *cpustates_tag()
     }
 
     /* set cpustates_column accordingly then return result */
-    cpustates_column = strlen(use);
+    cpustates_column = strlen(use) - (ncpu > 1 ? 2 : 1);
     return(use);
 }
 
@@ -428,33 +431,35 @@ i_cpustates(states)
 register int *states;
 
 {
-    register int i = 0;
+    register int i, c;
     register int value;
     register char **names = cpustate_names;
     register char *thisname;
 
-    /* print tag and bump lastline */
-    printf("\n%s", cpustates_tag());
-    lastline++;
+    /* copy over values into "last" array */
+    memcpy(lcpustates, states, num_cpustates * sizeof(int) * ncpu);
 
-    /* now walk thru the names and print the line */
-    while ((thisname = *names++) != NULL)
+    for (c = 0; c < ncpu; c++)
     {
-	if (*thisname != '\0')
+	/* print tag and bump lastline */
+	printf(cpustates_tag(), c);
+	lastline++;
+	/* now walk thru the names and print the line */
+	for (i = 0, names = cpustate_names; ((thisname = *names++) != NULL);)
 	{
-	    /* retrieve the value and remember it */
-	    value = *states++;
+	    if (*thisname != '\0')
+	    {
+		/* retrieve the value and remember it */
+		value = *states++;
 
-	    /* if percentage is >= 1000, print it as 100% */
-	    printf((value >= 1000 ? "%s%4.0f%% %s" : "%s%4.1f%% %s"),
-		   i++ == 0 ? "" : ", ",
-		   ((float)value)/10.,
-		   thisname);
+		/* if percentage is >= 1000, print it as 100% */
+		printf((value >= 1000 ? "%s%4.0f%% %s" : "%s%4.1f%% %s"),
+		       i++ == 0 ? "" : ", ",
+		       ((float)value)/10.,
+		       thisname);
+	    }
 	}
     }
-
-    /* copy over values into "last" array */
-    memcpy(lcpustates, states, num_cpustates * sizeof(int));
 }
 
 void
@@ -464,44 +469,47 @@ register int *states;
 
 {
     register int value;
-    register char **names = cpustate_names;
+    register char **names;
     register char *thisname;
-    register int *lp;
+    register int *lp = lcpustates;
     register int *colp;
+    register int c;
 
     Move_to(cpustates_column, y_cpustates);
     lastline = y_cpustates;
-    lp = lcpustates;
-    colp = cpustate_columns;
 
-    /* we could be much more optimal about this */
-    while ((thisname = *names++) != NULL)
+    for (c = 0; c < ncpu; c++)
     {
-	if (*thisname != '\0')
+	colp = cpustate_columns;
+	/* we could be much more optimal about this */
+	for (names = cpustate_names; (thisname = *names++) != NULL;)
 	{
-	    /* did the value change since last time? */
-	    if (*lp != *states)
+	    if (*thisname != '\0')
 	    {
-		/* yes, move and change */
-		Move_to(cpustates_column + *colp, y_cpustates);
-		lastline = y_cpustates;
+		/* did the value change since last time? */
+		if (*lp != *states)
+		{
+		    /* yes, move and change */
+		    lastline = y_cpustates + c;
+		    Move_to(cpustates_column + *colp, lastline);
 
-		/* retrieve value and remember it */
-		value = *states;
+		    /* retrieve value and remember it */
+		    value = *states;
 
-		/* if percentage is >= 1000, print it as 100% */
-		printf((value >= 1000 ? "%4.0f" : "%4.1f"),
-		       ((double)value)/10.);
+		    /* if percentage is >= 1000, print it as 100% */
+		    printf((value >= 1000 ? "%4.0f" : "%4.1f"),
+			   ((double)value)/10.);
 
-		/* remember it for next time */
-		*lp = value;
+		    /* remember it for next time */
+		    *lp = value;
+		}
 	    }
-	}
 
-	/* increment and move on */
-	lp++;
-	states++;
-	colp++;
+	    /* increment and move on */
+	    lp++;
+	    states++;
+	    colp++;
+	}
     }
 }
 
@@ -509,26 +517,27 @@ void
 z_cpustates()
 
 {
-    register int i = 0;
+    register int i, c;
     register char **names = cpustate_names;
     register char *thisname;
-    register int *lp;
+    register int *lp = lcpustates;
 
-    /* show tag and bump lastline */
-    printf("\n%s", cpustates_tag());
-    lastline++;
-
-    while ((thisname = *names++) != NULL)
+    for (c = 0; c < ncpu; c++)
     {
-	if (*thisname != '\0')
+	/* show tag and bump lastline */
+	printf(cpustates_tag(), c);
+	lastline++;
+	for (i = 0, names = cpustate_names; (thisname = *names++) != NULL;)
 	{
-	    printf("%s    %% %s", i++ == 0 ? "" : ", ", thisname);
+	    if (*thisname != '\0')
+	    {
+		printf("%s    %% %s", i++ == 0 ? "" : ", ", thisname);
+	    }
 	}
     }
 
     /* fill the "last" array with all -1s, to insure correct updating */
-    lp = lcpustates;
-    i = num_cpustates;
+    i = num_cpustates * ncpu;
     while (--i >= 0)
     {
 	*lp++ = -1;

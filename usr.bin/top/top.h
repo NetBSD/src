@@ -1,4 +1,4 @@
-/*	$NetBSD: top.h,v 1.5 2002/07/16 00:40:51 itojun Exp $	*/
+/*	$NetBSD: top.h,v 1.6 2003/10/03 15:32:06 christos Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -38,7 +38,7 @@
 #define VERSION		3
 
 /* Number of lines of header information on the standard screen */
-#define Header_lines	7
+#define Header_lines	(6 + ncpu)
 
 /* Maximum number of columns allowed for display */
 #define MAX_COLS	128

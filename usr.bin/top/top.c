@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.17 2003/08/20 03:35:38 itojun Exp $	*/
+/*	$NetBSD: top.c,v 1.18 2003/10/03 15:32:06 christos Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -49,7 +49,7 @@ const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: top.c,v 1.17 2003/08/20 03:35:38 itojun Exp $");
+__RCSID("$NetBSD: top.c,v 1.18 2003/10/03 15:32:06 christos Exp $");
 #endif
 
 #include "os.h"
@@ -540,7 +540,9 @@ Usage: %s [-ISbinqu] [-d x] [-s x] [-o field] [-U username] [number]\n",
 	    }
 	    else
 	    {
-		putchar('\n');
+		int i;
+		for (i = 0; i < statics.ncpu; i++)
+		    putchar('\n');
 	    }
 	    dostates = Yes;
 	}
