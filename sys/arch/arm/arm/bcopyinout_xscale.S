@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout_xscale.S,v 1.2 2003/10/23 09:11:35 scw Exp $	*/
+/*	$NetBSD: bcopyinout_xscale.S,v 1.3 2003/12/15 09:27:18 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: bcopyinout_xscale.S,v 1.2 2003/10/23 09:11:35 scw Exp $")	
+RCSID("$NetBSD: bcopyinout_xscale.S,v 1.3 2003/12/15 09:27:18 scw Exp $")	
 
 	.text
 	.align	0
@@ -57,8 +57,8 @@ RCSID("$NetBSD: bcopyinout_xscale.S,v 1.2 2003/10/23 09:11:35 scw Exp $")
  */
 ENTRY(copyin)
 	cmp	r2, #0x00
-	moveq	r0, #0x00
-	moveq	pc, lr			/* Bail early if length is zero */
+	movle	r0, #0x00
+	movle	pc, lr			/* Bail early if length is <= 0 */
 
 	stmfd	sp!, {r10-r11, lr}
 
@@ -99,16 +99,16 @@ ENTRY(copyin)
 	rsb	ip, ip, #0x04
 	cmp	r2, ip			/* Enough bytes left to align it? */
 	blt	.Lcopyin_l4_2		/* Nope. Just copy bytewise */
-	cmp	ip, #0x02
+	sub	r2, r2, ip
+	rsbs	ip, ip, #0x03
+	addne	pc, pc, ip, lsl #3
+	nop
 	ldrbt	ip, [r0], #0x01
-	sub	r2, r2, #0x01
 	strb	ip, [r1], #0x01
-	ldrgebt	ip, [r0], #0x01
-	subge	r2, r2, #0x01
-	strgeb	ip, [r1], #0x01
-	ldrgtbt	ip, [r0], #0x01
-	subgt	r2, r2, #0x01
-	strgtb	ip, [r1], #0x01
+	ldrbt	ip, [r0], #0x01
+	strb	ip, [r1], #0x01
+	ldrbt	ip, [r0], #0x01
+	strb	ip, [r1], #0x01
 	cmp	r2, #0x00		/* All done? */
 	moveq	pc, lr
 
@@ -124,6 +124,7 @@ ENTRY(copyin)
 	ldrnet	ip, [r0], #0x04
 	stmfd	sp!, {r4-r9}		/* Free up some registers */
 	mov	r3, #-1			/* Signal restore r4-r9 */
+	tst	r1, #0x07		/* XXX: bug work-around */
 	subne	r2, r2, #0x04
 	strne	ip, [r1], #0x04
 
@@ -465,13 +466,15 @@ ENTRY(copyin)
 	adds	r2, r2, #0x04
 	moveq	pc, lr
 .Lcopyin_l4_2:
+	rsbs	r2, r2, #0x03
+	addne	pc, pc, r2, lsl #3
+	nop
 	ldrbt	ip, [r0], #0x01
-	cmp	r2, #0x02
-	ldrgebt	r2, [r0], #0x01
 	strb	ip, [r1], #0x01
-	ldrgtbt	ip, [r0]
-	strgeb	r2, [r1], #0x01
-	strgtb	ip, [r1]
+	ldrbt	ip, [r0], #0x01
+	strb	ip, [r1], #0x01
+	ldrbt	ip, [r0]
+	strb	ip, [r1]
 	mov	pc, lr
 
 
@@ -484,8 +487,8 @@ ENTRY(copyin)
  */
 ENTRY(copyout)
 	cmp	r2, #0x00
-	moveq	r0, #0x00
-	moveq	pc, lr			/* Bail early if length is zero */
+	movle	r0, #0x00
+	movle	pc, lr			/* Bail early if length is <= 0 */
 
 	stmfd	sp!, {r10-r11, lr}
 
@@ -526,16 +529,16 @@ ENTRY(copyout)
 	rsb	ip, ip, #0x04
 	cmp	r2, ip			/* Enough bytes left to align it? */
 	blt	.Lcopyout_l4_2		/* Nope. Just copy bytewise */
-	cmp	ip, #0x02
+	sub	r2, r2, ip
+	rsbs	ip, ip, #0x03
+	addne	pc, pc, ip, lsl #3
+	nop
 	ldrb	ip, [r0], #0x01
-	sub	r2, r2, #0x01
 	strbt	ip, [r1], #0x01
-	ldrgeb	ip, [r0], #0x01
-	subge	r2, r2, #0x01
-	strgebt	ip, [r1], #0x01
-	ldrgtb	ip, [r0], #0x01
-	subgt	r2, r2, #0x01
-	strgtbt	ip, [r1], #0x01
+	ldrb	ip, [r0], #0x01
+	strbt	ip, [r1], #0x01
+	ldrb	ip, [r0], #0x01
+	strbt	ip, [r1], #0x01
 	cmp	r2, #0x00		/* All done? */
 	moveq	pc, lr
 
@@ -551,6 +554,7 @@ ENTRY(copyout)
 	ldrne	ip, [r0], #0x04
 	stmfd	sp!, {r4-r9}		/* Free up some registers */
 	mov	r3, #-1			/* Signal restore r4-r9 */
+	tst	r1, #0x07		/* XXX: bug work-around */
 	subne	r2, r2, #0x04
 	strnet	ip, [r1], #0x04
 
@@ -912,13 +916,15 @@ ENTRY(copyout)
 	adds	r2, r2, #0x04
 	moveq	pc, lr
 .Lcopyout_l4_2:
+	rsbs	r2, r2, #0x03
+	addne	pc, pc, r2, lsl #3
+	nop
 	ldrb	ip, [r0], #0x01
-	cmp	r2, #0x02
-	ldrgeb	r2, [r0], #0x01
 	strbt	ip, [r1], #0x01
-	ldrgtb	ip, [r0]
-	strgebt	r2, [r1], #0x01
-	strgtbt	ip, [r1]
+	ldrb	ip, [r0], #0x01
+	strbt	ip, [r1], #0x01
+	ldrb	ip, [r0]
+	strbt	ip, [r1]
 	mov	pc, lr
 
 
@@ -931,8 +937,8 @@ ENTRY(copyout)
  */
 ENTRY(kcopy)
 	cmp	r2, #0x00
-	moveq	r0, #0x00
-	moveq	pc, lr			/* Bail early if length is zero */
+	movle	r0, #0x00
+	movle	pc, lr			/* Bail early if length is <= 0 */
 
 	stmfd	sp!, {r10-r11, lr}
 
@@ -973,16 +979,15 @@ ENTRY(kcopy)
 	rsb	ip, ip, #0x04
 	cmp	r2, ip			/* Enough bytes left to align it? */
 	blt	.Lkcopy_bad_endgame2	/* Nope. Just copy bytewise */
-	cmp	ip, #0x02
+	sub	r2, r2, ip
+	rsbs	ip, ip, #0x03
+	addne	pc, pc, ip, lsl #3
 	ldrb	ip, [r0], #0x01
-	sub	r2, r2, #0x01
 	strb	ip, [r1], #0x01
-	ldrgeb	ip, [r0], #0x01
-	subge	r2, r2, #0x01
-	strgeb	ip, [r1], #0x01
-	ldrgtb	ip, [r0], #0x01
-	subgt	r2, r2, #0x01
-	strgtb	ip, [r1], #0x01
+	ldrb	ip, [r0], #0x01
+	strb	ip, [r1], #0x01
+	ldrb	ip, [r0], #0x01
+	strb	ip, [r1], #0x01
 	cmp	r2, #0x00		/* All done? */
 	moveq	pc, lr
 
@@ -1339,11 +1344,13 @@ ENTRY(kcopy)
 	adds	r2, r2, #0x04
 	moveq	pc, lr
 .Lkcopy_bad_endgame2:
+	rsbs	r2, r2, #0x03
+	addne	pc, pc, r2, lsl #3
+	nop
 	ldrb	ip, [r0], #0x01
-	cmp	r2, #0x02
-	ldrgeb	r2, [r0], #0x01
 	strb	ip, [r1], #0x01
-	ldrgtb	ip, [r0]
-	strgeb	r2, [r1], #0x01
-	strgtb	ip, [r1]
+	ldrb	ip, [r0], #0x01
+	strb	ip, [r1], #0x01
+	ldrb	ip, [r0]
+	strb	ip, [r1]
 	mov	pc, lr
