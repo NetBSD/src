@@ -62,7 +62,7 @@
 #define RETSIGTYPE void
 
 /* Define if the `S_IS*' macros in <sys/stat.h> do not work properly.  */
-#define STAT_MACROS_BROKEN 1
+/* #undef STAT_MACROS_BROKEN */
 
 /* Define if `sys_siglist' is declared by <signal.h>.  */
 #define SYS_SIGLIST_DECLARED 1
