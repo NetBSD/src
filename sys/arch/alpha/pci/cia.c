@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.28 1997/10/27 01:08:42 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.29 1998/01/12 10:21:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.28 1997/10/27 01:08:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.29 1998/01/12 10:21:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,7 @@ struct cfattach cia_ca = {
 	sizeof(struct cia_softc), ciamatch, ciaattach,
 };
 
-struct cfdriver cia_cd = {
-	NULL, "cia", DV_DULL,
-};
+extern struct cfdriver cia_cd;
 
 static int	ciaprint __P((void *, const char *pnp));
 

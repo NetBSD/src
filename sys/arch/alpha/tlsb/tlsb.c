@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.6 1997/09/02 13:20:50 thorpej Exp $ */
+/* $NetBSD: tlsb.c,v 1.7 1998/01/12 10:21:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.6 1997/09/02 13:20:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.7 1998/01/12 10:21:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,19 +58,17 @@ __KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.6 1997/09/02 13:20:50 thorpej Exp $");
 
 extern int	cputype;
 int		cpu_node_id;
-extern struct cfdriver cpu_cd;
 
 #define KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
 
 static int	tlsbmatch __P((struct device *, struct cfdata *, void *));
 static void	tlsbattach __P((struct device *, struct device *, void *));
+
 struct cfattach tlsb_ca = {
 	sizeof (struct device), tlsbmatch, tlsbattach
 };
 
-struct cfdriver	tlsb_cd = {
-	NULL, "tlsb", DV_DULL,
-};
+extern struct cfdriver tlsb_cd;
 
 static int	tlsbprint __P((void *, const char *));
 static int	tlsbsubmatch __P((struct device *, struct cfdata *, void *));
@@ -131,6 +129,7 @@ tlsbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+	extern struct cfdriver cpu_cd;
 	struct tlsb_dev_attach_args ta;
 	u_int32_t tldev;
 	u_int8_t vid;

@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.13 1997/09/25 01:32:09 thorpej Exp $ */
+/* $NetBSD: cfb.c,v 1.14 1998/01/12 10:21:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.13 1997/09/25 01:32:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.14 1998/01/12 10:21:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,6 @@ int	cfbprint __P((void *, const char *));
 
 struct cfattach cfb_ca = {
 	sizeof(struct cfb_softc), cfbmatch, cfbattach,
-};
-
-struct cfdriver cfb_cd = {
-	NULL, "cfb", DV_DULL,
 };
 
 void	cfb_getdevconfig __P((tc_addr_t dense_addr, struct cfb_devconfig *dc));

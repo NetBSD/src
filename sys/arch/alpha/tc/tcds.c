@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.21 1997/09/02 13:20:38 thorpej Exp $ */
+/* $NetBSD: tcds.c,v 1.22 1998/01/12 10:21:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.21 1997/09/02 13:20:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.22 1998/01/12 10:21:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,10 +65,6 @@ int     tcdsprint(void *, const char *);
 
 struct cfattach tcds_ca = {
 	sizeof(struct tcds_softc), tcdsmatch, tcdsattach,
-};
-
-struct cfdriver tcds_cd = {
-	NULL, "tcds", DV_DULL,
 };
 
 /*static*/ int	tcds_intr __P((void *));

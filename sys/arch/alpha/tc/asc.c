@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.7 1997/10/04 09:38:47 thorpej Exp $ */
+/* $NetBSD: asc.c,v 1.8 1998/01/12 10:21:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.7 1997/10/04 09:38:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.8 1998/01/12 10:21:15 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -142,10 +142,6 @@ int	ascmatch	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach asc_ca = {
 	sizeof(struct asc_softc), ascmatch, ascattach
-};
-
-struct cfdriver asc_cd = {
-	NULL, "asc", DV_DULL
 };
 
 struct scsipi_adapter asc_switch = {
@@ -214,6 +210,7 @@ ascattach(parent, self, aux)
 	register struct tcdsdev_attach_args *tcdsdev = aux;
 	struct asc_softc *asc = (void *)self;
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
+	extern struct cfdriver tcds_cd;
 
 	/*
 	 * Set up glue for MI code early; we use some of it here.

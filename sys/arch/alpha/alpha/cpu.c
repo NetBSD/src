@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.22 1997/09/02 13:18:00 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.23 1998/01/12 10:21:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22 1997/09/02 13:18:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 1998/01/12 10:21:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,7 @@ struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach
 };
 
-struct cfdriver cpu_cd = {
-	NULL, "cpu", DV_DULL
-};
+extern struct cfdriver cpu_cd;
 
 static int
 cpumatch(parent, cfdata, aux)
