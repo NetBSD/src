@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.5 1997/09/24 17:00:55 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.6 1997/10/16 15:16:34 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -176,7 +176,7 @@ wdcprobe(parent, match, aux)
 	if (wdcreset(wdc, SILENT) != 0) { 
 		/*
 		 * if the reset failed,, there is no master. test for ATAPI signature
-		 * on the salve device. If no ATAPI slave, wait 5s and retry a reset.
+		 * on the slave device. If no ATAPI slave, wait 5s and retry a reset.
 		 */
 #if 0
 		outb(iobase+wd_sdh, WDSD_IBM | 0x10); /* slave */
