@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.207 2002/04/11 11:08:40 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.207.4.1 2003/08/16 19:53:28 tron Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1568,12 +1568,30 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	 * XXX do not have to flush cache immediately
 	 */
 	ctx = getcontext4();
+
+	/*
+	 * Even if we're stealing a PMEG from ourselves (i.e. if pm==newpm),
+	 * we must make sure there are no user register windows in the CPU
+	 * for the following reasons:
+	 * (1) if we have a write-allocate cache and the segment we are
+	 *     stealing contains stack pages, an interrupt during the
+	 *     interval that starts at cache_flush_segment() below and ends
+	 *     when the segment is finally removed from the MMU, may cause
+	 *     dirty cache lines to reappear.
+	 * (2) when re-wiring this PMEG for use by another segment (e.g.
+	 *     in mmu_pagein()) a window exists where the PTEs in this PMEG
+	 *     point at arbitrary pages allocated to this address space.
+	 *     Again, a register window flush at this point is likely to
+	 *     cause data corruption in case the segment being rewired
+	 *     contains stack virtual addresses.
+	 */
+	write_user_windows();
 	if (CTX_USABLE(pm,rp)) {
-		CHANGE_CONTEXTS(ctx, pm->pm_ctxnum);
+		setcontext4(pm->pm_ctxnum);
 		cache_flush_segment(me->me_vreg, me->me_vseg);
 		va = VSTOVA(me->me_vreg,me->me_vseg);
 	} else {
-		CHANGE_CONTEXTS(ctx, 0);
+		setcontext4(0);
 		if (HASSUN4_MMU3L)
 			setregmap(0, tregion);
 		setsegmap(0, me->me_cookie);
@@ -1770,9 +1788,12 @@ region_alloc(mh, newpm, newvr)
 	TAILQ_INSERT_TAIL(mh, me, me_list);
 
 	rp = &pm->pm_regmap[me->me_vreg];
+
+	/* Flush register windows; see comment in me_alloc() */
+	write_user_windows();
 	ctx = getcontext4();
 	if (pm->pm_ctx) {
-		CHANGE_CONTEXTS(ctx, pm->pm_ctxnum);
+		setcontext4(pm->pm_ctxnum);
 		cache_flush_region(me->me_vreg);
 	}
 
