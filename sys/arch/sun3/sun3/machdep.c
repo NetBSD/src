@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 1995/01/24 06:18:16 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 1995/02/07 04:39:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -402,7 +402,8 @@ void consinit()
     cninit();
 
 #ifdef DDB
-	/* Well, this is where the hp300 does it... -gwr */
+	/* Now that we have a console, we can stop in DDB. */
+	db_machine_init();
 	ddb_init();
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -1163,7 +1164,7 @@ static int reboot2(howto, user_boot_string)
 
 	if (howto & RB_HALT) {
 		printf("Kernel halted.\n");
-		sun3_rom_halt();
+		sun3_mon_halt();
 	}
 
 	/*
@@ -1193,7 +1194,7 @@ static int reboot2(howto, user_boot_string)
 		}
 	}
 	printf("Kernel rebooting...\n");
-	sun3_rom_reboot(bs);
+	sun3_mon_reboot(bs);
 	/*NOTREACHED*/
 }
 
