@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.28 1998/09/06 10:39:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.29 1998/12/28 04:54:00 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 PROG=	ftpd
-SRCS=	conf.c ftpd.c ftpcmd.y logwtmp.c popen.c
+SRCS=	conf.c ftpd.c ftpcmd.y logwtmp.c popen.c util.c
 CPPFLAGS+=-DHASSETPROCTITLE
 DPADD+=	${LIBCRYPT}
 LDADD+=	-lcrypt
