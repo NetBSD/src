@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sysent.c,v 1.46 1998/02/19 00:45:36 thorpej Exp $	*/
+/*	$NetBSD: svr4_sysent.c,v 1.47 1998/02/19 03:34:20 thorpej Exp $	*/
 
 /*
  * System call switch table.
