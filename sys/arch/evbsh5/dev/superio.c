@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.7 2002/09/27 20:31:37 thorpej Exp $	*/
+/*	$NetBSD: superio.c,v 1.8 2002/09/28 12:50:27 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -407,7 +407,8 @@ superio_bs_unmap(void *arg, bus_space_handle_t bh, bus_size_t size)
 	struct superio_softc *sc = arg;
 	bus_addr_t addr = (bus_addr_t)bh;
 
-	extent_free(sc->sc_isaext, addr, size * 4, EX_NOWAIT);
+	if (sc->sc_isaext)
+		extent_free(sc->sc_isaext, addr, size * 4, EX_NOWAIT);
 }
 
 /*ARGSUSED*/
@@ -686,6 +687,7 @@ superio_console_tag(bus_space_tag_t bt, int port,
 		return (-1);
 	}
 
+	superio_bus_space_tag.bs_cookie = &sc;
 	*tp = &superio_bus_space_tag;
 	*ap = base;
 
