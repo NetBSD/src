@@ -27,7 +27,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: mbrlabel.8,v 1.12 2002/01/13 08:02:15 fair Exp $
+.\"	$NetBSD: mbrlabel.8,v 1.13 2002/01/24 23:35:10 fair Exp $
 .\"
 .Dd May 1, 2001
 .Dt MBRLABEL 8
@@ -83,15 +83,12 @@ Available options:
 Force an update, even if there has been no change.
 .It Fl q
 Performs operations in a quiet fashion.
-.It Fl r
-When used with
-.Fl w ,
-update the on-disk label as well as the in-core label if it has
-changed.
 .It Fl w
-If it has changed, update the in-core label, and then if
-.Fl r
-is given, update the on-disk label as well.
+Update the in-core label if it has been changed.
+.It Fl r
+In conjunction with
+.Fl w ,
+also update the on-disk label.
 .El
 .Sh SEE ALSO
 .Xr disklabel 8 ,
