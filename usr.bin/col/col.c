@@ -42,13 +42,14 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)col.c	5.3 (Berkeley) 2/2/91";*/
-static char rcsid[] = "$Id: col.c,v 1.4 1993/09/21 00:44:36 mycroft Exp $";
+static char rcsid[] = "$Id: col.c,v 1.5 1994/12/24 16:24:32 cgd Exp $";
 #endif /* not lint */
 
 #include <errno.h>
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define	BS	'\b'		/* backspace */
 #define	TAB	'\t'		/* tab */
