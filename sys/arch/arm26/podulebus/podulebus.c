@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.2 2000/08/22 21:22:49 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.3 2000/12/09 17:52:45 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.2 2000/08/22 21:22:49 bjh21 Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.3 2000/12/09 17:52:45 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -47,6 +47,12 @@ __RCSID("$NetBSD: podulebus.c,v 1.2 2000/08/22 21:22:49 bjh21 Exp $");
 #include <arch/arm26/podulebus/podulebusreg.h>
 
 #include "locators.h"
+
+#include "unixbp.h"
+
+#if NUNIXBP > 0
+extern struct cfdriver unixbp_cd;
+#endif
 
 static int podulebus_match(struct device *, struct cfdata *, void *);
 static void podulebus_attach(struct device *, struct device *, void *);
@@ -250,5 +256,9 @@ podulebus_irq_establish(struct device *self, int slot, int ipl,
 {
 
 	/* XXX: support for checking IRQ bit on podule? */
-	return ioc_irq_establish(self->dv_parent, IOC_IRQ_IL5, ipl, func, arg);
+#if NUNIXBP > 0
+	if (unixbp_cd.cd_ndevs > 0 && unixbp_cd.cd_devs[0] != NULL)
+		return irq_establish(IRQ_UNIXBP_BASE + slot, ipl, func, arg);
+#endif
+	return irq_establish(IRQ_PIRQ, ipl, func, arg);
 }

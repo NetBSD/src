@@ -1,4 +1,4 @@
-/* $NetBSD: irq.h,v 1.3 2000/12/09 15:16:01 bjh21 Exp $ */
+/* $NetBSD: irq.h,v 1.4 2000/12/09 17:52:45 bjh21 Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -59,6 +59,9 @@
 #define IRQ_FINTR	IOC_IRQ_IL4	/* Floppy disc interrupt */
 #define IRQ_LPINTR	IOC_IRQ_IL6	/* Parallel port latched interrupt */
 #define IRQ_INDEX	IOC_IRQ_IF	/* Start of floppy disc index pulse */
+
+/* IRQ numbers above 15 are non-IOC IRQs */
+#define IRQ_UNIXBP_BASE	16
 
 struct irq_handler;
 
