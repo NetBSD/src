@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.24 1997/09/12 13:31:11 drochner Exp $	*/
+/*	$NetBSD: boca.c,v 1.25 1997/10/16 00:29:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -41,9 +41,10 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+
 #include <dev/isa/isavar.h>
-#include <dev/isa/comreg.h>
-#include <dev/isa/comvar.h>
 #include <dev/isa/com_multi.h>
 
 #define	NSLAVES	8
