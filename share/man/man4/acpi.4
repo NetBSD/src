@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.12 2004/12/02 09:50:41 xtraeme Exp $
+.\" $NetBSD: acpi.4,v 1.13 2004/12/02 14:33:31 xtraeme Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,6 +47,7 @@
 .Cd "acpitz*   at acpi?"
 .Cd "com*      at acpi?"
 .Cd "fdc*      at acpi?"
+.Cd "joy*      at acpi?"
 .Cd "lpt*      at acpi?"
 .Cd "mpu*      at acpi?"
 .Cd "npx*      at acpi?"
@@ -122,8 +123,12 @@ thermal zones.
 NS8250-, NS16450-, and NS16550-based serial ports.
 .It fdc
 Floppy disk controllers.
+.It joy
+Joystick/Game port interface.
 .It lpt
 Standard ISA parallel port interface.
+.It mpu
+Roland MPU-401 (compatible) MIDI UART.
 .It wss
 Windows Sound System-compatible sound cards based on the AD1848 and compatible chips.
 .El
@@ -148,7 +153,9 @@ Toshiba Libretto device.
 .Xr apm 4 ,
 .Xr com 4 ,
 .Xr fdc 4 ,
+.Xr joy 4 ,
 .Xr lpt 4 ,
+.Xr mpu 4 ,
 .Xr npx 4 ,
 .Xr pci 4 ,
 .Xr pckbc 4 ,
