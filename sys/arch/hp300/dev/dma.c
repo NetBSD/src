@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.24 1999/08/01 21:50:17 thorpej Exp $	*/
+/*	$NetBSD: dma.c,v 1.25 2000/03/23 06:37:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -119,6 +120,7 @@ struct dma_softc {
 	struct	dmareg *sc_dmareg;		/* pointer to our hardware */
 	struct	dma_channel sc_chan[NDMACHAN];	/* 2 channels */
 	TAILQ_HEAD(, dmaqueue) sc_queue;	/* job queue */
+	struct	callout sc_debug_ch;
 	char	sc_type;			/* A, B, or C */
 	int	sc_ipl;				/* our interrupt level */
 	void	*sc_ih;				/* interrupt cookie */
@@ -187,6 +189,7 @@ dmainit()
 	sc->sc_type = (rev == 'B') ? DMA_B : DMA_C;
 
 	TAILQ_INIT(&sc->sc_queue);
+	callout_init(&sc->sc_debug_ch);
 
 	for (i = 0; i < NDMACHAN; i++) {
 		dc = &sc->sc_chan[i];
@@ -210,7 +213,7 @@ dmainit()
 
 #ifdef DEBUG
 	/* make sure timeout is really not needed */
-	timeout(dmatimeout, sc, 30 * hz);
+	callout_reset(&sc->sc_debug_ch, 30 * hz, dmatimeout, sc);
 #endif
 
 	printf("98620%c, 2 channels, %d bit DMA\n",
@@ -621,6 +624,6 @@ dmatimeout(arg)
 		}
 		splx(s);
 	}
-	timeout(dmatimeout, sc, 30 * hz);
+	callout_reset(&sc->sc_debug_ch, 30 * hz, dmatimeout, sc);
 }
 #endif

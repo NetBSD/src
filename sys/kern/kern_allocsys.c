@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.8 1999/12/05 17:12:43 tron Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.9 2000/03/23 06:30:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -133,7 +133,10 @@ allocsys(v, mdcallback)
 	caddr_t (*mdcallback) __P((caddr_t));
 {
 
-	ALLOCSYS(v, callout, struct callout, ncallout);
+	ALLOCSYS(v, callwheel, struct callout_queue, callwheelsize);
+#ifdef CALLWHEEL_STATS
+	ALLOCSYS(v, callwheel_sizes, int, callwheelsize);
+#endif
 #ifdef SYSVSHM
 	ALLOCSYS(v, shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif

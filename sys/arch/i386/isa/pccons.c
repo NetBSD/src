@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.138 2000/03/06 21:36:07 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.139 2000/03/23 06:39:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -198,6 +198,8 @@ struct pc_softc {
 	void	*sc_ih;
 	struct	tty *sc_tty;
 };
+
+static struct callout async_update_ch = CALLOUT_INITIALIZER;
 
 int pcprobe __P((struct device *, struct cfdata *, void *));
 void pcattach __P((struct device *, struct device *, void *));
@@ -529,13 +531,13 @@ async_update()
 
 	if (kernel || polling) {
 		if (async)
-			untimeout(do_async_update, NULL);
+			callout_stop(&async_update_ch);
 		do_async_update((void *)1);
 	} else {
 		if (async)
 			return;
 		async = 1;
-		timeout(do_async_update, NULL, 1);
+		callout_reset(&async_update_ch, 1, do_async_update, NULL);
 	}
 }
 
@@ -1050,7 +1052,7 @@ pcstart(tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {

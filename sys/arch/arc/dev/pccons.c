@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.16 2000/03/06 21:36:06 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.17 2000/03/23 06:34:24 thorpej Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
@@ -153,6 +153,8 @@ struct opms_softc {		/* driver status information */
 	u_char sc_status;	/* mouse button status */
 	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
 };
+
+static struct callout async_update_ch = CALLOUT_INITIALIZER;
 
 int pcprobe __P((struct device *, struct cfdata *, void *));
 void pcattach __P((struct device *, struct device *, void *));
@@ -464,13 +466,14 @@ async_update()
 
 	if (kernel || polling) {
 		if (async)
-			untimeout((void(*)(void *))do_async_update, NULL);
+			callout_stop(&async_update_ch);
 		do_async_update(1);
 	} else {
 		if (async)
 			return;
 		async = 1;
-		timeout((void(*)(void *))do_async_update, NULL, 1);
+		callout_reset(&async_update_ch, 1,
+		    (void(*)(void *))do_async_update, NULL);
 	}
 }
 
@@ -820,7 +823,7 @@ pcstart(tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {

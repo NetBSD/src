@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.28 2000/02/11 21:42:52 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.29 2000/03/23 06:36:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,7 @@
 #include <sys/tty.h>
 #include <sys/termios.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/proc.h>
 #include <dev/cons.h>
 
@@ -634,7 +635,7 @@ itestart(tp)
 		/* we have characters remaining. */
 		if (rbp->c_cc) {
 			tp->t_state |= TS_TIMEOUT;
-			timeout(ttrstrt, tp, 1);
+			callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 		}
 		/* wakeup we are below */
 		if (rbp->c_cc <= tp->t_lowat) {
@@ -878,6 +879,8 @@ enum caller	caller;
 static u_int last_char;
 static u_char tout_pending;
 
+static struct callout repeat_ch = CALLOUT_INITIALIZER;
+
 /*ARGSUSED*/
 static void
 repeat_handler(arg)
@@ -927,7 +930,7 @@ enum caller	caller;
 	 */
 	if (up) {
 		if(tout_pending) {
-			untimeout(repeat_handler, 0);
+			callout_stop(&repeat_ch);
 			tout_pending = 0;
 			last_char    = 0;
 		}
@@ -938,7 +941,7 @@ enum caller	caller;
 		/*
 		 * Different character, stop also
 		 */
-		untimeout(repeat_handler, 0);
+		callout_stop(&repeat_ch);
 		tout_pending = 0;
 		last_char    = 0;
 	}
@@ -1009,13 +1012,15 @@ enum caller	caller;
 	if(!tout_pending && caller == ITEFILT_TTY && kbd_ite->key_repeat) {
 		tout_pending = 1;
 		last_char    = c;
-		timeout(repeat_handler, 0, start_repeat_timeo * hz / 100);
+		callout_reset(&repeat_ch, start_repeat_timeo * hz / 100,
+		    repeat_handler, NULL);
 	}
 	else if(!tout_pending && caller==ITEFILT_REPEATER
 				&& kbd_ite->key_repeat) {
 		tout_pending = 1;
 		last_char    = c;
-		timeout(repeat_handler, 0, next_repeat_timeo * hz / 100);
+		callout_reset(&repeat_ch, next_repeat_timeo * hz / 100,
+		    repeat_handler, NULL);
 	}
 	/* handle dead keys */
 	if (key.mode & KBD_MODE_DEAD) {

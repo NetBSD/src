@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.7 1999/08/06 08:27:31 leo Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.8 2000/03/23 06:36:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ wdc_mb_probe(parent, cfp, aux)
 	struct cfdata *cfp;
 	void *aux;
 {
-	struct channel_softc ch = { 0 };
+	struct channel_softc ch;
 	int	result = 0;
 	u_char	sv_ierb;
 
@@ -95,6 +95,8 @@ wdc_mb_probe(parent, cfp, aux)
 		return 0;
 	if (!atari_realconfig)
 		return 0;
+
+	memset(&ch, 0, sizeof(ch));
 
 	ch.cmd_iot = ch.ctl_iot = mb_alloc_bus_space_tag();
 	if (ch.cmd_iot == NULL)

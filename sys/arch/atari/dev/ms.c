@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.9 1996/10/13 04:11:06 christos Exp $	*/
+/*	$NetBSD: ms.c,v 1.10 2000/03/23 06:36:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -61,6 +61,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 
@@ -97,6 +98,7 @@ mouseattach(cnt)
 {
 	printf("1 mouse configured\n");
 	ms_softc[0].ms_emul3b = 1;
+	callout_init(&ms_softc[0].ms_delay_ch);
 	return(NMOUSE);
 }
 
@@ -178,7 +180,7 @@ int		size, type;
 	fe  = &ms->ms_events.ev_q[put];
 
 	if ((type != KBD_TIMEO_PKG) && ms->ms_emul3b && ms->ms_bq_idx)
-		untimeout((FPV)ms_3b_delay, (void *)ms);
+		callout_stop(&ms->ms_delay_ch);
 
 	/*
 	 * Button states are encoded in the lower 3 bits of 'id'
@@ -267,7 +269,8 @@ int		size, type;
 			}
 		}
 		else if (ms->ms_bq[0].value == VKEY_DOWN) {
-			timeout((FPV)ms_3b_delay, (void *)ms, 10);
+			callout_reset(&ms->ms_delay_ch, 10,
+			    (FPV)ms_3b_delay, (void *)ms);
 			goto out;
 		}
 		flush_buttons   = 1;

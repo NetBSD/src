@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.7 2000/03/03 12:50:21 soda Exp $	*/
+/*	$NetBSD: isabus.c,v 1.8 2000/03/23 06:34:25 thorpej Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -92,6 +92,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -114,6 +115,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/isa_machdep.h>
 
 static int beeping;
+static struct callout sysbeep_ch = CALLOUT_INITIALIZER;
 
 #define	IRQ_SLAVE	2
 #define ICU_LEN		16
@@ -523,7 +525,7 @@ sysbeep(pitch, period)
 		return;		/* Can't beep yet. */
 
 	if (beeping)
-		untimeout(sysbeepstop, 0);
+		callout_stop(&sysbeep_ch);
 	if (!beeping || last_pitch != pitch) {
 		s = splhigh();
 		isa_outb(IO_TIMER1 + TIMER_MODE,
@@ -535,5 +537,5 @@ sysbeep(pitch, period)
 	}
 	last_pitch = pitch;
 	beeping = last_period = period;
-	timeout(sysbeepstop, 0, period);
+	callout_reset(&sysbeep_ch, period, sysbeepstop, NULL);
 }

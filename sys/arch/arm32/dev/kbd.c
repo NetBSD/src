@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.24 1999/02/02 04:02:26 mark Exp $	*/
+/*	$NetBSD: kbd.c,v 1.25 2000/03/23 06:35:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -48,6 +48,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
@@ -110,6 +111,8 @@ static int rawkbd_device = 0;
 int modifiers = 0;
 static int kbd_ack = 0;
 static int kbd_resend = 0;
+static struct callout autorepeat_ch = CALLOUT_INITIALIZER;
+static struct callout autorepeatstart_ch = CALLOUT_INITIALIZER;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
@@ -232,8 +235,8 @@ kbdopen(dev, flag, mode, p)
 
 /* Kill any active autorepeat */
 
-	untimeout(autorepeatstart, &autorepeatkey);
-	untimeout(autorepeat, &autorepeatkey);
+	callout_stop(&autorepeatstart_ch);
+	callout_stop(&autorepeat_ch);
 
 	return(0);
 }
@@ -921,8 +924,8 @@ kbddecodekey(sc, code)
 	if (!up && key != 0) {
 		if (key >= 0x200) {
 
-			untimeout(autorepeatstart, &autorepeatkey);
-			untimeout(autorepeat, &autorepeatkey);
+			callout_stop(&autorepeatstart_ch);
+			callout_stop(&autorepeat_ch);
 			autorepeatkey = -1;
 #if (NVT > 0)
 			if ((key & ~0x0f) == 0x480)
@@ -999,18 +1002,20 @@ kbddecodekey(sc, code)
 			 */
 			if (rawkbd_device == 0 && physconkbd(key) == 0) {
 				if (autorepeatkey != key) {
-					untimeout(autorepeatstart, &autorepeatkey);
-					untimeout(autorepeat, &autorepeatkey);
+					callout_stop(&autorepeatstart_ch);
+					callout_stop(&autorepeat_ch);
 					autorepeatkey = key;
-					timeout(autorepeatstart, &autorepeatkey, hz/kbdautorepeat.ka_delay);
+					callout_reset(&autorepeatstart_ch,
+					    hz / kbdautorepeat.ka_delay,
+					    autorepeatstart, &autorepeatkey);
 				}
 			}
 
 			return(1);
 		}
 	} else {
-		untimeout(autorepeatstart, &autorepeatkey);
-		untimeout(autorepeat, &autorepeatkey);
+		callout_stop(&autorepeatstart_ch);
+		callout_stop(&autorepeat_ch);
 		autorepeatkey = -1;
 	}
 	return(0);
@@ -1022,7 +1027,8 @@ autorepeatstart(key)
 	void	*key;
 {
 	physconkbd(*((int *)key));
-	timeout(autorepeat, key, hz/kbdautorepeat.ka_rate);
+	callout_reset(&autorepeat_ch, hz / kbdautorepeat.ka_rate,
+	    autorepeat, key);
 }
 
 
@@ -1031,7 +1037,8 @@ autorepeat(key)
 	void	*key;
 {
 	physconkbd(*((int *)key));
-	timeout(autorepeat, key, hz/kbdautorepeat.ka_rate);
+	callout_reset(&autorepeat_ch, hz / kbdautorepeat.ka_rate,
+	    autorepeat, key);
 }
 
 /* End of kbd.c */

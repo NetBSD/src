@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.47 1999/04/30 05:29:20 cgd Exp $	*/
+/*	$NetBSD: tty.h,v 1.48 2000/03/23 06:31:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -46,6 +46,7 @@
 #include <sys/termios.h>
 #include <sys/select.h>		/* For struct selinfo. */
 #include <sys/queue.h>
+#include <sys/callout.h>
 
 /*
  * Clists are actually ring buffers. The c_cc, c_cf, c_cl fields have
@@ -79,6 +80,8 @@ struct tty {
 	struct	clist t_canq;		/* Device canonical queue. */
 	long	t_cancc;		/* Canonical queue statistics. */
 	struct	clist t_outq;		/* Device output queue. */
+	struct	callout t_outq_ch;	/* for ttycheckoutq() */
+	struct	callout t_rstrt_ch;	/* for delayed output start */
 	long	t_outcc;		/* Output queue statistics. */
 	u_char	t_line;			/* Interface to device drivers. */
 	dev_t	t_dev;			/* Device. */
