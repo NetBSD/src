@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.71 1997/04/07 05:19:15 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.72 1997/04/07 05:40:45 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -82,8 +82,11 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_inarp.h>
 #include <netinet/ip_var.h>
+#include "arp.h"
+#if NARP > 0
+#include <netinet/if_inarp.h>
+#endif
 #endif
 #ifdef NS
 #include <netns/ns_var.h>
@@ -1433,7 +1436,9 @@ netintr()
 	} while (0)
 
 #ifdef INET
+#if NARP > 0
 	DONETISR(NETISR_ARP, arpintr());
+#endif
 	DONETISR(NETISR_IP, ipintr());
 #endif
 #ifdef NETATALK
