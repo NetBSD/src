@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.32 2001/02/04 17:05:16 ad Exp $
+#	$NetBSD: INSTALL_TINY,v 1.33 2001/04/21 21:10:42 fvdl Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -66,7 +66,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-#options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	DDB		# in-kernel debugger

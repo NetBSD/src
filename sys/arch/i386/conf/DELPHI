@@ -1,11 +1,11 @@
-#	$NetBSD: DELPHI,v 1.1 2000/11/05 03:51:14 thorpej Exp $
+#	$NetBSD: DELPHI,v 1.2 2001/04/21 21:10:41 fvdl Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
 
 include "arch/i386/conf/std.i386"
 
-ident 		"DELPHI-$Revision: 1.1 $"
+ident 		"DELPHI-$Revision: 1.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -62,7 +62,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
+options 	DIAGNOSTIC	# expensive kernel consistency checks
 options 	POOL_LOGSIZE=1000
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
