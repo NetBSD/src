@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.114 1998/02/05 07:59:46 mrg Exp $	*/
+/*	$NetBSD: init_main.c,v 1.115 1998/02/10 14:09:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -40,6 +40,8 @@
  *
  *	@(#)init_main.c	8.9 (Berkeley) 1/21/94
  */
+
+#include "opt_uvm.h"
 
 #include "rnd.h"
 

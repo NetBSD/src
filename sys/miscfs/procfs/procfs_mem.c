@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.17 1998/02/05 08:00:14 mrg Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.18 1998/02/10 14:10:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,6 +44,8 @@
  * This is a lightly hacked and merged version
  * of sef's pread/pwrite functions
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

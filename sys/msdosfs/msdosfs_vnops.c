@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.67 1998/02/05 08:00:17 mrg Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.68 1998/02/10 14:10:04 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -46,6 +46,8 @@
  *
  * October 1992
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

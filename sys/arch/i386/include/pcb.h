@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.22 1998/02/06 07:22:02 mrg Exp $	*/
+/*	$NetBSD: pcb.h,v 1.23 1998/02/10 14:11:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -45,6 +45,10 @@
 
 #ifndef _I386_PCB_H_
 #define _I386_PCB_H_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_pmap_new.h"
+#endif
 
 #include <sys/signal.h>
 

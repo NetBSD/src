@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.43 1998/02/05 07:59:53 mrg Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.44 1998/02/10 14:09:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)kern_resource.c	8.5 (Berkeley) 1/21/94
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

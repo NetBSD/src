@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.24 1998/02/05 08:00:15 mrg Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.25 1998/02/10 14:10:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -38,6 +38,8 @@
  *
  *	@(#)union_subr.c	8.16 (Berkeley) 12/10/94
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 1998/02/05 07:57:59 mrg Exp $ */
+/*	$NetBSD: mem.c,v 1.16 1998/02/10 14:11:41 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,8 @@
 /*
  * Memory special file
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.46 1998/02/05 08:00:44 mrg Exp $	*/
+/*	$NetBSD: vnode.h,v 1.47 1998/02/10 14:08:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,6 +37,10 @@
 
 #ifndef _SYS_VNODE_H_
 #define _SYS_VNODE_H_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
 
 #include <sys/queue.h>
 #ifdef UVM			/* XXX: clean up includes later */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.4 1998/02/10 02:34:17 perry Exp $	*/
+/*	$NetBSD: uvm.h,v 1.5 1998/02/10 14:12:01 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -41,6 +41,8 @@
 
 #ifndef _UVM_UVM_H_
 #define _UVM_UVM_H_
+
+#include "opt_uvmhist.h"
 
 #include <uvm/uvm_extern.h>
 
@@ -114,6 +116,13 @@ struct uvm {
 };
 
 extern struct uvm uvm;
+
+/*
+ * historys
+ */
+
+UVMHIST_DECL(maphist);
+UVMHIST_DECL(pdhist);
 
 /*
  * vm_map_entry etype bits:

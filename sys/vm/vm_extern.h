@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.31 1998/02/06 00:14:48 mrg Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.32 1998/02/10 14:08:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,6 +34,10 @@
  *
  *	@(#)vm_extern.h	8.2 (Berkeley) 1/12/94
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
 
 struct buf;
 struct loadavg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.4 1998/02/10 02:34:56 perry Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.5 1998/02/10 14:12:26 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -44,9 +44,6 @@
 /*
  * uvm_pager.h
  */
-
-UVMHIST_DECL(maphist);
-
 
 /*
  * async pager i/o descriptor structure

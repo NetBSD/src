@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.5 1998/02/08 06:15:59 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.6 1998/02/10 14:12:14 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -69,6 +69,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include "opt_uvmhist.h"
+#include "opt_pmap_new.h"
 
 /*
  * uvm_km.c: handle kernel memory allocation and management

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.36 1998/02/05 07:57:52 mrg Exp $ */
+/*	$NetBSD: cgsix.c,v 1.37 1998/02/10 14:11:33 mrg Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -51,6 +51,8 @@
  *
  * XXX should defer colormap updates to vertical retrace interrupts
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

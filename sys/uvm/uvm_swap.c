@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.4 1998/02/08 07:52:32 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.5 1998/02/10 14:12:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -30,6 +30,8 @@
  * from: NetBSD: vm_swap.c,v 1.52 1997/12/02 13:47:37 pk Exp
  * from: Id: uvm_swap.c,v 1.1.2.42 1998/02/02 20:38:06 chuck Exp
  */
+
+#include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

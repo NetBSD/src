@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.111 1998/02/07 02:36:58 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.112 1998/02/10 14:11:43 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -55,6 +55,8 @@
  * SPARC physical map management code.
  * Does not function on multiprocessors (yet).
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.27 1998/02/07 02:44:54 chs Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.28 1998/02/10 14:10:00 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -46,6 +46,8 @@
  *
  * October 1992
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

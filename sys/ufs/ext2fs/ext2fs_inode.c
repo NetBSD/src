@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.4 1998/02/05 08:00:29 mrg Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.5 1998/02/10 14:10:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -36,6 +36,8 @@
  *	@(#)ffs_inode.c	8.8 (Berkeley) 10/19/94
  * Modified for ext2fs by Manuel Bouyer.
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

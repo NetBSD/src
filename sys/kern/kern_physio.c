@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.29 1998/02/05 07:59:52 mrg Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.30 1998/02/10 14:09:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -40,6 +40,8 @@
  *
  *	@(#)kern_physio.c	8.1 (Berkeley) 6/10/93
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

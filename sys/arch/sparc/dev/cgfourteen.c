@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.9 1998/02/05 07:57:51 mrg Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.10 1998/02/10 14:11:32 mrg Exp $ */
 
 /*
  * Copyright (c) 1996 
@@ -60,6 +60,8 @@
  *
  * XXX should defer colormap updates to vertical retrace interrupts
  */
+
+#include "opt_uvm.h"
 
 /* 
  * The following is for debugging only; it opens up a security hole

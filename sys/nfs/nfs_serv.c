@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.40 1998/02/05 08:00:21 mrg Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.41 1998/02/10 14:10:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -57,6 +57,8 @@
  *	For Version 3, nfsm_reply() does not return for the error case, since
  *	most version 3 rpcs return more than the status for error cases.
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

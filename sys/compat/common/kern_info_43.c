@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.7 1998/02/05 07:59:28 mrg Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.8 1998/02/10 14:10:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)subr_xxx.c	8.1 (Berkeley) 6/10/93
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

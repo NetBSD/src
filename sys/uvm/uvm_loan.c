@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.4 1998/02/07 11:08:51 mrg Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.5 1998/02/10 14:12:17 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -57,8 +57,6 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm.h>
-
-UVMHIST_DECL(maphist);
 
 /*
  * "loaned" pages are pages which are (read-only, copy-on-write) loaned 

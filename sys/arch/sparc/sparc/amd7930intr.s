@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930intr.s,v 1.11 1998/02/05 07:57:54 mrg Exp $	*/
+/*	$NetBSD: amd7930intr.s,v 1.12 1998/02/10 14:11:49 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Rolf Grossmann.
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
  *
  *	@(#)bsd_audiointr.s	8.1 (Berkeley) 6/11/93
  */
+
+#include "opt_uvm.h"
 
 #ifndef AUDIO_C_HANDLER
 #include "assym.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.33 1998/02/06 07:22:02 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.34 1998/02/10 14:11:58 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -49,6 +49,10 @@
  *
  * from hp300:	@(#)pmap.h	7.2 (Berkeley) 12/16/90
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_pmap_new.h"
+#endif
 
 #ifdef PMAP_NEW			/* redirect */
 #include <machine/pmap.new.h>	/* defines _I386_PMAP_H_ */

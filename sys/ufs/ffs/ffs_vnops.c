@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.10 1998/02/05 08:00:34 mrg Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.11 1998/02/10 14:10:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)ffs_vnops.c	8.10 (Berkeley) 8/10/94
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.110 1998/02/05 08:00:05 mrg Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.111 1998/02/10 14:09:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)vfs_syscalls.c	8.28 (Berkeley) 12/10/94
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

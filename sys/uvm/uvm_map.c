@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.5 1998/02/08 07:52:28 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.6 1998/02/10 14:12:18 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -70,6 +70,9 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_uvmhist.h"
+#include "opt_pmap_new.h"
+
 /*
  * uvm_map.c: uvm map operations
  */
@@ -93,8 +96,6 @@
 
 #define UVM_MAP
 #include <uvm/uvm.h>
-
-UVMHIST_DECL(maphist);
 
 struct uvm_cnt uvm_map_call, map_backmerge, map_forwmerge;
 struct uvm_cnt uvm_mlk_call, uvm_mlk_hint;

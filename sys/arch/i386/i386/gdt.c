@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.12 1998/02/06 07:21:52 mrg Exp $	*/
+/*	$NetBSD: gdt.c,v 1.13 1998/02/10 14:11:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

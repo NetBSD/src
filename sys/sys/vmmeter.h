@@ -1,4 +1,4 @@
-/*	$NetBSD: vmmeter.h,v 1.12 1998/02/05 08:00:43 mrg Exp $	*/
+/*	$NetBSD: vmmeter.h,v 1.13 1998/02/10 14:08:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -38,9 +38,15 @@
 #ifndef _SYS_VMMETER_H_
 #define _SYS_VMMETER_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
+
 /*
- * System wide statistics counters.
+ * System wide statistics counters.  Look in <uvm/uvm_extern.h> for the
+ * UVM equivalent.
  */
+#if !defined(_KERNEL) || !defined(UVM)
 struct vmmeter {
 	/*
 	 * General system activity.
@@ -93,12 +99,7 @@ struct vmmeter {
 	u_int v_forks_ppwait;	/* number of forks that block parent */
 	u_int v_forks_sharevm;	/* number of forks that share address space */
 };
-#ifdef _KERNEL
-#if defined(UVM)
-extern struct	vmmeter cnt;
-#else
 struct	vmmeter cnt;
-#endif
 #endif
 
 /* systemwide totals computed every five seconds */

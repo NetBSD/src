@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.6 1998/02/09 13:08:26 mrg Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.7 1998/02/10 14:12:27 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -70,6 +70,8 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_uvmhist.h"
+
 /*
  * uvm_pdaemon.c: the page daemon
  */
@@ -84,8 +86,6 @@
 #include <vm/vm_kern.h>
 
 #include <uvm/uvm.h>
-
-UVMHIST_DECL(pdhist);
 
 /*
  * local prototypes

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.5 1998/02/08 18:27:30 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.6 1998/02/10 14:12:23 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -73,6 +73,8 @@
 /*
  * uvm_page.c: page ops.
  */
+
+#include "opt_pmap_new.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

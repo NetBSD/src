@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.23 1998/02/05 07:59:59 mrg Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.24 1998/02/10 14:09:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

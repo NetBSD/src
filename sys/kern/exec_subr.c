@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.11 1998/02/05 07:59:45 mrg Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.12 1998/02/10 14:09:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

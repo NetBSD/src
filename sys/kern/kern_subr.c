@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.33 1998/02/07 02:44:47 chs Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.34 1998/02/10 14:09:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -88,6 +88,8 @@
  *
  *	@(#)kern_subr.c	8.3 (Berkeley) 1/21/94
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

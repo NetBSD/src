@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.110 1998/02/09 02:30:42 scottb Exp $	*/
+/*	$NetBSD: trap.c,v 1.111 1998/02/10 14:11:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -45,6 +45,8 @@
 
 #include "opt_math_emulate.h"
 #include "opt_vm86.h"
+#include "opt_uvm.h"
+#include "opt_pmap_new.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

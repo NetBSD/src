@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.15 1998/02/06 00:14:52 mrg Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.16 1998/02/10 14:09:00 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -70,6 +70,10 @@
 
 #ifndef	_VM_MAP_
 #define	_VM_MAP_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
 
 #ifdef UVM
 #include <uvm/uvm_anon.h>

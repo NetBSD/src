@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.77 1998/02/05 08:00:01 mrg Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.78 1998/02/10 14:09:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@
 /*
  * External virtual filesystem routines
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

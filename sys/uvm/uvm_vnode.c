@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.3 1998/02/07 11:09:57 mrg Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.4 1998/02/10 14:12:33 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -49,6 +49,8 @@
  * from: Id: uvm_vnode.c,v 1.1.2.26 1998/02/02 20:38:07 chuck Exp
  */
 
+#include "opt_uvmhist.h"
+
 /*
  * uvm_vnode.c: the vnode pager.
  */
@@ -68,8 +70,6 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_vnode.h>
-
-UVMHIST_DECL(maphist);
 
 /*
  * private global data structure

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.14 1998/02/05 07:59:41 mrg Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.15 1998/02/10 14:09:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -36,6 +36,10 @@
 
 #ifndef _PDQ_OS_H
 #define	_PDQ_OS_H
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
 
 #define	PDQ_OS_TX_TIMEOUT		5	/* seconds */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.42 1998/02/05 07:59:59 mrg Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.43 1998/02/10 14:09:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_uvm.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

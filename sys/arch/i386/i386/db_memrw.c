@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.2 1998/02/06 07:21:52 mrg Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3 1998/02/10 14:11:20 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,6 +32,8 @@
  * Routines to read and write memory on behalf of the debugger, used
  * by DDB and KGDB.
  */
+
+#include "opt_pmap_new.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

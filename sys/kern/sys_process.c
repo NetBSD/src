@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.58 1998/02/05 07:59:58 mrg Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.59 1998/02/10 14:09:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -51,6 +51,8 @@
  * ptrace() requests should actually do, and its text is quoted several times
  * in this file.
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

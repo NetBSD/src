@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 1998/02/08 18:48:39 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23 1998/02/10 14:09:11 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -71,6 +71,10 @@
 
 #ifndef	_PMAP_VM_
 #define	_PMAP_VM_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_pmap_new.h"
+#endif
 
 struct proc;		/* for pmap_activate()/pmap_deactivate() proto */
 

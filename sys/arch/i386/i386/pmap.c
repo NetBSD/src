@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55 1998/02/06 07:21:58 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.56 1998/02/10 14:11:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -79,6 +79,7 @@
  */
 
 #include "opt_cputype.h"
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

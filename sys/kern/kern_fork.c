@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.37 1998/02/05 07:59:50 mrg Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.38 1998/02/10 14:09:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)kern_fork.c	8.6 (Berkeley) 4/8/94
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

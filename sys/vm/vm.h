@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.h,v 1.17 1998/02/06 00:14:47 mrg Exp $	*/
+/*	$NetBSD: vm.h,v 1.18 1998/02/10 14:08:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,6 +37,11 @@
 
 #ifndef VM_H
 #define VM_H
+
+/* XXX remove this later when the simple locks are not here! */
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
 
 typedef int vm_inherit_t;		/* XXX: inheritance codes */
 
