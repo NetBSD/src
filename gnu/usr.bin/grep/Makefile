@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2000/02/27 01:31:02 wiz Exp $
+#	$NetBSD: Makefile,v 1.15 2000/02/27 02:36:55 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,7 @@ CPPFLAGS+=	-I${DIST}/grep/src -I${DIST}/grep/intl -I${.CURDIR} \
 		-DGNULOCALEDIR=\"/usr/share/locale\" \
 		-DLOCALE_ALIAS_PATH=\"/usr/share/locale:.\" \
 		-DLOCALEDIR=\"/usr/share/locale\"
+CLEANFILES+=    ${PROG}.1 ${PROG}.info ${PROG}.cat1
 
 .if ${MKNLS} != "no"
 .for F in de.gmo el.gmo es.gmo fr.gmo ko.gmo nl.gmo no.gmo pl.gmo pt_BR.gmo \
@@ -30,6 +31,10 @@ FILESNAME_${F}=	grep.mo
 TEXINFO=	grep.texi
 INFOFLAGS=	-I${.CURDIR}/../../dist/grep/doc
 
+# this is a hack -- our texinfo doesn't support @command yet, so
+# we have to use the pre-generated grep.info until it does
+grep.info:
+	ln -s ${DIST}/grep/doc/grep.info .
 
 MLINKS=	grep.1 egrep.1 \
 	grep.1 fgrep.1
