@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.37 2002/05/15 10:11:15 bjh21 Exp $
+.\" $NetBSD: doc2html,v 1.38 2002/05/27 17:46:55 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -684,7 +684,7 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .make-mode code <code> </code>
 .make-mode em <em> </em>
 .make-mode i <i> </i>
-.make-mode caps <font\ size="-1"> <font\ size="+0">
+.make-mode caps <font\ size="-1"> </font>
 .make-mode null \& \&
 .make-mode function <code> </code>
 .am mode-i-on
