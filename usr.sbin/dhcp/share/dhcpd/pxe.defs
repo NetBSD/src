@@ -1,4 +1,4 @@
-#	$NetBSD: pxe.defs,v 1.1 2002/02/09 21:13:32 thorpej Exp $
+#	$NetBSD: pxe.defs,v 1.2 2002/02/17 20:26:03 thorpej Exp $
 #
 # Copyright 2001 Wasabi Systems, Inc.
 # All rights reserved.
@@ -32,6 +32,32 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# A PXE client can be identified using Option 60 (vendor-class-identifier).
+# The format of the option is:
+#
+#	PXEClient:Arch:xxxxx:UNDI:yyyzzz
+#
+# This allows you to select PXE clients for special treatment using
+# classes, like so:
+#
+#	class "pxe-clients-ia32" {
+#		match if substring (option vendor-class-identifier, 0, 20) =
+#		    "PXEClient:Arch:00000";
+#		.
+#		.
+#		.
+#	}
+#
+#	class "pxe-clients-ia64" {
+#		match if substring (option vendor-class-identifier, 0, 20) =
+#		    "PXEClient:Arch:00002";
+#		.
+#		.
+#		.
+#	}
 #
 
 option space PXE;
