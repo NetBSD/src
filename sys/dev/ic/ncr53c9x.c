@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.60 2000/12/01 04:37:54 augustss Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.61 2000/12/03 23:25:24 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -717,9 +717,9 @@ ncr53c9x_select(sc, ecb)
 
 	/* And get the targets attention */
 	if (ecb->tag[0])
-		NCRCMD(sc, NCRCMD_SELATN3 | NCRCMD_DMA);
+		NCRCMD(sc, NCRCMD_SELATN3);
 	else
-		NCRCMD(sc, NCRCMD_SELATN | NCRCMD_DMA);
+		NCRCMD(sc, NCRCMD_SELATN);
 }
 
 void
@@ -2692,3 +2692,4 @@ ncr53c9x_watch(arg)
 	splx(s);
 	callout_reset(&sc->sc_watchdog, 60*hz, ncr53c9x_watch, sc);
 }
+
