@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.50 2000/08/14 14:29:18 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.51 2000/08/15 22:41:54 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1161,3 +1161,35 @@ sys/arch/hp300/dev/ite.c			1.44
 
   Fix keyboard related panic when ite device is configured
   but not attached.  Fixes PR#10750.
+
+sys/netinet/ip_fil.c				1.57
+
+  Make this compile as part of ipftest (non-kernel).
+
+sys/compat/linux/common/linux_misc.c		1.63
+sys/compat/linux/arch/i386/syscalls.master	1.40
+sys/compat/linux/arch/i386/linux_syscall.h	regenerate
+sys/compat/linux/arch/i386/linux_syscallargs.h	regenerate
+sys/compat/linux/arch/i386/linux_sysent.c	regenerate
+sys/compat/linux/arch/i386/linux_syscalls.c	regenerate
+
+  Enable basic versions of Linux fsuid calls.  Fixes PR#9335.
+
+lib/libc/net/res_send.c				1.31
+
+  Do not try to retransmit forever in EINTR-busy situation.
+  Fixes PR#6410.
+
+share/man/man4/tun.4				1.6
+
+  Fix formatting glitches.
+
+share/mk/bsd.man.mk				1.54
+
+  Do not test $UPDATE nor file existence on MLINKS installation,
+  so that original manual page and links do not get out of sync.
+
+sys/nfs/nfs_vnops.c				patch
+
+  Be careful about data consistency across operations which may
+  block.  Should fix some reported nfs_lookup panics.
