@@ -1,4 +1,4 @@
-/*      $NetBSD: grf_cl.c,v 1.11.4.1 1996/05/27 10:50:40 is Exp $        */
+/*      $NetBSD: grf_cl.c,v 1.11.4.2 1996/06/11 21:23:42 is Exp $        */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -552,7 +552,7 @@ cl_blank(gp, on)
         struct grf_softc *gp;
         int *on;
 {
-        WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on ? 0x01 : 0x21);
+        WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on > 0 ? 0x01 : 0x21);
         return(0);
 }
         
