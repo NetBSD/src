@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.35 1998/10/31 23:51:05 mjacob Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.36 1999/02/12 06:25:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.35 1998/10/31 23:51:05 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.36 1999/02/12 06:25:13 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -190,7 +190,7 @@ dec_kn20aa_intr_string(ccv, ih)
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
         if (ih > KN20AA_MAX_IRQ)
-                panic("dec_kn20aa_intr_string: bogus kn20aa IRQ 0x%x\n",
+                panic("dec_kn20aa_intr_string: bogus kn20aa IRQ 0x%lx\n",
 		    ih);
 
         sprintf(irqstr, "kn20aa irq %ld", ih);
@@ -210,7 +210,7 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg)
 	void *cookie;
 
         if (ih > KN20AA_MAX_IRQ)
-                panic("dec_kn20aa_intr_establish: bogus kn20aa IRQ 0x%x\n",
+                panic("dec_kn20aa_intr_establish: bogus kn20aa IRQ 0x%lx\n",
 		    ih);
 
 	cookie = alpha_shared_intr_establish(kn20aa_pci_intr, ih, IST_LEVEL,
@@ -255,7 +255,7 @@ kn20aa_iointr(framep, vec)
 
 	if (vec >= 0x900) {
 		if (vec >= 0x900 + (KN20AA_MAX_IRQ << 4))
-			panic("kn20aa_iointr: vec 0x%x out of range\n", vec);
+			panic("kn20aa_iointr: vec 0x%lx out of range\n", vec);
 		irq = (vec - 0x900) >> 4;
 
 #ifdef EVCNT_COUNTERS
@@ -280,7 +280,7 @@ kn20aa_iointr(framep, vec)
 		return;
 	} 
 #endif
-	panic("kn20aa_iointr: weird vec 0x%x\n", vec);
+	panic("kn20aa_iointr: weird vec 0x%lx\n", vec);
 }
 
 void

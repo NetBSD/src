@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.13 1998/04/25 00:12:45 thorpej Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.14 1999/02/12 06:25:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.13 1998/04/25 00:12:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.14 1999/02/12 06:25:14 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -160,8 +160,8 @@ dec_kn8ae_intr_string(ccv, ih)
 	pci_intr_handle_t ih;
 {
 	static char irqstr[64];
-        sprintf(irqstr, "kn8ae irq %d vector 0x%x PCI Interrupt Pin %c",
-	    (ih >> 24), ih & 0xffff, (((ih >> 16) & 0x7) - 1) + 'A');
+        sprintf(irqstr, "kn8ae irq %ld vector 0x%lx PCI Interrupt Pin %c",
+	    (ih >> 24), ih & 0xffff, (int)(((ih >> 16) & 0x7) - 1) + 'A');
         return (irqstr);
 }
 
@@ -194,7 +194,7 @@ dec_kn8ae_intr_establish(ccv, ih, level, func, arg)
 
 	vp = &vectab[ionode][hose][device];
 	if (vp->func != kn8ae_spurious) {
-		printf("dec_kn8ae_intr_establish: vector 0x%x already used\n",
+		printf("dec_kn8ae_intr_establish: vector 0x%lx already used\n",
 		    ih & 0xffff);
 		return (cookie);
 	}
@@ -261,7 +261,7 @@ kn8ae_iointr(framep, vec)
 		return;
 	}
 	if ((vec & DWLPX_VEC_MARK) == 0) {
-		panic("kn8ae_iointr: vec 0x%x\n", vec);
+		panic("kn8ae_iointr: vec 0x%lx\n", vec);
 		/* NOTREACHED */
 	}
 	ionode = DWLPX_MVEC_IONODE(vec);
@@ -276,7 +276,7 @@ kn8ae_iointr(framep, vec)
 	if (ionode < 0 || ionode >= DWLPX_NIONODE ||
 	    hose < 0 || hose >= DWLPX_NHOSE ||
 	    device < 0 || device >= DWLPX_MAXDEV) {
-		panic("kn8ae_iointr: malformed vector 0x%x\n", vec);
+		panic("kn8ae_iointr: malformed vector 0x%lx\n", vec);
 		/* NOTREACHED */
 	}
 	vp = &vectab[ionode][hose][device];
