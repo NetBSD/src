@@ -51,16 +51,6 @@
  *   onboard xceiver or not.  Since the Clarkson drivers do a very
  *   good rendition of a 3c503, I also scavenged a lot of ideas from
  *   there.
- *
- * Onboard transceiver selection:
- *		David Burren (davidb@melb.cpr.itg.telecom.com.au) May 1993
- *
- * Whereas Herb's original version of this driver kludged the transceiver
- * selection into bit 7 of the unit number, it is now taken from the
- * "flags" specified in the kernel config file.
- * If bit 0 of the flags is set, the external transceiver is used.
- * This has been tested with the Etherlink II and the Etherlink II TP
- * (where the onboard transceiver is UTP).
  */
 #include "param.h"
 #include "mbuf.h"
@@ -106,7 +96,6 @@ struct	ec_softc {
 	u_short	ec_vector;		/* interrupt vector 		*/
 	short	ec_io_ctl_addr;		/* i/o bus address, control	*/
 	short	ec_io_nic_addr;		/* i/o bus address, DS8390	*/
-	short	thick_or_thin;		/* thick=0;thin=2		*/
 
 	caddr_t	ec_vmem_addr;		/* card RAM virtual memory base */
 	u_long	ec_vmem_size;		/* card RAM bytes		*/
@@ -241,11 +230,6 @@ struct isa_device *is;
 	ifp->if_name = "ec" ;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
-	/*
-	 *	IFF_LLC0 if "flags & 1" (ie. "use external transceiver")
-	 *	so that ec_init() knows what to do.
-	 */
-	ifp->if_flags |= (is->id_flags & 1) ? IFF_LLC0 : 0;
 	ifp->if_init = ec_init;
 	ifp->if_output = ether_output;
 	ifp->if_start = ec_start_output;
@@ -259,9 +243,8 @@ struct isa_device *is;
 /*
  * Weeee.. We get to tell people we exist...
  */
-	printf("ec%d: ethernet address %s (using %s transceiver)\n",
-		is->id_unit, ether_sprintf(sc->ec_addr),
-		(is->id_flags & 1) ? "external" : "on-board");
+	printf("ec%d: ethernet address %s\n",
+		is->id_unit, ether_sprintf(sc->ec_addr));
 }
 
 ec_init(unit)
@@ -555,6 +538,7 @@ int len;
     	struct mbuf *m, *ecget();
 	int off, resid;
 
+	++sc->ec_if.if_ipackets;
 	/*
 	 * Deal with trailer protocol: if type is trailer type
 	 * get true type from first 16-bit word past data.

@@ -120,10 +120,6 @@ struct ec_ring	{
 #define ECNTRL_OUTPUT   0x40         /* PC->3c503 direction if set*/
 #define ECNTRL_START    0x80         /* Start DMA Logic.          */
 /*
- * Name changed as the Etherlink II TP doesn't have a "thin-net"...
- */
-#define ECNTRL_THIN     ECNTRL_ONBOARD
-/*
  * Bits in E33G status register.
  */
 #define	ESTAT_DPRDY	0x80	/* Data port of FIFO ready */
