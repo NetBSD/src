@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.5 2001/01/23 10:10:22 ichiro Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.6 2001/01/23 13:48:06 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -97,12 +97,12 @@ struct	uplcom_softc {
  * These are the maximum number of bytes transferred per frame.
  * The output buffer size cannot be increased due to the size encoding.
  */
-#define UPLCOMIBUFSIZE 256;
-#define UPLCOMOBUFSIZE 256;
+#define UPLCOMIBUFSIZE 256
+#define UPLCOMOBUFSIZE 256
 
 Static	usbd_status uplcom_init(struct uplcom_softc *);
 Static	usbd_status uplcom_set_line_coding(struct uplcom_softc *sc,
-						usb_cdc_line_state_t *state);
+					   usb_cdc_line_state_t *state);
 
 Static	void	uplcom_set(void *, int, int, int);
 Static	void	uplcom_dtr(struct uplcom_softc *, int);
@@ -139,8 +139,7 @@ USB_MATCH(uplcom)
 	USB_MATCH_START(uplcom, uaa);
 	int i;
 
-
-	if (uaa->iface == NULL)
+	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
 	for (i = 0; uplcom_products[i].vendor != 0; i++) {
@@ -168,6 +167,7 @@ USB_ATTACH(uplcom)
 
 	DPRINTF(("\n\nuplcom attach: sc=%p\n", sc));
 
+	/* Move the device into the configured state. */
 	err = usbd_set_config_index(dev, UPLCOM_CONFIG_INDEX, 1);
 	if (err) {
 		printf("\n%s: failed to set configuration, err=%s\n",
@@ -259,11 +259,10 @@ USB_DETACH(uplcom)
 
 	DPRINTF(("uplcom_detach: sc=%p flags=%d\n", sc, flags));
 	sc->sc_dying = 1;
-	if (sc->sc_subdev != NULL) 
+	if (sc->sc_subdev != NULL) {
 		rv = config_detach(sc->sc_subdev, flags);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			USBDEV(sc->sc_dev));
+		sc->sc_subdev = NULL;
+	}
 
 	return (rv);
 }
