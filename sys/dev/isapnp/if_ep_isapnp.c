@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.4 1997/03/18 18:58:12 christos Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.5 1997/03/21 00:56:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -68,13 +68,13 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/ic/elink3var.h>
-#include <dev/ic/elink3reg.h>
-
 #include <dev/isa/isavar.h>
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
+
+#include <dev/ic/elink3var.h>
+#include <dev/ic/elink3reg.h>
 
 #ifdef __BROKEN_INDIRECT_CONFIG
 int ep_isapnp_match __P((struct device *, void *, void *));
@@ -99,7 +99,10 @@ ep_isapnp_match(parent, match, aux)
 {
 	struct isapnp_attach_args *ipa = aux;
 
-	return (!strcmp(ipa->ipa_devlogic, "TCM5094"));
+	if (strcmp(ipa->ipa_devlogic, "TCM5094"))
+		return (0);
+
+	return (1);
 }
 
 void
@@ -111,14 +114,14 @@ ep_isapnp_attach(parent, self, aux)
 	struct isapnp_attach_args *ipa = aux;
 	u_short conn = 0;
 
+	printf("\n");
+
 	sc->sc_iot = ipa->ipa_iot;
 	sc->sc_ioh = ipa->ipa_io[0].h;
 	sc->bustype = EP_BUS_ISA;
 
 	GO_WINDOW(0);
 	conn = bus_space_read_2(sc->sc_iot, sc->sc_ioh, EP_W0_CONFIG_CTRL);
-
-	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
 		printf("%s: error in region allocation\n", sc->sc_dev.dv_xname);
