@@ -1,4 +1,4 @@
-/*	$NetBSD: lcl.c,v 1.1.1.1.8.1 2001/01/28 15:52:23 he Exp $	*/
+/*	$NetBSD: lcl.c,v 1.1.1.1.8.2 2002/07/01 17:14:51 he Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: lcl.c,v 1.16 2000/02/28 07:52:16 vixie Exp";
+static const char rcsid[] = "Id: lcl.c,v 1.17 2001/05/29 05:49:02 marka Exp";
 #endif
 
 /* Imports */
@@ -56,6 +56,8 @@ struct irs_acc *
 irs_lcl_acc(const char *options) {
 	struct irs_acc *acc;
 	struct lcl_p *lcl;
+
+	UNUSED(options);
 
 	if (!(acc = memget(sizeof *acc))) {
 		errno = ENOMEM;
