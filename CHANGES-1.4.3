@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.47 2000/07/31 19:09:24 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.48 2000/08/02 15:45:24 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1114,3 +1114,8 @@ sys/msdosfs/msdosfs_vnops.c			1.102 via patch
 usr.sbin/pkg_install/lib/ftpio.c		1.10-1.12 via patch
 
   Sync up to main development branch.
+
+sys/netinet/ip_fil.c				1.56 via patch
+
+  Properly report initialization error.  Enable IPF automatically
+  if it wasn't already enabled before doing a NAT operation.
