@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_v2.c,v 1.2 1995/07/25 22:21:33 gwr Exp $	*/
+/*	$NetBSD: pcnfsd_v2.c,v 1.3 1995/07/25 22:24:19 gwr Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_v2.c 1.2 91/12/18 13:26:13 SMI */
 /*
@@ -547,7 +547,9 @@ char *map;
 	}
 
 	if (err = yp_bind(domain)) {
+#ifdef	DEBUG
 		msg_out("rpc.pcnfsd: yp_bind failed");
+#endif
 		return(NULL);
 	}
 
