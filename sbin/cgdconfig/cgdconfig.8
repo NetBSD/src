@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.18 2004/03/17 01:40:34 wiz Exp $
+.\" $NetBSD: cgdconfig.8,v 1.19 2004/07/04 17:19:57 elric Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,6 +43,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl nv
+.Op Fl V Ar vmeth
 .Ar cgd dev
 .Op Ar paramsfile
 .Nm
@@ -56,6 +57,7 @@
 .Nm
 .Fl G
 .Op Fl nv
+.Op Fl i Ar ivmeth
 .Op Fl k Ar kgmeth
 .Op Fl o Ar outfile
 .Ar paramsfile
