@@ -33,7 +33,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-  /* $NetBSD: parse.y,v 1.10 2002/01/29 10:20:34 tv Exp $ */
+  /* $NetBSD: parse.y,v 1.11 2003/07/14 11:36:49 itojun Exp $ */
 
 
 /* Some versions of bison are broken in that they use alloca() but don't
@@ -794,8 +794,8 @@ void build_eof_action()
 		else
 			{
 			sceof[scon_stk[i]] = true;
-			sprintf( action_text, "case YY_STATE_EOF(%s):\n",
-				scname[scon_stk[i]] );
+			snprintf(action_text, sizeof(action_text),
+			    "case YY_STATE_EOF(%s):\n", scname[scon_stk[i]]);
 			add_action( action_text );
 			}
 		}
@@ -819,7 +819,7 @@ char msg[], arg[];
 	{
 	char errmsg[MAXLINE];
 
-	(void) sprintf( errmsg, msg, arg );
+	(void) snprintf(errmsg, sizeof(errmsg), msg, arg);
 	synerr( errmsg );
 	}
 
@@ -841,7 +841,7 @@ char msg[], arg[];
 	{
 	char warn_msg[MAXLINE];
 
-	(void) sprintf( warn_msg, msg, arg );
+	(void) snprintf(warn_msg, sizeof(warn_msg), msg, arg);
 	lwarn( warn_msg );
 	}
 
@@ -863,7 +863,7 @@ char msg[], arg[];
 	{
 	char errmsg[MAXLINE];
 
-	(void) sprintf( errmsg, msg, arg );
+	(void) snprintf(errmsg, sizeof(errmsg), msg, arg);
 	pinpoint_message( errmsg );
 	}
 
@@ -887,7 +887,7 @@ int line;
 
 	if ( ! nowarn )
 		{
-		sprintf( warning, "warning, %s", str );
+		snprintf(warning, sizeof(warning), "warning, %s", str);
 		line_pinpoint( warning, line );
 		}
 	}
