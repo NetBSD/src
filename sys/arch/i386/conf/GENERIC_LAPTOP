@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.90.2.7 2004/07/14 09:08:04 tron Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.90.2.8 2004/07/15 20:26:38 he Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90.2.7 $"
+#ident 		"GENERIC-$Revision: 1.90.2.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -67,7 +67,8 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
