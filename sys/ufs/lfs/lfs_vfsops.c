@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.60 2000/11/27 03:33:57 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.61 2000/12/03 05:27:51 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -886,6 +886,7 @@ lfs_mountfs(devvp, mp, p)
 	ump->um_bptrtodb = 0;
 	ump->um_seqinc = 1 << fs->lfs_fsbtodb;
 	ump->um_nindir = fs->lfs_nindir;
+	ump->um_lognindir = ffs(fs->lfs_nindir) - 1;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
 	devvp->v_specmountpoint = mp;
