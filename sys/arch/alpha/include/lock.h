@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.12 2000/11/20 21:18:07 thorpej Exp $ */
+/* $NetBSD: lock.h,v 1.13 2000/11/22 07:44:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -144,8 +144,11 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 do {									\
 	struct cpu_info *__ci = curcpu();				\
 									\
-	if (__ci->ci_ipis != 0)						\
-		alpha_ipi_process(__ci);				\
+	if (__ci->ci_ipis != 0) {					\
+		/* printf("CPU %lu has IPIs pending\n",			\
+		    __ci->ci_cpuid); */					\
+		alpha_ipi_process(__ci, NULL);				\
+	}								\
 } while (0)
 #endif /* MULTIPROCESSOR */
 
