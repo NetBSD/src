@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.4 1996/04/12 06:09:48 cgd Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.4.4.1 1996/06/05 00:39:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -35,6 +35,9 @@
 #include <machine/autoconf.h>
 #include <machine/pte.h>
 #include <machine/rpb.h>
+#ifndef EVCNT_COUNTERS
+#include <machine/intrcnt.h>
+#endif
 
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/ioasicreg.h>
@@ -298,10 +301,18 @@ ioasic_intr(val)
 
 		sir = *sirp;
 
+#ifdef EVCNT_COUNTERS
+	/* No interrupt counting via evcnt counters */ 
+	XXX BREAK HERE XXX
+#else /* !EVCNT_COUNTERS */
+#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_IOASIC + slot]++
+#endif /* EVCNT_COUNTERS */ 
+
 		/* XXX DUPLICATION OF INTERRUPT BIT INFORMATION... */
 #define	CHECKINTR(slot, bits)						\
 		if (sir & bits) {					\
 			ifound = 1;					\
+			INCRINTRCNT(slot);				\
 			(*ioasicintrs[slot].iai_func)			\
 			    (ioasicintrs[slot].iai_arg);		\
 		}

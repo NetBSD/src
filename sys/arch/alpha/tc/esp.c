@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.8 1996/04/12 01:31:43 cgd Exp $	*/
+/*	$NetBSD: esp.c,v 1.8.4.1 1996/06/05 00:39:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -370,8 +370,8 @@ espattach(parent, self, aux)
 	sc->sc_ih.ih_fun = (void *) espintr;
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(sc->sc_pri, &sc->sc_ih);
-#endif
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+#endif
 
 	/*
 	 * fill in the prototype scsi_link.

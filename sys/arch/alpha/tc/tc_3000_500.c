@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_500.c,v 1.4.4.1 1996/06/04 19:03:28 cgd Exp $	*/
+/*	$NetBSD: tc_3000_500.c,v 1.4.4.2 1996/06/05 00:39:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,6 +32,9 @@
 
 #include <machine/autoconf.h>
 #include <machine/pte.h>
+#ifndef EVCNT_COUNTERS
+#include <machine/intrcnt.h>
+#endif
 
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tc_conf.h>
@@ -194,9 +197,18 @@ tc_3000_500_iointr(framep, vec)
 		ir &= ~(tc_3000_500_imask & 0x1ff);
 
 		ifound = 0;
+
+#ifdef EVCNT_COUNTERS
+	/* No interrupt counting via evcnt counters */ 
+	XXX BREAK HERE XXX
+#else /* !EVCNT_COUNTERS */
+#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_KN15 + slot]++
+#endif /* EVCNT_COUNTERS */ 
+
 #define	CHECKINTR(slot)							\
 		if (ir & tc_3000_500_intrbits[slot]) {			\
 			ifound = 1;					\
+			INCRINTRCNT(slot);				\
 			(*tc_3000_500_intr[slot].tci_func)		\
 			    (tc_3000_500_intr[slot].tci_arg);		\
 		}
