@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.31 2000/09/27 16:04:13 fvdl Exp $
+#	$NetBSD: Makefile.inc,v 1.32 2001/07/02 14:10:09 tv Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -88,9 +88,6 @@ boot: ${BOOTCODE}
 release:
 	-mkdir -p ${RELEASEDIR}/installation/floppy
 	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
-	for f in ${RELEASEDIR}/installation/floppy/${IMAGE}; do \
-		gzip <$$f >$$f.gz; \
-	done
 	
 clean cleandir distclean:
 	/bin/rm -f *.core ${CLEANFILES} ${IMAGE} ${IMAGE}.tmp
