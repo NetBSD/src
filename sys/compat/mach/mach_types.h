@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_types.h,v 1.16 2003/11/15 17:44:39 manu Exp $	 */
+/*	$NetBSD: mach_types.h,v 1.17 2003/11/16 01:14:07 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -58,9 +58,9 @@ typedef int mach_vm_prot_t;
 typedef int mach_thread_state_flavor_t;
 typedef unsigned int mach_natural_t;
 typedef unsigned long mach_vm_size_t;
-typedef unsigned quand mach_vm_size_64_t;
+typedef u_quad_t mach_vm_size_64_t;
 typedef unsigned long mach_vm_offset_t;
-typedef unsigned quad mach_vm_offset_64_t;
+typedef u_quad_t mach_vm_offset_64_t;
 typedef int mach_vm_region_flavor_t;
 typedef int mach_vm_behavior_t;
 typedef int mach_vm_sync_t;
