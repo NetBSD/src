@@ -1,4 +1,4 @@
-/*	$NetBSD: ctermid.c,v 1.5 1997/07/13 19:45:44 christos Exp $	*/
+/*	$NetBSD: ctermid.c,v 1.6 1997/07/14 19:40:49 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,13 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)ctermid.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ctermid.c,v 1.5 1997/07/13 19:45:44 christos Exp $");
+__RCSID("$NetBSD: ctermid.c,v 1.6 1997/07/14 19:40:49 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
-#include <paths.h>
 #include <string.h>
+#include <paths.h>
 
 char *
 ctermid(s)
@@ -54,7 +54,7 @@ ctermid(s)
 
 	if (s) {
 		bcopy(def, s, sizeof(_PATH_TTY));
-		return(s);
+		return (s);
 	}
-	return(def);
+	return (def);
 }
