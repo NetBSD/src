@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2004/01/30 08:43:15 lukem Exp $
+#	$NetBSD: Makefile,v 1.44 2004/03/06 16:12:06 heas Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -50,7 +50,7 @@ print_x11_version: .PHONY
 	${HOST_SH} -c '. ${.CURDIR}/sets.subr; echo $$x11_version'
 
 # This target has debugging value only, really.
-makeflist: .PHONY check_DESTDIR
+makeflist: .PHONY .PRECIOUS check_DESTDIR
 	${SETSCMD} ./makeflist ${MAKEFLIST_FLAGS}
 
 #
