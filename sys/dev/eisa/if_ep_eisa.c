@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.21 1999/08/19 08:06:31 tron Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.22 2000/05/07 13:57:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -128,7 +128,19 @@ struct cfattach ep_eisa_ca = {
 };
 
 /* XXX move these somewhere else */
-#define EISA_CONTROL	0x0c84
+/* While attaching we need a few special EISA registers of the card,
+   these are mapped at slotbase+EP_EISA_CFG_BASE with len EP_EISA_CFG_SIZE */
+#define EP_EISA_CFG_BASE	0x0c80
+#define	EP_EISA_CFG_CONTROL	0x0004	/* 1 byte */
+#define	EP_EISA_CFG_RESOURCE	0x0008	/* 2 byte */
+#define	EP_EISA_CFG_SIZE	0x000a
+
+/* The generic driver backend only needs access to the standard ports,
+   mapped at the beginning of the eisa slot space */
+#define	EP_IOPORT_OFFSET	0x0000
+#define	EP_IOPORT_SIZE		0x0020
+
+/* Bits for the eisa control register */
 #define EISA_RESET	0x04
 #define EISA_ERROR	0x02
 #define EISA_ENABLE	0x01
@@ -205,7 +217,7 @@ ep_eisa_attach(parent, self, aux)
 	struct ep_softc *sc = (void *)self;
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
-	bus_space_handle_t ioh;
+	bus_space_handle_t ioh, ioh_cfg;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
 	const char *intrstr;
@@ -213,8 +225,13 @@ ep_eisa_attach(parent, self, aux)
 	u_int irq;
 
 	/* Map i/o space. */
-	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot),
-	    EISA_SLOT_SIZE, 0, &ioh)) {
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) + EP_EISA_CFG_BASE,
+	    EP_EISA_CFG_SIZE, 0, &ioh_cfg)) {
+		printf("\n");
+		panic("ep_eisa_attach: can't map eisa cfg i/o space");
+	}
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) + EP_IOPORT_OFFSET,
+	    EP_IOPORT_SIZE, 0, &ioh)) {
 		printf("\n");
 		panic("ep_eisa_attach: can't map i/o space");
 	}
@@ -223,20 +240,28 @@ ep_eisa_attach(parent, self, aux)
 	sc->sc_iot = iot;
 
 	/* Reset card. */
-	bus_space_write_1(iot, ioh, EISA_CONTROL, EISA_ENABLE | EISA_RESET);
+	bus_space_write_1(iot, ioh_cfg, EP_EISA_CFG_CONTROL, 
+	    EISA_ENABLE | EISA_RESET);
 	delay(10);
-	bus_space_write_1(iot, ioh, EISA_CONTROL, EISA_ENABLE);
+	bus_space_write_1(iot, ioh_cfg, EP_EISA_CFG_CONTROL, EISA_ENABLE);
 	/* Wait for reset? */
 	delay(1000);
 
 	/* Read the IRQ from the card. */
-	irq = bus_space_read_2(iot, ioh, ELINK_W0_RESOURCE_CFG) >> 12;
+	irq = bus_space_read_2(iot, ioh_cfg, EP_EISA_CFG_RESOURCE) >> 12;
 
 	eep = ep_eisa_lookup(ea);
 	if (eep == NULL) {
 		printf("\n");
 		panic("ep_eisa_attach: impossible");
 	}
+
+	/* we don't need access to the config registers any more, but
+	   noone else should be able to map this space, so keep it
+	   reserved? */
+#if 0
+	bus_space_unmap(iot, ioh_cfg, EP_EISA_CFG_SIZE);
+#endif
 
 	printf(": %s\n", eep->eep_name);
 
