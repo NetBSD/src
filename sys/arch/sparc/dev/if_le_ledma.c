@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.1 1998/07/27 23:59:11 pk Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.2 1998/07/29 16:10:57 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -288,16 +288,21 @@ lehwreset(sc)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	struct dma_softc *dma = lesc->sc_dma;
+	u_long aui_bit;
 
 	/*
 	 * Reset DMA channel.
 	 */
+	aui_bit = dma->sc_regs->csr & DE_AUI_TP;
 	DMA_RESET(dma);
 	dma->sc_regs->en_bar = lesc->sc_laddr & 0xff000000;
 	DMA_ENINTR(dma);
 #define D_DSBL_WRINVAL D_DSBL_SCSI_DRN	/* XXX: fix dmareg.h */
-	/* Disable E-cache invalidates on chip writes */
-	dma->sc_regs->csr |= D_DSBL_WRINVAL;
+	/*
+	 * Disable E-cache invalidates on chip writes.
+	 * Retain previous cable selection bit.
+	 */
+	dma->sc_regs->csr |= (D_DSBL_WRINVAL | aui_bit);
 }
 
 hide void
