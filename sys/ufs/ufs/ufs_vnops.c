@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.96 2003/04/11 14:13:28 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.97 2003/04/25 23:12:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.96 2003/04/11 14:13:28 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.97 2003/04/25 23:12:33 fvdl Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -1027,7 +1027,7 @@ ufs_rename(void *v)
 			}
 			dp->i_ffs_effnlink++;
 			dp->i_nlink++;
-			DIP(dp, nlink) = ip->i_nlink;
+			DIP(dp, nlink) = dp->i_nlink;
 			dp->i_flag |= IN_CHANGE;
 			if (DOINGSOFTDEP(tdvp))
 				softdep_change_linkcnt(dp);
@@ -1035,7 +1035,7 @@ ufs_rename(void *v)
 			    UPDATE_DIROP)) != 0) {
 				dp->i_ffs_effnlink--;
 				dp->i_nlink--;
-				DIP(dp, nlink) = ip->i_nlink;
+				DIP(dp, nlink) = dp->i_nlink;
 				dp->i_flag |= IN_CHANGE;
 				if (DOINGSOFTDEP(tdvp))
 					softdep_change_linkcnt(dp);
@@ -1048,7 +1048,7 @@ ufs_rename(void *v)
 			if (doingdirectory && newparent) {
 				dp->i_ffs_effnlink--;
 				dp->i_nlink--;
-				DIP(dp, nlink) = ip->i_nlink;
+				DIP(dp, nlink) = dp->i_nlink;
 				dp->i_flag |= IN_CHANGE;
 				if (DOINGSOFTDEP(tdvp))
 					softdep_change_linkcnt(dp);
