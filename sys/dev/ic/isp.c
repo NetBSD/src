@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.67 2000/12/30 19:30:09 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.68 2000/12/30 19:47:20 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -56,7 +56,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
 /*
  * Inspiration and ideas about this driver are from Erik Moe's Linux driver
  * (qlogicisp.c) and Dave Miller's SBus version of same (qlogicisp.c). Some
