@@ -1,6 +1,6 @@
-.\"	$NetBSD: netconfig.4,v 1.1 2000/06/02 23:18:31 fvdl Exp $
+.\"	$NetBSD: netconfig.5,v 1.1 2000/06/15 20:05:54 fvdl Exp $
 .Dd June 2, 2000
-.Dt NETCONFIG 4
+.Dt NETCONFIG 5
 .Sh NAME
 .Nm netconfig
 .Nd network configuration data base
@@ -82,6 +82,23 @@ in calls to the RPC library function (see
 .Nm udp6 ,
 and then
 .Nm udp .
+.Pp
+.Xr getnetconfig 3
+and associated functions will parse this file and return structures of
+the following format:
+.Bd -literal
+struct netconfig {
+    char *nc_netid;              /* Network ID */
+    unsigned long nc_semantics;  /* Semantics (see below) */
+    unsigned long nc_flag;       /* Flags (see below) */
+    char *nc_protofmly;          /* Protocol family */
+    char *nc_proto;              /* Protocol name */
+    char *nc_device;             /* Network device pathname (unused) */
+    unsigned long nc_nlookups;   /* Number of lookup libs (unused) */
+    char **nc_lookups;           /* Names of the libraries (unused) */
+    unsigned long nc_unused[9];  /* reserved */
+};
+.Ed
 .Sh SEE ALSO
 .Xr getnetconfig 3 ,
 .Xr getnetpath 3
