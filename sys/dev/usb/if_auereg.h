@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.11 2000/03/30 16:38:55 augustss Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.12 2000/04/04 20:16:19 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -266,6 +266,7 @@ struct aue_softc {
 	char			aue_dying;
 	char			aue_attached;
 	u_int			aue_rx_errs;
+	u_int			aue_intr_errs;
 	struct timeval		aue_rx_notice;
 };
 
