@@ -1,4 +1,4 @@
-/* $NetBSD: abortfixup.c,v 1.2 2002/03/17 12:08:13 bjh21 Exp $ */
+/* $NetBSD: abortfixup.c,v 1.3 2002/03/17 12:25:11 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,24 +39,37 @@
 
 #include <sys/types.h>
 
-__RCSID("$NetBSD: abortfixup.c,v 1.2 2002/03/17 12:08:13 bjh21 Exp $");
+__RCSID("$NetBSD: abortfixup.c,v 1.3 2002/03/17 12:25:11 bjh21 Exp $");
 
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdio.h>
 
+void
+sighandler(int sig)
+{
 
-int main(void) {
+	/* Catching SIGSEGV means the test passed. */
+	exit(0);
+}
+
+int
+main(void)
+{
+
+	if (signal(SIGSEGV, sighandler) == SIG_ERR)
+		err(1, "signal");
+
 	printf("ARM 6/7 abort fixup panic regression test\n");
-	printf("    it should SEGV instead of panic!\n");
+	printf("    It should not panic!\n");
 
 	/*
  	 * issue an instruction that for certain generates a page
 	 * fault but _can't_ be fixed up by late abort fixup
 	 * routines due to its structure.
 	 */
-	
+
 	__asm __volatile ("
 		mvn r0, #0
 		mov r1, r0
