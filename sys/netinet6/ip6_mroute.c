@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.50 2003/07/08 10:20:45 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.51 2003/07/12 15:12:45 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -85,16 +85,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.50 2003/07/08 10:20:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.51 2003/07/12 15:12:45 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
-
-#ifndef _KERNEL
-# ifdef KERNEL
-#  define _KERNEL
-# endif
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
