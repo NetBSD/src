@@ -1,4 +1,4 @@
-#	$NetBSD: dot.instutils,v 1.4 1998/11/28 01:38:30 jonathan Exp $
+#	$NetBSD: dot.instutils,v 1.5 1999/06/22 02:21:58 cgd Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -131,7 +131,7 @@ Configure()
 	proto_domain=`echo $hname | sed -e 's/[^.]*\.//'`
 
 	echo	""
-	echo	"What domain is this machine in (this is NOT its YP"
+	echo	"What DNS domain is this machine in (this is NOT its YP"
 	echo -n	"domain name)? [$proto_domain] "
 	read dname
 	if [ "$dname" = "" ]; then
