@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.5 1995/04/11 02:44:51 cgd Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.6 1995/06/03 22:46:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.5 1995/04/11 02:44:51 cgd Exp $";
+static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.6 1995/06/03 22:46:45 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -558,11 +558,12 @@ host_port
 		{
 			char *a, *p;
 
-			a = (char *)&data_dest.sin_addr;
-			a[0] = $1; a[1] = $3; a[2] = $5; a[3] = $7;
+			data_dest.sin_len = sizeof(struct sockaddr_in);
+			data_dest.sin_family = AF_INET;
 			p = (char *)&data_dest.sin_port;
 			p[0] = $9; p[1] = $11;
-			data_dest.sin_family = AF_INET;
+			a = (char *)&data_dest.sin_addr;
+			a[0] = $1; a[1] = $3; a[2] = $5; a[3] = $7;
 		}
 	;
 

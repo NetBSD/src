@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_udp.c,v 1.5 1995/04/14 19:48:30 jtc Exp $	*/
+/*	$NetBSD: svc_udp.c,v 1.6 1995/06/03 22:37:28 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_udp.c,v 1.5 1995/04/14 19:48:30 jtc Exp $";
+static char *rcsid = "$NetBSD: svc_udp.c,v 1.6 1995/06/03 22:37:28 mycroft Exp $";
 #endif
 
 /*
@@ -114,6 +114,7 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 		madesock = TRUE;
 	}
 	memset(&addr, 0, sizeof (addr));
+	addr.sin_len = sizeof(struct sockaddr_in);
 	addr.sin_family = AF_INET;
 	if (bindresvport(sock, &addr)) {
 		addr.sin_port = 0;
