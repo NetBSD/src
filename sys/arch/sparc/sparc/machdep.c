@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 1997/04/04 21:01:49 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.79 1997/04/06 21:41:36 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -344,8 +344,8 @@ allocsys(v)
 		 * XXX stopgap measure to prevent wasting too much KVM on
 		 * the sparsely filled buffer cache.
 		 */
-		if (CPU_ISSUN4C && bufpages > 128)
-			bufpages = 128;
+		if (CPU_ISSUN4C && bufpages > (128 * (65536/MAXBSIZE)))
+			bufpages = (128 * (65536/MAXBSIZE));
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
