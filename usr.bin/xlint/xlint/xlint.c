@@ -1,4 +1,4 @@
-/*	$NetBSD: xlint.c,v 1.8 1998/10/08 08:20:37 itohy Exp $	*/
+/*	$NetBSD: xlint.c,v 1.9 1998/12/09 12:28:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.8 1998/10/08 08:20:37 itohy Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.9 1998/12/09 12:28:36 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -325,7 +325,7 @@ main(argc, argv)
 	appcstrg(&cppflags, "-lang-c");
 	appcstrg(&cppflags, "-undef");
 	appcstrg(&cppflags, "-$");
-	appcstrg(&cppflags, "-C");
+	appcstrg(&cppflags, "-CC");
 	appcstrg(&cppflags, "-Wcomment");
 	appcstrg(&cppflags, "-D__NetBSD__");
 	appcstrg(&cppflags, "-Dlint");		/* XXX don't def. with -s */
