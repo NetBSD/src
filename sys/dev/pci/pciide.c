@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.167 2002/08/25 17:25:33 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.168 2002/08/25 17:26:58 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.167 2002/08/25 17:25:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.168 2002/08/25 17:26:58 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -3784,6 +3784,10 @@ hpt_pci_intr(arg)
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133 ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2 ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2v2)
+#define PDC_IS_276(sc)							\
+	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133 ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2 ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA133TX2v2)
 
 void
 pdc202xx_chip_map(sc, pa)
@@ -3828,7 +3832,9 @@ pdc202xx_chip_map(sc, pa)
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	if (PDC_IS_265(sc))
+	if (PDC_IS_276(sc))
+		sc->sc_wdcdev.UDMA_cap = 6;
+	else if (PDC_IS_265(sc))
 		sc->sc_wdcdev.UDMA_cap = 5;
 	else if (PDC_IS_262(sc))
 		sc->sc_wdcdev.UDMA_cap = 4;
