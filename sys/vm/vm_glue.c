@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_glue.c	7.8 (Berkeley) 5/15/91
- *	$Id: vm_glue.c,v 1.7 1993/06/29 13:47:05 mycroft Exp $
+ *	$Id: vm_glue.c,v 1.8 1993/07/15 15:42:17 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -85,7 +85,7 @@ kernacc(addr, len, rw)
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
 	saddr = trunc_page(addr);
-	eaddr = round_page(addr+len-1);
+	eaddr = round_page(addr+len);
 	rv = vm_map_check_protection(kernel_map, saddr, eaddr, prot);
 	/*
 	 * XXX there are still some things (e.g. the buffer cache) that
@@ -121,12 +121,12 @@ useracc(addr, len, rw)
 	 * address here too.
 	 */
 	if ((vm_offset_t) addr >= VM_MAXUSER_ADDRESS
-	    || (vm_offset_t) addr + (len-1) >= VM_MAXUSER_ADDRESS
-	    || (vm_offset_t) addr + (len-1) < (vm_offset_t) addr)
+	    || (vm_offset_t) addr + len > VM_MAXUSER_ADDRESS
+	    || (vm_offset_t) addr + len <= (vm_offset_t) addr)
 		return (FALSE);
 
 	rv = vm_map_check_protection(&curproc->p_vmspace->vm_map,
-	    trunc_page(addr), round_page(addr+len-1), prot);
+	    trunc_page(addr), round_page(addr+len), prot);
 	return(rv == TRUE);
 }
 
@@ -143,7 +143,7 @@ chgkprot(addr, len, rw)
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
 	vm_map_protect(kernel_map, trunc_page(addr),
-		       round_page(addr+len-1), prot, FALSE);
+		       round_page(addr+len), prot, FALSE);
 }
 #endif
 
@@ -152,7 +152,7 @@ vslock(addr, len)
 	u_int	len;
 {
 	vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
-			round_page(addr+len-1), FALSE);
+			round_page(addr+len), FALSE);
 }
 
 vsunlock(addr, len, dirtied)
@@ -164,7 +164,7 @@ vsunlock(addr, len, dirtied)
 	dirtied++;
 #endif	lint
 	vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
-			round_page(addr+len-1), TRUE);
+			round_page(addr+len), TRUE);
 }
 
 /*
