@@ -1,4 +1,4 @@
-/* $NetBSD: infutil.h,v 1.5 2003/03/18 19:33:51 mycroft Exp $ */
+/* $NetBSD: infutil.h,v 1.6 2003/03/25 22:48:44 mycroft Exp $ */
 
 /* infutil.h -- types and macros common to blocks and codes
  * Copyright (C) 1995-2002 Mark Adler
@@ -57,8 +57,6 @@ struct inflate_blocks_state {
   Bytef *end;           /* one byte after sliding window */
   Bytef *read;          /* window read pointer */
   Bytef *write;         /* window write pointer */
-  check_func checkfn;   /* check function */
-  uLong check;          /* check on output */
 
 };
 

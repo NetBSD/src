@@ -1,4 +1,4 @@
-/* $NetBSD: infblock.h,v 1.4 2002/03/12 00:42:23 fvdl Exp $ */
+/* $NetBSD: infblock.h,v 1.5 2003/03/25 22:48:44 mycroft Exp $ */
 
 /* infblock.h -- header to use infblock.c
  * Copyright (C) 1995-2002 Mark Adler
@@ -31,11 +31,3 @@ extern void inflate_blocks_reset __P((
 extern int inflate_blocks_free __P((
     inflate_blocks_statef *,
     z_streamp));
-
-extern void inflate_set_dictionary __P((
-    inflate_blocks_statef *s,
-    const Bytef *d,  /* dictionary */
-    uInt  n));       /* dictionary length */
-
-extern int inflate_blocks_sync_point __P((
-    inflate_blocks_statef *s));

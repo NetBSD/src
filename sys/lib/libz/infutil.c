@@ -1,4 +1,4 @@
-/* $NetBSD: infutil.c,v 1.5 2003/03/18 19:33:51 mycroft Exp $ */
+/* $NetBSD: infutil.c,v 1.6 2003/03/25 22:48:44 mycroft Exp $ */
 
 /* inflate_util.c -- data and routines common to blocks and codes
  * Copyright (C) 1995-2002 Mark Adler
@@ -44,10 +44,6 @@ int r;
   z->avail_out -= n;
   z->total_out += n;
 
-  /* update check information */
-  if (s->checkfn != Z_NULL)
-    z->adler = s->check = (*s->checkfn)(s->check, q, n);
-
   /* copy as far as end of window */
   zmemcpy(p, q, n);
   p += n;
@@ -69,10 +65,6 @@ int r;
     /* update counters */
     z->avail_out -= n;
     z->total_out += n;
-
-    /* update check information */
-    if (s->checkfn != Z_NULL)
-      z->adler = s->check = (*s->checkfn)(s->check, q, n);
 
     /* copy */
     zmemcpy(p, q, n);

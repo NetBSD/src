@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/12/12 01:50:05 tv Exp $
+#	$NetBSD: Makefile,v 1.13 2003/03/25 22:48:43 mycroft Exp $
 
 LIB=	z
 NOPIC=	# defined
@@ -9,7 +9,7 @@ CPPFLAGS=	-I${ZDIR} ${ZCPPFLAGS} ${ZMISCCPPFLAGS} -D_ZLIB_PRIVATE
 .PATH.c: ${ZDIR}
 
 # files to be copied down from libz.
-LIBZSRCS= adler32.c crc32.c infblock.c infcodes.c inffast.c \
+LIBZSRCS= crc32.c infblock.c infcodes.c inffast.c \
         inflate.c inftrees.c infutil.c uncompr.c
 LIBZHDRS= infblock.h infcodes.h inffast.h inftrees.h infutil.h \
 	zconf.h zlib.h zutil.h

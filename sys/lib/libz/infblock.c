@@ -1,4 +1,4 @@
-/* $NetBSD: infblock.c,v 1.5 2003/03/18 20:00:47 mycroft Exp $ */
+/* $NetBSD: infblock.c,v 1.6 2003/03/25 22:48:44 mycroft Exp $ */
 
 /* infblock.c -- interpret and process block types to last block
  * Copyright (C) 1995-2002 Mark Adler
@@ -72,8 +72,8 @@ inflate_blocks_statef *s;
 z_streamp z;
 uLongf *c;
 {
-  if (c != Z_NULL)
-    *c = s->check;
+  if (c)
+    *c = 0;
   if (s->mode == BTREE || s->mode == DTREE)
     ZFREE(z, s->sub.trees.blens);
   if (s->mode == CODES)
@@ -82,8 +82,6 @@ uLongf *c;
   s->bitk = 0;
   s->bitb = 0;
   s->read = s->write = s->window;
-  if (s->checkfn != Z_NULL)
-    z->adler = s->check = (*s->checkfn)(0L, (const Bytef *)Z_NULL, 0);
   Tracev((stderr, "inflate:   blocks reset\n"));
 }
 
@@ -111,7 +109,8 @@ uInt w;
     return Z_NULL;
   }
   s->end = s->window + w;
-  s->checkfn = c;
+  if (c)
+    return Z_NULL;
   s->mode = TYPE;
   Tracev((stderr, "inflate:   blocks allocated\n"));
   inflate_blocks_reset(s, z, Z_NULL);
@@ -381,25 +380,4 @@ z_streamp z;
   ZFREE(z, s);
   Tracev((stderr, "inflate:   blocks freed\n"));
   return Z_OK;
-}
-
-
-void inflate_set_dictionary(s, d, n)
-inflate_blocks_statef *s;
-const Bytef *d;
-uInt  n;
-{
-  zmemcpy(s->window, d, n);
-  s->read = s->write = s->window + n;
-}
-
-
-/* Returns true if inflate is currently at the end of a block generated
- * by Z_SYNC_FLUSH or Z_FULL_FLUSH. 
- * IN assertion: s != Z_NULL
- */
-int inflate_blocks_sync_point(s)
-inflate_blocks_statef *s;
-{
-  return s->mode == LENS;
 }
