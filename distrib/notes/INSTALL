@@ -52,6 +52,8 @@ into the NetBSD _VER release. Some of the significant changes include:
 
 	Support for Sun 3/80s (sun3x architecture) has been added.
 
+	Support for R4000 DECstations has been added.
+
 	Integration/merger of 4.4BSD Lite-2 sources into userland
 	programs has nearly been completed.
 
