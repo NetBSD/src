@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.7 1999/01/11 22:40:00 kleink Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.8 2000/05/07 18:16:51 mycroft Exp $	*/
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 University of Maryland
@@ -27,7 +27,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_aout.c,v 1.7 1999/01/11 22:40:00 kleink Exp $");
+__RCSID("$NetBSD: exec_aout.c,v 1.8 2000/05/07 18:16:51 mycroft Exp $");
 #endif
  
 #include <unistd.h>
@@ -56,7 +56,7 @@ struct nlist *symbase;
 #define IS_GLOBAL_DEFINED(sp) \
                   (((sp)->n_type & N_EXT) && ((sp)->n_type & N_TYPE) != N_UNDF)
 
-#ifdef __sparc
+#ifdef __sparc__
 /* is the relocation entry dependent on a symbol? */
 #define IS_SYMBOL_RELOC(rp)   \
 	((rp)->r_extern || \
