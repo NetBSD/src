@@ -18,9 +18,8 @@
  */
 
 #ifdef IPX_CHANGE
-#ifndef lint
-static char rcsid[] = "$Id: ipxcp.c,v 1.1.1.4 1998/05/02 13:36:06 christos Exp $";
-#endif
+
+#define RCSID	"$Id: ipxcp.c,v 1.1.1.5 1999/08/24 20:25:43 christos Exp $"
 
 /*
  * TODO:
@@ -28,7 +27,8 @@ static char rcsid[] = "$Id: ipxcp.c,v 1.1.1.4 1998/05/02 13:36:06 christos Exp $
 
 #include <stdio.h>
 #include <string.h>
-#include <syslog.h>
+#include <unistd.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -37,6 +37,9 @@ static char rcsid[] = "$Id: ipxcp.c,v 1.1.1.4 1998/05/02 13:36:06 christos Exp $
 #include "fsm.h"
 #include "ipxcp.h"
 #include "pathnames.h"
+#include "magic.h"
+
+static const char rcsid[] = RCSID;
 
 /* global vars */
 ipxcp_options ipxcp_wantoptions[NUM_PPP];	/* Options that we want to request */
@@ -61,6 +64,7 @@ static int  ipxcp_rejci __P((fsm *, u_char *, int));	/* Peer rej'd our CI */
 static int  ipxcp_reqci __P((fsm *, u_char *, int *, int)); /* Rcv CI */
 static void ipxcp_up __P((fsm *));		/* We're UP */
 static void ipxcp_down __P((fsm *));		/* We're DOWN */
+static void ipxcp_finished __P((fsm *));	/* Don't need lower layer */
 static void ipxcp_script __P((fsm *, char *)); /* Run an up/down script */
 
 fsm ipxcp_fsm[NUM_PPP];		/* IPXCP fsm structure */
@@ -76,11 +80,55 @@ static fsm_callbacks ipxcp_callbacks = { /* IPXCP callback routines */
     ipxcp_up,			/* Called when fsm reaches OPENED state */
     ipxcp_down,			/* Called when fsm leaves OPENED state */
     NULL,			/* Called when we want the lower layer up */
-    NULL,			/* Called when we want the lower layer down */
+    ipxcp_finished,		/* Called when we want the lower layer down */
     NULL,			/* Called when Protocol-Reject received */
     NULL,			/* Retransmission is necessary */
     NULL,			/* Called to handle protocol-specific codes */
     "IPXCP"			/* String name of protocol */
+};
+
+/*
+ * Command-line options.
+ */
+static int setipxnode __P((char **));
+static int setipxname __P((char **));
+
+static option_t ipxcp_option_list[] = {
+    { "ipx", o_bool, &ipxcp_protent.enabled_flag,
+      "Enable IPXCP (and IPX)", 1 },
+    { "+ipx", o_bool, &ipxcp_protent.enabled_flag,
+      "Enable IPXCP (and IPX)", 1 },
+    { "noipx", o_bool, &ipxcp_protent.enabled_flag,
+      "Disable IPXCP (and IPX)" },
+    { "-ipx", o_bool, &ipxcp_protent.enabled_flag,
+      "Disable IPXCP (and IPX)" } ,
+    { "ipx-network", o_uint32, &ipxcp_wantoptions[0].our_network,
+      "Set our IPX network number", 0, &ipxcp_wantoptions[0].neg_nn },
+    { "ipxcp-accept-network", o_bool, &ipxcp_wantoptions[0].accept_network,
+      "Accept peer IPX network number", 1,
+      &ipxcp_allowoptions[0].accept_network },
+    { "ipx-node", o_special, setipxnode,
+      "Set IPX node number" },
+    { "ipxcp-accept-local", o_bool, &ipxcp_wantoptions[0].accept_local,
+      "Accept our IPX address", 1,
+      &ipxcp_allowoptions[0].accept_local },
+    { "ipxcp-accept-remote", o_bool, &ipxcp_wantoptions[0].accept_remote,
+      "Accept peer's IPX address", 1,
+      &ipxcp_allowoptions[0].accept_remote },
+    { "ipx-routing", o_int, &ipxcp_wantoptions[0].router,
+      "Set IPX routing proto number", 0,
+      &ipxcp_wantoptions[0].neg_router },
+    { "ipx-router-name", o_special, setipxname,
+      "Set IPX router name" },
+    { "ipxcp-restart", o_int, &ipxcp_fsm[0].timeouttime,
+      "Set timeout for IPXCP" },
+    { "ipxcp-max-terminate", o_int, &ipxcp_fsm[0].maxtermtransmits,
+      "Set max #xmits for IPXCP term-reqs" },
+    { "ipxcp-max-configure", o_int, &ipxcp_fsm[0].maxconfreqtransmits,
+      "Set max #xmits for IPXCP conf-reqs" },
+    { "ipxcp-max-failure", o_int, &ipxcp_fsm[0].maxnakloops,
+      "Set max #conf-naks for IPXCP" },
+    { NULL }
 };
 
 /*
@@ -110,6 +158,8 @@ struct protent ipxcp_protent = {
     NULL,
     0,
     "IPXCP",
+    "IPX",
+    ipxcp_option_list,
     NULL,
     NULL,
     NULL
@@ -130,6 +180,10 @@ struct protent ipxcp_protent = {
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
 			 (x) == CONFNAK ? "NAK" : "REJ")
 
+static int ipxcp_is_up;
+
+static char *ipx_ntoa __P((u_int32_t));
+
 /* Used in printing the node number */
 #define NODE(base) base[0], base[1], base[2], base[3], base[4], base[5]
 
@@ -146,7 +200,7 @@ short int internal;
 {
     short int  external;
 
-    if (internal & IPX_NONE)
+    if (internal & BIT(IPX_NONE) )
         external = IPX_NONE;
     else
         external = RIP_SAP;
@@ -158,15 +212,96 @@ short int internal;
  * Make a string representation of a network IP address.
  */
 
-char *
+static char *
 ipx_ntoa(ipxaddr)
 u_int32_t ipxaddr;
 {
     static char b[64];
-    sprintf(b, "%x", ipxaddr);
+    slprintf(b, sizeof(b), "%x", ipxaddr);
     return b;
 }
 
+
+static u_char *
+setipxnodevalue(src,dst)
+u_char *src, *dst;
+{
+    int indx;
+    int item;
+
+    for (;;) {
+        if (!isxdigit (*src))
+	    break;
+	
+	for (indx = 0; indx < 5; ++indx) {
+	    dst[indx] <<= 4;
+	    dst[indx] |= (dst[indx + 1] >> 4) & 0x0F;
+	}
+
+	item = toupper (*src) - '0';
+	if (item > 9)
+	    item -= 7;
+
+	dst[5] = (dst[5] << 4) | item;
+	++src;
+    }
+    return src;
+}
+
+static int
+setipxnode(argv)
+    char **argv;
+{
+    char *end;
+
+    memset (&ipxcp_wantoptions[0].our_node[0], 0, 6);
+    memset (&ipxcp_wantoptions[0].his_node[0], 0, 6);
+
+    end = setipxnodevalue (*argv, &ipxcp_wantoptions[0].our_node[0]);
+    if (*end == ':')
+	end = setipxnodevalue (++end, &ipxcp_wantoptions[0].his_node[0]);
+
+    if (*end == '\0') {
+        ipxcp_wantoptions[0].neg_node = 1;
+        return 1;
+    }
+
+    option_error("invalid parameter '%s' for ipx-node option", *argv);
+    return 0;
+}
+
+static int
+setipxname (argv)
+    char **argv;
+{
+    char *dest = ipxcp_wantoptions[0].name;
+    char *src  = *argv;
+    int  count;
+    char ch;
+
+    ipxcp_wantoptions[0].neg_name  = 1;
+    ipxcp_allowoptions[0].neg_name = 1;
+    memset (dest, '\0', sizeof (ipxcp_wantoptions[0].name));
+
+    count = 0;
+    while (*src) {
+        ch = *src++;
+	if (! isalnum (ch) && ch != '_') {
+	    option_error("IPX router name must be alphanumeric or _");
+	    return 0;
+	}
+
+	if (count >= sizeof (ipxcp_wantoptions[0].name)) {
+	    option_error("IPX router name is limited to %d characters",
+			 sizeof (ipxcp_wantoptions[0].name) - 1);
+	    return 0;
+	}
+
+	dest[count++] = toupper (ch);
+    }
+
+    return 1;
+}
 
 /*
  * ipxcp_init - Initialize IPXCP.
@@ -532,9 +667,8 @@ ipxcp_ackci(f, p, len)
 	ACKCINETWORK  (IPX_NETWORK_NUMBER,  go->neg_nn,	    go->our_network);
 	ACKCINODE     (IPX_NODE_NUMBER,	    go->neg_node,   go->our_node);
 	ACKCINAME     (IPX_ROUTER_NAME,	    go->neg_name,   go->name);
-	ACKCIPROTO    (IPX_ROUTER_PROTOCOL, go->neg_router, go->router);
-	ACKCIPROTO    (IPX_ROUTER_PROTOCOL, go->neg_router, go->router);
-	ACKCIPROTO    (IPX_ROUTER_PROTOCOL, go->neg_router, go->router);
+	if (len > 0)
+		ACKCIPROTO    (IPX_ROUTER_PROTOCOL, go->neg_router, go->router);
 /*
  * This is the end of the record.
  */
@@ -544,7 +678,7 @@ ipxcp_ackci(f, p, len)
 /*
  * The frame is invalid
  */
-    IPXCPDEBUG((LOG_INFO, "ipxcp_ackci: received bad Ack!"));
+    IPXCPDEBUG(("ipxcp_ackci: received bad Ack!"));
     return (0);
 }
 
@@ -588,7 +722,6 @@ ipxcp_nakci(f, p, len)
 	    no.neg_nn = 1;
 
 	    GETLONG(l, p);
-	    IPXCPDEBUG((LOG_INFO, "local IP address %d", l));
 	    if (l && ao->accept_network)
 		try.our_network = l;
 	    break;
@@ -597,10 +730,6 @@ ipxcp_nakci(f, p, len)
 	    if (!go->neg_node || no.neg_node || (cilen != CILEN_NODEN))
 		goto bad;
 	    no.neg_node = 1;
-
-	    IPXCPDEBUG((LOG_INFO,
-			"local node number %02X%02X%02X%02X%02X%02X",
-			NODE(p)));
 
 	    if (!zero_node (p) && ao->accept_local &&
 		! compare_node (p, ho->his_node))
@@ -629,8 +758,6 @@ ipxcp_nakci(f, p, len)
 	    no.router      |= s;
 	    try.router     |= s;
 	    try.neg_router  = 1;
-
-	    IPXCPDEBUG((LOG_INFO, "Router protocol number %d", s));
 	    break;
 
 	    /* These, according to the RFC, must never be NAKed. */
@@ -645,10 +772,6 @@ ipxcp_nakci(f, p, len)
 	p = next;
     }
 
-    /* If there is still anything left, this packet is bad. */
-    if (len != 0)
-	goto bad;
-
     /*
      * Do not permit the peer to force a router protocol which we do not
      * support. However, default to the condition that will accept "NONE".
@@ -662,6 +785,7 @@ ipxcp_nakci(f, p, len)
     
     /*
      * OK, the Nak is good.  Now we can update state.
+     * If there are any options left, we ignore them.
      */
     if (f->state != OPENED)
 	*go = try;
@@ -669,7 +793,7 @@ ipxcp_nakci(f, p, len)
     return 1;
 
 bad:
-    IPXCPDEBUG((LOG_INFO, "ipxcp_nakci: received bad Nak!"));
+    IPXCPDEBUG(("ipxcp_nakci: received bad Nak!"));
     return 0;
 }
 
@@ -699,7 +823,6 @@ ipxcp_rejci(f, p, len)
 	GETLONG(cilong, p); \
 	if (cilong != val) \
 	    break; \
-	IPXCPDEBUG((LOG_INFO,"ipxcp_rejci rejected long opt %d", opt)); \
 	neg = 0; \
     }
 
@@ -721,7 +844,6 @@ ipxcp_rejci(f, p, len)
 	}\
 	if (indx != count) \
 	    break; \
-	IPXCPDEBUG((LOG_INFO,"ipxcp_rejci rejected opt %d", opt)); \
 	neg = 0; \
     }
 
@@ -736,7 +858,6 @@ ipxcp_rejci(f, p, len)
 	GETCHAR(cilen, p); \
 	if (cilen != CILEN_VOID || citype != opt) \
 	    break; \
-	IPXCPDEBUG((LOG_INFO, "ipxcp_rejci rejected void opt %d", opt)); \
 	neg = 0; \
     }
 
@@ -753,7 +874,6 @@ ipxcp_rejci(f, p, len)
 	GETSHORT(cishort, p); \
 	if (cishort != to_external (val) || cishort == RIP_SAP) \
 	    break; \
-	IPXCPDEBUG((LOG_INFO, "ipxcp_rejci short opt %d", opt)); \
 	neg = 0; \
     }
 /*
@@ -780,7 +900,7 @@ ipxcp_rejci(f, p, len)
 /*
  * The frame is invalid at this point.
  */
-    IPXCPDEBUG((LOG_INFO, "ipxcp_rejci: received bad Reject!"));
+    IPXCPDEBUG(("ipxcp_rejci: received bad Reject!"));
     return 0;
 }
 
@@ -823,7 +943,7 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
 	if (l < 2 ||			/* Not enough data for CI header or */
 	    p[1] < 2 ||			/*  CI length too small or */
 	    p[1] > l) {			/*  CI length too big? */
-	    IPXCPDEBUG((LOG_INFO, "ipxcp_reqci: bad CI length!"));
+	    IPXCPDEBUG(("ipxcp_reqci: bad CI length!"));
 	    orc = CONFREJ;		/* Reject bad CI */
 	    cilen = l;			/* Reject till end of packet */
 	    l = 0;			/* Don't loop again */
@@ -839,8 +959,6 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
  * The network number must match. Choose the larger of the two.
  */
 	case IPX_NETWORK_NUMBER:
-	    IPXCPDEBUG((LOG_INFO, "ipxcp: received Network Number request"));
-	    
 	    /* if we wont negotiate the network number or the length is wrong
 	       then reject the option */
 	    if ( !ao->neg_nn || cilen != CILEN_NETN ) {
@@ -848,7 +966,6 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
 		break;		
 	    }
 	    GETLONG(cinetwork, p);
-	    IPXCPDEBUG((LOG_INFO,"Remote proposed IPX network number is %8Lx",tl));
 
 	    /* If the network numbers match then acknowledge them. */
 	    if (cinetwork != 0) {
@@ -885,8 +1002,6 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
  * The node number is required
  */
 	case IPX_NODE_NUMBER:
-	    IPXCPDEBUG((LOG_INFO, "ipxcp: received Node Number request"));
-
 	    /* if we wont negotiate the node number or the length is wrong
 	       then reject the option */
 	    if ( cilen != CILEN_NODEN ) {
@@ -944,7 +1059,6 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
  * Compression is not desired at this time. It is always rejected.
  */
 	case IPX_COMPRESSION_PROTOCOL:
-	    IPXCPDEBUG((LOG_INFO, "ipxcp: received Compression Protocol request "));
 	    orc = CONFREJ;
 	    break;
 /*
@@ -959,9 +1073,6 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
 	    }
 
 	    GETSHORT (cishort, p);
-	    IPXCPDEBUG((LOG_INFO,
-			"Remote router protocol number 0x%04x",
-			cishort));
 
 	    if (wo->neg_router == 0) {
 	        wo->neg_router = 1;
@@ -1006,7 +1117,6 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
  * The router name is advisorary. Just accept it if it is not too large.
  */
 	case IPX_ROUTER_NAME:
-	    IPXCPDEBUG((LOG_INFO, "ipxcp: received Router Name request"));
 	    if (cilen >= CILEN_NAME) {
 		int name_size = cilen - CILEN_NAME;
 		if (name_size > sizeof (ho->name))
@@ -1024,7 +1134,6 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
  * This is advisorary.
  */
 	case IPX_COMPLETE:
-	    IPXCPDEBUG((LOG_INFO, "ipxcp: received Complete request"));
 	    if (cilen != CILEN_COMPLETE)
 		orc = CONFREJ;
 	    else {
@@ -1036,14 +1145,10 @@ ipxcp_reqci(f, inp, len, reject_if_disagree)
  * All other entries are not known at this time.
  */
 	default:
-	    IPXCPDEBUG((LOG_INFO, "ipxcp: received Complete request"));
 	    orc = CONFREJ;
 	    break;
 	}
-
 endswitch:
-	IPXCPDEBUG((LOG_INFO, " (%s)\n", CODENAME(orc)));
-
 	if (orc == CONFACK &&		/* Good CI */
 	    rc != CONFACK)		/*  but prior CI wasnt? */
 	    continue;			/* Don't send this one */
@@ -1099,7 +1204,7 @@ endswitch:
     }
 
     *len = ucp - inp;			/* Compute output length */
-    IPXCPDEBUG((LOG_INFO, "ipxcp: returning Configure-%s", CODENAME(rc)));
+    IPXCPDEBUG(("ipxcp: returning Configure-%s", CODENAME(rc)));
     return (rc);			/* Return final code */
 }
 
@@ -1115,7 +1220,7 @@ ipxcp_up(f)
 {
     int unit = f->unit;
 
-    IPXCPDEBUG((LOG_INFO, "ipxcp: up"));
+    IPXCPDEBUG(("ipxcp: up"));
 
     /* The default router protocol is RIP/SAP. */
     if (ho->router == 0)
@@ -1136,7 +1241,8 @@ ipxcp_up(f)
 
     if (zero_node (go->our_node)) {
         static char errmsg[] = "Could not determine local IPX node address";
-	IPXCPDEBUG((LOG_ERR, errmsg));
+	if (debug)
+	    error(errmsg);
 	ipxcp_close(f->unit, errmsg);
 	return;
     }
@@ -1147,24 +1253,30 @@ ipxcp_up(f)
 
     if (go->network == 0) {
         static char errmsg[] = "Can not determine network number";
-	IPXCPDEBUG((LOG_ERR, errmsg));
+	if (debug)
+	    error(errmsg);
 	ipxcp_close (unit, errmsg);
 	return;
     }
 
     /* bring the interface up */
     if (!sifup(unit)) {
-	IPXCPDEBUG((LOG_WARNING, "sifup failed"));
+	if (debug)
+	    warn("sifup failed (IPX)");
+	ipxcp_close(unit, "Interface configuration failed");
+	return;
+    }
+    ipxcp_is_up = 1;
+
+    /* set the network number for IPX */
+    if (!sipxfaddr(unit, go->network, go->our_node)) {
+	if (debug)
+	    warn("sipxfaddr failed");
 	ipxcp_close(unit, "Interface configuration failed");
 	return;
     }
 
-    /* set the network number for IPX */
-    if (!sipxfaddr(unit, go->network, go->our_node)) {
-	IPXCPDEBUG((LOG_WARNING, "sipxfaddr failed"));
-	ipxcp_close(unit, "Interface configuration failed");
-	return;
-    }
+    np_up(f->unit, PPP_IPX);
 
     /*
      * Execute the ipx-up script, like this:
@@ -1185,11 +1297,27 @@ static void
 ipxcp_down(f)
     fsm *f;
 {
-    IPXCPDEBUG((LOG_INFO, "ipxcp: down"));
+    IPXCPDEBUG(("ipxcp: down"));
 
-    cipxfaddr (f->unit);
+    if (!ipxcp_is_up)
+	return;
+    ipxcp_is_up = 0;
+    np_down(f->unit, PPP_IPX);
+    cipxfaddr(f->unit);
+    sifnpmode(f->unit, PPP_IPX, NPMODE_DROP);
     sifdown(f->unit);
     ipxcp_script (f, _PATH_IPXDOWN);
+}
+
+
+/*
+ * ipxcp_finished - possibly shut down the lower layers.
+ */
+static void
+ipxcp_finished(f)
+    fsm *f;
+{
+    np_finished(f->unit, PPP_IPX);
 }
 
 
@@ -1206,44 +1334,40 @@ ipxcp_script(f, script)
     char strnetwork[32], strpid[32];
     char *argv[14],	 strproto_lcl[32], strproto_rmt[32];
 
-    sprintf (strpid,   "%d", getpid());
-    sprintf (strspeed, "%d", baud_rate);
+    slprintf(strpid, sizeof(strpid), "%d", getpid());
+    slprintf(strspeed, sizeof(strspeed),"%d", baud_rate);
 
     strproto_lcl[0] = '\0';
     if (go->neg_router && ((go->router & BIT(IPX_NONE)) == 0)) {
 	if (go->router & BIT(RIP_SAP))
-	    strcpy (strproto_lcl, "RIP ");
+	    strlcpy (strproto_lcl, "RIP ", sizeof(strproto_lcl));
 	if (go->router & BIT(NLSP))
-	    strcat (strproto_lcl, "NLSP ");
+	    strlcat (strproto_lcl, "NLSP ", sizeof(strproto_lcl));
     }
 
     if (strproto_lcl[0] == '\0')
-	strcpy (strproto_lcl, "NONE ");
+	strlcpy (strproto_lcl, "NONE ", sizeof(strproto_lcl));
 
     strproto_lcl[strlen (strproto_lcl)-1] = '\0';
 
     strproto_rmt[0] = '\0';
     if (ho->neg_router && ((ho->router & BIT(IPX_NONE)) == 0)) {
 	if (ho->router & BIT(RIP_SAP))
-	    strcpy (strproto_rmt, "RIP ");
+	    strlcpy (strproto_rmt, "RIP ", sizeof(strproto_rmt));
 	if (ho->router & BIT(NLSP))
-	    strcat (strproto_rmt, "NLSP ");
+	    strlcat (strproto_rmt, "NLSP ", sizeof(strproto_rmt));
     }
 
     if (strproto_rmt[0] == '\0')
-	strcpy (strproto_rmt, "NONE ");
+	strlcpy (strproto_rmt, "NONE ", sizeof(strproto_rmt));
 
     strproto_rmt[strlen (strproto_rmt)-1] = '\0';
 
-    strcpy (strnetwork, ipx_ntoa (go->network));
+    strlcpy (strnetwork, ipx_ntoa (go->network), sizeof(strnetwork));
 
-    sprintf (strlocal,
-	     "%02X%02X%02X%02X%02X%02X",
-	     NODE(go->our_node));
+    slprintf (strlocal, sizeof(strlocal), "%0.6B", go->our_node);
 
-    sprintf (strremote,
-	     "%02X%02X%02X%02X%02X%02X",
-	     NODE(ho->his_node));
+    slprintf (strremote, sizeof(strremote), "%0.6B", ho->his_node);
 
     argv[0]  = script;
     argv[1]  = ifname;
@@ -1259,7 +1383,7 @@ ipxcp_script(f, script)
     argv[11] = ipparam;
     argv[12] = strpid;
     argv[13] = NULL;
-    run_program(script, argv, 0);
+    run_program(script, argv, 0, NULL, NULL);
 }
 
 /*

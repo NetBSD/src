@@ -17,9 +17,7 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: magic.c,v 1.1.1.4 1998/05/02 13:36:05 christos Exp $";
-#endif
+#define RCSID	"$Id: magic.c,v 1.1.1.5 1999/08/24 20:25:42 christos Exp $"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -28,6 +26,8 @@ static char rcsid[] = "$Id: magic.c,v 1.1.1.4 1998/05/02 13:36:05 christos Exp $
 
 #include "pppd.h"
 #include "magic.h"
+
+static const char rcsid[] = RCSID;
 
 extern long mrand48 __P((void));
 extern void srand48 __P((long));

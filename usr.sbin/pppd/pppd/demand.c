@@ -17,16 +17,13 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: demand.c,v 1.1.1.4 1998/05/02 13:36:07 christos Exp $";
-#endif
+#define RCSID	"$Id: demand.c,v 1.1.1.5 1999/08/24 20:25:44 christos Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <syslog.h>
 #include <netdb.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,6 +42,8 @@ static char rcsid[] = "$Id: demand.c,v 1.1.1.4 1998/05/02 13:36:07 christos Exp 
 #include "fsm.h"
 #include "ipcp.h"
 #include "lcp.h"
+
+static const char rcsid[] = RCSID;
 
 char *frame;
 int framelen;
@@ -262,7 +261,7 @@ loop_frame(frame, len)
 {
     struct packet *pkt;
 
-    /* log_packet(frame, len, "from loop: ", LOG_DEBUG); */
+    /* dbglog("from loop: %P", frame, len); */
     if (len < PPP_HDRLEN)
 	return 0;
     if ((PPP_PROTOCOL(frame) & 0x8000) != 0)
