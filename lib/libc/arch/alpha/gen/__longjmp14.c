@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.2 2004/03/23 01:41:47 simonb Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.3 2004/03/23 01:42:53 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ __longjmp14(jmp_buf env, int val)
 	if (sc->sc_ownedfp) {
 		memcpy(&uc.uc_mcontext.__fpregs.__fp_fr,
 		    &sc->sc_fpregs, 31 * sizeof(unsigned long));
-		sc->sc_fpcr = uc.uc_mcontext.__fpregs.__fp_fpcr;
+		uc.uc_mcontext.__fpregs.__fp_fpcr = sc->sc_fpcr;
 		/* XXX sc_fp_control */
 		uc.uc_flags |= _UC_FPU;
 	}
