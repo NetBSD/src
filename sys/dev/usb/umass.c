@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.65 2001/11/13 08:01:40 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.66 2001/11/23 01:15:28 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.65 2001/11/13 08:01:40 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.66 2001/11/23 01:15:28 augustss Exp $");
 
 #include "atapibus.h"
 
@@ -334,6 +334,14 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 		return (UMATCH_VENDOR_PRODUCT);
 	}
 
+	if (vendor == USB_VENDOR_IOMEGA &&
+	    (product == USB_PRODUCT_IOMEGA_ZIP100 ||
+	     product == USB_PRODUCT_IOMEGA_ZIP250)) {
+		sc->drive = ZIP_100;
+		sc->transfer_speed = UMASS_ZIP100_TRANSFER_SPEED;
+		sc->quirks |= NO_TEST_UNIT_READY;
+	}
+
 	id = usbd_get_interface_descriptor(iface);
 	if (id == NULL || id->bInterfaceClass != UICLASS_MASS)
 		return (UMATCH_NONE);
@@ -389,13 +397,8 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 #endif
 		break;
 	case UIPROTO_MASS_BBB:
+	case UIPROTO_MASS_BBB_OLD:
 		sc->wire_proto = WPROTO_BBB;
-		break;
-	case UIPROTO_MASS_BBB_P:
-		sc->drive = ZIP_100;
-		sc->wire_proto = WPROTO_BBB;
-		sc->transfer_speed = UMASS_ZIP100_TRANSFER_SPEED;
-		sc->quirks |= NO_TEST_UNIT_READY;
 		break;
 	default:
 		DPRINTF(UDMASS_GEN, ("%s: Unsupported wire protocol %d\n",
@@ -469,6 +472,9 @@ USB_ATTACH(umass)
 	 */
 	sc->timeout = 4 * UMASS_MAX_TRANSFER_SIZE / sc->transfer_speed;
 	sc->timeout += UMASS_SPINUP_TIME;	/* allow for spinning up */
+#ifdef UMASS_DEBUG
+	printf("%s: timeout=%d ms\n", USBDEVNAME(sc->sc_dev), sc->timeout);
+#endif
 
 	id = usbd_get_interface_descriptor(sc->iface);
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
@@ -504,10 +510,8 @@ USB_ATTACH(umass)
 		sProto = "CBI-I";
 		break;
 	case UIPROTO_MASS_BBB:
+	case UIPROTO_MASS_BBB_OLD:
 		sProto = "BBB";
-		break;
-	case UIPROTO_MASS_BBB_P:
-		sProto = "BBB-P";
 		break;
 	default:
 		sProto = "unknown";
@@ -1165,9 +1169,8 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		}
 
 		/* Read the Command Status Wrapper via bulk-in endpoint. */
-		if (umass_setup_transfer(sc, sc->bulkin_pipe,
-				&sc->csw, UMASS_BBB_CSW_SIZE, 0,
-				next_xfer)) {
+		if (umass_setup_transfer(sc, sc->bulkin_pipe, &sc->csw,
+			UMASS_BBB_CSW_SIZE, 0, next_xfer)) {
 			umass_bbb_reset(sc, STATUS_WIRE_FAILED);
 			return;
 		}
@@ -1187,9 +1190,9 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			 */
 			if (sc->transfer_state == TSTATE_BBB_STATUS1) {
 				umass_clear_endpoint_stall(sc,
-						sc->bulkin, sc->bulkin_pipe,
-						TSTATE_BBB_SCLEAR,
-						sc->transfer_xfer[XFER_BBB_SCLEAR]);
+				    sc->bulkin, sc->bulkin_pipe,
+				    TSTATE_BBB_SCLEAR,
+				    sc->transfer_xfer[XFER_BBB_SCLEAR]);
 				return;
 			} else {
 				umass_bbb_reset(sc, STATUS_WIRE_FAILED);
