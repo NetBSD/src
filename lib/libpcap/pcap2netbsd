@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: pcap2netbsd,v 1.5 1999/07/02 16:03:41 simonb Exp $
+#	$NetBSD: pcap2netbsd,v 1.6 2004/09/22 19:35:47 dyoung Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -17,8 +17,10 @@
 #
 #  Written by Christos Zoulas Oct 2nd, 1997 for libpcap-0.4a3
 #
+#  Modified by David Young Sep 19th, 2004 for libpcap-0.8.3
+#
 
-$version = "0.4a3";
+$version = "0.8.3";
 
 # definitions ...
 
@@ -26,14 +28,15 @@ $version = "0.4a3";
 
 
 
-@libpcapf = ("bpf_image.c", "etherent.c", "gencode.c",
-	     "grammar.y", "inet.c", "nametoaddr.c", "optimize.c",
+@libpcapf = ("bpf_dump.c", "bpf_image.c", "etherent.c", "fad-getad.c",
+	     "gencode.c", "grammar.y", "inet.c", "nametoaddr.c", "optimize.c",
 	     "pcap-bpf.c", "pcap.c", "savefile.c", "scanner.l");
 
 @libpcaphf = ("pcap.h", "pcap-namedb.h");
 @libpcapmf = ("pcap.3");
-@libpcapdf = ("CHANGES", "README", "gnuc.h", "pcap-int.h", "gencode.h",
-	      "ethertype.h", "ppp.h");
+@libpcapdf = ("CHANGES", "README", "atmuni31.h", "llc.h", "pcap-bpf.h",
+	      "pcap-int.h", "pcap-stdinc.h", "gencode.h", "ethertype.h",
+	      "ppp.h", "sunatmpos.h");
 
 # sed edit list: file, sed-program
 %sedlist = (
@@ -60,13 +63,13 @@ sub fixrcs
     open(IFILE, "<$f") || die "Cannot open $f";
     open(OFILE, ">$t") || die "Cannot create $t";
 
-    if ($t =~ /.*\.[0-9]/) {
+    if ($t =~ /.*\.[0-9]$/) {
 	print OFILE '.\\" $', 'NetBSD',  '$', "\n.\\", "\n";
     }
-    elsif ($t =~ /.*\.[ch]/) {
+    elsif ($t =~ /.*\.[ch]$/) {
 	print OFILE "/*\t", '$', 'NetBSD', '$', "\t*/\n\n";
     }
-    elsif ($t =~ /.*\.[yl]/) {
+    elsif ($t =~ /.*\.[yl]$/) {
 	$hdr = 1;
     }
     else {
