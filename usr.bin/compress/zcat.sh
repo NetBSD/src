@@ -1,4 +1,5 @@
 #!/bin/sh -
+#	$NetBSD: zcat.sh,v 1.4 1995/03/26 19:54:37 glass Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -32,7 +33,6 @@
 # SUCH DAMAGE.
 #
 #	@(#)zcat.sh	8.1 (Berkeley) 6/6/93
-#	$NetBSD: zcat.sh,v 1.3 1995/03/26 09:44:45 glass Exp $
 #
 
 uncompress -c $*
