@@ -1,9 +1,8 @@
-# $NetBSD: md.arm32,v 1.47 2001/04/15 17:14:26 kleink Exp $
+# $NetBSD: md.arm32,v 1.48 2001/06/18 21:47:38 bjh21 Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
 ./usr/include/arm/arm32			comp-c-include
-./usr/include/arm/arm32/bus.h		comp-c-include
 ./usr/include/arm/arm32/frame.h		comp-c-include
 ./usr/include/arm/arm32/katelib.h	comp-c-include
 ./usr/include/arm/arm32/param.h		comp-c-include
@@ -15,6 +14,7 @@
 ./usr/include/arm/armreg.h		comp-c-include
 ./usr/include/arm/asm.h			comp-c-include
 ./usr/include/arm/bswap.h		comp-c-include
+./usr/include/arm/bus.h			comp-c-include
 ./usr/include/arm/cdefs.h		comp-c-include
 ./usr/include/arm/cpu.h			comp-c-include
 ./usr/include/arm/cpufunc.h		comp-c-include
