@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.118 1999/07/04 20:07:51 fvdl Exp $
+# $NetBSD: mi,v 1.119 1999/07/09 11:55:32 fvdl Exp $
 .
 ./altroot
 ./bin
@@ -556,6 +556,7 @@
 ./usr/sbin/mk-amd-map
 ./usr/sbin/mkalias
 ./usr/sbin/mknetid
+./usr/sbin/mld6query
 ./usr/sbin/mopa.out
 ./usr/sbin/mopchk
 ./usr/sbin/mopd
