@@ -1,3 +1,5 @@
+/*	$NetBSD: alloca.S,v 1.2 1997/05/08 13:38:32 matthias Exp $	*/
+
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
@@ -17,8 +19,6 @@
  * HISTORY
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
- *
- * 	$Id: alloca.S,v 1.1 1993/10/07 00:20:15 cgd Exp $
  */
 /*
  * Note: Saved registers are accessed through the frame pointer so 
@@ -26,6 +26,10 @@
  */
 
 #include <machine/asm.h>
+
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: alloca.S,v 1.2 1997/05/08 13:38:32 matthias Exp $")
+#endif
 
 ENTRY(alloca)
 	movd	tos,r2		/* get return address */

@@ -1,3 +1,5 @@
+/*	$NetBSD: strchr.S,v 1.2 1997/05/08 13:38:56 matthias Exp $	*/
+
 /* 
  * Written by Matthias Pfaller, 1996
  * Public domain.
@@ -6,10 +8,13 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strchr.S,v 1.1 1996/09/24 09:30:02 matthias Exp $")
+	RCSID("$NetBSD: strchr.S,v 1.2 1997/05/08 13:38:56 matthias Exp $")
+# if defined(INDEX)
+	RCSID("$Masqueraded: as index $")
+# endif
 #endif
 
-#ifndef INDEX
+#if !defined(INDEX)
 /*
  * char *
  * strchr (const char *s, int c)

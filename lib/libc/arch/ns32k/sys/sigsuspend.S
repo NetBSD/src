@@ -1,3 +1,5 @@
+/*	$NetBSD: sigsuspend.S,v 1.3 1997/05/08 13:39:09 matthias Exp $	*/
+
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
@@ -17,18 +19,17 @@
  * HISTORY
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
- *
- *	$Id: sigsuspend.S,v 1.2 1994/03/07 23:20:53 phil Exp $
  */
 
 #include "SYS.h"
 
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: sigsuspend.S,v 1.3 1997/05/08 13:39:09 matthias Exp $")
+#endif
+
 ENTRY(sigsuspend)
-	movd	S_ARG0, r0		/* fetch mask arg */
-	movd	0(r0), r0		/* indirect to mask arg */
-	movd	r0, S_ARG0
-	movd	SYS_sigsuspend, r0
-	SVC
-	bcs	cerror
-	movqd	0, r0			/* shouldn t happen */
+	movd	0(S_ARG0),S_ARG0	/* indirect to mask arg */
+	SYSTRAP(sigsuspend)
+	bcs	_ASM_LABEL(cerror)
+	movqd	0,r0			/* shouldn t happen */
 	ret	0

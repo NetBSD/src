@@ -1,3 +1,5 @@
+/*	$NetBSD: cerror.S,v 1.5 1997/05/08 13:39:03 matthias Exp $	*/
+
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
@@ -17,19 +19,24 @@
  * HISTORY
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
- *
- *	$Id: cerror.S,v 1.4 1994/06/02 20:39:22 phil Exp $
  */
 
 #include "SYS.h"
 
-	.globl  cerror
-	.globl	_errno
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: cerror.S,v 1.5 1997/05/08 13:39:03 matthias Exp $")
+#endif
 
-cerror:
+ASENTRY(cerror)
+#ifdef _REENTRANT
+	movd	r0,tos
+	bsr	_C_LABEL(__errno)
+	movd	tos,0(r0)
+#else
 	PIC_PROLOGUE
-	movd	r0, PIC_GOT(_errno)
+	movd	r0,PIC_GOT(_C_LABEL(errno))
 	PIC_EPILOGUE
-	movqd	-1, r0
-	movqd	-1, r1
+#endif
+	movqd	-1,r0
+	movqd	-1,r1
 	ret	0

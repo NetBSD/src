@@ -1,3 +1,5 @@
+/*	$NetBSD: Ovfork.S,v 1.3 1997/05/08 13:39:01 matthias Exp $	*/
+
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
  * All Rights Reserved.
@@ -17,19 +19,31 @@
  * HISTORY
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
- *
- *	$Id: Ovfork.S,v 1.2 1994/03/07 23:20:38 phil Exp $
  */
 
 #include "SYS.h"
 
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: Ovfork.S,v 1.3 1997/05/08 13:39:01 matthias Exp $")
+#endif
+
 /* 
  * r0 = pid of child in parent / pid of parent in child
  * r1 = 0 in parent, 1 in child
+ *
+ * trickery here, due to keith sklower, uses ret to clear the stack,
+ * and then returns with a jump indirect, since only one person can return
+ * with a ret off this stack... we do the ret before we vfork!
+ * (This is not really true for NetBSD. NetBSD's vfork creates a new
+ * vm context for the child).
  */
-SYSCALL(vfork)
-	cmpqd	0,r1
-	beq	parent
+ENTRY(vfork)
+	movd	tos,r2
+	SYSTRAP(vfork)
+	bcc	0f
+	movd	r2,tos
+	br	_ASM_LABEL(cerror)
+0:	cmpqd	0,r1
+	beq	0f
 	movqd	0,r0
-parent:
-	ret	0
+0:	jump	0(r2)
