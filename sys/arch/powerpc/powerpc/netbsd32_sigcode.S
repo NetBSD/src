@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.S,v 1.3 2003/01/19 00:00:11 matt Exp $ */
+/*	$NetBSD: netbsd32_sigcode.S,v 1.1 2003/01/19 00:00:11 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,24 +31,13 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * The following code is just a copy from sys/arch/powerpc/powerpc/sigcode.S 
- * Obviously, there are little chance that it works for Linux emulation, so 
- * it will have to be rewritten. 
- * Emmanuel Dreyfus <p99dreyf@criens.u-psud.fr>
- */
+#include <sys/syscall.h>
+#include <compat/netbsd32/netbsd32_syscall.h>
 
-#include <compat/linux/linux_syscall.h>
-
-/*
- * This is copied from sys/compat/linux/arch/powerpc/linux_machdep.h
- */
-#define LINUX__SIGNAL_FRAMESIZE 64
-
-#define	SIGCODE_NAME		linux_sigcode
-#define	ESIGCODE_NAME		linux_esigcode
-#define	SIGNAL_FRAMESIZE	LINUX_SIGNAL_FRAMESIZE
-#define	SIGRETURN_NAME		LINUX_SYS_sigreturn
-#define	EXIT_NAME		LINUX_SYS_exit
+#define SIGCODE_NAME		netbsd32_sigcode
+#define ESIGCODE_NAME		netbsd32_esigcode
+#define SIGRETURN_NAME		netbsd32_SYS_netbsd32___sigreturn14
+#define EXIT_NAME		netbsd32_SYS_netbsd32_exit
+#define	SIGCALLFRAMESIZE	16
 
 #include "sigcode.S"

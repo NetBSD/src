@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.3 2003/01/18 23:46:32 matt Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.4 2003/01/19 00:00:12 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,6 +41,17 @@
 #define	SIGRETURN_NAME	SYS___sigreturn14
 #define	EXIT_NAME	SYS_exit
 #endif
+#ifndef SIGNAL_FRAMESIZE
+#define SIGNAL_FRAMESIZE	0
+#endif
+#ifndef SIGCALLFRAMESIZE
+#ifdef _LP64
+#define	SIGCALLFRAMESIZE	32
+#else
+#define	SIGCALLFRAMESIZE	16
+#endif
+#endif
+
 /*
  * The following code gets copied to the top of the user stack on process
  * execution.  It does signal trampolining on signal delivery.
@@ -50,11 +61,12 @@
  */
 	.globl	_C_LABEL(SIGCODE_NAME),_C_LABEL(ESIGCODE_NAME)
 _C_LABEL(SIGCODE_NAME):
-	addi	%r1,%r1,-16		/* reserved space for callee */
+	addi	%r1,%r1,-SIGCALLFRAMESIZE	/* reserved space for callee */
 	blrl
-	addi	%r3,%r1,16		/* compute &sf_sc */
+	addi	%r3,%r1,SIGCALLFRAMESIZE+SIGNAL_FRAMESIZE
+						/* compute &sf_sc */
 	li	%r0,SIGRETURN_NAME
-	sc				/* sigreturn(scp) */
+	sc					/* sigreturn(scp) */
 	li	%r0,EXIT_NAME
-	sc				/* exit(errno) */
+	sc					/* exit(errno) */
 _C_LABEL(ESIGCODE_NAME):
