@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.6 2003/06/19 18:23:59 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.7 2003/07/18 15:11:23 jschauma Exp $
 
 ABI	application binary interface
 API	application program interface
@@ -29,11 +29,13 @@ IP	internet protocol
 ISA	industry standard architecture
 JPEG	joint photographic experts group
 NAT	network address translation
+NUMA	non uniform memory access
 PCI	peripheral component interconnect
 PNG	portable network graphics
 RAID	redundant array of inexpensive disks
 RPM	revolutions per minute
 SCSI	small computer standard interface
+SMP	symmetric multiprocessing
 TCP	transmission control protocol
 UDP	user datagram protocol
 XML	extensible markup language
