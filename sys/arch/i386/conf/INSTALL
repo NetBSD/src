@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.37 1997/06/14 02:07:08 perry Exp $
+#	$NetBSD: INSTALL,v 1.38 1997/06/14 06:23:47 perry Exp $
 #
 #	INSTALL -- an installation kernel config.
 #	This kernel should be derived from GENERIC with ramdisk
@@ -171,9 +171,10 @@ uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
 scsibus* at uha?
-wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
-wds1	at isa? port 0x358 irq 11 drq 5
-scsibus* at wds?
+# temporarily commented out, pending bus_dma fixes for this driver.
+#wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
+#wds1	at isa? port 0x358 irq 11 drq 5
+#scsibus* at wds?
 isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
 scsibus* at isp?
 
