@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.176 1999/06/28 08:20:40 itojun Exp $ */
+/* $NetBSD: machdep.c,v 1.177 1999/06/29 07:21:30 ross Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.176 1999/06/28 08:20:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 1999/06/29 07:21:30 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1111,12 +1111,18 @@ alpha_unknown_sysname()
 void
 identifycpu()
 {
+	char *s;
 
 	/*
 	 * print out CPU identification information.
 	 */
-	printf("%s, %ldMHz\n", cpu_model,
-	    hwrpb->rpb_cc_freq / 1000000);	/* XXX true for 21164? */
+	printf("%s", cpu_model);
+	for(s = cpu_model; *s; ++s)
+		if(strncasecmp(s, "MHz", 3) == 0)
+			goto skipMHz;
+	printf(", %ldMHz", hwrpb->rpb_cc_freq / 1000000);
+skipMHz:
+	printf("\n");
 	printf("%ld byte page size, %d processor%s.\n",
 	    hwrpb->rpb_page_size, ncpus, ncpus == 1 ? "" : "s");
 #if 0
@@ -2158,4 +2164,26 @@ cpu_mchkinfo()
 	if (mchkinfo_all_cpus == NULL)
 		return &startup_info;
 	return mchkinfo_all_cpus + alpha_pal_whami();
+}
+
+char *
+dot_conv(x)
+	unsigned long x;
+{
+	int i;
+	char *xc;
+	static int next;
+	static char space[2][20];
+
+	xc = space[next ^= 1] + sizeof space[0];
+	*--xc = '\0';
+	for (i = 0;; ++i) {
+		if (i && (i & 3) == 0)
+			*--xc = '.';
+		*--xc = "0123456789abcdef"[x & 0xf];
+		x >>= 4;
+		if (x == 0)
+			break;
+	}
+	return xc;
 }
