@@ -1,0 +1,20 @@
+#	$NetBSD: Makefile.distrib,v 1.1 2002/05/02 18:02:30 lukem Exp $
+#
+# Makefile snippet to setup various make variables variables used in distrib/:
+#   variables:
+#	DISTRIBDIR	Top level of distrib
+#	DISTRIBREV	NetBSD version without dots, as in "15ZD"
+#	DISTRIBVER	NetBSD version with dots, as in "1.5ZD"
+#
+#   commands:
+#	MAKESUMS	runs sets/makesums with the appropriate environment
+#	RELEASE_INSTALL	installs release binaries
+#
+#
+
+DISTRIBDIR=	${NETBSDSRCDIR}/distrib
+DISTRIBREV!=	sh ${NETBSDSRCDIR}/sys/conf/osrelease.sh -s
+DISTRIBVER!=	sh ${NETBSDSRCDIR}/sys/conf/osrelease.sh
+
+MAKESUMS=	CKSUM=${CKSUM:Q} sh ${DISTRIBDIR}/sets/makesums
+RELEASE_INSTALL=${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}

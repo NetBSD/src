@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.10 2002/05/02 13:05:49 lukem Exp $
+#	$NetBSD: Makefile.image,v 1.11 2002/05/02 18:02:30 lukem Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -16,11 +16,16 @@
 #
 # Optional variables:
 #	IMAGE		name of target image
+#	IMAGEPOSTBUILD	operation to run on ${IMAGE} ${.TARGET} after its built
+#			(if this returns non zero, ${.TARGET} is removed)
 #	DESTDIR		destination directory
 #	MAKEFS_FLAGS	extra options to ${MAKEFS}
 #	PARSELISTENV	environment variables to set for parselist.awk
 #	WORKDIR		directory to build image in to 
 #	IMAGETAR	tar.gz file to create containing ${IMAGE}'s contents
+#
+#	IMAGE_RELEASEDIR	where to install ${IMAGE}.gz
+#	IMAGETAR_RELEASEDIR	where to install ${IMAGETAR}
 #
 
 WORKDIR?=	work
@@ -60,21 +65,41 @@ ${IMAGE}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
 	    -o optimization=space,minfree=0,nsectors=1,ntracks=128 \
 	    ${MAKEFS_FLAGS} ${.TARGET}.tmp ${WORKDIR} \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}
+.if defined(IMAGEPOSTBUILD)
+	${IMAGEPOSTBUILD} || { rm -f ${.TARGET} ; false; }
+.endif
 
-CLEANFILES+=	${IMAGE} ${IMAGE}.tmp
-.endif								# }
+${IMAGE}.gz: ${IMAGE}
+	gzip -9f ${IMAGE}
+
+realall: ${IMAGE}
+
+.if defined(IMAGE_RELEASEDIR)
+release: check_RELEASEDIR .WAIT ${IMAGE}.gz
+	${RELEASE_INSTALL} ${IMAGE}.gz ${RELEASEDIR}/${IMAGE_RELEASEDIR}
+.endif
+
+CLEANFILES+=	${IMAGE} ${IMAGE}.gz ${IMAGE}.tmp
+.endif	# IMAGE							# }
 
 
 .if defined(IMAGETAR)						# {
-
 ${IMAGETAR}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
 	( cd ${WORKDIR}; \
 	  GZIP=-9 ${PAX} -N ${NETBSDSRCDIR}/etc -wdzM < ${.OBJDIR}/${WORKSPEC} \
 	) > ${.TARGET}.tmp \
 	&& mv ${.TARGET}.tmp ${.TARGET}
 
+realall: ${IMAGETAR}
+
 CLEANFILES+=	${IMAGETAR} ${IMAGETAR}.tmp
-.endif								# }
+
+.if defined(IMAGETAR_RELEASEDIR)
+release: check_RELEASEDIR .WAIT ${IMAGE}.gz
+	${RELEASE_INSTALL} ${IMAGE}.gz ${RELEASEDIR}/${IMAGETAR_RELEASEDIR}
+.endif
+
+.endif	# IMAGETAR						# }
 
 
 clean cleandir distclean: cleanfsimage

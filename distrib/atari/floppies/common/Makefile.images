@@ -1,56 +1,35 @@
-#	$NetBSD: Makefile.images,v 1.2 2002/04/26 15:50:25 lukem Exp $
+#	$NetBSD: Makefile.images,v 1.3 2002/05/02 18:02:28 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
 
 CRUNCHBIN=	instbin
 LISTS=		${.CURDIR}/list ${.CURDIR}/../common/list.images
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
-IMAGEDEPENDS+=	${CRUNCHBIN} ${KERNSRCDIR}/conf/osrelease.sh \
+IMAGEENDIAN=	be
+IMAGEDEPENDS+=	${CRUNCHBIN} \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd 
-PARSELISTENV=	ARCHDIR=${ARCHDIR:Q} \
-		DISTRIBREV=${DISTRIBREV:Q} \
-		DISTRIBVER=${DISTRIBVER:Q} \
-		KERNOBJDIR=${KERNOBJDIR:Q}
-MAKESUMS=	CKSUM=${CKSUM:Q} sh ${DISTRIBDIR}/sets/makesums
+
+IMAGE_RELEASEDIR=	installation/miniroot
 
 .if defined(USE_SYSINST)
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
 .endif
 
-realall: check_DESTDIR .WAIT image
-	@true
-
-release: check_RELEASEDIR .WAIT image
-	mkdir -p ${RELEASEDIR}/installation/miniroot
-	gzip -c -9 < ${.OBJDIR}/${IMAGE} \
-		> ${RELEASEDIR}/installation/miniroot/${IMAGE}.gz
-	 ${MAKESUMS} -t ${RELEASEDIR}/installation/miniroot ${IMAGE}.gz
-
-image:	${IMAGE} image_md_post
-
-image_md_post:
-# nothing here; refer to machine-dependant ${ARCHDIR}/Makefile.inc
-
-#
-# Using libhack:opendir() causes linking errors
-#
-NOLIBHACKOPENDIR=1
-
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=${DISTRIBDIR}/utils/libhack
 .include "${HACKSRC}/Makefile.inc"
-
-# This is listed in instbin.conf but is built here.
 ${CRUNCHBIN}: libhack.o
-
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 .if defined(MAKEDEVTARGETS)
 .include "${DISTRIBDIR}/common/Makefile.makedev"
 .endif
 .include "${DISTRIBDIR}/common/Makefile.image"
+
+release: check_RELEASEDIR
+	${MAKESUMS} -t ${RELEASEDIR}/${IMAGE_RELEASEDIR} ${IMAGE}.gz
 
 .include <bsd.prog.mk>

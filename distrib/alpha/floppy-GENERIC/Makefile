@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.14 2002/04/14 08:30:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2002/05/02 18:02:18 lukem Exp $
 
-.include "../../../Makefile.inc"
+.include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
 .include <bsd.kernobj.mk>
 
 MOUNT_POINT?=	/mnt
@@ -60,5 +62,7 @@ clean cleandir distclean:
 # nothing to do here
 depend includes lint regress tags:
 
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
+release: check_RELEASEDIR .WAIT GENERIC.fs
+	${RELEASE_INSTALL} GENERIC.fs ${RELEASEDIR}/installation/misc
+
+.include <bsd.prog.mk>

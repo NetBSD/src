@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.18 2002/04/26 15:50:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2002/05/02 18:02:35 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
 
@@ -10,24 +10,23 @@ MINIROOT=	${MINIROOTOBJ}/miniroot.fs
 MDSETTARGETS=	RAMDISK		${MINIROOT}	netbsd		\
 		INSTALL_TX3912	${MINIROOT}	netbsd.TX3912
 
-ITARGET=	${RELEASEDIR}/installation
+MDSET_RELEASEDIR=	installation
+
 PBSDBOOTDIR=	${KERNSRCDIR}/arch/${MACHINE}/stand/pbsdboot
 PBSDBOOT=	${PBSDBOOTDIR}/pbsdboot.uu
 PBSDBOOT1=	${PBSDBOOTDIR}/pbsdboot1.uu
 HPCBOOTDIR=	${KERNSRCDIR}/arch/hpc/stand
 HPCBOOT=	${HPCBOOTDIR}/binary/MIPS/hpcboot.exe.uu
 
-release: check_RELEASEDIR .WAIT ${KERNELDEPS}
-	-mkdir -p ${ITARGET}
-	${RELINSTALL} ${KERNELS} ${KERNELSYMS} ${ITARGET}
-	(cd ${ITARGET}; ${UUDECODE} ${PBSDBOOT1}; \
+release: check_RELEASEDIR .WAIT ${PBSDBOOT1} ${PBSDBOOT} ${HPCBOOT}
+	(cd ${RELEASEDIR}/installation; ${UUDECODE} ${PBSDBOOT1}; \
 	    chmod ${NONBINMODE} pbsdboot1.exe)
-	(cd ${ITARGET}; ${UUDECODE} ${PBSDBOOT}; \
+	(cd ${RELEASEDIR}/installation; ${UUDECODE} ${PBSDBOOT}; \
 	    chmod ${NONBINMODE} pbsdboot.exe)
-	(cd ${ITARGET}; rm -f hpcboot.exe; \
+	(cd ${RELEASEDIR}/installation; rm -f hpcboot.exe; \
 	    ${UUDECODE} -p ${HPCBOOT} >hpcboot.exe ; \
 	    chmod ${NONBINMODE} hpcboot.exe)
-	${MAKESUMS} -t ${ITARGET} '*.gz' '*.exe'
+	${MAKESUMS} -t ${RELEASEDIR}/installation '*.gz' '*.exe'
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
