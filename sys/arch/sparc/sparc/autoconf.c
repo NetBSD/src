@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.53 1996/04/09 15:24:00 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.54 1996/04/10 20:40:14 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -96,10 +96,6 @@
 int	cold;		/* if 1, still working on cold-start */
 int	fbnode;		/* node ID of ROM's console frame buffer */
 int	optionsnode;	/* node ID of ROM's options */
-/* extern int cpumod;	 * CPU model,
-			 * XXX currently valid only if cputyp == CPU_SUN4
-			 * or CPU_SUN4M
-			 */
 int	mmu_3l;		/* SUN4_400 models have a 3-level MMU */
 
 extern	struct promvec *promvec;
@@ -114,7 +110,7 @@ static	char *str2hex __P((char *, int *));
 static	int getstr __P((char *, int));
 static	int findblkmajor __P((struct device *));
 static	struct device *getdisk __P((char *, int, int, dev_t *));
-static int mbprint __P((void *, char *));
+static	int mbprint __P((void *, char *));
 static	void crazymap __P((char *, int *));
 int	st_crazymap __P((int));
 void	swapconf __P((void));
@@ -123,6 +119,7 @@ int	mainbus_match __P((struct device *, void *, void *));
 static	void mainbus_attach __P((struct device *, struct device *, void *));
 
 struct	bootpath bootpath[8];
+int	nbootpath;
 static	void bootpath_build __P((void));
 static	void bootpath_fake __P((struct bootpath *, char *));
 static	void bootpath_print __P((struct bootpath *));
@@ -429,12 +426,15 @@ bootstrap()
  * bootpath_build: build a bootpath. Used when booting a generic
  * kernel to find our root device.  Newer proms give us a bootpath,
  * for older proms we have to create one.  An element in a bootpath
- * has 3 fields: name (device name), val[0], and val[1]. Note that:
+ * has 4 fields: name (device name), val[0], val[1], and val[2]. Note that:
+ * Interpretation of val[] is device-dependent. Some examples:
  *
  * if (val[0] == -1) {
  *	val[1] is a unit number    (happens most often with old proms)
  * } else {
- *	val[0] is a sbus slot, and val[1] is an sbus offset [if sbus]
+ *	[sbus device] val[0] is a sbus slot, and val[1] is an sbus offset
+ *	[scsi disk] val[0] is target, val[1] is lun, val[2] is partition
+ *	[scsi tape] val[0] is target, val[1] is lun, val[2] is file #
  * }
  *
  */
@@ -486,11 +486,15 @@ bootpath_build()
 				cp = str2hex(++cp, &bp->val[0]);
 				if (*cp == ',')
 					cp = str2hex(++cp, &bp->val[1]);
+				if (*cp == ':')
+					/* XXX - we handle just one char */
+					bp->val[2] = *++cp - 'a', ++cp;
 			} else {
 				bp->val[0] = -1; /* no #'s: assume unit 0, no
 							sbus offset/adddress */
 			}
 			++bp;
+			++nbootpath;
 		}
 		bp->name[0] = 0;
 
@@ -548,11 +552,14 @@ bootpath_fake(bp, cp)
 	register char *pp;
 	int v0val[3];
 
-#define BP_APPEND(BP,N,V0,V1) { \
+#define BP_APPEND(BP,N,V0,V1,V2) { \
 	strcpy((BP)->name, N); \
 	(BP)->val[0] = (V0); \
 	(BP)->val[1] = (V1); \
-	(BP)++; }
+	(BP)->val[2] = (V2); \
+	(BP)++; \
+	nbootpath++; \
+}
 
 #if defined(SUN4)
 	if (CPU_ISSUN4M) {
@@ -578,14 +585,14 @@ bootpath_fake(bp, cp)
 		 */
 		if (cp[0] == 'x') {
 			if (cp[1] == 'd') {/* xd? */
-				BP_APPEND(bp, "vmel", -1, 0);
+				BP_APPEND(bp, "vmel", -1, 0, 0);
 			} else {
-				BP_APPEND(bp, "vmes", -1, 0);
+				BP_APPEND(bp, "vmes", -1, 0, 0);
 			}
 			sprintf(tmpname,"x%cc", cp[1]); /* e.g. xdc */
-			BP_APPEND(bp, tmpname,-1, v0val[0]);
+			BP_APPEND(bp, tmpname,-1, v0val[0], 0);
 			sprintf(tmpname,"%c%c", cp[0], cp[1]);
-			BP_APPEND(bp, tmpname,v0val[1], v0val[2]); /* e.g. xd */
+			BP_APPEND(bp, tmpname,v0val[1], v0val[2], 0); /* e.g. xd */
 			return;
 		}
 
@@ -594,44 +601,56 @@ bootpath_fake(bp, cp)
 		 * fake looks like: /obio0/le0
 		 */
 		if ((cp[0] == 'i' || cp[0] == 'l') && cp[1] == 'e')  {
-			BP_APPEND(bp, "obio", -1, 0);
+			BP_APPEND(bp, "obio", -1, 0, 0);
 			sprintf(tmpname,"%c%c", cp[0], cp[1]);
-			BP_APPEND(bp, tmpname, -1, 0);
+			BP_APPEND(bp, tmpname, -1, 0, 0);
 			return;
 		}
 
 		/*
 		 * scsi: sd, st, sr
-		 * assume: 4/100 = sw: /obio0/sw0/sd@0,0
-		 * 4/200 & 4/400 = si/sc: /vmes0/si0/sd@0,0
- 		 * 4/300 = esp: /obio0/esp0/sd@0,0
+		 * assume: 4/100 = sw: /obio0/sw0/sd@0,0:a
+		 * 4/200 & 4/400 = si/sc: /vmes0/si0/sd@0,0:a
+ 		 * 4/300 = esp: /obio0/esp0/sd@0,0:a
 		 * (note we expect sc to mimic an si...)
 		 */
 		if (cp[0] == 's' &&
 			(cp[1] == 'd' || cp[1] == 't' || cp[1] == 'r')) {
 
+			int  target, lun;
+
 			switch (cpumod) {
 			case SUN4_200:
 			case SUN4_400:
-				BP_APPEND(bp, "vmes", -1, 0);
-				BP_APPEND(bp, "si", -1, v0val[0]);
-				sprintf(tmpname,"%c%c", cp[0], cp[1]);
-				BP_APPEND(bp, tmpname, v0val[1], v0val[2]);
-				return;
+				BP_APPEND(bp, "vmes", -1, 0, 0);
+				BP_APPEND(bp, "si", -1, v0val[0], 0);
+				break;
 			case SUN4_100:
-				BP_APPEND(bp, "obio", -1, 0);
-				BP_APPEND(bp, "sw", -1, v0val[0]);
-				sprintf(tmpname, "%c%c", cp[0], cp[1]);
-				BP_APPEND(bp, tmpname, v0val[1], v0val[2]);
-				return;
+				BP_APPEND(bp, "obio", -1, 0, 0);
+				BP_APPEND(bp, "sw", -1, v0val[0], 0);
+				break;
 			case SUN4_300:
-				BP_APPEND(bp,"obio",-1,0);
-				BP_APPEND(bp,"esp",-1,v0val[0]);
-				sprintf(tmpname, "%c%c", cp[0], cp[1]);
-				BP_APPEND(bp, tmpname, v0val[1], v0val[2]);
-				return;
+				BP_APPEND(bp, "obio", -1, 0, 0);
+				BP_APPEND(bp, "esp", -1, v0val[0], 0);
+				break;
+			default:
+				panic("bootpath_fake: unknown cpumod %d",
+				      cpumod);
 			}
-			panic("bootpath_fake: unknown cpumod?");
+			/*
+			 * Deal with target/lun encodings.
+			 * Note: more special casing in dk_establish().
+			 */
+			if (oldpvec->monId[0] > '1') {
+				target = v0val[1] >> 3; /* new format */
+				lun    = v0val[1] & 0x7;
+			} else {
+				target = v0val[1] >> 2; /* old format */
+				lun    = v0val[1] & 0x3;
+			}
+			sprintf(tmpname, "%c%c", cp[0], cp[1]);
+			BP_APPEND(bp, tmpname, target, lun, v0val[2]);
+			return;
 		}
 
 		return; /* didn't grok bootpath, no change */
@@ -645,37 +664,45 @@ bootpath_fake(bp, cp)
 
 	/*
 	 * floppy: fd
-	 * fake looks like: /fd@0,0
+	 * fake looks like: /fd@0,0:a
 	 */
 	if (cp[0] == 'f' && cp[1] == 'd') {
-		BP_APPEND(bp, "fd", v0val[1], v0val[2]);
+		/*
+		 * Assume `fd(c,u,p)' means:
+		 * partition `p' on floppy drive `u' on controller `c'
+		 */
+		BP_APPEND(bp, "fd", v0val[0], v0val[1], v0val[2]);
 		return;
 	}
 
 	/*
-	 * ethenet: le
+	 * ethernet: le
 	 * fake looks like: /sbus0/le0
 	 */
 	if (cp[0] == 'l' && cp[1] == 'e') {
-		BP_APPEND(bp, "sbus", -1, 0);
-		BP_APPEND(bp, "le", -1, v0val[0]);
+		BP_APPEND(bp, "sbus", -1, 0, 0);
+		BP_APPEND(bp, "le", -1, v0val[0], 0);
 		return;
 	}
 
 	/*
 	 * scsi: sd, st, sr
-	 * fake looks like: /sbus0/esp0/sd@3,0
+	 * fake looks like: /sbus0/esp0/sd@3,0:a
 	 */
 	if (cp[0] == 's' && (cp[1] == 'd' || cp[1] == 't' || cp[1] == 'r')) {
 		char tmpname[8];
+		int  target, lun;
 
-		BP_APPEND(bp, "sbus", -1, 0);
-		BP_APPEND(bp, "esp", -1, v0val[0]);
+		BP_APPEND(bp, "sbus", -1, 0, 0);
+		BP_APPEND(bp, "esp", -1, v0val[0], 0);
 		if (cp[1] == 'r')
 			sprintf(tmpname, "cd"); /* netbsd uses 'cd', not 'sr'*/
 		else
 			sprintf(tmpname,"%c%c", cp[0], cp[1]);
-		BP_APPEND(bp, tmpname, v0val[1], v0val[2]);
+		/* XXX - is TARGET/LUN encoded in v0val[1]? */
+		target = v0val[1];
+		lun = 0;
+		BP_APPEND(bp, tmpname, target, lun, v0val[2]);
 		return;
 	}
 #endif /* SUN4C */
@@ -702,6 +729,8 @@ bootpath_print(bp)
 			printf("/%s%x", bp->name, bp->val[1]);
 		else
 			printf("/%s@%x,%x", bp->name, bp->val[0], bp->val[1]);
+		if (bp->val[2] != 0)
+			printf(":%c", bp->val[2] + 'a');
 		bp++;
 	}
 	printf("\n");
@@ -1867,6 +1896,8 @@ setroot()
 	extern int (*mountroot) __P((void *));
 	dev_t temp;
 	struct mountroot_hook *mrhp;
+	struct device *bootdv;
+	struct bootpath *bp;
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
 	extern int nfs_mountroot __P((void *));
@@ -1875,13 +1906,17 @@ setroot()
 	extern int ffs_mountroot __P((void *));
 #endif
 
+	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
+	bootdv = bp == NULL ? NULL : bp->dev;
+
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
 			printf("root device ");
 			if (bootdv != NULL)
 				printf("(default %s%c)",
 					bootdv->dv_xname,
-					bootdv->dv_class == DV_DISK?'a':' ');
+					bootdv->dv_class == DV_DISK
+						? bp->val[2]+'a' : ' ');
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
@@ -1897,7 +1932,7 @@ setroot()
 					goto gotswap;
 				}
 			}
-			dv = getdisk(buf, len, 0, &nrootdev);
+			dv = getdisk(buf, len, bp?bp->val[2]:0, &nrootdev);
 			if (dv != NULL) {
 				bootdv = dv;
 				break;
@@ -1961,10 +1996,11 @@ gotswap:
 		if (majdev >= 0) {
 			/*
 			 * Root and swap are on a disk.
-			 * Assume that we are supposed to put root on
-			 * partition a, and swap on partition b.
+			 * val[2] of the boot device is the partition number.
+			 * Assume swap is on partition b.
 			 */
-			mindev = (bootdv->dv_unit << PARTITIONSHIFT) + 0;
+			int part = bp->val[2];
+			mindev = (bootdv->dv_unit << PARTITIONSHIFT) + part;
 			rootdev = makedev(majdev, mindev);
 			nswapdev = dumpdev = makedev(major(rootdev),
 			    (minor(rootdev) & ~ PARTITIONMASK) | 1);
