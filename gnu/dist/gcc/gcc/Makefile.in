@@ -2546,10 +2546,10 @@ gccinstall.dvi: $(TEXI_GCCINSTALL_FILES)
 cppinternals.dvi: $(TEXI_CPPINT_FILES)
 	$(TEXI2DVI) -I $(docdir) -I $(docdir)/include $(docdir)/cppinternals.texi
 
-#generated-manpages: $(docdir)/gcov.1 $(docdir)/cpp.1 $(docdir)/gcc.1 \
-#	 $(docdir)/gfdl.7 $(docdir)/gpl.7 $(docdir)/fsf-funding.7 \
-#	 lang.generated-manpages
-#
+generated-manpages: $(docdir)/gcov.1 $(docdir)/cpp.1 $(docdir)/gcc.1 \
+	 $(docdir)/gfdl.7 $(docdir)/gpl.7 $(docdir)/fsf-funding.7 \
+	 lang.generated-manpages
+
 #$(docdir)/gcov.1: $(docdir)/gcov.texi
 #	$(STAMP) $(docdir)/gcov.1
 #	-$(TEXI2POD) $(docdir)/gcov.texi > gcov.pod
