@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.21 2003/06/14 19:11:41 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.22 2003/06/14 19:13:42 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -318,6 +318,9 @@ isabr_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 		panic("intr_establish: bogus irq or type");
 
 	switch (intrtype[irq]) {
+	case IST_NONE:
+		intrtype[irq] = type;
+		break;
 	case IST_EDGE:
 	case IST_LEVEL:
 		if (type == intrtype[irq])
@@ -425,6 +428,20 @@ isabr_iointr(mask, cf)
 void
 isabr_initicu()
 {
+
+	int i;
+
+	for (i = 0; i < ICU_LEN; i++) {
+		switch (i) {
+		case 2:
+		case 8:
+			intrtype[i] = IST_EDGE;
+			break;
+		default:
+			intrtype[i] = IST_NONE;
+			break;
+		}
+	}
 
 	isa_outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */
 	isa_outb(IO_ICU1+1, 0);			/* starting at this vector index */
