@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 2003/12/14 05:33:22 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 2003/12/14 05:49:14 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2003/12/14 05:33:22 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2003/12/14 05:49:14 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -385,13 +385,6 @@ mach_init(argc, argv, magic, btinfo)
 
 	switch (mach_type) {
 	case MACH_SGI_IP20:
-#ifdef IP20
-		ip20_init();
-#else
-		unconfigured_system_type(mach_type);
-#endif
-		break;
-
 	case MACH_SGI_IP22:
 #ifdef IP22
 		ip22_init();
