@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.68 2004/01/12 19:40:24 dbj Exp $	*/
+/*	$NetBSD: setup.c,v 1.69 2004/01/20 15:29:35 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.68 2004/01/12 19:40:24 dbj Exp $");
+__RCSID("$NetBSD: setup.c,v 1.69 2004/01/20 15:29:35 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -926,8 +926,10 @@ calcsb(dev, devfd, fs)
 		return (0);
 	}
 	/* avoid divide by 0 */
-	if (pp->p_fsize == 0 || pp->p_frag == 0)
+	if (pp->p_fsize == 0 || pp->p_frag == 0 || pp->p_cpg == 0) {
+		pfatal("%s: LABEL DOES NOT CONTAIN FILE SYSTEM PARAMETERS\n", dev);
 		return (0);
+	}
 	memset(fs, 0, sizeof(struct fs));
 	fs->fs_fsize = pp->p_fsize;
 	fs->fs_frag = pp->p_frag;
