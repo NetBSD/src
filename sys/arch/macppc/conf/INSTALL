@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.27 2000/05/26 00:22:07 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.28 2000/06/08 17:35:47 matt Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -37,7 +37,7 @@ options 	NMBCLUSTERS=1024
 options 	NFS_BOOT_DHCP, NFS_BOOT_BOOTPARAM
 
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
-options 	FONT_GALLANT12x22
+#options 	FONT_GALLANT12x22
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -61,7 +61,6 @@ pci*	at ppb? bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
-de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
@@ -75,8 +74,9 @@ pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 ohci*	at pci? dev ? function ?	# Open Host Controller
-#gm*	at pci? dev ? function ?	# gmac ethernet
+gm*	at pci? dev ? function ?	# gmac ethernet
 obio0	at pci? dev ? function ?
+tlp*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
@@ -143,5 +143,5 @@ wskbd*	at ukbd? console ?
 
 pseudo-device	md		1	# memory disk
 pseudo-device	loop			# network loopback
-pseudo-device	sl		2	# Serial Line IP
+#pseudo-device	sl		2	# Serial Line IP
 pseudo-device	pty		16	# pseudo-terminals
