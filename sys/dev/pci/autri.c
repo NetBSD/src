@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.1 2001/11/18 03:16:02 someya Exp $	*/
+/*	$NetBSD: autri.c,v 1.2 2001/11/18 16:59:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -612,22 +612,22 @@ autri_attach(parent, self, aux)
 	midi_attach_mi(&autri_midi_hw_if, sc, &sc->sc_dev);
 #endif
 
+	sc->sc_old_power = PWR_RESUME;
 	powerhook_establish(autri_powerhook, sc);
 }
 
 static void
-autri_powerhook(int why,void *addr)
+autri_powerhook(int why, void *addr)
 {
-	static int old = PWR_RESUME;
 	struct autri_softc *sc = addr;
 
-	if (why == PWR_RESUME && old == PWR_SUSPEND) {
+	if (why == PWR_RESUME && sc->sc_old_power == PWR_SUSPEND) {
 		DPRINTF(("PWR_RESUME\n"));
 		autri_init(sc);
 		/*autri_reset_codec(&sc->sc_codec);*/
 		(sc->sc_codec.codec_if->vtbl->restore_ports)(sc->sc_codec.codec_if);
 	}
-	old = why;
+	sc->sc_old_power = why;
 }
 
 int
