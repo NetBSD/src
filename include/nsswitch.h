@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.15 2004/10/04 04:02:27 lukem Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.16 2004/11/10 07:23:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _NSSWITCH_H	1
 
 /*
- * Don't use va_list in prototypes.   Va_list is typedef'd in two places
+ * Don't use va_list in prototypes.   va_list is typedef'd in two places
  * (<machine/varargs.h> and <machine/stdarg.h>), so if we include one of
  * them here we may collide with the utility's includes.  It's unreasonable
  * for utilities to have to include one of them to include nsswitch.h, so
@@ -59,7 +59,7 @@
 #define	NS_RETURN	1
 
 /*
- * layout of
+ * Layout of:
  *	uint32_t ns_src.flags
  */ 
 	/* nsswitch.conf status codes and nsdispatch(3) return values */
@@ -73,7 +73,7 @@
 #define	NS_FORCEALL	(1<<8)		/* force all methods to be invoked; */
 
 /*
- * currently implemented sources
+ * Currently implemented sources.
  */
 #define NSSRC_FILES	"files"		/* local files */
 #define	NSSRC_DNS	"dns"		/* DNS; IN for hosts, HS for others */
@@ -81,7 +81,7 @@
 #define	NSSRC_COMPAT	"compat"	/* passwd,group in YP compat mode */
 
 /*
- * currently implemented databases
+ * Currently implemented databases.
  */
 #define NSDB_HOSTS		"hosts"
 #define NSDB_GROUP		"group"
@@ -93,7 +93,7 @@
 #define NSDB_SHELLS		"shells"
 
 /*
- * suggested databases to implement
+ * Suggested databases to implement.
  */
 #define NSDB_ALIASES		"aliases"
 #define NSDB_AUTH		"auth"
@@ -119,7 +119,7 @@ typedef	int (*nss_method)(void *, void *, _BSD_VA_LIST_);
 
 /*
  * ns_dtab - `nsswitch dispatch table'
- * contains an entry for each source and the appropriate function to call
+ * Contains an entry for each source and the appropriate function to call.
  */
 typedef struct {
 	const char	 *src;
@@ -128,7 +128,7 @@ typedef struct {
 } ns_dtab;
 
 /*
- * macros to help build an ns_dtab[]
+ * Macros to help build an ns_dtab[]
  */
 #define NS_FILES_CB(F,C)	{ NSSRC_FILES,	F,	C },
 #define NS_COMPAT_CB(F,C)	{ NSSRC_COMPAT,	F,	C },
@@ -147,7 +147,7 @@ typedef struct {
 
 /*
  * ns_src - `nsswitch source'
- * used by the nsparser routines to store a mapping between a source
+ * Used by the nsparser routines to store a mapping between a source
  * and its dispatch control flags for a given database.
  */
 typedef struct {
@@ -157,10 +157,16 @@ typedef struct {
 
 
 /*
- * default sourcelist (if nsswitch.conf is missing, corrupt,
- * or the requested database doesn't have an entry.
+ * Default sourcelists (if nsswitch.conf is missing, corrupt,
+ * or the requested database doesn't have an entry)
  */
 extern const ns_src __nsdefaultsrc[];
+extern const ns_src __nsdefaultcompat[];
+extern const ns_src __nsdefaultcompat_forceall[];
+extern const ns_src __nsdefaultfiles[];
+extern const ns_src __nsdefaultfiles_forceall[];
+extern const ns_src __nsdefaultnis[];
+extern const ns_src __nsdefaultnis_forceall[];
 
 
 /*
@@ -189,12 +195,12 @@ typedef	ns_mtab *(*nss_module_register_fn)(const char *, u_int *,
 #ifdef _NS_PRIVATE
 
 /*
- * private data structures for back-end nsswitch implementation
+ * Private data structures for back-end nsswitch implementation.
  */
 
 /*
  * ns_dbt - `nsswitch database thang'
- * for each database in /etc/nsswitch.conf there is a ns_dbt, with its
+ * For each database in /etc/nsswitch.conf there is a ns_dbt, with its
  * name and a list of ns_src's containing the source information.
  */
 typedef struct {
