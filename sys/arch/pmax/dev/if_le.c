@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.11 1995/04/19 18:06:03 mellon Exp $	*/
+/*	$NetBSD: if_le.c,v 1.12 1995/05/02 20:00:09 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -539,8 +539,8 @@ leintr(unit)
 	le = &le_softc[unit];
 	ler1 = le->sc_r1;
 	stat = ler1->ler1_rdp;
-	if (!(stat & LE_INTR)) {
-		printf("le%d: spurrious interrupt\n", unit);
+	if (!stat || !(stat & LE_INTR)) {
+		printf("le%d: spurious interrupt\n", unit);
 		return;
 	}
 	if (stat & LE_SERR) {
