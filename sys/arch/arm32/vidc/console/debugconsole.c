@@ -1,4 +1,4 @@
-/* $NetBSD: debugconsole.c,v 1.4 1996/10/15 00:52:21 mark Exp $ */
+/*	$NetBSD: debugconsole.c,v 1.5 1997/10/14 11:49:14 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson

@@ -1,4 +1,4 @@
-/* $NetBSD: vidc_mc.S,v 1.4 1996/10/15 00:55:26 mark Exp $ */
+	/* $NetBSD: vidc_mc.S,v 1.5 1997/10/14 11:49:18 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -41,8 +41,7 @@
  * Created      : 17/09/94
  */
 
-#include "assym.h"
-#include <machine/iomd.h>
+#include <machine/asm.h>
 
 ip	.req	r12
 sp	.req	r13
@@ -62,14 +61,8 @@ pc	.req	r15
 
 /* Optimised for 8x16 font at the moment */
 
-	.global	_vidcconsolemc_render
-_vidcconsolemc_render:
+ENTRY(vidcconsolemc_render)
 	stmfd	sp!, {r0-r9, lr}
-
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
 
 	/* Generate colour mask */
 
@@ -81,7 +74,7 @@ _vidcconsolemc_render:
 
 	/* For each row (8 pixels) */
 
-xloop:
+Lvidcconsolemc_render_loop:
 	ldrb	r5, [r1], #1
 
 	mov	r7, #0
@@ -118,7 +111,7 @@ xloop:
 	add	r0, r0, r3
 
 	subs	r9, r9, #1
-	bne	xloop
+	bne	Lvidcconsolemc_render_loop
 
 	ldmfd	sp!, {r0-r9, pc}
 	
@@ -129,14 +122,8 @@ xloop:
  *	r2 = col
  */
 
-	.global _vidcconsolemc_cls
-_vidcconsolemc_cls:
+ENTRY(vidcconsolemc_cls)
 	stmfd	sp!, {r0-r9, lr}
-
-#if defined(GPROF) && defined(PROFILE_ASM)
-	mov	ip, lr
-	bl	mcount
-#endif
 	
 	mov	r3, r2
 	mov	r4, r2
@@ -146,7 +133,7 @@ _vidcconsolemc_cls:
 	mov	r8, r2
 	mov	r9, r2
 
-loop:
+Lvidcconsolemc_cls_loop:
 	stmia	r0!, {r2-r9}
 	stmia	r0!, {r2-r9}
 	stmia	r0!, {r2-r9}
@@ -165,6 +152,6 @@ loop:
 	stmia	r0!, {r2-r9}
 	
 	cmp	r0, r1
-	ble	loop
+	ble	Lvidcconsolemc_cls_loop
 
 	ldmfd	sp!, {r0-r9, pc}
