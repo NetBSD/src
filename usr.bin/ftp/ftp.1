@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.81 2002/02/08 01:36:23 ross Exp $
+.\" 	$NetBSD: ftp.1,v 1.82 2002/05/18 03:00:13 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd December 23, 2001
+.Dd May 18, 2002
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -495,8 +495,9 @@ Set the file transfer
 .Ic form
 to
 .Ar format .
-The default format is
-.Dq file .
+The default (and only supported)
+format is
+.Dq non-print .
 .It Ic ftp Ar host Op Ar port
 A synonym for
 .Ic open .
@@ -714,9 +715,9 @@ Set the file transfer
 .Ic mode
 to
 .Ar mode-name .
-The default mode is
-.Dq stream
-mode.
+The default (and only supported)
+mode is
+.Dq stream .
 .It Ic modtime Ar remote-file
 Show the last modification time of the file on the remote machine.
 .It Ic more Ar file
@@ -1294,9 +1295,9 @@ Set the file transfer
 .Ar structure
 to
 .Ar struct-name .
-By default
-.Dq stream
-structure is used.
+The default (and only supported)
+structure is
+.Dq file .
 .It Ic sunique
 Toggle storing of files on remote machine under unique file names.
 The remote
