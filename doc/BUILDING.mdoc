@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.26 2003/07/18 16:30:48 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.27 2003/07/29 10:07:16 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd July 18, 2003
+.Dd July 29, 2003
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -1052,6 +1052,8 @@ Set
 .Sy MAKEOBJDIRPREFIX
 to
 .Ar obj .
+Unsets
+.Sy MAKEOBJDIR .
 .
 .It Fl m Ar mach
 Set the value of
@@ -1109,8 +1111,12 @@ that will place the built object files under
 For instance, a setting of
 .Sy /usr/obj
 will place build-time files under
-.Sy /usr/obj/bin , /usr/obj/lib ,
+.Sy /usr/obj/bin ,
+.Sy /usr/obj/lib ,
+.Sy /usr/obj/usr.bin ,
 and so forth.
+Unsets
+.Sy MAKEOBJDIRPREFIX .
 .
 .It Fl o
 Set the value of
@@ -1164,14 +1170,18 @@ Set
 .Op Ar value
 .Sm on
 .Xc
-Set the variable
+Set the environment variable
 .Ar var
-to
-.Ar value
-(which is optional).
+to an optional
+.Ar value .
+This is propagated to the 
+.Sy \*[toolprefix]make
+wrapper.
 .
 .It Fl w Ar wrapper
-Create the \*[toolprefix]make wrapper script (see below) in a custom location,
+Create the
+.Sy \*[toolprefix]make
+wrapper script (see below) in a custom location,
 specified by
 .Ar wrapper .
 This allows, for instance, to place the wrapper in
@@ -1180,6 +1190,13 @@ automatically.
 Note that
 .Ar wrapper
 is the full name of the file, not just a directory name.
+.
+.It Fl Z Ar var
+Unset ("zap") the environment variable
+.Ar var .
+This is propagated to the 
+.Sy \*[toolprefix]make
+wrapper.
 .
 .El
 .
@@ -1207,6 +1224,12 @@ with several key variables pre-set, including
 .Sy MACHINE , MACHINE_ARCH ,
 and
 .Sy TOOLDIR .
+.Sy build.sh
+will also set variables specified with
+.Fl V ,
+and unset variables specified with
+.Fl Z .
+.Pp
 This script can be symlinked into a directory listed in
 .Sy PATH ,
 or called with an absolute path.
