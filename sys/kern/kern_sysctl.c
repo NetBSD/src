@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.21 1997/01/15 01:37:52 perry Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.22 1997/01/30 10:29:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -201,6 +201,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 {
 	int error, level, inthostid;
 	int old_autonicetime;
+	int old_vnodes;
 	extern char ostype[], osrelease[], version[];
 
 	/* all sysctl names at this level are terminal */
@@ -217,7 +218,11 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_VERSION:
 		return (sysctl_rdstring(oldp, oldlenp, newp, version));
 	case KERN_MAXVNODES:
-		return(sysctl_int(oldp, oldlenp, newp, newlen, &desiredvnodes));
+		old_vnodes = desiredvnodes;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &old_vnodes);
+		if (old_vnodes > desiredvnodes)
+			return (EINVAL);
+		return (error);
 	case KERN_MAXPROC:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxproc));
 	case KERN_MAXFILES:
