@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsmthdat.c,v 1.5 2003/02/13 14:16:18 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsmthdat.c,v 1.6 2003/03/04 17:25:13 kochi Exp $");
 
 #define __DSMTHDAT_C__
 

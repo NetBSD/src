@@ -2,7 +2,7 @@
  *
  * Module Name: evsci - System Control Interrupt configuration and
  *                      legacy to ACPI mode state transition functions
- *              xRevision: 87 $
+ *              xRevision: 88 $
  *
  ******************************************************************************/
 
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evsci.c,v 1.5 2003/02/13 14:16:19 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evsci.c,v 1.6 2003/03/04 17:25:15 kochi Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -146,40 +146,24 @@ AcpiEvSciHandler (
     void                    *Context)
 {
     UINT32                  InterruptHandled = ACPI_INTERRUPT_NOT_HANDLED;
-    UINT32                  Value;
-    ACPI_STATUS             Status;
 
 
     ACPI_FUNCTION_TRACE("EvSciHandler");
 
 
     /*
-     * Make sure that ACPI is enabled by checking SCI_EN.  Note that we are
-     * required to treat the SCI interrupt as sharable, level, active low.
+     * We are guaranteed by the ACPI CA initialization/shutdown code that
+     * if this interrupt handler is installed, ACPI is enabled.
      */
-    Status = AcpiGetRegister (ACPI_BITREG_SCI_ENABLE, &Value, ACPI_MTX_DO_NOT_LOCK);
-    if (ACPI_FAILURE (Status))
-    {
-        return (ACPI_INTERRUPT_NOT_HANDLED);
-    }
-
-    if (!Value)
-    {
-        /* ACPI is not enabled;  this interrupt cannot be for us */
-
-        return_VALUE (ACPI_INTERRUPT_NOT_HANDLED);
-    }
 
     /*
      * Fixed AcpiEvents:
-     * -------------
      * Check for and dispatch any Fixed AcpiEvents that have occurred
      */
     InterruptHandled |= AcpiEvFixedEventDetect ();
 
     /*
      * GPEs:
-     * -----
      * Check for and dispatch any GPEs that have occurred
      */
     InterruptHandled |= AcpiEvGpeDetect ();

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: actypes.h - Common data types for the entire ACPI subsystem
- *       xRevision: 252 $
+ *       xRevision: 253 $
  *
  *****************************************************************************/
 
@@ -984,6 +984,8 @@ typedef struct acpi_mem_space_context
 #define ACPI_ISA_ONLY_RANGES            (UINT8) 0x02
 #define ACPI_ENTIRE_RANGE               (ACPI_NON_ISA_ONLY_RANGES | ACPI_ISA_ONLY_RANGES)
 
+#define ACPI_SPARSE_TRANSLATION         (UINT8) 0x03
+
 /*
  *  IO Port Descriptor Decode
  */
@@ -1144,7 +1146,7 @@ typedef struct acpi_memory_attribute
 typedef struct acpi_io_attribute
 {
     UINT16                      RangeAttribute;
-    UINT16                      Reserved;
+    UINT16                      TranslationAttribute;
 
 } ACPI_IO_ATTRIBUTE;
 

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psopcode - Parser/Interpreter opcode information table
- *              xRevision: 76 $
+ *              xRevision: 77 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psopcode.c,v 1.5 2003/02/13 14:16:23 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psopcode.c,v 1.6 2003/03/04 17:25:23 kochi Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -352,7 +352,7 @@ __KERNEL_RCSID(0, "$NetBSD: psopcode.c,v 1.5 2003/02/13 14:16:23 kanaoka Exp $")
 #define ARGI_LLESSEQUAL_OP              ARGI_INVALID_OPCODE
 #define ARGI_LNOT_OP                    ARGI_LIST1 (ARGI_INTEGER)
 #define ARGI_LNOTEQUAL_OP               ARGI_INVALID_OPCODE
-#define ARGI_LOAD_OP                    ARGI_LIST2 (ARGI_REGION,     ARGI_TARGETREF)
+#define ARGI_LOAD_OP                    ARGI_LIST2 (ARGI_REGION_OR_FIELD,ARGI_TARGETREF)
 #define ARGI_LOAD_TABLE_OP              ARGI_LIST6 (ARGI_STRING,     ARGI_STRING,        ARGI_STRING,       ARGI_STRING,    ARGI_STRING, ARGI_ANYTYPE)
 #define ARGI_LOCAL0                     ARG_NONE
 #define ARGI_LOCAL1                     ARG_NONE
@@ -366,7 +366,7 @@ __KERNEL_RCSID(0, "$NetBSD: psopcode.c,v 1.5 2003/02/13 14:16:23 kanaoka Exp $")
 #define ARGI_MATCH_OP                   ARGI_LIST6 (ARGI_PACKAGE,    ARGI_INTEGER,       ARGI_INTEGER,      ARGI_INTEGER,   ARGI_INTEGER,   ARGI_INTEGER)
 #define ARGI_METHOD_OP                  ARGI_INVALID_OPCODE
 #define ARGI_METHODCALL_OP              ARGI_INVALID_OPCODE
-#define ARGI_MID_OP                     ARGI_LIST4 (ARGI_BUFFERSTRING,ARGI_INTEGER,      ARGI_INTEGER,      ARGI_TARGETREF)
+#define ARGI_MID_OP                     ARGI_LIST4 (ARGI_BUFFER_OR_STRING,ARGI_INTEGER,  ARGI_INTEGER,      ARGI_TARGETREF)
 #define ARGI_MOD_OP                     ARGI_LIST3 (ARGI_INTEGER,    ARGI_INTEGER,       ARGI_TARGETREF)
 #define ARGI_MULTIPLY_OP                ARGI_LIST3 (ARGI_INTEGER,    ARGI_INTEGER,       ARGI_TARGETREF)
 #define ARGI_MUTEX_OP                   ARGI_INVALID_OPCODE

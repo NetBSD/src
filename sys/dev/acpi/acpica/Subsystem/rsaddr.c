@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsaddr - Address resource descriptors (16/32/64)
- *              xRevision: 28 $
+ *              xRevision: 29 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsaddr.c,v 1.5 2003/02/13 14:16:24 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsaddr.c,v 1.6 2003/03/04 17:25:25 kochi Exp $");
 
 #define __RSADDR_C__
 
@@ -230,6 +230,8 @@ AcpiRsAddress16Resource (
         {
             OutputStruct->Data.Address16.Attribute.Io.RangeAttribute =
                 (UINT16) (Temp8 & 0x03);
+            OutputStruct->Data.Address16.Attribute.Io.TranslationAttribute =
+                (UINT16) ((Temp8 >> 4) & 0x03);
         }
         else
         {
@@ -434,6 +436,9 @@ AcpiRsAddress16Stream (
         Temp8 = (UINT8)
             (LinkedList->Data.Address16.Attribute.Io.RangeAttribute &
              0x03);
+        Temp8 |=
+            (LinkedList->Data.Address16.Attribute.Io.TranslationAttribute &
+             0x03) << 4;
     }
 
     *Buffer = Temp8;
@@ -627,6 +632,8 @@ AcpiRsAddress32Resource (
         {
             OutputStruct->Data.Address32.Attribute.Io.RangeAttribute =
                 (UINT16) (Temp8 & 0x03);
+            OutputStruct->Data.Address32.Attribute.Io.TranslationAttribute =
+                (UINT16) ((Temp8 >> 4) & 0x03);
         }
         else
         {
@@ -829,6 +836,9 @@ AcpiRsAddress32Stream (
         Temp8 = (UINT8)
             (LinkedList->Data.Address32.Attribute.Io.RangeAttribute &
              0x03);
+        Temp8 |=
+            (LinkedList->Data.Address32.Attribute.Io.TranslationAttribute &
+             0x03) << 4;
     }
 
     *Buffer = Temp8;
@@ -1021,6 +1031,8 @@ AcpiRsAddress64Resource (
         {
             OutputStruct->Data.Address64.Attribute.Io.RangeAttribute =
                 (UINT16) (Temp8 & 0x03);
+            OutputStruct->Data.Address64.Attribute.Io.TranslationAttribute =
+                (UINT16) ((Temp8 >> 4) & 0x03);
         }
         else
         {
@@ -1227,6 +1239,9 @@ AcpiRsAddress64Stream (
         Temp8 = (UINT8)
             (LinkedList->Data.Address64.Attribute.Io.RangeAttribute &
              0x03);
+        Temp8 |=
+            (LinkedList->Data.Address64.Attribute.Io.RangeAttribute &
+             0x03) << 4;
     }
 
     *Buffer = Temp8;

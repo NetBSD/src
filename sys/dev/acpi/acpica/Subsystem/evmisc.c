@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evmisc - Miscellaneous event manager support functions
- *              xRevision: 62 $
+ *              xRevision: 64 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evmisc.c,v 1.5 2003/02/13 14:16:19 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evmisc.c,v 1.6 2003/03/04 17:25:15 kochi Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -158,60 +158,6 @@ AcpiEvIsNotifyObject (
     default:
         return (FALSE);
     }
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiEvGetGpeRegisterIndex
- *
- * PARAMETERS:  GpeNumber       - Raw GPE number
- *
- * RETURN:      None.
- *
- * DESCRIPTION: Returns the register index (index into the GPE register info
- *              table) associated with this GPE.
- *
- ******************************************************************************/
-
-UINT32
-AcpiEvGetGpeRegisterIndex (
-    UINT32                  GpeNumber)
-{
-
-    if (GpeNumber > AcpiGbl_GpeNumberMax)
-    {
-        return (ACPI_GPE_INVALID);
-    }
-
-    return (ACPI_DIV_8 (AcpiGbl_GpeNumberToIndex[GpeNumber].NumberIndex));
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiEvGetGpeNumberIndex
- *
- * PARAMETERS:  GpeNumber       - Raw GPE number
- *
- * RETURN:      None.
- *
- * DESCRIPTION: Returns the number index (index into the GPE number info table)
- *              associated with this GPE.
- *
- ******************************************************************************/
-
-UINT32
-AcpiEvGetGpeNumberIndex (
-    UINT32                  GpeNumber)
-{
-
-    if (GpeNumber > AcpiGbl_GpeNumberMax)
-    {
-        return (ACPI_GPE_INVALID);
-    }
-
-    return (AcpiGbl_GpeNumberToIndex[GpeNumber].NumberIndex);
 }
 
 
@@ -680,6 +626,9 @@ AcpiEvTerminate (void)
 {
     ACPI_NATIVE_UINT        i;
     ACPI_STATUS             Status;
+    ACPI_GPE_BLOCK_INFO     *GpeBlock;
+    ACPI_GPE_BLOCK_INFO     *NextGpeBlock;
+    ACPI_GPE_EVENT_INFO     *GpeEventInfo;
 
 
     ACPI_FUNCTION_TRACE ("EvTerminate");
@@ -707,16 +656,22 @@ AcpiEvTerminate (void)
         /*
          * Disable all GPEs
          */
-        for (i = 0; i < AcpiGbl_GpeNumberMax; i++)
+        GpeBlock = AcpiGbl_GpeBlockListHead;
+        while (GpeBlock)
         {
-            if (AcpiEvGetGpeNumberIndex ((UINT32)i) != ACPI_GPE_INVALID)
+            GpeEventInfo = GpeBlock->EventInfo;
+            for (i = 0; i < (GpeBlock->RegisterCount * 8); i++)
             {
-                Status = AcpiHwDisableGpe((UINT32) i);
+                Status = AcpiHwDisableGpe (GpeEventInfo);
                 if (ACPI_FAILURE (Status))
                 {
                     ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Could not disable GPE %d\n", (UINT32) i));
                 }
+
+                GpeEventInfo++;
             }
+
+            GpeBlock = GpeBlock->Next;
         }
 
         /*
@@ -742,24 +697,17 @@ AcpiEvTerminate (void)
     }
 
     /*
-     * Free global tables, etc.
+     * Free global GPE blocks and related info structures
      */
-    if (AcpiGbl_GpeRegisterInfo)
+    GpeBlock = AcpiGbl_GpeBlockListHead;
+    while (GpeBlock)
     {
-        ACPI_MEM_FREE (AcpiGbl_GpeRegisterInfo);
-        AcpiGbl_GpeRegisterInfo = NULL;
-    }
+        NextGpeBlock = GpeBlock->Next;
+        ACPI_MEM_FREE (GpeBlock->EventInfo);
+        ACPI_MEM_FREE (GpeBlock->RegisterInfo);
+        ACPI_MEM_FREE (GpeBlock);
 
-    if (AcpiGbl_GpeNumberInfo)
-    {
-        ACPI_MEM_FREE (AcpiGbl_GpeNumberInfo);
-        AcpiGbl_GpeNumberInfo = NULL;
-    }
-
-    if (AcpiGbl_GpeNumberToIndex)
-    {
-        ACPI_MEM_FREE (AcpiGbl_GpeNumberToIndex);
-        AcpiGbl_GpeNumberToIndex = NULL;
+        GpeBlock = NextGpeBlock;
     }
 
     return_VOID;

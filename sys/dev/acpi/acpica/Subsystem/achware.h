@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: achware.h -- hardware specific interfaces
- *       xRevision: 61 $
+ *       xRevision: 62 $
  *
  *****************************************************************************/
 
@@ -188,29 +188,25 @@ AcpiHwClearAcpiStatus (
 
 /* GPE support */
 
-UINT8
-AcpiHwGetGpeBitMask (
-    UINT32                  GpeNumber);
-
 ACPI_STATUS
 AcpiHwEnableGpe (
-    UINT32                  GpeNumber);
+    ACPI_GPE_EVENT_INFO     *GpeEventInfo);
 
 void
 AcpiHwEnableGpeForWakeup (
-    UINT32                  GpeNumber);
+    ACPI_GPE_EVENT_INFO     *GpeEventInfo);
 
 ACPI_STATUS
 AcpiHwDisableGpe (
-    UINT32                  GpeNumber);
+    ACPI_GPE_EVENT_INFO     *GpeEventInfo);
 
 void
 AcpiHwDisableGpeForWakeup (
-    UINT32                  GpeNumber);
+    ACPI_GPE_EVENT_INFO     *GpeEventInfo);
 
 ACPI_STATUS
 AcpiHwClearGpe (
-    UINT32                  GpeNumber);
+    ACPI_GPE_EVENT_INFO     *GpeEventInfo);
 
 ACPI_STATUS
 AcpiHwGetGpeStatus (

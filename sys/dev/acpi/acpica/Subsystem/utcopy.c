@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utcopy - Internal to external object translation utilities
- *              xRevision: 111 $
+ *              xRevision: 112 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utcopy.c,v 1.7 2003/02/13 14:16:26 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utcopy.c,v 1.8 2003/03/04 17:25:28 kochi Exp $");
 
 #define __UTCOPY_C__
 
@@ -737,11 +737,11 @@ AcpiUtCopySimpleObject (
 
         /*
          * Allocate and copy the actual buffer if and only if:
-         * 1) There is a valid buffer (length > 0)
+         * 1) There is a valid buffer pointer
          * 2) The buffer is not static (not in an ACPI table) (in this case,
          *    the actual pointer was already copied above)
          */
-        if ((SourceDesc->Buffer.Length) &&
+        if ((SourceDesc->Buffer.Pointer) &&
             (!(SourceDesc->Common.Flags & AOPOBJ_STATIC_POINTER)))
         {
             DestDesc->Buffer.Pointer = ACPI_MEM_ALLOCATE (SourceDesc->Buffer.Length);
@@ -759,11 +759,11 @@ AcpiUtCopySimpleObject (
 
         /*
          * Allocate and copy the actual string if and only if:
-         * 1) There is a valid string (length > 0)
+         * 1) There is a valid string pointer
          * 2) The string is not static (not in an ACPI table) (in this case,
          *    the actual pointer was already copied above)
          */
-        if ((SourceDesc->String.Length) &&
+        if ((SourceDesc->String.Pointer) &&
             (!(SourceDesc->Common.Flags & AOPOBJ_STATIC_POINTER)))
         {
             DestDesc->String.Pointer = ACPI_MEM_ALLOCATE ((ACPI_SIZE) SourceDesc->String.Length + 1);
