@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.1.8.3 2005/01/18 14:21:41 bouyer Exp $	*/
+/*	$NetBSD: xencons.c,v 1.1.8.4 2005/03/08 14:05:02 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.1.8.3 2005/01/18 14:21:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.1.8.4 2005/03/08 14:05:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -97,7 +97,6 @@ const struct cdevsw xencons_cdevsw = {
 
 
 static void xencons_rx(ctrl_msg_t *, unsigned long);
-void xenconscn_attach(void);
 int xenconscn_getc(dev_t);
 void xenconscn_putc(dev_t, int);
 void xenconscn_pollc(dev_t, int);
