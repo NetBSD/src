@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.19 1998/08/31 00:11:18 mark Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.20 1998/09/06 04:20:38 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -589,7 +589,7 @@ initarm(prom_id)
 	(var) = physical_freestart;		\
 	physical_freestart += ((np) * NBPG);	\
 	free_pages -= (np);			\
-	bzero((char *)(var) - physical_start, ((np) * NBPG));
+	memset((char *)(var) - physical_start, 0, ((np) * NBPG));
 
 	loop1 = 0;
 	kernel_l1pt.physical = 0;
@@ -808,7 +808,7 @@ initarm(prom_id)
 	 */
 
 #if 0
-	bcopy((char *)KERNEL_TEXT_BASE, (char *)0x00000000, kerneldatasize);
+	memcpy((char *)0x00000000, (char *)KERNEL_TEXT_BASE, kerneldatasize);
 #endif
 
 	cpu_domains(DOMAIN_CLIENT);
@@ -847,7 +847,7 @@ initarm(prom_id)
 	setleds(LEDOFF);
 
 	/* Right set up the vectors at the bottom of page 0 */
-	bcopy(page0, (char *)0x00000000, page0_end - page0);
+	memcpy((char *)0x00000000, page0, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
 	cpu_cache_syncI_rng(0, page0_end - page0);

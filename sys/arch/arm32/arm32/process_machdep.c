@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.10 1998/07/06 01:56:40 mark Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.11 1998/09/06 04:20:38 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -114,7 +114,7 @@ process_read_fpregs(p, regs)
 	return(0);
 #else	/* ARMFPE */
 	/* No hardware FP support */
-	bzero(regs, sizeof(struct fpreg));
+	memset(regs, 0, sizeof(struct fpreg));
 	return(0);
 #endif	/* ARMFPE */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.24 1998/08/15 17:47:15 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.25 1998/09/06 04:20:37 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -839,7 +839,7 @@ fdopen(dev, flags, mode, p)
 		return ENXIO;
 
 	if ((fd->sc_flags & FD_OPEN) != 0 &&
-	    bcmp(fd->sc_type, type, sizeof(*type)))
+	    memcmp(fd->sc_type, type, sizeof(*type)))
 		return EBUSY;
 
 	fd->sc_type_copy = *type;
@@ -1389,7 +1389,7 @@ fdioctl(dev, cmd, addr, flag, p)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		bzero(&buffer, sizeof(buffer));
+		memset(&buffer, 0, sizeof(buffer));
 
 		buffer.d_secpercyl = fd->sc_type->seccyl;
 		buffer.d_type = DTYPE_FLOPPY;
@@ -1510,7 +1510,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		fd_formb.fd_formb_gaplen = fd->sc_type->gap2;
 		fd_formb.fd_formb_fillbyte = fd->sc_type->fillbyte;
 
-		bzero(il,sizeof il);
+		memset(il, 0, sizeof il);
 		for (j = 0, i = 1; i <= fd_formb.fd_formb_nsecs; i++) {
 			while (il[(j%fd_formb.fd_formb_nsecs)+1])
 				j++;
@@ -1559,7 +1559,7 @@ fdformat(dev, finfo, p)
 	if(bp == 0)
 		return ENOBUFS;
 	PHOLD(p);
-	bzero((void *)bp, sizeof(struct buf));
+	memset((void *)bp, 0, sizeof(struct buf));
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
 	bp->b_dev = dev;
@@ -1671,8 +1671,8 @@ load_memory_disc_from_floppy(md, dev)
 		if (biowait(bp))
 			panic("Cannot load floppy image\n");
                                                  
-		bcopy((caddr_t)bp->b_data, (caddr_t)md->md_addr
-		    + loop * fd_types[type].sectrac * DEV_BSIZE,
+		memcpy((caddr_t)md->md_addr + loop * fd_types[type].sectrac
+		    * DEV_BSIZE, (caddr_t)bp->b_data,
 		    fd_types[type].sectrac * DEV_BSIZE);
 	}
 	printf("\x08\x08\x08\x08\x08\x08%4dK done\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.23 1998/08/31 00:08:11 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.24 1998/09/06 04:20:37 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -676,7 +676,7 @@ initarm(bootconf)
 		printf("initarm: Secondary bootstrap ... ");
 
 	/* Zero down the memory we mapped in for the secondary bootstrap */
-	bzero(0x00000000, 0x400000);	/* XXX */
+	memset(0x00000000, 0, 0x400000);	/* XXX */
 
 	/*
 	 * Set up the variables that define the availablilty of physcial
@@ -768,7 +768,7 @@ initarm(bootconf)
 	(var) = physical_freestart;		\
 	physical_freestart += ((np) * NBPG);	\
 	free_pages -= (np);			\
-	bzero((char *)(var) - physical_start, ((np) * NBPG));
+	memset((char *)(var) - physical_start, 0, ((np) * NBPG));
 
 	loop1 = 0;
 	kernel_l1pt.physical = 0;
@@ -969,7 +969,7 @@ initarm(bootconf)
 	if (bootconfig.vram[0].pages != 0)
 		printf("mapping ... ");
 
-	bcopy((char *)KERNEL_TEXT_BASE, (char *)0x00000000, kerneldatasize);
+	memcpy((char *)0x00000000, (char *)KERNEL_TEXT_BASE, kerneldatasize);
 
 	/* Switch tables */
 #ifdef VERBOSE_INIT_ARM
@@ -1003,7 +1003,7 @@ initarm(bootconf)
 	printf("done.\n");
 
 	/* Right set up the vectors at the bottom of page 0 */
-	bcopy(page0, (char *)0x00000000, page0_end - page0);
+	memcpy((char *)0x00000000, page0, page0_end - page0);
 
 	/* We have modified a text page so sync the icache */
 	cpu_cache_syncI_rng(0, page0_end - page0);
