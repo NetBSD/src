@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.19 1998/07/05 06:49:17 jonathan Exp $	*/
+/*	$NetBSD: route.c,v 1.20 1998/08/15 03:17:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -595,7 +595,7 @@ static int rt_init_done = 0;
 
 #define RTTIMER_CALLOUT(r)	{				\
 	if (r->rtt_func != NULL) {				\
-		r->rtt_func(r->rtt_rt, r);			\
+		(*r->rtt_func)(r->rtt_rt, r);			\
 	} else {						\
 		rtrequest((int) RTM_DELETE,			\
 			  (struct sockaddr *)rt_key(r->rtt_rt),	\
