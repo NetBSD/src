@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.69 2000/06/16 11:34:55 hannken Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.70 2000/06/19 23:44:16 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.69 2000/06/16 11:34:55 hannken Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.70 2000/06/19 23:44:16 fvdl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -244,6 +244,7 @@ static struct ucred def_anon = {
 };
 
 static int      opt_flags;
+static int	have_v6 = 1;
 
 /* Bits for above */
 #define	OP_MAPROOT	0x001
@@ -279,7 +280,7 @@ main(argc, argv)
 	SVCXPRT *udptransp, *tcptransp, *udp6transp, *tcp6transp;
 	struct netconfig *udpconf, *tcpconf, *udp6conf, *tcp6conf;
 	int udpsock, tcpsock, udp6sock, tcp6sock;
-	int xcreated = 0;
+	int xcreated = 0, s;
 	int c, one = 1;
 
 	while ((c = getopt(argc, argv, "dnr")) != -1)
@@ -305,6 +306,13 @@ main(argc, argv)
 	else
 		exname = _PATH_EXPORTS;
 	openlog("mountd", LOG_PID, LOG_DAEMON);
+
+	s = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
+	if (s < 0)
+		have_v6 = 0;
+	else
+		close(s);
+
 	if (debug)
 		(void)fprintf(stderr, "Getting export list.\n");
 	get_exportlist(0);
@@ -1967,6 +1975,8 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	while (!done) {
 		switch (grp->gr_type) {
 		case GT_HOST:
+			if (addrp->sa_family == AF_INET6 && have_v6 == 0)
+				goto skip;
 			args.ua.export.ex_addr = addrp;
 			args.ua.export.ex_addrlen = addrlen;
 			args.ua.export.ex_masklen = 0;
@@ -1974,6 +1984,9 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		case GT_NET:
 			args.ua.export.ex_addr = (struct sockaddr *)
 			    &grp->gr_ptr.gt_net.nt_net;
+			if (args.ua.export.ex_addr->sa_family == AF_INET6 &&
+			    have_v6 == 0)
+				goto skip;
 			args.ua.export.ex_addrlen =
 			    args.ua.export.ex_addr->sa_len;
 			memset(&ss, 0, sizeof ss);
@@ -2054,6 +2067,7 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 			savedc = *cp;
 			*cp = '\0';
 		}
+skip:
 		if (addrp) {
 			ai = ai->ai_next;
 			if (ai == NULL)
