@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.18 2001/01/10 03:33:16 lukem Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.19 2001/11/01 07:48:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.18 2001/01/10 03:33:16 lukem Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.19 2001/11/01 07:48:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,7 +239,6 @@ main(argc, argv)
 		int so2;
 		pid_t pid;
 		fd_set fdset;
-		int rc;
 
 		/*
 		 * Check whether we need to re-read the configuration file
