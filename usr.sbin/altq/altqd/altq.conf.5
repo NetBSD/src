@@ -1,4 +1,4 @@
-.\"	$NetBSD: altq.conf.5,v 1.7 2003/03/15 23:48:30 wiz Exp $
+.\"	$NetBSD: altq.conf.5,v 1.8 2003/03/31 17:21:41 perry Exp $
 .\"	$KAME: altq.conf.5,v 1.12 2002/02/20 01:58:57 kjc Exp $
 .\"
 .\" Copyright (C) 2000
@@ -169,7 +169,7 @@ Name of a network interface (e.g., fxp0).
 .It Ar class_name
 Name of a class or a conditioner to which matching packets are directed.
 .It Cm name
-Add an arbitrary name to the filter for a future refenece.
+Add an arbitrary name to the filter for a future reference.
 .It Cm ruleno
 Specifies explicit order of filter matching.
 Filter matching is performed from a filter with a larger ruleno.
@@ -519,7 +519,7 @@ or
 is the slope of the first segment specified in bits-per-second.
 .Ar d
 is the x-projection of the intersection point of the 2 segments
-specified in milli-second.
+specified in milliseconds.
 .Ar m2
 is the slope of the second segment specified in bits-per-second.
 .Bl -tag -width 8n -offset indent
@@ -750,7 +750,7 @@ and can be integrated into other packet scheduling schemes.
 .Pp
 The
 .Cm red
-command sets the default RED paramters.
+command sets the default RED parameters.
 .Ar min_th
 and
 .Ar max_th
@@ -840,7 +840,7 @@ precedence levels.  ALTQ supports 3 drop precedence levels.
 .Pp
 The
 .Cm rio
-command sets the default RIO paramters.
+command sets the default RIO parameters.
 The parameters are RED parameters for 3 (low, medium, high) drop
 precedence.
 .Bl -tag -width interface -offset indent
@@ -1071,7 +1071,7 @@ profile, tswtcm takes yellow_action.
 Otherwise, tswtcm takes red_action.
 cmtd_rate and peak_rate are specified in bits per second.
 avg_interval provides the size of time window for averaging incoming
-rate, and is specified in milli-second.
+rate, and is specified in milliseconds.
 500 msec is ok for normal settings.
 .El
 .El
@@ -1101,7 +1101,7 @@ class cbq vx0 csl_class tcp_class pbandwidth  10   red
 .Ss HFSC Example
 .Bd -literal
 #
-# hfsc configuration for hierachical sharing
+# hfsc configuration for hierarchical sharing
 #
 interface pvc0 bandwidth 45M hfsc
 #
