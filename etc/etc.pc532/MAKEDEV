@@ -59,7 +59,7 @@ case $i in
 all)
 	sh MAKEDEV std sd0 sd1 sd2 st0 st1
 	sh MAKEDEV tty0 tty1 tty2 tty3 tty4 tty5 tty6 tty7 pty0 pty1
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 vnd0 vnd1
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 vnd0 vnd1
 	sh MAKEDEV local
 # Unknown which of the following will eventually be done ....
 #	sh MAKEDEV ch0 cd0 cd1
