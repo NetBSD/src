@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.6 1998/11/25 22:17:06 augustss Exp $	*/
+/*	$NetBSD: opl.c,v 1.7 1998/12/08 14:26:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ opl_attach(sc)
 	}
 
 	sc->syn.mets = &opl3_midi;
-	sprintf(sc->syn.name, "Yamaha OPL%d", sc->model);
+	sprintf(sc->syn.name, "%sYamaha OPL%d", sc->syn.name, sc->model);
 	sc->syn.data = sc;
 	sc->syn.nvoice = sc->model == OPL_2 ? OPL2_NVOICE : OPL3_NVOICE;
 	sc->syn.flags =  MS_DOALLOC | MS_FREQXLATE;
