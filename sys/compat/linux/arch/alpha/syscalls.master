@@ -1,5 +1,6 @@
-	$NetBSD: syscalls.master,v 1.16 2000/03/18 20:43:33 erh Exp $
+	$NetBSD: syscalls.master,v 1.17 2000/03/18 22:46:27 erh Exp $
 ;
+; XXX XAX lib/libc/sys/reboot.2 needs updating
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -43,6 +44,7 @@
 ;		make sure linux_foo() matches expected prototypes in .c files.
 ;		kill not used functions.  (ifdef the actual code)
 ;		fix getfsuid in linux_misc.c
+;		fix clone in linux_sched.c
 ;
 ; NOT USED = This syscall is not really used in Linux, except in its
 ;		osf compat mode.  Since Linux binaries shouldn't ever
@@ -194,7 +196,8 @@
 96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
 97	STD		{ int linux_sys_socket(int domain, int type, \
 			    int protocol); }
-98	NOARGS		{ int sys_connect(int s, const struct sockaddr *name, \
+98	STD		{ int linux_sys_connect(int s, \
+			    const struct sockaddr *name, \
 			    unsigned int namelen); }
 99	NOARGS		{ int compat_43_sys_accept(int s, \
 				caddr_t name, int *anamelen); }
@@ -464,8 +467,9 @@
 308	UNIMPL		delete_module
 309	UNIMPL		get_kernel_syms
 310	UNIMPL		syslog
-; XXX XAX XXX need a custom linux_sys_reboot.
-311	NOARGS		{ int sys_reboot(int opt); }
+311	STD		{ int linux_sys_reboot(int magic1, int magic2, \
+			    int cmd, void *arg); }
+; XXX XXX XAX need machine dependant sys_clone
 312	UNIMPL		{ int linux_sys_clone(int flags, void *stack); }
 ; XXX XAX does alpha linux really have a.out exec?
 #ifdef EXEC_AOUT
