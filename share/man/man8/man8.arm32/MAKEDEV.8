@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)MAKEDEV.8	5.2 (Berkeley) 3/22/91
-.\"	$Id: MAKEDEV.8,v 1.1 1996/03/28 21:39:10 mark Exp $
+.\"	$Id: MAKEDEV.8,v 1.2 1996/10/15 23:59:49 mark Exp $
 .\"
-.TH MAKEDEV 8 "March 22, 1991"
+.TH MAKEDEV 8 "February 17, 1996"
 .UC 7
 .SH NAME
 MAKEDEV \- create system and device special files
@@ -71,12 +71,7 @@ configuration specific devices
 .ns
 .TP 10
 tty0#
-standard COM ports
-.br
-.ns
-.TP 10
-cd#
-SCSI CD-ROM drives
+standard serial ports
 .br
 .ns
 .TP 10
@@ -85,13 +80,13 @@ fd#
 .br
 .ns
 .TP 10
-flog#
-kernel logging device
+pty#
+set of 16 master and slave pseudo terminals
 .br
 .ns
 .TP 10
-pty#
-set of 16 master and slave pseudo terminals
+wd#
+``winchester'' disk drives (IDE)
 .br
 .ns
 .TP 10
@@ -100,13 +95,23 @@ SCSI disk drives
 .br
 .ns
 .TP 10
+cd#
+SCSI CD-ROM drives
+.br
+.ns
+.TP 10
 st#
 SCSI tape drives
 .br
 .ns
 .TP 10
-wd#
-``winchester'' disk drives (ST506, IDE, ESDI, RLL etc.)
+ch#
+SCSI autochanger
+.br
+.ns
+.TP 10
+uk#
+SCSI unknown device
 .SH FILES
 /dev		The special file directory.
 .SH SEE ALSO
