@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tape.c	8.6 (Berkeley) 9/13/94";*/
-static char *rcsid = "$Id: tape.c,v 1.14 1994/12/28 02:21:53 mycroft Exp $";
+static char *rcsid = "$Id: tape.c,v 1.15 1995/02/20 19:43:56 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -125,7 +125,7 @@ setinput(source)
 		source = strchr(host, ':');
 		*source++ = '\0';
 		if (rmthost(host) == 0)
-			done(1);
+			exit(1);
 	} else
 #endif
 	if (strcmp(source, "-") == 0) {
@@ -141,7 +141,7 @@ setinput(source)
 			if (terminal == NULL) {
 				(void)fprintf(stderr, "cannot open %s: %s\n",
 				    _PATH_DEVNULL, strerror(errno));
-				done(1);
+				exit(1);
 			}
 		}
 		pipein++;
@@ -164,7 +164,7 @@ newtapebuf(size)
 	tapebuf = malloc(size * TP_BSIZE);
 	if (tapebuf == NULL) {
 		fprintf(stderr, "Cannot allocate space for tape buffer\n");
-		done(1);
+		exit(1);
 	}
 	tapebufsize = size;
 }
@@ -191,7 +191,7 @@ setup()
 		mt = open(magtape, O_RDONLY, 0);
 	if (mt < 0) {
 		fprintf(stderr, "%s: %s\n", magtape, strerror(errno));
-		done(1);
+		exit(1);
 	}
 	volno = 1;
 	setdumpnum();
@@ -205,7 +205,7 @@ setup()
 		cvtflag++;
 		if (gethead(&spcl) == FAIL) {
 			fprintf(stderr, "Tape is not a dump tape\n");
-			done(1);
+			exit(1);
 		}
 		fprintf(stderr, "Converting to new file system format.\n");
 	}
@@ -226,17 +226,17 @@ setup()
 	dumpdate = spcl.c_date;
 	if (stat(".", &stbuf) < 0) {
 		fprintf(stderr, "cannot stat .: %s\n", strerror(errno));
-		done(1);
+		exit(1);
 	}
 	if (stbuf.st_blksize > 0 && stbuf.st_blksize <= MAXBSIZE)
 		fssize = stbuf.st_blksize;
 	if (((fssize - 1) & fssize) != 0) {
 		fprintf(stderr, "bad block size %d\n", fssize);
-		done(1);
+		exit(1);
 	}
 	if (spcl.c_volume != 1) {
 		fprintf(stderr, "Tape is not volume 1 of the dump\n");
-		done(1);
+		exit(1);
 	}
 	if (gethead(&spcl) == FAIL) {
 		dprintf(stdout, "header read failed at %d blocks\n", blksread);
@@ -245,7 +245,7 @@ setup()
 	findinode(&spcl);
 	if (spcl.c_type != TS_CLRI) {
 		fprintf(stderr, "Cannot find file removal list\n");
-		done(1);
+		exit(1);
 	}
 	maxino = (spcl.c_count * TP_BSIZE * NBBY) + 1;
 	dprintf(stdout, "maxino = %d\n", maxino);
@@ -257,7 +257,7 @@ setup()
 	getfile(xtrmap, xtrmapskip);
 	if (spcl.c_type != TS_BITS) {
 		fprintf(stderr, "Cannot find file dump list\n");
-		done(1);
+		exit(1);
 	}
 	map = calloc((unsigned)1, (unsigned)howmany(maxino, NBBY));
 	if (map == (char *)NULL)
@@ -304,7 +304,7 @@ getvol(nextvol)
 	savecnt = blksread;
 again:
 	if (pipein)
-		done(1); /* pipes do not get a second chance */
+		exit(1); /* pipes do not get a second chance */
 	if (command == 'R' || command == 'r' || curfile.action != SKIP) {
 		newvol = nextvol;
 		wantnext = 1;
@@ -336,7 +336,7 @@ again:
 			(void) fgets(buf, BUFSIZ, terminal);
 		} while (!feof(terminal) && buf[0] == '\n');
 		if (feof(terminal))
-			done(1);
+			exit(1);
 		newvol = atoi(buf);
 		if (newvol <= 0) {
 			fprintf(stderr,
@@ -354,7 +354,7 @@ again:
 	(void) fflush(stderr);
 	(void) fgets(buf, BUFSIZ, terminal);
 	if (feof(terminal))
-		done(1);
+		exit(1);
 	if (!strcmp(buf, "none\n")) {
 		terminateinput();
 		return;
@@ -478,7 +478,7 @@ setdumpnum()
 		return;
 	if (pipein) {
 		fprintf(stderr, "Cannot have multiple dumps on pipe input\n");
-		done(1);
+		exit(1);
 	}
 	tcom.mt_op = MTFSF;
 	tcom.mt_count = dumpnum - 1;
@@ -720,7 +720,7 @@ xtrfile(buf, size)
 		fprintf(stderr,
 		    "write error extracting inode %d, name %s\nwrite: %s\n",
 			curfile.ino, curfile.name, strerror(errno));
-		done(1);
+		exit(1);
 	}
 }
 
@@ -738,7 +738,7 @@ xtrskip(buf, size)
 		fprintf(stderr,
 		    "seek error extracting inode %d, name %s\nlseek: %s\n",
 			curfile.ino, curfile.name, strerror(errno));
-		done(1);
+		exit(1);
 	}
 }
 
@@ -755,7 +755,7 @@ xtrlnkfile(buf, size)
 	if (pathlen > MAXPATHLEN) {
 		fprintf(stderr, "symbolic link name: %s->%s%s; too long %d\n",
 		    curfile.name, lnkbuf, buf, pathlen);
-		done(1);
+		exit(1);
 	}
 	(void) strcat(lnkbuf, buf);
 }
@@ -772,7 +772,7 @@ xtrlnkskip(buf, size)
 
 	fprintf(stderr, "unallocated block in symbolic link %s\n",
 		curfile.name);
-	done(1);
+	exit(1);
 }
 
 /*
@@ -897,7 +897,7 @@ getmore:
 			break;
 		}
 		if (!yflag && !reply("continue"))
-			done(1);
+			exit(1);
 		i = ntrec * TP_BSIZE;
 		memset(tapebuf, 0, i);
 #ifdef RRESTORE
@@ -910,7 +910,7 @@ getmore:
 		if (seek_failed) {
 			fprintf(stderr,
 			    "continuation failed: %s\n", strerror(errno));
-			done(1);
+			exit(1);
 		}
 	}
 	/*
@@ -955,12 +955,12 @@ findtapeblksize()
 
 	if (i <= 0) {
 		fprintf(stderr, "tape read error: %s\n", strerror(errno));
-		done(1);
+		exit(1);
 	}
 	if (i % TP_BSIZE != 0) {
 		fprintf(stderr, "Tape block size (%d) %s (%d)\n",
 			i, "is not a multiple of dump block size", TP_BSIZE);
-		done(1);
+		exit(1);
 	}
 	ntrec = i / TP_BSIZE;
 	numtrec = ntrec;

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.3 (Berkeley) 9/13/94";*/
-static char *rcsid = "$Id: main.c,v 1.6 1995/02/20 18:42:14 mycroft Exp $";
+static char *rcsid = "$Id: main.c,v 1.7 1995/02/20 19:43:54 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -160,6 +160,8 @@ main(argc, argv)
 		(void) signal(SIGTERM, SIG_IGN);
 	setlinebuf(stderr);
 
+	atexit(cleanup);
+
 	setinput(inputdev);
 
 	if (argc == 0) {
@@ -265,7 +267,7 @@ main(argc, argv)
 			checkrestore();
 		break;
 	}
-	done(0);
+	exit(0);
 	/* NOTREACHED */
 }
 
@@ -278,7 +280,7 @@ usage()
 	    "\trestore ifhmsvy\n",
 	    "\trestore rfsvy\n",
 	    "\trestore Rfsvy\n");
-	done(1);
+	exit(1);
 }
 
 /*

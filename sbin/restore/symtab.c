@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)symtab.c	8.2 (Berkeley) 9/13/94";*/
-static char *rcsid = "$Id: symtab.c,v 1.6 1994/12/28 02:21:52 mycroft Exp $";
+static char *rcsid = "$Id: symtab.c,v 1.7 1995/02/20 19:43:55 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -585,7 +585,7 @@ initsymtable(filename)
 				fprintf(stderr, "Incremental tape too low\n");
 			else
 				fprintf(stderr, "Incremental tape too high\n");
-			done(1);
+			exit(1);
 		}
 		break;
 	case 'R':

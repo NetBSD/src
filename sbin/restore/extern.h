@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	8.2 (Berkeley) 1/7/94
- *	$Id: extern.h,v 1.2 1994/06/08 19:33:34 mycroft Exp $
+ *	$Id: extern.h,v 1.3 1995/02/20 19:43:52 mycroft Exp $
  */
 
 struct entry	*addentry __P((char *, ino_t, int));
@@ -39,6 +39,7 @@ long		 addfile __P((char *, ino_t, int));
 void		 badentry __P((struct entry *, char *));
 void	 	 canon __P((char *, char *));
 void		 checkrestore __P((void));
+void 		 cleanup __P((void));
 void		 closemt __P((void));
 void		 createfiles __P((void));
 void		 createleaves __P((char *));
@@ -46,7 +47,6 @@ void		 createlinks __P((void));
 long		 deletefile __P((char *, ino_t, int));
 void		 deleteino __P((ino_t));
 ino_t		 dirlookup __P((const char *));
-__dead void 	 done __P((int));
 void		 dumpsymtable __P((char *, long));
 void	 	 extractdirs __P((int));
 int		 extractfile __P((char *));
