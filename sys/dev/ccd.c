@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.47 1998/02/22 06:50:08 enami Exp $	*/
+/*	$NetBSD: ccd.c,v 1.48 1998/02/22 07:14:30 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1486,10 +1486,9 @@ ccdgetdisklabel(dev)
 		for (i = 0; i < lp->d_npartitions; i++) {
 			pp = &lp->d_partitions[i];
 			if (pp->p_offset + pp->p_size > cs->sc_size)
-				printf("WARNING: %s: size of partition `%c' "
-				    "(%d) exceeds the size of ccd (%d)\n",
-				    cs->sc_xname, 'a' + i, pp->p_size,
-				    cs->sc_size);
+				printf("WARNING: %s: end of partition `%c' "
+				    "exceeds the size of ccd (%d)\n",
+				    cs->sc_xname, 'a' + i, cs->sc_size);
 		}
 	}
 
