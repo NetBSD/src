@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.22.4.1 2003/07/13 09:45:23 jlam Exp $	*/
+/*	$NetBSD: pl.c,v 1.22.4.2 2003/07/23 20:48:01 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.22.4.1 2003/07/13 09:45:23 jlam Exp $");
+__RCSID("$NetBSD: pl.c,v 1.22.4.2 2003/07/23 20:48:01 jlam Exp $");
 #endif
 #endif
 
@@ -201,7 +201,8 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 				warnx("Warning - block special device `%s' in PLIST", name);
 				break;
 			default:
-				(void) strcpy(buf, CHECKSUM_HEADER);
+				(void) strlcpy(buf, CHECKSUM_HEADER,
+				    sizeof(buf));
 				if (MD5File(name, &buf[ChecksumHeaderLen]) != (char *) NULL) {
 					tmp = new_plist_entry();
 					tmp->name = strdup(buf);
