@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.126 1999/09/26 21:40:13 mjl Exp $
+#	$NetBSD: Makefile,v 1.127 1999/10/20 17:57:55 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -161,6 +161,8 @@ distribution: distrib-dirs
 		${DESTDIR}/etc/dumpdates
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g operator -m 600 /dev/null \
 		${DESTDIR}/etc/skeykeys
+	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 /dev/null \
+		${DESTDIR}/var/at/at.deny
 	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 /dev/null \
 		${DESTDIR}/var/cron/log
 	${INSTALL} ${INSTPRIV} -c -o nobody -g ${BINGRP} -m 664 /dev/null \
