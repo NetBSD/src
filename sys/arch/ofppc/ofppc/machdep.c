@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 1997/11/13 10:37:56 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 1998/01/27 09:16:02 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -125,6 +125,10 @@ initppc(startkernel, endkernel, args)
 	extern tlbimiss, tlbimsize;
 	extern tlbdlmiss, tlbdlmsize;
 	extern tlbdsmiss, tlbdsmsize;
+#ifdef DDB
+	extern ddblow, ddbsize;
+	extern void *startsym, *endsym;
+#endif
 #if NIPKDB > 0
 	extern ipkdblow, ipkdbsize;
 #endif
@@ -212,6 +216,13 @@ initppc(startkernel, endkernel, args)
 		case EXC_DSMISS:
 			bcopy(&tlbdsmiss, (void *)EXC_DSMISS, (size_t)&tlbdsmsize);
 			break;
+#ifdef DDB
+		case EXC_PGM:
+		case EXC_TRC:
+		case EXC_BPT:
+			bcopy(&ddblow, (void *)exc, (size_t)&ddbsize);
+			break;
+#endif
 #if NIPKDB > 0
 		case EXC_PGM:
 		case EXC_TRC:
@@ -251,6 +262,9 @@ initppc(startkernel, endkernel, args)
 		}
 	}			
 
+#ifdef DDB
+	/* ddb_init(startsym, endsym); */
+#endif
 #if NIPKDB > 0
 	/*
 	 * Now trap to IPKDB

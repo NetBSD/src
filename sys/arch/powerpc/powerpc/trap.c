@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.4 1997/04/16 22:49:49 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.5 1998/01/27 09:16:03 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,6 +36,7 @@
 #include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/ktrace.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -238,18 +239,34 @@ syscall_bad:
 		enable_fpu(p);
 		break;
 
+	case EXC_AST|EXC_USER:
+		/* This is just here that we trap */
+		break;
+
+	case EXC_ALI|EXC_USER:
+/* XXX temporarily */
+		trapsignal(p, SIGBUS, EXC_ALI);
+		break;
+
+	case EXC_PGM|EXC_USER:
+/* XXX temporarily */
+		if (frame->srr1 & 0x0002000)
+			trapsignal(p, SIGTRAP, EXC_PGM);
+		else
+			trapsignal(p, SIGILL, EXC_PGM);
+		break;
+
 	default:
 brain_damage:
 		printf("trap type %x at %x\n", type, frame->srr0);
+#ifdef DDB
+		Debugger();			 /* XXX temporarily */
+#endif
 #ifdef TRAP_PANICWAIT
 		printf("Press a key to panic.\n");
 		cngetc();
 #endif
 		panic("trap");
-
-	case EXC_AST|EXC_USER:
-		/* This is just here that we trap */
-		break;
 	}
 
 	astpending = 0;		/* we are about to do it */

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8 1997/12/01 16:02:09 kleink Exp $
+#	$NetBSD: GENERIC,v 1.9 1998/01/27 09:15:58 sakamoto Exp $
 #
 # First try for PPC config file
 #
@@ -26,6 +26,8 @@ makeoptions	DEBUG="-g"
 options 	DEBUG
 options 	DIAGNOSTIC
 options 	TRAP_PANICWAIT
+#options	DDB
+#options	DDB_HISTORY_SIZE=100    # Enable history editing in DDB
 
 options 	TCP_COMPAT_42
 options 	COMPAT_43

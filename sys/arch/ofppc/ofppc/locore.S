@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5 1997/10/08 23:28:01 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.6 1998/01/27 09:16:01 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -777,6 +777,26 @@ _C_LABEL(tlbdsmiss):
 	ba	EXC_DSI
 _C_LABEL(tlbdsmsize) = .-_C_LABEL(tlbdsmiss)
 
+#ifdef DDB
+#define	ddbsave	0xde0		/* primary save area for DDB */
+/*
+ * In case of DDB we want a separate trap catcher for it
+ */
+	.local	ddbstk
+	.comm	ddbstk,INTSTK,8		/* ddb stack */
+
+	.globl	_C_LABEL(ddblow),_C_LABEL(ddbsize)
+_C_LABEL(ddblow):
+	mtsprg	1,1			/* save SP */
+	stmw	28,ddbsave(0)		/* free r28-r31 */
+	mflr	28			/* save LR */
+	mfcr	29			/* save CR */
+	lis	1,ddbstk+INTSTK@ha	/* get new SP */
+	addi	1,1,ddbstk+INTSTK@l
+	bla	ddbtrap
+_C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
+#endif	/* DDB */
+
 #if NIPKDB > 0
 #define	ipkdbsave	0xde0		/* primary save area for IPKDB */
 /*
@@ -1162,6 +1182,51 @@ decrintr:
 	addi	3,1,8			/* intr frame */
 	bl	_C_LABEL(decr_intr)
 	b	intr_exit
+
+#ifdef DDB
+/*
+ * Deliberate entry to ddbtrap
+ */
+	.globl	_C_LABEL(ddb_trap)
+_C_LABEL(ddb_trap):
+	mtsprg	1,1
+	mfmsr	3
+	mtsrr1	3
+	andi.	3,3,~(PSL_EE|PSL_ME)@l
+	mtmsr	3			/* disable interrupts */
+	isync
+	stmw	28,ddbsave(0)
+	mflr	28
+	li	29,EXC_BPT
+	mtlr	29
+	mfcr	29
+	mtsrr0	28
+
+/*
+ * Now the ddb trap catching code.
+ */
+ddbtrap:
+	FRAME_SETUP(ddbsave)
+/* Call C trap code: */
+	addi	3,1,8
+	bl	_C_LABEL(ddb_trap_glue)
+	or.	3,3,3
+	bne	ddbleave
+/* This wasn't for DDB, so switch to real trap: */
+	lwz	3,FRAME_EXC+8(1)	/* save exception */
+	stw	3,ddbsave+8(0)
+	FRAME_LEAVE(ddbsave)
+	mtsprg	1,1			/* prepare for entrance to realtrap */
+	stmw	28,tempsave(0)
+	mflr	28
+	mfcr	29
+	lwz	31,ddbsave+8(0)
+	mtlr	31
+	b	realtrap
+ddbleave:
+	FRAME_LEAVE(ddbsave)
+	rfi
+#endif /* DDB */
 
 #if NIPKDB > 0
 /*
