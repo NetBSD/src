@@ -1,4 +1,4 @@
-/* $NetBSD: netisr_dispatch.h,v 1.3 2001/01/09 05:04:23 thorpej Exp $ */
+/* $NetBSD: netisr_dispatch.h,v 1.4 2001/01/11 22:32:21 thorpej Exp $ */
 
 /*
  * netisr_dispatch: This file is included by the 
@@ -50,6 +50,9 @@
 #endif
 #if NSL > 0
 	DONETISR(NETISR_SLIP,slintr);
+#endif
+#if NSTRIP > 0
+	DONETISR(NETISR_STRIP,stripintr);
 #endif
 #if NPPP > 0
 	DONETISR(NETISR_PPP,pppintr);
