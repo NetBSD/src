@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.71 2000/12/30 04:11:34 itojun Exp $
+#	$NetBSD: bsd.README,v 1.72 2000/12/30 14:34:51 sommerfeld Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -461,10 +461,15 @@ If foo has multiple source files, add the line:
 The include file <bsd.subdir.mk> contains the default targets for building
 subdirectories.  It has the same eight targets as <bsd.prog.mk>: all, 
 clean, cleandir, depend, includes, install, lint, and tags.  For all of
-the directories listed in the variable SUBDIRS, the specified directory 
+the directories listed in the variable SUBDIR, the specified directory 
 will be visited and the target made.  There is also a default target which
 allows the command "make subdir" where subdir is any directory listed in
-the variable SUBDIRS.
+the variable SUBDIR.
+
+As a special case, the use of a token .WAIT as an entry in SUBDIR acts
+as a synchronization barrier when multiple make jobs are run; subdirs
+before the .WAIT must complete before any subdirs after .WAIT are
+started.  See make(1) for some caveats on use of .WAIT and other special sources.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
