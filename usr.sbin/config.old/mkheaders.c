@@ -71,6 +71,8 @@ do_count(dev, hname, search)
 			if (dp->d_type == PSEUDO_DEVICE) {
 				count =
 				    dp->d_slave != UNKNOWN ? dp->d_slave : 1;
+				if (dp->d_flags)
+				    dev = NULL;
 				break;
 			}
 			count++;
@@ -100,10 +102,10 @@ do_header(dev, hname, count)
 	char *file, *name, *inw, *toheader(), *tomacro(), *get_rword();
 	struct file_list *fl, *fl_head;
 	FILE *inf, *outf;
-	int inc, oldcount;
+	int inc = 0, oldcount;
 
 	file = toheader(hname);
-	name = tomacro(dev);
+	name = tomacro(dev?dev:hname) + (dev == NULL);
 	inf = fopen(file, "r");
 	oldcount = -1;
 	if (inf == 0) {
@@ -112,7 +114,8 @@ do_header(dev, hname, count)
 			perror(file);
 			exit(1);
 		}
-		fprintf(outf, "#define %s %d\n", name, count);
+                if (dev || (!dev && count))
+		        fprintf(outf, "#define %s %d\n", name, count);
 		(void) fclose(outf);
 		return;
 	}
@@ -143,6 +146,12 @@ do_header(dev, hname, count)
 		fl_head = fl;
 	}
 	(void) fclose(inf);
+/*DEBUG  printf("%s: dev=%x, inc=%d, oldcount=%d count=%d\n",
+		 file, dev, inc, oldcount, count); */
+	if (!dev && inc == 0 && oldcount == -1 && count == 0)
+		oldcount = 0;
+	else if (!dev && count == 0)
+		oldcount = -1;
 	if (count == oldcount) {
 		for (fl = fl_head; fl;) {
 			struct file_list *fln = fl->f_next;
@@ -168,8 +177,9 @@ do_header(dev, hname, count)
 	for (fl = fl_head; fl;) {
 		struct file_list *fln = fl->f_next;
 
-		fprintf(outf, "#define %s %u\n",
-		    fl->f_fn, count ? fl->f_type : 0);
+                if (dev || (!dev && count))
+                    fprintf(outf, "#define %s %u\n",
+                            fl->f_fn, count ? fl->f_type : 0);
 		free((char *)fl);
 		fl = fln;
 	}
@@ -201,8 +211,12 @@ char *tomacro(dev)
 
 	cp = mbuf;
 	*cp++ = 'N';
-	while (*dev)
-		*cp++ = toupper(*dev++);
+	while (*dev) {
+		if (islower(*dev))
+		    *cp++ = toupper(*dev++);
+		else
+		    *cp++ = *dev++;
+	}
 	*cp++ = 0;
 	return (mbuf);
 }
