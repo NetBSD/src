@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)pwcache.3	5.4 (Berkeley) 4/19/91
-.\"	$Id: pwcache.3,v 1.2 1993/08/01 07:40:35 mycroft Exp $
+.\"	$Id: pwcache.3,v 1.3 1994/01/28 05:43:35 cgd Exp $
 .\"
 .Dd April 19, 1991
 .Dt PWCACHE 3
@@ -42,12 +42,6 @@
 .Fn user_from_uid "uid_t uid" "int nouser"
 .Fn group_from_gid "gid_t gid" "int nogroup"
 .Sh DESCRIPTION
-.Bf -symbolic
-This interface is not part of the C library.
-It has been placed in the Berkeley utility library, libutil, as it is
-used by several standard utilities.
-.Ef
-.Pp
 The
 .Fn user_from_uid
 function returns the user name associated with the argument
