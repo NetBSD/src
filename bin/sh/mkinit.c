@@ -1,4 +1,4 @@
-/*	$NetBSD: mkinit.c,v 1.14 1996/02/18 12:29:21 mycroft Exp $	*/
+/*	$NetBSD: mkinit.c,v 1.15 1996/10/16 14:43:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkinit.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mkinit.c,v 1.14 1996/02/18 12:29:21 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mkinit.c,v 1.15 1996/10/16 14:43:37 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ struct text {
 	int nleft;
 	struct block *start;
 	struct block *last;
-};      
+};
 
 struct block {
 	struct block *next;
@@ -165,8 +165,8 @@ void addchar __P((int, struct text *));
 void writetext __P((struct text *, FILE *));
 FILE *ckfopen __P((char *, char *));
 void *ckmalloc __P((int));
-char *savestr __P((char *)); 
-void error __P((char *));  
+char *savestr __P((char *));
+void error __P((char *));
 
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 
@@ -217,6 +217,22 @@ readfile(fname)
 			dodecl(line, fp);
 		if (line[0] == '#' && gooddefine(line))
 			addstr(line, &defines);
+		if (line[0] == '#' && gooddefine(line)) {
+		        char *cp;
+			char line2[1024];
+			static const char undef[] = "#undef ";
+
+			strcpy(line2, line);
+			memcpy(line2, undef, sizeof(undef) - 1);
+			cp = line2 + sizeof(undef) - 1;
+			while(*cp && (*cp == ' ' || *cp == '\t'))
+			        cp++;
+			while(*cp && *cp != ' ' && *cp != '\t' && *cp != '\n')
+			        cp++;
+			*cp++ = '\n'; *cp = '\0';
+			addstr(line2, &defines);
+			addstr(line, &defines);
+		}
 	}
 	fclose(fp);
 }
@@ -350,7 +366,8 @@ dodecl(line1, fp)
 		if (! amiddecls)
 			addchar('\n', &decls);
 		q = NULL;
-		for (p = line1 + 6 ; *p != '\0' && *p != '=' && *p != '/' ; p++);
+		for (p = line1 + 6 ; *p && strchr("=/\n", *p) == NULL; p++)
+			continue;
 		if (*p == '=') {		/* eliminate initialization */
 			for (q = p ; *q && *q != ';' ; q++);
 			if (*q == '\0')
@@ -472,7 +489,7 @@ ckfopen(file, mode)
 }
 
 void *
-ckmalloc(nbytes) 
+ckmalloc(nbytes)
 	int nbytes;
 {
 	register char *p;
