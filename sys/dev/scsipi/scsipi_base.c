@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.30 2000/03/23 07:01:44 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.31 2000/04/02 03:05:55 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -576,7 +576,7 @@ scsipi_done(xs)
 {
 	struct scsipi_link *sc_link = xs->sc_link;
 	struct buf *bp;
-	int error;
+	int error, s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsipi_done\n"));
 #ifdef	SCSIDEBUG
@@ -600,8 +600,11 @@ scsipi_done(xs)
 		 * returned SUCCESSFULLY_QUEUED when the command was
 		 * submitted), we need to free the scsipi_xfer here.
 		 */
-		if (xs->xs_control & XS_CTL_ASYNC)
+		if (xs->xs_control & XS_CTL_ASYNC) {
+			s = splbio();
 			scsipi_free_xs(xs, XS_CTL_NOSLEEP);
+			splx(s);
+		}
 		SC_DEBUG(sc_link, SDEV_DB3, ("returning to adapter\n"));
 		return;
 	}
@@ -660,7 +663,7 @@ retry:
 	 * submitted), we need to free the scsipi_xfer here.
 	 */
 	if (xs->xs_control & XS_CTL_ASYNC) {
-		int s = splbio();
+		s = splbio();
 		scsipi_free_xs(xs, XS_CTL_NOSLEEP);
 		splx(s);
 	}
