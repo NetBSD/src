@@ -66,6 +66,8 @@
 ./usr/include/dev/ic/am7990var.h
 ./usr/include/dev/ic/bhareg.h
 ./usr/include/dev/ic/bhavar.h
+./usr/include/dev/ic/comreg.h
+./usr/include/dev/ic/comvar.h
 ./usr/include/dev/ic/cd1400reg.h
 ./usr/include/dev/ic/cs4231reg.h
 ./usr/include/dev/ic/cyreg.h
@@ -90,6 +92,8 @@
 ./usr/include/dev/ic/ispvar.h
 ./usr/include/dev/ic/lemacreg.h
 ./usr/include/dev/ic/lemacvar.h
+./usr/include/dev/ic/lptreg.h
+./usr/include/dev/ic/lptvar.h
 ./usr/include/dev/ic/mb86960reg.h
 ./usr/include/dev/ic/mc146818reg.h
 ./usr/include/dev/ic/midwayreg.h
@@ -114,8 +118,6 @@
 ./usr/include/dev/isa
 ./usr/include/dev/isa/ad1848var.h
 ./usr/include/dev/isa/com_multi.h
-./usr/include/dev/isa/comreg.h
-./usr/include/dev/isa/comvar.h
 ./usr/include/dev/isa/cs4231var.h
 ./usr/include/dev/isa/elink.h
 ./usr/include/dev/isa/espvar.h
@@ -133,7 +135,6 @@
 ./usr/include/dev/isa/isadmavar.h
 ./usr/include/dev/isa/isareg.h
 ./usr/include/dev/isa/isavar.h
-./usr/include/dev/isa/lptreg.h
 ./usr/include/dev/isa/madreg.h
 ./usr/include/dev/isa/mcdreg.h
 ./usr/include/dev/isa/pasreg.h
@@ -165,7 +166,7 @@
 ./usr/include/dev/pci/if_fxpreg.h
 ./usr/include/dev/pci/if_fxpvar.h
 ./usr/include/dev/pci/if_levar.h
-./usr/include/dev/pci/ncr_reg.h
+./usr/include/dev/pci/ncrreg.h
 ./usr/include/dev/pci/pcidevs.h
 ./usr/include/dev/pci/pcidevs_data.h
 ./usr/include/dev/pci/pcireg.h
