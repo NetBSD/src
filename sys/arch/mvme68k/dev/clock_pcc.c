@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcc.c,v 1.2 1996/09/12 05:10:46 thorpej Exp $	*/
+/*	$NetBSD: clock_pcc.c,v 1.3 1997/03/19 16:24:38 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,10 +55,10 @@
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
 
-int	clock_pcc_match __P((struct device *, void *, void *));
+int 	clock_pcc_match __P((struct device *, struct cfdata  *, void *));
 void	clock_pcc_attach __P((struct device *, struct device *, void *));
-int	clock_pcc_profintr __P((void *));
-int	clock_pcc_statintr __P((void *));
+int 	clock_pcc_profintr __P((void *));
+int 	clock_pcc_statintr __P((void *));
 void	clock_pcc_initclocks __P((int, int));
 void	clock_pcc_shutdown __P((void *));
 
@@ -69,11 +69,11 @@ struct cfattach clock_pcc_ca = {
 };
 
 int
-clock_pcc_match(parent, match, aux)
+clock_pcc_match(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = match;
 	struct pcc_attach_args *pa = aux;
 	static int clock_pcc_matched;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.8 1996/12/10 21:27:40 thorpej Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.9 1997/03/19 16:24:43 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -54,7 +54,7 @@
 #include <mvme68k/dev/wdscreg.h>
 
 void    wdsc_pcc_attach __P((struct device *, struct device *, void *));
-int     wdsc_pcc_match  __P((struct device *, void *, void *));
+int     wdsc_pcc_match  __P((struct device *, struct cfdata *, void *));
 
 void    wdsc_enintr     __P((struct sbic_softc *));
 int     wdsc_dmago      __P((struct sbic_softc *, char *, int, int));
@@ -96,11 +96,11 @@ int         shift_nosync = 0;
  * Match for SCSI devices on the onboard WD33C93 chip
  */
 int
-wdsc_pcc_match(pdp, match, auxp)
+wdsc_pcc_match(pdp, cf, auxp)
     struct device *pdp;
-    void *match, *auxp;
+	struct cfdata *cf;
+    void *auxp;
 {
-    struct cfdata *cf = match;
     struct pcc_attach_args *pa = auxp;
 
     if (strcmp(pa->pa_name, wdsc_cd.cd_name))

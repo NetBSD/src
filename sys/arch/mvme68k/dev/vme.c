@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.5 1996/12/09 17:42:17 thorpej Exp $	*/
+/*	$NetBSD: vme.c,v 1.6 1997/03/19 16:24:41 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,12 +48,12 @@
 
 #include <mvme68k/dev/vmevar.h>
 
-int	vmes_match __P((struct device *, void *, void *));
-int	vmel_match __P((struct device *, void *, void *));
+int	vmes_match __P((struct device *, struct cfdata *, void *));
+int	vmel_match __P((struct device *, struct cfdata *, void *));
 
 void	vme_attach __P((struct device *, struct device *, void *));
 
-int	vme_search __P((struct device *, void *, void *));
+int	vme_search __P((struct device *, struct cfdata *, void *));
 int	vme_print __P((void *, const char *));
 
 int	vmechip_print __P((void *, const char *));
@@ -133,9 +133,10 @@ vmechip_print(aux, cp)
 }
 
 int
-vmes_match(parent, vcf, aux)
+vmes_match(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct vme_attach_args *va = aux;
 
@@ -146,9 +147,10 @@ vmes_match(parent, vcf, aux)
 }
 
 int
-vmel_match(parent, vcf, aux)
+vmel_match(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct vme_attach_args *va = aux;
 
@@ -171,11 +173,11 @@ vme_attach(parent, self, args)
 }
 
 int
-vme_search(parent, match, aux)
+vme_search(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = match;
 	struct vme_attach_args *va = aux;
 	char *name;
 	int unit, reject = 0;

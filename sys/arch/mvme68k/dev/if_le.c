@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.13 1997/03/17 03:17:38 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.14 1997/03/19 16:24:39 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -72,7 +72,7 @@
 #include <mvme68k/dev/if_lereg.h>
 #include <mvme68k/dev/if_levar.h>
 
-int	le_pcc_match __P((struct device *, void *, void *));
+int 	le_pcc_match __P((struct device *, struct cfdata  *, void *));
 void	le_pcc_attach __P((struct device *, struct device *, void *));
 
 struct cfattach le_pcc_ca = {
@@ -109,11 +109,11 @@ le_pcc_rdcsr(sc, port)
 }
 
 int
-le_pcc_match(parent, match, aux)
+le_pcc_match(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = match;
 	struct pcc_attach_args *pa = aux;
 
 	if (strcmp(pa->pa_name, le_cd.cd_name))
