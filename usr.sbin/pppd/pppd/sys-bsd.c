@@ -19,7 +19,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sys-bsd.c,v 1.9 1995/07/04 23:48:07 paulus Exp $";
+static char rcsid[] = "$Id: sys-bsd.c,v 1.10 1995/08/17 12:04:03 paulus Exp $";
 #endif
 
 /*
@@ -57,6 +57,7 @@ static int rtm_seq;
 
 static int	restore_term;	/* 1 => we've munged the terminal */
 static struct termios inittermios; /* Initial TTY termios */
+static struct winsize wsinfo;	/* Initial window size info */
 
 static char *lock_file;		/* name of lock file created */
 
@@ -103,14 +104,19 @@ ppp_available()
 {
     int s, ok;
     struct ifreq ifr;
+    extern char *no_ppp_msg;
 
     if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-	return 1;		/* can't tell - maybe we're not root */
+	return 1;		/* can't tell */
 
     strncpy(ifr.ifr_name, "ppp0", sizeof (ifr.ifr_name));
     ok = ioctl(s, SIOCGIFFLAGS, (caddr_t) &ifr) >= 0;
     close(s);
 
+    no_ppp_msg = "\
+This system lacks kernel support for PPP.  To include PPP support\n\
+in the kernel, please follow the steps detailed in the README.bsd\n\
+file in the ppp-2.2 distribution.\n";
     return ok;
 }
 
@@ -213,8 +219,10 @@ set_up_tty(fd, local)
 	die(1);
     }
 
-    if (!restore_term)
+    if (!restore_term) {
 	inittermios = tios;
+	ioctl(fd, TIOCGWINSZ, &wsinfo);
+    }
 
     tios.c_cflag &= ~(CSIZE | CSTOPB | PARENB | CLOCAL);
     if (crtscts > 0)
@@ -281,6 +289,7 @@ restore_tty()
 	if (tcsetattr(fd, TCSAFLUSH, &inittermios) < 0)
 	    if (errno != ENXIO)
 		syslog(LOG_WARNING, "tcsetattr: %m");
+	ioctl(fd, TIOCSWINSZ, &wsinfo);
 	restore_term = 0;
     }
 }

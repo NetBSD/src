@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.14 1995/07/04 23:47:53 paulus Exp $";
+static char rcsid[] = "$Id: main.c,v 1.15 1995/08/17 12:03:57 paulus Exp $";
 #endif
 
 #include <stdio.h>
@@ -87,12 +87,15 @@ static int n_children;		/* # child processes still running */
 
 int baud_rate;
 
+char *no_ppp_msg = "Sorry - this system lacks PPP kernel support\n";
+
 /* prototypes */
 static void hup __P((int));
 static void term __P((int));
 static void chld __P((int));
 static void toggle_debug __P((int));
 static void open_ccp __P((int));
+static void bad_signal __P((int));
 
 static void get_input __P((void));
 void establish_ppp __P((void));
@@ -171,7 +174,7 @@ main(argc, argv)
     uid = getuid();
 
     if (!ppp_available()) {
-	fprintf(stderr, "Sorry - PPP is not available on this system\n");
+	fprintf(stderr, no_ppp_msg);
 	exit(1);
     }
 
@@ -252,8 +255,47 @@ main(argc, argv)
     SIGNAL(SIGTERM, term);		/* Terminate */
     SIGNAL(SIGCHLD, chld);
 
-    signal(SIGUSR1, toggle_debug);	/* Toggle debug flag */
-    signal(SIGUSR2, open_ccp);		/* Reopen CCP */
+    SIGNAL(SIGUSR1, toggle_debug);	/* Toggle debug flag */
+    SIGNAL(SIGUSR2, open_ccp);		/* Reopen CCP */
+
+    /*
+     * Install a handler for other signals which would otherwise
+     * cause pppd to exit without cleaning up.
+     */
+    SIGNAL(SIGABRT, bad_signal);
+    SIGNAL(SIGALRM, bad_signal);
+    SIGNAL(SIGFPE, bad_signal);
+    SIGNAL(SIGILL, bad_signal);
+    SIGNAL(SIGPIPE, bad_signal);
+    SIGNAL(SIGQUIT, bad_signal);
+    SIGNAL(SIGSEGV, bad_signal);
+#ifdef SIGBUS
+    SIGNAL(SIGBUS, bad_signal);
+#endif
+#ifdef SIGEMT
+    SIGNAL(SIGEMT, bad_signal);
+#endif
+#ifdef SIGPOLL
+    SIGNAL(SIGPOLL, bad_signal);
+#endif
+#ifdef SIGPROF
+    SIGNAL(SIGPROF, bad_signal);
+#endif
+#ifdef SIGSYS
+    SIGNAL(SIGSYS, bad_signal);
+#endif
+#ifdef SIGTRAP
+    SIGNAL(SIGTRAP, bad_signal);
+#endif
+#ifdef SIGVTALRM
+    SIGNAL(SIGVTALRM, bad_signal);
+#endif
+#ifdef SIGXCPU
+    SIGNAL(SIGXCPU, bad_signal);
+#endif
+#ifdef SIGXFSZ
+    SIGNAL(SIGXFSZ, bad_signal);
+#endif
 
     /*
      * Lock the device if we've been asked to.
@@ -347,6 +389,7 @@ main(argc, argv)
 	for (phase = PHASE_ESTABLISH; phase != PHASE_DEAD; ) {
 	    wait_input(timeleft(&timo));
 	    calltimeout();
+	    get_input();
 	    if (kill_link) {
 		lcp_close(0);
 		kill_link = 0;
@@ -358,7 +401,6 @@ main(argc, argv)
 		}
 		open_ccp_flag = 0;
 	    }
-	    get_input();
 	    reap_kids();	/* Don't leave dead kids lying around */
 	}
 
@@ -482,12 +524,23 @@ demuxprotrej(unit, protocol)
 
 
 /*
- * quit - Clean up state and exit.
+ * bad_signal - We've caught a fatal signal.  Clean up state and exit.
+ */
+static void
+bad_signal(sig)
+    int sig;
+{
+    syslog(LOG_ERR, "Fatal signal %d", sig);
+    die(1);
+}
+
+/*
+ * quit - Clean up state and exit (with an error indication).
  */
 void 
 quit()
 {
-    die(0);
+    die(1);
 }
 
 /*
