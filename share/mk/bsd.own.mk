@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.92 1998/10/28 22:41:24 is Exp $
+#	$NetBSD: bsd.own.mk,v 1.93 1998/10/30 00:20:45 mark Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -76,6 +76,7 @@ STRIPFLAG?=	-s
 # Systems on which UVM is the standard VM system.
 .if	(${MACHINE} == "alpha") || \
 	(${MACHINE} == "amiga") || \
+	(${MACHINE} == "arm32") || \
 	(${MACHINE} == "atari") || \
 	(${MACHINE} == "bebox") || \
 	(${MACHINE} == "hp300") || \
