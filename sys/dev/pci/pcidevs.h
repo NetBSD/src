@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.263 2000/09/13 13:53:22 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.264 2000/09/13 13:58:25 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.257 2000/09/13 13:53:06 tron Exp 
+ *	NetBSD: pcidevs,v 1.258 2000/09/13 13:58:06 tron Exp 
  */
 
 /*
@@ -927,7 +927,6 @@
 #define	PCI_PRODUCT_DIAMOND_VIPER	0x9001		/* Viper/PCI */
 
 /* D-Link Systems products */
-#define	PCI_PRODUCT_DLINK_DFE530TX	$$$	
 #define	PCI_PRODUCT_DLINK_DFE550TX	0x1002		/* DFE-550TX 10/100 Ethernet */
 
 /* Distributed Processing Technology products */
