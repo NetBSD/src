@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.61 2000/12/03 05:27:51 chs Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.62 2000/12/03 07:34:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1301,6 +1301,8 @@ lfs_vget(mp, ino, vpp)
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 	*vpp = vp;
+
+	uvm_vnp_setsize(vp, ip->i_ffs_size);
 
 	return (0);
 }
