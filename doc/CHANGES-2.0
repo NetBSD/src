@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.208 2004/05/15 13:58:16 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.209 2004/05/17 10:37:07 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2500,4 +2500,23 @@ sys/arch/i386/stand/mbr/mbr.S			1.7
 	a keypress. Just don't ask how I added more functionality AND got an
 	extra 7 free bytes!
 	[dsl, ticket #342]
+
+usr.sbin/apmd/apmd.8				1.18
+
+	Describe default polling rate correctly, from Jeff Ito in PR 25589.
+	New sentence, new line while here; bump date.
+	[wiz, ticket #343]
+
+share/man/man9/driver.9				1.13
+
+	Fix typo.
+	[wiz, ticket #344]
+
+usr.bin/du/du.1					1.18
+usr.bin/du/du.c					1.24
+
+	Add a "-n" flag that will ignore files/directories with the "nodump"
+	flag set.  Useful when used in conjunction with "dump -h" to size
+	dumps.
+	[simonb, ticket #347]
 
