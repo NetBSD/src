@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.56 2002/06/28 22:24:11 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.57 2002/07/01 13:17:48 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.56 2002/06/28 22:24:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.57 2002/07/01 13:17:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.56 2002/06/28 22:24:11 drochner Exp $");
 
 #include <dev/ic/pcdisplay.h>
 
-#include "opt_wsdisplay_compat.h" /* for WSCONS_SUPPORT_PCVTFONTS */
+/* for WSCONS_SUPPORT_PCVTFONTS and WSDISPLAY_CHARFUNCS */
+#include "opt_wsdisplay_compat.h"
 #include "opt_vga.h"
 
 static struct wsdisplay_font _vga_builtinfont = {
@@ -248,8 +249,10 @@ static void	vga_free_screen(void *, void *);
 static int	vga_show_screen(void *, void *, int,
 				void (*)(void *, int, int), void *);
 static int	vga_load_font(void *, void *, struct wsdisplay_font *);
+#ifdef WSDISPLAY_CHARFUNCS
 static int	vga_getwschar(void *, struct wsdisplay_char *);
 static int	vga_putwschar(void *, struct wsdisplay_char *);
+#endif /* WSDISPLAY_CHARFUNCS */
 
 void vga_doswitch(struct vga_config *);
 
@@ -261,8 +264,13 @@ const struct wsdisplay_accessops vga_accessops = {
 	vga_show_screen,
 	vga_load_font,
 	NULL,
+#ifdef WSDISPLAY_CHARFUNCS
 	vga_getwschar,
 	vga_putwschar
+#else /* WSDISPLAY_CHARFUNCS */
+	NULL,
+	NULL
+#endif /* WSDISPLAY_CHARFUNCS */
 };
 
 /*
@@ -1324,6 +1332,7 @@ vga_mapchar(void *id, int uni, u_int *index)
 	return (res1);
 }
 
+#ifdef WSDISPLAY_CHARFUNCS
 int
 vga_getwschar(void *cookie, struct wsdisplay_char *wschar)
 {
@@ -1341,3 +1350,4 @@ vga_putwschar(void *cookie, struct wsdisplay_char *wschar)
 	if (scr == NULL) return 0;
 	return (pcdisplay_putwschar(&scr->pcs, wschar));
 }
+#endif /* WSDISPLAY_CHARFUNCS */

@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.21 2002/06/26 23:05:33 christos Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.22 2002/07/01 13:17:48 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.21 2002/06/26 23:05:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.22 2002/07/01 13:17:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.21 2002/06/26 23:05:33 christos
 #include <dev/wscons/wsconsio.h>
 
 #include <dev/wscons/wsdisplayvar.h>
+
+#include "opt_wsdisplay_compat.h" /* for WSDISPLAY_CHARFUNCS */
 
 void
 pcdisplay_cursor_init(scr, existing)
@@ -274,6 +276,7 @@ pcdisplay_eraserows(id, startrow, nrows, fillattr)
 			scr->mem[off + i] = val;
 }
 
+#ifdef WSDISPLAY_CHARFUNCS
 int
 pcdisplay_getwschar(id, wschar)
 	void *id;
@@ -338,3 +341,4 @@ pcdisplay_putwschar(id, wschar)
 
 	return 0;
 }
+#endif /* WSDISPLAY_CHARFUNCS */
