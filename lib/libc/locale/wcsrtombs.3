@@ -1,4 +1,4 @@
-.\" $NetBSD: wcsrtombs.3,v 1.2 2002/03/18 07:56:29 wiz Exp $
+.\" $NetBSD: wcsrtombs.3,v 1.3 2002/03/25 19:17:02 yamt Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -78,13 +78,13 @@ if
 is not NULL pointer,
 the pointer object pointed by
 .Fa pwcs
-is NULL pointer (if the conversion is stopped due to reach a null byte)
+is NULL pointer (if the conversion is stopped due to reach a null wide character)
 or the first byte of the character just after the last character converted.
 .Pp
 If
 .Fa s
 is not null pointer and the conversion is stopped due to reach
-a null byte, the
+a null wide character, the
 .Fn wcsrtombs
 places the state object pointed by
 .Fa ps
@@ -101,8 +101,8 @@ The
 .Fn wcsrtombs
 returns the number of bytes to store the whole multibyte character string
 corresponding to the wide character string pointed by
-.Fa pwcs .
-In this case,
+.Fa pwcs ,
+not including the terminating null byte. In this case,
 .Fa n
 is ignored.
 .It "pwcs == NULL || *pwcs == NULL"
@@ -128,11 +128,7 @@ The
 .Fn wcsrtombs
 returns:
 .Bl -tag -width 012345678901
-.It 0
-The pointer object pointed by
-.Fa pwcs
-points a null wide character (L\'\\0\').
-.It positive
+.It 0 or positive
 number of bytes stored to the array pointed by
 .Fa s ,
 except for a null byte.
