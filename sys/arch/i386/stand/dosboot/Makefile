@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1997/06/13 13:17:47 drochner Exp $
+#	$NetBSD: Makefile,v 1.5 1997/06/13 17:49:23 drochner Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -9,7 +9,7 @@ SRCS= main.c devopen.c version.c
 
 CLEANFILES+= ${DOSSTART} ${PROG}.sym ${PROG}.com ${PROG}.list
 
-CPPFLAGS+= -DCOMPAT_OLDBOOT
+CPPFLAGS+= -DCOMPAT_OLDBOOT -DXMS
 
 #CFLAGS= -O2 -fomit-frame-pointer -fno-defer-pop
 CFLAGS+= -Wall
