@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.31 2002/10/07 09:41:51 dan Exp $	*/
+/*	$NetBSD: rnd.c,v 1.32 2002/10/07 11:02:20 dan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.31 2002/10/07 09:41:51 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.32 2002/10/07 11:02:20 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1000,14 +1000,21 @@ int
 rnd_extract_data(void *p, u_int32_t len, u_int32_t flags)
 {
 	int retval, s;
+	u_int32_t c;
 
+	if (!rnd_have_entropy) {
+		/* Try once again to put something in the pool */
+		c = rnd_counter();
 #ifdef RND_VERBOSE
-	if (!rnd_have_entropy)
 		printf("rnd: WARNING! initial entropy low (%u).\n",
 		       rndpool_get_entropy_count(&rnd_pool));
 #endif
+	}
 
 	s = splsoftclock();
+	if (!rnd_have_entropy) {
+		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 0);
+	}
 	retval = rndpool_extract_data(&rnd_pool, p, len, flags);
 	splx(s);
 
