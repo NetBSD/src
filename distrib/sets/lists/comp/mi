@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.592 2003/07/16 06:18:33 itojun Exp $
+#	$NetBSD: mi,v 1.593 2003/07/16 08:53:42 itojun Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -382,7 +382,6 @@
 ./usr/include/net/netisr.h		comp-c-include
 ./usr/include/net/pfil.h		comp-c-include
 ./usr/include/net/pfkeyv2.h		comp-c-include
-./usr/include/net/pfvar.h		comp-c-include
 ./usr/include/net/ppp-comp.h		comp-c-include
 ./usr/include/net/ppp_defs.h		comp-c-include
 ./usr/include/net/radix.h		comp-c-include
