@@ -1,4 +1,4 @@
-.\"	$NetBSD: showmount.8,v 1.4 1994/12/21 08:48:08 jtc Exp $
+.\"	$NetBSD: showmount.8,v 1.5 1995/08/31 22:26:07 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,9 +34,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)showmount.8	8.2 (Berkeley) 12/11/93
+.\"     @(#)showmount.8	8.3 (Berkeley) 3/29/95
 .\"
-.Dd December 11, 1993
+.Dd March 29, 1995
 .Dt SHOWMOUNT 8
 .Os BSD 4
 .Sh NAME
@@ -44,7 +44,7 @@
 .Nd show remote nfs mounts on host
 .Sh SYNOPSIS
 .Nm showmount
-.Op Fl ade
+.Op Fl ade3
 .Op Ar host
 .Sh DESCRIPTION
 .Nm Showmount
@@ -58,7 +58,10 @@ file systems mounted
 on the host. See
 .%T "NFS: Network File System Protocol Specification" ,
 RFC 1094,
-Appendix A ,
+Appendix A,
+and
+.%T "NFS: Network File System Version 3 Protocol Specification" ,
+Appendix I,
 for a detailed description of the protocol.
 .Bl -tag -width Ds
 .It Fl a
@@ -72,6 +75,8 @@ List directory paths of mount points instead of hosts
 Show the
 .Ar host Ns 's
 exports list
+.It Fl 3
+Use mount protocol Version 3, compatible with NFS Version 3.
 .El
 .Sh SEE ALSO
 .Xr mount 1 ,
