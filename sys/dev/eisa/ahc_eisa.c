@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.27 2003/04/20 16:50:13 fvdl Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.28 2003/04/22 14:33:01 tsutsui Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.27 2003/04/20 16:50:13 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.28 2003/04/22 14:33:01 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,8 @@ CFATTACH_DECL(ahc_eisa, sizeof(struct ahc_softc),
 int
 ahc_eisa_match(parent, match, aux)
 	struct device *parent;
-        struct cfdata *match;
-        void *aux; 
+	struct cfdata *match;
+	void *aux;
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
@@ -112,7 +112,7 @@ ahc_eisa_attach(parent, self, aux)
 	u_int scsiconf;
 	u_int scsiconf1;
 	u_char intdef;
-#ifdef DEBUG
+#ifdef AHC_DEBUG
 	int i;
 #endif
 
@@ -184,7 +184,7 @@ ahc_eisa_attach(parent, self, aux)
 		       intrtypestr, intrstr);
 
 	/*
-	 * Now that we know we own the resources we need, do the 
+	 * Now that we know we own the resources we need, do the
 	 * card initialization.
 	 *
 	 * First, the aic7770 card specific setup.
@@ -193,7 +193,7 @@ ahc_eisa_attach(parent, self, aux)
 	scsiconf = ahc_inb(ahc, SCSICONF);
 	scsiconf1 = ahc_inb(ahc, SCSICONF + 1);
 
-#if DEBUG
+#ifdef AHC_DEBUG
 	for (i = TARG_SCSIRATE; i <= HA_274_BIOSCTRL; i+=8) {
 		printf("0x%x, 0x%x, 0x%x, 0x%x, "
 		       "0x%x, 0x%x, 0x%x, 0x%x\n",
