@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.15 2003/08/07 09:05:05 agc Exp $ */
+/* $NetBSD: extern.h,v 1.16 2005/02/17 16:07:53 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,12 +41,12 @@
  */
 int gethdir(Char *);
 void dosource(Char **, struct command *);
-__dead void exitstat __P((void)) __attribute__((noreturn));
+__dead void exitstat(void) __attribute__((noreturn));
 void goodbye(void);
 void importpath(Char *);
 void initdesc(void);
 void pintr(int);
-void pintr1 __P((bool)) __attribute__((noreturn));
+void pintr1(bool) __attribute__((noreturn));
 void printprompt(void);
 void process(bool);
 void rechist(void);
@@ -54,9 +54,9 @@ void untty(void);
 int vis_fputc(int, FILE *);
 
 #ifdef PROF
-__dead void done __P((int)) __attribute__((noreturn));
+__dead void done(int) __attribute__((noreturn));
 #else
-__dead void xexit __P((int)) __attribute__((noreturn));
+__dead void xexit(int) __attribute__((noreturn));
 #endif
 
 /*
@@ -85,12 +85,12 @@ void heredoc(Char *);
  * err.c
  */
 void seterror(int, ...);
-__dead void stderror __P((int, ...)) __attribute__((noreturn));
+__dead void stderror(int, ...) __attribute__((noreturn));
 
 /*
  * exec.c
  */
-void doexec __P((Char **, struct command *)) __attribute__((noreturn));
+void doexec(Char **, struct command *) __attribute__((noreturn));
 void dohash(Char **, struct command *);
 void dounhash(Char **, struct command *);
 void dowhich(Char **, struct command *);
@@ -215,7 +215,7 @@ Char *strip(Char *);
 Char *quote(Char *);
 char *strsave(char *);
 char *strspl(char *, char *);
-void udvar __P((Char *)) __attribute__((noreturn));
+void udvar(Char *) __attribute__((noreturn));
 
 #ifndef	SHORT_STRINGS
 # ifdef NOTUSED

@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.21 2003/08/07 09:05:05 agc Exp $ */
+/* $NetBSD: exec.c,v 1.22 2005/02/17 16:07:53 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.21 2003/08/07 09:05:05 agc Exp $");
+__RCSID("$NetBSD: exec.c,v 1.22 2005/02/17 16:07:53 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ static int hits, misses;
 /* Dummy search path for just absolute search when no path */
 static Char *justabs[] = {STRNULL, 0};
 
-static void pexerr __P((void)) __attribute__((noreturn));
+static void pexerr(void) __attribute__((noreturn));
 static void texec(Char *, Char **);
 static int hashname(Char *);
 static int tellmewhat(struct wordent *, Char *);
