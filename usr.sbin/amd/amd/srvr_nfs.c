@@ -1,7 +1,7 @@
-/*	$NetBSD: srvr_nfs.c,v 1.9 1998/08/08 22:33:33 christos Exp $	*/
+/*	$NetBSD: srvr_nfs.c,v 1.10 1999/02/01 19:05:11 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: srvr_nfs.c,v 5.2.2.1 1992/02/09 15:09:06 jsp beta 
+ * Id: srvr_nfs.c,v 1.4 1999/01/13 23:31:02 ezk Exp 
  *
  */
 
@@ -138,7 +138,7 @@ start_ping(u_long nfs_version)
     nfs_version = NFS_VERSION;
     plog(XLOG_WARNING, "start_ping: nfs_version = 0 fixed");
   }
-  plog(XLOG_INFO, "start_ping: nfs_version: %d", nfs_version);
+  plog(XLOG_INFO, "start_ping: nfs_version: %d", (int) nfs_version);
 
   rpc_msg_init(&ping_msg, NFS_PROGRAM, nfs_version, NFSPROC_NULL);
 
@@ -189,7 +189,7 @@ got_portmap(voidp pkt, int len, struct sockaddr_in * sa, struct sockaddr_in * ia
 
     if (!error && port) {
 #ifdef DEBUG
-      dlog("got port (%d) for mountd on %s", port, fs->fs_host);
+      dlog("got port (%d) for mountd on %s", (int) port, fs->fs_host);
 #endif /* DEBUG */
       /*
        * Grab the port number.  Portmap sends back
@@ -203,7 +203,7 @@ got_portmap(voidp pkt, int len, struct sockaddr_in * sa, struct sockaddr_in * ia
     } else {
 #ifdef DEBUG
       dlog("Error fetching port for mountd on %s", fs->fs_host);
-      dlog("\t error=%d, port=%d", error, port);
+      dlog("\t error=%d, port=%d", error, (int) port);
 #endif /* DEBUG */
       /*
        * Almost certainly no mountd running on remote host
@@ -284,7 +284,7 @@ recompute_portmap(fserver *fs)
   if (fs->fs_version == 0)
     plog(XLOG_WARNING, "recompute_portmap: nfs_version = 0 fixed");
 
-  plog(XLOG_INFO, "recompute_portmap: NFS version %d", fs->fs_version);
+  plog(XLOG_INFO, "recompute_portmap: NFS version %d", (int) fs->fs_version);
 #ifdef HAVE_FS_NFS3
   if (fs->fs_version == NFS_VERSION3)
     mnt_version = MOUNTVERS3;
@@ -292,7 +292,7 @@ recompute_portmap(fserver *fs)
 #endif /* HAVE_FS_NFS3 */
     mnt_version = MOUNTVERS;
 
-  plog(XLOG_INFO, "Using MOUNT version: %d", mnt_version);
+  plog(XLOG_INFO, "Using MOUNT version: %d", (int) mnt_version);
   call_portmap(fs, nfs_auth, MOUNTPROG, mnt_version, (u_long) IPPROTO_UDP);
 }
 
@@ -491,7 +491,7 @@ nfs_keepalive(voidp v)
 		     nfs_pinged);
 
   /*
-   * See if a hard error occured
+   * See if a hard error occurred
    */
   switch (error) {
   case ENETDOWN:
@@ -573,7 +573,7 @@ nfs_srvr_port(fserver *fs, u_short * port, voidp wchan)
   if (error < 0 && wchan && !(fs->fs_flags & FSF_WANT)) {
     /*
      * If a wait channel is supplied, and no
-     * error has yet occured, then arrange
+     * error has yet occurred, then arrange
      * that a wakeup is done on the wait channel,
      * whenever a wakeup is done on this fs node.
      * Wakeup's are done on the fs node whenever
@@ -665,6 +665,15 @@ find_nfs_srvr(mntfs *mf)
   }
 #endif /* MNTTAB_OPT_PROTO */
 
+#ifdef HAVE_NFS_NFSV2_H
+  /* allow overriding if nfsv2 option is specified in mount options */
+  if (hasmntopt(&mnt, "nfsv2")) {
+    nfs_version = (u_long) 2;	/* nullify any ``vers=X'' statements */
+    nfs_proto = "udp";	/* nullify any ``proto=tcp'' stmts */
+    plog(XLOG_WARNING, "found compatiblity option \"nfsv2\": set options vers=2, proto=udp for host %s", host);
+  }
+#endif /* HAVE_NFS_NFSV2_H */
+
   /*
    * lookup host address and canonical name
    */
@@ -750,10 +759,10 @@ find_nfs_srvr(mntfs *mf)
     nfs_proto = "udp";
 
   plog(XLOG_INFO, "Using NFS version %d, protocol %s on host %s",
-       nfs_version, nfs_proto, host);
+       (int) nfs_version, nfs_proto, host);
 
   /*
-   * Try to find an existing fs server stucture for this host.
+   * Try to find an existing fs server structure for this host.
    * Note that differing versions or protocols have their own structures.
    * XXX: Need to fix the ping mechanism to actually use the NFS protocol
    * chosen here (right now it always uses datagram sockets).

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.12 1999/01/11 15:57:49 bouyer Exp $	*/
+/*	$NetBSD: config.h,v 1.13 1999/02/01 19:05:13 christos Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* aux/config.h.in.  Generated automatically from ./aux/configure.in by autoheader.  */
@@ -7,7 +7,7 @@
  * Erez Zadok <ezk@cs.columbia.edu>
  *
  * DO NOT EDIT BY HAND.
- * Note: accconfig.h generates config.h.in, which generates config.h.
+ * Note: acconfig.h generates config.h.in, which generates config.h.
  */
 
 #ifndef _CONFIG_H
@@ -39,7 +39,7 @@
 /* Define if have symbolic-link filesystem */
 #define HAVE_AM_FS_LINK 1
 
-/* Define if have symlink with exitence check filesystem */
+/* Define if have symlink with existence check filesystem */
 #define HAVE_AM_FS_LINKX 1
 
 /* Define if have NFS host-tree filesystem */
@@ -53,9 +53,6 @@
 
 /* Define if have union filesystem */
 #define HAVE_AM_FS_UNION 1
-
-/* Define if have Sun's autofs filesystem (NO LONGER NEEDED?) */
-/* #undef HAVE_AM_FS_AUTOFS */
 
 
 /*
@@ -78,7 +75,7 @@
 #define HAVE_MAP_NDBM 1
 
 /* Define if have HESIOD maps */
-/* #undef HAVE_MAP_HESIOD */
+#define HAVE_MAP_HESIOD 1
 
 /* Define if have LDAP maps */
 /* #undef HAVE_MAP_LDAP */
@@ -451,6 +448,9 @@
 /* old (4-argument) mount (compatibility) */
 /* #undef MNT2_GEN_OPT_FSS */
 
+/* ignore mount entry in df output */
+/* #undef MNT2_GEN_OPT_IGNORE */
+
 /* journaling filesystem (AIX's UFS/FFS) */
 /* #undef MNT2_GEN_OPT_JFS */
 
@@ -585,7 +585,7 @@
 /* #undef MNT2_NFS_OPT_LLOCK */
 
 /* set maximum grouplist size */
-/* #undef MNT2_NFS_OPT_MAXGRPS */
+#define MNT2_NFS_OPT_MAXGRPS 0x20
 
 /* Mnt server for mnt point */
 /* #undef MNT2_NFS_OPT_MNTD */
@@ -629,7 +629,7 @@
 /* Allocate a reserved port */
 #define MNT2_NFS_OPT_RESVPORT 0x8000
 
-/* set number of request retrys */
+/* set number of request retries */
 #define MNT2_NFS_OPT_RETRANS 0x10
 
 /* read only */
@@ -926,7 +926,7 @@
 #define PACKAGE "am-utils"
 
 /* Define version of package (must be defined by configure.in) */
-#define VERSION "6.0a16"
+#define VERSION "6.0.1s3"
 
 /* Define name of host machine's cpu (eg. sparc) */
 #define HOST_CPU MACHINE
@@ -1132,16 +1132,16 @@
 /* #undef HAVE_HASMNTOPT */
 
 /* Define if you have the hes_init function.  */
-/* #undef HAVE_HES_INIT */
+#define HAVE_HES_INIT 1
 
 /* Define if you have the hesiod_init function.  */
-/* #undef HAVE_HESIOD_INIT */
+#define HAVE_HESIOD_INIT 1
 
 /* Define if you have the hesiod_reload function.  */
 /* #undef HAVE_HESIOD_RELOAD */
 
 /* Define if you have the hesiod_to_bind function.  */
-/* #undef HAVE_HESIOD_TO_BIND */
+#define HAVE_HESIOD_TO_BIND 1
 
 /* Define if you have the ldap_open function.  */
 /* #undef HAVE_LDAP_OPEN */
@@ -1453,7 +1453,7 @@
 #define HAVE_GRP_H 1
 
 /* Define if you have the <hesiod.h> header file.  */
-/* #undef HAVE_HESIOD_H */
+#define HAVE_HESIOD_H 1
 
 /* Define if you have the <hsfs/hsfs.h> header file.  */
 /* #undef HAVE_HSFS_HSFS_H */
@@ -1481,6 +1481,9 @@
 
 /* Define if you have the <linux/nfs_mount.h> header file.  */
 /* #undef HAVE_LINUX_NFS_MOUNT_H */
+
+/* Define if you have the <linux/posix_types.h> header file.  */
+/* #undef HAVE_LINUX_POSIX_TYPES_H */
 
 /* Define if you have the <machine/endian.h> header file.  */
 #define HAVE_MACHINE_ENDIAN_H 1
@@ -1570,7 +1573,7 @@
 #define HAVE_NFS_RPCV2_H 1
 
 /* Define if you have the <nsswitch.h> header file.  */
-/* #undef HAVE_NSSWITCH_H */
+#define HAVE_NSSWITCH_H 1
 
 /* Define if you have the <pwd.h> header file.  */
 #define HAVE_PWD_H 1
@@ -1815,6 +1818,9 @@
 /* Define if you have the <tmpfs/tmp.h> header file.  */
 /* #undef HAVE_TMPFS_TMP_H */
 
+/* Define if you have the <ufs/ufs/ufsmount.h> header file.  */
+#define HAVE_UFS_UFS_UFSMOUNT_H 1
+
 /* Define if you have the <ufs/ufs_mount.h> header file.  */
 /* #undef HAVE_UFS_UFS_MOUNT_H */
 
@@ -1833,11 +1839,21 @@
 /* Define if you have the mapmalloc library (-lmapmalloc).  */
 /* #undef HAVE_LIBMAPMALLOC */
 
+/* Define if you have the nsl library (-lnsl).  */
+/* #undef HAVE_LIBNSL */
+
 /* Define if you have the rpc library (-lrpc).  */
 /* #undef HAVE_LIBRPC */
 
 /* Define if you have the rpcsvc library (-lrpcsvc).  */
 #define HAVE_LIBRPCSVC 1
+
+/* Name of package */
+#define PACKAGE "am-utils"
+
+/* Version number of package */
+#define VERSION "6.0.1s3"
+
 
 /**************************************************************************/
 /*** Everything below this line is part of the "BOTTOM" of acconfig.h.	***/
@@ -1852,6 +1868,9 @@
 
 /* does optarg exist? */
 #define HAVE_EXTERN_OPTARG 1
+
+/* does clnt_spcreateerror() exist? */
+#define HAVE_EXTERN_CLNT_SPCREATEERROR 1
 
 /* does clnt_sperrno() exist? */
 #define HAVE_EXTERN_CLNT_SPERRNO 1
@@ -1888,6 +1907,9 @@
 
 /* does sbrk() exist? */
 #define HAVE_EXTERN_SBRK 1
+
+/* does seteuid() exist? */
+#define HAVE_EXTERN_SETEUID 1
 
 /* does strcasecmp() exist? */
 #define HAVE_EXTERN_STRCASECMP 1

@@ -1,7 +1,7 @@
-/*	$NetBSD: fsi_util.c,v 1.9 1998/08/08 22:33:35 christos Exp $	*/
+/*	$NetBSD: fsi_util.c,v 1.10 1999/02/01 19:05:12 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -16,7 +16,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -37,7 +37,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: fsi_util.c,v 5.2.2.1 1992/02/09 15:09:39 jsp beta 
+ * Id: fsi_util.c,v 1.2 1999/01/10 21:54:28 ezk Exp 
  *
  */
 
