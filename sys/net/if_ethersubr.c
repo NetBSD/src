@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.14 1995/08/19 16:33:17 mycroft Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.15 1995/09/29 03:37:43 phil Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -55,8 +55,8 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 
-#ifdef INET
 #include <netinet/in.h>
+#ifdef INET
 #include <netinet/in_var.h>
 #endif
 #include <netinet/if_ether.h>
