@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.19 2003/05/21 06:26:07 wiz Exp $	*/
+/*	$NetBSD: systrace.c,v 1.20 2003/06/03 01:20:06 provos Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -126,7 +126,7 @@ make_output(char *output, size_t outlen, const char *binname,
 		if (line == NULL)
 			continue;
 
-		snprintf(p, size, ", %s: %s", tl->name, line);
+		snprintf(p, size, ", %s: %s", tl->name, strescape(line));
 		p = output + strlen(output);
 		size = outlen - strlen(output);
 

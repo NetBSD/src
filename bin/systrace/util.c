@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 2002/10/08 14:49:24 provos Exp $	*/
+/*	$NetBSD: util.c,v 1.4 2003/06/03 01:20:06 provos Exp $	*/
 /*	$OpenBSD: util.c,v 1.8 2002/07/19 14:38:58 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,14 +30,38 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.3 2002/10/08 14:49:24 provos Exp $");
+__RCSID("$NetBSD: util.c,v 1.4 2003/06/03 01:20:06 provos Exp $");
 
 #include <sys/types.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <err.h>
 
 #include "util.h"
+
+char *
+strescape(char *str)
+{
+	static char escape[8192];
+	int i, p;
+
+	for (p = i = 0; i < strlen(str) && p < sizeof(escape) - 1; i++) {
+		switch (str[i]) {
+		case '\\':
+		case '\"':
+			escape[p++] = '\\';
+			if (p >= sizeof(escape) - 1)
+				errx(1, "%s: string too long: %s",
+				    __func__, str);
+		default:
+			escape[p++] = str[i];
+		}
+	}
+
+	escape[p] = '\0';
+	return (escape);
+}
 
 char *
 strrpl(char *str, size_t size, char *match, char *value)
