@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.6 2003/03/08 19:43:57 perry Exp $
+#	$NetBSD: main.cf,v 1.7 2004/03/27 00:07:48 dan Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all 250+ parameters. See the sample-xxx.cf files for a full list.
@@ -98,6 +98,10 @@ mail_owner = postfix
 # addresses that this mail system receives mail on.  By default,
 # the software claims all active interfaces on the machine. The
 # parameter also controls delivery of mail to user@[ip.address].
+#
+# NOTE: On NetBSD, postfix does not listen on the network by default.
+#       To enable inbound mail reception once your configuration is
+#       ready, uncomment the smtp service in /etc/postfix/master.cf
 #
 # See also the proxy_interfaces parameter, for network addresses that
 # are forwarded to us via a proxy or network address translator.
