@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.41 2003/05/27 19:30:45 wiz Exp $
+#	$NetBSD: bsd.dep.mk,v 1.42 2003/05/27 21:43:32 wiz Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -42,7 +42,7 @@ __acpp_flags=	-traditional-cpp
 	  ${MKDEP} -a ${MKDEPFLAGS} \
 	    ${OBJCFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
 	fi
-	@files="${.ALLSRC:M*.cc} ${.ALLSRC:M*.cpp} ${.ALLSRC:M*.C} ${.ALLSRC:M*.cxx}"; \
+	@files="${.ALLSRC:M*.cc} ${.ALLSRC:M*.C} ${.ALLSRC:M*.cxx}"; \
 	if [ "$$files" != "  " ]; then \
 	  echo ${MKDEP} -a ${MKDEPFLAGS} \
 	    ${CXXFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} $$files; \
@@ -59,7 +59,6 @@ SRCS_C = ${SRCS:M*.c} ${DPSRCS:M*.c}
 SRCS_M = ${SRCS:M*.m} ${DPSRCS:M*.m}
 SRCS_X = ${SRCS:M*.C} ${DPSRCS:M*.C} \
          ${SRCS:M*.cc} ${DPSRCS:M*.cc} \
-         ${SRCS:M*.cpp} ${DPSRCS:M*.cpp} \
 	 ${SRCS:M*.cxx} ${DPSRCS:M*.cxx} 
 
 .depend: ${SRCS} ${DPSRCS} \
