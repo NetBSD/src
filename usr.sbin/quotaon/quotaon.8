@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983, 1990, 1991 Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Robert Elz at The University of Melbourne.
@@ -31,10 +31,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)quotaon.8	6.7 (Berkeley) 3/16/91
-.\"	$Id: quotaon.8,v 1.2 1993/08/01 07:23:57 mycroft Exp $
+.\"     from: @(#)quotaon.8	8.2 (Berkeley) 12/11/93
+.\"	$Id: quotaon.8,v 1.3 1994/06/13 22:04:13 mycroft Exp $
 .\"
-.Dd March 16, 1991
+.Dd December 11, 1993
 .Dt QUOTAON 8
 .Os BSD 4.2
 .Sh NAME
@@ -89,7 +89,7 @@ Available options:
 If the
 .Fl a
 flag is supplied in place of any filesystem names,
-.Nm quotaon Ns / Ns quotaoff
+.Nm quotaon Ns / Ns Nm quotaoff
 will enable/disable all the filesystems indicated in
 .Pa /etc/fstab
 to be read-write with disk quotas.
