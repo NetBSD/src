@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.33 2000/05/19 03:45:05 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.33.4.1 2001/11/15 23:09:22 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1682,7 +1682,7 @@ uvn_io(uvn, pps, npages, flags, rw)
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = rw;
 	uio.uio_resid = wanted;
-	uio.uio_procp = NULL;
+	uio.uio_procp = curproc;
 
 	/*
 	 * do the I/O!  (XXX: curproc?)
