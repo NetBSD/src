@@ -1,4 +1,4 @@
-/* $NetBSD: __setjmp14.S,v 1.2 2000/06/14 06:49:01 cgd Exp $ */
+/* $NetBSD: __setjmp14.S,v 1.3 2003/10/07 17:08:07 skd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -116,7 +116,7 @@ END(__setjmp14)
 LEAF(__longjmp14, 2)
 	LDGP(pv)
 	stq	a1, (( 0 + 4) * 8)(a0)		/* save return value */
-	CALL(__sigreturn14)			/* use sigreturn to return */
+	CALL(compat_16___sigreturn14)			/* use sigreturn to return */
 
 botch:
 	CALL(longjmperror)
