@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 1999/06/03 01:58:51 cgd Exp $
+#	$NetBSD: Makefile,v 1.34 1999/10/11 05:28:04 shin Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -27,6 +27,13 @@ CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
 # read in the old boot area even though we don't support writing the boot
 # area with disklabel(8).
 CPPFLAGS+= -DSAVEBOOTAREA
+.endif
+
+.if (${MACHINE} == "hpcmips")
+# recognize old partition ID for a while
+CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
+# use MBR partition info
+CPPFLAGS+= -DUSE_MBR
 .endif
 
 .include <bsd.prog.mk>
