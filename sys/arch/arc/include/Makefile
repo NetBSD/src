@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2000/03/31 11:44:05 soda Exp $
+#	$NetBSD: Makefile,v 1.15 2000/04/29 03:31:47 thorpej Exp $
 
 KDIR=	/sys/arch/arc/include
 INCSDIR= /usr/include/arc
@@ -8,7 +8,7 @@ INCSDIR= /usr/include/arc
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h bswap.h bsd-aout.h \
 	cdefs.h cpu.h cpuregs.h disklabel.h display.h ecoff_machdep.h \
 	elf_machdep.h endian.h endian_machdep.h float.h ieee.h ieeefp.h \
-	kcore.h kdbparam.h limits.h math.h mips_opcode.h \
+	kcore.h kdbparam.h limits.h lock.h math.h mips_opcode.h \
 	mouse.h param.h pcb.h pccons.h pmap.h proc.h profile.h psl.h \
 	pte.h ptrace.h reg.h regdef.h regnum.h reloc.h setjmp.h signal.h \
 	stdarg.h trap.h types.h varargs.h vmparam.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.1 2000/03/19 14:56:53 ragge Exp $	*/
+/*	$NetBSD: lock.h,v 1.2 2000/04/29 03:31:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -33,37 +33,36 @@
 #ifndef _VAX_LOCK_H_
 #define _VAX_LOCK_H_
 
-static __inline__ void
-cpu_simple_lock_init(__volatile struct simplelock *alp)
+static __inline void
+__cpu_simple_lock_init(__volatile int *alp)
 {
-	alp->lock_data = SIMPLELOCK_UNLOCKED;
+	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
-static __inline__ void
-cpu_simple_lock(__volatile struct simplelock *alp)
+static __inline void
+__cpu_simple_lock(__volatile int *alp)
 {
 	__asm__ __volatile ("1:;bbssi $0, (%0), 1b"
 		: /* No output */
-		: "r"(&alp->lock_data));
+		: "r"(alp));
 }
 
-static __inline__ void
-cpu_simple_unlock(__volatile struct simplelock *alp)
+static __inline void
+__cpu_simple_unlock(__volatile int *alp)
 {
-	alp->lock_data = SIMPLELOCK_UNLOCKED;
+	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
-static __inline__ int
-cpu_simple_lock_try(__volatile struct simplelock *alp)
+static __inline int
+__cpu_simple_lock_try(__volatile int *alp)
 {
 	register int ret;
 
 	__asm__ __volatile ("movl $0,%0;bbssi $0,(%1),1f;incl %0;1:"
 		: "&=r"(ret)
-		: "r"(&alp->lock_data));
+		: "r"(alp));
 
 	return ret;
 }
 
 #endif /* _VAX_LOCK_H_ */
-
