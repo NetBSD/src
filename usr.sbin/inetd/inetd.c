@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.76 2002/01/21 14:42:28 wiz Exp $	*/
+/*	$NetBSD: inetd.c,v 1.77 2002/05/31 14:28:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.76 2002/01/21 14:42:28 wiz Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.77 2002/05/31 14:28:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -386,7 +386,7 @@ void		initring __P((void));
 uint32_t	machtime __P((void));
 int 		port_good_dg __P((struct sockaddr *sa));
 static int	getline __P((int, char *, int));
-int		main __P((int, char *[], char *[]));
+int		main __P((int, char *[]));
 
 struct biltin {
 	char	*bi_service;		/* internally provided service name */
@@ -431,25 +431,16 @@ u_int16_t bad_ports[] =  { 7, 9, 13, 19, 37, 0};
 
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
 char	*CONFIG = _PATH_INETDCONF;
-char	**Argv;
-char 	*LastArg;
 
 int
-main(argc, argv, envp)
+main(argc, argv)
 	int argc;
-	char *argv[], *envp[];
+	char *argv[];
 {
 	struct servtab *sep, *nsep;
 	struct sigvec sv;
 	int ch, dofork;
 	pid_t pid;
-
-	Argv = argv;
-	if (envp == 0 || *envp == 0)
-		envp = argv;
-	while (*envp)
-		envp++;
-	LastArg = envp[-1] + strlen(envp[-1]);
 
 	while ((ch = getopt(argc, argv,
 #ifdef LIBWRAP
@@ -1757,25 +1748,19 @@ inetd_setproctitle(a, s)
 	char *a;
 	int s;
 {
-	int size;
-	char *cp;
+	socklen_t size;
 	struct sockaddr_storage ss;
-	char buf[80];
 	char hbuf[NI_MAXHOST];
 
-	cp = Argv[0];
 	size = sizeof(ss);
 	if (getpeername(s, (struct sockaddr *)&ss, &size) == 0) {
-		if (getnameinfo((struct sockaddr *)&ss, ss.ss_len,
-				hbuf, sizeof(hbuf), NULL, 0, niflags) != 0)
-			strcpy(hbuf, "?");
-		(void)snprintf(buf, sizeof buf, "-%s [%s]", a, hbuf);
+		if (getnameinfo((struct sockaddr *)&ss, size, hbuf,
+		    sizeof(hbuf), NULL, 0, niflags) == 0)
+			setproctitle("-%s [%s]", a, hbuf);
+		else
+			setproctitle("-%s [?]", a);
 	} else
-		(void)snprintf(buf, sizeof buf, "-%s", a);
-	strncpy(cp, buf, LastArg - cp);
-	cp += strlen(cp);
-	while (cp < LastArg)
-		*cp++ = ' ';
+		setproctitle("-%s", a);
 }
 
 void
