@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.67 2003/01/27 15:16:10 tsutsui Exp $ */
+/* $NetBSD: vga.c,v 1.68 2003/01/31 21:57:25 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.67 2003/01/27 15:16:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.68 2003/01/31 21:57:25 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.67 2003/01/27 15:16:10 tsutsui Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS and WSDISPLAY_CHARFUNCS */
 #include "opt_wsdisplay_compat.h"
+
+int vga_no_builtinfont = 0;
 
 static struct wsdisplay_font _vga_builtinfont = {
 	"builtin",			/* typeface name */
@@ -472,7 +474,6 @@ vga_init_screen(struct vga_config *vc, struct vgascreen *scr,
 
 	scr->pcs.mem = NULL;
 
-	wsfont_init();
 	scr->fontset1 = scr->fontset2 = 0;
 	if (vga_selectfont(vc, scr, 0, 0)) {
 		if (scr == &vga_console_screen)
@@ -528,6 +529,21 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 	vc->currenttype = vh->vh_mono ? &vga_25lscreen_mono : &vga_25lscreen;
 	callout_init(&vc->vc_switch_callout);
 
+	wsfont_init();
+	if (vga_no_builtinfont) {
+		struct wsdisplay_font *wf;
+		int cookie;
+
+		cookie = wsfont_find(NULL, 8, 16, 0,
+		     WSDISPLAY_FONTORDER_L2R, 0);
+		if (cookie == -1 || wsfont_lock(cookie, &wf))
+			panic("vga_init: can't load console font");
+		vga_loadchars(&vc->hdl, 0, wf->firstchar, wf->numchars,
+		    wf->fontheight, wf->data);
+		vga_builtinfont.wsfont = wf;
+		vga_builtinfont.cookie = cookie;
+		vga_builtinfont.slot = 0;
+	}
 	vc->vc_fonts[0] = &vga_builtinfont;
 	for (i = 1; i < 8; i++)
 		vc->vc_fonts[i] = 0;
@@ -586,12 +602,14 @@ vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
 	KASSERT(vga_builtinfont.slot == 0);
 #define BUILTINFONTLOC (0)
 #endif
-	vga_builtinfont.wsfont->data =
-	    malloc(256 * vga_builtinfont.wsfont->fontheight,
-	    M_DEVBUF, M_WAITOK);
-	vga_readoutchars(&vc->hdl, BUILTINFONTLOC, 0, 256,
-	    vga_builtinfont.wsfont->fontheight,
-	    vga_builtinfont.wsfont->data);
+	if (!vga_no_builtinfont) {
+		vga_builtinfont.wsfont->data =
+		    malloc(256 * vga_builtinfont.wsfont->fontheight,
+		    M_DEVBUF, M_WAITOK);
+		vga_readoutchars(&vc->hdl, BUILTINFONTLOC, 0, 256,
+		    vga_builtinfont.wsfont->fontheight,
+		    vga_builtinfont.wsfont->data);
+	}
 
 	vc->vc_type = type;
 	vc->vc_funcs = vf;
