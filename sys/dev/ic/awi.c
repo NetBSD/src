@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.58 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: awi.c,v 1.59 2003/12/04 13:57:30 keihan Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -79,13 +79,13 @@
  * Uses am79c930 chip driver to talk to firmware running on the am79c930.
  *
  * The initial version of the driver was written by
- * Bill Sommerfeld <sommerfeld@netbsd.org>.
+ * Bill Sommerfeld <sommerfeld@NetBSD.org>.
  * Then the driver module completely rewritten to support cards with DS phy
- * and to support adhoc mode by Atsushi Onoe <onoe@netbsd.org>
+ * and to support adhoc mode by Atsushi Onoe <onoe@NetBSD.org>
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.58 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.59 2003/12/04 13:57:30 keihan Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.acpidevs,v 1.1 2003/01/05 22:33:53 christos Exp $
+#	$NetBSD: Makefile.acpidevs,v 1.2 2003/12/04 13:57:30 keihan Exp $
 #
-# As per tron@netbsd.org, the proper procedure is
+# As per tron@NetBSD.org, the proper procedure is
 #
 # 1.) Change "src/sys/dev/acpi/acpidevs".
 # 2.) Commit "src/sys/dev/acpi/acpidevs".

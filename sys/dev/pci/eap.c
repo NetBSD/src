@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.66 2003/05/03 18:11:33 wiz Exp $	*/
+/*	$NetBSD: eap.c,v 1.67 2003/12/04 13:57:31 keihan Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -6,8 +6,8 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson <augustss@netbsd.org>, Charles M. Hannum, and
- * Antti Kantee <pooka@netbsd.org>.
+ * by Lennart Augustsson <augustss@NetBSD.org>, Charles M. Hannum, and
+ * Antti Kantee <pooka@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.66 2003/05/03 18:11:33 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.67 2003/12/04 13:57:31 keihan Exp $");
 
 #include "midi.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.268 2003/11/30 13:57:12 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.269 2003/12/04 13:57:30 keihan Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.268 2003/11/30 13:57:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.269 2003/12/04 13:57:30 keihan Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -222,7 +222,7 @@ static const struct wd_quirk {
 	 * XXX This is an incomplete list.  There are at least a couple
 	 * XXX more model numbers.  If you have trouble with such transfers
 	 * XXX (8K is the most common) on Seagate S-ATA drives, please
-	 * XXX notify thorpej@netbsd.org.
+	 * XXX notify thorpej@NetBSD.org.
 	 */
 	{ "ST3120023AS",
 	  WD_QUIRK_SPLIT_MOD15_WRITE },

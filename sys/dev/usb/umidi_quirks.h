@@ -1,11 +1,11 @@
-/*	$NetBSD: umidi_quirks.h,v 1.2 2001/09/29 22:00:47 tshiozak Exp $	*/
+/*	$NetBSD: umidi_quirks.h,v 1.3 2003/12/04 13:57:31 keihan Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Takuya SHIOZAKI (tshiozak@netbsd.org).
+ * by Takuya SHIOZAKI (tshiozak@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -1,11 +1,11 @@
-/*	$NetBSD: mpuvar.h,v 1.3 1999/10/05 03:29:22 itohy Exp $	*/
+/*	$NetBSD: mpuvar.h,v 1.4 2003/12/04 13:57:30 keihan Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@netbsd.org).
+ * by Lennart Augustsson (augustss@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

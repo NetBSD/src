@@ -1,10 +1,10 @@
-/*	$NetBSD: esmvar.h,v 1.8 2003/02/01 06:23:39 thorpej Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.9 2003/12/04 13:57:31 keihan Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
  * All rights reserved.
  *
- * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
+ * Copyright (c) 2000, 2001 Rene Hexel <rh@NetBSD.org>
  * All rights reserved.
  *
  * Copyright (c) 2000 Taku YAMAMOTO <taku@cent.saitama-u.ac.jp>

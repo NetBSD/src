@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.4 2003/05/03 18:11:22 wiz Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.5 2003/12/04 13:57:30 keihan Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 /*
- * <URL:http://mail-index.netbsd.org/port-arm32/1996/06/23/0005.html>:
+ * <URL:http://mail-index.NetBSD.org/port-arm32/1996/06/23/0005.html>:
  * There are 2 types of etherh card.  One uses the macronics chipset MX98905
  * and that chipset has a bug in it, in that it the MSB remote DMA
  * register does not work.  There is a workaround for this which
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.4 2003/05/03 18:11:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.5 2003/12/04 13:57:30 keihan Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>

@@ -1,11 +1,11 @@
-/*	$NetBSD: midisynvar.h,v 1.6 2003/06/29 22:30:01 fvdl Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.7 2003/12/04 13:57:30 keihan Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@netbsd.org).
+ * by Lennart Augustsson (augustss@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

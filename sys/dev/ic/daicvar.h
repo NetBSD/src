@@ -1,11 +1,11 @@
-/* $NetBSD: daicvar.h,v 1.5 2002/04/14 12:24:26 martin Exp $ */
+/* $NetBSD: daicvar.h,v 1.6 2003/12/04 13:57:30 keihan Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@netbsd.org>.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

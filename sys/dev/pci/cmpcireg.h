@@ -1,11 +1,11 @@
-/*	$NetBSD: cmpcireg.h,v 1.5 2003/11/22 16:48:14 itohy Exp $	*/
+/*	$NetBSD: cmpcireg.h,v 1.6 2003/12/04 13:57:31 keihan Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Takuya SHIOZAKI <tshiozak@netbsd.org> .
+ * by Takuya SHIOZAKI <tshiozak@NetBSD.org> .
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by ITOH Yasufumi.
