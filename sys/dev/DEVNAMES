@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.93 2002/01/30 14:35:43 ad Exp $
+#	$NetBSD: DEVNAMES,v 1.94 2002/03/15 22:11:05 martin Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -295,9 +295,9 @@ epic			MI
 es			amiga
 es			amigappc
 es			arm32
+esa			MI
 esc			arm32		Attribute
 esh			MI		
-esa			MI
 esl			MI		
 esm			MI		
 eso			MI		
@@ -451,13 +451,6 @@ hyper			amigappc
 hyper			hp300
 i2c			MI		Attribute
 i2c_eeprom		MI		Attribute
-i4b			MI
-i4bctl			MI
-i4bipr			MI
-i4bisppp		MI
-i4brbch			MI
-i4btel			MI
-i4btrc			MI
 i8042			arm32		Attribute
 i82586			MI		Attribute
 ibus			pmax
@@ -503,10 +496,12 @@ iopsp			MI
 ipaqbus			hpcarm
 ipaqlcd			hpcarm
 ipaqpcic		hpcarm
+ippp			MI
 irdasir			MI		Attribute
 irframe			MI
 irframedrv		MI		Attribute
 irif			hpcmips
+irip			MI
 isa			MI		
 isabeep			alpha
 isabeep			prep
@@ -515,6 +510,11 @@ isabus			MI		Attribute
 isabus			atari
 isadma			MI		Attribute
 isapnp			MI		
+isdn			MI
+isdnbch			MI
+isdnctl			MI
+isdntel			MI
+isdntrc			MI
 isic			MI
 isp			MI		
 it8368e			hpcmips
@@ -893,12 +893,12 @@ rl			vax
 rlc			vax
 rpckbd			arm32
 rt			MI
-rtii			MI
 rtc			arm26
 rtc			arm32
 rtc			pc532
 rtc			x68k
 rtfps			MI		
+rtii			MI
 rtk			MI		
 rtl80x9			MI		Attribute
 rx			MI		
@@ -949,11 +949,11 @@ ser			amigappc
 ser			atari
 ses			MI		
 sf			MI		
+sf2r			MI
 sfas			arm32		Attribute
 sfb			alpha
 sfb			pmax
 sgec			MI		Attribute
-sf2r			MI
 shb			evbsh3
 shb			mmeye
 shpcic			evbsh3
@@ -1078,13 +1078,13 @@ uda			MI
 udsbr			MI		
 uftdi			MI		
 ugen			MI		
-uirda			MI		
 uha			MI		
 uhci			MI		
 uhid			MI		
 uhidbus			MI		Attribute
 uhidev			MI		
 uhub			MI		
+uirda			MI		
 uk			MI		
 ukbd			MI		
 ukphy			MI		
