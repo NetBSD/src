@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.3 2001/10/08 21:22:14 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.4 2001/10/24 15:03:54 jhawk Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -180,3 +180,8 @@ bin/sh/expand.c					1.52
 distrib/sun3/common/rd.services			1.2
 
   Add missing NFS entries; required for mount_nfs.
+
+sys/dev/pci/bktr/bktr_os.c			1.21
+
+  Check unit count correctly (correct fencepost error)
+  on device open.
