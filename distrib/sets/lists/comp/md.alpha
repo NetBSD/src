@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.48 2004/01/11 14:53:23 lukem Exp $
+# $NetBSD: md.alpha,v 1.49 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/alpha				comp-c-include
 ./usr/include/alpha/_G_config.h			comp-obsolete		obsolete
 ./usr/include/alpha/alpha_cpu.h			comp-c-include
@@ -62,6 +62,7 @@
 ./usr/include/alpha/varargs.h			comp-c-include
 ./usr/include/alpha/vmparam.h			comp-c-include
 ./usr/include/alpha/vuid_event.h		comp-c-include
+./usr/include/alpha/wchar_limits.h		comp-c-include
 ./usr/include/alpha/wsconsio.h			comp-obsolete		obsolete
 ./usr/include/alpha/z8530var.h			comp-c-include
 ./usr/include/ieeefp.h				comp-c-include

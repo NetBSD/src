@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.21 2004/01/11 14:53:23 lukem Exp $
+# $NetBSD: ad.arm,v 1.22 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/arm				comp-c-include
 ./usr/include/arm/ansi.h			comp-c-include
 ./usr/include/arm/aout_machdep.h		comp-c-include
@@ -63,6 +63,7 @@
 ./usr/include/arm/trap.h			comp-c-include
 ./usr/include/arm/types.h			comp-c-include
 ./usr/include/arm/varargs.h			comp-c-include
+./usr/include/arm/wchar_limits.h		comp-c-include
 ./usr/include/arm32/bootconfig.h		comp-obsolete		obsolete
 ./usr/include/arm32/cpufunc.h			comp-obsolete		obsolete
 ./usr/include/arm32/cpus.h			comp-obsolete		obsolete

@@ -1,4 +1,4 @@
-# $NetBSD: md.evbmips,v 1.8 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.evbmips,v 1.9 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/evbmips				comp-c-include
 ./usr/include/evbmips/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbmips/ansi.h			comp-c-include
@@ -54,4 +54,5 @@
 ./usr/include/evbmips/types.h			comp-c-include
 ./usr/include/evbmips/varargs.h			comp-c-include
 ./usr/include/evbmips/vmparam.h			comp-c-include
+./usr/include/evbmips/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include

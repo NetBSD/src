@@ -1,4 +1,4 @@
-# $NetBSD: md.sun3,v 1.54 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.sun3,v 1.55 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sun3				comp-c-include
 ./usr/include/sun3/_G_config.h			comp-obsolete		obsolete
@@ -68,6 +68,7 @@
 ./usr/include/sun3/vmparam3.h			comp-c-include
 ./usr/include/sun3/vmparam3x.h			comp-c-include
 ./usr/include/sun3/vuid_event.h			comp-c-include
+./usr/include/sun3/wchar_limits.h		comp-c-include
 ./usr/include/sun3/z8530var.h			comp-c-include
 ./usr/include/sun68k				comp-c-include
 ./usr/include/sun68k/bus.h			comp-c-include

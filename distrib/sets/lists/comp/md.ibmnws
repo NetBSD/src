@@ -1,4 +1,4 @@
-# $NetBSD: md.ibmnws,v 1.4 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.ibmnws,v 1.5 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/ibmnws				comp-c-include
 ./usr/include/ibmnws/_G_config.h		comp-obsolete		obsolete
 ./usr/include/ibmnws/ansi.h			comp-c-include
@@ -54,4 +54,5 @@
 ./usr/include/ibmnws/types.h			comp-c-include
 ./usr/include/ibmnws/varargs.h			comp-c-include
 ./usr/include/ibmnws/vmparam.h			comp-c-include
+./usr/include/ibmnws/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
