@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.233 2004/03/09 02:35:45 junyoung Exp $	*/
+/*	$NetBSD: init_main.c,v 1.234 2004/03/27 00:42:38 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.233 2004/03/09 02:35:45 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.234 2004/03/27 00:42:38 jonathan Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.233 2004/03/09 02:35:45 junyoung Exp
 #include <sys/errno.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
+#include <sys/kcont.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
@@ -266,6 +267,9 @@ main(void)
 
 	/* Initialize sockets. */
 	soinit();
+
+	/* Initialize kcont. */
+        kcont_init();
 
 	/*
 	 * The following things must be done before autoconfiguration.
