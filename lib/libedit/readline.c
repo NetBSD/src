@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.29 2003/03/29 22:48:38 wiz Exp $	*/
+/*	$NetBSD: readline.c,v 1.30 2003/06/19 15:55:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.29 2003/03/29 22:48:38 wiz Exp $");
+__RCSID("$NetBSD: readline.c,v 1.30 2003/06/19 15:55:06 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -149,7 +149,7 @@ static char *el_rl_prompt = NULL;
 
 /* ARGSUSED */
 static char *
-_get_prompt(EditLine *el)
+_get_prompt(EditLine *el __attribute__((__unused__)))
 {
 	return (el_rl_prompt);
 }
@@ -342,7 +342,7 @@ _rl_compat_sub(const char *str, const char *what, const char *with,
 {
 	char *result;
 	const char *temp, *new;
-	int len, with_len, what_len, add;
+	size_t len, with_len, what_len, add;
 	size_t size, i;
 
 	result = malloc((size = 16));
@@ -544,7 +544,7 @@ _history_expand_command(const char *command, size_t cmdlen, char **result)
 			g_on = 2;
 		else if (*cmd == 's' || *cmd == '&') {
 			char *what, *with, delim;
-			int len, from_len;
+			size_t len, from_len;
 			size_t size;
 
 			if (*cmd == '&' && (from == NULL || to == NULL))
@@ -1185,7 +1185,8 @@ history_search_prefix(const char *str, int direction)
  */
 /* ARGSUSED */
 int
-history_search_pos(const char *str, int direction, int pos)
+history_search_pos(const char *str, 
+		   int direction __attribute__((__unused__)), int pos)
 {
 	HistEvent ev;
 	int curr_num, off;
@@ -1419,7 +1420,7 @@ username_completion_function(const char *text, int state)
  */
 /* ARGSUSED */
 static unsigned char
-_el_rl_complete(EditLine *el, int ch)
+_el_rl_complete(EditLine *el __attribute__((__unused__)), int ch)
 {
 	return (unsigned char) rl_complete(0, ch);
 }
@@ -1433,14 +1434,14 @@ completion_matches(const char *text, CPFunction *genfunc)
 {
 	char **match_list = NULL, *retstr, *prevstr;
 	size_t match_list_len, max_equal, which, i;
-	int matches;
+	size_t matches;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
 
 	matches = 0;
 	match_list_len = 1;
-	while ((retstr = (*genfunc) (text, matches)) != NULL) {
+	while ((retstr = (*genfunc) (text, (int)matches)) != NULL) {
 		/* allow for list terminator here */
 		if (matches + 2 >= match_list_len) {
 			char **nmatch_list;
@@ -1750,7 +1751,7 @@ rl_read_key(void)
  */
 /* ARGSUSED */
 void
-rl_reset_terminal(const char *p)
+rl_reset_terminal(const char *p __attribute__((__unused__)))
 {
 
 	if (h == NULL || e == NULL)

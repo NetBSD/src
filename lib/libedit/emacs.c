@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.13 2003/03/31 16:52:42 perry Exp $	*/
+/*	$NetBSD: emacs.c,v 1.14 2003/06/19 15:55:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.13 2003/03/31 16:52:42 perry Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.14 2003/06/19 15:55:05 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: emacs.c,v 1.13 2003/03/31 16:52:42 perry Exp $");
  */
 protected el_action_t
 /*ARGSUSED*/
-em_delete_or_list(EditLine *el, int c)
+em_delete_or_list(EditLine *el, int c __attribute__((__unused__)))
 {
 
 	if (el->el_line.cursor == el->el_line.lastchar) {
@@ -90,7 +90,7 @@ em_delete_or_list(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_delete_next_word(EditLine *el, int c)
+em_delete_next_word(EditLine *el, int c __attribute__((__unused__)))
 {
 	char *cp, *p, *kp;
 
@@ -119,7 +119,7 @@ em_delete_next_word(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_yank(EditLine *el, int c)
+em_yank(EditLine *el, int c __attribute__((__unused__)))
 {
 	char *kp, *cp;
 
@@ -156,7 +156,7 @@ em_yank(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_kill_line(EditLine *el, int c)
+em_kill_line(EditLine *el, int c __attribute__((__unused__)))
 {
 	char *kp, *cp;
 
@@ -178,7 +178,7 @@ em_kill_line(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_kill_region(EditLine *el, int c)
+em_kill_region(EditLine *el, int c __attribute__((__unused__)))
 {
 	char *kp, *cp;
 
@@ -211,7 +211,7 @@ em_kill_region(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_copy_region(EditLine *el, int c)
+em_copy_region(EditLine *el, int c __attribute__((__unused__)))
 {
 	char *kp, *cp;
 
@@ -260,7 +260,7 @@ em_gosmacs_transpose(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_next_word(EditLine *el, int c)
+em_next_word(EditLine *el, int c __attribute__((__unused__)))
 {
 	if (el->el_line.cursor == el->el_line.lastchar)
 		return (CC_ERROR);
@@ -285,7 +285,7 @@ em_next_word(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_upper_case(EditLine *el, int c)
+em_upper_case(EditLine *el, int c __attribute__((__unused__)))
 {
 	char *cp, *ep;
 
@@ -309,7 +309,7 @@ em_upper_case(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_capitol_case(EditLine *el, int c)
+em_capitol_case(EditLine *el, int c __attribute__((__unused__)))
 {
 	char *cp, *ep;
 
@@ -341,7 +341,7 @@ em_capitol_case(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_lower_case(EditLine *el, int c)
+em_lower_case(EditLine *el, int c __attribute__((__unused__)))
 {
 	char *cp, *ep;
 
@@ -365,7 +365,7 @@ em_lower_case(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_set_mark(EditLine *el, int c)
+em_set_mark(EditLine *el, int c __attribute__((__unused__)))
 {
 
 	el->el_chared.c_kill.mark = el->el_line.cursor;
@@ -379,7 +379,7 @@ em_set_mark(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_exchange_mark(EditLine *el, int c)
+em_exchange_mark(EditLine *el, int c __attribute__((__unused__)))
 {
 	char *cp;
 
@@ -396,7 +396,7 @@ em_exchange_mark(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_universal_argument(EditLine *el, int c)
+em_universal_argument(EditLine *el, int c __attribute__((__unused__)))
 {				/* multiply current argument by 4 */
 
 	if (el->el_state.argument > 1000000)
@@ -413,7 +413,7 @@ em_universal_argument(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_meta_next(EditLine *el, int c)
+em_meta_next(EditLine *el, int c __attribute__((__unused__)))
 {
 
 	el->el_state.metanext = 1;
@@ -426,7 +426,7 @@ em_meta_next(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_toggle_overwrite(EditLine *el, int c)
+em_toggle_overwrite(EditLine *el, int c __attribute__((__unused__)))
 {
 
 	el->el_state.inputmode = (el->el_state.inputmode == MODE_INSERT) ?
@@ -440,7 +440,7 @@ em_toggle_overwrite(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_copy_prev_word(EditLine *el, int c)
+em_copy_prev_word(EditLine *el, int c __attribute__((__unused__)))
 {
 	char *cp, *oldc, *dp;
 
@@ -467,7 +467,7 @@ em_copy_prev_word(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_inc_search_next(EditLine *el, int c)
+em_inc_search_next(EditLine *el, int c __attribute__((__unused__)))
 {
 
 	el->el_search.patlen = 0;
@@ -480,7 +480,7 @@ em_inc_search_next(EditLine *el, int c)
  */
 protected el_action_t
 /*ARGSUSED*/
-em_inc_search_prev(EditLine *el, int c)
+em_inc_search_prev(EditLine *el, int c __attribute__((__unused__)))
 {
 
 	el->el_search.patlen = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.24 2003/03/10 21:18:49 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.25 2003/06/19 15:55:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.24 2003/03/10 21:18:49 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.25 2003/06/19 15:55:06 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -338,7 +338,8 @@ re_goto_bottom(EditLine *el)
  */
 private void
 /*ARGSUSED*/
-re_insert(EditLine *el, char *d, int dat, int dlen, char *s, int num)
+re_insert(EditLine *el __attribute__((__unused__)),
+    char *d, int dat, int dlen, char *s, int num)
 {
 	char *a, *b;
 
@@ -381,7 +382,8 @@ re_insert(EditLine *el, char *d, int dat, int dlen, char *s, int num)
  */
 private void
 /*ARGSUSED*/
-re_delete(EditLine *el, char *d, int dat, int dlen, int num)
+re_delete(EditLine *el __attribute__((__unused__)),
+    char *d, int dat, int dlen, int num)
 {
 	char *a, *b;
 

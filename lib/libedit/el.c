@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.30 2002/11/12 00:00:23 thorpej Exp $	*/
+/*	$NetBSD: el.c,v 1.31 2003/06/19 15:55:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.30 2002/11/12 00:00:23 thorpej Exp $");
+__RCSID("$NetBSD: el.c,v 1.31 2003/06/19 15:55:05 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -308,10 +308,10 @@ el_get(EditLine *el, int op, void *ret)
 	case EL_ECHOTC:
 	case EL_SETTY:
 	{
-		char *argv[20];
+		const char *argv[20];
 		int i;
 
-		for (i = 1; i < 20; i++)
+ 		for (i = 1; i < sizeof(argv) / sizeof(argv[0]); i++)
 			if ((argv[i] = va_arg(va, char *)) == NULL)
 				break;
 

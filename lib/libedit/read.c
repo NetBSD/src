@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.24 2002/11/20 16:50:08 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.25 2003/06/19 15:55:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.24 2002/11/20 16:50:08 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.25 2003/06/19 15:55:06 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -97,6 +97,10 @@ el_read_getfn(EditLine *el)
 }
 
 
+#ifndef MIN
+#define MIN(A,B) ((A) < (B) ? (A) : (B))
+#endif
+
 #ifdef DEBUG_EDIT
 private void
 read_debug(EditLine *el)
@@ -121,7 +125,7 @@ read_debug(EditLine *el)
  */
 /* ARGSUSED */
 private int
-read__fixio(int fd, int e)
+read__fixio(int fd __attribute__((__unused__)), int e)
 {
 
 	switch (e) {
