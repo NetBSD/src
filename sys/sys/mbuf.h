@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.64 2002/03/09 01:46:32 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.65 2002/05/02 16:22:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ struct	pkthdr {
 struct m_ext {
 	caddr_t	ext_buf;		/* start of buffer */
 	void	(*ext_free)		/* free routine if not the usual */
-		__P((caddr_t, u_int, void *));
+		__P((struct mbuf *, caddr_t, u_int, void *));
 	void	*ext_arg;		/* argument for ext_free */
 	u_int	ext_size;		/* size of buffer, for ext_free */
 	int	ext_type;		/* malloc type */
@@ -392,23 +392,31 @@ do {									\
 	MCLINITREFERENCE(m);						\
 } while (/* CONSTCOND */ 0)
 
-#define	_MEXTREMOVE(m)							\
+#define	MEXTREMOVE(m)							\
 do {									\
+	int _ms_ = splvm(); /* MBUFLOCK */				\
 	if (MCLISREFERENCED(m)) {					\
 		_MCLDEREFERENCE(m);					\
+		splx(_ms_);						\
 	} else if ((m)->m_flags & M_CLUSTER) {				\
 		pool_cache_put(&mclpool_cache, (m)->m_ext.ext_buf);	\
+		splx(_ms_);						\
 	} else if ((m)->m_ext.ext_free) {				\
-		(*((m)->m_ext.ext_free))((m)->m_ext.ext_buf,		\
+		/*							\
+		 * NOTE: We assume that MEXTREMOVE() is called from	\
+		 * code where it is safe to invoke the free routine	\
+		 * without the mbuf to perform bookkeeping.		\
+		 */							\
+		splx(_ms_);						\
+		(*((m)->m_ext.ext_free))(NULL, (m)->m_ext.ext_buf,	\
 		    (m)->m_ext.ext_size, (m)->m_ext.ext_arg);		\
 	} else {							\
-		free((m)->m_ext.ext_buf,(m)->m_ext.ext_type);		\
+		splx(_ms_);						\
+		free((m)->m_ext.ext_buf, (m)->m_ext.ext_type);		\
 	}								\
 	(m)->m_flags &= ~(M_CLUSTER|M_EXT);				\
 	(m)->m_ext.ext_size = 0;	/* why ??? */			\
 } while (/* CONSTCOND */ 0)
-
-#define	MEXTREMOVE(m)	MBUFLOCK(_MEXTREMOVE((m));)
 
 /*
  * Reset the data pointer on an mbuf.
@@ -435,15 +443,36 @@ do {									\
 #define	MFREE(m, n)							\
 	MBUFLOCK(							\
 		mbstat.m_mtypes[(m)->m_type]--;				\
-		if (((m)->m_flags & M_PKTHDR) != 0 && (m)->m_pkthdr.aux) { \
+		if (((m)->m_flags & M_PKTHDR) != 0 &&			\
+		    (m)->m_pkthdr.aux != NULL) {			\
 			m_freem((m)->m_pkthdr.aux);			\
 			(m)->m_pkthdr.aux = NULL;			\
 		}							\
-		if ((m)->m_flags & M_EXT) {				\
-			_MEXTREMOVE((m));				\
-		}							\
 		(n) = (m)->m_next;					\
-		pool_cache_put(&mbpool_cache, (m));			\
+		if ((m)->m_flags & M_EXT) {				\
+			if (MCLISREFERENCED(m)) {			\
+				_MCLDEREFERENCE(m);			\
+				pool_cache_put(&mbpool_cache, (m));	\
+			} else if ((m)->m_flags & M_CLUSTER) {		\
+				pool_cache_put(&mclpool_cache,		\
+				    (m)->m_ext.ext_buf);		\
+				pool_cache_put(&mbpool_cache, (m));	\
+			} else if ((m)->m_ext.ext_free) {		\
+				/*					\
+				 * (*ext_free)() is responsible for	\
+				 * freeing the mbuf when it is safe.	\
+				 */					\
+				(*((m)->m_ext.ext_free))((m),		\
+				    (m)->m_ext.ext_buf,			\
+				    (m)->m_ext.ext_size,		\
+				    (m)->m_ext.ext_arg);		\
+			} else {					\
+				free((m)->m_ext.ext_buf,		\
+				    (m)->m_ext.ext_type);		\
+				pool_cache_put(&mbpool_cache, (m));	\
+			}						\
+		} else							\
+			pool_cache_put(&mbpool_cache, (m));		\
 	)
 
 /*
