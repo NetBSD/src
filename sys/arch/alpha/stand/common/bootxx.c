@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.1 1999/04/02 03:24:53 cgd Exp $ */
+/* $NetBSD: bootxx.c,v 1.2 1999/04/05 04:39:43 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -83,10 +83,10 @@
 
 #include "../common/common.h"
 
-extern void putstr __P((const char *)); /* XXX private, does not append '\n' */
+void main(void);
 
 void
-main()
+main(void)
 {
         struct stat sb;
 	const char *reason;

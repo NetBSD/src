@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.17 1999/04/02 03:19:08 cgd Exp $ */
+/* $NetBSD: boot.c,v 1.18 1999/04/05 04:39:42 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -157,7 +157,8 @@ main(long fd)
 
 	(void)printf("Entering %s at 0x%lx...\n", name, entry);
 	alpha_pal_imb();
-	(*(void (*)())entry)(ffp_save, ptbr_save, BOOTINFO_MAGIC,
+	(*(void (*)(u_int64_t, u_int64_t, u_int64_t, void *, u_int64_t,
+	    u_int64_t))entry)(ffp_save, ptbr_save, BOOTINFO_MAGIC,
 	    &bootinfo_v1, 1, 0);
 
 	(void)printf("KERNEL RETURNED!\n");
