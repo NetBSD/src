@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.70.2.10 2003/08/30 13:29:30 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.70.2.11 2003/09/01 07:35:35 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.70.2.10 2003/08/30 13:29:30 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.70.2.11 2003/09/01 07:35:35 jlam Exp $");
 #endif
 #endif
 
@@ -37,7 +37,6 @@ __RCSID("$NetBSD: perform.c,v 1.70.2.10 2003/08/30 13:29:30 jlam Exp $");
 
 #include <signal.h>
 #include <string.h>
-#include <sys/wait.h>
 
 static char LogDir[FILENAME_MAX];
 static int zapLogDir;		/* Should we delete LogDir? */
