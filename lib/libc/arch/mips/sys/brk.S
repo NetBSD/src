@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.9 1999/03/31 11:53:07 kleink Exp $	*/
+/*	$NetBSD: brk.S,v 1.9.10.1 2000/08/22 07:11:59 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)brk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: brk.S,v 1.9 1999/03/31 11:53:07 kleink Exp $")
+	ASMSTR("$NetBSD: brk.S,v 1.9.10.1 2000/08/22 07:11:59 kleink Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -51,28 +51,32 @@
 	.globl	_C_LABEL(__curbrk)
 	.globl	_C_LABEL(_end)
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(brk, _brk)
+#endif
+
 	.data
 _C_LABEL(__minbrk):
 	.word	_C_LABEL(_end)
 	.text
 
-LEAF(brk)
+LEAF(_brk)
 #ifdef ABICALLS
 	.set	noreorder
 	.cpload	t9
 	.set	reorder
 #endif
 	lw	v0, _C_LABEL(__minbrk)
-	bgeu	a0, v0, _C_LABEL(_brk)
+	bgeu	a0, v0, 1f
 	move	a0, v0		# dont allow break < minbrk
-ALEAF(_brk)
+1:
 	li	v0, SYS_break
 	syscall
-	bne	a3, zero, 1f
+	bne	a3, zero, 2f
 	sw	a0, _C_LABEL(__curbrk)
 	move	v0, zero
 	j	ra
-1:
+2:
 	la	t9, _C_LABEL(__cerror)
 	jr	t9
 END(brk)
