@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.83 1995/04/19 19:10:35 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.84 1995/04/19 22:08:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -521,7 +521,8 @@ pcclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp = pccd.cd_devs[PCUNIT(dev)]->sc_tty;
+	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
@@ -537,7 +538,8 @@ pcread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp = pccd.cd_devs[PCUNIT(dev)]->sc_tty;
+	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -548,7 +550,8 @@ pcwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct tty *tp = pccd.cd_devs[PCUNIT(dev)]->sc_tty;
+	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
@@ -557,8 +560,10 @@ struct tty *
 pctty(dev)
 	dev_t dev;
 {
+	struct pc_softc *sc = pccd.cd_devs[PCUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
 
-	return (pccd.cd_devs[PCUNIT(dev)]->sc_tty);
+	return (tp);
 }
 
 /*
