@@ -31,35 +31,19 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_prot.c	7.21 (Berkeley) 5/3/91
- *	$Id: setregid.c,v 1.4 1994/04/24 01:06:43 mycroft Exp $
+ *	$Id: setregid.c,v 1.4.2.1 1994/07/24 02:30:45 cgd Exp $
  */
 
 #include <sys/types.h>
-#include <stdio.h>
 #include <unistd.h>
-#include <sys/uio.h>
 
 extern int __setregid __P((gid_t, gid_t));
+
+__warn_references(setregid, "warning: this program uses setregid(), which is deprecated.");
 
 int
 setregid(rgid, egid)
 	int rgid, egid;
 {
-	static int warned;
-	static char w[] =
-	    ": warning: this program uses setregid(), which is deprecated.\r\n";
-
-	if (!warned) {
-		struct iovec iov[2];
-		extern char *__progname;	/* in crt0 */
-
-		iov[0].iov_base = __progname;
-		iov[0].iov_len = strlen(__progname);
-		iov[1].iov_base = w;
-		iov[1].iov_len = sizeof(w) - 1;
-		(void) writev(STDERR_FILENO, iov, 2);
-		warned = 1;
-	}
-
 	return (__setregid(rgid, egid));
 }

@@ -36,12 +36,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)gets.c	5.3 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: gets.c,v 1.5 1994/04/24 01:05:13 mycroft Exp $";
+static char *rcsid = "$Id: gets.c,v 1.5.2.1 1994/07/24 02:30:56 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <unistd.h>
 #include <stdio.h>
-#include <sys/uio.h>
+
+__warn_references(gets, "warning: this program uses gets(), which is unsafe.");
 
 char *
 gets(buf)
@@ -49,21 +49,6 @@ gets(buf)
 {
 	register int c;
 	register char *s;
-	static int warned;
-	static char w[] =
-	    ": warning: this program uses gets(), which is unsafe.\r\n";
-
-	if (!warned) {
-		struct iovec iov[2];
-		extern char *__progname;	/* in crt0 */
-
-		iov[0].iov_base = __progname;
-		iov[0].iov_len = strlen(__progname);
-		iov[1].iov_base = w;
-		iov[1].iov_len = sizeof(w) - 1;
-		(void) writev(STDERR_FILENO, iov, 2);
-		warned = 1;
-	}
 
 	for (s = buf; (c = getchar()) != '\n';)
 		if (c == EOF)
