@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.2 2001/11/14 18:26:22 thorpej Exp $	*/
+/*	$NetBSD: cache.c,v 1.3 2001/11/18 18:46:20 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -459,7 +459,6 @@ mips_config_cache(void)
 
 			case 16:
 			case 64:
-			case 128:
 				mips_cache_ops.mco_sdcache_wbinv_all =
 				    r4k_sdcache_wbinv_all_generic;
 				mips_cache_ops.mco_sdcache_wbinv_range =
@@ -470,6 +469,19 @@ mips_config_cache(void)
 				    r4k_sdcache_inv_range_generic;
 				mips_cache_ops.mco_sdcache_wb_range =
 				    r4k_sdcache_wb_range_generic;
+				break;
+
+			case 128:
+				mips_cache_ops.mco_sdcache_wbinv_all =
+				    r4k_sdcache_wbinv_all_128;
+				mips_cache_ops.mco_sdcache_wbinv_range =
+				    r4k_sdcache_wbinv_range_128;
+				mips_cache_ops.mco_sdcache_wbinv_range_index =
+				    r4k_sdcache_wbinv_range_index_128;
+				mips_cache_ops.mco_sdcache_inv_range =
+				    r4k_sdcache_inv_range_128;
+				mips_cache_ops.mco_sdcache_wb_range =
+				    r4k_sdcache_wb_range_128;
 				break;
 
 			default:
