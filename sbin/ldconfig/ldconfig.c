@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.22.2.1 1999/10/20 23:15:02 he Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.22.2.2 2000/06/01 17:43:42 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/mman.h>
+#include <a.out.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
@@ -174,7 +175,7 @@ do_conf ()
 	}
 
 	while ((line = fgetln(conf, &len)) != NULL) {
-		if (*line == '#' || *line == '\n')
+		if (*line != '/')
 			continue;
 
 		if (line[len-1] == '\n') {
@@ -232,7 +233,9 @@ dodir(dir, silent, update_dir_list)
 
 	while ((dp = readdir(dd)) != NULL) {
 		int n;
-		char *cp;
+		char *cp, *path;
+		FILE *fp;
+		struct exec ex;
 
 		/* Check for `lib' prefix */
 		if (dp->d_name[0] != 'l' ||
@@ -255,6 +258,18 @@ dodir(dir, silent, update_dir_list)
 				break;
 		}
 		if (cp <= name)
+			continue;
+
+		path = concat(dir, "/", dp->d_name);
+		fp = fopen(path, "r");
+		free(path);
+		if (fp == NULL)
+			continue;
+		n = fread(&ex, 1, sizeof(ex), fp);
+		fclose(fp);
+		if (n != sizeof(ex)
+		    || N_GETMAGIC(ex) != ZMAGIC
+		    || (N_GETFLAG(ex) & EX_DYNAMIC) == 0)
 			continue;
 
 		*cp = '\0';
