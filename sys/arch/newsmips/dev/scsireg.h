@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.5 2001/04/25 17:53:19 bouyer Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.6 2001/04/26 15:52:01 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -262,8 +262,8 @@ struct sc_softc {
 	int scsi_1185AQ;
 	int pad_start;
 
-	int	wbc;	/* # of channel that is waiting for scsi bus free */	
-	int	wrc;	/* # of channel that is waiting for reselection */	
+	int	wbc;	/* # of channel that is waiting for scsi bus free */
+	int	wrc;	/* # of channel that is waiting for reselection */
 	struct sc_chan_stat *ip;
 			/* In progress channel. Same as ISTAT.IP */
 	int	ipc;		/* number of in progress channel. */
