@@ -1,4 +1,4 @@
-/*	$NetBSD: poffd.c,v 1.3 2000/02/20 16:18:56 minoura Exp $	*/
+/*	$NetBSD: poffd.c,v 1.4 2001/02/21 22:55:51 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 MINOURA Makoto.
  * All rights reserved.
@@ -232,7 +232,7 @@ usr1handler(sig)
 	sigsetmask (sigsetmask (0) & (~sigmask (SIGUSR1)));
 	unlink (_PATH_POFFDPID);
 	execl(_PATH_BSHELL, "sh", "-c", shut, NULL);
-	logerror("Failed in exec: %s");
+	logerror("Failed in exec: %s", shut);
 	exit(1);
 }
 
