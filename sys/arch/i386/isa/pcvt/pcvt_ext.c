@@ -2196,8 +2196,6 @@ switch_screen(int n, int oldgrafx, int newgrafx)
 		if((saved_scrnsv_tmo = scrnsv_timeout))
 			pcvt_set_scrnsv_tmo(0);	/* screensaver off */
 #endif /* PCVT_SCREENSAVER */
-
-		async_update(UPDATE_STOP);	/* status display off */
 	}
 
 	if(!oldgrafx)
@@ -2265,9 +2263,6 @@ switch_screen(int n, int oldgrafx, int newgrafx)
 		    outb(addr_6845, CRTC_CUREND); /* select low register */
 		    outb(addr_6845+1, vsp->cursor_end);
 		}
-
-		/* make status display happy */
-		async_update(UPDATE_START);
 	}
 
 	if(!newgrafx)
@@ -2759,10 +2754,13 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		if(suser(p->p_ucred, &p->p_acflag) != 0)
 			return (EPERM);
 
+#if (PCVT_NETBSD <= 100) || defined(COMPAT_10) || defined(COMPAT_11)
+		/* This is done by i386_iopl(3) now. */
 #if PCVT_NETBSD || (PCVT_FREEBSD && PCVT_FREEBSD > 102)
 		fp->tf_eflags |= PSL_IOPL;
 #else
 		fp->sf_eflags |= PSL_IOPL;
+#endif
 #endif
 
 		return 0;
@@ -2772,6 +2770,8 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		/* abandon IO access permission */
 	{
 
+#if (PCVT_NETBSD <= 100) || defined(COMPAT_10) || defined(COMPAT_11)
+		/* This is done by i386_iopl(3) now. */
 #if PCVT_NETBSD > 9 || PCVT_FREEBSD >= 200
 		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
 		fp->tf_eflags &= ~PSL_IOPL;
@@ -2782,7 +2782,7 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		struct syscframe *fp = (struct syscframe *)p->p_regs;
 		fp->sf_eflags &= ~PSL_IOPL;
 #endif
-
+#endif
 		return 0;
 	}
 
