@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.9 2001/06/03 18:32:33 chris Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.10 2001/06/07 21:07:22 chris Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -330,7 +330,7 @@ struct cpu_functions arm7tdmi_cpufuncs = {
 	(void *)arm7tdmi_cache_flushID,	/* cache_purgeD_rng	*/
 	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
 
-	arm7_dataabt_fixup,		/* dataabt_fixup	*/
+	late_abort_fixup,		/* dataabt_fixup	*/
 	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
 
 	arm7tdmi_context_switch,		/* context_switch	*/
