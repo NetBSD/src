@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.44 2004/10/29 12:57:18 yamt Exp $	*/
+/*	$NetBSD: auvia.c,v 1.45 2004/11/08 06:20:58 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.44 2004/10/29 12:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.45 2004/11/08 06:20:58 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
 #define VIA_REV_8233	0x30
 #define VIA_REV_8233A	0x40
 #define VIA_REV_8235	0x50
+#define VIA_REV_8237	0x60
 
 #define AUVIA_PCICONF_JUNK	0x40
 #define		AUVIA_PCICONF_ENABLES	 0x00FF0000	/* reg 42 mask */
@@ -302,7 +303,9 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 		default:
 			break;
 		}
-		if (r >= VIA_REV_8235) /* 2 rec, 4 pb, 1 multi-pb, spdif */
+		if (r >= VIA_REV_8235)
+			revnum = "7";
+		else if (r >= VIA_REV_8235) /* 2 rec, 4 pb, 1 multi-pb, spdif */
 			revnum = "5";
 		aprint_normal(": VIA Technologies VT823%s AC'97 Audio "
 		    "(rev %s)\n", revnum, sc->sc_revision);
@@ -796,7 +799,7 @@ auvia_getdev(void *addr, struct audio_device *retp)
 
 	if (retp) {
 		if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
-			strncpy(retp->name, "VIA VT8233/8235",
+			strncpy(retp->name, "VIA VT823x",
 				sizeof(retp->name));
 		} else {
 			strncpy(retp->name, "VIA VT82C686A",
