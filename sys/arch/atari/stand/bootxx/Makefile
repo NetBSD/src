@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1996/05/14 10:16:13 leo Exp $
+#	$NetBSD: Makefile,v 1.3 1996/06/29 20:48:41 leo Exp $
 
 PROG=	bootxx
 SRCS=	bootxx.c bsdstart.s filesystem.c
@@ -7,6 +7,8 @@ NOMAN=
 STRIP=
 BINDIR=	/usr/mdec
 BINMODE=${NONBINMODE}
+
+LIBCRT0=
 
 DPADD=	${S_MACHSA}/libsa.a
 LDADD=	${S_MACHSA}/libsa.a
