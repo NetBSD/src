@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.34 2000/12/14 05:59:39 jmc Exp $
+# $NetBSD: obsolete.mi,v 1.35 2001/01/05 21:21:35 jdolecek Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -287,6 +287,7 @@
 /usr/include/g++/tree.cc
 /usr/include/g++/typemacros.h
 /usr/include/g++/values.h
+/usr/include/history.h
 /usr/include/netinet/if_arc.h
 /usr/include/netinet6/icmp6.h
 /usr/include/netinet6/ip6.h
@@ -300,6 +301,7 @@
 /usr/include/ntfs/ntfs_vfsops.h
 /usr/include/null.h
 /usr/include/objc/list.h
+/usr/include/readline.h
 /usr/include/sys/dmap.h
 /usr/include/sys/vcmd.h
 /usr/include/sys/vlimit.h
