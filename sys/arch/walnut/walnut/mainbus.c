@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2001/06/13 06:02:01 simonb Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2001/06/22 11:42:33 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -203,7 +203,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	mba.mba_pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
 	config_found(self, &mba.mba_pba, mainbus_print);
 #endif /* NPCI > 0 */
-
 }
 
 static int
