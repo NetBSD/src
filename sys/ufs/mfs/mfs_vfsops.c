@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.14 1998/02/18 07:05:50 thorpej Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.15 1998/03/01 02:23:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mfs_vfsops.c	8.4 (Berkeley) 4/16/94
+ *	@(#)mfs_vfsops.c	8.11 (Berkeley) 6/19/95
  */
 
 #include <sys/param.h>
@@ -88,39 +88,46 @@ struct vfsops mfs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	mfs_init,
-	NULL,				/* vfs_mountroot */
+	ffs_sysctl,
+	mfs_mountroot,
 	mfs_vnodeopv_descs,
 };
 
+/* 
+ * Memory based filesystem initialization.
+ */ 
+void
+mfs_init()
+{
+}
+
+
 /*
  * Called by main() when mfs is going to be mounted as root.
- *
- * Name is updated by mount(8) after booting.
  */
-#define ROOTNAME	"mfs_root"
 
 int
 mfs_mountroot()
 {
 	extern struct vnode *rootvp;
-	register struct fs *fs;
-	register struct mount *mp;
+	struct fs *fs;
+	struct mount *mp;
 	struct proc *p = curproc;	/* XXX */
 	struct ufsmount *ump;
 	struct mfsnode *mfsp;
-	size_t size;
-	int error;
+	int error = 0;
 
 	/*
 	 * Get vnodes for rootdev.
 	 */
-	if (bdevvp(rootdev, &rootvp))
-		panic("mfs_mountroot: can't setup bdevvp's");
+	if (bdevvp(rootdev, &rootvp)) {
+		printf("mfs_mountroot: can't setup bdevvp's");
+		return (error);
+	}
 
-	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
-	bzero((char *)mp, (u_long)sizeof(struct mount));
-	mp->mnt_op = &mfs_vfsops;
-	mp->mnt_flag = MNT_RDONLY;
+	if ((error = vfs_rootmountalloc(MOUNT_MFS, "mfs_root", &mp)))
+		return (error);
+
 	mfsp = malloc(sizeof *mfsp, M_MFSNODE, M_WAITOK);
 	rootvp->v_data = mfsp;
 	rootvp->v_op = mfs_vnodeop_p;
@@ -131,28 +138,21 @@ mfs_mountroot()
 	mfsp->mfs_pid = p->p_pid;
 	mfsp->mfs_buflist = (struct buf *)0;
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
+		mp->mnt_op->vfs_refcount--;
+		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
 		free(mfsp, M_MFSNODE);
 		return (error);
-	}
-	if ((error = vfs_lock(mp)) != 0) {
-		(void)ffs_unmount(mp, 0, p);
-		free(mp, M_MOUNT);
-		free(mfsp, M_MFSNODE);
-		return (error);
-	}
+	}	
+	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+	simple_unlock(&mountlist_slock);
 	mp->mnt_vnodecovered = NULLVP;
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
-	bzero(fs->fs_fsmnt, sizeof(fs->fs_fsmnt));
-	fs->fs_fsmnt[0] = '/';
-	bcopy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
-	(void) copystr(ROOTNAME, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
-	    &size);
-	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statfs(mp, &mp->mnt_stat, p);
-	vfs_unlock(mp);
+	vfs_unbusy(mp);
 	inittodr((time_t)0);
 	return (0);
 }
@@ -216,10 +216,7 @@ mfs_mount(mp, path, data, ndp, p)
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
-			if (vfs_busy(mp))
-				return (EBUSY);
 			error = ffs_flushfiles(mp, flags, p);
-			vfs_unbusy(mp);
 			if (error)
 				return (error);
 		}
@@ -281,30 +278,33 @@ mfs_start(mp, flags, p)
 	register struct mfsnode *mfsp = VTOMFS(vp);
 	register struct buf *bp;
 	register caddr_t base;
-	int error = 0;
+	int sleepreturn = 0;
 
 	base = mfsp->mfs_baseoff;
 	while (mfsp->mfs_buflist != (struct buf *)-1) {
+		/*
+		 * If a non-ignored signal is received, try to unmount.
+		 * If that fails, or the filesystem is already in the
+		 * process of being unmounted, clear the signal (it has been
+		 * "processed"), otherwise we will loop here, as tsleep
+		 * will always return EINTR/ERESTART.
+		 */
+		if (sleepreturn != 0) {
+			if (vfs_busy(mp, LK_NOWAIT, 0) ||
+			    dounmount(mp, 0, p) != 0)
+				CLRSIG(p, CURSIG(p));
+			sleepreturn = 0;
+			continue;
+		}
+
 		while ((bp = mfsp->mfs_buflist) != NULL) {
 			mfsp->mfs_buflist = bp->b_actf;
 			mfs_doio(bp, base);
 			wakeup((caddr_t)bp);
 		}
-		/*
-		 * If a non-ignored signal is received, try to unmount.
-		 * If that fails, clear the signal (it has been "processed"),
-		 * otherwise we will loop here, as tsleep will always return
-		 * EINTR/ERESTART.
-		 */
-		if (error == EINTR || error == ERESTART) {
-			if (vfs_busy(mp) == 0 && dounmount(mp, 0, p) != 0)
-				CLRSIG(p, CURSIG(p));
-			error = 0;
-			continue;
-		}
-		error = tsleep((caddr_t)vp, mfs_pri, "mfsidl", 0);
+		sleepreturn = tsleep(vp, mfs_pri, "mfsidl", 0);
 	}
-	return (error);
+	return (sleepreturn);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_param.h,v 1.15 1998/02/10 14:09:06 mrg Exp $	*/
+/*	$NetBSD: vm_param.h,v 1.16 1998/03/01 02:24:02 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_param.h	8.1 (Berkeley) 6/11/93
+ *	@(#)vm_param.h	8.2 (Berkeley) 1/9/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.9 1996/10/12 21:58:45 christos Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.10 1998/03/01 02:23:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,19 +32,24 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ffs_subr.c	8.2 (Berkeley) 9/21/93
+ *	@(#)ffs_subr.c	8.5 (Berkeley) 3/21/95
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#ifndef _KERNEL
+#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+#endif
 
 #ifdef _KERNEL
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
+#include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 
 /*
  * Return buffer with the contents of block "offset" from the beginning of
@@ -64,7 +69,7 @@ ffs_blkatoff(v)
 	struct inode *ip;
 	register struct fs *fs;
 	struct buf *bp;
-	daddr_t lbn;
+	ufs_daddr_t lbn;
 	int bsize, error;
 
 	ip = VTOI(ap->a_vp);
@@ -126,7 +131,7 @@ ffs_checkoverlap(bp, ip)
 	struct inode *ip;
 {
 	register struct buf *ebp, *ep;
-	register daddr_t start, last;
+	register ufs_daddr_t start, last;
 	struct vnode *vp;
 
 	ebp = &buf[nbuf];
@@ -162,7 +167,7 @@ int
 ffs_isblock(fs, cp, h)
 	struct fs *fs;
 	unsigned char *cp;
-	daddr_t h;
+	ufs_daddr_t h;
 {
 	unsigned char mask;
 
@@ -190,7 +195,7 @@ void
 ffs_clrblock(fs, cp, h)
 	struct fs *fs;
 	u_char *cp;
-	daddr_t h;
+	ufs_daddr_t h;
 {
 
 	switch ((int)fs->fs_frag) {
@@ -218,7 +223,7 @@ void
 ffs_setblock(fs, cp, h)
 	struct fs *fs;
 	unsigned char *cp;
-	daddr_t h;
+	ufs_daddr_t h;
 {
 
 	switch ((int)fs->fs_frag) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.h,v 1.9 1998/01/09 06:43:27 thorpej Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.10 1998/03/01 02:24:16 fvdl Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -11,7 +11,7 @@
  */
 
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -349,6 +349,25 @@ static __inline int VOP_POLL(vp, events, p)
 	return (VCALL(vp, VOFFSET(vop_poll), &a));
 }
 
+struct vop_revoke_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	int a_flags;
+};
+extern struct vnodeop_desc vop_revoke_desc;
+static __inline int VOP_REVOKE __P((struct vnode *, 
+    int)) __attribute__ ((unused));
+static __inline int VOP_REVOKE(vp, flags)
+	struct vnode *vp;
+	int flags;
+{
+	struct vop_revoke_args a;
+	a.a_desc = VDESC(vop_revoke);
+	a.a_vp = vp;
+	a.a_flags = flags;
+	return (VCALL(vp, VOFFSET(vop_revoke), &a));
+}
+
 struct vop_mmap_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
@@ -581,19 +600,19 @@ struct vop_readdir_args {
 	struct uio *a_uio;
 	struct ucred *a_cred;
 	int *a_eofflag;
-	off_t *a_cookies;
-	int a_ncookies;
+	off_t **a_cookies;
+	int *a_ncookies;
 };
 extern struct vnodeop_desc vop_readdir_desc;
 static __inline int VOP_READDIR __P((struct vnode *, struct uio *, 
-    struct ucred *, int *, off_t *, int)) __attribute__ ((unused));
+    struct ucred *, int *, off_t **, int *)) __attribute__ ((unused));
 static __inline int VOP_READDIR(vp, uio, cred, eofflag, cookies, ncookies)
 	struct vnode *vp;
 	struct uio *uio;
 	struct ucred *cred;
 	int *eofflag;
-	off_t *cookies;
-	int ncookies;
+	off_t **cookies;
+	int *ncookies;
 {
 	struct vop_readdir_args a;
 	a.a_desc = VDESC(vop_readdir);
@@ -650,60 +669,76 @@ static __inline int VOP_ABORTOP(dvp, cnp)
 struct vop_inactive_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
+	struct proc *a_p;
 };
 extern struct vnodeop_desc vop_inactive_desc;
-static __inline int VOP_INACTIVE __P((struct vnode *)) __attribute__ ((unused));
-static __inline int VOP_INACTIVE(vp)
+static __inline int VOP_INACTIVE __P((struct vnode *, 
+    struct proc *)) __attribute__ ((unused));
+static __inline int VOP_INACTIVE(vp, p)
 	struct vnode *vp;
+	struct proc *p;
 {
 	struct vop_inactive_args a;
 	a.a_desc = VDESC(vop_inactive);
 	a.a_vp = vp;
+	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_inactive), &a));
 }
 
 struct vop_reclaim_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
+	struct proc *a_p;
 };
 extern struct vnodeop_desc vop_reclaim_desc;
-static __inline int VOP_RECLAIM __P((struct vnode *)) __attribute__ ((unused));
-static __inline int VOP_RECLAIM(vp)
+static __inline int VOP_RECLAIM __P((struct vnode *, 
+    struct proc *)) __attribute__ ((unused));
+static __inline int VOP_RECLAIM(vp, p)
 	struct vnode *vp;
+	struct proc *p;
 {
 	struct vop_reclaim_args a;
 	a.a_desc = VDESC(vop_reclaim);
 	a.a_vp = vp;
+	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_reclaim), &a));
 }
 
 struct vop_lock_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
+	int a_flags;
 };
 extern struct vnodeop_desc vop_lock_desc;
-static __inline int VOP_LOCK __P((struct vnode *)) __attribute__ ((unused));
-static __inline int VOP_LOCK(vp)
+static __inline int VOP_LOCK __P((struct vnode *, 
+    int)) __attribute__ ((unused));
+static __inline int VOP_LOCK(vp, flags)
 	struct vnode *vp;
+	int flags;
 {
 	struct vop_lock_args a;
 	a.a_desc = VDESC(vop_lock);
 	a.a_vp = vp;
+	a.a_flags = flags;
 	return (VCALL(vp, VOFFSET(vop_lock), &a));
 }
 
 struct vop_unlock_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
+	int a_flags;
 };
 extern struct vnodeop_desc vop_unlock_desc;
-static __inline int VOP_UNLOCK __P((struct vnode *)) __attribute__ ((unused));
-static __inline int VOP_UNLOCK(vp)
+static __inline int VOP_UNLOCK __P((struct vnode *, 
+    int)) __attribute__ ((unused));
+static __inline int VOP_UNLOCK(vp, flags)
 	struct vnode *vp;
+	int flags;
 {
 	struct vop_unlock_args a;
 	a.a_desc = VDESC(vop_unlock);
 	a.a_vp = vp;
+	a.a_flags = flags;
 	return (VCALL(vp, VOFFSET(vop_unlock), &a));
 }
 

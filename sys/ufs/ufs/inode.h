@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.10 1997/06/11 10:10:08 bouyer Exp $	*/
+/*	$NetBSD: inode.h,v 1.11 1998/03/01 02:23:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)inode.h	8.5 (Berkeley) 7/8/94
+ *	@(#)inode.h	8.9 (Berkeley) 5/14/95
  */
 
 #include <ufs/ufs/dinode.h>
@@ -62,8 +62,7 @@ struct ext2fs_inode_ext {
  * active, and is put back when the file is no longer being used.
  */
 struct inode {
-	struct	inode  *i_next;	/* Hash chain forward. */
-	struct	inode **i_prev;	/* Hash chain back. */
+	LIST_ENTRY(inode) i_hash;/* Hash chain. */
 	struct	vnode  *i_vnode;/* Vnode associated with this inode. */
 	struct	vnode  *i_devvp;/* Vnode for block I/O. */
 	u_int32_t i_flag;	/* flags, see below */
@@ -82,8 +81,7 @@ struct inode {
 	struct	 dquot *i_dquot[MAXQUOTAS]; /* Dquot structures. */
 	u_quad_t i_modrev;	/* Revision level for NFS lease. */
 	struct	 lockf *i_lockf;/* Head of byte-level lock list. */
-	pid_t	 i_lockholder;	/* DEBUG: holder of inode lock. */
-	pid_t	 i_lockwaiter;	/* DEBUG: latest blocked for inode lock. */
+	struct   lock i_lock;	/* Inode lock. */
 	/*
 	 * Side effects; used during directory lookup.
 	 */
@@ -153,14 +151,11 @@ struct inode {
 /* These flags are kept in i_flag. */
 #define	IN_ACCESS	0x0001		/* Access time update request. */
 #define	IN_CHANGE	0x0002		/* Inode change time update request. */
-#define	IN_EXLOCK	0x0004		/* File has exclusive lock. */
-#define	IN_LOCKED	0x0008		/* Inode lock. */
-#define	IN_LWAIT	0x0010		/* Process waiting on file lock. */
-#define	IN_MODIFIED	0x0020		/* Inode has been modified. */
-#define	IN_RENAME	0x0040		/* Inode is being renamed. */
-#define	IN_SHLOCK	0x0080		/* File has shared lock. */
-#define	IN_UPDATE	0x0100		/* Modification time update request. */
-#define	IN_WANTED	0x0200		/* Inode is wanted by a process. */
+#define	IN_UPDATE	0x0004		/* Modification time update request. */
+#define	IN_MODIFIED	0x0008		/* Inode has been modified. */
+#define	IN_RENAME	0x0010		/* Inode is being renamed. */
+#define	IN_SHLOCK	0x0020		/* File has shared lock. */
+#define	IN_EXLOCK	0x0040		/* File has exclusive lock. */
 
 #ifdef _KERNEL
 /*

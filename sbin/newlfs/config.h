@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.2 1995/03/18 14:58:47 cgd Exp $	*/
+/*	$NetBSD: config.h,v 1.3 1998/03/01 02:20:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)config.h	8.2 (Berkeley) 4/22/94
+ *	@(#)config.h	8.3 (Berkeley) 5/24/95
  */
 
 /*
@@ -134,3 +134,9 @@
 #define	DFL_LFSBLOCK		4096
 #define	DFL_LFSBLOCK_SHIFT	12
 #define	DFL_LFSBLOCK_MASK	0xFFF
+
+#define DFL_LFSFRAG		4096
+#define DFL_LFS_FFMASK		DFL_LFSBLOCK_MASK
+#define DFL_LFS_FFSHIFT		DFL_LFSBLOCK_SHIFT
+#define DFL_LFS_FBMASK		0
+#define DFL_LFS_FBSHIFT		0

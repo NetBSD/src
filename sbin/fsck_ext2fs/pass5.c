@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.4 1997/10/09 13:19:39 bouyer Exp $	*/
+/*	$NetBSD: pass5.c,v 1.5 1998/03/01 02:20:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,12 +39,13 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.4 1997/10/09 13:19:39 bouyer Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.5 1998/03/01 02:20:25 fvdl Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <ufs/ufs/dinode.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.c,v 1.9 1998/01/09 06:41:17 thorpej Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.10 1998/03/01 02:22:36 fvdl Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -11,7 +11,7 @@
  */
 
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -252,6 +252,22 @@ struct vnodeop_desc vop_poll_desc = {
 	NULL,
 };
 
+int vop_revoke_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_revoke_args,a_vp),
+	VDESC_NO_OFFSET
+};
+struct vnodeop_desc vop_revoke_desc = {
+	0,
+	"vop_revoke",
+	0,
+	vop_revoke_vp_offsets,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	NULL,
+};
+
 int vop_mmap_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_mmap_args,a_vp),
 	VDESC_NO_OFFSET
@@ -461,7 +477,7 @@ struct vnodeop_desc vop_inactive_desc = {
 	vop_inactive_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_inactive_args, a_p),
 	VDESC_NO_OFFSET,
 	NULL,
 };
@@ -477,7 +493,7 @@ struct vnodeop_desc vop_reclaim_desc = {
 	vop_reclaim_vp_offsets,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_reclaim_args, a_p),
 	VDESC_NO_OFFSET,
 	NULL,
 };
@@ -773,6 +789,7 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_write_desc,
 	&vop_ioctl_desc,
 	&vop_poll_desc,
+	&vop_revoke_desc,
 	&vop_mmap_desc,
 	&vop_fsync_desc,
 	&vop_seek_desc,

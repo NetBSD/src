@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.12 1997/04/02 21:17:30 christos Exp $	*/
+/*	$NetBSD: radix.c,v 1.13 1998/03/01 02:25:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)radix.c	8.5 (Berkeley) 5/19/95
+ *	@(#)radix.c	8.6 (Berkeley) 10/17/95
  */
 
 /*
@@ -117,7 +117,7 @@ rn_search(v_arg, head)
 			x = x->rn_l;
 	}
 	return (x);
-};
+}
 
 struct radix_node *
 rn_search_m(v_arg, head, m_arg)
@@ -135,7 +135,7 @@ rn_search_m(v_arg, head, m_arg)
 			x = x->rn_l;
 	}
 	return x;
-};
+}
 
 int
 rn_refines(m_arg, n_arg)
@@ -306,7 +306,7 @@ on1:
 		}
 	} while (t != top);
 	return 0;
-};
+}
 		
 #ifdef RN_DEBUG
 int	rn_nodenum;

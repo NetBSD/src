@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1995/03/18 14:55:22 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 1998/03/01 02:26:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	8.1 (Berkeley) 6/5/93
+ *	@(#)extern.h	8.2 (Berkeley) 4/28/95
  */
 
 void	get __P((int, off_t, void *, size_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.18 1997/10/10 14:15:32 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.19 1998/03/01 02:25:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)bpf.h	8.1 (Berkeley) 6/10/93
+ *	@(#)bpf.h	8.2 (Berkeley) 1/9/95
  * @(#) Header: bpf.h,v 1.36 97/06/12 14:29:53 leres Exp  (LBL)
  */
 

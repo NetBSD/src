@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.27 1997/11/27 20:36:05 fvdl Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.28 1998/03/01 02:21:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: Id: portal_vnops.c,v 1.4 1992/05/30 10:05:24 jsp Exp
- *	@(#)portal_vnops.c	8.8 (Berkeley) 1/21/94
+ *	@(#)portal_vnops.c	8.14 (Berkeley) 5/21/95
  */
 
 /*
@@ -84,6 +84,7 @@ int	portal_setattr	__P((void *));
 #define	portal_ioctl	genfs_eopnotsupp
 #define	portal_poll	genfs_eopnotsupp
 #define	portal_mmap	genfs_eopnotsupp
+#define portal_revoke	genfs_revoke
 #define	portal_fsync	genfs_nullop
 #define	portal_seek	genfs_seek
 #define	portal_remove	genfs_eopnotsupp
@@ -97,12 +98,12 @@ int	portal_readdir	__P((void *));
 #define	portal_abortop	genfs_abortop
 int	portal_inactive	__P((void *));
 int	portal_reclaim	__P((void *));
-#define	portal_lock	genfs_nullop
-#define	portal_unlock	genfs_nullop
+#define	portal_lock	genfs_nolock
+#define	portal_unlock	genfs_nounlock
 #define	portal_bmap	genfs_badop
 #define	portal_strategy	genfs_badop
 int	portal_print	__P((void *));
-#define	portal_islocked	genfs_nullop
+#define	portal_islocked	genfs_noislocked
 int	portal_pathconf	__P((void *));
 #define	portal_advlock	genfs_badop
 #define	portal_blkatoff	genfs_badop
@@ -127,6 +128,7 @@ struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_write_desc, portal_write },		/* write */
 	{ &vop_ioctl_desc, portal_ioctl },		/* ioctl */
 	{ &vop_poll_desc, portal_poll },		/* poll */
+	{ &vop_revoke_desc, portal_revoke },		/* revoke */
 	{ &vop_mmap_desc, portal_mmap },		/* mmap */
 	{ &vop_fsync_desc, portal_fsync },		/* fsync */
 	{ &vop_seek_desc, portal_seek },		/* seek */
@@ -607,7 +609,12 @@ int
 portal_inactive(v)
 	void *v;
 {
+	struct vop_inactive_args /* {
+		struct vnode *a_vp;
+		struct proc *a_p;
+	} */ *ap = v;
 
+	VOP_UNLOCK(ap->a_vp, 0);
 	return (0);
 }
 

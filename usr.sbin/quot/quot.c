@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.13 1997/11/06 14:36:45 mrg Exp $	*/
+/*	$NetBSD: quot.c,v 1.14 1998/03/01 02:26:03 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,15 +33,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.13 1997/11/06 14:36:45 mrg Exp $");
+__RCSID("$NetBSD: quot.c,v 1.14 1998/03/01 02:26:03 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/time.h>
-#include <ufs/ffs/fs.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
+#include <ufs/ffs/fs.h>
 
 #include <err.h>
 #include <errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.25 1997/10/30 22:47:06 enami Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.26 1998/03/01 02:22:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vfs_lookup.c	8.6 (Berkeley) 11/21/94
+ *	@(#)vfs_lookup.c	8.10 (Berkeley) 5/27/95
  */
 
 #include <sys/param.h>
@@ -163,7 +163,7 @@ namei(ndp)
 			return (0);
 		}
 		if ((cnp->cn_flags & LOCKPARENT) && ndp->ni_pathlen == 1)
-			VOP_UNLOCK(ndp->ni_dvp);
+			VOP_UNLOCK(ndp->ni_dvp, 0);
 		if (ndp->ni_loopcnt++ >= MAXSYMLINKS) {
 			error = ELOOP;
 			break;
@@ -294,7 +294,7 @@ lookup(ndp)
 	cnp->cn_flags &= ~ISSYMLINK;
 	dp = ndp->ni_startdir;
 	ndp->ni_startdir = NULLVP;
-	VOP_LOCK(dp);
+	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 
 	/*
 	 * If we have a leading string of slashes, remove them, and just make
@@ -419,7 +419,7 @@ dirloop:
 			dp = dp->v_mount->mnt_vnodecovered;
 			vput(tdp);
 			VREF(dp);
-			VOP_LOCK(dp);
+			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
 
@@ -428,6 +428,7 @@ dirloop:
 	 */
 unionlookup:
 	ndp->ni_dvp = dp;
+	ndp->ni_vp = NULL;
 	if ((error = VOP_LOOKUP(dp, &ndp->ni_vp, cnp)) != 0) {
 #ifdef DIAGNOSTIC
 		if (ndp->ni_vp != NULL)
@@ -443,7 +444,7 @@ unionlookup:
 			dp = dp->v_mount->mnt_vnodecovered;
 			vput(tdp);
 			VREF(dp);
-			VOP_LOCK(dp);
+			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 			goto unionlookup;
 		}
 
@@ -461,7 +462,7 @@ unionlookup:
 		 * If creating and at end of pathname, then can consider
 		 * allowing file to be created.
 		 */
-		if (rdonly || (ndp->ni_dvp->v_mount->mnt_flag & MNT_RDONLY)) {
+		if (rdonly) {
 			error = EROFS;
 			goto bad;
 		}
@@ -500,12 +501,11 @@ unionlookup:
 	 */
 	while (dp->v_type == VDIR && (mp = dp->v_mountedhere) &&
 	       (cnp->cn_flags & NOCROSSMOUNT) == 0) {
-		if (mp->mnt_flag & MNT_MLOCK) {
-			mp->mnt_flag |= MNT_MWAIT;
-			sleep((caddr_t)mp, PVFS);
+		if (vfs_busy(mp, 0, 0))
 			continue;
-		}
-		if ((error = VFS_ROOT(dp->v_mountedhere, &tdp)) != 0)
+		error = VFS_ROOT(mp, &tdp);
+		vfs_unbusy(mp);
+		if (error)
 			goto bad2;
 		vput(dp);
 		ndp->ni_vp = dp = tdp;
@@ -544,19 +544,16 @@ nextname:
 
 terminal:
 	/*
-	 * Check for read-only file systems.
+	 * Disallow directory write attempts on read-only file systems.
 	 */
-	if (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME) {
+	if (rdonly &&
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
 		/*
 		 * Disallow directory write attempts on read-only
 		 * file systems.
 		 */
-		if (rdonly || (dp->v_mount->mnt_flag & MNT_RDONLY) ||
-		    (wantparent &&
-		     (ndp->ni_dvp->v_mount->mnt_flag & MNT_RDONLY))) {
-			error = EROFS;
-			goto bad2;
-		}
+		error = EROFS;
+		goto bad2;
 	}
 	if (ndp->ni_dvp != NULL) {
 		if (cnp->cn_flags & SAVESTART) {
@@ -567,12 +564,12 @@ terminal:
 			vrele(ndp->ni_dvp);
 	}
 	if ((cnp->cn_flags & LOCKLEAF) == 0)
-		VOP_UNLOCK(dp);
+		VOP_UNLOCK(dp, 0);
 	return (0);
 
 bad2:
 	if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
-		VOP_UNLOCK(ndp->ni_dvp);
+		VOP_UNLOCK(ndp->ni_dvp, 0);
 	vrele(ndp->ni_dvp);
 bad:
 	vput(dp);
@@ -588,7 +585,7 @@ relookup(dvp, vpp, cnp)
 	struct vnode *dvp, **vpp;
 	struct componentname *cnp;
 {
-	register struct vnode *dp = 0;	/* the directory we are searching */
+	struct vnode *dp = 0;		/* the directory we are searching */
 	int docache;			/* == 0 do not cache last component */
 	int wantparent;			/* 1 => wantparent or lockparent flag */
 	int rdonly;			/* lookup read-only flag bit */
@@ -609,7 +606,7 @@ relookup(dvp, vpp, cnp)
 	rdonly = cnp->cn_flags & RDONLY;
 	cnp->cn_flags &= ~ISSYMLINK;
 	dp = dvp;
-	VOP_LOCK(dp);
+	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 
 /* dirloop: */
 	/*
@@ -658,7 +655,7 @@ relookup(dvp, vpp, cnp)
 		 * If creating and at end of pathname, then can consider
 		 * allowing file to be created.
 		 */
-		if (rdonly || (dvp->v_mount->mnt_flag & MNT_RDONLY)) {
+		if (rdonly) {
 			error = EROFS;
 			goto bad;
 		}
@@ -685,17 +682,10 @@ relookup(dvp, vpp, cnp)
 	/*
 	 * Check for read-only file systems.
 	 */
-	if (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME) {
-		/*
-		 * Disallow directory write attempts on read-only
-		 * file systems.
-		 */
-		if (rdonly || (dp->v_mount->mnt_flag & MNT_RDONLY) ||
-		    (wantparent &&
-		     (dvp->v_mount->mnt_flag & MNT_RDONLY))) {
-			error = EROFS;
-			goto bad2;
-		}
+	if (rdonly &&
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
+		error = EROFS;
+		goto bad2;
 	}
 	/* ASSERT(dvp == ndp->ni_startdir) */
 	if (cnp->cn_flags & SAVESTART)
@@ -703,12 +693,12 @@ relookup(dvp, vpp, cnp)
 	if (!wantparent)
 		vrele(dvp);
 	if ((cnp->cn_flags & LOCKLEAF) == 0)
-		VOP_UNLOCK(dp);
+		VOP_UNLOCK(dp, 0);
 	return (0);
 
 bad2:
 	if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
-		VOP_UNLOCK(dvp);
+		VOP_UNLOCK(dvp, 0);
 	vrele(dvp);
 bad:
 	vput(dp);

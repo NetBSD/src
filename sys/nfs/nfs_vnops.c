@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.88 1998/02/10 14:10:19 mrg Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.89 1998/03/01 02:24:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs_vnops.c	8.16 (Berkeley) 5/27/95
+ *	@(#)nfs_vnops.c	8.19 (Berkeley) 7/31/95
  */
 
 #include "opt_uvm.h"
@@ -109,9 +109,7 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_lease_desc, nfs_lease_check },		/* lease */
 	{ &vop_ioctl_desc, nfs_ioctl },			/* ioctl */
 	{ &vop_poll_desc, nfs_poll },			/* poll */
-#ifdef Lite2_integrated
 	{ &vop_revoke_desc, nfs_revoke },		/* revoke */
-#endif
 	{ &vop_mmap_desc, nfs_mmap },			/* mmap */
 	{ &vop_fsync_desc, nfs_fsync },			/* fsync */
 	{ &vop_seek_desc, nfs_seek },			/* seek */
@@ -165,9 +163,7 @@ struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
-#ifdef Lite2_integrated
 	{ &vop_revoke_desc, spec_revoke },		/* revoke */
-#endif
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
 	{ &vop_fsync_desc, nfs_fsync },			/* fsync */
 	{ &vop_seek_desc, spec_seek },			/* seek */
@@ -219,9 +215,7 @@ struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
-#ifdef Lite2_integrated
 	{ &vop_revoke_desc, fifo_revoke },		/* revoke */
-#endif
 	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
 	{ &vop_fsync_desc, nfs_fsync },			/* fsync */
 	{ &vop_seek_desc, fifo_seek },			/* seek */
@@ -812,14 +806,14 @@ nfs_lookup(v)
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	register struct componentname *cnp = ap->a_cnp;
-	register struct vnode *dvp = ap->a_dvp;
-	register struct vnode **vpp = ap->a_vpp;
-	register int flags = cnp->cn_flags;
-	register struct vnode *newvp;
-	register u_int32_t *tl;
-	register caddr_t cp;
-	register int32_t t1, t2;
+	struct componentname *cnp = ap->a_cnp;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode **vpp = ap->a_vpp;
+	int flags = cnp->cn_flags;
+	struct vnode *newvp;
+	u_int32_t *tl;
+	caddr_t cp;
+	int32_t t1, t2;
 	struct nfsmount *nmp;
 	caddr_t bpos, dpos, cp2;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
@@ -863,11 +857,7 @@ nfs_lookup(v)
 			VREF(newvp);
 			error = 0;
 		} else
-#ifdef Lite2_integrated
-			error = vget(newvp, LK_EXCLUSIVE, p);
-#else
-			error = vget(newvp, 1);
-#endif
+			error = vget(newvp, LK_EXCLUSIVE);
 		if (!error) {
 			if (vpid == newvp->v_id) {
 			   if (!VOP_GETATTR(newvp, &vattr, cnp->cn_cred, cnp->cn_proc)
@@ -1984,8 +1974,8 @@ nfs_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		off_t *a_cookies;
-		int a_ncookies;
+		off_t **a_cookies;
+		int *a_ncookies;
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct uio *uio = ap->a_uio;
@@ -2018,9 +2008,12 @@ nfs_readdir(v)
 
 	if (!error && ap->a_cookies) {
 		struct dirent *dp;
-		off_t *cookies = ap->a_cookies;
-		int ncookies = ap->a_ncookies;
+		off_t *cookies;
+		int ncookies;
 
+		ncookies = uio->uio_resid / 16;
+		MALLOC(cookies, off_t *, sizeof (off_t) * ncookies, M_TEMP,
+		    M_WAITOK);
 		/*
 		 * Only the NFS server and emulations use cookies, and they
 		 * load the directory block into system space, so we can
@@ -2041,6 +2034,8 @@ nfs_readdir(v)
 		uio->uio_resid += (uio->uio_iov->iov_base - base);
 		uio->uio_iov->iov_len += (uio->uio_iov->iov_base - base);
 		uio->uio_iov->iov_base = base;
+		*ap->a_cookies = cookies;
+		*ap->a_ncookies = ncookies;
 	}
 
 	uio->uio_resid += lost;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_proto.c,v 1.6 1996/02/13 22:14:08 christos Exp $	*/
+/*	$NetBSD: ns_proto.c,v 1.7 1998/03/01 02:24:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ns_proto.c	8.1 (Berkeley) 6/10/93
+ *	@(#)ns_proto.c	8.2 (Berkeley) 2/9/95
  */
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.5 1997/09/16 12:25:36 lukem Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.6 1998/03/01 02:20:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.5 1997/09/16 12:25:36 lukem Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.6 1998/03/01 02:20:17 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,8 @@ __RCSID("$NetBSD: mount_cd9660.c,v 1.5 1997/09/16 12:25:36 lukem Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <isofs/cd9660/cd9660_mount.h>
 
 #include "mntopts.h"
 

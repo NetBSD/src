@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.10 1998/02/09 17:43:54 perry Exp $	*/
+/*	$NetBSD: if_types.h,v 1.11 1998/03/01 02:25:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_types.h	8.2 (Berkeley) 4/20/94
+ *	@(#)if_types.h	8.3 (Berkeley) 4/28/95
  */
 
 #ifndef _NET_IF_TYPES_H_

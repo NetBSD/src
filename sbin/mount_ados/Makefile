@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/10 19:49:02 christos Exp $
+#	$NetBSD: Makefile,v 1.8 1998/03/01 02:20:11 fvdl Exp $
 
 PROG=	mount_ados
 SRCS=	mount_ados.c getmntopts.c
 MAN=	mount_ados.8
 
 MOUNT=	${.CURDIR}/../mount
-CPPFLAGS+= -I${MOUNT}
+CPPFLAGS+= -I${.CURDIR}/../../sys -I${MOUNT}
 .PATH:	${MOUNT}
 
 .include <bsd.prog.mk>

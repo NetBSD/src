@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.14 1998/01/28 02:35:10 thorpej Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.15 1998/03/01 02:22:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)subr_log.c	8.1 (Berkeley) 6/10/93
+ *	@(#)subr_log.c	8.3 (Berkeley) 2/14/95
  */
 
 /*

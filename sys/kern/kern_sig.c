@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.70 1998/02/10 14:09:41 mrg Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.71 1998/03/01 02:22:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_sig.c	8.7 (Berkeley) 4/18/94
+ *	@(#)kern_sig.c	8.14 (Berkeley) 5/14/95
  */
 
 #include "opt_uvm.h"
@@ -489,7 +489,7 @@ gsignal(pgid, signum)
 }
 
 /*
- * Send a signal to a process group.  If checktty is 1,
+ * Send a signal to a process group. If checktty is 1,
  * limit to members which have a controlling terminal.
  */
 void
@@ -539,6 +539,7 @@ trapsignal(p, signum, code)
 		}
 	} else {
 		ps->ps_code = code;	/* XXX for core dump/debugger */
+		ps->ps_sig = signum;	/* XXX to verify code */
 		psignal(p, signum);
 	}
 }
@@ -790,8 +791,17 @@ issignal(p)
 			/*
 			 * If traced, always stop, and stay
 			 * stopped until released by the debugger.
+
+			 * Note that we must clear the pending signal
+			 * before we call trace_req since that routine
+			 * might cause a fault, calling tsleep and
+			 * leading us back here again with the same signal.
+			 * Then we would be deadlocked because the tracer
+			 * would still be blocked on the ipc struct from
+			 * the initial request.
 			 */
 			p->p_xstat = signum;
+			p->p_siglist &= ~mask;
 			if ((p->p_flag & P_FSTRACE) == 0)
 				psignal(p->p_pptr, SIGCHLD);
 			do {
@@ -814,7 +824,14 @@ issignal(p)
 			mask = sigmask(signum);
 			if ((p->p_sigmask & mask) != 0)
 				continue;
-			p->p_siglist &= ~mask;		/* take the signal! */
+			p->p_siglist |= mask;
+			/*
+			 * If the traced bit got turned off, go back up
+			 * to the top to rescan signals.  This ensures  
+			 * that p_sig* and ps_sigact are consistent.
+			 */
+			if ((p->p_flag & P_TRACED) == 0)
+				continue;
 		}
 
 		prop = sigprop[signum];
@@ -981,6 +998,7 @@ postsig(signum)
 		} else {
 			code = ps->ps_code;
 			ps->ps_code = 0;
+			ps->ps_sig = 0;
 		}
 		(*p->p_emul->e_sendsig)(action, signum, returnmask, code);
 	}
@@ -1142,7 +1160,7 @@ coredump(p)
 		    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL, p);
 	}
 out:
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	error1 = vn_close(vp, FWRITE, cred, p);
 	if (error == 0)
 		error = error1;

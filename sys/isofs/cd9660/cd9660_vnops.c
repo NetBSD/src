@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.43 1998/03/01 02:22:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cd9660_vnops.c	8.15 (Berkeley) 12/5/94
+ *	@(#)cd9660_vnops.c	8.15 (Berkeley) 5/27/95
  */
 
 #include <sys/param.h>
@@ -160,6 +160,22 @@ cd9660_access(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
+
+	/*
+	 * Disallow write attempts unless the file is a socket,
+	 * fifo, or a block or character device resident on the
+	 * file system.
+	 */
+	if (ap->a_mode & VWRITE) {
+		switch (vp->v_type) {
+		case VDIR:
+		case VLNK:
+		case VREG:
+			return (EROFS);
+		default:
+			break;
+		}
+	}
 
 	return (vaccess(vp->v_type, ip->inode.iso_mode & ALLPERMS,
 	    ip->inode.iso_uid, ip->inode.iso_gid, ap->a_mode, ap->a_cred));
@@ -423,8 +439,8 @@ cd9660_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		off_t *a_cookies;
-		int a_ncookies;
+		off_t **a_cookies;
+		int *a_ncookies;
 	} */ *ap = v;
 	register struct uio *uio = ap->a_uio;
 	struct isoreaddir *idp;
@@ -439,6 +455,11 @@ cd9660_readdir(v)
 	int error = 0;
 	int reclen;
 	u_short namelen;
+	off_t *cookies = NULL;
+	int ncookies = 0;
+
+	if (vdp->v_type != VDIR)
+		return (ENOTDIR);
 
 	dp = VTOI(vdp);
 	imp = dp->i_mnt;
@@ -453,9 +474,16 @@ cd9660_readdir(v)
 	idp->saveent.d_type = idp->assocent.d_type = idp->current.d_type =
 	    DT_UNKNOWN;
 	idp->uio = uio;
+	if (ap->a_ncookies == NULL)
+		idp->cookies = NULL;
+	else {
+		ncookies = uio->uio_resid / 16;
+		MALLOC(cookies, off_t *, ncookies * sizeof(off_t), M_TEMP,
+		    M_WAITOK);
+		idp->cookies = cookies;
+		idp->ncookies = ncookies;
+	}
 	idp->eofflag = 1;
-	idp->cookies = ap->a_cookies;
-	idp->ncookies = ap->a_ncookies;
 	idp->curroff = uio->uio_offset;
 
 	if ((entryoffsetinblock = idp->curroff & bmask) &&
@@ -566,6 +594,18 @@ cd9660_readdir(v)
 	}
 	if (error < 0)
 		error = 0;
+
+	if (ap->a_ncookies != NULL) {
+		if (error)
+			FREE(cookies, M_TEMP);
+		else {
+			/*
+			 * Work out the number of cookies actually used.
+			 */
+			*ap->a_ncookies = ncookies - idp->ncookies;
+			*ap->a_cookies = cookies;
+		}
+	}
 
 	if (bp)
 		brelse (bp);
@@ -717,47 +757,12 @@ cd9660_lock(v)
 {
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
+		int a_flags;
+		struct proc *a_p;
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
-	register struct iso_node *ip;
-#ifdef DIAGNOSTIC
-	struct proc *p = curproc;	/* XXX */
-#endif
 
-start:
-	while (vp->v_flag & VXLOCK) {
-		vp->v_flag |= VXWANT;
-		sleep((caddr_t)vp, PINOD);
-	}
-	if (vp->v_tag == VT_NON)
-		return (ENOENT);
-	ip = VTOI(vp);
-	if (ip->i_flag & IN_LOCKED) {
-		ip->i_flag |= IN_WANTED;
-#ifdef DIAGNOSTIC
-		if (p) {
-			if (p->p_pid == ip->i_lockholder)
-				panic("locking against myself");
-			ip->i_lockwaiter = p->p_pid;
-		} else
-			ip->i_lockwaiter = -1;
-#endif
-		(void) sleep((caddr_t)ip, PINOD);
-		goto start;
-	}
-#ifdef DIAGNOSTIC
-	ip->i_lockwaiter = 0;
-	if (ip->i_lockholder != 0)
-		panic("lockholder (%d) != 0", ip->i_lockholder);
-	if (p && p->p_pid == 0)
-		printf("locking by process 0\n");
-	if (p)
-		ip->i_lockholder = p->p_pid;
-	else
-		ip->i_lockholder = -1;
-#endif
-	ip->i_flag |= IN_LOCKED;
-	return (0);
+	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags, &vp->v_interlock));
 }
 
 /*
@@ -769,28 +774,13 @@ cd9660_unlock(v)
 {
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
+		int a_flags;
+		struct proc *a_p;
 	} */ *ap = v;
-	register struct iso_node *ip = VTOI(ap->a_vp);
+	struct vnode *vp = ap->a_vp;
 
-#ifdef DIAGNOSTIC
-	struct proc *p = curproc;	/* XXX */
-
-	if ((ip->i_flag & IN_LOCKED) == 0) {
-		vprint("cd9660_unlock: unlocked inode", ap->a_vp);
-		panic("cd9660_unlock NOT LOCKED");
-	}
-	if (p && p->p_pid != ip->i_lockholder && p->p_pid > -1 &&
-	    ip->i_lockholder > -1/* && lockcount++ < 100*/)
-		panic("unlocker (%d) != lock holder (%d)",
-		    p->p_pid, ip->i_lockholder);
-	ip->i_lockholder = 0;
-#endif
-	ip->i_flag &= ~IN_LOCKED;
-	if (ip->i_flag & IN_WANTED) {
-		ip->i_flag &= ~IN_WANTED;
-		wakeup((caddr_t)ip);
-	}
-	return (0);
+	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags | LK_RELEASE,
+		&vp->v_interlock));
 }
 
 /*
@@ -841,6 +831,7 @@ int
 cd9660_print(v)
 	void *v;
 {
+
 	printf("tag VT_ISOFS, isofs vnode\n");
 	return (0);
 }
@@ -856,9 +847,7 @@ cd9660_islocked(v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 
-	if (VTOI(ap->a_vp)->i_flag & IN_LOCKED)
-		return (1);
-	return (0);
+	return (lockstatus(&VTOI(ap->a_vp)->i_lock));
 }
 
 /*
@@ -909,6 +898,7 @@ cd9660_setattr(v)
 	void *v;
 {
 	struct vop_setattr_args /* {
+		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
@@ -971,6 +961,7 @@ int	lease_check	__P((void *));
 #define	cd9660_truncate	genfs_eopnotsupp
 #define	cd9660_update	genfs_nullop
 #define	cd9660_bwrite	genfs_eopnotsupp
+#define cd9660_revoke	genfs_revoke
 
 /*
  * Global vfs data structures for cd9660
@@ -991,6 +982,7 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_lease_desc, cd9660_lease_check },	/* lease */
 	{ &vop_ioctl_desc, cd9660_ioctl },		/* ioctl */
 	{ &vop_poll_desc, cd9660_poll },		/* poll */
+	{ &vop_revoke_desc, cd9660_revoke },		/* revoke */
 	{ &vop_mmap_desc, cd9660_mmap },		/* mmap */
 	{ &vop_fsync_desc, cd9660_fsync },		/* fsync */
 	{ &vop_seek_desc, cd9660_seek },		/* seek */
@@ -1043,6 +1035,7 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
+	{ &vop_revoke_desc, spec_revoke },		/* revoke */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_seek_desc, spec_seek },			/* seek */
@@ -1093,6 +1086,7 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
+	{ &vop_revoke_desc, fifo_revoke },		/* revoke */
 	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
 	{ &vop_fsync_desc, fifo_fsync },		/* fsync */
 	{ &vop_seek_desc, fifo_seek },			/* seek */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.5 1998/02/10 14:12:01 mrg Exp $	*/
+/*	$NetBSD: uvm.h,v 1.6 1998/03/01 02:25:28 fvdl Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -77,10 +77,8 @@ struct uvm {
 	struct pglist page_active;	/* allocated pages, in use */
 	struct pglist page_inactive_swp;/* pages inactive (reclaim or free) */
 	struct pglist page_inactive_obj;/* pages inactive (reclaim or free) */
-#if NCPU > 1
 	simple_lock_data_t pageqlock;	/* lock for active/inactive page q */
 	simple_lock_data_t fpageqlock;	/* lock for free page q */
-#endif /* NCPU > 1 */
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
 	struct proc *pagedaemon_proc;	/* daemon's pid */
@@ -89,20 +87,14 @@ struct uvm {
 	struct pglist *page_hash;	/* page hash table (vp/off->page) */
 	int page_nhash;			/* number of buckets */
 	int page_hashmask;		/* hash mask */
-#if NCPU > 1
 	simple_lock_data_t hashlock;	/* lock on page_hash array */
-#endif
 	/* anon stuff */
 	struct vm_anon *afree;		/* anon free list */
-#if NCPU > 1
 	simple_lock_data_t afreelock; 	/* lock on anon free list */
-#endif /* NCPU > 1 */
 
 	/* static kernel map entry pool */
 	vm_map_entry_t kentry_free;	/* free page pool */
-#if NCPU > 1
 	simple_lock_data_t kentry_lock;
-#endif
 
 	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
 	struct uvm_aiohead aio_done;	/* done async i/o reqs */

@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.19 1998/02/14 19:34:16 kleink Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.20 1998/03/01 02:24:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)spp_usrreq.c	8.1 (Berkeley) 6/10/93
+ *	@(#)spp_usrreq.c	8.2 (Berkeley) 1/9/95
  */
 
 #include <sys/param.h>
@@ -1336,7 +1336,7 @@ spp_usrreq(so, req, m, nam, control, p)
 	int ostate;
 
 	if (req == PRU_CONTROL)
-                return (ns_control(so, (long)m, (caddr_t)nam,
+                return (ns_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
 
 	s = splsoftnet();

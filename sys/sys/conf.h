@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.53 1997/10/16 23:30:36 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.54 1998/03/01 02:24:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)conf.h	8.3 (Berkeley) 1/21/94
+ *	@(#)conf.h	8.5 (Berkeley) 1/9/95
  */
 
 #ifndef _SYS_CONF_H_

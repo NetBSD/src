@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_vnops.c,v 1.14 1997/06/11 10:10:06 bouyer Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.15 1998/03/01 02:23:25 fvdl Exp $	*/
 
 /*
- * Copyright (c) 1986, 1989, 1991, 1993
+ * Copyright (c) 1986, 1989, 1991, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lfs_vnops.c	8.8 (Berkeley) 8/10/94
+ *	@(#)lfs_vnops.c	8.13 (Berkeley) 6/10/95
  */
 
 #include <sys/param.h>
@@ -83,6 +83,7 @@ struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_lease_desc, ufs_lease_check },		/* lease */
 	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
 	{ &vop_poll_desc, ufs_poll },			/* poll */
+	{ &vop_revoke_desc, ufs_revoke },		/* revoke */
 	{ &vop_mmap_desc, ufs_mmap },			/* mmap */
 	{ &vop_fsync_desc, lfs_fsync },			/* fsync */
 	{ &vop_seek_desc, ufs_seek },			/* seek */
@@ -95,7 +96,7 @@ struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_readdir_desc, ufs_readdir },		/* readdir */
 	{ &vop_readlink_desc, ufs_readlink },		/* readlink */
 	{ &vop_abortop_desc, ufs_abortop },		/* abortop */
-	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
+	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ufs_lock },			/* lock */
 	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
@@ -132,6 +133,7 @@ struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
+	{ &vop_revoke_desc, spec_revoke },		/* revoke */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_seek_desc, spec_seek },			/* seek */
@@ -144,7 +146,7 @@ struct vnodeopv_entry_desc lfs_specop_entries[] = {
 	{ &vop_readdir_desc, spec_readdir },		/* readdir */
 	{ &vop_readlink_desc, spec_readlink },		/* readlink */
 	{ &vop_abortop_desc, spec_abortop },		/* abortop */
-	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
+	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ufs_lock },			/* lock */
 	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
@@ -182,6 +184,7 @@ struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
+	{ &vop_revoke_desc, fifo_revoke },		/* revoke */
 	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
 	{ &vop_fsync_desc, fifo_fsync },		/* fsync */
 	{ &vop_seek_desc, fifo_seek },			/* seek */
@@ -194,7 +197,7 @@ struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_readdir_desc, fifo_readdir },		/* readdir */
 	{ &vop_readlink_desc, fifo_readlink },		/* readlink */
 	{ &vop_abortop_desc, fifo_abortop },		/* abortop */
-	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
+	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ufs_lock },			/* lock */
 	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
@@ -260,6 +263,10 @@ lfs_fsync(v)
 }
 
 #define	MARK_VNODE(dvp)	(dvp)->v_flag |= VDIROP
+
+/*
+ * XXXX most of these aren't used? - fvdl 02/98
+ */
 
 int
 lfs_symlink(v)
@@ -484,48 +491,35 @@ lfs_close(v)
 	int mod;
 	struct timespec ts;
 
-	if (vp->v_usecount > 1 && !(ip->i_flag & IN_LOCKED)) {
+	simple_lock(&vp->v_interlock);
+	if (vp->v_usecount > 1) {
 		mod = ip->i_flag & IN_MODIFIED;
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		FFS_ITIMES(ip, &ts, &ts, &ts);
 		if (!mod && ip->i_flag & IN_MODIFIED)
 			ip->i_lfs->lfs_uinodes++;
 	}
+	simple_unlock(&vp->v_interlock);
 	return (0);
-}
-
-/*
- * Stub inactive routine that avoid calling ufs_inactive in some cases.
- */
-int lfs_no_inactive = 0;
-
-int
-lfs_inactive(v)
-	void *v;
-{
-	struct vop_inactive_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-	
-	if (lfs_no_inactive)
-		return (0);
-	return (ufs_inactive(ap));
 }
 
 /*
  * Reclaim an inode so that it can be used for other purposes.
  */
+int lfs_no_inactive = 0;
+
 int
 lfs_reclaim(v)
 	void *v;
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
+		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 	int error;
 
-	if ((error = ufs_reclaim(vp)) != 0)
+	if ((error = ufs_reclaim(vp, ap->a_p)))
 		return (error);
 	FREE(vp->v_data, M_LFSNODE);
 	vp->v_data = NULL;

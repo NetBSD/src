@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.104 1998/02/14 01:26:50 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.105 1998/03/01 02:22:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tty.c	8.8 (Berkeley) 1/21/94
+ *	@(#)tty.c	8.13 (Berkeley) 1/9/95
  */
 
 #include "opt_uconsole.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.17 1997/11/17 15:37:07 ws Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.18 1998/03/01 02:25:12 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,6 +48,35 @@
  */
 
 /*
+ *  Arguments to mount MSDOS filesystems.
+ */
+struct msdosfs_args {
+	char	*fspec;		/* blocks special holding the fs to mount */
+	struct	export_args export;	/* network export information */
+	uid_t	uid;		/* uid that owns msdosfs files */
+	gid_t	gid;		/* gid that owns msdosfs files */
+	mode_t  mask;		/* mask to be applied for msdosfs perms */
+	int	flags;		/* see below */
+};
+
+/*
+ * Msdosfs mount options:
+ */
+#define	MSDOSFSMNT_SHORTNAME	1	/* Force old DOS short names only */
+#define	MSDOSFSMNT_LONGNAME	2	/* Force Win'95 long names */
+#define	MSDOSFSMNT_NOWIN95	4	/* Completely ignore Win95 entries */
+#define	MSDOSFSMNT_GEMDOSFS	8	/* This is a gemdos-flavour */
+
+/* All flags above: */
+#define	MSDOSFSMNT_MNTOPT \
+	(MSDOSFSMNT_SHORTNAME|MSDOSFSMNT_LONGNAME|MSDOSFSMNT_NOWIN95 \
+	 |MSDOSFSMNT_GEMDOSFS)
+#define	MSDOSFSMNT_RONLY	0x80000000	/* mounted read-only	*/
+#define	MSDOSFSMNT_WAITONFAT	0x40000000	/* mounted synchronous	*/
+#define	MSDOSFS_FATMIRROR	0x20000000	/* FAT is mirrored */
+
+#ifdef _KERNEL
+/*
  * Layout of the mount control block for a msdos file system.
  */
 struct msdosfsmount {
@@ -86,25 +115,6 @@ struct msdosfsmount {
 };
 /* Byte offset in FAT on filesystem pmp, cluster cn */
 #define	FATOFS(pmp, cn)	((cn) * (pmp)->pm_fatmult / (pmp)->pm_fatdiv)
-
-/*
- * Mount point flags:
- */
-#if 0
-    /* Defined in <sys/mount.h> */
-#define	MSDOSFSMNT_SHORTNAME	1
-#define	MSDOSFSMNT_LONGNAME	2
-#define	MSDOSFSMNT_NOWIN95	4
-#define	MSDOSFSMNT_GEMDOSFS	8
-#endif
-
-/* All flags above: */
-#define	MSDOSFSMNT_MNTOPT \
-	(MSDOSFSMNT_SHORTNAME|MSDOSFSMNT_LONGNAME|MSDOSFSMNT_NOWIN95 \
-	 |MSDOSFSMNT_GEMDOSFS)
-#define	MSDOSFSMNT_RONLY	0x80000000	/* mounted read-only	*/
-#define	MSDOSFSMNT_WAITONFAT	0x40000000	/* mounted synchronous	*/
-#define	MSDOSFS_FATMIRROR	0x20000000	/* FAT is mirrored */
 
 #define	VFSTOMSDOSFS(mp)	((struct msdosfsmount *)mp->mnt_data)
 
@@ -207,3 +217,5 @@ int msdosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int msdosfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *, struct vnode **, int *, struct ucred **));
 int msdosfs_vptofh __P((struct vnode *, struct fid *));
 void msdosfs_init __P((void));
+
+#endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.15 1997/10/15 17:04:30 mycroft Exp $	*/
+/*	$NetBSD: resource.h,v 1.16 1998/03/01 02:24:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)resource.h	8.2 (Berkeley) 1/4/94
+ *	@(#)resource.h	8.4 (Berkeley) 1/9/95
  */
 
 #ifndef _SYS_RESOURCE_H_

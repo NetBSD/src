@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ados.c,v 1.7 1997/09/16 12:23:34 lukem Exp $	*/
+/*	$NetBSD: mount_ados.c,v 1.8 1998/03/01 02:20:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ados.c,v 1.7 1997/09/16 12:23:34 lukem Exp $");
+__RCSID("$NetBSD: mount_ados.c,v 1.8 1998/03/01 02:20:11 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: mount_ados.c,v 1.7 1997/09/16 12:23:34 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <adosfs/adosfs.h>
 
 #include "mntopts.h"
 

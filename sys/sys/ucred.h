@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.12 1995/06/01 22:44:50 jtc Exp $	*/
+/*	$NetBSD: ucred.h,v 1.13 1998/03/01 02:24:15 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ucred.h	8.2 (Berkeley) 1/4/94
+ *	@(#)ucred.h	8.4 (Berkeley) 1/9/95
  */
 
 #ifndef _SYS_UCRED_H_

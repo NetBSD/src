@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.41 1998/02/10 14:10:12 mrg Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.42 1998/03/01 02:24:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs_serv.c	8.7 (Berkeley) 5/14/95
+ *	@(#)nfs_serv.c	8.8 (Berkeley) 7/31/95
  */
 
 /*
@@ -395,7 +395,7 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 			 * in a kernel.. Ugh.
 			 */
 			ind = nd;
-			VOP_UNLOCK(nd.ni_vp);
+			VOP_UNLOCK(nd.ni_vp, 0);
 			ind.ni_pathlen = strlen(nfs_pub.np_index);
 			ind.ni_cnd.cn_nameptr = ind.ni_cnd.cn_pnbuf =
 			    nfs_pub.np_index;
@@ -2541,15 +2541,8 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
 	}
-#ifdef Lite2_integrated
-	VOP_UNLOCK(vp, 0, procp);
-#else
-	VOP_UNLOCK(vp);
-#endif
+	VOP_UNLOCK(vp, 0);
 	MALLOC(rbuf, caddr_t, siz, M_TEMP, M_WAITOK);
-	ncookies = siz / (5 * NFSX_UNSIGNED); /*7 for V3, but it's an est. so*/
-	MALLOC(cookies, off_t *, ncookies * sizeof (off_t), M_TEMP,
-		M_WAITOK);
 again:
 	iv.iov_base = rbuf;
 	iv.iov_len = fullsiz;
@@ -2561,13 +2554,9 @@ again:
 	io.uio_rw = UIO_READ;
 	io.uio_procp = (struct proc *)0;
 	eofflag = 0;
-#ifdef Lite2_integrated
-	VOP_LOCK(vp, 0, procp);
-#else
-	VOP_LOCK(vp);
-#endif
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
-	error = VOP_READDIR(vp, &io, cred, &eofflag, cookies, ncookies);
+	error = VOP_READDIR(vp, &io, cred, &eofflag, &cookies, &ncookies);
 
 	off = (off_t)io.uio_offset;
 	if (!cookies && !error)
@@ -2578,14 +2567,10 @@ again:
 			error = getret;
 	}
 
-#ifdef Lite2_integrated
-	VOP_UNLOCK(vp, 0, procp);
-#else
-	VOP_UNLOCK(vp);
-#endif
+	VOP_UNLOCK(vp, 0);
 	if (error) {
 		vrele(vp);
-		free((caddr_t)rbuf, M_TEMP);
+		FREE((caddr_t)rbuf, M_TEMP);
 		if (cookies)
 			free((caddr_t)cookies, M_TEMP);
 		nfsm_reply(NFSX_POSTOPATTR(v3));
@@ -2814,16 +2799,9 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
 	}
-#ifdef Lite2_integrated
-	VOP_UNLOCK(vp, 0, procp);
-#else
-	VOP_UNLOCK(vp);
-#endif
+	VOP_UNLOCK(vp, 0);
 
 	MALLOC(rbuf, caddr_t, siz, M_TEMP, M_WAITOK);
-	ncookies = siz / (7 * NFSX_UNSIGNED);
-	MALLOC(cookies, off_t *, ncookies * sizeof (off_t), M_TEMP,
-		M_WAITOK);
 again:
 	iv.iov_base = rbuf;
 	iv.iov_len = fullsiz;
@@ -2836,21 +2814,14 @@ again:
 	io.uio_procp = (struct proc *)0;
 	eofflag = 0;
 
-#ifdef Lite2_integrated
-	VOP_LOCK(vp, 0, procp);
-#else
-	VOP_LOCK(vp);
-#endif
-	error = VOP_READDIR(vp, &io, cred, &eofflag, cookies, ncookies);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+
+	error = VOP_READDIR(vp, &io, cred, &eofflag, &cookies, &ncookies);
 
 	off = (u_quad_t)io.uio_offset;
 	getret = VOP_GETATTR(vp, &at, cred, procp);
 
-#ifdef Lite2_integrated
-	VOP_UNLOCK(vp, 0, procp);
-#else
-	VOP_UNLOCK(vp);
-#endif
+	VOP_UNLOCK(vp, 0);
 
 	/*
 	 * If the VGET operation doesn't work for this filesystem,
@@ -2874,8 +2845,8 @@ again:
 	if (error) {
 		vrele(vp);
 		if (cookies)
-			free((caddr_t)cookies, M_TEMP);
-		free((caddr_t)rbuf, M_TEMP);
+			FREE((caddr_t)cookies, M_TEMP);
+		FREE((caddr_t)rbuf, M_TEMP);
 		nfsm_reply(NFSX_V3POSTOPATTR);
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);

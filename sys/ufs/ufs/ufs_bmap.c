@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.5 1997/07/17 23:40:07 fvdl Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.6 1998/03/01 02:23:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_bmap.c	8.6 (Berkeley) 1/21/94
+ *	@(#)ufs_bmap.c	8.8 (Berkeley) 8/11/95
  */
 
 #include <sys/param.h>
@@ -102,8 +102,8 @@ ufs_bmap(v)
 int
 ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct vnode *vp;
-	register daddr_t bn;
-	daddr_t *bnp;
+	ufs_daddr_t bn;
+	ufs_daddr_t *bnp;
 	struct indir *ap;
 	int *nump;
 	int *runp;
@@ -113,8 +113,8 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct ufsmount *ump;
 	struct mount *mp;
 	struct vnode *devvp;
-	struct indir a[NIADDR], *xap;
-	daddr_t daddr;
+	struct indir a[NIADDR + 1], *xap;
+	ufs_daddr_t daddr;
 	long metalbn;
 	int error, maxrun = 0, num;
 
@@ -198,12 +198,12 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 			}
 		}
 
-		daddr = ((daddr_t *)bp->b_data)[xap->in_off];
+		daddr = ((ufs_daddr_t *)bp->b_data)[xap->in_off];
 		if (num == 1 && daddr && runp)
 			for (bn = xap->in_off + 1;
 			    bn < MNINDIR(ump) && *runp < maxrun &&
-			    is_sequential(ump, ((daddr_t *)bp->b_data)[bn - 1],
-			    ((daddr_t *)bp->b_data)[bn]);
+			    is_sequential(ump, ((ufs_daddr_t *)bp->b_data)[bn - 1],
+			    ((ufs_daddr_t *)bp->b_data)[bn]);
 			    ++bn, ++*runp);
 	}
 	if (bp)
@@ -226,7 +226,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 int
 ufs_getlbns(vp, bn, ap, nump)
 	struct vnode *vp;
-	register daddr_t bn;
+	register ufs_daddr_t bn;
 	struct indir *ap;
 	int *nump;
 {

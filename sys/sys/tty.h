@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.38 1997/10/09 12:59:50 mycroft Exp $	*/
+/*	$NetBSD: tty.h,v 1.39 1998/03/01 02:24:15 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tty.h	8.6 (Berkeley) 1/21/94
+ *	@(#)tty.h	8.7 (Berkeley) 1/9/95
  */
 
 #ifndef _SYS_TTY_H_

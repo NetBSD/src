@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.h,v 1.12 1996/09/07 12:41:10 mycroft Exp $	*/
+/*	$NetBSD: fifo.h,v 1.13 1998/03/01 02:21:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fifo.h	8.3 (Berkeley) 8/10/94
+ *	@(#)fifo.h	8.6 (Berkeley) 5/21/95
  */
 #ifdef FIFO
 
@@ -52,6 +52,7 @@ int	fifo_write	__P((void *));
 #define fifo_lease_check genfs_nullop
 int	fifo_ioctl	__P((void *));
 int	fifo_poll	__P((void *));
+#define fifo_revoke	genfs_revoke
 #define fifo_mmap	genfs_badop
 #define fifo_fsync	genfs_nullop
 #define fifo_seek	genfs_badop
@@ -64,14 +65,14 @@ int	fifo_poll	__P((void *));
 #define fifo_readdir	genfs_badop
 #define fifo_readlink	genfs_badop
 #define fifo_abortop	genfs_badop
-#define fifo_inactive	genfs_nullop
 #define fifo_reclaim	genfs_nullop
-int	fifo_lock	__P((void *));
-int	fifo_unlock	__P((void *));
+#define	fifo_lock	genfs_nolock
+#define	fifo_unlock	genfs_nounlock
+int	fifo_inactive	__P((void *));
 int	fifo_bmap	__P((void *));
 #define fifo_strategy	genfs_badop
 int	fifo_print	__P((void *));
-#define fifo_islocked	genfs_nullop
+#define fifo_islocked	genfs_noislocked
 int	fifo_pathconf	__P((void *));
 #define	fifo_advlock	genfs_eopnotsupp
 #define fifo_blkatoff	genfs_badop

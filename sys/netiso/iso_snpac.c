@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.17 1997/03/15 18:12:39 is Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.18 1998/03/01 02:24:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso_snpac.c	8.1 (Berkeley) 6/10/93
+ *	@(#)iso_snpac.c	8.4 (Berkeley) 5/2/95
  */
 
 /***********************************************************

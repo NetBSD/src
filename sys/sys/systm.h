@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.75 1998/02/10 14:08:50 mrg Exp $	*/
+/*	$NetBSD: systm.h,v 1.76 1998/03/01 02:24:15 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)systm.h	8.4 (Berkeley) 2/23/94
+ *	@(#)systm.h	8.7 (Berkeley) 3/29/95
  */
 
 /*

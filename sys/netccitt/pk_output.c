@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_output.c,v 1.9 1996/10/13 02:10:12 christos Exp $	*/
+/*	$NetBSD: pk_output.c,v 1.10 1998/03/01 02:24:57 fvdl Exp $	*/
 
 /*
  * Copyright(c) University of British Columbia, 1984
@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pk_output.c	8.1(Berkeley) 6/10/93
+ *	@(#)pk_output.c	8.2(Berkeley) 9/22/94
  */
 
 #include <sys/param.h>

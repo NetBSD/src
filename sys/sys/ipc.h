@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.15 1996/02/09 18:25:12 christos Exp $	*/
+/*	$NetBSD: ipc.h,v 1.16 1998/03/01 02:24:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ipc.h	8.3 (Berkeley) 1/21/94
+ *	@(#)ipc.h	8.4 (Berkeley) 2/19/95
  */
 
 /*

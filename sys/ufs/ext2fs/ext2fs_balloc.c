@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.2 1997/10/09 15:42:47 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.3 1998/03/01 02:23:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -61,19 +61,21 @@
 int
 ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 	register struct inode *ip;
-	register daddr_t bn;
+	register ufs_daddr_t bn;
 	int size;
 	struct ucred *cred;
 	struct buf **bpp;
 	int flags;
 {
 	register struct m_ext2fs *fs;
-	register daddr_t nb;
+	register ufs_daddr_t nb;
 	struct buf *bp, *nbp;
 	struct vnode *vp = ITOV(ip);
 	struct indir indirs[NIADDR + 2];
-	daddr_t newb, lbn, *bap, pref;
+	ufs_daddr_t newb, lbn, *bap, pref;
 	int num, i, error;
+	u_int deallocated;
+	ufs_daddr_t *allocib, *blkp, *allocblk, allociblk[NIADDR + 1];
 
 	*bpp = NULL;
 	if (bn < 0)
@@ -127,13 +129,16 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 	 */
 	--num;
 	nb = fs2h32(ip->i_e2fs_blocks[NDADDR + indirs[0].in_off]);
+	allocib = NULL;
+	allocblk = allociblk;
 	if (nb == 0) {
-		pref = ext2fs_blkpref(ip, lbn, 0, (daddr_t *)0);
+		pref = ext2fs_blkpref(ip, lbn, 0, (ufs_daddr_t *)0);
 			error = ext2fs_alloc(ip, lbn, pref,
 				  cred, &newb);
 		if (error)
 			return (error);
 		nb = newb;
+		*allocblk++ = nb;
 		ip->i_e2fs_last_blk = newb;
 		bp = getblk(vp, indirs[1].in_lbn, fs->e2fs_bsize, 0, 0);
 		bp->b_blkno = fsbtodb(fs, newb);
@@ -142,11 +147,10 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 		 * Write synchronously so that indirect blocks
 		 * never point at garbage.
 		 */
-		if ((error = bwrite(bp)) != 0) {
-			ext2fs_blkfree(ip, nb);
-			return (error);
-		}
-		ip->i_e2fs_blocks[NDADDR + indirs[0].in_off] = h2fs32(newb);
+		if ((error = bwrite(bp)) != 0)
+			goto fail;
+		allocib = &ip->i_e2fs_blocks[NDADDR + indirs[0].in_off];
+		*allocib = h2fs32(newb);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	/*
@@ -157,9 +161,9 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 			indirs[i].in_lbn, (int)fs->e2fs_bsize, NOCRED, &bp);
 		if (error) {
 			brelse(bp);
-			return (error);
+			goto fail;
 		}
-		bap = (daddr_t *)bp->b_data;
+		bap = (ufs_daddr_t *)bp->b_data;
 		nb = fs2h32(bap[indirs[i].in_off]);
 		if (i == num)
 			break;
@@ -168,14 +172,15 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 			brelse(bp);
 			continue;
 		}
-		pref = ext2fs_blkpref(ip, lbn, 0, (daddr_t *)0);
+		pref = ext2fs_blkpref(ip, lbn, 0, (ufs_daddr_t *)0);
 		error = ext2fs_alloc(ip, lbn, pref, cred,
 				  &newb);
 		if (error) {
 			brelse(bp);
-			return (error);
+			goto fail;
 		}
 		nb = newb;
+		*allocblk++ = nb;
 		ip->i_e2fs_last_blk = newb;
 		nbp = getblk(vp, indirs[i].in_lbn, fs->e2fs_bsize, 0, 0);
 		nbp->b_blkno = fsbtodb(fs, nb);
@@ -185,9 +190,8 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 		 * never point at garbage.
 		 */
 		if ((error = bwrite(nbp)) != 0) {
-			ext2fs_blkfree(ip, nb);
 			brelse(bp);
-			return (error);
+			goto fail;
 		}
 		bap[indirs[i - 1].in_off] = h2fs32(nb);
 		/*
@@ -209,9 +213,10 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 				  &newb);
 		if (error) {
 			brelse(bp);
-			return (error);
+			goto fail;
 		}
 		nb = newb;
+		*allocblk++ = nb;
 		ip->i_e2fs_last_lblk = lbn;
 		ip->i_e2fs_last_blk = newb;
 		nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, 0);
@@ -244,4 +249,20 @@ ext2fs_balloc(ip, bn, size, cred, bpp, flags)
 	}
 	*bpp = nbp;
 	return (0);
+fail:
+	/*
+	 * If we have failed part way through block allocation, we
+	 * have to deallocate any indirect blocks that we have allocated.
+	 */
+	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
+		ext2fs_blkfree(ip, *blkp);
+		deallocated += fs->e2fs_bsize;
+	}
+	if (allocib != NULL)
+		*allocib = 0;
+	if (deallocated) {
+		ip->i_e2fs_nblock -= btodb(deallocated);
+		ip->i_e2fs_flags |= IN_CHANGE | IN_UPDATE;
+	}
+	return error;
 }

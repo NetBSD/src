@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.3 1997/10/07 13:44:03 mrg Exp $	*/
+/*	$NetBSD: clean.h,v 1.4 1998/03/01 02:20:07 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clean.h	8.1 (Berkeley) 6/4/93
+ *	@(#)clean.h	8.2 (Berkeley) 5/4/95
  */
 
 /*

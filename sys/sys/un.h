@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.17 1998/01/07 22:49:12 thorpej Exp $	*/
+/*	$NetBSD: un.h,v 1.18 1998/03/01 02:24:15 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)un.h	8.1 (Berkeley) 6/2/93
+ *	@(#)un.h	8.3 (Berkeley) 2/19/95
  */
 
 #ifndef _SYS_UN_H_

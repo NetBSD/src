@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.9 1998/02/19 00:35:26 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.10 1998/03/01 02:22:41 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -127,7 +127,6 @@ compat_43_sys_stat(p, v, retval)
 	return (error);
 }
 
-
 /*
  * Get file status; this version does not follow links.
  */
@@ -140,26 +139,54 @@ compat_43_sys_lstat(p, v, retval)
 {
 	register struct compat_43_sys_lstat_args /* {
 		syscallarg(char *) path;
-		syscallarg(struct stat43 *) ub;
+		syscallarg(struct ostat *) ub;
 	} */ *uap = v;
-	struct stat sb;
+	struct vnode *vp, *dvp;
+	struct stat sb, sb1;
 	struct stat43 osb;
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF | LOCKPARENT, UIO_USERSPACE,
 	    SCARG(uap, path), p);
-	if ((error = namei(&nd)) != 0)
+	if ((error = namei(&nd)))
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
-	vput(nd.ni_vp);
-	if (error)
-		return (error);
+	/*
+	 * For symbolic links, always return the attributes of its
+	 * containing directory, except for mode, size, and links.
+	 */
+	vp = nd.ni_vp;
+	dvp = nd.ni_dvp;
+	if (vp->v_type != VLNK) {
+		if (dvp == vp)
+			vrele(dvp);
+		else
+			vput(dvp);
+		error = vn_stat(vp, &sb, p);
+		vput(vp);
+		if (error)
+			return (error);
+	} else {
+		error = vn_stat(dvp, &sb, p);
+		vput(dvp);
+		if (error) {
+			vput(vp);
+			return (error);
+		}
+		error = vn_stat(vp, &sb1, p);
+		vput(vp);
+		if (error)
+			return (error);
+		sb.st_mode &= ~S_IFDIR;
+		sb.st_mode |= S_IFLNK;
+		sb.st_nlink = sb1.st_nlink;
+		sb.st_size = sb1.st_size;
+		sb.st_blocks = sb1.st_blocks;
+	}
 	cvtstat(&sb, &osb);
-	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
+	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
-
 
 /*
  * Return status information about a file descriptor.
@@ -367,12 +394,12 @@ unionread:
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
 	auio.uio_resid = SCARG(uap, count);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	loff = auio.uio_offset = fp->f_offset;
 #	if (BYTE_ORDER != LITTLE_ENDIAN)
 		if (vp->v_mount->mnt_maxsymlinklen <= 0) {
 			error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag,
-			    (off_t *)0, 0);
+			    (off_t **)0, (int *)0);
 			fp->f_offset = auio.uio_offset;
 		} else
 #	endif
@@ -384,7 +411,7 @@ unionread:
 		MALLOC(dirbuf, caddr_t, SCARG(uap, count), M_TEMP, M_WAITOK);
 		kiov.iov_base = dirbuf;
 		error = VOP_READDIR(vp, &kuio, fp->f_cred, &eofflag,
-			    (off_t *)0, 0);
+			    (off_t **)0, (int *)0);
 		fp->f_offset = kuio.uio_offset;
 		if (error == 0) {
 			readcnt = SCARG(uap, count) - kuio.uio_resid;
@@ -420,7 +447,7 @@ unionread:
 		}
 		FREE(dirbuf, M_TEMP);
 	}
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	if (error)
 		return (error);
 
@@ -450,7 +477,7 @@ unionread:
 		
 		if (lvp != NULLVP) {
 			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
-			VOP_UNLOCK(lvp);
+			VOP_UNLOCK(lvp, 0);
 
 			if (error) {
 				vrele(lvp);

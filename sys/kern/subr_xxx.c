@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xxx.c,v 1.10 1996/02/04 02:16:51 christos Exp $	*/
+/*	$NetBSD: subr_xxx.c,v 1.11 1998/03/01 02:22:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)subr_xxx.c	8.1 (Berkeley) 6/10/93
+ *	@(#)subr_xxx.c	8.3 (Berkeley) 3/29/95
  */
 
 /*

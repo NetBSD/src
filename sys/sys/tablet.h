@@ -1,4 +1,4 @@
-/*	$NetBSD: tablet.h,v 1.10 1996/02/09 18:25:43 christos Exp $	*/
+/*	$NetBSD: tablet.h,v 1.11 1998/03/01 02:24:15 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1986, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tablet.h	8.3 (Berkeley) 1/4/94
+ *	@(#)tablet.h	8.4 (Berkeley) 7/10/94
  */
 
 #ifndef _SYS_TABLET_H_

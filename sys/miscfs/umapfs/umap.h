@@ -1,4 +1,4 @@
-/*	$NetBSD: umap.h,v 1.7 1997/10/06 09:32:35 thorpej Exp $	*/
+/*	$NetBSD: umap.h,v 1.8 1998/03/01 02:21:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)null_vnops.c       1.5 (Berkeley) 7/10/92
- *	@(#)umap.h	8.3 (Berkeley) 1/21/94
+ *	@(#)umap.h	8.4 (Berkeley) 8/20/94
  */
 
 #define MAPFILEENTRIES 64

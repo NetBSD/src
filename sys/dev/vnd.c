@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.55 1998/02/19 00:47:02 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.56 1998/03/01 02:21:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  *
  * from: Utah $Hdr: vn.c 1.13 94/04/02$
  *
- *	@(#)vn.c	8.6 (Berkeley) 4/1/94
+ *	@(#)vn.c	8.9 (Berkeley) 5/14/95
  */
 
 /*
@@ -401,11 +401,11 @@ vndstrategy(bp)
 		 */
 		if (!VOP_ISLOCKED(vnd->sc_vp)) {
 			dolock = 1;
-			VOP_LOCK(vnd->sc_vp);
+			vn_lock(vnd->sc_vp, 0);
 		}
 		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
 		if (dolock)
-			VOP_UNLOCK(vnd->sc_vp);
+			VOP_UNLOCK(vnd->sc_vp, 0);
 
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
@@ -762,12 +762,12 @@ vndioctl(dev, cmd, data, flag, p)
 		}
 		error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
 		if (error) {
-			VOP_UNLOCK(nd.ni_vp);
+			VOP_UNLOCK(nd.ni_vp, 0);
 			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
 			vndunlock(vnd);
 			return(error);
 		}
-		VOP_UNLOCK(nd.ni_vp);
+		VOP_UNLOCK(nd.ni_vp, 0);
 		vnd->sc_vp = nd.ni_vp;
 		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
 
@@ -982,20 +982,20 @@ vndsetcred(vnd, cred)
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_resid = aiov.iov_len;
-	VOP_LOCK(vnd->sc_vp);
+	vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_READ(vnd->sc_vp, &auio, 0, vnd->sc_cred);
 	if (error == 0) {
 		/*
 		 * Because vnd does all IO directly through the vnode
-		 * we need to flush (atleast) the buffer from the above
+		 * we need to flush (at least) the buffer from the above
 		 * VOP_READ from the buffer cache to prevent cache
 		 * incoherencies.  Also, be careful to write dirty
 		 * buffers back to stable storage.
 		 */
 		error = vinvalbuf(vnd->sc_vp, V_SAVE, vnd->sc_cred,
-		    curproc, 0, 0);
+			    curproc, 0, 0);
 	}
-	VOP_UNLOCK(vnd->sc_vp);
+	VOP_UNLOCK(vnd->sc_vp, 0);
 
 	free(tmpbuf, M_TEMP);
 	return (error);

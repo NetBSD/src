@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.14 1998/02/07 02:44:49 chs Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.15 1998/03/01 02:22:35 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -135,7 +135,8 @@ cache_lookup(dvp, vpp, cnp)
 				TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
 			}
 			return (ENOENT);
-		}
+		} else
+			nchstats.ncs_badhits++;
 	} else if (ncp->nc_vpid != ncp->nc_vp->v_id) {
 		nchstats.ncs_falsehits++;
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.32 1998/02/20 07:22:14 mycroft Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.33 1998/03/01 02:22:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_time.c	8.1 (Berkeley) 6/10/93
+ *	@(#)kern_time.c	8.4 (Berkeley) 5/26/95
  */
 
 #include "fs_nfs.h"

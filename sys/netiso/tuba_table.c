@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_table.c,v 1.6 1996/02/13 22:12:34 christos Exp $	*/
+/*	$NetBSD: tuba_table.c,v 1.7 1998/03/01 02:24:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tuba_table.c	8.2 (Berkeley) 11/15/93
+ *	@(#)tuba_table.c	8.6 (Berkeley) 9/22/94
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ tuba_timer(v)
 void
 tuba_table_init()
 {
-	rn_inithead((void **) &tuba_tree, 40);
+	rn_inithead((void **) &tuba_tree, 0);
 	timeout(tuba_timer, (caddr_t) 0, arpt_prune * hz);
 }
 
@@ -92,21 +92,28 @@ tuba_lookup(siso, wait)
 	struct radix_node *rn;
 	register struct tuba_cache *tc;
 	struct tuba_cache **new;
-	int             dupentry = 0, sum_a = 0, sum_b = 0, old_size, i;
+	int dupentry = 0, sum_a = 0, sum_b = 0, old_size, i;
 
-	if ((rn = rn_match((caddr_t) &siso->siso_addr, tuba_tree)) != NULL
+	siso->siso_nlen++;
+	if ((rn = rn_match((caddr_t)&siso->siso_addr, tuba_tree)) != NULL
 	    && ((rn->rn_flags & RNF_ROOT) == 0)) {
 		tc = (struct tuba_cache *) rn;
 		tc->tc_time = time.tv_sec;
-		return (tc->tc_index);
+		i = tc->tc_index;
+done:		
+		siso->siso_nlen--;
+		return (i);
 	}
 	if ((tc = (struct tuba_cache *) malloc(sizeof(*tc), M_RTABLE, wait))
-	    == NULL)
-		return (0);
+	    == NULL) {
+		i = 0;
+		goto done;
+	}
 	bzero((caddr_t) tc, sizeof(*tc));
-	bcopy(siso->siso_data, tc->tc_siso.siso_data,
-	      tc->tc_siso.siso_nlen = siso->siso_nlen);
-	rn_insert(&tc->tc_siso.siso_addr, tuba_tree, &dupentry, tc->tc_nodes);
+	tc->tc_addr = siso->siso_addr;
+	siso->siso_nlen--;
+	tc->tc_siso.siso_addr = siso->siso_addr;
+	rn_insert(&tc->tc_addr, tuba_tree, &dupentry, tc->tc_nodes);
 	if (dupentry)
 		panic("tuba_lookup 1");
 	tc->tc_siso.siso_family = AF_ISO;
@@ -133,7 +140,7 @@ tuba_lookup(siso, wait)
 	new = (struct tuba_cache **) malloc((unsigned) i, M_RTABLE, wait);
 	if (new == 0) {
 		tuba_table_size = old_size;
-		rn_delete(&tc->tc_siso.siso_addr, NULL, tuba_tree);
+		rn_delete(&tc->tc_addr, NULL, tuba_tree);
 		free((caddr_t) tc, M_RTABLE);
 		return (0);
 	}

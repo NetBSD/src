@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.7 1995/12/14 22:36:34 thorpej Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.8 1998/03/01 02:26:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,17 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)dumplfs.c	8.1 (Berkeley) 6/5/93";
+static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-static char rcsid[] = "$NetBSD: dumplfs.c,v 1.7 1995/12/14 22:36:34 thorpej Exp $";
+__RCSID("$NetBSD: dumplfs.c,v 1.8 1998/03/01 02:26:12 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +77,10 @@ static void	dump_segment __P((int, int, daddr_t, struct lfs *, int));
 static int	dump_sum __P((int, struct lfs *, SEGSUM *, int, daddr_t));
 static void	dump_super __P((struct lfs *));
 static void	usage __P((void));
+
+int		main __P((int, char *[]));
+
+extern u_long	cksum __P((void *, size_t));
 
 typedef struct seglist SEGLIST;
 struct seglist {
@@ -108,6 +114,7 @@ char *special;
 	else \
 		(void)printf("%d\tINUSE\t%d\t%8X    \n", \
 		    i, ip->if_version, ip->if_daddr)
+
 int
 main(argc, argv)
 	int argc;
@@ -361,7 +368,7 @@ dump_dinode(dip)
 	mt = dip->di_mtime;
 	ct = dip->di_ctime;
 
-	(void)printf("%s%d\t%s%d\t%s%d\t%s%d\t%s%d\n",
+	(void)printf("%s%d\t%s%d\t%s%d\t%s%d\t%s%qu\n",
 		"mode  ", dip->di_mode,
 		"nlink ", dip->di_nlink,
 		"uid   ", dip->di_uid,
@@ -391,20 +398,21 @@ dump_sum(fd, lfsp, sp, segnum, addr)
 	daddr_t addr;
 {
 	FINFO *fp;
-	u_int32_t *dp;
+	daddr_t *dp;
 	int i, j;
 	int ck;
-	int numblocks;
+	int numbytes;
 	struct dinode *inop;
 
-	if (sp->ss_sumsum != (ck = cksum(&sp->ss_datasum, 
+	if (sp->ss_magic != SS_MAGIC || 
+	    sp->ss_sumsum != (ck = cksum(&sp->ss_datasum, 
 	    LFS_SUMMARY_SIZE - sizeof(sp->ss_sumsum)))) {
-		(void)printf("dumplfs: %s %d address 0x%lx\n",
+		(void)printf("dumplfs: %s %d address 0x%x\n",
 		    "corrupt summary block; segment", segnum, addr);
 		return(0);
 	}
 
-	(void)printf("Segment Summary Info at 0x%lx\n", addr);
+	(void)printf("Segment Summary Info at 0x%x\n", addr);
 	(void)printf("    %s0x%X\t%s%d\t%s%d\n    %s0x%X\t%s0x%X",
 		"next     ", sp->ss_next,
 		"nfinfo   ", sp->ss_nfinfo,
@@ -413,14 +421,14 @@ dump_sum(fd, lfsp, sp, segnum, addr)
 		"datasum  ", sp->ss_datasum );
 	(void)printf("\tcreate   %s", ctime((time_t *)&sp->ss_create));
 
-	numblocks = (sp->ss_ninos + INOPB(lfsp) - 1) / INOPB(lfsp);
-
 	/* Dump out inode disk addresses */
 	dp = (daddr_t *)sp;
 	dp += LFS_SUMMARY_SIZE / sizeof(daddr_t);
 	inop = malloc(1 << lfsp->lfs_bshift);
 	printf("    Inode addresses:");
+	numbytes = 0;
 	for (dp--, i = 0; i < sp->ss_ninos; dp--) {
+		numbytes += lfsp->lfs_bsize;	/* add bytes for inode block */
 		printf("\t0x%X {", *dp);
 		get(fd, *dp << (lfsp->lfs_bshift - lfsp->lfs_fsbtodb), inop, 
 		    (1 << lfsp->lfs_bshift));
@@ -437,20 +445,24 @@ dump_sum(fd, lfsp, sp, segnum, addr)
 
 	printf("\n");
 	for (fp = (FINFO *)(sp + 1), i = 0; i < sp->ss_nfinfo; i++) {
-		numblocks += fp->fi_nblocks;
-		(void)printf("    FINFO for inode: %d version %d nblocks %d\n",
-		    fp->fi_ino, fp->fi_version, fp->fi_nblocks);
+		(void)printf("    FINFO for inode: %d version %d nblocks %d lastlength %d\n",
+		    fp->fi_ino, fp->fi_version, fp->fi_nblocks,
+		    fp->fi_lastlength);
 		dp = &(fp->fi_blocks[0]);
 		for (j = 0; j < fp->fi_nblocks; j++, dp++) {
 			(void)printf("\t%d", *dp);
 			if ((j % 8) == 7)
 				(void)printf("\n");
+			if (j == fp->fi_nblocks - 1)
+				numbytes += fp->fi_lastlength;
+			else
+				numbytes += lfsp->lfs_bsize;
 		}
 		if ((j % 8) != 0)
 			(void)printf("\n");
 		fp = (FINFO *)dp;
 	}
-	return (numblocks);
+	return (numbytes);
 }
 
 static void
@@ -463,8 +475,8 @@ dump_segment(fd, segnum, addr, lfsp, dump_sb)
 	struct lfs lfs_sb, *sbp;
 	SEGSUM *sump;
 	char sumblock[LFS_SUMMARY_SIZE];
-	int did_one, nblocks, sb;
-	off_t sum_offset, super_off;
+	int did_one, nbytes, sb;
+	off_t sum_offset, super_off = 0;
 
 	(void)printf("\nSEGMENT %d (Disk Address 0x%X)\n",
 	    addr >> (lfsp->lfs_segshift - daddr_shift), addr);
@@ -478,7 +490,7 @@ dump_segment(fd, segnum, addr, lfsp, dump_sb)
 		if (sump->ss_sumsum != cksum (&sump->ss_datasum, 
 			LFS_SUMMARY_SIZE - sizeof(sump->ss_sumsum))) {
 			sbp = (struct lfs *)sump;
-			if (sb = (sbp->lfs_magic == LFS_MAGIC)) {
+			if ((sb = (sbp->lfs_magic == LFS_MAGIC))) {
 				super_off = sum_offset;
 				sum_offset += LFS_SBPAD;
 			} else if (did_one)
@@ -488,11 +500,10 @@ dump_segment(fd, segnum, addr, lfsp, dump_sb)
 				break;
 			}
 		} else {
-			nblocks = dump_sum(fd, lfsp, sump, segnum, sum_offset >>
+			nbytes = dump_sum(fd, lfsp, sump, segnum, sum_offset >>
 			     (lfsp->lfs_bshift - lfsp->lfs_fsbtodb));
-			if (nblocks)
-				sum_offset += LFS_SUMMARY_SIZE + 
-					(nblocks << lfsp->lfs_bshift);
+			if (nbytes)
+				sum_offset += LFS_SUMMARY_SIZE + nbytes;
 			else
 				sum_offset = 0;
 			did_one = 1;
@@ -535,13 +546,13 @@ dump_super(lfsp)
 		"cleansz  ", lfsp->lfs_cleansz,
 		"segtabsz ", lfsp->lfs_segtabsz);
 
-	(void)printf("%s0x%X\t%s%d\t%s0x%X\t%s%d\n",
+	(void)printf("%s0x%X\t%s%d\t%s0x%qX\t%s%d\n",
 		"segmask  ", lfsp->lfs_segmask,
 		"segshift ", lfsp->lfs_segshift,
 		"bmask    ", lfsp->lfs_bmask,
 		"bshift   ", lfsp->lfs_bshift);
 
-	(void)printf("%s0x%X\t\t%s%d\t%s0x%X\t%s%d\n",
+	(void)printf("%s0x%qX\t\t%s%d\t%s0x%qX\t%s%u\n",
 		"ffmask   ", lfsp->lfs_ffmask,
 		"ffshift  ", lfsp->lfs_ffshift,
 		"fbmask   ", lfsp->lfs_fbmask,

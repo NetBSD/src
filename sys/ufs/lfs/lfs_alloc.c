@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.10 1998/02/07 17:29:04 chs Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.11 1998/03/01 02:23:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -71,7 +71,7 @@ lfs_valloc(v)
 	struct ifile *ifp;
 	struct inode *ip;
 	struct vnode *vp;
-	daddr_t blkno;
+	ufs_daddr_t blkno;
 	ino_t new_ino;
 	u_long i, max;
 	int error;
@@ -98,7 +98,7 @@ lfs_valloc(v)
 		vp = fs->lfs_ivnode;
 		ip = VTOI(vp);
 		blkno = lblkno(fs, ip->i_ffs_size);
-		lfs_balloc(vp, fs->lfs_bsize, blkno, &bp);
+		lfs_balloc(vp, 0, fs->lfs_bsize, blkno, &bp);
 		ip->i_ffs_size += fs->lfs_bsize;
 #ifdef UVM
 		uvm_vnp_setsize(vp, ip->i_ffs_size);
@@ -182,14 +182,13 @@ lfs_vcreate(mp, ino, vpp)
 
 	/* Initialize the inode. */
 	MALLOC(ip, struct inode *, sizeof(struct inode), M_LFSNODE, M_WAITOK);
+	lockinit(&ip->i_lock, PINOD, "lfsinode", 0, 0);
 	(*vpp)->v_data = ip;
 	ip->i_vnode = *vpp;
 	ip->i_devvp = ump->um_devvp;
 	ip->i_flag = IN_MODIFIED;
 	ip->i_dev = ump->um_dev;
 	ip->i_number = ip->i_din.ffs_din.di_inumber = ino;
-	ip->i_din.ffs_din.di_spare[0] = 0xdeadbeef;
-	ip->i_din.ffs_din.di_spare[1] = 0xdeadbeef;
 	ip->i_lfs = ump->um_lfs;
 #ifdef QUOTA
 	for (i = 0; i < MAXQUOTAS; i++)
@@ -220,7 +219,7 @@ lfs_vfree(v)
 	struct ifile *ifp;
 	struct inode *ip;
 	struct lfs *fs;
-	daddr_t old_iaddr;
+	ufs_daddr_t old_iaddr;
 	ino_t ino;
 
 	/* Get the inode number and file system. */

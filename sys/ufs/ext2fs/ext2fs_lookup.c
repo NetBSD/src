@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.4 1997/10/10 10:00:12 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.5 1998/03/01 02:23:46 fvdl Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -134,14 +134,15 @@ ext2fs_readdir(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		struct ucred *a_cred;
-		int *a_eofflag;
-		off_t *a_cookies;
+		int **a_eofflag;
+		off_t **a_cookies;
 		int ncookies;
 	} */ *ap = v;
-	register struct uio *uio = ap->a_uio;
+	struct uio *uio = ap->a_uio;
 	int error;
 	size_t e2fs_count, readcnt;
-	struct m_ext2fs *fs = VTOI(ap->a_vp)->i_e2fs;
+	struct vnode *vp = ap->a_vp;
+	struct m_ext2fs *fs = VTOI(vp)->i_e2fs;
 
 	struct ext2fs_direct *dp;
 	struct dirent dstd;
@@ -149,9 +150,12 @@ ext2fs_readdir(v)
 	struct iovec aiov;
 	caddr_t dirbuf;
 	off_t off = uio->uio_offset;
-	off_t *cookies = ap->a_cookies;
-	int ncookies = ap->a_ncookies;
+	off_t *cookies = NULL;
+	int nc = 0, ncookies = 0;
 	int e2d_reclen;
+
+	if (vp->v_type != VDIR)
+		return (ENOTDIR);
 
 	e2fs_count = uio->uio_resid;
 	/* Make sure we don't return partial entries. */
@@ -166,6 +170,12 @@ ext2fs_readdir(v)
 	aiov.iov_len = e2fs_count;
 	auio.uio_resid = e2fs_count;
 	MALLOC(dirbuf, caddr_t, e2fs_count, M_TEMP, M_WAITOK);
+	if (ap->a_ncookies) {
+		nc = ncookies = e2fs_count / 16;
+		MALLOC(cookies, off_t *, sizeof (off_t) * ncookies, M_TEMP,
+		    M_WAITOK);
+		*ap->a_cookies = cookies;
+	}
 	bzero(dirbuf, e2fs_count);
 	aiov.iov_base = dirbuf;
 
@@ -201,6 +211,14 @@ ext2fs_readdir(v)
 	}
 	FREE(dirbuf, M_TEMP);
 	*ap->a_eofflag = VTOI(ap->a_vp)->i_e2fs_size <= uio->uio_offset;
+	if (ap->a_ncookies) {
+		if (error) {
+			FREE(*ap->a_cookies, M_TEMP);
+			*ap->a_ncookies = 0;
+			*ap->a_cookies = NULL;
+		} else
+			*ap->a_ncookies = nc - ncookies;
+	}
 	return (error);
 }
 
@@ -246,8 +264,8 @@ ext2fs_lookup(v)
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	register struct vnode *vdp;	/* vnode for directory being searched */
-	register struct inode *dp;	/* inode for directory being searched */
+	struct vnode *vdp;	/* vnode for directory being searched */
+	struct inode *dp;	/* inode for directory being searched */
 	struct buf *bp;			/* a buffer of directory entries */
 	register struct ext2fs_direct *ep; /* the current directory entry */
 	int entryoffsetinblock;		/* offset of ep in bp's buffer */
@@ -284,6 +302,9 @@ ext2fs_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
+	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return (EROFS);
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
 		return (error);
 
@@ -312,14 +333,14 @@ ext2fs_lookup(v)
 			VREF(vdp);
 			error = 0;
 		} else if (flags & ISDOTDOT) {
-			VOP_UNLOCK(pdp);
-			error = vget(vdp, 1);
+			VOP_UNLOCK(pdp, 0);
+			error = vget(vdp, LK_EXCLUSIVE);
 			if (!error && lockparent && (flags & ISLASTCN))
-				error = VOP_LOCK(pdp);
+				error = vn_lock(pdp, LK_EXCLUSIVE);
 		} else {
-			error = vget(vdp, 1);
+			error = vget(vdp, LK_EXCLUSIVE);
 			if (!lockparent || error || !(flags & ISLASTCN))
-				VOP_UNLOCK(pdp);
+				VOP_UNLOCK(pdp, 0);
 		}
 		/*
 		 * Check that the capability number did not change
@@ -330,9 +351,9 @@ ext2fs_lookup(v)
 				return (0);
 			vput(vdp);
 			if (lockparent && pdp != vdp && (flags & ISLASTCN))
-				VOP_UNLOCK(pdp);
+				VOP_UNLOCK(pdp, 0);
 		}
-		if ((error = VOP_LOCK(pdp)) != 0)
+		if ((error = vn_lock(pdp, LK_EXCLUSIVE)) != 0)
 			return (error);
 		vdp = pdp;
 		dp = VTOI(pdp);
@@ -497,12 +518,6 @@ searchloop:
 	if ((nameiop == CREATE || nameiop == RENAME) &&
 		(flags & ISLASTCN) && dp->i_e2fs_nlink != 0) {
 		/*
-		 * Creation of files on a read-only mounted file system
-		 * is pointless, so don't proceed any further.
-		 */
-		if (vdp->v_mount->mnt_flag & MNT_RDONLY)
-					return (EROFS);
-		/*
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.
 		 */
@@ -544,7 +559,7 @@ searchloop:
 		 */
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, 0);
 		return (EJUSTRETURN);
 	}
 	/*
@@ -620,7 +635,7 @@ found:
 		}
 		*vpp = tdp;
 		if (!lockparent)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, 0);
 		return (0);
 	}
 
@@ -645,7 +660,7 @@ found:
 		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, 0);
 		return (0);
 	}
 
@@ -670,13 +685,13 @@ found:
 	 */
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp);	/* race to get the inode */
+		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
 		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0) {
-			VOP_LOCK(pdp);
+			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN) &&
-			(error = VOP_LOCK(pdp)) != 0) {
+		    (error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY)) != 0) {
 			vput(tdp);
 			return (error);
 		}
@@ -688,7 +703,7 @@ found:
 		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN))
-			VOP_UNLOCK(pdp);
+			VOP_UNLOCK(pdp, 0);
 		*vpp = tdp;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.21 1997/09/30 20:46:17 drochner Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.22 1998/03/01 02:24:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -60,6 +60,8 @@
 #include <nfs/krpc.h>
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsproto.h> /* XXX NFSX_V3FHMAX for next */
+#include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
 #include <nfs/nfsdiskless.h> /* XXX decl nfs_boot_sendrecv */
 
 /*

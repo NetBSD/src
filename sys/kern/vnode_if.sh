@@ -1,7 +1,7 @@
 #!/bin/sh -
 copyright="\
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.15 1998/01/09 06:40:43 thorpej Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.16 1998/03/01 02:22:37 fvdl Exp $'
 
 # Script to produce VFS front-end sugar.
 #

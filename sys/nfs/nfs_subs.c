@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.55 1998/02/19 00:54:13 thorpej Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.56 1998/03/01 02:24:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1576,10 +1576,8 @@ nfs_loadattrcache(vpp, fp, vaper)
 				 * Since the nfsnode does not have a lock, its
 				 * vnode lock has to be carried over.
 				 */
-#ifdef Lite2_integrated
 				nvp->v_vnlock = vp->v_vnlock;
 				vp->v_vnlock = NULL;
-#endif
 				nvp->v_data = vp->v_data;
 				vp->v_data = NULL;
 				vp->v_op = spec_vnodeop_p;
@@ -1737,9 +1735,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 	off_t *cookies, *cop;
 	int error, eof, nc, len;
 
-	nc = NFS_DIRFRAGSIZ / 16;
 	MALLOC(buf, caddr_t, NFS_DIRFRAGSIZ, M_TEMP, M_WAITOK);
-	MALLOC(cookies, off_t *, nc * sizeof (off_t), M_TEMP, M_WAITOK);
 
 	aiov.iov_base = buf;
 	aiov.iov_len = NFS_DIRFRAGSIZ;
@@ -1751,7 +1747,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 	auio.uio_resid = NFS_DIRFRAGSIZ;
 	auio.uio_offset = 0;
 
-	error = VOP_READDIR(vp, &auio, cred, &eof, cookies, nc);
+	error = VOP_READDIR(vp, &auio, cred, &eof, &cookies, &nc);
 
 	len = NFS_DIRFRAGSIZ - auio.uio_resid;
 	if (error || len == 0) {
@@ -1956,7 +1952,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 		break;
 	} else {
 		if ((cnp->cn_flags & LOCKPARENT) && ndp->ni_pathlen == 1)
-			VOP_UNLOCK(ndp->ni_dvp);
+			VOP_UNLOCK(ndp->ni_dvp, 0);
 		if (!pubflag) {
 			vrele(ndp->ni_dvp);
 			vput(ndp->ni_vp);
@@ -2205,9 +2201,6 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	int *rdonlyp;
 	int kerbflag;
 {
-#ifdef Lite2_integrated
-	struct proc *p = curproc;	/* XXX */
-#endif
 	register struct mount *mp;
 	register int i;
 	struct ucred *credanon;
@@ -2222,11 +2215,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 		fhp = &nfs_pub.np_handle;
 	}
 
-#ifdef Lite2_integrated
 	mp = vfs_getvfs(&fhp->fh_fsid);
-#else
-	mp = getvfs(&fhp->fh_fsid);
-#endif
 	if (!mp)
 		return (ESTALE);
 	error = VFS_FHTOVP(mp, &fhp->fh_fid, nam, vpp, &exflags, &credanon);
@@ -2264,11 +2253,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	else
 		*rdonlyp = 0;
 	if (!lockflag)
-#ifdef Lite2_integrated
-		VOP_UNLOCK(*vpp, 0, p);
-#else
-		VOP_UNLOCK(*vpp);
-#endif
+		VOP_UNLOCK(*vpp, 0);
 	return (0);
 }
 

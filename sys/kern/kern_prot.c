@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.43 1998/02/14 01:17:51 thorpej Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.44 1998/03/01 02:22:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_prot.c	8.6 (Berkeley) 1/21/94
+ *	@(#)kern_prot.c	8.9 (Berkeley) 2/14/95
  */
 
 /*

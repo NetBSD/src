@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.18 1997/07/08 02:32:02 christos Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.19 1998/03/01 02:22:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -163,9 +163,9 @@ check_shell:
 	 * close all open fd's when the start.  That kills this
 	 * method of implementing "safe" set-id and x-only scripts.
 	 */
-	VOP_LOCK(epp->ep_vp);
+	vn_lock(epp->ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_ACCESS(epp->ep_vp, VREAD, p->p_ucred, p);
-	VOP_UNLOCK(epp->ep_vp);
+	VOP_UNLOCK(epp->ep_vp, 0);
 	if (error == EACCES
 #ifdef SETUIDSCRIPTS
 	    || script_sbits

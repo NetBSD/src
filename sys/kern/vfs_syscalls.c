@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.112 1998/02/14 19:49:43 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.113 1998/03/01 02:22:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vfs_syscalls.c	8.28 (Berkeley) 12/10/94
+ *	@(#)vfs_syscalls.c	8.42 (Berkeley) 7/31/95
  */
 
 #include "opt_uvm.h"
@@ -84,12 +84,12 @@ int dounmount __P((struct mount *, int, struct proc *));
  * Mount a file system.
  */
 
-#if defined(COMPAT_09) || defined(COMPAT_43)
+#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
 /*
  * This table is used to maintain compatibility with 4.3BSD
  * and NetBSD 0.9 mount syscalls.  Note, the order is important!
  */
-static const char *mountcompatnames[] = {
+const char *mountcompatnames[] = {
 	NULL,		/* 0 = MOUNT_NONE */
 	MOUNT_FFS,	/* 1 */
 	MOUNT_NFS,	/* 2 */
@@ -109,7 +109,7 @@ static const char *mountcompatnames[] = {
 	MOUNT_ADOSFS,	/* 16 */
 	MOUNT_EXT2FS,	/* 17 */
 };
-static const int nmountcompatnames = sizeof(mountcompatnames) /
+const int nmountcompatnames = sizeof(mountcompatnames) /
     sizeof(mountcompatnames[0]);
 #endif /* COMPAT_09 || COMPAT_43 */
 
@@ -126,8 +126,8 @@ sys_mount(p, v, retval)
 		syscallarg(int) flags;
 		syscallarg(void *) data;
 	} */ *uap = v;
-	register struct vnode *vp;
-	register struct mount *mp;
+	struct vnode *vp;
+	struct mount *mp;
 	int error, flag = 0;
 	char fstypename[MFSNAMELEN];
 	struct vattr va;
@@ -137,11 +137,16 @@ sys_mount(p, v, retval)
 	/*
 	 * Get vnode to be covered
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	NDINIT(&nd, LOOKUP, FOLLOW , UIO_USERSPACE,
 	    SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
+	/*
+	 * A lookup in VFS_MOUNT might result in an attempt to
+	 * lock this vnode again, so make the lock resursive.
+	 */
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_CANRECURSE);
 	if (SCARG(uap, flags) & MNT_UPDATE) {
 		if ((vp->v_flag & VROOT) == 0) {
 			vput(vp);
@@ -181,7 +186,11 @@ sys_mount(p, v, retval)
 			}
 			SCARG(uap, flags) |= MNT_NOSUID | MNT_NODEV;
 		}
-		VOP_UNLOCK(vp);
+		if (vfs_busy(mp, LK_NOWAIT, 0)) {
+			vput(vp);
+			return (EPERM);
+		}                     
+		VOP_UNLOCK(vp, 0);
 		goto update;
 	}
 	/*
@@ -252,13 +261,9 @@ sys_mount(p, v, retval)
 	mp = (struct mount *)malloc((u_long)sizeof(struct mount),
 		M_MOUNT, M_WAITOK);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
+	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
+	(void)vfs_busy(mp, LK_NOWAIT, 0);
 	mp->mnt_op = vfs;
-	if ((error = vfs_lock(mp)) != 0) {
-		free((caddr_t)mp, M_MOUNT);
-		vput(vp);
-		return (error);
-	}
-	/* Do this early in case we block later. */
 	vfs->vfs_refcount++;
 	vp->v_mountedhere = mp;
 	mp->mnt_vnodecovered = vp;
@@ -289,6 +294,7 @@ update:
 		    (MNT_UPDATE | MNT_RELOAD | MNT_FORCE | MNT_WANTRDWR);
 		if (error)
 			mp->mnt_flag = flag;
+		vfs_unbusy(mp);
 		return (error);
 	}
 	/*
@@ -296,16 +302,19 @@ update:
 	 */
 	cache_purge(vp);
 	if (!error) {
+		simple_lock(&mountlist_slock);
 		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+		simple_unlock(&mountlist_slock);
 		checkdirs(vp);
-		VOP_UNLOCK(vp);
-		vfs_unlock(mp);
+		VOP_UNLOCK(vp, 0);
+		vfs_unbusy(mp);
 		(void) VFS_STATFS(mp, &mp->mnt_stat, p);
-		error = VFS_START(mp, 0, p);
+		if ((error = VFS_START(mp, 0, p)))
+			vrele(vp);
 	} else {
 		mp->mnt_vnodecovered->v_mountedhere = (struct mount *)0;
 		vfs->vfs_refcount--;
-		vfs_unlock(mp);
+		vfs_unbusy(mp);
 		free((caddr_t)mp, M_MOUNT);
 		vput(vp);
 	}
@@ -406,7 +415,7 @@ sys_unmount(p, v, retval)
 	}
 	vput(vp);
 
-	if (vfs_busy(mp))
+	if (vfs_busy(mp, 0, 0))
 		return (EBUSY);
 
 	return (dounmount(mp, SCARG(uap, flags), p));
@@ -425,41 +434,43 @@ dounmount(mp, flags, p)
 	struct vnode *coveredvp;
 	int error;
 
-	coveredvp = mp->mnt_vnodecovered;
+	simple_lock(&mountlist_slock);
 	mp->mnt_flag |= MNT_UNMOUNT;
-	if ((error = vfs_lock(mp)) != 0) {
-		vfs_unbusy(mp);
-		return (error);
-	}
-
+	vfs_unbusy(mp);
+	lockmgr(&mp->mnt_lock, LK_DRAIN | LK_INTERLOCK, &mountlist_slock);
 	if (mp->mnt_flag & MNT_EXPUBLIC)
 		vfs_setpublicfs(NULL, NULL, NULL);
-
 	mp->mnt_flag &=~ MNT_ASYNC;
 #if !defined(UVM)
 	vnode_pager_umount(mp);	/* release cached vnodes */
 #endif
 	cache_purgevfs(mp);	/* remove cache entries for this file sys */
-	if ((error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p)) == 0 ||
+	if (((mp->mnt_flag & MNT_RDONLY) ||
+	    (error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p)) == 0) ||
 	    (flags & MNT_FORCE))
 		error = VFS_UNMOUNT(mp, flags, p);
-	mp->mnt_flag &= ~MNT_UNMOUNT;
-	vfs_unbusy(mp);
+	simple_lock(&mountlist_slock);
 	if (error) {
-		vfs_unlock(mp);
-	} else {
-		CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
-		if (coveredvp != NULLVP) {
-			vrele(coveredvp);
-			coveredvp->v_mountedhere = (struct mount *)0;
-		}
-		mp->mnt_op->vfs_refcount--;
-		vfs_unlock(mp);
-		if (mp->mnt_vnodelist.lh_first != NULL)
-			panic("unmount: dangling vnode");
-		free((caddr_t)mp, M_MOUNT);
+		mp->mnt_flag &= ~MNT_UNMOUNT;
+		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
+		    &mountlist_slock);
+		if (mp->mnt_flag & MNT_MWAIT)
+			wakeup((caddr_t)mp);
+		 return (error);
 	}
-	return (error);
+	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
+	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
+		coveredvp->v_mountedhere = NULL;
+		vrele(coveredvp);
+	}
+	mp->mnt_op->vfs_refcount--;
+	if (mp->mnt_vnodelist.lh_first != NULL)
+		panic("unmount: dangling vnode");
+	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
+	if (mp->mnt_flag & MNT_MWAIT)
+		wakeup((caddr_t)mp);
+	free((caddr_t)mp, M_MOUNT);
+	return (0);
 }
 
 /*
@@ -480,18 +491,13 @@ sys_sync(p, v, retval)
 	register struct mount *mp, *nmp;
 	int asyncflag;
 
+	simple_lock(&mountlist_slock);
 	for (mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
-		/*
-		 * Get the prev pointer in case we hang on vfs_busy
-		 * while we are being unmounted.
-		 */
-		nmp = mp->mnt_list.cqe_prev;
-		/*
-		 * The lock check below is to avoid races with mount
-		 * and unmount.
-		 */
-		if ((mp->mnt_flag & (MNT_MLOCK|MNT_RDONLY|MNT_MPBUSY)) == 0 &&
-		    !vfs_busy(mp)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+			nmp = mp->mnt_list.cqe_prev;
+			continue;
+		}
+		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
 #if defined(UVM)
@@ -501,15 +507,14 @@ sys_sync(p, v, retval)
 #endif
 			VFS_SYNC(mp, MNT_NOWAIT, p->p_ucred, p);
 			if (asyncflag)
-				mp->mnt_flag |= MNT_ASYNC;
-			/*
-			 * Get the prev pointer again, as the prior filesystem
-			 * might have been unmounted while we were sync'ing.
-			 */
-			nmp = mp->mnt_list.cqe_prev;
-			vfs_unbusy(mp);
+				 mp->mnt_flag |= MNT_ASYNC;
 		}
+		simple_lock(&mountlist_slock);
+		nmp = mp->mnt_list.cqe_prev;
+		vfs_unbusy(mp);
+		
 	}
+	simple_unlock(&mountlist_slock);
 #ifdef DEBUG
 	if (syncprt)
 		vfs_bufstats();
@@ -627,11 +632,14 @@ sys_getfsstat(p, v, retval)
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct statfs);
 	sfsp = (caddr_t)SCARG(uap, buf);
-	for (count = 0,
-	     mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
-		nmp = mp->mnt_list.cqe_next;
-		if (sfsp && count < maxcount &&
-		    ((mp->mnt_flag & MNT_MLOCK) == 0)) {
+	simple_lock(&mountlist_slock);
+	count = 0;
+	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+			nmp = mp->mnt_list.cqe_next;
+			continue;
+		}
+		if (sfsp && count < maxcount) {
 			sp = &mp->mnt_stat;
 			/*
 			 * If MNT_NOWAIT is specified, do not refresh the
@@ -639,8 +647,12 @@ sys_getfsstat(p, v, retval)
 			 */
 			if (((SCARG(uap, flags) & MNT_NOWAIT) == 0 ||
 			    (SCARG(uap, flags) & MNT_WAIT)) &&
-			    (error = VFS_STATFS(mp, sp, p)) != 0)
+			    (error = VFS_STATFS(mp, sp, p)) != 0) {
+				simple_lock(&mountlist_slock);
+				nmp = mp->mnt_list.cqe_next;
+				vfs_unbusy(mp);
 				continue;
+			}
 			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 			error = copyout(sp, sfsp, sizeof(*sp));
 			if (error)
@@ -648,7 +660,11 @@ sys_getfsstat(p, v, retval)
 			sfsp += sizeof(*sp);
 		}
 		count++;
+		simple_lock(&mountlist_slock);
+		nmp = mp->mnt_list.cqe_next;
+		vfs_unbusy(mp);
 	}
+	simple_unlock(&mountlist_slock);
 	if (sfsp && count > maxcount)
 		*retval = maxcount;
 	else
@@ -679,27 +695,26 @@ sys_fchdir(p, v, retval)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
 	VREF(vp);
-	VOP_LOCK(vp);
+	vn_lock(vp,  LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
 	else
 		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
 	while (!error && (mp = vp->v_mountedhere) != NULL) {
-		if (mp->mnt_flag & MNT_MLOCK) {
-			mp->mnt_flag |= MNT_MWAIT;
-			sleep((caddr_t)mp, PVFS);
+		if (vfs_busy(mp, 0, 0))
 			continue;
-		}
-		if ((error = VFS_ROOT(mp, &tdp)) != 0)
+		error = VFS_ROOT(mp, &tdp);
+		vfs_unbusy(mp);
+		if (error)
 			break;
 		vput(vp);
 		vp = tdp;
 	}
-	VOP_UNLOCK(vp);
 	if (error) {
-		vrele(vp);
+		vput(vp);
 		return (error);
 	}
+	VOP_UNLOCK(vp, 0);
 	vrele(fdp->fd_cdir);
 	fdp->fd_cdir = vp;
 	return (0);
@@ -778,9 +793,11 @@ change_dir(ndp, p)
 		error = ENOTDIR;
 	else
 		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
-	VOP_UNLOCK(vp);
+	
 	if (error)
-		vrele(vp);
+		vput(vp);
+	else
+		VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
@@ -849,7 +866,7 @@ sys_open(p, v, retval)
 		type = F_FLOCK;
 		if ((flags & FNONBLOCK) == 0)
 			type |= F_WAIT;
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, 0);
 		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, type);
 		if (error) {
 			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
@@ -857,10 +874,10 @@ sys_open(p, v, retval)
 			fdp->fd_ofiles[indx] = NULL;
 			return (error);
 		}
-		VOP_LOCK(vp);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		fp->f_flag |= FHASLOCK;
 	}
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	*retval = indx;
 	return (0);
 }
@@ -1422,14 +1439,10 @@ sys_chflags(p, v, retval)
 		return (error);
 	vp = nd.ni_vp;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	VOP_LOCK(vp);
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
-		error = EROFS;
-	else {
-		VATTR_NULL(&vattr);
-		vattr.va_flags = SCARG(uap, flags);
-		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
-	}
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	VATTR_NULL(&vattr);
+	vattr.va_flags = SCARG(uap, flags);
+	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	vput(vp);
 	return (error);
 }
@@ -1457,15 +1470,11 @@ sys_fchflags(p, v, retval)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	VOP_LOCK(vp);
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
-		error = EROFS;
-	else {
-		VATTR_NULL(&vattr);
-		vattr.va_flags = SCARG(uap, flags);
-		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
-	}
-	VOP_UNLOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	VATTR_NULL(&vattr);
+	vattr.va_flags = SCARG(uap, flags);
+	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+	VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
@@ -1559,15 +1568,11 @@ change_mode(vp, mode, p)
 	int error;
 
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	VOP_LOCK(vp);
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
-		error = EROFS;
-	else {
-		VATTR_NULL(&vattr);
-		vattr.va_mode = mode & ALLPERMS;
-		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
-	}
-	VOP_UNLOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	VATTR_NULL(&vattr);
+	vattr.va_mode = mode & ALLPERMS;
+	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+	VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
@@ -1751,11 +1756,7 @@ change_owner(vp, uid, gid, p, posix_semantics)
 	int error;
 
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	VOP_LOCK(vp);
-	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
-		error = EROFS;
-		goto out;
-	}
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
 		goto out;
 
@@ -1801,7 +1802,7 @@ change_owner(vp, uid, gid, p, posix_semantics)
 #undef CHANGED
 	
 out:
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
@@ -1909,17 +1910,13 @@ change_utimes(vp, tptr, p)
 			return (error);
 	}
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	VOP_LOCK(vp);
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
-		error = EROFS;
-	else {
-		vattr.va_atime.tv_sec = tv[0].tv_sec;
-		vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
-		vattr.va_mtime.tv_sec = tv[1].tv_sec;
-		vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
-		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
-	}
-	VOP_UNLOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vattr.va_atime.tv_sec = tv[0].tv_sec;
+	vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
+	vattr.va_mtime.tv_sec = tv[1].tv_sec;
+	vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
+	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+	VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
@@ -1948,7 +1945,7 @@ sys_truncate(p, v, retval)
 		return (error);
 	vp = nd.ni_vp;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_type == VDIR)
 		error = EISDIR;
 	else if ((error = vn_writechk(vp)) == 0 &&
@@ -1987,7 +1984,7 @@ sys_ftruncate(p, v, retval)
 		return (EINVAL);
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_type == VDIR)
 		error = EISDIR;
 	else if ((error = vn_writechk(vp)) == 0) {
@@ -1995,7 +1992,7 @@ sys_ftruncate(p, v, retval)
 		vattr.va_size = SCARG(uap, length);
 		error = VOP_SETATTR(vp, &vattr, fp->f_cred, p);
 	}
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
@@ -2019,9 +2016,9 @@ sys_fsync(p, v, retval)
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, MNT_WAIT, p);
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
@@ -2326,17 +2323,13 @@ sys_revoke(p, v, retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	if (vp->v_type != VCHR && vp->v_type != VBLK) {
-		error = EINVAL;
-		goto out;
-	}
 	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
 		goto out;
 	if (p->p_ucred->cr_uid != vattr.va_uid &&
 	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		goto out;
 	if (vp->v_usecount > 1 || (vp->v_flag & VALIASED))
-		vgoneall(vp);
+		VOP_REVOKE(vp, REVOKEALL);
 out:
 	vrele(vp);
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.6 1997/09/16 12:29:21 lukem Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.7 1998/03/01 02:20:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,12 +43,14 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.6 1997/09/16 12:29:21 lukem Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.7 1998/03/01 02:20:41 fvdl Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
+
+#include <ufs/ufs/ufsmount.h>
 
 #include <err.h>
 #include <stdio.h>

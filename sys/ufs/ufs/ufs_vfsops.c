@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.5 1997/06/11 10:10:17 bouyer Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.6 1998/03/01 02:23:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_vfsops.c	8.4 (Berkeley) 4/16/94
+ *	@(#)ufs_vfsops.c	8.8 (Berkeley) 5/20/95
  */
 
 #include <sys/param.h>
@@ -123,39 +123,40 @@ ufs_quotactl(mp, cmds, uid, arg, p)
 	type = cmds & SUBCMDMASK;
 	if ((u_int)type >= MAXQUOTAS)
 		return (EINVAL);
+	if (vfs_busy(mp, LK_NOWAIT, 0))
+		return (0);
 
 	switch (cmd) {
 
 	case Q_QUOTAON:
-		return (quotaon(p, mp, type, arg));
+		error = quotaon(p, mp, type, arg);
+		break;
 
 	case Q_QUOTAOFF:
-		if (vfs_busy(mp))
-			return (0);
 		error = quotaoff(p, mp, type);
-		vfs_unbusy(mp);
-		return (error);
+		break;
 
 	case Q_SETQUOTA:
-		return (setquota(mp, uid, type, arg));
+		error = setquota(mp, uid, type, arg);
+		break;
 
 	case Q_SETUSE:
-		return (setuse(mp, uid, type, arg));
+		error = setuse(mp, uid, type, arg);
+		break;
 
 	case Q_GETQUOTA:
-		return (getquota(mp, uid, type, arg));
+		error =getquota(mp, uid, type, arg);
+		break;
 
 	case Q_SYNC:
-		if (vfs_busy(mp))
-			return (0);
 		error = qsync(mp);
-		vfs_unbusy(mp);
-		return (error);
+		break;
 
 	default:
-		return (EINVAL);
+		error = EINVAL;
 	}
-	/* NOTREACHED */
+	vfs_unbusy(mp);
+	return (error);
 #endif
 }
 
@@ -202,4 +203,22 @@ ufs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp)
 	*exflagsp = np->netc_exflags;
 	*credanonp = &np->netc_anon;
 	return (0);
+}
+
+/*
+ * Initialize UFS filesystems, done only once.
+ */
+
+void
+ufs_init()
+{
+	static int done = 0;
+
+	if (done)
+		return;
+	done = 1;
+	ufs_ihashinit();
+#ifdef QUOTA
+	dqinit();
+#endif
 }

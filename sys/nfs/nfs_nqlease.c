@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.23 1998/02/19 00:54:13 thorpej Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.24 1998/03/01 02:24:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1029,7 +1029,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 	sleepreturn = 0;
 	while ((nmp->nm_iflag & NFSMNT_DISMNT) == 0) {
 	    if (sleepreturn == EINTR || sleepreturn == ERESTART) {
-		if (vfs_busy(nmp->nm_mountp) == 0 &&
+		if (vfs_busy(nmp->nm_mountp, LK_NOWAIT, 0) == 0 &&
 		    dounmount(nmp->nm_mountp, 0, p) != 0)
 			CLRSIG(p, CURSIG(p));
 		sleepreturn = 0;
@@ -1059,11 +1059,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 			vp = NFSTOV(np);
 			vpid = vp->v_id;
 			if (np->n_expiry < time.tv_sec) {
-#ifdef Lite2_integrated
-			   if (vget(vp, LK_EXCLUSIVE, p) == 0) {
-#else
-			   if (vget(vp, 1) == 0) {
-#endif
+			   if (vget(vp, LK_EXCLUSIVE) == 0) {
 			     nmp->nm_inprog = vp;
 			     if (vpid == vp->v_id) {
 				CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
@@ -1090,11 +1086,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 			} else if ((np->n_expiry - NQ_RENEWAL) < time.tv_sec) {
 			    if ((np->n_flag & (NQNFSWRITE | NQNFSNONCACHE))
 				 == NQNFSWRITE && vp->v_dirtyblkhd.lh_first &&
-#ifdef Lite2_integrated
-				 vget(vp, LK_EXCLUSIVE, p) == 0) {
-#else
-				 vget(vp, 1) == 0) {
-#endif
+				 vget(vp, LK_EXCLUSIVE) == 0) {
 				 nmp->nm_inprog = vp;
 				 if (vpid == vp->v_id &&
 				     nqnfs_getlease(vp, ND_WRITE, cred, p)==0)
@@ -1197,10 +1189,7 @@ nqnfs_lease_updatetime(deltat)
 	struct mount *mp;
 	struct nfsmount *nmp;
 	int s;
-#ifdef Lite2_integrated
-	struct proc *p = curproc;	/* XXX */
 	struct mount *nxtmp;
-#endif
 
 	if (nqnfsstarttime != 0)
 		nqnfsstarttime += deltat;
@@ -1214,10 +1203,9 @@ nqnfs_lease_updatetime(deltat)
 	 * Search the mount list for all nqnfs mounts and do their timer
 	 * queues.
 	 */
-#ifdef Lite2_integrated
 	simple_lock(&mountlist_slock);
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nxtmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
 			nxtmp = mp->mnt_list.cqe_next;
 			continue;
 		}
@@ -1234,25 +1222,9 @@ nqnfs_lease_updatetime(deltat)
 		}
 		simple_lock(&mountlist_slock);
 		nxtmp = mp->mnt_list.cqe_next;
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
 	}
 	simple_unlock(&mountlist_slock);
-#else /* Lite2_integrated */
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
-	     mp = mp->mnt_list.cqe_next) {
-		if (!strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_NFS,
-		    MFSNAMELEN)) {
-			nmp = VFSTONFS(mp);
-			if (nmp->nm_flag & NFSMNT_NQNFS) {
-				for (np = nmp->nm_timerhead.cqh_first;
-				    np != (void *)&nmp->nm_timerhead;
-				    np = np->n_timer.cqe_next) {
-					np->n_expiry += deltat;
-				}
-			}
-		}
-	}
-#endif
 }
 
 /*

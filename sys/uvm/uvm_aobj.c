@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.7 1998/02/12 07:36:43 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.8 1998/03/01 02:25:28 fvdl Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -209,9 +209,7 @@ struct uvm_pagerops aobj_pager = {
  */
 
 static LIST_HEAD(aobjlist, uvm_aobj) uao_list;
-#if NCPU > 1
 static simple_lock_data_t uao_list_lock;
-#endif
 
 
 /*

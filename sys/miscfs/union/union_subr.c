@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.25 1998/02/10 14:10:38 mrg Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.26 1998/03/01 02:21:56 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)union_subr.c	8.16 (Berkeley) 12/10/94
+ *	@(#)union_subr.c	8.20 (Berkeley) 5/20/95
  */
 
 #include "opt_uvm.h"
@@ -82,7 +82,7 @@ static int union_relookup __P((struct union_mount *, struct vnode *,
 			       struct componentname *, const char *, int));
 int union_vn_close __P((struct vnode *, int, struct ucred *, struct proc *));
 static void union_dircache_r __P((struct vnode *, struct vnode ***, int *));
-struct vnode *union_dircache __P((struct vnode *));
+struct vnode *union_dircache __P((struct vnode *, struct proc *));
 
 void
 union_init()
@@ -132,19 +132,26 @@ union_updatevp(un, uppervp, lowervp)
 	int ohash = UNION_HASH(un->un_uppervp, un->un_lowervp);
 	int nhash = UNION_HASH(uppervp, lowervp);
 	int docache = (lowervp != NULLVP || uppervp != NULLVP);
+	int lhash, uhash;
 
 	/*
 	 * Ensure locking is ordered from lower to higher
 	 * to avoid deadlocks.
 	 */
-	if (nhash < ohash)
-		while (union_list_lock(nhash))
+	if (nhash < ohash) {
+		lhash = nhash;
+		uhash = ohash;
+	} else {
+		lhash = ohash;
+		uhash = nhash;
+	}
+
+	if (lhash != uhash)
+		while (union_list_lock(lhash))
 			continue;
-	while (union_list_lock(ohash))
+
+	while (union_list_lock(uhash))
 		continue;
-	if (nhash > ohash)
-		while (union_list_lock(nhash))
-			continue;
 
 	if (ohash != nhash || !docache) {
 		if (un->un_flags & UN_CACHED) {
@@ -593,12 +600,12 @@ union_copyfile(fvp, tvp, cred, p)
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_offset = 0;
 
-	VOP_UNLOCK(fvp);				/* XXX */
+	VOP_UNLOCK(fvp, 0);			/* XXX */
 	VOP_LEASE(fvp, p, cred, LEASE_READ);
-	VOP_LOCK(fvp);					/* XXX */
-	VOP_UNLOCK(tvp);				/* XXX */
+	vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
+	VOP_UNLOCK(tvp, 0);			/* XXX */
 	VOP_LEASE(tvp, p, cred, LEASE_WRITE);
-	VOP_LOCK(tvp);					/* XXX */
+	vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 
 	buf = malloc(MAXBSIZE, M_TEMP, M_WAITOK);
 
@@ -666,11 +673,11 @@ union_copyup(un, docopy, cred, p)
 		 * XX - should not ignore errors
 		 * from VOP_CLOSE
 		 */
-		VOP_LOCK(lvp);
+		vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_OPEN(lvp, FREAD, cred, p);
 		if (error == 0) {
 			error = union_copyfile(lvp, uvp, cred, p);
-			VOP_UNLOCK(lvp);
+			VOP_UNLOCK(lvp, 0);
 			(void) VOP_CLOSE(lvp, FREAD, cred, p);
 		}
 #ifdef UNION_DIAGNOSTIC
@@ -680,9 +687,9 @@ union_copyup(un, docopy, cred, p)
 
 	}
 	un->un_flags &= ~UN_ULOCK;
-	VOP_UNLOCK(uvp);
+	VOP_UNLOCK(uvp, 0);
 	union_vn_close(uvp, FWRITE, cred, p);
-	VOP_LOCK(uvp);
+	vn_lock(uvp, LK_EXCLUSIVE | LK_RETRY);
 	un->un_flags |= UN_ULOCK;
 
 	/*
@@ -789,7 +796,7 @@ union_mkshadow(um, dvp, cnp, vpp)
 
 	if (*vpp) {
 		VOP_ABORTOP(dvp, &cn);
-		VOP_UNLOCK(dvp);
+		VOP_UNLOCK(dvp, 0);
 		vrele(*vpp);
 		*vpp = NULLVP;
 		return (EEXIST);
@@ -835,10 +842,10 @@ union_mkwhiteout(um, dvp, cnp, path)
 	struct vnode *wvp;
 	struct componentname cn;
 
-	VOP_UNLOCK(dvp);
+	VOP_UNLOCK(dvp, 0);
 	error = union_relookup(um, dvp, &wvp, cnp, &cn, path, strlen(path));
 	if (error) {
-		VOP_LOCK(dvp);
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 	}
 
@@ -965,7 +972,7 @@ void
 union_removed_upper(un)
 	struct union_node *un;
 {
-
+#if 1
 	/*
 	 * We do not set the uppervp to NULLVP here, because lowervp
 	 * may also be NULLVP, so this routine would end up creating
@@ -976,6 +983,9 @@ union_removed_upper(un)
 	 * release it, union_inactive() will vgone() it.
 	 */
 	union_diruncache(un);
+#else
+	union_newupper(un, NULLVP);
+#endif
 
 	if (un->un_flags & UN_CACHED) {
 		un->un_flags &= ~UN_CACHED;
@@ -984,7 +994,7 @@ union_removed_upper(un)
 
 	if (un->un_flags & UN_ULOCK) {
 		un->un_flags &= ~UN_ULOCK;
-		VOP_UNLOCK(un->un_uppervp);
+		VOP_UNLOCK(un->un_uppervp, 0);
 	}
 }
 
@@ -1056,8 +1066,9 @@ union_dircache_r(vp, vppp, cntp)
 }
 
 struct vnode *
-union_dircache(vp)
+union_dircache(vp, p)
 	struct vnode *vp;
+	struct proc *p;
 {
 	int cnt;
 	struct vnode *nvp = NULLVP;
@@ -1065,9 +1076,11 @@ union_dircache(vp)
 	struct vnode **dircache;
 	int error;
 
-	VOP_LOCK(vp);
-
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	dircache = VTOUNION(vp)->un_dircache;
+
+	nvp = NULLVP;
+
 	if (dircache == 0) {
 		cnt = 0;
 		union_dircache_r(vp, 0, &cnt);
@@ -1091,7 +1104,7 @@ union_dircache(vp)
 	if (*vpp == NULLVP)
 		goto out;
 
-	VOP_LOCK(*vpp);
+	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
 	VREF(*vpp);
 	error = union_allocvp(&nvp, vp->v_mount, NULLVP, NULLVP, 0, *vpp, NULLVP, 0);
 	if (!error) {
@@ -1100,7 +1113,7 @@ union_dircache(vp)
 	}
 
 out:
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	return (nvp);
 }
 

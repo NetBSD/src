@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.18 1998/02/18 07:05:49 thorpej Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.19 1998/03/01 02:21:56 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)union_vfsops.c	8.13 (Berkeley) 12/10/94
+ *	@(#)union_vfsops.c	8.20 (Berkeley) 5/20/95
  */
 
 /*
@@ -70,6 +70,8 @@ int union_vget __P((struct mount *, ino_t, struct vnode **));
 int union_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 		      struct vnode **, int *, struct ucred **));
 int union_vptofh __P((struct vnode *, struct fid *));
+int union_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		      struct proc *));
 
 /*
  * Mount union filesystem
@@ -213,7 +215,7 @@ union_mount(mp, path, data, ndp, p)
 	mp->mnt_flag |= (um->um_uppervp->v_mount->mnt_flag & MNT_RDONLY);
 
 	mp->mnt_data = (qaddr_t)um;
-	getnewfsid(mp, makefstype(MOUNT_UNION));
+	vfs_getnewfsid(mp, MOUNT_UNION);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -292,18 +294,13 @@ union_unmount(mp, mntflags, p)
 	int error;
 	int freeing;
 	int flags = 0;
-	extern int doforce;
 
 #ifdef UNION_DIAGNOSTIC
 	printf("union_unmount(mp = %p)\n", mp);
 #endif
 
-	if (mntflags & MNT_FORCE) {
-		/* union can never be rootfs so don't check for it */
-		if (!doforce)
-			return (EINVAL);
+	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	}
 
 	if ((error = union_root(mp, &um_rootvp)) != 0)
 		return (error);
@@ -384,7 +381,7 @@ union_root(mp, vpp)
 	     VOP_ISLOCKED(um->um_uppervp)) {
 		loselock = 1;
 	} else {
-		VOP_LOCK(um->um_uppervp);
+		vn_lock(um->um_uppervp, LK_EXCLUSIVE | LK_RETRY);
 		loselock = 0;
 	}
 	if (um->um_lowervp)
@@ -399,7 +396,7 @@ union_root(mp, vpp)
 
 	if (error) {
 		if (!loselock)
-			VOP_UNLOCK(um->um_uppervp);
+			VOP_UNLOCK(um->um_uppervp, 0);
 		vrele(um->um_uppervp);
 		if (um->um_lowervp)
 			vrele(um->um_lowervp);
@@ -463,9 +460,10 @@ union_statfs(mp, sbp, p)
 	sbp->f_iosize = mstat.f_iosize;
 
 	/*
-	 * if the lower and upper blocksizes differ, then frig the
-	 * block counts so that the sizes reported by df make some
-	 * kind of sense.  none of this makes sense though.
+	 * The "total" fields count total resources in all layers,
+	 * the "free" fields count only those resources which are
+	 * free in the upper layer (since only the upper layer
+	 * is writeable).
 	 */
 
 	if (mstat.f_bsize != lbsize)
@@ -535,6 +533,19 @@ union_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
+int
+union_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
+}
+
 extern struct vnodeopv_desc union_vnodeop_opv_desc;
 
 struct vnodeopv_desc *union_vnodeopv_descs[] = {
@@ -555,6 +566,7 @@ struct vfsops union_vfsops = {
 	union_fhtovp,
 	union_vptofh,
 	union_init,
+	union_sysctl,
 	NULL,				/* vfs_mountroot */
 	union_vnodeopv_descs,
 };

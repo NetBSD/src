@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.16 1998/02/10 14:09:00 mrg Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.17 1998/03/01 02:24:00 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -193,28 +193,28 @@ typedef struct {
 
 #define	vm_map_lock_drain_interlock(map) { \
 	lockmgr(&(map)->lock, LK_DRAIN|LK_INTERLOCK, \
-		&(map)->ref_lock, curproc); \
+		&(map)->ref_lock); \
 	(map)->timestamp++; \
 }
 #ifdef DIAGNOSTIC
 #define	vm_map_lock(map) { \
-	if (lockmgr(&(map)->lock, LK_EXCLUSIVE, (void *)0, curproc) != 0) { \
+	if (lockmgr(&(map)->lock, LK_EXCLUSIVE, (void *)0) != 0) { \
 		panic("vm_map_lock: failed to get lock"); \
 	} \
 	(map)->timestamp++; \
 }
 #else
 #define	vm_map_lock(map) { \
-	lockmgr(&(map)->lock, LK_EXCLUSIVE, (void *)0, curproc); \
+	lockmgr(&(map)->lock, LK_EXCLUSIVE, (void *)0); \
 	(map)->timestamp++; \
 }
 #endif /* DIAGNOSTIC */
 #define	vm_map_unlock(map) \
-		lockmgr(&(map)->lock, LK_RELEASE, (void *)0, curproc)
+		lockmgr(&(map)->lock, LK_RELEASE, (void *)0)
 #define	vm_map_lock_read(map) \
-		lockmgr(&(map)->lock, LK_SHARED, (void *)0, curproc)
+		lockmgr(&(map)->lock, LK_SHARED, (void *)0)
 #define	vm_map_unlock_read(map) \
-		lockmgr(&(map)->lock, LK_RELEASE, (void *)0, curproc)
+		lockmgr(&(map)->lock, LK_RELEASE, (void *)0)
 #define vm_map_set_recursive(map) { \
 	simple_lock(&(map)->lk_interlock); \
 	(map)->lk_flags |= LK_CANRECURSE; \
@@ -235,7 +235,7 @@ static __inline boolean_t vm_map_lock_try(map)
 vm_map_t map;
 
 {
-  if (lockmgr(&(map)->lock, LK_EXCLUSIVE|LK_NOWAIT, (void *)0, curproc) != 0)
+  if (lockmgr(&(map)->lock, LK_EXCLUSIVE|LK_NOWAIT, (void *)0) != 0)
     return(FALSE);
   map->timestamp++;
   return(TRUE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.9 1998/01/28 02:38:45 thorpej Exp $	*/
+/*	$NetBSD: iso.h,v 1.10 1998/03/01 02:24:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -160,6 +160,8 @@ struct sockaddr_iso {
 
 #define SAME_ISOADDR(a, b) \
 	(bcmp((a)->siso_data, (b)->siso_data, (unsigned)(a)->siso_nlen)==0)
+#define SAME_ISOIFADDR(a, b) (bcmp((a)->siso_data, (b)->siso_data, \
+	(unsigned)((b)->siso_nlen - (b)->siso_tlen)) == 0)
 /*
  * The following are specific values for siso->siso_data[0],
  * otherwise known as the AFI:

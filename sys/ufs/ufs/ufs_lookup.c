@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.13 1997/06/11 10:10:13 bouyer Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.14 1998/03/01 02:23:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -145,6 +145,10 @@ ufs_lookup(v)
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
 		return (error);
 
+	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return (EROFS);
+
 	/*
 	 * We now have a segment name to search for, and a directory to search.
 	 *
@@ -170,14 +174,14 @@ ufs_lookup(v)
 			VREF(vdp);
 			error = 0;
 		} else if (flags & ISDOTDOT) {
-			VOP_UNLOCK(pdp);
-			error = vget(vdp, 1);
+			VOP_UNLOCK(pdp, 0);
+			error = vget(vdp, LK_EXCLUSIVE);
 			if (!error && lockparent && (flags & ISLASTCN))
-				error = VOP_LOCK(pdp);
+				error = vn_lock(pdp, LK_EXCLUSIVE);
 		} else {
-			error = vget(vdp, 1);
+			error = vget(vdp, LK_EXCLUSIVE);
 			if (!lockparent || error || !(flags & ISLASTCN))
-				VOP_UNLOCK(pdp);
+				VOP_UNLOCK(pdp, 0);
 		}
 		/*
 		 * Check that the capability number did not change
@@ -188,9 +192,9 @@ ufs_lookup(v)
 				return (0);
 			vput(vdp);
 			if (lockparent && pdp != vdp && (flags & ISLASTCN))
-				VOP_UNLOCK(pdp);
+				VOP_UNLOCK(pdp, 0);
 		}
-		if ((error = VOP_LOCK(pdp)) != 0)
+		if ((error = vn_lock(pdp, LK_EXCLUSIVE)) != 0)
 			return (error);
 		vdp = pdp;
 		dp = VTOI(pdp);
@@ -395,12 +399,6 @@ notfound:
 	      (ap->a_cnp->cn_flags & ISWHITEOUT))) &&
 	    (flags & ISLASTCN) && dp->i_ffs_nlink != 0) {
 		/*
-		 * Creation of files on a read-only mounted file system
-		 * is pointless, so don't proceed any further.
-		 */
-		if (vdp->v_mount->mnt_flag & MNT_RDONLY)
-			return (EROFS);
-		/*
 		 * Access for write is interpreted as allowing
 		 * creation of files in the directory.
 		 */
@@ -449,7 +447,7 @@ notfound:
 		 */
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, 0);
 		return (EJUSTRETURN);
 	}
 	/*
@@ -527,7 +525,7 @@ found:
 		}
 		*vpp = tdp;
 		if (!lockparent)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, 0);
 		return (0);
 	}
 
@@ -537,8 +535,7 @@ found:
 	 * Must get inode of directory entry to verify it's a
 	 * regular file, or empty directory.
 	 */
-	if (nameiop == RENAME && wantparent &&
-	    (flags & ISLASTCN)) {
+	if (nameiop == RENAME && wantparent && (flags & ISLASTCN)) {
 		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc);
 		if (error)
 			return (error);
@@ -554,7 +551,7 @@ found:
 		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, 0);
 		return (0);
 	}
 
@@ -579,14 +576,14 @@ found:
 	 */
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp);	/* race to get the inode */
+		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
 		if (error) {
-			VOP_LOCK(pdp);
+			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN) &&
-		    (error = VOP_LOCK(pdp))) {
+		    (error = vn_lock(pdp, LK_EXCLUSIVE))) {
 			vput(tdp);
 			return (error);
 		}
@@ -599,7 +596,7 @@ found:
 		if (error)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN))
-			VOP_UNLOCK(pdp);
+			VOP_UNLOCK(pdp, 0);
 		*vpp = tdp;
 	}
 

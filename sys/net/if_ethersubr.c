@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.26 1997/10/02 19:41:59 is Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.27 1998/03/01 02:25:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_ethersubr.c	8.1 (Berkeley) 6/10/93
+ *	@(#)if_ethersubr.c	8.2 (Berkeley) 4/4/96
  */
 
 #include <sys/param.h>
@@ -132,12 +132,15 @@ ether_output(ifp, m0, dst, rt0)
 	ifp->if_lastchange = time;
 	if ((rt = rt0) != NULL) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = rtalloc1(dst, 1)) != NULL)
+			if ((rt0 = rt = rtalloc1(dst, 1)) != NULL) {
 				rt->rt_refcnt--;
-			else 
+				if (rt->rt_ifp != ifp)
+					return (*rt->rt_ifp->if_output)
+							(ifp, m0, dst, rt);
+			} else 
 				senderr(EHOSTUNREACH);
 		}
-		if (rt->rt_flags & RTF_GATEWAY) {
+		if ((rt->rt_flags & RTF_GATEWAY) && dst->sa_family != AF_NS) {
 			if (rt->rt_gwroute == 0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
@@ -145,6 +148,13 @@ ether_output(ifp, m0, dst, rt0)
 			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
 				if ((rt = rt->rt_gwroute) == 0)
 					senderr(EHOSTUNREACH);
+				/* the "G" test below also prevents rt == rt0 */
+				if ((rt->rt_flags & RTF_GATEWAY) ||
+				    (rt->rt_ifp != ifp)) {
+					rt->rt_refcnt--;
+					rt0->rt_gwroute = 0;
+					senderr(EHOSTUNREACH);
+				}
 			}
 		}
 		if (rt->rt_flags & RTF_REJECT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.7 1996/11/15 23:11:56 cgd Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.8 1998/03/01 02:23:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -76,16 +76,16 @@ lfs_dump_super(lfsp)
 		"cleansz  ", lfsp->lfs_cleansz,
 		"segtabsz ", lfsp->lfs_segtabsz);
 
-	printf("%s%x\t%s%d\t%s%x\t%s%d\n",
+	printf("%s%x\t%s%d\t%s%lx\t%s%d\n",
 		"segmask  ", lfsp->lfs_segmask,
 		"segshift ", lfsp->lfs_segshift,
-		"bmask    ", lfsp->lfs_bmask,
+		"bmask    ", (unsigned long)lfsp->lfs_bmask,
 		"bshift   ", lfsp->lfs_bshift);
 
-	printf("%s%x\t%s%d\t%s%x\t%s%d\n",
-		"ffmask   ", lfsp->lfs_ffmask,
+	printf("%s%lu\t%s%d\t%s%lx\t%s%u\n",
+		"ffmask   ", (unsigned long)lfsp->lfs_ffmask,
 		"ffshift  ", lfsp->lfs_ffshift,
-		"fbmask   ", lfsp->lfs_fbmask,
+		"fbmask   ", (unsigned long)lfsp->lfs_fbmask,
 		"fbshift  ", lfsp->lfs_fbshift);
 
 	printf("%s%d\t%s%d\t%s%x\t%s%qx\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.14 1998/01/28 02:35:51 thorpej Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.15 1998/03/01 02:24:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pk_usrreq.c	8.1 (Berkeley) 6/10/93
+ *	@(#)pk_usrreq.c	8.2 (Berkeley) 1/9/95
  */
 
 #include <sys/param.h>

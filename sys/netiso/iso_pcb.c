@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.15 1998/01/28 02:38:46 thorpej Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.16 1998/03/01 02:24:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso_pcb.c	8.1 (Berkeley) 6/10/93
+ *	@(#)iso_pcb.c	8.3 (Berkeley) 7/19/94
  */
 
 /***********************************************************
@@ -212,7 +212,7 @@ iso_pcbbind(v, nam, p)
 		}
 #endif
 		for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
-			if (SAME_ISOADDR(siso, &ia->ia_addr))
+			if (SAME_ISOIFADDR(siso, &ia->ia_addr))
 				break;
 		if (ia == 0)
 			return EADDRNOTAVAIL;
@@ -241,6 +241,7 @@ iso_pcbbind(v, nam, p)
 		register char  *cp;
 noname:
 		cp = TSEL(isop->isop_laddr);
+		isop->isop_laddr->siso_tlen = 2;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISO]) {
 			printf("iso_pcbbind noname\n");

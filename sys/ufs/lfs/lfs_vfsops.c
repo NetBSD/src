@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.15 1998/02/18 07:05:50 thorpej Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.16 1998/03/01 02:23:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)lfs_vfsops.c	8.10 (Berkeley) 11/21/94
+ *	@(#)lfs_vfsops.c	8.20 (Berkeley) 6/10/95
  */
 
 #include <sys/param.h>
@@ -91,15 +91,52 @@ struct vfsops lfs_vfsops = {
 	lfs_fhtovp,
 	lfs_vptofh,
 	lfs_init,
-	NULL,				/* vfs_mountroot */
+	lfs_sysctl,
+	lfs_mountroot,
 	lfs_vnodeopv_descs,
 };
 
+/*
+ * Initialize the filesystem, most work done by ufs_init.
+ */
+void
+lfs_init()
+{
+	ufs_init();
+}
+
+/*
+ * Called by main() when ufs is going to be mounted as root.
+ */
 int
 lfs_mountroot()
 {
-	panic("lfs_mountroot");		/* XXX -- implement */
-	return 0;
+	extern struct vnode *rootvp;
+	struct mount *mp;
+	struct proc *p = curproc;	/* XXX */
+	int error;
+	
+	/*
+	 * Get vnodes for swapdev and rootdev.
+	 */
+	if ((error = bdevvp(rootdev, &rootvp))) {
+		printf("lfs_mountroot: can't setup bdevvp's");
+		return (error);
+	}
+	if ((error = vfs_rootmountalloc(MOUNT_LFS, "root_device", &mp)))
+		return (error);
+	if ((error = lfs_mountfs(rootvp, mp, p))) {
+		mp->mnt_op->vfs_refcount--;
+		vfs_unbusy(mp);
+		free(mp, M_MOUNT);
+		return (error);
+	}
+	simple_lock(&mountlist_slock);
+	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+	simple_unlock(&mountlist_slock);
+	(void)lfs_statfs(mp, &mp->mnt_stat, p);
+	vfs_unbusy(mp);
+	return (0);
 }
 
 /*
@@ -143,14 +180,12 @@ lfs_mount(mp, path, data, ndp, p)
 			 * that user has necessary permissions on the device.
 			 */
 			if (p->p_ucred->cr_uid != 0) {
-				VOP_LOCK(ump->um_devvp);
+				vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 				error = VOP_ACCESS(ump->um_devvp, VREAD|VWRITE,
 						   p->p_ucred, p);
-				if (error) {
-					VOP_UNLOCK(ump->um_devvp);
+				VOP_UNLOCK(ump->um_devvp, 0);
+				if (error)
 					return (error);
-				}
-				VOP_UNLOCK(ump->um_devvp);
 			}
 			fs->lfs_ronly = 0;
 		}
@@ -185,13 +220,13 @@ lfs_mount(mp, path, data, ndp, p)
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		VOP_LOCK(devvp);
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
 		if (error) {
 			vput(devvp);
 			return (error);
 		}
-		VOP_UNLOCK(devvp);
+		VOP_UNLOCK(devvp, 0);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = lfs_mountfs(devvp, mp, p);		/* LFS */
@@ -432,12 +467,18 @@ lfs_statfs(mp, sbp, p)
 	sbp->f_type = 0;
 	sbp->f_bsize = fs->lfs_bsize;
 	sbp->f_iosize = fs->lfs_bsize;
-	sbp->f_blocks = dbtofsb(fs,fs->lfs_dsize);
-	sbp->f_bfree = dbtofsb(fs, fs->lfs_bfree);
-        sbp->f_bavail = (long) (((u_int64_t) fs->lfs_dsize * (u_int64_t)
-		(100 - fs->lfs_minfree) / (u_int64_t) 100) -
-		(u_int64_t) (fs->lfs_dsize - sbp->f_bfree));
-	sbp->f_bavail = dbtofsb(fs, sbp->f_bavail);
+	sbp->f_blocks = dbtofrags(fs, fs->lfs_dsize);
+	sbp->f_bfree = dbtofrags(fs, fs->lfs_bfree);
+	/*
+	 * To compute the available space.  Subtract the minimum free
+	 * from the total number of blocks in the file system.  Set avail
+	 * to the smaller of this number and fs->lfs_bfree.
+	 */
+        sbp->f_bavail = (long) ((u_int64_t) fs->lfs_dsize * (u_int64_t)
+		(100 - fs->lfs_minfree) / (u_int64_t) 100);
+	sbp->f_bavail =
+	    sbp->f_bavail > fs->lfs_bfree ? fs->lfs_bfree : sbp->f_bavail;
+	sbp->f_bavail = dbtofrags(fs, sbp->f_bavail);
 	sbp->f_files = fs->lfs_nfiles;
 	sbp->f_ffree = sbp->f_bfree * INOPB(fs);
 	if (sbp != &mp->mnt_stat) {
@@ -489,7 +530,7 @@ lfs_vget(mp, ino, vpp)
 	struct ifile *ifp;
 	struct vnode *vp;
 	struct ufsmount *ump;
-	daddr_t daddr;
+	ufs_daddr_t daddr;
 	dev_t dev;
 	int error;
 
@@ -619,4 +660,17 @@ lfs_vptofh(vp, fhp)
 	ufhp->ufid_ino = ip->i_number;
 	ufhp->ufid_gen = ip->i_ffs_gen;
 	return (0);
+}
+
+int
+lfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.24 1997/10/19 02:00:28 mycroft Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.25 1998/03/01 02:22:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_ktrace.c	8.2 (Berkeley) 9/23/93
+ *	@(#)kern_ktrace.c	8.5 (Berkeley) 5/14/95
  */
 
 #ifdef KTRACE
@@ -292,7 +292,7 @@ sys_ktrace(curp, v, retval)
 			return (error);
 		}
 		vp = nd.ni_vp;
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, 0);
 		if (vp->v_type != VREG) {
 			(void) vn_close(vp, FREAD|FWRITE, curp->p_ucred, curp);
 			curp->p_traceflag &= ~KTRFAC_ACTIVE;
@@ -447,7 +447,7 @@ ktrwrite(vp, kth)
 {
 	struct uio auio;
 	struct iovec aiov[2];
-	register struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc;
 	int error;
 
 	if (vp == NULL)
@@ -467,9 +467,9 @@ ktrwrite(vp, kth)
 		aiov[1].iov_len = kth->ktr_len;
 		auio.uio_resid += kth->ktr_len;
 	}
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_WRITE(vp, &auio, IO_UNIT|IO_APPEND, p->p_ucred);
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	if (!error)
 		return;
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.26 1997/11/02 18:25:18 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.27 1998/03/01 02:24:15 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)time.h	8.2 (Berkeley) 7/10/94
+ *	@(#)time.h	8.5 (Berkeley) 5/4/95
  */
 
 #ifndef _SYS_TIME_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.16 1997/10/17 22:37:38 jonathan Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.17 1998/03/01 02:22:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)subr_prof.c	8.3 (Berkeley) 9/23/93
+ *	@(#)subr_prof.c	8.4 (Berkeley) 2/14/95
  */
 
 #include <sys/param.h>

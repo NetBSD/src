@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pageout.c,v 1.28 1998/01/31 04:02:45 ross Exp $	*/
+/*	$NetBSD: vm_pageout.c,v 1.29 1998/03/01 02:24:02 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_pageout.c	8.5 (Berkeley) 2/14/94
+ *	@(#)vm_pageout.c	8.7 (Berkeley) 6/19/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

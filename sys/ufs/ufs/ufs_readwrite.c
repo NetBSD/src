@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.15 1998/02/10 14:10:59 mrg Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.16 1998/03/01 02:23:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,13 +32,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_readwrite.c	8.8 (Berkeley) 8/4/94
+ *	@(#)ufs_readwrite.c	8.11 (Berkeley) 5/8/95
  */
 
 #include "opt_uvm.h"
 
 #ifdef LFS_READWRITE
-#define	BLKSIZE(a, b, c)	blksize(a)
+#define	BLKSIZE(a, b, c)	blksize(a, b, c)
 #define	FS			struct lfs
 #define	I_FS			i_lfs
 #define	READ			lfs_read
@@ -76,7 +76,7 @@ READ(v)
 	register struct uio *uio;
 	register FS *fs;
 	struct buf *bp;
-	daddr_t lbn, nextlbn;
+	ufs_daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error;
@@ -183,7 +183,7 @@ WRITE(v)
 	register FS *fs;
 	struct buf *bp;
 	struct proc *p;
-	daddr_t lbn;
+	ufs_daddr_t lbn;
 	off_t osize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
 	struct timespec ts;
@@ -243,7 +243,7 @@ WRITE(v)
 			xfersize = uio->uio_resid;
 #ifdef LFS_READWRITE
 		(void)lfs_check(vp, lbn);
-		error = lfs_balloc(vp, xfersize, lbn, &bp);
+		error = lfs_balloc(vp, blkoffset, xfersize, lbn, &bp);
 #else
 		if (fs->fs_bsize > xfersize)
 			flags |= B_CLRBUF;

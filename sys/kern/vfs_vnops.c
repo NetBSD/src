@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.27 1998/02/19 00:53:46 thorpej Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.28 1998/03/01 02:22:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vfs_vnops.c	8.5 (Berkeley) 12/8/94
+ *	@(#)vfs_vnops.c	8.14 (Berkeley) 6/15/95
  */
 
 #include "fs_union.h"
@@ -61,6 +61,10 @@
 
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
+#endif
+
+#ifdef UNION
+#include <miscfs/union/union.h>
 #endif
 
 struct 	fileops vnops =
@@ -92,6 +96,8 @@ vn_open(ndp, fmode, cmode)
 			VATTR_NULL(&va);
 			va.va_type = VREG;
 			va.va_mode = cmode;
+			if (fmode & O_EXCL)
+				 va.va_vaflags |= VA_EXCLUSIVE;
 			VOP_LEASE(ndp->ni_dvp, p, cred, LEASE_WRITE);
 			error = VOP_CREATE(ndp->ni_dvp, &ndp->ni_vp,
 					   &ndp->ni_cnd, &va);
@@ -140,9 +146,9 @@ vn_open(ndp, fmode, cmode)
 		}
 	}
 	if (fmode & O_TRUNC) {
-		VOP_UNLOCK(vp);				/* XXX */
+		VOP_UNLOCK(vp, 0);			/* XXX */
 		VOP_LEASE(vp, p, cred, LEASE_WRITE);
-		VOP_LOCK(vp);				/* XXX */
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 		VATTR_NULL(&va);
 		va.va_size = 0;
 		if ((error = VOP_SETATTR(vp, &va, cred, p)) != 0)
@@ -160,28 +166,13 @@ bad:
 
 /*
  * Check for write permissions on the specified vnode.
- * The read-only status of the file system is checked.
- * Also, prototype text segments cannot be written.
+ * Prototype text segments cannot be written.
  */
 int
 vn_writechk(vp)
 	register struct vnode *vp;
 {
 
-	/*
-	 * Disallow write attempts on read-only file systems;
-	 * unless the file is a socket or a block or character
-	 * device resident on the file system.
-	 */
-	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
-		switch (vp->v_type) {
-		case VREG: case VDIR: case VLNK:
-			return (EROFS);
-		case VNON: case VCHR: case VSOCK:
-		case VFIFO: case VBAD: case VBLK:
-			break;
-		}
-	}
 	/*
 	 * If there's shared text associated with
 	 * the vnode, try to free it up once.  If
@@ -237,7 +228,7 @@ vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
 	int error;
 
 	if ((ioflg & IO_NODELOCKED) == 0)
-		VOP_LOCK(vp);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	aiov.iov_base = base;
@@ -258,7 +249,7 @@ vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
 		if (auio.uio_resid && error == 0)
 			error = EIO;
 	if ((ioflg & IO_NODELOCKED) == 0)
-		VOP_UNLOCK(vp);
+		VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
@@ -266,10 +257,10 @@ int
 vn_readdir(fp, buf, segflg, count, done, p, cookies, ncookies)
 	struct file *fp;
 	char *buf;
-	int segflg, *done, ncookies;
+	int segflg, *done, *ncookies;
 	u_int count;
 	struct proc *p;
-	off_t *cookies;
+	off_t **cookies;
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
 	struct iovec aiov;
@@ -287,12 +278,12 @@ unionread:
 	auio.uio_segflg = segflg;
 	auio.uio_procp = p;
 	auio.uio_resid = count;
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	auio.uio_offset = fp->f_offset;
-	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, (off_t *)cookies,
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookies,
 		    ncookies);
 	fp->f_offset = auio.uio_offset;
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	if (error)
 		return (error);
 
@@ -321,12 +312,11 @@ unionread:
 		
 		if (lvp != NULLVP) {
 			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
-			VOP_UNLOCK(lvp);
-
 			if (error) {
-				vrele(lvp);
+				vput(lvp);
 				return (error);
 			}
+			VOP_UNLOCK(lvp, 0);
 			fp->f_data = (caddr_t) lvp;
 			fp->f_offset = 0;
 			error = vn_close(vp, FREAD, fp->f_cred, p);
@@ -362,17 +352,17 @@ vn_read(fp, uio, cred)
 	struct uio *uio;
 	struct ucred *cred;
 {
-	register struct vnode *vp = (struct vnode *)fp->f_data;
+	struct vnode *vp = (struct vnode *)fp->f_data;
 	int count, error;
 
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_READ);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = fp->f_offset;
 	count = uio->uio_resid;
 	error = VOP_READ(vp, uio, (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0,
 		cred);
 	fp->f_offset += count - uio->uio_resid;
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
@@ -385,7 +375,7 @@ vn_write(fp, uio, cred)
 	struct uio *uio;
 	struct ucred *cred;
 {
-	register struct vnode *vp = (struct vnode *)fp->f_data;
+	struct vnode *vp = (struct vnode *)fp->f_data;
 	int count, error, ioflag = IO_UNIT;
 
 	if (vp->v_type == VREG && (fp->f_flag & O_APPEND))
@@ -396,7 +386,7 @@ vn_write(fp, uio, cred)
 	    (vp->v_mount && (vp->v_mount->mnt_flag & MNT_SYNCHRONOUS)))
 		ioflag |= IO_SYNC;
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_WRITE);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = fp->f_offset;
 	count = uio->uio_resid;
 	error = VOP_WRITE(vp, uio, ioflag, cred);
@@ -404,7 +394,7 @@ vn_write(fp, uio, cred)
 		fp->f_offset = uio->uio_offset;
 	else
 		fp->f_offset += count - uio->uio_resid;
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
@@ -528,6 +518,35 @@ vn_poll(fp, events, p)
 {
 
 	return (VOP_POLL(((struct vnode *)fp->f_data), events, p));
+}
+
+/*
+ * Check that the vnode is still valid, and if so
+ * acquire requested lock.
+ */
+int
+vn_lock(vp, flags)
+	struct vnode *vp;
+	int flags;
+{
+	int error;
+	
+	do {
+		if ((flags & LK_INTERLOCK) == 0)
+			simple_lock(&vp->v_interlock);
+		if (vp->v_flag & VXLOCK) {
+			vp->v_flag |= VXWANT;
+			simple_unlock(&vp->v_interlock);
+			tsleep((caddr_t)vp, PINOD, "vn_lock", 0);
+			error = ENOENT;
+		} else {
+			error = VOP_LOCK(vp, flags | LK_INTERLOCK);
+			if (error == 0)
+				return (error);
+		}
+		flags &= ~LK_INTERLOCK;
+	} while (flags & LK_RETRY);
+	return (error);
 }
 
 /*

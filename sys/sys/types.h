@@ -1,7 +1,7 @@
-/*	$NetBSD: types.h,v 1.33 1998/01/17 12:04:49 mycroft Exp $	*/
+/*	$NetBSD: types.h,v 1.34 1998/03/01 02:24:15 fvdl Exp $	*/
 
 /*-
- * Copyright (c) 1982, 1986, 1991, 1993
+ * Copyright (c) 1982, 1986, 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.17 1998/02/18 07:05:49 thorpej Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.18 1998/03/01 02:21:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)null_vfsops.c       1.5 (Berkeley) 7/10/92
- *	@(#)umap_vfsops.c	8.3 (Berkeley) 1/21/94
+ *	@(#)umap_vfsops.c	8.8 (Berkeley) 5/14/95
  */
 
 /*
@@ -46,6 +46,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/vnode.h>
@@ -67,6 +68,8 @@ int	umapfs_vget __P((struct mount *, ino_t, struct vnode **));
 int	umapfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 			   struct vnode **, int *, struct ucred **));
 int	umapfs_vptofh __P((struct vnode *, struct fid *));
+int	umapfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+			   struct proc *));
 
 /*
  * Mount umap layer
@@ -179,7 +182,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	/*
 	 * Unlock the node (either the lower or the alias)
 	 */
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0);
 	/*
 	 * Make sure the node alias worked
 	 */
@@ -199,7 +202,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	if (UMAPVPTOLOWERVP(umapm_rootvp)->v_mount->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t) amp;
-	getnewfsid(mp, makefstype(MOUNT_UMAP));
+	vfs_getnewfsid(mp, MOUNT_UMAP);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -241,18 +244,13 @@ umapfs_unmount(mp, mntflags, p)
 	struct vnode *umapm_rootvp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
 	int error;
 	int flags = 0;
-	extern int doforce;
 
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_unmount(mp = %p)\n", mp);
 #endif
 
-	if (mntflags & MNT_FORCE) {
-		/* lofs can never be rootfs so don't check for it */
-		if (!doforce)
-			return (EINVAL);
+	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	}
 
 	/*
 	 * Clear out buffer cache.  I don't think we
@@ -306,7 +304,7 @@ umapfs_root(mp, vpp)
 	 */
 	vp = MOUNTTOUMAPMOUNT(mp)->umapm_rootvp;
 	VREF(vp);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
 	return (0);
 }
@@ -409,6 +407,19 @@ umapfs_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
+int
+umapfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
+}
+
 extern struct vnodeopv_desc umapfs_vnodeop_opv_desc;
 
 struct vnodeopv_desc *umapfs_vnodeopv_descs[] = {
@@ -429,6 +440,7 @@ struct vfsops umapfs_vfsops = {
 	umapfs_fhtovp,
 	umapfs_vptofh,
 	umapfs_init,
+	umapfs_sysctl,
 	NULL,				/* vfs_mountroot */
 	umapfs_vnodeopv_descs,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.9 1997/09/15 11:40:30 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.10 1998/03/01 02:20:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -41,9 +41,9 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)newfs.c	8.3 (Berkeley) 4/22/94";
+static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.9 1997/09/15 11:40:30 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.10 1998/03/01 02:20:54 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -330,7 +330,7 @@ main(argc, argv)
 		fatal("%s: `%c' partition is unavailable", argv[0], *cp);
 
 	/* If we're making a LFS, we break out here */
-	exit(make_lfs(fso, lp, pp, minfree, bsize, segsize));
+	exit(make_lfs(fso, lp, pp, minfree, bsize, fsize, segsize));
 }
 
 #ifdef COMPAT

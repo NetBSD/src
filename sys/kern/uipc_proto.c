@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_proto.c,v 1.9 1998/01/07 22:50:42 thorpej Exp $	*/
+/*	$NetBSD: uipc_proto.c,v 1.10 1998/03/01 02:22:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)uipc_proto.c	8.1 (Berkeley) 6/10/93
+ *	@(#)uipc_proto.c	8.2 (Berkeley) 2/14/95
  */
 
 #include <sys/param.h>

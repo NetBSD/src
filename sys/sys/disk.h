@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.13 1998/02/10 00:25:25 perry Exp $	*/
+/*	$NetBSD: disk.h,v 1.14 1998/03/01 02:24:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  *
  * from: Header: disk.h,v 1.5 92/11/19 04:33:03 torek Exp  (LBL)
  *
- *	@(#)disk.h	8.1 (Berkeley) 6/2/93
+ *	@(#)disk.h	8.2 (Berkeley) 1/9/95
  */
 
 #ifndef _SYS_DISK_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.24 1997/07/20 06:00:39 thorpej Exp $	*/
+/*	$NetBSD: df.c,v 1.25 1998/03/01 02:20:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,13 +49,14 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.24 1997/07/20 06:00:39 thorpej Exp $");
+__RCSID("$NetBSD: df.c,v 1.25 1998/03/01 02:20:01 fvdl Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
+#include <ufs/ufs/ufsmount.h>
 
 #include <err.h>
 #include <errno.h>
@@ -355,6 +356,7 @@ prtstat(sfsp, maxwidth)
  * This code constitutes the pre-system call Berkeley df code for extracting
  * information from filesystem superblocks.
  */
+#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <errno.h>
 #include <fstab.h>

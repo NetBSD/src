@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.20 1997/08/14 01:12:35 jonathan Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.21 1998/03/01 02:25:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_loop.c	8.1 (Berkeley) 6/10/93
+ *	@(#)if_loop.c	8.2 (Berkeley) 1/9/95
  */
 
 /*

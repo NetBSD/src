@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.66 1997/12/03 20:02:29 thorpej Exp $	*/
+/*	$NetBSD: exec.h,v 1.67 1998/03/01 02:24:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)exec.h	8.3 (Berkeley) 1/21/94
+ *	@(#)exec.h	8.4 (Berkeley) 2/19/95
  */
 
 #ifndef _SYS_EXEC_H_

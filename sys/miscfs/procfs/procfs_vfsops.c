@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.27 1998/02/18 07:05:48 thorpej Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.28 1998/03/01 02:21:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)procfs_vfsops.c	8.5 (Berkeley) 6/15/94
+ *	@(#)procfs_vfsops.c	8.7 (Berkeley) 5/10/95
  */
 
 /*
@@ -56,6 +56,7 @@
 #include <miscfs/procfs/procfs.h>
 #include <vm/vm.h>			/* for PAGE_SIZE */
 
+void	procfs_init __P((void));
 int	procfs_mount __P((struct mount *, const char *, void *,
 			  struct nameidata *, struct proc *));
 int	procfs_start __P((struct mount *, int, struct proc *));
@@ -68,6 +69,8 @@ int	procfs_vget __P((struct mount *, ino_t, struct vnode **));
 int	procfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 			   struct vnode **, int *, struct ucred **));
 int	procfs_vptofh __P((struct vnode *, struct fid *));
+int	procfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+			   struct proc *));
 /*
  * VFS Operations.
  *
@@ -94,7 +97,7 @@ procfs_mount(mp, path, data, ndp, p)
 
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = 0;
-	getnewfsid(mp, makefstype(MOUNT_PROCFS));
+	vfs_getnewfsid(mp, MOUNT_PROCFS);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -113,15 +116,10 @@ procfs_unmount(mp, mntflags, p)
 	struct proc *p;
 {
 	int error;
-	extern int doforce;
 	int flags = 0;
 
-	if (mntflags & MNT_FORCE) {
-		/* procfs can never be rootfs so don't check for it */
-		if (!doforce)
-			return (EINVAL);
+	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	}
 
 	if ((error = vflush(mp, 0, flags)) != 0)
 		return (error);
@@ -159,11 +157,6 @@ procfs_statfs(mp, sbp, p)
 	struct proc *p;
 {
 
-#ifdef COMPAT_09
-	sbp->f_type = 10;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = PAGE_SIZE;
 	sbp->f_iosize = PAGE_SIZE;
 	sbp->f_blocks = 1;	/* avoid divide by zero in some df's */
@@ -171,6 +164,11 @@ procfs_statfs(mp, sbp, p)
 	sbp->f_bavail = 0;
 	sbp->f_files = maxproc;			/* approx */
 	sbp->f_ffree = maxproc - nprocs;	/* approx */
+#ifdef COMPAT_09
+	sbp->f_type = 10;
+#else
+	sbp->f_type = 0;
+#endif
 	if (sbp != &mp->mnt_stat) {
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
@@ -245,6 +243,19 @@ procfs_init()
 {
 }
 
+int
+procfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	return (EOPNOTSUPP);
+}
+
 extern struct vnodeopv_desc procfs_vnodeop_opv_desc;
 
 struct vnodeopv_desc *procfs_vnodeopv_descs[] = {
@@ -265,6 +276,7 @@ struct vfsops procfs_vfsops = {
 	procfs_fhtovp,
 	procfs_vptofh,
 	procfs_init,
+	procfs_sysctl,
 	NULL,				/* vfs_mountroot */
 	procfs_vnodeopv_descs,
 };

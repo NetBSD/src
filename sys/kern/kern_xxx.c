@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.41 1998/02/05 07:59:57 mrg Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.42 1998/03/01 02:22:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_xxx.c	8.2 (Berkeley) 11/14/93
+ *	@(#)kern_xxx.c	8.3 (Berkeley) 2/14/95
  */
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_subr.c,v 1.10 1998/02/07 02:44:51 chs Exp $	*/
+/*	$NetBSD: null_subr.c,v 1.11 1998/03/01 02:21:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  *
  *	from: Id: lofs_subr.c,v 1.11 1992/05/30 10:05:43 jsp Exp
- *	@(#)null_subr.c	8.4 (Berkeley) 1/21/94
+ *	@(#)null_subr.c	8.7 (Berkeley) 5/14/95
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/vnode.h>
@@ -205,7 +206,8 @@ loop:
 				vgone(cvp);
 				goto loop;
 			}
-			if (vget(cvp, 0))	/* can't lock; will die! */
+			if (vget(cvp, LK_EXCLUSIVE))
+				/* can't lock; will die! */
 				goto loop;
 			break;
 		}
@@ -285,6 +287,7 @@ null_node_create(mp, lowervp, newvpp, takelock)
 	if (lowervp->v_usecount < 1) {
 		/* Should never happen... */
 		vprint("null_node_create: alias", aliasvp);
+		vprint("null_node_create: lower", lowervp);
 		panic("null_node_create: lower has 0 usecount.");
 	};
 #endif
@@ -296,7 +299,7 @@ null_node_create(mp, lowervp, newvpp, takelock)
 	   upper layer lock */
 	VTONULL(aliasvp)->null_flags |= NULL_LLOCK;
 	if (takelock)
-		VOP_LOCK(aliasvp);
+		vn_lock(aliasvp, LK_EXCLUSIVE | LK_RETRY);
 
 	*newvpp = aliasvp;
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.47 1998/02/10 14:08:53 mrg Exp $	*/
+/*	$NetBSD: vnode.h,v 1.48 1998/03/01 02:24:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vnode.h	8.11 (Berkeley) 11/21/94
+ *	@(#)vnode.h	8.17 (Berkeley) 5/20/95
  */
 
 #ifndef _SYS_VNODE_H_
@@ -42,6 +42,7 @@
 #include "opt_uvm.h"
 #endif
 
+#include <sys/lock.h>
 #include <sys/queue.h>
 #ifdef UVM			/* XXX: clean up includes later */
 #include <vm/pglist.h>		/* XXX */
@@ -79,6 +80,13 @@ enum vtagtype	{
  */
 LIST_HEAD(buflists, buf);
 
+/*
+ * Reading or writing any of these items requires holding the appropriate lock.
+ * v_freelist is locked by the global vnode_free_list simple lock.
+ * v_mntvnodes is locked by the global mntvnodes simple lock.
+ * v_flag, v_usecount, v_holdcount and v_writecount are
+ *     locked by the v_interlock simple lock
+ */
 struct vnode {
 #ifdef UVM
 	struct uvm_vnode v_uvm;			/* uvm data */
@@ -111,9 +119,11 @@ struct vnode {
 	int	v_clen;				/* length of current cluster */
 	int	v_ralen;			/* Read-ahead length */
 	daddr_t	v_maxra;			/* last readahead block */
+	struct	simplelock v_interlock;		/* lock on usecount and flag */
+	struct	lock *v_vnlock;			/* used for non-locking fs's */
 #ifdef UVM
 #else
-	long	v_spare[7];			/* round to 128 bytes */
+	long	v_spare[5];			/* round to 128 bytes */
 #endif
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void 	*v_data;			/* private data for fs */
@@ -164,9 +174,10 @@ struct vattr {
 };
 
 /*
- * Flags for va_cflags.
+ * Flags for va_vaflags.
  */
 #define	VA_UTIMES_NULL	0x01		/* utimes argument was NULL */
+#define VA_EXCLUSIVE	0x02		/* exclusive create request */
 
 /*
  * Flags for ioflag.
@@ -210,22 +221,57 @@ extern int		vttoif_tab[];
 #define	V_SAVE		0x0001		/* vinvalbuf: sync file first */
 #define	V_SAVEMETA	0x0002		/* vinvalbuf: leave indirect blocks */
 
-#ifdef DIAGNOSTIC
+#define REVOKEALL	0x0001		/* revoke: revoke all aliases */
+
 #define	HOLDRELE(vp)	holdrele(vp)
-#define	VATTR_NULL(vap)	vattr_null(vap)
 #define	VHOLD(vp)	vhold(vp)
 #define	VREF(vp)	vref(vp)
 
+#ifdef DIAGNOSTIC
+#define	VATTR_NULL(vap)	vattr_null(vap)
 void	holdrele __P((struct vnode *));
 void	vattr_null __P((struct vattr *));
 void	vhold __P((struct vnode *));
 void	vref __P((struct vnode *));
 #else
-#define	HOLDRELE(vp)	(vp)->v_holdcnt--	/* decrease buf or page ref */
 #define	VATTR_NULL(vap)	(*(vap) = va_null)	/* initialize a vattr */
-#define	VHOLD(vp)	(vp)->v_holdcnt++	/* increase buf or page ref */
-#define	VREF(vp)	(vp)->v_usecount++	/* increase reference */
-#endif
+
+/*
+ * decrease buf or page ref
+ */
+static __inline
+holdrele(vp)
+	struct vnode *vp;
+{
+	simple_lock(&vp->v_interlock);
+	vp->v_holdcnt--;
+	simple_unlock(&vp->v_interlock);
+}
+
+/*
+ * increase buf or page ref
+ */
+static __inline
+vhold(vp)
+	struct vnode *vp;
+{
+	simple_lock(&vp->v_interlock);
+	vp->v_holdcnt++;
+	simple_unlock(&vp->v_interlock);
+}
+
+/*
+ * increase reference
+ */
+static __inline
+vref(vp)
+	struct vnode *vp;
+{
+	simple_lock(&vp->v_interlock);
+	vp->v_usecount++;
+	simple_unlock(&vp->v_interlock);
+}
+#endif /* DIAGNOSTIC */
 
 #define	NULLVP	((struct vnode *)NULL)
 
@@ -300,6 +346,10 @@ struct vnodeop_desc {
  */
 extern struct vnodeop_desc *vnodeop_descs[];
 
+/*
+ * Interlock for scanning list of vnodes attached to a mountpoint
+ */
+struct simplelock mntvnode_slock;
 
 /*
  * This macro is very helpful in defining those offsets in the vdesc struct.
@@ -381,10 +431,10 @@ int 	cdevvp __P((dev_t dev, struct vnode **vpp));
 int 	getnewvnode __P((enum vtagtype tag, struct mount *mp,
 			 int (**vops) __P((void *)), struct vnode **vpp));
 int	getvnode __P((struct filedesc *fdp, int fd, struct file **fpp));
-void	getnewfsid __P((struct mount *, int));
+void	vfs_getnewfsid __P((struct mount *, char *));
 void 	vattr_null __P((struct vattr *vap));
 int 	vcount __P((struct vnode *vp));
-void	vclean __P((struct vnode *, int));
+void	vclean __P((struct vnode *, int, struct proc *));
 int	vfinddev __P((dev_t, enum vtype, struct vnode **));
 void	vflushbuf __P((struct vnode *vp, int sync));
 int	vflush __P((struct mount *mp, struct vnode *vp, int flags));
@@ -392,23 +442,26 @@ void	vntblinit __P((void));
 void	vwakeup __P((struct buf *));
 int 	vget __P((struct vnode *vp, int lockflag));
 void 	vgone __P((struct vnode *vp));
-void 	vgoneall __P((struct vnode *vp));
+void	vgonel __P((struct vnode *vp, struct proc *p));
 int	vinvalbuf __P((struct vnode *vp, int save, struct ucred *cred,
 	    struct proc *p, int slpflag, int slptimeo));
 void	vprint __P((char *label, struct vnode *vp));
+int	vrecycle __P((struct vnode *vp, struct simplelock *inter_lkp,
+	    struct proc *p));
 int	vn_bwrite __P((void *ap));
 int 	vn_close __P((struct vnode *vp,
 	    int flags, struct ucred *cred, struct proc *p));
 int 	vn_closefile __P((struct file *fp, struct proc *p));
 int	vn_ioctl __P((struct file *fp, u_long com, caddr_t data,
 	    struct proc *p));
+int	vn_lock __P((struct vnode *vp, int flags));
 int 	vn_open __P((struct nameidata *ndp, int fmode, int cmode));
 int 	vn_rdwr __P((enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,
 	    struct ucred *cred, int *aresid, struct proc *p));
 int	vn_read __P((struct file *fp, struct uio *uio, struct ucred *cred));
 int	vn_readdir __P((struct file *fp, char *buf, int segflg, u_int count,
-	    int *done, struct proc *p, off_t *cookies, int ncookies));
+	    int *done, struct proc *p, off_t **cookies, int *ncookies));
 int	vn_poll __P((struct file *fp, int events, struct proc *p));
 int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
 int	vn_write __P((struct file *fp, struct uio *uio, struct ucred *cred));
@@ -416,7 +469,6 @@ int	vn_writechk __P((struct vnode *vp));
 struct vnode *
 	checkalias __P((struct vnode *vp, dev_t nvp_rdev, struct mount *mp));
 void 	vput __P((struct vnode *vp));
-void 	vref __P((struct vnode *vp));
 void 	vrele __P((struct vnode *vp));
 int	vaccess __P((enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 		     mode_t acc_mode, struct ucred *cred));

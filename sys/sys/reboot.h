@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.13 1997/03/26 22:42:13 gwr Exp $	*/
+/*	$NetBSD: reboot.h,v 1.14 1998/03/01 02:24:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993, 1994
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)reboot.h	8.2 (Berkeley) 7/10/94
+ *	@(#)reboot.h	8.3 (Berkeley) 12/13/94
  */
 
 #ifndef _SYS_REBOOT_H_

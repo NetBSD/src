@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.71 1998/02/06 00:14:49 mrg Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.72 1998/03/01 02:24:00 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_glue.c	8.6 (Berkeley) 1/5/94
+ *	@(#)vm_glue.c	8.9 (Berkeley) 3/4/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -347,6 +347,7 @@ loop:
 	ppri = INT_MIN;
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		if (p->p_stat == SRUN && (p->p_flag & P_INMEM) == 0) {
+			/* XXX should also penalize based on vm_swrss */
 			pri = p->p_swtime + p->p_slptime
 			    - (p->p_nice - NZERO) * 8;
 			if (pri > ppri) {
@@ -371,6 +372,7 @@ loop:
 	 * We would like to bring someone in.
 	 * This part is really bogus cuz we could deadlock on memory
 	 * despite our feeble check.
+	 * XXX should require at least vm_swrss / 2
 	 */
 	if (cnt.v_free_count > atop(USPACE)) {
 #ifdef DEBUG

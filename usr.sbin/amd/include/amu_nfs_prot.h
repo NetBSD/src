@@ -1,4 +1,4 @@
-/*	$NetBSD: amu_nfs_prot.h,v 1.3 1997/10/26 00:25:54 christos Exp $	*/
+/*	$NetBSD: amu_nfs_prot.h,v 1.4 1998/03/01 02:25:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Erez Zadok
@@ -59,6 +59,7 @@
 #endif /* not NFS_NPROCS */
 #ifdef HAVE_NFS_NFS_H
 # include <nfs/nfs.h>
+# include <nfs/nfsmount.h>
 #endif /* HAVE_NFS_NFS_H */
 
 /* NON-NFS STUFF (doesn't really belong here) */

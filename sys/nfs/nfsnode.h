@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.24 1997/10/19 01:46:51 fvdl Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.25 1998/03/01 02:24:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -196,9 +196,7 @@ int	nfsfifo_read	__P((void *));
 int	nfsfifo_write	__P((void *));
 #define nfs_ioctl	((int (*)	__P((void *)))enoioctl)
 #define	nfs_poll	genfs_poll
-#ifdef Lite2_integrated
-#define nfs_revoke	vop_revoke
-#endif
+#define nfs_revoke	genfs_revoke
 int	nfs_mmap	__P((void *));
 int	nfs_fsync	__P((void *));
 #define nfs_seek	genfs_seek
@@ -213,15 +211,9 @@ int	nfs_readlink	__P((void *));
 #define	nfs_abortop	genfs_abortop
 int	nfs_inactive	__P((void *));
 int	nfs_reclaim	__P((void *));
-#ifdef Lite2_integrated
-#define nfs_lock	((int (*) __P((void *)))vop_nolock)
-#define nfs_unlock	((int (*) __P((void *)))vop_nounlock)
-#define nfs_islocked	((int (*) __P((void *)))vop_noislocked)
-#else
-int	nfs_lock	__P((void *));
-int	nfs_unlock	__P((void *));
-int	nfs_islocked	__P((void *));
-#endif /* Lite2_integrated */
+#define nfs_lock	genfs_nolock
+#define nfs_unlock	genfs_nounlock
+#define nfs_islocked	genfs_noislocked
 int	nfs_bmap	__P((void *));
 int	nfs_strategy	__P((void *));
 int	nfs_print	__P((void *));

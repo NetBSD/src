@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.20 1998/02/22 09:18:38 mycroft Exp $	*/
+/*	$NetBSD: libkern.h,v 1.21 1998/03/01 02:23:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)libkern.h	8.1 (Berkeley) 6/10/93
+ *	@(#)libkern.h	8.2 (Berkeley) 8/5/94
  */
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.18 1996/02/04 02:17:36 christos Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.19 1998/03/01 02:22:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tty_tb.c	8.1 (Berkeley) 6/10/93
+ *	@(#)tty_tb.c	8.2 (Berkeley) 1/9/95
  */
 
 #include "tb.h"

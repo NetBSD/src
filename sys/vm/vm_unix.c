@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_unix.c,v 1.20 1997/07/22 10:06:43 drochner Exp $	*/
+/*	$NetBSD: vm_unix.c,v 1.21 1998/03/01 02:24:03 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  *
  * from: Utah $Hdr: vm_unix.c 1.1 89/11/07$
  *
- *	@(#)vm_unix.c	8.1 (Berkeley) 6/11/93
+ *	@(#)vm_unix.c	8.2 (Berkeley) 1/9/95
  */
 
 /*

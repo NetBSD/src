@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.19 1997/05/08 16:19:43 mycroft Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.20 1998/03/01 02:25:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -76,6 +76,7 @@ adosfs_lookup(v)
 	struct ucred *ucp;	/* lookup credentials */
 	u_long bn, plen, hval;
 	const u_char *pelt;
+	struct proc *p;
 
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
@@ -88,6 +89,7 @@ adosfs_lookup(v)
 	ucp = cnp->cn_cred;
 	nameiop = cnp->cn_nameiop;
 	flags = cnp->cn_flags;
+	p = cnp->cn_proc;
 	last = flags & ISLASTCN;
 	lockp = flags & LOCKPARENT;
 	wantp = flags & (LOCKPARENT | WANTPARENT);
@@ -100,6 +102,10 @@ adosfs_lookup(v)
 	 */
 	if ((error = VOP_ACCESS(vdp, VEXEC, ucp, cnp->cn_proc)) != 0)
 		return (error);
+
+	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return (EROFS);
 
 	/*
 	 * cache lookup algorithm borrowed from ufs_lookup()
@@ -114,25 +120,25 @@ adosfs_lookup(v)
 			VREF(vdp);
 			error = 0;
 		} else if (flags & ISDOTDOT) {
-			VOP_UNLOCK(vdp);	/* race */
-			error = vget(*vpp, 1);
+			VOP_UNLOCK(vdp, 0);	/* race */
+			error = vget(*vpp, LK_EXCLUSIVE);
 			if (error == 0 && lockp && last)
-				error = VOP_LOCK(vdp);
+				error = vn_lock(vdp, LK_EXCLUSIVE);
 		} else {
-			error = vget(*vpp, 1);
+			error = vget(*vpp, LK_EXCLUSIVE);
 			/* if (lockp == 0 || error || last) */
 			if (lockp == 0 || error || last == 0)
-				VOP_UNLOCK(vdp);
+				VOP_UNLOCK(vdp, 0);
 		}
 		if (error == 0) {
 			if (vpid == vdp->v_id)
 				return (0);
 			vput(*vpp);
 			if (lockp && vdp != *vpp && last)
-				VOP_UNLOCK(vdp);
+				VOP_UNLOCK(vdp, 0);
 		}
 		*vpp = NULL;
-		if ((error = VOP_LOCK(vdp)) != 0)
+		if ((error = vn_lock(vdp, LK_EXCLUSIVE)) != 0)
 			return (error);
 	}
 
@@ -166,11 +172,12 @@ adosfs_lookup(v)
 		 * and fail. Otherwise we have succeded.
 		 * 
 		 */
-		VOP_UNLOCK(vdp); /* race */
+		VOP_UNLOCK(vdp, 0); /* race */
 		if ((error = VFS_VGET(vdp->v_mount, 
 				      (ino_t)adp->pblock, vpp)) != 0)
-			VOP_LOCK(vdp);
-		else if (last && lockp && (error = VOP_LOCK(vdp)))
+			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
+		else if (last && lockp &&
+		    (error = vn_lock(vdp, LK_EXCLUSIVE)))
 			vput(*vpp);
 		if (error) {
 			*vpp = NULL;
@@ -222,6 +229,10 @@ adosfs_lookup(v)
 	 * not found
 	 */
 	if ((nameiop == CREATE || nameiop == RENAME) && last) {
+
+		if (vdp->v_mount->mnt_flag & MNT_RDONLY)
+			return (EROFS);
+
 		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) != 0) {
 #ifdef ADOSFS_DIAGNOSTIC
 			printf("[VOP_ACCESS] %d)", error);
@@ -229,7 +240,7 @@ adosfs_lookup(v)
 			return (error);
 		}
 		if (lockp == 0)
-			VOP_UNLOCK(vdp);
+			VOP_UNLOCK(vdp, 0);
 		cnp->cn_nameiop |= SAVENAME;
 #ifdef ADOSFS_DIAGNOSTIC
 		printf("EJUSTRETURN)");
@@ -267,7 +278,7 @@ found:
 	if (vdp == *vpp)
 		VREF(vdp);
 	else if (lockp == 0 || last == 0)
-		VOP_UNLOCK(vdp);
+		VOP_UNLOCK(vdp, 0);
 found_lockdone:
 	if ((cnp->cn_flags & MAKEENTRY) && nocache == 0)
 		cache_enter(vdp, *vpp, cnp);

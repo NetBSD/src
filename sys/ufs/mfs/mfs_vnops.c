@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.12 1996/10/12 21:58:54 christos Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.13 1998/03/01 02:23:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mfs_vnops.c	8.5 (Berkeley) 7/28/94
+ *	@(#)mfs_vnops.c	8.11 (Berkeley) 5/22/95
  */
 
 #include <sys/param.h>
@@ -72,6 +72,7 @@ struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_write_desc, mfs_write },			/* write */
 	{ &vop_ioctl_desc, mfs_ioctl },			/* ioctl */
 	{ &vop_poll_desc, mfs_poll },			/* poll */
+	{ &vop_revoke_desc, mfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, mfs_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_seek_desc, mfs_seek },			/* seek */
@@ -231,6 +232,8 @@ mfs_bmap(v)
 		*ap->a_vpp = ap->a_vp;
 	if (ap->a_bnp != NULL)
 		*ap->a_bnp = ap->a_bn;
+	if (ap->a_runp != NULL)
+		 *ap->a_runp = 0;
 	return (0);
 }
 
@@ -294,12 +297,15 @@ mfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		struct proc *a_p;
 	} */ *ap = v;
-	register struct mfsnode *mfsp = VTOMFS(ap->a_vp);
+	struct vnode *vp = ap->a_vp;
+	struct mfsnode *mfsp = VTOMFS(vp);
 
 	if (mfsp->mfs_buflist && mfsp->mfs_buflist != (struct buf *)(-1))
 		panic("mfs_inactive: not inactive (mfs_buflist %p)",
 			mfsp->mfs_buflist);
+	VOP_UNLOCK(vp, 0);
 	return (0);
 }
 
@@ -335,13 +341,4 @@ mfs_print(v)
 	printf("tag VT_MFS, pid %d, base %p, size %ld\n", mfsp->mfs_pid,
 	    mfsp->mfs_baseoff, mfsp->mfs_size);
 	return (0);
-}
-
-/*
- * Memory based filesystem initialization.
- */
-void
-mfs_init()
-{
-
 }

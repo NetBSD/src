@@ -1,4 +1,4 @@
-/*	$NetBSD: ioccom.h,v 1.4 1994/10/30 21:49:56 cgd Exp $	*/
+/*	$NetBSD: ioccom.h,v 1.5 1998/03/01 02:24:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ioccom.h	8.2 (Berkeley) 3/28/94
+ *	@(#)ioccom.h	8.3 (Berkeley) 1/9/95
  */
 
 #ifndef	_SYS_IOCCOM_H_

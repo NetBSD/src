@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.39 1998/02/14 00:37:31 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.40 1998/03/01 02:22:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_fork.c	8.6 (Berkeley) 4/8/94
+ *	@(#)kern_fork.c	8.8 (Berkeley) 2/14/95
  */
 
 #include "opt_uvm.h"

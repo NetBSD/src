@@ -1,7 +1,7 @@
-/*	$NetBSD: fifo_vnops.c,v 1.24 1997/10/09 13:12:01 mycroft Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.25 1998/03/01 02:21:30 fvdl Exp $	*/
 
 /*
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,10 +32,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fifo_vnops.c	8.4 (Berkeley) 8/10/94
+ *	@(#)fifo_vnops.c	8.10 (Berkeley) 5/27/95
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/namei.h>
@@ -43,7 +44,6 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
-#include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/errno.h>
@@ -81,6 +81,7 @@ struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
+	{ &vop_revoke_desc, fifo_revoke },		/* revoke */
 	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
 	{ &vop_fsync_desc, fifo_fsync },		/* fsync */
 	{ &vop_seek_desc, fifo_seek },			/* seek */
@@ -147,8 +148,9 @@ fifo_open(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct fifoinfo *fip;
+	struct vnode *vp = ap->a_vp;
+	struct fifoinfo *fip;
+	struct proc *p = ap->a_p;
 	struct socket *rso, *wso;
 	int error;
 	static const char openstr[] = "fifo";
@@ -198,10 +200,10 @@ fifo_open(v)
 		if (ap->a_mode & O_NONBLOCK) {
 		} else {
 			while (fip->fi_writers == 0) {
-				VOP_UNLOCK(vp);
+				VOP_UNLOCK(vp, 0);
 				error = tsleep((caddr_t)&fip->fi_readers,
 				    PCATCH | PSOCK, openstr, 0);
-				VOP_LOCK(vp);
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				if (error)
 					goto bad;
 			}
@@ -215,10 +217,10 @@ fifo_open(v)
 			}
 		} else {
 			while (fip->fi_readers == 0) {
-				VOP_UNLOCK(vp);
+				VOP_UNLOCK(vp, 0);
 				error = tsleep((caddr_t)&fip->fi_writers,
 				    PCATCH | PSOCK, openstr, 0);
-				VOP_LOCK(vp);
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				if (error)
 					goto bad;
 			}
@@ -226,7 +228,7 @@ fifo_open(v)
 	}
 	return (0);
 bad:
-	VOP_CLOSE(vp, ap->a_mode, ap->a_cred, ap->a_p);
+	VOP_CLOSE(vp, ap->a_mode, ap->a_cred, p);
 	return (error);
 }
 
@@ -244,8 +246,8 @@ fifo_read(v)
 		int  a_ioflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	register struct uio *uio = ap->a_uio;
-	register struct socket *rso = ap->a_vp->v_fifoinfo->fi_readsock;
+	struct uio *uio = ap->a_uio;
+	struct socket *rso = ap->a_vp->v_fifoinfo->fi_readsock;
 	int error, startresid;
 
 #ifdef DIAGNOSTIC
@@ -257,10 +259,10 @@ fifo_read(v)
 	if (ap->a_ioflag & IO_NDELAY)
 		rso->so_state |= SS_NBIO;
 	startresid = uio->uio_resid;
-	VOP_UNLOCK(ap->a_vp);
+	VOP_UNLOCK(ap->a_vp, 0);
 	error = soreceive(rso, (struct mbuf **)0, uio, (struct mbuf **)0,
 	    (struct mbuf **)0, (int *)0);
-	VOP_LOCK(ap->a_vp);
+	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 	/*
 	 * Clear EOF indication after first such return.
 	 */
@@ -298,9 +300,9 @@ fifo_write(v)
 #endif
 	if (ap->a_ioflag & IO_NDELAY)
 		wso->so_state |= SS_NBIO;
-	VOP_UNLOCK(ap->a_vp);
+	VOP_UNLOCK(ap->a_vp, 0);
 	error = sosend(wso, (struct mbuf *)0, ap->a_uio, 0, (struct mbuf *)0, 0);
-	VOP_LOCK(ap->a_vp);
+	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 	if (ap->a_ioflag & IO_NDELAY)
 		wso->so_state &= ~SS_NBIO;
 	return (error);
@@ -369,6 +371,19 @@ fifo_poll(v)
 	return (revents);
 }
 
+int
+fifo_inactive(v)
+	void *v;
+{
+	struct vop_inactive_args /* {
+		struct vnode *a_vp;
+		struct proc *a_p;
+	} */ *ap = v;
+
+	VOP_UNLOCK(ap->a_vp, 0);
+	return (0);
+}
+
 /*
  * This is a noop, simply returning what one has been given.
  */
@@ -381,32 +396,15 @@ fifo_bmap(v)
 		daddr_t  a_bn;
 		struct vnode **a_vpp;
 		daddr_t *a_bnp;
+		int *a_runp;
 	} */ *ap = v;
 
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = ap->a_vp;
 	if (ap->a_bnp != NULL)
 		*ap->a_bnp = ap->a_bn;
-	return (0);
-}
-
-/*
- * At the moment we do not do any locking.
- */
-/* ARGSUSED */
-int
-fifo_lock(v)
-	void *v;
-{
-	return (0);
-}
-
-/* ARGSUSED */
-int
-fifo_unlock(v)
-	void *v;
-{
-
+	if (ap->a_runp != NULL)
+		*ap->a_runp = 0;
 	return (0);
 }
 

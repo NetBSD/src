@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.17 1998/02/10 14:10:55 mrg Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.18 1998/03/01 02:23:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ffs_inode.c	8.8 (Berkeley) 10/19/94
+ *	@(#)ffs_inode.c	8.13 (Berkeley) 4/21/95
  */
 
 #include "opt_uvm.h"
@@ -63,14 +63,8 @@
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
-static int ffs_indirtrunc __P((struct inode *, daddr_t, daddr_t, daddr_t, int,
-			       long *));
-
-void
-ffs_init()
-{
-	ufs_init();
-}
+static int ffs_indirtrunc __P((struct inode *, ufs_daddr_t, ufs_daddr_t,
+			       ufs_daddr_t, int, long *));
 
 /*
  * Update the access, modified, and inode change times as specified
@@ -112,10 +106,10 @@ ffs_update(v)
 	 * Ensure that uid and gid are correct. This is a temporary
 	 * fix until fsck has been changed to do the update.
 	 */
-	if (fs->fs_inodefmt < FS_44INODEFMT) {		/* XXX */
-		ip->i_din.ffs_din.di_ouid = ip->i_ffs_uid;		/* XXX */
-		ip->i_din.ffs_din.di_ogid = ip->i_ffs_gid;		/* XXX */
-	}						/* XXX */
+	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
+		ip->i_din.ffs_din.di_ouid = ip->i_ffs_uid;	/* XXX */
+		ip->i_din.ffs_din.di_ogid = ip->i_ffs_gid;	/* XXX */
+	}							/* XXX */
 	error = bread(ip->i_devvp,
 		      fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
 		      (int)fs->fs_bsize, NOCRED, &bp);
@@ -125,7 +119,7 @@ ffs_update(v)
 	}
 	*((struct dinode *)bp->b_data +
 	    ino_to_fsbo(fs, ip->i_number)) = ip->i_din.ffs_din;
-	if (ap->a_waitfor)
+	if (ap->a_waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
 		return (bwrite(bp));
 	else {
 		bdwrite(bp);
@@ -152,10 +146,10 @@ ffs_truncate(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	register struct vnode *ovp = ap->a_vp;
-	register daddr_t lastblock;
+	register ufs_daddr_t lastblock;
 	register struct inode *oip;
-	daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
-	daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
+	ufs_daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
+	ufs_daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
 	register struct fs *fs;
 	struct buf *bp;
@@ -191,13 +185,9 @@ ffs_truncate(v)
 	if ((error = getinoquota(oip)) != 0)
 		return (error);
 #endif
-#if defined(UVM)
-	uvm_vnp_setsize(ovp, length);
-#else
-	vnode_pager_setsize(ovp, length);
-#endif
 	fs = oip->i_fs;
 	osize = oip->i_ffs_size;
+	ovp->v_lasta = ovp->v_clen = ovp->v_cstart = ovp->v_lastw = 0;
 	/*
 	 * Lengthen the size of the file. We must ensure that the
 	 * last byte of the file is allocated. Since the smallest
@@ -217,8 +207,10 @@ ffs_truncate(v)
 			return (error);
 		oip->i_ffs_size = length;
 #if defined(UVM)
+		uvm_vnp_setsize(ovp, length);
 		(void) uvm_vnp_uncache(ovp);
 #else
+		vnode_pager_setsize(ovp, length);
 		(void) vnode_pager_uncache(ovp);
 #endif
 		if (aflags & B_SYNC)
@@ -260,6 +252,11 @@ ffs_truncate(v)
 		else
 			bawrite(bp);
 	}
+#if defined(UVM)
+	uvm_vnp_setsize(ovp, length);
+#else
+	vnode_pager_setsize(ovp, length);
+#endif
 	/*
 	 * Calculate index into inode's block list of
 	 * last direct and indirect blocks (if any)
@@ -407,17 +404,17 @@ done:
 static int
 ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	register struct inode *ip;
-	daddr_t lbn, lastbn;
-	daddr_t dbn;
+	ufs_daddr_t lbn, lastbn;
+	ufs_daddr_t dbn;
 	int level;
 	long *countp;
 {
 	register int i;
 	struct buf *bp;
 	register struct fs *fs = ip->i_fs;
-	register daddr_t *bap;
+	register ufs_daddr_t *bap;
 	struct vnode *vp;
-	daddr_t *copy = NULL, nb, nlbn, last;
+	ufs_daddr_t *copy = NULL, nb, nlbn, last;
 	long blkcount, factor;
 	int nblocks, blocksreleased = 0;
 	int error = 0, allerror = 0;
@@ -463,12 +460,12 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 		return (error);
 	}
 
-	bap = (daddr_t *)bp->b_data;
+	bap = (ufs_daddr_t *)bp->b_data;
 	if (lastbn != -1) {
-		MALLOC(copy, daddr_t *, fs->fs_bsize, M_TEMP, M_WAITOK);
+		MALLOC(copy, ufs_daddr_t *, fs->fs_bsize, M_TEMP, M_WAITOK);
 		bcopy((caddr_t)bap, (caddr_t)copy, (u_int)fs->fs_bsize);
 		bzero((caddr_t)&bap[last + 1],
-		  (u_int)(NINDIR(fs) - (last + 1)) * sizeof (daddr_t));
+		  (u_int)(NINDIR(fs) - (last + 1)) * sizeof (ufs_daddr_t));
 		error = bwrite(bp);
 		if (error)
 			allerror = error;
@@ -485,7 +482,7 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 			continue;
 		if (level > SINGLE) {
 			error = ffs_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
-					       (daddr_t)-1, level - 1,
+					       (ufs_daddr_t)-1, level - 1,
 					       &blkcount);
 			if (error)
 				allerror = error;

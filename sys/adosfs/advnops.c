@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.36 1997/10/10 01:57:31 fvdl Exp $	*/
+/*	$NetBSD: advnops.c,v 1.37 1998/03/01 02:25:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -89,6 +89,7 @@ int	lease_check __P((void *));
 #define adosfs_create 	genfs_eopnotsupp
 #define adosfs_mkdir 	genfs_eopnotsupp
 #define adosfs_mknod 	genfs_eopnotsupp
+#define adosfs_revoke	genfs_revoke
 #define adosfs_mmap 	genfs_eopnotsupp
 #define adosfs_remove 	genfs_eopnotsupp
 #define adosfs_rename 	genfs_eopnotsupp
@@ -113,6 +114,7 @@ struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_lease_desc, adosfs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, adosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, adosfs_poll },		/* poll */
+	{ &vop_revoke_desc, adosfs_poll },		/* revoke */
 	{ &vop_mmap_desc, adosfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, adosfs_fsync },		/* fsync */
 	{ &vop_seek_desc, adosfs_seek },		/* seek */
@@ -459,32 +461,13 @@ adosfs_lock(v)
 {
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
+		int a_flags;
+		struct proc *a_p;
 	} */ *sp = v;
-	struct vnode *vp;
-	struct anode *ap;
+	struct vnode *vp = sp->a_vp;
 
-#ifdef ADOSFS_DIAGNOSTIC
-	advopprint(sp);
-#endif
-	vp = sp->a_vp;
-start:
-	while (vp->v_flag & VXLOCK) {
-		vp->v_flag |= VXWANT;
-		tsleep(vp, PINOD, "adosfs_lock vp", 0);
-	}
-	if (vp->v_tag == VT_NON)
-		return (ENOENT);
-	ap = VTOA(vp);
-	if (ap->flags & ALOCKED) {
-		ap->flags |= AWANT;
-		tsleep(ap, PINOD, "adosfs_lock ap", 0);
-		goto start;
-	}
-	ap->flags |= ALOCKED;
-#ifdef ADOSFS_DIAGNOSTIC
-	printf(" 0)");
-#endif
-	return(0);
+	return (lockmgr(&VTOA(vp)->lock, sp->a_flags, &vp->v_interlock));
+
 }
 
 /*
@@ -496,23 +479,13 @@ adosfs_unlock(v)
 {
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
+		int a_flags;
+		struct proc *a_p;
 	} */ *sp = v;
-	struct anode *ap;
+	struct vnode *vp = sp->a_vp;
 
-#ifdef ADOSFS_DIAGNOSTIC
-	advopprint(sp);
-#endif
-	ap = VTOA(sp->a_vp);	
-	ap->flags &= ~ALOCKED;
-	if (ap->flags & AWANT) {
-		ap->flags &= ~AWANT;
-		wakeup(ap);
-	}
-
-#ifdef ADOSFS_DIAGNOSTIC
-	printf(" 0)");
-#endif
-	return(0);
+	return (lockmgr(&VTOA(vp)->lock, sp->a_flags | LK_RELEASE,
+		&vp->v_interlock));
 }
 
 
@@ -674,8 +647,8 @@ adosfs_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		off_t *a_cookies;
-		int a_ncookies;
+		off_t **a_cookies;
+		int *a_ncookies;
 	} */ *sp = v;
 	int error, useri, chainc, hashi, scanned, uavail;
 	struct adirent ad, *adp;
@@ -684,7 +657,8 @@ adosfs_readdir(v)
 	struct vnode *vp;
 	struct uio *uio;
 	u_long nextbn;
-	off_t uoff;
+	off_t uoff, *cookies = NULL;
+	int ncookies = 0;
 
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
@@ -693,6 +667,7 @@ adosfs_readdir(v)
 		error = ENOTDIR;
 		goto reterr;
 	}
+
 	uio = sp->a_uio;
 	uoff = uio->uio_offset;
 	if (uoff < 0) {
@@ -715,7 +690,14 @@ adosfs_readdir(v)
 		goto reterr;
 	}
 
-	while (uavail && (sp->a_cookies == NULL || sp->a_ncookies > 0)) {
+	if (sp->a_ncookies) {
+		ncookies = 0;
+		MALLOC(cookies, off_t *, sizeof (off_t) * uavail, M_TEMP,
+		    M_WAITOK);
+		*sp->a_cookies = cookies;
+	}
+
+	while (uavail) {
 		if (hashi == pap->ntabent) {
 			*sp->a_eofflag = 1;
 			break;
@@ -807,9 +789,9 @@ adosfs_readdir(v)
 		error = uiomove((caddr_t) adp, sizeof(struct adirent), uio);
 		if (error)
 			break;
-		if (sp->a_cookies) {
-			*sp->a_cookies++ = uoff;
-			sp->a_ncookies--;
+		if (sp->a_ncookies) {
+			*cookies++ = uoff;
+			ncookies++;
 		}
 		uoff += sizeof(struct adirent);
 		useri++;
@@ -822,6 +804,14 @@ reterr:
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);
 #endif
+	if (sp->a_ncookies) {
+		if (error) {
+			FREE(*sp->a_cookies, M_TEMP);
+			*sp->a_ncookies = 0;
+			*sp->a_cookies = NULL;
+		} else
+			*sp->a_ncookies = ncookies;
+	}
 	return(error);
 }
 
@@ -837,19 +827,35 @@ adosfs_access(v)
 		struct proc *a_p;
 	} */ *sp = v;
 	struct anode *ap;
+	struct vnode *vp = sp->a_vp;
 	int error;
 
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
 
-	ap = VTOA(sp->a_vp);
+	ap = VTOA(vp);
 #ifdef DIAGNOSTIC
-	if (!VOP_ISLOCKED(sp->a_vp)) {
+	if (!VOP_ISLOCKED(vp)) {
 		vprint("adosfs_access: not locked", sp->a_vp);
 		panic("adosfs_access: not locked");
 	}
 #endif
+	/*
+	 * Disallow write attempts unless the file is a socket,
+	 * fifo, or a block or character device resident on the
+	 * file system.
+	 */
+	if (sp->a_mode & VWRITE) {
+		switch (vp->v_type) {
+		case VDIR:
+		case VLNK:
+		case VREG:
+			return (EROFS);
+		default:
+			break;
+		}
+	}
 #ifdef QUOTA
 #endif
 	error = vaccess(sp->a_vp->v_type, adunixprot(ap->adprot) & ap->amp->mask,
@@ -898,12 +904,16 @@ adosfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		struct proc *a_p;
 	} */ *sp = v;
+	struct vnode *vp = sp->a_vp;
+	struct proc *p = sp->a_p;
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
-	if (sp->a_vp->v_usecount == 0 /* && check for file gone? */)
-		vgone(sp->a_vp);
+	VOP_UNLOCK(vp, 0);
+	/* XXX this needs to check if file was deleted */
+	vrecycle(vp, (struct simplelock *)0, p);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" 0)");
@@ -918,18 +928,8 @@ adosfs_islocked(v)
 	struct vop_islocked_args /* {
 		struct vnode *a_vp;
 	} */ *sp = v;
-	int locked;
 
-#ifdef ADOSFS_DIAGNOSTIC
-	advopprint(sp);
-#endif
-
-	locked = (VTOA(sp->a_vp)->flags & ALOCKED) == ALOCKED;
-
-#ifdef ADOSFS_DIAGNOSTIC
-	printf(" %d)", locked);
-#endif
-	return(locked);
+	return (lockstatus(&VTOA(sp->a_vp)->lock));
 }
 
 /*

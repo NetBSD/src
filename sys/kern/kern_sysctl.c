@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.33 1998/02/14 00:37:33 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.34 1998/03/01 02:22:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_sysctl.c	8.4 (Berkeley) 4/14/94
+ *	@(#)kern_sysctl.c	8.9 (Berkeley) 5/20/95
  */
 
 /*
@@ -133,11 +133,9 @@ sys___sysctl(p, v, retval)
 	case CTL_NET:
 		fn = net_sysctl;
 		break;
-#ifdef notyet
-	case CTL_FS:
-		fn = fs_sysctl;
+	case CTL_VFS:
+		fn = vfs_sysctl;
 		break;
-#endif
 	case CTL_MACHDEP:
 		fn = cpu_sysctl;
 		break;
@@ -292,7 +290,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &boottime,
 		    sizeof(struct timeval)));
 	case KERN_VNODE:
-		return (sysctl_vnode(oldp, oldlenp));
+		return (sysctl_vnode(oldp, oldlenp, p));
 	case KERN_PROC:
 		return (sysctl_doproc(name + 1, namelen - 1, oldp, oldlenp));
 	case KERN_FILE:
@@ -434,7 +432,7 @@ debug_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	if (namelen != 2)
 		return (ENOTDIR);		/* overloaded */
 	cdp = debugvars[name[0]];
-	if (cdp->debugname == 0)
+	if (name[0] >= CTL_DEBUG_MAXID || cdp->debugname == 0)
 		return (EOPNOTSUPP);
 	switch (name[1]) {
 	case CTL_DEBUG_NAME:

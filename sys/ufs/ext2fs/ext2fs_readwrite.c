@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.5 1998/02/10 14:10:45 mrg Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.6 1998/03/01 02:23:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -86,7 +86,7 @@ ext2fs_read(v)
 	register struct uio *uio;
 	register struct m_ext2fs *fs;
 	struct buf *bp;
-	daddr_t lbn, nextlbn;
+	ufs_daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error;
@@ -187,7 +187,7 @@ ext2fs_write(v)
 	register struct m_ext2fs *fs;
 	struct buf *bp;
 	struct proc *p;
-	daddr_t lbn;
+	ufs_daddr_t lbn;
 	off_t osize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
 	struct timespec ts;

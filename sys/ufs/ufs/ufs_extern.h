@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.8 1997/04/11 21:52:08 kleink Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.9 1998/03/01 02:23:36 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_extern.h	8.6 (Berkeley) 8/10/94
+ *	@(#)ufs_extern.h	8.10 (Berkeley) 5/14/95
  */
 
 struct buf;
@@ -78,6 +78,7 @@ int	ufs_lookup	__P((void *));
 int	ufs_mkdir	__P((void *));
 int	ufs_mknod	__P((void *));
 int	ufs_mmap	__P((void *));
+#define	ufs_revoke	genfs_revoke
 int	ufs_open	__P((void *));
 int	ufs_pathconf	__P((void *));
 int	ufs_print	__P((void *));
@@ -104,9 +105,9 @@ int	ufsfifo_close	__P((void *));
 #endif
 
 /* ufs_bmap.c */
-int ufs_bmaparray __P((struct vnode *, daddr_t, daddr_t *, struct indir *,
-		       int *, int *));
-int ufs_getlbns __P((struct vnode *, daddr_t, struct indir *, int *));
+int ufs_bmaparray __P((struct vnode *, ufs_daddr_t, ufs_daddr_t *,
+		       struct indir *, int *, int *));
+int ufs_getlbns __P((struct vnode *, ufs_daddr_t, struct indir *, int *));
 
 /* ufs_ihash.c */
 void ufs_ihashinit __P((void));
@@ -117,7 +118,7 @@ void ufs_ihashrem __P((struct inode *));
 
 /* ufs_inode.c */
 void ufs_init __P((void));
-int ufs_reclaim __P((struct vnode *));
+int ufs_reclaim __P((struct vnode *, struct proc *));
 
 /* ufs_lookup.c */
 void ufs_dirbad __P((struct inode *, doff_t, char *));

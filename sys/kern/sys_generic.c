@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.35 1997/11/04 21:24:17 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.36 1998/03/01 02:22:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sys_generic.c	8.5 (Berkeley) 1/21/94
+ *	@(#)sys_generic.c	8.9 (Berkeley) 2/14/95
  */
 
 #include <sys/param.h>
@@ -177,13 +177,6 @@ sys_readv(p, v, retval)
 		goto done;
 	auio.uio_resid = 0;
 	for (i = 0; i < iovcnt; i++) {
-#if 0
-		/* Cannot happen iov_len is unsigned */
-		if (iov->iov_len < 0) {
-			error = EINVAL;
-			goto done;
-		}
-#endif
 		auio.uio_resid += iov->iov_len;
 		if (auio.uio_resid < 0) {
 			error = EINVAL;
@@ -338,13 +331,6 @@ sys_writev(p, v, retval)
 		goto done;
 	auio.uio_resid = 0;
 	for (i = 0; i < iovcnt; i++) {
-#if 0
-		/* Cannot happen iov_len is unsigned */
-		if (iov->iov_len < 0) {
-			error = EINVAL;
-			goto done;
-		}
-#endif
 		auio.uio_resid += iov->iov_len;
 		if (auio.uio_resid < 0) {
 			error = EINVAL;

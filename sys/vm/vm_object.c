@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.52 1998/01/31 04:02:42 ross Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.53 1998/03/01 02:24:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -64,7 +64,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_object.c	8.5 (Berkeley) 3/22/94
+ *	@(#)vm_object.c	8.7 (Berkeley) 5/11/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

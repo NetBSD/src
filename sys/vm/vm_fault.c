@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_fault.c,v 1.22 1998/02/23 14:37:00 drochner Exp $	*/
+/*	$NetBSD: vm_fault.c,v 1.23 1998/03/01 02:24:00 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_fault.c	8.4 (Berkeley) 1/12/94
+ *	@(#)vm_fault.c	8.5 (Berkeley) 1/9/95
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

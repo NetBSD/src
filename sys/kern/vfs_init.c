@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.9 1998/02/18 07:15:30 thorpej Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.10 1998/03/01 02:22:35 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vfs_init.c	8.3 (Berkeley) 1/4/94
+ *	@(#)vfs_init.c	8.5 (Berkeley) 5/11/95
  */
 
 

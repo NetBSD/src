@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.55 1998/02/19 23:56:37 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.56 1998/03/01 02:24:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -372,7 +372,7 @@ sys_swapctl(p, v, retval)
 		sep = (struct swapent *)SCARG(uap, arg);
 		count = 0;
 
-		error = lockmgr(&swaplist_change_lock, LK_SHARED, (void *)0, p);
+		error = lockmgr(&swaplist_change_lock, LK_SHARED, (void *)0);
 		if (error)
 			return (error);
 		for (spp = swap_priority.lh_first; spp != NULL;
@@ -388,7 +388,7 @@ sys_swapctl(p, v, retval)
 				sep++;
 			}
 		}
-		(void)lockmgr(&swaplist_change_lock, LK_RELEASE, (void *)0, p);
+		(void)lockmgr(&swaplist_change_lock, LK_RELEASE, (void *)0);
 		if (error)
 			return (error);
 
@@ -403,7 +403,7 @@ sys_swapctl(p, v, retval)
 	if (SCARG(uap, arg) == NULL) {
 		/* XXX - interface - arg==NULL: miniroot */
 		vp = rootvp;
-		if (vget(vp, 1))
+		if (vget(vp, LK_EXCLUSIVE))
 			return (EBUSY);
 	} else {
 		NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, UIO_USERSPACE,
@@ -414,7 +414,7 @@ sys_swapctl(p, v, retval)
 		vp = nd.ni_vp;
 	}
 
-	error = lockmgr(&swaplist_change_lock, LK_EXCLUSIVE, (void *)0, p);
+	error = lockmgr(&swaplist_change_lock, LK_EXCLUSIVE, (void *)0);
 	if (error)
 		goto bad2;
 
@@ -499,7 +499,7 @@ sys_swapctl(p, v, retval)
 	}
 
 bad:
-	(void)lockmgr(&swaplist_change_lock, LK_RELEASE, (void *)0, p);
+	(void)lockmgr(&swaplist_change_lock, LK_RELEASE, (void *)0);
 bad2:
 	vput(vp);
 

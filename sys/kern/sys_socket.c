@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.15 1996/09/07 12:41:00 mycroft Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.16 1998/03/01 02:22:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sys_socket.c	8.1 (Berkeley) 6/10/93
+ *	@(#)sys_socket.c	8.3 (Berkeley) 2/14/95
  */
 
 #include <sys/param.h>

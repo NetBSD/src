@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.47 1997/11/17 00:59:56 ross Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.48 1998/03/01 02:22:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)subr_prf.c	8.3 (Berkeley) 1/21/94
+ *	@(#)subr_prf.c	8.4 (Berkeley) 5/4/95
  */
 
 #include <sys/param.h>
@@ -311,6 +311,11 @@ putchar(c, flags, tp)
 			mbp->msg_bufc[mbp->msg_bufx++] = c;
 			if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
 				mbp->msg_bufx = 0;
+			/* If the buffer is full, keep the most recent data. */
+			if (mbp->msg_bufr == mbp->msg_bufx) {
+				 if (++mbp->msg_bufr >= mbp->msg_bufs)
+					mbp->msg_bufr = 0;
+			}
 		}
 	}
 	if ((flags & TOCONS) && constty == NULL && c != '\0')

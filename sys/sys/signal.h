@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.27 1998/01/15 14:58:13 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.28 1998/03/01 02:24:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)signal.h	8.2 (Berkeley) 1/21/94
+ *	@(#)signal.h	8.4 (Berkeley) 5/4/95
  */
 
 #ifndef	_SYS_SIGNAL_H_

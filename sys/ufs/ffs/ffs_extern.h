@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.6 1996/12/22 10:10:40 cgd Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.7 1998/03/01 02:23:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -32,8 +32,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ffs_extern.h	8.3 (Berkeley) 4/16/94
+ *	@(#)ffs_extern.h	8.6 (Berkeley) 3/30/95
  */
+
+/*
+ * Sysctl values for the fast filesystem.
+ */
+#define FFS_CLUSTERREAD		1	/* cluster reading enabled */
+#define FFS_CLUSTERWRITE	2	/* cluster writing enabled */
+#define FFS_REALLOCBLKS		3	/* block reallocation enabled */
+#define FFS_ASYNCFREE		4	/* asynchronous block freeing enabled */
+#define FFS_MAXID		5	/* number of valid ffs ids */
+
+#define FFS_NAMES { \
+	{ 0, 0 }, \
+	{ "doclusterread", CTLTYPE_INT }, \
+	{ "doclusterwrite", CTLTYPE_INT }, \
+	{ "doreallocblks", CTLTYPE_INT }, \
+	{ "doasyncfree", CTLTYPE_INT }, \
+}
 
 struct buf;
 struct fid;
@@ -54,19 +71,19 @@ struct cg;
 __BEGIN_DECLS
 
 /* ffs_alloc.c */
-int ffs_alloc __P((struct inode *, daddr_t, daddr_t , int, struct ucred *,
-		   daddr_t *));
-int ffs_realloccg __P((struct inode *, daddr_t, daddr_t, int, int ,
+int ffs_alloc __P((struct inode *, ufs_daddr_t, ufs_daddr_t , int, struct ucred *,
+		   ufs_daddr_t *));
+int ffs_realloccg __P((struct inode *, ufs_daddr_t, ufs_daddr_t, int, int ,
 		       struct ucred *, struct buf **));
 int ffs_reallocblks __P((void *));
 int ffs_valloc __P((void *));
-daddr_t ffs_blkpref __P((struct inode *, daddr_t, int, daddr_t *));
-void ffs_blkfree __P((struct inode *, daddr_t, long));
+ufs_daddr_t ffs_blkpref __P((struct inode *, ufs_daddr_t, int, ufs_daddr_t *));
+void ffs_blkfree __P((struct inode *, ufs_daddr_t, long));
 int ffs_vfree __P((void *));
-void ffs_clusteracct __P((struct fs *, struct cg *, daddr_t, int));
+void ffs_clusteracct __P((struct fs *, struct cg *, ufs_daddr_t, int));
 
 /* ffs_balloc.c */
-int ffs_balloc __P((struct inode *, daddr_t, int, struct ucred *,
+int ffs_balloc __P((struct inode *, ufs_daddr_t, int, struct ucred *,
 		    struct buf **, int));
 
 /* ffs_inode.c */
@@ -80,9 +97,9 @@ void ffs_fragacct __P((struct fs *, int, int32_t[], int));
 #ifdef DIAGNOSTIC
 void	ffs_checkoverlap __P((struct buf *, struct inode *));
 #endif
-int ffs_isblock __P((struct fs *, unsigned char *, daddr_t));
-void ffs_clrblock __P((struct fs *, u_char *, daddr_t));
-void ffs_setblock __P((struct fs *, unsigned char *, daddr_t));
+int ffs_isblock __P((struct fs *, unsigned char *, ufs_daddr_t));
+void ffs_clrblock __P((struct fs *, u_char *, ufs_daddr_t));
+void ffs_setblock __P((struct fs *, unsigned char *, ufs_daddr_t));
 
 /* ffs_vfsops.c */
 int ffs_mountroot __P((void));
@@ -99,6 +116,8 @@ int ffs_vget __P((struct mount *, ino_t, struct vnode **));
 int ffs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 		    struct vnode **, int *, struct ucred **));
 int ffs_vptofh __P((struct vnode *, struct fid *));
+int ffs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		    struct proc *));
 int ffs_sbupdate __P((struct ufsmount *, int));
 int ffs_cgupdate __P((struct ufsmount *, int));
 

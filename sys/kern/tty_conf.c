@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.19 1997/04/03 00:54:19 kleink Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.20 1998/03/01 02:22:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tty_conf.c	8.4 (Berkeley) 1/21/94
+ *	@(#)tty_conf.c	8.5 (Berkeley) 1/9/95
  */
 
 #include <sys/param.h>
