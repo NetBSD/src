@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.23 1996/04/05 04:52:52 mhitch Exp $	*/
+/*	$NetBSD: malloc.h,v 1.24 1996/08/27 20:01:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -330,5 +330,7 @@ extern char *kmembase;
 extern struct kmembuckets bucket[];
 extern void *malloc __P((unsigned long size, int type, int flags));
 extern void free __P((void *addr, int type));
+extern void *realloc __P((void *curaddr, unsigned long newsize, int type,
+			int flags));
 #endif /* _KERNEL */
 #endif /* !_SYS_MALLOC_H_ */
