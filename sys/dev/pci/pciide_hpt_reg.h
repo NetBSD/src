@@ -1,4 +1,4 @@
-/*      $NetBSD: pciide_hpt_reg.h,v 1.10 2003/10/05 17:48:49 bouyer Exp $       */
+/*      $NetBSD: pciide_hpt_reg.h,v 1.11 2004/03/10 21:55:21 bouyer Exp $       */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -123,6 +123,8 @@
 #define HPT_SC2_DMARQW		0x04
 #define HPT_SC2_SCLK		0x02
 #define HPT_SC2_MAEN		0x01
+
+#define HPT370_FOUT 		0x7c	/* DPLL output frequency */
 
 static const u_int32_t hpt366_pio[] __attribute__((__unused__)) =
 	{0x00d0a7aa, 0x00c8a753, 0x00c8a742, 0x00c8a731};
