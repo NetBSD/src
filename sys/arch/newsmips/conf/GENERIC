@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.31 2000/10/30 10:16:31 tsubai Exp $
+# 	$NetBSD: GENERIC,v 1.32 2000/11/13 16:48:41 tsubai Exp $
 #
 #	GENERIC kernel for RISC-NEWS
 
 include		"arch/newsmips/conf/std.newsmips"
 
-#ident 		"GENERIC-$Revision: 1.31 $"
+#ident 		"GENERIC-$Revision: 1.32 $"
 
 maxusers	16
 
@@ -131,6 +131,13 @@ sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tapes
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?	# SCSI changer devices
+
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	FONT_GALLANT12x22
+
+wsdisplay0 at fb? console ?
+wskbd0	at kb? console ?
+wsmouse0 at ms?
 
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
