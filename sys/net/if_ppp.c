@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.42 1998/07/05 00:51:26 jonathan Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.43 1998/07/06 13:51:32 jtk Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -101,7 +101,7 @@
 #include <net/bpf.h>
 #endif
 
-#if INET
+#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
