@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.104 2001/01/05 18:04:42 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.105 2001/01/12 16:03:59 bouyer Exp $	*/
 
 
 /*
@@ -671,10 +671,23 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 
 	if (pci_mapreg_map(pa, PCIIDE_REG_CTL_BASE(wdc_cp->channel),
 	    PCI_MAPREG_TYPE_IO, 0,
-	    &wdc_cp->ctl_iot, &wdc_cp->ctl_ioh, NULL, ctlsizep) != 0) {
+	    &wdc_cp->ctl_iot, &cp->ctl_baseioh, NULL, ctlsizep) != 0) {
 		printf("%s: couldn't map %s channel ctl regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh, *cmdsizep);
+		return 0;
+	}
+	/*
+	 * In native mode, 4 bytes of I/O space are mapped for the control
+	 * register, the control register is at offset 2. Pass the generic
+	 * code a handle for only one byte at the rigth offset.
+	 */
+	if (bus_space_subregion(wdc_cp->ctl_iot, cp->ctl_baseioh, 2, 1,
+	    &wdc_cp->ctl_ioh) != 0) {
+		printf("%s: unable to subregion %s channel ctl regs\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+		bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh, *cmdsizep);
+		bus_space_unmap(wdc_cp->cmd_iot, cp->ctl_baseioh, *ctlsizep);
 		return 0;
 	}
 	return (1);
