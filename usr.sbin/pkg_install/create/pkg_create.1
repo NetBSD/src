@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.32.4.3 2003/08/21 09:27:44 jlam Exp $
+.\" $NetBSD: pkg_create.1,v 1.32.4.4 2003/08/21 22:13:07 jlam Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -41,6 +41,9 @@
 .Ek
 .Bk -words
 .Op Fl D Ar displayfile
+.Ek
+.Bk -words
+.Op Fl K Ar pkg_dbdir
 .Ek
 .Bk -words
 .Op Fl P Ar dpkgs
@@ -177,6 +180,15 @@ Set
 to be the install procedure for the package.
 This can be any executable program (or shell script).
 It will be invoked automatically when the package is later installed.
+.It Fl K Ar pkg_dbdir
+Set
+.Ar pkg_dbdir
+as the package database directory.
+If this option isn't specified, then the package database directory is
+taken from the value of the environment variable
+.Ev PKG_DBDIR ,
+otherwise it defaults to
+.Pa /var/db/pkg .
 .It Fl k Ar dscript
 Set
 .Ar dscript

@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.28.2.3 2003/07/31 19:17:36 jlam Exp $	*/
+/*	$NetBSD: main.c,v 1.28.2.4 2003/08/21 22:13:07 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.28.2.3 2003/07/31 19:17:36 jlam Exp $");
+__RCSID("$NetBSD: main.c,v 1.28.2.4 2003/08/21 22:13:07 jlam Exp $");
 #endif
 
 /*
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: main.c,v 1.28.2.3 2003/07/31 19:17:36 jlam Exp $");
 
 #define DEFAULT_SFX	".t[bg]z"	/* default suffix for ls{all,best} */
 
-static const char Options[] = "s:V";
+static const char Options[] = "K:s:V";
 
 void    usage(void);
 
@@ -353,6 +353,10 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, Options)) != -1)
 		switch (ch) {
+		case 'K':
+			_pkgdb_setPKGDB_DIR(optarg);
+			break;
+
 		case 's':
 			(void) strlcpy(sfx, optarg, sizeof(sfx));
 			use_default_sfx = FALSE;

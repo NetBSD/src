@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.33.4.4 2003/08/21 03:07:55 jlam Exp $
+.\" $NetBSD: pkg_add.1,v 1.33.4.5 2003/08/21 22:13:06 jlam Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -26,6 +26,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl fILMnRSuVv
+.Bk -words
+.Op Fl K Ar pkg_dbdir
+.Ek
 .Bk -words
 .Op Fl p Ar prefix
 .Ek
@@ -111,6 +114,15 @@ will still try to find and auto-install missing prerequisite packages,
 a failure to find one will not be fatal.
 .It Fl I
 If an installation script exists for a given package, do not execute it.
+.It Fl K Ar pkg_dbdir
+Set
+.Ar pkg_dbdir
+as the package database directory.
+If this option isn't specified, then the package database directory is
+taken from the value of the environment variable
+.Ev PKG_DBDIR ,
+otherwise it defaults to
+.Pa /var/db/pkg .
 .It Fl L
 Don't add the package to any views after installation.
 .It Fl M
@@ -422,8 +434,9 @@ for subsequent possible use by
 Any package dependencies are recorded in the other packages'
 .Pa /var/db/pkg/\*[Lt]other-pkg\*[Gt]/+REQUIRED_BY
 file
-(if the environment variable PKG_DBDIR is set, this overrides the
-.Pa /var/db/pkg/
+(if an alternate package database directory is specified, then it
+overrides the
+.Pa /var/db/pkg
 path shown above).
 .It
 If the package is a depoted package, then add it to the default view.
@@ -464,7 +477,11 @@ The current directory may be indicated implicitly by an empty directory
 name, or explicitly by a single period.
 FTP URLs may not end with a slash.
 .Ss PKG_DBDIR
-Where to register packages instead of
+If the
+.Fl K
+flag isn't given, then
+.Ev PKG_DBDIR
+notes where to register packages instead of
 .Pa /var/db/pkg .
 .Ss PKG_TMPDIR
 Staging directory for installing packages, defaults to /var/tmp.

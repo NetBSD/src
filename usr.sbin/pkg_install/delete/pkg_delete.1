@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.24.4.2 2003/07/24 23:14:52 jlam Exp $
+.\" $NetBSD: pkg_delete.1,v 1.24.4.3 2003/08/21 22:13:08 jlam Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -26,6 +26,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl DdFfnORrVv
+.Bk -words
+.Op Fl K Ar pkg_dbdir
+.Ek
 .Bk -words
 .Op Fl p Ar prefix
 .Ek
@@ -99,6 +102,15 @@ instead of the package-name.
 .It Fl f
 Force removal of the package, even if a dependency is recorded or the
 deinstall or require script fails.
+.It Fl K Ar pkg_dbdir
+Set
+.Ar pkg_dbdir
+as the package database directory.
+If this option isn't specified, then the package database directory is
+taken from the value of the environment variable
+.Ev PKG_DBDIR ,
+otherwise it defaults to
+.Pa /var/db/pkg .
 .It Fl n
 Don't actually deinstall a package, just report the steps that
 would be taken if it were.
@@ -139,7 +151,11 @@ Turn on verbose output.
 does pretty much what it says.
 It examines installed package records in
 .Pa /var/db/pkg/\*[Lt]pkg-name\*[Gt] ,
-deletes the package contents, and finally removes the package records.
+deletes the package contents, and finally removes the package records
+(if an alternate package database directory is specified, then it
+overrides the
+.Pa /var/db/pkg
+path shown above).
 .Pp
 If a package is required by other installed packages,
 .Nm
