@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_subr.c	7.13 (Berkeley) 6/28/90
- *	$Id: ufs_subr.c,v 1.4 1993/09/01 15:53:42 glass Exp $
+ *	$Id: ufs_subr.c,v 1.5 1993/09/11 00:09:25 jtc Exp $
  */
 
 #ifdef KERNEL
@@ -164,51 +164,3 @@ setblock(fs, cp, h)
 		panic("setblock");
 	}
 }
-
-#if (!defined(vax) && !defined(tahoe) && !defined(hp300) && !defined(sun3)) \
-	|| defined(VAX630) || defined(VAX650)
-/*
- * C definitions of special instructions.
- * Normally expanded with inline.
- */
-int
-scanc(size, cp, table, mask)
-	u_int size;
-	register u_char *cp, table[];
-	register u_char mask;
-{
-	register u_char *end = &cp[size];
-
-	while (cp < end && (table[*cp] & mask) == 0)
-		cp++;
-	return (end - cp);
-}
-#endif
-
-#if !defined(vax) && !defined(tahoe) && !defined(hp300) && !defined(sun3)
-int
-skpc(mask, size, cp)
-	register int mask;
-	u_int size;
-	register u_char *cp;
-{
-	register u_char *end = &cp[size];
-
-	while (cp < end && *cp == mask)
-		cp++;
-	return (end - cp);
-}
-
-int
-locc(mask, size, cp)
-	register int mask;
-	u_int size;
-	register u_char *cp;
-{
-	register u_char *end = &cp[size];
-
-	while (cp < end && *cp != mask)
-		cp++;
-	return (end - cp);
-}
-#endif
