@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.73.2.6 2002/06/24 22:03:19 nathanw Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.73.2.7 2002/10/06 21:26:31 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.2.6 2002/06/24 22:03:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.2.7 2002/10/06 21:26:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,6 +231,8 @@ cpu_setfunc(l, func, arg)
 {
 	struct user *up = l->l_addr;
 
+	up->u_pcb.pcb_hw.apcb_ksp =
+	    (u_int64_t)l->l_md.md_tf;
 	up->u_pcb.pcb_context[0] =
 	    (u_int64_t)func;			/* s0: pc */
 	up->u_pcb.pcb_context[1] =
