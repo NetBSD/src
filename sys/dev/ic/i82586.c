@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.42.10.1 2002/06/14 17:36:16 lukem Exp $	*/
+/*	$NetBSD: i82586.c,v 1.42.10.2 2003/01/28 05:30:00 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,12 +144,12 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.42.10.1 2002/06/14 17:36:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.42.10.2 2003/01/28 05:30:00 jmc Exp $");
 
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.42.10.1 2002/06/14 17:36:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.42.10.2 2003/01/28 05:30:00 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,6 +222,7 @@ static int	i82586_cmd_wait		__P((struct ie_softc *));
 void 		print_rbd 	__P((struct ie_softc *, int));
 #endif
 
+static char* padbuf = NULL;
 
 /*
  * Front-ends call this function to attach to the MI driver.
@@ -276,6 +277,16 @@ i82586_attach(sc, name, etheraddr, media, nmedia, defmedia)
                 ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
                 ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
         }
+
+	if (padbuf == NULL) {
+		padbuf = malloc(ETHER_MIN_LEN - ETHER_CRC_LEN, M_DEVBUF,
+		    M_ZERO | M_NOWAIT);
+		if (padbuf == NULL) {
+			 printf("%s: can't allocate pad buffer\n",
+			     sc->sc_dev.dv_xname);
+			 return;
+		}
+	}
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -1218,8 +1229,13 @@ i82586_start(ifp)
 			(sc->memcopyout)(sc, mtod(m,caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
 		}
-
-		len = max(m0->m_pkthdr.len, ETHER_MIN_LEN);
+		len = m0->m_pkthdr.len;
+		if (len < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+			(sc->memcopyout)(sc, padbuf, buffer,
+			    ETHER_MIN_LEN - ETHER_CRC_LEN - len);
+			buffer += ETHER_MIN_LEN -ETHER_CRC_LEN - len;
+			len = ETHER_MIN_LEN - ETHER_CRC_LEN;
+		}
 		m_freem(m0);
 
 		/*
