@@ -1,4 +1,4 @@
-/*	$NetBSD: yppasswdd_mkpw.c,v 1.4 1998/11/06 13:07:18 is Exp $	*/
+/*	$NetBSD: yppasswdd_mkpw.c,v 1.5 2000/07/04 20:27:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>
@@ -45,6 +45,7 @@
 #include <pwd.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <util.h>
 

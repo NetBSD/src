@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.13 1998/07/27 00:52:03 mycroft Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.14 2000/07/04 20:27:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.13 1998/07/27 00:52:03 mycroft Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.14 2000/07/04 20:27:39 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: quotaon.c,v 1.13 1998/07/27 00:52:03 mycroft Exp $");
 #include <err.h>
 #include <fstab.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
