@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.66 2004/10/31 05:50:58 mycroft Exp $	*/
+/*	$NetBSD: auich.c,v 1.67 2004/10/31 06:25:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.66 2004/10/31 05:50:58 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.67 2004/10/31 06:25:55 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1181,7 +1181,6 @@ auich_intr(void *v)
 					qptr = 0;
 				if (sc->sc_pintr)
 					sc->sc_pintr(sc->sc_parg);
-
 			}
 
 			sc->ptr_pcmo = qptr;
@@ -1315,10 +1314,10 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 
 	bus_space_write_4(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_BDBAR,
 	    sc->sc_cddma + ICH_PCMO_OFF(0));
-	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_CTRL,
-	    ICH_IOCE | ICH_FEIE | ICH_LVBIE | ICH_RPBM);
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_LVI,
 	    (sc->ptr_pcmo - 1) & ICH_LVI_MASK);
+	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_CTRL,
+	    ICH_IOCE | ICH_FEIE | ICH_LVBIE | ICH_RPBM);
 
 	return (0);
 }
@@ -1382,10 +1381,10 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 
 	bus_space_write_4(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_BDBAR,
 	    sc->sc_cddma + ICH_PCMI_OFF(0));
-	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CTRL,
-	    ICH_IOCE | ICH_FEIE | ICH_LVBIE | ICH_RPBM);
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_LVI,
 	    (sc->ptr_pcmi - 1) & ICH_LVI_MASK);
+	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CTRL,
+	    ICH_IOCE | ICH_FEIE | ICH_LVBIE | ICH_RPBM);
 
 	return (0);
 }
