@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.79 2001/12/06 04:27:42 chs Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.80 2002/07/05 02:02:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.79 2001/12/06 04:27:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.80 2002/07/05 02:02:00 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,7 +472,7 @@ kernfs_getattr(v)
 	microtime(&tv);
 	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_atime);
 	vap->va_mtime = vap->va_atime;
-	vap->va_ctime = vap->va_ctime;
+	vap->va_ctime = vap->va_atime;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
 	vap->va_rdev = 0;
