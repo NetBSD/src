@@ -1,3 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2002/04/02 11:36:34 skrll Exp $
+#	$NetBSD: Makefile,v 1.2 2002/07/21 08:14:48 lukem Exp $
+
+MERGED_SRCS+=	${COMMON}/sysinst ${COMMON}/upgrade ${COMMON}/xfer
 
 .include <bsd.man.mk>
