@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81.2.1.2.2 2005/04/06 10:09:59 he Exp $
+#	$NetBSD: Makefile,v 1.81.2.1.2.3 2005/04/06 10:38:33 he Exp $
 
 .include <bsd.own.mk>
 
@@ -76,6 +76,11 @@ SUBDIR+=	hp300-mkboot
 SUBDIR+=	amiga-elf2bb
 SUBDIR+=	amiga-aout2bb
 SUBDIR+=	amiga-txlt
+.endif
+
+.if ${MACHINE} == "bebox"
+SUBDIR+=	bebox-elf2pef
+SUBDIR+=	bebox-mkbootimage
 .endif
 
 .endif	# ! NOSUBDIR					# }
