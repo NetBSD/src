@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.332 2002/06/18 13:02:21 christos Exp $
+# $NetBSD: mi,v 1.333 2002/06/18 13:25:21 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1204,11 +1204,15 @@
 ./usr/share/man/cat8/atari		base-man-share
 ./usr/share/man/cat8/bebox		base-man-share
 ./usr/share/man/cat8/cats		base-man-share
+./usr/share/man/cat8/cesfic		base-man-share
 ./usr/share/man/cat8/cobalt		base-man-share
 ./usr/share/man/cat8/dreamcast		base-man-share
 ./usr/share/man/cat8/evbarm		base-man-share
+./usr/share/man/cat8/evbmips		base-man-share
 ./usr/share/man/cat8/evbsh3		base-man-share
 ./usr/share/man/cat8/hp300		base-man-share
+./usr/share/man/cat8/hp700		base-man-share
+./usr/share/man/cat8/hpcarm		base-man-share
 ./usr/share/man/cat8/hpcmips		base-man-share
 ./usr/share/man/cat8/hpcsh		base-man-share
 ./usr/share/man/cat8/i386		base-man-share
@@ -1229,6 +1233,7 @@
 ./usr/share/man/cat8/pmppc		base-man-share
 ./usr/share/man/cat8/prep		base-man-share
 ./usr/share/man/cat8/sandpoint		base-man-share
+./usr/share/man/cat8/sbmips		base-man-share
 ./usr/share/man/cat8/sgimips		base-man-share
 ./usr/share/man/cat8/shark		base-man-share
 ./usr/share/man/cat8/sparc		base-man-share
@@ -1292,11 +1297,15 @@
 ./usr/share/man/man8/atari		base-man-share
 ./usr/share/man/man8/bebox		base-man-share
 ./usr/share/man/man8/cats		base-man-share
+./usr/share/man/man8/cesfic		base-man-share
 ./usr/share/man/man8/cobalt		base-man-share
 ./usr/share/man/man8/dreamcast		base-man-share
 ./usr/share/man/man8/evbarm		base-man-share
+./usr/share/man/man8/evbmips		base-man-share
 ./usr/share/man/man8/evbsh3		base-man-share
 ./usr/share/man/man8/hp300		base-man-share
+./usr/share/man/man8/hp700		base-man-share
+./usr/share/man/man8/hpcarm		base-man-share
 ./usr/share/man/man8/hpcmips		base-man-share
 ./usr/share/man/man8/hpcsh		base-man-share
 ./usr/share/man/man8/i386		base-man-share
@@ -1317,6 +1326,7 @@
 ./usr/share/man/man8/pmppc		base-man-share
 ./usr/share/man/man8/prep		base-man-share
 ./usr/share/man/man8/sandpoint		base-man-share
+./usr/share/man/man8/sbmips		base-man-share
 ./usr/share/man/man8/sgimips		base-man-share
 ./usr/share/man/man8/shark		base-man-share
 ./usr/share/man/man8/sparc		base-man-share
@@ -1379,11 +1389,15 @@
 ./usr/share/man/html8/atari		base-man-share
 ./usr/share/man/html8/bebox		base-man-share
 ./usr/share/man/html8/cats		base-man-share
+./usr/share/man/html8/cesfic		base-man-share
 ./usr/share/man/html8/cobalt		base-man-share
 ./usr/share/man/html8/dreamcast		base-man-share
 ./usr/share/man/html8/evbarm		base-man-share
+./usr/share/man/html8/evbmips		base-man-share
 ./usr/share/man/html8/evbsh3		base-man-share
 ./usr/share/man/html8/hp300		base-man-share
+./usr/share/man/html8/hp700		base-man-share
+./usr/share/man/html8/hpcarm		base-man-share
 ./usr/share/man/html8/hpcmips		base-man-share
 ./usr/share/man/html8/hpcsh		base-man-share
 ./usr/share/man/html8/i386		base-man-share
@@ -1404,6 +1418,7 @@
 ./usr/share/man/html8/pmppc		base-man-share
 ./usr/share/man/html8/prep		base-man-share
 ./usr/share/man/html8/sandpoint		base-man-share
+./usr/share/man/html8/sbmips		base-man-share
 ./usr/share/man/html8/sgimips		base-man-share
 ./usr/share/man/html8/shark		base-man-share
 ./usr/share/man/html8/sparc		base-man-share
