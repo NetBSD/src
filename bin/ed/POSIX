@@ -5,10 +5,10 @@ compatibility, the POSIX rule that says a range of addresses cannot be
 used where only a single address is expected has been relaxed.
 
 The BSD commands included are:
-	1) the `s' command (i.e., s[rgp]*) to repeat a previous substitution,
-	2) the `W' command for appending text to an existing file,
-	3) the `wq' command for exiting after a write, and
-	4) the `z' command for scrolling through the buffer.
+	1) `s' (i.e., s[rgp]*) to repeat a previous substitution,
+	2) `W' for appending text to an existing file,
+	3) `wq' for exiting after a write, and
+	4) `z' for scrolling through the buffer.
 BSD line addressing syntax (i.e., `^' and `%').  is also recognized.
 
 The POSIX interactive global commands `G' and `V' are extended to support
@@ -27,28 +27,16 @@ with SunOS DES.
 
 An extension to the POSIX file commands `E', `e', `r', `W' and `w' is that
 <file> arguments are processed for backslash escapes, i.e.,  any character
-preceded by a backslash is interpreted literally.  A trailing backslash
-is ignored.  If the first unescaped character of a <file> argument is a
-bang (!), then the rest of the line is interpreted as a shell command,
-and no escape processing is performed by ed.  This rule does not apply to
-the 'f' command (described below).
+preceded by a backslash is interpreted literally.  If the first unescaped
+character of a <file> argument is a bang (!), then the rest of the line
+is interpreted as a shell command, and no escape processing is performed
+by ed.
 
-While the default file name cannot be set to a shell command (i.e.,
-!<shell-cmd>) via any of the `r', `w', and `e' commands, POSIX evidently
-does not preclude using the `f' command for this purpose.  Upon reading
-or writing the default file when its name begins with a bang, ed
-interprets the rest of the line as a shell command and attempts to execute
-it.  Escape processing is not performed in this case.
+The vi editor's bang command syntax is supported, i.e.,
+(addr1,addr2) !<shell-cmd> replaces the addressed lines with the output of 
+	the command <shell-cmd>.
+[rwe] !! reads/writes/edits the previous !<shell-cmd>.
 
 If ed is invoked with a name argument prefixed by a bang, then the
 remainder of the argument is interpreted as a shell command.  To invoke
 ed on a file whose name starts with bang, prefix the name with a backslash.
---
-The following commands are neither part of POSIX 1003.2 D11/2 nor are
-they supported in this version of ed.
-
-The vi command: (addr1,addr2) !<shell-cmd> which replaces a range of
-lines with the output of a shell command is not supported.
-
-The vi command: [rwe] !!, where !! is replaced by the previous
-!<shell-cmd> is not supported.
