@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdmatch.c,v 1.3 1998/02/03 05:13:34 perry Exp $	*/
+/*	$NetBSD: tcpdmatch.c,v 1.4 1998/03/05 18:23:31 christos Exp $	*/
 
  /*
   * tcpdmatch - explain what tcpd would do in a specific case
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdmatch.c 1.5 96/02/11 17:01:36";
 #else
-__RCSID("$NetBSD: tcpdmatch.c,v 1.3 1998/02/03 05:13:34 perry Exp $");
+__RCSID("$NetBSD: tcpdmatch.c,v 1.4 1998/03/05 18:23:31 christos Exp $");
 #endif
 #endif
 
@@ -36,6 +36,7 @@ __RCSID("$NetBSD: tcpdmatch.c,v 1.3 1998/02/03 05:13:34 perry Exp $");
 #include <syslog.h>
 #include <setjmp.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #ifndef	INADDR_NONE
