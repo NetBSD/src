@@ -8,15 +8,15 @@ If at all possible, you should consult the ``Installation Guide''
 document on the NetBSD/pmax web page, at http://www.netbsd.org/Ports/pmax.
 It has not been possible to reproduce the pmax installation Web page
 in fixed-font hardcopy format for the _VER release.  You must either visit
-the URL above, or request a rendered version (e.g, PostScript).
+the URL above, or request a rendered version (e.g., PostScript).
 
-Please follow the instructions at 
+Please check the NetbSD/pmax _VER installation instructions at
 
     http://www.netbsd.org/Ports/pmax/pmax-install.html
 
-now, and return to this document when you used those instructions
-to  install a miniroot, label a disk, and extract the NetBSD/pmax _VER
-installation tar sets.
+now, and return to this document when you used those instructions to
+install a diskimage, and used sysinst to label a disk and extract the
+NetBSD/pmax _VER installation tar sets.
 
 
 Install via diskless boot.
