@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.12 1994/03/25 16:30:05 chopps Exp $
+ *	$Id: machdep.c,v 1.13 1994/03/28 06:15:57 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -221,7 +221,7 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem = %d\n", ctob(physmem));
+	printf("real  mem = %d (%d pages)\n", ctob(physmem), ctob(physmem)/NBPG);
 
 	/*
 	 * Allocate space for system data structures.
@@ -375,7 +375,8 @@ again:
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(vm_page_free_count));
+	printf("avail mem = %d (%d pages)\n", ptoa(vm_page_free_count),
+	    ptoa(vm_page_free_count)/NBPG);
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 #ifdef DEBUG

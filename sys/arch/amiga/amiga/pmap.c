@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.7 1994/02/13 21:13:27 chopps Exp $
+ *	$Id: pmap.c,v 1.8 1994/03/28 06:15:58 chopps Exp $
  */
 
 /*
@@ -382,12 +382,12 @@ bogons:
 	 * initial segment table, pv_head_table and pmap_attributes.
 	 */
 	npg = atop(phys_end - phys_start);
-	s = (vm_size_t) ((cpu040 ? AMIGA_040STSIZE : AMIGA_STSIZE) +
+	s = (vm_size_t) ((cpu040 ? AMIGA_040STSIZE*128 : AMIGA_STSIZE) +
 	  sizeof(struct pv_entry) * npg + npg);
 	s = round_page(s);
 	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
 	Segtabzero = (st_entry_t *) addr;
-	addr += cpu040 ? AMIGA_040STSIZE : AMIGA_STSIZE;
+	addr += cpu040 ? AMIGA_040STSIZE*128 : AMIGA_STSIZE;
 	pv_table = (pv_entry_t) addr;
 	addr += sizeof(struct pv_entry) * npg;
 	pmap_attributes = (char *) addr;
@@ -402,6 +402,9 @@ bogons:
 	 * We need 1 PT page per possible task plus some slop.
 	 */
 	npg = min(atop(AMIGA_MAX_KPTSIZE), maxproc+16);
+	/* XXX - reduce KPT pages if small memory system */
+	if (phys_end - phys_start <= 4*1024*1024)
+		npg >>= 3;
 	s = ptoa(npg) + round_page(npg * sizeof(struct kpt_page));
 
 	/*

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ser.c	7.12 (Berkeley) 6/27/91
- *	$Id: ser.c,v 1.11 1994/02/17 09:10:56 chopps Exp $
+ *	$Id: ser.c,v 1.12 1994/03/28 06:16:21 chopps Exp $
  */
 
 #include "ser.h"
@@ -97,6 +97,8 @@ struct speedtab serspeedtab[] = {
 	9600,	SERBRD(9600),
 	19200,	SERBRD(19200),
 	38400,	SERBRD(38400),
+	57600,	SERBRD(57600),
+	76800,	SERBRD(76800),
 	-1,	-1
 };
 
