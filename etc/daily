@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.54 2003/12/07 22:22:15 perry Exp $
+#	$NetBSD: daily,v 1.55 2003/12/08 01:17:37 perry Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -140,7 +140,11 @@ if checkyesno check_uucp && \
 fi
 
 if checkyesno check_disks; then
-	df -hil -t nokernfs,procfs > $TMP 
+	if checkyesno show_remote_fs; then
+		df -hi -t nokernfs,procfs > $TMP
+	else
+		df -hil -t nokernfs,procfs > $TMP
+	fi
 	if [ -s /etc/dumpdates ] ; then
 		dump -W > $TMP2
 	fi
