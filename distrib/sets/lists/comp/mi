@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.217 2000/05/07 00:56:03 wiz Exp $
+#	$NetBSD: mi,v 1.218 2000/05/18 07:22:58 shin Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2002,6 +2002,13 @@
 ./usr/share/man/cat3/logf.0	comp-c-catman
 ./usr/share/man/cat3/login.0	comp-c-catman
 ./usr/share/man/cat3/login_cap.0	comp-c-catman
+./usr/share/man/cat3/login_close.0	comp-c-catman
+./usr/share/man/cat3/login_getcapbool.0	comp-c-catman
+./usr/share/man/cat3/login_getcapnum.0	comp-c-catman
+./usr/share/man/cat3/login_getcapsize.0	comp-c-catman
+./usr/share/man/cat3/login_getcapstr.0	comp-c-catman
+./usr/share/man/cat3/login_getcaptime.0	comp-c-catman
+./usr/share/man/cat3/login_getclass.0	comp-c-catman
 ./usr/share/man/cat3/login_tty.0	comp-c-catman
 ./usr/share/man/cat3/logout.0	comp-c-catman
 ./usr/share/man/cat3/logwtmp.0	comp-c-catman
@@ -2169,6 +2176,7 @@
 ./usr/share/man/cat3/seekdir.0	comp-c-catman
 ./usr/share/man/cat3/setbuf.0	comp-c-catman
 ./usr/share/man/cat3/setbuffer.0	comp-c-catman
+./usr/share/man/cat3/setclasscontext.0	comp-c-catman
 ./usr/share/man/cat3/setdisktab.0	comp-c-catman
 ./usr/share/man/cat3/setdomainname.0	comp-c-catman
 ./usr/share/man/cat3/setenv.0	comp-c-catman
@@ -2196,6 +2204,7 @@
 ./usr/share/man/cat3/setservent.0	comp-c-catman
 ./usr/share/man/cat3/setstate.0	comp-c-catman
 ./usr/share/man/cat3/setttyent.0	comp-c-catman
+./usr/share/man/cat3/setusercontext.0	comp-c-catman
 ./usr/share/man/cat3/setusershell.0	comp-c-catman
 ./usr/share/man/cat3/setvbuf.0	comp-c-catman
 ./usr/share/man/cat3/sha1.0	comp-c-catman
@@ -3513,6 +3522,13 @@
 ./usr/share/man/man3/logf.3		comp-c-man
 ./usr/share/man/man3/login.3		comp-c-man
 ./usr/share/man/man3/login_cap.3		comp-c-man
+./usr/share/man/man3/login_close.3		comp-c-man
+./usr/share/man/man3/login_getcapbool.3		comp-c-man
+./usr/share/man/man3/login_getcapnum.3		comp-c-man
+./usr/share/man/man3/login_getcapsize.3		comp-c-man
+./usr/share/man/man3/login_getcapstr.3		comp-c-man
+./usr/share/man/man3/login_getcaptime.3		comp-c-man
+./usr/share/man/man3/login_getclass.3		comp-c-man
 ./usr/share/man/man3/login_tty.3		comp-c-man
 ./usr/share/man/man3/logout.3		comp-c-man
 ./usr/share/man/man3/logwtmp.3		comp-c-man
@@ -3680,6 +3696,7 @@
 ./usr/share/man/man3/seekdir.3		comp-c-man
 ./usr/share/man/man3/setbuf.3		comp-c-man
 ./usr/share/man/man3/setbuffer.3		comp-c-man
+./usr/share/man/man3/setclasscontext.3		comp-c-man
 ./usr/share/man/man3/setdisktab.3		comp-c-man
 ./usr/share/man/man3/setdomainname.3		comp-c-man
 ./usr/share/man/man3/setenv.3		comp-c-man
@@ -3707,6 +3724,7 @@
 ./usr/share/man/man3/setservent.3		comp-c-man
 ./usr/share/man/man3/setstate.3		comp-c-man
 ./usr/share/man/man3/setttyent.3		comp-c-man
+./usr/share/man/man3/setusercontext.3		comp-c-man
 ./usr/share/man/man3/setusershell.3		comp-c-man
 ./usr/share/man/man3/setvbuf.3		comp-c-man
 ./usr/share/man/man3/sha1.3		comp-c-man

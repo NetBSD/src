@@ -1,6 +1,7 @@
-# $NetBSD: mi,v 1.246 2000/05/17 18:20:31 thorpej Exp $
+# $NetBSD: mi,v 1.247 2000/05/18 07:22:58 shin Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
+./usr/share/info/as.info
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
 ./usr/share/info/cpp.info
@@ -17,6 +18,7 @@
 ./usr/share/info/info-stnd.info
 ./usr/share/info/info.info
 ./usr/share/info/iostream.info
+./usr/share/info/ld.info
 ./usr/share/info/send-pr.info
 ./usr/share/info/stabs.info
 ./usr/share/info/texinfo.info
