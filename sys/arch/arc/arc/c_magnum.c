@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.3 2003/04/27 11:33:36 tsutsui Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.4 2003/05/25 14:00:12 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,6 +78,54 @@ struct timer_jazzio_config timer_magnum_conf = {
 	MIPS_INT_MASK_4,
 	timer_magnum_intr,
 	timer_magnum_init,
+};
+
+/*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given interrupt priority level.
+ */
+static const u_int32_t magnum_ipl_sr_bits[_IPL_N] = {
+	0,					/* IPL_NONE */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_3,		/* IPL_BIO */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_3,		/* IPL_NET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_3,		/* IPL_{TTY,SERIAL} */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_3|
+		MIPS_INT_MASK_4|
+		MIPS_INT_MASK_5,		/* IPL_{CLOCK,HIGH} */
 };
 
 int
@@ -189,12 +237,7 @@ c_magnum_init()
 	/*
 	 * Initialize interrupt priority
 	 */
-	splvec.splnet = MIPS_INT_MASK_SPL3;
-	splvec.splbio = MIPS_INT_MASK_SPL3;
-	splvec.splvm = MIPS_INT_MASK_SPL3;
-	splvec.spltty = MIPS_INT_MASK_SPL3;
-	splvec.splclock = MIPS_INT_MASK_SPL5;
-	splvec.splstatclock = MIPS_INT_MASK_SPL5;
+	ipl_sr_bits = magnum_ipl_sr_bits;
 
 	/*
 	 * Disable all interrupts. New masks will be set up

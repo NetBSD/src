@@ -1,4 +1,4 @@
-#	$NetBSD: std.arc,v 1.14 2003/04/28 05:03:44 tsutsui Exp $
+#	$NetBSD: std.arc,v 1.15 2003/05/25 14:00:13 tsutsui Exp $
 # standard arc info
 
 machine arc mips
@@ -17,7 +17,5 @@ options 	EXEC_ELF32		# native exec format
 options 	EXEC_SCRIPT		# may be unsafe
 
 options 	MIPS3_L2CACHE_ABSENT	# may not have L2 cache
-
-options 	__NO_SOFT_SERIAL_INTERRUPT	# for "com" driver
 
 makeoptions	DEFTEXTADDR="0x80200000"

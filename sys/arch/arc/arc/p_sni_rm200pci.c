@@ -1,4 +1,4 @@
-/*	$NetBSD: p_sni_rm200pci.c,v 1.1 2001/06/13 15:36:44 soda Exp $	*/
+/*	$NetBSD: p_sni_rm200pci.c,v 1.2 2003/05/25 14:00:12 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -79,6 +79,61 @@ struct platform platform_sni_rm200pci = {
 };
 
 /*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given interrupt priority level.
+ */
+/* XXX lack of hardware info for sni_rm200pci */
+static const u_int32_t sni_rm200pci_ipl_sr_bits[_IPL_N] = {
+	0,					/* IPL_NONE */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_3|
+		MIPS_INT_MASK_4|
+		MIPS_INT_MASK_5,		/* XXX IPL_BIO */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_3|
+		MIPS_INT_MASK_4|
+		MIPS_INT_MASK_5,		/* XXX IPL_NET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_3|
+		MIPS_INT_MASK_4|
+		MIPS_INT_MASK_5,		/* XXX IPL_{TTY,SERIAL} */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_3|
+		MIPS_INT_MASK_4|
+		MIPS_INT_MASK_5,		/* XXX IPL_{CLOCK,HIGH} */
+};
+
+/*
  * critial i/o space, interrupt, and other chipset related initialization.
  */
 void
@@ -109,6 +164,7 @@ p_sni_rm200pci_init()
 	/*
 	 * Initialize interrupt priority
 	 */
+	ipl_sr_bits = sni_rm200pci_ipl_sr_bits;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2003/04/27 17:05:56 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 2003/05/25 14:00:12 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -180,13 +180,12 @@ void arc_sysreset __P((bus_addr_t, bus_size_t));
  */
 int	safepri = MIPS3_PSL_LOWIPL;
 
-struct splvec	splvec = {			/* XXX will go XXX */
-	MIPS_INT_MASK_SPLHIGH, /* splbio */
-	MIPS_INT_MASK_SPLHIGH, /* splnet */
-	MIPS_INT_MASK_SPLHIGH, /* spltty */
-	MIPS_INT_MASK_SPLHIGH, /* splvm */
-	MIPS_INT_MASK_SPLHIGH, /* splclock */
-	MIPS_INT_MASK_SPLHIGH, /* splstatclock */
+const u_int32_t *ipl_sr_bits;
+const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
 };
 
 extern char kernel_text[], edata[], end[];
