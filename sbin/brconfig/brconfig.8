@@ -1,4 +1,4 @@
-.\"	$NetBSD: brconfig.8,v 1.7 2003/02/25 10:34:52 wiz Exp $
+.\"	$NetBSD: brconfig.8,v 1.8 2003/03/03 06:50:18 wiz Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -143,7 +143,8 @@ attribute, the only packets forwarded on the interface are broadcast
 or multicast packets and packets for which the destination address
 is known to be on the interface's segment.
 .It Cm ipf
-Enable IPF packet filtering on the bridge.  The current implementation passes
+Enable IPF packet filtering on the bridge.
+The current implementation passes
 all ARP and RARP packets through the bridge while filtering IP and ICMP
 packets through IPF.
 .It Cm -ipf
