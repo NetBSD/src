@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.53 2003/06/10 19:39:00 christos Exp $
+$NetBSD: isapnpdevs,v 1.54 2003/07/08 07:26:04 rh Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -232,6 +232,7 @@ devlogic	wss	CSC0100		0	CS4235 CODEC
 devlogic	wss	CSCA800		0	Terratec EWS64 CoDec
 devlogic	wss	ASB1611		0	AdLib NSC 16 PNP
 devlogic	wss	ASB1622		0	AdLib MSC 32 Wave PnP V3SB
+devlogic	wss	@@@0001		0	CMI8330/C3D Audio Adapter
 
 /*
  * ym
