@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.118 1999/03/25 03:29:06 explorer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.118.2.1 1999/04/13 22:52:43 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.113 1999/03/25 03:28:17 explorer Exp 
+ *	NetBSD: pcidevs,v 1.114 1999/04/12 23:18:16 jonathan Exp 
  */
 
 /*
@@ -1762,6 +1762,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "RM861HA",
 	},
 	{
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C700,
+	    0,
+	    "Opti",
+	    "82C700",
+	},
+	{
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C701,
+	    0,
+	    "Opti",
+	    "82C701",
+	},
+	{
 	    PCI_VENDOR_PCTECH, PCI_PRODUCT_PCTECH_RZ1000,
 	    0,
 	    "PC Technology",
@@ -1844,6 +1856,42 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Realtek Semiconductor",
 	    "8139 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C465,
+	    0,
+	    "Ricoh",
+	    "5C465 PCI-CardBus bridge",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C466,
+	    0,
+	    "Ricoh",
+	    "5C466 PCI-CardBus bridge",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C475,
+	    0,
+	    "Ricoh",
+	    "5C475 PCI-CardBus bridge",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C476,
+	    0,
+	    "Ricoh",
+	    "5C476 PCI-CardBus bridge",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C477,
+	    0,
+	    "Ricoh",
+	    "5C477 PCI-CardBus bridge",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C478,
+	    0,
+	    "Ricoh",
+	    "5C478 PCI-CardBus bridge",
 	},
 	{
 	    PCI_VENDOR_RISCOM, PCI_PRODUCT_RISCOM_N2,
@@ -2161,25 +2209,49 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
 	    0,
 	    "Texas Instruments",
-	    "PCI1130",
+	    "PCI1130 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1031,
+	    0,
+	    "Texas Instruments",
+	    "PCI1031 PCI-pcmcia Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1131,
 	    0,
 	    "Texas Instruments",
-	    "PCI1131",
+	    "PCI1131 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1250,
 	    0,
 	    "Texas Instruments",
-	    "PCI1250",
+	    "PCI1250 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1220,
+	    0,
+	    "Texas Instruments",
+	    "PCI1220 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1221,
+	    0,
+	    "Texas Instruments",
+	    "PCI1221 PCI-CardBus Bridge",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1225,
+	    0,
+	    "Texas Instruments",
+	    "PCI1225 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2030,
 	    0,
 	    "Texas Instruments",
-	    "PCI2030",
+	    "PCI2030 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,
@@ -2192,6 +2264,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Toshiba America",
 	    "TC35856F ATM (\"Meteor\")",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95,
+	    0,
+	    "Toshiba Info Systems (2nd PCI Vendor ID)",
+	    "ToPIC95 CardBus-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95B,
+	    0,
+	    "Toshiba Info Systems (2nd PCI Vendor ID)",
+	    "ToPIC95B CardBus-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC97,
+	    0,
+	    "Toshiba Info Systems (2nd PCI Vendor ID)",
+	    "ToPIC97 CardBus-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320,
