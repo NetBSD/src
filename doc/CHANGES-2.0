@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.21 2004/04/01 05:23:32 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.22 2004/04/01 05:25:27 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -206,3 +206,10 @@ sys/dev/pci/auvia.c				1.37
 
 	Don't allow block sizes < 288 bytes on VT823x chips. PR#22788
 	[jmcneill, ticket #36]
+
+sys/kern/kern_sysctl.c				1.170
+
+	Add the standard "is this tree writeable" check to sysctl_describe()
+	and a comment to sysctl_destroy() about why the check is slightly
+	different there.
+	[atatat, ticket #37]
