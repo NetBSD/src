@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.7 1994/07/18 21:38:12 cgd Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.8 1994/07/19 04:29:57 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -89,7 +89,7 @@ msdosfs_hashget(dev, dirclust, diroff)
 			    || dep->de_refcnt == 0)
 				continue;
 			if (dep->de_flag & DE_LOCKED) {
-				dep->de_flag |= DE_WANT;
+				dep->de_flag |= DE_WANTED;
 				sleep((caddr_t)dep, PINOD);
 				break;
 			}
@@ -325,7 +325,7 @@ deupdat(dep, tp, waitfor)
 	 * directory entries that describe a directory do not ever get
 	 * updated.  This is the way dos treats them.
 	 */
-	if ((dep->de_flag & DE_UPD) == 0 ||
+	if ((dep->de_flag & DE_UPDATE) == 0 ||
 	    vp->v_mount->mnt_flag & MNT_RDONLY ||
 	    dep->de_Attributes & ATTR_DIRECTORY ||
 	    dep->de_refcnt <= 0)
@@ -343,7 +343,7 @@ deupdat(dep, tp, waitfor)
 	 */
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	unix2dostime(&ts, &dep->de_Date, &dep->de_Time);
-	dep->de_flag &= ~DE_UPD;
+	dep->de_flag &= ~DE_UPDATE;
 
 	/*
 	 * Copy the directory entry out of the denode into the cluster it
@@ -474,7 +474,7 @@ detrunc(dep, length, flags, cred, p)
 	 * we free the trailing clusters.
 	 */
 	dep->de_FileSize = length;
-	dep->de_flag |= DE_UPD;
+	dep->de_flag |= DE_UPDATE;
 	vflags = (length > 0 ? V_SAVE : 0) | V_SAVEMETA;
 	vinvalbuf(DETOV(dep), vflags, cred, p, 0, 0);
 	allerror = deupdat(dep, &time, 1);
@@ -555,7 +555,7 @@ deextend(dep, length, cred)
 		}
 	}
 		
-	dep->de_flag |= DE_UPD;
+	dep->de_flag |= DE_UPDATE;
 	dep->de_FileSize = length;
 	return deupdat(dep, &time, 1);
 }
@@ -664,7 +664,7 @@ msdosfs_inactive(ap)
 	VOP_LOCK(vp);
 	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		error = detrunc(dep, (u_long) 0, 0, NOCRED, NULL);
-		dep->de_flag |= DE_UPD;
+		dep->de_flag |= DE_UPDATE;
 		dep->de_Name[0] = SLOT_DELETED;
 	}
 	DE_UPDAT(dep, &time, 0);
