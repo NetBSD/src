@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.8 2002/10/02 16:33:46 thorpej Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.9 2004/08/23 06:03:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.8 2002/10/02 16:33:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.9 2004/08/23 06:03:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,14 +87,14 @@ __KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.8 2002/10/02 16:33:46 thorpej Exp $")
 #define CAC_EISA_IOSIZE			0x0017
 #define CAC_EISA_IOCONF			0x38
 
-void	cac_eisa_attach(struct device *, struct device *, void *);
-int	cac_eisa_match(struct device *, struct cfdata *, void *);
+static void	cac_eisa_attach(struct device *, struct device *, void *);
+static int	cac_eisa_match(struct device *, struct cfdata *, void *);
 
-struct	cac_ccb *cac_eisa_l0_completed(struct cac_softc *);
-int	cac_eisa_l0_fifo_full(struct cac_softc *);
-void	cac_eisa_l0_intr_enable(struct cac_softc *, int);
-int	cac_eisa_l0_intr_pending(struct cac_softc *);
-void	cac_eisa_l0_submit(struct cac_softc *, struct cac_ccb *);
+static struct	cac_ccb *cac_eisa_l0_completed(struct cac_softc *);
+static int	cac_eisa_l0_fifo_full(struct cac_softc *);
+static void	cac_eisa_l0_intr_enable(struct cac_softc *, int);
+static int	cac_eisa_l0_intr_pending(struct cac_softc *);
+static void	cac_eisa_l0_submit(struct cac_softc *, struct cac_ccb *);
 
 CFATTACH_DECL(cac_eisa, sizeof(struct cac_softc),
     cac_eisa_match, cac_eisa_attach, NULL, NULL);
@@ -119,7 +119,7 @@ struct cac_eisa_type {
 	{ "CPQ4030",	"SMART-2/E",	&cac_l0 },
 };
 
-int
+static int
 cac_eisa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct eisa_attach_args *ea;
@@ -134,7 +134,7 @@ cac_eisa_match(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 cac_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct eisa_attach_args *ea;
@@ -213,7 +213,7 @@ cac_eisa_attach(struct device *parent, struct device *self, void *aux)
  * Linkage specific to EISA boards.
  */
 
-int
+static int
 cac_eisa_l0_fifo_full(struct cac_softc *sc)
 {
 
@@ -221,7 +221,7 @@ cac_eisa_l0_fifo_full(struct cac_softc *sc)
 	    CAC_EISA_CHANNEL_CLEAR) == 0);
 }
 
-void
+static void
 cac_eisa_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 	u_int16_t size;
@@ -242,7 +242,7 @@ cac_eisa_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 	cac_outb(sc, CAC_EISAREG_LOCAL_DOORBELL, CAC_EISA_CHANNEL_BUSY);
 }
 
-struct cac_ccb *
+static struct cac_ccb *
 cac_eisa_l0_completed(struct cac_softc *sc)
 {
 	struct cac_ccb *ccb;
@@ -271,7 +271,7 @@ cac_eisa_l0_completed(struct cac_softc *sc)
 	return (ccb);
 }
 
-int
+static int
 cac_eisa_l0_intr_pending(struct cac_softc *sc)
 {
 
@@ -279,7 +279,7 @@ cac_eisa_l0_intr_pending(struct cac_softc *sc)
 	    CAC_EISA_CHANNEL_BUSY);
 }
 
-void
+static void
 cac_eisa_l0_intr_enable(struct cac_softc *sc, int state)
 {
 
