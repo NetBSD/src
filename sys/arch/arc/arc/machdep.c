@@ -1,4 +1,5 @@
-/*	$NetBSD: machdep.c,v 1.27 2000/01/23 20:09:13 soda Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 2000/01/23 21:01:51 soda Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 1997/05/19 16:21:20 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,10 +65,15 @@
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
+#include <sys/device.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
+#ifdef MFS
+#include <ufs/mfs/mfs_extern.h>
+#endif
 
 #include <vm/vm_kern.h>
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
@@ -75,9 +81,11 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/pio.h>
-#include <machine/pte.h>
+#include <machine/bus.h>
+#include <machine/trap.h>
 #include <machine/autoconf.h>
-#include <mips/locore.h>		/* wbflush() */
+#include <mips/pte.h>
+#include <mips/locore.h>
 #include <mips/cpuregs.h>
 #include <mips/psl.h>
 #ifdef DDB
@@ -88,90 +96,107 @@
 
 #include <dev/cons.h>
 
-#include <pica/pica/pica.h>
-#include <pica/pica/picatype.h>
+#include <arc/arc/arctype.h>
+#include <arc/arc/arcbios.h>
+#include <arc/pica/pica.h>
+#include <arc/dti/desktech.h>
+#include <arc/algor/algor.h>
 
-#include <asc.h>
-
-#if NASC > 0
-#include <pica/dev/ascreg.h>
+#include "pc.h"
+#include "com.h"
+#if NCOM > 0
+#include <sys/termios.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
 #endif
 
+#ifndef COM_FREQ_MAGNUM
+#if 0
+#define COM_FREQ_MAGNUM	4233600 /* 4.2336MHz - ARC? */
+#else
+#define COM_FREQ_MAGNUM	8192000	/* 8.192 MHz - NEC RISCstation M402 */
+#endif
+#endif /* COM_FREQ_MAGNUM */
+
+#if NCOM > 0
+#ifndef CONSPEED
+#define CONSPEED TTYDEF_SPEED
+#endif
+#ifndef CONMODE
+#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+#endif
+#endif /* NCOM */
+
 extern struct consdev *cn_tab;
+extern char kernel_text[];
+extern void makebootdev __P((char *));
+extern void configure __P((void));
+extern int kbc_8042sysreset __P((void));
+extern void pccnattach __P((void));
 
 /* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
+char	machine[] = MACHINE;		/* from <machine/param.h> */
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[30];
 
-vm_map_t buffer_map;
+/* maps for VM objects */
+vm_map_t exec_map = NULL;
+vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
-int	memcfg;			/* memory config register */
-int	brdcfg;			/* motherboard config register */
-int	cpucfg;			/* Value of processor config register */
 int	cputype;		/* Mother board type */
 int	ncpu = 1;		/* At least one cpu in the system */
-int	isa_io_base;		/* Base address of ISA io port space */
-int	isa_mem_base;		/* Base address of ISA memory space */
+struct arc_bus_space arc_bus_io;/* Bus tag for bus.h macros */
+struct arc_bus_space arc_bus_mem;/* Bus tag for bus.h macros */
+struct arc_bus_space pica_bus;	/* picabus for com.c/com_lbus.c */
+int	com_freq = COM_FREQ;	/* unusual clock frequency of dev/ic/com.c */
+int	com_console_address;	/* Well, ain't it just plain stupid... */
+bus_space_tag_t comconstag = &arc_bus_io;	/* com console bus */
+struct arc_bus_space *arc_bus_com = &arc_bus_io; /* com bus */
+char   **environment;		/* On some arches, pointer to environment */
+char	eth_hw_addr[6];		/* HW ether addr not stored elsewhere */
 
+int mem_reserved[VM_PHYSSEG_MAX]; /* the cluster is reserved, i.e. not free */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-/*
- * Interrupt-blocking functions defined in locore. These names aren't used
- * directly except here and in interrupt handlers.
- */
-
-/* Block out one hardware interrupt-enable bit. */
-extern int	Mach_spl0 __P((void)), Mach_spl1 __P((void));
-extern int	Mach_spl2 __P((void)), Mach_spl3 __P((void));
-
-/* Block out nested interrupt-enable bits. */
-extern int	cpu_spl0 __P((void)), cpu_spl1 __P((void));
-extern int	cpu_spl2 __P((void)), cpu_spl3 __P((void));
-extern int	splhigh __P((void));
-
-/*
- * Instead, we declare the standard splXXX names as function pointers,
- * and initialie them to point to the above functions to match
- * the way a specific motherboard is  wired up.
- */
-int	(*Mach_splbio) __P((void)) = splhigh;
-int	(*Mach_splnet)__P((void)) = splhigh;
-int	(*Mach_spltty)__P((void)) = splhigh;
-int	(*Mach_splimp)__P((void)) = splhigh;
-int	(*Mach_splclock)__P((void)) = splhigh;
-int	(*Mach_splstatclock)__P((void)) = splhigh;
-
 /* initialize bss, etc. from kernel start, before main() is called. */
 extern	void
-mach_init __P((int argc, char *argv[], u_int code));
-
-
-/*
- * Pica video-console output (for output before console is autoconfigured)
- */
-static void  vid_scroll __P((void));
-void vid_print_string __P((const char *str));
-void vid_putchar __P((dev_t dev, char c));
-extern	int atoi __P((const char *cp));
+mach_init __P((int argc, char *argv[], char *envv[]));
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
 extern void stacktrace __P((void)); /*XXX*/
 #endif
 
+static void tlb_init_pica __P((void));
+static void tlb_init_tyne __P((void));
+static int get_simm_size __P((int *, int));
+static char *getenv __P((char *env));
+static void get_eth_hw_addr __P((char *));
+static int atoi __P((const char *, int));
 
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
+ * Used as an argument to splx().
+ * XXX disables interrupt 5 to disable mips3 on-chip clock.
  */
-int	safepri = PSL_LOWIPL;
+int	safepri = MIPS3_PSL_LOWIPL;
 
-extern void mips_vector_init  __P((void));
+struct splvec	splvec = {			/* XXX will go XXX */
+	MIPS_SPLHIGH, /* splbio */
+	MIPS_SPLHIGH, /* splnet */
+	MIPS_SPLHIGH, /* spltty */
+	MIPS_SPLHIGH, /* splimp */
+	MIPS_SPLHIGH, /* splclock */
+	MIPS_SPLHIGH, /* splstatclock */
+};
 
+extern struct user *proc0paddr;
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -180,27 +205,208 @@ extern void mips_vector_init  __P((void));
  * Return the first page address following the system.
  */
 void
-mach_init(argc, argv, code)
+mach_init(argc, argv, envv)
 	int argc;
 	char *argv[];
-	u_int code;
+	char *envv[];	/* Not on all arches... */
 {
-	register char *cp;
-	register int i;
-	struct tlb tlb;
-	u_long first, last;
+	char *cp;
+	int i;
+	vm_offset_t kernstartpfn, kernendpfn, first, last;
 	caddr_t kernend, v;
 	vm_size_t size;
 	extern char edata[], end[];
 
-	/* clear the BSS segment in NetBSD code */
-	kernend = (caddr_t)pica_round_page(end);
+	/* clear the BSS segment in kernel code */
+	kernend = (caddr_t)mips_round_page(end);
 	bzero(edata, kernend - edata);
+
+	environment = &argv[1];
+
+	/* Initialize the CPU type */
+	cputype = bios_ident();
+
+	if (cputype >= 0) { /* ARC BIOS present */
+		bios_init_console();
+		bios_save_info();
+		physmem = bios_configure_memory(mem_reserved, mem_clusters,
+		    &mem_cluster_cnt);
+	}
+
+	/*
+	 * Get config register now as mapped from BIOS since we are
+	 * going to demap these addresses later. We want as may TLB
+	 * entries as possible to do something useful :-).
+	 */
+
+	switch (cputype) {
+	case ACER_PICA_61:	/* ALI PICA 61 and MAGNUM is almost the */
+	case MAGNUM:		/* Same kind of hardware. NEC goes here too */
+		if(cputype == MAGNUM) {
+			strcpy(cpu_model, "MIPS Magnum");
+			com_freq = COM_FREQ_MAGNUM;
+		}
+		else {
+			strcpy(cpu_model, "Acer Pica-61");
+		}
+		pica_bus.bus_base = 0;
+		arc_bus_io.bus_base = PICA_V_ISA_IO;
+		arc_bus_mem.bus_base = PICA_V_ISA_MEM;
+		arc_bus_com = &pica_bus;
+		comconstag = &pica_bus;
+		com_console_address = PICA_SYS_COM1;
+
+		/*
+		 * Set up interrupt handling and I/O addresses.
+		 */
+		splvec.splnet = MIPS_INTMASK_0_to_3;
+		splvec.splbio = MIPS_INTMASK_0_to_3;
+		splvec.splimp = MIPS_INTMASK_0_to_3;
+		splvec.spltty = MIPS_INTMASK_0_to_3;
+		splvec.splclock = MIPS_INTMASK_0_to_5;
+		splvec.splstatclock = MIPS_INTMASK_0_to_5;
+		break;
+
+	case DESKSTATION_RPC44:
+		strcpy(cpu_model, "Deskstation rPC44");
+		arc_bus_io.bus_base = 0xb0000000;		/*XXX*/
+		arc_bus_mem.bus_base = 0xa0000000;		/*XXX*/
+		com_console_address = 0; /* Don't screew the mouse... */
+
+		/*
+		 * XXX
+		 *	- rewrite spl handling to allow ISA clock > bio|tty|net
+		 * or
+		 *	- use MIP3_INTERNAL_TIMER_INTERRUPT for clock
+		 */
+
+		break;
+
+	case DESKSTATION_TYNE:
+		strcpy(cpu_model, "Deskstation Tyne");
+		arc_bus_io.bus_base = TYNE_V_ISA_IO;
+		arc_bus_mem.bus_base = TYNE_V_ISA_MEM;
+		com_console_address = 0; /* Don't screew the mouse... */
+
+		/*
+		 * XXX
+		 *	- rewrite spl handling to allow ISA clock > bio|tty|net
+		 * or
+		 *	- use MIP3_INTERNAL_TIMER_INTERRUPT for clock
+		 */
+
+		break;
+
+	case -1:	/* Not identified as an ARC system. We have a couple */
+			/* of other options. Systems not having an ARC Bios  */
+
+			/* Make this more fancy when more comes in here */
+		environment = envv;
+		cputype = ALGOR_P4032;
+		strcpy(cpu_model, "Algorithmics P-4032");
+		arc_bus_io.bus_sparse1 = 2;
+		arc_bus_io.bus_sparse2 = 1;
+		arc_bus_io.bus_sparse4 = 0;
+		arc_bus_io.bus_sparse8 = 0;
+		com_console_address = P4032_COM1;
+
+		mem_clusters[0].start = 0;
+		mem_clusters[0].size =
+		    mips_trunc_page(MIPS_KSEG0_TO_PHYS(kernel_text));
+		mem_clusters[1].start = MIPS_KSEG0_TO_PHYS((int)kernend);
+		if (getenv("memsize") != 0) {
+			i = atoi(getenv("memsize"), 10);
+			i = 1024 * 1024 * i;
+			mem_clusters[1].size =
+			    i - (int)(MIPS_KSEG0_TO_PHYS(kernend));
+			mem_cluster_cnt = 2;
+			physmem = i;
+		} else {
+			i = get_simm_size((int *)0, 128*1024*1024);
+			mem_clusters[1].size =
+			    i - (int)(MIPS_KSEG0_TO_PHYS(kernend));
+			physmem = i;
+/*XXX Ouch!!! */
+			mem_clusters[2].start = i;
+			mem_clusters[2].size = get_simm_size((int *)(i), 0);
+			physmem += mem_clusters[2].size;
+			mem_clusters[3].start = i+i/2;
+			mem_clusters[3].size = get_simm_size((int *)(i+i/2), 0);
+			mem_cluster_cnt = 4;
+			physmem += mem_clusters[3].size;
+		}
+/*XXX*/
+		argv[0] = getenv("bootdev");
+		if(argv[0] == 0)
+			argv[0] = "unknown";
+
+
+		break;
+
+	default:	/* This is probably the best we can do... */
+		printf("kernel not configured for this system\n");
+		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
+	}
+	physmem = btoc(physmem);
+	mips_hardware_intr = arc_hardware_intr;
+	/*
+	 * XXX - currently, timer interrupt from count/compare register
+	 * is not used. so ...
+	 */
+	mips3_timer_delta = 0; /* longest interval */
+
+	/* look at argv[0] and compute bootdev for autoconfig setup */
+	makebootdev(argv[0]);
+
+	/*
+	 * Look at arguments passed to us and compute boothowto.
+	 * Default to SINGLE and ASKNAME if no args or
+	 * SINGLE and DFLTROOT if this is a ramdisk kernel.
+	 */
+#ifdef MEMORY_DISK_HOOKS
+	boothowto = RB_SINGLE | RB_DFLTROOT;
+#else
+	boothowto = RB_SINGLE | RB_ASKNAME;
+#endif /* MEMORY_DISK_HOOKS */
+#ifdef KADB
+	boothowto |= RB_KDB;
+#endif
+	get_eth_hw_addr(getenv("ethaddr"));
+	cp = getenv("osloadoptions");
+	if(cp) {
+		while(*cp) {
+			switch (*cp++) {
+			case 'a': /* autoboot */
+				boothowto &= ~RB_SINGLE;
+				break;
+
+			case 'd': /* use compiled in default root */
+				boothowto |= RB_DFLTROOT;
+				break;
+
+			case 'm': /* mini root present in memory */
+				boothowto |= RB_MINIROOT;
+				break;
+
+			case 'n': /* ask for names */
+				boothowto |= RB_ASKNAME;
+				break;
+
+			case 'N': /* don't ask for names */
+				boothowto &= ~RB_ASKNAME;
+				break;
+			}
+
+		}
+	}
 
 	/*
 	 * Set the VM page size.
 	 */
-	vm_set_page_size();
+	uvm_setpagesize();
+ 
+	/* make sure that we don't call BIOS console from now on */
+	cn_tab = NULL;
 
 	/*
 	 * Copy exception-dispatch code down to exception vector.
@@ -218,66 +424,33 @@ mach_init(argc, argv, code)
 	db_machine_init();
 #endif
 
-	/* check what model platform we are running on */
-	cputype = ACER_PICA_61; /* FIXME find systemtype */
-
 	/*
-	 * Get config register now as mapped from BIOS since we are
-	 * going to demap these addresses later. We want as may TLB
-	 * entries as possible to do something useful :-).
+	 * Now its time to abandon the BIOS and be self supplying.
+	 * Start with cleaning out the TLB. Bye bye Microsoft....
 	 */
+#ifdef	PREDATES_LOCORE_VECTOR_INIT
+	cpu_arch = 3;
+	mips3_SetWIRED(0);
+	mips3_TLBFlush();
+	mips3_SetWIRED(MIPS3_TLB_WIRED_ENTRIES);
+	mips3_vector_init();
+#endif
 
 	switch (cputype) {
-	case ACER_PICA_61:	/* ALI PICA 61 */
-		memcfg = in32(PICA_MEMORY_SIZE_REG);
-		brdcfg = in32(PICA_CONFIG_REG);
-		isa_io_base = PICA_V_ISA_IO;
-		isa_mem_base = PICA_V_ISA_MEM;
+	case ACER_PICA_61:
+	case MAGNUM:
+		tlb_init_pica();
 		break;
-	default:
-		memcfg = -1;
+
+	case DESKSTATION_TYNE:
+		tlb_init_tyne();
 		break;
-	}
 
-	/* look at argv[0] and compute bootdev */
-	makebootdev(argv[0]);
+	case DESKSTATION_RPC44:
+		break;
 
-	/*
-	 * Look at arguments passed to us and compute boothowto.
-	 */
-	boothowto = RB_SINGLE;
-#ifdef KADB
-	boothowto |= RB_KDB;
-#endif
-	if (argc > 1) {
-		for (i = 1; i < argc; i++) {
-			if(strncmp("OSLOADOPTIONS=",argv[i],14) == 0) {
-				for (cp = argv[i]+14; *cp; cp++) {
-					switch (*cp) {
-					case 'a': /* autoboot */
-						boothowto &= ~RB_SINGLE;
-						break;
-
-					case 'd': /* use compiled in default root */
-						boothowto |= RB_DFLTROOT;
-						break;
-
-					case 'm': /* mini root present in memory */
-						boothowto |= RB_MINIROOT;
-						break;
-
-					case 'n': /* ask for names */
-						boothowto |= RB_ASKNAME;
-						break;
-
-					case 'N': /* don't ask for names */
-						boothowto &= ~RB_ASKNAME;
-						break;
-					}
-
-				}
-			}
-		}
+	case ALGOR_P4032:
+		break;
 	}
 
 #ifdef MFS
@@ -291,144 +464,86 @@ mach_init(argc, argv, code)
 	}
 #endif
 
+#ifdef DDB
 	/*
-	 * Init the mapping for u page(s) for proc0, pm_tlbpid 1.
-	 * This also initializes nullproc for switch_exit().
+	 * Initialize machine-dependent DDB commands, in case of early panic.
 	 */
-	mips_init_proc0(kernend);
-
-	kernend += 2 * UPAGES * PAGE_SIZE;
-
-	/*
-	 * Now its time to abandon the BIOS and be self supplying.
-	 * Start with cleaning out the TLB. Bye bye Microsoft....
-	 */
-#ifdef	PREDATES_LOCORE_VECTOR_INIT
-	cpu_arch = 3;
-	mips3_SetWIRED(0);
-	mips3_TLBFlush();
-	mips3_SetWIRED(MIPS3_TLB_WIRED_ENTRIES);
-	mips3_vector_init();
+	db_machine_init();
+#if 0 /* XXX */
+	/* init symbols if present */
+	if (esym)
+		ddb_init(1000, &end, (int*)esym);
 #endif
-
-
-	/*
-	 * Set up mapping for hardware the way we want it!
-	 */
-
-	tlb.tlb_mask = MIPS3_PG_SIZE_256K;
-	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_LOCAL_IO_BASE);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_IO_BASE) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_INT_SOURCE) | MIPS3_PG_IOPAGE;
-	mips3_TLBWriteIndexedVPS(1, &tlb);
-
-	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
-	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_LOCAL_VIDEO_CTRL);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2) | MIPS3_PG_IOPAGE;
-	mips3_TLBWriteIndexedVPS(2, &tlb);
-	
-	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
-	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_EXTND_VIDEO_CTRL);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2) | MIPS3_PG_IOPAGE;
-	mips3_TLBWriteIndexedVPS(3, &tlb);
-	
-	tlb.tlb_mask = MIPS3_PG_SIZE_4M;
-	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_LOCAL_VIDEO);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2) | MIPS3_PG_IOPAGE;
-	mips3_TLBWriteIndexedVPS(4, &tlb);
-	
-	tlb.tlb_mask = MIPS3_PG_SIZE_16M;
-	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_ISA_IO);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_ISA_IO) | MIPS3_PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_ISA_MEM) | MIPS3_PG_IOPAGE;
-	mips3_TLBWriteIndexedVPS(5, &tlb);
-
-	/* check what model platform we are running on */
-	switch (cputype) {
-	case ACER_PICA_61:	/* ALI PICA 61 */
-		/*
-		 * Set up interrupt handling and I/O addresses.
-		 */
-#if 0 /* XXX FIXME */
-		Mach_splnet = Mach_spl1;
-		Mach_splbio = Mach_spl0;
-		Mach_splimp = Mach_spl1;
-		Mach_spltty = Mach_spl2;
-		Mach_splstatclock = Mach_spl3;
 #endif
-		strcpy(cpu_model, "PICA_61");
-		break;
-
-	default:
-		printf("kernel not configured for systype 0x%x\n", i);
-		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
-	}
-
 	/*
-	 * Find out how much memory is available.
+	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
+	proc0.p_addr = proc0paddr = (struct user *)kernend;
+	proc0.p_md.md_regs =
+	    (struct frame *)((caddr_t)kernend + UPAGES * PAGE_SIZE) - 1;
+	curpcb = &proc0.p_addr->u_pcb;
+	memset(kernend, 0, UPAGES * PAGE_SIZE);
 
-	switch (cputype) {
-	case ACER_PICA_61:	/* ALI PICA 61 */
-		/*
-		 * Size is determined from the memory config register.
-		 *  d0-d2 = bank 0 size (sim id)
-		 *  d3-d5 = bank 1 size
-		 *  d6 = bus width. (doubels memory size)
-		 */
-		if((memcfg & 7) <= 5)
-			physmem = 2097152 << (memcfg & 7);
-		if(((memcfg >> 3) & 7) <= 5)
-			physmem += 2097152 << ((memcfg >> 3) & 7);
-
-		if((memcfg & 0x40) == 0)
-			physmem += physmem;	/* 128 bit config */
-
-		physmem = btoc(physmem);
-		break;
-
-	default:
-		physmem = btoc((vm_offset_t)kernend - MIPS_KSEG0_START);
-		cp = (char *)MIPS_PHYS_TO_KSEG0(physmem << PGSHIFT);
-		while (cp < (char *)MIPS_MAX_MEM_ADDR) {
-			if (badaddr(cp, 4))
-				break;
-			i = *(int *)cp;
-			*(int *)cp = 0xa5a5a5a5;
-			/*
-			 * Data will persist on the bus if we read it right away
-			 * Have to be tricky here.
-			 */
-			((int *)cp)[4] = 0x5a5a5a5a;
-			wbflush();
-			if (*(int *)cp != 0xa5a5a5a5)
-				break;
-			*(int *)cp = i;
-			cp += NBPG;
-			physmem++;
-		}
-		break;
-	}
+	kernend += UPAGES * PAGE_SIZE;
 
 	maxmem = physmem;
 
-	/*
-	 * Now that we know how much memory we have, initialize the
-	 * mem cluster array.
-	 */
-	mem_clusters[0].start = 0;		/* XXX is this correct? */
-	mem_clusters[0].size  = ctob(physmem);
-	mem_cluster_cnt = 1;
+	/* XXX: revisit here */
 
 	/*
 	 * Load the rest of the pages into the VM system.
 	 */
-	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
-	last = mem_clusters[0].start + mem_clusters[0].size;
-	vm_page_physload(atop(first), atop(last), atop(first), atop(last));
+	kernstartpfn = atop(trunc_page(
+	    MIPS_KSEG0_TO_PHYS((kernel_text) - UPAGES * PAGE_SIZE)));
+	kernendpfn = atop(round_page(MIPS_KSEG0_TO_PHYS(kernend)));
+#if 0
+	/* give all free memory to VM */
+	/* XXX - currently doesn't work, due to "panic: pmap_enter: pmap" */
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		if (mem_reserved[i])
+			continue;
+		first = atop(round_page(mem_clusters[i].start));
+		last = atop(trunc_page(mem_clusters[i].start +
+		    mem_clusters[i].size));
+		if (last <= kernstartpfn || kernendpfn <= first) {
+			uvm_page_physload(first, last, first, last,
+			    VM_FREELIST_DEFAULT);
+		} else {
+			if (first < kernstartpfn)
+				uvm_page_physload(first, kernstartpfn,
+				    first, kernstartpfn, VM_FREELIST_DEFAULT);
+			if (kernendpfn < last)
+				uvm_page_physload(kernendpfn, last,
+				    kernendpfn, last, , VM_FREELIST_DEFAULT);
+		}
+	}
+#elif 0 /* XXX */
+	/* give all free memory above the kernel to VM (non-contig version) */
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		if (mem_reserved[i])
+			continue;
+		first = atop(round_page(mem_clusters[i].start));
+		last = atop(trunc_page(mem_clusters[i].start +
+		    mem_clusters[i].size));
+		if (kernendpfn < last) {
+			if (first < kernendpfn)
+				first = kernendpfn;
+			uvm_page_physload(first, last, first, last,
+			    VM_FREELIST_DEFAULT);
+		}
+	}
+#else
+	/* give all memory above the kernel to VM (contig version) */
+#if 1
+	mem_clusters[0].start = 0;
+	mem_clusters[0].size  = ctob(physmem);
+	mem_cluster_cnt = 1;
+#endif
+
+	first = kernendpfn;
+	last = physmem;
+	uvm_page_physload(first, last, first, last, VM_FREELIST_DEFAULT);
+#endif
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -453,6 +568,179 @@ mach_init(argc, argv, code)
 }
 
 /*
+ * NOTE:
+ *	TLB 0, 1, 2 are reserved by locore_r4000.S.
+ */
+
+void
+tlb_init_pica()
+{
+	struct tlb tlb;
+
+	tlb.tlb_mask = MIPS3_PG_SIZE_256K;
+	tlb.tlb_hi = mips3_vad_to_vpn(R4030_V_LOCAL_IO_BASE);
+	tlb.tlb_lo0 = vad_to_pfn(R4030_P_LOCAL_IO_BASE) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_INT_SOURCE) | MIPS3_PG_IOPAGE;
+	mips3_TLBWriteIndexedVPS(3, &tlb);
+
+	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
+	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_LOCAL_VIDEO_CTRL);
+	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2) | MIPS3_PG_IOPAGE;
+	mips3_TLBWriteIndexedVPS(4, &tlb);
+	
+	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
+	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_EXTND_VIDEO_CTRL);
+	tlb.tlb_lo0 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2) | MIPS3_PG_IOPAGE;
+	mips3_TLBWriteIndexedVPS(5, &tlb);
+	
+	tlb.tlb_mask = MIPS3_PG_SIZE_4M;
+	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_LOCAL_VIDEO);
+	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2) | MIPS3_PG_IOPAGE;
+	mips3_TLBWriteIndexedVPS(6, &tlb);
+	
+	tlb.tlb_mask = MIPS3_PG_SIZE_16M;
+	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_ISA_IO);
+	tlb.tlb_lo0 = vad_to_pfn(PICA_P_ISA_IO) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_ISA_MEM) | MIPS3_PG_IOPAGE;
+	mips3_TLBWriteIndexedVPS(7, &tlb);
+}
+
+void
+tlb_init_tyne()
+{
+	struct tlb tlb;
+
+	tlb.tlb_mask = MIPS3_PG_SIZE_256K;
+	tlb.tlb_hi = mips3_vad_to_vpn(TYNE_V_BOUNCE);
+	tlb.tlb_lo0 = mips3_vad_to_pfn64(TYNE_P_BOUNCE) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = MIPS3_PG_G;
+	mips3_TLBWriteIndexedVPS(3, &tlb);
+
+	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
+	tlb.tlb_hi = mips3_vad_to_vpn(TYNE_V_ISA_IO);
+	tlb.tlb_lo0 = mips3_vad_to_pfn64(TYNE_P_ISA_IO) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = MIPS3_PG_G;
+	mips3_TLBWriteIndexedVPS(4, &tlb);
+
+	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
+	tlb.tlb_hi = mips3_vad_to_vpn(TYNE_V_ISA_MEM);
+	tlb.tlb_lo0 = mips3_vad_to_pfn64(TYNE_P_ISA_MEM) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = MIPS3_PG_G;
+	mips3_TLBWriteIndexedVPS(5, &tlb);
+
+	tlb.tlb_mask = MIPS3_PG_SIZE_4K;
+	tlb.tlb_hi = mips3_vad_to_vpn(0xe3000000);
+	tlb.tlb_lo0 = 0x03ffc000 | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = MIPS3_PG_G;
+	mips3_TLBWriteIndexedVPS(6, &tlb);
+
+}
+
+/*
+ * Simple routine to figure out SIMM module size.
+ * This code is a real hack and can surely be improved on... :-)
+ */
+static int
+get_simm_size(fadr, max)
+	int *fadr;
+	int max;
+{
+	int msave;
+	int msize;
+	int ssize;
+	static int a1 = 0, a2 = 0;
+	static int s1 = 0, s2 = 0;
+
+	if(!max) {
+		if(a1 == (int)fadr)
+			return(s1);
+		else if(a2 == (int)fadr)
+			return(s2);
+		else
+			return(0);
+	}
+	fadr = (int *)MIPS_PHYS_TO_KSEG1(MIPS_KSEG0_TO_PHYS((int)fadr));
+
+	msize = max - 0x400000;
+	ssize = msize - 0x400000;
+
+	/* Find bank size of last module */
+	while(ssize >= 0) {
+		msave = fadr[ssize / 4];
+		fadr[ssize / 4] = 0xC0DEB00F;
+		if(fadr[msize /4 ] == 0xC0DEB00F) {
+			fadr[ssize / 4] = msave;
+			if(fadr[msize/4] == msave) {
+				break;	/* Wrap around */
+			}
+		}
+		fadr[ssize / 4] = msave;
+		ssize -= 0x400000;
+	}
+	msize = msize - ssize;
+	if(msize == max)
+		return(msize);	/* well it never wrapped... */
+
+	msave = fadr[0];
+	fadr[0] = 0xC0DEB00F;
+	if(fadr[msize / 4] == 0xC0DEB00F) {
+		fadr[0] = msave;
+		if(fadr[msize / 4] == msave)
+			return(msize);	/* First module wrap = size */
+	}
+
+	/* Ooops! Two not equal modules. Find size of first + second */
+	s1 = s2 = msize;
+	ssize = 0;
+	while(ssize < max) {
+		msave = fadr[ssize / 4];
+		fadr[ssize / 4] = 0xC0DEB00F;
+		if(fadr[msize /4 ] == 0xC0DEB00F) {
+			fadr[ssize / 4] = msave;
+			if(fadr[msize/4] == msave) {
+				break;	/* Found end of module 1 */
+			}
+		}
+		fadr[ssize / 4] = msave;
+		ssize += s2;
+		msize += s2;
+	}
+
+	/* Is second bank dual sided? */
+	fadr[(ssize+ssize/2)/4] = ~fadr[ssize];
+	if(fadr[(ssize+ssize/2)/4] != fadr[ssize]) {
+		a2 = ssize+ssize/2;
+	}
+	a1 = ssize;
+
+	return(ssize);
+}
+
+/*
+ * Return a pointer to the given environment variable.
+ */
+static char *
+getenv(envname)
+	char *envname;
+{
+	char **env = environment;
+	int i;
+
+	i = strlen(envname);
+
+	while(*env) {
+		if(strncasecmp(envname, *env, i) == 0 && (*env)[i] == '=') {
+			return(&(*env)[i+1]);
+		}
+		env++;
+	}
+	return(NULL);
+}
+
+/*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
@@ -465,7 +753,45 @@ consinit()
 	if (initted)
 		return;
 	initted = 1;
-	cninit();
+
+#ifndef COMCONSOLE
+	switch (cputype) {
+	case ACER_PICA_61:
+#if NPC_PICA > 0
+		pccnattach();
+		return;
+#endif
+		break;
+	case MAGNUM:
+#if NFB > 0
+		fb_console();
+		return;
+#endif
+		break;
+	case DESKSTATION_TYNE:
+	case DESKSTATION_RPC44:
+#if NPC_ISA > 0
+		pccnattach();
+		return;
+#endif
+		break;
+	case ALGOR_P4032:
+		/* XXX For now... */
+		break;
+	default:
+#if NVGA > 0
+		vga_localbus_console();
+		return;
+#endif
+		break;
+	}
+#endif /* !COMCONSOLE */
+
+#if NCOM > 0
+	if (com_console_address)
+		comcnattach(arc_bus_com, com_console_address,
+		    CONSPEED, com_freq, CONMODE);
+#endif
 }
 
 /*
@@ -475,10 +801,10 @@ consinit()
 void
 cpu_startup()
 {
-	register unsigned i;
+	unsigned i;
 	int base, residual;
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
+	vaddr_t minaddr, maxaddr;
+	vsize_t size;
 	char pbuf[9];
 #ifdef DEBUG
 	extern int pmapdebug;
@@ -491,6 +817,7 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
+	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
@@ -500,47 +827,64 @@ cpu_startup()
 	 * and usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
-				   &maxaddr, size, TRUE);
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
-			&minaddr, size, FALSE) != KERN_SUCCESS)
-		panic("startup: cannot allocate buffers");
+	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(size),
+		    NULL, UVM_UNKNOWN_OFFSET,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+		panic("cpu_startup: cannot allocate VM for buffers");
+
+	minaddr = (vaddr_t)buffers;
+	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
+		bufpages = btoc(MAXBSIZE) * nbuf; /* do not overallocate RAM */
+	}
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
+
+	/* now allocate RAM for buffers */
 	for (i = 0; i < nbuf; i++) {
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
+		vsize_t curbufsize;
+		vaddr_t curbuf;
+		struct vm_page *pg;
 
 		/*
-		 * First <residual> buffers get (base+1) physical pages
-		 * allocated for them.  The rest get (base) physical pages.
-		 *
-		 * The rest of each buffer occupies virtual space,
-		 * but has no physical memory allocated for it.
+		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
+		 * that MAXBSIZE space, we allocate and map (base+1) pages
+		 * for the first "residual" buffers, and then we allocate
+		 * "base" pages for the rest.
 		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
-		curbufsize = NBPG * (i < residual ? base+1 : base);
-		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
-		vm_map_simplify(buffer_map, curbuf);
+		curbuf = (vaddr_t)buffers + (i * MAXBSIZE);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+
+		while (curbufsize) {
+			pg = uvm_pagealloc(NULL, 0, NULL, 0);
+			if (pg == NULL)
+				panic("cpu_startup: not enough memory for "
+				    "buffer cache");
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+				       VM_PROT_READ|VM_PROT_WRITE);
+			curbuf += PAGE_SIZE;
+			curbufsize -= PAGE_SIZE;
+		}
 	}
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16 * NCARGS, TRUE);
+	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+
 	/*
 	 * Allocate a submap for physio
 	 */
-	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, TRUE);
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
-	 * Finally, allocate mbuf cluster submap.
+	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
+	 * are allocated via the pool allocator, and we use KSEG to
+	 * map those pages.
 	 */
-	mb_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-			       VM_MBUF_SIZE, FALSE);
+
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
@@ -550,16 +894,15 @@ cpu_startup()
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
-
-	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
 
+	/*
+	 * Set up CPU-specific registers, cache, etc.
+	 */
+	initcpu();
+}
 
 /*
  * machine dependent system variables.
@@ -614,6 +957,10 @@ cpu_reboot(howto, bootstr)
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+		extern struct proc proc0;
+		/* fill curproc with live object */
+		if (curproc == NULL)
+			curproc = &proc0;
 		/*
 		 * Synchronize the disks....
 		 */
@@ -627,14 +974,22 @@ cpu_reboot(howto, bootstr)
 		resettodr();
 	}
 	(void) splhigh();		/* extreme priority */
-	if (howto & RB_HALT)
+	if (howto & RB_HALT) {
 		printf("System halted.\n");
+		while(1); /* Forever */
+	}
 	else {
 		if (howto & RB_DUMP)
 			dumpsys();
 		printf("System restart.\n");
+		delay(2000000);
+#if NPC > 0
+		(void)kbc_8042sysreset();	/* Try this first */
+		delay(100000);			/* Give it a chance */
+#endif
+		__asm__(" li $2, 0xbfc00000; jr $2; nop\n");
+		while(1); /* Forever */
 	}
-	while(1); /* Forever */
 	/*NOTREACHED*/
 }
 
@@ -669,30 +1024,48 @@ microtime(tvp)
 	splx(s);
 }
 
-int
+void
 initcpu()
 {
 
-	/*
-	 * Disable all interrupts. New masks will be set up
-	 * during system configuration
-	 */
-	out16(PICA_SYS_LB_IE,0x000);
-	out32(PICA_SYS_EXT_IMASK, 0x00);
-
-	spl0();		/* safe to turn interrupts on now */
-	return 0;
+	switch(cputype) {
+	case ACER_PICA_61:
+	case MAGNUM:
+		/*
+		 * Disable all interrupts. New masks will be set up
+		 * during system configuration
+		 */
+		out16(PICA_SYS_LB_IE,0x000);
+		out32(R4030_SYS_EXT_IMASK, 0x00);
+		break;
+	}
+}
+/*
+ * Convert "xx:xx:xx:xx:xx:xx" string to ethernet hardware address.
+ */
+static void
+get_eth_hw_addr(s)
+	char *s;
+{
+	int i;
+	if(s != NULL) {
+		for(i = 0; i < 6; i++) {
+			eth_hw_addr[i] = atoi(s, 16);
+			s += 3;		/* Don't get to fancy here :-) */
+		}
+	}
 }
 
 /*
  * Convert an ASCII string into an integer.
  */
-int
-atoi(s)
+static int
+atoi(s, b)
 	const char *s;
+	int   b;
 {
 	int c;
-	unsigned base = 10, d;
+	unsigned base = b, d;
 	int neg = 0, val = 0;
 
 	if (s == 0 || (c = *s++) == 0)
@@ -745,79 +1118,4 @@ atoi(s)
 		val = -val;
 out:
 	return val;	
-}
-
-/*
- * This code is temporary for debugging at startup
- */
-
-static int vid_xpos=0, vid_ypos=0;
-
-static void 
-vid_wrchar(char c)
-{
-	volatile unsigned short *video;
-
-	video = (unsigned short *)(0xe08b8000) + vid_ypos * 80 + vid_xpos;
-	*video = (*video & 0xff00) | 0x0f00 | (unsigned short)c;
-}
-
-static void
-vid_scroll()
-{
-	volatile unsigned short *video;
-	int i;
-
-	video = (unsigned short *)(0xe08b8000);
-	for (i = 0; i < 80 * 24; i++) {
-		*video = *(video + 80);
-		video++;
-	}
-	for (i = 0; i < 80; i++) {
-		*video = (*video & 0xff00) | ' ';
-		video++;
-	}
-}
-
-void
-vid_print_string(const char *str)
-{
-	unsigned char c;
-
-	while ((c = *str++) != 0) {
-		vid_putchar((dev_t)0, c);
-	}
-}
-
-void
-vid_putchar(dev_t dev, char c)
-{
-	switch(c) {
-	case '\n':
-		vid_xpos = 0;
-		if(vid_ypos == 24)
-			vid_scroll();
-		else
-			vid_ypos++;
-		DELAY(500000);
-		break;
-
-	case '\r':
-		vid_xpos = 0;
-		break;
-
-	case '\t':
-		do {
-			vid_putchar(dev, ' ');
-		} while(vid_xpos & 7);
-		break;
-
-	default:
-		vid_wrchar(c);
-		vid_xpos++;
-		if(vid_xpos == 80) {
-			vid_xpos = 0;
-			vid_putchar(dev, '\n');
-		}
-	}
 }

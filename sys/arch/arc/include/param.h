@@ -1,4 +1,5 @@
-/*	$NetBSD: param.h,v 1.10 2000/01/23 20:08:28 soda Exp $	*/
+/*	$NetBSD: param.h,v 1.11 2000/01/23 21:01:57 soda Exp $	*/
+/*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -37,11 +38,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah Hdr: machparam.h 1.11 89/08/14
- *
- *
+ *	from: Utah Hdr: machparam.h 1.11 89/08/14
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _ARC_PARAM_H_
+#define _ARC_PARAM_H_
 
 /*
  * Machine-dependent constants (VM, etc) common across MIPS cpus
@@ -49,51 +51,35 @@
 #include <mips/mips_param.h>
 
 /*
- * Machine dependent constants for Acer Labs PICA_61.
+ * Machine dependent constants for ARC BIOS MIPS machines:
+ *	Acer Labs PICA_61
+ *	Deskstation rPC44
+ *	Deskstation Tyne
+ *	Etc
  */
-#define	MACHINE	     "pica"
-#define MACHINE_ARCH "mips"
-#define MID_PICA MID_PMAX /* For the moment */
-#define MID_MACHINE  MID_PICA
-
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value for all
- * data types (int, long, ...).   The result is u_int and must be cast to
- * any desired pointer type.
- *
- * ALIGNED_POINTER is a boolean macro that checks whether an address
- * is valid to fetch data elements of type t from on this architecture.
- * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits). 
- *
- */
-#define	ALIGNBYTES		7
-#define	ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
-
-#define	NBPG		4096		/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	NPTEPG		(NBPG/4)
-
-#define NBSEG		0x400000	/* bytes/segment */
-#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
-#define	SEGSHIFT	22		/* LOG2(NBSEG) */
+#define	_MACHINE	arc
+#define	MACHINE		"arc"
+#define MACHINE_ARCH	"mips"
+#define MID_MACHINE	MID_PMAX	/* XXX Bogus, but needed for now... */
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
-#define	KERNTEXTOFF	0x80080000	/* start of kernel text for kvm_mkdb */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
+/* XXX Maxphys temporary changed to 32K while SCSI driver is fixed. */
+#define	MAXPHYS		(32 * 1024)	/* max raw I/O transfer size */
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
 #define	UPAGES		2		/* pages of u-area */
+#if defined(_LOCORE) && defined(notyet)
+#define	UADDR		0xffffffffffffc000	/* address of u */
+#else
 #define	UADDR		0xffffc000	/* address of u */
+#endif
 #define USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
 #define	UVPN		(UADDR>>PGSHIFT)/* virtual page number of u */
 #define	KERNELSTACK	(UADDR+UPAGES*NBPG)	/* top of kernel stack */
@@ -106,8 +92,8 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLBYTES	2048		/* enough for whole Ethernet packet */
-#define	MCLSHIFT	10
+#define	MCLSHIFT	11
+#define	MCLBYTES	(1 << MCLSHIFT)	/* enough for whole Ethernet packet */
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
 
@@ -124,49 +110,35 @@
 
 /*
  * Size of kernel malloc arena in NBPG-sized logical pages
- */ 
+ *	XXX - different from <mips/include/mips_param.h>
+ */
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(512*1024/NBPG)
+#define	NKMEMCLUSTERS	(4096*1024/NBPG)
 #endif
-
-/* pages ("clicks") (4096 bytes) to disk blocks */
-#define	ctod(x)	((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)	((x) >> (PGSHIFT - DEV_BSHIFT))
-
-/* pages to bytes */
-#define	ctob(x)	((x) << PGSHIFT)
-#define btoc(x) (((x) + PGOFSET) >> PGSHIFT)
 
 /* bytes to disk blocks */
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 #define dbtob(x)	((x) << DEV_BSHIFT)
 
-/*
- * Map a ``block device block'' to a file system block.
- * This should be device dependent, and should use the bsize
- * field from the disk label.
- * For now though just use DEV_BSIZE.
- */
-#define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
-
-/*
- * Mach derived conversion macros
- */
-#define pica_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
-#define pica_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define pica_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define pica_ptob(x)		((unsigned)(x) << PGSHIFT)
+#include <machine/intr.h>
 
 #ifdef _KERNEL
 #ifndef _LOCORE
+
+extern int cpuspeed;
+extern void delay __P((int n));
+
+#if 0 /* XXX: should use mips_mcclock.c */
+#define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
+#else
 /*
  *   Delay is based on an assumtion that each time in the loop
  *   takes 3 clocks. Three is for branch and subtract in the delay slot.
  */
-extern	int cpuspeed;
 #define	DELAY(n)	{ register int N = cpuspeed * (n); while ((N -= 3) > 0); }
-#endif /*!_LOCORE */
+#endif
 
-#else /* !_KERNEL */
-#define	DELAY(n)	{ register int N = (n); while (--N > 0); }
-#endif /* !_KERNEL */
+#endif /* _LOCORE */
+#endif /* _KERNEL */
+
+#endif /* _ARC_PARAM_H_ */

@@ -1,4 +1,6 @@
-/*	$NetBSD: disklabel.h,v 1.3 2000/01/23 20:08:20 soda Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4 2000/01/23 21:01:56 soda Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.6 1997/04/10 13:06:25 deraadt Exp $	*/
+/*	NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp 	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -33,44 +35,24 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
-#define	LABELSECTOR	0			/* sector containing label */
-#define	LABELOFFSET	64			/* offset of label in sector */
-#define	MAXPARTITIONS	8			/* number of partitions */
-#define	RAW_PART	2			/* raw partition: xx?c */
+#define	LABELSECTOR	1		/* sector containing label */
+#define	LABELOFFSET	0		/* offset of label in sector */
+#define	MAXPARTITIONS	16		/* number of partitions */
+#define	RAW_PART	3		/* raw partition: ie. XX?d (XXX) */
 
-/* DOS partition table -- used when the system is booted from a dos
- * partition. This is the case on NT systems.
- */
-#define	DOSBBSECTOR	0		/* DOS boot block relative sector # */
-#define	DOSPARTOFF	446
-#define	NDOSPART	4
+#define	OPENBSD_RAW_PART 2		/* raw partition: XX?c */
 
-struct dos_partition {
-	u_int8_t	dp_flag;	/* bootstrap flags */
-	u_int8_t	dp_shd;		/* starting head */
-	u_int8_t	dp_ssect;	/* starting sector */
-	u_int8_t	dp_scyl;	/* starting cylinder */
-	u_int8_t	dp_typ;		/* partition type (see below) */
-	u_int8_t	dp_ehd;		/* end head */
-	u_int8_t	dp_esect;	/* end sector */
-	u_int8_t	dp_ecyl;	/* end cylinder */
-	u_int32_t	dp_start;	/* absolute starting sector number */
-	u_int32_t	dp_size;	/* partition size in sectors */
-} dos_partitions[NDOSPART];
-
-/* Known DOS partition types. */
-#define	DOSPTYP_386BSD	0xa5		/* 386BSD partition type */
-#define DOSPTYP_NETBSD	DOSPTYP_386BSD	/* NetBSD partition type (XXX) */
+/* Pull in MBR partition definitions. */
+#include <sys/disklabel_mbr.h>
+/* XXX - should move to <sys/disklabel_mbr.h> */
+#define	MBR_PTYPE_OPENBSD	0xa6	/* OpenBSD partition type */
+#define MBR_PTYPE_ONTRACK	0x54
 
 #include <sys/dkbad.h>
 struct cpu_disklabel {
-	struct dos_partition dosparts[NDOSPART];
+	struct mbr_partition dosparts[NMBRPART];
 	struct dkbad bad;
 };
-
-/* Isolate the relevant bits to get sector and cylinder. */
-#define	DPSECT(s)	((s) & 0x3f)
-#define	DPCYL(c, s)	((c) + (((s) & 0xc0) << 2))
 
 #ifdef _KERNEL
 struct disklabel;

@@ -1,4 +1,6 @@
-/*	$NetBSD: mainbus.c,v 1.7 2000/01/23 20:09:14 soda Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8 2000/01/23 21:01:52 soda Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.6 1997/04/19 17:19:45 pefo Exp $	*/
+/*	NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp 	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,7 +34,7 @@
 #include <sys/device.h>
 #include <sys/reboot.h>
 
-#include <pica/pica/picatype.h>
+#include <arc/arc/arctype.h>
 #include <machine/autoconf.h>
 
 struct mainbus_softc {
@@ -41,7 +43,7 @@ struct mainbus_softc {
 };
 
 /* Definition of the mainbus driver. */
-static int	mbmatch __P((struct device *, void *, void *));
+static int	mbmatch __P((struct device *, struct cfdata *, void *));
 static void	mbattach __P((struct device *, struct device *, void *));
 static int	mbprint __P((void *, const char *));
 
@@ -55,17 +57,16 @@ caddr_t	mb_cvtaddr __P((struct confargs *));
 int	mb_matchname __P((struct confargs *, char *));
 
 static int
-mbmatch(parent, cfdata, aux)
+mbmatch(parent, match, aux)
 	struct device *parent;
-	void *cfdata;
+	struct cfdata *match;
 	void *aux;
 {
-	struct cfdata *cf = cfdata;
 
 	/*
 	 * Only one mainbus, but some people are stupid...
 	 */	
-	if (cf->cf_unit > 0)
+	if (match->cf_unit > 0)
 		return(0);
 
 	/*
@@ -82,7 +83,7 @@ mbattach(parent, self, aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
-	extern int cputype, ncpus;
+	extern int cputype;
 
 	printf("\n");
 
@@ -104,7 +105,7 @@ mbattach(parent, self, aux)
 	nca.ca_bus = &sc->sc_bus;
 	config_found(self, &nca, mbprint);
 
-	if (cputype == ACER_PICA_61) {
+	if (cputype == ACER_PICA_61 || cputype == MAGNUM) {
 		/* we have a PICA bus! */
 		nca.ca_name = "pica";
 		nca.ca_slot = 0;
@@ -112,9 +113,30 @@ mbattach(parent, self, aux)
 		nca.ca_bus = &sc->sc_bus;
 		config_found(self, &nca, mbprint);
 	}
-	if (cputype == ACER_PICA_61) {
-		/* we have an ISA bus! */
-		nca.ca_name = "isa";
+	else if (cputype == ALGOR_P4032) {
+		/* we have an ALGOR bus! :-) */
+		nca.ca_name = "algor";
+		nca.ca_slot = 0;
+		nca.ca_offset = 0;
+		nca.ca_bus = &sc->sc_bus;
+		config_found(self, &nca, mbprint);
+	}
+
+	/* The following machines have a PCI bus */
+	if (cputype == ALGOR_P4032) {
+		nca.ca_name = "pbcpcibr";
+		nca.ca_slot = 0;
+		nca.ca_offset = 0;
+		nca.ca_bus = &sc->sc_bus;
+		config_found(self, &nca, mbprint);
+	}
+
+	/* The following machines have an ISA bus */
+	if (cputype == ACER_PICA_61 ||
+	    cputype == MAGNUM ||
+	    cputype == DESKSTATION_TYNE ||
+            cputype == DESKSTATION_RPC44) {
+		nca.ca_name = "isabr";
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
 		nca.ca_bus = &sc->sc_bus;

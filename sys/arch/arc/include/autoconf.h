@@ -1,4 +1,6 @@
-/*	$NetBSD: autoconf.h,v 1.5 2000/01/23 20:08:17 soda Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.6 2000/01/23 21:01:55 soda Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.2 1997/03/12 19:16:54 pefo Exp $	*/
+/*	NetBSD: autoconf.h,v 1.1 1995/02/13 23:07:31 cgd Exp 	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,6 +33,9 @@
  * Machine-dependent structures of autoconfiguration
  */
 
+#ifndef _ARC_AUTOCONF_H_
+#define _ARC_AUTOCONF_H_
+
 struct confargs;
 
 typedef int (*intr_handler_t) __P((void *));
@@ -50,8 +55,9 @@ struct abus {
 
 #define	BUS_MAIN	1		/* mainbus */
 #define	BUS_PICA	2		/* PICA Bus */
-#define	BUS_ASIC	3		/* IOCTL ASIC; under TurboChannel */
-#define	BUS_TCDS	4		/* TCDS ASIC; under TurboChannel */
+#define	BUS_ISABR	3		/* ISA Bridge Bus */
+#define	BUS_ALGOR	4		/* Algorithmics local bus */
+#define	BUS_PCIBR	5		/* Algorithmics PCI bridge */
 
 #define	BUS_INTR_ESTABLISH(ca, handler, val)				\
 	    (*(ca)->ca_bus->ab_intr_establish)((ca), (handler), (val))
@@ -71,7 +77,7 @@ struct confargs {
 
 void	set_clockintr __P((void (*)(struct clockframe *)));
 void	set_iointr __P((void (*)(void *, int)));
-int	badaddr			__P((void *, u_int64_t));
 
-int	initcpu __P((void));
+void	initcpu __P((void));
 void	makebootdev __P((char *cp));
+#endif /* _ARC_AUTOCONF_H_ */

@@ -1,3 +1,4 @@
+/*	$NetBSD: pbcpcibus.c,v 1.2 2000/01/23 21:01:59 soda Exp $	*/
 /*	$OpenBSD: pbcpcibus.c,v 1.4 1997/04/19 17:20:02 pefo Exp $ */
 
 /*
@@ -45,7 +46,6 @@
 #include <vm/vm.h>
 
 #include <machine/autoconf.h>
-#include <machine/pte.h>
 #include <machine/cpu.h>
 
 #include <dev/pci/pcireg.h>
@@ -60,7 +60,7 @@ extern vm_map_t phys_map;
 extern int cputype;
 extern char eth_hw_addr[];	/* Hardware ethernet address stored elsewhere */
 
-int	 pbcpcibrmatch __P((struct device *, void *, void *));
+int	 pbcpcibrmatch __P((struct device *, struct cfdata *, void *));
 void	 pbcpcibrattach __P((struct device *, struct device *, void *));
 
 void	 pbc_attach_hook __P((struct device *, struct device *,
@@ -93,7 +93,8 @@ struct pcibr_config pbc_config;
 int
 pbcpcibrmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct confargs *ca = aux;
 
@@ -182,7 +183,7 @@ vtophys(p)
 		va = (vm_offset_t)curproc->p_addr + (va & ~UADDR);
 	}
 	if((vm_offset_t)va < VM_MIN_KERNEL_ADDRESS) {
-		pa = CACHED_TO_PHYS(va);
+		pa = MIPS_CACHED_TO_PHYS(va);
 	}
 	else {
 		pa = pmap_extract(vm_map_pmap(phys_map), va);

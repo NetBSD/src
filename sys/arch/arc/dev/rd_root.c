@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_root.c,v 1.1.1.1 2000/01/23 20:24:27 soda Exp $	*/
+/*	$NetBSD: rd_root.c,v 1.2 2000/01/23 21:01:54 soda Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
