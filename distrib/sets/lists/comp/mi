@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.609 2003/09/04 09:17:10 itojun Exp $
+#	$NetBSD: mi,v 1.610 2003/09/06 18:23:18 yamt Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2275,9 +2275,9 @@
 ./usr/share/man/cat3/gettmode.0		comp-c-catman
 ./usr/share/man/cat3/getttyent.0	comp-c-catman
 ./usr/share/man/cat3/getttynam.0	comp-c-catman
+./usr/share/man/cat3/getusershell.0	comp-c-catman
 ./usr/share/man/cat3/getutmp.0	comp-c-catman
 ./usr/share/man/cat3/getutmpx.0	comp-c-catman
-./usr/share/man/cat3/getusershell.0	comp-c-catman
 ./usr/share/man/cat3/getutxent.0	comp-c-catman
 ./usr/share/man/cat3/getutxid.0	comp-c-catman
 ./usr/share/man/cat3/getutxline.0	comp-c-catman
@@ -5702,9 +5702,9 @@
 ./usr/share/man/man3/gettmode.3		comp-c-man
 ./usr/share/man/man3/getttyent.3		comp-c-man
 ./usr/share/man/man3/getttynam.3		comp-c-man
+./usr/share/man/man3/getusershell.3		comp-c-man
 ./usr/share/man/man3/getutmp.3		comp-c-man
 ./usr/share/man/man3/getutmpx.3		comp-c-man
-./usr/share/man/man3/getusershell.3		comp-c-man
 ./usr/share/man/man3/getutxent.3		comp-c-man
 ./usr/share/man/man3/getutxid.3		comp-c-man
 ./usr/share/man/man3/getutxline.3		comp-c-man
