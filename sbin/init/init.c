@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)init.c	8.1 (Berkeley) 7/15/93";*/
-static char *rcsid = "$Id: init.c,v 1.16 1994/06/11 07:54:04 mycroft Exp $";
+static char *rcsid = "$Id: init.c,v 1.17 1994/08/06 06:26:44 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -634,6 +634,7 @@ single_user()
 		 */
 		argv[0] = "-sh";
 		argv[1] = 0;
+		setenv("PATH", _PATH_STDPATH, 1);
 		execv(shell, argv);
 		emergency("can't exec %s for single user: %m", shell);
 		execv(_PATH_BSHELL, argv);
