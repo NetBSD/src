@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.20 1999/02/19 16:10:44 mycroft Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.21 1999/03/22 07:37:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -119,10 +119,6 @@ sbfind(parent, sc, ia)
 	sc->sc_drq16 = ia->ia_drq2;
 
 	if (!sbmatch(sc))
-		goto bad;
-
-	if ((sc->sc_drq8 != -1 && !isa_drq_isfree(sc->sc_ic, sc->sc_drq8)) ||
-	    (sc->sc_drq16 != -1 && !isa_drq_isfree(sc->sc_ic, sc->sc_drq16)))
 		goto bad;
 
 	if (ISSBPROCLASS(sc))

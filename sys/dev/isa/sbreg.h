@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.27 1999/02/18 07:08:36 mycroft Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.28 1999/03/22 07:37:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -288,7 +288,7 @@
 #define SBP_DRQ_VALID(chan) ((chan) == 0 || (chan) == 1 || (chan) == 3)
 #define SB_DRQ_VALID(chan)  ((chan) == 1)
 
-#define SB_BASE_VALID(base) ((base) == 0x220 || (base) == 0x240)
+#define SB_BASE_VALID(base) ((base) == 0x220 || (base) == 0x240 || (base) == 0x260)
 
 #define SB_INPUT_RATE	0
 #define SB_OUTPUT_RATE	1

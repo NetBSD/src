@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.81 1998/12/16 11:33:50 christos Exp $
+#	$NetBSD: files.isa,v 1.82 1999/03/22 07:37:35 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -248,15 +248,15 @@ file	dev/isa/if_ix.c		ix
 #
 
 # MPU401 MIDI UART compatibles
-define	mpu401
-file	dev/isa/mpu401.c		mpu401 & midi
+device	mpu: midibus
+file	dev/isa/mpu.c			(mpu | sb) needs-flag
 
 # the SoundBlaster DSP, or close likenesses; used by other drivers
 define	sbdsp { }
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
-device	sb: audio, isadma, sbdsp, mulaw, auconv, mpu401, midibus
+device	sb: audio, isadma, sbdsp, mulaw, auconv, midibus
 file	dev/isa/sb.c			sb needs-flag
 
 attach	sb at isa with sb_isa

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.96 1999/02/22 02:16:40 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.97 1999/03/22 07:37:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -171,17 +171,17 @@ struct sbmode {
 static struct sbmode sbpmodes[] = {
  { SB_1,   1, 8, 4000,22727,SB_DSP_WDMA     ,SB_DSP_HALT  ,SB_DSP_CONT  },
  { SB_20,  1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_2x,  1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
  { SB_2x,  1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_PRO, 1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_2x,  1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
  { SB_PRO, 1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  },
+ { SB_PRO, 1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
  { SB_PRO, 2, 8,11025,22727,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  },
  /* Yes, we write the record mode to set 16-bit playback mode. weird, huh? */
- { SB_JAZZ,1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
  { SB_JAZZ,1, 8,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
+ { SB_JAZZ,1, 8, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
  { SB_JAZZ,2, 8,11025,22727,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_STEREO },
- { SB_JAZZ,1,16, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
  { SB_JAZZ,1,16,22727,45454,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
+ { SB_JAZZ,1,16, 4000,22727,SB_DSP_WDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
  { SB_JAZZ,2,16,11025,22727,SB_DSP_HS_OUTPUT,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_STEREO },
  { SB_16,  1, 8, 5000,45000,SB_DSP16_WDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
  { SB_16,  2, 8, 5000,45000,SB_DSP16_WDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
@@ -193,16 +193,16 @@ static struct sbmode sbpmodes[] = {
 static struct sbmode sbrmodes[] = {
  { SB_1,   1, 8, 4000,12987,SB_DSP_RDMA     ,SB_DSP_HALT  ,SB_DSP_CONT  },
  { SB_20,  1, 8, 4000,12987,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_2x,  1, 8, 4000,12987,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
  { SB_2x,  1, 8,12987,14925,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  },
- { SB_PRO, 1, 8, 4000,22727,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
+ { SB_2x,  1, 8, 4000,12987,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  },
  { SB_PRO, 1, 8,22727,45454,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
+ { SB_PRO, 1, 8, 4000,22727,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
  { SB_PRO, 2, 8,11025,22727,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_STEREO },
- { SB_JAZZ,1, 8, 4000,22727,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
  { SB_JAZZ,1, 8,22727,45454,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
+ { SB_JAZZ,1, 8, 4000,22727,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_MONO },
  { SB_JAZZ,2, 8,11025,22727,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,SB_DSP_RECORD_STEREO },
- { SB_JAZZ,1,16, 4000,22727,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
  { SB_JAZZ,1,16,22727,45454,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
+ { SB_JAZZ,1,16, 4000,22727,SB_DSP_RDMA_LOOP,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_MONO },
  { SB_JAZZ,2,16,11025,22727,SB_DSP_HS_INPUT ,SB_DSP_HALT  ,SB_DSP_CONT  ,JAZZ16_RECORD_STEREO },
  { SB_16,  1, 8, 5000,45000,SB_DSP16_RDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
  { SB_16,  2, 8, 5000,45000,SB_DSP16_RDMA_8 ,SB_DSP_HALT  ,SB_DSP_CONT  },
@@ -366,26 +366,6 @@ sbdsp_attach(sc)
 	struct audio_params pparams, rparams;
 	int i;
 	u_int v;
-
-	/*
-	 * Create our DMA maps.
-	 */
-	if (sc->sc_drq8 != -1) {
-		if (isa_dmamap_create(sc->sc_ic, sc->sc_drq8,
-		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-			printf("%s: can't create map for drq %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_drq8);
-			return;
-		}
-	}
-	if (sc->sc_drq16 != -1 && sc->sc_drq16 != sc->sc_drq8) {
-		if (isa_dmamap_create(sc->sc_ic, sc->sc_drq16,
-		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-			printf("%s: can't create map for drq %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_drq16);
-			return;
-		}
-	}
 
 	pparams = audio_default;
 	rparams = audio_default;
@@ -603,7 +583,7 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 			    p->channels == m->channels &&
 			    p->precision == m->precision &&
 			    p->sample_rate >= m->lowrate && 
-			    p->sample_rate < m->highrate)
+			    p->sample_rate <= m->highrate)
 				break;
 		}
 		if (m->model == -1)
@@ -887,16 +867,38 @@ sbdsp_open(addr, flags)
 	int flags;
 {
 	struct sbdsp_softc *sc = addr;
+	int error;
 
 	DPRINTF(("sbdsp_open: sc=%p\n", sc));
 
 	if (sc->sc_open != SB_CLOSED)
-		return EBUSY;
-	if (sbdsp_reset(sc) != 0)
-		return EIO;
-
+		return (EBUSY);
 	sc->sc_open = SB_OPEN_AUDIO;
 	sc->sc_openflags = flags;
+
+	if (sc->sc_drq8 != -1) {
+		error = isa_dmamap_create(sc->sc_ic, sc->sc_drq8,
+		    MAX_ISADMA, BUS_DMA_NOWAIT);
+		if (error) {
+			printf("%s: can't create map for drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq8);
+			goto bad;
+		}
+	}
+	if (sc->sc_drq16 != -1 && sc->sc_drq16 != sc->sc_drq8) {
+		error = isa_dmamap_create(sc->sc_ic, sc->sc_drq16,
+		    MAX_ISADMA, BUS_DMA_NOWAIT);
+		if (error) {
+			printf("%s: can't create map for drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq16);
+			goto bad;
+		}
+	}
+
+	if (sbdsp_reset(sc) != 0) {
+		error = EIO;
+		goto bad;
+	}
 
 	if (ISSBPRO(sc) &&
 	    sbdsp_wdsp(sc, SB_DSP_RECORD_MONO) < 0) {
@@ -912,7 +914,11 @@ sbdsp_open(addr, flags)
 	 */
 	DPRINTF(("sbdsp_open: opened\n"));
 
-	return 0;
+	return (0);
+
+bad:
+	sc->sc_open = SB_CLOSED;
+	return (error);
 }
 
 void
@@ -931,8 +937,13 @@ sbdsp_close(addr)
 
 	sc->sc_intr8 = 0;
 	sc->sc_intr16 = 0;
-	sc->sc_open = SB_CLOSED;
 
+	if (sc->sc_drq8 != -1)
+		isa_dmamap_destroy(sc->sc_ic, sc->sc_drq8);
+	if (sc->sc_drq16 != -1 && sc->sc_drq16 != sc->sc_drq8)
+		isa_dmamap_destroy(sc->sc_ic, sc->sc_drq16);
+
+	sc->sc_open = SB_CLOSED;
 	DPRINTF(("sbdsp_close: closed\n"));
 }
 
@@ -1518,7 +1529,7 @@ sbdsp_intr(arg)
 	}
 #if NMIDI > 0
 	if ((irq & SBP_IRQ_MPU401) && sc->sc_hasmpu) {
-		mpu401_intr(&sc->sc_mpu_sc);
+		mpu_intr(&sc->sc_mpu);
 	}
 #endif
 	return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu401var.h,v 1.3 1998/11/25 22:17:06 augustss Exp $	*/
+/*	$NetBSD: mpuvar.h,v 1.1 1999/03/22 07:37:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,21 +36,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct mpu401_softc {
+struct mpu_softc {
 	bus_space_tag_t iot;		/* tag */
 	bus_space_handle_t ioh;		/* handle */
-	int	iobase;
 	int	open;
-	void	(*intr)__P((void*, int)); /* midi input intr handler */
+	void	(*intr)__P((void *, int)); /* midi input intr handler */
 	void	*arg;			/* arg for intr() */
 };
 
-struct midi_hw_if mpu401_midi_hw_if;
+struct midi_hw_if mpu_midi_hw_if;
 
-void	mpu401_intr __P((struct mpu401_softc *));
-int	mpu401_find __P((struct mpu401_softc *));
-int	mpu401_open __P((struct mpu401_softc *, int, 
+int	mpu_find __P((struct mpu_softc *));
+int	mpu_open __P((void *, int, 
 			 void (*iintr)__P((void *, int)),
 			 void (*ointr)__P((void *)), void *arg));
-void	mpu401_close __P((struct mpu401_softc *));
-int	mpu401_output __P((struct mpu401_softc *, int));
+void	mpu_close __P((void *));
+int	mpu_output __P((void *, int));
+void	mpu_getinfo __P((void *, struct midi_info *));
+int	mpu_intr __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.66 1999/02/19 16:10:44 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.67 1999/03/22 07:37:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -62,26 +62,11 @@
 #include <dev/isa/sbdspvar.h>
 
 #if NMIDI > 0
-int	sb_mpu401_open __P((void *, int, 
-			     void (*iintr)__P((void *, int)),
-			     void (*ointr)__P((void *)), void *arg));
-void	sb_mpu401_close __P((void *));
-int	sb_mpu401_output __P((void *, int));
-void	sb_mpu401_getinfo __P((void *, struct midi_info *));
-
 struct midi_hw_if sb_midi_hw_if = {
 	sbdsp_midi_open,
 	sbdsp_midi_close,
 	sbdsp_midi_output,
 	sbdsp_midi_getinfo,
-	0,			/* ioctl */
-};
-
-struct midi_hw_if sb_mpu401_hw_if = {
-	sb_mpu401_open,
-	sb_mpu401_close,
-	sb_mpu401_output,
-	sb_mpu401_getinfo,
 	0,			/* ioctl */
 };
 #endif
@@ -247,30 +232,29 @@ sbattach(sc)
 	struct sbdsp_softc *sc;
 {
 	struct audio_attach_args arg;
-#if NMIDI > 0
-	struct midi_hw_if *mhw = &sb_midi_hw_if;
-#endif
 
 	sbdsp_attach(sc);
 
 #if NMIDI > 0
-	sc->sc_hasmpu = 0;
-	if (ISSB16CLASS(sc) && sc->sc_mpu_sc.iobase != 0) {
-		sc->sc_mpu_sc.iot = sc->sc_iot;
-		if (mpu401_find(&sc->sc_mpu_sc)) {
-			sc->sc_hasmpu = 1;
-			mhw = &sb_mpu401_hw_if;
-		}
+	if (ISSB16CLASS(sc)) {
+		if (sc->sc_hasmpu && mpu_find(&sc->sc_mpu))
+			midi_attach_mi(&mpu_midi_hw_if, &sc->sc_mpu, &sc->sc_dev);
+		else
+			sc->sc_hasmpu = 0;
+	} else {
+		sc->sc_hasmpu = 0;
+		midi_attach_mi(&sb_midi_hw_if, sc, &sc->sc_dev);
 	}
-	midi_attach_mi(mhw, sc, &sc->sc_dev);
 #endif
 
 	audio_attach_mi(&sb_hw_if, sc, &sc->sc_dev);
 
-	arg.type = AUDIODEV_TYPE_OPL;
-	arg.hwif = 0;
-	arg.hdl = 0;
-	(void)config_found(&sc->sc_dev, &arg, audioprint);
+	if (sc->sc_model >= SB_20) {
+		arg.type = AUDIODEV_TYPE_OPL;
+		arg.hwif = 0;
+		arg.hdl = 0;
+		(void)config_found(&sc->sc_dev, &arg, audioprint);
+	}
 }
 
 /*
@@ -301,44 +285,3 @@ sb_getdev(addr, retp)
 		
 	return 0;
 }
-
-#if NMIDI > 0
-
-#define SBMPU(a) (&((struct sbdsp_softc *)addr)->sc_mpu_sc)
-
-int
-sb_mpu401_open(addr, flags, iintr, ointr, arg)
-	void *addr;
-	int flags;
-	void (*iintr)__P((void *, int));
-	void (*ointr)__P((void *));
-	void *arg;
-{
-	return mpu401_open(SBMPU(addr), flags, iintr, ointr, arg);
-}
-
-int
-sb_mpu401_output(addr, d)
-	void *addr;
-	int d;
-{
-	return mpu401_output(SBMPU(addr), d);
-}
-
-void
-sb_mpu401_close(addr)
-	void *addr;
-{
-	mpu401_close(SBMPU(addr));
-}
-
-void
-sb_mpu401_getinfo(addr, mi)
-	void *addr;
-	struct midi_info *mi;
-{
-	mi->name = "SB MPU-401 UART";
-	mi->props = 0;
-}
-#endif
-
