@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 1998/07/26 20:32:42 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.10.12.1 2001/11/24 22:07:08 he Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -40,6 +40,7 @@ int		chkrange __P((ufs_daddr_t, int));
 void		ckfini __P((void));
 int		ckinode __P((struct dinode *, struct inodesc *));
 void		clri __P((struct inodesc *, char *, int));
+int		cmpsblks __P((const struct fs *, struct fs *));
 struct		dinode * getnextinode __P((ino_t));
 void		direrror __P((ino_t, char *));
 int		dirscan __P((struct inodesc *));
@@ -52,18 +53,15 @@ void		freeblk __P((ufs_daddr_t, long));
 void		freeino __P((ino_t));
 void		freeinodebuf __P((void));
 int		ftypeok __P((struct dinode *));
-int		ftypeok __P((struct dinode *dp));
-void		getblk __P((struct bufarea *bp, ufs_daddr_t blk, long size));
+void		getblk __P((struct bufarea *, ufs_daddr_t, long));
 struct bufarea *getdatablk __P((ufs_daddr_t, long));
 struct inoinfo *getinoinfo __P((ino_t));
-struct dinode  *getnextinode __P((ino_t));
 struct dinode  *ginode __P((ino_t));
 void		getpathname __P((char *, ino_t, ino_t));
 void		inocleanup __P((void));
 void		inodirty __P((void));
 int		linkup __P((ino_t, ino_t));
 int		makeentry __P((ino_t, ino_t, char *));
-void		panic __P((const char *fmt, ...));
 void		pass1 __P((void));
 void		pass1b __P((void));
 int		pass1check __P((struct inodesc *));
@@ -72,10 +70,8 @@ void		pass3 __P((void));
 void		pass4 __P((void));
 int		pass4check __P((struct inodesc *));
 void		pass5 __P((void));
-void		pfatal __P((const char *fmt, ...));
 void		pinode __P((ino_t));
-void		propagate __P((void));
-void		pwarn __P((const char *fmt, ...));
+void		propagate __P((ino_t));
 int		reply __P((char *));
 void		resetinodebuf __P((void));
 int		setup __P((const char *));
