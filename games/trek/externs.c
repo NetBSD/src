@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.c,v 1.5 1999/07/21 13:19:10 hubertf Exp $	*/
+/*	$NetBSD: externs.c,v 1.6 1999/09/17 17:06:08 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)externs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: externs.c,v 1.5 1999/07/21 13:19:10 hubertf Exp $");
+__RCSID("$NetBSD: externs.c,v 1.6 1999/09/17 17:06:08 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,3 +103,21 @@ const char	*const Systemname[NINHAB] =
 	"Epsilon Eridani IV",
 	"Exo III"
 };
+
+struct quad	Quad[NQUADS][NQUADS];
+
+/* current sector map */
+char	Sect[NSECTS][NSECTS];
+
+const struct device	Device[NDEV];
+
+struct event	Event[MAXEVENTS];	/* dynamic event list; one entry per pending event */
+
+struct Ship_struct Ship;
+struct Game_struct Game;
+struct Move_struct Move;
+struct Param_struct Param;
+struct Now_struct Now;
+struct Etc_struct Etc;
+
+int Trace;
