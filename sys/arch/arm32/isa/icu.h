@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.1 1998/06/08 17:49:43 tv Exp $	*/
+/*	$NetBSD: icu.h,v 1.2 1998/10/06 02:43:26 mark Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,7 +53,10 @@
  */
 extern	unsigned imen;		/* interrupt mask enable */
 
-#define SET_ICUS()	(outb(IO_ICU1 + 1, imen), outb(IO_ICU2 + 1, imen >> 8))
+#define SET_ICUS()	{		\
+	outb(IO_ICU1 + 1, imen);	\
+	outb(IO_ICU2 + 1, imen >> 8);	\
+}
 
 #endif /* !_LOCORE */
 
