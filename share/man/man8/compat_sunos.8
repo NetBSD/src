@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: compat_sunos.8,v 1.2 1994/06/16 20:37:28 deraadt Exp $
+.\"	$Id: compat_sunos.8,v 1.2.2.1 1994/10/18 08:40:35 cgd Exp $
 .\"
 .Dd June 15, 1994
 .Dt COMPAT_SUNOS 8
@@ -88,6 +88,12 @@ In the binary, change every occurance of a path that starts with
 so that it starts with
 .Pa /sun .
 Note that the strings "/usr" and "/sun" are the same length.
+.Pp
+.It 6.
+If you ever expect to use YP, you will want to create a link:
+.nf
+ln -s /var/run/ypbind.lock /etc/ypbind.lock
+.fi
 .El
 .Pp
 This will place the SunOS libraries on your NetBSD machine
