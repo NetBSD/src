@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/12/24 19:47:50 perry Exp $
+#	$NetBSD: Makefile,v 1.10 2003/03/08 19:12:16 perry Exp $
 
 NOLINT=		# defined
 NOPIC=		# defined
@@ -32,7 +32,7 @@ SRCS=	been_here.c bounce.c canon_addr.c cleanup_strerror.c clnt_stream.c \
 	tok822_resolve.c tok822_rewrite.c tok822_tree.c xtext.c bounce_log.c \
 	flush_clnt.c mail_conf_time.c mbox_conf.c mbox_open.c abounce.c \
 	verp_sender.c match_parent_style.c mime_state.c header_token.c \
-	strip_addr.c virtual8_maps.c hold_message.c
+	strip_addr.c virtual8_maps.c hold_message.c dict_proxy.c mail_dict.c
 
 # IPv6
 #SRCS+=	wildcard_inet_addr.c

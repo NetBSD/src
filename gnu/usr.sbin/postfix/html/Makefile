@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/12/25 07:45:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/03/08 19:12:17 perry Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ FILES=	access.5.html aliases.5.html architecture.html \
 	postconf.1.html postdrop.1.html postfix.1.html \
 	postkick.1.html postlock.1.html postlog.1.html \
 	postmap.1.html postqueue.1.html postsuper.1.html \
+	proxymap.8.html \
 	qmgr.8.html queuing.html rate.html \
 	receiving.html regexp_table.5.html relocated.5.html \
 	resource.html rewrite.html security.html sendmail.1.html \
