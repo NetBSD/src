@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.14 1998/08/17 03:28:51 nathanw Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -210,9 +210,11 @@ com_pcmcia_attach(parent, self, aux)
 	struct com_softc *sc = &psc->sc_com;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
+	int autoalloc = 0;
 
 	psc->sc_pf = pa->pf;
 
+retry:
 	/* find a cfe we can use */
 
 	for (cfe = pa->pf->cfe_head.sqh_first; cfe;
@@ -229,26 +231,30 @@ com_pcmcia_attach(parent, self, aux)
 		if (cfe->num_iospace != 1)
 			continue;
 
-		if (cfe->iomask == 3) {
-			if (pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
-			    cfe->iospace[0].length, &psc->sc_pcioh)) {
-				continue;
+		if (autoalloc == 1) {
+			if (cfe->iomask == 3) {
+				if (!pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
+									 cfe->iospace[0].length,
+									 &psc->sc_pcioh)) {
+					goto found;
+				}
 			}
 		} else {
-			if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-			    cfe->iospace[0].length, 0, &psc->sc_pcioh)) {
-				continue;
+			if (!pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
+								 cfe->iospace[0].length, 0, &psc->sc_pcioh)) {
+				goto found;
 			}
 		}
-
-		break;
 	}
-
-	if (!cfe) {
+	if (autoalloc == 0) {
+		autoalloc = 1;
+		goto retry;
+	} else if (!cfe) {
 		printf(": can't allocate i/o space\n");
 		return;
 	}
 
+found:
 	sc->sc_iot = psc->sc_pcioh.iot;
 	sc->sc_ioh = psc->sc_pcioh.ioh;
 
