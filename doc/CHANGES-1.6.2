@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.208 2003/10/22 04:06:02 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.209 2003/10/22 04:19:46 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2560,10 +2560,19 @@ distrib/notes/macppc/prep.OPENFIRMWARE		1.4
 	Update Toast instructions for Toast 5 instead of Toast 4.
 	[mbw, ticket #1519]
 
-sys/compat/linux/common/linux_socket.c		1.47-1.48
+sys/compat/linux/common/linux_socket.c		1.49 (via patch)
+sys/compat/linux/common/linux_socket.h		1.11
 
-	Make credentials work on the i386 by passing the original msg 
-	structure.  Add a cast appease gcc3.3.
+	More complete sendmsg(2) and recvmsg(2) emulation:
+	* translate MSG_* flags
+	* rewrite CMSG level/type to appropriate NetBSD value on input, 
+	  and to Linux value on output
+	* handle different CMSG_DATA alignment for some archs
+ 
+	This fixes SCM_RIGHTS passing. Other SCM_* types are not supported -
+	the set is different on NetBSD and Linux. SCM_TIMESTAMP doesn't seem
+	to be actually implemented in Linux 2.5.15, so it's not supported
+	for Linux binaries either (for now).
 	[tv, ticket #1425]
 
 
@@ -2584,3 +2593,7 @@ src/sys/compat/linux/common/linux_mmap.h	1.15 (hand patched)
 	[tv, ticket #1427]
 
 
+src/sys/compat/linux/common/linux_misc.c	1.119
+
+	Implement MAP_TRYFIXED for linux emulation.
+	[tv, ticket #1428]
