@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldselect.c,v 1.52 2001/11/13 02:08:56 lukem Exp $	*/
+/*	$NetBSD: linux_oldselect.c,v 1.53 2003/01/18 08:04:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldselect.c,v 1.52 2001/11/13 02:08:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldselect.c,v 1.53 2003/01/18 08:04:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -62,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldselect.c,v 1.52 2001/11/13 02:08:56 lukem E
  * in registers on the i386 like Linux wants to.
  */
 int
-linux_sys_oldselect(p, v, retval)
-	struct proc *p;
+linux_sys_oldselect(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -76,7 +77,7 @@ linux_sys_oldselect(p, v, retval)
 	if ((error = copyin(SCARG(uap, lsp), &ls, sizeof(ls))))
 		return error;
 
-	return linux_select1(p, retval, ls.nfds, ls.readfds, ls.writefds,
+	return linux_select1(l, retval, ls.nfds, ls.readfds, ls.writefds,
 	    ls.exceptfds, ls.timeout);
 }
 

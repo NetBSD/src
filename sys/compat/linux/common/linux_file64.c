@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.18 2002/05/20 06:45:11 jdolecek Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.19 2003/01/18 08:02:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.18 2002/05/20 06:45:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.19 2003/01/18 08:02:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.18 2002/05/20 06:45:11 jdolecek E
 #include <sys/tty.h>
 #include <sys/conf.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -73,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.18 2002/05/20 06:45:11 jdolecek E
 #ifndef alpha
 
 static void bsd_to_linux_stat __P((struct stat *, struct linux_stat64 *));
-static int linux_do_stat64 __P((struct proc *, void *, register_t *, int));
+static int linux_do_stat64 __P((struct lwp *, void *, register_t *, int));
 
 /*
  * Convert a NetBSD stat structure to a Linux stat structure.
@@ -114,8 +115,8 @@ bsd_to_linux_stat(bsp, lsp)
  * by one function to avoid code duplication.
  */
 int
-linux_sys_fstat64(p, v, retval)
-	struct proc *p;
+linux_sys_fstat64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -123,6 +124,7 @@ linux_sys_fstat64(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct linux_stat64 *) sp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys___fstat13_args fsa;
 	struct linux_stat64 tmplst;
 	struct stat *st,tmpst;
@@ -136,7 +138,7 @@ linux_sys_fstat64(p, v, retval)
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
 
-	if ((error = sys___fstat13(p, &fsa, retval)))
+	if ((error = sys___fstat13(l, &fsa, retval)))
 		return error;
 
 	if ((error = copyin(st, &tmpst, sizeof tmpst)))
@@ -151,12 +153,13 @@ linux_sys_fstat64(p, v, retval)
 }
 
 static int
-linux_do_stat64(p, v, retval, dolstat)
-	struct proc *p;
+linux_do_stat64(l, v, retval, dolstat)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 	int dolstat;
 {
+	struct proc *p = l->l_proc;
 	struct sys___stat13_args sa;
 	struct linux_stat64 tmplst;
 	struct stat *st, tmpst;
@@ -171,8 +174,8 @@ linux_do_stat64(p, v, retval, dolstat)
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
 
-	if ((error = (dolstat ? sys___lstat13(p, &sa, retval) :
-				sys___stat13(p, &sa, retval))))
+	if ((error = (dolstat ? sys___lstat13(l, &sa, retval) :
+				sys___stat13(l, &sa, retval))))
 		return error;
 
 	if ((error = copyin(st, &tmpst, sizeof tmpst)))
@@ -187,8 +190,8 @@ linux_do_stat64(p, v, retval, dolstat)
 }
 
 int
-linux_sys_stat64(p, v, retval)
-	struct proc *p;
+linux_sys_stat64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -197,12 +200,12 @@ linux_sys_stat64(p, v, retval)
 		syscallarg(struct linux_stat64 *) sp;
 	} */ *uap = v;
 
-	return linux_do_stat64(p, uap, retval, 0);
+	return linux_do_stat64(l, uap, retval, 0);
 }
 
 int
-linux_sys_lstat64(p, v, retval)
-	struct proc *p;
+linux_sys_lstat64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -211,12 +214,12 @@ linux_sys_lstat64(p, v, retval)
 		syscallarg(struct linux_stat64 *) sp;
 	} */ *uap = v;
 
-	return linux_do_stat64(p, uap, retval, 1);
+	return linux_do_stat64(l, uap, retval, 1);
 }
 
 int
-linux_sys_truncate64(p, v, retval)
-	struct proc *p;
+linux_sys_truncate64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -224,11 +227,12 @@ linux_sys_truncate64(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(off_t) length;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return sys_truncate(p, uap, retval);
+	return sys_truncate(l, uap, retval);
 }
 
 #if !defined(__m68k__)
@@ -284,8 +288,8 @@ linux_to_bsd_flock64(bfp, lfp)
 }
 
 int
-linux_sys_fcntl64(p, v, retval)
-	struct proc *p;
+linux_sys_fcntl64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -294,6 +298,7 @@ linux_sys_fcntl64(p, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_fcntl_args fca;
 	struct linux_flock64 lfl;
 	struct flock bfl, *bfp;
@@ -315,7 +320,7 @@ linux_sys_fcntl64(p, v, retval)
 		SCARG(&fca, fd) = fd;
 		SCARG(&fca, cmd) = F_GETLK;
 		SCARG(&fca, arg) = bfp;
-		if ((error = sys_fcntl(p, &fca, retval)) != 0)
+		if ((error = sys_fcntl(l, &fca, retval)) != 0)
 			return error;
 		if ((error = copyin(bfp, &bfl, sizeof bfl)) != 0)
 			return error;
@@ -334,9 +339,9 @@ linux_sys_fcntl64(p, v, retval)
 		SCARG(&fca, fd) = fd;
 		SCARG(&fca, cmd) = cmd;
 		SCARG(&fca, arg) = bfp;
-		return sys_fcntl(p, &fca, retval);
+		return sys_fcntl(l, &fca, retval);
 	default:
-		return linux_sys_fcntl(p, v, retval);
+		return linux_sys_fcntl(l, v, retval);
 	}
 }
 #endif /* !m68k */
@@ -358,8 +363,8 @@ linux_sys_fcntl64(p, v, retval)
  * Note that this doesn't handle union-mounted filesystems.
  */
 int
-linux_sys_getdents64(p, v, retval)
-	struct proc *p;
+linux_sys_getdents64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -368,6 +373,7 @@ linux_sys_getdents64(p, v, retval)
 		syscallarg(struct linux_dirent64 *) dent;
 		syscallarg(unsigned int) count;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	caddr_t	inp, buf;		/* BSD-format */
