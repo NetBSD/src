@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.4 1993/10/09 09:17:56 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.5 1993/10/09 10:01:20 mycroft Exp $
  */
 
 /*
@@ -344,7 +344,7 @@ INTRLOCAL(unpend_V_next):
 	ALIGN_TEXT ; \
 INTRLOCAL(vec/**/irq_num): ; \
 	int     $(ICU_OFFSET + irq_num) ; \
-	jmp	unpend_V_next
+	jmp	INTRLOCAL(unpend_V_next)
 
 	BUILD_VEC(0)
 	BUILD_VEC(1)
