@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.13 1997/11/09 04:14:10 jonathan Exp $ */
+/*	$NetBSD: disks.c,v 1.14 1997/11/13 03:06:44 jonathan Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -351,7 +351,10 @@ void make_fstab (void)
 #ifndef DEBUG
 	fclose(f);
 #endif
+	/* We added /kern to fstab,  make mountpoint. */
+	make_target_dir("/kern");
 }
+
 
 /* Get information on the file systems mounted from the root filesystem.
  * Offer to convert them into 4.4BSD inodes if they are not 4.4BSD
