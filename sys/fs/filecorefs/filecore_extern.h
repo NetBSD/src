@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.7 2001/09/15 16:12:55 chs Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.1 2002/12/23 17:30:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.47 2002/12/23 17:15:21 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.48 2002/12/23 17:30:37 jdolecek Exp $
 
-SUBDIR=	altq arch compat dev filecorefs fs isofs lkm miscfs msdosfs \
+SUBDIR=	altq arch compat dev fs isofs lkm miscfs msdosfs \
 	net netatalk netccitt netinet netinet6 netisdn netiso netkey \
 	netnatm netns netsmb nfs ntfs sys ufs uvm
 

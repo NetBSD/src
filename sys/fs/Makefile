@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2002/12/23 17:15:21 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.3 2002/12/23 17:30:37 jdolecek Exp $
 
-SUBDIR=	adosfs smbfs
+SUBDIR=	adosfs filecorefs smbfs
 
 .include <bsd.kinc.mk>

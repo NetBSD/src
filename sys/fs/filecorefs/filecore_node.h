@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.h,v 1.6 2001/09/15 20:36:36 chs Exp $	*/
+/*	$NetBSD: filecore_node.h,v 1.1 2002/12/23 17:30:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry

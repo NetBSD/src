@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_bmap.c,v 1.4 2001/11/12 23:04:09 lukem Exp $	*/
+/*	$NetBSD: filecore_bmap.c,v 1.1 2002/12/23 17:30:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.4 2001/11/12 23:04:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.1 2002/12/23 17:30:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.4 2001/11/12 23:04:09 lukem Exp 
 #include <sys/vnode.h>
 #include <sys/mount.h>
 
-#include <filecorefs/filecore.h>
-#include <filecorefs/filecore_extern.h>
-#include <filecorefs/filecore_node.h>
+#include <fs/filecorefs/filecore.h>
+#include <fs/filecorefs/filecore_extern.h>
+#include <fs/filecorefs/filecore_node.h>
 
 /*
  * Bmap converts a the logical block number of a file to its physical block

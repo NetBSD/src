@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.9 2001/11/12 23:04:10 lukem Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.1 2002/12/23 17:30:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.9 2001/11/12 23:04:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.1 2002/12/23 17:30:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -47,9 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.9 2001/11/12 23:04:10 lukem Ex
 #include <sys/mount.h>
 #include <sys/systm.h>
 
-#include <filecorefs/filecore.h>
-#include <filecorefs/filecore_extern.h>
-#include <filecorefs/filecore_node.h>
+#include <fs/filecorefs/filecore.h>
+#include <fs/filecorefs/filecore_extern.h>
+#include <fs/filecorefs/filecore_node.h>
 
 struct	nchstats filecore_nchstats;
 
