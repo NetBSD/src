@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.44 1998/06/25 22:18:09 thorpej Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.45 1998/07/20 16:41:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -1115,7 +1115,7 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 	 * try and leave leading space for the lower level headers.
 	 */
 	siz += RPC_REPLYSIZ;
-	if (siz >= MINCLSIZE) {
+	if (siz >= max_datalen) {
 		MCLGET(mreq, M_WAIT);
 	} else
 		mreq->m_data += max_hdr;
