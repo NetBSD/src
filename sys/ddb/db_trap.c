@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.15 2000/07/17 19:57:50 jeffs Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.16 2000/07/18 20:51:07 jeffs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -44,6 +44,10 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
+/*
+ * db_trap_callback can be hooked by MD port code to handle special
+ * cases such as disabling hardware watchdogs while in DDB.
+ */
 void (*db_trap_callback)(int);
 
 void
