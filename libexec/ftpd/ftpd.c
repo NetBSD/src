@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.109 2000/11/15 02:32:30 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.110 2000/11/15 04:07:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.109 2000/11/15 02:32:30 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.110 2000/11/15 04:07:07 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,10 +190,6 @@ int	notickets = 1;
 char	*krbtkfile_env = NULL;
 char	*tty = ttyline;
 int	login_krb5_forwardable_tgt = 0;
-#endif
-
-#ifndef INET6_ADDRSTRLEN
-#define INET6_ADDRSTRLEN MAXHOSTNAMELEN
 #endif
 
 int epsvall = 0;
@@ -1437,7 +1433,7 @@ dataconn(const char *name, off_t size, const char *mode)
 	usedefault = 1;
 	file = getdatasock(mode);
 	if (file == NULL) {
-		char hbuf[INET6_ADDRSTRLEN];
+		char hbuf[NI_MAXHOST];
 		char pbuf[10];
 
 		getnameinfo((struct sockaddr *)&data_source.si_su,
@@ -1779,7 +1775,7 @@ void
 statcmd(void)
 {
 	struct sockinet *su = NULL;
-	static char ntop_buf[INET6_ADDRSTRLEN];
+	static char ntop_buf[NI_MAXHOST];
   	u_char *a, *p;
 	int ispassive, af;
 	off_t otbi, otbo, otb;
@@ -2345,7 +2341,6 @@ long_passive(char *cmd, int pf)
 int
 extended_port(const char *arg)
 {
-#ifdef INET6	/*not really IPv6-only.  just to avoid the use of getaddrinfo*/
 	char *tmp = NULL;
 	char *result[3];
 	char *p, *q;
@@ -2421,10 +2416,6 @@ extended_port(const char *arg)
 	if (res)
 		freeaddrinfo(res);
 	return -1;
-#else
-	reply(500, "Invalid argument, rejected.");
-	return -1;
-#endif
 }
 
 /*
