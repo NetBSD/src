@@ -142,4 +142,6 @@ extern void sh_pr_trapa PARAMS ((cpp_reader *));
 extern void sh_pr_nosave_low_regs PARAMS ((cpp_reader *));
 #endif
 
+extern rtx sh_get_pr_initial_val (void);
+
 #endif /* ! GCC_SH_PROTOS_H */

@@ -7857,4 +7857,11 @@ sh_register_operand (op, mode)
   return register_operand (op, mode);
 }
 
+rtx
+sh_get_pr_initial_val (void)
+{
+  return
+    get_hard_reg_initial_val (Pmode, TARGET_SHMEDIA ? PR_MEDIA_REG : PR_REG);
+}
+
 #include "gt-sh.h"
