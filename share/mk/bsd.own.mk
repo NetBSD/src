@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.416 2004/04/30 08:10:22 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.417 2004/05/12 13:49:01 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -671,11 +671,13 @@ X11SRCDIR.xc?=		${X11SRCDIR}/xfree/xc
 X11SRCDIR.local?=	${X11SRCDIR}/local
 X11ROOTDIR?=		/usr/X11R6
 X11BINDIR?=		${X11ROOTDIR}/bin
+X11ETCDIR?=		/etc/X11
 X11FONTDIR?=		${X11ROOTDIR}/lib/X11/fonts
 X11INCDIR?=		${X11ROOTDIR}/include
 X11LIBDIR?=		${X11ROOTDIR}/lib/X11
 X11MANDIR?=		${X11ROOTDIR}/man
 X11USRLIBDIR?=		${X11ROOTDIR}/lib
+
 X11DRI?=		no
 X11LOADABLE?=		yes
 
