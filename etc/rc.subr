@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.48 2002/04/18 07:18:05 lukem Exp $
+# $NetBSD: rc.subr,v 1.49 2002/05/21 12:31:01 lukem Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -819,6 +819,7 @@ backup_file()
 			if [ ! -f $_cur,v -o $_cur -nt $_cur,v ]; then
 				ci -q -f -u -t-"$_msg0" -m"$_msg1" $_cur
 				rcs -q -kb -U $_cur
+				co -q -f -u $_cur
 			fi
 		fi
 
@@ -827,6 +828,7 @@ backup_file()
 			cp -p $_file $_cur
 			ci -q -f -u -t-"$_msg0" -m"$_msg1" $_cur
 			rcs -q -kb -U $_cur
+			co -q -f -u $_cur
 			chown root:wheel $_cur $_cur,v
 			;;
 		remove)
