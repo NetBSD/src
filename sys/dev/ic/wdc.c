@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.127 2003/09/20 07:07:39 christos Exp $ */
+/*	$NetBSD: wdc.c,v 1.128 2003/09/20 21:42:47 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.127 2003/09/20 07:07:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.128 2003/09/20 21:42:47 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -278,29 +278,6 @@ wdcprobe(chp)
 			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 			    wd_sector) != 0x02)
 				ret_value &= ~0x02;
-		}
-
-		/* Register ghost test. */
-		if (ret_value == 0x03) {
-			if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
-				chp->wdc->select(chp,1);
-			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-			    WDSD_IBM | 0x10);
-			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sector, 0x01);
-			if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
-				chp->wdc->select(chp,0);
-			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-			    WDSD_IBM);
-			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sector, 0x02);
-			if (chp->wdc && (chp->wdc->cap & WDC_CAPABILITY_SELECT))
-				chp->wdc->select(chp,1);
-			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
-			    WDSD_IBM | 0x10);
-			if (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_sector) == 0x02) {
-				printf("%s: ghost detected\n",
-				    chp->wdc->sc_dev.dv_xname);
-				ret_value = 0x01;
-			}
 		}
 
 		if (ret_value == 0)
