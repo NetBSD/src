@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.36 2000/07/20 06:21:51 thorpej Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.37 2001/01/11 01:44:23 lukem Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.36 2000/07/20 06:21:51 thorpej Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.37 2001/01/11 01:44:23 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -104,9 +104,9 @@ main(argc, argv)
 		case 's':
 			dolog = 1;
 #ifndef LOG_DAEMON
-			openlog(__progname, 0, 0);
+			openlog("rpc.bootparamd", 0, 0);
 #else
-			openlog(__progname, 0, LOG_DAEMON);
+			openlog("rpc.bootparamd", 0, LOG_DAEMON);
 			setlogmask(LOG_UPTO(LOG_NOTICE));
 #endif
 			break;
