@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.10 1997/01/23 14:02:08 mrg Exp $	*/
+/*	$NetBSD: res_init.c,v 1.11 1997/04/13 10:30:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -56,9 +56,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
-static char rcsid[] = "$Id: res_init.c,v 8.3 1995/06/29 09:26:28 vixie Exp ";
+static char rcsid[] = "Id: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: res_init.c,v 1.10 1997/01/23 14:02:08 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_init.c,v 1.11 1997/04/13 10:30:50 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,6 +75,8 @@ static char rcsid[] = "$NetBSD: res_init.c,v 1.10 1997/01/23 14:02:08 mrg Exp $"
 
 static void res_setoptions __P((char *, char *));
 static u_int32_t net_mask __P((struct in_addr));
+static const char sort_mask[] = "/&";
+#define ISSORTMASK(ch) (strchr(sort_mask, ch) != NULL)
 
 /*
  * Resolver state default settings
@@ -122,6 +124,7 @@ res_init()
 	int dots;
 	u_long mask;
 
+	_res.id = res_randomid();
 	_res.nsaddr.sin_len = sizeof(struct sockaddr_in);
 	_res.nsaddr.sin_family = AF_INET;
 	_res.nsaddr.sin_port = htons(NAMESERVER_PORT);
@@ -133,7 +136,8 @@ res_init()
 	_res.nscount = 1;
 	_res.ndots = 1;
 	_res.pfcode = 0;
-	strncpy(_res.lookups, "f", sizeof _res.lookups);
+	_res.lookups[0] = 'f';
+	_res.lookups[1] = '0';
 
 	/* Allow user to override the local domain definition */
 	if ((cp = getenv("LOCALDOMAIN")) != NULL) {
@@ -171,8 +175,15 @@ res_init()
 		*pp++ = 0;
 	}
 
+#define	MATCH(line, name) \
+	(!strncmp(line, name, sizeof(name) - 1) && \
+	(line[sizeof(name) - 1] == ' ' || \
+	 line[sizeof(name) - 1] == '\t'))
+
 	if ((fp = fopen(_PATH_RESCONF, "r")) != NULL) {
-	    strncpy(_res.lookups, "bf", sizeof _res.lookups);
+	    _res.lookups[0] = 'b';
+	    _res.lookups[1] = 'f';
+	    _res.lookups[2] = '0';
 
 	    /* read the config file */
 	    while (fgets(buf, sizeof(buf), fp) != NULL) {
@@ -180,7 +191,7 @@ res_init()
 		if ((*buf == ';') || (*buf == '#'))
 			continue;
 		/* read default domain name */
-		if (!strncmp(buf, "domain", sizeof("domain") - 1)) {
+		if (MATCH(buf, "domain")) {
 		    if (haveenv)	/* skip if have from environ */
 			    continue;
 		    cp = buf + sizeof("domain") - 1;
@@ -223,7 +234,7 @@ res_init()
 		    continue;
 		}
 		/* set search list */
-		if (!strncmp(buf, "search", sizeof("search") - 1)) {
+		if (MATCH(buf, "search")) {
 		    if (haveenv)	/* skip if have from environ */
 			    continue;
 		    cp = buf + sizeof("search") - 1;
@@ -260,8 +271,7 @@ res_init()
 		    continue;
 		}
 		/* read nameservers to query */
-		if (!strncmp(buf, "nameserver", sizeof("nameserver") - 1) &&
-		   nserv < MAXNS) {
+		if (MATCH(buf, "nameserver") && nserv < MAXNS) {
 		   struct in_addr a;
 
 		    cp = buf + sizeof("nameserver") - 1;
@@ -277,34 +287,48 @@ res_init()
 		    }
 		    continue;
 		}
-		if (!strncmp(buf, "sortlist", sizeof("sortlist") - 1)) {
+		if (MATCH(buf, "sortlist")) {
 		    struct in_addr a;
 
 		    cp = buf + sizeof("sortlist") - 1;
-		    while (*cp == ' ' || *cp == '\t')
-			cp++;
-		    while (sscanf(cp,"%[0-9./]s", buf2) && nsort < MAXRESOLVSORT) {
-			if (net = strchr(buf2, '/'))
-			    *net = '\0';
-			if (inet_aton(buf2, &a)) {
+		    while (nsort < MAXRESOLVSORT) {
+			while (*cp == ' ' || *cp == '\t')
+			    cp++;
+			if (*cp == '\0' || *cp == '\n' || *cp == ';')
+			    break;
+			net = cp;
+			while (*cp && !ISSORTMASK(*cp) && *cp != ';' &&
+			       isascii(*cp) && !isspace(*cp))
+				cp++;
+			n = *cp;
+			*cp = 0;
+			if (inet_aton(net, &a)) {
 			    _res.sort_list[nsort].addr = a;
-			    if (net && inet_aton(net+1, &a)) {
-				_res.sort_list[nsort].mask = a.s_addr;
-			    } else {
-				_res.sort_list[nsort].mask =
+			    if (ISSORTMASK(n)) {
+				*cp++ = n;
+				net = cp;
+				while (*cp && *cp != ';' &&
+					isascii(*cp) && !isspace(*cp))
+				    cp++;
+				n = *cp;
+				*cp = 0;
+				if (inet_aton(net, &a)) {
+				    _res.sort_list[nsort].mask = a.s_addr;
+				} else {
+				    _res.sort_list[nsort].mask = 
 					net_mask(_res.sort_list[nsort].addr);
+				}
+			    } else {
+				_res.sort_list[nsort].mask = 
+				    net_mask(_res.sort_list[nsort].addr);
 			    }
 			    nsort++;
 			}
-			if (net)
-				*net = '/';
-			cp += strlen(buf2);
-			while (*cp == ' ' || *cp == '\t')
-			    cp++;
+			*cp = n;
 		    }
 		    continue;
 		}
-		if (!strncmp(buf, "options", sizeof("options") -1)) {
+		if (MATCH(buf, "options")) {
 		    res_setoptions(buf + sizeof("options") - 1, "conf");
 		    continue;
 		}
@@ -327,16 +351,27 @@ res_init()
 #ifndef SEARCH_LOCAL_DOMAINS
 		*pp = NULL;
 #else
+		dots = 0;
 		for (cp = _res.defdname, n = 0; *cp; cp++)
-			if (*cp == '.')
-				n++;
+			dots += (*cp == '.');
+
 		cp = _res.defdname;
-		for (; n >= LOCALDOMAINPARTS && pp < _res.dnsrch + MAXDFLSRCH;
-		    n--) {
-			cp = strchr(cp, '.');
-			*pp++ = ++cp;
+		while (pp < _res.dnsrch + MAXDFLSRCH) {
+			if (dots < LOCALDOMAINPARTS)
+				break;
+			cp = strchr(cp, '.') + 1;
+			*pp++ = cp;
+			dots--;
 		}
 		*pp++ = 0;
+#ifdef DEBUG
+		if (_res.options & RES_DEBUG) {
+			printf(";; res_init()... default dnsrch list:\n");
+			for (pp = _res.dnsrch; *pp; pp++)
+				printf(";;\t%s\n", *pp);
+			printf(";;\t..END..\n");
+		}
+#endif /* DEBUG */
 #endif
 	}
 
@@ -354,10 +389,9 @@ res_setoptions(options, source)
 	int i;
 
 #ifdef DEBUG
-	if (_res.options & RES_DEBUG) {
+	if (_res.options & RES_DEBUG)
 		printf(";; res_setoptions(\"%s\", \"%s\")...\n",
 		       options, source);
-	}
 #endif
 	while (*cp) {
 		/* skip leading and inner runs of spaces */
@@ -371,9 +405,8 @@ res_setoptions(options, source)
 			else
 				_res.ndots = RES_MAXNDOTS;
 #ifdef DEBUG
-			if (_res.options & RES_DEBUG) {
+			if (_res.options & RES_DEBUG)
 				printf(";;\tndots=%d\n", _res.ndots);
-			}
 #endif
 		} else if (!strncmp(cp, "debug", sizeof("debug")-1)) {
 #ifdef DEBUG
@@ -384,6 +417,8 @@ res_setoptions(options, source)
 			}
 			printf(";;\tdebug\n");
 #endif
+		} else if (!strncmp(cp, "inet6", sizeof("inet6") - 1)) {
+			_res.options |= RES_USE_INET6;
 		} else {
 			/* XXX - print a warning here? */
 		}
@@ -393,6 +428,7 @@ res_setoptions(options, source)
 	}
 }
 
+/* XXX - should really support CIDR which means explicit masks always. */
 static u_int32_t
 net_mask(in)		/* XXX - should really use system's version of this */
 	struct in_addr in;
@@ -406,7 +442,7 @@ net_mask(in)		/* XXX - should really use system's version of this */
 	return (htonl(IN_CLASSC_NET));
 }
 
-u_int16_t
+u_int
 res_randomid()
 {
 	struct timeval now;
