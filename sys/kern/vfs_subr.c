@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.95 1998/11/15 18:38:11 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.96 1998/11/18 20:24:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1347,6 +1347,23 @@ vfinddev(dev, type, vpp)
 	}
 	simple_unlock(&spechash_slock);
 	return (rc);
+}
+
+/*
+ * Revoke all the vnodes corresponding to the specified minor number
+ * range (endpoints inclusive) of the specified major.
+ */
+void
+vdevgone(maj, minl, minh, type)
+	int maj, minl, minh;
+	enum vtype type;
+{
+	struct vnode *vp;
+	int mn;
+
+	for (mn = minl; mn <= minh; mn++)
+		if (vfinddev(makedev(maj, mn), type, &vp))
+			VOP_REVOKE(vp, REVOKEALL);
 }
 
 /*
