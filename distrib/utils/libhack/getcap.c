@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.1 1999/03/13 19:08:44 sommerfe Exp $	*/
+/*	$NetBSD: getcap.c,v 1.2 1999/03/13 19:11:54 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,12 +36,17 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * Copied from lib/libc/gen/getcap.c rev 1.25 and then gutted, removing
+ * db-format database support.
+ */
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.1 1999/03/13 19:08:44 sommerfe Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.2 1999/03/13 19:11:54 sommerfe Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
