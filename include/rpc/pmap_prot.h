@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_prot.h,v 1.5 1998/02/10 00:44:34 perry Exp $	*/
+/*	$NetBSD: pmap_prot.h,v 1.6 1998/02/10 03:52:16 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -51,7 +51,7 @@
  *	TRUE is success, FALSE is failure.  Un-registers pair
  *	[prog, vers].  prot and port are ignored.
  *
- * PMAPPROC_GETPORT(struct pmap) returns (long unsigned).
+ * PMAPPROC_GETPORT(struct pmap) returns (u_int32_t).
  *	0 is failure.  Otherwise returns the port number where the pair
  *	[prog, vers] is registered.  It may lie!
  *
@@ -59,11 +59,12 @@
  *
  * PMAPPROC_CALLIT(unsigned, unsigned, unsigned, string<>)
  * 	RETURNS (port, string<>);
- * usage: encapsulatedresults = PMAPPROC_CALLIT(prog, vers, proc, encapsulatedargs);
+ * usage: encapsulatedresults = PMAPPROC_CALLIT(prog, vers, proc,
+ *				    encapsulatedargs);
  * 	Calls the procedure on the local machine.  If it is not registered,
  *	this procedure is quite; ie it does not return error information!!!
- *	This procedure only is supported on rpc/udp and calls via
- *	rpc/udp.  This routine only passes null authentication parameters.
+ *	This procedure only is supported on RPC/UDP and calls via
+ *	RPC/UDP.  This routine only passes null authentication parameters.
  *	This file has no interface to xdr routines for PMAPPROC_CALLIT.
  *
  * The service supports remote procedure calls on udp/ip or tcp/ip socket 111.
@@ -73,23 +74,23 @@
 #define _RPC_PMAP_PROT_H_
 #include <sys/cdefs.h>
 
-#define PMAPPORT		((u_short)111)
-#define PMAPPROG		((u_long)100000)
-#define PMAPVERS		((u_long)2)
-#define PMAPVERS_PROTO		((u_long)2)
-#define PMAPVERS_ORIG		((u_long)1)
-#define PMAPPROC_NULL		((u_long)0)
-#define PMAPPROC_SET		((u_long)1)
-#define PMAPPROC_UNSET		((u_long)2)
-#define PMAPPROC_GETPORT	((u_long)3)
-#define PMAPPROC_DUMP		((u_long)4)
-#define PMAPPROC_CALLIT		((u_long)5)
+#define PMAPPORT		((in_port_t)111)
+#define PMAPPROG		((u_int32_t)100000)
+#define PMAPVERS		((u_int32_t)2)
+#define PMAPVERS_PROTO		((u_int32_t)2)
+#define PMAPVERS_ORIG		((u_int32_t)1)
+#define PMAPPROC_NULL		((u_int32_t)0)
+#define PMAPPROC_SET		((u_int32_t)1)
+#define PMAPPROC_UNSET		((u_int32_t)2)
+#define PMAPPROC_GETPORT	((u_int32_t)3)
+#define PMAPPROC_DUMP		((u_int32_t)4)
+#define PMAPPROC_CALLIT		((u_int32_t)5)
 
 struct pmap {
-	long unsigned pm_prog;
-	long unsigned pm_vers;
-	long unsigned pm_prot;
-	long unsigned pm_port;
+	u_int32_t pm_prog;
+	u_int32_t pm_vers;
+	u_int32_t pm_prot;
+	u_int32_t pm_port;
 };
 
 struct pmaplist {
