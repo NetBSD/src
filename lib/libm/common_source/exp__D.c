@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)exp.c	5.7 (Berkeley) 12/2/92";*/
-static char rcsid[] = "$Id: exp.c,v 1.4 1993/08/14 19:21:14 mycroft Exp $";
+static char rcsid[] = "$Id: exp__D.c,v 1.1 1993/08/14 19:21:37 mycroft Exp $";
 #endif /* not lint */
 
 /* EXP(X)
@@ -115,8 +115,10 @@ ic(lnhuge, 7.1602103751842355450E2,    9,  1.6602B15B7ECF2)
 ic(lntiny,-7.5137154372698068983E2,    9, -1.77AF8EBEAE354)
 ic(invln2, 1.4426950408889633870E0,    0,  1.71547652B82FE)
 
-double exp(x)
-double x;
+/* returns exp(r = x + c) for |c| < |x| with no overlap.  */
+
+double exp__D(x, c)
+double x, c;
 {
 	double z, hi, lo, t;
 	int k;
@@ -134,7 +136,7 @@ double x;
 
 		    /* express (x+c)-k*ln2 as hi-lo and let x=hi-lo rounded */
 			hi = x - k * ln2hi;			/* Exact. */
-			x = hi - (lo = k * ln2lo);
+			x = hi - (lo = k * ln2lo - c);
 
 		    /* return 2^k*[1+x+x*c/(2+c)]  */
 			z = x * x;

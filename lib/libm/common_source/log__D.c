@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)log.c	5.10 (Berkeley) 1/10/93";*/
-static char rcsid[] = "$Id: log.c,v 1.4 1993/08/14 19:21:15 mycroft Exp $";
+static char rcsid[] = "$Id: log__D.c,v 1.1 1993/08/14 19:21:40 mycroft Exp $";
 #endif /* not lint */
 
 #include <math.h>
@@ -77,11 +77,15 @@ static char rcsid[] = "$Id: log.c,v 1.4 1993/08/14 19:21:15 mycroft Exp $";
  *	+Inf	return +Inf
 */
 
-double
+/*
+ * Extra precision variant, returning struct {double a, b;};
+ * log(x) = a+b to 63 bits, with a is rounded to 26 bits.
+ */
+struct Double
 #ifdef _ANSI_SOURCE
-log(double x)
+log__D(double x)
 #else
-log(x) double x;
+log__D(x) double x;
 #endif
 {
 	int m, j;
@@ -89,22 +93,6 @@ log(x) double x;
 	double logb(), ldexp();
 	volatile double u1;
 
-	/* Catch special cases */
-	if (x <= 0)
-		if (_IEEE && x == zero)	/* log(0) = -Inf */
-			return (-one/zero);
-		else if (_IEEE)		/* log(neg) = NaN */
-			return (zero/zero);
-		else if (x == zero)	/* NOT REACHED IF _IEEE */
-			return (infnan(-ERANGE));
-		else
-			return (infnan(EDOM));
-	else if (!finite(x))
-		if (_IEEE)		/* x = NaN, Inf */
-			return (x+x);
-		else
-			return (infnan(ERANGE));
-	
 	/* Argument reduction: 1 <= g < 2; x/2^m = g;	*/
 	/* y = F*(1 + f/F) for |f| <= 2^-8		*/
 
@@ -146,5 +134,8 @@ log(x) double x;
 	u1 += m*__logF_head[N] + __logF_head[j];	/* exact */
 	u2 = (u2 + __logF_tail[j]) + q;			/* tiny */
 	u2 += __logF_tail[N]*m;
-	return (u1 + u2);
+	r.a = u1 + u2;			/* Only difference is here */
+	TRUNC(r.a);
+	r.b = (u1 - r.a) + u2;
+	return (r);
 }
