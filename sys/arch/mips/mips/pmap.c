@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.111 2000/10/31 22:46:36 jeffs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.112 2000/10/31 23:16:31 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2000/10/31 22:46:36 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112 2000/10/31 23:16:31 jeffs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1592,9 +1592,10 @@ pmap_zero_page(phys)
 	 * might read old stale DRAM footprint, not the just-written data.
 	 */
 	if (CPUISMIPS3 && !mips_L2CachePresent) {
-		/*XXX FIXME Not very sophisticated */
-		/*	MachFlushCache();*/
-		MachFlushDCache(MIPS_PHYS_TO_KSEG0(phys), NBPG);
+		if (mips3_L1TwoWayCache)
+			MachHitFlushDCache(MIPS_PHYS_TO_KSEG0(phys), NBPG);
+		else
+			MachFlushDCache(phys, NBPG);
 	}
 #endif
 }
@@ -1744,9 +1745,10 @@ pmap_copy_page(src, dst)
 	 *      the destination as well?
 	 */
 	if (CPUISMIPS3) {
-		/*XXX FIXME Not very sophisticated */
-		/*	MachFlushCache();*/
-		MachFlushDCache(dst, NBPG);
+		if (mips3_L1TwoWayCache)
+			MachHitFlushDCache(MIPS_PHYS_TO_KSEG0(dst), NBPG);
+		else
+			MachFlushDCache(dst, NBPG);
 	}
 #endif
 }
