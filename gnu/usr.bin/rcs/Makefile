@@ -1,8 +1,5 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/18 04:42:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2001/01/09 03:13:41 lukem Exp $
 
-SUBDIR+=lib ci co ident merge rcs rcsclean rcsdiff rcsfreeze rcsmerge rlog
-
-all-ci all-co all-ident all-merge all-rcs all-rcsclean all-rcsdiff \
-    all-rcsfreeze all-rcsmerge all-rlog: all-lib
+SUBDIR+=lib .WAIT ci co ident merge rcs rcsclean rcsdiff rcsfreeze rcsmerge rlog
 
 .include <bsd.subdir.mk>
