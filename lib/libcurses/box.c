@@ -1,4 +1,4 @@
-/*	$NetBSD: box.c,v 1.10.6.2 2000/03/05 23:26:33 jdc Exp $	*/
+/*	$NetBSD: box.c,v 1.10.6.3 2000/03/16 21:47:16 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)box.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: box.c,v 1.10.6.2 2000/03/05 23:26:33 jdc Exp $");
+__RCSID("$NetBSD: box.c,v 1.10.6.3 2000/03/16 21:47:16 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,5 +54,5 @@ box(win, vert, hor)
 	WINDOW	*win;
 	chtype	 vert, hor;
 {
-	return (wborder (win, hor, hor, vert, vert, 0, 0, 0, 0));
+	return (wborder (win, vert, vert, hor, hor, 0, 0, 0, 0));
 }
