@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.73 2002/12/08 08:42:51 lukem Exp $
+#  $NetBSD: build.sh,v 1.74 2002/12/08 22:14:00 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -104,7 +104,7 @@ resolvepath () {
 usage () {
 	cat <<_usage_
 Usage:
-`basename $0` [-bdnortUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-k kernel]
+`basename $0` [-bdEnortUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-k kernel]
 	   [-M obj] [-m mach] [-O obj] [-R release] [-T tools] [-w wrapper]
 
     -a arch	set MACHINE_ARCH to arch (otherwise deduced from MACHINE)
@@ -112,6 +112,7 @@ Usage:
     -b		build nbmake and nbmake wrapper script, if needed
     -D dest	set DESTDIR to dest
     -d		build a full distribution into DESTDIR (including etc files)
+    -E		set "expert" mode; disables some DESTDIR checks
     -j njob	run up to njob jobs in parallel; see make(1)
     -k kernel	build a kernel using the named configuration file
     -M obj	set obj root directory to obj (sets MAKEOBJDIRPREFIX)
@@ -142,10 +143,11 @@ do_buildkernel=false
 do_buildtools=false
 do_rebuildmake=false
 do_removedirs=false
+expert_mode=false
 makeenv=
 makewrapper=
 opt_a=no
-opts='a:B:bD:dhj:k:M:m:nO:oR:rT:tUuw:'
+opts='a:B:bD:dEhj:k:M:m:nO:oR:rT:tUuw:'
 runcmd=
 
 if type getopts >/dev/null 2>&1; then
@@ -179,6 +181,8 @@ while eval $getoptcmd; do case $opt in
 		makeenv="$makeenv DESTDIR";;
 
 	-d)	buildtarget=distribution;;
+
+	-E)	expert_mode=true;;
 
 	-j)	eval $optargcmd
 		parallel="-j $OPTARG";;
@@ -362,8 +366,14 @@ if [ -z "$DESTDIR" ] || [ "$DESTDIR" = "/" ]; then
 		   [ "`uname -m`" != "$MACHINE" ]; then
 			bomb "DESTDIR must be set to a non-root path for cross builds or -d or -R."
 		fi
-		$runcmd echo "===> WARNING: Building to /."
-		$runcmd echo "===> If your kernel is not up to date, this may cause the system to break!"
+		if ! $expert_mode; then
+			bomb "DESTDIR must be set to a non-root path for non -E (expert) builds"
+		fi
+		$runcmd echo "===> WARNING: Building to /, in expert mode."
+		$runcmd echo "===>          This may cause your system to break, including if"
+		$runcmd echo "===>             - your kernel is not up to date"
+		$runcmd echo "===>             - the libraries or toolchain have changed"
+		$runcmd echo "===>          YOU HAVE BEEN WARNED!"
 	fi
 else
 	removedirs="$removedirs $DESTDIR"
@@ -409,7 +419,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.73 2002/12/08 08:42:51 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.74 2002/12/08 22:14:00 lukem Exp $
 #
 
 EOF

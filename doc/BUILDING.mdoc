@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.4 2002/12/08 08:42:52 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.5 2002/12/08 22:14:02 lukem Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -821,6 +821,13 @@ no release sets are placed in ${RELEASEDIR}.
 .Fl d
 is implied by
 .Fl R .
+.
+.It Fl E
+Set
+.Sq expert
+mode;
+.Sy DESTDIR
+does not have to be set to a non-root path for builds when this is set.
 .
 .It Fl j Ar njob
 Passed through to 
