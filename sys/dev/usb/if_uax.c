@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uax.c,v 1.5 2003/04/21 16:38:34 augustss Exp $	*/
+/*	$NetBSD: if_uax.c,v 1.6 2003/04/22 22:07:05 augustss Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -46,10 +46,12 @@
  * Driver for the ASIX AX88172 Fast Ethernet USB 2.0 adapter.
  * Data sheet at
  * http://www.asix.com.tw/datasheet/mac/Ax88172.PDF
+ * There AX88170 datasheet contains RX control register definitions.
+ * http://www.asix.com.tw/datasheet/mac/Ax88170.PDF
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.5 2003/04/21 16:38:34 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.6 2003/04/22 22:07:05 augustss Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -199,6 +201,7 @@ struct uax_softc {
 Static const struct usb_devno uax_devs[] = {
 	{ USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88172 },
 	{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100},
+	{ USB_VENDOR_LINKSYS2,		USB_PRODUCT_LINKSYS2_USB200M },
 	{ USB_VENDOR_NETGEAR,		USB_PRODUCT_NETGEAR_FA120 },
 };
 #define uax_lookup(v, p) ((struct uax_type *)usb_lookup(uax_devs, v, p))
