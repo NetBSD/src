@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2001/04/08 20:31:42 nathanw Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2001/11/14 19:32:37 nathanw Exp $
 #
 
 INCS=	auth.h auth_unix.h clnt.h clnt_soc.h nettype.h \
@@ -6,18 +6,17 @@ INCS=	auth.h auth_unix.h clnt.h clnt_soc.h nettype.h \
 	rpc_msg.h rpcb_clnt.h rpcb_prot.h rpcent.h \
 	svc.h svc_auth.h svc_soc.h types.h xdr.h
 
-.ifnmake getrpcgen
-XRPCGEN != (cd ${.CURDIR} && ${MAKE} -B ${MAKEFLAGS} getrpcgen)
-.endif
-
-getrpcgen:
-	@set -- X `type ${RPCGEN}` && shift `expr $$# - 1` && echo "$$1"
-
-rpcb_prot.h:: rpcb_prot.x ${XRPCGEN}
-	${RPCGEN} -C -h ${.CURDIR}/rpcb_prot.x -o ${.TARGET}
-
 CLEANFILES+=	rpcb_prot.h
 
 INCSDIR=	/usr/include/rpc
 
 .include <bsd.prog.mk>
+
+# Resolve rpcgen's path, to allow it to be a dependency.
+_RPCGEN:=	${RPCGEN}
+.if ${_RPCGEN:M/*} == ""
+_RPCGEN!=	type ${RPCGEN} | awk '{print $$NF}'
+.endif
+
+rpcb_prot.h: rpcb_prot.x ${_RPCGEN}
+	${RPCGEN} -C -h ${.CURDIR}/rpcb_prot.x -o ${.TARGET}

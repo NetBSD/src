@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp.c,v 1.9 1999/08/30 18:28:24 mycroft Exp $	*/
+/*	$NetBSD: ldexp.c,v 1.9.10.1 2001/11/14 19:31:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ldexp.c,v 1.9 1999/08/30 18:28:24 mycroft Exp $");
+__RCSID("$NetBSD: ldexp.c,v 1.9.10.1 2001/11/14 19:31:46 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,12 +47,12 @@ __RCSID("$NetBSD: ldexp.c,v 1.9 1999/08/30 18:28:24 mycroft Exp $");
 #include <math.h>
 
 /*
- * Multiply the given value by 2^exp.
+ * Multiply the given value by 2^expon.
  */
 double
-ldexp(val, exp)
+ldexp(val, expon)
 	double val;
-	int exp;
+	int expon;
 {
 	register int oldexp, newexp;
 	union {
@@ -74,17 +74,17 @@ ldexp(val, exp)
 		 * u.v is denormal.  We must adjust it so that the exponent
 		 * arithmetic below will work.
 		 */
-		if (exp <= DBL_EXP_BIAS) {
+		if (expon <= DBL_EXP_BIAS) {
 			/*
 			 * Optimization: if the scaling can be done in a single
 			 * multiply, or underflows, just do it now.
 			 */
-			if (exp <= -DBL_FRACBITS) {
+			if (expon <= -DBL_FRACBITS) {
 				errno = ERANGE;
 				return (0.0);
 			}
 			mul.v = 0.0;
-			mul.s.dbl_exp = exp + DBL_EXP_BIAS;
+			mul.s.dbl_exp = expon + DBL_EXP_BIAS;
 			u.v *= mul.v;
 			if (u.v == 0.0) {
 				errno = ERANGE;
@@ -93,14 +93,14 @@ ldexp(val, exp)
 			return (u.v);
 		} else {
 			/*
-			 * We know that exp is very large, and therefore the
+			 * We know that expon is very large, and therefore the
 			 * result cannot be denormal (though it may be Inf).
 			 * Shift u.v by just enough to make it normal.
 			 */
 			mul.v = 0.0;
 			mul.s.dbl_exp = DBL_FRACBITS + DBL_EXP_BIAS;
 			u.v *= mul.v;
-			exp -= DBL_FRACBITS;
+			expon -= DBL_FRACBITS;
 			oldexp = u.s.dbl_exp;
 		}
 	}
@@ -109,7 +109,7 @@ ldexp(val, exp)
 	 * u.v is now normalized and oldexp has been adjusted if necessary.
 	 * Calculate the new exponent and check for underflow and overflow.
 	 */
-	newexp = oldexp + exp;
+	newexp = oldexp + expon;
 
 	if (newexp <= 0) {
 		/*
@@ -121,17 +121,17 @@ ldexp(val, exp)
 			return (0.0);
 		}
 		/*
-		 * Denormalize the result.  We do this with a multiply.  If exp
-		 * is very large, it won't fit in a double, so we have to
-		 * adjust the exponent first.  This is safe because we know
-		 * that u.v is normal at this point.
+		 * Denormalize the result.  We do this with a multiply.
+		 * If expon is very large, it won't fit in a double,
+		 * so we have to adjust the exponent first.  This is safe
+		 * because we know that u.v is normal at this point.
 		 */
-		if (exp <= -DBL_EXP_BIAS) {
+		if (expon <= -DBL_EXP_BIAS) {
 			u.s.dbl_exp = 1;
-			exp += oldexp - 1;
+			expon += oldexp - 1;
 		}
 		mul.v = 0.0;
-		mul.s.dbl_exp = exp + DBL_EXP_BIAS;
+		mul.s.dbl_exp = expon + DBL_EXP_BIAS;
 		u.v *= mul.v;
 		return (u.v);
 	} else if (newexp >= DBL_EXP_INFNAN) {

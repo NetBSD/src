@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.7.2.1 2001/08/08 16:13:44 nathanw Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.7.2.2 2001/11/14 19:32:01 nathanw Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -255,7 +255,7 @@ svc_com_create(fd, sendsize, recvsize, netid)
 	SVCXPRT *svc;
 	int madefd = FALSE;
 	int port;
-	struct sockaddr_in sin;
+	struct sockaddr_in sccsin;
 
 	_DIAGASSERT(netid != NULL);
 
@@ -274,9 +274,9 @@ svc_com_create(fd, sendsize, recvsize, netid)
 		madefd = TRUE;
 	}
 
-	memset(&sin, 0, sizeof sin);
-	sin.sin_family = AF_INET;
-	bindresvport(fd, &sin);
+	memset(&sccsin, 0, sizeof sccsin);
+	sccsin.sin_family = AF_INET;
+	bindresvport(fd, &sccsin);
 	listen(fd, SOMAXCONN);
 	svc = svc_tli_create(fd, nconf, NULL, sendsize, recvsize);
 	(void) freenetconfigent(nconf);

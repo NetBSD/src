@@ -1,11 +1,11 @@
-/*	$NetBSD: ldexp_881.c,v 1.1.10.1 2001/11/14 19:31:53 nathanw Exp $	*/
+/*	$NetBSD: sockatmark.c,v 1.1.2.2 2001/11/14 19:32:00 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Klaus Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,25 +38,26 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ldexp_881.c,v 1.1.10.1 2001/11/14 19:31:53 nathanw Exp $");
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: sockatmark.c,v 1.1.2.2 2001/11/14 19:32:00 nathanw Exp $");
+#endif
 
-#include <sys/types.h>
-#include <machine/ieee.h>
-#include <math.h>
+#include "namespace.h"
 
-/*
- * ldexp(value, exp): return value * (2 ** exp).
- */
-double
-ldexp(value, exp2)
-	double value;
-	int exp2;
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+
+#include <assert.h>
+
+int
+sockatmark(s)
+	int s;
 {
-	double temp;
+	int val;
 
-	__asm ("fscalel %2,%1"
-		: "=f" (temp)
-		: "0" (value), "g" (exp2));
-	return (temp);
+	_DIAGASSERT(s != -1);
+
+	if (ioctl(s, SIOCATMARK, &val) == -1)
+		return (-1);
+
+	return (val);
 }

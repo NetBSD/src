@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp_softfloat.c,v 1.1.2.2 2001/10/08 20:17:40 nathanw Exp $	*/
+/*	$NetBSD: ldexp_softfloat.c,v 1.1.2.3 2001/11/14 19:31:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ldexp_softfloat.c,v 1.1.2.2 2001/10/08 20:17:40 nathanw Exp $");
+__RCSID("$NetBSD: ldexp_softfloat.c,v 1.1.2.3 2001/11/14 19:31:54 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -50,9 +50,9 @@ __RCSID("$NetBSD: ldexp_softfloat.c,v 1.1.2.2 2001/10/08 20:17:40 nathanw Exp $"
  * Multiply the given value by 2^exp.
  */
 double
-ldexp(val, exp)
+ldexp(val, exp2)
 	double val;
-	int exp;
+	int exp2;
 {
 	register int oldexp, newexp;
 	union {
@@ -74,17 +74,17 @@ ldexp(val, exp)
 		 * u.v is denormal.  We must adjust it so that the exponent
 		 * arithmetic below will work.
 		 */
-		if (exp <= DBL_EXP_BIAS) {
+		if (exp2 <= DBL_EXP_BIAS) {
 			/*
 			 * Optimization: if the scaling can be done in a single
 			 * multiply, or underflows, just do it now.
 			 */
-			if (exp <= -DBL_FRACBITS) {
+			if (exp2 <= -DBL_FRACBITS) {
 				errno = ERANGE;
 				return (0.0);
 			}
 			mul.v = 0.0;
-			mul.s.dbl_exp = exp + DBL_EXP_BIAS;
+			mul.s.dbl_exp = exp2 + DBL_EXP_BIAS;
 			u.v *= mul.v;
 			if (u.v == 0.0) {
 				errno = ERANGE;
@@ -100,7 +100,7 @@ ldexp(val, exp)
 			mul.v = 0.0;
 			mul.s.dbl_exp = DBL_FRACBITS + DBL_EXP_BIAS;
 			u.v *= mul.v;
-			exp -= DBL_FRACBITS;
+			exp2 -= DBL_FRACBITS;
 			oldexp = u.s.dbl_exp;
 		}
 	}
@@ -109,7 +109,7 @@ ldexp(val, exp)
 	 * u.v is now normalized and oldexp has been adjusted if necessary.
 	 * Calculate the new exponent and check for underflow and overflow.
 	 */
-	newexp = oldexp + exp;
+	newexp = oldexp + exp2;
 
 	if (newexp <= 0) {
 		/*
@@ -126,12 +126,12 @@ ldexp(val, exp)
 		 * adjust the exponent first.  This is safe because we know
 		 * that u.v is normal at this point.
 		 */
-		if (exp <= -DBL_EXP_BIAS) {
+		if (exp2 <= -DBL_EXP_BIAS) {
 			u.s.dbl_exp = 1;
-			exp += oldexp - 1;
+			exp2 += oldexp - 1;
 		}
 		mul.v = 0.0;
-		mul.s.dbl_exp = exp + DBL_EXP_BIAS;
+		mul.s.dbl_exp = exp2 + DBL_EXP_BIAS;
 		u.v *= mul.v;
 		return (u.v);
 	} else if (newexp >= DBL_EXP_INFNAN) {
