@@ -199,7 +199,6 @@ ENTRY(pbzero)
 	push	%ebp
 	mov	%esp, %ebp
 	push	%es
-	push	%esi
 	push	%edi
 	push	%ecx
 
@@ -218,7 +217,6 @@ ENTRY(pbzero)
 
 	pop	%ecx
 	pop	%edi
-	pop	%esi
 	pop	%es
 	pop	%ebp
 
