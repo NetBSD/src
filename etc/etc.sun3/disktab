@@ -1,5 +1,5 @@
 #
-#	$NetBSD: disktab,v 1.4 1999/05/17 03:35:55 gwr Exp $
+#	$NetBSD: disktab,v 1.5 1999/05/18 07:51:34 gwr Exp $
 #
 # Disk geometry and partition layout tables. 
 # Key:
@@ -31,9 +31,9 @@
 # (5 cylinders needed for maintenance + replacement sectors)
 #
 rdroot|ramdiskroot|RAM-disk root FS image:\
-	:ty=simulated:se#512:ns#16:nt#2:nc#16:\
-	:ta=4.4BSD:oa#0:pa#512:\
-	:ob#0:pb#0:oc#0:pc#512:
+	:ty=simulated:se#512:ns#20:nt#2:nc#20:\
+	:ta=4.4BSD:oa#0:pa#640:\
+	:ob#0:pb#0:oc#0:pc#640:
 miniroot|Installation root-on-swap FS image:\
 	:ty=simulated:se#512:ns#32:nt#8:nc#80:\
 	:ta=4.4BSD:oa#0:pa#20480:\
