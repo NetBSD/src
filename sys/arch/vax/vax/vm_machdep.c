@@ -1,6 +1,5 @@
-/*      $NetBSD: vm_machdep.c,v 1.20 1996/02/02 18:09:11 mycroft Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.21 1996/02/11 13:39:54 ragge Exp $       */
 
-#undef SWDEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -181,74 +180,102 @@ cpu_set_kpc(p, pc)
 	nyproc->PC = pc + 2;
 }
 
+/*
+ * Put in a process on the correct run queue based on it's priority
+ * and set the bit corresponding to the run queue.
+ */
 void 
 setrunqueue(p)
 	struct proc *p;
 {
-	struct prochd *q;
-	int knummer;
+	struct	prochd *q;
+	int	knummer;
 
-	if(p->p_back) 
-		panic("sket sig i setrunqueue\n");
-	knummer=(p->p_priority>>2);
-	bitset(knummer,whichqs);
-	q=&qs[knummer];
+	if (p->p_back) 
+		panic("sket sig i setrunqueue");
 
-	_insque(p,q);
+	knummer = (p->p_priority >> 2);
+	bitset(knummer, whichqs);
+	q = &qs[knummer];
+
+	_insque(p, q);
 
 	return;
 }
 
+/*
+ * Remove a process from the run queue. If this is the last process
+ * on that queue, clear the queue bit in whichqs.
+ */
 void
 remrq(p)
 	struct proc *p;
 {
-	struct proc *qp;
-	int bitnr;
+	struct	proc *qp;
+	int	bitnr;
 
-	bitnr=(p->p_priority>>2);
-	if(bitisclear(bitnr,whichqs))
-		panic("remrq: Process not in queue\n");
+	bitnr = (p->p_priority >> 2);
+	if (bitisclear(bitnr, whichqs))
+		panic("remrq: Process not in queue");
 
 	_remque(p);
 
-	qp=(struct proc *)&qs[bitnr];
-	if(qp->p_forw==qp)
-		bitclear(bitnr,whichqs);
+	qp = (struct proc *)&qs[bitnr];
+	if (qp->p_forw == qp)
+		bitclear(bitnr, whichqs);
 }
 
-volatile caddr_t curpcb,nypcb;
+volatile caddr_t curpcb, nypcb;
 
-cpu_switch(){
-	int i,j,s;
-	struct proc *p;
-	volatile struct proc *q;
-	extern unsigned int want_resched,scratch;
+/*
+ * Machine dependent part of switch function. Find the next process 
+ * with the highest priority to run. If the process queues are empty,
+ * sleep waiting for something to happen. The idle loop resides here.
+ */
+void
+cpu_switch()
+{
+	int	i,j,s;
+	struct	proc *p, *q;
+	extern	unsigned int want_resched, scratch;
 
-hej:	
-	/* F|rst: Hitta en k|. */
-	s=splhigh();
-	if((i=ffs(whichqs)-1)<0) goto idle;
+again:	
+	/* First: Search for a queue. */
+	s = splhigh();
+	if ((i = ffs(whichqs) -1 ) < 0)
+		goto idle;
 
 found:
+	/*
+	 * A queue with runnable processes found.
+	 * Get first process from queue. 
+	 */
 	asm(".data;savpsl:	.long	0;.text;movpsl savpsl");
-	q=(struct proc *)&qs[i];
-	if(q->p_forw==q)
+	q = (struct proc *)&qs[i];
+	if (q->p_forw == q)
 		panic("swtch: no process queued");
 
-	bitclear(i,whichqs);
-	p=q->p_forw;
+	/* Remove process from queue */
+	bitclear(i, whichqs);
+	p = q->p_forw;
 	_remque(p);
 
-	if(q->p_forw!=q) bitset(i,whichqs);
-	if(curproc) (u_int)curpcb=VIRT2PHYS(&curproc->p_addr->u_pcb);
-	else (u_int)curpcb=scratch;
-	(u_int)nypcb=VIRT2PHYS(&p->p_addr->u_pcb);
+	if (q->p_forw != q)
+		bitset(i, whichqs);
+	if (curproc)
+		(u_int)curpcb = VIRT2PHYS(&curproc->p_addr->u_pcb);
+	else
+		(u_int)curpcb = scratch;
+	(u_int)nypcb = VIRT2PHYS(&p->p_addr->u_pcb);
 
-	if(!p) panic("switch: null proc pointer\n");
-	want_resched=0;
-	curproc=p;
-	if(curpcb==nypcb) return;
+	if (p == 0)
+		panic("switch: null proc pointer");
+	want_resched = 0;
+	curproc = p;
+
+	/* Don't change process if it's the same that we'r already running */
+	if (curpcb == nypcb)
+		return;
 
 	asm("pushl savpsl");
 	asm("jsb _loswtch");
@@ -257,14 +284,15 @@ found:
 
 idle:	
 	spl0();
-	while(!whichqs);
-	goto hej;
+	while (whichqs == 0)
+		;
+	goto again;
 }
 
 /* Should check that values is in bounds XXX */
 copyinstr(from, to, maxlen, lencopied)
-void *from, *to;
-u_int *lencopied,maxlen;
+	void *from, *to;
+	u_int *lencopied,maxlen;
 {
 	u_int i;
 	void *addr=&curproc->p_addr->u_pcb.iftrap;
@@ -286,8 +314,8 @@ asm("Lstr:	ret");
 
 /* Should check that values is in bounds XXX */
 copyoutstr(from, to, maxlen, lencopied)
-void *from, *to;
-u_int *lencopied,maxlen;
+	void *from, *to;
+	u_int *lencopied,maxlen;
 {
 	u_int i;
 	char *gfrom=from, *gto=to;
@@ -311,9 +339,9 @@ cpu_exec_aout_makecmds(p, epp)
 {
 	int error;
 	struct exec *ep;
-/*
- * Compatibility with reno programs.
- */
+	/*
+	 * Compatibility with reno programs.
+	 */
 	ep=epp->ep_hdr;
 	switch (ep->a_midmag) {
 	case 0x10b: /* ZMAGIC in 4.3BSD Reno programs */
@@ -400,15 +428,17 @@ reno_zmagic(p, epp)
 
 void
 cpu_exit(p)
-	struct proc *p;
+	struct	proc *p;
 {
-	extern unsigned int scratch;
+	extern	unsigned int scratch;
 
-	if(!p) panic("cpu_exit from null process");
+	if (p == 0)
+		panic("cpu_exit from null process");
 	vmspace_free(p->p_vmspace);
 
 	(void) splimp();
-	mtpr(scratch+NBPG,PR_KSP);/* Must change kernel stack before freeing */
+	/* Must change kernel stack before freeing */
+	mtpr(scratch + NBPG, PR_KSP);
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 	cpu_switch();
 	/* NOTREACHED */
@@ -481,7 +511,7 @@ copyout(from, to, len)
 copyin(from, to, len)
 	void *from, *to;
 {
-	void *addr=&curproc->p_addr->u_pcb.iftrap;
+	void *addr = &curproc->p_addr->u_pcb.iftrap;
 
 	return locopyin(from, to, len, addr);
 }
