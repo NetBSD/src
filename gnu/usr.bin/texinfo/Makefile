@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2004/07/12 23:45:26 wiz Exp $
+#	$NetBSD: Makefile,v 1.19 2004/07/18 15:42:25 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,10 @@ SUBDIR=		common .WAIT info infokey install-info makeinfo texi2dvi texindex
 .if ${MKSHARE} != "no"
 FILESDIR=	/usr/share/misc
 FILES=		epsf.tex texinfo.cat texinfo.dtd texinfo.tex texinfo.xsl
+VERSION!=	sed -n "s/^\#define VERSION \"\(.*\)\"/\1/p" ${NETBSDSRCDIR}/gnu/usr.bin/texinfo/common/config.h
+
+texinfo.cat: texinfo-cat.in
+	sed 's/__VERSION__/${VERSION}/g' ${.ALLSRC} >$@
 .endif
 
 .if ${MKNLS} != "no"
@@ -29,7 +33,7 @@ DIST=		${NETBSDSRCDIR}/gnu/dist
 IDIST=		${DIST}/texinfo
 INFOFLAGS=	-I${IDIST}/doc
 
-.PATH: ${IDIST} ${IDIST}/doc ${IDIST}/makeinfo ${IDIST}/po ${IDIST}/util
+.PATH: ${IDIST} ${IDIST}/doc ${IDIST}/po ${IDIST}/util
 
 .include <bsd.info.mk>
 .include <bsd.prog.mk>
