@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.5.2.1 2001/06/27 03:49:41 perseant Exp $	*/
+/*	$NetBSD: config.h,v 1.5.2.2 2001/07/13 05:14:22 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,6 +34,11 @@
  *
  *	@(#)config.h	8.3 (Berkeley) 5/24/95
  */
+
+/*
+ * Version of the LFS to make.  Default to the newest one.
+ */
+#define DFL_VERSION LFS_VERSION
 
 /*
  * The following two constants set the default block and fragment sizes.
