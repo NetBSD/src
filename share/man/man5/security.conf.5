@@ -1,4 +1,4 @@
-.\"	$NetBSD: security.conf.5,v 1.20 2003/02/21 22:47:54 jhawk Exp $
+.\"	$NetBSD: security.conf.5,v 1.21 2003/03/03 06:41:51 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -165,9 +165,8 @@ phase, instruct mtree to follow symbolic links.
 If
 .Sy check_passwd
 is enabled, most warnings will be suppressed for entries whose shells
-are listed in this space-seperated list.  This is of particular value
-when those shells are not
-in
+are listed in this space-seperated list.
+This is of particular value when those shells are not in
 .Pa /etc/shells .
 .It Sy check_passwd_nowarn_users
 If
@@ -195,7 +194,8 @@ Change the backup directory from
 .It Sy diff_options
 Specify the options passed to
 .Xr diff 1
-when it is invoked to show changes made to system files. Defaults to
+when it is invoked to show changes made to system files.
+Defaults to
 .Dq -u ,
 for unified-format context-diffs.
 .It Sy pkgdb_dir
