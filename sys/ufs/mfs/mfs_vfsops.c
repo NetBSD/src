@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.2 1994/06/29 06:47:12 cgd Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.3 1994/12/15 19:51:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -247,7 +247,6 @@ mfs_mount(mp, path, data, ndp, p)
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 		&size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
-	(void) mfs_statfs(mp, &mp->mnt_stat, p);
 	return (0);
 }
 

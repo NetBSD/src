@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.11 1994/12/14 13:42:18 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.12 1994/12/15 19:54:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -203,7 +203,6 @@ cd9660_mount(mp, path, data, ndp, p)
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
-	(void) cd9660_statfs(mp, &mp->mnt_stat, p);
 	return 0;
 }
 
