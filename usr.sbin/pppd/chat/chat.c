@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.10 1997/09/26 19:52:18 christos Exp $	*/
+/*	$NetBSD: chat.c,v 1.11 1997/09/26 20:14:42 christos Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -76,7 +76,7 @@
 #if 0
 static char rcsid[] = "Id: chat.c,v 1.15 1997/07/14 03:50:22 paulus Exp ";
 #else
-__RCSID("$NetBSD: chat.c,v 1.10 1997/09/26 19:52:18 christos Exp $");
+__RCSID("$NetBSD: chat.c,v 1.11 1997/09/26 20:14:42 christos Exp $");
 #endif
 #endif
 
@@ -125,7 +125,7 @@ __RCSID("$NetBSD: chat.c,v 1.10 1997/09/26 19:52:18 christos Exp $");
 
 /*************** Micro getopt() *********************************************/
 #define	OPTION(c,v)	(_O&2&&**v?*(*v)++:!c||_O&4?0:(!(_O&1)&& \
-				(--c,++v),_O=4,c&&**v=='-'&&v[0][1]?*++*v=='-'\
+				((--c,++v),_O=4,c)&&**v=='-'&&v[0][1]?*++*v=='-'\
 				&&!v[0][1]?(--c,++v,0):(_O=2,*(*v)++):0))
 #define	OPTARG(c,v)	(_O&2?**v||(++v,--c)?(_O=1,--c,*v++): \
 				(_O=4,(char*)0):(char*)0)
@@ -377,7 +377,7 @@ char **argv;
 void do_file (chat_file)
 char *chat_file;
     {
-    int linect, len, sendflg;
+    int linect, sendflg;
     char *sp, *arg, quote;
     char buf [STR_LEN];
     FILE *cfp;
