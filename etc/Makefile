@@ -1,4 +1,4 @@
-#	@(#)Makefile	8.4 (Berkeley) 1/25/94
+#	@(#)Makefile	8.7 (Berkeley) 5/25/95
 
 NOOBJ=	oobj
 
@@ -7,7 +7,7 @@ NOOBJ=	oobj
 BIN1=	aliases amd-home amd-n changelist csh.cshrc csh.login csh.logout \
 	crontab crontab.local daily dm.conf exports ftpusers ftpwelcome \
 	gettytab group hosts hosts.lpd inetd.conf man.conf \
-	monthly motd netgroup phones printcap protocols rc \
+	monthly motd netgroup networks phones printcap protocols rc \
 	rc.local remote security services shells syslog.conf ttys weekly \
 	etc.${MACHINE}/disktab
 
@@ -25,11 +25,11 @@ all clean cleandir depend etc install lint:
 
 distribution:
 	# Hand-craft the password file first.
-	-mkdir /etc /dev
+	-mkdir ${DESTDIR}/etc ${DESTDIR}/dev ${DESTDIR}/tmp
 	cp master.passwd ${DESTDIR}/tmp/p
-	pwd_mkdb -p /tmp/p
-	rm -f /tmp/p
-	cp group /etc/group
+	-pwd_mkdb -p ${DESTDIR}/tmp/p
+	rm -f ${DESTDIR}/tmp/p
+	cp group ${DESTDIR}/etc/group
 	# Build the tree.
 	-mtree -def mtree/4.4BSD.dist -p ${DESTDIR}/ -u
 	# install devices
@@ -39,7 +39,7 @@ distribution:
 .endif
 	install -c -o root -g wheel -m 555 \
 	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
-	(cd /dev && ./MAKEDEV std)
+	(cd ${DESTDIR}/dev && ./MAKEDEV std)
 	install -c -o root -g wheel -m 444 COPYRIGHT ${DESTDIR}/
 	install -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	install -c -o root -g wheel -m 600 hosts.equiv ${DESTDIR}/etc
@@ -97,18 +97,20 @@ distribution:
 .endif
 	# There are certain symbolic links we have to have, and
 	# no other place to have install them.
-	(cd / && rm -f sys && ln -s usr/src/sys sys)
-	(cd /etc && rm -f rmt && ln -s /usr/sbin/rmt rmt)
-	(cd /etc && rm -f termcap && ln -s /usr/share/misc/termcap termcap)
-	(cd /usr && rm -f X11 && ln -s X11R5 X11)
-	(cd /usr/bin && rm -f X11 && ln -s /usr/X11/bin X11)
-	(cd /usr/lib && rm -f X && ln -s /usr/hpux/lib/X X)
-	(cd /usr/lib && rm -f X11 && ln -s /usr/X11/lib X11)
-	(cd /usr/lib && rm -f grmd && ln -s /usr/hpux/lib/grmd grmd)
-	(cd /usr/lib && rm -f tmac && ln -s /usr/share/tmac tmac)
-	(cd /usr/ucb && rm -f rdist && ln -s /usr/bin/rdist rdist)
+	(cd ${DESTDIR}/ && rm -f sys && ln -s usr/src/sys sys)
+	(cd ${DESTDIR}/etc && rm -f rmt && ln -s /usr/sbin/rmt rmt)
+	(cd ${DESTDIR}/etc && \
+	    rm -f termcap && ln -s /usr/share/misc/termcap termcap)
+	(cd ${DESTDIR}/usr && rm -f X11 && ln -s X11R5 X11)
+	(cd ${DESTDIR}/usr && rm -f X11 && ln -s X11R6 X11)
+	(cd ${DESTDIR}/usr/bin && rm -f X11 && ln -s /usr/X11/bin X11)
+	(cd ${DESTDIR}/usr/lib && rm -f X && ln -s /usr/hpux/lib/X X)
+	(cd ${DESTDIR}/usr/lib && rm -f X11 && ln -s /usr/X11/lib X11)
+	(cd ${DESTDIR}/usr/lib && rm -f grmd && ln -s /usr/hpux/lib/grmd grmd)
+	(cd ${DESTDIR}/usr/lib && rm -f tmac && ln -s /usr/share/tmac tmac)
+	(cd ${DESTDIR}/usr/ucb && rm -f rdist && ln -s /usr/bin/rdist rdist)
 .if ${MACHINE} == "hp300"
-	(cd /usr/bin && rm -f X11 && ln -s /usr/X11/bin X11)
+	(cd ${DESTDIR}/usr/bin && rm -f X11 && ln -s /usr/X11/bin X11)
 .endif
 
 hcx9-distribution:
