@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.13 1998/10/12 16:09:24 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.14 1998/10/13 02:09:47 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -240,8 +240,8 @@ atapi_probedev(atapi, target)
 #ifdef ATAPI_DEBUG_PROBE
 		printf("%s drive %d: cmdsz 0x%x drqtype 0x%x\n",
 		    atapi->sc_dev.dv_xname, target,
-		    id->config.cmd_drq_rem & ATAPI_PACKET_SIZE_MASK,
-		    id->config.cmd_drq_rem & ATAPI_DRQ_MASK);
+		    id->atap_config & ATAPI_CFG_CMD_MASK,
+		    id->atap_config & ATAPI_CFG_DRQ_MASK);
 #endif
 		/*
 		 * Allocate a device link and try and attach
