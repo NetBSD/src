@@ -54,5 +54,6 @@ dev/pci/if_le_pci.c
 dev/pci/if_levar.h
 dev/pci/pci.c
 dev/pci/pcivar.h
+dev/pci/ppb.c
 vm/vm_page.c
 vm/vm_page.h
