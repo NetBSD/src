@@ -35,14 +35,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.17 1993/06/29 19:12:44 deraadt Exp $
+ *	$Id: fd.c,v 1.18 1993/07/06 06:06:29 deraadt Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
  */
 /*
  * $Log: fd.c,v $
- * Revision 1.17  1993/06/29 19:12:44  deraadt
+ * Revision 1.18  1993/07/06 06:06:29  deraadt
+ * clean up code for timeout/untimeout/wakeup prototypes.
+ *
+ * Revision 1.17  1993/06/29  19:12:44  deraadt
  * uninitialized variable reported by <jfw@ksr.com>
  *
  * Revision 1.16  1993/06/21  09:39:52  deraadt
@@ -404,7 +407,7 @@ fdstrategy(bp)
 	dp = &(fdc->head);
 	s = splbio();
 	disksort(dp, bp);
-	untimeout(fd_turnoff,fdu); /* a good idea */
+	untimeout((timeout_t)fd_turnoff, (caddr_t)fdu); /* a good idea */
 	fdstart(fdcu);
 	splx(s);
 	return;
@@ -468,7 +471,7 @@ fd_turnon(fdu_t fdu)
 	{
 		fd_turnon1(fdu);
 		fd->flags |= FD_MOTOR_WAIT;
-		timeout(fd_motor_on,fdu,hz); /* in 1 sec its ok */
+		timeout((timeout_t)fd_motor_on, (caddr_t)fdu, hz); /* in 1 sec its ok */
 	}
 }
 
@@ -668,8 +671,8 @@ int fdstate(fdcu_t fdcu, fdc_p fdc)
 	TRACE1("fd%d",fdu);
 	TRACE1("[%s]",fdstates[fdc->state]);
 	TRACE1("(0x%x)",fd->flags);
-	untimeout(fd_turnoff, fdu);
-	timeout(fd_turnoff,fdu,4 * hz);
+	untimeout((timeout_t)fd_turnoff, (caddr_t)fdu);
+	timeout((timeout_t)fd_turnoff, (caddr_t)fdu, 4 * hz);
 	switch (fdc->state)
 	{
 	case DEVIDLE:
@@ -716,7 +719,7 @@ int fdstate(fdcu_t fdcu, fdc_p fdc)
 		return(0);	/* will return later */
 	case SEEKWAIT:
 		/* allow heads to settle */
-		timeout(fd_pseudointr,fdcu,hz/50);
+		timeout((timeout_t)fd_pseudointr, (caddr_t)fdcu, hz/50);
 		fdc->state = SEEKCOMPLETE;
 		return(0);	/* will return later */
 		break;
@@ -765,10 +768,10 @@ int fdstate(fdcu_t fdcu, fdc_p fdc)
 		out_fdc(fdcu,fd->ft->gap);		/* gap size */
 		out_fdc(fdcu,fd->ft->datalen);		/* data length */
 		fdc->state = IOCOMPLETE;
-		timeout(fd_timeout,fdcu,2 * hz);
+		timeout((timeout_t)fd_timeout, (caddr_t)fdcu, 2 * hz);
 		return(0);	/* will return later */
 	case IOCOMPLETE: /* IO DONE, post-analyze */
-		untimeout(fd_timeout,fdcu);
+		untimeout((timeout_t)fd_timeout, (caddr_t)fdcu);
 		for(i=0;i<7;i++)
 		{
 			fdc->status[i] = in_fdc(fdcu);
@@ -822,7 +825,7 @@ int fdstate(fdcu_t fdcu, fdc_p fdc)
 		return(0);	/* will return later */
 	case RECALWAIT:
 		/* allow heads to settle */
-		timeout(fd_pseudointr,fdcu,hz/30);
+		timeout((timeout_t)fd_pseudointr, (caddr_t)fdcu, hz/30);
 		fdc->state = RECALCOMPLETE;
 		return(0);	/* will return later */
 	case RECALCOMPLETE:

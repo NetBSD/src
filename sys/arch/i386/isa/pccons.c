@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.21 1993/06/16 02:57:20 mycroft Exp $
+ *	$Id: pccons.c,v 1.22 1993/07/06 06:06:32 deraadt Exp $
  */
 
 /*
@@ -614,7 +614,7 @@ cursor(int a)
 	outb(addr_6845+1, 18);
 #endif	FAT_CURSOR
 	if (a == 0)
-		timeout(cursor, 0, hz/10);
+		timeout((timeout_t)cursor, (caddr_t)0, hz/10);
 #ifdef XSERVER						/* 15 Aug 92*/
 	}
 #endif /* XSERVER */

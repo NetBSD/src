@@ -12,13 +12,16 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.11 1993/06/14 04:16:03 andrew Exp $
+ *	$Id: aha1542.c,v 1.12 1993/07/06 06:06:26 deraadt Exp $
  */
 
 /*
  * HISTORY
  * $Log: aha1542.c,v $
- * Revision 1.11  1993/06/14 04:16:03  andrew
+ * Revision 1.12  1993/07/06 06:06:26  deraadt
+ * clean up code for timeout/untimeout/wakeup prototypes.
+ *
+ * Revision 1.11  1993/06/14  04:16:03  andrew
  * Reduced bus-on time from the default of 11ms -> 9ms, to prevent floppy from
  * becoming data-starved during simultaneous fd & scsi activity.
  *
@@ -666,7 +669,7 @@ aha_free_ccb(int unit, struct aha_ccb *ccb, int flags)
 	 * one to come free, starting with queued entries*
 	 */
 	if (!ccb->next)
-		wakeup(&aha_ccb_free[unit]);
+		wakeup( (caddr_t)&aha_ccb_free[unit]);
 	if (!(flags & SCSI_NOMASK)) 
 		splx(opri);
 }
@@ -689,7 +692,7 @@ aha_get_ccb(int unit, int flags)
 	 * to come free
 	 */
 	while ((!(rc = aha_ccb_free[unit])) && (!(flags & SCSI_NOSLEEP)))
-		sleep(&aha_ccb_free[unit], PRIBIO);
+		sleep((caddr_t)&aha_ccb_free[unit], PRIBIO);
 	if (rc) {
 		aha_ccb_free[unit] = aha_ccb_free[unit]->next;
 		rc->flags = CCB_ACTIVE;
@@ -1255,8 +1258,8 @@ aha_bus_speed_check(int unit, int speed)
 	 * put the test data into the buffer and calculate
 	 * it's address. Read it onto the board
 	 */
-	strcpy(aha_scratch_buf,aha_test_string);
-	lto3b(KVTOPHYS(aha_scratch_buf),ad);
+	strcpy((char *)aha_scratch_buf, (char *)aha_test_string);
+	lto3b(KVTOPHYS(aha_scratch_buf), ad);
 
 	aha_cmd(unit,3, 0, 0, (u_char *)0, AHA_WRITE_FIFO,
 		ad[0], ad[1], ad[2]);
@@ -1275,7 +1278,7 @@ aha_bus_speed_check(int unit, int speed)
 	 * return the correct value depending upon the result
 	 * if copy fails.. assume too fast
 	 */
-	if(strcmp(aha_test_string,aha_scratch_buf))
+	if(strcmp(aha_test_string, (char *)aha_scratch_buf))
 		return(0);
 	return(aha_bus_speeds[speed].nsecs);
 }
@@ -1415,5 +1418,5 @@ aha_timeout(int arg)
 		}
 	}
 	splx(s);
-	timeout(aha_timeout, arg, SLEEPTIME);
+	timeout((timeout_t)aha_timeout, (caddr_t)arg, SLEEPTIME);
 }
