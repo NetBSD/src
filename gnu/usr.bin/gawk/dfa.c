@@ -2035,6 +2035,7 @@ dfafree(d)
   if (d->realtrans) free((ptr_t) d->realtrans);
   if (d->fails) free((ptr_t) d->fails);
   if (d->newlines) free((ptr_t) d->newlines);
+  if (d->success) free((ptr_t) d->success);
   for (dm = d->musts; dm; dm = ndm)
     {
       ndm = dm->next;
