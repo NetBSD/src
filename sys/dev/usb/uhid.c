@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.15 1999/01/10 11:13:36 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.16 1999/04/21 19:02:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -358,7 +358,7 @@ uhidread(dev, uio, flag)
 		DPRINTFN(1, ("uhidread immed\n"));
 		
 		r = usbd_get_report(sc->sc_iface, UHID_INPUT_REPORT,
-				    sc->sc_iid, sc->sc_ibuf, sc->sc_isize);
+				    sc->sc_iid, buffer, sc->sc_isize);
 		if (r != USBD_NORMAL_COMPLETION)
 			return (EIO);
 		return (uiomove(buffer, sc->sc_isize, uio));
