@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.50 1999/11/13 22:58:11 mhitch Exp $	*/
+/*	$NetBSD: dc.c,v 1.51 1999/11/19 02:17:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.50 1999/11/13 22:58:11 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.51 1999/11/19 02:17:01 simonb Exp $");
 
 /*
  * devDC7085.c --
@@ -138,8 +138,10 @@ void dcPollc	__P((dev_t, int));
 void dc_consinit __P((dev_t dev, dcregs *dcaddr));
 
 void dc_tty_init __P((struct dc_softc *sc, dev_t dev));
+#if NRASTERCONSOLE > 0
 void dc_kbd_init  __P((struct dc_softc *sc, dev_t dev));
 void dc_mouse_init __P((struct dc_softc *sc, dev_t dev));
+#endif
 
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */
@@ -311,10 +313,12 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 			dc_tty_init(sc, cn_tab->cn_dev);
 		}
 
+#if NRASTERCONSOLE > 0
 		if (major(cn_tab->cn_dev) == RCONSDEV) {
 			dc_kbd_init(sc, makedev(DCDEV, DCKBD_PORT));
 			dc_mouse_init(sc, makedev(DCDEV, DCMOUSE_PORT));
 		}
+#endif
 	}
 	return (1);
 }
@@ -365,6 +369,7 @@ dc_tty_init(sc, dev)
 	splx(s);
 }
 
+#if NRASTERCONSOLE > 0
 void
 dc_kbd_init(sc, dev)
 	struct dc_softc *sc;
@@ -404,20 +409,18 @@ dc_mouse_init(sc, dev)
 	(void) cold_dcparam(&ctty, &cterm, sc);
 
 
-#if	NRASTERCONSOLE > 0
 	/*
 	 * This is a hack.  As Ted Lemon observed, we want bstreams,
 	 * or failing that, a line discipline to do the inkernel DEC
 	 * mouse tracking required by Xservers.
 	 */
-
 	DELAY(10000);
 	MouseInit(ctty.t_dev, dcPutc, dcGetc);
 	DELAY(10000);
-#endif	/* NRASTERCONSOLE */
 
 	splx(s);
 }
+#endif	/* NRASTERCONSOLE */
 
 /*
  * open tty
