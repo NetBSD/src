@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.6 2003/08/07 09:27:57 agc Exp $	*/
+/*	$NetBSD: getcap.c,v 1.7 2004/04/25 04:35:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.6 2003/08/07 09:27:57 agc Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.7 2004/04/25 04:35:36 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,7 +94,8 @@ static size_t	 topreclen;	/* toprec length */
 static char	*toprec;	/* Additional record specified by cgetset() */
 static int	 gottoprec;	/* Flag indicating retrieval of toprecord */
 
-static int getent(char **, size_t *, char **, int, const char *, int, char *);
+static int getent(char **, size_t *, const char * const *, int, const char *,
+	int, char *);
 static int nfcmp(char *, char *);
 
 /*
@@ -186,7 +187,7 @@ cgetcap(char *buf, const char *cap, int type)
  * reference loop is detected.
  */
 int
-cgetent(char **buf, char **db_array, const char *name)
+cgetent(char **buf, const char * const *db_array, const char *name)
 {
 	size_t dummy;
 
@@ -212,10 +213,11 @@ cgetent(char **buf, char **db_array, const char *name)
  *	  MAX_RECURSION.
  */
 static int
-getent(char **cap, size_t *len, char **db_array, int fd, const char *name,
-	int depth, char *nfield)
+getent(char **cap, size_t *len, const char * const * db_array, int fd,
+	const char *name, int depth, char *nfield)
 {
-	char *r_end, *rp = NULL, **db_p;	/* pacify gcc */
+	char *r_end, *rp = NULL;		/* pacify gcc */
+	const char * const *db_p;
 	int myfd = 0, eof, foundit;
 	char *record;
 	int tc_not_resolved;
@@ -602,7 +604,7 @@ cgetmatch(const char *buf, const char *name)
 }
 
 int
-cgetfirst(char **buf, char **db_array)
+cgetfirst(char **buf, const char * const *db_array)
 {
 	(void)cgetclose();
 	return (cgetnext(buf, db_array));
@@ -610,7 +612,7 @@ cgetfirst(char **buf, char **db_array)
 
 static FILE *pfp;
 static int slash;
-static char **dbp;
+static const char * const *dbp;
 
 int
 cgetclose(void)
@@ -631,7 +633,7 @@ cgetclose(void)
  * upon returning an entry with more remaining, and -1 if an error occurs.
  */
 int
-cgetnext(char **bp, char **db_array)
+cgetnext(char **bp, const char * const *db_array)
 {
 	size_t len;
 	int status, done;
