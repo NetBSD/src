@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2002/01/31 05:11:16 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2002/01/31 16:25:54 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2002/01/31 05:11:16 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2002/01/31 16:25:54 uch Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -658,11 +658,12 @@ cpu_reboot(int howto, char *bootstr)
 	/* If "always halt" was specified as a boot flag, obey. */
 	if ((boothowto & RB_HALT) != 0) {
 		howto |= RB_HALT;
-	} else {
+	}
+
 #ifdef KLOADER_KERNEL_PATH
+	if ((howto & RB_HALT) == 0)
 		kloader_reboot_setup(KLOADER_KERNEL_PATH);
 #endif
-	}
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0) {
