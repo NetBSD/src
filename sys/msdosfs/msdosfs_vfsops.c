@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.25 1994/12/15 20:47:51 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.26 1995/01/18 09:14:37 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -183,10 +183,8 @@ msdosfs_mount(mp, path, data, ndp, p)
 	pmp->pm_gid = args.gid;
 	pmp->pm_uid = args.uid;
 	pmp->pm_mask = args.mask;
-	(void) copyinstr(path, (caddr_t)mp->mnt_stat.f_mntonname,
-	    sizeof(mp->mnt_stat.f_mntonname) - 1, &size);
-	bzero(mp->mnt_stat.f_mntonname + size,
-	    sizeof(mp->mnt_stat.f_mntonname) - size);
+	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
+	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
@@ -448,11 +446,8 @@ msdosfs_unmount(mp, mntflags, p)
 	int error, flags;
 
 	flags = 0;
-	if (mntflags & MNT_FORCE) {
-		if (mp->mnt_flag & MNT_ROOTFS)
-			return (EINVAL);
+	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	}
 #ifdef QUOTA
 #endif
 	if (error = vflush(mp, NULLVP, flags))
@@ -539,12 +534,10 @@ msdosfs_statfs(mp, sbp, p)
 	sbp->f_files = pmp->pm_RootDirEnts;			/* XXX */
 	sbp->f_ffree = 0;	/* what to put in here? */
 	if (sbp != &mp->mnt_stat) {
-		bcopy((caddr_t)mp->mnt_stat.f_mntonname,
-		    (caddr_t)&sbp->f_mntonname[0], MNAMELEN);
-		bcopy((caddr_t)mp->mnt_stat.f_mntfromname,
-		    (caddr_t)&sbp->f_mntfromname[0], MNAMELEN);
+		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
+		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (0);
 }
