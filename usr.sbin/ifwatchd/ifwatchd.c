@@ -1,3 +1,5 @@
+/*	$NetBSD: ifwatchd.c,v 1.2 2001/11/19 10:20:34 martin Exp $	*/
+
 /*
  * Copyright (c) 2001 Martin Husemann <martin@duskware.de>
  * All rights reserved.
@@ -22,30 +24,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/file.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/mbuf.h>
-#include <sys/sysctl.h>
-
+#include <sys/queue.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <unistd.h>
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <netdb.h>
-
-#include <sys/queue.h>
 
 /* local functions */
 static void usage(void);
