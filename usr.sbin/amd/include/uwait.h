@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)uwait.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: uwait.h,v 1.2 1994/06/13 19:50:10 mycroft Exp $
- *
+ *	from: @(#)uwait.h	8.1 (Berkeley) 6/6/93
+ *	$Id: uwait.h,v 1.3 1994/06/13 20:50:37 mycroft Exp $
  */
 
 #if defined(mc68k) || defined(mc68000) || defined(mc68020) || defined(sparc) || defined(hp9000s300) || defined(hp9000s800)

@@ -1,5 +1,5 @@
 #
-# $Id: Makefile,v 1.2 1994/06/13 19:49:19 mycroft Exp $
+# $Id: Makefile,v 1.3 1994/06/13 20:49:58 mycroft Exp $
 #
 # Copyright (c) 1990 Jan-Simon Pendry
 # Copyright (c) 1990 Imperial College of Science, Technology & Medicine
@@ -37,7 +37,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)Makefile	8.1 (Berkeley) 6/6/93
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$Id: Makefile,v 1.3 1994/06/13 20:49:58 mycroft Exp $
 #
 
 PROG = amdref

@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fsi_gram.y	8.1 (Berkeley) 6/6/93
- *
- * $Id: fsi_gram.y,v 1.2 1994/06/13 19:49:32 mycroft Exp $
- *
+ *	from: @(#)fsi_gram.y	8.1 (Berkeley) 6/6/93
+ *	$Id: fsi_gram.y,v 1.3 1994/06/13 20:50:13 mycroft Exp $
  */
 
 %{

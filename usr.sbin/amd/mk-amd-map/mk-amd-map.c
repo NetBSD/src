@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mk-amd-map.c	8.1 (Berkeley) 6/28/93
- *
- * $Id: mk-amd-map.c,v 1.2 1994/06/13 19:50:15 mycroft Exp $
+ *	from: @(#)mk-amd-map.c	8.1 (Berkeley) 6/28/93
+ *	$Id: mk-amd-map.c,v 1.3 1994/06/13 20:50:42 mycroft Exp $
  */
 
 /*
@@ -53,7 +52,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: mk-amd-map.c,v 1.2 1994/06/13 19:50:15 mycroft Exp $";
+static char rcsid[] = "$Id: mk-amd-map.c,v 1.3 1994/06/13 20:50:42 mycroft Exp $";
 static char sccsid[] = "@(#)mk-amd-map.c	8.1 (Berkeley) 6/28/93";
 #endif /* not lint */
 

@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)amq_clnt.c	8.1 (Berkeley) 6/6/93
- *
- * $Id: amq_clnt.c,v 1.1.1.1 1994/06/13 19:53:41 mycroft Exp $
+ *	from: @(#)amq_clnt.c	8.1 (Berkeley) 6/6/93
+ *	$Id: amq_clnt.c,v 1.2 1994/06/13 20:50:48 mycroft Exp $
  *
  */
 

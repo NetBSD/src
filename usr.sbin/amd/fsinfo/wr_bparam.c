@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)wr_bparam.c	8.1 (Berkeley) 6/6/93
- *
- * $Id: wr_bparam.c,v 1.2 1994/06/13 19:49:39 mycroft Exp $
- *
+ *	from: @(#)wr_bparam.c	8.1 (Berkeley) 6/6/93
+ *	$Id: wr_bparam.c,v 1.3 1994/06/13 20:50:26 mycroft Exp $
  */
 
 #include "../fsinfo/fsinfo.h"
