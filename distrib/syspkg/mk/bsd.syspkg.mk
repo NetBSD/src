@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.syspkg.mk,v 1.2 2002/03/29 20:56:28 jwise Exp $
+#	$NetBSD: bsd.syspkg.mk,v 1.3 2004/03/02 23:25:05 xtraeme Exp $
 #
 #	This file is derived from:
 #
@@ -11,6 +11,9 @@
 #
 #	Portions of this code are copyright (c) 2000-2002 Jim Wise
 #
+
+.if !defined(BSD_SYSPKG_MK)
+BSD_SYSPKG_MK=	# defined
 
 .if !target(__initialized__)
 __initialized__:
@@ -649,3 +652,5 @@ tags:
 
 ${PLIST}:
 	sh ${.CURDIR}/../../../../sets/makeplist ${SETNAME} ${PKGBASE} > ${PLIST}
+
+.endif # BSD_SYSPKG_MK
