@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.17 1997/04/07 23:41:00 cgd Exp $ */
+/* $NetBSD: tcasic.c,v 1.17.2.1 1997/06/03 23:31:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.17 1997/04/07 23:41:00 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.17.2.1 1997/06/03 23:31:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,13 +141,8 @@ tcasicattach(parent, self, aux)
 	}
 
 	tba.tba_memt = tc_bus_mem_init(NULL);
-
-	/* XXX XXX BEGIN XXX XXX */
-	{							/* XXX */
-		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
-		alpha_XXX_dmamap_or = 0;			/* XXX */
-	}							/* XXX */
-	/* XXX XXX END XXX XXX */
+	
+	tc_dma_init(tba.tba_nslots);
 
 	(*intr_setup)();
 	set_iointr(iointr);
