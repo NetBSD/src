@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2001/07/15 03:09:22 matt Exp $
+#	$NetBSD: Makefile,v 1.39 2001/10/31 18:26:23 skrll Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -46,7 +46,5 @@ ${PROG}: ${OBJS} ${DPADD}
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
 
 .endif
-
-MKMAN=	no
 
 .include <bsd.prog.mk>
