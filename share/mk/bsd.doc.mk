@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.32 1997/05/09 13:25:47 mycroft Exp $
+#	$NetBSD: bsd.doc.mk,v 1.33 1997/06/28 01:22:59 christos Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.own.mk>
@@ -18,11 +18,6 @@ REFER?=		refer
 ROFF?=		groff -M/usr/share/tmac ${MACROS} ${PAGES}
 SOELIM?=	soelim
 TBL?=		tbl
-
-BINDIR?=	/usr/share/doc
-BINGRP?=	bin
-BINOWN?=	bin
-BINMODE?=	444
 
 .if !target(all)
 all: paper.ps
@@ -44,17 +39,17 @@ cleandoc:
 .if !defined(NODOC)
 FILES?=	${SRCS}
 .for F in ${FILES} ${EXTRA} Makefile
-docinstall:: ${DESTDIR}${BINDIR}/${DIR}/${F}
+docinstall:: ${DESTDIR}${DOCDIR}/${DIR}/${F}
 .if !defined(UPDATE)
-.PHONY: ${DESTDIR}${BINDIR}/${DIR}/${F}
+.PHONY: ${DESTDIR}${DOCDIR}/${DIR}/${F}
 .endif
 .if !defined(BUILD)
-${DESTDIR}${BINDIR}/${DIR}/${F}: .MADE
+${DESTDIR}${DOCDIR}/${DIR}/${F}: .MADE
 .endif
 
-.PRECIOUS: ${DESTDIR}${BINDIR}/${DIR}/${F}
-${DESTDIR}${BINDIR}/${DIR}/${F}: ${F}
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${.ALLSRC} \
+.PRECIOUS: ${DESTDIR}${DOCDIR}/${DIR}/${F}
+${DESTDIR}${DOCDIR}/${DIR}/${F}: ${F}
+	${INSTALL} -c -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} ${.ALLSRC} \
 		${.TARGET}
 .endfor
 .endif
