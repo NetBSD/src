@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.19 2002/06/18 05:01:55 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.20 2002/06/18 13:40:18 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -25,7 +25,7 @@
 #
 ###########################################################################
 #
-#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   PLEASE RUN "cd ../share/man/man8 ; make makedevs"
 #   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
 #
 ###########################################################################
