@@ -1,8 +1,8 @@
-/*	$NetBSD: getether.c,v 1.5 2002/07/14 00:07:01 wiz Exp $	*/
+/*	$NetBSD: getether.c,v 1.6 2002/07/14 00:30:02 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getether.c,v 1.5 2002/07/14 00:07:01 wiz Exp $");
+__RCSID("$NetBSD: getether.c,v 1.6 2002/07/14 00:30:02 wiz Exp $");
 #endif
 
 /*
@@ -125,10 +125,10 @@ int
 getether(char *ifname, char *eap)
 {
 	int fd, rc = -1;
-	register int n;
+	int n;
 	struct ifreq ibuf[16];
 	struct ifconf ifc;
-	register struct ifreq *ifrp, *ifend;
+	struct ifreq *ifrp, *ifend;
 
 	/* Fetch the interface configuration */
 	fd = socket(AF_INET, SOCK_DGRAM, 0);

@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-bootp.c,v 1.6 2002/07/14 00:07:01 wiz Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.7 2002/07/14 00:30:02 wiz Exp $");
 /* 93/10/10 <gwr@mc.com> New data-driven option print routine. */
 #endif
 
@@ -98,8 +98,8 @@ bootp_print(struct bootp *bp, int length, u_short sport, u_short dport)
 
 	/* Client's Hardware address */
 	if (bp->bp_hlen) {
-		register struct ether_header *eh;
-		register char *e;
+		struct ether_header *eh;
+		char *e;
 
 		TCHECK(bp->bp_chaddr[0], 6);
 		eh = (struct ether_header *) packetp;
@@ -271,11 +271,11 @@ rfc1048_opts[] = {
 #define	KNOWN_OPTIONS (sizeof(rfc1048_opts) / sizeof(rfc1048_opts[0]))
 
 static void
-rfc1048_print(register u_char *bp, int length)
+rfc1048_print(u_char *bp, int length)
 {
 	u_char tag;
 	u_char *ep;
-	register int len;
+	int len;
 	u_int32 ul;
 	u_short us;
 	struct in_addr ia;
@@ -371,7 +371,7 @@ rfc1048_print(register u_char *bp, int length)
 }
 
 static void
-cmu_print(register u_char *bp, int length)
+cmu_print(u_char *bp, int length)
 {
 	struct cmu_vend *v;
 	u_char *ep;
@@ -420,7 +420,7 @@ cmu_print(register u_char *bp, int length)
  */
 
 static void
-other_print(register u_char *bp, int length)
+other_print(u_char *bp, int length)
 {
 	u_char *ep;					/* end pointer */
 	u_char *zp;					/* points one past last non-zero byte */
