@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.17 2002/12/09 21:29:26 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.18 2002/12/10 21:36:45 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.17 2002/12/09 21:29:26 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.18 2002/12/10 21:36:45 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -299,6 +299,41 @@ mach_vm_wire(p, msgh, maxlen, dst)
 	if ((error = uvm_map_protect(&p->p_vmspace->vm_map, req.req_address, 
 	    req.req_address + req.req_size, req.req_access, 0)) != 0)
 		return MACH_MSG_ERROR(p, msgh, &req, &rep, error, maxlen, dst);
+
+	rep.rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
+	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
+	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
+	rep.rep_trailer.msgh_trailer_size = 8;
+
+	return MACH_MSG_RETURN(p, &rep, msgh, sizeof(rep), maxlen, dst);
+}
+
+int
+mach_vm_protect(p, msgh, maxlen, dst)
+	struct proc *p;
+	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
+{
+	mach_vm_protect_request_t req;
+	mach_vm_protect_reply_t rep;
+	struct sys_mprotect_args cup;
+	register_t retval;
+	int error;
+
+	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
+		return error;
+
+	SCARG(&cup, addr) = (void *)req.req_addr;
+	SCARG(&cup, len) = req.req_size;
+	SCARG(&cup, prot) = req.req_prot;
+
+	if ((error = sys_mprotect(p, &cup, &retval)) != 0)
+		return MACH_MSG_ERROR(p, msgh, &req, &rep, error, maxlen, dst);
+
+	bzero(&rep, sizeof(rep));
 
 	rep.rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
