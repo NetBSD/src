@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxpvar.h,v 1.7 1998/12/17 23:25:29 explorer Exp $	*/
+/*	$NetBSD: if_fxpvar.h,v 1.8 1998/12/19 01:14:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,15 @@
  * Misc. defintions for the Intel EtherExpress Pro/100B PCI Fast
  * Ethernet driver
  */
+
+/*
+ * Number of completed TX commands at which point an interrupt
+ * will be generated to garbage collect the attached buffers.
+ * Must be at least one less than FXP_NTXCB, and should be
+ * enough less so that the transmitter doesn't become idle
+ * during the buffer rundown (which would reduce performance).
+ */
+#define	FXP_CXINT_THRESH 120
 
 /*
  * Number of transmit control blocks.  This determines the number
