@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.4 2005/02/27 01:16:27 christos Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.5 2005/03/14 05:35:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.4 2005/02/27 01:16:27 christos Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.5 2005/03/14 05:35:23 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: pam_ssh.c,v 1.4 2005/02/27 01:16:27 christos Exp $");
 #include <openssl/evp.h>
 
 #include "key.h"
+#include "auth.h"
 #include "authfd.h"
 #include "authfile.h"
 
@@ -93,14 +94,15 @@ static const char *pam_ssh_agent_envp[] = { NULL };
  * struct pam_ssh_key containing the key and its comment.
  */
 static struct pam_ssh_key *
-pam_ssh_load_key(const char *dir, const char *kfn, const char *passphrase)
+pam_ssh_load_key(struct passwd *pwd, const char *kfn, const char *passphrase)
 {
 	struct pam_ssh_key *psk;
 	char fn[PATH_MAX];
 	char *comment;
 	Key *key;
 
-	if (snprintf(fn, sizeof(fn), "%s/%s", dir, kfn) > (int)sizeof(fn))
+	if (snprintf(fn, sizeof(fn), "%s/%s", pwd->pw_dir, kfn) >
+	    (int)sizeof(fn))
 		return (NULL);
 	comment = NULL;
 	key = key_load_private(fn, passphrase, &comment);
@@ -108,9 +110,14 @@ pam_ssh_load_key(const char *dir, const char *kfn, const char *passphrase)
 		openpam_log(PAM_LOG_DEBUG, "failed to load key from %s\n", fn);
 		return (NULL);
 	}
+	if (!user_key_allowed(pwd, key)) {
+		openpam_log(PAM_LOG_DEBUG, "key from %s not authorized\n", fn);
+		goto out;
+	}
 
 	openpam_log(PAM_LOG_DEBUG, "loaded '%s' from %s\n", comment, fn);
 	if ((psk = malloc(sizeof(*psk))) == NULL) {
+out:
 		key_free(key);
 		free(comment);
 		return (NULL);
@@ -162,6 +169,20 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	if (pam_err != PAM_SUCCESS)
 		return (pam_err);
 
+#ifdef notyet
+	for (kfn = pam_ssh_keyfiles; *kfn != NULL; ++kfn) {
+		char path[MAXPATHLEN];
+		(void)snprintf(path, sizeof(path), "%s/%s", pwd->pw_dir, *kfn);
+		if (access(path, R_OK) == 0)
+			break;
+	}
+
+	if (*kfn == NULL) {
+		openpam_restore_cred(pamh);
+		return (PAM_AUTH_ERR);
+	}
+#endif
+
 	pass = (pam_get_item(pamh, PAM_AUTHTOK,
 	    (const void **)__UNCONST(&passphrase)) == PAM_SUCCESS);
  load_keys:
@@ -176,7 +197,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	/* try to load keys from all keyfiles we know of */
 	nkeys = 0;
 	for (kfn = pam_ssh_keyfiles; *kfn != NULL; ++kfn) {
-		psk = pam_ssh_load_key(pwd->pw_dir, *kfn, passphrase);
+		psk = pam_ssh_load_key(pwd, *kfn, passphrase);
 		if (psk != NULL) {
 			pam_set_data(pamh, *kfn, psk, pam_ssh_free_key);
 			++nkeys;
