@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: dma.c,v 1.2 1994/10/02 22:00:16 deraadt Exp $
+ *	$Id: dma.c,v 1.3 1994/10/15 05:48:56 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -95,11 +95,10 @@ dmamatch(parent, cf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
-	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
-		ra->ra_len = NBPG;
-		return (probeget(ra->ra_vaddr, 1) != -1);
-	}
-	return (1);
+	if (ca->ca_bustype == BUS_SBUS)
+		return (1);
+	ra->ra_len = NBPG;
+	return (probeget(ra->ra_vaddr, 1) != -1);
 }
 
 /*
@@ -120,7 +119,7 @@ dmaattach(parent, self, aux)
 	 */
 	if (ca->ca_ra.ra_vaddr == NULL)
 		ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_paddr,
-		    ca->ca_ra.ra_len);
+		    ca->ca_ra.ra_len, ca->ca_bustype);
 	if ((u_long)ca->ca_ra.ra_paddr & PGOFSET)
 		(u_long)ca->ca_ra.ra_vaddr |= ((u_long)ca->ca_ra.ra_paddr & PGOFSET);
 	sc->sc_regs = (struct dma_regs *) ca->ca_ra.ra_vaddr;

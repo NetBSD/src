@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgsix.c,v 1.2 93/10/18 00:01:51 torek Exp 
- * $Id: cgsix.c,v 1.6 1994/10/02 22:00:13 deraadt Exp $
+ * $Id: cgsix.c,v 1.7 1994/10/15 05:48:52 deraadt Exp $
  */
 
 /*
@@ -145,17 +145,15 @@ cgsixmatch(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
+	struct cg6_layout *p = (struct cg6_layout *)ra->ra_vaddr;
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
-	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
-		struct cg6_layout *p = (struct cg6_layout *)ra->ra_vaddr;
-
-		ra->ra_len = NBPG;
-		obio_tmp_map(&p->cg6_fhc_un.un_fhc);
-		return (probeget(&p->cg6_fhc_un.un_fhc, 4) != 0);
-	}
-	return (1);
+	if (ca->ca_bustype == BUS_SBUS)
+		return (1);
+	ra->ra_len = NBPG;
+	bus_tmp(&p->cg6_fhc_un.un_fhc, ca->ca_bustype);
+	return (probeget(&p->cg6_fhc_un.un_fhc, 4) != 0);
 }
 
 /*
@@ -182,7 +180,8 @@ cgsixattach(parent, self, args)
 
 	switch (ca->ca_bustype) {
 	case BUS_OBIO:
-	case BUS_VME:
+	case BUS_VME32:
+	case BUS_VME16:
 		sbus = node = 0;
 		sc->sc_fb.fb_type.fb_width = 1152;
 		sc->sc_fb.fb_type.fb_height = 900;
@@ -214,13 +213,17 @@ cgsixattach(parent, self, args)
 	 */
 	sc->sc_physadr = p = (struct cg6_layout *)ca->ca_ra.ra_paddr;
 	sc->sc_bt = bt = (volatile struct bt_regs *)
-	    mapiodev((caddr_t)&p->cg6_bt_un.un_btregs, sizeof *sc->sc_bt);
+	    mapiodev((caddr_t)&p->cg6_bt_un.un_btregs, sizeof *sc->sc_bt,
+	    ca->ca_bustype);
 	sc->sc_fhc = (volatile int *)
-	    mapiodev((caddr_t)&p->cg6_fhc_un.un_fhc, sizeof *sc->sc_fhc);
+	    mapiodev((caddr_t)&p->cg6_fhc_un.un_fhc, sizeof *sc->sc_fhc,
+	    ca->ca_bustype);
 	sc->sc_thc = (volatile struct cg6_thc *)
-	    mapiodev((caddr_t)&p->cg6_thc_un.un_thc, sizeof *sc->sc_thc);
+	    mapiodev((caddr_t)&p->cg6_thc_un.un_thc, sizeof *sc->sc_thc,
+	    ca->ca_bustype);
 	sc->sc_tec = (volatile struct cg6_tec_xxx *)
-	    mapiodev((caddr_t)&p->cg6_tec_un.un_tec, sizeof *sc->sc_tec);
+	    mapiodev((caddr_t)&p->cg6_tec_un.un_tec, sizeof *sc->sc_tec,
+	    ca->ca_bustype);
 
 	sc->sc_fhcrev = (*sc->sc_fhc >> FHC_REV_SHIFT) &
 	    (FHC_REV_MASK >> FHC_REV_SHIFT);

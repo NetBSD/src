@@ -42,7 +42,7 @@
  *	@(#)bwtwo.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: bwtwo.c,v 1.14 92/11/26 02:28:04 torek Exp 
- * $Id: bwtwo.c,v 1.4 1994/09/17 23:57:31 deraadt Exp $
+ * $Id: bwtwo.c,v 1.5 1994/10/15 05:48:50 deraadt Exp $
  */
 
 /*
@@ -142,10 +142,10 @@ bwtwoattach(parent, self, args)
 	p = (struct bwtwo_all *)ca->ca_ra.ra_paddr;
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen, but what the heck */
-		sc->sc_fb.fb_pixels = mapiodev(p->ba_ram, ramsize);
+		sc->sc_fb.fb_pixels = mapiodev(p->ba_ram, ramsize, ca->ca_bustype);
 	}
 	sc->sc_reg = (volatile struct bwtworeg *)
-	    mapiodev((caddr_t)&p->ba_reg, sizeof(p->ba_reg));
+	    mapiodev((caddr_t)&p->ba_reg, sizeof(p->ba_reg), ca->ca_bustype);
 	sc->sc_phys = p->ba_ram;
 
 	/* Insure video is enabled */

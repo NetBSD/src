@@ -30,7 +30,7 @@
  */
 
 /*
- * $Id: esp.c,v 1.8 1994/10/02 22:00:20 deraadt Exp $
+ * $Id: esp.c,v 1.9 1994/10/15 05:48:59 deraadt Exp $
  *
  * Based on aic6360 by Jarle Greipsland
  *
@@ -227,11 +227,10 @@ espmatch(parent, cf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
-	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
-		ra->ra_len = NBPG;
-		return (probeget(ra->ra_vaddr, 1) != -1);
-	}
-	return (1);
+	if (ca->ca_bustype == BUS_SBUS)
+		return (1);
+	ra->ra_len = NBPG;
+	return (probeget(ra->ra_vaddr, 1) != -1);
 }
 
 /*
@@ -266,7 +265,7 @@ espattach(parent, self, aux)
 		sc->sc_reg = (volatile caddr_t) ca->ca_ra.ra_vaddr;
 	else {
 		sc->sc_reg = (volatile caddr_t)
-		    mapiodev(ca->ca_ra.ra_paddr, ca->ca_ra.ra_len);
+		    mapiodev(ca->ca_ra.ra_paddr, ca->ca_ra.ra_len, ca->ca_bustype);
 	}
 
 	/* Other settings */

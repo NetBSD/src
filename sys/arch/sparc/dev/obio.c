@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.3 1994/10/02 22:00:29 deraadt Exp $	*/
+/*	$NetBSD: obio.c,v 1.4 1994/10/15 05:49:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -48,24 +48,35 @@
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/vaddrs.h>
 
-struct obio_softc {
+struct bus_softc {
 	struct	device sc_dev;		/* base device */
 	int	nothing;
 };
 
 /* autoconfiguration driver */
-static int	obiomatch(struct device *, struct cfdata *, void *);
+static int	busmatch(struct device *, struct cfdata *, void *);
 static void	obioattach(struct device *, struct device *, void *);
-struct cfdriver obiocd = { NULL, "obio", obiomatch, obioattach,
-	DV_DULL, sizeof(struct obio_softc)
+static void	vmesattach(struct device *, struct device *, void *);
+static void	vmelattach(struct device *, struct device *, void *);
+
+struct cfdriver obiocd = { NULL, "obio", busmatch, obioattach,
+	DV_DULL, sizeof(struct bus_softc)
+};
+struct cfdriver vmelcd = { NULL, "vmel", busmatch, vmelattach,
+	DV_DULL, sizeof(struct bus_softc)
+};
+struct cfdriver vmescd = { NULL, "vmes", busmatch, vmesattach,
+	DV_DULL, sizeof(struct bus_softc)
 };
 
-void *		obio_map __P((void *, int));
-void *		obio_tmp_map __P((void *));
-void		obio_tmp_unmap __P((void));
+static void	busattach(struct device *, struct device *, void *, int);
+
+void *		bus_map __P((void *, int, int));
+void *		bus_tmp __P((void *, int));
+void		bus_untmp __P((void));
 
 int
-obiomatch(parent, cf, aux)
+busmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -79,7 +90,7 @@ obiomatch(parent, cf, aux)
 }
 
 int
-obio_print(args, obio)
+busprint(args, obio)
 	void *args;
 	char *obio;
 {
@@ -94,24 +105,25 @@ obio_print(args, obio)
 }
 
 void
-obioattach(parent, self, args)
+busattach(parent, self, args, bustype)
 	struct device *parent, *self;
 	void *args;
+	int bustype;
 {
-	register struct obio_softc *sc = (struct obio_softc *)self;
+	register struct bus_softc *sc = (struct bus_softc *)self;
 	extern struct cfdata cfdata[];
 	register struct confargs *ca = args;
 	struct confargs oca;
 	register short *p;
 	struct cfdata *cf;
-	caddr_t tmpmap;
-
-	printf("\n");
+	caddr_t tmp;
 
 	if (sc->sc_dev.dv_unit > 0) {
 		printf(" unsupported\n");
 		return;
 	}
+
+	printf("\n");
 
 	for (cf = cfdata; cf->cf_driver; cf++) {
 		if (cf->cf_fstate == FSTATE_FOUND)
@@ -121,16 +133,17 @@ obioattach(parent, self, args)
 				oca.ca_ra.ra_iospace = -1;
 				oca.ca_ra.ra_paddr = (void *)cf->cf_loc[0];
 				oca.ca_ra.ra_len = 0;
-				tmpmap = NULL;
+				tmp = NULL;
 				if (oca.ca_ra.ra_paddr)
-					tmpmap = obio_tmp_map(oca.ca_ra.ra_paddr);
-				oca.ca_ra.ra_vaddr = tmpmap;
+					tmp = bus_tmp(oca.ca_ra.ra_paddr,
+					    bustype);
+				oca.ca_ra.ra_vaddr = tmp;
 				oca.ca_ra.ra_intr[0].int_pri = cf->cf_loc[1];
 				oca.ca_ra.ra_intr[0].int_vec = 0;
 				oca.ca_ra.ra_nintr = 1;
 				oca.ca_ra.ra_name = cf->cf_driver->cd_name;
 				oca.ca_ra.ra_bp = ca->ca_ra.ra_bp;
-				oca.ca_bustype = BUS_OBIO;
+				oca.ca_bustype = bustype;
 
 				if ((*cf->cf_driver->cd_match)(self, cf, &oca) == 0)
 					continue;
@@ -139,7 +152,7 @@ obioattach(parent, self, args)
 				 * check if XXmatch routine replaced the
 				 * temporary mapping with a real mapping.
 				 */
-				if (tmpmap == oca.ca_ra.ra_vaddr)
+				if (tmp == oca.ca_ra.ra_vaddr)
 					oca.ca_ra.ra_vaddr = NULL;
 				/*
 				 * or if it has asked us to create a mapping..
@@ -148,14 +161,39 @@ obioattach(parent, self, args)
 				 */
 				if (oca.ca_ra.ra_len)
 					oca.ca_ra.ra_vaddr =
-					    obio_map(oca.ca_ra.ra_paddr,
-					    oca.ca_ra.ra_len);
+					    bus_map(oca.ca_ra.ra_paddr,
+					    oca.ca_ra.ra_len, oca.ca_bustype);
 			
-				config_attach(self, cf, &oca, obio_print);
+				config_attach(self, cf, &oca, busprint);
 			}
 	}
-	obio_tmp_unmap();
+	bus_untmp();
 }
+
+void
+obioattach(parent, self, args)
+	struct device *parent, *self;
+	void *args;
+{
+	busattach(parent, self, args, BUS_OBIO);
+}
+
+void
+vmesattach(parent, self, args)
+	struct device *parent, *self;
+	void *args;
+{
+	busattach(parent, self, args, BUS_VME16);
+}
+
+void
+vmelattach(parent, self, args)
+	struct device *parent, *self;
+	void *args;
+{
+	busattach(parent, self, args, BUS_VME32);
+}
+
 
 #define	getpte(va)		lda(va, ASI_PTE)
 
@@ -164,38 +202,54 @@ obioattach(parent, self, args)
  * Else, create a new mapping.
  */
 void *
-obio_map(pa, len)
+bus_map(pa, len, bustype)
 	void *pa;
 	int len;
+	int bustype;
 {
 	u_long	pf = (u_long)pa >> PGSHIFT;
 	u_long	va, pte;
+	int pgtype;
+
+	switch (bt2pmt[bustype]) {
+	case PMAP_OBIO:
+		pgtype = PG_OBIO;
+		break;
+	case PMAP_VME32:
+		pgtype = PG_VME32;
+		break;
+	case PMAP_VME16:
+		pgtype = PG_VME16;
+		break;
+	}
 
 	if (len <= NBPG) {
 		for (va = OLDMON_STARTVADDR; va < OLDMON_ENDVADDR; va += NBPG) {
 			pte = getpte(va);
-			if ((pte & PG_V) != 0 && (pte & PG_TYPE) == PG_OBIO &&
+			if ((pte & PG_V) != 0 && (pte & PG_TYPE) == pgtype &&
 			    (pte & PG_PFNUM) == pf)
 				return ((void *)va);
 		}
 	}
-	return mapiodev(pa, len);
+	return mapiodev(pa, len, bustype);
 }
 
 void *
-obio_tmp_map(pa)
+bus_tmp(pa, bustype)
 	void *pa;
+	int bustype;
 {
 	vm_offset_t addr = (vm_offset_t)pa & ~PGOFSET;
+	int pmtype = bt2pmt[bustype];
 
 	pmap_enter(kernel_pmap, TMPMAP_VA,
-	    addr | PMAP_OBIO | PMAP_NC,
+	    addr | pmtype | PMAP_NC,
 	    VM_PROT_READ | VM_PROT_WRITE, 1);
 	return ((void *)TMPMAP_VA);
 }
 
 void
-obio_tmp_unmap()
+bus_untmp()
 {
 	pmap_remove(kernel_pmap, TMPMAP_VA, TMPMAP_VA+NBPG);
 }

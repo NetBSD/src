@@ -32,7 +32,7 @@
  *
  * from: Header: if_le.c,v 1.25 93/10/31 04:47:50 leres Locked 
  * from: @(#)if_le.c	8.2 (Berkeley) 10/30/93
- * $Id: if_le.c,v 1.12 1994/10/02 22:00:25 deraadt Exp $
+ * $Id: if_le.c,v 1.13 1994/10/15 05:49:03 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -179,11 +179,10 @@ lematch(parent, cf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
-	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
-		ra->ra_len = NBPG;
-		return (probeget(ra->ra_vaddr, 2) != -1);
-	}
-	return (1);
+	if (ca->ca_bustype == BUS_SBUS)
+		return (1);
+	ra->ra_len = NBPG;
+	return (probeget(ra->ra_vaddr, 2) != -1);
 }
 
 /*
@@ -215,7 +214,7 @@ leattach(parent, self, args)
 	pri = ca->ca_ra.ra_intr[0].int_pri;
 	printf(" pri %d", pri);
 	sc->sc_r1 = (volatile struct lereg1 *)
-	    mapiodev(ca->ca_ra.ra_paddr, sizeof(struct lereg1));
+	    mapiodev(ca->ca_ra.ra_paddr, sizeof(struct lereg1), ca->ca_bustype);
 	ler2 = sc->sc_r2 = (volatile struct lereg2 *)
 	    dvma_malloc(sizeof(struct lereg2));
 

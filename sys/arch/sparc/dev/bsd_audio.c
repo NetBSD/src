@@ -42,7 +42,7 @@
  *	@(#)bsd_audio.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: bsd_audio.c,v 1.18 93/04/24 16:20:35 leres Exp  (LBL)
- * $Id: bsd_audio.c,v 1.3 1994/10/02 22:00:11 deraadt Exp $
+ * $Id: bsd_audio.c,v 1.4 1994/10/15 05:48:47 deraadt Exp $
  */
 #include "bsdaudio.h"
 #if NBSDAUDIO > 0
@@ -310,7 +310,7 @@ audioattach(parent, self, args)
 	pri = ra->ra_intr[0].int_pri;
 	printf(" pri %d, softpri %d\n", pri, PIL_AUSOFT);
 	amd = (volatile struct amd7930 *)(ra->ra_vaddr ?
-	    ra->ra_vaddr : mapiodev(ra->ra_paddr, sizeof *amd));
+	    ra->ra_vaddr : mapiodev(ra->ra_paddr, sizeof (*amd), ca->ca_bustype));
 	sc->sc_au.au_amd = amd;
 
 	init_amd(amd);

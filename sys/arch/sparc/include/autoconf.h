@@ -42,7 +42,7 @@
  *	@(#)autoconf.h	8.2 (Berkeley) 9/30/93
  *
  * from: Header: autoconf.h,v 1.11 93/09/28 05:26:41 leres Exp (LBL)
- * $Id: autoconf.h,v 1.4 1994/09/17 23:46:32 deraadt Exp $
+ * $Id: autoconf.h,v 1.5 1994/10/15 05:49:44 deraadt Exp $
  */
 
 /*
@@ -81,9 +81,12 @@ struct confargs {
 	int	ca_offset;
 };
 #define BUS_MAIN	0
-#define	BUS_SBUS	1
-#define	BUS_OBIO	2
-#define	BUS_VME		3
+#define BUS_OBIO	1
+#define BUS_VME16	2
+#define BUS_VME32	3
+#define BUS_SBUS	4
+
+extern int bt2pmt[];
 
 /*
  * The various getprop* functions obtain `properties' from the ROMs.
@@ -124,8 +127,8 @@ char	*clockfreq __P((int freq));
  * it will use that instead of creating one, but you must only do this if
  * you get it from ../sparc/vaddrs.h.
  */
-void	*mapdev __P((void *pa, int va, int size));
-#define	mapiodev(pa, size)	mapdev(pa, 0, size)
+void	*mapdev __P((void *pa, int va, int size, int bustype));
+#define	mapiodev(pa, size, bustype)	mapdev(pa, 0, size, bustype)
 
 /*
  * Memory description arrays.  Shared between pmap.c and autoconf.c; no

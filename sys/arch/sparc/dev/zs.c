@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.14 1994/10/02 22:00:32 deraadt Exp $
+ * $Id: zs.c,v 1.15 1994/10/15 05:49:08 deraadt Exp $
  */
 
 /*
@@ -212,13 +212,10 @@ zsmatch(struct device *parent, struct cfdata *cf, void *aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
-	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
-		ra->ra_len = NBPG;
-		return (probeget(ra->ra_vaddr, 1) != -1);
-	}
-	if (ca->ca_bustype == BUS_MAIN && cputyp!=CPU_SUN4)
+	if (ca->ca_bustype==BUS_MAIN && cputyp!=CPU_SUN4)
 		return (getpropint(ra->ra_node, "slave", -2) == cf->cf_unit);
-	return (0);
+	ra->ra_len = NBPG;
+	return (probeget(ra->ra_vaddr, 1) != -1);
 }
 
 /*

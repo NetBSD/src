@@ -42,7 +42,7 @@
  *	@(#)memreg.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: memreg.c,v 1.7 92/11/26 03:05:04 torek Exp  (LBL)
- * $Id: memreg.c,v 1.3 1994/10/02 22:00:52 deraadt Exp $
+ * $Id: memreg.c,v 1.4 1994/10/15 05:51:23 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -94,7 +94,8 @@ memregattach(parent, self, aux)
 		ra->ra_vaddr = (caddr_t)par_err_reg;
 	} else {
 		par_err_reg = ra->ra_vaddr ? (volatile int *)ra->ra_vaddr :
-		    (volatile int *)mapiodev(ra->ra_paddr, sizeof(int));
+		    (volatile int *)mapiodev(ra->ra_paddr, sizeof(int),
+		    ca->ca_bustype);
 	}
 	printf("\n");
 }
