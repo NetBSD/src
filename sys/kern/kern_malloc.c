@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_malloc.c	7.25 (Berkeley) 5/8/91
- *	$Id: kern_malloc.c,v 1.2 1993/05/20 02:54:29 cgd Exp $
+ *	$Id: kern_malloc.c,v 1.3 1993/05/25 18:04:25 cgd Exp $
  */
 
 #include "param.h"
@@ -42,7 +42,7 @@
 #include "vm/vm_kern.h"
 
 struct kmembuckets bucket[MINBUCKET + 16];
-struct kmemstats kmemstats[M_LAST];
+struct kmemstats kmemstats[M_LAST + 1];
 struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
 char *memname[] = INITKMEMNAMES;
@@ -251,7 +251,7 @@ kmeminit()
 			bucket[indx].kb_elmpercl = CLBYTES / (1 << indx);
 		bucket[indx].kb_highwat = 5 * bucket[indx].kb_elmpercl;
 	}
-	for (indx = 0; indx < M_LAST; indx++)
+	for (indx = 0; indx <= M_LAST; indx++)
 		kmemstats[indx].ks_limit = npg * NBPG * 6 / 10;
 #endif
 }

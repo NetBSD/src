@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)vmstat.c	5.31 (Berkeley) 7/2/91"; */
-static char rcsid[] = "$Id: vmstat.c,v 1.3 1993/05/21 08:53:24 cgd Exp $";
+static char rcsid[] = "$Id: vmstat.c,v 1.4 1993/05/25 18:04:17 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -787,7 +787,7 @@ domem()
 	register int i;
 	int size;
 	long totuse = 0, totfree = 0, totreq = 0;
-	struct kmemstats kmemstats[M_LAST];
+	struct kmemstats kmemstats[M_LAST + 1];
 	struct kmembuckets buckets[MINBUCKET + 16];
 
 	kread(X_KMEMBUCKETS, buckets, sizeof(buckets));
@@ -809,7 +809,7 @@ domem()
 	(void)printf("\nMemory statistics by type\n");
 	(void)printf(
 "      Type  In Use  MemUse   HighUse  Limit Requests  TypeLimit KernLimit\n");
-	for (i = 0, ks = &kmemstats[0]; i < M_LAST; i++, ks++) {
+	for (i = 0, ks = &kmemstats[0]; i <= M_LAST; i++, ks++) {
 		if (ks->ks_calls == 0)
 			continue;
 		(void)printf("%10s %6ld %7ldK %8ldK %5ldK %8ld %6u %9u\n",
