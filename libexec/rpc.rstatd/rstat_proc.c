@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.18 1997/02/22 01:41:35 thorpej Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.19 1997/07/19 20:25:44 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$NetBSD: rstat_proc.c,v 1.18 1997/02/22 01:41:35 thorpej Exp $";
+static char rcsid[] = "$NetBSD: rstat_proc.c,v 1.19 1997/07/19 20:25:44 fvdl Exp $";
 #endif
 
 /*
@@ -144,6 +144,7 @@ rstatproc_stats_2_svc(arg, rqstp)
 	if (!stat_is_init)
 	        stat_init();
 	sincelastreq = 0;
+	stats_all.s2.if_opackets = stats_all.s3.if_opackets;
 	return (&stats_all.s2);
 }
 
@@ -155,6 +156,7 @@ rstatproc_stats_1_svc(arg, rqstp)
 	if (!stat_is_init)
 	        stat_init();
 	sincelastreq = 0;
+	stats_all.s1.if_opackets = stats_all.s3.if_opackets;
 	return (&stats_all.s1);
 }
 
@@ -222,18 +224,18 @@ updatestat()
 	 * statistics.  It also retrieves "hz" and the "cp_time" array.
 	 */
 	dkreadstats();
-	memset(stats_all.s1.dk_xfer, 0, sizeof(stats_all.s1.dk_xfer));
+	memset(stats_all.s3.dk_xfer, 0, sizeof(stats_all.s3.dk_xfer));
 	for (i = 0; i < dk_ndrive && i < DK_NDRIVE; i++)
-		stats_all.s1.dk_xfer[i] = cur.dk_xfer[i];
+		stats_all.s3.dk_xfer[i] = cur.dk_xfer[i];
 
 #ifdef BSD
 	for (i = 0; i < CPUSTATES; i++)
-		stats_all.s1.cp_time[i] = cur.cp_time[cp_xlat[i]];
+		stats_all.s3.cp_time[i] = cur.cp_time[cp_xlat[i]];
 #else
  	if (kvm_read(kfd, (long)nl[X_CPTIME].n_value,
-		     (char *)stats_all.s1.cp_time,
-		     sizeof (stats_all.s1.cp_time))
-	    != sizeof (stats_all.s1.cp_time)) {
+		     (char *)stats_all.s3.cp_time,
+		     sizeof (stats_all.s3.cp_time))
+	    != sizeof (stats_all.s3.cp_time)) {
 		syslog(LOG_ERR, "can't read cp_time from kmem");
 		exit(1);
 	}
@@ -241,22 +243,22 @@ updatestat()
 #ifdef BSD
         (void)getloadavg(avrun, sizeof(avrun) / sizeof(avrun[0]));
 #endif
-	stats_all.s2.avenrun[0] = avrun[0] * FSCALE;
-	stats_all.s2.avenrun[1] = avrun[1] * FSCALE;
-	stats_all.s2.avenrun[2] = avrun[2] * FSCALE;
+	stats_all.s3.avenrun[0] = avrun[0] * FSCALE;
+	stats_all.s3.avenrun[1] = avrun[1] * FSCALE;
+	stats_all.s3.avenrun[2] = avrun[2] * FSCALE;
  	if (kvm_read(kfd, (long)nl[X_BOOTTIME].n_value,
-		     (char *)&btm, sizeof (stats_all.s2.boottime))
-	    != sizeof (stats_all.s2.boottime)) {
+		     (char *)&btm, sizeof (stats_all.s3.boottime))
+	    != sizeof (stats_all.s3.boottime)) {
 		syslog(LOG_ERR, "can't read boottime from kmem");
 		exit(1);
 	}
-	stats_all.s2.boottime.tv_sec = btm.tv_sec;
-	stats_all.s2.boottime.tv_usec = btm.tv_usec;
+	stats_all.s3.boottime.tv_sec = btm.tv_sec;
+	stats_all.s3.boottime.tv_usec = btm.tv_usec;
 
 
 #ifdef DEBUG
-	syslog(LOG_DEBUG, "%d %d %d %d\n", stats_all.s1.cp_time[0],
-	    stats_all.s1.cp_time[1], stats_all.s1.cp_time[2], stats_all.s1.cp_time[3]);
+	syslog(LOG_DEBUG, "%d %d %d %d\n", stats_all.s3.cp_time[0],
+	    stats_all.s3.cp_time[1], stats_all.s3.cp_time[2], stats_all.s3.cp_time[3]);
 #endif
 
  	if (kvm_read(kfd, (long)nl[X_CNT].n_value, (char *)&cnt, sizeof cnt) !=
@@ -264,32 +266,32 @@ updatestat()
 		syslog(LOG_ERR, "can't read cnt from kmem");
 		exit(1);
 	}
-	stats_all.s1.v_pgpgin = cnt.v_pgpgin;
-	stats_all.s1.v_pgpgout = cnt.v_pgpgout;
-	stats_all.s1.v_pswpin = cnt.v_pswpin;
-	stats_all.s1.v_pswpout = cnt.v_pswpout;
-	stats_all.s1.v_intr = cnt.v_intr;
+	stats_all.s3.v_pgpgin = cnt.v_pgpgin;
+	stats_all.s3.v_pgpgout = cnt.v_pgpgout;
+	stats_all.s3.v_pswpin = cnt.v_pswpin;
+	stats_all.s3.v_pswpout = cnt.v_pswpout;
+	stats_all.s3.v_intr = cnt.v_intr;
 	gettimeofday(&tm, (struct timezone *) 0);
-	stats_all.s1.v_intr -= hz*(tm.tv_sec - btm.tv_sec) +
+	stats_all.s3.v_intr -= hz*(tm.tv_sec - btm.tv_sec) +
 	    hz*(tm.tv_usec - btm.tv_usec)/1000000;
-	stats_all.s2.v_swtch = cnt.v_swtch;
+	stats_all.s3.v_swtch = cnt.v_swtch;
 	
-	stats_all.s1.if_ipackets = 0;
-	stats_all.s1.if_opackets = 0;
-	stats_all.s1.if_ierrors = 0;
-	stats_all.s1.if_oerrors = 0;
-	stats_all.s1.if_collisions = 0;
+	stats_all.s3.if_ipackets = 0;
+	stats_all.s3.if_opackets = 0;
+	stats_all.s3.if_ierrors = 0;
+	stats_all.s3.if_oerrors = 0;
+	stats_all.s3.if_collisions = 0;
 	for (off = (long)ifnetq.tqh_first, i = 0; off && i < numintfs; i++) {
 		if (kvm_read(kfd, off, (char *)&ifnet, sizeof ifnet) !=
 		    sizeof ifnet) {
 			syslog(LOG_ERR, "can't read ifnet from kmem");
 			exit(1);
 		}
-		stats_all.s1.if_ipackets += ifnet.if_data.ifi_ipackets;
-		stats_all.s1.if_opackets += ifnet.if_data.ifi_opackets;
-		stats_all.s1.if_ierrors += ifnet.if_data.ifi_ierrors;
-		stats_all.s1.if_oerrors += ifnet.if_data.ifi_oerrors;
-		stats_all.s1.if_collisions += ifnet.if_data.ifi_collisions;
+		stats_all.s3.if_ipackets += ifnet.if_data.ifi_ipackets;
+		stats_all.s3.if_opackets += ifnet.if_data.ifi_opackets;
+		stats_all.s3.if_ierrors += ifnet.if_data.ifi_ierrors;
+		stats_all.s3.if_oerrors += ifnet.if_data.ifi_oerrors;
+		stats_all.s3.if_collisions += ifnet.if_data.ifi_collisions;
 		off = (long)ifnet.if_list.tqe_next;
 	}
 	gettimeofday((struct timeval *)&stats_all.s3.curtime,
