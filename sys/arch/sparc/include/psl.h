@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.10 1996/02/09 23:14:23 christos Exp $ */
+/*	$NetBSD: psl.h,v 1.11 1996/03/31 22:20:14 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -144,6 +144,22 @@ static __inline int name() \
 	__asm __volatile("nop; nop; nop"); \
 	return (oldipl); \
 }
+/* A non-priority-decreasing version of SPL */
+#define	SPLHOLD(name, newipl) \
+static __inline int name __P((void)); \
+static __inline int name() \
+{ \
+	int psr, oldipl; \
+	__asm __volatile("rd %%psr,%0" : "=r" (psr)); \
+	oldipl = psr & PSR_PIL; \
+	if ((newipl << 8) <= oldipl) \
+		return oldipl; \
+	psr &= ~oldipl; \
+	__asm __volatile("wr %0,%1,%%psr" : : \
+	    "r" (psr), "n" ((newipl) << 8)); \
+	__asm __volatile("nop; nop; nop"); \
+	return (oldipl); \
+}
 
 SPL(splsoftint, 1)
 #define	splsoftclock	splsoftint
@@ -172,6 +188,7 @@ SPL(spltty, PIL_TTY)
  * Memory allocation (must be as high as highest network, tty, or disk device)
  */
 SPL(splimp, 7)
+SPLHOLD(splpmap, 7)
 
 SPL(splclock, PIL_CLOCK)
 
