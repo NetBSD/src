@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.8 2004/01/17 21:14:46 bjh21 Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.9 2004/01/17 21:16:13 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,10 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.8 2004/01/17 21:14:46 bjh21 Exp $");
-
-#include "opt_ddb.h"
-#include "opt_pmap_debug.h"
+__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.9 2004/01/17 21:16:13 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.8 2004/01/17 21:14:46 bjh21 Exp $");
 
 #include <machine/bus.h>
 
-#include "opt_pckbd_layout.h"
 #include "opt_wsdisplay_compat.h"
 
 #include <dev/wscons/wsconsio.h>
@@ -179,7 +175,7 @@ rpckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	    case WSKBDIO_GTYPE:
-		*(int *)data = WSKBD_TYPE_RISCPC;
+		*(int *)data = WSKBD_TYPE_RISCP;
 		return 0;
 	    case WSKBDIO_SETLEDS:
 		/* same as rpckbd_set_leds */
