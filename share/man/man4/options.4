@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.12 1997/03/11 03:49:04 perry Exp $
+.\"	$NetBSD: options.4,v 1.13 1997/03/12 20:35:45 christos Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -704,6 +704,14 @@ the remote end would not respond.
 This option turns on the packet filter interface hooks.  See
 .Xr pfil 9
 for details.
+.It Cd options PPP_FILTER
+This option turns on
+.Xr pcap 3
+based filtering for ppp connections. This option is used by
+.Xr pppd 8
+which needs to be compiled with 
+.Em PPP_FILTER
+defined (the current default).
 .El
 .Ss System V IPC Options
 .Bl -ohang
