@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.1 2001/04/06 15:05:56 fredette Exp $	*/
+/*	$NetBSD: obio.c,v 1.2 2001/04/10 12:37:49 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ obio_match(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, ca->ca_name) == 0);
+	return (ca->ca_name == NULL || strcmp(cf->cf_driver->cd_name, ca->ca_name) == 0);
 }
 
 static void
