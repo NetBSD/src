@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.201 2004/10/01 04:02:10 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.202 2004/10/04 03:20:50 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -57,7 +57,7 @@
  * When new releases are made, src/gnu/usr.bin/groff/tmac/mdoc.local
  * needs to be updated and the changes sent back to the groff maintainers.
  *
- * (*)	Up to 2.0I "release" used to be ["",A-Z,Z[A-Z] but numeric
+ * (*)	Up to 2.0I "release" used to be "",A-Z,Z[A-Z] but numeric
  *	    	e.g. NetBSD-1.2D  = 102040000 ('D' == 4)
  *	NetBSD-2.0H 	(200080000) was changed on 20041001 to:
  *	2.99.9		(299000900)
