@@ -1,7 +1,7 @@
-# $Header: /cvsroot/src/gnu/usr.bin/bc/Attic/Makefile,v 1.1 1993/04/10 15:51:33 cgd Exp $
+# $Header: /cvsroot/src/gnu/usr.bin/bc/Attic/Makefile,v 1.2 1993/04/10 16:09:10 cgd Exp $
 
 PROG=	bc
-CFLAGS+=-D_POSIX_SOURCE
+CFLAGS+=-D_POSIX_SOURCE -I${.CURDIR}/obj
 SRCS=	bc.c scan.c util.c main.c number.c storage.c load.c execute.c global.c
 CLEANFILES+= bc.c scan.c y.tab.h
 
