@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.6 2001/01/05 09:09:48 sato Exp $	*/
+/*	$NetBSD: mq200.c,v 1.7 2001/01/21 14:00:32 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -134,7 +134,11 @@ mq200_attach(sc)
 		printf("%s: WARNING: unable to establish hard power hook\n",
 			sc->sc_dev.dv_xname);
 
-	mq200_fbinit(&sc->sc_fbconf);
+	if (mq200_fbinit(&sc->sc_fbconf) != 0) {
+		/* just return so that hpcfb will not be attached */
+		return;
+	}
+	
 	sc->sc_fbconf.hf_baseaddr = (u_long)bootinfo->fb_addr;
 	sc->sc_fbconf.hf_offset	= (u_long)sc->sc_fbconf.hf_baseaddr -
 	    MIPS_PHYS_TO_KSEG1(mips_ptob(mips_btop(sc->sc_baseaddr)));
@@ -288,6 +292,21 @@ mq200_fbinit(fb)
 		fb->hf_pack_width = 8;
 		fb->hf_pixels_per_pack = 4;
 		fb->hf_pixel_width = 2;
+		fb->hf_class_data_length = sizeof(struct hf_gray_tag);
+		fb->hf_u.hf_gray.hf_flags = 0;	/* reserved for future use */
+		break;
+
+	case BIFB_D4_M2L_F:
+	case BIFB_D4_M2L_Fx2:
+		fb->hf_access_flags |= HPCFB_ACCESS_REVERSE;
+		/* fall through */
+	case BIFB_D4_M2L_0:
+	case BIFB_D4_M2L_0x2:
+		fb->hf_class = HPCFB_CLASS_GRAYSCALE;
+		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
+		fb->hf_pack_width = 8;
+		fb->hf_pixels_per_pack = 2;
+		fb->hf_pixel_width = 4;
 		fb->hf_class_data_length = sizeof(struct hf_gray_tag);
 		fb->hf_u.hf_gray.hf_flags = 0;	/* reserved for future use */
 		break;
