@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.33 2000/05/23 07:03:10 tron Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.33.4.1 2000/07/30 05:45:30 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.33 2000/05/23 07:03:10 tron Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.33.4.1 2000/07/30 05:45:30 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1272,14 +1272,14 @@ _yphostent(line, af)
 	 * XXX: maybe support IPv6 parsing, based on 'af' setting
 	 */
 nextline:
+	/* check for host_addrs overflow */
+	if (buf >= &host_addrs[sizeof(host_addrs) / sizeof(host_addrs[0])])
+		goto done;
+
 	more = 0;
 	cp = strpbrk(p, " \t");
-	if (cp == NULL) {
-		if (host.h_name == NULL)
-			return (NULL);
-		else
-			goto done;
-	}
+	if (cp == NULL)
+		goto done;
 	*cp++ = '\0';
 
 	*hap++ = (char *)(void *)buf;
@@ -1320,6 +1320,8 @@ nextline:
 			*cp++ = '\0';
 	}
 done:
+	if (host.h_name == NULL)
+		return (NULL);
 	*q = NULL;
 	*hap = NULL;
 	return (&host);
