@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.37 1997/07/15 17:45:53 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.37.2.1 1998/05/08 06:01:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.37 1997/07/15 17:45:53 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.37.2.1 1998/05/08 06:01:05 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1449,7 +1449,7 @@ noexpand(text)
 	while ((c = *p++) != '\0') {
 		if (c == CTLESC)
 			p++;
-		else if (BASESYNTAX[c] == CCTL)
+		else if (BASESYNTAX[(int)c] == CCTL)
 			return 0;
 	}
 	return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.17 1997/07/04 21:01:54 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.17.2.1 1998/05/08 06:01:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.17 1997/07/04 21:01:54 christos Exp $");
+__RCSID("$NetBSD: error.c,v 1.17.2.1 1998/05/08 06:01:03 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,15 +49,16 @@ __RCSID("$NetBSD: error.c,v 1.17 1997/07/04 21:01:54 christos Exp $");
  * Errors and exceptions.
  */
 
+#include <signal.h>
+#include <unistd.h>
+#include <errno.h>
+
 #include "shell.h"
 #include "main.h"
 #include "options.h"
 #include "output.h"
 #include "error.h"
 #include "show.h"
-#include <signal.h>
-#include <unistd.h>
-#include <errno.h>
 
 
 /*
