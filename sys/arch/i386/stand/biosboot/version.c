@@ -1,6 +1,6 @@
-/*	$NetBSD: version.c,v 1.1.1.1 1997/03/14 02:40:31 perry Exp $	*/
+/*	$NetBSD: version.c,v 1.2 1997/04/13 18:49:31 perry Exp $	*/
 
-char version[] = "2.0Beta";
+char version[] = "2.0Beta2";
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
