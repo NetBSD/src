@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.16 1993/10/27 09:04:49 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.17 1993/10/27 21:22:29 mycroft Exp $
  */
 
 /*
@@ -398,7 +398,8 @@ pcprobe(parent, cf, aux)
 			/* XXXX */
 			printf("pcprobe: no interrupt\n");
 			ia->ia_irq = IRQ1;
-		}
+		} else
+			(void) inb(KBDATAP);
 	}
 
 	ia->ia_iobase = ps->ps_iobase;
@@ -415,8 +416,11 @@ pcforceintr(aux)
 {
 	extern unsigned imen, ipending;
 
-	(void) kbd_cmd(KBC_ECHO, 1);
-	printf("pcforceintr: %x %x %x %x\n", inb(IO_ICU1), inb(IO_ICU2), ipending, imen);
+	while (inb(KBSTATP) & KBS_DIB)
+		(void) inb(KBDATAP);
+	if (!kbd_wait())
+		return;
+	outb(KBOUTP, KBC_ECHO);
 }
 
 static void
@@ -542,7 +546,7 @@ pcintr(sc)
 		return 1;
 	cp = sget(&pc_state[unit], 1);
 	if (!tp || (tp->t_state & TS_ISOPEN) == 0)
-		return 0;
+		return 1;
 	if (cp)
 		do
 			(*linesw[tp->t_line].l_rint)(*cp++, tp);
