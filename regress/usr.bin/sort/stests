@@ -1,6 +1,6 @@
 #! /bin/sh
 #	@(#)stests	8.1 (Berkeley) 6/6/93
-#	$NetBSD: stests,v 1.12 2001/04/18 02:25:38 itojun Exp $
+#	$NetBSD: stests,v 1.13 2001/05/14 20:39:10 jdolecek Exp $
 
 # This code is derived from software contributed to Berkeley by
 # Peter McIlroy.
@@ -977,7 +977,7 @@ BEGIN {
 		line = line line
 	idx = 0
 }
-// { print $1 " " line; if (idx++ > 200) exit 0 }' > in
+/^/ { print $1 " " line; if (idx++ > 200) exit 0 }' > in
 ln -sf in out
 xsort "B" -f
 
