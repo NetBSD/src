@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.617 2003/10/10 14:15:16 agc Exp $
+# $NetBSD: mi,v 1.618 2003/10/14 14:59:04 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1286,7 +1286,6 @@
 ./usr/share/man/cat5/security.conf.0		man-sys-catman
 ./usr/share/man/cat5/services.0			man-net-catman
 ./usr/share/man/cat5/shells.0			man-sys-catman
-./usr/share/man/cat5/siginfo.0			man-sys-catman
 ./usr/share/man/cat5/ssh_config.0		man-secsh-catman
 ./usr/share/man/cat5/sshd_config.0		man-secsh-catman
 ./usr/share/man/cat5/stab.0			man-sys-catman
@@ -1298,7 +1297,6 @@
 ./usr/share/man/cat5/ttys.0			man-sys-catman
 ./usr/share/man/cat5/types.0			man-c-catman
 ./usr/share/man/cat5/tzfile.0			man-sys-catman
-./usr/share/man/cat5/ucontext.0			man-sys-catman
 ./usr/share/man/cat5/usermgmt.conf.0		man-sys-catman
 ./usr/share/man/cat5/utmp.0			man-sys-catman
 ./usr/share/man/cat5/utmpx.0			man-sys-catman
@@ -3135,7 +3133,6 @@
 ./usr/share/man/man5/security.conf.5		man-sys-man
 ./usr/share/man/man5/services.5			man-net-man
 ./usr/share/man/man5/shells.5			man-sys-man
-./usr/share/man/man5/siginfo.5			man-sys-man
 ./usr/share/man/man5/ssh_config.5		man-secsh-man
 ./usr/share/man/man5/sshd_config.5		man-secsh-man
 ./usr/share/man/man5/stab.5			man-sys-man
@@ -3147,7 +3144,6 @@
 ./usr/share/man/man5/ttys.5			man-sys-man
 ./usr/share/man/man5/types.5			man-c-man
 ./usr/share/man/man5/tzfile.5			man-sys-man
-./usr/share/man/man5/ucontext.5			man-sys-man
 ./usr/share/man/man5/usermgmt.conf.5		man-sys-man
 ./usr/share/man/man5/utmp.5			man-sys-man
 ./usr/share/man/man5/utmpx.5			man-sys-man
