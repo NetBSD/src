@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.76 2002/01/24 01:39:03 reinoud Exp $	*/
+/*	$NetBSD: parse.c,v 1.77 2002/01/26 20:42:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.76 2002/01/24 01:39:03 reinoud Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.77 2002/01/26 20:42:14 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.76 2002/01/24 01:39:03 reinoud Exp $");
+__RCSID("$NetBSD: parse.c,v 1.77 2002/01/26 20:42:14 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -195,6 +195,8 @@ typedef enum {
 static ParseSpecial specType;
 static int waiting;
 
+#define	LPAREN	'('
+#define	RPAREN	')'
 /*
  * Predecessor node for handling .ORDER. Initialized to NILGNODE when .ORDER
  * seen, then set to each successive source on the line.
@@ -253,6 +255,7 @@ static struct {
 { ".WAIT",	  Wait, 	0 },
 };
 
+static int ParseIsEscaped __P((const char *, const char *));
 static void ParseErrorInternal __P((char *, size_t, int, char *, ...))
      __attribute__((__format__(__printf__, 4, 5)));
 static void ParseVErrorInternal __P((char *, size_t, int, char *, va_list))
@@ -282,6 +285,33 @@ static void ParseFinishLine __P((void));
 static void ParseMark __P((GNode *));
 
 extern int  maxJobs;
+
+
+/*-
+ *----------------------------------------------------------------------
+ * ParseIsEscaped --
+ *	Check if the current character is escaped on the current line
+ *
+ * Results:
+ *	0 if the character is not backslash escaped, 1 otherwise
+ *
+ * Side Effects:
+ *	None
+ *----------------------------------------------------------------------
+ */
+static int
+ParseIsEscaped(line, c)
+    const char *line, *c;
+{
+    int active = 0;
+    for (;;) {
+	if (line == c)
+	    return active;
+	if (*--c != '\\')
+	    return active;
+	active = !active;
+    }
+}
 
 /*-
  *----------------------------------------------------------------------
@@ -827,6 +857,7 @@ ParseDoDependency (line)
     Lst 	    curTargs;	/* list of target names to be found and added
 				 * to the targets list */
     Lst		    curSrcs;	/* list of sources in order */
+    char	   *lstart = line;
 
     tOp = 0;
 
@@ -839,8 +870,9 @@ ParseDoDependency (line)
 
     do {
 	for (cp = line;
-	     *cp && !isspace ((unsigned char)*cp) &&
-	     (*cp != '!') && (*cp != ':') && (*cp != '(');
+	     *cp && (ParseIsEscaped(lstart, cp) ||
+	     (!isspace ((unsigned char)*cp) &&
+	     (*cp != '!') && (*cp != ':') && (*cp != LPAREN)));
 	     cp++)
 	{
 	    if (*cp == '$') {
@@ -864,7 +896,7 @@ ParseDoDependency (line)
 	    }
 	    continue;
 	}
-	if (*cp == '(') {
+	if (!ParseIsEscaped(lstart, cp) && *cp == LPAREN) {
 	    /*
 	     * Archives must be handled specially to make sure the OP_ARCHV
 	     * flag is set in their 'type' field, for one thing, and because
@@ -1060,8 +1092,10 @@ ParseDoDependency (line)
 	if (specType != Not && specType != ExPath) {
 	    Boolean warn = FALSE;
 
-	    while ((*cp != '!') && (*cp != ':') && *cp) {
-		if (*cp != ' ' && *cp != '\t') {
+	    while (*cp && (ParseIsEscaped(lstart, cp) ||
+		((*cp != '!') && (*cp != ':')))) {
+		if (ParseIsEscaped(lstart, cp) ||
+		    (*cp != ' ' && *cp != '\t')) {
 		    warn = TRUE;
 		}
 		cp++;
@@ -1075,7 +1109,8 @@ ParseDoDependency (line)
 	    }
 	}
 	line = cp;
-    } while ((*line != '!') && (*line != ':') && *line);
+    } while (*line && (ParseIsEscaped(lstart, line) ||
+	((*line != '!') && (*line != ':'))));
 
     /*
      * Don't need the list of target names anymore...
@@ -1268,7 +1303,7 @@ ParseDoDependency (line)
 	     * and handle them accordingly.
 	     */
 	    while (*cp && !isspace ((unsigned char)*cp)) {
-		if ((*cp == '(') && (cp > line) && (cp[-1] != '$')) {
+		if ((*cp == LPAREN) && (cp > line) && (cp[-1] != '$')) {
 		    /*
 		     * Only stop for a left parenthesis if it isn't at the
 		     * start of a word (that'll be for variable changes
@@ -1281,7 +1316,7 @@ ParseDoDependency (line)
 		}
 	    }
 
-	    if (*cp == '(') {
+	    if (*cp == LPAREN) {
 		GNode	  *gn;
 
 		sources = Lst_Init (FALSE);
@@ -1377,13 +1412,13 @@ Parse_IsVar (line)
 	    wasSpace = TRUE;
 	    break;
 
-	case '(':
+	case LPAREN:
 	case '{':
 	    level++;
 	    break;
 
 	case '}':
-	case ')':
+	case RPAREN:
 	    level--;
 	    break;
 
@@ -2677,7 +2712,8 @@ Parse_File(name, stream)
 			goto nextLine;
 		    }
 #ifndef POSIX
-		    while ((*cp != ':') && (*cp != '!') && (*cp != '\0')) {
+		    while (*cp && (ParseIsEscaped(line, cp) ||
+			(*cp != ':') && (*cp != '!'))) {
 			nonSpace = TRUE;
 			cp++;
 		    }
