@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.2,v 1.1.2.13 2005/03/17 00:04:08 he Exp $
+#	$NetBSD: CHANGES-2.0.2,v 1.1.2.14 2005/03/17 10:30:20 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.1 release to the NetBSD 2.0.2
 release.
@@ -157,3 +157,9 @@ sys/arch/prep/prep/machdep.c			1.52
 	the startup; only parts of the PCI memory space is mapped
 	already.  Move initialization since it requires UVM.
 	[jkunz, ticket 1152]
+
+lib/libpthread/pthread.3			1.4
+
+	Document PTHREAD_CONCURRENCY.
+	[daniel, ticket #1166]
+
