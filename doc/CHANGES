@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.186 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.187 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -440,3 +440,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	hp300: Switch to MI SCSI at last. [tsutsui 20030801]
 	evbarm: Add support for the Samsung SMDK2410 eval board for
 		the S3C2410 Processor.  [bsh 20030804]
+	dlsym(3): Add support for RTLD_DEFAULT, RTLD_NEXT and RTLD_SELF
+		[christos,skrll 20030812]
