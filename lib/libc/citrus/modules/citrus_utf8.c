@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf8.c,v 1.1 2002/03/17 22:14:24 tshiozak Exp $	*/
+/*	$NetBSD: citrus_utf8.c,v 1.2 2002/03/18 08:56:32 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf8.c,v 1.1 2002/03/17 22:14:24 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_utf8.c,v 1.2 2002/03/18 08:56:32 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -206,13 +206,14 @@ _citrus_UTF8_mbrtowc_priv(_UTF8EncodingInfo *ei, wchar_t *pwc, const char **s,
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(psenc != NULL);
 
+	s0 = *s;
+
 	if (s0 == NULL) {
 		_citrus_UTF8_init_state(ei, psenc);
 		*nresult = 0; /* state independent */
 		return (0);
 	}
 
-	s0 = *s;
 	chlenbak = psenc->chlen;
 
 	/* make sure we have the first byte in the buffer */
