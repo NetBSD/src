@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_x25subr.c	7.14 (Berkeley) 6/26/91
- *	$Id: if_x25subr.c,v 1.4 1994/01/16 01:59:21 cgd Exp $
+ *	from: @(#)if_x25subr.c	8.1 (Berkeley) 6/10/93
+ *	$Id: if_x25subr.c,v 1.5 1994/05/13 06:04:27 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -55,8 +55,6 @@
 #include <netccitt/pk.h>
 #include <netccitt/pk_var.h>
 
-#include <machine/cpu.h>
-
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -76,7 +74,19 @@ int tp_incoming();
 
 extern	struct ifnet loif;
 struct llinfo_x25 llinfo_x25 = {&llinfo_x25, &llinfo_x25};
+#ifndef _offsetof
+#define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
+#endif
 struct sockaddr *x25_dgram_sockmask;
+struct sockaddr_x25 x25_dgmask = {
+ _offsetof(struct sockaddr_x25, x25_udata[1]),			/* _len */
+ 0,								/* _family */
+ 0,								/* _net */
+ { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}, /* _addr */
+ {0},								/* opts */
+ -1,								/* _udlen */
+ {-1}								/* _udata */
+};
  
 struct if_x25stats {
 	int	ifx_wrongplen;
@@ -154,10 +164,9 @@ register struct mbuf *m;
 	ifp = m->m_pkthdr.rcvif;
 	ifp->if_lastchange = time;
 	switch (m->m_type) {
-	case MT_OOBDATA:
+	default:
 		if (m)
 			m_freem(m);
-	default:
 		return;
 
 	case MT_DATA:
@@ -205,6 +214,7 @@ register struct pklcd *lcp;
 register struct mbuf *m;
 {
 	register struct llinfo_x25 *lx = (struct llinfo_x25 *)lcp->lcd_upnext;
+	int do_clear = 1;
 	if (m == 0)
 		goto refused;
 	if (m->m_type != MT_CONTROL) {
@@ -218,10 +228,12 @@ register struct mbuf *m;
 			lcp->lcd_send(lcp); /* XXX start queued packets */
 		return;
 	default:
+		do_clear = 0;
 	refused:
 		lcp->lcd_upper = 0;
 		lx->lx_lcd = 0;
-		pk_disconnect(lcp);
+		if (do_clear)
+			pk_disconnect(lcp);
 		return;
 	}
 }
@@ -234,7 +246,7 @@ struct mbuf *m0;
 {
 	register struct rtentry *rt, *nrt;
 	register struct mbuf *m = m0->m_next; /* m0 has calling sockaddr_x25 */
-	int x25_rtrequest();
+	void x25_rtrequest();
 
 	rt = rtalloc1(SA(&lcp->lcd_faddr), 0);
 	if (rt == 0) {
@@ -383,7 +395,7 @@ struct ifnet *ifp;
 	register struct pklcd **lcpp, *lcp;
 	int s = splimp();
 
-	for (pkcb = pkcbhead; pkcb; pkcb = pkcb->pk_next)
+	FOR_ALL_PKCBS(pkcb)
 	    if (pkcb->pk_ia->ia_ifp == ifp)
 		for (lcpp = pkcb->pk_chan + pkcb->pk_maxlcn;
 		     --lcpp > pkcb->pk_chan;)
@@ -399,14 +411,22 @@ struct ifnet *ifp;
  * This routine gets called when validating additions of new routes
  * or deletions of old ones.
  */
+void
 x25_rtrequest(cmd, rt, dst)
-register struct rtentry *rt;
-struct sockaddr *dst;
+	register struct rtentry *rt;
+	struct sockaddr *dst;
 {
 	register struct llinfo_x25 *lx = (struct llinfo_x25 *)rt->rt_llinfo;
 	register struct sockaddr_x25 *sa =(struct sockaddr_x25 *)rt->rt_gateway;
 	register struct pklcd *lcp;
 
+	/* would put this pk_init, except routing table doesn't
+	   exist yet. */
+	if (x25_dgram_sockmask == 0) {
+		struct radix_node *rn_addmask();
+		x25_dgram_sockmask =
+			SA(rn_addmask((caddr_t)&x25_dgmask, 0, 4)->rn_key);
+	}
 	if (rt->rt_flags & RTF_GATEWAY) {
 		if (rt->rt_llinfo)
 			RTFREE((struct rtentry *)rt->rt_llinfo);
@@ -627,7 +647,7 @@ register struct x25_ifaddr *ia;
 		 * This uses the X25 routing table to do inverse
 		 * lookup of x25 address to sockaddr.
 		 */
-		if (rt = rtalloc1(dst, 0)) {
+		if (rt = rtalloc1(SA(dst), 0)) {
 			sa = rt->rt_gateway;
 			rt->rt_refcnt--;
 		}
@@ -640,20 +660,7 @@ register struct x25_ifaddr *ia;
 	if (sa && (rt = rtalloc1(sa, 1)))
 		rt->rt_refcnt--;
 }
-#ifndef _offsetof
-#define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
-#endif
-struct sockaddr_x25 x25_dgmask = {
- _offsetof(struct sockaddr_x25, x25_udata[1]),			/* _len */
- 0,								/* _family */
- 0,								/* _net */
- { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}, /* _addr */
- {0},								/* opts */
- -1,								/* _udlen */
- {-1}								/* _udata */
-};
 int x25_startproto = 1;
-struct radix_tree_head *x25_rnhead;
 
 pk_init()
 {
@@ -661,10 +668,6 @@ pk_init()
 	 * warning, sizeof (struct sockaddr_x25) > 32,
 	 * but contains no data of interest beyond 32
 	 */
-	struct radix_node *rn_addmask();
-	rn_inithead(&x25_rnhead, 32, AF_CCITT);
-	x25_dgram_sockmask =
-		SA(rn_addmask((caddr_t)&x25_dgmask, 0, 4)->rn_key);
 	if (x25_startproto) {
 		pk_protolisten(0xcc, 1, x25_dgram_incoming);
 		pk_protolisten(0x81, 1, x25_dgram_incoming);

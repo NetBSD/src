@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tcp.h	7.7 (Berkeley) 6/28/90
- *	$Id: tcp.h,v 1.4 1994/01/08 21:21:56 mycroft Exp $
+ *	from: @(#)tcp.h	8.1 (Berkeley) 6/10/93
+ *	$Id: tcp.h,v 1.5 1994/05/13 06:06:32 mycroft Exp $
  */
-
-#ifndef _NETINET_TCP_H_
-#define _NETINET_TCP_H_
 
 typedef	u_long	tcp_seq;
 /*
@@ -67,24 +64,36 @@ struct tcphdr {
 	u_short	th_urp;			/* urgent pointer */
 };
 
-#define	TCPOPT_EOL	0
-#define	TCPOPT_NOP	1
-#define	TCPOPT_MAXSEG	2
+#define	TCPOPT_EOL		0
+#define	TCPOPT_NOP		1
+#define	TCPOPT_MAXSEG		2
+#define	   TCPOLEN_MAXSEG		4
+#define	TCPOPT_WINDOW		3
+#define	   TCPOLEN_WINDOW		3
+#define	TCPOPT_SACK_PERMITTED	4		/* Experimental */
+#define	   TCPOLEN_SACK_PERMITTED	2
+#define	TCPOPT_SACK		5		/* Experimental */
+#define	TCPOPT_TIMESTAMP	8
+#define	   TCPOLEN_TIMESTAMP		10
+#define	   TCPOLEN_TSTAMP_APPA		(TCPOLEN_TIMESTAMP+2) /* appendix A */
+
+#define TCPOPT_TSTAMP_HDR	\
+    (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_TIMESTAMP<<8|TCPOLEN_TIMESTAMP)
 
 /*
  * Default maximum segment size for TCP.
  * With an IP MSS of 576, this is 536,
  * but 512 is probably more convenient.
- * This should be defined as MIN(512, IP_MSS - sizeof (struct tcpiphdr)).
+ * This should be defined as min(512, IP_MSS - sizeof (struct tcpiphdr)).
  */
-#define	TCP_MSS	512
+#define	TCP_MSS		512
 
-#define	TCP_MAXWIN	65535		/* largest value for window */
+#define	TCP_MAXWIN	65535	/* largest value for (unscaled) window */
+
+#define	TCP_MAX_WINSHIFT	14	/* maximum window shift */
 
 /*
  * User-settable options (used with setsockopt).
  */
 #define	TCP_NODELAY	0x01	/* don't delay send to coalesce packets */
 #define	TCP_MAXSEG	0x02	/* set maximum segment size */
-
-#endif /* !_NETINET_TCP_H_ */

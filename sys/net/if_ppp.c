@@ -69,7 +69,7 @@
  * Paul Mackerras (paulus@cs.anu.edu.au).
  */
 
-/* $Id: if_ppp.c,v 1.8 1994/05/08 12:33:49 paulus Exp $ */
+/* $Id: if_ppp.c,v 1.9 1994/05/13 06:02:48 mycroft Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
 #include "ppp.h"
@@ -136,7 +136,7 @@ int	pppwrite __P((struct tty *tp, struct uio *uio, int flag));
 int	ppptioctl __P((struct tty *tp, int cmd, caddr_t data, int flag,
 		       struct proc *));
 int	pppoutput __P((struct ifnet *ifp, struct mbuf *m0,
-		       struct sockaddr *dst));
+		       struct sockaddr *dst, struct rtentry *rtp));
 void	pppinput __P((int c, struct tty *tp));
 int	pppioctl __P((struct ifnet *ifp, int cmd, caddr_t data));
 void	pppstart __P((struct tty *tp));
@@ -230,7 +230,7 @@ pppalloc(pid)
     sc->sc_flags = 0;
     sc->sc_mru = PPP_MRU;
 #ifdef VJC
-    sl_compress_init(&sc->sc_comp);
+    sl_compress_init(&sc->sc_comp, -1);
 #endif
     sc->sc_if.if_flags |= IFF_RUNNING;
 
@@ -436,7 +436,7 @@ pppwrite(tp, uio, flag)
     *ph1 = *ph2;
     m0->m_data += PPP_HDRLEN;
     m0->m_len -= PPP_HDRLEN;
-    return (pppoutput(&sc->sc_if, m0, &dst));
+    return (pppoutput(&sc->sc_if, m0, &dst, (struct rtentry *)0));
 }
 
 /*
@@ -537,7 +537,7 @@ ppptioctl(tp, cmd, data, flag, p)
     case PPPIOCSMAXCID:
 	if (error = suser(p->p_ucred, &p->p_acflag))
 	    return (error);
-	sl_compress_setup(&sc->sc_comp, *(int *)data);
+	sl_compress_init(&sc->sc_comp, *(int *)data);
 	break;
 #endif
 
@@ -610,10 +610,11 @@ pppfcs(fcs, cp, len)
  * Packet is placed in Information field of PPP frame.
  */
 int
-pppoutput(ifp, m0, dst)
+pppoutput(ifp, m0, dst, rtp)
     struct ifnet *ifp;
     struct mbuf *m0;
     struct sockaddr *dst;
+    struct rtentry *rtp;
 {
     register struct ppp_softc *sc = &ppp_softc[ifp->if_unit];
     struct ppp_header *ph;

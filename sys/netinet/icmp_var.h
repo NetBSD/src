@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)icmp_var.h	7.5 (Berkeley) 6/28/90
- *	$Id: icmp_var.h,v 1.5 1994/01/10 23:27:39 mycroft Exp $
+ *	from: @(#)icmp_var.h	8.1 (Berkeley) 6/10/93
+ *	$Id: icmp_var.h,v 1.6 1994/05/13 06:05:53 mycroft Exp $
  */
-
-#ifndef _NETINET_ICMP_VAR_H_
-#define _NETINET_ICMP_VAR_H_
 
 /*
  * Variables related to this implementation
@@ -48,7 +45,7 @@ struct	icmpstat {
 	u_long	icps_oldicmp;		/* no error 'cuz old was icmp */
 	u_long	icps_outhist[ICMP_MAXTYPE + 1];
 /* statistics related to input messages processed */
-	u_long	icps_badcode;		/* icmp_code out of range */
+ 	u_long	icps_badcode;		/* icmp_code out of range */
 	u_long	icps_tooshort;		/* packet < ICMP_MINLEN */
 	u_long	icps_checksum;		/* bad checksum */
 	u_long	icps_badlen;		/* calculated bound mismatch */
@@ -56,8 +53,17 @@ struct	icmpstat {
 	u_long	icps_inhist[ICMP_MAXTYPE + 1];
 };
 
+/*
+ * Names for ICMP sysctl objects
+ */
+#define	ICMPCTL_MASKREPL	1	/* allow replies to netmask requests */
+#define ICMPCTL_MAXID		2
+
+#define ICMPCTL_NAMES { \
+	{ 0, 0 }, \
+	{ "maskrepl", CTLTYPE_INT }, \
+}
+
 #ifdef KERNEL
 struct	icmpstat icmpstat;
 #endif
-
-#endif /* !_NETINET_ICMP_VAR_H_ */

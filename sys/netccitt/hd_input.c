@@ -1,7 +1,7 @@
 /*
  * Copyright (c) University of British Columbia, 1984
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Laboratory for Computation Vision and the Computer Science Department
@@ -35,8 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)hd_input.c	7.7 (Berkeley) 5/29/91
- *	$Id: hd_input.c,v 1.5 1993/12/18 00:41:21 mycroft Exp $
+ *	from: @(#)hd_input.c	8.1 (Berkeley) 6/10/93
+ *	$Id: hd_input.c,v 1.6 1994/05/13 06:04:18 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -55,8 +55,9 @@
 #include <netccitt/hd_var.h>
 #include <netccitt/x25.h>
 
-static int frame_reject(), rej_routine(), free_iframes();
-
+static frame_reject();
+static rej_routine();
+static free_iframes();
 /*
  *      HDLC INPUT INTERFACE
  *
@@ -70,7 +71,6 @@ hdintr ()
 	register struct hdcb *hdp;
 	register struct ifnet *ifp;
 	register int s;
-	extern struct ifqueue pkintrq;
 	static struct ifnet *lastifp;
 	static struct hdcb *lasthdp;
 
@@ -114,8 +114,6 @@ hdintr ()
 		if (process_rxframe (hdp, m) == FALSE)
 			m_freem (m);
 	}
-	if (pkintrq.ifq_len)
-		pkintr ();
 }
 
 process_rxframe (hdp, fbuf)
@@ -451,7 +449,6 @@ struct Hdlc_iframe *frame;
 {
 	register struct Frmr_frame *frmr = &hd_frmr;
 
-
 	frmr -> frmr_control = ((struct Hdlc_frame *) frame) -> control;
 
 	frmr -> frmr_ns = frame -> ns;
@@ -498,7 +495,6 @@ register struct Hdlc_sframe *frame;
 int frametype;
 {
 	register int nr = frame -> nr, pf = frame -> pf, pollbit = 0;
-	int rej_routine();
 
 	if (valid_nr (hdp, nr, pf) == TRUE) {
 		switch (frametype) {
@@ -553,8 +549,6 @@ valid_nr (hdp, nr, finalbit)
 register struct hdcb *hdp;
 register int finalbit;
 {
-	int free_iframes();
-	
 	/* Make sure it really does acknowledge something. */
 	if (hdp->hd_lastrxnr == nr)
 		return (TRUE);

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_slvar.h	7.7 (Berkeley) 5/7/91
- *	$Id: if_slvar.h,v 1.10 1994/03/08 07:27:24 cgd Exp $
+ *	from: @(#)if_slvar.h	8.3 (Berkeley) 2/1/94
+ *	$Id: if_slvar.h,v 1.11 1994/05/13 06:02:56 mycroft Exp $
  */
-
-#ifndef _IF_SLVAR_H_
-#define _IF_SLVAR_H_
 
 /*
  * Definitions for SLIP interface data structures
@@ -86,4 +83,3 @@ int	sloutput __P((struct ifnet *,
 void	slstart __P((struct tty *));
 int	sltioctl __P((struct tty *, int, caddr_t, int));
 #endif /* KERNEL */
-#endif /* !_IF_SLVAR_H_ */
