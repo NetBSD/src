@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.23 2003/01/05 22:38:20 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.24 2003/01/05 22:51:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -733,10 +733,10 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	tf->tf_out[4] = (vaddr_t) ap;
 
 	/*
-	 * Ensure the stack is double-word aligned, and provide an
-	 * rwindow save area.
+	 * Ensure the stack is double-word aligned, and provide a
+	 * C call frame.
 	 */
-	sp = (void *)(((vaddr_t)sp & ~0x7) - sizeof(struct rwindow));
+	sp = (void *)(((vaddr_t)sp & ~0x7) - CCFSZ);
 
 	/* Arrange to begin execution at the upcall handler. */
 	tf->tf_pc = addr;
