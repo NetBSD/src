@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.7 1999/10/22 10:39:16 hannken Exp $	 */
+/*	$NetBSD: search.c,v 1.8 1999/10/25 13:57:12 kleink Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -83,7 +83,8 @@ _rtld_check_library(pathname)
 		goto lose;
 
 	/* Elf_e_ident includes class */
-	if (memcmp(Elf_e_ident, ehdr.e_ident, Elf_e_siz) != 0)
+	if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0 ||
+	    ehdr.e_ident[EI_CLASS] != ELFCLASS)
 		goto lose;
 
 	switch (ehdr.e_machine) {
@@ -92,10 +93,10 @@ _rtld_check_library(pathname)
 		goto lose;
 	}
 
-	if (ehdr.e_ident[Elf_ei_version] != Elf_ev_current ||
-	    ehdr.e_version != Elf_ev_current ||
-	    ehdr.e_ident[Elf_ei_data] != ELFDEFNNAME(MACHDEP_ENDIANNESS) ||
-	    ehdr.e_type != Elf_et_dyn)
+	if (ehdr.e_ident[EI_VERSION] != EV_CURRENT ||
+	    ehdr.e_version != EV_CURRENT ||
+	    ehdr.e_ident[EI_DATA] != ELFDEFNNAME(MACHDEP_ENDIANNESS) ||
+	    ehdr.e_type != ET_DYN)
 		goto lose;
 
 	close(fd);

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 1999/10/11 01:57:47 eeh Exp $	*/
+/*	$NetBSD: boot.c,v 1.10 1999/10/25 14:04:38 kleink Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -257,10 +257,12 @@ loadfile(fd, args)
 	} else
 #endif
 #ifdef SPARC_BOOT_ELF
-	if (bcmp(Elf32_e_ident, hdr.elf32.e_ident, Elf32_e_siz) == 0) {
+	if (bcmp(hdr.elf32.e_ident, ELFMAG, SELFMAG) == 0 &&
+	    hdr.elf32.e_ident[EI_CLASS] == ELFCLASS32) {
 		rval = elf32_exec(fd, &hdr.elf32, &entry, &ssym, &esym);
 	} else
-	if (bcmp(Elf64_e_ident, hdr.elf64.e_ident, Elf64_e_siz) == 0) {
+	if (bcmp(hdr.elf64.e_ident, ELFMAG, SELFMAG) == 0 &&
+	    hdr.elf64.e_ident[EI_CLASS] == ELFCLASS64) {
 		rval = elf64_exec(fd, &hdr.elf64, &entry, &ssym, &esym);
 	} else
 #endif
@@ -419,8 +421,8 @@ elf32_exec(fd, elf, entryp, ssymp, esymp)
 			printf("read phdr: %s\n", strerror(errno));
 			return (1);
 		}
-		if (phdr.p_type != Elf_pt_load ||
-		    (phdr.p_flags & (Elf_pf_w|Elf_pf_x)) == 0)
+		if (phdr.p_type != PT_LOAD ||
+		    (phdr.p_flags & (PF_W|PF_X)) == 0)
 			continue;
 
 		/* Read in segment. */
@@ -463,12 +465,12 @@ elf32_exec(fd, elf, entryp, ssymp, esymp)
 		return (1);
 	}
 	for (i = 0; i < elf->e_shnum; i++, shp++) {
-		if (shp->sh_type == Elf_sht_null)
+		if (shp->sh_type == SHT_NULL)
 			continue;
-		if (shp->sh_type != Elf_sht_symtab
-		    && shp->sh_type != Elf_sht_strtab) {
+		if (shp->sh_type != SHT_SYMTAB
+		    && shp->sh_type != SHT_STRTAB) {
 			shp->sh_offset = 0; 
-			shp->sh_type = Elf_sht_nobits;
+			shp->sh_type = SHT_NOBITS;
 			continue;
 		}
 		size += shp->sh_size;
@@ -500,8 +502,8 @@ elf32_exec(fd, elf, entryp, ssymp, esymp)
 	addr += sizeof(Elf32_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
 	off = sizeof(Elf32_Ehdr) + (elf->e_shnum * sizeof(Elf32_Shdr));
 	for (first = 1, i = 0; i < elf->e_shnum; i++, shp++) {
-		if (shp->sh_type == Elf_sht_symtab
-		    || shp->sh_type == Elf_sht_strtab) {
+		if (shp->sh_type == SHT_SYMTAB
+		    || shp->sh_type == SHT_STRTAB) {
 			if (first)
 				printf("symbols @ 0x%lx ", (u_long)addr);
 			printf("%s%d", first ? "" : "+", shp->sh_size);
