@@ -629,10 +629,9 @@ case "${target}" in
     fi
     ;;
   arm-*-netbsdelf*)
-    noconfigdirs="$noconfigdirs sim"
     ;;
   arm-*-netbsd*) # (a.out)
-    noconfigdirs="$noconfigdirs ld sim"
+    noconfigdirs="$noconfigdirs ld"
     ;;
   arm-*-oabi*)
     noconfigdirs="$noconfigdirs target-libgloss target-libffi"
