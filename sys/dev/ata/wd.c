@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.248 2003/04/26 09:54:15 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.249 2003/04/27 14:27:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.248 2003/04/26 09:54:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.249 2003/04/27 14:27:36 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1704,17 +1704,19 @@ wd_setcache(wd, bits)
 		return EIO;
 
 	if (params.atap_cmd_set1 == 0x0000 ||
-	    params.atap_cmd_set1 == 0xffff ||
+	    params.atap_cmd_set1 == 0xffff)
 	    (params.atap_cmd_set1 & WDC_CMD1_CACHE) == 0)
 		return EOPNOTSUPP;
 
-	if (bits & ~DKCACHE_WRITE)
+	if ((bits & DKCACHE_READ) == 0 ||
+	    (bits & DKCACHE_SAVE) != 0)
 		return EOPNOTSUPP;
 
 	memset(&wdc_c, 0, sizeof(struct wdc_command));
 	wdc_c.r_command = SET_FEATURES;
 	wdc_c.r_st_bmask = 0;
 	wdc_c.r_st_pmask = 0;
+	wdc_c.timeout = 30000; /* 30s timeout */
 	wdc_c.flags = AT_WAIT;
 	if (bits & DKCACHE_WRITE)
 		wdc_c.r_precomp = WDSF_WRITE_CACHE_EN;
