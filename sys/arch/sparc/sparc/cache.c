@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.44 1999/01/19 23:07:29 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.45 1999/01/20 15:25:29 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -637,8 +637,9 @@ srmmu_cache_flush(base, len)
 	if (len < NBPG) {
 		/* less than a page, flush just the covered cache lines */
 		ls = CACHEINFO.c_linesize;
+		baseoff = (int)base & (ls - 1);
+		i = (baseoff + len + ls - 1) >> CACHEINFO.c_l2linesize;
 		p = (char *)((int)base & -ls);
-		i = (len + ls - 1) >> CACHEINFO.c_l2linesize;
 		for (; --i >= 0; p += ls)
 			sta(p, ASI_IDCACHELFP, 0);
 		return;
