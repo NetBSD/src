@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.12 1998/08/02 14:18:07 drochner Exp $ */
+/* $NetBSD: wskbd.c,v 1.13 1998/09/17 18:05:43 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.12 1998/08/02 14:18:07 drochner Exp $";
+    "$NetBSD: wskbd.c,v 1.13 1998/09/17 18:05:43 drochner Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -969,6 +969,16 @@ wskbd_translate(id, type, value)
 	keysym_t ksym, res, *group;
 	struct wscons_keymap kpbuf, *kp;
 	int iscommand = 0;
+
+	if (type == WSCONS_EVENT_ALL_KEYS_UP) {
+		id->t_modifiers &= ~(MOD_SHIFT_L | MOD_SHIFT_R
+				| MOD_CONTROL_L | MOD_CONTROL_R
+				| MOD_META_L | MOD_META_R
+				| MOD_MODESHIFT
+				| MOD_COMMAND | MOD_COMMAND1 | MOD_COMMAND2);
+		update_leds(id);
+		return (KS_voidSymbol);
+	}
 
 	if (sc != NULL) {
 		if (value < 0 || value >= sc->sc_maplen) {
