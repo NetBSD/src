@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.2 1998/01/25 19:57:27 pk Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.3 1998/02/04 00:59:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -363,9 +363,17 @@ ie_vme_write24(sc, offset, addr)
 	int addr;
 {
 	u_char *f = (u_char *)&addr;
-	u_char *t = (u_char *)(sc->bh + offset);
+	u_int16_t v0, v1;
+	u_char *t;
 
-	t[0] = f[3]; t[1] = f[2]; t[2] = f[1]; /*_t[3] = _f[0];*/
+	t = (u_char *)&v0;
+	t[0] = f[3]; t[1] = f[2];
+	bus_space_write_2(sc->bt, sc->bh, offset, v0);
+
+	t = (u_char *)&v1;
+	t[0] = f[1]; t[1] = 0;
+	bus_space_write_2(sc->bt, sc->bh, offset+2, v1);
+
 	bus_space_barrier(sc->bt, sc->bh, offset, 4, BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -381,10 +389,7 @@ ie_vme_match(parent, cf, aux)
 	int mod;
 
 	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D;
-	if (vme_bus_probe(ct, bt, va->vma_reg[0], 2, mod))
-		return (1);
-
-	return (0);
+	return (vme_bus_probe(ct, bt, va->vma_reg[0], 2, mod, 0, 0));
 }
 
 void
