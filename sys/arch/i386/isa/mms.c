@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.21 1996/03/17 01:31:16 thorpej Exp $	*/
+/*	$NetBSD: mms.c,v 1.22 1996/04/11 22:15:20 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -113,8 +113,8 @@ mmsattach(parent, self, aux)
 	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_PULSE, IPL_TTY, mmsintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_PULSE,
+	    IPL_TTY, mmsintr, sc);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.26 1996/03/17 01:31:24 thorpej Exp $	*/
+/*	$NetBSD: pms.c,v 1.27 1996/04/11 22:15:27 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -203,13 +203,15 @@ pmsattach(parent, self, aux)
 {
 	struct pms_softc *sc = (void *)self;
 	int irq = self->dv_cfdata->cf_loc[0];
+	isa_chipset_tag_t ic = aux;			/* XXX */
 
 	printf(" irq %d\n", irq);
 
 	/* Other initialization was done by pmsprobe. */
 	sc->sc_state = 0;
 
-	sc->sc_ih = isa_intr_establish(irq, IST_EDGE, IPL_TTY, pmsintr, sc);
+	sc->sc_ih = isa_intr_establish(ic, irq, IST_EDGE, IPL_TTY,
+	    pmsintr, sc);
 }
 
 int
