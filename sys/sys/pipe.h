@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.15 2005/02/03 19:20:01 perry Exp $ */
+/* $NetBSD: pipe.h,v 1.16 2005/03/17 20:39:17 kleink Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -27,7 +27,7 @@
 #define _SYS_PIPE_H_
 
 #ifndef _KERNEL
-#include <sys/select.h>			/* for struct selinfo */
+#include <sys/selinfo.h>		/* for struct selinfo */
 #endif
 
 /*

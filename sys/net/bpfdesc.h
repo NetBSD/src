@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.21 2004/11/30 04:28:43 christos Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.22 2005/03/17 20:39:17 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -42,7 +42,7 @@
 #define _NET_BPFDESC_H_
 
 #include <sys/callout.h>
-#include <sys/select.h>
+#include <sys/selinfo.h>		/* for struct selinfo */
 
 /*
  * Descriptor associated with each open bpf file.

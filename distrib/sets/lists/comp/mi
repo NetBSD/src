@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.770 2005/03/13 15:20:09 perry Exp $
+#	$NetBSD: mi,v 1.771 2005/03/17 20:39:17 kleink Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1383,6 +1383,7 @@
 ./usr/include/sys/sched.h			comp-c-include
 ./usr/include/sys/scsiio.h			comp-c-include
 ./usr/include/sys/select.h			comp-c-include
+./usr/include/sys/selinfo.h			comp-c-include
 ./usr/include/sys/sem.h				comp-c-include
 ./usr/include/sys/sha1.h			comp-c-include
 ./usr/include/sys/shm.h				comp-c-include
