@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.521 2003/04/12 08:40:48 christos Exp $
+$NetBSD: pcidevs,v 1.522 2003/04/12 10:41:04 explorer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1890,6 +1890,7 @@ product PROLAN NE2KETHER 0x1980 Ethernet
 product PROMISE ULTRA100X 0x0d30 Ultra100X/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA66_0 0x0d38 Ultra66/ATA Bus Master IDE Accelerator
 product PROMISE MBULTRA133 0x1275 Ultra133/ATA Bus Master IDE Accelerator (MB)
+product	PROMISE	SATA150TX2PLUSO 0x3375 Serial ATA/150 TX4 Controller plus one parallel IDE bus
 product PROMISE SATA150TX2PLUS 0x3376 Serial ATA/150 TX2plus Bus Master IDE Accelerator
 product	PROMISE	SATA150TX4 0x3318 Serial ATA/150 TX4 Controller
 product PROMISE ULTRA100 0x4d30	Ultra100/ATA Bus Master IDE Accelerator
