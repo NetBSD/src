@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.h,v 1.3 2000/12/28 05:22:27 itojun Exp $	*/
+/*	$NetBSD: rune.h,v 1.4 2001/10/20 05:59:35 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -62,5 +62,7 @@
 #define __rune_sizestate	___rune_sizestate(_CurrentRuneLocale)
 #define __rune_packstate	___rune_packstate(_CurrentRuneLocale)
 #define __rune_unpackstate	___rune_unpackstate(_CurrentRuneLocale)
+
+#define _DEFAULT_INVALID_RUNE	-3
 
 #endif	/*! _RUNE_H_ */
