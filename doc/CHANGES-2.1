@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.2 2005/01/07 12:51:22 jdc Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.3 2005/01/07 15:02:30 jdc Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -24,7 +24,6 @@ src/sys/dev/pci/if_wm.c				1.78
 	- add the Receive and Transmit Data FIFO registers.
 	- change the Tx:Rx on-chip RAM allocation ratio based on MTU.
 	- On the 82547, keep track of how much of the Tx FIFO has been used.
-
 	[thorpej, ticket #897]
 
 sys/dev/pci/if_sk.c				1.11
@@ -37,14 +36,12 @@ sys/dev/pci/if_skvar.h				1.4
 	Lower interrupt moderation timer to (improves performance).
 	Improve chip identification. (from linux sk98lin driver).
 	Keep tx queue running by kicking the tx bmu repeatedly.
-
 	[abs, ticket #973]
 
 sys/arch/powerpc/powerpc/trap.c			1.104
 
 	Make sure to do setenv/unsetenv in pairs.  This prevents panics in
 	DIAGNOSTIC kernel when crossing segment boundaries.
-
 	[matt, ticket #985]
 
 src/sys/arch/macppc/conf/INSTALL		1.78
@@ -52,6 +49,36 @@ src/sys/arch/macppc/conf/INSTALL		1.78
 	Now that we have ofwboot load at 0xe00000, it doesn't make sense for
 	this kernel to load at 0x800000 - move back to the default and we
 	have around 13 MB of space for the kernel.
-
 	[wrstuden, ticket #951]
+
+sys/arch/sparc64/sparc64/pmap.c			1.157
+
+	Do the invalidation of the (virtually-addressed) L1 cache in
+	pmap_remove_all() (ie. just before we skip the per-page cache
+	invalidations while tearing down each context) instead of just
+	before we recycle all the contexts in ctx_alloc().  The latter
+	is not good enough since a (physically tagged) L1 cache line is
+	valid for all contexts, not just the one that was used to
+	instantiate it.  fixes PR#24126, PR#25669 and PR#27730.
+	[martin, ticket #1013]
+
+sys/arch/sparc64/sparc64/pmap.c			1.158
+
+	Better return value checking for pseg_get/pseg_set. Turn Debugger()
+	calls into proper panics and sprinkle some KASSERTs.  Closes PR#27288.
+	[martin, ticket #1014]
+
+lib/libc/arch/sparc64/gen/_setjmp.S		1.6
+
+	Replace the stack unwinding by a much simpler solution taken from
+	../../arch/sparc/gen/_setjmp.S rev. 1.6. This ended up to be
+	~identical to the OpenBSD change triggered by the same sparc change.
+	Thanks to Stoned Elipot for pointing out the problem.
+	[martin, ticket #1020]
+
+lib/libc/arch/x86_64/gen/swapcontext.S 1.3
+
+	Use correct stack offsets after pushing values onto it.
+	PR#28486.
+	[hira, ticket #1029]
 
