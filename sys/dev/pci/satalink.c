@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.5 2003/12/20 03:51:27 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.6 2003/12/20 06:26:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -573,7 +573,7 @@ sii3114_mapchan(struct pciide_channel *cp)
 
 	wdc_cp->ctl_iot = sc->sc_ba5_st;
 	if (bus_space_subregion(sc->sc_ba5_st, sc->sc_ba5_sh,
-			satalink_ba5_regmap[wdc_cp->channel].ba5_IDE_TF9,
+			satalink_ba5_regmap[wdc_cp->channel].ba5_IDE_TF8,
 			1, &cp->ctl_baseioh) != 0) {
 		aprint_error("%s: couldn't subregion %s ctl base\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
