@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 1998/04/13 12:10:26 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 1998/06/08 18:42:40 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -123,9 +123,10 @@ backplane_match(parent, cf, aux)
 	return (0);
 }
 
+#if VAX8600
 static	void find_sbi __P((struct device *, struct bp_conf *,
 	    int (*) __P((void *, const char *))));
-
+#endif
 
 void
 backplane_attach(parent, self, hej)
@@ -295,9 +296,9 @@ mem_match(parent, cf, aux)
 	void	*aux;
 {
 	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+#if VAX8600
 	struct	bp_conf *bp = aux;
 
-#if VAX8600
 	if (vax_cputype == VAX_8600 && !strcmp(parent->dv_xname, "backplane0")) {
 		if (strcmp(bp->type, "mem"))
 			return 0;
