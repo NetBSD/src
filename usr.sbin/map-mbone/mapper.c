@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.12 2002/09/19 03:31:19 mycroft Exp $	*/
+/*	$NetBSD: mapper.c,v 1.13 2002/09/23 03:36:04 itojun Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -37,7 +37,7 @@
 #include <string.h>
 #include <netdb.h>
 #include <sys/time.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include "defs.h"
 #include <arpa/inet.h>
 #include <stdarg.h>

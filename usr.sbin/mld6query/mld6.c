@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.7 2002/09/19 16:45:58 mycroft Exp $	*/
+/*	$NetBSD: mld6.c,v 1.8 2002/09/23 03:36:04 itojun Exp $	*/
 /*	$KAME: mld6.c,v 1.9 2000/12/04 06:29:37 itojun Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <unistd.h>
 #include <signal.h>
 

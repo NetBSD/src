@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.9 2002/09/20 19:49:59 mycroft Exp $ */
+/* $NetBSD: moused.c,v 1.10 2002/09/23 03:36:04 itojun Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.9 2002/09/20 19:49:59 mycroft Exp $");
+__RCSID("$NetBSD: moused.c,v 1.10 2002/09/23 03:36:04 itojun Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -72,7 +72,7 @@ __RCSID("$NetBSD: moused.c,v 1.9 2002/09/20 19:49:59 mycroft Exp $");
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <unistd.h>
 
 #define MAX_CLICKTHRESHOLD	2000	/* 2 seconds */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.24 2002/09/20 19:51:34 mycroft Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.25 2002/09/23 03:36:06 itojun Exp $	*/
 /*	$KAME: rtadvd.c,v 1.74 2002/09/08 01:25:17 itojun Exp $	*/
 
 /*
@@ -35,7 +35,6 @@
 #include <sys/uio.h>
 #include <sys/time.h>
 #include <sys/queue.h>
-#include <sys/poll.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -57,6 +56,7 @@
 #include <stdlib.h>
 #include <syslog.h>
 #include <util.h>
+#include <poll.h>
 
 #include "rtadvd.h"
 #include "rrenum.h"

@@ -1,4 +1,4 @@
-/*      $NetBSD: run.c,v 1.7 2002/09/19 00:45:47 mycroft Exp $       */
+/*      $NetBSD: run.c,v 1.8 2002/09/23 03:36:06 itojun Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,12 +48,12 @@
 #include <termios.h>
 #include <util.h>
 #include <err.h>
+#include <poll.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/param.h>
-#include <sys/poll.h>
 
 #include "sushi.h"
 #include "run.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbootd.c,v 1.16 2002/09/19 03:04:13 mycroft Exp $	*/
+/*	$NetBSD: rbootd.c,v 1.17 2002/09/23 03:36:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -57,13 +57,13 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rbootd.c,v 1.16 2002/09/19 03:04:13 mycroft Exp $");
+__RCSID("$NetBSD: rbootd.c,v 1.17 2002/09/23 03:36:05 itojun Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>

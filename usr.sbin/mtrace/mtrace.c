@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.24 2002/09/19 16:45:59 mycroft Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.25 2002/09/23 03:36:05 itojun Exp $	*/
 
 /*
  * mtrace.c
@@ -52,13 +52,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.24 2002/09/19 16:45:59 mycroft Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.25 2002/09/23 03:36:05 itojun Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <ctype.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.6 2000/08/03 00:07:22 fvdl Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.7 2002/09/23 03:36:05 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -42,7 +42,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
-#include <sys/poll.h>
 #include <sys/socket.h>
 #include <rpc/rpc.h>
 #include <rpc/rpcb_prot.h>
@@ -51,6 +50,7 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <poll.h>
 #ifdef PORTMAP
 #include <netinet/in.h>
 #include <rpc/pmap_prot.h>

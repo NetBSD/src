@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7 2001/04/30 00:36:08 fvdl Exp $	*/
+/*	$NetBSD: util.c,v 1.8 2002/09/23 03:36:06 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <ifaddrs.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <rpc/rpc.h>
 #include <errno.h>
 #include <stdlib.h>

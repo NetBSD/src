@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.38 2002/09/20 19:48:58 mycroft Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.39 2002/09/23 03:36:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.38 2002/09/20 19:48:58 mycroft Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.39 2002/09/23 03:36:05 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: nfsd.c,v 1.38 2002/09/20 19:48:58 mycroft Exp $");
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/poll.h>
+#include <poll.h>
 
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
