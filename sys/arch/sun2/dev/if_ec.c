@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.6 2002/10/02 16:02:22 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.7 2003/01/20 15:03:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -325,7 +325,7 @@ ec_start(ifp)
 	struct ec_softc *sc = ifp->if_softc;
 	struct mbuf *m, *m0;
 	int s;
-	u_int count;
+	u_int count, realcount;
 	bus_size_t off;
 
 	s = splnet();
@@ -353,11 +353,16 @@ ec_start(ifp)
 		count -= m->m_len;
 
 	/* Copy the packet into the xmit buffer. */
-	count = MIN(count, EC_PKT_MAXTDOFF);
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ECREG_TBUF, count);
-	for (off = count, m = m0; m != 0; off += m->m_len, m = m->m_next)
+	realcount = MIN(count, EC_PKT_MAXTDOFF);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ECREG_TBUF, realcount);
+	for (off = realcount, m = m0; m != 0; off += m->m_len, m = m->m_next)
 		ec_copyout(sc, mtod(m, u_int8_t *), ECREG_TBUF + off, m->m_len);
 	m_freem(m0);
+#if 0
+	bus_space_set_region_1(sc->sc_iot, sc->sc_ioh, ECREG_TBUF + off, 0,
+	    count - realcount);
+#endif
+	w16zero((u_int8_t *)(ECREG_TBUF + off), count - realcount);
 
 	/* Enable the transmitter. */
 	ECREG_CSR_WR((ECREG_CSR_RD & EC_CSR_PA) | EC_CSR_TBSW | EC_CSR_TINT | EC_CSR_JINT);
