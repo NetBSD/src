@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.37 2001/11/10 07:36:59 lukem Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.38 2001/12/01 22:11:13 chuck Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.37 2001/11/10 07:36:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.38 2001/12/01 22:11:13 chuck Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -990,7 +990,7 @@ amap_wiperange(amap, slotoff, slots)
 	struct vm_amap *amap;
 	int slotoff, slots;
 {
-	int byanon, lcv, stop, curslot, ptr;
+	int byanon, lcv, stop, curslot, ptr, slotend;
 	struct vm_anon *anon;
 
 	/*
@@ -1006,19 +1006,23 @@ amap_wiperange(amap, slotoff, slots)
 		byanon = FALSE;
 		lcv = 0;
 		stop = amap->am_nused;
+		slotend = slotoff + slots;
 	}
 
-	for (; lcv < stop; lcv++) {
+	while (lcv < stop) {
 		int refs;
 
 		if (byanon) {
-			if (amap->am_anon[lcv] == NULL)
+			curslot = lcv++;	/* lcv advances here */
+			if (amap->am_anon[curslot] == NULL)
 				continue;
-			curslot = lcv;
 		} else {
 			curslot = amap->am_slots[lcv];
-			if (curslot < slotoff || curslot >= stop)
+			if (curslot < slotoff || curslot >= slotend) {
+				lcv++;		/* lcv advances here */
 				continue;
+			}
+			stop--;	/* drop stop, since anon will be removed */
 		}
 		anon = amap->am_anon[curslot];
 
