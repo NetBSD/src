@@ -622,6 +622,8 @@ extern boolean bfd_elf64_size_dynamic_sections
 	   struct bfd_elf_version_tree *));
 extern void bfd_elf_set_dt_needed_name PARAMS ((bfd *, const char *));
 extern const char *bfd_elf_get_dt_soname PARAMS ((bfd *));
+extern struct bfd_link_needed_list *bfd_elf_get_runpath_list
+  PARAMS ((bfd *, struct bfd_link_info *));
 
 /* SunOS shared library support routines for the linker.  */
 
