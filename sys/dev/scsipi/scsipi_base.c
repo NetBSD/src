@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.27 1999/10/20 15:22:28 enami Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.28 2000/01/14 02:40:45 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -409,6 +409,23 @@ scsipi_interpret_sense(xs)
 	 * Not code 70, just report it
 	 */
 	default:
+#if	defined(SCSIDEBUG) || defined(DEBUG)
+	{
+		static char *uc = "undecodable sense error";
+		int i;
+		u_int8_t *cptr = (u_int8_t *) sense;
+		sc_link->sc_print_addr(sc_link);
+		if (xs->cmd == &xs->cmdstore) {
+			printf("%s for opcode 0x%x, data=",
+			    uc, xs->cmdstore.opcode);
+		} else {
+			printf("%s, data=", uc);
+		}
+		for (i = 0; i < sizeof (sense); i++)
+			printf(" 0x%02x", *(cptr++) & 0xff);
+		printf("\n");
+	}
+#else
 		sc_link->sc_print_addr(sc_link);
 		printf("Sense Error Code 0x%x",
 			sense->error_code & SSD_ERRCODE);
@@ -419,6 +436,7 @@ scsipi_interpret_sense(xs)
 			    _3btol(usense->block));
 		}
 		printf("\n");
+#endif
 		return (EIO);
 	}
 }
