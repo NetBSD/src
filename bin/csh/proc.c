@@ -1,4 +1,4 @@
-/* $NetBSD: proc.c,v 1.27 2003/08/07 09:05:06 agc Exp $ */
+/* $NetBSD: proc.c,v 1.28 2003/09/19 05:31:11 itojun Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.27 2003/08/07 09:05:06 agc Exp $");
+__RCSID("$NetBSD: proc.c,v 1.28 2003/09/19 05:31:11 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -957,7 +957,7 @@ dokill(Char **v, struct command *t)
 	}
 	if (Isdigit(v[0][1])) {
 	    signum = strtol(short2str(v[0] + 1), &ep, 10);
-	    if (signum < 0 || signum > NSIG || *ep)
+	    if (signum < 0 || signum >= NSIG || *ep)
 		stderror(ERR_NAME | ERR_BADSIG);
 	}
 	else {
