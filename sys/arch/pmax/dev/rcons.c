@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.53 2002/03/17 19:40:48 atatat Exp $	*/
+/*	$NetBSD: rcons.c,v 1.53.4.1 2002/05/19 07:41:28 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -47,6 +47,7 @@
 #include <sys/systm.h>
 #include <sys/tty.h>
 
+#include <dev/cons.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
@@ -55,9 +56,6 @@
 
 #include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
-#include <machine/conf.h>
-
-#include <pmax/pmax/cons.h>
 
 #include <pmax/dev/lk201var.h>
 #include <pmax/dev/rconsvar.h>
@@ -86,6 +84,18 @@ void		rconsstart __P((struct tty *));
 static void	rcons_later __P((void*));
 #endif
 
+dev_type_open(rconsopen);
+dev_type_close(rconsclose);
+dev_type_read(rconsread);
+dev_type_write(rconswrite);
+dev_type_ioctl(rconsioctl);
+dev_type_tty(rconstty);
+dev_type_poll(rconspoll);
+
+const struct cdevsw rcons_cdevsw = {
+	rconsopen, rconsclose, rconsread, rconswrite, rconsioctl,
+	nostop, rconstty, rconspoll, nommap, D_TTY
+};
 
 /*
  * rcons_connect is called by fbconnect when the first frame buffer is
@@ -241,7 +251,7 @@ rcons_indev(cn)
 	s = spltty();
 
 	/* Send any subsequent console calls to this cn_tab to rcons. */
-	cn->cn_dev = makedev (RCONSDEV, 0);
+	cn->cn_dev = makedev(cdevsw_lookup_major(&rcons_cdevsw), 0);
 
 	/* fixup for signature mismatch. */
 	cn->cn_putc = rcons_vputc;
@@ -262,6 +272,7 @@ rasterconsoleattach (n)
 	struct tty *tp = &rcons_tty [0];
 
 #ifdef notyet
+	const struct cdevsw *cdev;
 	int status;
 #endif
 
@@ -283,8 +294,13 @@ rasterconsoleattach (n)
 	if (cn_in_dev != NODEV && cn_in_devvp == NULLVP) {
 		/* try to get a reference on its vnode, but fail silently */
 		cdevvp(cn_in_dev, &cn_in_devvp);
-		status = ((*cdevsw[major(cn_in_dev)].d_open)
-			  (cn_in_dev, O_NONBLOCK, S_IFCHR, curproc)); /* XXX */
+		cdev = cdevsw_lookup(cn_in_dev);
+		if (cdev != NULL) {
+			status = ((*cdev->d_open)(cn_in_dev, O_NONBLOCK,
+						  S_IFCHR, curproc)); /* XXX */
+		} else {
+			status = ENXIO;
+		}
 		if (status)
 			printf ("rconsattach: input device open failed: %d\n",
 			        status);
@@ -404,27 +420,6 @@ rconsioctl(dev, cmd, data, flag, p)
 		return (error);
 	return ttioctl(tp, cmd, data, flag, p);
 }
-
-/* ARGSUSED */
-void
-rconsstop(tp, rw)
-	struct tty *tp;
-	int rw;
-{
-
-}
-
-/*ARGSUSED*/
-paddr_t
-rconsmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
-{
-
-	return -1;
-}
-
 
 #ifdef notyet
 void

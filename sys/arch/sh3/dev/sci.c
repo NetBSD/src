@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.25 2002/04/28 17:10:32 uch Exp $ */
+/* $NetBSD: sci.c,v 1.25.2.1 2002/05/19 07:41:27 gehenna Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -263,7 +263,19 @@ struct cfattach sci_ca = {
 
 extern struct cfdriver sci_cd;
 
-cdev_decl(sci);
+dev_type_open(sciopen);
+dev_type_close(sciclose);
+dev_type_read(sciread);
+dev_type_write(sciwrite);
+dev_type_ioctl(sciioctl);
+dev_type_stop(scistop);
+dev_type_tty(scitty);
+dev_type_poll(scipoll);
+
+const struct cdevsw sci_cdevsw = {
+	sciopen, sciclose, sciread, sciwrite, sciioctl,
+	scistop, scitty, scipoll, nommap, D_TTY
+};
 
 void InitializeSci (unsigned int);
 
@@ -1372,9 +1384,7 @@ scicnprobe(cp)
 	int maj;
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == sciopen)
-			break;
+	maj = cdevsw_lookup_major(&sci_cdevsw);
 
 	/* Initialize required fields. */
 	cp->cn_dev = makedev(maj, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.17 2002/04/17 23:31:24 gmcgarry Exp $	*/
+/*	$NetBSD: apci.c,v 1.17.2.1 2002/05/19 07:41:34 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.17 2002/04/17 23:31:24 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.17.2.1 2002/05/19 07:41:34 gehenna Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,6 +146,20 @@ struct cfattach apci_ca = {
 
 extern struct cfdriver apci_cd;
 
+dev_type_open(apciopen);
+dev_type_close(apciclose);
+dev_type_read(apciread);
+dev_type_write(apciwrite);
+dev_type_ioctl(apciioctl);
+dev_type_stop(apcistop);
+dev_type_tty(apcitty);
+dev_type_poll(apcipoll);
+
+const struct cdevsw apci_cdevsw = {
+	apciopen, apciclose, apciread, apciwrite, apciioctl,
+	apcistop, apcitty, apcipoll, nommap, D_TTY
+};
+
 int	apciintr __P((void *));
 void	apcieint __P((struct apci_softc *, int));
 void	apcimint __P((struct apci_softc *, u_char));
@@ -154,8 +168,6 @@ void	apcistart __P((struct tty *));
 int	apcimctl __P((struct apci_softc *, int, int));
 void	apciinit __P((struct apciregs *, int));
 void	apcitimeout __P((void *));
-
-cdev_decl(apci);
 
 #define	APCIUNIT(x)	(minor(x) & 0x7ffff)
 #define	APCIDIALOUT(x)	(minor(x) & 0x80000)
@@ -187,7 +199,6 @@ struct speedtab apcispeedtab[] = {
  */
 struct apciregs *apci_cn = NULL;	/* console hardware */
 int	apciconsinit;			/* has been initialized */
-int	apcimajor;			/* our major number */
 
 int	apcicnattach __P((bus_space_tag_t, bus_addr_t, int));
 int	apcicngetc __P((dev_t));
@@ -246,7 +257,8 @@ apciattach(parent, self, aux)
 		 * We didn't know which unit this would be during
 		 * the console probe, so we have to fixup cn_dev here.
 		 */
-		cn_tab->cn_dev = makedev(apcimajor, self->dv_unit);
+		cn_tab->cn_dev = makedev(cdevsw_lookup_major(&apci_cdevsw),
+					 self->dv_unit);
 	}
 
 	/* Look for a FIFO. */
@@ -898,9 +910,13 @@ apcitimeout(arg)
 int
 apcicnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 {
+#ifdef KGDB
+	extern const struct cdevsw ctty_cdevsw;
+#endif
         bus_space_handle_t bsh;
         caddr_t va;
         struct apciregs *apci;
+	int maj;
 
 	if (machineid != HP_425 || mmuid != MMUID_425_E)
 		return (1);
@@ -916,18 +932,15 @@ apcicnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
         apci_cn = apci;
 
         /* locate the major number */
-        for (apcimajor = 0; apcimajor < nchrdev; apcimajor++)
-                if (cdevsw[apcimajor].d_open == apciopen)
-                        break;
+	maj = cdevsw_lookup_major(&apci_cdevsw);
 
         /* initialize required fields */
         cn_tab = &apci_cons;
-        cn_tab->cn_dev = makedev(apcimajor, 0);
+        cn_tab->cn_dev = makedev(maj, 0);
 
 #ifdef KGDB
-	/* XXX this needs to be fixed. */
-	if (major(kgdb_dev) == 1)			/* XXX */
-		kgdb_dev = makedev(apcimajor, minor(kgdb_dev));
+	if (cdevsw_lookup(kgdb_dev) == &ctty_cdevsw)
+		kgdb_dev = makedev(maj, minor(kgdb_dev));
 #endif
 
         return (0);

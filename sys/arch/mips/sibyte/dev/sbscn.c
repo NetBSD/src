@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.1 2002/03/05 23:46:43 simonb Exp $ */
+/* $NetBSD: sbscn.c,v 1.1.6.1 2002/05/19 07:41:29 gehenna Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -164,7 +164,6 @@ int	sbscn_speed(long, long *);
 static int cflag2modes(tcflag_t, u_char *, u_char *);
 int	sbscn_param(struct tty *, struct termios *);
 void	sbscn_start(struct tty *);
-void	sbscnstop(struct tty *, int);
 int	sbscn_hwiflow(struct tty *, int);
 
 void	sbscn_loadchannelregs(struct sbscn_channel *);
@@ -180,14 +179,25 @@ int	sbscn_common_getc(u_long addr, int chan);
 void	sbscn_common_putc(u_long addr, int chan, int c);
 void	sbscn_intr(void *arg, uint32_t status, uint32_t pc);
 
-/* XXX: These belong elsewhere */
-cdev_decl(sbscn);
-
 int	sbscn_cngetc(dev_t dev);
 void	sbscn_cnputc(dev_t dev, int c);
 void	sbscn_cnpollc(dev_t dev, int on);
 
 extern struct cfdriver sbscn_cd;
+
+dev_type_open(sbscnopen);
+dev_type_close(sbscnclose);
+dev_type_read(sbscnread);
+dev_type_write(sbscnwrite);
+dev_type_ioctl(sbscnioctl);
+dev_type_stop(sbscnstop);
+dev_type_tty(sbscntty);
+dev_type_poll(sbscnpoll);
+
+const struct cdevsw sbscn_cdevsw = {
+	sbscnopen, sbscnclose, sbscnread, sbscnwrite, sbscnioctl,
+	sbscnstop, sbscntty, sbscnpoll, nommap, D_TTY
+};
 
 #define	integrate	static inline
 void 	sbscn_soft(void *);
@@ -354,9 +364,7 @@ sbscn_attach_channel(struct sbscn_softc *sc, int chan, int intr)
 		int maj;
 
 		/* locate the major number */
-		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == sbscnopen)
-				break;
+		maj = cdevsw_lookup_major(&sbscn_cdevsw);
 
 		cn_tab->cn_dev = makedev(maj, (sc->sc_dev.dv_unit << 1) + chan);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.2 2001/11/27 01:03:54 thorpej Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.2.10.1 2002/05/19 07:41:36 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -72,7 +72,7 @@
 #include <arm/iomd/vidc.h>
 #include <machine/vconsole.h>
 
-extern int physcon_major;
+extern const struct cdevsw physcon_cdevsw;
 extern struct vconsole *vconsole_default;
 extern videomemory_t videomemory;
 extern struct render_engine vidcrender;
@@ -113,6 +113,16 @@ struct cfattach vidcconsole_ca = {
 
 extern struct cfdriver vidcconsole_cd;
 
+dev_type_open(vidcconsoleopen);
+dev_type_close(vidcconsoleclose);
+dev_type_ioctl(vidcconsoleioctl);
+dev_type_mmap(vidcconsolemmap);
+
+const struct cdevsw vidcconsole_cdevsw = {
+	vidcconsoleopen, vidcconsoleclose, noread, nowrite, vidcconsoleioctl,
+	nostop, notty, nopoll, vidcconsolemmap,
+};
+
 int
 vidcconsoleopen(dev, flags, fmt, p)
 	dev_t dev;
@@ -143,7 +153,8 @@ vidcconsoleopen(dev, flags, fmt, p)
 		vconsole_new = *vconsole_default;
 		vconsole_new.render_engine = &vidcrender;
 		vconsole_spawn_re (
-		makedev ( physcon_major, 64 + minor(dev) ),
+		makedev ( cdevsw_lookup_major(&physcon_cdevsw),
+			  64 + minor(dev) ),
 		    &vconsole_new );
 	} else {
 		log(LOG_WARNING, "Multiple open of/dev/vidcconsole0 by proc %d\n", p->p_pid);
@@ -176,21 +187,18 @@ vidcconsoleclose(dev, flags, fmt, p)
 	return 0;
 }
 
-extern int physconioctl __P((dev_t, int, caddr_t, int,	struct proc *));
-
 int
 vidcconsoleioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	dev = makedev(physcon_major, 64 + minor(dev));
-	return(physconioctl(dev, cmd, data, flag, p));
+	dev = makedev(cdevsw_lookup_major(&physcon_cdevsw),
+		      64 + minor(dev));
+	return((*physcon_cdevsw.d_ioctl)(dev, cmd, data, flag, p));
 }
-
-extern paddr_t physconmmap __P((dev_t, off_t, int));
 
 paddr_t
 vidcconsolemmap(dev, offset, prot)
@@ -198,6 +206,7 @@ vidcconsolemmap(dev, offset, prot)
 	off_t offset;
 	int prot;
 {
-	dev = makedev(physcon_major, 64 + minor(dev));
-	return(physconmmap(dev, offset, prot));
+	dev = makedev(cdevsw_lookup_major(&physcon_cdevsw),
+		      64 + minor(dev));
+	return((*physcon_cdevsw.d_mmap)(dev, offset, prot));
 }

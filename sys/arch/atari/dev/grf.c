@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.26 2002/03/17 19:40:35 atatat Exp $	*/
+/*	$NetBSD: grf.c,v 1.26.4.1 2002/05/19 07:41:36 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -89,11 +89,6 @@
 int grfon __P((dev_t));
 int grfoff __P((dev_t));
 int grfsinfo __P((dev_t, struct grfdyninfo *));
-#ifdef BANKEDDEVPAGER
-int grfbanked_get __P((dev_t, off_t, int));
-int grfbanked_cur __P((dev_t));
-int grfbanked_set __P((dev_t, int));
-#endif
 
 int grfbusprint __P((void *auxp, const char *));
 int grfbusmatch __P((struct device *, struct cfdata *, void *));
@@ -109,6 +104,17 @@ struct cfattach grfbus_ca = {
 };
 
 extern struct cfdriver grfbus_cd;
+
+dev_type_open(grfopen);
+dev_type_close(grfclose);
+dev_type_ioctl(grfioctl);
+dev_type_poll(grfpoll);
+dev_type_mmap(grfmmap);
+
+const struct cdevsw grf_cdevsw = {
+	grfopen, grfclose, noread, nowrite, grfioctl,
+	nostop, notty, grfpoll, grfmmap,
+};
 
 /*
  * only used in console init.
@@ -210,6 +216,7 @@ struct proc	*p;
 {
 	struct grf_softc	*gp;
 	int			error;
+	extern const struct cdevsw view_cdevsw;
 
 	gp = grfsp[GRFUNIT(dev)];
 	error = 0;
@@ -256,7 +263,8 @@ struct proc	*p;
 		 * check to see whether it's a command recognized by the
 		 * view code.
 		 */
-		return(viewioctl(gp->g_viewdev, cmd, data, flag, p));
+		return((*view_cdevsw.d_ioctl)(gp->g_viewdev, cmd, data, flag,
+					      p));
 		error = EINVAL;
 		break;
 
@@ -391,10 +399,12 @@ struct grf_softc *gp;
 	struct view_size	vs;
 	bmap_t			bm;
 	struct grfinfo		*gi;
+	extern const struct cdevsw view_cdevsw;
 
 	gi = &gp->g_display;
 
-	viewioctl(gp->g_viewdev, VIOCGBMAP, (caddr_t)&bm, 0, NOPROC);
+	(*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCGBMAP, (caddr_t)&bm,
+			       0, NOPROC);
   
 	gp->g_data = (caddr_t) 0xDeadBeaf; /* not particularly clean.. */
   
@@ -407,7 +417,8 @@ struct grf_softc *gp;
 	gi->gd_vgasize = bm.vga_mappable;
 	gi->gd_vgabase = bm.vga_base;
 
-	if(viewioctl(gp->g_viewdev, VIOCGSIZE, (caddr_t)&vs, 0, NOPROC)) {
+	if((*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCGSIZE, (caddr_t)&vs, 0,
+				  NOPROC)) {
 		/*
 		 * fill in some default values...
 		 * XXX: Should _never_ happen
@@ -441,16 +452,20 @@ struct grf_softc	*gp;
 int			cmd, a2, a3;
 void			*arg;
 {
+	extern const struct cdevsw view_cdevsw;
+
 	switch (cmd) {
 		case GM_GRFON:
 			/*
 			 * Get in sync with view, ite might have changed it.
 			 */
 			grf_viewsync(gp);
-			viewioctl(gp->g_viewdev, VIOCDISPLAY, NULL, 0, NOPROC);
+			(*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCDISPLAY,
+					       NULL, 0, NOPROC);
 			return(0);
 	case GM_GRFOFF:
-			viewioctl(gp->g_viewdev, VIOCREMOVE, NULL, 0, NOPROC);
+			(*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCREMOVE,
+					       NULL, 0, NOPROC);
 			return(0);
 	case GM_GRFCONFIG:
 	default:

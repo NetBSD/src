@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.49 2002/03/17 19:40:38 atatat Exp $	*/
+/*	$NetBSD: dca.c,v 1.49.4.1 2002/05/19 07:41:34 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.49 2002/03/17 19:40:38 atatat Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.49.4.1 2002/05/19 07:41:34 gehenna Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -139,7 +139,19 @@ struct cfattach dca_ca = {
 
 extern struct cfdriver dca_cd;
 
-cdev_decl(dca);
+dev_type_open(dcaopen);
+dev_type_close(dcaclose);
+dev_type_read(dcaread);
+dev_type_write(dcawrite);
+dev_type_ioctl(dcaioctl);
+dev_type_stop(dcastop);
+dev_type_tty(dcatty);
+dev_type_poll(dcapoll);
+
+const struct cdevsw dca_cdevsw = {
+	dcaopen, dcaclose, dcaread, dcawrite, dcaioctl,
+	dcastop, dcatty, dcapoll, nommap, D_TTY
+};
 
 int	dcaintr __P((void *));
 void	dcaeint __P((struct dca_softc *, int));
@@ -147,7 +159,6 @@ void	dcamint __P((struct dca_softc *));
 
 int	dcaparam __P((struct tty *, struct termios *));
 void	dcastart __P((struct tty *));
-void	dcastop __P((struct tty *, int));
 int	dcamctl __P((struct dca_softc *, int, int));
 void	dcainit __P((struct dcadevice *, int));
 
@@ -163,7 +174,6 @@ static int dcadefaultrate = TTYDEF_SPEED;
 static struct consdev dca_cons = {
        NULL, NULL, dcacngetc, dcacnputc, nullcnpollc, NULL, NODEV, CN_REMOTE
 };
-static int dcamajor;
 static struct dcadevice *dca_cn = NULL;        /* pointer to hardware */
 static int dcaconsinit;                        /* has been initialized */
 static int dcaconscode;
@@ -248,7 +258,8 @@ dcaattach(parent, self, aux)
 		 * We didn't know which unit this would be during
 		 * the console probe, so we have to fixup cn_dev here.
 		 */
-		cn_tab->cn_dev = makedev(dcamajor, unit);
+		cn_tab->cn_dev = makedev(cdevsw_lookup_major(&dca_cdevsw),
+					 unit);
 	} else {
 		dca = (struct dcadevice *)iomap(dio_scodetopa(da->da_scode),
 		    da->da_size);
@@ -302,7 +313,7 @@ dcaattach(parent, self, aux)
 		printf("no fifo\n");
 
 #ifdef KGDB
-	if (kgdb_dev == makedev(dcamajor, unit)) {
+	if (kgdb_dev == makedev(cdevsw_lookup_major(&dca_cdevsw), unit)) {
 		if (sc->sc_flags & DCA_ISCONSOLE)
 			kgdb_dev = NODEV; /* can't debug over console port */
 		else {
@@ -552,8 +563,10 @@ dcaintr(arg)
 #define	RCVBYTE() \
 			code = dca->dca_data; \
 			if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0) { \
+				int maj; \
+				maj = cdevsw_lookup_major(&dca_cdevsw); \
 				if (code == FRAME_END && \
-				    kgdb_dev == makedev(dcamajor, unit)) \
+				    kgdb_dev == makedev(maj, unit)) \
 					kgdb_connect(0); /* trap into kgdb */ \
 			} else \
 				(*tp->t_linesw->l_rint)(code, tp)
@@ -627,7 +640,8 @@ dcaeint(sc, stat)
 #ifdef KGDB
 		/* we don't care about parity errors */
 		if (((stat & (LSR_BI|LSR_FE|LSR_PE)) == LSR_PE) &&
-		    kgdb_dev == makedev(dcamajor, sc->sc_hd->hp_unit)
+		    kgdb_dev == makedev(cdevsw_lookup_major(&dca_cdevsw),
+					sc->sc_hd->hp_unit)
 		    && c == FRAME_END)
 			kgdb_connect(0); /* trap into kgdb */
 #endif
@@ -925,7 +939,9 @@ dcamctl(sc, bits, how)
 	 * Always make sure MCR_IEN is set (unless setting to 0)
 	 */
 #ifdef KGDB
-	if (how == DMSET && kgdb_dev == makedev(dcamajor, sc->sc_hd->hp_unit))
+	if (how == DMSET &&
+	    kgdb_dev == makedev(cdevsw_lookup_major(&dca_cdevsw),
+				sc->sc_hd->hp_unit))
 		bits |= MCR_IEN;
 	else
 #endif
@@ -994,6 +1010,9 @@ dcacnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
         bus_space_handle_t bsh;
         caddr_t va;
         struct dcadevice *dca;
+#ifdef KGDB
+	extern const struct cdevsw ctty_cdevsw;
+#endif
 
         if (bus_space_map(bst, addr, DIOCSIZE, 0, &bsh))
                 return (1);
@@ -1019,19 +1038,13 @@ dcacnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	dcaconscode = scode;
         dca_cn = dca;
 
-        /* locate the major number */
-        for (dcamajor = 0; dcamajor < nchrdev; dcamajor++)
-                if (cdevsw[dcamajor].d_open == dcaopen)
-                        break;
-
         /* initialize required fields */
         cn_tab = &dca_cons;
-        cn_tab->cn_dev = makedev(dcamajor, 0);
+        cn_tab->cn_dev = makedev(cdevsw_lookup_major(&dca_cdevsw), 0);
 
 #ifdef KGDB
-	/* XXX this needs to be fixed. */
-	if (major(kgdb_dev) == 1)			/* XXX */
-		kgdb_dev = makedev(dcamajor, minor(kgdb_dev));
+	if (cdevsw_lookup(kgdb_dev) == &ctty_cdevsw)
+		kgdb_dev = makedev(maj, minor(kgdb_dev));
 #endif
 
         return (0);

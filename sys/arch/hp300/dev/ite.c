@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.52 2002/03/17 19:40:38 atatat Exp $	*/
+/*	$NetBSD: ite.c,v 1.52.4.1 2002/05/19 07:41:33 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.52 2002/03/17 19:40:38 atatat Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.52.4.1 2002/05/19 07:41:33 gehenna Exp $");                                                  
 
 #include "hil.h"
 
@@ -110,9 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.52 2002/03/17 19:40:38 atatat Exp $");
 #include <hp300/dev/itevar.h>
 #include <hp300/dev/kbdmap.h>
 
-/* prototypes for devsw entry points */
-cdev_decl(ite);
-
 #define set_attr(ip, attr)	((ip)->attribute |= (attr))
 #define clr_attr(ip, attr)	((ip)->attribute &= ~(attr))
 
@@ -135,6 +132,19 @@ struct cfattach ite_ca = {
 static struct kbdmap *ite_km;
 
 extern struct cfdriver ite_cd;
+
+dev_type_open(iteopen);
+dev_type_close(iteclose);
+dev_type_read(iteread);
+dev_type_write(itewrite);
+dev_type_ioctl(iteioctl);
+dev_type_tty(itetty);
+dev_type_poll(itepoll);
+
+const struct cdevsw ite_cdevsw = {
+	iteopen, iteclose, iteread, itewrite, iteioctl,
+	nostop, itetty, itepoll, nommap, D_TTY
+};
 
 /*
  * Terminal emulator state information, statically allocated
@@ -212,7 +222,8 @@ iteattach(parent, self, aux)
 		 * We didn't know which unit this would be during
 		 * the console probe, so we have to fixup cn_dev here.
 		 */
-		cn_tab->cn_dev = makedev(ite_major(), self->dv_unit);
+		cn_tab->cn_dev = makedev(cdevsw_lookup_major(&ite_cdevsw),
+					 self->dv_unit);
 	} else {
 		MALLOC(ite->sc_data, struct ite_data *,
 		    sizeof(struct ite_data), M_DEVBUF, M_NOWAIT | M_ZERO);
@@ -538,14 +549,6 @@ itestart(tp)
 	}
 	tp->t_state &= ~TS_BUSY;
 	splx(s);
-}
-
-void
-itestop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
-
 }
 
 void
@@ -980,24 +983,6 @@ ite_clrtoeos(ip, sp)
 	ite_drawcursor(ip, sp);
 }
 
-int
-ite_major()
-{
-	static int itemaj, initialized;
-
-	/* Only compute once. */
-	if (initialized)
-		return (itemaj);
-	initialized = 1;
-
-	/* locate the major number */
-	for (itemaj = 0; itemaj < nchrdev; itemaj++)
-		if (cdevsw[itemaj].d_open == iteopen)
-			break;
-
-	return (itemaj);
-}
-
 
 
 /*
@@ -1045,7 +1030,7 @@ itecninit(void)
 {
 
 	cn_tab = &ite_cons;
-	cn_tab->cn_dev = makedev(ite_major(), 0);
+	cn_tab->cn_dev = makedev(cdevsw_lookup_major(&ite_cdevsw), 0);
 }
 
 /*ARGSUSED*/

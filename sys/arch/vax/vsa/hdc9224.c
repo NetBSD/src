@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.17 2001/11/09 05:31:44 matt Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.17.10.1 2002/05/19 07:41:23 gehenna Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -182,9 +182,6 @@ static	void hdc_writeregs(struct hdcsoftc *);
 static	void hdc_readregs(struct hdcsoftc *);
 static	void hdc_qstart(void *);
  
-bdev_decl(rd);
-cdev_decl(rd);
-
 struct	cfattach hdc_ca = {
 	sizeof(struct hdcsoftc), hdcmatch, hdcattach
 };
@@ -193,6 +190,22 @@ struct	cfattach rd_ca = {
 	sizeof(struct rdsoftc), rdmatch, rdattach
 };
 
+dev_type_open(rdopen);
+dev_type_close(rdclose);
+dev_type_read(rdread);
+dev_type_write(rdwrite);
+dev_type_ioctl(rdioctl);
+dev_type_strategy(rdstrategy);
+dev_type_size(rdsize);
+
+const struct bdevsw rd_bdevsw = {
+	rdopen, rdclose, rdstrategy, rdioctl, nulldump, rdsize, D_DISK
+};
+
+const struct cdevsw rd_cdevsw = {
+	rdopen, rdclose, rdread, rdwrite, rdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
 
 /* At least 0.7 uS between register accesses */
 static int rd_dmasize, inq = 0;
@@ -327,8 +340,6 @@ rdmatch(parent, cf, aux)
 	return 1;
 }
 
-#define	RDMAJOR 19
-
 void
 rdattach(struct device *parent, struct device *self, void *aux)
 {
@@ -354,8 +365,9 @@ rdattach(struct device *parent, struct device *self, void *aux)
 	dl = rd->sc_disk.dk_label;
 	rdmakelabel(dl, &rd->sc_xbn);
 	printf("%s", rd->sc_dev.dv_xname);
-	msg = readdisklabel(MAKEDISKDEV(RDMAJOR, rd->sc_dev.dv_unit, RAW_PART),
-	    rdstrategy, dl, NULL);
+	msg = readdisklabel(MAKEDISKDEV(cdevsw_lookup_major(&rd_cdevsw),
+					rd->sc_dev.dv_unit, RAW_PART),
+			    rdstrategy, dl, NULL);
 	if (msg)
 		printf(": %s", msg);
 	printf(": size %d sectors\n", dl->d_secperunit);
@@ -737,15 +749,6 @@ int
 rdwrite(dev_t dev, struct uio *uio, int flag)
 {
 	return (physio (rdstrategy, NULL, dev, B_WRITE, minphys, uio));
-}
-
-/*
- *
- */
-int
-rddump(dev_t dev, daddr_t daddr, caddr_t addr, size_t size)
-{
-	return 0;
 }
 
 /*

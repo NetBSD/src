@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.3 2002/03/17 19:40:33 atatat Exp $	*/
+/*	$NetBSD: console.c,v 1.3.4.1 2002/05/19 07:41:37 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -92,7 +92,6 @@ struct vconsole *vconsole_current;
 struct vconsole *vconsole_head;
 struct vconsole *vconsole_default;
 extern struct vconsole *debug_vc;	/* rename this to vconsole_debug */
-int physcon_major=4;
 static char undefined_string[] = "UNDEFINED";
 int lastconsole;
 static int printing=0;
@@ -117,6 +116,23 @@ int	physcon_switchdown	__P((void));
 int vconsole_pending=0;
 int vconsole_blankinit=BLANKINIT;
 int vconsole_blankcounter=BLANKINIT;
+
+/*
+ * Device switch
+ */
+dev_type_open(physconopen);
+dev_type_close(physconclose);
+dev_type_read(physconread);
+dev_type_write(physconwrite);
+dev_type_ioctl(physconioctl);
+dev_type_tty(physcontty);
+dev_type_poll(physconpoll);
+dev_type_mmap(physconmmap);
+
+const struct cdevsw physcon_cdevsw = {
+	physconopen, physconclose, physconread, physconwrite, physconioctl,
+	nostop, physcontty, physconpoll, physconmmap,
+};
 
 /*
  * Now list all my render engines and terminal emulators
@@ -543,7 +559,7 @@ int ioctlconsolebug;
 int
 physconioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -577,12 +593,16 @@ physconioctl(dev, cmd, data, flag, p)
 		physcon_switch ( lastconsole );
 		return 0;
 	case CONSOLE_CREATE:
-		if ( vconsole_spawn ( makedev ( physcon_major, *(int *)data ),
+	{
+		int maj;
+		maj = cdevsw_lookup_major(&physcon_cdevsw);
+		if ( vconsole_spawn ( makedev ( maj, *(int *)data ),
 		    vconsole_default ) == 0 )
 			return ENOMEM;
 		else
 			return 0;
 		break;
+	}
 
 	case CONSOLE_RENDERTYPE:
 		strncpy ( (char *)data, vc->T_NAME, 20 );
@@ -611,7 +631,8 @@ physconioctl(dev, cmd, data, flag, p)
 		vconsole_new = *vc;
 		vconsole_new.render_engine = &vidcrender;
 		if ( vconsole_spawn_re ( 
-		    makedev ( physcon_major, *(int *)data ),
+		    makedev ( cdevsw_lookup_major(&physcon_cdevsw),
+			      *(int *)data ),
 		    &vconsole_new ) == 0 )
 			return ENOMEM;
 		else
@@ -663,7 +684,8 @@ physconioctl(dev, cmd, data, flag, p)
 		{
 		    struct vconsole *vc_p;	
 
-		    vc_p = find_vc(makedev(physcon_major,*(int*)data));
+		    vc_p = find_vc(makedev(cdevsw_lookup_major(&physcon_cdevsw),
+				   *(int*)data));
 		    if (vc_p==0) return EINVAL;
 		    printf ( "DEBUGPRINT for console %d\n", *(int*)data );
 		    printf ( "flags %08x vtty %01x\n", vc_p->flags, vc_p->vtty );
@@ -785,14 +807,6 @@ physconparam(tp, t)
 	return(0);
 }
 
-void
-physconstop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
-	/* Nothing necessary */
-}
-
 int
 physconkbd(key)
 	int key;
@@ -876,8 +890,6 @@ physconinit(cp)
 	physconinit_called=1;
 
 	locked=0;
-
-	physcon_major = major(cp->cn_dev);
 
 	/*
 	 * Create the master console
@@ -983,10 +995,7 @@ rpcconsolecnprobe(cp)
  * the device with the open function for the physical console
  */
 
-	for (major = 0; major < nchrdev; ++major) {
-		if (cdevsw[major].d_open == physconopen)
-			break;
-	}
+	major = cdevsw_lookup_major(&physcon_cdevsw);
 
 /* Initialise the required fields */
 
@@ -1140,7 +1149,7 @@ physcon_switch(number)
 		goto out;
 	}
 
-	vc = find_vc(makedev(physcon_major, number));
+	vc = find_vc(makedev(cdevsw_lookup_major(&physcon_cdevsw), number));
 
 	if (vc == 0) {
 		ret = 1;

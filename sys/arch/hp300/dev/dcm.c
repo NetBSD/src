@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.51 2002/03/17 19:40:38 atatat Exp $	*/
+/*	$NetBSD: dcm.c,v 1.51.4.1 2002/05/19 07:41:33 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.51 2002/03/17 19:40:38 atatat Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.51.4.1 2002/05/19 07:41:33 gehenna Exp $");                                                  
 
 #include "opt_kgdb.h"
 
@@ -276,8 +276,6 @@ struct	dcm_softc {
 #endif
 };
 
-cdev_decl(dcm);
-
 int	dcmintr __P((void *));
 void	dcmpint __P((struct dcm_softc *, int, int));
 void	dcmrint __P((struct dcm_softc *));
@@ -287,7 +285,6 @@ void	dcmmint __P((struct dcm_softc *, int, int));
 
 int	dcmparam __P((struct tty *, struct termios *));
 void	dcmstart __P((struct tty *));
-void	dcmstop __P((struct tty *, int));
 int	dcmmctl __P((dev_t, int, int));
 void	dcmsetischeme __P((int, int));
 void	dcminit __P((struct dcmdevice *, int, int));
@@ -319,9 +316,22 @@ static struct consdev dcm_cons = {
 int	dcmconscode;
 int	dcmdefaultrate = DEFAULT_BAUD_RATE;
 int	dcmconbrdbusy = 0;
-int	dcmmajor;
 
 extern struct cfdriver dcm_cd;
+
+dev_type_open(dcmopen);
+dev_type_close(dcmclose);
+dev_type_read(dcmread);
+dev_type_write(dcmwrite);
+dev_type_ioctl(dcmioctl);
+dev_type_stop(dcmstop);
+dev_type_tty(dcmtty);
+dev_type_poll(dcmpoll);
+
+const struct cdevsw dcm_cdevsw = {
+	dcmopen, dcmclose, dcmread, dcmwrite, dcmioctl,
+	dcmstop, dcmtty, dcmpoll, nommap, D_TTY
+};
 
 int
 dcmmatch(parent, match, aux)
@@ -363,7 +373,8 @@ dcmattach(parent, self, aux)
 		 * the console probe, so we have to fixup cn_dev here.
 		 * Note that we always assume port 1 on the board.
 		 */
-		cn_tab->cn_dev = makedev(dcmmajor, (brd << 2) | DCMCONSPORT);
+		cn_tab->cn_dev = makedev(cdevsw_lookup_major(&dcm_cdevsw),
+					 (brd << 2) | DCMCONSPORT);
 	} else {
 		dcm = (struct dcmdevice *)iomap(dio_scodetopa(da->da_scode),
 		    da->da_size);
@@ -443,7 +454,7 @@ dcmattach(parent, self, aux)
 		printf("\n");
 
 #ifdef KGDB
-	if (major(kgdb_dev) == dcmmajor &&
+	if (cdevsw_lookup(kgdb_dev) == &dcm_cdevsw &&
 	    DCMBOARD(DCMUNIT(kgdb_dev)) == brd) {
 		if (dcmconsole == DCMUNIT(kgdb_dev))	/* XXX fixme */
 			kgdb_dev = NODEV; /* can't debug over console port */
@@ -835,7 +846,11 @@ dcmreadbuf(sc, port)
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 #ifdef KGDB
-		if ((makedev(dcmmajor, minor(tp->t_dev)) == kgdb_dev) &&
+		int maj;
+
+		maj = cdevsw_lookup_major(&dcm_cdevsw);
+
+		if ((makedev(maj, minor(tp->t_dev)) == kgdb_dev) &&
 		    (head = pp->r_head & RX_MASK) != (pp->r_tail & RX_MASK) &&
 		    dcm->dcm_rfifos[3-port][head>>1].data_char == FRAME_START) {
 			pp->r_head = (head + 2) & RX_MASK;
@@ -1532,6 +1547,7 @@ dcmcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
         bus_space_handle_t bsh;
         caddr_t va;
         struct dcmdevice *dcm;
+	int maj;
 
         if (bus_space_map(bst, addr, DIOCSIZE, 0, &bsh))
                 return (1);
@@ -1555,13 +1571,11 @@ dcmcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
         dcm_cn = dcm;
 
         /* locate the major number */
-        for (dcmmajor = 0; dcmmajor < nchrdev; dcmmajor++)
-                if (cdevsw[dcmmajor].d_open == dcmopen)
-                        break;
+        maj = cdevsw_lookup_major(&dcm_cdevsw);
 
         /* initialize required fields */
         cn_tab = &dcm_cons;
-        cn_tab->cn_dev = makedev(dcmmajor, 0);
+        cn_tab->cn_dev = makedev(maj, 0);
 
 #ifdef KGDB_CHEAT
 	/* XXX this needs to be fixed. */
@@ -1569,7 +1583,7 @@ dcmcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 	 * This doesn't currently work, at least not with ite consoles;
 	 * the console hasn't been initialized yet.
 	 */
-	if (major(kgdb_dev) == dcmmajor &&
+	if (major(kgdb_dev) == maj &&
 	    DCMBOARD(DCMUNIT(kgdb_dev)) == DCMBOARD(unit)) {
 		dcminit(dcm_cn, DCMPORT(DCMUNIT(kgdb_dev)), kgdb_rate);
 		if (kgdb_debug_init) {

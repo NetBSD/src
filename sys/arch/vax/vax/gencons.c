@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.36 2002/03/17 19:40:52 atatat Exp $	*/
+/*	$NetBSD: gencons.c,v 1.36.4.1 2002/05/19 07:41:23 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -72,10 +72,22 @@ static	int pr_txdb[4] = {PR_TXDB, PR_TXDB1, PR_TXDB2, PR_TXDB3};
 static	int pr_rxdb[4] = {PR_RXDB, PR_RXDB1, PR_RXDB2, PR_RXDB3};
 
 cons_decl(gen);
-cdev_decl(gencn);
 
 static	int gencnparam __P((struct tty *, struct termios *));
 static	void gencnstart __P((struct tty *));
+
+dev_type_open(gencnopen);
+dev_type_close(gencnclose);
+dev_type_read(gencnread);
+dev_type_write(gencnwrite);
+dev_type_ioctl(gencnioctl);
+dev_type_tty(gencntty);
+dev_type_poll(gencnpoll);
+
+const struct cdevsw gen_cdevsw = {
+	gencnopen, gencnclose, gencnread, gencnwrite, gencnioctl,
+	nostop, gencntty, gencnpoll, nommap, D_TTY
+};
 
 int
 gencnopen(dev_t dev, int flag, int mode, struct proc *p)
@@ -227,11 +239,6 @@ gencnrint(void *arg)
 	KERNEL_UNLOCK();
 }
 
-void
-gencnstop(struct tty *tp, int flag)
-{
-}
-
 static void
 gencntint(void *arg)
 {
@@ -268,7 +275,7 @@ gencnprobe(struct consdev *cndev)
 	    (vax_boardtype == VAX_BTYP_680) ||
 	    (vax_boardtype == VAX_BTYP_681) ||
 	    (vax_boardtype == VAX_BTYP_650)) {
-		cndev->cn_dev = makedev(25, 0);
+		cndev->cn_dev = makedev(cdevsw_lookup_major(&gen_cdevsw), 0);
 		cndev->cn_pri = CN_NORMAL;
 	} else
 		cndev->cn_pri = CN_DEAD;

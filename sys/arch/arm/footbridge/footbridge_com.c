@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.4 2002/03/17 19:40:32 atatat Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.4.4.1 2002/05/19 07:41:37 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -50,7 +50,6 @@
 #include <sys/termios.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <arm/conf.h>
 #include <arm/footbridge/dc21285mem.h>
 #include <arm/footbridge/dc21285reg.h>
 #include <arm/footbridge/footbridgevar.h>
@@ -105,7 +104,6 @@ static int  fcom_probe   __P((struct device *, struct cfdata *, void *));
 static void fcom_attach  __P((struct device *, struct device *, void *));
 static void fcom_softintr __P((void *));
 
-int fcomopen __P((dev_t dev, int flag, int mode, struct proc *p));
 static int fcom_rxintr __P((void *));
 /*static int fcom_txintr __P((void *));*/
 
@@ -121,6 +119,19 @@ struct cfattach fcom_ca = {
 };
 
 extern struct cfdriver fcom_cd;
+
+dev_type_open(fcomopen);
+dev_type_close(fcomclose);
+dev_type_read(fcomread);
+dev_type_write(fcomwrite);
+dev_type_ioctl(fcomioctl);
+dev_type_tty(fcomtty);
+dev_type_poll(fcompoll);
+
+const struct cdevsw fcom_cdevsw = {
+	fcomopen, fcomclose, fcomread, fcomwrite, fcomioctl,
+	nostop, fcomtty, fcompoll, nommap, D_TTY
+};
 
 void fcominit	 	__P((bus_space_tag_t, bus_space_handle_t, int, int));
 void fcominitcons 	__P((bus_space_tag_t, bus_space_handle_t));
@@ -194,9 +205,7 @@ fcom_attach(parent, self, aux)
 		int major;
 
 		/* locate the major number */
-		for (major = 0; major < nchrdev; ++major)
-			if (cdevsw[major].d_open == fcomopen)
-				break;
+		major = cdevsw_lookup_major(&fcom_cdevsw);
 
 		cn_tab->cn_dev = makedev(major, sc->sc_dev.dv_unit);
 		printf(": console");
@@ -372,13 +381,6 @@ fcomtty(dev)
 	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
 
 	return sc->sc_tty;
-}
-
-void
-fcomstop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
 }
 
 static void
@@ -648,9 +650,7 @@ fcomcnprobe(cp)
 	/* Serial console is always present so no probe */
 
 	/* locate the major number */
-	for (major = 0; major < nchrdev; major++)
-		if (cdevsw[major].d_open == fcomopen)
-			break;
+	major = cdevsw_lookup_major(&fcom_cdevsw);
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(major, CONUNIT);
