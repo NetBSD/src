@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.c,v 1.10 2003/04/03 01:20:26 christos Exp $	*/
+/*	$NetBSD: locate.c,v 1.11 2003/04/05 16:36:38 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)locate.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: locate.c,v 1.10 2003/04/03 01:20:26 christos Exp $");
+__RCSID("$NetBSD: locate.c,v 1.11 2003/04/05 16:36:38 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -85,6 +85,7 @@ __RCSID("$NetBSD: locate.c,v 1.10 2003/04/03 01:20:26 christos Exp $");
 #include <stdlib.h>
 #include <err.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 
 #include "locate.h"
 #include "pathnames.h"
@@ -113,16 +114,23 @@ add_db(path)
 {
 	FILE *fp;
 	struct locate_db *dbp;
+	struct stat s;
 
 	if (!(path && *path))
 		path = _PATH_FCODES;
+
+	if (stat(path, &s) == -1)
+		err(1, "can't open database `%s'", path);
+	if (S_ISDIR(s.st_mode))
+		errx(1, "can't open database `%s': is a directory", path);
+
 	if ((fp = fopen(path, "r"))) {
 		dbp = NEW(struct locate_db);
 		dbp->db_fp = fp;
 		dbp->db_path = path;
 		LIST_INSERT_HEAD(&db_list, dbp, db_link);
 	} else {
-		warnx("no database file `%s'", path);
+		err(1, "can't open database `%s'", path);
 	}
 }
      
