@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80 1999/11/13 00:30:34 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.81 1999/11/24 18:32:50 drochner Exp $	*/
 
 /*
  *
@@ -904,7 +904,8 @@ pmap_bootstrap(kva_start)
 				  atop(avail_start), atop(hole_start),
 				  first16q);
 
-	if (first16q == VM_FREELIST_FIRST16) {
+	if (first16q != VM_FREELIST_DEFAULT &&
+	    hole_end < 16 * 1024 * 1024) {
 		uvm_page_physload(atop(hole_end), atop(16 * 1024 * 1024),
 				  atop(hole_end), atop(16 * 1024 * 1024),
 				  first16q);
@@ -913,7 +914,8 @@ pmap_bootstrap(kva_start)
 				  VM_FREELIST_DEFAULT);
 	} else {
 		uvm_page_physload(atop(hole_end), atop(avail_end),
-				  atop(hole_end), atop(avail_end), first16q);
+				  atop(hole_end), atop(avail_end),
+				  VM_FREELIST_DEFAULT);
 	}
 
 	/*
