@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.66 1997/11/17 01:57:52 lukem Exp $
+#	$NetBSD: INSTALL,v 1.67 1997/11/17 03:39:46 thorpej Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -350,7 +350,7 @@ fe0	at isa? port 0x2a0 irq ?		# AT1700
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 iy0	at isa? port ? irq ?			# EtherExpress PRO 10 ISA
-lc0	at isa? port ? iomem ? irq ?		# DEC EtherWORKS III (LEMAC)
+lc0	at isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 ne1	at isa? port 0x300 irq 10
