@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.130.2.4 1999/11/01 22:54:19 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.130.2.5 2000/02/04 23:01:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -228,7 +228,8 @@ scsibusactivate(self, act)
 			if (target == chan->chan_id)
 				continue;
 			for (lun = 0; lun < chan->chan_nluns; lun++) {
-				periph = chan->chan_periphs[target][lun];
+				periph = scsipi_lookup_periph(chan,
+				    target, lun);
 				if (periph == NULL)
 					continue;
 				error = config_deactivate(periph->periph_dev);
@@ -253,18 +254,26 @@ scsibusdetach(self, flags)
 	struct scsipi_periph *periph;
 	int target, lun, error;
 
+	/*
+	 * Shut down the channel.
+	 */
+	scsipi_channel_shutdown(chan);
+
+	/*
+	 * Now detach all of the periphs.
+	 */
 	for (target = 0; target < chan->chan_ntargets; target++) {
 		if (target == chan->chan_id)
 			continue;
 		for (lun = 0; lun < chan->chan_nluns; lun++) {
-			periph = chan->chan_periphs[target][lun];
+			periph = scsipi_lookup_periph(chan, target, lun);
 			if (periph == NULL)
 				continue;
 			error = config_detach(periph->periph_dev, flags);
 			if (error)
 				return (error);
+			scsipi_remove_periph(chan, periph);
 			free(periph, M_DEVBUF);
-			chan->chan_periphs[target][lun] = NULL;
 		}
 	}
 	return (0);
@@ -632,7 +641,7 @@ scsi_probe_device(sc, target, lun)
 	docontinue = 0;
 
 	/* Skip this slot if it is already attached. */
-	if (chan->chan_periphs[target][lun] != NULL)
+	if (scsipi_lookup_periph(chan, target, lun) != NULL)
 		return (docontinue);
 
 	periph = malloc(sizeof(*periph), M_DEVBUF, M_WAITOK);
@@ -791,7 +800,7 @@ scsi_probe_device(sc, target, lun)
 		docontinue = 1;
 
 	if ((cf = config_search(scsibussubmatch, &sc->sc_dev, &sa)) != NULL) {
-		chan->chan_periphs[target][lun] = periph;
+		scsipi_insert_periph(chan, periph);
 		/*
 		 * XXX Can't assign periph_dev here, because we'll
 		 * XXX need it before config_attach() returns.  Must
