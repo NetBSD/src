@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.173 1998/08/12 18:17:55 augustss Exp $
+#	$NetBSD: GENERIC,v 1.174 1998/08/12 18:32:18 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -466,6 +466,7 @@ audio*	at sp?
 #audio*	at uaudio?
 audio*	at wss?
 audio*	at ym?
+audio*	at ess?
 
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker
