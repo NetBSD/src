@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.5 1998/01/09 08:12:05 perry Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.6 2001/09/02 00:13:06 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1985 The Regents of the University of California.
@@ -37,10 +37,5 @@
 
 #include <paths.h>
 
-#ifdef sgi
-#define	_PATH_MASTERLOG	"/var/adm/timed.masterlog"
-#define	_PATH_TIMEDLOG	"/var/adm/timed.log"
-#else
 #define	_PATH_MASTERLOG	"/var/log/timed.masterlog"
 #define	_PATH_TIMEDLOG	"/var/log/timed.log"
-#endif
