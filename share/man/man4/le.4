@@ -35,7 +35,7 @@
 .\"
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: le.4,v 1.8 1999/12/21 07:48:11 fair Exp $
+.\"	$NetBSD: le.4,v 1.9 1999/12/21 11:17:14 drochner Exp $
 .\"
 .Dd June 9, 1993
 .Dt LE 4
@@ -44,11 +44,20 @@
 .Nm le
 .Nd AMD 7990, 79C90, 79C960, 79C970 LANCE Ethernet interface driver
 .Sh SYNOPSIS
+.Ss ISA boards
+.Cd "nele0 at isa? port 0x320 irq 9 drq 7    #NE2100"
+.Cd "le* at nele?"
+.Cd "bicc0 at isa? port 0x320 irq 10 drq 7   #BICC Isolan"
+.Cd "le* at bicc?"
+.Cd "depca0 at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5 #DEC DEPCA"
+.Cd "le* at depca?"
+.Cd "le* at isapnp?   #ISA-Plug-and-Play adapters"
+.Ss PCI boards and mainboard adapters
+.Cd "le* at pci? dev? function ?"
+.Ss Turbochannel PMAD-A or onboard (alpha, pmax)
+.Cd "le* at tc? slot ? offset ?"
 .Ss alpha
 .Cd "le* at ioasic? offset ?"
-.Cd "le* at tc? slot ? offset ?"
-.Cd "le* at pci? dev ? function ?"
-.Cd "le* at depca?"
 .Ss amiga
 .Cd "le* at zbus0"
 .Ss atari
@@ -56,12 +65,6 @@
 .Cd "le0 at vme0 irq 5  # Riebl/PAM"
 .Ss hp300
 .Cd "le* at dio? scode ?"
-.Ss i386
-.Cd "le* at pci? dev? function ?            # PCI boards"
-.Cd "nele0 at isa? port 0x320 irq 9 drq 7   # NE2100"
-.Cd "le* at nele?"
-.Cd "bicc0 at isa? port 0x320 irq 10 drq 7  # BICC IsoLan"
-.Cd "le* at bicc?"
 .Ss mvme68k
 .Cd "le0 at pcc? ipl 3  # MVME147"
 .Ss news68k
@@ -70,7 +73,6 @@
 .Cd "le0 at hb0 addr 0xbff80000 level 1"
 .Ss pmax
 .Cd "le* at ioasic? offset ?"
-.Cd "le* at tc? slot ? offset ?  # PMAD-A LANCE"
 .Cd "le* at ibus0 addr ?"
 .Ss sparc and sparc64
 .Cd "le* at sbus? slot ? offset ?"
@@ -84,7 +86,7 @@
 .Sh DESCRIPTION
 The 
 .Nm
-interface provides access to a 10 Mb/s
+interface provides access to a
 .Tn Ethernet
 network via the
 .Tn AMD
