@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.6.4.5 1999/03/18 07:27:29 nisimura Exp $ */
+/*	$NetBSD: dec_maxine.c,v 1.6.4.6 1999/03/29 06:55:03 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,32 +73,30 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.5 1999/03/18 07:27:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.6 1999/03/29 06:55:03 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
+#include <sys/termios.h>
+#include <dev/cons.h>
 
 #include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/sysconf.h>
 
-#include <pmax/pmax/pmaxtype.h> 
-
-#include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
-#include <pmax/pmax/clockreg.h>
-
-#include <dev/tc/tcvar.h>		/* tc type definitions for.. */
-#include <pmax/tc/ioasicvar.h>		/* ioasic_base */
-
-#include <pmax/tc/ioasicreg.h>		/* ioasic interrrupt masks */
+#include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/maxine.h>		/* baseboard addresses (constants) */
 #include <pmax/pmax/dec_kn02_subr.h>	/* 3min/maxine memory errors */
+#include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
 
+#include <dev/tc/tcvar.h>
+#include <pmax/tc/ioasicvar.h>
+#include <pmax/tc/ioasicreg.h>
 #include <dev/ic/z8530sc.h>
-#include <pmax/tc/zs_ioasicvar.h>	/* console */
+#include <pmax/tc/zs_ioasicvar.h>
 
 #include "wsdisplay.h"
+#include "xcfb.h"
 
 /* XXX XXX XXX */
 #define	IOASIC_INTR_SCSI 0x00000200
@@ -113,15 +111,21 @@ int  dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
 void kn02ca_wbflush __P((void));
 unsigned kn02ca_clkread __P((void));
 
+extern unsigned (*clkread) __P((void));
+extern void prom_haltbutton __P((void));
+extern void prom_findcons __P((int *, int *, int *));
+extern int xcfb_cnattach __P((tc_addr_t));
+extern int tc_fb_cnattach __P((int));
+extern void dtopkbd_cnattach __P((tc_addr_t));
+
+extern char cpu_model[];
+extern int zs_major;
+extern u_int32_t latched_cycle_cnt;
+extern volatile struct chiptime *mcclock_addr; /* XXX */
+
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
 extern int _splx_ioasic __P((int));
-extern void prom_haltbutton __P((void));
-extern unsigned (*clkread) __P((void));
-extern u_int32_t latched_cycle_cnt;
-extern volatile struct chiptime *mcclock_addr; /* XXX */
-extern char cpu_model[];
-
 struct splsw spl_maxine = {
 	{ _spllower_ioasic,	0 },
 	{ _splraise_ioasic,	IPL_BIO },
@@ -133,7 +137,7 @@ struct splsw spl_maxine = {
 };
 
 /*
- * Fill in platform struct. 
+ * Fill in platform struct.
  */
 void
 dec_maxine_init()
@@ -217,16 +221,6 @@ dec_maxine_bus_reset()
 	kn02ca_wbflush();
 }
 
-#include <dev/cons.h>
-#include <sys/termios.h>
-#include "xcfb.h"
-
-extern void prom_findcons __P((int *, int *, int *));
-extern int  xcfb_cnattach __P((tc_addr_t));
-extern int  tc_fb_cnattach __P((int));
-extern int  zs_major;
-extern void dtopkbd_cnattach __P((tc_addr_t));
-
 void
 dec_maxine_cons_init()
 {
@@ -291,9 +285,7 @@ dec_maxine_intr(cpumask, pc, status, cause)
 	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
 	u_int32_t *imsk = (void *)(sc->sc_base + IOASIC_IMSK);
 	u_int32_t *intr = (void *)(sc->sc_base + IOASIC_INTR);
-	volatile struct chiptime *clk
-		= (void *)(sc->sc_base + IOASIC_SLOT_8_START);
-	volatile int temp;
+	void *clk = (void *)(sc->sc_base + IOASIC_SLOT_8_START);
 	struct clockframe cf;
 
 	if (cpumask & MIPS_INT_MASK_4)
@@ -301,7 +293,7 @@ dec_maxine_intr(cpumask, pc, status, cause)
 
 	/* handle clock interrupts ASAP */
 	if (cpumask & MIPS_INT_MASK_1) {
-		temp = clk->regc;	/* XXX clear interrupt bits */
+		__asm __volatile("lbu $0,48(%0)" :: "r"(clk));
 		cf.pc = pc;
 		cf.sr = status;
 		latched_cycle_cnt =
@@ -376,7 +368,7 @@ void
 kn02ca_wbflush()
 {
 	/* read once IOASIC_INTR */
-	__asm __volatile("lw  $2,0xbc040120");
+	__asm __volatile("lw $0,0xbc040120");
 }
 
 unsigned

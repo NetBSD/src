@@ -1,4 +1,4 @@
-/*	$NetBSD: kn03.h,v 1.6 1998/06/22 09:37:40 jonathan Exp $	*/
+/*	$NetBSD: kn03.h,v 1.6.4.1 1999/03/29 06:55:04 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,21 +39,21 @@
  *	@(#)kn03.h	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -203,6 +203,7 @@
 /* (re)defines for the System Interrupt and Mask Registers */
 /* high-order 16 bits 0xFFFF0000 same on all DECstation ioasics */
 
+#define	KN03_INTR_PROD_JUMPER	0x00008000	/* ro */
 #define	KN03_INTR_NVR_JUMPER	0x00004000	/* ro */
 #define	KN03_INTR_TC_2		0x00002000	/* ro */
 #define	KN03_INTR_TC_1		0x00001000	/* ro */

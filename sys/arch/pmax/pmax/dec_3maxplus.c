@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.9.2.6 1999/03/18 07:27:28 nisimura Exp $ */
+/*	$NetBSD: dec_3maxplus.c,v 1.9.2.7 1999/03/29 06:55:03 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,26 +73,24 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.6 1999/03/18 07:27:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.9.2.7 1999/03/29 06:55:03 nisimura Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>	
+#include <sys/termios.h>
+#include <dev/cons.h>
 
 #include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/sysconf.h>
 
 #include <pmax/pmax/pmaxtype.h> 
-
+#include <pmax/pmax/kn03.h>		/* baseboard addresses (constants) */
+#include <pmax/pmax/dec_3max_subr.h>
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
-#include <pmax/pmax/clockreg.h>
 
 #include <dev/tc/tcvar.h>		/* tc type definitions for.. */
 #include <pmax/tc/ioasicvar.h>		/* ioasic_base */
-
 #include <pmax/tc/ioasicreg.h>		/* ioasic interrrupt masks */
-#include <pmax/pmax/kn03.h>		/* baseboard addresses (constants) */
-#include <pmax/pmax/dec_3max_subr.h>
 
 #include <dev/ic/z8530sc.h>
 #include <pmax/tc/zs_ioasicvar.h>	/* console */
@@ -114,15 +112,18 @@ unsigned kn03_clkread __P((void));
 
 static void dec_3maxplus_memerr __P ((void));
 
+extern unsigned (*clkread) __P((void));
+extern void prom_haltbutton __P((void));
+extern void prom_findcons __P((int *, int *, int *));
+extern int tc_fb_cnattach __P((int));
+
+extern char cpu_model[];
+extern u_int32_t latched_cycle_cnt;
+extern volatile struct chiptime *mcclock_addr;
+
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
 extern int _splx_ioasic __P((int));
-extern void prom_haltbutton __P((void));
-extern unsigned (*clkread) __P((void));
-extern u_int32_t latched_cycle_cnt;
-extern volatile struct chiptime *mcclock_addr;
-extern char cpu_model[];
-
 struct splsw spl_3maxplus = {
 	{ _spllower_ioasic,	0 },
 	{ _splraise_ioasic,	IPL_BIO },
@@ -159,8 +160,6 @@ dec_3maxplus_init()
 void
 dec_3maxplus_os_init()
 {
-	extern void ioasic_init __P((int));
-
 	/* clear any memory errors from probes */
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
@@ -226,13 +225,6 @@ dec_3maxplus_bus_reset()
 	kn03_wbflush();
 }
 
-
-#include <dev/cons.h>
-#include <sys/termios.h>
-
-extern void prom_findcons __P((int *, int *, int *));
-extern int tc_fb_cnattach __P((int));
-
 void
 dec_3maxplus_cons_init()
 {
@@ -288,9 +280,7 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
 	u_int32_t *imsk = (void *)(sc->sc_base + IOASIC_IMSK);
 	u_int32_t *intr = (void *)(sc->sc_base + IOASIC_INTR);
-	volatile struct chiptime *clk
-		= (void *)(sc->sc_base + IOASIC_SLOT_8_START);
-	volatile int temp;
+	void *clk = (void *)(sc->sc_base + IOASIC_SLOT_8_START);
 	struct clockframe cf;
 	static int warned = 0;
 	u_long old_buscycle = latched_cycle_cnt;
@@ -300,7 +290,7 @@ dec_3maxplus_intr(cpumask, pc, status, cause)
 
 	/* handle clock interrupts ASAP */
 	if (cpumask & MIPS_INT_MASK_1) {
-		temp = clk->regc;	/* XXX clear interrupt bits */
+		__asm __volatile("lbu $0,48(%0)" :: "r"(clk));
 		cf.pc = pc;
 		cf.sr = status;
 		latched_cycle_cnt = *(u_int32_t *)(sc->sc_base + IOASIC_CTR);
@@ -405,7 +395,7 @@ dec_3maxplus_memerr()
 
 	/* Fetch error address, ECC chk/syn bits, clear interrupt */
 	erradr = *(u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR);
-	errsyn = *(u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRSYN);
+	errsyn = MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRSYN);
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	kn03_wbflush();
 
@@ -416,7 +406,8 @@ dec_3maxplus_memerr()
 void
 kn03_wbflush()
 {
-	__asm __volatile("lw  $2,0xbf840000");
+	/* read once IOASIC_INTR */
+	__asm __volatile("lw $0,0xbf840000");
 }
 
 /*

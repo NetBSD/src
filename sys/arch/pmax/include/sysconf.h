@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.2 1998/03/26 06:27:57 thorpej Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.2.4.1 1999/03/29 06:55:04 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -57,7 +57,7 @@
  *
  */
 
-extern struct platform {
+struct platform {
 	/*
 	 * Platform Information.
 	 */
@@ -81,9 +81,9 @@ extern struct platform {
 	void	(*mcheck_handler) __P((unsigned long, struct trapframe *,
 		unsigned long, unsigned long));
 #endif
-} platform;
+};
 
-extern struct platform unimpl_platform;
+extern struct platform platform, unimpl_platform;
 
 /*
  * There is an array of functions to initialize the platform structure.

@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.25.2.2 1998/10/19 19:19:32 drochner Exp $ */
+/* $NetBSD: clock.c,v 1.25.2.3 1999/03/29 06:55:03 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25.2.2 1998/10/19 19:19:32 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25.2.3 1999/03/29 06:55:03 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,11 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25.2.2 1998/10/19 19:19:32 drochner Exp 
 #include <sys/device.h>
 
 #include <dev/clock_subr.h>
-
 #include <machine/clock_machdep.h>
-#include <machine/autoconf.h>
-
 #include <dev/dec/clockvar.h>
+
 #include "opt_ntp.h"
 
 #define MINYEAR 1998 /* "today" */
@@ -84,20 +82,17 @@ clockattach(dev, fns)
 		panic("clockattach: multiple clocks");
 	clockdev = dev;
 	clockfns = fns;
-#ifdef EVCNT_COUNTERS
-	evcnt_attach(dev, "intr", &clock_intr_evcnt);
-#endif
 }
 
 /*
  * Machine-dependent clock routines.
  *
- * Startrtclock restarts the real-time clock, which provides
+ * Cpu_initclocks restarts the real-time clock, which provides
  * hardclock interrupts to kern_clock.c.
  *
  * Inittodr initializes the time of day hardware which provides
  * date functions.  Its primary function is to use some file
- * system information in case the hardare clock lost state.
+ * system information in case the hardware clock lost state.
  *
  * Resettodr restores the time of day hardware after a time change.
  */
@@ -126,23 +121,6 @@ cpu_initclocks()
 		tickfix >>= (ftp - 1);
 		tickfixinterval = hz >> (ftp - 1);
         }
-
-	/*
-	 * Establish the clock interrupt; it's a special case.
-	 *
-	 * We establish the clock interrupt this late because if
-	 * we do it at clock attach time, we may have never been at
-	 * spl0() since taking over the system.  Some versions of
-	 * PALcode save a clock interrupt, which would get delivered
-	 * when we spl0() in autoconf.c.  If established the clock
-	 * interrupt handler earlier, that interrupt would go to
-	 * hardclock, which would then fall over because p->p_stats
-	 * isn't set at that time.
-	 */
-#ifdef 	alpha
-	set_clockintr();
-#endif
-
 	/*
 	 * Get the clock started.
 	 */
@@ -162,8 +140,8 @@ setstatclockrate(newhz)
 	/* nothing we can do */
 }
 
-/*  
- * Experiments (and  passing years) show that Decstation PROMS
+/*
+ * Experiments (and passing years) show that DECstation PROMS
  * assume the kernel uses the clock chip as a time-of-year clock.
  * The PROM assumes the clock is always set to 1972 or 1973, and contains
  * time-of-year in seconds.   The PROM checks the clock at boot time,
@@ -239,7 +217,7 @@ inittodr(base)
 	dt.dt_hour = 0;
 	dt.dt_min = 0;
 	dt.dt_sec = 0;
-	for(;;) {
+	for (;;) {
 		time.tv_sec = yearsecs + clock_ymdhms_to_secs(&dt);
 		if (badbase || (time.tv_sec > base - 2 * SECDAY))
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.7.4.5 1999/03/18 07:27:29 nisimura Exp $ */
+/*	$NetBSD: dec_3min.c,v 1.7.4.6 1999/03/29 06:55:03 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,29 +73,27 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.5 1999/03/18 07:27:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.6 1999/03/29 06:55:03 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/termios.h>
+#include <dev/cons.h>
 
 #include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/sysconf.h>
 
-#include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
-#include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/pmaxtype.h>
-
-#include <dev/tc/tcvar.h>		/* tc type definitions for.. */
-#include <pmax/tc/ioasicvar.h>		/* ioasic_base */
-#include <pmax/tc/ioasicreg.h>		/* ioasic interrrupt masks */
-
 #include <pmax/pmax/kmin.h>		/* 3min baseboard addresses */
 #include <pmax/pmax/dec_kn02_subr.h>	/* 3min/maxine memory errors */
+#include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
 
+#include <dev/tc/tcvar.h>
+#include <pmax/tc/ioasicvar.h>
+#include <pmax/tc/ioasicreg.h>
 #include <dev/ic/z8530sc.h>
-#include <pmax/tc/zs_ioasicvar.h>	/* console */
+#include <pmax/tc/zs_ioasicvar.h>
 
 #include "wsdisplay.h"
 
@@ -118,14 +116,18 @@ void kmin_intr_establish
 void dec_3min_mcclock_cpuspeed __P((volatile struct chiptime *mcclock_addr,
 			       int clockmask));
 
+extern unsigned (*clkread) __P((void));
 extern void prom_haltbutton __P((void));
+extern void prom_findcons __P((int *, int *, int *));
+extern int tc_fb_cnattach __P((int));
+
+extern char cpu_model[];
+extern int zs_major;
+extern volatile struct chiptime *mcclock_addr;
+
 extern int _splraise_ioasic __P((int));
 extern int _spllower_ioasic __P((int));
 extern int _splx_ioasic __P((int));
-extern unsigned (*clkread) __P((void));
-extern volatile struct chiptime *mcclock_addr;
-extern char cpu_model[];
-
 struct splsw spl_3min = {
 	{ _spllower_ioasic,	0 },
 	{ _splraise_ioasic,	IPL_BIO },
@@ -137,7 +139,7 @@ struct splsw spl_3min = {
 };
 
 /*
- * Fill in platform struct. 
+ * Fill in platform struct.
  */
 void
 dec_3min_init()
@@ -233,14 +235,6 @@ dec_3min_os_init()
 	clkread = kn02ba_clkread;
 }
 
-
-#include <dev/cons.h>
-#include <sys/termios.h>
-
-extern void prom_findcons __P((int *, int *, int *));
-extern int tc_fb_cnattach __P((int));
-extern int zs_major;
-
 void
 dec_3min_cons_init()
 {
@@ -326,9 +320,7 @@ dec_3min_intr(cpumask, pc, status, cause)
 	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
 	u_int32_t *imsk = (void *)(sc->sc_base + IOASIC_IMSK);
 	u_int32_t *intr = (void *)(sc->sc_base + IOASIC_INTR);
-	volatile struct chiptime *clk
-		= (void *)(sc->sc_base + IOASIC_SLOT_8_START);
-	volatile int temp;
+	void *clk = (void *)(sc->sc_base + IOASIC_SLOT_8_START);
 	struct clockframe cf;
 	static int warned = 0;
 #ifdef MIPS3
@@ -350,7 +342,7 @@ dec_3min_intr(cpumask, pc, status, cause)
 			if (can_serve & KMIN_INTR_TIMEOUT)
 				kn02ba_memerr();
 			if (can_serve & KMIN_INTR_CLOCK) {
-				temp = clk->regc;/* XXX clear interrupt bits */
+				__asm __volatile("lbu $0,48(%0)" :: "r"(clk));
 				cf.pc = pc;
 				cf.sr = status;
 #ifdef MIPS3
@@ -388,7 +380,7 @@ dec_3min_intr(cpumask, pc, status, cause)
 #define	ERRORS	(IOASIC_INTR_ISDN_OVRUN|IOASIC_INTR_ISDN_READ_E|IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E|IOASIC_INTR_LANCE_READ_E)
 #define	PTRLOAD	(IOASIC_INTR_ISDN_PTR_LOAD|IOASIC_INTR_SCSI_PTR_LOAD)
 	/*
-	 * XXX future project is here XXX 
+	 * XXX future project is here XXX
 	 * IOASIC DMA completion interrupt (PTR_LOAD) should be checked
 	 * here, and DMA pointers serviced as soon as possible.
 	 */
@@ -428,9 +420,9 @@ dec_3min_intr(cpumask, pc, status, cause)
 /*
  * Count instructions between 4ms mcclock interrupt requests,
  * using the ioasic clock-interrupt-pending bit to determine
- * when clock ticks occur.  
+ * when clock ticks occur. 
  * Set up iosiac to allow only clock interrupts, then
- * call 
+ * call
  */
 void
 dec_3min_mcclock_cpuspeed(mcclock_addr, clockmask)
@@ -444,7 +436,7 @@ dec_3min_mcclock_cpuspeed(mcclock_addr, clockmask)
 	/* Allow only clock interrupts through ioasic. */
 	*imsk = KMIN_INTR_CLOCK;
 	kn02ba_wbflush();
-     
+    
 	mc_cpuspeed(mcclock_addr, clockmask);
 
 	*imsk = saved_imsk;
@@ -455,7 +447,7 @@ void
 kn02ba_wbflush()
 {
 	/* read twice IOASIC_INTR register */
-	__asm __volatile("lw  $2,0xbc040120; lw  $2,0xbc040120");
+	__asm __volatile("lw $0,0xbc040120; lw $0,0xbc040120");
 }
 
 unsigned
@@ -466,8 +458,16 @@ kn02ba_clkread()
 	extern u_int32_t latched_cycle_cnt;
 
 	if (CPUISMIPS3) {
-		u_int32_t cycles = mips3_cycle_count() - latched_cycle_cnt;
-		return (cycles / cpu_mhz);
+		u_int32_t mips3_cycles;
+
+		mips3_cycles = mips3_cycle_count() - latched_cycle_cnt;
+#if 0
+		/* XXX divides take 78 cycles: approximate with * 41/2048 */
+		return (mips3_cycles / cpu_mhz);
+#else
+		return((mips3_cycles >> 6) + (mips3_cycles >> 8) +
+		       (mips3_cycles >> 11));
+#endif
 	}
 #endif
 	return 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: pm.c,v 1.1.2.8 1999/03/15 08:40:32 nisimura Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.9 1999/03/29 06:55:05 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.8 1999/03/15 08:40:32 nisimura Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.9 1999/03/29 06:55:05 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,28 +42,20 @@ __KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.8 1999/03/15 08:40:32 nisimura Exp $");
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <vm/vm.h>
-
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wscons_raster.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <machine/autoconf.h>
 
+#include <machine/cpu.h>
 #include <pmax/ibus/ibusvar.h>
-
-#include "opt_uvm.h"
-#if defined(UVM)
-#include <uvm/uvm_extern.h>
-#define useracc uvm_useracc
-#endif
 
 extern void kn01_wbflush __P((void));
 
 struct pccreg {
-#define	_WORD_(_x_)	u_int16_t _x_; unsigned : 16
+#define	_WORD_(xxx)	u_int16_t xxx; unsigned : 16
 	_WORD_(pcc_cmdr);	/* cursor command register */
 	_WORD_(pcc_xpos);	/* cursor X position */
 	_WORD_(pcc_ypos);	/* cursor Y position */
@@ -478,14 +470,16 @@ pm_cnattach(addr)
         struct fb_devconfig *dcp = &pm_console_dc;
         long defattr;
 
-        pm_getdevconfig(addr, dcp);
- 
-        rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
+	if (badaddr((char *)addr, 4))
+		return (0);
 
+        pm_getdevconfig(addr, dcp);
+        rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
         wsdisplay_cnattach(&pm_stdscreen, &dcp->dc_rcons,
                            0, 0, defattr);
+
         pm_consaddr = (caddr_t)addr;
-        return (0);
+        return (1);
 }
 
 void
@@ -542,9 +536,9 @@ get_cmap(sc, p)
 	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
 		return (EINVAL);
 
-	if (!useracc(p->red, count, B_WRITE) ||
-	    !useracc(p->green, count, B_WRITE) ||
-	    !useracc(p->blue, count, B_WRITE))
+	if (!uvm_useracc(p->red, count, B_WRITE) ||
+	    !uvm_useracc(p->green, count, B_WRITE) ||
+	    !uvm_useracc(p->blue, count, B_WRITE))
 		return (EFAULT);
 
 	copyout(&sc->sc_cmap.r[index], p->red, count);
@@ -564,9 +558,9 @@ set_cmap(sc, p)
 	if (index >= CMAP_SIZE || (index + count) > CMAP_SIZE)
 		return (EINVAL);
 
-	if (!useracc(p->red, count, B_READ) ||
-	    !useracc(p->green, count, B_READ) ||
-	    !useracc(p->blue, count, B_READ))
+	if (!uvm_useracc(p->red, count, B_READ) ||
+	    !uvm_useracc(p->green, count, B_READ) ||
+	    !uvm_useracc(p->blue, count, B_READ))
 		return (EFAULT);
 
 	copyin(p->red, &sc->sc_cmap.r[index], count);
@@ -590,9 +584,9 @@ set_cursor(sc, p)
 		count = p->cmap.count;
 		if (index >= 2 || (index + count) > 2)
 			return (EINVAL);
-		if (!useracc(p->cmap.red, count, B_READ) ||
-		    !useracc(p->cmap.green, count, B_READ) ||
-		    !useracc(p->cmap.blue, count, B_READ))
+		if (!uvm_useracc(p->cmap.red, count, B_READ) ||
+		    !uvm_useracc(p->cmap.green, count, B_READ) ||
+		    !uvm_useracc(p->cmap.blue, count, B_READ))
 			return (EFAULT);
 
 		count = p->cmap.count;
@@ -606,8 +600,8 @@ set_cursor(sc, p)
 		if (p->size.x > CURSOR_MAX_SIZE || p->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
 		count = (CURSOR_MAX_SIZE / NBBY) * p->size.y;
-		if (!useracc(p->image, count, B_READ) ||
-		    !useracc(p->mask, count, B_READ))
+		if (!uvm_useracc(p->image, count, B_READ) ||
+		    !uvm_useracc(p->mask, count, B_READ))
 			return (EFAULT);
 		cc->cc_size = p->size;
 		memset(cc->cc_image, 0, sizeof cc->cc_image);
