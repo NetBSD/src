@@ -988,6 +988,7 @@ documented_lang_options[] =
   { "-Wformat", "Warn about printf format anomalies" },
   { "-Wnetbsd-format-audit", "NetBSD format audit" },
   { "-Wno-format", "" },
+  { "-Wno-format-extra-args", "" },
   { "-Wimplicit-function-declaration",
     "Warn about implicit function declarations" },
   { "-Wno-implicit-function-declaration", "" },
