@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.327 2001/03/18 22:32:15 toddpw Exp $
+# $NetBSD: mi,v 1.328 2001/03/20 18:49:50 atatat Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -197,6 +197,8 @@
 ./usr/share/man/cat1/mailx.0			man-mail-catman
 ./usr/share/man/cat1/make.0			man-util-catman
 ./usr/share/man/cat1/man.0			man-man-catman
+./usr/share/man/cat1/md2.0			man-util-catman
+./usr/share/man/cat1/md4.0			man-util-catman
 ./usr/share/man/cat1/md5.0			man-util-catman
 ./usr/share/man/cat1/merge.0			man-util-catman
 ./usr/share/man/cat1/mesg.0			man-util-catman
@@ -304,6 +306,7 @@
 ./usr/share/man/cat1/rlog.0			man-rcs-catman
 ./usr/share/man/cat1/rlogin.0			man-netutil-catman
 ./usr/share/man/cat1/rm.0			man-util-catman
+./usr/share/man/cat1/rmd160.0			man-util-catman
 ./usr/share/man/cat1/rmdir.0			man-util-catman
 ./usr/share/man/cat1/rs.0			man-util-catman
 ./usr/share/man/cat1/rsh.0			man-netutil-catman
@@ -321,6 +324,7 @@
 ./usr/share/man/cat1/send-pr.0			man-gnats-catman
 ./usr/share/man/cat1/sftp.0			man-secsh-catman
 ./usr/share/man/cat1/sh.0			man-util-catman
+./usr/share/man/cat1/sha1.0			man-util-catman
 ./usr/share/man/cat1/shar.0			man-util-catman
 ./usr/share/man/cat1/shlock.0			man-util-catman
 ./usr/share/man/cat1/shuffle.0			man-util-catman
@@ -1680,6 +1684,8 @@
 ./usr/share/man/man1/mailx.1			man-mail-man
 ./usr/share/man/man1/make.1			man-util-man
 ./usr/share/man/man1/man.1			man-man-man
+./usr/share/man/man1/md2.1			man-util-man
+./usr/share/man/man1/md4.1			man-util-man
 ./usr/share/man/man1/md5.1			man-util-man
 ./usr/share/man/man1/merge.1			man-util-man
 ./usr/share/man/man1/mesg.1			man-util-man
@@ -1787,6 +1793,7 @@
 ./usr/share/man/man1/rlog.1			man-rcs-man
 ./usr/share/man/man1/rlogin.1			man-netutil-man
 ./usr/share/man/man1/rm.1			man-util-man
+./usr/share/man/man1/rmd160.1			man-util-man
 ./usr/share/man/man1/rmdir.1			man-util-man
 ./usr/share/man/man1/rs.1			man-util-man
 ./usr/share/man/man1/rsh.1			man-netutil-man
@@ -1804,6 +1811,7 @@
 ./usr/share/man/man1/send-pr.1			man-gnats-man
 ./usr/share/man/man1/sftp.1			man-secsh-man
 ./usr/share/man/man1/sh.1			man-util-man
+./usr/share/man/man1/sha1.1			man-util-man
 ./usr/share/man/man1/shar.1			man-util-man
 ./usr/share/man/man1/shlock.1			man-util-man
 ./usr/share/man/man1/shuffle.1			man-util-man
