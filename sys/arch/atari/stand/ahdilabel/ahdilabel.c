@@ -1,4 +1,4 @@
-/* $NetBSD: ahdilabel.c,v 1.4 2001/07/26 22:53:13 wiz Exp $ */
+/* $NetBSD: ahdilabel.c,v 1.5 2004/11/12 09:52:15 he Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -350,7 +350,7 @@ read_sector (ptable, buf, part, se)
 			/* Extend to end of disk */
 			return (ptable->secperunit -
 			    ptable->parts[part].start);
-		i = (int) (toupper (buf[1]) - 'A');
+		i = (int) (toupper ((unsigned char)(buf[1]) - 'A'));
 		if (i >= 0 && i <= ptable->nparts ) {
 			if (se == PART_ROOT && part > i)
 				/* Root after partition ... */
