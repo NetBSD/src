@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.158 2002/02/27 12:21:36 shiba Exp $
+.\"	$NetBSD: main,v 1.159 2002/02/27 21:32:05 scw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,8 +46,8 @@
 .nr DOC_XR 1
 .ds MACHINE_LIST algor alpha amiga amigappc arc arm26 arm32 atari bebox cobalt
 .as MACHINE_LIST " dreamcast evbsh3 hp300 hpcmips hpcsh i386 luna68k mac68k
-.as MACHINE_LIST " macppc mmeye mvme68k news68k newsmips next68k ofppc pc532
-.as MACHINE_LIST " playstation2 pmax prep sgimips sparc sparc64 sun2 sun3
+.as MACHINE_LIST " macppc mmeye mvme68k mvmeppc news68k newsmips next68k ofppc
+.as MACHINE_LIST " pc532 playstation2 pmax prep sgimips sparc sparc64 sun2 sun3
 .as MACHINE_LIST " vax x68k
 .
 .so \*[.CURDIR]/../common/macros
@@ -1472,6 +1472,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Leo Weppelman Ta Mt leo@netbsd.org Ta Sy atari
 .It Ta Nathan Williams Ta Mt nathanw@netbsd.org Ta Sy sun3
 .It Ta Steve Woodford Ta Mt scw@netbsd.org Ta Sy mvme68k
+.It Ta Steve Woodford Ta Mt scw@netbsd.org Ta Sy mvmeppc
 .It Ta Reinoud Zandijk Ta Mt reinoud@netbsd.org Ta Sy acorn32
 .It Ta Ta
 .br_ne 1i
