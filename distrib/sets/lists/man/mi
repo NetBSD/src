@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.342 2001/04/16 08:22:50 wiz Exp $
+# $NetBSD: mi,v 1.343 2001/04/19 08:22:00 jdolecek Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -532,6 +532,7 @@
 ./usr/share/man/cat4/cy.0			man-sys-catman
 ./usr/share/man/cat4/cz.0			man-sys-catman
 ./usr/share/man/cat4/daic.0			man-sys-catman
+./usr/share/man/cat4/dasd.0			man-sys-catman
 ./usr/share/man/cat4/ddb.0			man-sys-catman
 ./usr/share/man/cat4/de.0			man-sys-catman
 ./usr/share/man/cat4/depca.0			man-sys-catman
@@ -597,6 +598,7 @@
 ./usr/share/man/cat4/i386/busmouse.0		man-sys-catman
 ./usr/share/man/cat4/i386/com.0			man-sys-catman
 ./usr/share/man/cat4/i386/console.0		man-sys-catman
+./usr/share/man/cat4/i386/ed.0			man-sys-catman
 ./usr/share/man/cat4/i386/fdc.0			man-sys-catman
 ./usr/share/man/cat4/i386/intro.0		man-sys-catman
 ./usr/share/man/cat4/i386/joy.0			man-sys-catman
@@ -2029,6 +2031,7 @@
 ./usr/share/man/man4/cy.4			man-sys-man
 ./usr/share/man/man4/cz.4			man-sys-man
 ./usr/share/man/man4/daic.4			man-sys-man
+./usr/share/man/man4/dasd.4			man-sys-man
 ./usr/share/man/man4/ddb.4			man-sys-man
 ./usr/share/man/man4/de.4			man-sys-man
 ./usr/share/man/man4/depca.4			man-sys-man
@@ -2094,6 +2097,7 @@
 ./usr/share/man/man4/i386/busmouse.4		man-sys-man
 ./usr/share/man/man4/i386/com.4			man-sys-man
 ./usr/share/man/man4/i386/console.4		man-sys-man
+./usr/share/man/man4/i386/ed.4			man-sys-man
 ./usr/share/man/man4/i386/fdc.4			man-sys-man
 ./usr/share/man/man4/i386/intro.4		man-sys-man
 ./usr/share/man/man4/i386/joy.4			man-sys-man
