@@ -1,6 +1,6 @@
 	    Internet Software Consortium DHCP Distribution
-		   Version 3, Beta 2, Patchlevel 23
-			    March 22, 2001
+		   Version 3, Beta 2, Patchlevel 24
+			    April 5, 2001
 
 			    Release Notes
 
@@ -43,11 +43,48 @@ the README file.
 
 The Dynamic DNS Update support is a descendent of an implementation
 done by Lans Carstensen and Brian Dols at Rose-Hulman Institute of
-Technology, Jim Watt at Perkin-Elmer, Irina Goble at Integrated
-Measurement Systems, and Brian Murrell at BC Tel Advanced
-Communications.  I'd like to express my thanks to all of these good
-people here, both for working on the code and for prodding me into
-improving it.
+Technology, Jim Watt at Applied Biosystems, Irina Goble at Integrated
+Measurement Systems, Igor Sharfmesser at Kazakh Telecom, and Brian
+Murrell at BC Tel Advanced Communications.  I'd like to express my
+thanks to all of these good people here, both for working on the code
+and for prodding me into improving it.
+
+	        Changes since 3.0 Beta 2 Patchlevel 23
+
+- Fix a bug in the DNS update code where a status code was not being
+  checked.   This may have been causing core dumps.
+
+- When parsing the lease file, if a lease declaration includes a
+  billing class statement, and the lease already has a billing class,
+  unbill the old class.
+
+- When processing failover transactions, where acks will be deferred,
+  process the state transition immediately.
+
+-  Don't try to use the new SIOCGIFCONF buffer size detection code on
+   Linux 2.0, which doesn't provide this functionality.
+
+- Apply a patch suggested by Tuan Uong for a problem in dlpi.c.
+
+- Fix a problem in using the which command in the configure script.
+
+- Fix a parse error in the client when setting up an omapi listener.
+
+- Document the -n and -g flags to the client.
+
+- Make sure there is always a stdin and stdout on startup.   This
+  prevents shell scripts from accidentally writing error messages into
+  configuration files that happen to be opened as stderr.
+
+- If an interface is removed, the client will now notice that it is
+  gone rather than spinning.   This has only been tested on NetBSD.
+
+- The client will attempt to get an address even if it can't create a
+  lease file.
+
+- Don't overwrite tracefiles.
+
+- Fix some memory allocation bugs in failover.
 
 	        Changes since 3.0 Beta 2 Patchlevel 22
 
