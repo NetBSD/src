@@ -42,8 +42,8 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * from: Id: sparc/dev/zs.c,v 1.3 1993/10/13 02:36:44 deraadt Exp 
- * gwr: merged some of Adam's changes and fixed some bugs.
+ * from: sparc/dev/zs.c,v 1.3 1993/10/13 02:36:44 deraadt Exp 
+ * $Id: zs.c,v 1.3 1994/05/04 05:34:14 gwr Exp $
  */
 
 /*
@@ -72,8 +72,11 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/obio.h>
+#include <machine/mon.h>
+#include <machine/eeprom.h>
 
-#include "cons.h"
+#include <dev/cons.h>
+
 #include "kbd.h"
 #include "zsreg.h"
 #include "zsvar.h"
@@ -81,8 +84,6 @@
 #ifdef KGDB
 #include <machine/remote-sl.h>
 #endif
-
-/* #define DEBUG 1 */
 
 #define	ZSMAJOR	12		/* XXX */
 
@@ -136,16 +137,11 @@ static int	zs_getspeed(volatile struct zschan *);
 static void	zs_reset(volatile struct zschan *, int, int);
 static void	zs_modem(struct zs_chanstate *, int);
 static void	zs_loadchannelregs(volatile struct zschan *, u_char *);
-static void zs_delay(void);
 static u_char zs_read(volatile struct zschan *, u_char);
 static u_char zs_write(volatile struct zschan *, u_char, u_char);
 
 /* Console stuff. */
-static struct tty *zs_ctty;	/* console `struct tty *' */
-static int zs_consin = -1, zs_consout = -1;
-static int zscnputc(int);	/* console putc function */
 static volatile struct zschan *zs_conschan;
-static struct tty *zs_checkcons(struct zsinfo *, int, struct zs_chanstate *);
 
 #ifdef KGDB
 /* KGDB stuff.  Must reboot to change zs_kgdbunit. */
@@ -154,7 +150,7 @@ static int zs_kgdb_savedspeed;
 static void zs_checkkgdb(int, struct zs_chanstate *, struct tty *);
 #endif
 
-static volatile struct zsdevice *zsaddr[NZS];
+static volatile struct zsdevice *zsaddr[NZS];	/* XXX, but saves work */
 
 /*
  * Console keyboard L1-A processing is done in the hardware interrupt code,
@@ -209,8 +205,10 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	obio_print(obio_addr, ZSSOFT_PRI);
 	printf(" hwpri %d\n", ZSHARD_PRI);
 
-	addr = (struct zsdevice *)
-		obio_alloc(obio_addr, OBIO_ZS_SIZE, OBIO_WRITE);
+	if ((addr = zsaddr[zs]) == NULL) {
+		zsaddr[zs] = addr = (struct zsdevice *)
+			obio_alloc(obio_addr, OBIO_ZS_SIZE, OBIO_WRITE);
+	}
 
 	if (!didintr) {
 		didintr = 1;
@@ -243,24 +241,29 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	cs->cs_zc =	&addr->zs_chan[CHAN_A];
 	cs->cs_speed = zs_getspeed(cs->cs_zc);
 #ifdef	DEBUG
-	printf("zs%d speed %d ",  cs->cs_unit, cs->cs_speed);
+	mon_printf("zs%da speed %d ",  zs, cs->cs_speed);
 #endif
 	cs->cs_softcar = softcar & 1;
 #if 0
 	/* XXX - Drop carrier here? -gwr */
 	zs_modem(cs, cs->cs_softcar ? 1 : 0);
 #endif
+	cs->cs_ttyp = tp;
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
 	/*tp->t_stop = zsstop;*/
-	if ((ctp = zs_checkcons(zi, unit, cs)) != NULL)
-		tp = ctp;
-	cs->cs_ttyp = tp;
+	if (cs->cs_zc == zs_conschan) {
+		/* This unit is the console. */
+		cs->cs_consio = 1;
+		cs->cs_brkabort = 1;
+		cs->cs_softcar = 1;
+	} else {
+		/* Can not run kgdb on the console? */
 #ifdef KGDB
-	if (ctp == NULL)
 		zs_checkkgdb(unit, cs, tp);
 #endif
+	}
 	if (unit == ZS_KBD) {
 		/*
 		 * Keyboard: tell /dev/kbd driver how to talk to us.
@@ -278,24 +281,29 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	cs->cs_zc = &addr->zs_chan[CHAN_B];
 	cs->cs_speed = zs_getspeed(cs->cs_zc);
 #ifdef	DEBUG
-	printf("zs%d speed %d\n", cs->cs_unit, cs->cs_speed);
+	mon_printf("zs%db speed %d\n", zs, cs->cs_speed);
 #endif
 	cs->cs_softcar = softcar & 2;
 #if 0
 	/* XXX - Drop carrier here? -gwr */
 	zs_modem(cs, cs->cs_softcar ? 1 : 0);
 #endif
+	cs->cs_ttyp = tp;
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
 	/*tp->t_stop = zsstop;*/
-	if ((ctp = zs_checkcons(zi, unit, cs)) != NULL)
-		tp = ctp;
-	cs->cs_ttyp = tp;
+	if (cs->cs_zc == zs_conschan) {
+		/* This unit is the console. */
+		cs->cs_consio = 1;
+		cs->cs_brkabort = 1;
+		cs->cs_softcar = 1;
+	} else {
+		/* Can not run kgdb on the console? */
 #ifdef KGDB
-	if (ctp == NULL)
 		zs_checkkgdb(unit, cs, tp);
 #endif
+	}
 	if (unit == ZS_MOUSE) {
 		/*
 		 * Mouse: tell /dev/mouse driver how to talk to us.
@@ -342,82 +350,93 @@ zs_reset(zc, inten, speed)
 	zs_loadchannelregs(zc, reg);
 }
 
+/*
+ * Console support
+ */
 
-/* This is only called when the EEPROM says the console is ttyA or ttyB */
+/*
+ * Used by the kd driver to find out if it can work.
+ */
 int
-zscnprobe(struct consdev *cn)
+zscnprobe_kbd()
 {
-	int maj, unit = minor(cn->cn_dev);
+	if (zs1_va == NULL) {
+		mon_printf("zscnprobe_kbd: zs1 not yet mapped\n");
+		return CN_DEAD;
+	}
+	return CN_INTERNAL;
+}
+
+/*
+ * This is the console probe routine for ttya and ttyb.
+ */
+static int
+zscnprobe(struct consdev *cn, int unit)
+{
+	int maj, eeCons;
+
+	if (zs0_va == NULL) {
+		mon_printf("zscnprobe: zs0 not yet mapped\n");
+		cn->cn_pri = CN_DEAD;
+		return 0;
+	}
+	zsaddr[0] = (struct zsdevice *)zs0_va;
+	/* XXX - Also try to make sure it exists? */
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == zsopen)
 			break;
-	if (maj >= nchrdev) {
-		cn->cn_pri = CN_DEAD;
-		return 0;
+
+	cn->cn_dev = makedev(maj, unit);
+
+	/* Use EEPROM console setting to decide "remote" console. */
+	if (eeprom_va == NULL) {
+		mon_printf("zscnprobe: eeprom not yet mapped\n");
+		eeCons = -1;
+	} else {
+		eeCons = ((struct eeprom *)eeprom_va)->eeConsole;
 	}
 
-	/* initialize required fields */
-#if 0 /* XXX - Not yet. */
-	cn->cn_dev = makedev(maj, unit);
-	cn->cn_pri = CN_REMOTE;
-#else
-	cn->cn_pri = CN_DEAD;
-	/* XXX - See below... */
-#endif
+	/* Hack: EE_CONS_TTYA + 1 == EE_CONS_TTYB */
+	if (eeCons == (EE_CONS_TTYA + unit)) {
+		cn->cn_pri = CN_REMOTE;
+	} else {
+		cn->cn_pri = CN_NORMAL;
+	}
 	return (0);
+}
+
+/* This is the constab entry for TTYA. */
+int
+zscnprobe_a(struct consdev *cn)
+{
+	return (zscnprobe(cn, 0));
+}
+
+/* This is the constab entry for TTYB. */
+int
+zscnprobe_b(struct consdev *cn)
+{
+	return (zscnprobe(cn, 1));
 }
 
 /* Attach as console.  Also set zs_conschan */
 int
 zscninit(struct consdev *cn)
 {
-	int unit = minor(cn->cn_dev);
-
-	/* XXX - We need a way to find a VA for the device. */
-	/* zs_conschan = zsaddr[unit]; */
-}
-
-
-#if 0
-/*
- * Declare the given tty (which is in fact &cons) as a console input
- * or output.  This happens before the zs chip is attached; the hookup
- * is finished later, in zs_setcons() below.
- *
- * This is used only for ports a and b.  The console keyboard is decoded
- * independently (we always send unit-2 input to /dev/kbd, which will
- * direct it to /dev/console if appropriate).
- */
-void
-zsconsole(tp, unit, out, fnstop)
-	register struct tty *tp;
-	register int unit;
-	int out;
-	void (**fnstop) __P((struct tty *, int));
-{
-	extern int (*v_putc)();
-	int zs;
+	int unit;
 	volatile struct zsdevice *addr;
 
-	if (unit >= ZS_KBD)
-		panic("zsconsole");
-	if (out) {
-		zs_consout = unit;
-		zs = unit >> 1;
-		if ((addr = zsaddr[zs]) == NULL)
-			addr = zsaddr[zs] = findzs(zs);
-		zs_conschan = (unit & 1) == 0 ? &addr->zs_chan[CHAN_A] :
-		    &addr->zs_chan[CHAN_B];
-		v_putc = zscnputc;
-	} else
-		zs_consin = unit;
-	if(fnstop)
-		*fnstop = &zsstop;
-	zs_ctty = tp;
+	unit = minor(cn->cn_dev) & 1;
+	addr = (struct zsdevice *)zs0_va;
+	zs_conschan = ((unit == 0) ?
+				   &addr->zs_chan[CHAN_A] :
+				   &addr->zs_chan[CHAN_B] );
+
+	mon_printf("console on zs0 (tty%c)\n", unit + 'a');
 }
-#endif
+
 
 /*
  * Polled console input putchar.
@@ -433,7 +452,8 @@ zscngetc()
 
 	s = splhigh();
 	while ((zc->zc_csr & ZSRR0_RX_READY) == 0)
-		zs_delay();
+		ZS_DELAY();
+	ZS_DELAY();
 	c = zc->zc_data;
 	splx(s);
 	return (c);
@@ -456,54 +476,11 @@ zscnputc(c)
 		zscnputc('\r');
 	s = splhigh();
 	while ((zc->zc_csr & ZSRR0_TX_READY) == 0)
-		zs_delay();
+		ZS_DELAY();
+	ZS_DELAY();
 	zc->zc_data = c;
+	ZS_DELAY();
 	splx(s);
-}
-
-/*
- * Set up the given unit as console input, output, both, or neither, as
- * needed.  Return console tty if it is to receive console input.
- */
-static struct tty *
-zs_checkcons(struct zsinfo *zi, int unit, struct zs_chanstate *cs)
-{
-	register struct tty *tp;
-	char *i, *o;
-
-	if ((tp = zs_ctty) == NULL)
-		return (0);
-	i = zs_consin == unit ? "input" : NULL;
-	o = zs_consout == unit ? "output" : NULL;
-	if (i == NULL && o == NULL)
-		return (0);
-
-	/* rewire the minor device (gack) */
-	tp->t_dev = makedev(major(tp->t_dev), unit);
-
-	/*
-	 * Rewire input and/or output.  Note that baud rate reflects
-	 * input settings, not output settings, but we can do no better
-	 * if the console is split across two ports.
-	 *
-	 * XXX	split consoles don't work anyway -- this needs to be
-	 *	thrown away and redone
-	 */
-	if (i) {
-		tp->t_param = zsparam;
-		tp->t_ispeed = tp->t_ospeed = cs->cs_speed;
-		tp->t_cflag = CS8;
-		ttsetwater(tp);
-	}
-	if (o) {
-		tp->t_oproc = zsstart;
-		/*tp->t_stop = zsstop;*/
-	}
-	printf("%s%c: console %s\n",
-	    zi->zi_dev.dv_xname, (unit & 1) + 'a', i ? (o ? "i/o" : i) : o);
-	cs->cs_consio = 1;
-	cs->cs_brkabort = 1;
-	return (tp);
 }
 
 #ifdef KGDB
@@ -580,15 +557,17 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 	int unit = minor(dev), zs = unit >> 1, error, s;
 
 #ifdef	DEBUG
-	printf("zs_open\n");
+	mon_printf("zs_open\n");
 #endif
 	if (zs >= zscd.cd_ndevs || (zi = zscd.cd_devs[zs]) == NULL ||
 	    unit == ZS_KBD || unit == ZS_MOUSE)
 		return (ENXIO);
 	cs = &zi->zi_cs[unit & 1];
-	/* Prevent simultaneous use by console? */
+#if 0
+	/* The kd driver avoids the need for this hack. */
 	if (cs->cs_consio)
 		return (ENXIO);		/* ??? */
+#endif
 	tp = cs->cs_ttyp;
 	s = spltty();
 	if ((tp->t_state & TS_ISOPEN) == 0) {
@@ -607,6 +586,9 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (EBUSY);
 	}
 	error = 0;
+#ifdef	DEBUG
+	mon_printf("wait for carrier...\n");
+#endif
 	for (;;) {
 		/* loop, turning on the device, until carrier present */
 		zs_modem(cs, 1);
@@ -623,6 +605,10 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 		    ttopen, 0))
 			break;
 	}
+#ifdef	DEBUG
+	mon_printf("...carrier %s\n",
+			   (tp->t_state & TS_CARR_ON) ? "on" : "off");
+#endif
 	splx(s);
 	if (error == 0)
 		error = linesw[tp->t_line].l_open(dev, tp);
@@ -642,6 +628,9 @@ zsclose(dev_t dev, int flags, int mode, struct proc *p)
 	struct zsinfo *zi;
 	int unit = minor(dev), s;
 
+#ifdef	DEBUG
+	mon_printf("zs_close\n");
+#endif
 	zi = zscd.cd_devs[unit >> 1];
 	cs = &zi->zi_cs[unit & 1];
 	tp = cs->cs_ttyp;
@@ -704,12 +693,11 @@ zshard(int intrarg)
 	static int zsrint(struct zs_chanstate *, volatile struct zschan *);
 	static int zsxint(struct zs_chanstate *, volatile struct zschan *);
 	static int zssint(struct zs_chanstate *, volatile struct zschan *);
-#ifdef	DEBUG
-	printf("zshard\n");
-#endif
 
 	for (a = zslist; a != NULL; a = b->cs_next) {
 		rr3 = ZS_READ(a->cs_zc, 3);
+
+		/* XXX - This should loop to empty the on-chip fifo. */
 		if (rr3 & (ZSRR3_IP_A_RX|ZSRR3_IP_A_TX|ZSRR3_IP_A_STAT)) {
 			intflags |= 2;
 			zc = a->cs_zc;
@@ -728,6 +716,8 @@ zshard(int intrarg)
 			}
 			a->cs_rbput = i;
 		}
+
+		/* XXX - This should loop to empty the on-chip fifo. */
 		if (rr3 & (ZSRR3_IP_B_RX|ZSRR3_IP_B_TX|ZSRR3_IP_B_STAT)) {
 			intflags |= 2;
 			zc = b->cs_zc;
@@ -849,6 +839,9 @@ zssint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 		}
 	}
 	if ((rr0 & ZSRR0_BREAK) && cs->cs_brkabort) {
+		/* Wait for end of break to avoid PROM abort. */
+		while (zc->zc_csr & ZSRR0_BREAK)
+			ZS_DELAY();
 		zsabort();
 		return (0);
 	}
@@ -857,9 +850,12 @@ zssint(register struct zs_chanstate *cs, register volatile struct zschan *zc)
 
 zsabort()
 {
-
+#ifdef DDB
+	Debugger();
+#else
 	printf("stopping on keyboard abort\n");
-	sun3_stop();
+	sun3_rom_abort();
+#endif
 }
 
 #ifdef KGDB
@@ -900,10 +896,6 @@ zssoft(int arg)
 	register struct linesw *line;
 	register struct tty *tp;
 	register int get, n, c, cc, unit, s;
-
-#ifdef	DEBUG
-	printf("zssoft\n");
-#endif
 
 	isr_soft_clear(ZSSOFT_PRI);
 
@@ -1069,10 +1061,6 @@ zsstart(register struct tty *tp)
 
 	cs = &zi->zi_cs[unit & 1];
 	s = spltty();
-
-#ifdef	DEBUG
-	printf("zsstart\n");
-#endif
 
 	/*
 	 * If currently active or delaying, no need to do anything.
@@ -1308,18 +1296,6 @@ zs_loadchannelregs(volatile struct zschan *zc, u_char *reg)
 	ZS_WRITE(zc, 5, reg[5]);
 }
 
-/* XXX - Tune this... -gwr */
-int cpuspeed = 50;
-
-static void
-zs_delay()
-{
-	int n = cpuspeed;
-	while (n--) {
-		nullop();		/* foil optimizer */
-	}
-}
-
 static u_char
 zs_read(zc, reg)
 	volatile struct zschan *zc;
@@ -1328,9 +1304,9 @@ zs_read(zc, reg)
 	u_char val;
 
 	zc->zc_csr = reg;
-	zs_delay();
+	ZS_DELAY();
 	val = zc->zc_csr;
-	zs_delay();
+	ZS_DELAY();
 	return val;
 }
 
@@ -1340,9 +1316,9 @@ zs_write(zc, reg, val)
 	u_char reg, val;
 {
 	zc->zc_csr = reg;
-	zs_delay();
+	ZS_DELAY();
 	zc->zc_csr = val;
-	zs_delay();
+	ZS_DELAY();
 	return val;
 }
 
@@ -1395,9 +1371,11 @@ zs_kgdb_init()
 		return;
 	}
 	zs = unit >> 1;
-	if ((addr = zsaddr[zs]) == NULL)
-		addr = zsaddr[zs] = findzs(zs);
 	unit &= 1;
+	
+	if ((addr = zs0_va) == NULL)
+		panic("kbdb_attach: zs0 not yet mapped");
+
 	zc = unit == 0 ? &addr->zs_chan[CHAN_A] : &addr->zs_chan[CHAN_B];
 	zs_kgdb_savedspeed = zs_getspeed(zc);
 	printf("zs_kgdb_init: attaching zs%d%c at %d baud\n",
