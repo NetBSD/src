@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.26 1998/03/30 02:34:25 jonathan Exp $	*/
+/*	$NetBSD: pm.c,v 1.27 1999/04/24 08:01:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  *	@(#)pm.c	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  *  devGraphics.c --
  *
  *     	This file contains machine-dependent routines for the graphics device.
@@ -46,7 +46,7 @@
  *	Copyright (C) 1989 Digital Equipment Corporation.
  *	Permission to use, copy, modify, and distribute this software and
  *	its documentation for any purpose and without fee is hereby granted,
- *	provided that the above copyright notice appears in all copies.  
+ *	provided that the above copyright notice appears in all copies.
  *	Digital Equipment Corporation makes no representations about the
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.26 1998/03/30 02:34:25 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.27 1999/04/24 08:01:05 simonb Exp $");
 
 
 #include <sys/param.h>
@@ -157,7 +157,7 @@ pmattach(fi, unit, cold_console_flag)
 	int unit;
 	int cold_console_flag;
 {
-	register PCCRegs *pcc = (PCCRegs *)fi->fi_base;
+	PCCRegs *pcc = (PCCRegs *)fi->fi_base;
 
 	/* check for no frame buffer */
 	if (badaddr((char *)fi->fi_pixels, 4))
@@ -274,8 +274,8 @@ pmLoadCursor(fi, cur)
 	struct fbinfo *fi;
 	unsigned short *cur;
 {
-	register PCCRegs *pcc = (PCCRegs *)fi->fi_base;
-	register int i;
+	PCCRegs *pcc = (PCCRegs *)fi->fi_base;
+	int i;
 
 	curReg |= PCC_LODSA;
 	pcc->cmdr = curReg;
@@ -304,7 +304,7 @@ pmLoadCursor(fi, cur)
  *
  * Side effects:
  *	None.
- *	NB:  should not turn on the hardwar cursor, since the 
+ *	NB:  should not turn on the hardwar cursor, since the
  *	Xserver positions the cursor to upper left corner as the last
  * 	cursor operation before it exits.
  *
@@ -312,10 +312,10 @@ pmLoadCursor(fi, cur)
  */
 void
 pmPosCursor(fi, x, y)
-	register struct fbinfo *fi;
-	register int x, y;
+	struct fbinfo *fi;
+	int x, y;
 {
-	register PCCRegs *pcc = (PCCRegs *)fi->fi_base;
+	PCCRegs *pcc = (PCCRegs *)fi->fi_base;
 
 	if (y < fi->fi_fbu->scrInfo.min_cur_y ||
 	    y > fi->fi_fbu->scrInfo.max_cur_y)
@@ -338,7 +338,7 @@ pmPosCursor(fi, x, y)
 void pccCursorOn(fi)
 	struct fbinfo *fi;
 {
-	register PCCRegs *pcc = (PCCRegs *)fi -> fi_base;
+	PCCRegs *pcc = (PCCRegs *)fi -> fi_base;
 	pcc -> cmdr = curReg | (PCC_ENPA | PCC_ENPB);
 	wbflush();
 }
@@ -352,7 +352,7 @@ void pccCursorOn(fi)
 void pccCursorOff(fi)
 	struct fbinfo *fi;
 {
-	register PCCRegs *pcc = (PCCRegs *)fi -> fi_base;
+	PCCRegs *pcc = (PCCRegs *)fi -> fi_base;
 	pcc -> cmdr = curReg & ~(PCC_ENPA | PCC_ENPB);
 	wbflush();
 }
@@ -377,11 +377,11 @@ static int
 pm_video_on (fi)
 	struct fbinfo *fi;
 {
-	register PCCRegs *pcc = (PCCRegs *)fi -> fi_base;
+	PCCRegs *pcc = (PCCRegs *)fi -> fi_base;
 
 	if (!fi -> fi_blanked)
 		return 0;
-	
+
 	pcc -> cmdr = curReg & ~(PCC_FOPA | PCC_FOPB);
 	bt478RestoreCursorColor (fi);
 	fi -> fi_blanked = 0;
@@ -398,11 +398,11 @@ pm_video_on (fi)
 static int pm_video_off (fi)
 	struct fbinfo *fi;
 {
-	register PCCRegs *pcc = (PCCRegs *)fi -> fi_base;
+	PCCRegs *pcc = (PCCRegs *)fi -> fi_base;
 
 	if (fi -> fi_blanked)
 		return 0;
-	
+
 	bt478BlankCursor (fi);
 	pcc -> cmdr = curReg | PCC_FOPA | PCC_FOPB;
 	fi -> fi_blanked = 1;

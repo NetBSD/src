@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.8 1999/03/25 01:17:52 simonb Exp $	*/
+/*	$NetBSD: dec_maxine.c,v 1.9 1999/04/24 08:01:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.8 1999/03/25 01:17:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.9 1999/04/24 08:01:12 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -233,12 +233,12 @@ dec_maxine_device_register(dev, aux)
  */
 void
 dec_maxine_enable_intr(slotno, handler, sc, on)
-	register unsigned int slotno;
+	unsigned int slotno;
 	int (*handler) __P((void* softc));
 	void *sc;
 	int on;
 {
-	register unsigned mask;
+	unsigned mask;
 
 	switch (slotno) {
 	case 0:			/* a real slot, but  */
@@ -298,8 +298,8 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 	unsigned statusReg;
 	unsigned causeReg;
 {
-	register u_int intr;
-	register volatile struct chiptime *c =
+	u_int intr;
+	volatile struct chiptime *c =
 	    (volatile struct chiptime *) MIPS_PHYS_TO_KSEG1(XINE_SYS_CLOCK);
 	volatile u_int *imaskp = (volatile u_int *)
 		MIPS_PHYS_TO_KSEG1(XINE_REG_IMSK);

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.8 1999/03/30 14:27:56 soda Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.9 1999/04/24 08:10:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -151,7 +151,7 @@ VECTOR(mips3_TLBMiss, unknown)
 					# actually part of KSU but we must
 					# be a user address
 	add	k1, k0, k1
-	lw	k1, 0(k1)		
+	lw	k1, 0(k1)
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	beq	k1, zero, 5f			# invalid segment map
 	srl	k0, k0, PGSHIFT - 2		# compute segment map index
@@ -211,8 +211,8 @@ VECTOR(mips3_XTLBMiss, unknown)
 	dsra	k1, k1, 32		# Tricky -- The lower bit is
 					# actually part of KSU but we must
 					# be a user address
-	add	k1, k0, k1		
-	lw	k1, 0(k1)		
+	add	k1, k0, k1
+	lw	k1, 0(k1)
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	# get the virtual address
 	beq	k1, zero, 5f			# invalid segment map
 	srl	k0, k0, PGSHIFT - 2		# compute segment map index
@@ -327,7 +327,7 @@ mips3_SlowFault:
  * Build trapframe on stack to hold interrupted kernel context, then
  * call trap() to process the condition.
  *
- * trapframe is pointed to by the 5th arg 
+ * trapframe is pointed to by the 5th arg
  * and a dummy sixth argument is used to avoid alignment problems
  *	{
  *  	register_t cf_args[4 + 1];
@@ -524,7 +524,7 @@ NESTED_NOPROFILE(mips3_UserGenException, CALLFRAME_SIZ, ra)
  * First disable interrupts and set exception level.
  */
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupt
-	nop					# 3 clock delay before 
+	nop					# 3 clock delay before
 	nop					# exceptions blocked
 	nop					# for R4X
 	li	v0, MIPS_SR_EXL
@@ -708,7 +708,7 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	REG_L	k0, FRAME_SR(k1)
 	REG_L	ra, FRAME_RA(k1)
 	mtc0	k0, MIPS_COP_0_STATUS
-	nop					# 3 nops before eret 
+	nop					# 3 nops before eret
 	nop
 	nop
 	eret					# return to syscall point
@@ -1011,7 +1011,7 @@ END(mips3_UserIntr)
  *
  *	The case of wired TLB entries is special.  The wired TLB entries
  *	are used to keep the u area TLB's valid.  The PTE entries for these
- *	do not have MIPS3_PG_G set; the kernel instead relies 
+ *	do not have MIPS3_PG_G set; the kernel instead relies
  *	on the switch_resume function to set these bits.
  *
  *	To preserve this situation, we set PG_G bits on the "other" TLB entries
@@ -1034,7 +1034,7 @@ LEAF_NOPROFILE(mips3_TLBInvalidException)
 	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
 	srl	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
-	beq	k1, zero, outofworld	# No. Failing beyond. . . 
+	beq	k1, zero, outofworld	# No. Failing beyond. . .
 	lw	k1, _C_LABEL(Sysmap)
 
 	sll	k0, k0, 2			# compute offset from index
@@ -1127,7 +1127,7 @@ LEAF_NOPROFILE(mips3_TLBMissException)
 	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
 	srl	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
-	beq	k1, zero, outofworld	# No. Failing beyond. . . 
+	beq	k1, zero, outofworld	# No. Failing beyond. . .
 	lw	k1, _C_LABEL(Sysmap)
 	srl	k0, k0, 1
 	sll	k0, k0, 3			# compute offset from index
@@ -1210,7 +1210,7 @@ END(mips3_SetPID)
  *--------------------------------------------------------------------------
  */
 LEAF(mips3_SetWIRED)
-	mtc0	a0, MIPS_COP_0_TLB_WIRED		
+	mtc0	a0, MIPS_COP_0_TLB_WIRED
 	nop				# Required for 5230
 	nop				# Required for 5230
 	j	ra
@@ -1234,7 +1234,7 @@ END(mips3_SetWIRED)
  *--------------------------------------------------------------------------
  */
 LEAF(mips3_GetWIRED)
-	mfc0	v0, MIPS_COP_0_TLB_WIRED		
+	mfc0	v0, MIPS_COP_0_TLB_WIRED
 	j	ra
 	nop
 END(mips3_GetWIRED)
@@ -1260,7 +1260,7 @@ END(mips3_GetWIRED)
 LEAF(mips3_TLBFlush)
 	mfc0	v1, MIPS_COP_0_STATUS	# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS	# Disable interrupts
-	mfc0	t1, MIPS_COP_0_TLB_WIRED		
+	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	li	v0, MIPS_KSEG0_START		# invalid address
 	dmfc0	t0, MIPS_COP_0_TLB_HI		# Save the PID
 
@@ -1706,7 +1706,7 @@ END(mips3_FlushICache)
  *
  *	Flush data cache for index range of addr to addr + len - 1.
  *	The address is reduced to a kseg0 index.
- *	
+ *
  * Results:
  *	None.
  *
@@ -1773,7 +1773,7 @@ END(mips3_FlushDCache)
  *
  *	Flush data cache for index range of addr to addr + len - 1.
  *	The address is reduced to a kseg0 index.
- *	
+ *
  * Results:
  *	None.
  *
@@ -1846,7 +1846,7 @@ END(mips52xx_FlushDCache)
  *	The address can be any valid viritual address as long
  *	as no TLB invalid traps occur. Only lines with matching
  *	addr is flushed.
- *	
+ *
  * Results:
  *	None.
  *
@@ -1973,7 +1973,7 @@ XLEAF(mips3_VCEI)	/* XXXX */
 	cache	31, 0(k0)
 	nop
 #ifdef DEBUG
-	mfc0	k1, MIPS_COP_0_EXC_PC		
+	mfc0	k1, MIPS_COP_0_EXC_PC
 	sw	k0, VCE_vaddr
 	sw	k1, VCE_epc
 	la	k1, VCE_count		# count number of exceptions
@@ -2037,7 +2037,7 @@ END(mips3_wbflush)
  * Call the service function with one argument, specified by the s0
  * and s1 respectively.  There is no need register save operation.
  */
-LEAF(mips3_proc_trampoline) 
+LEAF(mips3_proc_trampoline)
 	jal	ra, s0
 	move	a0, s1
 	.set	noat
@@ -2052,7 +2052,7 @@ LEAF(mips3_proc_trampoline)
 	REG_L	v0, FRAME_EPC(a1)
 	mtlo	t0
 	mthi	t1
-	dmtc0	v0, MIPS_COP_0_EXC_PC		
+	dmtc0	v0, MIPS_COP_0_EXC_PC
 	nop
 	move	k1, a1
 	REG_L	AT, FRAME_AST(k1)
@@ -2121,7 +2121,7 @@ LEAF_NOPROFILE(mips3_cpu_switch_resume)
 	andi	s0, a0, MIPS3_PG_ODDPG		# does p_addr start on odd page
 	beq	s0, zero, 1f			# no, only one TLB entry needed
 	nop
-	
+
 # p_addr starts on an odd page, need to set up 2 TLB entries
 	addu	v0, a0, MIPS3_PG_ODDPG		# map second page
 	# see if this address currently exists in TLB
@@ -2170,7 +2170,7 @@ LEAF_NOPROFILE(mips3_cpu_switch_resume)
 	nop
 	slti	s0, s0, MIPS3_TLB_WIRED_ENTRIES	# if found in random entry XXX
 	bnez	s0, 2f				# flush it
-	mtc0	zero, MIPS_COP_0_TLB_LO0	
+	mtc0	zero, MIPS_COP_0_TLB_LO0
 	mtc0	zero, MIPS_COP_0_TLB_LO1
 	li	s0, MIPS_KSEG0_START
 	mtc0	s0, MIPS_COP_0_TLB_HI
@@ -2202,7 +2202,7 @@ LEAF(mips3_Set64bit)
 	mfc0	v0, MIPS_COP_0_STATUS
 	lui	v1, (MIPS3_SR_XX >> 16)
 	or	v0, v0, v1
-	ori	v0, v0, MIPS3_SR_KX | MIPS3_SR_UX | MIPS3_SR_SX 
+	ori	v0, v0, MIPS3_SR_KX | MIPS3_SR_UX | MIPS3_SR_SX
 	mtc0	v0, MIPS_COP_0_STATUS
 	j	ra
 	nop
@@ -2217,7 +2217,7 @@ END(mips3_Set64bit)
  *	read 32-bit cycle-counter clock in coprocessor 0.
  *
  * Results:
- *	returns 32-bit clock value, incremented automatically by CPU 
+ *	returns 32-bit clock value, incremented automatically by CPU
  *	at nominal cycle rate (i.e., half the maximum issue rate.)
  *
  * Side effects:
@@ -2283,7 +2283,7 @@ END(mips3_read_config)
 /*
  * Write value to compare register.
  *
- * Side Effects:	
+ * Side Effects:
  *	Clears interrupt request from cycle-counter clock.
  */
 LEAF(mips3_write_compare)

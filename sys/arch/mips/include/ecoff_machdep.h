@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.15 1999/03/08 06:36:59 tsubai Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.16 1999/04/24 08:10:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -49,7 +49,7 @@
 #define _MIPS3_OK() 1
 #endif
 
-	
+
 #define ECOFF_MAGIC_MIPSEB	0x0160	/* mips1, big-endian */
 #define ECOFF_MAGIC_MIPSEL	0x0162	/* mips1, little-endian */
 #define ECOFF_MAGIC_MIPSEL3	0x0142	/* mips3, little-endian */

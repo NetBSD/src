@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2 1999/04/22 01:52:54 simonb Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.3 1999/04/24 08:01:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -39,7 +39,7 @@
  * The bootinfo structure is at the end of the 64kB hole between
  * 0x80010000 to 0x8001ffff that neither NetBSD nor the PROM uses.
  */
-#define BOOTINFO_ADDR	0x8001fc00	
+#define BOOTINFO_ADDR	0x8001fc00
 
 struct btinfo_common {
 	int next;		/* offset of next item, or zero */

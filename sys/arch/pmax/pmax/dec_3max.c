@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.8 1999/03/27 03:27:09 mhitch Exp $	*/
+/*	$NetBSD: dec_3max.c,v 1.9 1999/04/24 08:01:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.8 1999/03/27 03:27:09 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.9 1999/04/24 08:01:11 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ dec_3max_init()
 void
 dec_3max_os_init()
 {
-	register int i;
+	int i;
 
 	volatile int *csr_addr =
 		(volatile int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
@@ -205,12 +205,12 @@ dec_3max_device_register(dev, aux)
  */
 void
 dec_3max_enable_intr(slotno, handler, sc, on)
-	register u_int slotno;
+	u_int slotno;
 	int (*handler) __P((void* softc));
 	void *sc;
 	int on;
 {
-	register volatile int *p_csr =
+	volatile int *p_csr =
 		(volatile int *)MIPS_PHYS_TO_KSEG1(KN02_SYS_CSR);
 	int csr;
 	int s;
@@ -254,10 +254,10 @@ dec_3max_intr(mask, pc, statusReg, causeReg)
 	unsigned statusReg;
 	unsigned causeReg;
 {
-	register unsigned i, m;
-	register volatile struct chiptime *c =
+	unsigned i, m;
+	volatile struct chiptime *c =
 	    (volatile struct chiptime *) MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
-	register unsigned csr;
+	unsigned csr;
 	int temp;
 	struct clockframe cf;
 	static int warned = 0;
