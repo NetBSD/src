@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_console.h,v 1.2 2001/03/13 16:31:31 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.h,v 1.3 2001/03/15 17:24:47 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ public:
 	struct console_info {
 		u_int32_t cpu, machine;
 		print_func_t print;
+		int16_t boot_console;
 	};
 	static struct console_info _console_info[];
 	static void SCIFPrint(const char *);
@@ -58,6 +59,7 @@ private:
 	static SHConsole *_instance;
 	int _kmode;
 	print_func_t _print;
+	int16_t _boot_console;
 
 	SHConsole(void);
 
@@ -67,5 +69,6 @@ public:
 
 	virtual BOOL init(void);
 	virtual void print(const TCHAR *fmt, ...);
+	virtual int16_t getBootConsole(void) { return _boot_console; }
 };
 #endif //_HPCBOOT_SH_CONSOLE_H_
