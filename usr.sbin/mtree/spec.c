@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.26 2001/10/04 04:51:27 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.27 2001/10/04 05:03:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.26 2001/10/04 04:51:27 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.27 2001/10/04 05:03:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -258,13 +258,8 @@ set(char *t, NODE *ip)
 			ip->st_gid = gid;
 			break;
 		case F_IGN:
+		case F_OPT:
 			/* just set flag bit */
-			break;
-		case F_TAGS:
-			len = strlen(val) + 3;	/* "," + str + ",\0" */
-			if ((ip->tags = malloc(len)) == NULL)
-				mtree_err("memory allocation error");
-			snprintf(ip->tags, len, ",%s,", val);
 			break;
 		case F_MD5:
 			if (val[0]=='0' && val[1]=='x')
@@ -293,6 +288,12 @@ set(char *t, NODE *ip)
 		case F_SLINK:
 			if ((ip->slink = strdup(val)) == NULL)
 				mtree_err("memory allocation error");
+			break;
+		case F_TAGS:
+			len = strlen(val) + 3;	/* "," + str + ",\0" */
+			if ((ip->tags = malloc(len)) == NULL)
+				mtree_err("memory allocation error");
+			snprintf(ip->tags, len, ",%s,", val);
 			break;
 		case F_TIME:
 			ip->st_mtimespec.tv_sec =
