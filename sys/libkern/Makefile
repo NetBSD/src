@@ -1,9 +1,7 @@
-#	$Id: Makefile,v 1.7 1993/09/13 19:53:18 jtc Exp $
+#	$Id: Makefile,v 1.8 1993/09/13 21:01:09 jtc Exp $
 
 LIB=	kern
 LIBDIR=	${.CURDIR}/../arch/${MACHINE}/compile
-
-NOPROFILE=
 
 .if exists (${.CURDIR}/${MACHINE}/Makefile.inc)
 .PATH:	${.CURDIR}/${MACHINE}
@@ -28,5 +26,9 @@ AINC+=	-I${LIBC}/${MACHINE}
 install:
 	install ${COPY} lib${LIB}.a ${LIBDIR}
 	${RANLIB} -t ${LIBDIR}/lib${LIB}.a
+.if !defined(NOPROFILE)
+	install ${COPY} lib${LIB}_p.a ${LIBDIR}
+	${RANLIB} -t ${LIBDIR}/lib${LIB}_p.a
+.endif
 
 .include <bsd.lib.mk>
