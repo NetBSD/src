@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.20 2001/01/17 00:30:51 thorpej Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.21 2001/02/20 07:53:31 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.34 2000/10/07 03:58:53 itojun Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ gif_output(ifp, m, dst, rt)
 	struct sockaddr *dst;
 	struct rtentry *rt;	/* added in net2 */
 {
-	register struct gif_softc *sc = (struct gif_softc*)ifp;
+	struct gif_softc *sc = (struct gif_softc*)ifp;
 	int error = 0;
 	static int called = 0;	/* XXX: MUTEX */
 
@@ -350,7 +350,7 @@ gif_input(m, af, gifp)
 	struct ifnet *gifp;
 {
 	int s, isr;
-	register struct ifqueue *ifq = 0;
+	struct ifqueue *ifq = 0;
 
 	if (gifp == NULL) {
 		/* just in case */
