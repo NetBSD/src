@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.176 1997/12/04 15:33:33 tv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.177 1998/01/13 19:15:32 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2762,11 +2762,11 @@ mac68k_ring_bell(freq, length, volume)
  */
 
 int
-bus_space_map(t, bpa, size, cacheable, bshp)
+bus_space_map(t, bpa, size, flags, bshp)
 	bus_space_tag_t t;
 	bus_addr_t bpa;
 	bus_size_t size;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *bshp;
 {
 	u_long pa, endpa;
@@ -2789,7 +2789,7 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 		panic("bus_space_map: overflow");
 #endif
 
-	error = bus_mem_add_mapping(bpa, size, cacheable, bshp);
+	error = bus_mem_add_mapping(bpa, size, flags, bshp);
 	if (error) {
 		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
 		    (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
@@ -2803,12 +2803,12 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 }
 
 int
-bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
+bus_space_alloc(t, rstart, rend, size, alignment, boundary, flags,
     bpap, bshp)
 	bus_space_tag_t t;
 	bus_addr_t rstart, rend;
 	bus_size_t size, alignment, boundary;
-	int cacheable;
+	int flags;
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
@@ -2835,7 +2835,7 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = bus_mem_add_mapping(bpa, size, cacheable, bshp);
+	error = bus_mem_add_mapping(bpa, size, flags, bshp);
 	if (error) {
 		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
 		    (iomem_malloc_safe ? EX_MALLOCOK : 0))) {
@@ -2851,10 +2851,10 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 }
 
 int
-bus_mem_add_mapping(bpa, size, cacheable, bshp)
+bus_mem_add_mapping(bpa, size, flags, bshp)
 	bus_addr_t bpa;
 	bus_size_t size;
-	int cacheable;
+	int flags;
 	bus_space_handle_t *bshp;
 {
 	u_long pa, endpa;
@@ -2877,7 +2877,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
-		if (!cacheable)
+		if (!(flags & BUS_SPACE_MAP_CACHEABLE))
 			pmap_changebit(pa, PG_CI, TRUE);
 	}
  
@@ -2938,10 +2938,10 @@ bus_space_subregion(t, bsh, offset, size, nbshp)
 	return (0);
 }
 
-int    *nofault;
+label_t	*nofault;
 
 int
-bus_probe(t, bsh, offset, sz)
+mac68k_bus_space_probe(t, bsh, offset, sz)
 	bus_space_tag_t t;
 	bus_space_handle_t bsh;
 	bus_size_t offset;
@@ -2950,9 +2950,9 @@ bus_probe(t, bsh, offset, sz)
 	int i;
 	label_t faultbuf;
 
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *)0;
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
+		nofault = (label_t *)0;
 		return (0);
 	}
 
@@ -2967,15 +2967,11 @@ bus_probe(t, bsh, offset, sz)
 		i = bus_space_read_4(t, bsh, offset);
 		break;
 	case 8:
-		/*FALLTHROUGH*/
 	default:
-#ifdef DIAGNOSTIC
-		printf("bus_probe: unsupported data size %d\n", sz);
-#endif
-		nofault = (int *)0;
-		return (0);
+		panic("bus_space_probe: unsupported data size %d\n", sz);
+		/* NOTREACHED */
 	}
 
-	nofault = (int *)0;
+	nofault = (label_t *)0;
 	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.25 1998/01/12 19:22:01 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.26 1998/01/13 19:24:50 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -121,7 +121,7 @@ ascmatch(parent, cf, aux)
 	if (bus_space_map(oa->oa_tag, addr, MAC68K_ASC_LEN, 0, &bsh))
 		return (0);
 
-	if (bus_probe(oa->oa_tag, bsh, 0, 1))
+	if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0, 1))
 		rval = 1;
 	else
 		rval = 0;

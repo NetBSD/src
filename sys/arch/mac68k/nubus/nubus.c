@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.42 1998/01/12 19:22:14 thorpej Exp $	*/
+/*	$NetBSD: nubus.c,v 1.43 1998/01/13 19:24:56 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -350,7 +350,7 @@ nubus_probe_slot(bst, bsh, slot, fmt)
 	for (j = 8, found = 0; j > 0 && !found; j >>= 1) {
 		ofs--;
 		for (i = j; i > 0; i--, lanes--) {
-			if (!bus_probe(bst, bsh, ofs, 1)) {
+			if (!mac68k_bus_space_probe(bst, bsh, ofs, 1)) {
 				lanes -= i;
 				break;
 			}
