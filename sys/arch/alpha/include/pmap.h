@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.27 1999/04/15 22:15:39 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.28 1999/05/21 23:08:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -165,17 +165,6 @@ struct pv_head {
 	"l2pt",								\
 	"l3pt",								\
 }
-
-struct pv_page_info {
-	TAILQ_ENTRY(pv_page) pgi_list;
-	LIST_HEAD(, pv_entry) pgi_freelist;
-	int pgi_nfree;
-};
-
-struct pv_page {
-	struct pv_page_info pvp_pgi;
-	struct pv_entry pvp_pv[1];		/* variable length */
-};
 
 #ifdef _KERNEL
 
