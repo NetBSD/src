@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_timer.c,v 1.13 2003/08/07 16:33:42 agc Exp $	*/
+/*	$NetBSD: tp_timer.c,v 1.14 2004/04/18 18:54:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_timer.c,v 1.13 2003/08/07 16:33:42 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_timer.c,v 1.14 2004/04/18 18:54:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,9 +102,8 @@ tp_timerinit()
 		return;
 	tp_refinfo.tpr_size = N_TPREF + 1;	/* Need to start somewhere */
 	s = sizeof(*tp_ref) * tp_refinfo.tpr_size;
-	if ((tp_ref = (struct tp_ref *) malloc(s, M_PCB, M_NOWAIT)) == 0)
+	if ((tp_ref = (struct tp_ref *) malloc(s, M_PCB, M_NOWAIT|M_ZERO)) == 0)
 		panic("tp_timerinit");
-	bzero((caddr_t) tp_ref, (unsigned) s);
 	tp_refinfo.tpr_base = tp_ref;
 	tp_rttdiv = hz / PR_SLOWHZ;
 	tp_rttadd = (2 * tp_rttdiv) - 1;
