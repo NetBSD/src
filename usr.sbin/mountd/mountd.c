@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mountd.c	8.8 (Berkeley) 2/20/94";*/
-static char *rcsid = "$Id: mountd.c,v 1.17 1994/10/31 04:24:32 cgd Exp $";
+static char *rcsid = "$Id: mountd.c,v 1.18 1994/12/18 00:18:52 cgd Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -1770,7 +1770,6 @@ get_mountlist()
 {
 	struct mountlist *mlp, **mlpp;
 	char *host, *dirp, *cp;
-	int len;
 	char str[STRSIZ];
 	FILE *mlfile;
 

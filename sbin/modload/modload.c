@@ -29,14 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modload.c,v 1.10 1994/09/18 19:53:46 mycroft Exp $
+ *	$Id: modload.c,v 1.11 1994/12/18 00:16:11 cgd Exp $
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <err.h>
-#include <a.out.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
@@ -44,6 +39,12 @@
 #include <sys/lkm.h>
 #include <sys/file.h>
 #include <sys/errno.h>
+#include <a.out.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <err.h>
+#include <unistd.h>
 #include "pathnames.h"
 
 #ifndef DFLT_ENTRY
