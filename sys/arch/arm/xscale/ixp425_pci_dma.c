@@ -1,4 +1,5 @@
-/*	$NetBSD: ixdp425reg.h,v 1.3 2003/09/25 14:11:18 ichiro Exp $ */
+/*	$NetBSD: ixp425_pci_dma.c,v 1.1 2003/09/25 14:11:18 ichiro Exp $ */
+
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -32,52 +33,53 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_IXDP425REG_H_
-#define	_IXDP425REG_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_dma.c,v 1.1 2003/09/25 14:11:18 ichiro Exp $");
 
-/*
- * Interrupt & GPIO  
- */
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
 
-#if BOARDTYPE == ixdp425
-/* GPIOs */
-#define	GPIO_PCI_CLK	14
-#define	GPIO_PCI_RESET	13
-#define	GPIO_PCI_INTA	11
-#define	GPIO_PCI_INTB	10
-#define	GPIO_PCI_INTC	9
-#define	GPIO_PCI_INTD	8
-/* Interrupt */
-#define	PCI_INT_A	IXP425_INT_GPIO_11
-#define	PCI_INT_B	IXP425_INT_GPIO_10
-#define	PCI_INT_C	IXP425_INT_GPIO_9
-#define	PCI_INT_D	IXP425_INT_GPIO_8
-#define	I2C_SDA		IXP425_INT_GPIO_7
-#define	I2C_SCL		IXP425_INT_GPIO_6
-#endif /* BOARDTYPE == ixdp425 */
+#include <uvm/uvm_extern.h>
 
-#if BOARDTYPE == zao425		/* conf/ZAO425 */
-/* GPIOs */
-#define	GPIO_PCI_CLK	14
-#define	GPIO_PCI_RESET	13
-#define	GPIO_PCI_INTA	11
-#define	GPIO_PCI_INTB	10
-#define	GPIO_PCI_INTC	9
-#define	GPIO_PCI_INTD	8
-/* Interrupt */
-#define	MPCI_GPIO0	IXP425_INT_GPIO_12
-#define	PCI_INT_A	IXP425_INT_GPIO_11
-#define	PCI_INT_B	IXP425_INT_GPIO_10
-#define	PCI_INT_C	IXP425_INT_GPIO_9
-#define	PCI_INT_D	IXP425_INT_GPIO_8
-#define	I2C_SDA		IXP425_INT_GPIO_7
-#define	I2C_SCL		IXP425_INT_GPIO_6
-#define	MPCI_GPIO3	IXP425_INT_GPIO_5
-#define	HSS0_INT	IXP425_INT_GPIO_4
-#define	HSS0_SCLK	IXP425_INT_GPIO_3
-#define	HSS0_SDI	IXP425_INT_GPIO_2
-#define	HSS0_SDO	IXP425_INT_GPIO_1
-#define	HSS0_CS		IXP425_INT_GPIO_0
-#endif /* BOARDTYPE == zao425 */
+#define _ARM32_BUS_DMA_PRIVATE
+#include <machine/bus.h>
 
-#endif	/* _IXDP425REG_H_ */
+#include <arm/xscale/ixp425reg.h>
+#include <arm/xscale/ixp425var.h>
+
+void
+ixp425_pci_dma_init(struct ixp425_softc *sc)
+{
+	extern paddr_t physical_start, physical_end;
+
+	bus_dma_tag_t dmat = &sc->ia_pci_dmat;
+	struct arm32_dma_range *dr = &sc->ia_pci_dma_range;
+
+	dmat->_ranges = dr;
+	dmat->_nranges = 1;
+
+	dr->dr_sysbase = physical_start;
+	dr->dr_busbase = PCI_MAPREG_MEM_ADDR(IXP425_PCI_MEM_VBASE +
+			 physical_start);
+	dr->dr_busbase = physical_start;
+	dr->dr_len = physical_end - physical_start;
+
+	dmat->_dmamap_create = _bus_dmamap_create;
+	dmat->_dmamap_destroy = _bus_dmamap_destroy;
+	dmat->_dmamap_load = _bus_dmamap_load;
+	dmat->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
+	dmat->_dmamap_load_uio = _bus_dmamap_load_uio;
+	dmat->_dmamap_load_raw = _bus_dmamap_load_raw;
+	dmat->_dmamap_unload = _bus_dmamap_unload;
+	dmat->_dmamap_sync_pre = _bus_dmamap_sync;
+	dmat->_dmamap_sync_post = NULL;
+
+	dmat->_dmamem_alloc = _bus_dmamem_alloc;
+	dmat->_dmamem_free = _bus_dmamem_free;
+	dmat->_dmamem_map = _bus_dmamem_map;
+	dmat->_dmamem_unmap = _bus_dmamem_unmap;
+	dmat->_dmamem_mmap = _bus_dmamem_mmap;
+}
