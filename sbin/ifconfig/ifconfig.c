@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.166 2005/03/20 02:43:50 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.167 2005/03/20 02:51:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.166 2005/03/20 02:43:50 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.167 2005/03/20 02:51:47 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1246,13 +1246,6 @@ carrier(void)
 	return !(ifmr.ifm_status & IFM_ACTIVE);
 }
 
-
-#define	IFFBITS \
-"\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
-\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
-
-#define	IFCAPBITS \
-"\020\1IP4CSUM\2TCP4CSUM\3UDP4CSUM\4TCP6CSUM\5UDP6CSUM\6TCP4CSUM_Rx\7UDP4CSUM_Rx\10TSO4"
 
 const int ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
 
