@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.h	7.11 (Berkeley) 3/19/91
- *	$Id: if.h,v 1.3.4.1 1993/10/29 04:31:38 mycroft Exp $
+ *	$Id: if.h,v 1.3.4.2 1993/11/03 21:17:44 mycroft Exp $
  */
 
 #ifndef _NET_IF_H_
@@ -91,15 +91,13 @@ struct ifnet {
 		int	ifq_drops;
 	} if_snd;			/* output queue */
 /* procedure handles */
-	int	(*if_init)();		/* init routine */
 	int	(*if_output)();		/* output routine (enqueue) */
-	int	(*if_start)();		/* initiate output routine */
-	int	(*if_done)();		/* output complete routine */
+	void	(*if_start)();		/* initiate output routine */
 	int	(*if_ioctl)();		/* ioctl routine */
 #ifdef vax
 	int	(*if_reset)();		/* bus reset routine */
 #endif
-	int	(*if_watchdog)();	/* timer routine */
+	void	(*if_watchdog)();	/* timer routine */
 /* generic interface statistics */
 	int	if_ipackets;		/* packets received on interface */
 	int	if_ierrors;		/* input errors on interface */
