@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.57 2005/01/23 01:25:04 elric Exp $
+#	$NetBSD: files.usb,v 1.58 2005/01/24 01:36:07 joff Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -235,3 +235,8 @@ file	dev/usb/uscanner.c		uscanner		needs-flag
 device	usscanner: scsi
 attach	usscanner at uhub
 file	dev/usb/usscanner.c		usscanner
+
+# Atmel AT76c503 / AT76c503a / AT76c505 / AT76c505a @ USB
+device	atu: ether, ifnet, arp, wlan
+attach	atu at uhub
+file	dev/usb/if_atu.c		atu
