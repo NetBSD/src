@@ -1,4 +1,4 @@
-/*	$NetBSD: db_dump.c,v 1.3 2001/01/27 07:21:58 itojun Exp $	*/
+/*	$NetBSD: db_dump.c,v 1.4 2001/02/06 10:02:04 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)db_dump.c	4.33 (Berkeley) 3/3/91";
@@ -219,11 +219,13 @@ zt_dump(FILE *fp) {
 static int
 fwd_dump(FILE *fp) {
 	int i;
+
 	fprintf(fp, ";; ++forwarders table++\n");
-	for (i=0;i<fwddata_count;i++) {
-		fprintf(fp,"; %s rtt=%d\n",
-			inet_ntoa(fwddata[i]->fwdaddr.sin_addr),
-			fwddata[i]->nsdata->d_nstime);
+	for (i = 0; i < fwddata_count; i++) {
+		if (fwddata[i] != NULL)
+			fprintf(fp,"; %s rtt=%d\n",
+				inet_ntoa(fwddata[i]->fwdaddr.sin_addr),
+				fwddata[i]->nsdata->d_nstime);
 	}
 	fprintf(fp, ";; --forwarders table--\n");
 	return (0);
