@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arc,v 1.8 2003/10/10 21:21:25 jdolecek Exp $
+#	$NetBSD: majors.arc,v 1.9 2003/10/10 22:42:39 jdolecek Exp $
 #
 # Device majors for arc
 #
@@ -49,8 +49,6 @@ device-major	clockctl	char 52			clockctl
 device-major	systrace	char 53			systrace
 device-major	cgd		char 54  block 10	cgd
 device-major	ksyms		char 55			ksyms
-device-major	pf		char 56			pf
-device-major	crypto		char 57			opencrypto
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

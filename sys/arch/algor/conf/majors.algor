@@ -1,4 +1,4 @@
-#	$NetBSD: majors.algor,v 1.8 2003/10/10 21:21:25 jdolecek Exp $
+#	$NetBSD: majors.algor,v 1.9 2003/10/10 22:42:39 jdolecek Exp $
 #
 # Device majors for algor
 #
@@ -67,8 +67,6 @@ device-major	clockctl	char 66			clockctl
 device-major	systrace	char 67			systrace
 device-major	cgd		char 68  block 18	cgd
 device-major	ksyms		char 69			ksyms
-device-major	pf		char 70			pf
-device-major	crypto		char 71			opencrypto
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.20 2003/10/10 21:21:26 jdolecek Exp $
+#	$NetBSD: majors.i386,v 1.21 2003/10/10 22:42:40 jdolecek Exp $
 #
 # Device majors for i386
 #
@@ -107,8 +107,6 @@ device-major	ppi		char 104		ppi
 device-major	rd		char 105 block 22	rd
 device-major	ct		char 106 block 23	ct
 device-major	mt		char 107 block 24	mt
-device-major	pf		char 108		pf
-device-major	crypto		char 109		opencrypto
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
