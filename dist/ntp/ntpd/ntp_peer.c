@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_peer.c,v 1.1.1.1 2000/03/29 12:38:52 simonb Exp $	*/
+/*	$NetBSD: ntp_peer.c,v 1.1.1.2 2000/04/22 14:53:18 simonb Exp $	*/
 
 /*
  * ntp_peer.c - management of data maintained for peer associations
@@ -12,6 +12,9 @@
 
 #include "ntpd.h"
 #include "ntp_stdlib.h"
+#ifdef AUTOKEY
+#include "ntp_crypto.h"
+#endif /* AUTOKEY */
 
 /*
  *                  Table of valid association combinations
@@ -129,7 +132,6 @@ static struct peer init_peer_alloc[INIT_PEER_ALLOC];
 /* static u_long init_peer_starttime; */
 
 static	void	getmorepeermem	P((void));
-static	void	key_expire	P((struct peer *));
 
 /*
  * init_peer - initialize peer data structures and counters
@@ -287,21 +289,17 @@ findpeer(
 		}
 	}
 
-#ifdef DEBUG
-	if (debug > 1)
-		printf("pkt_mode %d action %d\n", pkt_mode, *action);
-#endif
-	/* if no matching association is found */
+	/*
+	 * If no matching association is found
+	 */
 	if (peer == 0) {
 		*action = MATCH_ASSOC(NO_PEER, pkt_mode);
-#ifdef DEBUG
-		if (debug > 1)
-			printf("pkt_mode %d action %d\n", pkt_mode, *action);
-#endif
 		return (struct peer *)0;
 	}
 
-	/* reset the default interface to something more meaningful */
+	/*
+	 * Reset the default interface to something more meaningful
+	 */
 	if ((peer->dstadr == any_interface))
 		peer->dstadr = dstadr;
 	return peer;
@@ -370,35 +368,36 @@ findmanycastpeer(
 	return manycast_peer;
 }
 
-/*
- * key_expire - garbage collect keys
- */
-static void
-key_expire(
-	struct peer *peer
-	)
-{
-	int i;
-
-	if (peer->keylist != 0) {
-		for (i = 0; i <= peer->keynumber; i++)
-			authtrust(peer->keylist[i], 0);
-		free(peer->keylist);
-		peer->keylist = 0;
-	}
-	if (peer->keyid > NTP_MAXKEY) {
-		authtrust(peer->keyid, 0);
-		peer->keyid = 0;
-	}
-}
 
 /*
- * key_rekey - expire all keys and roll a new private value. Note the
- * 32-bit mask is necessary for 64-bit u_longs.
+ * clear_all - flush all time values and refresh Diffie-Hellman public
+ * value.
  */
 void
-key_expire_all(
-	)
+clear_all(void)
+{
+	struct peer *peer, *next_peer;
+	int n;
+
+	for (n = 0; n < HASH_SIZE; n++) {
+		for (peer = peer_hash[n]; peer != 0; peer = next_peer) {
+			next_peer = peer->next;
+			peer_clear(peer);
+		}
+	}
+#ifdef DEBUG
+	if (debug)
+		printf("clear_all: at %lu\n", current_time);
+#endif
+}
+
+
+#ifdef AUTOKEY
+/*
+ * expire_all - flush all crypto data and update timestamp
+ */
+void
+expire_all(void)
 {
 	struct peer *peer, *next_peer;
 	int n;
@@ -407,15 +406,25 @@ key_expire_all(
 		for (peer = peer_hash[n]; peer != 0; peer = next_peer) {
 			next_peer = peer->next;
 			key_expire(peer);
+			peer->pcookie.tstamp = 0;
 		}
 	}
-	sys_private = (u_long)RANDOM & 0xffffffff;
+	sys_private = (u_int32)RANDOM & 0xffffffff;
+	L_CLR(&sys_revoketime);
+	if (sys_leap != LEAP_NOTINSYNC)
+		get_systime(&sys_revoketime);
+#ifdef PUBKEY
+	if (crypto_enable)
+		crypto_agree();
+#endif /* PUBKEY */
 #ifdef DEBUG
 	if (debug)
-		printf("key_expire_all: at %lu private %08lx\n",
-		    current_time, sys_private);
+		printf("expire_all: at %lu\n", current_time);
 #endif
 }
+#endif /* AUTOKEY */
+
+
 /*
  * unpeer - remove peer structure from hash table and free structure
  */
@@ -426,16 +435,22 @@ unpeer(
 {
 	int hash;
 
+	peer_associations--;
 #ifdef DEBUG
-	if (debug > 1)
-		printf("demobilize %u\n", peer_to_remove->associd);
+	if (debug)
+		printf("demobilize %u %d\n", peer_to_remove->associd,
+		    peer_associations);
 #endif
-	key_expire(peer_to_remove);
+	peer_clear(peer_to_remove);
+	if (peer_to_remove->keystr != 0)
+		free(peer_to_remove->keystr);
+#ifdef PUBKEY
+	if (peer_to_remove->pubkey != 0)
+		free(peer_to_remove->pubkey);
+#endif /* PUBKEY */
 	hash = HASH_ADDR(&peer_to_remove->srcadr);
 	peer_hash_count[hash]--;
 	peer_demobilizations++;
-	peer_associations--;
-
 #ifdef REFCLOCK
 	/*
 	 * If this peer is actually a clock, shut it down first
@@ -504,7 +519,8 @@ peer_config(
 	int maxpoll,
 	int flags,
 	int ttl,
-	u_long key
+	keyid_t key,
+	u_char *keystr
 	)
 {
 	register struct peer *peer;
@@ -517,7 +533,7 @@ peer_config(
 	if (dstadr != 0) {
 		while (peer != 0) {
 			if (peer->dstadr == dstadr)
-			    break;
+				break;
 			peer = findexistingpeer(srcadr, peer, hmode);
 		}
 	}
@@ -535,30 +551,36 @@ peer_config(
 		peer->flags = flags | FLAG_CONFIG |
 			(peer->flags & FLAG_REFCLOCK);
 		peer->cast_flags = (hmode == MODE_BROADCAST) ?
-			IN_CLASSD(ntohl(srcadr->sin_addr.s_addr)) ? MDF_MCAST : MDF_BCAST : MDF_UCAST;
+		    IN_CLASSD(ntohl(srcadr->sin_addr.s_addr)) ?
+		    MDF_MCAST : MDF_BCAST : MDF_UCAST;
 		peer->ttl = (u_char)ttl;
 		peer->keyid = key;
-		peer->keynumber = 0;
-		return peer;
-	}
+	} else {
 
-	/*
-	 * If we're here this guy is unknown to us.  Make a new peer
-	 * structure for him.
-	 */
-	peer = newpeer(srcadr, dstadr, hmode, version, minpoll, maxpoll,
-		       ttl, key);
-	if (peer != 0) {
+		/*
+		 * If we're here this guy is unknown to us.  Make a new peer
+		 * structure for him.
+		 */
+		peer = newpeer(srcadr, dstadr, hmode, version, minpoll,
+		    maxpoll, ttl, key);
+		if (peer == 0)
+			return (peer);
 		peer->flags |= flags | FLAG_CONFIG;
-#ifdef DEBUG
-		if (debug)
-			printf("peer_config: %s mode %d vers %d min %d max %d flags 0x%04x ttl %d key %lu\n",
-			    ntoa(&peer->srcadr), peer->hmode, peer->version,
-			    peer->minpoll, peer->maxpoll, peer->flags,
-			    peer->ttl, peer->keyid);
-#endif
 	}
-	return peer;
+#ifdef DEBUG
+	if (debug)
+		printf(
+		    "peer_config: %s mode %d vers %d min %d max %d flags 0x%04x ttl %d key %08x\n",
+		    ntoa(&peer->srcadr), peer->hmode, peer->version,
+		    peer->minpoll, peer->maxpoll, peer->flags, peer->ttl,
+		    peer->keyid);
+#endif
+#ifdef PUBKEY
+	if (!(peer->flags & FLAG_SKEY) || peer->hmode == MODE_BROADCAST)
+		return (peer);
+	crypto_public(peer, keystr);
+#endif /* PUBKEY */
+	return (peer);
 }
 
 
@@ -585,7 +607,7 @@ newpeer(
 	 * knowlege of our system state.
 	 */
 	if (peer_free_count == 0)
-	    getmorepeermem();
+		getmorepeermem();
 
 	peer = peer_free;
 	peer_free = peer->next;
@@ -595,12 +617,11 @@ newpeer(
 	/*
 	 * Initialize the structure.  This stuff is sort of part of
 	 * the receive procedure and part of the clear procedure rolled
-		 * into one.
-		 *
+	 * into one.
+	 *
 	 * Zero the whole thing for now.  We might be pickier later.
 	 */
 	memset((char *)peer, 0, sizeof(struct peer));
-
 	peer->srcadr = *srcadr;
 	if (dstadr != 0)
 		peer->dstadr = dstadr;
@@ -632,15 +653,13 @@ newpeer(
 	peer_clear(peer);
 	peer->update = peer->outdate = current_time;
 	peer->nextdate = peer->outdate + RANDPOLL(NTP_MINPOLL);
-	if (peer->flags & FLAG_BURST)
-		peer->burst = NTP_SHIFT;
 
 	/*
 	 * Assign him an association ID and increment the system variable
 	 */
 	peer->associd = current_association_ID;
 	if (++current_association_ID == 0)
-	    ++current_association_ID;
+		++current_association_ID;
 
 	/*
 	 * Note time on statistics timers.
@@ -682,9 +701,9 @@ newpeer(
 	assoc_hash[i] = peer;
 	assoc_hash_count[i]++;
 #ifdef DEBUG
-	if (debug > 1)
-		printf("mobilize %u next %lu\n", peer->associd,
-		    peer->nextdate - peer->outdate);
+	if (debug)
+		printf("mobilize %u %d next %lu\n", peer->associd,
+		    peer_associations, peer->nextdate - peer->outdate);
 #endif
 	return peer;
 }
@@ -777,7 +796,6 @@ peer_reset(
 	peer->oldpkt = 0;
 	peer->seldisptoolarge = 0;
 	peer->selbroken = 0;
-	peer->seltooold = 0;
 	peer->timereset = current_time;
 }
 

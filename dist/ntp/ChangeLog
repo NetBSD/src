@@ -1,3 +1,158 @@
+2000-04-11  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* configure.in: 4.0.99i
+
+	Dave made some documentation updates.
+
+2000-04-08  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* flock-build: Add malarky.  By default, --enable-parse-clocks.
+	Start 2 builds, one with and the other without rsaref.
+
+	* configure.in: 4.0.99h6
+	Dave improved the crypto stuff some more.
+
+2000-04-05  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* ntpd/refclock_acts.c (acts_receive): Do a better job with year
+	conversions and leap-year checks.  The PTB stuff caught this.
+	Reported by: Daniel.Aeby@eam.admin.ch
+
+2000-04-02  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* ntpd/refclock_atom.c (atom_pps): Bugfix
+	From: Philippe Charnier <charnier@xp11.frmug.org>
+
+2000-03-30  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* libparse/clk_wharton.c (cvt_wharton_400a): Do not return
+	CVT_NONE when receiving the early warning bit set.
+	From: Philippe De Muyter  <phdm@macqel.be>
+
+	* configure.in: 4.0.99h5
+	Dave made more changes to the auth key stuff.
+
+2000-03-29  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* configure.in: 4.0.99h4
+	Dave made a bunch of changes/fixes to the auth key stuff.
+
+2000-03-22  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* ntpd/ntp_resolver.c: Typos.
+
+2000-03-21  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* configure.in: 4.0.99h3
+
+	* ntpd/ntp_intres.c: Use LOG_INFO instead of LOG_DEBUG.
+	* ntpd/ntp_resolver.c: Ditto.
+
+2000-03-20  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* util/Makefile.am (ntp_genkeys_LDADD): Might need snprintf (-lntp)
+
+	* librsaref/Makefile.am (stamp-rsaref): nodist_HEADERS are not
+	supoprted yet.  Hack around it.
+
+	* ntpd/ntp_resolver.c (findhostaddr): hstrerror isn't always available.
+
+	* configure.in: Look for hstrerror.
+
+	* util/ntp_genkeys.c (main): Use snprintf, not sprintf.
+	
+	* ntpd/ntp_crypto.c: Use gethostname, not uname
+	* util/ntp_genkeys.c: Ditto
+	From: Dave Mills
+
+2000-03-19  Harlan Stenn  <harlan@pfcs.com>
+
+	* ntpd/ntp_proto.c (receive): Rename ntp_res_send() to
+	  ntp_res_name() and adjust the number of arguments.
+	* ntpd/ntp_resolver.c (ntp_res_name): Ditto
+	* include/ntpd.h: Ditto
+
+	* ntpd/ntp_resolver.c: Add de_done to the dns_entry structure.
+
+2000-03-18  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* configure.in: 4.0.99h2
+
+	* libparse/Makefile.am (info_trimble.c): Use $(srcdir)/foo.sed
+	instead of foo.sed .
+
+	* librsaref/Makefile.am (stamp-rsaref): Copy each file to the build
+	directory, not to the source directory.  This sucks; it wastes
+	space (but it's more portable).
+
+	* configure.in (ac_busted_vpath_in_make): Add FreeBSD.  I bet all
+	systems that use pmake will need this.
+	(ac_busted_vpath_in_make): Remove FreeBSD - I found a workaround.
+
+	* Makefile.am: General cleanup
+
+	* configure.in: 4.0.99h1
+
+	* ntpd/ntp_resolver.c: Lose unneeded header.
+
+2000-03-17  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* libntp/snprintf.c: #include <config.h>
+
+	* libntp/Makefile.am (EXTRA_libntp_a_SOURCES): Use it correctly...
+
+2000-03-16  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* libntp/Makefile.am (EXTRA_DIST): Added snprintf.c
+
+	* configure.in: Look for (and provide if it's missing) snprintf()
+
+	* ntpd/ntp_request.c (dns_a): Call crypto_public with the resolved
+	name and the peer pointer.
+	(dns_a): crypto_public() is only available if PUBKEY is #defined.
+
+	* ntpd/ntp_crypto.c (crypto_public): sprintf is Evil.  Use snprintf.
+	(crypto_setup): Ditto
+	(crypto_read): Ditto
+
+	* ntpd/ntp_resolver.c (ntp_res_send): Lose some debugging noise.
+
+	* ntpd/ntp_config.c (getconfig): Lose testing code.
+
+	* ntpd/ntp_request.c (dns_a): Fix buglet in hostname length check.
+
+2000-03-16  Harlan Stenn  <harlan@pfcs.com>
+
+	* ntpd/ntp_request.c (dns_a): Start cracking the returned information.
+
+2000-03-15  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* ntpd/ntp_resolver.c (ntp_res): Authenticate the keyid.
+
+	* ntpd/ntp_crypto.c (crypto_line): Fix definition
+	(crypto_read): Ditto.
+
+	* ntpd/ntp_config.c (getconfig): Move req_keyid generation here.
+
+	* librsaref/Makefile.am (BUILT_SOURCES): Cleanup more nodist_ stuff.
+
+2000-03-14  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* build (RSASUF): If we have rsaref2/ and are building
+	--without-rsaref, note it as a build-directory suffix.
+
+	* configure.in: 4.0.99h
+	Crypto merge
+
+	* librsaref/Makefile.am (nodist_librsaref_a_SOURCES): Added nodist_
+
+2000-02-28  Harlan Stenn  <stenn@whimsy.udel.edu>
+
+	* configure.in: Lose the changequote calls and fix the quoting.
+	Reported by: Akim Demaille <akim@epita.fr>
+
+	* ntpd/ntp_request.c: Log various error conditions.
+
 2000-02-27  Harlan Stenn  <stenn@whimsy.udel.edu>
 
 	* configure.in: 4.0.99g
@@ -208,7 +363,7 @@
 
 	* ntpd/refclock_chu.c: NCHAN is used with generic ICOM.
 
-	* ntpd/refclock_wwv.c: Use new auido stuff
+	* ntpd/refclock_wwv.c: Use new audio stuff
 	* ntpd/refclock_irig.c: Use new audio stuff
 	* ntpd/refclock_chu.c: Use new audio stuff
 	* ntpd/ntp_proto.c: Clean up
@@ -293,7 +448,7 @@
 	From: Marc.Brett@westgeo.com
 
 	* ntpd/refclock_chu.c: NetBSD needs sys/ioctl.h
-	(chu_debug): NetBSED-specific debug output.
+	(chu_debug): NetBSD-specific debug output.
 	From: Frederick Bruckman <fb@enteract.com>
 
 2000-01-06  Harlan Stenn  <stenn@whimsy.udel.edu>

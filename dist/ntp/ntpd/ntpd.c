@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.1.1.1 2000/03/29 12:38:53 simonb Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.1.1.2 2000/04/22 14:53:23 simonb Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -93,6 +93,10 @@
 #ifdef SCO5_CLOCK
 # include <sys/ci/ciioctl.h>
 #endif
+
+#ifdef PUBKEY
+#include "ntp_crypto.h"
+#endif /* PUBKEY */
 
 /*
  * Signals we catch for debugging.	If not debugging we ignore them.
@@ -337,6 +341,10 @@ ntpdmain(
 {
 	l_fp now;
 	char *cp;
+	u_int n;
+#ifdef AUTOKEY
+	char hostname[MAXFILENAME];
+#endif /* AUTOKEY */
 	struct recvbuf *rbuflist;
 	struct recvbuf *rbuf;
 #ifdef _AIX			/* HMS: ifdef SIGDANGER? */
@@ -380,10 +388,13 @@ ntpdmain(
 	}
 	addSourceToRegistry("NTP", szMsgPath);
 #endif
+	getstartup(argc, argv); /* startup configuration, may set debug */
 
+	/*
+	 * Initialize random generator and public key pair
+	 */
 	get_systime(&now);
 	SRANDOM((int)(now.l_i * now.l_uf));
-	getstartup(argc, argv); /* startup configuration, may set debug */
 
 #if !defined(VMS)
 # ifndef NODETACH
@@ -716,21 +727,35 @@ service_main(
 #ifdef REFCLOCK
 	init_refclock();
 #endif
+#ifdef PUBKEY
+	crypto_init();		/* Call *before* going to high-priority */
+#endif /* PUBKEY */
 	set_process_priority();
-	init_proto();
+	init_proto();		/* Call at high priority */
 	init_io();
 	init_loopfilter();
-
-	mon_start(MON_ON);		/* monitor on by default now	  */
+	mon_start(MON_ON);	/* monitor on by default now	  */
 				/* turn off in config if unwanted */
 
 	/*
 	 * Get configuration.  This (including argument list parsing) is
 	 * done in a separate module since this will definitely be different
-	 * for the gizmo board.
+	 * for the gizmo board. While at it, save the host name for later
+	 * along with the length. The crypto needs this.
 	 */
 	getconfig(argc, argv);
-
+#ifdef AUTOKEY
+	gethostname(hostname, MAXFILENAME);
+	for (n = strlen(hostname); n % 4 != 0; n++)
+		hostname[n] = 0;
+	sys_hostname = emalloc(n);
+	sys_hostnamelen = n;
+	memcpy(sys_hostname, hostname, n);
+#ifdef PUBKEY
+	if (crypto_enable)
+		crypto_setup();
+#endif /* PUBKEY */
+#endif /* AUTOKEY */
 	initializing = 0;
 
 #if defined(SYS_WINNT) && !defined(NODETACH)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_types.h,v 1.1.1.1 2000/03/29 12:38:48 simonb Exp $	*/
+/*	$NetBSD: ntp_types.h,v 1.1.1.2 2000/04/22 14:52:45 simonb Exp $	*/
 
 /*
  *  ntp_types.h - defines how int32 and u_int32 are treated.
@@ -66,6 +66,8 @@ typedef unsigned int u_int;
 # endif /* not sizeof(long) == 4 */
 # include "Bletch: what's 32 bits on this machine?"
 #endif /* not sizeof(int) == 4 */
+
+typedef u_int32 keyid_t;
 
 #endif /* _NTP_TYPES_ */
 
