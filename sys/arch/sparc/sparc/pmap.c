@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.279 2004/04/10 18:40:04 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.280 2004/04/10 18:48:35 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.279 2004/04/10 18:40:04 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.280 2004/04/10 18:48:35 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -5489,11 +5489,6 @@ pmap_protect4m(pm, sva, eva, prot)
 	struct segmap *sp;
 	int newprot;
 
-	/* XXX noexec stuff gets "Level 15 Interrupt" without this */
-	if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
-		prot = VM_PROT_NONE;
-	}
-
 	if ((prot & VM_PROT_READ) == 0) {
 		pmap_remove(pm, sva, eva);
 		return;
@@ -5534,13 +5529,14 @@ pmap_protect4m(pm, sva, eva, prot)
 		/*
 		 * pages loaded: take away write bits from MMU PTEs
 		 */
-
 		pmap_stats.ps_npg_prot_all += (nva - va) >> PGSHIFT;
 		for (; va < nva; va += NBPG) {
 			int tpte, npte;
 
 			tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
 			if ((tpte & SRMMU_PGTYPE) != PG_SUN4M_OBMEM)
+				continue;
+			if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
 				continue;
 			npte = (tpte & ~SRMMU_PROT_MASK) | newprot;
 			if (npte == tpte)
