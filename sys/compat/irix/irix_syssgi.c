@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.3 2001/12/01 22:14:15 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.4 2001/12/01 22:19:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.3 2001/12/01 22:14:15 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.4 2001/12/01 22:19:38 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE 32
@@ -89,7 +89,7 @@ irix_sys_syssgi(p, v, retval)
 	void *arg1, *arg2, *arg3; 
 
 #ifdef DEBUG_IRIX
-	printf("irix_syssgi(): request = %d\n", request);
+	printf("irix_sys_syssgi(): request = %d\n", request);
 #endif
 	switch(request) {
 	case IRIX_SGI_SYSID:	/* Get HostID */
