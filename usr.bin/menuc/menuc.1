@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.9 2002/03/21 05:15:39 phil Exp $
+.\"	$NetBSD: menuc.1,v 1.10 2002/05/24 22:09:20 wiz Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ can be used to specify a different base name.
 .It Ev MENUDEF
 Can be set to point to a different set of
 definition files for
-.Nm menuc .
+.Nm "" .
 The current location defaults to
 .Pa /usr/share/misc .
 .El
@@ -84,11 +84,11 @@ does not end until a matching end comment is found.
 In many places, C code is included in the definition
 .Ar file .
 All C code is passed verbatim to the C output file.
-.Nm menuc
+.Nm
 comments do not start in C code
 and comments in the C code are passed verbatim to
 the output.  The C comments are not recognized by
-.Nm menuc .
+.Nm "" .
 In all cases, C code starts with a left brace
 .Em ({)
 and ends with the matching right brace
@@ -217,16 +217,16 @@ menu \*[Lt]name\*[Gt] \*[Lt]options\*[Gt] ;
 Names are unquoted strings of alpha-numeric and underscore
 characters.  They must start with an alpha character.
 In C source, a menu named
-.Nm foo
+.Dq foo
 is appears as
-.Nm MENU_foo .
+.Dq MENU_foo .
 (Capitalization is important.)  This is important,
 because the menu is displayed and processed by
 calling the function
 .Dl process_menu (MENU_foo) ;
 .Pp
 The options are a comma separated list of options as in the
-.Na default
+.Dq default
 declaration.  These override the options from the most
 recent default declaration.
 .Pp
@@ -300,7 +300,7 @@ them are included.  Newlines in the code
 translate to newlines in the help text.
 .Sh DYNAMIC MENUS
 If requested,
-.Nm menuc
+.Nm
 supports dynamic menus by allowing the user to create new
 menus.  The related definitions for using dynamic menus
 are:
@@ -396,10 +396,10 @@ pointer will disable the help feature for the menu.
 .Sh EXAMPLES
 The following is a simple menu definition file.
 It is complete in that the output of
-.Na menuc
+.Nm
 may be compiled into a complete program.  For example,
 if the following was in a file called
-.Na example.mc ,
+.Pa example.mc ,
 an executable program could be produced by the following
 commands.
 .Bd -literal -offset indent
