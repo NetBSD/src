@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.13 1996/03/30 21:12:16 christos Exp $ */
+/*	$NetBSD: mem.c,v 1.14 1997/04/19 21:28:53 pk Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,7 +120,7 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
+		/* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
 			if (!pmap_pa_exists(v)) {
@@ -135,9 +135,9 @@ mmrw(dev, uio, flags)
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
 			    (vm_offset_t)vmmap + NBPG);
-			continue;
+			break;
 
-/* minor device 1 is kernel memory */
+		/* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
 			if (v >= MSGBUF_VA && v < MSGBUF_VA+NBPG) {
@@ -153,9 +153,9 @@ mmrw(dev, uio, flags)
 					return (EFAULT);
 			}
 			error = uiomove((caddr_t)v, c, uio);
-			continue;
+			break;
 
-/* minor device 2 is EOF/RATHOLE */
+		/* minor device 2 is EOF/RATHOLE */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
@@ -164,21 +164,27 @@ mmrw(dev, uio, flags)
 /* XXX should add sbus, etc */
 
 #if defined(SUN4)
-/* minor device 11 (/dev/eeprom) is the old-style (a'la Sun 3) EEPROM */
+		/*
+		 * minor device 11 (/dev/eeprom) is the old-style
+		 * (a'la Sun 3) EEPROM.
+		 */
 		case 11:
 			if (cputyp == CPU_SUN4)
 				error = eeprom_uio(uio);
 			else
 				error = ENXIO;
 
-			continue;
+			break;
 #endif /* SUN4 */
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
+		/*
+		 * minor device 12 (/dev/zero) is source of nulls on read,
+		 * rathole on write.
+		 */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
-				c = iov->iov_len;
-				break;
+				uio->uio_resid = 0;
+				return(0);
 			}
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
@@ -187,17 +193,11 @@ mmrw(dev, uio, flags)
 			}
 			c = min(iov->iov_len, CLBYTES);
 			error = uiomove(zeropage, c, uio);
-			continue;
+			break;
 
 		default:
 			return (ENXIO);
 		}
-		if (error)
-			break;
-		iov->iov_base += c;
-		iov->iov_len -= c;
-		uio->uio_offset += c;
-		uio->uio_resid -= c;
 	}
 	if (minor(dev) == 0) {
 unlock:
@@ -214,5 +214,5 @@ mmmmap(dev, off, prot)
         int off, prot;
 {
 
-	return (EOPNOTSUPP);
+	return (-1);
 }
