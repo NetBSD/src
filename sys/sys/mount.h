@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.99 2003/02/01 06:23:50 thorpej Exp $	*/
+/*	$NetBSD: mount.h,v 1.100 2003/04/06 07:04:42 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -460,7 +460,7 @@ struct nfs_public {
 MALLOC_DECLARE(M_MOUNT);
 
 /*
- * exported vnode operations
+ * exported VFS interface (see vfssubr(9))
  */
 struct	mount *vfs_getvfs __P((fsid_t *));    /* return vfs given fsid */
 int	vfs_export			    /* process mount export info */
@@ -470,11 +470,9 @@ struct	netcred *vfs_export_lookup	    /* lookup host in fs export list */
 	  __P((struct mount *, struct netexport *, struct mbuf *));
 int	vfs_setpublicfs			    /* set publicly exported fs */
 	  __P((struct mount *, struct netexport *, struct export_args *));
-int	vfs_lock __P((struct mount *));	    /* lock a vfs */
 int	vfs_mountedon __P((struct vnode *));/* is a vfs mounted on vp */
 int	vfs_mountroot __P((void));
 void	vfs_shutdown __P((void));	    /* unmount and sync file systems */
-void	vfs_unlock __P((struct mount *));   /* unlock a vfs */
 void	vfs_unmountall __P((struct proc *));	    /* unmount file systems */
 int 	vfs_busy __P((struct mount *, int, struct simplelock *));
 int	vfs_rootmountalloc __P((char *, char *, struct mount **));
