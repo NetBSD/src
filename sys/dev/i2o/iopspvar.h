@@ -1,4 +1,4 @@
-/*	$NetBSD: iopspvar.h,v 1.4 2001/04/25 17:53:28 bouyer Exp $	*/
+/*	$NetBSD: iopspvar.h,v 1.5 2001/08/04 16:54:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #define	IOPSP_MAX_LUN		8
 #define	IOPSP_MAX_SCSI_TARGET	15
-#define	IOPSP_MAX_FCAL_TARGET	127
+#define	IOPSP_MAX_FC_TARGET	127
 
 #define	IOPSP_TIDMAP(map, t, l)	(map[(t) * IOPSP_MAX_LUN + (l)])
 #define	IOPSP_TID_ABSENT	0x0000	/* Device is absent */

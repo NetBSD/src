@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.8 2001/06/26 12:48:06 bouyer Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.9 2001/08/04 16:54:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 			struct	i2o_param_hba_scsi_port_info spi;
 		} p;
 	} __attribute__ ((__packed__)) param;
-	int fcal, rv;
+	int fc, rv;
 #ifdef I2OVERBOSE
 	int size;
 #endif
@@ -154,7 +154,7 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 		goto bad;
 	}
 
-	fcal = (param.p.ci.bustype == I2O_HBA_BUS_FCA);		/* XXX */
+	fc = (param.p.ci.bustype == I2O_HBA_BUS_FCA);
 
 	/* 
 	 * Say what the device is.  If we can find out what the controling
@@ -173,8 +173,12 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #ifdef I2OVERBOSE
-	printf("%s: %d-bit, max sync rate %dMHz, initiator ID %d\n",
-	    sc->sc_dv.dv_xname, param.p.sci.maxdatawidth,
+	printf("%s: ", sc->sc_dv.dv_xname);
+	if (fc)
+		printf("FC");
+	else
+		printf("%d-bit", param.p.sci.maxdatawidth);
+	printf(", max sync rate %dMHz, initiator ID %d\n",
 	    (u_int32_t)le64toh(param.p.sci.maxsyncrate) / 1000,
 	    le32toh(param.p.sci.initiatorid));
 #endif
@@ -191,8 +195,8 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_channel.chan_adapter = &sc->sc_adapter;
 	sc->sc_channel.chan_bustype = &scsi_bustype;
 	sc->sc_channel.chan_channel = 0;
-	sc->sc_channel.chan_ntargets = fcal ?
-	    IOPSP_MAX_FCAL_TARGET : param.p.sci.maxdatawidth;
+	sc->sc_channel.chan_ntargets = fc ?
+	    IOPSP_MAX_FC_TARGET : param.p.sci.maxdatawidth;
 	sc->sc_channel.chan_nluns = IOPSP_MAX_LUN;
 	sc->sc_channel.chan_id = le32toh(param.p.sci.initiatorid);
 	sc->sc_channel.chan_flags = SCSIPI_CHAN_NOSETTLE;
@@ -274,7 +278,7 @@ iopsp_reconfig(struct device *dv)
 		if ((le16toh(le->classid) & 4095) ==
 		    I2O_CLASS_BUS_ADAPTER_PORT &&
 		    (le32toh(le->usertid) & 4095) == bptid) {
-			bptid = le32toh(le->localtid) & 4095;
+			bptid = le16toh(le->localtid) & 4095;
 			break;
 		}
 
@@ -284,7 +288,7 @@ iopsp_reconfig(struct device *dv)
 			continue;
 		if (((le32toh(le->usertid) >> 12) & 4095) != bptid)
 			continue;
-		tid = le32toh(le->localtid) & 4095;
+		tid = le16toh(le->localtid) & 4095;
 
 		rv = iop_param_op(iop, tid, NULL, 0, I2O_PARAM_SCSI_DEVICE_INFO,
 		    &param, sizeof(param));
@@ -384,7 +388,7 @@ iopsp_rescan(struct iopsp_softc *sc)
 		return (rv);
 	}
 
-	im = iop_msg_alloc(iop, &sc->sc_ii, IM_WAIT);
+	im = iop_msg_alloc(iop, IM_WAIT);
 
 	mf.msgflags = I2O_MSGFLAGS(i2o_hba_bus_scan);
 	mf.msgfunc = I2O_MSGFUNC(sc->sc_ii.ii_tid, I2O_HBA_BUS_SCAN);
@@ -460,7 +464,7 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			panic("%s: CDB too large\n", sc->sc_dv.dv_xname);
 #endif
 
-		im = iop_msg_alloc(iop, &sc->sc_ii, IM_POLL_INTR |
+		im = iop_msg_alloc(iop, IM_POLL_INTR |
 		    IM_NOSTATUS | ((flags & XS_CTL_POLL) != 0 ? IM_POLL : 0));
 		im->im_dvcontext = xs;
 
@@ -547,7 +551,7 @@ iopsp_scsi_abort(struct iopsp_softc *sc, int atid, struct iop_msg *aim)
 	int rv, s;
 
 	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
-	im = iop_msg_alloc(iop, &sc->sc_ii, IM_POLL);
+	im = iop_msg_alloc(iop, IM_POLL);
 
 	mf.msgflags = I2O_MSGFLAGS(i2o_scsi_scb_abort);
 	mf.msgfunc = I2O_MSGFUNC(atid, I2O_SCSI_SCB_ABORT);
