@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.14 2004/09/08 19:45:22 jdolecek Exp $	*/
+/*	linux_sched.c,v 1.14 2004/09/08 19:45:22 jdolecek Exp	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.14 2004/09/08 19:45:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "linux_sched.c,v 1.14 2004/09/08 19:45:22 jdolecek Exp");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -364,5 +364,6 @@ linux_sys_exit_group(l, v, retval)
 
 	exit1(l, W_EXITCODE(SCARG(uap, error_code), 0));
 	/* NOTREACHED */
+	return 0;
 }
 #endif /* !__m68k__ */
