@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.29 2000/08/07 05:56:11 enami Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.30 2000/08/07 06:00:59 enami Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.29 2000/08/07 05:56:11 enami Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.30 2000/08/07 06:00:59 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -423,7 +423,7 @@ next:	tmp = p;
 		 * load the paths for the next root.
 		 */
 		if (p->fts_level == FTS_ROOTLEVEL) {
-			if (!ISSET(FTS_NOCHDIR) && FCHDIR(sp, sp->fts_rfd)) {
+			if (FCHDIR(sp, sp->fts_rfd)) {
 				SET(FTS_STOP);
 				return (NULL);
 			}
@@ -480,7 +480,7 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 	 * one directory.
 	 */
 	if (p->fts_level == FTS_ROOTLEVEL) {
-		if (!ISSET(FTS_NOCHDIR) && FCHDIR(sp, sp->fts_rfd)) {
+		if (FCHDIR(sp, sp->fts_rfd)) {
 			SET(FTS_STOP);
 			return (NULL);
 		}
