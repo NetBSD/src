@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2001/11/05 15:24:49 lukem Exp $
+# $NetBSD: Makefile,v 1.10 2001/11/21 05:40:30 gmcgarry Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,14 @@ LIB=	com_err
 SRCS=	error.c com_err.c roken_rename.h
 
 INCS=	com_err.h com_right.h
+
+MAN=	com_err.3
+MLINKS=	com_err.3 com_err_va.3 \
+	com_err.3 error_message.3 \
+	com_err.3 error_table_name.3 \
+	com_err.3 init_error_table.3 \
+	com_err.3 set_com_err_hook.3 \
+	com_err.3 reset_com_err_hook.3 
 
 .if ${USETOOLS} != "yes"
 .PHONY: compile_et
