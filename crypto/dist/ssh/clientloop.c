@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.16 2002/03/08 02:00:52 itojun Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.17 2002/04/22 07:59:39 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -60,7 +60,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.96 2002/02/06 14:55:15 markus Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.99 2002/03/21 23:07:37 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -82,6 +82,7 @@ RCSID("$OpenBSD: clientloop.c,v 1.96 2002/02/06 14:55:15 markus Exp $");
 #include "atomicio.h"
 #include "sshtty.h"
 #include "misc.h"
+#include "readpass.h"
 
 /* import options */
 extern Options options;
@@ -471,6 +472,67 @@ client_process_net_input(fd_set * readset)
 	}
 }
 
+static void
+process_cmdline(void)
+{
+	void (*handler)(int);
+	char *s, *cmd;
+	u_short fwd_port, fwd_host_port;
+	char buf[1024], sfwd_port[6], sfwd_host_port[6];
+	int local = 0;
+
+	leave_raw_mode();
+ 	handler = signal(SIGINT, SIG_IGN);
+	cmd = s = read_passphrase("\r\nssh> ", RP_ECHO);
+	if (s == NULL)
+		goto out;
+	while (*s && isspace(*s))
+		s++;
+	if (*s == 0)
+		goto out;
+	if (strlen(s) < 2 || s[0] != '-' || !(s[1] == 'L' || s[1] == 'R')) {
+		log("Invalid command.");
+		goto out;
+	}
+	if (s[1] == 'L')
+		local = 1;
+	if (!local && !compat20) {
+		log("Not supported for SSH protocol version 1.");
+		goto out;
+	}
+	s += 2;
+	while (*s && isspace(*s))
+		s++;
+
+	if (sscanf(s, "%5[0-9]:%255[^:]:%5[0-9]",
+	    sfwd_port, buf, sfwd_host_port) != 3 &&
+	    sscanf(s, "%5[0-9]/%255[^/]/%5[0-9]",
+	    sfwd_port, buf, sfwd_host_port) != 3) {
+		log("Bad forwarding specification.");
+		goto out;
+	}
+	if ((fwd_port = a2port(sfwd_port)) == 0 ||
+	    (fwd_host_port = a2port(sfwd_host_port)) == 0) {
+		log("Bad forwarding port(s).");
+		goto out;
+	}
+	if (local) {
+		if (channel_setup_local_fwd_listener(fwd_port, buf,
+		    fwd_host_port, options.gateway_ports) < 0) {
+			log("Port forwarding failed.");
+			goto out;
+		}
+	} else
+		channel_request_remote_forwarding(fwd_port, buf,
+		    fwd_host_port);
+	log("Forwarding port.");
+out:
+	signal(SIGINT, handler);
+	enter_raw_mode();
+	if (cmd)
+		xfree(cmd);
+}
+
 /* process the characters one by one */
 static int
 process_escapes(Buffer *bin, Buffer *bout, Buffer *berr, char *buf, int len)
@@ -575,6 +637,7 @@ process_escapes(Buffer *bin, Buffer *bout, Buffer *berr, char *buf, int len)
 "%c?\r\n\
 Supported escape sequences:\r\n\
 ~.  - terminate connection\r\n\
+~C  - open a command line\r\n\
 ~R  - Request rekey (SSH protocol 2 only)\r\n\
 ~^Z - suspend ssh\r\n\
 ~#  - list forwarded connections\r\n\
@@ -592,6 +655,10 @@ Supported escape sequences:\r\n\
 				s = channel_open_message();
 				buffer_append(berr, s, strlen(s));
 				xfree(s);
+				continue;
+
+			case 'C':
+				process_cmdline();
 				continue;
 
 			default:

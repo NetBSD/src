@@ -1,5 +1,5 @@
-/*	$NetBSD: pathnames.h,v 1.9 2002/03/11 04:57:56 itojun Exp $	*/
-/*	$OpenBSD: pathnames.h,v 1.11 2002/02/09 17:37:34 deraadt Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.10 2002/04/22 07:59:41 itojun Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.12 2002/03/19 03:03:43 stevesk Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -123,6 +123,9 @@
 /* for sftp */
 #define _PATH_SFTP_SERVER		"/usr/libexec/sftp-server"
 #define _PATH_LS			"ls"
+
+/* chroot directory for unprivileged user when UsePrivilegeSeparation=yes */
+#define _PATH_PRIVSEP_CHROOT_DIR	"/var/empty"
 
 #define _PATH_RSH			"/usr/bin/rsh"
 #define _PATH_URANDOM			"/dev/urandom"

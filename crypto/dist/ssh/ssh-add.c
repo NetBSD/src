@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.15 2002/03/08 02:00:55 itojun Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.16 2002/04/22 07:59:45 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-add.c,v 1.50 2002/01/29 14:27:57 markus Exp $");
+RCSID("$OpenBSD: ssh-add.c,v 1.53 2002/03/21 22:44:05 rees Exp $");
 
 #include <openssl/evp.h>
 
@@ -57,7 +57,7 @@ extern char *__progname;
 static char *default_files[] = {
 	_PATH_SSH_CLIENT_ID_RSA,
 	_PATH_SSH_CLIENT_ID_DSA,
-	_PATH_SSH_CLIENT_IDENTITY, 
+	_PATH_SSH_CLIENT_IDENTITY,
 	NULL
 };
 
@@ -171,7 +171,13 @@ add_file(AuthenticationConnection *ac, const char *filename)
 static int
 update_card(AuthenticationConnection *ac, int add, const char *id)
 {
-	if (ssh_update_card(ac, add, id)) {
+	char *pin;
+
+	pin = read_passphrase("Enter passphrase for smartcard: ", RP_ALLOW_STDIN);
+	if (pin == NULL)
+		return -1;
+
+	if (ssh_update_card(ac, add, id, pin)) {
 		fprintf(stderr, "Card %s: %s\n",
 		    add ? "added" : "removed", id);
 		return 0;
@@ -301,6 +307,8 @@ main(int argc, char **argv)
 	if (argc == 0) {
 		char buf[MAXPATHLEN];
 		struct passwd *pw;
+		struct stat st;
+		int count = 0;
 
 		if ((pw = getpwuid(getuid())) == NULL) {
 			fprintf(stderr, "No user found with uid %u\n",
@@ -310,11 +318,17 @@ main(int argc, char **argv)
 		}
 
 		for(i = 0; default_files[i]; i++) {
-			snprintf(buf, sizeof(buf), "%s/%s", pw->pw_dir, 
+			snprintf(buf, sizeof(buf), "%s/%s", pw->pw_dir,
 			    default_files[i]);
+			if (stat(buf, &st) < 0)
+				continue;
 			if (do_file(ac, deleting, buf) == -1)
 				ret = 1;
+			else
+				count++;
 		}
+		if (count == 0)
+			ret = 1;
 	} else {
 		for(i = 0; i < argc; i++) {
 			if (do_file(ac, deleting, argv[i]) == -1)
