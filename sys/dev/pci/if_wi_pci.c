@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.18 2003/03/27 14:43:30 perry Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.19 2003/03/27 20:09:07 perry Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.18 2003/03/27 14:43:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.19 2003/03/27 20:09:07 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,8 +119,10 @@ const struct wi_pci_product {
 	  NULL, 1 },
 	{ PCI_VENDOR_INTERSIL,		PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN,
 	  "Intersil Prism2.5", 0 },
+#ifdef PCI_VENDOR_COREGA
 	{ PCI_VENDOR_COREGA,		PCI_PRODUCT_COREGA_CGWLPCIA11,
 	  NULL, 1 },
+#endif
 	{ 0,				0,
 	  NULL, 0},
 };
