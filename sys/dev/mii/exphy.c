@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.33 2002/09/30 21:57:47 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.34 2002/10/02 16:34:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.33 2002/09/30 21:57:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.34 2002/10/02 16:34:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ int	exphymatch(struct device *, struct cfdata *, void *);
 void	exphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(exphy, sizeof(struct mii_softc),
-    exphymatch, exphyattach, mii_phy_detach, mii_phy_activate)
+    exphymatch, exphyattach, mii_phy_detach, mii_phy_activate);
 
 int	exphy_service(struct mii_softc *, struct mii_data *, int);
 void	exphy_reset(struct mii_softc *);

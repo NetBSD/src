@@ -1,4 +1,4 @@
-/*	$NetBSD: depca.c,v 1.7 2002/09/30 21:17:57 thorpej Exp $	*/
+/*	$NetBSD: depca.c,v 1.8 2002/10/02 16:33:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.7 2002/09/30 21:17:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.8 2002/10/02 16:33:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ int	le_depca_match(struct device *, struct cfdata *, void *);
 void	le_depca_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(le_depca, sizeof(struct le_depca_softc),
-    le_depca_match, le_depca_attach, NULL, NULL)
+    le_depca_match, le_depca_attach, NULL, NULL);
 
 void	depca_copytobuf(struct lance_softc *, void *, int, int);
 void	depca_copyfrombuf(struct lance_softc *, void *, int, int);

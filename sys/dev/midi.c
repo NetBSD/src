@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.28 2002/09/30 21:19:38 thorpej Exp $	*/
+/*	$NetBSD: midi.c,v 1.29 2002/10/02 16:33:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.28 2002/09/30 21:19:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.29 2002/10/02 16:33:30 thorpej Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -104,7 +104,7 @@ const struct cdevsw midi_cdevsw = {
 };
 
 CFATTACH_DECL(midi, sizeof(struct midi_softc),
-    midiprobe, midiattach, mididetach, midiactivate)
+    midiprobe, midiattach, mididetach, midiactivate);
 
 #ifdef MIDI_SAVE
 #define MIDI_SAVE_SIZE 100000

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwscsi.c,v 1.8 2002/09/30 21:21:07 thorpej Exp $	*/
+/*	$NetBSD: fwscsi.c,v 1.9 2002/10/02 16:33:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwscsi.c,v 1.8 2002/09/30 21:21:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwscsi.c,v 1.9 2002/10/02 16:33:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -91,7 +91,7 @@ struct fwscsi_softc {
 };
 
 CFATTACH_DECL(fwscsi, sizeof(struct fwscsi_softc),
-    fwscsi_match, fwscsi_attach, fwscsi_detach, NULL)
+    fwscsi_match, fwscsi_attach, fwscsi_detach, NULL);
 
 static int
 fwscsi_match(struct device *parent, struct cfdata *match, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.10 2002/09/30 21:09:36 thorpej Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.11 2002/10/02 16:33:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.10 2002/09/30 21:09:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.11 2002/10/02 16:33:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ static int	pwctl_ghook(void *, int, long, void *);
 int	pwctl_hardpower(void *, int, long, void *);
 
 CFATTACH_DECL(pwctl, sizeof(struct pwctl_softc),
-    pwctl_match, pwctl_attach, NULL, NULL)
+    pwctl_match, pwctl_attach, NULL, NULL);
 
 int
 pwctl_match(struct device *parent, struct cfdata *match, void *aux)

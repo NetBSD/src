@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.32 2002/09/30 21:57:50 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.33 2002/10/02 16:34:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.32 2002/09/30 21:57:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.33 2002/10/02 16:34:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ int	sqphymatch(struct device *, struct cfdata *, void *);
 void	sqphyattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sqphy, sizeof(struct mii_softc),
-    sqphymatch, sqphyattach, mii_phy_detach, mii_phy_activate)
+    sqphymatch, sqphyattach, mii_phy_detach, mii_phy_activate);
 
 int	sqphy_service(struct mii_softc *, struct mii_data *, int);
 void	sqphy_status(struct mii_softc *);
