@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.19 1998/09/08 08:37:12 fvdl Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.20 1999/02/12 01:39:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -671,10 +671,10 @@ ufs_dirbadentry(dp, ep, entryoffsetinblock)
 	        DIRSIZ(FSFMT(dp), ep, needswap) ||
 	    namlen > MAXNAMLEN) {
 		/*return (1); */
-		printf("First bad, reclen=%x, DIRSIZ=%d, namlen=%d, flags=%x "
+		printf("First bad, reclen=%x, DIRSIZ=%lu, namlen=%d, flags=%x "
 			"entryoffsetinblock=%d\n",
 			ufs_rw16(ep->d_reclen, needswap),
-			DIRSIZ(FSFMT(dp), ep, needswap),
+			(u_long)DIRSIZ(FSFMT(dp), ep, needswap),
 			namlen, dp->v_mount->mnt_flag, entryoffsetinblock);
 		goto bad;
 	}
