@@ -1,3 +1,5 @@
+.\"	$NetBSD: def.nr,v 1.2 1998/01/09 06:34:40 perry Exp $
+.\"
 .NC "Definitions"
 .sh 1 "General Terms"
 .ip "Kernel" 5

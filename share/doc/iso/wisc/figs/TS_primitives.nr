@@ -1,3 +1,5 @@
+.\"	$NetBSD: TS_primitives.nr,v 1.2 1998/01/09 06:34:57 perry Exp $
+.\"
 .(b
 .TS
 center expand box;

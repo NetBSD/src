@@ -1,3 +1,5 @@
+.\"	$NetBSD: eicon.table5.1.orig.nr,v 1.2 1998/01/09 06:34:44 perry Exp $
+.\"
 .TS
 center,box,tab(:);
 c s s s s s s
