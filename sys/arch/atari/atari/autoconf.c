@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.1.1 1995/03/26 07:12:18 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 1995/07/11 18:24:57 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -130,7 +130,7 @@ config_console()
 	 * we need mainbus' cfdata.
 	 */
 	cf = config_rootsearch(NULL, "mainbus", "mainbus");
-	if(cf == NULL)
+	if (cf == NULL)
 		panic("no mainbus");
 	atari_config_found(cf, NULL, "grfbus", NULL);
 }
@@ -142,25 +142,23 @@ swapconf()
 	u_int		maj;
 	int		nb;
 
-	for(swp = swdevt; swp->sw_dev > 0; swp++) {
+	for (swp = swdevt; swp->sw_dev > 0; swp++) {
 		maj = major(swp->sw_dev);
 
-		if(maj > nblkdev)
+		if (maj > nblkdev)
 			break;
 
-		if(bdevsw[maj].d_psize) {
+		if (bdevsw[maj].d_psize) {
 			nb = bdevsw[maj].d_psize(swp->sw_dev);
-			if(nb > 0 && 
+			if (nb > 0 && 
 			    (swp->sw_nblks == 0 || swp->sw_nblks > nb))
 				swp->sw_nblks = nb;
 			else swp->sw_nblks = 0;
 		}
 		swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 	}
-	if(dumplo == 0 && bdevsw[major(dumpdev)].d_psize)
-		dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) -
-			ctob(physmem)/DEV_BSIZE;
-	if(dumplo < 0)
+	dumpconf();
+	if( dumplo < 0)
 		dumplo = 0;
 
 }
@@ -183,7 +181,7 @@ setroot()
 	dev_t		temp, orootdev;
 	struct swdevt	*swp;
 
-	if(boothowto & RB_DFLTROOT
+	if (boothowto & RB_DFLTROOT
 		|| (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
 	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
@@ -198,15 +196,15 @@ setroot()
 	 * If the original rootdev is the same as the one
 	 * just calculated, don't need to adjust the swap configuration.
 	 */
-	if(rootdev == orootdev)
+	if (rootdev == orootdev)
 		return;
 	printf("changing root device to %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
 		unit, part + 'a');
 #ifdef DOSWAP
 	mindev = DISKUNIT(rootdev);
-	for(swp = swdevt; swp->sw_dev; swp++) {
-		if(majdev == major(swp->sw_dev)
+	for (swp = swdevt; swp->sw_dev; swp++) {
+		if (majdev == major(swp->sw_dev)
 			&& mindev == DISKUNIT(swp->sw_dev)) {
 			temp = swdevt[0].sw_dev;
 			swdevt[0].sw_dev = swp->sw_dev;
@@ -214,13 +212,13 @@ setroot()
 			break;
 		}
 	}
-	if(swp->sw_dev == 0)
+	if (swp->sw_dev == 0)
 		return;
 	/*
 	 * If dumpdev was the same as the old primary swap
 	 * device, move it to the new primary swap device.
 	 */
-	if(temp == dumpdev)
+	if (temp == dumpdev)
 		dumpdev = swdevt[0].sw_dev;
 #endif
 }
@@ -239,7 +237,7 @@ mbmatch(pdp, cfp, auxp)
 	struct cfdata *cfp;
 	void *auxp;
 {
-	if(cfp->cf_unit > 0)
+	if (cfp->cf_unit > 0)
 		return(0);
 	/*
 	 * We are always here
