@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.20 2004/05/08 14:25:59 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.21 2004/06/12 19:18:24 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -44,6 +44,9 @@ message md_hello
 {Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
 
 }
+
+message Keyboard_type {Keyboard type}
+message kb_default {pl}
 
 message dobad144
 {Instalowanie tablicy zlych blokow ...

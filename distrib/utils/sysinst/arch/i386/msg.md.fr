@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.37 2004/05/08 14:25:59 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.38 2004/06/12 19:18:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,9 @@ message md_hello
 {Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.
 
 }
+
+message Keyboard_type {Keyboard type}
+message kb_default {fr}
 
 message dobad144
 {Installation de la table des block défectueux ...
