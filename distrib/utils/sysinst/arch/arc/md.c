@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 2003/05/30 13:58:25 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.12 2003/05/30 22:17:02 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -132,142 +132,13 @@ md_copy_filesystem(void)
 int
 md_make_bsd_partitions(void)
 {
-	FILE *f;
-	int i;
-	int maxpart = getmaxpartitions();
-	int partstart, partsize;
+	return make_bsd_partitions();
+}
 
-	/* Ask for layout type -- standard or special */
-	msg_display(MSG_layout,
-			(1.0*ptsize*sectorsize)/MEG,
-			(1.0*minfsdmb*sectorsize)/MEG,
-			(1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
-	process_menu(MENU_layout);
-
-	if (layoutkind == 3) {
-		ask_sizemult(dlcylsize);
-	} else {
-		sizemult = MEG / sectorsize;
-		multname = msg_string(MSG_megname);
-	}
-
-
-	/* Build standard partitions */
-	emptylabel(bsdlabel);
-
-	/* Partitions C and D are predefined. */
-	bsdlabel[C].pi_fstype = FS_UNUSED;
-	bsdlabel[C].pi_offset = ptstart;
-	bsdlabel[C].pi_size = ptsize;
-	
-	bsdlabel[D].pi_fstype = FS_UNUSED;
-	bsdlabel[D].pi_offset = 0;
-	bsdlabel[D].pi_size = dlsize;
-
-	/* Standard fstypes */
-	bsdlabel[A].pi_fstype = FS_BSDFFS;
-	bsdlabel[A].pi_bsize  = 8192;
-	bsdlabel[A].pi_fsize  = 1024;
-	bsdlabel[B].pi_fstype = FS_SWAP;
-	bsdlabel[E].pi_fstype = FS_UNUSED;
-	bsdlabel[F].pi_fstype = FS_UNUSED;
-	bsdlabel[G].pi_fstype = FS_UNUSED;
-	bsdlabel[H].pi_fstype = FS_UNUSED;
-
-	switch (layoutkind) {
-	case 1: /* standard: a root, b swap, c/d "unused", e /usr */
-	case 2: /* standard X: a root, b swap (big), c/d "unused", e /usr */
-		partstart = ptstart;
-
-		/* check that we have enough space */
-		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize);
-		i += NUMSEC(layoutkind * 2 * (rammb < 16 ? 16 : rammb),
-			   MEG/sectorsize, dlcylsize);
-		if ( i > ptsize) {
-			msg_display(MSG_disktoosmall);
-			process_menu(MENU_ok);
-			goto custom;
-		}
-		/* Root */
-		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-				   dlcylsize) - partstart;
-		bsdlabel[A].pi_offset = partstart;
-		bsdlabel[A].pi_size = partsize;
-		bsdlabel[A].pi_bsize = 8192;
-		bsdlabel[A].pi_fsize = 1024;
-		strcpy (fsmount[A], "/");
-		partstart += partsize;
-
-		/* swap */
-		i = NUMSEC(layoutkind * 2 * (rammb < 16 ? 16 : rammb),
-			   MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart;
-		bsdlabel[B].pi_offset = partstart;
-		bsdlabel[B].pi_size = partsize;
-		partstart += partsize;
-
-		/* /usr */
-		partsize = ptsize - (partstart - ptstart);
-		bsdlabel[E].pi_fstype = FS_BSDFFS;
-		bsdlabel[E].pi_offset = partstart;
-		bsdlabel[E].pi_size = partsize;
-		bsdlabel[E].pi_bsize = 8192;
-		bsdlabel[E].pi_fsize = 1024;
-		strcpy (fsmount[E], "/usr");
-		break;
-
-	case 3:
-custom:
-	}
-
-	/*
-	 * OK, we have a partition table. Give the user the chance to
-	 * edit it and verify it's OK, or abort altogether.
-	 */
-	if (edit_and_check_label(bsdlabel, maxpart, RAW_PART, RAW_PART) == 0) {
-		msg_display(MSG_abort);
-		return 0;
-	}
-
-	/* Disk name */
-	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
-
-	/* Create the disktab.preinstall */
-#ifdef DEBUG
-	f = fopen ("/tmp/disktab", "a");
-#else
-	f = fopen ("/etc/disktab", "w");
-#endif
-	if (f == NULL) {
-		endwin();
-		(void) fprintf (stderr, "Could not open /etc/disktab");
-		exit (1);
-	}
-	(void)fprintf (f, "%s|NetBSD installation generated:\\\n", bsddiskname);
-	(void)fprintf (f, "\t:dt=%s:ty=winchester:\\\n", disktype);
-	(void)fprintf (f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
-	(void)fprintf (f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
-	(void)fprintf (f, "\t:se#%d:%s\\\n", sectorsize, doessf);
-	for (i=0; i<8; i++) {
-		(void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
-			       'a'+i, bsdlabel[i].pi_size,
-			       'a'+i, bsdlabel[i].pi_offset,
-			       'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
-		if (bsdlabel[i].pi_fstype == FS_BSDFFS)
-			(void)fprintf (f, "b%c#%d:f%c#%d",
-				       'a'+i, bsdlabel[i].pi_bsize,
-				       'a'+i, bsdlabel[i].pi_fsize);
-		if (i < 7)
-			(void)fprintf (f, "\\\n");
-		else
-			(void)fprintf (f, "\n");
-	}
-	fclose (f);
-
-	/* Everything looks OK. */
-	return (1);
+int
+md_check_partitions(void)
+{
+	return 1;
 }
 
 int
