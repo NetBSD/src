@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/08/16 08:24:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2001/10/30 05:13:10 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ LIBSA=${.CURDIR}/../../../../lib/libsa
 .PATH.c: ${LIBSA}
 
 CPPFLAGS+=-I${LIBSA} -I.
+CPPFLAGS+=-I${.CURDIR}/..
 
 LDSTATIC?=	-static
 
