@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.104 2002/05/12 20:40:11 matt Exp $	*/
+/*	$NetBSD: if.c,v 1.105 2002/05/23 21:34:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.104 2002/05/12 20:40:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.105 2002/05/23 21:34:39 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -1235,6 +1235,28 @@ ifunit(name)
 	const char *name;
 {
 	struct ifnet *ifp;
+	const char *cp = name;
+	u_int unit = 0;
+	u_int i;
+
+	/*
+	 * If the entire name is a number, treat it as an ifindex.
+	 */
+	for (i = 0; i < IFNAMSIZ && *cp >= '0' && *cp <= '9'; i++, cp++) {
+		unit = unit * 10 + (*cp - '0');
+	}
+
+	/*
+	 * If the number took all of the name, then it's a valid ifindex.
+	 */
+	if (i == IFNAMSIZ || (cp != name && *cp == '\0')) {
+		if (unit >= if_index)
+			return (NULL);
+		ifp = ifindex2ifnet[unit];
+		if (ifp == NULL || ifp->if_output == if_nulloutput)
+			return (NULL);
+		return (ifp);
+	}
 
 	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 	     ifp = TAILQ_NEXT(ifp, if_list)) {
@@ -1259,6 +1281,7 @@ ifioctl(so, cmd, data, p)
 	struct ifnet *ifp;
 	struct ifreq *ifr;
 	struct ifcapreq *ifcr;
+	struct ifdatareq *ifdr;
 	int s, error = 0;
 	short oif_flags;
 
@@ -1270,6 +1293,7 @@ ifioctl(so, cmd, data, p)
 	}
 	ifr = (struct ifreq *)data;
 	ifcr = (struct ifcapreq *)data;
+	ifdr = (struct ifdatareq *)data;
 
 	switch (cmd) {
 	case SIOCIFCREATE:
@@ -1392,6 +1416,22 @@ ifioctl(so, cmd, data, p)
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
 		ifp->if_metric = ifr->ifr_metric;
+		break;
+
+	case SIOCGIFDATA:
+		ifdr->ifdr_data = ifp->if_data;
+		break;
+
+	case SIOCZIFDATA:
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			return (error);
+		ifdr->ifdr_data = ifp->if_data;
+		/*
+		 * Assumes that the volatile counters that can be
+		 * zero'ed are at the end of if_data.
+		 */
+		memset(&ifp->if_data.ifi_ipackets, 0, sizeof(ifp->if_data) -
+		    offsetof(struct if_data, ifi_ipackets));
 		break;
 
 	case SIOCSIFMTU:
