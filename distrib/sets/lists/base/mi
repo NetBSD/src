@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.205 2001/01/04 20:35:35 garbled Exp $
+# $NetBSD: mi,v 1.206 2001/01/05 07:02:38 garbled Exp $
 .
 ./altroot
 ./bin
@@ -1259,6 +1259,30 @@
 ./usr/share/sendmail/ostype
 ./usr/share/sendmail/sh
 ./usr/share/sendmail/siteconfig
+./usr/share/sushi/info
+./usr/share/sushi/info/programming
+./usr/share/sushi/info/programming/helpapi
+./usr/share/sushi/info/programming/formapi
+./usr/share/sushi/info/programming/execapi
+./usr/share/sushi/info/programming/basics
+./usr/share/sushi/info/programming/i18n
+./usr/share/sushi/info/programming/scriptapi
+./usr/share/sushi/info/programming/searchpaths
+./usr/share/sushi/info/programming/indexapi
+./usr/share/sushi/install
+./usr/share/sushi/install/remove
+./usr/share/sushi/install/install
+./usr/share/sushi/install/installb
+./usr/share/sushi/install/list
+./usr/share/sushi/scripton
+./usr/share/sushi/scriptoff
+./usr/share/sushi/system
+./usr/share/sushi/system/rcconf
+./usr/share/sushi/users
+./usr/share/sushi/users/listuser
+./usr/share/sushi/users/deluser
+./usr/share/sushi/users/disuser
+./usr/share/sushi/users/adduser
 ./usr/share/tabset
 ./usr/share/tabset/3101
 ./usr/share/tabset/9837
