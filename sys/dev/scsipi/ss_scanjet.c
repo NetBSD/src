@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.28 2002/09/14 21:41:24 chs Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.28.8.1 2004/09/11 12:57:39 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.28 2002/09/14 21:41:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.28.8.1 2004/09/11 12:57:39 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,11 +48,13 @@ __KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.28 2002/09/14 21:41:24 chs Exp $");
 #include <sys/device.h>
 #include <sys/conf.h>		/* for cdevsw */
 #include <sys/scanio.h>
+#include <sys/kernel.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_scanner.h>
 #include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/scsipi_base.h>
 #include <dev/scsipi/ssvar.h>
 
 #define SCANJET_RETRIES 4
@@ -267,6 +269,7 @@ scanjet_read(ss, bp)
 	struct buf *bp;
 {
 	struct scsi_rw_scanner cmd;
+	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph = ss->sc_periph;
 	int error;
 
@@ -285,19 +288,35 @@ scanjet_read(ss, bp)
 	/*
 	 * go ask the adapter to do all this for us
 	 */
-	error = scsipi_command(periph,
+	xs = scsipi_make_xs(periph,
+	    (struct scsipi_generic *) &cmd, sizeof(cmd),
+	    (u_char *) bp->b_data, bp->b_bcount,
+	    SCANJET_RETRIES, 100000, bp,
+	    XS_CTL_NOSLEEP | XS_CTL_ASYNC | XS_CTL_DATA_IN);
+	if (xs == NULL) {
+		/*
+		 * out of memory. Keep this buffer in the queue, and
+		 * retry later.
+		 */
+		callout_reset(&ss->sc_callout, hz / 2, ssrestart,
+		    periph);
+		return(0);
+	}
+#ifdef DIAGNOSTIC
+	if (BUFQ_GET(&ss->buf_queue) != bp)
+		panic("ssstart(): dequeued wrong buf");
+#else
+	BUFQ_GET(&ss->buf_queue);
+#endif
+	error = scsipi_command(periph, xs,
 	    (struct scsipi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount, SCANJET_RETRIES, 100000, bp,
 	    XS_CTL_NOSLEEP | XS_CTL_ASYNC | XS_CTL_DATA_IN);
-	if (error) {
-		printf("%s: not queued, error %d\n", ss->sc_dev.dv_xname,
-		    error);
-	} else {
-		ss->sio.scan_window_size -= bp->b_bcount;
-		if (ss->sio.scan_window_size < 0)
-			ss->sio.scan_window_size = 0;
-	}
-
+	/* with a scsipi_xfer preallocated, scsipi_command can't fail */
+	KASSERT(error == 0);
+	ss->sio.scan_window_size -= bp->b_bcount;
+	if (ss->sio.scan_window_size < 0)
+		ss->sio.scan_window_size = 0;
 	return (0);
 }
 
@@ -321,7 +340,7 @@ scanjet_ctl_write(ss, buf, size)
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = WRITE;
 	_lto3b(size, cmd.len);
-	return (scsipi_command(ss->sc_periph,
+	return (scsipi_command(ss->sc_periph, NULL,
 	    (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK));
@@ -347,7 +366,7 @@ scanjet_ctl_read(ss, buf, size)
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ;
 	_lto3b(size, cmd.len);
-	return (scsipi_command(ss->sc_periph,
+	return (scsipi_command(ss->sc_periph, NULL,
 	    (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK));
