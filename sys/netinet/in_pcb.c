@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.61 1999/12/13 15:17:20 itojun Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.62 2000/02/01 00:05:07 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -415,20 +415,23 @@ in_pcbconnect(v, nam)
 		 */
 		if (ro->ro_rt && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
 			ia = ifatoia(ro->ro_rt->rt_ifa);
-		if (ia == 0) {
-		    u_int16_t fport = sin->sin_port;
+		if (ia == NULL) {
+			u_int16_t fport = sin->sin_port;
 
-		    sin->sin_port = 0;
-		    ia = ifatoia(ifa_ifwithladdr(sintosa(sin)));
-		    sin->sin_port = fport;
-		    if (ia == 0)
-			/* Find 1st non-loopback AF_INET address */
-			for (ia = in_ifaddr.tqh_first ; ia != NULL ;
-				ia = ia->ia_list.tqe_next)
-			    if (!(ia->ia_ifp->if_flags & IFF_LOOPBACK))
-				break;
-		    if (ia == 0)
-			return (EADDRNOTAVAIL);
+			sin->sin_port = 0;
+			ia = ifatoia(ifa_ifwithladdr(sintosa(sin)));
+			sin->sin_port = fport;
+			if (ia == 0) {
+				/* Find 1st non-loopback AF_INET address */
+				for (ia = in_ifaddr.tqh_first ; ia != NULL;
+				     ia = ia->ia_list.tqe_next) {
+					if ((ia->ia_ifp->if_flags &
+					     IFF_LOOPBACK) == 0)
+						break;
+				}
+			}
+			if (ia == NULL)
+				return (EADDRNOTAVAIL);
 		}
 		/*
 		 * If the destination address is multicast and an outgoing
@@ -879,7 +882,7 @@ in_selectsrc(sin, ro, soopts, mopts, errorp)
 	 */
 	if (ro->ro_rt && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
 		ia = ifatoia(ro->ro_rt->rt_ifa);
-	if (ia == 0) {
+	if (ia == NULL) {
 		u_int16_t fport = sin->sin_port;
 
 		sin->sin_port = 0;
@@ -889,11 +892,12 @@ in_selectsrc(sin, ro, soopts, mopts, errorp)
 			/* Find 1st non-loopback AF_INET address */
 			for (ia = in_ifaddr.tqh_first;
 			     ia != NULL;
-			     ia = ia->ia_list.tqe_next)
+			     ia = ia->ia_list.tqe_next) {
 				if (!(ia->ia_ifp->if_flags & IFF_LOOPBACK))
 					break;
+			}
 		}
-		if (ia == 0) {
+		if (ia == NULL) {
 			*errorp = EADDRNOTAVAIL;
 			return NULL;
 		}
