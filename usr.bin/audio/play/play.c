@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.14 1999/10/23 04:20:14 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.15 1999/11/06 15:05:45 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -73,6 +73,7 @@ main(argc, argv)
 	size_t	len;
 	off_t	filesize;
 	int	ch;
+	int	exitstatus = EXIT_SUCCESS;
 	int	iflag = 0;
 	int	qflag = 0;
 	int	verbose = 0;
@@ -192,8 +193,11 @@ main(argc, argv)
 			ssize_t	hdrlen;
 
 			fd = open(*argv, O_RDONLY);
-			if (fd < 0)
-				err(1, "could not open %s", *argv);
+			if (fd < 0) {
+				warn("could not open %s", *argv);
+				exitstatus = EXIT_FAILURE;
+				continue;
+			}
 
 			if (fstat(fd, &sb) < 0)
 				err(1, "could not fstat %s", *argv);
@@ -207,7 +211,7 @@ main(argc, argv)
 			 * instead, so that filesystems, etc, that do not
 			 * support mmap() work
 			 */
-			if (addr == (void *)-1) {
+			if (addr == MAP_FAILED) {
 				play_fd(fd, *argv);
 				close(fd);
 				continue;
@@ -232,12 +236,12 @@ main(argc, argv)
 			}
 
 			filesize -= hdrlen;
-			(char *)addr += hdrlen;
+			addr = (char *)addr + hdrlen;
 
 			while (filesize > bufsize) {
 				if (write(audiofd, addr, bufsize) != bufsize)
 					err(1, "write failed");
-				(char *)addr += bufsize;
+				addr = (char *)addr + bufsize;
 				filesize -= bufsize;
 			}
 			if (write(audiofd, addr, (size_t)filesize) != (ssize_t)filesize)
@@ -255,7 +259,7 @@ main(argc, argv)
 		play_fd(STDIN_FILENO, "standard input");
 	}
 
-	exit(0);
+	exit(exitstatus);
 }
 
 /*
