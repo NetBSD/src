@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_vfsops.c	7.56 (Berkeley) 6/28/91
- *	$Id: ufs_vfsops.c,v 1.15 1994/05/17 04:26:19 cgd Exp $
+ *	$Id: ufs_vfsops.c,v 1.16 1994/05/18 00:35:13 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -517,8 +517,6 @@ ufs_statfs(mp, sbp, p)
 	return (0);
 }
 
-extern int syncprt;
-
 /*
  * Go through the disk queues to initiate sandbagged IO;
  * go through the inodes to write those that have been modified;
@@ -536,8 +534,6 @@ ufs_sync(mp, waitfor)
 	register struct fs *fs;
 	int error, allerror = 0;
 
-	if (syncprt)
-		bufstats();
 	fs = ump->um_fs;
 	/*
 	 * Write back modified superblock.
