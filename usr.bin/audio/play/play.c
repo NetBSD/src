@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.37 2002/07/20 08:40:16 grant Exp $	*/
+/*	$NetBSD: play.c,v 1.38 2002/10/01 20:22:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -50,7 +50,7 @@ int main(int, char *[]);
 void usage(void);
 void play(char *);
 void play_fd(const char *, int);
-ssize_t audioctl_write_fromhdr(void *, size_t, int, size_t *);
+ssize_t audioctl_write_fromhdr(void *, size_t, int, size_t *, const char *);
 void cleanup(int) __attribute__((__noreturn__));
 
 audio_info_t	info;
@@ -258,7 +258,7 @@ play(file)
 	 * get the header length and set up the audio device
 	 */
 	if ((hdrlen = audioctl_write_fromhdr(addr,
-	    (size_t)filesize, audiofd, &datasize)) < 0) {
+	    (size_t)filesize, audiofd, &datasize, file)) < 0) {
 		if (play_errstring)
 			errx(1, "%s: %s", play_errstring, file);
 		else
@@ -315,7 +315,7 @@ play_fd(file, fd)
 			return;
 		err(1, "unexpected EOF");
 	}
-	hdrlen = audioctl_write_fromhdr(buffer, nr, audiofd, &datasize);
+	hdrlen = audioctl_write_fromhdr(buffer, nr, audiofd, &datasize, file);
 	if (hdrlen < 0) {
 		if (play_errstring)
 			errx(1, "%s: %s", play_errstring, file);
@@ -358,11 +358,12 @@ write_error:
  * uses the local "info" variable. blah... fix me!
  */
 ssize_t
-audioctl_write_fromhdr(hdr, fsz, fd, datasize)
+audioctl_write_fromhdr(hdr, fsz, fd, datasize, file)
 	void	*hdr;
 	size_t	fsz;
 	int	fd;
 	size_t	*datasize;
+	const char	*file;
 {
 	sun_audioheader	*sunhdr;
 	ssize_t	hdr_len;
@@ -431,10 +432,17 @@ set_audio_mode:
 	}
 	info.mode = AUMODE_PLAY_ALL;
 
-	if (verbose)
-		printf("sample_rate=%d channels=%d precision=%d encoding=%s\n",
-		   info.play.sample_rate, info.play.channels,
-		   info.play.precision, audio_enc_from_val(info.play.encoding));
+	if (verbose) {
+		const char *enc = audio_enc_from_val(info.play.encoding);
+
+		printf("%s: sample_rate=%d channels=%d "
+		   "precision=%d%s%s\n", file,
+		   info.play.sample_rate,
+		   info.play.channels,
+		   info.play.precision,
+		   enc ? " encoding=" : "", 
+		   enc ? enc : "");
+	}
 
 	if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
 		err(1, "failed to set audio info");
