@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.19 2005/01/01 12:46:00 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.20 2005/01/01 13:29:29 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.19 2005/01/01 12:46:00 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.20 2005/01/01 13:29:29 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1885,8 +1885,11 @@ filt_audioread(struct knote *kn, long hint)
 	int s;
 
 	s = splaudio();
-	kn->kn_data = audio_stream_get_used(sc->sc_rustream)
-		- sc->sc_rr.usedlow;
+	if (!sc->sc_full_duplex && (sc->sc_mode & AUMODE_PLAY))
+		kn->kn_data = sc->sc_pr.stamp - sc->sc_wstamp;
+	else
+		kn->kn_data = audio_stream_get_used(sc->sc_rustream)
+			- sc->sc_rr.usedlow;
 	splx(s);
 
 	return kn->kn_data > 0;
@@ -1998,11 +2001,13 @@ audio_mmap(struct audio_softc *sc, off_t off, int prot)
 			audio_fill_silence(&cb->s.param, cb->s.start,
 					   cb->s.bufsize);
 			s = splaudio();
+			sc->sc_pustream = &cb->s;
 			if (!sc->sc_pbus)
 				(void)audiostartp(sc);
 			splx(s);
 		} else {
 			s = splaudio();
+			sc->sc_rustream = &cb->s;
 			if (!sc->sc_rbus)
 				(void)audiostartr(sc);
 			splx(s);
@@ -2892,6 +2897,9 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 				rp = pp;
 			}
 		}
+
+		if (sc->sc_pr.mmapped && pfilters.req_size > 0)
+			return EINVAL;
 
 		/* construct new filter chain */
 		memset(pf, 0, sizeof(pf));
