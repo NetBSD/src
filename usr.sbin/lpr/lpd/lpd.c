@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.20 2000/01/27 05:39:50 itojun Exp $	*/
+/*	$NetBSD: lpd.c,v 1.21 2000/02/24 06:33:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.20 2000/01/27 05:39:50 itojun Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.21 2000/02/24 06:33:48 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,6 +105,10 @@ __RCSID("$NetBSD: lpd.c,v 1.20 2000/01/27 05:39:50 itojun Exp $");
 #include "lp.local.h"
 #include "pathnames.h"
 #include "extern.h"
+
+/* XXX from libc/net/rcmd.c */
+extern int __ivaliduser_sa __P((FILE *, struct sockaddr *, socklen_t,
+		const char *, const char *));
 
 int	lflag;				/* log requests flag */
 int	rflag;				/* allow of for remote printers */
@@ -613,7 +617,7 @@ chkhost(f)
 	hostf = fopen(_PATH_HOSTSEQUIV, "r");
 again:
 	if (hostf) {
-		if (__ivaliduser_sa(hostf, f, DUMMY, DUMMY) == 0) {
+		if (__ivaliduser_sa(hostf, f, f->sa_len, DUMMY, DUMMY) == 0) {
 			(void)fclose(hostf);
 			return;
 		}
