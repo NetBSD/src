@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.52.2.2 2003/06/02 15:11:30 tron Exp $ */
+/*	$NetBSD: fdisk.c,v 1.52.2.3 2003/06/02 15:13:23 tron Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.52.2.2 2003/06/02 15:11:30 tron Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.52.2.3 2003/06/02 15:13:23 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -354,7 +354,7 @@ main(int argc, char *argv[])
 			break;
 		case 'l':
 			for (len = 0; len < KNOWN_SYSIDS; len++)
-				printf("%03lu %s\n", (u_long) len,
+				printf("%03d %s\n", part_types[len].type,
 				part_types[len].name);
 			return 0;
 		case 'u':
