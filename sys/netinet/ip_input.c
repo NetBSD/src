@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.142 2001/11/28 09:25:13 darrenr Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.143 2002/02/21 08:39:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.142 2001/11/28 09:25:13 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.143 2002/02/21 08:39:33 itojun Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -1665,9 +1665,21 @@ ip_forward(m, srcrt)
 		break;
 
 	case ENOBUFS:
+#if 1
+		/*
+		 * a router should not generate ICMP_SOURCEQUENCH as
+		 * required in RFC1812 Requirements for IP Version 4 Routers.
+		 * source quench could be a big problem under DoS attacks,
+		 * or the underlying interface is rate-limited.
+		 */
+		if (mcopy)
+			m_freem(mcopy);
+		return;
+#else
 		type = ICMP_SOURCEQUENCH;
 		code = 0;
 		break;
+#endif
 	}
 	icmp_error(mcopy, type, code, dest, destifp);
 }
