@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.1 2001/08/17 21:37:28 thorpej Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.1.18.1 2003/06/30 03:13:51 grant Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -102,6 +102,7 @@
 #define	BRDGGMA			19	/* get max age (ifbrparam) */
 #define	BRDGSMA			20	/* set max age (ifbrparam) */
 #define	BRDGSIFPRIO		21	/* set if priority (ifbreq) */
+#define BRDGSIFCOST		22	/* set if path cost (ifbreq) */
 
 /*
  * Generic bridge control request.
@@ -111,6 +112,7 @@ struct ifbreq {
 	uint32_t	ifbr_ifsflags;		/* member if flags */
 	uint8_t		ifbr_state;		/* member if STP state */
 	uint8_t		ifbr_priority;		/* member if STP priority */
+	uint8_t		ifbr_path_cost;		/* member if STP cost */
 	uint8_t		ifbr_portno;		/* member if port number */
 };
 
