@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.237 2002/12/19 23:04:26 lukem Exp $
+#	$NetBSD: Makefile,v 1.238 2002/12/21 15:54:51 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -406,7 +406,7 @@ kernset-${configfile}:
 					echo "./$${kernel}.$${s} type=file"; \
 				fi; \
 			done; \
-		done ) | GZIP=-9 ${PAX} -zw \
+		done ) | GZIP=-9 ${PAX} -O -zw \
 		    -M -N ${NETBSDSRCDIR}/etc \
 		    -f ${RELEASEDIR}/binary/sets/kern-${configfile}.tgz
 .endfor	# KERNEL_SETS							# }

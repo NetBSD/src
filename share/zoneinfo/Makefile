@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2002/12/19 10:56:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.31 2002/12/21 15:54:51 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -91,8 +91,8 @@ afterinstall: ${DATA} ${REDO}
 		"%s type=file mode=0444 uname=${BINOWN} gname=${BINGRP}\n" ; \
 	) > ${TZBUILDSPEC}
 	cd ${TZBUILDDIR} && \
-	    ${PAX} -rw ${UNPRIVED:D:U-pe} -M -N ${NETBSDSRCDIR}/etc ${TZDIR} \
-	    < ${TZBUILDSPEC}
+	  ${PAX} -O -rw ${UNPRIVED:D:U-pe} -M -N ${NETBSDSRCDIR}/etc ${TZDIR} \
+	  < ${TZBUILDSPEC}
 .if defined(UNPRIVED)
 	sed -e "s|^\.|./${TZDIR}|g" -e "s|//|/|g" < ${TZBUILDSPEC} | \
 	    ${CAT} -l >>${METALOG}

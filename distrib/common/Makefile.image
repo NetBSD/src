@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.17 2002/05/09 09:21:25 lukem Exp $
+#	$NetBSD: Makefile.image,v 1.18 2002/12/21 15:54:48 lukem Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -101,7 +101,7 @@ CLEANFILES+=	${IMAGE} ${IMAGE}.gz ${IMAGE}.tmp
 .if defined(IMAGETAR)						# {
 ${IMAGETAR}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
 	( cd ${WORKDIR}; \
-	  GZIP=-9 ${PAX} -N ${NETBSDSRCDIR}/etc -wdzM < ${.OBJDIR}/${WORKSPEC} \
+	  GZIP=-9 ${PAX} -ON ${NETBSDSRCDIR}/etc -wdzM <${.OBJDIR}/${WORKSPEC} \
 	) > ${.TARGET}.tmp \
 	&& mv ${.TARGET}.tmp ${.TARGET}
 
