@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_line.c,v 1.2 1998/01/09 08:08:50 perry Exp $	*/
+/*	$NetBSD: vs_line.c,v 1.2.10.1 2000/10/18 01:46:05 tv Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -141,7 +141,8 @@ vs_line(sp, smp, yp, xp)
 			cols_per_screen -= O_NUMBER_LENGTH;
 			if ((!dne || smp->lno == 1) && skip_cols == 0) {
 				nlen = snprintf(cbuf,
-				    sizeof(cbuf), O_NUMBER_FMT, smp->lno);
+				    sizeof(cbuf), O_NUMBER_FMT,
+				    (unsigned long)smp->lno);
 				(void)gp->scr_addstr(sp, cbuf, nlen);
 			}
 		}
@@ -504,7 +505,8 @@ vs_number(sp)
 			break;
 
 		(void)gp->scr_move(sp, smp - HMAP, 0);
-		len = snprintf(nbuf, sizeof(nbuf), O_NUMBER_FMT, smp->lno);
+		len = snprintf(nbuf, sizeof(nbuf), O_NUMBER_FMT,
+		    (unsigned long)smp->lno);
 		(void)gp->scr_addstr(sp, nbuf, len);
 	}
 	(void)gp->scr_move(sp, oldy, oldx);
