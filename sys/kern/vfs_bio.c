@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.120 2004/03/25 08:22:31 simonb Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.121 2004/03/25 23:17:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.120 2004/03/25 08:22:31 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.121 2004/03/25 23:17:16 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,7 +408,7 @@ buf_lotsfree(void)
 
 	thresh = (16 * bufmem) / bufmem_hiwater;
 
-	if ((try > thresh) && (uvmexp.free > ( 2 * uvmexp.freetarg))) {
+	if ((try > thresh) && (uvmexp.free > (2 * uvmexp.freetarg))) {
 		return 1;
 	}
 
@@ -489,7 +489,7 @@ buf_malloc(size_t size)
 		s = splbio();
 		simple_lock(&bqueue_slock);
 		needbuffer = 1;
-		ltsleep(&needbuffer, PNORELOCK | (PRIBIO+1),
+		ltsleep(&needbuffer, PNORELOCK | (PRIBIO + 1),
 			"buf_malloc", 0, &bqueue_slock);
 		splx(s);
 	}
@@ -1138,7 +1138,7 @@ start:
 	} else {
 		/* wait for a free buffer of any kind */
 		needbuffer = 1;
-		ltsleep(&needbuffer, slpflag|(PRIBIO+1),
+		ltsleep(&needbuffer, slpflag|(PRIBIO + 1),
 			"getnewbuf", slptimeo, &bqueue_slock);
 		return (NULL);
 	}
