@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.3 2001/01/23 02:36:17 ichiro Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.4 2001/01/23 08:15:58 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -93,19 +93,17 @@ struct	uplcom_softc {
  * These are the maximum number of bytes transferred per frame.
  * The output buffer size cannot be increased due to the size encoding.
  */
-#define UPLCOMIBUFSIZE 64;
-#define UPLCOMOBUFSIZE 64;
+#define UPLCOMIBUFSIZE 256;
+#define UPLCOMOBUFSIZE 256;
 
 Static	usbd_status uplcom_init(struct uplcom_softc *);
 Static	usbd_status uplcom_set_line_coding(struct uplcom_softc *sc,
-							usb_cdc_line_state_t *state);
+						usb_cdc_line_state_t *state);
 
 Static	void	uplcom_set(void *, int, int, int);
 Static	void	uplcom_dtr(struct uplcom_softc *, int);
 Static	void	uplcom_rts(struct uplcom_softc *, int);
-#if 0
 Static	void	uplcom_break(struct uplcom_softc *, int);
-#endif
 Static	void	uplcom_set_line_state(struct uplcom_softc *);
 Static	int	uplcom_param(void *, int, struct termios *);
 
@@ -231,7 +229,7 @@ USB_ATTACH(uplcom)
 	uca.ibufsize = UPLCOMIBUFSIZE;
 	uca.obufsize = UPLCOMOBUFSIZE;
 	uca.ibufsizepad = UPLCOMIBUFSIZE;
-	uca.opkthdrlen = 1;
+	uca.opkthdrlen = 0;
 	uca.device = dev;
 	uca.iface = iface;
 	uca.methods = &uplcom_methods;
@@ -337,9 +335,7 @@ uplcom_set(void *addr, int portno, int reg, int onoff)
 		uplcom_rts(sc, onoff);
 		break;
 	case UCOM_SET_BREAK:
-#if 0
 		uplcom_break(sc, onoff);
-#endif
 		break;
 	default:
 		break;
@@ -362,7 +358,6 @@ uplcom_dtr(struct uplcom_softc *sc, int onoff)
 void
 uplcom_rts(struct uplcom_softc *sc, int onoff)
 {
-
 	DPRINTF(("uplcom_rts: onoff=%d\n", onoff));
 
 	if (sc->sc_rts == onoff)
@@ -370,6 +365,22 @@ uplcom_rts(struct uplcom_softc *sc, int onoff)
 	sc->sc_rts = onoff;
 
 	uplcom_set_line_state(sc);
+}
+
+void
+uplcom_break(struct uplcom_softc *sc, int onoff)
+{
+	usb_device_request_t req;
+
+	DPRINTF(("uplcom_break: onoff=%d\n", onoff));
+
+	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+	req.bRequest = UCDC_SEND_BREAK;
+	USETW(req.wValue, onoff ? UCDC_BREAK_ON : UCDC_BREAK_OFF);
+	USETW(req.wIndex, sc->sc_iface_number);
+	USETW(req.wLength, 0);
+
+	(void)usbd_do_request(sc->sc_udev, &req, 0);
 }
 
 usbd_status
