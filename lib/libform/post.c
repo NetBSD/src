@@ -1,4 +1,4 @@
-/*	$NetBSD: post.c,v 1.1 2000/12/17 12:04:30 blymn Exp $	*/
+/*	$NetBSD: post.c,v 1.2 2001/01/04 12:30:37 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -67,6 +67,16 @@ post_form(FORM *form)
 			return E_SYSTEM_ERROR;
 
 	}
+	
+#ifdef DEBUG
+	if (dbg == NULL) {
+		dbg = fopen("___form_dbg.out", "w");
+		if (dbg == NULL) {
+			fprintf(stderr, "Cannot open debug file!\n");
+			return E_SYSTEM_ERROR;
+		}
+	}
+#endif
 	
 	form->in_init = 1;
 	if (form->form_init != NULL)

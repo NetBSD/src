@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.1 2000/12/17 12:04:30 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.2 2001/01/04 12:30:37 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -83,7 +83,7 @@ _formi_create_field(FIELD *, int, int, int, int, int, int);
  * Set the userptr for the field
  */
 int
-set_field_userptr(FIELD *field, char *ptr)
+set_field_userptr(FIELD *field, void *ptr)
 {
 	FIELD *fp = (field == NULL) ? &_formi_default_field : field;
 
@@ -96,7 +96,7 @@ set_field_userptr(FIELD *field, char *ptr)
  * Return the userptr for the field.
  */
 
-char *
+void *
 field_userptr(FIELD *field)
 {
 	if (field == NULL)

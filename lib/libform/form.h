@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.1 2000/12/17 12:04:30 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.2 2001/01/04 12:30:37 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -270,7 +270,7 @@ int field_pad(FIELD *);
 int field_status(FIELD *);
 Form_Hook field_term(FORM *);
 FIELDTYPE *field_type(FIELD *);
-char *field_userptr(FIELD *);
+void *field_userptr(FIELD *);
 int form_driver(FORM *, int);
 FIELD **form_fields(FORM *);
 Form_Hook form_init(FORM *);
@@ -280,7 +280,7 @@ int form_opts_on(FORM *, Form_Options);
 int form_page(FORM *);
 WINDOW *form_sub(FORM *);
 Form_Hook form_term(FORM *);
-char *form_userptr(FORM *);
+void *form_userptr(FORM *);
 WINDOW *form_win(FORM *);
 int free_field(FIELD *);
 int free_fieldtype(FIELDTYPE *);
@@ -307,7 +307,7 @@ int set_field_pad(FIELD *, int);
 int set_field_status(FIELD *, int);
 int set_field_term(FORM *, Form_Hook);
 int set_field_type(FIELD *, FIELDTYPE *, ...);
-int set_field_userptr(FIELD *, char *);
+int set_field_userptr(FIELD *, void *);
 int set_fieldtype_arg(FIELDTYPE *, char *(*)(va_list *),
 			   char *(*)(char *),
 			   void (*)(char *));
@@ -319,7 +319,7 @@ int set_form_opts(FORM *, Form_Options);
 int set_form_page(FORM *, int);
 int set_form_sub(FORM *, WINDOW *);
 int set_form_term(FORM *, Form_Hook);
-int set_form_userptr(FORM *, char *);
+int set_form_userptr(FORM *, void *);
 int set_form_win(FORM *, WINDOW *);
 int set_max_field(FIELD *, int);
 int set_new_page(FIELD *, int);

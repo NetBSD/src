@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.h,v 1.1 2000/12/17 12:04:30 blymn Exp $	*/
+/*	$NetBSD: internals.h,v 1.2 2001/01/04 12:30:37 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -29,10 +29,15 @@
  *
  */
 
+#include <stdio.h>
 #include "form.h"
 
 #ifndef FORMI_INTERNALS_H
 #define FORMI_INTERNALS_H 1
+
+#ifdef DEBUG
+extern FILE *dbg;
+#endif
 
 /* direction definitions for _formi_pos_new_field */
 #define _FORMI_BACKWARD 1

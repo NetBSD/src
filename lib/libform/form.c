@@ -1,4 +1,4 @@
-/*	$NetBSD: form.c,v 1.1 2000/12/17 12:04:30 blymn Exp $	*/
+/*	$NetBSD: form.c,v 1.2 2001/01/04 12:30:37 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -154,7 +154,7 @@ scale_form(FORM *form, int *rows, int *cols)
  * Set the user defined pointer for the form given.
  */
 int
-set_form_userptr(FORM *form, char *ptr)
+set_form_userptr(FORM *form, void *ptr)
 {
 	if (form == NULL)
 		_formi_default_form.userptr = ptr;
@@ -167,7 +167,7 @@ set_form_userptr(FORM *form, char *ptr)
 /*
  * Return the user defined pointer associated with the given form.
  */
-char *
+void *
 form_userptr(FORM *form)
 {
 
@@ -577,7 +577,7 @@ pos_form_cursor(FORM *form)
 	row = cur->form_row + cur->cursor_ypos;
 	col = cur->form_col + cur->cursor_xpos;
 #ifdef DEBUG
-	fprintf(stderr, "pos_cursor: row=%d, col=%d\n", row, col);
+	fprintf(dbg, "pos_cursor: row=%d, col=%d\n", row, col);
 #endif
 	
 	wmove(form->subwin, row, col);
