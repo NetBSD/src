@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.21 1996/07/20 18:56:59 ragge Exp $
+#       $NetBSD: files.vax,v 1.22 1996/08/20 14:05:20 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -14,6 +14,9 @@ attach	backplane at root
 device	sbi { tr=-1 }
 attach	sbi at backplane
 file	arch/vax/vax/sbi.c		sbi needs-flag
+
+device	cmi { tr=-1 }
+attach	cmi at backplane
 
 device	bi { node=-1 }
 attach	bi at backplane
@@ -31,10 +34,11 @@ device	mem
 attach	mem at backplane with mem_backplane
 attach	mem at bi with mem_bi
 attach	mem at sbi with mem_sbi
-
+attach	mem at cmi with mem_cmi
 
 device	mba { drive = -1 }
-attach	mba at sbi
+attach	mba at sbi with mba_sbi
+attach	mba at cmi with mba_cmi
 file	arch/vax/mba/mba.c		mba needs-flag
 
 device  hp: disk
@@ -57,16 +61,17 @@ attach	kdb at bi
 file	arch/vax/bi/kdb.c		kdb
 
 device	uba { csr }
-attach	uba at sbi, bi
+attach	uba at backplane with uba_backplane
+attach	uba at sbi with uba_sbi
+attach	uba at cmi with uba_cmi
+attach	uba at bi with uba_bi
 file	arch/vax/uba/uba.c		uba
-
-device	uda: mscp
-attach	uda at uba
-file    arch/vax/uba/uda.c		uda
 
 device	mtc: mscp
 attach	mtc at uba
-file	arch/vax/uba/mtc.c		mtc
+device	uda: mscp
+attach	uda at uba
+file    arch/vax/uba/uda.c		uda | mtc
 
 device	de:ifnet, ether
 attach	de at uba
@@ -76,6 +81,11 @@ file	arch/vax/if/if_de.c		de
 device	qe:ifnet, ether
 attach	qe at uba
 file	arch/vax/if/if_qe.c		qe
+
+# DEBNA/DEBNT Ethernet Adapter
+device	ni:ifnet, ether
+attach	ni at bi
+file	arch/vax/bi/ni.c		ni
 
 # TS11 at UBA
 device	ts
@@ -314,7 +324,7 @@ file	arch/vax/vax/autoconf.c
 file	arch/vax/vax/random.s		inet
 file	arch/vax/vax/in_cksum.c		inet
 file	arch/vax/vax/ns_cksum.c		ns
-file	arch/vax/vax/disksubr.c		ffs
+file	arch/vax/vax/disksubr.c		disk | tape
 file	arch/vax/if/if_uba.c		de | qe
 file	arch/vax/vax/db_machdep.c	ddb
 file	arch/vax/vax/db_disasm.c	ddb
