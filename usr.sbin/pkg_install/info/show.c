@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.12 1999/03/04 01:45:22 hubertf Exp $	*/
+/*	$NetBSD: show.c,v 1.13 1999/05/15 03:27:50 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.12 1999/03/04 01:45:22 hubertf Exp $");
+__RCSID("$NetBSD: show.c,v 1.13 1999/05/15 03:27:50 hubertf Exp $");
 #endif
 #endif
 
@@ -81,7 +81,7 @@ static show_t	showv[] = {
 	{	PLIST_IGNORE,	NULL,	NULL },
 	{	PLIST_NAME,	"@name %s",	"\tPackage name: %s" },
 	{	PLIST_UNEXEC,	"@unexec %s",	"\tUNEXEC '%s'" },
-	{	PLIST_SRC,	"@srcdir: %s",	"\tSRCDIR to: %s" },
+	{	PLIST_SRC,	"@src: %s",	"\tSRC to: %s" },
 	{	PLIST_DISPLAY,	"@display %s",	"\tInstall message file: %s" },
 	{	PLIST_PKGDEP,	"@pkgdep %s",	"\tPackage depends on: %s" },
 	{	PLIST_MTREE,	"@mtree %s",	"\tPackage mtree file: %s" },
