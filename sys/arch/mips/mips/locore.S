@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.111 2000/07/25 17:56:05 jeffs Exp $	*/
+/*	$NetBSD: locore.S,v 1.112 2000/08/09 23:03:24 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -834,11 +834,12 @@ END(copyerr)
 LEAF(fuswintr)
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(fswintrberr)
+	lw	a2, U_PCB_ONFAULT(v1)
 	blt	a0, zero, _C_LABEL(fswintrberr)
 	sw	v0, U_PCB_ONFAULT(v1)
 	lhu	v0, 0(a0)			# fetch short
 	j	ra
-	sw	zero, U_PCB_ONFAULT(v1)
+	sw	a2, U_PCB_ONFAULT(v1)
 END(fuswintr)
 
 /*
@@ -849,10 +850,11 @@ END(fuswintr)
 LEAF(suswintr)
 	lw	v1, _C_LABEL(curpcb)
 	la	v0, _C_LABEL(fswintrberr)
+	lw	a2, U_PCB_ONFAULT(v1)
 	blt	a0, zero, _C_LABEL(fswintrberr)
 	sw	v0, U_PCB_ONFAULT(v1)
 	sh	a1, 0(a0)			# store short
-	sw	zero, U_PCB_ONFAULT(v1)
+	sw	a2, U_PCB_ONFAULT(v1)
 	j	ra
 	move	v0, zero
 END(suswintr)
@@ -999,7 +1001,12 @@ END(badaddr)
  */
 LEAF(fswintrberr)
 	nop
-XLEAF(fswberr)
+	sw	a2, U_PCB_ONFAULT(v1)
+	j	ra
+	li	v0, -1
+END(fswintrberr)
+
+LEAF(fswberr)
 XLEAF(baderr)
 	sw	zero, U_PCB_ONFAULT(v1)
 	j	ra
