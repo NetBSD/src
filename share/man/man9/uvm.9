@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.21 2001/05/06 04:46:54 gmcgarry Exp $
+.\"	$NetBSD: uvm.9,v 1.22 2001/05/12 17:10:05 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -98,8 +98,9 @@ created.
 initialises the uvmexp members pagesize (if not already done by
 machine-dependent code), pageshift and pagemask.  It should be called by
 machine-dependent code early in the
-.Xr pmap_init 9
-call.
+.Fn pmap_init
+call (see
+.Xr pmap 9 ) .
 .Pp
 .Fn uvm_swap_init
 initialises the swap sub-system.
