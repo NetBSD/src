@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.16.4.5 1999/07/31 19:01:33 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.16.4.6 1999/08/02 23:37:04 thorpej Exp $	*/
 
 /*
  *
@@ -498,10 +498,8 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 ReTry:
 	if (uobj) {
 		/* object is locked */
-		simple_lock_assert(&uobj->vmobjlock, SLOCK_LOCKED);
 		result = uobj->pgops->pgo_put(uobj, ppsp, *npages, flags);
 		/* object is now unlocked */
-		simple_lock_assert(&uobj->vmobjlock, SLOCK_UNLOCKED);
 	} else {
 		/* nothing locked */
 		result = uvm_swap_put(swblk, ppsp, *npages, flags);
