@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.120 2002/09/27 15:37:19 provos Exp $	*/
+/*	$NetBSD: tulip.c,v 1.121 2002/10/08 15:05:35 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.120 2002/09/27 15:37:19 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.121 2002/10/08 15:05:35 minoura Exp $");
 
 #include "bpfilter.h"
 
@@ -4976,6 +4976,15 @@ tlp_2114x_isv_tmsw_init(sc)
 		case TULIP_CHIP_21140A:
 			/* XXX should come from SROM */
 			defmedia = IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, 0);
+			if (ifmedia_match(&sc->sc_mii.mii_media, defmedia,
+				sc->sc_mii.mii_media.ifm_mask) == NULL) {
+				/*
+				 * There is not a 10baseT media.
+				 * Fall back to the first found one.
+				 */
+				ife = TAILQ_FIRST(&sc->sc_mii.mii_media.ifm_list);
+				defmedia = ife->ifm_media;
+			}
 			break;
 
 		case TULIP_CHIP_21142:
