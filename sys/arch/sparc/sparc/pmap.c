@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 1994/12/14 06:59:20 deraadt Exp $ */
+/*	$NetBSD: pmap.c,v 1.26 1995/01/09 08:58:34 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -2791,37 +2791,6 @@ kvm_uncache(va, npages)
 		setpte(va, pte);
 		cache_flush_page((int)va);
 	}
-}
-
-/*
- * For /dev/mem.
- */
-int
-pmap_enter_hw(pm, va, pa, prot, wired)
-	register struct pmap *pm;
-	vm_offset_t va, pa;
-	vm_prot_t prot;
-	int wired;
-{
-	register struct memarr *ma;
-	register int n;
-	register u_int t;
-
-	if (pa >= MAXMEM)				/* ??? */
-		return (EFAULT);
-	for (ma = pmemarr, n = npmemarr; --n >= 0; ma++) {
-		t = (u_int)pa - ma->addr;
-		if (t < ma->len)
-			goto ok;
-	}
-	return (EFAULT);
-ok:
-	pa = (HWTOSW(atop(pa)) << PGSHIFT) | (pa & PGOFSET);
-	if (pa >= vm_first_phys + vm_num_phys)		/* ??? */
-		return (EFAULT);
-
-	pmap_enter(pm, va, pa, prot, wired);
-	return (0);
 }
 
 int

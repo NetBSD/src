@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4 1994/12/06 08:34:10 deraadt Exp $ */
+/*	$NetBSD: mem.c,v 1.5 1995/01/09 08:58:32 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,31 +58,31 @@
 
 #include <vm/vm.h>
 
+caddr_t zeropage;
+
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
 	int flags;
 {
-	register struct iovec *iov;
-	register caddr_t va;
 	register int o;
-	register u_int c;
+	register u_int c, v;
+	register struct iovec *iov;
 	int error = 0;
-	caddr_t zbuf = NULL;
 	extern caddr_t vmempage;
-	static struct {
-		int	locked;
-		int	wanted;
-	} physlock;
+	static int physlock;
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmempage */
-		while (physlock.locked) {
-			physlock.wanted = 1;
-			(void)tsleep((caddr_t)&physlock, PZERO, "mmrw", 0);
+		while (physlock > 0) {
+			physlock++;
+			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
+			    "mmrw", 0);
+			if (error)
+				return (error);
 		}
-		physlock.locked = 1;
+		physlock = 1;
 	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -97,35 +97,29 @@ mmrw(dev, uio, flags)
 
 /* minor device 0 is physical memory */
 		case 0:
-			o = uio->uio_offset;
-			va = vmempage;
-			if (pmap_enter_hw(kernel_pmap, (vm_offset_t)va, 
-			    (vm_offset_t)trunc_page(o), 
-			    uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, 1)) {
-				error = EFAULT;
-				goto unlock;
-			}
+			v = uio->uio_offset;
+			pmap_enter(kernel_pmap, (vm_offset_t)vmempage,
+			    trunc_page(v), uio->uio_rw == UIO_READ ?
+			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = (int)uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (u_int)(NBPG - o));
-			error = uiomove(&va[o], (int)c, uio);
-			pmap_remove(kernel_pmap,
-			    (vm_offset_t)va, (vm_offset_t)va + PAGE_SIZE);
+			error = uiomove((caddr_t)vmempage + o, (int)c, uio);
+			pmap_remove(kernel_pmap, (vm_offset_t)vmempage,
+			    (vm_offset_t)vmempage + NBPG);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
-			va = (caddr_t)(int)uio->uio_offset;
-			if (va >= (caddr_t)MSGBUF_VA &&
-			    va < ((caddr_t)MSGBUF_VA)+NBPG) {
+			v = uio->uio_offset;
+			if (v >= MSGBUF_VA && v < MSGBUF_VA+NBPG) {
 				c = min(iov->iov_len, 4096);
 			} else {
 				c = min(iov->iov_len, MAXPHYS);
-				if (!kernacc(va, c,
-				uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+				if (!kernacc((caddr_t)v, c,
+				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 					return (EFAULT);
 			}
-			error = uiomove(va, (int)c, uio);
+			error = uiomove(v, (int)c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
@@ -139,16 +133,16 @@ mmrw(dev, uio, flags)
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
-				uio->uio_resid = 0;
-				return (0);
+				c = iov->iov_len;
+				break;
 			}
-			if (zbuf == NULL) {	/* XXX grot */
-				zbuf = (caddr_t)malloc(CLBYTES,
-				    M_TEMP, M_WAITOK);
-				bzero(zbuf, CLBYTES);
+			if (zeropage == NULL) {
+				zeropage = (caddr_t)
+				    malloc(CLBYTES, M_TEMP, M_WAITOK);
+				bzero(zeropage, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zbuf, (int)c, uio);
+			error = uiomove(zeropage, (int)c, uio);
 			continue;
 
 		default:
@@ -161,13 +155,10 @@ mmrw(dev, uio, flags)
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
 	}
-	if (zbuf)
-		free(zbuf, M_TEMP);
 	if (minor(dev) == 0) {
-unlock:
-		physlock.locked = 0;
-		if (physlock.wanted)
+		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
+		physlock = 0;
 	}
 	return (error);
 }
