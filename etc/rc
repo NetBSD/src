@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.103 1998/04/07 04:47:33 mrg Exp $
+#	$NetBSD: rc,v 1.104 1998/06/21 16:38:38 tron Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -271,8 +271,8 @@ if checkyesno amd; then
 	if [ -d "$amd_dir" ]; then
 		if [ -r "$amd_master" ]; then
 			echo -n ' amd'
-			amd $amd_flags -p -a $amd_dir `cat $amd_master` \
-			    > /var/run/amd.pid
+			amd $amd_flags -p -a $amd_dir \
+			`sed s/#.*$// <$amd_master`  >/var/run/amd.pid
 		else
 			echo
 			logger -s "WARNING: \$amd_master ($amd_master)not " \
