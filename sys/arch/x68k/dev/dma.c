@@ -1,7 +1,7 @@
-/*	$NetBSD: dma.c,v 1.3 1998/05/24 19:32:48 is Exp $	*/
+/*	$NetBSD: dma.c,v 1.4 1998/08/15 03:02:44 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *

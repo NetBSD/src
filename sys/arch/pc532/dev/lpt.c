@@ -1,9 +1,9 @@
-/*	$NetBSD: lpt.c,v 1.26 1998/07/05 00:51:13 jonathan Exp $	*/
+/*	$NetBSD: lpt.c,v 1.27 1998/08/15 03:02:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
  * Copyright (c) 1994 Poul-Henning Kamp
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
  * All rights reserved.
  *

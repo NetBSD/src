@@ -1,9 +1,9 @@
-/*	$NetBSD: seagate.c,v 1.27 1998/06/09 07:25:06 thorpej Exp $	*/
+/*	$NetBSD: seagate.c,v 1.28 1998/08/15 03:02:32 mycroft Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
  *
- * Copyright 1994, Charles Hannum (mycroft@ai.mit.edu)
+ * Copyright 1994, Charles M. Hannum (mycroft@ai.mit.edu)
  * Copyright 1994, Kent Palmkvist (kentp@isy.liu.se)
  * Copyright 1994, Robert Knier (rknier@qgraph.com) 
  * Copyright 1992, 1994 Drew Eckhardt (drew@colorado.edu)
