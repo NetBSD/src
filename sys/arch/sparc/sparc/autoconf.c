@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.149 2001/05/26 10:22:32 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.150 2001/06/26 19:37:54 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1265,6 +1265,8 @@ makememarr(ap, max, which)
 
 	case PROM_OPENFIRM:
 		node = OF_finddevice("/memory");
+		if (node == -1)
+		    node = 0;
 
 	case_common:
 		if (node == 0)
