@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.40 2003/07/26 15:04:41 mrg Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.41 2003/09/24 09:55:35 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -201,11 +201,21 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 		} else
 #endif
 		if (ELF_ST_TYPE(sym->st_info) == STT_FUNC &&
-		    sym->st_value != 0) {
+		    sym->st_value != 0 && sym->st_shndx == SHN_UNDEF) {
 			/*
 			 * If there are non-PLT references to the function,
 			 * st_value should be 0, forcing us to resolve the
 			 * address immediately.
+			 *
+			 * XXX DANGER WILL ROBINSON!
+			 * The linker is not outputting PLT slots for calls to
+			 * functions that are defined in the same shared
+			 * library.  This is a bug.  For now, if there is a
+			 * definition, we fail the test above and do not do
+			 * lazy binding for this GOT slot.  Unfortunately, a
+			 * similar problem also seems to happen with references
+			 * to data items, and we can't fix that here.
+			 * - mycroft, 2003/09/24
 			 */
 			*got = sym->st_value + (Elf_Addr)obj->relocbase;
 		} else if (sym->st_info == ELF_ST_INFO(STB_GLOBAL, STT_SECTION)) {
