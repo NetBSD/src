@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.53 2000/07/22 05:03:23 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.54 2000/07/26 11:48:50 ragge Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -178,7 +178,17 @@ SCBENTRY(mcheck)
 	rei
 
 L4:	addl2	(sp)+,sp	# remove info pushed on stack
-	cmpl	_C_LABEL(vax_cputype),$1 # Is it a 11/780?
+	pushr	$0x3f		# save regs for clobbering
+	movl	_C_LABEL(dep_call),r0	# get cpu-specific mchk handler
+	tstl	BADADDR(r0)	# any handler available?
+	bneq	4f		# yep, call it
+	popr	$0x3f		# nope, restore regs
+	brb	0f		# continue
+4:	calls	$0,*BADADDR(r0)	# call machine-specific handler
+	popr	$0x3f		# restore regs
+	brb	2f
+
+0:	cmpl	_C_LABEL(vax_cputype),$1 # Is it a 11/780?
 	bneq	1f		# No...
 
 	mtpr	$0, $PR_SBIFS	# Clear SBI fault register

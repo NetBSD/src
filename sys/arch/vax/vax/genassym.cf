@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.23 2000/07/02 04:40:45 cgd Exp $
+#	$NetBSD: genassym.cf,v 1.24 2000/07/26 11:48:51 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -68,6 +68,7 @@ define	SSP		offsetof(struct pcb, SSP)
 
 define	MCHK		offsetof(struct cpu_dep, cpu_mchk)
 define	MEMERR		offsetof(struct cpu_dep, cpu_memerr)
+define	BADADDR		offsetof(struct cpu_dep, cpu_badaddr)
 
 define	KERNBASE	KERNBASE
 
