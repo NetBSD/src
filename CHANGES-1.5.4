@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.54 2002/09/19 18:54:18 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.55 2002/09/23 05:13:52 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1517,3 +1517,10 @@ lib/libkvm/kvm.c				1.72-1.75,1.77
 
   Set the close-on-exec bit on all file descriptors we open. Inspired by a
   FreeBSD security advisory.
+
+distrib/sets/lists/base/shl.elf			1.58 via patch
+distrib/sets/lists/base/shl.mi			1.173 via patch
+lib/libdes/shlib_version			1.4
+
+  Belatedly bump libdes shared library major number, due to bump of
+  libcrypto shared major when we moved from OpenSSL 0.9.5 to 0.9.6.
