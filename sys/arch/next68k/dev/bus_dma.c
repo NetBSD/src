@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.16 2000/06/29 07:58:50 mrg Exp $ */
+/* $NetBSD: bus_dma.c,v 1.17 2000/12/26 07:27:01 dbj Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16 2000/06/29 07:58:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.17 2000/12/26 07:27:01 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,7 +460,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 						"address=0x%08x, end=0x%08x, ops=0x%x",p,e,ops);
 			}
 #endif
-			while((p<e)&&(!p%NBPG)) {
+			while((p<e)&&(p%NBPG)) {
 				DCFL(p);							/* flush cache line */
 				p += 16;
 			}
@@ -492,7 +492,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 						"address=0x%08x, end=0x%08x, ops=0x%x", p,e,ops);
 			}
 #endif
-			while((p<e)&&(!p%NBPG)) {
+			while((p<e)&&(p%NBPG)) {
 				DCPL(p);							/* purge cache line */
 				p += 16;
 			}
