@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.24.4.7 2003/02/07 20:06:26 tron Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.24.4.8 2003/02/07 20:07:20 tron Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.7 2003/02/07 20:06:26 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.8 2003/02/07 20:07:20 tron Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -261,6 +261,12 @@ pppoe_clone_destroy(ifp)
 #endif
 	sppp_detach(&sc->sc_sppp.pp_if);
 	if_detach(ifp);
+	if (sc->sc_concentrator_name)
+		free(sc->sc_concentrator_name, M_DEVBUF);
+	if (sc->sc_service_name)
+		free(sc->sc_service_name, M_DEVBUF);
+	if (sc->sc_ac_cookie)
+		free(sc->sc_ac_cookie, M_DEVBUF);
 	free(sc, M_DEVBUF);
 }
 
@@ -515,6 +521,8 @@ breakbreak:;
 			goto done;
 		}
 		if (ac_cookie) {
+			if (sc->sc_ac_cookie)
+				free(sc->sc_ac_cookie, M_DEVBUF);
 			sc->sc_ac_cookie = malloc(ac_cookie_len, M_DEVBUF,
 			    M_DONTWAIT);
 			if (sc->sc_ac_cookie == NULL)
@@ -556,7 +564,7 @@ breakbreak:;
 		sc->sc_state = PPPOE_STATE_INITIAL;
 		memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
 		if (sc->sc_ac_cookie) {
-			free(sc->sc_ac_cookie, M_MBUF);
+			free(sc->sc_ac_cookie, M_DEVBUF);
 			sc->sc_ac_cookie = NULL;
 		}
 		sc->sc_ac_cookie_len = 0;
@@ -993,7 +1001,7 @@ pppoe_disconnect(struct pppoe_softc *sc)
 	sc->sc_state = PPPOE_STATE_INITIAL;
 	memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
 	if (sc->sc_ac_cookie) {
-		free(sc->sc_ac_cookie, M_MBUF);
+		free(sc->sc_ac_cookie, M_DEVBUF);
 		sc->sc_ac_cookie = NULL;
 	}
 	sc->sc_ac_cookie_len = 0;
