@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.7.6.3 1999/01/31 05:40:36 minoura Exp $
+#	$NetBSD: INSTALL,v 1.7.6.4 1999/02/02 23:46:43 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -181,7 +181,9 @@ options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 #### Device configurations
 
 ## Fundamental devices; see also std.x68k
+dmac0	at intio0 addr 0xe84000		# DMA controler
 xel0	at intio0
+opm0	at intio0 addr 0xe90000		# OPM: required for fdc
 
 ## Display devices and console
 grfbus0	at mainbus0			# bitmapped displays
@@ -195,8 +197,7 @@ ite0	at grf0				# internal terminal emulator
 pseudo-device	pow		2	#! software power switch
 
 ## floppy disks
-#!fdc0	at intio0 addr 0xe92000 intr 96 dma 0
-fdc0	at mainbus0			#! floppy controller
+fdc0	at intio0 addr 0xe94000 intr 96 dma 0 dmaintr 100 # floppy controler
 fd*	at fdc0 unit ?			# builtin floppy drives
 
 ## SCSI devices
