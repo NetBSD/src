@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.3 2001/04/22 13:00:24 jdolecek Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.4 2001/04/22 20:00:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
  * for MCA rev. 2.2 in hands, thanks to Scott Telford <st@epcc.ed.ac.uk>.
  *
  * TODO:
+ * - finish support for kernel memory crash dump
  * - move the MCA DMA controller (edc_setup_dma()) goo to device driver
  *   independant location
  * - improve error recovery
@@ -116,8 +117,7 @@ struct cfattach edc_mca_ca = {
 
 static int	edc_intr __P((void *));
 static void	edc_attach_ed __P((struct device *));
-static void	edc_dump_status_block __P((struct edc_mca_softc *, int, int,
-			int));
+static void	edc_dump_status_block __P((struct edc_mca_softc *, int, int));
 static int	edc_setup_dma __P((struct edc_mca_softc *, struct buf *,
 			bus_addr_t, bus_size_t));
 static int	edc_do_attn __P((struct edc_mca_softc *, int, int, int));
@@ -439,7 +439,7 @@ edc_intr(arg)
 		break;
 	default:
 		if ((sc->sc_flags & DASD_QUIET) == 0)
-			edc_dump_status_block(sc, devno, cmd, intr_id);
+			edc_dump_status_block(sc, devno, intr_id);
 
 		bioerror = EIO;
 		break;
@@ -776,7 +776,7 @@ static const char * const edc_dev_errors[] = {
 	"Bad Format",
 	"Volume Overflow",
 	"No Data AM Found",
-	"(Block not found) No ID AM or ID CRC error occured",
+	"Block not found (No ID AM or ID CRC error occured)",
 	"Reserved",
 	"Reserved",
 	"No ID found on track (ID search)",
@@ -784,9 +784,9 @@ static const char * const edc_dev_errors[] = {
 };
 
 static void
-edc_dump_status_block(sc, devno, cmd, intr_id)
+edc_dump_status_block(sc, devno, intr_id)
 	struct edc_mca_softc *sc;
-	int devno, cmd, intr_id;
+	int devno, intr_id;
 {
 	struct ed_softc *ed = sc->sc_ed[devno];
 	printf("%s: Command: %s, Status: %s\n",
@@ -794,23 +794,35 @@ edc_dump_status_block(sc, devno, cmd, intr_id)
 		edc_commands[ed->sc_status_block[0] & 0x1f],
 		edc_cmd_status[SB_GET_CMD_STATUS(ed->sc_status_block)]
 		);
-	printf("%s: IntrId: %s\n", ed->sc_dev.dv_xname,
-		edc_cmd_status[intr_id]);
 	printf("%s: # left blocks: %u, last processed RBA: %u\n",
 		ed->sc_dev.dv_xname,
 		ed->sc_status_block[SB_RESBLKCNT_IDX],
-		(ed->sc_status_block[4] << 16) | ed->sc_status_block[5]);
+		(ed->sc_status_block[5] << 16) | ed->sc_status_block[4]);
 
-	if (cmd == ISR_COMPLETED_WARNING) {
+	if (intr_id == ISR_COMPLETED_WARNING) {
 		printf("%s: Command Error Code: %s\n",
 			ed->sc_dev.dv_xname,
 			edc_cmd_error[ed->sc_status_block[1] & 0xff]);
 	}
 
-	if (cmd == ISR_CMD_FAILED) {
-		printf("%s: Device: Status: %s, Error Code: %s\n",
+	if (intr_id == ISR_CMD_FAILED) {
+		char buf[100];
+
+		printf("%s: Device Error Code: %s\n",
 			ed->sc_dev.dv_xname,
-			edc_dev_status[(ed->sc_status_block[2] & 0xff00) >> 8],
 			edc_dev_errors[ed->sc_status_block[2] & 0xff]);
+		bitmask_snprintf((ed->sc_status_block[2] & 0xff00) >> 8,
+			"\20"
+			"\01SeekOrCmdComplete"
+			"\02Track0Flag"
+			"\03WriteFault"
+			"\04Selected"
+			"\05Ready"
+			"\06Reserved0"
+			"\07STANDBY"
+			"\010Reserved0",
+			buf, sizeof(buf));
+		printf("%s: Device Status: %s\n",
+			ed->sc_dev.dv_xname, buf);
 	}
 }
