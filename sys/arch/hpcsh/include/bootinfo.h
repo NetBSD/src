@@ -1,7 +1,7 @@
-/*	$NetBSD: bootinfo.h,v 1.1 2001/01/17 05:21:50 itojun Exp $	*/
-#ifndef _EVBSH3_BOOTINFO_H_
-#define _EVBSH3_BOOTINFO_H_
+/*	$NetBSD: bootinfo.h,v 1.2 2001/01/28 03:31:30 uch Exp $	*/
+#ifndef _HPCSH_BOOTINFO_H_
+#define _HPCSH_BOOTINFO_H_
 
 #include <sh3/bootinfo.h>
 
-#endif /* _EVBSH3_BOOTINFO_H_ */
+#endif /* _HPCSH_BOOTINFO_H_ */
