@@ -1,6 +1,6 @@
 #ifndef lint
 #ifndef NOID
-static char	elsieid[] = "@(#)strftime.c	7.62";
+static char	elsieid[] = "@(#)strftime.c	7.64";
 /*
 ** Based on the UCB version with the ID appearing below.
 ** This is ANSIish only when "multibyte character == plain character".
@@ -531,7 +531,7 @@ label:
 				if (t->tm_isdst == 0)
 #ifdef USG_COMPAT
 					diff = -timezone;
-#else /* defined USG_COMPAT */
+#else /* !defined USG_COMPAT */
 					continue;
 #endif /* !defined USG_COMPAT */
 				else
@@ -603,7 +603,6 @@ _loc P((void))
 	static const char	locale_home[] = LOCALE_HOME;
 	static const char	lc_time[] = "LC_TIME";
 	static char *		locale_buf;
-	static char		locale_buf_C[] = "C";
 
 	int			fd;
 	int			oldsun;	/* "...ain't got nothin' to do..." */
@@ -641,8 +640,8 @@ _loc P((void))
 	** Slurp the locale file into the cache.
 	*/
 	namesize = strlen(name) + 1;
-	if (sizeof(filename) <
-		sizeof(locale_home) + namesize + sizeof(lc_time))
+	if (sizeof filename  <
+		((sizeof locale_home) + namesize + (sizeof lc_time)))
 			goto no_locale;
 	oldsun = 0;
 	(void) sprintf(filename, "%s/%s/%s", locale_home, name, lc_time);
@@ -664,8 +663,7 @@ _loc P((void))
 		goto bad_locale;
 	bufsize = namesize + st.st_size;
 	locale_buf = NULL;
-	lbuf = (lbuf == NULL || lbuf == locale_buf_C) ?
-		malloc(bufsize) : realloc(lbuf, bufsize);
+	lbuf = (lbuf == NULL) ?  malloc(bufsize) : realloc(lbuf, bufsize);
 	if (lbuf == NULL)
 		goto bad_locale;
 	(void) strcpy(lbuf, name);
@@ -714,7 +712,7 @@ bad_locale:
 	(void) close(fd);
 no_locale:
 	localebuf = C_time_locale;
-	locale_buf = locale_buf_C;
+	locale_buf = NULL;
 	return &localebuf;
 }
 #endif /* defined LOCALE_HOME */
