@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.60 2000/01/12 10:29:35 joda Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.61 2000/01/24 22:31:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.60 2000/01/12 10:29:35 joda Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.61 2000/01/24 22:31:27 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1147,7 +1147,7 @@ get_media_options(type, val)
 		if (option == -1)
 			errx(1, "unknown %s media option: %s",
 			    get_media_type_string(type), str);
-		rval |= option;
+		rval |= IFM_OPTIONS(option);
 	}
 
 	free(optlist);
