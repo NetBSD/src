@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.36 1998/05/06 01:21:23 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.37 1998/05/07 01:30:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ tcp_slowtimo()
 		if (tp == 0 || tp->t_state == TCPS_LISTEN)
 			continue;
 		for (i = 0; i < TCPT_NTIMERS; i++) {
-			if (TCP_TIMER_ISFIRING(tp, i)) {
+			if (TCP_TIMER_ISEXPIRED(tp, i)) {
 				(void) tcp_usrreq(tp->t_inpcb->inp_socket,
 				    PRU_SLOWTIMO, (struct mbuf *)0,
 				    (struct mbuf *)i, (struct mbuf *)0,
@@ -189,7 +189,7 @@ tpgone:
 #endif
 	tcp_now++;					/* for timestamps */
 	if (++syn_cache_last >= tcp_syn_cache_interval) {
-		syn_cache_timer(syn_cache_last);
+		syn_cache_timer();
 		syn_cache_last = 0;
 	}
 	splx(s);
