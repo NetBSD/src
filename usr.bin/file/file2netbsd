@@ -1,6 +1,6 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: file2netbsd,v 1.10 2001/09/09 10:48:34 pooka Exp $
+#	$NetBSD: file2netbsd,v 1.11 2002/03/24 22:22:03 pooka Exp $
 #
 #  Perl script to convert a standard distribution directory for file into
 #	a NetBSD source tree.
@@ -8,7 +8,7 @@
 #  This is done as a script so that as each distribution is released,
 #	only changes from the previous one need to be dealt with as
 #	modifications to this script and related files.  This should
-#	reduce the cost of updating from a new release of xntp by an
+#	reduce the cost of updating from a new release of file by an
 #	order of magnitude (or more?)
 #
 #  This script requires two environment variables set:
@@ -25,7 +25,7 @@ $version = "3.37";
 @subdirs = ("usr.bin/file", "usr.bin/file/magdir");
 
 
-@filef = ("LEGAL.NOTICE", "MAINT", "magic.mime",
+@filef = ("LEGAL.NOTICE", "MAINT",
 	  "README", "apprentice.c", "ascmagic.c",
 	  "compress.c", "file.c", "file.h", "fsmagic.c",
 	  "is_tar.c", "names.h", "patchlevel.h",
@@ -176,6 +176,7 @@ print "Populating the usr.bin/file directory.\n";
 &copyfiles ("$srcdir", "$targetdir/usr.bin/file", @filef);
 &copyfile("$srcdir/file.man", "$targetdir/usr.bin/file/file.1");
 &copyfile("$srcdir/magic.man", "$targetdir/usr.bin/file/magic.5");
+&copyfile("$srcdir/magic.mime", "$targetdir/usr.bin/file/magic.mime.in");
 system("cat $srcdir/Header > $targetdir/usr.bin/file/Header");
 system("cat $srcdir/Localstuff > $targetdir/usr.bin/file/Localstuff");
 
