@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: modf.s,v 1.3 92/06/20 00:00:54 torek Exp
- * $Id: modf.S,v 1.1 1993/10/07 00:21:37 cgd Exp $
+ * $Id: modf.S,v 1.2 1993/12/08 18:33:43 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -99,7 +99,7 @@ ENTRY(modf)
 	 * and then set up the fpu registers.  This would be
 	 * much easier if we could do alu operations on fpu registers!
 	 */
-	sethi	0x80000000, %l1		! sign bit
+	sethi	%hi(0x80000000), %l1	! sign bit
 	andn	%i0, %l1, %l0
 	st	%l0, [%fp - 16]
 	sethi	%hi(Lmagic), %l0
