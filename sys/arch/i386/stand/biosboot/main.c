@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1997/04/13 18:44:39 perry Exp $	*/
+/*	$NetBSD: main.c,v 1.5 1997/04/13 19:10:00 perry Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -428,7 +428,7 @@ main()
 		printf("starting in %d\b", TIMEOUT);
 
 		c = awaitkey(TIMEOUT, 1);
-		if ((c != '\r') && (c != '\n'))
+		if ((c != '\r') && (c != '\n') && (c != '\0'))
 			bootmenu(); /* does not return */
 
 		printf("\n");
@@ -454,7 +454,7 @@ main()
 		    "starting in %d\b", TIMEOUT);
 
 		c = awaitkey(TIMEOUT, 1);
-		if ((c != '\r') && (c != '\n'))
+		if ((c != '\r') && (c != '\n') && (c != '\0'))
 			bootmenu(); /* does not return */
 
 		printf("\n");
