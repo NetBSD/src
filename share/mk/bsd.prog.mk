@@ -1,13 +1,16 @@
-#	$NetBSD: bsd.prog.mk,v 1.85 1997/05/26 03:58:41 cjs Exp $
+#	$NetBSD: bsd.prog.mk,v 1.85.2.1 1997/10/12 22:04:54 cjs Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
+.if !target(__initialized__)
+__initialized__:
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
-
 .include <bsd.own.mk>
-
+.include <bsd.obj.mk>
 .MAIN:		all
+.endif
+
 .PHONY:		cleanprog proginstall scriptsinstall
 realinstall:	proginstall scriptsinstall
 clean cleandir:	cleanprog
@@ -33,6 +36,7 @@ LIBCURSES?=	${BUILDDIR}/usr/lib/libcurses.a
 LIBDBM?=	${BUILDDIR}/usr/lib/libdbm.a
 LIBDES?=	${BUILDDIR}/usr/lib/libdes.a
 LIBEDIT?=	${BUILDDIR}/usr/lib/libedit.a
+LIBBFD?=	${BUILDDIR}/usr/lib/libbfd.a
 LIBGCC?=	${BUILDDIR}/usr/lib/libgcc.a
 LIBGNUMALLOC?=	${BUILDDIR}/usr/lib/libgnumalloc.a
 LIBKDB?=	${BUILDDIR}/usr/lib/libkdb.a
@@ -45,6 +49,7 @@ LIBNTP?=	${BUILDDIR}/usr/lib/libntp.a
 LIBPC?=		${BUILDDIR}/usr/lib/libpc.a
 LIBPCAP?=	${BUILDDIR}/usr/lib/libpcap.a
 LIBPLOT?=	${BUILDDIR}/usr/lib/libplot.a
+LIBPOSIX?=	${BUILDDIR}/usr/lib/libposix.a
 LIBRESOLV?=	${BUILDDIR}/usr/lib/libresolv.a
 LIBRPCSVC?=	${BUILDDIR}/usr/lib/librpcsvc.a
 LIBSKEY?=	${BUILDDIR}/usr/lib/libskey.a
@@ -181,18 +186,13 @@ lint: ${LOBJS}
 	@${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
 .endif
 
-.if !defined(NOMAN)
 .include <bsd.man.mk>
-.endif
-
-.if !defined(NONLS)
 .include <bsd.nls.mk>
-.endif
-
-.include <bsd.obj.mk>
 .include <bsd.files.mk>
 .include <bsd.inc.mk>
 .include <bsd.links.mk>
 .include <bsd.dep.mk>
-.include <bsd.subdir.mk>
 .include <bsd.sys.mk>
+
+# Make sure all of the standard targets are defined, even if they do nothing.
+regress:
