@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.7 2002/06/05 19:16:18 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.8 2002/06/05 21:59:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -497,7 +497,7 @@ XINTR(irq_num):								;\
 	jz	XSTRAY(irq_num)		/* no handlers; we're stray */	;\
 	STRAY_INITIALIZE		/* nobody claimed it yet */	;\
 	leaq	_C_LABEL(intrcnt)(%rip),%rdi				;\
-	incl	(4*(irq_num))(%rdi)	/* XXX */			;\
+	incq	(8*(irq_num))(%rdi)	/* XXX */			;\
 7:	movq	IH_ARG(%rbx),%rdi	/* get handler arg */		;\
 	testq	%rdi,%rdi						;\
 	jnz	4f							;\
@@ -515,7 +515,7 @@ XSTRAY_VEC(irq_num)							;\
 	movq	$irq_num,%rdi						;\
 	call	_C_LABEL(isa_strayintr)					;\
 	leaq	_C_LABEL(strayintrcnt)(%rip),%rdi			;\
-	incl	(4*(irq_num))(%rdi)					;\
+	incq	(8*(irq_num))(%rdi)					;\
 	jmp	5b							;\
 XHOLD_VEC(irq_num)							;\
 	leaq	_C_LABEL(ipending)(%rip),%rdi				;\
@@ -627,11 +627,11 @@ _C_LABEL(eintrnames):
 	.align 64
 
 _C_LABEL(intrcnt):
-	.long	0, 0, 0, 0, 0, 0, 0, 0
-	.long	0, 0, 0, 0, 0, 0, 0, 0
+	.quad	0, 0, 0, 0, 0, 0, 0, 0
+	.quad	0, 0, 0, 0, 0, 0, 0, 0
 _C_LABEL(strayintrcnt):
-	.long	0, 0, 0, 0, 0, 0, 0, 0
-	.long	0, 0, 0, 0, 0, 0, 0, 0
+	.quad	0, 0, 0, 0, 0, 0, 0, 0
+	.quad	0, 0, 0, 0, 0, 0, 0, 0
 _C_LABEL(eintrcnt):
 
 	.text
