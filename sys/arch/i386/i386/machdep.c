@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187 1996/02/09 17:15:27 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.188 1996/02/10 00:51:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1159,9 +1159,11 @@ struct queue {
  * insert an element into a queue
  */
 void
-_insque(elem, head)
-	register struct queue *elem, *head;
+_insque(v1, v2)
+	void *v1;
+	void *v2;
 {
+	register struct queue *elem = v1, *head = v2;
 	register struct queue *next;
 
 	next = head->q_next;
@@ -1175,9 +1177,10 @@ _insque(elem, head)
  * remove an element from a queue
  */
 void
-_remque(elem)
-	register struct queue *elem;
+_remque(v)
+	void *v;
 {
+	register struct queue *elem = v;
 	register struct queue *next, *prev;
 
 	next = elem->q_next;
