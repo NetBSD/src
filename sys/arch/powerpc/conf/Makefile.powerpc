@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.17 2001/10/23 18:57:33 thorpej Exp $
+#	$NetBSD: Makefile.powerpc,v 1.18 2001/10/23 19:26:46 thorpej Exp $
 #
 # Makefile for NetBSD
 #
@@ -17,6 +17,8 @@
 #
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
+
+MACHINE_ARCH=powerpc
 
 .include <bsd.own.mk>
 

@@ -1,6 +1,4 @@
-MACHTYPE=powerpc
-MACHINE_ARCH=powerpc
-MACHINE=amigappc
+#	$NetBSD: Makefile.amigappc,v 1.4 2001/10/23 19:26:42 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -14,8 +12,12 @@ MACHINE=amigappc
 #	/sys/arch/amiga/conf/Makefile.amiga
 # after which config should be rerun for all machines of that type.
 
+MACHINE_ARCH=powerpc
+
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
+
+MACHTYPE=powerpc
 
 AR=	/usr/pkg/cross/powerpc-netbsd/bin/ar
 AS=	/usr/pkg/cross/powerpc-netbsd/bin/as
