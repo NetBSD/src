@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.17 2004/06/10 12:11:19 seb Exp $	*/
+/*	$NetBSD: sab.c,v 1.18 2004/07/17 21:23:10 heas Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.17 2004/06/10 12:11:19 seb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.18 2004/07/17 21:23:10 heas Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -264,23 +264,23 @@ sab_attach(parent, self, aux)
 		return;
 	}
 
-	printf(": rev ");
+	aprint_normal(": rev ");
 	r = SAB_READ(sc, SAB_VSTR) & SAB_VSTR_VMASK;
 	switch (r) {
 	case SAB_VSTR_V_1:
-		printf("1");
+		aprint_normal("1");
 		break;
 	case SAB_VSTR_V_2:
-		printf("2");
+		aprint_normal("2");
 		break;
 	case SAB_VSTR_V_32:
-		printf("3.2");
+		aprint_normal("3.2");
 		break;
 	default:
-		printf("unknown(0x%x)", r);
+		aprint_normal("unknown(0x%x)", r);
 		break;
 	}
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Let current output drain */
 	DELAY(100000);
@@ -312,7 +312,7 @@ sab_print(args, name)
 
 	if (name)
 		aprint_normal("sabtty at %s", name);
-	aprint_normal(" port %d", sa->sbt_portno);
+	aprint_normal(" port %u", sa->sbt_portno);
 	return (UNCONF);
 }
 
@@ -380,7 +380,7 @@ sabtty_attach(parent, self, aux)
 
 	sc->sc_tty = ttymalloc();
 	if (sc->sc_tty == NULL) {
-		printf(": failed to allocate tty\n");
+		aprint_normal(": failed to allocate tty\n");
 		return;
 	}
 	tty_attach(sc->sc_tty);
@@ -406,11 +406,11 @@ sabtty_attach(parent, self, aux)
 		    SAB_CHAN_B, SAB_CHANLEN, &sc->sc_bh);
 		break;
 	default:
-		printf(": invalid channel: %u\n", sa->sbt_portno);
+		aprint_normal(": invalid channel: %u\n", sa->sbt_portno);
 		return;
 	}
 	if (r != 0) {
-		printf(": failed to allocate register subregion\n");
+		aprint_normal(": failed to allocate register subregion\n");
 		return;
 	}
 
@@ -451,18 +451,19 @@ sabtty_attach(parent, self, aux)
 		}
 
 		if (sc->sc_flags & SABTTYF_CONS_OUT) {
+			sabtty_tec_wait(sc);
 			sabtty_cons_output = sc;
 			cn_tab->cn_putc = sab_cnputc;
 			maj = cdevsw_lookup_major(&sabtty_cdevsw);
 			cn_tab->cn_dev = makedev(maj, self->dv_unit);
 		}
-		printf(": console %s", acc);
+		aprint_normal(": console %s", acc);
 	} else {
 		/* Not a console... */
 		sabtty_reset(sc);
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 int
