@@ -1,4 +1,4 @@
-/*	$NetBSD: rand.c,v 1.8 1998/11/15 17:13:51 christos Exp $	*/
+/*	$NetBSD: rand.c,v 1.9 1999/09/16 09:43:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rand.c	8.1 (Berkeley) 6/14/93";
 #else
-__RCSID("$NetBSD: rand.c,v 1.8 1998/11/15 17:13:51 christos Exp $");
+__RCSID("$NetBSD: rand.c,v 1.9 1999/09/16 09:43:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,7 +56,7 @@ rand()
 
 void
 srand(seed)
-u_int seed;
+	u_int seed;
 {
 	next = seed;
 }
