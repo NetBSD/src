@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.51 2000/02/22 03:38:42 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.52 2000/02/22 16:07:02 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -3035,7 +3035,7 @@ rf_auto_config_set(cset,unit)
 	*/
 
 	raidID = cset->ac->clabel->last_unit;
-	if (raidID >= numraid) {
+	if ((raidID < 0) || (raidID >= numraid)) {
 		/* let's not wander off into lala land. */
 		raidID = numraid - 1;
 	}
