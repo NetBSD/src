@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2002/01/12 12:21:09 manu Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 2002/01/12 12:24:17 manu Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.3 2002/01/12 12:21:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.4 2002/01/12 12:24:17 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -435,6 +435,7 @@ static int chrtoblktbl[] = {
 	/* 63 */	NODEV,
 	/* 64 */	NODEV,
 	/* 65 */	NODEV,
+	/* 66 */	NODEV,
 };
 
 /*
