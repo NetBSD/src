@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6.h,v 1.9 2000/07/13 05:34:21 itojun Exp $	*/
-/*	$KAME: ip6.h,v 1.9 2000/07/02 21:01:32 itojun Exp $	*/
+/*	$NetBSD: ip6.h,v 1.10 2000/10/10 16:26:44 itojun Exp $	*/
+/*	$KAME: ip6.h,v 1.14 2000/10/09 01:04:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -117,8 +117,8 @@ struct ip6_hdr {
  */
 
 struct	ip6_ext {
-	u_char	ip6e_nxt;
-	u_char	ip6e_len;
+	u_int8_t ip6e_nxt;
+	u_int8_t ip6e_len;
 };
 
 /* Hop-by-Hop options header */
