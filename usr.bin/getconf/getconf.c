@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.17 2002/08/05 06:24:23 tron Exp $	*/
+/*	$NetBSD: getconf.c,v 1.18 2002/08/05 06:35:44 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.17 2002/08/05 06:24:23 tron Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.18 2002/08/05 06:35:44 tron Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -84,7 +84,7 @@ const struct conf_variable conf_table[] =
   { "_POSIX_NAME_MAX",		CONSTANT,	_POSIX_NAME_MAX		},
   { "_POSIX_NGROUPS_MAX",	CONSTANT,	_POSIX_NGROUPS_MAX	},
   { "_POSIX_OPEN_MAX",		CONSTANT,	_POSIX_OPEN_MAX		},
-  { "_POSIX_PATH_MAX",		CONSTANT,	_POSIX_PATH_BUF		},
+  { "_POSIX_PATH_MAX",		CONSTANT,	_POSIX_PATH_MAX		},
   { "_POSIX_PIPE_BUF",		CONSTANT,	_POSIX_PIPE_BUF		},
   { "_POSIX_SSIZE_MAX",		CONSTANT,	_POSIX_SSIZE_MAX	},
   { "_POSIX_STREAM_MAX",	CONSTANT,	_POSIX_STREAM_MAX	},
