@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sipvar.h,v 1.1 2003/05/23 00:57:26 ichiro Exp $ */
+/*	$NetBSD: ixp425_sipvar.h,v 1.2 2003/06/01 01:49:56 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -51,6 +51,7 @@ struct ixpsip_attach_args {
 	bus_space_tag_t		sa_iot;		/* Bus tag */
 	bus_addr_t		sa_addr;	/* i/o address  */
 	bus_size_t		sa_size;
+	int			sa_index;
 	int			sa_intr;
 };
 

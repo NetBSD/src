@@ -1,4 +1,4 @@
-/*      $NetBSD: ixp425_comvar.h,v 1.2 2003/05/31 23:57:45 ichiro Exp $        */
+/*      $NetBSD: ixp425_comvar.h,v 1.3 2003/06/01 01:49:56 ichiro Exp $        */
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
  *
@@ -98,6 +98,16 @@ struct ixp4xx_com_softc {
 	int			enabled;
 };
 
+/*
+ * UART information
+ */
+struct uart_info {
+	const char		*name;
+	u_int32_t		hw_addr;
+	u_int32_t		v_addr;
+	u_int8_t		intr;
+}; 
+
 extern struct ixp4xx_com_softc* ixp4xx_com_sc;
 
 int	ixp4xx_comspeed(long, long);
@@ -106,6 +116,9 @@ void	ixp4xx_com_attach_subr(struct ixp4xx_com_softc *);
 
 int	ixp4xxcomintr(void* arg);
 
-int	ixp4xx_comcnattach(bus_space_tag_t, bus_addr_t, bus_space_handle_t, int, int, tcflag_t, char*);
+int	ixp4xx_comcnattach(bus_space_tag_t, const struct uart_info *,
+		int, int, tcflag_t);
+int	ixdp_ixp4xx_comcnattach(bus_space_tag_t, int, int, int, tcflag_t);
+
 
 #endif /* _IXP425_COMVAR_H_ */

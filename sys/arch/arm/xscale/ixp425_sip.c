@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sip.c,v 1.1 2003/05/23 00:57:25 ichiro Exp $ */
+/*	$NetBSD: ixp425_sip.c,v 1.2 2003/06/01 01:49:56 ichiro Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.1 2003/05/23 00:57:25 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.2 2003/06/01 01:49:56 ichiro Exp $");
 
 /*
  * Slow peripheral bus of IXP425 Processor
@@ -93,6 +93,7 @@ ixpsip_search(parent, cf, aux)
 	sa.sa_iot = sc->sc_iot;
 	sa.sa_addr = cf->cf_loc[IXPSIPCF_ADDR];
 	sa.sa_size = cf->cf_loc[IXPSIPCF_SIZE];
+	sa.sa_index = cf->cf_loc[IXPSIPCF_INDEX];
 	sa.sa_intr = cf->cf_loc[IXPSIPCF_INTR];
 
 	if (config_match(parent, cf, &sa) > 0)
@@ -112,6 +113,8 @@ ixpsip_print(aux, name)
 		aprint_normal(" addr 0x%lx", sa->sa_addr);
 	if (sa->sa_size > 1)
 		aprint_normal("-0x%lx", sa->sa_addr + sa->sa_size - 1);
+	if (sa->sa_index > 1)
+		aprint_normal(" index %d", sa->sa_index);
 	if (sa->sa_intr > 1)
 		aprint_normal(" intr %d", sa->sa_intr);
 

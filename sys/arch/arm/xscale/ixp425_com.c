@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_com.c,v 1.5 2003/05/31 23:57:45 ichiro Exp $ */
+/*	$NetBSD: ixp425_com.c,v 1.6 2003/06/01 01:49:56 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.5 2003/05/31 23:57:45 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.6 2003/06/01 01:49:56 ichiro Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1370,13 +1370,16 @@ struct consdev ixp4xx_comcons = {
 };
 
 int
-ixp4xx_comcnattach(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t ioh,
-	int rate, int frequency, tcflag_t cflag, char *name)
+ixp4xx_comcnattach(bus_space_tag_t iot, const struct uart_info *config,
+	int rate, int frequency, tcflag_t cflag)
 {
+
+	bus_addr_t iobase = config->hw_addr;
+	bus_space_handle_t ioh = config->v_addr;
+	char *name = (char *)config->name;
+	
 	int res;
-
 	res = ixp4xx_cominit(iot, ioh, rate, frequency, cflag);
-
 	if (res)
 		return (res);
 
