@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.23 2000/08/15 01:01:41 hubertf Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.24 2000/08/15 02:09:11 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -372,9 +372,9 @@ post_menu (struct menudesc *m)
 			selrow = cury;
 		} else
 			mvwaddstr (m->mw, cury, hasbox, " ");
-		if (! (m->mopt & MC_NOSHORTCUT)) {
+		if (!(m->mopt & MC_NOSHORTCUT)) {
 			(void) sprintf (optstr, "%c: ", opt_ch(i));
-			waddstr (m->mw, optstr);
+		    	waddstr (m->mw, optstr);
 		}
 		waddstr (m->mw, m->opts[i].opt_name);
 		if (m->cursel == i)
@@ -389,7 +389,7 @@ post_menu (struct menudesc *m)
 			selrow = cury;
 		} else
 			mvwaddstr (m->mw, cury, hasbox, " ");
-		if (! (m->mopt & MC_NOSHORTCUT))
+		if (!(m->mopt & MC_NOSHORTCUT))
 			waddstr (m->mw, "x: ");
 		waddstr (m->mw, m->exitstr);
 		if (m->cursel >= m->numopts)
@@ -565,13 +565,13 @@ process_req (struct menudesc *m, int num, int req)
 			m->cursel = m->numopts;
 			scroll_sel = 1;
 			refresh = 1;
-		} else {
-			if (! (m->mopt & MC_NOSHORTCUT)) {
+		} else 
+			if (!(m->mopt & MC_NOSHORTCUT)) {
 				if (ch > 'z')
 					ch = 255;
 				if (ch >= 'a') {
 					if (ch > 'x') ch--;
-					ch = ch - 'a';
+				   		ch = ch - 'a';
 				} else
 					ch = 25 + ch - 'A';
 				if (ch < 0 || ch >= m->numopts)
@@ -581,8 +581,8 @@ process_req (struct menudesc *m, int num, int req)
 					scroll_sel = 1;
 					refresh = 1;
 				}
-			}
-		}
+			} else 
+				mbeep();
 	}
 
 	if (m->mopt & MC_SCROLL && scroll_sel) {
@@ -727,7 +727,7 @@ process_menu (int num)
 /* local prototypes */
 static int double_menus (void);
 
-static int
+static int 
 double_menus (void)
 {
 	menudesc *temp;
@@ -749,8 +749,8 @@ double_menus (void)
 
 int
 new_menu (char * title, menu_ent * opts, int numopts, 
-        int x, int y, int h, int w, int mopt,
-        void (*post_act)(void), void (*exit_act), char * help)
+	int x, int y, int h, int w, int mopt,
+	void (*post_act)(void), void (*exit_act), char * help)
 {
 	int ix;
 
@@ -766,7 +766,7 @@ new_menu (char * title, menu_ent * opts, int numopts,
 	/* if ix == num_menus ... panic */
 
 	/* Set Entries */
-	menus[ix].title = title?title:"";
+	menus[ix].title = title ? title : "";
 	menus[ix].opts = opts;
 	menus[ix].numopts = numopts;
 	menus[ix].x = x;

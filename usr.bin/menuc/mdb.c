@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.16 2000/08/15 01:01:41 hubertf Exp $	*/
+/*	$NetBSD: mdb.c,v 1.17 2000/08/15 02:09:11 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -161,7 +161,7 @@ write_menu_file (char *initcode)
 		(void) fprintf (out_file, "#define DYNAMIC_MENUS\n\n");
 
 	(void) fprintf (out_file,
-		"struct menudesc;\n"
+		"struct menudesc;\n"	
 		"typedef\n"
 		"struct menu_ent {\n"
 		"	char   *opt_name;\n"
@@ -194,11 +194,9 @@ write_menu_file (char *initcode)
 		"#define MC_NOEXITOPT 1\n"
 		"#define MC_NOBOX 2\n"
 		"#define MC_SCROLL 4\n"
- 		"#define MC_NOSHORTCUT 16      /* don't display letter shortcuts */\n"
+		"#define MC_NOSHORTCUT 8\n"
+		"#define MC_VALID 256\n"	
 		);
-
-	if (do_dynamic)
-		(void) fprintf (out_file, "#define MC_VALID 8\n");
 
 	(void) fprintf (out_file, "%s",
 		"\n"
