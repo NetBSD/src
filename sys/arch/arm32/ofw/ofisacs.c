@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisacs.c,v 1.5 1998/07/08 04:59:46 thorpej Exp $	*/
+/*	$NetBSD: ofisacs.c,v 1.6 1998/07/21 00:08:57 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -51,6 +51,8 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+
+#include <dev/isa/cs89x0reg.h>
 #include <arm32/isa/if_csvar.h>
 
 
