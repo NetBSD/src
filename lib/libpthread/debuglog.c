@@ -1,4 +1,4 @@
-/*	$NetBSD: debuglog.c,v 1.1.2.1 2001/07/17 20:22:41 nathanw Exp $	*/
+/*	$NetBSD: debuglog.c,v 1.1.2.2 2001/07/24 21:26:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,13 +40,15 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/shm.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
 
 
-void pthread__debuglog_read(void);
+void pthread__debuglog_read(int);
+void usage(void);
 
 
 static struct pthread_msgbuf* debugbuf;
@@ -54,21 +56,57 @@ static struct pthread_msgbuf* debugbuf;
 int
 main(int argc, char *argv[])
 {
+	int ch;
+	extern int optind;
+	extern char *optarg;
+
+	int follow, initialize;
+
+	follow = 0;
+	initialize = 0;
+
+	while ((ch = getopt(argc, argv, "fi")) != -1)
+		switch (ch) {           
+		case 'f': 
+			follow = 1;
+			break;
+		case 'i':
+			initialize = 1;
+			break;
+
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 0)
+		usage();
 
 	debugbuf = pthread__debuglog_init();
 
-	pthread__debuglog_read();
+	if (initialize) {
+		/* Initialize */
+		debugbuf->msg_magic = BUF_MAGIC;
+		debugbuf->msg_bufw = 0;
+		debugbuf->msg_bufr = 0;
+		debugbuf->msg_bufs = PTHREAD__DEBUG_SHMSIZE;
+	}
 
+	pthread__debuglog_read(follow);
+	
 	return 0;
 }
 
 void
-pthread__debuglog_read(void)
+pthread__debuglog_read(int follow)
 {
 
 	int readp, writep;
 
-	while (1) {
+	do {
 
 		readp = debugbuf->msg_bufr;
 		writep = debugbuf->msg_bufw;
@@ -84,9 +122,17 @@ pthread__debuglog_read(void)
 
 		debugbuf->msg_bufr = writep;
 
-		sleep(1);
-	}
+		if (follow)
+			sleep(1);
+	} while (follow);
 }
 
 
 
+
+void usage()
+{
+
+  fprintf(stderr,"usage: debuglog [-fi]\n");
+  exit(1);
+}
