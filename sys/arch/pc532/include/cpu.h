@@ -65,7 +65,8 @@
 #define	NEED_BCMP		/* need bcmp function */
 #define	NEED_STRLEN		/* need strlen function */
 
-#define	cpu_exec(p)	/* nothing */
+#define	cpu_exec(p)		/* nothing */
+#define cpu_swapin(p)           /* nothing */
 
 /*
  * Arguments to hardclock, softclock and gatherstats
