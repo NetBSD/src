@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 1999/12/05 15:53:10 minoura Exp $
+#	$NetBSD: list,v 1.2 1999/12/05 16:26:40 minoura Exp $
 
 # Do this first to prevent file system full caused by huge db files.
 COPY	${CURDIR}/../../../../etc/master.passwd	etc/master.passwd
@@ -83,8 +83,9 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the boot blocks in /usr/mdec
-COPY	${DESTDIR}/usr/mdec/installboot	usr/mdec/installboot
-COPY	${DESTDIR}/usr/mdec/sdboot	usr/mdec/sdboot
+COPY	${CURDIR}/installboot.sh	usr/mdec/installboot
+SPECIAL /bin/chmod 555 usr/mdec/installboot
+COPY	${OBJDIR}/xxboot		usr/mdec/sdboot
 LINK	usr/mdec/sdboot			usr/mdec/fdboot
 COPY	${DESTDIR}/usr/mdec/mboot	usr/mdec/mboot
 
