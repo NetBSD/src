@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.181 2002/07/10 18:55:20 thorpej Exp $
+#	$NetBSD: Makefile,v 1.182 2002/07/10 23:44:54 uwe Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -163,7 +163,7 @@ build:
 # ${RELEASEDIR}).
 
 distribution:
-#	(cd ${.CURDIR} && ${MAKE} NOPOSTINSTALL=1 build)
+	(cd ${.CURDIR} && ${MAKE} NOPOSTINSTALL=1 build)
 	(cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 distribution)
 .if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"
 	(cd ${.CURDIR}/distrib/sets && ${MAKE} checkflist)
