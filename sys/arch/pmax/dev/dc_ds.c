@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.15 2000/01/10 03:24:31 simonb Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.16 2000/02/03 04:19:59 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -40,6 +40,7 @@ struct cfattach dc_ds_ca = {
 };
 
 
+#if 0
 /*
  * Initialize a line for (polled) console I/O
  */
@@ -69,6 +70,7 @@ dc_ds_consinit(dev)
 	dc_consinit(dev, (void *)MIPS_PHYS_TO_KSEG1(dcaddr));
 	return (1);
 }
+#endif
 
 
 /*
