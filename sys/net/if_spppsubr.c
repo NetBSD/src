@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.50 2002/07/11 21:37:51 yamt Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.51 2002/07/13 11:08:03 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.50 2002/07/11 21:37:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.51 2002/07/13 11:08:03 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -597,7 +597,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->state[IDX_IPCP] == STATE_OPENED) {
 			schednetisr (NETISR_IP);
 			inq = &ipintrq;
-			sp->pp_last_activity = time.tv_sec;
+			sp->pp_last_activity = mono_time.tv_sec;
 		}
 		break;
 #endif
@@ -612,7 +612,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
 			schednetisr (NETISR_IPV6);
 			inq = &ip6intrq;
-			sp->pp_last_activity = time.tv_sec;
+			sp->pp_last_activity = mono_time.tv_sec;
 		}
 		break;
 #endif
@@ -680,7 +680,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 
 	s = splnet();
 
-	sp->pp_last_activity = time.tv_sec;
+	sp->pp_last_activity = mono_time.tv_sec;
 
 	if ((ifp->if_flags & IFF_UP) == 0 ||
 	    (ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == 0) {
@@ -2035,7 +2035,7 @@ sppp_lcp_up(struct sppp *sp)
 	STDDCL;
 
 	/* Initialize activity timestamp: opening a connection is an activity */
-	sp->pp_last_activity = time.tv_sec;
+	sp->pp_last_activity = mono_time.tv_sec;
 
 	/*
 	 * If this interface is passive or dial-on-demand, and we are
@@ -4606,7 +4606,7 @@ sppp_keepalive(void *dummy)
 	time_t now;
 
 	s = splnet();
-	now = time.tv_sec;
+	now = mono_time.tv_sec;
 	for (sp=spppq; sp; sp=sp->pp_next) {
 		struct ifnet *ifp = &sp->pp_if;
 
