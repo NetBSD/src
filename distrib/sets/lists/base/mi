@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.223 2001/01/31 17:53:23 itojun Exp $
+# $NetBSD: mi,v 1.224 2001/02/03 02:57:12 jwise Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -958,8 +958,8 @@
 ./usr/share/locale/en_US.UTF-2/LC_CTYPE		base-locale-en
 ./usr/share/locale/en_US.UTF-8			base-locale-en
 ./usr/share/locale/en_US.UTF-8/LC_CTYPE		base-locale-en
-./usr/share/locale/es				base-locale-ex
-./usr/share/locale/es/LC_MESSAGES		base-locale-ex
+./usr/share/locale/es				base-locale-es
+./usr/share/locale/es/LC_MESSAGES		base-locale-es
 ./usr/share/locale/es/LC_MESSAGES/grep.mo	base-util_locale-es
 ./usr/share/locale/es_ES.ISO8859-1		base-locale-es
 ./usr/share/locale/es_ES.ISO8859-1/LC_CTYPE	base-locale-es
