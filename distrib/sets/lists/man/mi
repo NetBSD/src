@@ -1,7 +1,7 @@
-# $NetBSD: mi,v 1.251 2000/06/12 19:49:18 mycroft Exp $
+# $NetBSD: mi,v 1.252 2000/06/20 01:28:45 minoura Exp $
 ./usr/share/info/am-utils.info
-./usr/share/info/awk.info
 ./usr/share/info/as.info
+./usr/share/info/awk.info
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
 ./usr/share/info/cpp.info
@@ -512,12 +512,12 @@
 ./usr/share/man/cat4/qsphy.0
 ./usr/share/man/cat4/raid.0
 ./usr/share/man/cat4/ray.0
-./usr/share/man/cat4/rtk.0
 ./usr/share/man/cat4/rmidi.0
 ./usr/share/man/cat4/rnd.0
 ./usr/share/man/cat4/route.0
 ./usr/share/man/cat4/rpc.0
 ./usr/share/man/cat4/rtfps.0
+./usr/share/man/cat4/rtk.0
 ./usr/share/man/cat4/sb.0
 ./usr/share/man/cat4/scsi.0
 ./usr/share/man/cat4/scsibus.0
@@ -529,9 +529,9 @@
 ./usr/share/man/cat4/sl.0
 ./usr/share/man/cat4/sm.0
 ./usr/share/man/cat4/sound.0
+./usr/share/man/cat4/sp.0
 ./usr/share/man/cat4/speaker.0
 ./usr/share/man/cat4/spkr.0
-./usr/share/man/cat4/sp.0
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/sqphy.0
 ./usr/share/man/cat4/ss.0
@@ -766,8 +766,8 @@
 ./usr/share/man/cat8/dumpfs.0
 ./usr/share/man/cat8/dumplfs.0
 ./usr/share/man/cat8/edquota.0
-./usr/share/man/cat8/error.0
 ./usr/share/man/cat8/envstat.0
+./usr/share/man/cat8/error.0
 ./usr/share/man/cat8/eshconfig.0
 ./usr/share/man/cat8/faithd.0
 ./usr/share/man/cat8/fastboot.0
@@ -1530,12 +1530,12 @@
 ./usr/share/man/man4/qsphy.4
 ./usr/share/man/man4/raid.4
 ./usr/share/man/man4/ray.4
-./usr/share/man/man4/rtk.4
 ./usr/share/man/man4/rmidi.4
 ./usr/share/man/man4/rnd.4
 ./usr/share/man/man4/route.4
 ./usr/share/man/man4/rpc.4
 ./usr/share/man/man4/rtfps.4
+./usr/share/man/man4/rtk.4
 ./usr/share/man/man4/sb.4
 ./usr/share/man/man4/scsi.4
 ./usr/share/man/man4/scsibus.4
@@ -1547,9 +1547,9 @@
 ./usr/share/man/man4/sl.4
 ./usr/share/man/man4/sm.4
 ./usr/share/man/man4/sound.4
+./usr/share/man/man4/sp.4
 ./usr/share/man/man4/speaker.4
 ./usr/share/man/man4/spkr.4
-./usr/share/man/man4/sp.4
 ./usr/share/man/man4/spp.4
 ./usr/share/man/man4/sqphy.4
 ./usr/share/man/man4/ss.4
