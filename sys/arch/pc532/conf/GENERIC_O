@@ -1,14 +1,13 @@
 #
 # GENERIC 532 Distribution - sd1 version
 #
-#	$Id: GENERIC_O,v 1.1 1994/05/03 07:26:59 phil Exp $
+#	$Id: GENERIC_O,v 1.2 1994/05/25 00:00:48 phil Exp $
 #
 machine		"pc532"
 cpu		"ns532"
 ident		GENERIC_O
 timezone	0
 maxusers	10
-maxfdescs	2048
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		FFS
 options		INET
