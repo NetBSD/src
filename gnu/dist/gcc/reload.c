@@ -3059,6 +3059,13 @@ find_reloads (insn, replace, ind_levels, live_known, reload_reg_p)
 			&& GET_CODE (XEXP (operand, 0)) == REG
 			&& (ind_levels == 0
 			    || reg_equiv_address[REGNO (XEXP (operand, 0))] != 0))
+		    /* Similarly if a mem's address is another mem and we
+		       don't have indirection.  find_reloads_address will
+		       have pushed the correct reloads for this case.  */
+		    || (GET_CODE (operand) == MEM
+			&& GET_CODE (XEXP (operand, 0)) == MEM
+			&& ind_levels == 0
+			&& address_reloaded[i])
 		    || (GET_CODE (operand) == REG
 			&& REGNO (operand) >= FIRST_PSEUDO_REGISTER
 			&& reg_renumber[REGNO (operand)] < 0
