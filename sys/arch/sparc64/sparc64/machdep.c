@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 2000/05/26 21:20:21 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.63 2000/06/02 22:56:32 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@
 
 /* Our exported CPU info; we have only one for now. */  
 struct cpu_info cpu_info_store;
+int bus_space_debug = 0;
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
@@ -1219,26 +1220,20 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	 *
 	 * Actually a #Sync is expensive.  We should optimize.
 	 */
-	switch (ops) {
-	case BUS_DMASYNC_PREREAD:
-		/* Flush any pending writes */
+	if ((ops & BUS_DMASYNC_PREREAD) || (ops & BUS_DMASYNC_PREWRITE)) {
+		/* 
+		 * Don't really need to do anything, but flush any pending
+		 * writes anyway. 
+		 */
 		__asm("membar #Sync" : );
-		break;
-	case BUS_DMASYNC_POSTREAD:
+	}
+	if (ops & BUS_DMASYNC_POSTREAD) {
 		/* Invalidate the vcache */
 		blast_vcache();
-		/* Maybe we should flush the I$? */
-		break;
-	case BUS_DMASYNC_PREWRITE:
-		/* Flush any pending writes */
-		__asm("membar #Sync" : );
-		break;
-	case BUS_DMASYNC_POSTWRITE:
-		/* Nothing to do */
-		break;
-	default:
-		__asm("membar #Sync" : );
-		printf("_bus_dmamap_sync: unknown sync op\n");
+		/* Maybe we should flush the I$? When we support LKMs.... */
+	}
+	if (ops & BUS_DMASYNC_POSTWRITE) {
+		/* Nothing to do.  Handled by the bus controller. */
 	}
 }
 
@@ -1502,6 +1497,7 @@ static	vaddr_t iobase = IODEV_BASE;
 		 * out of IO mappings, config space will not be mapped in,
 		 * rather it will be accessed through MMU bypass ASI accesses.
 		 */
+		if (flags & BUS_SPACE_MAP_LINEAR) return (-1);
 		*hp = (bus_space_handle_t)addr;
 		if (!vaddr) return (0);
 		/* FALLTHROUGH */
@@ -1515,6 +1511,8 @@ static	vaddr_t iobase = IODEV_BASE;
 		pm_flags = PMAP_NC;
 		break;
 	}
+
+	if (!(flags & BUS_SPACE_MAP_CACHEABLE)) pm_flags |= PMAP_NC;
 
 	if (vaddr)
 		v = trunc_page(vaddr);
@@ -1532,12 +1530,13 @@ static	vaddr_t iobase = IODEV_BASE;
 
 #ifdef NOTDEF_DEBUG
 	printf("\nsparc_bus_map: type %x addr %016llx virt %llx paddr %016llx\n",
-		       (int)iospace, (u_int64_t)addr, (u_int64_t)*hp, (u_int64_t)pa);
+		(int)iospace, (u_int64_t)addr, (u_int64_t)*hp, (u_int64_t)pa);
 #endif
 
 	do {
 #ifdef NOTDEF_DEBUG
-		printf("sparc_bus_map: phys %llx virt %p hp %llx\n", (u_int64_t)pa, (char *)v, (u_int64_t)*hp);
+		printf("sparc_bus_map: phys %llx virt %p hp %llx\n", 
+			(u_int64_t)pa, (char *)v, (u_int64_t)*hp);
 #endif
 		pmap_enter(pmap_kernel(), v, pa | pm_flags,
 				(flags&BUS_SPACE_MAP_READONLY) ? VM_PROT_READ
