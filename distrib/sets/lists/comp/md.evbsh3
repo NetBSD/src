@@ -21,6 +21,7 @@
 ./usr/include/evbsh3/frame.h	comp-c-include
 ./usr/include/evbsh3/ieee.h	comp-c-include
 ./usr/include/evbsh3/ieeefp.h	comp-c-include
+./usr/include/evbsh3/int_types.h	comp-c-include
 ./usr/include/evbsh3/intr.h	comp-c-include
 ./usr/include/evbsh3/limits.h	comp-c-include
 ./usr/include/evbsh3/loadfile_machdep.h	comp-c-include

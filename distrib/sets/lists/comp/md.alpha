@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.28 2000/06/20 01:28:38 minoura Exp $
+# $NetBSD: md.alpha,v 1.29 2000/06/26 15:49:45 kleink Exp $
 ./usr/include/alpha	comp-c-include
 ./usr/include/alpha/_G_config.h	comp-c-include
 ./usr/include/alpha/alpha_cpu.h	comp-c-include
@@ -26,6 +26,7 @@
 ./usr/include/alpha/frame.h	comp-c-include
 ./usr/include/alpha/ieee.h	comp-c-include
 ./usr/include/alpha/ieeefp.h	comp-c-include
+./usr/include/alpha/int_types.h	comp-c-include
 ./usr/include/alpha/intr.h	comp-c-include
 ./usr/include/alpha/kbio.h	comp-c-include
 ./usr/include/alpha/kcore.h	comp-c-include
