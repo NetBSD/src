@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscalls.c,v 1.10 2002/11/25 22:26:21 manu Exp $ */
+/* $NetBSD: darwin_syscalls.c,v 1.11 2002/12/08 00:50:27 manu Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_syscalls.c,v 1.10 2002/11/25 22:26:21 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_syscalls.c,v 1.11 2002/12/08 00:50:27 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -24,9 +24,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_syscalls.c,v 1.10 2002/11/25 22:26:21 manu Ex
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <compat/common/compat_file.h>
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
-#include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscallargs.h>
 #endif /* _KERNEL_OPT */
@@ -133,7 +133,7 @@ const char *const darwin_syscallnames[] = {
 	"setpgid",			/* 82 = setpgid */
 	"setitimer",			/* 83 = setitimer */
 	"owait",			/* 84 = owait */
-	"oswapon",			/* 85 = oswapon */
+	"swapon",			/* 85 = swapon */
 	"getitimer",			/* 86 = getitimer */
 	"ogethostname",			/* 87 = ogethostname */
 	"osethostname",			/* 88 = osethostname */

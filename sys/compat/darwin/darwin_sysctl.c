@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.3 2002/11/29 13:18:09 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.4 2002/12/08 00:50:27 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.3 2002/11/29 13:18:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.4 2002/12/08 00:50:27 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.3 2002/11/29 13:18:09 manu Exp $
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
-
-#include <compat/freebsd/freebsd_syscallargs.h>
 
 #include <compat/darwin/darwin_sysctl.h>
 #include <compat/darwin/darwin_syscallargs.h>

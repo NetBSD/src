@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mman.c,v 1.3 2002/12/05 22:48:54 manu Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.4 2002/12/08 00:50:26 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.4 2002/12/08 00:50:26 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,10 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD");
 
 #include <sys/syscallargs.h>
 
+#include <compat/common/compat_file.h>
+
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
-
-#include <compat/freebsd/freebsd_syscallargs.h>
 
 #include <compat/darwin/darwin_syscallargs.h>
 
@@ -84,7 +84,7 @@ darwin_sys_load_shared_file(p, v, retval)
 	char filename[MAXPATHLEN + 1];
 	mach_sf_mapping_t *mapp;
 	size_t maplen;
-	struct freebsd_sys_open_args open_cup;
+	struct sys_open_args open_cup;
 	struct sys_close_args close_cup;
 	int fd;
 	int i;
@@ -116,7 +116,7 @@ darwin_sys_load_shared_file(p, v, retval)
 	SCARG(&open_cup, path) = SCARG(uap, filename);
 	SCARG(&open_cup, flags) = O_RDONLY;
 	SCARG(&open_cup, mode) = 0;
-	if ((error = freebsd_sys_open(p, &open_cup, &fd)) != 0)
+	if ((error = bsd_sys_open(p, &open_cup, &fd)) != 0)
 		return error;
 	
 	fdp = p->p_fd;
