@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9.4.1 2005/04/06 21:41:57 tron Exp $
+#	$NetBSD: Makefile,v 1.9.4.2 2005/04/06 22:37:08 tron Exp $
 
 SUBDIR=	ati atimisc chips fbdev glint imstt mga nv r128 radeon \
 	s3 s3virge savage sis tdfx trident vga wsfb
@@ -17,7 +17,8 @@ SUBDIR=	newport
 .endif
 
 .if ${MACHINE} == "sparc64"
-SUBDIR= sunffb sunleo suncg6 suncg3 suncg14 suntcx sunbw2  ati vga
+SUBDIR= sunffb sunleo suncg6 suncg3 suncg14 suntcx sunbw2 ati atimisc \
+	r128 radeon vga
 .endif
 
 .include <bsd.subdir.mk>
