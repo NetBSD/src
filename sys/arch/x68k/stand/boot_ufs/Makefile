@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/09/27 14:08:27 minoura Exp $
+#	$NetBSD: Makefile,v 1.4 2001/09/28 01:49:54 minoura Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,6 @@ BOOT_TEXT=	006000		# Secondary (/boot)
 
 PROG=		$(BOOT)
 BINDIR=		/usr/mdec
-PROGNAME=	sdboot
 STRIPFLAG=
 BINMODE=	444
 MKMAN=		no
