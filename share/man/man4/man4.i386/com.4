@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
-.\"	$Id: com.4,v 1.3 1995/02/17 09:43:38 jtc Exp $
+.\"	$Id: com.4,v 1.4 1996/03/10 09:14:29 cgd Exp $
 .\"
 .Dd August 6, 1993
 .Dt COM 4 i386
@@ -45,7 +45,6 @@ serial communications interface
 .Sh SYNOPSIS
 .Cd "com0 at isa? port" \&"IO_COM1\&" irq 4
 .Cd "com1 at isa? port" \&"IO_COM2\&" irq 3
-.Cd "com2 at ast? slave ? flags 1"
 .Sh DESCRIPTION
 The
 .Nm
@@ -61,14 +60,6 @@ Input and output for each line may set to one of following baud rates;
 50, 75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600,
 19200, 38400, 57600, or 115200, or any other baud rate which is a factor
 of 115200.
-.Pp
-If
-.Dq flags 1
-is specified, the
-.Nm
-driver will not set the MCR_IENABLE bit on the UART.  This is mainly for
-use on AST multiport boards, where the MCR_IENABLE bit is used to control
-whether or not the devices use a shared interrupt.
 .Sh FILES
 .Bl -tag -width Pa
 .It Pa /dev/tty00
