@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 2002/01/20 03:41:48 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20 2002/03/09 19:11:21 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -169,6 +169,7 @@ extern int current_intr_depth;
  * Per-CPU information.  For now we assume one CPU.
  */
 
+#include <sys/device.h>
 #include <sys/sched.h>
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
@@ -176,6 +177,7 @@ struct cpu_info {
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
+	struct evcnt ci_arm700bugcount;
 };
 
 extern struct cpu_info cpu_info_store;
