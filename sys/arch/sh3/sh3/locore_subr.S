@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.18 2004/01/18 04:59:52 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.19 2004/01/18 18:54:17 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.18 2004/01/18 04:59:52 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.19 2004/01/18 18:54:17 uwe Exp $")
 
 
 	.text
@@ -73,6 +73,7 @@ ENTRY(cpu_switch)
 	mov.l	r14,	@-r1
 	mov.l	r15,	@-r1
 
+_L.find_and_switch:
 	/* Search next lwp. cpu_switch_search may or may not sleep. */
 	mov.l	_L.cpu_switch_search, r0
 	jsr	@r0
@@ -183,6 +184,56 @@ ENTRY(cpu_switchto)
 _L.SFp:			.long	(L_MD_PCB)
 _L.curlwp:		.long	_C_LABEL(curlwp)
 _L.cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
+
+
+/*
+ * void cpu_exit(struct lwp *l)
+ *	Just fall-through to the switch_exit below.
+ */
+ENTRY(cpu_exit)
+	mov.l	_L.switch_exit.lwp_exit2, r5	/* exit_func to call */
+	/* FALLTHROUGH */
+
+/*
+ * switch_exit(struct lwp *l, void (*exit_func)(struct lwp *))
+ *	Called only from cpu_exit(l).  Before we call exit_func to
+ *	free lwp's resources (including kernel stack) we need to
+ *	switch to the lwp0's kernel stack.  Then we jump into the
+ *	middle of cpu_switch to find and switch to a new lwp.
+ */
+ALTENTRY(switch_exit)
+	mov.l	_L.switch_exit.lwp0_pcb, r1
+	mov.l	_L.switch_exit.curpcb, r0
+	mov.l	@r1, r1
+	mov.l	r1, @r0			/* curpcb = lwp0.l_md.md_pcb */
+
+	mov.l	@(SF_R7_BANK, r1), r0	/* stack top */
+	mov.l	@(SF_R6_BANK, r1), r2	/* current frame */
+	mov.l	@(SF_R15, r1), r3	/* current stack */
+
+	/* switch to lwp0's kernel stack */
+	__EXCEPTION_BLOCK(r1, r6)
+	ldc	r0, r7_bank
+	ldc	r2, r6_bank
+	mov	r3, r15
+	__EXCEPTION_UNBLOCK(r0, r1)
+
+	/* safe to call (*exit_func)(l); now */
+	jsr	@r5
+	 nop			/* lwp is already in r4 */
+
+	/* proceed to cpu_switch */
+	bra	_L.find_and_switch
+	 mov	#0, r4		/* no "previous" lwp */
+
+	.align 2
+_L.switch_exit.lwp_exit2:
+	.long	_C_LABEL(lwp_exit2)
+_L.switch_exit.lwp0_pcb:
+	.long	_C_LABEL(lwp0) + L_MD_PCB
+_L.switch_exit.curpcb:
+	.long	_C_LABEL(curpcb)
+
 
 #ifdef SH3
 /*
