@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sd.c	7.8 (Berkeley) 6/9/91
- *	$Id: sd.c,v 1.4 1994/01/25 03:19:15 brezak Exp $
+ *	$Id: sd.c,v 1.5 1994/01/25 13:10:21 mycroft Exp $
  */
 
 /*
@@ -799,7 +799,7 @@ sdioctl(dev, cmd, data, flag, p)
 	register struct disklabel *lp = &sc->sc_label;
 	struct cpu_disklabel cd;
 	int error, flags;
-        
+
 	switch (cmd) {
 	default:
 		return (EINVAL);
@@ -814,24 +814,24 @@ sdioctl(dev, cmd, data, flag, p)
 			&lp->d_partitions[sdpart(dev)];
 		return (0);
 
-        case DIOCWLABEL:
-                if ((flag & FWRITE) == 0)
-                        return (EBADF);
+	case DIOCWLABEL:
+		if ((flag & FWRITE) == 0)
+ 			return (EBADF);
 		if (*(int *)data)
 			sc->sc_flags |= SDF_LABEL;
 		else
 			sc->sc_flags &= ~SDF_LABEL;
 		return (0);
 
-        case DIOCSDINFO:
-                if ((flag & FWRITE) == 0)
-                        return (EBADF);
+	case DIOCSDINFO:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
 		error = setdisklabel(lp, (struct disklabel *)data,
 				     /*(sc->sc_flags & SDF_WLABEL) ? 0
 				     : sc->sc_info.si_open*/0, &cd);
 		return (error);
 
-        case DIOCWDINFO:
+	case DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 		error = setdisklabel(lp, (struct disklabel *)data,
