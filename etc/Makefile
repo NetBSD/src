@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.294 2004/11/14 20:28:28 yamt Exp $
+#	$NetBSD: Makefile,v 1.295 2004/11/15 00:28:16 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -147,17 +147,12 @@ distribution: .PHONY check_DESTDIR .WAIT distrib-dirs
 .endif	# !DISTRIBUTION_DONE
 
 
-CLEANFILES+=	MAKEDEV ttys
+CLEANFILES+=	MAKEDEV
 MAKEDEV: .EXEC
 	${_MKTARGET_CREATE}
 	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
 	    awk -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl > ${.TARGET}
-
-ttys: mkttys etc.${MACHINE}/ttys
-	${_MKTARGET_CREATE}
-	${HOST_SH} ${.ALLSRC} > ${.TARGET}
-
 
 RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		DESTDIR EXTERNAL_TOOLCHAIN \
@@ -271,7 +266,7 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV ttys
 .endif	# MKUNPRIVED != no
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/ttys
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    ttys ${DESTDIR}/etc
+	    etc.${MACHINE}/ttys ${DESTDIR}/etc
 	${_MKMSG_INSTALL} ${DESTDIR}/dev/MAKEDEV
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV ${DESTDIR}/dev
