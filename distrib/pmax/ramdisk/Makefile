@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.2.2.1 1999/04/17 11:09:58 simonb Exp $
+#	$NetBSD: Makefile,v 1.2.2.2 1999/10/20 23:09:53 he Exp $
+
+BINDIR=		/installation/netboot
 
 TOP?=		${.CURDIR}/..
 ARCHDIR?=        ${.CURDIR}/../../${MACHINE}/miniroot
@@ -17,14 +19,17 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}c
 VND_CRDEV=	/dev/r${VND}c
-IMAGE?=		xxx.fs
 MDEC=		${DESTDIR}/usr/mdec
+
+CLEANFILES=	${IMAGE} ${DISKIMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
 
 LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-all: ${CBIN} 
+all: ${IMAGE}
+
+${IMAGE}: ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} count=${CSIZE}
 	vnconfig -v -c ${VND_CDEV} ${IMAGE}
 #	disklabel -rw ${VND_CDEV} ${DISKTYPE}
@@ -54,9 +59,16 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
+realinstall:
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
+		-m ${NONBINMODE} ${DISKIMAGE} ${RELEASEDIR}${BINDIR}
+
 clean cleandir distclean:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f *.core ${CLEANFILES} *.o *.cro *.c
+
+# XXX!
+depend:
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>
+.include "../Makefile.inc"
