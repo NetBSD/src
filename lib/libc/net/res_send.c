@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.25 2000/04/25 08:51:39 itojun Exp $	*/
+/*	$NetBSD: res_send.c,v 1.26 2000/04/25 13:46:10 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.25 2000/04/25 08:51:39 itojun Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.26 2000/04/25 13:46:10 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -280,6 +280,8 @@ res_isourserver(inp)
 /* int
  * res_nameinquery(name, type, class, buf, eom)
  *	look for (name,type,class) in the query section of packet (buf,eom)
+ * requires:
+ *	buf + HFIXESDZ <= eom
  * returns:
  *	-1 : format error
  *	0  : not found
@@ -308,6 +310,8 @@ res_nameinquery(name, type, class, buf, eom)
 		if (n < 0)
 			return (-1);
 		cp += n;
+		if (cp + 2 * INT16SZ > eom)
+			return (-1);
 		ttype = _getshort(cp); cp += INT16SZ;
 		tclass = _getshort(cp); cp += INT16SZ;
 		if (ttype == type &&
@@ -342,6 +346,9 @@ res_queriesmatch(buf1, eom1, buf2, eom2)
 	_DIAGASSERT(buf2 != NULL);
 	_DIAGASSERT(eom2 != NULL);
 
+	if (buf1 + HFIXEDSZ > eom1 || buf2 + HFIXEDSZ > eom2)
+		return (-1);
+
 	if (qdcount != ntohs(((const HEADER *)(const void *)buf2)->qdcount))
 		return (0);
 	while (qdcount-- > 0) {
@@ -352,6 +359,8 @@ res_queriesmatch(buf1, eom1, buf2, eom2)
 		if (n < 0)
 			return (-1);
 		cp += n;
+		if (cp + 2 * INT16SZ > eom1)
+			return (-1);
 		ttype = _getshort(cp);	cp += INT16SZ;
 		tclass = _getshort(cp); cp += INT16SZ;
 		if (!res_nameinquery(tname, ttype, tclass, buf2, eom2))
@@ -378,6 +387,10 @@ res_send(buf, buflen, ans, anssiz)
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		/* errno should have been set by res_init() in this case. */
+		return (-1);
+	}
+	if (anssiz < HFIXEDSZ) {
+		errno = EINVAL;
 		return (-1);
 	}
 	DprintQ((_res.options & RES_DEBUG) || (_res.pfcode & RES_PRF_QUERY),
@@ -435,7 +448,8 @@ res_send(buf, buflen, ans, anssiz)
 #ifdef INET6
 		Dprint((_res.options & RES_DEBUG) &&
 		       getnameinfo(nsap, (size_t)nsap->sa_len, abuf,
-			   sizeof(abuf), NULL, 0, NI_NUMERICHOST) == 0,
+			   sizeof(abuf), NULL, 0,
+			   NI_NUMERICHOST|NI_WITHSCOPEID) == 0,
 		       (stdout, ";; Querying server (# %d) address = %s\n",
 			ns + 1, abuf));
 #else /* INET6 */
@@ -543,6 +557,17 @@ read_len:
 				len = anssiz;
 			} else
 				len = resplen;
+			if (len < HFIXEDSZ) {
+				/*
+				 * Undersized message.
+				 */
+				Dprint(_res.options & RES_DEBUG,
+				       (stdout, ";; undersized: %d\n", len));
+				terrno = EMSGSIZE;
+				badns |= (1 << ns);
+				res_close();
+				goto next_ns;
+			}
 			cp = ans;
 			while (len != 0 &&
 			       (n = read(s, cp, (size_t)len)) > 0) {
@@ -738,6 +763,18 @@ wait:
 				goto next_ns;
 			}
 			gotsomewhere = 1;
+			if (resplen < HFIXEDSZ) {
+				/*
+				 * Undersized message.
+				 */
+				Dprint(_res.options & RES_DEBUG,
+				       (stdout, ";; undersized: %d\n",
+					resplen));
+				terrno = EMSGSIZE;
+				badns |= (1 << ns);
+				res_close();
+				goto next_ns;
+			}
 			if (hp->id != anhp->id) {
 				/*
 				 * response from old query, ignore it.
