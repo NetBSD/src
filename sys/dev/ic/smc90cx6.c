@@ -1,8 +1,7 @@
-/*	$NetBSD: smc90cx6.c,v 1.5 1995/04/11 18:52:00 chopps Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.6 1995/04/14 16:57:19 chopps Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
- * Copyright (c) 1994 Timo Rossi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,8 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by  Timo Rossi
- *      This product includes software developed by  Ignatios Souvatzis
+ *      This product includes software developed by Ignatios Souvatzis
+ *      for the NetBSD project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -35,7 +34,7 @@
 /*
  * Driver for the Commodore Busines Machines arcnet card
  * written by Ignatios Souvatzis <is@beverly.rhein.de>,
- * somewhat based on Amiga if_ed.c 
+ * somewhat based on Amiga if_ed.c by Timo Rossi <trossi@jyu.fi>.
  */
 
 #define BAHASMCOPY /**/
@@ -91,6 +90,9 @@
 #define ARC_MAX_FORBID_LEN 256
 #define ARC_MAX_LEN 508
 #define ARC_ADDR_LEN 1
+
+/* for watchdog timer. This should be more than enough. */
+#define ARCTIMEOUT (5*IFNET_SLOWHZ)
 
 #define MIN(a,b) ((b)<0?(a):min((a),(b)))
 
@@ -174,6 +176,7 @@ void bah_stop __P((struct bah_softc *));
 void bah_start __P((struct ifnet *));
 int bahintr __P((struct bah_softc *sc));
 int bah_ioctl __P((struct ifnet *, unsigned long, caddr_t));
+void bah_watchdog __P((int));
 void movepout __P((u_char *from, u_char volatile *to, int len));
 void movepin __P((u_char volatile *from, u_char *to, int len));
 void bah_srint __P((struct bah_softc *sc, void *dummy));
@@ -240,7 +243,7 @@ bahattach(parent, self, aux)
 	printf(": link addr 0x%02x(%ld)\n", linkaddress, linkaddress);
 #endif
 
-	sc->sc_arccom.ac_anaddr = sc->sc_base->dipswitches;
+	sc->sc_arccom.ac_anaddr = linkaddress;
 
 	/* clear the int mask... */
 
@@ -264,9 +267,13 @@ bahattach(parent, self, aux)
 	ifp->if_output = arc_output;
 	ifp->if_start = bah_start;
 	ifp->if_ioctl = bah_ioctl;
-	/* might need later: ifp->if_watchdog  = bah_watchdog */
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_NOARP;
+	ifp->if_timer = 0;
+	ifp->if_watchdog  = bah_watchdog;
+
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX |
+	    IFF_NOTRAILERS | IFF_NOARP;
+
+	ifp->if_mtu = ARCMTU;
 
 	if_attach(ifp);
 	arc_ifattach(ifp);
@@ -318,7 +325,7 @@ bah_reset(sc)
 	struct bah_softc *sc;
 {
 	struct ifnet *ifp;
-	int i, s;
+	int i, s, linkaddress;
 
 	ifp = &sc->sc_arccom.ac_if;
 
@@ -339,10 +346,17 @@ bah_reset(sc)
 		DELAY(120);
 	} while (!(sc->sc_base->status & ARC_POR)); 
 
+	linkaddress = sc->sc_base->dipswitches;
+
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 2)
-	printf("%s: reset: card reset, status=0x%02x\n",
-	    sc->sc_dev.dv_xname, sc->sc_base->status);
+	printf("bah%ld: reset: card reset, link addr = 0x%02x (%ld)\n",
+	    ifp->if_unit, linkaddress, linkaddress);
 #endif
+	sc->sc_arccom.ac_anaddr = linkaddress;
+
+	/* tell the routing level about the (possibly changed) link address */
+	arc_ifattach(ifp);
+
 	/* POR is NMI, but we need it below: */
 	sc->sc_intmask = ARC_RECON|ARC_POR;
 	sc->sc_base->status	= sc->sc_intmask;
@@ -413,6 +427,9 @@ bah_stop(sc)
 	/* Stop the interface */
 	sc->sc_base->kick1 = 0;
 	sc->sc_base->kick2 = 0;
+
+	/* Stop watchdog timer */
+	sc->sc_arccom.ac_if.if_timer = 0;
 
 #ifdef BAHTIMINGS
 	log(LOG_DEBUG,"%s\
@@ -648,6 +665,7 @@ bah_start(ifp)
 		sc->sc_base->command = ARC_TX(buffer);
 		sc->sc_base->status  = sc->sc_intmask;
 
+		sc->sc_arccom.ac_if.if_timer = ARCTIMEOUT;
 #ifdef BAHTIMINGS
 		bcopy((caddr_t)&time,
 		    (caddr_t)&(sc->sc_stats.lasttxstart_tv),
@@ -660,12 +678,13 @@ bah_start(ifp)
 	m_freem(m);
 
 	/*
-	 * We dont really need a transmit timeout timer, do we?
-	 * XXX (sighing deeply) yes, after 10 times reading the docs,
-	 * I realized that in the case the receiver NAKs the buffer request,
+	 * After 10 times reading the docs, I realized
+	 * that in the case the receiver NAKs the buffer request,
 	 * the hardware retries till shutdown.
-	 * TODO: Insert some reasonable transmit timeout timer.
+	 * This is integrated now in the code above.
 	 */
+
+	return;
 }
 
 void 
@@ -876,8 +895,7 @@ bah_srint(sc,dummy)
 		bpf_mtap(ifp->if_bpf, head);
 #endif
 
-	m_adj(head, 3); /* gcc does structure padding */
-	arc_input(ifp, ah, head);
+	arc_input(&sc->sc_arccom.ac_if, head);
 
 	/* arc_input has freed it, we dont need to... */
 
@@ -921,7 +939,11 @@ bah_tint(sc)
 	buffer = sc->sc_tx_act;
 	isr = sc->sc_base->status;
 
-	/* XXX insert retransmit code etc. here. For now just: */ 
+	/*
+	 * XXX insert retransmit code etc. here; and dont forget
+	 * to not retransmit if this is a timeout int.
+	 * For now just: 
+	 */ 
 
 	if (!(isr & ARC_TMA) && !(sc->sc_broadcast[buffer]))
 		sc->sc_arccom.ac_if.if_oerrors++;
@@ -956,6 +978,8 @@ bah_tint(sc)
 		 * sc->sc_base->status = sc->sc_intmask;
 		 */
 		sc->sc_base->command = ARC_TX(buffer);
+		/* init watchdog timer */
+		sc->sc_arccom.ac_if.if_timer = ARCTIMEOUT;
 
 #ifdef BAHTIMINGS
 		bcopy((caddr_t)&time,
@@ -973,6 +997,8 @@ bah_tint(sc)
 		/* have to disable TX interrupt */
 		sc->sc_intmask &= ~ARC_TA;
 		sc->sc_base->status = sc->sc_intmask;
+		/* ... and watchdog timer */
+		sc->sc_arccom.ac_if.if_timer = 0;
 
 #ifdef BAH_DEBUG
 		printf("%s: tint: no more buffers to send, status 0x%02x\n",
@@ -1166,4 +1192,32 @@ bah_ioctl(ifp, command, data)
 
 	splx(s);
 	return (error);
+}
+
+/*
+ * watchdog routine for transmitter.
+ *
+ * We need this, because else a receiver whose hardware is alive, but whose
+ * software has not enabled the Receiver, would make our hardware wait forever
+ * Discovered this after 20 times reading the docs.
+ *
+ * Only thing we do is disable transmitter. We'll get an transmit timeout,
+ * and the int handler will have to decide not to retransmit (in case
+ * retransmission is implemented).
+ *
+ * This one assumes being called inside splimp(), and that imp >= ipl2
+ */
+
+void
+bah_watchdog(unit)
+int unit;
+{
+	struct bah_softc *sc;
+	struct ifnet *ifp;
+
+	sc  = bahcd.cd_devs[unit];
+	ifp = &(sc->sc_arccom.ac_if);
+
+	sc->sc_base->command = ARC_TXDIS;
+	return;
 }
