@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.14 1998/02/07 02:44:49 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -226,7 +226,7 @@ nchinit()
 {
 
 	TAILQ_INIT(&nclruhead);
-	nchashtbl = hashinit(desiredvnodes, M_CACHE, &nchash);
+	nchashtbl = hashinit(desiredvnodes, M_CACHE, M_WAITOK, &nchash);
 }
 
 /*
