@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.3 1998/02/07 02:34:08 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.4 1998/02/07 11:09:19 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -43,6 +43,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)vm_page.c   8.3 (Berkeley) 3/21/94
+ * from: Id: uvm_page.c,v 1.1.2.18 1998/02/06 05:24:42 chs Exp
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.

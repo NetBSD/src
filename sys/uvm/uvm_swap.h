@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.2 1998/02/06 22:32:31 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.3 1998/02/07 11:09:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -26,6 +26,8 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * from: Id: uvm_swap.h,v 1.1.2.6 1997/12/15 05:39:31 mrg Exp
  */
 
 #ifndef _UVM_UVM_SWAP_H_
