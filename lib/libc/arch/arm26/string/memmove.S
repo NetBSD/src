@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.1 2000/05/09 21:55:50 bjh21 Exp $	*/
+/*	$NetBSD: memmove.S,v 1.2 2000/12/14 19:40:22 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 ENTRY(memmove)
 	stmfd	sp!, {r0, lr}
-	bl	_C_FUNC(_memcpy)
+	bl	_C_LABEL(_memcpy)
 #ifdef __APCS_26__
 	ldmfd	sp!, {r0, pc}^
 #else
