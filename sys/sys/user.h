@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)user.h	7.19 (Berkeley) 5/4/91
- *	$Id: user.h,v 1.4 1994/05/05 06:13:36 cgd Exp $
+ *	$Id: user.h,v 1.5 1994/05/07 00:42:56 cgd Exp $
  */
 
 #ifndef _SYS_USER_H_
@@ -49,7 +49,7 @@
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <vm/vm.h>		/* XXX */
-#include <sys/kinfo_proc.h>
+#include <sys/sysctl.h>
 
 
 /*
