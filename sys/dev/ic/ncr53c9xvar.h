@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.29 2000/12/20 03:19:34 eeh Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.30 2001/01/19 23:04:23 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ struct ncr53c9x_tinfo {
 #define T_SYNCMODE	0x08	/* SYNC mode has been negotiated */
 #define T_SYNCHOFF	0x10	/* SYNC mode for is permanently off */
 #define T_RSELECTOFF	0x20	/* RE-SELECT mode is off */
-#define T_TAGOFF	0x40	/* TAG QUEUEs are off */
+#define T_TAG		0x40	/* Turn on TAG QUEUEs */
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 	u_char	nextag;		/* Next available tag */
