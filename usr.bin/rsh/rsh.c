@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.23 2004/10/16 02:03:54 christos Exp $	*/
+/*	$NetBSD: rsh.c,v 1.24 2004/10/16 07:36:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.23 2004/10/16 02:03:54 christos Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.24 2004/10/16 07:36:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,6 @@ main(int argc, char **argv)
 	pid_t pid;
 	uid_t uid;
 	char *args, *host, *p, *user, *name;
-	char *service = NULL;
 
 	argoff = asrsh = dflag = nflag = 0;
 	one = 1;
