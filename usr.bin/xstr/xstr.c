@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.7 1997/10/20 01:21:46 mrg Exp $	*/
+/*	$NetBSD: xstr.c,v 1.8 1998/09/27 18:29:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: xstr.c,v 1.7 1997/10/20 01:21:46 mrg Exp $");
+__RCSID("$NetBSD: xstr.c,v 1.8 1998/09/27 18:29:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: xstr.c,v 1.7 1997/10/20 01:21:46 mrg Exp $");
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
+#include <err.h>
 #include "pathnames.h"
 
 /*
@@ -64,32 +65,40 @@ __RCSID("$NetBSD: xstr.c,v 1.7 1997/10/20 01:21:46 mrg Exp $");
  * November, 1978
  */
 
-#define	ignore(a)	((void) a)
+static off_t	hashit __P((char *, int));
+static void	onintr __P((int));
+static off_t	yankstr __P((char **));
+static int	octdigit __P((char));
+static void	inithash __P((void));
+static int	fgetNUL __P((char *, int, FILE *));
+static int	xgetc __P((FILE *));
+static void	flushsh __P((void));
+static void	found __P((int, off_t, char *));
+static void	prstr __P((char *));
+static void	xsdotc __P((void));
+static char	lastchr __P((char *));
+static int	istail __P((char *, char *));
+static void	process __P((char *));
+static void	usage __P((void));
 
-off_t	tellpt;
-off_t	hashit __P((char *, int));
-void	onintr __P((int));
-off_t	yankstr __P((char **));
-int	octdigit __P((char));
-void	inithash __P((void));
-int	fgetNUL __P((char *, int, FILE *));
-int	xgetc __P((FILE *));
-void	flushsh __P((void));
-void	found __P((int, off_t, char *));
-void	prstr __P((char *));
-void	xsdotc __P((void));
-char	lastchr __P((char *));
-int	istail __P((char *, char *));
-void	process __P((char *));
+static off_t	tellpt;
+static off_t	mesgpt;
+static char	*strings =	"strings";
+static char	*array =	0;
+static int	cflg;
+static int	vflg;
+static int	readstd;
+static char	linebuf[BUFSIZ];
 
-off_t	mesgpt;
-char	*strings =	"strings";
+#define	BUCKETS	128
 
-char	*array =	0;
+static struct	hash {
+	off_t	hpt;
+	char	*hstr;
+	struct	hash *hnext;
+	short	hnew;
+} bucket[BUCKETS];
 
-int	cflg;
-int	vflg;
-int	readstd;
 int	main __P((int, char *[]));
 
 int
@@ -114,8 +123,7 @@ main(argc, argv)
 			array = optarg;
 			break;
 		default:
-			fprintf(stderr, "usage: xstr [ -v ] [ -c ] [ -l array ] [ - ] [ name ... ]\n");
-			exit (1);
+			usage();
 		}
 	argc -= optind;
 	argv += optind;
@@ -124,16 +132,16 @@ main(argc, argv)
 		array = "xstr";
 
 	if (signal(SIGINT, SIG_IGN) == SIG_DFL)
-		signal(SIGINT, onintr);
+		(void)signal(SIGINT, onintr);
 	if (cflg || (argc == 0 && !readstd))
 		inithash();
 	else
 		strings = mktemp(strdup(_PATH_TMP));
 	while (readstd || argc > 0) {
 		if (freopen("x.c", "w", stdout) == NULL)
-			perror("x.c"), exit(1);
+			err(1, "Cannot open `%s'", "x.c");
 		if (!readstd && freopen(argv[0], "r", stdin) == NULL)
-			perror(argv[0]), exit(2);
+			err(1, "Cannot open `%s'", argv[0]);
 		process("x.c");
 		if (readstd == 0)
 			argc--, argv++;
@@ -144,13 +152,11 @@ main(argc, argv)
 	if (cflg == 0)
 		xsdotc();
 	if (strings[0] == '/')
-		ignore(unlink(strings));
+		(void)unlink(strings);
 	exit(0);
 }
 
-char linebuf[BUFSIZ];
-
-void
+static void
 process(name)
 	char *name;
 {
@@ -162,10 +168,8 @@ process(name)
 	printf("extern char\t%s[];\n", array);
 	for (;;) {
 		if (fgets(linebuf, sizeof linebuf, stdin) == NULL) {
-			if (ferror(stdin)) {
-				perror(name);
-				exit(3);
-			}
+			if (ferror(stdin))
+				err(1, "Error reading `%s'", name);
 			break;
 		}
 		if (linebuf[0] == '#') {
@@ -217,11 +221,13 @@ def:
 		}
 	}
 out:
-	if (ferror(stdout))
-		perror("x.c"), onintr(0);
+	if (ferror(stdout)) {
+		warn("Error reading `%s'", "x.c");
+		onintr(1);
+	}
 }
 
-off_t
+static off_t
 yankstr(cpp)
 	char **cpp;
 {
@@ -245,10 +251,8 @@ yankstr(cpp)
 			if (c == '\n') {
 				if (fgets(linebuf, sizeof linebuf, stdin)
 				    == NULL) {
-					if (ferror(stdin)) {
-						perror("x.c");
-						exit(3);
-					}
+					if (ferror(stdin))
+						err(1, "Error reading `x.c'");
 					return(-1);
 				}
 				cp = linebuf;
@@ -281,7 +285,7 @@ out:
 	return (hashit(dbuf, 1));
 }
 
-int
+static int
 octdigit(c)
 	char c;
 {
@@ -289,7 +293,7 @@ octdigit(c)
 	return (isdigit(c) && c != '8' && c != '9');
 }
 
-void
+static void
 inithash()
 {
 	char buf[BUFSIZ];
@@ -301,12 +305,12 @@ inithash()
 		mesgpt = tellpt;
 		if (fgetNUL(buf, sizeof buf, mesgread) == 0)
 			break;
-		ignore(hashit(buf, 0));
+		(void)hashit(buf, 0);
 	}
-	ignore(fclose(mesgread));
+	(void)fclose(mesgread);
 }
 
-int
+static int
 fgetNUL(obuf, rmdr, file)
 	char *obuf;
 	int rmdr;
@@ -321,7 +325,7 @@ fgetNUL(obuf, rmdr, file)
 	return ((feof(file) || ferror(file)) ? 0 : 1);
 }
 
-int
+static int
 xgetc(file)
 	FILE *file;
 {
@@ -330,16 +334,8 @@ xgetc(file)
 	return (getc(file));
 }
 
-#define	BUCKETS	128
 
-struct	hash {
-	off_t	hpt;
-	char	*hstr;
-	struct	hash *hnext;
-	short	hnew;
-} bucket[BUCKETS];
-
-off_t
+static off_t
 hashit(str, new)
 	char *str;
 	int new;
@@ -354,15 +350,11 @@ hashit(str, new)
 		if (i >= 0)
 			return (hp->hpt + i);
 	}
-	if ((hp = (struct hash *) calloc(1, sizeof (*hp))) == NULL) {
-		perror("xstr");
-		exit(8);
-	}
+	if ((hp = (struct hash *) calloc(1, sizeof (*hp))) == NULL)
+		err(1, "%s", "");
 	hp->hpt = mesgpt;
-	if (!(hp->hstr = strdup(str))) {
-		(void)fprintf(stderr, "xstr: %s\n", strerror(errno));
-		exit(1);
-	}
+	if ((hp->hstr = strdup(str)) == NULL)
+		err(1, "%s", "");
 	mesgpt += strlen(hp->hstr) + 1;
 	hp->hnext = hp0->hnext;
 	hp->hnew = new;
@@ -370,7 +362,7 @@ hashit(str, new)
 	return (hp->hpt);
 }
 
-void
+static void
 flushsh()
 {
 	int i;
@@ -388,22 +380,23 @@ flushsh()
 		return;
 	mesgwrit = fopen(strings, old ? "r+" : "w");
 	if (mesgwrit == NULL)
-		perror(strings), exit(4);
+		err(1, "Cannot open `%s'", strings);
 	for (i = 0; i < BUCKETS; i++)
 		for (hp = bucket[i].hnext; hp != NULL; hp = hp->hnext) {
 			found(hp->hnew, hp->hpt, hp->hstr);
 			if (hp->hnew) {
 				fseek(mesgwrit, hp->hpt, 0);
-				ignore(fwrite(hp->hstr, strlen(hp->hstr) + 1, 1, mesgwrit));
+				(void)fwrite(hp->hstr, strlen(hp->hstr) + 1, 1,
+				    mesgwrit);
 				if (ferror(mesgwrit))
-					perror(strings), exit(4);
+					err(1, "Error writing `%s'", strings);
 			}
 		}
 	if (fclose(mesgwrit) == EOF)
-		perror(strings), exit(4);
+		err(1, "Error closing `%s'", strings);
 }
 
-void
+static void
 found(new, off, str)
 	int new;
 	off_t off;
@@ -412,14 +405,14 @@ found(new, off, str)
 	if (vflg == 0)
 		return;
 	if (!new)
-		fprintf(stderr, "found at %d:", (int) off);
+		(void)fprintf(stderr, "found at %d:", (int) off);
 	else
-		fprintf(stderr, "new at %d:", (int) off);
+		(void)fprintf(stderr, "new at %d:", (int) off);
 	prstr(str);
-	fprintf(stderr, "\n");
+	(void)fprintf(stderr, "\n");
 }
 
-void
+static void
 prstr(cp)
 	char *cp;
 {
@@ -436,17 +429,17 @@ prstr(cp)
 			fprintf(stderr, "%c", c);
 }
 
-void
+static void
 xsdotc()
 {
 	FILE *strf = fopen(strings, "r");
 	FILE *xdotcf;
 
 	if (strf == NULL)
-		perror(strings), exit(5);
+		err(1, "Cannot open `%s'", strings);
 	xdotcf = fopen("xs.c", "w");
 	if (xdotcf == NULL)
-		perror("xs.c"), exit(6);
+		err(1, "Cannot open `%s'", "xs.c");
 	fprintf(xdotcf, "char\t%s[] = {\n", array);
 	for (;;) {
 		int i, c;
@@ -454,8 +447,8 @@ xsdotc()
 		for (i = 0; i < 8; i++) {
 			c = getc(strf);
 			if (ferror(strf)) {
-				perror(strings);
-				onintr(0);
+				warn("Error reading `%s'", strings);
+				onintr(1);
 			}
 			if (feof(strf)) {
 				fprintf(xdotcf, "\n");
@@ -467,11 +460,11 @@ xsdotc()
 	}
 out:
 	fprintf(xdotcf, "};\n");
-	ignore(fclose(xdotcf));
-	ignore(fclose(strf));
+	(void)fclose(xdotcf);
+	(void)fclose(strf);
 }
 
-char
+static char
 lastchr(cp)
 	char *cp;
 {
@@ -481,7 +474,7 @@ lastchr(cp)
 	return (*cp);
 }
 
-int
+static int
 istail(str, of)
 	char *str, *of;
 {
@@ -492,15 +485,24 @@ istail(str, of)
 	return (d);
 }
 
-void
+static void
 onintr(dummy)
 	int dummy;
 {
 
-	ignore(signal(SIGINT, SIG_IGN));
+	(void)signal(SIGINT, SIG_IGN);
 	if (strings[0] == '/')
-		ignore(unlink(strings));
-	ignore(unlink("x.c"));
-	ignore(unlink("xs.c"));
-	exit(7);
+		(void)unlink(strings);
+	(void)unlink("x.c");
+	(void)unlink("xs.c");
+	exit(dummy);
+}
+
+static void
+usage()
+{
+	extern char *__progname;
+	(void)fprintf(stderr, "Usage: %s [-vc] [-l array] [-] [<name> ...]\n",
+	    __progname);
+	exit(1);
 }
