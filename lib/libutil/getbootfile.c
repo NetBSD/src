@@ -1,4 +1,4 @@
-/*	$NetBSD: getbootfile.c,v 1.1 2001/04/06 14:31:14 wiz Exp $	*/
+/*	$NetBSD: getbootfile.c,v 1.2 2002/09/12 14:42:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getbootfile.c,v 1.1 2001/04/06 14:31:14 wiz Exp $");
+__RCSID("$NetBSD: getbootfile.c,v 1.2 2002/09/12 14:42:15 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -78,7 +78,8 @@ getbootfile(void)
 		}
 
 		/* check if we got a valid and 'secure' filename */
-		if (secure_path(kernel) != 0) {
+		if (strcmp(kernel, _PATH_UNIX) != 0 && 
+		    secure_path(kernel) != 0) {
 			/* doesn't seems so, fall back to default */
 			kernel = _PATH_UNIX;
 		}
