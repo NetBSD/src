@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.19 2001/05/12 22:35:29 chs Exp $
+# $NetBSD: files.next68k,v 1.20 2001/06/18 02:00:50 christos Exp $
 
 # next68k-specific configuration info
 
@@ -108,6 +108,7 @@ include "compat/svr4/files.svr4"
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/m68k/files.linux_m68k"
+file arch/m68k/m68k/linux_trap.c		compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"

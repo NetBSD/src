@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.132 2001/06/16 21:44:27 manu Exp $	*/
+/*	$NetBSD: proc.h,v 1.133 2001/06/18 02:00:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -102,6 +102,7 @@ struct emul {
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
 	void		(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
+	void		(*e_trapsignal) __P((struct proc *, int, u_long));
 	char		*e_sigcode;	/* Start of sigcode */
 	char		*e_esigcode;	/* End of sigcode */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.44 2001/01/17 00:07:24 fvdl Exp $
+#	$NetBSD: files.hp300,v 1.45 2001/06/18 02:00:49 christos Exp $
 #
 # hp300-specific configuration info
 
@@ -226,6 +226,7 @@ file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/m68k/files.linux_m68k"
+file arch/m68k/m68k/linux_trap.c		compat_linux
 
 # a.out binary compatibility (COMPAT_AOUT)
 include "compat/aout/files.aout"
