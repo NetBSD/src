@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.9 2003/01/09 12:48:05 blymn Exp $	*/
+/*	$NetBSD: screen.c,v 1.10 2003/01/27 21:09:21 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.9 2003/01/09 12:48:05 blymn Exp $");
+__RCSID("$NetBSD: screen.c,v 1.10 2003/01/27 21:09:21 jdc Exp $");
 #endif
 #endif					/* not lint */
 
@@ -63,7 +63,6 @@ set_term(SCREEN *new)
 		old_screen->pfast = __pfast;
 		old_screen->rawmode = __rawmode;
 		old_screen->noqch = __noqch;
-		old_screen->nca = __nca;
 		old_screen->winlistp = __winlistp;
 		old_screen->COLS = COLS;
 		old_screen->LINES = LINES;
@@ -80,7 +79,6 @@ set_term(SCREEN *new)
         __pfast = new->pfast;
 	__rawmode = new->rawmode;
 	__noqch = new->noqch;
-	__nca = new->nca;
 	COLS = new->COLS;
 	LINES = new->LINES;
 	COLORS = new->COLORS;
