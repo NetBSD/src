@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.c,v 1.17 1996/11/19 05:08:36 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.c,v 1.18 1996/11/25 03:59:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -91,7 +91,7 @@ dec_2100_a50_cons_init()
 	extern struct apecs_config apecs_configuration;
 
 	acp = &apecs_configuration;
-	apecs_init(acp);
+	apecs_init(acp, 0);
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
