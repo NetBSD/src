@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.6 1997/10/18 11:52:32 lukem Exp $	*/
+/*	$NetBSD: append.c,v 1.7 1997/10/19 13:35:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)append.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: append.c,v 1.6 1997/10/18 11:52:32 lukem Exp $");
+__RCSID("$NetBSD: append.c,v 1.7 1997/10/19 13:35:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ append(argv)
 
 	afd = open_archive(O_CREAT|O_RDWR);
 	if (lseek(afd, (off_t)0, SEEK_END) == (off_t)-1)
-		error(archive);
+		err(1, "lseek %s", archive);
 
 	/* Read from disk, write to an archive; pad on write. */
 	SETCF(0, 0, afd, archive, WPAD);

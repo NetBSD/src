@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1995/03/25 06:39:46 glass Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1997/10/19 13:36:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -40,7 +40,6 @@ void	badfmt __P((void));
 int	compare __P((char *));
 int	contents __P((char **));
 int	delete __P((char **));
-void	error __P((char *));
 int	extract __P((char **));
 char   *files __P((char **argv));
 int	move __P((char **));

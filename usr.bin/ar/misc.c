@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.8 1997/10/18 11:53:17 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.9 1997/10/19 13:36:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: misc.c,v 1.8 1997/10/18 11:53:17 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.9 1997/10/19 13:36:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ tmp()
 	sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 	if ((fd = mkstemp(path)) == -1)
-		error(tname);
+		err(1, "mkstemp %s", tname);
         (void)unlink(path);
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	return (fd);
@@ -144,11 +144,4 @@ badfmt()
 {
 	errno = EFTYPE;
 	err(1, "%s", archive);
-}
-
-void
-error(name)
-	char *name;
-{
-	err(1, "%s", name);
 }

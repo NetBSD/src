@@ -1,4 +1,4 @@
-/*	$NetBSD: archive.c,v 1.13 1997/10/18 11:56:11 lukem Exp $	*/
+/*	$NetBSD: archive.c,v 1.14 1997/10/19 13:35:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)archive.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: archive.c,v 1.13 1997/10/18 11:56:11 lukem Exp $");
+__RCSID("$NetBSD: archive.c,v 1.14 1997/10/19 13:35:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,11 +82,11 @@ open_archive(mode)
 			goto opened;
 		}
 		if (errno != EEXIST)
-			error(archive);
+			err(1, "open %s", archive);
 		mode &= ~O_EXCL;
 	}
 	if ((fd = open(archive, mode, DEFFILEMODE)) < 0)
-		error(archive);
+		err(1, "open %s", archive);
 
 	/* 
 	 * Attempt to place a lock on the opened file - if we get an 
@@ -94,7 +94,7 @@ open_archive(mode)
 	 * it's going across NFS).
 	 */
 opened:	if (flock(fd, LOCK_EX|LOCK_NB) && errno != EOPNOTSUPP)
-		error(archive);
+		err(1, "flock %s", archive);
 	
 	/*
 	 * If not created, O_RDONLY|O_RDWR indicates that it has to be
@@ -105,11 +105,11 @@ opened:	if (flock(fd, LOCK_EX|LOCK_NB) && errno != EOPNOTSUPP)
 		if ((nr = read(fd, buf, SARMAG) != SARMAG)) {
 			if (nr >= 0)
 				badfmt();
-			error(archive);
+			err(1, "read %s", archive);
 		} else if (memcmp(buf, ARMAG, SARMAG))
 			badfmt();
 	} else if (write(fd, ARMAG, SARMAG) != SARMAG)
-		error(archive);
+		err(1, "write %s", archive);
 	return (fd);
 }
 
@@ -145,7 +145,7 @@ get_arobj(fd)
 		if (!nr)
 			return (0);
 		if (nr < 0)
-			error(archive);
+			err(1, "read %s", archive);
 		badfmt();
 	}
 
@@ -178,7 +178,7 @@ get_arobj(fd)
 		nr = read(fd, chdr.name, len);
 		if (nr != len) {
 			if (nr < 0)
-				error(archive);
+				err(1, "read %s", archive);
 			badfmt();
 		}
 		chdr.name[len] = 0;
@@ -267,10 +267,10 @@ put_arobj(cfp, sb)
 	}
 
 	if (write(cfp->wfd, hb, sizeof(HDR)) != sizeof(HDR))
-		error(cfp->wname);
+		err(1, "write %s", cfp->wname);
 	if (lname) {
 		if (write(cfp->wfd, name, lname) != lname)
-			error(cfp->wname);
+			err(1, "write %s", cfp->wname);
 		already_written = lname;
 	}
 	copy_ar(cfp, size);
@@ -312,23 +312,23 @@ copy_ar(cfp, size)
 		sz -= nr;
 		for (off = 0; off < nr; nr -= off, off += nw)
 			if ((nw = write(to, buf + off, nr)) < 0)
-				error(cfp->wname);
+				err(1, "write %s", cfp->wname);
 	}
 	if (sz) {
 		if (nr == 0)
 			badfmt();
-		error(cfp->rname);
+		err(1, "write %s", cfp->rname);
 	}
 
 	if (cfp->flags & RPAD && (size + chdr.lname) & 1 &&
 	    (nr = read(from, buf, 1)) != 1) {
 		if (nr == 0)
 			badfmt();
-		error(cfp->rname);
+		err(1, "read %s", cfp->rname);
 	}
 	if (cfp->flags & WPAD && (size + already_written) & 1 &&
 	    write(to, &pad, 1) != 1)
-		error(cfp->wname);
+		err(1, "write %s", cfp->wname);
 }
 
 /*
@@ -343,5 +343,5 @@ skip_arobj(fd)
 
 	len = chdr.size + ((chdr.size + chdr.lname) & 1);
 	if (lseek(fd, len, SEEK_CUR) == (off_t)-1)
-		error(archive);
+		err(1, "lseek %s", archive);
 }
