@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_exec.c,v 1.5 1994/10/24 17:37:36 deraadt Exp $ */
+/*	$NetBSD: svr4_exec.c,v 1.6 1994/10/26 05:27:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
