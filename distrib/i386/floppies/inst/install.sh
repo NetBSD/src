@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.3 1994/08/31 00:10:42 cgd Exp $
+#	$Id: install.sh,v 1.4 1994/10/18 07:03:02 glass Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -398,7 +398,7 @@ while [ "$answer" = "" ]; do
 done
 
 echo	""
-echo -n	"Labellling disk $drivename..."
+echo -n	"Labeling disk $drivename..."
 $DONTDOIT disklabel -w -B $drivename $labelname
 echo	" done."
 
@@ -441,8 +441,12 @@ if [ "$hname" != "" ]; then
 fi
 
 echo	""
+echo    "Populating filesystems with bootstrapping binaries and config files"
+$DONTDOIT tar --one-file-system -cf - . | (cd /mnt ; tar --unlink -xpf - )
+$DONTDOIT cp /tmp/.hdprofile /mnt/.profile
+
+echo	""
 echo -n	"Creating an fstab..."
-$DONTDOIT mkdir -p $FSTABDIR
 echo /dev/${drivename}a / ufs rw 1 1 | sed -e s,//,/, > $FSTAB
 if [ "$ename" != "" ]; then
 	echo /dev/${drivename}e /$ename ufs rw 1 2 | sed -e s,//,/, >> $FSTAB
@@ -461,13 +465,19 @@ echo	" done."
 
 echo	""
 echo	""
-echo	"OK!  The preliminary work of setting up your disk is now complete,"
-echo	"and you can install the actual NetBSD software."
+echo	"OK!  The preliminary work of setting up your disk is now complete."
+echo 	""
+echo	"The remaining tasks are:"
 echo	""
-echo	"Right now, your disk is mounted on /mnt.  You should consult"
-echo	"the installation notes to determine how to load and install the"
-echo	"NetBSD distribution sets, and how to configure your system when"
-echo	"you are done."
+echo	"To copy a NetBSD kernel to the hard drive's root filesystem."
+echo	"Once accomplished, you can boot off the hard drive."
+echo	""
+echo	"To load and install the NetBSD distribution sets."
+echo	"Currently the hard drive's root filesystem is mounted on /mnt"
+echo	""
+echo	"Consult the installation notes which will describe how to"
+echo	"install the distribution sets and kernel.  Post-installation"
+echo	"configuration is also discussed therein."
 echo	""
 echo	"GOOD LUCK!"
 echo	""

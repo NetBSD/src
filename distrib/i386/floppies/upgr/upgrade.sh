@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: upgrade.sh,v 1.2 1994/08/30 23:48:25 cgd Exp $
+#	$Id: upgrade.sh,v 1.3 1994/10/18 07:03:16 glass Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -228,6 +228,13 @@ fi
 echo	"Done."
 
 echo	""
+echo	"Copying bootstrapping binaries and config files to the hard drive..."
+$DONTDOIT cp /mnt/.profile /mnt/.profile.bak
+$DONTDOIT tar --exclude etc --one-file-system -cf - . | (cd /mnt ; tar --unlink -xpf - )
+$DONTDOIT mv /mnt/etc/rc /mnt/etc/rc.bak
+$DONTDOIT cp /tmp/.hdprofile /mnt/.profile
+
+echo	""
 echo	"Mounting remaining partitions..."
 chroot /mnt mount -at ufs > /dev/null 2>&1
 echo	"Done."
@@ -235,11 +242,11 @@ echo	"Done."
 echo    ""
 echo    ""
 echo	"OK!  The preliminary work of setting up your disk is now complete,"
-echo	"and you can upgrade the actual NetBSD software."
+echo	"and you can now upgrade the actual NetBSD software."
 echo	""
-echo	"Right now, your disk is mounted on /mnt.  You should consult"
+echo	"Right now, your hard disk is mounted on /mnt.  You should consult"
 echo	"the installation notes to determine how to load and install the new"
-echo    "NetBSD distribution sets, and how to clean up after the upgrade"
+echo	"NetBSD distribution sets, and how to clean up after the upgrade"
 echo	"software, when you are done."
 echo	""
 echo	"GOOD LUCK!"
