@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.23 2002/10/05 16:13:31 junyoung Exp $	 */
+/*	$NetBSD: paths.c,v 1.24 2002/10/05 16:26:37 junyoung Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -358,8 +358,7 @@ _rtld_process_hints(path_p, lib_p, fname)
 
 		len = strcspn(b, "\n#");
 		if (len == 0) {
-			if (*b == '#')
-				b += strcspn(b, "\n");			
+			b += strcspn(b, "\n");			
 			continue;
 		}
 
