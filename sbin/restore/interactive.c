@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.15 1999/01/03 01:50:34 lukem Exp $	*/
+/*	$NetBSD: interactive.c,v 1.16 1999/02/09 08:55:24 erh Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.5 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: interactive.c,v 1.15 1999/01/03 01:50:34 lukem Exp $");
+__RCSID("$NetBSD: interactive.c,v 1.16 1999/02/09 08:55:24 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -447,7 +447,7 @@ copynext(input, output)
 		 */
 		quote = *cp++;
 		while (*cp != quote && *cp != '\0')
-			*bp++ = *cp++ | 0200;
+			*bp++ = *cp++;
 		if (*cp++ == '\0') {
 			fprintf(stderr, "missing %c\n", quote);
 			cp--;
