@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wivar.h,v 1.15 2000/12/09 22:59:44 castor Exp $	*/
+/*	$NetBSD: wivar.h,v 1.1 2001/05/06 03:26:39 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -39,22 +39,22 @@
  */
 
 struct wi_softc	{
-	struct device sc_dev;
-	struct ethercom sc_ethercom;
+	struct device		sc_dev;
+	struct ethercom		sc_ethercom;
+	struct ifnet		*sc_ifp;
+	void			*sc_ih; /* interrupt handler */
+	int			(*sc_enable) __P((struct wi_softc *));
+	void			(*sc_disable) __P((struct wi_softc *));
 
-	struct pcmcia_function *sc_pf;
-	struct pcmcia_io_handle sc_pcioh;
-	int sc_iowin;
+	int sc_attached;
 	int sc_enabled;
 	int sc_prism2;
 
-	bus_space_tag_t		wi_btag;
-	bus_space_handle_t	wi_bhandle;
+	bus_space_tag_t		sc_iot;	/* bus cookie */
+	bus_space_handle_t	sc_ioh; /* bus i/o handle */
 
 	struct callout		wi_inquire_ch;
 
-  	void *sc_sdhook;	/* saved shutdown hook for card */
-	void *sc_ih;
 	u_int8_t		sc_macaddr[ETHER_ADDR_LEN];
 	
 	struct ifmedia		sc_media;
@@ -82,7 +82,11 @@ struct wi_softc	{
 	int                     wi_tx_key;
 	struct wi_ltv_keys      wi_keys;
 	struct wi_counters	wi_stats;
-#if NRND > 0
-	rndsource_element_t	rnd_source;	/* random source */
-#endif
 };
+
+int	wi_attach __P((struct wi_softc *));
+int	wi_detach __P((struct wi_softc *));
+int	wi_activate __P((struct device *, enum devact));
+int	wi_intr __P((void *arg));
+void	wi_power __P((struct wi_softc *, int));
+void	wi_shutdown __P((struct wi_softc *));
