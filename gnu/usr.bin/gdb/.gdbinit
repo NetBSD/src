@@ -1,3 +1,7 @@
+# $NetBSD: .gdbinit,v 1.3 1997/10/18 19:12:11 gwr Exp $
+
+# .gdbinit for debugging gdb with itself
+
 echo Setting up the environment for debugging gdb.\n
 
 set complaints 1
