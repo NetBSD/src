@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.27 1999/11/22 05:17:33 itojun Exp $
+#	$NetBSD: SHARK,v 1.28 1999/11/22 08:14:05 tron Exp $
 # From:  NetBSD: GENERIC,v 1.55 1999/03/27 07:11:36 explorer Exp
 #
 #	SHARK
@@ -97,13 +97,6 @@ options 	INET6		# IPV6
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	NFS_BOOT_DHCP	# use NetBSD standard DHCP/NFS boot code
-
-# IPv6 options
-
-options 	INET6		# IPV6
-options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_DEBUG	# debug for IP security
 
 # Compatibility options
 
@@ -237,18 +230,3 @@ pseudo-device	rnd			# /dev/random and /dev/urandom
 #pseudo-device	md	1		# Ramdisk driver
 #pseudo-device	profiler 1		# fiq based profiling device
 pseudo-device	sequencer 1		# MIDI sequencer
-
-# Pull in config fragments for kernel crypto.  Use only one of these,
-# and adjust the prefixes as necessary.
-
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
-
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
-
-# for IPv6
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
