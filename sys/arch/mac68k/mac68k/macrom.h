@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.h,v 1.4 1995/09/16 12:36:00 briggs Exp $	*/
+/*	$NetBSD: macrom.h,v 1.5 1995/09/17 21:28:37 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -68,7 +68,7 @@ extern void		(*jEgret)();	/* Pointer to MMU Swap routine */
 extern u_int16_t	HwCfgFlags;	/* Hardware config flags */
 extern u_int32_t	HwCfgFlags2;	/* more hardware config flags */
 extern u_int32_t	HwCfgFlags3;	/* more hardware config flags */
-extern u_int32_t	HwCfgFlags4;	/* pointer to patch table */
+extern u_int32_t	ADBReInit_JTBL;	/* pointer to patch table */
 extern void		(*jClkNoMem)(); /* pointer to ClkNoMem */
 extern u_char		SysParam[20];	/* Place where PRam data gets stored */
 	/* Types */
