@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.19 1993/10/28 00:59:22 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.20 1993/10/28 12:15:16 mycroft Exp $
  */
 
 /*
@@ -101,9 +101,9 @@ struct	pc_state {
 #define	PSF_STAND	0x2		/* standout mode? */
 #define	PSF_RAW		0x4		/* read raw scan codes */
 	u_char	ps_state;		/* parser state */
-#define	PSS_ESCAPE	0x1		/* seen escape */
-#define	PSS_EBRACE	0x2		/* seen escape bracket */
-#define	PSS_EPARAM	0x4		/* seen escape and parameters */
+#define	PSS_ESCAPE	1		/* seen escape */
+#define	PSS_EBRACE	2		/* seen escape bracket */
+#define	PSS_EPARAM	3		/* seen escape and parameters */
 	u_char	ps_at;			/* normal attributes */
 	u_char	ps_sat;			/* standout attributes */
 	int 	ps_cx, ps_cy;		/* escape parameters */
@@ -706,7 +706,7 @@ sput(ps, cp, n)
 
 		switch (c) {
 		    case 0x1B:
-			if (state & PSS_ESCAPE) {
+			if (state >= PSS_ESCAPE) {
 				wrtchar(c, ps->ps_sat);
 				state = 0;
 			} else
@@ -738,9 +738,9 @@ sput(ps, cp, n)
 
 		    default:
 		    bypass:
-			if (state & PSS_ESCAPE) {
+			if (state >= PSS_ESCAPE) {
 				scroll = 0;
-				if (state & PSS_EBRACE) {
+				if (state >= PSS_EBRACE) {
 					switch(c) {
 						int pos;
 					    case 'm':
@@ -908,7 +908,7 @@ sput(ps, cp, n)
 						break;
 					    }
 					    case ';': /* Switch params in cursor def */
-						state = state | PSS_EPARAM;
+						state = PSS_EPARAM;
 						break;
 					    case 'r':
 						ps->ps_sat = (ps->ps_cx & FG_MASK) |
@@ -936,7 +936,7 @@ sput(ps, cp, n)
 							break;
 						    case 3:
 							/* pc text attribute */
-							if (state & PSS_EPARAM)
+							if (state >= PSS_EPARAM)
 								at = ps->ps_cy;
 							break;
 						}
@@ -946,7 +946,7 @@ sput(ps, cp, n)
 
 					    default: /* Only numbers valid here */
 						if ((c >= '0') && (c <= '9')) {
-							if (state & PSS_EPARAM) {
+							if (state >= PSS_EPARAM) {
 								ps->ps_cy *= 10;
 								ps->ps_cy += c - '0';
 							} else {
@@ -964,7 +964,7 @@ sput(ps, cp, n)
 					state = 0;
 				} else if (c == '[') { /* Start ESC [ sequence */
 					ps->ps_cx = ps->ps_cy = 0;
-					state = state | PSS_EBRACE;
+					state = PSS_EBRACE;
 				} else { /* Invalid, clear state */
 					wrtchar(c, ps->ps_sat); 
 					state = 0;
