@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18 1996/10/04 06:56:25 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.19 1996/11/06 13:51:49 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -57,9 +57,7 @@ bdev_decl(vnd);
 #include "rd.h"
 bdev_decl(rd);
 #include "fd.h"
-#define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 bdev_decl(fd);
-#undef	fdopen
 bdev_decl(sw);
 #include "sd.h"
 bdev_decl(sd);
@@ -74,9 +72,7 @@ struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NVND,vnd),	/* 0: vnode disk driver */
 	bdev_rd_init(NRD,rd),		/* 1: ram disk - for install disk */
-#define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 	bdev_disk_init(NFD,fd),		/* 2: floppy disk */
-#undef	fdopen
 	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
@@ -158,9 +154,7 @@ cdev_decl(view);
 cdev_decl(kbd);
 #include "mouse.h"
 cdev_decl(ms);
-#define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 cdev_decl(fd);
-#undef	fdopen
 cdev_decl(vnd);
 cdev_decl(ccd);
 dev_decl(filedesc,open);
@@ -188,9 +182,7 @@ struct cdevsw	cdevsw[] =
 	cdev_view_init(NVIEW,view),	/* 13: /dev/view00 /dev/view01, ... */
 	cdev_mouse_init(NKBD,kbd),	/* 14: /dev/kbd	*/
 	cdev_mouse_init(NMOUSE,ms),	/* 15: /dev/mouse0 /dev/mouse1 */
-#define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 	cdev_disk_init(NFD,fd),		/* 16: floppy disk */
-#undef	fdopen
 	cdev_disk_init(NVND,vnd),	/* 17: vnode disk driver */
 	cdev_fd_init(1,filedesc),	/* 18: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 19: Berkeley packet filter */
