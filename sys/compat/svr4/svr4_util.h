@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_util.h,v 1.2 1994/10/26 05:28:05 cgd Exp $	*/
+/*	$NetBSD: svr4_util.h,v 1.3 1994/10/29 00:43:32 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,38 +33,38 @@
 #include <machine/vmparam.h>
 #include <sys/exec.h>
 
-static __inline void
+static __inline caddr_t
 stackgap_init()
 {
-    extern char sigcode[], esigcode[];
+	extern char     sigcode[], esigcode[];
 #define szsigcode (esigcode - sigcode)
-    extern caddr_t svr4_edata;
-    svr4_edata = (caddr_t) STACKGAPBASE;
+	extern caddr_t  svr4_edata;
+	return STACKGAPBASE;
 }
 
 
 static __inline void *
-stackgap_alloc(sz)
-    size_t sz;
+stackgap_alloc(sgp, sz)
+	caddr_t	*sgp;
+	size_t   sz;
 {
-    extern caddr_t svr4_edata;
-    void *p = (void *) svr4_edata;
-    svr4_edata += ALIGN(sz);
-    return p;
+	void	*p = (void *) *sgp;
+	*sgp += ALIGN(sz);
+	return p;
 }
 
 #ifdef DEBUG_SVR4
-# define DPRINTF(a)	printf a;
+#define DPRINTF(a)	printf a;
 #else
-# define DPRINTF(a)
+#define DPRINTF(a)
 #endif
 
 extern const char svr4_emul_path[];
 
-int svr4_emul_find __P((struct proc *, int, const char *,
-			char *, char **));
+int svr4_emul_find __P((struct proc *, caddr_t *, 
+			const char *, char *, char **));
 
-#define CHECKALT(p, path) \
-    svr4_emul_find(p, UIO_USERSPACE, svr4_emul_path, (path), &(path))
+#define CHECKALT(p, sgp, path) \
+    svr4_emul_find(p, sgp, svr4_emul_path, path, &(path))
 
 #endif /* !_SVR4_UTIL_H_ */
