@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.65 2001/07/08 07:27:14 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.66 2001/08/31 00:05:31 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd July 8, 2001
+.Dd August 31, 2001
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -428,6 +428,10 @@ The user must have a standard shell returned by
 If the user's shell field in the password database is empty, the
 shell is assumed to be
 .Pa /bin/sh .
+As per
+.Xr shells 5 ,
+the user's shell must be listed with full path in
+.Pa /etc/shells .
 .It
 If directed by the file
 .Xr ftpchroot 5
