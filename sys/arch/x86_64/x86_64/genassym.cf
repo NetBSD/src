@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 2002/06/03 18:23:17 fvdl Exp $
+#	$NetBSD: genassym.cf,v 1.6 2002/06/25 01:24:50 thorpej Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,11 +163,6 @@ define	TF_RFLAGS		offsetof(struct trapframe, tf_rflags)
 
 define	FRAMESIZE		sizeof(struct trapframe)
 
-define	SIGF_HANDLER		offsetof(struct sigframe, sf_handler)
-define	SIGF_SC			offsetof(struct sigframe, sf_sc)
-define	SIGF_SIGNUM		offsetof(struct sigframe, sf_signum)
-define	SIGF_CODE		offsetof(struct sigframe, sf_code)
-define	SIGF_SCP		offsetof(struct sigframe, sf_scp)
 define	SC_FS			offsetof(struct sigcontext, sc_fs)
 define	SC_GS			offsetof(struct sigcontext, sc_gs)
 define	SC_RFLAGS		offsetof(struct sigcontext, sc_rflags)
@@ -180,8 +175,6 @@ define	IH_COUNT		offsetof(struct intrhand, ih_count)
 define	IH_NEXT			offsetof(struct intrhand, ih_next)
 
 ifdef COMPAT_NETBSD32
-define	SIGF_HANDLER32		offsetof(struct netbsd32_sigframe, sf_handler)
-define	SIGF_SC32		offsetof(struct netbsd32_sigframe, sf_sc)
 define	SC_FS32			offsetof(struct netbsd32_sigcontext, sc_fs)
 define	SC_GS32			offsetof(struct netbsd32_sigcontext, sc_gs)
 endif
