@@ -1,4 +1,5 @@
-/*	$NetBSD: boot.c,v 1.3 2001/11/02 20:24:37 thorpej Exp $	*/
+#define	DEBUG
+/*	$NetBSD: boot.c,v 1.4 2002/01/09 23:18:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,9 +41,6 @@
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
  * All rights reserved.
- *
- * ELF support derived from NetBSD/alpha's boot loader, written
- * by Christopher G. Demetriou.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -92,6 +90,7 @@
 
 #include <machine/cpu.h>
 
+#include "cache.h"
 #include "ofdev.h"
 #include "openfirm.h"
 
@@ -178,6 +177,8 @@ chain(entry, args, ssym, esym)
 	l += sizeof(esym);
 	DPRINTF("args + l -> %p\n", args + l);
 
+	DPRINTF("Calling OF_chain(%p, %p, %p, %p, %u)\n",
+	    (void *)RELOC, end - (char *)RELOC, entry, args, l);
 	OF_chain((void *)RELOC, end - (char *)RELOC, entry, args, l);
 	panic("chain");
 }
@@ -301,9 +302,12 @@ main()
 	esym = (void *)marks[MARK_END];
 
 	printf(" start=0x%x\n", entry);
-#if 0
-	__syncicache((void *)entry, (u_int)ssym - (u_int)entry);
-#endif
+
+	if (cache_syncI != NULL) {
+		DPRINTF("Syncing I$...\n");
+		(*cache_syncI)();
+	}
+
 	chain((void *)entry, bootline, ssym, esym);
 
 	OF_exit();
