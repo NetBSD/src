@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.13 1999/03/23 05:59:09 cgd Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.14 2002/01/31 19:31:31 tv Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -34,17 +34,21 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
 #endif
 
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.13 1999/03/23 05:59:09 cgd Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.14 2002/01/31 19:31:31 tv Exp $");
 #endif /* not lint */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /*
  * uudecode [file ...]
@@ -54,16 +58,16 @@ __RCSID("$NetBSD: uudecode.c,v 1.13 1999/03/23 05:59:09 cgd Exp $");
  */
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <locale.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <limits.h>
 
 static int decode __P((void));
 static void usage __P((void));
