@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.10 2000/06/09 05:42:01 soda Exp $	*/
+/*	$NetBSD: isabus.c,v 1.11 2000/06/17 06:58:35 soda Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -124,6 +124,7 @@ struct isabr_softc {
 	struct	device sc_dv;
 	struct	arc_isa_bus arc_isa_cs;
 	struct	abus sc_bus;
+	struct arc_bus_dma_tag sc_dmat;
 };
 
 /* Definition of the driver for autoconfig. */
@@ -138,6 +139,8 @@ extern struct cfdriver isabr_cd;
 
 extern struct arc_bus_space arc_bus_io, arc_bus_mem;
 
+void	isabr_attach_hook __P((struct device *, struct device *,
+			struct isabus_attach_args *));
 const struct evcnt *isabr_intr_evcnt __P((isa_chipset_tag_t, int));
 void	*isabr_intr_establish __P((isa_chipset_tag_t, int, int, int,
 			int (*)(void *), void *));
@@ -182,12 +185,15 @@ isabrattach(parent, self, aux)
 	case MAGNUM:
 	case NEC_R94:
 	case NEC_R96:
+		jazz_bus_dma_tag_init(&sc->sc_dmat);
 		set_intr(MIPS_INT_MASK_2, isabr_iointr, 3);
 		break;
 	case DESKSTATION_TYNE:
+		_bus_dma_tag_init(&sc->sc_dmat); /* XXX dedicated bounce mem */
 		set_intr(MIPS_INT_MASK_2, isabr_iointr, 2);
 		break;
 	case DESKSTATION_RPC44:
+		_bus_dma_tag_init(&sc->sc_dmat); /* XXX bounce for >16MB */
 		set_intr(MIPS_INT_MASK_2, isabr_iointr, 2);
 		break;
 	default:
@@ -198,13 +204,15 @@ isabrattach(parent, self, aux)
 	sc->sc_bus.ab_dv = (struct device *)sc;
 	sc->sc_bus.ab_type = BUS_ISABR;
 
+	sc->arc_isa_cs.ic_attach_hook = isabr_attach_hook;
 	sc->arc_isa_cs.ic_intr_evcnt = isabr_intr_evcnt;
 	sc->arc_isa_cs.ic_intr_establish = isabr_intr_establish;
 	sc->arc_isa_cs.ic_intr_disestablish = isabr_intr_disestablish;
 
 	iba.iba_busname = "isa";
-	iba.iba_iot = (bus_space_tag_t)&arc_bus_io;
-	iba.iba_memt = (bus_space_tag_t)&arc_bus_mem;
+	iba.iba_iot = &arc_bus_io;
+	iba.iba_memt = &arc_bus_mem;
+	iba.iba_dmat = &sc->sc_dmat;
 	iba.iba_ic = &sc->arc_isa_cs;
 	config_found(self, &iba, isabrprint);
 }
@@ -308,6 +316,15 @@ intr_calculatemasks()
 		isa_outb(IO_ICU1 + 1, imen);
 		isa_outb(IO_ICU2 + 1, imen >> 8);
 	}
+}
+
+void
+isabr_attach_hook(parent, self, iba)
+	struct device *parent, *self;
+	struct isabus_attach_args *iba;
+{
+
+	/* Nothing to do. */
 }
 
 const struct evcnt *
