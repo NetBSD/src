@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigsuspend.2,v 1.9 1999/10/06 17:14:02 jdolecek Exp $
+.\"	$NetBSD: sigsuspend.2,v 1.10 1999/12/02 21:42:39 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,6 +39,8 @@
 .Sh NAME
 .Nm sigsuspend
 .Nd atomically release blocked signals and wait for interrupt
+.Sh LIBRARY
+.Lb libc
 .Sh SYNOPSIS
 .Fd #include <signal.h>
 .Ft int
