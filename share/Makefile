@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2000/12/30 04:21:20 itojun Exp $
+#	$NetBSD: Makefile,v 1.15 2001/01/07 07:10:30 garbled Exp $
 #	from @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # Missing:  ms
@@ -7,7 +7,7 @@
 
 .if ${MKSHARE} != "no" || \
 	make(clean) || make(cleandir) || make(distclean) || make(obj)
-SUBDIR=	dict doc examples man me misc mk \
+SUBDIR=	dict doc examples man me misc mk sushi \
 	tabset termcap tmac wscons zoneinfo
 .if ${MKNLS} != "no"
 SUBDIR+=locale
