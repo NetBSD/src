@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.300.2.28 2002/04/27 20:24:44 sommerfeld Exp $
+# $NetBSD: GENERIC,v 1.300.2.29 2002/05/03 19:12:54 sommerfeld Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.300.2.28 $"
+#ident 		"GENERIC-$Revision: 1.300.2.29 $"
 
 maxusers	32		# estimated number of users
 
@@ -212,8 +212,8 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-cpu* at mainbus? apid ?
-#ioapic* at mainbus? apid ?
+cpu* at mainbus?
+#ioapic* at mainbus?
 
 apm0	at mainbus0			# Advanced power management
 

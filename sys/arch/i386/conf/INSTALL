@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.135.2.19 2002/04/27 20:24:44 sommerfeld Exp $
+#	$NetBSD: INSTALL,v 1.135.2.20 2002/05/03 19:12:55 sommerfeld Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -166,8 +166,7 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-cpu* at mainbus? apid ?
-#ioapic* at mainbus? apid ?
+cpu* at mainbus?
 
 #apm0	at mainbus0			# Advanced power management
 
