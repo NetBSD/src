@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.23 2002/01/12 13:35:25 manu Exp $	*/
+/*	$NetBSD: conf.c,v 1.24 2002/01/19 21:13:45 scw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -183,7 +183,7 @@ struct cdevsw	cdevsw[] =
 	cdev_rnd_init(NRND,rnd),	/* 35: random source pseudo-device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 36: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 37: RAIDframe disk driver */
-	cdev_svr4_net_init(NSVR4_NET,svr4_net) /* 38: svr4 net pseudo-device */
+	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 38: svr4 net pseudo-device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 39: clockctl pseudo device */
 };
 
