@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.72 2003/12/30 12:33:24 pk Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.73 2004/01/09 19:10:22 dbj Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.72 2003/12/30 12:33:24 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.73 2004/01/09 19:10:22 dbj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1067,7 +1067,9 @@ ffs_fragextend(ip, cg, bprev, osize, nsize)
 		return (0);
 	}
 	cgp->cg_old_time = ufs_rw32(time.tv_sec, UFS_FSNEEDSWAP(fs));
-	cgp->cg_time = ufs_rw64(time.tv_sec, UFS_FSNEEDSWAP(fs));
+	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
+	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
+		cgp->cg_time = ufs_rw64(time.tv_sec, UFS_FSNEEDSWAP(fs));
 	bno = dtogd(fs, bprev);
 	blksfree = cg_blksfree(cgp, UFS_FSNEEDSWAP(fs));
 	for (i = numfrags(fs, osize); i < frags; i++)
@@ -1139,7 +1141,9 @@ ffs_alloccg(ip, cg, bpref, size)
 		return (0);
 	}
 	cgp->cg_old_time = ufs_rw32(time.tv_sec, needswap);
-	cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
+	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
+	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
+		cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
 	if (size == fs->fs_bsize) {
 		blkno = ffs_alloccgblk(ip, bp, bpref);
 		bdwrite(bp);
@@ -1257,6 +1261,14 @@ gotit:
 	ufs_add32(cgp->cg_cs.cs_nbfree, -1, needswap);
 	fs->fs_cstotal.cs_nbfree--;
 	fs->fs_cs(fs, ufs_rw32(cgp->cg_cgx, needswap)).cs_nbfree--;
+	if ((fs->fs_magic == FS_UFS1_MAGIC) &&
+	    ((fs->fs_old_flags & FS_FLAGS_UPDATED) == 0)) {
+		int cylno;
+		cylno = old_cbtocylno(fs, bno);
+		ufs_add16(old_cg_blks(fs, cgp, cylno, needswap)[old_cbtorpos(fs, bno)], -1,
+		    needswap);
+		ufs_add32(old_cg_blktot(cgp, needswap)[cylno], -1, needswap);
+	}
 	fs->fs_fmod = 1;
 	blkno = ufs_rw32(cgp->cg_cgx, needswap) * fs->fs_fpg + bno;
 	if (DOINGSOFTDEP(ITOV(ip)))
@@ -1424,7 +1436,9 @@ ffs_nodealloccg(ip, cg, ipref, mode)
 		return (0);
 	}
 	cgp->cg_old_time = ufs_rw32(time.tv_sec, needswap);
-	cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
+	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
+	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
+		cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
 	inosused = cg_inosused(cgp, needswap);
 	if (ipref) {
 		ipref %= fs->fs_ipg;
@@ -1547,7 +1561,9 @@ ffs_blkfree(ip, bno, size)
 		return;
 	}
 	cgp->cg_old_time = ufs_rw32(time.tv_sec, needswap);
-	cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
+	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
+	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
+		cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
 	cgbno = dtogd(fs, bno);
 	blksfree = cg_blksfree(cgp, needswap);
 	if (size == fs->fs_bsize) {
@@ -1562,6 +1578,13 @@ ffs_blkfree(ip, bno, size)
 		ufs_add32(cgp->cg_cs.cs_nbfree, 1, needswap);
 		fs->fs_cstotal.cs_nbfree++;
 		fs->fs_cs(fs, cg).cs_nbfree++;
+		if ((fs->fs_magic == FS_UFS1_MAGIC) &&
+		    ((fs->fs_old_flags & FS_FLAGS_UPDATED) == 0)) {
+			i = old_cbtocylno(fs, cgbno);
+			ufs_add16(old_cg_blks(fs, cgp, i, needswap)[old_cbtorpos(fs, cgbno)], 1,
+			    needswap);
+			ufs_add32(old_cg_blktot(cgp, needswap)[i], 1, needswap);
+		}
 	} else {
 		bbase = cgbno - fragnum(fs, cgbno);
 		/*
@@ -1602,6 +1625,13 @@ ffs_blkfree(ip, bno, size)
 			ufs_add32(cgp->cg_cs.cs_nbfree, 1, needswap);
 			fs->fs_cstotal.cs_nbfree++;
 			fs->fs_cs(fs, cg).cs_nbfree++;
+			if ((fs->fs_magic == FS_UFS1_MAGIC) &&
+			    ((fs->fs_old_flags & FS_FLAGS_UPDATED) == 0)) {
+				i = old_cbtocylno(fs, bbase);
+				ufs_add16(old_cg_blks(fs, cgp, i, needswap)[old_cbtorpos(fs,
+				    bbase)], 1, needswap);
+				ufs_add32(old_cg_blktot(cgp, needswap)[i], 1, needswap);
+			}
 		}
 	}
 	fs->fs_fmod = 1;
@@ -1722,7 +1752,9 @@ ffs_freefile(v)
 		return (0);
 	}
 	cgp->cg_old_time = ufs_rw32(time.tv_sec, needswap);
-	cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
+	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
+	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
+		cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
 	inosused = cg_inosused(cgp, needswap);
 	ino %= fs->fs_ipg;
 	if (isclr(inosused, ino)) {
