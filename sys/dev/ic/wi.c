@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.99 2002/10/07 11:01:52 onoe Exp $	*/
+/*	$NetBSD: wi.c,v 1.100 2002/10/15 08:53:46 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.99 2002/10/07 11:01:52 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.100 2002/10/15 08:53:46 onoe Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -325,7 +325,7 @@ wi_attach(struct wi_softc *sc)
 	sc->sc_max_datalen = 2304;
 	sc->sc_rts_thresh = 2347;
 	sc->sc_system_scale = 1;
-	sc->sc_cnfauthmode = 1;
+	sc->sc_cnfauthmode = IEEE80211_AUTH_OPEN;
 	sc->sc_roaming_mode = 1;
 
 	ifmedia_init(&sc->sc_media, 0, wi_media_change, wi_media_status);
@@ -1734,10 +1734,15 @@ wi_write_wep(struct wi_softc *sc)
 			wi_write_val(sc, WI_RID_CNFAUTHMODE,
 			    sc->sc_cnfauthmode);
 			val = PRIVACY_INVOKED | EXCLUDE_UNENCRYPTED;
-			if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+			/*
+			 * Encryption firmware has a bug for HostAP mode.
+			 */
+			if (sc->sc_firmware_type == WI_INTERSIL &&
+			    ic->ic_opmode == IEEE80211_M_HOSTAP)
 				val |= HOST_ENCRYPT;
 		} else {
-			wi_write_val(sc, WI_RID_CNFAUTHMODE, 1); /* open */
+			wi_write_val(sc, WI_RID_CNFAUTHMODE,
+			    IEEE80211_AUTH_OPEN);
 			val = HOST_ENCRYPT | HOST_DECRYPT;
 		}
 		error = wi_write_val(sc, WI_RID_P2_ENCRYPTION, val);
@@ -1747,12 +1752,18 @@ wi_write_wep(struct wi_softc *sc)
 		    ic->ic_wep_txkey);
 		if (error)
 			break;
+		/*
+		 * It seems that the firmware accept 104bit key only if
+		 * all the keys have 104bit length.  We get the length of
+		 * the transmit key and use it for all other keys.
+		 * Perhaps we should use software WEP for such situation.
+		 */
+		keylen = ic->ic_nw_keys[ic->ic_wep_txkey].wk_len;
+		if (keylen > IEEE80211_WEP_KEYLEN)
+			keylen = 13;	/* 104bit keys */
+		else
+			keylen = IEEE80211_WEP_KEYLEN;
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-			keylen = ic->ic_nw_keys[i].wk_len;
-			if (keylen > IEEE80211_WEP_KEYLEN)
-				keylen = 13;	/* 104bit keys */
-			else
-				keylen = IEEE80211_WEP_KEYLEN;
 			error = wi_write_rid(sc, WI_RID_P2_CRYPT_KEY0 + i,
 			    ic->ic_nw_keys[i].wk_key, keylen);
 			if (error)
