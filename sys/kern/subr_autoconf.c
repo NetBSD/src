@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.47 2000/01/24 18:03:19 thorpej Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.48 2000/01/25 13:23:26 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -488,9 +488,12 @@ config_detach(dev, flags)
 	 * the list.)
 	 */
 	for (d = TAILQ_NEXT(dev, dv_list); d != NULL;
-	     d = TAILQ_NEXT(d, dv_list)) {
-		if (d->dv_parent == dev)
-			panic("config_detach: detached device has children");
+	    d = TAILQ_NEXT(d, dv_list)) {
+		if (d->dv_parent == dev) {
+			printf("config_detach: detached device %s"
+			    " has children %s\n", dev->dv_xname, d->dv_xname);
+			panic("config_detach");
+		}
 	}
 #endif
 
