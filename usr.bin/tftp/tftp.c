@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.11 2000/01/21 17:08:36 mycroft Exp $	*/
+/*	$NetBSD: tftp.c,v 1.11.4.1 2001/02/26 16:58:54 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.11 2000/01/21 17:08:36 mycroft Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.11.4.1 2001/02/26 16:58:54 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,8 @@ sendfile(fd, name, mode)
 	struct tftphdr *ap;	   /* data and ack packets */
 	struct tftphdr *dp;
 	int n;
-	volatile int block, size, convert;
+	volatile unsigned int block;
+	volatile int size, convert;
 	volatile unsigned long amount;
 	struct sockaddr_storage from;
 	int fromlen;
@@ -218,7 +219,8 @@ recvfile(fd, name, mode)
 	struct tftphdr *ap;
 	struct tftphdr *dp;
 	int n;
-	volatile int block, size, firsttrip;
+	volatile unsigned int block;
+	volatile int size, firsttrip;
 	volatile unsigned long amount;
 	struct sockaddr_storage from;
 	int fromlen;
@@ -385,23 +387,26 @@ nak(error, peer)
 	const struct errmsg *pe;
 	struct tftphdr *tp;
 	int length;
+	size_t msglen;
 
 	tp = (struct tftphdr *)ackbuf;
 	tp->th_opcode = htons((u_short)ERROR);
+	msglen = sizeof(ackbuf) - (&tp->th_msg[0] - ackbuf);
 	for (pe = errmsgs; pe->e_code >= 0; pe++)
 		if (pe->e_code == error)
 			break;
 	if (pe->e_code < 0) {
 		tp->th_code = EUNDEF;
-		strcpy(tp->th_msg, strerror(error - 100));
+		strlcpy(tp->th_msg, strerror(error - 100), msglen);
 	} else {
 		tp->th_code = htons((u_short)error);
-		strcpy(tp->th_msg, pe->e_msg);
+		strlcpy(tp->th_msg, pe->e_msg, msglen);
 	}
-	length = strlen(pe->e_msg) + 4;
+	length = strlen(tp->th_msg);
+	msglen = &tp->th_msg[length + 1] - ackbuf;
 	if (trace)
-		tpacket("sent", tp, length);
-	if (sendto(f, ackbuf, length, 0, peer, peer->sa_len) != length)
+		tpacket("sent", tp, (int)msglen);
+	if (sendto(f, ackbuf, msglen, 0, peer, peer->sa_len) != length)
 		warn("nak");
 }
 
