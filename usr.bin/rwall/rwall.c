@@ -1,4 +1,4 @@
-/* $NetBSD: rwall.c,v 1.11 2000/06/14 06:49:22 cgd Exp $ */
+/* $NetBSD: rwall.c,v 1.11.2.1 2000/10/01 04:32:31 taca Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988 Regents of the University of California.\n\
 #if 0
 static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";
 #else
-__RCSID("$NetBSD: rwall.c,v 1.11 2000/06/14 06:49:22 cgd Exp $");
+__RCSID("$NetBSD: rwall.c,v 1.11.2.1 2000/10/01 04:32:31 taca Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ makemsg(fname)
 	FILE *fp;
 	int fd;
 	const char *whom;
-	char hostname[MAXHOSTNAMELEN + 1], lbuf[100], tmpname[32];
+	char *tty, hostname[MAXHOSTNAMELEN + 1], lbuf[100], tmpname[32];
 
 	(void)strcpy(tmpname, _PATH_TMP);
 	(void)strcat(tmpname, "/wall.XXXXXX");
@@ -153,8 +153,13 @@ makemsg(fname)
 	 */
 	(void)fprintf(fp, "Remote Broadcast Message from %s@%s\n",
 	    whom, hostname);
-	(void)fprintf(fp, "        (%s) at %d:%02d ...\n", ttyname(2),
-	    lt->tm_hour, lt->tm_min);
+	tty = ttyname(STDERR_FILENO);
+	if (tty == NULL)
+		(void)fprintf(fp, "        at %d:%02d ...\n",
+			      lt->tm_hour, lt->tm_min);
+	else
+		(void)fprintf(fp, "        (%s) at %d:%02d ...\n", tty,
+			      lt->tm_hour, lt->tm_min);
 
 	putc('\n', fp);
 
