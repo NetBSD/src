@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread-stub.c,v 1.3.6.10 2002/03/25 03:40:37 nathanw Exp $	*/
+/*	$NetBSD: pthread-stub.c,v 1.3.6.11 2002/05/02 16:56:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Graff <explorer@flame.org>.
@@ -36,58 +36,8 @@
 
 #include <stdio.h>
 
-/*
- * When you update this file, don't forget to update pthread-intr.c
- * for those poor folks still using a.out.
- */
-
-#ifdef __weak_alias
-__weak_alias(_libc_pthread_mutex_init, _pthread_mutex_init)
-__weak_alias(_libc_pthread_mutex_lock, _pthread_mutex_lock)
-__weak_alias(_libc_pthread_mutex_unlock, _pthread_mutex_unlock)
-#if 0
-__weak_alias(_libc_pthread_rwlock_init, _pthread_rwlock_init)
-__weak_alias(_libc_pthread_rwlock_rdlock, _pthread_rwlock_rdlock)
-__weak_alias(_libc_pthread_rwlock_wrlock, _pthread_rwlock_wrlock)
-__weak_alias(_libc_pthread_rwlock_unlock, _pthread_rwlock_unlock)
-#endif
-__weak_alias(_libc_pthread_once, _pthread_once)
-__weak_alias(_libc_pthread_cond_init, _pthread_cond_init)
-__weak_alias(_libc_pthread_cond_wait, _pthread_cond_wait)
-__weak_alias(_libc_pthread_cond_signal, _pthread_cond_signal)
-__weak_alias(_libc_pthread_key_create, _pthread_key_create)
-__weak_alias(_libc_pthread_setspecific, _pthread_setspecific)
-__weak_alias(_libc_pthread_getspecific, _pthread_getspecific)
-__weak_alias(_libc_pthread_self, _pthread_self)
-__weak_alias(_libc_pthread_sigmask, _pthread_sigmask)
-__weak_alias(_libc_pthread__errno, _pthread__errno)
-#endif
-
-int _pthread_mutex_init(pthread_mutex_t *, pthread_mutexattr_t *);
-int _pthread_mutex_lock(pthread_mutex_t *);
-int _pthread_mutex_unlock(pthread_mutex_t *);
-#if 0
-int _pthread_rwlock_init(pthread_rwlock_t *, pthread_rwlockattr_t *);
-int _pthread_rwlock_rdlock(pthread_rwlock_t *);
-int _pthread_rwlock_wrlock(pthread_rwlock_t *);
-int _pthread_rwlock_unlock(pthread_rwlock_t *);
-#endif
-int _pthread_once(pthread_once_t *, void (*)(void));
-int _pthread_cond_init(pthread_cond_t *,const pthread_condattr_t *);
-int _pthread_cond_wait(pthread_cond_t *, pthread_mutex_t *);
-int _pthread_cond_signal(pthread_cond_t *);
-void _pthread_spin_lock(pthread_spinlock_t *);
-void _pthread_spin_unlock(pthread_spinlock_t *);
-int _pthread_key_create(pthread_key_t *, void (*)(void *));
-int _pthread_setspecific(pthread_key_t, const void *);
-void* _pthread_getspecific(pthread_key_t);
-pthread_t _pthread_self(void);
-int _pthread_sigmask(int, const sigset_t *, sigset_t *);
-int* _pthread__errno(void);
-
-
-int
-_pthread_mutex_init(pthread_mutex_t *m, pthread_mutexattr_t *a)
+static int
+_pthread_mutex_init(pthread_mutex_t *m, const pthread_mutexattr_t *a)
 {
 	/* LINTED deliberate lack of effect */
 	(void)m;
@@ -97,7 +47,7 @@ _pthread_mutex_init(pthread_mutex_t *m, pthread_mutexattr_t *a)
 	return (0);
 }
 
-int
+static int
 _pthread_mutex_lock(pthread_mutex_t *m)
 {
 	/* LINTED deliberate lack of effect */
@@ -106,7 +56,7 @@ _pthread_mutex_lock(pthread_mutex_t *m)
 	return (0);
 }
 
-int
+static int
 _pthread_mutex_unlock(pthread_mutex_t *m)
 {
 	/* LINTED deliberate lack of effect */
@@ -115,7 +65,7 @@ _pthread_mutex_unlock(pthread_mutex_t *m)
 	return (0);
 }
 #if 0
-int
+static int
 _pthread_rwlock_init(pthread_rwlock_t *l, pthread_rwlockattr_t *a)
 {
 	/* LINTED deliberate lack of effect */
@@ -126,7 +76,7 @@ _pthread_rwlock_init(pthread_rwlock_t *l, pthread_rwlockattr_t *a)
 	return (0);
 }
 
-int
+static int
 _pthread_rwlock_rdlock(pthread_rwlock_t *l)
 {
 	/* LINTED deliberate lack of effect */
@@ -135,7 +85,7 @@ _pthread_rwlock_rdlock(pthread_rwlock_t *l)
 	return (0);
 }
 
-int
+static int
 _pthread_rwlock_wrlock(pthread_rwlock_t *l)
 {
 	/* LINTED deliberate lack of effect */
@@ -144,7 +94,7 @@ _pthread_rwlock_wrlock(pthread_rwlock_t *l)
 	return (0);
 }
 
-int
+static int
 _pthread_rwlock_unlock(pthread_rwlock_t *l)
 {
 	/* LINTED deliberate lack of effect */
@@ -154,7 +104,7 @@ _pthread_rwlock_unlock(pthread_rwlock_t *l)
 }
 #endif
 
-int
+static int
 _pthread_once(pthread_once_t *o, void (*r)(void))
 {
 	/* LINTED deliberate lack of effect */
@@ -165,7 +115,7 @@ _pthread_once(pthread_once_t *o, void (*r)(void))
 	return (0);
 }
 
-int
+static int
 _pthread_cond_init(pthread_cond_t *c,const pthread_condattr_t *a)
 {
 	/* LINTED deliberate lack of effect */
@@ -176,7 +126,7 @@ _pthread_cond_init(pthread_cond_t *c,const pthread_condattr_t *a)
 	return (0);
 }
 
-int
+static int
 _pthread_cond_wait(pthread_cond_t *c, pthread_mutex_t *m)
 {
 	/* LINTED deliberate lack of effect */
@@ -187,7 +137,7 @@ _pthread_cond_wait(pthread_cond_t *c, pthread_mutex_t *m)
 	return (0);
 }
 
-int
+static int
 _pthread_cond_signal(pthread_cond_t *c)
 {
 	/* LINTED deliberate lack of effect */
@@ -196,7 +146,7 @@ _pthread_cond_signal(pthread_cond_t *c)
 	return (0);
 }
 
-int
+static int
 _pthread_key_create(pthread_key_t *k, void (*d)(void *))
 {
 	/* LINTED deliberate lack of effect */
@@ -207,7 +157,7 @@ _pthread_key_create(pthread_key_t *k, void (*d)(void *))
 	return (0);
 }
 
-int
+static int
 _pthread_setspecific(pthread_key_t k, const void *v)
 {
 	/* LINTED deliberate lack of effect */
@@ -218,7 +168,7 @@ _pthread_setspecific(pthread_key_t k, const void *v)
 	return (0);
 }
 
-void*
+static void*
 _pthread_getspecific(pthread_key_t k)
 {
 	/* LINTED deliberate lack of effect */
@@ -227,14 +177,14 @@ _pthread_getspecific(pthread_key_t k)
 	return (0);
 }
 
-pthread_t
+static pthread_t
 _pthread_self(void)
 {
 
 	return (0);
 }
 
-int
+static int
 _pthread_sigmask(int h, const sigset_t *s, sigset_t *o)
 {
 	/* LINTED deliberate lack of effect */
@@ -247,9 +197,45 @@ _pthread_sigmask(int h, const sigset_t *s, sigset_t *o)
 	return (0);
 }
 
-int *
+static int *
 _pthread__errno(void)
 {
 
 	return NULL;
 }
+
+
+
+static pthread_ops_t __null_pthread_ops = {
+	_pthread_mutex_init,
+	_pthread_mutex_lock,
+	NULL, /* _pthread_mutex_trylock */
+	_pthread_mutex_unlock,
+	NULL, /* _pthread_mutex_destroy */
+	NULL, /* _pthread_mutexattr_init */
+	NULL, /* _pthread_mutexattr_destroy */
+
+	_pthread_cond_init,
+	_pthread_cond_signal,
+	NULL, /* _pthread_cond_broadcast */
+	_pthread_cond_wait,
+	NULL, /* _pthread_cond_timedwait */
+	NULL, /* _pthread_cond_destroy */
+	NULL, /* _pthread_condattr_init */
+	NULL, /* _pthread_condattr_destroy */
+
+	_pthread_key_create,
+	_pthread_setspecific,
+	_pthread_getspecific,
+	NULL, /* _pthread_key_delete */
+
+	_pthread_once,
+
+	_pthread_self,
+
+	_pthread_sigmask,
+
+	_pthread__errno
+};
+
+pthread_ops_t *__libc_pthread_ops = &__null_pthread_ops;
