@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1996/09/29 23:29:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 1996/10/01 23:42:47 mrg Exp $
 
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
@@ -70,5 +70,4 @@ symlinks:
 		ln -s machine ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
 	fi
 
-.include <bsd.prog.mk>
 .include <bsd.subdir.mk>
