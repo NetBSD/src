@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.15 2001/08/30 08:31:25 lukem Exp $	*/
+/*	$NetBSD: fs.h,v 1.16 2001/08/30 14:37:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -203,8 +203,8 @@ struct fs {
 	int32_t	 fs_npsect;		/* # sectors/track including spares */
 	int32_t	 fs_interleave;		/* hardware sector interleave */
 	int32_t	 fs_trackskew;		/* sector 0 skew, per track */
-	int32_t	 fs_headswitch;		/* head switch time, usec (UNUSED) */
-	int32_t	 fs_trkseek;		/* track-to-track seek, usec (UNUSED) */
+/* fs_id takes the space of the unused fs_headswitch and fs_trkseek fields */
+	int32_t	 fs_id[2];		/* unique file system id */
 /* sizes determined by number of cylinder groups and their sizes */
 	ufs_daddr_t  fs_csaddr;		/* blk addr of cyl grp summary area */
 	int32_t	 fs_cssize;		/* size of cyl grp summary area */

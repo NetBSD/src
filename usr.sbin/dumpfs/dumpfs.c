@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.27 2001/08/17 02:18:49 lukem Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.28 2001/08/30 14:37:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,25 +43,22 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.27 2001/08/17 02:18:49 lukem Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.28 2001/08/30 14:37:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 
-#include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <fstab.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 union {
@@ -169,6 +166,7 @@ dumpfs(const char *name)
 				i++;
 		}
 	}
+	printf("id\t[ %x %x ]\n", afs.fs_id[0], afs.fs_id[1]);
 	printf("cylgrp\t%s\tinodes\t%s\tfslevel %d\tsoftdep %sabled\n",
 	    i < 1 ? "static" : "dynamic", i < 2 ? "4.2/4.3BSD" : "4.4BSD", i,
 	    (afs.fs_flags & FS_DOSOFTDEP) ? "en" : "dis");
@@ -188,8 +186,8 @@ dumpfs(const char *name)
 	printf("minfree\t%d%%\toptim\t%s\tmaxcontig %d\tmaxbpg\t%d\n",
 	    afs.fs_minfree, afs.fs_optim == FS_OPTSPACE ? "space" : "time",
 	    afs.fs_maxcontig, afs.fs_maxbpg);
-	printf("rotdelay %dms\theadswitch %dus\ttrackseek %dus\trps\t%d\n",
-	    afs.fs_rotdelay, afs.fs_headswitch, afs.fs_trkseek, afs.fs_rps);
+	printf("rotdelay %dms\trps\t%d\n",
+	    afs.fs_rotdelay, afs.fs_rps);
 	printf("ntrak\t%d\tnsect\t%d\tnpsect\t%d\tspc\t%d\n",
 	    afs.fs_ntrak, afs.fs_nsect, afs.fs_npsect, afs.fs_spc);
 	printf("symlinklen %d\ttrackskew %d\tinterleave %d\tcontigsumsize %d\n",
@@ -211,7 +209,7 @@ dumpfs(const char *name)
 		printf("blocks available in each of %d rotational positions",
 		     afs.fs_nrpos);
 	else
-		printf("insufficient space to maintain rotational tables\n");
+		printf("(no rotational position table)\n");
 	for (c = 0; c < afs.fs_cpc; c++) {
 		printf("\ncylinder number %d:", c);
 		for (i = 0; i < afs.fs_nrpos; i++) {
