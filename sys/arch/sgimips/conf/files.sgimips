@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.30 2003/12/15 12:48:37 sekiya Exp $
+#	$NetBSD: files.sgimips,v 1.31 2003/12/15 13:02:28 sekiya Exp $
 
 maxpartitions 16
 
@@ -68,7 +68,7 @@ file 	dev/ic/z8530sc.c			zsc
 file dev/arcbios/arcbios.c
 file dev/arcbios/arcbios_tty.c
 
-file arch/sgimips/sgimips/ip22.c		ip2x
+file arch/sgimips/sgimips/ip2x.c		ip2x
 file arch/sgimips/sgimips/ip22_cache.S		ip2x
 file arch/sgimips/sgimips/ip32.c		ip32
 file arch/sgimips/sgimips/autoconf.c
