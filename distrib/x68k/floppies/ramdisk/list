@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11.2.1 2000/09/14 14:15:24 minoura Exp $
+#	$NetBSD: list,v 1.11.2.2 2000/09/14 14:28:07 minoura Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -76,7 +76,7 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the boot blocks /usr/mdec
-COPY	${CURDIR}/../ramdisk.sysinst/installboot.sh	usr/mdec/installboot
+COPY	${COMMONDIR}/installboot.sh	usr/mdec/installboot
 SPECIAL	/bin/chmod 555 usr/mdec/installboot
 COPY	${DESTDIR}/usr/mdec/sdboot	usr/mdec/sdboot
 LINK	usr/mdec/sdboot			usr/mdec/fdboot
@@ -84,10 +84,10 @@ LINK	usr/mdec/sdboot			usr/mdec/fdboot
 # and the common installation tools
 COPY	${CURDIR}/../../../utils/script-installer/dot.instutils	   .instutils
 COPY	${CURDIR}/../../../utils/script-installer/dot.commonutils  .commonutils
-COPY	${CURDIR}/termcap.vt		usr/share/misc/termcap
+COPY	${COMMONDIR}/termcap.vt		usr/share/misc/termcap
 
 # the disktab explanation file
-COPY	${CURDIR}/disktab.preinstall	etc/disktab.preinstall
+COPY	${COMMONDIR}/disktab.preinstall	etc/disktab.preinstall
 
 # and the installation tools
 COPY	${CURDIR}/dot.profile		.profile
