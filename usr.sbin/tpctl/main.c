@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2002/08/27 14:12:17 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2004/02/24 15:12:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin
@@ -49,7 +49,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.1 2002/08/27 14:12:17 takemura Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2004/02/24 15:12:18 wiz Exp $");
 #endif /* not lint */
 
 void load_data(char *data_file, struct tpctl_data *);
@@ -347,7 +347,7 @@ do_calibration(char *dev, struct tp *tp, struct wsmouse_calibcoords *coords)
 }
 
 /*
- * draw corss cursor on frame buffer
+ * draw cross cursor on frame buffer
  *
  * return:	none
  */
@@ -372,7 +372,7 @@ drawcross(struct fb *fb, int x, int y, int size, fb_pixel_t pixel)
  *
  * date:	input file descriptor
  *
- * return:	0	nothing has been occured
+ * return:	0	nothing has occurred
  *		1	ESC key was pressed
  *		-1	error
  */
