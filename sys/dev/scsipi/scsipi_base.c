@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.45 2001/06/13 18:17:42 bjh21 Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.46 2001/06/26 15:32:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -798,9 +798,11 @@ scsipi_interpret_sense(xs)
 			if ((xs->xs_control & XS_CTL_IGNORE_NOT_READY) != 0)
 				return (0);
 			if (sense->add_sense_code == 0x3A &&
-			    sense->add_sense_code_qual == 0x00)
+			    sense->add_sense_code_qual == 0x00) {
 				error = ENODEV; /* Medium not present */
-			else
+				if (xs->xs_control & XS_CTL_SILENT_NODEV)
+					return (error);
+			} else
 				error = EIO;
 			if ((xs->xs_control & XS_CTL_SILENT) != 0)
 				return (error);

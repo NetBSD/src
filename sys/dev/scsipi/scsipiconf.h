@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.53 2001/06/13 18:17:42 bjh21 Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.54 2001/06/26 15:32:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -538,21 +538,23 @@ struct scsipi_xfer {
 				0x00000080	/* ignore media change */
 #define	XS_CTL_IGNORE_ILLEGAL_REQUEST					\
 				0x00000100	/* ignore ILLEGAL REQUEST */
-#define	XS_CTL_RESET		0x00000200	/* reset the device */
-#define	XS_CTL_DATA_UIO		0x00000400	/* xs_data points to uio */
-#define	XS_CTL_DATA_IN		0x00000800	/* data coming into memory */
-#define	XS_CTL_DATA_OUT		0x00001000	/* data going out of memory */
-#define	XS_CTL_TARGET		0x00002000	/* target mode operation */
-#define	XS_CTL_ESCAPE		0x00004000	/* escape operation */
-#define	XS_CTL_URGENT		0x00008000	/* urgent (recovery)
+#define	XS_CTL_SILENT_NODEV	0x00000200	/* don't print sense info
+						   if sense info is nodev */
+#define	XS_CTL_RESET		0x00000400	/* reset the device */
+#define	XS_CTL_DATA_UIO		0x00000800	/* xs_data points to uio */
+#define	XS_CTL_DATA_IN		0x00001000	/* data coming into memory */
+#define	XS_CTL_DATA_OUT		0x00002000	/* data going out of memory */
+#define	XS_CTL_TARGET		0x00004000	/* target mode operation */
+#define	XS_CTL_ESCAPE		0x00008000	/* escape operation */
+#define	XS_CTL_URGENT		0x00010000	/* urgent (recovery)
 						   operation */
-#define	XS_CTL_SIMPLE_TAG	0x00010000	/* use a Simple Tag */
-#define	XS_CTL_ORDERED_TAG	0x00020000	/* use an Ordered Tag */
-#define	XS_CTL_HEAD_TAG		0x00040000	/* use a Head of Queue Tag */
-#define	XS_CTL_THAW_PERIPH	0x00080000	/* thaw periph once enqueued */
-#define	XS_CTL_FREEZE_PERIPH	0x00100000	/* freeze periph when done */
-#define XS_CTL_DATA_ONSTACK	0x00200000	/* data is alloc'ed on stack */
-#define XS_CTL_REQSENSE		0x00400000	/* xfer is a request sense */
+#define	XS_CTL_SIMPLE_TAG	0x00020000	/* use a Simple Tag */
+#define	XS_CTL_ORDERED_TAG	0x00040000	/* use an Ordered Tag */
+#define	XS_CTL_HEAD_TAG		0x00080000	/* use a Head of Queue Tag */
+#define	XS_CTL_THAW_PERIPH	0x00100000	/* thaw periph once enqueued */
+#define	XS_CTL_FREEZE_PERIPH	0x00200000	/* freeze periph when done */
+#define XS_CTL_DATA_ONSTACK	0x00400000	/* data is alloc'ed on stack */
+#define XS_CTL_REQSENSE		0x00800000	/* xfer is a request sense */
 
 #define	XS_CTL_TAGMASK	(XS_CTL_SIMPLE_TAG|XS_CTL_ORDERED_TAG|XS_CTL_HEAD_TAG)
 
