@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.11 2000/11/29 11:18:33 simonb Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.12 2000/12/30 14:26:50 sommerfeld Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		Simon Burge <simonb@netbsd.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.11 2000/11/29 11:18:33 simonb Exp $
+ * $Id: m_netbsd15.c,v 1.12 2000/12/30 14:26:50 sommerfeld Exp $
  */
 
 #include <sys/param.h>
@@ -492,6 +492,7 @@ format_next_process(handle, get_userid)
 		switch (pp->p_stat) {
 		case SONPROC:
 		case SRUN:
+		case SSLEEP:			
 			snprintf(state, sizeof(state), "%s/%lld", 
 				 statep, (long long)pp->p_cpuid);
 			statep = state;
