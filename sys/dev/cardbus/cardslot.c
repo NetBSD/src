@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.11 2000/07/02 06:25:46 cgd Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.12 2001/01/28 01:49:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -169,7 +169,7 @@ cardslotattach(parent, self, aux)
       }
       CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_CB);
     } else {
-      /* attach deffered */
+      /* attach deferred */
       cardslot_event_throw(sc, CARDSLOT_EVENT_INSERTION_CB);
     }
   }
@@ -181,7 +181,7 @@ cardslotattach(parent, self, aux)
       pcmcia_card_attach((struct device *)sc->sc_16_softc);
       CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_16);
     } else {
-      /* attach deffered */
+      /* attach deferred */
       cardslot_event_throw(sc, CARDSLOT_EVENT_INSERTION_16);
     }
   }
@@ -364,7 +364,7 @@ cardslot_event_thread(arg)
       if ((CARDSLOT_CARDTYPE(sc->sc_status) == CARDSLOT_STATUS_CARD_CB)
 	  || (CARDSLOT_CARDTYPE(sc->sc_status) == CARDSLOT_STATUS_CARD_16)) {
 	if (CARDSLOT_WORK(sc->sc_status) == CARDSLOT_STATUS_WORKING) {
-	  /* A card has already been inserted and work. */
+	  /* A card has already been inserted and works. */
 	  break;
 	}
       }
@@ -449,7 +449,7 @@ cardslot_event_thread(arg)
 
   sc->sc_event_thread = NULL;
 
-  /* In case parent is waiting for us to exit. */
+  /* In case the parent device is waiting for us to exit. */
   wakeup(sc);
 
   kthread_exit(0);
