@@ -1,5 +1,6 @@
 #
 # new config file for GENERIC
+# $Id: GENERIC,v 1.5 1994/05/05 03:48:56 gwr Exp $
 #
 
 include "std.sun3"
@@ -10,7 +11,7 @@ options		"SUN3_60"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	4
-options		TIMEZONE="'8*60'"	# minutes west of GMT (for param.c)
+options		TIMEZONE=480		# minutes west of GMT (for param.c)
 options 	DST=2			# daylight savings rules (for param.c)
 options 	MAXFDESCS=2048   	# max # of fds/process (for param.c)
 
@@ -18,8 +19,6 @@ options 	MAXFDESCS=2048   	# max # of fds/process (for param.c)
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 options		KTRACE				# system call tracing support
 makeoptions	DEBUG="-g"			# symbols for kgdb + nm
-options		"COMPAT_43"
-options		"TCP_COMPAT_42"
 
 # Filesystem options
 options 	NFSSERVER			# nfs server support
