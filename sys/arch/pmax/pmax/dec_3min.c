@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.34 2000/02/03 04:09:02 nisimura Exp $ */
+/* $NetBSD: dec_3min.c,v 1.35 2000/02/29 04:41:52 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,8 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.34 2000/02/03 04:09:02 nisimura Exp $");
-
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.35 2000/02/29 04:41:52 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,10 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.34 2000/02/03 04:09:02 nisimura Exp $
 
 #include "rasterconsole.h"
 
-
-/*
- * forward declarations
- */
 void		dec_3min_init __P((void));		/* XXX */
 static void	dec_3min_bus_reset __P((void));
 static void	dec_3min_cons_init __P((void));
@@ -109,7 +104,6 @@ static void	dec_3min_device_register __P((struct device *, void *));
 static int	dec_3min_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_3min_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
-static void	dec_3min_intr_disestablish __P((struct device *, void *));
 
 static void	kn02ba_wbflush __P((void));
 static unsigned	kn02ba_clkread __P((void));
@@ -136,7 +130,6 @@ dec_3min_init()
 	platform.device_register = dec_3min_device_register;
 	platform.iointr = dec_3min_intr;
 	platform.intr_establish = dec_3min_intr_establish;
-	platform.intr_disestablish = dec_3min_intr_disestablish;
 	platform.memsize = memsize_scan;
 	platform.clkread = kn02ba_clkread;
 
@@ -259,47 +252,43 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
 	int (*handler) __P((void *));
 	void *arg;
 {
-	int slotno = (int)cookie;
 	unsigned mask;
 
-	switch (slotno) {
+	switch ((int)cookie) {
 		/* slots 0-2 don't interrupt through the IOASIC. */
-	  case 0:
+	  case SYS_DEV_OPT0:
 		mask = MIPS_INT_MASK_0;
 		break;
-	  case 1:
+	  case SYS_DEV_OPT1:
 		mask = MIPS_INT_MASK_1;
 		break;
-	  case 2:
+	  case SYS_DEV_OPT2:
 		mask = MIPS_INT_MASK_2;
 		break;
 
-	  case KMIN_SCSI_SLOT:
+	  case SYS_DEV_SCSI:
 		mask = (IOASIC_INTR_SCSI | IOASIC_INTR_SCSI_PTR_LOAD |
 			IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 		break;
-	  case KMIN_LANCE_SLOT:
+	  case SYS_DEV_LANCE:
 		mask = KMIN_INTR_LANCE;
 		break;
-	  case KMIN_SCC0_SLOT:
+	  case SYS_DEV_SCC0:
 		mask = KMIN_INTR_SCC_0;
 		break;
-	  case KMIN_SCC1_SLOT:
+	  case SYS_DEV_SCC1:
 		mask = KMIN_INTR_SCC_1;
-		break;
-	  case KMIN_ASIC_SLOT:
-		mask = KMIN_INTR_ASIC;
 		break;
 	  default:
 #ifdef DIAGNOSTIC
-		printf("warning: enabling unknown intr %x\n", slotno);
+		printf("warning: enabling unknown intr %x\n", (int)cookie);
 #endif
 		return;
 	}
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
 	printf("3MIN: imask %x, %sabling slot %d, sc %p handler %p\n",
-	    kmin_tc3_imask, (on? "en" : "dis"), slotno, sc, handler);
+	    kmin_tc3_imask, (on? "en" : "dis"), (int)cookie, sc, handler);
 #endif
 
 	/*
@@ -307,22 +296,29 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
 	 * slot, set the IOASIC interrupt mask.
 	 * Otherwise, set the appropriate spl level in the R3000
 	 * register.
-	 * Be careful to set handlers  before enabling, and disable
+	 * Be careful to set handlers before enabling, and disable
 	 * interrupts before clearing handlers.
 	 */
 
 	/* Set the interrupt handler and argument ... */
-	intrtab[slotno].ih_func = handler;
-	intrtab[slotno].ih_arg = arg;
+	intrtab[(int)cookie].ih_func = handler;
+	intrtab[(int)cookie].ih_arg = arg;
 	/* ... and set the relevant mask */
-	if (slotno <= 2) {
+	switch ((int)cookie) {
+	case SYS_DEV_OPT0:
+	case SYS_DEV_OPT1:
+	case SYS_DEV_OPT2:
 		/* it's an option slot */
+		{
 		int s = splhigh();
 		s |= mask;
 		splx(s);
-	} else {
-		/* it's a baseboard device going via the ASIC */
+		}
+		break;
+	default:
+		/* it's a baseboard device going via the IOASIC */
 		kmin_tc3_imask |= mask;
+		break;
 	}
 
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = kmin_tc3_imask;
@@ -330,18 +326,14 @@ dec_3min_intr_establish(dev, cookie, level, handler, arg)
 }
 
 
-static void
-dec_3min_intr_disestablish(dev, arg)
-	struct device *dev;
-	void *arg;
-{
-	printf("dec_3min_intr_distestablish: not implemented\n");
-}
+#define CHECKINTR(slot, bits)                                   \
+    do {							\
+        if (can_serve & (bits)) {                               \
+                intrcnt[slot] += 1;                             \
+                (*intrtab[slot].ih_func)(intrtab[slot].ih_arg); \
+        }							\
+    } while (0)
 
-
-/*
- * 3min hardware interrupts. (DECstation 5000/1xx)
- */
 static int
 dec_3min_intr(cpumask, pc, status, cause)
 	unsigned cpumask;
@@ -362,12 +354,12 @@ dec_3min_intr(cpumask, pc, status, cause)
 	if (cpumask & MIPS_INT_MASK_3) {
 		/* NB: status & MIPS_INT_MASK3 must also be set */
 		/* masked interrupts are still observable */
-		u_int32_t intr, imsk, turnoff;
+		u_int32_t intr, imsk, can_serve, turnoff;
 
 		turnoff = 0;
 		intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
 		imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
-		intr &= imsk;
+		can_serve = intr & imsk;
 
 		if (intr & IOASIC_INTR_SCSI_PTR_LOAD) {
 			turnoff |= IOASIC_INTR_SCSI_PTR_LOAD;
@@ -418,19 +410,8 @@ dec_3min_intr(cpumask, pc, status, cause)
 		if (intr_depth > 1)
 			 goto done;
 
-		if ((intr & KMIN_INTR_SCC_0) &&
-		    intrtab[KMIN_SCC0_SLOT].ih_func) {
-			(*(intrtab[KMIN_SCC0_SLOT].ih_func))
-			  (intrtab[KMIN_SCC0_SLOT].ih_arg);
-			intrcnt[SERIAL0_INTR]++;
-		}
-
-		if ((intr & KMIN_INTR_SCC_1) &&
-		    intrtab[KMIN_SCC1_SLOT].ih_func) {
-			(*(intrtab[KMIN_SCC1_SLOT].ih_func))
-			  (intrtab[KMIN_SCC1_SLOT].ih_arg);
-			intrcnt[SERIAL1_INTR]++;
-		}
+		CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
+		CHECKINTR(SYS_DEV_SCC1, IOASIC_INTR_SCC_1);
 
 #ifdef notyet /* untested */
 		/* If tty interrupts were enabled, re-enable them ASAP. */
@@ -446,19 +427,8 @@ dec_3min_intr(cpumask, pc, status, cause)
 		if (intr_depth > 1)
 			 goto done;
 #endif
-		if ((intr & IOASIC_INTR_LANCE) &&
-		    intrtab[KMIN_LANCE_SLOT].ih_func) {
-			(*(intrtab[KMIN_LANCE_SLOT].ih_func))
-			  (intrtab[KMIN_LANCE_SLOT].ih_arg);
-			intrcnt[LANCE_INTR]++;
-		}
-
-		if ((intr & IOASIC_INTR_SCSI) &&
-		    intrtab[KMIN_SCSI_SLOT].ih_func) {
-			(*(intrtab[KMIN_SCSI_SLOT].ih_func))
-			  (intrtab[KMIN_SCSI_SLOT].ih_arg);
-			intrcnt[SCSI_INTR]++;
-		}
+		CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
+		CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
 
 		if (user_warned && ((intr & KMIN_INTR_PSWARN) == 0)) {
 			printf("%s\n", "Power supply ok now.");
@@ -469,18 +439,18 @@ dec_3min_intr(cpumask, pc, status, cause)
 			printf("%s\n", "Power supply overheating");
 		}
 	}
-	if ((cpumask & MIPS_INT_MASK_0) && intrtab[0].ih_func) {
-		(*intrtab[0].ih_func)(intrtab[0].ih_arg);
-		intrcnt[SLOT0_INTR]++;
+	if ((cpumask & MIPS_INT_MASK_0) && intrtab[SYS_DEV_OPT0].ih_func) {
+		(*intrtab[SYS_DEV_OPT0].ih_func)(intrtab[SYS_DEV_OPT0].ih_arg);
+		intrcnt[SYS_DEV_OPT0]++;
  	}
 
-	if ((cpumask & MIPS_INT_MASK_1) && intrtab[1].ih_func) {
-		(*intrtab[1].ih_func)(intrtab[1].ih_arg);
-		intrcnt[SLOT1_INTR]++;
+	if ((cpumask & MIPS_INT_MASK_1) && intrtab[SYS_DEV_OPT1].ih_func) {
+		(*intrtab[SYS_DEV_OPT1].ih_func)(intrtab[SYS_DEV_OPT1].ih_arg);
+		intrcnt[SYS_DEV_OPT1]++;
 	}
-	if ((cpumask & MIPS_INT_MASK_2) && intrtab[2].ih_func) {
-		(*intrtab[2].ih_func)(intrtab[2].ih_arg);
-		intrcnt[SLOT2_INTR]++;
+	if ((cpumask & MIPS_INT_MASK_2) && intrtab[SYS_DEV_OPT2].ih_func) {
+		(*intrtab[SYS_DEV_OPT2].ih_func)(intrtab[SYS_DEV_OPT2].ih_arg);
+		intrcnt[SYS_DEV_OPT2]++;
 	}
 
 done:

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.27 2000/02/09 08:37:43 nisimura Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.28 2000/02/29 04:41:53 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.27 2000/02/09 08:37:43 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.28 2000/02/29 04:41:53 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.27 2000/02/09 08:37:43 nisimura Exp
 #include "rasterconsole.h"
 #include "xcfb.h"
 
-/*
- * Forward declarations
- */
 void		dec_maxine_init __P((void));		/* XXX */
 static void	dec_maxine_bus_reset __P((void));
 static void	dec_maxine_cons_init __P((void));
@@ -108,7 +105,6 @@ static void	dec_maxine_device_register __P((struct device *, void *));
 static int	dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
 static void	dec_maxine_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
-static void	dec_maxine_intr_disestablish __P((struct device *, void *));
 
 static void	kn02ca_wbflush __P((void));
 static unsigned	kn02ca_clkread __P((void));
@@ -129,7 +125,6 @@ dec_maxine_init()
 	platform.device_register = dec_maxine_device_register;
 	platform.iointr = dec_maxine_intr;
 	platform.intr_establish = dec_maxine_intr_establish;
-	platform.intr_disestablish = dec_maxine_intr_disestablish;
 	platform.memsize = memsize_scan;
 	platform.clkread = kn02ca_clkread;
 	/* MAXINE has 1 microsec. free-running high resolution timer */
@@ -237,15 +232,6 @@ dec_maxine_device_register(dev, aux)
 }
 
 
-/*
- *  Enable interrupts from a TURBOchannel slot.
- *
- *	We pretend we actually have 11 slots even if we really have
- *	only 2: TCslots 0-1 maps to slots 0-1, TCslot 2 is used for
- *	the system (TCslot3), TCslot3 maps to slots 3-10
- *	 (see pmax/tc/ds-asic-conf.c).
- *	Note that all these interrupts come in via the IMR.
- */
 static void
 dec_maxine_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
@@ -254,67 +240,60 @@ dec_maxine_intr_establish(dev, cookie, level, handler, arg)
 	int (*handler) __P((void *));
 	void *arg;
 {
-	int slotno = (int)cookie;
 	unsigned mask;
 
-	switch (slotno) {
-	  case 0:	/* a real slot, but  */
+	switch ((int)cookie) {
+	  case SYS_DEV_OPT0:
 		mask = XINE_INTR_TC_0;
 		break;
-	  case 1:	/* a real slot, but */
+	  case SYS_DEV_OPT1:
 		mask = XINE_INTR_TC_1;
 		break;
-	  case XINE_FLOPPY_SLOT:
+	  case SYS_DEV_FDC:
 		mask = XINE_INTR_FLOPPY;
 		break;
-	  case XINE_SCSI_SLOT:
+	  case SYS_DEV_SCSI:
 		mask = (IOASIC_INTR_SCSI | IOASIC_INTR_SCSI_PTR_LOAD |
 			IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 		break;
-	  case XINE_LANCE_SLOT:
+	  case SYS_DEV_LANCE:
 		mask = IOASIC_INTR_LANCE;
 		break;
-	  case XINE_SCC0_SLOT:
-		mask = XINE_INTR_SCC_0;
+	  case SYS_DEV_SCC0:
+		mask = IOASIC_INTR_SCC_0;
 		break;
-	  case XINE_DTOP_SLOT:
+	  case SYS_DEV_DTOP:
 		mask = XINE_INTR_DTOP_RX;
 		break;
-	  case XINE_ISDN_SLOT:
-		mask = (XINE_INTR_ISDN | IOASIC_INTR_ISDN_DS_OVRUN |
+	  case SYS_DEV_ISDN:
+		mask = (IOASIC_INTR_ISDN | IOASIC_INTR_ISDN_DS_OVRUN |
 		    IOASIC_INTR_ISDN_DS_TXLOAD | IOASIC_INTR_ISDN_DS_RXLOAD);
-		break;
-	  case XINE_ASIC_SLOT:
-		mask = XINE_INTR_ASIC;
 		break;
 	  default:
 #ifdef DIAGNOSTIC
-		printf("warning: enabling unknown intr %x\n", slotno);
+		printf("warning: enabling unknown intr %x\n", (int)cookie);
 #endif
 		return;
 	}
 
 	xine_tc3_imask |= mask;
-	intrtab[slotno].ih_func = handler;
-	intrtab[slotno].ih_arg = arg;
+	intrtab[(int)cookie].ih_func = handler;
+	intrtab[(int)cookie].ih_arg = arg;
 
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = xine_tc3_imask;
 	kn02ca_wbflush();
 }
 
 
-static void
-dec_maxine_intr_disestablish(dev, arg)
-	struct device *dev;
-	void *arg;
-{
-	printf("dec_maxine_intr_distestablish: not implemented\n");
-}
+#define CHECKINTR(vvv, bits)					\
+    do {							\
+	if (can_serve & (bits)) {				\
+		ifound = 1;					\
+		intrcnt[vvv] += 1;				\
+		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
+	}							\
+    } while (0)
 
-
-/*
- * Maxine hardware interrupts. (Personal DECstation 5000/xx)
- */
 static int
 dec_maxine_intr(cpumask, pc, status, cause)
 	unsigned cpumask;
@@ -345,100 +324,60 @@ dec_maxine_intr(cpumask, pc, status, cause)
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
 
 	if (cpumask & MIPS_INT_MASK_3) {
-		u_int32_t intr, imsk, turnoff;
-
-		turnoff = 0;
-		intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
-		imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
-		intr &= imsk;
-
-		if (intr & XINE_INTR_SCC_0) {
-			if (intrtab[XINE_SCC0_SLOT].ih_func)
-				(*(intrtab[XINE_SCC0_SLOT].ih_func))
-				(intrtab[XINE_SCC0_SLOT].ih_arg);
-			else
-				printf ("can't handle scc interrupt\n");
-			intrcnt[SERIAL0_INTR]++;
-		}
-
-		if (intr & IOASIC_INTR_SCSI_PTR_LOAD) {
-			turnoff |= IOASIC_INTR_SCSI_PTR_LOAD;
-#ifdef notdef
-			asc_dma_intr();
-#endif
-		}
-
-		if (intr & (IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E))
-			turnoff |= IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E;
-		if (intr & IOASIC_INTR_LANCE_READ_E)
-			turnoff |= IOASIC_INTR_LANCE_READ_E;
-
-		if (turnoff)
-			*(u_int32_t *)(ioasic_base + IOASIC_INTR) = ~turnoff;
-
-		if (intr & XINE_INTR_DTOP_RX) {
-			if (intrtab[XINE_DTOP_SLOT].ih_func)
-				(*(intrtab[XINE_DTOP_SLOT].ih_func))
-				    (intrtab[XINE_DTOP_SLOT].ih_arg);
-			else
-				printf ("can't handle dtop interrupt\n");
-			intrcnt[DTOP_INTR]++;
-		}
-
-		if (intr & XINE_INTR_FLOPPY) {
-			if (intrtab[XINE_FLOPPY_SLOT].ih_func)
-				(*(intrtab[XINE_FLOPPY_SLOT].ih_func))
-				    (intrtab[XINE_FLOPPY_SLOT].ih_arg);
-		else
-			printf ("can't handle floppy interrupt\n");
-			intrcnt[FLOPPY_INTR]++;
-		}
-
-		if (intr & XINE_INTR_TC_0) {
-			if (intrtab[0].ih_func)
-				(*(intrtab[0].ih_func))
-				    (intrtab[0].ih_arg);
-			else
-				printf ("can't handle tc0 interrupt\n");
-			intrcnt[SLOT0_INTR]++;
-		}
-
-		if (intr & XINE_INTR_TC_1) {
-			if (intrtab[1].ih_func)
-				(*(intrtab[1].ih_func))
-				    (intrtab[1].ih_arg);
-			else
-				printf ("can't handle tc1 interrupt\n");
-			intrcnt[SLOT1_INTR]++;
-		}
-
-		if (intr & XINE_INTR_ISDN) {
-			if (intrtab[XINE_ISDN_SLOT].ih_func)
-				(*(intrtab[XINE_ISDN_SLOT].ih_func))
-				    (intrtab[XINE_ISDN_SLOT].ih_arg);
-			else
-				printf ("can't handle isdn interrupt\n");
-				intrcnt[ISDN_INTR]++;
-		}
-
-		if (intr & IOASIC_INTR_LANCE) {
-			if (intrtab[XINE_LANCE_SLOT].ih_func)
-				(*(intrtab[XINE_LANCE_SLOT].ih_func))
-				    (intrtab[XINE_LANCE_SLOT].ih_arg);
-			else
-				printf ("can't handle lance interrupt\n");
-
-			intrcnt[LANCE_INTR]++;
-		}
-
-		if (intr & IOASIC_INTR_SCSI) {
-			if (intrtab[XINE_SCSI_SLOT].ih_func)
-				(*(intrtab[XINE_SCSI_SLOT].ih_func))
-				    (intrtab[XINE_SCSI_SLOT].ih_arg);
-			else
-				printf ("can't handle scsi interrupt\n");
-			intrcnt[SCSI_INTR]++;
-		}
+		int ifound;
+		u_int32_t imsk, intr, can_serve, xxxintr;
+	
+		do {
+			ifound = 0;
+			intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
+			imsk = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
+			can_serve = intr & imsk;
+ 
+			CHECKINTR(SYS_DEV_DTOP, XINE_INTR_DTOP);
+			CHECKINTR(SYS_DEV_SCC0, IOASIC_INTR_SCC_0);
+			CHECKINTR(SYS_DEV_LANCE, IOASIC_INTR_LANCE);
+			CHECKINTR(SYS_DEV_SCSI, IOASIC_INTR_SCSI);
+			/* CHECKINTR(SYS_DEV_OPT2, XINE_INTR_VINT);	*/
+			/* CHECKINTR(SYS_DEV_ISDN, IOASIC_INTR_ISDN);	*/
+			/* CHECKINTR(SYS_DEV_FDC, IOASIC_INTR_FDC);	*/
+			CHECKINTR(SYS_DEV_OPT1, XINE_INTR_TC_1); 
+			CHECKINTR(SYS_DEV_OPT0, XINE_INTR_TC_0); 
+ 
+#define ERRORS	(IOASIC_INTR_ISDN_OVRUN|IOASIC_INTR_ISDN_READ_E|IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E|IOASIC_INTR_LANCE_READ_E)
+#define PTRLOAD (IOASIC_INTR_ISDN_PTR_LOAD|IOASIC_INTR_SCSI_PTR_LOAD)
+ 
+#if 0	
+	if (can_serve & IOASIC_INTR_SCSI_PTR_LOAD) {
+		extern void asc_ptr_load __P((void *));
+		ifound = 1;
+		asc_ptr_load(intrtab[SYS_DEV_SCSI].ih_arg);
+	}
+#endif	
+ 
+	/* 
+	 * XXX future project is here XXX
+	 * IOASIC DMA completion interrupt (PTR_LOAD) should be checked
+	 * here, and DMA pointers serviced as soon as possible.
+	 */	
+	/*
+	 * All of IOASIC device interrupts comes through a single service
+	 * request line coupled with MIPS cpu INT 3.
+	 * Disabling INT 3 makes entire IOASIC interrupt services blocked,
+	 * and it's harmful because it causes DMA overruns during network
+	 * disk I/O interrupts.
+	 * So, Non-DMA interrupts should be selectively disabled by masking
+	 * IOASIC_IMSK register, and INT 3 itself be reenabled immediately,
+	 * and made available all the time.
+	 * DMA interrupts can then be serviced whilst still servicing
+	 * non-DMA interrupts from ioctl devices or TC options.
+	 */
+			xxxintr = can_serve & (ERRORS | PTRLOAD);
+			if (xxxintr) {
+				ifound = 1;
+				*(u_int32_t *)(ioasic_base + IOASIC_INTR)
+					= intr &~ xxxintr;
+			}
+		} while (ifound);
 	}
 	if (cpumask & MIPS_INT_MASK_2)
 		kn02ba_errintr();
