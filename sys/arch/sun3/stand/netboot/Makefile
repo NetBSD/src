@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 1995/07/03 02:53:55 gwr Exp $
+#	$NetBSD: Makefile,v 1.3 1995/09/23 03:42:47 gwr Exp $
 
 SA_PROG= netboot
 SRCS=   boot.c conf.c version.c dev_net.c
 
-DEFS= -DSTANDALONE -DSUN_BOOTPARAMS
+DEFS= -DSUN_BOOTPARAMS
 
 all:	${SA_PROG}.bin
 

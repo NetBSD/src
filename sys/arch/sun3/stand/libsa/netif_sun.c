@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.1 1995/06/09 22:19:26 gwr Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.2 1995/09/23 03:42:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -61,6 +61,7 @@
 #include "promdev.h"
 
 static struct netif netif_prom;
+static void sun3_getether __P((u_char *));
 
 #ifdef NETIF_DEBUG
 int netif_debug;
@@ -84,7 +85,7 @@ netif_open(machdep_hint)
 {
 	struct saioreq *si;
 	struct iodesc *io;
-	int fd, error;
+	int error;
 
 	/* find a free socket */
 	io = sockets;
@@ -153,7 +154,7 @@ int
 netif_put(desc, pkt, len)
 	struct iodesc *desc;
 	void *pkt;
-	int len;
+	size_t len;
 {
 	struct saioreq *si;
 	struct saif *sif;
@@ -210,7 +211,7 @@ int
 netif_get(desc, pkt, maxlen, timo)
 	struct iodesc *desc;
 	void *pkt;
-	int maxlen;
+	size_t maxlen;
 	time_t timo;
 {
 	struct saioreq *si;
@@ -264,6 +265,7 @@ netif_get(desc, pkt, maxlen, timo)
 
 static struct idprom sun3_idprom;
 
+static void
 sun3_getether(ea)
 	u_char *ea;
 {

@@ -8,6 +8,12 @@
  */
 
 #include <sys/param.h>
+#include "stand.h"
+
+/* XXX */
+extern int  get_segmap __P((int));
+extern void set_segmap __P((int, int));
+
 
 #define	DVMA_BASE 0xFFf00000
 #define DVMA_MAPLEN  0xE0000	/* 1 MB - 128K (save MONSHORTSEG) */
@@ -63,7 +69,6 @@ dvma_mapout(char *addr, int len)
 	return ((char *) va);
 }
 
-extern char *alloc(int len);
 char *
 dvma_alloc(int len)
 {
@@ -75,7 +80,6 @@ dvma_alloc(int len)
 	return(dvma_mapin(mem, len));
 }
 
-extern void free(void *ptr, int len);
 void
 dvma_free(char *dvma, int len)
 {

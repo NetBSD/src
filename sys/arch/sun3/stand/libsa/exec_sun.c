@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_sun.c,v 1.3 1995/06/09 22:23:01 gwr Exp $ */
+/*	$NetBSD: exec_sun.c,v 1.4 1995/09/23 03:42:40 gwr Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -44,6 +44,7 @@
 extern int debug;
 
 /*ARGSUSED*/
+int
 exec_sun(file, loadaddr)
 	char	*file;
 	char	*loadaddr;
@@ -159,7 +160,8 @@ exec_sun(file, loadaddr)
 	close(io);
 
 	if (debug) {
-		printf("Debug mode - enter c to continue\n");
+		printf("Debug mode - enter c to continue...");
+		/* This will print "\nAbort at ...\n" */
 		asm("	trap #0");
 	}
 
