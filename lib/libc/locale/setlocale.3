@@ -1,4 +1,4 @@
-.\"	$NetBSD: setlocale.3,v 1.15 2003/02/12 02:48:59 gmcgarry Exp $
+.\"	$NetBSD: setlocale.3,v 1.16 2003/02/12 18:57:27 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"	@(#)setlocale.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd February 12, 2003
 .Dt SETLOCALE 3
 .Os
 .Sh NAME
@@ -135,9 +135,9 @@ The only function in the library that sets the locale is
 .Fn setlocale ;
 the locale is never changed as a side effect of some other routine.
 .Pp
-.Pp
-Changing the setting of LC_MESSAGES has no effect on catalogs that
-have already been opened by
+Changing the setting of
+.Dv LC_MESSAGES
+has no effect on catalogs that have already been opened by
 .Xr catopen 3 .
 .Pp
 The
@@ -328,10 +328,10 @@ language:
 .Ed
 .Pp
 When a process is started, its current locale is set to the C or POSIX
-locale.  An internationalized program that depends on locale data not
-defined in the C or POSIX locale must invoke the setlocale subroutine
-in the following manner before using any of the locale-specific
-information:
+locale.
+An internationalized program that depends on locale data not defined in
+the C or POSIX locale must invoke the setlocale subroutine in the
+following manner before using any of the locale-specific information:
 .Bd -literal
 	setlocale(LC_ALL, "");
 .Ed
@@ -382,7 +382,9 @@ The current implementation supports only the
 .Li "\&""C""
 and
 .Li "\&""POSIX""
-locales for all but the LC_CTYPE locale.
+locales for all but the
+.Dv LC_CTYPE
+locale.
 .Pp
 In spite of the gnarly currency support in
 .Fn localeconv ,
