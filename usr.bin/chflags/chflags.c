@@ -1,4 +1,4 @@
-/*	$NetBSD: chflags.c,v 1.4 1995/03/26 08:49:20 glass Exp $	*/
+/*	$NetBSD: chflags.c,v 1.5 1997/10/18 12:39:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)chflags.c	8.5 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$NetBSD: chflags.c,v 1.4 1995/03/26 08:49:20 glass Exp $";
+__RCSID("$NetBSD: chflags.c,v 1.5 1997/10/18 12:39:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ static char rcsid[] = "$NetBSD: chflags.c,v 1.4 1995/03/26 08:49:20 glass Exp $"
 #include <string.h>
 #include <unistd.h>
 
+int	main __P((int, char **));
 u_long	string_to_flags __P((char **, u_long *, u_long *));
 void	usage __P((void));
 
@@ -131,7 +132,7 @@ main(argc, argv)
 	}
 
 	if ((ftsp = fts_open(++argv, fts_options , 0)) == NULL)
-		err(1, NULL); 
+		err(1, "fts_open `%s'", argv[0]); 
 
 	for (rval = 0; (p = fts_read(ftsp)) != NULL;) {
 		switch (p->fts_info) {
