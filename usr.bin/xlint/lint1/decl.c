@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.24 2001/09/16 16:34:43 wiz Exp $ */
+/* $NetBSD: decl.c,v 1.25 2001/11/21 19:14:25 wiz Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: decl.c,v 1.24 2001/09/16 16:34:43 wiz Exp $");
+__RCSID("$NetBSD: decl.c,v 1.25 2001/11/21 19:14:25 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -390,7 +390,7 @@ addtype(type_t *tp)
 		/* remeber specifiers "signed" and "unsigned" in dcs->d_smod */
 		if (dcs->d_smod != NOTSPEC)
 			/*
-			 * more then one "signed" and/or "unsigned"; print
+			 * more than one "signed" and/or "unsigned"; print
 			 * an error in deftyp()
 			 */
 			dcs->d_terr = 1;
@@ -507,7 +507,7 @@ tdeferr(type_t *td, tspec_t t)
  * or enum tag if the typedef name is the first defined for this tag.
  *
  * If the tag is unnamed, the typdef name is used for identification
- * of this tag in lint2. Although its possible that more then one typedef
+ * of this tag in lint2. Although its possible that more than one typedef
  * name is defined for one tag, the first name defined should be unique
  * if the tag is unnamed.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.4 2001/05/28 12:40:38 lukem Exp $	*/
+/*	$NetBSD: main2.c,v 1.5 2001/11/21 19:14:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main2.c,v 1.4 2001/05/28 12:40:38 lukem Exp $");
+__RCSID("$NetBSD: main2.c,v 1.5 2001/11/21 19:14:26 wiz Exp $");
 #endif
 
 #include <stdio.h>
@@ -59,7 +59,7 @@ const	char *libname;
 int	pflag;
 
 /*
- * warnings for (tentative) definitions of the same name in more then
+ * warnings for (tentative) definitions of the same name in more than
  * one translation unit
  */
 int	sflag;

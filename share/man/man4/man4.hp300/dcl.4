@@ -1,4 +1,4 @@
-.\"	$NetBSD: dcl.4,v 1.7 2001/09/11 06:30:03 gmcgarry Exp $
+.\"	$NetBSD: dcl.4,v 1.8 2001/11/21 19:14:27 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -89,7 +89,7 @@ receive overflow.
 For output to devices that make heavy use of
 .Tn XON/XOFF
 a write size of less
-then 256 will improve performance marginally.
+than 256 will improve performance marginally.
 .Sh FILES
 .Bl -tag -width /dev/ttyl[0-9] -compact
 .It Pa /dev/ttyl[0-9]
@@ -116,7 +116,7 @@ Where the errors are encoded:
 .Sh SEE ALSO
 .Xr tty 4
 .Sh BUGS
-Breaks received at a faster rate then 1 break every second will be
+Breaks received at a faster rate than 1 break every second will be
 recognized as a single break.
 .Pp
 Console use is not supported.

@@ -90,7 +90,7 @@ where
 .I file
 is the basename for the logfile and where
 .I number
-ranges from 0 to one less then the
+ranges from 0 to one less than the
 .I cycle
 count specified for the command.
 The

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.33 2001/07/18 06:24:38 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.34 2001/11/21 19:14:24 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.33 2001/07/18 06:24:38 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.34 2001/11/21 19:14:24 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -412,7 +412,7 @@ clean_loop(FS_INFO *fsp, int nsegs, long options)
 	} else {
 	        /* 
 		 * We will also clean if the system is reasonably idle and
-		 * the total clean space is less then IDLE_LIM % of possible
+		 * the total clean space is less than IDLE_LIM % of possible
 		 * clean space.
 		 */
 		if (getloadavg(loadavg, MAXLOADS) == -1) {
