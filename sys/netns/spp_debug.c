@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_debug.c,v 1.9 1998/07/05 00:51:29 jonathan Exp $	*/
+/*	$NetBSD: spp_debug.c,v 1.10 2001/06/19 07:37:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -58,10 +58,19 @@
 #define SPPTIMERS
 #include <netns/spp_timer.h>
 #include <netns/spp_var.h>
-#define	SANAMES
+#define SANAMES
 #include <netns/spp_debug.h>
 
+extern char *prurequests[];
+extern char *tcpstates[];
+extern const char * const sanames[];
+extern const char * const sppnames[];
+
 int	sppconsdebug = 0;
+
+struct	spp_debug spp_debug[SPP_NDEBUG];
+int	spp_debx;
+
 /*
  * spp debug routines
  */
@@ -79,10 +88,6 @@ spp_trace(act, ostate, sp, si, req)
 	unsigned long iptime();
 	int flags;
 	struct spp_debug *sd = &spp_debug[spp_debx++];
-	extern char *prurequests[];
-	extern char *sanames[];
-	extern char *tcpstates[];
-	extern char *spptimers[];
 
 	if (spp_debx == SPP_NDEBUG)
 		spp_debx = 0;
