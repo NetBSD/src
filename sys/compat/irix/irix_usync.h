@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usync.h,v 1.1 2002/04/29 14:40:23 manu Exp $ */
+/*	$NetBSD: irix_usync.h,v 1.2 2002/05/22 21:32:21 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,13 @@
 #ifndef _IRIX_USYNCL_H_
 #define _IRIX_USYNCL_H_
 
+/* processes queue waiting for a semaphore */
+struct irix_usync_rec {
+	TAILQ_ENTRY(irix_usync_rec)	iur_list;
+	struct proc *iur_p;
+	struct irix_semaphore *iur_sem;
+};
+
 /* usync_fcntl() commands, undocumented in IRIX */
 #define IRIX_USYNC_BLOCK		1
 #define IRIX_USYNC_INTR_BLOCK		2
@@ -49,5 +56,12 @@
 #define IRIX_USYNC_NOTIFY_DELETE	7
 #define IRIX_USYNC_NOTIFY_CLEAR		8
 #define IRIX_USYNC_GET_STATE		11
+
+struct irix_usync_arg {
+	int iua_uk0;	/* unknown, usually small integer around 1000 */
+	int iua_uk1;	/* unknown, usually pointer to code in libc */
+	int iua_uk2;	/* unknown, usually null */
+	struct irix_semaphore *iua_sem;	/* semaphore address */
+};
 
 #endif /* _IRIX_USYNC_H */
