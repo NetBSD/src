@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.76 2003/02/26 14:36:44 drochner Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.77 2003/03/02 22:35:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -222,6 +222,10 @@ struct mbuf {
 #define	M_CLUSTER	0x0008	/* external storage is a cluster */
 
 /* mbuf pkthdr flags, also in m_flags */
+#define M_AUTHIPHDR	0x0010	/* data origin authentication for IP header */
+#define M_DECRYPTED	0x0020	/* confidentiality */
+#define M_LOOP		0x0040	/* for Mbuf statistics */
+#define M_AUTHIPDGM     0x0080  /* data origin authentication */
 #define	M_BCAST		0x0100	/* send/received as link-level broadcast */
 #define	M_MCAST		0x0200	/* send/received as link-level multicast */
 #define	M_CANFASTFWD	0x0400	/* used by filters to indicate packet can
@@ -230,10 +234,6 @@ struct mbuf {
 #define	M_LINK0		0x1000	/* link layer specific flag */
 #define	M_LINK1		0x2000	/* link layer specific flag */
 #define	M_LINK2		0x4000	/* link layer specific flag */
-#define M_AUTHIPHDR	0x0010	/* data origin authentication for IP header */
-#define M_DECRYPTED	0x0020	/* confidentiality */
-#define M_LOOP		0x0040	/* for Mbuf statistics */
-#define M_AUTHIPDGM     0x0080  /* data origin authentication */
 
 /* flags copied when copying m_pkthdr */
 #define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD|M_ANYCAST6|M_LINK0|M_LINK1|M_LINK2|M_AUTHIPHDR|M_DECRYPTED|M_LOOP|M_AUTHIPDGM)
