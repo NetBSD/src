@@ -11,11 +11,11 @@ __weak_reference(_catopen,catopen);
 
 #include <nl_types.h>
 
-extern nl_catd _catopen __P((char *, int));
+extern nl_catd _catopen __P((__const char *, int));
 
 nl_catd
 catopen(name, oflag)
-	char *name;
+	__const char *name;
 	int oflag;
 {
 	return _catopen(name, oflag);
