@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2001/10/15 16:23:00 minoura Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 2001/12/02 14:25:44 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -242,7 +242,7 @@ bootmenu(void)
 	}
 
 	printf("Please use the absolute unit# (e.g. SCSI ID)"
-	       " instead of the NetBSD ones.\n");
+	       " instead of the NetBSD logical #.\n");
 	for (;;) {
 		char *p, *options;
 
@@ -314,7 +314,7 @@ bootmain(int bootdev)
 	default:
 		printf("Warning: unknown boot device: %x\n", bootdev);
 	}
-	print_title("%s, Revision %s\n(%s, %s)",
+	print_title("%s, Revision %s\n\t(%s, %s)",
 		    bootprog_name, bootprog_rev,
 		    bootprog_maker, bootprog_date);
 	bootmenu();
