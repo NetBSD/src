@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.38.4.5 2001/11/24 19:23:51 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.38.4.6 2001/11/24 19:56:49 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38.4.5 2001/11/24 19:23:51 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38.4.6 2001/11/24 19:56:49 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -211,14 +211,14 @@ syscall(struct trapframe *tf)
 			       nstkargs * sizeof(register_t));
 		if (error) {
 #ifdef SYSCALL_DEBUG
-			scdebug_call(p, code, (register_t *)args);
+			scdebug_call(l, code, (register_t *)args);
 #endif
 			goto bad;
 		}
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
@@ -253,7 +253,7 @@ syscall(struct trapframe *tf)
 		break;
 	}
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif
 	userret(l);
 #ifdef KTRACE
@@ -277,7 +277,7 @@ child_return(void *arg)
 	tf->tf_r15 &= ~R15_FLAG_C;
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, SYS_fork /* XXX */, 0, &tf->tf_r0);
+	scdebug_ret(l, SYS_fork /* XXX */, 0, &tf->tf_r0);
 #endif
 	userret(l);
 #ifdef KTRACE

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.45.2.2 2001/11/14 19:16:39 nathanw Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.45.2.3 2001/11/24 19:55:46 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.45.2.2 2001/11/14 19:16:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.45.2.3 2001/11/24 19:55:46 bjh21 Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.45.2.2 2001/11/14 19:16:39 nathanw Ex
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/syscall.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -100,7 +101,7 @@ scdebug_call(l, code, args)
 	struct lwp *l;
 	register_t code, args[];
 {
-	struct proc *p = l->l_proc
+	struct proc *p = l->l_proc;
 	const struct sysent *sy;
 	const struct emul *em;
 	int i;
@@ -110,12 +111,12 @@ scdebug_call(l, code, args)
 
 	em = p->p_emul;
 	sy = &em->e_sysent[code];
-	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
+	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= SYS_NSYSENT ||
 	     sy->sy_call == sys_nosys))
 		return;
 		
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
-	if (code < 0 || code >= em->e_nsysent)
+	if (code < 0 || code >= SYS_NSYSENT)
 		printf("OUT OF RANGE (%d)", code);
 	else {
 		printf("%d call: %s", code, em->e_syscallnames[code]);
@@ -147,12 +148,12 @@ scdebug_ret(l, code, error, retval)
 
 	em = p->p_emul;
 	sy = &em->e_sysent[code];
-	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
+	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= SYS_NSYSENT ||
 	    sy->sy_call == sys_nosys))
 		return;
 		
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
-	if (code < 0 || code >= em->e_nsysent)
+	if (code < 0 || code >= SYS_NSYSENT)
 		printf("OUT OF RANGE (%d)", code);
 	else
 		printf("%d ret: err = %d, rv = 0x%lx,0x%lx", code,
