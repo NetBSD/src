@@ -1,4 +1,5 @@
-/*	$NetBSD: fils.c,v 1.4 1997/01/29 01:49:25 mark Exp $	*/
+/*	$NetBSD: fils.c,v 1.5 1997/03/29 04:31:10 darrenr Exp $	*/
+
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -27,18 +28,15 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <net/if.h>
-#include <netinet/tcp.h>
-#include <netinet/ip_var.h>
-#include <netinet/tcpip.h>
-#include <netinet/ip_fil.h>
-#include <netinet/ip_compat.h>
-#include <netinet/ip_nat.h>
-#include <netinet/ip_frag.h>
-#include <netinet/ip_state.h>
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
+#include <netinet/ip_compat.h>
+#include <netinet/ip_fil.h>
 #include "ipf.h"
+#include <netinet/ip_nat.h>
+#include <netinet/ip_frag.h>
+#include <netinet/ip_state.h>
 #include "kmem.h"
 #ifdef	__NetBSD__
 #include <paths.h>
@@ -46,7 +44,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "Id: fils.c,v 2.4.5 1996/11/17 05:08:11 darrenr Exp";
+static	char	rcsid[] = "Id: fils.c,v 2.0.2.4 1996/11/17 05:08:11 darrenr Exp";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
@@ -66,10 +64,15 @@ static	char	*filters[4] = { "ipfilter(in)", "ipfilter(out)",
 
 int	opts = 0;
 
-static	void	showstats(), showfrstates();
-static	void	showlist(), showipstates();
+extern	int	main __P((int, char *[]));
+static	void	showstats __P((int, friostat_t *));
+static	void	showfrstates __P((int, ipfrstat_t *));
+static	void	showlist __P((friostat_t *));
+static	void	showipstates __P((int, ips_stat_t *));
+static	void	Usage __P((char *));
 
-void Usage(name)
+
+static void Usage(name)
 char *name;
 {
 	fprintf(stderr, "Usage: %s [-afhIiosv] [-d <device>]\n", name);
@@ -253,11 +256,14 @@ struct	friostat	*fiop;
 		set = 1 - set;
 	if (opts & OPT_ACCNT) {
 		i = F_AC;
-		if (opts & OPT_OUTQUE)
+		if (opts & OPT_OUTQUE) {
 			fp = (struct frentry *)fiop->f_acctout[set];
-		else if (opts & OPT_INQUE) {
-			fp = (struct frentry *)fiop->f_acctin[set];
 			i++;
+		} else if (opts & OPT_INQUE)
+			fp = (struct frentry *)fiop->f_acctin[set];
+		else {
+			FPRINTF(stderr, "No -i or -o given with -a\n");
+			return;
 		}
 	} else if (opts & OPT_OUTQUE) {
 		i = F_OUT;
@@ -318,13 +324,16 @@ ips_stat_t *ipsp;
 		return;
 	for (i = 0; i < IPSTATE_SIZE; i++)
 		while (istab[i]) {
-			if (kmemcpy(&ips, istab[i], sizeof(ips)) == -1)
+			if (kmemcpy((char *)&ips, (u_long)istab[i],
+				    sizeof(ips)) == -1)
 				break;
 			PRINTF("%s -> ", inet_ntoa(ips.is_src));
 			PRINTF("%s age %d pass %d pr %d state %d/%d\n",
 				inet_ntoa(ips.is_dst), ips.is_age,
 				ips.is_pass, ips.is_p, ips.is_state[0],
 				ips.is_state[1]);
+			PRINTF("\tpkts %d bytes %d",
+				ips.is_pkts, ips.is_bytes);
 			if (ips.is_p == IPPROTO_TCP)
 				PRINTF("\t%hu -> %hu %lu:%lu %hu:%hu\n",
 					ntohs(ips.is_sport),
@@ -332,10 +341,10 @@ ips_stat_t *ipsp;
 					ips.is_seq, ips.is_ack,
 					ips.is_swin, ips.is_dwin);
 			else if (ips.is_p == IPPROTO_UDP)
-				PRINTF("\t%hu -> %hu\n", ntohs(ips.is_sport),
+				PRINTF(" %hu -> %hu\n", ntohs(ips.is_sport),
 					ntohs(ips.is_dport));
 			else if (ips.is_p == IPPROTO_ICMP)
-				PRINTF("\t%hu %hu %d\n", ips.is_icmp.ics_id,
+				PRINTF(" %hu %hu %d\n", ips.is_icmp.ics_id,
 					ips.is_icmp.ics_seq,
 					ips.is_icmp.ics_type);
 			istab[i] = ips.is_next;
@@ -359,7 +368,7 @@ ipfrstat_t *ifsp;
 		return;
 	for (i = 0; i < IPFT_SIZE; i++)
 		while (ipfrtab[i]) {
-			if (kmemcpy(&ifr, (u_long)ipfrtab[i],
+			if (kmemcpy((char *)&ifr, (u_long)ipfrtab[i],
 				    sizeof(ifr)) == -1)
 				break;
 			PRINTF("%s -> ", inet_ntoa(ifr.ipfr_src));
