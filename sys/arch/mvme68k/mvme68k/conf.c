@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21 2000/09/06 19:51:44 scw Exp $	*/
+/*	$NetBSD: conf.c,v 1.22 2001/03/21 22:25:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -133,11 +133,6 @@ cdev_decl(tun);
 
 #include "lpt.h"
 cdev_decl(lpt);
-/* open, close, write, ioctl */
-#define	cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*)))enodev,  \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*)))enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0}
 
 #include "ipfilter.h" 
 #include "rnd.h"
