@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.140 2002/07/04 23:32:15 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.141 2002/07/11 10:37:27 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -366,6 +366,7 @@ do {									\
 #define	FORK_SHARECWD	0x04		/* Share cdir/rdir/cmask */
 #define	FORK_SHAREFILES	0x08		/* Share file descriptors */
 #define	FORK_SHARESIGS	0x10		/* Share signal actions */
+#define	FORK_NOWAIT	0x20		/* Make init the parent of the child */
 
 #define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
 extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;

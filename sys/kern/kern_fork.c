@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.89 2002/06/17 16:22:50 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.90 2002/07/11 10:37:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.89 2002/06/17 16:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.90 2002/07/11 10:37:26 pooka Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -407,8 +407,8 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	if (flags & FORK_PPWAIT)
 		p2->p_flag |= P_PPWAIT;
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
-	p2->p_pptr = p1;
-	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
+	p2->p_pptr = (flags & FORK_NOWAIT) ? initproc : p1;
+	LIST_INSERT_HEAD(&p2->p_pptr->p_children, p2, p_sibling);
 	LIST_INIT(&p2->p_children);
 
 	callout_init(&p2->p_realit_ch);
