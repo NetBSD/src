@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.h,v 1.12 2003/08/07 16:44:30 agc Exp $	*/
+/*	$NetBSD: chared.h,v 1.13 2003/10/18 23:48:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -62,8 +62,8 @@
 
 typedef struct c_macro_t {
 	int	  level;
+	int	  offset;
 	char	**macro;
-	char	 *nline;
 } c_macro_t;
 
 /*

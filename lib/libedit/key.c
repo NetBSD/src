@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.14 2003/08/07 16:44:31 agc Exp $	*/
+/*	$NetBSD: key.c,v 1.15 2003/10/18 23:48:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: key.c,v 1.14 2003/08/07 16:44:31 agc Exp $");
+__RCSID("$NetBSD: key.c,v 1.15 2003/10/18 23:48:42 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -352,7 +352,8 @@ node__try(EditLine *el, key_node_t *ptr, const char *str, key_value_t *val, int 
 			break;
 		case XK_STR:
 		case XK_EXE:
-			ptr->val.str = strdup(val->str);
+			if ((ptr->val.str = el_strdup(val->str)) == NULL)
+				return -1;
 			break;
 		default:
 			EL_ABORT((el->el_errfile, "Bad XK_ type %d\n", ntype));
