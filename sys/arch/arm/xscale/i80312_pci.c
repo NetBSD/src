@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_pci.c,v 1.1 2001/11/09 03:27:51 thorpej Exp $	*/
+/*	$NetBSD: i80312_pci.c,v 1.2 2001/11/09 18:04:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -114,6 +114,7 @@ i80312_pci_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
 struct pciconf_state {
 	bus_addr_t ps_addr_reg;
 	bus_addr_t ps_data_reg;
+	bus_addr_t ps_csr_reg;
 	uint32_t ps_addr_val;
 
 	int ps_b, ps_d, ps_f;
@@ -140,9 +141,11 @@ i80312_pci_conf_setup(struct i80312_softc *sc, pcitag_t tag, int offset,
 	if (ps->ps_b == pbus) {
 		ps->ps_addr_reg = I80312_ATU_POCCA;
 		ps->ps_data_reg = I80312_ATU_POCCD;
+		ps->ps_csr_reg = PCI_COMMAND_STATUS_REG;
 	} else {
 		ps->ps_addr_reg = I80312_ATU_SOCCA;
 		ps->ps_data_reg = I80312_ATU_SOCCD;
+		ps->ps_csr_reg = I80312_ATU_SACS;
 	}
 
 	/*
@@ -182,16 +185,20 @@ i80312_pci_conf_read(void *v, pcitag_t tag, int offset)
 	bus_space_write_4(sc->sc_st, sc->sc_atu_sh, ps.ps_addr_reg,
 	    ps.ps_addr_val);
 
-#if 1
 	va = (vaddr_t) bus_space_vaddr(sc->sc_st, sc->sc_atu_sh);
 	if (badaddr_read((void *) (va + ps.ps_data_reg), sizeof(rv), &rv)) {
+		/*
+		 * Clear the Master Abort by reading the PCI
+		 * Status Register.
+		 */
+		(void) bus_space_read_4(sc->sc_st, sc->sc_atu_sh,
+		    ps.ps_csr_reg);
+#if 0
 		printf("conf_read: %d/%d/%d bad address\n",
 		    ps.ps_b, ps.ps_d, ps.ps_f);
+#endif
 		rv = (pcireg_t) -1;
 	}
-#else
-	rv = bus_space_read_4(sc->sc_st, sc->sc_atu_sh, ps.ps_data_reg);
-#endif
 
 	PCI_CONF_UNLOCK(s);
 
