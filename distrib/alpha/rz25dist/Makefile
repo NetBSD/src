@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2002/02/06 23:29:42 ross Exp $
+# $NetBSD: Makefile,v 1.27 2002/05/07 14:47:45 lukem Exp $
 
 .include "../../../Makefile.inc"
 
@@ -60,8 +60,7 @@ build-fs:
 	ln -s ../local/bin/strip ${DESTDIR}/usr/bin
 	cp -p ${DESTDIR}/usr/mdec/boot ${DESTDIR}/
 	sync; sleep 1; sync; sleep 1
-	${DESTDIR}/usr/mdec/installboot -v /dev/r${DESTDISK}c \
-	    ${DESTDIR}/usr/mdec/bootxx_ffs
+	${INSTALLBOOT} -v /dev/r${DESTDISK}c ${DESTDIR}/usr/mdec/bootxx_ffs
 
 unmount-fs:
 	umount ${DESTDIR}/usr ${DESTDIR}
