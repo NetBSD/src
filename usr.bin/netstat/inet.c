@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.35 1999/02/18 07:42:12 lukem Exp $	*/
+/*	$NetBSD: inet.c,v 1.36 1999/04/29 03:58:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.35 1999/02/18 07:42:12 lukem Exp $");
+__RCSID("$NetBSD: inet.c,v 1.36 1999/04/29 03:58:27 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -277,6 +277,7 @@ tcp_stats(off, name)
 	ps(tcps_sc_bucketoverflow, "\t\t%lu dropped due to bucket overflow\n");
 	ps(tcps_sc_reset, "\t\t%lu dropped due to RST\n");
 	ps(tcps_sc_unreach, "\t\t%lu dropped due to ICMP unreachable\n");
+	p(tcps_sc_retransmitted, "\t%lu SYN,ACK%s retransmitted\n");
 	p(tcps_sc_dupesyn, "\t%lu duplicate SYN%s received for entries already in the cache\n");
 	p(tcps_sc_dropped, "\t%lu SYN%s dropped (no route or no space)\n");
 
