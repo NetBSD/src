@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.22 2002/04/30 12:33:32 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.22.2.1 2002/05/19 07:56:32 gehenna Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -92,7 +92,6 @@ static volatile struct ss_dz {/* base address of DZ-controller: 0x200A0000 */
 #undef REG
 
 cons_decl(dz);
-cdev_decl(dz);
 
 #if NDZKBD > 0 || NDZMS > 0
 static int
@@ -148,6 +147,9 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dz_softc *sc = (void *)self;
 	struct vsbus_attach_args *va = aux;
+#if NDZKBD > 0
+	extern const struct cdevsw dz_cdevsw;
+#endif
 #if NDZKBD > 0 || NDZMS > 0
 	struct dzkm_attach_args daa;
 #endif
@@ -184,7 +186,7 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 
 #if NDZKBD > 0
 	/* Don't change speed if this is the console */
-	if (cn_tab->cn_dev != makedev(getmajor(dzopen), 0))
+	if (cn_tab->cn_dev != makedev(cdevsw_lookup_major(&dz_cdevsw), 0))
 		dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) 
 		    | DZ_LPR_8_BIT_CHAR;
 	daa.daa_line = 0;
@@ -232,6 +234,7 @@ dzcnprobe(struct consdev *cndev)
 	extern	vaddr_t iospace;
 	int diagcons;
 	paddr_t ioaddr = 0x200A0000;
+	extern const struct cdevsw dz_cdevsw;
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
@@ -259,7 +262,7 @@ dzcnprobe(struct consdev *cndev)
 		cndev->cn_pri = CN_REMOTE;
 	else
 		cndev->cn_pri = CN_NORMAL;
-	cndev->cn_dev = makedev(getmajor(dzopen), diagcons);
+	cndev->cn_dev = makedev(cdevsw_lookup_major(&dz_cdevsw), diagcons);
 	(vaddr_t)dz = dz_regs = iospace;
 	ioaccess(iospace, ioaddr, 1);
 }
@@ -332,6 +335,7 @@ dzputc(struct dz_linestate *ls, int ch)
 	int line = 0; /* = ls->dz_line; */
 	u_short tcr;
 	int s;
+	extern const struct cdevsw dz_cdevsw;
 
 	/* if the dz has already been attached, the MI
 	   driver will do the transmitting: */
@@ -347,6 +351,6 @@ dzputc(struct dz_linestate *ls, int ch)
 	}
 
 	/* use dzcnputc to do the transmitting: */
-	dzcnputc(makedev(getmajor(dzopen), line), ch);
+	dzcnputc(makedev(cdevsw_lookup_major(&dz_cdevsw), line), ch);
 }
 #endif /* NDZKBD > 0 || NDZMS > 0 */

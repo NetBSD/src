@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.24 2002/02/25 14:58:09 ad Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.24.8.1 2002/05/19 07:56:32 gehenna Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -171,8 +171,6 @@ idzcngetc(dev)
 	return (c);
 }
 
-#define	DZMAJOR 1
-
 void
 idzcnprobe(cndev)
 	struct	consdev *cndev;
@@ -180,6 +178,7 @@ idzcnprobe(cndev)
 	extern	vaddr_t iospace;
 	int diagcons;
 	paddr_t ioaddr = DZADDR;
+	extern const struct cdevsw dz_cdevsw;
 
 	/* not fine... but for now only KA53 is known to have dz@ibus */
 
@@ -190,7 +189,7 @@ idzcnprobe(cndev)
 
 	diagcons = 3;
 	cndev->cn_pri = CN_NORMAL;
-	cndev->cn_dev = makedev(DZMAJOR, diagcons);
+	cndev->cn_dev = makedev(cdevsw_lookup_major(&dz_cdevsw), diagcons);
 	idz_regs = iospace;
 	ioaccess(iospace, ioaddr, 1);
 }
