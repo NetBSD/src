@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.41 1997/01/05 21:44:24 veego Exp $	*/
+/*	$NetBSD: conf.c,v 1.42 1997/01/07 11:35:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -94,7 +94,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 dev_decl(filedesc,open);
 #include "bpfilter.h"
 #include "tun.h"
-#include "ipl.h"
+#include "ipfilter.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -138,7 +138,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scanner_init(NSS,ss),	/* 37: SCSI scanner */
 	cdev_ch_init(NCH,ch),		/* 38: SCSI autochanger */
 	cdev_uk_init(NUK,uk),		/* 39: SCSI unknown */
-	cdev_ipl_init(NIPL,ipl),	/* 40: ip-filter device */
+	cdev_ipf_init(NIPFILTER,ipl),	/* 40: ip-filter device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

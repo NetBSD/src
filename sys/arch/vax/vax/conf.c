@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26 1997/01/05 18:50:28 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.27 1997/01/07 11:35:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -326,7 +326,7 @@ cdev_decl(qv);
 #include "qd.h"
 cdev_decl(qd);
 
-#include "ipl.h"
+#include "ipfilter.h"
 cdev_decl(ipl);
 
 #if defined(INGRES)
@@ -398,7 +398,7 @@ struct cdevsw	cdevsw[] =
 	cdev_audio_init(NNP,np),	/* 39: NP Intelligent Board */
 	cdev_graph_init(NQV,qv),	/* 40: QVSS graphic display */
 	cdev_graph_init(NQD,qd),	/* 41: QDSS graphic display */
-	cdev_ipl_init(NIPL,ipl),	/* 42: Packet filter */
+	cdev_ipf_init(NIPFILTER,ipl),	/* 42: Packet filter */
 	cdev_ingres_init(NII,ii),	/* 43: Ingres device */
 	cdev_notdef(),			/* 44  was Datakit */
 	cdev_notdef(),			/* 45  was Datakit */

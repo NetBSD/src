@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.37 1997/01/06 07:35:39 mrg Exp $
+# 	$NetBSD: GENERIC,v 1.38 1997/01/07 11:35:18 mrg Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -289,4 +289,4 @@ pseudo-device	bpfilter 16	# Berkeley Packet Filter
 pseudo-device	vnd	4	# disk-like interface to files
 pseudo-device	ccd	4	# concatenated and striped disks
 #pseudo-device	strip	1	# radio clock
-#pseudo-device	ipl		# ip filter
+#pseudo-device	ipfilter	# ip filter

@@ -212,7 +212,7 @@ pseudo-device   bpfilter 8              # packet filter
 pseudo-device	sl	2               # CSLIP
 pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
-#pseudo-device	ipl	1		# ip filter
+#pseudo-device	ipfilter 1		# ip filter
 
 pseudo-device   pty     32              # pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline

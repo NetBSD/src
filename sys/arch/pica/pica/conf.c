@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1996/09/07 12:40:37 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1997/01/07 11:35:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -144,19 +144,7 @@ cdev_decl(pc);
 cdev_decl(pms);
 cdev_decl(cd);
 dev_decl(filedesc,open);
-
-/* open, close, read, ioctl */
-cdev_decl(ipl);
-#define	cdev_gen_ipf(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev, 0 }
-#ifdef IPFILTER
-#define NIPF 1
-#else
-#define NIPF 0
-#endif
+#include "ipfilter.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -193,7 +181,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 28: */
 	cdev_notdef(),			/* 29: */
 	cdev_notdef(),			/* 30: */
-	cdev_gen_ipf(NIPF,ipl),         /* 31: IP filter log */
+	cdev_ipf_init(NIPFILTER,ipl),	/* 31: ip-filter device */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);

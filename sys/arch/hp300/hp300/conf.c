@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.35 1997/01/05 21:29:49 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.36 1997/01/07 11:35:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -137,7 +137,7 @@ dev_decl(filedesc,open);
 cdev_decl(bpf);
 #include "tun.h"
 cdev_decl(tun);
-#include "ipl.h"
+#include "ipfilter.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -159,7 +159,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NDCM,dcm),	/* 15: 4-port serial */
 	cdev_tape_init(NMT,mt),		/* 16: magnetic reel tape */
 	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
-	cdev_ipl_init(NIPL,ipl),	/* 18: ip-filter device */
+	cdev_ipf_init(NIPFILTER,ipl),	/* 18: ip-filter device */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-device */

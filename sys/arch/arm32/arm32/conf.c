@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 1997/01/06 02:44:10 mark Exp $	*/
+/*	$NetBSD: conf.c,v 1.18 1997/01/07 11:35:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -217,7 +217,7 @@ cdev_decl(cpu);
 cdev_decl(iic);
 #include "rtc.h"
 cdev_decl(rtc);
-#include "ipl.h"
+#include "ipfilter.h"
 
 /* Character devices */
 
@@ -268,7 +268,7 @@ struct cdevsw cdevsw[] = {
 	cdev_rtc_init(NRTC, rtc),	/* 43: RTC driver */
 	cdev_lkm_dummy(),		/* 44: */
 	cdev_lkm_dummy(),		/* 45: */
-	cdev_ipl_init(NIPL,ipl),	/* 46: ip-filter device */
+	cdev_ipf_init(NIPFILTER,ipl),	/* 46: ip-filter device */
 	cdev_lkm_dummy(),		/* 47: */
 	cdev_lkm_dummy(),		/* 48: */
 	cdev_lkm_dummy(),		/* 49: */
