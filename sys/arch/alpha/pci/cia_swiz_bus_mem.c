@@ -1,4 +1,4 @@
-/*	$NetBSD: cia_swiz_bus_mem.c,v 1.4 1996/06/11 21:25:30 cgd Exp $	*/
+/*	$NetBSD: cia_swiz_bus_mem.c,v 1.5 1996/08/27 16:29:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
