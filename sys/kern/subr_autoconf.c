@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.19 1996/03/17 01:00:43 thorpej Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.20 1996/04/04 00:25:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,6 +76,20 @@ struct matchinfo {
 
 static char *number __P((char *, int));
 static void mapply __P((struct matchinfo *, struct cfdata *));
+
+struct devicelist alldevs;		/* list of all devices */
+struct evcntlist allevents;		/* list of all event counters */
+
+/*
+ * Initialize autoconfiguration data structures.
+ */
+void
+config_init()
+{
+
+	TAILQ_INIT(&alldevs);
+	TAILQ_INIT(&allevents);
+}
 
 /*
  * Apply the matching function and choose the best.  This is used
@@ -303,7 +317,6 @@ config_attach(parent, match, aux, print)
 	register struct device *dev;
 	register struct cfdriver *cd;
 	register struct cfattach *ca;
-	static struct device **nextp = &alldevs;
 
 	if (parent && parent->dv_cfdata->cf_driver->cd_indirect) {
 		dev = match;
@@ -322,8 +335,7 @@ config_attach(parent, match, aux, print)
 	else
 		cf->cf_fstate = FSTATE_FOUND;
 
-	*nextp = dev;			/* link up */
-	nextp = &dev->dv_next;
+	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);
 
 	if (parent == ROOT)
 		printf("%s (root)", dev->dv_xname);
@@ -427,7 +439,6 @@ evcnt_attach(dev, name, ev)
 	const char *name;
 	struct evcnt *ev;
 {
-	static struct evcnt **nextp = &allevents;
 
 #ifdef DIAGNOSTIC
 	if (strlen(name) >= sizeof(ev->ev_name))
@@ -437,6 +448,5 @@ evcnt_attach(dev, name, ev)
 	ev->ev_dev = dev;
 	/* ev->ev_count = 0; */
 	strcpy(ev->ev_name, name);
-	*nextp = ev;
-	nextp = &ev->ev_next;
+	TAILQ_INSERT_TAIL(&allevents, ev, ev_list);
 }
