@@ -56,20 +56,6 @@ typedef utmpidle utmpidlearr<MAXUSERS>;
 
 program RUSERSPROG {
 	/*
-	 * Includes idle information
-	 */
-	version RUSERSVERS_IDLE {
-		int
-		RUSERSPROC_NUM(void) = 1;
-
-		utmpidlearr
-		RUSERSPROC_NAMES(void) = 2;
-
-		utmpidlearr
-		RUSERSPROC_ALLNAMES(void) = 3;
-	} = 1;
-
-	/*
 	 * Old version does not include idle information
 	 */
 	version RUSERSVERS_ORIG {
@@ -80,6 +66,20 @@ program RUSERSPROG {
 		RUSERSPROC_NAMES(void) = 2;
 
 		utmparr
+		RUSERSPROC_ALLNAMES(void) = 3;
+	} = 1;
+
+	/*
+	 * Includes idle information
+	 */
+	version RUSERSVERS_IDLE {
+		int
+		RUSERSPROC_NUM(void) = 1;
+
+		utmpidlearr
+		RUSERSPROC_NAMES(void) = 2;
+
+		utmpidlearr
 		RUSERSPROC_ALLNAMES(void) = 3;
 	} = 2;
 } = 100002;
