@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.16 1995/05/31 00:09:55 briggs Exp $
+#	$NetBSD: Makefile.mac68k,v 1.17 1995/06/16 04:45:22 briggs Exp $
 
 # Makefile for NetBSD for the mac
 #	Derived from makefile for hp300 from NetBSD
@@ -33,6 +33,12 @@ GPROF.EX=/usr/src/lib/libc/csu.mac68k/gmon.ex
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
 MAC68K=	../..
+
+INCLUDES= -I. -I$S/arch -I$S -I$S/sys
+COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -DREFBIT -Dmac68k
+CFLAGS=	-O ${COPTS}
+
+### Find out what to use for libkern.
 .include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
 LIBKERN=${KERNLIB}
@@ -42,10 +48,6 @@ LIBKERN=${KERNLIB_PROF}
 
 ### for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
-
-INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -DREFBIT -Dmac68k
-CFLAGS=	-O ${COPTS}
 
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
 # where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
