@@ -1,8 +1,9 @@
 #	from: @(#)Makefile	5.10 (Berkeley) 12/8/90
-#	$Id: Makefile,v 1.4 1993/08/01 05:45:13 mycroft Exp $
+#	$Id: Makefile,v 1.5 1993/08/04 18:59:50 mycroft Exp $
 
 PROG=	hack
-SRCS=	alloc.c hack.Decl.c hack.apply.c hack.bones.c hack.c hack.cmd.c \
+SRCS+=	hack.onames.h
+SRCS+=	alloc.c hack.Decl.c hack.apply.c hack.bones.c hack.c hack.cmd.c \
 	hack.do.c hack.do_name.c hack.do_wear.c hack.dog.c hack.eat.c \
 	hack.end.c hack.engrave.c hack.fight.c hack.invent.c hack.ioctl.c \
 	hack.lev.c hack.main.c hack.makemon.c hack.mhitu.c hack.mklev.c \
@@ -18,11 +19,12 @@ DPADD=	${LIBTERM}
 LDADD=	-ltermcap
 HIDEGAME=hidegame
 
+CLEANFILES+=hack.onames.h
 hack.onames.h: makedefs def.objects.h
 	makedefs ${.CURDIR}/def.objects.h > hack.onames.h
 
 makedefs: makedefs.c
-	${CC} ${CFLAGS} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c
+	${CC} ${CFLAGS} ${LDFLAGS} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c
 
 beforeinstall: 
 	@if [ ! -d ${DESTDIR}/var/games/hackdir ]; then \
