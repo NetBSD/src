@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.233 2004/05/29 21:27:06 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.234 2004/05/30 07:25:01 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3264,4 +3264,50 @@ sys/dev/pcmcia/if_ne_pcmcia.c			1.113
 	ASIC to read the Ethernet address. However, as other OS's drivers
 	suggest, something which looks right is at offset 0x110.
 	[is, ticket #413]
+
+sys/kern/uipc_socket2.c				1.63
+sys/netipsec/key.c				1.19
+sys/sys/socketvar.h				1.76
+
+	Make FAST_IPSEC PF_KEY dumps unicast and reliable.
+	[jonathan, ticket #405]
+
+lib/libc/time/tzcode2netbsd			1.5
+
+	Update for tzcode2004a.
+	[kleink, ticket #406]
+
+sys/dev/pci/twe.c				1.56
+sys/dev/pci/twevar.h				1.21
+
+	Rename twe_tweio_command_handler() to twe_ccb_wait_handler() and 
+	expose it.
+	[thorpej, ticket #410]
+
+sys/dev/pci/ld_twe.c				1.20
+
+	Add a "flush" operation so the array's write cache is flushed on
+	close and at shutdown.
+	[thorpej, ticket #411]
+
+usr.bin/stat/stat.c				1.18
+
+	If using stat (the -L flag) and it fails, fall back to lstat(). It
+	may be the case that we're examining a broken symlink, and anything is
+	better than nothing.
+	[atatat, ticket #412]
+
+usr.sbin/rpcbind/rpcbind.c			1.7
+
+	Decrease log severity to debug if a protocol is not supported by the
+	kernel. This avoids "rpcbind: cannot create socket for tcp6" messages
+	at startup on IPv4-only kernels.
+	[martin, ticket #414]
+
+etc/daily					1.61
+
+	If not doing full_netstat, use the -v option anyway to avoid truncating
+	interface names like bridge0 or pppoe0 - the awk post processing
+	reserves enough space for the column already.
+	[martin, ticket #415]
 
