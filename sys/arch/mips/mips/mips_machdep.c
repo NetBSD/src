@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.175 2004/03/24 15:34:50 atatat Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.175.2.1 2004/07/04 12:53:59 he Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.175 2004/03/24 15:34:50 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.175.2.1 2004/07/04 12:53:59 he Exp $");
 
 #include "opt_cputype.h"
 
@@ -1719,12 +1719,18 @@ cpu_getmcontext(l, mcp, flags)
 		/*
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
-		 * XXX:  FP regs may be written to wrong location XXX
 		 */
 		if (l == fpcurlwp)
 			savefpregs(l);
-		memcpy(&mcp->__fpregs, &l->l_addr->u_pcb.pcb_fpregs.r_regs,
-		    sizeof (mcp->__fpregs));
+
+		/*
+		 * The PCB FP regs struct includes the FP CSR, so use the
+		 * size of __fpregs.__fp_r when copying.
+		 */
+		memcpy(&mcp->__fpregs.__fp_r,
+		    &l->l_addr->u_pcb.pcb_fpregs.r_regs,
+		    sizeof(mcp->__fpregs.__fp_r));
+		mcp->__fpregs.__fp_csr = l->l_addr->u_pcb.pcb_fpregs.r_regs[32];
 		*flags |= _UC_FPU;
 	}
 }
@@ -1754,10 +1760,18 @@ cpu_setmcontext(l, mcp, flags)
 
 	/* Restore floating point register context, if any. */
 	if (flags & _UC_FPU) {
-		/* XXX:  FP regs may be read from wrong location XXX */
-		memcpy(&l->l_addr->u_pcb.pcb_fpregs.r_regs, &mcp->__fpregs,
-		    sizeof (mcp->__fpregs));
-		/* XXX:  Do we restore here?? */
+		/* Disable the FPU to fault in FP registers. */
+		f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
+		if (l == fpcurlwp)
+			fpcurlwp = NULL;
+
+		/*
+		 * The PCB FP regs struct includes the FP CSR, so use the
+		 * size of __fpregs.__fp_r when copying.
+		 */
+		memcpy(&l->l_addr->u_pcb.pcb_fpregs.r_regs,
+		    &mcp->__fpregs.__fp_r, sizeof(mcp->__fpregs.__fp_r));
+		l->l_addr->u_pcb.pcb_fpregs.r_regs[32] = mcp->__fpregs.__fp_csr;
 	}
 
 	if (flags & _UC_SETSTACK)
