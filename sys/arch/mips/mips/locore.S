@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.125 2001/11/12 11:12:16 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.126 2001/11/14 18:15:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1032,7 +1032,7 @@ LEAF(suiword)
 	sw	a1, 0(a0)			# store word
 	sw	zero, U_PCB_ONFAULT(v1)
 	move	v0, zero
-	lw	v1, _C_LABEL(mips_locore_jumpvec) + MIPSX_FLUSHICACHE
+	lw	v1, _C_LABEL(mips_cache_ops) + MIPSX_FLUSHICACHE
 	j	v1				# NOTE: must not clobber v0!
 	li	a1, 4				# size of word
 END(suiword)
@@ -1537,33 +1537,6 @@ _C_LABEL(cpu_id):
 _C_LABEL(fpu_id):
 	.word	0
 
-	.globl	_C_LABEL(mips_L1DCacheSize)
-	.globl	_C_LABEL(mips_L1ICacheSize)
-	.globl	_C_LABEL(mips_L1DCacheLSize)
-	.globl	_C_LABEL(mips_L1ICacheLSize)
-	.globl	_C_LABEL(mips_CacheAliasMask)
-	.globl	_C_LABEL(mips_CachePreferMask)
-	.globl	_C_LABEL(mips_L2CacheSize)
-	.globl	_C_LABEL(mips_L2CacheLSize)
-	.globl	_C_LABEL(mips_L2CachePresent)
-_C_LABEL(mips_L1DCacheSize):
-	.word	0
-_C_LABEL(mips_L1ICacheSize):
-	.word	0
-_C_LABEL(mips_L1DCacheLSize):
-	.word	0
-_C_LABEL(mips_L1ICacheLSize):
-	.word	0
-_C_LABEL(mips_CacheAliasMask):
-	.word 0
-_C_LABEL(mips_CachePreferMask):
-	.word 0
-_C_LABEL(mips_L2CacheSize):
-	.word	0
-_C_LABEL(mips_L2CacheLSize):
-	.word	0
-_C_LABEL(mips_L2CachePresent):
-	.word	0
 #ifdef MIPS_DYNAMIC_STATUS_MASK
 	.globl	_C_LABEL(mips_dynamic_status_mask)
 _C_LABEL(mips_dynamic_status_mask):

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2001/07/19 15:32:16 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 2001/11/14 18:15:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -611,6 +611,7 @@ struct newsmips_bus_dmamap {
 	int		_dm_flags;	/* misc. flags */
 	int		_dm_maptbl;	/* DMA mapping table index */
 	int		_dm_maptblcnt;	/* number of DMA mapping table */
+	struct proc	*_dm_proc;	/* proc that owns the mapping */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
@@ -621,6 +622,8 @@ struct newsmips_bus_dmamap {
 };
 
 #ifdef _NEWSMIPS_BUS_DMA_PRIVATE
+void	newsmips_bus_dma_init(void);
+
 int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *);
 void	_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
@@ -633,7 +636,9 @@ int	_bus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
 int	_bus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int);
 void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
-void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+void	_bus_dmamap_sync_r3k(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
+void	_bus_dmamap_sync_r4k(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int);
 
 int	_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,

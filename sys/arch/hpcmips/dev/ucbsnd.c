@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.6 2001/09/15 12:47:08 uch Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.7 2001/11/14 18:15:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,6 +54,8 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/endian.h>
+
+#include <mips/cache.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -567,7 +569,7 @@ ucbsndwrite_subr(struct ucbsnd_softc *sc, u_int32_t *buf, size_t bufsize,
 	 */
 	for (i = 0; i < bufsize / sizeof(int); i++)
 		buf[i] = htobe32(buf[i]);
-	MachFlushCache();
+	mips_dcache_wbinv_range((vaddr_t)buf, bufsize);
 	
 	ringbuf_producer_return(&sc->sc_rb, bufsize);
 
