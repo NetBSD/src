@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.21 2000/12/20 08:04:27 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.22 2000/12/20 09:35:40 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.21 2000/12/20 08:04:27 sato Exp $";
+    "$Id: hpcfb.c,v 1.22 2000/12/20 09:35:40 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,8 @@ int	hpcfb_debug = 0;
 /*
  * currently experimental
 #define HPCFB_JUMP
-#define HPCFB_MULTI
 */
+#define HPCFB_MULTI
 
 struct hpcfb_vchar {
 	u_int c;
@@ -803,6 +803,7 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 	struct hpcfb_softc *sc = v;
 #ifdef HPCFB_MULTI
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
+	struct hpcfb_devconfig *odc;
 #endif /* HPCFB_MULTI */
 
 	DPRINTF(("%s(%d): hpcfb_show_screen()\n", __FILE__, __LINE__));
@@ -811,16 +812,32 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 #ifdef HPCFB_JUMP
 	hpcfb_check_scroll(dc);
 #endif /* HPCFB_JUMP */
-	/* save current screen image */
-	dc->dc_rinfo.ri_bits = sc->sc_dc->dc_rinfo.ri_bits;
-	sc->sc_dc->dc_state &= ~HPCFB_DC_CURRENT;
-	/* switch screen image */
-	dc->dc_state |= HPCFB_DC_CURRENT;
+	odc = sc->sc_dc;
 
+	if (odc == dc) {
+		hpcfb_refresh_screen(sc);
+		return 0;
+	}
+
+	if (odc->dc_curx >= 0 && odc->dc_cury >= 0)
+		hpcfb_cursor(odc, 0,  odc->dc_cury, odc->dc_curx); /* disable cursor */
+	/* switch screen image from old to new */
+	dc->dc_rinfo.ri_bits = odc->dc_rinfo.ri_bits;
+
+	/* disable old screen */
+	odc->dc_state &= ~HPCFB_DC_CURRENT;
+	odc->dc_rinfo.ri_bits = NULL;
+
+	/* switch screen */
+	dc->dc_state |= HPCFB_DC_CURRENT;
 	sc->sc_dc = dc;
+
+	/* redraw screen image */
+	if (dc->dc_curx >= 0 && dc->dc_cury >= 0)
+		hpcfb_cursor(dc, 0,  dc->dc_cury, dc->dc_curx); /* disable cursor */
 	hpcfb_redraw(dc, 0, dc->dc_rows, 1);
-	if (dc->dc_curx > 0 && dc->dc_cury > 0)
-		hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); 
+	if (dc->dc_curx >= 0 && dc->dc_cury >= 0)
+		hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); /* re enable cursor */
 #else /* HPCFB_MULTI */
 	hpcfb_refresh_screen(sc);
 #endif /* !HPCFB_MULTI */
@@ -869,6 +886,8 @@ hpcfb_cursor(cookie, on, row, col)
 		return;
 	}
 #endif /* HPCFB_JUMP */
+	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+		return;
 
 	if (ri->ri_bits == NULL)
 		return;
@@ -964,6 +983,8 @@ hpcfb_putchar(cookie, row, col, uc, attr)
 	}
 #endif /* HPCFB_JUMP */
 
+	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+		return;
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1038,6 +1059,8 @@ hpcfb_copycols(cookie, row, srccol, dstcol, ncols)
 		return;
 	}
 #endif /* HPCFB_JUMP */
+	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+		return;
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1111,6 +1134,8 @@ hpcfb_erasecols(cookie, row, startcol, ncols, attr)
 		return;
 	}
 #endif /* HPCFB_JUMP */
+	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+		return;
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1203,6 +1228,8 @@ hpcfb_redraw(cookie, row, num, all)
 		return;
 	}
 #endif /* HPCFB_JUMP */
+	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+		return;
 	if (vscn == 0)
 		return;
 
@@ -1299,6 +1326,8 @@ hpcfb_copyrows(cookie, src, dst, num)
 
 	hpcfb_tv_copyrows(cookie, src, dst, num);
 
+	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+		return;
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1406,6 +1435,8 @@ hpcfb_eraserows(cookie, row, nrow, attr)
 		return;
 	}
 #endif /* HPCFB_JUMP */
+	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+		return;
 	if (ri->ri_bits == NULL)
 		return;
 
