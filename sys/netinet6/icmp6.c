@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.20 2000/02/14 19:45:50 thorpej Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.21 2000/02/15 00:31:08 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2060,17 +2060,21 @@ icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				&icmp6stat, sizeof(icmp6stat));
 	case ICMPV6CTL_ERRRATELIMIT:
 	    {
-		int rate_usec, error;
+		int rate_usec, error, s;
 
 		/*
 		 * The sysctl specifies the rate in usec-between-icmp,
-		 * so we must convert to a timeval.
+		 * so we must convert from/to a timeval.
 		 */
+		rate_usec = (icmp6errratelim.tv_sec * 1000000) +
+		    icmp6errratelim.tv_usec;
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &rate_usec);
 		if (error)
 			return (error);
+		s = splsoftnet();
 		icmp6errratelim.tv_sec = rate_usec / 1000000;
 		icmp6errratelim.tv_usec = rate_usec % 1000000;
+		splx(s);
 
 		return (0);
 	    }
