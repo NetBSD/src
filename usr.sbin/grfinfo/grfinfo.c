@@ -19,12 +19,12 @@
  * improvements that they make and grant CSS redistribution rights.
  *
  * 	from: Utah $Hdr: grfinfo.c 1.3 94/04/04$
- *	$NetBSD: grfinfo.c,v 1.5 1997/10/17 06:09:15 lukem Exp $
+ *	$NetBSD: grfinfo.c,v 1.6 1997/10/17 15:44:08 carrel Exp $
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: grfinfo.c,v 1.5 1997/10/17 06:09:15 lukem Exp $");
+__RCSID("$NetBSD: grfinfo.c,v 1.6 1997/10/17 15:44:08 carrel Exp $");
 #endif
 
 #include <sys/types.h>
@@ -118,9 +118,9 @@ printall()
 			printf(", %d plane", gi.gd_planes);
 	}
 	printf(" %s\n", tname());
-	printf("registers: 0x%x bytes at 0x%x\n",
+	printf("registers: 0x%x bytes at %p\n",
 	       gi.gd_regsize, gi.gd_regaddr);
-	printf("framebuf:  0x%x bytes at 0x%x (%d x %d)\n",
+	printf("framebuf:  0x%x bytes at %p (%d x %d)\n",
 	       gi.gd_fbsize, gi.gd_fbaddr, gi.gd_fbwidth, gi.gd_fbheight);
 }
 
