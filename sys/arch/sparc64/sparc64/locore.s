@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.103 2000/10/04 22:18:25 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.104 2000/10/20 16:43:54 eeh Exp $	*/
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -2019,14 +2019,14 @@ intr_setup_msg:
 	movz	%icc, %sp, %g6; \
 	or	%g1, %lo(EINTSTACK), %g1; \
 	srl	%g6, 0, %g6;					/* truncate at 32-bits */ \
-	set	(EINTSTACK-INTSTACK), %g7;	/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
+	set	(EINTSTACK-INTSTACK), %g7; \
 	or	%g5, %lo((stackspace)), %g5; \
 	sub	%g1, %g6, %g2;					/* Determine if we need to switch to intr stack or not */ \
 	dec	%g7;						/* Make it into a mask */ \
 	andncc	%g2, %g7, %g0;					/* XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
 	rdpr	%wstate, %g7;					/* Find if we're from user mode */ \
 	sra	%g5, 0, %g5;					/* Sign extend the damn thing */ \
-	movz	%xcc, %g1, %g6;					/* Stay on interrupt stack? */ \
+	movnz	%xcc, %g1, %g6;					/* Stay on interrupt stack? */ \
 	cmp	%g7, WSTATE_KERN;				/* User or kernel sp? */ \
 	movnz	%icc, %g1, %g6;					/* Stay on interrupt stack? */ \
 	add	%g6, %g5, %g6;					/* Allocate a stack frame */ \
