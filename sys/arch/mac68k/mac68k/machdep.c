@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.218 1999/02/20 09:57:35 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.219 1999/02/20 10:00:37 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -761,9 +761,10 @@ cpu_reboot(howto, bootstr)
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
-	if (howto & RB_HALT) {
-		printf("System halted.\n\n");
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+		/* First try to power down under VIA control. */
 		via_powerdown();
+
 #ifndef MRG_ADB
 		/*
 		 * Shut down machines whose power functions are accessed
@@ -772,8 +773,15 @@ cpu_reboot(howto, bootstr)
 		 */
 		adb_poweroff();
 #endif
-		printf("You may turn the machine off,");
-		printf(" or hit any key to reboot.\n");
+		/*
+		 * RB_POWERDOWN implies RB_HALT... fall into it...
+		 */
+	}
+
+	if (howto & RB_HALT) {
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
 		(void)cngetc();
 	}
 
