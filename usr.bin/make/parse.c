@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91"; */
-static char *rcsid = "$Id: parse.c,v 1.12 1995/01/06 19:57:31 christos Exp $";
+static char *rcsid = "$Id: parse.c,v 1.13 1995/02/08 04:36:41 christos Exp $";
 #endif /* not lint */
 
 /*-
@@ -2404,8 +2404,9 @@ Parse_File(name, stream)
 		    goto nextLine;
 		}
 	    }
-	    if (*line == '#') {
-		/* If we're this far, the line must be a comment. */
+	    if (*line == '#' || *line == '\0') {
+		/* If we're this far, the line must be a comment.
+		   (Empty lines are ignored as well) */
 		goto nextLine;
 	    }
 	    
