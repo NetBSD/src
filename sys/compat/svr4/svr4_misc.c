@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.33 1996/02/09 23:12:14 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.34 1996/02/10 00:48:10 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -969,10 +969,9 @@ svr4_sys_waitsys(p, v, retval)
 		return EINVAL;
 	}
 
-	DPRINTF(("waitsys(%d, %d, %x, %x)\n", 
+	DPRINTF(("waitsys(%d, %d, %p, %x)\n", 
 	         SCARG(uap, grp), SCARG(uap, id),
-		 (unsigned int) SCARG(uap, info),
-	         SCARG(uap, options)));
+		 SCARG(uap, info), SCARG(uap, options)));
 
 loop:
 	nfound = 0;
