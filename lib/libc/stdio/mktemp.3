@@ -1,4 +1,4 @@
-.\"	$NetBSD: mktemp.3,v 1.12 1998/07/27 16:41:40 mycroft Exp $
+.\"	$NetBSD: mktemp.3,v 1.13 1998/07/28 17:11:12 mycroft Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)mktemp.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 24, 1997
+.Dd July 28, 1998
 .Dt MKTEMP 3
 .Os
 .Sh NAME
@@ -162,6 +162,16 @@ A
 .Fn mktemp
 function appeared in
 .At v7 .
+.Pp
+The
+.Fn mkstemp
+function appeared in
+.Bx 4.4 .
+.Pp
+The
+.Fn mkdtemp
+function appeared in
+.Nx 1.4 .
 .Sh SECURITY CONSIDERATIONS
 The use of
 .Fn mktemp
