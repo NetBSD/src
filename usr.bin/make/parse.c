@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.87 2003/03/21 15:52:57 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.88 2003/03/21 16:48:21 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.87 2003/03/21 15:52:57 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.88 2003/03/21 16:48:21 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.87 2003/03/21 15:52:57 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.88 2003/03/21 16:48:21 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -634,7 +634,7 @@ ParseDoSpecialSrc(ClientData tp, ClientData sp)
 	pref++;
     else
 	pref = tn->name;
-    if ((cp2 = strchr(pref, '.')) > tn->name) {
+    if ((cp2 = strchr(pref, '.')) > pref) {
 	cp = estrdup(pref);
 	cp[cp2 - pref] = '\0';
 	Var_Set(PREFIX, cp, tn, 0);
