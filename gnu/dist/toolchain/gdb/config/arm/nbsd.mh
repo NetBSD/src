@@ -1,5 +1,5 @@
 # Host: ARM running NetBSD
 XDEPFILES= 
-NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o armb-nat.o arm-convert.o
+NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o armnbsd-nat.o arm-convert.o
 XM_FILE= xm-nbsd.h
 NAT_FILE= nm-nbsd.h

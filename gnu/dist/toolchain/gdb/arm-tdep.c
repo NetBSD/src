@@ -2113,3 +2113,30 @@ coff_sym_is_thumb (int val)
 	  val == C_THUMBSTATFUNC ||
 	  val == C_THUMBLABEL);
 }
+
+#ifdef GET_LONGJMP_TARGET
+
+/* Figure out where the longjmp will land.  Slurp the args out of the stack.
+   We expect the first arg to be a pointer to the jmp_buf structure from which
+   we extract the pc (JB_PC) that we will land at.  The pc is copied into PC.
+   This routine returns true on success. */
+
+int
+get_longjmp_target(pc)
+     CORE_ADDR *pc;
+{
+  CORE_ADDR jb_addr;
+  char raw_buffer[MAX_REGISTER_RAW_SIZE];
+
+  jb_addr = read_register(0);
+
+  if (target_read_memory(jb_addr + JB_PC * JB_ELEMENT_SIZE, raw_buffer,
+			 sizeof(CORE_ADDR)))
+    return 0;
+
+  *pc = extract_address (raw_buffer, sizeof(CORE_ADDR));
+  return 1;
+
+}
+
+#endif /* GET_LONGJMP_TARGET */
