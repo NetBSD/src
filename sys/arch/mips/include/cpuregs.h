@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.17 1998/12/04 10:32:08 nisimura Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.18 1999/01/16 09:07:37 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -194,6 +194,7 @@
  * R4000 status register bit definitons,
  * where different from r2000/r3000.
  */
+#define MIPS3_SR_XX		0x80000000
 #define MIPS3_SR_RP		0x08000000
 #define MIPS3_SR_FR_32		0x04000000
 #define MIPS3_SR_RE		0x02000000
@@ -373,8 +374,8 @@
  *	MIPS_COP_0_TLB_CONTEXT	TLB context.
  *	MIPS_COP_0_BAD_VADDR	Bad virtual address.
  *	MIPS_COP_0_TLB_HI	TLB entry high.
- *	MIPS_COP_0_STATUS_REG	Status register.
- *	MIPS_COP_0_CAUSE_REG	Exception cause register.
+ *	MIPS_COP_0_STATUS	Status register.
+ *	MIPS_COP_0_CAUSE	Exception cause register.
  *	MIPS_COP_0_EXC_PC	Exception PC.
  *	MIPS_COP_0_PRID		Processor revision identifier.
  */
@@ -388,14 +389,16 @@
 #define MIPS_COP_0_TLB_HI	$10
 #define MIPS_COP_0_STATUS_REG	$12
 #define MIPS_COP_0_CAUSE_REG	$13
+#define MIPS_COP_0_STATUS	$12
+#define MIPS_COP_0_CAUSE	$13
 #define MIPS_COP_0_EXC_PC	$14
 #define MIPS_COP_0_PRID		$15
 
 
-/* r3k-specific */
+/* MIPS-I */
 #define MIPS_COP_0_TLB_LOW	$2
 
-/* MIPS-III additions */
+/* MIPS-III */
 #define MIPS_COP_0_TLB_LO0	$2
 #define MIPS_COP_0_TLB_LO1	$3
 
@@ -525,6 +528,7 @@
 #define MIPS3_TLB_ATTR_WB_NONCOHERENT	3 /* R4000/R4400, IDT */
 #define MIPS3_TLB_ATTR_WB_EXCLUSIVE	4 /* R4000/R4400 */
 #define MIPS3_TLB_ATTR_WB_SHARABLE	5 /* R4000/R4400 */
+#define MIPS3_TLB_ATTR_WB_UPDATE	6 /* R4000/R4400 */
 #define MIPS4_TLB_ATTR_UNCACHED_ACCELERATED 7 /* R10000 */
 
 
@@ -557,7 +561,7 @@
 
 #define MIPS3_TLB_NUM_TLB_ENTRIES	48
 #define MIPS_R4300_TLB_NUM_TLB_ENTRIES	32
-#define MIPS3_TLB_WIRED_ENTRIES		8
+#define MIPS3_TLB_WIRED_ENTRIES		8	/* XXX gross XXX */
 
 
 /*
@@ -601,5 +605,53 @@
 #define MIPS_TLB_FOUND		1
 #define MIPS_TLB_FOUND_WITH_PATCH	2
 #define MIPS_TLB_PROBE_ERROR		3
+
+/*
+ * CPU processor revision ID
+ */
+#define	MIPS_R2000	0x01	/* MIPS R2000 CPU		ISA I	*/
+#define	MIPS_R3000	0x02	/* MIPS R3000 CPU		ISA I	*/
+#define	MIPS_R6000	0x03	/* MIPS R6000 CPU		ISA II	*/
+#define	MIPS_R4000	0x04	/* MIPS R4000/4400 CPU		ISA III	*/
+#define	MIPS_R3LSI	0x05	/* LSI Logic R3000 derivate	ISA I	*/
+#define	MIPS_R6000A	0x06	/* MIPS R6000A CPU		ISA II	*/
+#define	MIPS_R3IDT	0x07	/* IDT R3041 or RC36100 CPU	ISA I	*/ 
+#define	MIPS_R10000	0x09	/* MIPS R10000/T5 CPU		ISA IV	*/
+#define	MIPS_R4200	0x0a	/* NEC VR4200 CPU 		ISA III	*/
+#define	MIPS_R4300	0x0b	/* NEC VR4300 CPU		ISA III	*/
+#define	MIPS_R4100	0x0c	/* NEC VR4100 CPU		ISA III	*/
+#define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV	*/
+#define	MIPS_R4600	0x20	/* QED R4600 Orion		ISA III	*/
+#define	MIPS_R4700	0x21	/* QED R4700 Orion              ISA III	*/
+#define	MIPS_R4650	0x22	/* !ID crash! QED R4650 CPU	ISA III	*/
+#define	MIPS_TX3900	0x22	/* !ID crash! Toshiba R3000 CPU	ISA I	*/
+#define	MIPS_R5000	0x23	/* MIPS R5000 CPU		ISA IV	*/
+#define	MIPS_RC32364	0x26	/* IDT RC32364 CPU		ISA II	*/
+#define	MIPS_RM5230	0x28	/* QED RM5230 CPU		ISA IV	*/
+#define	MIPS_RC64470	0x30	/* IDT RC64474/RC64475 CPU	ISA III	*/
+#define	MIPS_R3SONY	0x21	/* ? Sony R3000 based CPU	ISA I	*/
+#define	MIPS_R3NKK	0x23	/* ? NKK R3000 based CPU	ISA I	*/
+
+/*
+ * FPU processor revision ID
+ */
+#define	MIPS_SOFT	0x00	/* Software emulation		ISA I	*/
+#define	MIPS_R2360	0x01	/* MIPS R2360 FPC		ISA I	*/
+#define	MIPS_R2010	0x02	/* MIPS R2010 FPC		ISA I	*/
+#define	MIPS_R3010	0x03	/* MIPS R3010 FPC		ISA I	*/
+#define	MIPS_R6010	0x04	/* MIPS R6010 FPC		ISA II	*/
+#define	MIPS_R4010	0x05	/* MIPS R4010 FPC		ISA II	*/
+#define	MIPS_R31LSI	0x06	/* LSI Logic derivate		ISA I	*/
+#define	MIPS_R10010	0x09	/* MIPS R10000/T5 FPU		ISA IV	*/
+#define	MIPS_R4210	0x0a	/* NEC VR4210 FPC		ISA III	*/
+#define	MIPS_R4300	0x0b	/* NEC VR4300 FPC		ISA III	*/
+#define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV	*/
+#define	MIPS_R4600	0x20	/* QED R4600 Orion FPU		ISA III	*/
+#define	MIPS_R5010	0x23	/* MIPS R5000 FPU		ISA IV	*/
+#define	MIPS_RC32364	0x26	/* IDT RC32364 FPU		ISA II	*/
+#define	MIPS_RM5230	0x28	/* QED RM5230 FPU		ISA IV	*/
+#define	MIPS_R3SONY	0x21	/* ? Sony R3000 based FPU	ISA I	*/
+#define	MIPS_R3TOSH	0x22	/* ? Toshiba R3000 based FPU	ISA I	*/
+#define	MIPS_R3NKK	0x23	/* ? NKK R3000 based FPU	ISA I	*/
 
 #endif /* _MIPS_CPUREGS_H_ */
