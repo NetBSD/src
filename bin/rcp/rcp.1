@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcp.1,v 1.18 2004/09/05 08:48:32 wiz Exp $
+.\"	$NetBSD: rcp.1,v 1.19 2005/03/09 03:11:22 ginsbach Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)rcp.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd September 5, 2004
+.Dd March 8, 2005
 .Dt RCP 1
 .Os
 .Sh NAME
@@ -37,10 +37,10 @@
 .Nd remote file copy
 .Sh SYNOPSIS
 .Nm
-.Op Fl p
+.Op Fl 46p
 .Ar file1 file2
 .Nm
-.Op Fl pr
+.Op Fl 46pr
 .Ar file ...
 .Ar directory
 .Sh DESCRIPTION
@@ -55,6 +55,10 @@ form ``rname@rhost:path'', or a local file name (containing no `:' characters,
 or a `/' before any `:'s).
 .Pp
 .Bl -tag -width flag
+.It Fl 4
+Use IPv4 addresses only.
+.It Fl 6
+Use IPv6 addresses only.
 .It Fl p
 The
 .Fl p

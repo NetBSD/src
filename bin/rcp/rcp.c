@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.36 2005/02/17 15:25:02 xtraeme Exp $	*/
+/*	$NetBSD: rcp.c,v 1.37 2005/03/09 03:11:22 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.36 2005/02/17 15:25:02 xtraeme Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.37 2005/03/09 03:11:22 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,12 +79,12 @@ CREDENTIALS 	cred;
 Key_schedule	schedule;
 #ifdef CRYPT
 int	doencrypt = 0;
-#define	OPTIONS	"dfKk:prtx"
+#define	OPTIONS	"46dfKk:prtx"
 #else
-#define	OPTIONS	"dfKk:prt"
+#define	OPTIONS	"46dfKk:prt"
 #endif
 #else
-#define	OPTIONS "dfprt"
+#define	OPTIONS "46dfprt"
 #endif
 
 struct passwd *pwd;
@@ -93,6 +93,7 @@ u_short	port;
 uid_t	userid;
 int errs, rem;
 int pflag, iamremote, iamrecursive, targetshouldbedirectory;
+int family = AF_UNSPEC;
 
 #define	CMDNEEDS	64
 char cmd[CMDNEEDS];		/* must hold "rcp -r -p -d\0" */
@@ -119,6 +120,12 @@ main(int argc, char *argv[])
 	fflag = tflag = 0;
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1)
 		switch(ch) {			/* User-visible flags. */
+		case '4':
+			family = AF_INET;
+			break;
+		case '6':
+			family = AF_INET6;
+			break;
 		case 'K':
 #ifdef KERBEROS
 			use_kerberos = 0;
@@ -308,7 +315,7 @@ toremote(char *targ, int argc, char *argv[])
 #endif
 					rem = rcmd_af(&host, port, pwname,
 					    tuser ? tuser : pwname,
-					    bp, NULL, PF_UNSPEC);
+					    bp, NULL, family);
 				if (rem < 0)
 					exit(1);
 				if (response() < 0)
@@ -363,7 +370,7 @@ tolocal(int argc, char *argv[])
 		    use_kerberos ? 
 			kerberos(&host, bp, pwname, suser) : 
 #endif
-			rcmd_af(&host, port, pwname, suser, bp, NULL,PF_UNSPEC);
+			rcmd_af(&host, port, pwname, suser, bp, NULL, family);
 		(void)free(bp);
 		if (rem < 0) {
 			++errs;
@@ -391,7 +398,7 @@ source(int argc, char *argv[])
 #endif
 
 	for (indx = 0; indx < argc; ++indx) {
-                name = argv[indx];
+		name = argv[indx];
 		if ((fd = open(name, O_RDONLY, 0)) < 0)
 			goto syserr;
 		if (fstat(fd, &stb)) {
@@ -816,7 +823,7 @@ again:
 			errx(1,
 			   "the -x option requires Kerberos authentication");
 #endif
-		rem = rcmd_af(host, port, locuser, user, bp, NULL, PF_UNSPEC);
+		rem = rcmd_af(host, port, locuser, user, bp, NULL, family);
 	}
 	return (rem);
 }
