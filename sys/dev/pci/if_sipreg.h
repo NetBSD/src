@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.3 2000/09/20 02:08:44 thorpej Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.4 2000/09/21 04:05:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -281,6 +281,10 @@ struct sip_desc {
 #define	RFCR_RFADDR_MC5	  0x00090000	/* multicast hash word 5 */
 #define	RFCR_RFADDR_MC6	  0x000a0000	/* multicast hash word 6 */
 #define	RFCR_RFADDR_MC7	  0x000b0000	/* multicast hash word 7 */
+
+#define	RFCR_NS_RFADDR_PMATCH	0x0000	/* perfect match */
+#define	RFCR_NS_RFADDR_PCOUNT	0x0006	/* pattern count */
+#define	RFCR_NS_RFADDR_FILTMEM	0x0200	/* filter memory (hash/pattern) */
 
 #define	SIP_RFDR	0x4c	/* receive filter data register */
 #define	RFDR_BMASK	0x00030000	/* byte mask (83815) */
