@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.46 2003/06/03 23:22:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.46 2003/06/03 23:22:00 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,8 @@ Static const struct usbd_quirk_entry {
  	0x100, { UQ_ASSUME_CM_OVER_DATA | UQ_NO_STRINGS }},
  { USB_VENDOR_SANYO, USB_PRODUCT_SANYO_SCP4900,
  	0x000, { UQ_ASSUME_CM_OVER_DATA | UQ_NO_STRINGS }},
+ { USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_T720C,
+ 	0x001, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_TI, USB_PRODUCT_TI_UTUSB41,	    0x110, { UQ_POWER_CLAIM }},
  { USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_320U,
 						    0x000, { UQ_NO_STRINGS }},
