@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.9 1998/03/27 01:30:03 cgd Exp $	*/
+/*	$NetBSD: mcount.c,v 1.10 1999/01/17 01:30:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -33,21 +33,22 @@
  * SUCH DAMAGE.
  */
 
-/* If compiling for a standalone program, there is no profiling support. */
-#if !defined(_STANDALONE)
+/* If building a standalone libkern, don't include mcount. */
+#ifndef _STANDALONE
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(_KERNEL) && defined(LIBC_SCCS)
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: mcount.c,v 1.9 1998/03/27 01:30:03 cgd Exp $";
+__RCSID("$NetBSD: mcount.c,v 1.10 1999/01/17 01:30:06 mrg Exp $");
 #endif
 #endif
 
 #include <sys/param.h>
 #include <sys/gmon.h>
 
-_MCOUNT_DECL __P((u_long, u_long));
+_MCOUNT_DECL __P((u_long, u_long)) __attribute__((__unused__));	/* see below. */
 
 /*
  * mcount is called on entry to each function compiled with the profiling
@@ -65,14 +66,14 @@ _MCOUNT_DECL __P((u_long, u_long));
  * perform this optimization.
  */
 _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
-	register u_long frompc, selfpc;
+	u_long frompc, selfpc;
 {
-	register u_short *frompcindex;
-	register struct tostruct *top, *prevtop;
-	register struct gmonparam *p;
-	register long toindex;
+	u_short *frompcindex;
+	struct tostruct *top, *prevtop;
+	struct gmonparam *p;
+	long toindex;
 #ifdef _KERNEL
-	register int s;
+	int s;
 #endif
 
 	p = &_gmonparam;
@@ -193,4 +194,4 @@ overflow:
  */
 MCOUNT
 
-#endif /* !defined(_STANDALONE) */
+#endif /* !_STANDALONE */
