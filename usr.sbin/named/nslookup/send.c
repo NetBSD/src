@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.3 1998/01/09 08:10:11 perry Exp $	*/
+/*	$NetBSD: send.c,v 1.4 1998/08/27 03:11:37 tv Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -57,7 +57,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)send.c	5.18 (Berkeley) 3/2/91";
-static char rcsid[] = "$Id: send.c,v 1.3 1998/01/09 08:10:11 perry Exp $";
+static char rcsid[] = "$Id: send.c,v 1.4 1998/08/27 03:11:37 tv Exp $";
 #endif /* not lint */
 
 /*
@@ -83,6 +83,7 @@ static char rcsid[] = "$Id: send.c,v 1.3 1998/01/09 08:10:11 perry Exp $";
 #include <sys/uio.h>
 #include <netinet/in.h>
 #include <stdio.h>
+#include <string.h>
 #include <errno.h>
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
