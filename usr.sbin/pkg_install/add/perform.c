@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.101 2004/05/08 16:50:37 grant Exp $	*/
+/*	$NetBSD: perform.c,v 1.102 2004/07/30 11:35:46 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.101 2004/05/08 16:50:37 grant Exp $");
+__RCSID("$NetBSD: perform.c,v 1.102 2004/07/30 11:35:46 agc Exp $");
 #endif
 #endif
 
@@ -40,13 +40,74 @@ __RCSID("$NetBSD: perform.c,v 1.101 2004/05/08 16:50:37 grant Exp $");
 #include <stdlib.h>
 #include <sys/utsname.h>
 
-static int read_buildinfo(char **);
-
 static char LogDir[FILENAME_MAX];
 static int zapLogDir;		/* Should we delete LogDir? */
 
 static package_t Plist;
 static char *Home;
+
+/* used in build information */
+enum {
+	Good,
+	Missing,
+	Warning,
+	Fatal
+};
+
+/* Read package build information */
+static int
+read_buildinfo(char **buildinfo)
+{
+	char   *key;
+	char   *line;
+	size_t	len;
+	FILE   *fp;
+
+	if ((fp = fopen(BUILD_INFO_FNAME, "r")) == NULL) {
+		warnx("unable to open %s file.", BUILD_INFO_FNAME);
+		return 0;
+	}
+
+	while ((line = fgetln(fp, &len)) != NULL) {
+		if (line[len - 1] == '\n')
+			line[len - 1] = '\0';
+
+		if ((key = strsep(&line, "=")) == NULL)
+			continue;
+
+		/*
+		 * pkgsrc used to create the BUILDINFO file using
+		 * "key= value", so skip the space if it's there.
+		 */
+		if (line == NULL)
+			continue;
+		if (line[0] == ' ')
+			line += sizeof(char);
+
+		/*
+		 * we only care about opsys, arch, version, and
+		 * dependency recommendations
+		 */
+		if (line[0] != '\0') {
+			if (strcmp(key, "OPSYS") == 0)
+			    buildinfo[BI_OPSYS] = strdup(line);
+			else if (strcmp(key, "OS_VERSION") == 0)
+			    buildinfo[BI_OS_VERSION] = strdup(line);
+			else if (strcmp(key, "MACHINE_ARCH") == 0)
+			    buildinfo[BI_MACHINE_ARCH] = strdup(line);
+			else if (strcmp(key, "IGNORE_RECOMMENDED") == 0)
+			    buildinfo[BI_IGNORE_RECOMMENDED] = strdup(line);
+		}
+	}
+	(void) fclose(fp);
+	if (buildinfo[BI_OPSYS] == NULL ||
+	    buildinfo[BI_OS_VERSION] == NULL ||
+	    buildinfo[BI_MACHINE_ARCH] == NULL) {
+		warnx("couldn't extract build information from package.");
+		return 0;
+	}
+	return 1;
+}
 
 static int
 sanity_check(const char *pkg)
@@ -270,10 +331,13 @@ pkg_do(const char *pkg)
 		}
 	}
 
-	/* Check OS, version and architecture */
-	if (read_buildinfo(buildinfo) != 0 && !Force) {
-		warnx("aborting.");
-		goto bomb;
+	/* Read the OS, version and architecture from BUILD_INFO file */
+	if (!read_buildinfo(buildinfo)) {
+		warn("can't read build information from %s", BUILD_INFO_FNAME);
+		if (!Force) {
+			warnx("aborting.");
+			goto bomb;
+		}
 	}
 
 	if (uname(&host_uname) < 0) {
@@ -283,34 +347,54 @@ pkg_do(const char *pkg)
 			goto bomb;
 		}
 	} else {
-		int	osbad = 0;
+		int	status = Good;
 
-		/* If either the OS or arch are different, bomb */
-		if (strcmp(OPSYS_NAME, buildinfo[BI_OPSYS]) != 0 ||
-		strcmp(MACHINE_ARCH, buildinfo[BI_MACHINE_ARCH]) != 0)
-			osbad = 2;
-
-		/* If OS and arch are the same, warn if version differs */
-		if (strcmp(OPSYS_NAME, buildinfo[BI_OPSYS]) == 0 &&
-		    strcmp(MACHINE_ARCH, buildinfo[BI_MACHINE_ARCH]) == 0) {
-			if (strcmp(host_uname.release, buildinfo[BI_OS_VERSION]) != 0)
-				osbad = 1;
-		} else
-			osbad = 2;
-
-		if (osbad) {
-			warnx("Package `%s' OS mismatch:", pkg);
-			warnx("%s/%s %s (pkg) vs. %s/%s %s (this host)",
-			    buildinfo[BI_OPSYS],
-			    buildinfo[BI_MACHINE_ARCH],
-			    buildinfo[BI_OS_VERSION],
-			    OPSYS_NAME,
-			    MACHINE_ARCH,
-			    host_uname.release);
+		/* check that we have read some values from buildinfo */
+		if (buildinfo[BI_OPSYS] == NULL) {
+			warnx("Missing operating system value from build information");
+			status = Missing;
 		}
-		if (!Force && (osbad >= 2)) {
-			    warnx("aborting.");
-			    goto bomb;
+		if (buildinfo[BI_MACHINE_ARCH] == NULL) {
+			warnx("Missing machine architecture value from build information");
+			status = Missing;
+		}
+		if (buildinfo[BI_OS_VERSION] == NULL) {
+			warnx("Missing operating system version value from build information");
+			status = Missing;
+		}
+
+		if (status == Good) {
+			/* If either the OS or arch are different, bomb */
+			if (strcmp(OPSYS_NAME, buildinfo[BI_OPSYS]) != 0 ||
+			    strcmp(MACHINE_ARCH, buildinfo[BI_MACHINE_ARCH]) != 0) {
+				status = Fatal;
+			}
+
+			/* If OS and arch are the same, warn if version differs */
+			if (strcmp(OPSYS_NAME, buildinfo[BI_OPSYS]) == 0 &&
+			    strcmp(MACHINE_ARCH, buildinfo[BI_MACHINE_ARCH]) == 0) {
+				if (strcmp(host_uname.release, buildinfo[BI_OS_VERSION]) != 0) {
+					status = Warning;
+				}
+			} else {
+				status = Fatal;
+			}
+
+			if (status != Good) {
+				warnx("Package `%s' OS mismatch:", pkg);
+				warnx("%s/%s %s (pkg) vs. %s/%s %s (this host)",
+				    buildinfo[BI_OPSYS],
+				    buildinfo[BI_MACHINE_ARCH],
+				    buildinfo[BI_OS_VERSION],
+				    OPSYS_NAME,
+				    MACHINE_ARCH,
+				    host_uname.release);
+			}
+		}
+
+		if (!Force && status == Fatal) {
+			warnx("aborting.");
+			goto bomb;
 		}
 	}
 
@@ -939,58 +1023,3 @@ pkg_perform(lpkg_head_t *pkgs)
 	return err_cnt;
 }
 
-/* Read package build information */
-static int
-read_buildinfo(char **buildinfo)
-{
-	char   *key;
-	char   *line;
-	size_t	len;
-	FILE   *fp;
-
-	fp = fopen(BUILD_INFO_FNAME, "r");
-	if (!fp) {
-		warnx("unable to open %s file.", BUILD_INFO_FNAME);
-		return 1;
-	}
-
-	while ((line = fgetln(fp, &len)) != NULL) {
-		if (line[len - 1] == '\n')
-			line[len - 1] = '\0';
-
-		if ((key = strsep(&line, "=")) == NULL)
-			continue;
-
-		/*
-		 * pkgsrc used to create the BUILDINFO file using
-		 * "key= value", so skip the space if it's there.
-		 */
-		if (line == NULL)
-			continue;
-		if (line[0] == ' ')
-			line += sizeof(char);
-
-		/*
-		 * we only care about opsys, arch, version, and
-		 * dependency recommendations
-		 */
-		if (line[0] != '\0') {
-			if (strcmp(key, "OPSYS") == 0)
-			    buildinfo[BI_OPSYS] = strdup(line);
-			else if (strcmp(key, "OS_VERSION") == 0)
-			    buildinfo[BI_OS_VERSION] = strdup(line);
-			else if (strcmp(key, "MACHINE_ARCH") == 0)
-			    buildinfo[BI_MACHINE_ARCH] = strdup(line);
-			else if (strcmp(key, "IGNORE_RECOMMENDED") == 0)
-			    buildinfo[BI_IGNORE_RECOMMENDED] = strdup(line);
-		}
-	}
-	fclose(fp);
-	if (buildinfo[BI_OPSYS] == NULL ||
-	    buildinfo[BI_OS_VERSION] == NULL ||
-	    buildinfo[BI_MACHINE_ARCH] == NULL) {
-		warnx("couldn't extract build information from package.");
-		return 1;
-	}
-	return 0;
-}
