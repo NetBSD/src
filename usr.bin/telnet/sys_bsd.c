@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.21 2002/09/23 03:29:10 itojun Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.22 2002/09/23 12:48:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.21 2002/09/23 03:29:10 itojun Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.22 2002/09/23 12:48:04 mycroft Exp $");
 #endif
 #endif /* not lint */
 

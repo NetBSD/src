@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.25 2002/09/23 03:36:06 itojun Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.26 2002/09/23 12:48:10 mycroft Exp $	*/
 /*	$KAME: rtadvd.c,v 1.74 2002/09/08 01:25:17 itojun Exp $	*/
 
 /*
