@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.111 2003/03/15 06:58:50 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.112 2003/03/20 06:51:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.111 2003/03/15 06:58:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.112 2003/03/20 06:51:17 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -369,7 +369,7 @@ lfs_vflush(struct vnode *vp)
 	}
 #endif
 
-#if 1 /* XXX */
+#if 1
 	do {
 		do {
 			if (LIST_FIRST(&vp->v_dirtyblkhd) != NULL)
@@ -536,7 +536,6 @@ lfs_segwrite(struct mount *mp, int flags)
 	int writer_set = 0;
 	int dirty;
 	int redo;
-	int loopcount;
 	int sn;
 	
 	fs = VFSTOUFS(mp)->um_lfs;
@@ -644,7 +643,6 @@ lfs_segwrite(struct mount *mp, int flags)
 
 	did_ckp = 0;
 	if (do_ckp || fs->lfs_doifile) {
-		loopcount = 10;
 		do {
 			vp = fs->lfs_ivnode;
 
@@ -663,45 +661,35 @@ lfs_segwrite(struct mount *mp, int flags)
 			redo = lfs_writeinode(fs, sp, ip);
 			redo += lfs_writeseg(fs, sp);
 			redo += (fs->lfs_flags & LFS_IFDIRTY);
-		} while (redo && do_ckp && --loopcount > 0);
-		if (loopcount <= 0)
-			printf("lfs_segwrite: possibly invalid checkpoint!\n");
+		} while (redo && do_ckp);
 
-		/* The ifile should now be all clear */
-		if (do_ckp && LIST_FIRST(&vp->v_dirtyblkhd)) {
-			struct buf *bp;
-			int s, warned = 0, dopanic = 0;
-			s = splbio();
-			for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = LIST_NEXT(bp, b_vnbufs)) {
-				if (!(bp->b_flags & B_GATHERED)) {
-					if (!warned)
-						printf("lfs_segwrite: ifile still has dirty blocks?!\n");
-					++dopanic;
-					++warned;
-					printf("bp=%p, lbn %" PRId64 ", "
-						"flags 0x%lx\n",
-						bp, bp->b_lblkno,
-						bp->b_flags);
+		/*
+		 * Unless we are unmounting, the Ifile may continue to have
+		 * dirty blocks even after a checkpoint, due to changes to
+		 * inodes' atime.  If we're checkpointing, it's "impossible"
+		 * for other parts of the Ifile to be dirty after the loop
+		 * above, since we hold the segment lock.
+		 */
+		if (LIST_EMPTY(&vp->v_dirtyblkhd)) {
+			LFS_CLR_UINO(ip, IN_ALLMOD);
+		}
+#ifdef DIAGNOSTIC
+		else if (do_ckp) {
+			LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {
+				if (bp->b_lblkno < fs->lfs_cleansz +
+				    fs->lfs_segtabsz &&
+				    !(bp->b_flags & B_GATHERED)) {
+					panic("dirty blocks");
 				}
 			}
-			if (dopanic)
-				panic("dirty blocks");
-			splx(s);
 		}
-		LFS_CLR_UINO(ip, IN_ALLMOD);
+#endif
 	} else {
 		(void) lfs_writeseg(fs, sp);
 	}
 	
-	/*
-	 * If the I/O count is non-zero, sleep until it reaches zero.
-	 * At the moment, the user's process hangs around so we can
-	 * sleep. 
-	 */
-	if (loopcount <= 0)
-		fs->lfs_doifile = 1;
-	else
-		fs->lfs_doifile = 0;
+	/* Note Ifile no longer needs to be written */
+	fs->lfs_doifile = 0;
 	if (writer_set && --fs->lfs_writer == 0)
 		wakeup(&fs->lfs_dirops);
 
@@ -715,7 +703,6 @@ lfs_segwrite(struct mount *mp, int flags)
 	 */
 	if (do_ckp && !did_ckp) {
 		sp->seg_flags &= ~SEGM_CKP;
-		/* if (do_ckp) printf("lfs_segwrite: no checkpoint\n"); */
 	}
 
 	if (lfs_dostats) {
