@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.5 1998/01/26 20:30:06 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.6 1998/06/09 07:25:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -111,11 +111,7 @@ struct ec_softc {
 	void *sc_ih;			/* interrupt handle */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	ec_probe __P((struct device *, void *, void *));
-#else
 int	ec_probe __P((struct device *, struct cfdata *, void *));
-#endif
 void	ec_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ec_ca = {
@@ -158,11 +154,7 @@ int ec_media[] = {
 int
 ec_probe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.7 1998/06/09 00:05:46 thorpej Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.8 1998/06/09 07:25:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -63,11 +63,7 @@ struct wdc_isa_softc {
 	int	sc_drq;
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	wdc_isa_probe	__P((struct device *, void *, void *));
-#else
 int	wdc_isa_probe	__P((struct device *, struct cfdata *, void *));
-#endif
 void	wdc_isa_attach	__P((struct device *, struct device *, void *));
 
 struct cfattach wdc_isa_ca = {
@@ -81,11 +77,7 @@ static void	wdc_isa_dma_finish __P((void *));
 int
 wdc_isa_probe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 #if 0 /* XXX memset */

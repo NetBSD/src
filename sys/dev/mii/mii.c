@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.4 1998/02/11 19:02:11 bouyer Exp $	*/
+/*	$NetBSD: mii.c,v 1.5 1998/06/09 07:30:43 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -60,13 +60,8 @@ struct mii_softc {
 static void mii_sync __P((mii_data_t *));
 static void mii_sendbit __P((mii_data_t *, u_int32_t, int));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int miimatch __P((struct device *, void *, void *));
-int mii_configmatch __P((struct device *, void *, void *));
-#else
 int miimatch __P((struct device *, struct cfdata *, void *));
 int mii_configmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void miiattach __P((struct device *, struct device *, void *));
 
 int mii_print __P((void *, const char *));
@@ -97,20 +92,12 @@ mii_print(aux, pnp)
 	return (UNCONF);
 }
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int
-miimatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-#else
 int
 miimatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-#endif
 	return 1;
 }
 
@@ -168,21 +155,12 @@ miiattach(parent, self, aux)
 	}
 }
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int
-mii_configmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct cfdata *cf =match;
-#else
 int
 mii_configmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-#endif
 	mii_phy_t *phy = aux;
 
 	if (cf->cf_loc[MIICF_DEV] != MIICF_DEV_DEFAULT &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.11 1998/03/06 20:00:28 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.12 1998/06/09 07:32:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -52,11 +52,7 @@
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int ne_pcmcia_match __P((struct device *, void *, void *));
-#else
 int ne_pcmcia_match __P((struct device *, struct cfdata *, void *));
-#endif
 void ne_pcmcia_attach __P((struct device *, struct device *, void *));
 
 int	ne_pcmcia_enable __P((struct dp8390_softc *));
@@ -234,11 +230,7 @@ struct ne2000dev {
 int
 ne_pcmcia_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pcmcia_attach_args *pa = aux;

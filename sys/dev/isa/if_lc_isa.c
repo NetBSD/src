@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.6 1997/11/30 20:03:15 christos Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.7 1998/06/09 07:25:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -82,11 +82,7 @@ extern struct cfdriver lc_cd;
 
 static int lemac_isa_find __P((lemac_softc_t *, struct isa_attach_args *,
     int));
-#ifdef __BROKEN_INDIRECT_CONFIG
-static int lemac_isa_probe __P((struct device *, void *, void *));
-#else
 static int lemac_isa_probe __P((struct device *, struct cfdata *, void *));
-#endif
 static void lemac_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach lc_isa_ca = {
@@ -192,19 +188,11 @@ outio:
 static int
 lemac_isa_probe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = ((struct device *)match)->dv_cfdata;
-#else
 	struct cfdata *cf = match;
-#endif
 	lemac_softc_t sc;
 	(void)sprintf(sc.sc_dv.dv_xname, "%s%d", lc_cd.cd_name, cf->cf_unit);
     

@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.42 1998/01/12 09:43:30 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.43 1998/06/09 07:24:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -61,11 +61,7 @@ struct ast_softc {
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int astprobe __P((struct device *, void *, void *));
-#else
 int astprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void astattach __P((struct device *, struct device *, void *));
 int astintr __P((void *));
 int astprint __P((void *, const char *));
@@ -77,11 +73,7 @@ struct cfattach ast_ca = {
 int
 astprobe(parent, self, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG 
-	void *self;
-#else
 	struct cfdata *self;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

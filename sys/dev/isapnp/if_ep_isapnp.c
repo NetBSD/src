@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.11 1997/12/17 01:31:59 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.12 1998/06/09 07:28:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -76,11 +76,7 @@
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int ep_isapnp_match __P((struct device *, void *, void *));
-#else
 int ep_isapnp_match __P((struct device *, struct cfdata *, void *));
-#endif
 void ep_isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ep_isapnp_ca = {
@@ -90,11 +86,7 @@ struct cfattach ep_isapnp_ca = {
 int
 ep_isapnp_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isapnp_attach_args *ipa = aux;

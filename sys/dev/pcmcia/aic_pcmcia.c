@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.4 1998/06/05 03:02:31 enami Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.5 1998/06/09 07:32:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -51,11 +51,7 @@
 #define	PCMCIA_PRODUCT_ADAPTEC_APA1460_1	0x0001
 #define	PCMCIA_PRODUCT_ADAPTEC_APA1460_2	0x0002
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	aic_pcmcia_match __P((struct device *, void *, void *));
-#else
 int	aic_pcmcia_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	aic_pcmcia_attach __P((struct device *, struct device *, void *));
 
 struct aic_pcmcia_softc {
@@ -75,11 +71,7 @@ struct cfattach aic_pcmcia_ca = {
 int
 aic_pcmcia_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pcmcia_attach_args *pa = aux;

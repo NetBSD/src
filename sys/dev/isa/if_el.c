@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.51 1998/01/12 09:43:36 thorpej Exp $	*/
+/*	$NetBSD: if_el.c,v 1.52 1998/06/09 07:25:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -106,11 +106,7 @@ void elread __P((struct el_softc *, int));
 struct mbuf *elget __P((struct el_softc *sc, int));
 static inline void el_hardreset __P((struct el_softc *));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int elprobe __P((struct device *, void *, void *));
-#else
 int elprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void elattach __P((struct device *, struct device *, void *));
 
 struct cfattach el_ca = {
@@ -126,11 +122,7 @@ struct cfattach el_ca = {
 int
 elprobe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

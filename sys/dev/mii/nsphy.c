@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.3 1998/01/12 09:28:53 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.4 1998/06/09 07:30:44 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -53,11 +53,7 @@
 void	nsphy_pdown __P((void *v));
 int	nsphy_media_set __P((int, void *));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	nsphymatch __P((struct device *, void *, void *));
-#else
 int	nsphymatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	nsphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach nsphy_ca = {
@@ -67,11 +63,7 @@ struct cfattach nsphy_ca = {
 int
 nsphymatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	mii_phy_t *phy = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.16 1998/06/09 00:05:46 thorpej Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.17 1998/06/09 07:25:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -58,11 +58,7 @@
 
 static	int sbfind __P((struct device *, struct sbdsp_softc *, struct isa_attach_args *));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	sb_isa_match __P((struct device *, void *, void *));
-#else
 int	sb_isa_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	sb_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach sb_isa_ca = {
@@ -79,21 +75,13 @@ struct cfattach sb_isa_ca = {
 int
 sb_isa_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct sbdsp_softc probesc, *sc = &probesc;
 
 	bzero(sc, sizeof *sc);
-#ifdef __BROKEN_INDIRECT_CONFIG
-	sc->sc_dev.dv_cfdata = ((struct device *)match)->dv_cfdata;
-#else
 	sc->sc_dev.dv_cfdata = match;
-#endif
 	strcpy(sc->sc_dev.dv_xname, "sb");
 	return sbfind(parent, sc, aux);
 }

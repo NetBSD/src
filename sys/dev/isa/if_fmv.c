@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv.c,v 1.21 1998/03/22 04:25:37 enami Exp $	*/
+/*	$NetBSD: if_fmv.c,v 1.22 1998/06/09 07:25:02 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -50,11 +50,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/if_fereg.h>	/* XXX */
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	fmv_match __P((struct device *, void *, void *));
-#else
 int	fmv_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	fmv_attach __P((struct device *, struct device *, void *));
 
 struct fmv_softc {
@@ -103,11 +99,7 @@ static int const fmv_iomap[8] = {
 int
 fmv_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

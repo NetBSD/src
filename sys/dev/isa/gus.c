@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.55 1998/06/09 00:05:45 thorpej Exp $	*/
+/*	$NetBSD: gus.c,v 1.56 1998/06/09 07:24:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -433,11 +433,7 @@ void	stereo_dmaintr __P((void *));
  * ISA bus driver routines
  */
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	gusprobe __P((struct device *, void *, void *));
-#else
 int	gusprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void	gusattach __P((struct device *, struct device *, void *));
 
 struct cfattach gus_ca = {
@@ -666,11 +662,7 @@ struct audio_device gus_device = {
 int
 gusprobe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

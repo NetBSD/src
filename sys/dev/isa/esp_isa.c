@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.9 1998/06/09 00:05:45 thorpej Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.10 1998/06/09 07:24:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -161,11 +161,7 @@
 
 #include <dev/isa/espvar.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	esp_isa_match __P((struct device *, void *, void *)); 
-#else
 int	esp_isa_match __P((struct device *, struct cfdata *, void *)); 
-#endif
 void	esp_isa_attach __P((struct device *, struct device *, void *));  
 
 struct cfattach esp_isa_ca = {
@@ -363,11 +359,7 @@ esp_init(esc, epd)
 int
 esp_isa_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.6 1998/06/05 03:40:07 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.7 1998/06/09 07:32:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -74,11 +74,7 @@ struct wdc_pcmcia_softc {
 	void *sc_ih;
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-static int wdc_pcmcia_match	__P((struct device *, void *, void *));
-#else
 static int wdc_pcmcia_match	__P((struct device *, struct cfdata *, void *));
-#endif
 static void wdc_pcmcia_attach	__P((struct device *, struct device *, void *));
 
 struct cfattach wdc_pcmcia_ca = {
@@ -88,11 +84,7 @@ struct cfattach wdc_pcmcia_ca = {
 static int
 wdc_pcmcia_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pcmcia_attach_args *pa = aux;

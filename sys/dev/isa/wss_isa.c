@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.3 1998/06/09 00:05:47 thorpej Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.4 1998/06/09 07:25:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -77,11 +77,7 @@ static void	madprobe __P((struct wss_softc *, int));
 static void	madunmap __P((struct wss_softc *));
 static int	detect_mad16 __P((struct wss_softc *, int));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int		wss_isa_probe __P((struct device *, void *, void *));
-#else
 int		wss_isa_probe __P((struct device *, struct cfdata *, void *));
-#endif
 void		wss_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach wss_isa_ca = {
@@ -94,21 +90,13 @@ struct cfattach wss_isa_ca = {
 int
 wss_isa_probe(parent, match, aux)
     struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-    void *match;
-#else
     struct cfdata *match;
-#endif
     void *aux;
 {
     struct wss_softc probesc, *sc = &probesc;
 
     bzero(sc, sizeof *sc);
-#ifdef __BROKEN_INDIRECT_CONFIG
-    sc->sc_dev.dv_cfdata = ((struct device *)match)->dv_cfdata;
-#else
     sc->sc_dev.dv_cfdata = match;
-#endif
     if (wssfind(parent, sc, aux)) {
         bus_space_unmap(sc->sc_iot, sc->sc_ioh, WSS_CODEC);
         ad1848_unmap(&sc->sc_ad1848);

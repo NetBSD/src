@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isa.c,v 1.3 1997/10/19 09:05:04 thorpej Exp $	*/
+/*	$NetBSD: if_ne_isa.c,v 1.4 1998/06/09 07:25:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -83,11 +83,7 @@
 
 #include <dev/isa/isavar.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	ne_isa_match __P((struct device *, void *, void *));
-#else
 int	ne_isa_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	ne_isa_attach __P((struct device *, struct device *, void *));
 
 struct ne_isa_softc {
@@ -104,11 +100,7 @@ struct cfattach ne_isa_ca = {
 int
 ne_isa_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

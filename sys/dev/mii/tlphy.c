@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.5 1998/01/12 09:28:54 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.6 1998/06/09 07:30:44 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -54,11 +54,7 @@ int	tlphy_media_set __P((int, void *));
 int	tlphy_media_set_aui __P((struct phy_softc *));
 int	tlphy_status __P((int, void*));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	tlphymatch __P((struct device *, void *, void *));
-#else
 int	tlphymatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	tlphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach tlphy_ca = {
@@ -68,11 +64,7 @@ struct cfattach tlphy_ca = {
 int
 tlphymatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	mii_phy_t *phy = aux;

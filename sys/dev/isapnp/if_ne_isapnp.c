@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.3 1997/12/17 01:32:00 thorpej Exp $	*/
+/*	$NetBSD: if_ne_isapnp.c,v 1.4 1998/06/09 07:28:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -86,11 +86,7 @@
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-static int ne_isapnp_match __P((struct device *, void *, void *));
-#else
 static int ne_isapnp_match __P((struct device *, struct cfdata *, void *));
-#endif
 static void ne_isapnp_attach __P((struct device *, struct device *, void *));
 
 struct ne_isapnp_softc {
@@ -119,11 +115,7 @@ static const struct ne_pnpid {
 static int
 ne_isapnp_match(
 	struct device *parent,
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match,
-#else
 	struct cfdata *match,
-#endif
 	void *aux)
 {
 	struct isapnp_attach_args *ipa = aux;

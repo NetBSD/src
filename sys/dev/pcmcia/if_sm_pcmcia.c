@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.2 1997/10/16 23:27:28 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.3 1998/06/09 07:32:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -84,11 +84,7 @@
 #define	PCMCIA_MANUFACTURER_MEGAHERTZ	0x128
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJACK	0x103
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	sm_pcmcia_match __P((struct device *, void *, void *));
-#else
 int	sm_pcmcia_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	sm_pcmcia_attach __P((struct device *, struct device *, void *));
 
 struct sm_pcmcia_softc {
@@ -111,11 +107,7 @@ void	sm_pcmcia_disable __P((struct smc91cxx_softc *));
 int
 sm_pcmcia_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pcmcia_attach_args *pa = aux;

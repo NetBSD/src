@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.5 1998/06/08 12:19:46 pk Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.6 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,11 +104,7 @@ static int 	check_ie_present __P((struct ie_softc*, bus_space_tag_t,
 static int	ai_find_mem_size __P((struct ai_softc*, bus_space_tag_t,
 					bus_size_t));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int ai_match __P((struct device *, void*, void *));
-#else
 int ai_match __P((struct device *, struct cfdata *, void *));
-#endif
 void ai_attach __P((struct device *, struct device *, void *));
 
 /*
@@ -236,11 +232,7 @@ ai_write_24 (sc, offset, addr)
 int
 ai_match(parent, cf, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-        void *cf;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
 	int rv = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.21 1998/03/22 04:25:37 enami Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.22 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -50,11 +50,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/if_fereg.h>	/* XXX */
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	ate_match __P((struct device *, void *, void *));
-#else
 int	ate_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	ate_attach __P((struct device *, struct device *, void *));
 
 struct ate_softc {
@@ -106,11 +102,7 @@ static int const ate_iomap[8] = {
 int
 ate_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
