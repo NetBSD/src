@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2002/05/05 00:45:31 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2002/06/06 19:17:01 fvdl Exp $
 
 .include <bsd.own.mk>
 
@@ -41,25 +41,25 @@ gcrt0.o: crt0.c
 crtbegin.o: crtbegin.c
 	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
 	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
-	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 crtbeginS.o: crtbegin.c
 	@echo "${COMPILE.c} -DSHARED ${.ALLSRC} -o ${.TARGET}"
 	@${COMPILE.c} -DSHARED ${.ALLSRC} -o ${.TARGET}.o
-	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 crtend.o: crtend.c
 	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
 	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
-	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 crtendS.o: crtend.c
 	@echo "${COMPILE.c} -DSHARED ${.ALLSRC} -o ${.TARGET}"
 	@${COMPILE.c} -DSHARED ${.ALLSRC} -o ${.TARGET}.o
-	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	@${LD} -X -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 FILES=${OBJS}
