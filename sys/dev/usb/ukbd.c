@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.65.2.4 2002/01/08 00:32:11 nathanw Exp $        */
+/*      $NetBSD: ukbd.c,v 1.65.2.5 2002/01/09 02:52:03 nathanw Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.65.2.4 2002/01/08 00:32:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.65.2.5 2002/01/09 02:52:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,9 +444,6 @@ ukbd_detach(struct device *self, int flags)
 	/* The console keyboard does not get a disable call, so check pipe. */
 	if (sc->sc_hdev.sc_state & UHIDEV_OPEN)
 		uhidev_close(&sc->sc_hdev);
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
 
 	return (rv);
 }
