@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.57 1999/02/03 20:15:51 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.58 1999/02/03 23:51:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -205,9 +205,8 @@ static void zs_shutdown __P((struct zstty_softc *));
 static void	zsstart __P((struct tty *));
 static int	zsparam __P((struct tty *, struct termios *));
 static void zs_modem __P((struct zstty_softc *, int));
-static void tiocm_to_zs __P((struct zstty_softc *, struct zs_chanstate *,
-    int, int));
-static int  zs_to_tiocm __P((struct zs_chanstate *));
+static void tiocm_to_zs __P((struct zstty_softc *, int, int));
+static int  zs_to_tiocm __P((struct zstty_softc *));
 static int    zshwiflow __P((struct tty *, int));
 static void  zs_hwiflow __P((struct zstty_softc *));
 
@@ -677,11 +676,11 @@ zsioctl(dev, cmd, data, flag, p)
 	case TIOCMSET:
 	case TIOCMBIS:
 	case TIOCMBIC:
-		tiocm_to_zs(zst, cs, cmd, *(int *)data);
+		tiocm_to_zs(zst, cmd, *(int *)data);
 		break;
 
 	case TIOCMGET:
-		*(int *)data = zs_to_tiocm(cs);
+		*(int *)data = zs_to_tiocm(zst);
 		break;
 
 	default:
@@ -994,13 +993,12 @@ zs_modem(zst, onoff)
 }
 
 static void
-tiocm_to_zs(zst, cs, how, ttybits)
+tiocm_to_zs(zst, how, ttybits)
 	struct zstty_softc *zst;
-	struct zs_chanstate *cs;
 	int how, ttybits;
 {
-	int s;
-	u_char zsbits, tmp5;
+	struct zs_chanstate *cs = zst->zst_cs;
+	u_char zsbits;
 
 	zsbits = 0;
 	if (ISSET(ttybits, TIOCM_DTR))
@@ -1008,24 +1006,20 @@ tiocm_to_zs(zst, cs, how, ttybits)
 	if (ISSET(ttybits, TIOCM_RTS))
 		SET(zsbits, ZSWR5_RTS);
 
-	s = splzs();
-
-	tmp5 = cs->cs_preg[5];
 	switch (how) {
 	case TIOCMBIC:
-		CLR(tmp5, zsbits);
+		CLR(cs->cs_preg[5], zsbits);
 		break;
 
 	case TIOCMBIS:
-		SET(tmp5, zsbits);
+		SET(cs->cs_preg[5], zsbits);
 		break;
 
 	case TIOCMSET:
-		CLR(tmp5, ZSWR5_RTS | ZSWR5_DTR);
-		SET(tmp5, zsbits);
+		CLR(cs->cs_preg[5], ZSWR5_RTS | ZSWR5_DTR);
+		SET(cs->cs_preg[5], zsbits);
 		break;
 	}
-	cs->cs_preg[5] = tmp5;
 
 	if (!cs->cs_heldchange) {
 		if (zst->zst_tx_busy) {
@@ -1035,14 +1029,13 @@ tiocm_to_zs(zst, cs, how, ttybits)
 		} else
 			zs_loadchannelregs(cs);
 	}
-
-	splx(s);
 }
 
 static int
-zs_to_tiocm(cs)
-	struct zs_chanstate *cs;
+zs_to_tiocm(zst)
+	struct zstty_softc *zst;
 {
+	struct zs_chanstate *cs = zst->zst_cs;
 	u_char zsbits;
 	int ttybits = 0;
 
