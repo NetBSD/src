@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.3 1998/07/12 20:40:45 augustss Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.4 1998/07/23 13:57:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,11 +55,11 @@ void usbdump __P((int f));
 void dumpone __P((char *name, int f, int addr));
 int main __P((int, char **));
 
+extern char *__progname;
+
 void
 usage()
 {
-	extern char *__progname;
-
 	fprintf(stderr, "Usage: %s [-a addr] [-f dev] [-v]\n", __progname);
 	exit(1);
 }
@@ -162,6 +162,7 @@ main(argc, argv)
 	extern char *optarg;
 	char *dev = 0;
 	int addr = 0;
+	int ncont;
 
 	while ((ch = getopt(argc, argv, "a:f:v")) != -1) {
 		switch(ch) {
@@ -183,10 +184,11 @@ main(argc, argv)
 	argv += optind;
 
 	if (dev == 0) {
-		for (i = 0; i < 10; i++) {
+		for (ncont = 0, i = 0; i < 10; i++) {
 			sprintf(buf, "%s%d", USBDEV, i);
 			f = open(buf, O_RDONLY);
 			if (f >= 0) {
+				ncont++;
 				dumpone(buf, f, addr);
 				close(f);
 			} else {
@@ -194,6 +196,8 @@ main(argc, argv)
 					warn("%s", buf);
 			}
 		}
+		if (verbose && ncont == 0)
+			printf("%s: no USB controllers found\n", __progname);
 	} else {
 		f = open(dev, O_RDONLY);
 		if (f >= 0)
