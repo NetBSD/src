@@ -44,7 +44,7 @@
 .Cd "vpo* at ppbus?"
 .Sh DESCRIPTION
 The
-.Nm 
+.Nm
 system provides a uniform, modular and architecture-independent
 system for the implementation of drivers to control various parallel devices,
 and to utilize different parallel port chip sets.
@@ -93,35 +93,35 @@ that provide similar services.
 Parallel port chip set support is provided by
 .Xr atppc 4 .
 .Pp
-The ppbus system provides functions and macros to request service from the 
+The ppbus system provides functions and macros to request service from the
 ppbus including reads, writes, setting of parameters, and bus requests/releases.
 .Pp
-.Xr atppc 4 
-detects chip set and capabilities and sets up interrupt handling. It makes 
-methods available for use to the 
+.Xr atppc 4
+detects chip set and capabilities and sets up interrupt handling. It makes
+methods available for use to the
 .Nm
 system.
 .Sh PARALLEL PORT MODEL
-The logical parallel port model chosen for the ppbus system is the AT 
-parallel port model. Consequently, for the 
+The logical parallel port model chosen for the ppbus system is the AT
+parallel port model. Consequently, for the
 .Em atppc
-implementation of ppbus, most of the services provided by ppbus will 
-translate into I/O instructions on actual registers. However, other parallel 
-port implementations may require more than one I/O instruction to do a single 
+implementation of ppbus, most of the services provided by ppbus will
+translate into I/O instructions on actual registers. However, other parallel
+port implementations may require more than one I/O instruction to do a single
 logical register operation on data, status and control virtual registers.
 .Ss Description
 The parallel port may operate in the following modes:
 .Bl -bullet -offset indent
 .It
-Compatible (Centronics -- the standard parallel port mode) mode, output byte 
+Compatible (Centronics -- the standard parallel port mode) mode, output byte
 .It
-Nibble mode, input 4-bits 
+Nibble mode, input 4-bits
 .It
-Byte (PS/2) mode, input byte 
+Byte (PS/2) mode, input byte
 .It
-Extended Capability Port (ECP) mode, bidirectional byte 
+Extended Capability Port (ECP) mode, bidirectional byte
 .It
-Enhanced Parallel Port (EPP) mode, bidirectional byte 
+Enhanced Parallel Port (EPP) mode, bidirectional byte
 .El
 .Ss Compatible mode
 This mode defines the protocol used by most PCs to transfer data to a printer.
@@ -135,12 +135,12 @@ This mode is referred to as
 "Fast Centronics" or "Parallel Port FIFO mode".
 .Ss Nibble mode
 The Nibble mode is the most common way to get reverse channel data from a
-printer or peripheral. When combined with the standard host to printer mode, a 
+printer or peripheral. When combined with the standard host to printer mode, a
 bidirectional data channel is created. Inputs are accomplished by reading
 4 of the 8 bits of the status register.
 .Ss Byte mode
 In this mode, the data register is used either for outputs and inputs.
-All transfers are 8-bits long. Channel direction must be negotiated when doing 
+All transfers are 8-bits long. Channel direction must be negotiated when doing
 IEEE 1248 compliant operations.
 .Ss Extended Capability Port mode
 The ECP protocol was proposed as an advanced mode for communication with
@@ -164,7 +164,7 @@ performance parallel port link that would still be compatible with the
 standard parallel port.
 .Pp
 The EPP mode has two types of cycle: address and data.
-What makes the difference at hardware level is the strobe of the byte placed 
+What makes the difference at hardware level is the strobe of the byte placed
 on the data lines. Data are strobed with nAutofeed, addresses are strobed with
 nSelectin signals.
 .Pp
@@ -185,16 +185,16 @@ disturbing the current transfer.
 .Ss Mixed modes
 Some manufacturers, like SMC, have implemented chip sets that support mixed
 modes. With such chip sets, mode switching is available at any time by
-accessing the extended control register. All ECP-capable chip sets can switch 
-between standard, byte, fast centronics, and ECP modes. Some ECP chip sets also 
-support switching to EPP mode. 
+accessing the extended control register. All ECP-capable chip sets can switch
+between standard, byte, fast centronics, and ECP modes. Some ECP chip sets also
+support switching to EPP mode.
 .Sh IEEE 1284 1994 Standard
 .Ss Background
 This standard is also named "IEEE Standard Signaling Method for a
 Bidirectional Parallel Peripheral Interface for Personal Computers". It
 defines a signaling method for asynchronous, fully interlocked, bidirectional
 parallel communications between hosts and printers or other peripherals.
-It also specifies a format for a peripheral identification string and a method 
+It also specifies a format for a peripheral identification string and a method
 of returning this string to the host.
 .Pp
 This standard is architecture independent and only specifies dialog handshake
@@ -206,19 +206,19 @@ The IEEE 1284 protocol is fully oriented with all supported parallel port
 modes. The computer acts as master and the peripheral as slave.
 .Pp
 Any transfer is defined as a finite state automate.
-It allows software to properly manage the fully interlocked scheme of the 
-signaling method. The compatible mode is supported "as is" without any 
+It allows software to properly manage the fully interlocked scheme of the
+signaling method. The compatible mode is supported "as is" without any
 negotiation because it is the default, backward-compatible transfer mode.
 Any other mode must be firstly negotiated by the host to check
 it is supported by the peripheral, then to enter one of the forward idle
 states.
 .Pp
-At any time, the slave may want to send data to the host. The host must 
+At any time, the slave may want to send data to the host. The host must
 negotiate to permit the peripheral to complete the transfer.
 Interrupt lines may be dedicated to the requesting signals
 to prevent time consuming polling methods.
 .Pp
-If the host accepts the transfer, it must firstly negotiate the reverse mode 
+If the host accepts the transfer, it must firstly negotiate the reverse mode
 and then start the transfer. At any time during reverse transfer, the host may
 terminate the transfer or the slave may drive wires to signal that no more
 data is available.
@@ -229,14 +229,14 @@ termination, transfer in any mode without bothering you with low level
 characteristics of the standard.
 .Pp
 IEEE 1284 interacts with the ppbus system as least as possible. That means
-you still have to request the ppbus when you want to access it, and of course, 
+you still have to request the ppbus when you want to access it, and of course,
 release it when finished.
 .Sh ARCHITECTURE
 .Ss Chip set, ppbus and device layers
 First, there is the
-.Em chip set 
+.Em chip set
 layer, the lowest of the ppbus system.
-It provides chip set abstraction through a set of low level functions that maps 
+It provides chip set abstraction through a set of low level functions that maps
 the logical model to the underlying hardware.
 .Pp
 Secondly, there is the
@@ -253,34 +253,34 @@ propose an arch-independent interface to access the hardware layer.
 .Pp
 Finally, the
 .Em device
-layer represents the traditional device drivers such as lpt which now use an 
+layer represents the traditional device drivers such as lpt which now use an
 abstraction instead of real hardware.
 .Pp
 .Ss Parallel port mode management
-Operating modes are differentiated at various ppbus system layers. There is a 
-difference between a 
+Operating modes are differentiated at various ppbus system layers. There is a
+difference between a
 .Em capability
 and a
 .Em mode .
-A chip set may have a combination of capabilities, but at any one time the 
+A chip set may have a combination of capabilities, but at any one time the
 .Nm
 system operates in a single mode.
 .Pp
-Nibble mode is a 
+Nibble mode is a
 .Em virtual
-mode: the actual chip set would be in standard mode and the driver would change 
+mode: the actual chip set would be in standard mode and the driver would change
 its behavior to drive the right lines on the parallel port.
 .Pp
-Each child device of 
+Each child device of
 .Nm
-must set its operating mode and other parameters whenever it requests and gets 
-access to it's parent 
+must set its operating mode and other parameters whenever it requests and gets
+access to it's parent
 .Nm .
 .Sh FEATURES
 .Ss The boot process
 .Nm
 attachment tries to detect any PnP parallel peripheral (according to
-.%T "Plug and Play Parallel Port Devices" draft from (c)1993-4 Microsoft 
+.%T "Plug and Play Parallel Port Devices" draft from (c)1993-4 Microsoft
 Corporation) then probes and attaches known device drivers.
 .Pp
 During probe, device drivers should request the ppbus and try to
@@ -288,23 +288,23 @@ determine if the right capabilities are present in the system.
 .Ss Bus request and interrupts
 .Nm
 reservation via a bus request is mandatory not to corrupt I/O of other devices.
-For example, when the 
-.Xr lpt 4 
-device is opened, the bus will be 'allocated' to the device driver and attempts 
-to reserve the bus for another device will fail until the 
-.Em lpt 
+For example, when the
+.Xr lpt 4
+device is opened, the bus will be 'allocated' to the device driver and attempts
+to reserve the bus for another device will fail until the
+.Em lpt
 driver releases the bus.
 .Pp
-Child devices can also register interrupt handlers to be called when a hardware 
+Child devices can also register interrupt handlers to be called when a hardware
 interrupt occurs. In order to attach a handler, drivers must
-own the bus. Drivers should have interrupt handlers that check to see if the 
-device still owns the bus when they are called and/or ensure that these 
+own the bus. Drivers should have interrupt handlers that check to see if the
+device still owns the bus when they are called and/or ensure that these
 handlers are removed whenever the device does not own the bus.
 .Ss Micro-sequences
 .Em Micro-sequences
-are a general purpose mechanism to allow fast low-level manipulation of the 
-parallel port. Micro-sequences may be used to do either standard (in IEEE 1284 
-modes) or non-standard transfers. The philosophy of micro-sequences is to avoid 
+are a general purpose mechanism to allow fast low-level manipulation of the
+parallel port. Micro-sequences may be used to do either standard (in IEEE 1284
+modes) or non-standard transfers. The philosophy of micro-sequences is to avoid
 the overhead of the ppbus layer for a sequence of operations and do most of
 the job at the chip set level.
 .Pp
@@ -336,6 +336,6 @@ The
 system first appeared in
 .Fx 3.0 .
 .Sh AUTHORS
-This manual page is based on the FreeBSD 
+This manual page is based on the FreeBSD
 .Xr ppbus 4
 manual page. The information has been updated for NetBSD's port by Gary Thorpe.
