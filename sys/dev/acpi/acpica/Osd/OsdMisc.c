@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.3 2002/06/05 17:58:33 drochner Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.4 2002/06/15 18:02:43 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.3 2002/06/05 17:58:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.4 2002/06/15 18:02:43 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -119,6 +119,14 @@ AcpiOsGetLine(char *Buffer)
 	printf("ACPI: WARNING: DDB not configured into kernel.\n");
 	return (AE_NOT_EXIST);
 #endif
+}
+
+ACPI_STATUS
+AcpiOsTableOverride(ACPI_TABLE_HEADER *ExistingTable,
+		    ACPI_TABLE_HEADER **NewTable)
+{
+	/* XXX TBD */
+	return (AE_OK);
 }
 
 /*
