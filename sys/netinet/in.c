@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.16 1995/04/10 00:06:57 mycroft Exp $	*/
+/*	$NetBSD: in.c,v 1.17 1995/04/11 04:30:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -155,7 +155,6 @@ in_socktrim(ap)
 }
 
 int	in_interfaces;		/* number of external internet interfaces */
-extern	struct ifnet loif;
 
 /*
  * Generic internet control operations (ioctl's).
@@ -238,7 +237,7 @@ in_control(so, cmd, data, ifp)
 				ia->ia_broadaddr.sin_family = AF_INET;
 			}
 			ia->ia_ifp = ifp;
-			if (ifp != &loif)
+			if ((ifp->if_flags & IFF_LOOPBACK) == 0)
 				in_interfaces++;
 		}
 		break;

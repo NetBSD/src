@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.1 1995/02/23 07:19:51 glass Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.2 1995/04/11 04:32:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -61,7 +61,6 @@
 #include <netinet/if_arc.h>
 
 u_char	arcbroadcastaddr = 0;
-extern	struct ifnet loif;
 
 #define senderr(e) { error = (e); goto bad;}
 
