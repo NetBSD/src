@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.41 2000/07/27 03:57:50 cgd Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.42 2000/10/10 14:30:41 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.41 2000/07/27 03:57:50 cgd Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.42 2000/10/10 14:30:41 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ main(argc, argv)
 	char *argv[];
 {
 	struct stat from_sb, to_sb;
-	mode_t *set;
+	void *set;
 	u_long fset;
 	u_int iflags;
 	int ch, no_target;
@@ -183,6 +183,7 @@ main(argc, argv)
 			if (!(set = setmode(optarg)))
 				errx(1, "%s: invalid file mode", optarg);
 			mode = getmode(set, 0);
+			free(set);
 			break;
 		case 'o':
 			owner = optarg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.18 1999/12/01 22:14:46 wennmach Exp $	*/
+/*	$NetBSD: spec.c,v 1.19 2000/10/10 14:30:41 enami Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.18 1999/12/01 22:14:46 wennmach Exp $");
+__RCSID("$NetBSD: spec.c,v 1.19 2000/10/10 14:30:41 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,7 +179,7 @@ set(t, ip)
 	char *kw, *val, *md;
 	struct group *gr;
 	struct passwd *pw;
-	mode_t *m;
+	void *m;
 	int value;
 	char *ep;
 
