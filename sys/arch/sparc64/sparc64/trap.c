@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13 1998/09/07 18:23:54 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.14 1998/09/07 23:49:21 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -347,6 +347,22 @@ const char *trap_type[] = {
 	"svr4 gethrvtime",	/* 125 */
 	T,			/* 126 */
 	"svr4 gethrestime",	/* 127 */
+	T, T, T, T, T, T, T, T, /* 128..12f */
+	T, T,			/* 130..131 */
+	"get condition codes",	/* 132 */
+	"set condision codes",	/* 133 */
+	T, T, T, T,		/* 134..137 */
+	T, T, T, T, T, T, T, T, /* 138..13f */
+	T, T, T, T, T, T, T, T, /* 140..147 */
+	T, T, T, T, T, T, T, T, /* 148..14f */
+	T, T, T, T, T, T, T, T, /* 150..157 */
+	T, T, T, T, T, T, T, T, /* 158..15f */
+	T, T, T, T,		/* 160..163 */
+	"SVID syscall64",	/* 164 */
+	"SPARC Intl syscall64",	/* 165 */
+	"OS vedor spec syscall",/* 166 */
+	"HW OEM syscall",	/* 167 */
+	"ret from deferred trap",	/* 168 */
 };
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
@@ -1145,7 +1161,7 @@ kfault:
 #ifdef DEBUG
 			if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW|TDB_STOPCPIO)) {
 				printf("data_access_fault: copyin/out of %p fault -- recover\n", addr);
-				Debugger();
+				DEBUGGER(type, tf);
 			}
 #endif
 			tf->tf_pc = onfault;
@@ -1194,7 +1210,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	register u_int64_t tstate;
 	register struct proc *p;
 	register struct vmspace *vm;
-	register vaddr_t va;
+	register vaddr_t va = 0; /* Stupid GCC warning */
 	register int rv;
 	vm_prot_t ftype;
 	vaddr_t onfault;
@@ -1402,8 +1418,10 @@ kfault:
 				/* NOTREACHED */
 			}
 #ifdef DEBUG
-			if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
+			if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW|TDB_STOPCPIO)) {
 				printf("data_access_error: kern fault -- skipping instr\n");
+				if (trapdebug&TDB_STOPCPIO) DEBUGGER(type, tf);
+			}
 #endif
 			tf->tf_pc = onfault;
 			tf->tf_npc = onfault + 4;
@@ -1732,6 +1750,27 @@ out:
  * `in' registers within the syscall trap code (because of the automatic
  * `save' effect of each trap).  They are, however, the %o registers of the
  * thing that made the system call, and are named that way here.
+ *
+ * 32-bit system calls on a 64-bit system are a problem.  Each system call
+ * argument is stored in the smaller of the argument's true size or a
+ * `register_t'.  Now on a 64-bit machine all normal types can be stored in a
+ * `register_t'.  (The only exceptions would be 128-bit `quad's or 128-bit
+ * extended precision floating point values, which we don't support.)  For
+ * 32-bit syscalls, 64-bit integers like `off_t's, double precision floating
+ * point values, and several other types cannot fit in a 32-bit `register_t'.
+ * These will require reading in two `register_t' values for one argument.
+ *
+ * In order to calculate the true size of the arguments and therefore whether
+ * any argument needs to be split into two slots, the system call args
+ * structure needs to be built with the appropriately sized register_t.
+ * Otherwise the emul needs to do some magic to split oversized arguments.
+ *
+ * We can handle most this stuff for normal syscalls by using either a 32-bit
+ * or 64-bit array of `register_t' arguments.  Unfortunately ktrace always
+ * expects arguments to be `register_t's, so it loses badly.  What's worse,
+ * ktrace may need to do size translations to massage the argument array
+ * appropriately according to the emulation that is doing the ktrace.
+ *  
  */
 void
 syscall(code, tf, pc)
@@ -1744,10 +1783,11 @@ syscall(code, tf, pc)
 	register struct sysent *callp;
 	register struct proc *p;
 	int error, new;
-	struct args {
-		register_t i[8];
+	union args {
+		register32_t i[8];
+		register64_t l[8];
 	} args;
-	register_t rval[2], *argp;
+	register_t rval[2];
 	u_quad_t sticks;
 #ifdef DIAGNOSTIC
 	extern struct pcb *cpcb;
@@ -1838,6 +1878,7 @@ syscall(code, tf, pc)
 	if (code < 0 || code >= nsys)
 		callp += p->p_emul->e_nosys;
 	else if (tf->tf_out[6] & 1L) {
+		register64_t *argp;
 #ifndef __LP64
 #ifdef DEBUG
 		printf("syscall(): 64-bit stack on a 32-bit kernel????\n");
@@ -1846,12 +1887,16 @@ syscall(code, tf, pc)
 #endif
 		/* 64-bit stack -- not really supported on 32-bit kernels */
 		callp += code;
-		i = callp->sy_argsize / sizeof(register64_t);
+#if 1
+		i = (long)callp->sy_argsize / sizeof(register64_t);
+#else
+		i = callp->sy_narg; /* Why divide? */
+#endif
 		if (i > nap) {	/* usually false */
 			register64_t temp[6];
 			int j = 0;
 #ifdef DEBUG
-			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
+			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW) || i>8)
 				printf("Args64 %d>%d -- need to copyin\n", i , nap);
 #endif
 			if (i > 8)
@@ -1862,24 +1907,24 @@ syscall(code, tf, pc)
 				       (caddr_t)&temp, (i - nap) * sizeof(register64_t));
 			/* Copy each to the argument array */
 			for (j=0; nap+j < i; j++)
-				args.i[nap+j] = temp[j];
+				args.l[nap+j] = temp[j];
 			if (error) {
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_SYSCALL))
 					ktrsyscall(p->p_tracep, code,
-					    callp->sy_argsize, args.i);
+					    callp->sy_argsize, (register_t*)args.i);
 #endif
 				goto bad;
 			}
 			i = nap;
 		}
 		/* Need to convert from int64 to int32 or we lose */
-		for (argp = &args.i[0]; i--;) 
+		for (argp = &args.l[0]; i--;) 
 				*argp++ = *ap++;
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
-			for (i=0; i < callp->sy_argsize / sizeof(register64_t); i++) 
-				printf("arg[%d]=%x ", i, (long)(args.i[i]));
+			for (i=0; i < (long)callp->sy_argsize / sizeof(register64_t); i++) 
+				printf("arg[%d]=%x ", i, (long)(args.l[i]));
 			printf("\n");
 		}
 		if (trapdebug&(TDB_STOPCALL|TDB_SYSTOP)) { 
@@ -1888,14 +1933,19 @@ syscall(code, tf, pc)
 		}
 #endif
 	} else {
+		register32_t *argp;
 		/* 32-bit stack */
 		callp += code;
-		i = callp->sy_argsize / sizeof(register32_t);
+#if 1
+		i = (long)callp->sy_argsize / sizeof(register32_t);
+#else
+		i = callp->sy_narg; /* Why divide? */
+#endif
 		if (i > nap) {	/* usually false */
 			register32_t temp[6];
 			int j = 0;
 #ifdef DEBUG
-			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
+			if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW) || i>8)
 				printf("Args %d>%d -- need to copyin\n", i , nap);
 #endif
 			if (i > 8)
@@ -1920,7 +1970,7 @@ syscall(code, tf, pc)
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_SYSCALL))
 					ktrsyscall(p->p_tracep, code,
-					    callp->sy_argsize, args.i);
+					    callp->sy_argsize, (register_t *)args.i);
 #endif
 				goto bad;
 			}
@@ -1931,7 +1981,7 @@ syscall(code, tf, pc)
 				*argp++ = *ap++;
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
-			for (i=0; i < callp->sy_argsize / sizeof(register32_t); i++) 
+			for (i=0; i < (long)callp->sy_argsize / sizeof(register32_t); i++) 
 				printf("arg[%d]=%x ", i, (int)(args.i[i]));
 			printf("\n");
 		}
@@ -1943,7 +1993,7 @@ syscall(code, tf, pc)
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_argsize, args.i);
+		ktrsyscall(p->p_tracep, code, callp->sy_argsize, (register_t *)args.i);
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
