@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.4 2002/03/07 23:12:54 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.1 2002/03/24 21:20:39 bjh21 Exp $
 #
-#	etc.arm26/Makefile.inc -- arm26-specific etc Makefile targets
+#	etc.acorn26/Makefile.inc -- acorn26-specific etc Makefile targets
 #
 
 KERNEL_SETS=		GENERIC FOURMEG
