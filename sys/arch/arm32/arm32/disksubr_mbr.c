@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.1 1998/06/08 20:21:18 mark Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.2 1998/06/22 21:12:51 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -75,6 +75,8 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
+
+#include "opt_mbr.h"
 
 #define	b_cylin	b_resid
 
