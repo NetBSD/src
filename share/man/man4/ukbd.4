@@ -1,4 +1,4 @@
-.\" $NetBSD: ukbd.4,v 1.7 2001/09/11 23:18:55 wiz Exp $
+.\" $NetBSD: ukbd.4,v 1.8 2001/10/24 22:37:07 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,3 +60,10 @@ The
 driver
 appeared in
 .Nx 1.4 .
+.Sh BUGS
+The
+.Nm
+driver is brought into action rather late in the boot process, so if
+it is used as the console driver then
+.Xr ddb 4
+is not usable until late in the boot.
