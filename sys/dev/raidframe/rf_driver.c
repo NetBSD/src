@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.87 2004/03/01 23:30:58 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.88 2004/03/05 02:53:56 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.87 2004/03/01 23:30:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.88 2004/03/05 02:53:56 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -125,8 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.87 2004/03/01 23:30:58 oster Exp $")
 RF_DECLARE_MUTEX(rf_rad_pool_lock)
 static struct pool rf_rad_pool;
 #define RF_MAX_FREE_RAD 128
-#define RF_RAD_INC       16
-#define RF_RAD_INITIAL   32
+#define RF_MIN_FREE_RAD  32
 
 /* debug variables */
 char    rf_panicbuf[2048];	/* a buffer to hold an error msg when we panic */
@@ -436,7 +435,9 @@ rf_ConfigureRDFreeList(RF_ShutdownList_t **listp)
 	pool_init(&rf_rad_pool, sizeof(RF_RaidAccessDesc_t), 0, 0, 0,
 		  "rf_rad_pl", NULL);
 	pool_sethiwat(&rf_rad_pool, RF_MAX_FREE_RAD);
-	pool_prime(&rf_rad_pool, RF_RAD_INITIAL);
+	pool_prime(&rf_rad_pool, RF_MIN_FREE_RAD);
+	pool_setlowat(&rf_rad_pool, RF_MIN_FREE_RAD);
+
 	rf_ShutdownCreate(listp, rf_ShutdownRDFreeList, NULL);
 	simple_lock_init(&rf_rad_pool_lock);
 	return (0);
