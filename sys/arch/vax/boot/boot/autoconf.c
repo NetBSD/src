@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2000/04/22 20:29:59 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.8 2000/04/24 07:03:27 mhitch Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -221,7 +221,7 @@ rtimer()
 	mtpr(0xc1, PR_ICCS);
 	if (skip)
 		return;
-	if (vax_boardtype == VAX_BTYP_46) {
+	if (vax_boardtype == VAX_BTYP_46 || vax_boardtype == VAX_BTYP_48) {
 		int nu = sluttid - getsecs();
 		if (senast != nu) {
 			mtpr(20, PR_IPL);
