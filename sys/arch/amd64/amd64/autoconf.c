@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2003/10/08 04:25:44 lukem Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2003/12/30 12:33:15 pk Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2003/10/08 04:25:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2003/12/30 12:33:15 pk Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -122,9 +122,6 @@ cpu_configure()
 
 	spl0();
 	lcr8(0);
-
-	/* XXX Finish deferred buffer cache allocation. */
-	x86_64_bufinit();
 }
 
 void
