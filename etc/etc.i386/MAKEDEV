@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.110 2000/05/07 01:39:27 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.111 2000/05/07 19:15:21 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -136,7 +136,7 @@ all)
 	sh $0 tty0 tty1 tty2 tty3 pty0 pty1 raid0 raid1 raid2 raid3
 	sh $0 st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1 lpa2
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	sh $0 lpt0 lpt1 lpt2 ttyv0 tun0 tun1 ipl
+	sh $0 lpt0 lpt1 lpt2 ttyv0 tun0 tun1 tun2 tun3 ipl
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
 	sh $0 speaker lkm mms0 lms0 pms0 joy0 joy1 apm local satlink0
 	sh $0 audio
@@ -173,6 +173,7 @@ usbs)
 	sh $0 ulpt0 ulpt1
 	sh $0 ttyU0 ttyU1
 	sh $0 urio0
+	sh $0 ugen0
 	;;
 
 std)
