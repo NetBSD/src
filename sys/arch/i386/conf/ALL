@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.52 1994/05/21 08:37:27 cgd Exp $
+#	$Id: ALL,v 1.53 1994/07/01 20:09:56 mycroft Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -203,7 +203,7 @@ device		sb0	at isa? port 0x220 irq 7 drq 1
 device ed0 at isa? port 0x300 irq 10 iomem 0xcc000
 device ed1 at isa? port 0x250 irq 9 iomem 0xd8000
 #device hp0 at isa? port 0x300 irq 5
-device is0 at isa? port 0x280 irq 10 drq 7
+device le0 at isa? port 0x280 irq 10 drq 7
 device ep0 at isa? port ? irq ?
 
 #math co-processor

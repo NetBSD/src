@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.37 1994/05/21 08:37:49 cgd Exp $
+#	$Id: TRINITY,v 1.38 1994/07/01 20:10:00 mycroft Exp $
 #
 
 machine		"i386"
@@ -111,6 +111,7 @@ disk		fd1	at fdc0 drive ?
 
 device		ed0	at isa? port 0x300 irq 9
 device		ep0	at isa? port ? irq ?
+device		le0	at isa? port 0x200 iomem 0xd0000 iosiz 49152 irq 5
 
 device		npx0	at isa? port "IO_NPX" irq 13
 
