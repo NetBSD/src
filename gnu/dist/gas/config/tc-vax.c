@@ -1217,6 +1217,16 @@ md_estimate_size_before_relax (fragP, segment)
 	  int reloc_type = NO_RELOC;
 	  p = fragP->fr_literal + old_fr_fix;
 #ifndef OBJ_VMS
+	  /*
+	   * If this is to undefined symbol, then if it's an indirect
+	   * reference indicate that is can mutated into a GLOB_DAT
+	   * by the loader.  We restrict ourselves to no offset due to
+	   * a limitation in the NetBSD linker.
+	   */
+	  if ((p[0] & 0x10) == 0 && !fragP->fr_offset && !flag_want_pic)
+	    {
+	      reloc_type = NO_RELOC2;
+	    }
 	  if (GOT_symbol == NULL)
 	    GOT_symbol = symbol_find(GLOBAL_OFFSET_TABLE_NAME);
 	  if (PLT_symbol == NULL)
@@ -1588,6 +1598,12 @@ tc_aout_fix_to_chars (where, fixP, segment_address_in_file)
 	
   switch (fixP->fx_r_type) {
 	case NO_RELOC:
+		break;
+	case NO_RELOC2:
+		if (r_flags & 8)
+		    r_flags |= 0x80;		/* setting the copy bit */
+						/*   says we can convert */
+						/*   to gotslot if needed */
 		break;
 	case RELOC_32:
 		if (flag_want_pic && S_IS_EXTERNAL(fixP->fx_addsy)) {
