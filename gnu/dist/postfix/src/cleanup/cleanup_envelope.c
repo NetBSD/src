@@ -192,15 +192,19 @@ static void cleanup_envelope_process(CLEANUP_STATE *state, int type, char *buf, 
 	if (state->orig_rcpt == 0)
 	    state->orig_rcpt = mystrdup(buf);
 	cleanup_rewrite_internal(clean_addr, *buf ? buf : var_empty_addr);
-	if (cleanup_rcpt_canon_maps)
-	    cleanup_map11_internal(state, clean_addr, cleanup_rcpt_canon_maps,
-				cleanup_ext_prop_mask & EXT_PROP_CANONICAL);
-	if (cleanup_comm_canon_maps)
-	    cleanup_map11_internal(state, clean_addr, cleanup_comm_canon_maps,
-				cleanup_ext_prop_mask & EXT_PROP_CANONICAL);
-	if (cleanup_masq_domains
-	    && (cleanup_masq_flags & CLEANUP_MASQ_FLAG_ENV_RCPT))
-	    cleanup_masquerade_internal(clean_addr, cleanup_masq_domains);
+	if (var_canon_env_rcpt) {
+	    if (cleanup_rcpt_canon_maps)
+		cleanup_map11_internal(state, clean_addr,
+				    cleanup_rcpt_canon_maps,
+				    cleanup_ext_prop_mask & EXT_PROP_CANONICAL);
+	    if (cleanup_comm_canon_maps)
+		cleanup_map11_internal(state, clean_addr,
+				    cleanup_comm_canon_maps,
+				    cleanup_ext_prop_mask & EXT_PROP_CANONICAL);
+	    if (cleanup_masq_domains
+		&& (cleanup_masq_flags & CLEANUP_MASQ_FLAG_ENV_RCPT))
+		cleanup_masquerade_internal(clean_addr, cleanup_masq_domains);
+	}
 	cleanup_out_recipient(state, state->orig_rcpt, STR(clean_addr));
 	if (state->recip == 0)
 	    state->recip = mystrdup(STR(clean_addr));
