@@ -25,8 +25,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: ndp.8,v 1.4 1999/12/13 15:30:25 itojun Exp $
-.\"	KAME Id: ndp.8,v 1.4 1999/12/13 11:07:41 jinmei Exp
+.\"	$NetBSD: ndp.8,v 1.5 2000/02/26 08:48:22 itojun Exp $
+.\"	KAME Id: ndp.8,v 1.5 2000/02/17 05:35:56 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt NDP 8
@@ -75,7 +75,8 @@
 .Op Fl nt
 .Ar nodename
 .Ar ether_addr
-.Op temp
+.Op Li temp
+.Op Li proxy
 .\"
 .Sh DESCRIPTION
 .Nm
@@ -128,6 +129,15 @@ Show default router list.
 Flush all the entries in the default router list.
 .It Fl s
 Register a NDP entry for a node.
+The entry will be permanent unless the word
+.Li temp
+is given in the command. 
+If the word
+.Li proxy
+is given, this system will act as an proxy NDP server,
+responding to requests for 
+.Ar hostname
+even though the host address is not its own.
 .It Fl t
 Print timestamp on each entries,
 to make it possible to merge output with

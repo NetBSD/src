@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.50 2000/02/15 20:14:48 thorpej Exp $
+.\"	$NetBSD: sysctl.3,v 1.51 2000/02/26 08:48:21 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -779,7 +779,6 @@ The currently defined protocols and names are:
 .It icmp6	nd6_umaxtries	integer	yes
 .It icmp6	nd6_mmaxtries	integer	yes
 .It icmp6	nd6_useloopback	integer	yes
-.It icmp6	nd6_proxyall	integer	yes
 .It icmp6	nodeinfo	integer	yes
 .It tcp6	mssdflt	integer	yes
 .It tcp6	do_rfc1323	integer	yes
@@ -919,8 +918,6 @@ constant in IPv6 neighbor discovery specification
 .It Li icmp6.nd6_useloopback
 If set to non-zero, kernel IPv6 stack will use loopback interface for
 local traffic.
-.It Li icmp6.nd6_proxyall
-The variable enables proxy neighbor advertisements.
 .It Li icmp6.nodeinfo
 The variable enables, or disables, kernel support for
 ICMPv6 node information query/reply.
