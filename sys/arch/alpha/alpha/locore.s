@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.67 1999/11/01 22:41:55 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.68 1999/11/07 17:01:20 chs Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.67 1999/11/01 22:41:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.68 1999/11/07 17:01:20 chs Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -1077,7 +1077,9 @@ LEAF(copystr, 4)
 	LDGP(pv)
 
 	mov	a2, t0			/* t0 = i = len */
-	beq	a2, 2f			/* if (len == 0), bail out */
+	bne	a2, 1f			/* if (len != 0), proceed */
+	ldiq	t1, 1			/* else bail */
+	br	zero, 2f
 
 1:	ldq_u	t1, 0(a0)		/* t1 = *from */
 	extbl	t1, a0, t1
@@ -1098,7 +1100,7 @@ LEAF(copystr, 4)
 	stq	t0, 0(a3)
 3:	beq	t1, 4f			/* *from == '\0'; leave quietly */
 
-	ldiq	v0, ENAMETOOLONG		/* *from != '\0'; error. */
+	ldiq	v0, ENAMETOOLONG	/* *from != '\0'; error. */
 	RET
 
 4:	mov	zero, v0		/* return 0. */
