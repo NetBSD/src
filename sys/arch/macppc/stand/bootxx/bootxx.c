@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.6 2002/05/15 13:55:38 lukem Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.7 2002/05/16 18:02:47 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -80,7 +80,7 @@ _start:
 	mtibatu	3,8
 	isync
 
-	li	1,(stack+4096)@l	/* setup 4KB of stack */
+	li	1,(stack+4080)@l	/* setup 4KB of stack */
 
 	b	startup
 ");
