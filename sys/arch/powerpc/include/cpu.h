@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 2002/08/06 06:14:37 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20 2002/08/14 15:41:57 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -41,10 +41,10 @@
 #include "opt_ppcarch.h"
 #endif
 
-#include <sys/device.h>
 #include <machine/frame.h>
 #include <machine/psl.h>
 #include <machine/intr.h>
+#include <sys/device.h>
 
 
 struct cache_info {
@@ -158,17 +158,17 @@ extern volatile int intr_depth;
 
 #endif /* MULTIPROCESSOR */
 
-static __inline int
+static __inline register_t
 mfmsr(void)
 {
-	int msr;
+	register_t msr;
 
 	asm volatile ("mfmsr %0" : "=r"(msr));
 	return msr;
 }
 
 static __inline void
-mtmsr(int msr)
+mtmsr(register_t msr)
 {
 
 	asm volatile ("mtmsr %0" : : "r"(msr));
