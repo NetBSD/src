@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.11 1998/02/10 04:54:57 lukem Exp $	*/
+/*	$NetBSD: xdr.c,v 1.12 1998/02/11 11:52:58 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.11 1998/02/10 04:54:57 lukem Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.12 1998/02/11 11:52:58 lukem Exp $");
 #endif
 #endif
 
@@ -516,9 +516,9 @@ bool_t
 xdr_opaque(xdrs, cp, cnt)
 	XDR *xdrs;
 	caddr_t cp;
-	size_t cnt;
+	u_int32_t cnt;
 {
-	size_t rndup;
+	u_int32_t rndup;
 	static crud[BYTES_PER_XDR_UNIT];
 
 	/*
@@ -568,11 +568,11 @@ bool_t
 xdr_bytes(xdrs, cpp, sizep, maxsize)
 	XDR *xdrs;
 	caddr_t *cpp;
-	size_t *sizep;
-	size_t maxsize;
+	u_int32_t *sizep;
+	u_int32_t maxsize;
 {
 	char *sp = *cpp;  /* sp is the actual string pointer */
-	size_t nodesize;
+	u_int32_t nodesize;
 
 	/*
 	 * first deal with the length since xdr bytes are counted
@@ -692,11 +692,11 @@ bool_t
 xdr_string(xdrs, cpp, maxsize)
 	XDR *xdrs;
 	char **cpp;
-	size_t maxsize;
+	u_int32_t maxsize;
 {
 	char *sp = *cpp;  /* sp is the actual string pointer */
-	size_t size;
-	size_t nodesize;
+	u_int32_t size;
+	u_int32_t nodesize;
 
 	/*
 	 * first deal with the length since xdr strings are counted-strings
