@@ -19,6 +19,10 @@
 # Printers:
 # Call units:
 # Special purpose devices:
+#	bpf*	packet filter
+#	lkm	loadable kernel modules interface
+#	tun*	network tunnel driver
+# Platform-specific devices:
 #	NOTE: /dev/mouse should be a link to one of these for X windows.
 #	pm*	raw interface to PMAX graphics devices
 #	cfb*	raw interface to turbochannel PMAG-BA color frame buffer
@@ -76,11 +80,33 @@ tz*)
 	umask 77
 	;;
 
-rz*|vnd*)
+bpf*)
+	unit=`expr $i : 'bpf\(.*\)'`
+	rm -f bpf$unit
+	mknod bpf$unit c 12 $unit
+	chmod 600 bpf$unit
+	chown root.wheel bpf$unit
+	;;
+
+#tun*)
+#	unit=`expr $i : 'tun\(.*\)'`
+#	rm -f tun$unit
+#	mknod tun$unit c 111 $unit
+#	chmod 600 tun$unit
+#	chown root.wheel tun$unit
+#	;;
+#lkm)
+#	rm -f lkm
+#	mknod lkm c 112 0
+#	chown root.kmem lkm
+#	chmod 640 lkm
+#	;;
+
+rz*|vnd*|vn*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
 	rz*) name=rz; blk=21; chr=56;;
-	vnd*) name=vnd; blk=2; chr=11;;
+	vn*) name=vnd; blk=2; chr=11;;
 	esac
 	case $unit in
 	0|1|2|3|4|5|6)
