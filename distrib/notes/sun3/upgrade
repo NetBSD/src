@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.9 2000/10/29 14:08:11 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.10 2000/11/02 01:37:48 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -146,7 +146,7 @@ wish to extract additional sets at a later time.
 To extract these sets, use the following commands:
 .Pp
 .Dl # "Ic cd /"
-.Dl # "Ic pax -zrvpe -f Ar \&"path to set\&""
+.Dl # "Ic pax -zrvpe -f" Ar "\&"path to set\&""
 .bullet)
 .(Note
 .No You Em should not
