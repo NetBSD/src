@@ -1,6 +1,8 @@
+/*	$NetBSD: pathnames.h,v 1.3 1994/11/14 06:51:38 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +32,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+<<<<<<< pathnames.h
  *	from: @(#)pathnames.h	5.1 (Berkeley) 4/17/90
- *	$Id: pathnames.h,v 1.2 1993/08/01 18:01:01 mycroft Exp $
+ *	$Id: pathnames.h,v 1.3 1994/11/14 06:51:38 jtc Exp $
+||||||| 1.1.1.2
+ *	@(#)pathnames.h	5.1 (Berkeley) 4/17/90
+=======
+ *	@(#)pathnames.h	8.1 (Berkeley) 6/6/93
+>>>>>>> /var/tmp/T4001951
  */
 
 #define	_PATH_ECHO	"/bin/echo"
