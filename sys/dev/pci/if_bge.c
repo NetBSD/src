@@ -1,4 +1,5 @@
-/*	$NetBSD: if_bge.c,v 1.7 2002/06/27 23:56:20 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.8 2002/06/28 00:55:20 thorpej Exp $	*/
+
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1546,7 +1547,7 @@ static const struct bge_product {
 
 	{ PCI_VENDOR_SCHNEIDERKOCH,
 	  PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1,
-	  "SysKonnect SK-9DX1 Gigabit Ethernet" },
+	  "SysKonnect SK-9Dx1 Gigabit Ethernet" },
 
 	{ PCI_VENDOR_3COM,
 	  PCI_PRODUCT_3COM_3C996,
@@ -1750,7 +1751,8 @@ bge_attach(parent, self, aux)
 	if (bge_alloc_jumbo_mem(sc)) {
 		printf("%s: jumbo buffer allocation failed\n",
 		    sc->bge_dev.dv_xname);
-	}
+	} else
+		sc->ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
 	/* Set default tuneable values. */
 	sc->bge_stat_ticks = BGE_TICKS_PER_SEC;
@@ -1771,8 +1773,6 @@ bge_attach(parent, self, aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	DPRINTFN(5, ("bcopy\n"));
 	strcpy(ifp->if_xname, sc->bge_dev.dv_xname);
-
-	sc->ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
 	sc->ethercom.ec_if.if_capabilities |=
 	  IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
@@ -1859,22 +1859,6 @@ bge_release_resources(sc)
 
 	if (sc->bge_vpd_readonly != NULL)
 		free(sc->bge_vpd_readonly, M_DEVBUF);
-
-#ifdef fake
-	if (sc->bge_intrhand != NULL)
-		bus_teardown_intr(dev, sc->bge_irq, sc->bge_intrhand);
-
-	if (sc->bge_irq != NULL)
-		bus_release_resource(dev, SYS_RES_IRQ, 0, sc->bge_irq);
-
-	if (sc->bge_res != NULL)
-		bus_release_resource(dev, SYS_RES_MEMORY,
-		    BGE_PCI_BAR0, sc->bge_res);
-
-	if (sc->bge_rdata != NULL)
-		contigfree(sc->bge_rdata,
-		    sizeof(struct bge_ring_data), M_DEVBUF);
-#endif
 }
 
 void
@@ -1930,7 +1914,7 @@ bge_reset(sc)
 		DELAY(1000);
 	}
 
-	if (i == BGE_TIMEOUT) {
+	if (i == 750) {
 		printf("%s: firmware handshake timed out, val = %x\n",
 		    sc->bge_dev.dv_xname, val);
 		return;
@@ -2364,7 +2348,7 @@ bge_encap(sc, m_head, txidx)
 	if (m_head->m_pkthdr.csum_flags) {
 		if (m_head->m_pkthdr.csum_flags & M_CSUM_IPv4)
 			csum_flags |= BGE_TXBDFLAG_IP_CSUM;
-		if (m_head->m_pkthdr.csum_flags & (M_CSUM_TCPv4| M_CSUM_UDPv4))
+		if (m_head->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4))
 			csum_flags |= BGE_TXBDFLAG_TCP_UDP_CSUM;
 	}
 
