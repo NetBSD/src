@@ -1,5 +1,6 @@
 ;;- Machine description for SPARC chip for GNU C compiler
-;;  Copyright (C) 1987, 88, 89, 92-98, 1999 Free Software Foundation, Inc.
+;;  Copyright (C) 1987, 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+;;  1999 Free Software Foundation, Inc.
 ;;  Contributed by Michael Tiemann (tiemann@cygnus.com)
 ;;  64 bit SPARC V9 support by Michael Tiemann, Jim Wilson, and Doug Evans,
 ;;  at Cygnus Support.
@@ -7480,7 +7481,7 @@
 		    gen_rtvec (3,
 			       gen_rtx_SET (VOIDmode, pc_rtx,
 					XEXP (operands[0], 0)),
-			       GEN_INT (INTVAL (operands[3]) & 0xfff),
+			       operands[3],
 			       gen_rtx_CLOBBER (VOIDmode,
 					gen_rtx_REG (Pmode, 15)))));
       else
@@ -7512,7 +7513,7 @@
     emit_call_insn
       (gen_rtx_PARALLEL (VOIDmode,
 		gen_rtvec (3, gen_rtx_CALL (VOIDmode, fn_rtx, nregs_rtx),
-			   GEN_INT (INTVAL (operands[3]) & 0xfff),
+			   operands[3],
 			   gen_rtx_CLOBBER (VOIDmode,
 				    gen_rtx_REG (Pmode, 15)))));
   else
