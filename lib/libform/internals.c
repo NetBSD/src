@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.15 2001/05/11 14:04:48 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.16 2001/05/16 11:51:16 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -285,10 +285,11 @@ find_cur_line(FIELD *cur, unsigned pos)
  * will return E_REQUEST_DENIED.
  */
 int
-_formi_wrap_field(FIELD *field, unsigned int pos)
+_formi_wrap_field(FIELD *field, unsigned int loc)
 {
 	char *str;
-	int width, row;
+	int width, row, start_row;
+	unsigned int pos;
 	
 	str = field->buffers[0].string;
 
@@ -319,17 +320,25 @@ _formi_wrap_field(FIELD *field, unsigned int pos)
 			return E_OK;
 		}
 	}
+
+	start_row = find_cur_line(field, loc);
 	
-	for (row = 0; row < field->row_count; row++) {
+	  /* if we are not at the top of the field then back up one
+	   * row because we may be able to merge the current row into
+	   * the one above.
+	   */
+	if (start_row > 0)
+		start_row--;
+	
+	for (row = start_row; row < field->row_count; row++) {
 	  AGAIN:
 		pos = field->lines[row].end;
-		if (field->lines[row].length <= width) {
+		if (field->lines[row].length < width) {
 			  /* line may be too short, try joining some lines */
 
-			if (((((int) field->row_count) - 1) == row) ||
-			    (field->lines[row].length == width)) {
-				/* if line is just right or this is the last
-				 * row then don't wrap
+			if ((((int) field->row_count) - 1) == row) {
+				/* if this is the last row then don't
+				 * wrap
 				 */
 				continue;
 			}
@@ -361,12 +370,30 @@ _formi_wrap_field(FIELD *field, unsigned int pos)
 			
 			if ((!isblank(str[pos])) &&
 			    ((field->opts & O_WRAP) == O_WRAP)) {
-				pos = find_sow(str, (unsigned int) pos);
-				if ((pos == 0) || (!isblank(str[pos - 1]))) {
-					return E_REQUEST_DENIED;
+				if (!isblank(str[pos - 1]))
+					pos = find_sow(str,
+						       (unsigned int) pos);
+				/*
+				 * If we cannot split the line then return
+				 * NO_ROOM so the driver can tell that it
+				 * should not autoskip (if that is enabled)
+				 */
+				if ((pos == 0) || (!isblank(str[pos - 1]))
+				    || ((pos <= field->lines[row].start)
+					&& (field->buffers[0].length
+					    >= (width - 1
+						+ field->lines[row].start)))) {
+					return E_NO_ROOM;
 				}
 			}
 
+			  /* if we are at the end of the string and it has
+			   * a trailing blank, don't wrap the blank.
+			   */
+			if ((pos == field->buffers[0].length - 1) &&
+			    (isblank(str[pos])))
+				continue;
+			
 			if (split_line(field, pos) != E_OK) {
 				return E_REQUEST_DENIED;
 			}
@@ -757,8 +784,9 @@ _formi_redraw_field(FORM *form, int field)
 	slen = 0;
 	start = 0;
 
-	for (row = 0; row < cur->row_count; row++) {
-		wmove(form->scrwin, (int) (cur->form_row + row),
+	for (row = cur->start_line; row < cur->row_count; row++) {
+		wmove(form->scrwin,
+		      (int) (cur->form_row + row - cur->start_line),
 		      (int) cur->form_col);
 		start = cur->lines[row].start;
 		slen = cur->lines[row].length;
@@ -879,7 +907,15 @@ _formi_redraw_field(FORM *form, int field)
 		for (i = 0; i < post; i++)
 			waddch(form->scrwin, cur->pad);
 	}
-	
+
+	for (row = cur->row_count - cur->start_line; row < cur->rows; row++) {
+		wmove(form->scrwin, (int) (cur->form_row + row),
+		      (int) cur->form_col);
+		for (i = 0; i < cur->cols; i++) {
+			waddch(form->scrwin, cur->pad);
+		}
+	}
+
 	return;
 }
 
@@ -1013,6 +1049,7 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 		      &field->buffers[0].string[pos],
 		      field->buffers[0].length - pos);
 		field->buffers[0].length--;
+		bump_lines(field, (int) pos, -1);
 	} else {
 		field->buf0_status = TRUE;
 		if ((field->rows + field->nrows) == 1) {
@@ -1025,20 +1062,45 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 				field->cursor_xpos = field->cols;
 			}
 		} else {
-			field->cursor_ypos = find_cur_line(field, pos)
-				- field->start_line;
+			new_size = find_cur_line(field, pos);
+			if (new_size >= field->rows) {
+				field->cursor_ypos = field->rows - 1;
+				field->start_line = field->row_count
+					- field->cursor_ypos - 1;
+			} else
+				field->cursor_ypos = new_size;
+			
 			field->cursor_xpos = pos
 				- field->lines[field->cursor_ypos
 					      + field->start_line].start + 1;
+
+			  /*
+			   * Annoying corner case - if we are right in
+			   * the bottom right corner of the field we
+			   * need to scroll the field one line so the
+			   * cursor is positioned correctly in the
+			   * field.
+			   */
+			if ((field->cursor_xpos >= field->cols) &&
+			    (field->cursor_ypos == (field->rows - 1))) {
+				field->cursor_ypos--;
+				field->start_line++;
+			}
 		}
 	}
 	
 #ifdef DEBUG
+	assert((field->cursor_xpos < 400000)
+	       && (field->cursor_ypos < 400000)
+	       && (field->start_line < 400000));
+	       
 	fprintf(dbg,
 	    "add_char exit: xpos=%d, start=%d, length=%d(%d), allocated=%d\n",
 		field->cursor_xpos, field->start_char,
 		field->buffers[0].length, strlen(field->buffers[0].string),
 		field->buffers[0].allocated);
+	fprintf(dbg, "add_char exit: ypos=%d, start_line=%d\n",
+		field->cursor_ypos, field->start_line);
 	fprintf(dbg,"add_char exit: %s\n", field->buffers[0].string);
 	fprintf(dbg, "add_char exit: buf0_status=%d\n", field->buf0_status);
 	fprintf(dbg, "add_char exit: status = %s\n",
