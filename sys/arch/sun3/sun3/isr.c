@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.20 1995/09/26 04:02:20 gwr Exp $	*/
+/*	$NetBSD: isr.c,v 1.21 1995/10/08 23:47:34 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -50,6 +50,8 @@
 
 #include "vector.h"
 #include "interreg.h"
+
+#include "ether.h"	/* for NETHER */
 
 extern int intrcnt[];	/* statistics */
 
@@ -142,8 +144,10 @@ void isr_soft_clear(level)
 }
 
 /*
- * XXX - This really belongs in some common file, like
- * src/sys/net/netisr.c  -gwr
+ * XXX - This really belongs in some common file,
+ *	i.e.  src/sys/net/netisr.c
+ * Also, should use an array of chars instead of
+ * a bitmask to avoid atomicity locking issues.
  */
 void netintr()
 {
@@ -154,17 +158,11 @@ void netintr()
 	netisr = 0;
 	splx(s);
 
-	/*
-	 * Theo says:
-	 * XXX	this is bogus: should just have a list of
-	 *	routines to call, a la timeouts.  Mods to
-	 *	netisr are not atomic and must be protected (gah).
-	 * Gordon says:
-	 * How about an array of characters (1 per protocol)?
-	 */
-#ifdef INET
+#if	NETHER > 0
 	if (n & (1 << NETISR_ARP))
 		arpintr();
+#endif
+#ifdef INET
 	if (n & (1 << NETISR_IP))
 		ipintr();
 #endif
@@ -241,9 +239,7 @@ int nmi_intr(arg)
 	static int nmi_cnt;
 	if (!nmi_cnt++) {
 		printf("nmi interrupt received\n");
-#ifdef	DDB
 		Debugger();
-#endif
 	}
 	return 1;
 }
