@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.40 1998/12/18 13:18:43 drochner Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.41 1999/02/10 18:02:28 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -115,7 +115,7 @@ sys_bind(p, v, retval)
 	register struct sys_bind_args /* {
 		syscallarg(int) s;
 		syscallarg(const struct sockaddr *) name;
-		syscallarg(int) namelen;
+		syscallarg(unsigned int) namelen;
 	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *nam;
@@ -160,11 +160,12 @@ sys_accept(p, v, retval)
 	register struct sys_accept_args /* {
 		syscallarg(int) s;
 		syscallarg(struct sockaddr *) name;
-		syscallarg(int *) anamelen;
+		syscallarg(unsigned int *) anamelen;
 	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *nam;
-	int namelen, error, s, tmpfd;
+	unsigned int namelen;
+	int error, s, tmpfd;
 	register struct socket *so;
 
 	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
@@ -221,7 +222,7 @@ sys_accept(p, v, retval)
 			namelen = nam->m_len;
 		/* SHOULD COPY OUT A CHAIN HERE */
 		if ((error = copyout(mtod(nam, caddr_t),
-		    (caddr_t)SCARG(uap, name), (u_int)namelen)) == 0)
+		    (caddr_t)SCARG(uap, name), namelen)) == 0)
 			error = copyout((caddr_t)&namelen,
 			    (caddr_t)SCARG(uap, anamelen),
 			    sizeof(*SCARG(uap, anamelen)));
@@ -241,7 +242,7 @@ sys_connect(p, v, retval)
 	register struct sys_connect_args /* {
 		syscallarg(int) s;
 		syscallarg(const struct sockaddr *) name;
-		syscallarg(int) namelen;
+		syscallarg(unsigned int) namelen;
 	} */ *uap = v;
 	struct file *fp;
 	register struct socket *so;
@@ -360,7 +361,7 @@ sys_sendto(p, v, retval)
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
 		syscallarg(const struct sockaddr *) to;
-		syscallarg(int) tolen;
+		syscallarg(unsigned int) tolen;
 	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov;
@@ -396,14 +397,14 @@ sys_sendmsg(p, v, retval)
 	error = copyin(SCARG(uap, msg), (caddr_t)&msg, sizeof(msg));
 	if (error)
 		return (error);
-	if (msg.msg_iovlen > UIO_SMALLIOV) {
-		if (msg.msg_iovlen > IOV_MAX)
+	if ((unsigned int)msg.msg_iovlen > UIO_SMALLIOV) {
+		if ((unsigned int)msg.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
 		MALLOC(iov, struct iovec *,
 		    sizeof(struct iovec) * msg.msg_iovlen, M_IOV, M_WAITOK);
 	} else
 		iov = aiov;
-	if (msg.msg_iovlen > 0) {
+	if ((unsigned int)msg.msg_iovlen > 0) {
 		error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
 		    (size_t)(msg.msg_iovlen * sizeof(struct iovec)));
 		if (error)
@@ -548,7 +549,7 @@ sys_recvfrom(p, v, retval)
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
 		syscallarg(struct sockaddr *) from;
-		syscallarg(int *) fromlenaddr;
+		syscallarg(unsigned int *) fromlenaddr;
 	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov;
@@ -592,14 +593,14 @@ sys_recvmsg(p, v, retval)
 		       sizeof(msg));
 	if (error)
 		return (error);
-	if (msg.msg_iovlen > UIO_SMALLIOV) {
-		if (msg.msg_iovlen > IOV_MAX)
+	if ((unsigned int)msg.msg_iovlen > UIO_SMALLIOV) {
+		if ((unsigned int)msg.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
 		MALLOC(iov, struct iovec *,
 		    sizeof(struct iovec) * msg.msg_iovlen, M_IOV, M_WAITOK);
 	} else
 		iov = aiov;
-	if (msg.msg_iovlen > 0) {
+	if ((unsigned int)msg.msg_iovlen > 0) {
 		error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
 		    (size_t)(msg.msg_iovlen * sizeof(struct iovec)));
 		if (error)
@@ -810,7 +811,7 @@ sys_setsockopt(p, v, retval)
 		syscallarg(int) level;
 		syscallarg(int) name;
 		syscallarg(const void *) val;
-		syscallarg(int) valsize;
+		syscallarg(unsigned int) valsize;
 	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
@@ -823,7 +824,7 @@ sys_setsockopt(p, v, retval)
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
-			       (u_int)SCARG(uap, valsize));
+			       SCARG(uap, valsize));
 		if (error) {
 			(void) m_free(m);
 			return (error);
@@ -846,11 +847,12 @@ sys_getsockopt(p, v, retval)
 		syscallarg(int) level;
 		syscallarg(int) name;
 		syscallarg(void *) val;
-		syscallarg(int *) avalsize;
+		syscallarg(unsigned int *) avalsize;
 	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
-	int valsize, error;
+	unsigned int valsize;
+	int error;
 
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
@@ -867,7 +869,7 @@ sys_getsockopt(p, v, retval)
 		if (valsize > m->m_len)
 			valsize = m->m_len;
 		error = copyout(mtod(m, caddr_t), SCARG(uap, val),
-		    (u_int)valsize);
+		    valsize);
 		if (error == 0)
 			error = copyout((caddr_t)&valsize,
 			    (caddr_t)SCARG(uap, avalsize), sizeof(valsize));
@@ -936,12 +938,13 @@ sys_getsockname(p, v, retval)
 	register struct sys_getsockname_args /* {
 		syscallarg(int) fdes;
 		syscallarg(struct sockaddr *) asa;
-		syscallarg(int *) alen;
+		syscallarg(unsigned int *) alen;
 	} */ *uap = v;
 	struct file *fp;
 	register struct socket *so;
 	struct mbuf *m;
-	int len, error;
+	unsigned int len;
+	int error;
 
 	if ((error = getsock(p->p_fd, SCARG(uap, fdes), &fp)) != 0)
 		return (error);
@@ -956,7 +959,7 @@ sys_getsockname(p, v, retval)
 		goto bad;
 	if (len > m->m_len)
 		len = m->m_len;
-	error = copyout(mtod(m, caddr_t), (caddr_t)SCARG(uap, asa), (u_int)len);
+	error = copyout(mtod(m, caddr_t), (caddr_t)SCARG(uap, asa), len);
 	if (error == 0)
 		error = copyout((caddr_t)&len, (caddr_t)SCARG(uap, alen),
 		    sizeof(len));
@@ -978,12 +981,13 @@ sys_getpeername(p, v, retval)
 	register struct sys_getpeername_args /* {
 		syscallarg(int) fdes;
 		syscallarg(struct sockaddr *) asa;
-		syscallarg(int *) alen;
+		syscallarg(unsigned int *) alen;
 	} */ *uap = v;
 	struct file *fp;
 	register struct socket *so;
 	struct mbuf *m;
-	int len, error;
+	unsigned int len;
+	int error;
 
 	if ((error = getsock(p->p_fd, SCARG(uap, fdes), &fp)) != 0)
 		return (error);
@@ -1000,7 +1004,7 @@ sys_getpeername(p, v, retval)
 		goto bad;
 	if (len > m->m_len)
 		len = m->m_len;
-	error = copyout(mtod(m, caddr_t), (caddr_t)SCARG(uap, asa), (u_int)len);
+	error = copyout(mtod(m, caddr_t), (caddr_t)SCARG(uap, asa), len);
 	if (error)
 		goto bad;
 	error = copyout((caddr_t)&len, (caddr_t)SCARG(uap, alen), sizeof(len));
