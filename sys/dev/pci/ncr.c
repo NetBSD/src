@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.57 1997/04/13 19:58:17 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.58 1997/04/13 20:14:34 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -1326,7 +1326,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.57 1997/04/13 19:58:17 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.58 1997/04/13 20:14:34 cgd Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3397,10 +3397,10 @@ ncr_attach(parent, self, aux)
 	**	virtual and physical memory.
 	*/
 
-	ioh_valid = (pci_map_register(pa, 0x10,
+	ioh_valid = (pci_mapreg_map(pa, 0x10,
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, &ioaddr, NULL) == 0);
-	memh_valid = (pci_map_register(pa, 0x14,
+	memh_valid = (pci_mapreg_map(pa, 0x14,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &memt, &memh, &memaddr, NULL) == 0);
 

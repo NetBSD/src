@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.39 1997/04/13 19:56:14 cgd Exp $	*/
+/*	$NetBSD: if_de.c,v 1.40 1997/04/13 20:14:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -4740,10 +4740,10 @@ tulip_pci_attach(
 #if defined(__NetBSD__)
     csr_base = 0;
 
-    ioh_valid = (pci_map_register(pa, PCI_CBIO,
+    ioh_valid = (pci_mapreg_map(pa, PCI_CBIO,
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL) == 0);
-    memh_valid = (pci_map_register(pa, PCI_CBMA,
+    memh_valid = (pci_mapreg_map(pa, PCI_CBMA,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
             &memt, &memh, NULL, NULL) == 0);
 
