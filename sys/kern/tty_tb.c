@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tty_tb.c	7.7 (Berkeley) 5/9/91
- *	$Id: tty_tb.c,v 1.11 1994/02/17 14:50:38 mycroft Exp $
+ *	from: @(#)tty_tb.c	8.1 (Berkeley) 6/10/93
+ *	$Id: tty_tb.c,v 1.12 1994/05/12 03:25:27 cgd Exp $
  */
 
 #include "tb.h"
@@ -40,12 +40,9 @@
  * Line discipline for RS232 tablets;
  * supplies binary coordinate data.
  */
-
 #include <sys/param.h>
-#include <sys/ioctl.h>
 #include <sys/tablet.h>
 #include <sys/tty.h>
-#include <sys/proc.h>
 
 /*
  * Tablet configuration table.
@@ -69,7 +66,7 @@ static	int tblresdecode(), tbhresdecode();
 
 struct	tbconf tbconf[TBTYPE] = {
 { 0 },
-{ 5, sizeof (struct tbpos), 0200, tbdecode, "6", "4" },	
+{ 5, sizeof (struct tbpos), 0200, tbdecode, "6", "4" },
 { 5, sizeof (struct tbpos), 0200, tbdecode, "\1CN", "\1RT", "\2", "\4" },
 { 8, sizeof (struct gtcopos), 0200, gtcodecode },
 {17, sizeof (struct polpos), 0200, poldecode, 0, 0, "\21", "\5\22\2\23",
@@ -89,8 +86,8 @@ struct tb {
 	int	tbflags;		/* mode & type bits */
 #define	TBMAXREC	17	/* max input record size */
 	char	cbuf[TBMAXREC];		/* input buffer */
-        int     tbinbuf;
-        char   *tbcp;
+	int	tbinbuf;
+	char	*tbcp;
 	union {
 		struct	tbpos tbpos;
 		struct	gtcopos gtcopos;
@@ -109,7 +106,7 @@ tbopen(dev, tp)
 	register struct tb *tbp;
 
 	if (tp->t_line == TABLDISC)
-		return (0);
+		return (ENODEV);
 	ttywflush(tp);
 	for (tbp = tb; tbp < &tb[NTB]; tbp++)
 		if (tbp->tbflags == 0)
@@ -328,20 +325,25 @@ tbtioctl(tp, cmd, data, flag, p)
 
 	case BIOSMODE: {
 		register struct tbconf *tc;
+		char *c;
 
 		tbp->tbflags &= ~TBMODE;
 		tbp->tbflags |= *(int *)data & TBMODE;
 		tc = &tbconf[tbp->tbflags & TBTYPE];
 		if (tbp->tbflags&TBSTOP) {
 			if (tc->tbc_stop)
-				ttyoutstr(tc->tbc_stop, tp);
+				for (c = tc->tbc_stop; *c != '\0'; c++);
+					ttyout(c, tp);
 		} else if (tc->tbc_start)
-			ttyoutstr(tc->tbc_start, tp);
+			for (c = tc->tbc_start; *c != '\0'; c++);
+				ttyout(c, tp);
 		if (tbp->tbflags&TBPOINT) {
 			if (tc->tbc_point)
-				ttyoutstr(tc->tbc_point, tp);
+				for (c = tc->tbc_point; *c != '\0'; c++);
+					ttyout(c, tp);
 		} else if (tc->tbc_run)
-			ttyoutstr(tc->tbc_run, tp);
+			for (c = tc->tbc_run; *c != '\0'; c++);
+				ttyout(c, tp);
 		ttstart(tp);
 		break;
 	}
