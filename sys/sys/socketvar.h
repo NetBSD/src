@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.21 1996/09/07 12:41:34 mycroft Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.22 1996/12/22 10:14:06 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -268,7 +268,7 @@ int	sosetopt __P((struct socket *so, int level, int optname,
 	    struct mbuf *m0));
 int	soshutdown __P((struct socket *so, int how));
 void	sowakeup __P((struct socket *so, struct sockbuf *sb));
-int	sockargs __P((struct mbuf **, caddr_t, int, int));
+int	sockargs __P((struct mbuf **, const void *, int, int));
 
 int	sendit __P((struct proc *, int, struct msghdr *, int, register_t *));
 int	recvit __P((struct proc *, int, struct msghdr *, caddr_t,
