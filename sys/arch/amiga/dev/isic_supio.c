@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_supio.c,v 1.13 2003/01/06 13:04:59 wiz Exp $ */
+/*	$NetBSD: isic_supio.c,v 1.14 2004/11/21 20:43:22 is Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -47,7 +47,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.13 2003/01/06 13:04:59 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.14 2004/11/21 20:43:22 is Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.13 2003/01/06 13:04:59 wiz Exp $");
 #include <dev/ic/isac.h>
 
 /* XXX I think the following line should be elsewhere ... -is */
-extern const struct isdn_layer1_bri_driver isic_std_driver;
+extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
 /*static*/ int isic_supio_match(struct device *, struct cfdata *, void *);
 /*static*/ void isic_supio_attach(struct device *, struct device *, void *);
