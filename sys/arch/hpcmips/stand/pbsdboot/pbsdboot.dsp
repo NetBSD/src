@@ -315,6 +315,57 @@ DEP_CPP_MAIN_=\
 # End Source File
 # Begin Source File
 
+SOURCE=.\mips.c
+
+!IF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Release"
+
+!ELSEIF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Debug"
+
+DEP_CPP_MIPS_=\
+	"..\..\..\..\lib\libsa\saerrno.h"\
+	"..\..\..\..\lib\libsa\saioctl.h"\
+	"..\..\..\..\lib\libsa\stand.h"\
+	"..\..\..\..\sys\bswap.h"\
+	"..\..\..\..\sys\cdefs.h"\
+	"..\..\..\..\sys\cdefs_aout.h"\
+	"..\..\..\..\sys\cdefs_elf.h"\
+	"..\..\..\..\sys\endian.h"\
+	"..\..\..\..\sys\errno.h"\
+	"..\..\..\..\sys\featuretest.h"\
+	"..\..\..\..\sys\stat.h"\
+	"..\..\..\..\sys\time.h"\
+	"..\..\..\..\sys\types.h"\
+	"..\..\..\mips\include\ansi.h"\
+	"..\..\..\mips\include\bswap.h"\
+	"..\..\..\mips\include\cdefs.h"\
+	"..\..\..\mips\include\endian.h"\
+	"..\..\include\ansi.h"\
+	"..\..\include\bootinfo.h"\
+	"..\..\include\cdefs.h"\
+	"..\..\include\endian.h"\
+	"..\..\include\platid.h"\
+	"..\..\include\platid_generated.h"\
+	"..\include\machine\ansi.h"\
+	"..\include\machine\bootinfo.h"\
+	"..\include\machine\bswap.h"\
+	"..\include\machine\cdefs.h"\
+	"..\include\machine\endian.h"\
+	"..\include\machine\platid.h"\
+	"..\include\machine\types.h"\
+	"..\include\mips\ansi.h"\
+	"..\include\mips\cdefs.h"\
+	"..\include\mips\endian.h"\
+	"..\include\mips\types.h"\
+	"..\libsa\compat.h"\
+	"..\libsa\stand.h"\
+	".\pbsdboot.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=.\pbsdboot.c
 
 !IF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Release"
@@ -479,13 +530,64 @@ DEP_CPP_PRINT=\
 # End Source File
 # Begin Source File
 
-SOURCE=.\startprog.c
+SOURCE=.\systeminfo.c
 
 !IF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Release"
 
 !ELSEIF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Debug"
 
-DEP_CPP_START=\
+DEP_CPP_SYSTE=\
+	"..\..\..\..\lib\libsa\saerrno.h"\
+	"..\..\..\..\lib\libsa\saioctl.h"\
+	"..\..\..\..\lib\libsa\stand.h"\
+	"..\..\..\..\sys\bswap.h"\
+	"..\..\..\..\sys\cdefs.h"\
+	"..\..\..\..\sys\cdefs_aout.h"\
+	"..\..\..\..\sys\cdefs_elf.h"\
+	"..\..\..\..\sys\endian.h"\
+	"..\..\..\..\sys\errno.h"\
+	"..\..\..\..\sys\featuretest.h"\
+	"..\..\..\..\sys\stat.h"\
+	"..\..\..\..\sys\time.h"\
+	"..\..\..\..\sys\types.h"\
+	"..\..\..\mips\include\ansi.h"\
+	"..\..\..\mips\include\bswap.h"\
+	"..\..\..\mips\include\cdefs.h"\
+	"..\..\..\mips\include\endian.h"\
+	"..\..\include\ansi.h"\
+	"..\..\include\bootinfo.h"\
+	"..\..\include\cdefs.h"\
+	"..\..\include\endian.h"\
+	"..\..\include\platid.h"\
+	"..\..\include\platid_generated.h"\
+	"..\include\machine\ansi.h"\
+	"..\include\machine\bootinfo.h"\
+	"..\include\machine\bswap.h"\
+	"..\include\machine\cdefs.h"\
+	"..\include\machine\endian.h"\
+	"..\include\machine\platid.h"\
+	"..\include\machine\types.h"\
+	"..\include\mips\ansi.h"\
+	"..\include\mips\cdefs.h"\
+	"..\include\mips\endian.h"\
+	"..\include\mips\types.h"\
+	"..\libsa\compat.h"\
+	"..\libsa\stand.h"\
+	".\pbsdboot.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\tx39xx.c
+
+!IF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Release"
+
+!ELSEIF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Debug"
+
+DEP_CPP_TX39X=\
 	"..\..\..\..\lib\libsa\saerrno.h"\
 	"..\..\..\..\lib\libsa\saioctl.h"\
 	"..\..\..\..\lib\libsa\stand.h"\
@@ -537,6 +639,57 @@ SOURCE=.\vmem.c
 !ELSEIF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Debug"
 
 DEP_CPP_VMEM_=\
+	"..\..\..\..\lib\libsa\saerrno.h"\
+	"..\..\..\..\lib\libsa\saioctl.h"\
+	"..\..\..\..\lib\libsa\stand.h"\
+	"..\..\..\..\sys\bswap.h"\
+	"..\..\..\..\sys\cdefs.h"\
+	"..\..\..\..\sys\cdefs_aout.h"\
+	"..\..\..\..\sys\cdefs_elf.h"\
+	"..\..\..\..\sys\endian.h"\
+	"..\..\..\..\sys\errno.h"\
+	"..\..\..\..\sys\featuretest.h"\
+	"..\..\..\..\sys\stat.h"\
+	"..\..\..\..\sys\time.h"\
+	"..\..\..\..\sys\types.h"\
+	"..\..\..\mips\include\ansi.h"\
+	"..\..\..\mips\include\bswap.h"\
+	"..\..\..\mips\include\cdefs.h"\
+	"..\..\..\mips\include\endian.h"\
+	"..\..\include\ansi.h"\
+	"..\..\include\bootinfo.h"\
+	"..\..\include\cdefs.h"\
+	"..\..\include\endian.h"\
+	"..\..\include\platid.h"\
+	"..\..\include\platid_generated.h"\
+	"..\include\machine\ansi.h"\
+	"..\include\machine\bootinfo.h"\
+	"..\include\machine\bswap.h"\
+	"..\include\machine\cdefs.h"\
+	"..\include\machine\endian.h"\
+	"..\include\machine\platid.h"\
+	"..\include\machine\types.h"\
+	"..\include\mips\ansi.h"\
+	"..\include\mips\cdefs.h"\
+	"..\include\mips\endian.h"\
+	"..\include\mips\types.h"\
+	"..\libsa\compat.h"\
+	"..\libsa\stand.h"\
+	".\pbsdboot.h"\
+	
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\vr41xx.c
+
+!IF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Release"
+
+!ELSEIF  "$(CFG)" == "pbsdboot - Win32 (WCE MIPS) Debug"
+
+DEP_CPP_VR41X=\
 	"..\..\..\..\lib\libsa\saerrno.h"\
 	"..\..\..\..\lib\libsa\saioctl.h"\
 	"..\..\..\..\lib\libsa\stand.h"\

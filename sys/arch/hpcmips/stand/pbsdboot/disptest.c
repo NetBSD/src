@@ -1,4 +1,4 @@
-/*	$NetBSD: disptest.c,v 1.1.1.1 1999/09/16 12:23:30 takemura Exp $	*/
+/*	$NetBSD: disptest.c,v 1.2 1999/09/26 02:42:50 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -67,10 +67,10 @@ gpio_test()
 	volatile unsigned short *giuselh;
 	volatile unsigned short *giupiodl;
 	volatile unsigned short *giupiodh;
-	unsigned long sell = 0;
-	unsigned long selh = 0;
-	unsigned long piodl = 0;
-	unsigned long piodh = 0;
+	unsigned short sell = 0;
+	unsigned short selh = 0;
+	unsigned short piodl = 0;
+	unsigned short piodh = 0;
 	int res, i;
 	unsigned short regs[16];
 	unsigned short prev_regs[16];
