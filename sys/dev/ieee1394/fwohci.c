@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.46 2001/11/15 09:48:08 lukem Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.47 2001/12/29 12:26:31 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.46 2001/11/15 09:48:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.47 2001/12/29 12:26:31 ichiro Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -3660,6 +3660,48 @@ fwohci_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->fwbuscf_idlo == ntohl(*((u_int32_t *)&fwa->uid[4]))))
 		return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 	return 0;
+}
+
+int
+fwohci_detach(struct fwohci_softc *sc, int flags)
+{
+	int rv = 0;
+
+	if (sc->sc_sc1394.sc1394_if != NULL)
+		rv = config_detach(sc->sc_sc1394.sc1394_if, flags);
+	if (rv != 0)
+		return (rv);
+
+	callout_stop(&sc->sc_selfid_callout);
+
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
+	if (sc->sc_shutdownhook != NULL)
+		shutdownhook_disestablish(sc->sc_shutdownhook);
+
+	return (rv);
+}
+
+int
+fwohci_activate(struct device *self, enum devact act)
+{
+	struct fwohci_softc *sc = (struct fwohci_softc *)self;
+	int s, rv = 0;
+
+	s = splhigh();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if (sc->sc_sc1394.sc1394_if != NULL)
+	                rv = config_deactivate(sc->sc_sc1394.sc1394_if);
+		break; 
+	}
+	splx(s);
+
+	return (rv);
 }
 
 #ifdef FW_DEBUG
