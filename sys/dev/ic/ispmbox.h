@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.45 2003/03/03 20:54:56 mjacob Exp $ */
+/* $NetBSD: ispmbox.h,v 1.46 2003/03/25 06:25:35 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -680,12 +680,16 @@ typedef struct isp_icb {
 #define	ICBXOPT_LOOP_2_PTP	(2 << 4)
 #define	ICBXOPT_PTP_2_LOOP	(3 << 4)
 
+/*
+ * The lower 4 bits of the xfwoptions field are the OPERATION MODE bits.
+ * RIO is not defined for the 23XX cards
+ */
 #define	ICBXOPT_RIO_OFF		0
 #define	ICBXOPT_RIO_16BIT	1
 #define	ICBXOPT_RIO_32BIT	2
 #define	ICBXOPT_RIO_16BIT_IOCB	3
 #define	ICBXOPT_RIO_32BIT_IOCB	4
-#define	ICBXOPT_ZIO		(1 << 5)
+#define	ICBXOPT_ZIO		5	
 
 #define	ICBZOPT_ENA_RDXFR_RDY	0x01
 #define	ICBZOPT_ENA_OOF		(1 << 6) /* out of order frame handling */
