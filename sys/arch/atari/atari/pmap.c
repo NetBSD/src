@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 1995/06/09 19:42:36 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 1995/07/11 21:27:35 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -200,10 +200,10 @@ struct kpt_page *kpt_pages;
  * Segtabzero is an empty segment table which all processes share til they
  * reference something.
  */
-u_int	*Sysseg1;		/* root segment for 68040 */
-u_int	*Sysseg;
-u_int	*Sysmap, *Sysptmap;
-u_int	*Segtabzero;
+u_int		*Sysseg1;		/* root segment for 68040 */
+u_int		*Sysseg;
+u_int		*Sysmap, *Sysptmap;
+u_int		*Segtabzero;
 vm_size_t	Sysptsize = VM_KERNEL_PT_PAGES + 4 / NPTEPG;
 
 struct pmap	kernel_pmap_store;
@@ -225,8 +225,9 @@ static	vm_offset_t	avail_next;
 static	vm_size_t	avail_remaining;
 #endif
 
-boolean_t	pmap_testbit();
-void		pmap_enter_ptpage();
+boolean_t		pmap_testbit __P((vm_offset_t, int));
+void			pmap_enter_ptpage __P((pmap_t, vm_offset_t));
+extern vm_offset_t	reserve_dumppages __P((vm_offset_t));
 
 #ifdef MACHINE_NONCONTIG
 #define pmap_valid_page(pa)	(pmap_initialized && pmap_isvalidphys(pa))
@@ -321,7 +322,7 @@ vm_offset_t kernel_size;
 	SYSMAP(caddr_t		,vmpte		,vmmap	   ,1		)
 	SYSMAP(struct msgbuf *	,msgbufmap	,msgbufp   ,1		)
 
-	virtual_avail = va;
+	virtual_avail = reserve_dumppages(va);
 }
 
 /*
