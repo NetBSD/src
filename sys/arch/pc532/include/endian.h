@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.7 1994/10/26 08:24:25 cgd Exp $	*/
+/*	$NetBSD: endian.h,v 1.8 1995/06/18 07:13:46 phil Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -35,8 +35,8 @@
  *	@(#)endian.h	7.8 (Berkeley) 4/3/91
  */
 
-#ifndef _MACHINE_ENDIAN_H_
-#define _MACHINE_ENDIAN_H_
+#ifndef _PC532_ENDIAN_H_
+#define _PC532_ENDIAN_H_
 
 /*
  * Define the order of 32-bit words in 64-bit words.
@@ -67,19 +67,44 @@ __END_DECLS
 
 #ifdef __GNUC__
 
-#define __byte_swap_long(x) \
+#define __byte_swap_long_variable(x) \
 ({ register unsigned long __x = (x); \
    __asm ("rotw 8,%1; rotd 16,%1; rotw 8,%1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
 
-#define __byte_swap_word(x) \
+#define __byte_swap_word_variable(x) \
 ({ register unsigned short __x = (x); \
    __asm ("rotw 8,%1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
+
+
+#ifdef __OPTIMIZE__
+
+#define	__byte_swap_long_constant(x) \
+	((((x) & 0xff000000) >> 24) | \
+	 (((x) & 0x00ff0000) >>  8) | \
+	 (((x) & 0x0000ff00) <<  8) | \
+	 (((x) & 0x000000ff) << 24))
+#define	__byte_swap_word_constant(x) \
+	((((x) & 0xff00) >> 8) | \
+	 (((x) & 0x00ff) << 8))
+#define	__byte_swap_long(x) \
+	(__builtin_constant_p((x)) ? \
+	 __byte_swap_long_constant(x) : __byte_swap_long_variable(x))
+#define	__byte_swap_word(x) \
+	(__builtin_constant_p((x)) ? \
+	 __byte_swap_word_constant(x) : __byte_swap_word_variable(x))
+
+#else /* __OPTIMIZE__ */
+
+#define	__byte_swap_long(x)	__byte_swap_long_variable(x)
+#define	__byte_swap_word(x)	__byte_swap_word_variable(x)
+
+#endif /* __OPTIMIZE__ */
 
 #define	ntohl(x)	__byte_swap_long(x)
 #define	ntohs(x)	__byte_swap_word(x)
@@ -99,4 +124,4 @@ __END_DECLS
 
 #endif /* _POSIX_SOURCE */
 
-#endif /* _MACHINE_ENDIAN_H_ */
+#endif /* _PC532_ENDIAN_H_ */
