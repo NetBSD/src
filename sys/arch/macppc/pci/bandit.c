@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.10 1999/05/05 08:43:53 tsubai Exp $	*/
+/*	$NetBSD: bandit.c,v 1.11 1999/05/06 19:16:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,14 +107,15 @@
 #define	BANDIT_SPECIAL_CYCLE	0xe00000	/* Special Cycle offset */
 
 static void bandit_init __P((pci_chipset_tag_t));
-static void scan_pci_devs __P((void));
+static void scan_pci_devs __P((int));
 static void config_slot __P((int, pci_chipset_tag_t, int));
 
 void
-pci_init()
+pci_init(canmap)
+	int canmap;
 {
 
-	scan_pci_devs();
+	scan_pci_devs(canmap);
 }
 
 static void
@@ -138,7 +139,8 @@ bandit_init(pc)
 
 
 static void
-scan_pci_devs()
+scan_pci_devs(canmap)
+	int canmap;
 {
 	int reglen, node, child, n, is_bandit, is_mpc106;
 	char name[64];
@@ -223,6 +225,7 @@ scan_pci_devs()
 			continue;
 
 		pci_bridges[n].bus = reg[0];
+		pci_bridges[n].present = 1;
 
 		/*
 		 * Map the PCI configuration space access registers,
@@ -230,27 +233,36 @@ scan_pci_devs()
 		 */
 		if (is_bandit) {
 			/* XXX magic numbers */
-			if (OF_getprop(node, "reg", reg, sizeof(reg)) != 8)
-				continue;
-			pci_bridges[n].addr = mapiodev(reg[0] + 0x800000, 4);
-			pci_bridges[n].data = mapiodev(reg[0] + 0xc00000, 4);
 			pci_bridges[n].pc = n;
-			bandit_init(n);
+			if (canmap) {
+				if (OF_getprop(node, "reg", reg,
+				    sizeof(reg)) != 8)
+					continue;
+				pci_bridges[n].addr =
+				    mapiodev(reg[0] + 0x800000, 4);
+				pci_bridges[n].data =
+				    mapiodev(reg[0] + 0xc00000, 4);
+				bandit_init(n);
+			}
 		} else if (is_mpc106) {
 			/* XXX magic numbers */
-			pci_bridges[n].addr = mapiodev(0xfec00000, 4);
-			pci_bridges[n].data = mapiodev(0xfee00000, 4);
 			pci_bridges[n].pc = PCI_CHIPSET_MPC106; /* for now */
+			if (canmap) {
+				pci_bridges[n].addr = mapiodev(0xfec00000, 4);
+				pci_bridges[n].data = mapiodev(0xfee00000, 4);
+			}
 		}
 
-		/*
-		 * Configure all of the PCI devices attached to this
-		 * PCI-Host bridge.
-		 */
-		child = OF_child(node);
-		while (child) {
-			config_slot(child, pci_bridges[n].pc, -1);
-			child = OF_peer(child);
+		if (canmap) {
+			/*
+			 * Configure all of the PCI devices attached to this
+			 * PCI-Host bridge.
+			 */
+			child = OF_child(node);
+			while (child) {
+				config_slot(child, pci_bridges[n].pc, -1);
+				child = OF_peer(child);
+			}
 		}
 
 		/* Bridge found, increment bridge instance. */
