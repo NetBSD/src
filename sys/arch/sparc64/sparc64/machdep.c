@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149 2003/10/18 06:51:42 petrov Exp $ */
+/*	$NetBSD: machdep.c,v 1.150 2003/10/21 08:31:11 petrov Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149 2003/10/18 06:51:42 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2003/10/21 08:31:11 petrov Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_compat_sunos.h"
@@ -370,7 +370,7 @@ setregs(l, pack, stack)
 	tf->tf_npc = tf->tf_pc + 4;
 	stack -= sizeof(struct rwindow);
 	tf->tf_out[6] = stack - STACK_OFFSET;
-	tf->tf_out[7] = NULL;
+	tf->tf_out[7] = 0UL;
 #ifdef NOTDEF_DEBUG
 	printf("setregs: setting tf %p sp %p pc %p\n", (long)tf, 
 	       (long)tf->tf_out[6], (long)tf->tf_pc);
@@ -1297,7 +1297,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	 */
 	map->dm_mapsize = buflen;
 	i = 0;
-	map->dm_segs[i].ds_addr = NULL;
+	map->dm_segs[i].ds_addr = 0UL;
 	map->dm_segs[i].ds_len = 0;
 
 	incr = PAGE_SIZE - (vaddr & PGOFSET);
@@ -1683,7 +1683,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM code.
 	 */
-	segs[0].ds_addr = NULL; /* UPA does not map things */
+	segs[0].ds_addr = 0UL; /* UPA does not map things */
 	segs[0].ds_len = size;
 	*rsegs = 1;
 
@@ -1866,7 +1866,7 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 	vm_prot_t pm_prot = VM_PROT_READ;
 	int err, map_little = 0;
 
-	if (iobase == NULL)
+	if (iobase == 0UL)
 		iobase = IODEV_BASE;
 	if (io_space == NULL)
 		/*
