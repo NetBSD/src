@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.45 1995/07/02 18:13:15 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.46 1995/07/03 16:58:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -49,6 +49,7 @@
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/time.h>
+#include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
 #include <sys/namei.h>
