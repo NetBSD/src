@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.39 1995/06/28 04:09:25 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.40 1995/06/30 05:23:03 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -393,7 +393,7 @@ fault:
 _badtrap:
 	moveml	#0xC0C0,sp@-		| save scratch regs
 	movw	sp@(22),sp@-		| push exception vector info
-	clrw	sp@-
+	clrw	sp@-			| and pad
 	movl	sp@(22),sp@-		| and PC
 	jbsr	_straytrap		| report
 	addql	#8,sp			| pop args
@@ -883,7 +883,7 @@ start:
 	.word	0x4e7b, 0x0007		| Disable dtt1
 	.word	0x4e7b, 0x0003		| Disable MMU
 
-	movl	#0x80000000,sp@-	| Fake an enabled MMU
+	movl	#0x0,sp@-		| Fake unenabled MMU
 	jra	do_bootstrap
 
 Lstartnot040:
