@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.28 2000/04/11 06:50:37 nisimura Exp $ */
+/* $NetBSD: dec_3100.c,v 1.29 2000/04/11 12:05:35 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -167,7 +167,7 @@ dec_3100_cons_init()
 
 #define CALLINTR(vvv, cp0)					\
     do {							\
-	if (cpumask & (cp0)) {					\
+	if (ipending & (cp0)) {					\
 		intrcnt[vvv] += 1;				\
 		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
 	}							\
