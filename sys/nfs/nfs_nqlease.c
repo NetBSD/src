@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.49 2003/06/28 14:22:17 darrenr Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.50 2003/06/29 18:43:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.49 2003/06/28 14:22:17 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.50 2003/06/29 18:43:36 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -739,7 +739,7 @@ nqnfsrv_getlease(nfsd, slp, lwp, mrq)
 	flags = fxdr_unsigned(int, *tl++);
 	nfsd->nd_duration = fxdr_unsigned(int, *tl);
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly,
-		(nfsd->nd_flag & ND_KERBAUTH), FALSE, lwp);
+		(nfsd->nd_flag & ND_KERBAUTH), FALSE);
 	if (error) {
 		nfsm_reply(0);
 		return 0;
@@ -1099,7 +1099,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 			vp = NFSTOV(np);
 			vpid = vp->v_id;
 			if (np->n_expiry < time.tv_sec) {
-			   if (vget(vp, LK_EXCLUSIVE, l) == 0) {
+			   if (vget(vp, LK_EXCLUSIVE) == 0) {
 			     nmp->nm_inprog = vp;
 			     if (vpid == vp->v_id) {
 				CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
@@ -1128,7 +1128,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 			    if ((np->n_flag & (NQNFSWRITE | NQNFSNONCACHE))
 				 == NQNFSWRITE &&
 				 !LIST_EMPTY(&vp->v_dirtyblkhd) &&
-				 vget(vp, LK_EXCLUSIVE, l) == 0) {
+				 vget(vp, LK_EXCLUSIVE) == 0) {
 				 nmp->nm_inprog = vp;
 				 if (vpid == vp->v_id &&
 				     nqnfs_getlease(vp, ND_WRITE, cred, l)==0)

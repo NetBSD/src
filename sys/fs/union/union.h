@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.5 2003/06/29 15:11:48 thorpej Exp $	*/
+/*	$NetBSD: union.h,v 1.6 2003/06/29 18:43:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -101,7 +101,7 @@ struct union_node {
 extern int union_allocvp __P((struct vnode **, struct mount *,
 				struct vnode *, struct vnode *,
 				struct componentname *, struct vnode *,
-				struct vnode *, int, struct lwp *));
+				struct vnode *, int));
 extern int union_copyfile __P((struct vnode *, struct vnode *,
 					struct ucred *, struct lwp *));
 extern int union_copyup __P((struct union_node *, int, struct ucred *,

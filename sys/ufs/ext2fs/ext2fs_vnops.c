@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.46 2003/06/28 14:22:24 darrenr Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.47 2003/06/29 18:43:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.46 2003/06/28 14:22:24 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.47 2003/06/29 18:43:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,6 @@ ext2fs_mknod(v)
 	struct vattr *vap = ap->a_vap;
 	struct vnode **vpp = ap->a_vpp;
 	struct inode *ip;
-	struct componentname *cnp = ap->a_cnp;
 	int error;
 	struct mount	*mp;	
 	ino_t		ino;
@@ -167,7 +166,7 @@ ext2fs_mknod(v)
 	vput(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
-	error = VFS_VGET(mp, ino, vpp, cnp->cn_lwp);
+	error = VFS_VGET(mp, ino, vpp);
 	if (error != 0) {
 		*vpp = NULL;
 		return (error);
@@ -779,7 +778,7 @@ abortit:
 			goto bad;
 		if (xp != NULL)
 			vput(tvp);
-		error = ext2fs_checkpath(ip, dp, tcnp->cn_cred, tcnp->cn_lwp);
+		error = ext2fs_checkpath(ip, dp, tcnp->cn_cred);
 		if (error != 0)
 			goto out;
 		if ((tcnp->cn_flags & SAVESTART) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.10 2003/06/28 14:21:50 darrenr Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.11 2003/06/29 18:43:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.10 2003/06/28 14:21:50 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.11 2003/06/29 18:43:25 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -800,8 +800,7 @@ ntfs_lookup(ap)
 		dprintf(("ntfs_lookup: parentdir: %d\n",
 			 vap->va_a_name->n_pnumber));
 		error = VFS_VGET(ntmp->ntm_mountp,
-				 vap->va_a_name->n_pnumber,ap->a_vpp,
-				 cnp->cn_lwp); 
+				 vap->va_a_name->n_pnumber,ap->a_vpp);
 		ntfs_ntvattrrele(vap);
 		if (error) {
 			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)

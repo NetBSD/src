@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.188 2003/06/28 14:21:59 darrenr Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.189 2003/06/29 18:43:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.188 2003/06/28 14:21:59 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.189 2003/06/29 18:43:29 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -379,7 +379,7 @@ checkdirs(olddp)
 
 	if (olddp->v_usecount == 1)
 		return;
-	if (VFS_ROOT(olddp->v_mountedhere, &newdp, curlwp))
+	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
 	proclist_lock_read();
 	LIST_FOREACH(p, &allproc, p_list) {
@@ -871,7 +871,7 @@ sys_fchdir(l, v, retval)
 	while (!error && (mp = vp->v_mountedhere) != NULL) {
 		if (vfs_busy(mp, 0, 0))
 			continue;
-		error = VFS_ROOT(mp, &tdp, l);
+		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp);
 		if (error)
 			break;
@@ -1240,7 +1240,7 @@ sys_fhopen(l, v, retval)
 		goto bad;
 	}
 
-	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp, l)) != 0) {
+	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)) != 0) {
 		vp = NULL;	/* most likely unnecessary sanity for bad: */
 		goto bad;
 	}
@@ -1356,7 +1356,7 @@ sys_fhstat(l, v, retval)
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
 		return (ESTALE);
-	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp, l)))
+	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
 		return (error);
 	error = vn_stat(vp, &sb, l);
 	vput(vp);
@@ -1395,7 +1395,7 @@ sys_fhstatfs(l, v, retval)
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
 		return (ESTALE);
-	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp, l)))
+	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
 		return (error);
 	mp = vp->v_mount;
 	vput(vp);

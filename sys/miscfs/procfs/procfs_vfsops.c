@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.46 2003/06/28 14:22:04 darrenr Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.47 2003/06/29 18:43:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.46 2003/06/28 14:22:04 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.47 2003/06/29 18:43:35 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -77,8 +77,8 @@ int	procfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
 			     struct lwp *));
 int	procfs_statfs __P((struct mount *, struct statfs *, struct lwp *));
 int	procfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int	procfs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
-int	procfs_fhtovp __P((struct mount *, struct fid *, struct vnode **, struct lwp *));
+int	procfs_vget __P((struct mount *, ino_t, struct vnode **));
+int	procfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	procfs_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	procfs_vptofh __P((struct vnode *, struct fid *));
@@ -171,10 +171,9 @@ procfs_unmount(mp, mntflags, l)
 }
 
 int
-procfs_root(mp, vpp, l)
+procfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	return (procfs_allocvp(mp, vpp, 0, Proot, -1));
@@ -244,22 +243,20 @@ procfs_sync(mp, waitfor, uc, l)
 
 /*ARGSUSED*/
 int
-procfs_vget(mp, ino, vpp, l)
+procfs_vget(mp, ino, vpp)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	return (EOPNOTSUPP);
 }
 
 /*ARGSUSED*/
 int
-procfs_fhtovp(mp, fhp, vpp, l)
+procfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	return (EINVAL);

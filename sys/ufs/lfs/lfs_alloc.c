@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.67 2003/06/28 14:22:26 darrenr Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.68 2003/06/29 18:43:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.67 2003/06/28 14:22:26 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.68 2003/06/29 18:43:43 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -129,7 +129,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct lwp *l,
 	 * we don't have to do anything else.  If the version number is wrong,
 	 * take appropriate action.
 	 */
-	error = VFS_VGET(fs->lfs_ivnode->v_mount, ino, &vp, l);
+	error = VFS_VGET(fs->lfs_ivnode->v_mount, ino, &vp);
 	if (error == 0) {
 		/* printf("lfs_rf_valloc[1]: ino %d vp %p\n", ino, vp); */
 

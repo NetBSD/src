@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.2 2003/06/28 14:21:49 darrenr Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.3 2003/06/29 18:43:24 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.2 2003/06/28 14:21:49 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.3 2003/06/29 18:43:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ loop:
 			vp = DETOV(dep);
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&msdosfs_ihash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, l))
+			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
 			return (dep);
 		}

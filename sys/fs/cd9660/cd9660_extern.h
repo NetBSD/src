@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.3 2003/06/28 14:21:49 darrenr Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.4 2003/06/29 18:43:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -91,13 +91,12 @@ int cd9660_mount __P((struct mount *,
 	    const char *, void *, struct nameidata *, struct lwp *));
 int cd9660_start __P((struct mount *, int, struct lwp *));
 int cd9660_unmount __P((struct mount *, int, struct lwp *));
-int cd9660_root __P((struct mount *, struct vnode **, struct lwp *));
+int cd9660_root __P((struct mount *, struct vnode **));
 int cd9660_quotactl __P((struct mount *, int, uid_t, caddr_t, struct lwp *));
 int cd9660_statfs __P((struct mount *, struct statfs *, struct lwp *));
 int cd9660_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int cd9660_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
-int cd9660_fhtovp __P((struct mount *, struct fid *, struct vnode **,
-	    struct lwp *));
+int cd9660_vget __P((struct mount *, ino_t, struct vnode **));
+int cd9660_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int cd9660_check_export __P((struct mount *, struct mbuf *, int *,
 	    struct ucred **));
 int cd9660_vptofh __P((struct vnode *, struct fid *));

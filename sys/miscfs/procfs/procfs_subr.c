@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.54 2003/06/28 14:22:04 darrenr Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.55 2003/06/29 18:43:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.54 2003/06/28 14:22:04 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.55 2003/06/29 18:43:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -483,7 +483,7 @@ loop:
 		    pp->pfs_fd == fd && vp->v_mount == mp) {
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&pfs_hash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, l))
+			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
 			return (vp);
 		}

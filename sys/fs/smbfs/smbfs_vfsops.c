@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.29 2003/06/29 12:17:21 martin Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.30 2003/06/29 18:43:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.29 2003/06/29 12:17:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.30 2003/06/29 18:43:25 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -72,7 +72,7 @@ static MALLOC_DEFINE(M_SMBFSHASH, "SMBFS hash", "SMBFS hash table");
 int smbfs_mount(struct mount *, const char *, void *,
 		struct nameidata *, struct lwp *);
 int smbfs_quotactl(struct mount *, int, uid_t, caddr_t, struct lwp *);
-int smbfs_root(struct mount *, struct vnode **, struct lwp *);
+int smbfs_root(struct mount *, struct vnode **);
 static int smbfs_setroot(struct mount *);
 int smbfs_start(struct mount *, int, struct lwp *);
 int smbfs_statfs(struct mount *, struct statfs *, struct lwp *);
@@ -82,8 +82,8 @@ void smbfs_init(void);
 void smbfs_reinit(void);
 void smbfs_done(void);
 
-int smbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp, struct lwp *);
-int smbfs_fhtovp(struct mount *, struct fid *, struct vnode **, struct lwp *);
+int smbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp);
+int smbfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int smbfs_vptofh(struct vnode *, struct fid *);
 
 extern struct pool smbfs_node_pool;
@@ -289,7 +289,7 @@ smbfs_setroot(struct mount *mp)
  * Return locked root vnode of a filesystem.
  */
 int
-smbfs_root(struct mount *mp, struct vnode **vpp, struct lwp *l)
+smbfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct smbmount *smp = VFSTOSMBFS(mp);
 
@@ -302,7 +302,7 @@ smbfs_root(struct mount *mp, struct vnode **vpp, struct lwp *l)
 
 	KASSERT(smp->sm_root != NULL && SMBTOV(smp->sm_root) != NULL);
 	*vpp = SMBTOV(smp->sm_root);
-	return vget(*vpp, LK_EXCLUSIVE | LK_RETRY, l);
+	return vget(*vpp, LK_EXCLUSIVE | LK_RETRY);
 }
 
 /*
@@ -430,7 +430,7 @@ loop:
 			continue;
 		}
 		simple_unlock(&mntvnode_slock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, l);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
 			simple_lock(&mntvnode_slock);
 			if (error == ENOENT)
@@ -453,21 +453,19 @@ loop:
  * smbfs flat namespace lookup. Unsupported.
  */
 /* ARGSUSED */
-int smbfs_vget(mp, ino, vpp, l)
+int smbfs_vget(mp, ino, vpp)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	return (EOPNOTSUPP);
 }
 
 /* ARGSUSED */
-int smbfs_fhtovp(mp, fhp, vpp, l)
+int smbfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	return (EINVAL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.46 2003/06/28 14:21:59 darrenr Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.47 2003/06/29 18:43:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.46 2003/06/28 14:21:59 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.47 2003/06/29 18:43:28 thorpej Exp $");
 
 #include "opt_ktrace.h"
 
@@ -581,7 +581,7 @@ unionlookup:
 		if (vfs_busy(mp, 0, 0))
 			continue;
 		VOP_UNLOCK(dp, 0);
-		error = VFS_ROOT(mp, &tdp, cnp->cn_lwp);
+		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp);
 		if (error) {
 			dpunlocked = 1;

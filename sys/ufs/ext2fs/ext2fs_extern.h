@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.16 2003/06/28 14:22:24 darrenr Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.17 2003/06/29 18:43:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -95,8 +95,7 @@ int ext2fs_dirremove __P((struct vnode *, struct componentname *));
 int ext2fs_dirrewrite __P((struct inode *, struct inode *,
 			   struct componentname *));
 int ext2fs_dirempty __P((struct inode *, ino_t, struct ucred *));
-int ext2fs_checkpath __P((struct inode *, struct inode *, struct ucred *,
-			  struct lwp *));
+int ext2fs_checkpath __P((struct inode *, struct inode *, struct ucred *));
 
 /* ext2fs_subr.c */
 int ext2fs_blkatoff __P((void *));
@@ -118,8 +117,8 @@ int ext2fs_unmount __P((struct mount *, int, struct lwp *));
 int ext2fs_flushfiles __P((struct mount *, int, struct lwp *));
 int ext2fs_statfs __P((struct mount *, struct statfs *, struct lwp *));
 int ext2fs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int ext2fs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
-int ext2fs_fhtovp __P((struct mount *, struct fid *, struct vnode **, struct lwp *));
+int ext2fs_vget __P((struct mount *, ino_t, struct vnode **));
+int ext2fs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int ext2fs_vptofh __P((struct vnode *, struct fid *));
 int ext2fs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		       struct lwp *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.105 2003/06/28 14:22:21 darrenr Exp $	*/
+/*	$NetBSD: mount.h,v 1.106 2003/06/29 18:43:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -355,8 +355,7 @@ struct vfsops {
 				    struct lwp *l));
 	int	(*vfs_unmount)	__P((struct mount *mp, int mntflags,
 				    struct lwp *l));
-	int	(*vfs_root)	__P((struct mount *mp, struct vnode **vpp,
-				    struct lwp *l));
+	int	(*vfs_root)	__P((struct mount *mp, struct vnode **vpp));
 	int	(*vfs_quotactl)	__P((struct mount *mp, int cmds, uid_t uid,
 				    caddr_t arg, struct lwp *l));
 	int	(*vfs_statfs)	__P((struct mount *mp, struct statfs *sbp,
@@ -364,9 +363,9 @@ struct vfsops {
 	int	(*vfs_sync)	__P((struct mount *mp, int waitfor,
 				    struct ucred *cred, struct lwp *l));
 	int	(*vfs_vget)	__P((struct mount *mp, ino_t ino,
-				    struct vnode **vpp, struct lwp *l));
+				    struct vnode **vpp));
 	int	(*vfs_fhtovp)	__P((struct mount *mp, struct fid *fhp,
-				    struct vnode **vpp, struct lwp *l));
+				    struct vnode **vpp));
 	int	(*vfs_vptofh)	__P((struct vnode *vp, struct fid *fhp));
 	void	(*vfs_init)	__P((void));
 	void	(*vfs_reinit)	__P((void));
@@ -385,12 +384,12 @@ struct vfsops {
 	(*(MP)->mnt_op->vfs_mount)(MP, PATH, DATA, NDP, L)
 #define VFS_START(MP, FLAGS, P)	  (*(MP)->mnt_op->vfs_start)(MP, FLAGS, P)
 #define VFS_UNMOUNT(MP, FORCE, P) (*(MP)->mnt_op->vfs_unmount)(MP, FORCE, P)
-#define VFS_ROOT(MP, VPP, P)	  (*(MP)->mnt_op->vfs_root)(MP, VPP, P)
+#define VFS_ROOT(MP, VPP)	  (*(MP)->mnt_op->vfs_root)(MP, VPP)
 #define VFS_QUOTACTL(MP,C,U,A,P)  (*(MP)->mnt_op->vfs_quotactl)(MP, C, U, A, P)
 #define VFS_STATFS(MP, SBP, P)	  (*(MP)->mnt_op->vfs_statfs)(MP, SBP, P)
 #define VFS_SYNC(MP, WAIT, C, P)  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C, P)
-#define VFS_VGET(MP, INO, VPP, P) (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP, P)
-#define VFS_FHTOVP(MP, FIDP, VPP, P) (*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP, P)
+#define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
+#define VFS_FHTOVP(MP, FIDP, VPP) (*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP)
 #define VFS_CHECKEXP(MP, NAM, EXFLG, CRED) \
 	(*(MP)->mnt_op->vfs_checkexp)(MP, NAM, EXFLG, CRED)
 #define	VFS_VPTOFH(VP, FIDP)	  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP)

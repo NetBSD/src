@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.24 2003/06/29 02:17:00 thorpej Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.25 2003/06/29 18:43:21 thorpej Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.24 2003/06/29 02:17:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.25 2003/06/29 18:43:21 thorpej Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -108,7 +108,7 @@ struct vfsops coda_vfsops = {
     coda_nb_statfs,
     coda_sync,
     coda_vget,
-    (int (*) (struct mount *, struct fid *, struct vnode **, struct lwp *))
+    (int (*) (struct mount *, struct fid *, struct vnode **))
 	eopnotsupp,
     (int (*) (struct vnode *, struct fid *)) eopnotsupp,
     coda_init,
@@ -335,18 +335,17 @@ coda_unmount(vfsp, mntflags, l)
  * find root of cfs
  */
 int
-coda_root(vfsp, vpp, l)
+coda_root(vfsp, vpp)
 	struct mount *vfsp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
     struct coda_mntinfo *mi = vftomi(vfsp);
     struct vnode **result;
     int error;
-    struct proc *p;
+    struct lwp *l = curlwp;	/* XXX */
+    struct proc *p = l->l_proc;	/* XXX */
     ViceFid VFid;
 
-    p = l->l_proc;
     ENTRY;
     MARK_ENTRY(CODA_ROOT_STATS);
     result = NULL;
@@ -481,11 +480,10 @@ coda_sync(vfsp, waitfor, cred, l)
 }
 
 int
-coda_vget(vfsp, ino, vpp, l)
+coda_vget(vfsp, ino, vpp)
     struct mount *vfsp;
     ino_t ino;
     struct vnode **vpp;
-    struct lwp *l;
 {
     ENTRY;
     return (EOPNOTSUPP);
@@ -497,23 +495,22 @@ coda_vget(vfsp, ino, vpp, l)
  * a type-specific fid.  
  */
 int
-coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp, l)
+coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
     struct mount *vfsp;    
     struct fid *fhp;
     struct mbuf *nam;
     struct vnode **vpp;
     int *exflagsp;
     struct ucred **creadanonp;
-    struct lwp *l;
 {
     struct cfid *cfid = (struct cfid *)fhp;
     struct cnode *cp = 0;
     int error;
-    struct proc *p;
+    struct lwp *l = curlwp;	/* XXX */
+    struct proc *p = l->l_proc;	/* XXX */
     ViceFid VFid;
     int vtype;
 
-    p = l->l_proc;
     ENTRY;
     
     MARK_ENTRY(CODA_VGET_STATS);
@@ -614,7 +611,7 @@ getNewVnode(vpp)
 	return ENODEV;
     
     return coda_fhtovp(mi->mi_vfsp, (struct fid*)&cfid, NULL, vpp,
-		      NULL, NULL, curlwp);	/* XXX */
+		      NULL, NULL);
 }
 
 #include <ufs/ufs/quota.h>
