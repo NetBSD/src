@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32_compat_43.c,v 1.2 1998/08/26 13:38:21 mrg Exp $	*/
+/*	$NetBSD: sparc32_compat_43.c,v 1.3 1998/08/29 17:01:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -40,11 +40,10 @@
 #include <sys/ucred.h>
 #include <vm/vm.h>	/* XXX for <sys/sysctl.h> */
 #include <sys/sysctl.h>
+#include <sys/swap.h>
 
 #include <compat/sparc32/sparc32.h>
 #include <compat/sparc32/sparc32_syscallargs.h>
-
-#include <vm/vm_swap.h>
 
 static void
 sparc32_from_stat43(sp43, sp32)
