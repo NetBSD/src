@@ -1,8 +1,11 @@
-#	$NetBSD: files.sun3.newconf,v 1.19 1995/01/24 05:48:29 gwr Exp $
+#	$NetBSD: files.sun3.newconf,v 1.20 1995/01/25 20:45:56 cgd Exp $
 
 #
 # sun3-specific configuration info
 #
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
 
 maxusers 2 8 64
 
