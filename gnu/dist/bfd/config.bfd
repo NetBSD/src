@@ -343,7 +343,7 @@ case "${targ}" in
     targ_defvec=ecoff_big_vec
     targ_selvecs=ecoff_little_vec
     ;;
-  mipsel-*-netbsd*|mips-dec-netbsd*)
+  mipsel-*-netbsd* | mips-dec-netbsd*)
     targ_defvec=bfd_elf32_littlemips_vec
     targ_selvecs=bfd_elf32_bigmips_vec
     ;;
