@@ -345,11 +345,13 @@ bfd_errmsg (error_tag)
 #ifndef errno
   extern int errno;
 #endif
+  int tmp;
+
   if (error_tag == bfd_error_system_call)
     return xstrerror (errno);
 
-  if ((((int)error_tag <(int) bfd_error_no_error) ||
-       ((int)error_tag > (int)bfd_error_invalid_error_code)))
+  if ((((tmp = error_tag) <(int) bfd_error_no_error) ||
+       ((tmp = error_tag) > (int)bfd_error_invalid_error_code)))
     error_tag = bfd_error_invalid_error_code;/* sanity check */
 
   return _(bfd_errmsgs [(int)error_tag]);

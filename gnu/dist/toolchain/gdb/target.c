@@ -1569,7 +1569,9 @@ char *
 target_signal_to_string (sig)
      enum target_signal sig;
 {
-  if ((sig >= TARGET_SIGNAL_FIRST) && (sig <= TARGET_SIGNAL_LAST))
+  int tmp;
+
+  if (((tmp = sig) >= TARGET_SIGNAL_FIRST) && (sig <= TARGET_SIGNAL_LAST))
     return signals[sig].string;
   else
     return signals[TARGET_SIGNAL_UNKNOWN].string;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.171 2002/03/08 20:48:42 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.172 2002/03/09 13:22:54 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.171 2002/03/08 20:48:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.172 2002/03/09 13:22:54 bjh21 Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2794,6 +2794,7 @@ vfs_vnode_print(vp, full, pr)
 {
 	char buf[256];
 	const char *vtype, *vtag;
+	int tmp;
 
 	uvm_object_printit(&vp->v_uobj, full, pr);
 	bitmask_snprintf(vp->v_flag, vnode_flagbits, buf, sizeof(buf));
@@ -2805,10 +2806,10 @@ vfs_vnode_print(vp, full, pr)
 	      vp->v_data, vp->v_usecount, vp->v_writecount,
 	      vp->v_holdcnt, vp->v_numoutput);
 
-	vtype = (vp->v_type >= 0 &&
+	vtype = ((tmp = vp->v_type) >= 0 &&
 		 vp->v_type < sizeof(vnode_types) / sizeof(vnode_types[0])) ?
 		vnode_types[vp->v_type] : "UNKNOWN";
-	vtag = (vp->v_tag >= 0 &&
+	vtag = ((tmp = vp->v_tag) >= 0 &&
 		vp->v_tag < sizeof(vnode_tags) / sizeof(vnode_tags[0])) ?
 		vnode_tags[vp->v_tag] : "UNKNOWN";
 	
