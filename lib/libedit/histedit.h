@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.5 1997/04/11 17:52:45 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.6 1997/10/14 15:05:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -145,20 +145,20 @@ void		  el_deletestr	__P((EditLine *, int));
 typedef struct history History;
 
 typedef struct HistEvent {
-    int 	  num;
-    const char *str;
+    int 	 num;
+    const char	*str;
 } HistEvent;
 
 /*
  * History access functions.
  */
-History *		history_init	__P((void));
-void 			history_end	__P((History *));
+History *	history_init	__P((void));
+void 		history_end	__P((History *));
 
-const HistEvent *	history		__P((History *, int, ...));
+int 		history		__P((History *, HistEvent *, int, ...));
 
 #define H_FUNC		 0	/* , UTSL		*/
-#define H_EVENT		 1	/* , const int);	*/
+#define H_SETMAXSIZE	 1	/* , const int);	*/
 #define H_FIRST		 2	/* , void);		*/
 #define H_LAST		 3	/* , void);		*/
 #define H_PREV		 4	/* , void);		*/
@@ -174,5 +174,6 @@ const HistEvent *	history		__P((History *, int, ...));
 #define H_LOAD		14	/* , const char *);	*/
 #define H_SAVE		15	/* , const char *);	*/
 #define H_CLEAR		16	/* , void);		*/
+#define H_GETSIZE	17	/* , void);		*/
 
 #endif /* _h_editline */
