@@ -309,8 +309,8 @@
 				
 #if !defined PCVT_NULLCHARS	/* ---------- DEFAULT: ON ------------- */
 # define PCVT_NULLCHARS 1	/* allow the keyboard to send null 	*/
-#elif PCVT_NULLCHARS != 0	/* program. this has the side effect,	*/
-# undef PCVT_NULLCHARS		/* (0x00) characters to the calling	*/
+#elif PCVT_NULLCHARS != 0	/* (0x00) characters to the calling	*/
+# undef PCVT_NULLCHARS		/* program. this has the side effect,	*/
 # define PCVT_NULLCHARS 1	/* that every undefined key also sends	*/
 #endif				/* out nulls. take it as experimental	*/
 				/* code, this behaviour will change in	*/
