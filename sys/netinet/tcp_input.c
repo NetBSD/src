@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.20 1997/06/30 18:35:55 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.21 1997/06/30 18:53:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -38,13 +38,7 @@
 /*
  *	TODO list for SYN cache stuff:
  *
- *	(a) There's clearly a change to the tcp_respond() interface, but
- *	    it's not clear to me exactly what the new semantics are, or
- *	    that all of the callers get it correct.  Unfortunately, the
- *	    change isn't DOCUMENTED, and I don't have time to figure it
- *	    out.
- *
- *	(b) The definition of "struct syn_cache" says:
+ *	(a) The definition of "struct syn_cache" says:
  *
  *		This structure should not exceeed 32 bytes.
  *
@@ -69,7 +63,7 @@
  *	    integreated these changes with one fo the IPv6 status that are
  *	    available?)
  *
- *	(c) Find room for a "state" field, which is needed to keep a
+ *	(b) Find room for a "state" field, which is needed to keep a
  *	    compressed state for TIME_WAIT TCBs.  It's been noted already
  *	    that this is fairly important for very high-volume web and
  *	    mail servers, which use a large number of short-lived
