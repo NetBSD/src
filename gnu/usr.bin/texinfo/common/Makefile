@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2000/11/01 02:06:25 itojun Exp $
+#	$NetBSD: Makefile,v 1.5 2001/07/25 16:47:50 assar Exp $
 
 LIB=		common
-SRCS+=		getopt.c getopt1.c xmalloc.c xstrdup.c
+SRCS+=		getopt.c getopt1.c substring.c xexit.c xmalloc.c xstrdup.c
 
 CPPFLAGS+=	-DGNULOCALEDIR=\"/usr/share/locale\" \
 		-DLOCALE_ALIAS_PATH=\"/usr/share/locale:.\"
