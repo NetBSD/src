@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
- *	$Id: kern_xxx.c,v 1.10 1994/02/15 06:58:07 cgd Exp $
+ *	$Id: kern_xxx.c,v 1.11 1994/03/01 07:58:28 glass Exp $
  */
 
 #include <sys/param.h>
@@ -218,7 +218,7 @@ scdebug_call(p, code, narg, args)
 		code = 0;
 	} else
 		printf("%d", code);
-	printf("called: %s(", syscallnames[code]);
+	printf(" called: %s(", syscallnames[code]);
 	for (i = 0; i < narg; i++)
 		printf("0x%x, ", args[i]);
 	printf(")\n");
@@ -234,11 +234,10 @@ scdebug_ret(p, code, error, retval)
 
 	printf("proc %d: syscall ", p->p_pid);
 	if (code < 0 || code >= nsysent) {
-
 		printf("OUT OF RANGE (%d)", code);
 		code = 0;
 	} else
 		printf("%d", code);
-	printf("return: error = %d, retval = %d\n", error, retval);
+	printf(" return: error = %d, retval = %d\n", error, retval);
 }
 #endif /* SYSCALL_DEBUG */
