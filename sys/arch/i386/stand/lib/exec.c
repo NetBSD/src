@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.7 1999/01/28 22:45:06 christos Exp $	 */
+/*	$NetBSD: exec.c,v 1.8 1999/01/29 18:49:08 christos Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -7,6 +7,8 @@
  *	Matthias Drochner.  All rights reserved.
  * Copyright (c) 1996
  * 	Perry E. Metzger.  All rights reserved.
+ * Copyright (c) 1997
+ * 	Martin Husemann.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,8 +42,11 @@
  */
 
 /*
- * starts NetBSD a.out kernel needs lowlevel startup from startprog.S
+ * starts NetBSD a.out kernel
+ * needs lowlevel startup from startprog.S
+ * This is a special version of exec.c to support use of XMS.
  */
+
 #include <sys/param.h>
 #include <sys/reboot.h>
 #ifdef COMPAT_OLDBOOT
@@ -84,13 +89,19 @@ exec_netbsd(file, loadaddr, boothowto)
 {
 	u_long          boot_argv[BOOT_NARGS];
 	int		fd;
+	u_long		marks[MARK_MAX];
+	struct btinfo_symtab btinfo_symtab;
+	u_long		extmem;
+#ifdef XMS
+	u_long		xmsmem;
+	physaddr_t	origaddr = loadaddr;
+#endif
+
 #ifdef COMPAT_OLDBOOT
 	char           *fsname, *devname;
 	int             unit, part;
 	const char     *filename;
 	int             bootdevnr;
-	u_long		marks[MARK_MAX];
-	struct btinfo_symtab btinfo_symtab;
 #endif
 
 #ifdef	DEBUG
@@ -101,17 +112,40 @@ exec_netbsd(file, loadaddr, boothowto)
 
 	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
 
+	extmem = getextmem();
+
+#ifdef XMS
+	if ((getextmem1() == 0) && (xmsmem = checkxms())) {
+	        u_long kernsize;
+
+		/*
+		 * With "CONSERVATIVE_MEMDETECT", extmem is 0 because
+		 *  getextmem() is getextmem1(). Without, the "smart"
+		 *  methods could fail to report all memory as well.
+		 * xmsmem is a few kB less than the actual size, but
+		 *  better than nothing.
+		 */
+		if (xmsmem > extmem)
+			extmem = xmsmem;
+		/* 
+		 * Get the size of the kernel
+		 */
+		marks[MARK_START] = loadaddr;
+		if ((fd = loadfile(file, marks, COUNT_ALL)) == -1)
+			goto out;
+		close(fd);
+
+		kernsize = marks[MARK_END];
+		kernsize = (kernsize + 1023) / 1024;
+
+		loadaddr = xmsalloc(kernsize);
+		if (!loadaddr)
+			return(ENOMEM);
+	}
+#endif
 	marks[MARK_START] = loadaddr;
 	if ((fd = loadfile(file, marks, LOAD_ALL)) == -1)
 		goto out;
-
-	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
-	    (-sizeof(int));
-
-	btinfo_symtab.nsym = marks[MARK_NSYM];
-	btinfo_symtab.ssym = marks[MARK_SYM];
-	btinfo_symtab.esym = marks[MARK_END];
-	BI_ADD(&btinfo_symtab, BTINFO_SYMTAB, sizeof(struct btinfo_symtab));
 
 	boot_argv[0] = boothowto;
 
@@ -155,22 +189,47 @@ exec_netbsd(file, loadaddr, boothowto)
 #else
 	boot_argv[1] = 0;
 #endif
+	boot_argv[2] = vtophys(bootinfo);	/* old cyl offset */
+	/* argv[3] below */
+	boot_argv[4] = extmem;
+	boot_argv[5] = getbasemem();
+
 #ifdef PASS_BIOSGEOM
 	bi_getbiosgeom();
 #endif
-	boot_argv[2] = vtophys(bootinfo);	/* old cyl offset */
-	boot_argv[3] = marks[MARK_END];
-	boot_argv[4] = getextmem();
-	boot_argv[5] = getbasemem();
-
 	close(fd);
 
+#ifdef XMS
+	if (loadaddr != origaddr) {
+		/*
+		 * We know have done our last DOS IO, so we may
+		 * trash the OS. Copy the data from the temporary
+		 * buffer to its real adress.
+		 */
+		marks[MARK_START] -= loadaddr;
+		marks[MARK_END] -= loadaddr;
+		marks[MARK_SYM] -= loadaddr;
+		marks[MARK_END] -= loadaddr;
+		ppbcopy(loadaddr, origaddr, marks[MARK_END]);
+	}
+#endif
+	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
+	    (-sizeof(int));
+
+	boot_argv[3] = marks[MARK_END];
+
+
 #ifdef DEBUG
-	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n", marks[MARK_START],
+	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n", marks[MARK_ENTRY],
 	    marks[MARK_NSYM], marks[MARK_SYM], marks[MARK_END]);
 #endif
 
-	startprog(marks[MARK_START], BOOT_NARGS, boot_argv, 0x90000);
+	btinfo_symtab.nsym = marks[MARK_NSYM];
+	btinfo_symtab.ssym = marks[MARK_SYM];
+	btinfo_symtab.esym = marks[MARK_END];
+	BI_ADD(&btinfo_symtab, BTINFO_SYMTAB, sizeof(struct btinfo_symtab));
+
+	startprog(marks[MARK_ENTRY], BOOT_NARGS, boot_argv, 0x90000);
 	panic("exec returned");
 
 out:
