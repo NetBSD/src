@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.9 1999/12/05 23:39:11 aidan Exp $	*/
+/*	$NetBSD: k5login.c,v 1.10 1999/12/26 17:47:18 aidan Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.9 1999/12/05 23:39:11 aidan Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.10 1999/12/26 17:47:18 aidan Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -332,11 +332,7 @@ kdestroy()
 	    return;
 
 	code = krb5_cc_resolve(kcontext, krbtkfile_env, &ccache);
-	if (!code) {
+	if (!code)
 	    code = krb5_cc_destroy(kcontext, ccache);
-	    if (!code) {
-		krb5_cc_close(kcontext, ccache);
-	    }
-	}
 }
 #endif
