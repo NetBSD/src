@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/04/12 07:48:09 itojun Exp $
+#	$NetBSD: Makefile,v 1.4 2001/11/21 17:33:26 wiz Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -42,7 +42,7 @@ INCSDIR=/usr/include/openssl
 
 # this rebuilds the `srcs.inc' and the .inc files it reads.
 # note that we have no idea, rc5 or rsa here so we include
-# them explicitely above if we are using these ciphers.
+# them explicitly above if we are using these ciphers.
 # XXX
 # we patch `ssl.inc' as we need to be able to turn off SSLv2.
 update_inc:
