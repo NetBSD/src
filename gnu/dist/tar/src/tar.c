@@ -200,7 +200,7 @@ static struct option long_options[] =
   {"exclude", required_argument, 0, EXCLUDE_OPTION},
   {"exclude-from", required_argument, 0, 'X'},
   {"extract", no_argument, 0, 'x'},
-  {"fast-read", no_argument, 0, 0},
+  {"fast-read", no_argument, &fast_read_option, 1},
   {"file", required_argument, 0, 'f'},
   {"files-from", required_argument, 0, 'T'},
   {"force-local", no_argument, &force_local_option, 1},
@@ -337,8 +337,9 @@ Operation modifiers:\n\
   -G, --incremental          handle old GNU-format incremental backup\n\
   -g, --listed-incremental=FILE\n\
                              handle new GNU-format incremental backup\n\
-      --ignore-failed-read   do not exit with nonzero on unreadable files\n"),
-	     stdout);
+      --ignore-failed-read   do not exit with nonzero on unreadable files\n\
+      --fast-read            stop after desired names in archive have been found\n"),
+	    stdout);
       fputs (_("\
 \n\
 Handling of file attributes:\n\
@@ -512,6 +513,7 @@ decode_options (int argc, char **argv)
   excluded = new_exclude ();
   newer_mtime_option = TYPE_MINIMUM (time_t);
   recursion_option = FNM_LEADING_DIR;
+  namelist_freed = 0;
 
   owner_option = -1;
   group_option = -1;
