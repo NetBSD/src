@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26.2.1 1998/10/15 02:16:31 nisimura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26.2.2 1999/03/15 02:00:45 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,15 +31,12 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/reboot.h>
-
 
 #include <machine/autoconf.h>
-#include <dev/tc/tcvar.h>
-#include <dev/tc/ioasicvar.h>
 #include <pmax/pmax/pmaxtype.h>
 
-#include "tc.h"			/* Is TURBOchannel configured? */
+#include <dev/tc/tcvar.h>	/* XXX */
+#include "tc.h"			/* XXX Is TURBOchannel configured? */
 
 struct mainbus_softc {
 	struct	device sc_dv;
@@ -54,11 +51,6 @@ struct cfattach mainbus_ca = {
 	sizeof(struct mainbus_softc), mbmatch, mbattach
 };
 
-void	mb_intr_establish __P((struct confargs *ca,
-			       int (*handler)(intr_arg_t),
-			       intr_arg_t val ));
-void	mb_intr_disestablish __P((struct confargs *));
-
 static int
 mbmatch(parent, cf, aux)
 	struct device *parent;
@@ -70,12 +62,12 @@ mbmatch(parent, cf, aux)
 	 * Only one mainbus, but some people are stupid...
 	 */	
 	if (cf->cf_unit > 0)
-		return(0);
+		return (0);
 
 	/*
 	 * That one mainbus is always here.
 	 */
-	return(1);
+	return (1);
 }
 
 int ncpus = 0;	/* only support uniprocessors, for now */
@@ -86,13 +78,13 @@ mbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	register struct device *mb = self;
+	struct device *mb = self;
 	struct confargs nca;
 
 	printf("\n");
 
 	/*
-	 * if we ever support multi-CPU DEcstations (5800 family),
+	 * if we ever support multi-processor DECsystem (5800 family),
 	 * the Alpha port's mainbus.c has an example of attaching
 	 * multiple CPUs.
 	 *
@@ -100,8 +92,6 @@ mbattach(parent, self, aux)
 	 */
  	nca.ca_name = "cpu";
 	nca.ca_slot = 0;
-	nca.ca_offset = 0;
-	nca.ca_addr = 0;
 	config_found(mb, &nca, mbprint);
 
 #if NTC > 0
@@ -116,13 +106,12 @@ mbattach(parent, self, aux)
 	}
 #endif /* NTC */
 
-
 	if (systype == DS_PMAX || systype == DS_MIPSMATE) {
 		nca.ca_name = "baseboard";
+		nca.ca_slot = 0;
 		config_found(mb, &nca, mbprint);
 	}
 }
-
 
 static int
 mbprint(aux, pnp)
@@ -133,22 +122,4 @@ mbprint(aux, pnp)
 	if (pnp)
 		return (QUIET);
 	return (UNCONF);
-}
-
-void
-mb_intr_establish(ca, handler, val)
-	struct confargs *ca;
-	int (*handler) __P((intr_arg_t));
-	intr_arg_t val;
-{
-
-	panic("can never mb_intr_establish");
-}
-
-void
-mb_intr_disestablish(ca)
-	struct confargs *ca;
-{
-
-	panic("can never mb_intr_disestablish");
 }

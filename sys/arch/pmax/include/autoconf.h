@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.9.2.2 1998/10/20 02:46:42 nisimura Exp $ */
+/*	$NetBSD: autoconf.h,v 1.9.2.3 1999/03/15 02:00:45 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,14 +30,10 @@
 /*
  * Machine-dependent structures of autoconfiguration
  */
-#include <machine/tc_machdep.h>
 
 struct confargs {
-	char	*ca_name;		/* Device name. */
-	int	ca_slot;		/* Device slot (table entry). */
-	int	ca_offset;		/* Offset into slot. */
-	tc_addr_t ca_addr;		/* Device address. */
-	int	ca_slotpri;		/* Device interrupt "priority" */
+	char	*ca_name;		/* device name */
+	int	ca_slot;		/* CPU "slot" number */
 };
 
 typedef void	*intr_arg_t;		/* pointer to some softc */
