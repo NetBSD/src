@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.29 2003/04/28 23:16:14 bjh21 Exp $	*/
+/*	$NetBSD: netdb.h,v 1.30 2003/05/05 14:20:03 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -166,7 +166,8 @@ struct	protoent {
  * This should be deleted the next time the libc major number is
  * incremented.
  */
-#if (_XOPEN_SOURCE - 0) >= 520 || defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
+    defined(_NETBSD_SOURCE)
 struct addrinfo {
 	int	ai_flags;	/* AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST */
 	int	ai_family;	/* PF_xxx */
@@ -205,7 +206,8 @@ struct addrinfo {
 /*
  * Error return codes from getaddrinfo()
  */
-#if (_XOPEN_SOURCE - 0) >= 520 || defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
+    defined(_NETBSD_SOURCE)
 #define	EAI_ADDRFAMILY	 1	/* address family for hostname not supported */
 #define	EAI_AGAIN	 2	/* temporary failure in name resolution */
 #define	EAI_BADFLAGS	 3	/* invalid value for ai_flags */
@@ -220,12 +222,13 @@ struct addrinfo {
 #define	EAI_BADHINTS	12
 #define	EAI_PROTOCOL	13
 #define	EAI_MAX		14
-#endif /* (_XOPEN_SOURCE - 0) >= 520 || _NETBSD_SOURCE */
+#endif /* _POSIX_C_SOURCE >= 200112 || _XOPEN_SOURCE >= 520 || _NETBSD_SOURCE */
 
 /*
  * Flag values for getaddrinfo()
  */
-#if (_XOPEN_SOURCE - 0) >= 520 || defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
+    defined(_NETBSD_SOURCE)
 #define	AI_PASSIVE	0x00000001 /* get address to use bind() */
 #define	AI_CANONNAME	0x00000002 /* fill ai_canonname */
 #define	AI_NUMERICHOST	0x00000004 /* prevent name resolution */
@@ -233,7 +236,8 @@ struct addrinfo {
 #define	AI_MASK		(AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST)
 #endif
 
-#if (_XOPEN_SOURCE - 0) >= 520 || defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
+    defined(_NETBSD_SOURCE)
 /*
  * Constants for getnameinfo()
  */
@@ -260,14 +264,15 @@ struct addrinfo {
 #if defined(_NETBSD_SOURCE)
 #define	SCOPE_DELIMITER '%'		/*KAME extension*/
 #endif
-#endif /* (_XOPEN_SOURCE - 0) >= 520 || _NETBSD_SOURCE */
+#endif /* (_POSIX_C_SOURCE - 0) >= 200112L || ... */
 
 __BEGIN_DECLS
 void		endhostent __P((void));
 void		endnetent __P((void));
 void		endprotoent __P((void));
 void		endservent __P((void));
-#if (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+#if (_XOPEN_SOURCE - 0) >= 500 && (_XOPEN_SOURCE - 0) < 600 || \
+    defined(_NETBSD_SOURCE)
 void		freehostent __P((struct hostent *));
 #endif
 struct hostent	*gethostbyaddr __P((const char *, socklen_t, int));
@@ -276,7 +281,8 @@ struct hostent	*gethostbyname __P((const char *));
 struct hostent	*gethostbyname2 __P((const char *, int));
 #endif
 struct hostent	*gethostent __P((void));
-#if (_XOPEN_SOURCE - 0) >= 520 || defined(_NETBSD_SOURCE)
+#if (_XOPEN_SOURCE - 0) >= 520 && (_XOPEN_SOURCE - 0) < 600 || \
+    defined(_NETBSD_SOURCE)
 #if 0 /* we do not ship these */
 struct hostent	*getipnodebyaddr __P((const void *, size_t, int, int *));
 struct hostent	*getipnodebyname __P((const char *, int, int, int *));
@@ -301,7 +307,8 @@ void		sethostent __P((int));
 #endif
 void		setnetent __P((int));
 void		setprotoent __P((int));
-#if (_XOPEN_SOURCE - 0) >= 520 || defined(_NETBSD_SOURCE)
+#if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
+    defined(_NETBSD_SOURCE)
 int		getaddrinfo __P((const char *, const char *,
 				 const struct addrinfo *, struct addrinfo **));
 int		getnameinfo __P((const struct sockaddr *, socklen_t, char *,
