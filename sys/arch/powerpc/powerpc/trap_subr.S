@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.15 2002/03/27 15:40:46 kleink Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.16 2002/04/18 12:33:26 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -250,20 +250,12 @@ _C_LABEL(isitrap601):
 	mtcr	30
 	bc	4,25,1f			/* branch if Valid is is false,
 					   presently assumes supervisor only */
-
 	/* get batu */
 	lwz	31,_C_LABEL(battable)@l(31)
-/* We randomly use the highest two bat registers here */
-	mfspr	28,SPR_RTCL_R
-	andi.	28,28,128
-	bne	2f
-	mtibatu	2,31
-	mtibatl	2,30
-	b	3f
-2:
+
 	mtibatu	3,31
 	mtibatl	3,30
-3:
+
 	mtcr	29			/* restore CR */
 	lmw	28,disisave(0)		/* restore r28-r31 */
 	rfi				/* return to trapped code */
