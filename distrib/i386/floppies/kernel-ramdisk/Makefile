@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/04/11 12:17:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2002/04/11 12:22:58 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -26,6 +26,6 @@ TARGETS=	INSTALL		${RAMDISK_B}	-		\
 
 release: check_RELEASEDIR
 	-mkdir -p ${RELEASEDIR}/binary/kernel
-	cp -p ${KERNELS} ${KERNELSYMS} ${RELEASEDIR}/binary/kernel
+	${RELINSTALL} ${KERNELS} ${KERNELSYMS} ${RELEASEDIR}/binary/kernel
 
 .include "${.CURDIR}/../common/Makefile.mdset"
