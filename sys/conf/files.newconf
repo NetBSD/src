@@ -1,4 +1,4 @@
-#	$NetBSD: files.newconf,v 1.32 1994/06/29 06:30:47 cgd Exp $
+#	$NetBSD: files.newconf,v 1.32.2.1 1994/08/15 16:56:31 mycroft Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -144,14 +144,14 @@ file miscfs/nullfs/null_vnops.c		nullfs
 file miscfs/portal/portal_vfsops.c	portal
 file miscfs/portal/portal_vnops.c	portal
 file miscfs/procfs/procfs_ctl.c		procfs
-file miscfs/procfs/procfs_mem.c		procfs
+file miscfs/procfs/procfs_fpregs.c
+file miscfs/procfs/procfs_mem.c
 file miscfs/procfs/procfs_note.c	procfs
-file miscfs/procfs/procfs_regs.c	procfs
+file miscfs/procfs/procfs_regs.c
 file miscfs/procfs/procfs_status.c	procfs
 file miscfs/procfs/procfs_subr.c	procfs
 file miscfs/procfs/procfs_vfsops.c	procfs
 file miscfs/procfs/procfs_vnops.c	procfs
-file miscfs/procfs/procfs_fpregs.c	procfs
 file miscfs/specfs/spec_vnops.c
 file miscfs/umapfs/umap_subr.c		umapfs
 file miscfs/umapfs/umap_vfsops.c	umapfs
