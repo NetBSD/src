@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.11 1998/07/02 07:46:45 mrg Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.12 1998/07/03 04:10:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.11 1998/07/02 07:46:45 mrg Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.12 1998/07/03 04:10:43 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,7 +201,8 @@ doit(sinp)
 			fprintf(stderr, "Login incorrect.\n");
 			return;
 		}
-	}
+	} else
+		(void)crypt("dummy password", "PA");	/* must always crypt */
 	if (strcmp(pw->pw_shell, _PATH_UUCICO)) {
 		fprintf(stderr, "Login incorrect.\n");
 		return;
