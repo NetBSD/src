@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.17 1998/12/19 20:34:53 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.17.2.1 2000/10/19 16:32:27 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.17 1998/12/19 20:34:53 christos Exp $");
+__RCSID("$NetBSD: server.c,v 1.17.2.1 2000/10/19 16:32:27 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,8 @@ static void	comment __P((char *));
 static void	dospecial __P((char *));
 static int	fchtogm __P((int, char *, time_t, char *, char *, mode_t));
 static void	hardlink __P((char *));
-static void	note __P((const char *, ...));
+static void	note __P((const char *, ...))
+     __attribute__((__format__(__printf__, 1, 2)));
 static void	query __P((char *));
 static void	recvf __P((char *, int));
 static void	removeit __P((struct stat *));
