@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_ecoff.c,v 1.5 1997/12/15 05:43:52 mrg Exp $	*/
+/*	$NetBSD: nlist_ecoff.c,v 1.6 1998/02/03 18:23:48 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.5 1997/12/15 05:43:52 mrg Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.6 1998/02/03 18:23:48 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -58,8 +58,8 @@ __RCSID("$NetBSD: nlist_ecoff.c,v 1.5 1997/12/15 05:43:52 mrg Exp $");
 
 int
 __fdnlist_ecoff(fd, list)
-	register int fd;
-	register struct nlist *list;
+	int fd;
+	struct nlist *list;
 {
 	struct nlist *p;
 	struct ecoff_exechdr *exechdrp;

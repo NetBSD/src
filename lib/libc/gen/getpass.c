@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.11 1997/07/21 14:07:12 jtc Exp $	*/
+/*	$NetBSD: getpass.c,v 1.12 1998/02/03 18:23:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpass.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getpass.c,v 1.11 1997/07/21 14:07:12 jtc Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.12 1998/02/03 18:23:45 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,8 +60,8 @@ getpass(prompt)
 	const char *prompt;
 {
 	struct termios term;
-	register int ch;
-	register char *p;
+	int ch;
+	char *p;
 	FILE *fp, *outfp;
 	int echo;
 	static char buf[_PASSWORD_LEN + 1];

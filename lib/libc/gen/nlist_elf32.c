@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.7 1997/12/15 05:43:54 mrg Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.8 1998/02/03 18:23:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -66,8 +66,8 @@
 
 int
 ELFNAMEEND(__fdnlist)(fd, list)
-	register int fd;
-	register struct nlist *list;
+	int fd;
+	struct nlist *list;
 {
 	struct stat st;
 	struct nlist *p;
