@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2000/08/03 22:58:32 assar Exp $
+#	$NetBSD: Makefile,v 1.26 2002/03/22 18:10:24 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -55,7 +55,7 @@ LDADD+=	-lipsec
 DPADD+=	${LIBIPSEC}
 CPPFLAGS+=-DINET6
 
-.if (${MKKERBEROS} != "no")
+.if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION -DKRB4
 CPPFLAGS+=-DKRB5 -DFORWARD
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2001/01/07 08:00:57 enami Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2002/03/22 18:10:25 thorpej Exp $
 
 WARNS?=	1
 WFORMAT=2
@@ -11,6 +11,14 @@ LIBAMUOBJDIR!=cd ${.CURDIR}/../libamu && ${PRINTOBJDIR}
 
 CPPFLAGS+= -DHAVE_CONFIG_H -I${.CURDIR}/../include -I${IDIST}/libamu \
 	-I${IDIST}/include -I${LIBAMUOBJDIR}
+
+.if (${USE_HESIOD} != "no")
+CPPFLAGS+=-DHAVE_MAP_HESIOD=1
+.endif
+
+.if (${USE_YP} != "no")
+CPPFLAGS+=-DHAVE_MAP_NIS=1
+.endif
 
 .if !defined(LIB) || empty(LIB)
 LDADD+=	-L${LIBAMUOBJDIR} -lamu

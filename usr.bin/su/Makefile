@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2001/01/11 00:54:57 sjg Exp $
+#	$NetBSD: Makefile,v 1.27 2002/03/22 18:10:24 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -19,7 +19,7 @@ CPPFLAGS+=-DLOGIN_CAP
 # list of groups.
 #CPPFLAGS+=-DSU_INDIRECT_GROUP
 
-.if (${MKKERBEROS} != "no")
+.if (${USE_KERBEROS} != "no")
 .ifdef AFS
 DPADD+= ${LIBKAFS}
 LDADD+= -lkafs
@@ -36,7 +36,7 @@ LDADD+=	-lcrypto -lroken -lcom_err
 
 .include <bsd.prog.mk>
 
-.ifdef SKEY
+.if (${USE_SKEY} != "no")
 CPPFLAGS+=-DSKEY
 DPADD+= ${LIBSKEY}
 LDADD+= -lskey

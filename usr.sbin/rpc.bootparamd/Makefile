@@ -1,10 +1,15 @@
-#	$NetBSD: Makefile,v 1.20 2002/02/02 17:11:38 tv Exp $
+#	$NetBSD: Makefile,v 1.21 2002/03/22 18:10:25 thorpej Exp $
+
+.include <bsd.own.mk>
 
 PROG=	rpc.bootparamd
 SRCS=	bootparamd.c bootparam_prot_svc.c
 MAN=	bootparams.5 rpc.bootparamd.8
 MLINKS=	rpc.bootparamd.8 bootparamd.8
+
+.if (${USE_YP} != "no")
 CPPFLAGS+=-DYP
+.endif
 
 DPADD=	${LIBRPCSVC} ${LIBUTIL}
 LDADD=	-lrpcsvc -lutil

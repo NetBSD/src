@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2000/10/18 00:24:18 simonb Exp $
+#	$NetBSD: Makefile,v 1.35 2002/03/22 18:10:23 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -11,13 +11,13 @@ BINOWN=	root
 BINMODE=4555
 CPPFLAGS+=-DLOGIN_CAP
 
-.ifdef SKEY
+.if (${USE_SKEY} != "no")
 CPPFLAGS+=-DSKEY
 DPADD+= ${LIBSKEY}
 LDADD+=	-lskey
 .endif
 
-.if (${MKKERBEROS} != "no")
+.if (${USE_KERBEROS} != "no")
 SRCS+= k5login.c
 CPPFLAGS+=-DKERBEROS5 -I${DESTDIR}/usr/include/krb5
 LDADD+= -lkrb5 -lasn1

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/10/19 23:59:56 tv Exp $
+#	$NetBSD: Makefile,v 1.12 2002/03/22 18:10:25 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,7 @@ MAN=	racoon.8 racoon.conf.5
 LIBPFKEYDIR!=	cd ${.CURDIR}/../libpfkey; ${PRINTOBJDIR}
 LDADD+=	-L${LIBPFKEYDIR} -lpfkey
 DPADD+=	${LIBPFKEYDIR}/libpfkey.a
-.if (${MKKERBEROS} != "no")
+.if (${USE_KERBEROS} != "no")
 LDADD+=	-lgssapi -lkrb5 -lcom_err -lroken -lasn1
 DPADD+=	${LIBGSSAPI} ${LIBKRB5} ${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1}
 .endif
@@ -34,7 +34,7 @@ CPPFLAGS+=-DHAVE_OPENSSL_OPENSSLV_H=1
 CPPFLAGS+=-DYY_NO_UNPUT
 CPPFLAGS+=-I${LIBPFKEYSRCDIR}
 CPPFLAGS+=-I${RACOONSRCDIR}/missing
-.if (${MKKERBEROS} != "no")
+.if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-DHAVE_GSSAPI 
 .endif
 YHEADER=1
@@ -43,7 +43,7 @@ YHEADER=1
 SRCS+=	print-isakmp.c
 CPPFLAGS+=-DRACOON_PKG_VERSION="\"${PKGVERSION}\""
 CPPFLAGS+=-I${TCPDUMPSRCDIR} -I${TCPDUMPSRCDIR}/lbl -DHAVE_PRINT_ISAKMP_C=1
-.if (${MKKERBEROS} != "no")
+.if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-I${DESTDIR}/usr/include/krb5
 .endif
 

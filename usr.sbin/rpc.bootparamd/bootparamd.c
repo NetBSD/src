@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.39 2001/04/11 06:21:49 jhawk Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.40 2002/03/22 18:10:26 thorpej Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.39 2001/04/11 06:21:49 jhawk Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.40 2002/03/22 18:10:26 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -41,7 +41,9 @@ __RCSID("$NetBSD: bootparamd.c,v 1.39 2001/04/11 06:21:49 jhawk Exp $");
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
 #include <rpcsvc/bootparam_prot.h>
+#ifdef YP
 #include <rpcsvc/ypclnt.h>
+#endif
 
 #include "pathnames.h"
 

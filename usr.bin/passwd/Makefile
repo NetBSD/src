@@ -1,21 +1,29 @@
-#	$NetBSD: Makefile,v 1.30 2000/10/18 00:24:19 simonb Exp $
+#	$NetBSD: Makefile,v 1.31 2002/03/22 18:10:23 thorpej Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
 
 PROG=	passwd
-SRCS=	local_passwd.c passwd.c pwd_gensalt.c yp_passwd.c
-DPADD+= ${LIBRPCSVC} ${LIBCRYPT} ${LIBUTIL}
-LDADD+= -lrpcsvc -lcrypt -lutil
-CPPFLAGS+=-I${.CURDIR} -DYP -DLOGIN_CAP
+SRCS=	local_passwd.c passwd.c pwd_gensalt.c
 
+CPPFLAGS+=-I${.CURDIR} -DLOGIN_CAP
+
+.if (${USE_YP} != "no")
+SRCS+=	yp_passwd.c
+CPPFLAGS+=-DYP
+DPADD+=	${LIBRPCSVC}
+LDADD+=	-lrpcsvc
 LINKS=	${BINDIR}/passwd ${BINDIR}/yppasswd
 MLINKS=	passwd.1 yppasswd.1
+.endif
+
+DPADD+= ${LIBCRYPT} ${LIBUTIL}
+LDADD+= -lcrypt -lutil
 
 BINOWN=	root
 BINMODE=4555
 
-.if (${MKKERBEROS} != "no")
+.if (${USE_KERBEROS} != "no")
 CPPFLAGS+= -DKERBEROS5 -I${DESTDIR}/usr/include/krb5
 SRCS+=	krb5_passwd.c
 

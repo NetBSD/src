@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$NetBSD: Makefile,v 1.14 2002/01/29 17:58:36 thorpej Exp $
+#	$NetBSD: Makefile,v 1.15 2002/03/22 18:10:21 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ CPPFLAGS+= -I${.CURDIR}
 COPTS+=	-O0
 .endif
 
-.if (${MKKERBEROS} != "no")
+.if (${USE_KERBEROS} != "no")
 SRCS+=	enc_des.c kerberos.c
 SRCS+=	kerberos5.c
 

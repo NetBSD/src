@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/06/23 19:37:43 itojun Exp $
+#	$NetBSD: Makefile,v 1.10 2002/03/22 18:10:24 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	auth-chall.c auth2-chall.c groupaccess.c \
 	auth-skey.c auth-bsdauth.c
 
-.if (${MKKERBEROS} != "no")
+.if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-DKRB5 -DAFS -I${DESTDIR}/usr/include/krb5
 SRCS+=	auth-krb5.c
 LDADD+=	-lkrb5 -lkafs -lasn1
@@ -34,7 +34,7 @@ CPPFLAGS+=-DLIBWRAP
 LDADD+=	-lwrap
 DPADD+=	${LIBWRAP}
 
-.ifdef SKEY
+.if (${USE_SKEY} != "no")
 CPPFLAGS+=-DSKEY
 LDADD+=	-lskey
 DPADD+=	${LIBSKEY}
