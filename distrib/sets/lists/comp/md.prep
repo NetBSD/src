@@ -1,4 +1,4 @@
-# $NetBSD: md.prep,v 1.11 2002/08/07 21:21:00 briggs Exp $
+# $NetBSD: md.prep,v 1.12 2002/09/07 12:48:53 gehenna Exp $
 ./usr/include/prep	comp-c-include
 ./usr/include/prep/_G_config.h	comp-c-include
 ./usr/include/prep/ansi.h	comp-c-include
@@ -9,7 +9,6 @@
 ./usr/include/prep/bswap.h	comp-c-include
 ./usr/include/prep/bus.h	comp-c-include
 ./usr/include/prep/cdefs.h	comp-c-include
-./usr/include/prep/conf.h	comp-c-include
 ./usr/include/prep/cpu.h	comp-c-include
 ./usr/include/prep/cpufunc.h	comp-c-include
 ./usr/include/prep/db_machdep.h	comp-c-include

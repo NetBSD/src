@@ -1,4 +1,4 @@
-# $NetBSD: md.sandpoint,v 1.4 2002/08/07 21:21:01 briggs Exp $
+# $NetBSD: md.sandpoint,v 1.5 2002/09/07 12:48:53 gehenna Exp $
 ./usr/include/ieeefp.h	comp-c-include
 ./usr/include/sandpoint	comp-c-include
 ./usr/include/sandpoint/_G_config.h	comp-c-include
@@ -9,7 +9,6 @@
 ./usr/include/sandpoint/bswap.h	comp-c-include
 ./usr/include/sandpoint/bus.h	comp-c-include
 ./usr/include/sandpoint/cdefs.h	comp-c-include
-./usr/include/sandpoint/conf.h	comp-c-include
 ./usr/include/sandpoint/cpu.h	comp-c-include
 ./usr/include/sandpoint/cpufunc.h	comp-c-include
 ./usr/include/sandpoint/db_machdep.h	comp-c-include
