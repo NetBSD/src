@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.136 2000/02/23 17:46:11 tls Exp $
+#	$NetBSD: Makefile,v 1.137 2000/03/10 05:51:57 groo Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 # XXX Temporary for BUILD_POSTFIX
@@ -9,7 +9,8 @@ SRCTOP=	..
 
 SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
 	chown chroot chrtbl cnwctl config cron dbsym dev_mkdb \
-	dhcp diskpart dumpfs dumplfs edquota eeprom eshconfig greconfig \
+	dhcp diskpart dumpfs dumplfs edquota eeprom \
+	envstat eshconfig greconfig \
 	grfconfig grfinfo gspa hilinfo inetd iostat ipf iteconfig kgmon \
 	kvm_mkdb lastlogin link lpr mailwrapper map-mbone mbrlabel \
 	mdconfig mdsetimage \
