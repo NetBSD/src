@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.6 1995/05/23 03:43:08 cgd Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.7 1995/06/18 01:24:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -37,8 +37,12 @@
  * separated into pci_machdep.h.
  */
 
-#if (i386 != 1)
+#if (alpha + i386 != 1)
 ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
+#endif
+
+#if alpha
+#include <alpha/pci/pci_machdep.h>
 #endif
 
 #if i386
@@ -61,10 +65,10 @@ struct pci_attach_args {
 	pcireg_t pa_id, pa_class;
 };
 
-pcitag_t pci_make_tag __P((int, int, int));
 pcireg_t pci_conf_read __P((pcitag_t, int));
 void	 pci_conf_write __P((pcitag_t, int, pcireg_t));
-int	 pci_map_mem __P((pcitag_t, int, vm_offset_t *, vm_offset_t *));
+pcitag_t pci_make_tag __P((int, int, int));
 void	*pci_map_int __P((pcitag_t, pci_intrlevel, int (*)(void *), void *));
+int	 pci_map_mem __P((pcitag_t, int, vm_offset_t *, vm_offset_t *));
 
 int	 pci_attach_subdev __P((struct device *, int, int));
