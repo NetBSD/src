@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16 2000/06/02 22:56:33 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.17 2000/06/12 23:20:54 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,14 @@
 
 #include <machine/types.h>
 #include <machine/ctlreg.h>
+
+/*
+ * Debug hooks
+ */
+
+#define	BSDB_ACCESS	0x01
+#define BSDB_MAP	0x02
+extern int bus_space_debug;
 
 /*
  * UPA and SBUS spaces are non-cached and big endian
@@ -369,11 +377,10 @@ int bus_space_probe __P((
 #define	bus_space_read_8(t, h, o)					\
 	    ldxa((h) + (o), bus_type_asi[(t)->type])
 #else
-extern int bus_space_debug;
 #define	bus_space_read_1(t, h, o) ({					\
 	unsigned char __bv =				      		\
 	    lduba((h) + (o), bus_type_asi[(t)->type]);			\
-	if (bus_space_debug)						\
+	if (bus_space_debug & BSDB_ACCESS)				\
 	printf("bsr1(%llx + %llx, %x) -> %x\n", (u_int64_t)(h),		\
 		(u_int64_t)(o),						\
 		bus_type_asi[(t)->type], (unsigned int) __bv);		\
@@ -382,7 +389,7 @@ extern int bus_space_debug;
 #define	bus_space_read_2(t, h, o) ({					\
 	unsigned short __bv =				      		\
 	    lduha((h) + (o), bus_type_asi[(t)->type]);			\
-	if (bus_space_debug)						\
+	if (bus_space_debug & BSDB_ACCESS)				\
 	printf("bsr2(%llx + %llx, %x) -> %x\n", (u_int64_t)(h),		\
 		(u_int64_t)(o),						\
 		bus_type_asi[(t)->type], (unsigned int)__bv);		\
@@ -391,18 +398,18 @@ extern int bus_space_debug;
 #define	bus_space_read_4(t, h, o) ({					\
 	unsigned int __bv =				      		\
 	    lda((h) + (o), bus_type_asi[(t)->type]);			\
-	if (bus_space_debug)						\
+	if (bus_space_debug & BSDB_ACCESS)				\
 	printf("bsr4(%llx + %llx, %x) -> %x\n", (u_int64_t)(h),		\
-		(u_int64_t)(h),						\
+		(u_int64_t)(o),						\
 		bus_type_asi[(t)->type], __bv);				\
 	__bv; })
 
 #define	bus_space_read_8(t, h, o) ({					\
 	u_int64_t __bv =				      		\
 	    ldxa((h) + (o), bus_type_asi[(t)->type]);			\
-	if (bus_space_debug)						\
+	if (bus_space_debug & BSDB_ACCESS)				\
 	printf("bsr8(%llx + %llx, %x) -> %llx\n", (u_int64_t)(h),	\
-		(u_int64_t) (o),					\
+		(u_int64_t)(o),						\
 		bus_type_asi[(t)->type], __bv);				\
 	__bv; })
 #endif
@@ -465,28 +472,28 @@ extern int bus_space_debug;
 	((void)(stxa((h) + (o), bus_type_asi[(t)->type], (v))))
 #else
 #define	bus_space_write_1(t, h, o, v) ({				\
-	if (bus_space_debug)						\
+	if (bus_space_debug & BSDB_ACCESS)				\
 	printf("bsw1(%llx + %llx, %x) <- %x\n", (u_int64_t)(h),		\
 		(u_int64_t)(o),						\
 		bus_type_asi[(t)->type], (unsigned int) v);		\
 	((void)(stba((h) + (o), bus_type_asi[(t)->type], (v))));  })
 
 #define	bus_space_write_2(t, h, o, v) ({				\
-	if (bus_space_debug)						\
+	if (bus_space_debug & BSDB_ACCESS)				\
 	printf("bsw2(%llx + %llx, %x) <- %x\n", (u_int64_t)(h),		\
 		(u_int64_t)(o),						\
 		bus_type_asi[(t)->type], (unsigned int) v);		\
 	((void)(stha((h) + (o), bus_type_asi[(t)->type], (v)))); })
 
 #define	bus_space_write_4(t, h, o, v) ({				\
-	if (bus_space_debug)						\
+	if (bus_space_debug & BSDB_ACCESS)				\
 	printf("bsw4(%llx + %llx, %x) <- %x\n", (u_int64_t)(h),		\
 		(u_int64_t)(o),						\
 		bus_type_asi[(t)->type], (unsigned int) v);		\
 	((void)(sta((h) + (o), bus_type_asi[(t)->type], (v)))); })
 
 #define	bus_space_write_8(t, h, o, v) ({				\
-	if (bus_space_debug)						\
+	if (bus_space_debug & BSDB_ACCESS)				\
 	printf("bsw8(%llx + %llx, %x) <- %llx\n", (u_int64_t)(h),	\
 		(u_int64_t)(o),						\
 		bus_type_asi[(t)->type], (u_int64_t) v);		\
