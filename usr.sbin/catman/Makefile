@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 1999/04/04 16:50:47 dante Exp $
+#	$NetBSD: Makefile,v 1.6.10.1 2002/11/03 19:51:47 he Exp $
 
 BINDIR=		/usr/sbin
 PROG=		catman
-SRCS=		config.c catman.c
+SRCS=		catman.c manconf.c
 MAN=		catman.8
 .PATH:		${.CURDIR}/../../usr.bin/man
 CPPFLAGS+=-I${.CURDIR}/../../usr.bin/man
