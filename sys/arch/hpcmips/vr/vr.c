@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.15 2000/03/12 05:04:47 takemura Exp $	*/
+/*	$NetBSD: vr.c,v 1.16 2000/04/11 17:57:44 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -105,7 +105,7 @@
 void	vr_init __P((void));
 void	vr_os_init __P((void));
 void	vr_bus_reset __P((void));
-int	vr_intr __P((u_int32_t mask, u_int32_t pc, u_int32_t statusReg, u_int32_t causeReg));
+int	vr_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 void	vr_cons_init __P((void));
 void	vr_device_register __P((struct device *, void *));
 void    vr_fb_init __P((caddr_t*));
@@ -143,6 +143,7 @@ vr_init()
 	 * Platform Specific Function Hooks
 	 */
 	platform.os_init = vr_os_init;
+	platform.iointr = vr_intr;
 	platform.bus_reset = vr_bus_reset;
 	platform.cons_init = vr_cons_init;
 	platform.device_register = vr_device_register;
@@ -257,7 +258,6 @@ vr_os_init()
 	/*
 	 * Set up interrupt handling and I/O addresses.
 	 */
-	mips_hardware_intr = vr_intr;
 
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL0;
@@ -437,15 +437,13 @@ null_handler(arg, pc, statusReg)
  * Handle interrupts.
  */
 int
-vr_intr(mask, pc, status, cause)
-	u_int32_t mask;
-	u_int32_t pc;
-	u_int32_t status;
-	u_int32_t cause;
+vr_intr(status, cause, pc, ipending)
+	u_int32_t status, cause, pc, ipending;
 {
 	int hwintr;
 
-	hwintr = (ffs(mask >> 10) -1) & 0x3;
+	hwintr = (ffs(ipending >> 10) -1) & 0x3;
 	(*intr_handler[hwintr])(intr_arg[hwintr], pc, status);
+	
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }

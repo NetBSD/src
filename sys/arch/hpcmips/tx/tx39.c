@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.14 2000/02/21 13:46:04 shin Exp $ */
+/*	$NetBSD: tx39.c,v 1.15 2000/04/11 17:57:43 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -115,6 +115,7 @@ tx_init()
 	platform.fb_init = tx_fb_init;
 	platform.mem_init = tx_mem_init;
 	platform.reboot = tx_reboot;
+	platform.iointr = tx39icu_intr;
 
 	model = (cpu_id.cpu.cp_majrev << 4)| cpu_id.cpu.cp_minrev;
 
@@ -147,7 +148,6 @@ tx_os_init()
 	/*
 	 * Set up interrupt handling and I/O addresses.
 	 */
-	mips_hardware_intr = tx39icu_intr;
 
 	splvec.splbio = MIPS_SPL_2_4;
 	splvec.splnet = MIPS_SPL_2_4;

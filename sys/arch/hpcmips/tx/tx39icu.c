@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.6 2000/01/16 21:47:00 uch Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.7 2000/04/11 17:57:43 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
@@ -271,11 +271,8 @@ tx39icu_attach(parent, self, aux)
 }
 
 int
-tx39icu_intr(mask, pc, status, cause)
-	u_int32_t mask;
-	u_int32_t pc;
-	u_int32_t status;
-	u_int32_t cause;
+tx39icu_intr(status, cause, pc, ipending)
+	u_int32_t status, cause, pc, ipending;
 {
 	struct tx39icu_softc *sc;
 	tx_chipset_tag_t tc;
@@ -299,8 +296,8 @@ tx39icu_intr(mask, pc, status, cause)
 #endif
 
 #ifdef TX39ICUDEBUG
-	if (!(mask & MIPS_INT_MASK_4) && !(mask & MIPS_INT_MASK_2)) {
-		bitdisp(mask);
+	if (!(ipending & MIPS_INT_MASK_4) && !(ipending & MIPS_INT_MASK_2)) {
+		bitdisp(ipending);
 		panic("bogus HwInt");
 	}
 #ifdef TX39_DEBUG
@@ -311,14 +308,14 @@ tx39icu_intr(mask, pc, status, cause)
 #endif /* TX39ICUDEBUG */
 
 	/* IRQHIGH */
-	if (mask & MIPS_INT_MASK_4) {
-		tx39_irqhigh_intr(mask, pc, status, cause);
+	if (ipending & MIPS_INT_MASK_4) {
+		tx39_irqhigh_intr(ipending, pc, status, cause);
 
 		return 0;
 	}
 
 	/* IRQLOW */
-	if (mask & MIPS_INT_MASK_2) {
+	if (ipending & MIPS_INT_MASK_2) {
 		for (i = 1; i <= TX39_INTRSET_MAX; i++) {
 			int ofs;
 #ifdef TX392X
@@ -360,7 +357,7 @@ tx39icu_intr(mask, pc, status, cause)
 	{
 		extern int	tx39biu_intr __P((void*));
 		/* Bus error (If watch dog timer is enabled)*/
-		if (mask & MIPS_INT_MASK_1) {
+		if (ipending & MIPS_INT_MASK_1) {
 			tx39biu_intr(0); /* Clear bus error */
 		}
 	}
@@ -391,8 +388,8 @@ tx39_irqhigh(set, bit)
 }
 
 void
-tx39_irqhigh_intr(mask, pc, status, cause)
-	u_int32_t mask;
+tx39_irqhigh_intr(ipending, pc, status, cause)
+	u_int32_t ipending;
 	u_int32_t pc;
 	u_int32_t status;
 	u_int32_t cause;
