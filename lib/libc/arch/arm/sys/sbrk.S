@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.7 2003/08/07 16:42:05 agc Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.8 2004/08/21 11:30:17 rearnsha Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@ ENTRY(_sbrk)
 	str	r1, [r2]
 
 	/* Return old curbrk value */
-	mov	r15, r14
+	RET
 
 	.align	0
 #ifdef PIC
