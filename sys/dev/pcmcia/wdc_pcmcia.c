@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.22 1999/10/20 15:22:27 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.23 1999/11/21 10:13:08 takemura Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,6 +124,12 @@ struct wdc_pcmcia_product {
 	  WDC_PCMCIA_NO_EXTRA_RESETS,
 	  PCMCIA_CIS_TEAC_IDECARDII,
 	  PCMCIA_STR_TEAC_IDECARDII },
+
+	/* Mobile Dock 2, which doesn't have vendor ID nor product ID */
+	{ -1, -1, 0,
+	  { "SHUTTLE TECHNOLOGY LTD.", "PCCARD-IDE/ATAPI Adapter", NULL, NULL},
+	  "SHUTTLE TECHNOLOGY IDE/ATAPI Adapter"
+	},
 
 	{ 0, 0, 0, { NULL, NULL, NULL, NULL}, NULL }
 };
