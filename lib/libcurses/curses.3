@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.49 2003/06/20 06:58:54 jdc Exp $
+.\"	$NetBSD: curses.3,v 1.50 2003/07/04 12:40:15 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,15 +84,15 @@ must be called before any of the other routines that deal with color are used.
 .It addch Ta Xr curses_addch 3
 .It addchnstr Ta Xr curses_addchstr 3
 .It addchstr Ta Xr curses_addchstr 3
-.It addstr Ta Xr curses_addstr 3
 .It addnstr Ta Xr curses_addstr 3
+.It addstr Ta Xr curses_addstr 3
 .It assume_default_colors Ta Xr curses_default_colors 3
 .It attr_get Ta Xr curses_attributes 3
-.It attr_on Ta Xr curses_attributes 3
 .It attr_off Ta Xr curses_attributes 3
+.It attr_on Ta Xr curses_attributes 3
 .It attr_set Ta Xr curses_attributes 3
-.It attron Ta Xr curses_attributes 3
 .It attroff Ta Xr curses_attributes 3
+.It attron Ta Xr curses_attributes 3
 .It attrset Ta Xr curses_attributes 3
 .It beep Ta Xr curses_tty 3
 .It bkgd Ta Xr curses_background 3
@@ -109,10 +109,10 @@ must be called before any of the other routines that deal with color are used.
 .It color_set Ta Xr curses_attributes 3
 .It copywin Ta Xr curses_window 3
 .It curs_set Ta Xr curses_tty 3
-.It delay_output Ta Xr curses_tty 3
 .It def_prog_mode Ta Xr curses_tty 3
 .It def_shell_mode Ta Xr curses_tty 3
 .It define_key Ta Xr curses_input 3
+.It delay_output Ta Xr curses_tty 3
 .It delch Ta Xr curses_delch 3
 .It deleteln Ta Xr curses_deleteln 3
 .It delscreen Ta Xr curses_screen 3
@@ -129,18 +129,18 @@ must be called before any of the other routines that deal with color are used.
 .It flushok Ta Xr curses_refresh 3
 .It fullname Ta Xr curses_termcap 3
 .It getattrs Ta Xr curses_attributes 3
+.It getbegx Ta Xr curses_cursor 3
+.It getbegy Ta Xr curses_cursor 3
 .It getbkgd Ta Xr curses_background 3
 .It getcap Ta Xr curses_termcap 3
 .It getch Ta Xr curses_input 3
-.It getcury Ta Xr curses_cursor 3
 .It getcurx Ta Xr curses_cursor 3
-.It getbegy Ta Xr curses_cursor 3
-.It getbegx Ta Xr curses_cursor 3
-.It getmaxy Ta Xr curses_cursor 3
+.It getcury Ta Xr curses_cursor 3
 .It getmaxx Ta Xr curses_cursor 3
+.It getmaxy Ta Xr curses_cursor 3
 .It getnstr Ta Xr curses_input 3
-.It getpary Ta Xr curses_cursor 3
 .It getparx Ta Xr curses_cursor 3
+.It getpary Ta Xr curses_cursor 3
 .It getparyx Ta Xr curses_cursor 3
 .It getstr Ta Xr curses_input 3
 .It gettmode Ta Xr curses_tty 3
@@ -154,10 +154,10 @@ must be called before any of the other routines that deal with color are used.
 .It inch Ta Xr curses_inch 3
 .It inchnstr Ta Xr curses_inch 3
 .It inchstr Ta Xr curses_inch 3
-.It innstr Ta Xr curses_inch 3
 .It init_color Ta Xr curses_color 3
 .It init_pair Ta Xr curses_color 3
 .It initscr Ta Xr curses_screen 3
+.It innstr Ta Xr curses_inch 3
 .It insch Ta Xr curses_insertch 3
 .It insdelln Ta Xr curses_insdelln 3
 .It insertln Ta Xr curses_insertln 3
@@ -167,8 +167,8 @@ must be called before any of the other routines that deal with color are used.
 .It is_wintouched Ta Xr curses_touch 3
 .It isendwin Ta Xr curses_screen 3
 .It keyname Ta Xr curses_keyname 3
-.It keypad Ta Xr curses_input 3
 .It keyok Ta Xr curses_input 3
+.It keypad Ta Xr curses_input 3
 .It killchar Ta Xr curses_tty 3
 .It leaveok Ta Xr curses_tty 3
 .It longname Ta Xr curses_termcap 3
@@ -177,8 +177,8 @@ must be called before any of the other routines that deal with color are used.
 .It mvaddch Ta Xr curses_addch 3
 .It mvaddchnstr Ta Xr curses_addchstr 3
 .It mvaddchstr Ta Xr curses_addchstr 3
-.It mvaddstr Ta Xr curses_addstr 3
 .It mvaddnstr Ta Xr curses_addstr 3
+.It mvaddstr Ta Xr curses_addstr 3
 .It mvcur Ta Xr curses_cursor 3
 .It mvderwin Ta Xr curses_window 3
 .It mvgetnstr Ta Xr curses_input 3
@@ -189,8 +189,8 @@ must be called before any of the other routines that deal with color are used.
 .It mvwaddch Ta Xr curses_addch 3
 .It mvwaddchnstr Ta Xr curses_addchstr 3
 .It mvwaddchstr Ta Xr curses_addchstr 3
-.It mvwaddstr Ta Xr curses_addstr 3
 .It mvwaddnstr Ta Xr curses_addstr 3
+.It mvwaddstr Ta Xr curses_addstr 3
 .It mvwgetnstr Ta Xr curses_input 3
 .It mvwgetstr Ta Xr curses_input 3
 .It mvwhline Ta Xr curses_line 3
@@ -204,8 +204,8 @@ must be called before any of the other routines that deal with color are used.
 .It nocbreak Ta Xr curses_tty 3
 .It nodelay Ta Xr curses_input 3
 .It noecho Ta Xr curses_tty 3
-.It noqiflush Ta Xr curses_tty 3
 .It nonl Ta Xr curses_tty 3
+.It noqiflush Ta Xr curses_tty 3
 .It noraw Ta Xr curses_tty 3
 .It notimeout Ta Xr curses_input 3
 .It overlay Ta Xr curses_window 3
@@ -226,8 +226,8 @@ must be called before any of the other routines that deal with color are used.
 .It scrl Ta Xr curses_scroll 3
 .It scroll Ta Xr curses_scroll 3
 .It scrollok Ta Xr curses_scroll 3
-.It setscrreg Ta Xr curses_scroll 3
 .It set_term Ta Xr curses_screen 3
+.It setscrreg Ta Xr curses_scroll 3
 .It setterm Ta Xr curses_screen 3
 .It standend Ta Xr curses_standout 3
 .It standout Ta Xr curses_standout 3
@@ -248,14 +248,14 @@ must be called before any of the other routines that deal with color are used.
 .It waddch Ta Xr curses_addch 3
 .It waddchnstr Ta Xr curses_addchstr 3
 .It waddchstr Ta Xr curses_addchstr 3
-.It waddstr Ta Xr curses_addstr 3
 .It waddnstr Ta Xr curses_addstr 3
+.It waddstr Ta Xr curses_addstr 3
 .It wattr_get Ta Xr curses_attributes 3
-.It wattr_on Ta Xr curses_attributes 3
 .It wattr_off Ta Xr curses_attributes 3
+.It wattr_on Ta Xr curses_attributes 3
 .It wattr_set Ta Xr curses_attributes 3
-.It wattron Ta Xr curses_attributes 3
 .It wattroff Ta Xr curses_attributes 3
+.It wattron Ta Xr curses_attributes 3
 .It wattrset Ta Xr curses_attributes 3
 .It wbkgd Ta Xr curses_background 3
 .It wbkgdset Ta Xr curses_background 3
