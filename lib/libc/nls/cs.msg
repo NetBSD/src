@@ -183,6 +183,8 @@ $ ENOSTR
 91 Není STREAM
 $ ETIME
 92 Vypr¹el èasový limit STREAM ioctl
+$ ENOATTR
+93 Atribut nebyl nalezen
 $set 2
 $ SIGHUP
 1 Terminál odpojen
