@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.18 1997/11/30 15:49:34 drochner Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.19 1998/06/09 01:57:46 tv Exp $	*/
 
 /* 
  * Mach Operating System
@@ -63,7 +63,8 @@ int db_symtab[SYMTAB_SPACE/sizeof(int)] = { 0, 1 };
  * Find the symbol table and strings; tell ddb about them.
  */
 void
-X_db_sym_init(vsymtab, vesymtab, name)
+X_db_sym_init(symsize, vsymtab, vesymtab, name)
+	int symsize;		/* size of symbol table */
 	void *vsymtab;		/* pointer to start of symbol table */
 	void *vesymtab;		/* pointer to end of string table,
 				   for checking - rounded up to integer
@@ -75,16 +76,14 @@ X_db_sym_init(vsymtab, vesymtab, name)
 	register char *strtab;
 	register int slen;
 	char *estrtab;
-	int *symtab = vsymtab;
-	char *esymtab = vesymtab;
 
-	if (ALIGNED_POINTER(symtab, int) == 0) {
-		printf("DDB: bad symtol table start address %p\n", symtab);
+	if (ALIGNED_POINTER(vsymtab, int) == 0) {
+		printf("DDB: bad symbol table start address %p\n", vsymtab);
 		return;
 	}
 
 #ifdef SYMTAB_SPACE
-	if (*symtab < sizeof(int)) {
+	if (symsize < sizeof(struct nlist)) {
 		printf ("DDB: no symbols\n");
 		return;
 	}
@@ -94,8 +93,8 @@ X_db_sym_init(vsymtab, vesymtab, name)
 	 * Find pointers to the start and end of the symbol entries,
 	 * given a pointer to the start of the symbol table.
 	 */
-	sym_start = (struct nlist *)(symtab + 1);
-	sym_end   = (struct nlist *)((char *)sym_start + *symtab);
+	sym_start = (struct nlist *)vsymtab;
+	sym_end   = (struct nlist *)((char *)sym_start + symsize);
 
 	strtab = (char *)sym_end;
 	slen = *(int *)strtab;
@@ -103,7 +102,7 @@ X_db_sym_init(vsymtab, vesymtab, name)
 #ifdef	SYMTAB_SPACE
 	printf("DDB: found symbols [%d + %d bytes]\n",
 		   *symtab, slen);
-	if ((*symtab + slen) > db_symtabsize) {
+	if ((symsize + slen) > db_symtabsize) {
 		printf("DDB: symbols larger than SYMTAB_SPACE?\n");
 		return;
 	}
@@ -113,7 +112,7 @@ X_db_sym_init(vsymtab, vesymtab, name)
 #define	round_to_size(x) \
 	(((vm_offset_t)(x) + sizeof(vm_size_t) - 1) & ~(sizeof(vm_size_t) - 1))
 
-	if (round_to_size(estrtab) != round_to_size(esymtab)) {
+	if (round_to_size(estrtab) != round_to_size(vesymtab)) {
 	    printf("[ %s symbol table not valid ]\n", name);
 	    return;
         }
@@ -135,10 +134,10 @@ X_db_sym_init(vsymtab, vesymtab, name)
 	}
 
 	if (db_add_symbol_table((char *)sym_start, (char *)sym_end, name,
-	    (char *)symtab) !=  -1) {
+	    NULL) !=  -1) {
 #ifndef	SYMTAB_SPACE
                 printf("[ preserving %d bytes of %s symbol table ]\n",
-		       esymtab - (char *)symtab, name);
+                          (char *)vesymtab - (char *)vsymtab, name);
 #endif
         }
 }
@@ -342,15 +341,13 @@ X_db_sym_numargs(symtab, cursym, nargp, argnamep)
  * Initialization routine for a.out files.
  */
 void
-ddb_init()
+ddb_init(symsize, vss, vse)
+	int symsize;
+	void *vss, *vse;
 {
 #ifndef SYMTAB_SPACE
-	extern char	*esym;
-	extern int	end;
-
-	if (esym > (char *)&end) {
-	    X_db_sym_init((int *)&end, esym, "netbsd");
-	}
+	if (symsize)
+		X_db_sym_init(symsize, vss, vse, "netbsd");
 #else
 	X_db_sym_init (db_symtab, 0, "netbsd");
 #endif

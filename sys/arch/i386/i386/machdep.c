@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.307 1998/06/06 21:27:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.308 1998/06/09 01:57:43 tv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1861,7 +1861,12 @@ init386(first_avail)
 
 
 #ifdef DDB
-	ddb_init();
+	{
+		extern int end;
+		extern int *esym;
+
+		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+	}
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
