@@ -27,6 +27,12 @@
  **********************************************************************
  * HISTORY
  * $Log: supcname.c,v $
+ * Revision 1.3  1996/12/23 19:42:19  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.2  1995/09/16 19:12:14  glass
  * if the function returns nothing, declare it void
  *
@@ -57,6 +63,7 @@
  */
 
 #include "supcdefs.h"
+#include "supextern.h"
 
 extern COLLECTION *firstC;		/* collection list pointer */
 
@@ -83,7 +90,8 @@ void getnams ()
 	f = fopen (buf,"r");
 	if (f == NULL)  logquit (1,"Can't open %s",buf);
 	while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
-		if (q = index (p,'\n'))  *q = '\0';
+		if ((q = index (p,'\n')) != NULL)
+			*q = '\0';
 		if (index ("#;:",*p))  continue;
 		q = nxtarg (&p,"= \t");
 		p = skipover (p," \t");

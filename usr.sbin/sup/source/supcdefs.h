@@ -33,6 +33,12 @@
  *	across the network to save BandWidth
  *
  * $Log: supcdefs.h,v $
+ * Revision 1.4  1996/12/23 19:42:16  christos
+ * - add missing prototypes.
+ * - fix function call inconsistencies
+ * - fix int <-> long and pointer conversions
+ * It should run now on 64 bit machines...
+ *
  * Revision 1.3  1996/09/05 16:50:07  christos
  * - for portability make sure that we never use "" as a pathname, always convert
  *   it to "."
@@ -84,6 +90,8 @@
 #include <pwd.h>
 #include <grp.h>
 #include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -98,10 +106,6 @@
 #include "supmsg.h"
 
 extern int errno;
-extern uid_t getuid();
-extern gid_t getgid();
-extern long time();
-
 extern int PGMVERSION;
 
 /*******************************************

@@ -33,7 +33,9 @@
  *
  **********************************************************************
  */
-char *malloc();
+#include "supcdefs.h"
+#include "supextern.h"
+
 
 char *salloc(p)
 char *p;
