@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.9 1995/04/19 06:56:21 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.10 1995/04/19 16:23:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -164,7 +164,10 @@ extern int pmax_boardtype;
 extern u_long le_iomem;
 extern u_long asic_base;
 
-extern void lestart __P((struct ifnet *));
+int leioctl __P((struct ifnet *, u_long, caddr_t));
+void lestart __P((struct ifnet *));
+void leinit __P((int));
+void lereset __P((int));
 
 /*
  * Test to see if device is present.
@@ -181,7 +184,6 @@ leprobe(dp)
 	struct ifnet *ifp = &le->sc_if;
 	u_char *cp;
 	int i;
-	extern int leinit(), lereset(), leioctl();
 
 	switch (pmax_boardtype) {
 	case DS_PMAX:
@@ -252,8 +254,6 @@ leprobe(dp)
 
 	ifp->if_unit = dp->pmax_unit;
 	ifp->if_name = "le";
-	ifp->if_mtu = ETHERMTU;
-	ifp->if_reset = lereset;
 	ifp->if_ioctl = leioctl;
 	ifp->if_start = lestart;
 #ifdef MULTICAST
@@ -385,6 +385,7 @@ ledrinit(le)
 	}
 }
 
+void
 lereset(unit)
 	register int unit;
 {
@@ -455,6 +456,7 @@ lereset(unit)
 /*
  * Initialization of interface
  */
+void
 leinit(unit)
 	int unit;
 {
@@ -521,7 +523,6 @@ lestart(ifp)
 		LERDWR(ler0, LE_TDMD | LE_INEA, le->sc_r1->ler1_rdp);
 	}
 	le->sc_tmdnext = bix;
-	return;
 }
 
 /*
@@ -908,7 +909,7 @@ leioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			(void)leinit(ifp->if_unit);
+			leinit(ifp->if_unit);
 			arp_ifinit(&le->sc_ac, ifa);
 			break;
 #endif
