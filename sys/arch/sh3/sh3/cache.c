@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.2 2002/02/17 20:57:09 uch Exp $	*/
+/*	$NetBSD: cache.c,v 1.3 2002/03/10 07:46:51 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_memsize.h"	/* IOM_RAM_BEGIN */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +145,7 @@ sh_cache_information()
 void
 __cache_flush()
 {
-	__volatile__ int *p = (int *)ram_start;
+	__volatile__ int *p = (int *)IOM_RAM_BEGIN;
 	int i;
 	int d;
 
@@ -166,4 +168,3 @@ __cache_flush()
 	 *
 	 */
 }
-
