@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.116 2002/06/02 02:44:27 enami Exp $
+#	$NetBSD: DEVNAMES,v 1.117 2002/06/14 10:01:27 wiz Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -1211,7 +1211,7 @@ wlan			MI		Attribute
 ws			luna68k
 wsdisplay		MI		
 wsdisplaydev		MI		Attribute
-wsemuldisplaydev MI			Attribute
+wsemuldisplaydev	MI		Attribute
 wskbd			MI		
 wskbddev		MI		Attribute
 wsmouse			MI		
