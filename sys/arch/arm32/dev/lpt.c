@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.2 1996/02/15 21:33:52 mark Exp $ */
+/* $NetBSD: lpt.c,v 1.3 1996/03/06 23:31:03 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -49,8 +49,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from:$NetBSD: lpt.c,v 1.2 1996/02/15 21:33:52 mark Exp $
- *	$Id: lpt.c,v 1.2 1996/02/15 21:33:52 mark Exp $
+ *	from:$NetBSD: lpt.c,v 1.3 1996/03/06 23:31:03 mark Exp $
  */
 
 /*
@@ -321,7 +320,9 @@ lptattach(parent, self, aux)
 #else
 		sc->sc_ih.ih_level = IPL_NONE;
 #endif
-		irq_claim(mb->mb_irq, &sc->sc_ih);
+		if (irq_claim(mb->mb_irq, &sc->sc_ih))
+			panic("Cannot claim IRQ %d for lpt%d\n", mb->mb_irq, sc->sc_dev.dv_unit);
+
 	}
 #if defined(INET) && defined(PLIP)
 	else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.1 1996/01/31 23:24:37 mark Exp $	*/
+/*	$NetBSD: fd.c,v 1.2 1996/03/06 23:31:01 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -37,8 +37,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)fd.c	7.4 (Berkeley) 5/25/91
- *
- *	$Id: fd.c,v 1.1 1996/01/31 23:24:37 mark Exp $
  */
 
 /* The new config stuff do no use to use and need to be pulled out */
@@ -323,7 +321,8 @@ fdcattach(parent, self, aux)
 	fdc->sc_ih.ih_func = fdcintr;
 	fdc->sc_ih.ih_arg = fdc;
 	fdc->sc_ih.ih_level = IPL_BIO;
-	irq_claim(IRQ_FLOPPY, &fdc->sc_ih);
+	if (irq_claim(mb->mb_irq, &fdc->sc_ih))
+		panic("Cannot claim IRQ %d for fdc%d\n", mb->mb_irq, parent->dv_unit);
 
 	/*
 	 * The NVRAM info only tells us about the first two disks on the
