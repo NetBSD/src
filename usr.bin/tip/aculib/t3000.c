@@ -1,4 +1,4 @@
-/*	$NetBSD: t3000.c,v 1.4 1996/12/29 10:41:58 cgd Exp $	*/
+/*	$NetBSD: t3000.c,v 1.5 1997/02/11 09:24:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: t3000.c,v 1.4 1996/12/29 10:41:58 cgd Exp $";
+static char rcsid[] = "$NetBSD: t3000.c,v 1.5 1997/02/11 09:24:18 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -105,7 +105,7 @@ badsynch:
 	connected = t3000_connect();
 #ifdef ACULOG
 	if (timeout) {
-		sprintf(line, "%d second dial timeout",
+		(void)snprintf(line, sizeof line, "%d second dial timeout",
 			number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "t3000", line);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: v3451.c,v 1.5 1996/12/29 10:42:00 cgd Exp $	*/
+/*	$NetBSD: v3451.c,v 1.6 1997/02/11 09:24:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)v3451.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: v3451.c,v 1.5 1996/12/29 10:42:00 cgd Exp $";
+static char rcsid[] = "$NetBSD: v3451.c,v 1.6 1997/02/11 09:24:20 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -89,8 +89,7 @@ v3451_dialer(num, acu)
 #endif
 		return (0);
 	}
-	strcpy(phone, num);
-	strcat(phone, "\r");
+	snprintf(phone, sizeof phone, "%s\r", num);
 	vawrite(phone, 1 + slow);
 	if (!expect(phone)) {
 		printf("Vadic will not accept phone number\n");
