@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.3 2000/03/01 00:23:07 he Exp $
+#	$NetBSD: Makefile,v 1.10.2.4 2000/06/03 15:18:54 he Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -59,7 +59,7 @@ unconfig:
 netbsd.ram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
-	strip netbsd.tmp
+#	strip netbsd.tmp
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
@@ -79,6 +79,7 @@ release:
 release: $(IMAGE)
 	gzip -c -9 < $(.OBJDIR)/${IMAGE} \
 		> $(RELEASEDIR)/installation/bootfs/${IMAGE}.gz
+	cp netbsd.ram.gz $(RELEASEDIR)/binary/kernel/netbsd-INSTALL.gz
 .endif	# RELEASEDIR check
 
 .include <bsd.obj.mk>
