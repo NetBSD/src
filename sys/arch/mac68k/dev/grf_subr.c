@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.8 1997/08/03 07:00:43 scottr Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.9 1997/08/03 16:44:24 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ grf_establish(sc, sp, g_mode, g_phys)
 	ga.ga_grfmode = gm;
 	ga.ga_slot = sp;
 	ga.ga_tag = sc->sc_tag;
-	ga.ga_handle = sc->sc_tag;
+	ga.ga_handle = sc->sc_handle;
 	ga.ga_mode = g_mode;
 	ga.ga_phys = g_phys;
 	(void)config_found(&sc->sc_dev, &ga, grfbusprint);
