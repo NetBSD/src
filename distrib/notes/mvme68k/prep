@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.10 2000/11/21 12:39:00 scw Exp $
+.\"	$NetBSD: prep,v 1.11 2001/07/24 18:02:56 nra Exp $
 .
 \*M machines usually need little or no preparation before installing
 .Nx ,
@@ -110,7 +110,7 @@ command.
 .Pp
 To install successfully to a local SCSI disk, you need to ensure that
 the system is aware of what targets are connected to the SCSI bus. This
-can be done by issueing the following command:
+can be done by issuing the following command:
 .Pp
 .Dl 1xx-Bug\*> Ic iot;t
 .Pp
