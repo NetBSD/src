@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strftime.c	5.11 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strftime.c,v 1.11 1996/06/01 21:23:25 jtc Exp $";
+static char *rcsid = "$Id: strftime.c,v 1.12 1996/12/20 20:27:22 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -72,8 +72,8 @@ strftime(s, maxsize, format, t)
 				((t)->tm_wday ? (t)->tm_wday - 1 : 6)) / 7)
 static size_t
 _fmt(format, t)
-	register char *format;
-	struct tm *t;
+	register const char *format;
+	const struct tm *t;
 {
 	for (; *format; ++format) {
 		if (*format == '%') {
@@ -278,7 +278,7 @@ _fmt(format, t)
 
 static int
 _secs(t)
-	struct tm *t;
+	const struct tm *t;
 {
 	static char buf[15];
 	register time_t s;
@@ -310,7 +310,7 @@ _conv(n, digits, pad)
 
 static int
 _add(str)
-	register char *str;
+	register const char *str;
 {
 	for (;; ++pt, --gsize) {
 		if (!gsize)
