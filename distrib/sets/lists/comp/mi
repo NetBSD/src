@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.641 2003/11/18 00:56:57 thorpej Exp $
+#	$NetBSD: mi,v 1.642 2003/11/18 23:00:04 lukem Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -845,6 +845,7 @@
 ./usr/include/sys/socket.h		comp-c-include
 ./usr/include/sys/socketvar.h		comp-c-include
 ./usr/include/sys/sockio.h		comp-c-include
+./usr/include/sys/soundcard.h		comp-c-include
 ./usr/include/sys/stat.h		comp-c-include
 ./usr/include/sys/stdint.h		comp-c-include
 ./usr/include/sys/swap.h		comp-c-include
