@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2 2002/03/06 03:27:34 simonb Exp $ */
+/* $NetBSD: cpu.c,v 1.3 2002/03/06 07:34:36 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -102,6 +102,24 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / 1000000;
 	/* Compute clock cycles per hz */
 	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / hz;
+
+	/*
+	 * To implement a more accurate microtime using the CP0 COUNT
+	 * register we need to divide that register by the number of
+	 * cycles per MHz.  But...
+	 *
+	 * DIV and DIVU are expensive on MIPS (eg 75 clocks on the
+	 * R4000).  MULT and MULTU are only 12 clocks on the same CPU.
+	 * On the SB1 these appear to be 40-72 clocks for DIV/DIVU and 3
+	 * clocks for MUL/MULTU.
+	 *
+	 * The strategy we use to to calculate the reciprical of cycles
+	 * per MHz, scaled by 1<<32.  Then we can simply issue a MULTU
+	 * and pluck of the HI register and have the results of the
+	 * division.
+	 */
+	curcpu()->ci_divisor_recip =
+	    0x100000000ULL / curcpu()->ci_divisor_delay;
 
 	printf(": %lu.%02luMHz (hz cycles = %lu, delay divisor = %lu)\n",
 	    curcpu()->ci_cpu_freq / 1000000,
