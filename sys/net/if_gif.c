@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.40 2002/03/26 16:05:03 christos Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.41 2002/06/13 05:10:34 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.40 2002/03/26 16:05:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.41 2002/06/13 05:10:34 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -251,6 +251,8 @@ gif_encapcheck(m, off, proto, arg)
 #endif
 #ifdef INET6
 	case 6:
+		if (m->m_pkthdr.len < sizeof(struct ip6_hdr))
+			return 0;
 		if (sc->gif_psrc->sa_family != AF_INET6 ||
 		    sc->gif_pdst->sa_family != AF_INET6)
 			return 0;
@@ -539,6 +541,9 @@ gif_ioctl(ifp, cmd, data)
 	struct ifreq     *ifr = (struct ifreq*)data;
 	int error = 0, size;
 	struct sockaddr *dst, *src;
+#ifdef SIOCSIFMTU
+	u_long mtu;
+#endif
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -572,16 +577,12 @@ gif_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFMTU:
-		{
-			u_long mtu;
-			if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-				break;
-			mtu = ifr->ifr_mtu;
-			if (mtu < GIF_MTU_MIN || mtu > GIF_MTU_MAX) {
-				return (EINVAL);
-			}
-			ifp->if_mtu = mtu;
-		}
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
+		mtu = ifr->ifr_mtu;
+		if (mtu < GIF_MTU_MIN || mtu > GIF_MTU_MAX)
+			return (EINVAL);
+		ifp->if_mtu = mtu;
 		break;
 #endif /* SIOCSIFMTU */
 
