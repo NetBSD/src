@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.10 1998/10/18 17:00:32 christos Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.11 1998/10/24 19:04:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ const char hpux_emul_path[] = "/emul/hpux";
 extern char sigcode[], esigcode[];
 extern struct sysent hpux_sysent[];
 extern char *hpux_syscallnames[];
-extern int hpux_error[];
+extern int nativ_to_hpux_errno[];
 
 static	int exec_hpux_prep_nmagic __P((struct proc *, struct exec_package *));
 static	int exec_hpux_prep_zmagic __P((struct proc *, struct exec_package *));
@@ -110,7 +110,7 @@ static	int exec_hpux_prep_omagic __P((struct proc *, struct exec_package *));
 
 struct emul emul_hpux = {
 	"hpux",
-	hpux_error,
+	native_to_hpux_errno,
 	hpux_sendsig,
 	HPUX_SYS_syscall,
 	HPUX_SYS_MAXSYSCALL,
