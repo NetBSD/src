@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pms.c,v 1.7.2.1 1993/11/03 13:20:09 mycroft Exp $
+ *	$Id: pms.c,v 1.7.2.2 1993/11/03 13:28:44 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -46,6 +46,7 @@
 #define PMS_DATA	0       /* Offset for data port, read-write */
 #define PMS_CNTRL	4       /* Offset for control port, write-only */
 #define PMS_STATUS	4	/* Offset for status port, read-only */
+#define	PMS_NPORTS	16
 
 #define	PMS_CHUNK	128	/* chunk size for read */
 #define	PMS_BSIZE	1020	/* buffer size */
@@ -255,7 +256,7 @@ pmsclose(dev, flag)
 	pms_pit_cmd(iobase, PMS_INT_DISABLE);
 	pms_aux_cmd(iobase, PMS_AUX_DISABLE);
 
-	sc->state &= ~OPEN;
+	sc->sc_state &= ~PMS_OPEN;
 
 	clfree(&sc->sc_q);
 
@@ -368,7 +369,7 @@ int
 pmsintr(arg)
 	void *arg;
 {
-	struct	lms_softc *sc = (struct lms_softc *)arg;
+	struct	pms_softc *sc = (struct pms_softc *)arg;
 	u_short	iobase = sc->sc_iobase;
 	u_char	buttons, changed;
 	char	dx, dy;
@@ -400,13 +401,13 @@ pmsintr(arg)
 		dy = (dy == -127) ? 127 : -dy;
 
 		buttons = ((buttons & 1) << 2) | ((buttons & 6) >> 1);
-		changed = ((buttons ^ sc->status) & 0x07) << 3;
-		sc->status = buttons | (sc->status & ~BUTSTATMASK) | changed;
+		changed = ((buttons ^ sc->sc_status) & 0x07) << 3;
+		sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) | changed;
 
 		if (dx || dy || changed) {
 			/* update accumulated movements */
-			sc->x += dx;
-			sc->y += dy;
+			sc->sc_x += dx;
+			sc->sc_y += dy;
 
 			buffer[0] = 0x80 | (buttons ^ BUTSTATMASK);
 			buffer[1] = dx;
@@ -414,8 +415,8 @@ pmsintr(arg)
 			buffer[3] = buffer[4] = 0;
 			(void) b_to_q(buffer, sizeof buffer, &sc->sc_q);
 
-			if (sc->state & PMS_ASLP) {
-				sc->state &= ~PMS_ASLP;
+			if (sc->sc_state & PMS_ASLP) {
+				sc->sc_state &= ~PMS_ASLP;
 				wakeup((caddr_t)sc);
 			}
 			selwakeup(&sc->sc_rsel);
