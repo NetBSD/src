@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.34 1999/04/12 19:31:27 mjl Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.35 2001/11/13 07:56:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * ISA PnP bus autoconfiguration.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.35 2001/11/13 07:56:41 lukem Exp $");
 
 #include "isadma.h"
 

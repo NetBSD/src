@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpdebug.c,v 1.5 1998/09/05 14:15:25 christos Exp $	*/
+/*	$NetBSD: isapnpdebug.c,v 1.6 2001/11/13 07:56:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isapnpdebug.c,v 1.6 2001/11/13 07:56:41 lukem Exp $");
 
 #ifdef DEBUG_ISAPNP
 

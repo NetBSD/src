@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.13 1999/03/22 10:00:12 mycroft Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.14 2001/11/13 07:56:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.14 2001/11/13 07:56:43 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
