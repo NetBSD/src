@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.68 2004/02/10 01:30:49 matt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.69 2004/03/24 07:47:32 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.68 2004/02/10 01:30:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.69 2004/03/24 07:47:32 junyoung Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -472,9 +472,9 @@ uvm_km_kmemalloc1(map, obj, size, align, prefer, flags)
 		offset += PAGE_SIZE;
 		loopsize -= PAGE_SIZE;
 	}
-	
+
        	pmap_update(pmap_kernel());
-	 
+
 	UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
 	return(kva);
 }

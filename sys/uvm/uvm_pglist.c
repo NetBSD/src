@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.30 2003/11/03 03:58:28 yamt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.31 2004/03/24 07:47:33 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.30 2003/11/03 03:58:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.31 2004/03/24 07:47:33 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ uvm_pglistalloc_c_ps(ps, num, low, high, alignment, boundary, rlist)
 		if (vm_physseg_find(try + num - 1, &cidx) != ps - vm_physmem)
 			panic("pgalloc contig: botch3");
 		if (cidx != try - ps->start + num - 1)
-			panic("pgalloc contig: botch4");		
+			panic("pgalloc contig: botch4");
 #endif
 		tryidx = try - ps->start;
 		end = tryidx + num;
