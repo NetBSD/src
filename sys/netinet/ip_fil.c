@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.3 1997/01/07 10:51:01 mrg Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.4 1997/01/08 21:45:39 veego Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -86,8 +86,8 @@ static	void	frzerostats __P((caddr_t data));
 int	iplioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int	iplopen __P((dev_t, int, int, struct proc *));
 int	iplclose __P((dev_t, int, int, struct proc *));
-int	iplattach __P((void));
-int	ipldetach __P((void));
+int	ipfilterattach __P((void));
+int	ipfilterdetach __P((void));
 # ifdef IPFILTER_LOG
 int	iplread __P((dev_t, struct uio *, int));
 # else
@@ -134,7 +134,7 @@ char *s;
 #endif /* IPFILTER_LKM */
 
 
-int iplattach()
+int ipfilterattach()
 {
 	int s;
 
@@ -157,7 +157,7 @@ int iplattach()
 }
 
 
-int ipldetach()
+int ipfilterdetach()
 {
 	int s, i = FR_INQUE|FR_OUTQUE;
 
@@ -282,9 +282,9 @@ int mode;
 		else {
 			IRCOPY(data, (caddr_t)&enable, sizeof(enable));
 			if (enable)
-				error = iplattach();
+				error = ipfilterattach();
 			else
-				error = ipldetach();
+				error = ipfilterdetach();
 		}
 		break;
 	}
@@ -736,7 +736,7 @@ struct tcpiphdr *ti;
 #ifndef	IPFILTER_LKM
 void iplinit()
 {
-	(void) iplattach();
+	(void) ipfilterattach();
 	ip_init();
 }
 #endif
