@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_llabs.c,v 1.1 2000/03/06 18:32:28 kleink Exp $	*/
+/*	$NetBSD: Lint_llabs.c,v 1.2 2000/03/07 20:02:00 kleink Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -10,7 +10,6 @@
 /* ARGSUSED */ /* LONGLONG */
 long long int
 llabs(j)
-	/* LONGLONG */
 	long long int j;
 {
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: _strtoll.c,v 1.1 2000/03/06 18:32:28 kleink Exp $	*/
+/*	$NetBSD: _strtoll.c,v 1.2 2000/03/07 20:02:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -35,8 +35,10 @@ __indr_reference(_strtoll, strtoll)
 #else
 
 #include <stdlib.h>
+/* LONGLONG */
 long long int	_strtoll __P((const char *, char **, int));	/* XXX */
 
+/* LONGLONG */
 long long int
 strtoll(nptr, endptr, base)
 	const char *nptr;
