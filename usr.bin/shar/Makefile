@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.1 (Berkeley) 5/23/90
-#	$Id: Makefile,v 1.4 1993/07/30 23:51:08 mycroft Exp $
+#	$NetBSD: Makefile,v 1.5 1994/12/21 08:42:01 jtc Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 MAN1=	shar.0
 
