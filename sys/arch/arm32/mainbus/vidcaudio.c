@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.8 1997/03/13 02:19:35 mycroft Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.9 1997/03/20 17:04:12 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -95,6 +95,9 @@ struct vidcaudio_softc {
 	int open;
 
 	u_int encoding;
+	u_int precision;
+	int channels;
+
 	int inport;
 	int outport;
 };
@@ -176,7 +179,9 @@ vidcaudio_attach(parent, self, aux)
 	sc->iobase = mb->mb_iobase;
 
 	sc->open = 0;
-	sc->encoding = 0;
+	sc->encoding = AUDIO_ENCODING_ULAW;
+	sc->precision = 8;
+	sc->channels = 1;
 	sc->inport = 0;
 	sc->outport = 0;
 	ag.in_sr = 24*1024;
@@ -303,10 +308,9 @@ u_long vidcaudio_get_in_sr       __P((void *));
 int    vidcaudio_set_out_sr      __P((void *, u_long));
 u_long vidcaudio_get_out_sr      __P((void *));
 int    vidcaudio_query_encoding  __P((void *, struct audio_encoding *));
-int    vidcaudio_set_encoding	 __P((void *, u_int));
+int    vidcaudio_set_format	 __P((void *, u_int));
 int    vidcaudio_get_encoding	 __P((void *));
-int    vidcaudio_set_precision	 __P((void *, u_int));
-int    vidcaudio_getprecision	 __P((void *));
+int    vidcaudio_get_precision	 __P((void *));
 int    vidcaudio_set_channels 	 __P((void *, int));
 int    vidcaudio_get_channels	 __P((void *));
 int    vidcaudio_round_blocksize __P((void *, int));
@@ -383,60 +387,58 @@ int vidcaudio_query_encoding ( void *addr, struct audio_encoding *fp )
     return 0;
 }
 
-int vidcaudio_set_encoding ( void *addr, u_int enc )
+int vidcaudio_set_format ( void *addr, u_int encoding, u_int precision )
 {
     struct vidcaudio_softc *sc = addr;
 
-    switch (enc)
-    {
-	case AUDIO_ENCODING_ULAW:
-#ifdef DEBUG
-	    printf ( "DEBUG: Set ulaw encoding\n" );
-#endif
-            sc->encoding = enc;
-	    break;
+    if (encoding != AUDIO_ENCODING_ULAW)
+	return (EINVAL);
+    if (precision != 8)
+	return (EINVAL);
 
-        default:
-	    return (EINVAL);
-    }
-    return 0;
+    sc->encoding = encoding;
+    sc->precision = precision;
+    return (0);
 }
 
 int vidcaudio_get_encoding ( void *addr )
 {
     struct vidcaudio_softc *sc = addr;
-    return sc->encoding;
-}
 
-int vidcaudio_set_precision ( void *addr, u_int prec )
-{
-    if (prec != 8)
-	return EINVAL;
-    return 0;
+    return (sc->encoding);
 }
 
 int vidcaudio_get_precision ( void *addr )
 {
-    return (8);
+    struct vidcaudio_softc *sc = addr;
+
+    return (sc->precision);
 }
 
-int vidcaudio_set_channels ( void *addr, int chans )
+int vidcaudio_set_channels ( void *addr, int channels )
 {
-    if ( chans!=1 )
-	return EINVAL;
+    struct vidcaudio_softc *sc = addr;
 
-    return 0;
+    if (channels != 1)
+	return (EINVAL);
+
+    sc->channels = channels;
+    return (0);
 }
 
 int vidcaudio_get_channels ( void *addr )
 {
-    return 1;
+    struct vidcaudio_softc *sc = addr;
+
+    return (sc->channels);
 }
 
 int vidcaudio_round_blocksize ( void *addr, int blk )
 {
-    if (blk>NBPG) blk=NBPG;
-    return blk;
+
+    if (blk > NBPG)
+	blk = NBPG;
+    return (blk);
 }
 
 int vidcaudio_set_out_port ( void *addr, int port )
@@ -607,9 +609,8 @@ struct audio_hw_if vidcaudio_hw_if = {
     vidcaudio_set_out_sr,
     vidcaudio_get_out_sr,
     vidcaudio_query_encoding,
-    vidcaudio_set_encoding,
+    vidcaudio_set_format,
     vidcaudio_get_encoding,
-    vidcaudio_set_precision,
     vidcaudio_get_precision,
     vidcaudio_set_channels,
     vidcaudio_get_channels,

@@ -1,4 +1,4 @@
-/* $NetBSD: lmcaudio.c,v 1.3 1997/03/13 02:19:32 mycroft Exp $ */
+/* $NetBSD: lmcaudio.c,v 1.4 1997/03/20 17:04:11 mycroft Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -94,7 +94,8 @@ struct lmcaudio_softc {
 
 	u_int encoding;
 	u_int precision;
-	u_int channels;
+	int channels;
+
 	int inport;
 	int outport;
 };
@@ -173,7 +174,7 @@ lmcaudio_attach(parent, self, aux)
 	sc->iobase = mb->mb_iobase;
 
 	sc->open = 0;
-	sc->encoding = AUDIO_ENCODING_LINEAR;
+	sc->encoding = AUDIO_ENCODING_PCM16;
 	sc->precision = 16;
 	sc->channels = 2;
 	sc->inport = 0;
@@ -343,10 +344,9 @@ u_long lmcaudio_get_in_sr       __P((void *));
 int    lmcaudio_set_out_sr      __P((void *, u_long));
 u_long lmcaudio_get_out_sr      __P((void *));
 int    lmcaudio_query_encoding  __P((void *, struct audio_encoding *));
-int    lmcaudio_set_encoding	 __P((void *, u_int));
+int    lmcaudio_set_format	 __P((void *, u_int, u_int));
 int    lmcaudio_get_encoding	 __P((void *));
-int    lmcaudio_set_precision	 __P((void *, u_int));
-int    lmcaudio_getprecision	 __P((void *));
+int    lmcaudio_get_precision	 __P((void *));
 int    lmcaudio_set_channels 	 __P((void *, int));
 int    lmcaudio_get_channels	 __P((void *));
 int    lmcaudio_round_blocksize __P((void *, int));
@@ -427,24 +427,20 @@ lmcaudio_query_encoding(addr, fp)
 }
 
 int
-lmcaudio_set_encoding(addr, enc)
+lmcaudio_set_format(addr, encoding, precision)
 	void *addr;
-	u_int enc;
+	u_int encoding, precision;
 {
 	struct lmcaudio_softc *sc = addr;
 
-	switch (enc) {
-	case AUDIO_ENCODING_LINEAR:
-#ifdef DEBUG
-		printf ( "DEBUG: Set linear encoding\n" );
-#endif
-		sc->encoding = enc;
-		break;
-
-	default:
+	if (encoding != AUDIO_ENCODING_PCM16)
 		return (EINVAL);
-	}
-	return 0;
+	if (precision != 16)
+		return (EINVAL);
+
+	sc->encoding = encoding;
+	sc->precision = precision;
+	return (0);
 }
 
 int
@@ -452,19 +448,8 @@ lmcaudio_get_encoding(addr)
 	void *addr;
 {
 	struct lmcaudio_softc *sc = addr;
-	return(sc->encoding);
-}
 
-int
-lmcaudio_set_precision(addr, prec)
-	void *addr;
-	u_int prec;
-{
-	register struct lmcaudio_softc *sc = addr;
-	if (prec != 16)
-		return EINVAL;
-	sc->precision = prec;
-	return 0;
+	return (sc->encoding);
 }
 
 int
@@ -473,20 +458,21 @@ lmcaudio_get_precision(addr)
 {
 	register struct lmcaudio_softc *sc = addr;
 
-	return(sc->precision);
+	return (sc->precision);
 }
 
 int
-lmcaudio_set_channels(addr, chans)
+lmcaudio_set_channels(addr, channels)
 	void *addr;
-	int chans;
+	int channels;
 {
 	register struct lmcaudio_softc *sc = addr;
-	if (chans != 2)
-		return EINVAL;
 
-	sc->channels = chans;
-	return 0;
+	if (channels != 2)
+		return (EINVAL);
+
+	sc->channels = channels;
+	return (0);
 }
 
 int
@@ -494,7 +480,8 @@ lmcaudio_get_channels(addr)
 	void *addr;
 {
 	register struct lmcaudio_softc *sc = addr;
-	return(sc->channels);;
+
+	return (sc->channels);
 }
 
 int
@@ -502,11 +489,12 @@ lmcaudio_round_blocksize(addr, blk)
 	void *addr;
 	int blk;
 {
+
 	if (blk > NBPG)
 		blk = NBPG;
 	else if (blk & 0x0f)	/* quad word */
 		blk &= ~0x0f;
-	return blk;
+	return (blk);
 }
 
 int
@@ -737,9 +725,8 @@ struct audio_hw_if lmcaudio_hw_if = {
 	lmcaudio_set_out_sr,
 	lmcaudio_get_out_sr,
 	lmcaudio_query_encoding,
-	lmcaudio_set_encoding,
+	lmcaudio_set_format,
 	lmcaudio_get_encoding,
-	lmcaudio_set_precision,
 	lmcaudio_get_precision,
 	lmcaudio_set_channels,
 	lmcaudio_get_channels,
