@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.9 1997/08/12 07:38:10 mikel Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.10 1997/10/27 22:16:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -41,6 +41,7 @@
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/isa/isadmavar.h>
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
@@ -50,11 +51,12 @@ static __inline u_char isapnp_shift_bit __P((struct isapnp_softc *));
 static int isapnp_findcard __P((struct isapnp_softc *));
 static void isapnp_free_region __P((bus_space_tag_t, struct isapnp_region *));
 static int isapnp_alloc_region __P((bus_space_tag_t, struct isapnp_region *));
-static int isapnp_alloc_pin __P((struct isapnp_pin *));
+static int isapnp_alloc_irq __P((struct device *, struct isapnp_pin *));
+static int isapnp_alloc_drq __P((struct device *, struct isapnp_pin *));
 static int isapnp_testconfig __P((bus_space_tag_t, bus_space_tag_t,
     struct isapnp_attach_args *, int));
-static struct isapnp_attach_args *isapnp_bestconfig __P((struct isapnp_softc *,
-    struct isapnp_attach_args **));
+static struct isapnp_attach_args *isapnp_bestconfig __P((struct device *, 
+    struct isapnp_softc *, struct isapnp_attach_args **));
 static void isapnp_print_region __P((const char *, struct isapnp_region *,
     size_t));
 static void isapnp_configure __P((struct isapnp_softc *,
@@ -217,27 +219,54 @@ isapnp_alloc_region(t, r)
 }
 
 
-/* isapnp_alloc_pin():
- *	Allocate an irq/drq
+/* isapnp_alloc_irq():
+ *	Allocate an irq
  *	XXX: No resource conflict checks!
  */
 static int
-isapnp_alloc_pin(i)
+isapnp_alloc_irq(isa, i)
+	struct device *isa;
 	struct isapnp_pin *i;
 {
 	int b;
 
-	if (i->bits == 0)
+	if (i->bits == 0) {
 		i->num = 0;
-	else
-		for (b = 0; b < 16; b++)
-			if (i->bits & (1 << b)) {
-				i->num = b;
-				break;
-			}
-	return 0;
+		return 0;
+	}
+
+	for (b = 0; b < 16; b++)
+		if (i->bits & (1 << b)) {
+			i->num = b;
+			return 0;
+		}
+
+	return EINVAL;
 }
 
+/* isapnp_alloc_drq():
+ *	Allocate a drq
+ */
+static int
+isapnp_alloc_drq(isa, i)
+	struct device *isa;
+	struct isapnp_pin *i;
+{
+	int b;
+
+	if (i->bits == 0) {
+		i->num = 0;
+		return 0;
+	}
+
+	for (b = 0; b < 16; b++)
+		if ((i->bits & (1 << b)) && isa_drq_isfree(isa, b)) {
+			i->num = b;
+			return 0;
+		}
+
+	return EINVAL;
+}
 
 /* isapnp_testconfig():
  *	Test/Allocate the regions used
@@ -274,13 +303,13 @@ isapnp_testconfig(iot, memt, ipa, alloc)
 	}
 
 	for (; nirq < ipa->ipa_nirq; nirq++) {
-		error = isapnp_alloc_pin(&ipa->ipa_irq[nirq]);
+		error = isapnp_alloc_irq(ipa->ipa_isa, &ipa->ipa_irq[nirq]);
 		if (error)
 			goto bad;
 	}
 
 	for (; ndrq < ipa->ipa_ndrq; ndrq++) {
-		error = isapnp_alloc_pin(&ipa->ipa_drq[ndrq]);
+		error = isapnp_alloc_drq(ipa->ipa_isa, &ipa->ipa_drq[ndrq]);
 		if (error)
 			goto bad;
 	}
@@ -356,7 +385,8 @@ isapnp_unconfig(iot, memt, ipa)
  *	free all other configurations.
  */
 static struct isapnp_attach_args *
-isapnp_bestconfig(sc, ipa)
+isapnp_bestconfig(isa, sc, ipa)
+	struct device *isa;
 	struct isapnp_softc *sc;
 	struct isapnp_attach_args **ipa;
 {
@@ -377,6 +407,7 @@ isapnp_bestconfig(sc, ipa)
 				best = c;
 		}
 
+		best->ipa_isa = isa;
 		/* Test the best config */
 		error = isapnp_testconfig(sc->sc_iot, sc->sc_memt, best, 0);
 
@@ -795,7 +826,8 @@ isapnp_attach(parent, self, aux)
 			continue;
 
 		DPRINTF(("Selecting attachments\n"));
-		for (d = 0; (lpa = isapnp_bestconfig(sc, &ipa)) != NULL; d++) {
+		for (d = 0;
+		    (lpa = isapnp_bestconfig(parent, sc, &ipa)) != NULL; d++) {
 			isapnp_write_reg(sc, ISAPNP_LOGICAL_DEV_NUM, d);
 			isapnp_configure(sc, lpa);
 #ifdef DEBUG_ISAPNP
@@ -814,7 +846,6 @@ isapnp_attach(parent, self, aux)
 			    lpa->ipa_devident, lpa->ipa_devlogic,
 			    lpa->ipa_devcompat, lpa->ipa_devclass);
 #endif
-
 			if (lpa->ipa_pref == ISAPNP_DEP_CONFLICTING) {
 				printf("%s: <%s, %s, %s, %s> ignored; %s\n",
 				    sc->sc_dev.dv_xname,
