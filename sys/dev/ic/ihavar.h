@@ -1,4 +1,4 @@
-/*	$NetBSD: ihavar.h,v 1.3 2001/07/27 16:16:34 tsutsui Exp $ */
+/*	$NetBSD: ihavar.h,v 1.4 2001/09/27 15:11:34 tsutsui Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -48,7 +48,7 @@
  * $OpenBSD: iha.h,v 1.2 2001/02/08 17:35:05 krw Exp $
  */
 
-#define IHA_MAX_SG_ENTRIES	33
+#define IHA_MAX_SG_ENTRIES	(MAXPHYS / PAGE_SIZE + 1)
 #define IHA_MAX_TARGETS		16
 #define IHA_MAX_SCB		32
 #define IHA_MAX_EXTENDED_MSG	 4 /* SDTR(3) and WDTR(4) only */
