@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.13 2001/11/13 12:49:45 lukem Exp $ */
+/* $NetBSD: mcclock.c,v 1.14 2001/11/23 01:04:11 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.13 2001/11/13 12:49:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.14 2001/11/23 01:04:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -40,13 +40,13 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.13 2001/11/13 12:49:45 lukem Exp $");
 #include <dev/ic/mc146818reg.h>
 
 /*
- * XXX rate is machine-dependent.
+ * XXX default rate is machine-dependent.
  */
 #ifdef __alpha__
-#define MC_DFEAULTRATE MC_RATE_1024_Hz
+#define MC_DFEAULTHZ	1024
 #endif
 #ifdef pmax
-#define MC_DEFAULTRATE MC_RATE_256_Hz
+#define MC_DEFAULTHZ	256
 #endif
 
 
@@ -84,10 +84,55 @@ mcclock_init(dev)
 	struct device *dev;
 {
 	struct mcclock_softc *sc = (struct mcclock_softc *)dev;
+	int rate;
 
-	mc146818_write(sc, MC_REGA, MC_BASE_32_KHz | MC_DEFAULTRATE);
+printf("%s: try to set hz to %d\n", sc->sc_dev.dv_xname, hz);
+
+again:
+	switch (hz) {
+	case 32:
+		rate = MC_BASE_32_KHz | MC_RATE_32_Hz;
+		break;
+	case 64:
+		rate = MC_BASE_32_KHz | MC_RATE_64_Hz;
+		break;
+	case 128:
+		rate = MC_BASE_32_KHz | MC_RATE_128_Hz;
+		break;
+	case 256:
+		rate = MC_BASE_32_KHz | MC_RATE_256_Hz;
+		break;
+	case 512:
+		rate = MC_BASE_32_KHz | MC_RATE_512_Hz;
+		break;
+	case 1024:
+		rate = MC_BASE_32_KHz | MC_RATE_1024_Hz;
+		break;
+	case 2048:
+		rate = MC_BASE_32_KHz | MC_RATE_2048_Hz;
+		break;
+	case 4096:
+		rate = MC_BASE_32_KHz | MC_RATE_4096_Hz;
+		break;
+	case 8192:
+		rate = MC_BASE_32_KHz | MC_RATE_8192_Hz;
+		break;
+	case 16384:
+		rate = MC_BASE_4_MHz | MC_RATE_1;
+		break;
+	case 32768:
+		rate = MC_BASE_4_MHz | MC_RATE_2;
+		break;
+	default:
+		printf("%s: Cannot get %d Hz clock; using %d Hz\n",
+		    sc->sc_dev.dv_xname, hz, MC_DEFAULTHZ);
+		hz = MC_DEFAULTHZ;
+		goto again;
+	}
+	mc146818_write(sc, MC_REGA, rate);
 	mc146818_write(sc, MC_REGB,
 	    MC_REGB_PIE | MC_REGB_SQWE | MC_REGB_BINARY | MC_REGB_24HR);
+printf("%s: hz set to %d\n", sc->sc_dev.dv_xname, hz);
 }
 
 /*
