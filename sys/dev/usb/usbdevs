@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.332 2003/06/30 12:41:38 martin Exp $
+$NetBSD: usbdevs,v 1.333 2003/07/30 04:47:55 gehenna Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1242,6 +1242,8 @@ product ROLAND UA3		0x000f	EDIROL UA-3 USB audio I/F
 product	ROLAND UM880N		0x0014	EDIROL UM-880 MIDI I/F (native)
 product	ROLAND UM880G		0x0015	EDIROL UM-880 MIDI I/F (generic)
 product	ROLAND SD90		0x0016	EDIROL SD-90 STDIO Canvas MIDI Synth.
+product	ROLAND UA3FX		0x0050	EDIROL UA-3FX USB audio I/F (advanced)
+product	ROLAND UA3FX		0x0051	EDIROL UA-3FX USB audio I/F
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
