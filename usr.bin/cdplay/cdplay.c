@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.19 2002/01/23 01:09:15 thorpej Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.19.2.1 2002/10/13 23:38:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.19 2002/01/23 01:09:15 thorpej Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.19.2.1 2002/10/13 23:38:54 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: cdplay.c,v 1.19 2002/01/23 01:09:15 thorpej Exp $");
 #include <err.h>
 #include <errno.h>
 #include <histedit.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -672,6 +673,8 @@ Play_Relative_Addresses:
 		return (play_msf(m1, s1, f1, m2, s2, f2));
 
 Try_Absolute_Timed_Addresses:
+		m2 = UINT_MAX;
+
 		if (6 != sscanf(arg, "%d:%d.%d%d:%d.%d",
 			&m1, &s1, &f1, &m2, &s2, &f2) &&
 		    5 != sscanf(arg, "%d:%d.%d%d:%d", &m1, &s1, &f1, &m2, &s2) &&
@@ -681,7 +684,7 @@ Try_Absolute_Timed_Addresses:
 		    2 != sscanf(arg, "%d:%d", &m1, &s1))
 			goto Clean_up;
 
-		if (m2 == 0) {
+		if (m2 == UINT_MAX) {
 			if (msf) {
 				m2 = toc_buffer[n].addr.msf.minute;
 				s2 = toc_buffer[n].addr.msf.second;
