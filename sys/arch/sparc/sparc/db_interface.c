@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.47 2002/12/23 00:42:37 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.48 2003/01/07 15:15:06 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -111,10 +111,12 @@ db_write_bytes(addr, size, data)
 /*
  * Data and functions used by DDB only.
  */
+
 void
 cpu_Debugger()
 {
 	asm("ta 0x81");
+	sparc_noop();	/* Force this function to allocate a stack frame */
 }
 
 static int nil;
@@ -217,6 +219,9 @@ kdb_kbd_trap(tf)
 	}
 }
 
+/* struct cpu_info of CPU being investigated */
+struct cpu_info *ddb_cpuinfo;
+
 #ifdef MULTIPROCESSOR
 
 #define NOCPU -1
@@ -311,6 +316,7 @@ kdb_trap(type, tf)
 	}
 	curcpu()->ci_ddb_regs = ddb_regp = &dbreg;
 #endif
+	ddb_cpuinfo = curcpu();
 
 	/* Should switch to kdb`s own stack here. */
 
@@ -530,6 +536,7 @@ db_cpu_cmd(addr, have_addr, count, modif)
 	}
 	db_printf("using cpu %ld", addr);
 	ddb_regp = (void *)ci->ci_ddb_regs;
+	ddb_cpuinfo = ci;
 }
 
 #endif /* MULTIPROCESSOR */
