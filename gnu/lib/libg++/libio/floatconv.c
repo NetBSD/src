@@ -1102,6 +1102,7 @@ _IO_strtod
 	TEST_ENDIANNESS;
         sign = nz0 = nz = 0;
         rv = 0.;
+	(void)&rv;		/* Force rv into the stack */
         for(s = s00;;s++) switch(*s) {
                 case '-':
                         sign = 1;

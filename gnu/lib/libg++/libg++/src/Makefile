@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/03/09 00:01:20 phil Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 1996/12/17 18:57:01 phil Exp $
 
 LIB=		g++
 
@@ -9,9 +9,9 @@ MLCG.cc NegExp.cc Normal.cc Obstack.cc Poisson.cc RNG.cc \
 Random.cc Rational.cc Regex.cc RndInt.cc SLList.cc SmplHist.cc \
 SmplStat.cc String.cc Uniform.cc Weibull.cc bitand.c bitany.c \
 bitblt.c bitclear.c bitcopy.c bitcount.c bitinvert.c bitlcomp.c \
-bitset1.c bitxor.c builtin.cc chr.cc compare.cc error.cc \
-fmtq.cc gcd.cc hash.cc ioob.cc lg.cc pow.cc \
-sqrt.cc str.cc timer.c 
+bitset1.c bitxor.c builtin.cc compare.cc error.cc fmtq.cc \
+gcd.cc hash.cc ioob.cc lg.cc pow.cc sqrt.cc \
+timer.c 
 
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../../include \
 		  -I$(.CURDIR)/../../libio -I$(.CURDIR)/../../libstdc++

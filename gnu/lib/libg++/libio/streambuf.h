@@ -116,6 +116,7 @@ enum open_mode {
 
 class ios : public _ios_fields {
   ios& operator=(ios&);  /* Not allowed! */
+  ios (const ios&); /* Not allowed! */
   public:
     typedef __fmtflags fmtflags;
     typedef int iostate;
@@ -134,7 +135,8 @@ class ios : public _ios_fields {
 	trunc = _IO_TRUNC,
 	nocreate = _IO_NOCREATE,
 	noreplace = _IO_NOREPLACE,
-	bin = _IOS_BIN };
+	bin = _IOS_BIN, // Deprecated - ANSI uses ios::binary.
+	binary = _IOS_BIN };
     enum seek_dir { beg, cur, end};
     // ANSI: typedef enum seek_dir seekdir; etc
     // NOTE: If adding flags here, before to update ios::bitalloc().

@@ -38,10 +38,11 @@
 // object pointer that points to the sub-object that is matched is
 // returned.
 
-void* __class_type_info::__rtti_match(const type_info& desired, int is_public,
-				      void *objptr) const
+void*
+__class_type_info::__rtti_match (const type_info& desired, int is_public,
+				 void *objptr) const
 {
-  if (__rtti_compare(desired) == 0)
+  if (__rtti_compare (desired) == 0)
     return objptr;
 
   void *match_found = 0;
@@ -52,7 +53,7 @@ void* __class_type_info::__rtti_match(const type_info& desired, int is_public,
     if (is_virtual_list[i])
       p = *(void **)p;
 
-    if ((p=base_list[i]->__rtti_match(desired, is_public, p))
+    if ((p=base_list[i]->__rtti_match (desired, is_public, p))
 	!= 0)
       if (match_found == 0)
 	match_found = p;
@@ -66,8 +67,9 @@ void* __class_type_info::__rtti_match(const type_info& desired, int is_public,
   return match_found;
 }
 
-void* __pointer_type_info::__rtti_match(const type_info& catch_type, int,
-					void *objptr) const
+void*
+__pointer_type_info::__rtti_match (const type_info& catch_type, int,
+				   void *objptr) const
 {
   if (catch_type.__rtti_get_node_type () == __rtti_get_node_type())
     {
@@ -113,15 +115,15 @@ __throw_type_match_rtti (void *catch_type_r, void *throw_type_r, void *objptr)
     return 0;
 
 #if 0
-  printf("We want to match a %s against a %s!\n",
-	 throw_type.name(), catch_type.name());
+  printf ("We want to match a %s against a %s!\n",
+	  throw_type.name (), catch_type.name ());
 #endif
 
   /* The 1 skips conversions to private bases. */
   new_objptr = throw_type.__rtti_match (catch_type, 1, objptr);
 #if 0
   if (new_objptr)
-    printf("It converts, delta is %d\n", new_objptr-objptr);
+    printf ("It converts, delta is %d\n", new_objptr-objptr);
 #endif
   return new_objptr;
 }

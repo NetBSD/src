@@ -1,35 +1,74 @@
 /* AUTOMATICALLY GENERATED; DO NOT EDIT! */ 
 #ifndef _G_config_h
 #define _G_config_h
-#define _G_LIB_VERSION "2.7.1"
+#define _G_LIB_VERSION "2.7.2"
+#ifndef __alpha__
 #define _G_NAMES_HAVE_UNDERSCORE 1
+#else /* __alpha__ */
+#define _G_NAMES_HAVE_UNDERSCORE 0
+#endif /* __alpha__ */
 #define _G_VTABLE_LABEL_HAS_LENGTH 1
+#ifndef __alpha__
 #define _G_VTABLE_LABEL_PREFIX "__vt$"
+#else /* __alpha__ */
+#define _G_VTABLE_LABEL_PREFIX "_vt$"
+#endif /* __alpha__ */
 #define _G_HAVE_ST_BLKSIZE 1
+#ifndef __alpha__
 typedef unsigned long _G_clock_t;
+#else /* __alpha__ */
+typedef int _G_clock_t;
+#endif /* __alpha__ */
 typedef int _G_dev_t;
+#ifndef __alpha__
 typedef long long _G_fpos_t;
+#else /* __alpha__ */
+typedef long _G_fpos_t;
+#endif /* __alpha__ */
 typedef unsigned int _G_gid_t;
 typedef unsigned int _G_ino_t;
 typedef unsigned short _G_mode_t;
 typedef unsigned short _G_nlink_t;
+#ifndef __alpha__
 typedef long long _G_off_t;
+#else /* __alpha__ */
+typedef long _G_off_t;
+#endif /* __alpha__ */
 typedef int _G_pid_t;
 #ifndef __PTRDIFF_TYPE__
+#ifndef __alpha__
 #define __PTRDIFF_TYPE__ int
+#else /* __alpha__ */
+#define __PTRDIFF_TYPE__ long
+#endif /* __alpha__ */
 #endif
 typedef __PTRDIFF_TYPE__ _G_ptrdiff_t;
 typedef unsigned int _G_sigset_t;
 #ifndef __SIZE_TYPE__
+#ifndef __alpha__
 #define __SIZE_TYPE__ unsigned int
+#else /* __alpha__ */
+#define __SIZE_TYPE__ unsigned long
+#endif /* __alpha__ */
 #endif
 typedef __SIZE_TYPE__ _G_size_t;
+#ifndef __alpha__
 typedef long _G_time_t;
+#else /* __alpha__ */
+typedef int _G_time_t;
+#endif /* __alpha__ */
 typedef unsigned int _G_uid_t;
 typedef int _G_wchar_t;
+#ifndef __alpha__
 typedef int _G_ssize_t;
 typedef int /* default */ _G_wint_t;
 typedef char * _G_va_list;
+#else /* __alpha__ */
+typedef long _G_ssize_t;
+typedef unsigned int /* default */ _G_wint_t;
+#define _G_NEED_STDARG_H
+#define _G_va_list va_list
+#endif /* __alpha__ */
 #define _G_signal_return_type void
 #define _G_sprintf_return_type int
 

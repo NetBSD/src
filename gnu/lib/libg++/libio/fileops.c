@@ -43,21 +43,26 @@ extern int errno;
    is that of gptr(); in put mode that of pptr().
 
    The position in the buffer that corresponds to the position
-   in external file system is file_ptr().
-   This is normally _IO_read_end, except in putback mode,
-   when it is _IO_save_end.
+   in external file system is normally _IO_read_end, except in putback
+   mode, when it is _IO_save_end.
    If the field _fb._offset is >= 0, it gives the offset in
    the file as a whole corresponding to eGptr(). (?)
 
    PUT MODE:
-   If a filebuf is in put mode, pbase() is non-NULL and equal to base().
-   Also, epptr() == ebuf().
-   Also, eback() == gptr() && gptr() == egptr().
-   The un-flushed character are those between pbase() and pptr().
+   If a filebuf is in put mode, then all of _IO_read_ptr, _IO_read_end,
+   and _IO_read_base are equal to each other.  These are usually equal
+   to _IO_buf_base, though not necessarily if we have switched from
+   get mode to put mode.  (The reason is to maintain the invariant
+   that _IO_read_end corresponds to the external file position.)
+   _IO_write_base is non-NULL and usually equal to _IO_base_base.
+   We also have _IO_write_end == _IO_buf_end, but only in fully buffered mode.
+   The un-flushed character are those between _IO_write_base and _IO_write_ptr.
+
    GET MODE:
    If a filebuf is in get or putback mode, eback() != egptr().
    In get mode, the unread characters are between gptr() and egptr().
    The OS file position corresponds to that of egptr().
+
    PUTBACK MODE:
    Putback mode is used to remember "excess" characters that have
    been sputbackc'd in a separate putback buffer.
@@ -70,7 +75,7 @@ extern int errno;
    The OS position corresponds to that of save_egptr().
    
    LINE BUFFERED OUTPUT:
-   During line buffered output, pbase()==base() && epptr()==base().
+   During line buffered output, _IO_write_base==base() && epptr()==base().
    However, ptr() may be anywhere between base() and ebuf().
    This forces a call to filebuf::overflow(int C) on every put.
    If there is more space in the buffer, and C is not a '\n',
@@ -102,11 +107,11 @@ int
 DEFUN(_IO_file_close_it, (fp),
       register _IO_FILE* fp)
 {
-  int sync_status, close_status;
+  int write_status, close_status;
   if (!_IO_file_is_open(fp))
     return EOF;
 
-  sync_status = _IO_file_sync (fp);
+  write_status = _IO_do_flush (fp);
 
   _IO_unsave_markers(fp);
 
@@ -122,7 +127,7 @@ DEFUN(_IO_file_close_it, (fp),
   fp->_fileno = EOF;
   fp->_offset = _IO_pos_BAD;
 
-  return close_status ? close_status : sync_status;
+  return close_status ? close_status : write_status;
 }
 
 void
@@ -211,7 +216,7 @@ DEFUN(_IO_file_setbuf, (fp, p, len),
 }
 
 /* Write TO_DO bytes from DATA to FP.
-   Then mark FP has having empty buffers. */
+   Then mark FP as having empty buffers. */
 
 int
 DEFUN(_IO_do_write, (fp, data, to_do),
@@ -220,24 +225,28 @@ DEFUN(_IO_do_write, (fp, data, to_do),
   _IO_size_t count;
   if (to_do == 0)
     return 0;
-  if (fp->_flags & _IO_IS_APPENDING)
-    /* On a system without a proper O_APPEND implementation,
-       you would need to sys_seek(0, SEEK_END) here, but is
-       is not needed nor desirable for Unix- or Posix-like systems.
-       Instead, just indicate that offset (before and after) is
-       unpredictable. */
-    fp->_offset = _IO_pos_BAD;
-  else if (fp->_IO_read_end != fp->_IO_write_base)
-    { 
-      _IO_pos_t new_pos
-	= _IO_SYSSEEK(fp, fp->_IO_write_base - fp->_IO_read_end, 1);
-      if (new_pos == _IO_pos_BAD)
-	return EOF;
-      fp->_offset = new_pos;
+  else
+    {
+      if (fp->_flags & _IO_IS_APPENDING)
+	/* On a system without a proper O_APPEND implementation,
+	   you would need to sys_seek(0, SEEK_END) here, but is
+	   is not needed nor desirable for Unix- or Posix-like systems.
+	   Instead, just indicate that offset (before and after) is
+	   unpredictable. */
+	fp->_offset = _IO_pos_BAD;
+      else if (fp->_IO_read_end != fp->_IO_write_base)
+	{ 
+	  _IO_pos_t new_pos
+	    = _IO_SYSSEEK(fp, fp->_IO_write_base - fp->_IO_read_end, 1);
+	  if (new_pos == _IO_pos_BAD)
+	    return EOF;
+	  fp->_offset = new_pos;
+	}
+      count = _IO_SYSWRITE (fp, data, to_do);
+      if (fp->_cur_column)
+	fp->_cur_column
+	  = _IO_adjust_column (fp->_cur_column - 1, data, to_do) + 1;
     }
-  count = _IO_SYSWRITE (fp, data, to_do);
-  if (fp->_cur_column)
-    fp->_cur_column = _IO_adjust_column(fp->_cur_column - 1, data, to_do) + 1;
   _IO_setg(fp, fp->_IO_buf_base, fp->_IO_buf_base, fp->_IO_buf_base);
   fp->_IO_write_base = fp->_IO_write_ptr = fp->_IO_buf_base;
   fp->_IO_write_end = (fp->_flags & (_IO_LINE_BUF+_IO_UNBUFFERED)) ? fp->_IO_buf_base
@@ -306,7 +315,15 @@ DEFUN(_IO_file_overflow, (f, ch),
 	  _IO_doallocbuf(f);
 	  _IO_setg (f, f->_IO_buf_base, f->_IO_buf_base, f->_IO_buf_base);
 	}
-      /* Otherwise must be currently reading. */
+      /* Otherwise must be currently reading.
+	 If _IO_read_ptr (and hence also _IO_read_end) is at the buffer end,
+	 logically slide the buffer forwards one block (by setting the
+	 read pointers to all point at the beginning of the block).  This
+	 makes room for subsequent output.
+	 Otherwise, set the read pointers to _IO_read_end (leaving that
+	 alone, so it can continue to correspond to the external position). */
+      if (f->_IO_read_ptr == f->_IO_buf_end)
+	f->_IO_read_end = f->_IO_read_ptr = f->_IO_buf_base;
       f->_IO_write_ptr = f->_IO_read_ptr;
       f->_IO_write_base = f->_IO_write_ptr;
       f->_IO_write_end = f->_IO_buf_end;

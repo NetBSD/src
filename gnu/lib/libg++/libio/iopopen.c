@@ -26,13 +26,13 @@ the executable file might be covered by the GNU General Public License. */
 
 #define _POSIX_SOURCE
 #include "libioP.h"
+#include <sys/types.h>
 #if _IO_HAVE_SYS_WAIT
 #include <signal.h>
 #include <unistd.h>
 #ifdef __STDC__
 #include <stdlib.h>
 #endif
-#include <sys/types.h>
 #include <sys/wait.h>
 
 #ifndef _IO_fork
@@ -118,7 +118,7 @@ DEFUN(_IO_proc_open, (fp, command, mode),
 	  proc_file_chain = proc_file_chain->next;
 	}
 
-      _IO_execl("/bin/sh", "sh", "-c", command, NULL);
+      _IO_execl("/bin/sh", "sh", "-c", command, (char *)0);
       _IO__exit(127);
     }
   _IO_close(child_end);

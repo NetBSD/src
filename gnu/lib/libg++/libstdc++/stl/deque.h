@@ -374,6 +374,9 @@ public:
     friend T* value_type(const iterator&) {
 	return (T*)(0);
     }
+    friend inline difference_type* distance_type(const iterator&) {
+	    return (difference_type*)(0);
+    }
 #endif
 };
 

@@ -36,7 +36,7 @@ DEFUN(_IO_setvbuf, (fp, buf, mode, size),
   switch (mode)
     {
     case _IOFBF:
-      fp->_IO_file_flags &= ~_IO_LINE_BUF;
+      fp->_IO_file_flags &= ~_IO_LINE_BUF|_IO_UNBUFFERED;
       if (buf == NULL)
 	{
 	  if (fp->_IO_buf_base == NULL)
@@ -62,6 +62,7 @@ DEFUN(_IO_setvbuf, (fp, buf, mode, size),
 	}
       break;
     case _IOLBF:
+      fp->_IO_file_flags &= ~_IO_UNBUFFERED;
       fp->_IO_file_flags |= _IO_LINE_BUF;
       if (buf == NULL)
 	return 0;
