@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_subr.c,v 1.1 2002/09/24 18:17:25 uwe Exp $ */
+/*	$NetBSD: igsfb_subr.c,v 1.2 2003/05/10 01:51:56 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.1 2002/09/24 18:17:25 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.2 2003/05/10 01:51:56 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,21 +40,23 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.1 2002/09/24 18:17:25 uwe Exp $");
 
 #include <machine/bus.h>
 
+#include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
+#include <dev/rasops/rasops.h>
 
 #include <dev/ic/igsfbreg.h>
 #include <dev/ic/igsfbvar.h>
 
 
-static void	igsfb_init_seq(struct igsfb_softc *);
-static void	igsfb_init_crtc(struct igsfb_softc *);
-static void	igsfb_init_grfx(struct igsfb_softc *);
-static void	igsfb_init_attr(struct igsfb_softc *);
-static void	igsfb_init_ext(struct igsfb_softc *);
-static void	igsfb_init_dac(struct igsfb_softc *);
+static void	igsfb_init_seq(struct igsfb_devconfig *);
+static void	igsfb_init_crtc(struct igsfb_devconfig *);
+static void	igsfb_init_grfx(struct igsfb_devconfig *);
+static void	igsfb_init_attr(struct igsfb_devconfig *);
+static void	igsfb_init_ext(struct igsfb_devconfig *);
+static void	igsfb_init_dac(struct igsfb_devconfig *);
 
-static void	igsfb_freq_latch(struct igsfb_softc *);
-static void	igsfb_video_on(struct igsfb_softc *);
+static void	igsfb_freq_latch(struct igsfb_devconfig *);
+static void	igsfb_video_on(struct igsfb_devconfig *);
 
 
 
@@ -62,27 +64,30 @@ static void	igsfb_video_on(struct igsfb_softc *);
  * Enable chip.
  */
 int
-igsfb_enable(iot)
+igsfb_enable(iot, iobase, ioflags)
 	bus_space_tag_t iot;
+	bus_addr_t iobase;
+	int ioflags;
 {
 	bus_space_handle_t vdoh;
 	bus_space_handle_t vseh;
 	bus_space_handle_t regh;
 	int ret;
 
-	ret = bus_space_map(iot, IGS_VDO, 1, 0, &vdoh);
+	ret = bus_space_map(iot, iobase + IGS_VDO, 1, ioflags, &vdoh);
 	if (ret != 0) {
 		printf("unable to map VDO register\n");
 		goto out0;
 	}
 
-	ret = bus_space_map(iot, IGS_VSE, 1, 0, &vseh);
+	ret = bus_space_map(iot, iobase + IGS_VSE, 1, ioflags, &vseh);
 	if (ret != 0) {
 		printf("unable to map VSE register\n");
 		goto out1;
 	}
 
-	ret = bus_space_map(iot, IGS_REG_BASE, IGS_REG_SIZE, 0, &regh);
+	ret = bus_space_map(iot, iobase + IGS_REG_BASE, IGS_REG_SIZE, ioflags,
+			    &regh);
 	if (ret != 0) {
 		printf("unable to map I/O registers\n");
 		goto out2;
@@ -116,11 +121,11 @@ igsfb_enable(iot)
  * This is common for all video modes.
  */
 static void
-igsfb_init_seq(sc)
-	struct igsfb_softc *sc;
+igsfb_init_seq(dc)
+	struct igsfb_devconfig *dc;
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = dc->dc_iot;
+	bus_space_handle_t ioh = dc->dc_ioh;
 
 	/* start messing with sequencer */
 	igs_seq_write(iot, ioh, IGS_SEQ_RESET, 0);
@@ -142,11 +147,11 @@ igsfb_init_seq(sc)
  * Init CRTC to 640x480 8bpp at 60Hz
  */
 static void
-igsfb_init_crtc(sc)
-	struct igsfb_softc *sc;
+igsfb_init_crtc(dc)
+	struct igsfb_devconfig *dc;
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = dc->dc_iot;
+	bus_space_handle_t ioh = dc->dc_ioh;
 
 	igs_crtc_write(iot, ioh, 0x00, 0x5f);
 	igs_crtc_write(iot, ioh, 0x01, 0x4f);
@@ -185,11 +190,11 @@ igsfb_init_crtc(sc)
  * This is common for all video modes.
  */
 static void
-igsfb_init_grfx(sc)
-	struct igsfb_softc *sc;
+igsfb_init_grfx(dc)
+	struct igsfb_devconfig *dc;
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = dc->dc_iot;
+	bus_space_handle_t ioh = dc->dc_ioh;
 
 	igs_grfx_write(iot, ioh, 0, 0x00);
 	igs_grfx_write(iot, ioh, 1, 0x00);
@@ -208,11 +213,11 @@ igsfb_init_grfx(sc)
  * This is common for all video modes.
  */
 static void
-igsfb_init_attr(sc)
-	struct igsfb_softc *sc;
+igsfb_init_attr(dc)
+	struct igsfb_devconfig *dc;
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = dc->dc_iot;
+	bus_space_handle_t ioh = dc->dc_ioh;
 	int i;
 
 	igs_attr_flip_flop(iot, ioh);	/* reset attr flip-flop to address */
@@ -232,11 +237,11 @@ igsfb_init_attr(sc)
  * When done with ATTR controller, call this to unblank the screen.
  */
 static void
-igsfb_video_on(sc)
-	struct igsfb_softc *sc;
+igsfb_video_on(dc)
+	struct igsfb_devconfig *dc;
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = dc->dc_iot;
+	bus_space_handle_t ioh = dc->dc_ioh;
 
 	igs_attr_flip_flop(iot, ioh);
 	bus_space_write_1(iot, ioh, IGS_ATTR_IDX, 0x20);
@@ -248,11 +253,11 @@ igsfb_video_on(sc)
  * Latch VCLK (b0/b1) and MCLK (b2/b3) values.
  */
 static void
-igsfb_freq_latch(sc)
-	struct igsfb_softc *sc;
+igsfb_freq_latch(dc)
+	struct igsfb_devconfig *dc;
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = dc->dc_iot;
+	bus_space_handle_t ioh = dc->dc_ioh;
 
 	bus_space_write_1(iot, ioh, IGS_EXT_IDX, 0xb9);
 	bus_space_write_1(iot, ioh, IGS_EXT_PORT, 0x80);
@@ -261,11 +266,12 @@ igsfb_freq_latch(sc)
 
 
 static void
-igsfb_init_ext(sc)
-	struct igsfb_softc *sc;
+igsfb_init_ext(dc)
+	struct igsfb_devconfig *dc;
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = dc->dc_iot;
+	bus_space_handle_t ioh = dc->dc_ioh;
+	int is_cyberpro = (dc->dc_id >= 0x2000);
 
 	igs_ext_write(iot, ioh, 0x10, 0x10); /* IGS_EXT_START_ADDR enable */
 	igs_ext_write(iot, ioh, 0x12, 0x00); /* IGS_EXT_IRQ_CTL disable  */
@@ -315,16 +321,16 @@ igsfb_init_ext(sc)
 	/* ext graphics ctl: GCEXTPATH.  krups 1, nettrom 1, docs 3 */
 	igs_ext_write(iot, ioh, 0x90, 0x01);
 
-	if (sc->sc_is2k)	/* select normal vclk/mclk registers */
+	if (is_cyberpro)	/* select normal vclk/mclk registers */
 	    igs_ext_write(iot, ioh, 0xBF, 0x00);
 
 	igs_ext_write(iot, ioh, 0xB0, 0xD2); /* VCLK = 25.175MHz */
 	igs_ext_write(iot, ioh, 0xB1, 0xD3);
 	igs_ext_write(iot, ioh, 0xB2, 0xDB); /* MCLK = 75MHz*/
 	igs_ext_write(iot, ioh, 0xB3, 0x54);
-	igsfb_freq_latch(sc);
+	igsfb_freq_latch(dc);
 
-	if (sc->sc_is2k)
+	if (is_cyberpro)
 	    igs_ext_write(iot, ioh, 0xF8, 0x04); /* XXX: ??? */
 
 	/* 640x480 8bpp at 60Hz */
@@ -336,11 +342,11 @@ igsfb_init_ext(sc)
 
 
 static void
-igsfb_init_dac(sc)
-	struct igsfb_softc *sc;
+igsfb_init_dac(dc)
+	struct igsfb_devconfig *dc;
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = dc->dc_iot;
+	bus_space_handle_t ioh = dc->dc_ioh;
 	u_int8_t reg;
 
 	/* RAMDAC address 2 select */
@@ -359,11 +365,11 @@ igsfb_init_dac(sc)
 
 
 void
-igsfb_1024x768_8bpp_60Hz(sc)
-	struct igsfb_softc *sc;
+igsfb_1024x768_8bpp_60Hz(dc)
+	struct igsfb_devconfig *dc;
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = dc->dc_iot;
+	bus_space_handle_t ioh = dc->dc_ioh;
 
 	igs_crtc_write(iot, ioh, 0x11, 0x00); /* write enable CRTC 0..7 */
 
@@ -403,7 +409,7 @@ igsfb_1024x768_8bpp_60Hz(sc)
 	igs_ext_write(iot, ioh, 0xB2, 0xE2); /* MCLK */
 	igs_ext_write(iot, ioh, 0xB3, 0x58);
 #endif
-	igsfb_freq_latch(sc);
+	igsfb_freq_latch(dc);
 
 	igs_ext_write(iot, ioh, 0x11, 0x00);
 	igs_ext_write(iot, ioh, 0x77, 0x01); /* 8bpp, indexed */
@@ -412,53 +418,21 @@ igsfb_1024x768_8bpp_60Hz(sc)
 }
 
 
-static void igsfb_xxx_snoop(struct igsfb_softc *); /* XXX: debugging */
-
-static void
-igsfb_xxx_snoop(sc)
-	struct igsfb_softc *sc;
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int8_t reg;
-
-	/* Memory size */
-	reg = igs_ext_read(iot, ioh, IGS_EXT_BUS_CTL);
-	printf(">>> EXT.30 = 0x%02x\n", reg);
-
-	/*
-	 * Memory type &c.
-	 * netwinder = 0x63 -> serial DRAM   1Mx16 chips
-	 *     krups = 0x03 -> serial DRAM 256Kx?? chips
-	 */
-	reg = igs_ext_read(iot, ioh, IGS_EXT_MEM_CTL1);
-	printf(">>> EXT.71 = 0x%02x\n", reg);
-
-	/*
-	 * netwinder = 0x02 -> 4Mb, 32bit bus
-	 *     krups = 0x05 -> 2Mb, 64bit bus
-	 */
-	reg = igs_ext_read(iot, ioh, IGS_EXT_MEM_CTL2);
-	printf(">>> EXT.72 = 0x%02x\n", reg);
-}
-
-
 /*
  * igs-video-init from krups prom
  */
 void
-igsfb_hw_setup(sc)
-	struct igsfb_softc *sc;
+igsfb_hw_setup(dc)
+	struct igsfb_devconfig *dc;
 {
-	igsfb_xxx_snoop(sc);	/* misc debugging printfs */
 
-	igsfb_init_seq(sc);
-	igsfb_init_crtc(sc);
-	igsfb_init_attr(sc);
-	igsfb_init_grfx(sc);
-	igsfb_init_ext(sc);
-	igsfb_init_dac(sc);
+	igsfb_init_seq(dc);
+	igsfb_init_crtc(dc);
+	igsfb_init_attr(dc);
+	igsfb_init_grfx(dc);
+	igsfb_init_ext(dc);
+	igsfb_init_dac(dc);
 
-	igsfb_1024x768_8bpp_60Hz(sc);
-	igsfb_video_on(sc);
+	igsfb_1024x768_8bpp_60Hz(dc);
+	igsfb_video_on(dc);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: igsfbvar.h,v 1.4 2003/01/12 21:37:59 uwe Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.5 2003/05/10 01:51:56 uwe Exp $ */
 
 /*
- * Copyright (c) 2002 Valeriy E. Ushakov
+ * Copyright (c) 2002, 2003 Valeriy E. Ushakov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,11 +29,9 @@
 
 /*
  * Integraphics Systems IGA 168x and CyberPro series.
- * Only tested on IGA 1682 in Krups JavaStation-NC.
  */
 #ifndef _DEV_IC_IGSFBVAR_H_
 #define _DEV_IC_IGSFBVAR_H_
-
 
 #define	IGS_CMAP_SIZE	256	/* 256 R/G/B entries */
 struct igs_hwcmap {
@@ -65,57 +63,74 @@ struct igs_bittab {
 };
 
 
-struct igsfb_softc {
-	struct device sc_dev;
+struct igsfb_devconfig {
+	/* io space, may be memory mapped */
+	bus_space_tag_t dc_iot;
+	bus_addr_t dc_iobase;
+	int dc_ioflags;
 
 	/* io registers */
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	bus_space_handle_t sc_crtch;
+	bus_space_handle_t dc_ioh;
 
 	/* linear memory */
-	bus_space_tag_t sc_memt;
-	bus_addr_t sc_memaddr;
-	bus_size_t sc_memsz; /* size of linear address space including mmio */
-	int sc_memflags;
+	bus_space_tag_t dc_memt;
+	bus_addr_t dc_memaddr;
+	bus_size_t dc_memsz; /* size of linear address space including mmio */
+	int dc_memflags;
 
-	/* video memory size */
-	bus_size_t sc_vmemsz;
+	/* actual video memory size */
+	bus_size_t dc_vmemsz;
 
-	/* fb part actually mapped for wsdisplay */
-	bus_space_handle_t sc_fbh;
-	bus_size_t sc_fbsz;
+	/* resolution */
+	int dc_width, dc_height, dc_depth;
 
-	/* 1k of cursor sprite data */
-	bus_space_handle_t sc_crh;
+	/* part of video memory mapped for wsscreen */
+	bus_space_handle_t dc_fbh;
+	bus_size_t dc_fbsz;
 
-	/* 
+	/* 1KB of cursor sprite data */
+	bus_space_handle_t dc_crh;
+
+	/* XXX: notyet
 	 * graphic coprocessor can be accessed either via i/o space
 	 * or via memory-mapped i/o access through memory space
 	 */
-	bus_space_tag_t sc_copt;
-	bus_space_handle_t sc_coph;
+	bus_space_tag_t dc_copt;
+	bus_space_handle_t dc_coph;
 
-	/* IGA1682 vs CyberPro 2k (use version num. for finer distinction?) */
-	int sc_is2k;
+	/* product id: IGA 168x, CyberPro 2k &c */
+	int dc_id;
 
 	/* flags that control driver operation */
-	int sc_hwflags;
-#define IGSFB_HW_BSWAP		0x1	/* endianness mismatch */
+	int dc_hwflags;
+#define IGSFB_HW_BSWAP			0x1 /* endianness mismatch */
+#define IGSFB_HW_BE_SELECT		0x2 /* big endian magic (cyberpro) */
 
-	struct rasops_info *sc_ri;
+/* do we need to do bswap in software? */
+#define IGSFB_HW_SOFT_BSWAP(dc)						\
+	((((dc)->dc_hwflags) & (IGSFB_HW_BSWAP | IGSFB_HW_BE_SELECT))	\
+		== IGSFB_HW_BSWAP)
 
-	struct igs_hwcmap sc_cmap;	/* software copy of colormap */
-	struct igs_hwcursor sc_cursor;	/* software copy of cursor sprite */
+	struct rasops_info dc_ri;
+
+	struct igs_hwcmap dc_cmap;	/* software copy of colormap */
+	struct igs_hwcursor dc_cursor;	/* software copy of cursor sprite */
 
 	/* precomputed bit tables for cursor sprite 1bpp -> 2bpp conversion */
-	struct igs_bittab *sc_bittab;
+	struct igs_bittab dc_bittab;
 
-	int sc_nscreens;
+	int dc_nscreens;		/* can do only a single screen */
 
-	int sc_blanked;			/* screen is currently blanked */
-	int sc_curenb;			/* cursor sprite enabled */
+	int dc_blanked;			/* screen is currently blanked */
+	int dc_curenb;			/* cursor sprite enabled */
 };
+
+
+struct igsfb_softc {
+	struct device sc_dev;
+	struct igsfb_devconfig *sc_dc;
+};
+
 
 
 /*
@@ -195,11 +210,15 @@ igs_attr_write(t, h, idx, val)
 
 
 /* igsfb_subr.c */
-int	igsfb_enable(bus_space_tag_t);
-void	igsfb_hw_setup(struct igsfb_softc *);
-void	igsfb_1024x768_8bpp_60Hz(struct igsfb_softc *);
+int	igsfb_enable(bus_space_tag_t, bus_addr_t, int);
+void	igsfb_hw_setup(struct igsfb_devconfig *);
+void	igsfb_1024x768_8bpp_60Hz(struct igsfb_devconfig *);
 
 /* igsfb.c */
-void	igsfb_common_attach(struct igsfb_softc *, int);
+int	igsfb_cnattach_subr(struct igsfb_devconfig *);
+void	igsfb_attach_subr(struct igsfb_softc *, int);
+
+
+extern struct igsfb_devconfig igsfb_console_dc;
 
 #endif /* _DEV_IC_IGSFBVAR_H_ */
