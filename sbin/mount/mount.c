@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.34 1997/10/29 19:41:24 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.35 1997/10/31 09:40:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.34 1997/10/29 19:41:24 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.35 1997/10/31 09:40:29 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,13 +66,14 @@ __RCSID("$NetBSD: mount.c,v 1.34 1997/10/29 19:41:24 christos Exp $");
 int	debug, verbose;
 
 int	checkvfsname __P((const char *, const char **));
-char   *catopt __P((char *, const char *));
+void	catopt __P((char **, const char *));
 struct statfs
        *getmntpt __P((const char *));
 int	hasopt __P((const char *, const char *));
 const char
       **makevfslist __P((char *));
-void	mangle __P((char *, int *, const char **));
+static void
+	mangle __P((char *, int *, const char ***, int *));
 int	mountfs __P((const char *, const char *, const char *,
 			int, const char *, const char *, int));
 void	prmount __P((struct statfs *));
@@ -139,7 +140,7 @@ main(argc, argv)
 			break;
 		case 'o':
 			if (*optarg)
-				options = catopt(options, optarg);
+				catopt(&options, optarg);
 			break;
 		case 'r':
 			init_flags |= MNT_RDONLY;
@@ -298,12 +299,13 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		_PATH_USRSBIN,
 		NULL
 	};
-	const char *argv[100], **edir;
+	const char **argv, **edir;
 	struct statfs sf;
 	pid_t pid;
-	int argc, i, status;
+	int argc, i, status, maxargc;
 	char *optbuf, execname[MAXPATHLEN + 1], execbase[MAXPATHLEN],
 	    mntpath[MAXPATHLEN];
+
 #ifdef __GNUC__
 	(void) &name;
 	(void) &optbuf;
@@ -317,19 +319,15 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 
 	name = mntpath;
 
-	if (mntopts == NULL)
-		mntopts = "";
-	if (options == NULL) {
-		if (*mntopts == '\0') {
-			options = "rw";
-		} else {
-			options = mntopts;
-			mntopts = "";
-		}
-	}
-	optbuf = catopt(strdup(mntopts), options);
+	optbuf = NULL;
+	if (mntopts)
+		catopt(&optbuf, mntopts);
+	if (options)
+		catopt(&optbuf, options);
+	if (!mntopts && !options)
+		catopt(&optbuf, "rw");
 
-	if (strcmp(name, "/") == 0)
+	if (!strcmp(name, "/"))
 		flags |= MNT_UPDATE;
 	else if (skipmounted) {
 		if (statfs(name, &sf) < 0) {
@@ -348,28 +346,32 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		}
 	}
 	if (flags & MNT_FORCE)
-		optbuf = catopt(optbuf, "force");
+		catopt(&optbuf, "force");
 	if (flags & MNT_RDONLY)
-		optbuf = catopt(optbuf, "ro");
+		catopt(&optbuf, "ro");
 
 	if (flags & MNT_UPDATE) {
-		optbuf = catopt(optbuf, "update");
+		catopt(&optbuf, "update");
 		/* Figure out the fstype only if we defaulted to ffs */
 		if (vfstype == ffs && statfs(name, &sf) != -1)
 			vfstype = sf.f_fstypename;
 	}
 
+	maxargc = 64;
+	argv = malloc(sizeof(char *) * maxargc);
+
 	(void) snprintf(execbase, sizeof(execbase), "mount_%s", vfstype);
 	argc = 0;
 	argv[argc++] = execbase;
-	mangle(optbuf, &argc, argv);
+	if (optbuf)
+		mangle(optbuf, &argc, &argv, &maxargc);
 	argv[argc++] = spec;
 	argv[argc++] = name;
 	argv[argc] = NULL;
 
 	if (verbose) {
-		(void)printf("exec: %s", execbase);
-		for (i = 1; i < argc; i++)
+		(void)printf("exec:");
+		for (i = 0; i < argc; i++)
 			(void)printf(" %s", argv[i]);
 		(void)printf("\n");
 		return (0);
@@ -378,8 +380,10 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 	switch (pid = vfork()) {
 	case -1:				/* Error. */
 		warn("vfork");
-		free(optbuf);
+		if (optbuf)
+			free(optbuf);
 		return (1);
+
 	case 0:					/* Child. */
 		if (debug)
 			_exit(0);
@@ -398,8 +402,10 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 			warnx("%s not found for %s", execbase, name);
 		_exit(1);
 		/* NOTREACHED */
+
 	default:				/* Parent. */
-		free(optbuf);
+		if (optbuf)
+			free(optbuf);
 
 		if (waitpid(pid, &status, 0) < 0) {
 			warn("waitpid");
@@ -475,38 +481,45 @@ getmntpt(name)
 	return (NULL);
 }
 
-char *
-catopt(s0, s1)
-	char *s0;
-	const char *s1;
+void
+catopt(sp, o)
+	char **sp;
+	const char *o;
 {
-	size_t i;
-	char *cp;
+	char *s;
+	size_t i, j;
 
-	if (s0 && *s0) {
-		i = strlen(s0) + strlen(s1) + 1 + 1;
-		if ((cp = malloc(i)) == NULL)
-			err(1, "%s", "");
-		(void)snprintf(cp, i, "%s,%s", s0, s1);
+	s = *sp;
+	if (s) {
+		i = strlen(s);
+		j = i + 1 + strlen(o) + 1;
+		s = realloc(s, j);
+		(void)snprintf(s + i, j, ",%s", o);
 	} else
-		cp = strdup(s1);
-
-	if (s0)
-		free(s0);
-	return (cp);
+		s = strdup(o);
+	*sp = s;
 }
 
-void
-mangle(options, argcp, argv)
+static void
+mangle(options, argcp, argvp, maxargcp)
 	char *options;
-	int *argcp;
-	const char **argv;
+	int *argcp, *maxargcp;
+	const char ***argvp;
 {
 	char *p, *s;
-	int argc;
+	int argc, maxargc;
+	const char **argv;
 
 	argc = *argcp;
-	for (s = options; (p = strsep(&s, ",")) != NULL;)
+	argv = *argvp;
+	maxargc = *maxargcp;
+
+	for (s = options; (p = strsep(&s, ",")) != NULL;) {
+		/* Always leave space for one more argument and the NULL. */
+		if (argc >= maxargc - 4) {
+			maxargc <<= 1;
+			argv = realloc(argv, maxargc * sizeof(char *));
+		}
 		if (*p != '\0')
 			if (*p == '-') {
 				argv[argc++] = p;
@@ -519,8 +532,11 @@ mangle(options, argcp, argv)
 				argv[argc++] = "-o";
 				argv[argc++] = p;
 			}
+	}
 
 	*argcp = argc;
+	*argvp = argv;
+	*maxargcp = maxargc;
 }
 
 void
