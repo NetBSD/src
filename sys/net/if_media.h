@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.30 2002/11/07 07:42:24 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.31 2002/11/07 07:53:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ typedef	void (*ifm_stat_cb_t) __P((struct ifnet *ifp, struct ifmediareq *req));
 struct ifmedia_entry {
 	TAILQ_ENTRY(ifmedia_entry) ifm_list;
 	u_int	ifm_media;	/* description of this media attachment */
-	int	ifm_data;	/* for driver-specific use */
+	u_int	ifm_data;	/* for driver-specific use */
 	void	*ifm_aux;	/* for driver-specific use */
 };
 
