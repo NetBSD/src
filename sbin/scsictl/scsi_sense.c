@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_sense.c,v 1.3 1999/03/15 23:20:23 thorpej Exp $	*/
+/*	$NetBSD: scsi_sense.c,v 1.4 2003/05/17 23:03:28 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -299,10 +299,8 @@ asc2ascii(asc, ascq, result, reslen)
 			(void) snprintf(result, reslen,
 			    "ASC 0x%02x ASCQ 0x%02x",
 			    asc & 0xff, ascq & 0xff);
-	} else {
-		(void) strncpy(result, adesc[i].description, reslen);
-		result[reslen - 1] = '\0';	/* ensure termination */
-	}
+	} else
+		(void) strlcpy(result, adesc[i].description, reslen);
 }
 
 void
@@ -439,8 +437,7 @@ scsi_decode_sense(snsbuf, flag, rqsbuf, rqsbuflen)
 	if (flag == 0 || flag == 2 || flag == 3)
 		skey = snsbuf[2] & 0xf;
 	if (flag == 0) {			/* Sense Key Only */
-		(void) strncpy(rqsbuf, sense_keys[skey], rqsbuflen);
-		rqsbuf[rqsbuflen - 1] = '\0';
+		(void) strlcpy(rqsbuf, sense_keys[skey], rqsbuflen);
 		return (rqsbuf);
 	} else if (flag == 1) {			/* ASC/ASCQ Only */
 		asc2ascii(snsbuf[12], snsbuf[13], rqsbuf, rqsbuflen);
