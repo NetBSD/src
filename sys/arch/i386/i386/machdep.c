@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.479 2002/08/25 20:21:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.480 2002/09/05 02:43:00 erh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.479 2002/08/25 20:21:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.480 2002/09/05 02:43:00 erh Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2968,7 +2968,7 @@ init386(first_avail)
 
 		/* First hunk */
 		if (seg_start != seg_end) {
-			if (seg_start <= (16 * 1024 * 1024) &&
+			if (seg_start < (16 * 1024 * 1024) &&
 			    first16q != VM_FREELIST_DEFAULT) {
 				u_int64_t tmp;
 
@@ -3001,7 +3001,7 @@ init386(first_avail)
 
 		/* Second hunk */
 		if (seg_start1 != seg_end1) {
-			if (seg_start1 <= (16 * 1024 * 1024) &&
+			if (seg_start1 < (16 * 1024 * 1024) &&
 			    first16q != VM_FREELIST_DEFAULT) {
 				u_int64_t tmp;
 
