@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.4 1996/08/27 21:59:02 cgd Exp $	*/
+/*	$NetBSD: spc.c,v 1.5 1996/08/28 19:00:50 cgd Exp $	*/
 
 #define	integrate	static inline
 
@@ -442,16 +442,6 @@ spc_find(unit)
 	return addr;
 }
 
-int
-spcprint(aux, name)
-	void *aux;
-	const char *name;
-{
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-
 /*
  */
 void
@@ -469,6 +459,7 @@ spcattach(parent, self, aux)
 	/*
 	 * Fill in the prototype scsi_link
 	 */
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_initiator;
 	sc->sc_link.adapter = &spc_switch;
@@ -477,7 +468,7 @@ spcattach(parent, self, aux)
 
 	printf("\n");
 
-	config_found(self, &sc->sc_link, spcprint);
+	config_found(self, &sc->sc_link, scsiprint);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.26 1996/08/27 21:59:56 cgd Exp $	*/
+/*	$NetBSD: asc.c,v 1.27 1996/08/28 19:01:36 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -461,7 +461,6 @@ extern u_long asc_iomem;
  */
 int	ascmatch  __P((struct device * parent, void *cfdata, void *aux));
 void	ascattach __P((struct device *parent, struct device *self, void *aux));
-int	ascprint(void*, const char*);
 
 struct cfattach asc_ca = {
 	sizeof(struct asc_softc), ascmatch, ascattach
@@ -672,6 +671,7 @@ ascattach(parent, self, aux)
 	/*
 	 * fill in the prototype scsi_link.
 	 */
+	asc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	asc->sc_link.adapter_softc = asc;
 	asc->sc_link.adapter_target = asc->sc_id;
 	asc->sc_link.adapter = &asc_switch;
@@ -681,21 +681,11 @@ ascattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices.
 	 */
-	config_found(self, &asc->sc_link, ascprint);
+	config_found(self, &asc->sc_link, scsiprint);
 
 #endif /* USE_NEW_SCSI */
 }
 
-/*
- * Does anyone actually use this, and what for ?
- */
-int
-ascprint(aux, name)
-	void *aux;
-	const char *name;
-{
-	return -1;
-}
 /*
  *  Per Fogelstrom's SCSI Driver breaks down request transfer size.
  */

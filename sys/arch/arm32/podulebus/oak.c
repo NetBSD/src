@@ -1,4 +1,4 @@
-/* $NetBSD: oak.c,v 1.5 1996/08/27 21:55:30 cgd Exp $ */
+/* $NetBSD: oak.c,v 1.6 1996/08/28 18:59:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson 1996.
@@ -91,7 +91,6 @@ struct oak_softc {
 
 int  oakprobe 	__P(( struct device *, void *, void * ));
 void oakattach 	__P(( struct device *, struct device *, void * ));
-int  oakprint   __P(( void *, const char * ));
 void oakminphys __P(( struct buf * ));
 
 #ifdef USE_OWN_PIO_ROUTINES
@@ -149,6 +148,7 @@ oakattach(parent, self, aux)
 
 	printf(" 16-bit");
 
+	ncr_sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.adapter_target = 7;
 	ncr_sc->sc_link.adapter = &oak_adapter;
@@ -192,19 +192,10 @@ oakattach(parent, self, aux)
 
 	printf(" UNDER DEVELOPMENT\n");
 
-	config_found(self, &(ncr_sc->sc_link), oakprint);
+	config_found(self, &(ncr_sc->sc_link), scsiprint);
 }
 
 int
-oakprint(aux, name)
-	void *aux;
-	const char *name;
-{
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
-}
-
 void
 oakminphys(bp)
 	struct buf *bp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.4 1996/08/27 21:56:35 cgd Exp $	*/
+/*	$NetBSD: asc.c,v 1.5 1996/08/28 19:00:30 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -439,7 +439,6 @@ typedef struct asc_softc *asc_softc_t;
  */
 int	ascmatch __P((struct device *, void *, void *));
 void	ascattach __P((struct device *, struct device *, void *));
-int	ascprint(void *, const char *);
 
 int	asc_doprobe __P((void *, int, int, struct device *));
 
@@ -591,6 +590,7 @@ ascattach(parent, self, aux)
 	/*
 	 * Fill in the prototype scsi link.
 	 */
+	asc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	asc->sc_link.adapter_softc = asc;
 	asc->sc_link.adapter_target = asc->sc_id;
 	asc->sc_link.adapter = &asc_switch;
@@ -600,15 +600,7 @@ ascattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub devices.
 	 */
-	config_found(self, &asc->sc_link, ascprint);
-}
-
-int
-ascprint(aux, name)
-	void *aux;
-	const char *name;
-{
-	return -1;
+	config_found(self, &asc->sc_link, scsiprint);
 }
 
 /*

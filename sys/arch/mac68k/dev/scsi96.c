@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96.c,v 1.18 1996/08/27 21:56:11 cgd Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.19 1996/08/28 19:00:15 cgd Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -110,16 +110,6 @@ struct cfdriver ncr96scsi_cd = {
 	NULL, "ncr96scsi", DV_DULL, NULL, 0
 };
 
-static int ncr96_print __P((void *, const char *));
-static int
-ncr96_print(aux, name)
-	void   *aux;
-	const char   *name;
-{
-	/* printf("%s: (sc_link = 0x%x)", name, (int) aux); return UNCONF; */
-	return UNCONF;
-}
-
 static int
 ncr96probe(parent, match, aux)
 	struct device *parent;
@@ -150,6 +140,7 @@ ncr96attach(parent, dev, aux)
 
 	ncr53c96 = (struct ncr53c96_softc *) dev;
 
+	ncr53c96->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr53c96->sc_link.scsibus = unit;
 	ncr53c96->sc_link.adapter_target = 7;
 	ncr53c96->sc_link.adapter = &ncr53c96_switch;
@@ -161,7 +152,7 @@ ncr96attach(parent, dev, aux)
 
 	printf("\n");
 
-	config_found(dev, &(ncr53c96->sc_link), ncr96_print);
+	config_found(dev, &(ncr53c96->sc_link), scsiprint);
 
 	/*
 	 * Enable IRQ and DRQ interrupts.
