@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.188 2000/01/11 17:21:02 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.189 2000/01/12 09:11:42 haya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.183 2000/01/11 17:20:24 matt Exp 
+ *	NetBSD: pcidevs,v 1.184 2000/01/12 09:08:36 haya Exp 
  */
 
 /*
@@ -3170,6 +3170,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Toshiba America Info Systems",
 	    "ToPIC97 CardBus-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC100,
+	    0,
+	    "Toshiba America Info Systems",
+	    "ToPIC100 CardBus-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_FIRO,
