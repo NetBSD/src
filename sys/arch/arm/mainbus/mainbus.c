@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.6 2002/10/02 05:02:31 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.7 2003/01/01 00:46:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -104,13 +104,13 @@ mainbusprint(aux, mainbus)
 	struct mainbus_attach_args *mb = aux;
 
 	if (mb->mb_iobase != MAINBUSCF_BASE_DEFAULT)
-		printf(" base 0x%x", mb->mb_iobase);
+		aprint_normal(" base 0x%x", mb->mb_iobase);
 	if (mb->mb_iosize > 1)
-		printf("-0x%x", mb->mb_iobase + mb->mb_iosize - 1);
+		aprint_normal("-0x%x", mb->mb_iobase + mb->mb_iosize - 1);
 	if (mb->mb_irq != -1)
-		printf(" irq %d", mb->mb_irq);
+		aprint_normal(" irq %d", mb->mb_irq);
 	if (mb->mb_drq != -1)
-		printf(" drq 0x%08x", mb->mb_drq);
+		aprint_normal(" drq 0x%08x", mb->mb_drq);
 
 /* XXXX print flags */
 	return (QUIET);

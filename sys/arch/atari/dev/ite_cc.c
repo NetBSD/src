@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.20 2002/10/02 05:04:25 thorpej Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.21 2003/01/01 00:48:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -283,7 +283,7 @@ void		*auxp;
 const char	*pnp;
 {
 	if(pnp)
-		printf("ite at %s", pnp);
+		aprint_normal("ite at %s", pnp);
 	return(UNCONF);
 }
 
