@@ -8,7 +8,7 @@
  */
 
 #include <pthread/copyright.h>
-#include <pthread/machdep.h>
+#include <pthread/engine.h>
 #include <pthread/kernel.h>
 #include <pthread/queue.h>
 #include <pthread/mutex.h>
