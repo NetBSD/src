@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.40 2000/10/02 12:05:12 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.41 2000/10/11 23:48:00 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -153,7 +153,7 @@ md_post_newfs(void)
 
 	printf(msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/boot.pmax", "/boot.pmax");
-	run_prog(0, 1, "Warning: disk is probably not bootable",
+	run_prog(RUN_DISPLAY, "Warning: disk is probably not bootable",
 	    "/usr/mdec/installboot /dev/r%sc /usr/mdec/bootxx_ffs", diskdev);
 	return 0;
 }
@@ -216,11 +216,11 @@ md_cleanup_install(void)
 		(void)fprintf(script, "%s\n", sedcmd);
 	do_system(sedcmd);
 
-	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
 
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
 }
 
 int
