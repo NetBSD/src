@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.25 1999/05/07 20:54:01 tron Exp $
+# $NetBSD: md.arm32,v 1.26 1999/06/10 00:54:13 simonb Exp $
 ./usr/include/arm32
 ./usr/include/arm32/_G_config.h
 ./usr/include/arm32/ansi.h
@@ -60,7 +60,3 @@
 ./usr/lib/libarm32_pic.a
 ./usr/lib/scrt0.o
 ./usr/libdata/lint/llib-larm32.ln
-./usr/share/man/cat2/arm32_drain_writebuf.0
-./usr/share/man/cat2/arm32_sync_icache.0
-./usr/share/man/man2/arm32_drain_writebuf.2
-./usr/share/man/man2/arm32_sync_icache.2

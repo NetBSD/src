@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.145 1999/06/09 03:01:21 simonb Exp $
+# $NetBSD: mi,v 1.146 1999/06/10 00:54:13 simonb Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -1202,6 +1202,8 @@
 ./usr/share/man/cat2/access.0
 ./usr/share/man/cat2/acct.0
 ./usr/share/man/cat2/adjtime.0
+./usr/share/man/cat2/arm32_drain_writebuf.0
+./usr/share/man/cat2/arm32_sync_icache.0
 ./usr/share/man/cat2/bind.0
 ./usr/share/man/cat2/brk.0
 ./usr/share/man/cat2/chdir.0
@@ -1255,6 +1257,12 @@
 ./usr/share/man/cat2/getsockopt.0
 ./usr/share/man/cat2/gettimeofday.0
 ./usr/share/man/cat2/getuid.0
+./usr/share/man/cat2/i386_get_ioperm.0
+./usr/share/man/cat2/i386_get_ldt.0
+./usr/share/man/cat2/i386_iopl.0
+./usr/share/man/cat2/i386_set_ioperm.0
+./usr/share/man/cat2/i386_set_ldt.0
+./usr/share/man/cat2/i386_vm86.0
 ./usr/share/man/cat2/intro.0
 ./usr/share/man/cat2/ioctl.0
 ./usr/share/man/cat2/kill.0
@@ -1266,6 +1274,7 @@
 ./usr/share/man/cat2/lseek.0
 ./usr/share/man/cat2/lstat.0
 ./usr/share/man/cat2/lutimes.0
+./usr/share/man/cat2/m68k_sync_icache.0
 ./usr/share/man/cat2/madvise.0
 ./usr/share/man/cat2/mincore.0
 ./usr/share/man/cat2/minherit.0
@@ -2259,6 +2268,8 @@
 ./usr/share/man/man2/access.2
 ./usr/share/man/man2/acct.2
 ./usr/share/man/man2/adjtime.2
+./usr/share/man/man2/arm32_drain_writebuf.2
+./usr/share/man/man2/arm32_sync_icache.2
 ./usr/share/man/man2/bind.2
 ./usr/share/man/man2/brk.2
 ./usr/share/man/man2/chdir.2
@@ -2312,6 +2323,12 @@
 ./usr/share/man/man2/getsockopt.2
 ./usr/share/man/man2/gettimeofday.2
 ./usr/share/man/man2/getuid.2
+./usr/share/man/man2/i386_get_ioperm.2
+./usr/share/man/man2/i386_get_ldt.2
+./usr/share/man/man2/i386_iopl.2
+./usr/share/man/man2/i386_set_ioperm.2
+./usr/share/man/man2/i386_set_ldt.2
+./usr/share/man/man2/i386_vm86.2
 ./usr/share/man/man2/intro.2
 ./usr/share/man/man2/ioctl.2
 ./usr/share/man/man2/kill.2
@@ -2323,6 +2340,7 @@
 ./usr/share/man/man2/lseek.2
 ./usr/share/man/man2/lstat.2
 ./usr/share/man/man2/lutimes.2
+./usr/share/man/man2/m68k_sync_icache.2
 ./usr/share/man/man2/madvise.2
 ./usr/share/man/man2/mincore.2
 ./usr/share/man/man2/minherit.2
