@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2003/08/07 11:13:37 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2004/02/13 17:56:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.8 2003/08/07 11:13:37 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 2004/02/13 17:56:17 wiz Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -97,7 +97,7 @@ void	try(char *, int, char **);
  *		file; if not specified, all files with hard, non
  *		ignorable errors are touched (assuming they can be).
  *
- *	-t:	touch only files ending with the list of suffices, each
+ *	-t:	touch only files ending with the list of suffixes, each
  *		suffix preceded by a dot.
  *		eg, -t .c.y.l
  *		will touch only files ending with .c, .y or .l
