@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.64 2004/03/27 01:17:49 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.65 2004/03/27 04:25:12 atatat Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.64 2004/03/27 01:17:49 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.65 2004/03/27 04:25:12 atatat Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -173,7 +173,6 @@ static int	bge_auto_thresh = 1;
 static int	bge_rx_thresh_lvl;
 
 #ifdef __NetBSD__
-static struct sysctlnode *bge_node_root;
 static int bge_rxthresh_nodenum;
 #endif /* __NetBSD__ */
 
@@ -3757,7 +3756,7 @@ sysctl_bge_verify(SYSCTLFN_ARGS)
 }
 
 /*
- * Setup sysctl(3) MIB, hw.bge.*.
+ * Set up sysctl(3) MIB, hw.bge.*.
  *
  * TBD condition SYSCTL_PERMANENT on being an LKM or not
  */
@@ -3778,20 +3777,17 @@ SYSCTL_SETUP(sysctl_bge, "sysctl bge subtree setup")
 		goto err;
 	}
 
-	bge_node_root = node;
-
 	/* BGE Rx interrupt mitigation level */
 	if ((rc = sysctl_createv(clog, 0, NULL, &node, 
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "rx_lvl", NULL, sysctl_bge_verify, 0,
 	    &bge_rx_thresh_lvl,
-	    0, CTL_HW, bge_node_root->sysctl_num, CTL_CREATE,
+	    0, CTL_HW, node->sysctl_num, CTL_CREATE,
 	    CTL_EOL)) != 0) {
 		goto err;
 	}
 
 	bge_rxthresh_nodenum = node->sysctl_num;
-	node = NULL;
 
 	return;
 
