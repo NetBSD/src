@@ -1,259 +1,344 @@
-This is the source portion of BIND version 8.  Its companions are "doc" and
-"contrib" so you are probably not missing anything.
-
-See the CHANGES file for a detailed listing of all changes.  See the INSTALL
-file for information on building and installing BIND.
-
-See the SUPPORT file for information on obtaining commercial support for ISC
-artifacts including BIND, INN, and DHCP.
-
-Note that BIND 8 is in "end-of-life", having been replaced by BIND 9.  See
-http://www.isc.org/ for more details.
-
-BIND 8.3.7 Highlights
-	Security release.
-
-BIND 8.3.6 Highlights
-	Maintenance release.
-
-BIND 8.3.5 Highlights
-	Maintenance release.
-
-BIND 8.3.4 Highlights
-	Security Fix DoS and buffer overrun.
-
-BIND 8.3.3 Highlights
-	Security Fix libbind. All applications linked against libbind
-	need to relinked.
-	'rndc restart' now preserves named's arguements
-
-BIND 8.3.2 Highlights
-	dig, nslookup, host and nsupdate have improved IPv6 support.
-
-BIND 8.3.1 Highlights
-	Critical bug fix to prevent DNS storms. If you have BIND 8.3.0 you
-	need to upgrade.
-
-BIND 8.3.0 Highlights
-	IPv6 transport support in resolver (from KAME).
-	Opaque rdata support.
-	EDNS0 support.
-	Glue ordering to help non-ENDS0 aware clients (servers) cope with
-	larger responses as a result of IPv6 by allowing A records to be added
-	first to the additional section.  IPv6 capable clients are expected to
-	use EDNS0 to allow larger responses to be sent.
-	Bug Fixes, includes BIND 8.2.5 changes.
-
-BIND 8.2.4 Highlights
-	NSAP processing was not RFC 1706 compliant. NOTE: OLD MASTER FILES
-	NEED TO BE CORRECTED AND CACHE FILES REMOVED.
-	Fixes long-standing protocol incompatibility in DNSSEC support.
-	Avoids fwd'ing to root name servers if response will be rejected.
-	new port/cygwin contributed by s_c_biggs@bigfoot.com.
-	new contrib/mdnkit (V1.3) from author.
-	new contrib/adm from official ftp site.
-	new contrib/host from author.
-	new contrib/dnsp from author.
-	fixed file descriptor leak in resolver.
-	fixed a major memory leak in the processing of dynamic updates.
-	numerous portability improvements.
-	numerous bug fixes.
-
-BIND 8.2.3 Highlights
-
-	Improved support for Windows NT and Windows 2000.
-	Host stats are no longer required to track the source of a record.
-	IXFR improvements.
-	Forwarders track and use RTT to select fastest.
-	Unix domain sockets implementions that require the directory
-	to be secure, are now secured.
-	Many minor problems fixed.
-	Linux DoS removed.
-
-BIND 8.2.2 patchlevel 5 Highlights
-
-	Bug in named-xfer (from patchlevel 4).
-	Portability to IPv6 versions of FreeBSD, OpenBSD, NetBSD.
-	Portability improvements (A/UX, AIX, IRIX, NetBSD, SCO, MPE/IX, NT).
-	"also-notify" option could cause memory allocation errors.
-	IXFR improvements (though client-side is still disabled).
-	Contributed software upgraded (including TIS's "dns_signer").
-	Several latent denial-of-service bugs fixed (from audits, not abuse).
-	New "make noesw" top-level target for removing encumbered components.
-
-BIND 8.2.2 Highlights
+BIND 9
 
-	Interoperability with MS-Win2K has been improved.                     
-	Server-side IXFR is now known to work even under high load.                 
-	Support for Windows/NT (thanks to BayNetworks).
-	More fixes, especially to DNSSEC, TSIG, IXFR, and selective forwarding.
-	More portability improvements and lint removal (A/UX 3.1.1, SCO 5.0).
-	Better NOTIFY behaviour, especially with large update volume.
-	Better UPDATE handling, including SRV RR support and RFC compliance.
-	Fix for "ndc reload ZONENAME" (specific zone reload) problems.
-	Fix for round robin when multiple CNAMEs are in use.
-	New "min-roots" (MINROOTS) and "serial-queries" (MAXQSERIAL) options.
-	Log files are no longer auto-rotated every time the server starts up.
-	New "ndc reconfig" command only finds new/deleted zones, no stat()ing.
-	New global options for "transfer-source" and "also-notify".
-	$GENERATE now supports more record types, and options.
+	BIND version 9 is a major rewrite of nearly all aspects of the
+	underlying BIND architecture.  Some of the important features of
+	BIND 9 are:
 
-BIND 8.2.1 Highlights
+		- DNS Security
+			DNSSEC (signed zones)
+			TSIG (signed DNS requests)
 
-	Bug fixes, especially to DNSSEC, TSIG, IXFR, and selective forwarding.
-	Portability improvements and lint removal.
-	Use best SOA rather than first-better when selecting an AXFR master.
-	$TTL now accepts symbolic time values (such as "$TTL 1h30m").
-	"ndc reload" now accepts a zone argument, for single-zone reloads.
-	ndc is better behaved; is verbose or quiet when appropriate.
-	event and error reporting improvements.
+		- IP version 6
+			Answers DNS queries on IPv6 sockets
+			IPv6 resource records (AAAA)
+			Experimental IPv6 Resolver Library
 
-BIND 8.2 Highlights
+		- DNS Protocol Enhancements
+			IXFR, DDNS, Notify, EDNS0
+			Improved standards conformance
 
-	RFC 2308 (Negative Caching)
-	RFC 2181 (DNS Clarifications)
-	RFC 2065 (DNS Security)
-	TSIG (Transaction SIGnatures)
-	support for multiple virtual name servers
-	NDC uses a "control channel" now (no more signals)
-	"Split DNS" via zone type "forward".
+		- Views
+			One server process can provide multiple "views" of
+			the DNS namespace, e.g. an "inside" view to certain
+			clients, and an "outside" view to others.
 
-	Many bug fixes
-	Documentation improvements
-	Performance enhancements
+		- Multiprocessor Support
 
-BIND 8.1.2 Highlights
+		- Improved Portability Architecture
 
-	Security fixes for a number of problems including:
 
-		An attacker could overwrite the stack if inverse query support
-		was enabled.
+	BIND version 9 development has been underwritten by the following
+	organizations:
 
-		A number of denial of service attacks where malformed packets
-		could cause the server to crash.
+		Sun Microsystems, Inc.
+		Hewlett Packard
+		Compaq Computer Corporation
+		IBM
+		Process Software Corporation
+		Silicon Graphics, Inc.
+		Network Associates, Inc.
+		U.S. Defense Information Systems Agency
+		USENIX Association
+		Stichting NLnet - NLnet Foundation
+		Nominum, Inc.
 
-		The server was willing to answer queries on its forwarding
-		sockets.
 
-	Several memory leaks have been plugged.
+BIND 9.3.0
 
-	The server no longer panics if a periodic interface scan fails due
-	to no file descriptors being available.
+	BIND 9.3.0 has a number of new features over 9.2,
+	including:
 
-	Updates to a number of ports.  New ports for QNX, LynxOS, HP-UX 9.x,
-	and HP MPE.
+	DNSSEC is now DS based.
+	See doc/draft/draft-ietf-dnsext-dnssec-*
 
-	"files unlimited" now works as expected on systems where setting
-	an infinite rlim_max for RLIMIT_NOFILE works.
+	DNSSEC lookaside validation.
 
-	Adding and deleting the same record in the same dynamic update no
-	longer crashes the server.
+	check-names is now implemented.
+	rrset-order in more complete.
 
-	If a dynamic update fails, rollback is now done in LIFO order instead
-	of FIFO order.
+	IPv4/IPv6 transition support, dual-stack-servers.
 
-	Better behavior when priming of the root servers fails.
+	IXFR deltas can now be generated when loading master files,
+	ixfr-from-differences.
 
-	purge_zone() didn't work correctly for the root zone, allowing
-	old data to persist after loading the zone.
+	It is now possible to specify the size of a journal, max-journal-size.
 
-	Improved handling of oversized UDP packets.
+	It is now possible to define a named set of master servers to be
+	used in masters clause, masters.
 
-	All hosts on the also-notify list are now notified.
+	The advertised EDNS UDP size can now be set, edns-udp-size.
 
-	The meaning of the count returned by select() varies somewhat by
-	operating system, and this could cause previous releases of the
-	server to spin.
+	allow-v6-synthesis has been obsoleted.
 
-	Per-host statistics may be disabled by specifying 'host-statistics no'
-	in named.conf.
+	NOTE:
+	* Zones containing MD and MF will now be rejected.
+	* dig, nslookup name. now report "Not Implemented" as
+	  NOTIMP rather than NOTIMPL.  This will have impact on scripts
+	  that are looking for NOTIMPL.
 
-	The maximum number of zones has been increased from 32768 to 65536.
+	libbind: corresponds to that from BIND 8.4.5.
 
-	query-source may specify an address and port that the server is
-	already listening on.  BIND 8.1.1 required that either the address
-	or port be wild.  E.g., you can now say:
+BIND 9.2.0
 
-		listen-on port 53 { 10.0.0.1; };
-		query-source address 10.0.0.1 port 53;
+	BIND 9.2.0 has a number of new features over 9.1,
+	including:
 
-	The value of FD_SETSIZE to use may be specified.
+	  - The size of the cache can now be limited using the
+            "max-cache-size" option.
 
-	Experimental -u (set user id), -g (set group id), and -t (chroot)
-	command line options.  See the INSTALL file for details.
+	  - The server can now automatically convert RFC1886-style
+	    recursive lookup requests into RFC2874-style lookups, 
+	    when enabled using the new option "allow-v6-synthesis".
+            This allows stub resolvers that support AAAA records
+            but not A6 record chains or binary labels to perform
+            lookups in domains that make use of these IPv6 DNS
+            features.
 
-BIND 8 Features
+	  - Performance has been improved.
 
-	-> DNS Dynamic Updates (RFC 2136)
-
-	-> DNS Change Notification (RFC 1996)
-
-	-> Completely new configuration syntax
-
-	-> Flexible, categorized logging system
-
-	-> IP-address-based access control for queries, zone transfers, and
-	   updates that may be specified on a zone-by-zone basis
-
-	-> More efficient zone transfers
-
-	-> Improved performance for servers with thousands of zones
-
-	-> The server no longer forks for outbound zone transfers
-
-	-> Many bug fixes
-
-File and Directory Overview
-
-	CHANGES				history of added features and
-					fixed bugs
-
-	INSTALL				how to build and install
-
-	README				this file
-						
-	TODO				features planned but not yet written
-
-	Version				the version number of this release
-
-	bin/*				source for executables, including
-					the nameserver
-
-	include/*			public .h files
-
-	lib/*				the resolver and various BIND
-					support libraries
-
-	port/*				ports to various operating systems
+	  - The man pages now use the more portable "man" macros
+	    rather than the "mandoc" macros, and are installed
+            by "make install".
+
+          - The named.conf parser has been completely rewritten.
+            It now supports "include" directives in more
+            places such as inside "view" statements, and it no
+            longer has any reserved words.
+
+          - The "rndc status" command is now implemented.
+
+	  - rndc can now be configured automatically.
+
+	  - A BIND 8 compatible stub resolver library is now
+	    included in lib/bind.
+
+	  - OpenSSL has been removed from the distribution.  This
+	    means that to use DNSSEC, OpenSSL must be installed and
+	    the --with-openssl option must be supplied to configure.
+	    This does not apply to the use of TSIG, which does not
+	    require OpenSSL.
+
+	  - The source distribution now builds on Windows NT/2000.
+	    See win32utils/readme1.txt and win32utils/win32-build.txt
+	    for details.
+
+	This distribution also includes a new lightweight stub
+	resolver library and associated resolver daemon that fully
+	support forward and reverse lookups of both IPv4 and IPv6
+	addresses.  This library is considered experimental and
+	is not a complete replacement for the BIND 8 resolver library.
+	Applications that use the BIND 8 res_* functions to perform
+	DNS lookups or dynamic updates still need to be linked against
+	the BIND 8 libraries.  For DNS lookups, they can also use the
+	new "getrrsetbyname()" API.
+
+	BIND 9.2 is capable of acting as an authoritative server
+	for DNSSEC secured zones.  This functionality is believed to
+	be stable and complete except for lacking support for
+	verifications involving wildcard records in secure zones.
+
+	When acting as a caching server, BIND 9.2 can be configured
+	to perform DNSSEC secure resolution on behalf of its clients.
+	This part of the DNSSEC implementation is still considered
+	experimental.  For detailed information about the state of the
+	DNSSEC implementation, see the file doc/misc/dnssec.
+
+	There are a few known bugs:
+
+		On some systems, IPv6 and IPv4 sockets interact in
+		unexpected ways.  For details, see doc/misc/ipv6.
+		To reduce the impact of these problems, the server
+		no longer listens for requests on IPv6 addresses
+		by default.  If you need to accept DNS queries over
+		IPv6, you must specify "listen-on-v6 { any; };"
+		in the named.conf options statement.
+
+		FreeBSD prior to 4.2 (and 4.2 if running as non-root)
+		and OpenBSD prior to 2.8 log messages like
+		"fcntl(8, F_SETFL, 4): Inappropriate ioctl for device".
+		This is due to a bug in "/dev/random" and impacts the
+		server's DNSSEC support.
+
+		OS X 10.1.4 (Darwin 5.4), OS X 10.1.5 (Darwin 5.5) and
+		OS X 10.2 (Darwin 6.0) reports errors like
+		"fcntl(3, F_SETFL, 4): Operation not supported by device".
+		This is due to a bug in "/dev/random" and impacts the
+		server's DNSSEC support.
+
+		--with-libtool does not work on AIX.
+
+	A bug in the Windows 2000 DNS server can cause zone transfers
+	from a BIND 9 server to a W2K server to fail.  For details,
+	see the "Zone Transfers" section in doc/misc/migration.
+
+	For a detailed list of user-visible changes from
+	previous releases, see the CHANGES file.
+
+
+Building
+
+	BIND 9 currently requires a UNIX system with an ANSI C compiler,
+	basic POSIX support, and a 64 bit integer type.
+
+	We've had successful builds and tests on the following systems:
+
+		AIX 4.3
+		COMPAQ Tru64 UNIX 4.0D
+		COMPAQ Tru64 UNIX 5 (with IPv6 EAK)
+		FreeBSD 3.4-STABLE, 3.5, 4.0, 4.1
+		HP-UX 11
+		IRIX64 6.5
+		NetBSD 1.5
+		Red Hat Linux 6.0, 6.1, 6.2, 7.0
+		Solaris 2.6, 7, 8
+		Windows NT/W2K
+
+	Additionally, we have unverified reports of success building
+	previous versions of BIND 9 from users of the following systems:
+
+		AIX 5L
+		SuSE Linux 7.0
+		Slackware Linux 7.x, 8.0
+	        Red Hat Linux 7.1
+		Debian GNU/Linux 2.2 and 3.0
+		Mandrake 8.1
+		OpenBSD 2.6, 2.8, 2.9
+		UnixWare 7.1.1
+		HP-UX 10.20
+		BSD/OS 4.2
+		Mac OS X 10.1
+
+	To build, just
+
+		./configure
+		make
+
+	Do not use a parallel "make".
+
+	Several environment variables that can be set before running
+	configure will affect compilation:
+
+	    CC
+		The C compiler to use.	configure tries to figure
+		out the right one for supported systems.
+
+	    CFLAGS
+		C compiler flags.  Defaults to include -g and/or -O2
+		as supported by the compiler.  
+
+	    STD_CINCLUDES
+		System header file directories.	 Can be used to specify
+		where add-on thread or IPv6 support is, for example.
+		Defaults to empty string.
+
+	    STD_CDEFINES
+		Any additional preprocessor symbols you want defined.
+		Defaults to empty string.
+
+		Possible settings:
+		Change the default syslog facility of named/lwresd.
+		  -DISC_FACILITY=LOG_LOCAL0	
+		Enable DNSSEC signature chasing support in dig.
+		  -DDIG_SIGCHASE=1 (sets -DDIG_SIGCHASE_TD=1 and
+				    -DDIG_SIGCHASE_BU=1)
+
+	To build shared libraries, specify "--with-libtool" on the
+	configure command line.
+
+	For the server to support DNSSEC, you need to build it
+	with crypto support.  You must have OpenSSL 0.9.5a
+	or newer installed and specify "--with-openssl" on the
+	configure command line.  If OpenSSL is installed under
+	a nonstandard prefix, you can tell configure where to
+	look for it using "--with-openssl=/prefix".
+
+	To build libbind (the BIND 8 resolver library), specify
+	"--enable-libbind" on the configure command line.
+
+	On some platforms, BIND 9 can be built with multithreading
+	support, allowing it to take advantage of multiple CPUs.
+	You can specify whether to build a multithreaded BIND 9 
+	by specifying "--enable-threads" or "--disable-threads"
+	on the configure command line.  The default is operating
+	system dependent.
+
+	If your operating system has integrated support for IPv6, it
+	will be used automatically.  If you have installed KAME IPv6
+	separately, use "--with-kame[=PATH]" to specify its location.
+
+	"make install" will install "named" and the various BIND 9 libraries.
+	By default, installation is into /usr/local, but this can be changed
+	with the "--prefix" option when running "configure".
+
+	You may specify the option "--sysconfdir" to set the directory 
+	where configuration files like "named.conf" go by default,
+	and "--localstatedir" to set the default parent directory
+	of "run/named.pid".   For backwards compatibility with BIND 8,
+	--sysconfdir defaults to "/etc" and --localstatedir defaults to
+	"/var" if no --prefix option is given.  If there is a --prefix
+	option, sysconfdir defaults to "$prefix/etc" and localstatedir
+	defaults to "$prefix/var".
+
+	To see additional configure options, run "configure --help".
+	Note that the help message does not reflect the BIND 8 
+	compatibility defaults for sysconfdir and localstatedir.
+
+	If you're planning on making changes to the BIND 9 source, you
+	should also "make depend".  If you're using Emacs, you might find
+	"make tags" helpful.
+
+	If you need to re-run configure please run "make distclean" first.
+	This will ensure that all the option changes take.
+
+	Building with gcc is not supported, unless gcc is the vendor's usual
+	compiler (e.g. the various BSD systems, Linux).
 	
+	* gcc-3.2.1 and gcc-3.1.1 is known to cause problems with solaris-x86.
+	* gcc prior to gcc-3.2.3 ultrasparc generates incorrect code at -02.
 
-Kits, Questions, Comments, and Bug Reports
+	A limited test suite can be run with "make test".  Many of
+	the tests require you to configure a set of virtual IP addresses
+	on your system, and some require Perl; see bin/tests/system/README
+	for details.
 
-    <URL:ftp://ftp.isc.org/isc/bind/src/cur>        current non-test release
-    <URL:ftp://ftp.isc.org/isc/bind/src/testing>    latest public test kit
 
-    <URL:usenet:comp.protocols.dns.bind>            using BIND
-    <URL:usenet:comp.protocols.dns.ops>             DNS operations in general
-    <URL:usenet:comp.protocols.dns.std>             DNS standards in general
+Documentation
 
-    <URL:mailto:bind-users-request@vix.com>         gw'd to u:c.p.d.bind
-    <URL:mailto:namedroppers-request@internic.net>  gw'd to u:c.p.d.std
-    <URL:mailto:bind-workers-request@vix.com>       code warriors only please
+	The BIND 9 Administrator Reference Manual is included with the
+	source distribution in DocBook XML and HTML format, in the
+	doc/arm directory.
 
-    <URL:http://www.isc.org/bind.html>		    the BIND home page
-    <URL:mailto:bind-bugs@isc.org>		    bug reports
+	Some of the programs in the BIND 9 distribution have man pages
+	in their directories.  In particular, the command line
+	options of "named" are documented in /bin/named/named.8.
+	There is now also a set of man pages for the lwres library.
 
-To Support the Effort
+	If you are upgrading from BIND 8, please read the migration
+	notes in doc/misc/migration.  If you are upgrading from
+	BIND 4, read doc/misc/migration-4to9.
 
-	Note that BIND is supported by the Internet Software Consortium, and
-	although it is free for use and redistribution and incorporation into
-	vendor products and export and anything else you can think of, it
-	costs money to produce.  That money comes from ISPs, hardware and
-	software vendors, companies who make extensive use of the software,
-	and generally kind hearted folk such as yourself.
+	Frequently asked questions and their answers can be found in
+	FAQ.
 
-	The Internet Software Consortium has also commissioned a DHCP server
-	implementation, has taken over official support/release of the INN
-	system, and has supported the Kerberos Version 5 effort at MIT.  You
-	can learn more about the ISC's goals and accomplishments from the web
-	page at <URL:http://www.isc.org/>.
+
+Bug Reports and Mailing Lists
+
+	Bugs reports should be sent to
+
+		bind9-bugs@isc.org
+
+	To join the BIND 9 Users mailing list, send mail to
+
+		bind9-users-request@isc.org
+
+	archives of which can be found via
+
+		http://www.isc.org/ops/lists/
+
+	If you're planning on making changes to the BIND 9 source
+	code, you might want to join the BIND Workers mailing list.
+	Send mail to
+
+		bind-workers-request@isc.org
+
+
