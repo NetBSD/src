@@ -1227,7 +1227,7 @@ void
 pccnpollc(Dev_t dev, int on)
 {
 #if PCVT_NETBSD > 110
-	struct vt_softc *sc = vt_cd.cd_devs[0];	/* XXX */
+	struct vt_softc *sc = NULL;	/* XXX not used */
 #else	
 #if PCVT_NETBSD > 101
 	struct vt_softc *sc = vtcd.cd_devs[0];	/* XXX */
