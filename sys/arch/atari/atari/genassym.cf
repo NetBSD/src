@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 1998/10/01 00:29:52 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.10 1999/03/28 06:00:18 simonb Exp $
 
 #-
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,9 +45,7 @@ include <sys/syscall.h>
 include <sys/user.h>
 
 include <vm/vm.h>
-ifdef UVM
 include <uvm/uvm_extern.h>
-endif
 
 include <machine/cpu.h>
 include <machine/trap.h>
@@ -88,13 +86,8 @@ define	MD_REGS			offsetof(struct mdproc, md_regs)
 define	SRUN			SRUN
 
 # interrupt/fault metering
-# interrupt/fault metering
-ifdef UVM
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
-else
-define	V_INTR			offsetof(struct vmmeter, v_intr)
-endif
-	
+
 # general constants
 define	UPAGES			UPAGES
 define	USPACE			USPACE
