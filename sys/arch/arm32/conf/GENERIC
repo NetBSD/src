@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.36 1998/03/18 16:34:42 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.37 1998/03/22 18:33:28 mark Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -244,8 +244,7 @@ com*	at amps?
 ie*	at podulebus?			# Ether1 podules
 ea*	at podulebus?			# Ether3 podules
 eb0	at podulebus?			# EtherB network slot cards
-eh0	at podulebus?			# EtherH network slot cards
-em0	at podulebus?			# EtherM network slot cards
+ne*	at podulebus?			# NE2000 clone cards
 
 pseudo-device	loop	1               # network loopback
 pseudo-device	bpfilter 8              # packet filter
