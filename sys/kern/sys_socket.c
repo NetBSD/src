@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_socket.c	7.11 (Berkeley) 4/16/91
- *	$Id: sys_socket.c,v 1.6 1994/04/25 08:08:56 mycroft Exp $
+ *	$Id: sys_socket.c,v 1.7 1994/04/25 08:09:59 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -164,8 +164,7 @@ soo_select(fp, which, p)
 		break;
 
 	case 0:
-		if (so->so_oobmark ||
-		    (so->so_state & SS_RCVATMARK)) {
+		if (so->so_oobmark || (so->so_state & SS_RCVATMARK)) {
 			splx(s);
 			return (1);
 		}
@@ -184,6 +183,7 @@ soo_stat(so, ub)
 {
 
 	bzero((caddr_t)ub, sizeof (*ub));
+	ub->st_mode = S_IFSOCK;
 	return ((*so->so_proto->pr_usrreq)(so, PRU_SENSE,
 	    (struct mbuf *)ub, (struct mbuf *)0, 
 	    (struct mbuf *)0));
