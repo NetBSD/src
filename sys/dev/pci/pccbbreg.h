@@ -1,3 +1,4 @@
+/*	$NetBSD: pccbbreg.h,v 1.2 1999/10/15 06:42:39 haya Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -27,7 +28,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: pccbbreg.h,v 1.1 1999/10/15 06:07:30 haya Exp $ */
 
 #ifndef _DEV_PCI_PCCBBREG_H_
 #define	_DEV_PCI_PCCBBREG_H_
