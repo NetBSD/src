@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.2.3 2002/03/17 20:18:55 thorpej Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.2.4 2002/03/18 01:16:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -112,8 +112,6 @@ typedef struct rwlock krwlock_t;
 #define	RWLOCK_READ_COUNT_SHIFT	4
 #define	RWLOCK_READ_INCR	(1 << RWLOCK_READ_COUNT_SHIFT)
 
-#include <machine/rwlock_impl.h>
-
 #define	RWLOCK_OWNER(rwl)						\
 	((struct proc *)((rwl)->rwl_owner & RWLOCK_THREAD))
 
@@ -139,5 +137,7 @@ int	rw_write_locked(krwlock_t *);
 
 struct proc *rw_owner(krwlock_t *);
 #endif /* _KERNEL */
+
+#include <machine/rwlock_impl.h>
 
 #endif /* _SYS_RWLOCK_H_ */
