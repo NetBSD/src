@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.13 1997/11/05 07:28:29 jonathan Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.14 1997/11/05 22:46:05 mhitch Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -325,8 +325,24 @@ device:    %s
 directory: %s
 }
 
+message localfssource
+{Enter the local device to be used and directory where the
+distribution is located.  Remember, the directory should contain
+the tar.gz files.
+
+device:     %s
+filesystem: %s
+directory:  %s
+}
+
+message filesys
+{filesystem}
+
 message cdrombadmount
 {The CDROM could not be mounted on device %s.}
+
+message localfsbadmount
+{%s could not be mounted on local device %s.}
 
 message asknetdev
 {I have found the following network interfaces: %s
