@@ -70,7 +70,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "$Id: res_mkquery.c,v 1.1.1.1 2000/04/22 07:11:55 mellon Exp $";
+static const char rcsid[] = "$Id: res_mkquery.c,v 1.1.1.2 2000/07/20 05:50:19 mellon Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -98,7 +98,7 @@ res_nmkquery(res_state statp,
 	     const u_char *data,	/* resource record data */
 	     unsigned datalen,		/* length of data */
 	     const u_char *newrr_in,	/* new rr for modify or append */
-	     u_char *buf,		/* buffer to put query */
+	     double *buf,		/* buffer to put query */
 	     unsigned buflen)		/* size of buffer */
 {
 	register HEADER *hp;
@@ -117,10 +117,10 @@ res_nmkquery(res_state statp,
 	hp->opcode = op;
 	hp->rd = (statp->options & RES_RECURSE) != 0;
 	hp->rcode = NOERROR;
-	cp = buf + HFIXEDSZ;
+	cp = ((u_char *)buf) + HFIXEDSZ;
 	buflen -= HFIXEDSZ;
 	dpp = dnptrs;
-	*dpp++ = buf;
+	*dpp++ = (u_char *)buf;
 	*dpp++ = NULL;
 	lastdnptr = dnptrs + sizeof dnptrs / sizeof dnptrs[0];
 	/*
@@ -187,5 +187,5 @@ res_nmkquery(res_state statp,
 	default:
 		return (-1);
 	}
-	return (cp - buf);
+	return (cp - ((u_char *)buf));
 }

@@ -31,7 +31,7 @@ int minires_update (ns_updrec *);
 ns_updrec *minires_mkupdrec (int, const char *, unsigned int,
 			     unsigned int, unsigned long);
 void minires_freeupdrec (ns_updrec *);
-int minires_nmkupdate (res_state, ns_updrec *, unsigned char *, unsigned *);
+int minires_nmkupdate (res_state, ns_updrec *, double *, unsigned *);
 ns_rcode minires_nupdate (res_state, ns_updrec *);
 int minires_ninit (res_state);
 
@@ -121,9 +121,9 @@ unsigned int res_randomid (void);
 ns_rcode res_findzonecut (res_state, const char *, ns_class, int, char *,
 			  size_t, struct in_addr *, int, int *, void *);
 int res_nsend (res_state,
-	       unsigned char *, unsigned, unsigned char *, unsigned);
-int res_nsendsigned (res_state, unsigned char *,
-		     unsigned, ns_tsig_key *, unsigned char *, unsigned);
+	       double *, unsigned, double *, unsigned);
+int res_nsendsigned (res_state, double *,
+		     unsigned, ns_tsig_key *, double *, unsigned);
 int ns_samename (const char *, const char *);
 int res_nameinquery (const char *, int, int,
 		     const unsigned char *, const unsigned char *);
@@ -147,15 +147,15 @@ int ns_name_uncompress (const u_char *, const u_char *,
 			    const u_char *, char *, size_t);
 int res_nmkquery (res_state, int,
 		  const char *, ns_class, ns_type, const unsigned char *,
-		  unsigned, const unsigned char *, unsigned char *, unsigned);
+		  unsigned, const unsigned char *, double *, unsigned);
 int ns_initparse (const unsigned char *, unsigned, ns_msg *);
 int res_nquery(res_state, const char *,
-	       ns_class, ns_type, unsigned char *, unsigned anslen);
+	       ns_class, ns_type, double *, unsigned anslen);
 int res_nsearch(res_state, const char *,
-		ns_class, ns_type, unsigned char *, unsigned);
+		ns_class, ns_type, double *, unsigned);
 const char *res_hostalias (const res_state, const char *, char *, size_t);
 int res_nquerydomain(res_state, const char *, const char *,
-		     ns_class class, ns_type type, unsigned char *, unsigned);
+		     ns_class class, ns_type type, double *, unsigned);
 
 int ns_skiprr(const unsigned char *, const unsigned char *, ns_sect, int);
 int dn_skipname (const unsigned char *, const unsigned char *);

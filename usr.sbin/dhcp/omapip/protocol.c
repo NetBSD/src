@@ -306,7 +306,8 @@ isc_result_t omapi_protocol_signal_handler (omapi_object_t *h,
 		/* If we already have the data, fall through. */
 
 	      case omapi_protocol_header_wait:
-		status = omapi_message_allocate (&p -> message, MDL);
+		status = omapi_message_new ((omapi_object_t **)&p -> message,
+					    MDL);
 		if (status != ISC_R_SUCCESS) {
 			omapi_disconnect (c, 1);
 			return status;
@@ -712,7 +713,7 @@ isc_result_t omapi_protocol_send_status (omapi_object_t *po,
 	if (po -> type != omapi_type_protocol)
 		return ISC_R_INVALIDARG;
 
-	status = omapi_message_allocate (&message, MDL);
+	status = omapi_message_new ((omapi_object_t **)&message, MDL);
 	if (status != ISC_R_SUCCESS)
 		return status;
 	mo = (omapi_object_t *)message;
@@ -765,7 +766,7 @@ isc_result_t omapi_protocol_send_update (omapi_object_t *po,
 	if (po -> type != omapi_type_protocol)
 		return ISC_R_INVALIDARG;
 
-	status = omapi_message_allocate (&message, MDL);
+	status = omapi_message_new ((omapi_object_t **)&message, MDL);
 	if (status != ISC_R_SUCCESS)
 		return status;
 	mo = (omapi_object_t *)message;

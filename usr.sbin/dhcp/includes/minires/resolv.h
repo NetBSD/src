@@ -50,7 +50,7 @@
 
 /*
  *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
- *	$Id: resolv.h,v 1.1.1.1 2000/04/22 07:11:51 mellon Exp $
+ *	$Id: resolv.h,v 1.1.1.2 2000/07/20 05:50:00 mellon Exp $
  */
 
 #ifndef _RESOLV_H_
@@ -93,18 +93,18 @@ typedef enum { res_goahead, res_nextns, res_modified, res_done, res_error }
 	res_sendhookact;
 
 typedef res_sendhookact (*res_send_qhook) (struct sockaddr_in * const *ns,
-					      u_char **query,
+					      double **query,
 					      unsigned *querylen,
-					      u_char *ans,
+					      double *ans,
 					      unsigned anssiz,
 					      int *resplen);
 
 typedef res_sendhookact (*res_send_rhook) (const struct sockaddr_in *ns,
-					      u_char *query,
-					      unsigned querylen,
-					      u_char *ans,
-					      unsigned anssiz,
-					      int *resplen);
+					   double *query,
+					   unsigned querylen,
+					   double *ans,
+					   unsigned anssiz,
+					   int *resplen);
 
 struct res_sym {
 	int	number;		/* Identifying number, like T_MX */
