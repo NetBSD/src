@@ -1,4 +1,4 @@
-.\"     $NetBSD: selrecord.9,v 1.3 2004/02/18 13:35:46 yamt Exp $
+.\"     $NetBSD: selrecord.9,v 1.4 2004/02/18 13:46:18 wiz Exp $
 .\"
 .\" Copyright (C) 2002 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -34,7 +34,7 @@
 .Sh NAME
 .Nm selrecord ,
 .Nm selwakeup
-.Nd "record and wakeup select requests"
+.Nd record and wakeup select requests
 .Sh SYNOPSIS
 .In sys/param.h
 .In sys/select.h
@@ -50,7 +50,7 @@ and
 .Fn selwakeup
 are the two central functions used by
 .Xr select 2 ,
-.Xr poll 2
+.Xr poll 2 ,
 and the objects that are being selected on.
 They handle the task of recording which threads are waiting on which objects
 and the waking of the proper threads when an event of interest occurs on an
@@ -98,7 +98,7 @@ and then calls
 .Fn KNOTE
 with
 .Va knhint .
-In the most cases,
+In most cases,
 .Fn selnotify
 should be used rather than using
 .Fn selwakeup
