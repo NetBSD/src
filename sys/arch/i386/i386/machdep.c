@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.241.2.1 1997/08/23 07:08:58 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.241.2.2 1997/08/27 22:24:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -216,7 +216,7 @@ vm_map_t buffer_map;
 char consdevname[] = CONSDEVNAME;
 #ifdef KGDB
 #ifndef KGDB_DEVNAME
-#define KGDB_DEVNAME "com0"
+#define KGDB_DEVNAME "com"
 #endif
 char kgdb_devname[] = KGDB_DEVNAME;
 #endif
@@ -249,12 +249,37 @@ void	dumpsys __P((void));
 void	identifycpu __P((void));
 void	init386 __P((vm_offset_t));
 #if (NCOM > 0)
-static int initcomport __P((unsigned int, int, int *, bus_space_handle_t *));
+#ifndef CONADDR
+#define CONADDR 0x3f8
 #endif
+int comcnaddr;
+#ifndef CONSPEED
+#define CONSPEED TTYDEF_SPEED
+#endif
+int comcnrate;
+#ifndef CONMODE
+#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+#endif
+int comcnmode;
+#endif /* NCOM */
 void	consinit __P((void));
 #ifdef KGDB
-void kgdb_port_init __P((void));
+#if (NCOM > 0)
+#ifndef KGDBADDR
+#define KGDBADDR 0x3f8
 #endif
+int comkgdbaddr;
+#ifndef KGDBRATE
+#define KGDBRATE TTYDEF_SPEED
+#endif
+int comkgdbrate;
+#ifndef KGDBMODE
+#define KGDBMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+#endif
+int comkgdbmode;
+#endif /* NCOM */
+void kgdb_port_init __P((void));
+#endif /* KGDB */
 #ifdef COMPAT_NOMID
 static int exec_nomid	__P((struct proc *, struct exec_package *));
 #endif
@@ -624,8 +649,8 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				"Pentium Pro compatible"	/* Default */
+				"M2", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"M2"		/* Default */
 			}
 		} }
 	}
@@ -1694,29 +1719,6 @@ pmap_page_index(pa)
 	return -1;
 }
 
-#if (NCOM > 0)
-/* minimal initialization of a com port for use by console or KGDB */
-static int initcomport(idx, rate, iobase, handle)
-unsigned int idx;
-int rate;
-int *iobase;
-bus_space_handle_t *handle;
-{
-	bus_space_tag_t tag = I386_BUS_SPACE_IO;
-	static int combases[] = {0x3f8, 0x2f8, 0x3e8, 0x3e8};
-
-	if(idx >= sizeof(combases) / sizeof(int))
-		return(-1);
-	*iobase = combases[idx];
-
-	if (bus_space_map(tag, *iobase, COM_NPORTS, 0, handle))
-		return(-1);
-
-	cominit(tag, *handle, rate);
-	return(0);
-}
-#endif
-
 /*
  * consinit:
  * initialize the system console.
@@ -1734,29 +1736,21 @@ consinit()
 
 #if (NPC > 0) || (NVT > 0)
 	if(!strcmp(consdevname, "pc")) {
-		static struct consdev pccons = { NULL, NULL,
-		pccngetc, pccnputc, pccnpollc, NODEV, 1};
-
-		pccninit(0);
-
-		pccons.cn_dev = makedev(12, 0);  /* XXX */
-		cn_tab = &pccons;
+		pccnattach();
 		return;
 	}
 #endif
 #if (NCOM > 0)
-	if(!strncmp(consdevname, "com", 3)) {
-		static struct consdev comcons = { NULL, NULL,
-		comcngetc, comcnputc, comcnpollc, NODEV, 1};
+	if(!strcmp(consdevname, "com")) {
+		bus_space_tag_t tag = I386_BUS_SPACE_IO;
 
-		if(initcomport(consdevname[3] - '0', comconsrate,
-			       &comconsaddr, &comconsioh)) {
-			panic("can't init console port %s", consdevname);
-		}
+		comcnaddr = CONADDR;
+		comcnrate = CONSPEED;
+		comcnmode = CONMODE;
 
-		comcons.cn_dev = makedev(8, consdevname[3] - '0');  /* XXX */
-		cn_tab = &comcons;
-		comconscflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
+		if(comcnattach(tag, comcnaddr, comcnrate, comcnmode))
+			panic("can't init serial console @%x", comcnaddr);
+
 		return;
 	}
 #endif
@@ -1767,17 +1761,15 @@ consinit()
 void
 kgdb_port_init()
 {
-	if(!strcmp(kgdb_devname, consdevname)) /* must be != console */
-		return;
 #if (NCOM > 0)
-	if(!strncmp(kgdb_devname, "com", 3)) {
-		if(initcomport(kgdb_devname[3] - '0', kgdb_rate,
-			       &com_kgdb_addr, &com_kgdb_ioh)) {
-			panic("can't init KGDB device %s", kgdb_devname);
-		}
+	if(!strcmp(kgdb_devname, "com")) {
+		bus_space_tag_t tag = I386_BUS_SPACE_IO;
 
-		kgdb_dev = 123; /* unneeded, only to satisfy some tests */
-		kgdb_attach(com_kgdb_getc, com_kgdb_putc, NULL);
+		comkgdbaddr = KGDBADDR;
+		comkgdbrate = KGDBRATE;
+		comkgdbmode = KGDBMODE;
+
+		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, comkgdbmode);
 	}
 #endif
 }
@@ -2003,10 +1995,20 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+#if 0
+		/* 
+		 * Not done for two reasons:
+		 *
+		 *	(1) PG_N doesn't exist on the 386.
+		 *
+		 *	(2) pmap_changebit() only deals with
+		 *	    managed pages.
+		 */
 		if (!cacheable)
 			pmap_changebit(pa, PG_N, ~0);
 		else
 			pmap_changebit(pa, 0, ~PG_N);
+#endif
 	}
  
 	return 0;
@@ -2365,10 +2367,14 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 {
 	vm_offset_t va;
 	bus_addr_t addr;
-	int curseg;
+	int curseg, s;
 
 	size = round_page(size);
+
+	s = splimp();
 	va = kmem_alloc_pageable(kmem_map, size);
+	splx(s);
+
 	if (va == 0)
 		return (ENOMEM);
 
@@ -2383,6 +2389,10 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE, TRUE);
 #if 0
+			/*
+			 * This is not necessary on x86-family
+			 * processors.
+			 */
 			if (flags & BUS_DMAMEM_NOSYNC)
 				pmap_changebit(addr, PG_N, ~0);
 			else
@@ -2404,6 +2414,7 @@ _bus_dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
+	int s;
 
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
@@ -2411,7 +2422,9 @@ _bus_dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
+	s = splimp();
 	kmem_free(kmem_map, (vm_offset_t)kva, size);
+	splx(s);
 }
 
 /*

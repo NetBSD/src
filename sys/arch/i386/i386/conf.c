@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.87 1997/07/14 21:09:09 kleink Exp $	*/
+/*	$NetBSD: conf.c,v 1.87.2.1 1997/08/27 22:24:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -37,7 +37,7 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-#include "wdc.h"
+#include "wd.h"
 bdev_decl(wd);
 bdev_decl(sw);
 #include "fdc.h"
@@ -63,7 +63,7 @@ bdev_decl(md);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_disk_init(NWDC,wd),	/* 0: ST506/ESDI/IDE disk */
+	bdev_disk_init(NWD,wd),	/* 0: ST506/ESDI/IDE disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_disk_init(NFDC,fd),	/* 2: floppy diskette */
 	bdev_tape_init(NWT,wt),		/* 3: QIC-02/QIC-36 tape */
@@ -184,6 +184,7 @@ cdev_decl(ccd);
 cdev_decl(joy);
 #include "apm.h"
 cdev_decl(apm);
+
 #include "ipfilter.h"
 #include "satlink.h"
 cdev_decl(satlink);
@@ -193,7 +194,7 @@ struct cdevsw	cdevsw[] =
 	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
 	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
-	cdev_disk_init(NWDC,wd),	/* 3: ST506/ESDI/IDE disk */
+	cdev_disk_init(NWD,wd),	/* 3: ST506/ESDI/IDE disk */
 	cdev_swap_init(1,sw),		/* 4: /dev/drum (swap pseudo-device) */
 	cdev_tty_init(NPTY,pts),	/* 5: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
@@ -349,24 +350,3 @@ chrtoblk(dev)
 		return (NODEV);
 	return (makedev(blkmaj, minor(dev)));
 }
-
-/*
- * This entire table could be autoconfig()ed but that would mean that
- * the kernel's idea of the console would be out of sync with that of
- * the standalone boot.  I think it best that they both use the same
- * known algorithm unless we see a pressing need otherwise.
- */
-#include <dev/cons.h>
-
-cons_decl(pc);
-cons_decl(com);
-
-struct	consdev constab[] = {
-#if NPC + NVT > 0
-	cons_init(pc),
-#endif
-#if NCOM > 0
-	cons_init(com),
-#endif
-	{ 0 },
-};

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.85.2.1 1997/07/30 07:23:04 marc Exp $
+#	$NetBSD: files.i386,v 1.85.2.2 1997/08/27 22:24:15 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -30,14 +30,13 @@ file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
 file	dev/cons.c
-file	dev/cninit.c
 major	{vnd = 14}
 
 #
 # Machine-independent SCSI drivers
 #
 
-include "../../../scsi/files.scsi"
+include "../../../dev/scsipi/files.scsipi"
 major	{sd = 4}
 major	{st = 5}
 major	{cd = 6}
