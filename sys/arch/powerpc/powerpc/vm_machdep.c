@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49 2003/03/14 05:37:14 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.50 2003/04/02 02:47:19 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -217,12 +217,12 @@ pagemove(from, to, size)
 	paddr_t pa;
 	vaddr_t va;
 
-	for (va = (vaddr_t)from; size > 0; size -= NBPG) {
+	for (va = (vaddr_t)from; size > 0; size -= PAGE_SIZE) {
 		(void) pmap_extract(pmap_kernel(), va, &pa);
-		pmap_kremove(va, NBPG);
+		pmap_kremove(va, PAGE_SIZE);
 		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE);
-		va += NBPG;
-		to += NBPG;
+		va += PAGE_SIZE;
+		to += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 }
@@ -334,12 +334,12 @@ vmaprange(p, uaddr, len, prot)
 	len = round_page(off + len);
 	taddr = uvm_km_valloc_wait(phys_map, len);
 	kaddr = taddr + off;
-	for (; len > 0; len -= NBPG) {
+	for (; len > 0; len -= PAGE_SIZE) {
 		(void) pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
 		    faddr, &pa);
 		pmap_kenter_pa(taddr, pa, prot);
-		faddr += NBPG;
-		taddr += NBPG;
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
 	}
 	return (kaddr);
 }
@@ -390,7 +390,7 @@ vmapbuf(bp, len)
 	len = round_page(off + len);
 	taddr = uvm_km_valloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
-	for (; len > 0; len -= NBPG) {
+	for (; len > 0; len -= PAGE_SIZE) {
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &pa);
 		/*
@@ -398,8 +398,8 @@ vmapbuf(bp, len)
 		 * appropriately set.
 		 */
 		pmap_kenter_pa(taddr, pa, prot);
-		faddr += NBPG;
-		taddr += NBPG;
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 }
