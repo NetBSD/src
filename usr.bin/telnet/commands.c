@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.33 1999/12/03 06:34:24 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.34 1999/12/03 06:52:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.33 1999/12/03 06:34:24 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.34 1999/12/03 06:52:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2312,7 +2312,6 @@ tn(argc, argv)
     for (res = res0; res; res = res->ai_next) {
 	printf("Trying %s...\n", sockaddr_ntop(res->ai_addr));
 	net = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	setuid(getuid());
 	if (net < 0) {
 	    cause = "telnet: socket";
 	    continue;
@@ -2340,24 +2339,30 @@ tn(argc, argv)
 	    if ((len = ipsec_get_policylen(ipsec_policy)) < 0) {
 		printf("%s\n", ipsec_strerror());
 		freeaddrinfo(res0);
+		setuid(getuid());
 		return 0;
 	    }
 	    if ((buf = (char *)malloc(len)) == NULL) {
 		perror("malloc");
 		freeaddrinfo(res0);
+		setuid(getuid());
 		return 0;
 	    }
 	    if ((len = ipsec_set_policy(buf, len, ipsec_policy)) < 0) {
 		printf("%s\n", ipsec_strerror());
-		freeaddrinfo(res0);
-		return 0;
+		(void) NetClose(net);
+		net = -1;
+		free(buf);
+		continue;
 	    }
 	    level = res->ai_family == AF_INET ? IPPROTO_IP : IPPROTO_IPV6;
 	    optname = res->ai_family == AF_INET ? IP_IPSEC_POLICY : IPV6_IPSEC_POLICY;
 	    if (setsockopt(net, level, optname, buf, len) < 0){
 		perror("setsockopt");
-		freeaddrinfo(res0);
-		return 0;
+		(void) NetClose(net);
+		net = -1;
+		free(buf);
+		continue;
 	    }
 	    free(buf);
 	}
@@ -2385,6 +2390,7 @@ tn(argc, argv)
 	break;
     }
     freeaddrinfo(res0);
+    setuid(getuid());
     if (net < 0 || connected == 0) {
 	perror(cause);
 	return 0;
