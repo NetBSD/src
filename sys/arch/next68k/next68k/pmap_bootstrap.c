@@ -1,11 +1,10 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.8 2001/03/31 09:05:21 dbj Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.9 2001/04/02 05:28:38 dbj Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
  * should probably be re-synced when needed.
- * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
- * original cvs id:
- *	NetBSD: pmap_bootstrap.c,v 1.10 1998/08/22 10:55:35 scw Exp
+ * cvs id of source for the most recent syncing:
+ *	NetBSD: pmap_bootstrap.c,v 1.15 2000/11/20 19:35:30 scw Exp 
  */
 
 
@@ -61,7 +60,7 @@
 
 #define RELOC(v, t)	*((t*)((u_int)&(v) + firstpa))
 
-extern char *kernel_text, *etext;
+extern char *etext;
 extern int Sysptsize;
 extern char *proc0paddr;
 extern st_entry_t *Sysseg;
@@ -75,9 +74,12 @@ extern phys_ram_seg_t mem_clusters[];
 extern int mem_cluster_cnt;
 extern paddr_t msgbufpa;
 extern int protection_codes[];
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 extern int pmap_aliasmask;
 #endif
+
+void	pmap_bootstrap __P((paddr_t, paddr_t));
+
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -89,9 +91,6 @@ extern int pmap_aliasmask;
  */
 caddr_t		CADDR1, CADDR2, vmmap;
 extern caddr_t	msgbufaddr;
-#ifdef MAP_LEDATABUF
-extern void *ledatabuf; /* XXXCDC */
-#endif
 
 /*
  * Bootstrap the VM system.
@@ -156,9 +155,11 @@ pmap_bootstrap(nextpa, firstpa)
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
 	 */
+#if defined(M68040) || defined(M68060)
 	if (RELOC(mmutype, int) == MMU_68040)
 		kstsize = MAXKL2SIZE / (NPTEPG/SG4_LEV2SIZE);
 	else
+#endif
 		kstsize = 1;
 	kstpa = nextpa;
 	nextpa += kstsize * NBPG;
@@ -181,12 +182,6 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += NBPG;
 	p0upa = nextpa;
 	nextpa += USPACE;
-#ifdef MAP_LEDATABUF
-	{ /* XXXCDC */
-		ledatabuf = (void *)nextpa;
-		nextpa += 4 * NBPG;
-	} /* XXXCDC */
-#endif
 
 	/*
 	 * Clear all PTEs to zero
@@ -222,6 +217,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * working.  The 224mb of address space that this allows will most
 	 * likely be insufficient in the future (at least for the kernel).
 	 */
+#if defined(M68040) || defined(M68060)
 	if (RELOC(mmutype, int) == MMU_68040) {
 		int num;
 
@@ -289,9 +285,21 @@ pmap_bootstrap(nextpa, firstpa)
 			*pte++ = protopte;
 			protopte += NBPG;
 		}
-		pte = &((u_int *)kptmpa)[NPTEPG-1];
+		/*
+		 * Invalidate all but the last remaining entry.
+		 */
+		epte = &((u_int *)kptmpa)[NPTEPG-1];
+		while (pte < epte) {
+			*pte++ = PG_NV;
+		}
+		/*
+		 * Initialize the last to point to the page
+		 * table page allocated earlier.
+		 */
 		*pte = lkptpa | PG_RW | PG_CI | PG_V;
-	} else {
+	} else
+#endif /* M68040 || M68060 */
+	{
 		/*
 		 * Map the page table pages in both the HW segment table
 		 * and the software Sysptmap.  Note that Sysptmap is also
@@ -345,21 +353,22 @@ pmap_bootstrap(nextpa, firstpa)
 	while (pte < epte)
 		*pte++ = PG_NV;
 	/*
-	 * Validate PTEs for kernel text (RO)
+	 * Validate PTEs for kernel text (RO).  The first page
+	 * of kernel text remains invalid; see locore.s
 	 */
-	pte = &((u_int *)kptpa)[m68k_btop(KERNBASE)];
+	pte = &((u_int *)kptpa)[m68k_btop(KERNBASE + NBPG)];
 	epte = &pte[m68k_btop(m68k_trunc_page(&etext))];
-	protopte = firstpa | PG_RO | PG_V;
+	protopte = (firstpa + NBPG) | PG_RO | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
 	}
 	/*
 	 * Validate PTEs for kernel data/bss, dynamic data allocated
-	 * by us so far (nextpa - firstpa bytes), and pages for proc0
+	 * by us so far (kstpa - firstpa bytes), and pages for proc0
 	 * u-area and page table allocated below (RW).
 	 */
-	epte = &((u_int *)kptpa)[m68k_btop(nextpa - firstpa)];
+	epte = &((u_int *)kptpa)[m68k_btop(kstpa - firstpa)];
 	protopte = (protopte & ~PG_PROT) | PG_RW;
 	/*
 	 * Enable copy-back caching of data pages
@@ -370,16 +379,21 @@ pmap_bootstrap(nextpa, firstpa)
 		*pte++ = protopte;
 		protopte += NBPG;
 	}
-#ifdef MAP_LEDATABUF
-	{ /* XXXCDC -- uncache lebuf */
-		u_int *lepte = &((u_int *)kptpa)[m68k_btop(ledatabuf)];
-
-		lepte[0] = lepte[0] | PG_CI;
-		lepte[1] = lepte[1] | PG_CI;
-		lepte[2] = lepte[2] | PG_CI;
-		lepte[3] = lepte[3] | PG_CI;
-	} /* XXXCDC yuck */
-#endif
+	/*
+	 * map the kernel segment table cache invalidated for 
+	 * these machines (for the 68040 not strictly necessary, but
+	 * recommended by Motorola; for the 68060 mandatory)
+	 */
+	epte = &((u_int *)kptpa)[m68k_btop(nextpa - firstpa)];
+	protopte = (protopte & ~PG_PROT) | PG_RW;
+	if (RELOC(mmutype, int) == MMU_68040) {
+		protopte &= ~PG_CCB;
+		protopte |= PG_CIN;
+	}
+	while (pte < epte) {
+		*pte++ = protopte;
+		protopte += NBPG;
+	}
 	/*
 	 * Finally, validate the internal IO space PTEs (RW+CI).
 	 * We do this here since the 320/350 MMU registers (also
@@ -534,7 +548,9 @@ pmap_bootstrap(nextpa, firstpa)
 	/*
 	 * Reserve space at the end of on-board RAM for the message
 	 * buffer.  We force it into on-board RAM because VME RAM
-	 * isn't cached by the hardware (s-l-o-w).
+	 * gets cleared very early on in locore.s (to initialise
+	 * parity on boards that need it). This would clobber the
+	 * messages from a previous running NetBSD system.
 	 */
 	RELOC(phys_seg_list[0].ps_end, paddr_t) -=
 	    m68k_round_page(MSGBUFSIZE);
@@ -587,6 +603,7 @@ pmap_bootstrap(nextpa, firstpa)
 		simple_lock_init(&kpm->pm_lock);
 		kpm->pm_count = 1;
 		kpm->pm_stpa = (st_entry_t *)kstpa;
+#if defined(M68040) || defined(M68060)
 		/*
 		 * For the 040 we also initialize the free level 2
 		 * descriptor mask noting that we have used:
@@ -608,6 +625,7 @@ pmap_bootstrap(nextpa, firstpa)
 			     num++)
 				kpm->pm_stfree &= ~l2tobm(num);
 		}
+#endif
 	}
 
 	/*
