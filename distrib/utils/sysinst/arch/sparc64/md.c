@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2001/01/14 02:38:22 mrg Exp $	*/
+/*	$NetBSD: md.c,v 1.8.2.1 2003/12/24 04:37:44 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -161,13 +161,25 @@ md_check_partitions(void)
 	return check_partitions();
 }
 
+/* install/update bootblocks */
+static void
+install_bootblocks(void)
+{
+
+	/* Install boot blocks now that we have a full system ... */       
+	msg_display(MSG_dobootblks, diskdev);
+	run_prog(RUN_DISPLAY, NULL, "/sbin/disklabel -W %s", diskdev);
+	run_prog(RUN_DISPLAY, NULL, "/usr/mdec/binstall ffs %s", targetroot_mnt);
+}
+
 /* Upgrade support */
 int
 md_update(void)
 {
-	endwin();
+	/* endwin(); */
 	md_copy_filesystem();
 	md_post_newfs();
+	install_bootblocks();
 	wrefresh(curscr);
 	wmove(stdscr, 0, 0);
 	wclear(stdscr);
@@ -182,10 +194,7 @@ md_cleanup_install(void)
 	char realto[STRSIZE];
 	char sedcmd[STRSIZE];
 
-	/* Install boot blocks now that we have a full system ... */
-	msg_display(MSG_dobootblks, diskdev);
-	run_prog(RUN_DISPLAY, NULL, "/sbin/disklabel -W %s", diskdev);
-	run_prog(RUN_DISPLAY, NULL, "/usr/mdec/binstall ffs %s", targetroot_mnt);
+	install_bootblocks();
 
 	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
 	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
