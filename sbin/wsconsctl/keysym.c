@@ -1,4 +1,4 @@
-/*	$NetBSD: keysym.c,v 1.3 1999/02/08 11:08:23 hannken Exp $ */
+/*	$NetBSD: keysym.c,v 1.4 2000/07/03 03:38:02 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <dev/wscons/wsksymdef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include "keysym.h"
 #include "wsconsctl.h"
