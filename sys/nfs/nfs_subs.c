@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_subs.c	7.41 (Berkeley) 5/15/91
- *	$Id: nfs_subs.c,v 1.6 1993/07/13 10:40:07 cgd Exp $
+ *	$Id: nfs_subs.c,v 1.7 1993/08/02 23:11:14 mycroft Exp $
  */
 
 /*
@@ -111,7 +111,7 @@ struct mbuf *nfsm_reqh(prog, vers, procid, cred, hsiz, bpos, mb, retxid)
 	u_long procid;
 	struct ucred *cred;
 	int hsiz;
-	caddr_t **bpos;
+	caddr_t *bpos;
 	struct mbuf **mb;
 	u_long *retxid;
 {
