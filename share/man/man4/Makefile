@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.131 2000/02/11 12:38:22 fair Exp $
+#	$NetBSD: Makefile,v 1.132 2000/02/12 09:19:04 fair Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	adv.4 adw.4 ahb.4 ahc.4 aria.4 atalk.4 audio.4 awi.4 bha.4 bpf.4 \
@@ -45,6 +45,7 @@ MLINKS+=bha.4 bt.4
 MLINKS+=cardbus.4 cbb.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=fpa.4 fea.4 fpa.4 fta.4
+MLINKS+=le.4 bicc.4 le.4 nele.4 le.4 depca.4
 MLINKS+=netintro.4 networking.4
 MLINKS+=pms.4 pmsi.4
 MLINKS+=pcmcia.4 pcic.4
