@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.28 1999/12/12 17:55:21 tron Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.29 2000/02/02 08:05:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -428,7 +428,7 @@ tl_pci_attach(parent, self, aux)
 	sc->tl_mii.mii_statchg = tl_statchg;
 	ifmedia_init(&sc->tl_mii.mii_media, IFM_IMASK, tl_mediachange,
 	    tl_mediastatus);
-	mii_phy_probe(self, &sc->tl_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(self, &sc->tl_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY);
 	if (LIST_FIRST(&sc->tl_mii.mii_phys) == NULL) { 
 		ifmedia_add(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);

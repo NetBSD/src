@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.15 1999/12/12 17:46:36 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.16 2000/02/02 08:05:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -401,7 +401,7 @@ fxp_mii_initmedia(sc)
 	sc->sc_mii.mii_statchg = fxp_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_mii_mediachange,
 	    fxp_mii_mediastatus);
-	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
