@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.4 2000/10/23 11:32:30 ad Exp $
+#	$NetBSD: files.sgimips,v 1.5 2000/11/14 20:28:22 pooka Exp $
 
 maxpartitions 16
 
@@ -73,6 +73,9 @@ file dev/cons.c
 
 include "arch/sgimips/gio/files.gio"
 #include "arch/sgimips/hpc/files.hpc"
+
+# Machine-independent I2O drivers.
+include "dev/i2o/files.i2o"
 
 include "dev/pci/files.pci"
 file	arch/sgimips/pci/pci_machdep.c	pci
