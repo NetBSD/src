@@ -1,0 +1,418 @@
+.rn '' }`
+'''
+'''
+.de Sh
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp
+.if t .sp .5v
+.if n .sp
+..
+.de Ip
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.de Vb
+.ft CW
+.nf
+.ne \\$1
+..
+.de Ve
+.ft R
+
+.fi
+..
+'''
+'''
+'''     Set up \*(-- to give an unbreakable dash;
+'''     string Tr holds user defined translation string.
+'''     Bell System Logo is used as a dummy character.
+'''
+.tr \(*W-|\(bv\*(Tr
+.ie n \{\
+.ds -- \(*W-
+.ds PI pi
+.if (\n(.H=4u)&(1m=24u) .ds -- \(*W\h'-12u'\(*W\h'-12u'-\" diablo 10 pitch
+.if (\n(.H=4u)&(1m=20u) .ds -- \(*W\h'-12u'\(*W\h'-8u'-\" diablo 12 pitch
+.ds L" ""
+.ds R" ""
+'''   \*(M", \*(S", \*(N" and \*(T" are the equivalent of
+'''   \*(L" and \*(R", except that they are used on ".xx" lines,
+'''   such as .IP and .SH, which do another additional levels of
+'''   double-quote interpretation
+.ds M" """
+.ds S" """
+.ds N" """""
+.ds T" """""
+.ds L' '
+.ds R' '
+.ds M' '
+.ds S' '
+.ds N' '
+.ds T' '
+'br\}
+.el\{\
+.ds -- \(em\|
+.tr \*(Tr
+.ds L" ``
+.ds R" ''
+.ds M" ``
+.ds S" ''
+.ds N" ``
+.ds T" ''
+.ds L' `
+.ds R' '
+.ds M' `
+.ds S' '
+.ds N' `
+.ds T' '
+.ds PI \(*p
+'br\}
+.\"	If the F register is turned on, we'll generate
+.\"	index entries out stderr for the following things:
+.\"		TH	Title 
+.\"		SH	Header
+.\"		Sh	Subsection 
+.\"		Ip	Item
+.\"		X<>	Xref  (embedded
+.\"	Of course, you have to process the output yourself
+.\"	in some meaninful fashion.
+.if \nF \{
+.de IX
+.tm Index:\\$1\t\\n%\t"\\$2"
+..
+.nr % 0
+.rr F
+.\}
+.TH des_modes 7 "0.9.5a" "22/Jul/100" "OpenSSL"
+.UC
+.if n .hy 0
+.if n .na
+.ds C+ C\v'-.1v'\h'-1p'\s-2+\h'-1p'+\s0\v'.1v'\h'-1p'
+.de CQ          \" put $1 in typewriter font
+.ft CW
+'if n "\c
+'if t \\&\\$1\c
+'if n \\&\\$1\c
+'if n \&"
+\\&\\$2 \\$3 \\$4 \\$5 \\$6 \\$7
+'.ft R
+..
+.\" @(#)ms.acc 1.5 88/02/08 SMI; from UCB 4.2
+.	\" AM - accent mark definitions
+.bd B 3
+.	\" fudge factors for nroff and troff
+.if n \{\
+.	ds #H 0
+.	ds #V .8m
+.	ds #F .3m
+.	ds #[ \f1
+.	ds #] \fP
+.\}
+.if t \{\
+.	ds #H ((1u-(\\\\n(.fu%2u))*.13m)
+.	ds #V .6m
+.	ds #F 0
+.	ds #[ \&
+.	ds #] \&
+.\}
+.	\" simple accents for nroff and troff
+.if n \{\
+.	ds ' \&
+.	ds ` \&
+.	ds ^ \&
+.	ds , \&
+.	ds ~ ~
+.	ds ? ?
+.	ds ! !
+.	ds /
+.	ds q
+.\}
+.if t \{\
+.	ds ' \\k:\h'-(\\n(.wu*8/10-\*(#H)'\'\h"|\\n:u"
+.	ds ` \\k:\h'-(\\n(.wu*8/10-\*(#H)'\`\h'|\\n:u'
+.	ds ^ \\k:\h'-(\\n(.wu*10/11-\*(#H)'^\h'|\\n:u'
+.	ds , \\k:\h'-(\\n(.wu*8/10)',\h'|\\n:u'
+.	ds ~ \\k:\h'-(\\n(.wu-\*(#H-.1m)'~\h'|\\n:u'
+.	ds ? \s-2c\h'-\w'c'u*7/10'\u\h'\*(#H'\zi\d\s+2\h'\w'c'u*8/10'
+.	ds ! \s-2\(or\s+2\h'-\w'\(or'u'\v'-.8m'.\v'.8m'
+.	ds / \\k:\h'-(\\n(.wu*8/10-\*(#H)'\z\(sl\h'|\\n:u'
+.	ds q o\h'-\w'o'u*8/10'\s-4\v'.4m'\z\(*i\v'-.4m'\s+4\h'\w'o'u*8/10'
+.\}
+.	\" troff and (daisy-wheel) nroff accents
+.ds : \\k:\h'-(\\n(.wu*8/10-\*(#H+.1m+\*(#F)'\v'-\*(#V'\z.\h'.2m+\*(#F'.\h'|\\n:u'\v'\*(#V'
+.ds 8 \h'\*(#H'\(*b\h'-\*(#H'
+.ds v \\k:\h'-(\\n(.wu*9/10-\*(#H)'\v'-\*(#V'\*(#[\s-4v\s0\v'\*(#V'\h'|\\n:u'\*(#]
+.ds _ \\k:\h'-(\\n(.wu*9/10-\*(#H+(\*(#F*2/3))'\v'-.4m'\z\(hy\v'.4m'\h'|\\n:u'
+.ds . \\k:\h'-(\\n(.wu*8/10)'\v'\*(#V*4/10'\z.\v'-\*(#V*4/10'\h'|\\n:u'
+.ds 3 \*(#[\v'.2m'\s-2\&3\s0\v'-.2m'\*(#]
+.ds o \\k:\h'-(\\n(.wu+\w'\(de'u-\*(#H)/2u'\v'-.3n'\*(#[\z\(de\v'.3n'\h'|\\n:u'\*(#]
+.ds d- \h'\*(#H'\(pd\h'-\w'~'u'\v'-.25m'\f2\(hy\fP\v'.25m'\h'-\*(#H'
+.ds D- D\\k:\h'-\w'D'u'\v'-.11m'\z\(hy\v'.11m'\h'|\\n:u'
+.ds th \*(#[\v'.3m'\s+1I\s-1\v'-.3m'\h'-(\w'I'u*2/3)'\s-1o\s+1\*(#]
+.ds Th \*(#[\s+2I\s-2\h'-\w'I'u*3/5'\v'-.3m'o\v'.3m'\*(#]
+.ds ae a\h'-(\w'a'u*4/10)'e
+.ds Ae A\h'-(\w'A'u*4/10)'E
+.ds oe o\h'-(\w'o'u*4/10)'e
+.ds Oe O\h'-(\w'O'u*4/10)'E
+.	\" corrections for vroff
+.if v .ds ~ \\k:\h'-(\\n(.wu*9/10-\*(#H)'\s-2\u~\d\s+2\h'|\\n:u'
+.if v .ds ^ \\k:\h'-(\\n(.wu*10/11-\*(#H)'\v'-.4m'^\v'.4m'\h'|\\n:u'
+.	\" for low resolution devices (crt and lpr)
+.if \n(.H>23 .if \n(.V>19 \
+\{\
+.	ds : e
+.	ds 8 ss
+.	ds v \h'-1'\o'\(aa\(ga'
+.	ds _ \h'-1'^
+.	ds . \h'-1'.
+.	ds 3 3
+.	ds o a
+.	ds d- d\h'-1'\(ga
+.	ds D- D\h'-1'\(hy
+.	ds th \o'bp'
+.	ds Th \o'LP'
+.	ds ae ae
+.	ds Ae AE
+.	ds oe oe
+.	ds Oe OE
+.\}
+.rm #[ #] #H #V #F C
+.SH "NAME"
+Modes of DES \- the variants of DES and other crypto algorithms of OpenSSL
+.SH "DESCRIPTION"
+Several crypto algorithms for OpenSSL can be used in a number of modes.  Those
+are used for using block ciphers in a way similar to stream ciphers, among
+other things.
+.SH "OVERVIEW"
+.Sh "Electronic Codebook Mode (\s-1ECB\s0)"
+Normally, this is found as the function \fIalgorithm\fR\fI_ecb_encrypt()\fR.
+.Ip "\(bu" 2
+64 bits are enciphered at a time.
+.Ip "\(bu" 2
+The order of the blocks can be rearranged without detection.
+.Ip "\(bu" 2
+The same plaintext block always produces the same ciphertext block
+(for the same key) making it vulnerable to a \*(L'dictionary attack\*(R'.
+.Ip "\(bu" 2
+An error will only affect one ciphertext block.
+.Sh "Cipher Block Chaining Mode (\s-1CBC\s0)"
+Normally, this is found as the function \fIalgorithm\fR\fI_cbc_encrypt()\fR.
+Be aware that \fIdes_cbc_encrypt()\fR is not really \s-1DES\s0 \s-1CBC\s0 (it does
+not update the \s-1IV\s0); use \fIdes_ncbc_encrypt()\fR instead.
+.Ip "\(bu" 2
+a multiple of 64 bits are enciphered at a time.
+.Ip "\(bu" 2
+The \s-1CBC\s0 mode produces the same ciphertext whenever the same
+plaintext is encrypted using the same key and starting variable.
+.Ip "\(bu" 2
+The chaining operation makes the ciphertext blocks dependent on the
+current and all preceding plaintext blocks and therefore blocks can not
+be rearranged.
+.Ip "\(bu" 2
+The use of different starting variables prevents the same plaintext
+enciphering to the same ciphertext.
+.Ip "\(bu" 2
+An error will affect the current and the following ciphertext blocks.
+.Sh "Cipher Feedback Mode (\s-1CFB\s0)"
+Normally, this is found as the function \fIalgorithm\fR\fI_cfb_encrypt()\fR.
+.Ip "\(bu" 2
+a number of bits (j) <= 64 are enciphered at a time.
+.Ip "\(bu" 2
+The \s-1CFB\s0 mode produces the same ciphertext whenever the same
+plaintext is encrypted using the same key and starting variable.
+.Ip "\(bu" 2
+The chaining operation makes the ciphertext variables dependent on the
+current and all preceding variables and therefore j-bit variables are
+chained together and can not be rearranged.
+.Ip "\(bu" 2
+The use of different starting variables prevents the same plaintext
+enciphering to the same ciphertext.
+.Ip "\(bu" 2
+The strength of the \s-1CFB\s0 mode depends on the size of k (maximal if
+j == k).  In my implementation this is always the case.
+.Ip "\(bu" 2
+Selection of a small value for j will require more cycles through
+the encipherment algorithm per unit of plaintext and thus cause
+greater processing overheads.
+.Ip "\(bu" 2
+Only multiples of j bits can be enciphered.
+.Ip "\(bu" 2
+An error will affect the current and the following ciphertext variables.
+.Sh "Output Feedback Mode (\s-1OFB\s0)"
+Normally, this is found as the function \fIalgorithm\fR\fI_ofb_encrypt()\fR.
+.Ip "\(bu" 2
+a number of bits (j) <= 64 are enciphered at a time.
+.Ip "\(bu" 2
+The \s-1OFB\s0 mode produces the same ciphertext whenever the same
+plaintext enciphered using the same key and starting variable.  More
+over, in the \s-1OFB\s0 mode the same key stream is produced when the same
+key and start variable are used.  Consequently, for security reasons
+a specific start variable should be used only once for a given key.
+.Ip "\(bu" 2
+The absence of chaining makes the \s-1OFB\s0 more vulnerable to specific attacks.
+.Ip "\(bu" 2
+The use of different start variables values prevents the same
+plaintext enciphering to the same ciphertext, by producing different
+key streams.
+.Ip "\(bu" 2
+Selection of a small value for j will require more cycles through
+the encipherment algorithm per unit of plaintext and thus cause
+greater processing overheads.
+.Ip "\(bu" 2
+Only multiples of j bits can be enciphered.
+.Ip "\(bu" 2
+\s-1OFB\s0 mode of operation does not extend ciphertext errors in the
+resultant plaintext output.  Every bit error in the ciphertext causes
+only one bit to be in error in the deciphered plaintext.
+.Ip "\(bu" 2
+\s-1OFB\s0 mode is not self-synchronising.  If the two operation of
+encipherment and decipherment get out of synchronism, the system needs
+to be re-initialised.
+.Ip "\(bu" 2
+Each re-initialisation should use a value of the start variable
+different from the start variable values used before with the same
+key.  The reason for this is that an identical bit stream would be
+produced each time from the same parameters.  This would be
+susceptible to a \*(L'known plaintext\*(R' attack.
+.Sh "Triple \s-1ECB\s0 Mode"
+Normally, this is found as the function \fIalgorithm\fR\fI_ecb3_encrypt()\fR.
+.Ip "\(bu" 2
+Encrypt with key1, decrypt with key2 and encrypt with key3 again.
+.Ip "\(bu" 2
+As for \s-1ECB\s0 encryption but increases the key length to 168 bits.
+There are theoretic attacks that can be used that make the effective
+key length 112 bits, but this attack also requires 2^56 blocks of
+memory, not very likely, even for the \s-1NSA\s0.
+.Ip "\(bu" 2
+If both keys are the same it is equivalent to encrypting once with
+just one key.
+.Ip "\(bu" 2
+If the first and last key are the same, the key length is 112 bits.
+There are attacks that could reduce the key space to 55 bit's but it
+requires 2^56 blocks of memory.
+.Ip "\(bu" 2
+If all 3 keys are the same, this is effectively the same as normal
+ecb mode.
+.Sh "Triple \s-1CBC\s0 Mode"
+Normally, this is found as the function \fIalgorithm\fR\fI_ede3_cbc_encrypt()\fR.
+.Ip "\(bu" 2
+Encrypt with key1, decrypt with key2 and then encrypt with key3.
+.Ip "\(bu" 2
+As for \s-1CBC\s0 encryption but increases the key length to 168 bits with
+the same restrictions as for triple ecb mode.
+.SH "NOTES"
+This text was been written in large parts by Eric Young in his original
+documentation for SSLeay, the predecessor of OpenSSL.  In turn, he attributed
+it to:
+.PP
+.Vb 5
+\&        AS 2805.5.2
+\&        Australian Standard
+\&        Electronic funds transfer - Requirements for interfaces,
+\&        Part 5.2: Modes of operation for an n-bit block cipher algorithm
+\&        Appendix A
+.Ve
+.SH "SEE ALSO"
+the \fIblowfish(3)|blowfish(3)\fR manpage, the \fIdes(3)|des(3)\fR manpage, the \fIidea(3)|idea(3)\fR manpage,
+the \fIrc2(3)|rc2(3)\fR manpage
+
+.rn }` ''
+.IX Title "des_modes 7"
+.IX Name "Modes of DES - the variants of DES and other crypto algorithms of OpenSSL"
+
+.IX Header "NAME"
+
+.IX Header "DESCRIPTION"
+
+.IX Header "OVERVIEW"
+
+.IX Subsection "Electronic Codebook Mode (\s-1ECB\s0)"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Subsection "Cipher Block Chaining Mode (\s-1CBC\s0)"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Subsection "Cipher Feedback Mode (\s-1CFB\s0)"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Subsection "Output Feedback Mode (\s-1OFB\s0)"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Subsection "Triple \s-1ECB\s0 Mode"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Subsection "Triple \s-1CBC\s0 Mode"
+
+.IX Item "\(bu"
+
+.IX Item "\(bu"
+
+.IX Header "NOTES"
+
+.IX Header "SEE ALSO"
+
