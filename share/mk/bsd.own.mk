@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.325 2003/03/07 01:21:56 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.326 2003/03/25 23:35:48 pooka Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -183,6 +183,7 @@ MDSETIMAGE=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-mdsetimage
 MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}menuc
 MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}mkdep
 MKLOCALE=	${TOOLDIR}/bin/${_TOOL_PREFIX}mklocale
+MKMAGIC=	${TOOLDIR}/bin/${_TOOL_PREFIX}file
 MKTEMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}mktemp
 MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}msgc
 MTREE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mtree
