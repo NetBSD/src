@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.65 2000/11/26 17:44:11 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.66 2000/12/05 18:18:04 wrstuden Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -71,6 +71,8 @@
 #	ttyE?	Workstation console ("wscons") glass-tty emulators
 #	ttyCZ?	Cyclades-Z multiport serial boards.  Each "unit"
 #		makes 64 ports.
+#	ttyCY*	Cyclom-Y multiport serial boards. Each "unit" makes
+#		32 ports.
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -130,7 +132,7 @@ all)
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 usbs wscons
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
-	sh $0 ttyCZ0
+	sh $0 ttyCZ0 ttyCY0
 	;;
 
 minimal)
@@ -339,6 +341,28 @@ ttyCZ*)
 		mknod dtyCZ$nminor c $major $(($minor + $dialout ))
 		chown uucp.wheel ttyCZ$nminor dtyCZ$nminor
 		chmod 600 ttyCZ$nminor dtyCZ$nminor
+		minor=$(($minor + 1))
+	done
+	;;
+
+ttyCY*)
+	unit=${i#ttyCY}
+	major=60
+	minor=$(($unit * 32))
+	eminor=$(($minor + 32))
+	while [ $minor -lt $eminor ]; do
+		if [ $minor -lt 10 ]; then
+			nminor=00$minor
+		elif [ $minor -lt 100 ]; then
+			nminor=0$minor
+		else
+			nminor=$minor
+		fi
+		rm -f ttyCY$nminor dtyCY$nminor
+		mknod ttyCY$nminor c $major $(($minor + $dialin  ))
+		mknod dtyCY$nminor c $major $(($minor + $dialout ))
+		chown uucp.wheel ttyCY$nminor dtyCY$nminor
+		chmod 600 ttyCY$nminor dtyCY$nminor
 		minor=$(($minor + 1))
 	done
 	;;
