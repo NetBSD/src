@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.57 1996/02/11 01:20:23 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.58 1996/02/27 03:17:00 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,6 +112,14 @@ Ljmp0panic:
 _buserr:
 	tstl	_nofault		| device probe?
 	jeq	Lberr			| no, handle as usual
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
+	jne	Lberrfault30		| no, handle as 030
+	movl	sp@(0x14),_mac68k_buserr_addr
+	movl	_nofault,sp@-		| yes,
+	jbsr	_longjmp
+#endif
+Lberrfault30:
 	movl	sp@(0x10),_mac68k_buserr_addr
 	movl	_nofault,sp@-		| yes,
 	jbsr	_longjmp		|  longjmp(nofault)
@@ -553,6 +561,7 @@ Lsigr1:
  */
 /* BARF We must re-configure this. */
 	.globl	_hardclock, _nmihand
+	.globl	_mrg_VBLQueue
 
 _spurintr:
 _lev3intr:
@@ -612,6 +621,7 @@ _rtclock_intr:
 	movl	sp, sp@-		| push pointer to ps, pc
 	jbsr	_hardclock		| call generic clock int routine
 	lea	sp@(12), sp		| pop params
+	jbsr	_mrg_VBLQueue		| give programs in the VBLqueue a chance
 	addql	#1,_intrcnt+20		| add another system clock interrupt
 
 	addql	#1,_cnt+V_INTR		| chalk up another interrupt
