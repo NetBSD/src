@@ -28,13 +28,17 @@
 /*
  * HISTORY
  * $Log: aha1542.c,v $
- * Revision 1.2  1993/04/08 08:26:46  deraadt
+ * Revision 1.3  1993/04/10 12:05:04  glass
+ * fixed to be compliant, subservient, and to take advantage of the newly
+ * hacked config(8)
+ *
+ * Revision 1.2  1993/04/08  08:26:46  deraadt
  * dmesg output at boottime now tries to print out information as
  * soon as it is available. The output looks much more like Sunos.
  *
  * Revision 1.1  1993/03/21  18:09:54  cgd
  * after 0.2.2 "stable" patches applied
- *
+ * 
  * Revision 1.6  1992/08/24  21:01:58  jason
  * many changes and bugfixes for osf1
  *
@@ -122,17 +126,14 @@
 #include <i386/isa/isa_device.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-#endif  __386BSD__
 
-
-#ifdef	__386BSD__
-#include "ddb.h"
-#if	NDDB > 0
+#ifdef DDB
 int	Debugger();
-#else	NDDB
+#else
 #define Debugger() panic("should call debugger here (adaptec.c)")
-#endif	NDDB
-#endif	__386BSD__
+#endif /*!DDB*/
+
+#endif /*__386BSD__*/
 extern int delaycount;  /* from clock setup code */
 
 /************************** board definitions *******************************/

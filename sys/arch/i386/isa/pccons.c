@@ -51,7 +51,8 @@
  * 14 Mar 93	Chris G. Demetriou	Moved pg() to i386/cons.c, code
  *					cleanup, removed ctl-alt-del.
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.3 1993/04/08 08:26:57 deraadt Exp $";
+
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.4 1993/04/10 12:05:22 glass Exp $";
 
 /*
  * code to work keyboard & display for PC-style console
@@ -1466,8 +1467,7 @@ loop:
 #endif /* !XSERVER*/
 	}
 
-#include "ddb.h"
-#if NDDB > 0
+#ifdef DDB
 	/*
 	 *   Check for cntl-alt-esc
 	 */

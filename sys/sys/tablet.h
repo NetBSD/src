@@ -39,12 +39,6 @@
 /*
  * Tablet line discipline.
  */
-#ifdef KERNEL
-#include "../h/ioctl.h"
-#else
-#include <sys/ioctl.h>
-#endif
-
 /*
  * Reads on the tablet return one of the following structures, depending on
  * the underlying tablet type.  The first two are defined such that a read of
@@ -94,6 +88,5 @@ struct	polpos {
 #define		TBDIGIHIRES	0x8		/* gtco digi-pad, high res */
 #define BIOSTYPE	_IOW('b', 3, int)	/* set tablet type */
 #define BIOGTYPE	_IOR('b', 4, int)	/* get tablet type*/
-#endif
 
 #endif /* !_TABLET_H_ */

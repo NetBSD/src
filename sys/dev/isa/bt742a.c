@@ -24,9 +24,13 @@
 /*
  * HISTORY
  * $Log: bt742a.c,v $
- * Revision 1.1  1993/03/21 18:04:42  cgd
- * after 0.2.2 "stable" patches applied
+ * Revision 1.2  1993/04/10 12:05:14  glass
+ * fixed to be compliant, subservient, and to take advantage of the newly
+ * hacked config(8)
  *
+ * Revision 1.1  1993/03/21  18:10:06  cgd
+ * after 0.2.2 "stable" patches applied
+ * 
  * Revision 1.7  1992/08/24  22:40:16  jason
  * BIG_DMA ifdef for 512 dma segments instead of 128 segments
  *
@@ -98,12 +102,11 @@
 
 
 #ifdef	__386BSD__
-#include "ddb.h"
-#if	NDDB > 0
+#ifdef DDB
 int	Debugger();
-#else	NDDB
+#else
 #define	Debugger() panic("should call debugger here (adaptec.c)")
-#endif	NDDB
+#endif	/*!DDB*/
 #endif	__386BSD__
 
 #ifdef	MACH
