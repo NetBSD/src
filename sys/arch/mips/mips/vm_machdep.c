@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.64 2000/06/14 22:17:59 soren Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.65 2000/06/15 13:04:05 shin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.64 2000/06/14 22:17:59 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65 2000/06/15 13:04:05 shin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,16 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct frame *f;
 	pt_entry_t *pte;
 	int i, x;
+
+#ifdef MIPS3
+	/*
+	 * To eliminate virtual aliases created by pmap_zero_page(),
+	 * this cache flush operation is necessary.
+	 * VCED on kernel stack is not allowed.
+	 */
+	if (CPUISMIPS3 && mips_L2CachePresent)
+		MachHitFlushDCache((vaddr_t)p2->p_addr, USPACE);
+#endif
 
 #ifdef DIAGNOSTIC
 	/*
