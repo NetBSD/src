@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.37 1993/07/08 09:55:54 cgd Exp $
+ *	$Id: machdep.c,v 1.38 1993/07/12 12:00:45 cgd Exp $
  */
 
 #include "npx.h"
@@ -188,10 +188,11 @@ again:
 	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
-		if (physmem < (2 * 1024 * 1024))
+		if (physmem < btoc(2 * 1024 * 1024))
 			bufpages = physmem / 10 / CLSIZE;
 		else
-			bufpages = ((2 * 1024 * 1024 + physmem) / 20) / CLSIZE;
+			bufpages = (btoc(2 * 1024 * 1024) + physmem) / 20 / CLSIZE;
+
 	bufpages = min(NKMEMCLUSTERS*2/5, bufpages);
 
 	if (nbuf == 0) {
@@ -290,6 +291,9 @@ again:
 #ifdef barely_notdef /* XXX - cgd */
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
+#else
+	printf("using %d buffers backed by %d bytes of memory\n",
+		nbuf, freebufspace);
 #endif
 
 	/*
