@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.279 2005/02/13 06:14:00 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.280 2005/02/13 19:35:43 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -491,6 +491,8 @@ markus is very cooperative about it):
 - hack in cipher.c #ifdef NEW_OPENSSL because we are missing EVP_acss
   when someone imports openssl, we can remove this.
 - uidswap.c changed order of set{e,}{u,g}id so that it works on NetBSD
+- added moduli from portable openssh
+- added USE_PAM patches and auth_pam.[ch] from portable openssh
 
 Package:	OpenSSL
 Version:	0.9.7d
