@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.7 2000/02/01 22:39:52 chopps Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.8 2000/02/23 17:22:11 soren Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -70,7 +70,7 @@ int pcic_isapnp_match __P((struct device *, struct cfdata *, void *));
 void	pcic_isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach pcic_isapnp_ca = {
-	sizeof(struct pcic_softc), pcic_isapnp_match, pcic_isapnp_attach
+	sizeof(struct pcic_isa_softc), pcic_isapnp_match, pcic_isapnp_attach
 };
 
 static struct pcmcia_chip_functions pcic_isa_functions = {
@@ -111,6 +111,7 @@ pcic_isapnp_attach(parent, self, aux)
 	void *aux;
 {
 	struct pcic_softc *sc = (void *) self;
+	struct pcic_isa_softc *isc = (void *) self;
 	struct isapnp_attach_args *ipa = aux;
 	isa_chipset_tag_t ic = ipa->ipa_ic;
 	bus_space_tag_t iot = ipa->ipa_iot;
@@ -162,7 +163,7 @@ pcic_isapnp_attach(parent, self, aux)
 	sc->membase = maddr;
 	sc->subregionmask = (1 << (msize / PCIC_MEM_PAGESIZE)) - 1;
 
-	sc->intr_est = ic;
+	isc->sc_ic = ic;
 	sc->pct = (pcmcia_chipset_tag_t) & pcic_isa_functions;
 
 	sc->iot = iot;
