@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.11 2002/10/23 06:15:59 gmcgarry Exp $
+.\"     $NetBSD: vnode.9,v 1.12 2002/12/29 06:51:40 yamt Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -662,10 +662,13 @@ The argument
 .Fa flags
 is a set of flags modifying the operation of
 .Fn vflush .
-If MNT_NOFORCE is specified, there should not be any active vnodes and
+If FORCECLOSE is not specified, there should not be any active vnodes and
 an error is returned if any are found (this is a user error, not a
 system error).
-If MNT_FORCE is specified, active vnodes that are found are detached.
+If FORCECLOSE is specified, active vnodes that are found are detached.
+If WRITECLOSE is set, only flush out regular file vnodes open for
+writing.
+SKIPSYSTEM causes any vnodes marked V_SYSTEM to be skipped.
 .It Fn vaccess "type" "file_mode" "uid" "gid" "acc_mode" "cred"
 Do access checking by comparing the file's permissions to the caller's
 desired access type
