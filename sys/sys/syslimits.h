@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)syslimits.h	7.4 (Berkeley) 2/4/91
- *	$Id: syslimits.h,v 1.5 1993/09/24 18:29:49 jtc Exp $
+ *	$Id: syslimits.h,v 1.6 1993/12/10 20:08:01 jtc Exp $
  */
 
 #ifndef _SYS_SYSLIMITS_H_
@@ -54,7 +54,7 @@
 #define	BC_DIM_MAX	2048	/* max array elements allowed by bc(1) */
 #define	BC_SCALE_MAX	99	/* max scale value allowed by bc(1) */
 #define	BC_STRING_MAX	1000	/* max const string length allowed by bc(1) */
-#define	EQUIV_CLASS_MAX	2	/* max weights for order keyword; see locale */
+#define	COLL_WEIGHTS_MAX 2	/* max weights for order keyword; see locale */
 #define	EXPR_NEST_MAX	32	/* max expressions nested in expr(1) */
 #define	LINE_MAX	2048	/* max length in bytes of an input line */
 #define	RE_DUP_MAX	255	/* max repeated RE's using interval notation */
