@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.18.8.1 2001/02/03 21:05:52 he Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.18.8.2 2001/02/03 21:09:17 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.18.8.1 2001/02/03 21:05:52 he Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.18.8.2 2001/02/03 21:09:17 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -774,23 +774,24 @@ nak(error)
 	struct tftphdr *tp;
 	int length;
 	const struct errmsg *pe;
+	size_t msglen;
 
 	tp = (struct tftphdr *)buf;
 	tp->th_opcode = htons((u_short)ERROR);
+	msglen = sizeof(buf) - (&tp->th_msg[0] - buf);
 	for (pe = errmsgs; pe->e_code >= 0; pe++)
 		if (pe->e_code == error)
 			break;
 	if (pe->e_code < 0) {
 		tp->th_code = EUNDEF;   /* set 'undef' errorcode */
-		strcpy(tp->th_msg, strerror(error - 100));
+		strlcpy(tp->th_msg, strerror(error - 100), msglen);
 	} else {
 		tp->th_code = htons((u_short)error);
-		strcpy(tp->th_msg, pe->e_msg);
+		strlcpy(tp->th_msg, pe->e_msg, msglen);
 	}
-	length = strlen(pe->e_msg);
-	tp->th_msg[length] = '\0';
-	length += 5;
-	if (send(peer, buf, length, 0) != length)
+	length = strlen(tp->th_msg);
+	msglen = &tp->th_msg[length + 1] - buf;
+	if (send(peer, buf, msglen, 0) != msglen)
 		syslog(LOG_ERR, "nak: %m");
 }
 
