@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 2001/03/24 05:30:57 briggs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 2001/03/26 18:52:29 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1440,9 +1440,6 @@ pmap_activate(p)
 		/* Store pointer to new current pmap. */
 		curpm = pcb->pcb_pmreal;
 
-		/* Save kernel SR. */
-		__asm __volatile("mfsr %0,%1" : "=r"(ksr) : "n"(KERNEL_SR) );
-
 		/*
 		 * Set new segment registers.  We use the pmap's real
 		 * address to avoid accessibility problems.
@@ -1456,9 +1453,6 @@ pmap_activate(p)
 			__asm __volatile("mtsrin %0,%1"
 			    :: "r"(seg), "r"(i << ADDR_SR_SHFT));
 		}
-
-		/* Restore kernel SR. */
-		__asm __volatile("mtsr %0,%1" :: "n"(KERNEL_SR), "r"(ksr));
 
 		/* Interrupts are OK again. */
 		psl |= PSL_EE;
