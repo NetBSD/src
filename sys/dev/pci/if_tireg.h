@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.1 1999/09/01 11:47:46 drochner Exp $ */
+/* $NetBSD: if_tireg.h,v 1.1.14.1 2000/12/31 21:19:57 jhawk Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -92,8 +92,8 @@
  * Firmware revision that we want.
  */
 #define TI_FIRMWARE_MAJOR		0xc
-#define TI_FIRMWARE_MINOR		0x3
-#define TI_FIRMWARE_FIX			0xc
+#define TI_FIRMWARE_MINOR		0x4
+#define TI_FIRMWARE_FIX			0xd
 
 /*
  * Miscelaneous Local Control register.
@@ -1001,11 +1001,6 @@ struct ti_event_desc {
 #define TI_RESID (TI_JPAGESZ - (TI_JLEN * TI_JSLOTS) % TI_JPAGESZ)
 #define TI_JMEM ((TI_JLEN * TI_JSLOTS) + TI_RESID)
 
-struct ti_jslot {
-	caddr_t			ti_buf;
-	int			ti_inuse;
-};
-
 /*
  * Ring structures. Most of these reside in host memory and we tell
  * the NIC where they are via the ring control blocks. The exceptions
@@ -1045,7 +1040,7 @@ struct ti_chain_data {
 	struct mbuf		*ti_rx_jumbo_chain[TI_JUMBO_RX_RING_CNT];
 	struct mbuf		*ti_rx_mini_chain[TI_MINI_RX_RING_CNT];
 	/* Stick the jumbo mem management stuff here too. */
-	struct ti_jslot		ti_jslots[TI_JSLOTS];
+	caddr_t			ti_jslots[TI_JSLOTS];
 	void			*ti_jumbo_buf;
 };
 
@@ -1091,6 +1086,7 @@ struct ti_softc {
 	u_int8_t		ti_unit;	/* interface number */
 #endif
 	u_int8_t		ti_hwrev;	/* Tigon rev (1 or 2) */
+	u_int8_t		ti_copper;	/* 1000baseTX card */
 	u_int8_t		ti_linkstat;	/* Link state */
 	struct ti_ring_data	*ti_rdata;	/* rings */
 	struct ti_chain_data	ti_cdata;	/* mbufs */
