@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.3 2003/04/02 10:39:28 fvdl Exp $ */
+/* $NetBSD: segwrite.c,v 1.4 2003/07/12 11:41:15 yamt Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -910,13 +910,6 @@ lfs_seglock(struct lfs * fs, unsigned long flags)
 	sp->seg_iocount = 0;
 	(void) lfs_initseg(fs);
 
-	/*
-	 * Keep a cumulative count of the outstanding I/O operations.  If the
-	 * disk drive catches up with us it could go to zero before we finish,
-	 * so we artificially increment it by one until we've scheduled all of
-	 * the writes we intend to do.
-	 */
-	++fs->lfs_iocount;
 	return 0;
 }
 
@@ -954,8 +947,8 @@ lfs_segunlock(struct lfs * fs)
 		fs->lfs_nactive = 0;
 
 		/* Since we *know* everything's on disk, write both sbs */
-		lfs_writesuper(fs, fs->lfs_sboffs[fs->lfs_activesb]);
-		lfs_writesuper(fs, fs->lfs_sboffs[1 - fs->lfs_activesb]);
+		lfs_writesuper(fs, fs->lfs_sboffs[0]);
+		lfs_writesuper(fs, fs->lfs_sboffs[1]);
 
 		--fs->lfs_seglock;
 		fs->lfs_lockpid = 0;
