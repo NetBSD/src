@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 2001/06/15 18:26:07 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 2001/06/15 20:43:01 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -940,9 +940,8 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 			    "pmap_pteg_table %p but invalid in pvo",
 			    pvo, pt);
 		}
-		if (((pt->pte_lo ^ pvo->pvo_pte.pte_lo) >> PTE_RPGN_SHFT) == 0) {
+		if (((pt->pte_lo ^ pvo->pvo_pte.pte_lo) & ~(PTE_CHG|PTE_REF)) != 0) {
 #ifdef DEBUG
-			pmap_pte_print(&pvo->pvo_pte);
 			pmap_pte_print(pt);
 #endif
 			panic("pmap_pvo_to_pte: pvo %p: pvo pte does "
@@ -956,7 +955,6 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 #ifdef DIAGNOSTIC
 	if (pvo->pvo_pte.pte_hi & PTE_VALID)
 #ifdef DEBUG
-		pmap_pte_print(&pvo->pvo_pte);
 		pmap_pte_print(pt);
 #endif
 		panic("pmap_pvo_to_pte: pvo %p: has invalid pte in "
@@ -972,6 +970,7 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 	int ptegidx;
 	sr_t sr;
 
+	va &= ~ADDR_POFF;
 	sr = va_to_sr(pm->pm_sr, va);
 	ptegidx = va_to_pteg(sr, va);
 
