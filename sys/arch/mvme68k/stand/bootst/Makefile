@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$NetBSD: Makefile,v 1.4 1996/10/18 06:07:11 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 1998/06/12 23:11:45 cgd Exp $
 
 RELOC=0x3F0000 
 
@@ -10,10 +10,10 @@ INCPATH=-I${.CURDIR} -I${.CURDIR}/../libsa -I${.CURDIR}/../libbug \
 CFLAGS=	-O2 ${INCPATH} ${DEFS} ${COPTS}
 CLEANFILES+=stboot bootst bootst.bug
 
-.include "${S}/arch/${MACHINE}/stand/libsa/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/libbug/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/bugcrt/Makefile.inc"
-.include "${S}/arch/${MACHINE}/stand/wrtvid/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/libsa/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/libbug/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/bugcrt/Makefile.inc"
+.include "${S}/arch/mvme68k/stand/wrtvid/Makefile.inc"
 
 SRCS=   boot.c conf.c dev_tape.c rawfs.c version.c
 
