@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.51 2001/10/11 04:27:30 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.52 2001/10/19 14:26:19 tv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.51 2001/10/11 04:27:30 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.52 2001/10/19 14:26:19 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,6 +78,7 @@ int	mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char	pathbuf[MAXPATHLEN];
 uid_t	uid;
 gid_t	gid;
+char	*group, *owner, *fflags;
 FILE	*metafp;
 char	*metafile;
 u_long	fileflags;
@@ -114,7 +115,7 @@ main(int argc, char *argv[])
 	u_int iflags;
 	int ch, no_target;
 	char *p;
-	char *flags = NULL, *to_name, *group = NULL, *owner = NULL;
+	char *to_name;
 
 	setprogname(argv[0]);
 
@@ -148,10 +149,7 @@ main(int argc, char *argv[])
 			dodir = 1;
 			break;
 		case 'f':
-			flags = optarg;
-			if (string_to_flags(&flags, &fileflags, NULL))
-				errx(1, "%s: invalid flag", flags);
-			iflags |= SETFLAGS;
+			fflags = optarg;
 			break;
 		case 'g':
 			group = optarg;
@@ -225,7 +223,7 @@ main(int argc, char *argv[])
 		usage();
 
 	/* strip and flags make no sense with links */
-	if ((dostrip || flags) && dolink)
+	if ((dostrip || fflags) && dolink)
 		usage();
 
 	/* must have at least two arguments, except when creating directories */
@@ -233,7 +231,7 @@ main(int argc, char *argv[])
 		usage();
 
 	/* get group and owner id's */
-	if (group) {
+	if (group && !dounpriv) {
 		struct group *gp;
 
 		if ((gp = getgrnam(group)) != NULL)
@@ -242,7 +240,7 @@ main(int argc, char *argv[])
 			errx(1, "unknown group %s", group);
 		iflags |= HASGID;
 	}
-	if (owner) {
+	if (owner && !dounpriv) {
 		struct passwd *pp;
 
 		if ((pp = getpwnam(owner)) != NULL)
@@ -250,6 +248,12 @@ main(int argc, char *argv[])
 		else if (! parseid(owner, &uid))
 			errx(1, "unknown user %s", owner);
 		iflags |= HASUID;
+	}
+
+	if (fflags && !dounpriv) {
+		if (string_to_flags(&fflags, &fileflags, NULL))
+			errx(1, "%s: invalid flag", fflags);
+		iflags |= SETFLAGS;
 	}
 
 	if (metafile) {
@@ -738,13 +742,12 @@ metadata_log(const char *path, mode_t type, u_int flags, struct timeval *tv)
 	fprintf(metafp, ".%s%s type=%s mode=%#o",	/* print details */
 	    buf[0] == '/' ? "" : "/", buf,
 	    S_ISDIR(type) ? "dir" : "file", mode);
-	if (flags & HASUID)
-		fprintf(metafp, " uid=%d", uid);
-	if (flags & HASGID)
-		fprintf(metafp, " gid=%d", gid);
-	if (flags & SETFLAGS)
-		fprintf(metafp, " flags=%s",
-		    flags_to_string(fileflags, "none"));
+	if (owner)
+		fprintf(metafp, " uname=%s", owner);
+	if (group)
+		fprintf(metafp, " gname=%s", group);
+	if (fflags)
+		fprintf(metafp, " flags=%s", fflags);
 	if (tv != NULL)
 		fprintf(metafp, " time=%ld.%ld", tv[1].tv_sec, tv[1].tv_usec);
 	fputc('\n', metafp);
