@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.8 2003/03/25 23:17:30 provos Exp $	*/
+/*	$NetBSD: parse.y,v 1.9 2003/05/20 22:45:13 provos Exp $	*/
 /*	$OpenBSD: parse.y,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.y,v 1.8 2003/03/25 23:17:30 provos Exp $");
+__RCSID("$NetBSD: parse.y,v 1.9 2003/05/20 22:45:13 provos Exp $");
 
 #include <sys/types.h>
 
@@ -72,7 +72,7 @@ extern int iamroot;
 
 %token	AND OR NOT LBRACE RBRACE LSQBRACE RSQBRACE THEN MATCH PERMIT DENY ASK
 %token	EQ NEQ TRUE SUB NSUB INPATH LOG COMMA IF USER GROUP EQUAL NEQUAL AS
-%token	COLON RE
+%token	COLON RE LESSER GREATER
 %token	<string> STRING
 %token	<string> CMDSTRING
 %token	<number> NUMBER
@@ -167,7 +167,11 @@ logcode	: /* Empty */
 ;
 
 
-uid: STRING
+uid		: NUMBER
+{
+	$$ = $1;
+} 
+		| STRING
 {
 	struct passwd *pw;
 	if ((pw = getpwnam($1)) == NULL) {
@@ -178,7 +182,11 @@ uid: STRING
 	$$ = pw->pw_uid;
 }
 
-gid: STRING
+gid		: NUMBER
+{
+	$$ = $1;
+}
+		| STRING
 {
 	struct group *gr;
 	if ((gr = getgrnam($1)) == NULL) {
@@ -241,6 +249,18 @@ predicate : /* Empty */
 	$$.p_uid = $5;
 	$$.p_flags = PREDIC_UID | PREDIC_NEGATIVE;
 }
+		| COMMA IF USER LESSER uid
+{
+	memset(&$$, 0, sizeof($$));
+	$$.p_uid = $5;
+	$$.p_flags = PREDIC_UID | PREDIC_LESSER;
+}
+		| COMMA IF USER GREATER uid
+{
+	memset(&$$, 0, sizeof($$));
+	$$.p_uid = $5;
+	$$.p_flags = PREDIC_UID | PREDIC_GREATER;
+}
 		| COMMA IF GROUP EQUAL gid
 {
 	memset(&$$, 0, sizeof($$));
@@ -252,6 +272,18 @@ predicate : /* Empty */
 	memset(&$$, 0, sizeof($$));
 	$$.p_gid = $5;
 	$$.p_flags = PREDIC_GID | PREDIC_NEGATIVE;
+}
+		| COMMA IF GROUP LESSER gid
+{
+	memset(&$$, 0, sizeof($$));
+	$$.p_gid = $5;
+	$$.p_flags = PREDIC_GID | PREDIC_LESSER;
+}
+		| COMMA IF GROUP GREATER gid
+{
+	memset(&$$, 0, sizeof($$));
+	$$.p_gid = $5;
+	$$.p_flags = PREDIC_GID | PREDIC_GREATER;
 }
 
 expression	: symbol

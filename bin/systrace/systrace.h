@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.12 2003/03/25 23:17:30 provos Exp $	*/
+/*	$NetBSD: systrace.h,v 1.13 2003/05/20 22:45:14 provos Exp $	*/
 /*	$OpenBSD: systrace.h,v 1.14 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -70,6 +70,9 @@ struct filter {
 #define PREDIC_UID	0x01
 #define PREDIC_GID	0x02
 #define PREDIC_NEGATIVE	0x10
+#define PREDIC_LESSER	0x20
+#define PREDIC_GREATER	0x30
+#define PREDIC_MASK	0x30
 		int p_flags;
 		uid_t p_uid;
 		gid_t p_gid;
