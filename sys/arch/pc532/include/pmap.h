@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 1998/01/03 01:13:08 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19 1998/02/18 02:05:35 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -197,6 +197,8 @@ pmap_phys_address(int ppn)
 {
 	return ns532_ptob(ppn);
 }
+
+vm_offset_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 
 #endif	/* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.h,v 1.2 1998/02/06 22:26:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.new.h,v 1.3 1998/02/18 02:05:34 cgd Exp $	*/
 
 /*
  *
@@ -506,6 +506,8 @@ vm_prot_t prot;
   if (pmap_valid_entry(opte))
     pmap_update_pg(va);                         
 }                                               
+
+vm_offset_t	pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 
 #endif /* _KERNEL */
 #endif	/* _I386_PMAP_H_ */
