@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_ioctl.c,v 1.9 1999/04/28 02:16:07 cgd Exp $	*/
+/*	$NetBSD: osf1_ioctl.c,v 1.10 1999/04/29 17:34:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -136,7 +136,7 @@ osf1_sys_ioctl(p, v, retval)
 #endif
 
 	SCARG(&a, fd) = SCARG(uap, fd);
-	SCARG(&a, com) = SCARG(uap, com);
+	SCARG(&a, com) = SCARG(uap, com) & 0xffffffff;		/* XXX */
 	SCARG(&a, data) = SCARG(uap, data);
 	switch (group) {
 	case 'f':
