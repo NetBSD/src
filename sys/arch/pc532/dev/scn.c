@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: scn.c,v 1.10 1994/04/21 22:31:32 phil Exp $
+ *	$Id: scn.c,v 1.11 1994/05/17 17:29:37 phil Exp $
  */
 
 #include "scn.h"
@@ -47,26 +47,27 @@
  * scn2681 driver for the pc532.  Phil Nelson  Feb 8, 1993
  * 
  */
-#include "param.h"
-#include "systm.h"
-#include "ioctl.h"
-#include "select.h"
-#include "tty.h"
-#include "proc.h"
-#include "user.h"
-#include "conf.h"
-#include "file.h"
-#include "uio.h"
-#include "kernel.h"
-#include "syslog.h"
-#include "types.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/tty.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
+#include <sys/types.h>
+
+#include <dev/cons.h>
+
+#include <machine/icu.h>
 
 #include "device.h"
 #include "scnreg.h"
 
-#include <dev/cons.h>
-
-#include "../pc532/icu.h"
 #include "sl.h"
 
 int 	scnprobe(), scnattach(), scnintr(), scnparam();

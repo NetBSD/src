@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: ncr.c,v 1.7 1994/04/19 17:10:34 phil Exp $
+ * $Id: ncr.c,v 1.8 1994/05/17 17:29:36 phil Exp $
  *
  */
 
@@ -40,25 +40,25 @@
 
 static int ncr_debug=1;
 
-#include "sys/types.h"
-#include "sys/malloc.h"
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/errno.h"
-#include "sys/buf.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/device.h"
-#include "scsi/scsi_all.h"
-#include "scsi/scsi_debug.h"
-#include "scsi/scsiconf.h"
+#include <sys/types.h>
+#include <sys/malloc.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/errno.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/device.h>
+#include <scsi/scsi_all.h>
+#include <scsi/scsi_debug.h>
+#include <scsi/scsiconf.h>
+
+#include <machine/icu.h>
 
 #include "ncr_defs.h"
 #include "ncr_5380.h"
 
-/* needed? */
 #include "device.h"
-#include "../pc532/icu.h"
 
 #define NCR5380 DP8490
 
