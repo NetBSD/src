@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.59 2002/04/20 17:36:16 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.60 2002/05/18 15:14:39 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.59 2002/04/20 17:36:16 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.60 2002/05/18 15:14:39 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,6 +411,8 @@ USB_ATTACH(uaudio)
 	       sc->sc_audio_rev >> 8, sc->sc_audio_rev & 0xff);
 
 	sc->sc_playchan.sc = sc->sc_recchan.sc = sc;
+	sc->sc_playchan.altidx = -1;
+	sc->sc_recchan.altidx = -1;
 
 	if (usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_AU_NO_FRAC)
 		sc->sc_altflags |= UA_NOFRAC;
