@@ -27,7 +27,11 @@
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <miscfs/specfs/specdev.h>	/* defines v_rdev */
+#if (BSD > 199103) || defined(__NetBSD__)
+#include <miscfs/specfs/specdev.h>		/* defines v_rdev */
+#else
+#include <sys/specdev.h>			/* defines v_rdev */
+#endif
 #include <sys/malloc.h>
 #include <sys/dir.h>		/* defines dirent structure */
 
@@ -226,6 +230,9 @@ msdosfs_getattr(vp, vap, cred, p)
 	vap->va_uid = 0;
 	vap->va_rdev = 0;
 	vap->va_size = dep->de_FileSize;
+#if (BSD <= 199103) && !defined(__NetBSD__)
+	vap->va_size_rsv = 0;
+#endif
 	dos2unixtime((union dosdate *) & dep->de_Date,
 	    (union dostime *) & dep->de_Time, &vap->va_atime);
 	vap->va_atime.tv_usec = 0;
@@ -244,6 +251,9 @@ msdosfs_getattr(vp, vap, cred, p)
 	vap->va_blocksize = dep->de_pmp->pm_bpcluster;
 	vap->va_bytes = (dep->de_FileSize + dep->de_pmp->pm_crbomask) &
 	    			~(dep->de_pmp->pm_crbomask);
+#if (BSD <= 199103) && !defined(__NetBSD__)
+	vap->va_bytes_rsv = 0;
+#endif
 	vap->va_type = vp->v_type;
 	return 0;
 }
