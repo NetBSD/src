@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.18 2004/08/16 10:12:40 aymeric Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.19 2004/08/17 08:35:43 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 2004/08/16 10:12:40 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19 2004/08/17 08:35:43 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,6 +195,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
+		sgsize = min(sgsize, map->_dm_maxsegsz);
 
 		/*
 		 * Make sure we don't cross any boundaries.
