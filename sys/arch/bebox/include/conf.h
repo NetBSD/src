@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.1 1997/10/14 06:48:10 sakamoto Exp $	*/
+/*	$NetBSD: conf.h,v 1.2 1998/04/15 21:48:51 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -46,14 +46,6 @@ cdev_decl(fd);
 	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
 
 cdev_decl(pc);
-
-/* open, close, write, ioctl */
-#define	cdev_spkr_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
-
-cdev_decl(spkr);
 
 cdev_decl(mms);
 
