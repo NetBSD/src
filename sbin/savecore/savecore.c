@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
+/*	$NetBSD: savecore.c,v 1.27 1996/06/23 20:30:39 leo Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $";
+static char rcsid[] = "$NetBSD: savecore.c,v 1.27 1996/06/23 20:30:39 leo Exp $";
 #endif
 #endif /* not lint */
 
@@ -277,6 +277,15 @@ kmem_setup()
 			exit(1);
 		}
 	hdrsz = kvm_dump_mkheader(kd_dump, (off_t)dumplo);
+
+	/*
+	 * If 'hdrsz' == 0, kvm_dump_mkheader() failed on the magic-number
+	 * checks, ergo no dump is present...
+	 */
+	if (hdrsz == 0) {
+		syslog(LOG_WARNING, "no core dump");
+		exit(1);
+	}
 	if (hdrsz == -1) {
 		syslog(LOG_ERR, "%s: kvm_dump_mkheader: %s", dump_sys,
 			kvm_geterr(kd_dump));
