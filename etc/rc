@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.136 1999/11/15 20:04:50 fvdl Exp $
+#	$NetBSD: rc,v 1.137 1999/11/23 08:05:04 lukem Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -435,8 +435,15 @@ if checkyesno update_motd; then
 	rm -f $T
 fi
 
-if [ -f /var/account/acct ]; then
-	echo 'turning on accounting';	accton /var/account/acct
+if checkyesno accounting; then
+	if [ -f /var/account/acct ]; then
+		echo 'turning on accounting'
+		accton /var/account/acct
+	else
+		echo
+		logger -s "WARNING: /var/account/acct doesn't exist; " \
+		    "accounting not enabled."
+	fi
 fi
 
 echo -n standard daemons:
