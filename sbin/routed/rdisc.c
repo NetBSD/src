@@ -1,4 +1,4 @@
-/*	$NetBSD: rdisc.c,v 1.12 2001/03/10 23:52:46 christos Exp $	*/
+/*	$NetBSD: rdisc.c,v 1.13 2001/11/02 05:30:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -39,7 +39,7 @@
 #include <netinet/ip_icmp.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: rdisc.c,v 1.12 2001/03/10 23:52:46 christos Exp $");
+__RCSID("$NetBSD: rdisc.c,v 1.13 2001/11/02 05:30:57 lukem Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -699,17 +699,17 @@ send_rdisc(union ad_u *p,
 	   naddr dst,			/* 0 or unicast destination */
 	   int	type)			/* 0=unicast, 1=bcast, 2=mcast */
 {
-	struct sockaddr_in sin;
+	struct sockaddr_in rsin;
 	int flags;
 	const char *msg;
 	naddr tgt_mcast;
 
 
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_addr.s_addr = dst;
-	sin.sin_family = AF_INET;
+	memset(&rsin, 0, sizeof(rsin));
+	rsin.sin_addr.s_addr = dst;
+	rsin.sin_family = AF_INET;
 #ifdef _HAVE_SIN_LEN
-	sin.sin_len = sizeof(sin);
+	rsin.sin_len = sizeof(rsin);
 #endif
 	flags = MSG_DONTROUTE;
 
@@ -722,10 +722,10 @@ send_rdisc(union ad_u *p,
 	case 1:				/* broadcast */
 		if (ifp->int_if_flags & IFF_POINTOPOINT) {
 			msg = "Send pt-to-pt";
-			sin.sin_addr.s_addr = ifp->int_dstaddr;
+			rsin.sin_addr.s_addr = ifp->int_dstaddr;
 		} else {
 			msg = "Send broadcast";
-			sin.sin_addr.s_addr = ifp->int_brdaddr;
+			rsin.sin_addr.s_addr = ifp->int_brdaddr;
 		}
 		break;
 
@@ -774,16 +774,16 @@ send_rdisc(union ad_u *p,
 	if (rdisc_sock < 0)
 		get_rdisc_sock();
 
-	trace_rdisc(msg, ifp->int_addr, sin.sin_addr.s_addr, ifp,
+	trace_rdisc(msg, ifp->int_addr, rsin.sin_addr.s_addr, ifp,
 		    p, p_size);
 
 	if (0 > sendto(rdisc_sock, p, p_size, flags,
-		       (struct sockaddr *)&sin, sizeof(sin))) {
+		       (struct sockaddr *)&rsin, sizeof(rsin))) {
 		if (ifp == 0 || !(ifp->int_state & IS_BROKE))
 			msglog("sendto(%s%s%s): %s",
 			       ifp != 0 ? ifp->int_name : "",
 			       ifp != 0 ? ", " : "",
-			       inet_ntoa(sin.sin_addr),
+			       inet_ntoa(rsin.sin_addr),
 			       strerror(errno));
 		if (ifp != 0)
 			if_sick(ifp);
