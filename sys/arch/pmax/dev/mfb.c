@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.30 1997/11/17 11:44:50 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.31 1997/12/22 02:39:28 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.30 1997/11/17 11:44:50 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.31 1997/12/22 02:39:28 jonathan Exp $");
 
 #include "fb.h"
 #include "mfb.h"
@@ -359,7 +359,10 @@ mfbinit(fi, mfbaddr, unit, silent)
 	if (tb_kbdmouseconfig(fi))
 		return (0);
 
-	/* white-on-black if console, black-on-black otherwise. */
+	/*
+	 * black-on-white during first initialization of console,
+	 * white-on-black otherwise.
+	 */
 	mfbInitColorMapBlack(fi, isconsole);
 
 
@@ -388,21 +391,18 @@ static __inline void
 bt431_cursor_off(fi)
 	register struct fbinfo *fi;
 {
-	bt455_regmap_t *regs = (bt455_regmap_t *)(fi -> fi_vdac);
 	u_char cursor_save [6];
-	register int i;
 
+	/* Stash the current cursor color (and overlay). */
 	bcopy (cursor_RGB, cursor_save, 6);
-
-	/* Zap the cursor */
-	BT455_SELECT_ENTRY(regs, 8);
-	for (i = 0; i < 6; i++) {
-		cursor_RGB[i] = 0;
-		regs->addr_cmap_data = 0;
-		wbflush();
-	}
+	/* Zero the cursor colors. */
+	bzero(cursor_RGB, 6);
+	/* Write the zeroed colors to the hardware and fb color map. */
 	mfbRestoreCursorColor (fi);
-
+	/*
+	 * Replace stashed colors, so the cursor will be visible next
+	 * time the cursor color map is restored.
+	 */
 	bcopy (cursor_save, cursor_RGB, 6);
 }
 
@@ -561,8 +561,12 @@ mfbPosCursor(fi, x, y)
 }
 
 /*
- * Initialize the colormap to the default state, which is that entry
- * zero is black and all other entries are full white. 
+ * Initialize the colormap to the default state.
+ * For the text console, entry zero is black and all other entries are
+ * full white.
+ * During the first console initialization, and when the framebuffer
+ * device is open, entry zero is full white and all other entries are
+ * black.
  * The hardware cursor is turned off.  
  */
 static void
@@ -572,8 +576,6 @@ mfbInitColorMapBlack(fi, blackpix)
 {
 	u_char rgb [3];
 	register int i;
-
-	blackpix = 1; /* XXX XXX XXX defeat screensave bug */
 
 	if (blackpix)
 		rgb [0] = rgb [1] = rgb [2] = 0xff;
@@ -620,29 +622,47 @@ mfbLoadColorMap(fi, bits, index, count)
 	u_char *cmap;
 	int i;
 
-	if (index > 15 || index < 0 || index + count > 15)
+	if (count < 0 || index < 0 || index + count > 15)
 		return EINVAL;
 
+	/* We will read COUNT red, green, and blue values from CMAP_BITS. */
 	cmap_bits = (u_char *)bits;
+
+	/*
+	 * We will save these rgb values in our local palette, starting
+	 * at the correct offset for color map entry to be changed,
+	 * which is specified in INDEX.
+	 */
 	cmap = (u_char *)(fi -> fi_cmap_bits) + index * 3;
 
+	/* Select the correct starting hardware register for entry INDEX. */
 	BT455_SELECT_ENTRY(regs, index);
-	for (i = 0; i < count; i++) {
-		cmap [(i + index) * 3]
-			= regs->addr_cmap_data = cmap_bits [i * 3] >> 4;
-		wbflush();
-		cmap [(i + index) * 3 + 1]
-			= regs->addr_cmap_data = cmap_bits [i * 3 + 1] >> 4;
-		wbflush();
-		cmap [(i + index) * 3 + 2]
-			= regs->addr_cmap_data = cmap_bits [i * 3 + 2] >> 4;
-		wbflush();
+
+	/*
+	 * We iterate through this loop three times for each changed
+	 * color map entry (once for red, once for green, once for blue.)
+	 * On each pass we stash away the user-specified intensity in
+	 * CMAP (which is already based at the correct offset for the
+	 * first color map entry to be changed!)  Then *after* saving
+	 * the value we shift right by 4 bits and write it to the
+	 * (auto-incremented) hardware register.  The right-shift has the
+	 * effect of making "low" intensities be zero values, and "high"
+	 * intensities non-zero values, which is the best we can do on
+	 * the black-and-white mfb.
+	 * If the framebuffer is blanked, no changes are written to the
+	 * hardware at this time.
+	 */ 
+	for (i = 0; i < (count * 3); i++) {
+		cmap[i] = cmap_bits[i];
+		if (! fi->fi_blanked) {
+			regs->addr_cmap_data = cmap [i] >> 4;
+			wbflush();
+		}
 	}
 	return 0;
 }
 
 /* stub for driver */
-
 int
 mfbLoadColorMapNoop(fi, bits, index, count)
 	struct fbinfo *fi;
@@ -686,17 +706,17 @@ bt455_video_on(fi)
 
 	if (!fi -> fi_blanked)
 		return 0;
+	fi -> fi_blanked = 0;
 
 	cmap = (u_char *)(fi -> fi_cmap_bits);
 
-	/* restore old color map entry zero */
+	/* restore old color map entries 0 and 1 */
 	BT455_SELECT_ENTRY(regs, 0);
 	for (i = 0; i < 6; i++) {
-		regs->addr_cmap_data = cmap [i];
+		regs->addr_cmap_data = cmap [i] >> 4;
 		wbflush();
 	}
 	mfbRestoreCursorColor (fi);
-	fi -> fi_blanked = 0;
 
 	return 0;
 }
@@ -729,7 +749,7 @@ bt455_video_off(fi)
 
 	cmap = (u_char *)(fi -> fi_cmap_bits);
 
-	/* Zap the colormap... */
+	/* Zap colormap entries 0 (background) and 1 (foreground) */
 	BT455_SELECT_ENTRY(regs, 0);
 	for (i = 0; i < 6; i++) {
 		regs->addr_cmap_data = 0;
