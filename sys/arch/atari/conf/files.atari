@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.9 1995/06/25 19:07:07 leo Exp $
+#	$NetBSD: files.atari,v 1.10 1995/08/11 20:01:19 leo Exp $
 #
 
 maxpartitions 16
@@ -62,7 +62,7 @@ define	scsi {}
 
 # ncr 5380 controller
 device	ncrscsi at mainbus: scsi
-file	arch/atari/dev/ncr5380.c	ncrscsi
+file	arch/atari/dev/atari5380.c	ncrscsi
 
 device	scsibus at scsi	{target = -1, lun = -1}
 

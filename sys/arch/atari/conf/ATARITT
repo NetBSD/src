@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.3 1995/06/25 19:07:04 leo Exp $
+#	$NetBSD: ATARITT,v 1.4 1995/08/11 20:01:15 leo Exp $
 #
 # ATARI-TT
 #
@@ -73,6 +73,11 @@ options		KTRACE			# Add kernel tracing system call
 options		DIAGNOSTIC		# Add additional error checking code
 options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 options		GENERIC			# Mini-root boot support
+
+#
+# Atari specific kernel options:
+#
+options		TT_SCSI			# SCSI-support for TT only
 
 #
 # Build one kernel that can boot from any disk.
