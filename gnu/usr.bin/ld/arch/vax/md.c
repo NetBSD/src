@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 1998/08/20 15:12:02 matt Exp $	*/
+/*	$NetBSD: md.c,v 1.6 1998/08/21 01:03:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -133,8 +133,8 @@ long		index;
 
 	sp->mask = 0;			/* save no registers */
 	sp->opcode = JSB_PCREL;
-	sp->addr[0] = fudge & 0xffff;
-	sp->addr[1] = fudge >> 16;
+	sp->offset[0] = fudge & 0xffff;
+	sp->offset[1] = fudge >> 16;
 	sp->reloc_index = index;
 }
 
@@ -155,8 +155,8 @@ u_long		addr;
 
 	sp->mask = *(u_short *) addr;	/* store the procedure entry mask */
 	sp->opcode = JMP_PCREL;		/* jmp to procedure + 2 */
-	sp->addr[0] = (fudge + 2) & 0xffff;	/* skipping entry mask */
-	sp->addr[1] = (fudge + 2) >> 16;
+	sp->offset[0] = (fudge + 2) & 0xffff;	/* skipping entry mask */
+	sp->offset[1] = (fudge + 2) >> 16;
 #if 0
 	sp->reloc_index = 0;
 #endif
@@ -176,10 +176,10 @@ int			type;
 	 * Fix relocation address to point to the correct
 	 * location within this jmpslot.
 	 */
-	r->r_address += sizeof(sp->opcode);
+	r->r_address += sizeof(sp->mask);
 
 	/* Relocation size */
-	r->r_length = 2;
+	r->r_length = 2;	/* 4 bytes */
 
 	/* Set relocation type */
 	r->r_jmptable = 1;
@@ -201,7 +201,7 @@ int			type;
 		r->r_relative = 1;
 
 	/* Relocation size */
-	r->r_length = 2;
+	r->r_length = 2;	/* 4 bytes */
 }
 
 /*
@@ -212,7 +212,7 @@ md_make_cpyreloc(rp, r)
 struct relocation_info	*rp, *r;
 {
 	/* Relocation size */
-	r->r_length = 2;
+	r->r_length = 2;	/* 4 bytes */
 
 	r->r_copy = 1;
 }
@@ -223,7 +223,7 @@ long	where;
 long	*savep;
 {
 	*savep = *(long *)where;
-	*(char *)where = TRAP;		/* !!! fixit !!! */
+	*(char *)where = BPT;		/* !!! fixit !!! */
 }
 
 #ifndef RTLD
@@ -245,15 +245,15 @@ int		magic, flags;
 	if (oldmagic || magic == QMAGIC)
 		hp->a_midmag = magic;
 	else
-		N_SETMAGIC((*hp), magic, MID_I386, flags);
+		N_SETMAGIC((*hp), magic, MID_VAX, flags);
 #endif
 #ifdef FreeBSD
 	if (oldmagic)
 		hp->a_midmag = magic;
 	else if (netzmagic)
-		N_SETMAGIC_NET((*hp), magic, MID_I386, flags);
+		N_SETMAGIC_NET((*hp), magic, MID_VAX, flags);
 	else
-		N_SETMAGIC((*hp), magic, MID_I386, flags);
+		N_SETMAGIC((*hp), magic, MID_VAX, flags);
 #endif
 
 	/* TEXT_START depends on the value of outheader.a_entry.  */
