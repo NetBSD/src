@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 1996/10/13 04:10:37 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 1996/12/20 16:20:57 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -44,7 +44,7 @@ static void setroot __P((void));
 void swapconf __P((void));
 void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, const char *));
-int mbmatch __P((struct device *, void *, void *));
+int mbmatch __P((struct device *, struct cfdata *, void *));
 
 extern int cold;	/* 1 if still booting (locore.s) */
 int atari_realconfig;
@@ -235,12 +235,11 @@ struct cfdriver mainbus_cd = {
 };
 
 int
-mbmatch(pdp, match, auxp)
-	struct device *pdp;
-	void *match, *auxp;
+mbmatch(pdp, cfp, auxp)
+	struct device	*pdp;
+	struct cfdata	*cfp;
+	void		*auxp;
 {
-	struct cfdata *cfp = match;
-
 	if (cfp->cf_unit > 0)
 		return(0);
 	/*
