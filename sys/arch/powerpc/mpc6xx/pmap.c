@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 2001/09/16 16:34:34 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28 2001/10/18 01:03:44 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1206,11 +1206,13 @@ pmap_syncicache(paddr_t pa, psize_t len)
 	}
 	if (pmap_initialized) {
 		pte_t saved_pte;
+		psize_t offset = pa & ADDR_POFF;
 		if (__predict_false(pmap_pvo_syncicache == NULL))
 			pmap_pvo_syncicache = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
 		calls++;
 		pmap_pa_map(pmap_pvo_syncicache, pa, &saved_pte, &depth);
-		__syncicache((void *)PVO_VADDR(pmap_pvo_syncicache), len);
+		__syncicache((void *)(PVO_VADDR(pmap_pvo_syncicache)|offset),
+		    len);
 		pmap_pa_unmap(pmap_pvo_syncicache, &saved_pte, &depth);
 		return;
 	}
