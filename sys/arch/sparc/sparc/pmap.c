@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.62 1996/05/29 20:58:38 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.63 1996/05/30 00:02:09 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2080,8 +2080,7 @@ if(pm==NULL)panic("pv_changepte 1");
 				tpte = getpte4(va);
 			}
 			if (tpte & PG_V)
-				flags |= (tpte >> PG_M_SHIFT) &
-				    (PV_MOD|PV_REF);
+				flags |= (tpte >> PG_M_SHIFT) & (PV_MOD|PV_REF);
 			tpte = (tpte | bis) & ~bic;
 			setpte4(va, tpte);
 			if (pte != NULL)	/* update software copy */
@@ -3931,7 +3930,7 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 	while (va < endva) {
 		tpte = getpte4(va);
 		if ((tpte & PG_V) == 0) {
-			va += PAGE_SIZE;
+			va += NBPG;
 			continue;
 		}
 		if ((tpte & PG_TYPE) == PG_OBMEM) {
@@ -4127,7 +4126,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 		/*
 		 * PTEs are not in MMU.  Just invalidate software copies.
 		 */
-		for (; va < endva; pte++, va += PAGE_SIZE) {
+		for (; va < endva; pte++, va += NBPG) {
 			tpte = *pte;
 			if ((tpte & PG_V) == 0) {
 				/* nothing to remove (braindead VM layer) */
@@ -4189,7 +4188,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 		pteva = VA_VPG(va) << PGSHIFT;
 		perpage = 0;
 	}
-	for (; va < endva; pteva += PAGE_SIZE, va += PAGE_SIZE) {
+	for (; va < endva; pteva += NBPG, va += NBPG) {
 		tpte = getpte4(pteva);
 		if ((tpte & PG_V) == 0)
 			continue;
@@ -4289,19 +4288,21 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 	 */
 	if (CTX_USABLE(pm,rp)) {
 		/* process has a context, must flush cache */
-		npg = (endva - va) >> PGSHIFT;
 		setcontext(pm->pm_ctxnum);
-		if (npg > PMAP_RMU_MAGIC) {
-			perpage = 0; /* flush the whole segment */
-			if (vactype != VAC_NONE)
+		if (vactype != VAC_NONE) {
+			npg = (endva - va) >> PGSHIFT;
+			if (npg > PMAP_RMU_MAGIC) {
+				perpage = 0; /* flush the whole segment */
 				cache_flush_segment(vr, vs);
+			} else
+				perpage = 1;
 		} else
-			perpage = (vactype != VAC_NONE);
+			perpage = 0;
 	} else {
 		/* no context; cache flush unnecessary */
 		perpage = 0;
 	}
-	for (; va < endva; va += PAGE_SIZE) {
+	for (; va < endva; va += NBPG) {
 		/* Note: we use sw pagetables here since pages have been
 		 * flushed already. This avoids over-zealous cache flushing.
 		 */
