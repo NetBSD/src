@@ -1,3 +1,5 @@
+/*	$NetBSD: grfinfo.c,v 1.3 1997/01/31 23:12:14 carrel Exp $	*/
+
 /* 
  * Copyright (c) 1987-1993, The University of Utah and
  * the Center for Software Science at the University of Utah (CSS).
@@ -19,7 +21,7 @@
  * improvements that they make and grant CSS redistribution rights.
  *
  * 	from: Utah $Hdr: grfinfo.c 1.3 94/04/04$
- *	$Id: grfinfo.c,v 1.2 1997/01/31 23:06:54 carrel Exp $
+ *	$Id: grfinfo.c,v 1.3 1997/01/31 23:12:14 carrel Exp $
  */
 
 #include <stdio.h>
