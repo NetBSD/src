@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.53 2003/06/19 09:38:03 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.54 2003/06/19 11:27:02 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -670,3 +670,18 @@ sys/netatalk/ddp_output.c			1.7 (via patch)
 	- retain m_pkthdr for mbuf passed down to ifp->if_output.
 	  pointed out by is@netbsd
 	[itojun, ticket #1316]
+
+sys/arch/macppc/conf/GENERIC			1.157
+sys/arch/macppc/conf/files.macppc		1.58
+sys/arch/macppc/dev/kauai.c			1.1, patch (new)
+sys/arch/macppc/dev/obio.c			1.18
+sys/dev/pci/pcidevs				1.516
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+
+	Support the PowerBook G4 12-inch (and maybe 17-inch).
+	  Kauai ATA, new obio chip, and Japanese keymap for
+	  WSDISPLAY_COMPAT_RAWKBD
+
+	Add new Apple devices.
+	[hamajima, ticket #1323]
