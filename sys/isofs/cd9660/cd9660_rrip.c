@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.7 1994/09/19 09:09:46 mycroft Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.8 1994/09/22 02:44:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -326,7 +326,7 @@ cd9660_rrip_tstamp(p,ana)
 			cd9660_tstamp_conv7(ptime,&ana->inop->inode.iso_mtime);
 			ptime += 7;
 		} else
-			bzero(&ana->inop->inode.iso_mtime,sizeof(struct timeval));
+			bzero(&ana->inop->inode.iso_mtime,sizeof(struct timespec));
 		
 		if (*p->flags&ISO_SUSP_TSTAMP_ACCESS) {
 			cd9660_tstamp_conv7(ptime,&ana->inop->inode.iso_atime);
@@ -347,7 +347,7 @@ cd9660_rrip_tstamp(p,ana)
 			cd9660_tstamp_conv17(ptime,&ana->inop->inode.iso_mtime);
 			ptime += 17;
 		} else
-			bzero(&ana->inop->inode.iso_mtime,sizeof(struct timeval));
+			bzero(&ana->inop->inode.iso_mtime,sizeof(struct timespec));
 		
 		if (*p->flags&ISO_SUSP_TSTAMP_ACCESS) {
 			cd9660_tstamp_conv17(ptime,&ana->inop->inode.iso_atime);

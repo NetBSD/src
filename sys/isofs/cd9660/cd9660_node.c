@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.9 1994/07/19 15:27:40 mycroft Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.10 1994/09/22 02:44:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -377,8 +377,8 @@ cd9660_deftstamp(isodir,inop,bp)
 
 int
 cd9660_tstamp_conv7(pi,pu)
-char *pi;
-struct timeval *pu;
+	char *pi;
+	struct timespec *pu;
 {
 	int i;
 	int crtime, days;
@@ -393,8 +393,8 @@ struct timeval *pu;
 	tz = pi[6];
 	
 	if (y < 1970) {
-		pu->tv_sec  = 0;
-		pu->tv_usec = 0;
+		pu->ts_sec  = 0;
+		pu->ts_nsec = 0;
 		return 0;
 	} else {
 #ifdef	ORIGINAL
@@ -414,8 +414,8 @@ struct timeval *pu;
 		if (-48 <= tz && tz <= 52)
 			crtime -= tz * 15 * 60;
 	}
-	pu->tv_sec  = crtime;
-	pu->tv_usec = 0;
+	pu->ts_sec  = crtime;
+	pu->ts_nsec = 0;
 	return 1;
 }
 
@@ -436,7 +436,7 @@ cd9660_chars2ui(begin,len)
 int
 cd9660_tstamp_conv17(pi,pu)
 	u_char *pi;
-	struct timeval *pu;
+	struct timespec *pu;
 {
 	u_char buf[7];
 	
