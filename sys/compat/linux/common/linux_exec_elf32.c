@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.14 1996/06/13 18:42:01 christos Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.15 1996/06/13 19:27:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -395,7 +395,7 @@ linux_elf_signature(p, epp, eh)
 
 		/*
 		 * Identify candidates for the comment header;
-		 * it cannot have a load address, or flags and
+		 * Header cannot have a load address, or flags and
 		 * it must be large enough.
 		 */
 		if (s->sh_type != Elf32_sht_progbits ||
@@ -405,13 +405,14 @@ linux_elf_signature(p, epp, eh)
 			continue;
 
 		if ((error = elf_read_from(p, epp->ep_vp, s->sh_offset,
-		    (caddr_t) buf, sizeof(signature) - 1)))
+		    (caddr_t) buf, sizeof(signature) - 1)) != 0)
 			goto out;
 
-		if (bcmp(buf, signature, sizeof(signature) - 1) == 0) {
-			error = 0;
+		/*
+		 * error is 0, if the signatures match we are done.
+		 */
+		if (bcmp(buf, signature, sizeof(signature) - 1) == 0)
 			goto out;
-		}
 	}
 	error = EFTYPE;
 
