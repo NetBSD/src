@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.62 2000/06/24 11:14:55 soren Exp $
+.\" $NetBSD: main,v 1.63 2000/06/28 07:06:46 ur Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -964,6 +964,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Matt Thomas Ta Mt matt@NetBSD.ORG
 .It Ta Christoph Toshok Ta Mt toshok@NetBSD.ORG
 .It Ta UCHIYAMA Yasushi Ta Mt uch@NetBSD.ORG
+.It Ta Shuichiro URATA Ta Mt ur@NetBSD.ORG
 .It Ta Todd Vierling Ta Mt tv@NetBSD.ORG
 .It Ta Aymeric Vincent Ta Mt aymeric@NetBSD.ORG
 .It Ta Paul Vixie Ta Mt vixie@NetBSD.ORG
