@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.14.2.1 2004/07/15 20:22:39 he Exp $
+#	$NetBSD: IQ31244,v 1.14.2.1.2.1 2005/04/02 21:29:19 he Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -170,6 +170,7 @@ artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 
 atabus* 	at ata? channel ?
