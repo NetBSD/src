@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2002/01/31 16:25:55 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2002/02/01 17:52:55 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 
 #include <hpcsh/hpcsh/clockvar.h>
 
+#include <sh3/pclock.h>
 #include <sh3/intcreg.h>
 
 #ifdef DEBUG
@@ -244,7 +245,13 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	}
 #endif
 
-	/* start console */
+	/* 
+	 * start console 
+	 */
+	/* serial console requires PCLOCK. estimate here */
+	clock_init();
+	sh3_pclock = clock_get_pclock();
+
 	if (bootinfo->magic == BOOTINFO_MAGIC) {
 		platid.dw.dw0 = bootinfo->platid_cpu;
 		platid.dw.dw1 = bootinfo->platid_machine;
@@ -362,11 +369,9 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 void
 cpu_startup()
 {
-	int cpuclock, pclock;
+	int cpuclock;
 
-	clock_init();
 	cpuclock = clock_get_cpuclock();
-	pclock = clock_get_pclock();
 
 	sh3_startup();
 #define CPUIDMATCH(p)							\
@@ -383,8 +388,8 @@ cpu_startup()
 		    platid_name(&platid));
 
 #define MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
-	DPRINTF(("%s %d.%02d MHz PCLOCK %d.%02d MHz\n", cpu_model,
-	    MHZ(cpuclock), MHZ(pclock)));
+	printf("%s %d.%02d MHz PCLOCK %d.%02d MHz\n", cpu_model,
+	    MHZ(cpuclock), MHZ(PCLOCK));
 
 #ifdef SYSCALL_DEBUG
 	scdebug |= SCDEBUG_ALL;
