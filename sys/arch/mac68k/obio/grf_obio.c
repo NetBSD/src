@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.37 1998/08/12 06:50:37 scottr Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.38 1998/08/13 13:45:33 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -235,14 +235,20 @@ grfiv_attach(parent, self, aux)
 		vbase1 = bus_space_read_4(sc->sc_tag, sc->sc_regh, 0x0) & 0xfff;
 		vbase2 = bus_space_read_4(sc->sc_tag, sc->sc_regh, 0x4) & 0xf;
 		sc->sc_fbofs = (vbase1 << 9) | (vbase2 << 5);
-		switch (current_mac_model->machineid) {	/* XXX */
-		case MACH_MACLC475:			/* XXX */
-		case MACH_MACLC475_33:			/* XXX */
-		case MACH_MACLC575:			/* XXX */
-			/* A guess... ? */		/* XXX */
-			sc->sc_fbofs = 0x1000;		/* XXX */
-			break;				/* XXX */
-		}					/* XXX */
+
+#if 1
+		/*
+		 * XXX The following hack exists because the DAFB v7 in these
+		 * systems doesn't compute fbofs correctly. (sar 19980813)
+		 */
+		switch (current_mac_model->machineid) {
+		case MACH_MACLC475:
+		case MACH_MACLC475_33:
+		case MACH_MACLC575:
+			sc->sc_fbofs = 0x1000;
+			break;
+		}
+#endif
 
 		printf(" @ %lx: DAFB video subsystem, monitor sense %x\n",
 		    sc->sc_basepa + sc->sc_fbofs,
