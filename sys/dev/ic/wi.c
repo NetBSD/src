@@ -1,4 +1,4 @@
-/* $NetBSD: wi.c,v 1.8 2001/05/15 11:45:50 ichiro Exp $ */
+/* $NetBSD: wi.c,v 1.9 2001/05/16 02:36:37 ichiro Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1404,14 +1404,14 @@ wi_init(ifp)
 		wi_write_record(sc, (struct wi_ltv_gen *)&sc->wi_keys);
 		if (sc->sc_prism2 && sc->wi_use_wep) {
 			/*
-			 * Prism2 Firmware version < ver 0.8c3
+			 * Prism2 Firmware version < ver 0.8 variant3
 			 *   If promiscuous mode disable, Prism2 chip
 			 *  does not work with WEP .
 			 * It is under investigation for details.
 			 * (ichiro@netbsd.org)
 			 */
-			if (sc->sc_prism2_ver < 803 ) {
-				/* firm ver < 0.8c3 */
+			if (sc->sc_prism2_ver < 83 ) {
+				/* firm ver < 0.8 variant 3 */
 				WI_SETVAL(WI_RID_PROMISC, 1);
 			}
 			WI_SETVAL(WI_RID_AUTH_CNTL, sc->wi_authtype);
@@ -1670,40 +1670,34 @@ wi_get_id(sc)
         ver.wi_type = WI_RID_CARDID;
         ver.wi_len = 5;
         wi_read_record(sc, (struct wi_ltv_gen *)&ver);
+	printf("%s: using ", sc->sc_dev.dv_xname);
 	switch (ver.wi_ver[0]) {
 		case WI_NIC_EVB2:
-			printf("%s: using PRISM2 HFA3841(EVB2)",
-			       sc->sc_dev.dv_xname);
+			printf("PRISM2 HFA3841(EVB2)");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB3763:
-			printf("%s: using PRISM2 HWB3763 rev.B",
-			       sc->sc_dev.dv_xname);
+			printf("PRISM2 HWB3763 rev.B");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB3163:
-			printf("%s: using PRISM2 HWB3163 rev.A",
-			       sc->sc_dev.dv_xname);
+			printf("PRISM2 HWB3163 rev.A");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB3163B:
-			printf("%s: using PRISM2 HWB3163 rev.B",
-			       sc->sc_dev.dv_xname);
+			printf("PRISM2 HWB3163 rev.B");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_EVB3:
-			printf("%s: using PRISM2 HFA3842(EVB3)",
-			       sc->sc_dev.dv_xname);
+			printf("PRISM2 HFA3842(EVB3)");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB1153:
-			printf("%s: using PRISM2 HFA1153",
-			       sc->sc_dev.dv_xname);
+			printf("PRISM2 HFA1153");
 			sc->sc_prism2 = 1;
 			break;
 		default:               
-			printf("%s: using Lucent Chip or unknown chip.\n",
-			       sc->sc_dev.dv_xname);
+			printf("Lucent Chip or unknown chip.\n");
 			sc->sc_prism2 = 0;
 			break;  
 	}
@@ -1714,10 +1708,10 @@ wi_get_id(sc)
 		ver.wi_type = WI_RID_IDENT;
 		ver.wi_len = 5;
 		wi_read_record(sc, (struct wi_ltv_gen *)&ver);
-		printf(" ,Firmware Ver: %i.%i.%i \n", ver.wi_ver[3],
-		       ver.wi_ver[2], ver.wi_ver[1]); 
-		sc->sc_prism2_ver = ver.wi_ver[3] * 100 +
-				    ver.wi_ver[2] *  10 + ver.wi_ver[1];
+		printf(" ,Firmware: %i.%i variant %i \n", ver.wi_ver[2],
+		       ver.wi_ver[3], ver.wi_ver[1]); 
+		sc->sc_prism2_ver = ver.wi_ver[2] * 100 +
+				    ver.wi_ver[3] *  10 + ver.wi_ver[1];
 	}
 
 	return;
