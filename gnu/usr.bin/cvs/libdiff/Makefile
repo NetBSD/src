@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:03 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2001/12/12 23:46:45 lukem Exp $
+
+NOLINT=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -8,10 +12,6 @@ DIST=	${IDIST}/${LIB}
 .PATH:	${DIST}
 
 SRCS !=	echo ${DIST}/*.c | sed -e s,${DIST}/,,g
-
-NOLINT=		# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
 
 # only needed during build
 libinstall::
