@@ -33,7 +33,7 @@
  *	isic_pci.c - pci bus frontend for i4b_isic driver
  *	----------------------------------------------------
  *
- *	$Id: isic_pci.c,v 1.7 2002/03/24 20:35:53 martin Exp $ 
+ *	$Id: isic_pci.c,v 1.8 2002/03/25 16:39:56 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.7 2002/03/24 20:35:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.8 2002/03/25 16:39:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -87,17 +87,13 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.7 2002/03/24 20:35:53 martin Exp $");
 #include <dev/ic/hscx.h>
 #include <dev/pci/isic_pci.h>
 
-#include "opt_isicpci.h"
-
 extern const struct isdn_layer1_bri_driver isic_std_driver;
 
 static int isic_pci_match __P((struct device *, struct cfdata *, void *));
 static void isic_pci_attach __P((struct device *, struct device *, void *));
 static const struct isic_pci_product * find_matching_card __P((struct pci_attach_args *pa));
 
-#ifdef ISICPCI_ELSA_QS1PCI
 static void isic_pci_isdn_attach __P((struct pci_isic_softc *psc, struct pci_attach_args *pa, const char *cardname));
-#endif
 
 struct cfattach isic_pci_ca = {
 	sizeof(struct pci_isic_softc), isic_pci_match, isic_pci_attach
@@ -112,32 +108,12 @@ static const struct isic_pci_product {
 	void (*attach)(struct pci_isic_softc *psc, struct pci_attach_args *pa);
 	void (*pciattach)(struct pci_isic_softc *psc, struct pci_attach_args *pa, const char *cardname);
 } isic_pci_products[] = {
-
-#ifdef ISICPCI_ELSA_QS1PCI
-#ifndef PCI_PRODUCT_ELSA_QS1PCI
-#define PCI_PRODUCT_ELSA_QS1PCI 0x1000	/* added to pcidevs in 1.3K, earlier versions missing it */
-#endif
 	{ PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_QS1PCI,
 	  CARD_TYPEP_ELSAQS1PCI,
 	  "ELSA QuickStep 1000pro/PCI",
 	  isic_attach_Eqs1pp,	/* card specific initialization */
 	  isic_pci_isdn_attach	/* generic setup for ISAC/HSCX or IPAC boards */
 	 },
-#endif
-
-#ifdef ISICPCI_AVM_A1
-#ifndef PCI_VENDOR_AVM
-#define PCI_VENDOR_AVM	0x1244	/* earlier versions missing this */
-#define	PCI_PRODUCT_AVM_FRITZ_CARD 0x0a00
-#endif
-	{ PCI_VENDOR_AVM, PCI_PRODUCT_AVM_FRITZ_CARD,
-	  CARD_TYPEP_AVMA1PCI,
-	  "Fritz!Card",
-	  isic_attach_fritzPci,
-	  NULL				/* card rolls its own setup */
-	 },
-#endif
-
 	{ 0, 0, 0, NULL, NULL },
 };
 
@@ -205,7 +181,6 @@ isic_pci_attach(parent, self, aux)
 /*---------------------------------------------------------------------------*
  *	isic - pci device driver attach routine
  *---------------------------------------------------------------------------*/
-#ifdef ISICPCI_ELSA_QS1PCI
 static void
 isic_pci_isdn_attach(psc, pa, cardname)
 	struct pci_isic_softc *psc;
@@ -358,4 +333,3 @@ isic_pci_isdn_attach(psc, pa, cardname)
 
 	isic_attach_bri(sc, cardname, &isic_std_driver);
 }
-#endif
