@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.37 1999/07/25 06:30:34 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.38 1999/07/25 13:59:08 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -617,10 +617,13 @@ ktrwrite(p, v, kth)
 	if (!error)
 		return;
 	/*
-	 * If error encountered, give up tracing on this vnode.
+	 * If error encountered, give up tracing on this vnode.  Don't report
+	 * EPIPE as this can easily happen with fktrace()/ktruss.
 	 */
-	log(LOG_NOTICE, "ktrace write failed, errno %d, tracing stopped\n",
-	    error);
+	if (error != EPIPE)
+		log(LOG_NOTICE,
+		    "ktrace write failed, errno %d, tracing stopped\n",
+		    error);
 	proclist_lock_read();
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		if (p->p_tracep == v)
