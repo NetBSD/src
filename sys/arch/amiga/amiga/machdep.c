@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 1994/12/28 08:55:58 chopps Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 1994/12/29 22:35:47 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1167,6 +1167,7 @@ dumpsys()
  * we guarantee that the time will be greater than the value obtained by a
  * previous call.
  */
+void
 microtime(tvp)
 	register struct timeval *tvp;
 {
