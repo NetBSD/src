@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.30 2001/03/18 15:56:05 bjh21 Exp $	*/
+/*	$NetBSD: asc.c,v 1.31 2001/04/21 20:47:26 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -159,7 +159,14 @@ ascattach(pdp, dp, auxp)
 	 * eveything is a valid dma address
 	 */
 	sbic->sc_dmamask = 0;
-	sbic->sc_sbicp = (sbic_regmap_p) (sc->sc_podule->mod_base + ASC_SBIC);
+
+	/* Map sbic */
+	sbic->sc_sbicp.sc_sbiciot = pa->pa_iot;
+	if (bus_space_map (sbic->sc_sbicp.sc_sbiciot,
+	    sc->sc_podule->mod_base + ASC_SBIC, ASC_SBIC_SPACE, 0,
+	    &sbic->sc_sbicp.sc_sbicioh))
+		panic("%s: Cannot map SBIC\n", dp->dv_xname);
+
 	sbic->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
 
 	sbic->sc_adapter.scsipi_cmd = asc_scsicmd;

@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.21 2001/04/19 17:30:20 rearnsha Exp $ */
+/* $NetBSD: sbic.c,v 1.22 2001/04/21 20:47:26 rearnsha Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -865,7 +865,7 @@ sbicinit(struct sbic_softc *dev)
 
 	SBIC_DEBUG(printf("sbicinit:\n"));
 
-	regs = dev->sc_sbicp;
+	regs = &dev->sc_sbicp;
 
 	if ((dev->sc_flags & SBICF_ALIVE) == 0) {
 		TAILQ_INIT(&dev->ready_list);
@@ -927,7 +927,7 @@ sbicreset(struct sbic_softc *dev)
 
 	SBIC_DEBUG(printf("sbicreset: %d\n", __LINE__));
 
-	regs = dev->sc_sbicp;
+	regs = &dev->sc_sbicp;
 
 	SBIC_DEBUG(printf("sbicreset: regs = %08x\n", regs));
 
@@ -1410,7 +1410,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 #endif
 
 	SBIC_TRACE(dev);
-	regs = dev->sc_sbicp;
+	regs = &dev->sc_sbicp;
 	acb = dev->sc_nexus;
 
 	/* Make sure pointers are OK */
@@ -1690,7 +1690,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 	dev->target = xs->sc_link->scsipi_scsi.target;
 	dev->lun = xs->sc_link->scsipi_scsi.lun;
 	acb = dev->sc_nexus;
-	regs = dev->sc_sbicp;
+	regs = &dev->sc_sbicp;
 
 	usedma = sbicdmaok(dev, xs);
 
@@ -1900,7 +1900,7 @@ sbicintr(struct sbic_softc *dev)
 /*	int newtarget, newlun;*/
 /*	unsigned tcnt;*/
 
-	regs = dev->sc_sbicp;
+	regs = &dev->sc_sbicp;
 
 	/*
 	 * pending interrupt?
@@ -1950,7 +1950,7 @@ sbicpoll(struct sbic_softc *dev)
 /*	unsigned tcnt;*/
 
 	SBIC_TRACE(dev);
-	regs = dev->sc_sbicp;
+	regs = &dev->sc_sbicp;
 
 	do {
 		GET_SBIC_asr (regs, asr);
@@ -2010,7 +2010,7 @@ sbicmsgin(struct sbic_softc *dev)
 	int recvlen;
 	u_char asr, csr, *tmpaddr;
 
-	regs = dev->sc_sbicp;
+	regs = &dev->sc_sbicp;
 
 	dev->sc_msg[0] = 0xff;
 	dev->sc_msg[1] = 0xff;
@@ -2285,7 +2285,7 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 /*	unsigned tcnt;*/
 
 	SBIC_TRACE(dev);
-	regs = dev->sc_sbicp;
+	regs = &dev->sc_sbicp;
 	acb = dev->sc_nexus;
 
 	QPRINTF(("next[%02x,%02x]",asr,csr));
@@ -2723,7 +2723,7 @@ sbictimeout(struct sbic_softc *dev)
 		if (dev->sc_dmatimo > 1) {
 			printf("%s: dma timeout #%d\n",
 			    dev->sc_dev.dv_xname, dev->sc_dmatimo - 1);
-			GET_SBIC_asr(dev->sc_sbicp, asr);
+			GET_SBIC_asr(&dev->sc_sbicp, asr);
 			if (asr & SBIC_ASR_INT) {
 				/* We need to service a missed IRQ */
 				printf("Servicing a missed int:(%02x,%02x)->(%02x,??)\n",
@@ -2773,7 +2773,7 @@ sbic_dump(struct sbic_softc *dev)
 	int i;
 
 	s = splbio();
-	regs = dev->sc_sbicp;
+	regs = &dev->sc_sbicp;
 #if CSR_TRACE_SIZE
 	printf("csr trace: ");
 	i = csr_traceptr;
