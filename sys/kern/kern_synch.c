@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.97 2000/09/23 01:00:35 enami Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.98 2000/11/12 18:17:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -498,7 +498,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 #endif
 		if (relock && interlock != NULL)
 			simple_lock(interlock);
-		if ((p->p_sigacts->ps_sigact[sig].sa_flags & SA_RESTART) == 0)
+		if ((SIGACTION(p, sig).sa_flags & SA_RESTART) == 0)
 			return (EINTR);
 		return (ERESTART);
 	}
