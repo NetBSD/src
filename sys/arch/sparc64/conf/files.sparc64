@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.10 1998/09/02 05:51:36 eeh Exp $
+#	$NetBSD: files.sparc64,v 1.11 1998/09/05 16:01:11 pk Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -11,10 +11,6 @@ maxusers 2 8 1024
 device mainbus {}
 attach mainbus at root
 
-device obio { [addr = -1], [level = -1] }
-attach obio at mainbus
-file	arch/sparc64/dev/obio.c		obio
-
 device iommu {}
 attach iommu at mainbus
 file	arch/sparc64/sparc64/iommu.c		iommu
@@ -24,24 +20,21 @@ attach sbus at mainbus, iommu
 file	arch/sparc64/dev/sbus.c			sbus
 
 #device auxreg
-#attach auxreg at mainbus, sbus, obio
+#attach auxreg at mainbus, sbus
 #file	arch/sparc64/sparc64/auxreg.c
 
 device clock
-attach clock at mainbus, sbus, obio
-
-device oclock
-attach oclock at sbus, obio
+attach clock at mainbus, sbus
 
 device timer
-attach timer at mainbus, sbus, obio
+attach timer at mainbus, sbus
 
 device eeprom
-attach eeprom at sbus, obio
+attach eeprom at sbus
 file	arch/sparc64/sparc64/clock.c
 
 device power
-attach power at sbus, obio
+attach power at sbus
 file	arch/sparc64/dev/power.c			power
 
 device cpu
@@ -49,12 +42,12 @@ attach cpu at mainbus
 file	arch/sparc64/sparc64/cpu.c
 
 device zs {channel = -1}
-attach zs at mainbus, sbus, obio
+attach zs at mainbus, sbus
 file	arch/sparc64/dev/zs.c			zs needs-count
 file	dev/ic/z8530sc.c			zs
 
 device fdc {}
-attach fdc at mainbus, sbus, obio
+attach fdc at mainbus, sbus
 device fd: disk
 attach fd at fdc
 file	arch/sparc64/dev/fd.c			fdc | fd needs-flag
@@ -93,31 +86,26 @@ major { vnd = 8 }
 major { cd = 18 }
 
 #device dma {}
-#attach dma at sbus, obio
+#attach dma at sbus
 #device ledma {}
 #attach ledma at sbus
 #file	arch/sparc64/dev/dma.c		dma | ledma
 
 #device esp: scsi, ncr53c9x
-#attach esp at sbus, dma, obio
+#attach esp at sbus, dma
 #device fas: scsi, ncr53c9x
-#attach fas at sbus, dma, obio
+#attach fas at sbus, dma
 #file	arch/sparc64/dev/esp.c		esp | fas
-
-#device audioamd: audio
-#attach audioamd at mainbus, obio, sbus
-#file	arch/sparc64/dev/amd7930.c		audio
-#file	arch/sparc64/sparc64/amd7930intr.s		audio
 
 # Brooktree DAC attribute
 define bt_dac
 
 device bwtwo
-attach bwtwo at sbus, obio
+attach bwtwo at sbus
 file	arch/sparc64/dev/bwtwo.c		bwtwo needs-flag
 
 device cgtwo
-attach cgtwo at sbus, obio
+attach cgtwo at sbus
 file	arch/sparc64/dev/cgtwo.c		cgtwo needs-flag
 
 device cgthree: bt_dac
@@ -125,16 +113,16 @@ attach cgthree at sbus
 file	arch/sparc64/dev/cgthree.c	cgthree needs-flag
 
 device cgfour: bt_dac
-attach cgfour at sbus, obio
+attach cgfour at sbus
 file	arch/sparc64/dev/cgfour.c		cgfour needs-flag
 
 device cgsix: bt_dac
-attach cgsix at sbus, obio
+attach cgsix at sbus
 file	arch/sparc64/dev/cgsix.c		cgsix needs-flag
 file	arch/sparc64/dev/cgsix_sbus.c		cgsix needs-flag
 
 device cgeight: bt_dac
-attach cgeight at sbus, obio
+attach cgeight at sbus
 file	arch/sparc64/dev/cgeight.c	cgeight needs-flag
 
 device tcx: bt_dac
@@ -142,27 +130,10 @@ attach tcx at sbus
 file	arch/sparc64/dev/tcx.c		tcx needs-flag
 
 device cgfourteen
-attach cgfourteen at sbus, obio
+attach cgfourteen at sbus
 file	arch/sparc64/dev/cgfourteen.c	cgfourteen needs-flag
 
 file	arch/sparc64/dev/bt_subr.c	bt_dac
-
-# device definition in sys/conf/files
-#attach le at ledma, obio: le24
-#file	arch/sparc64/dev/if_le.c	le
-
-device ie: ifnet, ether, arp
-attach ie at sbus, obio
-file	arch/sparc64/dev/if_ie.c		ie
-
-device sw: scsi, ncr5380sbc
-attach sw at sbus, obio
-file	arch/sparc64/dev/si.c		 sw
-
-# Efficient Networks, Inc. ATM interface
-# device declaration in sys/conf/files
-#attach  en at sbus with en_sbus
-#file    arch/sparc64/dev/if_en_sbus.c     en_sbus
 
 #
 # Generic Sun stuff
