@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 1999/06/05 05:10:01 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.12 1999/06/07 05:28:04 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -201,8 +201,10 @@ clock_map(bh, model)
 	char *model;
 {
 	struct clockreg *cl;
+	paddr_t pa;
 
-	pmap_changeprot(pmap_kernel(), (vaddr_t)bh, VM_PROT_READ, 1);
+	pa = pmap_extract(pmap_kernel(), (vaddr_t)bh);
+	pmap_enter(pmap_kernel(), (vaddr_t)bh, pa, VM_PROT_READ, 1, VM_PROT_READ);
 	cl = (struct clockreg *)((long)bh + CLK_MK48T08_OFF);
 
 	return (cl);
@@ -414,10 +416,13 @@ clk_wenable(onoff)
 	else
 		prot = --writers == 0 ? VM_PROT_READ : 0;
 	splx(s);
-	if (prot)
-		pmap_changeprot(pmap_kernel(),
-				(vaddr_t)clockreg & ~(NBPG-1),
-				prot, 1);
+	if (prot) {
+		vaddr_t va = (vaddr_t)clockreg & ~(NBPG-1);
+		paddr_t pa;
+
+		pa = pmap_extract(pmap_kernel(), va);
+		pmap_enter(pmap_kernel(), va, pa, prot, 1, prot);
+	}
 }
 
 void

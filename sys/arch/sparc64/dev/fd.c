@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.7 1999/06/05 21:58:17 eeh Exp $	*/
+/*	$NetBSD: fd.c,v 1.8 1999/06/07 05:28:03 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -393,14 +393,9 @@ fdcattach(parent, self, aux)
 	TAILQ_INIT(&fdc->sc_drives);
 
 	pri = ca->ca_ra.ra_intr[0].int_pri;
-#ifdef FDC_C_HANDLER
 	fdc->sc_hih.ih_fun = (void *)fdchwintr;
 	fdc->sc_hih.ih_arg = fdc;
 	intr_establish(pri, &fdc->sc_hih);
-#else
-	fdciop = &fdc->sc_io;
-	intr_fasttrap(pri, fdchwintr);
-#endif
 	fdc->sc_sih.ih_fun = (void *)fdcswintr;
 	fdc->sc_sih.ih_arg = fdc;
 	intr_establish(PIL_FDSOFT, &fdc->sc_sih);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.17 1999/06/05 05:30:43 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.18 1999/06/07 05:28:03 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,30 @@
  *
  *	@(#)sbus.c	8.1 (Berkeley) 6/11/93
  */
+
+/*
+ * Copyright (c) 1999 Eduardo Horvath
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *  
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR  ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR  BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
+
 
 /*
  * Sbus stuff.
@@ -862,10 +886,7 @@ sbus_intr_establish(t, level, flags, handler, arg)
 	ih->ih_arg = arg;
 	ih->ih_number = vec;
 	ih->ih_pil = (1<<ipl);
-	if ((flags & BUS_INTR_ESTABLISH_FASTTRAP) != 0)
-		intr_fasttrap(ipl, (void (*)__P((void)))handler);
-	else
-		intr_establish(ipl, ih);
+	intr_establish(ipl, ih);
 	return (ih);
 }
 
