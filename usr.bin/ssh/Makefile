@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/08/02 17:04:23 thorpej Exp $
+#	$NetBSD: Makefile,v 1.6 2000/09/23 06:18:08 simonb Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,10 @@
 
 .if defined(SSHDIST)
 SUBDIR=	libssh ssh sshd ssh-add ssh-keygen ssh-agent scp
+
+all-ssh all-sshd all-ssh-add all-ssh-keygen all-ssh-agent all-scp: all-libssh
+dependall-ssh dependall-sshd dependall-ssh-add dependall-ssh-keygen \
+	dependall-ssh-agent dependall-scp: dependall-libssh
 
 distribution:
 	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 \
