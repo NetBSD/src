@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.260 2000/09/13 13:48:44 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.261 2000/09/13 13:53:22 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.256 2000/09/13 13:48:09 tron Exp 
+ *	NetBSD: pcidevs,v 1.257 2000/09/13 13:53:06 tron Exp 
  */
 
 /*
@@ -4429,7 +4429,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102,
 	    0,
 	    "VIA Technologies",
-	    "VT6102 (Rhine II) 10/100BaseTX",
+	    "VT6102 (Rhine II) 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_MC97,
