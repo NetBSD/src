@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.10 1999/09/08 21:17:59 jsm Exp $	*/
+/*	$NetBSD: snake.c,v 1.11 1999/09/08 21:45:31 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.10 1999/09/08 21:17:59 jsm Exp $");
+__RCSID("$NetBSD: snake.c,v 1.11 1999/09/08 21:45:31 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -905,7 +905,7 @@ winnings(won)
 
 void
 stop(dummy)
-	int dummy;
+	int dummy __attribute__((__unused__));
 {
 	signal(SIGINT, SIG_IGN);
 	ll();
