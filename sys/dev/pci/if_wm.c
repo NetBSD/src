@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.93 2005/02/18 05:58:31 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.94 2005/02/20 15:55:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.93 2005/02/18 05:58:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.94 2005/02/20 15:55:54 jdolecek Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1760,12 +1760,11 @@ wm_start(struct ifnet *ifp)
 		 *
 		 * This is only valid on the last descriptor of the packet.
 		 */
-		if (sc->sc_ethercom.ec_nvlans != 0 &&
-		    (mtag = m_tag_find(m0, PACKET_TAG_VLAN, NULL)) != NULL) {
+		if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL) {
 			sc->sc_txdescs[lasttx].wtx_cmdlen |=
 			    htole32(WTX_CMD_VLE);
 			sc->sc_txdescs[lasttx].wtx_fields.wtxu_vlan
-			    = htole16(*(u_int *)(mtag + 1) & 0xffff);
+			    = htole16(VLAN_TAG_VALUE(mtag) & 0xffff);
 		}
 #endif /* XXXJRT */
 
@@ -2199,23 +2198,10 @@ wm_rxintr(struct wm_softc *sc)
 		 * If VLANs are enabled, VLAN packets have been unwrapped
 		 * for us.  Associate the tag with the packet.
 		 */
-		if (sc->sc_ethercom.ec_nvlans != 0 &&
-		    (status & WRX_ST_VP) != 0) {
-			struct m_tag *vtag;
-
-			vtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-			    M_NOWAIT);
-			if (vtag == NULL) {
-				ifp->if_ierrors++;
-				log(LOG_ERR,
-				    "%s: unable to allocate VLAN tag\n",
-				    sc->sc_dev.dv_xname);
-				m_freem(m);
-				continue;
-			}
-
-			*(u_int *)(vtag + 1) =
-			    le16toh(sc->sc_rxdescs[i].wrx_special);
+		if ((status & WRX_ST_VP) != 0) {
+			VLAN_INPUT_TAG(ifp, m,
+			    le16toh(sc->sc_rxdescs[i].wrx_special,
+			    continue);
 		}
 #endif /* XXXJRT */
 
@@ -2594,7 +2580,7 @@ wm_init(struct ifnet *ifp)
 
 #if 0 /* XXXJRT */
 	/* Deal with VLAN enables. */
-	if (sc->sc_ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->sc_ethercom))
 		sc->sc_ctrl |= CTRL_VME;
 	else
 #endif /* XXXJRT */
