@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.71 2001/11/10 07:36:59 lukem Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.72 2001/12/31 22:34:39 chs Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.71 2001/11/10 07:36:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.72 2001/12/31 22:34:39 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -532,8 +532,8 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	vm_prot_t access_type;
 {
 	struct uvm_faultinfo ufi;
-	vm_prot_t enter_prot;
-	boolean_t wired, narrow, promote, locked, shadowed;
+	vm_prot_t enter_prot, check_prot;
+	boolean_t wired, narrow, promote, locked, shadowed, wire_fault;
 	int npages, nback, nforw, centeridx, error, lcv, gotpages;
 	vaddr_t startva, objaddr, currva, offset, uoff;
 	paddr_t pa;
@@ -558,7 +558,9 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	ufi.orig_map = orig_map;
 	ufi.orig_rvaddr = trunc_page(vaddr);
 	ufi.orig_size = PAGE_SIZE;	/* can't get any smaller than this */
-	if (fault_type == VM_FAULT_WIRE)
+	wire_fault = fault_type == VM_FAULT_WIRE ||
+	    fault_type == VM_FAULT_WIREMAX;
+	if (wire_fault)
 		narrow = TRUE;		/* don't look for neighborhood
 					 * pages on wire */
 	else
@@ -593,7 +595,9 @@ ReFault:
 	 * check protection
 	 */
 
-	if ((ufi.entry->protection & access_type) != access_type) {
+	check_prot = fault_type == VM_FAULT_WIREMAX ?
+	    ufi.entry->max_protection : ufi.entry->protection;
+	if ((check_prot & access_type) != access_type) {
 		UVMHIST_LOG(maphist,
 		    "<- protection failure (prot=0x%x, access=0x%x)",
 		    ufi.entry->protection, access_type, 0, 0);
@@ -609,7 +613,7 @@ ReFault:
 	 */
 
 	enter_prot = ufi.entry->protection;
-	wired = VM_MAPENT_ISWIRED(ufi.entry) || (fault_type == VM_FAULT_WIRE);
+	wired = VM_MAPENT_ISWIRED(ufi.entry) || wire_fault;
 	if (wired)
 		access_type = enter_prot; /* full access for wired */
 
@@ -621,6 +625,7 @@ ReFault:
 	 */
 
 	if (UVM_ET_ISNEEDSCOPY(ufi.entry)) {
+		KASSERT(fault_type != VM_FAULT_WIREMAX);
 		if ((access_type & VM_PROT_WRITE) ||
 		    (ufi.entry->object.uvm_obj == NULL)) {
 			/* need to clear */
@@ -637,8 +642,8 @@ ReFault:
 			 * ensure that we pmap_enter page R/O since
 			 * needs_copy is still true
 			 */
-			enter_prot &= ~VM_PROT_WRITE;
 
+			enter_prot &= ~VM_PROT_WRITE;
 		}
 	}
 
@@ -1218,7 +1223,7 @@ ReFault:
 	 */
 
 	uvm_lock_pageq();
-	if (fault_type == VM_FAULT_WIRE) {
+	if (wire_fault) {
 		uvm_pagewire(pg);
 
 		/*
@@ -1669,7 +1674,7 @@ Case2:
 	}
 
 	uvm_lock_pageq();
-	if (fault_type == VM_FAULT_WIRE) {
+	if (wire_fault) {
 		uvm_pagewire(pg);
 		if (pg->pqflags & PQ_AOBJ) {
 
@@ -1713,9 +1718,10 @@ Case2:
  */
 
 int
-uvm_fault_wire(map, start, end, access_type)
+uvm_fault_wire(map, start, end, fault_type, access_type)
 	struct vm_map *map;
 	vaddr_t start, end;
+	vm_fault_t fault_type;
 	vm_prot_t access_type;
 {
 	vaddr_t va;
@@ -1736,7 +1742,7 @@ uvm_fault_wire(map, start, end, access_type)
 	}
 
 	for (va = start ; va < end ; va += PAGE_SIZE) {
-		error = uvm_fault(map, va, VM_FAULT_WIRE, access_type);
+		error = uvm_fault(map, va, fault_type, access_type);
 		if (error) {
 			if (va != start) {
 				uvm_fault_unwire(map, start, va);
