@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.42 2001/02/27 20:23:12 reinoud Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.43 2001/03/02 01:46:57 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -112,8 +112,8 @@ videomemory_t videomemory;	/* Video memory descriptor */
 char *boot_args = NULL;
 char *boot_file = NULL;
 
-extern int *vidc_base;
-extern int *iomd_base;
+extern int       *vidc_base;
+extern u_int32_t  iomd_base;
 
 vm_offset_t physical_start;
 vm_offset_t physical_freestart;
@@ -452,7 +452,7 @@ initarm_new_bootloader(bootconf)
 		videomemory.vidm_type = VIDEOMEM_TYPE_DRAM
 	;
 	vidc_base = (int *) VIDC_HW_BASE;
-	iomd_base = (int *) IOMD_HW_BASE;
+	iomd_base =         IOMD_HW_BASE;
 
 	/*
 	 * Initialise the physical console
@@ -832,7 +832,7 @@ initarm_new_bootloader(bootconf)
 		bootconfig.display_start = VMEM_VBASE;
 	};
 	vidc_base = (int *) VIDC_BASE;
-	iomd_base = (int *) IOMD_BASE;
+	iomd_base =         IOMD_BASE;
 	physcon_display_base(VMEM_VBASE);
 	vidcrender_reinit();
 
@@ -1275,7 +1275,7 @@ initarm_old_bootloader(bootconf)
 			videomemory.vidm_type = VIDEOMEM_TYPE_DRAM;
 	};
 	vidc_base = (int *) VIDC_BASE;
-	iomd_base = (int *) IOMD_BASE;
+	iomd_base =         IOMD_BASE;
 
 	/*
 	 * Initialise the physical console
