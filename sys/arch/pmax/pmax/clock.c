@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.23 1998/04/22 07:08:11 jonathan Exp $ */
+/* $NetBSD: clock.c,v 1.24 1998/08/29 16:15:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.23 1998/04/22 07:08:11 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24 1998/08/29 16:15:53 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -112,7 +112,6 @@ clockattach(dev, fns)
 void
 cpu_initclocks()
 {
-	extern int tickadj;
 
 	if (clockfns == NULL)
 		panic("cpu_initclocks: no clock attached");
