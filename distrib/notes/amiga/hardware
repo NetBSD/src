@@ -1,4 +1,4 @@
-.\" $NetBSD: hardware,v 1.32 1999/04/26 19:29:45 is Exp $	
+.\" $NetBSD: hardware,v 1.33 1999/06/28 21:28:37 is Exp $	
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -93,7 +93,7 @@ Scanners:
 CD-ROM drives:
 	Most SCSI CD-ROM drives
 Serial cards:
-	HyperCom 3Z, HyperCom 4, HyperCom 3+ and 4+ (serial ports only)
+	HyperCom 3Z, HyperCom 4, HyperCom 3+ and 4+
 	MultiFaceCard II and III
 	A2232 (normal and clockdoubled)
 Amiga floppy drives with Amiga (880/1760kB) and 
@@ -114,7 +114,7 @@ drivers for: Blizzard III SCSI option,
 Ferret SCSI, Oktagon SCSI.
 .Pp
 Footnotes: Known problems with some hardware:
-.Bl -tag -width ****
+.Bl -tag -width *****
 .It *
 the Emplant SCSI adapter has been reported by a party to
 hang after doing part of the installation without problems.
