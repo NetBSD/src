@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.190 2003/02/25 23:35:03 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.191 2003/04/03 09:13:10 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.190 2003/02/25 23:35:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.191 2003/04/03 09:13:10 enami Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -396,10 +396,12 @@ vattr_null(vap)
 	vap->va_blocksize = VNOVAL;
 	vap->va_atime.tv_sec =
 	    vap->va_mtime.tv_sec =
-	    vap->va_ctime.tv_sec = VNOVAL;
+	    vap->va_ctime.tv_sec =
+	    vap->va_birthtime.tv_sec = VNOVAL;
 	vap->va_atime.tv_nsec =
 	    vap->va_mtime.tv_nsec =
-	    vap->va_ctime.tv_nsec = VNOVAL;
+	    vap->va_ctime.tv_nsec =
+	    vap->va_birthtime.tv_nsec = VNOVAL;
 	vap->va_gen = VNOVAL;
 	vap->va_flags = VNOVAL;
 	vap->va_rdev = VNOVAL;
