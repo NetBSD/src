@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 1997/11/11 05:48:05 mrg Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 1997/11/11 12:42:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.8 1997/11/11 05:48:05 mrg Exp $");
+__RCSID("$NetBSD: conf.c,v 1.9 1997/11/11 12:42:24 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -93,17 +93,18 @@ parse_conf(findclass)
 		cnext = conv->next;
 		free(conv);
 	}
+	curclass.checkportcmd = 0;
 	curclass.conversions =	NULL;
 	REASSIGN(curclass.display, NULL);
-	curclass.modify =	1;
 	curclass.maxtimeout =	7200;		/* 2 hours */
+	curclass.modify =	1;
 	REASSIGN(curclass.notify, NULL);
 	curclass.timeout =	900;		/* 15 minutes */
 	curclass.umask =	027;
 
 	if (strcasecmp(findclass, "guest") == 0) {
-		curclass.umask = 0707;
 		curclass.modify = 0;
+		curclass.umask = 0707;
 	}
 
 	infile = conffilename(_PATH_FTPDCONF);
@@ -138,7 +139,13 @@ parse_conf(findclass)
 		    !none && strcasecmp(class, "all") != 0)
 			continue;
 
-		if (strcasecmp(word, "conversion") == 0) {
+		if (strcasecmp(word, "checkportcmd") == 0) {
+			if (none ||
+			    (!EMPTYSTR(arg) && strcasecmp(arg, "off") == 0))
+				curclass.checkportcmd = 0;
+			else
+				curclass.checkportcmd = 1;
+		} else if (strcasecmp(word, "conversion") == 0) {
 			char *suffix, *types, *disable, *convcmd;
 
 			if (EMPTYSTR(arg)) {
@@ -274,8 +281,6 @@ parse_conf(findclass)
 				continue;
 			}
 			curclass.umask = umask;
-		} else if (strcasecmp(word, "checkportcmd") == 0) {
-			curclass.checkportcmd = 1;
 		} else {
 			syslog(LOG_WARNING,
 			    "%s line %d: unknown directive '%s'",

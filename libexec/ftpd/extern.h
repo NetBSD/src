@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1997/11/11 05:48:06 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 1997/11/11 12:42:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -82,6 +82,7 @@ struct ftpconv {
 };
 
 struct ftpclass {
+	int		 checkportcmd;	/* Check PORT commands are valid */
 	char		*classname;	/* Current class */
 	struct ftpconv 	*conversions;	/* List of conversions */
 	char		*display;	/* Files to display upon chdir */
@@ -90,5 +91,4 @@ struct ftpclass {
 	char		*notify;	/* Files to notify about upon chdir */
 	unsigned int	 timeout;	/* Default timeout */
 	mode_t		 umask;		/* Umask to use */
-	int		 checkportcmd;	/* check PORT commands are valid */
 };
