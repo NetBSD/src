@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.11 2001/09/10 21:19:22 chris Exp $	*/
+/*	$NetBSD: bus.c,v 1.11.2.1 2001/11/13 20:07:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,12 +47,10 @@
 
 #define _COBALT_BUS_DMA_PRIVATE
 #include <machine/bus.h>
-#include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <mips/cpuregs.h>
-#include <mips/locore.h>
+#include <mips/cache.h>
 
 static int	_bus_dmamap_load_buffer(bus_dmamap_t, void *, bus_size_t,
 				struct proc *, int, vaddr_t *, int *, int);
@@ -561,7 +559,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		    "(0x%lx..0x%lx) ...", i, addr + offset,
 		    addr + offset + minlen - 1);
 #endif
-		MachFlushDCache(addr + offset, minlen);
+		mips_dcache_wbinv_range_index(addr + offset, minlen);
 
 #ifdef BUS_DMA_DEBUG
 		printf("\n");
