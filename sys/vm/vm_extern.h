@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.46 1999/07/22 22:58:40 thorpej Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.47 2000/03/29 03:41:07 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,6 +35,9 @@
  *	@(#)vm_extern.h	8.5 (Berkeley) 5/3/95
  */
 
+#ifndef _VM_VM_EXTERN_H_
+#define _VM_VM_EXTERN_H_
+
 struct buf;
 struct loadavg;
 struct proc;
@@ -60,3 +63,4 @@ void		cpu_swapout __P((struct proc *));
 #endif
 
 #endif
+#endif /* !_VM_VM_EXTERN_H_ */

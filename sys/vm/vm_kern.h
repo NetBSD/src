@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.h,v 1.12 1999/03/24 05:51:34 mrg Exp $	*/
+/*	$NetBSD: vm_kern.h,v 1.13 2000/03/29 03:41:07 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -64,6 +64,9 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _VM_VM_KERN_H_
+#define _VM_VM_KERN_H_
+
 /* Kernel memory management definitions. */
 
 extern vm_map_t	buffer_map;
@@ -72,3 +75,4 @@ extern vm_map_t	kernel_map;
 extern vm_map_t	kmem_map;
 extern vm_map_t	mb_map;
 extern vm_map_t	phys_map;
+#endif /* !_VM_VM_KERN_H_ */
