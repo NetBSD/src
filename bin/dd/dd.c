@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.14 1999/11/09 15:06:31 drochner Exp $	*/
+/*	$NetBSD: dd.c,v 1.15 2000/08/02 16:46:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.14 1999/11/09 15:06:31 drochner Exp $");
+__RCSID("$NetBSD: dd.c,v 1.15 2000/08/02 16:46:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ u_int	cbsz;			/* conversion block size */
 u_int	files_cnt = 1;		/* # of files to copy */
 int	progress = 0;		/* display sign of life */
 const u_char	*ctab;		/* conversion table */
+sigset_t nset;			/* a set blocking SIGINFO */
 
 int
 main(argc, argv)
@@ -97,6 +98,8 @@ main(argc, argv)
 
 	(void)signal(SIGINFO, summaryx);
 	(void)signal(SIGINT, terminate);
+	(void)sigemptyset(&nset);
+	(void)sigaddset(&nset, SIGINFO);
 
 	(void)atexit(summary);
 
@@ -374,7 +377,7 @@ dd_out(force)
 	outp = out.db;
 	for (n = force ? out.dbcnt : out.dbsz;; n = out.dbsz) {
 		for (cnt = n;; cnt -= nw) {
-			nw = write(out.fd, outp, cnt);
+			nw = bwrite(out.fd, outp, cnt);
 			if (nw <= 0) {
 				if (nw == 0)
 					errx(1, "%s: end of device", out.name);
@@ -413,4 +416,25 @@ dd_out(force)
 
 	if (progress)
 		(void)write(STDERR_FILENO, ".", 1);
+}
+
+/*
+ * A protected against SIGINFO write
+ */
+ssize_t
+bwrite(fd, buf, len)
+	int fd;
+	const void *buf;
+	size_t len;
+{
+	sigset_t oset;
+	ssize_t rv;
+	int oerrno;
+
+	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
+	rv = write(fd, buf, len);
+	oerrno = errno;
+	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
+	errno = oerrno;
+	return rv;
 }
