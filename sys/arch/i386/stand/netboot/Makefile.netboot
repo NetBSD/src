@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.netboot,v 1.2 2002/02/19 19:55:01 thorpej Exp $
+#	$NetBSD: Makefile.netboot,v 1.3 2003/04/01 21:25:35 mycroft Exp $
 
 .include "../Makefile.inc"
 
@@ -15,6 +15,7 @@ RELOC=		0x90000
 
 SRCS= main.c devopen.c conf.c dev_net.c exec.c
 
+CPPFLAGS+= -DSLOW	# for libz
 #CPPFLAGS+= -DDEBUG
 #CPPFLAGS+= -DNET_DEBUG
 CPPFLAGS+= -DSUPPORT_BOOTP -DSUPPORT_DHCP

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2003/02/01 14:48:17 dsl Exp $
+#	$NetBSD: Makefile,v 1.23 2003/04/01 21:25:35 mycroft Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -11,6 +11,7 @@ RELOC=		0x100
 
 SRCS= main.c devopen.c exec.c
 
+CPPFLAGS+= -DSLOW	# for libz
 CPPFLAGS+= -DCOMPAT_386BSD_MBRPART
 CPPFLAGS+= -DXMS
 #uncomment if there are problems with memory detection
