@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.17 2000/11/27 08:39:54 chs Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.18 2001/08/09 08:15:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -107,10 +107,10 @@ void ffs_fragacct __P((struct fs *, int, int32_t[], int, int));
 #ifdef DIAGNOSTIC
 void	ffs_checkoverlap __P((struct buf *, struct inode *));
 #endif
-int ffs_isblock __P((struct fs *, unsigned char *, ufs_daddr_t));
-int ffs_isfreeblock __P((struct fs *, unsigned char *, ufs_daddr_t));
+int ffs_isblock __P((struct fs *, u_char *, ufs_daddr_t));
+int ffs_isfreeblock __P((struct fs *, u_char *, ufs_daddr_t));
 void ffs_clrblock __P((struct fs *, u_char *, ufs_daddr_t));
-void ffs_setblock __P((struct fs *, unsigned char *, ufs_daddr_t));
+void ffs_setblock __P((struct fs *, u_char *, ufs_daddr_t));
 
 /* ffs_vfsops.c */
 void ffs_init __P((void));
