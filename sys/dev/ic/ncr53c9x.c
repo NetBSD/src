@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.6 1997/03/27 01:16:03 gwr Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.7 1997/04/01 22:10:04 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -289,12 +289,10 @@ ncr53c9x_init(sc, doreset)
 		sc->sc_state = NCR_CLEANING;
 		if ((ecb = sc->sc_nexus) != NULL) {
 			ecb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout(ncr53c9x_timeout, ecb);
 			ncr53c9x_done(sc, ecb);
 		}
 		while ((ecb = sc->nexus_list.tqh_first) != NULL) {
 			ecb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout(ncr53c9x_timeout, ecb);
 			ncr53c9x_done(sc, ecb);
 		}
 	}
@@ -416,6 +414,15 @@ ncr53c9x_select(sc, ecb)
 
 	/* new state NCR_SELECTING */
 	sc->sc_state = NCR_SELECTING;
+
+	/*
+	 * Schedule the timeout now, the first time we will go away
+	 * expecting to come back due to an interrupt, because it is
+	 * always possible that the interrupt may never happen.
+	 */
+	if ((ecb->xs->flags & SCSI_POLL) == 0)
+		timeout(ncr53c9x_timeout, ecb,
+		    (ecb->timeout * hz) / 1000);
 
 	NCRCMD(sc, NCRCMD_FLUSH);
 
@@ -650,6 +657,7 @@ ncr53c9x_sense(sc, ecb)
 	ecb->daddr = (char *)&xs->sense;
 	ecb->dleft = sizeof(struct scsi_sense_data);
 	ecb->flags |= ECB_SENSE;
+	ecb->timeout = NCR_SENSE_TIMEOUT;
 	ti->senses++;
 	if (ecb->flags & ECB_NEXUS)
 		ti->lubusy &= ~(1 << sc_link->lun);
@@ -676,6 +684,8 @@ ncr53c9x_done(sc, ecb)
 	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->target];
 
 	NCR_TRACE(("[ncr53c9x_done(error:%x)] ", xs->error));
+
+	untimeout(ncr53c9x_timeout, ecb);
 
 	/*
 	 * Now, if we've come here with no error code, i.e. we've kept the
@@ -1447,6 +1457,7 @@ ncr53c9x_intr(sc)
 						goto reset;
 					}
 					printf("sending REQUEST SENSE\n");
+					untimeout(ncr53c9x_timeout, ecb);
 					ncr53c9x_sense(sc, ecb);
 					goto out;
 				}
@@ -1499,6 +1510,7 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 		case NCR_SELECTING:
 			sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
 			sc->sc_flags = 0;
+			ecb = sc->sc_nexus;
 
 			if (sc->sc_espintr & NCRINTR_RESEL) {
 				/*
@@ -1508,10 +1520,11 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 				 */
 				if (sc->sc_state == NCR_SELECTING) {
 					NCR_MISC(("backoff selector "));
-					sc_link = sc->sc_nexus->xs->sc_link;
+					untimeout(ncr53c9x_timeout, ecb);
+					sc_link = ecb->xs->sc_link;
 					ti = &sc->sc_tinfo[sc_link->target];
 					TAILQ_INSERT_HEAD(&sc->ready_list,
-					    sc->sc_nexus, chain);
+					    ecb, chain);
 					ecb = sc->sc_nexus = NULL;
 				}
 				sc->sc_state = NCR_RESELECTED;
@@ -1649,12 +1662,6 @@ if (sc->sc_flags & NCR_ICCS) printf("[[esp: BUMMER]]");
 				/* Do an implicit RESTORE POINTERS. */
 				sc->sc_dp = ecb->daddr;
 				sc->sc_dleft = ecb->dleft;
-
-				/* On our first connection, schedule a timeout. */
-				if ((ecb->xs->flags & SCSI_POLL) == 0)
-					timeout(ncr53c9x_timeout, ecb,
-					    (ecb->timeout * hz) / 1000);
-
 				sc->sc_state = NCR_CONNECTED;
 				break;
 			} else {
@@ -1830,7 +1837,6 @@ reset:
 	return 1;
 
 finish:
-	untimeout(ncr53c9x_timeout, ecb);
 	ncr53c9x_done(sc, ecb);
 	goto out;
 
@@ -1895,7 +1901,7 @@ ncr53c9x_timeout(arg)
 		sc->sc_state, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase,
 		(long)sc->sc_dleft, sc->sc_msgpriq, sc->sc_msgout,
 		NCRDMA_ISACTIVE(sc) ? "DMA active" : "");
-#if NCR53C9X_DEBUG > 0
+#if NCR53C9X_DEBUG > 1
 	printf("TRACE: %s.", ecb->trace);
 #endif
 
