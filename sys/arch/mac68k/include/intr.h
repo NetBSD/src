@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20 2001/04/13 23:30:00 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.21 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -106,13 +106,13 @@ extern volatile u_int8_t ssir;
 #define	setsoftadb()	siron(SIR_ADB)
 
 /* intr.c */
-void	intr_init __P((void));
-void	intr_establish __P((int (*)(void *), void *, int));
-void	intr_disestablish __P((int));
-void	intr_dispatch __P((int));
+void	intr_init(void);
+void	intr_establish(int (*)(void *), void *, int);
+void	intr_disestablish(int);
+void	intr_dispatch(int);
 
 /* locore.s */
-int	spl0 __P((void));
+int	spl0(void);
 #endif /* _KERNEL */
 
 #endif /* _MAC68K_INTR_H_ */

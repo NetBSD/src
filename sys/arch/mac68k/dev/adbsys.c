@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.44 2003/07/15 02:43:16 lukem Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.45 2005/01/15 16:00:59 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adbsys.c,v 1.44 2003/07/15 02:43:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adbsys.c,v 1.45 2005/01/15 16:00:59 chs Exp $");
 
 #include "opt_adb.h"
 
@@ -47,15 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: adbsys.c,v 1.44 2003/07/15 02:43:16 lukem Exp $");
 extern	struct mac68k_machine_S mac68k_machine;
 
 /* from adb.c */
-void    adb_processevent __P((adb_event_t * event));
+void    adb_processevent(adb_event_t *);
 
-extern void adb_jadbproc __P((void));
+extern void adb_jadbproc(void);
 
 void 
-adb_complete(buffer, data_area, adb_command)
-	caddr_t buffer;
-	caddr_t data_area;
-	int adb_command;
+adb_complete(caddr_t buffer, caddr_t data_area, int adb_command)
 {
 	adb_event_t event;
 	ADBDataBlock adbdata;
@@ -97,10 +94,7 @@ adb_complete(buffer, data_area, adb_command)
 }
 
 void 
-adb_msa3_complete(buffer, data_area, adb_command)
-	caddr_t buffer;
-	caddr_t data_area;
-	int adb_command;
+adb_msa3_complete(caddr_t buffer, caddr_t data_area, int adb_command)
 {
 	adb_event_t event;
 	ADBDataBlock adbdata;
@@ -142,10 +136,7 @@ adb_msa3_complete(buffer, data_area, adb_command)
 }
 
 void 
-adb_mm_nonemp_complete(buffer, data_area, adb_command)
-	caddr_t buffer;
-	caddr_t data_area;
-	int adb_command;
+adb_mm_nonemp_complete(caddr_t buffer, caddr_t data_area, int adb_command)
 {
 	adb_event_t event;
 	ADBDataBlock adbdata;
@@ -216,8 +207,7 @@ static volatile int extdms_done;
  * described in _Inside Macintosh, Devices_.
  */
 void
-extdms_init(totaladbs)
-	int totaladbs;
+extdms_init(int totaladbs)
 {
 	ADBDataBlock adbdata;
 	int adbindex, adbaddr, count;

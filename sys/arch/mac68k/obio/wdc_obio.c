@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.17 2004/08/20 06:39:38 thorpej Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.18 2005/01/15 16:01:00 chs Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.17 2004/08/20 06:39:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.18 2005/01/15 16:01:00 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,18 +73,19 @@ struct wdc_obio_softc {
 	void    *sc_ih;
 };
 
-int	wdc_obio_match	(struct device *, struct cfdata *, void *);
-void	wdc_obio_attach	(struct device *, struct device *, void *);
-void	wdc_obio_intr (void *);
+int	wdc_obio_match(struct device *, struct cfdata *, void *);
+void	wdc_obio_attach(struct device *, struct device *, void *);
+void	wdc_obio_intr(void *);
 
 CFATTACH_DECL(wdc_obio, sizeof(struct wdc_obio_softc),
     wdc_obio_match, wdc_obio_attach, NULL, NULL);
 
+static bus_space_tag_t		wdc_obio_isr_tag;
+static bus_space_handle_t	wdc_obio_isr_hdl;
+static struct ata_channel	*ch_sc;
+
 int
-wdc_obio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+wdc_obio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
 	struct ata_channel ch;
@@ -138,30 +139,8 @@ wdc_obio_match(parent, match, aux)
 	return 0;
 }
 
-static bus_space_tag_t		wdc_obio_isr_tag;
-static bus_space_handle_t	wdc_obio_isr_hdl;
-static struct ata_channel	*ch_sc = NULL;
-
 void
-wdc_obio_intr(arg)
-	void *arg;
-{
-	unsigned char status;
-
-	status = bus_space_read_1(wdc_obio_isr_tag,
-				  wdc_obio_isr_hdl, 0);
-	if (status & 0x20) {
-		wdcintr(ch_sc);
-		bus_space_write_1(wdc_obio_isr_tag,
-				  wdc_obio_isr_hdl, 0, status&~0x20);
-	}
-}
-
-void
-wdc_obio_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdc_obio_softc *sc = (void *)self;
 	struct wdc_regs *wdr;
@@ -253,4 +232,18 @@ wdc_obio_attach(parent, self, aux)
 	printf("\n");
 
 	wdcattach(chp);
+}
+
+void
+wdc_obio_intr(void *arg)
+{
+	unsigned char status;
+
+	status = bus_space_read_1(wdc_obio_isr_tag,
+				  wdc_obio_isr_hdl, 0);
+	if (status & 0x20) {
+		wdcintr(ch_sc);
+		bus_space_write_1(wdc_obio_isr_tag,
+				  wdc_obio_isr_hdl, 0, status&~0x20);
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.23 2003/07/15 02:43:25 lukem Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.24 2005/01/15 16:01:00 chs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_obio.c,v 1.23 2003/07/15 02:43:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_obio.c,v 1.24 2005/01/15 16:01:00 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -66,23 +66,20 @@ __KERNEL_RCSID(0, "$NetBSD: if_sn_obio.c,v 1.23 2003/07/15 02:43:25 lukem Exp $"
 #define SONIC_REG_BASE	0x50F0A000
 #define SONIC_PROM_BASE	0x50F08000
 
-static int	sn_obio_match __P((struct device *, struct cfdata *, void *));
-static void	sn_obio_attach __P((struct device *, struct device *, void *));
-static int	sn_obio_getaddr __P((struct sn_softc *, u_int8_t *));
-static int	sn_obio_getaddr_kludge __P((struct sn_softc *, u_int8_t *));
+static int	sn_obio_match(struct device *, struct cfdata *, void *);
+static void	sn_obio_attach(struct device *, struct device *, void *);
+static int	sn_obio_getaddr(struct sn_softc *, u_int8_t *);
+static int	sn_obio_getaddr_kludge(struct sn_softc *, u_int8_t *);
 
 CFATTACH_DECL(sn_obio, sizeof(struct sn_softc),
     sn_obio_match, sn_obio_attach, NULL, NULL);
 
 static int
-sn_obio_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+sn_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
-	bus_space_handle_t	bsh;
-	int			found = 0;
+	bus_space_handle_t bsh;
+	int found = 0;
 
 	if (!mac68k_machine.sonic)
 		return 0;
@@ -103,9 +100,7 @@ sn_obio_match(parent, cf, aux)
  * Install interface into kernel networking data structures
  */
 static void
-sn_obio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+sn_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	struct sn_softc	*sc = (void *)self;
@@ -200,9 +195,7 @@ sn_obio_attach(parent, self, aux)
 }
 
 static int
-sn_obio_getaddr(sc, lladdr)
-	struct sn_softc	*sc;
-	u_int8_t *lladdr;
+sn_obio_getaddr(struct sn_softc	*sc, u_int8_t *lladdr)
 {
 	bus_space_handle_t bsh;
 
@@ -229,9 +222,7 @@ sn_obio_getaddr(sc, lladdr)
  * when we can properly get the MAC address on the PBs.
  */
 static int
-sn_obio_getaddr_kludge(sc, lladdr)
-	struct sn_softc	*sc;
-	u_int8_t *lladdr;
+sn_obio_getaddr_kludge(struct sn_softc *sc, u_int8_t *lladdr)
 {
 	int i, ors = 0;
 
