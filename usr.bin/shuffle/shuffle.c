@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.6 1998/12/07 04:10:13 fair Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.7 1999/02/03 16:22:16 is Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.6 1998/12/07 04:10:13 fair Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.7 1999/02/03 16:22:16 is Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -134,7 +134,7 @@ usage()
 {
 	extern char *__progname;
 	(void) fprintf(stderr,
-    "Usage: %s [-f <filename>] [-n <number>] [-p <number>] [<arg> ...]",
+    "Usage: %s [-f <filename>] [-n <number>] [-p <number>] [<arg> ...]\n",
 		__progname);
 	exit(1);
 }
