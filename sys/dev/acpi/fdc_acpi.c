@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.1 2002/12/28 19:31:35 jmcneill Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.2 2002/12/28 19:53:50 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.1 2002/12/28 19:31:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.2 2002/12/28 19:53:50 jmcneill Exp $");
 
 #include "rnd.h"
 
@@ -152,6 +152,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+	sc->sc_drq = drq->ar_drq;
 
 	sc->sc_iot = aa->aa_iot;
 	if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length,
