@@ -114,11 +114,15 @@ struct ec_ring	{
  *  Control bits for E33G_CNTRL
  */
 #define ECNTRL_RESET    0x01         /* Software reset of ASIC and 8390. */
-#define ECNTRL_THIN     0x02         /* Enable thinnet interface. */
+#define ECNTRL_ONBOARD	0x02         /* Enable on-board transceiver. */
 #define ECNTRL_SAPROM   0x04         /* Map Address Prom.         */
 #define ECNTRL_DBLBFR   0x20         /* FIFO Configuration bit    */
 #define ECNTRL_OUTPUT   0x40         /* PC->3c503 direction if set*/
 #define ECNTRL_START    0x80         /* Start DMA Logic.          */
+/*
+ * Name changed as the Etherlink II TP doesn't have a "thin-net"...
+ */
+#define ECNTRL_THIN     ECNTRL_ONBOARD
 /*
  * Bits in E33G status register.
  */
