@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.38 1997/05/28 02:44:55 thorpej Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.39 1997/07/21 05:43:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -62,6 +62,15 @@
 #include <vm/vm_param.h>
 #include <vm/vm_kern.h>
 
+#if !defined(DEBUG) && defined(LKMDEBUG)
+# define DEBUG
+#endif
+
+#ifdef DEBUG
+# define LKMDB_INFO	0x01
+# define LKMDB_LOAD	0x02
+int	lkmdebug = 0;
+#endif
 
 #define PAGESIZE 1024		/* kmem_alloc() allocation quantum */
 
@@ -162,7 +171,8 @@ lkmclose(dev, flag, mode, p)
 
 	if (!(lkm_v & LKM_ALLOC)) {
 #ifdef DEBUG
-		printf("LKM: close before open!\n");
+		if (lkmdebug & LKMDB_INFO)
+			printf("LKM: close before open!\n");
 #endif	/* DEBUG */
 		return (EBADF);
 	}
@@ -237,10 +247,13 @@ lkmioctl(dev, cmd, data, flag, p)
 		resrvp->addr = curp->area; /* ret kernel addr */
 
 #ifdef DEBUG
-		printf("LKM: LMRESERV (actual   = 0x%08lx)\n", curp->area);
-		printf("LKM: LMRESERV (adjusted = 0x%08lx)\n",
-			trunc_page(curp->area));
-#endif	/* DEBUG */
+		if (lkmdebug & LKMDB_INFO) {
+			printf("LKM: LMRESERV (actual   = 0x%08lx)\n",
+			    curp->area);
+			printf("LKM: LMRESERV (adjusted = 0x%08lx)\n",
+			    trunc_page(curp->area));
+		}
+#endif /* DEBUG */
 		lkm_state = LKMS_RESERVED;
 		break;
 
@@ -270,14 +283,16 @@ lkmioctl(dev, cmd, data, flag, p)
 		if ((curp->offset + i) < curp->size) {
 			lkm_state = LKMS_LOADING;
 #ifdef DEBUG
-			printf("LKM: LMLOADBUF (loading @ %ld of %ld, i = %d)\n",
-			curp->offset, curp->size, i);
-#endif	/* DEBUG */
+			if (lkmdebug & LKMDB_LOAD)
+		printf("LKM: LMLOADBUF (loading @ %ld of %ld, i = %d)\n",
+			    curp->offset, curp->size, i);
+#endif /* DEBUG */
 		} else {
 			lkm_state = LKMS_LOADED;
 #ifdef DEBUG
-			printf("LKM: LMLOADBUF (loaded)\n");
-#endif	/* DEBUG */
+			if (lkmdebug & LKMDB_LOAD)
+				printf("LKM: LMLOADBUF (loaded)\n");
+#endif /* DEBUG */
 		}
 		curp->offset += i;
 		break;
@@ -291,8 +306,9 @@ lkmioctl(dev, cmd, data, flag, p)
 
 		lkmunreserve();	/* coerce state to LKM_IDLE */
 #ifdef DEBUG
-		printf("LKM: LMUNRESERV\n");
-#endif	/* DEBUG */
+		if (lkmdebug & LKMDB_INFO)
+			printf("LKM: LMUNRESERV\n");
+#endif /* DEBUG */
 		break;
 
 	case LMREADY:		/* module loaded: call entry */
@@ -313,8 +329,9 @@ lkmioctl(dev, cmd, data, flag, p)
 		default:
 
 #ifdef DEBUG
-			printf("lkm_state is %02x\n", lkm_state);
-#endif	/* DEBUG */
+			if (lkmdebug & LKMDB_INFO)
+				printf("lkm_state is %02x\n", lkm_state);
+#endif /* DEBUG */
 			return ENXIO;
 		}
 
@@ -336,8 +353,9 @@ lkmioctl(dev, cmd, data, flag, p)
 
 		curp->used = 1;
 #ifdef DEBUG
-		printf("LKM: LMREADY\n");
-#endif	/* DEBUG */
+		if (lkmdebug & LKMDB_INFO)
+			printf("LKM: LMREADY\n");
+#endif /* DEBUG */
 		lkm_state = LKMS_IDLE;
 		break;
 
