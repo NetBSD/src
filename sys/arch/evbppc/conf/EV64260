@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.3 2003/03/17 23:23:47 matt Exp $
+#	$NetBSD: EV64260,v 1.4 2003/03/24 17:07:15 matt Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -13,14 +13,23 @@ maxusers	32
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
 
-# Discovery options
+# PowerPC options
 options		ALTIVEC
+#options 	CLOCKBASE=100000000	# EVB64260
+options 	CLOCKBASE=133000000	# EVB64260A
+
+# Marvell options
 options 	GT_MPP_INTERRUPTS=0x2c600000
 options 	GT_MPP_WATCHDOG=0x03000000
-#options 	MPSC_CONSOLE
+#options 	MPSC_CONSOLE=0
 options 	GT_MPSC_DEFAULT_BAUD_RATE=9600
-options 	GT_BASE=0xF8000000
-options 	CLOCKBASE=100000000
+#options 	GT_BASE=0x14000000	# PMON low
+options 	GT_BASE=0xF8000000	# PPCBoot
+options 	GT_MPSC_FREQUENCY="(cpu_timebase*4)"
+options 	GT_MPSC_CLOCK_SOURCE="BRG_BCR_CLKS_TCLK"
+options 	PCI0_GPPINTS=0xffffff1b,PCI1_GPPINTS=0xffffff1d
+options 	PCI0_SKIPMASK="(~0xc0)",PCI1_SKIPMASK="(~0xc0)"
+options 	OBIO0_STRIDE=0,OBIO1_STRIDE=2,OBIO2_STRIDE=2,OBIO3_STRIDE=2
 
 # Options for necessary to use MD
 #options 	MEMORY_DISK_HOOKS
@@ -121,7 +130,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-#options 	PCI_NETBSD_CONFIGURE	# Do not rely on BIOS/whatever to configure PCI devices
+options 	PCI_NETBSD_CONFIGURE	# Do not rely on BIOS/whatever to configure PCI devices
 #options 	PCI_CONFIGURE_VERBOSE	# Show PCI config information
 
 # wscons options
@@ -149,9 +158,13 @@ gtpci1		at gt0 unit 1		# 64-bit, 66MHz
 pci*		at gtpci?
 
 # 16550s off CS2
+obio0		at gt0 unit 0		# Chip Select 0
+obio1		at gt0 unit 1		# Chip Select 1
 obio2		at gt0 unit 2		# Chip Select 2
 com0		at obio2 offset 0x0020 size 8 irq 85
 com1		at obio2 offset 0x0000 size 8 irq 86
+obio3		at gt0 unit 3		# Chip Select 3
+obio4		at gt0 unit 4		# Boot Chip Select
 
 # UARTs
 gtmpsc0 	at gt0 unit 0		# Serial #0
@@ -161,7 +174,6 @@ gtmpsc1 	at gt0 unit 1		# Serial #1
 gfe0		at gt0 unit 0 flags 1	# Ethernet #0 (RMMI)
 gfe1		at gt0 unit 1 flags 1	# Ethernet #1 (RMMI)
 gfe2		at gt0 unit 2 flags 1	# Ethernet #2 (RMMI)
-acphy*		at mii? phy ?
 
 # PCI devices
 ppb*		at pci? dev ? function ?	# PCI-PCI bridges
@@ -193,15 +205,18 @@ pci*		at ppb? bus ?
 #ucom*	at uvscom? portno ?
 
 
-fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
-sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
-rtk*	at pci? dev ? function ?	# Realtek 8129/8139
-ep*	at pci? dev ? function ?
-wm*	at pci? dev ? function ?
+fxp*		at pci? dev ? function ? # Intel EtherExpress PRO 10+/100B
+tlp*		at pci? dev ? function ? # Digital 'Tulip' cards
+wm*		at pci? dev ? function ? # Intel GigE cards
+acphy*		at mii? phy ?
 inphy*		at mii? phy ?
 makphy*		at mii? phy ?
+nsphy*		at mii? phy ?
+sqphy*		at mii? phy ?
 ukphy*		at mii? phy ?
 
+siop*		at pci? dev ? function ?
+esiop*		at pci? dev ? function ?
 isp*		at pci? dev ? function ?
 scsibus*	at scsi?
 sd*		at scsibus? target ? lun ?
@@ -210,8 +225,8 @@ cd*		at scsibus? target ? lun ?
 #auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 #audio*	at auvia?
 
-#pciide* at pci? dev ? function ? flags 0x0000
-#wd*	at pciide? channel ? drive ? flags 0x0000
+pciide*		at pci? dev ? function ? flags 0x0000
+wd*		at pciide? channel ? drive ? flags 0x0000
 
 #pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated/striped disk devices
@@ -219,7 +234,7 @@ cd*		at scsibus? target ? lun ?
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
-#pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bpfilter	8	# packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 #pseudo-device	ppp		2	# Point-to-Point Protocol
 #pseudo-device	sl		2	# Serial Line IP
