@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.2 2003/01/18 10:34:20 thorpej Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.3 2003/06/12 23:01:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ pthread__sp(void)
  *    For a good time, see comments in pthread_switch.S and
  *    ../i386/pthread_switch.S about STACK_SWITCH.
  */
-#define STACKSPACE	16		/* 4 integer valuses */
+#define STACKSPACE	(6*4)		/* 6 integer values */
 
 /*
  * Conversions between struct reg and struct mcontext. Used by
