@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOTX,v 1.54 2004/11/24 20:52:23 bouyer Exp $
+# $NetBSD: BOOTX,v 1.55 2005/01/31 16:58:32 hannken Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.7 2003/10/08 11:05:27 bouyer Exp $
-#		NetBSD: GENERIC.in,v 1.41 2004/11/10 17:54:03 christos Exp $
+#		NetBSD: GENERIC.in,v 1.44 2005/01/31 16:54:33 hannken Exp $
 include "arch/atari/conf/std.atari"
 
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
