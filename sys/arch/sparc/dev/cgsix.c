@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.15 1995/09/17 20:43:43 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.16 1995/10/08 01:39:16 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -190,24 +190,24 @@ cgsixattach(parent, self, args)
 	case BUS_VME32:
 	case BUS_VME16:
 		sbus = node = 0;
-		sc->sc_fb.fb_type.fb_width = 1152;
-		sc->sc_fb.fb_type.fb_height = 900;
-		sc->sc_fb.fb_linebytes = 1152;
 		nam = "cgsix";
 		break;
+
 	case BUS_SBUS:
 		node = ca->ca_ra.ra_node;
-		sc->sc_fb.fb_type.fb_width = getpropint(node, "width", 1152);
-		sc->sc_fb.fb_type.fb_height = getpropint(node, "height", 900);
-		sc->sc_fb.fb_linebytes = getpropint(node, "linebytes", 1152);
 		nam = getpropstring(node, "model");
 		break;
+
 	case BUS_MAIN:
 		printf("cgsix on mainbus?\n");
 		return;
 	}
-	ramsize = sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes;
+
 	sc->sc_fb.fb_type.fb_depth = 8;
+	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
+	    1152, 900, node, ca->ca_bustype);
+
+	ramsize = sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes;
 	sc->sc_fb.fb_type.fb_cmsize = 256;
 	sc->sc_fb.fb_type.fb_size = ramsize;
 	printf(": %s, %d x %d", nam,
