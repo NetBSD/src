@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.76 2004/01/16 12:43:16 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.77 2004/02/09 13:11:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.76 2004/01/16 12:43:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.77 2004/02/09 13:11:21 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -301,7 +301,7 @@ uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
  *
  * - the process passed to us is a dead (pre-zombie) process; we
  *   are running on a different context now (the reaper).
- * - we must run in a separate thread because freeing the vmspace
+ * - borrow proc0's address space because freeing the vmspace
  *   of the dead process may block.
  */
 
@@ -309,7 +309,20 @@ void
 uvm_proc_exit(p)
 	struct proc *p;
 {
-	uvmspace_free(p->p_vmspace);
+	struct lwp *l = curlwp; /* XXX */
+	struct vmspace *ovm;
+
+	KASSERT(p == l->l_proc);
+	ovm = p->p_vmspace;
+
+	/*
+	 * borrow proc0's address space.
+	 */
+	pmap_deactivate(l);
+	p->p_vmspace = proc0.p_vmspace;
+	pmap_activate(l);
+	
+	uvmspace_free(ovm);
 }
 
 void

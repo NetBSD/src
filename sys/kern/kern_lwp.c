@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.22 2004/02/09 13:02:48 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.23 2004/02/09 13:11:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.22 2004/02/09 13:02:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.23 2004/02/09 13:11:21 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -569,6 +569,8 @@ lwp_exit(struct lwp *l)
 
 	/* This LWP no longer needs to hold the kernel lock. */
 	KERNEL_PROC_UNLOCK(l);
+
+	pmap_deactivate(l);
 
 	/* cpu_exit() will not return */
 	cpu_exit(l);
