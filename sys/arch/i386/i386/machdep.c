@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1993 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1992 Terrence R. Lambert.
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.85 1994/02/01 05:37:17 mycroft Exp $
+ *	$Id: machdep.c,v 1.86 1994/02/18 02:23:31 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -311,6 +311,8 @@ struct cpu_nameclass i386_cpus[] = {
 
 identifycpu()
 {
+	extern char cpu_vendor[];
+
 	printf("CPU: ");
 #ifdef DIAGNOSTIC
 	if (cpu < 0 || cpu >= (sizeof i386_cpus/sizeof(struct cpu_nameclass)))
@@ -319,6 +321,8 @@ identifycpu()
 	printf("%s", i386_cpus[cpu].cpu_name);
 	cpu_class = i386_cpus[cpu].cpu_class;
 	printf(" (");
+	if (cpu_vendor[0] != '\0')
+		printf("%s ", cpu_vendor);
 	switch(cpu_class) {
 	case CPUCLASS_386:
 		printf("386");

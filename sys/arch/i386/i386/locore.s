@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1993 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -122,18 +122,17 @@
  * Initialization
  */
 	.data
-        .globl	_esym
-_esym:	.long	0		# ptr to end of syms
 
-	.globl	_cpu,_cold,_boothowto,_bootdev,_cyloffset,_atdevbase,_proc0paddr,_curpcb
-_cpu:	.long	0		# are we 386, 386sx, or 486
-_cold:	.long	1		# cold till we are not
+	.globl	_cpu,_cpu_vendor,_cold,_esym,_boothowto,_bootdev,_atdevbase
+	.globl	_cyloffset,_proc0paddr,_curpcb,_IdlePTD,_KPTphys
+_cpu:		.long	0	# are we 386, 386sx, or 486
+_cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
+_cold:		.long	1	# cold till we are not
+_esym:		.long	0	# ptr to end of syms
 _atdevbase:	.long	0	# location of start of iomem in virtual
 _atdevphys:	.long	0	# location of device mapping ptes (phys)
 _cyloffset:	.long	0
 _proc0paddr:	.long	0
-
-	.globl	_IdlePTD,_KPTphys
 _IdlePTD:	.long	0
 _KPTphys:	.long	0
 
@@ -188,7 +187,7 @@ start:	movw	$0x1234,0x472	# warm boot
 	movl	$(CPU_386),_cpu-KERNBASE
 	jmp	2f
 
-1:	/* try to frob identification flag; does not exist on 486 */
+1:	/* try to frob identification flag; does not exist on early 486s */
 	pushfl
 	popl	%eax
 	movl	%eax,%ecx
@@ -204,6 +203,25 @@ start:	movw	$0x1234,0x472	# warm boot
 
 	testl	%eax,%eax
 	jnz	1f
+	movl	$(CPU_486),_cpu-KERNBASE
+	jmp	2f
+
+1:	/* use the `cpuid' instruction */
+	xorl	%eax,%eax
+	.byte	0x0f,0xa2		/* cpuid 0 */
+	movl	%ebx,_cpu_vendor	/* store vendor string */
+	movl	%edx,_cpu_vendor+4
+	movl	%ecx,_cpu_vendor+8
+	movb	$0,_cpu_vendor+12
+
+	movl	$1,%eax
+	.byte	0x0f,0xa2		/* cpuid 1 */
+	rorl	$8,%eax			/* extract family type */
+	andl	$15,%eax
+	cmpl	$5,%eax
+	jae	1f
+
+	/* less than Pentium; must be 486 */
 	movl	$(CPU_486),_cpu-KERNBASE
 	jmp	2f
 
