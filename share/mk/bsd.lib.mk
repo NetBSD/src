@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.118 1997/10/28 12:40:16 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.119 1997/10/30 07:25:32 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -147,9 +147,6 @@ CFLAGS+=	${COPTS}
 	@${COMPILE.m} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
-
-.m.ln:
-	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
 .S.o .s.o:
 	@echo ${COMPILE.S:Q} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC}
