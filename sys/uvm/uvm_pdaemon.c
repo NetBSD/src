@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.45.4.1 2002/03/11 21:28:55 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.45.4.2 2002/03/12 00:03:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.45.4.1 2002/03/11 21:28:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.45.4.2 2002/03/12 00:03:59 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -333,9 +333,9 @@ uvm_aiodone_daemon(void *arg)
 			bp = nbp;
 		}
 		if (free <= uvmexp.reserve_kernel) {
-			s = uvm_lock_fpageq();
+			mutex_enter(&uvm.fpageq_mutex);
 			wakeup(&uvm.pagedaemon);
-			uvm_unlock_fpageq(s);
+			mutex_exit(&uvm.fpageq_mutex);
 		} else {
 			simple_lock(&uvm.pagedaemon_lock);
 			wakeup(&uvmexp.free);

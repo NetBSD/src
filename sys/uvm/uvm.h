@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.31.6.1 2002/03/11 21:28:52 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.31.6.2 2002/03/12 00:03:58 thorpej Exp $	*/
 
 /*
  *
@@ -85,7 +85,7 @@ struct uvm {
 	struct pglist page_active;	/* allocated pages, in use */
 	struct pglist page_inactive;	/* pages between the clock hands */
 	struct simplelock pageqlock;	/* lock for active/inactive page q */
-	struct simplelock fpageqlock;	/* lock for free page q */
+	kmutex_t fpageq_mutex;		/* mutex for free page q */
 	boolean_t page_init_done;	/* TRUE if uvm_page_init() finished */
 	boolean_t page_idle_zero;	/* TRUE if we should try to zero
 					   pages in the idle loop */

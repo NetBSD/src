@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.19 2001/11/10 07:37:01 lukem Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.19.4.1 2002/03/12 00:03:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.19 2001/11/10 07:37:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.19.4.1 2002/03/12 00:03:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	paddr_t try, idxpa, lastidxpa;
 	int psi;
 	struct vm_page *pgs, *pg;
-	int s, tryidx, idx, pgflidx, end, error, free_list, color;
+	int tryidx, idx, pgflidx, end, error, free_list, color;
 	u_long pagemask;
 #ifdef DEBUG
 	struct vm_page *tp;
@@ -123,7 +123,7 @@ uvm_pglistalloc(size, low, high, alignment, boundary, rlist, nsegs, waitok)
 	 * Block all memory allocation and lock the free list.
 	 */
 
-	s = uvm_lock_fpageq();
+	mutex_enter(&uvm.fpageq_mutex);
 
 	/* Are there even any free pages? */
 	if (uvmexp.free <= (uvmexp.reserve_pagedaemon + uvmexp.reserve_kernel))
@@ -232,7 +232,7 @@ out:
 	 */
 
 	UVM_KICK_PDAEMON();
-	uvm_unlock_fpageq(s);
+	mutex_exit(&uvm.fpageq_mutex);
 	return (error);
 }
 
@@ -247,13 +247,12 @@ uvm_pglistfree(list)
 	struct pglist *list;
 {
 	struct vm_page *pg;
-	int s;
 
 	/*
 	 * Lock the free list and free each page.
 	 */
 
-	s = uvm_lock_fpageq();
+	mutex_enter(&uvm.fpageq_mutex);
 	while ((pg = TAILQ_FIRST(list)) != NULL) {
 		KASSERT((pg->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) == 0);
 		TAILQ_REMOVE(list, pg, pageq);
@@ -266,5 +265,5 @@ uvm_pglistfree(list)
 			uvm.page_idle_zero = vm_page_zero_enable;
 		STAT_DECR(uvm_pglistalloc_npages);
 	}
-	uvm_unlock_fpageq(s);
+	mutex_exit(&uvm.fpageq_mutex);
 }
