@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1999/02/13 02:54:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 1999/03/13 23:18:18 lukem Exp $
 #
 # This is the Makefile for the Taylor UUCP uuconf library
 
@@ -20,9 +20,10 @@ CPPFLAGS+=	-I$(.CURDIR)/../common_sources \
 		-DNEWCONFIGLIB=\"$(newconfigdir)\"\
 		-DOLDCONFIGLIB=\"$(oldconfigdir)\"
 
+MKLINT=		no
 MKMAN=		no
-MKPROFILE=	no
 MKPIC=		no
+MKPROFILE=	no
 
 # only needed during build
 libinstall::

@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1999/03/13 23:22:11 lukem Exp $
 
 LIB=	common
 SRCS=	common.c displayq.c rmjob.c startdaemon.c
 
-MKPROFILE=	no
+MKLINT=		no
 MKPIC=		no
+MKPROFILE=	no
 
 # only needed during build
 libinstall::
