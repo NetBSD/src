@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.4 1999/12/31 19:40:19 itojun Exp $
+# $NetBSD: Makefile,v 1.5 2000/02/25 09:19:07 itojun Exp $
 
 PROG=	rtsold
 SRCS=	rtsold.c rtsol.c if.c probe.c dump.c
 
-CPPFLAGS+=-DINET6
+CPPFLAGS+=-DINET6 -DHAVE_GETIFADDRS
 
 MAN=	rtsold.8
 MLINKS=	rtsold.8 rtsol.8

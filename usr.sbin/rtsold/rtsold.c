@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.5 2000/01/22 10:05:13 tron Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.6 2000/02/25 09:19:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,9 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/socket.h>
 
+#include <net/if.h>
 #include <net/if_dl.h>
 
 #include <netinet/in.h>
@@ -85,6 +87,9 @@ static char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be configurab
 static char *pidfilename = "/var/run/rtsold.pid"; /* should be configurable */
 
 static int ifconfig __P((char *ifname));
+#if 0
+static int ifreconfig __P((char *ifname));
+#endif
 static int make_packet __P((struct ifinfo *ifinfo));
 static struct timeval *rtsol_check_timer __P((void));
 static void TIMEVAL_ADD __P((struct timeval *a, struct timeval *b,
@@ -174,18 +179,22 @@ main(argc, argv)
 	if (signal(SIGUSR1, (void *)rtsold_set_dump_file) < 0)
 		errx(1, "failed to set signal for dump status");
 
+	/*
+	 * Open a socket for sending RS and receiving RA.
+	 * This should be done before calling ifinit(), since the function
+	 * uses the socket.
+	 */
+	if ((s = sockopen()) < 0)
+		errx(1, "failed to open a socket");
+
 	/* configuration per interface */
 	if (ifinit())
 		errx(1, "failed to initilizatoin interfaces");
 	while (argc--) {
 		if (ifconfig(*argv))
-			errx(1, "failed to initilize %s", *argv);
+			errx(1, "failed to initialize %s", *argv);
 		argv++;
 	}
-
-	/* open a socket for sending RS and receiving RA */
-	if ((s = sockopen()) < 0)
-		errx(1, "failed to open a socket");
 
 	/* setup for probing default routers */
 	if (probe_init())
@@ -270,11 +279,13 @@ ifconfig(char *ifname)
 	if (find_ifinfo(sdl->sdl_index)) {
 		warnmsg(LOG_ERR, __FUNCTION__,
 			"interface %s was already cofigured", ifname);
+		free(sdl);
 		return(-1);
 	}
 
 	if ((ifinfo = malloc(sizeof(*ifinfo))) == NULL) {
 		warnmsg(LOG_ERR, __FUNCTION__, "memory allocation failed");
+		free(sdl);
 		return(-1);
 	}
 	memset(ifinfo, 0, sizeof(*ifinfo));
@@ -319,10 +330,37 @@ ifconfig(char *ifname)
 	return(0);
 
   bad:
-	free(ifinfo);
 	free(ifinfo->sdl);
+	free(ifinfo);
 	return(-1);
 }
+
+#if 0
+static int
+ifreconfig(char *ifname)
+{
+	struct ifinfo *ifi, *prev;
+	int rv;
+
+	prev = NULL;
+	for (ifi = iflist; ifi; ifi = ifi->next) {
+		if (strncmp(ifi->ifname, ifname, sizeof(ifi->ifname)) == 0)
+			break;
+		prev = ifi;
+	}
+	prev->next = ifi->next;
+
+	rv = ifconfig(ifname);
+
+	/* reclaim it after ifconfig() in case ifname is pointer inside ifi */
+	if (ifi->rs_data)
+		free(ifi->rs_data);
+	free(ifi->sdl);
+	free(ifi);
+
+	return rv;
+}
+#endif
 
 struct ifinfo *
 find_ifinfo(int ifindex)
