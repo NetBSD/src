@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.264 1999/10/08 13:53:00 drochner Exp $
+#	$NetBSD: GENERIC,v 1.264.2.1 1999/10/19 17:56:39 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -363,6 +363,7 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI autochangers
+se*	at scsibus? target ? lun ?	# SCSI Ethernet
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
