@@ -1,4 +1,4 @@
-/*	$NetBSD: chroot.c,v 1.9 2001/04/06 02:14:52 lukem Exp $	*/
+/*	$NetBSD: chroot.c,v 1.10 2001/04/06 02:24:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: chroot.c,v 1.9 2001/04/06 02:14:52 lukem Exp $");
+__RCSID("$NetBSD: chroot.c,v 1.10 2001/04/06 02:24:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 {
 	struct group	*gp;
 	struct passwd	*pw;
-	char		*endp, *comma;
+	char		*endp, *p;
 	const char	*shell;
 	gid_t		gid, gidlist[NGROUPS_MAX];
 	uid_t		uid;
@@ -84,12 +84,18 @@ main(int argc, char *argv[])
 		switch(ch) {
 		case 'u':
 			user = optarg;
+			if (*user == '\0')
+				usage();
 			break;
 		case 'g':
 			group = optarg;
+			if (*group == '\0')
+				usage();
 			break;
 		case 'G':
 			grouplist = optarg;
+			if (*grouplist == '\0')
+				usage();
 			break;
 		case '?':
 		default:
@@ -105,7 +111,7 @@ main(int argc, char *argv[])
 	if (group != NULL) {
 		if (isdigit(*group)) {
 			gid = (gid_t)strtol(group, &endp, 0);
-			if (endp == group)
+			if (*endp != '\0')
 				goto getgroup;
 		} else {
  getgroup:
@@ -116,30 +122,28 @@ main(int argc, char *argv[])
 		}
 	}
 
-	for (gids = 0; grouplist != NULL; ) {
-		comma = strchr(grouplist, ',');
-		if (comma != NULL)
-			*comma++ = '\0';
+	for (gids = 0; (p = strsep(&grouplist, ",")) != NULL; ) {
+		if (*p == '\0')
+			continue;
 
-		if (isdigit(*grouplist)) {
-			gidlist[gids] = (gid_t)strtol(grouplist, &endp, 0);
-			if (endp == grouplist)
+		if (isdigit(*p)) {
+			gidlist[gids] = (gid_t)strtol(p, &endp, 0);
+			if (*endp != '\0')
 				goto getglist;
 		} else {
  getglist:
-			if ((gp = getgrnam(grouplist)) != NULL)
+			if ((gp = getgrnam(p)) != NULL)
 				gidlist[gids] = gp->gr_gid;
 			else
-				errx(1, "no such group %s", group);
+				errx(1, "no such group %s", p);
 		}
 		gids++;
-		grouplist = comma;
 	}
 
 	if (user != NULL) {
 		if (isdigit(*user)) {
 			uid = (uid_t)strtol(user, &endp, 0);
-			if (endp == user)
+			if (*endp != '\0')
 				goto getuser;
 		} else {
  getuser:
