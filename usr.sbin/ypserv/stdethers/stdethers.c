@@ -1,4 +1,4 @@
-/*	$NetBSD: stdethers.c,v 1.6 1997/10/13 07:41:49 lukem Exp $	*/
+/*	$NetBSD: stdethers.c,v 1.6.2.1 1997/11/28 09:38:26 mellon Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdethers.c,v 1.6 1997/10/13 07:41:49 lukem Exp $");
+__RCSID("$NetBSD: stdethers.c,v 1.6.2.1 1997/11/28 09:38:26 mellon Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,12 +61,12 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	FILE *data_file;
-	char data_line[_POSIX2_LINE_MAX];
-	int line_no = 0, len;
-	char *fname;
 	struct ether_addr eth_addr;
-	char hostname[MAXHOSTNAMELEN];
+	FILE	*data_file;
+	int	 line_no;
+	size_t	 len;
+	char	*fname, *p, *h;
+	char	 hostname[MAXHOSTNAMELEN + 1];
 
 	if (argc > 2)
 		usage();
@@ -81,27 +81,19 @@ main(argc, argv)
 		data_file = stdin;
 	}
 
-	while (read_line(data_file, data_line, sizeof(data_line))) {
-		line_no++;
-		len = strlen(data_line);
-
-		if (len <= 1 || data_line[0] == '#')
+	line_no = 0;
+	while ((p = read_line(data_file, &len, &line_no)) != NULL) {
+		if (len == 0 || *p == '#')
 			continue;
 
-		/*
-		 * Check if we have the whole line
-		 */
-		if (data_line[len - 1] != '\n') {
-			warnx("%s line %d: line to long, skipping",
-			    fname, line_no);
-			continue;
-		} else
-			data_line[len - 1] = '\0';
+		h = strchr(p, '#');
+		if (h != NULL)
+			*h = '\0';
 
-		if (ether_line(data_line, &eth_addr, hostname) == 0)
+		if (ether_line(p, &eth_addr, hostname) == 0)
 			printf("%s\t%s\n", ether_ntoa(&eth_addr), hostname);
 		else
-			warnx("ignoring line %d: `%s'", line_no, data_line);
+			warnx("ignoring line %d: `%s'", line_no, p);
 	}
 
 	exit(0);
