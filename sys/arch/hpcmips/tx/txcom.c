@@ -1,7 +1,7 @@
-/*	$NetBSD: txcom.c,v 1.4 2000/01/06 18:11:23 uch Exp $ */
+/*	$NetBSD: txcom.c,v 1.5 2000/01/13 17:53:37 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,8 @@
 #include <hpcmips/tx/tx39uartvar.h>
 #include <hpcmips/tx/tx39uartreg.h>
 
+#include <hpcmips/tx/tx39irvar.h>
+
 #include <hpcmips/tx/tx39clockreg.h> /* XXX */
 
 #define SET(t, f)	(t) |= (f)
@@ -93,6 +95,7 @@ extern struct cfdriver txcom_cd;
 
 int	txcom_match	__P((struct device*, struct cfdata*, void*));
 void	txcom_attach	__P((struct device*, struct device*, void*));
+int	txcom_print	__P((void*, const char*));
 
 int	txcom_txintr		__P((void*));
 int	txcom_rxintr		__P((void*));
@@ -221,6 +224,24 @@ txcom_attach(parent, self, aux)
 			  txcom_parityerr_intr, sc);
 	tx_intr_establish(tc, TXCOMINTR(BREAK, slot), IST_EDGE, IPL_TTY,
 			  txcom_break_intr, sc);
+
+	/*
+	 * UARTB can connect IR module
+	 */
+	if (ua->ua_slot == 1) {
+		struct txcom_attach_args tca;
+		tca.tca_tc = tc;
+		tca.tca_parent = self;
+		config_found(self, &tca, txcom_print);
+	}
+}
+
+int
+txcom_print(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	return pnp ? QUIET : UNCONF;
 }
 
 int
@@ -236,6 +257,11 @@ txcom_enable(chip)
 	slot = chip->sc_slot;
 	ofs = TX39_UARTCTRL1_REG(slot);
 
+	/* Supply clock XXX should call clock module routine. */
+	reg = tx_conf_read(tc, TX39_CLOCKCTRL_REG);
+	reg |= (slot ? TX39_CLOCK_ENUARTBCLK : TX39_CLOCK_ENUARTACLK);
+	tx_conf_write(tc, TX39_CLOCKCTRL_REG, reg);
+
 	/* Power on */
 	reg = tx_conf_read(tc, ofs);
 	reg |= TX39_UARTCTRL1_ENUART;
@@ -248,7 +274,7 @@ txcom_enable(chip)
 	      --timeout > 0)
 		;
 	
-	if (timeout == 0) {
+	if (timeout == 0 && !cold) {
 		printf("UART%c never power up\n", "AB"[chip->sc_slot]);
 		return 1;
 	}
@@ -258,11 +284,6 @@ txcom_enable(chip)
 	 */
 	reg &= ~(TX39_UARTCTRL1_ENDMARX | TX39_UARTCTRL1_ENDMATX);
 	tx_conf_write(tc, ofs, reg);
-
-	/* Supply clock XXX should call clock module routine. */
-	reg = tx_conf_read(tc, TX39_CLOCKCTRL_REG);
-	reg |= (slot ? TX39_CLOCK_ENUARTBCLK : TX39_CLOCK_ENUARTACLK);
-	tx_conf_write(tc, TX39_CLOCKCTRL_REG, reg);
 
 	return 0;
 }
@@ -307,6 +328,23 @@ __txcom_txbufready(chip, retry)
 	} while(--retry != 0);
 	
 	return 0;
+}
+
+void
+txcom_pulse_mode(dev)
+	struct device *dev;
+{
+	struct txcom_softc *sc = (void*)dev;
+	struct txcom_chip *chip = sc->sc_chip;
+	tx_chipset_tag_t tc = chip->sc_tc;
+	int ofs;
+	txreg_t reg;
+	
+	ofs = TX39_UARTCTRL1_REG(chip->sc_slot);
+
+	reg = tx_conf_read(tc, ofs);
+	reg |= (TX39_UARTCTRL1_PULSEOPT2 | TX39_UARTCTRL1_PULSEOPT1);
+	tx_conf_write(tc, ofs, reg);
 }
 
 /*
@@ -417,6 +455,9 @@ txcom_setbaudrate(chip)
 	if (chip->sc_speed == 0)
 		return;
 
+	if (!cold)
+		DPRINTF(("txcom_setbaudrate: %d\n", chip->sc_speed));
+
 	baudrate = TX39_UARTCLOCKHZ / (chip->sc_speed * 16) - 1;
 	reg = TX39_UARTCTRL2_BAUDRATE_SET(0, baudrate);
 	
@@ -435,7 +476,9 @@ txcom_cnattach(slot, speed, cflag)
 	txcom_chip.sc_speed	= speed;
 	txcom_chip.sc_hwflags |= TXCOM_HW_CONSOLE;
 
-	txcom_enable(&txcom_chip);
+	if (txcom_enable(&txcom_chip))
+		return 1;
+
 	txcom_setmode(&txcom_chip);
 	txcom_setbaudrate(&txcom_chip);
 
@@ -663,7 +706,6 @@ txcomopen(dev, flag, mode, p)
 	struct txcom_chip *chip;
 	struct tty *tp;
 	int s, err;
-	struct termios t;
 
 	if (!sc)
 		return ENXIO;
@@ -678,48 +720,56 @@ txcomopen(dev, flag, mode, p)
 
 	s = spltty();
 
-	tp->t_dev = dev;
-	tp->t_ispeed = 0;
-	tp->t_ospeed = 0;
+	if (txcom_enable(sc->sc_chip))
+		goto out;
 	
-	t.c_ispeed = 0;
-	if (ISSET(chip->sc_hwflags, TXCOM_HW_CONSOLE)) {
-		t.c_ospeed = chip->sc_speed;
-		t.c_cflag = chip->sc_cflag;
-	} else {
-		t.c_ospeed = TTYDEF_SPEED;
-		t.c_cflag = TTYDEF_CFLAG;
-	}
-
-	if (ISSET(chip->sc_swflags, TIOCFLAG_CLOCAL))
-		SET(t.c_cflag, CLOCAL);
-	if (ISSET(chip->sc_swflags, TIOCFLAG_CRTSCTS))
-		SET(t.c_cflag, CRTSCTS);
-	if (ISSET(chip->sc_swflags, TIOCFLAG_MDMBUF))
-		SET(t.c_cflag, MDMBUF);
-	
-	txcom_enable(sc->sc_chip);
-
-	txcomparam(tp, &t);
-
-	tp->t_iflag = TTYDEF_IFLAG;
-	tp->t_oflag = TTYDEF_OFLAG;
-	tp->t_lflag = TTYDEF_LFLAG;
-
-	ttychars(tp);
-	ttsetwater(tp);
-
 	/*
-	 * Turn on DTR.  We must always do this, even if carrier is not
-	 * present, because otherwise we'd have to use TIOCSDTR
-	 * immediately after setting CLOCAL, which applications do not
-	 * expect.  We always assert DTR while the device is open
-	 * unless explicitly requested to deassert it.
+	 * Do the following iff this is a first open.
 	 */
-	txcom_modem(sc, 1);
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
+		struct termios t;
+		
+		tp->t_dev = dev;
+
+		t.c_ispeed = 0;
+		if (ISSET(chip->sc_hwflags, TXCOM_HW_CONSOLE)) {
+			t.c_ospeed = chip->sc_speed;
+			t.c_cflag = chip->sc_cflag;
+		} else {
+			t.c_ospeed = TTYDEF_SPEED;
+			t.c_cflag = TTYDEF_CFLAG;
+		}
+
+		if (ISSET(chip->sc_swflags, TIOCFLAG_CLOCAL))
+			SET(t.c_cflag, CLOCAL);
+		if (ISSET(chip->sc_swflags, TIOCFLAG_CRTSCTS))
+			SET(t.c_cflag, CRTSCTS);
+		if (ISSET(chip->sc_swflags, TIOCFLAG_MDMBUF))
+			SET(t.c_cflag, MDMBUF);
+		
+		/* Make sure txcomparam() will do something. */
+		tp->t_ospeed = 0;
+		txcomparam(tp, &t);
+
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
+
+		ttychars(tp);
+		ttsetwater(tp);
+
+		/*
+		 * Turn on DTR.  We must always do this, even if carrier is not
+		 * present, because otherwise we'd have to use TIOCSDTR
+		 * immediately after setting CLOCAL, which applications do not
+		 * expect.  We always assert DTR while the device is open
+		 * unless explicitly requested to deassert it.
+		 */
+		txcom_modem(sc, 1);
 	
-	/* Clear the input ring, and unblock. */
-	sc->sc_rbget = sc->sc_rbput = 0;
+		/* Clear the input ring, and unblock. */
+		sc->sc_rbget = sc->sc_rbput = 0;
+	}
 
 	splx(s);
 
@@ -835,6 +885,10 @@ txcomioctl(dev, cmd, data, flag, p)
 	s = spltty();
 
 	switch (cmd) {
+	default:
+		err = ENOTTY;
+		break;
+
 	case TIOCSBRK:
 		txcom_break(sc, 1);
 		break;
@@ -942,14 +996,13 @@ txcomparam(tp, t)
 {
 	struct txcom_softc *sc = txcom_cd.cd_devs[minor(tp->t_dev)];
 	struct txcom_chip *chip;
-	int ospeed, cflag;
+	int ospeed;
 	int s;
 	
 	if (!sc)
 		return ENXIO;
 	
 	ospeed = t->c_ospeed;
-	cflag = t->c_cflag;
 
 	/* Check requested parameters. */
 	if (ospeed < 0) {
@@ -967,8 +1020,8 @@ txcomparam(tp, t)
 	 */
 	if (ISSET(chip->sc_swflags, TIOCFLAG_SOFTCAR) ||
 	    ISSET(chip->sc_hwflags, TXCOM_HW_CONSOLE)) {
-		SET(cflag, CLOCAL);
-		CLR(cflag, HUPCL);
+		SET(t->c_cflag, CLOCAL);
+		CLR(t->c_cflag, HUPCL);
 	}
 	splx(s);
 
@@ -977,14 +1030,14 @@ txcomparam(tp, t)
 	 * Some callers need to clear tp->t_ospeed
 	 * to make sure initialization gets done.
 	 */
-	if (tp->t_ospeed == ospeed && tp->t_cflag == cflag) {
+	if (tp->t_ospeed == ospeed && tp->t_cflag == t->c_cflag) {
 		return 0;
 	}
 
 	s = spltty();
 	chip = sc->sc_chip;
 	chip->sc_speed = ospeed;
-	chip->sc_cflag = cflag;
+	chip->sc_cflag = t->c_cflag;
 	
 	txcom_setmode(chip);
 	txcom_setbaudrate(chip);
