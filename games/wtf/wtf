@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+#	$NetBSD: wtf,v 1.1 1999/07/22 01:03:20 mrg Exp $
+#
+# Public domain
+#
+
+acronyms=${ACRONYMDB:-/usr/share/misc/acronyms}
+
+if [ $1 = "is" ] ; then
+	shift
+fi
+
+if [ $# -lt 1 ] ; then
+	echo "Usage: $0 [is] <acronym>"
+fi
+
+rv=0
+while [ $# -gt 0 ] ; do
+	target=`echo $1 | tr '[a-z]' '[A-Z]'`
+	ans=`sed -ne "/^$target/s/^$target[ 	]*//p" < $acronyms 2>/dev/null`
+	if [ "$ans" != "" ] ; then
+		echo "$target: $ans"
+	else
+		echo "Gee...  I don't know what $1 means..."
+		rv=1
+	fi
+	shift
+done
+exit $rv
