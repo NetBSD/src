@@ -1,4 +1,4 @@
-/* $NetBSD: pm.c,v 1.1.2.14 1999/10/26 03:45:43 nisimura Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.15 1999/11/19 11:06:25 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,12 +32,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.14 1999/10/26 03:45:43 nisimura Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.15 1999/11/19 11:06:25 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.14 1999/10/26 03:45:43 nisimura Exp $");
 #include <dev/wscons/wsdisplayvar.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 #include <pmax/ibus/ibusvar.h>
 
 extern void kn01_wbflush __P((void));
@@ -119,14 +120,14 @@ struct fb_devconfig {
 	int	    dc_blanked;		/* currently has video disabled */
 };
 
-struct hwcmap {
+struct hwcmap256 {
 #define	CMAP_SIZE	256	/* 256 R/G/B entries */
 	u_int8_t r[CMAP_SIZE];
 	u_int8_t g[CMAP_SIZE];
 	u_int8_t b[CMAP_SIZE];
 };
 
-struct hwcursor {
+struct hwcursor16 {
 	struct wsdisplay_curpos cc_pos;
 	struct wsdisplay_curpos cc_hot;
 	struct wsdisplay_curpos cc_size;
@@ -138,31 +139,35 @@ struct hwcursor {
 struct pm_softc {
 	struct device sc_dev;
 	struct fb_devconfig *sc_dc;	/* device configuration */
-	struct hwcmap sc_cmap;		/* software copy of colormap */
-	struct hwcursor sc_cursor;	/* software copy of cursor */
+	struct hwcmap256 sc_cmap;	/* software copy of colormap */
+	struct hwcursor16 sc_cursor;	/* software copy of cursor */
 	/* no sc_change field because pm does not emit interrupt */
 	int nscreens;
 	short magic_x, magic_y;		/* cursor location offset */
-#define	PCC_MAGIC_X 212
-#define	PCC_MAGIC_Y 34
 
 	struct pccreg *sc_pcc;
 	struct bt478reg *sc_vdac;
 	u_int16_t sc_pcccmdr;		/* software copy of PCC cmdr */
 };
 
-int  pmmatch __P((struct device *, struct cfdata *, void *));
-void pmattach __P((struct device *, struct device *, void *));
+#define	PCC_MAGIC_X 212
+#define	PCC_MAGIC_Y 34
 
-struct cfattach pm_ca = {
+static int  pmmatch __P((struct device *, struct cfdata *, void *));
+static void pmattach __P((struct device *, struct device *, void *));
+
+const struct cfattach pm_ca = {
 	sizeof(struct pm_softc), pmmatch, pmattach,
 };
 
-void pm_getdevconfig __P((u_int32_t, struct fb_devconfig *));
-struct fb_devconfig pm_console_dc;
-caddr_t pm_consaddr;
+static u_int32_t pm_consaddr;
+static struct fb_devconfig pm_console_dc;
+static void pm_getdevconfig __P((u_int32_t, struct fb_devconfig *));
+static void pminit __P((struct fb_devconfig *));
 
-struct wsdisplay_emulops pm_emulops = {
+int  pm_cnattach __P((paddr_t));
+
+static const struct wsdisplay_emulops pm_emulops = {
 	rcons_cursor,
 	rcons_mapchar,
 	rcons_putchar,
@@ -173,7 +178,7 @@ struct wsdisplay_emulops pm_emulops = {
 	rcons_alloc_attr
 };
 
-struct wsscreen_descr pm_stdscreen = {
+static struct wsscreen_descr pm_stdscreen = {
 	"std",
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
 	&pm_emulops,
@@ -181,23 +186,23 @@ struct wsscreen_descr pm_stdscreen = {
 	WSSCREEN_REVERSE
 };
 
-const struct wsscreen_descr *_pm_scrlist[] = {
+static const struct wsscreen_descr *_pm_scrlist[] = {
 	&pm_stdscreen,
 };
 
-struct wsscreen_list pm_screenlist = {
+static const struct wsscreen_list pm_screenlist = {
 	sizeof(_pm_scrlist) / sizeof(struct wsscreen_descr *), _pm_scrlist
 };
 
-int	pmioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	pmmmap __P((void *, off_t, int));
+static int  pmioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static int  pmmmap __P((void *, off_t, int));
 
-int	pm_alloc_screen __P((void *, const struct wsscreen_descr *,
+static int  pm_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
-void	pm_free_screen __P((void *, void *));
-void	pm_show_screen __P((void *, void *));
+static void pm_free_screen __P((void *, void *));
+static void pm_show_screen __P((void *, void *));
 
-struct wsdisplay_accessops pm_accessops = {
+static const struct wsdisplay_accessops pm_accessops = {
 	pmioctl,
 	pmmmap,
 	pm_alloc_screen,
@@ -206,19 +211,17 @@ struct wsdisplay_accessops pm_accessops = {
 	0 /* load_font */
 };
 
-int  pm_cnattach __P((u_int32_t));
-void pminit __P((struct fb_devconfig *));
 
 static int  set_cmap __P((struct pm_softc *, struct wsdisplay_cmap *));
 static int  get_cmap __P((struct pm_softc *, struct wsdisplay_cmap *));
 static int  set_cursor __P((struct pm_softc *, struct wsdisplay_cursor *));
 static int  get_cursor __P((struct pm_softc *, struct wsdisplay_cursor *));
 static void set_curpos __P((struct pm_softc *, struct wsdisplay_curpos *));
-void bt478_loadcmap __P((struct pm_softc *));
-void bt478_load_curcmap __P((struct pm_softc *));
-void pcc_load_curshape __P((struct pm_softc *));
-void pcc_set_curpos __P((struct pm_softc *));
-void pcc_show_cursor __P((struct pm_softc *, int));
+static void bt478_loadcmap __P((struct pm_softc *));
+static void bt478_load_curcmap __P((struct pm_softc *));
+static void pcc_load_curshape __P((struct pm_softc *));
+static void pcc_set_curpos __P((struct pm_softc *));
+static void pcc_show_cursor __P((struct pm_softc *, int));
 
 #define	KN01_SYS_PCC	0x11100000
 #define	KN01_SYS_BT478	0x11200000
@@ -226,7 +229,8 @@ void pcc_show_cursor __P((struct pm_softc *, int));
 #define	KN01_SYS_CSR	0x1e000000
 #define	KN01_CSR_MONO	    0x0800
 
-int
+
+static int
 pmmatch(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -241,7 +245,7 @@ pmmatch(parent, match, aux)
 	return (1);
 }
 
-void
+static void
 pm_getdevconfig(dense_addr, dc)
 	u_int32_t dense_addr;
 	struct fb_devconfig *dc;
@@ -289,7 +293,7 @@ pm_getdevconfig(dense_addr, dc)
 	pm_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
 }
 
-void
+static void
 pmattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -297,10 +301,10 @@ pmattach(parent, self, aux)
 	struct pm_softc *sc = (struct pm_softc *)self;
 	struct ibus_attach_args *ia = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	struct hwcmap *cm;
+	struct hwcmap256 *cm;
 	int console, i;
 
-	console = ((caddr_t)ia->ia_addr == pm_consaddr);
+	console = (ia->ia_addr == pm_consaddr);
 	if (console) {
 		sc->sc_dc = &pm_console_dc;
 		sc->nscreens = 1;
@@ -335,6 +339,26 @@ pmattach(parent, self, aux)
 }
 
 int
+pm_cnattach(addr)
+	paddr_t addr;
+{
+	u_int32_t v = MIPS_PHYS_TO_KSEG1(addr);
+	struct fb_devconfig *dcp = &pm_console_dc;
+	long defattr;
+
+	if (badaddr((char *)v, 4))
+		return (0);
+
+	pm_getdevconfig(v, dcp);
+	rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&pm_stdscreen, &dcp->dc_rcons,
+			   0, 0, defattr);
+
+	pm_consaddr = v;
+	return (1);
+}
+
+static int
 pmioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
@@ -407,10 +431,10 @@ pmioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
 	}
-	return ENOTTY;
+	return -1;
 }
 
-int
+static int
 pmmmap(v, offset, prot)
 	void *v;
 	off_t offset;
@@ -423,7 +447,7 @@ pmmmap(v, offset, prot)
 	return mips_btop(sc->sc_dc->dc_paddr + offset);
 }
 
-int
+static int
 pm_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	void *v;
 	const struct wsscreen_descr *type;
@@ -446,7 +470,7 @@ pm_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	return (0);
 }
 
-void
+static void
 pm_free_screen(v, cookie)
 	void *v;
 	void *cookie;
@@ -459,33 +483,14 @@ pm_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-void
+static void
 pm_show_screen(v, cookie)
 	void *v;
 	void *cookie;
 {
 }
 
-int
-pm_cnattach(addr)
-	u_int32_t addr;
-{
-        struct fb_devconfig *dcp = &pm_console_dc;
-        long defattr;
-
-	if (badaddr((char *)addr, 4))
-		return (0);
-
-        pm_getdevconfig(addr, dcp);
-        rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
-        wsdisplay_cnattach(&pm_stdscreen, &dcp->dc_rcons,
-                           0, 0, defattr);
-
-        pm_consaddr = (caddr_t)addr;
-        return (1);
-}
-
-void
+static void
 pminit(dc)
 	struct fb_devconfig *dc;
 {
@@ -617,7 +622,7 @@ get_cursor(sc, p)
 	return (ENOTTY); /* XXX */
 }
 
-void
+static void
 set_curpos(sc, curpos)
 	struct pm_softc *sc;
 	struct wsdisplay_curpos *curpos;
@@ -637,12 +642,12 @@ set_curpos(sc, curpos)
 	sc->sc_cursor.cc_pos.y = y;
 }
 
-void
+static void
 bt478_loadcmap(sc)
 	struct pm_softc *sc;
 {
 	int i;
-	struct hwcmap *cm = &sc->sc_cmap;
+	struct hwcmap256 *cm = &sc->sc_cmap;
 	struct bt478reg *vdac = sc->sc_vdac;
 	
 	vdac->bt_mapWA = 0;		 kn01_wbflush();
@@ -653,7 +658,7 @@ bt478_loadcmap(sc)
 	}
 }
 
-void
+static void
 bt478_load_curcmap(sc)
 	struct pm_softc *sc;
 {
@@ -676,7 +681,7 @@ bt478_load_curcmap(sc)
 	vdac->bt_over = cp[4];	kn01_wbflush();
 }
 
-void
+static void
 pcc_load_curshape(sc)
 	struct pm_softc *sc;
 {
@@ -694,7 +699,7 @@ pcc_load_curshape(sc)
 	pcc->pcc_cmdr = sc->sc_pcccmdr;
 }
 
-void
+static void
 pcc_set_curpos(sc)
 	struct pm_softc *sc;
 {
@@ -704,7 +709,7 @@ pcc_set_curpos(sc)
 	pcc->pcc_ypos = sc->sc_cursor.cc_pos.y + sc->magic_y;
 }
 
-void
+static void
 pcc_show_cursor(sc, enable)
 	struct pm_softc *sc;
 	int enable;

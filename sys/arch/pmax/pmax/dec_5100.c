@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.2.4.13 1999/11/12 11:07:20 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.2.4.14 1999/11/19 11:06:28 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.13 1999/11/12 11:07:20 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.14 1999/11/19 11:06:28 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,7 @@ void dec_5100_memerr __P((void));
 
 extern void kn230_wbflush __P((void));
 extern void prom_haltbutton __P((void));
-
-extern int dc_cnattach __P((paddr_t, int, int, int));
+extern void dc_cnattach __P((paddr_t, int));
 extern void mips_set_wbflush __P((void (*)(void)));
 
 static u_int32_t kn230imsk;
@@ -137,11 +136,9 @@ dec_5100_cons_init()
 	 * FIFO depth * character time,
 	 * character time = (1000000 / (defaultrate / 10))
 	 */
-	DELAY(160000000 / 9600);        /* XXX */
+	DELAY(160000000 / 9600);
 
-	if (dc_cnattach(0x1c000000, 0,
-	    9600, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
-		panic("can't init serial console");
+	dc_cnattach(KN01_SYS_DZ, 0);
 }
 
 void

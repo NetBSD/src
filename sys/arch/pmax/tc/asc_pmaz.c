@@ -1,7 +1,7 @@
-/* $NetBSD: asc_pmaz.c,v 1.1.2.5 1999/03/30 07:09:42 nisimura Exp $ */
+/* $NetBSD: asc_pmaz.c,v 1.1.2.6 1999/11/19 11:06:29 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.1.2.5 1999/03/30 07:09:42 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.1.2.6 1999/11/19 11:06:29 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,8 +103,6 @@ asc_pmaz_match(parent, cfdata, aux)
 	struct tc_attach_args *d = aux;
 	
 	if (strncmp("PMAZ-AA ", d->ta_modname, TC_ROM_LLEN))
-		return (0);
-	if (tc_badaddr(d->ta_addr))
 		return (0);
 
 	return (1);

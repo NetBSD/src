@@ -1,7 +1,7 @@
-/* $NetBSD: asc_ioasic.c,v 1.1.2.13 1999/09/10 09:53:25 nisimura Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.1.2.14 1999/11/19 11:06:29 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.13 1999/09/10 09:53:25 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.14 1999/11/19 11:06:29 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,8 +92,6 @@ asc_ioasic_match(parent, cfdata, aux)
 	struct ioasicdev_attach_args *d = aux;
 	
 	if (strncmp("asc", d->iada_modname, TC_ROM_LLEN))
-		return 0;
-	if (tc_badaddr(d->iada_addr))
 		return 0;
 
 	return 1;
@@ -188,6 +186,8 @@ asc_ioasic_reset(sc)
 	asc->sc_active = 0;
 }
 
+#define	SCRDEBUG(x)
+
 int
 asc_ioasic_intr(sc)
 	struct ncr53c9x_softc *sc;
@@ -248,6 +248,7 @@ asc_ioasic_intr(sc)
 		ptr = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
 						IOASIC_SCSI_DMAPTR);
 		ptr = (ptr >> 3) & 0x1ffffffc;
+SCRDEBUG(("SCSI_SCR -> %x, DMAPTR: %p\n", scr, (void *)ptr));
 		p = (u_int16_t *)MIPS_PHYS_TO_KSEG0(ptr);
 		/*
 		 * scr
@@ -326,6 +327,7 @@ asc_ioasic_setup(sc, addr, len, datain, dmasize)
 			scr |= 4;
 			cp += 8;
 		}
+SCRDEBUG(("SCSI_SCR <- %x, DMAPTR: %p\n", scr, (void *)kvtophys(cp)));
 	}
 	ptr0 = kvtophys(cp);
 	cp = mips_trunc_page(cp + NBPG);

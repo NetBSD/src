@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.9.2.6 1999/10/26 06:19:08 nisimura Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.9.2.7 1999/11/19 11:06:26 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -680,8 +680,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 
 			/* XXX Do something about COHERENT here. */
 		}
