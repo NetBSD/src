@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.59 2000/12/31 19:27:24 matt Exp $     */
+/*	$NetBSD: trap.c,v 1.60 2000/12/31 19:41:41 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -66,10 +66,10 @@
 volatile int startsysc = 0, faultdebug = 0;
 #endif
 
-static __inline void userret __P((struct proc *, struct trapframe *, u_quad_t));
+static __inline void userret (struct proc *, struct trapframe *, u_quad_t);
 
-void	trap __P((struct trapframe *));
-void	syscall __P((struct trapframe *));
+void	trap (struct trapframe *);
+void	syscall (struct trapframe *);
 
 char *traptypes[]={
 	"reserved addressing",
@@ -110,10 +110,7 @@ int no_traps = 18;
  *	return to usermode.
  */
 static __inline void
-userret(p, frame, oticks)
-	struct proc *p;
-	struct trapframe *frame;
-	u_quad_t oticks;
+userret(struct proc *p, struct trapframe *frame, u_quad_t oticks)
 {
 	int sig;
 
@@ -143,8 +140,7 @@ userret(p, frame, oticks)
 }
 
 void
-trap(frame)
-	struct trapframe *frame;
+trap(struct trapframe *frame)
 {
 	u_int	sig = 0, type = frame->trap, trapsig = 1;
 	u_int	rv, addr, umode;
@@ -312,10 +308,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 }
 
 void
-setregs(p, pack, stack)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct proc *p, struct exec_package *pack, u_long stack)
 {
 	struct trapframe *exptr;
 
@@ -329,8 +322,7 @@ setregs(p, pack, stack)
 }
 
 void
-syscall(frame)
-	struct	trapframe *frame;
+syscall(struct trapframe *frame)
 {
 	const struct sysent *callp;
 	u_quad_t oticks;
@@ -351,7 +343,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	nsys = p->p_emul->e_nsysent;
 	oticks = p->p_sticks;
 
-	if(frame->code == SYS___syscall){
+	if (frame->code == SYS___syscall) {
 		int g = *(int *)(frame->ap);
 
 		frame->code = *(int *)(frame->ap + 4);
@@ -359,14 +351,14 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 		*(int *)(frame->ap) = g - 2;
 	}
 
-	if(frame->code < 0 || frame->code >= nsys)
+	if ((unsigned long) frame->code >= nsys)
 		callp += p->p_emul->e_nosys;
 	else
 		callp += frame->code;
 
 	rval[0] = 0;
 	rval[1] = frame->r1;
-	if(callp->sy_narg) {
+	if (callp->sy_narg) {
 		err = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
 		if (err) {
 #ifdef KTRACE
@@ -386,7 +378,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 
 #ifdef TRAPDEBUG
 if(startsysc)
-	printf("retur %s pc %lx, psl %lx, sp %lx, pid %d, v{rde %d r0 %d, r1 %d, frame %p\n",
+	printf("retur %s pc %lx, psl %lx, sp %lx, pid %d, err %d r0 %d, r1 %d, frame %p\n",
 	       syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->sp,
 		p->p_pid,err,rval[0],rval[1],exptr); /* } */
 #endif
@@ -432,4 +424,3 @@ child_return(void *arg)
 		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 }
-
