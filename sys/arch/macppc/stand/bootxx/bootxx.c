@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.2 1998/06/26 12:29:28 tsubai Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.3 1998/07/02 19:26:02 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -51,7 +51,7 @@ asm("
 _start:
 
 	li	8,0x4000	/* _start */
-	li	9,0x100
+	li	9,0x20
 	mtctr	9
 1:
 	dcbf	0,8
@@ -61,12 +61,16 @@ _start:
 	sync
 	isync
 
+	li	0,0
+	mtdbatu	3,0
+	mtibatu	3,0
+	isync
 	li	8,0x1ffe	/* map the lowest 256MB */
 	li	9,0x22		/* BAT_I */
-	mtdbatu	3,8
 	mtdbatl	3,9
-	mtibatu	3,8
+	mtdbatu	3,8
 	mtibatl	3,9
+	mtibatu	3,8
 	isync
 
 	lis	1,stack@ha	/* setup 4KB of stack */
