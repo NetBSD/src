@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.2 1999/12/07 07:11:49 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.3 1999/12/07 07:33:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ const struct tulip_cardbus_product {
 	int		tcp_pmreg;	/* power management register offset */
 } tlp_cardbus_products[] = {
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21142,
-	  TULIP_CHIP_21142,		0 },
+	  TULIP_CHIP_21142,		0xe0 },
 
 	{ 0,				0,
 	  TULIP_CHIP_INVALID,		0 },
