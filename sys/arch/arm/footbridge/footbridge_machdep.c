@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_machdep.c,v 1.3 2001/07/28 18:12:44 chris Exp $	*/
+/*	$NetBSD: footbridge_machdep.c,v 1.4 2001/11/23 17:23:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,6 @@
 #include <sys/systm.h>
 #include <uvm/uvm_extern.h>
 #include <machine/pmap.h>
-#include <machine/pte.h>
 #include <arm/footbridge/dc21285mem.h>
 
 extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));

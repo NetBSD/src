@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.21 2001/11/22 18:34:36 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.22 2001/11/23 17:23:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -82,7 +82,6 @@
 #include <machine/io.h>
 #include <machine/irqhandler.h>
 #include <arm/arm32/katelib.h>
-#include <machine/pte.h>
 #include <machine/bootinfo.h>
 #include <machine/undefined.h>
 #include <machine/rtc.h>
