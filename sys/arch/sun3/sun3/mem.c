@@ -106,13 +106,14 @@
 #include <vm/vm_prot.h>
 
 #include <machine/cpu.h>
+#include <machine/obio.h>
 
 extern caddr_t vmmap;
 
 /*
  * Sun3: XXXXX
  * 
- * Need support for eeprom, various vme spaces, and is /dev/zero right?
+ * Need support for various vme spaces, and is /dev/zero right?
  * Also make the unit constants into macros.
  *
  */
@@ -173,6 +174,17 @@ mmrw(dev, uio, flags)
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return (0);
+
+/* minor device 11 (/dev/eeprom) accesses Non-Volatile RAM */
+		case 11:
+			if (eeprom_va == NULL)
+				return (ENXIO);
+			o = uio->uio_offset;
+			if (o >= OBIO_EEPROM_SIZE)
+				return (EFAULT);	/* Not ENXIO? -gwr */
+			c = MIN(uio->uio_resid, OBIO_EEPROM_SIZE - o);
+			error = uiomove(eeprom_va + o, (int)c, uio);
+			return (error);
 
 /* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
 		case 12:

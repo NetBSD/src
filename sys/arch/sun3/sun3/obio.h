@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/obio.h,v 1.7 1994/02/23 08:29:17 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/obio.h,v 1.8 1994/03/16 04:34:01 glass Exp $
  */
 
 /*
@@ -91,5 +91,7 @@ void obio_probe __P((caddr_t addr));
 #define OBIO_LOC(device) (struct obio_cf_loc *) device->dv_cfdata->cf_loc
 
 #ifdef KERNEL
+
+extern vm_offset_t eeprom_va;
 
 #endif
