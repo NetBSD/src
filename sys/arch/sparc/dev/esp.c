@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.18 1995/02/01 12:37:24 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.19 1995/03/01 21:09:27 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -226,9 +226,6 @@ espmatch(parent, vcf, aux)
 		return (0);
 	if (ca->ca_bustype == BUS_SBUS)
 		return (1);
-	if (cputyp == CPU_SUN4 && ca->ca_bustype == BUS_OBIO &&
-	    cpumod == SUN4_100) 
-		return 0; /* see 4/110 comment in cpu.c */
 	ra->ra_len = NBPG;
 	return (probeget(ra->ra_vaddr, 1) != -1);
 }

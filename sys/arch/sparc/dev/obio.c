@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.11 1995/02/01 12:37:26 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.12 1995/03/01 21:09:35 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -131,6 +131,19 @@ busattach(parent, self, args, bustype)
 	for (cf = cfdata; cf->cf_driver; cf++) {
 		if (cf->cf_fstate == FSTATE_FOUND)
 			continue;
+		if (bustype == BUS_OBIO && cputyp == CPU_SUN4) {
+			/*
+			 * On the 4/100 obio addresses must be mapped at
+			 * 0x0YYYYYYY, but alias higher up (we avoid the
+			 * alias condition because it causes pmap difficulties)
+			 * XXX: We also assume that 4/[23]00 obio addresses
+			 * must be 0xZYYYYYYY, where (Z != 0)
+			 */
+			if (cpumod==SUN4_100 && (cf->cf_loc[0] & 0xf0000000))
+				continue;
+			if (cpumod!=SUN4_100 && !(cf->cf_loc[0] & 0xf0000000))
+				continue;
+		}
 		for (p = cf->cf_parents; *p >= 0; p++)
 			if (self->dv_cfdata == &cfdata[*p]) {
 				oca.ca_ra.ra_iospace = -1;
@@ -138,7 +151,7 @@ busattach(parent, self, args, bustype)
 				oca.ca_ra.ra_len = 0;
 				oca.ca_ra.ra_nreg = 1;
 				tmp = NULL;
-				if (oca.ca_ra.ra_paddr)
+				if (oca.ca_ra.ra_paddr != (void *)-1)
 					tmp = bus_tmp(oca.ca_ra.ra_paddr,
 					    bustype);
 				oca.ca_ra.ra_vaddr = tmp;
@@ -149,7 +162,11 @@ busattach(parent, self, args, bustype)
 					oca.ca_ra.ra_intr[0].int_vec = -1;
 				oca.ca_ra.ra_nintr = 1;
 				oca.ca_ra.ra_name = cf->cf_driver->cd_name;
-				oca.ca_ra.ra_bp = ca->ca_ra.ra_bp;
+				if (ca->ca_ra.ra_bp != NULL &&
+				    strcmp(ca->ca_ra.ra_bp->name, "sbus") == 0)
+					oca.ca_ra.ra_bp = ca->ca_ra.ra_bp + 1;
+				else
+					oca.ca_ra.ra_bp = NULL;
 				oca.ca_bustype = bustype;
 
 				if ((*cf->cf_driver->cd_match)(self, cf, &oca) == 0)
