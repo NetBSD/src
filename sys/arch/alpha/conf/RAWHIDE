@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.13 2002/04/12 08:10:48 gmcgarry Exp $
+# $NetBSD: RAWHIDE,v 1.14 2002/04/17 02:22:44 mycroft Exp $
 #
 # Alpha 4100 stripped for action server kernel.
 #
@@ -55,7 +55,6 @@ pci*	at	mcpcia?
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
-de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
 esh*	at	pci? dev ? function ?		# Essential HIPPI card
@@ -63,6 +62,8 @@ fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
+tlp*	at	pci? dev ? function ?		# DECchip 21x4x and clones
+ukphy*	at	mii? phy ?			# generic unknown PHYs
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
