@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.68 2001/08/20 10:31:46 hubertf Exp $
+.\"	$NetBSD: sysctl.8,v 1.69 2001/10/30 06:43:55 kml Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -216,6 +216,8 @@ privilege can change the value.
 .It machdep.console_device	dev_t	no
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.icmp.errppslimit	integer	yes
+.It net.inet.icmp.rediraccept	integer	yes
+.It net.inet.icmp.redirtimeout	integer	yes
 .It net.inet.ip.allowsrcrt	integer	yes
 .It net.inet.ip.anonportmax	integer	yes
 .It net.inet.ip.anonportmin	integer	yes
