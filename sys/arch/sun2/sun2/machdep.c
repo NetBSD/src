@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14.4.1 2002/05/17 13:50:00 gehenna Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14.4.2 2002/06/08 09:12:09 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -688,7 +688,7 @@ extern paddr_t avail_start;
 void
 dumpsys()
 {
-	struct bdevsw *dsw;
+	const struct bdevsw *dsw;
 	kcore_seg_t	*kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
 	struct sun2_kcore_hdr *sh;
