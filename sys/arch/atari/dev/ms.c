@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.6 1996/04/23 11:02:01 leo Exp $	*/
+/*	$NetBSD: ms.c,v 1.7 1996/09/25 15:03:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -87,7 +87,7 @@ dev_type_open(msopen);
 dev_type_close(msclose);
 dev_type_read(msread);
 dev_type_ioctl(msioctl);
-dev_type_select(msselect);
+dev_type_poll(mspoll);
 
 static	void	ms_3b_delay __P((struct ms_softc *));
 
@@ -406,14 +406,14 @@ struct proc		*p;
 }
 
 int
-msselect(dev, rw, p)
+mspoll(dev, events, p)
 dev_t		dev;
-int		rw;
+int		events;
 struct proc	*p;
 {
 	struct ms_softc *ms;
 
 	ms = &ms_softc[minor(dev)];
-	return(ev_select(&ms->ms_events, rw, p));
+	return(ev_poll(&ms->ms_events, events, p));
 }
 #endif /* NMOUSE > 0 */
