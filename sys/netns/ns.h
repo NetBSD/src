@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.h,v 1.12 1998/10/20 01:46:28 matt Exp $	*/
+/*	$NetBSD: ns.h,v 1.13 2000/02/02 05:07:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -143,6 +143,8 @@ union ns_net ns_broadnet;
 
 #define	satosns(sa)	((struct sockaddr_ns *)(sa))
 #define	snstosa(sns)	((struct sockaddr *)(sns))
+
+extern void ns_purgeaddr __P((struct ifaddr *, struct ifnet *));
 #else
 
 #include <sys/cdefs.h>
