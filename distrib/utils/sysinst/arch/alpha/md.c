@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 1999/04/11 22:40:22 bouyer Exp $	*/
+/*	$NetBSD: md.c,v 1.13 1999/04/15 05:01:04 nathanw Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -146,7 +146,7 @@ int	md_post_newfs (void)
 int	md_copy_filesystem (void)
 {
 	if (target_already_root()) {
-		return;
+		return 0;
 	}
 
 	/* Copy the instbin(s) to the disk */
