@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 1996/03/16 10:29:36 leo Exp $
+#	$NetBSD: Makefile,v 1.27 1996/03/30 06:48:58 cgd Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -6,14 +6,7 @@
 
 SUBDIR=	badsect disklabel ccdconfig dmesg fastboot ifconfig init mknod \
 	modload modunload mount mountd nfsd nfsiod nologin ping quotacheck \
-	reboot route routed shutdown slattach swapon ttyflags umount
-
-# XXX Temporarely until all ports are able to use savecore (leo)
-.if	(${MACHINE} == "atari")
-SUBDIR+=        savecore
-.else
-SUBDIR+=        savecore.old
-.endif
+	reboot route routed savecore shutdown slattach swapon ttyflags umount
 
 # support for various file systems
 SUBDIR+= mount_ados
