@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2000/01/16 23:30:13 uch Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2000/01/22 11:03:16 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -124,6 +124,9 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("MobileGearII MC-R320"), BIFB_D2_M2L_0,
 		640, 240, 160, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_320 },
+	{ TEXT("MobileGearII MC/R430"), BIFB_D16_FFFF,
+		640, 240, 1280, 0xa180100,
+		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_430 },
 	{ TEXT("MobileGearII MC-R500"), BIFB_D8_FF,
 		640, 240, 1024, 0x13000000,
 		PLATID_CPU_MIPS_VR_4111, PLATID_MACH_NEC_MCR_500 },
@@ -139,7 +142,7 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("MobileGearII MC-R520"), BIFB_D16_0000,
 		640, 240, 1600, 0xa000000,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_520 },
-	{ TEXT("MobileGearII MC/R530"), BIFB_D16_0000,
+	{ TEXT("MobileGearII MC/R530"), BIFB_D16_FFFF,
 		640, 240, 1280, 0xa180100,
 		PLATID_CPU_MIPS_VR_4121, PLATID_MACH_NEC_MCR_530 },
 	{ TEXT("Mobile Pro 770"), BIFB_D16_0000,
@@ -441,9 +444,27 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message) {
 	case WM_INITDIALOG:
+		/*
+		 * If you modify this program and update pbsdboot.uu,
+		 * change version string which is coded in main.c
+		 * appropriately.
+		 * 
+		 * The version string is in format:
+		 *
+		 *   Version A.B.C YYYY.MM.DD
+		 *
+		 * in where:
+		 *
+		 *   A: Don't change this.
+		 *   B: Increment this number if you change program's behavior,
+		 *      fix some bugs or add new features.
+		 *   C: Increment this number if you change/add some
+		 *      parameters, constants, windows' resources.
+		 *   YYYY.MM.DD: date
+		 */
 		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
 			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.9 2000.01.17\r\n")
+			       TEXT("Version 1.9.1 2000.01.23\r\n")
 			       TEXT("\r\n")
 			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 			       TEXT("All rights reserved.\r\n")
