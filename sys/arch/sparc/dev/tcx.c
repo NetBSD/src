@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.5 1996/10/13 03:00:11 christos Exp $ */
+/*	$NetBSD: tcx.c,v 1.6 1996/12/10 22:55:05 pk Exp $ */
 
 /* 
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ struct tcx_softc {
 
 /* autoconfiguration driver */
 static void	tcxattach __P((struct device *, struct device *, void *));
-static int	tcxmatch __P((struct device *, void *, void *));
+static int	tcxmatch __P((struct device *, struct cfdata *, void *));
 static void	tcx_unblank __P((struct device *));
 
 /* cdevsw prototypes */
@@ -133,11 +133,11 @@ static void tcx_loadcmap __P((struct tcx_softc *, int, int));
  * Match a tcx.
  */
 int
-tcxmatch(parent, vcf, aux)
+tcxmatch(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 

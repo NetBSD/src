@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.14 1996/11/01 23:32:15 pk Exp $	*/
+/*	$NetBSD: am7930.c,v 1.15 1996/12/10 22:54:46 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -110,7 +110,7 @@ static void init_amd __P((volatile struct amd7930 *));
 
 /* autoconfiguration driver */
 void	amd7930attach __P((struct device *, struct device *, void *));
-int	amd7930match __P((struct device *, void *, void *));
+int	amd7930match __P((struct device *, struct cfdata *, void *));
 
 struct cfattach audio_ca = {
 	sizeof(struct amd7930_softc), amd7930match, amd7930attach
@@ -281,11 +281,11 @@ struct audio_hw_if sa_hw_if = {
 /* autoconfig routines */
 
 int
-amd7930match(parent, vcf, aux)
+amd7930match(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 

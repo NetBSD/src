@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.26 1996/10/13 02:59:57 christos Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.27 1996/12/10 22:54:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -341,7 +341,7 @@ int in_ierint = 0;
 int in_ietint = 0;
 #endif
 
-int iematch __P((struct device *, void *, void *));
+int iematch __P((struct device *, struct cfdata *, void *));
 void ieattach __P((struct device *, struct device *, void *));
 
 struct cfattach ie_ca = {
@@ -402,12 +402,11 @@ ie_ack(sc, mask)
 
 
 int
-iematch(parent, vcf, aux)
+iematch(parent, cf, aux)
 	struct device *parent;
-	void *vcf;
-	void   *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.5 1996/10/13 02:59:36 christos Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.6 1996/12/10 22:54:49 pk Exp $ */
 
 /*
  * Copyright (c) 1996 
@@ -101,7 +101,7 @@
 
 /* autoconfiguration driver */
 static void	cgfourteenattach(struct device *, struct device *, void *);
-static int	cgfourteenmatch(struct device *, void *, void *);
+static int	cgfourteenmatch(struct device *, struct cfdata *, void *);
 static void	cgfourteenunblank(struct device *);
 
 /* cdevsw prototypes */
@@ -139,11 +139,11 @@ static void cg14_loadcursor __P((struct cgfourteen_softc *));/* set shape */
  * Match a cgfourteen.
  */
 int
-cgfourteenmatch(parent, vcf, aux)
+cgfourteenmatch(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 

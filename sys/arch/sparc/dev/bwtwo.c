@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.31 1996/10/20 19:18:00 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.32 1996/12/10 22:54:47 pk Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -103,7 +103,7 @@ struct bwtwo_softc {
 
 /* autoconfiguration driver */
 static void	bwtwoattach __P((struct device *, struct device *, void *));
-static int	bwtwomatch __P((struct device *, void *, void *));
+static int	bwtwomatch __P((struct device *, struct cfdata *, void *));
 static void	bwtwounblank __P((struct device *));
 static void	bwtwo_set_video __P((struct bwtwo_softc *, int));
 static int	bwtwo_get_video __P((struct bwtwo_softc *));
@@ -133,11 +133,11 @@ extern struct tty *fbconstty;
  * Match a bwtwo.
  */
 int
-bwtwomatch(parent, vcf, aux)
+bwtwomatch(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 

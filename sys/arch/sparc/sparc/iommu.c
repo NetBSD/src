@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.7 1996/10/13 03:00:35 christos Exp $ */
+/*	$NetBSD: iommu.c,v 1.8 1996/12/10 23:17:44 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -63,7 +63,7 @@ int	has_iocache;
 /* autoconfiguration driver */
 int	iommu_print __P((void *, const char *));
 void	iommu_attach __P((struct device *, struct device *, void *));
-int	iommu_match __P((struct device *, void *, void *));
+int	iommu_match __P((struct device *, struct cfdata *, void *));
 
 struct cfattach iommu_ca = {
 	sizeof(struct iommu_softc), iommu_match, iommu_attach
@@ -92,11 +92,11 @@ iommu_print(args, iommu)
 }
 
 int
-iommu_match(parent, vcf, aux)
+iommu_match(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 

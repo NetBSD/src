@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.43 1996/12/10 14:44:53 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.44 1996/12/10 22:54:57 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -134,7 +134,7 @@ extern	struct fdcio	*fdciop;
 #endif
 
 /* controller driver configuration */
-int	fdcmatch __P((struct device *, void *, void *));
+int	fdcmatch __P((struct device *, struct cfdata *, void *));
 void	fdcattach __P((struct device *, struct device *, void *));
 
 struct cfattach fdc_ca = {
@@ -210,7 +210,7 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int	fdmatch __P((struct device *, void *, void *));
+int	fdmatch __P((struct device *, struct cfdata *, void *));
 void	fdattach __P((struct device *, struct device *, void *));
 
 struct cfattach fd_ca = {
@@ -278,7 +278,8 @@ static void fdconf __P((struct fdc_softc *));
 int
 fdcmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
@@ -509,7 +510,8 @@ fdcattach(parent, self, aux)
 int
 fdmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct fdc_softc *fdc = (void *)parent;
 	struct fdc_attach_args *fa = aux;

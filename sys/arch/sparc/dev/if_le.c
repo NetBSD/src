@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.41 1996/12/06 22:07:59 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.42 1996/12/10 22:55:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -74,7 +74,7 @@
 #include <sparc/dev/if_lereg.h>
 #include <sparc/dev/if_levar.h>
 
-int	lematch __P((struct device *, void *, void *));
+int	lematch __P((struct device *, struct cfdata *, void *));
 void	leattach __P((struct device *, struct device *, void *));
 
 #if defined(SUN4M)	/* XXX */
@@ -203,11 +203,11 @@ lenocarrier(sc)
 }
 
 int
-lematch(parent, match, aux)
+lematch(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 

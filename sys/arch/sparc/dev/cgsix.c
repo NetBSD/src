@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.28 1996/10/13 02:59:38 christos Exp $ */
+/*	$NetBSD: cgsix.c,v 1.29 1996/12/10 22:54:51 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -120,7 +120,7 @@ struct cgsix_softc {
 
 /* autoconfiguration driver */
 static void	cgsixattach __P((struct device *, struct device *, void *));
-static int	cgsixmatch __P((struct device *, void *, void *));
+static int	cgsixmatch __P((struct device *, struct cfdata *, void *));
 static void	cg6_unblank __P((struct device *));
 
 /* cdevsw prototypes */
@@ -156,11 +156,11 @@ static void cg6_loadcursor __P((struct cgsix_softc *));/* set shape */
  * Match a cgsix.
  */
 int
-cgsixmatch(parent, vcf, aux)
+cgsixmatch(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
