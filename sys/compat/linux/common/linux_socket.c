@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.39.4.2 2003/10/22 04:18:35 jmc Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.39.4.3 2003/10/22 04:21:55 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.39.4.2 2003/10/22 04:18:35 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.39.4.3 2003/10/22 04:21:55 jmc Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -75,6 +75,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.39.4.2 2003/10/22 04:18:35 jmc Ex
 #include <sys/exec.h>
 
 #include <sys/syscallargs.h>
+
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_util.h>
@@ -290,13 +295,41 @@ linux_sys_socket(p, v, retval)
 		syscallarg(int) protocol;
 	} */ *uap = v;
 	struct sys_socket_args bsa;
+	int error;
 
 	SCARG(&bsa, protocol) = SCARG(uap, protocol);
 	SCARG(&bsa, type) = SCARG(uap, type);
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
-	return sys_socket(p, &bsa, retval);
+	error = sys_socket(p, &bsa, retval);
+
+#ifdef INET6
+	/*
+	 * Linux AF_INET6 socket has IPV6_V6ONLY setsockopt set to 0 by
+	 * default and some apps depend on this. So, set V6ONLY to 0
+	 * for Linux apps if the sysctl value is set to 1.
+	 */
+	if (!error && ip6_v6only && SCARG(&bsa, domain) == PF_INET6) {
+		struct file *fp;
+
+		if (getsock(p->p_fd, *retval, &fp) == 0) {
+			struct mbuf *m;
+
+			m = m_get(M_WAIT, MT_SOOPTS);
+			m->m_len = sizeof(int);
+			*mtod(m, int *) = 0;
+
+			/* ignore error */
+			(void) sosetopt((struct socket *)fp->f_data,
+				IPPROTO_IPV6, IPV6_V6ONLY, m);
+
+			FILE_UNUSE(fp, p);
+		}
+	}
+#endif
+
+	return (error);
 }
 
 int
