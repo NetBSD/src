@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.119 2003/08/27 02:09:59 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.120 2003/09/06 03:36:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.119 2003/08/27 02:09:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.120 2003/09/06 03:36:30 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -235,7 +235,7 @@ ip_output(m0, va_alist)
 	if ((flags & (IP_FORWARDING|IP_RAWOUTPUT)) == 0) {
 		ip->ip_v = IPVERSION;
 		ip->ip_off = htons(0);
-		ip->ip_id = htons(ip_id++);
+		ip->ip_id = htons(ip_randomid());
 		ip->ip_hl = hlen >> 2;
 		ipstat.ips_localout++;
 	} else {
