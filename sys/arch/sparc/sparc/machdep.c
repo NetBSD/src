@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165.4.1 2000/06/30 16:27:39 simonb Exp $ */
+/*	$NetBSD: machdep.c,v 1.165.4.2 2000/07/19 02:53:15 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1654,7 +1654,7 @@ static int	sparc_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
 static int	sparc_bus_mmap __P((bus_space_tag_t, bus_type_t,
 				    bus_addr_t, int, bus_space_handle_t *));
 static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
-						   int (*) __P((void *)),
+						   int, int (*) __P((void *)),
 						   void *));
 static void     sparc_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
 					bus_size_t, bus_size_t, int));
@@ -1776,8 +1776,9 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 
 
 void *
-sparc_mainbus_intr_establish(t, level, flags, handler, arg)
+sparc_mainbus_intr_establish(t, pil, level, flags, handler, arg)
 	bus_space_tag_t t;
+	int	pil;
 	int	level;
 	int	flags;
 	int	(*handler)__P((void *));
@@ -1793,9 +1794,9 @@ sparc_mainbus_intr_establish(t, level, flags, handler, arg)
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
 	if ((flags & BUS_INTR_ESTABLISH_FASTTRAP) != 0)
-		intr_fasttrap(level, (void (*)__P((void)))handler);
+		intr_fasttrap(pil, (void (*)__P((void)))handler);
 	else
-		intr_establish(level, ih);
+		intr_establish(pil, ih);
 	return (ih);
 }
 

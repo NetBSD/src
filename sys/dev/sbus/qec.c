@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.10 2000/01/11 12:59:44 pk Exp $ */
+/*	$NetBSD: qec.c,v 1.10.4.1 2000/07/19 02:53:08 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
 
 #include <dev/sbus/sbusvar.h>
@@ -66,7 +67,8 @@ static int qec_bus_map __P((
 		bus_space_handle_t *));
 static void *qec_intr_establish __P((
 		bus_space_tag_t,
-		int,			/*level*/
+		int,			/*bus interrupt priority*/
+		int,			/*`device class' interrupt level*/
 		int,			/*flags*/
 		int (*) __P((void *)),	/*handler*/
 		void *));		/*arg*/
@@ -260,18 +262,19 @@ qec_bus_map(t, btype, offset, size, flags, vaddr, hp)
 }
 
 void *
-qec_intr_establish(t, level, flags, handler, arg)
+qec_intr_establish(t, pri, level, flags, handler, arg)
 	bus_space_tag_t t;
-	int level;      
+	int pri;
+	int level;
 	int flags;
-	int (*handler) __P((void *)); 
-	void *arg;      
+	int (*handler) __P((void *));
+	void *arg;
 {
 	struct qec_softc *sc = t->cookie;
 
-	if (level == 0) {
+	if (pri == 0) {
 		/*
-		 * qe.c calls bus_intr_establish() with `level = 0'
+		 * qe.c calls bus_intr_establish() with `pri == 0'
 		 * XXX - see also comment in qec_attach().
 		 */
 		if (sc->sc_intr == NULL) {
@@ -279,10 +282,10 @@ qec_intr_establish(t, level, flags, handler, arg)
 				sc->sc_dev.dv_xname);
 			return (NULL);
 		}
-		level = sc->sc_intr->sbi_pri;
+		pri = sc->sc_intr->sbi_pri;
 	}
 
-	return (bus_intr_establish(t->parent, level, flags, handler, arg));
+	return (bus_intr_establish(t->parent, pri, level, flags, handler, arg));
 }
 
 void

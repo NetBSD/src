@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.10 2000/06/04 19:15:03 cgd Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.10.2.1 2000/07/19 02:53:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,8 +56,8 @@
 
 #include <machine/apmvar.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/tctrl.h>
 
 #include <sparc/dev/ts102reg.h>
@@ -210,7 +210,7 @@ tctrl_attach(parent, self, aux)
 	}
 
 	if (sa->sa_nintr != 0) {
-		(void)bus_intr_establish(sc->sc_memt, sa->sa_pri,
+		(void)bus_intr_establish(sc->sc_memt, sa->sa_pri, IPL_NONE,
 		    0, tctrl_intr, sc);
 		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 		    sc->sc_dev.dv_xname, "intr");
