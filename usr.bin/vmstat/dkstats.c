@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.2 1998/04/01 16:41:31 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -32,6 +32,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/types.h>
 #include <sys/dkstat.h>
 #include <sys/time.h>
 #include <sys/disk.h>
