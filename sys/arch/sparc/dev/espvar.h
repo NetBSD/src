@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.9 1995/11/28 22:49:31 pk Exp $ */
+/*	$NetBSD: espvar.h,v 1.10 1995/12/18 23:58:41 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -140,7 +140,7 @@ struct esp_softc {
 	struct intrhand sc_ih;			/* intr handler */
 	struct evcnt sc_intrcnt;		/* intr count */
 	struct scsi_link sc_link;		/* scsi lint struct */
-	volatile caddr_t sc_reg;		/* the registers */
+	volatile u_char *sc_reg;		/* the registers */
 	struct dma_softc *sc_dma;		/* pointer to my dma */
 
 	/* register defaults */
@@ -195,6 +195,17 @@ struct esp_softc {
 	int sc_rev;				/* esp revision */
 	int sc_minsync;				/* minimum sync period / 4 */
 };
+
+/*
+ * Macros to read and write the chip's registers.
+ */
+#define	ESP_READ_REG(sc, reg)			\
+	((sc)->sc_reg[(reg) * 4])
+#define	ESP_WRITE_REG(sc, reg, val)		\
+	do {					\
+		u_char v = (val);		\
+		(sc)->sc_reg[(reg) * 4] = v;	\
+	} while (0)
 
 /* values for sc_state */
 #define ESP_IDLE	0x01	/* waiting for something to do */
@@ -263,10 +274,10 @@ struct esp_softc {
 	if (esp_debug & ESP_SHOWCCMDS)			\
 		printf("<cmd:0x%x>", (unsigned)cmd);	\
 	sc->sc_lastcmd = cmd;				\
-	sc->sc_reg[ESP_CMD] = (unsigned)cmd;		\
+	ESP_WRITE_REG(sc, ESP_CMD, cmd);		\
 } while (0)
 #else
-#define	ESPCMD(sc, cmd)		sc->sc_reg[ESP_CMD] = (unsigned)cmd
+#define	ESPCMD(sc, cmd)		ESP_WRITE_REG(sc, ESP_CMD, cmd)
 #endif
 
 #define SAME_ESP(sc, bp, ca) \
