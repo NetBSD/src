@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69 2002/10/10 22:37:51 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.70 2002/10/30 06:37:38 manu Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -71,6 +71,31 @@ int setfault __P((faultbuf));	/* defined in locore.S */
 /* Why are these not defined in a header? */
 int badaddr __P((void *, size_t));
 int badaddr_read __P((void *, size_t, int *));
+
+void
+child_return(void *arg)
+{
+	struct proc * const p = arg;
+	struct trapframe * const tf = trapframe(p);
+
+	KERNEL_PROC_UNLOCK(p);
+
+	tf->fixreg[FIRSTARG] = 0;
+	tf->fixreg[FIRSTARG + 1] = 1;
+	tf->cr &= ~0x10000000;
+	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't
+					   be them. */
+	p->p_addr->u_pcb.pcb_fpcpu = NULL;
+#ifdef	KTRACE
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
+		ktrsysret(p, SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(p);
+	}
+#endif
+	/* Profiling?							XXX */
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+}
 
 void
 trap(struct trapframe *frame)
