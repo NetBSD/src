@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.136 2002/04/12 17:02:33 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.137 2002/04/20 06:04:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.136 2002/04/12 17:02:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.137 2002/04/20 06:04:35 simonb Exp $");
 
 #include "opt_uconsole.h"
 
@@ -116,7 +116,7 @@ const char	ttyout[] = "ttyout";
 
 char const char_type[] = {
 	E|CC, O|CC, O|CC, E|CC, O|CC, E|CC, E|CC, O|CC,	/* nul - bel */
-	O|BS, E|TB, E|NL, O|CC, E|VT, O|CR, O|CC, E|CC, /* bs - si */
+	O|BS, E|TB, E|NL, O|CC, E|VT, O|CR, O|CC, E|CC,	/* bs - si */
 	O|CC, E|CC, E|CC, O|CC, E|CC, O|CC, O|CC, E|CC, /* dle - etb */
 	E|CC, O|CC, O|CC, E|CC, O|CC, E|CC, E|CC, O|CC, /* can - us */
 	O|NO, E|NO, E|NO, O|NO, E|NO, O|NO, O|NO, E|NO, /* sp - ' */
@@ -1921,7 +1921,7 @@ ttyinfo(struct tty *tp)
 	struct timeval	utime, stime;
 	int		tmp;
 
-	if (ttycheckoutq(tp,0) == 0)
+	if (ttycheckoutq(tp, 0) == 0)
 		return;
 
 	/* Print load average. */
