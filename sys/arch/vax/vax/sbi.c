@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.21 2000/06/04 18:02:35 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.21.20.1 2002/06/05 04:13:17 lukem Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,6 +45,7 @@
 
 static	int sbi_print(void *, const char *);
 static	int sbi_match(struct device *, struct cfdata *, void *);
+static	int sbi_match_abus(struct device *, struct cfdata *, void *);
 static	void sbi_attach(struct device *, struct device *, void*);
 
 int
@@ -68,6 +69,16 @@ sbi_print(void *aux, const char *name)
 }
 
 int
+sbi_match_abus(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct bp_conf *bp = aux;
+
+	if (bp->num == 0) /* XXX - only one SBI */
+		return 1;
+	return 0;
+}
+
+int
 sbi_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	if (vax_bustype == VAX_SBIBUS)
@@ -78,13 +89,21 @@ sbi_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 sbi_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct bp_conf *bp = aux;
 	u_int	nexnum, minnex;
 	struct	sbi_attach_args sa;
 
 	printf("\n");
 
 #define NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
-	minnex = self->dv_unit * NNEXSBI;
+	if (vax_boardtype == VAX_BTYP_780) {
+		minnex = 0;	/* only one SBI */
+		sa.sa_sbinum = 0;
+	}
+	if (vax_boardtype == VAX_BTYP_790) {
+		minnex = bp->num * NNEXSBI;
+		sa.sa_sbinum = bp->num;
+	}
 	for (nexnum = minnex; nexnum < minnex + NNEXSBI; nexnum++) {
 		struct	nexus *nexusP = 0;
 		volatile int tmp;
@@ -109,5 +128,5 @@ struct	cfattach sbi_mainbus_ca = {
 };
 
 struct	cfattach sbi_abus_ca = {
-	sizeof(struct device), sbi_match, sbi_attach
+	sizeof(struct device), sbi_match_abus, sbi_attach
 };
