@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.14 2003/09/25 22:04:17 christos Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.15 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.14 2003/09/25 22:04:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.15 2003/10/08 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ svr4_getsiginfo(sip, sig, code, addr)
 void
 svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-	u_long code = ksi->ksi_trap;
+	u_long code = KSI_TRAPCODE(ksi);
 	int sig = ksi->ksi_signo;
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.19 2003/10/05 19:44:58 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.20 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19 2003/10/05 19:44:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.20 2003/10/08 00:28:41 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -223,7 +223,7 @@ syscall_plain(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 			break;
 		default:
 			/* Undefined so illegal instruction */
-			(void)memset(&ksi, 0, sizeof(ksi));
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGILL;
 			/* XXX get an ILL_ILLSYSCALL assigned */
 			ksi.ksi_code = 0;
@@ -241,7 +241,7 @@ syscall_plain(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 		break;
 	default:
 		/* Undefined so illegal instruction */
-		(void)memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		/* XXX get an ILL_ILLSYSCALL assigned */
 		ksi.ksi_code = 0;
@@ -351,7 +351,7 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 			break;
 		default:
 			/* Undefined so illegal instruction */
-			(void)memset(&ksi, 0, sizeof(ksi));
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGILL;
 			/* XXX get an ILL_ILLSYSCALL assigned */
 			ksi.ksi_code = 0;
@@ -369,7 +369,7 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 		break;
 	default:
 		/* Undefined so illegal instruction */
-		(void)memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		/* XXX get an ILL_ILLSYSCALL assigned */
 		ksi.ksi_code = 0;

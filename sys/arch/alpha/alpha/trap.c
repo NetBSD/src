@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.85 2003/10/07 17:04:18 skd Exp $ */
+/* $NetBSD: trap.c,v 1.86 2003/10/08 00:28:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85 2003/10/07 17:04:18 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.86 2003/10/08 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,6 +269,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			if (i == 0)
 				goto out;
 
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = i;
 			ksi.ksi_code = BUS_ADRALN;
 			ksi.ksi_addr = (void *)a0;		/* VA */
@@ -298,6 +299,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			i = alpha_fp_complete(a0, a1, l, &ucode);
 			if (i == 0)
 				goto out;
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = i;
 			if (i == SIGSEGV)
 				ksi.ksi_code = SEGV_MAPERR; /* just pick one */
@@ -339,6 +341,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		switch (a0) {
 		case ALPHA_IF_CODE_GENTRAP:
 			if (framep->tf_regs[FRAME_A0] == -2) { /* weird! */
+				KSI_INIT_TRAP(&ksi);
 				ksi.ksi_signo = SIGFPE;
 				ksi.ksi_code =  alpha_ucode_to_ksiginfo(ucode);
 				ksi.ksi_addr = 
@@ -349,6 +352,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			/* FALLTHROUTH */
 		case ALPHA_IF_CODE_BPT:
 		case ALPHA_IF_CODE_BUGCHK:
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_code = TRAP_BRKPT;
 			ksi.ksi_addr = (void *)l->l_md.md_tf->tf_regs[FRAME_PC];
@@ -359,6 +363,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			KERNEL_PROC_LOCK(l);
 			i = handle_opdec(l, &ucode);
 			KERNEL_PROC_UNLOCK(l);
+			KSI_INIT_TRAP(&ksi);
 			if (i == 0)
 				goto out;
 			else if (i == SIGSEGV)
@@ -533,6 +538,7 @@ do_fault:
 				}
 				goto dopanic;
 			}
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_addr = (void *)a0;
 			ksi.ksi_trap = a1; /* MMCSR VALUE */
 			if (rv == ENOMEM) {

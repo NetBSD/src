@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.95 2003/09/22 14:27:00 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.96 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95 2003/09/22 14:27:00 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2003/10/08 00:28:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,7 +346,7 @@ trapmmufault(type, code, v, fp, l, sticks)
 	u_int nss;
 	int rv;
 
-	(void)memset(&ksi, 0, sizeof(ksi));
+	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_trap = type & ~T_USER;
 
 	/*
@@ -609,7 +609,7 @@ trap(type, code, v, frame)
 	l = curlwp;
 	uvmexp.traps++;
 
-	(void)memset(&ksi, 0, sizeof(ksi));
+	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_trap = type & ~T_USER;
 
 	/* I have verified that this DOES happen! -gwr */

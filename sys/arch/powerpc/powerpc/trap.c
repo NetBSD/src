@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.89 2003/09/27 04:44:42 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.90 2003/10/08 00:28:42 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.89 2003/09/27 04:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.90 2003/10/08 00:28:42 thorpej Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -99,7 +99,7 @@ trap(struct trapframe *frame)
 		frame->srr1 &= ~PSL_SE;
 		if (p->p_nras == 0 ||
 		    ras_lookup(p, (caddr_t)frame->srr0) == (caddr_t) -1) {
-			memset(&ksi, 0, sizeof(ksi));
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = EXC_TRC;
 			ksi.ksi_addr = (void *)frame->srr0;
@@ -229,7 +229,7 @@ trap(struct trapframe *frame)
 			    (frame->dsisr & DSISR_STORE) ? "write" : "read",
 			    frame->dar, frame->srr0, frame->dsisr, rv);
 		}
-		memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_DSI;
 		ksi.ksi_addr = (void *)frame->dar;
@@ -289,7 +289,7 @@ trap(struct trapframe *frame)
 			    "(SRR1=%#lx)\n", p->p_pid, l->l_lid, p->p_comm,
 			    frame->srr0, frame->srr1);
 		}
-		memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_ISI;
 		ksi.ksi_addr = (void *)frame->srr0;
@@ -332,7 +332,7 @@ trap(struct trapframe *frame)
 				    p->p_pid, l->l_lid, p->p_comm,
 				    frame->dar, frame->srr0, frame->dsisr);
 			}
-			memset(&ksi, 0, sizeof(ksi));
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGBUS;
 			ksi.ksi_trap = EXC_ALI;
 			ksi.ksi_addr = (void *)frame->dar;
@@ -360,7 +360,7 @@ trap(struct trapframe *frame)
 			    p->p_pid, l->l_lid, p->p_comm,
 			    frame->srr0, frame->srr1);
 		}
-		memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_trap = EXC_PGM;
 		ksi.ksi_addr = (void *)frame->srr0;
@@ -377,7 +377,7 @@ trap(struct trapframe *frame)
 			    "(SSR1=%#lx)\n",
 			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
 		}
-		memset(&ksi, 0, sizeof(ksi));
+		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGBUS;
 		ksi.ksi_trap = EXC_MCHK;
 		ksi.ksi_addr = (void *)frame->srr0;
@@ -391,7 +391,7 @@ trap(struct trapframe *frame)
 		if (frame->srr1 & 0x00020000) {	/* Bit 14 is set if trap */
 			if (p->p_nras == 0 ||
 			    ras_lookup(p, (caddr_t)frame->srr0) == (caddr_t) -1) {
-				memset(&ksi, 0, sizeof(ksi));
+				KSI_INIT_TRAP(&ksi);
 				ksi.ksi_signo = SIGTRAP;
 				ksi.ksi_trap = EXC_PGM;
 				ksi.ksi_addr = (void *)frame->srr0;
@@ -406,7 +406,7 @@ trap(struct trapframe *frame)
 				printf("trap: pid %d.%d (%s): user PGM trap @"
 				    " %#lx (SSR1=%#lx)\n", p->p_pid, l->l_lid,
 				    p->p_comm, frame->srr0, frame->srr1);
-			memset(&ksi, 0, sizeof(ksi));
+			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGILL;
 			ksi.ksi_trap = EXC_PGM;
 			ksi.ksi_addr = (void *)frame->srr0;

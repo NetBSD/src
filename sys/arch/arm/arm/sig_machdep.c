@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.21 2003/10/05 19:44:58 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.22 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.21 2003/10/05 19:44:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.22 2003/10/08 00:28:41 thorpej Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -97,7 +97,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigframe_sigcontext *fp, frame;
 	int onstack;
 	int sig = ksi->ksi_signo;
-	u_long code = ksi->ksi_trap;
+	u_long code = KSI_TRAPCODE(ksi);
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = process_frame(l);
@@ -256,7 +256,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	/* populate the siginfo frame */
-	frame.sf_si._info = *ksi;
+	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = NULL;
