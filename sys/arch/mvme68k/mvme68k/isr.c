@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.7 1997/11/13 10:43:11 veego Exp $	*/
+/*	$NetBSD: isr.c,v 1.8 1998/02/21 19:03:26 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,12 +40,21 @@
  * Link and dispatch interrupts.
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
-#include <machine/cpu.h>
+
+#ifdef UVM
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+#endif
+
 #include <net/netisr.h>
+
+#include <machine/cpu.h>
 
 #include <mvme68k/mvme68k/isr.h>
 
@@ -213,7 +222,11 @@ isrdispatch_autovec(evec)
 	ipl = vec - ISRAUTOVEC;
 
 	intrcnt[ipl]++;
+#ifdef UVM
+	uvmexp.intrs++;
+#else
 	cnt.v_intr++;
+#endif
 
 	list = &isr_autovec[ipl];
 	if (list->lh_first == NULL) {
@@ -251,7 +264,11 @@ isrdispatch_vectored(pc, evec, frame)
 	ipl = (getsr() >> 8) & 7;
 
 	intrcnt[ipl]++;
+#ifdef UVM
+	uvmexp.intrs++;
+#else
 	cnt.v_intr++;
+#endif
 
 	if ((vec < ISRVECTORED) || (vec >= (ISRVECTORED + NISRVECTORED)))
 		panic("isrdispatch_vectored: bad vec 0x%x\n", vec);
