@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.23 1998/07/27 06:17:49 is Exp $	*/
+/*	$NetBSD: stand.h,v 1.24 1998/07/27 15:10:05 is Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -133,7 +133,7 @@ int	open __P((const char *, int));
 int	close __P((int));
 void	closeall __P((void));
 ssize_t	read __P((int, void *, size_t));
-ssize_t	write __P((int, const void *, size_t));
+ssize_t	write __P((int, void *, size_t));
 off_t	lseek __P((int, off_t, int));
     
 int	nodev __P((void));
