@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strcpy.c	5.7 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strcpy.c,v 1.5 1995/10/07 09:26:46 mycroft Exp $";
+static char *rcsid = "$Id: strcpy.c,v 1.6 1996/03/14 18:52:21 christos Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -45,6 +45,6 @@ strcpy(to, from)
 {
 	char *save = to;
 
-	for (; *to = *from; ++from, ++to);
+	for (; (*to = *from) != '\0'; ++from, ++to);
 	return(save);
 }

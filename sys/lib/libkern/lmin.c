@@ -1,4 +1,4 @@
-/*	$NetBSD: lmin.c,v 1.2 1994/10/26 06:42:28 cgd Exp $	*/
+/*	$NetBSD: lmin.c,v 1.3 1996/03/14 18:52:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991 Regents of the University of California.
@@ -34,6 +34,9 @@
  *
  *	@(#)subr_xxx.c	7.10 (Berkeley) 4/20/91
  */
+
+#define LIBKERN_INLINE
+#include <lib/libkern/libkern.h>
 
 long
 lmin(a, b)
