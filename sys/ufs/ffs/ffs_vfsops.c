@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.52 1999/08/03 19:22:43 drochner Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.53 1999/10/16 23:53:29 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -627,7 +627,9 @@ out2:
 out:
 	if (bp)
 		brelse(bp);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
+	VOP_UNLOCK(devvp, 0);
 	if (ump) {
 		free(ump, M_UFSMNT);
 		mp->mnt_data = (qaddr_t)0;
@@ -691,9 +693,10 @@ ffs_unmount(mp, mntflags, p)
 		(void) ffs_sbupdate(ump, MNT_WAIT);
 	}
 	ump->um_devvp->v_specflags &= ~SI_MOUNTEDON;
+	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
-	vrele(ump->um_devvp);
+	vput(ump->um_devvp);
 	free(fs->fs_csp[0], M_UFSMNT);
 	free(fs, M_UFSMNT);
 	free(ump, M_UFSMNT);

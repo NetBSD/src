@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.39 1999/07/17 01:08:28 wrstuden Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.40 1999/10/16 23:53:27 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -511,8 +511,9 @@ cd9660_unmount(mp, mntflags, p)
 #endif
 	
 	isomp->im_devvp->v_specflags &= ~SI_MOUNTEDON;
+	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
-	vrele(isomp->im_devvp);
+	vput(isomp->im_devvp);
 	free((caddr_t)isomp, M_ISOFSMNT);
 	mp->mnt_data = (qaddr_t)0;
 	mp->mnt_flag &= ~MNT_LOCAL;
