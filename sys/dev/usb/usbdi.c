@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.3 1998/07/23 13:44:22 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.4 1998/07/24 21:02:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -214,6 +214,7 @@ usbd_start(pipe)
 	}
 	SIMPLEQ_REMOVE_HEAD(&pipe->queue, reqh, next);
 	pipe->running = 1;
+	pipe->curreqh = reqh;
 	return (pipe->methods->transfer(reqh));
 }
 
@@ -789,10 +790,9 @@ usbd_ar_pipe(pipe)
 {
 	usbd_request_handle reqh;
 
-	reqh = SIMPLEQ_FIRST(&pipe->queue);
-	if (reqh != 0) {
-		pipe->methods->abort(reqh);
-	}
+	if (pipe->curreqh != 0)
+		pipe->methods->abort(pipe->curreqh);
+
 	for (;;) {
 		reqh = SIMPLEQ_FIRST(&pipe->queue);
 		if (reqh == 0)
@@ -849,6 +849,7 @@ usbd_transfer_cb(reqh)
 			      reqh->actlen, reqh->length));
 		reqh->status = USBD_SHORT_XFER;
 	}
+	pipe->curreqh = 0;
 	if (reqh->callback)
 		reqh->callback(reqh, reqh->priv, reqh->status);
 
@@ -862,6 +863,7 @@ usbd_transfer_cb(reqh)
 		pipe->running = 0;
 	else {
 		SIMPLEQ_REMOVE_HEAD(&pipe->queue, nreqh, next);
+		pipe->curreqh = reqh;
 		r = pipe->methods->transfer(nreqh);
 		if (r != USBD_IN_PROGRESS)
 			printf("usbd_transfer_cb: error=%d\n", r);
