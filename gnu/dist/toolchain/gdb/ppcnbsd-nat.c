@@ -242,8 +242,8 @@ fetch_kcore_registers (pcb)
     error("Cannot read switchframe.");
   supply_register(1, (char *)&pcb->pcb_sp);
   supply_register(2, (char *)&sf.fixreg2);
-  supply_register(PC_REGNUM, (char *)&sf.fill);
-  supply_register(LR_REGNUM, (char *)&sf.fill);
+  supply_register(PC_REGNUM, (char *)&sf.lr);
+  supply_register(LR_REGNUM, (char *)&sf.lr);
   supply_register(CR_REGNUM, (char *)&sf.cr);
   for (regno = 13; regno < 32; regno++)
     supply_register(regno, (char *)&sf.fixreg[regno - 13]);
