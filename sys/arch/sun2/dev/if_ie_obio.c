@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.1 2001/06/27 17:24:35 fredette Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.2 2001/10/01 01:53:31 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -260,7 +260,7 @@ ie_obio_match(parent, cf, aux)
 	int matched;
 	u_int8_t ctrl;
 
-	/* No default Multibus address. */
+	/* No default obio address. */
 	if (oba->oba_paddr == -1)
 		return(0);
         
