@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2001/09/01 09:53:25 rearnsha Exp $
+#	$NetBSD: Makefile,v 1.3 2002/03/16 20:37:49 reinoud Exp $
 
 .include <bsd.own.mk>
+
+SUBDIR+= abort-fixup
 
 .if ${OBJECT_FMT} == "ELF"
 SUBDIR+= sigstackalign
