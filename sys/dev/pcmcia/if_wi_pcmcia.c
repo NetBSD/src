@@ -1,11 +1,11 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.52 2004/08/10 03:54:37 mycroft Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.53 2004/08/10 06:10:38 mycroft Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Ichiro FUKUHARA (ichiro@ichiro.org).
+ * by Ichiro FUKUHARA (ichiro@ichiro.org), and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.52 2004/08/10 03:54:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.53 2004/08/10 06:10:38 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
