@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.39 1997/12/04 06:39:02 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.40 1998/01/20 16:44:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.39 1997/12/04 06:39:02 mycroft Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.40 1998/01/20 16:44:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -565,10 +565,11 @@ run_service(ctrl, sep)
 {
 	struct passwd *pwd;
 	struct group *grp = NULL;	/* XXX gcc */
+	char buf[7];
 #ifdef LIBWRAP
 	struct request_info req;
 	int denied;
-	char buf[7], *service = NULL;	/* XXX gcc */
+	char *service = NULL;	/* XXX gcc */
 #endif
 
 #ifdef LIBWRAP
