@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_break.c,v 1.40 1998/03/03 13:44:48 fvdl Exp $	*/
+/*	$NetBSD: linux_break.c,v 1.41 1998/03/24 09:47:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -722,7 +722,7 @@ linux_sys_utime(p, v, retval)
 	else
 		SCARG(&ua, tptr) = NULL;
 
-	return sys_utimes(p, uap, retval);
+	return sys_utimes(p, &ua, retval);
 }
 
 /*
