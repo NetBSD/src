@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.65 2001/01/14 02:38:14 mrg Exp $	*/
+/*	$NetBSD: defs.h,v 1.66 2001/04/15 11:08:51 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -251,6 +251,8 @@ EXTERN int net_dhcpconf INIT(0);
 #ifdef INET6
 EXTERN char net_ip6[STRSIZE] INIT("");
 EXTERN char net_namesvr6[STRSIZE] INIT("");
+EXTERN int net_ip6conf INIT(0);
+#define IP6CONF_AUTOHOST	0x01
 #endif
 
 /* Variables for upgrade. */
