@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.34 1998/03/03 13:47:48 fvdl Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.35 1998/03/05 04:36:07 scottb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -103,6 +103,8 @@
 #include <compat/ibcs2/ibcs2_utime.h>
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_sysi86.h>
+
+extern struct emul emul_ibcs2_coff, emul_ibcs2_xout, emul_ibcs2_elf;
 
 
 int
@@ -732,7 +734,7 @@ ibcs2_sys_time(p, v, retval)
 
 	microtime(&tv);
 	*retval = tv.tv_sec;
-	if (SCARG(uap, tp))
+	if (p->p_emul != &emul_ibcs2_xout && SCARG(uap, tp))
 		return copyout((caddr_t)&tv.tv_sec, (caddr_t)SCARG(uap, tp),
 			       sizeof(ibcs2_time_t));
 	else
@@ -1643,28 +1645,54 @@ xenix_sys_locking(p, v, retval)
 	      syscallarg(int) blk;
 	      syscallarg(int) size;
 	} */ *uap = v;
-	struct sys_flock_args fl;
+	struct sys_fcntl_args fa;
+	struct flock *flp;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	int cmd;
+	off_t off;
+	caddr_t sg = stackgap_init(p->p_emul);
 
-	SCARG(&fl, fd) = SCARG(uap, fd);
 	switch SCARG(uap, blk) {
-	case X_LK_UNLCK:
-		SCARG(&fl, how) = LOCK_UN;
-		break;
-	case X_LK_NBLCK:
-		SCARG(&fl, how) = LOCK_NB | LOCK_EX;
-		break;
-	case X_LK_NBRLCK:
-		SCARG(&fl, how) = LOCK_NB | LOCK_SH;
-		break;
-	case X_LK_LOCK:
-		SCARG(&fl, how) = LOCK_EX;
-		break;
+	case X_LK_GETLK:
+	case X_LK_SETLK:
 	case X_LK_SETLKW:
-		SCARG(&fl, how) = LOCK_EX;
-		break;
-	default:
-		return EINVAL;
+		return ibcs2_sys_fcntl(p, v, retval);
 	}
 
-	return sys_flock(p, &fl, retval);
+	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+		return (EBADF);
+	off = fp->f_offset;
+
+	flp = stackgap_alloc(&sg, sizeof(*flp));
+	flp->l_start = off;
+	switch SCARG(uap, blk) {
+	case X_LK_UNLCK:  
+		cmd = F_SETLK;  
+		flp->l_type = F_UNLCK; 
+		break;
+	case X_LK_LOCK:   
+		cmd = F_SETLKW; 
+		flp->l_type = F_WRLCK; 
+		break;
+	case X_LK_NBRLCK: 
+		cmd = F_SETLK;  
+		flp->l_type = F_RDLCK; 
+		break;
+	case X_LK_NBLCK:  
+		cmd = F_SETLK;  
+		flp->l_type = F_WRLCK; 
+		break;
+	default: 
+		return EINVAL;
+	}
+	flp->l_len = SCARG(uap, size);
+	flp->l_whence = SEEK_SET;
+
+	SCARG(&fa, fd) = SCARG(uap, fd);
+	SCARG(&fa, cmd) = cmd;
+	SCARG(&fa, arg) = (void *)flp;
+
+	return sys_fcntl(p, &fa, retval);
 }
