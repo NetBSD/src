@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.c,v 1.13 1997/03/12 20:17:54 christos Exp $	*/
+/*	$NetBSD: lcp.c,v 1.14 1997/05/17 22:14:20 christos Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -21,9 +21,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: lcp.c,v 1.29 1997/03/04 03:39:56 paulus Exp ";
+static char rcsid[] = "Id: lcp.c,v 1.30 1997/04/30 05:52:59 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: lcp.c,v 1.13 1997/03/12 20:17:54 christos Exp $";
+static char rcsid[] = "$NetBSD: lcp.c,v 1.14 1997/05/17 22:14:20 christos Exp $";
 #endif
 #endif
 
@@ -84,7 +84,7 @@ static void lcp_rprotrej __P((fsm *, u_char *, int));
 
 static void lcp_echo_lowerup __P((int));
 static void lcp_echo_lowerdown __P((int));
-static void LcpEchoTimeout __P((caddr_t));
+static void LcpEchoTimeout __P((void *));
 static void lcp_received_echo_reply __P((fsm *, int, u_char *, int));
 static void LcpSendEchoRequest __P((fsm *));
 static void LcpLinkFailure __P((fsm *));
@@ -1753,7 +1753,7 @@ LcpEchoCheck (f)
      * Start the timer for the next interval.
      */
     assert (lcp_echo_timer_running==0);
-    TIMEOUT (LcpEchoTimeout, (caddr_t) f, lcp_echo_interval);
+    TIMEOUT (LcpEchoTimeout, f, lcp_echo_interval);
     lcp_echo_timer_running = 1;
 }
 
@@ -1763,7 +1763,7 @@ LcpEchoCheck (f)
 
 static void
 LcpEchoTimeout (arg)
-    caddr_t arg;
+    void *arg;
 {
     if (lcp_echo_timer_running != 0) {
         lcp_echo_timer_running = 0;
@@ -1861,7 +1861,7 @@ lcp_echo_lowerdown (unit)
     fsm *f = &lcp_fsm[unit];
 
     if (lcp_echo_timer_running != 0) {
-        UNTIMEOUT (LcpEchoTimeout, (caddr_t) f);
+        UNTIMEOUT (LcpEchoTimeout, f);
         lcp_echo_timer_running = 0;
     }
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: demand.c,v 1.4 1997/03/12 20:17:39 christos Exp $	*/
+/*	$NetBSD: demand.c,v 1.5 1997/05/17 22:14:17 christos Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -21,9 +21,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: demand.c,v 1.5 1996/08/28 06:40:03 paulus Exp ";
+static char rcsid[] = "Id: demand.c,v 1.6 1997/04/30 05:51:56 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: demand.c,v 1.4 1997/03/12 20:17:39 christos Exp $";
+static char rcsid[] = "$NetBSD: demand.c,v 1.5 1997/05/17 22:14:17 christos Exp $";
 #endif
 #endif
 
@@ -268,7 +268,7 @@ loop_frame(frame, len)
 {
     struct packet *pkt;
 
-    /* log_packet(frame, len, "from loop: "); */
+    /* log_packet(frame, len, "from loop: ", LOG_DEBUG); */
     if (len < PPP_HDRLEN)
 	return 0;
     if ((PPP_PROTOCOL(frame) & 0x8000) != 0)
@@ -320,6 +320,7 @@ demand_rexmit(proto)
     if (prev != NULL)
 	prev->next = NULL;
 }
+
 /*
  * Scan a packet to decide whether it is an "active" packet,
  * that is, whether it is worth bringing up the link for.

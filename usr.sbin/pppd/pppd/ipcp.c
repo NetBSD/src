@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.c,v 1.11 1997/03/12 20:17:46 christos Exp $	*/
+/*	$NetBSD: ipcp.c,v 1.12 1997/05/17 22:14:19 christos Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -21,9 +21,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: ipcp.c,v 1.30 1997/03/04 03:39:10 paulus Exp ";
+static char rcsid[] = "Id: ipcp.c,v 1.31 1997/04/30 05:52:48 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: ipcp.c,v 1.11 1997/03/12 20:17:46 christos Exp $";
+static char rcsid[] = "$NetBSD: ipcp.c,v 1.12 1997/05/17 22:14:19 christos Exp $";
 #endif
 #endif
 

@@ -1,6 +1,6 @@
-.\"	$NetBSD: pppd.8,v 1.15 1997/03/13 19:08:15 christos Exp $
+.\"	$NetBSD: pppd.8,v 1.16 1997/05/17 22:14:26 christos Exp $
 .\" manual page [] for pppd 2.3
-.\" Id: pppd.8,v 1.25 1997/03/04 03:42:25 paulus Exp
+.\" Id: pppd.8,v 1.26 1997/04/30 05:56:22 paulus Exp 
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -59,8 +59,8 @@ except that qualifiers which are inappropriate for a PPP link, such as
 \fBether\fR and \fBarp\fR, are not permitted.  Generally the filter
 expression should be enclosed in single-quotes to prevent whitespace
 in the expression from being interpreted by the shell. This option
-is only available if both the kernel and pppd were compiled with
-PPP_FILTER defined.
+is currently only available under NetBSD, and then only
+if both the kernel and pppd were compiled with PPP_FILTER defined.
 .TP
 .B asyncmap \fI<map>
 Set the async character map to <map>.  This map describes which
@@ -560,8 +560,9 @@ itself with PAP to \fIn\fR seconds (0 means no limit).
 Specifies a packet filter to applied to data packets being sent or
 received to determine which packets should be allowed to pass.
 Packets which are rejected by the filter are silently discarded.  This
-option can be used to provide protection against IP address spoofing
-and other attacks.
+option can be used to prevent specific network daemons (such as
+routed) using up link bandwidth, or to provide a basic firewall
+capability.
 The \fIfilter-expression\fR syntax is as described for tcpdump(1),
 except that qualifiers which are inappropriate for a PPP link, such as
 \fBether\fR and \fBarp\fR, are not permitted.  Generally the filter
@@ -569,8 +570,8 @@ expression should be enclosed in single-quotes to prevent whitespace
 in the expression from being interpreted by the shell.  Note that it
 is possible to apply different constraints to incoming and outgoing
 packets using the \fBinbound\fR and \fBoutbound\fR qualifiers. This
-option is only available if both the kernel and pppd were compiled with
-PPP_FILTER defined.
+option is currently only available under NetBSD, and then only if both
+the kernel and pppd were compiled with PPP_FILTER defined.
 .TP
 .B persist
 Do not exit after a connection is terminated; instead try to reopen
