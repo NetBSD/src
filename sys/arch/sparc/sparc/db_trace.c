@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.13 1999/07/04 06:45:26 chs Exp $ */
+/*	$NetBSD: db_trace.c,v 1.14 2000/04/10 01:22:09 chs Exp $ */
 
 /*
  * Mach Operating System
@@ -90,16 +90,27 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		char		*name;
 		db_addr_t	pc;
 
-		pc = frame->fr_pc;
-		if (!INKERNEL(pc))
-			break;
-
 		/*
 		 * Switch to frame that contains arguments
 		 */
+
+		pc = frame->fr_pc;
 		frame = frame->fr_fp;
-		if (!INKERNEL(frame))
-			break;
+
+		if (!INKERNEL(pc) || !INKERNEL(frame)) {
+			if (!kernel_only) {
+				count++;
+				while (count--) {
+					db_printf("0x%lx()\n", pc);
+					pc = fuword(&frame->fr_pc);
+					frame = (void *)fuword(&frame->fr_fp);
+					if (pc == 0 || frame == NULL) {
+						return;
+					}
+				}
+			}
+			return;
+		}
 
 		db_find_sym_and_offset(pc, &name, &offset);
 		if (name == NULL)
@@ -116,6 +127,5 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		db_printf("0x%x) at ", frame->fr_arg[i]);
 		db_printsym(pc, DB_STGY_PROC);
 		db_printf("\n");
-
 	}
 }
