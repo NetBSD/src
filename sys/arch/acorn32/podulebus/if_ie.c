@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.11 2003/01/20 14:59:27 bouyer Exp $ */
+/* $NetBSD: if_ie.c,v 1.12 2003/07/14 15:17:22 lukem Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -61,7 +61,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ie.c,v 1.11 2003/01/20 14:59:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.12 2003/07/14 15:17:22 lukem Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

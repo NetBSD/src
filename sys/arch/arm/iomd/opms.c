@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.4 2002/11/26 19:50:22 christos Exp $	*/
+/*	$NetBSD: opms.c,v 1.5 2003/07/14 15:17:23 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: opms.c,v 1.4 2002/11/26 19:50:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.5 2003/07/14 15:17:23 lukem Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
