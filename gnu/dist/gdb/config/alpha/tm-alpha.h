@@ -1,6 +1,6 @@
 /* Definitions to make GDB run on an Alpha box under OSF1.  This is
-   also used by the Alpha/Netware target.
-   Copyright 1993, 1994, 1995 Free Software Foundation, Inc.
+   also used by the Alpha/Netware and Alpha/Linux targets.
+   Copyright 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -24,6 +24,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "bfd.h"
 #include "coff/sym.h"		/* Needed for PDR below.  */
 #include "coff/symconst.h"
+
+#ifdef __STDC__
+struct frame_info;
+struct type;
+struct value;
+struct symbol;
+#endif
 
 #if !defined (TARGET_BYTE_ORDER)
 #define TARGET_BYTE_ORDER LITTLE_ENDIAN
@@ -61,9 +68,6 @@ extern CORE_ADDR alpha_skip_prologue PARAMS ((CORE_ADDR addr, int lenient));
    some instructions.  */
 
 #define SAVED_PC_AFTER_CALL(frame)	alpha_saved_pc_after_call(frame)
-#ifdef __STDC__
-struct frame_info;
-#endif
 extern CORE_ADDR
 alpha_saved_pc_after_call PARAMS ((struct frame_info *));
 
@@ -184,9 +188,6 @@ alpha_saved_pc_after_call PARAMS ((struct frame_info *));
 
 #define REGISTER_CONVERT_TO_VIRTUAL(REGNUM, TYPE, FROM, TO) \
   alpha_register_convert_to_virtual (REGNUM, TYPE, FROM, TO)
-#ifdef __STDC__
-struct type;
-#endif
 extern void
 alpha_register_convert_to_virtual PARAMS ((int, struct type *, char *, char *));
 
@@ -316,10 +317,7 @@ extern void alpha_find_saved_regs PARAMS ((struct frame_info *));
 /* Things needed for making the inferior call functions.  */
 
 #define PUSH_ARGUMENTS(nargs, args, sp, struct_return, struct_addr) \
-    sp = alpha_push_arguments(nargs, args, sp, struct_return, struct_addr)
-#ifdef __STDC__
-struct value;
-#endif
+    sp = alpha_push_arguments((nargs), (args), (sp), (struct_return), (struct_addr))
 extern CORE_ADDR
 alpha_push_arguments PARAMS ((int, struct value **, CORE_ADDR, int, CORE_ADDR));
 
@@ -384,6 +382,7 @@ extern CORE_ADDR alpha_call_dummy_address PARAMS ((void));
    alpha_extra_func_info_t's off of this.  */
 
 #define MIPS_EFI_SYMBOL_NAME "__GDB_EFI_INFO__"
+extern void ecoff_relocate_efi PARAMS ((struct symbol *, CORE_ADDR));
 
 /* Specific information about a procedure.
    This overlays the ALPHA's PDR records, 
@@ -452,5 +451,36 @@ extern struct frame_info *setup_arbitrary_frame PARAMS ((int, CORE_ADDR *));
    types of calls will work. */
 
 #define COERCE_FLOAT_TO_DOUBLE 1
+
+/* Return TRUE if procedure descriptor PROC is a procedure descriptor
+   that refers to a dynamically generated sigtramp function.
+
+   OSF/1 doesn't use dynamic sigtramp functions, so this is always
+   FALSE.  */
+
+#define PROC_DESC_IS_DYN_SIGTRAMP(proc)	(0)
+#define SET_PROC_DESC_IS_DYN_SIGTRAMP(proc)
+
+/* If PC is inside a dynamically generated sigtramp function, return
+   how many bytes the program counter is beyond the start of that
+   function.  Otherwise, return a negative value.
+
+   OSF/1 doesn't use dynamic sigtramp functions, so this always
+   returns -1.  */
+
+#define DYNAMIC_SIGTRAMP_OFFSET(pc)	(-1)
+
+/* Translate a signal handler frame into the address of the sigcontext
+   structure.  */
+
+#define SIGCONTEXT_ADDR(frame) \
+  (read_memory_integer ((frame)->next ? frame->next->frame : frame->frame, 8))
+
+/* If FRAME refers to a sigtramp frame, return the address of the next
+   frame.  */
+
+#define FRAME_PAST_SIGTRAMP_FRAME(frame, pc) \
+  (alpha_osf_skip_sigtramp_frame (frame, pc))
+extern CORE_ADDR alpha_osf_skip_sigtramp_frame PARAMS ((struct frame_info *, CORE_ADDR));
 
 #endif /* TM_ALPHA_H */
