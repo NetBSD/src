@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.11 1998/01/12 10:39:20 thorpej Exp $	*/
+/*	$NetBSD: drsc.c,v 1.12 1998/07/26 06:45:18 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -141,8 +141,8 @@ drscattach(pdp, dp, auxp)
 	add_isr(&sc->sc_isr);
 #else
 	drsc_softc = sc;
-	*draco_intpen &= ~DRIRQ_SCSI;
-	*draco_intena |= DRIRQ_SCSI;
+	single_inst_bclr_b(*draco_intpen, DRIRQ_SCSI);
+	single_inst_bset_b(*draco_intena, DRIRQ_SCSI);
 #endif
 	/*
 	 * attach all scsi units on us
@@ -193,7 +193,7 @@ drsc_handler()
 	rp->siop_sien = 0;
 	rp->siop_dien = 0;
 	sc->sc_flags |= SIOP_INTDEFER | SIOP_INTSOFF;
-	*draco_intpen &= ~DRIRQ_SCSI;
+	single_inst_bclr_b(*draco_intpen, DRIRQ_SCSI);
 #ifdef DEBUG
 	if (*draco_intpen & DRIRQ_SCSI)
 		printf("%s: intpen still 0x%x\n", sc->sc_dev.dv_xname,

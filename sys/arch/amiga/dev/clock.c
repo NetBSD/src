@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.32 1998/01/12 10:39:18 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.33 1998/07/26 06:45:18 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,7 @@
 #include <amiga/amiga/cia.h>
 #ifdef DRACO
 #include <amiga/amiga/drcustom.h>
+#include <m68k/include/asm_single.h>
 #endif
 #include <amiga/dev/rtc.h>
 #include <amiga/dev/zbusvar.h>
@@ -259,7 +260,7 @@ cpu_initclocks()
 		draco_ioct->io_timerlo = CLK_INTERVAL & 0xFF;
 		draco_ioct->io_timerhi = CLK_INTERVAL >> 8;
 		draco_ioct->io_timerrst = 0;	/* any value resets */
-		draco_ioct->io_status2 |= DRSTAT2_TMRINTENA;
+		single_inst_bset_b(draco_ioct->io_status2, DRSTAT2_TMRINTENA);
 
 		return;
 	}
@@ -279,7 +280,7 @@ cpu_initclocks()
 	 */
 #ifdef DRACO
 	if (dracorev)		/* we use cia a on DraCo */
-		*draco_intena |= DRIRQ_INT2;
+		single_inst_bset_b(*draco_intena, DRIRQ_INT2);
 	else
 #endif
 		custom.intena = INTF_SETCLR | INTF_EXTER;
