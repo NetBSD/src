@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 1999/04/22 04:24:54 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 1999/05/19 14:06:59 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -509,6 +509,32 @@ pmap_init()
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+
+	/*
+	 * Now that this is done, mark the pages shared with the
+	 * hardware page table search as non-CCB (actually, as CI).
+	 *
+	 * XXX Hm. Given that this is in the kernel map, can't we just
+	 * use the va's?
+	 */
+#if defined (M68060)
+	if (cputype == CPU_68060) {
+		struct kpt_page *kptp = kpt_free_list;
+
+		while (kptp) {
+			pmap_changebit(kptp->kpt_pa, PG_CI, ~PG_CCB);
+			kptp = kptp->kpt_next;
+		}
+
+		addr2 = (vm_offset_t)Segtabzeropa;
+		while (addr2 < (vm_offset_t)Segtabzeropa + X68K_STSIZE) {
+			pmap_changebit(addr2, PG_CI, ~PG_CCB);
+			addr2 += NBPG;
+		}
+
+		DCIS();
+	}
+#endif
 
 	/*
 	 * Now it is safe to enable pv_table recording.
@@ -1329,9 +1355,13 @@ validate:
 	if (wired)
 		npte |= PG_W;
 	if (!checkpv && !cacheable)
-		npte |= PG_CI;
 #if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040 && (npte & (PG_PROT|PG_CI)) == PG_RW)
+		npte |= (mmutype == MMU_68040 ? PG_CIN : PG_CI);
+#else
+		npte |= PG_CI;
+#endif
+#if defined(M68040) || defined(M68060)
+	else if (mmutype == MMU_68040 && (npte & (PG_PROT|PG_CI)) == PG_RW)
 #ifdef DEBUG
 		if (dowriteback && (dokwriteback || pmap != pmap_kernel()))
 #endif
@@ -1496,7 +1526,12 @@ pmap_update()
 {
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_update()\n"));
-
+#if defined(M68060)
+#if defined(M68040) || defined(M68030) || defined(M68020)
+	if (cputype == CPU_68060)
+#endif
+		DCIA();
+#endif
 	TBIA();		/* XXX should not be here. */
 }
 
@@ -2386,7 +2421,8 @@ pmap_enter_ptpage(pmap, va)
 #ifdef DEBUG
 			if (dowriteback && dokwriteback)
 #endif
-			pmap_changebit((paddr_t)pmap->pm_stpa, 0, ~PG_CCB);
+			/* Assume segment table size <= 4096 */
+			pmap_changebit((paddr_t)pmap->pm_stpa, PG_CI, ~PG_CCB);
 			pmap->pm_stfree = protostfree;
 		}
 #endif
@@ -2420,6 +2456,12 @@ pmap_enter_ptpage(pmap, va)
 			bzero(addr, SG4_LEV2SIZE*sizeof(st_entry_t));
 			addr = (caddr_t)&pmap->pm_stpa[ix*SG4_LEV2SIZE];
 			*ste = (u_int)addr | SG_RW | SG_U | SG_V;
+#if 0 /* XXX should be superfluous here: defined(M68060) */
+			if (cputype == CPU_68060) {
+				pmap_changebit(addr, PG_CI, ~PG_CCB);
+				DCIS(); /* XXX */
+			}
+#endif
 
 			PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,
 			    ("enter: alloc ste2 %d(%p)\n", ix, addr));
@@ -2520,7 +2562,7 @@ pmap_enter_ptpage(pmap, va)
 			       pmap == pmap_kernel() ? "Kernel" : "User",
 			       va, ptpa, pte, *pte);
 #endif
-		pmap_changebit(ptpa, 0, ~PG_CCB);
+		pmap_changebit(ptpa, PG_CI, ~PG_CCB);
 	}
 #endif
 	/*
