@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.80 1997/12/03 01:01:19 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.81 1998/01/12 08:44:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -190,9 +190,7 @@ struct cfattach audio_ca = {
 	sizeof(struct audio_softc), audioprobe, audioattach
 };
 
-struct cfdriver audio_cd = {
-	NULL, "audio", DV_DULL
-};
+extern struct cfdriver audio_cd;
 
 int
 audioprobe(parent, match, aux)
