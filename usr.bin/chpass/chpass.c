@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
+/*	$NetBSD: chpass.c,v 1.9 1996/08/09 09:22:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $";
+static char rcsid[] = "$NetBSD: chpass.c,v 1.9 1996/08/09 09:22:11 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,14 +66,17 @@ static char rcsid[] = "$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $";
 #include "chpass.h"
 #include "pathnames.h"
 
-char *progname = "chpass";
+extern	char *__progname;		/* from crt0.o */
+
 char *tempname;
 uid_t uid;
+int use_yp;
+
+void	(*Pw_error) __P((const char *, int, int));
 
 #ifdef	YP
-int use_yp;
-int force_yp = 0;
 extern struct passwd *ypgetpwnam(), *ypgetpwuid();
+extern	int _yp_check __P((char **));	/* buried deep inside libc */
 #endif
 
 void	baduser __P((void));
@@ -104,52 +107,55 @@ main(argc, argv)
 			op = NEWSH;
 			arg = optarg;
 			break;
-#ifdef	YP
 		case 'l':
 			use_yp = 0;
 			break;
 		case 'y':
-			if (!use_yp) {
-				warnx("YP not in use.");
-				usage();
-			}
-			force_yp = 1;
-			break;
+#ifdef	YP
+			if (!use_yp)
+				errx(1, "YP not in use.");
+#else
+			errx(1, "YP support not compiled in.");
 #endif
-		case '?':
+			break;
 		default:
 			usage();
 		}
 	argc -= optind;
 	argv += optind;
 
+#ifdef YP
+	if (use_yp)
+		Pw_error = yppw_error;
+	else
+#endif
+		Pw_error = pw_error;
+
 #ifdef	YP
 	if (op == LOADENTRY && use_yp)
-		errx(1, "cannot load entry using NIS.\n\tUse the -l flag to load local.");
+		errx(1, "cannot load entry using YP.\n\tUse the -l flag to load local.");
 #endif
 	uid = getuid();
 
 	if (op == EDITENTRY || op == NEWSH)
 		switch(argc) {
 		case 0:
-			pw = getpwuid(uid);
 #ifdef	YP
-			if (pw && !force_yp)
-				use_yp = 0;
-			else if (use_yp)
+			if (use_yp)
 				pw = ypgetpwuid(uid);
+			else
 #endif	/* YP */
+				pw = getpwuid(uid);
 			if (!pw)
 				errx(1, "unknown user: uid %u\n", uid);
 			break;
 		case 1:
-			pw = getpwnam(*argv);
 #ifdef	YP
-			if (pw && !force_yp)
-				use_yp = 0;
-			else if (use_yp)
+			if (use_yp)
 				pw = ypgetpwnam(*argv);
+			else
 #endif	/* YP */
+				pw = getpwnam(*argv);
 			if (!pw)
 				errx(1, "unknown user: %s", *argv);
 			if (uid && uid != pw->pw_uid)
@@ -164,7 +170,7 @@ main(argc, argv)
 		if (!arg[0])
 			usage();
 		if (p_shell(arg, pw, (ENTRY *)NULL))
-			pw_error((char *)NULL, 0, 1);
+				(*Pw_error)((char *)NULL, 0, 1);
 	}
 
 	if (op == LOADENTRY) {
@@ -175,20 +181,26 @@ main(argc, argv)
 			exit(1);
 	}
 
-	/* Get the passwd lock file and open the passwd file for reading. */
-	pw_init();
-	tfd = pw_lock(0);
-	if (tfd < 0)
-		errx(1, "the passwd file is busy.");
-	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
-	if (pfd < 0)
-		pw_error(_PATH_MASTERPASSWD, 1, 1);
+	if (!use_yp) {
+		/*
+		 * Get the passwd lock file and open the passwd file for
+		 * reading.
+		 */
+		pw_init();
+		tfd = pw_lock(0);
+		if (tfd < 0)
+			errx(1, "the passwd file is busy.");
+		pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
+		if (pfd < 0)
+			pw_error(_PATH_MASTERPASSWD, 1, 1);
+	}
 
 	/* Edit the user passwd information if requested. */
 	if (op == EDITENTRY) {
 		dfd = mkstemp(tempname);
-		if (dfd < 0)
-			pw_error(tempname, 1, 1);
+		if (dfd < 0) {
+				(*Pw_error)(tempname, 1, 1);
+		}
 		display(tempname, dfd, pw);
 		edit(tempname, pw);
 		(void)unlink(tempname);
@@ -197,7 +209,7 @@ main(argc, argv)
 #ifdef	YP
 	if (use_yp) {
 		if (pw_yp(pw, uid))
-			pw_error((char *)NULL, 0, 1);
+			yppw_error((char *)NULL, 0, 1);
 		else
 			exit(0);
 	}
