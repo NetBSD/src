@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.401 2002/01/29 06:08:35 junyoung Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.402 2002/01/30 01:53:00 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.396 2002/01/29 06:07:16 junyoung Exp 
+ *	NetBSD: pcidevs,v 1.397 2002/01/30 01:52:32 tron Exp 
  */
 
 /*
@@ -398,7 +398,7 @@
 #define	PCI_VENDOR_MEGASOFT	0x1160		/* Megasoft */
 #define	PCI_VENDOR_PFU	0x1161		/* PFU Limited */
 #define	PCI_VENDOR_OALAB	0x1162		/* OA Laboratory */
-#define	PCI_VENDOR_SYNEMA	0x1163		/* Synema Corporation */
+#define	PCI_VENDOR_RENDITION	0x1163		/* Rendition Inc. */
 #define	PCI_VENDOR_APT	0x1164		/* Advanced Peripherals Technologies */
 #define	PCI_VENDOR_IMAGRAPH	0x1165		/* Imagraph */
 #define	PCI_VENDOR_SERVERWORKS	0x1166		/* ServerWorks */
