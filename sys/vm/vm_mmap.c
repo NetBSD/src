@@ -37,27 +37,27 @@
  *
  *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.13 1993/11/12 05:57:43 cgd Exp $
+ *	$Id: vm_mmap.c,v 1.14 1993/12/17 07:56:57 mycroft Exp $
  */
 
 /*
  * Mapped file (mmap) interface to VM
  */
 
-#include "param.h"
-#include "systm.h"
-#include "filedesc.h"
-#include "proc.h"
-#include "vnode.h"
-#include "miscfs/specfs/specdev.h" /* XXX */
-#include "file.h"
-#include "mman.h"
-#include "conf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/filedesc.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
+#include <miscfs/specfs/specdev.h> /* XXX */
+#include <sys/file.h>
+#include <sys/mman.h>
+#include <sys/conf.h>
 
-#include "vm.h"
-#include "vm_pager.h"
-#include "vm_prot.h"
-#include "vm_statistics.h"
+#include <vm/vm.h>
+#include <vm/vm_pager.h>
+#include <vm/vm_prot.h>
+#include <vm/vm_statistics.h>
 
 #ifdef DEBUG
 int mmapdebug = 0;

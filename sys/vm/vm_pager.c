@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pager.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pager.c,v 1.7 1993/10/02 00:00:24 cgd Exp $
+ *	$Id: vm_pager.c,v 1.8 1993/12/17 07:57:14 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -68,12 +68,12 @@
  *	for builtin pagers.
  */
 
-#include "param.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/malloc.h>
 
-#include "vm.h"
-#include "vm_page.h"
-#include "vm_kern.h"
+#include <vm/vm.h>
+#include <vm/vm_page.h>
+#include <vm/vm_kern.h>
 
 #if SWAPPAGER
 extern struct pagerops swappagerops;

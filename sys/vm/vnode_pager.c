@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode_pager.c	7.5 (Berkeley) 4/20/91
- *	$Id: vnode_pager.c,v 1.3 1993/08/30 07:09:26 deraadt Exp $
+ *	$Id: vnode_pager.c,v 1.4 1993/12/17 07:57:24 mycroft Exp $
  */
 
 /*
@@ -47,20 +47,20 @@
  *	fix credential use (uses current process credentials now)
  */
 
-#include "param.h"
-#include "proc.h"
-#include "malloc.h"
-#include "vnode.h"
-#include "uio.h"
-#include "mount.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/vnode.h>
+#include <sys/uio.h>
+#include <sys/mount.h>
 
-#include "vm_param.h"
-#include "lock.h"
-#include "queue.h"
-#include "vm_prot.h"
-#include "vm_object.h"
-#include "vm_page.h"
-#include "vnode_pager.h"
+#include <vm/vm_param.h>
+#include <vm/lock.h>
+#include <vm/queue.h>
+#include <vm/vm_prot.h>
+#include <vm/vm_object.h>
+#include <vm/vm_page.h>
+#include <vm/vnode_pager.h>
 
 queue_head_t	vnode_pager_list;	/* list of managed vnodes */
 

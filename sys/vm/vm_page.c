@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_page.c,v 1.7 1993/11/10 08:22:14 cgd Exp $
+ *	$Id: vm_page.c,v 1.8 1993/12/17 07:57:07 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -67,12 +67,12 @@
  *	Resident memory management module.
  */
 
-#include "param.h"
+#include <sys/param.h>
 
-#include "vm.h"
-#include "vm_map.h"
-#include "vm_page.h"
-#include "vm_pageout.h"
+#include <vm/vm.h>
+#include <vm/vm_map.h>
+#include <vm/vm_page.h>
+#include <vm/vm_pageout.h>
 
 /*
  *	Associated with each page of user-allocatable memory is a
