@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.5 2002/03/16 20:43:50 christos Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.6 2003/01/18 07:33:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.5 2002/03/16 20:43:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.6 2003/01/18 07:33:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.5 2002/03/16 20:43:50 christos 
 #include <sys/uio.h>
 #include <sys/user.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/reg.h>
@@ -65,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.5 2002/03/16 20:43:50 christos 
  * Process debugging system call.
  */
 int
-freebsd_sys_ptrace(p, v, retval)
-	struct proc *p;
+freebsd_sys_ptrace(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -76,6 +77,7 @@ freebsd_sys_ptrace(p, v, retval)
 		syscallarg(caddr_t) addr;
 		syscallarg(int) data;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int error;
 	caddr_t sg;
 	struct {
@@ -92,7 +94,7 @@ freebsd_sys_ptrace(p, v, retval)
 		SCARG(&npa, pid) = SCARG(uap, pid);
 		SCARG(&npa, addr) = SCARG(uap, addr);
 		SCARG(&npa, data) = SCARG(uap, data);
-		return sys_ptrace(p, &npa, retval);
+		return sys_ptrace(l, &npa, retval);
 #endif
 	case FREEBSD_PT_TRACE_ME:
 	case FREEBSD_PT_READ_I:
@@ -102,7 +104,7 @@ freebsd_sys_ptrace(p, v, retval)
 	case FREEBSD_PT_CONTINUE:
 	case FREEBSD_PT_KILL:
 		/* These requests are compatible with NetBSD */
-		return sys_ptrace(p, uap, retval);
+		return sys_ptrace(l, uap, retval);
 
 	case FREEBSD_PT_READ_U:
 	case FREEBSD_PT_WRITE_U:
@@ -112,14 +114,14 @@ freebsd_sys_ptrace(p, v, retval)
 		SCARG(&npa, req) = PT_GETREGS;
 		SCARG(&npa, pid) = SCARG(uap, pid);
 		SCARG(&npa, addr) = (caddr_t)&nrp->regs;
-		if ((error = sys_ptrace(p, &npa, retval)) != 0)
+		if ((error = sys_ptrace(l, &npa, retval)) != 0)
 			return error;
 #endif
 #ifdef PT_GETFPREGS
 		SCARG(&npa, req) = PT_GETFPREGS;
 		SCARG(&npa, pid) = SCARG(uap, pid);
 		SCARG(&npa, addr) = (caddr_t)&nrp->fpregs;
-		if ((error = sys_ptrace(p, &npa, retval)) != 0)
+		if ((error = sys_ptrace(l, &npa, retval)) != 0)
 			return error;
 #endif
 		netbsd_to_freebsd_ptrace_regs(&nrp->regs, &nrp->fpregs, &fr);
@@ -139,14 +141,14 @@ freebsd_sys_ptrace(p, v, retval)
 			SCARG(&npa, req) = PT_SETREGS;
 			SCARG(&npa, pid) = SCARG(uap, pid);
 			SCARG(&npa, addr) = (caddr_t)&nrp->regs;
-			if ((error = sys_ptrace(p, &npa, retval)) != 0)
+			if ((error = sys_ptrace(l, &npa, retval)) != 0)
 				return error;
 #endif
 #ifdef PT_SETFPREGS
 			SCARG(&npa, req) = PT_SETFPREGS;
 			SCARG(&npa, pid) = SCARG(uap, pid);
 			SCARG(&npa, addr) = (caddr_t)&nrp->fpregs;
-			if ((error = sys_ptrace(p, &npa, retval)) != 0)
+			if ((error = sys_ptrace(l, &npa, retval)) != 0)
 				return error;
 #endif
 			return 0;
