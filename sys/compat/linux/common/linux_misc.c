@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.77 2000/12/13 21:41:23 augustss Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.78 2000/12/18 14:40:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -871,12 +871,12 @@ linux_sys_personality(p, v, retval)
  * The calls are here because of type conversions.
  */
 int
-linux_sys_setreuid(p, v, retval)
+linux_sys_setreuid16(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_setreuid_args /* {
+	struct linux_sys_setreuid16_args /* {
 		syscallarg(int) ruid;
 		syscallarg(int) euid;
 	} */ *uap = v;
@@ -891,12 +891,12 @@ linux_sys_setreuid(p, v, retval)
 }
 
 int
-linux_sys_setregid(p, v, retval)
+linux_sys_setregid16(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_setregid_args /* {
+	struct linux_sys_setregid16_args /* {
 		syscallarg(int) rgid;
 		syscallarg(int) egid;
 	} */ *uap = v;
@@ -1069,6 +1069,62 @@ linux_sys_getresuid(p, v, retval)
 		return (error);
 
 	return (copyout(&pc->p_svuid, SCARG(uap, suid), sizeof(uid_t)));
+}
+
+/*
+ * XXX fix these for 0xffff == -1 for old Linux uids return case.
+ */
+int
+linux_sys_setuid16(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return sys_setuid(p, v, retval);
+}
+
+int
+linux_sys_getuid16(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return sys_getuid(p, v, retval);
+}
+int
+linux_sys_setgid16(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return sys_setgid(p, v, retval);
+}
+
+int
+linux_sys_getgid16(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return sys_getgid(p, v, retval);
+}
+
+int
+linux_sys_geteuid16(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return sys_geteuid(p, v, retval);
+}
+
+int
+linux_sys_getegid16(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return sys_getegid(p, v, retval);
 }
 
 int
