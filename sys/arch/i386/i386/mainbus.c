@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 1996/03/17 01:31:05 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 1996/04/03 04:26:38 chuck Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -92,6 +92,18 @@ mainbus_attach(parent, self, aux)
 
 	printf("\n");
 
+	if (1 /* XXX ISA NOT YET SEEN */) {
+		mba.mba_iba.iba_busname = "isa";
+		mba.mba_iba.iba_bc = NULL;
+		config_found(self, &mba.mba_iba, mainbus_print);
+	}
+
+	if (!bcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN)) {
+		mba.mba_eba.eba_busname = "eisa";
+		mba.mba_eba.eba_bc = NULL;
+		config_found(self, &mba.mba_eba, mainbus_print);
+	}
+
 	/*
 	 * XXX Note also that the presence of a PCI bus should
 	 * XXX _always_ be checked, and if present the bus should be
@@ -107,17 +119,6 @@ mainbus_attach(parent, self, aux)
 	}
 #endif
 
-	if (!bcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN)) {
-		mba.mba_eba.eba_busname = "eisa";
-		mba.mba_eba.eba_bc = NULL;
-		config_found(self, &mba.mba_eba, mainbus_print);
-	}
-
-	if (1 /* XXX ISA NOT YET SEEN */) {
-		mba.mba_iba.iba_busname = "isa";
-		mba.mba_iba.iba_bc = NULL;
-		config_found(self, &mba.mba_iba, mainbus_print);
-	}
 }
 
 int
