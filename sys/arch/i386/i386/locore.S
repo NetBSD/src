@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1.2.6 2002/12/23 16:15:28 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.2.7 2002/12/31 01:03:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1683,7 +1683,7 @@ ENTRY(cpu_switch)
 1:	
 #endif /* DEBUG */
 	
-	movl	CPUVAR(CURLWP),%esi
+	movl	16(%esp),%esi		# current
 
 	/*
 	 * Clear curlwp so that we don't accumulate system time while idle.
@@ -1976,19 +1976,11 @@ switch_return:
 	popl	%ebx
 	ret
 
-#ifdef DIAGNOSTIC
-NENTRY(preempt_error)
-	pushl	$1f
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"cpu_preempt"
-#endif /* DIAGNOSTIC */
-
 /*
- * void cpu_preempt(struct lwp *current, struct lwp *next)
+ * void cpu_switchto(struct lwp *current, struct lwp *next)
  * Switch to the specified next LWP.
  */
-ENTRY(cpu_preempt)
+ENTRY(cpu_switchto)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
@@ -1999,11 +1991,11 @@ ENTRY(cpu_preempt)
 	pushl	$2f
 	call	_C_LABEL(panic)
 	/* NOTREACHED */
-2:	.asciz	"not splsched() in cpu_preempt!"
+2:	.asciz	"not splsched() in cpu_switchto!"
 1:
 #endif /* DEBUG */
 
-	movl	CPUVAR(CURLWP),%esi
+	movl	16(%esp),%esi		# current
 	movl	20(%esp),%edi		# next
 
 	/*
@@ -2012,35 +2004,17 @@ ENTRY(cpu_preempt)
 	 * the correct queue if it happens to get called from the spllower()
 	 * below and changes the priority.  (See corresponding comment in
 	 * usrret()).
+	 *
+	 * XXX Is this necessary?  We know we won't go idle.
 	 */
 	movl	$0,CPUVAR(CURLWP)
 
-preempt_dequeue:
 	/*
 	 * We're running at splhigh(), but it's otherwise okay to take
 	 * interrupts here.
 	 */
 	sti
 
-	movzbl	L_PRIORITY(%edi),%eax
-#ifdef DIAGNOSTIC
-	shrl	$2,%eax
-	btl	%eax,_C_LABEL(sched_whichqs)
-	jnc	_C_LABEL(preempt_error)
-#endif /* DIAGNOSTIC */
-	movl	L_BACK(%edi),%edx	# unlink process
-	movl	$0,L_BACK(%edi)		# zap reverse link to indicate off list
-	movl	L_FORW(%edi),%ecx
-	movl	%ecx,L_FORW(%edx)
-	movl	%edx,L_BACK(%ecx)
-	cmpl	%ecx,%edx		# q still has something?
-	jne	3f
-#ifndef DIAGNOSTIC
-	shrl	$2,%eax
-#endif
-	btrl	%eax,_C_LABEL(sched_whichqs)	# no; clear bit
-
-3:
 	/* Jump into the middle of cpu_switch */
 	xorl	%eax,%eax
 	jmp	switch_resume

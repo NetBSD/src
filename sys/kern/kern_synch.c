@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.28 2002/12/29 20:54:42 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.29 2002/12/31 01:03:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.28 2002/12/29 20:54:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.29 2002/12/31 01:03:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -921,7 +921,8 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	if (newl == NULL) {
 		retval = cpu_switch(l, NULL);
 	} else {
-		cpu_preempt(l, newl);
+		remrunqueue(newl);
+		cpu_switchto(l, newl);
 		retval = 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.23.8.7 2002/12/30 18:49:33 thorpej Exp $	*/
+/*	$NetBSD: macros.h,v 1.23.8.8 2002/12/31 01:03:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -350,8 +350,8 @@ bbcci(int bitnr, long *addr)
 	    : "=g"(ret) ::"r0","r1","r2","r3","r4","r5");		\
 	ret; })
 
-#define	cpu_preempt(p, newp)						\
-	__asm __volatile("movpsl -(%%sp); movl %0,%%r0; jsb Swtchto"	\
+#define	cpu_switchto(p, newp)						\
+	__asm __volatile("movpsl -(%%sp); movl %0,%%r2; jsb Swtchto"	\
 	    :: "g" (newp) : "r0", "r1", "r2", "r3", "r4", "r5")
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.1.2.8 2002/09/18 00:02:03 nathanw Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.1.2.9 2002/12/31 01:03:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -438,31 +438,16 @@ Lcpu_switch_same:
 	bras	Lcpu_switch_nofprest
 
 /*
- * void cpu_preempt(struct lwp *current, struct lwp *next)
+ * void cpu_switchto(struct lwp *current, struct lwp *next)
  *
  * Switch to the specific next LWP.
  */
-ENTRY(cpu_preempt)
-	movl	%sp@(4),%a0		| fetch `current' lwp
-	movl	%a0@(L_ADDR),%a1
-	movw	%sr,%a1@(PCB_PS)	| save sr before changing ipl
+ENTRY(cpu_switchto)
+	movl	%sp@(4),%a1		| fetch `current' lwp
+	movl	%a1@(L_ADDR),%a0
+	movw	%sr,%a0@(PCB_PS)	| save sr before changing ipl
 	clrl	_C_LABEL(curlwp)
 	movl	%sp@(8),%a0		| fetch `next' lwp
-	movb	%a0@(L_PRIORITY),%d0
-
-	/* Unlink `next' from queue */
-	movl	%a0@(L_BACK),%a1
-	movl    %a0@(L_FORW),%a0
-	movl    %a0,%a1@(L_FORW)
-	movl    %a1,%a0@(L_BACK)
-	cmpal   %a0,%a1			| anyone left on queue?
-	jne     1f			| yes, skip
-	movl    _C_LABEL(sched_whichqs),%d1
-	lsrb	#2,%d0
-	bclr    %d0,%d1			| no, clear bit
-	movl    %d1,_C_LABEL(sched_whichqs)
-1:	movl	%sp@(4),%a1		| fetch `current' lwp again
-	movl	%sp@(8),%a0		| fetch `next' lwp again
 	jbra	Lcpu_switch_common
 
 

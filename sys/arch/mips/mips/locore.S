@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.126.2.17 2002/11/11 22:00:42 nathanw Exp $	*/
+/*	$NetBSD: locore.S,v 1.126.2.18 2002/12/31 01:03:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -410,13 +410,13 @@ END(cpu_switch)
 
 
 /* 
- * cpu_preempt(struct lwp *cur, struct lwp *next)
+ * cpu_switchto(struct lwp *cur, struct lwp *next)
  * Switch to the specified next LWP
  * Arguments:
  *	a0	'struct lwp *' of the current LWP
  *	a1	'struct lwp *' of the LWP to switch to
  */
-NESTED(cpu_preempt, CALLFRAME_SIZ, ra)
+NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	lw	a2, L_ADDR(a0)
 	mfc0	t0, MIPS_COP_0_STATUS
 	REG_PROLOGUE
@@ -443,9 +443,6 @@ NESTED(cpu_preempt, CALLFRAME_SIZ, ra)
 
 	move	s0, a0				# s0 = old proc
 	move	s7, a1				# s7 = newproc
-
-	jal	_C_LABEL(remrunqueue)
-	move	a0, a1				# Remove newproc from queue
 
 #if defined(LOCKDEBUG)
 	/*
@@ -541,7 +538,7 @@ NESTED(cpu_preempt, CALLFRAME_SIZ, ra)
 	COP0_SYNC
 	j	ra
 	nop
-END(cpu_preempt)
+END(cpu_switchto)
 
 /*
  * switch_exit(struct lwp *)

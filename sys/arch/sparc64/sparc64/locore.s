@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139.4.16 2002/12/29 19:41:11 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.139.4.17 2002/12/31 01:03:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -8133,18 +8133,17 @@ swtchdelay:
 	 restore
 
 /*
- * cpu_preempt(struct lwp *current, struct lwp *next)
+ * cpu_switchto(struct lwp *current, struct lwp *next)
  * Switch to the specified next LWP
  * Arguments:
  *	i0	'struct lwp *' of the current LWP
  *	i1	'struct lwp *' of the LWP to switch to
  */
-ENTRY(cpu_preempt)
+ENTRY(cpu_switchto)
 	save	%sp, -CC64FSZ, %sp
 	/*
 	 * REGISTER USAGE AT THIS POINT:
 	 *	%l1 = tmp 0
-	 *	%l2 = %hi(_C_LABEL(whichqs))
 	 *	%l3 = p
 	 *	%l4 = lastproc
 	 *	%l5 = cpcb
@@ -8153,9 +8152,6 @@ ENTRY(cpu_preempt)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 *	%o2 = tmp 3
-	 *	%o3 = whichqs
-	 *	%o4 = which
-	 *	%o5 = q
 	 */
 	flushw	
 	rdpr	%pstate, %o1			! oldpstate = %pstate;
@@ -8163,46 +8159,16 @@ ENTRY(cpu_preempt)
 	sethi	%hi(CPCB), %l6
 	mov	%i1, %l3			! new lwp -> %l3
 
-	sethi	%hi(_C_LABEL(sched_whichqs)), %l2	! set up addr regs
-	ldub	[%l3 + L_PRIORITY], %o4		! load which
-
 	sethi	%hi(CURLWP), %l7
 	LDPTR	[%l6 + %lo(CPCB)], %l5
-	
-	srl	%o4, 2, %o4			! convert pri -> queue number
+
 	stx	%o7, [%l5 + PCB_PC]		! cpcb->pcb_pc = pc;
-	
+
 	mov	%i0, %l4			! lastproc = curlwp; (hope he's right)
 	sth	%o1, [%l5 + PCB_PSTATE]		! cpcb->pcb_pstate = oldpstate;
 
 	STPTR	%g0, [%l7 + %lo(CURLWP)]	! curlwp = NULL;
-	
-	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
 
-	sll	%o4, PTRSHFT+1, %o0
-	LDPTR	[%l3 + L_BACK], %o5
-
-	cmp	%l3, %o5		! if (p == q)
-	be,pn	%icc, Lsw_panic_rq	!	panic("switch rq");
-	 EMPTY
-	LDPTR	[%l3], %o0		! tmp0 = p->p_forw;
-	STPTR	%o0, [%o5]		! q->ph_link = tmp0;
-	STPTR	%o5, [%o0 + PTRSZ]	! tmp0->p_back = q;
-
-	set	_C_LABEL(sched_qs), %o5	! q = &qs[which];
-	sll	%o4, PTRSHFT+1, %o0
-	add	%o0, %o5, %o5
-	ldx	[%o5], %o0
-
-	
-	cmp	%o0, %o5		! if (tmp0 == q)
-	bne	1f
-	 EMPTY
-	mov	1, %o1			!	whichqs &= ~(1 << which);
-	sll	%o1, %o4, %o1
-	andn	%o3, %o1, %o3
-	st	%o3, [%l2 + %lo(_C_LABEL(sched_whichqs))]
-1:
 	ba,pt	%icc, cpu_loadproc
 	 nop
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.2.2.7 2002/12/30 18:49:34 thorpej Exp $	   */
+/*	$NetBSD: subr.S,v 1.2.2.8 2002/12/31 01:03:51 thorpej Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -413,11 +413,7 @@ JSBENTRY(Swtchto)
 	clrl	CI_CURLWP(%r1)		# Stop process accounting
 	svpctx				# Now on interrupt stack
 
-	# New LWP already in %r0
-	remque	(%r0),%r2		# remove new lwp from queue
-	bneq	1f			# jmp if queue not empty?
-	halt		# XXX
-1:	clrl	L_BACK(%r2)		# clear proc backpointer
+	# New LWP already in %r2
 	mfpr	$PR_SSP,%r1		# Get ptr to this cpu_info struct
 #if defined(MULTIPROCESSOR)
 	movl	r1,L_CPU(%r2)		# l->l_cpu = curcpu();

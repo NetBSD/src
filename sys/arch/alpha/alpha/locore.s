@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.97.2.11 2002/10/23 16:42:53 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.97.2.12 2002/12/31 01:03:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.11 2002/10/23 16:42:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.12 2002/12/31 01:03:46 thorpej Exp $");
 
 #include "assym.h"
 
@@ -767,10 +767,7 @@ LEAF(cpu_switch, 0)
 	LDGP(pv)
 	/*
 	 * do an inline savectx(), to save old context
-	 * Note: GET_CURLWP clobbers v0, t0, t8...t11.
 	 */
-	GET_CURLWP
-	ldq	a0, 0(v0)
 	ldq	a1, L_ADDR(a0)
 	/* NOTE: ksp is stored by the swpctx */
 	stq	s0, U_PCB_CONTEXT+(0 * 8)(a1)	/* store s0 - s6 */
@@ -943,20 +940,17 @@ switch_resume:
 	END(cpu_switch)
 
 /*
- * cpu_preempt(struct lwp *current, struct lwp *next)
+ * cpu_switchto(struct lwp *current, struct lwp *next)
  * Switch to the specified next LWP
  * Arguments:
  *	a0	'struct lwp *' of the current LWP
  *	a1	'struct lwp *' of the LWP to switch to
  */
-LEAF(cpu_preempt, 0)
+LEAF(cpu_switchto, 0)
 	LDGP(pv)
 	/*
 	 * do an inline savectx(), to save old context
-	 * Note: GET_CURLWP clobbers v0, t0, t8...t11.
 	 */
-	GET_CURLWP
-	ldq	a0, 0(v0)
 	ldq	a2, L_ADDR(a0)
 	/* NOTE: ksp is stored by the swpctx */
 	stq	s0, U_PCB_CONTEXT+(0 * 8)(a2)	/* store s0 - s6 */
@@ -972,37 +966,11 @@ LEAF(cpu_preempt, 0)
 
 	mov	a0, s0				/* save old curlwp */
 	mov	a2, s1				/* save old U-area */
-
-cpu_preempt_queuescan:
-	br	pv, 1f
-1:	LDGP(pv)
-	ldl	t3, sched_whichqs		/* look for non-empty queue */
-	bne	t3, 4f	 			/* and if none, panic! */
-	PANIC("cpu_preempt",Lcpu_preempt_pmsg)
-
-4:
-	ldq	t5, L_BACK(a1)			/* t5 = l->l_back */
-	stq	zero, L_BACK(a1)		/* firewall: l->l_back = NULL*/
-	ldq	t6, L_FORW(a1)			/* t6 = l->l_forw */
-	stq	t5, L_BACK(t6)			/* t6->l_back = t5 */
-	stq	t6, L_FORW(t5)			/* t5->l_forw = t6 */
-
-	cmpeq	t6, t5, t0			/* see if queue is empty */
-	beq	t0, 5f				/* nope, it's not! */
-
-	ldiq	t0, 1				/* compute bit in whichqs */
-	ldq	t2, L_PRIORITY(a1)
-	srl	t2, 2, t2	
-	sll	t0, t2, t0
-	xor	t3, t0, t3			/* clear bit in whichqs */
-	stl	t3, sched_whichqs
-
-5:
 	mov	a1, s2				/* save new lwp */
 	ldq	s3, L_MD_PCBPADDR(s2)		/* save new pcbpaddr */
 
 	br	switch_resume			/* finish the switch */
-	END(cpu_preempt)
+	END(cpu_switchto)
 
 /*
  * proc_trampoline()

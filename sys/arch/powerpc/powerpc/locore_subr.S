@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.2.10.8 2002/12/19 19:58:16 thorpej Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.2.10.9 2002/12/31 01:03:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -287,7 +287,7 @@ ENTRY_NOPROFILE(cpu_switch)
 	andc	9,9,3
 	stw	9,_C_LABEL(sched_whichqs)@l(8) /* mark it empty */
 
-switch_preempt_common:
+switch_common:
 1:
 	/* just did this resched thing */
 	xor	3,3,3
@@ -428,13 +428,13 @@ switch_return:
 
 /*
  * void
- * cpu_preempt(struct lwp *current, struct lwp *new)
+ * cpu_switchto(struct lwp *current, struct lwp *new)
  * Variant of cpu_switch, but instead of picking a new LWP from the run
  * queue, switch to the indicated new LWP.
  * 	r3 - current LWP
  * 	r4 - LWP to switch to
  */
-ENTRY(cpu_preempt)
+ENTRY(cpu_switchto)
 	mflr	0			/* save lr */
 	stw	0,4(1)
 	stwu	1,-16(1)
@@ -443,8 +443,8 @@ ENTRY(cpu_preempt)
 
 	stwu	1,-16(1)
 	stw	29,8(1)
-	mr	30,3
-	mr	29,4
+	mr	30,3			/* r30 = curlwp */
+	mr	29,4			/* r29 = newlwp */
 
 #if defined(MULTIPROCESSOR)
 	/* Switch to the idle PCB unless we're already running on it. */
@@ -504,34 +504,12 @@ ENTRY(cpu_preempt)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
 
-/* Find a new process */
+	/* Make stack normal, r31 newlwp, r30 oldlwp */
 	mr	31,29
 	lwz	29,8(1)
 	addi	1,1,16
 
-	lwz	4,L_BACK(31)		/* r4 = newlwp->l_back */
-	lwz	3,L_FORW(31)		/* r3 = newlwp->l_forw */
-	stw	4,L_BACK(3)		/* r3->l_back = r4 */
-	stw	3,L_FORW(4)		/* r4->l_forw = r3 */
-	
-	cmpl	0,4,3			/* queue empty? */
-	bne	switch_preempt_common
-
-	/* so now r31 is newlwp and r3/r4 are scratch again */
-
-	lis	8,_C_LABEL(sched_whichqs)@ha
-	lwz	9,_C_LABEL(sched_whichqs)@l(8)
-
-	lbz	3,L_PRIORITY(31)
-	li	4,2
-	srw	3,3,4			/* r3 = newlwp->l_priority / 4 */
-	lis	4,0x8000
-	srw	3,4,3			/* r3 = 0x80000000 >> r3 */
-	andc	9,9,3			/* sched_whichqs &= ~r3 */
-	stw	9,_C_LABEL(sched_whichqs)@l(8) /* mark it empty */
-
-	/* Stack normal, r31 is newlwp, r30 is oldlwp */
-	b	switch_preempt_common
+	b	switch_common
 /* NOTREACHED */
 
 /*
