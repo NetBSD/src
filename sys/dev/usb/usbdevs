@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.176 2001/07/16 15:38:48 augustss Exp $
+$NetBSD: usbdevs,v 1.177 2001/07/16 18:31:00 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -368,13 +368,6 @@ product AGFA SNAPSCAN1212U	0x0001	SnapScan 1212U
 product AGFA SNAPSCANTOUCH	0x0100	SnapScan Touch
 product AGFA SNAPSCAN1212U2	0x2061	SnapScan 1212U
 
-/* Agiler products */
-product ELECOM MOUSE29UO	0x0002	mouse 29UO
-product ELECOM LDUSBTX0		0x200c	LD-USB/TX
-product ELECOM LDUSBTX1		0x4002	LD-USB/TX
-product ELECOM LDUSBTX2		0x400b	LD-USB/TX
-product ELECOM LDUSBTX3		0xabc1	LD-USB/TX
-
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
 
@@ -422,7 +415,7 @@ product BELKIN2 F5U002		0x0002	F5U002 Parallel printer adapter
 
 /* Billionton products */
 product BILLIONTON USB100	0x0986	USB100N 10/100 FastEthernet Adapter
-product BILLIONTON USBMP100	0x0987	USB100LP
+product BILLIONTON USBLP100	0x0987	USB100LP
 product BILLIONTON USBEL100	0x0988	USB100EL
 product BILLIONTON USBE100	0x8511	USBE100
 
@@ -504,9 +497,16 @@ product DIGI ACCELEPORT8	0x0008	AccelePort USB 8
 product EIZO HUB		0x0000	hub
 product EIZO MONITOR		0x0001	monitor
 
+/* Elecom products */
+product ELECOM MOUSE29UO	0x0002	mouse 29UO
+product ELECOM LDUSBTX0		0x200c	LD-USB/TX
+product ELECOM LDUSBTX1		0x4002	LD-USB/TX
+product ELECOM LDUSBTX2		0x400b	LD-USB/TX
+product ELECOM LDUSBTX3		0xabc1	LD-USB/TX
+
 /* Elsa products */
 product ELSA MODEM1		0x2265	ELSA Modem Board
-product ELSA USB2Ethernet	0x3000	Microlink USB2Ethernet
+product ELSA USB2ETHERNET	0x3000	Microlink USB2Ethernet
 
 /* Entrega products */
 product ENTREGA 1S		0x0001	1S serial connector
