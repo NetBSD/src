@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.32 2003/02/05 18:07:46 matt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.33 2003/03/07 01:26:12 thorpej Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -196,6 +196,18 @@ EXTRA_CLEAN+= config_time.h
 config_time.h: Makefile
 	cp config_time.src config_time.h
 .endif
+
+.if defined(MEMORY_DISK_IMAGE)
+md_root_image.h: ${MEMORY_DISK_IMAGE}
+	${HEXDUMP} -v -e '"\t" 8/1 "0x%02x, " "\n"' ${.ALLSRC} > ${.TARGET}
+
+# XXX This is only needed when building md_root.o
+CPPFLAGS+=	-DMEMORY_DISK_IMAGE
+md_root.o: md_root_image.h
+.endif
+
+# depend on MEMORY_DISK_IMAGE configuration
+md_root.o: Makefile
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
