@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.7 1999/10/13 17:48:04 drochner Exp $	*/
+/*	$NetBSD: parse.c,v 1.8 2000/02/22 12:39:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -226,6 +226,7 @@ hid_get_item(hid_data_t s, hid_item_t *h)
 				c->collevel++;
 				*h = *c;
 				hid_clear_local(c);
+				c->report_ID = NO_REPORT_ID;
 				s->nusage = 0;
 				return (1);
 			case 11:	/* Feature */
@@ -238,7 +239,7 @@ hid_get_item(hid_data_t s, hid_item_t *h)
 				c->kind = hid_endcollection;
 				c->collevel--;
 				*h = *c;
-				hid_clear_local(c);
+				/*hid_clear_local(c);*/
 				s->nusage = 0;
 				return (1);
 			default:
@@ -364,7 +365,7 @@ hid_report_size(report_desc_t r, enum hid_kind k, int *idp)
 		*idp = 0;
 	memset(&h, 0, sizeof h);
 	for (d = hid_start_parse(r, 1<<k); hid_get_item(d, &h); ) {
-		if (h.report_ID != 0) {
+		if (h.report_ID != NO_REPORT_ID) {
 			if (idp)
 				*idp = h.report_ID;
 			id = 8;

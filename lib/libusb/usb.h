@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.5 1999/07/02 15:46:53 simonb Exp $	*/
+/*	$NetBSD: usb.h,v 1.6 2000/02/22 12:39:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -45,6 +45,7 @@ typedef struct hid_item {
 	int unit;
 	int report_size;
 	int report_ID;
+#define NO_REPORT_ID 0
 	int report_count;
 	/* Local */
 	unsigned int usage;
