@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.293 1998/02/19 04:18:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.294 1998/03/05 04:20:44 scottb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1063,21 +1063,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	}
 	/* NOTREACHED */
 }
-
-#ifdef COMPAT_IBCS2
-void ibcs2_sendsig __P((sig_t, int, int, u_long));
-
-void
-ibcs2_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
-	int sig, mask;
-	u_long code;
-{
-	extern int bsd_to_ibcs2_sig[];
-
-	sendsig(catcher, bsd_to_ibcs2_sig[sig], mask, code);
-}
-#endif
 
 /*
  * Send an interrupt to process.
