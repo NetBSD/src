@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.7 1999/08/25 11:28:10 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.8 1999/08/28 22:49:05 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -137,7 +137,7 @@ sys/net/if.c					1.51
 sys/netinet/ip_proxy.c				1.18
 
   Check the protocol before forwarding to proxy module.  Fixes
-  PR#7831.  (bouyer/darrenr)
+  PR#7831.  (bouyer)
 
 gnu/usr.bin/tar/gnu.c				1.5
 gnu/usr.bin/tar/list.c				1.6
@@ -152,9 +152,32 @@ doc/tmac/doc-common				1.32
   Mark Ap as callable, fixes formatting of a few man pages.  (ross)
 
 sys/dev/ata/ata_wdc.c                           1.20
-sys/dev/ic/wdc.c                                1.70
-sys/dev/scsipi/atapi_wdc.c                      patch
+sys/dev/ic/wdc.c                                1.69-1.70
+sys/dev/scsipi/atapi_wdc.c                      1.22+patch
 
   Add some debug printfs, change timeout handling to be more efficient
   and less error-prone, and fix the "lockup after lost interrupt"
-  problem some users have been reporting.  (bouyer)
+  problem some users have been reporting.  Also a mostly-stylistic
+  change guarding tsleep() with a while() loop, and a retry if PIO
+  mode < 3 fails.  (bouyer)
+
+share/mk/bsd.man.mk				1.46
+
+  Use -Tascii for pre-generated man pages, avoiding nroff character
+  set dependence on LESSCHARSET (!).  (bad)
+
+etc/mtree/special				1.23-1.24
+
+  Change to match the permissions set on install, and fix for
+  nonexistent group name.  (is)
+
+share/zoneinfo/africa				1.1.1.10
+share/zoneinfo/antarctica			1.1.1.6
+share/zoneinfo/asia				1.1.1.9
+share/zoneinfo/australasia			1.1.1.9
+share/zoneinfo/europe				1.1.1.9
+share/zoneinfo/leapseconds			1.1.1.4
+share/zoneinfo/northamerica			1.1.1.10
+share/zoneinfo/southamerica			1.1.1.9
+
+  Update to tzdata1999e.  (kleink)
