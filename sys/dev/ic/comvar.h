@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.38 2001/01/07 18:09:26 sommerfeld Exp $	*/
+/*	$NetBSD: comvar.h,v 1.39 2001/01/14 23:50:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -150,7 +150,7 @@ int cominit __P((bus_space_tag_t, bus_addr_t, int, int, tcflag_t,
 int com_detach __P((struct device *, int));
 int com_activate __P((struct device *, enum devact));
 
-#ifndef __GENERIC_SOFT_INTERRUPTS
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
 #define	IPL_SERIAL	IPL_TTY
 #define	splserial()	spltty()

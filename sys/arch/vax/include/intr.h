@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.8 2001/01/14 02:00:43 thorpej Exp $	*/
+/* 	$NetBSD: intr.h,v 1.9 2001/01/14 23:50:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -136,8 +136,6 @@ do {								\
 #define setsoftserial()	_setsirr(IPL_SOFTSERIAL)
 #define setsoftnet()	_setsirr(IPL_SOFTNET)
 #define setsoftclock()	_setsirr(IPL_SOFTCLOCK)
-
-#define __GENERIC_SOFT_INTERRUPTS
 
 #if !defined(_LOCORE)
 LIST_HEAD(sh_head, softintr_handler);
