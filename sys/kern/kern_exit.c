@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.135 2004/02/09 13:11:21 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.136 2004/02/18 14:42:20 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.135 2004/02/09 13:11:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.136 2004/02/18 14:42:20 hannken Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -393,6 +393,8 @@ exit1(struct lwp *l, int rv)
 	cpu_lwp_free(l, 1);
 #endif
 
+	pmap_deactivate(l);
+
 	/*
 	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
 	 */
@@ -499,8 +501,6 @@ exit1(struct lwp *l, int rv)
 
 	/* This process no longer needs to hold the kernel lock. */
 	KERNEL_PROC_UNLOCK(l);
-
-	pmap_deactivate(l);
 
 #ifdef DEBUG
 	/* Nothing should use the process link anymore */
