@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.28 2000/06/04 18:10:40 mycroft Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.29 2000/06/04 18:14:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.28 2000/06/04 18:10:40 mycroft Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.29 2000/06/04 18:14:45 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -356,7 +356,7 @@ showkre()
 		X(time);
 		etime += s.time[i];
 	}
-	if (etime < 5.0) {	/* < 5 ticks - ignore this trash */
+	if (etime < 1.0) {	/* < 5 ticks - ignore this trash */
 		if (failcnt++ >= MAXFAIL) {
 			clear();
 			mvprintw(2, 10, "The alternate system clock has died!");
