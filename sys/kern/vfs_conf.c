@@ -31,18 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vfs_conf.c	7.3 (Berkeley) 6/28/90
- *	$Id: vfs_conf.c,v 1.8 1993/06/10 16:25:04 brezak Exp $
+ *	$Id: vfs_conf.c,v 1.9 1993/07/07 10:55:00 cgd Exp $
  */
 
 #include "param.h"
 #include "mount.h"
-
-/*
- * This specifies the filesystem used to mount the root.
- * This specification should be done by /etc/config.
- */
-extern int ufs_mountroot();
-int (*mountroot)() = ufs_mountroot;
 
 /*
  * These define the root filesystem and device.
