@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.48 2001/08/12 11:48:27 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.49 2001/08/12 11:52:43 itojun Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -118,9 +118,7 @@
  *   field hits 0 (= no external reference other than from SA header.
  */
 
-#ifdef IPSEC_DEBUG
 u_int32_t key_debug_level = 0;
-#endif
 static u_int key_spi_trycnt = 1000;
 static u_int32_t key_spi_minval = 0x100;
 static u_int32_t key_spi_maxval = 0x0fffffff;	/* XXX */
