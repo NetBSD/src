@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.3 1996/03/17 06:29:33 cgd Exp $	*/
+/*	$NetBSD: pack.c,v 1.4 1996/06/17 18:21:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -209,7 +209,8 @@ packdevi()
 
 /*
  * Return true if two aliases are "the same".  In this case, they need
- * to have the same config flags and the same locators.
+ * to attach via the same attribute, have the same config flags, and
+ * have the same locators.
  */
 static int
 sameas(i1, i2)
@@ -217,6 +218,8 @@ sameas(i1, i2)
 {
 	register const char **p1, **p2;
 
+	if (i1->i_atattr != i2->i_atattr)
+		return (0);
 	if (i1->i_cfflags != i2->i_cfflags)
 		return (0);
 	for (p1 = i1->i_locs, p2 = i2->i_locs; *p1 == *p2; p2++)
