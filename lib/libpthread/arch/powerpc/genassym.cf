@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.1 2001/11/13 20:21:23 briggs Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.2 2001/11/21 03:29:01 briggs Exp $
 
 # Copyright (c) 2001 Wasabi Systems, Inc.
 # All rights reserved.
@@ -42,6 +42,7 @@ include "pthread_md.h"
 
 # for _context_u.S
 define UC_FLAGS		offsetof(ucontext_t, uc_flags)
+define _UC_FPVALID	offsetof(ucontext_t, uc_mcontext.__fpregs.__fpu_valid)
 define _REG_R0		offsetof(ucontext_t, uc_mcontext.__gregs[0])
 define _REG_CR		offsetof(ucontext_t, uc_mcontext.__gregs[32])
 define _REG_LR		offsetof(ucontext_t, uc_mcontext.__gregs[33])
@@ -49,9 +50,12 @@ define _REG_PC		offsetof(ucontext_t, uc_mcontext.__gregs[34])
 define _REG_MSR		offsetof(ucontext_t, uc_mcontext.__gregs[35])
 define _REG_CTR		offsetof(ucontext_t, uc_mcontext.__gregs[36])
 define _REG_XER		offsetof(ucontext_t, uc_mcontext.__gregs[37])
+define _REG_FP0		offsetof(ucontext_t, uc_mcontext.__fpregs.__fpu_regs[0])
+define _REG_FPSCR	offsetof(ucontext_t, uc_mcontext.__fpregs.__fpu_fpscr)
 
 # uc_flags
 define _UC_CPU		_UC_CPU
+define _UC_FPU		_UC_FPU
 define _UC_USER_BIT	_UC_USER_BIT
 
 #========================================================================
