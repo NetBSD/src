@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2002/04/29 09:53:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.28.4.1 2002/06/19 00:03:07 lukem Exp $
 
 LIB=	compat
 NOPIC=	# defined
@@ -46,3 +46,6 @@ libinstall::
 .include <bsd.own.mk>
 .undef DESTDIR
 .include <bsd.lib.mk>
+
+showsources: ${SRCS} 
+	@echo ${.ALLSRC}
