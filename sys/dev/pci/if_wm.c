@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.31 2003/01/21 05:43:26 itojun Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.32 2003/02/04 17:40:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -2315,8 +2315,8 @@ wm_add_rxbuf(struct wm_softc *sc, int idx)
 
 	rxs->rxs_mbuf = m;
 
-	error = bus_dmamap_load(sc->sc_dmat, rxs->rxs_dmamap,
-	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
+	m->m_len = m->m_pkthdr.len = m->m_ext.ext_size;
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, rxs->rxs_dmamap, m,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to load rx DMA map %d, error = %d\n",
