@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.20 2002/09/23 02:55:03 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.21 2002/09/24 00:12:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.20 2002/09/23 02:55:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.21 2002/09/24 00:12:55 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -49,31 +49,30 @@ static void
 rf_FreeASMList(RF_AccessStripeMap_t * start, RF_AccessStripeMap_t * end,
     int count);
 
-/*****************************************************************************************
+/***************************************************************************
  *
- * MapAccess -- main 1st order mapping routine.
- *
- * Maps an access in the RAID address space to the corresponding set of physical disk
- * addresses.  The result is returned as a list of AccessStripeMap structures, one per
- * stripe accessed.  Each ASM structure contains a pointer to a list of PhysDiskAddr
- * structures, which describe the physical locations touched by the user access.  Note
- * that this routine returns only static mapping information, i.e. the list of physical
- * addresses returned does not necessarily identify the set of physical locations that
- * will actually be read or written.
- *
- * The routine also maps the parity.  The physical disk location returned always
- * indicates the entire parity unit, even when only a subset of it is being accessed.
- * This is because an access that is not stripe unit aligned but that spans a stripe
- * unit boundary may require access two distinct portions of the parity unit, and we
- * can't yet tell which portion(s) we'll actually need.  We leave it up to the algorithm
- * selection code to decide what subset of the parity unit to access.
- *
- * Note that addresses in the RAID address space must always be maintained as
+ * MapAccess -- main 1st order mapping routine.  Maps an access in the
+ * RAID address space to the corresponding set of physical disk
+ * addresses.  The result is returned as a list of AccessStripeMap
+ * structures, one per stripe accessed.  Each ASM structure contains a
+ * pointer to a list of PhysDiskAddr structures, which describe the
+ * physical locations touched by the user access.  Note that this routine
+ * returns only static mapping information, i.e. the list of physical
+ * addresses returned does not necessarily identify the set of physical
+ * locations that will actually be read or written.  The routine also
+ * maps the parity.  The physical disk location returned always indicates
+ * the entire parity unit, even when only a subset of it is being
+ * accessed.  This is because an access that is not stripe unit aligned
+ * but that spans a stripe unit boundary may require access two distinct
+ * portions of the parity unit, and we can't yet tell which portion(s)
+ * we'll actually need.  We leave it up to the algorithm selection code
+ * to decide what subset of the parity unit to access.  Note that
+ * addresses in the RAID address space must always be maintained as
  * longs, instead of ints.
- *
+ * 
  * This routine returns NULL if numBlocks is 0
  *
- ****************************************************************************************/
+ ***************************************************************************/
 
 RF_AccessStripeMapHeader_t *
 rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
@@ -252,13 +251,15 @@ rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
 #endif
 	return (asm_hdr);
 }
-/*****************************************************************************************
- * This routine walks through an ASM list and marks the PDAs that have failed.
- * It's called only when a disk failure causes an in-flight DAG to fail.
- * The parity may consist of two components, but we want to use only one failedPDA
- * pointer.  Thus we set failedPDA to point to the first parity component, and rely
- * on the rest of the code to do the right thing with this.
- ****************************************************************************************/
+
+/***************************************************************************
+ * This routine walks through an ASM list and marks the PDAs that have
+ * failed.  It's called only when a disk failure causes an in-flight
+ * DAG to fail.  The parity may consist of two components, but we want
+ * to use only one failedPDA pointer.  Thus we set failedPDA to point
+ * to the first parity component, and rely on the rest of the code to
+ * do the right thing with this.
+ ***************************************************************************/
 
 void 
 rf_MarkFailuresInASMList(raidPtr, asm_h)
@@ -296,15 +297,16 @@ rf_MarkFailuresInASMList(raidPtr, asm_h)
 	}
 }
 
-/*****************************************************************************************
+/***************************************************************************
  *
- * routines to allocate and free list elements.  All allocation routines zero the
- * structure before returning it.
+ * routines to allocate and free list elements.  All allocation
+ * routines zero the structure before returning it.
  *
- * FreePhysDiskAddr is static.  It should never be called directly, because
- * FreeAccessStripeMap takes care of freeing the PhysDiskAddr list.
+ * FreePhysDiskAddr is static.  It should never be called directly,
+ * because FreeAccessStripeMap takes care of freeing the PhysDiskAddr
+ * list.
  *
- ****************************************************************************************/
+ ***************************************************************************/
 
 static RF_FreeList_t *rf_asmhdr_freelist;
 #define RF_MAX_FREE_ASMHDR 128
@@ -519,15 +521,15 @@ rf_FreeAccessStripeMap(hdr)
 	rf_FreeASMList(hdr->stripeMap, pt, asm_count);
 	rf_FreeAccessStripeMapHeader(hdr);
 }
-/* We can't use the large write optimization if there are any failures in the stripe.
- * In the declustered layout, there is no way to immediately determine what disks
- * constitute a stripe, so we actually have to hunt through the stripe looking for failures.
- * The reason we map the parity instead of just using asm->parityInfo->col is because
- * the latter may have been already redirected to a spare drive, which would
- * mess up the computation of the stripe offset.
+/* We can't use the large write optimization if there are any failures
+ * in the stripe.  In the declustered layout, there is no way to
+ * immediately determine what disks constitute a stripe, so we
+ * actually have to hunt through the stripe looking for failures.  The
+ * reason we map the parity instead of just using asm->parityInfo->col
+ * is because the latter may have been already redirected to a spare
+ * drive, which would mess up the computation of the stripe offset.
  *
- * ASSUMES AT MOST ONE FAILURE IN THE STRIPE.
- */
+ * ASSUMES AT MOST ONE FAILURE IN THE STRIPE.  */
 int 
 rf_CheckStripeForFailures(raidPtr, asmap)
 	RF_Raid_t *raidPtr;
