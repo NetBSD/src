@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.12 2003/06/29 22:31:12 fvdl Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.13 2003/08/02 12:11:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,13 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12 2003/06/29 22:31:12 fvdl Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_quota.h"
-#endif
-
-#undef	QUOTA	/* XXX - quota support for ntfs does not compile */
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.13 2003/08/02 12:11:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,9 +456,6 @@ ntfs_access(ap)
 	mode_t mask, mode = ap->a_mode;
 	gid_t *gp;
 	int i;
-#ifdef QUOTA
-	int error;
-#endif
 
 	dprintf(("ntfs_access: %d\n",ip->i_number));
 
@@ -480,10 +471,6 @@ ntfs_access(ap)
 		case VREG:
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
-#ifdef QUOTA
-			if (error = getinoquota(ip))
-				return (error);
-#endif
 			break;
 		}
 	}
