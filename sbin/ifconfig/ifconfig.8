@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.72 2004/03/01 00:19:06 wiz Exp $
+.\"	$NetBSD: ifconfig.8,v 1.73 2005/03/06 00:13:36 matt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd February 29, 2004
+.Dd March 5, 2005
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -542,6 +542,12 @@ support it only for the in-bound direction.
 .It Cm -udp4csum-rx
 Disable hardware-assisted UDP/IPv4 checksums on interfaces that
 support it only for the in-bound direction.
+.It Cm tso4
+Enable hardware-assisted TCP/IPv4 segmentation on interfaces that
+support it.
+.It Cm -tso4
+Disable hardware-assisted TCP/IPv4 segmentation on interfaces that
+support it.
 .El
 .Pp
 .Nm
