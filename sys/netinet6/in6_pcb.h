@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.22 2003/08/07 16:33:25 agc Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.23 2003/08/25 00:14:30 itojun Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -81,9 +81,7 @@ struct	in6pcb {
 					/* pointers to other pcb's */
 	struct	in6pcb *in6p_head;	/* pointer back to chain of
 					   in6pcb's for this protocol */
-	struct	in6_addr in6p_faddr;	/* foreign host table entry */
 	u_int16_t in6p_fport;		/* foreign port */
-	struct	in6_addr in6p_laddr;	/* local host table entry */
 	u_int16_t in6p_lport;		/* local port */
 	u_int32_t in6p_flowinfo;	/* priority and flowlabel */
 	struct	socket *in6p_socket;	/* back pointer to socket */
@@ -95,10 +93,6 @@ struct	in6pcb {
 	struct	mbuf *in6p_options;   /* IP6 options */
 	struct	ip6_pktopts *in6p_outputopts; /* IP6 options for outgoing packets */
 	struct	ip6_moptions *in6p_moptions; /* IP6 multicast options */
-	u_short	in6p_ifindex;
-	/* should move the following just after next/prev */
-	LIST_ENTRY(in6pcb) in6p_hlist;	/* hash chain */
-	u_long	in6p_hash;		/* hash value */
 #if 1 /* IPSEC */
 	struct inpcbpolicy *in6p_sp;	/* security policy. */
 #endif
@@ -106,9 +100,8 @@ struct	in6pcb {
 	int	in6p_cksum;		/* IPV6_CHECKSUM setsockopt */
 };
 
-#ifdef _KERNEL
-#define in6p_ip6_nxt in6p_ip6.ip6_nxt  /* for KAME src sync over BSD*'s */
-#endif
+#define in6p_faddr	in6p_ip6.ip6_dst
+#define in6p_laddr	in6p_ip6.ip6_src
 
 /*
  * Flags in in6p_flags
