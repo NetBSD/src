@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.53 2000/09/15 14:55:16 christos Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.54 2000/11/13 11:50:46 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.53 2000/09/15 14:55:16 christos Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.54 2000/11/13 11:50:46 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -272,77 +272,11 @@ cmd
 
 	| EPRT check_login SP STRING CRLF
 		{
-#ifdef INET6
-			char *tmp = NULL;
-			char *result[3];
-			char *p, *q;
-			char delim;
-			struct addrinfo hints;
-			struct addrinfo *res;
-			int i;
-
 			if ($2) {
-
-			tmp = xstrdup($4);
-			p = tmp;
-			delim = p[0];
-			p++;
-			memset(result, 0, sizeof(result));
-			for (i = 0; i < 3; i++) {
-				q = strchr(p, delim);
-				if (!q || *q != delim) {
- parsefail:
-					reply(500,
-					    "Invalid argument, rejected.");
-					usedefault = 1;
-					goto eprt_done;
-				}
-				*q++ = '\0';
-				result[i] = p;
-				p = q;
-			}
-
-			/* some more sanity check */
-			p = result[0];
-			while (*p) {
-				if (!isdigit(*p))
-					goto parsefail;
-				p++;
-			}
-			p = result[2];
-			while (*p) {
-				if (!isdigit(*p))
-					goto parsefail;
-				p++;
-			}
-
-			memset(&hints, 0, sizeof(hints));
-			if (atoi(result[0]) == 1)
-				hints.ai_family = PF_INET;
-			if (atoi(result[0]) == 2)
-				hints.ai_family = PF_INET6;
-			else
-				hints.ai_family = PF_UNSPEC;	/* XXX */
-			hints.ai_socktype = SOCK_STREAM;
-			if (getaddrinfo(result[1], result[2], &hints, &res))
-				goto parsefail;
-			memcpy(&data_dest, res->ai_addr, res->ai_addrlen);
-			if (his_addr.su_family == AF_INET6 &&
-			    data_dest.su_family == AF_INET6) {
-				/* XXX more sanity checks! */
-				data_dest.su_sin6.sin6_scope_id =
-					his_addr.su_sin6.sin6_scope_id;
-			}
-			port_check("EPRT", -1);
- eprt_done:
-			if (tmp != NULL)
-				free(tmp);
-
+				if (extended_port($4) == 0)
+					port_check("EPRT", -1);
 			}
 			free($4);
-#else
-			reply(500, "Invalid argument, rejected.");
-#endif
 		}
 
 	| PASV check_login CRLF
@@ -368,22 +302,8 @@ cmd
 
 	| EPSV check_login SP NUMBER CRLF
 		{
-			if ($2) {
-				int pf;
-
-				switch ($4) {
-				case 1:
-					pf = PF_INET;
-					break;
-				case 2:
-					pf = PF_INET6;
-					break;
-				default:
-					pf = -1;	/*junk*/
-					break;
-				}
-				long_passive("EPSV", pf);
-			}
+			if ($2)
+				long_passive("EPSV", epsvproto2af($4));
 		}
 
 	| EPSV check_login SP ALL CRLF
@@ -1846,6 +1766,9 @@ port_check(const char *cmd, int family)
 			if (memcmp(&data_dest.su_sin6.sin6_addr,
 			    &his_addr.su_sin6.sin6_addr,
 			    sizeof(data_dest.su_sin6.sin6_addr)) != 0)
+				goto port_check_fail;
+			if (data_dest.su_sin6.sin6_scope_id !=
+			    his_addr.su_sin6.sin6_scope_id)
 				goto port_check_fail;
 			break;
 #endif
