@@ -1,5 +1,3 @@
-/*	$NetBSD: tree.c,v 1.1 1996/02/02 15:29:24 mrg Exp $	*/
-
 /* tree - balanced binary tree library
  *
  * vix 05apr94 [removed vixie.h dependencies; cleaned up formatting, names]

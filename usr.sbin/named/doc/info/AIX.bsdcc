@@ -1,0 +1,66 @@
+Received: by gw.home.vix.com id AA20833; Sun, 3 Jul 94 23:08:01 -0700
+Received: by gate1.ks.se id AA06485
+  (5.67b/IDA-1.5 for <paul@vix.com>); Mon, 4 Jul 1994 08:11:40 +0200
+Received: from patricia.ks.se(136.155.37.10) by gate1.ks.se via smap (V1.3mjr)
+	id sma006482; Mon Jul  4 08:11:07 1994
+Received: from grodan.data.ks.se by patricia.ks.se with SMTP id AA07920
+  (5.67a/IDA-1.5 for <paul@vix.com>); Mon, 4 Jul 1994 08:15:49 +0200
+Received: by grodan.data.ks.se (AIX 3.2/UCB 5.64/4.03)
+          id AA73470; Mon, 4 Jul 1994 08:05:02 +0100
+Date: Mon, 4 Jul 1994 08:05:01 +0100 (NFT)
+From: Urban Kaveus <uka@data.ks.se>
+Sender: Urban Kaveus <uka@data.ks.se>
+Reply-To: Urban Kaveus <uka@data.ks.se>
+Subject: Re: 4.9.3-beta4 private release (includes beta3-beta4 patch) 
+To: Paul A Vixie <paul@vix.com>
+Cc: Rikard Anderljung <ran@data.ks.se>
+In-Reply-To: <9407020153.AA21510@gw.home.vix.com>
+Message-Id: <Pine.3.89.9407040756.D20848-0100000@grodan.data.ks.se>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; CHARSET=US-ASCII
+
+
+On Fri, 1 Jul 1994, Paul A Vixie wrote:
+> <sys/param.h> is supposed to include <sys/types.h>.  i take it yours doesn't?
+
+Hi again !
+
+Thanks a lot ! You gave me the clue to the AIX C compiler flags !
+
+The top level Makefile says "Supid AIX" and defines "bsdcc" as the compiler
+to use. Now, there is no such thing as a bsdcc compiler on a vanilla AIX
+system. You have to create a link named bsdcc pointing at your
+original C compiler named xlc and create a "flavour entry" in your xlc.cfg
+file :
+
+* Berkeley style compiler. Added 931221 by Urban K.
+bsdcc:  use             = DEFLT
+        crt             = /lib/crt0.o
+        mcrt            = /lib/mcrt0.o
+        gcrt            = /lib/gcrt0.o
+        libraries       = -lbsd, -lc
+        proflibs        = -L/lib/profiled,-L/usr/lib/profiled
+        options         = -H512,-T512, -qlanglvl=extended, -qnoro, 
+                          -D_BSD, -D_NONSTD_TYPES, -D_NO_PROTO,
+                          -bnodelcsect, -U__STR__, -U__MATH__
+
+Of course you are right, <sys/param.h> DO include <sys/types.h> if the
+_BSD flag is set.
+Our problem was that we broke the configuration entry in xlc.cfg into
+several lines. That has been done in all other AIX configuration files so 
+why not in this one ?
+
+But it did not work, we did not get the _BSD flag set and we did not
+even get warned about the configuration mistake.
+
+Your clue togheter with the inctree perl program lead us right. Thanks !
+Now, the BETA 6 compiles like a charm with no changes at all.
+
+Yours
+
+Urban Kaveus  <uka@data.ks.se>
+dataavdelningen
+Karolinska Hospital
+S-171 76 Stockholm
+Sweden
+

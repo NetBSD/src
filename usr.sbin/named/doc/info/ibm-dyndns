@@ -1,0 +1,76 @@
+Delivery-Date: Tue, 12 Sep 1995 19:35:04 -0700
+Return-Path: edie@watson.ibm.com
+Received: by gw.home.vix.com id AA26254; Tue, 12 Sep 95 19:35:03 -0700
+Received: from WATSON by watson.ibm.com (IBM VM SMTP V2R3) with BSMTP id 6121;
+   Tue, 12 Sep 95 22:34:27 EDT
+Received: from YKTVMV by watson.vnet.ibm.com with "VAGENT.V1.02 on VAGENT2"
+          id 2126; Tue, 12 Sep 1995 22:34:26 EDT
+Received: from edisto.watson.ibm.com by yktvmv.watson.ibm.com (IBM VM SMTP V2Rx)
+   with TCP; Tue, 12 Sep 95 22:34:26 EDT
+Received: by edisto.watson.ibm.com (AIX 3.2/UCB 5.64/900524)
+          id AA20787; Tue, 12 Sep 1995 22:31:40 -0400
+Message-Id: <9509130231.AA20787@edisto.watson.ibm.com>
+X-External-Networks: yes
+To: paul@vix.com
+Cc: bind-workers@vix.com
+Subject: IBM's Dynamic DNS implementation
+Date: Tue, 12 Sep 95 22:31:35 -0500
+From: "Edie E. Gunter" <edie@watson.ibm.com>
+
+
+Hi Paul,
+
+I've just ftp'd the file ibmddns.tar.gz to ftp.vix.com and
+put it in your /incoming directory.  This is the dynamic
+DNS implementation IBM said it would donate to the public
+domain at the IETF in Stockholm in July.
+
+The changes were made against the 4.9.3 BETA26 version of
+BIND.  The ibmddns.tar file has a patch list and another tar file
+with several new files.
+
+The implementation of dynamic updates is based
+on the August 1995 draft-ieft-dnsind-dynDNS-03.txt file.
+
+Also included is implementation of KEY and SIG RR's as per
+the June 25, 1995 draft-ietf-dnssec-secext-04.txt file.  This
+implementation uses the BSAFE Cryptographic Toolkit for
+RSA security.  This toolkit is not included, but is
+available for purchase from RSA Data Security, Inc.
+(email: info@rsa.com)  Additionally, the code can be
+compiled without security (see conf/options.h), but this
+probably isn't a good idea.
+
+There are also appropriate #ifdefs and makefiles and other
+minor changes necessary to make this code build on OS/2.
+
+There is a file dyndns.setup that will lead you through
+the steps necessary to set everything up and use a new
+test tool we've provided to actually perform an update.
+
+I should mention here a few caveats:
+
+ - The ZoneName update type was not implemented.
+
+ - On completion of an update, the master file for the
+   zone is rewritten.
+
+ - On an error, to return the database to the state it was in
+   prior to the start of processing this update, the master file
+   for this zone is re-read.
+
+ - The secondary can only forward updates to the primary using
+   UDP.  (The TCP code was not implemented.)
+
+ - There is no code in the resolver to search the universe for
+   an authoritative server to handle an update.  The resolver
+   API we implemented requires that the primary name be known
+   and specified in the API calls.
+
+If you have any questions or problems with this code, please
+don't hesitate to call (or email).  We hope you (and the rest
+of the BIND community) will be able to make some good use of this
+work.
+
+Edie Gunter
+

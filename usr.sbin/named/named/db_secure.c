@@ -1,7 +1,5 @@
-/*	$NetBSD: db_secure.c,v 1.1 1996/02/02 15:28:36 mrg Exp $	*/
-
 #ifndef LINT
-static char rcsid[] = "$Id: db_secure.c,v 8.5 1995/12/06 20:34:38 vixie Exp ";
+static char rcsid[] = "$Id: db_secure.c,v 1.1.1.1 1997/04/13 09:06:44 mrg Exp $";
 #endif
 
 /* this file was contributed by Gregory Neil Shapiro of WPI in August 1993 */
@@ -56,7 +54,7 @@ build_secure_netlist(zp)
 		return(0);
 	}
 	/* A parent's RR's aren't valid */
-	if (strcasecmp(snp->n_dname, SECURE_ZONE_RR)) {
+	if (strcasecmp(NAME(*snp), SECURE_ZONE_RR)) {
 	  zp->secure_nets=NULL;
 	  return(0);
 	}

@@ -1,0 +1,83 @@
+Received: by gw.home.vix.com id AA21040; Tue, 19 Jul 94 15:20:16 -0700
+Received: from localhost (mailer@localhost) by gatekeeper.ray.com (8.6.4/8.6.5) id SAA15612 for <paul@vix.com>; Tue, 19 Jul 1994 18:17:16 -0400
+Received: from sccux1.msd.ray.com by gatekeeper.ray.com; Tue Jul 19 18:18:31 1994
+Received: (from wag@localhost) by sccux1.msd.ray.com (8.6.9/8.6.9) id SAA29713 for <paul@vix.com>; Tue, 19 Jul 1994 18:18:05 -0400
+From: Bill Gianopoulos <wag@sccux1.msd.ray.com>
+Message-Id: <199407192218.SAA29713@sccux1.msd.ray.com>
+Subject: Info.Ultrix.VAX
+To: <paul@vix.com> (Paul A Vixie)
+Date: Tue, 19 Jul 1994 18:18:04 -0400 (EDT)
+X-Mailer: ELM [version 2.4 PL23]
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Content-Length: 2793      
+
+This is the stuff I promised you about linking on a ULTRIX VAX platform.
+
+There is a problem in the Ultrix VAX version of the ld command which
+causes problems when linking modules using the bind-4.9.3 resolver
+library.  The ld command is not working according to the documentation
+on its man page which states "If the argument is a library, it is
+searched only once at the point it is encountered in the argument list.
+Only those routines defining an unresolved external reference are loaded."
+In fact, if the library has been processed by ranlib, and a routine
+is loaded to resolve an unsatisfied external reference, any other modules
+which contain any entry point referenced by that module will be loaded
+even if the reference has already been resolved by a previously loaded
+module.  This causes duplicate entry points to be loaded and results in
+ld errors when you try to link.
+
+The approach I use to get around this problem is to split the standard
+Ultrix libc.a into 2 libraries, one called liboldres.a which contains
+the resolver routines from the Ultrix release libc.a, and a libc.a which
+contains everything except the resolver routines.
+
+It is then possible to link using the released Ultrix resolver by specifying
+"-loldres" on the ld (or cc) command, or using the new resolver by specifying
+"-lresolv -l44bsd".
+
+the shell script I use to create the 2 libraries follows:
+
+#!/bin/sh
+#
+# Split the released Ultrix libc.a into 2 libraries.  The resultant
+# libc.a will not contain the resolver routines which are present
+# in the new libresolv.a which will be built by the bind install.
+# The resolver routines from the released Ultrix libc.a will be
+# put in a new liboldres.a library.  The original libc.a will be saved
+# as libcold.a.
+#
+if [ -f /usr/lib/libcold.a ]
+then
+  echo "/usr/lib/libcold.a already exists."
+  exit 1
+fi
+if [ -f /usr/lib/liboldres.a ]
+then
+  echo "/usr/lib/liboldres.a already exists."
+  exit 1
+fi
+rm -r /tmp/libres$$
+mkdir /tmp/libres$$
+cd /tmp/libres$$
+ar x /usr/lib/libc.a gethostent.o getnetent.o herror.o res_comp.o \
+                     res_debug.o res_init.o res_mkquery.o res_query.o \
+                     res_send.o
+ar r /usr/lib/liboldres.a *.o
+ranlib /usr/lib/liboldres.a
+cd /tmp
+rm -r libres$$
+cp /usr/lib/libc.a /usr/lib/libcold.a
+ar d /usr/lib/libc.a gethostent.o getnetent.o herror.o res_comp.o \
+                     res_debug.o res_init.o res_mkquery.o res_query.o \
+                     res_send.o
+ranlib /usr/lib/libc.a
+
+-- 
+William A. Gianopoulos; Raytheon Missile Systems Division
+wag@sccux1.msd.ray.com
+-------------------------------------------------------------------------
+My opinions are my own and do not in any way represent the opinions of my
+employer.
+-------------------------------------------------------------------------

@@ -1,5 +1,3 @@
-.\"	$NetBSD: resolver.3,v 1.1 1996/02/02 15:27:53 mrg Exp $
-.\"
 .\" Copyright (c) 1985, 1995 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -18,9 +16,9 @@
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
 .\"	@(#)resolver.3	6.5 (Berkeley) 6/23/90
-.\"	$Id: resolver.3,v 8.3 1995/12/22 10:20:28 vixie Exp 
+.\"	$Id: resolver.3,v 1.1.1.1 1997/04/13 09:07:35 mrg Exp $
 .\"
-.TH RESOLVER 3 "December 11, 1995
+.TH RESOLVER @LIB_NETWORK_EXT_U@ "December 11, 1995
 .UC 4
 .SH NAME
 res_query, res_search, res_mkquery, res_send, res_init, dn_comp, dn_expand \- resolver routines
@@ -100,6 +98,10 @@ res_query, res_search, res_mkquery, res_send, res_init, dn_comp, dn_expand \- re
 .B char *exp_dn;
 .br
 .B int  length;
+.PP
+.B herror(const char *s)
+.PP
+.B hstrerror(int err)
 .SH DESCRIPTION
 These routines are used for making, sending and interpreting
 query and reply messages with Internet domain name servers.
@@ -155,9 +157,9 @@ This option is enabled by default.
 If this option is set,
 .I res_search
 will search for host names in the current domain and in parent domains; see
-.IR hostname (7).
+.IR hostname (@DESC_EXT@).
 This is used by the standard host lookup routine
-.IR gethostbyname (3).
+.IR gethostbyname (@LIB_NETWORK_EXT@).
 This option is enabled by default.
 .IP RES_NOALIASES
 This option turns off the user level aliasing feature controlled by
@@ -167,7 +169,7 @@ The
 .I res_init
 routine
 reads the configuration file (if any; see
-.IR resolver (5))
+.IR resolver (@FORMAT_EXT@))
 to get the default domain name,
 search list and
 the Internet address of the local name server(s).
@@ -190,7 +192,7 @@ structure or are inherited from the configuration file's
 .I options
 command.  The syntax of the ``RES_OPTIONS'' environment variable
 is explained in
-.IR resolver (5).
+.IR resolver (@FORMAT_EXT@).
 Initialization normally occurs on the first call
 to one of the other resolver routines.
 .PP
@@ -295,10 +297,42 @@ The uncompressed name is placed in the buffer indicated by
 which is of size
 .IR length .
 The size of compressed name is returned or \-1 if there was an error.
+.PP
+The external variable
+.B h_errno
+is set whenever an error occurs during resolver operation.  The following
+definitions are given in
+.BR <netdb.h> :
+.PP
+.nf
+#define NETDB_INTERNAL -1  /* see errno */
+#define NETDB_SUCCESS  0   /* no problem */
+#define HOST_NOT_FOUND 1   /* Authoritative Answer Host not found */
+#define TRY_AGAIN      2   /* Non-Authoritive not found, or SERVFAIL */
+#define NO_RECOVERY    3   /* Nonrecoverable: FORMERR, REFUSED, NOTIMP */
+#define NO_DATA        4   /* Valid name, no data for requested type */
+.ft R
+.ad
+.fi
+.PP
+The
+.B herror
+function writes a message to the diagnostic output consisting of the string
+parameter
+.BR s ,
+the constant string ": ", and a message corresponding to the value of
+.BR h_errno .
+.PP
+The
+.B hstrerror
+function returns a string which is the message text corresponding to the
+value of the
+.B err
+parameter.
 .SH FILES
-/etc/resolv.conf	see resolver(5)
+/etc/resolv.conf	see resolver(@FORMAT_EXT@)
 .SH "SEE ALSO"
-gethostbyname(3), named(8), resolver(5), hostname(7),
+gethostbyname(@LIB_NETWORK_EXT@), @INDOT@named(@SYS_OPS_EXT@), resolver(@FORMAT_EXT@), hostname(@DESC_EXT@),
 .br
 RFC1032, RFC1033, RFC1034, RFC1035, RFC974, 
 .br

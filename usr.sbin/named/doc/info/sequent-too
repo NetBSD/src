@@ -1,0 +1,289 @@
+Delivery-Date: Mon, 19 Jun 1995 18:24:21 -0700
+Return-Path: bind-workers-request@vix.com
+Received: by gw.home.vix.com id AA19673; Mon, 19 Jun 95 18:19:54 -0700
+Received: by gw.home.vix.com id AA19669; Mon, 19 Jun 95 18:19:53 -0700
+Received:  from oracle.us.oracle.com by inet-smtp-gw-1.us.oracle.com with ESMTP (8.6.12/37.7)
+	id SAA23597; Mon, 19 Jun 1995 18:19:53 -0700
+Received:  from borogove.us.oracle.com by oracle.us.oracle.com with SMTP (8.6.9/37.7)
+	id SAA23784; Mon, 19 Jun 1995 18:19:50 -0700
+Received: by borogove.us.oracle.com (5.0/SMI-SVR4)
+	id AA12444; Mon, 19 Jun 1995 18:19:40 -0700
+Date: Mon, 19 Jun 1995 18:19:40 -0700
+From: jhanley@us.oracle.com (John Hanley)
+Message-Id: <9506200119.AA12444@borogove.us.oracle.com>
+To: bind-workers@vix.com
+Phone: +1 415 506 2360
+In-Reply-To: <9506180802.AA23945@gw.home.vix.com> (message from Paul A Vixie on Sun, 18 Jun 1995 01:02:27 -0700)
+Subject: BIND vs. ptx
+Content-Length: 8817
+
+I'm going to risk dredging up SYSV debates.
+Here are some patches that I have found useful.
+
+Recently I had the <ahem> pleasure of porting beta17 to Dynix/ptx, in order
+to cope with the unresolved Sequent mailbug 209395.  Most SVR3 compilations
+choke until you notice the following things:
+
+ (1) a new header file, "conf/u_types.h" should typedef u_int, since
+       no system headers define it, other than <rpc/types.h>
+ (2) <netinet/in_systm.h> should typedef u_{char,short,long}, since no other
+       system headers define them
+ (3) <sys/types.h> MUST precede <sys/uio.h> (for caddr_t)
+ (4) <sys/types.h> MUST precede <netinet/in.h> (for ulong)
+
+I didn't want to use <rpc/types.h>.  Perhaps it would be simpler to use it,
+as it defines all four, u_{int,char,short,long}, but I feared conflicts with
+the sytem headers that _do_ define some of those.  In an initial attempt I
+tried typedef'ing u_int in "portability.h", but found that a seperate header
+file was necessary to accommodate multiple inclusion from various callers.  Any
+random pathname would work well, in case "conf" was a poor directory choice.
+
+Note that under recent ptx revs, such as version V4.0.2 (SysV release 4.0),
+the command
+
+  % egrep 'u_(char|short|int|long)' /usr/include/sys/types.h
+
+returns 4 lines, while under older revs, such as version V2.1.5
+(SysV release 3.2.0), the same ``egrep'' command returns nothing.
+SVR4 hosts definitely should not define NEED_SVR3_U_TYPES.
+
+This patch has no effect on the
+  ld: libinet.so: fatal error: attempt to override defined size of symbol `_res`
+  from file ../res/libresolv.a(res_init.o) with size of tentative definition
+error that beta17 + ptx SVR4 runs into.  Same diagnostic patched and unpatched.
+I'll send a few details on that in a separate note.
+
+Strictly speaking, /*comments*/ don't belong on #include lines.
+Feel free to strip them out, and to move command line defines (``cc -D'')
+into a header file.  I didn't touch the unusual /usr/local destinations
+in the Makefile.
+
+So, the first six chunks of the patch relate to typedef'ing unsigned
+quantities in an environment that arguably has a <sys/types.h> header
+that is (permanently) broken.  I believe the implementation is fairly
+clean.  If this addition falls victim to the old SYSV portability
+controversy and is relegated to SVR3-specific instructions with a
+patch file under "contrib", so be it.  This first half of the patch
+is fully conditionalized on NEED_SVR3_U_TYPES, so it has no effect
+until you explicitly ask for it.
+
+The remaining chunks, from "herror.c" through "skip.c", simply add a
+call to <sys/types.h>, and I request that these #include's become part of the
+BIND distribution.  My plea is based on the belief that the <sys/types.h>
+call is a significant porting aid in some environments, and that no
+environment should be missing <sys/types.h> or be caused grief by its
+inclusion.  Certainly, Solaris {1,2}.x experiences no difference.  The
+second half of the patch is not conditionally included, but it should be safe.
+If it proves to be unsafe, it could obviously be conditionalized.
+
+For what it's worth, on a ptx host where ``uname -rv'' returns "3.2.0 V2.1.5",
+the build script below will compile the tree cleanly.
+
+
+	Cheers,
+	JH
+
+
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+rm -rf 4.9.3
+mkdir  4.9.3
+cd     4.9.3
+gunzip < ../bind-4.9.3-BETA17.tar.gz | tar xf -
+patch -p < ../bind-patches
+# Strip leading comment character ('#') from relevant Sequent defines
+(echo '/Sequent/+2,/Sequent/+11 s/^.//'; echo 'x') | ex Makefile
+make > make.out
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+--- conf/u_types.h	Tue May 16 00:00:00 1995
++++ conf/u_types.h	Tue May 16 18:38:06 1995
+@@ -0,0 +1,14 @@
++/*   Various unsigned types that SVR3 does not supply.
++ *     (You might be able to find them in <rpc/types.h>, but with opportunity
++ *      for conflicts.)
++ */
++
++#ifndef _CONF_U_TYPES_H
++#define _CONF_U_TYPES_H
++
++/* pull in SVR3 typedefs for u_{char,short,long} */
++#include <netinet/in_systm.h>
++
++typedef  unsigned long  u_int;
++
++#endif
+--- Makefile~	Thu Jan 12 21:54:04 1995
++++ Makefile	Tue May 16 18:28:11 1995
+@@ -359,8 +359,9 @@
+ #PS = ps -p
+ 
+ #(Sequent Dynix/PTX)
++# tested with SysV release "3.2.0", version "V2.1.5"
+ #CC = cc $(CPPFLAGS) -Wc,-pw
+-#CPPFLAGS = -Du_int="unsigned int" -DSYSV
++#CPPFLAGS = -DSYSV -DNEED_SVR3_U_TYPES
+ #RANLIB = :
+ #LIBS = -ll -lsocket -linet -lnsl -lseq
+ #PIDDIR = /etc
+--- include/resolv.h~	Thu Dec 15 06:24:07 1994
++++ include/resolv.h	Tue May 16 18:42:13 1995
+@@ -69,6 +69,9 @@
+ #endif
+ #include <sys/cdefs.h>
+ #include <stdio.h>
++#ifdef NEED_SVR3_U_TYPES
++#include "../conf/u_types.h"	/* pull in the typedef for u_int */
++#endif
+ 
+ /*
+  * revision information.  this is the release date in YYYYMMDD format.
+--- conf/portability.h~	Thu Jan 12 21:44:30 1995
++++ conf/portability.h	Tue May 16 18:20:51 1995
+@@ -63,6 +63,9 @@
+ 
+ #include <string.h>
+ #include <sys/types.h>
++#ifdef NEED_SVR3_U_TYPES
++#include "../conf/u_types.h"	/* pull in SVR3 typedefs for u_{char,short,long} */
++#endif
+ #include <sys/param.h>
+ #ifndef TIME_H_INCLUDED
+ # include <sys/time.h>
+--- include/arpa/inet.h	Wed Dec 14 22:24:08 1994
++++ include/arpa/inet.h	Mon Jun 19 12:18:17 1995
+@@ -70,6 +70,9 @@
+ # include <sys/types.h>
+ #endif
+ #include <sys/cdefs.h>
++#ifdef NEED_SVR3_U_TYPES
++#include "../../conf/u_types.h" /* pull in SVR3 typedefs for u_{char,short,long} */
++#endif
+ 
+ __BEGIN_DECLS
+ unsigned long	 inet_addr __P((const char *));
+--- include/arpa/nameser.h~	Thu Dec 15 06:24:09 1994
++++ include/arpa/nameser.h	Tue May 16 19:02:39 1995
+@@ -68,6 +68,9 @@
+ # include <sys/types.h>
+ #endif
+ #include <sys/cdefs.h>
++#ifdef NEED_SVR3_U_TYPES
++#include "../../conf/u_types.h" /* pull in SVR3 typedefs for u_{char,short,long} */
++#endif
+ 
+ #ifdef _AUX_SOURCE
+ #include <sys/types.h>			/* ech for A/UX */
+--- res/herror.c~	Thu Dec 15 06:24:24 1994
++++ res/herror.c	Tue May 16 16:37:13 1995
+@@ -59,6 +59,7 @@
+ #endif /* LIBC_SCCS and not lint */
+ 
+ #include <sys/param.h>
++#include <sys/types.h>
+ #include <sys/uio.h>
+ #include <netdb.h>
+ #if defined(BSD) && (BSD >= 199103)
+--- res/res_comp.c~	Thu Dec 15 06:24:24 1994
++++ res/res_comp.c	Tue May 16 17:28:59 1995
+@@ -59,6 +59,7 @@
+ #endif /* LIBC_SCCS and not lint */
+ 
+ #include <sys/param.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/nameser.h>
+ 
+--- res/res_debug.c~	Mon Dec 19 08:35:11 1994
++++ res/res_debug.c	Tue May 16 16:59:54 1995
+@@ -59,6 +59,7 @@
+ #endif /* LIBC_SCCS and not lint */
+ 
+ #include <sys/param.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <arpa/nameser.h>
+--- res/res_mkquery.c~	Thu Dec 15 06:24:25 1994
++++ res/res_mkquery.c	Tue May 16 18:46:59 1995
+@@ -59,6 +59,7 @@
+ #endif /* LIBC_SCCS and not lint */
+ 
+ #include <sys/param.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/nameser.h>
+ 
+--- res/res_query.c~	Wed Jan 11 08:58:07 1995
++++ res/res_query.c	Tue May 16 17:54:10 1995
+@@ -59,6 +59,7 @@
+ #endif /* LIBC_SCCS and not lint */
+ 
+ #include <sys/param.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <arpa/nameser.h>
+--- res/sethostent.c~	Thu Dec 15 06:24:26 1994
++++ res/sethostent.c	Tue May 16 17:55:34 1995
+@@ -37,6 +37,7 @@
+ #endif /* LIBC_SCCS and not lint */
+ 
+ #include <sys/param.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/nameser.h>
+ #include <netdb.h>
+--- compat/lib/inet_addr.c~	Thu Dec 15 06:23:51 1994
++++ compat/lib/inet_addr.c	Tue May 16 18:30:54 1995
+@@ -59,6 +59,7 @@
+ #endif /* LIBC_SCCS and not lint */
+ 
+ #include <sys/param.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+ #include <ctype.h>
+--- named/ns_req.c~	Tue Dec 20 02:16:25 1994
++++ named/ns_req.c	Tue May 16 18:24:04 1995
+@@ -59,6 +59,7 @@
+  */
+ 
+ #include <sys/param.h>
++#include <sys/types.h>
+ #include <sys/uio.h>
+ #include <sys/file.h>
+ #include <sys/socket.h>
+--- named/ns_stats.c~	Wed Jan 11 08:58:05 1995
++++ named/ns_stats.c	Tue May 16 18:25:58 1995
+@@ -64,6 +64,7 @@
+ /**************************************************************************/
+ 
+ #include <sys/param.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/nameser.h>
+ #include <stdio.h>
+--- tools/nslookup/debug.c~	Thu Dec 15 07:24:31 1994
++++ tools/nslookup/debug.c	Tue May 16 18:27:12 1995
+@@ -71,6 +71,7 @@
+  */
+ 
+ #include <sys/param.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/nameser.h>
+ #include <arpa/inet.h>
+--- tools/nslookup/skip.c~	Thu Dec 15 07:24:33 1994
++++ tools/nslookup/skip.c	Tue May 16 18:28:47 1995
+@@ -76,6 +76,7 @@
+  */
+ 
+ #include <sys/param.h>
++#include <sys/types.h>
+ #include <netinet/in.h>
+ #include <arpa/nameser.h>
+ #include <resolv.h>
+
