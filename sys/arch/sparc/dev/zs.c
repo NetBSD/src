@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.69 1999/03/27 01:21:36 wrstuden Exp $	*/
+/*	$NetBSD: zs.c,v 1.69.2.1 2000/01/15 16:50:53 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -906,9 +906,19 @@ get_serial_promdev(io)
 	 * At this point we assume the device path is in the form
 	 *   ....device@x,y:a for ttya and ...device@x,y:b for ttyb, etc.
 	 */
-	while (*cp != 0)
-		cp++;
-	cp -= 2;
+	if (cp[0] != '\0' && cp[1] != '\0') {
+		while (*cp != '\0')
+			cp++;
+		cp -= 2;
+	} else {
+		/*
+		 * If don't have at least a 2 character string at cp, then
+		 *  we default to using using the string ":a" for ttya.
+		 */
+		cp[0] = ':';
+		cp[1] = 'a';
+		cp[2] = '\0';
+	}
 
 	if (cp >= buffer) {
 		/* XXX: only allows tty's a->z, assumes PROMDEV_TTYx contig */
