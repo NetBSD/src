@@ -1,4 +1,4 @@
-/* $NetBSD: pm.c,v 1.1.2.12 1999/04/06 02:35:21 nisimura Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.13 1999/08/11 05:34:57 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.12 1999/04/06 02:35:21 nisimura Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.13 1999/08/11 05:34:57 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,6 @@ struct wsdisplay_accessops pm_accessops = {
 
 int  pm_cnattach __P((u_int32_t));
 void pminit __P((struct fb_devconfig *));
-void pm_screenblank __P((struct pm_softc *));
 
 static int  set_cmap __P((struct pm_softc *, struct wsdisplay_cmap *));
 static int  get_cmap __P((struct pm_softc *, struct wsdisplay_cmap *));
@@ -375,7 +374,11 @@ pmioctl(v, cmd, data, flag, p)
 		turnoff = *(int *)data == WSDISPLAYIO_VIDEO_OFF;
 		if ((dc->dc_blanked == 0) ^ turnoff) {
 			dc->dc_blanked = turnoff;
-			pm_screenblank(sc);
+#if 0 /* XXX later XXX */
+  DS3100 Functional Specification Revision 1.3 says;
+  be blanked by using the cursor plane control bits to force the output
+  of both planes and changing VDAC overlay map entry 12 to 0x000000.
+#endif
 		}
 		return (0);
 
@@ -486,44 +489,27 @@ void
 pminit(dc)
 	struct fb_devconfig *dc;
 {
-	int i;
-	volatile struct bt478reg *vdac =
-		(void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_BT478);
-	volatile struct pccreg *pcc =
-		(void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
-
+	int i, n;
+	u_int16_t *p = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CSR);
+	struct bt478reg *vdac = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_BT478);
+	struct pccreg *pcc = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
+	
+	*(u_int8_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_PMASK) = 0xff;
 	pcc->pcc_cmdr = PCC_FOPB | PCC_VBHI;
 
-	*(volatile u_int8_t *)MIPS_PHYS_TO_KSEG1(KN01_SYS_PMASK) = 0xff;
-
-	vdac->bt_mapWA = 0;	kn01_wbflush();
-	vdac->bt_map = 0;	kn01_wbflush();
-	vdac->bt_map = 0;	kn01_wbflush();
-	vdac->bt_map = 0;	kn01_wbflush();
-	for (i = 1; i < CMAP_SIZE; i++) {
-		vdac->bt_mapWA = i;	kn01_wbflush();
+	i = 0;
+	n = (*p & KN01_CSR_MONO) ? 128 : 1;
+	vdac->bt_mapWA = 0;		kn01_wbflush();
+	do {
+		vdac->bt_map = 0;	kn01_wbflush();
+		vdac->bt_map = 0;	kn01_wbflush();
+		vdac->bt_map = 0;	kn01_wbflush();
+	} while (++i < n);
+	do {
 		vdac->bt_map = 0xff;	kn01_wbflush();
 		vdac->bt_map = 0xff;	kn01_wbflush();
 		vdac->bt_map = 0xff;	kn01_wbflush();
-	}
-}
-
-void
-pm_screenblank(sc)
-	struct pm_softc *sc;
-{
-#if 0 /* XXX later XXX */
-	struct fb_devconfig *dc = sc->sc_dc;
-
-	if (dc->dc_blanked) {
-		/* blank screen */
-		/* turnoff hardware cursor */
-	}
-	else {
-		/* restore current colormap */
-		/* turnon hardware cursor */
-	}
-#endif
+	} while (++i < CMAP_SIZE);
 }
 
 static int
@@ -657,10 +643,10 @@ bt478_loadcmap(sc)
 {
 	int i;
 	struct hwcmap *cm = &sc->sc_cmap;
-	volatile struct bt478reg *vdac = sc->sc_vdac;
+	struct bt478reg *vdac = sc->sc_vdac;
 	
+	vdac->bt_mapWA = 0;		 kn01_wbflush();
 	for (i = 0; i < CMAP_SIZE; i++) {
-		vdac->bt_mapWA = i;	 kn01_wbflush();
 		vdac->bt_map = cm->r[i]; kn01_wbflush();
 		vdac->bt_map = cm->g[i]; kn01_wbflush();
 		vdac->bt_map = cm->b[i]; kn01_wbflush();
@@ -672,7 +658,7 @@ bt478_load_curcmap(sc)
 	struct pm_softc *sc;
 {
 	u_int8_t *cp = sc->sc_cursor.cc_color;
-	volatile struct bt478reg *vdac = sc->sc_vdac;
+	struct bt478reg *vdac = sc->sc_vdac;
 
 	vdac->bt_overWA = 0x04;	kn01_wbflush();
 	vdac->bt_over = cp[1];	kn01_wbflush();
@@ -694,7 +680,7 @@ void
 pcc_load_curshape(sc)
 	struct pm_softc *sc;
 {
-	volatile struct pccreg *pcc = sc->sc_pcc;
+	struct pccreg *pcc = sc->sc_pcc;
 	u_int32_t *bp;
 	int i;
 
@@ -712,7 +698,7 @@ void
 pcc_set_curpos(sc)
 	struct pm_softc *sc;
 {
-	volatile struct pccreg *pcc = sc->sc_pcc;
+	struct pccreg *pcc = sc->sc_pcc;
 
 	pcc->pcc_xpos = sc->sc_cursor.cc_pos.x + sc->magic_x;
 	pcc->pcc_ypos = sc->sc_cursor.cc_pos.y + sc->magic_y;
@@ -723,7 +709,7 @@ pcc_show_cursor(sc, enable)
 	struct pm_softc *sc;
 	int enable;
 {
-	volatile struct pccreg *pcc = sc->sc_pcc;
+	struct pccreg *pcc = sc->sc_pcc;
 
 	if (enable)
 		sc->sc_pcccmdr |=  (PCC_ENPA | PCC_ENPB);
