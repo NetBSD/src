@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.43 2002/11/27 21:26:57 atatat Exp $	*/
+/*	$NetBSD: kdump.c,v 1.44 2002/11/28 16:18:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.43 2002/11/27 21:26:57 atatat Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.44 2002/11/28 16:18:49 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -641,7 +641,9 @@ static const char *
 signame(long sig, int xlat)
 {
 	static char buf[64];
-	if (sig <= 0 || sig >= NSIG) {
+	if (sig == 0)
+		return " 0";
+	else if (sig < 0 || sig >= NSIG) {
 		(void)snprintf(buf, sizeof(buf), "*unknown %ld*", sig);
 		return buf;
 	} else
