@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.1 1997/11/15 00:48:15 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.2 1997/11/28 19:37:22 mellon Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -86,30 +86,7 @@ caddr_t	msgbufaddr;
 
 caddr_t allocsys __P((caddr_t));
 
-static int fake_spl __P((void));
-static int fake_splx __P((int));
-static void fake_setsoft __P((void));
-static void fake_clock_return __P((struct clockframe *, int));
-static void fake_irq_establish __P((int, int, void (*)(void *), void *));
 void install_extint __P((void (*)(void)));
-
-struct machvec machine_interface = {
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_spl,
-	fake_splx,
-	fake_setsoft,
-	fake_setsoft,
-	fake_clock_return,
-	fake_irq_establish,
-};
-
 int cold = 1;
 
 void
@@ -139,12 +116,9 @@ initppc(startkernel, endkernel, size, args)
 	 * BeBox MotherBoard's Register
 	 *  Interrupt Mask Reset
 	 */
-#define CPU0_INT_MASK	0x7ffff0f0
-#define CPU1_INT_MASK	0x7ffff1f0
-	*(volatile unsigned int *)CPU0_INT_MASK = 0x0ffffffc;
-	*(volatile unsigned int *)CPU0_INT_MASK = 0x80000023;
-	*(volatile unsigned int *)CPU1_INT_MASK = 0x0ffffffc;  
-
+	*(volatile u_int *)(MOTHER_BOARD_REG + CPU0_INT_MASK) = 0x0ffffffc;
+	*(volatile u_int *)(MOTHER_BOARD_REG + CPU0_INT_MASK) = 0x80000023;
+	*(volatile u_int *)(MOTHER_BOARD_REG + CPU1_INT_MASK) = 0x0ffffffc;  
 
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
@@ -466,18 +440,7 @@ cpu_startup()
 	/*
 	 * BeBox Mother Board's Register Mapping
 	 */
-	bebox_mb_reg  = physmemmap(0x7ffff000, NBPG);
-
-	/*
-	 * For now, use soft spl handling.
-	 */
-	{
-		extern struct machvec soft_machvec;
-		extern int cpl;
-
-		cpl = IPL_NONE;
-		machine_interface = soft_machvec;
-	}
+	bebox_mb_reg  = physmemmap(MOTHER_BOARD_REG, NBPG);
 
 	/*
 	 * Now allow hardware interrupts.
@@ -487,7 +450,7 @@ cpu_startup()
 		
 		splhigh();
 		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
-			      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
+			      : "=r"(msr) : "K"(PSL_EE));
 	}
 	
 	/*
@@ -741,11 +704,9 @@ dumpsys()
  * Soft networking interrupts.
  */
 void
-softnet()
+softnet(isr)
+	int isr;
 {
-	int isr = netisr;
-
-	netisr = 0;
 #ifdef	INET
 #include "arp.h"
 #if NARP > 0
@@ -841,47 +802,11 @@ cpu_reboot(howto, what)
 	while(1);
 }
 
-/*
- * Initial Machine Interface.
- */
-static int
-fake_spl()
+void
+lcsplx(ipl)
+	int ipl;
 {
-	int scratch;
-
-	asm volatile ("mfmsr %0; andi. %0,%0,%1; mtmsr %0; isync"
-	    : "=r"(scratch) : "K"((u_short)~(PSL_EE|PSL_ME)));
-	return -1;
-}
-
-static void
-fake_setsoft()
-{
-	/* Do nothing */
-}
-
-static int
-fake_splx(new)
-	int new;
-{
-	return fake_spl();
-}
-
-static void
-fake_clock_return(frame, nticks)
-	struct clockframe *frame;
-	int nticks;
-{
-	/* Do nothing */
-}
-
-static void
-fake_irq_establish(irq, level, handler, arg)
-	int irq, level;
-	void (*handler) __P((void *));
-	void *arg;
-{
-	panic("fake_irq_establish");
+	splx(ipl); 
 }
 
 /* not impliment */
