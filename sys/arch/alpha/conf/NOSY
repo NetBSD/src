@@ -1,4 +1,4 @@
-# $NetBSD: NOSY,v 1.23 1998/03/26 02:51:46 thorpej Exp $
+# $NetBSD: NOSY,v 1.24 1998/03/26 02:58:48 thorpej Exp $
 #
 # Kernel for nostromo.nas.nasa.gov.
 #
@@ -20,7 +20,8 @@ options 	PMAP_NEW		# new PMAP interface for UVM
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
 options 	DEBUG			# Expensive debugging checks/support
 options 	DDB			# Kernel dynamic debugger
-#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+makeoptions	DEBUG="-g"		# full debugging symbols
 
 # File systems
 file-system	FFS		# Fast file system
