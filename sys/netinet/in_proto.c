@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.35 2000/02/10 14:44:28 itojun Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.36 2000/02/15 04:03:49 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -275,3 +275,5 @@ int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
 int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
 struct	syn_cache_head tcp_syn_cache[TCP_SYN_HASH_SIZE];
 int	tcp_syn_cache_interval = 1;	/* runs timer twice a second */
+
+struct timeval icmperrratelim = { 0, 1000 };	/* 1000usec = 1msec */
