@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.1 1999/11/21 06:50:27 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.2 1999/12/07 17:25:00 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -28,10 +28,13 @@
 
 #include "opt_tx39_debug.h"
 #include "biconsdev.h"
+#include "fb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <dev/cons.h> /* consdev */
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -42,11 +45,18 @@
 #include <hpcmips/dev/plumpowervar.h>
 #include <hpcmips/dev/plumvideoreg.h>
 
-#if NBICONSDEV > 0
 #include <machine/bootinfo.h>
+
+#if NBICONSDEV > 0
 #include <hpcmips/dev/biconsvar.h>
 #include <hpcmips/dev/bicons.h>
-#endif /* NBICONSDEV */
+#endif
+
+#if NFB > 0
+#include <dev/rcons/raster.h>
+#include <dev/wscons/wsdisplayvar.h>
+#include <arch/hpcmips/dev/fbvar.h>
+#endif
 
 int	plumvideo_match __P((struct device*, struct cfdata*, void*));
 void	plumvideo_attach __P((struct device*, struct device*, void*));
@@ -70,9 +80,7 @@ struct fb_attach_args {
 };
 
 void	plumvideo_dump __P((struct plumvideo_softc*));
-#if NBICONSDEV > 0
-void	plumvideo_biconsinit __P((struct plumvideo_softc*));
-#endif /* NBICONSDEV */
+void	plumvideo_bootinforefil __P((struct plumvideo_softc*));
 
 int
 plumvideo_match(parent, cf, aux)
@@ -80,7 +88,10 @@ plumvideo_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return 1;
+	/*
+	 * VRAM area also uses as UHOSTC shared RAM.
+	 */
+	return 2; /* 1st attach group */
 }
 
 void
@@ -109,22 +120,42 @@ plumvideo_attach(parent, self, aux)
 	}
 
 	printf("\n");
-	plum_power_disestablish(sc->sc_pc, PLUM_PWR_LCD);
-	plum_power_disestablish(sc->sc_pc, PLUM_PWR_BKL);
-	delay(100);
+
+	/*
+	 * Power control
+	 */
+	/* LCD power on and display on */
 	plum_power_establish(sc->sc_pc, PLUM_PWR_LCD);
+
+	/* supply power to V-RAM */
+	plum_power_establish(sc->sc_pc, PLUM_PWR_EXTPW2);
+	/* supply power to LCD */
+	plum_power_establish(sc->sc_pc, PLUM_PWR_EXTPW1);
+#if notrequired
+	/* supply power to RAMDAC */
+	plum_power_establish(sc->sc_pc, PLUM_PWR_EXTPW0);
+#endif	
+
+	/* back-light on */
 	plum_power_establish(sc->sc_pc, PLUM_PWR_BKL);
-	delay(100);
 
-//	plumvideo_dump(sc);
-#if NBICONSDEV > 0
-	/* Enable builtin console */
-	plumvideo_biconsinit(sc);
-#endif /* NBICONSDEV */
+	/* MAX back-light luminance */
+	plum_conf_write(sc->sc_regt, sc->sc_regh, PLUM_VIDEO_PLLUM_REG,
+			0x3);
 
+	/* 
+	 *  reinstall bootinfo 
+	 */
+	plumvideo_bootinforefil(sc);
+
+#if NFB > 0
+	if(!cn_tab && fb_cnattach(0, 0, 0, 0)) {
+		panic("plumvideo_attach: can't init fb console");
+	}
 	/* Attach frame buffer device */
 	fba.fba_name = "fb";
 	config_found(self, &fba, plumvideo_print);
+#endif
 }
 
 int
@@ -135,10 +166,8 @@ plumvideo_print(aux, pnp)
 	return pnp ? QUIET : UNCONF;
 }
 
-
-#if NBICONSDEV > 0
 void
-plumvideo_biconsinit(sc)
+plumvideo_bootinforefil(sc)
 	struct plumvideo_softc *sc;
 {
 	bus_space_tag_t regt = sc->sc_regt;
@@ -162,10 +191,11 @@ plumvideo_biconsinit(sc)
 	
 	bootinfo->fb_addr = (unsigned char *)ioh;
 
+#if NBICONSDEV > 0
 	/* re-install */
 	bicons_init();
+#endif
 }
-#endif /* NBICONSDEV */
 
 void
 plumvideo_dump(sc)
