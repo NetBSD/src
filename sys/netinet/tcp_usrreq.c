@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.27 1997/10/10 01:51:11 explorer Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.27.2.1 1997/11/08 06:31:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -400,8 +400,9 @@ tcp_ctloutput(op, so, level, optname, mp)
 			break;
 
 		case TCP_MAXSEG:
-			if (m && (i = *mtod(m, int *)) > 0 && i <= tp->t_maxseg)
-				tp->t_maxseg = i;
+			if (m && (i = *mtod(m, int *)) > 0 && 
+			    i <= tp->t_peermss)
+				tp->t_peermss = i;  /* limit on send size */
 			else
 				error = EINVAL;
 			break;
@@ -423,7 +424,7 @@ tcp_ctloutput(op, so, level, optname, mp)
 			*mtod(m, int *) = tp->t_flags & TF_NODELAY;
 			break;
 		case TCP_MAXSEG:
-			*mtod(m, int *) = tp->t_maxseg;
+			*mtod(m, int *) = tp->t_peermss;
 			break;
 		default:
 			error = ENOPROTOOPT;

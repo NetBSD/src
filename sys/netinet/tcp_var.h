@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.25 1997/10/17 22:12:46 kml Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.25.2.1 1997/11/08 06:31:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -49,8 +49,9 @@ struct tcpcb {
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
 	short	t_rxtcur;		/* current retransmit value */
 	short	t_dupacks;		/* consecutive dup acks recd */
-	u_short	t_maxseg;		/* peer's maximum segment size */
+	u_short	t_peermss;		/* peer's maximum segment size */
 	u_short	t_ourmss;		/* our's maximum segment size */
+	u_short t_segsz;		/* current segment size in use */
 	char	t_force;		/* 1 if forcing out a byte */
 	u_short	t_flags;
 #define	TF_ACKNOW	0x0001		/* ack peer immediately */
