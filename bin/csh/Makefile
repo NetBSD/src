@@ -1,16 +1,20 @@
-#	from: @(#)Makefile	5.24 (Berkeley) 7/1/91
-#	$Id: Makefile,v 1.5 1993/08/01 05:47:53 mycroft Exp $
-
+#	from: @(#)Makefile	8.1 (Berkeley) 5/31/93
+#	$Id: Makefile,v 1.6 1994/09/21 00:10:23 mycroft Exp $
+#
 # C Shell with process control; VM/UNIX VAX Makefile
 # Bill Joy UC Berkeley; Jim Kulp IIASA, Austria
 #
 # To profile, put -DPROF in DEFS and -pg in CFLAGS, and recompile.
 
 PROG=	csh
-CFLAGS+=-fstrength-reduce -DFILEC -DNLS -DSHORT_STRINGS -I.
+DFLAGS=-DBUILTIN -DFILEC -DNLS -DSHORT_STRINGS
+#CFLAGS+=-g
+#CFLAGS+=-Wall -ansi -pedantic
+CFLAGS+=-I${.CURDIR} -I. ${DFLAGS}
 SRCS=	alloc.c char.c const.c csh.c dir.c dol.c err.c exec.c exp.c file.c \
-	func.c glob.c hist.c init.c lex.c misc.c parse.c print.c printf.c \
-	proc.c sem.c set.c str.c time.c
+	func.c glob.c hist.c init.c lex.c misc.c parse.c printf.c proc.c \
+	sem.c set.c str.c time.c
+#.PATH:	${.CURDIR}/../../usr.bin/printf
 
 MAN1=	csh.0
 MLINKS=	csh.1 limit.1 csh.1 alias.1 csh.1 bg.1 csh.1 dirs.1 csh.1 fg.1 \
@@ -36,6 +40,6 @@ const.h: const.c
 	    sed -e 's/Char \([a-zA-Z0-9_]*\)\(.*\)/extern Char \1[];/' | \
 	    sort >> $@
 
-.depend alloc.o: const.h err.h
+.depend alloc.o: const.h err.h 
 
 .include <bsd.prog.mk>

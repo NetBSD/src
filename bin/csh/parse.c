@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)parse.c	5.11 (Berkeley) 6/8/91";*/
-static char rcsid[] = "$Id: parse.c,v 1.4 1993/08/01 19:00:35 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)parse.c	8.1 (Berkeley) 5/31/93";*/
+static char *rcsid = "$Id: parse.c,v 1.5 1994/09/21 00:11:04 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -219,7 +219,7 @@ freenod(p1, p2)
 #define	PHERE	1
 #define	PIN	2
 #define	POUT	4
-#define	PDIAG	8
+#define	PERR	8
 
 /*
  * syntax
@@ -463,7 +463,7 @@ syn2(p1, p2, flags)
 	    f = flags | POUT;
 	    pn = p->next;
 	    if (pn != p2 && pn->word[0] == '&') {
-		f |= PDIAG;
+		f |= PERR;
 		t->t_dflg |= F_STDERR;
 	    }
 	    t->t_dtyp = NODE_PIPE;
@@ -595,7 +595,7 @@ again:
 		t->t_dflg |= F_APPEND;
 	    if (p->next != p2 && eq(p->next->word, STRand)) {
 		t->t_dflg |= F_STDERR, p = p->next;
-		if (flags & (POUT | PDIAG)) {
+		if (flags & (POUT | PERR)) {
 		    seterror(ERR_OUTRED);
 		    continue;
 		}
@@ -611,7 +611,7 @@ again:
 		seterror(ERR_MISRED);
 		continue;
 	    }
-	    if ((flags & POUT) && (flags & PDIAG) == 0 || t->t_drit)
+	    if ((flags & POUT) && ((flags & PERR) == 0 || t->t_drit))
 		seterror(ERR_OUTRED);
 	    else
 		t->t_drit = Strsave(p->word);

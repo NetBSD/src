@@ -1,6 +1,6 @@
-/*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,282 +31,380 @@
  * SUCH DAMAGE.
  */
 
+#if !defined(BUILTIN) && !defined(SHELL)
 #ifndef lint
-/*static char sccsid[] = "from: @(#)printf.c	5.4 (Berkeley) 6/16/91";*/
-static char rcsid[] = "$Id: printf.c,v 1.4 1993/08/01 19:00:32 mycroft Exp $";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
+#endif /* not lint */
+#endif
+
+#ifndef lint
+static char sccsid[] = "@(#)printf.c	8.1 (Berkeley) 7/20/93";
 #endif /* not lint */
 
-/*
- * tc.printf.c: A public-domain, minimal printf/sprintf routine that prints
- *	       through the putchar() routine.  Feel free to use for
- *	       anything...  -- 7/17/87 Paul Placeway
- */
-#include <strings.h>
+#include <sys/types.h>
+
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
+#ifdef SHELL
+#define	EOF	-1
+#else
+#include <stdio.h>
+#endif
 #include <stdlib.h>
-#if __STDC__
-# include <stdarg.h>
+#include <string.h>
+
+/*
+ * XXX
+ * This *has* to go away.  TK.
+ */
+#ifdef SHELL
+#define main printfcmd
+#define warnx(a, b, c) {						\
+	char buf[64];							\
+	(void)sprintf(buf, sizeof(buf), a, b, c);			\
+	error(buf);							\
+}
+#include "../../bin/sh/bltin/bltin.h"
+#endif
+
+#define PF(f, func) { \
+	if (fieldwidth) \
+		if (precision) \
+			(void)printf(f, fieldwidth, precision, func); \
+		else \
+			(void)printf(f, fieldwidth, func); \
+	else if (precision) \
+		(void)printf(f, precision, func); \
+	else \
+		(void)printf(f, func); \
+}
+
+static int	 asciicode __P((void));
+static void	 escape __P((char *));
+static int	 getchr __P((void));
+static double	 getdouble __P((void));
+static int	 getint __P((int *));
+static int	 getlong __P((long *));
+static char	*getstr __P((void));
+static char	*mklong __P((char *, int));
+static void	 usage __P((void));
+
+static char **gargv;
+
+int
+#ifdef BUILTIN
+progprintf(argc, argv)
 #else
-# include <varargs.h>
+main(argc, argv)
 #endif
-#include "csh.h"
-#include "char.h"
-#include "extern.h"
+	int argc;
+	char *argv[];
+{
+	extern int optind;
+	static char *skip1, *skip2;
+	int ch, end, fieldwidth, precision;
+	char convch, nextch, *format, *fmt, *start;
 
-#ifdef lint
-#undef va_arg
-#define va_arg(a, b) (a ? (b) 0 : (b) 0)
-#endif
+	while ((ch = getopt(argc, argv, "")) != EOF)
+		switch (ch) {
+		case '?':
+		default:
+			usage();
+			return (1);
+		}
+	argc -= optind;
+	argv += optind;
 
-#define INF	32766		/* should be bigger than any field to print */
+	if (argc < 1) {
+		usage();
+		return (1);
+	}
 
-static unsigned char buf[128];
+	/*
+	 * Basic algorithm is to scan the format string for conversion
+	 * specifications -- once one is found, find out if the field
+	 * width or precision is a '*'; if it is, gather up value.  Note,
+	 * format strings are reused as necessary to use up the provided
+	 * arguments, arguments of zero/null string are provided to use
+	 * up the format string.
+	 */
+	skip1 = "#-+ 0";
+	skip2 = "*0123456789";
+
+	escape(fmt = format = *argv);		/* backslash interpretation */
+	gargv = ++argv;
+	for (;;) {
+		end = 0;
+		/* find next format specification */
+next:		for (start = fmt;; ++fmt) {
+			if (!*fmt) {
+				/* avoid infinite loop */
+				if (end == 1) {
+					warnx("missing format character",
+					    NULL, NULL);
+					return (1);
+				}
+				end = 1;
+				if (fmt > start)
+					(void)printf("%s", start);
+				if (!*gargv)
+					return (0);
+				fmt = format;
+				goto next;
+			}
+			/* %% prints a % */
+			if (*fmt == '%') {
+				if (*++fmt != '%')
+					break;
+				*fmt++ = '\0';
+				(void)printf("%s", start);
+				goto next;
+			}
+		}
+
+		/* skip to field width */
+		for (; strchr(skip1, *fmt); ++fmt);
+		if (*fmt == '*') {
+			if (getint(&fieldwidth))
+				return (1);
+		} else
+			fieldwidth = 0;
+
+		/* skip to possible '.', get following precision */
+		for (; strchr(skip2, *fmt); ++fmt);
+		if (*fmt == '.')
+			++fmt;
+		if (*fmt == '*') {
+			if (getint(&precision))
+				return (1);
+		} else
+			precision = 0;
+
+		/* skip to conversion char */
+		for (; strchr(skip2, *fmt); ++fmt);
+		if (!*fmt) {
+			warnx("missing format character", NULL, NULL);
+			return (1);
+		}
+
+		convch = *fmt;
+		nextch = *++fmt;
+		*fmt = '\0';
+		switch(convch) {
+		case 'c': {
+			char p;
+
+			p = getchr();
+			PF(start, p);
+			break;
+		}
+		case 's': {
+			char *p;
+
+			p = getstr();
+			PF(start, p);
+			break;
+		}
+		case 'd': case 'i': case 'o': case 'u': case 'x': case 'X': {
+			long p;
+			char *f;
+			
+			if ((f = mklong(start, convch)) == NULL)
+				return (1);
+			if (getlong(&p))
+				return (1);
+			PF(f, p);
+			break;
+		}
+		case 'e': case 'E': case 'f': case 'g': case 'G': {
+			double p;
+
+			p = getdouble();
+			PF(start, p);
+			break;
+		}
+		default:
+			warnx("illegal format character", NULL, NULL);
+			return (1);
+		}
+		*fmt = nextch;
+	}
+	/* NOTREACHED */
+}
+
+static char *
+mklong(str, ch)
+	char *str;
+	int ch;
+{
+	static char copy[64];
+	int len;
+
+	len = strlen(str) + 2;
+	memmove(copy, str, len - 3);
+	copy[len - 3] = 'l';
+	copy[len - 2] = ch;
+	copy[len - 1] = '\0';
+	return (copy);
+}
 
 static void
-doprnt(addchar, sfmt, ap)
-    void    (*addchar) ();
-    char   *sfmt;
-    va_list ap;
+escape(fmt)
+	register char *fmt;
 {
-    register unsigned char *f, *bp;
-    register long l;
-    register unsigned long u;
-    register int i;
-    register int fmt;
-    register unsigned char pad = ' ';
-    int     flush_left = 0, f_width = 0, prec = INF, hash = 0, do_long = 0;
-    int     sign = 0;
+	register char *store;
+	register int value, c;
 
-    f = (unsigned char *) sfmt;
-    for (; *f; f++) {
-	if (*f != '%') {	/* then just out the char */
-	    (*addchar) ((int) (*f));
+	for (store = fmt; c = *fmt; ++fmt, ++store) {
+		if (c != '\\') {
+			*store = c;
+			continue;
+		}
+		switch (*++fmt) {
+		case '\0':		/* EOS, user error */
+			*store = '\\';
+			*++store = '\0';
+			return;
+		case '\\':		/* backslash */
+		case '\'':		/* single quote */
+			*store = *fmt;
+			break;
+		case 'a':		/* bell/alert */
+			*store = '\7';
+			break;
+		case 'b':		/* backspace */
+			*store = '\b';
+			break;
+		case 'f':		/* form-feed */
+			*store = '\f';
+			break;
+		case 'n':		/* newline */
+			*store = '\n';
+			break;
+		case 'r':		/* carriage-return */
+			*store = '\r';
+			break;
+		case 't':		/* horizontal tab */
+			*store = '\t';
+			break;
+		case 'v':		/* vertical tab */
+			*store = '\13';
+			break;
+					/* octal constant */
+		case '0': case '1': case '2': case '3':
+		case '4': case '5': case '6': case '7':
+			for (c = 3, value = 0;
+			    c-- && *fmt >= '0' && *fmt <= '7'; ++fmt) {
+				value <<= 3;
+				value += *fmt - '0';
+			}
+			--fmt;
+			*store = value;
+			break;
+		default:
+			*store = *fmt;
+			break;
+		}
 	}
-	else {
-	    f++;		/* skip the % */
-
-	    if (*f == '-') {	/* minus: flush left */
-		flush_left = 1;
-		f++;
-	    }
-
-	    if (*f == '0' || *f == '.') {
-		/* padding with 0 rather than blank */
-		pad = '0';
-		f++;
-	    }
-	    if (*f == '*') {	/* field width */
-		f_width = va_arg(ap, int);
-		f++;
-	    }
-	    else if (Isdigit(*f)) {
-		f_width = atoi((char *) f);
-		while (Isdigit(*f))
-		    f++;	/* skip the digits */
-	    }
-
-	    if (*f == '.') {	/* precision */
-		f++;
-		if (*f == '*') {
-		    prec = va_arg(ap, int);
-		    f++;
-		}
-		else if (Isdigit(*f)) {
-		    prec = atoi((char *) f);
-		    while (Isdigit(*f))
-			f++;	/* skip the digits */
-		}
-	    }
-
-	    if (*f == '#') {	/* alternate form */
-		hash = 1;
-		f++;
-	    }
-
-	    if (*f == 'l') {	/* long format */
-		do_long = 1;
-		f++;
-	    }
-
-	    fmt = *f;
-	    if (Isupper(fmt)) {
-		do_long = 1;
-		fmt = Tolower(fmt);
-	    }
-	    bp = buf;
-	    switch (fmt) {	/* do the format */
-	    case 'd':
-		if (do_long)
-		    l = va_arg(ap, long);
-		else
-		    l = (long) (va_arg(ap, int));
-		if (l < 0) {
-		    sign = 1;
-		    l = -l;
-		}
-		do {
-		    *bp++ = l % 10 + '0';
-		} while ((l /= 10) > 0);
-		if (sign)
-		    *bp++ = '-';
-		f_width = f_width - (bp - buf);
-		if (!flush_left)
-		    while (f_width-- > 0)
-			(*addchar) ((int) (pad));
-		for (bp--; bp >= buf; bp--)
-		    (*addchar) ((int) (*bp));
-		if (flush_left)
-		    while (f_width-- > 0)
-			(*addchar) ((int) (' '));
-		break;
-
-	    case 'o':
-	    case 'x':
-	    case 'u':
-		if (do_long)
-		    u = va_arg(ap, unsigned long);
-		else
-		    u = (unsigned long) (va_arg(ap, unsigned));
-		if (fmt == 'u') {	/* unsigned decimal */
-		    do {
-			*bp++ = u % 10 + '0';
-		    } while ((u /= 10) > 0);
-		}
-		else if (fmt == 'o') {	/* octal */
-		    do {
-			*bp++ = u % 8 + '0';
-		    } while ((u /= 8) > 0);
-		    if (hash)
-			*bp++ = '0';
-		}
-		else if (fmt == 'x') {	/* hex */
-		    do {
-			i = u % 16;
-			if (i < 10)
-			    *bp++ = i + '0';
-			else
-			    *bp++ = i - 10 + 'a';
-		    } while ((u /= 16) > 0);
-		    if (hash) {
-			*bp++ = 'x';
-			*bp++ = '0';
-		    }
-		}
-		i = f_width - (bp - buf);
-		if (!flush_left)
-		    while (i-- > 0)
-			(*addchar) ((int) (pad));
-		for (bp--; bp >= buf; bp--)
-		    (*addchar) ((int) (*bp));
-		if (flush_left)
-		    while (i-- > 0)
-			(*addchar) ((int) (' '));
-		break;
-
-
-	    case 'c':
-		i = va_arg(ap, int);
-		(*addchar) ((int) (i));
-		break;
-
-	    case 's':
-		bp = va_arg(ap, unsigned char *);
-		if (!bp)
-		    bp = (unsigned char *) "(nil)";
-		f_width = f_width - strlen((char *) bp);
-		if (!flush_left)
-		    while (f_width-- > 0)
-			(*addchar) ((int) (pad));
-		for (i = 0; *bp && i < prec; i++) {
-		    (*addchar) ((int) (*bp));
-		    bp++;
-		}
-		if (flush_left)
-		    while (f_width-- > 0)
-			(*addchar) ((int) (' '));
-
-		break;
-
-	    case '%':
-		(*addchar) ((int) ('%'));
-		break;
-	    }
-	    flush_left = 0, f_width = 0, prec = INF, hash = 0, do_long = 0;
-	    sign = 0;
-	    pad = ' ';
-	}
-    }
+	*store = '\0';
 }
 
+static int
+getchr()
+{
+	if (!*gargv)
+		return ('\0');
+	return ((int)**gargv++);
+}
 
-static unsigned char *xstring;
+static char *
+getstr()
+{
+	if (!*gargv)
+		return ("");
+	return (*gargv++);
+}
+
+static char *Number = "+-.0123456789";
+static int
+getint(ip)
+	int *ip;
+{
+	long val;
+
+	if (getlong(&val))
+		return (1);
+	if (val > INT_MAX) {
+		warnx("%s: %s", *gargv, strerror(ERANGE));
+		return (1);
+	}
+	*ip = val;
+	return (0);
+}
+
+static int
+getlong(lp)
+	long *lp;
+{
+	long val;
+	char *ep;
+
+	if (!*gargv) {
+		*lp = 0;
+		return (0);
+	}
+	if (strchr(Number, **gargv)) {
+		errno = 0;
+		val = strtol(*gargv, &ep, 0);
+		if (*ep != '\0') {
+			warnx("%s: illegal number", *gargv, NULL);
+			return (1);
+		}
+		if (errno == ERANGE)
+			if (val == LONG_MAX) {
+				warnx("%s: %s", *gargv, strerror(ERANGE));
+				return (1);
+			}
+			if (val == LONG_MIN) {
+				warnx("%s: %s", *gargv, strerror(ERANGE));
+				return (1);
+			}
+			
+		*lp = val;
+		++gargv;
+		return (0);
+	}
+	*lp =  (long)asciicode();
+	return (0);
+}
+
+static double
+getdouble()
+{
+	if (!*gargv)
+		return ((double)0);
+	if (strchr(Number, **gargv))
+		return (atof(*gargv++));
+	return ((double)asciicode());
+}
+
+static int
+asciicode()
+{
+	register int ch;
+
+	ch = **gargv;
+	if (ch == '\'' || ch == '"')
+		ch = (*gargv)[1];
+	++gargv;
+	return (ch);
+}
+
 static void
-xaddchar(c)
-    int     c;
+usage()
 {
-    *xstring++ = c;
-}
-
-
-void
-#if __STDC__
-xsprintf(char *str, char *fmt, ...)
-#else
-xsprintf(str, fmt, va_alist)
-    char   *str;
-    char   *fmt;
-    va_dcl
-#endif
-{
-    va_list va;
-
-#if __STDC__
-    va_start(va, fmt);
-#else
-    va_start(va);
-#endif
-    xstring = (unsigned char *) str;
-    doprnt(xaddchar, fmt, va);
-    va_end(va);
-    *xstring++ = '\0';
-}
-
-
-void
-#if __STDC__
-xprintf(char *fmt, ...)
-#else
-xprintf(fmt, va_alist)
-    char   *fmt;
-    va_dcl
-#endif
-{
-    va_list va;
-
-#if __STDC__
-    va_start(va, fmt);
-#else
-    va_start(va);
-#endif
-    doprnt(xputchar, fmt, va);
-    va_end(va);
-}
-
-
-void
-xvprintf(fmt, va)
-    char   *fmt;
-    va_list va;
-{
-    doprnt(xputchar, fmt, va);
-}
-
-void
-xvsprintf(str, fmt, va)
-    char   *str;
-    char   *fmt;
-    va_list va;
-{
-    xstring = (unsigned char *) str;
-    doprnt(xaddchar, fmt, va);
-    *xstring++ = '\0';
+	(void)fprintf(stderr, "usage: printf format [arg ...]\n");
 }
