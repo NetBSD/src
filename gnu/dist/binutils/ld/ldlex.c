@@ -28,9 +28,15 @@
 #ifndef FLEXINT_H
 #define FLEXINT_H
 
+/* XXX NetBSD 1.6 has <stdint.h>.  */
+#ifdef __NetBSD__
+#include <sys/param.h>
+#endif
+
 /* C99 systems have <inttypes.h>. Non-C99 systems may or may not. */
 
-#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
+#if (defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L) \
+    || __NetBSD_Version__ > 106000000
 #include <inttypes.h>
 typedef int8_t flex_int8_t;
 typedef uint8_t flex_uint8_t;
