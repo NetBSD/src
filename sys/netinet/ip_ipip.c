@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.3 1999/02/02 07:20:13 thorpej Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.3.2.1 1999/04/04 19:24:32 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -287,6 +287,7 @@ ipip_ioctl(ifp, cmd, data)
 {
 	struct ipip_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct in_ifaddr *ia = (struct in_ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -300,26 +301,52 @@ ipip_ioctl(ifp, cmd, data)
 			break;
 		}
 
-		if (cmd == SIOCSIFADDR)
-			sc->sc_src = (satosin(ifa->ifa_addr))->sin_addr;
-		else
-			sc->sc_dst = (satosin(ifa->ifa_dstaddr))->sin_addr;
+		sc->sc_src = (satosin(ifa->ifa_addr))->sin_addr;
+		sc->sc_dst = ia->ia_dstaddr.sin_addr;
+		ifp->if_mtu = 0;
+		ifp->if_flags &= ~IFF_UP;
 
 		if (!in_nullhost(sc->sc_src) && !in_nullhost(sc->sc_dst)) {
+			struct rtentry *rt;
+
 			ipip_compute_route(sc);
 			/*
 			 * Now that we know the route to use, fill in the
 			 * MTU.
 			 */
-			ifp->if_mtu = sc->sc_route.ro_rt->rt_ifp->if_mtu -
-			    ifp->if_hdrlen;
-			ifp->if_flags |= IFF_UP;
+			rt = sc->sc_route.ro_rt;
+			if (rt != NULL) {
+				ifp->if_mtu = rt->rt_ifp->if_mtu -
+					      ifp->if_hdrlen;
+				ifp->if_flags |= IFF_UP;
+			}
 		}
 		break;
 
 	case SIOCSIFFLAGS:
 		if (in_nullhost(sc->sc_src) || in_nullhost(sc->sc_dst))
 			ifp->if_flags &= ~IFF_UP;
+
+		if (ifp->if_flags & IFF_UP) {
+			if (sc->sc_route.ro_rt == NULL) {
+				struct rtentry *rt;
+
+				ipip_compute_route(sc);
+				rt = sc->sc_route.ro_rt;
+				if (rt != NULL)
+					ifp->if_mtu = rt->rt_ifp->if_mtu -
+						      ifp->if_hdrlen;
+				else
+					ifp->if_flags &= ~IFF_UP;
+			}
+		}
+		else {
+			if (sc->sc_route.ro_rt != NULL) {
+				RTFREE(sc->sc_route.ro_rt);
+				sc->sc_route.ro_rt = NULL;
+			}
+			ifp->if_mtu = 0;
+		}
 		break;
 
 	case SIOCSIFMTU:
