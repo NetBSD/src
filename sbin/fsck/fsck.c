@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.16 1997/10/31 09:48:04 mycroft Exp $	*/
+/*	$NetBSD: fsck.c,v 1.17 1998/07/26 12:03:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.16 1997/10/31 09:48:04 mycroft Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.17 1998/07/26 12:03:09 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,7 +89,7 @@ static void addentry __P((struct fstypelist *, const char *, const char *));
 static void maketypelist __P((char *));
 static void catopt __P((char **, const char *));
 static void mangle __P((char *, int *, const char ***, int *));
-static char *getfslab __P((const char *));
+static const char *getfslab __P((const char *));
 static void usage __P((void));
 static void *isok __P((struct fstab *));
 
@@ -100,7 +100,7 @@ main(argc, argv)
 {
 	struct fstab *fs;
 	int i, rval = 0;
-	char *vfstype = NULL;
+	const char *vfstype = NULL;
 	char globopt[3];
 
 	globopt[0] = '-';
@@ -164,7 +164,8 @@ main(argc, argv)
 
 
 	for (; argc--; argv++) {
-		char *spec, *type;
+		char *spec;
+		const char *type;
 
 		if ((fs = getfsfile(*argv)) == NULL &&
 		    (fs = getfsspec(*argv)) == NULL) {
@@ -464,13 +465,14 @@ mangle(options, argcp, argvp, maxargcp)
 }
 
 
-static char *
+const static char *
 getfslab(str)
 	const char *str;
 {
 	struct disklabel dl;
 	int fd;
-	char p, *vfstype;
+	char p;
+	const char *vfstype;
 	u_char t;
 
 	/* deduce the filesystem type from the disk label */
