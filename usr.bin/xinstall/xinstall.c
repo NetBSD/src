@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.26 1998/09/28 08:16:15 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.27 1998/10/01 18:23:52 erh Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.26 1998/09/28 08:16:15 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.27 1998/10/01 18:23:52 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -526,8 +526,8 @@ void
 usage()
 {
 	(void)fprintf(stderr, "\
-usage: install [-cs] [-f flags] [-g group] [-m mode] [-o owner] file1 file2\n\
-       install [-cs] [-f flags] [-g group] [-m mode] [-o owner] file1 ... fileN directory\n\
-       install  -d   [-g group] [-m mode] [-o owner] directory ...\n");
+usage: install [-cps] [-f flags] [-g group] [-m mode] [-o owner] file1 file2\n\
+       install [-cps] [-f flags] [-g group] [-m mode] [-o owner] file1 ... fileN directory\n\
+       install  -pd   [-g group] [-m mode] [-o owner] directory ...\n");
 	exit(1);
 }
