@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.2 1999/08/01 00:23:48 matt Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.3 1999/08/11 01:46:25 matt Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -176,29 +176,17 @@ iommu0	at mainbus0				# sun4m
 sbus0	at iommu0				# sun4m
 
 ## SBus to PCMCIA bridge
-# Currently enabling nell* with audioamd* causes panic at attach
-#nell*	at sbus? slot ? offset ?		# PCMCIA bridge
-#pcmcia*	at nell?
-#tspcic*	at sbus? slot ? offset ?	# PCMCIA bridge (tadpole 3gx)
-#pcmcia*	at tspcic?
+#tpcic*	at sbus? slot ? offset ?		# PCMCIA bridge (tadpole 3gx)
+#pcmcia*	at tpcic?
 
 #### Standard system devices -- all required for a given architecture
 
 ## Auxiliary system registers on sun4c and sun4m
 auxreg0	at obio0				# sun4m
 
-## Power status and control register on Sun4m systems
-power0	at obio0
-
 ## Mostek clock found on 4/300, sun4c, and sun4m systems.
 ## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
 clock0	at obio0				# sun4m
-
-## Memory error registers.
-#memreg0	at obio0				# sun4m
-
-## ECC memory control
-#eccmemctl0 at mainbus0				# sun4m
 
 ## Timer chip found on 4/300, sun4c, and sun4m systems.
 timer0	at obio0				# sun4m
@@ -214,6 +202,7 @@ zstty1	at zs0 channel 1	# ttyb
 zs1	at obio0					# sun4m
 kbd0	at zs1 channel 0	# keyboard
 ms0	at zs1 channel 1	# mouse
+zstty*  at zs? channel ?	# mouse
 
 ## Tadpole 3GX/3XL have a builtin modem that emulates a NS16450.
 com*	at obio0					# sun4m (tadpole)
@@ -321,6 +310,9 @@ pseudo-device	ipfilter
 pnozz0 at sbus? slot ? offset ?
 
 #### Other device configuration
+
+# Tadpole microcontroller
+tctrl0 at obio0
 
 ## Pseudo ttys, required for network logins and programs like screen.
 ## 32 is a good number for average systems; you may have as many as you
