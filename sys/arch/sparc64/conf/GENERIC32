@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.78 2004/01/14 22:29:03 jonathan Exp $
+# 	$NetBSD: GENERIC32,v 1.79 2004/02/26 20:23:17 petrov Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.78 $"
+#ident 		"GENERIC-$Revision: 1.79 $"
 
 maxusers	64
 
@@ -661,7 +661,8 @@ cgsix0		at sbus? slot ? offset ?
 cgsix*		at sbus? slot ? offset ?
 
 ## Sun FFB not supported
-#ffb*		at upa?
+#ffb*		at mainbus0
+#wsdisplay*	at ffb?
 
 #### Other device configuration
 
