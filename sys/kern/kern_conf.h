@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_conf.h,v 1.1 1996/02/04 02:19:27 christos Exp $	*/
+/*	$NetBSD: kern_conf.h,v 1.2 1996/03/14 19:01:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/conf.h>
 
-cdev_decl(fdesc);
+cdev_decl(filedesc);
 
 cdev_decl(log);
 
