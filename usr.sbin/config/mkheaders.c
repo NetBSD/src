@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.23 1999/07/09 06:44:59 thorpej Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.24 1999/09/22 14:23:03 ws Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,8 +61,8 @@ static int locators_print __P((const char *, void *, void *));
 static int defopts_print __P((const char *, void *, void *));
 static char *cntname __P((const char *));
 static int cmphdr __P((const char *, const char *));
-static int fprintcnt(FILE *fp, struct nvlist *nv);
-
+static int fprintcnt __P((FILE *, struct nvlist *));
+static int fprintstr __P((FILE *, const char *));
 
 /*
  * Make the various config-generated header files.
@@ -124,6 +124,38 @@ emitcnt(head)
 }
 
 /*
+ * Output a string, preceded by a tab and possibly unescaping any quotes.
+ * The argument will be output as is if it doesn't start with \".
+ * Otherwise the first backslash in a \? sequence will be dropped.
+ */
+static int
+fprintstr(fp, str)
+	FILE *fp;
+	const char *str;
+{
+	int n;
+
+	if (strncmp(str, "\\\"", 2))
+		return fprintf(fp, "\t%s", str);
+
+	if (fputc('\t', fp) < 0)
+		return -1;
+	
+	for (n = 1; *str; str++, n++) {
+		switch (*str) {
+		case '\\':
+			if (!*++str)				/* XXX */
+				str--;
+		default:
+			if (fputc(*str, fp) < 0)
+				return -1;
+			break;
+		}
+	}
+	return n;
+}
+
+/*
  * Callback function for walking the option file hash table.  We write out
  * the options defined for this file.
  */
@@ -158,7 +190,7 @@ defopts_print(name, value, arg)
 			if (fprintf(fp, "#define\t%s", option->nv_name) < 0)
 				goto bad;
 			if (option->nv_str != NULL && isfsoption == 0 &&
-			    fprintf(fp, "\t%s", option->nv_str) < 0)
+			    fprintstr(fp, option->nv_str) < 0)
 				goto bad;
 			if (fputc('\n', fp) < 0)
 				goto bad;
