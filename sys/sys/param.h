@@ -36,15 +36,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)param.h	8.2 (Berkeley) 1/21/94
- *	$Id: param.h,v 1.11 1994/05/24 02:35:24 cgd Exp $
+ *	$Id: param.h,v 1.12 1994/06/08 11:46:38 mycroft Exp $
  */
 
-#define	BSD	199103		/* System version (year & month). */
+#define	BSD	199306		/* System version (year & month). */
 #define BSD4_3	1
 #define BSD4_4	1
 
 #define NetBSD	1993070		/* NetBSD version (year, month, release) */
-#define NetBSD0_9 2		/* NetBSD 0.9B */
+#define NetBSD0_9 3		/* NetBSD 0.9C */
 
 #ifndef NULL
 #define	NULL	0
