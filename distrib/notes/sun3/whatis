@@ -1,6 +1,4 @@
-.\"	$NetBSD: whatis,v 1.7 2000/10/10 12:55:23 lukem Exp $
+.\"	$NetBSD: whatis,v 1.8 2000/10/14 22:27:45 lukem Exp $
 .
-For the sun3,
-.Nx \*V
-brings combined Sun3 and Sun3X support with the same
-installation media.
+This is the fifth major release of
+.Nx*M .
