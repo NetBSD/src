@@ -1,3 +1,4 @@
+/*	$NetBSD: auth-passwd.c,v 1.1.1.1.2.3 2001/12/10 23:56:55 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-passwd.c,v 1.21 2001/02/12 16:16:23 markus Exp $");
+RCSID("$OpenBSD: auth-passwd.c,v 1.23 2001/06/26 16:15:23 dugsong Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -44,14 +45,17 @@ RCSID("$OpenBSD: auth-passwd.c,v 1.21 2001/02/12 16:16:23 markus Exp $");
 #include "servconf.h"
 #include "auth.h"
 
+
+extern ServerOptions options;
+
 /*
  * Tries to authenticate the user using password.  Returns true if
  * authentication succeeds.
  */
 int
-auth_password(struct passwd * pw, const char *password)
+auth_password(Authctxt *authctxt, const char *password)
 {
-	extern ServerOptions options;
+	struct passwd * pw = authctxt->pw;
 	char *encrypted_password;
 
 	/* deny if no user. */
@@ -61,16 +65,29 @@ auth_password(struct passwd * pw, const char *password)
 		return 0;
 	if (*password == '\0' && options.permit_empty_passwd == 0)
 		return 0;
-
-#ifdef KRB4
+#ifdef KRB5
 	if (options.kerberos_authentication == 1) {
-		int ret = auth_krb4_password(pw, password);
+		int ret = auth_krb5_password(authctxt, password);
 		if (ret == 1 || ret == 0)
 			return ret;
 		/* Fall back to ordinary passwd authentication. */
 	}
 #endif
-
+#ifdef KRB4
+	if (options.kerberos_authentication == 1) {
+		int ret = auth_krb4_password(authctxt, password);
+		if (ret == 1 || ret == 0)
+			return ret;
+		/* Fall back to ordinary passwd authentication. */
+	}
+#endif
+#ifdef BSD_AUTH
+	if (auth_userokay(pw->pw_name, authctxt->style, "auth-ssh",
+	    (char *)password) == 0)
+		return 0;
+	else
+		return 1;
+#endif
 	/* Check for users with no password. */
 	if (strcmp(password, "") == 0 && strcmp(pw->pw_passwd, "") == 0)
 		return 1;
