@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4 1998/09/05 23:57:28 eeh Exp $ */
+/*	$NetBSD: mem.c,v 1.5 1999/02/10 17:03:27 kleink Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -194,7 +194,7 @@ mmrw(dev, uio, flags)
 							stba(v++, ASI_PHYS_CACHED, lduba(d++, ASI_P));
 					break;
 				}
-				iov->iov_base += cnt;
+				iov->iov_base =  (caddr_t)iov->iov_base + cnt;
 				iov->iov_len -= cnt;
 				uio->uio_resid -= cnt;
 				uio->uio_offset += cnt;

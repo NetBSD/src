@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.43 1999/02/07 09:34:59 jonathan Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.44 1999/02/10 17:03:28 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ uiomove(buf, n, uio)
 #endif
 			break;
 		}
-		(caddr_t)iov->iov_base += cnt;
+		iov->iov_base = (caddr_t)iov->iov_base + cnt;
 		iov->iov_len -= cnt;
 		uio->uio_resid -= cnt;
 		uio->uio_offset += cnt;
@@ -212,7 +212,7 @@ again:
 		*(char *)iov->iov_base = c;
 		break;
 	}
-	((caddr_t)iov->iov_base)++;
+	iov->iov_base = (caddr_t)iov->iov_base + 1;
 	iov->iov_len--;
 	uio->uio_resid--;
 	uio->uio_offset++;
