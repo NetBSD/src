@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-none.c,v 1.1.1.1 2002/06/24 05:26:12 itojun Exp $	*/
+/*	$NetBSD: auth2-none.c,v 1.2 2002/06/24 05:48:27 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -58,7 +58,7 @@ auth2_read_banner(void)
 	}
 	len = st.st_size;
 	banner = xmalloc(len + 1);
-	n = atomicio(read, fd, banner, len);
+	n = atomic_read(fd, banner, len);
 	close(fd);
 
 	if (n != len) {

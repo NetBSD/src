@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.13 2002/05/27 13:45:17 itojun Exp $	*/
+/*	$NetBSD: auth.c,v 1.14 2002/06/24 05:48:27 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.41 2002/03/19 15:31:47 markus Exp $");
+RCSID("$OpenBSD: auth.c,v 1.43 2002/05/17 14:27:55 millert Exp $");
 
 #include <libgen.h>
 
