@@ -1,4 +1,4 @@
-/*	$NetBSD: bufaux.c,v 1.1.1.1.2.3 2001/12/10 23:52:27 he Exp $	*/
+/*	$NetBSD: bufaux.c,v 1.1.1.1.2.4 2002/06/06 16:47:44 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -141,10 +141,18 @@ buffer_get_bignum2(Buffer *buffer, BIGNUM *value)
 	xfree(bin);
 	return len;
 }
-
 /*
- * Returns an integer from the buffer (4 bytes, msb first).
+ * Returns integers from the buffer (msb first).
  */
+
+u_short
+buffer_get_short(Buffer *buffer)
+{
+	u_char buf[2];
+	buffer_get(buffer, (char *) buf, 2);
+	return GET_16BIT(buf);
+}
+
 u_int
 buffer_get_int(Buffer *buffer)
 {
@@ -162,8 +170,16 @@ buffer_get_int64(Buffer *buffer)
 }
 
 /*
- * Stores an integer in the buffer in 4 bytes, msb first.
+ * Stores integers in the buffer, msb first.
  */
+void
+buffer_put_short(Buffer *buffer, u_short value)
+{
+	char buf[2];
+	PUT_16BIT(buf, value);
+	buffer_append(buffer, buf, 2);
+}
+
 void
 buffer_put_int(Buffer *buffer, u_int value)
 {
