@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.222 1999/03/22 23:43:30 bad Exp $
+#	$NetBSD: GENERIC,v 1.223 1999/03/23 20:08:55 bad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -198,10 +198,12 @@ isa*	at pcib?
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
+pcmcia*	at tcic? controller ? socket ?
 
 # ISA PCMCIA controllers
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
 pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
+tcic0	at isa? port 0x240 iomem 0xd0000 iosiz 0x4000
 
 # PCI PCMCIA controllers
 pcic0	at pci? dev? function ?
