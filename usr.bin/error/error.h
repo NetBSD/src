@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.5 1998/10/08 01:29:27 wsanchez Exp $	*/
+/*	$NetBSD: error.h,v 1.6 2001/02/05 01:44:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -67,7 +67,6 @@ typedef	int	boolean;
 #define	INTROFF	18
 #define	INMOD2	19
 
-extern	int	language;
 /*
  *	We analyze each line in the error message file, and
  *	attempt to categorize it by type, as well as language.
@@ -113,7 +112,6 @@ extern	int		class_count[];
 extern FILE	*errorfile;	/* where error file comes from */
 extern FILE	*queryfile;	/* where the query responses from the user come from*/
 
-extern	char	*currentfilename;
 extern	char	*processname;
 extern	char	*scriptname;
 
