@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.36 1998/08/04 04:03:18 perry Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.37 1998/12/21 23:03:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1103,7 +1103,7 @@ unp_scan(m0, op)
 				if (cm->cmsg_level != SOL_SOCKET ||
 				    cm->cmsg_type != SCM_RIGHTS)
 					continue;
-				qfds = (cm->cmsg_len - sizeof(*cm))
+				qfds = (cm->cmsg_len - ALIGN(sizeof(*cm)))
 						/ sizeof(struct file *);
 				rp = (struct file **)(cm + 1);
 				for (i = 0; i < qfds; i++)
