@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile,v 1.6 2004/01/02 06:31:11 rtr Exp $
+#	$NetBSD: Makefile,v 1.7 2004/01/05 05:36:20 rtr Exp $
 
 .include <bsd.own.mk>
 
 PROG=	XFree86
 BINMODE=4711
 
-MAN=	XFree86.1
-MAN=	XF86Config.5
-
+MAN=	XFree86.1 XF86Config.5
 
 .PATH:  ${X11SRCDIR.xc}/programs/Xserver/hw/xfree86
 
