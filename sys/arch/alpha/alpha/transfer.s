@@ -1,4 +1,4 @@
-/*	$NetBSD: transfer.s,v 1.2 1999/05/31 20:40:23 ross Exp $	*/
+/*	$NetBSD: transfer.s,v 1.3 2001/04/10 10:09:46 ross Exp $	*/
 
 /*-
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -38,12 +38,10 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: transfer.s,v 1.2 1999/05/31 20:40:23 ross Exp $")
+__KERNEL_RCSID(0, "$NetBSD: transfer.s,v 1.3 2001/04/10 10:09:46 ross Exp $")
 
 /*
- * New transfer point for NetBSD Alpha kernel.  This could be written in
- * C, actually. It's a bit safer from things like mcount this way. This file
- * exists because having the entry point in locore confuses gdb.
+ * Locating the entry point in locore confuses gdb.
  */
 
 .globl	__transfer
@@ -55,10 +53,3 @@ __transfer:
 	lda	pv,locorestart
 	jmp	zero,(pv)
 .end	__transfer
-/*
- * Temporary trap to divert upgrading sites into config.
- */
-.globl	U_need_2_run_config
-.ent	U_need_2_run_config 0
-	U_need_2_run_config:
-.end	U_need_2_run_config

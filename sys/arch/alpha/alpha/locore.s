@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.88 2001/01/19 18:51:17 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.89 2001/04/10 10:09:45 ross Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.88 2001/01/19 18:51:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.89 2001/04/10 10:09:45 ross Exp $");
 
 #include "assym.h"
 
@@ -1879,9 +1879,5 @@ longjmp_botchmsg:
 	.asciz	"longjmp botch from %p"
 	.text
 END(longjmp)
-
-NESTED(transfer_check,0,0,ra,0,0)
-	CALL(U_need_2_run_config)
-	END(transfer_check)
 
 /**************************************************************************/
