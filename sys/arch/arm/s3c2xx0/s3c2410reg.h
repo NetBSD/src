@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410reg.h,v 1.3 2003/08/27 03:46:05 bsh Exp $ */
+/* $NetBSD: s3c2410reg.h,v 1.4 2003/09/03 03:11:50 mycroft Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -112,7 +112,11 @@
 #define S3C2410_INTCTL_SIZE	0x20
 
 
-/* Clock control: CLKCON register */
+/* Clock control */
+#define	CLKMAN_LOCKTIME	0x00
+#define	CLKMAN_MPLLCON	0x04
+#define	CLKMAN_UPLLCON	0x08
+#define	CLKMAN_CLKCON	0x0c
 #define	 CLKCON_SPI 	(1<<18)
 #define	 CLKCON_IIS 	(1<<17)
 #define	 CLKCON_IIC 	(1<<16)
@@ -130,6 +134,10 @@
 #define  CLKCON_NANDFC	(1<<4)	/* PCLK to NAND Flash controller */
 #define  CLKCON_IDLE	(1<<2)	/* 1=transition to IDLE mode */
 #define  CLKCON_STOP	(1<<0)	/* 1=transition to STOP mode */
+#define	CLKMAN_CLKSLOW	0x10
+#define	CLKMAN_CLKDIVN	0x14
+#define	 CLKDIVN_HDIVN	(1<<1)	/* hclk=fclk/2 */
+#define	 CLKDIVN_PDIVN	(1<<0)	/* pclk=hclk/2 */
 
 /* NAND Flash controller */
 #define	NANDFC_NFCONF	0x00	/* Configuration */
