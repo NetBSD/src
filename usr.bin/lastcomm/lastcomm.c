@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lastcomm.c	5.11 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: lastcomm.c,v 1.4 1993/12/04 01:57:10 jtc Exp $";
+static char rcsid[] = "$Id: lastcomm.c,v 1.5 1994/03/23 04:37:40 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -56,24 +56,24 @@ static char rcsid[] = "$Id: lastcomm.c,v 1.4 1993/12/04 01:57:10 jtc Exp $";
 #include <stdlib.h>
 #include "pathnames.h"
 
-struct	acct buf[DEV_BSIZE / sizeof (struct acct)];
-
 time_t	expand();
 char	*flagbits();
 char	*getdev();
+
+extern char	*user_from_uid __P((unsigned long, int));
 
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
-	extern char *optarg;
-	register struct acct *acp;
-	register int bn, cc;
+	register char *p;
+	struct acct ab;
 	struct stat sb;
-	int ch, fd;
-	char *acctfile, *ctime(), *strcpy(), *user_from_uid();
-	long lseek();
+	FILE *fp;
+	off_t size;
+	time_t x;
+	int ch;
+	char *acctfile;
 
 	acctfile = _PATH_ACCT;
 	while ((ch = getopt(argc, argv, "f:")) != EOF)
@@ -88,43 +88,59 @@ main(argc, argv)
 		}
 	argv += optind;
 
-	fd = open(acctfile, O_RDONLY);
-	if (fd < 0) {
-		perror(acctfile);
-		exit(1);
-	}
-	(void)fstat(fd, &sb);
-	setpassent(1);
-	for (bn = btodb(sb.st_size); bn >= 0; bn--) {
-		(void)lseek(fd, (off_t)dbtob(bn), L_SET);
-		cc = read(fd, buf, DEV_BSIZE);
-		if (cc < 0) {
-			perror("read");
-			break;
-		}
-		acp = buf + (cc / sizeof (buf[0])) - 1;
-		for (; acp >= buf; acp--) {
-			register char *cp;
-			time_t x;
+	/* Open the file. */
+	if ((fp = fopen(acctfile, "r")) == NULL || fstat(fileno(fp), &sb))
+		err(1, "%s", acctfile);
 
-			if (acp->ac_comm[0] == '\0')
-				(void)strcpy(acp->ac_comm, "?");
-			for (cp = &acp->ac_comm[0];
-			     cp < &acp->ac_comm[fldsiz(acct, ac_comm)] && *cp;
-			     cp++)
-				if (!isascii(*cp) || iscntrl(*cp))
-					*cp = '?';
-			if (*argv && !ok(argv, acp))
-				continue;
-			x = expand(acp->ac_utime) + expand(acp->ac_stime);
-			printf("%-*.*s %s %-*s %-*s %6.2f secs %.16s\n",
-				fldsiz(acct, ac_comm), fldsiz(acct, ac_comm),
-				acp->ac_comm, flagbits(acp->ac_flag),
-				UT_NAMESIZE, user_from_uid(acp->ac_uid, 0),
-				UT_LINESIZE, getdev(acp->ac_tty),
-				x / (double)AHZ, ctime(&acp->ac_btime));
-		}
+	/*
+	 * Round off to integral number of accounting records, probably
+	 * not necessary, but it doesn't hurt.
+	 */
+	size = sb.st_size - sb.st_size % sizeof(struct acct);
+
+	/* Check if any records to display. */ 
+	if (size < sizeof(struct acct))
+		exit(0); 
+
+	/*
+	 * Seek to before the last entry in the file; use lseek(2) in case
+	 * the file is bigger than a "long".
+	 */
+	size -= sizeof(struct acct);
+	if (lseek(fileno(fp), size, SEEK_SET) == -1)
+		err(1, "%s", acctfile);
+
+	for (;;) {
+		if (fread(&ab, sizeof(struct acct), 1, fp) != 1)
+			err(1, "%s", acctfile);
+
+		if (fseek(fp, 2 * -(long)sizeof(struct acct), SEEK_CUR) == -1)
+			err(1, "%s", acctfile);
+
+		if (size == 0)
+			break;
+		size -= sizeof(struct acct);
+
+		if (ab.ac_comm[0] == '\0') {
+			ab.ac_comm[0] = '?';
+			ab.ac_comm[1] = '\0';
+		} else
+			for (p = &ab.ac_comm[0];
+			    p < &ab.ac_comm[fldsiz(acct, ac_comm)] && *p; ++p)
+				if (!isprint(*p))
+					*p = '?';
+		if (*argv && !ok(argv, &ab))
+			continue;
+
+		x = expand(ab.ac_utime) + expand(ab.ac_stime);
+		printf("%-*.*s %s %-*s %-*s %6.2f secs %.16s\n",
+			fldsiz(acct, ac_comm), fldsiz(acct, ac_comm),
+			ab.ac_comm, flagbits(ab.ac_flag),
+			UT_NAMESIZE, user_from_uid(ab.ac_uid, 0),
+			UT_LINESIZE, getdev(ab.ac_tty),
+			x / (double)AHZ, ctime(&ab.ac_btime));
 	}
+	exit(0);
 }
 
 time_t
@@ -164,7 +180,6 @@ ok(argv, acp)
 	register struct acct *acp;
 {
 	register char *cp;
-	char *user_from_uid();
 
 	do {
 		cp = user_from_uid(acp->ac_uid, 0);
@@ -212,7 +227,8 @@ setupdevs()
 	while (dp = readdir(fd)) {
 		if (dp->d_ino == 0)
 			continue;
-		if (dp->d_name[0] != 't' && /* XXX (cgd) followin is a hack! */
+		if (dp->d_name[0] != 't' &&
+#warning WARNING! ugly pc 'vga' console hack!
 		    (strcmp(dp->d_name, "console") && strcmp(dp->d_name, "vga")))
 			continue;
 		(void)strncpy(hashtab->dev_name, dp->d_name, UT_LINESIZE);
