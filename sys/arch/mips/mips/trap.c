@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.60 1997/06/16 23:41:55 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.61 1997/06/17 04:11:33 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2350,11 +2350,11 @@ mips3_dump_tlb(first, last)
 		else {
 			printf("TLB*%2d vad 0x%08x ", tlbno, tlb.tlb_hi);
 		}
-		printf("0=0x%08lx ", pfn_to_vad(tlb.tlb_lo0));
+		printf("0=0x%08x ", pfn_to_vad(tlb.tlb_lo0));
 		printf("%c", tlb.tlb_lo0 & mips_pg_m_bit() ? 'M' : ' ');
 		printf("%c", tlb.tlb_lo0 & mips_pg_global_bit() ? 'G' : ' ');
 		printf(" atr %x ", (tlb.tlb_lo0 >> 3) & 7);
-		printf("1=0x%08lx ", pfn_to_vad(tlb.tlb_lo1));
+		printf("1=0x%08x ", pfn_to_vad(tlb.tlb_lo1));
 		printf("%c", tlb.tlb_lo1 & mips_pg_m_bit() ? 'M' : ' ');
 		printf("%c", tlb.tlb_lo1 & mips_pg_global_bit() ? 'G' : ' ');
 		printf(" atr %x ", (tlb.tlb_lo1 >> 3) & 7);
