@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.42 2002/05/23 06:25:25 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.43 2002/05/23 06:35:18 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.42 2002/05/23 06:25:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.43 2002/05/23 06:35:18 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,16 +442,7 @@ in6_ifattach_addaddr(ifp, ia)
 			    if_name(ifp), ip6_sprintf(&llsol), error));
 		}
 
-		/* XXX should we run DAD on other interface types? */
-		switch (ifp->if_type) {
-#if 1
-		case IFT_ARCNET:
-		case IFT_ETHER:
-		case IFT_FDDI:
-		case IFT_IEEE1394:
-#else
-		default:
-#endif
+		if (in6if_do_dad(ifp)) {
 			/* mark the address TENTATIVE, if needed. */
 			ia->ia6_flags |= IN6_IFF_TENTATIVE;
 			/* nd6_dad_start() will be called in in6_if_up */

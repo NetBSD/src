@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.24 2001/12/21 08:54:54 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.25 2002/05/23 06:35:18 itojun Exp $	*/
 /*	$KAME: in6_var.h,v 1.53 2001/02/10 02:44:27 itojun Exp $	*/
 
 /*
@@ -568,6 +568,7 @@ extern void in6_len2mask __P((struct in6_addr *, int));
 int	in6_control __P((struct socket *,
 			 u_long, caddr_t, struct ifnet *, struct proc *));
 void	in6_purgeaddr __P((struct ifaddr *, struct ifnet *));
+int	in6if_do_dad __P((struct ifnet *));
 void	in6_purgeif __P((struct ifnet *));
 void	in6_savemkludge __P((struct in6_ifaddr *));
 void	in6_setmaxmtu   __P((void));
