@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.6 2000/01/08 22:57:31 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.7 2000/01/09 03:28:11 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -282,7 +282,7 @@ rf_ConfigureParityLogging(
 	}
 	for (i = 0; i < raidPtr->regionBufferPool.totalBuffers; i++) {
 		RF_Malloc(raidPtr->regionBufferPool.buffers[i], raidPtr->regionBufferPool.bufferSize * sizeof(char), (caddr_t));
-		if (raidPtr->regionBufferPool.buffers == NULL) {
+		if (raidPtr->regionBufferPool.buffers[i] == NULL) {
 			rf_mutex_destroy(&raidPtr->regionBufferPool.mutex);
 			rf_cond_destroy(&raidPtr->regionBufferPool.cond);
 			for (j = 0; j < i; j++) {
