@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.31 2002/09/06 08:58:48 lukem Exp $
+# $NetBSD: postinstall,v 1.32 2002/09/20 12:57:33 christos Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -59,18 +59,18 @@ err()
 {
 	exitval=$1
 	shift
-	echo 1>&2 "${PROGNAME}: $*"
+	echo 1>&2 "${PROGNAME}: $@"
 	exit ${exitval}
 }
 
 warn()
 {
-	echo 1>&2 "${PROGNAME}: $*"
+	echo 1>&2 "${PROGNAME}: $@"
 }
 
 msg()
 {
-	echo "	$*"
+	echo "	$@"
 }
 
 # additem item description
@@ -117,7 +117,7 @@ check_ids()
 	_type=$2
 	_file=$3
 	shift 3
-	_ids=$*
+	_ids="$@"
 
 	if [ ! -f "${_file}" ]; then
 		msg "${_file} doesn't exist; can't check for missing ${_type}"
@@ -166,7 +166,7 @@ compare_dir()
 	_dest=$3
 	_mode=$4
 	shift 4
-	_files=$*
+	_files="$@"
 
 	if [ ! -d "${_src}" ]; then
 		msg "${_src} is not a directory; skipping check"
@@ -635,7 +635,7 @@ main()
 		;;
 
 	check|fix)
-		todo=$*
+		todo="$@"
 		: ${todo:=${items}}
 
 		# ensure that all supplied items are valid
@@ -710,5 +710,5 @@ trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
 
 umask 022
 
-main $*
+main "$@"
 exit 0
