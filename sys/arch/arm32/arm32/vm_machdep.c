@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 1998/02/21 23:27:10 mark Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20 1998/04/03 01:58:40 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -42,8 +42,6 @@
  *
  * Created      : 08/10/94
  */
-
-#define DEBUG_VMMACHDEP
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +90,6 @@ pt_entry_t *pmap_pte	__P((pmap_t, vm_offset_t));
 
 /*
  * Special compilation symbols
- * DEBUG_VMMACHDEP
  * STACKCHECKS
  */
 
@@ -144,32 +141,19 @@ cpu_fork(p1, p2)
 
 #ifdef STACKCHECKS
 	/* Fill the undefined stack with a known pattern */
-
 	ptr = ((u_char *)p2->p_addr) + USPACE_UNDEF_STACK_BOTTOM;
 	for (loop = 0; loop < (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM); ++loop, ++ptr)
 		*ptr = 0xdd;
 
 	/* Fill the kernel stack with a known pattern */
-
 	ptr = ((u_char *)p2->p_addr) + USPACE_SVC_STACK_BOTTOM;
 	for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM); ++loop, ++ptr)
 		*ptr = 0xdd;
 #endif	/* STACKCHECKS */
 
-/* Now ...
- * vm_fork has allocated UPAGES in kernel Vm space for us. p2->p_addr
- * points to the start of this. The i386 releases this memory in vm_fork
- * and relocates it in cpu_fork.
- * We can work with it allocated by vm_fork. We we must do is
- * copy the stack and activate the p2 page directory.
- * We activate first and then call savectx which will copy the stack.
- * This must also set the stack pointer for p2 to its correct address
- * NOTE: This will be different from p1 stack address.
- */
- 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
-		printf("cpu_fork: pcb = %p pagedir = %p\n",
+		printf("cpu_fork: pcb=%p pagedir=%p\n",
 		    &p2->p_addr->u_pcb, p2->p_addr->u_pcb.pcb_pagedir);
 		printf("p1->procaddr=%p p1->procaddr->u_pcb=%p pid=%d pmap=%p\n",
 		    p1->p_addr, &p1->p_addr->u_pcb, p1->p_pid,
@@ -180,65 +164,66 @@ cpu_fork(p1, p2)
 	}
 #endif	/* PMAP_DEBUG */
 
-/* ream out old pagetables */
+	/* ream out old pagetables */
+	if (p1->p_vmspace != p2->p_vmspace) {
+		vp = &p2->p_vmspace->vm_map;
+		(void)vm_deallocate(vp, muaddr, VM_MAX_ADDRESS - muaddr);
+		(void)vm_allocate(vp, &muaddr, VM_MAX_ADDRESS - muaddr, FALSE);
+		(void)vm_map_inherit(vp, muaddr, VM_MAX_ADDRESS, VM_INHERIT_NONE);
 
-	vp = &p2->p_vmspace->vm_map;
-	(void)vm_deallocate(vp, muaddr, VM_MAX_ADDRESS - muaddr);
-	(void)vm_allocate(vp, &muaddr, VM_MAX_ADDRESS - muaddr, FALSE);
-	(void)vm_map_inherit(vp, muaddr, VM_MAX_ADDRESS, VM_INHERIT_NONE);
-
-
-/* Get the address of the page table containing 0x00000000 */
-
-	addr = trunc_page((u_int)vtopte(0));
+		/* Get the address of the page table containing 0x00000000 */
+		addr = trunc_page((u_int)vtopte(0));
 
 #ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0) {
-		printf("fun time: paging in PT %08x for 0\n", (u_int)addr);
-		printf("p2->p_vmspace->vm_map.pmap->pm_pdir[0] = %08x\n",
-		    p2->p_vmspace->vm_map.pmap->pm_pdir[0]);
-		printf("p2->pm_vptpt[0] = %08x",
-		    *((int *)(p2->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
+		if (pmap_debug_level >= 0) {
+			printf("fun time: paging in PT %lx for 0\n", addr);
+			printf("p2->p_vmspace->vm_map.pmap->pm_pdir[0] = %08x\n",
+			    p2->p_vmspace->vm_map.pmap->pm_pdir[0]);
+			printf("p2->pm_vptpt[0] = %08x",
+			    *((int *)(p2->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
+		}
+#endif	/* PMAP_DEBUG */
+
+		/* Nuke the exising mapping */
+		p2->p_vmspace->vm_map.pmap->pm_pdir[0] = 0;
+		p2->p_vmspace->vm_map.pmap->pm_pdir[1] = 0;
+		p2->p_vmspace->vm_map.pmap->pm_pdir[2] = 0;
+		p2->p_vmspace->vm_map.pmap->pm_pdir[3] = 0;
+
+		*((int *)(p2->p_vmspace->vm_map.pmap->pm_vptpt + 0)) = 0;
+
+		cpu_cache_purgeID();
+		cpu_tlb_flushID();
+
+		/*
+		 * Wire down a page to cover the page table zero page
+		 * and the start of the user are in
+		 */
+
+#ifdef PMAP_DEBUG
+		if (pmap_debug_level >= 0)
+			printf("vm_map_pageable: addr=%lx\n", addr);
+#endif	/* PMAP_DEBUG */
+
+		if (vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG,
+		    FALSE) != 0)
+			panic("Failed to fault in system page PT\n");
+
+#ifdef PMAP_DEBUG
+		if (pmap_debug_level >= 0) {
+			printf("party on! acquired a page table for 0M->(4M-1)\n");
+			printf("p2->p_vmspace->vm_map.pmap->pm_pdir[0] = %08x\n",
+			    p2->p_vmspace->vm_map.pmap->pm_pdir[0]);
+			printf("p2->pm_vptpt[0] = %08x",
+			    *((int *)(p2->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
+		}
+#endif	/* PMAP_DEBUG */
+
+		/* Map the system page */
+
+		pmap_enter(p2->p_vmspace->vm_map.pmap, 0,
+		    systempage.physical, VM_PROT_READ, TRUE);
 	}
-#endif	/* PMAP_DEBUG */
-
-/* Nuke the exising mapping */
-
-	p2->p_vmspace->vm_map.pmap->pm_pdir[0] = 0;
-	p2->p_vmspace->vm_map.pmap->pm_pdir[1] = 0;
-	p2->p_vmspace->vm_map.pmap->pm_pdir[2] = 0;
-	p2->p_vmspace->vm_map.pmap->pm_pdir[3] = 0;
-
-	*((int *)(p2->p_vmspace->vm_map.pmap->pm_vptpt + 0)) = 0;
-
-	cpu_cache_purgeID();
-	cpu_tlb_flushID();
-
-/* Wire down a page to cover the page table zero page and the start of the user are in */
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("vm_map_pageable: addr=%08x\n", (u_int)addr);
-#endif	/* PMAP_DEBUG */
-
-	if (vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE) != 0)
-		panic("Failed to fault in system page PT\n");
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0) {
-		printf("party on! acquired a page table for 0M->(4M-1)\n");
-		printf("p2->p_vmspace->vm_map.pmap->pm_pdir[0] = %08x\n",
-		    p2->p_vmspace->vm_map.pmap->pm_pdir[0]);
-		printf("p2->pm_vptpt[0] = %08x",
-		    *((int *)(p2->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
-	}
-#endif	/* PMAP_DEBUG */
-
-	/* Map the system page */
-
-	pmap_enter(p2->p_vmspace->vm_map.pmap, 0,
-	    systempage.physical, VM_PROT_READ, TRUE);
-
 	pmap_activate(p2);
 
 #ifdef ARMFPE
@@ -292,7 +277,6 @@ cpu_exit(p)
 
 #ifdef STACKCHECKS
 	/* Report how much stack has been used - debugging */
-
 	if (p) {
 		u_char *ptr;
 		int loop;
