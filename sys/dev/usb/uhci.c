@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.92 2000/03/24 22:57:58 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.93 2000/03/25 00:11:21 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -569,6 +569,9 @@ uhci_allocx(bus)
 		UXFER(xfer)->iinfo.isdone = 1;
 #endif
 	}
+#ifdef DIAGNOSTIC
+	xfer->isfree = 0;
+#endif
 	return (xfer);
 }
 
@@ -579,6 +582,13 @@ uhci_freex(bus, xfer)
 {
 	struct uhci_softc *sc = (struct uhci_softc *)bus;
 
+#ifdef DIAGNOSTIC
+	if (xfer->isfree) {
+		printf("uhci_freex: xfer=%p already free\n", xfer);
+		return;
+	}
+	xfer->isfree = 1;
+#endif
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
 }
 
@@ -2572,6 +2582,21 @@ uhci_device_isoc_done(xfer)
 	uhci_intr_info_t *ii = &UXFER(xfer)->iinfo;
 
 	DPRINTFN(4, ("uhci_isoc_done: length=%d\n", xfer->actlen));
+
+#ifdef DIAGNOSTIC
+	if (xfer->isfree) {
+		printf("uhci_device_isoc_done: xfer=%p is free\n", xfer);
+		return;
+	}
+
+        if (ii->stdend == NULL) {
+                printf("uhci_device_isoc_done: xfer=%p stdend==NULL\n", xfer);
+#ifdef UHCI_DEBUG
+		uhci_dump_ii(ii);
+#endif
+		return;
+	}
+#endif
 
 	/* Turn off the interrupt since it is active even if the TD is not. */
 	ii->stdend->td.td_status &= htole32(~UHCI_TD_IOC);
