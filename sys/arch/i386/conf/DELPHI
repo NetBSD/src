@@ -1,11 +1,11 @@
-#	$NetBSD: DELPHI,v 1.9 2001/11/20 12:56:29 lukem Exp $
+#	$NetBSD: DELPHI,v 1.10 2001/12/28 17:37:03 augustss Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
 
 include "arch/i386/conf/std.i386"
 
-ident 		"DELPHI-$Revision: 1.9 $"
+ident 		"DELPHI-$Revision: 1.10 $"
 
 maxusers	64		# estimated number of users
 
@@ -588,16 +588,19 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 #uhub*	at usb?
 #uhub*	at uhub? port ? configuration ? interface ?
 
+# USB HID device
+#uhidev*	at uhub? port ? configuration ? interface ?
+
 # USB Mice
-#ums*	at uhub? port ? configuration ? interface ?
+#ums*	at uhidev? reportid ?
 #wsmouse*	at ums? mux 0
 
 # USB Keyboards
-#ukbd*	at uhub? port ? configuration ? interface ?
+#ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ? mux 1
 
 # USB Generic HID devices
-#uhid*	at uhub? port ? configuration ? interface ?
+#uhid*	at uhidev? reportid ?
 
 # USB Printer
 #ulpt*	at uhub? port ? configuration ? interface ?
