@@ -1,7 +1,7 @@
-/*	$Id: tm.h,v 1.2 1993/11/26 07:18:45 pk Exp $ */
+/*	$Id: tm.h,v 1.3 1993/12/05 00:50:03 cgd Exp $ */
 
 #include <machine/ansi.h>
-#include "da30/m68k.h"
+#include "m68k/m68k.h"
 
 /* See m68k.h.  7 means 68020 with 68881.  */
 
@@ -14,7 +14,7 @@
 
 /* Names to predefine in the preprocessor for this target machine.  */
 
-#define CPP_PREDEFINES "-Dmc68000 -Dmc68020 -Dunix -D__BSD_NET2__ -D__NetBSD__ -Dda30"
+#define CPP_PREDEFINES "-Dm68k -Dmc68000 -Dmc68020 -D__NetBSD__ -Dunix"
 
 /* Specify -k to assembler for PIC code generation. */
 

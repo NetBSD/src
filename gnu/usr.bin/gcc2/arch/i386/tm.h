@@ -1,6 +1,6 @@
 /* Configuration for an i386 running 386BSD as the target machine. 
 
-	$Id: tm.h,v 1.3 1993/11/26 07:02:08 pk Exp $
+	$Id: tm.h,v 1.4 1993/12/05 00:49:43 cgd Exp $
 */
 
 /* This is tested by i386gas.h.  */
@@ -12,7 +12,7 @@
 #include "i386/perform.h"
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dunix -Di386 -D__BSD_NET2__ -D__NetBSD__ -D__386BSD__"
+#define CPP_PREDEFINES "-Di386 -D__NetBSD__ -D__386BSD__ -Dunix"
 
 /* Like the default, except no -lg.  */
 #define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
