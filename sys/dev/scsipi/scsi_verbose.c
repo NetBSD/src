@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_verbose.c,v 1.5 1998/07/10 19:37:18 mjacob Exp $	*/
+/*	$NetBSD: scsi_verbose.c,v 1.6 1998/07/11 00:52:10 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
 
 static const char *sense_keys[16] = {
 	"No Additional Sense",
-	"Soft Error",
+	"Recovered Error",
 	"Not Ready",
 	"Media Error",
 	"Hardware Error",
@@ -454,7 +454,7 @@ scsi_decode_sense(sinfo, flag)
 				    (snsbuf[16] & 0xff) << 8 |
 				    (snsbuf[17] & 0xff));
 			return (rqsbuf);
-		case SKEY_RECOVERABLE_ERROR:
+		case SKEY_RECOVERED_ERROR:
 		case SKEY_MEDIUM_ERROR:
 		case SKEY_HARDWARE_ERROR:
 			(void)sprintf(rqsbuf, "Actual Retry Count: %d",

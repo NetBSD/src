@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.61 1998/07/01 17:16:46 mjacob Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.62 1998/07/11 00:52:09 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -209,9 +209,13 @@ scsi_interpret_sense(xs)
 
 		switch (key) {
 		case SKEY_NO_SENSE:
-		case SKEY_RECOVERABLE_ERROR:
-			if (xs->resid == xs->datalen)
+		case SKEY_RECOVERED_ERROR:
+			if (xs->resid == xs->datalen && xs->datalen) {
+				/*
+				 * Why is this here?
+				 */
 				xs->resid = 0;	/* not short read */
+			}
 		case SKEY_EQUAL:
 			error = 0;
 			break;
