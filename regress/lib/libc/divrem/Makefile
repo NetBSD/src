@@ -1,10 +1,10 @@
-# $Id: Makefile,v 1.4 2002/09/18 05:41:37 lukem Exp $
+# $Id: Makefile,v 1.5 2003/12/19 18:39:04 veego Exp $
 
 NOMAN=		# defined
 
 PROG=		divremtest
 COPTS+=		-Wall -Wno-format -Wno-parentheses -Wno-uninitialized
-GOODRESULT=	ffc1f640297c048e4a9ee02c89bd328a
+GOODRESULT=	3f181846a7fd931b9aeafeac6b32d24c
 
 regress: ${PROG}
 	[ `./${PROG} | md5` = ${GOODRESULT} ]
