@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.293 2003/01/21 20:53:29 augustss Exp $
+$NetBSD: usbdevs,v 1.294 2003/01/24 00:18:26 markd Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1040,6 +1040,7 @@ product NETGEAR FA101		0x1020	10/100 Ethernet
 /* Nikon products */
 product NIKON E990		0x0102	Digital Camera E990
 product NIKON E880		0x0103	Digital Camera E880
+product NIKON E885		0x0105	Digital Camera E885
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1 Digital Camera
