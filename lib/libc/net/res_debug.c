@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.25 1999/09/20 04:39:17 lukem Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.26 2000/04/25 13:26:03 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.25 1999/09/20 04:39:17 lukem Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.26 2000/04/25 13:26:03 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -325,7 +325,7 @@ __fp_nquery(msg, len, file)
 	cp = msg + HFIXEDSZ;
 	endMark = msg + len;
 	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEADX) || hp->rcode) {
-		fprintf(file,";; ->>HEADER<<- opcode: %s, status: %s, id: %d",
+		fprintf(file, ";; ->>HEADER<<- opcode: %s, status: %s, id: %d",
 			_res_opcodes[hp->opcode],
 			_res_resultcodes[hp->rcode],
 			ntohs(hp->id));
@@ -334,17 +334,17 @@ __fp_nquery(msg, len, file)
 	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEADX))
 		putc(';', file);
 	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEAD2)) {
-		fprintf(file,"; flags:");
+		fprintf(file, "; flags:");
 		if (hp->qr)
-			fprintf(file," qr");
+			fprintf(file, " qr");
 		if (hp->aa)
-			fprintf(file," aa");
+			fprintf(file, " aa");
 		if (hp->tc)
-			fprintf(file," tc");
+			fprintf(file, " tc");
 		if (hp->rd)
-			fprintf(file," rd");
+			fprintf(file, " rd");
 		if (hp->ra)
-			fprintf(file," ra");
+			fprintf(file, " ra");
 		if (hp->unused)
 			fprintf(file, " UNUSED-BIT-ON");
 		if (hp->ad)
@@ -353,9 +353,9 @@ __fp_nquery(msg, len, file)
 			fprintf(file, " cd");
 	}
 	if ((!_res.pfcode) || (_res.pfcode & RES_PRF_HEAD1)) {
-		fprintf(file,"; Ques: %d", ntohs(hp->qdcount));
-		fprintf(file,", Ans: %d", ntohs(hp->ancount));
-		fprintf(file,", Auth: %d", ntohs(hp->nscount));
+		fprintf(file, "; Ques: %d", ntohs(hp->qdcount));
+		fprintf(file, ", Ans: %d", ntohs(hp->ancount));
+		fprintf(file, ", Auth: %d", ntohs(hp->nscount));
 		fprintf(file, ", Addit: %d", ntohs(hp->arcount));
 	}
 	if ((!_res.pfcode) || (_res.pfcode & 
@@ -425,7 +425,7 @@ __fp_nquery(msg, len, file)
 	return;
  trunc:
 	fprintf(file, "\n;; ...truncated\n");
-		return;
+	return;
  error:
 	fprintf(file, "\n;; ...malformed\n");
 }
@@ -806,7 +806,7 @@ __p_rr(cp, msg, file)
 		while (cp < cp1 + dlen) {
 			c = *cp++;
 			do {
- 				if (c & 0200) {
+				if (c & 0200) {
 					if (lcnt == 0) {
 						fputs("\n\t\t\t", file);
 						lcnt = 5;
@@ -815,7 +815,7 @@ __p_rr(cp, msg, file)
 					putc(' ', file);
 					lcnt--;
 				}
- 				c <<= 1;
+				c <<= 1;
 			} while (++n & 07);
 		}
 		putc(')', file);

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetent.c,v 1.13 2000/01/22 22:19:14 mycroft Exp $	*/
+/*	$NetBSD: getnetent.c,v 1.14 2000/04/25 13:26:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)getnetent.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: getnetent.c,v 8.4 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetent.c,v 1.13 2000/01/22 22:19:14 mycroft Exp $");
+__RCSID("$NetBSD: getnetent.c,v 1.14 2000/04/25 13:26:03 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -149,7 +149,7 @@ again:
 	net.n_net = inet_network(cp);
 	net.n_addrtype = AF_INET;
 	q = net.n_aliases = net_aliases;
-	if (p != NULL)  {
+	if (p != NULL) {
 		cp = p;
 		while (cp && *cp) {
 			if (*cp == ' ' || *cp == '\t') {
