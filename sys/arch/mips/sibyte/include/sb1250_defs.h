@@ -48,6 +48,122 @@
     *     THE POSSIBILITY OF SUCH DAMAGE.
     ********************************************************************* */
 
+#ifndef _SB1250_DEFS_H
+#define _SB1250_DEFS_H
+
+/*
+ * These headers require ANSI C89 string concatenation, and GCC or other
+ * 'long long' (64-bit integer) support.
+ */
+#if !defined(__STDC__) && !defined(_MSC_VER)
+#error SiByte headers require ANSI C89 support
+#endif
+
+
+/*  *********************************************************************
+    *  Macros for feature tests, used to enable include file features
+    *  for chip features only present in certain chip revisions.
+    *
+    *  SIBYTE_HDR_FEATURES may be defined to be the mask value chip/revision
+    *  which is to be exposed by the headers.  If undefined, it defaults to
+    *  "all features."
+    *
+    *  Use like:
+    *
+    *    #define SIBYTE_HDR_FEATURES	SIBYTE_HDR_FMASK_112x_PASS1
+    *
+    *		Generate defines only for that revision of chip.
+    *
+    *    #if SIBYTE_HDR_FEATURE(chip,pass)
+    *
+    *		True if header features for that revision or later of
+    *	        that particular chip type are enabled in SIBYTE_HDR_FEATURES.
+    *	        (Use this to bracket #defines for features present in a given
+    *		revision and later.)
+    *
+    *		Note that there is no implied ordering between chip types.
+    *
+    *		Note also that 'chip' and 'pass' must textually exactly
+    *		match the defines below.  So, for example,
+    *		SIBYTE_HDR_FEATURE(112x, PASS1) is OK, but
+    *		SIBYTE_HDR_FEATURE(1120, pass1) is not (for two reasons).
+    *
+    *    #if SIBYTE_HDR_FEATURE_UP_TO(chip,pass)
+    *
+    *		Same as SIBYTE_HDR_FEATURE, but true for the named revision
+    *		and earlier revisions of the named chip type.
+    *
+    *    #if SIBYTE_HDR_FEATURE_EXACT(chip,pass)
+    *
+    *		Same as SIBYTE_HDR_FEATURE, but only true for the named
+    *		revision of the named chip type.  (Note that this CANNOT
+    *		be used to verify that you're compiling only for that
+    *		particular chip/revision.  It will be true any time this
+    *		chip/revision is included in SIBYTE_HDR_FEATURES.)
+    *
+    *    #if SIBYTE_HDR_FEATURE_CHIP(chip)
+    *
+    *		True if header features for (any revision of) that chip type
+    *		are enabled in SIBYTE_HDR_FEATURES.  (Use this to bracket
+    *		#defines for features specific to a given chip type.)
+    *
+    *  Mask values currently include room for additional revisions of each
+    *  chip type, but can be renumbered at will.  Note that they MUST fit
+    *  into 31 bits and may not include C type constructs, for safe use in
+    *  CPP conditionals.  Bit positions within chip types DO indicate
+    *  ordering, so be careful when adding support for new minor revs.
+    ********************************************************************* */
+
+#define	SIBYTE_HDR_FMASK_1250_ALL		0x00000ff
+#define	SIBYTE_HDR_FMASK_1250_PASS1		0x0000001
+#define	SIBYTE_HDR_FMASK_1250_PASS2		0x0000002
+
+#define	SIBYTE_HDR_FMASK_112x_ALL		0x0000f00
+#define	SIBYTE_HDR_FMASK_112x_PASS1		0x0000100
+#define SIBYTE_HDR_FMASK_112x_PASS3		0x0000200
+
+/* Bit mask for chip/revision.  (use _ALL for all revisions of a chip).  */ 
+#define	SIBYTE_HDR_FMASK(chip, pass)					\
+    (SIBYTE_HDR_FMASK_ ## chip ## _ ## pass)
+#define	SIBYTE_HDR_FMASK_ALLREVS(chip)					\
+    (SIBYTE_HDR_FMASK_ ## chip ## _ALL)
+
+#define	SIBYTE_HDR_FMASK_ALL						\
+    (SIBYTE_HDR_FMASK_1250_ALL | SIBYTE_HDR_FMASK_112x_ALL)
+
+#ifndef SIBYTE_HDR_FEATURES
+#define	SIBYTE_HDR_FEATURES			SIBYTE_HDR_FMASK_ALL
+#endif
+
+
+/* Bit mask for revisions of chip exclusively before the named revision.  */
+#define	SIBYTE_HDR_FMASK_BEFORE(chip, pass)				\
+    ((SIBYTE_HDR_FMASK(chip, pass) - 1) & SIBYTE_HDR_FMASK_ALLREVS(chip))
+
+/* Bit mask for revisions of chip exclusively after the named revision.  */
+#define	SIBYTE_HDR_FMASK_AFTER(chip, pass)				\
+    (~(SIBYTE_HDR_FMASK(chip, pass)					\
+     | (SIBYTE_HDR_FMASK(chip, pass) - 1)) & SIBYTE_HDR_FMASK_ALLREVS(chip))
+
+
+/* True if header features enabled for (any revision of) that chip type.  */
+#define SIBYTE_HDR_FEATURE_CHIP(chip)					\
+    (!! (SIBYTE_HDR_FMASK_ALLREVS(chip) & SIBYTE_HDR_FEATURES))
+
+/* True if header features enabled for that rev or later, inclusive.  */
+#define SIBYTE_HDR_FEATURE(chip, pass)					\
+    (!! ((SIBYTE_HDR_FMASK(chip, pass)					\
+	  | SIBYTE_HDR_FMASK_AFTER(chip, pass)) & SIBYTE_HDR_FEATURES))
+
+/* True if header features enabled for exactly that rev.  */
+#define SIBYTE_HDR_FEATURE_EXACT(chip, pass)				\
+    (!! (SIBYTE_HDR_FMASK(chip, pass) & SIBYTE_HDR_FEATURES))
+
+/* True if header features enabled for that rev or before, inclusive.  */
+#define SIBYTE_HDR_FEATURE_UP_TO(chip, pass)				\
+    (!! ((SIBYTE_HDR_FMASK(chip, pass)					\
+	 | SIBYTE_HDR_FMASK_BEFORE(chip, pass)) & SIBYTE_HDR_FEATURES))
+
 
 /*  *********************************************************************
     *  Naming schemes for constants in these files:
@@ -88,9 +204,6 @@
 
 
 
-
-#ifndef _SB1250_DEFS_H
-#define _SB1250_DEFS_H
 
 /*
  * Cast to 64-bit number.  Presumably the syntax is different in 
@@ -139,8 +252,8 @@
 
 
 #if !defined(__ASSEMBLER__)
-#define SBWRITECSR(csr,val) *((volatile uint64_t *) MIPS_PHYS_TO_KSEG1(csr)) = (val)
-#define SBREADCSR(csr) (*((volatile uint64_t *) MIPS_PHYS_TO_KSEG1(csr)))
+#define SBWRITECSR(csr,val) *((volatile uint64_t *) PHYS_TO_K1(csr)) = (val)
+#define SBREADCSR(csr) (*((volatile uint64_t *) PHYS_TO_K1(csr)))
 #endif /* __ASSEMBLER__ */
 
 #endif

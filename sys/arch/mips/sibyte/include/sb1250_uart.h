@@ -348,8 +348,9 @@
 #define M_DUART_OUT_PIN_CLR(chan) \
     (chan == 0 ? M_DUART_OUT_PIN_CLR0 : M_DUART_OUT_PIN_CLR1)
 
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
 /* 
- * Full Interrupt Control Register (PASS2)
+ * Full Interrupt Control Register
  */
 
 #define S_DUART_SIG_FULL           _SB_MAKE64(0)
@@ -361,6 +362,7 @@
 #define M_DUART_INT_TIME           _SB_MAKEMASK(4,S_DUART_INT_TIME)
 #define V_DUART_INT_TIME(x)        _SB_MAKEVALUE(x,S_DUART_INT_TIME)
 #define G_DUART_INT_TIME(x)        _SB_GETVALUE(x,S_DUART_INT_TIME,M_DUART_INT_TIME)
+#endif /* 1250 PASS2 || 112x PASS1 */
 
 
 /* ********************************************************************** */

@@ -74,6 +74,10 @@
     * Memory Controller Registers
     ********************************************************************* */
 
+/*
+ * XXX: can't remove MC base 0 if 112x, since it's used by other macros,
+ * since there is one reg there (but it could get its addr/offset constant).
+ */
 #define A_MC_BASE_0                 0x0010051000
 #define A_MC_BASE_1                 0x0010052000
 #define MC_REGISTER_SPACING         0x1000
@@ -118,15 +122,25 @@
     * L2 Cache Control Registers
     ********************************************************************* */
 
-#define A_L2_READ_ADDRESS           0x0010040018
-#define A_L2_EEC_ADDRESS            0x0010040038
+#define A_L2_READ_TAG               0x0010040018
+#define A_L2_ECC_TAG                0x0010040038
+#if SIBYTE_HDR_FEATURE(112x, PASS1)
+#define A_L2_READ_MISC              0x0010040058
+#endif /* 112x PASS1 */
 #define A_L2_WAY_DISABLE            0x0010041000
 #define A_L2_MAKEDISABLE(x)         (A_L2_WAY_DISABLE | (((~(x))&0x0F) << 8))
 #define A_L2_MGMT_TAG_BASE          0x00D0000000
 
-#define A_L2_CACHE_DISABLE	   0x0010042000	/* PASS2 */
-#define A_L2_MAKECACHEDISABLE(x)   (A_L2_CACHE_DISABLE | (((x)&0x0F) << 8))	/* PASS2 */
-#define A_L2_MISC_CONFIG	   0x0010043000	/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define A_L2_CACHE_DISABLE	   0x0010042000
+#define A_L2_MAKECACHEDISABLE(x)   (A_L2_CACHE_DISABLE | (((x)&0x0F) << 8))
+#define A_L2_MISC_CONFIG	   0x0010043000
+#endif /* 1250 PASS2 || 112x PASS1 */
+
+/* Backward-compatibility definitions.  */
+/* XXX: discourage people from using these constants.  */
+#define A_L2_READ_ADDRESS           A_L2_READ_TAG
+#define A_L2_EEC_ADDRESS            A_L2_ECC_TAG
 
 
 /*  ********************************************************************* 
@@ -143,7 +157,9 @@
 
 #define A_MAC_BASE_0                0x0010064000
 #define A_MAC_BASE_1                0x0010065000
+#if SIBYTE_HDR_FEATURE_CHIP(1250)
 #define A_MAC_BASE_2                0x0010066000
+#endif /* 1250 */
 
 #define MAC_SPACING                 0x1000
 #define MAC_DMA_TXRX_SPACING        0x0400
@@ -152,6 +168,7 @@
 #define DMA_TX                      1
 #define MAC_NUM_DMACHAN		    2		    /* channels per direction */
 
+/* XXX: not correct; depends on SOC type.  */
 #define MAC_NUM_PORTS               3
 
 #define A_MAC_CHANNEL_BASE(macnum)                  \
@@ -195,6 +212,9 @@
 #define R_MAC_DMA_CUR_DSCRA             0x00000020
 #define R_MAC_DMA_CUR_DSCRB             0x00000028
 #define R_MAC_DMA_CUR_DSCRADDR          0x00000030
+#if SIBYTE_HDR_FEATURE(112x, PASS1)
+#define R_MAC_DMA_OODPKTLOST_RX         0x00000038	/* rx only */
+#endif /* 112x PASS1 */
 
 /*
  * RMON Counters
@@ -233,6 +253,10 @@
 #define R_MAC_ADFILTER_CFG              0x00000200
 #define R_MAC_ETHERNET_ADDR             0x00000208
 #define R_MAC_PKT_TYPE                  0x00000210
+#if SIBYTE_HDR_FEATURE(112x, PASS1)
+#define R_MAC_ADMASK0			0x00000218
+#define R_MAC_ADMASK1			0x00000220
+#endif /* 112x PASS1 */
 #define R_MAC_HASH_BASE                 0x00000240
 #define R_MAC_ADDR_BASE                 0x00000280
 #define R_MAC_CHLO0_BASE                0x00000300
@@ -242,7 +266,9 @@
 #define R_MAC_INT_MASK                  0x00000410
 #define R_MAC_TXD_CTL                   0x00000420
 #define R_MAC_MDIO                      0x00000428
-#define R_MAC_STATUS1		        0x00000430	/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define R_MAC_STATUS1		        0x00000430
+#endif /* 1250 PASS2 || 112x PASS1 */
 #define R_MAC_DEBUG_STATUS              0x00000448
 
 #define MAC_HASH_COUNT			8
@@ -273,9 +299,11 @@
 #define R_DUART_RX_HOLD             0x160
 #define R_DUART_TX_HOLD             0x170
 
-#define R_DUART_FULL_CTL	    0x140	/* PASS2 */
-#define R_DUART_OPCR_X		    0x180	/* PASS2 */
-#define R_DUART_AUXCTL_X	    0x190	/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define R_DUART_FULL_CTL	    0x140
+#define R_DUART_OPCR_X		    0x180
+#define R_DUART_AUXCTL_X	    0x190
+#endif /* 1250 PASS2 || 112x PASS1 */
 
 
 /*
@@ -341,13 +369,15 @@
 #define A_DUART_INPORT_CHNG_A       0x00100603D0
 #define A_DUART_INPORT_CHNG_B       0x00100603E0
 
-#define A_DUART_FULL_CTL_A	    0x0010060140	/* PASS2 */
-#define A_DUART_FULL_CTL_B	    0x0010060240	/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define A_DUART_FULL_CTL_A	    0x0010060140
+#define A_DUART_FULL_CTL_B	    0x0010060240
 
-#define A_DUART_OPCR_A	  	    0x0010060180	/* PASS2 */
-#define A_DUART_OPCR_B	  	    0x0010060280	/* PASS2 */
+#define A_DUART_OPCR_A	  	    0x0010060180
+#define A_DUART_OPCR_B	  	    0x0010060280
 
-#define A_DUART_INPORT_CHNG_DEBUG   0x00100603F0	/* PASS2 */
+#define A_DUART_INPORT_CHNG_DEBUG   0x00100603F0
+#endif /* 1250 PASS2 || 112x PASS1 */
 
 
 /*  ********************************************************************* 
@@ -484,6 +514,10 @@
 #define A_IO_DRIVE_1		    0x0010061308
 #define A_IO_DRIVE_2		    0x0010061310
 #define A_IO_DRIVE_3		    0x0010061318
+#define A_IO_DRIVE_BASE		    A_IO_DRIVE_0
+#define IO_DRIVE_REGISTER_SPACING   8
+#define R_IO_DRIVE(x)		    ((x)*IO_DRIVE_REGISTER_SPACING)
+#define A_IO_DRIVE(x)		    (A_IO_DRIVE_BASE + R_IO_DRIVE(x))
 
 #define R_IO_INTERRUPT_STATUS       0x0A00
 #define R_IO_INTERRUPT_DATA0        0x0A10
@@ -615,11 +649,13 @@
 #define A_SCD_TIMER_CNT_3           0x0010020188
 #define A_SCD_TIMER_CFG_3           0x0010020198
 
-#define A_SCD_SCRATCH		   0x0010020C10		/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define A_SCD_SCRATCH		   0x0010020C10
 
-#define A_SCD_ZBBUS_CYCLE_COUNT	   0x0010030000		/* PASS2 */
-#define A_SCD_ZBBUS_CYCLE_CP0	   0x0010020C00		/* PASS2 */
-#define A_SCD_ZBBUS_CYCLE_CP1	   0x0010020C08		/* PASS2 */
+#define A_SCD_ZBBUS_CYCLE_COUNT	   0x0010030000
+#define A_SCD_ZBBUS_CYCLE_CP0	   0x0010020C00
+#define A_SCD_ZBBUS_CYCLE_CP1	   0x0010020C08
+#endif /* 1250 PASS2 || 112x PASS1 */
 
 
 /*  ********************************************************************* 
@@ -647,7 +683,9 @@
 #define A_ADDR_TRAP_CFG_1           0x0010020448
 #define A_ADDR_TRAP_CFG_2           0x0010020450
 #define A_ADDR_TRAP_CFG_3           0x0010020458
-#define A_ADDR_TRAP_REG_DEBUG	    0x0010020460	/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define A_ADDR_TRAP_REG_DEBUG	    0x0010020460
+#endif /* 1250 PASS2 || 112x PASS1 */
 
 
 /*  ********************************************************************* 
@@ -657,6 +695,7 @@
 #define A_IMR_CPU0_BASE                 0x0010020000
 #define A_IMR_CPU1_BASE                 0x0010022000
 #define IMR_REGISTER_SPACING            0x2000
+#define IMR_REGISTER_SPACING_SHIFT      13
 
 #define A_IMR_MAPPER(cpu) (A_IMR_CPU0_BASE+(cpu)*IMR_REGISTER_SPACING)
 #define A_IMR_REGISTER(cpu,reg) (A_IMR_MAPPER(cpu)+(reg))
@@ -693,7 +732,9 @@
     ********************************************************************* */
 
 #define A_SCD_BUS_ERR_STATUS        0x0010020880
-#define A_SCD_BUS_ERR_STATUS_DEBUG  0x00100208D0	/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define A_SCD_BUS_ERR_STATUS_DEBUG  0x00100208D0
+#endif /* 1250 PASS2 || 112x PASS1 */
 #define A_BUS_ERR_DATA_0            0x00100208A0
 #define A_BUS_ERR_DATA_1            0x00100208A8
 #define A_BUS_ERR_DATA_2            0x00100208B0
@@ -748,6 +789,26 @@
 #define R_DM_CUR_DSCR_ADDR	    0x0000000010
 #define R_DM_DSCR_BASE_DEBUG	    0x0000000018
 
+#if SIBYTE_HDR_FEATURE(112x, PASS1)
+#define A_DM_PARTIAL_0		    0x0010020ba0
+#define A_DM_PARTIAL_1		    0x0010020ba8
+#define A_DM_PARTIAL_2		    0x0010020bb0
+#define A_DM_PARTIAL_3		    0x0010020bb8
+#define DM_PARTIAL_REGISTER_SPACING 0x8
+#define A_DM_PARTIAL(idx)	    (A_DM_PARTIAL_0 + ((idx) * DM_PARTIAL_REGISTER_SPACING))
+#endif /* 112x PASS1 */
+
+#if SIBYTE_HDR_FEATURE(112x, PASS1)
+#define A_DM_CRC_0		    0x0010020b80
+#define A_DM_CRC_1		    0x0010020b90
+#define DM_CRC_REGISTER_SPACING	    0x10
+#define DM_CRC_NUM_CHANNELS	    2
+#define A_DM_CRC_BASE(idx)	    (A_DM_CRC_0 + ((idx) * DM_CRC_REGISTER_SPACING))
+#define A_DM_CRC_REGISTER(idx,reg)  (A_DM_CRC_BASE(idx) + (reg))
+
+#define R_CRC_DEF_0		    0x00
+#define R_CTCP_DEF_0		    0x08
+#endif /* 112x PASS1 */
 
 /*  *********************************************************************
     *  Physical Address Map

@@ -94,8 +94,10 @@
 #define K_INT_MBOX_1                27
 #define K_INT_MBOX_2                28
 #define K_INT_MBOX_3                29
-#define K_INT_CYCLE_CP0_INT	    30		/* PASS2 */
-#define K_INT_CYCLE_CP1_INT	    31		/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define K_INT_CYCLE_CP0_INT	    30
+#define K_INT_CYCLE_CP1_INT	    31
+#endif /* 1250 PASS2 || 112x PASS1 */
 #define K_INT_GPIO_0                32
 #define K_INT_GPIO_1                33
 #define K_INT_GPIO_2                34
@@ -125,9 +127,11 @@
 #define K_INT_PCI_INTC              58
 #define K_INT_PCI_INTD              59
 #define K_INT_SPARE_2               60
-#define K_INT_MAC_0_CH1		    61		/* PASS2 */
-#define K_INT_MAC_1_CH1		    62		/* PASS2 */
-#define K_INT_MAC_2_CH1		    63		/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define K_INT_MAC_0_CH1		    61
+#define K_INT_MAC_1_CH1		    62
+#define K_INT_MAC_2_CH1		    63
+#endif /* 1250 PASS2 || 112x PASS1 */
 
 /*
  * Mask values for each interrupt
@@ -163,8 +167,10 @@
 #define M_INT_MBOX_1                _SB_MAKEMASK1(K_INT_MBOX_1)
 #define M_INT_MBOX_2                _SB_MAKEMASK1(K_INT_MBOX_2)
 #define M_INT_MBOX_3                _SB_MAKEMASK1(K_INT_MBOX_3)
-#define M_INT_CYCLE_CP0_INT	    _SB_MAKEMASK1(K_INT_CYCLE_CP0_INT)	/* PASS2 */
-#define M_INT_CYCLE_CP1_INT	    _SB_MAKEMASK1(K_INT_CYCLE_CP1_INT)	/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define M_INT_CYCLE_CP0_INT	    _SB_MAKEMASK1(K_INT_CYCLE_CP0_INT)
+#define M_INT_CYCLE_CP1_INT	    _SB_MAKEMASK1(K_INT_CYCLE_CP1_INT)
+#endif /* 1250 PASS2 || 112x PASS1 */
 #define M_INT_GPIO_0                _SB_MAKEMASK1(K_INT_GPIO_0)
 #define M_INT_GPIO_1                _SB_MAKEMASK1(K_INT_GPIO_1)
 #define M_INT_GPIO_2                _SB_MAKEMASK1(K_INT_GPIO_2)
@@ -194,9 +200,11 @@
 #define M_INT_PCI_INTC              _SB_MAKEMASK1(K_INT_PCI_INTC)
 #define M_INT_PCI_INTD              _SB_MAKEMASK1(K_INT_PCI_INTD)
 #define M_INT_SPARE_2               _SB_MAKEMASK1(K_INT_SPARE_2)
-#define M_INT_MAC_0_CH1		    _SB_MAKEMASK1(K_INT_MAC_0_CH1)	/* PASS2 */
-#define M_INT_MAC_1_CH1		    _SB_MAKEMASK1(K_INT_MAC_1_CH1)	/* PASS2 */
-#define M_INT_MAC_2_CH1		    _SB_MAKEMASK1(K_INT_MAC_2_CH1)	/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define M_INT_MAC_0_CH1		    _SB_MAKEMASK1(K_INT_MAC_0_CH1)
+#define M_INT_MAC_1_CH1		    _SB_MAKEMASK1(K_INT_MAC_1_CH1)
+#define M_INT_MAC_2_CH1		    _SB_MAKEMASK1(K_INT_MAC_2_CH1)
+#endif /* 1250 PASS2 || 112x PASS1 */
 
 /*
  * Interrupt mappings

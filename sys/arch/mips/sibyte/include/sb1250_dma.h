@@ -70,8 +70,23 @@
 
 
 #define M_DMA_DROP                  _SB_MAKEMASK1(0)
+
 #define M_DMA_CHAIN_SEL             _SB_MAKEMASK1(1)
 #define M_DMA_RESERVED1             _SB_MAKEMASK1(2)
+
+#define S_DMA_DESC_TYPE		    _SB_MAKE64(1)
+#define M_DMA_DESC_TYPE		    _SB_MAKE64(2,S_DMA_DESC_TYPE)
+#define V_DMA_DESC_TYPE(x)          _SB_MAKEVALUE(x,S_DMA_DESC_TYPE)
+#define G_DMA_DESC_TYPE(x)          _SB_GETVALUE(x,S_DMA_DESC_TYPE,M_DMA_DESC_TYPE)
+
+#define K_DMA_DESC_TYPE_RING_AL		0
+#define K_DMA_DESC_TYPE_CHAIN_AL	1
+
+#if SIBYTE_HDR_FEATURE(112x, PASS3)
+#define K_DMA_DESC_TYPE_RING_UAL_WI	2
+#define K_DMA_DESC_TYPE_RING_UAL_RMW	3
+#endif
+
 #define M_DMA_EOP_INT_EN            _SB_MAKEMASK1(3)
 #define M_DMA_HWM_INT_EN            _SB_MAKEMASK1(4)
 #define M_DMA_LWM_INT_EN            _SB_MAKEMASK1(5)
@@ -99,7 +114,7 @@
 #define G_DMA_LOW_WATERMARK(x)      _SB_GETVALUE(x,S_DMA_LOW_WATERMARK,M_DMA_LOW_WATERMARK)
 
 /*
- * Ethernet and Serial DMA Configuration Register 2 (Table 7-5)
+ * Ethernet and Serial DMA Configuration Register 1 (Table 7-5)
  * Registers: DMA_CONFIG1_MAC_x_RX_CH_0 
  * Registers: DMA_CONFIG1_DMA_x_TX_CH_0
  * Registers: DMA_CONFIG1_SER_x_RX
@@ -112,6 +127,12 @@
 #define M_DMA_FLOW_CTL_EN           _SB_MAKEMASK1(3)
 #define M_DMA_NO_DSCR_UPDT          _SB_MAKEMASK1(4)
 #define M_DMA_L2CA		    _SB_MAKEMASK1(5)
+
+#if SIBYTE_HDR_FEATURE(112x, PASS3)
+#define M_DMA_RX_XTRA_STATUS	    _SB_MAKEMASK1(6)
+#define M_DMA_TX_CPU_PAUSE	    _SB_MAKEMASK1(6)
+#define M_DMA_TX_FC_PAUSE_EN	    _SB_MAKEMASK1(7)
+#endif
 
 #define M_DMA_MBZ1                  _SB_MAKEMASK(6,15)
 
@@ -158,8 +179,25 @@
 
 #define S_DMA_CURDSCR_ADDR          _SB_MAKE64(0)
 #define M_DMA_CURDSCR_ADDR          _SB_MAKEMASK(40,S_DMA_CURDSCR_ADDR)
-#define S_DMA_CURDSCR_COUNT         _SB_MAKE64(48)
+#define S_DMA_CURDSCR_COUNT         _SB_MAKE64(40)
 #define M_DMA_CURDSCR_COUNT         _SB_MAKEMASK(16,S_DMA_CURDSCR_COUNT)
+
+#if SIBYTE_HDR_FEATURE(112x, PASS3)
+#define M_DMA_TX_CH_PAUSE_ON	    _SB_MAKEMASK1(56)
+#endif
+
+/*
+ * Receive Packet Drop Registers
+ */
+#if SIBYTE_HDR_FEATURE(112x, PASS3)
+#define S_DMA_OODLOST_RX           _SB_MAKE64(0)
+#define M_DMA_OODLOST_RX           _SB_MAKEMASK(16,S_DMA_OODLOST_RX)
+#define G_DMA_OODLOST_RX(x)        _SB_GETVALUE(x,S_DMA_OODLOST_RX,M_DMA_OODLOST_RX)
+
+#define S_DMA_EOP_COUNT_RX         _SB_MAKE64(16)
+#define M_DMA_EOP_COUNT_RX         _SB_MAKEMASK(8,S_DMA_EOP_COUNT_RX)
+#define G_DMA_EOP_COUNT_RX(x)      _SB_GETVALUE(x,S_DMA_EOP_COUNT_RX,M_DMA_EOP_COUNT_RX)
+#endif
 
 /*  *********************************************************************
     *  DMA Descriptors
@@ -171,6 +209,8 @@
 
 #define S_DMA_DSCRA_OFFSET          _SB_MAKE64(0)
 #define M_DMA_DSCRA_OFFSET          _SB_MAKEMASK(5,S_DMA_DSCRA_OFFSET)
+#define V_DMA_DSCRA_OFFSET(x)       _SB_MAKEVALUE(x,S_DMA_DSCRA_OFFSET)
+#define G_DMA_DSCRA_OFFSET(x)       _SB_GETVALUE(x,S_DMA_DSCRA_OFFSET,M_DMA_DSCRA_OFFSET)
 
 /* Note: Don't shift the address over, just mask it with the mask below */
 #define S_DMA_DSCRA_A_ADDR          _SB_MAKE64(5)
@@ -178,10 +218,21 @@
 
 #define M_DMA_DSCRA_A_ADDR_OFFSET   (M_DMA_DSCRA_OFFSET | M_DMA_DSCRA_A_ADDR)
 
+#if SIBYTE_HDR_FEATURE(112x, PASS3)
+#define S_DMA_DSCRA_A_ADDR_UA        _SB_MAKE64(0)
+#define M_DMA_DSCRA_A_ADDR_UA        _SB_MAKEMASK(40,S_DMA_DSCRA_A_ADDR_UA)
+#endif
+
 #define S_DMA_DSCRA_A_SIZE          _SB_MAKE64(40)
 #define M_DMA_DSCRA_A_SIZE          _SB_MAKEMASK(9,S_DMA_DSCRA_A_SIZE)
 #define V_DMA_DSCRA_A_SIZE(x)       _SB_MAKEVALUE(x,S_DMA_DSCRA_A_SIZE)
 #define G_DMA_DSCRA_A_SIZE(x)       _SB_GETVALUE(x,S_DMA_DSCRA_A_SIZE,M_DMA_DSCRA_A_SIZE)
+
+#if SIBYTE_HDR_FEATURE(112x, PASS3)
+#define S_DMA_DSCRA_DSCR_CNT	    _SB_MAKE64(40)
+#define M_DMA_DSCRA_DSCR_CNT	    _SB_MAKEMASK(8,S_DMA_DSCRA_DSCR_CNT)
+#define G_DMA_DSCRA_DSCR_CNT(x)	    _SB_GETVALUE(x,S_DMA_DSCRA_DSCR_CNT,M_DMA_DSCRA_DSCR_CNT)
+#endif
 
 #define M_DMA_DSCRA_INTERRUPT       _SB_MAKEMASK1(49)
 #define M_DMA_DSCRA_OFFSETB	    _SB_MAKEMASK1(50)
@@ -201,6 +252,13 @@
 #define V_DMA_DSCRB_OPTIONS(x)      _SB_MAKEVALUE(x,S_DMA_DSCRB_OPTIONS)
 #define G_DMA_DSCRB_OPTIONS(x)      _SB_GETVALUE(x,S_DMA_DSCRB_OPTIONS,M_DMA_DSCRB_OPTIONS)
 
+#if SIBYTE_HDR_FEATURE(112x, PASS3)
+#define S_DMA_DSCRB_A_SIZE        _SB_MAKE64(8)
+#define M_DMA_DSCRB_A_SIZE        _SB_MAKEMASK(14,S_DMA_DSCRB_A_SIZE)
+#define V_DMA_DSCRB_A_SIZE(x)     _SB_MAKEVALUE(x,S_DMA_DSCRB_A_SIZE)
+#define G_DMA_DSCRB_A_SIZE(x)     _SB_GETVALUE(x,S_DMA_DSCRB_A_SIZE,M_DMA_DSCRB_A_SIZE)
+#endif
+
 #define R_DMA_DSCRB_ADDR            _SB_MAKE64(0x10)
 
 /* Note: Don't shift the address over, just mask it with the mask below */
@@ -214,10 +272,25 @@
 
 #define M_DMA_DSCRB_B_VALID         _SB_MAKEMASK1(49)
 
+#if SIBYTE_HDR_FEATURE(112x, PASS3)
+#define S_DMA_DSCRB_PKT_SIZE_MSB    _SB_MAKE64(48)
+#define M_DMA_DSCRB_PKT_SIZE_MSB    _SB_MAKEMASK(2,S_DMA_DSCRB_PKT_SIZE_MSB)
+#define V_DMA_DSCRB_PKT_SIZE_MSB(x) _SB_MAKEVALUE(x,S_DMA_DSCRB_PKT_SIZE_MSB)
+#define G_DMA_DSCRB_PKT_SIZE_MSB(x) _SB_GETVALUE(x,S_DMA_DSCRB_PKT_SIZE_MSB,M_DMA_DSCRB_PKT_SIZE_MSB)
+#endif
+
 #define S_DMA_DSCRB_PKT_SIZE        _SB_MAKE64(50)
 #define M_DMA_DSCRB_PKT_SIZE        _SB_MAKEMASK(14,S_DMA_DSCRB_PKT_SIZE)
 #define V_DMA_DSCRB_PKT_SIZE(x)     _SB_MAKEVALUE(x,S_DMA_DSCRB_PKT_SIZE)
 #define G_DMA_DSCRB_PKT_SIZE(x)     _SB_GETVALUE(x,S_DMA_DSCRB_PKT_SIZE,M_DMA_DSCRB_PKT_SIZE)
+
+/*
+ * from pass2 some bits in dscr_b are also used for rx status
+ */
+#define S_DMA_DSCRB_STATUS          _SB_MAKE64(0)
+#define M_DMA_DSCRB_STATUS          _SB_MAKEMASK(1,S_DMA_DSCRB_STATUS)
+#define V_DMA_DSCRB_STATUS(x)       _SB_MAKEVALUE(x,S_DMA_DSCRB_STATUS)
+#define G_DMA_DSCRB_STATUS(x)       _SB_GETVALUE(x,S_DMA_DSCRB_STATUS,M_DMA_DSCRB_STATUS)
 
 /* 
  * Ethernet Descriptor Status Bits (Table 7-15)
@@ -226,8 +299,15 @@
 #define M_DMA_ETHRX_BADIP4CS        _SB_MAKEMASK1(51)
 #define M_DMA_ETHRX_DSCRERR	    _SB_MAKEMASK1(52)
 
-/* Note: BADTCPCS is actually in DSCR_A */
-#define M_DMA_ETHRX_BADTCPCS	_SB_MAKEMASK1(0)	/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1) 
+/* Note: BADTCPCS is actually in DSCR_B options field */
+#define M_DMA_ETHRX_BADTCPCS	_SB_MAKEMASK1(0)
+#endif /* 1250 PASS2 || 112x PASS1 */
+
+#if SIBYTE_HDR_FEATURE(112x, PASS3)
+#define M_DMA_ETH_VLAN_FLAG	_SB_MAKEMASK1(1)
+#define M_DMA_ETH_CRC_FLAG	_SB_MAKEMASK1(2)
+#endif
 
 #define S_DMA_ETHRX_RXCH            53
 #define M_DMA_ETHRX_RXCH            _SB_MAKEMASK(2,S_DMA_ETHRX_RXCH)
@@ -248,8 +328,8 @@
 #define K_DMA_ETHRX_PKTTYPE_USER2   6
 #define K_DMA_ETHRX_PKTTYPE_USER3   7
 
-#define M_DMA_ETHRX_MATCH_EXACT     _SB_MAKEMASK1(58)
-#define M_DMA_ETHRX_MATCH_HASH      _SB_MAKEMASK1(59)
+#define M_DMA_ETHRX_MATCH_HASH      _SB_MAKEMASK1(58)
+#define M_DMA_ETHRX_MATCH_EXACT     _SB_MAKEMASK1(59)
 #define M_DMA_ETHRX_BCAST           _SB_MAKEMASK1(60)
 #define M_DMA_ETHRX_MCAST           _SB_MAKEMASK1(61)
 #define M_DMA_ETHRX_BAD	            _SB_MAKEMASK1(62)
@@ -374,6 +454,83 @@
 #define G_DM_CUR_DSCR_DSCR_COUNT(r) _SB_GETVALUE(r,S_DM_CUR_DSCR_DSCR_COUNT,\
                                      M_DM_CUR_DSCR_DSCR_COUNT)
 
+
+#if SIBYTE_HDR_FEATURE(112x, PASS1)
+/*
+ * Data Mover Channel Partial Result Registers
+ * Register: DM_PARTIAL_0
+ * Register: DM_PARTIAL_1
+ * Register: DM_PARTIAL_2
+ * Register: DM_PARTIAL_3
+ */
+#define S_DM_PARTIAL_CRC_PARTIAL      _SB_MAKE64(0)
+#define M_DM_PARTIAL_CRC_PARTIAL      _SB_MAKEMASK(32,S_DM_PARTIAL_CRC_PARTIAL)
+#define V_DM_PARTIAL_CRC_PARTIAL(r)   _SB_MAKEVALUE(r,S_DM_PARTIAL_CRC_PARTIAL)
+#define G_DM_PARTIAL_CRC_PARTIAL(r)   _SB_GETVALUE(r,S_DM_PARTIAL_CRC_PARTIAL,\
+                                       M_DM_PARTIAL_CRC_PARTIAL)
+
+#define S_DM_PARTIAL_TCPCS_PARTIAL    _SB_MAKE64(32)
+#define M_DM_PARTIAL_TCPCS_PARTIAL    _SB_MAKEMASK(16,S_DM_PARTIAL_TCPCS_PARTIAL)
+#define V_DM_PARTIAL_TCPCS_PARTIAL(r) _SB_MAKEVALUE(r,S_DM_PARTIAL_TCPCS_PARTIAL)
+#define G_DM_PARTIAL_TCPCS_PARTIAL(r) _SB_GETVALUE(r,S_DM_PARTIAL_TCPCS_PARTIAL,\
+                                       M_DM_PARTIAL_TCPCS_PARTIAL)
+
+#define M_DM_PARTIAL_ODD_BYTE         _SB_MAKEMASK1(48)
+#endif /* 112x PASS1 */
+
+
+#if SIBYTE_HDR_FEATURE(112x, PASS1)
+/*
+ * Data Mover CRC Definition Registers
+ * Register: CRC_DEF_0
+ * Register: CRC_DEF_1
+ */
+#define S_CRC_DEF_CRC_INIT            _SB_MAKE64(0)
+#define M_CRC_DEF_CRC_INIT            _SB_MAKEMASK(32,S_CRC_DEF_CRC_INIT)
+#define V_CRC_DEF_CRC_INIT(r)         _SB_MAKEVALUE(r,S_CRC_DEF_CRC_INIT)
+#define G_CRC_DEF_CRC_INIT(r)         _SB_GETVALUE(r,S_CRC_DEF_CRC_INIT,\
+                                       M_CRC_DEF_CRC_INIT)
+
+#define S_CRC_DEF_CRC_POLY            _SB_MAKE64(32)
+#define M_CRC_DEF_CRC_POLY            _SB_MAKEMASK(32,S_CRC_DEF_CRC_POLY)
+#define V_CRC_DEF_CRC_POLY(r)         _SB_MAKEVALUE(r,S_CRC_DEF_CRC_POLY)
+#define G_CRC_DEF_CRC_POLY(r)         _SB_GETVALUE(r,S_CRC_DEF_CRC_POLY,\
+                                       M_CRC_DEF_CRC_POLY)
+#endif /* 112x PASS1 */
+
+
+#if SIBYTE_HDR_FEATURE(112x, PASS1)
+/*
+ * Data Mover CRC/Checksum Definition Registers
+ * Register: CTCP_DEF_0
+ * Register: CTCP_DEF_1
+ */
+#define S_CTCP_DEF_CRC_TXOR           _SB_MAKE64(0)
+#define M_CTCP_DEF_CRC_TXOR           _SB_MAKEMASK(32,S_CTCP_DEF_CRC_TXOR)
+#define V_CTCP_DEF_CRC_TXOR(r)        _SB_MAKEVALUE(r,S_CTCP_DEF_CRC_TXOR)
+#define G_CTCP_DEF_CRC_TXOR(r)        _SB_GETVALUE(r,S_CTCP_DEF_CRC_TXOR,\
+                                       M_CTCP_DEF_CRC_TXOR)
+
+#define S_CTCP_DEF_TCPCS_INIT         _SB_MAKE64(32)
+#define M_CTCP_DEF_TCPCS_INIT         _SB_MAKEMASK(16,S_CTCP_DEF_TCPCS_INIT)
+#define V_CTCP_DEF_TCPCS_INIT(r)      _SB_MAKEVALUE(r,S_CTCP_DEF_TCPCS_INIT)
+#define G_CTCP_DEF_TCPCS_INIT(r)      _SB_GETVALUE(r,S_CTCP_DEF_TCPCS_INIT,\
+                                       M_CTCP_DEF_TCPCS_INIT)
+
+#define S_CTCP_DEF_CRC_WIDTH          _SB_MAKE64(48)
+#define M_CTCP_DEF_CRC_WIDTH          _SB_MAKEMASK(2,S_CTCP_DEF_CRC_WIDTH)
+#define V_CTCP_DEF_CRC_WIDTH(r)       _SB_MAKEVALUE(r,S_CTCP_DEF_CRC_WIDTH)
+#define G_CTCP_DEF_CRC_WIDTH(r)       _SB_GETVALUE(r,S_CTCP_DEF_CRC_WIDTH,\
+                                       M_CTCP_DEF_CRC_WIDTH)
+
+#define K_CTCP_DEF_CRC_WIDTH_4        0
+#define K_CTCP_DEF_CRC_WIDTH_2        1
+#define K_CTCP_DEF_CRC_WIDTH_1        2
+
+#define M_CTCP_DEF_CRC_BIT_ORDER      _SB_MAKEMASK1(50)
+#endif /* 112x PASS1 */
+
+
 /*
  * Data Mover Descriptor Doubleword "A"  (Table 7-26)
  */
@@ -384,10 +541,9 @@
 #define M_DM_DSCRA_UN_DEST          _SB_MAKEMASK1(40)
 #define M_DM_DSCRA_UN_SRC           _SB_MAKEMASK1(41)
 #define M_DM_DSCRA_INTERRUPT        _SB_MAKEMASK1(42)
-/*#define M_DM_DSCRA_THROTTLE         _SB_MAKEMASK1(43) */ /* REMOVED PASS2 */
-
-#define M_DM_DSCRA_RD_BKOFF	    _SB_MAKEMASK1(52)		/* PASS2 */
-#define M_DM_DSCRA_WR_BKOFF	    _SB_MAKEMASK1(53)		/* PASS2 */
+#if SIBYTE_HDR_FEATURE_UP_TO(1250, PASS1)
+#define M_DM_DSCRA_THROTTLE         _SB_MAKEMASK1(43)
+#endif /* up to 1250 PASS1 */
 
 #define S_DM_DSCRA_DIR_DEST         _SB_MAKE64(44)
 #define M_DM_DSCRA_DIR_DEST         _SB_MAKEMASK(2,S_DM_DSCRA_DIR_DEST)
@@ -421,7 +577,23 @@
 #define M_DM_DSCRA_L2C_DEST         _SB_MAKEMASK1(50)
 #define M_DM_DSCRA_L2C_SRC          _SB_MAKEMASK1(51)
 
-#define M_DM_DSCRA_RESERVED2        _SB_MAKEMASK(10,54)
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define M_DM_DSCRA_RD_BKOFF	    _SB_MAKEMASK1(52)
+#define M_DM_DSCRA_WR_BKOFF	    _SB_MAKEMASK1(53)
+#endif /* 1250 PASS2 || 112x PASS1 */
+
+#if SIBYTE_HDR_FEATURE(112x, PASS1)
+#define M_DM_DSCRA_TCPCS_EN         _SB_MAKEMASK1(54)
+#define M_DM_DSCRA_TCPCS_RES        _SB_MAKEMASK1(55)
+#define M_DM_DSCRA_TCPCS_AP         _SB_MAKEMASK1(56)
+#define M_DM_DSCRA_CRC_EN           _SB_MAKEMASK1(57)
+#define M_DM_DSCRA_CRC_RES          _SB_MAKEMASK1(58)
+#define M_DM_DSCRA_CRC_AP           _SB_MAKEMASK1(59)
+#define M_DM_DSCRA_CRC_DFN          _SB_MAKEMASK1(60)
+#define M_DM_DSCRA_CRC_XBIT         _SB_MAKEMASK1(61)
+#endif /* 112x PASS1 */
+
+#define M_DM_DSCRA_RESERVED2        _SB_MAKEMASK(3,61)
 
 /*
  * Data Mover Descriptor Doubleword "B"  (Table 7-25)

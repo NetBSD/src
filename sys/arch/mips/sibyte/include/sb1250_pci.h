@@ -84,8 +84,10 @@
 #define R_PCI_TYPE0_ERRORADDR	0x0084
 #define R_PCI_TYPE0_ADDSTATUS	0x0088
 #define R_PCI_TYPE0_SUBSYSSET	0x008C	/* only accessible from ZBBus */
-#define R_PCI_TYPE0_READHOST	0x0094	/* Read Host register */		/* PASS2 */
-#define R_PCI_TYPE0_ADXTEND	0x0098	/* Adaptive Extend register */		/* PASS2 */
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
+#define R_PCI_TYPE0_READHOST	0x0094	/* Read Host register */
+#define R_PCI_TYPE0_ADXTEND	0x0098	/* Adaptive Extend register */
+#endif /* 1250 PASS2 || 112x PASS1 */
 
 /*
  * PCI Device ID register
@@ -264,14 +266,15 @@
 #define M_PCI_ASTATUS_RETRYINTMASK	_SB_MAKEMASK1_32(5)
 #define M_PCI_ASTATUS_SIGNALINTA	_SB_MAKEMASK1_32(6)
 
+#if SIBYTE_HDR_FEATURE(1250, PASS2) || SIBYTE_HDR_FEATURE(112x, PASS1)
 /*
- * Read Host Register  (PASS2)
+ * Read Host Register
  */
 
-#define M_PCI_READHOST_RDHOST	_SB_MAKEMASK1_32(0)		/* PASS2 */
+#define M_PCI_READHOST_RDHOST	_SB_MAKEMASK1_32(0)
 
 /*
- * Adaptive Extend Register (PASS2)
+ * Adaptive Extend Register
  */
 
 #define S_PCI_ADXTEND_NOM_TAR_RETRY	1
@@ -286,6 +289,7 @@
 
 #define M_PCI_ADXTEND_DIS_DMAR_IOW_DEP  _SB_MAKEMASK1_32(6)
 #define M_PCI_ADXTEND_DIS_MEMRD_BE      _SB_MAKEMASK1_32(6)
+#endif /* 1250 PASS2 || 112x PASS1 */
 
 
 #endif
