@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.2 1998/08/09 20:15:38 perry Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.2.6.1 2000/02/01 23:38:39 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -69,7 +69,11 @@ e2fs_sb_bswap(old, new)
 	new->e2fs_state			=		bswap16(old->e2fs_state);
 	new->e2fs_beh			=		bswap16(old->e2fs_beh);
 	new->e2fs_ruid			=		bswap16(old->e2fs_ruid);
-	new->e2fs_rgid			=		bswap16(old->e2fs_rgid);
+	new->e2fs_rgid			=		bswap16(old->e2fs_rgid);	new->e2fs_first_ino		=		bswap32(old->e2fs_first_ino);
+	new->e2fs_inode_size		=		bswap16(old->e2fs_inode_size);
+	new->e2fs_features_compat	=		bswap32(old->e2fs_features_compat);
+	new->e2fs_features_incompat	=		bswap32(old->e2fs_features_incompat);
+	new->e2fs_features_rocompat	=		bswap32(old->e2fs_features_rocompat);
 }
 
 void e2fs_cg_bswap(old, new, size)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.8 1999/02/17 13:09:43 bouyer Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.8.2.1 2000/02/01 23:38:39 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -132,7 +132,7 @@ struct ext2fs {
 	u_int16_t  e2fs_block_group_nr;	/* block grp number of this sblk*/
 	u_int32_t  e2fs_features_compat; /*  OK to mount if unknown */
 	u_int32_t  e2fs_features_incompat; /* not OK to mount if unknown */
-	u_int32_t  e2fs_features_compat_ro; /* OK to mount ro if unknown */
+	u_int32_t  e2fs_features_rocompat; /* OK to mount ro if unknown */
 	u_int32_t  reserved2[230];
 };
 
@@ -161,7 +161,23 @@ struct m_ext2fs {
  * Filesystem identification
  */
 #define	E2FS_MAGIC	0xef53	/* the ext2fs magic number */
-#define E2FS_REV	0	/* revision level */
+#define E2FS_REV0	0	/* revision level */
+#define E2FS_REV1	1	/* revision level */
+
+/* compatible/imcompatible features */
+#define EXT2F_COMPAT_PREALLOC		0x0001
+
+#define EXT2F_ROCOMPAT_SPARSESUPER	0x0001
+#define EXT2F_ROCOMPAT_LARGEFILE	0x0002
+#define EXT2F_ROCOMPAT_BTREE_DIR	0x0004
+
+#define EXT2F_INCOMPAT_COMP		0x0001
+#define EXT2F_INCOMPAT_FTYPE		0x0002
+
+/* features supported in this implementation */
+#define EXT2F_COMPAT_SUPP		0x0000
+#define EXT2F_ROCOMPAT_SUPP		0x0000
+#define EXT2F_INCOMPAT_SUPP		EXT2F_INCOMPAT_FTYPE
 
 /*
  * OS identification
