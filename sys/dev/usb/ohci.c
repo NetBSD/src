@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.83 2000/03/29 01:46:26 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.84 2000/03/29 18:24:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ int ohcidebug = 0;
  * The OHCI controller is little endian, so on big endian machines
  * the data strored in memory needs to be swapped.
  */
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #if BYTE_ORDER == BIG_ENDIAN
 #define htole32(x) (bswap32(x))
 #define le32toh(x) (bswap32(x))
