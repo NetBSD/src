@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.101 2001/01/05 15:20:53 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.102 2001/01/05 15:29:39 bouyer Exp $	*/
 
 
 /*
@@ -1343,8 +1343,10 @@ piix_chip_map(sc, pa)
 	sc->sc_wdcdev.DMA_cap = 2;
 	switch(sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_INTEL_82801AA_IDE:
-	case PCI_PRODUCT_INTEL_82801BA_IDE:
 		sc->sc_wdcdev.UDMA_cap = 4;
+		break;
+	case PCI_PRODUCT_INTEL_82801BA_IDE:
+		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:
 		sc->sc_wdcdev.UDMA_cap = 2;
@@ -1369,7 +1371,8 @@ piix_chip_map(sc, pa)
 			    DEBUG_PROBE);
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -1419,7 +1422,8 @@ piix_chip_map(sc, pa)
 			    DEBUG_PROBE);
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -1578,8 +1582,27 @@ piix3_4_setup_channel(chp)
 			goto pio;
 
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE) {
 			ideconf |= PIIX_CONFIG_PINGPONG;
+		}
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE) {
+			/* setup Ultra/100 */
+			if (drvp->UDMA_mode > 2 &&
+			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)
+				drvp->UDMA_mode = 2;
+			if (drvp->UDMA_mode > 4) {
+				ideconf |= PIIX_CONFIG_UDMA100(channel, drive);
+			} else {
+				ideconf &= ~PIIX_CONFIG_UDMA100(channel, drive);
+				if (drvp->UDMA_mode > 2) {
+					ideconf |= PIIX_CONFIG_UDMA66(channel,
+					    drive);
+				} else {
+					ideconf &= ~PIIX_CONFIG_UDMA66(channel,
+					    drive);
+				}
+			}
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE) {
 			/* setup Ultra/66 */
