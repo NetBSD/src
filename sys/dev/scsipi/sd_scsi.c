@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.26 2002/10/04 03:43:06 soren Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.27 2003/03/07 16:18:57 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.26 2002/10/04 03:43:06 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.27 2003/03/07 16:18:57 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,10 @@ struct scsipi_inquiry_pattern sd_scsibus_patterns[] = {
 	 "",         "",                 ""},
 	{T_OPTICAL, T_REMOV,
 	 "",         "",                 ""},
+	{T_SIMPLE_DIRECT, T_FIXED,
+	 "",         "",                 ""},
+	{T_SIMPLE_DIRECT, T_REMOV,
+	 "",         "",                 ""},
 };
 
 struct sd_scsibus_mode_sense_data {
@@ -101,6 +105,8 @@ static int	sd_scsibus_mode_sense __P((struct sd_softc *,
 static int	sd_scsibus_get_parms __P((struct sd_softc *,
 		    struct disk_parms *, int));
 static int	sd_scsibus_get_optparms __P((struct sd_softc *,
+		    struct disk_parms *, int));
+static int	sd_scsibus_get_simplifiedparms __P((struct sd_softc *,
 		    struct disk_parms *, int));
 static int	sd_scsibus_flush __P((struct sd_softc *, int));
 static int	sd_scsibus_getcache __P((struct sd_softc *, int *));
@@ -155,6 +161,10 @@ sd_scsibus_attach(parent, self, aux)
 	 */
 	if (periph->periph_version == 0)
 		sd->flags |= SDF_ANCIENT;
+
+	if (sd->type == T_SIMPLE_DIRECT)
+		periph->periph_quirks |=
+			(PQUIRK_ONLYBIG | PQUIRK_NOBIGMODESENSE);
 
 	sdattach(parent, sd, periph, &sd_scsibus_ops);
 }
@@ -230,6 +240,67 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	return (SDGP_RESULT_OK);
 }
 
+static int
+sd_scsibus_get_simplifiedparms(sd, dp, flags)
+	struct sd_softc *sd;
+	struct disk_parms *dp;
+	int flags;
+{
+	struct {
+		struct scsipi_mode_header header;
+		/* no block descriptor */
+		u_int8_t pg_code; /* page code (should be 6) */
+		u_int8_t pg_length; /* page length (should be 11) */
+		u_int8_t wcd; /* bit0: cache disable */
+		u_int8_t lbs[2]; /* logical block size */
+		u_int8_t size[5]; /* number of log. blocks */
+		u_int8_t pp; /* power/performance */
+		u_int8_t flags;
+		u_int8_t resvd;
+	} scsipi_sense;
+	u_long sectors;
+	int error;
+
+	/*
+	 * scsipi_size (ie "read capacity") and mode sense page 6
+	 * give the same information. Do both for now, and check
+	 * for consistency.
+	 * XXX probably differs for removable media
+	 */
+	dp->blksize = 512;
+	if ((sectors = scsipi_size(sd->sc_periph, flags)) == 0)
+		return (SDGP_RESULT_OFFLINE);		/* XXX? */
+
+	error = scsipi_mode_sense(sd->sc_periph, SMS_DBD, 6,
+	    &scsipi_sense.header, sizeof(scsipi_sense),
+	    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
+
+	if (error != 0)
+		return (SDGP_RESULT_OFFLINE);		/* XXX? */
+
+	dp->blksize = _2btol(scsipi_sense.lbs);
+	if (dp->blksize == 0) 
+		dp->blksize = 512;
+
+	/*
+	 * Create a pseudo-geometry.
+	 */
+	dp->heads = 64;
+	dp->sectors = 32;
+	dp->cyls = sectors / (dp->heads * dp->sectors);
+	/* XXX disksize is only a "long" currently */
+	dp->disksize = /* XXX _5btol */
+		(_3btol(scsipi_sense.size) << 16)
+		| (_2btol(&scsipi_sense.size[3]));
+	if (dp->disksize != sectors) {
+		printf("RBC size: mode sense=%ld, get cap=%ld\n",
+		       dp->disksize, sectors);
+		dp->disksize = sectors;
+	}
+
+	return (SDGP_RESULT_OK);
+}
+
 /*
  * Get the scsi driver to send a full inquiry to the * device and use the
  * results to fill out the disk parameter structure.
@@ -253,6 +324,9 @@ sd_scsibus_get_parms(sd, dp, flags)
 	 */
 	if (sd->type == T_OPTICAL)
 		return (sd_scsibus_get_optparms(sd, dp, flags));
+
+	if (sd->type == T_SIMPLE_DIRECT)
+		return (sd_scsibus_get_simplifiedparms(sd, dp, flags));
 
 	if ((error = sd_scsibus_mode_sense(sd, &scsipi_sense, page = 4,
 	    flags)) == 0) {
