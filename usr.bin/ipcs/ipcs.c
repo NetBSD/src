@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.12 1996/07/19 23:58:33 explorer Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.13 1997/02/11 08:43:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -99,17 +99,18 @@ fmt_perm(mode)
 }
 
 void
-cvt_time(t, buf)
+cvt_time(t, buf, buflen)
 	time_t  t;
 	char   *buf;
+	int	buflen;
 {
 	struct tm *tm;
 
 	if (t == 0) {
-		strcpy(buf, "no-entry");
+		(void)strncpy(buf, "no-entry", buflen - 1);
 	} else {
 		tm = localtime(&t);
-		sprintf(buf, "%2d:%02d:%02d",
+		(void)snprintf(buf, buflen, "%2d:%02d:%02d",
 			tm->tm_hour, tm->tm_min, tm->tm_sec);
 	}
 }
@@ -271,9 +272,12 @@ main(argc, argv)
 					        ctime_buf[100];
 					struct msqid_ds *msqptr = &xmsqids[i];
 
-					cvt_time(msqptr->msg_stime, stime_buf);
-					cvt_time(msqptr->msg_rtime, rtime_buf);
-					cvt_time(msqptr->msg_ctime, ctime_buf);
+					cvt_time(msqptr->msg_stime, stime_buf,
+					    sizeof stime_buf);
+					cvt_time(msqptr->msg_rtime, rtime_buf,
+					    sizeof rtime_buf);
+					cvt_time(msqptr->msg_ctime, ctime_buf,
+					    sizeof ctime_buf);
 
 					printf("q %6d %10d %s %8s %8s",
 					    IXSEQ_TO_IPCID(i, msqptr->msg_perm),
@@ -370,9 +374,12 @@ main(argc, argv)
 					        ctime_buf[100];
 					struct shmid_ds *shmptr = &xshmids[i];
 
-					cvt_time(shmptr->shm_atime, atime_buf);
-					cvt_time(shmptr->shm_dtime, dtime_buf);
-					cvt_time(shmptr->shm_ctime, ctime_buf);
+					cvt_time(shmptr->shm_atime, atime_buf,
+					    sizeof atime_buf);
+					cvt_time(shmptr->shm_dtime, dtime_buf,
+					    sizeof dtime_buf);
+					cvt_time(shmptr->shm_ctime, ctime_buf,
+					    sizeof ctime_buf);
 
 					printf("m %6d %10d %s %8s %8s",
 					    IXSEQ_TO_IPCID(i, shmptr->shm_perm),
@@ -479,8 +486,10 @@ main(argc, argv)
 					int     j, value;
 					union semun junk;
 
-					cvt_time(semaptr->sem_otime, otime_buf);
-					cvt_time(semaptr->sem_ctime, ctime_buf);
+					cvt_time(semaptr->sem_otime, otime_buf,
+					    sizeof otime_buf);
+					cvt_time(semaptr->sem_ctime, ctime_buf,
+					    sizeof ctime_buf);
 
 					printf("s %6d %10d %s %8s %8s",
 					    IXSEQ_TO_IPCID(i, semaptr->sem_perm),
