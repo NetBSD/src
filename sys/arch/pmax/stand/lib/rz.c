@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.4 1994/10/26 21:10:58 cgd Exp $	*/
+/*	$NetBSD: rz.c,v 1.5 1995/01/18 06:53:46 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,9 +38,10 @@
  *	@(#)rz.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <stand/stand.h>
+#include <stand.h>
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include "dec_prom.h"
 
 struct	rz_softc {
 	int	sc_fd;			/* PROM file id */
@@ -66,6 +67,11 @@ rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	long offset;
 
 	offset = bn * DEV_BSIZE;
+
+#ifdef DEBUG
+/*XXX*/printf("zs:%x %d\n", offset, reqcnt);
+#endif
+
 	/*
 	 * Partial-block transfers not handled.
 	 */
@@ -75,9 +81,13 @@ rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	}
 
 	offset += pp->p_offset * DEV_BSIZE;
+#if 0
 	if (prom_lseek(sc->sc_fd, offset, 0) < 0)
 		return (EIO);
 	s = prom_read(sc->sc_fd, addr, reqcnt);
+#else
+	s = bootread (offset / 512, addr, reqcnt);
+#endif
 	if (s < 0)
 		return (EIO);
 
@@ -102,8 +112,18 @@ rzopen(f, ctlr, unit, part)
 		return (ENXIO);
 	device[5] = '0' + unit;
 	/* NOTE: only support reads for now */
-	if ((i = prom_open(device, 0)) < 0)
+	/* Another NOTE: bootinit on the TurboChannel doesn't look at
+	   the device string - it's provided for compatibility with
+	   the DS3100 PROMs.   As a consequence, it may be possible to
+	   boot from some other drive with these bootblocks on the 3100,
+	   but will not be possible on any TurboChannel machine. */
+#if 0
+	if ((i = prom_open(device, 0)) < 0) {
+#else
+	if ((i = bootinit (device)) < 0) {
+#endif
 		return (ENXIO);
+	}
 
 	sc = alloc(sizeof(struct rz_softc));
 	bzero(sc, sizeof(struct rz_softc));
@@ -135,12 +155,15 @@ rzopen(f, ctlr, unit, part)
 
 	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0) {
 	bad:
+#ifndef SMALL
 		free(sc, sizeof(struct rz_softc));
+#endif
 		return (ENXIO);
 	}
 	return (0);
 }
 
+#ifndef SMALL
 rzclose(f)
 	struct open_file *f;
 {
@@ -148,3 +171,4 @@ rzclose(f)
 	f->f_devdata = (void *)0;
 	return (0);
 }
+#endif

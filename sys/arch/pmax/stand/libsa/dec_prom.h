@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.4 1994/10/26 21:10:54 cgd Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.5 1995/01/18 06:53:40 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,55 +96,99 @@ typedef int jmp_buf[12];
 typedef void (*psig_t)(int);
 
 struct callback {
-	void	*(*memcpy) __P((void *s1, void *s2, int n));		/* 00 */
-	void	*(*memset) __P((void *s1, int c, int n));		/* 04 */
-	char	*(*strcat) __P((char *s1, char *s2));			/* 08 */
-	int	(*strcmp) __P((char *s1, char *s2));			/* 0c */
-	char	*(*strcpy) __P((char *s1, char *s2));			/* 10 */
-	int	(*strlen) __P((char *s1));				/* 14 */
-	char	*(*strncat) __P((char *s1, char *s2, int n));		/* 18 */
-	char	*(*strncpy) __P((char *s1, char *s2, int n));		/* 1c */
-	int	(*strncmp) __P((char *s1, char *s2, int n));		/* 20 */
-	int	(*getchar) __P((void));					/* 24 */
-	char	*(*gets) __P((char *s));				/* 28 */
-	int	(*puts) __P((char *s));					/* 2c */
-	int	(*printf) __P((char *fmt, ...));			/* 30 */
-	int	(*sprintf) __P((char *s, char *fmt, ...));		/* 34 */
-	int	(*io_poll) __P((void));					/* 38 */
-	long	(*strtol) __P((char *s, char **endptr, int base));	/* 3c */
-	psig_t	(*signal) __P((int sig, psig_t func));			/* 40 */
-	int	(*raise) __P((int sig));				/* 44 */
-	long	(*time) __P((long *tod));				/* 48 */
-	int	(*setjmp) __P((jmp_buf env));				/* 4c */
-	void	(*longjmp) __P((jmp_buf env, int value));		/* 50 */
-	int	(*bootinit) __P((void));				/* 54 */
-	int	(*bootread) __P((int b, void *buffer, int n));		/* 58 */
-	int	(*bootwrite) __P((int b, void *buffer, int n));		/* 5c */
-	int	(*setenv) __P((char *name, char *value));		/* 60 */
-	char	*(*getenv) __P((char *name));				/* 64 */
-	int	(*unsetenv) __P((char *name));				/* 68 */
-	u_long	(*slot_address) __P((int sn));				/* 6c */
-	void	(*wbflush) __P((void));					/* 70 */
-	void	(*msdelay) __P((int delay));				/* 74 */
-	void	(*leds) __P((int value));				/* 78 */
-	void	(*clear_cache) __P((void));				/* 7c */
-	int	(*getsysid) __P((void));				/* 80 */
-	int	(*getbitmap) __P((memmap *map));			/* 84 */
-	int	(*disableintr) __P((int sn));				/* 88 */
-	int	(*enableintr) __P((int sn));				/* 8c */
-	int	(*testintr) __P((int sn));				/* 90 */
-	void	*reserved_data;						/* 94 */
-	int	(*console_init) __P((void));				/* 98 */
-	void	(*halt) __P((int *v, int cnt));				/* 9c */
-	void	(*showfault) __P((void));				/* a0 */
-	tcinfo	*(*gettcinfo) __P(());					/* a4 */
-	int	(*execute_cmd) __P((char *cmd));			/* a8 */
-	void	(*rex) __P((char cmd));					/* ac */
+	void	*(*_memcpy) __P((void *s1, void *s2, int n));		/* 00 */
+	void	*(*_memset) __P((void *s1, int c, int n));		/* 04 */
+	char	*(*_strcat) __P((char *s1, char *s2));			/* 08 */
+	int	(*_strcmp) __P((char *s1, char *s2));			/* 0c */
+	char	*(*_strcpy) __P((char *s1, char *s2));			/* 10 */
+	int	(*_strlen) __P((char *s1));				/* 14 */
+	char	*(*_strncat) __P((char *s1, char *s2, int n));		/* 18 */
+	char	*(*_strncpy) __P((char *s1, char *s2, int n));		/* 1c */
+	int	(*_strncmp) __P((char *s1, char *s2, int n));		/* 20 */
+	int	(*_getchar) __P((void));				/* 24 */
+	char	*(*_gets) __P((char *s));				/* 28 */
+	int	(*_puts) __P((char *s));				/* 2c */
+	int	(*_printf) __P((char *fmt, ...));			/* 30 */
+	int	(*_sprintf) __P((char *s, char *fmt, ...));		/* 34 */
+	int	(*_io_poll) __P((void));				/* 38 */
+	long	(*_strtol) __P((char *s, char **endptr, int base));	/* 3c */
+	psig_t	(*_signal) __P((int sig, psig_t func));			/* 40 */
+	int	(*_raise) __P((int sig));				/* 44 */
+	long	(*_time) __P((long *tod));				/* 48 */
+	int	(*_setjmp) __P((jmp_buf env));				/* 4c */
+	void	(*_longjmp) __P((jmp_buf env, int value));		/* 50 */
+	int	(*_bootinit) __P((char *fname));			/* 54 */
+	int	(*_bootread) __P((int b, void *buffer, int n));		/* 58 */
+	int	(*_bootwrite) __P((int b, void *buffer, int n));	/* 5c */
+	int	(*_setenv) __P((char *name, char *value));		/* 60 */
+	char	*(*_getenv) __P((char *name));				/* 64 */
+	int	(*_unsetenv) __P((char *name));				/* 68 */
+	u_long	(*_slot_address) __P((int sn));				/* 6c */
+	void	(*_wbflush) __P((void));				/* 70 */
+	void	(*_msdelay) __P((int delay));				/* 74 */
+	void	(*_leds) __P((int value));				/* 78 */
+	void	(*_clear_cache) __P((void));				/* 7c */
+	int	(*_getsysid) __P((void));				/* 80 */
+	int	(*_getbitmap) __P((memmap *map));			/* 84 */
+	int	(*_disableintr) __P((int sn));				/* 88 */
+	int	(*_enableintr) __P((int sn));				/* 8c */
+	int	(*_testintr) __P((int sn));				/* 90 */
+	void	*_reserved_data;					/* 94 */
+	int	(*_console_init) __P((void));				/* 98 */
+	void	(*_halt) __P((int *v, int cnt));			/* 9c */
+	void	(*_showfault) __P((void));				/* a0 */
+	tcinfo	*(*_gettcinfo) __P(());					/* a4 */
+	int	(*_execute_cmd) __P((char *cmd));			/* a8 */
+	void	(*_rex) __P((char cmd));				/* ac */
 	/* b0 to d4 reserved */
 };
 
 extern const struct callback *callv;
 extern const struct callback callvec;
+
+#ifndef KERNEL
+#define memcpy (*callv -> _memcpy)
+#define memset (*callv -> _memset)
+#define strcat (*callv -> _strcat)
+#define strcmp (*callv -> _strcmp)
+#define strcpy (*callv -> _strcpy)
+#define strlen (*callv -> _strlen)
+#define strncat (*callv -> _strncat)
+#define strncpy (*callv -> _strncpy)
+#define strncmp (*callv -> _strncmp)
+#define getchar (*callv -> _getchar)
+#define gets (*callv -> _gets)
+#define puts (*callv -> _puts)
+#define printf (*callv -> _printf)
+#define sprintf (*callv -> _sprintf)
+#define io_poll (*callv -> _io_poll)
+#define strtol (*callv -> _strtol)
+#define raise (*callv -> _raise)
+#define time (*callv -> _time)
+#define setjmp (*callv -> _setjmp)
+#define longjmp (*callv -> _longjmp)
+#define bootinit (*callv -> _bootinit)
+#define bootread (*callv -> _bootread)
+#define bootwrite (*callv -> _bootwrite)
+#define setenv (*callv -> _setenv)
+#define getenv (*callv -> _getenv)
+#define unsetenv (*callv -> _unsetenv)
+#define wbflush (*callv -> _wbflush)
+#define msdelay (*callv -> _msdelay)
+#define leds (*callv -> _leds)
+#define clear_cache (*callv -> _clear_cache)
+#define getsysid (*callv -> _getsysid)
+#define getbitmap (*callv -> _getbitmap)
+#define disableintr (*callv -> _disableintr)
+#define enableintr (*callv -> _enableintr)
+#define testintr (*callv -> _testintr)
+#define console_init (*callv -> _console_init)
+#define halt (*callv -> _halt)
+#define showfault (*callv -> _showfault)
+#define gettcinfo (*callv -> _gettcinfo)
+#define execute_cmd (*callv -> _execute_cmd)
+#define rex (*callv -> _rex)
+#endif
 
 /*
  * The prom routines use the following structure to hold strings.
