@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.21 2001/11/13 06:17:47 lukem Exp $ */
+/* $NetBSD: wsmouse.c,v 1.22 2001/11/22 00:57:14 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.21 2001/11/13 06:17:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.22 2001/11/22 00:57:14 augustss Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -296,6 +296,13 @@ wsmouse_input(struct device *wsmousedev, u_int btns /* 0 is up */,
 	evar = sc->sc_base.me_evp;
 	if (evar == NULL)
 		return;
+
+#ifdef DIAGNOSTIC
+	if (evar->q == NULL) {
+		printf("wsmouse_input: evar->q=NULL\n");
+		return;
+	}
+#endif
 
 #if NWSMUX > 0
 	DPRINTFN(5,("wsmouse_input: %s mux=%p, evar=%p\n",
