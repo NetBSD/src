@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 1998/08/08 16:10:41 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.13 1999/03/09 12:57:57 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -166,6 +166,18 @@ autoconf()
 		break;
 
 	case VAX_TYP_SOC:
+		switch (vax_boardtype) {
+		case VAX_BTYP_48: {
+			int *map, i;
+
+			/* Map all 16MB of I/O space to low 16MB of memory */
+			map = (int *)0x700000; /* XXX */
+			*(int *)0x20080008 = (int)map; /* XXX */
+			for (i = 0; i < 0x8000; i++)
+				map[i] = 0x80000000 | i;
+			}
+			break;
+		}
 		break;
 
 	}
