@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.18 1996/03/21 18:25:57 jtc Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.18.4.1 1996/12/06 00:10:58 rat Exp $";
 #endif
 
 #include <stdio.h>
@@ -175,9 +175,9 @@ main(argc, argv)
     progname = *argv;
 
     if (!options_from_file(_PATH_SYSOPTIONS, REQ_SYSOPTIONS, 0) ||
-	!options_for_tty() ||
 	!options_from_user() ||
-	!parse_args(argc-1, argv+1))
+	!parse_args(argc-1, argv+1) ||
+	!options_for_tty())
 	exit(1);
 
     if (!ppp_available()) {
@@ -502,7 +502,7 @@ main(argc, argv)
 	    locked = 0;
 	}
 
-	if (!demand) {
+	if (!demand && pidfilename[0] != 0) {
 	    if (unlink(pidfilename) < 0 && errno != ENOENT) 
 		syslog(LOG_WARNING, "unable to delete pid file: %m");
 	    pidfilename[0] = 0;
