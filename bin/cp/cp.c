@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.31 2001/09/13 09:53:59 wiz Exp $ */
+/* $NetBSD: cp.c,v 1.32 2002/12/16 14:44:14 jrf Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.31 2001/09/13 09:53:59 wiz Exp $");
+__RCSID("$NetBSD: cp.c,v 1.32 2002/12/16 14:44:14 jrf Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ __RCSID("$NetBSD: cp.c,v 1.31 2001/09/13 09:53:59 wiz Exp $");
 PATH_T to = { to.p_path, "" };
 
 uid_t myuid;
-int Rflag, fflag, iflag, pflag, rflag; 
+int Rflag, fflag, iflag, pflag, rflag, vflag; 
 mode_t myumask;
 
 enum op { FILE_TO_FILE, FILE_TO_DIR, DIR_TO_DNE };
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 	(void)setlocale(LC_ALL, "");
 
 	Hflag = Lflag = Pflag = Rflag = 0;
-	while ((ch = getopt(argc, argv, "HLPRfipr")) != -1) 
+	while ((ch = getopt(argc, argv, "HLPRfiprv")) != -1) 
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -138,6 +138,9 @@ main(int argc, char *argv[])
 			break;
 		case 'r':
 			rflag = 1;
+			break;
+		case 'v':
+			vflag = 1;
 			break;
 		case '?':
 		default:
@@ -452,6 +455,8 @@ copy(char *argv[], enum op type, int fts_options)
 				rval = 1;
 			break;
 		}
+		if (vflag)
+			(void)printf("%s -> %s\n", curr->fts_path, to.p_path);
 	}
 	if (errno)
 		err(1, "fts_read");
