@@ -4528,18 +4528,32 @@ sm_gethostbyaddr(addr, len, type)
 	static struct hostent he;
 	static char buf[1000];
 	extern struct hostent *_switch_gethostbyaddr_r();
-
-	hp = _switch_gethostbyaddr_r(addr, len, type, &he, buf, sizeof(buf), &h_errno);
 # else /* SOLARIS == 20300 || SOLARIS == 203 */
 	extern struct hostent *__switch_gethostbyaddr();
-
-	hp = __switch_gethostbyaddr(addr, len, type);
 # endif /* SOLARIS == 20300 || SOLARIS == 203 */
 #else /* (SOLARIS > 10000 && SOLARIS < 20400) || (defined(SOLARIS) && SOLARIS < 204) */
 # if NETINET6
 	int err;
 # endif /* NETINET6 */
+#endif /* (SOLARIS > 10000 && SOLARIS < 20400) || (defined(SOLARIS) && SOLARIS < 204) */
 
+#if NETINET6
+	if (type == AF_INET6) {
+		if (IN6_IS_ADDR_UNSPECIFIED((struct in6_addr *)addr) ||
+		    IN6_IS_ADDR_LINKLOCAL((struct in6_addr *)addr)) {
+			h_errno = HOST_NOT_FOUND;
+			return NULL;
+		}
+	}
+#endif /* NETINET6 */
+
+#if (SOLARIS > 10000 && SOLARIS < 20400) || (defined(SOLARIS) && SOLARIS < 204)
+# if SOLARIS == 20300 || SOLARIS == 203
+	hp = _switch_gethostbyaddr_r(addr, len, type, &he, buf, sizeof(buf), &h_errno);
+# else /* SOLARIS == 20300 || SOLARIS == 203 */
+	hp = __switch_gethostbyaddr(addr, len, type);
+# endif /* SOLARIS == 20300 || SOLARIS == 203 */
+#else /* (SOLARIS > 10000 && SOLARIS < 20400) || (defined(SOLARIS) && SOLARIS < 204) */
 # if NETINET6
 	hp = getipnodebyaddr(addr, len, type, &err);
 	h_errno = err;
