@@ -642,7 +642,7 @@ do {									\
 #undef LINK_SPEC
 #define	LINK_SPEC							\
  "-m m68kelfnbsd							\
-  %{assert*}								\
+  %{assert*} %{R*}     							\
   %{shared:-shared}							\
   %{!shared:								\
     -dc -dp								\
