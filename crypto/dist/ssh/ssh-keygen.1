@@ -91,7 +91,7 @@ or
 .Pa $HOME/.ssh/id_dsa .
 Additionally, the system administrator may use this to generate host keys,
 as seen in
-.Pa /etc/rc .
+.Pa /etc/rc.d/sshd .
 .Pp
 Normally this program generates the key and asks for a file in which
 to store the private key.
@@ -153,7 +153,7 @@ new passphrase.
 Silence
 .Nm ssh-keygen .
 Used by
-.Pa /etc/rc
+.Pa /etc/rc.d/sshd
 when creating a new key.
 .It Fl t Ar type
 Specifies the type of the key to create.
@@ -235,5 +235,4 @@ protocol versions 1.5 and 2.0.
 .Xr ssh 1 ,
 .Xr ssh-add 1 ,
 .Xr ssh-agent 1 ,
-.Xr sshd 8 ,
-.Xr ssl 8
+.Xr sshd 8

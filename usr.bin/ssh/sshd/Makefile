@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/01/14 05:22:34 itojun Exp $
+#	$NetBSD: Makefile,v 1.3 2001/02/07 17:05:37 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -8,19 +8,9 @@ MAN=	sshd.8
 BINDIR=	/usr/sbin
 
 SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
-	pty.c log-server.c login.c servconf.c serverloop.c auth.c \
-	auth1.c auth2.c auth-options.c session.c dh.c
-
-CPPFLAGS+=-DLIBWRAP
-LDADD+=	-lwrap
-DPADD+=	${LIBWRAP}
-
-.ifdef SKEY
-SRCS+=	auth-skey.c auth2-skey.c
-CPPFLAGS+=-DSKEY
-LDADD+=	-lskey
-DPADD+=	${LIBSKEY}
-.endif
+	pty.c log-server.c login.c servconf.c serverloop.c \
+	auth.c auth1.c auth2.c auth-options.c session.c dh.c \
+	auth-chall.c auth2-chall.c groupaccess.c
 
 .if (${MKKERBEROS} != "no")
 # XXX needs krb5
@@ -38,3 +28,13 @@ DPADD+=	${LIBKRB} ${LIBCOM_ERR} ${LIBROKEN}
 
 LDADD+=	-lcrypto -lutil -lz
 DPADD+=	${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
+
+CPPFLAGS+=-DLIBWRAP
+LDADD+=	-lwrap
+DPADD+=	${LIBWRAP}
+
+.ifdef SKEY
+CPPFLAGS+=-DSKEY
+LDADD+=	-lskey
+DPADD+=	${LIBSKEY}
+.endif

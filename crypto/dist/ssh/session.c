@@ -56,6 +56,7 @@ RCSID("$OpenBSD: session.c,v 1.53 2001/02/04 15:32:25 stevesk Exp $");
 #include "login.h"
 #include "serverloop.h"
 #include "canohost.h"
+#include "session.h"
 
 #ifdef HAVE_LOGIN_CAP
 #include <login_cap.h>
@@ -127,7 +128,7 @@ static login_cap_t *lc;
 /*
  * Remove local Xauthority file.
  */
-void
+static void
 xauthfile_cleanup_proc(void *ignore)
 {
 	debug("xauthfile_cleanup_proc called");
@@ -149,7 +150,7 @@ xauthfile_cleanup_proc(void *ignore)
  * Function to perform cleanup if we get aborted abnormally (e.g., due to a
  * dropped connection).
  */
-void
+static void
 pty_cleanup_proc(void *session)
 {
 	Session *s=session;
@@ -616,7 +617,7 @@ do_exec_pty(Session *s, const char *command, struct passwd * pw)
 	}
 }
 
-const char *
+static const char *
 get_remote_name_or_ip(void)
 {
 	static const char *remote = "";
@@ -703,7 +704,7 @@ do_login(Session *s, const char *command)
  * Sets the value of the given variable in the environment.  If the variable
  * already exists, its value is overriden.
  */
-void
+static void
 child_set_env(char ***envp, u_int *envsizep, const char *name,
 	      const char *value)
 {
@@ -744,7 +745,7 @@ child_set_env(char ***envp, u_int *envsizep, const char *name,
  * Otherwise, it must consist of empty lines, comments (line starts with '#')
  * and assignments of the form name=value.  No other forms are allowed.
  */
-void
+static void
 read_environment_file(char ***env, u_int *envsize,
 		      const char *filename)
 {
@@ -1179,7 +1180,7 @@ session_new(void)
 	return NULL;
 }
 
-void
+static void
 session_dump(void)
 {
 	int i;
@@ -1211,7 +1212,7 @@ session_open(int chanid)
 	return 1;
 }
 
-Session *
+static Session *
 session_by_channel(int id)
 {
 	int i;
@@ -1227,7 +1228,7 @@ session_by_channel(int id)
 	return NULL;
 }
 
-Session *
+static Session *
 session_by_pid(pid_t pid)
 {
 	int i;
@@ -1242,7 +1243,7 @@ session_by_pid(pid_t pid)
 	return NULL;
 }
 
-int
+static int
 session_window_change_req(Session *s)
 {
 	s->col = packet_get_int();
@@ -1254,7 +1255,7 @@ session_window_change_req(Session *s)
 	return 1;
 }
 
-int
+static int
 session_pty_req(Session *s)
 {
 	u_int len;
@@ -1303,7 +1304,7 @@ session_pty_req(Session *s)
 	return 1;
 }
 
-int
+static int
 session_subsystem_req(Session *s)
 {
 	u_int len;
@@ -1329,7 +1330,7 @@ session_subsystem_req(Session *s)
 	return success;
 }
 
-int
+static int
 session_x11_req(Session *s)
 {
 	int fd;
@@ -1385,7 +1386,7 @@ session_x11_req(Session *s)
 	return 1;
 }
 
-int
+static int
 session_shell_req(Session *s)
 {
 	/* if forced_command == NULL, the shell is execed */
@@ -1399,7 +1400,7 @@ session_shell_req(Session *s)
 	return 1;
 }
 
-int
+static int
 session_exec_req(Session *s)
 {
 	u_int len;
@@ -1420,7 +1421,7 @@ session_exec_req(Session *s)
 	return 1;
 }
 
-int
+static int
 session_auth_agent_req(Session *s)
 {
 	static int called = 0;
@@ -1535,7 +1536,7 @@ session_pty_cleanup(Session *s)
 		error("close(s->ptymaster): %s", strerror(errno));
 }
 
-void
+static void
 session_exit_message(Session *s, int status)
 {
 	Channel *c;
@@ -1580,7 +1581,7 @@ session_exit_message(Session *s, int status)
 	s->chanid = -1;
 }
 
-void
+static void
 session_free(Session *s)
 {
 	debug("session_free: session %d pid %d", s->self, s->pid);
@@ -1595,7 +1596,7 @@ session_free(Session *s)
 	s->used = 0;
 }
 
-void
+static void
 session_close(Session *s)
 {
 	session_pty_cleanup(s);
@@ -1644,7 +1645,7 @@ session_close_by_channel(int id, void *arg)
 	}
 }
 
-char *
+static char *
 session_tty_list(void)
 {
 	static char buf[1024];

@@ -1,5 +1,3 @@
-/*	$NetBSD: readconf.c,v 1.2 2001/01/18 13:37:17 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,21 +11,18 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: readconf.c,v 1.52 2000/12/27 12:30:19 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: readconf.c,v 1.2 2001/01/18 13:37:17 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: readconf.c,v 1.60 2001/01/28 20:36:16 stevesk Exp $");
 
 #include "ssh.h"
-#include "pathnames.h"
-#include "readconf.h"
-#include "match.h"
 #include "xmalloc.h"
 #include "compat.h"
+#include "cipher.h"
+#include "pathnames.h"
+#include "log.h"
+#include "readconf.h"
+#include "match.h"
+#include "misc.h"
 
 /* Format of the configuration file:
 
@@ -98,7 +93,7 @@ typedef enum {
 	oBadOption,
 	oForwardAgent, oForwardX11, oGatewayPorts, oRhostsAuthentication,
 	oPasswordAuthentication, oRSAAuthentication, oFallBackToRsh, oUseRsh,
-	oSkeyAuthentication, oXAuthLocation,
+	oChallengeResponseAuthentication, oXAuthLocation,
 #ifdef KRB4
 	oKerberosAuthentication,
 #endif /* KRB4 */
@@ -109,7 +104,7 @@ typedef enum {
 	oUser, oHost, oEscapeChar, oRhostsRSAAuthentication, oProxyCommand,
 	oGlobalKnownHostsFile, oUserKnownHostsFile, oConnectionAttempts,
 	oBatchMode, oCheckHostIP, oStrictHostKeyChecking, oCompression,
-	oCompressionLevel, oKeepAlives, oNumberOfPasswordPrompts, oTISAuthentication,
+	oCompressionLevel, oKeepAlives, oNumberOfPasswordPrompts,
 	oUsePrivilegedPort, oLogLevel, oCiphers, oProtocol,
 	oGlobalKnownHostsFile2, oUserKnownHostsFile2, oPubkeyAuthentication,
 	oKbdInteractiveAuthentication, oKbdInteractiveDevices, oHostKeyAlias
@@ -132,8 +127,10 @@ static struct {
 	{ "kbdinteractivedevices", oKbdInteractiveDevices },
 	{ "rsaauthentication", oRSAAuthentication },
 	{ "pubkeyauthentication", oPubkeyAuthentication },
-	{ "dsaauthentication", oPubkeyAuthentication },		/* alias */
-	{ "skeyauthentication", oSkeyAuthentication },
+	{ "dsaauthentication", oPubkeyAuthentication },		    /* alias */
+	{ "challengeresponseauthentication", oChallengeResponseAuthentication },
+	{ "skeyauthentication", oChallengeResponseAuthentication }, /* alias */
+	{ "tisauthentication", oChallengeResponseAuthentication },  /* alias */
 #ifdef KRB4
 	{ "kerberosauthentication", oKerberosAuthentication },
 #endif /* KRB4 */
@@ -170,7 +167,6 @@ static struct {
 	{ "compressionlevel", oCompressionLevel },
 	{ "keepalive", oKeepAlives },
 	{ "numberofpasswordprompts", oNumberOfPasswordPrompts },
-	{ "tisauthentication", oTISAuthentication },
 	{ "loglevel", oLogLevel },
 	{ NULL, 0 }
 };
@@ -254,7 +250,7 @@ process_config_line(Options *options, const char *host,
 	/* Ignore leading whitespace. */
 	if (*keyword == '\0')
 		keyword = strdelim(&s);
-	if (!*keyword || *keyword == '\n' || *keyword == '#')
+	if (keyword == NULL || !*keyword || *keyword == '\n' || *keyword == '#')
 		return 0;
 
 	opcode = parse_token(keyword, filename, linenum);
@@ -321,32 +317,14 @@ parse_flag:
 		intptr = &options->rhosts_rsa_authentication;
 		goto parse_flag;
 
-	case oTISAuthentication:
-		/* fallthrough, there is no difference on the client side */
-	case oSkeyAuthentication:
-		intptr = &options->skey_authentication;
+	case oChallengeResponseAuthentication:
+		intptr = &options->challenge_reponse_authentication;
 		goto parse_flag;
 
 #ifdef KRB4
 	case oKerberosAuthentication:
 		intptr = &options->kerberos_authentication;
-		arg = strdelim(&s);
-		if (!arg || *arg == '\0')
-			fatal("%.200s line %d: Missing v4/v5/no argument.",
-			    filename, linenum);
-		value = 0;	/* To avoid compiler warning... */
-		if (strcmp(arg, "v4") == 0)
-			value = 4;
-		else if (strcmp(arg, "v5") == 0)
-			value = 5;
-		else if (strcmp(arg, "no") == 0 || strcmp(arg, "false") == 0)
-			value = 0;
-		else
-			fatal("%.200s line %d: Bad v4/v5/no argument.",
-			    filename, linenum);
-		if (*activep && *intptr == -1)
-			*intptr = value;
-		break;
+		goto parse_flag;
 #endif /* KRB4 */
 
 #ifdef AFS
@@ -379,7 +357,7 @@ parse_flag:
 		intptr = &options->strict_host_key_checking;
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
-			fatal("%.200s line %d: Missing yes/no argument.",
+			fatal("%.200s line %d: Missing yes/no/ask argument.",
 			      filename, linenum);
 		value = 0;	/* To avoid compiler warning... */
 		if (strcmp(arg, "yes") == 0 || strcmp(arg, "true") == 0)
@@ -622,8 +600,7 @@ parse_int:
 	}
 
 	/* Check that there is no garbage at end of line. */
-	if ((arg = strdelim(&s)) != NULL && *arg != '\0')
-	{
+	if ((arg = strdelim(&s)) != NULL && *arg != '\0') {
 		fatal("%.200s line %d: garbage at end of line; \"%.200s\".",
 		      filename, linenum, arg);
 	}
@@ -689,7 +666,7 @@ initialize_options(Options * options)
 	options->rhosts_authentication = -1;
 	options->rsa_authentication = -1;
 	options->pubkey_authentication = -1;
-	options->skey_authentication = -1;
+	options->challenge_reponse_authentication = -1;
 #ifdef KRB4
 	options->kerberos_authentication = -1;
 #endif
@@ -742,10 +719,10 @@ fill_default_options(Options * options)
 		options->forward_agent = 0;
 	if (options->forward_x11 == -1)
 		options->forward_x11 = 0;
-#ifdef _PATH_XAUTH
+#ifdef XAUTH_PATH
 	if (options->xauth_location == NULL)
-		options->xauth_location = _PATH_XAUTH;
-#endif /* _PATH_XAUTH */
+		options->xauth_location = XAUTH_PATH;
+#endif /* XAUTH_PATH */
 	if (options->gateway_ports == -1)
 		options->gateway_ports = 0;
 	if (options->use_privileged_port == -1)
@@ -756,11 +733,11 @@ fill_default_options(Options * options)
 		options->rsa_authentication = 1;
 	if (options->pubkey_authentication == -1)
 		options->pubkey_authentication = 1;
-	if (options->skey_authentication == -1)
-		options->skey_authentication = 0;
+	if (options->challenge_reponse_authentication == -1)
+		options->challenge_reponse_authentication = 0;
 #ifdef KRB4
 	if (options->kerberos_authentication == -1)
-		options->kerberos_authentication = 4;
+		options->kerberos_authentication = 1;
 #endif /* KRB4 */
 #ifdef AFS
 	if (options->kerberos_tgt_passing == -1)
@@ -771,7 +748,7 @@ fill_default_options(Options * options)
 	if (options->password_authentication == -1)
 		options->password_authentication = 1;
 	if (options->kbd_interactive_authentication == -1)
-		options->kbd_interactive_authentication = 0;
+		options->kbd_interactive_authentication = 1;
 	if (options->rhosts_rsa_authentication == -1)
 		options->rhosts_rsa_authentication = 1;
 	if (options->fallback_to_rsh == -1)
@@ -781,7 +758,7 @@ fill_default_options(Options * options)
 	if (options->batch_mode == -1)
 		options->batch_mode = 0;
 	if (options->check_host_ip == -1)
-		options->check_host_ip = 0;
+		options->check_host_ip = 1;
 	if (options->strict_host_key_checking == -1)
 		options->strict_host_key_checking = 2;	/* 2 is default */
 	if (options->compression == -1)

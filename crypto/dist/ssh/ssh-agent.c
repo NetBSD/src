@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.4 2001/01/14 05:22:32 itojun Exp $	*/
+/*	$OpenBSD: ssh-agent.c,v 1.49 2001/01/29 19:47:31 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,14 +36,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: ssh-agent.c,v 1.45 2000/12/19 23:17:58 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: ssh-agent.c,v 1.4 2001/01/14 05:22:32 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: ssh-agent.c,v 1.49 2001/01/29 19:47:31 markus Exp $");
+
+#include <openssl/evp.h>
+#include <openssl/md5.h>
 
 #include "ssh.h"
 #include "rsa.h"
@@ -51,18 +48,14 @@ __RCSID("$NetBSD: ssh-agent.c,v 1.4 2001/01/14 05:22:32 itojun Exp $");
 #include "bufaux.h"
 #include "xmalloc.h"
 #include "packet.h"
-#include "pathnames.h"
 #include "getput.h"
 #include "mpaux.h"
-
-#include <openssl/evp.h>
-#include <openssl/md5.h>
-#include <openssl/dsa.h>
-#include <openssl/rsa.h>
 #include "key.h"
 #include "authfd.h"
+#include "cipher.h"
 #include "kex.h"
 #include "compat.h"
+#include "log.h"
 
 typedef struct {
 	int fd;
@@ -100,23 +93,7 @@ char socket_dir[1024];
 
 extern char *__progname;
 
-static void
-printunset(int c_flag, char *varname)
-{
-	if (c_flag)
-	  	printf("unsetenv %s;\n", varname);
-	else
-	  	printf("unset %s;\n", varname);
-}
-
-static void
-printset(int c_flag, char *varname, char *val)
-{
-	if (c_flag)
-	  	printf("setenv %s %s;\n", varname, val);
-	else
-	  	printf("%s=%s; export %s;\n", varname, val, varname);
-}
+int	prepare_select(fd_set **, fd_set **, int *);
 
 static void
 idtab_init(void)
@@ -217,7 +194,8 @@ process_authentication_challenge1(SocketEntry *e)
 	private = lookup_private_key(key, NULL, 1);
 	if (private != NULL) {
 		/* Decrypt the challenge using the private key. */
-		rsa_private_decrypt(challenge, challenge, private->rsa);
+		if (rsa_private_decrypt(challenge, challenge, private->rsa) <= 0)
+			goto failure;
 
 		/* The response is MD5 of decrypted challenge plus session id. */
 		len = BN_num_bytes(challenge);
@@ -314,7 +292,7 @@ process_remove_identity(SocketEntry *e, int version)
 
 		if (bits != key_size(key))
 			log("Warning: identity keysize mismatch: actual %d, announced %d",
-			      key_size(key), bits);
+			    key_size(key), bits);
 		break;
 	case 2:
 		blob = buffer_get_string(&e->input, &blen);
@@ -409,7 +387,7 @@ process_add_identity(SocketEntry *e, int version)
 	switch (version) {
 	case 1:
 		k = key_new_private(KEY_RSA1);
-		buffer_get_int(&e->input);		 	/* ignored */
+		buffer_get_int(&e->input);			/* ignored */
 		buffer_get_bignum(&e->input, k->rsa->n);
 		buffer_get_bignum(&e->input, k->rsa->e);
 		buffer_get_bignum(&e->input, k->rsa->d);
@@ -424,7 +402,7 @@ process_add_identity(SocketEntry *e, int version)
 		break;
 	case 2:
 		type_name = buffer_get_string(&e->input, NULL);
-                type = key_type_from_name(type_name);
+		type = key_type_from_name(type_name);
 		xfree(type_name);
 		switch(type) {
 		case KEY_DSA:
@@ -577,17 +555,17 @@ new_socket(int type, int fd)
 	buffer_init(&sockets[old_alloc].output);
 }
 
-static void
-prepare_select(fd_set *readset, fd_set *writeset)
+int
+prepare_select(fd_set **fdrp, fd_set **fdwp, int *fdl)
 {
-	u_int i;
-	for (i = 0; i < sockets_alloc; i++)
+	u_int i, sz;
+	int n = 0;
+
+	for (i = 0; i < sockets_alloc; i++) {
 		switch (sockets[i].type) {
 		case AUTH_SOCKET:
 		case AUTH_CONNECTION:
-			FD_SET(sockets[i].fd, readset);
-			if (buffer_len(&sockets[i].output) > 0)
-				FD_SET(sockets[i].fd, writeset);
+			n = MAX(n, sockets[i].fd);
 			break;
 		case AUTH_UNUSED:
 			break;
@@ -595,6 +573,34 @@ prepare_select(fd_set *readset, fd_set *writeset)
 			fatal("Unknown socket type %d", sockets[i].type);
 			break;
 		}
+	}
+
+	sz = howmany(n+1, NFDBITS) * sizeof(fd_mask);
+	if (*fdrp == NULL || n > *fdl) {
+		if (*fdrp)
+			free(*fdrp);
+		if (*fdwp)
+			free(*fdwp);
+		*fdrp = xmalloc(sz);
+		*fdwp = xmalloc(sz);
+		*fdl = n;
+	}
+	memset(*fdrp, 0, sz);
+	memset(*fdwp, 0, sz);
+
+	for (i = 0; i < sockets_alloc; i++) {
+		switch (sockets[i].type) {
+		case AUTH_SOCKET:
+		case AUTH_CONNECTION:
+			FD_SET(sockets[i].fd, *fdrp);
+			if (buffer_len(&sockets[i].output) > 0)
+				FD_SET(sockets[i].fd, *fdwp);
+			break;
+		default:
+			break;
+		}
+	}
+	return (1);
 }
 
 static void
@@ -613,7 +619,8 @@ after_select(fd_set *readset, fd_set *writeset)
 		case AUTH_SOCKET:
 			if (FD_ISSET(sockets[i].fd, readset)) {
 				slen = sizeof(sunaddr);
-				sock = accept(sockets[i].fd, (struct sockaddr *) & sunaddr, &slen);
+				sock = accept(sockets[i].fd,
+				    (struct sockaddr *) &sunaddr, &slen);
 				if (sock < 0) {
 					perror("accept from AUTH_SOCKET");
 					break;
@@ -624,8 +631,9 @@ after_select(fd_set *readset, fd_set *writeset)
 		case AUTH_CONNECTION:
 			if (buffer_len(&sockets[i].output) > 0 &&
 			    FD_ISSET(sockets[i].fd, writeset)) {
-				len = write(sockets[i].fd, buffer_ptr(&sockets[i].output),
-					 buffer_len(&sockets[i].output));
+				len = write(sockets[i].fd,
+				    buffer_ptr(&sockets[i].output),
+				    buffer_len(&sockets[i].output));
 				if (len <= 0) {
 					shutdown(sockets[i].fd, SHUT_RDWR);
 					close(sockets[i].fd);
@@ -658,19 +666,24 @@ after_select(fd_set *readset, fd_set *writeset)
 static void
 check_parent_exists(int sig)
 {
+	int save_errno = errno;
+
 	if (parent_pid != -1 && kill(parent_pid, 0) < 0) {
 		/* printf("Parent has died - Authentication agent exiting.\n"); */
 		exit(1);
 	}
 	signal(SIGALRM, check_parent_exists);
 	alarm(10);
+	errno = save_errno;
 }
 
 static void
 cleanup_socket(void)
 {
-	unlink(socket_name);
-	rmdir(socket_dir);
+	if (socket_name[0])
+		unlink(socket_name);
+	if (socket_dir[0])
+		rmdir(socket_dir);
 }
 
 static void
@@ -681,24 +694,31 @@ cleanup_exit(int i)
 }
 
 static void
+cleanup_handler(int sig)
+{
+	cleanup_socket();
+	_exit(2);
+}
+
+static void
 usage(void)
 {
 	fprintf(stderr, "ssh-agent version %s\n", SSH_VERSION);
 	fprintf(stderr, "Usage: %s [-c | -s] [-k] [command {args...]]\n",
-		__progname);
+	    __progname);
 	exit(1);
 }
 
 int
 main(int ac, char **av)
 {
-	fd_set readset, writeset;
 	int sock, c_flag = 0, k_flag = 0, s_flag = 0, ch;
 	struct sockaddr_un sunaddr;
 	struct rlimit rlim;
 	pid_t pid;
-	char *shell, *pidstr, pidstrbuf[1 + 3 * sizeof pid];
+	char *shell, *format, *pidstr, pidstrbuf[1 + 3 * sizeof pid];
 	extern int optind;
+	fd_set *readsetp = NULL, *writesetp = NULL;
 
 	while ((ch = getopt(ac, av, "cks")) != -1) {
 		switch (ch) {
@@ -734,35 +754,35 @@ main(int ac, char **av)
 		pidstr = getenv(SSH_AGENTPID_ENV_NAME);
 		if (pidstr == NULL) {
 			fprintf(stderr, "%s not set, cannot kill agent\n",
-				SSH_AGENTPID_ENV_NAME);
+			    SSH_AGENTPID_ENV_NAME);
 			exit(1);
 		}
 		pid = atoi(pidstr);
-		if (pid < 1) {	/* XXX PID_MAX check too */
-		/* Yes, PID_MAX check please */
+		if (pid < 1) {
 			fprintf(stderr, "%s=\"%s\", which is not a good PID\n",
-				SSH_AGENTPID_ENV_NAME, pidstr);
+			    SSH_AGENTPID_ENV_NAME, pidstr);
 			exit(1);
 		}
 		if (kill(pid, SIGTERM) == -1) {
 			perror("kill");
 			exit(1);
 		}
-		printunset(c_flag, SSH_AUTHSOCKET_ENV_NAME);
-		printunset(c_flag, SSH_AGENTPID_ENV_NAME);
+		format = c_flag ? "unsetenv %s;\n" : "unset %s;\n";
+		printf(format, SSH_AUTHSOCKET_ENV_NAME);
+		printf(format, SSH_AGENTPID_ENV_NAME);
 		printf("echo Agent pid %d killed;\n", pid);
 		exit(0);
 	}
 	parent_pid = getpid();
 
 	/* Create private directory for agent socket */
-	strlcpy(socket_dir, _PATH_SSH_TMPDIR, sizeof socket_dir);
+	strlcpy(socket_dir, "/tmp/ssh-XXXXXXXX", sizeof socket_dir);
 	if (mkdtemp(socket_dir) == NULL) {
 		perror("mkdtemp: private socket dir");
 		exit(1);
 	}
 	snprintf(socket_name, sizeof socket_name, "%s/agent.%d", socket_dir,
-		 parent_pid);
+	    parent_pid);
 
 	/*
 	 * Create socket early so it will exist before command gets run from
@@ -784,6 +804,7 @@ main(int ac, char **av)
 		perror("listen");
 		cleanup_exit(1);
 	}
+
 	/*
 	 * Fork, and have the parent execute the command, if any, or present
 	 * the socket data.  The child continues as the authentication agent.
@@ -797,8 +818,11 @@ main(int ac, char **av)
 		close(sock);
 		snprintf(pidstrbuf, sizeof pidstrbuf, "%d", pid);
 		if (ac == 0) {
-			printset(c_flag, SSH_AUTHSOCKET_ENV_NAME, socket_name);
-			printset(c_flag, SSH_AGENTPID_ENV_NAME, pidstrbuf);
+			format = c_flag ? "setenv %s %s;\n" : "%s=%s; export %s;\n";
+			printf(format, SSH_AUTHSOCKET_ENV_NAME, socket_name,
+			    SSH_AUTHSOCKET_ENV_NAME);
+			printf(format, SSH_AGENTPID_ENV_NAME, pidstrbuf,
+			    SSH_AGENTPID_ENV_NAME);
 			printf("echo Agent pid %d;\n", pid);
 			exit(0);
 		}
@@ -837,18 +861,16 @@ main(int ac, char **av)
 	idtab_init();
 	signal(SIGINT, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
-	signal(SIGHUP, cleanup_exit);
-	signal(SIGTERM, cleanup_exit);
+	signal(SIGHUP, cleanup_handler);
+	signal(SIGTERM, cleanup_handler);
 	while (1) {
-		FD_ZERO(&readset);
-		FD_ZERO(&writeset);
-		prepare_select(&readset, &writeset);
-		if (select(max_fd + 1, &readset, &writeset, NULL, NULL) < 0) {
+		prepare_select(&readsetp, &writesetp, &max_fd);
+		if (select(max_fd + 1, readsetp, writesetp, NULL, NULL) < 0) {
 			if (errno == EINTR)
 				continue;
 			exit(1);
 		}
-		after_select(&readset, &writeset);
+		after_select(readsetp, writesetp);
 	}
 	/* NOTREACHED */
 }

@@ -85,7 +85,7 @@ static volatile int child_wait_status;	/* Status from wait(). */
 
 void	server_init_dispatch(void);
 
-void
+static void
 sigchld_handler(int sig)
 {
 	int save_errno = errno;
@@ -104,7 +104,7 @@ sigchld_handler(int sig)
 	signal(SIGCHLD, sigchld_handler);
 	errno = save_errno;
 }
-void
+static void
 sigchld_handler2(int sig)
 {
 	int save_errno = errno;
@@ -118,8 +118,8 @@ sigchld_handler2(int sig)
  * Make packets from buffered stderr data, and buffer it for sending
  * to the client.
  */
-void
-make_packets_from_stderr_data()
+static void
+make_packets_from_stderr_data(void)
 {
 	int len;
 
@@ -147,8 +147,8 @@ make_packets_from_stderr_data()
  * Make packets from buffered stdout data, and buffer it for sending to the
  * client.
  */
-void
-make_packets_from_stdout_data()
+static void
+make_packets_from_stdout_data(void)
 {
 	int len;
 
@@ -178,7 +178,7 @@ make_packets_from_stdout_data()
  * have data or can accept data.  Optionally, a maximum time can be specified
  * for the duration of the wait (0 = infinite).
  */
-void
+static void
 wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
     u_int max_time_milliseconds)
 {
@@ -261,7 +261,7 @@ retry_select:
  * Processes input from the client and the program.  Input data is stored
  * in buffers and processed later.
  */
-void
+static void
 process_input(fd_set * readset)
 {
 	int len;
@@ -314,7 +314,7 @@ process_input(fd_set * readset)
 /*
  * Sends data from internal buffers to client program stdin.
  */
-void
+static void
 process_output(fd_set * writeset)
 {
 	int len;
@@ -351,8 +351,8 @@ process_output(fd_set * writeset)
  * Wait until all buffered output has been sent to the client.
  * This is used when the program terminates.
  */
-void
-drain_output()
+static void
+drain_output(void)
 {
 	/* Send any buffered stdout data to the client. */
 	if (buffer_len(&stdout_buffer) > 0) {
@@ -376,8 +376,8 @@ drain_output()
 	packet_write_wait();
 }
 
-void
-process_buffered_input_packets()
+static void
+process_buffered_input_packets(void)
 {
 	dispatch_run(DISPATCH_NONBLOCK, NULL, NULL);
 }
@@ -678,7 +678,7 @@ server_loop2(void)
 	channel_stop_listening();
 }
 
-void
+static void
 server_input_stdin_data(int type, int plen, void *ctxt)
 {
 	char *data;
@@ -695,7 +695,7 @@ server_input_stdin_data(int type, int plen, void *ctxt)
 	xfree(data);
 }
 
-void
+static void
 server_input_eof(int type, int plen, void *ctxt)
 {
 	/*
@@ -708,7 +708,7 @@ server_input_eof(int type, int plen, void *ctxt)
 	stdin_eof = 1;
 }
 
-void
+static void
 server_input_window_size(int type, int plen, void *ctxt)
 {
 	int row = packet_get_int();
@@ -722,7 +722,7 @@ server_input_window_size(int type, int plen, void *ctxt)
 		pty_change_window_size(fdin, row, col, xpixel, ypixel);
 }
 
-Channel *
+static Channel *
 server_request_direct_tcpip(char *ctype)
 {
 	int sock, newch;
@@ -755,7 +755,7 @@ server_request_direct_tcpip(char *ctype)
 	return (newch >= 0) ? channel_lookup(newch) : NULL;
 }
 
-Channel *
+static Channel *
 server_request_session(char *ctype)
 {
 	int newch;
@@ -783,7 +783,7 @@ server_request_session(char *ctype)
 	return NULL;
 }
 
-void
+static void
 server_input_channel_open(int type, int plen, void *ctxt)
 {
 	Channel *c = NULL;
@@ -830,7 +830,7 @@ server_input_channel_open(int type, int plen, void *ctxt)
 	xfree(ctype);
 }
 
-void
+static void
 server_input_global_request(int type, int plen, void *ctxt)
 {
 	char *rtype;
@@ -879,8 +879,8 @@ server_input_global_request(int type, int plen, void *ctxt)
 	xfree(rtype);
 }
 
-void
-server_init_dispatch_20()
+static void
+server_init_dispatch_20(void)
 {
 	debug("server_init_dispatch_20");
 	dispatch_init(&dispatch_protocol_error);
@@ -895,8 +895,8 @@ server_init_dispatch_20()
 	dispatch_set(SSH2_MSG_CHANNEL_WINDOW_ADJUST, &channel_input_window_adjust);
 	dispatch_set(SSH2_MSG_GLOBAL_REQUEST, &server_input_global_request);
 }
-void
-server_init_dispatch_13()
+static void
+server_init_dispatch_13(void)
 {
 	debug("server_init_dispatch_13");
 	dispatch_init(NULL);
@@ -910,8 +910,8 @@ server_init_dispatch_13()
 	dispatch_set(SSH_MSG_CHANNEL_OPEN_FAILURE, &channel_input_open_failure);
 	dispatch_set(SSH_MSG_PORT_OPEN, &channel_input_port_open);
 }
-void
-server_init_dispatch_15()
+static void
+server_init_dispatch_15(void)
 {
 	server_init_dispatch_13();
 	debug("server_init_dispatch_15");
@@ -919,7 +919,7 @@ server_init_dispatch_15()
 	dispatch_set(SSH_MSG_CHANNEL_CLOSE_CONFIRMATION, &channel_input_oclose);
 }
 void
-server_init_dispatch()
+server_init_dispatch(void)
 {
 	if (compat20)
 		server_init_dispatch_20();

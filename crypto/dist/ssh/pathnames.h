@@ -27,8 +27,8 @@
  * should be world-readable.
  */
 #define _PATH_HOST_KEY_FILE		ETCDIR "/ssh_host_key"
-#define _PATH_SERVER_CONFIG_FILE	ETCDIR "/sshd_config"
-#define _PATH_HOST_CONFIG_FILE		ETCDIR "/ssh_config"
+#define _PATH_SERVER_CONFIG_FILE	ETCDIR "/sshd.conf"
+#define _PATH_HOST_CONFIG_FILE		ETCDIR "/ssh.conf"
 #define _PATH_HOST_DSA_KEY_FILE		ETCDIR "/ssh_host_dsa_key"
 #define _PATH_DH_PRIMES			ETCDIR "/primes"
 
@@ -104,3 +104,6 @@
 
 /* for scp */
 #define _PATH_CP			"cp"
+
+#define _PATH_RSH			"/usr/bin/rsh"
+#define _PATH_URANDOM			"/dev/urandom"
