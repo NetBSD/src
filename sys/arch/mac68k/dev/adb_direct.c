@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.44 2000/09/27 03:27:23 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.45 2001/11/20 03:19:41 chs Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1782,13 +1782,13 @@ adb_soft_intr(void)
 		/* call default completion routine if it's valid */
 		if (comprout) {
 #ifdef __NetBSD__
-			asm("	movml #0xffff,sp@-	| save all registers
-				movl %0,a2 		| compdata
-				movl %1,a1 		| comprout
-				movl %2,a0 		| buffer
-				movl %3,d0 		| cmd
-				jbsr a1@ 		| go call the routine
-				movml sp@+,#0xffff	| restore all registers"
+			asm("	movml #0xffff,%%sp@-	| save all registers
+				movl %0,%%a2 		| compdata
+				movl %1,%%a1 		| comprout
+				movl %2,%%a0 		| buffer
+				movl %3,%%d0 		| cmd
+				jbsr %%a1@ 		| go call the routine
+				movml %%sp@+,#0xffff	| restore all registers"
 			    :
 			    : "g"(compdata), "g"(comprout),
 				"g"(buffer), "g"(cmd)
@@ -2355,13 +2355,13 @@ adb_comp_exec(void)
 {
 	if ((long)0 != adbCompRout) /* don't call if empty return location */
 #ifdef __NetBSD__
-		asm("	movml #0xffff,sp@-	| save all registers
-			movl %0,a2		| adbCompData
-			movl %1,a1		| adbCompRout
-			movl %2,a0		| adbBuffer
-			movl %3,d0		| adbWaitingCmd
-			jbsr a1@		| go call the routine
-			movml sp@+,#0xffff	| restore all registers"
+		asm("	movml #0xffff,%%sp@-	| save all registers
+			movl %0,%%a2		| adbCompData
+			movl %1,%%a1		| adbCompRout
+			movl %2,%%a0		| adbBuffer
+			movl %3,%%d0		| adbWaitingCmd
+			jbsr %%a1@		| go call the routine
+			movml %%sp@+,#0xffff	| restore all registers"
 		    :
 		    : "g"(adbCompData), "g"(adbCompRout),
 			"g"(adbBuffer), "g"(adbWaitingCmd)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.17 2001/09/16 16:40:44 wiz Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.18 2001/11/20 03:19:42 chs Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -902,12 +902,12 @@ pm_pmgrop_mrg(pmdata)
 	u_int32_t rval=0;
 
 	asm("
-		movl	%1, a0
+		movl	%1,%%a0
 		.word	0xa085
-		movl	d0, %0"
+		movl	%%d0,%0"
 		: "=g" (rval)
 		: "g" (pmdata)
-		: "a0", "d0" );
+		: "a0","d0");
 
 	return rval;
 }

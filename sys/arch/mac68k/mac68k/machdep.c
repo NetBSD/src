@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.265 2001/09/10 21:19:16 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.266 2001/11/20 03:19:43 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,6 +110,8 @@
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
+#define ELFSIZE 32
+#include <sys/exec_elf.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -450,9 +452,8 @@ cpu_startup(void)
 			if (pg == NULL) 
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
-			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -2342,10 +2343,10 @@ gray_bar()
    	3) restore regs
 */
 
-	__asm __volatile ("	movl a0,sp@-;
-				movl a1,sp@-;
-				movl d0,sp@-;
-				movl d1,sp@-");
+	__asm __volatile ("	movl %a0,%sp@-;
+				movl %a1,%sp@-;
+				movl %d0,%sp@-;
+				movl %d1,%sp@-");
 
 /* check to see if gray bars are turned off */
 	if (mac68k_machine.do_graybars) {
@@ -2357,10 +2358,10 @@ gray_bar()
 			((u_long *)videoaddr)[gray_nextaddr++] = 0x00000000;
 	}
 
-	__asm __volatile ("	movl sp@+,d1;
-				movl sp@+,d0;
-				movl sp@+,a1;
-				movl sp@+,a0");
+	__asm __volatile ("	movl %sp@+,%d1;
+				movl %sp@+,%d0;
+				movl %sp@+,%a1;
+				movl %sp@+,%a0");
 }
 #endif
 
@@ -2750,17 +2751,17 @@ printstar(void)
 	 * Be careful as we assume that no registers are clobbered
 	 * when we call this from assembly.
 	 */
-	__asm __volatile ("	movl a0,sp@-;
-				movl a1,sp@-;
-				movl d0,sp@-;
-				movl d1,sp@-");
+	__asm __volatile ("	movl %a0,%sp@-;
+				movl %a1,%sp@-;
+				movl %d0,%sp@-;
+				movl %d1,%sp@-");
 
 	/* printf("*"); */
 
-	__asm __volatile ("	movl sp@+,d1;
-				movl sp@+,d0;
-				movl sp@+,a1;
-				movl sp@+,a0");
+	__asm __volatile ("	movl %sp@+,%d1;
+				movl %sp@+,%d0;
+				movl %sp@+,%a1;
+				movl %sp@+,%a0");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsysasm.s,v 1.10 2000/02/14 07:01:45 scottr Exp $	*/
+/*	$NetBSD: adbsysasm.s,v 1.11 2001/11/20 03:19:42 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -43,14 +43,14 @@
 /* (provided it has been set up with SetADBInfo) */
 GLOBAL(adb_kbd_asmcomplete)
 #if NAKBD > 0
-	moveml	#0x80e0, sp@-	| save scratch regs
-	movl	d0, sp@-	/* ADB command byte */
-	movl	a2, sp@-	/* data area pointer */
-	/*	a1 is the pointer to this routine itself. */
-	movl	a0, sp@-	/* device data buffer */
+	moveml	#0x80e0,%sp@-	| save scratch regs
+	movl	%d0,%sp@-	/* ADB command byte */
+	movl	%a2,%sp@-	/* data area pointer */
+	/*	%a1 is the pointer to this routine itself. */
+	movl	%a0,%sp@-	/* device data buffer */
 	jbsr	_C_LABEL(kbd_adbcomplete)
-	addl	#12, sp		/* pop params */
-	moveml	sp@+, #0x0701	| restore scratch regs
+	addl	#12,%sp		/* pop params */
+	moveml	%sp@+,#0x0701	| restore scratch regs
 #endif
 	rts
 
@@ -58,14 +58,14 @@ GLOBAL(adb_kbd_asmcomplete)
 /* (provided it has been set up with SetADBInfo) */
 GLOBAL(adb_ms_asmcomplete)
 #if NAMS > 0
-	moveml	#0x80e0, sp@-	| save scratch regs
-	movl	d0, sp@-	/* ADB command byte */
-	movl	a2, sp@-	/* data area pointer */
-	/*	a1 is the pointer to this routine itself. */
-	movl	a0, sp@-	/* device data buffer */
+	moveml	#0x80e0,%sp@-	| save scratch regs
+	movl	%d0,%sp@-	/* ADB command byte */
+	movl	%a2,%sp@-	/* data area pointer */
+	/*	%a1 is the pointer to this routine itself. */
+	movl	%a0,%sp@-	/* device data buffer */
 	jbsr	_C_LABEL(ms_adbcomplete)
-	addl	#12, sp		/* pop params */
-	moveml	sp@+, #0x0701	| restore scratch regs
+	addl	#12,%sp		/* pop params */
+	moveml	%sp@+,#0x0701	| restore scratch regs
 #endif
 	rts
 
@@ -77,16 +77,16 @@ GLOBAL(adb_jadbprochello)
 
 GLOBAL(adb_jadbproc)
 #if defined(ADB_DEBUG) && 0
-	moveml	#0xc0c0, sp@-	| save scratch regs
-	movl	_C_LABEL(adb_jadbprochello), sp@-
+	moveml	#0xc0c0,%sp@-	| save scratch regs
+	movl	_C_LABEL(adb_jadbprochello),%sp@-
 	jbsr	_C_LABEL(printf)
-	addl	#4, sp		/* pop params */
-	moveml	sp@+, #0x0303	| restore scratch regs
+	addl	#4,%sp		/* pop params */
+	moveml	%sp@+,#0x0303	| restore scratch regs
 #endif
 		/* Don't do anything; adbattach fixes dev info for us. */
 	rts
 
 	/* ADBOp's completion routine used by extdms_init() in adbsys.c. */
 GLOBAL(extdms_complete)
-	movl	#-1,a2@		| set done flag
+	movl	#-1,%a2@	| set done flag
 	rts
