@@ -1,4 +1,4 @@
-/*	$NetBSD: lca.c,v 1.11 1996/10/23 04:12:25 cgd Exp $	*/
+/*	$NetBSD: lca.c,v 1.12 1996/11/11 21:02:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -194,6 +194,7 @@ lcaattach(parent, self, aux)
 		pci_axppci_33_pickintr(lcp);
 		break;
 #endif
+
 	default:
 		panic("lcaattach: shouldn't be here, really...");
 	}

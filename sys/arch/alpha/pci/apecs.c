@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs.c,v 1.13 1996/10/23 04:12:22 cgd Exp $	*/
+/*	$NetBSD: apecs.c,v 1.14 1996/11/11 21:02:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -157,6 +157,7 @@ apecsattach(parent, self, aux)
 		pci_2100_a50_pickintr(acp);
 		break;
 #endif
+
 	default:
 		panic("apecsattach: shouldn't be here, really...");
 	}
