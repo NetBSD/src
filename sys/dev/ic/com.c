@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.107 1997/08/24 09:40:16 drochner Exp $	*/
+/*	$NetBSD: com.c,v 1.108 1997/08/27 18:00:13 is Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -1376,11 +1376,12 @@ comsoft(arg)
 		sc = com_cd.cd_devs[unit];
 		if (sc == NULL)
 			continue;
-#endif
 
 		tp = sc->sc_tty;
 		if (tp == NULL || !ISSET(tp->t_state, TS_ISOPEN | TS_WOPEN))
 			continue;
+#endif
+		tp = sc->sc_tty;
 		
 		if (sc->sc_rx_ready) {
 			sc->sc_rx_ready = 0;
