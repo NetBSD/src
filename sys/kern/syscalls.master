@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.61 1997/10/18 16:35:25 christos Exp $
+	$NetBSD: syscalls.master,v 1.62 1997/10/19 03:25:55 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -136,7 +136,7 @@
 			    int count); }
 59	STD		{ int sys_execve(const char *path, \
 			    char * const *argp, char * const *envp); }
-60	STD		{ int sys_umask(int newmask); }
+60	STD		{ mode_t sys_umask(mode_t newmask); }
 61	STD		{ int sys_chroot(const char *path); }
 62	COMPAT_43	{ int sys_fstat(int fd, struct stat43 *sb); } fstat43
 63	COMPAT_43	{ int sys_getkerninfo(int op, char *where, int *size, \
