@@ -1,4 +1,4 @@
-#	$NetBSD: ttys,v 1.1 1995/08/25 21:25:14 ragge Exp $
+#	$NetBSD: ttys,v 1.2 1998/06/05 22:31:43 ragge Exp $
 #
 #	@(#)ttys	5.2 (Berkeley) 6/10/93
 #
@@ -8,16 +8,25 @@
 # the root password.
 console	"/usr/libexec/getty std.9600"	unknown	on secure
 
-# Hardwired lines are marked off, by default, so getty(8)
-# is quiet when they don't exist.
-tty00	"/usr/libexec/getty std.9600"	unknown	off secure
-tty01	"/usr/libexec/getty std.9600"	unknown	off secure
-tty02	"/usr/libexec/getty std.9600"	unknown	off secure
-tty03	"/usr/libexec/getty std.9600"	unknown	off secure
-tty04	"/usr/libexec/getty std.9600"	unknown	off secure
-tty05	"/usr/libexec/getty std.9600"	unknown	off secure
-tty06	"/usr/libexec/getty std.9600"	unknown	off secure
-tty07	"/usr/libexec/getty std.9600"	unknown	off secure
+# Virtual terminals on VS3100 with "glass tty"
+#ttyw0	"/usr/libexec/getty std.9600"	sun on secure
+#ttyw1	"/usr/libexec/getty std.9600"	sun on secure
+#ttyw2	"/usr/libexec/getty std.9600"	sun on secure
+#ttyw3	"/usr/libexec/getty std.9600"	sun on secure
+#ttyw4	"/usr/libexec/getty std.9600"	sun on secure
+#ttyw5	"/usr/libexec/getty std.9600"	sun on secure
+#ttyw6	"/usr/libexec/getty std.9600"	sun on secure
+#ttyw7	"/usr/libexec/getty std.9600"	sun on secure
+
+# DZ-11 lines, not frobbed by getty (keyboard/mouse may be sad)
+#tty00	"/usr/libexec/getty std.9600"	unknown	off secure
+#tty01	"/usr/libexec/getty std.9600"	unknown	off secure
+#tty02	"/usr/libexec/getty std.9600"	unknown	off secure
+#tty03	"/usr/libexec/getty std.9600"	unknown	off secure
+#tty04	"/usr/libexec/getty std.9600"	unknown	off secure
+#tty05	"/usr/libexec/getty std.9600"	unknown	off secure
+#tty06	"/usr/libexec/getty std.9600"	unknown	off secure
+#tty07	"/usr/libexec/getty std.9600"	unknown	off secure
 
 ttyp0	none			network
 ttyp1	none			network
