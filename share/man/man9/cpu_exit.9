@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_exit.9,v 1.7 2003/08/23 07:21:07 yamt Exp $
+.\"     $NetBSD: cpu_exit.9,v 1.8 2003/08/23 23:29:54 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,9 +56,10 @@ as the last action during process or lwp exit to switch to a new context
 will clean up machine-dependent process state.
 If
 .Fa is_process
-is 0, we're exiting an lwp.  In that case,
+is 0, we're exiting an lwp.
+In that case,
 .Fn cpu_exit
-only do lwp-appropriate cleanup.
+only does lwp-appropriate cleanup.
 .Fn cpu_exit
 will then invoke
 .Fn exit2
