@@ -1,119 +1,51 @@
-#	$NetBSD: Makefile,v 1.15 1998/08/21 21:12:19 tv Exp $
+#	$NetBSD: Makefile,v 1.16 1998/08/22 19:02:10 tv Exp $
 
-LIB=	bfd
+LIB=		bfd
 
-NOLINT=		nolint (XXX should be linted)
+NOLINT=		nolint (GNU source)
 NOMAN=
 NOPROFILE=
 
-TOP=	$(.CURDIR)/../..
-dist=	$(TOP)/dist
-srcdir= $(dist)/bfd
+SRCS=		archive.c archures.c bfd.c cache.c coffgen.c corefile.c \
+		format.c init.c libbfd.c opncls.c reloc.c section.c syms.c \
+		targets.c hash.c linker.c elf.c srec.c binary.c tekhex.c \
+		ihex.c stabs.c stab-syms.c netbsd-core.c \
+		dis-buf.c disassemble.c \
+		argv.c basename.c choose-temp.c concat.c cplus-dem.c \
+		fdmatch.c fnmatch.c getopt.c getopt1.c getruntime.c hex.c \
+		floatformat.c objalloc.c obstack.c spaces.c strerror.c \
+		strsignal.c xatexit.c xexit.c xmalloc.c xstrdup.c xstrerror.c \
+		insque.c vasprintf.c ${BFD_ARCH_SRCS}
+CPPFLAGS+= 	-I. -I${.CURDIR} \
+		-I${DIST}/bfd -I${DIST}/opcodes -I${DIST}/include \
+		${BFD_ARCH_DEFS}
 
-INCSDIR=/usr/include/bfd
-INCS= ansidecl.h bfd.h libiberty.h
+DIST=		${.CURDIR}/../../dist
 
-# COPTS+=-g #XXX
-CPPFLAGS+= -I.
-CPPFLAGS+= -I$(.CURDIR)
-CPPFLAGS+= -I$(dist)/bfd
-CPPFLAGS+= -I$(dist)/opcodes
-# ommitted -I$(dist)/libiberty on purpose
-CPPFLAGS+= -I$(dist)/include
+INCSDIR=	/usr/include/machine/bfd
+INCS=		ansidecl.h bfd.h libiberty.h
 
-.PATH: $(dist)/bfd
-.PATH: $(dist)/opcodes
-.PATH: $(dist)/libiberty
+DPSRCS+=	bfd.h elf32-target.h elf64-target.h targmatch.h
+CLEANFILES+=	bfd.h elf32-target.h elf64-target.h targmatch.h
+
+.PATH:		${DIST}/bfd ${DIST}/opcodes ${DIST}/libiberty ${DIST}/include
 
 # XXX temporary change mips -> mipsel
-.if exists(_${MACHINE_ARCH:S/^mips$/mipsel/}.mk)
 .include  "_${MACHINE_ARCH:S/^mips$/mipsel/}.mk"
-.endif
 
-BFD_WORDSIZE?=	32
-BFD_64BIT_LONG?=0
+bfd.h: bfd-in2.h bfd-h.sed
+	sed -f ${.ALLSRC:M*.sed} ${.ALLSRC:M*.h} >$@
 
-DPSRCS+=	bfd.h
-CLEANFILES+=	bfd.h
-bfd.h: bfd-in2.h
-	@sed	-e 's,@VERSION@,2.8.1,' \
-		-e 's,@wordsize@,${BFD_WORDSIZE},' \
-		-e 's,@BFD_HOST_64BIT_LONG@,${BFD_64BIT_LONG},' \
-		-e 's,@BFD_HOST_64_BIT_DEFINED@,0,' \
-		< $> > $@
+targmatch.h: config.bfd targmatch.sed
+	sed -f ${.ALLSRC:M*.sed} ${.ALLSRC:M*.bfd} >$@
 
-# From $(dist)/bfd: BFD_LIBS, BFD_BACKENDS, BFD_MACHINES, ...
-# Have to ommit libbfd.c to avoid .c.so rule problem.
-BFD_SRCS= \
-	archive.c archures.c bfd.c cache.c coffgen.c corefile.c \
-	format.c init.c lib_bfd.c opncls.c reloc.c \
-	section.c syms.c targets.c hash.c linker.c \
-	elf.c srec.c binary.c tekhex.c ihex.c stabs.c stab-syms.c \
-	$(BFD_BACKENDS) $(BFD_MACHINES) netbsd-core.c
+elf32-target.h: elfxx-target.h
+	sed -e s/NN/32/g < $> > $@
 
-# From $(dist)/opcodes: BFD_MACHINES, dis*
-OPCODE_SRCS= $(OPCODE_MACHINES) dis-buf.c disassemble.c
+elf64-target.h: elfxx-target.h
+	sed -e s/NN/64/g < $> > $@
 
-# From $(dist)/libiberty: REQUIRED_OFILES, HOST_OFILES
-IBERTY_SRCS= argv.c basename.c choose-temp.c concat.c cplus-dem.c \
-  fdmatch.c fnmatch.c getopt.c getopt1.c getruntime.c hex.c \
-  floatformat.c objalloc.c obstack.c spaces.c strerror.c strsignal.c \
-  xatexit.c xexit.c xmalloc.c xstrdup.c xstrerror.c \
-  insque.c vasprintf.c
-
-SRCS = $(BFD_SRCS) $(OPCODE_SRCS) $(IBERTY_SRCS)
 .include <bsd.lib.mk>
 
-CC_o=	$(CC) $(CFLAGS) $(CPPFLAGS)
-CC_so=	$(CC) $(CFLAGS) $(CPPFLAGS) $(CPICFLAGS)
-
-beforedepend ${LIB}: elf32-target.h elf64-target.h
-
-# Add $(ARCH_DEFS) when compiling these...
-archures.o: $(dist)/bfd/archures.c
-	$(CC_o)  $(ARCH_DEFS) -c $(.IMPSRC)
-archures.so: $(dist)/bfd/archures.c
-	$(CC_so) $(ARCH_DEFS) -c $(.IMPSRC) -o $@
-
-# Add $(ARCH_DEFS) when compiling these...
-disassemble.o: $(dist)/opcodes/disassemble.c
-	$(CC_o)  $(ARCH_DEFS) -c $(.IMPSRC)
-disassemble.so: $(dist)/opcodes/disassemble.c
-	$(CC_so) $(ARCH_DEFS) -c $(.IMPSRC) -o $@
-
-# Add $(TDEFAULTS) when compiling these...
-targets.o: $(dist)/bfd/targets.c
-	$(CC_o)  $(TDEFAULTS) -c $(.IMPSRC)
-targets.so: $(dist)/bfd/targets.c
-	$(CC_so) $(TDEFAULTS) -c $(.IMPSRC) -o $@
-
-# Avoid the unwanted .c.a default rule
-.NOPATH: libbfd.a
-
-# Icky generated header files...
-CLEANFILES+= elf32-target.h elf64-target.h
-elf32-target.h : $(dist)/bfd/elfxx-target.h
-	-rm -f $@
-	sed -e s/NN/32/g < $(dist)/bfd/elfxx-target.h > $@
-elf64-target.h : $(dist)/bfd/elfxx-target.h
-	-rm -f $@
-	sed -e s/NN/64/g < $(dist)/bfd/elfxx-target.h > $@
-
-# Some dependencies, by hand.
-argv.o : alloca-conf.h
-${OBJS} : ansidecl.h bfd.h config.h libiberty.h
-targets.o : targmatch.h
-
-# Make sure we build elf32-target.h when needed.
-elf32-gen.o   : elf32-target.h
-elf32-i386.o  : elf32-target.h
-elf32-m68k.o  : elf32-target.h
-elf32-mips.o  : elf32-target.h
-elf32-ppc.o   : elf32-target.h
-elf32-sparc.o : elf32-target.h
-
-# Make sure we build elf64-target.h when needed.
-elf64-alpha.o : elf64-target.h
-elf64-gen.o   : elf64-target.h
-elf64-mips.o  : elf64-target.h
-elf64-sparc.o : elf64-target.h
+${OBJS}: bfd.h elf32-target.h elf64-target.h
+targets.o targets.so targets.po: targmatch.h
