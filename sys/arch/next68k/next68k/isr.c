@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.14 2000/08/09 02:26:26 tv Exp $ */
+/*	$NetBSD: isr.c,v 1.15 2001/05/13 16:55:39 chs Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -294,6 +294,8 @@ isrdispatch_vectored(pc, evec, frame)
 	if ((*isr->isr_func)(isr->isr_arg ? isr->isr_arg : frame) == 0)
 		printf("isrdispatch_vectored: vec 0x%x not claimed\n", vec);
 }
+
+void netintr __P((void));
 
 void
 netintr()

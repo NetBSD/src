@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.13 2001/04/24 04:31:05 thorpej Exp $ */
+/*	$NetBSD: mem.c,v 1.14 2001/05/13 16:55:39 chs Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/mem.c
@@ -63,14 +63,19 @@
 
 #include <uvm/uvm_extern.h>
 
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
+
 extern u_int lowram;
 static caddr_t devzeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -78,9 +83,10 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -104,8 +110,7 @@ mmrw(dev, uio, flags)
 		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
-			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
-			    "mmrw", 0);
+			error = tsleep(&physlock, PZERO | PCATCH, "mmrw", 0);
 			if (error)
 				return (error);
 		}
@@ -193,7 +198,9 @@ mmrw(dev, uio, flags)
 		uio->uio_resid -= c;
 	}
 	if (minor(dev) == 0) {
+#ifndef DEBUG
 unlock:
+#endif
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;

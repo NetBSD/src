@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.22 2001/04/16 14:12:12 dbj Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.23 2001/05/13 16:55:38 chs Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -340,7 +340,7 @@ mb8795_rint(sc)
 
 #if defined(XE_DEBUG)
 			/* Peek at the packet */
-			DPRINTF(("%s: received packet, at VA 0x%08x-0x%08x,len %d\n",
+			DPRINTF(("%s: received packet, at VA %p-%p,len %d\n",
 					sc->sc_dev.dv_xname,mtod(m,u_char *),mtod(m,u_char *)+m->m_len,m->m_len));
 			if (xe_debug > 3) {
 				xe_hex_dump(mtod(m,u_char *), m->m_pkthdr.len);
@@ -469,7 +469,7 @@ mb8795_watchdog(ifp)
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++ifp->if_oerrors;
 
-	DPRINTF(("%s: %d input errors, %d input packets\n",
+	DPRINTF(("%s: %lld input errors, %lld input packets\n",
 			sc->sc_dev.dv_xname, ifp->if_ierrors, ifp->if_ipackets));
 
 	mb8795_reset(sc);
@@ -995,9 +995,9 @@ mb8795_rxdmamap_load(sc,map)
 			map->dm_mapsize, BUS_DMASYNC_PREREAD);
 	
   if (error) {
-		DPRINTF(("DEBUG: m->m_data = 0x%08x, m->m_len = %d\n",
+		DPRINTF(("DEBUG: m->m_data = %p, m->m_len = %d\n",
 				m->m_data, m->m_len));
-		DPRINTF(("DEBUG: MCLBYTES = %d, map->_dm_size = %d\n",
+		DPRINTF(("DEBUG: MCLBYTES = %d, map->_dm_size = %ld\n",
 				MCLBYTES, map->_dm_size));
 
     panic("%s: can't load rx mbuf chain, error = %d\n",
