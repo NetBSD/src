@@ -1,4 +1,4 @@
-.\" $NetBSD: midiplay.1,v 1.1 1998/08/12 21:39:12 augustss Exp $
+.\" $NetBSD: midiplay.1,v 1.2 1998/08/12 21:49:38 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -60,7 +60,7 @@ The
 flag gives the number of the MIDI device used for output (as listed
 by the
 .Fl l
-flag).
+flag).  The default is device 0.
 .Pp
 The
 .Fl f
@@ -76,7 +76,8 @@ flag will show MIDI file meta events (copyright, lyrics, etc).
 .Pp
 The
 .Fl t
-flag can be used to change the tempo of the playing.
+flag can be used to change the tempo of the playing.  The default
+tempo is 100.
 .Pp
 The 
 .Fl v
