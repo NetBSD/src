@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.18 2002/05/21 01:57:33 briggs Exp $
+#	$NetBSD: list,v 1.18.2.1 2002/05/28 05:06:24 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -52,7 +52,7 @@ PROG	usr/bin/tset
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
 
-PROG	usr/mdec/installboot
+PROG	usr/sbin/installboot
 
 # init invokes the shell as -sh
 ARGVLN	sh	-sh
