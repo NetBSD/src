@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.250 2003/12/27 18:23:51 daniel Exp $
+.\"	$NetBSD: main,v 1.251 2003/12/29 13:33:58 igy Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1884,6 +1884,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Reed Shadgett Ta Mt dent@NetBSD.org
 .It Ta Tim Shepard Ta Mt shep@NetBSD.org
 .It Ta Takeshi Shibagaki Ta Mt shiba@NetBSD.org
+.It Ta Naoto Shimazaki Ta Mt igy@NetBSD.org
 .It Ta Takao Shinohara Ta Mt shin@NetBSD.org
 .It Ta Takuya SHIOZAKI Ta Mt tshiozak@NetBSD.org
 .It Ta Chuck Silvers Ta Mt chs@NetBSD.org
