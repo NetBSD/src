@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.16 1998/10/12 20:38:55 wsanchez Exp $	*/
+/*	$NetBSD: calendar.c,v 1.17 1998/10/12 20:51:06 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.16 1998/10/12 20:38:55 wsanchez Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.17 1998/10/12 20:51:06 wsanchez Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -345,7 +345,7 @@ opencal()
 			(void)close(pdes[1]);
 		}
 		(void)close(pdes[0]);
-		execl(_PATH_CPP, "cpp", "-P", "-I.", "-I" _PATH_CALENDARS, NULL);
+		execl(_PATH_CPP, "cpp", "-P", "-I.", __CONCAT("-I",_PATH_CALENDARS), NULL);
 		warn("execl: %s", _PATH_CPP);
 		_exit(1);
 	}
