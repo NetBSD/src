@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.23 2000/08/30 18:41:16 tsubai Exp $	*/
+/*	$NetBSD: locore.s,v 1.24 2000/09/04 05:50:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -1150,7 +1150,7 @@ ENTRY(switch_exit)
 XLexit2:
 	.long	_C_LABEL(exit2)
 XL_MMUCR_VBITS:
-	.long	0xfcfcff05
+	.long	MMUCR_VALIDBITS
 XXL_SHREG_MMUCR:
 	.long	SHREG_MMUCR
 XXLP_ADDR:
