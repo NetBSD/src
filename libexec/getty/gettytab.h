@@ -1,4 +1,4 @@
-/*	$NetBSD: gettytab.h,v 1.8 1996/07/31 20:40:31 thorpej Exp $	*/
+/*	$NetBSD: gettytab.h,v 1.9 1998/10/12 18:03:49 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -86,6 +86,7 @@ struct gettyflags {
 #define FL	gettystrs[21].value
 #define WE	gettystrs[22].value
 #define LN	gettystrs[23].value
+#define PP	gettystrs[24].value
 
 /*
  * Numeric definitions.

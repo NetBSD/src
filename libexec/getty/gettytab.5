@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettytab.5,v 1.19 1998/04/22 04:54:19 ross Exp $
+.\"	$NetBSD: gettytab.5,v 1.20 1998/10/12 18:03:48 tsarna Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -155,6 +155,7 @@ hangup line on last close
 .It "pe	bool	false	use printer (hard copy) erase algorithm"
 .It "pf	num	0	delay"
 between first prompt and following flush (seconds)
+.It "pp	str	unused	PPP authentication program"
 .It "ps	bool	false	line connected to a"
 .Tn MICOM
 port selector
@@ -358,6 +359,12 @@ implementation.
 does not check parity of input characters in
 .Dv RAW
 mode.
+.Pp
+If
+.Em \&pp
+string is specified and a PPP link bringup sequence is recognized,
+getty will invoke the program referenced by the pp option.  This
+can be used to handle incoming PPP calls.
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr gethostname 3 ,
