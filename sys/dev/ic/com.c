@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.149 1998/11/18 23:58:52 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.150 1999/01/26 17:08:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1921,7 +1921,7 @@ comintr(arg)
 		if (ISSET(lsr, LSR_BI)) {
 #ifdef DDB 
 			if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-				Debugger();
+				console_debugger();
 				continue;
 			}
 #endif
