@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.9 1999/02/09 22:32:33 is Exp $
+#	$NetBSD: Makefile,v 1.10 1999/03/03 12:00:18 jonathan Exp $
 
-.if exists(${MACHINE_ARCH})
-SUBDIR+= ${MACHINE_ARCH}
+.if exists(${MACHINE_ARCH:S/mipse[bl]/mips/})
+SUBDIR+= ${MACHINE_ARCH:S/mipse[bl]/mips/}
 .endif
 
 .include <bsd.subdir.mk>
