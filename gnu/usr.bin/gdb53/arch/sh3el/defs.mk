@@ -1,4 +1,4 @@
-# $NetBSD: defs.mk,v 1.1 2003/09/21 21:14:50 uwe Exp $
+# $NetBSD: defs.mk,v 1.2 2003/10/28 01:58:23 uwe Exp $
 G_GDB_OBJS=\
 annotate.o \
 arch-utils.o \
@@ -146,7 +146,7 @@ wrapper.o
 
 G_SIM_OBJS=
 
-G_BFD_CPPFLAGS=-DDEFAULT_VECTOR=bfd_elf32_shnbsd_vec -DSELECT_VECS='&bfd_elf32_shnbsd_vec,&bfd_elf32_shlnbsd_vec,&shcoff_vec,&shlcoff_vec,&bfd_elf32_little_generic_vec,&bfd_elf32_big_generic_vec' -DSELECT_ARCHITECTURES='&bfd_sh_arch' -DHAVE_bfd_elf32_shnbsd_vec -DHAVE_bfd_elf32_shlnbsd_vec -DHAVE_shcoff_vec -DHAVE_shlcoff_vec -DHAVE_bfd_elf32_little_generic_vec -DHAVE_bfd_elf32_big_generic_vec
+G_BFD_CPPFLAGS=-DDEFAULT_VECTOR=bfd_elf32_shlnbsd_vec -DSELECT_VECS='&bfd_elf32_shlnbsd_vec,&bfd_elf32_shnbsd_vec,&shcoff_vec,&shlcoff_vec,&bfd_elf32_little_generic_vec,&bfd_elf32_big_generic_vec' -DSELECT_ARCHITECTURES='&bfd_sh_arch' -DHAVE_bfd_elf32_shlnbsd_vec -DHAVE_bfd_elf32_shnbsd_vec -DHAVE_shcoff_vec -DHAVE_shlcoff_vec -DHAVE_bfd_elf32_little_generic_vec -DHAVE_bfd_elf32_big_generic_vec
 G_BFD_OBJS=\
 archive.o \
 archive64.o \
