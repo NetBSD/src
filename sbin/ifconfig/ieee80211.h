@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 2005/03/19 23:13:42 thorpej Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.1 2005/03/19 23:13:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,27 +29,12 @@
  * SUCH DAMAGE.
  */
 
-struct afswtch {
-	const char *af_name;
-	short af_af;
-	void (*af_status)(int);
-	void (*af_getaddr)(const char *, int);
-	void (*af_getprefix)(const char *, int);
-	u_long af_difaddr;
-	u_long af_aifaddr;
-	u_long af_gifaddr;
-	void *af_ridreq;
-	void *af_addreq;
-};
+void	setifnwid(const char *, int);
+void	setifnwkey(const char *, int);  
+void	setifbssid(const char *, int);
+void	setifchan(const char *, int);
+void	setifpowersave(const char *, int);
+void	setifpowersavesleep(const char *, int);
 
-extern struct afswtch *afp;
-extern struct ifreq ifr;
-extern int s;
-extern char name[30];
-
-extern int zflag;
-
-struct afswtch *lookup_af_byname(const char *);
-struct afswtch *lookup_af_bynum(int);
-const char *get_string(const char *, const char *, u_int8_t *, int *);
-void print_string(const u_int8_t *, int);
+void	ieee80211_statistics(void);
+void	ieee80211_status(void);
