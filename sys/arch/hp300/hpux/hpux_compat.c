@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hpux_compat.c 1.41 91/04/06
  *	from: @(#)hpux_compat.c	7.16 (Berkeley) 5/30/91
- *	$Id: hpux_compat.c,v 1.8 1994/05/17 10:37:09 cgd Exp $
+ *	$Id: hpux_compat.c,v 1.9 1994/05/23 06:19:05 mycroft Exp $
  */
 
 /*
@@ -708,7 +708,7 @@ hpux_advise(p, uap, retval)
 
 	switch (uap->arg) {
 	case 0:
-		p->p_addr->u_pcb.pcb_flags |= PCB_HPUXMMAP;
+		p->p_md.md_flags |= MDP_HPUXMMAP;
 		break;
 	case 1:
 		ICIA();
@@ -1316,7 +1316,7 @@ hpuxdumpu(vp, cred)
 	 * only uses this information to verify that a particular
 	 * core file goes with a particular binary.
 	 */
-	bcopy((caddr_t)p->p_addr->u_pcb.pcb_exec,
+	bcopy((caddr_t)p->p_addr->u_md.md_exec,
 	      (caddr_t)&faku->hpuxu_exdata, sizeof (struct hpux_exec));
 	/*
 	 * Adjust user's saved registers (on kernel stack) to reflect
