@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.20 2000/11/20 08:24:17 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21 2001/07/07 07:51:38 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -91,7 +91,7 @@ readdisklabel(dev, strat, lp, clp)
 	if (biowait(bp)) {
 		msg = "cpu_disklabel read error\n";
 	} else {
-		bcopy(bp->b_data, clp, sizeof (struct cpu_disklabel));
+		memcpy(clp, bp->b_data, sizeof (struct cpu_disklabel));
 	}
 
 	brelse(bp);
@@ -212,7 +212,7 @@ writedisklabel(dev, strat, lp, clp)
 	if ( (error = biowait(bp)) != 0 ) {
 		/* nothing */
 	} else {
-		bcopy(bp->b_data, clp, sizeof(struct cpu_disklabel));
+		memcpy(clp, bp->b_data, sizeof(struct cpu_disklabel));
 	}
 
 	brelse(bp);
@@ -234,7 +234,7 @@ writedisklabel(dev, strat, lp, clp)
 		/* obtain buffer to scrozz drive with */
 		bp = geteblk((int)lp->d_secsize);
 
-		bcopy(clp, bp->b_data, sizeof(struct cpu_disklabel));
+		memcpy(bp->b_data, clp, sizeof(struct cpu_disklabel));
 
 		/* request no partition relocation by driver on I/O operations */
 		bp->b_dev = dev;
@@ -353,9 +353,9 @@ bsdtocpulabel(lp, clp)
 	clp->sbsize = lp->d_sbsize;
 	clp->checksum = lp->d_checksum;
 	/* note: assume at least 4 partitions */
-	bcopy(&lp->d_partitions[0], clp->vid_4, sizeof(struct partition) * 4);
-	bzero(clp->cfg_4, sizeof(struct partition) * 12);
-	bcopy(&lp->d_partitions[4], clp->cfg_4, sizeof(struct partition) 
+	memcpy(clp->vid_4, &lp->d_partitions[0], sizeof(struct partition) * 4);
+	memset(clp->cfg_4, 0, sizeof(struct partition) * 12);
+	memcpy(clp->cfg_4, &lp->d_partitions[4], sizeof(struct partition) 
 		* ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
 
 	/*
@@ -363,14 +363,14 @@ bsdtocpulabel(lp, clp)
 	 * see disklabel.h for more details
 	 * [note: this used to be handled by 'wrtvid']
 	 */
-	bcopy(VID_ID, clp->vid_id, sizeof(clp->vid_id));
+	memcpy(clp->vid_id, VID_ID, sizeof(clp->vid_id));
 	clp->vid_oss = VID_OSS;
 	clp->vid_osl = VID_OSL;
 	clp->vid_osa_u = VID_OSAU;
 	clp->vid_osa_l = VID_OSAL;
 	clp->vid_cas = VID_CAS;
 	clp->vid_cal = VID_CAL;
-	bcopy(VID_MOT, clp->vid_mot, sizeof(clp->vid_mot));
+	memcpy(clp->vid_mot, VID_MOT, sizeof(clp->vid_mot));
 	clp->cfg_rec = CFG_REC;
 	clp->cfg_psm = CFG_PSM;
 }
@@ -437,8 +437,8 @@ cputobsdlabel(lp, clp)
 	lp->d_bbsize = clp->bbsize;
 	lp->d_sbsize = clp->sbsize;
 	/* note: assume at least 4 partitions */
-	bcopy(clp->vid_4, &lp->d_partitions[0], sizeof(struct partition) * 4);
-	bcopy(clp->cfg_4, &lp->d_partitions[4], sizeof(struct partition) 
+	memcpy(&lp->d_partitions[0], clp->vid_4, sizeof(struct partition) * 4);
+	memcpy(&lp->d_partitions[4], clp->cfg_4, sizeof(struct partition) 
 		* ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
