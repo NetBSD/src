@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 1996/09/12 02:45:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1114,12 +1114,23 @@ boot(howto, bootstr)
 	register int howto;
 	char *bootstr;
 {
+	extern int cold;
+
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)
 		savectx(curproc->p_addr);
 
-	boothowto = howto | (boothowto & RB_SBOOT);
-	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
+	/* Save the RB_SBOOT flag. */
+	howto |= (boothowto & RB_SBOOT);
+
+	/* If system is hold, just halt. */
+	if (cold) {
+		howto |= RB_HALT;
+		goto haltsys;
+	}
+
+	boothowto = howto;
+	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
 		/*
@@ -1128,17 +1139,36 @@ boot(howto, bootstr)
 		 */
 		resettodr();
 	}
-	splhigh();			/* extreme priority */
-	if (howto&RB_HALT) {
+
+	/* Disable interrupts. */
+	splhigh();
+
+	/* If rebooting and a dump is requested, do it. */
+	if (howto & RB_DUMP)
+		dumpsys();
+
+ haltsys:
+	/* Run any shutdown hooks. */
+	doshutdownhooks();
+
+#if defined(PANICWAIT) && !defined(DDB)
+	if ((howto & RB_HALT) == 0 && panicstr) {
+		printf("hit any key to reboot...\n");
+		(void)cngetc();
+		printf("\n");
+	}
+#endif
+
+	/* Finally, halt/reboot the system. */
+	if (howto & RB_HALT) {
 		printf("halted\n\n");
 		doboot(RB_HALT);
-		/*NOTREACHED*/
-	} else {
-		if (howto & RB_DUMP)
-			dumpsys();
-		doboot(RB_AUTOBOOT);
-		/*NOTREACHED*/
+		/* NOTREACHED */
 	}
+
+	printf("rebooting...\n");
+	delay(1000000);
+	doboot(RB_AUTOBOOT);
 	/*NOTREACHED*/
 }
 
