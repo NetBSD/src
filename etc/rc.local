@@ -1,15 +1,19 @@
-#	$NetBSD: rc.local,v 1.25 1998/11/20 17:26:32 hubertf Exp $
+#	$NetBSD: rc.local,v 1.26 2000/07/22 01:50:30 lukem Exp $
 #	originally from: @(#)rc.local	8.3 (Berkeley) 4/28/94
 #
 # This file is (nearly) the last thing invoked by /etc/rc during a
-# normal boot.
+# normal boot, via /etc/rc.d/local.
+#
 # It is intended to be edited locally to add site-specific boot-time
 # actions, such as starting locally installed daemons.
+#
+# An alternative option is to create site-specific /etc/rc.d scripts.
 #
 
 echo -n 'starting local daemons:'
 
-# add your local daemons here, following the startup models in /etc/rc
+# Add your local daemons here.
+#
 
 #if [ -f /usr/pkg/etc/rc.d/sshd.sh ]; then
 #	/usr/pkg/etc/rc.d/sshd.sh
