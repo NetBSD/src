@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.124 1999/05/07 21:20:13 hwr Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.125 1999/05/17 17:08:09 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.119 1999/05/07 21:19:06 hwr Exp 
+ *	NetBSD: pcidevs,v 1.120 1999/05/17 17:07:00 drochner Exp 
  */
 
 /*
@@ -1736,6 +1736,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Neomagic",
 	    "MagicGraph 128ZV",
+	},
+	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256AV_VGA,
+	    0,
+	    "Neomagic",
+	    "MagicMedia 256AV VGA",
+	},
+	{
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU,
+	    0,
+	    "Neomagic",
+	    "MagicMedia 256AV Audio",
 	},
 	{
 	    PCI_VENDOR_NEXGEN, PCI_PRODUCT_NEXGEN_NX82C501,

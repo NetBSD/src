@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.126 1999/05/07 21:20:12 hwr Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.127 1999/05/17 17:08:08 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.119 1999/05/07 21:19:06 hwr Exp 
+ *	NetBSD: pcidevs,v 1.120 1999/05/17 17:07:00 drochner Exp 
  */
 
 /*
@@ -966,6 +966,8 @@
 
 /* Neomagic products */
 #define	PCI_PRODUCT_NEOMAGIC_NMMG128ZV	0x0003		/* MagicGraph 128ZV */
+#define	PCI_PRODUCT_NEOMAGIC_NMMM256AV_VGA	0x0005		/* MagicMedia 256AV VGA */
+#define	PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU	0x8005		/* MagicMedia 256AV Audio */
 
 /* NexGen products */
 #define	PCI_PRODUCT_NEXGEN_NX82C501	0x4e78		/* NX82C501 Host-PCI Bridge */
