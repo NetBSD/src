@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.50 2003/12/28 13:28:39 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.51 2003/12/30 00:15:46 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.50 2003/12/28 13:28:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.51 2003/12/30 00:15:46 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -369,8 +369,6 @@ mach_e_proc_exit(p)
 
 	mach_e_lwp_exit(proc_representative_lwp(p));
 
-	mach_semaphore_cleanup(p);
-
 	med = (struct mach_emuldata *)p->p_emuldata;
 
 	lockmgr(&med->med_rightlock, LK_EXCLUSIVE, NULL);
@@ -449,6 +447,8 @@ mach_e_lwp_exit(l)
 	struct lwp *l;
 {
 	struct mach_lwp_emuldata *mle;
+
+	mach_semaphore_cleanup(l);
 
 #ifdef DIAGNOSTIC
 	if (l->l_emuldata == NULL) {

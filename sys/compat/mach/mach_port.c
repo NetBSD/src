@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.49 2003/12/21 07:53:59 simonb Exp $ */
+/*	$NetBSD: mach_port.c,v 1.50 2003/12/30 00:15:46 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.49 2003/12/21 07:53:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.50 2003/12/30 00:15:46 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -632,6 +632,7 @@ mach_port_put(mp)
 {
 	struct mach_message *mm;
 
+	printf("port_put: %p\n", mp);
 	if (mp->mp_refcount > 0) {
 		uprintf("mach_port_put: trying to free a referenced port\n");
 		return;

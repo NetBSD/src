@@ -1,4 +1,4 @@
-/* $NetBSD: mach_syscallargs.h,v 1.12 2003/11/20 07:12:34 manu Exp $ */
+/* $NetBSD: mach_syscallargs.h,v 1.13 2003/12/30 00:15:46 manu Exp $ */
 
 /*
  * System call argument lists.
@@ -59,6 +59,7 @@ struct mach_sys_semaphore_signal_all_trap_args {
 
 struct mach_sys_semaphore_signal_thread_trap_args {
 	syscallarg(mach_port_name_t) signal_name;
+	syscallarg(mach_port_name_t) thread;
 };
 
 struct mach_sys_semaphore_wait_trap_args {

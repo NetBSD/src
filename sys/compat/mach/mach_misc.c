@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.20 2003/12/28 23:00:36 manu Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.21 2003/12/30 00:15:46 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.20 2003/12/28 23:00:36 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.21 2003/12/30 00:15:46 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,30 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.20 2003/12/28 23:00:36 manu Exp $");
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_syscallargs.h>
-
-
-int
-mach_sys_semaphore_signal_all_trap(struct lwp *l, void *v, register_t *r) {
-#ifdef DEBUG_MACH
-	struct mach_sys_semaphore_signal_all_trap_args *ap = v;
-#endif
-	*r = 0;
-	DPRINTF(("mach_sys_semaphore_signal_all_trap(0x%x);\n",
-	    SCARG(ap, signal_name)));
-	return 0;
-}
-
-
-int
-mach_sys_semaphore_signal_thread_trap(struct lwp *l, void *v, register_t *r) {
-#ifdef DEBUG_MACH
-	struct mach_sys_semaphore_signal_thread_trap_args *ap = v;
-#endif
-	*r = 0;
-	DPRINTF(("mach_sys_semaphore_signal_thread_trap(0x%x);\n",
-	    SCARG(ap, signal_name)));
-	return 0;
-}
 
 
 int

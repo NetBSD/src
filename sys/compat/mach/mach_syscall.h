@@ -1,4 +1,4 @@
-/* $NetBSD: mach_syscall.h,v 1.12 2003/11/20 07:12:34 manu Exp $ */
+/* $NetBSD: mach_syscall.h,v 1.13 2003/12/30 00:15:46 manu Exp $ */
 
 /*
  * System call numbers.
@@ -31,7 +31,7 @@
 /* syscall: "semaphore_signal_all_trap" ret: "mach_kern_return_t" args: "mach_port_name_t" */
 #define	MACH_SYS_semaphore_signal_all_trap	34
 
-/* syscall: "semaphore_signal_thread_trap" ret: "mach_kern_return_t" args: "mach_port_name_t" */
+/* syscall: "semaphore_signal_thread_trap" ret: "mach_kern_return_t" args: "mach_port_name_t" "mach_port_name_t" */
 #define	MACH_SYS_semaphore_signal_thread_trap	35
 
 /* syscall: "semaphore_wait_trap" ret: "mach_kern_return_t" args: "mach_port_name_t" */
