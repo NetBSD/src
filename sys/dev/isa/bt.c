@@ -1,4 +1,4 @@
-/*	$NetBSD: bt.c,v 1.5 1996/04/03 08:48:48 mycroft Exp $	*/
+/*	$NetBSD: bt.c,v 1.6 1996/04/03 09:45:47 mycroft Exp $	*/
 
 #define BTDIAG
 #define integrate
@@ -221,7 +221,7 @@ bt_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	 * Wait for the adapter to go idle, unless it's one of
 	 * the commands which don't need this
 	 */
-	if (opcode != BT_MBX_INIT && opcode != BT_MBO_INTR_EN) {
+	if (opcode != BT_MBO_INTR_EN) {
 		for (i = 20000; i; i--) {	/* 1 sec? */
 			sts = inb(iobase + BT_STAT_PORT);
 			if (sts & BT_STAT_IDLE)
@@ -286,16 +286,19 @@ bt_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
 	 * We may get an extra interrupt for the HACC signal, but this is
 	 * unimportant.
 	 */
-	for (i = 20000; i; i--) {	/* 1 sec? */
-		sts = inb(iobase + BT_INTR_PORT);
-		/* XXX Need to save this in the interrupt handler? */
-		if (sts & BT_INTR_HACC)
-			break;
-		delay(50);
-	}
-	if (!i) {
-		printf("%s: bt_cmd, host not finished(0x%x)\n", name, sts);
-		return ENXIO;
+	if (opcode != BT_MBO_INTR_EN) {
+		for (i = 20000; i; i--) {	/* 1 sec? */
+			sts = inb(iobase + BT_INTR_PORT);
+			/* XXX Need to save this in the interrupt handler? */
+			if (sts & BT_INTR_HACC)
+				break;
+			delay(50);
+		}
+		if (!i) {
+			printf("%s: bt_cmd, host not finished(0x%x)\n",
+			    name, sts);
+			return ENXIO;
+		}
 	}
 	outb(iobase + BT_CTRL_PORT, BT_CTRL_IRST);
 	return 0;
