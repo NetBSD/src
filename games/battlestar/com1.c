@@ -1,4 +1,4 @@
-/*	$NetBSD: com1.c,v 1.10 2000/07/23 23:57:23 mycroft Exp $	*/
+/*	$NetBSD: com1.c,v 1.11 2000/09/08 17:25:31 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com1.c,v 1.10 2000/07/23 23:57:23 mycroft Exp $");
+__RCSID("$NetBSD: com1.c,v 1.11 2000/09/08 17:25:31 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -127,10 +127,10 @@ news()
 			convert(TONIGHT);
 			clearbit(location[POOLS].objects, BATHGOD);
 			if (OUTSIDE && ourtime - rythmn - CYCLE < 10) {
-				puts("The dying sun sinks into the ocean, leaving a blood stained sunset.");
+				puts("The dying sun sinks into the ocean, leaving a blood-stained sunset.");
 				puts("The sky slowly fades from orange to violet to black.  A few stars");
 				puts("flicker on, and it is night.");
-				puts("The world seems completly different at night.");
+				puts("The world seems completely different at night.");
 			}
 		}
 		rythmn = ourtime - ourtime % CYCLE;
