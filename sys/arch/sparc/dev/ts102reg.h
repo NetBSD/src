@@ -1,4 +1,4 @@
-/*	$NetBSD: ts102reg.h,v 1.3 1999/11/12 04:41:46 matt Exp $ */
+/*	$NetBSD: ts102reg.h,v 1.4 1999/12/15 08:12:31 garbled Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,16 +40,16 @@
 
 /* The TS102 consumes a 256MB region of the SPARCbook 3's address space.
  */
-#define	TS102_OFFSET_REGISTERS		0x02000000
-#define	TS102_OFFSET_CARD_A_ATTR_SPACE	0x04000000
-#define	TS102_OFFSET_CARD_B_ATTR_SPACE	0x05000000
-#define	TS102_SIZE_ATTR_SPACE		0x01000000
-#define	TS102_OFFSET_CARD_A_IO_SPACE	0x06000000
-#define	TS102_OFFSET_CARD_B_IO_SPACE	0x07000000
-#define	TS102_SIZE_IO_SPACE		0x01000000
-#define	TS102_OFFSET_CARD_A_MEM_SPACE	0x08000000
-#define	TS102_OFFSET_CARD_B_MEM_SPACE	0x0c000000
-#define	TS102_SIZE_MEM_SPACE		0x04000000
+#define TS102_OFFSET_REGISTERS		0x02000000
+#define TS102_OFFSET_CARD_A_ATTR_SPACE	0x04000000
+#define TS102_OFFSET_CARD_B_ATTR_SPACE	0x05000000
+#define TS102_SIZE_ATTR_SPACE		0x01000000
+#define TS102_OFFSET_CARD_A_IO_SPACE	0x06000000
+#define TS102_OFFSET_CARD_B_IO_SPACE	0x07000000
+#define TS102_SIZE_IO_SPACE		0x01000000
+#define TS102_OFFSET_CARD_A_MEM_SPACE	0x08000000
+#define TS102_OFFSET_CARD_B_MEM_SPACE	0x0c000000
+#define TS102_SIZE_MEM_SPACE		0x04000000
 
 /* There are two separate register blocks within the TS102.  The first
  * gives access to PCMCIA card specific resources, and the second gives
@@ -171,8 +171,8 @@ enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_RD_HW_VERSION=0x03,	/* none		ack + 2 bytes */
     TS102_OP_RD_UCTLR_VERSION=0x04,	/* none		ack + 2 bytes */
     TS102_OP_RD_MAX_TEMP=0x05,		/* none		ack + 1 bytes */
-    TS102_OP_RD_MIN_TEMP=0x07,		/* none		ack + 1 bytes */
-    TS102_OP_RD_CURRENT_TEMP=0x06,	/* none		ack + 1 bytes */
+    TS102_OP_RD_MIN_TEMP=0x06,		/* none		ack + 1 bytes */
+    TS102_OP_RD_CURRENT_TEMP=0x07,	/* none		ack + 1 bytes */
     TS102_OP_RD_SYSTEM_VARIANT=0x08,	/* none		ack + 4 bytes */
     TS102_OP_RD_POWERON_CYCLES=0x09,	/* none		ack + 4 bytes */
     TS102_OP_RD_POWERON_SECONDS=0x0a,	/* none		ack + 4 bytes */
@@ -228,8 +228,8 @@ enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_RD_DC_IN_VLT=0x15,		/* none		ack + 1 bytes */
     TS102_OP_RD_HORZ_PRT_VLT=0x16,	/* none		ack + 1 bytes */
     TS102_OP_RD_VERT_PTR_VLT=0x17,	/* none		ack + 1 bytes */
-    TS102_OP_RD_INT_CHANGE_LEVEL=0x18,	/* none		ack + 1 bytes */
-    TS102_OP_RD_EXT_CHARGE_LEVEL=0x19,	/* none		ack + 1 bytes */
+    TS102_OP_RD_INT_CHARGE_RATE=0x18,	/* none		ack + 1 bytes */
+    TS102_OP_RD_EXT_CHARGE_RATE=0x19,	/* none		ack + 1 bytes */
     TS102_OP_RD_RTC_ALARM=0x1a,		/* none		ack + 7 bytes */
     TS102_OP_RD_EVENT_STATUS_NO_RESET=0x1b,	/* none		ack + 2 bytes */
     TS102_OP_RD_INT_KBD_LAYOUT=0x1c,	/* none		ack + 2 bytes */
@@ -259,14 +259,23 @@ enum ts102_opcode {			/* Argument	Returned */
 #define	TS102_BITPORT_BP_DIS		0x10	/* no bootprom from pcmcia (high) */
 						/* boot from pcmcia (low */
 #define	TS102_BITPORT_ENCSYNC		0x20	/* enab composite sync (low) */
+    TS102_OP_CTL_DEV=0x22,	/* undocumented mask 	ack + 1 byte */
+#define TS102_DEVCTL_CHARGE_DISABLE	0x01	/* dis/en charging */
+#define TS102_DEVCTL_POINTER_DISABLE	0x04	/* dis/en pointer */
+#define TS102_DEVCTL_KEYCLICK		0x08	/* keyclick? */
+#define TS102_DEVCTL_INT_BTNCLICK	0x10	/* internal button click? */
+#define TS102_DEVCTL_EXT_BTNCLICK	0x20	/* ext. button click?? */
     TS102_OP_CTL_SPEAKER_VOLUME=0x23,	/* mask		ack + 1 byte */
     TS102_OP_CTL_TFT_BIRGHNESS=0x24,	/* mask		ack + 1 byte */
     TS102_OP_CTL_WATCHDOG=0x25,		/* mask		ack + 1 byte */
     TS102_OP_CTL_FCTRY_EEPROM=0x26,	/* mask		ack + 1 byte */
+    TS102_OP_CTL_SECURITY_KEY=0x27,	/* no idea */
     TS102_OP_CTL_KDB_TIME_UNTL_RTP=0x28, /* mask 	ack + 1 byte */
     TS102_OP_CTL_KBD_TIME_BTWN_RPTS=0x29, /* mask	ack + 1 byte */
     TS102_OP_CTL_TIMEZONE=0x2a,		/* mask		ack + 1 byte */
     TS102_OP_CTL_MARK_SPACE_RATIO=0x2b,	/* mask		ack + 1 byte */
+    TS102_OP_CTL_MOUSE_SENS=0x2c, 	/* no idea */
+    TS102_OP_CTL_MOUSE_SCAN=0x2d,	/* no idea */
     TS102_OP_CTL_DIAGNOSTIC_MODE=0x2e,	/* mask		ack + 1 byte */
 #define	TS102_DIAGNOSTIC_MODE_CMD_DIAG_ON_LCD	0x01
 #define	TS102_DIAGNOSTIC_MODE_KDB_MS_9600	0x02
@@ -275,6 +284,7 @@ enum ts102_opcode {			/* Argument	Returned */
     /* Commands returning no status
      */
     TS102_OP_CMD_RING_BELL=0x30,	/* msb,lsb	ack */
+    TS102_OP_RD_INPUT_SOURCE=0x31,	/* no idea */
     TS102_OP_CMD_DIAGNOSTIC_STATUS=0x32, /* msb,lsb	ack */
     TS102_OP_CMD_CLR_KEY_COMBO_TBL=0x33, /* none	ack */
     TS102_OP_CMD_SOFTWARE_RESET=0x34,	/* none		ack */
@@ -321,6 +331,9 @@ enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_ADMIN_VRFY_USER_PASS=0x71,	/* len <pass>   ack + status */
     TS102_OP_ADMIN_GET_SYSTEM_PASS=0x72, /* none	ack + <7bytekey> */
     TS102_OP_ADMIN_VRFY_SYSTEM_PASS=0x73, /* len <pass>   ack + status */
+    TS102_OP_RD_INT_CHARGE_LEVEL=0x7a, /* ack + 2 byte */
+    TS102_OP_RD_EXT_CHARGE_LEVEL=0x7b, /* ack + 2 byte */
+    TS102_OP_SLEEP=0x80, /* supposedly sleeps, not sure */
     TS102_OP_ADMIN_POWER_OFF=0x82,	 /* len <pass>	none */
     TS102_OP_ADMIN_POWER_RESTART=0x83,	 /* msb,xx,lsb	none */
 };
