@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2000/08/03 03:53:40 assar Exp $
+# $NetBSD: Makefile,v 1.9 2001/02/11 18:02:06 assar Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/roken
 .PATH: ${.CURDIR}/../../include/heimdal
@@ -15,6 +15,7 @@ SRCS=						\
 	environment.c				\
 	eread.c					\
 	erealloc.c				\
+	esetenv.c				\
 	estrdup.c				\
 	ewrite.c				\
 	get_default_username.c			\

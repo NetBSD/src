@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2000/12/30 17:21:45 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.10 2001/02/11 18:02:05 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -99,6 +99,7 @@ SRCS=						\
 	rd_safe.c				\
 	read_message.c				\
 	recvauth.c				\
+	replay.c				\
 	send_to_kdc.c				\
 	sendauth.c				\
 	set_default_realm.c			\
@@ -137,7 +138,10 @@ MAN=						\
 	krb5_unparse_name.3			\
 	krb5_warn.3				\
 	kerberos.8				\
-	verify_krb5_conf.8
+	verify_krb5_conf.8			\
+	krb5_auth_context.3			\
+	krb5_context.3				\
+	krb5_init_context.3			\
 
 krb5-types.h:
 	cp ${.CURDIR}/../../include/heimdal/$@ $@
@@ -148,7 +152,6 @@ ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/krb5		\
-	 -I${DIST}/krb4/lib/krb			\
 	 -I${DIST}/openssl/crypto/md4		\
 	 -I${DIST}/openssl/crypto/md5		\
 	 -I${DIST}/openssl/crypto/sha		\

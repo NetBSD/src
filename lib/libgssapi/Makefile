@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2000/12/30 17:21:44 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.5 2001/02/11 18:02:05 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ SRCS	 =		\
 	canonicalize_name.c	\
 	compare_name.c		\
 	context_time.c		\
+	copy_ccache.c		\
 	create_emtpy_oid_set.c	\
 	decapsulate.c		\
 	delete_sec_context.c	\
