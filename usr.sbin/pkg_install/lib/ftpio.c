@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpio.c,v 1.8 2000/01/25 17:21:07 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.9 2000/01/26 02:12:14 hubertf Exp $	*/
 /*	 Id: foo2.c,v 1.12 1999/12/17 02:31:57 feyrer Exp feyrer 	*/
 
 /*
@@ -95,7 +95,7 @@ expect(int fd, const char *str, int *ftprc)
 
     memset(buf, '#', sizeof(buf));
 
-    timeout.tv_sec=60;
+    timeout.tv_sec=5*60;
     timeout.tv_usec=0;
     done=0;
     retval=0;
