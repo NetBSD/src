@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.22.2.5 2002/02/26 20:14:36 he Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.22.2.6 2004/04/07 22:40:58 jmc Exp $	*/
 /*	$KAME: ip6_input.c,v 1.119 2000/08/26 10:00:45 itojun Exp $	*/
 
 /*
@@ -1275,7 +1275,7 @@ ip6_nexthdr(m, off, proto, nxtp)
 		if (m->m_pkthdr.len < off + sizeof(fh))
 			return -1;
 		m_copydata(m, off, sizeof(fh), (caddr_t)&fh);
-		if ((ntohs(fh.ip6f_offlg) & IP6F_OFF_MASK) != 0)
+		if ((fh.ip6f_offlg & IP6F_OFF_MASK) != 0)
 			return -1;
 		if (nxtp)
 			*nxtp = fh.ip6f_nxt;
