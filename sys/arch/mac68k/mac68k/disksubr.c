@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 1995/03/17 03:40:41 briggs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.10 1995/07/23 21:51:47 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -72,7 +72,7 @@
 /* its alot cleaner now, and adding support for new partition types
 isn't a bitch anymore
 known bugs:
-1) when only an HFS part exists on a drive it gets assigned to "B"
+1) when only an HFS_PART part exists on a drive it gets assigned to "B"
 this is because of line 623 of sd.c, I think this line should go.
 2) /sbin/disklabel expects the whole disk to be in "D", we put it in
 "C" (I think) and we don't set that position in the disklabel structure
@@ -91,11 +91,11 @@ as used.  Again, not my fault.
 static int print=0;
 static char *mstr2upper(char *str);
 
-#define ROOT 1
-#define UFS 2
-#define SWAP 3
-#define HFS 4
-#define SCRATCH 5
+#define ROOT_PART 1
+#define UFS_PART 2
+#define SWAP_PART 3
+#define HFS_PART 4
+#define SCRATCH_PART 5
 
 int getFreeLabelEntry(struct disklabel *lp)
 {
@@ -134,21 +134,21 @@ figure out what the type of the given part is and return it
 		if (bzb->bzbMagic!=BZB_MAGIC)
 			return 0;
 
-		if(bzb->bzbFlags & BZB_ROOTFS)	return ROOT;
+		if(bzb->bzbFlags & BZB_ROOTFS)	return ROOT_PART;
 
-		if(bzb->bzbFlags & BZB_USRFS)  return UFS;
+		if(bzb->bzbFlags & BZB_USRFS)  return UFS_PART;
 
-	   if(bzb->bzbType == BZB_TYPESWAP) return SWAP;
+	   if(bzb->bzbType == BZB_TYPESWAP) return SWAP_PART;
 
 		return 0;
 	}
-	if (strcmp(PART_MAC_TYPE,(char *)part->pmPartType)==0 ) return HFS;
+	if (strcmp(PART_MAC_TYPE,(char *)part->pmPartType)==0 ) return HFS_PART;
 
 /*
-	if (strcmp(PART_SCRATCH,(char *)part->pmPartType)==0 ) return SCRATCH;
+	if (strcmp(PART_SCRATCH,(char *)part->pmPartType)==0 ) return SCRATCH_PART;
 */
 
-	return SCRATCH;	/* no known type, but label it, anyway */
+	return SCRATCH_PART;	/* no known type, but label it, anyway */
 }
 
 
@@ -244,7 +244,7 @@ int setHfs(struct partmapentry *part,struct disklabel *lp,int slot)
 	lp->d_partitions[slot].p_fstype=FS_HFS;
 
 #if PRINT_DISKLABELS
-	printf("%c: HFS '%s' at %d size %d\n",slot+'a',
+	printf("%c: HFS_PART '%s' at %d size %d\n",slot+'a',
 		part->pmPartName,
 		part->pmPyPartStart,
 		part->pmPartBlkCnt);
@@ -285,21 +285,21 @@ int getNamedType(struct partmapentry *part,struct disklabel *lp,int type, int al
 		{
 			switch(type)
 			{
-				case ROOT:
+				case ROOT_PART:
 					bzb = (struct blockzeroblock *)
 						(&part[i].pmBootArgs);
 					if (alt >= 0 && alt != bzb->bzbCluster)
 						goto skip;
 					setRoot(&(part[i]),lp,0);
 					break;
-				case UFS:
+				case UFS_PART:
 					bzb = (struct blockzeroblock *)
 						(&part[i].pmBootArgs);
 					if (alt >= 0 && alt != bzb->bzbCluster)
 						goto skip;
 					setUfs(&(part[i]),lp,6);
 					break;
-				case SWAP:
+				case SWAP_PART:
 					setSwap(&(part[i]),lp,1);
 					break;
 				default:
@@ -379,11 +379,11 @@ AKB --	I added to Mike's original algorithm by searching for a bzbCluster
 		struct partmapentry pmap[MAXPARTITIONS];
 
 		fixPartTable(pmap,lp->d_secsize,bp->b_un.b_addr);
-		if (getNamedType(pmap,lp,ROOT, 0))
-			getNamedType(pmap,lp,ROOT, -1);
-		if (getNamedType(pmap,lp,UFS, 0))
-			getNamedType(pmap,lp,UFS, -1);
-		getNamedType(pmap,lp,SWAP, -1);
+		if (getNamedType(pmap,lp,ROOT_PART, 0))
+			getNamedType(pmap,lp,ROOT_PART, -1);
+		if (getNamedType(pmap,lp,UFS_PART, 0))
+			getNamedType(pmap,lp,UFS_PART, -1);
+		getNamedType(pmap,lp,SWAP_PART, -1);
 		for(i=0;i<MAXPARTITIONS;i++)
 		{
 			int partType;
@@ -398,21 +398,21 @@ AKB --	I added to Mike's original algorithm by searching for a bzbCluster
 			switch (partType)
 			{
 
-				case ROOT:
+				case ROOT_PART:
 /*
-another root part will turn into a plain old UFS partition,
+another root part will turn into a plain old UFS_PART partition,
 live with it.
 */
-				case UFS:
+				case UFS_PART:
 					setUfs(&(pmap[i]),lp,slot);
 					break;
-				case SWAP:
+				case SWAP_PART:
 					setSwap(&(pmap[i]),lp,slot);
 					break;
-				case HFS:
+				case HFS_PART:
 					setHfs(&(pmap[i]),lp,slot);
 					break;
-				case SCRATCH:
+				case SCRATCH_PART:
 					setScratch(&(pmap[i]),lp,slot);
 					break;
 				default:
