@@ -1,7 +1,5 @@
-/*	$NetBSD: wire.c,v 1.1.1.2 2000/11/19 23:43:22 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: wire.c,v 1.8.2.2 2000/06/09 20:16:26 ezk Exp
+ * $Id: wire.c,v 1.1.1.3 2001/05/13 17:34:24 veego Exp $
  *
  */
 
@@ -244,6 +242,12 @@ getwire_lookup(u_long address, u_long netmask, int ishost)
 
   /* fill in network name (string) */
   al->ip_net_name = strdup(s);
+  /* Let's be cautious here about buffer overflows -Ion */
+  if (strlen(s) > MAXHOSTNAMELEN) {
+    al->ip_net_name[MAXHOSTNAMELEN] = '\0';
+    plog(XLOG_WARNING, "Long hostname %s truncated to %d characters",
+	 s, MAXHOSTNAMELEN);
+  }
 
   return (al);
 }
@@ -387,7 +391,7 @@ void
 getwire(char **name1, char **number1)
 {
   struct ifconf ifc;
-  struct ifreq *ifr;
+  struct ifreq *ifr, ifrpool;
   caddr_t cp, cplim;
   int fd = -1;
   u_long address;
@@ -442,7 +446,8 @@ getwire(char **name1, char **number1)
    * Scan the list looking for a suitable interface
    */
   for (cp = buf; cp < cplim; /* increment in the loop body */) {
-    ifr = (struct ifreq *) cp;
+    memcpy(&ifrpool, cp, sizeof(ifrpool));
+    ifr = &ifrpool;
     cp += SIZE(ifr);
 
     if (ifr->ifr_addr.sa_family != AF_INET)

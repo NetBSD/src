@@ -1,8 +1,6 @@
-/*	$NetBSD: fsi_lex.l,v 1.1.1.2 2000/11/19 23:44:32 wiz Exp $	*/
-
 %{
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +39,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * Id: fsi_lex.l,v 1.4 2000/01/12 16:44:58 ezk Exp
+ * $Id: fsi_lex.l,v 1.1.1.3 2001/05/13 17:34:36 veego Exp $
  *
  */
 
@@ -238,7 +236,7 @@ yyerror(char *fmt, ...)
   va_start(ap, fmt);
   col_cleanup(0);
   fprintf(stderr, "%s:%d: ", fsi_filename ? fsi_filename : "/dev/stdin", yylineno);
-  fprintf(stderr, fmt, ap);
+  vfprintf(stderr, fmt, ap);
   fputc('\n', stderr);
   parse_errors++;
   va_end(ap);

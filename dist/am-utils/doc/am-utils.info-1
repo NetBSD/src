@@ -1,5 +1,5 @@
-This is Info file am-utils.info, produced by Makeinfo version 1.68 from
-the input file am-utils.texi.
+This is am-utils.info, produced by makeinfo version 4.0 from
+am-utils.texi.
 
 START-INFO-DIR-ENTRY
 * Am-utils: (am-utils).          The Amd automounter suite of utilities
@@ -92,13 +92,13 @@ Source Distribution
 *******************
 
    The Am-utils home page is located in
-     `http://www.cs.columbia.edu/~ezk/am-utils/'
+     <http://www.am-utils.org/>
 
    You can get the latest distribution version of Am-utils from
-     `ftp://shekel.mcl.cs.columbia.edu/pub/am-utils/am-utils.tar.gz'
+     <ftp://ftp.am-utils.org/pub/am-utils/am-utils.tar.gz>
 
-   Alpha and beta distributions are available in
-     `ftp://shekel.mcl.cs.columbia.edu/pub/am-utils/'.
+   Additional alpha, beta, and release distributions are available in
+     <ftp://ftp.am-utils.org/pub/am-utils/>.
 
    Revision 5.2 was part of the 4.3BSD Reno distribution.
 
@@ -106,24 +106,25 @@ Source Distribution
 network version 2 distribution
 
    Revision 6.0 was made independently by Erez Zadok
-<ezk@cs.columbia.edu> at the Computer Science Department (http://www.cs.columbia.edu/) of Columbia University (http://www.columbia.edu/),
-as part of his
-PhD thesis work (http://www.cs.columbia.edu/~ezk/research/tp/thesis_proposal.html). *Note History::, for more details.
+<ezk@cs.columbia.edu> at the Computer Science Department
+(http://www.cs.columbia.edu/) of Columbia University
+(http://www.columbia.edu/), as part of his PhD thesis work
+(http://www.cs.columbia.edu/~ezk/research/tp/thesis_proposal.html).
+*Note History::, for more details.
 
 Bug Reports
 ===========
 
-   Before reporting a bug, see if it is a known one in the
-bugs (http://www.cs.columbia.edu/~ezk/am-utils/BUGS.txt) file.  Send
-all bug reports to <amd-dev@majordomo.cs.columbia.edu> quoting the
-details of the release and your configuration.  These can be obtained
-by running the command `amd -v'.  It would greatly help if you could
-provide a reproducible procedure for detecting the bug you are
-reporting.
+   Before reporting a bug, see if it is a known one in the bugs
+(http://www.am-utils.org/BUGS.txt) file.  Send all bug reports to
+<amd-dev@majordomo.cs.columbia.edu> quoting the details of the release
+and your configuration.  These can be obtained by running the command
+`amd -v'.  It would greatly help if you could provide a reproducible
+procedure for detecting the bug you are reporting.
 
    Providing working patches is highly encouraged.  Every patch
 incorporated, however small, will get its author an honorable mention in
-the authors file (http://www.cs.columbia.edu/~ezk/am-utils/AUTHORS.txt).
+the authors file (http://www.am-utils.org/AUTHORS.txt).
 
 Mailing List
 ============
@@ -204,7 +205,7 @@ History
 Several people have stepped in to maintain it unofficially.  Most
 notable were the `upl' (Unofficial Patch Level) releases of Amd,
 created by me (Erez Zadok <ezk@cs.columbia.edu>), and available from
-`ftp://ftp.cs.columbia.edu/pub/amd/'.  The last such unofficial release
+<ftp://ftp.cs.columbia.edu/pub/amd/>.  The last such unofficial release
 was `upl102'.
 
    Through the process of patching and aging, it was becoming more and
@@ -439,7 +440,7 @@ filesystem is still busy, the mapping is re-instated and its
 time-to-live interval is extended.  The global default for this grace
 period is controlled by the `-w' command-line option (*note -w: -w
 Option.) or the amd.conf parameter `dismount_interval' (*note
-dismount_interval Parameter::.).  It is also possible to set this value
+dismount_interval Parameter::).  It is also possible to set this value
 on a per-mount basis (*note opts: opts Option.).
 
    Filesystems can be forcefully timed out using the Amq command.
@@ -506,7 +507,7 @@ indefinitely, such as mounting an NFS filesystem.  Other tasks such as
 obtaining filehandle information for an NFS filesystem, are done using a
 purpose built non-blocking RPC library which is integrated with Amd's
 task scheduler.  This library is also used to implement NFS keep-alives
-(*note Keep-alives::.).
+(*note Keep-alives::).
 
    Whenever a mount is deferred or backgrounded, Amd must wait for it
 to complete before replying to the kernel.  However, this would cause
@@ -533,100 +534,107 @@ release.  The listing is based on the standard output from GNU's
 am-utils, not all systems listed here have been verified working for all
 features.
 
-Auto-Configured System Name  Config  Compile  Amd  NFS3  Shlib  Hlfsd  
-alpha-dec-osf2.1             yes     yes      yes  ?     no     ?      
-alpha-dec-osf4.0             yes     yes      yes  yes   yes    ?      
-alphaev5-unknown-linux-gnu   yes     yes      yes  n/a   yes    ?      
-alphaev5-unknown-linux-gnu-rh5.2yes     yes      yes  n/a   yes    ?      
-hppa1.0-hp-hpux11.00         yes     yes      yes  no    yes    yes    
-hppa1.1-hp-hpux10.10         yes     yes      yes  n/a   no     ?      
-hppa1.1-hp-hpux10.20         yes     yes      yes  no    no     ?      
-hppa1.1-hp-hpux11.00         yes     yes      yes  no    yes    yes    
-hppa1.1-hp-hpux9.01          yes     yes      yes  n/a   yes    ?      
-hppa1.1-hp-hpux9.05          yes     yes      yes  n/a   yes    ?      
-hppa1.1-hp-hpux9.07          yes     yes      yes  n/a   yes    ?      
-hppa2.0w-hp-hpux11.00        yes     yes      yes  n/a   yes    ?      
-i386-pc-bsdi2.1              yes     yes      yes  n/a   no     ?      
-i386-pc-bsdi3.0              yes     yes      yes  yes   no     ?      
-i386-pc-bsdi3.1              yes     yes      yes  yes   no     ?      
-i386-pc-bsdi4.0              yes     yes      yes  yes   yes    ?      
-i386-pc-bsdi4.0.1            yes     yes      yes  yes   yes    ?      
-i386-pc-bsdi4.1              yes     yes      yes  yes   yes    ?      
-i386-pc-solaris2.5.1         yes     yes      yes  yes   yes    yes    
-i386-pc-solaris2.6           yes     yes      yes  yes   yes    yes    
-i386-pc-solaris2.7           yes     yes      yes  yes   yes    yes    
-i386-unknown-freebsd2.1.0    yes     yes      yes  n/a   ?      ?      
-i386-unknown-freebsd2.2.1    yes     yes      yes  n/a   yes    ?      
-i386-unknown-freebsd2.2.6    yes     yes      yes  n/a   yes    ?      
-i386-unknown-freebsd2.2.7    yes     yes      yes  n/a   yes    ?      
-i386-unknown-freebsd2.2.8    yes     yes      yes  n/a   yes    ?      
-i386-unknown-freebsd3.0      yes     yes      yes  yes   yes    ?      
-i386-unknown-freebsdelf3.0   yes     yes      yes  yes   yes    ?      
-i386-unknown-freebsdelf3.1   yes     yes      yes  yes   yes    ?      
-i386-unknown-freebsdelf3.2   yes     yes      yes  yes   yes    ?      
-i386-unknown-freebsdelf3.3   yes     yes      yes  yes   yes    ?      
-i386-unknown-freebsdelf4.0   yes     yes      yes  yes   yes    ?      
-i386-unknown-netbsd1.2.1     yes     yes      yes  yes   yes    ?      
-i386-unknown-netbsd1.3       yes     yes      yes  yes   yes    ?      
-i386-unknown-netbsd1.3.1     yes     yes      yes  yes   yes    ?      
-i386-unknown-netbsd1.3.2     yes     yes      yes  yes   yes    ?      
-i386-unknown-netbsd1.3.3     yes     yes      yes  yes   yes    ?      
-i386-unknown-netbsd1.4       yes     yes      yes  yes   yes    ?      
-i386-unknown-netbsd1.4.1     yes     yes      yes  yes   yes    ?      
-i386-unknown-openbsd2.1      yes     yes      yes  yes   yes    ?      
-i386-unknown-openbsd2.2      yes     yes      yes  yes   yes    ?      
-i386-unknown-openbsd2.3      yes     yes      yes  yes   yes    ?      
-i386-unknown-openbsd2.4      yes     yes      yes  yes   yes    ?      
-i386-unknown-openbsd2.5      yes     yes      yes  yes   yes    ?      
-i486-ncr-sysv4.3.03          yes     yes      ?    yes   yes    ?      
-i486-pc-linux-gnu-rh6.0      yes     yes      yes  n/a   yes    ?      
-i486-pc-linux-gnulibc1       yes     yes      yes  n/a   yes    ?      
-i486-pc-linux-gnulibc1-rh4.2 yes     yes      yes  n/a   yes    ?      
-i486-pc-linux-gnuoldld       yes     yes      yes  n/a   yes    ?      
-i586-pc-linux-gnu            yes     yes      yes  n/a   yes    ?      
-i586-pc-linux-gnu-rh5.2      yes     yes      yes  n/a   yes    ?      
-i586-pc-linux-gnu-rh6.0      yes     yes      yes  n/a   yes    ?      
-i586-pc-linux-gnu-rh6.1      yes     yes      yes  n/a   yes    ?      
-i586-pc-linux-gnulibc1       yes     yes      yes  n/a   yes    ?      
-i586-pc-linux-gnulibc1-rh4.2 yes     yes      yes  n/a   yes    ?      
-i686-pc-linux-gnu            yes     yes      yes  n/a   yes    ?      
-i686-pc-linux-gnu-rh5.2      yes     yes      yes  n/a   yes    ?      
-i686-pc-linux-gnu-rh6.0      yes     yes      yes  n/a   yes    ?      
-i686-pc-linux-gnulibc        yes     yes      yes  n/a   yes    ?      
-i686-pc-linux-gnulibc1       yes     yes      yes  n/a   yes    ?      
-m68k-hp-hpux9.00             yes     yes      yes  n/a   ?      ?      
-m68k-sun-sunos4.1.1          yes     yes      yes  n/a   no     ?      
-m68k-next-nextstep3          yes     yes      yes  n/a   no     ?      
-mips-dec-ultrix4.3           yes     yes      yes  n/a   ?      ?      
-mips-sgi-irix5.2             ?       ?        ?    ?     ?      ?      
-mips-sgi-irix5.3             yes     yes      yes  yes   yes    ?      
-mips-sgi-irix6.2             yes     yes      yes  yes   yes    ?      
-mips-sgi-irix6.4             yes     yes      yes  yes   yes    ?      
-mips-sgi-irix6.5             yes     yes      ?    yes   yes    ?      
-powerpc-ibm-aix4.1.5.0       yes     yes      yes  n/a   no/broken?      
-powerpc-ibm-aix4.2.1.0       yes     yes      yes  yes   no/broken?      
-powerpc-ibm-aix4.3.1.0       yes     yes      ?    yes   ?      ?      
-powerpc-unknown-linux-gnu    yes     yes      yes  n/a   yes    ?      
-rs6000-ibm-aix3.2            yes     yes      yes  n/a   ?      ?      
-rs6000-ibm-aix3.2.5          yes     yes      yes  n/a   ?      ?      
-rs6000-ibm-aix4.1.4.0        yes     yes      yes  n/a   no/broken?      
-rs6000-ibm-aix4.1.5.0        yes     yes      yes  n/a   no/broken?      
-sparc-sun-solaris2.3         yes     yes      yes  n/a   yes    ?      
-sparc-sun-solaris2.4         yes     yes      yes  n/a   yes    ?      
-sparc-sun-solaris2.5         yes     yes      yes  yes   yes    ?      
-sparc-sun-solaris2.5.1       yes     yes      yes  yes   yes    yes    
-sparc-sun-solaris2.6         yes     yes      yes  yes   yes    yes    
-sparc-sun-solaris2.7         yes     yes      yes  yes   yes    yes    
-sparc-sun-solaris2.8         yes     yes      yes  yes   yes    yes    
-sparc-sun-sunos4.1.1         yes     yes      yes  n/a   yes    ?      
-sparc-sun-sunos4.1.3         yes     yes      yes  n/a   yes    ?      
-sparc-sun-sunos4.1.3C        yes     yes      yes  n/a   yes    ?      
-sparc-sun-sunos4.1.3_U1      yes     yes      yes  n/a   yes    ?      
-sparc-sun-sunos4.1.4         yes     yes      yes  n/a   yes    ?      
-sparc-unknown-linux-gnulibc1 yes     yes      yes  n/a   yes    ?      
-sparc-unknown-netbsd1.2E     yes     yes      yes  ?     ?      ?      
-sparc-unknown-netbsd1.2G     yes     yes      yes  ?     ?      ?      
-sparc64-unknown-linux-gnu    yes     yes      yes  n/a   yes    ?      
+Auto-Configured System Name   Config   Compile   Amd   NFS3   Shlib   Hlfsd
+alpha-dec-osf2.1              yes      yes       yes   ?      no      ?
+alpha-dec-osf4.0              yes      yes       yes   yes    yes     ?
+alpha-dec-osf4.0f             yes      yes       yes   yes    yes     ?
+alpha-dec-osf5.1              yes      yes       yes   yes    yes     ?
+alphaev5-unknown-linux-gnu    yes      yes       yes   n/a    yes     ?
+alphaev5-unknown-linux-gnu-rh5.2yes      yes       yes   n/a    yes     ?
+alphaev6-dec-osf5.0           yes      yes       yes   yes    yes     ?
+hppa1.0-hp-hpux11.00          yes      yes       yes   no     yes     yes
+hppa1.1-hp-hpux10.10          yes      yes       yes   n/a    no      ?
+hppa1.1-hp-hpux10.20          yes      yes       yes   no     no      ?
+hppa1.1-hp-hpux11.00          yes      yes       yes   UDP    yes     yes
+hppa1.1-hp-hpux9.01           yes      yes       yes   n/a    yes     ?
+hppa1.1-hp-hpux9.05           yes      yes       yes   n/a    yes     ?
+hppa1.1-hp-hpux9.07           yes      yes       yes   n/a    yes     ?
+hppa2.0w-hp-hpux11.00         yes      yes       yes   n/a    yes     ?
+i386-pc-bsdi2.1               yes      yes       yes   n/a    no      ?
+i386-pc-bsdi3.0               yes      yes       yes   yes    no      ?
+i386-pc-bsdi3.1               yes      yes       yes   yes    no      ?
+i386-pc-bsdi4.0               yes      yes       yes   yes    yes     ?
+i386-pc-bsdi4.0.1             yes      yes       yes   yes    yes     ?
+i386-pc-bsdi4.1               yes      yes       yes   yes    yes     ?
+i386-pc-solaris2.5.1          yes      yes       yes   yes    yes     yes
+i386-pc-solaris2.6            yes      yes       yes   yes    yes     yes
+i386-pc-solaris2.7            yes      yes       yes   yes    yes     yes
+i386-unknown-freebsd2.1.0     yes      yes       yes   n/a    ?       ?
+i386-unknown-freebsd2.2.1     yes      yes       yes   n/a    yes     ?
+i386-unknown-freebsd2.2.6     yes      yes       yes   n/a    yes     ?
+i386-unknown-freebsd2.2.7     yes      yes       yes   n/a    yes     ?
+i386-unknown-freebsd2.2.8     yes      yes       yes   n/a    yes     ?
+i386-unknown-freebsd3.0       yes      yes       yes   yes    yes     ?
+i386-unknown-freebsd4.2       yes      yes       yes   yes    yes     ?
+i386-unknown-freebsdelf3.0    yes      yes       yes   yes    yes     ?
+i386-unknown-freebsdelf3.1    yes      yes       yes   yes    yes     ?
+i386-unknown-freebsdelf3.2    yes      yes       yes   yes    yes     ?
+i386-unknown-freebsdelf3.3    yes      yes       yes   yes    yes     ?
+i386-unknown-freebsdelf3.4    yes      yes       yes   yes    yes     ?
+i386-unknown-freebsdelf4.0    yes      yes       yes   yes    yes     ?
+i386-unknown-netbsd1.2.1      yes      yes       yes   yes    yes     ?
+i386-unknown-netbsd1.3        yes      yes       yes   yes    yes     ?
+i386-unknown-netbsd1.3.1      yes      yes       yes   yes    yes     ?
+i386-unknown-netbsd1.3.2      yes      yes       yes   yes    yes     ?
+i386-unknown-netbsd1.3.3      yes      yes       yes   yes    yes     ?
+i386-unknown-netbsd1.4        yes      yes       yes   yes    yes     ?
+i386-unknown-netbsd1.4.1      yes      yes       yes   yes    yes     ?
+i386-unknown-openbsd2.1       yes      yes       yes   yes    yes     ?
+i386-unknown-openbsd2.2       yes      yes       yes   yes    yes     ?
+i386-unknown-openbsd2.3       yes      yes       yes   yes    yes     ?
+i386-unknown-openbsd2.4       yes      yes       yes   yes    yes     ?
+i386-unknown-openbsd2.5       yes      yes       yes   yes    yes     ?
+i486-ncr-sysv4.3.03           yes      yes       ?     yes    yes     ?
+i486-pc-linux-gnu-rh6.0       yes      yes       yes   n/a    yes     ?
+i486-pc-linux-gnulibc1        yes      yes       yes   n/a    yes     ?
+i486-pc-linux-gnulibc1-rh4.2  yes      yes       yes   n/a    yes     ?
+i486-pc-linux-gnuoldld        yes      yes       yes   n/a    yes     ?
+i586-pc-linux-gnu             yes      yes       yes   n/a    yes     ?
+i586-pc-linux-gnu-rh5.2       yes      yes       yes   n/a    yes     ?
+i586-pc-linux-gnu-rh6.0       yes      yes       yes   n/a    yes     ?
+i586-pc-linux-gnu-rh6.1       yes      yes       yes   n/a    yes     ?
+i586-pc-linux-gnu-rh6.2       yes      yes       yes   n/a    yes     ?
+i586-pc-linux-gnulibc1        yes      yes       yes   n/a    yes     ?
+i586-pc-linux-gnulibc1-rh4.2  yes      yes       yes   n/a    yes     ?
+i686-pc-linux-gnu             yes      yes       yes   n/a    yes     ?
+i686-pc-linux-gnu-rh5.2       yes      yes       yes   n/a    yes     ?
+i686-pc-linux-gnu-rh6.0       yes      yes       yes   n/a    yes     ?
+i686-pc-linux-gnu-rh6.2       yes      yes       yes   n/a    yes     yes
+i686-pc-linux-gnulibc         yes      yes       yes   n/a    yes     ?
+i686-pc-linux-gnulibc1        yes      yes       yes   n/a    yes     ?
+m68k-hp-hpux9.00              yes      yes       yes   n/a    ?       ?
+m68k-sun-sunos4.1.1           yes      yes       yes   n/a    no      ?
+m68k-next-nextstep3           yes      yes       yes   n/a    no      ?
+mips-dec-ultrix4.3            yes      yes       yes   n/a    ?       ?
+mips-sgi-irix5.2              ?        ?         ?     ?      ?       ?
+mips-sgi-irix5.3              yes      yes       yes   yes    yes     ?
+mips-sgi-irix6.2              yes      yes       yes   yes    yes     ?
+mips-sgi-irix6.4              yes      yes       yes   yes    yes     ?
+mips-sgi-irix6.5              yes      yes       yes   yes    yes     ?
+powerpc-ibm-aix4.1.5.0        yes      yes       yes   n/a    no/broken?
+powerpc-ibm-aix4.2.1.0        yes      yes       yes   yes    no/broken?
+powerpc-ibm-aix4.3.1.0        yes      yes       ?     yes    ?       ?
+powerpc-unknown-linux-gnu     yes      yes       yes   n/a    yes     ?
+rs6000-ibm-aix3.2             yes      yes       yes   n/a    ?       ?
+rs6000-ibm-aix3.2.5           yes      yes       yes   n/a    ?       ?
+rs6000-ibm-aix4.1.4.0         yes      yes       yes   n/a    no/broken?
+rs6000-ibm-aix4.1.5.0         yes      yes       yes   n/a    no/broken?
+sparc-sun-solaris2.3          yes      yes       yes   n/a    yes     ?
+sparc-sun-solaris2.4          yes      yes       yes   n/a    yes     ?
+sparc-sun-solaris2.5          yes      yes       yes   yes    yes     ?
+sparc-sun-solaris2.5.1        yes      yes       yes   yes    yes     yes
+sparc-sun-solaris2.6          yes      yes       yes   yes    yes     yes
+sparc-sun-solaris2.7          yes      yes       yes   yes    yes     yes
+sparc-sun-solaris2.8          yes      yes       yes   yes    yes     yes
+sparc-sun-sunos4.1.1          yes      yes       yes   n/a    yes     ?
+sparc-sun-sunos4.1.3          yes      yes       yes   n/a    yes     ?
+sparc-sun-sunos4.1.3C         yes      yes       yes   n/a    yes     ?
+sparc-sun-sunos4.1.3_U1       yes      yes       yes   n/a    yes     ?
+sparc-sun-sunos4.1.4          yes      yes       yes   n/a    yes     ?
+sparc-unknown-linux-gnulibc1  yes      yes       yes   n/a    yes     ?
+sparc-unknown-netbsd1.2E      yes      yes       yes   ?      ?       ?
+sparc-unknown-netbsd1.2G      yes      yes       yes   ?      ?       ?
+sparc64-unknown-linux-gnu     yes      yes       yes   n/a    yes     ?
 
    See the `INSTALL' in the distribution for more specific details on
 building and/or configuring for some systems.
@@ -647,8 +655,7 @@ possible locations from which to resolve the request.  Each location
 specifies filesystem type, information required by that filesystem (for
 example the block special device in the case of UFS), and some
 information describing where to mount the filesystem (*note fs
-Option::.).  A location may also contain "selectors" (*note
-Selectors::.).
+Option::).  A location may also contain "selectors" (*note Selectors::).
 
 * Menu:
 
@@ -675,16 +682,16 @@ the reference, for example closing any open file descriptors.  The
 available maps are configured when Amd is built and can be displayed by
 running the command `amd -v'.
 
-   When using an Amd configuration file (*note Amd Configuration
-File::.)  and the keyword `map_type' (*note map_type Parameter::.), you
-may force the map used to any type.
+   When using an Amd configuration file (*note Amd Configuration File::)
+and the keyword `map_type' (*note map_type Parameter::), you may force
+the map used to any type.
 
    By default, Amd caches data in a mode dependent on the type of map.
 This is the same as specifying `cache:=mapdefault' and selects a
 suitable default cache mode depending on the map type.  The individual
 defaults are described below.  The CACHE option can be specified on
 automount points to alter the caching behavior (*note Automount
-Filesystem::.).
+Filesystem::).
 
    The following map types have been implemented, though some are not
 available on all machines.  Run the command `amd -v' to obtain a list
@@ -712,7 +719,7 @@ the file and supports both comments and continuation lines.
 
    Continuation lines are indicated by a backslash character (`\') as
 the last character of a line in the file.  The backslash, newline
-character *and any leading white space on the following line* are
+character _and any leading white space on the following line_ are
 discarded.  A maximum line length of 2047 characters is enforced after
 continuation lines are read but before comments are stripped.  Each
 line must end with a newline character; that is newlines are
@@ -721,7 +728,7 @@ terminators, not separators.  The following examples illustrate this:
      key     valA   valB;   \
                valC
 
-   specifies *three* locations, and is identical to
+   specifies _three_ locations, and is identical to
 
      key     valA   valB;   valC
 
@@ -730,7 +737,7 @@ terminators, not separators.  The following examples illustrate this:
      key     valA   valB;\
                valC
 
-   specifies only *two* locations, and is identical to
+   specifies only _two_ locations, and is identical to
 
      key     valA   valB;valC
 
@@ -744,7 +751,7 @@ character.
 file maps, or ndbm maps built with the `mk-amd-map' program.
 
    When caching is enabled, file maps have a default cache mode of
-`all' (*note Automount Filesystem::.).
+`all' (*note Automount Filesystem::).
 
 
 File: am-utils.info,  Node: ndbm maps,  Next: NIS maps,  Prev: File maps,  Up: Map Types
@@ -755,13 +762,13 @@ ndbm maps
    An ndbm map may be used as a fast access form of a file map.  The
 program, `mk-amd-map', converts a normal map file into an ndbm database.
 This program supports the same continuation and comment conventions that
-are provided for file maps.  Note that ndbm format files may *not* be
+are provided for file maps.  Note that ndbm format files may _not_ be
 sharable across machine architectures.  The notion of speed generally
 only applies to large maps; a small map, less than a single disk block,
 is almost certainly better implemented as a file map.
 
    ndbm maps have a default cache mode of `all' (*note Automount
-Filesystem::.).
+Filesystem::).
 
 
 File: am-utils.info,  Node: NIS maps,  Next: NIS+ maps,  Prev: ndbm maps,  Up: Map Types
@@ -770,12 +777,12 @@ NIS maps
 --------
 
    When using NIS (formerly YP), an Amd map is implemented directly by
-the underlying NIS map.  Comments and continuation lines are *not*
+the underlying NIS map.  Comments and continuation lines are _not_
 supported in the automounter and must be stripped when constructing the
 NIS server's database.
 
    NIS maps have a default cache mode of `all' (*note Automount
-Filesystem::.).
+Filesystem::).
 
    The following rule illustrates what could be added to your NIS
 `Makefile', in this case causing the `amd.home' map to be rebuilt:
@@ -826,13 +833,13 @@ Hesiod maps
 using the "Hesiod" name server.  The string following the dot is used
 as a name qualifier and is prepended with the key being located.  The
 entire string is then resolved in the `automount' context, or the
-amd.conf parameter `hesiod_base' (*note hesiod_base Parameter::.).  For
-example, if the the key is `jsp' and map name is `hesiod.homes' then
+amd.conf parameter `hesiod_base' (*note hesiod_base Parameter::).  For
+example, if the key is `jsp' and map name is `hesiod.homes' then
 "Hesiod" is asked to resolve `jsp.homes.automount'.
 
    Hesiod maps do not support cache mode `all' and, when caching is
 enabled, have a default cache mode of `inc' (*note Automount
-Filesystem::.).
+Filesystem::).
 
    The following is an example of a "Hesiod" map entry:
 
@@ -878,7 +885,7 @@ Union maps
 ----------
 
    The union map support is provided specifically for use with the union
-filesystem, *note Union Filesystem::..
+filesystem, *note Union Filesystem::.
 
    It is identified by the string `union:' which is followed by a colon
 separated list of directories.  The directories are read in order, and
@@ -905,7 +912,7 @@ of `inc'.
                   host==shekel \
                   host!=shekel;type:=nfs
 
-when converted to LDAP (*note amd2ldif::.), will result in the following
+when converted to LDAP (*note amd2ldif::), will result in the following
 LDAP database:
      $ amd2ldif amd.home CUCS < amd.home
      dn: cn=amdmap timestamp, CUCS
@@ -943,7 +950,7 @@ How keys are looked up
    The key is located in the map whose type was determined when the
 automount point was first created.  In general the key is a pathname
 component.  In some circumstances this may be modified by variable
-expansion (*note Variable Expansion::.) and prefixing.  If the automount
+expansion (*note Variable Expansion::) and prefixing.  If the automount
 point has a prefix, specified by the PREF option, then that is
 prepended to the search key before the map is searched.
 
@@ -966,7 +973,7 @@ attempts a lookup.  Finally, Amd attempts to locate the special key `*'.
    At any point when a wildcard is found, Amd proceeds as if an exact
 match had been found and the value field is then used to resolve the
 mount request, otherwise an error code is propagated back to the kernel.
-(*note Filesystem Types::.).
+(*note Filesystem Types::).
 
 
 File: am-utils.info,  Node: Location Format,  Prev: Key Lookup,  Up: Mount Maps
@@ -1013,7 +1020,7 @@ satisfy the request.  "location-selection"s are separated by the `||'
 operator.  The effect of this operator is to prevent use of
 location-selections to its right if any of the location-selections on
 its left were selected whether or not any of them were successfully
-mounted (*note Selectors::.).
+mounted (*note Selectors::).
 
    The location-selection, and singleton "location-list",
 `type:=ufs;dev:=/dev/xd1g' would inform Amd to mount a UFS filesystem
@@ -1026,7 +1033,7 @@ double quotes `"', for example `type:="ufs";dev:="/dev/xd1g"'.  These
 quotes are stripped when the value is parsed and there is no way to get
 a double quote into a value field.  Double quotes are used to get white
 space into a value field, which is needed for the program filesystem
-(*note Program Filesystem::.).
+(*note Program Filesystem::).
 
 * Menu:
 
@@ -1078,7 +1085,7 @@ substituted.  In the previous example, `${path/}' would be expanded to
 begins with `.' then only the domain part of the name is substituted.
 For example, if `${rhost}' was `swan.doc.ic.ac.uk' then `${.rhost}'
 would be expanded to `doc.ic.ac.uk'.  Similarly, if the variable name
-ends with `.'  then only the host component is substituted.  In the
+ends with `.' then only the host component is substituted.  In the
 previous example, `${rhost.}' would be expanded to `swan'.
 
    Variable expansion is a two phase process.  Before a location is
@@ -1106,65 +1113,5 @@ ordering can become significant.
      local sub-domain components.  For example, if `${domain}' was
      `Berkeley.EDU' and `${rhost}' was initially `snow.Berkeley.EDU',
      after the normalization it would simply be `snow'.  Hostname
-     normalization is currently done in a *case-dependent* manner.
-
-
-File: am-utils.info,  Node: Selectors,  Next: Map Options,  Prev: Variable Expansion,  Up: Location Format
-
-Selectors
----------
-
-   Selectors are used to control the use of a location.  It is possible
-to share a mount map between many machines in such a way that filesystem
-location, architecture and operating system differences are hidden from
-the users.  A selector of the form `arch==sun3;os==sunos4' would only
-apply on Sun-3s running SunOS 4.x.
-
-   Selectors can be negated by using `!=' instead of `=='.  For example
-to select a location on all non-Vax machines the selector `arch!=vax'
-would be used.
-
-   Selectors are evaluated left to right.  If a selector fails then that
-location is ignored.  Thus the selectors form a conjunction and the
-locations form a disjunction.  If all the locations are ignored or
-otherwise fail then Amd uses the "error" filesystem (*note Error
-Filesystem::.).  This is equivalent to having a location `type:=error'
-at the end of each mount-map entry.
-
-   The default value of many of the selectors listed here can be
-overridden by an Amd command line switch or in an Amd configuration
-file.  *Note Amd Configuration File::.
-
-   The following selectors are currently implemented.
-
-* Menu:
-
-* arch Selector Variable::
-* autodir Selector Variable::
-* byte Selector Variable::
-* cluster Selector Variable::
-* domain Selector Variable::
-* host Selector Variable::
-* hostd Selector Variable::
-* karch Selector Variable::
-* os Selector Variable::
-* osver Selector Variable::
-* full_os Selector Variable::
-* vendor Selector Variable::
-
-* key Selector Variable::
-* map Selector Variable::
-* netnumber Selector Variable::
-* network Selector Variable::
-* path Selector Variable::
-* wire Selector Variable::
-* uid Selector Variable::
-* gid Selector Variable::
-
-* exists Selector Function::
-* false Selector Function::
-* netgrp Selector Function::
-* netgrpd Selector Function::
-* in_network Selector Function::
-* true Selector Function::
+     normalization is currently done in a _case-dependent_ manner.
 

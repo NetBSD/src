@@ -1,7 +1,5 @@
-/*	$NetBSD: fsi_util.c,v 1.1.1.2 2000/11/19 23:44:30 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +35,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: fsi_util.c,v 1.3 2000/01/12 16:44:59 ezk Exp
+ * $Id: fsi_util.c,v 1.1.1.3 2001/05/13 17:34:33 veego Exp $
  *
  */
 
@@ -117,7 +115,7 @@ error(char *fmt, ...)
   va_start(ap, fmt);
   col_cleanup(0);
   fprintf(stderr, "%s: Error, ", progname);
-  fprintf(stderr, fmt, ap);
+  vfprintf(stderr, fmt, ap);
   fputc('\n', stderr);
   errors++;
   va_end(ap);
@@ -132,7 +130,7 @@ lerror(ioloc *l, char *fmt, ...)
   va_start(ap, fmt);
   col_cleanup(0);
   fprintf(stderr, "%s:%d: ", l->i_file, l->i_line);
-  fprintf(stderr, fmt, ap);
+  vfprintf(stderr, fmt, ap);
   fputc('\n', stderr);
   errors++;
   va_end(ap);
@@ -147,7 +145,7 @@ lwarning(ioloc *l, char *fmt, ...)
   va_start(ap, fmt);
   col_cleanup(0);
   fprintf(stderr, "%s:%d: ", l->i_file, l->i_line);
-  fprintf(stderr, fmt, ap);
+  vfprintf(stderr, fmt, ap);
   fputc('\n', stderr);
   va_end(ap);
 }
@@ -161,7 +159,7 @@ fatal(char *fmt, ...)
   va_start(ap, fmt);
   col_cleanup(1);
   fprintf(stderr, "%s: Fatal, ", progname);
-  fprintf(stderr, fmt, ap);
+  vfprintf(stderr, fmt, ap);
   fputc('\n', stderr);
   va_end(ap);
   exit(1);
@@ -180,7 +178,7 @@ log(char *fmt, ...)
     va_start(ap, fmt);
     fputc('#', stdout);
     fprintf(stdout, "%s: ", progname);
-    fprintf(stdout, fmt, ap);
+    vfprintf(stdout, fmt, ap);
     putc('\n', stdout);
     va_end(ap);
   }

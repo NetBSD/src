@@ -1,7 +1,5 @@
-/*	$NetBSD: hlfsd.c,v 1.1.1.2 2000/11/19 23:43:50 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: hlfsd.c,v 1.7 2000/02/11 02:09:51 ezk Exp
+ * $Id: hlfsd.c,v 1.1.1.3 2001/05/13 17:34:37 veego Exp $
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -949,7 +947,7 @@ fatal(char *mess)
 		am_get_progname(), lessmess, errno);
     }
   }
-  plog(XLOG_FATAL, mess);
+  plog(XLOG_FATAL, "%s", mess);
 
   hlfsd_going_down(1);
 }

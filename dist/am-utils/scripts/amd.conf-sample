@@ -22,6 +22,7 @@ local_domain =			cs.columbia.edu
 karch =				sun4m
 arch =				sun4
 # if you don't like autoconf picking up "sunos5" as the os-type, override it
+# (amd -O)
 os =				sos5
 # (amd -o)
 osver =				2.5.1
@@ -35,7 +36,7 @@ print_version =			yes | no
 log_file =			/var/log/amd | syslog | syslog:facility
 # NFS (RPC/UDP) retry interval, in tenths of secs (amd -t interval.counter)
 nfs_retry_interval =		8
-nfs_retransmit_counter =	110
+nfs_retransmit_counter =	11 (eleven retransmission attempts)
 # (amd -w)
 dismount_interval =		120
 # (amd -y)
@@ -47,15 +48,15 @@ debug_options =			all,amq,daemon,fork,full,hrtime,info,mem,mtab,\
 				str,readdir,test,trace,xdrtrace
 # (amd -S)
 plock =				no | yes
-# selectors on /defaults are off by default
-selectors_on_default =		yes | no
+# selectors are not recognized by default in the /defaults entry
+selectors_in_defaults =		yes | no
 # should browsable maps show number of entries to df/statfs (default=no)
 show_statfs_entries =		yes | no
 # (hpux) cluster name (amd -C)
 cluster =			???
 # LDAP (Lightweight Directory Access Protocol) options
-ldap_base =			ldap.your.domain:389
-ldap_hostports =		"ou=Marketing, o=AMD Ltd, c=US"
+ldap_base =			"ou=Marketing, o=AMD Ltd, c=US"
+ldap_hostports =		ldap.your.domain:389
 ldap_cache_seconds =		0 (default)
 ldap_cache_maxmem =		131072 (default)
 # default base name for hesiod maps

@@ -1,9 +1,58 @@
-This is Info file am-utils.info, produced by Makeinfo version 1.68 from
-the input file am-utils.texi.
+This is am-utils.info, produced by makeinfo version 4.0 from
+am-utils.texi.
 
 START-INFO-DIR-ENTRY
 * Am-utils: (am-utils).          The Amd automounter suite of utilities
 END-INFO-DIR-ENTRY
+
+
+File: am-utils.info,  Node: Network Host Filesystem,  Next: Network Filesystem Group,  Prev: Network Filesystem,  Up: Filesystem Types
+
+Network Host Filesystem (`host')
+================================
+
+   The "host" (`type:=host') filesystem allows access to the entire
+export tree of an NFS server.  The implementation is layered above the
+`nfs' implementation so keep-alives work in the same way.  The only
+option which needs to be specified is `rhost' which is the name of the
+fileserver to mount.
+
+   The `host' filesystem type works by querying the mount daemon on the
+given fileserver to obtain its export list.  Amd then obtains
+filehandles for each of the exported filesystems.  Any errors at this
+stage cause that particular filesystem to be ignored.  Finally each
+filesystem is mounted.  Again, errors are logged but ignored.  One
+common reason for mounts to fail is that the mount point does not exist.
+Although Amd attempts to automatically create the mount point, it may
+be on a remote filesystem to which Amd does not have write permission.
+
+   When an attempt to unmount a `host' filesystem mount fails, Amd
+remounts any filesystems which had successfully been unmounted.  To do
+this Amd queries the mount daemon again and obtains a fresh copy of the
+export list.  Amd then tries to mount any exported filesystems which
+are not currently mounted.
+
+   Sun's automounter provides a special `-hosts' map.  To achieve the
+same effect with Amd requires two steps.  First a mount map must be
+created as follows:
+
+     *       type:=host;rhost:=${key};fs:=${autodir}/${rhost}/root
+
+and then start Amd with the following command
+
+     amd /net net.map
+
+where `net.map' is the name of map described above.  Note that the
+value of `${fs}' is overridden in the map.  This is done to avoid a
+clash between the mount tree and any other filesystem already mounted
+from the same fileserver.
+
+   If different mount options are needed for different hosts then
+additional entries can be added to the map, for example
+
+     host2       opts:=ro,nosuid,soft
+
+would soft mount `host2' read-only.
 
 
 File: am-utils.info,  Node: Network Filesystem Group,  Next: Unix Filesystem,  Prev: Network Host Filesystem,  Up: Filesystem Types
@@ -18,17 +67,15 @@ above the `nfs' implementation so keep-alives work in the same way.
    The options are the same as for the `nfs' filesystem with one
 difference.
 
-The following options must be specified:
+The following options should be specified:
 
 `rhost'
-     the remote fileserver.  This must be an entry in the hosts
-     database.  IP addresses are not accepted.  The default value is
-     taken from the local host name (`${host}') if no other value is
-     specified.
+     the remote fileserver.  The default value is taken from the local
+     host name (`${host}') if no other value is specified.
 
 `rfs'
-     as a list of filesystems to mount.  The list is in the form of a
-     comma separated strings.
+     is a list of filesystems to mount, and must be specified.  The
+     list is in the form of a comma separated strings.
 
 For example:
 
@@ -37,14 +84,14 @@ For example:
 
    The first string defines the root of the tree, and is applied as a
 prefix to the remaining members of the list which define the individual
-filesystems.  The first string is *not* used as a filesystem name.  A
+filesystems.  The first string is _not_ used as a filesystem name.  A
 parallel operation is used to determine the local mount points to
 ensure a consistent layout of a tree of mounts.
 
-   Here, the *three* filesystems, `/public', `/public/graphics' and
+   Here, the _three_ filesystems, `/public', `/public/graphics' and
 `/public/usenet', would be mounted.
 
-   A local mount point, `${fs}', *must* be specified.  The default
+   A local mount point, `${fs}', _must_ be specified.  The default
 local mount point will not work correctly in the general case.  A
 suggestion is to use `fs:=${autodir}/${rhost}/root'.
 
@@ -454,7 +501,7 @@ tree of another machine.
 
 `opts'
      Normally, `auto' style maps are not browsable even if you turn on
-     directory browsability (*note browsable_dirs Parameter::.).  To
+     directory browsability (*note browsable_dirs Parameter::).  To
      enable browsing entries in `auto' maps, specify `opts:=browsable'
      in the description of this map.
 
@@ -511,7 +558,7 @@ precedence.  The following command could be used to achieve this effect:
 
      amd ... /mtmp union:/tmp:/var/tmp -type:=union
 
-   Currently, the unioned directories must *not* be automounted.  That
+   Currently, the unioned directories must _not_ be automounted.  That
 would cause a deadlock.  This seriously limits the current usefulness of
 this filesystem type and the problem will be addressed in a future
 release of Amd.
@@ -549,9 +596,7 @@ Top-level Filesystem (`toplvl')
    The "toplvl" (`type:=toplvl') filesystems is derived from the `auto'
 filesystem and is used to mount the top-level automount nodes.
 Requests of this type are automatically generated from the command line
-arguments and can also be passed in by using the `-M' option of the
-"Amq" command.  That option is insecure, and is unavailable unless
-am-utils was configured with `--with-amq-mount'.
+arguments.
 
 
 File: am-utils.info,  Node: Root Filesystem,  Next: Inheritance Filesystem,  Prev: Autofs Filesystem,  Up: Filesystem Types
@@ -577,7 +622,7 @@ automounter supporting filesystem for Amd's mount points.  Hence it is
 another type of top level filesystem.
 
    The autofs filesystem is not directly accessible from Amd maps, but
-only from the `amd.conf' file (*note mount_type Parameter::.).
+only from the `amd.conf' file (*note mount_type Parameter::).
 
    Note that Autofs support is still very early.  See the distribution
 file `README.autofs' for detail of what works and what does not.
@@ -814,8 +859,10 @@ only.
 * local_domain Parameter::
 * log_file Parameter::
 * log_options Parameter::
+* nfs_proto Parameter::
 * nfs_retransmit_counter Parameter::
 * nfs_retry_interval Parameter::
+* nfs_vers Parameter::
 * nis_domain Parameter::
 * normalize_hostnames Parameter::
 * os Parameter::
@@ -826,7 +873,7 @@ only.
 * print_pid Parameter::
 * print_version Parameter::
 * restart_mounts Parameter::
-* selectors_on_default Parameter::
+* selectors_in_defaults Parameter::
 * show_statfs_entries Parameter::
 * unmount_on_exit Parameter::
 * vendor Parameter::
@@ -978,6 +1025,8 @@ ldap_base Parameter
 -------------------
 
    (type=string, default not set).  Specify the base name for LDAP.
+This often includes LDAP-specific values such as country and
+organization.
 
 
 File: am-utils.info,  Node: ldap_cache_maxmem Parameter,  Next: ldap_cache_seconds Parameter,  Prev: ldap_base Parameter,  Up: Global Parameters
@@ -1003,8 +1052,8 @@ File: am-utils.info,  Node: ldap_hostports Parameter,  Next: local_domain Parame
 ldap_hostports Parameter
 ------------------------
 
-   (type=string, default not set).  Specify LDAP-specific values such
-as country and organization.
+   (type=string, default not set).  Specify the LDAP host and port
+values.
 
 
 File: am-utils.info,  Node: local_domain Parameter,  Next: log_file Parameter,  Prev: ldap_hostports Parameter,  Up: Global Parameters
@@ -1042,7 +1091,7 @@ generally a bad idea to use those reserved for other services such as
 `kern', `lpr', `cron', etc.
 
 
-File: am-utils.info,  Node: log_options Parameter,  Next: nfs_retransmit_counter Parameter,  Prev: log_file Parameter,  Up: Global Parameters
+File: am-utils.info,  Node: log_options Parameter,  Next: nfs_proto Parameter,  Prev: log_file Parameter,  Up: Global Parameters
 
 log_options Parameter
 ---------------------
@@ -1085,7 +1134,21 @@ debugging options by running `amd -H'.  Possible values are:
      warnings
 
 
-File: am-utils.info,  Node: nfs_retransmit_counter Parameter,  Next: nfs_retry_interval Parameter,  Prev: log_options Parameter,  Up: Global Parameters
+File: am-utils.info,  Node: nfs_proto Parameter,  Next: nfs_retransmit_counter Parameter,  Prev: log_options Parameter,  Up: Global Parameters
+
+nfs_proto Parameter
+-------------------
+
+   (type=string, default to trying version tcp then udp).  By default,
+Amd tries `tcp' and then `udp'.  This option forces the overall NFS
+protocol used to TCP or UDP.  It overrides what is in the Amd maps, and
+is useful when Amd is compiled with NFSv3 support that may not be
+stable.  With this option you can turn off the complete usage of NFSv3
+dynamically (without having to recompile Amd) until such time as NFSv3
+support is desired again.
+
+
+File: am-utils.info,  Node: nfs_retransmit_counter Parameter,  Next: nfs_retry_interval Parameter,  Prev: nfs_proto Parameter,  Up: Global Parameters
 
 nfs_retransmit_counter Parameter
 --------------------------------
@@ -1096,14 +1159,14 @@ retransmissions that the kernel will use to communicate with Amd.
 *Note -t Option::.
 
 
-File: am-utils.info,  Node: nfs_retry_interval Parameter,  Next: nis_domain Parameter,  Prev: nfs_retransmit_counter Parameter,  Up: Global Parameters
+File: am-utils.info,  Node: nfs_retry_interval Parameter,  Next: nfs_vers Parameter,  Prev: nfs_retransmit_counter Parameter,  Up: Global Parameters
 
 nfs_retry_interval Parameter
 ----------------------------
 
    (type=numeric, default=8).  Same as the timeout part of the `-t'
 timeout.retransmit option to Amd.  Specifies the NFS timeout interval,
-in *tenths* of seconds, between NFS/RPC retries (for UDP only).  This
+in _tenths_ of seconds, between NFS/RPC retries (for UDP only).  This
 is the value that the kernel will use to communicate with Amd.  *Note
 -t Option::.
 
@@ -1114,7 +1177,21 @@ long an interval gives poor interactive response; too short an interval
 causes excessive retries.
 
 
-File: am-utils.info,  Node: nis_domain Parameter,  Next: normalize_hostnames Parameter,  Prev: nfs_retry_interval Parameter,  Up: Global Parameters
+File: am-utils.info,  Node: nfs_vers Parameter,  Next: nis_domain Parameter,  Prev: nfs_retry_interval Parameter,  Up: Global Parameters
+
+nfs_vers Parameter
+------------------
+
+   (type=numeric, default to trying version 3 then 2).  By default, Amd
+tries version 3 and then version 2.  This option forces the overall NFS
+protocol used to version 3 or 2.  It overrides what is in the Amd maps,
+and is useful when Amd is compiled with NFSv3 support that may not be
+stable.  With this option you can turn off the complete usage of NFSv3
+dynamically (without having to recompile Amd) until such time as NFSv3
+support is desired again.
+
+
+File: am-utils.info,  Node: nis_domain Parameter,  Next: normalize_hostnames Parameter,  Prev: nfs_vers Parameter,  Up: Global Parameters
 
 nis_domain Parameter
 --------------------
@@ -1171,10 +1248,10 @@ pid_file Parameter
 process ID of the running daemon into.  If not specified, Amd will
 print its process id onto the standard output.  Useful for killing Amd
 after it had run.  Note that the PID of a running Amd can also be
-retrieved via Amq (*note Amq -p option::.).
+retrieved via Amq (*note Amq -p option::).
 
    This file is used only if the `print_pid' option is on (*note
-print_pid Parameter::.).
+print_pid Parameter::).
 
 
 File: am-utils.info,  Node: plock Parameter,  Next: portmap_program Parameter,  Prev: pid_file Parameter,  Up: Global Parameters
@@ -1228,7 +1305,7 @@ its version information string, which includes some configuration and
 compilation values.
 
 
-File: am-utils.info,  Node: restart_mounts Parameter,  Next: selectors_on_default Parameter,  Prev: print_version Parameter,  Up: Global Parameters
+File: am-utils.info,  Node: restart_mounts Parameter,  Next: selectors_in_defaults Parameter,  Prev: print_version Parameter,  Up: Global Parameters
 
 restart_mounts Parameter
 ------------------------
@@ -1239,13 +1316,13 @@ currently mounted.  Whenever one of these would have been auto-mounted,
 Amd inherits it.
 
 
-File: am-utils.info,  Node: selectors_on_default Parameter,  Next: show_statfs_entries Parameter,  Prev: restart_mounts Parameter,  Up: Global Parameters
+File: am-utils.info,  Node: selectors_in_defaults Parameter,  Next: show_statfs_entries Parameter,  Prev: restart_mounts Parameter,  Up: Global Parameters
 
-selectors_on_default Parameter
-------------------------------
+selectors_in_defaults Parameter
+-------------------------------
 
    (type=boolean, default=`no').  If `yes', then the `/defaults' entry
-of maps will be looked for and any selectors processed before setting
+of maps will search for and process any selectors before setting
 defaults for all other keys in that map.  Useful when you want to set
 different options for a complete map based on some parameters.  For
 example, you may want to better the NFS performance over slow
@@ -1255,72 +1332,5 @@ slip-based networks as follows:
          wire==slip-net;opts:=intr,rsize=1024,wsize=1024 \
          wire!=slip-net;opts:=intr,rsize=8192,wsize=8192
 
-
-File: am-utils.info,  Node: show_statfs_entries Parameter,  Next: unmount_on_exit Parameter,  Prev: selectors_on_default Parameter,  Up: Global Parameters
-
-show_statfs_entries Parameter
------------------------------
-
-   (type=boolean), default=`no').  If `yes', then all maps which are
-browsable will also show the number of entries (keys) they have when
-df(1) runs. (This is accomplished by returning non-zero values to the
-statfs(2) system call).
-
-
-File: am-utils.info,  Node: unmount_on_exit Parameter,  Next: vendor Parameter,  Prev: show_statfs_entries Parameter,  Up: Global Parameters
-
-unmount_on_exit Parameter
--------------------------
-
-   (type=boolean), default=`no').  If `yes', then Amd will attempt to
-unmount all file systems which it knows about.  Normally it leaves all
-(esp. NFS) mounted file systems intact.  Note that Amd does not know
-about file systems mounted before it starts up, unless the
-`restart_mounts' option is used (*note restart_mounts Parameter::.).
-
-
-File: am-utils.info,  Node: vendor Parameter,  Prev: unmount_on_exit Parameter,  Up: Global Parameters
-
-vendor Parameter
-----------------
-
-   (type=string, default to compiled in value).  The name of the vendor
-of the operating system.  Overrides the compiled-in vendor name.  Useful
-when the compiled-in name is not desired.  For example, most Intel based
-systems set the vendor name to `unknown', but you can set it to
-`redhat'.
-
-
-File: am-utils.info,  Node: Regular Map Parameters,  Next: amd.conf Examples,  Prev: Global Parameters,  Up: Amd Configuration File
-
-Regular Map Parameters
-======================
-
-   The following parameters are applicable only to regular map sections.
-
-* Menu:
-
-* map_name Parameter::
-* tag Parameter::
-
-
-File: am-utils.info,  Node: map_name Parameter,  Next: tag Parameter,  Prev: Regular Map Parameters,  Up: Regular Map Parameters
-
-map_name Parameter
-------------------
-
-   (type=string, must be specified).  Name of the map where the keys are
-located.
-
-
-File: am-utils.info,  Node: tag Parameter,  Prev: map_name Parameter,  Up: Regular Map Parameters
-
-tag Parameter
--------------
-
-   (type=string, default no tag).  Each map entry in the configuration
-file can be tagged.  If no tag is specified, that map section will
-always be processed by Amd.  If it is specified, then Amd will process
-the map if the `-T' option was given to Amd, and the value given to that
-command-line option matches that in the map section.
+   Deprecated form: selectors_on_default.
 

@@ -1,7 +1,5 @@
-/*	$NetBSD: hlfsd.h,v 1.1.1.2 2000/11/19 23:43:52 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: hlfsd.h,v 1.4 2000/01/12 16:45:02 ezk Exp
+ * $Id: hlfsd.h,v 1.1.1.3 2001/05/13 17:34:38 veego Exp $
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -54,7 +52,7 @@
  * MACROS AND CONSTANTS:
  */
 
-#define HLFSD_VERSION	"hlfsd 1.1 (1993-2000)"
+#define HLFSD_VERSION	"hlfsd 1.1 (1993-2001)"
 #define PERS_SPOOLMODE	0755
 #define OPEN_SPOOLMODE	01777
 #define DOTSTRING	"."

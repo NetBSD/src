@@ -1,5 +1,3 @@
-/*	$NetBSD: am_compat.h,v 1.1.1.2 2000/11/19 23:42:58 wiz Exp $	*/
-
 /*
  * am_compat.h:
  *
@@ -87,6 +85,14 @@
 #if defined(MNT2_NFS_OPT_MAXGRPS) && !defined(MNTTAB_OPT_MAXGROUPS)
 # define MNTTAB_OPT_MAXGROUPS "maxgroups"
 #endif /* defined(MNT2_NFS_OPT_MAXGRPS) && !defined(MNTTAB_OPT_MAXGROUPS) */
+
+#if defined(MNT2_NFS_OPT_PROPLIST) && !defined(MNTTAB_OPT_PROPLIST)
+# define MNTTAB_OPT_PROPLIST "proplist"
+#endif /* defined(MNT2_NFS_OPT_PROPLIST) && !defined(MNTTAB_OPT_PROPLIST) */
+
+#if defined(MNT2_NFS_OPT_NONLM) && !defined(MNTTAB_OPT_NOLOCK)
+# define MNTTAB_OPT_NOLOCK "nolock"
+#endif /* defined(MNT2_NFS_OPT_NONLM) && !defined(MNTTAB_OPT_NOLOCK) */
 
 /*
  * Complete MNTTAB_OPT_* options based on MNT2_CDFS_OPT_* mount options.

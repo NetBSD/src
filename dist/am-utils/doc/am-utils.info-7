@@ -1,5 +1,5 @@
-This is Info file am-utils.info, produced by Makeinfo version 1.68 from
-the input file am-utils.texi.
+This is am-utils.info, produced by makeinfo version 4.0 from
+am-utils.texi.
 
 START-INFO-DIR-ENTRY
 * Am-utils: (am-utils).          The Amd automounter suite of utilities
@@ -30,8 +30,8 @@ Index
 * Alternate locations:                   Mounting a Volume.
 * am-eject:                              am-eject.
 * Amd command line options:              Amd Command Line Options.
-* Amd configuration file:                -F Option.
 * Amd Configuration File:                Amd Configuration File.
+* Amd configuration file:                -F Option.
 * Amd configuration file; specifying name: -F Option.
 * Amd's PID:                             Amq -p option.
 * Amd's process ID:                      Amq -p option.
@@ -118,17 +118,19 @@ Index
 * Delaying mounts from specific locations: delay Option.
 * Determining the map type:              Map Types.
 * dev, mount option <1>:                 Floppy Filesystem.
-* dev, mount option <2>:                 Unix Filesystem.
-* dev, mount option:                     CD-ROM Filesystem.
+* dev, mount option <2>:                 CD-ROM Filesystem.
+* dev, mount option:                     Unix Filesystem.
 * Direct automount filesystem:           Direct Automount Filesystem.
 * direct, filesystem type:               Direct Automount Filesystem.
 * Discovering version information:       -v Option.
 * Discovering what is going on at run-time: Controlling Amd.
 * Disk filesystems:                      Unix Filesystem.
 * dismount_interval Parameter:           dismount_interval Parameter.
+* Displaying brief help <1>:             Amq -H-option.
 * Displaying brief help:                 -H Option.
 * Displaying the process id:             -p Option.
 * Distributed Mail Spool Service:        Distributed Mail Spool Service.
+* dollar Selector Variable:              dollar Selector Variable.
 * Domain name:                           -d Option.
 * domain Selector Variable:              domain Selector Variable.
 * Domain stripping:                      Variable Expansion.
@@ -224,11 +226,13 @@ Index
 * full_os, mount selector:               full_os Selector Variable.
 * fully_qualified_hosts Parameter:       fully_qualified_hosts Parameter.
 * Generic volume name:                   /vol.
+* Getting real working directory:        Amq -w option.
 * gid Selector Variable:                 gid Selector Variable.
 * gid, mount selector:                   gid Selector Variable.
 * Global statistics:                     Amq -s option.
 * Grammar, FSinfo:                       FSinfo Grammar.
 * Help; showing from Amd:                -H Option.
+* Help; showing from Amq:                Amq -H-option.
 * Hesiod maps:                           Hesiod maps.
 * Hesiod: turning on RES_DEBUG:          -D-Option.
 * hesiod_base Parameter:                 hesiod_base Parameter.
@@ -349,6 +353,7 @@ Index
 * Mount flags; ignore:                   opts Option.
 * Mount flags; int:                      opts Option.
 * Mount flags; intr:                     opts Option.
+* Mount flags; lock:                     opts Option.
 * Mount flags; maxgroups:                opts Option.
 * Mount flags; multi:                    opts Option.
 * Mount flags; nfsv3:                    opts Option.
@@ -362,6 +367,7 @@ Index
 * Mount flags; nodevs:                   opts Option.
 * Mount flags; noexec:                   opts Option.
 * Mount flags; noint:                    opts Option.
+* Mount flags; nolock:                   opts Option.
 * Mount flags; nomnttab:                 opts Option.
 * Mount flags; norrip:                   opts Option.
 * Mount flags; nosub:                    opts Option.
@@ -374,6 +380,7 @@ Index
 * Mount flags; ping:                     opts Option.
 * Mount flags; port:                     opts Option.
 * Mount flags; posix:                    opts Option.
+* Mount flags; proplist:                 opts Option.
 * Mount flags; proto:                    opts Option.
 * Mount flags; quota:                    opts Option.
 * Mount flags; rdonly:                   opts Option.
@@ -403,15 +410,15 @@ Index
 * Mount option; addopts:                 addopts Option.
 * Mount option; cachedir:                Caching Filesystem.
 * Mount option; delay:                   delay Option.
-* Mount option; dev <1>:                 CD-ROM Filesystem.
-* Mount option; dev <2>:                 Floppy Filesystem.
+* Mount option; dev <1>:                 Floppy Filesystem.
+* Mount option; dev <2>:                 CD-ROM Filesystem.
 * Mount option; dev:                     Unix Filesystem.
 * Mount option; fs:                      fs Option.
 * Mount option; mount:                   Program Filesystem.
 * Mount option; opts:                    opts Option.
 * Mount option; remopts:                 remopts Option.
-* Mount option; rfs <1>:                 Network Filesystem.
-* Mount option; rfs:                     Loopback Filesystem.
+* Mount option; rfs <1>:                 Loopback Filesystem.
+* Mount option; rfs:                     Network Filesystem.
 * Mount option; rhost:                   Network Filesystem.
 * Mount option; sublink:                 sublink Option.
 * Mount option; type:                    type Option.
@@ -479,8 +486,10 @@ Index
 * NFS V.3 support:                       Supported Platforms.
 * nfs, filesystem type:                  Network Filesystem.
 * NFS-Link filesystem II:                NFS-Link Filesystem.
+* nfs_proto Parameter:                   nfs_proto Parameter.
 * nfs_retransmit_counter Parameter:      nfs_retransmit_counter Parameter.
 * nfs_retry_interval Parameter:          nfs_retry_interval Parameter.
+* nfs_vers Parameter:                    nfs_vers Parameter.
 * nfsl, filesystem type:                 NFS-Link Filesystem.
 * nfsx, filesystem type:                 Network Filesystem Group.
 * NIS (YP) domain name:                  -y Option.
@@ -590,7 +599,7 @@ Index
 * Selector; wire:                        wire Selector Variable.
 * Selectors:                             Selectors.
 * selectors on default:                  /defaults with selectors.
-* selectors_on_default Parameter:        selectors_on_default Parameter.
+* selectors_in_defaults Parameter:       selectors_in_defaults Parameter.
 * Server crashes:                        Keep-alives.
 * Setting a delay on a mount location:   delay Option.
 * Setting additional options on a mount location: addopts Option.

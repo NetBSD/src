@@ -1,5 +1,5 @@
-This is Info file am-utils.info, produced by Makeinfo version 1.68 from
-the input file am-utils.texi.
+This is am-utils.info, produced by makeinfo version 4.0 from
+am-utils.texi.
 
 START-INFO-DIR-ENTRY
 * Am-utils: (am-utils).          The Amd automounter suite of utilities
@@ -114,8 +114,8 @@ File: am-utils.info,  Node: /defaults with selectors,  Next: /tftpboot in a chro
 
    It is sometimes useful to have different defaults for a given map.
 To achieve this, the `/defaults' entry must be able to process normal
-selectors.  This feature is turned on by setting `selectors_on_default
-= yes' in the `amd.conf' file.  *Note selectors_on_default Parameter::.
+selectors.  This feature is turned on by setting `selectors_in_defaults
+= yes' in the `amd.conf' file.  *Note selectors_in_defaults Parameter::.
 
    In this example, I set different default NFS mount options for hosts
 which are running over a slower network link.  By setting a smaller size
@@ -132,7 +132,7 @@ File: am-utils.info,  Node: /tftpboot in a chroot-ed environment,  Prev: /defaul
 `/tftpboot' in a chroot-ed environment
 ======================================
 
-   In this complex example, we attempt to run an Amd process *inside* a
+   In this complex example, we attempt to run an Amd process _inside_ a
 chroot-ed environment.  `tftpd' (Trivial FTP) is used to trivially
 retrieve files used to boot X-Terminals, Network Printers, Network
 routers, diskless workstations, and other such devices.  For security
@@ -206,7 +206,7 @@ that are created inside `/tftpboot':
 
 `adminpr.cfg'
 `tekxp'
-     Two manually created symbolic links to directories *inside* the
+     Two manually created symbolic links to directories _inside_ the
      Amd-managed directory.  The crossing of the component `tp' will
      cause Amd to automount one of the remote replicas.  Once crossed,
      access to files inside proceeds as usual.  The `adminpr.cfg' is a
@@ -434,9 +434,8 @@ Acknowledgments & Trademarks
 <amd-dev@majordomo.cs.columbia.edu> mailing list through the months
 developing am-utils.  These members have contributed to the
 discussions, ideas, code and documentation, and subjected their systems
-to alpha quality code.  Special thanks go to those
-authors (http://www.cs.columbia.edu/~ezk/am-utils/AUTHORS.txt) who have
-submitted patches.
+to alpha quality code.  Special thanks go to those authors
+(http://www.am-utils.org/AUTHORS.txt) who have submitted patches.
 
    Thanks to the Formal Methods Group at Imperial College for suffering
 patiently while Amd was being developed on their machines.

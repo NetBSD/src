@@ -1,7 +1,5 @@
-/*	$NetBSD: mtab_svr4.c,v 1.1.1.2 2000/11/19 23:43:12 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: mtab_svr4.c,v 1.4 2000/01/12 16:44:44 ezk Exp
+ * $Id: mtab_svr4.c,v 1.1.1.3 2001/05/13 17:33:45 veego Exp $
  *
  * How to manage the mount table file.  Based on other SVR3 ports.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -60,13 +58,10 @@
  */
 static int mntent_lock_fd = -1;
 
-/* static char mnttabname[] = MNTTAB_FILE_NAME; */
 
-#ifdef MNTTAB_LOCK_FILE
-static char mtlckname[] = MNTTAB_LOCK_FILE;
-#else /* not MTAB_LOCK_FILE */
+#ifdef MOUNT_TABLE_ON_FILE
 static char mtlckname[] = "/etc/.mnttab.lock";
-#endif /* not MTAB_LOCK_FILE */
+#endif /* MOUNT_TABLE_ON_FILE */
 
 
 /****************************************************************************/
@@ -85,6 +80,7 @@ unlockmnttab(void)
 }
 
 
+#ifdef MOUNT_TABLE_ON_FILE
 static int
 lockfile(int fd, int type)
 {
@@ -103,6 +99,8 @@ lockfile(int fd, int type)
   ret = fcntl(fd, F_SETLKW, &lk);
   return ret;
 }
+#endif /* MOUNT_TABLE_ON_FILE */
+
 
 /* return 0 if locking succeeded, -1 if failed */
 static int
@@ -125,7 +123,7 @@ lockmnttab(void)
     close(mntent_lock_fd);
     mntent_lock_fd = -1;
 #ifdef DEBUG
-    dlog("lock %s failed %m", mtlckname);
+    dlog("lock %s failed: %m", mtlckname);
 #endif /* DEBUG */
     return -1;
   }
@@ -161,6 +159,7 @@ mnt_dup(const mntent_t *mtp)
 /*
  * Adjust arguments in mntent_t.
  */
+#ifdef MOUNT_TABLE_ON_FILE
 static mntent_t *
 update_mnttab_fields(const mntent_t *mnt)
 {
@@ -189,12 +188,15 @@ update_mnttab_fields(const mntent_t *mnt)
 
   return &mt;
 }
+#endif /* MOUNT_TABLE_ON_FILE */
 
 
 static void
 write_mntent_to_mtab(FILE *fp, const mntent_t *mnt)
 {
+#ifdef MOUNT_TABLE_ON_FILE
   putmntent(fp, update_mnttab_fields(mnt));
+#endif /* MOUNT_TABLE_ON_FILE */
 }
 
 

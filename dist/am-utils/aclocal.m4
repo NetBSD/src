@@ -26,30 +26,6 @@ dnl ======================================================================
 
 
 dnl ######################################################################
-dnl check if compiler can handle "void *"
-AC_DEFUN(AC_C_VOID_P,
-[
-AC_CACHE_CHECK(if compiler can handle void *,
-ac_cv_c_void_p,
-[
-# try to compile a program which uses void *
-AC_TRY_COMPILE(
-[ ],
-[
-void *vp;
-], ac_cv_c_void_p=yes, ac_cv_c_void_p=no)
-])
-if test "$ac_cv_c_void_p" = yes
-then
-  AC_DEFINE(voidp, void *)
-else
-  AC_DEFINE(voidp, char *)
-fi
-])
-dnl ======================================================================
-
-
-dnl ######################################################################
 dnl New versions of the cache functions which also dynamically evaluate the
 dnl cache-id field, so that it may contain shell variables to expand
 dnl dynamically for the creation of $ac_cv_* variables on the fly.
@@ -130,7 +106,7 @@ ac_cv_style_checkmount,
 case "${host_os_name}" in
 	svr4* | sysv4* | solaris2* | sunos5* )
 			ac_cv_style_checkmount=svr4 ;;
-	bsd44* | bsdi* | freebsd* | netbsd* | openbsd* )
+	bsd44* | bsdi* | freebsd* | netbsd* | openbsd* | darwin* | rhapsody* )
 			ac_cv_style_checkmount=bsd44 ;;
 	aix* )
 			ac_cv_style_checkmount=aix ;;
@@ -490,21 +466,28 @@ do
     break
   fi
 
-  # look a loadable filesystem module (linux)
+  # look for a loadable filesystem module (linux)
   if test -f /lib/modules/$host_os_version/fs/$ac_fs_tmp.o
   then
     eval "ac_cv_fs_$ac_fs_name=yes"
     break
   fi
 
-  # look a loadable filesystem module (linux redhat-5.1)
+  # look for a loadable filesystem module (linux 2.4+)
+  if test -f /lib/modules/$host_os_version/kernel/fs/$ac_fs_tmp/$ac_fs_tmp.o
+  then
+    eval "ac_cv_fs_$ac_fs_name=yes"
+    break
+  fi
+
+  # look for a loadable filesystem module (linux redhat-5.1)
   if test -f /lib/modules/preferred/fs/$ac_fs_tmp.o
   then
     eval "ac_cv_fs_$ac_fs_name=yes"
     break
   fi
 
-  # in addition look for statically compiled loadable module (linux)
+  # in addition look for statically compiled filesystem (linux)
 changequote(<<, >>)dnl
   if egrep "[^a-zA-Z0-9_]$ac_fs_tmp$" /proc/filesystems >/dev/null 2>&1
 changequote([, ])dnl
@@ -515,31 +498,18 @@ changequote([, ])dnl
 
   if test "$ac_fs_tmp" = "nfs3" -a "$ac_cv_header_linux_nfs_mount_h" = "yes"
   then
-  AC_TRY_RUN(
-  [
-struct nfs_fh {
-  int a;
-};
-
-struct sockaddr_in {
-  int a;
-};
-#include <linux/nfs_mount.h>
-
-int main()
-{
-#if NFS_MOUNT_VERSION >= 4
-  exit(0);
-#else
-  exit(1);
-#endif
-}
-  ], [eval "ac_cv_fs_$ac_fs_name=yes"
+    # hack hack hack
+    # in 6.1, which has fallback to v2/udp, we might want
+    # to always use version 4.
+    # in 6.0 we do not have much choice
+    #
+    let nfs_mount_version="`grep NFS_MOUNT_VERSION /usr/include/linux/nfs_mount.h | awk '{print $''3;}'`"
+    if test $nfs_mount_version -ge 4
+    then
+      eval "ac_cv_fs_$ac_fs_name=yes"
       break
-     ]
-  )
+    fi
   fi
-
 
   # run a test program for bsdi3
   AC_TRY_RUN(
@@ -836,8 +806,9 @@ dnl ======================================================================
 dnl ######################################################################
 dnl Find generic mount(2) options (hex numbers)
 dnl Usage: AC_CHECK_MNT2_GEN_OPT(<fs>)
-dnl Check if there is an entry for MS_<fs> or M_<fs> in sys/mntent.h or
-dnl mntent.h, then define MNT2_GEN_OPT_<fs> to the hex number.
+dnl Check if there is an entry for MS_<fs>, MNT_<fs>, or M_<fs>
+dnl (in that order) in mntent.h, sys/mntent.h, or mount.h...
+dnl then define MNT2_GEN_OPT_<fs> to the hex number.
 AC_DEFUN(AC_CHECK_MNT2_GEN_OPT,
 [
 # what name to give to the fs
@@ -1132,7 +1103,7 @@ ac_cv_style_mnttab,
 case "${host_os_name}" in
 	aix* )
 			ac_cv_style_mnttab=aix ;;
-	bsd* | bsdi* | freebsd* | netbsd* | openbsd* )
+	bsd* | bsdi* | freebsd* | netbsd* | openbsd* | darwin* | rhapsody* )
 			ac_cv_style_mnttab=bsd ;;
 	isc3* )
 			ac_cv_style_mnttab=isc3 ;;
@@ -1220,6 +1191,13 @@ do
     break
   fi
 
+  # look for a loadable filesystem module (linux 2.4+)
+  if test -f /lib/modules/$host_os_version/kernel/fs/$ac_fs_tmp/$ac_fs_tmp.o
+  then
+    eval "ac_cv_mnttab_type_$ac_fs_name=\\\"$ac_fs_tmp\\\""
+    break
+  fi
+
   # look for a loadable filesystem module (linux redhat-5.1)
   if test -f /lib/modules/preferred/fs/$ac_fs_tmp.o
   then
@@ -1227,7 +1205,7 @@ do
     break
   fi
 
-  # next look for statically compiled loadable module (linux)
+  # next look for statically compiled filesystem (linux)
 changequote(<<, >>)dnl
   if egrep "[^a-zA-Z0-9_]$ac_fs_tmp$" /proc/filesystems >/dev/null 2>&1
 changequote([, ])dnl
@@ -1308,18 +1286,20 @@ ac_cv_style_mount,
 [
 # select the correct style for mounting filesystems
 case "${host_os_name}" in
-	svr4* | sysv4* | solaris2* | sunos5* | aoi* | hpux1[[12]]* )
+	solaris1* | sunos[[34]]* | bsdi[[12]]* )
+			ac_cv_style_mount=default ;;
+	hpux[[6-9]]* | hpux10* )
+			ac_cv_style_mount=hpux ;;
+	svr4* | sysv4* | solaris* | sunos* | aoi* | hpux* )
 			ac_cv_style_mount=svr4 ;;
-	bsdi3* | bsdi4* )
+	bsdi* )
 			ac_cv_style_mount=bsdi3 ;;
 	aix* )
 			ac_cv_style_mount=aix ;;
-	hpux* )
-			ac_cv_style_mount=hpux ;;
-	irix6* )
-			ac_cv_style_mount=irix6 ;;
 	irix5* )
 			ac_cv_style_mount=irix5 ;;
+	irix* )
+			ac_cv_style_mount=irix6 ;;
 	isc3* )
 			ac_cv_style_mount=isc3 ;;
 	linux* )
@@ -1353,7 +1333,11 @@ ac_cv_mount_trap,
 [
 # select the correct style to mount(2) a filesystem
 case "${host_os_name}" in
-	svr4* | sysv4* | solaris2* | sunos5* | aoi* | hpux1[[12]]* )
+	solaris1* | sunos[[34]]* )
+		ac_cv_mount_trap=default ;;
+	hpux[[6-9]]* | hpux10* )
+		ac_cv_mount_trap=hpux ;;
+	svr4* | sysv4* | solaris* | sunos* | aoi* | hpux* )
 		ac_cv_mount_trap=svr4 ;;
 	news4* | riscix* )
 		ac_cv_mount_trap=news4 ;;
@@ -1365,10 +1349,6 @@ case "${host_os_name}" in
 		ac_cv_mount_trap=aux ;;
 	hcx* )
 		ac_cv_mount_trap=hcx ;;
-dnl	hpux11* )
-dnl		ac_cv_mount_trap=hpux11 ;;
-	hpux* )
-		ac_cv_mount_trap=hpux ;;
 	rtu6* )
 		ac_cv_mount_trap=rtu6 ;;
 	dgux* )
@@ -1492,6 +1472,13 @@ do
     break
   fi
 
+  # look for a loadable filesystem module (linux 2.4+)
+  if test -f /lib/modules/$host_os_version/kernel/fs/$ac_fs_tmp/$ac_fs_tmp.o
+  then
+    eval "ac_cv_mount_type_$ac_fs_name=\\\"$ac_fs_tmp\\\""
+    break
+  fi
+
   # look for a loadable filesystem module (linux redhat-5.1)
   if test -f /lib/modules/preferred/fs/$ac_fs_tmp.o
   then
@@ -1499,7 +1486,7 @@ do
     break
   fi
 
-  # in addition look for statically compiled loadable module (linux)
+  # in addition look for statically compiled filesystem (linux)
 changequote(<<, >>)dnl
   if egrep "[^a-zA-Z0-9_]$ac_fs_tmp$" /proc/filesystems >/dev/null 2>&1
 changequote([, ])dnl
@@ -1606,7 +1593,9 @@ ac_cv_transport_type,
 [
 # select the correct type
 case "${host_os_name}" in
-	solaris2* | sunos5* | hpux1[[12]]* )
+	solaris1* | sunos[[34]]* | hpux[[6-9]]* | hpux10* )
+		ac_cv_transport_type=sockets ;;
+	solaris* | sunos* | hpux* )
 		ac_cv_transport_type=tli ;;
 	* )
 		ac_cv_transport_type=sockets ;;
@@ -1636,36 +1625,35 @@ ac_cv_nfs_fh_dref_style,
 [
 # select the correct nfs address dereferencing style
 case "${host_os}" in
-	svr4* | sysv4* |solaris2* | sunos5* | hpux1[[12]]* )
-		ac_cv_nfs_fh_dref_style=svr4 ;;
-	sunos4* )
-		ac_cv_nfs_fh_dref_style=sunos4 ;;
+	hpux[[6-9]]* | hpux10* )
+		ac_cv_nfs_fh_dref_style=hpux ;;
 	sunos3* )
 		ac_cv_nfs_fh_dref_style=sunos3 ;;
-changequote(<<, >>)dnl
-	# bsdi3, freebsd-2.2, netbsd, etc. changed the type of the
-	# filehandle in nfs_args from nfsv2fh_t to u_char.
-	freebsd2.[2-9]* | freebsd[3-4]* | freebsdelf[3-4]* | bsdi[3-4]* | netbsd* | openbsd* )
-		ac_cv_nfs_fh_dref_style=freebsd22 ;;
-	aix4.[2-9]* )
-		ac_cv_nfs_fh_dref_style=aix42 ;;
-changequote([, ])dnl
-	bsd44* | bsdi2* | freebsd*  )
+	sunos4* | solaris1* )
+		ac_cv_nfs_fh_dref_style=sunos4 ;;
+	svr4* | sysv4* | solaris* | sunos* | hpux* )
+		ac_cv_nfs_fh_dref_style=svr4 ;;
+	bsd44* | bsdi2* | freebsd2.[[01]]* )
 		ac_cv_nfs_fh_dref_style=bsd44 ;;
-	hpux* )
-		ac_cv_nfs_fh_dref_style=hpux ;;
+	# all new BSDs changed the type of the
+	# filehandle in nfs_args from nfsv2fh_t to u_char.
+	# I wonder about darwin/rhapsody...
+	freebsd* | freebsdelf* | bsdi* | netbsd* | openbsd* )
+		ac_cv_nfs_fh_dref_style=freebsd22 ;;
+	aix[[1-3]]* | aix4.[[01]]* )
+		ac_cv_nfs_fh_dref_style=aix3 ;;
+	aix* )
+		ac_cv_nfs_fh_dref_style=aix42 ;;
 	irix* )
 		ac_cv_nfs_fh_dref_style=irix ;;
 	linux* )
 		ac_cv_nfs_fh_dref_style=linux ;;
-	aix* )
-		ac_cv_nfs_fh_dref_style=aix3 ;;
 	isc3 )
 		ac_cv_nfs_fh_dref_style=isc3 ;;
-	osf4* | osf5* )
-		ac_cv_nfs_fh_dref_style=osf4 ;;
-	osf* )
+	osf[[1-3]]* )
 		ac_cv_nfs_fh_dref_style=osf2 ;;
+	osf* )
+		ac_cv_nfs_fh_dref_style=osf4 ;;
 	nextstep* )
 		ac_cv_nfs_fh_dref_style=nextstep ;;
 	* )
@@ -1712,13 +1700,13 @@ ac_cv_nfs_prot_headers,
 case "${host_os}" in
 	irix5* )
 			ac_cv_nfs_prot_headers=irix5 ;;
-	irix6* )
+	irix* )
 			ac_cv_nfs_prot_headers=irix6 ;;
 	sunos3* )
 			ac_cv_nfs_prot_headers=sunos3 ;;
-	sunos4* )
+	sunos4* | solaris1* )
 			ac_cv_nfs_prot_headers=sunos4 ;;
-	sunos5.3* | solaris2.3* )
+	sunos5.[[0-3]]* | solaris2.[[0-3]]* )
 			ac_cv_nfs_prot_headers=sunos5_3 ;;
 	sunos5.4* | solaris2.4* )
 			ac_cv_nfs_prot_headers=sunos5_4 ;;
@@ -1728,44 +1716,42 @@ case "${host_os}" in
 			ac_cv_nfs_prot_headers=sunos5_6 ;;
 	sunos5.7* | solaris2.7* )
 			ac_cv_nfs_prot_headers=sunos5_7 ;;
-	sunos5* | solaris2* )
+	sunos* | solaris* )
 			ac_cv_nfs_prot_headers=sunos5_8 ;;
-	bsdi2* )
+	bsdi2*)
 			ac_cv_nfs_prot_headers=bsdi2 ;;
-	bsdi3* | bsdi4* )
+	bsdi* )
 			ac_cv_nfs_prot_headers=bsdi3 ;;
 	freebsd2* )
 			ac_cv_nfs_prot_headers=freebsd2 ;;
-changequote(<<, >>)dnl
-	freebsd[3-4]* | freebsdelf[3-4]* )
+	freebsd* | freebsdelf* )
 			ac_cv_nfs_prot_headers=freebsd3 ;;
-	netbsd1.[4-9]* )
-			ac_cv_nfs_prot_headers=netbsd1_4 ;;
-changequote([, ])dnl
+	netbsd1.[[0-2]]* )
+			ac_cv_nfs_prot_headers=netbsd ;;
 	netbsd1.3* )
 			ac_cv_nfs_prot_headers=netbsd1_3 ;;
-	netbsd* )
-			ac_cv_nfs_prot_headers=netbsd ;;
+	netbsd* | netbsdelf* )
+			ac_cv_nfs_prot_headers=netbsd1_4 ;;
 	openbsd* )
 			ac_cv_nfs_prot_headers=openbsd ;;
-	hpux1[[12]]* )
-			ac_cv_nfs_prot_headers=hpux11 ;;
-	hpux* )
+	hpux[[6-9]]* | hpux10* )
 			ac_cv_nfs_prot_headers=hpux ;;
-changequote(<<, >>)dnl
-	aix4.[3-9]* )
-			ac_cv_nfs_prot_headers=aix4_3 ;;
-changequote([, ])dnl
+	hpux* )
+			ac_cv_nfs_prot_headers=hpux11 ;;
+	aix[[1-3]]* )
+			ac_cv_nfs_prot_headers=aix3 ;;
+	aix4.[[01]]* )
+			ac_cv_nfs_prot_headers=aix4 ;;
 	aix4.2* )
 			ac_cv_nfs_prot_headers=aix4_2 ;;
-	aix4* )
-			ac_cv_nfs_prot_headers=aix4 ;;
 	aix* )
-			ac_cv_nfs_prot_headers=aix3 ;;
-	osf4* | osf5* )
+			ac_cv_nfs_prot_headers=aix4_3 ;;
+	osf[[1-3]]* )
+			ac_cv_nfs_prot_headers=osf2 ;;
+	osf4* | osf5.0* )
 			ac_cv_nfs_prot_headers=osf4 ;;
 	osf* )
-			ac_cv_nfs_prot_headers=osf2 ;;
+			ac_cv_nfs_prot_headers=osf5_1 ;;
 	svr4* )
 			ac_cv_nfs_prot_headers=svr4 ;;
 	sysv4* )	# this is for NCR2 machines
@@ -1776,6 +1762,8 @@ changequote([, ])dnl
 			ac_cv_nfs_prot_headers=nextstep ;;
 	ultrix* )
 			ac_cv_nfs_prot_headers=ultrix ;;
+ 	darwin* | rhapsody* )
+ 			ac_cv_nfs_prot_headers=darwin ;;
 	* )
 			ac_cv_nfs_prot_headers=default ;;
 esac
@@ -1807,12 +1795,14 @@ ac_cv_nfs_sa_dref_style,
 [
 # select the correct nfs address dereferencing style
 case "${host_os}" in
-	svr4* | sysv4* | solaris2* | sunos5* | hpux1[[12]]* )
+	hpux[[6-9]]* | hpux10* | sunos[[34]]* | solaris1* )
+		ac_cv_nfs_sa_dref_style=default ;;
+	svr4* | sysv4* | solaris* | sunos* | hpux* )
 		ac_cv_nfs_sa_dref_style=svr4 ;;
-	bsd44* | bsdi* | freebsd* | netbsd* | openbsd* )
-		ac_cv_nfs_sa_dref_style=bsd44 ;;
 	386bsd* | bsdi1* )
 		ac_cv_nfs_sa_dref_style=386bsd ;;
+	bsd44* | bsdi* | freebsd* | netbsd* | openbsd* | darwin* | rhapsody* )
+		ac_cv_nfs_sa_dref_style=bsd44 ;;
 	linux* )
 		ac_cv_nfs_sa_dref_style=linux ;;
 	aix* )
@@ -1842,12 +1832,10 @@ ac_cv_nfs_socket_connection,
 ac_cv_nfs_socket_connection=none
 # select the correct style
 case "${host_os}" in
-changequote(<<, >>)dnl
-	openbsd2.[2-9]* | freebsd[3-4]* | freebsdelf[3-4]* )
-			ac_cv_nfs_socket_connection=conn ;;
-changequote([, ])dnl
-	openbsd* )
+	openbsd2.[[01]]* )
 			ac_cv_nfs_socket_connection=noconn ;;
+	openbsd* | freebsd* | freebsdelf* )
+			ac_cv_nfs_socket_connection=conn ;;
 esac
 ])
 # set correct value
@@ -1922,7 +1910,7 @@ ac_cv_style_umount,
 [
 # select the correct style for unmounting filesystems
 case "${host_os_name}" in
-	bsd44* | bsdi* | freebsd* | netbsd* | openbsd* )
+	bsd44* | bsdi* | freebsd* | netbsd* | openbsd* | darwin* | rhapsody* )
 			ac_cv_style_umount=bsd44 ;;
 	osf* )
 			ac_cv_style_umount=osf ;;
@@ -1989,6 +1977,30 @@ if test "$ac_cv_unmount_call" != no
 then
   am_utils_unmount_call=$ac_cv_unmount_call
   AC_SUBST(am_utils_unmount_call)
+fi
+])
+dnl ======================================================================
+
+
+dnl ######################################################################
+dnl check if compiler can handle "void *"
+AC_DEFUN(AC_C_VOID_P,
+[
+AC_CACHE_CHECK(if compiler can handle void *,
+ac_cv_c_void_p,
+[
+# try to compile a program which uses void *
+AC_TRY_COMPILE(
+[ ],
+[
+void *vp;
+], ac_cv_c_void_p=yes, ac_cv_c_void_p=no)
+])
+if test "$ac_cv_c_void_p" = yes
+then
+  AC_DEFINE(voidp, void *)
+else
+  AC_DEFINE(voidp, char *)
 fi
 ])
 dnl ======================================================================
@@ -2470,198 +2482,9 @@ dnl ######################################################################
 dnl an M4 macro to include a list of common headers being used everywhere
 define(AC_MOUNT_HEADERS,
 [
-#ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
-#endif /* HAVE_SYS_TYPES_H */
-#ifdef HAVE_SYS_ERRNO_H
-# include <sys/errno.h>
-#endif /* HAVE_SYS_ERRNO_H */
-#ifdef HAVE_SYS_PARAM_H
-# include <sys/param.h>
-#endif /* HAVE_SYS_PARAM_H */
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif /* HAVE_SYS_TIME_H */
-#ifdef HAVE_SYS_UCRED_H
-# include <sys/ucred.h>
-#endif /* HAVE_SYS_UCRED_H */
-#ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
-#endif /* HAVE_SYS_SOCKET_H */
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif /* HAVE_NETINET_IN_H */
-#ifdef HAVE_NET_IF_H
-# include <net/if.h>
-#endif /* HAVE_NET_IF_H */
-#ifdef HAVE_STDIO_H
-# include <stdio.h>
-#endif /* HAVE_STDIO_H */
-
-#ifndef KERNEL
-# define KERNEL_off_for_now_breaks_FreeBSD
-#endif /* not KERNEL */
-
-#ifdef HAVE_SYS_MNTENT_H
-# include <sys/mntent.h>
-#endif /* HAVE_SYS_MNTENT_H */
-#ifdef HAVE_MNTENT_H
-# include <mntent.h>
-#endif /* HAVE_MNTENT_H */
-#ifdef HAVE_SYS_MNTTAB_H
-# include <sys/mnttab.h>
-#endif /* HAVE_SYS_MNTTAB_H */
-#if defined(HAVE_MNTTAB_H) && !defined(MNTTAB)
-/*
- * Do not include it if MNTTAB is already defined because it probably
- * came from <sys/mnttab.h> and we do not want conflicting definitions.
- */
-# include <mnttab.h>
-#endif /* defined(HAVE_MNTTAB_H) && !defined(MNTTAB) */
-
-#ifdef HAVE_SYS_MOUNT_H
-# ifndef NFSCLIENT
-#  define NFSCLIENT
-# endif /* not NFSCLIENT */
-# ifndef PCFS
-#  define PCFS
-# endif /* not PCFS */
-# ifndef LOFS
-#  define LOFS
-# endif /* not LOFS */
-# ifndef RFS
-#  define RFS
-# endif /* not RFS */
-# ifndef MSDOSFS
-#  define MSDOSFS
-# endif /* not MSDOSFS */
-# ifndef MFS
-#  define MFS
-# endif /* not MFS */
-# ifndef CD9660
-#  define CD9660
-# endif /* not CD9660 */
-# ifndef NFS
-#  define NFS
-# endif /* not NFS */
-# include <sys/mount.h>
-#endif /* HAVE_SYS_MOUNT_H */
-
-#ifdef HAVE_SYS_VMOUNT_H
-# include <sys/vmount.h>
-#endif /* HAVE_SYS_VMOUNT_H */
-
-#ifdef HAVE_LINUX_FS_H
-/*
- * There's a conflict of definitions on redhat alpha linux between
- * <netinet/in.h> and <linux/fs.h>.
- * Also a conflict in definitions of ntohl/htonl in RH-5.1 sparc64
- * between <netinet/in.h> and <linux/byteorder/generic.h> (2.1 kernels).
- */
-# ifdef HAVE_SOCKETBITS_H
-#  define _LINUX_SOCKET_H
-#  undef BLKFLSBUF
-#  undef BLKGETSIZE
-#  undef BLKRAGET
-#  undef BLKRASET
-#  undef BLKROGET
-#  undef BLKROSET
-#  undef BLKRRPART
-#  undef MS_MGC_VAL
-#  undef MS_RMT_MASK
-# endif /* HAVE_SOCKETBITS_H */
-# ifdef HAVE_LINUX_POSIX_TYPES_H
-#  include <linux/posix_types.h>
-# endif /* HAVE_LINUX_POSIX_TYPES_H */
-# ifndef _LINUX_BYTEORDER_GENERIC_H
-#  define _LINUX_BYTEORDER_GENERIC_H
-# endif /* _LINUX_BYTEORDER_GENERIC_H */
-# ifndef _LINUX_STRING_H_
-#  define _LINUX_STRING_H_
-# endif /* not _LINUX_STRING_H_ */
-# ifdef HAVE_LINUX_KDEV_T_H
-#  define __KERNEL__
-#  include <linux/kdev_t.h>
-#  undef __KERNEL__
-# endif /* HAVE_LINUX_KDEV_T_H */
-# ifdef HAVE_LINUX_LIST_H
-#  define __KERNEL__
-#  include <linux/list.h>
-#  undef __KERNEL__
-# endif /* HAVE_LINUX_LIST_H */
-# include <linux/fs.h>
-#endif /* HAVE_LINUX_FS_H */
-
-#ifdef HAVE_SYS_FS_TYPES_H
-# include <sys/fs_types.h>
-#endif /* HAVE_SYS_FS_TYPES_H */
-
-#ifdef HAVE_UFS_UFS_MOUNT_H
-# include <ufs/ufs_mount.h>
-#endif /* HAVE_UFS_UFS_MOUNT_H */
-#ifdef HAVE_UFS_UFS_UFSMOUNT_H
-# ifndef MAXQUOTAS
-#  define MAXQUOTAS     2
-# endif /* not MAXQUOTAS */
-struct netexport { int this_is_SO_wrong; }; /* for bsdi-2.1 */
-/* netbsd-1.4 does't protect <ufs/ufs/ufsmount.h> */
-# ifndef _UFS_UFS_UFSMOUNT_H
-#  include <ufs/ufs/ufsmount.h>
-#  define _UFS_UFS_UFSMOUNT_H
-# endif /* not _UFS_UFS_UFSMOUNT_H */
-#endif /* HAVE_UFS_UFS_UFSMOUNT_H */
-
-#ifdef HAVE_CDFS_CDFS_MOUNT_H
-# include <cdfs/cdfs_mount.h>
-#endif /* HAVE_CDFS_CDFS_MOUNT_H */
-#ifdef HAVE_CDFS_CDFSMOUNT_H
-# include <cdfs/cdfsmount.h>
-#endif /* HAVE_CDFS_CDFSMOUNT_H */
-#ifdef HAVE_ISOFS_CD9660_CD9660_MOUNT_H
-# include <isofs/cd9660/cd9660_mount.h>
-#endif /* HAVE_ISOFS_CD9660_CD9660_MOUNT_H */
-
-#ifdef HAVE_RPC_RPC_H
-# include <rpc/rpc.h>
-#endif /* HAVE_RPC_RPC_H */
-#ifdef HAVE_RPC_TYPES_H
-# include <rpc/types.h>
-#endif /* HAVE_RPC_TYPES_H */
-/* Prevent multiple inclusion on Ultrix 4 */
-#if defined(HAVE_RPC_XDR_H) && !defined(__XDR_HEADER__)
-# include <rpc/xdr.h>
-#endif /* defined(HAVE_RPC_XDR_H) && !defined(__XDR_HEADER__) */
-
-/* ALWAYS INCLUDE AM-UTILS' SPECIFIC NFS PROTOCOL HEADER! */
+#include "${srcdir}/include/mount_headers1.h"
 #include AMU_NFS_PROTOCOL_HEADER
-
-#ifdef HAVE_RPCSVC_MOUNT_H
-# include <rpcsvc/mount.h>
-#endif /* HAVE_RPCSVC_MOUNT_H */
-
-#ifdef HAVE_MOUNT_H
-# include <mount.h>
-#endif /* HAVE_MOUNT_H */
-
-#ifdef HAVE_NFS_NFS_GFS_H
-# include <nfs/nfs_gfs.h>
-#endif /* HAVE_NFS_NFS_GFS_H */
-
-#ifdef HAVE_NFS_MOUNT_H
-# include <nfs/mount.h>
-#endif /* HAVE_NFS_MOUNT_H */
-
-#ifdef HAVE_SYS_FS_NFS_CLNT_H
-# include <sys/fs/nfs_clnt.h>
-#endif /* HAVE_SYS_FS_NFS_CLNT_H */
-
-#ifdef HAVE_LINUX_NFS_MOUNT_H
-# define _LINUX_NFS_H
-# define _LINUX_NFS2_H
-# define _LINUX_NFS_FS_H
-# define _LINUX_IN_H
-# include <linux/nfs_mount.h>
-#endif /* HAVE_LINUX_NFS_MOUNT_H */
+#include "${srcdir}/include/mount_headers2.h"
 
 $1
 ]
@@ -2693,24 +2516,6 @@ AC_DEFUN(AC_NAME_VERSION,
 AC_DEFINE_UNQUOTED(VERSION, "$1")
 AC_MSG_RESULT(\"$1\")
 ])
-dnl ======================================================================
-
-
-dnl ######################################################################
-dnl Do you want to turn on "amq -M" code (security hole for IP sproofing!)
-AC_DEFUN(AC_OPT_AMQ_MOUNT,
-[AC_MSG_CHECKING(for amq -M remote mount code)
-AC_ARG_ENABLE(amq-mount,
-[  --enable-amq-mount      enable amq -M remote mount code],
-[if test "$enableval" = yes; then
-  AC_MSG_RESULT(yes)
-  AC_DEFINE(ENABLE_AMQ_MOUNT)
-else
-  AC_MSG_RESULT(no)
-fi], [
-  # default is to not include this code because it is insecure
-  AC_MSG_RESULT(no)
-])])
 dnl ======================================================================
 
 
@@ -2853,18 +2658,7 @@ case "${host_os}" in
 				;;
 		esac
 		;;
-	osf4* | osf5* )
-		# get the right version of struct sockaddr
-		case "${CC}" in
-			cc )
-				ac_cv_os_cflags="-std -D_SOCKADDR_LEN"
-				;;
-			* )
-				ac_cv_os_cflags="-D_SOCKADDR_LEN"
-				;;
-		esac
-		;;
-	osf* )
+	osf[[1-3]]* )
 		# get the right version of struct sockaddr
 		case "${CC}" in
 			cc )
@@ -2875,21 +2669,38 @@ case "${host_os}" in
 				;;
 		esac
 		;;
-changequote(<<, >>)dnl
-	aix4.[3-9]* )
-changequote([, ])dnl
-		# avoid circular dependencies in yp headers
-#		ac_cv_os_cflags="-D_NO_PROTO -DHAVE_BAD_HEADERS"
-#		ac_cv_os_cflags="-DHAVE_BAD_HEADERS"
-		ac_cv_os_cflags="-DHAVE_BAD_HEADERS -D_XOPEN_EXTENDED_SOURCE"
+	osf* )
+		# get the right version of struct sockaddr
+		case "${CC}" in
+			cc )
+				ac_cv_os_cflags="-std -D_SOCKADDR_LEN"
+				;;
+			* )
+				ac_cv_os_cflags="-D_SOCKADDR_LEN"
+				;;
+		esac
 		;;
-	aix4.* )
+	aix[[1-3]]* )
+		ac_cv_os_cflags="" ;;
+	aix4.[[0-2]]* )
 		# turn on additional headers
 		ac_cv_os_cflags="-D_XOPEN_EXTENDED_SOURCE"
 		;;
-changequote(<<, >>)dnl
-	solaris2.[6-9]* | sunos5.[6-9]* )
-changequote([, ])dnl
+	aix* )
+		# avoid circular dependencies in yp headers
+		ac_cv_os_cflags="-DHAVE_BAD_HEADERS -D_XOPEN_EXTENDED_SOURCE"
+		;;
+	OFF-sunos4* )
+		# make sure passing whole structures is handled in gcc
+		case "${CC}" in
+			gcc )
+				ac_cv_os_cflags="-fpcc-struct-return"
+				;;
+		esac
+		;;
+	sunos[[34]]* | solaris1* | solaris2.[[0-5]]* | sunos5.[[0-5]]* )
+		ac_cv_os_cflags="" ;;
+	solaris* | sunos* )
 		# turn on 64-bit file offset interface
 		case "${CC}" in
 			* )
@@ -2902,14 +2713,6 @@ changequote([, ])dnl
 		case "${CC}" in
 			cc )
 				ac_cv_os_cflags="-Ae"
-				;;
-		esac
-		;;
-	OFF-sunos4* )
-		# make sure passing whole structures is handled in gcc
-		case "${CC}" in
-			gcc )
-				ac_cv_os_cflags="-fpcc-struct-return"
 				;;
 		esac
 		;;
@@ -3112,6 +2915,70 @@ dnl ======================================================================
 
 
 dnl ######################################################################
+dnl Find the structure of an NFS V3 filehandle.
+dnl if found, defined am_nfs_fh3 to it, else leave it undefined.
+AC_DEFUN(AC_STRUCT_NFS_FH3,
+[
+AC_CACHE_CHECK(for type/structure of NFS V3 filehandle,
+ac_cv_struct_nfs_fh3,
+[
+# try to compile a program which may have a definition for the type
+dnl need a series of compilations, which will test out every possible type
+dnl such as struct nfs_fh3, fhandle3_t, nfsv3fh_t, etc.
+# set to a default value
+ac_cv_struct_nfs_fh3=notfound
+
+# look for "nfs_fh3_freebsd3"
+if test "$ac_cv_struct_nfs_fh3" = notfound
+then
+AC_TRY_COMPILE_NFS(
+[ nfs_fh3_freebsd3 nh;
+], ac_cv_struct_nfs_fh3="nfs_fh3_freebsd3", ac_cv_struct_nfs_fh3=notfound)
+fi
+
+# look for "nfs_fh3"
+if test "$ac_cv_struct_nfs_fh3" = notfound
+then
+AC_TRY_COMPILE_NFS(
+[ nfs_fh3 nh;
+], ac_cv_struct_nfs_fh3="nfs_fh3", ac_cv_struct_nfs_fh3=notfound)
+fi
+
+# look for "struct nfs_fh3"
+if test "$ac_cv_struct_nfs_fh3" = notfound
+then
+AC_TRY_COMPILE_NFS(
+[ struct nfs_fh3 nh;
+], ac_cv_struct_nfs_fh3="struct nfs_fh3", ac_cv_struct_nfs_fh3=notfound)
+fi
+
+# look for "nfsv3fh_t"
+if test "$ac_cv_struct_nfs_fh3" = notfound
+then
+AC_TRY_COMPILE_NFS(
+[ nfsv3fh_t nh;
+], ac_cv_struct_nfs_fh3="nfsv3fh_t", ac_cv_struct_nfs_fh3=notfound)
+fi
+
+# look for "fhandle3_t"
+if test "$ac_cv_struct_nfs_fh3" = notfound
+then
+AC_TRY_COMPILE_NFS(
+[ fhandle3_t nh;
+], ac_cv_struct_nfs_fh3="fhandle3_t", ac_cv_struct_nfs_fh3=notfound)
+fi
+
+])
+
+if test "$ac_cv_struct_nfs_fh3" != notfound
+then
+  AC_DEFINE_UNQUOTED(am_nfs_fh3, $ac_cv_struct_nfs_fh3)
+fi
+])
+dnl ======================================================================
+
+
+dnl ######################################################################
 dnl Find the structure of an nfs filehandle.
 dnl if found, defined am_nfs_fh to it, else leave it undefined.
 dnl THE ORDER OF LOOKUPS IN THIS FILE IS VERY IMPORTANT!!!
@@ -3171,70 +3038,6 @@ fi
 if test "$ac_cv_struct_nfs_fh" != notfound
 then
   AC_DEFINE_UNQUOTED(am_nfs_fh, $ac_cv_struct_nfs_fh)
-fi
-])
-dnl ======================================================================
-
-
-dnl ######################################################################
-dnl Find the structure of an NFS V3 filehandle.
-dnl if found, defined am_nfs_fh3 to it, else leave it undefined.
-AC_DEFUN(AC_STRUCT_NFS_FH3,
-[
-AC_CACHE_CHECK(for type/structure of NFS V3 filehandle,
-ac_cv_struct_nfs_fh3,
-[
-# try to compile a program which may have a definition for the type
-dnl need a series of compilations, which will test out every possible type
-dnl such as struct nfs_fh3, fhandle3_t, nfsv3fh_t, etc.
-# set to a default value
-ac_cv_struct_nfs_fh3=notfound
-
-# look for "nfs_fh3_freebsd3"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ nfs_fh3_freebsd3 nh;
-], ac_cv_struct_nfs_fh3="nfs_fh3_freebsd3", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-# look for "nfs_fh3"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ nfs_fh3 nh;
-], ac_cv_struct_nfs_fh3="nfs_fh3", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-# look for "struct nfs_fh3"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ struct nfs_fh3 nh;
-], ac_cv_struct_nfs_fh3="struct nfs_fh3", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-# look for "nfsv3fh_t"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ nfsv3fh_t nh;
-], ac_cv_struct_nfs_fh3="nfsv3fh_t", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-# look for "fhandle3_t"
-if test "$ac_cv_struct_nfs_fh3" = notfound
-then
-AC_TRY_COMPILE_NFS(
-[ fhandle3_t nh;
-], ac_cv_struct_nfs_fh3="fhandle3_t", ac_cv_struct_nfs_fh3=notfound)
-fi
-
-])
-
-if test "$ac_cv_struct_nfs_fh3" != notfound
-then
-  AC_DEFINE_UNQUOTED(am_nfs_fh3, $ac_cv_struct_nfs_fh3)
 fi
 ])
 dnl ======================================================================
@@ -3334,7 +3137,11 @@ AC_TRY_COMPILE(
 # include <sys/vmount.h>
 #endif /* HAVE_SYS_VMOUNT_H */
 
-#ifdef HAVE_LINUX_FS_H
+/*
+ * There is no point in including this on a glibc2 system
+ * we're only asking for trouble
+ */
+#if defined HAVE_LINUX_FS_H && (!defined __GLIBC__ || __GLIBC__ < 2)
 /*
  * There's a conflict of definitions on redhat alpha linux between
  * <netinet/in.h> and <linux/fs.h>.
@@ -3373,7 +3180,8 @@ AC_TRY_COMPILE(
 #  undef __KERNEL__
 # endif /* HAVE_LINUX_LIST_H */
 # include <linux/fs.h>
-#endif /* HAVE_LINUX_FS_H */
+#endif /* HAVE_LINUX_FS_H && (!__GLIBC__ || __GLIBC__ < 2) */
+
 #ifdef HAVE_SYS_FS_AUTOFS_H
 # include <sys/fs/autofs.h>
 #endif /* HAVE_SYS_FS_AUTOFS_H */
@@ -3482,7 +3290,7 @@ ac_cv_auth_create_gidlist,
 [
 # select the correct type
 case "${host_os_name}" in
-	sunos4* | bsdi2* | sysv4* | hpux10.10 | ultrix* | aix4* )
+	sunos[[34]]* | bsdi2* | sysv4* | hpux10.10 | ultrix* | aix4* )
 		ac_cv_auth_create_gidlist="int" ;;
 	* )
 		ac_cv_auth_create_gidlist="gid_t" ;;
@@ -3756,11 +3564,11 @@ AC_CACHE_CHECK(non-pointer type of 6th (fromlen) argument to recvfrom(),
 ac_cv_recvfrom_fromlen,
 [
 # select the correct type
-case "${host}" in
-changequote(<<, >>)dnl
-	*-aix4.* )
+case "${host_os}" in
+	aix[[1-3]]* )
+		ac_cv_recvfrom_fromlen="int" ;;
+	aix* )
 		ac_cv_recvfrom_fromlen="size_t" ;;
-changequote([, ])dnl
 	* )
 		ac_cv_recvfrom_fromlen="int" ;;
 esac
@@ -3969,10 +3777,10 @@ ac_cv_yp_order_outorder,
 [
 # select the correct type
 case "${host_os}" in
-changequote(<<, >>)dnl
-	solaris2* | svr4* | sysv4* | sunos5* | hpux* | aix4.[3-9]* )
+	aix[[1-3]]* | aix4.[[0-2]]* | sunos[[34]]* | solaris1* )
+		ac_cv_yp_order_outorder=int ;;
+	solaris* | svr4* | sysv4* | sunos* | hpux* | aix* )
 		ac_cv_yp_order_outorder="unsigned long" ;;
-changequote([, ])dnl
 	osf* )
 		# DU4 man page is wrong, headers are right
 		ac_cv_yp_order_outorder="unsigned int" ;;
@@ -4155,7 +3963,12 @@ NONE) lt_target="$host" ;;
 esac
 
 # Check for any special flags to pass to ltconfig.
-libtool_flags="--cache-file=$cache_file"
+#
+# the following will cause an existing older ltconfig to fail, so
+# we ignore this at the expense of the cache file... Checking this 
+# will just take longer ... bummer!
+#libtool_flags="--cache-file=$cache_file"
+#
 test "$enable_shared" = no && libtool_flags="$libtool_flags --disable-shared"
 test "$enable_static" = no && libtool_flags="$libtool_flags --disable-static"
 test "$enable_fast_install" = no && libtool_flags="$libtool_flags --disable-fast-install"
@@ -4454,35 +4267,31 @@ esac
 ])
 
 # AC_LIBLTDL_CONVENIENCE[(dir)] - sets LIBLTDL to the link flags for
-# the libltdl convenience library and INCLTDL to the include flags for
-# the libltdl header and adds --enable-ltdl-convenience to the
-# configure arguments.  Note that LIBLTDL and INCLTDL are not
-# AC_SUBSTed, nor is AC_CONFIG_SUBDIRS called.  If DIR is not
-# provided, it is assumed to be `libltdl'.  LIBLTDL will be prefixed
-# with '${top_builddir}/' and INCLTDL will be prefixed with
-# '${top_srcdir}/' (note the single quotes!).  If your package is not
-# flat and you're not using automake, define top_builddir and
-# top_srcdir appropriately in the Makefiles.
+# the libltdl convenience library, adds --enable-ltdl-convenience to
+# the configure arguments.  Note that LIBLTDL is not AC_SUBSTed, nor
+# is AC_CONFIG_SUBDIRS called.  If DIR is not provided, it is assumed
+# to be `${top_builddir}/libltdl'.  Make sure you start DIR with
+# '${top_builddir}/' (note the single quotes!) if your package is not
+# flat, and, if you're not using automake, define top_builddir as
+# appropriate in the Makefiles.
 AC_DEFUN(AC_LIBLTDL_CONVENIENCE, [AC_BEFORE([$0],[AC_LIBTOOL_SETUP])dnl
   case "$enable_ltdl_convenience" in
   no) AC_MSG_ERROR([this package needs a convenience libltdl]) ;;
   "") enable_ltdl_convenience=yes
       ac_configure_args="$ac_configure_args --enable-ltdl-convenience" ;;
   esac
-  LIBLTDL='${top_builddir}/'ifelse($#,1,[$1],['libltdl'])/libltdlc.la
-  INCLTDL='-I${top_srcdir}/'ifelse($#,1,[$1],['libltdl'])
+  LIBLTDL=ifelse($#,1,$1,['${top_builddir}/libltdl'])/libltdlc.la
+  INCLTDL=ifelse($#,1,-I$1,['-I${top_builddir}/libltdl'])
 ])
 
 # AC_LIBLTDL_INSTALLABLE[(dir)] - sets LIBLTDL to the link flags for
-# the libltdl installable library and INCLTDL to the include flags for
-# the libltdl header and adds --enable-ltdl-install to the configure
-# arguments.  Note that LIBLTDL and INCLTDL are not AC_SUBSTed, nor is
-# AC_CONFIG_SUBDIRS called.  If DIR is not provided and an installed
-# libltdl is not found, it is assumed to be `libltdl'.  LIBLTDL will
-# be prefixed with '${top_builddir}/' and INCLTDL will be prefixed
-# with '${top_srcdir}/' (note the single quotes!).  If your package is
-# not flat and you're not using automake, define top_builddir and
-# top_srcdir appropriately in the Makefiles.
+# the libltdl installable library, and adds --enable-ltdl-install to
+# the configure arguments.  Note that LIBLTDL is not AC_SUBSTed, nor
+# is AC_CONFIG_SUBDIRS called.  If DIR is not provided, it is assumed
+# to be `${top_builddir}/libltdl'.  Make sure you start DIR with
+# '${top_builddir}/' (note the single quotes!) if your package is not
+# flat, and, if you're not using automake, define top_builddir as
+# appropriate in the Makefiles.
 # In the future, this macro may have to be called after AC_PROG_LIBTOOL.
 AC_DEFUN(AC_LIBLTDL_INSTALLABLE, [AC_BEFORE([$0],[AC_LIBTOOL_SETUP])dnl
   AC_CHECK_LIB(ltdl, main,
@@ -4495,8 +4304,8 @@ AC_DEFUN(AC_LIBLTDL_INSTALLABLE, [AC_BEFORE([$0],[AC_LIBTOOL_SETUP])dnl
   ])
   if test x"$enable_ltdl_install" = x"yes"; then
     ac_configure_args="$ac_configure_args --enable-ltdl-install"
-    LIBLTDL='${top_builddir}/'ifelse($#,1,[$1],['libltdl'])/libltdl.la
-    INCLTDL='-I${top_srcdir}/'ifelse($#,1,[$1],['libltdl'])
+    LIBLTDL=ifelse($#,1,$1,['${top_builddir}/libltdl'])/libltdl.la
+    INCLTDL=ifelse($#,1,-I$1,['-I${top_builddir}/libltdl'])
   else
     ac_configure_args="$ac_configure_args --enable-ltdl-install=no"
     LIBLTDL="-lltdl"

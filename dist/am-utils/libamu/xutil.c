@@ -1,7 +1,5 @@
-/*	$NetBSD: xutil.c,v 1.1.1.2 2000/11/19 23:43:24 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: xutil.c,v 1.11.2.3 2000/05/27 23:41:24 ezk Exp
+ * $Id: xutil.c,v 1.1.1.3 2001/05/13 17:34:25 veego Exp $
  *
  */
 
@@ -82,7 +80,11 @@ static int orig_mem_bytes;
 #endif /* DEBUG_MEM */
 
 /* forward definitions */
-static void real_plog(int lvl, char *fmt, va_list vargs);
+static void real_plog(int lvl, const char *fmt, va_list vargs)
+     __attribute__((__format__(__printf__, 2, 0)));
+/* for GCC format string auditing */
+static const char *expand_error(const char *f, char *e, int maxlen)
+     __attribute__((__format_arg__(1)));
 
 #ifdef DEBUG
 /*
@@ -287,18 +289,31 @@ checkup_mem(void)
  * with the current error code taken from errno.  Make sure
  * 'e' never gets longer than maxlen characters.
  */
-static void
-expand_error(char *f, char *e, int maxlen)
+static const char *
+expand_error(const char *f, char *e, int maxlen)
 {
+#ifndef HAVE_STRERROR
+  /*
+   * XXX: we are assuming that if a system doesn't has strerror,
+   * then it has sys_nerr.  If this assumption turns out to be wrong on
+   * some systems, we'll have to write a separate test to detect if
+   * a system has sys_nerr.  -Erez
+   */
   extern int sys_nerr;
-  char *p, *q;
+#endif /* not HAVE_STRERROR */
+  const char *p;
+  char *q;
   int error = errno;
   int len = 0;
 
   for (p = f, q = e; (*q = *p) && len < maxlen; len++, q++, p++) {
     if (p[0] == '%' && p[1] == 'm') {
       const char *errstr;
+#ifdef HAVE_STRERROR
+      if (error < 0)
+#else /* not HAVE_STRERROR */
       if (error < 0 || error >= sys_nerr)
+#endif /* not HAVE_STRERROR */
 	errstr = NULL;
       else
 #ifdef HAVE_STRERROR
@@ -316,6 +331,7 @@ expand_error(char *f, char *e, int maxlen)
     }
   }
   e[maxlen-1] = '\0';		/* null terminate, to be sure */
+  return e;
 }
 
 
@@ -404,7 +420,7 @@ debug_option(char *opt)
 
 
 void
-dplog(char *fmt, ...)
+dplog(const char *fmt, ...)
 {
   va_list ap;
 
@@ -419,7 +435,7 @@ dplog(char *fmt, ...)
 
 
 void
-plog(int lvl, char *fmt, ...)
+plog(int lvl, const char *fmt, ...)
 {
   va_list ap;
 
@@ -433,7 +449,7 @@ plog(int lvl, char *fmt, ...)
 
 
 static void
-real_plog(int lvl, char *fmt, va_list vargs)
+real_plog(int lvl, const char *fmt, va_list vargs)
 {
   char msg[1024];
   char efmt[1024];
@@ -448,17 +464,21 @@ real_plog(int lvl, char *fmt, va_list vargs)
   checkup_mem();
 #endif /* DEBUG_MEM */
 
-  expand_error(fmt, efmt, 1024);
-
 #ifdef HAVE_VSNPRINTF
-  vsnprintf(ptr, 1024, efmt, vargs);
+  /*
+   * XXX: ptr is 1024 bytes long, but we may write to ptr[strlen(ptr) + 2]
+   * (to add an '\n', see code below) so we have to limit the string copy
+   * to 1023 (including the '\0').
+   */
+  vsnprintf(ptr, 1023, expand_error(fmt, efmt, 1024), vargs);
+  msg[1022] = '\0';		/* null terminate, to be sure */
 #else /* not HAVE_VSNPRINTF */
   /*
    * XXX: ptr is 1024 bytes long.  It is possible to write into it
    * more than 1024 bytes, if efmt is already large, and vargs expand
    * as well.  This is not as safe as using vsnprintf().
    */
-  vsprintf(ptr, efmt, vargs);
+  vsprintf(ptr, expand_error(fmt, efmt, 1023), vargs);
   msg[1023] = '\0';		/* null terminate, to be sure */
 #endif /* not HAVE_VSNPRINTF */
 
