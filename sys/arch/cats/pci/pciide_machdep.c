@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.5 2002/02/09 11:43:29 chris Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.1 2002/02/09 12:14:03 chris Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.

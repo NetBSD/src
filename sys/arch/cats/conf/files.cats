@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.15 2002/02/02 18:37:43 jdolecek Exp $
+#	$NetBSD: files.cats,v 1.16 2002/02/09 12:14:02 chris Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -112,7 +112,7 @@ include "dev/mii/files.mii"
 
 device	pcib: isabus
 attach	pcib at pci
-file	arch/arm32/pci/pcib.c			pcib
+file	arch/cats/pci/pcib.c			pcib
 
 # XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
 # XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
@@ -122,7 +122,7 @@ file	arch/arm32/pci/pcib.c			pcib
 attach	lpt at puc with lpt_puc
 file	dev/pci/lpt_puc.c	lpt_puc
 
-file	arch/arm32/pci/pciide_machdep.c	pciide
+file	arch/cats/pci/pciide_machdep.c	pciide
 
 # Include USB stuff
 include "dev/usb/files.usb"
