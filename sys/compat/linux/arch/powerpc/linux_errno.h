@@ -1,4 +1,4 @@
-/* $NetBSD: linux_errno.h,v 1.2 2001/02/04 22:59:26 christos Exp $ */
+/* $NetBSD: linux_errno.h,v 1.3 2001/02/11 20:24:50 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 #ifndef _POWERPC_LINUX_ERRNO_H
 #define _POWERPC_LINUX_ERRNO_H
 
+/*
+ * Return positive errnos to userland
+ */
+#define LINUX_SCERR_SIGN +
 
 /* Use common/linux_errno.h for #1-35 */
 
