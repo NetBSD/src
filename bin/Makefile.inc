@@ -1,5 +1,5 @@
-#	from: @(#)Makefile.inc	5.1 (Berkeley) 5/11/90
-#	$Id: Makefile.inc,v 1.6 1993/11/08 02:34:22 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1995/03/21 02:08:54 cgd Exp $
+#	@(#)Makefile.inc	8.1 (Berkeley) 5/31/93
 
 BINDIR?=	/bin
 LDSTATIC=	-static
