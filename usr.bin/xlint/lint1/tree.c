@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.26 2002/09/13 14:59:25 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.27 2002/10/21 22:48:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.26 2002/09/13 14:59:25 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.27 2002/10/21 22:48:13 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3799,11 +3799,21 @@ conaddr(tnode_t *tn, sym_t **symp, ptrdiff_t *offsp)
 	case CVT:
 		t = tn->tn_type->t_tspec;
 		ot = tn->tn_left->tn_type->t_tspec;
-		if ((!isityp(t) && t != PTR) || (!isityp(ot) && ot != PTR)) {
+		if ((!isityp(t) && t != PTR) || (!isityp(ot) && ot != PTR))
 			return (-1);
-		} else if (psize(t) != psize(ot)) {
+#ifdef notdef
+		/* 
+		 * consider:
+		 * 	struct foo {
+		 *	    unsigned char a;
+		 *      } f = {
+		 *          (u_char)(u_long)(&(((struct foo *)0)->a))
+		 *	};
+		 * since psize(u_long) != psize(u_char) this fails.
+		 */
+		else if (psize(t) != psize(ot))
 			return (-1);
-		}
+#endif
 		if (conaddr(tn->tn_left, symp, offsp) == -1)
 			return (-1);
 		break;
