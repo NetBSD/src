@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.12 2003/10/17 18:15:52 tsutsui Exp $	*/
+/*	$NetBSD: console.c,v 1.13 2003/12/15 05:28:14 lonewolf Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.12 2003/10/17 18:15:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.13 2003/12/15 05:28:14 lonewolf Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_machtypes.h"
@@ -41,15 +41,22 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.12 2003/10/17 18:15:52 tsutsui Exp $")
 #include <machine/machtype.h>
 
 #include <dev/cons.h>
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+#include <dev/ic/i8042reg.h>
+#include <dev/ic/pckbcvar.h>
 
+#include <sgimips/gio/giovar.h>
+#include <sgimips/hpc/hpcreg.h>
+#include <sgimips/hpc/iocreg.h>
 #include <sgimips/dev/macereg.h>
 
 #include "com.h"
 #include "zsc.h"
+#include "gio.h"
+#include "pckbc.h"
 
 #ifndef CONMODE
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
@@ -78,6 +85,27 @@ consinit()
 	/* Get comm speed from ARCS */
 	dbaud = ARCBIOS->GetEnvironmentVariable("dbaud");
 	speed = strtoul(dbaud, NULL, 10);
+
+#if defined(IP22)
+	if (mach_type == MACH_SGI_IP22) {
+		if (strcmp(consdev, "video()") == 0) {
+			/* XXX Assumes that if output is video() input must be
+			 * keyboard(). */
+
+#if (NGIO > 0)
+			gio_cnattach();
+#endif
+
+#if (NPCKBC > 0)
+			/* XXX Hardcoded iotag, HPC address XXX */
+			pckbc_cnattach(1,
+			    0x1fb80000 + HPC_PBUS_CH6_DEVREGS + IOC_KB_REGS,
+			    KBCMDP, PCKBC_KBD_SLOT);
+#endif
+			return;
+		}
+	}
+#endif
 	
 
 #if (defined(IP20) || defined(IP22)) && (NZSC > 0)
