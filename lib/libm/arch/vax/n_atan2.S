@@ -1,4 +1,4 @@
-/*	$NetBSD: n_atan2.S,v 1.1 1995/10/10 23:40:25 ragge Exp $	*/
+/*	$NetBSD: n_atan2.S,v 1.2 1998/10/31 02:06:02 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -77,6 +77,7 @@
 	.text
 	.align 1
 	.globl	_atan2
+	.type	_atan2,@function
 _atan2 :
 	.word	0x0ff4
 	movq	4(ap),r2		# r2 = y

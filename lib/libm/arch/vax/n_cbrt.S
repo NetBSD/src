@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cbrt.S,v 1.1 1995/10/10 23:40:26 ragge Exp $	*/
+/*	$NetBSD: n_cbrt.S,v 1.2 1998/10/31 02:06:02 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,8 +43,11 @@
  */
 
 	.globl	_cbrt
+	.type	_cbrt,@function
 	.globl	_d_cbrt
-	.globl  _dcbrt_
+	.type	_d_cbrt,@function
+	.globl	_dcbrt_
+	.type	_dcbrt_,@function
 	.text
 	.align	1
 

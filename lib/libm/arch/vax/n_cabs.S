@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cabs.S,v 1.1 1995/10/10 23:40:26 ragge Exp $	*/
+/*	$NetBSD: n_cabs.S,v 1.2 1998/10/31 02:06:02 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,10 +46,15 @@
 	.text
 	.align	1
 	.globl  _cabs
+	.type	_cabs,@function
 	.globl  _hypot
+	.type	_hypot,@function
 	.globl	_z_abs
+	.type	_z_abs,@function
 	.globl	libm$cdabs_r6
+	.type	libm$cdabs_r6,@label
 	.globl	libm$dsqrt_r5
+	.type	libm$dsqrt_r5,@label
 
 /*	entry for c functions cabs and hypot */
 _cabs:
