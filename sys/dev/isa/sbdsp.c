@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.85 1998/08/10 02:13:44 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.86 1998/08/10 02:19:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -699,7 +699,7 @@ sbdsp_set_params(addr, setmode, usemode, play, rec)
 	sc->sc_o.run = SB_NOTRUNNING;
 
 	if (sc->sc_fullduplex &&
-	    (usemode & (AUMODE_PLAY | AUMODE_RECORD)) == (AUMODE_PLAY | AUMODE_RECORD) &&
+	    usemode == (AUMODE_PLAY | AUMODE_RECORD) &&
 	    sc->sc_i.dmachan == sc->sc_o.dmachan) {
 		DPRINTF(("sbdsp_set_params: fd=%d, usemode=%d, idma=%d, odma=%d\n", sc->sc_fullduplex, usemode, sc->sc_i.dmachan, sc->sc_o.dmachan));
 		if (sc->sc_o.dmachan == sc->sc_drq8) {
