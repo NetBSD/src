@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.6.2.3 2002/06/20 03:39:12 nathanw Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.6.2.4 2002/06/21 07:31:42 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6.2.3 2002/06/20 03:39:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.6.2.4 2002/06/21 07:31:42 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,17 +210,17 @@ procfs_machdep_getattr(struct vnode *vp, struct vattr *vap, struct proc *procp)
 }
 
 int
-procfs_machdep_doxmmregs(struct proc *curp, struct proc *p,
+procfs_machdep_doxmmregs(struct proc *curp, struct lwp *l,
     struct pfsnode *pfs, struct uio *uio)
 {
 
-	return (process_machdep_doxmmregs(curp, p, uio));
+	return (process_machdep_doxmmregs(curp, l, uio));
 }
 
 int
-procfs_machdep_validxmmregs(struct proc *p, struct mount *mp)
+procfs_machdep_validxmmregs(struct lwp *l, struct mount *mp)
 {
 
-	return (process_machdep_validxmmregs(p));
+	return (process_machdep_validxmmregs(l));
 }
 #endif
