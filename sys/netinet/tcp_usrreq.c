@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.84 2003/09/29 21:39:35 tls Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.85 2003/10/22 02:45:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.84 2003/09/29 21:39:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.85 2003/10/22 02:45:57 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -973,6 +973,9 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				}
 				break;
 			}
+			/* Update the TCPCB template. */
+			if (newp != NULL)
+				tcp_tcpcb_template();
 			return (0);
 		}
 	}
