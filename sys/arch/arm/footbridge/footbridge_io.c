@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.3 2001/09/10 21:19:36 chris Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.4 2001/09/10 23:05:19 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -69,6 +69,9 @@ struct bus_space footbridge_bs_tag = {
 	/* get kernel virtual address */
 	footbridge_bs_vaddr,
 
+	/* Mmap bus space for user */
+	bs_notimpl_bs_mmap,
+	
 	/* barrier */
 	footbridge_bs_barrier,
 

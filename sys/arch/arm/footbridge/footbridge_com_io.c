@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com_io.c,v 1.1 2001/06/09 10:29:12 chris Exp $	*/
+/*	$NetBSD: footbridge_com_io.c,v 1.2 2001/09/10 23:05:19 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -68,6 +68,9 @@ struct bus_space fcomcons_bs_tag = {
 
 	/* get kernel virtual address */
 	0, /* never used */
+
+	/* Mmap bus space for user */
+	bs_notimpl_bs_mmap,
 
 	/* barrier */
 	fcomcons_bs_barrier,
