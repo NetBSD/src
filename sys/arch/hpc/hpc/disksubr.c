@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 2001/01/22 12:37:14 shin Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.1 2001/02/21 16:34:00 uch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
