@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.95 1999/04/01 02:49:12 cjs Exp $
+#	$NetBSD: Makefile,v 1.96 1999/04/25 19:13:05 scottr Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -25,6 +25,15 @@
 #   DESTDIR is the target directory for installation of the compiled
 #	software. It defaults to /. Note that programs are built against
 #	libraries installed in DESTDIR.
+#   EXPORTABLE_SYSTEM, when set, ensures that non-exportable crypto code
+#	is not compiled or installed. EXPORTABLE_SYSTEM is ignored if
+#	the `domestic' subtree does not exist.
+#   FORCE_DOMESTIC, when set, forces a descent into the domestic tree
+#	when handling the `all', `includes', and `install' targets. This
+#	flag is incompatible with the `build' target. It's generally a
+#	bad idea to use FORCE_DOMESTIC unless the ramifications are well
+#	understood, and should never be enabled by default. FORCE_DOMESTIC
+#	is ignored if the `domestic' subtree does not exist.
 #
 # Targets:
 #   build: builds a full release of netbsd in DESTDIR.
@@ -57,8 +66,9 @@ includes-gnu: includes-include includes-sys
 # Descend into the domestic tree if it exists AND
 #  1) the target is clean, cleandir, or obj, OR
 #  2) the the target is install or includes AND
-#    NOT compiling only "exportable" code AND
-#    doing it as part of installing a distribution.
+#     NOT compiling only "exportable" code AND
+#     doing it as part of installing a distribution, OR
+#  3) we Really Know what we're doing.  (Really!)
 #
 # NOTE:  due to the use of the make(foo) construct here, using the
 # clean, cleandir, and obj targets on the command line in conjunction
@@ -67,7 +77,8 @@ includes-gnu: includes-include includes-sys
 .if exists(domestic) && \
     (make(clean) || make(cleandir) || make(obj) || \
     ((make(includes) || make(install)) && \
-    !defined(EXPORTABLE_SYSTEM) && defined(_DISTRIB)))
+	!defined(EXPORTABLE_SYSTEM) && defined(_DISTRIB)) || \
+    defined(FORCE_DOMESTIC))
 SUBDIR+= domestic
 .endif
 
@@ -104,6 +115,12 @@ whatis.db:
 # as the build will automatically remove/replace the non-pkg entries there.
 
 build: beforeinstall
+.if defined(FORCE_DOMESTIC)
+	@echo '*** CAPUTE!'
+	@echo '    The FORCE_DOMESTIC flag is not compatible with "make build".'
+	@echo '    Please correct the problem and try again.'
+	@false
+.endif
 .if ${MKSHARE} != "no"
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
 	(cd ${.CURDIR}/share/tmac && ${MAKE} && ${MAKE} install)
