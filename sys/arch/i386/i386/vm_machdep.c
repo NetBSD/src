@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86.2.5 2000/08/07 01:08:53 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86.2.6 2000/08/18 13:38:36 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -103,7 +103,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	/*
 	 * Save p1's npx h/w state to p1's pcb so that we can copy it.
 	 */
-	npxsave_proc(p1);
+	if (p1->p_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_proc(p1, 1);
 #endif
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
@@ -167,7 +168,7 @@ cpu_swapout(p)
 	/*
 	 * Make sure we save the FP state before the user area vanishes.
 	 */
-	npxsave_proc(p);
+	npxsave_proc(p, 1);
 #endif
 }
 
@@ -185,7 +186,8 @@ cpu_exit(p)
 
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
-	npxdrop(p);
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_proc(p, 0);
 #endif
 
 	/*
