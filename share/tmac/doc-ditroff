@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-ditroff,v 1.4 1998/02/15 00:40:12 thorpej Exp $
+.\"	$NetBSD: doc-ditroff,v 1.5 1998/11/10 04:27:43 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,47 +36,47 @@
 .\" tmac.mdoc-ditroff
 .\"     %beginstrip%
 .\"
-.ds aD \fI\s10
-.ds aR \f(CO\s10
-.ds cM \f(CB\s10
-.ds dF \fR\s10
-.ds eM \fI\s10
-.ds eR \fC\s10
-.ds eV \fC\s10
-.ds fA \f(CO\s10
-.ds fD \f(CB\s10
-.ds fL \f(CB\s10
-.ds fN \f(CB\s10
+.ds aD \fI\s\n(.s
+.ds aR \f(CO\s\n(.s
+.ds cM \f(CB\s\n(.s
+.ds dF \fR\s\n(.s
+.ds eM \fI\s\n(.s
+.ds eR \fC\s\n(.s
+.ds eV \fC\s\n(.s
+.ds fA \f(CO\s\n(.s
+.ds fD \f(CB\s\n(.s
+.ds fL \f(CB\s\n(.s
+.ds fN \f(CB\s\n(.s
 .ds fP \fP\s0
 .ds fS \s0
-.ds fT \f(CO\s10
-.ds Hs \fR\s10
-.ds iC \f(CB\s10
+.ds fT \f(CO\s\n(.s
+.ds Hs \fR\s\n(.s
+.ds iC \f(CB\s\n(.s
 .ds lI \fC
-.ds lP \fR\|(\|\fP\s10
-.ds lp \fR(\fP\s10
-.ds rP \fR\|)\|\fP\s10
-.ds rp \fR)\fP\s10
-.ds lB \fR\^[\^\fP\s10
-.ds rB \fR\^]\fP\s10
-.ds mL \fB\s10
-.ds nM \f(CB\s10
-.ds nO \fR\s10
+.ds lP \fR\|(\|\fP\s\n(.s
+.ds lp \fR(\fP\s\n(.s
+.ds rP \fR\|)\|\fP\s\n(.s
+.ds rp \fR)\fP\s\n(.s
+.ds lB \fR\^[\^\fP\s\n(.s
+.ds rB \fR\^]\fP\s\n(.s
+.ds mL \fB\s\n(.s
+.ds nM \f(CB\s\n(.s
+.ds nO \fR\s\n(.s
 .ds nT \s0
-.ds pA \fC\s10
+.ds pA \fC\s\n(.s
 .ds Pu \fR{\ .\ ,\ :\ ;\ (\ )\ [\ ]\ \fR}
-.ds rA \fR\s10
-.ds rT \f(CO\s10
-.ds sH \fB\s10
+.ds rA \fR\s\n(.s
+.ds rT \f(CO\s\n(.s
+.ds sH \fB\s\n(.s
 .ds sP \s0
-.ds sY \fB\s10
-.ds sX \fR\s10
+.ds sY \fB\s\n(.s
+.ds sX \fR\s\n(.s
 .ds tF \fR
-.ds tN \s9
-.ds vA \fI\s10
-.ds Vs \fR\s10
-.ds vT \f(CB\s10
-.ds xR \fC\s10
+.ds tN \s'\n(.s-1'
+.ds vA \fI\s\n(.s
+.ds Vs \fR\s\n(.s
+.ds vT \f(CB\s\n(.s
+.ds xR \fC\s\n(.s
 .tr *\(**
 .nr sI \w\fC,u*5
 .nr Ti \n(sIu
