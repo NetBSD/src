@@ -26,7 +26,7 @@ char    copyright[] =
 
 #ifndef lint
 static char rcsid[] =
-"@(#) $Id: rarpd.c,v 1.5 1994/03/30 02:32:50 cgd Exp $";
+"@(#) $Id: rarpd.c,v 1.6 1994/05/14 21:57:56 cgd Exp $";
 #endif
 
 
@@ -287,7 +287,7 @@ rarp_open(device)
 		BPF_STMT(BPF_LD | BPF_H | BPF_ABS, 12),
 		BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, ETHERTYPE_REVARP, 0, 3),
 		BPF_STMT(BPF_LD | BPF_H | BPF_ABS, 20),
-		BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, REVARP_REQUEST, 0, 1),
+		BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, ARPOP_REVREQUEST, 0, 1),
 		BPF_STMT(BPF_RET | BPF_K, sizeof(struct ether_arp) +
 		    sizeof(struct ether_header)),
 		BPF_STMT(BPF_RET | BPF_K, 0),
@@ -348,7 +348,7 @@ rarp_check(p, len)
 	/* XXX This test might be better off broken out... */
 	if (ntohs (ep->ether_type) != ETHERTYPE_REVARP ||
 	    ntohs (ap->arp_hrd) != ARPHRD_ETHER ||
-	    ntohs (ap->arp_op) != REVARP_REQUEST ||
+	    ntohs (ap->arp_op) != ARPOP_REVREQUEST ||
 	    ntohs (ap->arp_pro) != ETHERTYPE_IP ||
 	    ap->arp_hln != 6 || ap->arp_pln != 4) {
 		err(NONFATAL, "request fails sanity check");
@@ -652,13 +652,13 @@ update_arptab(ep, ipaddr)
 }
 /*
  * Build a reverse ARP packet and sent it out on the interface.
- * 'ep' points to a valid REVARP_REQUEST.  The REVARP_REPLY is built
+ * 'ep' points to a valid ARPOP_REVREQUEST.  The ARPOP_REVREPLY is built
  * on top of the request, then written to the network.
  *
  * RFC 903 defines the ether_arp fields as follows.  The following comments
  * are taken (more or less) straight from this document.
  *
- * REVARP_REQUEST
+ * ARPOP_REVREQUEST
  *
  * arp_sha is the hardware address of the sender of the packet.
  * arp_spa is undefined.
@@ -668,7 +668,7 @@ update_arptab(ep, ipaddr)
  *   address of the sender.
  * arp_tpa is undefined.
  *
- * REVARP_REPLY
+ * ARPOP_REVREPLY
  *
  * arp_sha is the hardware address of the responder (the sender of the
  *   reply packet).
@@ -699,7 +699,7 @@ rarp_reply(ii, ep, ipaddr)
 	ep->ether_type = htons(ETHERTYPE_REVARP);
 	ap->ea_hdr.ar_hrd = htons(ARPHRD_ETHER);
 	ap->ea_hdr.ar_pro = htons(ETHERTYPE_IP);
-	ap->arp_op = htons(REVARP_REPLY);
+	ap->arp_op = htons(ARPOP_REVREPLY);
 
 	bcopy((char *) &ap->arp_sha, (char *) &ep->ether_dhost, 6);
 	bcopy((char *) ii->ii_eaddr, (char *) &ep->ether_shost, 6);
