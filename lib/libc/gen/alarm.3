@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)alarm.3	6.4 (Berkeley) 4/19/91
-.\"	$Id: alarm.3,v 1.4 1993/10/04 18:25:58 jtc Exp $
+.\"	$Id: alarm.3,v 1.5 1993/10/14 23:25:28 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt ALARM 3
@@ -40,8 +40,8 @@
 .Nd set signal timer alarm
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
-.Ft u_int
-.Fn alarm "u_int seconds"
+.Ft unsigned int
+.Fn alarm "unsigned int seconds"
 .Sh DESCRIPTION
 .Bf -symbolic
 This interface is made obsolete by setitimer(2).
@@ -83,7 +83,7 @@ alarm.
 .Sh STANDARDS
 The
 .Fn alarm
-functions conforms to 
+function conforms to 
 .St -p1003.1-90 .
 .Sh HISTORY
 An
