@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.4 2000/07/04 22:35:05 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.5 2000/10/11 21:08:54 he Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.4 2000/07/04 22:35:05 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.5 2000/10/11 21:08:54 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -289,8 +289,8 @@ debug_readlabel(fd)
 	if ((n = read(fd, &lab, sizeof(struct disklabel))) < 0)
 		fatal("unable to read disk label: %s", strerror(errno));
 	else if (n < sizeof(struct disklabel))
-		fatal("short read of disklabel: %d of %d bytes", n,
-			sizeof(struct disklabel));
+		fatal("short read of disklabel: %d of %ld bytes", n,
+			(u_long) sizeof(struct disklabel));
 	return(&lab);
 }
 
