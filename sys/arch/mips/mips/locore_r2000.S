@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.40 1997/08/09 03:41:05 jonathan Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.40.4.1 1997/11/01 23:19:53 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1445,9 +1445,20 @@ LEAF(mips1_FlushICache)
 	or	v1, MIPS_KSEG1_START		# Run uncached.
 	j	v1
 	nop
+#ifdef pmax
+	/*
+	 * The insn below attempts to wait for the  writebuffer to drain. 
+	 * It does not work on all MIPS hosts or maybe even all DEC machines.
+	 * It assumes that the COP0 usability bit is wired to external
+	 * writebuffer logic. This is not true on some DECstations or on
+	 * the SONY news3400.
+	 * Why we are even doing this for an I-cache flush is beyond me.
+	 */
 1:
 	bc0f	1b				# make sure stores are complete
-	li	v1, MIPS_SR_ISOL_CACHES | MIPS_SR_SWAP_CACHES
+#endif	/* pmax */
+	li	v1, MIPS_SR_ISOL_CACHES | MIPS_SR_SWAP_CACHES	# DELAYSLOT
+
 	mtc0	v1, MIPS_COP_0_STATUS_REG
 	nop
 	addu	a1, a1, a0			# compute ending address
@@ -1483,12 +1494,20 @@ LEAF(mips1_FlushDCache)
 	mfc0	t0, MIPS_COP_0_STATUS_REG	# Save SR
 	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts.
 	nop
+
+#ifdef pmax
+	/*
+	 * The insn below attempts to wait for the  writebuffer to drain. 
+	 * It does not work on all MIPS hosts or maybe even all DEC machines.
+	 * It assumes that the COP0 usability bit is wired to external
+	 * writebuffer logic. This is not true on some DECstations or on
+	 * the SONY news3400. (note the following ld is in our delayslot.)
+	 */
 1:
 	bc0f	1b				# make sure stores are complete
-# BUG: should drain write buffer.
-# The insn above does not work on some all DEC machines, or all variants
-# of the mips architecture.
-	li	v1, MIPS_SR_ISOL_CACHES
+#endif
+
+	li	v1, MIPS_SR_ISOL_CACHES		# DELAYSLOT
 	mtc0	v1, MIPS_COP_0_STATUS_REG
 	nop
 	addu	t1, a1, a0			# compute ending address
