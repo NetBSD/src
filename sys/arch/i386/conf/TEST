@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.10 1993/10/20 23:04:57 cgd Exp $
+#	$Id: TEST,v 1.11 1993/10/26 12:19:38 mycroft Exp $
 #
 
 # standard options
@@ -57,7 +57,7 @@ include		"std.i386"
 #timer1 at isa? port 0x48			# only in EISA boxes
 
 #console
-pc0 at isa? port 0x60
+pc0 at isa?
 
 #math co-processor
 npx0 at isa? port 0xf0
