@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nice.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: nice.c,v 1.5 1993/08/27 22:30:34 jtc Exp $";
+static char rcsid[] = "$Id: nice.c,v 1.6 1993/11/10 20:01:20 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -96,8 +96,10 @@ main(argc, argv)
 	if (setpriority(PRIO_PROCESS, 0, niceness)) {
 		warn ("setpriority");
 	}
+
 	execvp(argv[0], &argv[0]);
-	err ((errno == ENOENT) ? 127 : 126, argv[0]);
+	err ((errno == ENOENT) ? 127 : 126, "%s", argv[0]);
+	/* NOTREACHED */
 }
 
 static void
