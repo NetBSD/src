@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.11 2001/12/28 05:52:42 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.12 2001/12/28 06:08:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -591,8 +591,9 @@ sa_upcall_userret(struct lwp *l)
 		if (copyout(&sau->sau_e_ctx, sau->sau_event.sa_context, 
 		    sizeof(ucontext_t)) != 0) {
 #ifdef DIAGNOSTIC
-		printf("cpu_stashcontext: couldn't copyout context of %d.%d\n",
-		    p->p_pid, sau->sau_event.sa_id);
+		printf("sa_upcall_userret(%d.%d): couldn't copyout"
+		    " context of event LWP %d\n",
+		    p->p_pid, l->l_lid, sau->sau_event.sa_id);
 #endif
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
@@ -607,8 +608,9 @@ sa_upcall_userret(struct lwp *l)
 		if (copyout(&sau->sau_i_ctx, sau->sau_interrupted.sa_context, 
 		    sizeof(ucontext_t)) != 0) {
 #ifdef DIAGNOSTIC
-		printf("cpu_stashcontext: couldn't copyout context of %d.%d\n",
-		    p->p_pid, sau->sau_interrupted.sa_id);
+		printf("sa_upcall_userret(%d.%d): couldn't copyout"
+		    " context of interrupted LWP %d\n",
+		    p->p_pid, l->l_lid, sau->sau_interrupted.sa_id);
 #endif
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
