@@ -1,4 +1,4 @@
-#	$NetBSD: files.oldconf,v 1.57 1995/01/25 04:48:07 cgd Exp $
+#	$NetBSD: files.oldconf,v 1.58 1995/02/23 07:19:56 glass Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -129,6 +129,7 @@ msdosfs/msdosfs_vnops.c		optional msdosfs
 net/bpf.c		optional bpfilter
 net/bpf_filter.c	optional bpfilter device-driver
 net/if.c		standard
+net/if_arcsubr.c      optional arc device-driver
 net/if_ethersubr.c	optional ether device-driver
 net/if_loop.c		optional loop device-driver
 net/if_ppp.c		optional ppp device-driver
