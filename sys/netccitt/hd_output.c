@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_output.c,v 1.7 1996/05/07 02:36:06 thorpej Exp $	*/
+/*	$NetBSD: hd_output.c,v 1.8 1996/10/10 23:02:22 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -170,7 +170,7 @@ hd_send_iframe(hdp, buf, poll_bit)
 	KILL_TIMER(hdp);
 
 	if (buf == 0) {
-		printf("hd_send_iframe: zero arg\n");
+		kprintf("hd_send_iframe: zero arg\n");
 #ifdef HDLCDEBUG
 		hd_status(hdp);
 		hd_dumptrace(hdp);
@@ -202,7 +202,7 @@ hd_send_iframe(hdp, buf, poll_bit)
 	/* Write buffer on device. */
 	m = hdp->hd_dontcopy ? buf : m_copy(buf, 0, (int) M_COPYALL);
 	if (m == 0) {
-		printf("hdlc: out of mbufs\n");
+		kprintf("hdlc: out of mbufs\n");
 		return;
 	}
 	(*hdp->hd_output) (m, hdp);
@@ -235,10 +235,10 @@ hd_ifoutput(m, va_alist)
 
 	if (IF_QFULL(&ifp->if_snd)) {
 		IF_DROP(&ifp->if_snd);
-		/*
-		 * printf("%s: HDLC says OK to send but queue full, may
-		 * hang\n", ifp->if_xname);
-		 */
+#if 0
+		kprintf("%s: HDLC says OK to send but queue full, may hang\n",
+		    ifp->if_xname);
+#endif
 		m_freem(m);
 	} else {
 		IF_ENQUEUE(&ifp->if_snd, m);

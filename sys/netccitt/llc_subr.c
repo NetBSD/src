@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.5 1996/05/07 02:36:08 thorpej Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.6 1996/10/10 23:02:25 christos Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -244,7 +244,7 @@ llc_setsapinfo(ifp, af, sap, llconf)
 	 */
 	pp = pffindtype(af, SOCK_STREAM);
 	if (pp == 0 || pp->pr_input == 0 || pp->pr_ctlinput == 0) {
-		printf("network	level protosw error");
+		kprintf("network level protosw error");
 		return 0;
 	}
 	/*
@@ -2496,37 +2496,38 @@ llc_link_dump(linkp, message)
 	register int    i;
 
 	/* print interface */
-	printf("if %s\n", linkp->llcl_if->if_xname);
+	kprintf("if %s\n", linkp->llcl_if->if_xname);
 
 	/* print message */
-	printf(">> %s <<\n", message);
+	kprintf(">> %s <<\n", message);
 
 	/* print MAC and LSAP */
-	printf("llc addr ");
+	kprintf("llc addr ");
 	for (i = 0; i < (SAL(linkp)->sdl_alen) - 2; i++)
-		printf("%x:", (char) *(LLADDR(SAL(linkp)) + i) & 0xff);
-	printf("%x,", (char) *(LLADDR(SAL(linkp)) + i) & 0xff);
-	printf("%x\n", (char) *(LLADDR(SAL(linkp)) + i + 1) & 0xff);
+		kprintf("%x:", (char) *(LLADDR(SAL(linkp)) + i) & 0xff);
+	kprintf("%x,", (char) *(LLADDR(SAL(linkp)) + i) & 0xff);
+	kprintf("%x\n", (char) *(LLADDR(SAL(linkp)) + i + 1) & 0xff);
 
 	/* print state we're in and timers */
-	printf("state %s, ", llc_getstatename(linkp));
+	kprintf("state %s, ", llc_getstatename(linkp));
 	for (i = LLC_ACK_SHIFT; i < LLC_AGE_SHIFT; i++)
-		printf("%s-%c %d/", timer_names[i],
-		       (linkp->llcl_timerflags & (1 << i) ? 'R' : 'S'),
-		       linkp->llcl_timers[i]);
-	printf("%s-%c %d\n", timer_names[i], (linkp->llcl_timerflags & (1 << i) ?
-					 'R' : 'S'), linkp->llcl_timers[i]);
+		kprintf("%s-%c %d/", timer_names[i],
+		    (linkp->llcl_timerflags & (1 << i) ? 'R' : 'S'),
+		    linkp->llcl_timers[i]);
+	kprintf("%s-%c %d\n", timer_names[i],
+	    (linkp->llcl_timerflags & (1 << i) ?  'R' : 'S'),
+	    linkp->llcl_timers[i]);
 
 	/* print flag values */
-	printf("flags P %d/F %d/S %d/DATA %d/REMOTE_BUSY %d\n",
-	       LLC_GETFLAG(linkp,P), LLC_GETFLAG(linkp,F),
-	       LLC_GETFLAG(linkp,S),
-	       LLC_GETFLAG(linkp,DATA), LLC_GETFLAG(linkp,REMOTE_BUSY));
+	kprintf("flags P %d/F %d/S %d/DATA %d/REMOTE_BUSY %d\n",
+	    LLC_GETFLAG(linkp,P), LLC_GETFLAG(linkp,F),
+	    LLC_GETFLAG(linkp,S),
+	    LLC_GETFLAG(linkp,DATA), LLC_GETFLAG(linkp,REMOTE_BUSY));
 
 	/* print send and receive state variables, ack, and window */
-	printf("V(R) %d/V(S) %d/N(R) received %d/window %d/freeslot %d\n",
-	       linkp->llcl_vs, linkp->llcl_vr, linkp->llcl_nr_received,
-	       linkp->llcl_window, linkp->llcl_freeslot);
+	kprintf("V(R) %d/V(S) %d/N(R) received %d/window %d/freeslot %d\n",
+	    linkp->llcl_vs, linkp->llcl_vr, linkp->llcl_nr_received,
+	    linkp->llcl_window, linkp->llcl_freeslot);
 
 	/* further expansions can follow here */
 

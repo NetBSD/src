@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.13 1996/05/23 23:35:26 mycroft Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.14 1996/10/10 23:02:29 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -390,8 +390,6 @@ int
 pk_listen(lcp)
 	register struct pklcd *lcp;
 {
-	register struct pklcd **pp;
-
 	if (lcp->lcd_ceaddr == 0)
 		return (EDESTADDRREQ);
 
@@ -711,7 +709,7 @@ to_bcd(b, sa, xcp)
 		char            dnicname[sizeof(long) * NBBY / 3 + 2];
 		register char  *p = dnicname;
 
-		sprintf(p, "%d", xcp->xc_addr.x25_net & 0x7fff);
+		ksprintf(p, "%d", xcp->xc_addr.x25_net & 0x7fff);
 		for (; *p; p++)	/* *p == 0 means dnic matched */
 			if ((*p ^ *x++) & 0x0f)
 				break;
@@ -1146,16 +1144,16 @@ pk_message(lcn, xcp, fmt, va_alist)
 
 	if (lcn)
 		if (!PQEMPTY)
-			printf("X.25(%s): lcn %d: ", format_ntn(xcp), lcn);
+			kprintf("X.25(%s): lcn %d: ", format_ntn(xcp), lcn);
 		else
-			printf("X.25: lcn %d: ", lcn);
+			kprintf("X.25: lcn %d: ", lcn);
 	else if (!PQEMPTY)
-		printf("X.25(%s): ", format_ntn(xcp));
+		kprintf("X.25(%s): ", format_ntn(xcp));
 	else
-		printf("X.25: ");
+		kprintf("X.25: ");
 
 	va_start(ap, fmt);
-	printf("%:\n", fmt, ap);
+	kprintf("%:\n", fmt, ap);
 	va_end(ap);
 }
 

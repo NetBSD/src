@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_input.c,v 1.8 1996/05/23 23:35:24 mycroft Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.9 1996/10/10 23:02:27 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -316,8 +316,8 @@ pkintr()
 		if (m == 0)
 			break;
 		if (m->m_len < PKHEADERLN) {
-			printf("pkintr: packet too short (len=%d)\n",
-			       m->m_len);
+			kprintf("pkintr: packet too short (len=%d)\n",
+			    m->m_len);
 			m_freem(m);
 			continue;
 		}
@@ -878,7 +878,7 @@ pk_from_bcd(a, iscalling, sa, xcp)
 	if (xcp->xc_addr.x25_net && (xcp->xc_nodnic || xcp->xc_prepnd0)) {
 		octet           dnicname[sizeof(long) * NBBY / 3 + 2];
 
-		sprintf((char *) dnicname, "%d", xcp->xc_addr.x25_net);
+		ksprintf((char *) dnicname, "%d", xcp->xc_addr.x25_net);
 		prune_dnic((char *) buf, sa->x25_addr, dnicname, xcp);
 	} else
 		bcopy((caddr_t) buf, (caddr_t) sa->x25_addr, count + 1);
@@ -1136,10 +1136,10 @@ pk_parse_facilities(fcp, sa)
 			break;
 
 		default:
-			/*
-			 * printf("unknown facility %x, class=%d\n", *fcp,
-			 * (*fcp & 0xc0) >> 6);
-			 */
+#if 0
+			 kprintf("unknown facility %x, class=%d\n", *fcp,
+			     (*fcp & 0xc0) >> 6);
+#endif
 			switch ((*fcp & 0xc0) >> 6) {
 			case 0:/* class A */
 				fcp += 2;
