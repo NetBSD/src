@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_any.c,v 1.1 2001/04/06 15:14:39 fredette Exp $ */
+/*	$NetBSD: bwtwo_any.c,v 1.2 2001/04/10 12:44:12 fredette Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -165,8 +165,7 @@ bwtwoattach_any(parent, self, aux)
 
 	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 	fb->fb_type.fb_depth = 1;
-	fb->fb_type.fb_width = 1152;
-	fb->fb_type.fb_height = 900;
+	fb_setsize_eeprom(fb, fb->fb_type.fb_depth, 1152, 900);
 
 	isconsole = fb_is_console(0);
 
