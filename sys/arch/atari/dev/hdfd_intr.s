@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd_intr.s,v 1.3 1996/12/18 12:35:36 leo Exp $
+/*	$NetBSD: hdfd_intr.s,v 1.4 1997/01/01 21:12:57 leo Exp $
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -41,6 +41,7 @@
 #define ASSEMBLER /* XXX */
 #include <atari/dev/hdfdreg.h>
 
+	.text
 	.globl	_fddmaaddr
 	.globl	_fdio_addr,_fddmalen
 	.globl	_mfp_hdfd_nf, _mfp_hdfd_fifo
@@ -51,7 +52,7 @@
  * one character waiting.
  */
 _mfp_hdfd_nf:
-	addql	#1,_intrcnt+12		|  XXX: add another fdc/acsi interrupt
+	addql	#1,nintr		|  add another interrupt
 
 	moveml	d0-d1/a0-a1,sp@-	|  Save scratch registers
 	movl	_fdio_addr,a0		|  Get base of fdc registers
@@ -69,7 +70,7 @@ hdfd_rd_nf:
 1:
 	subql	#1, _fddmalen		|  decrement bytecount
 	movl	a1,_fddmaaddr		|  update dma pointer
-	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
+|	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
 	moveml	sp@+,d0-d1/a0-a1
 	rte
 hdfd_wrt_nf:
@@ -80,7 +81,7 @@ hdfd_wrt_nf:
  * Systems *with* fifo's enter here.
  */
 _mfp_hdfd_fifo:
-	addql	#1,_intrcnt+12		|  XXX: add another fdc/acsi interrupt
+	addql	#1,_intrcnt_user+88	|  add another interrupt
 
 	moveml	d0-d1/a0-a1,sp@-	|  Save scratch registers
 	movl	_fdio_addr,a0		|  Get base of fdc registers
@@ -133,7 +134,16 @@ hdfdc_xit:
 	 * stuff.
 	 */
 hdfdc_norm:
-	jbsr	_fdc_ctrl_intr		|  handle interrupt
+	tstl	nintr
+	jeq	0f
+	movl	nintr,d0
+	clrl	nintr
+	addl	d0, _intrcnt_user+88	|  add another interrupt
+	addl	d0, _cnt+V_INTR		|  chalk up another interrupt
+0:	jbsr	_fdc_ctrl_intr		|  handle interrupt
 	moveml	sp@+,d0-d1/a0-a1	|    and saved registers
-	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
 	jra	rei
+
+	.data
+nintr:
+	.long	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.5 1996/12/20 12:49:37 leo Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.6 1997/01/01 21:12:56 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -83,6 +83,7 @@
 #include <machine/mfp.h>
 
 #include <atari/dev/hdfdreg.h>
+#include <atari/atari/intr.h>
 #include <atari/atari/device.h>
 
 /*
@@ -110,10 +111,13 @@ void	fddma_intr(void);
 caddr_t	fddmaaddr  = NULL;
 int	fddmalen   = 0;
 
+extern void	mfp_hdfd_nf __P((void)), mfp_hdfd_fifo __P((void));
+
 /*
  * Argument to fdcintr.....
  */
 static void	*intr_arg = NULL; /* XXX: arg. to intr_establish() */
+
 
 
 #define FDUNIT(dev)	(minor(dev) / 8)
@@ -366,16 +370,11 @@ fdcattach(parent, self, aux)
 
 	printf("\n");
 
-	/*
-	 * Setup the interrupt vector.
-	 * XXX: While no int_establish() functions are available,
-	 *      we do it the Dirty(Tm) way...
-	 */
-	{
-		extern	u_long	uservects[];
-		extern	void	mfp_hdfd_nf(void), mfp_hdfd_fifo(void);
-
-		uservects[22] = (u_long)(has_fifo ? mfp_hdfd_fifo:mfp_hdfd_nf);
+	if (intr_establish(22, USER_VEC|FAST_VEC, 0,
+			   (hw_ifun_t)(has_fifo ? mfp_hdfd_fifo : mfp_hdfd_nf),
+			   NULL) == NULL) {
+		printf("fdcattach: Can't establish interrupt\n");
+		return;
 	}
 
 	/*
