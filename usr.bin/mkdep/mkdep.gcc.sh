@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: mkdep.gcc.sh,v 1.10 1997/07/20 23:27:09 cgd Exp $
+#	$NetBSD: mkdep.gcc.sh,v 1.11 1997/07/21 05:37:32 cgd Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -92,9 +92,9 @@ TMP=/tmp/mkdep$$
 trap 'rm -f $TMP ; exit 1' 1 2 3 13 15
 
 if [ x$pflag = x ]; then
-	${CC} -M "$@" | sed -e 's;\([ \t]*\)\./;\1;g' > $TMP
+	${CC} -M "$@" | sed -e 's;\([ \t][ \t]*\)\./;\1;g' > $TMP
 else
-	${CC} -M "$@" | sed -e 's;\.o\([ ]*\):;\1:;' -e 's;\([ \t]*\)\./;\1;g' > $TMP
+	${CC} -M "$@" | sed -e 's;\.o\([ \t]*\):;\1:;' -e 's;\([ \t][ \t]*\)\./;\1;g' > $TMP
 fi
 
 if [ $? != 0 ]; then
