@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.33 1998/10/10 00:28:36 thorpej Exp $	*/
+/*	$NetBSD: idesc.c,v 1.34 1998/11/19 21:44:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -217,6 +217,7 @@ struct idec_softc
 	struct isr sc_isr;
 
 	struct	scsipi_link sc_link;	/* proto for sub devices */
+	struct	scsipi_adapter sc_adapter;
 	ide_regmap_p	sc_cregs;	/* driver specific regs */
 	volatile u_char *sc_a1200;	/* A1200 interrupt control */
 	TAILQ_HEAD(,ide_pending) sc_xslist;	/* LIFO */
@@ -252,12 +253,6 @@ void idesetdelay __P((int));
 void ide_scsidone __P((struct idec_softc *, int));
 void ide_donextcmd __P((struct idec_softc *));
 int  idesc_intr __P((void *));
-
-struct scsipi_adapter idesc_scsiswitch = {
-	ide_scsicmd,
-	minphys,		/* no max transfer len, at this level */
-	NULL,			/* scsipi_ioctl */
-};
 
 struct scsipi_device idesc_scsidev = {
 	NULL,		/* use default error handler */
@@ -402,10 +397,13 @@ idescattach(pdp, dp, auxp)
 
 	printf ("\n");
 
+	sc->sc_adapter.scsipi_cmd = ide_scsicmd;
+	sc->sc_adapter.scsipi_minphys = minphys;
+
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &idesc_scsiswitch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &idesc_scsidev;
 	sc->sc_link.openings = 1;
 	sc->sc_link.scsipi_scsi.max_target = 7;

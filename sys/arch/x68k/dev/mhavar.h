@@ -1,4 +1,4 @@
-/*	$NetBSD: mhavar.h,v 1.1 1997/10/19 09:29:36 oki Exp $	*/
+/*	$NetBSD: mhavar.h,v 1.2 1998/11/19 21:50:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -92,6 +92,7 @@ struct mha_softc {
 	volatile u_char *sc_pcx;
 
 	struct scsipi_link sc_link;	/* prototype for subdevs */
+	struct scsipi_adapter sc_adapter;
 
 	TAILQ_HEAD(, acb) free_list, ready_list, nexus_list;
 	struct acb *sc_nexus;	/* current command */

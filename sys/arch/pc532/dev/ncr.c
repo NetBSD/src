@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.42 1998/10/10 00:28:32 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.43 1998/11/19 21:48:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -81,12 +81,6 @@ static void	ncr_wait_not_req __P((struct ncr5380_softc *sc));
  */
 int ncr_default_options = 0;
 
-struct scsipi_adapter ncr_switch = {
-	ncr5380_scsi_cmd,	/* scsipi_cmd				*/
-	minphys,		/* scsipi_minphys			*/
-	NULL,			/* scsipi_ioctl				*/
-};
-
 struct scsipi_device ncr_dev = {
 	NULL,			/* use default error handler		*/
 	NULL,			/* do not have a start function		*/
@@ -138,12 +132,18 @@ ncr_attach(parent, self, aux)
 		printf("\n");
 
 	/*
+	 * Fill in the adapter.
+	 */
+	sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = minphys;
+
+	/*
 	 * Fill in the prototype scsi_link.
 	 */
 	sc->sc_link.scsipi_scsi.channel        = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc  = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter        = &ncr_switch;
+	sc->sc_link.adapter        = &sc->sc_adapter;
 	sc->sc_link.device	   = &ncr_dev;
 	sc->sc_link.type = BUS_SCSI;
 

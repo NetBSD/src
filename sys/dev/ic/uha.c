@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.18 1998/10/10 00:28:34 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.19 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -104,12 +104,6 @@ int uha_create_mscps __P((struct uha_softc *, struct uha_mscp *, int));
 void uha_enqueue __P((struct uha_softc *, struct scsipi_xfer *, int));
 struct scsipi_xfer *uha_dequeue __P((struct uha_softc *));
 
-struct scsipi_adapter uha_switch = {
-	uha_scsi_cmd,		/* scsipi_cmd */
-	uhaminphys,		/* scsipi_minphys */
-	NULL,			/* scsipi_ioctl */
-};
-
 /* the below structure is so we have a default dev struct for out link struct */
 struct scsipi_device uha_dev = {
 	NULL,			/* Use default error handler */
@@ -178,12 +172,18 @@ uha_attach(sc, upd)
 	(sc->init)(sc);
 
 	/*
+	 * Fill in the adapter.
+	 */
+	sc->sc_adapter.scsipi_cmd = uha_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = uhaminphys;
+
+	/*
 	 * fill in the prototype scsipi_link.
 	 */
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = upd->sc_scsi_dev;
-	sc->sc_link.adapter = &uha_switch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &uha_dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bhavar.h,v 1.11 1998/08/15 10:51:18 mycroft Exp $	*/
+/*	$NetBSD: bhavar.h,v 1.12 1998/11/19 21:53:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@ struct bha_softc {
 	TAILQ_HEAD(, bha_ccb) sc_free_ccb, sc_waiting_ccb;
 	int sc_mbofull;
 	struct scsipi_link sc_link;	/* prototype for devs */
+	struct scsipi_adapter sc_adapter;
 
 	LIST_HEAD(, scsipi_xfer) sc_queue;
 	struct scsipi_xfer *sc_queuelast;

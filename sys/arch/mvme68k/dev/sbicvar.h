@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.4 1997/08/27 11:23:59 bouyer Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.5 1998/11/19 21:47:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -99,7 +99,8 @@ struct  sbic_softc {
     } sc_sync[8];
     u_char                  target;     /* Currently active target */
     u_char                  lun;
-    struct  scsipi_link       sc_link;    /* proto for sub devices */
+    struct  scsipi_link     sc_link;    /* proto for sub devices */
+    struct  scsipi_adapter  sc_adapter;
     sbic_regmap_p           sc_sbicp;   /* the SBIC */
     volatile void           *sc_cregs;  /* driver specific regs */
     int                     sc_ipl;

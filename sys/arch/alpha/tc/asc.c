@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.14 1998/10/10 00:28:30 thorpej Exp $ */
+/* $NetBSD: asc.c,v 1.15 1998/11/19 21:43:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.14 1998/10/10 00:28:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.15 1998/11/19 21:43:00 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,12 +113,6 @@ void	asc_tcds_attach	__P((struct device *, struct device *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach asc_tcds_ca = {
 	sizeof(struct asc_tcds_softc), asc_tcds_match, asc_tcds_attach
-};
-
-struct scsipi_adapter asc_tcds_switch = {
-	ncr53c9x_scsi_cmd,
-	minphys,		/* no max at this level; handled by DMA code */
-	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device asc_tcds_dev = {
@@ -237,7 +231,9 @@ asc_tcds_attach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, &asc_tcds_switch, &asc_tcds_dev);
+	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = minphys;
+	ncr53c9x_attach(sc, &asc_tcds_dev);
 }
 
 /*

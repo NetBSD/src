@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.27 1998/10/10 00:28:37 thorpej Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.28 1998/11/19 21:44:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -58,12 +58,6 @@ int mgnsc_dmaintr __P((void *));
 void mgnsc_dump __P((void));
 #endif
 
-struct scsipi_adapter mgnsc_scsiswitch = {
-	siop_scsicmd,
-	siop_minphys,
-	NULL,		/* scsipi_ioctl */
-};
-
 struct scsipi_device mgnsc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
@@ -120,10 +114,13 @@ mgnscattach(pdp, dp, auxp)
 
 	alloc_sicallback();
 
+	sc->sc_adapter.scsipi_cmd = siop_scsicmd;
+	sc->sc_adapter.scsipi_minphys = siop_minphys;
+
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &mgnsc_scsiswitch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &mgnsc_scsidev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;

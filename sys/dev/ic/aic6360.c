@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.59 1998/10/10 00:28:33 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.60 1998/11/19 21:52:59 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -183,12 +183,6 @@ void	aic_show_scsi_cmd __P((struct aic_acb *));
 void	aic_print_active_acb __P((void));
 #endif
 
-struct scsipi_adapter aic_switch = {
-	aic_scsi_cmd,		/* scsipi_cmd */
-	aic_minphys,		/* scsipi_minphys */
-	NULL,			/* scsipi_ioctl */
-};
-
 struct scsipi_device aic_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
@@ -279,12 +273,18 @@ aicattach(sc)
 	aic_init(sc);	/* Init chip and driver */
 
 	/*
+	 * Fill in the adapter.
+	 */
+	sc->sc_adapter.scsipi_cmd = aic_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = aic_minphys;
+
+	/*
 	 * Fill in the prototype scsipi_link
 	 */
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_initiator;
-	sc->sc_link.adapter = &aic_switch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &aic_dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;

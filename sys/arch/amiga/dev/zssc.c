@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.25 1998/10/10 00:28:37 thorpej Exp $	*/
+/*	$NetBSD: zssc.c,v 1.26 1998/11/19 21:44:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -58,12 +58,6 @@ int  zssc_dmaintr __P((void *));
 void zssc_dump __P((void));
 #endif
 
-struct scsipi_adapter zssc_scsiswitch = {
-	siop_scsicmd,
-	siop_minphys,
-	NULL,		/* scsipi_ioctl */
-};
-
 struct scsipi_device zssc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
@@ -121,10 +115,13 @@ zsscattach(pdp, dp, auxp)
 
 	alloc_sicallback();
 
+	sc->sc_adapter.scsipi_cmd = siop_scsicmd;
+	sc->sc_adapter.scsipi_minphys = siop_minphys;
+
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &zssc_scsiswitch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &zssc_scsidev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.5 1998/10/10 00:28:34 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.6 1998/11/19 21:53:00 thorpej Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -51,12 +51,6 @@
 static void ispminphys __P((struct buf *));
 static int32_t ispcmd __P((ISP_SCSI_XFER_T *));
 
-static struct scsipi_adapter isp_switch = {
-	ispcmd,			/* scsipi_cmd */
-	ispminphys,		/* scsipi_minphys */
-	NULL,			/* scsipi_ioctl */
-};
-
 static struct scsipi_device isp_dev = { NULL, NULL, NULL, NULL };
 static int isp_poll __P((struct ispsoftc *, ISP_SCSI_XFER_T *, int));
 
@@ -67,11 +61,15 @@ void
 isp_attach(isp)
 	struct ispsoftc *isp;
 {
+
+	isp->isp_osinfo._adapter.scsipi_cmd = ispcmd;
+	isp->isp_osinfo._adapter.scsipi_minphys = ispminphys;
+
 	isp->isp_state = ISP_RUNSTATE;
 	isp->isp_osinfo._link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	isp->isp_osinfo._link.adapter_softc = isp;
 	isp->isp_osinfo._link.device = &isp_dev;
-	isp->isp_osinfo._link.adapter = &isp_switch;
+	isp->isp_osinfo._link.adapter = &isp->isp_osinfo._adapter;
 
 	if (isp->isp_type & ISP_HA_FC) {
 		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_FC_TARG-1;

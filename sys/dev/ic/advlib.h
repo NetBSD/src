@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.5 1998/10/28 20:39:46 dante Exp $        */
+/*      $NetBSD: advlib.h,v 1.6 1998/11/19 21:52:58 thorpej Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -841,6 +841,7 @@ typedef struct asc_softc
 	struct adv_control	*sc_control; /* control structures */
 	TAILQ_HEAD(, adv_ccb)	sc_free_ccb, sc_waiting_ccb;
 	struct scsipi_link	sc_link;     /* prototype for devs */
+	struct scsipi_adapter	sc_adapter;
 
 	LIST_HEAD(, scsipi_xfer) sc_queue;
 	struct scsipi_xfer	*sc_queuelast;
