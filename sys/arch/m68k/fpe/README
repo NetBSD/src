@@ -1,3 +1,4 @@
+* $NetBSD: README,v 1.2 1995/11/03 04:48:22 briggs Exp $
 * NetBSD/m68k FPE (floating point emulation) README file
 * Created Oct/??/95 by kenn@romulus.rutgers.edu (Ken Nakata)
 * Last updated Nov/02/95 by kenn
@@ -6,13 +7,11 @@
 
 To compile a kernel with FPE built-in, do the following:
 
-1) Extract all files in the directory ${MYSYS}/arch/m68k/fpe
-
-2) Add a line "options FPU_EMULATE" to your config file.  If you are
+1) Add a line "options FPU_EMULATE" to your config file.  If you are
 going to use the resulted kernel on a machine with an FPU for
 debugging purpose, add "options DEBUG_WITH_FPU" as well.
 
-3) Follow the usual procedure to build a new kernel.
+2) Follow the usual procedure to build a new kernel.
 
 NOTE:  If you add "options DEBUG_WITH_FPU", FPE will accept cpID=6 as
 emulated FPU.  You will need a modified gas that generates cpID=6 for
