@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 2000/10/08 16:04:02 bjh21 Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2000/10/08 16:08:56 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.33 2000/10/08 16:04:02 bjh21 Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 2000/10/08 16:08:56 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -660,12 +660,11 @@ putf(cp)
 			xputs(editedhost);
 			break;
 
-		case 'd': {
-			static char fmt[] = "%l:% %p on %A, %d %B %Y";
-
-			fmt[4] = 'M';		/* I *hate* SCCS... */
+		case 'd':
 			(void)time(&t);
-			(void)strftime(db, sizeof(db), fmt, localtime(&t));
+			(void)strftime(db, sizeof(db),
+			    /* SCCS eats %M% */
+			    "%l:%M" "%p on %A, %d %B %Y", localtime(&t));
 			xputs(db);
 			break;
 
@@ -684,7 +683,6 @@ putf(cp)
 		case 'v':
 			xputs(kerninfo.version);
 			break;
-		}
 
 		case '%':
 			putchr('%');
