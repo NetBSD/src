@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.19.2.4 2000/07/21 18:55:58 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.19.2.5 2001/05/06 15:04:35 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -435,14 +435,22 @@ awi_power(sc, why)
 	ocansleep = sc->sc_cansleep;
 	sc->sc_cansleep = 0;
 #ifdef needtobefixed	/*ONOE*/
-	if (why == PWR_RESUME) {
-		sc->sc_enabled = 0;
-		awi_init(sc);
-		(void)awi_intr(sc);
-	} else {
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
 		awi_stop(sc);
 		if (sc->sc_disable)
 			(*sc->sc_disable)(sc);
+		break;
+	case PWR_RESUME:
+		sc->sc_enabled = 0;
+		awi_init(sc);
+		(void)awi_intr(sc);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
 	}
 #endif
 	sc->sc_cansleep = ocansleep;
