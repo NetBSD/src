@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.8 2004/01/05 23:23:32 jmmv Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.9 2004/09/25 03:31:35 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.8 2004/01/05 23:23:32 jmmv Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.9 2004/09/25 03:31:35 thorpej Exp $");
 #endif
 
 
@@ -95,6 +95,11 @@ void	disk_synccache(int, char *[]);
 void	disk_keeplabel(int, char *[]);
 void	disk_badsectors(int, char *[]);
 
+void	disk_addwedge(int, char *[]);
+void	disk_delwedge(int, char *[]);
+void	disk_getwedgeinfo(int, char *[]);
+void	disk_listwedges(int, char *[]);
+
 struct command commands[] = {
 	{ "getcache",
 	  "",
@@ -120,6 +125,26 @@ struct command commands[] = {
 	  "flush | list | retry",
 	   disk_badsectors,
 	   O_RDWR },
+
+	{ "addwedge",
+	  "name startblk blkcnt ptype",
+	  disk_addwedge,
+	  O_RDWR },
+
+	{ "delwedge",
+	  "dk",
+	  disk_delwedge,
+	  O_RDWR },
+
+	{ "getwedgeinfo",
+	  "",
+	  disk_getwedgeinfo,
+	  O_RDONLY },
+
+	{ "listwedges",
+	  "",
+	  disk_listwedges,
+	  O_RDONLY },
 
 	{ NULL,
 	  NULL,
@@ -422,6 +447,132 @@ disk_badsectors(int argc, char *argv[])
 				fflush(stdout);
 			}
 		}
+	}
+}
+
+void
+disk_addwedge(int argc, char *argv[])
+{
+	struct dkwedge_info dkw;
+	char *cp;
+	daddr_t start;
+	uint64_t size;
+
+	if (argc != 4)
+		usage();
+
+	/* XXX Unicode. */
+	if (strlen(argv[0]) > sizeof(dkw.dkw_wname) - 1)
+		errx(1, "Wedge name too long; max %zd characters",
+		    sizeof(dkw.dkw_wname) - 1);
+	strcpy(dkw.dkw_wname, argv[0]);
+
+	if (strlen(argv[3]) > sizeof(dkw.dkw_ptype) - 1)
+		errx(1, "Wedge partition type too long; max %zd characters",
+		    sizeof(dkw.dkw_ptype) - 1);
+	strcpy(dkw.dkw_ptype, argv[3]);
+
+	errno = 0;
+	start = strtoll(argv[1], &cp, 0);
+	if (*cp != '\0')
+		errx(1, "Invalid start block: %s", argv[1]);
+	if (errno == ERANGE && (start == LLONG_MAX ||
+				start == LLONG_MIN))
+		errx(1, "Start block out of range.");
+	if (start < 0)
+		errx(1, "Start block must be >= 0.");
+
+	errno = 0;
+	size = strtoull(argv[2], &cp, 0);
+	if (*cp != '\0')
+		errx(1, "Invalid block count: %s", argv[2]);
+	if (errno == ERANGE && (size == ULLONG_MAX))
+		errx(1, "Block count out of range.");
+
+	dkw.dkw_offset = start;
+	dkw.dkw_size = size;
+
+	if (ioctl(fd, DIOCAWEDGE, &dkw) == -1)
+		err(1, "%s: addwedge", dvname);
+}
+
+void
+disk_delwedge(int argc, char *argv[])
+{
+	struct dkwedge_info dkw;
+
+	if (argc != 1)
+		usage();
+
+	if (strlen(argv[0]) > sizeof(dkw.dkw_devname) - 1)
+		errx(1, "Wedge dk name too long; max %zd characters",
+		    sizeof(dkw.dkw_devname) - 1);
+	strcpy(dkw.dkw_devname, argv[0]);
+
+	if (ioctl(fd, DIOCDWEDGE, &dkw) == -1)
+		err(1, "%s: delwedge", dvname);
+}
+
+void
+disk_getwedgeinfo(int argc, char *argv[])
+{
+	struct dkwedge_info dkw;
+
+	if (argc != 0)
+		usage();
+
+	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == -1)
+		err(1, "%s: getwedgeinfo", dvname);
+
+	printf("%s at %s: %s\n", dkw.dkw_devname, dkw.dkw_parent,
+	    dkw.dkw_wname);	/* XXX Unicode */
+	printf("%s: %llu blocks at %lld, type: %s\n",
+	    dkw.dkw_devname, dkw.dkw_size, dkw.dkw_offset, dkw.dkw_ptype);
+}
+
+void
+disk_listwedges(int argc, char *argv[])
+{
+	struct dkwedge_info *dkw;
+	struct dkwedge_list dkwl;
+	size_t bufsize;
+	u_int i;
+
+	if (argc != 0)
+		usage();
+
+	dkw = NULL;
+	dkwl.dkwl_buf = dkw;
+	dkwl.dkwl_bufsize = 0;
+
+	for (;;) {
+		if (ioctl(fd, DIOCLWEDGES, &dkwl) == -1)
+			err(1, "%s: listwedges", dvname);
+		if (dkwl.dkwl_nwedges == dkwl.dkwl_ncopied)
+			break;
+		bufsize = dkwl.dkwl_nwedges * sizeof(*dkw);
+		if (dkwl.dkwl_bufsize < bufsize) {
+			dkw = realloc(dkwl.dkwl_buf, bufsize);
+			if (dkw == NULL)
+				errx(1, "%s: listwedges: unable to "
+				    "allocate wedge info buffer", dvname);
+			dkwl.dkwl_buf = dkw;
+			dkwl.dkwl_bufsize = bufsize;
+		}
+	}
+
+	if (dkwl.dkwl_nwedges == 0) {
+		printf("%s: no wedges configured\n", dvname);
+		return;
+	}
+
+	printf("%s: %u wedge%s:\n", dvname, dkwl.dkwl_nwedges,
+	    dkwl.dkwl_nwedges == 1 ? "" : "s");
+	for (i = 0; i < dkwl.dkwl_nwedges; i++) {
+		printf("%s: %s, %llu blocks at %lld, type: %s\n",
+		    dkw[i].dkw_devname,
+		    dkw[i].dkw_wname,	/* XXX Unicode */
+		    dkw[i].dkw_size, dkw[i].dkw_offset, dkw[i].dkw_ptype);
 	}
 }
 
