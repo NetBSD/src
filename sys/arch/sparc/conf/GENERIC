@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.108 2000/06/20 14:24:24 pk Exp $
+# 	$NetBSD: GENERIC,v 1.109 2000/06/21 13:46:43 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.108 $"
+#ident 		"GENERIC-$Revision: 1.109 $"
 
 maxusers	32
 
@@ -15,7 +15,7 @@ options 	SUN4		# sun4/100, sun4/200, sun4/300
 options 	SUN4C		# sun4c - SS1, 1+, 2, ELC, SLC, IPC, IPX, etc.
 options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 
-#options 	SUN4_MMU3L	# 3-level MMU on sun4/400; (incomplete)
+options 	SUN4_MMU3L	# sun4/400 3-level MMU
 
 ## System options specific to the sparc machine type
 
