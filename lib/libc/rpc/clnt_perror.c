@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.6 1995/04/21 21:59:52 jtc Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.7 1995/04/24 16:34:39 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_perror.c,v 1.6 1995/04/21 21:59:52 jtc Exp $";
+static char *rcsid = "$NetBSD: clnt_perror.c,v 1.7 1995/04/24 16:34:39 cgd Exp $";
 #endif
 
 /*
@@ -190,7 +190,7 @@ clnt_sperrno(stat)
 	unsigned int errnum = stat;
 
 	if (errnum < (sizeof(rpc_errlist)/sizeof(rpc_errlist[0])))
-		return rpc__errlist[errnum];
+		return (char *)rpc_errlist[errnum];
 
 	return ("RPC: (unknown error code)");
 }
@@ -254,7 +254,7 @@ auth_errmsg(stat)
 	unsigned int errnum = stat;
 
 	if (errnum < (sizeof(auth_errlist)/sizeof(auth_errlist[0])))
-		return auth_errlist[errnum];
+		return (char *)auth_errlist[errnum];
 
 	return(NULL);
 }
