@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.1 2000/08/19 13:22:40 mrg Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.2 2000/12/03 01:54:49 minoura Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,6 +39,11 @@
 
 /* sparc machine dependent messages, english */
 
+
+message md_hello
+{If you booted from a floppy, you may now remove the disk.
+
+}
 
 message fullpart
 {We are now going to install NetBSD on the disk %s.  You may
