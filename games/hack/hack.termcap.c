@@ -3,11 +3,12 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: hack.termcap.c,v 1.4 1995/04/24 12:23:34 cgd Exp $";
+static char rcsid[] = "$NetBSD: hack.termcap.c,v 1.5 1995/04/29 01:08:51 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
+#include <termios.h>
 #include "config.h"	/* for ROWNO and COLNO */
 #include "def.flag.h"	/* for flags.nonull */
 extern char *tgetstr(), *tgoto(), *getenv();
@@ -16,7 +17,7 @@ extern long *alloc();
 #ifndef lint
 extern			/* it is defined in libtermlib (libtermcap) */
 #endif lint
-	short ospeed;		/* terminal baudrate; used by tputs */
+	speed_t ospeed;		/* terminal baudrate; used by tputs */
 static char tbuf[512];
 static char *HO, *CL, *CE, *UP, *CM, *ND, *XD, *BC, *SO, *SE, *TI, *TE;
 static char *VS, *VE;
@@ -236,10 +237,6 @@ bell()
 	(void) fflush(stdout);
 }
 
-static short tmspc10[] = {		/* from termcap */
-	0, 2000, 1333, 909, 743, 666, 500, 333, 166, 83, 55, 41, 20, 10, 5
-};
-
 delay_output() {
 	/* delay 50 ms - could also use a 'nap'-system call */
 	/* BUG: if the padding character is visible, as it is on the 5620
@@ -251,14 +248,13 @@ delay_output() {
 		/* is this terminfo, or what? */
 		/* tputs("$<50>", 1, xputc); */
 
-	else if(ospeed > 0 || ospeed < SIZE(tmspc10)) if(CM) {
+	else if(ospeed > 0) if(CM) {
 		/* delay by sending cm(here) an appropriate number of times */
 		register int cmlen = strlen(tgoto(CM, curx-1, cury-1));
-		register int i = 500 + tmspc10[ospeed]/2;
+		register int i = (ospeed + (10 * cmlen)) / (20 * cmlen);
 
 		while(i > 0) {
 			cmov(curx, cury);
-			i -= cmlen*tmspc10[ospeed];
 		}
 	}
 }
