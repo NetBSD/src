@@ -1,4 +1,11 @@
-# $NetBSD: nanpa.awk,v 1.1 2003/03/03 01:14:03 jhawk Exp $
+# $NetBSD: nanpa.awk,v 1.2 2003/03/13 02:55:01 jhawk Exp $
+#
+# todo:
+#	parse "http://docs.nanpa.com/cgi-bin/npa_reports/nanpa?
+#	    function=list_npa_introduced" to produce parenthetical
+#	    notes about what area codes are overlayed by others
+#	    (or split from).
+#
 function parse(file, ispipe, isplanning,	i, planinit, t)
 {
 	planinit = 0;
