@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.67 2005/01/25 23:55:21 wrstuden Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.68 2005/01/27 02:16:42 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.67 2005/01/25 23:55:21 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.68 2005/01/27 02:16:42 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,7 +461,7 @@ loop:
 		waitfor = (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
 	error = VOP_UPDATE(vp, NULL, NULL, waitfor);
 
-	if (error == 0 && ap->a_flags & FSYNC_WAIT) {
+	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int i = 0;
 		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &i, FWRITE,
 			ap->a_p->p_ucred, ap->a_p);
