@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.6 2002/02/25 00:34:15 kleink Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7 2002/08/13 04:57:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -66,6 +66,7 @@
 
 #include <machine/walnut.h>
 #include <powerpc/ibm4xx/ibm405gp.h>
+#include <powerpc/ibm4xx/pcicreg.h>
 
 static bus_space_tag_t pci_iot;
 static bus_space_handle_t pci_ioh;
@@ -75,7 +76,7 @@ void pci_machdep_init(void)
 
 	if (pci_ioh == 0) {
 		pci_iot = 0;
-		if (bus_space_map(pci_iot, PCIC0_BASE, 8, 0, &pci_ioh)){
+		if (bus_space_map(pci_iot, IBM405GP_PCIC0_BASE, 8, 0, &pci_ioh)){
 			panic("Cannot map PCI registers\n");
 		}
 	}
@@ -139,9 +140,9 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	pcireg_t data;
 
 	/* 405GT BIOS disables interrupts here. Should we? --Art */
-	bus_space_write_4(pci_iot, pci_ioh, PCIC0_CFGADDR, tag | reg);
-	data = bus_space_read_4(pci_iot, pci_ioh, PCIC0_CFGDATA);
-	bus_space_write_4(pci_iot, pci_ioh, PCIC0_CFGADDR, 0); /* 405GP pass2 errata #6 */
+	bus_space_write_4(pci_iot, pci_ioh, PCIC_CFGADDR, tag | reg);
+	data = bus_space_read_4(pci_iot, pci_ioh, PCIC_CFGDATA);
+	bus_space_write_4(pci_iot, pci_ioh, PCIC_CFGADDR, 0); /* 405GP pass2 errata #6 */
 	return data;
 }
 
@@ -149,9 +150,9 @@ void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 
-	bus_space_write_4(pci_iot, pci_ioh, PCIC0_CFGADDR, tag | reg);
-	bus_space_write_4(pci_iot, pci_ioh, PCIC0_CFGDATA, data);
-	bus_space_write_4(pci_iot, pci_ioh, PCIC0_CFGADDR, 0); /* 405GP pass2 errata #6 */
+	bus_space_write_4(pci_iot, pci_ioh, PCIC_CFGADDR, tag | reg);
+	bus_space_write_4(pci_iot, pci_ioh, PCIC_CFGDATA, data);
+	bus_space_write_4(pci_iot, pci_ioh, PCIC_CFGADDR, 0); /* 405GP pass2 errata #6 */
 }
 
 
