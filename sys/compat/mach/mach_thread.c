@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.1 2002/11/26 08:10:18 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.2 2002/11/28 21:21:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.1 2002/11/26 08:10:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.2 2002/11/28 21:21:33 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,9 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.1 2002/11/26 08:10:18 manu Exp $")
 #include <compat/mach/mach_syscallargs.h>
 
 int 
-mach_thread_policy(p, msgh)
+mach_thread_policy(p, msgh, maxlen, dst)
 	struct proc *p;
 	mach_msg_header_t *msgh;
+	size_t maxlen;
+	mach_msg_header_t *dst;
 {
 	mach_thread_policy_request_t req;
 	mach_thread_policy_reply_t rep;
@@ -71,6 +73,11 @@ mach_thread_policy(p, msgh)
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
 	rep.rep_trailer.msgh_trailer_size = 8;
+
+	if (sizeof(rep) > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
 
 	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
 		return error;

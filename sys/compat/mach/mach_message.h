@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.5 2002/11/11 09:28:00 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.6 2002/11/28 21:21:32 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -152,7 +152,8 @@ typedef struct {
 
 struct mach_subsystem_namemap {
 	int	map_id;
-	int	(*map_handler) __P((struct proc *, mach_msg_header_t *));
+	int	(*map_handler)(struct proc *, mach_msg_header_t *, 
+		    size_t, mach_msg_header_t *);
 	const char	*map_name;
 };
 extern struct mach_subsystem_namemap mach_namemap[];

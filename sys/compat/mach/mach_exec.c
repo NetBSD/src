@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.11 2002/11/21 19:53:41 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.12 2002/11/28 21:21:32 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.11 2002/11/21 19:53:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.12 2002/11/28 21:21:32 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,9 @@ extern struct sysent sysent[];
 extern const char * const syscallnames[];
 #endif
 #ifndef __HAVE_SYSCALL_INTERN
-void syscall __P((void));
+void syscall(void);
 #else
-void mach_syscall_intern __P((struct proc *));
+void mach_syscall_intern(struct proc *);
 #endif
 
 const struct emul emul_mach = {

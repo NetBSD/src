@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.c,v 1.3 2002/11/12 06:14:39 manu Exp $ */
+/*	$NetBSD: mach_errno.c,v 1.4 2002/11/28 21:21:32 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,10 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.3 2002/11/12 06:14:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.4 2002/11/28 21:21:32 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
+#include <sys/null.h>
+#include <sys/errno.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -136,11 +138,13 @@ int native_to_mach_errno[] = {
 };
 
 int
-mach_msg_error(msgh, req, rep, error)
+mach_msg_error(msgh, req, rep, error, maxlen, dst)
 	mach_msg_header_t *msgh;
 	mach_msg_header_t *req;
 	mach_error_reply_t *rep;
 	int error;
+	size_t maxlen;
+	mach_msg_header_t *dst;
 {	
 	bzero(rep, sizeof(*rep));
 
@@ -151,6 +155,11 @@ mach_msg_error(msgh, req, rep, error)
 	rep->rep_msgh.msgh_id = req->msgh_id + 100;
 	rep->rep_retval = native_to_mach_errno[error];
 	rep->rep_trailer.msgh_trailer_size = 8;
+
+	if (sizeof(*rep) > maxlen)
+		return EMSGSIZE;
+	if (dst != NULL)
+		msgh = dst;
 
 	return copyout(rep, msgh, sizeof(*rep));
 }
