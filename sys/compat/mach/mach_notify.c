@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.1 2003/03/29 11:04:10 manu Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.2 2003/04/05 19:27:51 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,13 +37,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.1 2003/03/29 11:04:10 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.2 2003/04/05 19:27:51 manu Exp $");
+
+#include "opt_ktrace.h"
+#include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_exec.h>
@@ -57,17 +63,11 @@ mach_notify_port_destroyed(l, mr)
 	struct mach_port *mp;
 	mach_notify_port_destroyed_request_t *req;
 
-#ifdef DEBUG_MACH
-	printf("mach_notify_port_destroyed\n");
-#endif
 	if (mr->mr_notify_destroyed == NULL)
 		return;
 	mp = mr->mr_notify_destroyed->mr_port;
 
 #ifdef DEBUG_MACH
-	printf("name = %x, notify = %x\n", mr->mr_name, 
-	    mr->mr_notify_destroyed->mr_name);
-	printf("mach_notify_port_destroyed: mp = %p\n", mp);
 	if (mp == NULL) {
 		printf("Warning: notification right without a port\n");
 		return;
@@ -78,16 +78,22 @@ mach_notify_port_destroyed(l, mr)
 
 	req->req_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	req->req_msgh.msgh_size = sizeof(*req);
+	req->req_msgh.msgh_size = sizeof(*req) - sizeof(req->req_trailer);
 	req->req_msgh.msgh_local_port = mr->mr_notify_destroyed->mr_name;
 	req->req_msgh.msgh_id= MACH_NOTIFY_DESTROYED_MSGID;
 	req->req_body.msgh_descriptor_count = 1;
 	req->req_rights.name = mr->mr_name;
+	req->req_trailer.msgh_trailer_size = 8;
 
 #ifdef KTRACE 
-	ktruser(p, "notify_port_destroyed", NULL, 0, 0);
+	ktruser(l->l_proc, "notify_port_destroyed", NULL, 0, 0);
 #endif
 	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
+#ifdef DEBUG_MACH_MSG
+	printf("pid %d: message queued on port %p (%d) [%p]\n",
+	    l->l_proc->p_pid, mp, req->req_msgh.msgh_id, 
+	    mp->mp_recv->mr_sethead);
+#endif
 	wakeup(mp->mp_recv->mr_sethead);
 
 	return;
@@ -119,15 +125,21 @@ mach_notify_port_no_senders(l, mr)
 
 	req->req_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	req->req_msgh.msgh_size = sizeof(*req);
+	req->req_msgh.msgh_size = sizeof(*req) - sizeof(req->req_trailer);
 	req->req_msgh.msgh_local_port = mr->mr_notify_no_senders->mr_name;
 	req->req_msgh.msgh_id= MACH_NOTIFY_NO_SENDERS_MSGID;
 	req->req_mscount = mr->mr_refcount;
+	req->req_trailer.msgh_trailer_size = 8;
 
 #ifdef KTRACE 
-	ktruser(p, "notify_port_no_senders", NULL, 0, 0);
+	ktruser(l->l_proc, "notify_port_no_senders", NULL, 0, 0);
 #endif
 	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
+#ifdef DEBUG_MACH_MSG
+	printf("pid %d: message queued on port %p (%d) [%p]\n",
+	    l->l_proc->p_pid, mp, req->req_msgh.msgh_id, 
+	    mp->mp_recv->mr_sethead);
+#endif
 	wakeup(mp->mp_recv->mr_sethead);
 
 	return;
@@ -157,19 +169,25 @@ mach_notify_port_dead_name(l, mr)
 
 	req->req_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	req->req_msgh.msgh_size = sizeof(*req);
+	req->req_msgh.msgh_size = sizeof(*req) - sizeof(req->req_trailer);
 	req->req_msgh.msgh_local_port = mr->mr_notify_dead_name->mr_name;
 	req->req_msgh.msgh_id= MACH_NOTIFY_DEAD_NAME_MSGID;
 	req->req_name = mr->mr_name;
+	req->req_trailer.msgh_trailer_size = 8;
 
 #ifdef KTRACE 
-	ktruser(p, "notify_port_dead_name", NULL, 0, 0);
+	ktruser(l->l_proc, "notify_port_dead_name", NULL, 0, 0);
 #endif
 
 	mr->mr_refcount++;
 
 	mp = mr->mr_notify_dead_name->mr_port;
 	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
+#ifdef DEBUG_MACH_MSG
+	printf("pid %d: message queued on port %p (%d) [%p]\n",
+	    l->l_proc->p_pid, mp, req->req_msgh.msgh_id, 
+	    mp->mp_recv->mr_sethead);
+#endif
 	wakeup(mp->mp_recv->mr_sethead);
 
 	return;
