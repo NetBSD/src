@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.2 1997/10/17 18:35:19 mark Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.2.10.1 1999/09/19 15:33:17 he Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -29,7 +29,9 @@ ENTRY(__modsi3)
 	ldmfd	sp!, {pc}
 
 L_overflow:
-	mvn	r0, #0
+	mov	r0, #8			/* SIGFPE */
+	bl	_raise			/* raise it */
+	mov	r0, #0
 	mov	pc, lr
 
 ENTRY(__udivsi3)
@@ -75,6 +77,87 @@ L_divide_l1:
 	mov	r2, #1
 	mov	r3, #0
 
+	/*
+	 * If the highest bit of the dividend is set, we have to be
+	 * careful when shifting the divisor. Test this. 
+	 */
+	movs	r1,r1
+	bpl	L_old_code
+
+	/*
+	 * At this point, the highest bit of r1 is known to be set.
+	 * We abuse this below in the tst instructions.
+	 */
+	tst	r1, r0 /*, lsl #0 */
+	bmi	L_divide_b1
+	tst	r1, r0, lsl #1
+	bmi	L_divide_b2
+	tst	r1, r0, lsl #2
+	bmi	L_divide_b3
+	tst	r1, r0, lsl #3
+	bmi	L_divide_b4
+	tst	r1, r0, lsl #4
+	bmi	L_divide_b5
+	tst	r1, r0, lsl #5
+	bmi	L_divide_b6
+	tst	r1, r0, lsl #6
+	bmi	L_divide_b7
+	tst	r1, r0, lsl #7
+	bmi	L_divide_b8
+	tst	r1, r0, lsl #8
+	bmi	L_divide_b9
+	tst	r1, r0, lsl #9
+	bmi	L_divide_b10
+	tst	r1, r0, lsl #10
+	bmi	L_divide_b11
+	tst	r1, r0, lsl #11
+	bmi	L_divide_b12
+	tst	r1, r0, lsl #12
+	bmi	L_divide_b13
+	tst	r1, r0, lsl #13
+	bmi	L_divide_b14
+	tst	r1, r0, lsl #14
+	bmi	L_divide_b15
+	tst	r1, r0, lsl #15
+	bmi	L_divide_b16
+	tst	r1, r0, lsl #16
+	bmi	L_divide_b17
+	tst	r1, r0, lsl #17
+	bmi	L_divide_b18
+	tst	r1, r0, lsl #18
+	bmi	L_divide_b19
+	tst	r1, r0, lsl #19
+	bmi	L_divide_b20
+	tst	r1, r0, lsl #20
+	bmi	L_divide_b21
+	tst	r1, r0, lsl #21
+	bmi	L_divide_b22
+	tst	r1, r0, lsl #22
+	bmi	L_divide_b23
+	tst	r1, r0, lsl #23
+	bmi	L_divide_b24
+	tst	r1, r0, lsl #24
+	bmi	L_divide_b25
+	tst	r1, r0, lsl #25
+	bmi	L_divide_b26
+	tst	r1, r0, lsl #26
+	bmi	L_divide_b27
+	tst	r1, r0, lsl #27
+	bmi	L_divide_b28
+	tst	r1, r0, lsl #28
+	bmi	L_divide_b29
+	tst	r1, r0, lsl #29
+	bmi	L_divide_b30
+	tst	r1, r0, lsl #30
+	bmi	L_divide_b31
+/*
+ * instead of:
+ *	tst	r1, r0, lsl #31
+ *	bmi	L_divide_b32
+ */
+	b	L_divide_b32
+
+L_old_code:
 	cmp	r1, r0
 	bcc	L_divide_b0
 	cmp	r1, r0, lsl #1
@@ -137,9 +220,11 @@ L_divide_l1:
 	bcc	L_divide_b29
 	cmp	r1, r0, lsl #30
 	bcc	L_divide_b30
+L_divide_b32:
 	cmp	r1, r0, lsl #31
 	subhs	r1, r1,r0, lsl #31
 	addhs	r3, r3,r2, lsl #31
+L_divide_b31:
 	cmp	r1, r0, lsl #30
 	subhs	r1, r1,r0, lsl #30
 	addhs	r3, r3,r2, lsl #30
