@@ -1,3 +1,5 @@
+/*	$NetBSD: krb_passwd.c,v 1.2 1996/08/09 09:19:36 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)krb_passwd.c	5.4 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: krb_passwd.c,v 1.1 1994/07/27 03:28:19 brezak Exp $";
+#if 0
+static char sccsid[] = "from: @(#)krb_passwd.c	5.4 (Berkeley) 3/1/91";
+#else
+static char rcsid[] = "$NetBSD: krb_passwd.c,v 1.2 1996/08/09 09:19:36 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 #ifdef KERBEROS

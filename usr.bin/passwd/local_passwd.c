@@ -1,3 +1,5 @@
+/*	$NetBSD: local_passwd.c,v 1.9 1996/08/09 09:19:39 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$Id: local_passwd.c,v 1.8 1996/05/15 21:55:26 jtc Exp $";
+#if 0
+static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";
+#else
+static char rcsid[] = "$NetBSD: local_passwd.c,v 1.9 1996/08/09 09:19:39 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,7 +53,6 @@ static char rcsid[] = "$Id: local_passwd.c,v 1.8 1996/05/15 21:55:26 jtc Exp $";
 
 uid_t uid;
 
-char *progname = "passwd";
 char *tempname;
 
 local_passwd(uname)
@@ -59,10 +63,6 @@ local_passwd(uname)
 	char *getnewpasswd();
 
 	if (!(pw = getpwnam(uname))) {
-#ifdef YP
-		extern int use_yp;
-		if (!use_yp)
-#endif
 		(void)fprintf(stderr, "passwd: unknown user %s.\n", uname);
 		return(1);
 	}
