@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 1997/03/15 13:04:23 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.7 1997/06/08 17:49:16 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -58,6 +58,7 @@ Xmain()
 	register howto asm("r11");
 	register bdev  asm("r10");
 	int io, retry, type;
+	extern	char vers[];
 
 	io=0;
 	bootdev=bdev;
@@ -73,7 +74,7 @@ Xmain()
 
 	for (retry = 0;;) {
 		if (io >= 0)
-			printf("\nNboot\n");
+			printf("\n%s\n", vers);
 		if (howto & RB_ASKNAME) {
 			printf(": ");
 			gets(line);

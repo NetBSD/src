@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.7 1997/04/10 21:25:21 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.8 1997/06/08 17:49:18 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -95,7 +95,7 @@ setup()
 {
 	vax_cputype = (mfpr(PR_SID) >> 24) & 0xFF;
 
-	put_fp = pr_putchar;
+	put_fp = pr_putchar; /* Default */
 	get_fp = pr_getchar;
 	/*
 	 * according to vax_cputype we initialize vax_boardtype.
@@ -120,17 +120,12 @@ setup()
 	 * enough to do that) we decide which method/routines to use
 	 * for console I/O. 
 	 * mtpr/mfpr are restricted to serial consoles, ROM-based routines
-	 * support both serial and graphical consoles, thus we use that
-	 * as fallthrough/default.
+	 * support both serial and graphical consoles.
+	 * We default to mtpr routines; so that we don't crash if
+	 * it isn't a supported system.
 	 */
 	switch (vax_boardtype) {
 
-	case VAX_BTYP_630: /* MVII has only mtpr console */
-		put_fp = pr_putchar;
-		get_fp = pr_getchar;
-		break;
-
-	case VAX_BTYP_650:
 	case VAX_BTYP_660:
 	case VAX_BTYP_670:
 	case VAX_BTYP_690:
@@ -152,15 +147,16 @@ setup()
 		rom_putc = 0x20040058;		/* 537133144 */
 		rom_getc = 0x20040044;		/* 537133124 */
 		break;
-
-	default:
-		put_fp = rom_putchar;
-		get_fp = rom_getchar;
-		rom_putc = 0x20040058;		/* 537133144 */
-		rom_getc = 0x20040044;		/* 537133124 */
-		break;
+#ifdef notdef
+	case VAX_BTYP_630:
+	case VAX_BTYP_650:
+	case VAX_BTYP_9CC:
+	case VAX_BTYP_60:
+		put_fp = pr_putchar;
+		get_fp = pr_getchar;
+		break
+#endif
 	}
-
 	return;
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/03/15 13:04:22 ragge Exp $
+#	$NetBSD: Makefile,v 1.13 1997/06/08 17:49:15 ragge Exp $
 #
 
 INCPATH=-I. -I../../../../.. -I../../../.. -I../../.. -I../.. -I../../../lib/libsa
@@ -54,21 +54,24 @@ xxboot:	start.o bootxx.o romread.o libsvax.a ${SALIB}
 	@dd if=a.out of=xxboot bs=32 skip=1
 	@rm -f a.out
 
-boot:	boot.o srt0.o devopen.o conf.o ${DEVS} libsvax.a ${SALIB}
+boot:	boot.o srt0.o devopen.o conf.o ${DEVS} libsvax.a ${SALIB} vers.o
+	@date '+_vers: .globl _vers; .asciz ">> NetBSD/vax boot ver. %y%m%d %H:%M <<"' | as -o vers.o
 	ld -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o boot.o \
-	conf.o ${DEVS} ${LIBS}
+	conf.o ${DEVS} ${LIBS} vers.o
 	@strip boot
 	@size boot
 
-edlabel: edlabel.o srt0.o devopen.o conf.o ${DEVS} libsvax.a
+edlabel: edlabel.o srt0.o devopen.o conf.o ${DEVS} libsvax.a vers.o
+	@date '+_vers: .globl _vers; .asciz ">> NetBSD/vax boot ver. %y%m%d %H:%M <<"' | as -o vers.o
 	ld -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o edlabel.o\
-	conf.o ${DEVS} ${LIBS}
+	conf.o ${DEVS} ${LIBS} vers.o
 	@strip edlabel
 	@size edlabel
 
-copy:	copy.o srt0.o devopen.o conf.o ${DEVS} libsvax.a
+copy:	copy.o srt0.o devopen.o conf.o ${DEVS} libsvax.a vers.o
+	@date '+_vers: .globl _vers; .asciz ">> NetBSD/vax boot ver. %y%m%d %H:%M <<"' | as -o vers.o
 	ld -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o copy.o \
-	conf.o ${DEVS} ${LIBS}
+	conf.o ${DEVS} ${LIBS} vers.o
 	@strip copy
 	@size copy
 
