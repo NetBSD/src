@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.7 2002/01/27 13:23:09 jdolecek Exp $
+#	$NetBSD: NC_WSCONS,v 1.8 2002/02/11 21:48:48 reinoud Exp $
 #
 #	NC - with wscons
 #
@@ -84,9 +84,6 @@ options 	COMPAT_14	# NetBSD 1.4 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-
-# Bootloader options
-#options 	COMPAT_OLD_BOOTLOADER
 
 
 # Shared memory options

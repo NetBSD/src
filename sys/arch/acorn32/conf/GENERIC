@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.10 2002/01/30 14:01:33 reinoud Exp $
+# 	$NetBSD: GENERIC,v 1.11 2002/02/11 21:48:46 reinoud Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -20,7 +20,7 @@
 
 include		"arch/acorn32/conf/std.acorn32"
 
-#ident		"GENERIC-$Revision: 1.10 $"
+#ident		"GENERIC-$Revision: 1.11 $"
 
 # estimated number of users
 maxusers	32
@@ -104,9 +104,6 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-
-# Bootloader options (has to go !)
-options 	COMPAT_OLD_BOOTLOADER
 
 # Shared memory options
 
