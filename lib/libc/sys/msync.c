@@ -1,4 +1,4 @@
-/*	$NetBSD: msync.c,v 1.2 1997/10/22 00:56:32 fvdl Exp $	*/
+/*	$NetBSD: msync.c,v 1.3 1998/12/02 19:37:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -35,6 +35,9 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
+
+__warn_references(msync,
+    "warning: reference to compatibility msync(); include <sys/mman.h> for correct reference")
 
 int
 msync(addr, size)
