@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.31.2.3 2001/06/21 20:07:34 nathanw Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.31.2.4 2001/08/24 00:11:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -457,6 +457,7 @@ genfs_getpages(v)
 	vaddr_t kva;
 	struct buf *bp, *mbp;
 	struct vnode *vp = ap->a_vp;
+	struct vnode *devvp;
 	struct uvm_object *uobj = &vp->v_uvm.u_obj;
 	struct vm_page *pgs[16];			/* XXXUBC 16 */
 	struct ucred *cred = curproc->l_proc->p_ucred;		/* XXXUBC curproc */
@@ -529,9 +530,14 @@ genfs_getpages(v)
 	 * leave space in the page array for a whole block.
 	 */
 
-	fs_bshift = vp->v_mount->mnt_fs_bshift;
+	if (vp->v_type == VREG) {
+		fs_bshift = vp->v_mount->mnt_fs_bshift;
+		dev_bshift = vp->v_mount->mnt_dev_bshift;
+	} else {
+		fs_bshift = DEV_BSHIFT;
+		dev_bshift = DEV_BSHIFT;
+	}
 	fs_bsize = 1 << fs_bshift;
-	dev_bshift = vp->v_mount->mnt_dev_bshift;
 	dev_bsize = 1 << dev_bshift;
 	KASSERT((diskeof & (dev_bsize - 1)) == 0);
 	KASSERT((memeof & (dev_bsize - 1)) == 0);
@@ -696,7 +702,7 @@ genfs_getpages(v)
 		 */
 
 		lbn = offset >> fs_bshift;
-		error = VOP_BMAP(vp, lbn, NULL, &blkno, &run);
+		error = VOP_BMAP(vp, lbn, &devvp, &blkno, &run);
 		if (error) {
 			UVMHIST_LOG(ubchist, "VOP_BMAP lbn 0x%x -> %d\n",
 				    lbn, error,0,0);
@@ -768,6 +774,7 @@ genfs_getpages(v)
 		}
 		bp->b_lblkno = 0;
 		bp->b_private = mbp;
+		bp->b_dev = devvp->v_rdev;
 
 		/* adjust physical blkno for partial blocks */
 		bp->b_blkno = blkno + ((offset - ((off_t)lbn << fs_bshift)) >>
@@ -961,6 +968,7 @@ genfs_putpages(v)
 	struct vm_page *pg;
 	struct buf *mbp, *bp;
 	struct vnode *vp = ap->a_vp;
+	struct vnode *devvp;
 	boolean_t async = (ap->a_flags & PGO_SYNCIO) == 0;
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p offset 0x%x count %d",
@@ -975,8 +983,13 @@ genfs_putpages(v)
 
 	error = 0;
 	npages = ap->a_count;
-	fs_bshift = vp->v_mount->mnt_fs_bshift;
-	dev_bshift = vp->v_mount->mnt_dev_bshift;
+	if (vp->v_type == VREG) {
+		fs_bshift = vp->v_mount->mnt_fs_bshift;
+		dev_bshift = vp->v_mount->mnt_dev_bshift;
+	} else {
+		fs_bshift = DEV_BSHIFT;
+		dev_bshift = DEV_BSHIFT;
+	}
 	dev_bsize = 1 << dev_bshift;
 	KASSERT((eof & (dev_bsize - 1)) == 0);
 
@@ -1009,7 +1022,7 @@ genfs_putpages(v)
 	     bytes > 0;
 	     offset += iobytes, bytes -= iobytes) {
 		lbn = offset >> fs_bshift;
-		error = VOP_BMAP(vp, lbn, NULL, &blkno, &run);
+		error = VOP_BMAP(vp, lbn, &devvp, &blkno, &run);
 		if (error) {
 			UVMHIST_LOG(ubchist, "VOP_BMAP() -> %d", error,0,0,0);
 			skipbytes += bytes;
@@ -1044,6 +1057,7 @@ genfs_putpages(v)
 		}
 		bp->b_lblkno = 0;
 		bp->b_private = mbp;
+		bp->b_dev = devvp->v_rdev;
 
 		/* adjust physical blkno for partial blocks */
 		bp->b_blkno = blkno + ((offset - ((off_t)lbn << fs_bshift)) >>

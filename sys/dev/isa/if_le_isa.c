@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.25.2.1 2001/06/21 20:03:49 nathanw Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.25.2.2 2001/08/24 00:09:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,9 +75,6 @@
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
-#include "opt_inet.h"
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -90,11 +87,6 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/intr.h>

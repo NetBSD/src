@@ -1,4 +1,4 @@
-/* $NetBSD: tgavar.h,v 1.9 2000/04/20 05:25:20 nathanw Exp $ */
+/* $NetBSD: tgavar.h,v 1.9.6.1 2001/08/24 00:10:23 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -117,6 +117,8 @@ struct tga_softc {
 	       PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21030) ||		\
 	       PCI_PRODUCT(id) == PCI_PRODUCT_DEC_PBXGB) ? 10 : 0)
 
+int tga_cnmatch __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
+		    pcitag_t));
 int tga_cnattach __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
 		      int, int, int));
 

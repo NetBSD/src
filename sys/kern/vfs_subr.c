@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.146.2.3 2001/06/21 20:07:10 nathanw Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.146.2.4 2001/08/24 00:11:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -272,8 +272,7 @@ vfs_rootmountalloc(fstypename, devname, mpp)
 	struct vfsops *vfsp = NULL;
 	struct mount *mp;
 
-	for (vfsp = LIST_FIRST(&vfs_list); vfsp != NULL;
-	     vfsp = LIST_NEXT(vfsp, vfs_list))
+	LIST_FOREACH(vfsp, &vfs_list, vfs_list)
 		if (!strncmp(vfsp->vfs_name, fstypename, MFSNAMELEN))
 			break;
 
@@ -420,7 +419,7 @@ getnewvnode(tag, mp, vops, vpp)
 	struct freelst *listhd;
 	static int toggle;
 	struct vnode *vp;
-	int error = 0;
+	int error = 0, tryalloc;
 #ifdef DIAGNOSTIC
 	int s;
 #endif
@@ -455,26 +454,31 @@ getnewvnode(tag, mp, vops, vpp)
 	 * referencing buffers.
 	 */
 
+ try_again:
+	vp = NULL;
+
+	simple_lock(&vnode_free_list_slock);
+
 	toggle ^= 1;
 	if (numvnodes > 2 * desiredvnodes)
 		toggle = 0;
 
-	simple_lock(&vnode_free_list_slock);
-	if (numvnodes < desiredvnodes ||
+	tryalloc = numvnodes < desiredvnodes ||
 	    (TAILQ_FIRST(listhd = &vnode_free_list) == NULL &&
-	    (TAILQ_FIRST(listhd = &vnode_hold_list) == NULL || toggle))) {
+	     (TAILQ_FIRST(listhd = &vnode_hold_list) == NULL || toggle));
+
+	if (tryalloc &&
+	    (vp = pool_get(&vnode_pool, PR_NOWAIT)) != NULL) {
 		simple_unlock(&vnode_free_list_slock);
-		vp = pool_get(&vnode_pool, PR_WAITOK);
 		memset(vp, 0, sizeof(*vp));
-		simple_lock_init(&vp->v_interlock);
+		simple_lock_init(&vp->v_interlock);  
 		numvnodes++;
 	} else {
 		for (vp = TAILQ_FIRST(listhd); vp != NULLVP;
 		    vp = TAILQ_NEXT(vp, v_freelist)) {
 			if (simple_lock_try(&vp->v_interlock)) {
-				if ((vp->v_flag & VLAYER) == 0) {
+				if ((vp->v_flag & VLAYER) == 0)
 					break;
-				}
 				if (VOP_ISLOCKED(vp) == 0)
 					break;
 				else
@@ -490,6 +494,12 @@ getnewvnode(tag, mp, vops, vpp)
 			simple_unlock(&vnode_free_list_slock);
 			if (mp && error != EDEADLK)
 				vfs_unbusy(mp);
+			if (tryalloc) {
+				printf("WARNING: unable to allocate new "
+				    "vnode, retrying...\n");
+				(void) tsleep(&lbolt, PRIBIO, "newvn", hz);
+				goto try_again;
+			}
 			tablefull("vnode", "increase kern.maxvnodes or NVNODE");
 			*vpp = 0;
 			return (ENFILE);
@@ -1786,7 +1796,8 @@ loop:
 		/*
 		 * Alias, but not in use, so flush it out.
 		 */
-		if (vq->v_usecount == 0 && vq != vp) {
+		if (vq->v_usecount == 0 && vq != vp &&
+		    (vq->v_flag & VXLOCK) == 0) {
 			simple_unlock(&spechash_slock);
 			vgone(vq);
 			goto loop;
@@ -1872,9 +1883,6 @@ printlockedvnodes()
 }
 #endif
 
-extern const char *mountcompatnames[];
-extern const int nmountcompatnames;
-
 /*
  * Top level filesystem related information gathering.
  */
@@ -1890,6 +1898,8 @@ vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 {
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
 	struct vfsconf vfc;
+	extern const char * const mountcompatnames[];
+	extern int nmountcompatnames;
 #endif
 	struct vfsops *vfsp;
 
@@ -1899,10 +1909,14 @@ vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	/* Not generic: goes to file system. */
 	if (name[0] != VFS_GENERIC) {
-		if (name[0] >= nmountcompatnames || name[0] < 0 ||
-		    mountcompatnames[name[0]] == NULL)
+		static const struct ctlname vfsnames[VFS_MAXID+1]=CTL_VFS_NAMES;
+		const char *vfsname;
+
+		if (name[0] < 0 || name[0] > VFS_MAXID
+		    || (vfsname = vfsnames[name[0]].ctl_name) == NULL)
 			return (EOPNOTSUPP);
-		vfsp = vfs_getopsbyname(mountcompatnames[name[0]]);
+
+		vfsp = vfs_getopsbyname(vfsname);
 		if (vfsp == NULL || vfsp->vfs_sysctl == NULL)
 			return (EOPNOTSUPP);
 		return ((*vfsp->vfs_sysctl)(&name[1], namelen - 1,
@@ -2080,6 +2094,10 @@ vfs_hang_addrlist(mp, nep, argp)
 		mp->mnt_flag |= MNT_DEFEXPORTED;
 		return (0);
 	}
+
+	if (argp->ex_addrlen > MLEN)
+		return (EINVAL);
+
 	i = sizeof(struct netcred) + argp->ex_addrlen + argp->ex_masklen;
 	np = (struct netcred *)malloc(i, M_NETADDR, M_WAITOK);
 	memset((caddr_t)np, 0, i);

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.h,v 1.10.2.2 2001/06/21 20:02:45 nathanw Exp $ */
+/* $NetBSD: isp_target.h,v 1.10.2.3 2001/08/24 00:09:28 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -458,6 +458,14 @@ typedef struct {
 			u_int16_t ct_scsi_status;
 			u_int32_t ct_xfrlen;
 			ispds_t ct_dataseg[ISP_RQDSEG_T2];
+			/*
+			 * For CTIO3, an ispds64_t would go here, padded
+			 * to the end of the request.
+			 */
+			/*
+			 * For CTIO4, an ispdlist_t would go here, padded
+			 * to the end of the request.
+			 */
 		} m0;
 		struct {
 			u_int16_t _reserved;

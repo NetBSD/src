@@ -1,4 +1,4 @@
-/*	$NetBSD: cyzfirm.h,v 1.1 2000/05/17 17:58:09 thorpej Exp $	*/
+/*	$NetBSD: cyzfirm.h,v 1.1.8.1 2001/08/24 00:09:55 nathanw Exp $	*/
 
 /*
  * Firmware for Cyclades Z series multiport serial boards.

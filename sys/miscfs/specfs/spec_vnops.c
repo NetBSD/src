@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.53.2.2 2001/06/21 20:07:45 nathanw Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.53.2.3 2001/08/24 00:11:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -120,7 +120,9 @@ const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, spec_update },		/* update */
 	{ &vop_bwrite_desc, spec_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_getpages_desc, spec_getpages },		/* getpages */
+	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ NULL, NULL }
 };
 const struct vnodeopv_desc spec_vnodeop_opv_desc =
 	{ &spec_vnodeop_p, spec_vnodeop_entries };
@@ -161,6 +163,7 @@ spec_open(v)
 	dev_t bdev, dev = (dev_t)vp->v_rdev;
 	int maj = major(dev);
 	int error;
+	struct partinfo pi;
 
 	/*
 	 * Don't allow open if fs is mounted -nodev.
@@ -218,7 +221,18 @@ spec_open(v)
 		 */
 		if ((error = vfs_mountedon(vp)) != 0)
 			return (error);
-		return ((*bdevsw[maj].d_open)(dev, ap->a_mode, S_IFBLK, p));
+		error = (*bdevsw[maj].d_open)(dev, ap->a_mode, S_IFBLK, p);
+		if (error) {
+			return error;
+		}
+		error = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
+		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
+		if (error == 0) {
+			vp->v_uvm.u_size = (voff_t)pi.disklab->d_secsize *
+			    pi.part->p_size;
+		}
+		return 0;
+
 	case VNON:
 	case VLNK:
 	case VDIR:
@@ -550,7 +564,7 @@ spec_bmap(v)
 	if (ap->a_bnp != NULL)
 		*ap->a_bnp = ap->a_bn;
 	if (ap->a_runp != NULL)
-		*ap->a_runp = 0;
+		*ap->a_runp = (MAXBSIZE >> DEV_BSHIFT) - 1;
 	return (0);
 }
 
@@ -735,4 +749,21 @@ spec_advlock(v)
 	struct vnode *vp = ap->a_vp;
 
 	return lf_advlock(ap, &vp->v_speclockf, (off_t)0);
+}
+
+/*
+ * glue for genfs_{get,put}pages()
+ */
+int
+spec_size(v)
+	void *v;
+{
+	struct vop_size_args /* {
+		struct vnode *a_vp;
+		off_t a_size;
+		off_t *a_eobp;
+	} */ *ap = v;
+
+	*ap->a_eobp = ap->a_size;
+	return 0;
 }

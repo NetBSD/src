@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.26.2.3 2001/06/21 20:09:40 nathanw Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.26.2.4 2001/08/24 00:13:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -1528,14 +1528,8 @@ ntfs_writentvattr_plain(
 		off = ntfs_btocnoff(off);
 
 		while (left && ccl) {
-#if defined(__FreeBSD__)
 			tocopy = min(left,
 				  min(ntfs_cntob(ccl) - off, MAXBSIZE - off));
-#else
-			/* under NetBSD, bread() can read
-			 * maximum one block worth of data */
-			tocopy = min(left, ntmp->ntm_bps - off);
-#endif
 			cl = ntfs_btocl(tocopy + off);
 			ddprintf(("ntfs_writentvattr_plain: write: " \
 				"cn: 0x%x cl: %d, off: %d len: %d, left: %d\n",
@@ -1632,17 +1626,24 @@ ntfs_readntvattr_plain(
 				off = ntfs_btocnoff(off);
 
 				while (left && ccl) {
-#if defined(__FreeBSD__)
 					tocopy = min(left,
 						  min(ntfs_cntob(ccl) - off,
 						      MAXBSIZE - off));
-#else
-					/* under NetBSD, bread() can read
-					 * maximum one block worth of data */
-					tocopy = min(left,
-						ntmp->ntm_bps - off);
-#endif
 					cl = ntfs_btocl(tocopy + off);
+
+					/*
+					 * If 'off' pushes us to next
+					 * block, don't attempt to read whole
+					 * 'tocopy' at once. This is to avoid
+					 * bread() with varying 'size' for
+					 * same 'blkno', which is not good.
+					 */
+					if (cl > ntfs_btocl(tocopy)) {
+						tocopy -=
+						    ntfs_btocnoff(tocopy + off);
+						cl--;
+					}
+
 					ddprintf(("ntfs_readntvattr_plain: " \
 						"read: cn: 0x%x cl: %d, " \
 						"off: %d len: %d, left: %d\n",
@@ -1686,7 +1687,7 @@ ntfs_readntvattr_plain(
 				off = 0;
 				if (uio) {
 					size_t remains = tocopy;
-					for(; remains; remains++)
+					for(; remains; remains--)
 						uiomove("", 1, uio);
 				} else 
 					bzero(data, tocopy);

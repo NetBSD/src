@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.h,v 1.4 2000/02/13 04:53:57 oster Exp $	*/
+/*	$NetBSD: rf_driver.h,v 1.4.6.1 2001/08/24 00:10:35 nathanw Exp $	*/
 /*
  * rf_driver.h
  */
@@ -47,20 +47,14 @@ RF_RaidAccessDesc_t *rf_AllocRaidAccDesc(RF_Raid_t * raidPtr, RF_IoType_t type,
 					 RF_RaidAddr_t raidAddress, 
 					 RF_SectorCount_t numBlocks, 
 					 caddr_t bufPtr,
-					 void *bp, RF_DagHeader_t ** paramDAG,
-					 RF_AccessStripeMapHeader_t ** paramASM,
+					 void *bp,
 					 RF_RaidAccessFlags_t flags, 
-					 void (*cbF) (struct buf *), 
-					 void *cbA,
 					 RF_AccessState_t * states);
 void    rf_FreeRaidAccDesc(RF_RaidAccessDesc_t * desc);
 int     rf_DoAccess(RF_Raid_t * raidPtr, RF_IoType_t type, int async_flag,
 		    RF_RaidAddr_t raidAddress, RF_SectorCount_t numBlocks, 
-		    caddr_t bufPtr, void *bp_in, RF_DagHeader_t ** paramDAG,
-		    RF_AccessStripeMapHeader_t ** paramASM, 
-		    RF_RaidAccessFlags_t flags, 
-		    RF_RaidAccessDesc_t ** paramDesc, 
-		    void (*cbF) (struct buf *), void *cbA);
+		    caddr_t bufPtr, void *bp_in, 
+		    RF_RaidAccessFlags_t flags);
 int     rf_SetReconfiguredMode(RF_Raid_t * raidPtr, RF_RowCol_t row,
 			       RF_RowCol_t col);
 int     rf_FailDisk(RF_Raid_t * raidPtr, RF_RowCol_t frow, RF_RowCol_t fcol,

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.16.2.1 2001/06/21 20:10:40 nathanw Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.16.2.2 2001/08/24 00:13:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -158,8 +158,7 @@ uvm_pagewire(pg)
 			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
 			pg->pqflags &= ~PQ_ACTIVE;
 			uvmexp.active--;
-		}
-		if (pg->pqflags & PQ_INACTIVE) {
+		} else if (pg->pqflags & PQ_INACTIVE) {
 			TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
 			pg->pqflags &= ~PQ_INACTIVE;
 			uvmexp.inactive--;

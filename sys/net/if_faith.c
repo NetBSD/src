@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.17.2.1 2001/06/21 20:08:01 nathanw Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.17.2.2 2001/08/24 00:12:09 nathanw Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ faith_clone_create(ifc, unit)
 	struct faith_softc *sc;
 
 	sc = malloc(sizeof(struct faith_softc), M_DEVBUF, M_WAITOK);
-	bzero(sc, sizeof(struct faith_softc));
+	memset(sc, 0, sizeof(struct faith_softc));
 
 	sprintf(sc->sc_if.if_xname, "%s%d", ifc->ifc_name, unit);
 
@@ -345,7 +345,7 @@ faithprefix(in6)
 	if (ip6_keepfaith == 0)
 		return 0;
 
-	bzero(&sin6, sizeof(sin6));
+	memset(&sin6, 0, sizeof(sin6));
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *in6;

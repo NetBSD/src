@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isapnp.c,v 1.4 2000/06/06 16:27:50 soren Exp $	*/
+/*	$NetBSD: if_tr_isapnp.c,v 1.4.4.1 2001/08/24 00:09:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,10 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
-#include "bpfilter.h" 
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -55,23 +51,6 @@
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h> 
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

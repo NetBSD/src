@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.51 2000/07/06 02:02:50 thorpej Exp $	*/
+/*	$NetBSD: wt.c,v 1.51.2.1 2001/08/24 00:09:52 nathanw Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -248,7 +248,7 @@ wtattach(parent, self, aux)
 	/* Try Wangtek. */
 	if (wtreset(iot, ioh, &wtregs)) {
 		sc->type = WANGTEK;
-		bcopy(&wtregs, &sc->regs, sizeof(sc->regs));
+		memcpy(&sc->regs, &wtregs, sizeof(sc->regs));
 		printf(": type <Wangtek>\n");
 		goto ok;
 	}
@@ -256,7 +256,7 @@ wtattach(parent, self, aux)
 	/* Try Archive. */
 	if (wtreset(iot, ioh, &avregs)) {
 		sc->type = ARCHIVE;
-		bcopy(&avregs, &sc->regs, sizeof(sc->regs));
+		memcpy(&sc->regs, &avregs, sizeof(sc->regs));
 		printf(": type <Archive>\n");
 		/* Reset DMA. */
 		bus_space_write_1(iot, ioh, sc->regs.RDMAPORT, 0);
@@ -717,7 +717,7 @@ wtintr(arg)
 		/* If reading short block, copy the internal buffer
 		 * to the user memory. */
 		isa_dmadone(sc->sc_ic, sc->chan);
-		bcopy(sc->buf, sc->dmavaddr, sc->dmatotal - sc->dmacount);
+		memcpy(sc->dmavaddr, sc->buf, sc->dmatotal - sc->dmacount);
 	} else
 		isa_dmadone(sc->sc_ic, sc->chan);
 

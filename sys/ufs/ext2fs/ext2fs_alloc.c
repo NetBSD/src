@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.9 2000/06/28 14:16:37 mrg Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.9.2.1 2001/08/24 00:13:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -230,7 +230,7 @@ ext2fs_dirpref(fs)
  * If no blocks have been allocated in the first section, the policy is to
  * request a block in the same cylinder group as the inode that describes
  * the file. Otherwise, the policy is to try to allocate the blocks
- * contigously. The two fields of the ext2 inode extention (see
+ * contigously. The two fields of the ext2 inode extension (see
  * ufs/ufs/inode.h) help this.
  */
 ufs_daddr_t

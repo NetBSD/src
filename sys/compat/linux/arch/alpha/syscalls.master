@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.31.2.2 2001/06/21 19:59:28 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.31.2.3 2001/08/24 00:08:47 nathanw Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -209,19 +209,20 @@
 97	STD		{ int linux_sys_socket(int domain, int type, \
 			    int protocol); }
 98	STD		{ int linux_sys_connect(int s, \
-			    const struct sockaddr *name, \
+			    const struct osockaddr *name, \
 			    unsigned int namelen); }
-99	NOARGS		{ int compat_43_sys_accept(int s, \
-				caddr_t name, int *anamelen); }
+99	STD		{ int linux_sys_accept(int s, \
+				struct osockaddr *name, int *anamelen); }
 ;100	ALIAS		osf1_sys_getpriority
 100	NOARGS		{ int sys_getpriority(int which, int who); }
-101	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
+101	STD		{ int linux_sys_send(int s, caddr_t buf, int len, \
 				int flags); }
-102	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
+102	STD		{ int linux_sys_recv(int s, caddr_t buf, int len, \
 				int flags); }
 103	STD		{ int linux_sys_sigreturn(struct linux_sigframe *sfp); }
-104	NOARGS		{ int sys_bind(int s, const struct sockaddr *name, \
-			    unsigned int namelen); }
+104	STD		{ int linux_sys_bind(int s,	     \
+				const struct osockaddr *name, \
+				unsigned int namelen); }
 105	STD		{ int linux_sys_setsockopt(int s, int level, \
 				int optname, void *optval, int optlen); }
 106	NOARGS		{ int sys_listen(int s, int backlog); }
@@ -235,9 +236,9 @@
 ;112	ALIAS		osf1_sys_sigstack
 112	NOARGS		{ int compat_43_sys_sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); }
-113	NOARGS		{ size_t sys_recvmsg(int fd, struct msghdr *msg, \
+113	STD		{ size_t linux_sys_recvmsg(int s, struct msghdr *msg, \
 				int flags); }
-114	NOARGS		{ ssize_t sys_sendmsg(int fd, \
+114	STD		{ ssize_t linux_sys_sendmsg(int s, \
 				const struct msghdr *msg, int flags); }
 115	UNIMPL
 116	NODEF		{ int osf1_sys_gettimeofday(struct osf1_timeval *tv, \
@@ -256,8 +257,8 @@
 123	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
 124	NOARGS		{ int sys_fchmod(int fd, mode_t mode); }
 125	STD		{ int linux_sys_recvfrom(int s, void *buf, int len, \
-				int flags, struct sockaddr *from, \
-				int *fromlen); }
+				int flags, struct osockaddr *from, \
+				int *fromlenaddr); }
 126	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 127	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
 128	STD		{ int linux_sys_rename(const char *from, const char *to); }
@@ -266,7 +267,7 @@
 131	NOARGS		{ int sys_flock(int fd, int how); }
 132	NOARGS		{ int sys_setgid(gid_t gid); }
 133	STD		{ int linux_sys_sendto(int s, void *msg, int len, \
-				int flags, struct sockaddr *to, int tolen); }
+				int flags, struct osockaddr *to, int tolen); }
 134	NOARGS		{ int sys_shutdown(int s, int how); }
 135	STD		{ int linux_sys_socketpair(int domain, int type, \
 				int protocol, int *rsv); }
@@ -276,7 +277,7 @@
 			    const struct osf1_timeval *tptr); }
 139	UNIMPL
 140	UNIMPL
-141	NOARGS		{ int compat_43_sys_getpeername(int fdes, \
+141	STD		{ int linux_sys_getpeername(int fdes, \
 				caddr_t asa, int *alen); }
 142	UNIMPL
 143	UNIMPL
@@ -288,7 +289,7 @@
 147	NOARGS		{ int sys_setsid(void); }
 148	UNIMPL		quotactl
 149	UNIMPL
-150	NOARGS		{ int compat_43_sys_getsockname(int fdec, \
+150	STD		{ int linux_sys_getsockname(int fdec, \
 				caddr_t asa, int *alen); }
 151	UNIMPL
 152	UNIMPL

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.43 2001/02/21 05:45:11 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.43.2.1 2001/08/24 00:12:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ rtalloc1(dst, report)
 				goto miss;
 			}
 			/* Inform listeners of the new route */
-			bzero(&info, sizeof(info));
+			memset(&info, 0, sizeof(info));
 			info.rti_info[RTAX_DST] = rt_key(rt);
 			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
@@ -218,7 +218,7 @@ rtalloc1(dst, report)
 	} else {
 		rtstat.rts_unreach++;
 	miss:	if (report) {
-			bzero((caddr_t)&info, sizeof(info));
+			memset((caddr_t)&info, 0, sizeof(info));
 			info.rti_info[RTAX_DST] = dst;
 			rt_missmsg(msgtype, &info, 0, err);
 		}
@@ -301,7 +301,9 @@ rtredirect(dst, gateway, netmask, flags, src, rtp)
 	 * we have a routing loop, perhaps as a result of an interface
 	 * going down recently.
 	 */
-#define	equal(a1, a2) (bcmp((caddr_t)(a1), (caddr_t)(a2), (a1)->sa_len) == 0)
+#define	equal(a1, a2) \
+	((a1)->sa_len == (a2)->sa_len && \
+	 bcmp((caddr_t)(a1), (caddr_t)(a2), (a1)->sa_len) == 0)
 	if (!(flags & RTF_DONE) && rt &&
 	     (!equal(src, rt->rt_gateway) || rt->rt_ifa != ifa))
 		error = EINVAL;
@@ -365,7 +367,7 @@ out:
 		rtstat.rts_badredirect++;
 	else if (stat != NULL)
 		(*stat)++;
-	bzero((caddr_t)&info, sizeof(info));
+	memset((caddr_t)&info, 0, sizeof(info));
 	info.rti_info[RTAX_DST] = dst;
 	info.rti_info[RTAX_GATEWAY] = gateway;
 	info.rti_info[RTAX_NETMASK] = netmask;
@@ -388,7 +390,7 @@ rtdeletemsg(rt)
 	 * deleted.  That will allow the information being reported to
 	 * be accurate (and consistent with route_output()).
 	 */
-	bzero((caddr_t)&info, sizeof(info));
+	memset((caddr_t)&info, 0, sizeof(info));
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
@@ -502,7 +504,7 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 {
 	struct rt_addrinfo info;
 
-	bzero(&info, sizeof(info));
+	memset(&info, 0, sizeof(info));
 	info.rti_flags = flags;
 	info.rti_info[RTAX_DST] = dst;
 	info.rti_info[RTAX_GATEWAY] = gateway;
@@ -646,13 +648,6 @@ rtrequest1(req, info, ret_nrt)
 			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
 			rt->rt_parent = *ret_nrt;
 			rt->rt_parent->rt_refcnt++;
-		} else if (rt->rt_rmx.rmx_mtu == 0
-			    && !(rt->rt_rmx.rmx_locks & RTV_MTU)) { /* XXX */
-			if (rt->rt_gwroute != NULL) {
-				rt->rt_rmx.rmx_mtu = rt->rt_gwroute->rt_rmx.rmx_mtu;
-			} else {
-				rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;
-			}
 		}
 		rn = rnh->rnh_addaddr((caddr_t)ndst, (caddr_t)netmask,
 		    rnh, rt->rt_nodes);
@@ -732,13 +727,15 @@ rt_setgate(rt0, dst, gate)
 		rt->rt_gwroute = rtalloc1(gate, 1);
 		/*
 		 * If we switched gateways, grab the MTU from the new
-		 * gateway route if the current MTU is 0 or greater
-		 * than the MTU of gateway.
+		 * gateway route if the current MTU, if the current MTU is
+		 * greater than the MTU of gateway.
+		 * Note that, if the MTU of gateway is 0, we will reset the
+		 * MTU of the route to run PMTUD again from scratch. XXX
 		 */
 		if (rt->rt_gwroute
 		    && !(rt->rt_rmx.rmx_locks & RTV_MTU)
-		    && (rt->rt_rmx.rmx_mtu == 0
-		    || rt->rt_rmx.rmx_mtu > rt->rt_gwroute->rt_rmx.rmx_mtu)) { /* XXX */
+		    && rt->rt_rmx.rmx_mtu
+		    && rt->rt_rmx.rmx_mtu > rt->rt_gwroute->rt_rmx.rmx_mtu) {
 			rt->rt_rmx.rmx_mtu = rt->rt_gwroute->rt_rmx.rmx_mtu;
 		}
 	}
@@ -762,7 +759,7 @@ rt_maskedcopy(src, dst, netmask)
 	while (cp2 < cplim)
 		*cp2++ = *cp1++ & *cp3++;
 	if (cp2 < cplim2)
-		bzero((caddr_t)cp2, (unsigned)(cplim2 - cp2));
+		memset((caddr_t)cp2, 0, (unsigned)(cplim2 - cp2));
 }
 
 /*
@@ -796,7 +793,7 @@ rtinit(ifa, cmd, flags)
 							: ENETUNREACH);
 		}
 	}
-	bzero(&info, sizeof(info));
+	memset(&info, 0, sizeof(info));
 	info.rti_ifa = ifa;
 	info.rti_flags = flags | ifa->ifa_flags;
 	info.rti_info[RTAX_DST] = dst;
@@ -826,7 +823,6 @@ rtinit(ifa, cmd, flags)
 			IFAFREE(rt->rt_ifa);
 			rt->rt_ifa = ifa;
 			rt->rt_ifp = ifa->ifa_ifp;
-			rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;	/*XXX*/
 			IFAREF(ifa);
 			if (ifa->ifa_rtrequest)
 				ifa->ifa_rtrequest(RTM_ADD, rt, NULL);

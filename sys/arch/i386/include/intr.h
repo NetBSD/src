@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17.2.1 2001/06/21 19:25:50 nathanw Exp $	*/
+/*	$NetBSD: intr.h,v 1.17.2.2 2001/08/24 00:08:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -186,7 +186,8 @@ struct i386_soft_intr {
 
 #define	i386_softintr_lock(si, s)					\
 do {									\
-	(s) = splhigh();						\
+	/* XXX splhigh braindamage on i386 */				\
+	(s) = splserial();						\
 } while (/*CONSTCOND*/ 0)
 
 #define	i386_softintr_unlock(si, s)					\

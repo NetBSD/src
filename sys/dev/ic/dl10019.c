@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.1.2.1 2001/06/21 20:02:25 nathanw Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.1.2.2 2001/08/24 00:09:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,8 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +212,7 @@ dl10019_mii_readreg(struct device *self, int phy, int reg)
 	ops = (nsc->sc_type == NE2000_TYPE_DL10022) ?
 	    &dl10022_mii_bitbang_ops : &dl10019_mii_bitbang_ops;
 
-	val = mii_bitbang_readreg(self, &dl10019_mii_bitbang_ops, phy, reg);
+	val = mii_bitbang_readreg(self, ops, phy, reg);
 
 	return (val);
 }
@@ -228,7 +226,7 @@ dl10019_mii_writereg(struct device *self, int phy, int reg, int val)
 	ops = (nsc->sc_type == NE2000_TYPE_DL10022) ?
 	    &dl10022_mii_bitbang_ops : &dl10019_mii_bitbang_ops;
 
-	mii_bitbang_writereg(self, &dl10019_mii_bitbang_ops, phy, reg, val);
+	mii_bitbang_writereg(self, ops, phy, reg, val);
 }
 
 void

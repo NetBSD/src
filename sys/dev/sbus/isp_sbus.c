@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.40.2.2 2001/06/21 20:05:36 nathanw Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.40.2.3 2001/08/24 00:10:41 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -339,7 +339,7 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 	if (isp->isp_rquest_dma)
 		return (0);
 
-	n = sizeof (XS_T **) * isp->isp_maxcmds;
+	n = isp->isp_maxcmds * sizeof (XS_T *);
 	isp->isp_xflist = (XS_T **) malloc(n, M_DEVBUF, M_WAITOK);
 	if (isp->isp_xflist == NULL) {
 		isp_prt(isp, ISP_LOGERR, "cannot alloc xflist array");

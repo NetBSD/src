@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.11 2001/02/19 21:14:49 fvdl Exp $	*/
+/*	$NetBSD: auvia.c,v 1.11.2.1 2001/08/24 00:10:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -83,8 +83,8 @@ struct auvia_dma_op {
 #define AUVIA_DMAOP_COUNT(x)	((x)&0x00FFFFFF)
 };
 
-/* rev. H and later seem to support only fixed rate 44.1 kHz */
-#define	AUVIA_FIXED_RATE	44100	
+/* rev. H and later seem to support only fixed rate 48 kHz */
+#define	AUVIA_FIXED_RATE	48000	
 
 int	auvia_match(struct device *, struct cfdata *, void *);
 void	auvia_attach(struct device *, struct device *, void *);

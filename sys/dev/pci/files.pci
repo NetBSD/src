@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.123.2.2 2001/06/21 20:04:36 nathanw Exp $
+#	$NetBSD: files.pci,v 1.123.2.3 2001/08/24 00:10:00 nathanw Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -54,9 +54,14 @@ file	dev/pci/ld_twe.c		ld_twe
 attach	cac at pci with cac_pci
 file	dev/pci/cac_pci.c		cac_pci
 
-# Mylex RAID controllers
+# Mylex DAC960 RAID controllers
 attach	mlx at pci with mlx_pci
 file	dev/pci/mlx_pci.c		mlx_pci
+
+# Newer Mylex AcceleRAID and eXtremeRAID controllers
+device	mly: scsi
+attach	mly at pci
+file	dev/pci/mly.c			mly			needs-flag
 
 # DPT EATA SCSI controllers
 attach	dpt at pci with dpt_pci
@@ -118,11 +123,6 @@ file	dev/pci/if_fpa.c		fpa
 # device declaration in sys/conf/files
 attach	le at pci with le_pci: le32
 file	dev/pci/if_le_pci.c		le_pci
-
-# NCR 53c8xx SCSI chips
-device	ncr: scsi
-attach	ncr at pci
-file	dev/pci/ncr.c			ncr
 
 # common code for siop/esiop pci front end
 define	siop_pci_common
@@ -359,6 +359,11 @@ device	gsip: ether, ifnet, arp, mii, mii_bitbang
 attach	gsip at pci
 file	dev/pci/if_gsip.c		gsip
 
+# Sundance Tech./Tamarack TC9021 Gigabit Ethernet
+device	stge: ether, ifnet, arp, mii, mii_bitbang
+attach	stge at pci
+file	dev/pci/if_stge.c		stge
+
 # Realtek 8129/8139 Ethernet controllers
 attach	rtk at pci with rtk_pci
 file	dev/pci/if_rtk_pci.c		rtk_pci
@@ -385,6 +390,11 @@ file	dev/pci/if_ti.c			ti
 # Adaptec AIC-6915 Ethernet interface
 attach	sf at pci with sf_pci
 file	dev/pci/if_sf_pci.c		sf_pci
+
+# Sundance Tech. ST-201 10/100 Ethernet
+device	ste: ether, ifnet, arp, mii, mii_bitbang
+attach	ste at pci
+file	dev/pci/if_ste.c		ste
 
 # YENTA PCI-Cardbus bridge 
 #device	cbb: cbbus, pcmciabus

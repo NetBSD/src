@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.26.2.1 2001/06/21 20:02:09 nathanw Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.26.2.2 2001/08/24 00:09:14 nathanw Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -213,7 +213,7 @@ typedef enum {
 
 /*
  * The driver keeps up to MAX_SCB scb structures per card in memory.  The SCB
- * consists of a "hardware SCB" mirroring the fields availible on the card
+ * consists of a "hardware SCB" mirroring the fields available on the card
  * and additional information the kernel stores for each transaction.
  */
 struct hardware_scb {

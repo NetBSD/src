@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.120.2.2 2001/06/21 20:05:22 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.120.2.3 2001/08/24 00:10:31 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.130 2001/05/21 13:44:48 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.134 2001/08/07 13:57:24 christos Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -72,6 +72,7 @@
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
 #define	PCMCIA_VENDOR_AIRONET	0x015f	/* Aironet Wireless Communications */
+#define	PCMCIA_VENDOR_PSION	0x016c	/* Psion */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
@@ -88,6 +89,7 @@
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
 #define	PCMCIA_VENDOR_MELCO	0x8a01	/* Melco Corporation */
+#define	PCMCIA_VENDOR_ZONET	0x8a01	/* Zonet Technology Inc. */
 #define	PCMCIA_VENDOR_CONTEC	0xc001	/* Contec */
 #define	PCMCIA_VENDOR_MACNICA	0xc00b	/* MACNICA */
 #define	PCMCIA_VENDOR_ROLAND	0xc00c	/* Roland */
@@ -138,6 +140,9 @@
 #define	PCMCIA_CIS_3COM_3CCFEM556BI	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3CCFEM556BI	0x0556
 #define	PCMCIA_STR_3COM_3CCFEM556BI	"3Com/Megahertz 3CCFEM556BI Ethernet/Modem"
+#define	PCMCIA_CIS_3COM_3CRWE62092A	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_3COM_3CRWE62092A	0x2092
+#define	PCMCIA_STR_3COM_3CRWE62092A	"3Com 3CRWE62092A Wireless LAN"
 
 /* Compaq Products */
 #define	PCMCIA_CIS_COMPAQ2_CPQ_10_100	{ NULL, NULL, NULL, NULL }
@@ -323,6 +328,11 @@
 #define	PCMCIA_PRODUCT_PANASONIC_KXLC003	0x0504
 #define	PCMCIA_STR_PANASONIC_KXLC003	"Panasonic 8X CD-ROM Interface Card"
 
+/* Psion */
+#define	PCMCIA_CIS_PSION_GOLDCARD	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_PSION_GOLDCARD	0x0020
+#define	PCMCIA_STR_PSION_GOLDCARD	"Psion Gold Card"
+
 /* US Robotics Products */
 #define	PCMCIA_CIS_USROBOTICS_WORLDPORT144	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144	0x3330
@@ -504,6 +514,12 @@
 #define	PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11	0x0305
 #define	PCMCIA_STR_BUFFALO_WLI_PCM_S11	"BUFFALO AirStation 11Mbps WLAN"
 
+/* ZONET */
+#define	PCMCIA_CIS_ZONET_ZEN	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ZONET_ZEN	0x0100
+#define	PCMCIA_STR_ZONET_ZEN	"Zonet Zen 10/10"
+
+
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
 #define	PCMCIA_VENDOR_PLANET	-1	/* Planet */
@@ -524,6 +540,7 @@
 #define	PCMCIA_VENDOR_AMD	-1	/* AMD */
 #define	PCMCIA_VENDOR_INTERSIL	-1	/* Intersil */
 #define	PCMCIA_VENDOR_SYNERGY21	-1	/* Synergy 21 */
+#define	PCMCIA_VENDOR_CNET	-1	/* CNet */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -550,6 +567,9 @@
 #define	PCMCIA_CIS_DLINK_DE660	{ "D-Link", "DE-660", NULL, NULL }
 #define	PCMCIA_PRODUCT_DLINK_DE660	-1
 #define	PCMCIA_STR_DLINK_DE660	"D-Link DE-660"
+#define	PCMCIA_CIS_DLINK_DE660PLUS	{ "D-Link", "DE-660+", NULL, NULL }
+#define	PCMCIA_PRODUCT_DLINK_DE660PLUS	-1
+#define	PCMCIA_STR_DLINK_DE660PLUS	"D-Link DE-660+"
 #define	PCMCIA_CIS_RPTI_EP400	{ "RPTI LTD.", "EP400", "CISV100", NULL }
 #define	PCMCIA_PRODUCT_RPTI_EP400	-1
 #define	PCMCIA_STR_RPTI_EP400	"RPTI EP400"
@@ -659,3 +679,6 @@
 #define	PCMCIA_CIS_SYNERGY21_S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" }
 #define	PCMCIA_PRODUCT_SYNERGY21_S21810	-1
 #define	PCMCIA_STR_SYNERGY21_S21810	"Synergy 21 S21810+ NE2000 Compatible Card"
+#define	PCMCIA_CIS_CNET_NE2000	{ "CNet", "CN40BC Ethernet", "D", "NE2000" }
+#define	PCMCIA_PRODUCT_CNET_NE2000	-1
+#define	PCMCIA_STR_CNET_NE2000	"CNet CN40BC NE2000 Compatible"

@@ -1,5 +1,5 @@
-/*	$NetBSD: des_setkey.c,v 1.4 2001/02/21 21:39:53 jdolecek Exp $	*/
-/*	$KAME: des_setkey.c,v 1.5 2000/11/06 13:58:09 itojun Exp $	*/
+/*	$NetBSD: des_setkey.c,v 1.4.2.1 2001/08/24 00:09:00 nathanw Exp $	*/
+/*	$KAME: des_setkey.c,v 1.6 2001/07/03 14:27:53 itojun Exp $	*/
 
 /* crypto/des/set_key.c */
 /* Copyright (C) 1995-1996 Eric Young (eay@mincom.oz.au)
@@ -131,10 +131,7 @@ des_cblock (*key);
 		 * this section very often :-(, thanks to
 		 * engineering@MorningStar.Com for the fix
 		 * eay 93/06/29 */
-/*
-		if (memcmp(weak_keys[i],key,sizeof(key)) == 0) return(1);
-*/
-		if (bcmp(weak_keys[i],key,sizeof(key)) == 0) return(1);
+		if (bcmp(weak_keys[i],key,sizeof(*key)) == 0) return(1);
 	return(0);
 	}
 

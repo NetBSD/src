@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.6 2000/05/15 08:32:08 bouyer Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.6.6.1 2001/08/24 00:09:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -39,15 +39,15 @@ struct ata_bio {
 #define ATA_POLL    0x0002 /* poll for completion */
 #define ATA_ITSDONE 0x0004 /* the transfer is as done as it gets */
 #define ATA_SINGLE  0x0008 /* transfer has to be done in single-sector mode */
-#define ATA_LBA     0x0010 /* tranfert uses LBA adressing */
-#define ATA_READ    0x0020 /* tranfert is a read (otherwise a write) */
+#define ATA_LBA     0x0010 /* transfer uses LBA adressing */
+#define ATA_READ    0x0020 /* transfer is a read (otherwise a write) */
 #define ATA_CORR    0x0040 /* transfer had a corrected error */
     int multi; /* number of blocks to transfer in multi-mode */
     struct disklabel *lp; /* pointer to drive's label info */
     daddr_t blkno; /* block addr */
-    daddr_t blkdone; /* number of blks transfered */
-    daddr_t nblks; /* number of block currently transfering */
-    int     nbytes; /* number of bytes currently transfering */
+    daddr_t blkdone; /* number of blks transferred */
+    daddr_t nblks; /* number of block currently transferring */
+    int     nbytes; /* number of bytes currently transferring */
     long    bcount; /* total number of bytes */
     char*   databuf; /* data buffer adress */
     volatile int error;

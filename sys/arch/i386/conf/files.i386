@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.182.2.2 2001/06/21 19:25:20 nathanw Exp $
+#	$NetBSD: files.i386,v 1.182.2.3 2001/08/24 00:08:28 nathanw Exp $
 #
 # new style config file for i386 architecture
 #
@@ -322,6 +322,13 @@ include	"compat/svr4/files.svr4"
 file	arch/i386/i386/svr4_machdep.c		compat_svr4
 file	arch/i386/i386/svr4_sigcode.s		compat_svr4
 file	arch/i386/i386/svr4_syscall.c		compat_svr4
+
+# MACH binary compatibility (COMPAT_MACH)
+include	"compat/mach/files.mach"
+file	arch/i386/i386/mach_machdep.c		compat_mach
+file	arch/i386/i386/mach_sigcode.s		compat_mach
+file	arch/i386/i386/mach_syscall.c		compat_mach
+file	arch/i386/i386/macho_machdep.c		exec_macho
 
 # iBCS-2 binary compatibility (COMPAT_IBCS2)
 include	"compat/ibcs2/files.ibcs2"

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.12.2.1 2001/06/21 20:08:14 nathanw Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.12.2.2 2001/08/24 00:12:16 nathanw Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ stf_clone_create(ifc, unit)
 	}
 
 	sc = malloc(sizeof(struct stf_softc), M_DEVBUF, M_WAIT);
-	bzero(sc, sizeof(struct stf_softc));
+	memset(sc, 0, sizeof(struct stf_softc));
 
 	sprintf(sc->sc_if.if_xname, "%s%d", ifc->ifc_name, unit);
 
@@ -319,7 +319,7 @@ stf_encapcheck(m, off, proto, arg)
 	 * success on: src = 10.1.1.1, ia6->ia_addr = 2002:0a00:.../24
 	 * fail on: src = 10.1.1.1, ia6->ia_addr = 2002:0b00:.../24
 	 */
-	bzero(&a, sizeof(a));
+	memset(&a, 0, sizeof(a));
 	a.s_addr = GET_V4(&ia6->ia_addr.sin6_addr)->s_addr;
 	a.s_addr &= GET_V4(&ia6->ia_prefixmask.sin6_addr)->s_addr;
 	b = ip.ip_src;
@@ -473,7 +473,7 @@ stf_output(ifp, m, dst, rt)
 		return ENOBUFS;
 	ip = mtod(m, struct ip *);
 
-	bzero(ip, sizeof(*ip));
+	memset(ip, 0, sizeof(*ip));
 
 	bcopy(GET_V4(&((struct sockaddr_in6 *)&ia6->ia_addr)->sin6_addr),
 	    &ip->ip_src, sizeof(ip->ip_src));
@@ -559,7 +559,7 @@ stf_checkaddr4(sc, in, inifp)
 		struct sockaddr_in sin;
 		struct rtentry *rt;
 
-		bzero(&sin, sizeof(sin));
+		memset(&sin, 0, sizeof(sin));
 		sin.sin_family = AF_INET;
 		sin.sin_len = sizeof(struct sockaddr_in);
 		sin.sin_addr = *in;

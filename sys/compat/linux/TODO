@@ -1,4 +1,4 @@
-	$NetBSD: TODO,v 1.2.2.1 2001/06/21 19:59:24 nathanw Exp $
+	$NetBSD: TODO,v 1.2.2.2 2001/08/24 00:08:45 nathanw Exp $
 
 	A good place to look for things to do might be the gnats
 PR database at http://www.netbsd.org/Misc/query-pr.html
@@ -11,13 +11,15 @@ stuff you're working on, or for other questions, try one of us:
 
 Person:                    Main area:
 Eric Haszlakiewicz         Alpha
-erh@netbsd.org
+<erh@netbsd.org>
 
 Frank van der Linden       i386
-fvdl@netbsd.org
+<fvdl@netbsd.org>
+Jaromir Dolecek	         
+<jdolecek@netbsd.org>
 
 ITOH Yasufumi              m68k
-itohy@netbsd.com
+<itohy@netbsd.com>
 
 Emmanuel Dreyfus           PowerPC
-manu@netbsd.org
+<manu@netbsd.org>

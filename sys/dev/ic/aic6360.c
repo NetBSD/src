@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.70.6.1 2001/06/21 20:02:01 nathanw Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.70.6.2 2001/08/24 00:09:13 nathanw Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -226,7 +226,7 @@ aic_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 	/* See if we can pull the id string out of the ID register,
 	 * now only used for informational purposes.
 	 */
-	bzero(chip_id, sizeof(chip_id));
+	memset(chip_id, 0, sizeof(chip_id));
 	bus_space_read_multi_1(iot, ioh, ID, chip_id, sizeof(IDSTRING) - 1);
 	AIC_START(("AIC found ID: %s ",chip_id));
 	AIC_START(("chip revision %d\n",
@@ -420,12 +420,12 @@ aic_init(struct aic_softc *sc, int bus_reset)
 		TAILQ_INIT(&sc->free_list);
 		sc->sc_nexus = NULL;
 		acb = sc->sc_acb;
-		bzero(acb, sizeof(sc->sc_acb));
+		memset(acb, 0, sizeof(sc->sc_acb));
 		for (r = 0; r < sizeof(sc->sc_acb) / sizeof(*acb); r++) {
 			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 			acb++;
 		}
-		bzero(&sc->sc_tinfo, sizeof(sc->sc_tinfo));
+		memset(&sc->sc_tinfo, 0, sizeof(sc->sc_tinfo));
 	} else {
 		/* Cancel any active commands. */
 		sc->sc_state = AIC_CLEANING;
@@ -554,7 +554,7 @@ aic_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			acb->scsipi_cmd_length = 0;
 			acb->data_length = 0;
 		} else {
-			bcopy(xs->cmd, &acb->scsipi_cmd, xs->cmdlen);
+			memcpy(&acb->scsipi_cmd, xs->cmd, xs->cmdlen);
 			acb->scsipi_cmd_length = xs->cmdlen;
 			acb->data_addr = xs->data;
 			acb->data_length = xs->datalen;
@@ -874,7 +874,7 @@ aic_sense(struct aic_softc *sc, struct aic_acb *acb)
 
 	AIC_MISC(("requesting sense  "));
 	/* Next, setup a request sense command block */
-	bzero(ss, sizeof(*ss));
+	memset(ss, 0, sizeof(*ss));
 	ss->opcode = REQUEST_SENSE;
 	ss->byte2 = periph->periph_lun << 5;
 	ss->length = sizeof(struct scsipi_sense_data);

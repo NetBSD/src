@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.11.2.1 2001/06/21 20:03:15 nathanw Exp $ */
+/*      $NetBSD: sgec.c,v 1.11.2.2 2001/08/24 00:09:37 nathanw Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -139,7 +139,7 @@ sgec_attach(sc)
 	/*
 	 * Zero the newly allocated memory.
 	 */
-	bzero(sc->sc_zedata, sizeof(struct ze_cdata));
+	memset(sc->sc_zedata, 0, sizeof(struct ze_cdata));
 	/*
 	 * Create the transmit descriptor DMA maps.
 	 */
@@ -355,7 +355,7 @@ zestart(ifp)
 		totlen = 0;
 		for (m0 = m; m0; m0 = m0->m_next) {
 			error = bus_dmamap_load(sc->sc_dmat, sc->sc_xmtmap[idx],
-			    mtod(m0, void *), m0->m_len, 0, 0);
+			    mtod(m0, void *), m0->m_len, 0, BUS_DMA_WRITE);
 			buffer = sc->sc_xmtmap[idx]->dm_segs[0].ds_addr;
 			len = m0->m_len;
 			if (len == 0)
@@ -572,7 +572,8 @@ ze_add_rxbuf(sc, i)
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_rcvmap[i]);
 
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_rcvmap[i],
-	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
+	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error)
 		panic("%s: can't load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, i, error);
@@ -617,7 +618,7 @@ ze_setup(sc)
 	 * Init the setup packet with valid info.
 	 */
 	memset(zc->zc_setup, 0xff, sizeof(zc->zc_setup)); /* Broadcast */
-	bcopy(enaddr, zc->zc_setup, ETHER_ADDR_LEN);
+	memcpy(zc->zc_setup, enaddr, ETHER_ADDR_LEN);
 
 	/*
 	 * Multicast handling. The SGEC can handle up to 16 direct 
@@ -627,11 +628,11 @@ ze_setup(sc)
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6)) {
 			ifp->if_flags |= IFF_ALLMULTI;
 			break;
 		}
-		bcopy(enm->enm_addrlo, &zc->zc_setup[j], ETHER_ADDR_LEN);
+		memcpy(&zc->zc_setup[j], enm->enm_addrlo, ETHER_ADDR_LEN);
 		j += 8;
 		ETHER_NEXT_MULTI(step, enm);
 		if ((enm != NULL)&& (j == 128)) {

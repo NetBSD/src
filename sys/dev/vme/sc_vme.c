@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_vme.c,v 1.1.2.2 2001/06/21 20:06:33 nathanw Exp $	*/
+/*	$NetBSD: sc_vme.c,v 1.1.2.3 2001/08/24 00:11:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000,2001 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 #include <dev/scsipi/scsipi_debug.h>
 #include <dev/scsipi/scsiconf.h>
 
-#ifndef DDB
+#if !defined(DDB) && !defined(Debugger)
 #define	Debugger()
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.17.2.2 2001/06/21 20:03:30 nathanw Exp $	*/
+/*	$NetBSD: wi.c,v 1.17.2.3 2001/08/24 00:09:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -96,9 +96,7 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include <dev/pcmcia/pcmciareg.h>
-#include <dev/pcmcia/pcmciavar.h>
-#include <dev/pcmcia/pcmciadevs.h>
+#include <machine/bus.h>
 
 #include <dev/ic/wi_ieee.h>
 #include <dev/ic/wireg.h>
@@ -181,7 +179,7 @@ wi_attach(sc)
 	 * Is it really enough just checking against null ethernet address?
 	 * Or, check against possible vendor?  XXX.
 	 */
-	if (bcmp(sc->sc_macaddr, empty_macaddr, ETHER_ADDR_LEN) == 0) {
+	if (memcmp(sc->sc_macaddr, empty_macaddr, ETHER_ADDR_LEN) == 0) {
 		printf("%s: could not get mac address, attach failed\n",
 		    sc->sc_dev.dv_xname);
 			return 1;
@@ -235,7 +233,7 @@ wi_attach(sc)
 	wi_read_record(sc, &gen);
 	sc->wi_channel = le16toh(gen.wi_val);
 
-	bzero((char *)&sc->wi_stats, sizeof(sc->wi_stats));
+	memset((char *)&sc->wi_stats, 0, sizeof(sc->wi_stats));
 
 	/*
 	 * Find out if we support WEP on this card.
@@ -337,12 +335,12 @@ static void wi_rxeof(sc)
 		m->m_pkthdr.len = m->m_len =
 		    le16toh(rx_frame.wi_dat_len) + WI_SNAPHDR_LEN;
 
-		bcopy((char *)&rx_frame.wi_dst_addr,
-		    (char *)&eh->ether_dhost, ETHER_ADDR_LEN);
-		bcopy((char *)&rx_frame.wi_src_addr,
-		    (char *)&eh->ether_shost, ETHER_ADDR_LEN);
-		bcopy((char *)&rx_frame.wi_type,
-		    (char *)&eh->ether_type, sizeof(u_int16_t));
+		memcpy((char *)&eh->ether_dhost, (char *)&rx_frame.wi_dst_addr,
+		    ETHER_ADDR_LEN);
+		memcpy((char *)&eh->ether_shost, (char *)&rx_frame.wi_src_addr,
+		    ETHER_ADDR_LEN);
+		memcpy((char *)&eh->ether_type, (char *)&rx_frame.wi_type,
+		    sizeof(u_int16_t));
 
 		if (wi_read_data(sc, id, WI_802_11_OFFSET,
 		    mtod(m, caddr_t) + sizeof(struct ether_header),
@@ -934,7 +932,7 @@ static void wi_setmulti(sc)
 	if ((ifp->if_flags & IFF_PROMISC) != 0) {
 allmulti:
 		ifp->if_flags |= IFF_ALLMULTI;
-		bzero((char *)&mcast, sizeof(mcast));
+		memset((char *)&mcast, 0, sizeof(mcast));
 		mcast.wi_type = WI_RID_MCAST;
 		mcast.wi_len = ((ETHER_ADDR_LEN / 2) * 16) + 1;
 
@@ -946,13 +944,13 @@ allmulti:
 	ETHER_FIRST_MULTI(estep, ec, enm);
 	while (enm != NULL) {
 		/* Punt on ranges or too many multicast addresses. */
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0 ||
 		    i >= 16)
 			goto allmulti;
 
-		bcopy(enm->enm_addrlo,
-		    (char *)&mcast.wi_mcast[i], ETHER_ADDR_LEN);
+		memcpy((char *)&mcast.wi_mcast[i], enm->enm_addrlo,
+		    ETHER_ADDR_LEN);
 		i++;
 		ETHER_NEXT_MULTI(estep, enm);
 	}
@@ -977,9 +975,9 @@ wi_setdef(sc, wreq)
 	switch(wreq->wi_type) {
 	case WI_RID_MAC_NODE:
 		sdl = (struct sockaddr_dl *)ifp->if_sadl;
-		bcopy((char *)&wreq->wi_val, (char *)&sc->sc_macaddr,
+		memcpy((char *)&sc->sc_macaddr, (char *)&wreq->wi_val,
 		    ETHER_ADDR_LEN);
-		bcopy((char *)&wreq->wi_val, LLADDR(sdl), ETHER_ADDR_LEN);
+		memcpy(LLADDR(sdl), (char *)&wreq->wi_val, ETHER_ADDR_LEN);
 		break;
 	case WI_RID_PORTTYPE:
 		error = wi_sync_media(sc, le16toh(wreq->wi_val[0]), sc->wi_tx_rate);
@@ -1036,7 +1034,7 @@ wi_setdef(sc, wreq)
 		sc->wi_tx_key = le16toh(wreq->wi_val[0]);
 		break;
 	case WI_RID_DEFLT_CRYPT_KEYS:
-		bcopy((char *)wreq, (char *)&sc->wi_keys,
+		memcpy((char *)&sc->wi_keys, (char *)wreq,
 		    sizeof(struct wi_ltv_keys));
 		break;
 	default:
@@ -1063,8 +1061,8 @@ wi_getdef(sc, wreq)
 	case WI_RID_MAC_NODE:
 		wreq->wi_len += ETHER_ADDR_LEN / 2 - 1;
 		sdl = (struct sockaddr_dl *)ifp->if_sadl;
-		bcopy(&sc->sc_macaddr, &wreq->wi_val, ETHER_ADDR_LEN);
-		bcopy(LLADDR(sdl), &wreq->wi_val, ETHER_ADDR_LEN);
+		memcpy(&wreq->wi_val, &sc->sc_macaddr, ETHER_ADDR_LEN);
+		memcpy(&wreq->wi_val, LLADDR(sdl), ETHER_ADDR_LEN);
 		break;
 	case WI_RID_PORTTYPE:
 		wreq->wi_val[0] = htole16(sc->wi_ptype);
@@ -1122,7 +1120,7 @@ wi_getdef(sc, wreq)
 		break;
 	case WI_RID_DEFLT_CRYPT_KEYS:
 		wreq->wi_len += sizeof(struct wi_ltv_keys) / 2 - 1;
-		bcopy(&sc->wi_keys, wreq, sizeof(struct wi_ltv_keys));
+		memcpy(wreq, &sc->wi_keys, sizeof(struct wi_ltv_keys));
 		break;
 	default:
 #if 0
@@ -1219,16 +1217,16 @@ wi_ioctl(ifp, command, data)
 			break;
 		if (wreq.wi_type == WI_RID_IFACE_STATS) {
 			/* XXX native byte order */
-			bcopy((char *)&sc->wi_stats, (char *)&wreq.wi_val,
+			memcpy((char *)&wreq.wi_val, (char *)&sc->wi_stats,
 			    sizeof(sc->wi_stats));
 			wreq.wi_len = (sizeof(sc->wi_stats) / 2) + 1;
 		} else if (wreq.wi_type == WI_RID_DEFLT_CRYPT_KEYS) {
 			/* For non-root user, return all-zeroes keys */
 			if (suser(p->p_ucred, &p->p_acflag))
-				bzero((char *)&wreq,
+				memset((char *)&wreq, 0,
 				    sizeof(struct wi_ltv_keys));
 			else
-				bcopy((char *)&sc->wi_keys, (char *)&wreq,
+				memcpy((char *)&wreq, (char *)&sc->wi_keys,
 				    sizeof(struct wi_ltv_keys));
 		} else {
 			if (sc->sc_enabled == 0)
@@ -1473,7 +1471,7 @@ wi_start(ifp)
 	if (m0 == NULL)
 		return;
 
-	bzero((char *)&tx_frame, sizeof(tx_frame));
+	memset((char *)&tx_frame, 0, sizeof(tx_frame));
 	id = sc->wi_tx_data_id;
 	eh = mtod(m0, struct ether_header *);
 
@@ -1485,14 +1483,14 @@ wi_start(ifp)
 	    ntohs(eh->ether_type) == ETHERTYPE_ARP ||
 	    ntohs(eh->ether_type) == ETHERTYPE_REVARP ||
 	    ntohs(eh->ether_type) == ETHERTYPE_IPV6) {
-		bcopy((char *)&eh->ether_dhost,
-		    (char *)&tx_frame.wi_addr1, ETHER_ADDR_LEN);
-		bcopy((char *)&eh->ether_shost,
-		    (char *)&tx_frame.wi_addr2, ETHER_ADDR_LEN);
-		bcopy((char *)&eh->ether_dhost,
-		    (char *)&tx_frame.wi_dst_addr, ETHER_ADDR_LEN);
-		bcopy((char *)&eh->ether_shost,
-		    (char *)&tx_frame.wi_src_addr, ETHER_ADDR_LEN);
+		memcpy((char *)&tx_frame.wi_addr1, (char *)&eh->ether_dhost,
+		    ETHER_ADDR_LEN);
+		memcpy((char *)&tx_frame.wi_addr2, (char *)&eh->ether_shost,
+		    ETHER_ADDR_LEN);
+		memcpy((char *)&tx_frame.wi_dst_addr, (char *)&eh->ether_dhost,
+		    ETHER_ADDR_LEN);
+		memcpy((char *)&tx_frame.wi_src_addr, (char *)&eh->ether_shost,
+		    ETHER_ADDR_LEN);
 
 		tx_frame.wi_dat_len = htole16(m0->m_pkthdr.len - WI_SNAPHDR_LEN);
 		tx_frame.wi_frame_ctl = htole16(WI_FTYPE_DATA);
@@ -1558,10 +1556,10 @@ wi_mgmt_xmit(sc, data, len)
 	hdr = (struct wi_80211_hdr *)data;
 	dptr = data + sizeof(struct wi_80211_hdr);
 
-	bzero((char *)&tx_frame, sizeof(tx_frame));
+	memset((char *)&tx_frame, 0, sizeof(tx_frame));
 	id = sc->wi_tx_mgmt_id;
 
-	bcopy((char *)hdr, (char *)&tx_frame.wi_frame_ctl,
+	memcpy((char *)&tx_frame.wi_frame_ctl, (char *)hdr,
 	   sizeof(struct wi_80211_hdr));
 
 	tx_frame.wi_dat_len = htole16(len - WI_SNAPHDR_LEN);
@@ -1669,42 +1667,42 @@ wi_get_id(sc)
 	wi_read_record(sc, (struct wi_ltv_gen *)&ver);
 	printf("%s: using ", sc->sc_dev.dv_xname);
 	switch (le16toh(ver.wi_ver[0])) {
-		case WI_NIC_EVB2:
-			printf("RF:PRISM2 MAC:HFA3841");
-			sc->sc_prism2 = 1;
-			break;
-		case WI_NIC_HWB3763:
-			printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3763 rev.B");
-			sc->sc_prism2 = 1;
-			break;
-		case WI_NIC_HWB3163:
-			printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163 rev.A");
-			sc->sc_prism2 = 1;
-			break;
-		case WI_NIC_HWB3163B:
-			printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163 rev.B");
-			sc->sc_prism2 = 1;
-			break;
-		case WI_NIC_EVB3:
-			printf("RF:PRISM2 MAC:HFA3842");
-			sc->sc_prism2 = 1;
-			break;
-		case WI_NIC_HWB1153:
-			printf("RF:PRISM1 MAC:HFA3841 CARD:HWB1153");
-			sc->sc_prism2 = 1;
-			break;
-		case WI_NIC_P2_SST:
-			printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163-SST-flash");
-			sc->sc_prism2 = 1;
-			break;
-		case WI_NIC_PRISM2_5:
-			printf("RF:PRISM2.5 MAC:ISL3873");
-			sc->sc_prism2 = 1;
-			break;
-		default:
-			printf("Lucent chip or unknown chip\n");
-			sc->sc_prism2 = 0;
-			break;
+	case WI_NIC_EVB2:
+		printf("RF:PRISM2 MAC:HFA3841");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_HWB3763:
+		printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3763 rev.B");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_HWB3163:
+		printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163 rev.A");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_HWB3163B:
+		printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163 rev.B");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_EVB3:
+		printf("RF:PRISM2 MAC:HFA3842");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_HWB1153:
+		printf("RF:PRISM1 MAC:HFA3841 CARD:HWB1153");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_P2_SST:
+		printf("RF:PRISM2 MAC:HFA3841 CARD:HWB3163-SST-flash");
+		sc->sc_prism2 = 1;
+		break;
+	case WI_NIC_PRISM2_5:
+		printf("RF:PRISM2.5 MAC:ISL3873");
+		sc->sc_prism2 = 1;
+		break;
+	default:
+		printf("Lucent chip or unknown chip\n");
+		sc->sc_prism2 = 0;
+		break;
 	}
 
 	if (sc->sc_prism2) {
@@ -1716,7 +1714,7 @@ wi_get_id(sc)
 		LE16TOH(ver.wi_ver[1]);
 		LE16TOH(ver.wi_ver[2]);
 		LE16TOH(ver.wi_ver[3]);
-		printf(" ,Firmware: %i.%i variant %i\n", ver.wi_ver[2],
+		printf(", Firmware: %i.%i variant %i\n", ver.wi_ver[2],
 		       ver.wi_ver[3], ver.wi_ver[1]);
 		sc->sc_prism2_ver = ver.wi_ver[2] * 100 +
 				    ver.wi_ver[3] *  10 + ver.wi_ver[1];
@@ -1934,7 +1932,8 @@ wi_set_nwkey(sc, nwkey)
 	struct wi_softc *sc;
 	struct ieee80211_nwkey *nwkey;
 {
-	int i, len, error;
+	int i, error;
+	size_t len;
 	struct wi_req wreq;
 	struct wi_ltv_keys *wk = (struct wi_ltv_keys *)&wreq;
 

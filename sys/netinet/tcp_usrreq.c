@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.60.2.1 2001/04/09 01:58:33 nathanw Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.60.2.2 2001/08/24 00:12:32 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -103,6 +103,7 @@
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
+#include "opt_tcp_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,12 +207,14 @@ tcp_usrreq(so, req, m, nam, control, p)
 		switch (family) {
 #ifdef INET
 		case PF_INET:
+			in_pcbpurgeif0(&tcbtable, (struct ifnet *)control);
 			in_purgeif((struct ifnet *)control);
 			in_pcbpurgeif(&tcbtable, (struct ifnet *)control);
 			break;
 #endif
 #ifdef INET6
 		case PF_INET6:
+			in6_pcbpurgeif0(&tcb6, (struct ifnet *)control);
 			in6_purgeif((struct ifnet *)control);
 			in6_pcbpurgeif(&tcb6, (struct ifnet *)control);
 			break;
@@ -603,8 +606,10 @@ tcp_usrreq(so, req, m, nam, control, p)
 	default:
 		panic("tcp_usrreq");
 	}
+#ifdef TCP_DEBUG
 	if (tp && (so->so_options & SO_DEBUG))
 		tcp_trace(TA_USER, ostate, tp, NULL, req);
+#endif
 
 release:
 	splx(s);
@@ -795,26 +800,6 @@ tcp_attach(so)
 	default:
 		return EAFNOSUPPORT;
 	}
-#ifdef IPSEC
-#ifdef INET
-	if (inp) {
-		error = ipsec_init_policy(so, &inp->inp_sp);
-		if (error != 0) {
-			in_pcbdetach(inp);
-			return (error);
-		}
-	}
-#endif
-#ifdef INET6
-	if (in6p) {
-		error = ipsec_init_policy(so, &in6p->in6p_sp);
-		if (error != 0) {
-			in6_pcbdetach(in6p);
-			return (error);
-		}
-	}
-#endif
-#endif /*IPSEC*/
 	if (inp)
 		tp = tcp_newtcpcb(family, (void *)inp);
 #ifdef INET6

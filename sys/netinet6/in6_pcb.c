@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.35.2.1 2001/06/21 20:08:55 nathanw Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.35.2.2 2001/08/24 00:12:39 nathanw Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -114,6 +114,9 @@ in6_pcballoc(so, head)
 	struct in6pcb *head;
 {
 	struct in6pcb *in6p;
+#ifdef IPSEC
+	int error;
+#endif
 
 	MALLOC(in6p, struct in6pcb *, sizeof(*in6p), M_PCB, M_NOWAIT);
 	if (in6p == NULL)
@@ -123,6 +126,13 @@ in6_pcballoc(so, head)
 	in6p->in6p_socket = so;
 	in6p->in6p_hops = -1;	/* use kernel default */
 	in6p->in6p_icmp6filt = NULL;
+#ifdef IPSEC
+	error = ipsec_init_policy(so, &in6p->in6p_sp);
+	if (error != 0) {
+		FREE(in6p, M_PCB);
+		return error;
+	}
+#endif /*IPSEC*/
 	in6p->in6p_next = head->in6p_next;
 	head->in6p_next = in6p;
 	in6p->in6p_prev = head;
@@ -387,6 +397,10 @@ in6_pcbconnect(in6p, nam)
 	 * but if this line is missing, the garbage value remains.
 	 */
 	in6p->in6p_flowinfo = sin6->sin6_flowinfo;
+#ifdef IPSEC
+	if (in6p->in6p_socket->so_type == SOCK_STREAM)
+		ipsec_pcbconn(in6p->in6p_sp);
+#endif
 	return(0);
 }
 
@@ -398,6 +412,9 @@ in6_pcbdisconnect(in6p)
 	in6p->in6p_fport = 0;
 	if (in6p->in6p_socket->so_state & SS_NOFDREF)
 		in6_pcbdetach(in6p);
+#ifdef IPSEC
+	ipsec_pcbdisconn(in6p->in6p_sp);
+#endif
 }
 
 void
@@ -600,6 +617,45 @@ in6_pcbnotify(head, dst, fport_arg, src, lport_arg, cmd, cmdarg, notify)
 		nmatch++;
 	}
 	return nmatch;
+}
+
+void
+in6_pcbpurgeif0(head, ifp)
+	struct in6pcb *head;
+	struct ifnet *ifp;
+{
+	struct in6pcb *in6p, *nin6p;
+	struct ip6_moptions *im6o;
+	struct in6_multi_mship *imm, *nimm;
+
+	for (in6p = head->in6p_next; in6p != head; in6p = nin6p) {
+		nin6p = in6p->in6p_next;
+		im6o = in6p->in6p_moptions;
+		if (im6o) {
+			/*
+			 * Unselect the outgoing interface if it is being
+			 * detached.
+			 */
+			if (im6o->im6o_multicast_ifp == ifp)
+				im6o->im6o_multicast_ifp = NULL;
+
+			/*
+			 * Drop multicast group membership if we joined
+			 * through the interface being detached.
+			 * XXX controversial - is it really legal for kernel
+			 * to force this?
+			 */
+			for (imm = im6o->im6o_memberships.lh_first;
+			     imm != NULL; imm = nimm) {
+				nimm = imm->i6mm_chain.le_next;
+				if (imm->i6mm_maddr->in6m_ifp == ifp) {
+					LIST_REMOVE(imm, i6mm_chain);
+					in6_delmulti(imm->i6mm_maddr);
+					free(imm, M_IPMADDR);
+				}
+			}
+		}
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.107.2.2 2001/06/21 20:05:08 nathanw Exp $	*/
+/*	$NetBSD: pciide.c,v 1.107.2.3 2001/08/24 00:10:20 nathanw Exp $	*/
 
 
 /*
@@ -525,9 +525,7 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	{ PCI_VENDOR_AMD, pciide_amd_products },
 	{ PCI_VENDOR_OPTI, pciide_opti_products },
 	{ PCI_VENDOR_TRIONES, pciide_triones_products },
-#ifdef PCIIDE_ACARD_ENABLE
 	{ PCI_VENDOR_ACARD, pciide_acard_products },
-#endif
 #ifdef PCIIDE_SERVERWORKS_ENABLE
 	{ PCI_VENDOR_SERVERWORKS, pciide_serverworks_products },
 #endif
@@ -561,7 +559,6 @@ void	pciide_mapchan __P((struct pci_attach_args *,
 int	pciide_chan_candisable __P((struct pciide_channel *));
 void	pciide_map_compat_intr __P(( struct pci_attach_args *,
 	    struct pciide_channel *, int, int));
-int	pciide_print __P((void *, const char *pnp));
 int	pciide_compat_intr __P((void *));
 int	pciide_pci_intr __P((void *));
 const struct pciide_product_desc* pciide_lookup_product __P((u_int32_t));
@@ -1012,7 +1009,8 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 
 	error = bus_dmamap_load(sc->sc_dmat,
 	    dma_maps->dmamap_xfer,
-	    databuf, datalen, NULL, BUS_DMA_NOWAIT | BUS_DMA_STREAMING);
+	    databuf, datalen, NULL, BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
+	    ((flags & WDC_DMA_READ) ? BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error) {
 		printf("%s:%d: unable to load xfer DMA map for"
 		    "drive %d, error=%d\n", sc->sc_wdcdev.sc_dev.dv_xname,
@@ -2749,6 +2747,8 @@ sis_chip_map(sc, pa)
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	pcireg_t rev = PCI_REVISION(pa->pa_class);
 	bus_size_t cmdsize, ctlsize;
+	pcitag_t pchb_tag;
+	pcireg_t pchb_id, pchb_class;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -2756,12 +2756,25 @@ sis_chip_map(sc, pa)
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	printf("\n");
+
+	/* get a PCI tag for the host bridge (function 0 of the same device) */
+	pchb_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
+	/* and read ID and rev of the ISA bridge */
+	pchb_id = pci_conf_read(sc->sc_pc, pchb_tag, PCI_ID_REG);
+	pchb_class = pci_conf_read(sc->sc_pc, pchb_tag, PCI_CLASS_REG);
+
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
-		if (rev > 0xd0)
+		/*
+		 * controllers associated to a rev 0x2 530 Host to PCI Bridge
+		 * have problems with UDMA (info provided by Christos)
+		 */
+		if (rev >= 0xd0 &&
+		    (PCI_PRODUCT(pchb_id) != PCI_PRODUCT_SIS_530HB ||
+		    PCI_REVISION(pchb_class) >= 0x03))
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	}
 
@@ -2895,15 +2908,21 @@ acer_chip_map(sc, pa)
 	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
-		if (rev >= 0x20)
+		if (rev >= 0x20) {
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+			if (rev >= 0xC4)
+				sc->sc_wdcdev.UDMA_cap = 5;
+			else if (rev >= 0xC2)
+				sc->sc_wdcdev.UDMA_cap = 4;
+			else
+				sc->sc_wdcdev.UDMA_cap = 2;
+		}
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 	    
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 2;
 	sc->sc_wdcdev.set_modes = acer_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
@@ -2928,6 +2947,24 @@ acer_chip_map(sc, pa)
 	interface = PCI_INTERFACE(pci_conf_read(sc->sc_pc, sc->sc_tag,
 	    PCI_CLASS_REG));
 
+	/* From linux: enable "Cable Detection" */
+	if (rev >= 0xC2) {
+		pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x4B,
+		    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4B)
+		    | ACER_0x4B_CDETECT);
+		/* set south-bridge's enable bit, m1533, 0x79 */
+		if (rev == 0xC2)
+			/* 1543C-B0 (m1533, 0x79, bit 2) */
+			pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x79,
+			    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x79)
+			    | ACER_0x79_REVC2_EN);
+		else
+			/* 1553/1535 (m1533, 0x79, bit 1) */
+			pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x79,
+			    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x79)
+			    | ACER_0x79_EN);
+	}
+
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
@@ -2937,8 +2974,9 @@ acer_chip_map(sc, pa)
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 			continue;
 		}
+		/* newer controllers seems to lack the ACER_CHIDS. Sigh */
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    acer_pci_intr);
+		     (rev >= 0xC2) ? pciide_pci_intr : acer_pci_intr);
 		if (cp->hw_ok == 0)
 			continue;
 		if (pciide_chan_candisable(cp)) {
@@ -2968,6 +3006,17 @@ acer_setup_channel(chp)
 	    acer_fifo_udma), DEBUG_PROBE);
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
+
+	if ((chp->ch_drive[0].drive_flags | chp->ch_drive[1].drive_flags) &
+	    DRIVE_UDMA) { /* check 80 pins cable */
+		if (pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4A) &
+		    ACER_0x4A_80PIN(chp->channel)) {
+			if (chp->ch_drive[0].UDMA_mode > 2)
+				chp->ch_drive[0].UDMA_mode = 2;
+			if (chp->ch_drive[1].UDMA_mode > 2)
+				chp->ch_drive[1].UDMA_mode = 2;
+		}
+	}
 
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
@@ -2999,6 +3048,13 @@ acer_setup_channel(chp)
 			acer_fifo_udma |= 
 			    ACER_UDMA_TIM(chp->channel, drive,
 				acer_udma[drvp->UDMA_mode]);
+			/* XXX disable if one drive < UDMA3 ? */
+			if (drvp->UDMA_mode >= 3) {
+				pciide_pci_write(sc->sc_pc, sc->sc_tag,
+				    ACER_0x4B,
+				    pciide_pci_read(sc->sc_pc, sc->sc_tag,
+					ACER_0x4B) | ACER_0x4B_UDMA66);
+			}
 		} else {
 			/*
 			 * use Multiword DMA
@@ -3075,8 +3131,12 @@ hpt_chip_map(sc, pa)
 	printf(": Triones/Highpoint ");
 	if (revision == HPT370_REV)
 		printf("HPT370 IDE Controller\n");
-	else
+	else if (revision == HPT370A_REV)
+		printf("HPT370A IDE Controller\n");
+	else if (revision == HPT366_REV)
 		printf("HPT366 IDE Controller\n");
+	else
+		printf("unknown HPT IDE controller rev %d\n", revision);
 
 	/* 
 	 * when the chip is in native mode it identifies itself as a
@@ -3087,7 +3147,7 @@ hpt_chip_map(sc, pa)
 	} else {
 		interface = PCIIDE_INTERFACE_BUS_MASTER_DMA |
 		    PCIIDE_INTERFACE_PCI(0);
-		if (revision == HPT370_REV)
+		if (revision == HPT370_REV || revision == HPT370A_REV)
 			interface |= PCIIDE_INTERFACE_PCI(1);
 	}
 
@@ -3155,7 +3215,7 @@ hpt_chip_map(sc, pa)
 		wdcattach(&cp->wdc_channel);
 		hpt_setup_channel(&cp->wdc_channel);
 	}
-	if (revision == HPT370_REV) {
+	if (revision == HPT370_REV || revision == HPT370A_REV) {
 		/*
 		 * HPT370_REV has a bit to disable interrupts, make sure
 		 * to clear it

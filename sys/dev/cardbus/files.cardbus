@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.13.2.2 2001/06/21 20:01:25 nathanw Exp $
+#	$NetBSD: files.cardbus,v 1.13.2.3 2001/08/24 00:09:06 nathanw Exp $
 #
 # files.cardbus
 #
@@ -57,6 +57,12 @@ file	dev/cardbus/fwohci_cardbus.c	fwohci_cardbus
 #
 attach	ahc at cardbus with ahc_cardbus: ahc_seeprom, smc93cx6
 file	dev/cardbus/ahc_cardbus.c	ahc_cardbus
+
+#
+# PCI bridge
+#
+attach  ppb at cardbus with rbus_ppb
+file	dev/cardbus/rbus_ppb.c		rbus_ppb
 
 #
 # RealTek 8139

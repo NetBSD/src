@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp.h,v 1.12 1997/11/03 15:01:18 is Exp $	*/
+/*	$NetBSD: clnp.h,v 1.12.26.1 2001/08/24 00:12:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -140,7 +140,7 @@ struct clnp_segment {
 /*
  *	NOTE:
  *		The clnp_frag structure is stored in an mbuf immedately
- *		preceeding the fragment data. Since there are words in
+ *		preceding the fragment data. Since there are words in
  *		this struct, it must be word aligned.
  *
  *	NOTE:

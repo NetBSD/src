@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.40.4.1 2001/06/21 19:25:57 nathanw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.40.4.2 2001/08/24 00:08:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -113,14 +113,12 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
-/* (PDSLOT_PTE << PDSHIFT) - UPAGES*NBPG */
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0xbfbfe000)
-/* (PDSLOT_PTE << PDSHIFT) + (PDSLOT_PTE << PGSHIFT) */
-#define VM_MAX_ADDRESS		((vaddr_t)0xbfeff000)
-/* PDSLOT_KERN << PDSHIFT */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xc0000000)
-/* PDSLOT_APTE << PDSHIFT */
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xffc00000)
+#define	VM_MAXUSER_ADDRESS	\
+			((vaddr_t)((PDSLOT_PTE << PDSHIFT) - (UPAGES * NBPG)))
+#define	VM_MAX_ADDRESS		\
+		((vaddr_t)((PDSLOT_PTE << PDSHIFT) + (PDSLOT_PTE << PGSHIFT)))
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)(PDSLOT_KERN << PDSHIFT))
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)(PDSLOT_APTE << PDSHIFT))
 
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.8.2.1 2001/06/21 20:10:02 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.8.2.2 2001/08/24 00:13:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -456,7 +456,9 @@ ext2fs_balloc_range(vp, off, len, cred, flags)
 	lockmgr(&vp->v_glock, LK_RELEASE, NULL);
 
 	/*
-	 * unbusy any pages we are holding.
+	 * clear PG_RDONLY on any pages we are holding
+	 * (since they now have backing store) and unbusy them.
+	 * if we got an error, free any pages we created past the old eob.
 	 */
 
 errout:
@@ -466,6 +468,9 @@ errout:
 		    PGO_FREE);
 	}
 	if (pgs[0] != NULL) {
+		for (i = 0; i < npages; i++) {
+			pgs[i]->flags &= ~PG_RDONLY;
+		}
 		uvm_page_unbusy(pgs, npages);
 	}
 	simple_unlock(&uobj->vmobjlock);

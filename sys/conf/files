@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.427.2.3 2001/06/21 20:01:02 nathanw Exp $
+#	$NetBSD: files,v 1.427.2.4 2001/08/24 00:08:58 nathanw Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -29,12 +29,14 @@ defopt	NFSSERVER
 
 defopt	opt_kmempages.h	NKMEMPAGES NKMEMPAGES_MIN NKMEMPAGES_MAX
 defopt	opt_malloclog.h	MALLOCLOG MALLOCLOGSIZE
+defopt	opt_malloc_debug.h MALLOC_DEBUG
 defopt	opt_pool.h	POOL_DIAGNOSTIC
 defopt	opt_poollog.h	POOL_LOGSIZE
 
 defopt	opt_revcache.h	NAMECACHE_ENTER_REVERSE
 
-defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT EXEC_ELF_CATCHALL
+defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64
+			EXEC_MACHO EXEC_SCRIPT EXEC_ELF_CATCHALL
 
 # compatibility options
 defopt	COMPAT_FREEBSD
@@ -49,6 +51,7 @@ defopt	COMPAT_NETBSD32
 defopt	COMPAT_AOUT
 defopt	COMPAT_AOUT_M68K
 defopt	COMPAT_M68K4K
+defopt	COMPAT_MACH
 defopt	COMPAT_VAX1K
 defopt	COMPAT_43
 defopt	COMPAT_PECOFF
@@ -56,6 +59,7 @@ defopt	opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 				COMPAT_13 COMPAT_14 COMPAT_15 COMPAT_NOMID
 
 # networking protocols
+defopt	opt_tcp_debug.h	TCP_DEBUG TCP_NDEBUG
 defopt	opt_inet.h	INET INET6 INET6_MD_CKSUM
 defopt	opt_ipsec.h	IPSEC IPSEC_ESP
 defopt	opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
@@ -122,6 +126,9 @@ defopt	RAID_AUTOCONFIG
 # buffer cache size options
 defopt	opt_bufcache.h	BUFCACHE BUFPAGES
 
+# userconf
+defopt opt_userconf.h	USERCONF
+
 
 # Not entirely MI, but present on multiple arch's
 
@@ -137,7 +144,7 @@ defopt	LOCKDEBUG
 defopt	SYSCALL_DEBUG
 
 # memory (ram) disk options
-defopt	opt_md.h	MEMORY_DISK_HOOKS MEMORY_DISK_SERVER MEMORY_DISK_IS_ROOT
+defopt	opt_md.h	MEMORY_DISK_HOOKS MEMORY_DISK_SERVER MEMORY_DISK_IS_ROOT MEMORY_DISK_DYNAMIC
 
 defopt	opt_mdsize.h	MINIROOTSIZE
 
@@ -557,6 +564,10 @@ file	dev/ic/mm58167.c		mm58167
 define	dl10019
 file	dev/ic/dl10019.c		dl10019
 
+# ASIX AX88190 NE2000-compatible network interface subroutines
+define	ax88190
+file	dev/ic/ax88190.c		ax88190
+
 # WD/SMC 80x3 family, SMC Elite Ultra [8216], SMC EtherEZ
 device	we: ether, ifnet, arp, dp8390nic
 file	dev/ic/we.c			we
@@ -826,6 +837,7 @@ file	kern/exec_ecoff.c		exec_ecoff
 file	kern/exec_elf32.c		exec_elf32
 file	kern/exec_elf64.c		exec_elf64
 file	kern/exec_elf_common.c		exec_elf32 | exec_elf64
+file	kern/exec_macho.c		exec_macho
 file	kern/exec_script.c		exec_script
 file	kern/exec_subr.c
 file	kern/init_main.c
@@ -843,6 +855,7 @@ file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
+file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_ntptime.c
 file	kern/kern_physio.c
 file	kern/kern_proc.c
@@ -864,6 +877,7 @@ file	kern/subr_pool.c
 file	kern/subr_prf.c
 file	kern/subr_prof.c
 file	kern/subr_rmap.c
+file	kern/subr_userconf.c		userconf
 file	kern/subr_xxx.c
 file	kern/sys_generic.c
 file	kern/sys_pipe.c			new_pipe

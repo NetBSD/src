@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.50.2.2 2001/06/21 20:07:47 nathanw Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.50.2.3 2001/08/24 00:12:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -610,12 +610,10 @@ union_mknod(v)
 		if (error)
 			return (error);
 
-		if (vp != NULLVP) {
-			error = union_allocvp(ap->a_vpp, mp, NULLVP, NULLVP,
-					cnp, vp, NULLVP, 1);
-			if (error)
-				vput(vp);
-		}
+		error = union_allocvp(ap->a_vpp, mp, NULLVP, NULLVP,
+				      cnp, vp, NULLVP, 1);
+		if (error)
+		    vput(vp);
 		return (error);
 	}
 
@@ -1527,14 +1525,13 @@ union_symlink(v)
 
 	if (dvp != NULLVP) {
 		int error;
-		struct vnode *vp;
 
 		FIXUP(un);
 		VREF(dvp);
 		un->un_flags |= UN_KLOCK;
 		vput(ap->a_dvp);
-		error = VOP_SYMLINK(dvp, &vp, cnp, ap->a_vap, ap->a_target);
-		*ap->a_vpp = NULLVP;
+		error = VOP_SYMLINK(dvp, ap->a_vpp, cnp, ap->a_vap,
+				    ap->a_target);
 		return (error);
 	}
 
@@ -1989,32 +1986,15 @@ union_getpages(v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct vm_page *pg;
-	int error, npages, i;
+	int error;
 
 	/*
 	 * just call into the underlying layer to get the pages.
-	 * XXXUBC for now, mark pages from the lower layer read-only
-	 * so that write faults will come back here again.
 	 */
 
 	ap->a_vp = OTHERVP(vp);
 	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
 	simple_lock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
-	if (error || ap->a_vp == UPPERVP(vp)) {
-		return error;
-	}
-	npages = *ap->a_count;
-	simple_lock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
-	for (i = 0; npages > 0; i++) {
-		pg = ap->a_m[i];
-		if (pg == NULL || pg == PGO_DONTCARE) {
-			continue;
-		}
-		pg->flags |= PG_RDONLY;
-		npages--;
-	}
-	simple_unlock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
-	return 0;
+	return error;
 }

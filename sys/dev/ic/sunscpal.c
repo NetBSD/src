@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.3.2.2 2001/06/21 20:03:22 nathanw Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.3.2.3 2001/08/24 00:09:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -119,7 +119,7 @@ static void	sunscpal_machine __P((struct sunscpal_softc *));
 void	sunscpal_abort __P((struct sunscpal_softc *));
 void	sunscpal_cmd_timeout __P((void *));
 /*
- * Action flags returned by the info_tranfer functions:
+ * Action flags returned by the info_transfer functions:
  * (These determine what happens next.)
  */
 #define ACT_CONTINUE	0x00	/* No flags: expect another phase */
@@ -309,7 +309,9 @@ sunscpal_dma_poll(sc)
 
 #ifdef	SUNSCPAL_DEBUG
 	if (sunscpal_debug & SUNSCPAL_DBG_DMA) {
-		printf("sunscpal_dma_poll: done, icr=0x%x\n", SUNSCPAL_READ_2(sc, sunscpal_icr));
+		char buffer[64];
+		bitmask_snprintf(SUNSCPAL_READ_2(sc, sunscpal_icr), SUNSCPAL_ICR_BITS, buffer, sizeof(buffer));
+		printf("sunscpal_dma_poll: done, icr=%s\n", buffer);
 	}
 #endif
 }
@@ -352,7 +354,9 @@ sunscpal_dma_stop(sc)
 
 
 	if (icr & (SUNSCPAL_ICR_BUS_ERROR)) {
-		printf("sc: DMA error, icr=0x%x, reset\n", icr);
+		char buffer[64];
+		bitmask_snprintf(icr, SUNSCPAL_ICR_BITS, buffer, sizeof(buffer));
+		printf("sc: DMA error, icr=%s, reset\n", buffer);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		sc->sc_state |= SUNSCPAL_ABORTING;
 		goto out;
@@ -820,10 +824,25 @@ new:
 out:
 		splx(s);
 		return;
+
 	case ADAPTER_REQ_GROW_RESOURCES:
-	case ADAPTER_REQ_SET_XFER_MODE:
-		/* not supported */
+		/* XXX Not supported. */
 		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+	    {
+		/*
+		 * We don't support Sync, Wide, or Tagged Queueing.
+		 * Just callback now, to report this.
+		 */
+		struct scsipi_xfer_mode *xm = arg;
+
+		xm->xm_mode = 0;
+		xm->xm_period = 0;
+		xm->xm_offset = 0;
+		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
+		return;
+	    }
 	}
 }
 
@@ -1957,7 +1976,7 @@ void
 sunscpal_clear_trace()
 {
 	sunscpal_traceidx = 0;
-	bzero((char*) sunscpal_tracebuf, sizeof(sunscpal_tracebuf));
+	memset((char*) sunscpal_tracebuf, 0, sizeof(sunscpal_tracebuf));
 }
 
 void

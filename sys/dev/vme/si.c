@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.2.6.1 2001/06/21 20:06:34 nathanw Exp $	*/
+/*	$NetBSD: si.c,v 1.2.6.2 2001/08/24 00:11:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -651,7 +651,7 @@ si_intr_off(ncr_sc)
 
 /*
  * This function is called during the COMMAND or MSG_IN phase
- * that preceeds a DATA_IN or DATA_OUT phase, in case we need
+ * that precedes a DATA_IN or DATA_OUT phase, in case we need
  * to setup the DMA engine before the bus enters a DATA phase.
  *
  * XXX: The VME adapter appears to suppress SBC interrupts

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.4.2.2 2001/06/21 20:10:43 nathanw Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.4.2.3 2001/08/24 00:13:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -71,7 +71,9 @@
 #ifndef	_VM_PARAM_
 #define	_VM_PARAM_
 
+#ifdef _KERNEL
 #include <machine/vmparam.h>
+#endif
 
 /*
  * This belongs in types.h, but breaks too many existing programs.
@@ -112,8 +114,10 @@ typedef int	boolean_t;
 #define	VM_ANONMIN	6
 #define	VM_VTEXTMIN	7
 #define	VM_VNODEMIN	8
+#define	VM_MAXSLP	9
+#define	VM_USPACE	10
 
-#define	VM_MAXID	9		/* number of valid vm ids */
+#define	VM_MAXID	11		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -125,6 +129,8 @@ typedef int	boolean_t;
 	{ "anonmin", CTLTYPE_INT }, \
 	{ "vtextmin", CTLTYPE_INT }, \
 	{ "vnodemin", CTLTYPE_INT }, \
+	{ "maxslp", CTLTYPE_INT }, \
+	{ "uspace", CTLTYPE_INT }, \
 }
 
 #ifndef ASSEMBLER

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.2.8.1 2001/08/24 00:09:51 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -84,6 +84,8 @@ pckbc_isa_match(parent, match, aux)
 		return (0);
 
 	if (pckbc_is_console(iot, IO_KBD) == 0) {
+		struct pckbc_internal t;
+
 		if (bus_space_map(iot, IO_KBD + KBDATAP, 1, 0, &ioh_d))
 			return (0);
 		if (bus_space_map(iot, IO_KBD + KBCMDP, 1, 0, &ioh_c)) {
@@ -91,15 +93,20 @@ pckbc_isa_match(parent, match, aux)
 			return (0);
 		}
 
+		memset(&t, 0, sizeof(t));
+		t.t_iot = iot;
+		t.t_ioh_d = ioh_d;
+		t.t_ioh_c = ioh_c;
+
 		/* flush KBC */
-		(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+		(void) pckbc_poll_data1(&t, PCKBC_KBD_SLOT, 0);
 
 		/* KBC selftest */
 		if (pckbc_send_cmd(iot, ioh_c, KBC_SELFTEST) == 0) {
 			ok = 0;
 			goto out;
 		}
-		res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+		res = pckbc_poll_data1(&t, PCKBC_KBD_SLOT, 0);
 		if (res != 0x55) {
 			printf("kbc selftest: %x\n", res);
 			ok = 0;
@@ -154,7 +161,7 @@ pckbc_isa_attach(parent, self, aux)
 			panic("pckbc_attach: couldn't map");
 
 		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
-		bzero(t, sizeof(struct pckbc_internal));
+		memset(t, 0, sizeof(struct pckbc_internal));
 		t->t_iot = iot;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;

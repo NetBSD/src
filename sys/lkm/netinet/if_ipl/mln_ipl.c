@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.24 2001/02/05 10:42:42 chs Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.24.2.1 2001/08/24 00:11:56 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -253,6 +253,7 @@ static int ipl_load()
 		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 		if (error)
 			return error;
+		vput(nd.ni_vp);
 	}
 	return error;
 }

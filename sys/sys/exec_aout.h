@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.23.14.1 2001/06/21 20:09:46 nathanw Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.23.14.2 2001/08/24 00:13:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -78,11 +78,13 @@ struct exec {
 #define	MID_ALPHA	141	/* Alpha BSD binary */
 #define	MID_MIPS	142	/* big-endian MIPS */
 #define	MID_ARM6	143	/* ARM6 */
+#define	MID_M680002K	144	/* m68000 with 2K page sizes */
 #define	MID_SH3		145	/* SH3 */
 #define	MID_POWERPC	149	/* big-endian PowerPC */
 #define	MID_VAX		150	/* vax */
 #define	MID_SPARC64	151	/* LP64 sparc */
-#define MID_X86_64	152	/* AMD x86-64 */
+#define	MID_X86_64	152	/* AMD x86-64 */
+#define	MID_M88K	153	/* m88k BSD core dumps */
 #define	MID_HP300	300	/* hp300 (68020+68881) BSD binary */
 #define	MID_HPUX	0x20C	/* hp200/300 HP-UX binary */
 #define	MID_HPUX800     0x20B   /* hp800 HP-UX binary */
@@ -90,9 +92,9 @@ struct exec {
 /*
  * a_flags
  */
-#define EX_DYNAMIC	0x20
-#define EX_PIC		0x10
-#define EX_DPMASK	0x30
+#define	EX_DYNAMIC	0x20
+#define	EX_PIC		0x10
+#define	EX_DPMASK	0x30
 /*
  * Interpretation of the (a_flags & EX_DPMASK) bits:
  *
@@ -200,7 +202,7 @@ int	exec_aout_prep_oldomagic __P((struct proc *, struct exec_package *));
 /*
  * MD portion
  */
-int cpu_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+int	cpu_exec_aout_makecmds __P((struct proc *, struct exec_package *));
 
 #endif /* _KERNEL */
 

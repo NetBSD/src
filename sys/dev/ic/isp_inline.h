@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.12.2.1 2001/04/09 01:56:19 nathanw Exp $ */
+/* $NetBSD: isp_inline.h,v 1.12.2.2 2001/08/24 00:09:27 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -151,7 +151,7 @@ isp_getrqentry(struct ispsoftc *isp, u_int16_t *iptrp,
 {
 	volatile u_int16_t iptr, optr;
 
-	optr = isp->isp_reqodx = ISP_READ(isp, OUTMAILBOX4);
+	optr = isp->isp_reqodx = READ_REQUEST_QUEUE_OUT_POINTER(isp);
 	iptr = isp->isp_reqidx;
 	*resultp = ISP_QUEUE_ENTRY(isp->isp_rquest, iptr);
 	iptr = ISP_NXT_QENTRY(iptr, RQUEST_QUEUE_LEN(isp));

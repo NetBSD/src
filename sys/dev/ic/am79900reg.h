@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900reg.h,v 1.2 1998/08/15 10:18:13 mycroft Exp $	*/
+/*	$NetBSD: am79900reg.h,v 1.2.24.1 2001/08/24 00:09:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,7 +115,8 @@ struct leinit {
 #define	LE_R1_BUFF	(1<<26)		/* buffer error */
 #define	LE_R1_STP	(1<<25)		/* start of packet */
 #define	LE_R1_ENP	(1<<24)		/* end of packet */
-#define	LE_R1_ONES	(0xf<<12)		/* end of packet */
+#define	LE_R1_ONES	(0xf<<12)	/* must be ones */
+#define	LE_R1_BCNT_MASK	(0x7ff)		/* byte count mask */
 
 #define	LE_R1_BITS \
     "\20\40OWN\37ERR\36FRAM\35OFLO\34CRC\33BUFF\32STP\31ENP"
@@ -123,12 +124,16 @@ struct leinit {
 /* Transmit message descriptor 1 (tmd1_bits) */ 
 #define	LE_T1_OWN	(1<<31)		/* LANCE owns the packet */
 #define	LE_T1_ERR	(1<<30)		/* error summary */
+#define	LE_T1_ADD_FCS	(1<<29)		/* add FCS (PCnet-PCI) */
+#define	LE_T1_NO_FCS	(1<<29)		/* no FCS (ILACC) */
 #define	LE_T1_MORE	(1<<28)		/* multiple collisions */
+#define	LE_T1_LTINT	(1<<28)		/* transmit interrupt (if LTINTEN) */
 #define	LE_T1_ONE	(1<<27)		/* single collision */
 #define	LE_T1_DEF	(1<<26)		/* defferred transmit */
 #define	LE_T1_STP	(1<<25)		/* start of packet */
 #define	LE_T1_ENP	(1<<24)		/* end of packet */
-#define	LE_T1_ONES	(0xf<<12)		/* end of packet */
+#define	LE_T1_ONES	(0xf<<12)	/* must be ones */
+#define	LE_T1_BCNT_MASK	(0x7ff)		/* byte count mask */
 
 #define	LE_T1_BITS \
     "\20\40OWN\37ERR\36RES\35MORE\34ONE\33DEF\32STP\31ENP"
@@ -136,6 +141,7 @@ struct leinit {
 /* Transmit message descriptor 3 (tmd3) */ 
 #define	LE_T2_BUFF	(1<<31)		/* buffer error */
 #define	LE_T2_UFLO	(1<<30)		/* underflow error */
+#define	LE_T2_EXDEF	(1<<29)		/* excessive defferral */
 #define	LE_T2_LCOL	(1<<28)		/* late collision */
 #define	LE_T2_LCAR	(1<<27)		/* loss of carrier */
 #define	LE_T2_RTRY	(1<<26)		/* retry error */

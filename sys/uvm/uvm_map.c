@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.93.2.3 2001/06/21 20:10:33 nathanw Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.93.2.4 2001/08/24 00:13:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1002,7 +1002,7 @@ uvm_unmap_remove(map, start, end, entry_list)
 	 * list headed by "first_entry".  once we remove them from the map
 	 * the caller should unlock the map and drop the references to the
 	 * backing objects [c.f. uvm_unmap_detach].  the object is to
-	 * seperate unmapping from reference dropping.  why?
+	 * separate unmapping from reference dropping.  why?
 	 *   [1] the map has to be locked for unmapping
 	 *   [2] the map need not be locked for reference dropping
 	 *   [3] dropping references may trigger pager I/O, and if we hit
@@ -1999,7 +1999,7 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
 	entry = start_entry;
 
 	/*
-	 * handle wiring and unwiring seperately.
+	 * handle wiring and unwiring separately.
 	 */
 
 	if (new_pageable) {		/* unwire */
@@ -2599,7 +2599,7 @@ uvm_map_clean(map, start, end, flags)
 				continue;
 
 			default:
-				panic("uvm_map_clean: wierd flags");
+				panic("uvm_map_clean: weird flags");
 			}
 		}
 		amap_unlock(amap);
@@ -2681,15 +2681,14 @@ uvm_map_checkprot(map, start, end, protection)
  * - refcnt set to 1, rest must be init'd by caller
  */
 struct vmspace *
-uvmspace_alloc(min, max, pageable)
+uvmspace_alloc(min, max)
 	vaddr_t min, max;
-	int pageable;
 {
 	struct vmspace *vm;
 	UVMHIST_FUNC("uvmspace_alloc"); UVMHIST_CALLED(maphist);
 
 	vm = pool_get(&uvm_vmspace_pool, PR_WAITOK);
-	uvmspace_init(vm, NULL, min, max, pageable);
+	uvmspace_init(vm, NULL, min, max);
 	UVMHIST_LOG(maphist,"<- done (vm=0x%x)", vm,0,0,0);
 	return (vm);
 }
@@ -2701,16 +2700,15 @@ uvmspace_alloc(min, max, pageable)
  * - refcnt set to 1, rest must me init'd by caller
  */
 void
-uvmspace_init(vm, pmap, min, max, pageable)
+uvmspace_init(vm, pmap, min, max)
 	struct vmspace *vm;
 	struct pmap *pmap;
 	vaddr_t min, max;
-	boolean_t pageable;
 {
 	UVMHIST_FUNC("uvmspace_init"); UVMHIST_CALLED(maphist);
 
 	memset(vm, 0, sizeof(*vm));
-	uvm_map_setup(&vm->vm_map, min, max, pageable ? VM_MAP_PAGEABLE : 0);
+	uvm_map_setup(&vm->vm_map, min, max, VM_MAP_PAGEABLE);
 	if (pmap)
 		pmap_reference(pmap);
 	else
@@ -2833,8 +2831,7 @@ uvmspace_exec(l, start, end)
 		 * for p
 		 */
 
-		nvm = uvmspace_alloc(start, end,
-			 (map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE);
+		nvm = uvmspace_alloc(start, end);
 
 		/*
 		 * install new vmspace and drop our ref to the old one.
@@ -2915,8 +2912,7 @@ uvmspace_fork(vm1)
 
 	vm_map_lock(old_map);
 
-	vm2 = uvmspace_alloc(old_map->min_offset, old_map->max_offset,
-		      (old_map->flags & VM_MAP_PAGEABLE) ? TRUE : FALSE);
+	vm2 = uvmspace_alloc(old_map->min_offset, old_map->max_offset);
 	memcpy(&vm2->vm_startcopy, &vm1->vm_startcopy,
 	(caddr_t) (vm1 + 1) - (caddr_t) &vm1->vm_startcopy);
 	new_map = &vm2->vm_map;		  /* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.14 1999/07/01 08:12:51 itojun Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.14.14.1 2001/08/24 00:12:28 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,14 +65,14 @@
  */
 
 #include "opt_inet.h"
+#include "opt_tcp_debug.h"
 
-#ifdef TCPDEBUG
+#ifdef TCP_DEBUG
 /* load symbolic names */
 #define	PRUREQUESTS
 #define	TCPSTATES
 #define	TCPTIMERS
 #define	TANAMES
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +106,9 @@
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
-#ifdef TCPDEBUG
+struct	tcp_debug tcp_debug[TCP_NDEBUG];
+int	tcp_debx;
 int	tcpconsdebug = 0;
-#endif
 /*
  * Tcp debug routines
  */
@@ -119,11 +119,9 @@ tcp_trace(act, ostate, tp, m, req)
 	struct mbuf *m;
 	int req;
 {
-#ifdef TCPDEBUG
 	tcp_seq seq, ack;
 	int len, flags;
 	struct tcphdr *th;
-#endif
 	struct tcp_debug *td = &tcp_debug[tcp_debx++];
 
 	if (tcp_debx == TCP_NDEBUG)
@@ -141,9 +139,7 @@ tcp_trace(act, ostate, tp, m, req)
 #ifdef INET6
 	bzero((caddr_t)&td->td_ti6, sizeof (td->td_ti6));
 #endif
-#ifdef TCPDEBUG
 	th = NULL;
-#endif
 	if (m) {
 		struct ip *ip;
 		ip = mtod(m, struct ip *);
@@ -152,9 +148,7 @@ tcp_trace(act, ostate, tp, m, req)
 			if (m->m_len < sizeof(td->td_ti))
 				break;
 			bcopy(mtod(m, caddr_t), &td->td_ti, sizeof(td->td_ti));
-#ifdef TCPDEBUG
-			th = (struct tcphdr *)((caddr_t)td->td_ti + sizeof(struct ip));
-#endif
+			th = (struct tcphdr *)((caddr_t)&td->td_ti + sizeof(struct ip));
 			break;
 #ifdef INET6
 		case 6:
@@ -162,19 +156,16 @@ tcp_trace(act, ostate, tp, m, req)
 				break;
 			bcopy(mtod(m, caddr_t), &td->td_ti6,
 				sizeof(td->td_ti6));
-#ifdef TCPDEBUG
-			th = (struct tcphdr *)((caddr_t)td->td_ti6 + sizeof(struct ip6_hdr));
-#endif
+			th = (struct tcphdr *)((caddr_t)&td->td_ti6 + sizeof(struct ip6_hdr));
 			break;
 #endif
 		}
 	}
 	td->td_req = req;
-#ifdef TCPDEBUG
 	if (tcpconsdebug == 0)
 		return;
 	if (tp)
-		printf("%x %s:", tp, tcpstates[ostate]);
+		printf("%p %s:", tp, tcpstates[ostate]);
 	else
 		printf("???????? ");
 	printf("%s ", tanames[act]);
@@ -187,7 +178,7 @@ tcp_trace(act, ostate, tp, m, req)
 			break;
 		seq = th->th_seq;
 		ack = th->th_ack;
-		len = th->th_len;
+		len = m->m_pkthdr.len;
 		if (act == TA_OUTPUT) {
 			seq = ntohl(seq);
 			ack = ntohl(ack);
@@ -204,7 +195,7 @@ tcp_trace(act, ostate, tp, m, req)
 		if (flags) {
 #ifndef lint
 			char *cp = "<";
-#define pf(f) { if (th->th_flags&TH_/**/f) { printf("%s%s", cp, "f"); cp = ","; } }
+#define pf(f) { if (th->th_flags&__CONCAT(TH_,f)) { printf("%s%s", cp, "f"); cp = ","; } }
 			pf(SYN); pf(ACK); pf(FIN); pf(RST); pf(PUSH); pf(URG);
 #endif
 			printf(">");
@@ -223,10 +214,10 @@ tcp_trace(act, ostate, tp, m, req)
 	printf("\n");
 	if (tp == 0)
 		return;
-	printf("\trcv_(nxt,wnd,up) (%x,%x,%x) snd_(una,nxt,max) (%x,%x,%x)\n",
+	printf("\trcv_(nxt,wnd,up) (%x,%lx,%x) snd_(una,nxt,max) (%x,%x,%x)\n",
 	    tp->rcv_nxt, tp->rcv_wnd, tp->rcv_up, tp->snd_una, tp->snd_nxt,
 	    tp->snd_max);
-	printf("\tsnd_(wl1,wl2,wnd) (%x,%x,%x)\n",
+	printf("\tsnd_(wl1,wl2,wnd) (%x,%x,%lx)\n",
 	    tp->snd_wl1, tp->snd_wl2, tp->snd_wnd);
-#endif /* TCPDEBUG */
 }
+#endif /* TCP_DEBUG */

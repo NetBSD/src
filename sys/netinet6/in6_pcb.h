@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.16 2001/02/11 06:50:59 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.16.2.1 2001/08/24 00:12:39 nathanw Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -166,6 +166,7 @@ struct	in6pcb *
 int	in6_pcbnotify __P((struct in6pcb *, struct sockaddr *,
 			   u_int, struct sockaddr *, u_int, int, void *,
 			   void (*)(struct in6pcb *, int)));
+void	in6_pcbpurgeif0 __P((struct in6pcb *, struct ifnet *));
 void	in6_pcbpurgeif __P((struct in6pcb *, struct ifnet *));
 void	in6_rtchange __P((struct in6pcb *, int));
 void	in6_setpeeraddr __P((struct in6pcb *, struct mbuf *));

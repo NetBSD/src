@@ -1,4 +1,4 @@
-/*        $NetBSD: ieee1212reg.h,v 1.1.8.1 2001/06/21 20:06:09 nathanw Exp $ */
+/*        $NetBSD: ieee1212reg.h,v 1.1.8.2 2001/08/24 00:10:58 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -179,11 +179,26 @@
 #define	P1212_KEYVALUE_Unit_Dependent_Info	0x14	/* leaf | directory */
 #define	P1212_KEYVALUE_Unit_Location		0x15	/* leaf */
 #define	P1212_KEYVALUE_Unit_Poll_Mask		0x16	/* immediate */
-#define	P1212_KEYVALUE_Model_Id 		0x17	/* immediate */
+
+/*
+ * Items not in original p1212 standard but are in proposed drafts and in use
+ * already in some roms.
+ */
+
+#define P1212_KEYVALUE_Model                    0x17    /* immediate */
+#define P1212_KEYVALUR_Instance_Directory       0x18    /* directory */
+#define P1212_KEYVALUE_Keyword                  0x19    /* leaf */
+#define P1212_KEYVALUE_Feature_Directory        0x1A    /* directory */
+#define P1212_KEYVALUE_Extended_ROM             0x1B    /* leaf */
+#define P1212_KEYVALUE_Extended_Key_Spec_Id     0x1C    /* immediate */
+#define P1212_KEYVALUE_Extended_Key             0x1D    /* immediate */
+#define P1212_KEYVALUE_Extended_Data            0x1E    /* imm|leaf|dir|offset */
+#define P1212_KEYVALUE_Modifiable_Descriptor    0x1F    /* leaf */
+#define P1212_KEYVALUE_Directory_Id             0x20    /* immediate */
 
 #define	P1212_KEYTYPE_STRINGS { "Immediate", "Offset", "Leaf", "Directory" }
 
-#define P1212_KEYVALUE_STRINGS { NULL, \
+#define P1212_KEYVALUE_STRINGS { "Root-Directory", \
 	"Textual-Descriptor", "Bus-Dependent-Info", "Module-Vendor-Id", \
 	"Module-Hw-Version", "Module-Spec-Id", "Module-Sw-Version", \
 	"Module-Dependent-Info", "Node-Vendor-Id", "Node-Hw_Version", \
@@ -191,7 +206,10 @@
 	"Node-Unique-Id", "Node-Units-Extent", "Node-Memory-Extent", \
 	"Node-Dependent-Info", "Unit-Directory", "Unit-Spec-Id", \
 	"Unit-Sw-Version", "Unit-Dependent-Info", "Unit-Location", \
-	"Unit-Poll-Mask", "Model-Id" }
+	"Unit-Poll-Mask", "Model", "Instance-Directory", "Keyword", \
+        "Feature-Directory", "Extended-ROM", "Extended-Key-Spec-Id", \
+        "Extended-Key", "Extended-Data", "Modifiable-Descriptor", \
+        "Directory-Id" }
 
 /* Leaf nodes look like:
  *
@@ -210,4 +228,9 @@
  *	[1]	direntry
  *	[n]	direntry
  */
+
+/* Some definitions for the p1212_find routines. */
+#define P1212_FIND_SEARCHALL          0x1
+#define P1212_FIND_RETURNALL          0x2
+
 #endif	/* _DEV_STD_IEEE1212REG_H_ */

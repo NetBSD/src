@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.3 2001/06/21 20:09:41 nathanw Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.4 2001/08/24 00:13:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -956,11 +956,21 @@ ntfs_vgetex(
 		fp->f_flag |= FN_VALID;
 	}
 
+	/*
+	 * We may be calling vget() now. To avoid potential deadlock, we need
+	 * to release ntnode lock, since due to locking order vnode
+	 * lock has to be acquired first.
+	 * ntfs_fget() bumped ntnode usecount, so ntnode won't be recycled
+	 * prematurely.
+	 */
+	ntfs_ntput(ip);
+
 	if (FTOV(fp)) {
-		VGET(FTOV(fp), lkflags, p);
-		*vpp = FTOV(fp);
-		ntfs_ntput(ip);
-		return (0);
+		/* vget() returns error if the vnode has been recycled */
+		if (VGET(FTOV(fp), lkflags, p) == 0) {
+			*vpp = FTOV(fp);
+			return (0);
+		}
 	}
 
 	error = getnewvnode(VT_NTFS, ntmp->ntm_mountp, ntfs_vnodeop_p, &vp);
@@ -980,8 +990,6 @@ ntfs_vgetex(
 
 	if (ino == NTFS_ROOTINO)
 		vp->v_flag |= VROOT;
-
-	ntfs_ntput(ip);
 
 	if (lkflags & LK_TYPE_MASK) {
 		error = VN_LOCK(vp, lkflags, p);

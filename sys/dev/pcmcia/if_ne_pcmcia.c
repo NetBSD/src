@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.1 2001/06/21 20:05:16 nathanw Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.2 2001/08/24 00:10:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -57,6 +57,9 @@
 #include <dev/ic/rtl80x9var.h>
 
 #include <dev/ic/dl10019var.h>
+
+#include <dev/ic/ax88190reg.h>
+#include <dev/ic/ax88190var.h>
 
 int	ne_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	ne_pcmcia_attach __P((struct device *, struct device *, void *));
@@ -131,6 +134,11 @@ static const struct ne2000dev {
       PCMCIA_CIS_DLINK_DE660,
       0, -1, { 0x00, 0x80, 0xc8 } },
 
+    { PCMCIA_STR_DLINK_DE660PLUS,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_DLINK_DE660PLUS,
+      0, -1, { 0x00, 0x80, 0xc8 } },
+
     { PCMCIA_STR_RPTI_EP400,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_RPTI_EP400,
@@ -160,6 +168,16 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_EPSON_EEN10B,
       PCMCIA_CIS_EPSON_EEN10B,
       0, 0xff0, { 0x00, 0x00, 0x48 } },
+
+    { PCMCIA_STR_CNET_NE2000,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_CNET_NE2000,
+      0, -1, { 0x00, 0x80, 0xad } },
+
+    { PCMCIA_STR_ZONET_ZEN,
+      PCMCIA_VENDOR_ZONET, PCMCIA_PRODUCT_ZONET_ZEN,
+      PCMCIA_CIS_ZONET_ZEN,
+      0, -1, { 0x00, 0x00, 0x00 } },       
 
     /*
      * You have to add new entries which contains
@@ -216,6 +234,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
       PCMCIA_CIS_LINKSYS_ETHERFAST,
       0, -1, { 0x00, 0x80, 0xc8 }, NE2000DVF_DL10019 },
+
+    { PCMCIA_STR_LINKSYS_ETHERFAST,
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
+      PCMCIA_CIS_LINKSYS_ETHERFAST,
+      0, -1, { 0x00, 0x90, 0xfe }, NE2000DVF_DL10019 },
 
     { PCMCIA_STR_DLINK_DE650,
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
@@ -679,6 +702,14 @@ again:
 			++i;
 			goto again;
 		}
+
+		dsc->sc_mediachange = ax88190_mediachange;
+		dsc->sc_mediastatus = ax88190_mediastatus;
+		dsc->init_card = ax88190_init_card;
+		dsc->stop_card = ax88190_stop_card;
+		dsc->sc_media_init = ax88190_media_init;
+		dsc->sc_media_fini = ax88190_media_fini;
+
 		nsc->sc_type = NE2000_TYPE_AX88190;
 		typestr = " (AX88190)";
 	}
@@ -882,7 +913,7 @@ ne_pcmcia_ax88190_set_iobase(psc)
 	int rv = 1, mwindow;
 	u_int last_liobase, new_liobase;
 
-	if (pcmcia_mem_alloc(psc->sc_pf, NE2000_AX88190_LAN_IOSIZE, &pcmh)) {
+	if (pcmcia_mem_alloc(psc->sc_pf, AX88190_LAN_IOSIZE, &pcmh)) {
 #if 0
 		printf("%s: can't alloc mem for LAN iobase\n",
 		    dsc->sc_dev.dv_xname);
@@ -890,7 +921,7 @@ ne_pcmcia_ax88190_set_iobase(psc)
 		goto fail_1;
 	}
 	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR,
-	    NE2000_AX88190_LAN_IOBASE, NE2000_AX88190_LAN_IOSIZE,
+	    AX88190_LAN_IOBASE, AX88190_LAN_IOSIZE,
 	    &pcmh, &offset, &mwindow)) {
 		printf("%s: can't map mem for LAN iobase\n",
 		    dsc->sc_dev.dv_xname);

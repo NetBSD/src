@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.2.2.1 2001/06/21 20:04:56 nathanw Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.2.2.2 2001/08/24 00:10:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -199,6 +199,8 @@ mlx_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct mlx_softc *mlx;
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
+	bus_space_handle_t memh, ioh;
+	bus_space_tag_t memt, iot;
 	pcireg_t reg;
 	const char *intrstr;
 	int ior, memr, i;
@@ -234,13 +236,20 @@ mlx_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	if (memr != -1)
 		if (pci_mapreg_map(pa, memr, PCI_MAPREG_TYPE_MEM, 0,
-		    &mlx->mlx_iot, &mlx->mlx_ioh, NULL, NULL))
+		    &memt, &memh, NULL, NULL))
 			memr = -1;
 	if (ior != -1)
 		if (pci_mapreg_map(pa, ior, PCI_MAPREG_TYPE_IO, 0,
-		    &mlx->mlx_iot, &mlx->mlx_ioh, NULL, NULL))
+		    &iot, &ioh, NULL, NULL))
 		    	ior = -1;
-	if (memr == -1 && ior == -1) {
+
+	if (memr != -1) {
+		mlx->mlx_iot = memt;
+		mlx->mlx_ioh = memh;
+	} else if (ior != -1) {
+		mlx->mlx_iot = iot;
+		mlx->mlx_ioh = ioh;
+	} else {
 		printf("%s: can't map i/o or memory space\n", self->dv_xname);
 		return;
 	}

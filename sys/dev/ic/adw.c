@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.27.2.2 2001/06/21 20:01:55 nathanw Exp $	 */
+/* $NetBSD: adw.c,v 1.27.2.3 2001/08/24 00:09:11 nathanw Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -428,7 +428,7 @@ adw_attach(ADW_SOFTC *sc)
 	if (error)
 		return; /* (error) */ ;
 
-	bzero(sc->sc_control, sizeof(struct adw_control));
+	memset(sc->sc_control, 0, sizeof(struct adw_control));
 
 	/*
 	 * Create and initialize the Control Blocks.
@@ -454,7 +454,7 @@ adw_attach(ADW_SOFTC *sc)
 	/*
 	 * Zero's the freeze_device status
 	 */
-	 bzero(sc->sc_freeze_dev, sizeof(sc->sc_freeze_dev));
+	 memset(sc->sc_freeze_dev, 0, sizeof(sc->sc_freeze_dev));
 
 	/*
 	 * Initialize the adapter
@@ -637,7 +637,7 @@ adw_build_req(ADW_SOFTC *sc, ADW_CCB *ccb)
 	int             error;
 
 	scsiqp = &ccb->scsiq;
-	bzero(scsiqp, sizeof(ADW_SCSI_REQ_Q));
+	memset(scsiqp, 0, sizeof(ADW_SCSI_REQ_Q));
 
 	/*
 	 * Set the ADW_SCSI_REQ_Q 'ccb_ptr' to point to the
@@ -654,10 +654,10 @@ adw_build_req(ADW_SOFTC *sc, ADW_CCB *ccb)
 	 * For wide  boards a CDB length maximum of 16 bytes
 	 * is supported.
 	 */
-	bcopy(xs->cmd, &scsiqp->cdb, ((scsiqp->cdb_len = xs->cmdlen) <= 12)?
+	memcpy(&scsiqp->cdb, xs->cmd, ((scsiqp->cdb_len = xs->cmdlen) <= 12)?
 			xs->cmdlen : 12 );
 	if(xs->cmdlen > 12)
-		bcopy(&(xs->cmd[12]),  &scsiqp->cdb16, xs->cmdlen - 12);
+		memcpy(&scsiqp->cdb16, &(xs->cmd[12]), xs->cmdlen - 12);
 
 	scsiqp->target_id = periph->periph_target;
 	scsiqp->target_lun = periph->periph_lun;
@@ -679,7 +679,9 @@ adw_build_req(ADW_SOFTC *sc, ADW_CCB *ccb)
 			error = bus_dmamap_load_uio(dmat,
 				ccb->dmamap_xfer, (struct uio *) xs->data,
 			        ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			         BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+			         BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+				 ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				  BUS_DMA_WRITE));
 		} else
 #endif		/* TFS */
 		{
@@ -687,7 +689,9 @@ adw_build_req(ADW_SOFTC *sc, ADW_CCB *ccb)
 			      ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
 			      ((xs->xs_control & XS_CTL_NOSLEEP) ?
 			       BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
-			       BUS_DMA_STREAMING);
+			       BUS_DMA_STREAMING |
+			       ((xs->xs_control & XS_CTL_DATA_IN) ?
+			        BUS_DMA_READ : BUS_DMA_WRITE));
 		}
 
 		switch (error) {
@@ -719,7 +723,8 @@ out_bad:
 		scsiqp->data_cnt = xs->datalen;
 		scsiqp->vdata_addr = xs->data;
 		scsiqp->data_addr = ccb->dmamap_xfer->dm_segs[0].ds_addr;
-		bzero(ccb->sg_block, sizeof(ADW_SG_BLOCK) * ADW_NUM_SG_BLOCK);
+		memset(ccb->sg_block, 0,
+		    sizeof(ADW_SG_BLOCK) * ADW_NUM_SG_BLOCK);
 		adw_build_sglist(ccb, scsiqp, ccb->sg_block);
 	} else {
 		/*
@@ -1067,7 +1072,7 @@ adw_isr_callback(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 	if ((scsiq->host_status == QHSTA_NO_ERROR) &&
 	   ((scsiq->done_status == QD_NO_ERROR) ||
 	    (scsiq->done_status == QD_WITH_ERROR))) {
-		switch (scsiq->host_status) {
+		switch (scsiq->scsi_status) {
 		case SCSI_STATUS_GOOD:
 			if ((scsiq->cdb[0] == INQUIRY) &&
 			    (scsiq->target_lun == 0)) {

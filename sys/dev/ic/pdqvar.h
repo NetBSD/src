@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.30.2.1 2001/06/21 20:03:10 nathanw Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.30.2.2 2001/08/24 00:09:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -85,7 +85,7 @@ enum _pdq_type_t {
 #define	PDQ_OS_PAGESIZE			NBPG
 #endif
 #define	PDQ_OS_USEC_DELAY(n)		DELAY(n)
-#define	PDQ_OS_MEMZERO(p, n)		bzero((caddr_t)(p), (n))
+#define	PDQ_OS_MEMZERO(p, n)		memset((caddr_t)(p), 0, (n))
 #if defined(__NetBSD__) && !defined(PDQ_NO_BUS_DMA)
 #define PDQ_BUS_DMA
 #endif
@@ -316,6 +316,8 @@ typedef struct _pdq_os_ctx_t {
 #if defined(IFM_FDDI)
     struct ifmedia sc_ifmedia;
 #endif
+    int sc_flags;
+#define	PDQIF_DOWNCALL		0x0001	/* active calling from if to pdq */
     pdq_t *sc_pdq;
 #if defined(__alpha__) || defined(__i386__)
     pdq_bus_ioport_t sc_iobase;

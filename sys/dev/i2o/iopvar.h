@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.4.2.1 2001/04/09 01:56:03 nathanw Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.4.2.2 2001/08/24 00:09:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -68,8 +68,7 @@ struct iop_msg {
 #define	IM_REPLIED		0x0001	/* Message has been replied to */
 #define	IM_ALLOCED		0x0002	/* This message wrapper is allocated */
 #define	IM_SGLOFFADJ		0x0004	/* S/G list offset adjusted */
-#define	IM_DISCARD		0x0008	/* Discard message wrapper once sent */
-#define	IM_FAIL			0x0010	/* Transaction error returned */	
+#define	IM_FAIL			0x0008	/* Transaction error returned */	
 
 #define	IM_USERMASK		0xff00
 #define	IM_WAIT			0x0100	/* Wait (sleep) for completion */
@@ -90,7 +89,7 @@ struct iop_initiator {
 	int	ii_ictx;		/* Initiator context */
 	int	ii_tid;
 };
-#define	II_DISCARD	0x0001	/* Don't track state; discard msg wrappers */
+#define	II_NOTCTX	0x0001	/* No transaction context */
 #define	II_CONFIGURED	0x0002	/* Already configured */
 #define	II_UTILITY	0x0004	/* Utility initiator (not a real device) */
 
@@ -109,45 +108,47 @@ struct iop_pgop {
  * Per-IOP context.
  */
 struct iop_softc {
-	struct device	sc_dv;		/* generic device data */
-	bus_space_handle_t sc_ioh;	/* bus space handle */
-	bus_space_tag_t	sc_iot;		/* bus space tag */
-	bus_dma_tag_t	sc_dmat;	/* bus DMA tag */
-	void	 	*sc_ih;		/* interrupt handler cookie */
-	struct lock	sc_conflock;	/* autoconfiguration lock */
-	bus_addr_t	sc_memaddr;	/* register window address */
-	bus_size_t	sc_memsize;	/* register window size */
+	struct device	sc_dv;		/* Generic device data */
+	bus_space_handle_t sc_ioh;	/* Bus space handle */
+	bus_space_tag_t	sc_iot;		/* Bus space tag */
+	bus_dma_tag_t	sc_dmat;	/* Bus DMA tag */
+	void	 	*sc_ih;		/* Interrupt handler cookie */
 
-	struct i2o_hrt	*sc_hrt;	/* hardware resource table */
-	struct iop_tidmap *sc_tidmap;	/* tid map (per-lct-entry flags) */
-	struct i2o_lct	*sc_lct;	/* logical configuration table */
-	int		sc_nlctent;	/* number of LCT entries */
+	struct iop_msg	*sc_ims;	/* Message wrappers */
+	SLIST_HEAD(, iop_msg) sc_im_freelist; /* Free wrapper list */
+
+	bus_dmamap_t	sc_rep_dmamap;	/* Reply frames DMA map */
+	int		sc_rep_size;	/* Reply frames size */
+	bus_addr_t	sc_rep_phys;	/* Reply frames PA */
+	caddr_t		sc_rep;		/* Reply frames VA */
+
+	int		sc_maxib;	/* Max inbound (-> IOP) queue depth */
+	int		sc_maxob;	/* Max outbound (<- IOP) queue depth */
+	int		sc_curib;	/* Current inbound queue depth */
+
+	struct i2o_hrt	*sc_hrt;	/* Hardware resource table */
+	struct iop_tidmap *sc_tidmap;	/* TID map (per-LCT-entry flags) */
+	struct i2o_lct	*sc_lct;	/* Logical configuration table */
+	int		sc_nlctent;	/* Number of LCT entries */
 	int		sc_flags;	/* IOP-wide flags */
-	int		sc_maxib;
-	int		sc_maxob;
-	int		sc_curib;
-	u_int32_t	sc_chgind;	/* autoconfig vs. LCT change ind. */
-	LIST_HEAD(, iop_initiator) sc_iilist;/* initiator list */
-	int		sc_nii;
-	int		sc_nuii;
+	u_int32_t	sc_chgind;	/* Configuration change indicator */
+	struct lock	sc_conflock;	/* Configuration lock */
+	struct proc	*sc_reconf_proc;/* Auto reconfiguration process */
+	LIST_HEAD(, iop_initiator) sc_iilist;/* Initiator list */
+	int		sc_nii;		/* Total number of initiators */
+	int		sc_nuii;	/* Number of utility initiators */
+
 	struct iop_initiator sc_eventii;/* IOP event handler */
-	struct proc	*sc_reconf_proc;/* reconfiguration process */
-	struct iop_msg	*sc_ims;
-	SLIST_HEAD(, iop_msg) sc_im_freelist;
-	caddr_t		sc_ptb;
+	bus_dmamap_t	sc_scr_dmamap;  /* Scratch DMA map */
+	bus_dma_segment_t sc_scr_seg[1];/* Scratch DMA segment */
+	caddr_t		sc_scr;		/* Scratch memory VA */
 
-	/*
-	 * Reply queue.
-	 */
-	bus_dmamap_t	sc_rep_dmamap;
-	int		sc_rep_size;
-	bus_addr_t	sc_rep_phys;
-	caddr_t		sc_rep;
+	bus_space_tag_t	sc_bus_memt;	/* Parent bus memory tag */
+	bus_space_tag_t	sc_bus_iot;	/* Parent but I/O tag */
+	bus_addr_t	sc_memaddr;	/* Register window address */
+	bus_size_t	sc_memsize;	/* Register window size */
 
-	bus_space_tag_t	sc_bus_memt;
-	bus_space_tag_t	sc_bus_iot;
-
-	struct i2o_status sc_status;	/* status */
+	struct i2o_status sc_status;	/* Last retrieved status record */
 };
 #define	IOP_OPEN		0x01	/* Device interface open */
 #define	IOP_HAVESTATUS		0x02	/* Successfully retrieved status */
@@ -167,14 +168,15 @@ int	iop_param_op(struct iop_softc *, int, struct iop_initiator *, int,
 int	iop_print_ident(struct iop_softc *, int);
 int	iop_simple_cmd(struct iop_softc *, int, int, int, int, int);
 void	iop_strvis(struct iop_softc *, const char *, int, char *, int);
+int	iop_post(struct iop_softc *, u_int32_t *);
 
 void	iop_initiator_register(struct iop_softc *, struct iop_initiator *);
 void	iop_initiator_unregister(struct iop_softc *, struct iop_initiator *);
 
-struct	iop_msg *iop_msg_alloc(struct iop_softc *, struct iop_initiator *, int);
+struct	iop_msg *iop_msg_alloc(struct iop_softc *, int);
 void	iop_msg_free(struct iop_softc *, struct iop_msg *);
 int	iop_msg_map(struct iop_softc *, struct iop_msg *, u_int32_t *, void *,
-		    int, int);
+		    int, int, struct proc *);
 int	iop_msg_map_bio(struct iop_softc *, struct iop_msg *, u_int32_t *,
 			void *, int, int);
 int	iop_msg_post(struct iop_softc *, struct iop_msg *, void *, int);

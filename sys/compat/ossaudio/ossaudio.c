@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.33.2.1 2001/06/21 20:00:22 nathanw Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.33.2.2 2001/08/24 00:08:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -599,6 +599,7 @@ getdevinfo(fp, p)
 		{ AudioNline,		OSS_SOUND_MIXER_LINE },
 		{ AudioNcd,		OSS_SOUND_MIXER_CD },
 		{ AudioNdac,		OSS_SOUND_MIXER_PCM },
+		{ AudioNaux,		OSS_SOUND_MIXER_LINE1 },
 		{ AudioNrecord,		OSS_SOUND_MIXER_IMIX },
 		{ AudioNmaster,		OSS_SOUND_MIXER_VOLUME },
 		{ AudioNtreble,		OSS_SOUND_MIXER_TREBLE },

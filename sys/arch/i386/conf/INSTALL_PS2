@@ -1,0 +1,18 @@
+#	$NetBSD: INSTALL_PS2,v 1.4.4.2 2001/08/24 00:08:27 nathanw Exp $
+#
+#	INSTALL_PS2 - PS/2 Installation kernel.
+#
+#	This kernel is derived from GENERIC_PS2TINY with MEMORY_DISK stuff
+#	added.
+#
+
+include "arch/i386/conf/GENERIC_PS2TINY"
+
+# Enable the hooks used for initializing the root memory-disk.
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
+
+# File systems
+file-system 	MFS			# memory file system

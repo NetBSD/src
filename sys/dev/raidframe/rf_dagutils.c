@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.6 1999/12/09 02:26:09 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.6.6.1 2001/08/24 00:10:34 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -248,7 +248,7 @@ rf_AllocDAGHeader()
 
 	RF_FREELIST_GET(rf_dagh_freelist, dh, next, (RF_DagHeader_t *));
 	if (dh) {
-		bzero((char *) dh, sizeof(RF_DagHeader_t));
+		memset((char *) dh, 0, sizeof(RF_DagHeader_t));
 	}
 	return (dh);
 }

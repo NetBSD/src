@@ -1,4 +1,4 @@
-/* $NetBSD: bt485.c,v 1.3 2000/06/28 17:12:56 mrg Exp $ */
+/* $NetBSD: bt485.c,v 1.3.4.1 2001/08/24 00:09:18 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -259,10 +259,10 @@ bt485_set_cmap(rc, cmapp)
 	struct wsdisplay_cmap *cmapp;
 {
 	struct bt485data *data = (struct bt485data *)rc;
-	int count, index, s;
+	u_int count, index;
+	int s;
 
-	if ((u_int)cmapp->index >= 256 ||
-	    ((u_int)cmapp->index + (u_int)cmapp->count) > 256)
+	if (cmapp->index >= 256 || (cmapp->index + cmapp->count) > 256)
 		return (EINVAL);
 	if (!uvm_useracc(cmapp->red, cmapp->count, B_READ) ||
 	    !uvm_useracc(cmapp->green, cmapp->count, B_READ) ||
@@ -316,7 +316,8 @@ bt485_set_cursor(rc, cursorp)
 	struct wsdisplay_cursor *cursorp;
 {
 	struct bt485data *data = (struct bt485data *)rc;
-	int count, index, v, s;
+	u_int count, index, v;
+	int s;
 
 	v = cursorp->which;
 
@@ -325,9 +326,8 @@ bt485_set_cursor(rc, cursorp)
 	 * before we do anything that we can't recover from.
 	 */
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
-		if ((u_int)cursorp->cmap.index > 2 ||
-		    ((u_int)cursorp->cmap.index +
-		     (u_int)cursorp->cmap.count) > 2)
+		if (cursorp->cmap.index > 2 ||
+		    (cursorp->cmap.index + cursorp->cmap.count) > 2)
 			return (EINVAL);
 		count = cursorp->cmap.count;
 		if (!uvm_useracc(cursorp->cmap.red, count, B_READ) ||
@@ -336,8 +336,8 @@ bt485_set_cursor(rc, cursorp)
 			return (EFAULT);
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
-		if ((u_int)cursorp->size.x > CURSOR_MAX_SIZE ||
-		    (u_int)cursorp->size.y > CURSOR_MAX_SIZE)
+		if (cursorp->size.x > CURSOR_MAX_SIZE ||
+		    cursorp->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
 		count = (CURSOR_MAX_SIZE / NBBY) * data->cursize.y;
 		if (!uvm_useracc(cursorp->image, count, B_READ) ||
@@ -371,8 +371,8 @@ bt485_set_cursor(rc, cursorp)
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		data->cursize = cursorp->size;
 		count = (CURSOR_MAX_SIZE / NBBY) * data->cursize.y;
-		bzero(data->curimage, sizeof data->curimage);
-		bzero(data->curmask, sizeof data->curmask);
+		memset(data->curimage, 0, sizeof data->curimage);
+		memset(data->curmask, 0, sizeof data->curmask);
 		copyin(cursorp->image, data->curimage, count);	/* can't fail */
 		copyin(cursorp->mask, data->curmask, count);	/* can't fail */
 		data->changed |= DATA_CURSHAPE_CHANGED;

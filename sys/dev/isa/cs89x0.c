@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.17 2000/12/14 06:59:01 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.17.2.1 2001/08/24 00:09:43 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -147,9 +147,8 @@
 **       safe, and not really a performance win anyway.  (It was only used when
 **       setting up the multicast logical address filter, which is an
 **       infrequent event.  It could have been used in the IFF_PROMISCUOUS
-**       address check above, but the benefit of it vs. bcmp or memcmp would be
-**       inconsequential, there.)  Use bcmp() instead.  Eventually, this should
-**       use memcmp(), so that the compiler can optimize it into inline code.
+**       address check above, but the benefit of it vs. memcmp would be
+**       inconsequential, there.)  Use memcmp() instead.
 **     * restructure csStartOuput to avoid the following bugs in the case where
 **       txWait was being set:
 **         * it would accidentally drop the outgoing packet if told to wait
@@ -360,7 +359,7 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	sc->sc_xe_togo = cs_xmit_early_table[sc->sc_xe_ent].better_count;
 
 	/* Initialize ifnet structure. */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = cs_start_output;
 	ifp->if_ioctl = cs_ioctl;
@@ -393,7 +392,7 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	}
 
 	if (enaddr != NULL)
-		bcopy(enaddr, sc->sc_enaddr, sizeof(sc->sc_enaddr));
+		memcpy(sc->sc_enaddr, enaddr, sizeof(sc->sc_enaddr));
 	else if ((sc->sc_cfgflags & CFGFLG_NOT_EEPROM) == 0) {
 		/* Get and store the Ethernet address */
 		if (cs_get_enaddr(sc) == CS_ERROR) {
@@ -1057,7 +1056,7 @@ cs_set_ladr_filt(sc, ec)
 	 */
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof enm->enm_addrlo)) {
 			/*
 	                 * We must listen to a range of multicast addresses.
@@ -1810,7 +1809,7 @@ cs_process_rx_dma(sc)
 					 * No wrap around. Copy the frame
 					 * header
 					 */
-					bcopy(dma_mem_ptr, pBuff, pkt_length);
+					memcpy(pBuff, dma_mem_ptr, pkt_length);
 					dma_mem_ptr += pkt_length;
 				} else {
 					to_copy = (u_int)
@@ -1818,7 +1817,7 @@ cs_process_rx_dma(sc)
 					    dma_mem_ptr);
 
 					/* Copy the first half of the frame. */
-					bcopy(dma_mem_ptr, pBuff, to_copy);
+					memcpy(pBuff, dma_mem_ptr, to_copy);
 					pBuff += to_copy;
 
 					/*
@@ -1835,7 +1834,7 @@ cs_process_rx_dma(sc)
 					dma_mem_ptr = sc->sc_dmabase;
 
 					/* Copy rest of the frame. */
-					bcopy(dma_mem_ptr, pBuff, to_copy);
+					memcpy(pBuff, dma_mem_ptr, to_copy);
 					dma_mem_ptr += to_copy;
 				}
 

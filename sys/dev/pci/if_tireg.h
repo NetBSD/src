@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.3.2.1 2001/06/21 20:04:52 nathanw Exp $ */
+/* $NetBSD: if_tireg.h,v 1.3.2.2 2001/08/24 00:10:09 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1020,10 +1020,21 @@ struct ti_ring_data {
 	u_int32_t		ti_pad1[6];
 	struct ti_producer	ti_tx_considx_r;
 	u_int32_t		ti_pad2[6];
-	struct ti_tx_desc	*ti_tx_ring_nic;/* pointer to shared mem */
-	struct ti_cmd_desc	*ti_cmd_ring;	/* pointer to shared mem */
 	struct ti_gib		ti_info;
 };
+
+#define	TI_CDOFF(x)		offsetof(struct ti_ring_data, x)
+#define	TI_CDRXSTDOFF(x)	TI_CDOFF(ti_rx_std_ring[(x)])
+#define	TI_CDRXJUMBOOFF(x)	TI_CDOFF(ti_rx_jumbo_ring[(x)])
+#define	TI_CDRXMINIOFF(x)	TI_CDOFF(ti_rx_mini_ring[(x)])
+#define	TI_CDRXRTNOFF(x)	TI_CDOFF(ti_rx_return_ring[(x)])
+#define	TI_CDEVENTOFF(x)	TI_CDOFF(ti_event_ring[(x)])
+#define	TI_CDTXOFF(x)		TI_CDOFF(ti_tx_ring[(x)])
+#define	TI_CDEVPRODOFF		TI_CDOFF(ti_ev_prodidx_r)
+#define	TI_CDRTNPRODOFF		TI_CDOFF(ti_return_prodidx_r)
+#define	TI_CDTXCONSOFF		TI_CDOFF(ti_tx_considx_r)
+#define	TI_CDGIBOFF		TI_CDOFF(ti_info)
+#define	TI_CDSTATSOFF		TI_CDOFF(ti_info.ti_stats)
 
 /*
  * Mbuf pointers. We need these to keep track of the virtual addresses
@@ -1073,22 +1084,28 @@ struct ti_softc {
 	char			*ti_vhandle;
 	bus_space_tag_t		ti_btag;
 	void			*ti_intrhand;
-#if 0
-	struct resource		*ti_irq;
-	struct resource		*ti_res;
-#endif
+
 	struct ifmedia		ifmedia;	/* media info */
-#if 0
-	u_int8_t		ti_unit;	/* interface number */
-#endif
+
 	u_int8_t		ti_hwrev;	/* Tigon rev (1 or 2) */
-	u_int8_t		ti_copper;	/* 1000baseTX card */
+	u_int8_t		ti_copper;	/* 1000baseT card */
 	u_int8_t		ti_linkstat;	/* Link state */
 	struct ti_ring_data	*ti_rdata;	/* rings */
-	struct ti_chain_data	ti_cdata;	/* mbufs */
 #define ti_ev_prodidx		ti_rdata->ti_ev_prodidx_r
 #define ti_return_prodidx	ti_rdata->ti_return_prodidx_r
 #define ti_tx_considx		ti_rdata->ti_tx_considx_r
+
+	struct ti_tx_desc	*ti_tx_ring_nic;/* pointer to shared mem */
+
+	struct ti_chain_data	ti_cdata;	/* mbufs */
+
+	/*
+	 * Function pointers to deal with Tigon 1 vs. Tigon 2 differences.
+	 */
+	int			(*sc_tx_encap)(struct ti_softc *,
+				    struct mbuf *, uint32_t *);
+	void			(*sc_tx_eof)(struct ti_softc *);
+
 	u_int16_t		ti_tx_saved_considx;
 	u_int16_t		ti_rx_saved_considx;
 	u_int16_t		ti_ev_saved_considx;
@@ -1118,6 +1135,79 @@ struct ti_softc {
 	SIMPLEQ_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[TI_TX_RING_CNT];
 };
+
+#define	TI_CDRXSTDADDR(sc, x)	((sc)->info_dmaaddr + TI_CDRXSTDOFF((x)))
+#define	TI_CDRXJUMBOADDR(sc, x)	((sc)->info_dmaaddr + TI_CDRXJUMBOOFF((x)))
+#define	TI_CDRXMINIADDR(sc, x)	((sc)->info_dmaaddr + TI_CDRXMINIOFF((x)))
+#define	TI_CDRXRTNADDR(sc, x)	((sc)->info_dmaaddr + TI_CDRXRTNOFF((x)))
+#define	TI_CDEVENTADDR(sc, x)	((sc)->info_dmaaddr + TI_CDEVENTOFF((x)))
+#define	TI_CDTXADDR(sc, x)	((sc)->info_dmaaddr + TI_CDTXOFF((x)))
+#define	TI_CDEVPRODADDR(sc)	((sc)->info_dmaaddr + TI_CDEVPRODOFF)
+#define	TI_CDRTNPRODADDR(sc)	((sc)->info_dmaaddr + TI_CDRTNPRODOFF)
+#define	TI_CDTXCONSADDR(sc)	((sc)->info_dmaaddr + TI_CDTXCONSOFF)
+#define	TI_CDGIBADDR(sc)	((sc)->info_dmaaddr + TI_CDGIBOFF)
+#define	TI_CDSTATSADDR(sc)	((sc)->info_dmaaddr + TI_CDSTATSOFF)
+
+#define	TI_CDRXSTDSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDRXSTDOFF((x)), sizeof(struct ti_rx_desc), (ops))
+
+#define	TI_CDRXJUMBOSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDRXJUMBOOFF((x)), sizeof(struct ti_rx_desc), (ops))
+
+#define	TI_CDRXMINISYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDRXMINIOFF((x)), sizeof(struct ti_rx_desc), (ops))
+
+#define	TI_CDRXRTNSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDRXRTNOFF((x)), sizeof(struct ti_rx_desc), (ops))
+
+#define	TI_CDEVENTSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDEVENTOFF((x)), sizeof(struct ti_event_desc), (ops))
+
+#define	TI_CDTXSYNC(sc, x, n, ops)					\
+do {									\
+	int __x, __n;							\
+									\
+	__x = (x);							\
+	__n = (n);							\
+									\
+	/* If it will wrap around, sync to the end of the ring. */	\
+	if ((__x + __n) > TI_TX_RING_CNT) {				\
+		bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,	\
+		    TI_CDTXOFF(__x), sizeof(struct ti_tx_desc) *	\
+		    (TI_TX_RING_CNT - __x), (ops));			\
+		__n -= (TI_TX_RING_CNT - __x);				\
+		__x = 0;						\
+	}								\
+									\
+	/* Now sync whatever is left. */				\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDTXOFF(__x), sizeof(struct ti_tx_desc) * (__n), (ops));	\
+} while (/*CONSTCOND*/0)
+
+#define	TI_CEVPRODSYNC(sc, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDEVPRODOFF, sizeof(struct ti_producer), (ops))
+
+#define	TI_CDRTNPRODSYNC(sc, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDRTNPRODOFF, sizeof(struct ti_producer), (ops))
+
+#define	TI_CDTXCONSSYNC(sc, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDTXCONSOFF, sizeof(struct ti_producer), (ops))
+
+#define	TI_CDGIBSYNC(sc, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDGIBOFF, sizeof(struct ti_gib), (ops))
+
+#define	TI_CDSTATSSYNC(sc, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->info_dmamap,		\
+	    TI_CDSTATSOFF, sizeof(struct ti_stats), (ops))
 
 /*
  * Microchip Technology 24Cxx EEPROM control bytes

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.55.2.1 2001/06/21 20:06:58 nathanw Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.55.2.2 2001/08/24 00:11:34 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.55.2.1 2001/06/21 20:06:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.55.2.2 2001/08/24 00:11:34 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -92,6 +92,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.55.2.1 2001/06/21 20:06:58 natha
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <machine/limits.h>
+
+#include "opt_userconf.h"
+#ifdef USERCONF
+#include <sys/userconf.h>
+#include <sys/reboot.h>
+#endif
 
 /*
  * Autoconfiguration subroutines.
@@ -149,6 +155,11 @@ configure(void)
 	TAILQ_INIT(&deferred_config_queue);
 	TAILQ_INIT(&interrupt_config_queue);
 	TAILQ_INIT(&alldevs); 
+
+#ifdef USERCONF
+	if (boothowto & RB_USERCONF)
+		user_config();
+#endif
 
 	/*
 	 * Do the machine-dependent portion of autoconfiguration.  This

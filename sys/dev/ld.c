@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.7.2.1 2001/06/21 20:01:15 nathanw Exp $	*/
+/*	$NetBSD: ld.c,v 1.7.2.2 2001/08/24 00:09:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -183,10 +183,10 @@ ldenddetach(struct ld_softc *sc)
 
 	/* Locate the major numbers. */
 	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
-		if (bdevsw[bmaj].d_open == sdopen)
+		if (bdevsw[bmaj].d_open == ldopen)
 			break;
 	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == sdopen)
+		if (cdevsw[cmaj].d_open == ldopen)
 			break;
 
 	/* Kill off any queued buffers. */

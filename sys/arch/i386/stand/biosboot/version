@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.9.4.1 2001/06/21 19:26:11 nathanw Exp $
+$NetBSD: version,v 1.9.4.2 2001/08/24 00:08:39 nathanw Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -19,3 +19,4 @@ is taken as the current.
 	initialization (rather than using a compile flag).
 	Recognize ESDI disks and identify them as ed(4) for COMPAT_OLDBOOT.
 2.10:	g/c COMPAT_OLDBOOT
+2.11:	loadfile() update:  ELF symbols no longer need backward seeks.

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stream.c,v 1.2.4.1 2001/06/21 20:00:52 nathanw Exp $	 */
+/*	$NetBSD: svr4_32_stream.c,v 1.2.4.2 2001/08/24 00:08:57 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1902,7 +1902,8 @@ svr4_32_sys_getmsg(p, v, retval)
 		aiov.iov_len = dat.maxlen;
 		msg.msg_flags = 0;
 
-		error = recvit(p, SCARG(uap, fd), &msg, (caddr_t) flen, retval);
+		error = recvit(p, SCARG(uap, fd), &msg, (caddr_t) flen,
+		    retval);
 
 		if (error) {
 			DPRINTF(("getmsg: recvit failed %d\n", error));
@@ -1940,7 +1941,7 @@ svr4_32_sys_getmsg(p, v, retval)
 		if (st->s_cmd == SVR4_TI_CONNECT_REQUEST) {
 		        struct sys_read_args ra;
 
-			/* More wierdness:  Again, I can't find documentation
+			/* More weirdness:  Again, I can't find documentation
 			 * to back this up, but when a process does a generic
 			 * "getmsg()" call it seems that the command field is
 			 * zero and the length of the data area is zero.  I

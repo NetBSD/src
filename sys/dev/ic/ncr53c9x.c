@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.70.2.2 2001/06/21 20:03:00 nathanw Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.70.2.3 2001/08/24 00:09:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -434,7 +434,7 @@ ncr53c9x_init(sc, doreset)
 
 		TAILQ_INIT(&sc->ready_list);
 		sc->sc_nexus = NULL;
-		bzero(sc->sc_tinfo, sizeof(sc->sc_tinfo));
+		memset(sc->sc_tinfo, 0, sizeof(sc->sc_tinfo));
 		for (r = 0; r < NCR_NTARG; r++) {
 			LIST_INIT(&sc->sc_tinfo[r].luns);
 		}
@@ -638,7 +638,7 @@ ncr53c9x_select(sc, ecb)
 	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0) {
 		int timeout = ecb->timeout;
 
-		if (hz > 100 && timeout > 1000)
+		if (timeout > 1000000)
 			timeout = (timeout / 1000) * hz;
 		else
 			timeout = (timeout * hz) / 1000;
@@ -794,7 +794,7 @@ ncr53c9x_get_ecb(sc, flags)
 	ecb = (struct ncr53c9x_ecb *)pool_get(&ecb_pool, PR_NOWAIT);
 	splx(s);
 	if (ecb) {
-		bzero(ecb, sizeof(*ecb));
+		memset(ecb, 0, sizeof(*ecb));
 		ecb->flags |= ECB_ALLOC;
 	}
 	return (ecb);
@@ -856,7 +856,7 @@ ncr53c9x_scsipi_request(chan, req, arg)
 			ecb->clen = 0;
 			ecb->dleft = 0;
 		} else {
-			bcopy(xs->cmd, &ecb->cmd.cmd, xs->cmdlen);
+			memcpy(&ecb->cmd.cmd, xs->cmd, xs->cmdlen);
 			ecb->clen = xs->cmdlen;
 			ecb->daddr = xs->data;
 			ecb->dleft = xs->datalen;
@@ -1070,7 +1070,7 @@ ncr53c9x_sched(sc)
 				splx(s);
 				continue;
 			}
-			bzero(li, sizeof(*li));
+			memset(li, 0, sizeof(*li));
 			li->lun = lun;
 
 			LIST_INSERT_HEAD(&ti->luns, li, link);
@@ -1137,7 +1137,7 @@ ncr53c9x_sense(sc, ecb)
 
 	NCR_MISC(("requesting sense "));
 	/* Next, setup a request sense command block */
-	bzero(ss, sizeof(*ss));
+	memset(ss, 0, sizeof(*ss));
 	ss->opcode = REQUEST_SENSE;
 	ss->byte2 = periph->periph_lun << SCSI_CMD_LUN_SHIFT;
 	ss->length = sizeof(struct scsipi_sense_data);
@@ -2638,15 +2638,10 @@ printf("<<RESELECT CONT'd>>");
 
 	default:
 		/* Don't panic: reset. */
-		printf("%s: invalid state: %d",
+		printf("%s: invalid state: %d\n",
 		    sc->sc_dev.dv_xname, sc->sc_state);
 		ncr53c9x_scsi_reset(sc);
 		goto out;
-#if 0
-		panic("%s: invalid state: %d",
-		    sc->sc_dev.dv_xname, sc->sc_state);
-#endif
-		break;
 	}
 
 	/*
@@ -2859,7 +2854,7 @@ ncr53c9x_abort(sc, ecb)
 		 * Reschedule timeout.
 		 */
 		timeout = ecb->timeout;
-		if (hz > 100 && timeout > 1000)
+		if (timeout > 1000000)
 			timeout = (timeout / 1000) * hz;
 		else
 			timeout = (timeout * hz) / 1000;

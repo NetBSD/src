@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.h,v 1.9.14.1 2001/06/21 20:08:42 nathanw Exp $	*/
+/*	$NetBSD: tcp_debug.h,v 1.9.14.2 2001/08/24 00:12:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -75,7 +75,5 @@ char	*tanames[] =
 #ifndef TCP_NDEBUG
 #define	TCP_NDEBUG 100
 #endif
-struct	tcp_debug tcp_debug[TCP_NDEBUG];
-int	tcp_debx;
 
 #endif /* _NETINET_TCP_DEBUG_H_ */

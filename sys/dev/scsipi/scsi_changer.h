@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_changer.h,v 1.14 1999/09/09 23:24:12 thorpej Exp $	*/
+/*	$NetBSD: scsi_changer.h,v 1.14.14.1 2001/08/24 00:10:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996, 1999 Jason R. Thorpe <thorpej@and.com>
@@ -310,7 +310,7 @@ struct scsi_send_volume_tag {
 /*
  * Device capabilities page.
  *
- * This page defines characteristics of the elemenet types in the
+ * This page defines characteristics of the element types in the
  * medium changer device.
  *
  * Note in the definitions below, the following abbreviations are
@@ -318,7 +318,7 @@ struct scsi_send_volume_tag {
  *		MT	Medium transport element (picker)
  *		ST	Storage transport element (slot)
  *		IE	Import/export element (portal)
- *		DT	Data tranfer element (tape/disk drive)
+ *		DT	Data transfer element (tape/disk drive)
  */
 struct page_device_capabilities {
 	u_int8_t	pg_code;	/* page code (0x1f) */
@@ -369,7 +369,7 @@ struct page_device_capabilities {
 };
 
 /*
- * Medium changer elemement address assignment page.
+ * Medium changer element address assignment page.
  *
  * Some of these fields can be a little confusing, so an explanation
  * is in order.
@@ -421,7 +421,7 @@ struct page_element_address_assignment {
 	/* First data transfer element address */
 	u_int8_t	fdtea[2];
 
-	/* Number of data trafer elements */
+	/* Number of data transfer elements */
 	u_int8_t	ndte[2];
 
 	u_int8_t	reserved[2];

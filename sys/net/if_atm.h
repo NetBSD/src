@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.11 1999/11/19 20:41:19 thorpej Exp $       */
+/*      $NetBSD: if_atm.h,v 1.11.6.1 2001/08/24 00:12:07 nathanw Exp $       */
 
 /*
  *
@@ -47,10 +47,10 @@
 
 #ifndef NO_ATM_PVCEXT
 /*
- * ATM_PVCEXT enables PVC extention: VP/VC shaping
+ * ATM_PVCEXT enables PVC extension: VP/VC shaping
  * and PVC shadow interfaces.
  */
-#define ATM_PVCEXT	/* enable pvc extention */
+#define ATM_PVCEXT	/* enable pvc extension */
 #endif
 
 #if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__)

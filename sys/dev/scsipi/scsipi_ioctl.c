@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.37.14.1 2001/06/21 20:05:56 nathanw Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.37.14.2 2001/08/24 00:10:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ si_get()
 	int s;
 
 	si = malloc(sizeof(struct scsi_ioctl), M_TEMP, M_WAITOK);
-	bzero(si, sizeof(struct scsi_ioctl));
+	memset(si, 0, sizeof(struct scsi_ioctl));
 	s = splbio();
 	LIST_INSERT_HEAD(&si_head, si, si_list);
 	splx(s);
@@ -181,7 +181,7 @@ scsipi_user_done(xs)
 		SC_DEBUG(periph, SCSIPI_DB3, ("have short sense\n"));
 		screq->senselen_used = min(sizeof(xs->sense.atapi_sense),
 		    SENSEBUFLEN);
-		bcopy(&xs->sense.scsi_sense, screq->sense, screq->senselen);
+		memcpy(screq->sense, &xs->sense.scsi_sense, screq->senselen);
 		screq->retsts = SCCMD_UNKNOWN; /* XXX need a shortsense here */
 		break;
 	case XS_DRIVER_STUFFUP:

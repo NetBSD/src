@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.3.2.2 2001/06/21 20:01:33 nathanw Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.3.2.3 2001/08/24 00:09:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: bivideo.c,v 1.3.2.2 2001/06/21 20:01:33 nathanw Exp $";
+    "$NetBSD: bivideo.c,v 1.3.2.3 2001/08/24 00:09:07 nathanw Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,12 +215,12 @@ bivideo_init(struct hpcfb_fbconf *fb)
 	    bootinfo->fb_line_bytes == 0 ||
 	    bootinfo->fb_width == 0 ||
 	    bootinfo->fb_height == 0) {
-		printf("no frame buffer infomation.\n");
+		printf("no frame buffer information.\n");
 		return (-1);
 	}
 
 	/* zero fill */
-	bzero(fb, sizeof(*fb));
+	memset(fb, 0, sizeof(*fb));
 
 	fb->hf_conf_index	= 0;	/* configuration index		*/
 	fb->hf_nconfs		= 1;   	/* how many configurations	*/
@@ -302,8 +302,8 @@ bivideo_init(struct hpcfb_fbconf *fb)
 	case BIFB_D16_0000:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;
 		fb->hf_access_flags |= HPCFB_ACCESS_STATIC;
-#if BYTE_ORDER == BIG_ENDIAN /* XXXX */
-		fb->hf_swap_flags = HPCFB_SWAP_BYTE;
+#if BYTE_ORDER == LITTLE_ENDIAN
+		fb->hf_order_flags = HPCFB_REVORDER_BYTE;
 #endif
 		fb->hf_pack_width = 16;
 		fb->hf_pixels_per_pack = 1;

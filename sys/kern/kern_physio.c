@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.46.2.2 2001/04/09 01:57:53 nathanw Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.46.2.3 2001/08/24 00:11:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -145,7 +145,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			bp->b_data = iovp->iov_base;
 
 			/*
-			 * [call minphys to bound the tranfer size]
+			 * [call minphys to bound the transfer size]
 			 * and remember the amount of data to transfer,
 			 * for later comparison.
 			 */
@@ -290,7 +290,7 @@ putphysbuf(bp)
 {
 	int s;
 
-	/* XXXCDC: is this necesary? */
+	/* XXXCDC: is this necessary? */
 	if (bp->b_vp)
 		brelvp(bp);
 

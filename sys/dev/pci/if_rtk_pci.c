@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.5.2.1 2001/06/21 20:04:48 nathanw Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.5.2.2 2001/08/24 00:10:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -85,11 +85,6 @@
  * to select which interface to use depending on the chip type.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
-#include "bpfilter.h"
-#include "rnd.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -105,18 +100,6 @@
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -170,7 +153,7 @@ static const struct rtk_type rtk_pci_devs[] = {
 	{ PCI_VENDOR_SEGA, PCI_PRODUCT_SEGA_BROADBAND,
 		"SEGA Broadband Adapter",
 		RTK_8139 },
-	{	PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE530TXPLUS,
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE530TXPLUS,
 		"D-Link Systems DFE 530TX+",
 		RTK_8139 },
 	{ 0, 0, NULL, 0 }

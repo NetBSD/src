@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.5.2.1 2001/06/21 20:03:44 nathanw Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.5.2.2 2001/08/24 00:09:42 nathanw Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -168,9 +168,6 @@ fw_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 	if_attach(ifp);
 	ieee1394_ifattach(ifp, &sc->sc_ic.ic_hwaddr);
-	(*psc->sc1394_ifinreg)
-	    (sc->sc_sc1394.sc1394_dev.dv_parent, FW_FIFO_HI, FW_FIFO_LO,
-	    fw_input);
 
 	sc->sc_flags |= FWF_ATTACHED;
 
@@ -253,8 +250,10 @@ fw_start(struct ifnet *ifp)
 		    (sc->sc_sc1394.sc1394_dev.dv_parent, m0, fw_txint);
 		if (error)
 			break;
-		ifp->if_flags |= IFF_OACTIVE;
 	}
+	IFQ_POLL(&ifp->if_snd, m0);
+	if (m0 != NULL)
+		ifp->if_flags |= IFF_OACTIVE;
 }
 
 void
@@ -264,14 +263,22 @@ fw_txint(struct device *self, struct mbuf *m0)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	m_freem(m0);
-	ifp->if_flags &= ~IFF_OACTIVE;
-	fw_start(ifp);
+	if (ifp->if_flags & IFF_OACTIVE) {
+		ifp->if_flags &= ~IFF_OACTIVE;
+		fw_start(ifp);
+	}
 }
 
 int
 fw_init(struct ifnet *ifp)
 {
+	struct fw_softc *sc = (struct fw_softc *)ifp->if_softc;
+	struct ieee1394_softc *psc =
+	    (struct ieee1394_softc *)sc->sc_sc1394.sc1394_dev.dv_parent;
 
+	(*psc->sc1394_ifinreg)
+	    (sc->sc_sc1394.sc1394_dev.dv_parent, FW_FIFO_HI, FW_FIFO_LO,
+	    fw_input);
 	ifp->if_flags |= IFF_RUNNING;
 	return 0;
 }
@@ -279,8 +286,14 @@ fw_init(struct ifnet *ifp)
 void
 fw_stop(struct ifnet *ifp, int disable)
 {
+	struct fw_softc *sc = (struct fw_softc *)ifp->if_softc;
+	struct ieee1394_softc *psc =
+	    (struct ieee1394_softc *)sc->sc_sc1394.sc1394_dev.dv_parent;
 	struct mbuf *m;
 
+	(*psc->sc1394_ifinreg)
+	    (sc->sc_sc1394.sc1394_dev.dv_parent, FW_FIFO_HI, FW_FIFO_LO,
+	    NULL);
 	for (;;) {
 		IF_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.40.2.1 2001/06/21 20:09:07 nathanw Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.40.2.2 2001/08/24 00:12:45 nathanw Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -610,6 +610,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 				   (struct ifnet *)control, p));
 
 	if (req == PRU_PURGEIF) {
+		in6_pcbpurgeif0(&udb6, (struct ifnet *)control);
 		in6_purgeif((struct ifnet *)control);
 		in6_pcbpurgeif(&udb6, (struct ifnet *)control);
 		return (0);
@@ -641,13 +642,6 @@ udp6_usrreq(so, req, m, addr6, control, p)
 			break;
 		in6p = sotoin6pcb(so);
 		in6p->in6p_cksum = -1;	/* just to be sure */
-#ifdef IPSEC
-		error = ipsec_init_policy(so, &in6p->in6p_sp);
-		if (error != 0) {
-			in6_pcbdetach(in6p);
-			break;
-		}
-#endif /*IPSEC*/
 		break;
 
 	case PRU_DETACH:

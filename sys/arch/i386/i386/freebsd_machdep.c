@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.26.4.2 2001/06/21 19:25:26 nathanw Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.26.4.3 2001/08/24 00:08:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,10 @@ freebsd_setregs(l, epp, stack)
 	register struct pcb *pcb = &l->l_addr->u_pcb;
 
 	setregs(l, epp, stack);
-	pcb->pcb_savefpu.sv_env.en_cw = __FreeBSD_NPXCW__;
+	if (i386_use_fxsave)
+		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __FreeBSD_NPXCW__;
+	else
+		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __FreeBSD_NPXCW__;
 }
 
 /*

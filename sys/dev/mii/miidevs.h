@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.14.2.2 2001/06/21 20:04:23 nathanw Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.14.2.3 2001/08/24 00:09:59 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.23 2001/06/19 19:51:04 thorpej Exp 
+ *	NetBSD: miidevs,v 1.27 2001/07/27 17:54:40 thorpej Exp 
  */
 
 /*-
@@ -101,6 +101,7 @@
 #define	MII_OUI_xxDAVICOM	0x000602	/* Davicom Semiconductor */
 #define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
 
+#define	MII_OUI_xxMARVELL	0x000ac2	/* Marvell Semiconductor */
 
 /*
  * List of known models.  Grouped by oui.
@@ -121,18 +122,20 @@
 #define	MII_STR_yyAMD_79c901home	"Am79C901 HomePHY"
 
 /* Broadcom Corp. PHYs */
+#define	MII_MODEL_xxBROADCOM_3C905B	0x0012
+#define	MII_STR_xxBROADCOM_3C905B	"Broadcom 3c905B internal PHY"
 #define	MII_MODEL_xxBROADCOM_3C905C	0x0017
-#define	MII_STR_xxBROADCOM_3C905C	"Broadcom 3C905C internal PHY"
+#define	MII_STR_xxBROADCOM_3C905C	"Broadcom 3c905C internal PHY"
 #define	MII_MODEL_xxBROADCOM_BCM5201	0x0021
 #define	MII_STR_xxBROADCOM_BCM5201	"BCM5201 10/100 media interface"
-#define	MII_MODEL_BROADCOM_BCM5221	0x001e
-#define	MII_STR_BROADCOM_BCM5221	"BCM5221 10/100 PHY"
+#define	MII_MODEL_xxBROADCOM_BCM5221	0x001e
+#define	MII_STR_xxBROADCOM_BCM5221	"BCM5221 10/100 media interface"
 #define	MII_MODEL_BROADCOM_BCM5400	0x0004
-#define	MII_STR_BROADCOM_BCM5400	"BCM5400 1000baseTX PHY"
+#define	MII_STR_BROADCOM_BCM5400	"BCM5400 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5401	0x0005
-#define	MII_STR_BROADCOM_BCM5401	"BCM5401 1000baseTX PHY"
+#define	MII_STR_BROADCOM_BCM5401	"BCM5401 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5411	0x0007
-#define	MII_STR_BROADCOM_BCM5411	"BCM5411 1000baseTX PHY"
+#define	MII_STR_BROADCOM_BCM5411	"BCM5411 1000BASE-T media interface"
 
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
@@ -159,10 +162,14 @@
 /* Level 1 PHYs */
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000
 #define	MII_STR_xxLEVEL1_LXT970	"LXT970 10/100 media interface"
+#define	MII_MODEL_LEVEL1_LXT1000_OLD	0x0003
+#define	MII_STR_LEVEL1_LXT1000_OLD	"LXT1000 1000BASE-T media interface"
+#define	MII_MODEL_LEVEL1_LXT1000	0x000c
+#define	MII_STR_LEVEL1_LXT1000	"LXT1000 1000BASE-T media interface"
 
 /* Marvell Semiconductor PHYs */
-#define	MII_MODEL_MARVELL_E1000	0x0000
-#define	MII_STR_MARVELL_E1000	"Marvell 88E1000 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1000	0x0005
+#define	MII_STR_xxMARVELL_E1000	"Marvell 88E1000 Gigabit PHY"
 
 /* Myson Technology PHYs */
 #define	MII_MODEL_xxMYSON_MTD972	0x0000
@@ -176,9 +183,9 @@
 #define	MII_MODEL_xxNATSEMI_DP83815	0x0002
 #define	MII_STR_xxNATSEMI_DP83815	"DP83815 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83891	0x0005
-#define	MII_STR_xxNATSEMI_DP83891	"DP83891 1000baseTX PHY"
+#define	MII_STR_xxNATSEMI_DP83891	"DP83891 1000BASE-T media interface"
 #define	MII_MODEL_xxNATSEMI_DP83861	0x0006
-#define	MII_STR_xxNATSEMI_DP83861	"DP83861 1000baseTX PHY"
+#define	MII_STR_xxNATSEMI_DP83861	"DP83861 1000BASE-T media interface"
 
 /* PMC Sierra PHYs */
 #define	MII_MODEL_xxPMCSIERRA_PM8351	0x0000
@@ -202,7 +209,7 @@
 
 /* Texas Instruments PHYs */
 #define	MII_MODEL_TI_TLAN10T	0x0001
-#define	MII_STR_TI_TLAN10T	"ThunderLAN 10baseT media interface"
+#define	MII_STR_TI_TLAN10T	"ThunderLAN 10BASE-T media interface"
 #define	MII_MODEL_TI_100VGPMI	0x0002
 #define	MII_STR_TI_100VGPMI	"ThunderLAN 100VG-AnyLan media interface"
 #define	MII_MODEL_TI_TNETE2101	0x0003
@@ -212,7 +219,7 @@
 #define	MII_MODEL_xxTSC_78Q2120	0x0014
 #define	MII_STR_xxTSC_78Q2120	"78Q2120 10/100 media interface"
 #define	MII_MODEL_xxTSC_78Q2121	0x0015
-#define	MII_STR_xxTSC_78Q2121	"78Q2121 100baseTX media interface"
+#define	MII_STR_xxTSC_78Q2121	"78Q2121 100BASE-TX media interface"
 
 /* XaQti Corp. PHYs */
 #define	MII_MODEL_xxXAQTI_XMACII	0x0000

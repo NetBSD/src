@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.31 2001/02/11 19:34:58 nathanw Exp $ */
+/* $NetBSD: tga.c,v 1.31.2.1 2001/08/24 00:10:23 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -72,8 +72,12 @@ struct cfattach tga_ca = {
 
 int	tga_identify __P((struct tga_devconfig *));
 const struct tga_conf *tga_getconf __P((int));
-static void	tga_getdevconfig __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
+static void	tga_init __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
 	    pcitag_t tag, struct tga_devconfig *dc));
+
+static int tga_matchcommon __P((bus_space_tag_t, pci_chipset_tag_t, pcitag_t));
+static void tga_mapaddrs __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
+	pcitag_t, bus_size_t *pcisize, struct tga_devconfig *dc));
 
 struct tga_devconfig tga_console_dc;
 
@@ -154,6 +158,15 @@ static void	tga_blank __P((struct tga_devconfig *));
 static void	tga_unblank __P((struct tga_devconfig *));
 
 int
+tga_cnmatch(iot, memt, pc, tag)
+	bus_space_tag_t iot, memt;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+{
+	return tga_matchcommon(memt, pc, tag);
+}
+
+int
 tgamatch(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -167,41 +180,66 @@ tgamatch(parent, match, aux)
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_DEC_21030:
 	case PCI_PRODUCT_DEC_PBXGB:
-		return 10;
+		break;
 	default:
 		return 0;
 	}
-	return (0);
+
+	/* short-circuit the following test, as we
+	 * already have the memory mapped and hence
+	 * cannot perform it---and we are the console
+	 * anyway.
+	 */
+	if (pa->pa_tag == tga_console_dc.dc_pcitag)
+		return 10;
+
+	return tga_matchcommon(pa->pa_memt, pa->pa_pc, pa->pa_tag);
 }
 
-static void
-tga_getdevconfig(memt, pc, tag, dc)
+static int
+tga_matchcommon(memt, pc, tag)
 	bus_space_tag_t memt;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
+{
+	struct tga_devconfig tmp_dc;
+	struct tga_devconfig *dc = &tmp_dc;
+	bus_size_t pcisize;
+
+	tga_mapaddrs(memt, pc, tag, &pcisize, dc);
+	dc->dc_tga_type = tga_identify(dc);
+
+	dc->dc_tgaconf = tga_getconf(dc->dc_tga_type);
+	bus_space_unmap(memt, dc->dc_memh, pcisize);
+	if (dc->dc_tgaconf)
+		return 10;
+	return 0;
+}
+
+static void
+tga_mapaddrs(memt, pc, tag, pcisize, dc)
+	bus_space_tag_t memt;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	bus_size_t *pcisize;
 	struct tga_devconfig *dc;
 {
-	const struct tga_conf *tgac;
-	struct rasops_info *rip;
-	int cookie;
-	bus_size_t pcisize;
-	int i, flags;
+	int flags;
 
 	dc->dc_memt = memt;
-
-	dc->dc_pcitag = tag;
+	dc->dc_tgaconf = NULL;
 
 	/* XXX magic number */
 	if (pci_mapreg_info(pc, tag, 0x10,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
-	    &dc->dc_pcipaddr, &pcisize, &flags))
-		return;
+	    &dc->dc_pcipaddr, pcisize, &flags))
+		panic("tga_mapaddrs: pci_mapreg_info() failed");
 	if ((flags & BUS_SPACE_MAP_PREFETCHABLE) == 0)		/* XXX */
 		panic("tga memory not prefetchable");
 
-	if (bus_space_map(memt, dc->dc_pcipaddr, pcisize,
+	if (bus_space_map(memt, dc->dc_pcipaddr, *pcisize,
 	    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR, &dc->dc_memh))
-		return;
+		panic("tga_mapaddrs: could not map TGA address space");
 	dc->dc_vaddr = (vaddr_t) bus_space_vaddr(memt, dc->dc_memh);
 #ifdef __alpha__
 	dc->dc_paddr = ALPHA_K0SEG_TO_PHYS(dc->dc_vaddr);	/* XXX */
@@ -213,16 +251,29 @@ tga_getdevconfig(memt, pc, tag, dc)
 	bus_space_subregion(dc->dc_memt, dc->dc_memh, 
 						TGA_MEM_CREGS, TGA_CREGS_SIZE,
 						&dc->dc_regs);
+}
+
+static void
+tga_init(memt, pc, tag, dc)
+	bus_space_tag_t memt;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	struct tga_devconfig *dc;
+{
+	const struct tga_conf *tgac;
+	struct rasops_info *rip;
+	int cookie;
+	bus_size_t pcisize;
+	int i;
+
+	dc->dc_pcitag = tag;
+	tga_mapaddrs(memt, pc, tag, &pcisize, dc);
 	dc->dc_tga_type = tga_identify(dc);
-
 	tgac = dc->dc_tgaconf = tga_getconf(dc->dc_tga_type);
-	if (tgac == NULL)
-		return;
-
 #if 0
 	/* XXX on the Alpha, pcisize = 4 * cspace_size. */
 	if (tgac->tgac_cspace_size != pcisize)			/* sanity */
-		panic("tga_getdevconfig: memory size mismatch?");
+		panic("tga_init: memory size mismatch?");
 #endif
 
 	switch (TGARREG(dc, TGA_REG_GREV) & 0xff) {
@@ -238,7 +289,7 @@ tga_getdevconfig(memt, pc, tag, dc)
 		dc->dc_tga2 = 1;
 		break;
 	default:
-		panic("tga_getdevconfig: TGA Revision not recognized");
+		panic("tga_init: TGA Revision not recognized");
 	}
 
 	if (dc->dc_tga2) {
@@ -376,9 +427,8 @@ tgaattach(parent, self, aux)
 	} else {
 		sc->sc_dc = (struct tga_devconfig *)
 		    malloc(sizeof(struct tga_devconfig), M_DEVBUF, M_WAITOK);
-		bzero(sc->sc_dc, sizeof(struct tga_devconfig));
-		tga_getdevconfig(pa->pa_memt, pa->pa_pc, pa->pa_tag,
-		    sc->sc_dc);
+		memset(sc->sc_dc, 0, sizeof(struct tga_devconfig));
+		tga_init(pa->pa_memt, pa->pa_pc, pa->pa_tag, sc->sc_dc);
 	}
 	if (sc->sc_dc->dc_vaddr == NULL) {
 		printf(": couldn't map memory space; punt!\n");
@@ -482,7 +532,6 @@ tga_config_interrupts (d)
 	struct tga_softc *sc = (struct tga_softc *)d;
 	sc->sc_dc->dc_intrenabled = 1;
 }
-	
 
 int
 tga_ioctl(v, cmd, data, flag, p)
@@ -604,8 +653,11 @@ tga_intr(v)
 			return 0;
 		}
 	}
-	dc->dc_ramdac_intr(dcrc);
-	dc->dc_ramdac_intr = NULL;
+	/* if we have something to do, do it */
+	if (dc->dc_ramdac_intr) {
+		dc->dc_ramdac_intr(dcrc);
+		dc->dc_ramdac_intr = NULL;
+	}
 	TGAWREG(dc, TGA_REG_SISR, 0x00000001);
 	TGAREGWB(dc, TGA_REG_SISR, 1);
 	return (1);
@@ -695,8 +747,7 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 	struct tga_devconfig *dcp = &tga_console_dc;
 	long defattr;
 
-	tga_getdevconfig(memt, pc,
-	    pci_make_tag(pc, bus, device, function), dcp);
+	tga_init(memt, pc, pci_make_tag(pc, bus, device, function), dcp);
 
 	/* sanity checks */
 	if (dcp->dc_vaddr == NULL)
@@ -766,7 +817,8 @@ tga_builtin_set_cursor(dc, cursorp)
 {
 	struct ramdac_funcs *dcrf = dc->dc_ramdac_funcs;
 	struct ramdac_cookie *dcrc = dc->dc_ramdac_cookie;
-	int count, error, v;
+	u_int count, v;
+	int error;
 
 	v = cursorp->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {

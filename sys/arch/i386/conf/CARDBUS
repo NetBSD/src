@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.31.2.2 2001/06/21 19:25:10 nathanw Exp $
+#	$NetBSD: CARDBUS,v 1.31.2.3 2001/08/24 00:08:25 nathanw Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.31.2.2 $"
+#ident		"CARDBUS-$Revision: 1.31.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -81,6 +81,7 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
@@ -134,9 +135,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
-
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
-#options 	TCP_COMPAT_42
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
@@ -401,7 +400,6 @@ lpt2	at isa? port 0x3bc
 #bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 #dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
-#ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI (old driver)
 #siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 #pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
@@ -454,7 +452,6 @@ scsibus* at esp?
 #scsibus* at iopsp?
 #scsibus* at isp?
 #scsibus* at nca?
-#scsibus* at ncr?
 #scsibus* at pcscp?
 #scsibus* at sea?
 #scsibus* at siop?

@@ -1,16 +1,22 @@
-#	$NetBSD: Makefile,v 1.1 2000/12/08 23:05:47 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2001/08/24 00:11:55 nathanw Exp $
 
 .include "../Makefile.inc"
 
+.if ${MACHINE} == sparc64 && ${MACHINE_ARCH} == sparc64
+ELFSIZE=64
+.else
+ELFSIZE=32
+.endif
+
 .PATH:	$S/compat/svr4
 
-CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_ELF32
+CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_ELF${ELFSIZE} -DELFSIZE=${ELFSIZE}
 
 MKMAN=	no
 
 KMOD=	exec_svr4_elf
 
 SRCS=	lkminit_exec.c
-SRCS+=	svr4_exec_elf32.c
+SRCS+=	svr4_exec_elf${ELFSIZE}.c
 
 .include <bsd.kmod.mk>

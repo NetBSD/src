@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.32 2001/02/13 19:53:52 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.32.2.1 2001/08/24 00:13:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -584,55 +584,59 @@ ntfs_readdir(ap)
 	int i, error = 0;
 	u_int32_t faked = 0, num;
 	int ncookies = 0;
-	struct dirent cde;
+	struct dirent *cde;
 	off_t off;
 
 	dprintf(("ntfs_readdir %d off: %d resid: %d\n",ip->i_number,(u_int32_t)uio->uio_offset,uio->uio_resid));
 
 	off = uio->uio_offset;
 
+	MALLOC(cde, struct dirent *, sizeof(struct dirent), M_TEMP, M_WAITOK);
+
 	/* Simulate . in every dir except ROOT */
-	if( ip->i_number != NTFS_ROOTINO ) {
-		struct dirent dot = { NTFS_ROOTINO,
-				sizeof(struct dirent), DT_DIR, 1, "." };
+	if (ip->i_number != NTFS_ROOTINO
+	    && uio->uio_offset < sizeof(struct dirent)) {
+		cde->d_fileno = ip->i_number;
+		cde->d_reclen = sizeof(struct dirent);
+		cde->d_type = DT_DIR;
+		cde->d_namlen = 1;
+		strncpy(cde->d_name, ".", 2);
+		error = uiomove((void *)cde, sizeof(struct dirent), uio);
+		if (error)
+			goto out;
 
-		if( uio->uio_offset < sizeof(struct dirent) ) {
-			dot.d_fileno = ip->i_number;
-			error = uiomove((char *)&dot,sizeof(struct dirent),uio);
-			if(error)
-				return (error);
-
-			ncookies ++;
-		}
+		ncookies++;
 	}
 
 	/* Simulate .. in every dir including ROOT */
-	if( uio->uio_offset < 2 * sizeof(struct dirent) ) {
-		struct dirent dotdot = { NTFS_ROOTINO,
-				sizeof(struct dirent), DT_DIR, 2, ".." };
+	if (uio->uio_offset < 2 * sizeof(struct dirent)) {
+		cde->d_fileno = NTFS_ROOTINO;	/* XXX */
+		cde->d_reclen = sizeof(struct dirent);
+		cde->d_type = DT_DIR;
+		cde->d_namlen = 2;
+		strncpy(cde->d_name, "..", 3);
 
-		error = uiomove((char *)&dotdot,sizeof(struct dirent),uio);
-		if(error)
-			return (error);
+		error = uiomove((void *) cde, sizeof(struct dirent), uio);
+		if (error)
+			goto out;
 
-		ncookies ++;
+		ncookies++;
 	}
 
 	faked = (ip->i_number == NTFS_ROOTINO) ? 1 : 2;
 	num = uio->uio_offset / sizeof(struct dirent) - faked;
 
-	while( uio->uio_resid >= sizeof(struct dirent) ) {
+	while (uio->uio_resid >= sizeof(struct dirent)) {
 		struct attr_indexentry *iep;
 		char *fname;
 		size_t remains;
 		int sz;
 
 		error = ntfs_ntreaddir(ntmp, fp, num, &iep);
+		if (error)
+			goto out;
 
-		if(error)
-			return (error);
-
-		if( NULL == iep )
+		if (NULL == iep)
 			break;
 
 		for(; !(iep->ie_flag & NTFS_IEFLAG_LAST) && (uio->uio_resid >= sizeof(struct dirent));
@@ -641,8 +645,8 @@ ntfs_readdir(ap)
 			if(!ntfs_isnamepermitted(ntmp,iep))
 				continue;
 
-			remains = sizeof(cde.d_name) - 1;
-			fname = cde.d_name;
+			remains = sizeof(cde->d_name) - 1;
+			fname = cde->d_name;
 			for(i=0; i<iep->ie_fnamelen; i++) {
 				sz = (*ntmp->ntm_wput)(fname, remains,
 						iep->ie_fname[i]);
@@ -651,17 +655,17 @@ ntfs_readdir(ap)
 			}
 			*fname = '\0';
 			dprintf(("ntfs_readdir: elem: %d, fname:[%s] type: %d, flag: %d, ",
-				num, cde.d_name, iep->ie_fnametype,
+				num, cde->d_name, iep->ie_fnametype,
 				iep->ie_flag));
-			cde.d_namlen = fname - (char *) cde.d_name + 1;
-			cde.d_fileno = iep->ie_number;
-			cde.d_type = (iep->ie_fflag & NTFS_FFLAG_DIR) ? DT_DIR : DT_REG;
-			cde.d_reclen = sizeof(struct dirent);
-			dprintf(("%s\n", (cde.d_type == DT_DIR) ? "dir":"reg"));
+			cde->d_namlen = fname - (char *) cde->d_name;
+			cde->d_fileno = iep->ie_number;
+			cde->d_type = (iep->ie_fflag & NTFS_FFLAG_DIR) ? DT_DIR : DT_REG;
+			cde->d_reclen = sizeof(struct dirent);
+			dprintf(("%s\n", (cde->d_type == DT_DIR) ? "dir":"reg"));
 
-			error = uiomove((char *)&cde, sizeof(struct dirent), uio);
-			if(error)
-				return (error);
+			error = uiomove((void *)cde, sizeof(struct dirent), uio);
+			if (error)
+				goto out;
 
 			ncookies++;
 			num++;
@@ -709,6 +713,8 @@ ntfs_readdir(ap)
 	if (ap->a_eofflag)
 	    *ap->a_eofflag = VTONT(ap->a_vp)->i_size <= uio->uio_offset;
 */
+    out:
+	FREE(cde, M_TEMP);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_bpf.c,v 1.1 1998/05/15 17:07:15 drochner Exp $	*/
+/*	$NetBSD: ether_bpf.c,v 1.1.28.1 2001/08/24 00:08:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -112,7 +112,7 @@ int EtherInit(ha)
 		return (0);
 	}
 
-	bcopy(BPF_IFNAME, ifr.ifr_name, IFNAMSIZ);
+	memcpy(ifr.ifr_name, BPF_IFNAME, IFNAMSIZ);
 	res = ioctl(bpf, BIOCSETIF, &ifr);
 	if (res < 0) {
 		warn("ioctl BIOCSETIF %s", BPF_IFNAME);
@@ -157,7 +157,7 @@ int EtherInit(ha)
 		kvm_read(kvm, (u_long)ifap, &ifaddr, sizeof(struct ifaddr));
 		kvm_read(kvm, (u_long)ifaddr.ifa_addr, sdlp, sdllen);
 		if (sdlp->sdl_family == AF_LINK) {
-			bcopy(LLADDR(sdlp), ha, 6);
+			memcpy(ha, LLADDR(sdlp), 6);
 			break;
 		}
 		ifap = ifaddr.ifa_list.tqe_next;
@@ -215,7 +215,7 @@ EtherReceive(pkt, maxlen)
 #endif
 		if (rbuf.h.bh_caplen > maxlen)
 			return (0);
-		bcopy(&rbuf.buf[rbuf.h.bh_hdrlen], pkt, rbuf.h.bh_caplen);
+		memcpy(pkt, &rbuf.buf[rbuf.h.bh_hdrlen], rbuf.h.bh_caplen);
 		return (rbuf.h.bh_caplen);
 	}
 

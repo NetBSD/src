@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.5.6.1 2001/06/21 20:03:06 nathanw Exp $ */
+/* $NetBSD: pckbc.c,v 1.5.6.2 2001/08/24 00:09:35 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -76,7 +76,9 @@ struct pckbc_devcmd {
 
 /* data per slave device */
 struct pckbc_slotdata {
-	int polling; /* don't read data port in interrupt handler */
+	int polling;	/* don't process data in interrupt handler */
+	int poll_data;	/* data read from inr handler if polling */
+	int poll_stat;	/* status read from inr handler if polling */
 	TAILQ_HEAD(, pckbc_devcmd) cmdqueue; /* active commands */
 	TAILQ_HEAD(, pckbc_devcmd) freequeue; /* free commands */
 #define NCMD 5
@@ -147,24 +149,40 @@ pckbc_send_cmd(iot, ioh_c, val)
 	return (1);
 }
 
+/*
+ * Note: the spl games here are to deal with some strange PC kbd controllers
+ * in some system configurations.
+ * This is not canonical way to handle polling input.
+ */
 int
-pckbc_poll_data1(iot, ioh_d, ioh_c, slot, checkaux)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh_d, ioh_c;
+pckbc_poll_data1(pt, slot, checkaux)
+	pckbc_tag_t pt;
 	pckbc_slot_t slot;
 	int checkaux;
 {
-	int i;
-	u_char stat;
+	struct pckbc_internal *t = pt;
+	struct pckbc_slotdata *q = t->t_slotdata[slot];
+	int i, s;
+	u_char stat, c;
+
+	s = splhigh();
+
+	if (q && q->polling && q->poll_data != -1 && q->poll_stat != -1) {
+		stat	= q->poll_stat;
+		c	= q->poll_data;
+		q->poll_data = -1;
+		q->poll_stat = -1;
+		goto process;
+	}
 
 	/* if 1 port read takes 1us (?), this polls for 100ms */
 	for (i = 100000; i; i--) {
-		stat = bus_space_read_1(iot, ioh_c, 0);
+		stat = bus_space_read_1(t->t_iot, t->t_ioh_c, 0);
 		if (stat & KBS_DIB) {
-			register u_char c;
-
 			KBD_DELAY;
-			c = bus_space_read_1(iot, ioh_d, 0);
+			c = bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
+		    
+		    process:
 			if (checkaux && (stat & 0x20)) { /* aux data */
 				if (slot != PCKBC_AUX_SLOT) {
 #ifdef PCKBCDEBUG
@@ -180,9 +198,12 @@ pckbc_poll_data1(iot, ioh_d, ioh_c, slot, checkaux)
 					continue;
 				}
 			}
+			splx(s);
 			return (c);
 		}
 	}
+
+	splx(s);
 	return (-1);
 }
 
@@ -194,14 +215,12 @@ pckbc_get8042cmd(t)
 	struct pckbc_internal *t;
 {
 	bus_space_tag_t iot = t->t_iot;
-	bus_space_handle_t ioh_d = t->t_ioh_d;
 	bus_space_handle_t ioh_c = t->t_ioh_c;
 	int data;
 
 	if (!pckbc_send_cmd(iot, ioh_c, K_RDCMDBYTE))
 		return (0);
-	data = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT,
-				t->t_haveaux);
+	data = pckbc_poll_data1(t, PCKBC_KBD_SLOT, t->t_haveaux);
 	if (data == -1)
 		return (0);
 	t->t_cmdbyte = data;
@@ -316,7 +335,7 @@ pckbc_attach(sc)
 	ioh_c = t->t_ioh_c;
 
 	/* flush */
-	(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+	(void) pckbc_poll_data1(t, PCKBC_KBD_SLOT, 0);
 
 	/* set initial cmd byte */
 	if (!pckbc_put8042cmd(t)) {
@@ -334,7 +353,7 @@ pckbc_attach(sc)
 	 */
 	if (!pckbc_send_cmd(iot, ioh_c, KBC_KBDTEST))
 		return;
-	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+	res = pckbc_poll_data1(t, PCKBC_KBD_SLOT, 0);
 
 	/*
 	 * Normally, we should get a "0" here.
@@ -370,7 +389,7 @@ pckbc_attach(sc)
 		goto nomouse;
 	}
 	bus_space_write_1(iot, ioh_d, 0, 0x5a); /* a random value */
-	res = pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_AUX_SLOT, 1);
+	res = pckbc_poll_data1(t, PCKBC_AUX_SLOT, 1);
 	if (res != -1) {
 		/*
 		 * In most cases, the 0x5a gets echoed.
@@ -428,8 +447,7 @@ pckbc_flush(self, slot)
 {
 	struct pckbc_internal *t = self;
 
-	(void) pckbc_poll_data1(t->t_iot, t->t_ioh_d, t->t_ioh_c,
-				slot, t->t_haveaux);
+	(void) pckbc_poll_data1(t, slot, t->t_haveaux);
 }
 
 int
@@ -441,8 +459,7 @@ pckbc_poll_data(self, slot)
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
 	int c;
 
-	c = pckbc_poll_data1(t->t_iot, t->t_ioh_d, t->t_ioh_c,
-			     slot, t->t_haveaux);
+	c = pckbc_poll_data1(t, slot, t->t_haveaux);
 	if (c != -1 && q && CMD_IN_QUEUE(q)) {
 		/* we jumped into a running command - try to
 		 deliver the response */
@@ -527,7 +544,10 @@ pckbc_set_poll(self, slot, on)
 
 	t->t_slotdata[slot]->polling = on;
 
-	if (!on) {
+	if (on) {
+		t->t_slotdata[slot]->poll_data = -1;
+		t->t_slotdata[slot]->poll_stat = -1;
+	} else {
                 int s;
 
                 /*
@@ -554,9 +574,6 @@ pckbc_poll_cmd1(t, slot, cmd)
 	pckbc_slot_t slot;
 	struct pckbc_devcmd *cmd;
 {
-	bus_space_tag_t iot = t->t_iot;
-	bus_space_handle_t ioh_d = t->t_ioh_d;
-	bus_space_handle_t ioh_c = t->t_ioh_c;
 	int i, c = 0;
 
 	while (cmd->cmdidx < cmd->cmdlen) {
@@ -566,8 +583,7 @@ pckbc_poll_cmd1(t, slot, cmd)
 			return;
 		}
 		for (i = 10; i; i--) { /* 1s ??? */
-			c = pckbc_poll_data1(iot, ioh_d, ioh_c, slot,
-					     t->t_haveaux);
+			c = pckbc_poll_data1(t, slot, t->t_haveaux);
 			if (c != -1)
 				break;
 		}
@@ -608,8 +624,7 @@ pckbc_poll_cmd1(t, slot, cmd)
 		else
 			i = 10; /* 1s ??? */
 		while (i--) {
-			c = pckbc_poll_data1(iot, ioh_d, ioh_c, slot,
-					     t->t_haveaux);
+			c = pckbc_poll_data1(t, slot, t->t_haveaux);
 			if (c != -1)
 				break;
 		}
@@ -640,8 +655,8 @@ pckbc_poll_cmd(self, slot, cmd, len, responselen, respbuf, slow)
 	if ((len > 4) || (responselen > 4))
 		return (EINVAL);
 
-	bzero(&nc, sizeof(nc));
-	bcopy(cmd, nc.cmd, len);
+	memset(&nc, 0, sizeof(nc));
+	memcpy(nc.cmd, cmd, len);
 	nc.cmdlen = len;
 	nc.responselen = responselen;
 	nc.flags = (slow ? KBC_CMDFLAG_SLOW : 0);
@@ -649,7 +664,7 @@ pckbc_poll_cmd(self, slot, cmd, len, responselen, respbuf, slow)
 	pckbc_poll_cmd1(t, slot, &nc);
 
 	if (nc.status == 0 && respbuf)
-		bcopy(nc.response, respbuf, responselen);
+		memcpy(respbuf, nc.response, responselen);
 
 	return (nc.status);
 }
@@ -832,8 +847,8 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 	if (!nc)
 		return (ENOMEM);
 
-	bzero(nc, sizeof(*nc));
-	bcopy(cmd, nc->cmd, len);
+	memset(nc, 0, sizeof(*nc));
+	memcpy(nc->cmd, cmd, len);
 	nc->cmdlen = len;
 	nc->responselen = responselen;
 	nc->flags = (sync ? KBC_CMDFLAG_SYNC : 0);
@@ -867,7 +882,7 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 
 	if (sync) {
 		if (respbuf)
-			bcopy(nc->response, respbuf, responselen);
+			memcpy(respbuf, nc->response, responselen);
 		TAILQ_INSERT_TAIL(&q->freequeue, nc, next);
 	}
 
@@ -927,15 +942,19 @@ pckbcintr(vsc)
 			continue;
 		}
 
-		if (q->polling)
-			break; /* pckbc_poll_data() will get it */
-
 		KBD_DELAY;
 		data = bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
 
 #if NRND > 0
 		rnd_add_uint32(&q->rnd_source, (stat<<8)|data);
 #endif
+
+		if (q->polling) {
+			q->poll_data = data;
+			q->poll_stat = stat;
+			break; /* pckbc_poll_data() will get it */
+		}
+
 		if (CMD_IN_QUEUE(q) && pckbc_cmdresponse(t, slot, data))
 			continue;
 
@@ -967,6 +986,7 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
                 return (ENXIO);
 	}
 
+	memset(&pckbc_consdata, 0, sizeof(pckbc_consdata));
 	pckbc_consdata.t_iot = iot;
 	pckbc_consdata.t_ioh_d = ioh_d;
 	pckbc_consdata.t_ioh_c = ioh_c;
@@ -974,7 +994,7 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 	callout_init(&pckbc_consdata.t_cleanup);
 
 	/* flush */
-	(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
+	(void) pckbc_poll_data1(&pckbc_consdata, PCKBC_KBD_SLOT, 0);
 
 	/* selftest? */
 

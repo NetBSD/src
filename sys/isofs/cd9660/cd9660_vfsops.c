@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.52.2.3 2001/06/21 20:06:39 nathanw Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.52.2.4 2001/08/24 00:11:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -148,6 +148,7 @@ cd9660_mountroot()
 	simple_unlock(&mountlist_slock);
 	(void)cd9660_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
+	inittodr(0);
 	return (0);
 }
 
@@ -408,7 +409,7 @@ iso_mountfs(devvp, mp, p, argp)
 	
 	devvp->v_specmountpoint = mp;
 	
-	/* Check the Rock Ridge Extention support */
+	/* Check the Rock Ridge Extension support */
 	if (!(argp->flags & ISOFSMNT_NORRIP)) {
 		struct iso_directory_record *rootp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.22 2000/03/13 23:52:36 soren Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.22.6.1 2001/08/24 00:09:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -69,6 +69,51 @@
 #define ELINK_WINDOW	0x0f    /* Read. BASE+0x0f is always window reg. */
 
 /*
+ * Corkscrew ISA Bridge ASIC registers.
+ */
+#define	CORK_ASIC_DCR		0x2000
+#define	CORK_ASIC_RCR		0x2002
+#define	CORK_ASIC_ROM_PAGE	0x2004	/* 8-bit */
+#define	CORK_ASIC_MCR		0x2006	/* 8-bit */
+#define	CORK_ASIC_DEBUG		0x2008	/* 8-bit */
+#define	CORK_ASIC_EEPROM_COMMAND 0x200a
+#define	CORK_ASIC_EEPROM_DATA	0x200c
+
+/*
+ * Corkscrew DMA Control Register.
+ */
+#define	DCR_CHRDYWAIT_40ns	(0 << 13)
+#define	DCR_CHRDYWAIT_80ns	(1 << 13)
+#define	DCR_CHRDYWAIT_120ns	(2 << 13)
+#define	DCR_CHRDYWAIT_160ns	(3 << 13)
+#define	DCR_RECOVWAIT_80ns	(0 << 11)
+#define	DCR_RECOVWAIT_120ns	(1 << 11)
+#define	DCR_RECOVWAIT_160ns	(2 << 11)
+#define	DCR_RECOVWAIT_200ns	(3 << 11)
+#define	DCR_CMDWIDTH(x)		((x) << 8) /* base 40ns, 40ns increments */
+#define	DCR_BURSTLEN(x)		((x) << 3)
+#define	DCR_DRQSELECT(x)	((x) << 0) /* 3, 5, 6, 7 valid */
+
+/*
+ * Corkscrew Debug register.
+ */
+#define	DEBUG_PCIBUSFAULT	(1U << 0)
+#define	DEBUG_ISABUSFAULT	(1U << 1)
+
+/*
+ * Corkscrew EEPROM Command register.
+ */
+#define	CORK_EEPROM_BUSY	(1U << 9)
+#define	CORK_EEPROM_CMD_READ	(1U << 7)	/* Same as 3c509 */
+
+/*
+ * Corkscrew Master Control register.
+ */
+#define	MCR_PCI_CONFIG		(1U << 0)
+#define	MCR_WRITE_BUFFER	(1U << 1)
+#define	MCR_READ_PREFETCH	(1U << 2)
+
+/*
  * Window 0 registers. Setup.
  */
 	/* Write */
@@ -88,10 +133,11 @@
 #define ELINK_W1_TX_PIO_WR_2	0x02
 #define ELINK_W1_TX_PIO_WR_1	0x00
 	/* Read */
-#define ELINK_W1_FREE_TX		0x0c
-#define ELINK_W1_TX_STATUS		0x0b    /* byte */
+#define ELINK_W1_FREE_TX	0x0c
+#define ELINK_W1_TX_STATUS	0x0b    /* byte */
 #define ELINK_W1_TIMER		0x0a    /* byte */
-#define ELINK_W1_RX_STATUS		0x08
+#define ELINK_W1_RX_STATUS	0x08
+#define	ELINK_W1_RX_ERRORS	0x04
 #define ELINK_W1_RX_PIO_RD_2	0x02
 #define ELINK_W1_RX_PIO_RD_1	0x00
 /*
@@ -130,8 +176,8 @@
  * Window 4 registers. Diagnostics.
  */
 	/* Read/Write */
-#define ELINK_W4_MEDIA_TYPE	0x0a
-#define ELINK_W4_CTRLR_STATUS	0x08
+#define ELINK_W4_MEDIA_TYPE		0x0a
+#define ELINK_W4_CTRLR_STATUS		0x08
 #define ELINK_W4_NET_DIAG		0x06
 #define ELINK_W4_FIFO_DIAG		0x04
 #define ELINK_W4_HOST_DIAG		0x02

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.13.4.1 2001/06/21 20:05:44 nathanw Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.13.4.2 2001/08/24 00:10:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -231,7 +231,7 @@ cd_atapibus_load_unload(cd, options, slot)
 {
 	struct atapi_load_unload atapi_cmd;
 
-	bzero(&atapi_cmd, sizeof(atapi_cmd));
+	memset(&atapi_cmd, 0, sizeof(atapi_cmd));
 	atapi_cmd.opcode = ATAPI_LOAD_UNLOAD;
 	atapi_cmd.options = options;    /* ioctl uses ATAPI values */
 	atapi_cmd.slot = slot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.44.2.1 2001/06/21 20:02:32 nathanw Exp $	*/
+/*	$NetBSD: i82557.c,v 1.44.2.2 2001/08/24 00:09:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -293,7 +293,7 @@ fxp_attach(struct fxp_softc *sc)
 	sc->sc_cdseg = seg;
 	sc->sc_cdnseg = rseg;
 
-	bzero(sc->sc_control_data, sizeof(struct fxp_control_data));
+	memset(sc->sc_control_data, 0, sizeof(struct fxp_control_data));
 
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct fxp_control_data), 1,
@@ -354,7 +354,7 @@ fxp_attach(struct fxp_softc *sc)
 			break;
 	(*fp->fp_init)(sc);
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = fxp_ioctl;
@@ -440,6 +440,7 @@ fxp_attach(struct fxp_softc *sc)
 void
 fxp_mii_initmedia(struct fxp_softc *sc)
 {
+	int flags;
 
 	sc->sc_flags |= FXPF_MII;
 
@@ -449,11 +450,15 @@ fxp_mii_initmedia(struct fxp_softc *sc)
 	sc->sc_mii.mii_statchg = fxp_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_mii_mediachange,
 	    fxp_mii_mediastatus);
+
+	flags = MIIF_NOISOLATE;
+	if (sc->sc_rev >= FXP_REV_82558_A4)
+		flags |= MIIF_DOPAUSE;
 	/*
 	 * The i82557 wedges if all of its PHYs are isolated!
 	 */
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, MIIF_NOISOLATE);
+	    MII_OFFSET_ANY, flags);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -778,7 +783,7 @@ fxp_start(struct ifnet *ifp)
 		 * again.
 		 */
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_NOWAIT) != 0) {
+		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -797,7 +802,7 @@ fxp_start(struct ifnet *ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
@@ -1733,7 +1738,8 @@ fxp_add_rfabuf(struct fxp_softc *sc, bus_dmamap_t rxmap, int unload)
 	M_SETCTX(m, rxmap);
 
 	error = bus_dmamap_load(sc->sc_dmat, rxmap,
-	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
+	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, sc->sc_rxq.ifq_len, error);

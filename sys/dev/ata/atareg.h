@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.6 2000/03/29 23:16:48 augustss Exp $	*/
+/*	$NetBSD: atareg.h,v 1.6.6.1 2001/08/24 00:09:04 nathanw Exp $	*/
 
 /*
  * Drive parameter structure for ATA/ATAPI.
@@ -60,7 +60,7 @@ struct ataparams {
     u_int8_t	atap_olddmatiming;	/* 52: old DMA timing mode (ATA) */
     u_int8_t	__junk3;
 #endif
-    u_int16_t	atap_extensions;	/* 53: extentions supported */
+    u_int16_t	atap_extensions;	/* 53: extensions supported */
 #define WDC_EXT_UDMA_MODES	0x0004
 #define WDC_EXT_MODES		0x0002
 #define WDC_EXT_GEOM		0x0001

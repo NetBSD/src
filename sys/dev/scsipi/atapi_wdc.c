@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.39.2.1 2001/06/21 20:05:40 nathanw Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.39.2.2 2001/08/24 00:10:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -754,7 +754,15 @@ again:
 			xfer->c_bcount -= sc_xfer->datalen;
 		}
 		sc_xfer->resid = xfer->c_bcount;
-		if (chp->ch_status & WDCS_ERR) {
+		/*
+		 * Some drive occasionally set WDCS_ERR with 
+		 * "ATA illegal length indication" in the error
+		 * register. If we read some data the sense is valid
+		 * anyway, so don't report the error.
+		 */
+		if (chp->ch_status & WDCS_ERR &&
+		    ((sc_xfer->xs_control & XS_CTL_REQSENSE) == 0 ||
+		    sc_xfer->resid == sc_xfer->datalen)) {
 			/* save the short sense */
 			sc_xfer->error = XS_SHORTSENSE;
 			sc_xfer->sense.atapi_sense = chp->ch_error;

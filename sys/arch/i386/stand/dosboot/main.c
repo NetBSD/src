@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16.4.1 2001/06/21 19:26:13 nathanw Exp $	 */
+/*	$NetBSD: main.c,v 1.16.4.2 2001/08/24 00:08:39 nathanw Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -316,7 +316,7 @@ command_help(arg)
 	char *arg;
 {
 	printf("commands are:\n"
-	       "boot [xdNx:][filename] [-adsvq]\n"
+	       "boot [xdNx:][filename] [-acdqsv]\n"
 	       "     (ex. \"sd0a:netbsd.old -s\"\n"
 	       "ls [path]\n"
 	       "mode ufs|dos\n"

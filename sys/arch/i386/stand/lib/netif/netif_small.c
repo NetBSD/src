@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_small.c,v 1.5 1997/09/17 18:21:41 drochner Exp $	*/
+/*	$NetBSD: netif_small.c,v 1.5.30.1 2001/08/24 00:08:41 nathanw Exp $	*/
 
 /* minimal netif - for boot ROMs we don't have to select between
   several interfaces, and we have to save space
@@ -85,7 +85,7 @@ netif_open()
 #endif
 		return (-1);
 	}
-	bzero(io, sizeof(*io));
+	memset(io, 0, sizeof(*io));
 
 	if(!EtherInit(io->myea)) {
 		printf("EtherInit failed\n");

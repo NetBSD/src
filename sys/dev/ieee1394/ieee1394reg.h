@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394reg.h,v 1.5.2.1 2001/06/21 20:03:43 nathanw Exp $	*/
+/*	$NetBSD: ieee1394reg.h,v 1.5.2.2 2001/08/24 00:09:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ struct ieee1394_async_nodata {
 #endif
 
 #define	IEEE1394_BCAST_PHY_ID	0x3f
+#define IEEE1394_ISOCH_MASK	0x3f
 
 /*
  * Transaction code

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_time.c,v 1.2 1999/05/05 01:51:37 cgd Exp $ */
+/* $NetBSD: osf1_time.c,v 1.2.18.1 2001/08/24 00:08:55 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -172,6 +172,53 @@ osf1_sys_setitimer(p, v, retval)
 		}
 	}
 
+	return (error);
+}
+
+int
+osf1_sys_getitimer(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_getitimer_args *uap = v;
+	struct sys_getitimer_args a;
+	struct osf1_itimerval o_oitv;
+	struct itimerval b_oitv;
+	caddr_t sg;
+	int error;
+	switch (SCARG(uap, which)) {
+	case OSF1_ITIMER_REAL:
+		SCARG(&a, which) = ITIMER_REAL;
+		break;
+	case OSF1_ITIMER_VIRTUAL:
+		SCARG(&a, which) = ITIMER_VIRTUAL;
+		break;
+	case OSF1_ITIMER_PROF:
+		SCARG(&a, which) = ITIMER_PROF;
+		break;
+	default:
+		return (EINVAL);
+	}
+	sg = stackgap_init(p->p_emul);
+	SCARG(&a, itv) = stackgap_alloc(&sg, sizeof b_oitv);
+	if (error == 0)
+		error = sys_getitimer(p, &a, retval);
+	if (error == 0 && SCARG(uap, itv) != NULL) {
+		/* get the NetBSD itimerval return value */
+		error = copyin((caddr_t)SCARG(&a, itv), (caddr_t)&b_oitv,
+		    sizeof b_oitv);
+		if (error == 0) {
+			/* fill in and copy out the NetBSD timeval */
+			memset(&o_oitv, 0, sizeof o_oitv);
+			o_oitv.it_interval.tv_sec = b_oitv.it_interval.tv_sec;
+			o_oitv.it_interval.tv_usec = b_oitv.it_interval.tv_usec;
+			o_oitv.it_value.tv_sec = b_oitv.it_value.tv_sec;
+			o_oitv.it_value.tv_usec = b_oitv.it_value.tv_usec;
+			error = copyout((caddr_t)&o_oitv,
+			    (caddr_t)SCARG(uap, itv), sizeof o_oitv);
+		}
+	}
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.32.2.2 2001/06/21 19:25:37 nathanw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.32.2.3 2001/08/24 00:08:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -81,21 +81,86 @@
 #include <machine/vm86.h>
 #endif
 
-static __inline struct trapframe *process_frame (struct lwp *);
-static __inline struct save87 *process_fpframe (struct lwp *);
-
 static __inline struct trapframe *
 process_frame(struct lwp *l)
 {
 
-	return (l->l_md.md_regs);
+	return (p->p_md.md_regs);
 }
 
-static __inline struct save87 *
+static __inline union savefpu *
 process_fpframe(struct lwp *l)
 {
 
 	return (&l->l_addr->u_pcb.pcb_savefpu);
+}
+
+void
+process_xmm_to_s87(const struct savexmm *sxmm, struct save87 *s87)
+{
+	int i;
+
+	/* FPU control/status */
+	s87->sv_env.en_cw = sxmm->sv_env.en_cw;
+	s87->sv_env.en_sw = sxmm->sv_env.en_sw;
+	/* tag word handled below */
+	s87->sv_env.en_fip = sxmm->sv_env.en_fip;
+	s87->sv_env.en_fcs = sxmm->sv_env.en_fcs;
+	s87->sv_env.en_opcode = sxmm->sv_env.en_opcode;
+	s87->sv_env.en_foo = sxmm->sv_env.en_foo;
+	s87->sv_env.en_fos = sxmm->sv_env.en_fos;
+
+	/* Tag word and registers. */
+	for (i = 0; i < 8; i++) {
+		if (sxmm->sv_env.en_tw & (1U << i))
+			s87->sv_env.en_tw &= ~(3U << (i * 2));
+		else
+			s87->sv_env.en_tw |= (3U << (i * 2));
+
+		if (sxmm->sv_ex_tw & (1U << i))
+			s87->sv_ex_tw &= ~(3U << (i * 2));
+		else
+			s87->sv_ex_tw |= (3U << (i * 2));
+
+		memcpy(&s87->sv_ac[i].fp_bytes, &sxmm->sv_ac[i].fp_bytes,
+		    sizeof(s87->sv_ac[i].fp_bytes));
+	}
+
+	s87->sv_ex_sw = sxmm->sv_ex_sw;
+}
+
+void
+process_s87_to_xmm(const struct save87 *s87, struct savexmm *sxmm)
+{
+	int i;
+
+	/* FPU control/status */
+	sxmm->sv_env.en_cw = s87->sv_env.en_cw;
+	sxmm->sv_env.en_sw = s87->sv_env.en_sw;
+	/* tag word handled below */
+	sxmm->sv_env.en_fip = s87->sv_env.en_fip;
+	sxmm->sv_env.en_fcs = s87->sv_env.en_fcs;
+	sxmm->sv_env.en_opcode = s87->sv_env.en_opcode;
+	sxmm->sv_env.en_foo = s87->sv_env.en_foo;
+	sxmm->sv_env.en_fos = s87->sv_env.en_fos;
+
+	/* Tag word and registers. */
+	for (i = 0; i < 8; i++) {
+		if (((s87->sv_env.en_tw >> (i * 2)) & 3) == 3)
+			sxmm->sv_env.en_tw &= ~(1U << i);
+		else
+			sxmm->sv_env.en_tw |= (1U << i);
+
+		if (((s87->sv_ex_tw >> (i * 2)) & 3) == 3)
+			sxmm->sv_ex_tw &= ~(1U << i);
+		else
+			sxmm->sv_ex_tw |= (1U << i);
+
+		memcpy(&sxmm->sv_ac[i].fp_bytes, &s87->sv_ac[i].fp_bytes,
+		    sizeof(sxmm->sv_ac[i].fp_bytes));
+	}
+
+	sxmm->sv_ex_sw = s87->sv_ex_sw;
 }
 
 int
@@ -137,7 +202,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 int
 process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
-	struct save87 *frame = process_fpframe(l);
+	union savefpu *frame = process_fpframe(l);
 
 	if (l->l_md.md_flags & MDP_USEDFPU) {
 #if NNPX > 0
@@ -147,22 +212,40 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 			npxsave();
 #endif
 	} else {
-		u_short cw;
-
 		/*
 		 * Fake a FNINIT.
 		 * The initial control word was already set by setregs(), so
 		 * save it temporarily.
 		 */
-		cw = frame->sv_env.en_cw;
-		memset(frame, 0, sizeof(*regs));
-		frame->sv_env.en_cw = cw;
-		frame->sv_env.en_sw = 0x0000;
-		frame->sv_env.en_tw = 0xffff;
+		if (i386_use_fxsave) {
+			uint32_t mxcsr = frame->sv_xmm.sv_env.en_mxcsr;
+			uint16_t cw = frame->sv_xmm.sv_env.en_cw;
+
+			/* XXX Don't zero XMM regs? */
+			memset(&frame->sv_xmm, 0, sizeof(frame->sv_xmm));
+			frame->sv_xmm.sv_env.en_cw = cw;
+			frame->sv_xmm.sv_env.en_mxcsr = mxcsr;
+			frame->sv_xmm.sv_env.en_sw = 0x0000;
+			frame->sv_xmm.sv_env.en_tw = 0x00;
+		} else {
+			uint16_t cw = frame->sv_87.sv_env.en_cw;
+
+			memset(&frame->sv_87, 0, sizeof(frame->sv_87));
+			frame->sv_87.sv_env.en_cw = cw;
+			frame->sv_87.sv_env.en_sw = 0x0000;
+			frame->sv_87.sv_env.en_tw = 0xffff;
+		}
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
-	memcpy(regs, frame, sizeof(*regs));
+	if (i386_use_fxsave) {
+		struct save87 s87;
+
+		/* XXX Yuck */
+		process_xmm_to_s87(&frame->sv_xmm, &s87);
+		memcpy(regs, &s87, sizeof(*regs));
+	} else
+		memcpy(regs, &frame->sv_87, sizeof(*regs));
 	return (0);
 }
 
@@ -219,7 +302,7 @@ process_write_regs(struct lwp *l, struct reg *regs)
 int
 process_write_fpregs(struct lwp *l, struct fpreg *regs)
 {
-	struct save87 *frame = process_fpframe(l);
+	union savefpu *frame = process_fpframe(l);
 
 	if (l->l_md.md_flags & MDP_USEDFPU) {
 #if NNPX > 0
@@ -232,7 +315,14 @@ process_write_fpregs(struct lwp *l, struct fpreg *regs)
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
-	memcpy(frame, regs, sizeof(*regs));
+	if (i386_use_fxsave) {
+		struct save87 s87;
+
+		/* XXX Yuck. */
+		memcpy(&s87, regs, sizeof(*regs));
+		process_s87_to_xmm(&s87, &frame->sv_xmm);
+	} else
+		memcpy(&frame->sv_87, regs, sizeof(*regs));
 	return (0);
 }
 

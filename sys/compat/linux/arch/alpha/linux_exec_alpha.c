@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_alpha.c,v 1.2 2001/01/18 17:48:04 tv Exp $	*/
+/*	$NetBSD: linux_exec_alpha.c,v 1.2.2.1 2001/08/24 00:08:46 nathanw Exp $	*/
 
 #define ELFSIZE 64
 
@@ -19,17 +19,17 @@
  * XXX port.  If so, move it to common/linux_exec_elf32.c
  * XXX included based on some define.
  */
-void *
+int
 ELFNAME2(linux,copyargs)(struct exec_package *pack, struct ps_strings *arginfo,	
-			 void *stack, void *argp)
+    char **stackp, void *argp)
 {
 	size_t len;
 	LinuxAuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
+	int error;
 
-	stack = copyargs(pack, arginfo, stack, argp);
-	if (!stack)
-		return(NULL);
+	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0)
+		return error;
 
 	memset(ai, 0, sizeof(LinuxAuxInfo) * LINUX_ELF_AUX_ENTRIES);
 
@@ -104,9 +104,9 @@ ELFNAME2(linux,copyargs)(struct exec_package *pack, struct ps_strings *arginfo,
 	a++;
 
 	len = (a - ai) * sizeof(LinuxAuxInfo);
-	if (copyout(ai, stack, len))
-		return NULL;
-	stack = (caddr_t)stack + len;
+	if ((error = copyout(ai, *stackp, len)) != 0)
+		return error;
+	*stackp += len;
 
-	return(stack);
+	return 0;
 }

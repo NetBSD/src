@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.125.2.2 2001/06/21 20:09:59 nathanw Exp $	*/
+/*	$NetBSD: systm.h,v 1.125.2.3 2001/08/24 00:13:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -210,9 +210,9 @@ void	tablefull __P((const char *, const char *));
 
 int	kcopy __P((const void *, void *, size_t));
 
-#define bcopy(src, dst, len)	memcpy(dst, src, len)
-#define bzero(src, len)		memset(src, 0, len)
-#define bcmp(a, b, len)		memcmp(a, b, len)
+#define bcopy(src, dst, len)	memcpy((dst), (src), (len))
+#define bzero(src, len)		memset((src), 0, (len))
+#define bcmp(a, b, len)		memcmp((a), (b), (len))
 
 int	copystr __P((const void *, void *, size_t, size_t *));
 int	copyinstr __P((const void *, void *, size_t, size_t *));

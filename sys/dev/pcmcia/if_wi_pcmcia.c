@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.3.2.2 2001/06/21 20:05:18 nathanw Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.3.2.3 2001/08/24 00:10:29 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,10 +40,6 @@
  * PCMCIA attachment for Lucent & Intersil WaveLAN PCMCIA card
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -54,24 +50,6 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_ieee80211.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -201,12 +179,12 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11,
 	  PCMCIA_CIS_BUFFALO_WLI_PCM_S11,
 	  PCMCIA_STR_BUFFALO_WLI_PCM_S11 },
-#if 0
+
 	{ PCMCIA_VENDOR_EMTAC,
 	  PCMCIA_PRODUCT_EMTAC_WLAN,
 	  PCMCIA_CIS_EMTAC_WLAN,
 	  PCMCIA_STR_EMTAC_WLAN },
-#endif
+
 	{ 0,
 	  0,
 	  { NULL, NULL, NULL, NULL },
@@ -400,6 +378,7 @@ wi_pcmcia_attach(parent, self, aux)
 attach_failed:
 	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 no_interrupt:
+	pcmcia_function_disable(psc->sc_pf);
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 no_config_entry:

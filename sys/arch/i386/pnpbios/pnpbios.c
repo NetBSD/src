@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.21.4.1 2001/06/21 19:26:09 nathanw Exp $ */
+/* $NetBSD: pnpbios.c,v 1.21.4.2 2001/08/24 00:08:38 nathanw Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -556,7 +556,7 @@ pnpbios_getnode(flags, idxp, buf, len)
 		return (res);
 
 	*idxp = *(short *)(pnpbios_scratchbuf + 0);
-	bcopy(pnpbios_scratchbuf + 2, buf, len);
+	memcpy(buf, pnpbios_scratchbuf + 2, len);
 	return (0);
 }
 
@@ -941,7 +941,7 @@ pnp_scan(bufp, maxlen, r, in_depends)
 
 	p = *bufp;
 
-	bzero(r, sizeof(*r));
+	memset(r, 0, sizeof(*r));
 	SIMPLEQ_INIT(&r->mem);
 	SIMPLEQ_INIT(&r->io);
 	SIMPLEQ_INIT(&r->irq);

@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.18.2.1 2001/06/21 20:01:51 nathanw Exp $ */
+/*      $NetBSD: ac97.c,v 1.18.2.2 2001/08/24 00:09:11 nathanw Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -466,7 +466,7 @@ ac97_setup_source_info(as)
 	for (idx = 0, ouridx = 0; idx < SOURCE_INFO_SIZE; idx++) {
 		si = &as->source_info[ouridx];
 
-		bcopy(&source_info[idx], si, sizeof(*si));
+		memcpy(si, &source_info[idx], sizeof(*si));
 
 		switch (si->type) {
 		case AUDIO_MIXER_CLASS:
@@ -480,7 +480,7 @@ ac97_setup_source_info(as)
 			/* Add an entry for mute, if necessary */
 			if (si->mute) {
 				si = &as->source_info[ouridx];
-				bcopy(&source_info[idx], si, sizeof(*si));
+				memcpy(si, &source_info[idx], sizeof(*si));
 				si->qualifier = AudioNmute;
 				si->type = AUDIO_MIXER_ENUM;
 				si->info = &ac97_on_off;
@@ -679,7 +679,7 @@ ac97_query_devinfo(codec_if, dip)
 		if (name)
 			strcpy(dip->label.name, name);
 
-		bcopy(si->info, &dip->un, si->info_size);
+		memcpy(&dip->un, si->info, si->info_size);
 
 		/* Set the delta for volume sources */
 		if (dip->type == AUDIO_MIXER_VALUE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.5.2.2 2001/06/21 20:01:50 nathanw Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.5.2.3 2001/08/24 00:09:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 			struct	i2o_param_rbs_device_info bdi;
 			struct	i2o_param_rbs_operation op;
 		} p;
-	} param /* XXX gcc __attribute__ ((__packed__)) */;
+	} __attribute__ ((__packed__)) param;
 
 	sc = (struct ld_iop_softc *)self;
 	ld = &sc->sc_ld;
@@ -163,7 +163,7 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	/* Register another initiator to handle events from the device. */
 	sc->sc_eventii.ii_dv = self;
 	sc->sc_eventii.ii_intr = ld_iop_intr_event;
-	sc->sc_eventii.ii_flags = II_DISCARD | II_UTILITY;
+	sc->sc_eventii.ii_flags = II_NOTCTX | II_UTILITY;
 	sc->sc_eventii.ii_tid = ia->ia_tid;
 	iop_initiator_register(iop, &sc->sc_eventii);
 
@@ -390,7 +390,7 @@ ld_iop_start(struct ld_softc *ld, struct buf *bp)
 	sc = (struct ld_iop_softc *)ld;
 	iop = (struct iop_softc *)ld->sc_dv.dv_parent;
 
-	im = iop_msg_alloc(iop, &sc->sc_ii, 0);
+	im = iop_msg_alloc(iop, 0);
 	im->im_dvcontext = bp;
 
 	write = ((bp->b_flags & B_READ) == 0);
@@ -428,7 +428,7 @@ ld_iop_start(struct ld_softc *ld, struct buf *bp)
 	/* Map the data transfer and enqueue the command. */
 	rv = iop_msg_map_bio(iop, im, mb, bp->b_data, bp->b_bcount, write);
 	if (rv == 0) {
-		if ((rv = iop_msg_post(iop, im, mb, 0)) != 0) {
+		if ((rv = iop_post(iop, mb)) != 0) {
 			iop_msg_unmap(iop, im);
 			iop_msg_free(iop, im);
 		}
@@ -451,7 +451,7 @@ ld_iop_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	iop = (struct iop_softc *)ld->sc_dv.dv_parent;
 	bcount = blkcnt * ld->sc_secsize;
 	ba = (u_int64_t)blkno * ld->sc_secsize;
-	im = iop_msg_alloc(iop, &sc->sc_ii, IM_POLL);
+	im = iop_msg_alloc(iop, IM_POLL);
 
 	mf = (struct i2o_rbs_block_write *)mb;
 	mf->msgflags = I2O_MSGFLAGS(i2o_rbs_block_write);
@@ -463,7 +463,7 @@ ld_iop_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	mf->lowoffset = (u_int32_t)ba;
 	mf->highoffset = (u_int32_t)(ba >> 32);
 
-	if ((rv = iop_msg_map(iop, im, mb, data, bcount, 1)) != 0) {
+	if ((rv = iop_msg_map(iop, im, mb, data, bcount, 1, NULL)) != 0) {
 		iop_msg_free(iop, im);
 		return (rv);
 	}
@@ -485,7 +485,7 @@ ld_iop_flush(struct ld_softc *ld)
 
 	sc = (struct ld_iop_softc *)ld;
 	iop = (struct iop_softc *)ld->sc_dv.dv_parent;
-	im = iop_msg_alloc(iop, &sc->sc_ii, IM_WAIT);
+	im = iop_msg_alloc(iop, IM_WAIT);
 
 	mf.msgflags = I2O_MSGFLAGS(i2o_rbs_cache_flush);
 	mf.msgfunc = I2O_MSGFUNC(sc->sc_ii.ii_tid, I2O_RBS_CACHE_FLUSH);
@@ -493,10 +493,7 @@ ld_iop_flush(struct ld_softc *ld)
 	mf.msgtctx = im->im_tctx;
 	mf.flags = 1 << 16;			/* time multiplier */
 
-	/*
-	 * XXX Aincent disks will return an error here.  Also, we shouldn't
-	 * be polling on completion while the system is running.
-	 */
+	/* XXX Aincent disks will return an error here. */
 	rv = iop_msg_post(iop, im, &mf, LD_IOP_TIMEOUT * 2);
 	iop_msg_free(iop, im);
 	return (rv);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.46.2.1 2001/06/21 20:04:53 nathanw Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.46.2.2 2001/08/24 00:10:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -541,7 +541,8 @@ vr_add_rxbuf(sc, i)
 	ds->ds_mbuf = m_new;
 
 	error = bus_dmamap_load(sc->vr_dmat, ds->ds_dmamap,
-	    m_new->m_ext.ext_buf, m_new->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
+	    m_new->m_ext.ext_buf, m_new->m_ext.ext_size, NULL,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: unable to load rx DMA map %d, error = %d\n",
 		    sc->vr_dev.dv_xname, i, error);
@@ -936,9 +937,9 @@ vr_start(ifp)
 		 * fit in one DMA segment, and we need to copy.  Note,
 		 * the packet must also be aligned.
 		 */
-		if ((mtod(m0, bus_addr_t) & 3) != 0 ||
+		if ((mtod(m0, uintptr_t) & 3) != 0 ||
 		    bus_dmamap_load_mbuf(sc->vr_dmat, ds->ds_dmamap, m0,
-		     BUS_DMA_NOWAIT) != 0) {
+		     BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -957,7 +958,7 @@ vr_start(ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->vr_dmat,
-			    ds->ds_dmamap, m, BUS_DMA_NOWAIT);
+			    ds->ds_dmamap, m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->vr_dev.dv_xname, error);
@@ -1111,7 +1112,8 @@ vr_init(ifp)
 				vr_rxdrain(sc);
 				goto out;
 			}
-		}
+		} else
+			VR_INIT_RXDESC(sc, i);
 	}
 	sc->vr_rxptr = 0;
 
@@ -1520,7 +1522,7 @@ vr_attach(parent, self, aux)
 	printf("%s: Ethernet address: %s\n",
 		sc->vr_dev.dv_xname, ether_sprintf(eaddr));
 
-	bcopy(eaddr, sc->vr_enaddr, ETHER_ADDR_LEN);
+	memcpy(sc->vr_enaddr, eaddr, ETHER_ADDR_LEN);
 
 	sc->vr_dmat = pa->pa_dmat;
 
@@ -1599,7 +1601,7 @@ vr_attach(parent, self, aux)
 	ifp->if_stop = vr_stop;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	bcopy(sc->vr_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->vr_dev.dv_xname);
 
 	/*
 	 * Initialize MII/media info.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.2.2.3 2001/06/21 20:04:04 nathanw Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.2.2.4 2001/08/24 00:09:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ ep_mca_attach(parent, self, aux)
 
 	/* map the pio registers */
 	if (bus_space_map(ma->ma_iot, iobase, MCA_IOSZ, 0, &ioh)) {
-		printf(": unable to map i/o space\n", sc->sc_dev.dv_xname);
+		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.31.2.1 2001/06/21 20:07:06 nathanw Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.31.2.2 2001/08/24 00:11:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -283,7 +283,7 @@ ttyldisc_init()
 	slinesw = LSWITCHBRK;
 	linesw = malloc(slinesw * sizeof(struct linesw *), 
 	    M_TTYS, M_WAITOK);
-	bzero(linesw, slinesw * sizeof(struct linesw *));
+	memset(linesw, 0, slinesw * sizeof(struct linesw *));
 
 	TTYLDISCINIT(termios_disc, 0);
 	/* Do we really need this one? */

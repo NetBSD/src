@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.5.2.1 2001/06/21 20:01:06 nathanw Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.5.2.2 2001/08/24 00:09:00 nathanw Exp $	*/
 /*	$KAME: rijndael-api-fst.c,v 1.8 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -74,9 +74,9 @@ int rijndael_cipherInit(cipherInstance *cipher, BYTE mode, char *IV) {
 		return BAD_CIPHER_MODE;
 	}
 	if (IV != NULL) {
-		bcopy(IV, cipher->IV, MAX_IV_SIZE);
+		memcpy(cipher->IV, IV, MAX_IV_SIZE);
 	} else {
-		bzero(cipher->IV, MAX_IV_SIZE);
+		memset(cipher->IV, 0, MAX_IV_SIZE);
 	}
 	return TRUE;
 }
@@ -108,8 +108,8 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 		
 	case MODE_CBC:
 #if 1 /*STRICT_ALIGN*/
-		bcopy(cipher->IV, block, 16);
-		bcopy(input, iv, 16);
+		memcpy(block, cipher->IV, 16);
+		memcpy(iv, input, 16);
 		((word32*)block)[0] ^= ((word32*)iv)[0];
 		((word32*)block)[1] ^= ((word32*)iv)[1];
 		((word32*)block)[2] ^= ((word32*)iv)[2];
@@ -124,7 +124,7 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 		input += 16;
 		for (i = numBlocks - 1; i > 0; i--) {
 #if 1 /*STRICT_ALIGN*/
-			bcopy(outBuffer, block, 16);
+			memcpy(block, outBuffer, 16);
 			((word32*)block)[0] ^= ((word32*)iv)[0];
 			((word32*)block)[1] ^= ((word32*)iv)[1];
 			((word32*)block)[2] ^= ((word32*)iv)[2];
@@ -143,7 +143,7 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 	
 	case MODE_CFB1:
 #if 1 /*STRICT_ALIGN*/
-		bcopy(cipher->IV, iv, 16); 
+		memcpy(iv, cipher->IV, 16); 
 #else  /* !STRICT_ALIGN */
 		*((word32*)iv[0]) = *((word32*)(cipher->IV   ));
 		*((word32*)iv[1]) = *((word32*)(cipher->IV+ 4));
@@ -220,7 +220,7 @@ int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 		padLen = 16 - (inputOctets - 16*numBlocks);
 		if (padLen > 0 && padLen <= 16)
 			panic("rijndael_padEncrypt(ECB)");
-		bcopy(input, block, 16 - padLen);
+		memcpy(block, input, 16 - padLen);
 		for (cp = block + 16 - padLen; cp < block + 16; cp++)
 			*cp = padLen;
 		rijndaelEncrypt(block, outBuffer, key->keySched, key->ROUNDS);
@@ -284,7 +284,7 @@ int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 		
 	case MODE_CBC:
 #if 1 /*STRICT_ALIGN */
-		bcopy(cipher->IV, iv, 16); 
+		memcpy(iv, cipher->IV, 16); 
 #else
 		*((word32*)iv[0]) = *((word32*)(cipher->IV   ));
 		*((word32*)iv[1]) = *((word32*)(cipher->IV+ 4));
@@ -298,8 +298,8 @@ int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 			((word32*)block)[2] ^= *((word32*)iv[2]);
 			((word32*)block)[3] ^= *((word32*)iv[3]);
 #if 1 /*STRICT_ALIGN*/
-			bcopy(input, iv, 16);
-			bcopy(block, outBuffer, 16);
+			memcpy(iv, input, 16);
+			memcpy(outBuffer, block, 16);
 #else
 			*((word32*)iv[0]) = ((word32*)input)[0]; ((word32*)outBuffer)[0] = ((word32*)block)[0];
 			*((word32*)iv[1]) = ((word32*)input)[1]; ((word32*)outBuffer)[1] = ((word32*)block)[1];
@@ -313,7 +313,7 @@ int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 	
 	case MODE_CFB1:
 #if 1 /*STRICT_ALIGN */
-		bcopy(cipher->IV, iv, 16); 
+		memcpy(iv, cipher->IV, 16); 
 #else
 		*((word32*)iv[0]) = *((word32*)(cipher->IV));
 		*((word32*)iv[1]) = *((word32*)(cipher->IV+ 4));
@@ -394,11 +394,11 @@ int rijndael_padDecrypt(cipherInstance *cipher, keyInstance *key,
 				return BAD_DATA;
 			}
 		}
-		bcopy(block, outBuffer, 16 - padLen);
+		memcpy(outBuffer, block, 16 - padLen);
 		break;
 		
 	case MODE_CBC:
-		bcopy(cipher->IV, iv, 16);
+		memcpy(iv, cipher->IV, 16);
 		/* all blocks but last */
 		for (i = numBlocks - 1; i > 0; i--) {
 			rijndaelDecrypt(input, block, key->keySched, key->ROUNDS);
@@ -406,8 +406,8 @@ int rijndael_padDecrypt(cipherInstance *cipher, keyInstance *key,
 			((word32*)block)[1] ^= iv[1];
 			((word32*)block)[2] ^= iv[2];
 			((word32*)block)[3] ^= iv[3];
-			bcopy(input, iv, 16);
-			bcopy(block, outBuffer, 16);
+			memcpy(iv, input, 16);
+			memcpy(outBuffer, block, 16);
 			input += 16;
 			outBuffer += 16;
 		}
@@ -426,7 +426,7 @@ int rijndael_padDecrypt(cipherInstance *cipher, keyInstance *key,
 				return BAD_DATA;
 			}
 		}
-		bcopy(block, outBuffer, 16 - padLen);
+		memcpy(outBuffer, block, 16 - padLen);
 		break;
 	
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.169.2.2 2001/06/21 20:05:59 nathanw Exp $	*/
+/*	$NetBSD: sd.c,v 1.169.2.3 2001/08/24 00:10:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -750,7 +750,7 @@ sdstart(periph)
 			/*
 			 * We can fit in a small cdb.
 			 */
-			bzero(&cmd_small, sizeof(cmd_small));
+			memset(&cmd_small, 0, sizeof(cmd_small));
 			cmd_small.opcode = (bp->b_flags & B_READ) ?
 			    SCSI_READ_COMMAND : SCSI_WRITE_COMMAND;
 			_lto3b(bp->b_rawblkno, cmd_small.addr);
@@ -763,7 +763,7 @@ sdstart(periph)
 			/*
 			 * Need a large cdb.
 			 */
-			bzero(&cmd_big, sizeof(cmd_big));
+			memset(&cmd_big, 0, sizeof(cmd_big));
 			cmd_big.opcode = (bp->b_flags & B_READ) ?
 			    READ_BIG : WRITE_BIG;
 			_lto4b(bp->b_rawblkno, cmd_big.addr);
@@ -1065,7 +1065,7 @@ sdgetdefaultlabel(sd, lp)
 	struct disklabel *lp;
 {
 
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 
 	lp->d_secsize = sd->params.blksize;
 	lp->d_ntracks = sd->params.heads;
@@ -1114,7 +1114,7 @@ sdgetdisklabel(sd)
 	struct disklabel *lp = sd->sc_dk.dk_label;
 	char *errstring;
 
-	bzero(sd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+	memset(sd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
 	sdgetdefaultlabel(sd, lp);
 
@@ -1166,8 +1166,8 @@ sd_reassign_blocks(sd, blkno)
 	struct scsi_reassign_blocks scsipi_cmd;
 	struct scsi_reassign_blocks_data rbdata;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
-	bzero(&rbdata, sizeof(rbdata));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
+	memset(&rbdata, 0, sizeof(rbdata));
 	scsipi_cmd.opcode = SCSI_REASSIGN_BLOCKS;
 
 	_lto2b(sizeof(rbdata.defect_descriptor[0]), rbdata.length);
@@ -1362,7 +1362,7 @@ sddump(dev, blkno, va, size)
 		/*
 		 *  Fill out the scsi command
 		 */
-		bzero(&cmd, sizeof(cmd));
+		memset(&cmd, 0, sizeof(cmd));
 		cmd.opcode = WRITE_BIG;
 		_lto4b(blkno, cmd.addr);
 		_lto2b(nwrt, cmd.length);
@@ -1372,7 +1372,7 @@ sddump(dev, blkno, va, size)
 		 * don't use scsipi_command() as it may want to wait
 		 * for an xs.
 		 */
-		bzero(xs, sizeof(sx));
+		memset(xs, 0, sizeof(sx));
 		xs->xs_control |= XS_CTL_NOSLEEP | XS_CTL_POLL |
 		    XS_CTL_DATA_OUT;
 		xs->xs_status = 0;

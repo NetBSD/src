@@ -1,4 +1,4 @@
-/*     $NetBSD: scsiio.h,v 1.9 2000/11/08 19:09:30 ad Exp $        */
+/*     $NetBSD: scsiio.h,v 1.9.2.1 2001/08/24 00:13:09 nathanw Exp $        */
 
 #ifndef _SYS_SCSIIO_H_
 #define _SYS_SCSIIO_H_
@@ -89,6 +89,12 @@ struct scbusioscan_args {
 #define	SCBUSIOSCAN	_IOW('U', 0, struct scbusioscan_args)
 
 #define	SCBUSIORESET	_IO('U', 1)	/* reset SCSI bus */
+
+struct scbusiodetach_args {
+	int	sa_target;	/* target to scan; -1 for wildcard */
+	int	sa_lun;		/* lun to scan; -1 for wildcard */
+};
+#define	SCBUSIODETACH	_IOW('U', 2, struct scbusiodetach_args)
 
 /* enable/disable device properties */
 struct scbusaccel_args {

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.38.4.1 2001/06/21 20:05:54 nathanw Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.38.4.2 2001/08/24 00:10:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -797,10 +797,11 @@ scsipi_interpret_sense(xs)
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 			if ((xs->xs_control & XS_CTL_IGNORE_NOT_READY) != 0)
 				return (0);
-			if (sense->add_sense_code == 0x3A &&
-			    sense->add_sense_code_qual == 0x00)
+			if (sense->add_sense_code == 0x3A) {
 				error = ENODEV; /* Medium not present */
-			else
+				if (xs->xs_control & XS_CTL_SILENT_NODEV)
+					return (error);
+			} else
 				error = EIO;
 			if ((xs->xs_control & XS_CTL_SILENT) != 0)
 				return (error);
@@ -947,7 +948,7 @@ scsipi_size(periph, flags)
 	struct scsipi_read_cap_data rdcap;
 	struct scsipi_read_capacity scsipi_cmd;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = READ_CAPACITY;
 
 	/*
@@ -982,7 +983,7 @@ scsipi_test_unit_ready(periph, flags)
 	if (periph->periph_quirks & PQUIRK_NOTUR)
 		return (0);
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = TEST_UNIT_READY;
 
 	return (scsipi_command(periph,
@@ -1003,7 +1004,7 @@ scsipi_inquire(periph, inqbuf, flags)
 {
 	struct scsipi_inquiry scsipi_cmd;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = INQUIRY;
 	scsipi_cmd.length = sizeof(struct scsipi_inquiry_data);
 
@@ -1028,7 +1029,7 @@ scsipi_prevent(periph, type, flags)
 	if (periph->periph_quirks & PQUIRK_NODOORLOCK)
 		return (0);
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = PREVENT_ALLOW;
 	scsipi_cmd.how = type;
 
@@ -1052,7 +1053,7 @@ scsipi_start(periph, type, flags)
 	if (periph->periph_quirks & PQUIRK_NOSTARTUNIT)
 		return 0;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = START_STOP;
 	scsipi_cmd.byte2 = 0x00;
 	scsipi_cmd.how = type;
@@ -1077,7 +1078,7 @@ scsipi_mode_sense(periph, byte2, page, data, len, flags, retries, timeout)
 	struct scsipi_mode_sense scsipi_cmd;
 	int error;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = MODE_SENSE;
 	scsipi_cmd.byte2 = byte2;
 	scsipi_cmd.page = page;
@@ -1102,7 +1103,7 @@ scsipi_mode_sense_big(periph, byte2, page, data, len, flags, retries, timeout)
 	struct scsipi_mode_sense_big scsipi_cmd;
 	int error;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = MODE_SENSE_BIG;
 	scsipi_cmd.byte2 = byte2;
 	scsipi_cmd.page = page;
@@ -1124,7 +1125,7 @@ scsipi_mode_select(periph, byte2, data, len, flags, retries, timeout)
 	struct scsipi_mode_select scsipi_cmd;
 	int error;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = MODE_SELECT;
 	scsipi_cmd.byte2 = byte2;
 	if (scsipi_periph_bustype(periph) == SCSIPI_BUSTYPE_ATAPI)
@@ -1148,7 +1149,7 @@ scsipi_mode_select_big(periph, byte2, data, len, flags, retries, timeout)
 	struct scsipi_mode_select_big scsipi_cmd;
 	int error;
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = MODE_SELECT_BIG;
 	scsipi_cmd.byte2 = byte2;
 	_lto2b(len, scsipi_cmd.length);
@@ -1328,15 +1329,24 @@ scsipi_complete(xs)
 		/* request sense for a request sense ? */
 		if (xs->xs_control & XS_CTL_REQSENSE) {
 			scsipi_printaddr(periph);
+			printf("request sense for a request sense ?\n");
 			/* XXX maybe we should reset the device ? */
 			/* we've been frozen because xs->error != XS_NOERROR */
 			scsipi_periph_thaw(periph, 1);
 			splx(s);
+			if (xs->resid < xs->datalen) {
+				printf("we read %d bytes of sense anyway:\n",
+				    xs->datalen - xs->resid);
+#ifdef SCSIVERBOSE
+				scsipi_print_sense_data((void *)xs->data, 0);
+#endif
+			}
 			return EINVAL;
 		}
 		scsipi_request_sense(xs);
 	}
 	splx(s);
+
 	/*
 	 * If it's a user level request, bypass all usual completion
 	 * processing, let the user work it out..  
@@ -1349,7 +1359,6 @@ scsipi_complete(xs)
 		SC_DEBUG(periph, SCSIPI_DB3, ("returned from user done()\n "));
 		return 0;
 	}
-
 
 	switch (xs->error) {
 	case XS_NOERROR:
@@ -1532,7 +1541,7 @@ scsipi_request_sense(xs)
 	flags |= XS_CTL_REQSENSE | XS_CTL_URGENT | XS_CTL_DATA_IN |
 	    XS_CTL_THAW_PERIPH | XS_CTL_FREEZE_PERIPH;
 
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = REQUEST_SENSE;
 	cmd.length = sizeof(struct scsipi_sense_data);
 
@@ -1937,9 +1946,17 @@ scsipi_completion_thread(arg)
 		s = splbio();
 		xs = TAILQ_FIRST(&chan->chan_complete);
 		if (xs == NULL &&
-		    (chan->chan_flags & SCSIPI_CHAN_SHUTDOWN) == 0) {
+		    (chan->chan_flags &
+		     (SCSIPI_CHAN_SHUTDOWN | SCSIPI_CHAN_CALLBACK)) == 0) {
 			(void) tsleep(&chan->chan_complete, PRIBIO,
 			    "sccomp", 0);
+			splx(s);
+			continue;
+		}
+		if (chan->chan_flags & SCSIPI_CHAN_CALLBACK) {
+			/* call chan_callback from thread context */
+			chan->chan_flags &= ~SCSIPI_CHAN_CALLBACK;
+			chan->chan_callback(chan, chan->chan_callback_arg);
 			splx(s);
 			continue;
 		}
@@ -1947,19 +1964,23 @@ scsipi_completion_thread(arg)
 			splx(s);
 			break;
 		}
-		TAILQ_REMOVE(&chan->chan_complete, xs, channel_q);
-		splx(s);
+		if (xs) {
+			TAILQ_REMOVE(&chan->chan_complete, xs, channel_q);
+			splx(s);
 
-		/*
-		 * Have an xfer with an error; process it.
-		 */
-		(void) scsipi_complete(xs);
+			/*
+			 * Have an xfer with an error; process it.
+			 */
+			(void) scsipi_complete(xs);
 
-		/*
-		 * Kick the queue; keep it running if it was stopped
-		 * for some reason.
-		 */
-		scsipi_run_queue(chan);
+			/*
+			 * Kick the queue; keep it running if it was stopped
+			 * for some reason.
+			 */
+			scsipi_run_queue(chan);
+		} else {
+			splx(s);
+		}
 	}
 
 	chan->chan_thread = NULL;
@@ -1990,6 +2011,33 @@ scsipi_create_completion_thread(arg)
 		    chan->chan_channel);
 		panic("scsipi_create_completion_thread");
 	}
+}
+
+/*
+ * scsipi_thread_call_callback:
+ *
+ * 	request to call a callback from the completion thread
+ */
+int
+scsipi_thread_call_callback(chan, callback, arg)
+	struct scsipi_channel *chan;
+	void (*callback) __P((struct scsipi_channel *, void *));
+	void *arg;
+{
+	int s;
+
+	s = splbio();
+	if (chan->chan_flags & SCSIPI_CHAN_CALLBACK) {
+		splx(s);
+		return EBUSY;
+	}
+	scsipi_channel_freeze(chan, 1);
+	chan->chan_callback = callback;
+	chan->chan_callback_arg = arg;
+	chan->chan_flags |= SCSIPI_CHAN_CALLBACK;
+	wakeup(&chan->chan_complete);
+	splx(s);
+	return(0);
 }
 
 /*
@@ -2192,26 +2240,25 @@ scsipi_set_xfer_mode(chan, target, immed)
 		if (itperiph != NULL)
 			break;
 	}
-	if (itperiph != NULL)
+	if (itperiph != NULL) {
 		xm.xm_mode = itperiph->periph_cap;
-
-	/*
-	 * Now issue the request to the adapter.
-	 */
-	s = splbio();
-	scsipi_adapter_request(chan, ADAPTER_REQ_SET_XFER_MODE, &xm);
-	splx(s);
-
-	/*
-	 * If we want this to happen immediately, issue a dummy command,
-	 * since most adapters can't really negotiate unless they're
-	 * executing a job.
-	 */
-	if (immed != 0 && itperiph != NULL) {
-		(void) scsipi_test_unit_ready(itperiph,
-		    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
-		    XS_CTL_IGNORE_NOT_READY |
-		    XS_CTL_IGNORE_MEDIA_CHANGE);
+		/*
+		 * Now issue the request to the adapter.
+		 */
+		s = splbio();
+		scsipi_adapter_request(chan, ADAPTER_REQ_SET_XFER_MODE, &xm);
+		splx(s);
+		/*
+		 * If we want this to happen immediately, issue a dummy
+		 * command, since most adapters can't really negotiate unless
+		 * they're executing a job.
+		 */
+		if (immed != 0) {
+			(void) scsipi_test_unit_ready(itperiph,
+			    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
+			    XS_CTL_IGNORE_NOT_READY |
+			    XS_CTL_IGNORE_MEDIA_CHANGE);
+		}
 	}
 }
 
@@ -2262,6 +2309,62 @@ scsipi_async_event_channel_reset(chan)
 	}
 }
 
+/*
+ * scsipi_target_detach:
+ *
+ *	detach all periph associated with a I_T
+ * 	must be called from valid thread context
+ */
+int
+scsipi_target_detach(chan, target, lun, flags)
+	struct scsipi_channel *chan;
+	int target, lun;
+	int flags;
+{
+	struct scsipi_periph *periph;
+	int ctarget, mintarget, maxtarget;
+	int clun, minlun, maxlun;
+	int error;
+
+	if (target == -1) {
+		mintarget = 0;
+		maxtarget = chan->chan_ntargets;
+	} else {
+		if (target == chan->chan_id)
+			return EINVAL;
+		if (target < 0 || target >= chan->chan_ntargets)
+			return EINVAL;
+		mintarget = target;
+		maxtarget = target + 1;
+	}
+
+	if (lun == -1) {
+		minlun = 0;
+		maxlun = chan->chan_nluns;
+	} else {
+		if (lun < 0 || lun >= chan->chan_nluns)
+			return EINVAL;
+		minlun = lun;
+		maxlun = lun + 1;
+	}
+
+	for (ctarget = mintarget; ctarget < maxtarget; ctarget++) {
+		if (ctarget == chan->chan_id)
+			continue;
+
+		for (clun = minlun; clun < maxlun; clun++) {
+			periph = scsipi_lookup_periph(chan, ctarget, clun);
+			if (periph == NULL)
+				continue;
+			error = config_detach(periph->periph_dev, flags);
+			if (error)
+				return (error);
+			scsipi_remove_periph(chan, periph);
+			free(periph, M_DEVBUF);
+		}
+	}
+	return(0);
+}
 
 /*
  * scsipi_adapter_addref:

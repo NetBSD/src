@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.46.2.1 2001/06/21 20:10:08 nathanw Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.46.2.2 2001/08/24 00:13:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -111,11 +111,12 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 	      struct vnode **vpp)
 {
 	IFILE *ifp;
-	struct buf *bp;
+	struct buf *bp, *cbp;
 	struct vnode *vp;
 	struct inode *ip;
 	ino_t tino, oldnext;
 	int error;
+	CLEANERINFO *cip;
 
 	/*
 	 * First, just try a vget. If the version number is the one we want,
@@ -148,9 +149,9 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 	 * The inode is not in use.  Find it on the free list.
 	 */
 	/* If the Ifile is too short to contain this inum, extend it */
-	while (VTOI(fs->lfs_ivnode)->i_ffs_size <=
-	       dbtob(fsbtodb(fs, ino / fs->lfs_ifpb + fs->lfs_cleansz +
-			     fs->lfs_segtabsz))) {
+	while (VTOI(fs->lfs_ivnode)->i_ffs_size <= (ino / 
+		fs->lfs_ifpb + fs->lfs_cleansz + fs->lfs_segtabsz) 
+		<< fs->lfs_bshift) {
 		extend_ifile(fs, NOCRED);
 	}
 
@@ -159,10 +160,11 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 	ifp->if_version = version;
 	brelse(bp);
 
-	if (ino == fs->lfs_free) {
-		fs->lfs_free = oldnext;
+	LFS_GET_HEADFREE(fs, cip, cbp, &ino);
+	if (ino) {
+		LFS_PUT_HEADFREE(fs, cip, cbp, oldnext);
 	} else {
-		tino = fs->lfs_free;
+		tino = ino;
 		while(1) {
 			LFS_IENTRY(ifp, fs, tino, bp);
 			if (ifp->if_nextfree == ino ||
@@ -211,10 +213,12 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	struct vnode *vp;
 	struct inode *ip;
 	IFILE *ifp;
-	struct buf *bp;
+	IFILE_V1 *ifp_v1;
+	struct buf *bp, *cbp;
 	int error;
 	ufs_daddr_t i, blkno, max;
 	ino_t oldlast;
+	CLEANERINFO *cip;
 
 	vp = fs->lfs_ivnode;
 	(void)lfs_vref(vp);
@@ -233,21 +237,33 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	
 	i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
 		fs->lfs_ifpb;
-	oldlast = fs->lfs_free;
-	fs->lfs_free = i;
+	LFS_GET_HEADFREE(fs, cip, cbp, &oldlast);
+	LFS_PUT_HEADFREE(fs, cip, cbp, i);
 #ifdef DIAGNOSTIC
 	if(fs->lfs_free == LFS_UNUSED_INUM)
 		panic("inode 0 allocated [2]");
 #endif /* DIAGNOSTIC */
 	max = i + fs->lfs_ifpb;
 	/* printf("extend ifile for ino %d--%d\n", i, max); */
-	for (ifp = (struct ifile *)bp->b_data; i < max; ++ifp) {
-		ifp->if_version = 1;
-		ifp->if_daddr = LFS_UNUSED_DADDR;
-		ifp->if_nextfree = ++i;
+
+	if(fs->lfs_version == 1) {
+		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < max; ++ifp_v1) {
+			ifp_v1->if_version = 1;
+			ifp_v1->if_daddr = LFS_UNUSED_DADDR;
+			ifp_v1->if_nextfree = ++i;
+		}
+		ifp_v1--;
+		ifp_v1->if_nextfree = oldlast;
+	} else {
+		for (ifp = (IFILE *)bp->b_data; i < max; ++ifp) {
+			ifp->if_version = 1;
+			ifp->if_daddr = LFS_UNUSED_DADDR;
+			ifp->if_nextfree = ++i;
+		}
+		ifp--;
+		ifp->if_nextfree = oldlast;
 	}
-	ifp--;
-	ifp->if_nextfree = oldlast;
+
 	(void) VOP_BWRITE(bp); /* Ifile */
 	lfs_vunref(vp);
 
@@ -258,8 +274,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 /* ARGSUSED */
 /* VOP_BWRITE 2i times */
 int
-lfs_valloc(v)
-	void *v;
+lfs_valloc(void *v)
 {
 	struct vop_valloc_args /* {
 				  struct vnode *a_pvp;
@@ -268,30 +283,33 @@ lfs_valloc(v)
 				  struct vnode **a_vpp;
 				  } */ *ap = v;
 	struct lfs *fs;
-	struct buf *bp;
+	struct buf *bp, *cbp;
 	struct ifile *ifp;
 	ino_t new_ino;
 	int error;
 	int new_gen;
+	CLEANERINFO *cip;
 
 	fs = VTOI(ap->a_pvp)->i_lfs;
 	if (fs->lfs_ronly)
 		return EROFS;
 	*ap->a_vpp = NULL;
 	
-	/*
-	 * Use lfs_seglock here, instead of fs->lfs_freelock, to ensure that
-	 * the free list is not changed in between the time that the ifile
-	 * blocks are written to disk and the time that the superblock is
-	 * written to disk.
-	 *
-	 * XXX this sucks.  We should instead encode the head of the free
-	 * list into the CLEANERINFO block of the Ifile. [XXX v2]
-	 */
-	lfs_seglock(fs, SEGM_PROT);
+	if (fs->lfs_version == 1) {
+		/*
+		 * Use lfs_seglock here, instead of fs->lfs_freelock, to
+		 * ensure that the free list is not changed in between
+		 * the time that the ifile blocks are written to disk
+		 * and the time that the superblock is written to disk.
+		 */
+		lfs_seglock(fs, SEGM_PROT);
+	} else {
+		lockmgr(&fs->lfs_freelock, LK_EXCLUSIVE, 0);
+	}
 
 	/* Get the head of the freelist. */
-	new_ino = fs->lfs_free;
+	LFS_GET_HEADFREE(fs, cip, cbp, &new_ino);
+
 #ifdef DIAGNOSTIC
 	if(new_ino == LFS_UNUSED_INUM) {
 #ifdef DEBUG
@@ -311,15 +329,19 @@ lfs_valloc(v)
 	LFS_IENTRY(ifp, fs, new_ino, bp);
 	if (ifp->if_daddr != LFS_UNUSED_DADDR)
 		panic("lfs_valloc: inuse inode %d on the free list", new_ino);
-	fs->lfs_free = ifp->if_nextfree;
+	LFS_PUT_HEADFREE(fs, cip, cbp, ifp->if_nextfree);
+
 	new_gen = ifp->if_version; /* version was updated by vfree */
 	brelse(bp);
 
 	/* Extend IFILE so that the next lfs_valloc will succeed. */
 	if (fs->lfs_free == LFS_UNUSED_INUM) {
 		if ((error = extend_ifile(fs, ap->a_cred)) != 0) {
-			fs->lfs_free = new_ino;
-			lfs_segunlock(fs);
+			LFS_PUT_HEADFREE(fs, cip, cbp, new_ino);
+			if (fs->lfs_version == 1)
+				lfs_segunlock(fs);
+			else
+				lockmgr(&fs->lfs_freelock, LK_RELEASE, 0);
 			return error;
 		}
 	}
@@ -327,8 +349,11 @@ lfs_valloc(v)
 	if(fs->lfs_free == LFS_UNUSED_INUM)
 		panic("inode 0 allocated [3]");
 #endif /* DIAGNOSTIC */
-	
-	lfs_segunlock(fs);
+
+	if (fs->lfs_version == 1)
+		lfs_segunlock(fs);
+	else
+		lockmgr(&fs->lfs_freelock, LK_RELEASE, 0);
 
 	return lfs_ialloc(fs, ap->a_pvp, new_ino, new_gen, ap->a_vpp);
 }
@@ -340,8 +365,9 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	struct inode *ip;
 	struct vnode *vp;
 	IFILE *ifp;
-	struct buf *bp;
+	struct buf *bp, *cbp;
 	int error;
+	CLEANERINFO *cip;
 
 	error = getnewvnode(VT_LFS, pvp->v_mount, lfs_vnodeop_p, &vp);
 	/* printf("lfs_ialloc: ino %d vp %p error %d\n", new_ino, vp, error);*/
@@ -353,6 +379,7 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	lfs_vcreate(pvp->v_mount, new_ino, vp);
 	
 	ip = VTOI(vp);
+	LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED);
 	/* Zero out the direct and indirect block addresses. */
 	bzero(&ip->i_din, sizeof(ip->i_din));
 	ip->i_din.ffs_din.di_inumber = new_ino;
@@ -397,8 +424,8 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	 */
 	LFS_IENTRY(ifp, fs, new_ino, bp);
 	ifp->if_daddr = LFS_UNUSED_DADDR;
-	ifp->if_nextfree = fs->lfs_free;
-	fs->lfs_free = new_ino;
+	LFS_GET_HEADFREE(fs, cip, cbp, &(ifp->if_nextfree));
+	LFS_PUT_HEADFREE(fs, cip, cbp, new_ino);
 	(void) VOP_BWRITE(bp); /* Ifile */
 
 	*vpp = NULLVP;
@@ -407,10 +434,7 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 
 /* Create a new vnode/inode pair and initialize what fields we can. */
 void
-lfs_vcreate(mp, ino, vp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode *vp;
+lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 {
 	struct inode *ip;
 	struct ufsmount *ump;
@@ -440,15 +464,15 @@ lfs_vcreate(mp, ino, vp)
 	ip->i_ffs_blocks = 0;
 	ip->i_lfs_effnblks = 0;
 	ip->i_flag = 0;
-	LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED);
+	/* Why was IN_MODIFIED ever set here? */
+	/* LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED); */
 }
 
 /* Free an inode. */
 /* ARGUSED */
 /* VOP_BWRITE 2i times */
 int
-lfs_vfree(v)
-	void *v;
+lfs_vfree(void *v)
 {
 	struct vop_vfree_args /* {
 				 struct vnode *a_pvp;
@@ -456,13 +480,14 @@ lfs_vfree(v)
 				 int a_mode;
 				 } */ *ap = v;
 	SEGUSE *sup;
-	struct buf *bp;
+	CLEANERINFO *cip;
+	struct buf *cbp, *bp;
 	struct ifile *ifp;
 	struct inode *ip;
 	struct vnode *vp;
 	struct lfs *fs;
 	ufs_daddr_t old_iaddr;
-	ino_t ino;
+	ino_t ino, otail;
 	extern int lfs_dirvcount;
 	
 	/* Get the inode number and file system. */
@@ -471,17 +496,14 @@ lfs_vfree(v)
 	fs = ip->i_lfs;
 	ino = ip->i_number;
 
-#if 0
-	/*
-	 * Right now this is unnecessary since we take the seglock.
-	 * But if the seglock is no longer necessary (e.g. we put the
-	 * head of the free list into the Ifile) we will need to drain
-	 * this vnode of any pending writes.
-	 */
-	if (WRITEINPROG(vp))
+	/* Drain of pending writes */
+	if (fs->lfs_version > 1 && WRITEINPROG(vp))
 		tsleep(vp, (PRIBIO+1), "lfs_vfree", 0);
-#endif
-	lfs_seglock(fs, SEGM_PROT);
+
+	if (fs->lfs_version == 1)
+		lfs_seglock(fs, SEGM_PROT);
+	else
+		lockmgr(&fs->lfs_freelock, LK_EXCLUSIVE, 0);
 	
 	if(vp->v_flag & VDIROP) {
 		--lfs_dirvcount;
@@ -499,27 +521,43 @@ lfs_vfree(v)
 
 	/*
 	 * Set the ifile's inode entry to unused, increment its version number
-	 * and link it into the free chain.
+	 * and link it onto the free chain.
 	 */
 	LFS_IENTRY(ifp, fs, ino, bp);
 	old_iaddr = ifp->if_daddr;
 	ifp->if_daddr = LFS_UNUSED_DADDR;
 	++ifp->if_version;
-	ifp->if_nextfree = fs->lfs_free;
-	fs->lfs_free = ino;
-	(void) VOP_BWRITE(bp); /* Ifile */
+	if (fs->lfs_version == 1) {
+		LFS_GET_HEADFREE(fs, cip, cbp, &(ifp->if_nextfree));
+		LFS_PUT_HEADFREE(fs, cip, cbp, ino);
+		(void) VOP_BWRITE(bp); /* Ifile */
+	} else {
+		ifp->if_nextfree = LFS_UNUSED_INUM;
+		/*
+		 * XXX Writing the freed node here means that it might not
+		 * XXX make it into the free list in the event of a crash
+		 * XXX (the ifile could be written before the rest of this
+		 * XXX completes).
+		 */
+		(void) VOP_BWRITE(bp); /* Ifile */
+		LFS_GET_TAILFREE(fs, cip, cbp, &otail);
+		LFS_IENTRY(ifp, fs, otail, bp);
+		ifp->if_nextfree = ino;
+		VOP_BWRITE(bp);
+		LFS_PUT_TAILFREE(fs, cip, cbp, ino);
+	}
 #ifdef DIAGNOSTIC
-	if(fs->lfs_free == LFS_UNUSED_INUM) {
+	if(ino == LFS_UNUSED_INUM) {
 		panic("inode 0 freed");
 	}
 #endif /* DIAGNOSTIC */
 	if (old_iaddr != LFS_UNUSED_DADDR) {
-		LFS_SEGENTRY(sup, fs, datosn(fs, old_iaddr), bp);
+		LFS_SEGENTRY(sup, fs, dtosn(fs, old_iaddr), bp);
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes < DINODE_SIZE) {
 			printf("lfs_vfree: negative byte count"
 			       " (segment %d short by %d)\n",
-			       datosn(fs, old_iaddr),
+			       dtosn(fs, old_iaddr),
 			       (int)DINODE_SIZE - sup->su_nbytes);
 			panic("lfs_vfree: negative byte count");
 			sup->su_nbytes = DINODE_SIZE;
@@ -533,6 +571,9 @@ lfs_vfree(v)
 	fs->lfs_fmod = 1;
 	--fs->lfs_nfiles;
 	
-	lfs_segunlock(fs);
+	if (fs->lfs_version == 1)
+		lfs_segunlock(fs);
+	else
+		lockmgr(&fs->lfs_freelock, LK_RELEASE, 0);
 	return (0);
 }

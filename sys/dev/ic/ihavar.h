@@ -1,4 +1,4 @@
-/*	$NetBSD: ihavar.h,v 1.2.2.2 2001/06/21 20:02:37 nathanw Exp $ */
+/*	$NetBSD: ihavar.h,v 1.2.2.3 2001/08/24 00:09:26 nathanw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -31,7 +31,7 @@
  * Ported from i91uscsi.h, provided by Initio Corporation, which probably
  * came from the same people who provided i91u.c:
  *
- * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
+ * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
  *
  * FreeBSD
  *
@@ -73,8 +73,7 @@ struct iha_sglist {
 
 /*
  * iha_scsi_req_q - SCSI Request structure used by the
- *		    Tulip (aka inic-950). Note that 32
- *		    bit pointers and ints are assumed!
+ *		    Tulip (aka inic-940/950).
  */
 
 struct iha_scsi_req_q {
@@ -118,7 +117,6 @@ struct iha_scsi_req_q {
 	int sg_size;			/* # of valid entries in sg_list */
 	u_int32_t sg_addr;		/* SGList Physical Address	*/
 
-
 	int cmdlen;			/* CDB Length			*/
 	u_int8_t cmd[12];		/* SCSI Command			*/
 
@@ -132,7 +130,7 @@ struct iha_scsi_req_q {
  */
 struct tcs {
 	int flags;
-#define		      FLAG_SCSI_RATE	 0x0007 /* Index into tul_rate_tbl[] */
+#define		      FLAG_SCSI_RATE	 0x0007 /* Index into iha_rate_tbl[] */
 #define		      FLAG_EN_DISC	 0x0008 /* Enable disconnect	     */
 #define		      FLAG_NO_SYNC	 0x0010 /* No sync data transfer     */
 #define		      FLAG_NO_WIDE	 0x0020 /* No wide data transfer     */
@@ -142,7 +140,6 @@ struct tcs {
 #define		      FLAG_SYNC_DONE	 0x0200 /* SDTR msg has been sent    */
 #define		      FLAG_NO_NEG_SYNC   (FLAG_NO_SYNC | FLAG_SYNC_DONE)
 #define		      FLAG_NO_NEG_WIDE   (FLAG_NO_WIDE | FLAG_WIDE_DONE)
-#define		      FLAG_NO_NEGOTIATE	 (FLAG_NO_NEG_SYNC | FLAG_NO_NEG_WIDE)
 	int period;
 	int offset;
 	int tagcnt;
@@ -233,7 +230,7 @@ struct eeprom_adapter {
 };
 
 /*
- * Tulip (aka ini-950) Serial EEPROM Layout
+ * Tulip (aka ini-940/950) Serial EEPROM Layout
  */
 struct iha_eeprom {
 	/* ---------- Header ------------------------------------------------*/

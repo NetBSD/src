@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-deflate.c,v 1.7 2000/08/25 21:25:14 thorpej Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.7.2.1 2001/08/24 00:12:17 nathanw Exp $	*/
 /*	Id: ppp-deflate.c,v 1.5 1997/03/04 03:33:28 paulus Exp 	*/
 
 /*
@@ -173,7 +173,7 @@ z_comp_alloc(options, opt_len)
     }
 
     state->w_size = w_size;
-    bzero(&state->stats, sizeof(state->stats));
+    memset(&state->stats, 0, sizeof(state->stats));
     return (void *) state;
 }
 
@@ -402,7 +402,7 @@ z_decomp_alloc(options, opt_len)
     }
 
     state->w_size = w_size;
-    bzero(&state->stats, sizeof(state->stats));
+    memset(&state->stats, 0, sizeof(state->stats));
     return (void *) state;
 }
 

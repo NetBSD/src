@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.59.2.2 2001/06/21 20:09:49 nathanw Exp $	*/
+/*	$NetBSD: malloc.h,v 1.59.2.3 2001/08/24 00:13:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -41,6 +41,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_kmemstats.h"
 #include "opt_malloclog.h"
+#include "opt_malloc_debug.h"
 #include "opt_lockdebug.h"
 #endif
 
@@ -301,15 +302,15 @@
 }
 
 struct kmemstats {
-	long	ks_inuse;	/* # of packets of this type currently in use */
-	long	ks_calls;	/* total packets of this type ever allocated */
-	long 	ks_memuse;	/* total memory held in bytes */
+	u_long	ks_inuse;	/* # of packets of this type currently in use */
+	u_long	ks_calls;	/* total packets of this type ever allocated */
+	u_long 	ks_memuse;	/* total memory held in bytes */
 	u_short	ks_limblocks;	/* number of times blocked for hitting limit */
 	u_short	ks_mapblocks;	/* number of times blocked for kernel map */
-	long	ks_maxused;	/* maximum number ever used */
-	long	ks_limit;	/* most that are allowed to exist */
-	long	ks_size;	/* sizes of this thing that are allocated */
-	long	ks_spare;
+	u_long	ks_maxused;	/* maximum number ever used */
+	u_long	ks_limit;	/* most that are allowed to exist */
+	u_long	ks_size;	/* sizes of this thing that are allocated */
+	u_long	ks_spare;
 };
 
 /*
@@ -441,6 +442,15 @@ extern void	_free(void *addr, int type, const char *file, long line);
 extern void	*malloc(unsigned long size, int type, int flags);
 extern void	free(void *addr, int type);
 #endif /* MALLOCLOG */
+
+#ifdef MALLOC_DEBUG
+int	debug_malloc(unsigned long, int, int, void **);
+int	debug_free(void *, int);
+void	debug_malloc_init(void);
+
+void	debug_malloc_print(void);
+void	debug_malloc_printit(void (*)(const char *, ...), vaddr_t);
+#endif /* MALLOC_DEBUG */
 
 extern void	*realloc(void *curaddr, unsigned long newsize, int type,
 		    int flags);

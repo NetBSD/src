@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.39.2.2 2001/06/21 20:02:42 nathanw Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.39.2.3 2001/08/24 00:09:27 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -80,6 +80,7 @@
  */
 #define	_XT(xs)	((((xs)->timeout/1000) * hz) + (3 * hz))
 
+static void isp_config_interrupts(struct device *);
 static void ispminphys_1020(struct buf *);
 static void ispminphys(struct buf *);
 static INLINE void ispcmd(struct ispsoftc *, XS_T *);
@@ -158,12 +159,11 @@ isp_attach(struct ispsoftc *isp)
 		ISP_UNLOCK(isp);
 	}
 
+
 	/*
-	 * After this point, we'll be doing the new configuration
-	 * schema which allows interrups, so we can do tsleep/wakeup
-	 * for mailbox stuff at that point.
-	 */
-	isp->isp_osinfo.no_mbox_ints = 0;
+         * Defer enabling mailbox interrupts until later.
+         */
+        config_interrupts((struct device *) isp, isp_config_interrupts);
 
 	/*
 	 * And attach children (if any).
@@ -173,6 +173,21 @@ isp_attach(struct ispsoftc *isp)
 		config_found((void *)isp, &isp->isp_chanB, scsiprint);
 	}
 }
+
+
+static void
+isp_config_interrupts(struct device *self)
+{
+        struct ispsoftc *isp = (struct ispsoftc *) self;
+
+	/*
+	 * After this point, we'll be doing the new configuration
+	 * schema which allows interrups, so we can do tsleep/wakeup
+	 * for mailbox stuff at that point.
+	 */
+	isp->isp_osinfo.no_mbox_ints = 0;
+}
+
 
 /*
  * minphys our xfers
@@ -335,7 +350,6 @@ ispcmd(struct ispsoftc *isp, XS_T *xs)
 			isp->isp_osinfo.threadwork = 0;
 			isp->isp_osinfo.blocked =
 			    isp->isp_osinfo.paused = 0;
-isp_prt(isp, ISP_LOGALL, "ispcmd, manual runstate, (freeze count %d)", isp->isp_chanA.chan_qfreeze);
 			if (wasblocked) {
 				scsipi_channel_thaw(&isp->isp_chanA, 1);
 			}
@@ -399,7 +413,6 @@ isp_prt(isp, ISP_LOGALL, "ispcmd, manual runstate, (freeze count %d)", isp->isp_
 		if (isp->isp_osinfo.blocked == 0) {
 			isp->isp_osinfo.blocked = 1;
 			scsipi_channel_freeze(&isp->isp_chanA, 1);
-isp_prt(isp, ISP_LOGALL, "ispcmd, RQLATER, (freeze count %d)", isp->isp_chanA.chan_qfreeze);
 		}
 		xs->error = XS_REQUEUE;
 		scsipi_done(xs);
@@ -967,6 +980,21 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		lp->port_wwn = wwpn;
 		lp->portid = portid;
 		lp->fabric_dev = 1;
+		break;
+	}
+	case ISPASYNC_FW_CRASH:
+	{
+		u_int16_t mbox1, mbox6;
+		mbox1 = ISP_READ(isp, OUTMAILBOX1);
+		if (IS_DUALBUS(isp)) { 
+			mbox6 = ISP_READ(isp, OUTMAILBOX6);
+		} else {
+			mbox6 = 0;
+		}
+                isp_prt(isp, ISP_LOGERR,
+                    "Internal Firmware on bus %d Error @ RISC Address 0x%x",
+                    mbox6, mbox1);
+		isp_reinit(isp);
 		break;
 	}
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.2 2001/02/04 22:59:26 christos Exp $  */
+/*	$NetBSD: linux_exec.h,v 1.2.4.1 2001/08/24 00:08:48 nathanw Exp $  */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #define LINUX_ATEXIT_SIGNATURE	1
 
 /*
- * LINUX_SHIFT enable the 16 bytes shift for arguments and ELF auxilliary
+ * LINUX_SHIFT enable the 16 bytes shift for arguments and ELF auxiliary
  * table. This is needed on the PowerPC
  */
 #define LINUX_SHIFT 0x0000000FUL
@@ -85,7 +85,7 @@
 #define LINUX_SP_WRAP 0x30		/* Size of the stack pointer wrap code */
 
 /*
- * Entries in the ELF auxilliary table. This is counted from
+ * Entries in the ELF auxiliary table. This is counted from
  * sys/compat/linux/arc/powerpc/linux_exec_powerpc.c
  */
 #define LINUX_ELF_AUX_ENTRIES 14
@@ -116,8 +116,8 @@ typedef struct {
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-void * linux_elf32_copyargs __P((struct exec_package *,
-    struct ps_strings *, void *, void *)); 
+int linux_elf32_copyargs __P((struct exec_package *,
+    struct ps_strings *, char **, void *)); 
 __END_DECLS
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.75.2.2 2001/06/21 20:08:00 nathanw Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.75.2.3 2001/08/24 00:12:09 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1363,7 +1363,8 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    }
 #ifdef INET
 		case AF_INET:
-			if ((error = (*ifp->if_init)(ifp)) != 0)
+			if ((ifp->if_flags & IFF_RUNNING) == 0 &&
+			    (error = (*ifp->if_init)(ifp)) != 0)
 				break;
 			arp_ifinit(ifp, ifa);
 			break;
@@ -1385,7 +1386,8 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    }
 #endif /* NS */
 		default:
-			error = (*ifp->if_init)(ifp);
+			if ((ifp->if_flags & IFF_RUNNING) == 0)
+				error = (*ifp->if_init)(ifp);
 			break;
 		}
 		break;
@@ -1406,8 +1408,13 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > maxmtu)
 			error = EINVAL;
-		else
+		else {
 			ifp->if_mtu = ifr->ifr_mtu;
+
+			/* Make sure the device notices the MTU change. */
+			if (ifp->if_flags & IFF_UP)
+				error = (*ifp->if_init)(ifp);
+		}
 		break;
 	    }
 

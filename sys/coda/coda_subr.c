@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.10.2.1 2001/06/21 19:58:48 nathanw Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.10.2.2 2001/08/24 00:08:43 nathanw Exp $	*/
 
 /*
  * 
@@ -107,7 +107,7 @@ coda_alloc(void)
 	VNODE_VM_INFO_INIT(CTOV(cp));
 	coda_new++;
     }
-    bzero(cp, sizeof (struct cnode));
+    memset(cp, 0, sizeof (struct cnode));
 
     return(cp);
 }

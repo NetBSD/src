@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.26.2.1 2001/04/09 01:57:51 nathanw Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.26.2.2 2001/08/24 00:11:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -260,3 +260,27 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 			UVM_FLAG_FIXED|UVM_FLAG_COPYONW));
 	return error;
 }
+
+/*
+ * exec_read_from():
+ *
+ *	Read from vnode into buffer at offset.
+ */
+int
+exec_read_from(struct proc *p, struct vnode *vp, u_long off, void *buf,
+    size_t size)
+{
+	int error;
+	size_t resid;
+
+	if ((error = vn_rdwr(UIO_READ, vp, buf, size, off, UIO_SYSSPACE,
+	    0, p->p_ucred, &resid, p)) != 0)
+		return error;
+	/*
+	 * See if we got all of it
+	 */
+	if (resid != 0)
+		return ENOEXEC;
+	return 0;
+}
+

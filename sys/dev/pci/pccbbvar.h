@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.15 2001/02/20 15:16:38 minoura Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.15.2.1 2001/08/24 00:10:15 nathanw Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -173,5 +173,8 @@ struct pccbb_intrhand_list {
 	int pil_level;
 	struct pccbb_intrhand_list *pil_next;
 };
+
+void pccbb_intr_route __P((struct pccbb_softc *sc));
+
 
 #endif /* _DEV_PCI_PCCBBREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.68 2000/11/08 14:28:14 ad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.68.2.1 2001/08/24 00:12:24 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -182,6 +182,9 @@ in_pcballoc(so, v)
 	struct inpcbtable *table = v;
 	struct inpcb *inp;
 	int s;
+#ifdef IPSEC
+	int error;
+#endif
 
 	inp = pool_get(&inpcb_pool, PR_NOWAIT);
 	if (inp == NULL)
@@ -190,6 +193,13 @@ in_pcballoc(so, v)
 	inp->inp_table = table;
 	inp->inp_socket = so;
 	inp->inp_errormtu = -1;
+#ifdef IPSEC
+	error = ipsec_init_policy(so, &inp->inp_sp);
+	if (error != 0) {
+		pool_put(&inpcb_pool, inp);
+		return error;
+	}
+#endif
 	so->so_pcb = inp;
 	s = splnet();
 	CIRCLEQ_INSERT_HEAD(&table->inpt_queue, inp, inp_queue);
@@ -486,6 +496,10 @@ in_pcbconnect(v, nam)
 	inp->inp_faddr = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;
 	in_pcbstate(inp, INP_CONNECTED);
+#ifdef IPSEC
+	if (inp->inp_socket->so_type == SOCK_STREAM)
+		ipsec_pcbconn(inp->inp_sp);
+#endif
 	return (0);
 }
 
@@ -500,6 +514,9 @@ in_pcbdisconnect(v)
 	in_pcbstate(inp, INP_BOUND);
 	if (inp->inp_socket->so_state & SS_NOFDREF)
 		in_pcbdetach(inp);
+#ifdef IPSEC
+	ipsec_pcbdisconn(inp->inp_sp);
+#endif
 }
 
 void
@@ -623,7 +640,7 @@ in_pcbnotifyall(table, faddr, errno, notify)
 }
 
 void
-in_pcbpurgeif(table, ifp)
+in_pcbpurgeif0(table, ifp)
 	struct inpcbtable *table;
 	struct ifnet *ifp;
 {
@@ -635,9 +652,6 @@ in_pcbpurgeif(table, ifp)
 	    inp != (struct inpcb *)&table->inpt_queue;
 	    inp = ninp) {
 		ninp = inp->inp_queue.cqe_next;
-		if (inp->inp_route.ro_rt != NULL &&
-		    inp->inp_route.ro_rt->rt_ifp == ifp)
-			in_rtchange(inp, 0);
 		imo = inp->inp_moptions;
 		if (imo != NULL) {
 			/*
@@ -662,6 +676,23 @@ in_pcbpurgeif(table, ifp)
 			}
 			imo->imo_num_memberships -= gap;
 		}
+	}
+}
+
+void
+in_pcbpurgeif(table, ifp)
+	struct inpcbtable *table;
+	struct ifnet *ifp;
+{
+	struct inpcb *inp, *ninp;
+
+	for (inp = table->inpt_queue.cqh_first;
+	    inp != (struct inpcb *)&table->inpt_queue;
+	    inp = ninp) {
+		ninp = inp->inp_queue.cqe_next;
+		if (inp->inp_route.ro_rt != NULL &&
+		    inp->inp_route.ro_rt->rt_ifp == ifp)
+			in_rtchange(inp, 0);
 	}
 }
 

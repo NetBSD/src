@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.55 2001/02/26 07:20:44 itojun Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.55.2.1 2001/08/24 00:12:28 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -450,6 +450,7 @@ rip_usrreq(so, req, m, nam, control, p)
 		    (struct ifnet *)control, p));
 
 	if (req == PRU_PURGEIF) {
+		in_pcbpurgeif0(&rawcbtable, (struct ifnet *)control);
 		in_purgeif((struct ifnet *)control);
 		in_pcbpurgeif(&rawcbtable, (struct ifnet *)control);
 		return (0);
@@ -487,13 +488,6 @@ rip_usrreq(so, req, m, nam, control, p)
 			break;
 		inp = sotoinpcb(so);
 		inp->inp_ip.ip_p = (long)nam;
-#ifdef IPSEC
-		error = ipsec_init_policy(so, &inp->inp_sp);
-		if (error != 0) {
-			in_pcbdetach(inp);
-			break;
-		}
-#endif /*IPSEC*/
 		break;
 
 	case PRU_DETACH:

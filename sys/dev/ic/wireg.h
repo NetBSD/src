@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.7.2.2 2001/06/21 20:03:31 nathanw Exp $	*/
+/*	$NetBSD: wireg.h,v 1.7.2.3 2001/08/24 00:09:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -324,11 +324,11 @@ struct wi_ltv_str {
 		int			l;			\
 								\
 		l = (strlen(str) + 1) & ~0x1;			\
-		bzero((char *)&s, sizeof(s));			\
+		memset((char *)&s, 0, sizeof(s));		\
 		s.wi_len = (l / 2) + 2;				\
 		s.wi_type = recno;				\
 		s.wi_str[0] = htole16(strlen(str));		\
-		bcopy(str, (char *)&s.wi_str[1], strlen(str));	\
+		memcpy((char *)&s.wi_str[1], str, strlen(str));	\
 		wi_write_record(sc, (struct wi_ltv_gen *)&s);	\
 	} while (0)
 

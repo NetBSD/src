@@ -1,4 +1,4 @@
-/* $NetBSD: awivar.h,v 1.13 2001/01/18 20:28:17 jdolecek Exp $ */
+/* $NetBSD: awivar.h,v 1.13.2.1 2001/08/24 00:09:17 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -201,14 +201,14 @@ struct awi_softc
 int	awi_attach __P((struct awi_softc *));
 int	awi_intr __P((void *));
 void	awi_reset __P((struct awi_softc *));
+int	awi_init __P((struct ifnet *));
+void	awi_stop __P((struct ifnet *, int));
 #ifdef __NetBSD__
 int	awi_activate __P((struct device *, enum devact));
 int	awi_detach __P((struct awi_softc *));
 void	awi_power __P((struct awi_softc *, int));
 #endif
 
-void awi_stop __P((struct awi_softc *sc));
-int awi_init __P((struct awi_softc *sc));
 int awi_init_region __P((struct awi_softc *));
 int awi_wicfg __P((struct ifnet *, u_long, caddr_t));
 

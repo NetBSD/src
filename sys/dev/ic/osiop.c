@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.4.2.2 2001/06/21 20:03:04 nathanw Exp $	*/
+/*	$NetBSD: osiop.c,v 1.4.2.3 2001/08/24 00:09:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -437,7 +437,9 @@ osiop_scsipi_request(chan, req, arg)
 		if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 			err = bus_dmamap_load(sc->sc_dmat, acb->datadma,
 			    xs->data, xs->datalen, NULL,
-			    BUS_DMA_NOWAIT | BUS_DMA_STREAMING);
+			    BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
+			    ((xs->xs_control & XS_CTL_DATA_IN) ?
+			     BUS_DMA_READ : BUS_DMA_WRITE));
 			if (err) {
 				printf("%s: unable to load data DMA map: %d",
 				    sc->sc_dev.dv_xname, err);

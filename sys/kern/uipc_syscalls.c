@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.57.2.2 2001/06/21 20:07:08 nathanw Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.57.2.3 2001/08/24 00:11:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -37,13 +37,6 @@
 
 #include "opt_ktrace.h"
 #include "opt_new_pipe.h"
-
-/*
- * Though COMPAT_OLDSOCK is needed only for COMPAT_43, SunOS, Linux,
- * HP-UX, FreeBSD, Ultrix, OSF1, we define it unconditionally so that
- * this would be LKM-safe.
- */
-#define COMPAT_OLDSOCK		/* used by <sys/socket.h> */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,19 +275,21 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	so = (struct socket *)fp->f_data;
-	FILE_UNUSE(fp, p);
-	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING))
-		return (EALREADY);
+	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
+		error = EALREADY;
+		goto out;
+	}
 	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
 	    MT_SONAME);
 	if (error)
-		return (error);
+		goto out;
 	error = soconnect(so, nam);
 	if (error)
 		goto bad;
 	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
 		m_freem(nam);
-		return (EINPROGRESS);
+		error = EINPROGRESS;
+		goto out;
 	}
 	s = splsoftnet();
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
@@ -313,6 +308,8 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 	m_freem(nam);
 	if (error == ERESTART)
 		error = EINTR;
+ out:
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
@@ -408,9 +405,7 @@ sys_sendto(struct lwp *l, void *v, register_t *retval)
 	msg.msg_iov = &aiov;
 	msg.msg_iovlen = 1;
 	msg.msg_control = 0;
-#ifdef COMPAT_OLDSOCK
 	msg.msg_flags = 0;
-#endif
 	aiov.iov_base = (char *)SCARG(uap, buf);	/* XXX kills const */
 	aiov.iov_len = SCARG(uap, len);
 	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
@@ -446,9 +441,7 @@ sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 			goto done;
 	}
 	msg.msg_iov = iov;
-#ifdef COMPAT_OLDSOCK
 	msg.msg_flags = 0;
-#endif
 	p = l->l_proc;
 	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 done:
@@ -511,11 +504,7 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	} else
 		to = 0;
 	if (mp->msg_control) {
-		if (mp->msg_controllen < sizeof(struct cmsghdr)
-#ifdef COMPAT_OLDSOCK
-		    && mp->msg_flags != MSG_COMPAT
-#endif
-		) {
+		if (mp->msg_controllen < sizeof(struct cmsghdr)) {
 			error = EINVAL;
 			goto bad;
 		}
@@ -523,22 +512,6 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 				 mp->msg_controllen, MT_CONTROL);
 		if (error)
 			goto bad;
-#ifdef COMPAT_OLDSOCK
-		if (mp->msg_flags == MSG_COMPAT) {
-			struct cmsghdr *cm;
-
-			M_PREPEND(control, sizeof(*cm), M_WAIT);
-			if (control == 0) {
-				error = ENOBUFS;
-				goto bad;
-			} else {
-				cm = mtod(control, struct cmsghdr *);
-				cm->cmsg_len = control->m_len;
-				cm->cmsg_level = SOL_SOCKET;
-				cm->cmsg_type = SCM_RIGHTS;
-			}
-		}
-#endif
 	} else
 		control = 0;
 #ifdef KTRACE
@@ -644,11 +617,7 @@ sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 	}
 	uiov = msg.msg_iov;
 	msg.msg_iov = iov;
-#ifdef COMPAT_OLDSOCK
-	msg.msg_flags = SCARG(uap, flags) &~ MSG_COMPAT;
-#else
 	msg.msg_flags = SCARG(uap, flags);
-#endif
 	p = l->l_proc;
 	if ((error = recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval)) == 0) {
 		msg.msg_iov = uiov;
@@ -744,11 +713,6 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 		if (len <= 0 || from == 0)
 			len = 0;
 		else {
-#ifdef COMPAT_OLDSOCK
-			if (mp->msg_flags & MSG_COMPAT)
-				mtod(from, struct osockaddr *)->sa_family =
-				    mtod(from, struct sockaddr *)->sa_family;
-#endif
 			if (len > from->m_len)
 				len = from->m_len;
 			/* else if len < from->m_len ??? */
@@ -759,36 +723,10 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 		}
 		mp->msg_namelen = len;
 		if (namelenp &&
-		    (error = copyout((caddr_t)&len, namelenp, sizeof(int)))) {
-#ifdef COMPAT_OLDSOCK
-			if (mp->msg_flags & MSG_COMPAT)
-				error = 0;	/* old recvfrom didn't check */
-			else
-#endif
+		    (error = copyout((caddr_t)&len, namelenp, sizeof(int))))
 			goto out;
-		}
 	}
 	if (mp->msg_control) {
-#ifdef COMPAT_OLDSOCK
-		/*
-		 * We assume that old recvmsg calls won't receive access
-		 * rights and other control info, esp. as control info
-		 * is always optional and those options didn't exist in 4.3.
-		 * If we receive rights, trim the cmsghdr; anything else
-		 * is tossed.
-		 */
-		if (control && mp->msg_flags & MSG_COMPAT) {
-			if (mtod(control, struct cmsghdr *)->cmsg_level !=
-			    SOL_SOCKET ||
-			    mtod(control, struct cmsghdr *)->cmsg_type !=
-			    SCM_RIGHTS) {
-				mp->msg_controllen = 0;
-				goto out;
-			}
-			control->m_len -= sizeof(struct cmsghdr);
-			control->m_data += sizeof(struct cmsghdr);
-		}
-#endif
 		len = mp->msg_controllen;
 		if (len <= 0 || control == 0)
 			len = 0;
@@ -1098,7 +1036,7 @@ sys_getpeername(struct lwp *l, void *v, register_t *retval)
  * XXX arguments in mbufs, and this could go away.
  */
 int
-sockargs(struct mbuf **mp, const void *buf, int buflen, int type)
+sockargs(struct mbuf **mp, const void *buf, size_t buflen, int type)
 {
 	struct sockaddr	*sa;
 	struct mbuf	*m;
@@ -1106,14 +1044,15 @@ sockargs(struct mbuf **mp, const void *buf, int buflen, int type)
 
 	/*
 	 * We can't allow socket names > UCHAR_MAX in length, since that
-	 * will overflow sa_len.
+	 * will overflow sa_len.  Control data more than a page size in
+	 * length is just too much.
 	 */
-	if (type == MT_SONAME && (u_int)buflen > UCHAR_MAX)
+	if (buflen > (type == MT_SONAME ? UCHAR_MAX : PAGE_SIZE))
 		return (EINVAL);
 
 	/* Allocate an mbuf to hold the arguments. */
 	m = m_get(M_WAIT, type);
-	if ((u_int)buflen > MLEN) {
+	if (buflen > MLEN) {
 		/*
 		 * Won't fit into a regular mbuf, so we allocate just
 		 * enough external storage to hold the argument.
@@ -1121,7 +1060,7 @@ sockargs(struct mbuf **mp, const void *buf, int buflen, int type)
 		MEXTMALLOC(m, buflen, M_WAITOK);
 	}
 	m->m_len = buflen;
-	error = copyin(buf, mtod(m, caddr_t), (u_int)buflen);
+	error = copyin(buf, mtod(m, caddr_t), buflen);
 	if (error) {
 		(void) m_free(m);
 		return (error);
@@ -1129,8 +1068,11 @@ sockargs(struct mbuf **mp, const void *buf, int buflen, int type)
 	*mp = m;
 	if (type == MT_SONAME) {
 		sa = mtod(m, struct sockaddr *);
-
-#if defined(COMPAT_OLDSOCK) && BYTE_ORDER != BIG_ENDIAN
+#if BYTE_ORDER != BIG_ENDIAN
+		/*
+		 * 4.3BSD compat thing - need to stay, since bind(2),
+		 * connect(2), sendto(2) were not versioned for COMPAT_43.
+		 */
 		if (sa->sa_family == 0 && sa->sa_len < AF_MAX)
 			sa->sa_family = sa->sa_len;
 #endif

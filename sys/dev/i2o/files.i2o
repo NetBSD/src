@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2o,v 1.3 2001/02/24 01:59:47 lukem Exp $
+#	$NetBSD: files.i2o,v 1.3.2.1 2001/08/24 00:09:08 nathanw Exp $
 
 defopt	opt_i2o.h	I2OVERBOSE I2ODEBUG
 
@@ -11,3 +11,7 @@ file	dev/i2o/ld_iop.c		ld_iop
 device	iopsp: scsi
 attach	iopsp at iop
 file	dev/i2o/iopsp.c			iopsp
+
+device	iopl: ether, token, fddi, ifnet, arp
+attach	iopl at iop
+file	dev/i2o/iopl.c			iopl

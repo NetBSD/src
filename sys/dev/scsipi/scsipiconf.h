@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.46.2.2 2001/06/21 20:05:58 nathanw Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.46.2.3 2001/08/24 00:10:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -293,6 +293,10 @@ struct scsipi_channel {
 
 	/* Completed (async) jobs. */
 	struct scsipi_xfer_queue chan_complete;
+
+	/* callback we may have to call from completion thread */
+	void (*chan_callback) __P((struct scsipi_channel *, void *));
+	void *chan_callback_arg;
 };
 
 /* chan_flags */
@@ -300,6 +304,7 @@ struct scsipi_channel {
 #define	SCSIPI_CHAN_OPENINGS	0x02	/* use chan_openings */
 #define	SCSIPI_CHAN_CANGROW	0x04	/* channel can grow resources */
 #define	SCSIPI_CHAN_NOSETTLE	0x08	/* don't wait for devices to settle */
+#define	SCSIPI_CHAN_CALLBACK	0x10	/* has to call chan_callback() */
 
 #define	SCSIPI_CHAN_MAX_PERIPH(chan)					\
 	(((chan)->chan_flags & SCSIPI_CHAN_OPENINGS) ?			\
@@ -538,21 +543,23 @@ struct scsipi_xfer {
 				0x00000080	/* ignore media change */
 #define	XS_CTL_IGNORE_ILLEGAL_REQUEST					\
 				0x00000100	/* ignore ILLEGAL REQUEST */
-#define	XS_CTL_RESET		0x00000200	/* reset the device */
-#define	XS_CTL_DATA_UIO		0x00000400	/* xs_data points to uio */
-#define	XS_CTL_DATA_IN		0x00000800	/* data coming into memory */
-#define	XS_CTL_DATA_OUT		0x00001000	/* data going out of memory */
-#define	XS_CTL_TARGET		0x00002000	/* target mode operation */
-#define	XS_CTL_ESCAPE		0x00004000	/* escape operation */
-#define	XS_CTL_URGENT		0x00008000	/* urgent (recovery)
+#define	XS_CTL_SILENT_NODEV	0x00000200	/* don't print sense info
+						   if sense info is nodev */
+#define	XS_CTL_RESET		0x00000400	/* reset the device */
+#define	XS_CTL_DATA_UIO		0x00000800	/* xs_data points to uio */
+#define	XS_CTL_DATA_IN		0x00001000	/* data coming into memory */
+#define	XS_CTL_DATA_OUT		0x00002000	/* data going out of memory */
+#define	XS_CTL_TARGET		0x00004000	/* target mode operation */
+#define	XS_CTL_ESCAPE		0x00008000	/* escape operation */
+#define	XS_CTL_URGENT		0x00010000	/* urgent (recovery)
 						   operation */
-#define	XS_CTL_SIMPLE_TAG	0x00010000	/* use a Simple Tag */
-#define	XS_CTL_ORDERED_TAG	0x00020000	/* use an Ordered Tag */
-#define	XS_CTL_HEAD_TAG		0x00040000	/* use a Head of Queue Tag */
-#define	XS_CTL_THAW_PERIPH	0x00080000	/* thaw periph once enqueued */
-#define	XS_CTL_FREEZE_PERIPH	0x00100000	/* freeze periph when done */
-#define XS_CTL_DATA_ONSTACK	0x00200000	/* data is alloc'ed on stack */
-#define XS_CTL_REQSENSE		0x00400000	/* xfer is a request sense */
+#define	XS_CTL_SIMPLE_TAG	0x00020000	/* use a Simple Tag */
+#define	XS_CTL_ORDERED_TAG	0x00040000	/* use an Ordered Tag */
+#define	XS_CTL_HEAD_TAG		0x00080000	/* use a Head of Queue Tag */
+#define	XS_CTL_THAW_PERIPH	0x00100000	/* thaw periph once enqueued */
+#define	XS_CTL_FREEZE_PERIPH	0x00200000	/* freeze periph when done */
+#define XS_CTL_DATA_ONSTACK	0x00400000	/* data is alloc'ed on stack */
+#define XS_CTL_REQSENSE		0x00800000	/* xfer is a request sense */
 
 #define	XS_CTL_TAGMASK	(XS_CTL_SIMPLE_TAG|XS_CTL_ORDERED_TAG|XS_CTL_HEAD_TAG)
 
@@ -639,6 +646,9 @@ void	scsipi_print_sense __P((struct scsipi_xfer *, int));
 void	scsipi_print_sense_data __P((struct scsipi_sense_data *, int));
 char   *scsipi_decode_sense __P((void *, int));
 #endif
+int	scsipi_thread_call_callback __P((struct scsipi_channel *,
+	    void (*callback) __P((struct scsipi_channel *, void *)),
+	    void *));
 void	scsipi_async_event __P((struct scsipi_channel *,
 	    scsipi_async_event_t, void *));
 int	scsipi_do_ioctl __P((struct scsipi_periph *, dev_t, u_long, caddr_t,
@@ -656,6 +666,7 @@ void	scsipi_remove_periph __P((struct scsipi_channel *,
 	    struct scsipi_periph *));
 struct scsipi_periph *scsipi_lookup_periph __P((struct scsipi_channel *,
 	    int, int));
+int	scsipi_target_detach __P((struct scsipi_channel *, int, int, int));
 
 int	scsipi_adapter_addref __P((struct scsipi_adapter *));
 void	scsipi_adapter_delref __P((struct scsipi_adapter *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.30.2.1 2001/06/21 20:04:44 nathanw Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.30.2.2 2001/08/24 00:10:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -74,9 +74,6 @@
  *
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
-
-#include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.28.2.2 2001/06/21 20:01:21 nathanw Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.28.2.3 2001/08/24 00:09:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -520,6 +520,11 @@ cardbus_attach_card(struct cardbus_softc *sc)
 		ca.ca_iot = sc->sc_iot;
 		ca.ca_memt = sc->sc_memt;
 		ca.ca_dmat = sc->sc_dmat;
+
+#if rbus
+		ca.ca_rbus_iot = sc->sc_rbus_iot;
+		ca.ca_rbus_memt= sc->sc_rbus_memt;
+#endif
 
 		ca.ca_tag = tag;
 		ca.ca_device = sc->sc_device;

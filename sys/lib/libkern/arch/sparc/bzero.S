@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.5 1999/03/05 09:18:32 pk Exp $	*/
+/*	$NetBSD: bzero.S,v 1.5.20.1 2001/08/24 00:11:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,32 +44,61 @@
 #if 0
 	.asciz "@(#)bzero.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: bzero.S,v 1.5 1999/03/05 09:18:32 pk Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.5.20.1 2001/08/24 00:11:52 nathanw Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
 /*
- * bzero(addr, len)
- *
  * We should unroll the loop, but at the moment this would
  * gain nothing since the `std' instructions are what limits us.
+ */
+
+#ifdef MEMSET
+/*
+ * void *
+ * memset(void *addr, int pattern, size_t len)
+ */
+ENTRY(memset)
+	! %o0 = addr, %o1 = pattern, %o2 = len
+	/*
+	 * Expand the byte pattern to fill 64 bits in an even-aligned
+	 * register pair; shuffle arguments to match those of bzero.
+	 */
+	and	%o1, 0xff, %o3
+	mov	%o2, %o1		! shuffle argument
+	sll	%o3, 8, %o2
+	or	%o2, %o3, %o2
+	mov	%o0, %g1		! save original pointer
+	sll	%o2, 16, %o3
+	or	%o2, %o3, %o2
+	! Optimize a common case: addr and len are both multiples of 8.
+	or	%o0, %o1, %o5
+	btst	7, %o5			! ((addr | len) & 7) != 0?
+	bnz	1f			! if so, cannot optimize
+	 mov	%o2, %o3		! in any case, complete pat expansion
+#else
+/*
+ * void
+ * bzero(void *addr, size_t len)
  */
 ENTRY(bzero)
 	! %o0 = addr, %o1 = len
 
+	clr	%o2
 	! Optimize a common case: addr and len are both multiples of 8.
-	or	%o0, %o1, %o2
-	btst	7, %o2			! ((addr | len) & 7) != 0?
+	or	%o0, %o1, %o5
+	btst	7, %o5			! ((addr | len) & 7) != 0?
 	bnz	1f			! if so, cannot optimize
-	 clr	%g1			! in any case, we want g1=0
+	 clr	%o3			! in any case, we want o3=0
+#endif
 
 	/* `Good' operands, can just store doubles. */
 0:
 	deccc	8, %o1			! while ((len -= 8) >= 0)
 	bge,a	0b
-	 std	%g0, [%o0 + %o1]	!	*(quad *)(addr + len) = 0;
+	 std	%o2, [%o0 + %o1]	!	*(quad *)(addr + len) = 0;
 	retl
-	nop
+	 nop
 
 	/*
 	 * Either the address is unaligned, or the count is not a
@@ -85,7 +114,7 @@ ENTRY(bzero)
 2:
 	deccc	%o1			! while (--len >= 0)
 	bge,a	2b
-	 stb	%g0, [%o0 + %o1]	!	addr[len] = 0;
+	 stb	%o2, [%o0 + %o1]	!	addr[len] = 0;
 	retl
 	 nop
 
@@ -97,21 +126,21 @@ Lstd:
 	 */
 	bz,a	1f			! if (addr & 1) {
 	 btst	2, %o0
-	stb	%g0, [%o0]		!	*addr = 0;
+	stb	%o2, [%o0]		!	*addr = 0;
 	inc	%o0			!	addr++;
 	dec	%o1			!	len--;
 	btst	2, %o0			! }
 1:
 	bz,a	1f			! if (addr & 2) {
 	 btst	4, %o0
-	sth	%g0, [%o0]		!	*(short *)addr = 0;
+	sth	%o2, [%o0]		!	*(short *)addr = 0;
 	inc	2, %o0			!	addr += 2;
 	dec	2, %o1			!	len -= 2;
 	btst	4, %o0			! }
 1:
 	bz	1f			! if (addr & 4) {
 	 dec	8, %o1
-	st	%g0, [%o0]		!	*(int *)addr = 0;
+	st	%o2, [%o0]		!	*(int *)addr = 0;
 	inc	4, %o0			!	addr += 4;
 	dec	4, %o1			!	len -= 4;
 					! }
@@ -121,12 +150,12 @@ Lstd:
 	 * the remaining count is 8, 1 if it is 9, etc.).
 	 */
 1:
-	std	%g0, [%o0]		! do {
+	std	%o2, [%o0]		! do {
 2:					!	*(quad *)addr = 0;
 	inc	8, %o0			!	addr += 8;
 	deccc	8, %o1			! } while ((len -= 8) >= 0);
 	 bge,a	2b
-	std	%g0, [%o0]
+	std	%o2, [%o0]
 
 	/*
 	 * Len is in [-8..-1] where -8 => done, -7 => 1 byte to zero,
@@ -135,16 +164,20 @@ Lstd:
 	btst	4, %o1
 	bz	1f			! if (len & 4) {
 	 btst	2, %o1
-	st	%g0, [%o0]		!	*(int *)addr = 0;
+	st	%o2, [%o0]		!	*(int *)addr = 0;
 	inc	4, %o0			!	addr += 4;
 1:
 	bz	1f			! if (len & 2) {
 	 btst	1, %o1
-	sth	%g0, [%o0]		!	*(short *)addr = 0;
+	sth	%o2, [%o0]		!	*(short *)addr = 0;
 	inc	2, %o0			!	addr += 2;
 1:
 	bnz,a	1f			! if (len & 1)
-	 stb	%g0, [%o0]		!	*addr = 0;
+	 stb	%o2, [%o0]		!	*addr = 0;
 1:
 	retl
+#ifdef MEMSET
+	 mov	%g1, %o0		! restore original pointer
+#else
 	 nop
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.30 2000/12/18 23:57:13 thorpej Exp $	*/
+/*	$NetBSD: awi.c,v 1.30.2.1 2001/08/24 00:09:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,6 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/errno.h>
-#include <sys/syslog.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 4
 #include <sys/bus.h>
 #else
@@ -124,8 +123,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
 #ifdef __NetBSD__
 #include <netinet/if_inarp.h>
 #else
@@ -135,7 +132,6 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#include <net/bpfdesc.h>
 #endif
 
 #include <machine/cpu.h>
@@ -302,6 +298,8 @@ awi_attach(sc)
 	ifp->if_flags |= IFF_NOTRAILERS;
 #endif
 #ifdef __NetBSD__
+	ifp->if_init = awi_init;
+	ifp->if_stop = awi_stop;
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 #endif
 #ifdef __FreeBSD__
@@ -369,7 +367,7 @@ awi_detach(sc)
 
 	s = splnet();
 	sc->sc_invalid = 1;
-	awi_stop(sc);
+	awi_stop(ifp, 1);
 	while (sc->sc_sleep_cnt > 0) {
 		wakeup(sc);
 		(void)tsleep(sc, PWAIT, "awidet", 1);
@@ -381,11 +379,6 @@ awi_detach(sc)
 #endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	if (sc->sc_enabled) {
-		if (sc->sc_disable)
-			(*sc->sc_disable)(sc);
-		sc->sc_enabled = 0;
-	}
 	splx(s);
 	return 0;
 }
@@ -420,34 +413,29 @@ awi_power(sc, why)
 	struct awi_softc *sc;
 	int why;
 {
+	struct ifnet *ifp = sc->sc_ifp;
 	int s;
 	int ocansleep;
-
-	if (!sc->sc_enabled)
-		return;
 
 	s = splnet();
 	ocansleep = sc->sc_cansleep;
 	sc->sc_cansleep = 0;
-#ifdef needtobefixed	/*ONOE*/
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		awi_stop(sc);
-		if (sc->sc_disable)
-			(*sc->sc_disable)(sc);
+		awi_stop(ifp, 1);
 		break;
 	case PWR_RESUME:
-		sc->sc_enabled = 0;
-		awi_init(sc);
-		(void)awi_intr(sc);
+		if (ifp->if_flags & IFF_UP) {
+			awi_init(ifp);
+			(void)awi_intr(sc);
+		}
 		break;
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
 	case PWR_SOFTRESUME:
 		break;
 	}
-#endif
 	sc->sc_cansleep = ocansleep;
 	splx(s);
 }
@@ -485,16 +473,13 @@ awi_ioctl(ifp, cmd, data)
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		sc->sc_format_llc = !(ifp->if_flags & IFF_LINK0);
-		if (!(ifp->if_flags & IFF_UP)) {
-			if (sc->sc_enabled) {
-				awi_stop(sc);
-				if (sc->sc_disable)
-					(*sc->sc_disable)(sc);
-				sc->sc_enabled = 0;
-			}
-			break;
-		}
-		error = awi_init(sc);
+		if (ifp->if_flags & IFF_UP) {
+			/* Do not reset if already associated */
+			if (!(ifp->if_flags & IFF_RUNNING))
+				awi_stop(ifp, 0);
+			error = awi_init(ifp);
+		} else if (sc->sc_enabled)
+			awi_stop(ifp, 1);
 		break;
 
 	case SIOCADDMULTI:
@@ -511,7 +496,7 @@ awi_ioctl(ifp, cmd, data)
 		 */
 		if (error == ENETRESET) {
 			if (sc->sc_enabled)
-				error = awi_init(sc);
+				error = awi_init(ifp);
 			else
 				error = 0;
 		}
@@ -540,8 +525,8 @@ awi_ioctl(ifp, cmd, data)
 		memcpy(&sc->sc_mib_mac.aDesired_ESS_ID[2], nwid.i_nwid,
 		    nwid.i_len);
 		if (sc->sc_enabled) {
-			awi_stop(sc);
-			error = awi_init(sc);
+			awi_stop(ifp, 0);	/* force rescan */
+			error = awi_init(ifp);
 		}
 		break;
 	case SIOCG80211NWID:
@@ -553,6 +538,10 @@ awi_ioctl(ifp, cmd, data)
 		break;
 	case SIOCS80211NWKEY:
 		error = awi_wep_setnwkey(sc, (struct ieee80211_nwkey *)data);
+		if (error == 0 && sc->sc_enabled) {
+			awi_stop(ifp, 0);	/* force rescan */
+			error = awi_init(ifp);
+		}
 		break;
 	case SIOCG80211NWKEY:
 		error = awi_wep_getnwkey(sc, (struct ieee80211_nwkey *)data);
@@ -685,8 +674,8 @@ awi_media_change(ifp)
 		sc->sc_mib_local.Network_Mode = 1;
 	}
 	if (sc->sc_enabled) {
-		awi_stop(sc);
-		error = awi_init(sc);
+		awi_stop(ifp, 0);	/* force rescan */
+		error = awi_init(ifp);
 	}
 	return error;
 }
@@ -763,12 +752,12 @@ awi_intr(arg)
 }
 
 int
-awi_init(sc)
-	struct awi_softc *sc;
+awi_init(ifp)
+	struct ifnet *ifp;
 {
+	struct awi_softc *sc = ifp->if_softc;
 	int error, ostatus;
 	int n;
-	struct ifnet *ifp = sc->sc_ifp;
 #ifdef __FreeBSD__
 	struct ifmultiaddr *ifma;
 #else
@@ -827,8 +816,10 @@ awi_init(sc)
 			(*sc->sc_enable)(sc);
 		sc->sc_status = AWI_ST_INIT;
 		error = awi_init_hw(sc);
-		if (error)
+		if (error) {
+			awi_stop(ifp, 1);
 			return error;
+		}
 	}
 	ostatus = sc->sc_status;
 	sc->sc_status = AWI_ST_INIT;
@@ -837,7 +828,7 @@ awi_init(sc)
 	    (error = awi_mib(sc, AWI_CMD_SET_MIB, AWI_MIB_MAC)) != 0 ||
 	    (error = awi_mib(sc, AWI_CMD_SET_MIB, AWI_MIB_MGT)) != 0 ||
 	    (error = awi_mib(sc, AWI_CMD_SET_MIB, AWI_MIB_PHY)) != 0) {
-		awi_stop(sc);
+		awi_stop(ifp, 1);
 		return error;
 	}
 	if (ifp->if_flags & IFF_RUNNING)
@@ -854,14 +845,15 @@ awi_init(sc)
 }
 
 void
-awi_stop(sc)
-	struct awi_softc *sc;
+awi_stop(ifp, disable)
+	struct ifnet *ifp;
+	int disable;
 {
-	struct ifnet *ifp = sc->sc_ifp;
+	struct awi_softc *sc = ifp->if_softc;
 	struct awi_bss *bp;
 
 	sc->sc_status = AWI_ST_INIT;
-	if (!sc->sc_invalid) {
+	if (sc->sc_enabled && !sc->sc_invalid) {
 		(void)awi_cmd_wait(sc);
 		if (sc->sc_mib_local.Network_Mode &&
 		    sc->sc_status > AWI_ST_AUTH)
@@ -876,6 +868,11 @@ awi_stop(sc)
 	while ((bp = TAILQ_FIRST(&sc->sc_scan)) != NULL) {
 		TAILQ_REMOVE(&sc->sc_scan, bp, list);
 		free(bp, M_DEVBUF);
+	}
+	if (sc->sc_enabled && disable) {
+		if (sc->sc_disable)
+			(*sc->sc_disable)(sc);
+		sc->sc_enabled = 0;
 	}
 }
 
@@ -948,6 +945,10 @@ awi_start(ifp)
 				break;
 			}
 			IF_DEQUEUE(&sc->sc_mgtq, m0);
+#ifdef AWI_DEBUG
+			if (awi_dump)
+				awi_dump_pkt(sc, m0, -1);
+#endif
 		} else {
 			if (!(ifp->if_flags & IFF_RUNNING))
 				break;
@@ -968,6 +969,10 @@ awi_start(ifp)
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			AWI_BPF_MTAP(sc, m0, AWI_BPF_NORM);
 			m0 = awi_fix_txhdr(sc, m0);
+#ifdef AWI_DEBUG
+			if (awi_dump)
+				awi_dump_pkt(sc, m0, -1);
+#endif
 			if (sc->sc_wep_algo != NULL && m0 != NULL)
 				m0 = awi_wep_encrypt(sc, m0, 1);
 			if (m0 == NULL) {
@@ -976,10 +981,6 @@ awi_start(ifp)
 			}
 			ifp->if_opackets++;
 		}
-#ifdef AWI_DEBUG
-		if (awi_dump)
-			awi_dump_pkt(sc, m0, -1);
-#endif
 		AWI_BPF_MTAP(sc, m0, AWI_BPF_RAW);
 		len = 0;
 		for (m = m0; m != NULL; m = m->m_next) {
@@ -1490,7 +1491,7 @@ awi_init_hw(sc)
 	awi_intr_unlock(sc);
 	am79c930_gcr_setbits(&sc->sc_chip, AM79C930_GCR_ENECINT);
 
-	/* issueing interface test command */
+	/* issuing interface test command */
 	error = awi_cmd(sc, AWI_CMD_NOP);
 	if (error) {
 		printf("%s: failed to complete selftest", sc->sc_dev.dv_xname);
@@ -2196,7 +2197,7 @@ awi_send_asreq(sc, reassoc)
 	struct ifnet *ifp = sc->sc_ifp;
 	struct mbuf *m;
 	struct ieee80211_frame *wh;
-	u_int16_t lintval;
+	u_int16_t capinfo, lintval;
 	u_int8_t *asreq;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -2224,12 +2225,16 @@ awi_send_asreq(sc, reassoc)
 	asreq = (u_int8_t *)&wh[1];
 
 	/* capability info */
-	if (sc->sc_wep_algo == NULL)
-		LE_WRITE_2(asreq, IEEE80211_CAPINFO_CF_POLLABLE);
+	capinfo = IEEE80211_CAPINFO_CF_POLLABLE;	/*XXX*/
+	if (sc->sc_mib_local.Network_Mode)
+		capinfo |= IEEE80211_CAPINFO_ESS;
 	else
-		LE_WRITE_2(asreq,
-		    IEEE80211_CAPINFO_CF_POLLABLE | IEEE80211_CAPINFO_PRIVACY);
+		capinfo |= IEEE80211_CAPINFO_IBSS;
+	if (sc->sc_wep_algo != NULL)
+		capinfo |= IEEE80211_CAPINFO_PRIVACY;
+	LE_WRITE_2(asreq, capinfo);
 	asreq += 2;
+
 	/* listen interval */
 	lintval = LE_READ_2(&sc->sc_mib_mgt.aListen_Interval);
 	LE_WRITE_2(asreq, lintval);

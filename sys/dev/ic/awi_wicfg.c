@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wicfg.c,v 1.3.4.2 2001/06/21 20:02:14 nathanw Exp $	*/
+/*	$NetBSD: awi_wicfg.c,v 1.3.4.3 2001/08/24 00:09:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,9 +43,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/mbuf.h>
-#include <sys/malloc.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
@@ -57,7 +54,6 @@
 #endif
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #ifdef __FreeBSD__
 #include <net/ethernet.h>
 #include <net/if_arp.h>
@@ -74,7 +70,6 @@
 #endif
 
 #ifdef __NetBSD__
-#include <dev/ic/am79c930reg.h>
 #include <dev/ic/am79c930var.h>
 #include <dev/ic/awireg.h>
 #include <dev/ic/awivar.h>
@@ -82,7 +77,6 @@
 #include <dev/ic/wi_ieee.h>	/* XXX */
 #endif
 #ifdef __FreeBSD__
-#include <dev/awi/am79c930reg.h>
 #include <dev/awi/am79c930var.h>
 
 #undef	_KERNEL		/* XXX */
@@ -246,6 +240,14 @@ awi_cfgget(ifp, cmd, data)
 		wreq.wi_val[0] = sc->sc_start_bss;
 		wreq.wi_len = 1;
 		break;
+	case WI_RID_MICROWAVE_OVEN:
+		wreq.wi_val[0] = 0;	/* no ... not supported */
+		wreq.wi_len = 1;
+		break;
+	case WI_RID_ROAMING_MODE:
+		wreq.wi_val[0] = 1;	/* enabled ... not supported */
+		wreq.wi_len = 1;
+		break;
 	case WI_RID_SYSTEM_SCALE:
 		wreq.wi_val[0] = 1;	/* low density ... not supported */
 		wreq.wi_len = 1;
@@ -260,6 +262,10 @@ awi_cfgget(ifp, cmd, data)
 		break;
 	case WI_RID_WEP_AVAIL:
 		wreq.wi_val[0] = 1;
+		wreq.wi_len = 1;
+		break;
+	case WI_RID_AUTH_CNTL:
+		wreq.wi_val[0] = 1;	/* open system authentication only */
 		wreq.wi_len = 1;
 		break;
 	case WI_RID_ENCRYPTION:
@@ -543,6 +549,22 @@ awi_cfgset(ifp, cmd, data)
 		sc->sc_start_bss = wreq.wi_val[0] ? 1 : 0;
 		error = ENETRESET;
 		break;
+	case WI_RID_MICROWAVE_OVEN:
+		if (wreq.wi_len != 1) {
+			error = EINVAL;
+			break;
+		}
+		if (wreq.wi_val[0] != 0)
+			error = EINVAL;		/* not supported */
+		break;
+	case WI_RID_ROAMING_MODE:
+		if (wreq.wi_len != 1) {
+			error = EINVAL;
+			break;
+		}
+		if (wreq.wi_val[0] != 1)
+			error = EINVAL;		/* not supported */
+		break;
 	case WI_RID_SYSTEM_SCALE:
 		if (wreq.wi_len != 1) {
 			error = EINVAL;
@@ -564,6 +586,14 @@ awi_cfgset(ifp, cmd, data)
 		break;
 	case WI_RID_WEP_AVAIL:
 		error = EPERM;
+		break;
+	case WI_RID_AUTH_CNTL:
+		if (wreq.wi_len != 1) {
+			error = EINVAL;
+			break;
+		}
+		if (wreq.wi_val[0] != 1)
+			error = EINVAL;		/* not implmented */
 		break;
 	case WI_RID_ENCRYPTION:
 		if (wreq.wi_len != 1) {
@@ -620,8 +650,8 @@ awi_cfgset(ifp, cmd, data)
 	}
 	if (error == ENETRESET) {
 		if (sc->sc_enabled) {
-			awi_stop(sc);
-			error = awi_init(sc);
+			awi_stop(ifp, 0);
+			error = awi_init(ifp);
 		} else
 			error = 0;
 	}

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.34.2.2 2001/06/21 20:00:21 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.34.2.3 2001/08/24 00:08:55 nathanw Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -159,7 +159,7 @@
 			    struct osf1_itimerval *oitv); }
 84	UNIMPL		old wait
 85	UNIMPL		table
-86	UNIMPL		getitimer
+86	STD		{ int osf1_sys_getitimer(u_int which, struct osf1_itimerval *itv); }
 87	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
 			    u_int len); }
 88	NOARGS		{ int compat_43_sys_sethostname(const char *hostname, \
@@ -227,7 +227,7 @@
 129	STD		{ int osf1_sys_truncate(const char *path, \
 			    off_t length); }
 130	STD		{ int osf1_sys_ftruncate(int fd, off_t length); }
-131	UNIMPL		flock
+131	NOARGS		{ int sys_flock(int fd, int operation); }
 132	STD		{ int osf1_sys_setgid(gid_t gid); }
 133	STD		{ int osf1_sys_sendto(int s, caddr_t buf, size_t len, \
 			    int flags, struct sockaddr *to, int tolen); }
@@ -387,3 +387,8 @@
 259	UNIMPL		swapctl
 260	UNIMPL		memcntl
 261	UNIMPL		fdatasync
+262	UNIMPL		oflock
+263	UNIMPL		_F64_readv
+264	UNIMPL		_F64_writev
+265	UNIMPL		cdslxlate
+266	UNIMPL		sendfile

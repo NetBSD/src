@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.12.2.2 2001/06/21 20:05:58 nathanw Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.12.2.3 2001/08/24 00:10:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -159,15 +159,15 @@ scsipi_inqmatch(inqbuf, base, nmatches, matchsize, bestpriority)
 			continue;
 		priority = 2;
 		len = strlen(match->vendor);
-		if (bcmp(inqbuf->vendor, match->vendor, len))
+		if (memcmp(inqbuf->vendor, match->vendor, len))
 			continue;
 		priority += len;
 		len = strlen(match->product);
-		if (bcmp(inqbuf->product, match->product, len))
+		if (memcmp(inqbuf->product, match->product, len))
 			continue;
 		priority += len;
 		len = strlen(match->revision);
-		if (bcmp(inqbuf->revision, match->revision, len))
+		if (memcmp(inqbuf->revision, match->revision, len))
 			continue;
 		priority += len;
 

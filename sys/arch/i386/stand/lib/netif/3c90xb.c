@@ -1,4 +1,4 @@
-/* $NetBSD: 3c90xb.c,v 1.5 1999/12/02 13:21:48 drochner Exp $ */
+/* $NetBSD: 3c90xb.c,v 1.5.8.1 2001/08/24 00:08:41 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -358,7 +358,7 @@ found:
 	val = ex_read_eeprom(EEPROM_OEM_ADDR2);
 	myethaddr[4] = val >> 8;
 	myethaddr[5] = val & 0xff;
-	bcopy(myethaddr, myadr, 6);
+	memcpy(myadr, myethaddr, 6);
 
 	upd = RECVBUF_VIRT;
 	upd->upd_nextptr = RECVBUF_PHYS;
@@ -406,7 +406,7 @@ EtherSend(pkt, len)
 #ifdef _STANDALONE
 	dpd->dpd_frags[0].fr_addr = vtophys(pkt);
 #else
-	bcopy(pkt, SNDBUF_VIRT + 100, len);
+	memcpy(SNDBUF_VIRT + 100, pkt, len);
 	dpd->dpd_frags[0].fr_addr = SNDBUF_PHYS + 100;
 #endif
 	dpd->dpd_frags[0].fr_len = len | EX_FR_LAST;
@@ -444,7 +444,7 @@ EtherReceive(pkt, maxlen)
 	if (len > maxlen)
 		len = 0;
 	else
-		bcopy(RECVBUF_VIRT + 100, pkt, len);
+		memcpy(pkt, RECVBUF_VIRT + 100, len);
 
 	upd->upd_pktstatus = 1500;
 	CSR_WRITE_2(ELINK_COMMAND, ELINK_UPUNSTALL);

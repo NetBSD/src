@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.51.2.1 2001/06/21 20:05:01 nathanw Exp $	*/
+/*	$NetBSD: pci.c,v 1.51.2.2 2001/08/24 00:10:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -348,9 +348,8 @@ pciprint(aux, pnp)
 		    *(long *)&pa->pa_tag, *(long *)&pa->pa_intrtag,
 		    (long)pa->pa_intrswiz, (long)pa->pa_intrpin);
 #else
-		printf("tag %#lx, intrtag %#lx, intrswiz %#lx, intrpin %#lx",
-		    (long)pa->pa_tag, (long)pa->pa_intrtag, (long)pa->pa_intrswiz,
-		    (long)pa->pa_intrpin);
+		printf("intrswiz %#lx, intrpin %#lx",
+		    (long)pa->pa_intrswiz, (long)pa->pa_intrpin);
 #endif
 		printf(", i/o %s, mem %s,",
 		    pa->pa_flags & PCI_FLAGS_IO_ENABLED ? "on" : "off",

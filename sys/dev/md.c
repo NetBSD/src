@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.25 2001/02/08 13:11:31 tsutsui Exp $	*/
+/*	$NetBSD: md.c,v 1.25.2.1 2001/08/24 00:09:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -130,7 +130,7 @@ mdattach(n)
 			printf("ramdisk: malloc for attach failed!\n");
 			return;
 		}
-		bzero((caddr_t)sc, sizeof(*sc));
+		memset((caddr_t)sc, 0, sizeof(*sc));
 		ramdisk_devs[i] = sc;
 		sc->sc_dev.dv_unit = i;
 		sprintf(sc->sc_dev.dv_xname, "md%d", i);
@@ -364,9 +364,9 @@ mdstrategy(bp)
 			xfer = (sc->sc_size - off);
 		addr = sc->sc_addr + off;
 		if (bp->b_flags & B_READ)
-			bcopy(addr, bp->b_data, xfer);
+			memcpy(bp->b_data, addr, xfer);
 		else
-			bcopy(bp->b_data, addr, xfer);
+			memcpy(addr, bp->b_data, xfer);
 		bp->b_resid -= xfer;
 		break;
 

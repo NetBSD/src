@@ -1,10 +1,4 @@
-# $NetBSD: TODO,v 1.6.2.2 2001/06/21 20:03:57 nathanw Exp $
-
-Bugs:
-* i386: keyboard freezes in fd_mountroothook when booting from floppy;
-	if the fd_mountroothook is not executed, the keyboard works
-	just fine
-	maybe rev.1.6 of sys/dev/ic/pckbc.c fixes this?
+# $NetBSD: TODO,v 1.6.2.3 2001/08/24 00:09:53 nathanw Exp $
 
 Projects:
 * proper MCA DMA/bus_dma(9) support (primarily for AHA-1640 ATM), using

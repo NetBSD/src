@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.2 2000/11/17 03:55:18 erh Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.2.2.1 2001/08/24 00:08:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define _ALPHA_LINUX_EXEC_H
 
 #include <sys/exec_aout.h>
+#include <sys/exec_elf.h>
 
 #define LINUX_M_ALPHA		MID_ALPHA
 #define LINUX_MID_MACHINE	LINUX_M_ALPHA
@@ -84,10 +85,12 @@ typedef struct {
 #ifdef _KERNEL
 __BEGIN_DECLS
 #ifdef EXEC_ELF32
-void *linux_elf32_copyargs __P((struct exec_package *, struct ps_strings *, void *, void *));
+int linux_elf32_copyargs __P((struct exec_package *, struct ps_strings *,
+    char **, void *));
 #endif
 #ifdef EXEC_ELF64
-void *linux_elf64_copyargs __P((struct exec_package *, struct ps_strings *, void *, void *));
+int linux_elf64_copyargs __P((struct exec_package *, struct ps_strings *,
+    char **, void *));
 #endif
 __END_DECLS
 #endif /* !_KERNEL */

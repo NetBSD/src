@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.43.2.1 2001/06/21 20:09:21 nathanw Exp $	*/
-/*	$KAME: key.c,v 1.182 2001/02/16 23:43:01 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.43.2.2 2001/08/24 00:12:50 nathanw Exp $	*/
+/*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -118,9 +118,7 @@
  *   field hits 0 (= no external reference other than from SA header.
  */
 
-#ifdef IPSEC_DEBUG
 u_int32_t key_debug_level = 0;
-#endif
 static u_int key_spi_trycnt = 1000;
 static u_int32_t key_spi_minval = 0x100;
 static u_int32_t key_spi_maxval = 0x0fffffff;	/* XXX */
@@ -354,7 +352,7 @@ static struct mbuf *key_setsadbaddr __P((u_int16_t,
 static struct mbuf *key_setsadbident __P((u_int16_t, u_int16_t, caddr_t,
 	int, u_int64_t));
 #endif
-static struct mbuf *key_setsadbxsa2(u_int8_t, u_int32_t);
+static struct mbuf *key_setsadbxsa2 __P((u_int8_t, u_int32_t, u_int32_t));
 static struct mbuf *key_setsadbxpolicy __P((u_int16_t, u_int8_t,
 	u_int32_t));
 static void *key_newbuf __P((const void *, u_int));
@@ -367,10 +365,6 @@ static int key_cmpsaidx_withmode
 	__P((struct secasindex *, struct secasindex *));
 static int key_cmpsaidx_withoutmode
 	__P((struct secasindex *, struct secasindex *));
-static int key_cmpspidx_exactly
-	__P((struct secpolicyindex *, struct secpolicyindex *));
-static int key_cmpspidx_withmask
-	__P((struct secpolicyindex *, struct secpolicyindex *));
 static int key_sockaddrcmp __P((struct sockaddr *, struct sockaddr *, int));
 static int key_bbcmp __P((caddr_t, caddr_t, u_int));
 static void key_srandom __P((void));
@@ -1669,6 +1663,9 @@ key_spdadd(so, m, mhp)
 		}
     	}
 
+	/* invalidate all cached SPD pointers on pcb */
+	ipsec_invalpcbcacheall();
+
     {
 	struct mbuf *n, *mpolicy;
 	struct sadb_msg *newmsg;
@@ -1825,6 +1822,9 @@ key_spddelete(so, m, mhp)
 	sp->state = IPSEC_SPSTATE_DEAD;
 	key_freesp(sp);
 
+	/* invalidate all cached SPD pointers on pcb */
+	ipsec_invalpcbcacheall();
+
     {
 	struct mbuf *n;
 	struct sadb_msg *newmsg;
@@ -1890,6 +1890,9 @@ key_spddelete2(so, m, mhp)
 
 	sp->state = IPSEC_SPSTATE_DEAD;
 	key_freesp(sp);
+
+	/* invalidate all cached SPD pointers on pcb */
+	ipsec_invalpcbcacheall();
 
     {
 	struct mbuf *n, *nn;
@@ -2103,6 +2106,9 @@ key_spdflush(so, m, mhp)
 			sp->state = IPSEC_SPSTATE_DEAD;
 		}
 	}
+
+	/* invalidate all cached SPD pointers on pcb */
+	ipsec_invalpcbcacheall();
 
 	if (sizeof(struct sadb_msg) > m->m_len + M_TRAILINGSPACE(m)) {
 #ifdef IPSEC_DEBUG
@@ -3148,6 +3154,7 @@ key_setdumpsa(sav, type, satype, seq, pid)
 
 		case SADB_X_EXT_SA2:
 			m = key_setsadbxsa2(sav->sah->saidx.mode,
+					sav->replay ? sav->replay->count : 0,
 					sav->sah->saidx.reqid);
 			if (!m)
 				goto fail;
@@ -3420,9 +3427,9 @@ key_setsadbident(exttype, idtype, string, stringlen, id)
  * set data into sadb_x_sa2.
  */
 static struct mbuf *
-key_setsadbxsa2(mode, reqid)
+key_setsadbxsa2(mode, seq, reqid)
 	u_int8_t mode;
-	u_int32_t reqid;
+	u_int32_t seq, reqid;
 {
 	struct mbuf *m;
 	struct sadb_x_sa2 *p;
@@ -3444,7 +3451,7 @@ key_setsadbxsa2(mode, reqid)
 	p->sadb_x_sa2_mode = mode;
 	p->sadb_x_sa2_reserved1 = 0;
 	p->sadb_x_sa2_reserved2 = 0;
-	p->sadb_x_sa2_reserved3 = 0;
+	p->sadb_x_sa2_sequence = seq;
 	p->sadb_x_sa2_reqid = reqid;
 
 	return m;
@@ -3715,7 +3722,7 @@ key_cmpsaidx_withoutmode(saidx0, saidx1)
  *	1 : equal
  *	0 : not equal
  */
-static int
+int
 key_cmpspidx_exactly(spidx0, spidx1)
 	struct secpolicyindex *spidx0, *spidx1;
 {
@@ -3752,7 +3759,7 @@ key_cmpspidx_exactly(spidx0, spidx1)
  *	1 : equal
  *	0 : not equal
  */
-static int
+int
 key_cmpspidx_withmask(spidx0, spidx1)
 	struct secpolicyindex *spidx0, *spidx1;
 {
@@ -3789,7 +3796,13 @@ key_cmpspidx_withmask(spidx0, spidx1)
 		 && satosin6(&spidx0->src)->sin6_port !=
 		    satosin6(&spidx1->src)->sin6_port)
 			return 0;
-		if (satosin6(&spidx0->src)->sin6_scope_id !=
+		/*
+		 * scope_id check. if sin6_scope_id is 0, we regard it
+		 * as a wildcard scope, which matches any scope zone ID. 
+		 */
+		if (satosin6(&spidx0->src)->sin6_scope_id &&
+		    satosin6(&spidx1->src)->sin6_scope_id &&
+		    satosin6(&spidx0->src)->sin6_scope_id !=
 		    satosin6(&spidx1->src)->sin6_scope_id)
 			return 0;
 		if (!key_bbcmp((caddr_t)&satosin6(&spidx0->src)->sin6_addr,
@@ -3818,7 +3831,13 @@ key_cmpspidx_withmask(spidx0, spidx1)
 		 && satosin6(&spidx0->dst)->sin6_port !=
 		    satosin6(&spidx1->dst)->sin6_port)
 			return 0;
-		if (satosin6(&spidx0->dst)->sin6_scope_id !=
+		/*
+		 * scope_id check. if sin6_scope_id is 0, we regard it
+		 * as a wildcard scope, which matches any scope zone ID. 
+		 */
+		if (satosin6(&spidx0->src)->sin6_scope_id &&
+		    satosin6(&spidx1->src)->sin6_scope_id &&
+		    satosin6(&spidx0->dst)->sin6_scope_id !=
 		    satosin6(&spidx1->dst)->sin6_scope_id)
 			return 0;
 		if (!key_bbcmp((caddr_t)&satosin6(&spidx0->dst)->sin6_addr,
@@ -6283,7 +6302,9 @@ key_expire(sav)
 	m_cat(result, m);
 
 	/* create SA extension */
-	m = key_setsadbxsa2(sav->sah->saidx.mode, sav->sah->saidx.reqid);
+	m = key_setsadbxsa2(sav->sah->saidx.mode,
+			sav->replay ? sav->replay->count : 0,
+			sav->sah->saidx.reqid);
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
@@ -7365,8 +7386,6 @@ key_alloc_mbuf(l)
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
-static int *key_sysvars[] = KEYCTL_VARS;
-
 int
 key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	int *name;
@@ -7378,11 +7397,35 @@ key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 {
 	if (name[0] >= KEYCTL_MAXID)
 		return EOPNOTSUPP;
-	if (!key_sysvars[name[0]])
-		return EOPNOTSUPP;
 	switch (name[0]) {
-	default:
+#ifdef IPSEC_DEBUG
+	case KEYCTL_DEBUG_LEVEL:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-			key_sysvars[name[0]]);
+		    &key_debug_level);
+#endif
+	case KEYCTL_SPI_TRY:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &key_spi_trycnt);
+	case KEYCTL_SPI_MIN_VALUE:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &key_spi_minval);
+	case KEYCTL_SPI_MAX_VALUE:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &key_spi_maxval);
+	case KEYCTL_RANDOM_INT:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &key_int_random);
+	case KEYCTL_LARVAL_LIFETIME:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &key_larval_lifetime);
+	case KEYCTL_BLOCKACQ_COUNT:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &key_blockacq_count);
+	case KEYCTL_BLOCKACQ_LIFETIME:
+		return sysctl_int(oldp, oldlenp, newp, newlen,
+		    &key_blockacq_lifetime);
+	default:
+		return EOPNOTSUPP;
 	}
+	/* NOTREACHED */
 }

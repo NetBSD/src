@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.8.2.1 2001/06/21 20:05:21 nathanw Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.8.2.2 2001/08/24 00:10:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -233,6 +233,28 @@ static const struct pcmcia_config_entry pcmcia_ndc_nd5100_func0_cfe0 = {
 	0,			/* maxtwins */
 };
 
+static const struct pcmcia_function pcmcia_emtac_a2424i_func0 = {
+	0,			/* function number */
+	PCMCIA_FUNCTION_NETWORK,
+	0x21,			/* last cfe number */
+	0x3e0,			/* ccr_base */
+	0x1,			/* ccr_mask */
+};
+
+static const struct pcmcia_config_entry pcmcia_emtac_a2424i_func0_cfe0 = {
+	0x21,			/* cfe number */
+	PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL |
+	PCMCIA_CFE_IRQPULSE,
+	PCMCIA_IFTYPE_IO,
+	1,			/* num_iospace */
+	6,			/* iomask */
+	{ { 0x40, 0x100 } },	/* iospace */
+	0xffff,			/* irqmask */
+	0,			/* num_memspace */
+	{ { 0 } },		/* memspace */
+	0,			/* maxtwins */
+};
+
 static const struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
 	{ PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
 	  PCMCIA_CIS_INVALID,
@@ -264,6 +286,8 @@ static const struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
 	  &pcmcia_sveclancard_func0, &pcmcia_sveclancard_func0_cfe0 },
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID, PCMCIA_CIS_NDC_ND5100_E,
 	  &pcmcia_ndc_nd5100_func0, &pcmcia_ndc_nd5100_func0_cfe0 },
+	{ PCMCIA_VENDOR_EMTAC, PCMCIA_PRODUCT_EMTAC_WLAN, PCMCIA_CIS_INVALID,
+	  &pcmcia_emtac_a2424i_func0, &pcmcia_emtac_a2424i_func0_cfe0 },
 };
 	
 static int n_pcmcia_cis_quirks =

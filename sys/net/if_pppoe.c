@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.3.2.2 2001/06/21 20:08:10 nathanw Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.3.2.3 2001/08/24 00:12:13 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -177,7 +177,7 @@ pppoeattach()
 	for (sc = pppoe_softc; i < NPPPOE; sc++) {
 		sprintf(sc->sc_sppp.pp_if.if_xname, "pppoe%d", i++);
 		sc->sc_sppp.pp_if.if_softc = sc;
-		sc->sc_sppp.pp_if.if_mtu = ETHERMTU - PPPOE_HEADERLEN;
+		sc->sc_sppp.pp_if.if_mtu = ETHERMTU - PPPOE_HEADERLEN - 2; /* two byte PPP protocol discriminator, then IP data */
 		sc->sc_sppp.pp_if.if_flags = IFF_SIMPLEX | IFF_POINTOPOINT
 		    | IFF_MULTICAST | IFF_LINK1;	/* auto "dial" */
 		sc->sc_sppp.pp_if.if_type = IFT_PPP;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.19.20.1 2001/03/05 22:49:28 nathanw Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.19.20.2 2001/08/24 00:08:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 /* The sizes of the arguments.  Used for copyin. */
-int linux_socketcall_argsize[] = {
+static const int linux_socketcall_argsize[LINUX_MAX_SOCKETCALL+1] = {
 	-1,
 	sizeof(struct linux_sys_socket_args),		/* 1 */
 	sizeof(struct linux_sys_bind_args),
@@ -117,7 +117,7 @@ linux_sys_socketcall(l, v, retval)
 	struct linux_socketcall_dummy_args lda;
 	int error;
 
-	if (SCARG(uap, what) > LINUX_MAX_SOCKETCALL)
+	if (SCARG(uap, what) < 0 || SCARG(uap, what) > LINUX_MAX_SOCKETCALL)
 		return ENOSYS;
 
 	if ((error = copyin((caddr_t) SCARG(uap, args), (caddr_t) &lda,
@@ -128,23 +128,23 @@ linux_sys_socketcall(l, v, retval)
 	case LINUX_SYS_socket:
 		return linux_sys_socket(l, (void *)&lda, retval);
 	case LINUX_SYS_bind:
-		return sys_bind(l, (void *)&lda, retval);
+		return linux_sys_bind(l, (void *)&lda, retval);
 	case LINUX_SYS_connect:
 		return linux_sys_connect(l, (void *)&lda, retval);
 	case LINUX_SYS_listen:
 		return sys_listen(l, (void *)&lda, retval);
 	case LINUX_SYS_accept:
-		return compat_43_sys_accept(l, (void *)&lda, retval);
+		return linux_sys_accept(l, (void *)&lda, retval);
 	case LINUX_SYS_getsockname:
-		return compat_43_sys_getsockname(l, (void *)&lda, retval);
+		return linux_sys_getsockname(l, (void *)&lda, retval);
 	case LINUX_SYS_getpeername:
-		return compat_43_sys_getpeername(l, (void *)&lda, retval);
+		return linux_sys_getpeername(l, (void *)&lda, retval);
 	case LINUX_SYS_socketpair:
 		return linux_sys_socketpair(l, (void *)&lda, retval);
 	case LINUX_SYS_send:
-		return compat_43_sys_send(l, (void *)&lda, retval);
+		return linux_sys_send(l, (void *)&lda, retval);
 	case LINUX_SYS_recv:
-		return compat_43_sys_recv(l, (void *)&lda, retval);
+		return linux_sys_recv(l, (void *)&lda, retval);
 	case LINUX_SYS_sendto:
 		return linux_sys_sendto(l, (void *)&lda, retval);
 	case LINUX_SYS_recvfrom:
@@ -156,9 +156,9 @@ linux_sys_socketcall(l, v, retval)
 	case LINUX_SYS_getsockopt:
 		return linux_sys_getsockopt(l, (void *)&lda, retval);
 	case LINUX_SYS_sendmsg:
-		return sys_sendmsg(l, (void *)&lda, retval);
+		return linux_sys_sendmsg(l, (void *)&lda, retval);
 	case LINUX_SYS_recvmsg:
-		return sys_recvmsg(l, (void *)&lda, retval);
+		return linux_sys_recvmsg(l, (void *)&lda, retval);
 	default:
 		return ENOSYS;
 	}

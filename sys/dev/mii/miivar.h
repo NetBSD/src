@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.19.2.2 2001/06/21 20:04:23 nathanw Exp $	*/
+/*	$NetBSD: miivar.h,v 1.19.2.3 2001/08/24 00:09:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -147,6 +147,8 @@ typedef struct mii_softc mii_softc_t;
 #define MIIF_AUTOTSLEEP	0x0010		/* use tsleep(), not callout() */
 #define MIIF_HAVEFIBER	0x0020		/* from parent: has fiber interface */
 #define	MIIF_HAVE_GTCR	0x0040		/* has 100base-T2/1000base-T CR */
+#define	MIIF_IS_1000X	0x0080		/* is a 1000BASE-X device */
+#define	MIIF_DOPAUSE	0x0100		/* advertise PAUSE capability */
 
 /* XXX ununsed
 #define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP|MIIF_AUTOTSLEEP)
