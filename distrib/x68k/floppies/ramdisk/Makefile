@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1999/12/05 15:48:12 minoura Exp $
+#	$NetBSD: Makefile,v 1.14 1999/12/24 17:02:15 minoura Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -70,6 +70,8 @@ HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.
 # Used in building bootfloppy
 echoimage:
 	@echo ${.OBJDIR}/${IMAGE}
+
+depend:
 
 release:
 

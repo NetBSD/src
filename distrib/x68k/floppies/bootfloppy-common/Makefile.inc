@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 1999/12/05 15:48:11 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.13 1999/12/24 17:02:15 minoura Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -14,7 +14,6 @@ IMAGE?=		xxx-${REV}.fs
 RAMDISKDIR?=	$(.CURDIR)/../ramdisk/
 KERN?=		netbsd-xxx
 KERNNAME?=	netbsd.xxx
-KERNSRC?=	${.CURDIR}/../../../../sys
 GZNAME?=	${KERNNAME}.gz
 MDEC=		${DESTDIR}/usr/mdec
 
@@ -59,18 +58,16 @@ ${KERNNAME}: ${KERN} ${RAMDISK}
 	mdsetimage -v netbsd.tmp ${RAMDISK}
 	mv -f netbsd.tmp ${.TARGET}
 
-${KERN}:
-	config -s ${KERNSRC} -b ${KERNDIR} ${KERNCNF}
-	( cd ${KERNDIR} ; make depend && make )
-
 ${GZNAME}: ${KERNNAME}
 	gzip -cv9 ${KERNNAME} > ${.TARGET}
+
+depend:
 
 release:
 	-mkdir -p ${RELEASEDIR}/installation/floppy
 	-mkdir -p ${RELEASEDIR}/installation/misc
 	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
-	gzip <${IMAGE} >${RELEASEDIR}/installation/floppies/${IMAGE}.gz
+	gzip <${IMAGE} >${RELEASEDIR}/installation/floppy/${IMAGE}.gz
 	cp -p ${KERNNAME} ${RELEASEDIR}/installation/misc
 	cp -p ${GZNAME} ${RELEASEDIR}/installation/misc
 
