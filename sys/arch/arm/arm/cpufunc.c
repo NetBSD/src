@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.3 2001/05/13 14:41:56 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.4 2001/06/02 19:01:03 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -54,6 +54,76 @@
 #include <machine/cpufunc.h>
 #include <machine/bootconfig.h>
 #include <arch/arm/arm/disassem.h>
+
+#ifdef CPU_ARM3
+struct cpu_functions arm3_cpufuncs = {
+	/* CPU functions */
+	
+	cpufunc_id,			/* id			 */
+
+	/* MMU functions */
+
+	arm3_control,			/* control		*/
+	NULL,				/* domain		*/
+	NULL,				/* setttb		*/
+	NULL,				/* faultstatus		*/
+	NULL,				/* faultaddress		*/
+
+	/* TLB functions */
+
+	cpufunc_nullop,			/* tlb_flushID		*/
+	(void *)cpufunc_nullop,		/* tlb_flushID_SE	*/
+	cpufunc_nullop,			/* tlb_flushI		*/
+	(void *)cpufunc_nullop,		/* tlb_flushI_SE	*/
+	cpufunc_nullop,			/* tlb_flushD		*/
+	(void *)cpufunc_nullop,		/* tlb_flushD_SE	*/
+
+	/* Cache functions */
+
+	arm3_cache_flush,		/* cache_flushID	*/
+	(void *)arm3_cache_flush,	/* cache_flushID_SE	*/
+	arm3_cache_flush,		/* cache_flushI		*/
+	(void *)arm3_cache_flush,	/* cache_flushI_SE	*/
+	arm3_cache_flush,		/* cache_flushD		*/
+	(void *)arm3_cache_flush,	/* cache_flushD_SE	*/
+
+	cpufunc_nullop,			/* cache_cleanID	s*/
+	(void *)cpufunc_nullop,		/* cache_cleanID_E	s*/
+	cpufunc_nullop,			/* cache_cleanD		s*/
+	(void *)cpufunc_nullop,		/* cache_cleanD_E	*/
+
+	arm3_cache_flush,		/* cache_purgeID	s*/
+	(void *)arm3_cache_flush,	/* cache_purgeID_E	s*/
+	arm3_cache_flush,		/* cache_purgeD		s*/
+	(void *)arm3_cache_flush,	/* cache_purgeD_E	s*/
+
+	/* Other functions */
+
+	cpufunc_nullop,			/* flush_prefetchbuf	*/
+	cpufunc_nullop,			/* drain_writebuf	*/
+	cpufunc_nullop,			/* flush_brnchtgt_C	*/
+	(void *)cpufunc_nullop,		/* flush_brnchtgt_E	*/
+
+	(void *)cpufunc_nullop,		/* sleep		*/
+
+	/* Soft functions */
+
+	cpufunc_nullop,			/* cache_syncI		*/
+	(void *)cpufunc_nullop,		/* cache_cleanID_rng	*/
+	(void *)cpufunc_nullop,		/* cache_cleanD_rng	*/
+	(void *)arm3_cache_flush,	/* cache_purgeID_rng	*/
+	(void *)arm3_cache_flush,	/* cache_purgeD_rng	*/
+	(void *)cpufunc_nullop,		/* cache_syncI_rng	*/
+
+	NULL,				/* dataabt_fixup	*/
+	cpufunc_null_fixup,		/* prefetchabt_fixup	*/
+
+	NULL,				/* context_switch	*/
+
+	(void *)cpufunc_nullop		/* cpu setup		*/
+
+};
+#endif	/* CPU_ARM3 */
 
 #ifdef CPU_ARM6
 struct cpu_functions arm6_cpufuncs = {
@@ -353,6 +423,14 @@ set_cpufuncs()
 	cputype &= CPU_ID_CPU_MASK;
 
 
+#ifdef CPU_ARM3
+	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
+	    (cputype & 0x00000f00) == 0x00000300) {
+		cpufuncs = arm3_cpufuncs;
+		cpu_reset_needs_v4_MMU_disable = 0;
+		return 0;
+	}
+#endif	/* CPU_ARM3 */
 #ifdef CPU_ARM6
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
 	    (cputype & 0x00000f00) == 0x00000600) {
