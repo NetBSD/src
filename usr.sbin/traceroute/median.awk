@@ -1,4 +1,5 @@
 #!/bin/awk -f
+#	$NetBSD: median.awk,v 1.3 1995/03/26 21:45:21 glass Exp $
 #
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -35,7 +36,7 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)median.awk	8.1 (Berkeley) 6/6/93
-#	$Id: median.awk,v 1.2 1994/05/16 19:15:59 mycroft Exp $
+#	$Id: median.awk,v 1.3 1995/03/26 21:45:21 glass Exp $
 #
 /^ *[0-9]/	{
 	# print out the median time to each hop along a route.
