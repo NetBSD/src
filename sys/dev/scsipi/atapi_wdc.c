@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.1.2.1 1998/06/04 16:53:07 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.1.2.2 1998/06/11 09:27:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -84,6 +84,7 @@ int   atapi_print	__P((void *, const char *));
 void  wdc_atapi_minphys  __P((struct buf *bp));
 void  wdc_atapi_start	__P((struct channel_softc *,struct wdc_xfer *));
 int   wdc_atapi_intr	 __P((struct channel_softc *, struct wdc_xfer *));
+int   wdc_atapi_ctrl	 __P((struct channel_softc *, struct wdc_xfer *));
 void  wdc_atapi_done	 __P((struct channel_softc *, struct wdc_xfer *));
 int   wdc_atapi_send_cmd __P((struct scsipi_xfer *sc_xfer));
 
@@ -172,6 +173,7 @@ wdc_atapi_get_params(ab_link, drive, flags, id)
 		    wdc_c.r_error), DEBUG_PROBE);
 		return -1;
 	}
+	chp->ch_drive[drive].state = 0;
 
 	bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
 	
@@ -229,10 +231,21 @@ wdc_atapi_start(chp, xfer)
 	struct wdc_xfer *xfer;
 {
 	struct scsipi_xfer *sc_xfer = xfer->cmd;
+	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 
 	WDCDEBUG_PRINT(("wdc_atapi_start, scsi flags 0x%x \n",sc_xfer->flags),
 	DEBUG_FUNCS);
-
+	/* Do control operations specially. */
+	if (drvp->state < READY) {
+		if (drvp->state != PIOMODE) {
+			printf("%s:%d:%d: bad state %d in wdc_atapi_start\n",
+			    chp->wdc->sc_dev.dv_xname, chp->channel,
+			    xfer->drive, drvp->state);
+			panic("wdc_atapi_start: bad state");
+		}
+		wdc_atapi_ctrl(chp, xfer);
+		return;
+	}
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (xfer->drive << 4));
 	if (wait_for_unbusy(chp) < 0) {
@@ -300,6 +313,14 @@ wdc_atapi_intr(chp, xfer)
 	int ire, dma_err = 0;
 
 	WDCDEBUG_PRINT(("wdc_atapi_intr\n"), DEBUG_INTR);
+
+	/* Is it not a transfer, but a control operation? */
+	if (drvp->state < READY) {
+		printf("%s:%d:%d: bad state %d in wdc_atapi_intr\n",
+		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
+		    drvp->state);
+		panic("wdc_atapi_intr: bad state\n");
+	}
 	/* Ack interrupt done in wait_for_unbusy */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (xfer->drive << 4));
@@ -308,6 +329,7 @@ wdc_atapi_intr(chp, xfer)
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
 		wdccommandshort(chp, xfer->drive, ATAPI_SOFT_RESET);
+		drvp->state = 0;
 		if (wait_for_unbusy(chp) != 0)
 			printf("%s:%d:%d: reset failed\n",
 			    chp->wdc->sc_dev.dv_xname, chp->channel,
@@ -506,6 +528,107 @@ again:
 	    sc_xfer->sense.atapi_sense), DEBUG_INTR);
 	wdc_atapi_done(chp, xfer);
 	return (1);
+}
+
+int
+wdc_atapi_ctrl(chp, xfer)
+	struct channel_softc *chp;
+	struct wdc_xfer *xfer;
+{
+	struct scsipi_xfer *sc_xfer = xfer->cmd;
+	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
+	char *errstring = NULL;
+
+	WDCDEBUG_PRINT(("wdc_atapi_ctrl state %d\n", drvp->state), DEBUG_INTR);
+	/* Ack interrupt done in wait_for_unbusy */
+again:
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+	    WDSD_IBM | (xfer->drive << 4));
+	switch (drvp->state) {
+	case PIOMODE:
+		/* Don't try to set mode if controller can't be adjusted */
+		if ((chp->wdc->cap & WDC_CAPABILITY_PIO) == 0)
+			goto dmamode;
+		/*
+		 * if mode is < 3, it is unknown. Assume the defaults are
+		 * good.
+		 */
+		if (drvp->PIO_mode < 3)
+			goto dmamode;
+		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
+		    0x08 | drvp->PIO_mode, WDSF_SET_MODE);
+		drvp->state = PIOMODE_WAIT;
+		break;
+	case PIOMODE_WAIT:
+		errstring = "piomode";
+		if (wait_for_unbusy(chp))
+			goto timeout;
+		if (chp->ch_status & WDCS_ERR)
+			goto error;
+	/* fall through */
+
+	case DMAMODE:
+	dmamode:
+		if (drvp->drive_flags & DRIVE_UDMA) {
+			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
+			    0x40 | drvp->UDMA_mode, WDSF_SET_MODE);
+		} else if (drvp->drive_flags & DRIVE_DMA) {
+			wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
+			    0x20 | drvp->DMA_mode, WDSF_SET_MODE);
+		} else {
+			goto ready;
+		}
+		drvp->state = DMAMODE_WAIT;
+		break;
+	case DMAMODE_WAIT:
+		errstring = "dmamode";
+		if (wait_for_unbusy(chp))
+			goto timeout;
+		if (chp->ch_status & WDCS_ERR)
+			goto error;
+	/* fall through */
+
+	case READY:
+	ready:
+		drvp->state = READY;
+		xfer->c_intr = wdc_atapi_intr;
+		wdc_atapi_start(chp, xfer);
+		return 1;
+	}
+	if ((sc_xfer->flags & SCSI_POLL) == 0) {
+		chp->ch_flags |= WDCF_IRQ_WAIT;
+		xfer->c_intr = wdc_atapi_ctrl;
+		timeout(wdctimeout, chp, WAITTIME);
+	} else {
+		goto again;
+	}
+	return 1;
+
+timeout:
+	if ((xfer->c_flags & C_TIMEOU) == 0 ) {
+		return 0; /* IRQ was not for us */
+	}
+	printf("%s:%d:%d: %s timed out\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive, errstring);
+	wdccommandshort(chp, xfer->drive, ATAPI_SOFT_RESET);
+	drvp->state = 0;
+	if (wait_for_unbusy(chp) != 0)
+		printf("%s:%d:%d: reset failed\n",
+		    chp->wdc->sc_dev.dv_xname, chp->channel,
+		    xfer->drive);
+	sc_xfer->error = XS_SELTIMEOUT;
+	wdc_atapi_done(chp, xfer);
+	return 0;
+error:
+	printf("%s:%d:%d: %s ",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
+	    errstring);
+	printf("error (%x)\n", chp->ch_error);
+	sc_xfer->error = XS_SENSE;
+	sc_xfer->sense.atapi_sense = chp->ch_error;
+	drvp->state = 0;
+	wdc_atapi_done(chp, xfer);
+	return 0;
 }
 
 void

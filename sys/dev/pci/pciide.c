@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.6 1998/06/10 11:29:25 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.7 1998/06/11 09:27:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -114,7 +114,7 @@ void piix3_4_setup_chip __P((struct pciide_softc*,
 				pci_chipset_tag_t, pcitag_t));
 
 static u_int32_t piix_setup_idetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
-static u_int32_t piix_setup_idetim_drvs __P((u_int8_t, u_int8_t, u_int8_t));
+static u_int32_t piix_setup_idetim_drvs __P((struct ata_drive_datas*));
 static u_int32_t piix_setup_sidetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
 
 int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
@@ -752,6 +752,7 @@ piix_setup_chip(sc, pc, tag)
 		    (drvp[1].drive_flags & DRIVE_DMA)) {
 			mode[0] = mode[1] =
 			    min(drvp[0].DMA_mode, drvp[1].DMA_mode);
+			    drvp[0].DMA_mode = mode[0];
 			goto ok;
 		}
 		/*
@@ -761,27 +762,27 @@ piix_setup_chip(sc, pc, tag)
 		if (drvp[0].drive_flags & DRIVE_DMA) {
 			mode[0] = drvp[0].DMA_mode;
 			mode[1] = drvp[1].PIO_mode;
-			if (piix_isp_pio[mode[1]] < piix_isp_dma[mode[0]] ||
-			    piix_rtc_pio[mode[1]] < piix_rtc_dma[mode[0]])
+			if (piix_isp_pio[mode[1]] != piix_isp_dma[mode[0]] ||
+			    piix_rtc_pio[mode[1]] != piix_rtc_dma[mode[0]])
 				mode[1] = 0;
 			goto ok;
 		}
 		if (drvp[1].drive_flags & DRIVE_DMA) {
 			mode[1] = drvp[1].DMA_mode;
 			mode[0] = drvp[0].PIO_mode;
-			if (piix_isp_pio[mode[0]] < piix_isp_dma[mode[1]] ||
-			    piix_rtc_pio[mode[0]] < piix_rtc_dma[mode[1]])
+			if (piix_isp_pio[mode[0]] != piix_isp_dma[mode[1]] ||
+			    piix_rtc_pio[mode[0]] != piix_rtc_dma[mode[1]])
 				mode[0] = 0;
 			goto ok;
 		}
 		/*
 		 * If both drives are not DMA, takes the lower mode, unless
-		 * one of them is PIO mode 0
+		 * one of them is PIO mode < 2
 		 */
-		if (drvp[0].PIO_mode == 0) {
+		if (drvp[0].PIO_mode < 2) {
 			mode[0] = 0;
 			mode[1] = drvp[1].PIO_mode;
-		} else if (drvp[1].PIO_mode == 0) {
+		} else if (drvp[1].PIO_mode < 2) {
 			mode[1] = 0;
 			mode[0] = drvp[0].PIO_mode;
 		} else {
@@ -791,13 +792,15 @@ piix_setup_chip(sc, pc, tag)
 ok:		/* The modes are setup */
 		for (drive = 0; drive < 2; drive++) {
 			if (drvp[drive].drive_flags & DRIVE_DMA) {
+				drvp[drive].DMA_mode = mode[drive];
 				idetim |= piix_setup_idetim_timings(
 				    mode[drive], 1, channel);
 				goto end;
-			}
+			} else
+				drvp[drive].PIO_mode = mode[drive];
 		}
 		/* If we are there, none of the drives are DMA */
-		if (mode[0] > 0)
+		if (mode[0] >= 2)
 			idetim |= piix_setup_idetim_timings(
 			    mode[0], 0, channel);
 		else 
@@ -811,27 +814,15 @@ end:		/*
 			/* If no drive, skip */
 			if ((drvp[drive].drive_flags & DRIVE) == 0)
 				continue;
+			idetim |= piix_setup_idetim_drvs(&drvp[drive]);
+			printf("%s:%d:%d: using PIO mode %d",
+			    sc->sc_wdcdev.sc_dev.dv_xname,
+			    channel, drive, drvp[drive].PIO_mode);
 			if (drvp[drive].drive_flags & DRIVE_DMA) {
-				/* Enable fast timing for mode >= 1 */
-				if (mode[drive] >= 1)
-					idetim = PIIX_IDETIM_SET(idetim,
-					    PIIX_IDETIM_DTE(drive) |
-					    PIIX_IDETIM_TIME(drive), channel);
 				idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-				drvp[drive].DMA_mode = mode[drive];
-				drvp[drive].PIO_mode = 0;
-				printf("%s:%d:%d: using DMA mode %d\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname,
-				    channel, drive, mode[drive]);
-			} else {
-				if (mode[drive] > 0)
-					idetim |= piix_setup_idetim_drvs(
-					    mode[drive], channel, drive);
-				drvp[drive].PIO_mode = mode[drive];
-				printf("%s:%d:%d: using PIO mode %d\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname,
-				    channel, drive, mode[drive]);
+				printf(", DMA mode %d", drvp[drive].DMA_mode);
 			}
+			printf("\n");
 		}
 		if (idedma_ctl != 0) {
 			/* Add software bits in status register */
@@ -887,7 +878,6 @@ piix3_4_setup_chip(sc, pc, tag)
 				goto pio;
 			if (pciide_dma_table_setup(sc, channel, drive) != 0)
 			    goto pio; /* Abort DMA setup */
-			drvp->PIO_mode = 0; /* use compatible timings for PIO */
 			if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) &&
 			    (drvp->drive_flags & DRIVE_UDMA)) {
 				/* use Ultra/DMA */
@@ -897,10 +887,6 @@ piix3_4_setup_chip(sc, pc, tag)
 				udmareg |= PIIX_UDMATIM_SET(
 				    piix4_sct_udma[drvp->UDMA_mode],
 				    channel, drive);
-				printf("%s:%d:%d: using Ultra DMA/33 mode %d\n",
-				     sc->sc_wdcdev.sc_dev.dv_xname,
-				     channel, drive,
-				     drvp->UDMA_mode);
 			} else {
 				/* use Multiword DMA */
 				drvp->drive_flags &= ~DRIVE_UDMA;
@@ -913,21 +899,9 @@ piix3_4_setup_chip(sc, pc, tag)
 					idetim =PIIX_IDETIM_SET(idetim,
 					    PIIX_IDETIM_SITRE, channel);
 				}
-				printf("%s:%d:%d: using DMA mode %d\n",
-				     sc->sc_wdcdev.sc_dev.dv_xname,
-				     channel, drive,
-				     drvp->DMA_mode);
 			}
-			/* enable fast timings only for mode >= 1 */
-			if (drvp->drive_flags & DRIVE_UDMA ||
-			    drvp->DMA_mode >= 1)
-				/* Enable DMA only PIO modes may be wrong */
-				idetim = PIIX_IDETIM_SET(idetim,
-				    PIIX_IDETIM_DTE(drive) |
-				    PIIX_IDETIM_TIME(drive),
-				    channel);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
-			continue;
+			goto end;
 		
 pio:			/* use PIO mode */
 			drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
@@ -940,11 +914,15 @@ pio:			/* use PIO mode */
 				idetim =PIIX_IDETIM_SET(idetim,
 				    PIIX_IDETIM_SITRE, channel);
 			}
-			idetim |= piix_setup_idetim_drvs(drvp->PIO_mode,
-			    channel, drive);
-			printf("%s:%d:%d: using PIO mode %d\n",
-			     sc->sc_wdcdev.sc_dev.dv_xname, channel, drive,
-			     drvp->PIO_mode);
+end:			idetim |= piix_setup_idetim_drvs(&drvp[drive]);
+			printf("%s:%d:%d: using PIO mode %d",
+			    sc->sc_wdcdev.sc_dev.dv_xname,
+			    channel, drive, drvp[drive].PIO_mode);
+			if (drvp[drive].drive_flags & DRIVE_DMA)
+			    printf(", DMA mode %d", drvp[drive].DMA_mode);
+			if (drvp[drive].drive_flags & DRIVE_UDMA)
+			    printf(", UDMA mode %d", drvp->UDMA_mode);
+			printf("\n");
 		}
 		if (idedma_ctl != 0) {
 			/* Add software bits in status register */
@@ -985,25 +963,59 @@ piix_setup_idetim_timings(mode, dma, channel)
 		    channel);
 }
 
-/* setup PPE, IE and TIME field based on PIO mode */
+/* setup DTE, PPE, IE and TIME field based on PIO mode */
 static u_int32_t
-piix_setup_idetim_drvs(mode, channel, drive)
-	u_int8_t mode;
-	u_int8_t channel;
-	u_int8_t drive;
+piix_setup_idetim_drvs(drvp)
+	struct ata_drive_datas *drvp;
 {
 	u_int32_t ret = 0;
+	struct channel_softc *chp = drvp->chnl_softc;
+	u_int8_t channel = chp->channel;
+	u_int8_t drive = drvp->drive;
 
-	/* if mode <= 1, use compatible timings only */
-	if (mode <= 1)
-		return 0;
+	/*
+	 * If drive is using UDMA, timings setups are independant
+	 * So just check DMA and PIO here.
+	 */
+	if (drvp->drive_flags & DRIVE_DMA) {
+		/* if mode = DMA mode 0, use compatible timings */
+		if ((drvp->drive_flags & DRIVE_DMA) &&
+		    drvp->DMA_mode == 0) {
+			drvp->PIO_mode = 0;
+			return ret;
+		}
+		ret = PIIX_IDETIM_SET(ret, PIIX_IDETIM_TIME(drive), channel);
+		/*
+		 * PIO and DMA timings are the same, use fast timings for PIO
+		 * too, else use compat timings.
+		 */
+		if ((piix_isp_pio[drvp->PIO_mode] !=
+		    piix_isp_dma[drvp->DMA_mode]) ||
+		    (piix_rtc_pio[drvp->PIO_mode] !=
+		    piix_rtc_dma[drvp->DMA_mode]))
+			drvp->PIO_mode = 0;
+		/* if PIO mode <= 2, use compat timings for PIO */
+		if (drvp->PIO_mode <= 2) {
+			ret = PIIX_IDETIM_SET(ret, PIIX_IDETIM_DTE(drive),
+			    channel);
+			return ret;
+		}
+	}
+
+	/*
+	 * Now setup PIO modes. If mode < 2, use compat timings.
+	 * Else enable fast timings. Enable IORDY and prefetch/post
+	 * if PIO mode >= 3.
+	 */
+
+	if (drvp->PIO_mode < 2)
+		return ret;
 
 	ret = PIIX_IDETIM_SET(ret, PIIX_IDETIM_TIME(drive), channel);
-	/* I didn't read anything about this, it's just a guess */
-	if (mode >= 3) 
+	if (drvp->PIO_mode >= 3) {
 		ret = PIIX_IDETIM_SET(ret, PIIX_IDETIM_IE(drive), channel);
-	if (mode >= 2)
 		ret = PIIX_IDETIM_SET(ret, PIIX_IDETIM_PPE(drive), channel);
+	}
 	return ret;
 }
 
