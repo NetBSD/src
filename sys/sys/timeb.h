@@ -1,4 +1,4 @@
-/*	$NetBSD: timeb.h,v 1.9 1994/09/18 04:44:13 mycroft Exp $	*/
+/*	$NetBSD: timeb.h,v 1.10 1995/06/05 19:39:35 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -50,5 +50,14 @@ struct timeb {
 	short	timezone;		/* minutes west of CUT */
 	short	dstflag;		/* DST == non-zero */
 };
+
+#ifndef _KERNEL
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+int ftime __P((struct timeb *tp));
+__END_DECLS
+#endif /* _KERNEL */
+
 
 #endif /* !_SYS_TIMEB_H_ */
