@@ -1,4 +1,4 @@
-/* $NetBSD: stubs.c,v 1.15 1997/01/31 01:46:49 thorpej Exp $ */
+/*	$NetBSD: stubs.c,v 1.16 1997/02/04 05:47:56 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -75,88 +75,9 @@ extern u_int soft_interrupts;
 extern int msgbufmapped;
 extern dev_t dumpdev;
 extern BootConfig bootconfig;
+#ifdef notyet
 extern videomemory_t videomemory;
-
-#ifdef GENERIC
-
-#include "fdc.h" 
-#include "md.h" 
-
-extern dev_t rootdev;
-extern int ffs_mountroot();
-extern int cd9660_mountroot();
-extern int nfs_mountroot();
-int do_mountroot();
-int (*mountroot)() = do_mountroot;
-
-#ifdef MEMORY_DISK_HOOKS
-extern struct md_conf *bootmd;
-#endif	/* MEMORY_DISK_HOOKS */
-
-int load_memory_disc_from_floppy __P((struct md_conf *md, dev_t dev));
-
-
-int
-do_mountroot()
-{
-	int error;
-
-#if (NFDC > 0 && NMD > 0 && defined(MEMORY_DISK_HOOKS))
-
-/*
- * Ok ideally the memory disc would be loaded via the md_open_hook() but since
- * we are loading the ramdisc from floppy we only want to load it during
- * the boot and not at any other time.
- */
-
-/*
- * Ok bit of bodging here. The memory disc minor is the unit number. However
- * if booting from the memory disc we limit to always booting off minor 0
- * i.e. rd0. The memory disc device passed as the root device is only used to
- * identify the memory disc major. The minor, instead of indicating the memory
- * disc unit is used to indicate the floppy minor that should be used for
- * loading the boot memory disc which is unit 0.
- */
-
-	if (major(rootdev) == 18 && bootmd) {
-		if (load_memory_disc_from_floppy(bootmd, makedev(17, minor(rootdev))) != 0)
-			panic("Failed to load memory disc\n");
-		boothowto |= RB_SINGLE;
-		rootdev = makedev(major(rootdev), 0);
-	}
-#endif	/* NFDC ... */
-
-/*
- * Slight bug with mounting CD's sometimes. The first mount may fail
- * so we will try again. This only happens with the temporary ATAPI
- * CDROM driver we are using
- */
-
-#ifdef NFS
-	/* Test for the fake nfs device */
-	if (major(rootdev) == 1)
-		return(nfs_mountroot());
-#endif	/* NFS */
-#ifdef CD9660
-	if (major(rootdev) == 20 || major(rootdev) == 26) {
-		error = cd9660_mountroot();
-		if (error)
-			error = cd9660_mountroot();
-	}
-	else {
-#endif	/* CD9660 */
-#ifdef FFS
-		error = ffs_mountroot();
-#endif	/* FFS */
-#ifdef CD9660
-		if (error)
-			error = cd9660_mountroot();
-	}
-#endif	/* CD9660 */
-	return(error);
-} 
-#endif	/* GENERIC */
-
+#endif
 
 /* Eventually this will become macros */
 
