@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.30 2001/03/31 06:56:54 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.31 2001/04/02 05:29:43 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ esp_hex_dump(unsigned char *pkt, size_t len)
 {
 	size_t i, j;
 
-	printf("00000000 ");
+	printf("00000000  ");
 	for(i=0; i<len; i++) {
 		printf("%c%c ", XCHR(pkt[i]>>4), XCHR(pkt[i]));
 		if ((i+1) % 16 == 8) {
@@ -510,11 +510,9 @@ esp_dma_isintr(sc)
 					if (nr) {
 						DPRINTF(("nextma_intr = %d\n",nr));
 #ifdef DIAGNOSTIC
-#if 0
-						if (flushcount > 16) {
+						if (flushcount > 4) {
 							printf("%s: unexpected flushcount %d\n",sc->sc_dev.dv_xname,flushcount);
 						}
-#endif
 #endif
 #ifdef DIAGNOSTIC
 #if 0
