@@ -164,15 +164,15 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 #define	cdev_disk_init(c,n) { \
 	dev_init(c,n,open), (dev_type_close((*))) nullop, dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, seltrue, (dev_type_map((*))) enodev, \
-	dev_init(c,n,strategy) }
+	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) seltrue, \
+	(dev_type_map((*))) enodev, dev_init(c,n,strategy) }
 
 /* open, close, read, write, ioctl, strategy */
 #define	cdev_tape_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, seltrue, (dev_type_map((*))) enodev, \
-	dev_init(c,n,strategy) }
+	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) seltrue, \
+	(dev_type_map((*))) enodev, dev_init(c,n,strategy) }
 
 /* open, close, read, write, ioctl, stop, tty */
 #define	cdev_tty_init(c,n) { \
@@ -185,7 +185,7 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
 	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
 	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, seltrue, \
+	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) seltrue, \
 	(dev_type_map((*))) enodev, 0 }
 
 cdev_decl(no);			/* dummy declarations */
@@ -211,7 +211,8 @@ dev_type_read(mmrw);
 #define	cdev_mm_init(c,n) { \
 	(dev_type_open((*))) nullop, (dev_type_close((*))) nullop, mmrw, \
 	mmrw, (dev_type_ioctl((*))) enodev, (dev_type_stop((*))) nullop, \
-	(dev_type_reset((*))) nullop, 0, seltrue, (dev_type_map((*))) enodev, 0 }
+	(dev_type_reset((*))) nullop, 0, (dev_type_select((*)))seltrue, \
+	(dev_type_map((*))) enodev, 0 }
 
 /* read, write, strategy */
 #define	cdev_swap_init(c,n) { \
@@ -248,10 +249,18 @@ cdev_decl(sd);
 cdev_decl(tz);
 cdev_decl(rz);
 
-/* XXX shouldn't this be optional? */
 cdev_decl(grf);
 /* open, close, ioctl, select, map -- XXX should be a map device */
 #define	cdev_grf_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
+	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
+	dev_init(c,n,select), dev_init(c,n,map), 0 }
+
+#include "view.h"
+cdev_decl(view);
+/* open, close, ioctl, select, map -- XXX should be a map device */
+#define	cdev_view_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
@@ -300,8 +309,8 @@ cdev_decl(vn);
 #define	cdev_vn_init(c,n) { \
 	dev_init(c,n,open), (dev_type_close((*))) nullop, dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, seltrue, (dev_type_map((*))) enodev, \
-	0 }
+	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) seltrue, \
+	(dev_type_map((*))) enodev, 0 }
 
 dev_type_open(fdopen);
 /* open */
@@ -358,7 +367,11 @@ struct cdevsw	cdevsw[] =
 	cdev_ite_init(NITE,ite),	/* 13: console terminal emulator */
 	cdev_kbd_init(1, kbd),		/* 14: /dev/kbd */
 	cdev_mouse_init(NMOUSE, ms),	/* 15: /dev/mouse0 /dev/mouse1 */
+#if 0
 	cdev_notdef(),			/* 16: */
+#else
+	cdev_view_init (NVIEW, view),	/* 16: /dev/view00 /dev/view01 ... */
+#endif
 	cdev_notdef(),			/* 17: */
 	cdev_notdef(),			/* 18: */
 	cdev_vn_init(NVN,vn),		/* 19: vnode disk */

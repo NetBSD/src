@@ -824,13 +824,17 @@ sun_sendsig(catcher, sig, mask, code)
  * psl to gain improper priviledges or to cause
  * a machine fault.
  */
+
+struct sigreturn_args {
+  struct sigcontext *sigcntxp;
+};
+
+
 /* ARGSUSED */
 sigreturn(p, uap, retval)
-	struct proc *p;
-	struct args {
-		struct sigcontext *sigcntxp;
-	} *uap;
-	int *retval;
+     struct proc *p;
+     struct sigreturn_args *uap;
+     int *retval;
 {
 	register struct sigcontext *scp;
 	register struct frame *frame;
@@ -840,8 +844,10 @@ sigreturn(p, uap, retval)
 	int flags;
 	extern short exframesize[];
 
+#ifdef COMPAT_SUNOS
 	if (p->p_emul == EMUL_SUNOS)
 	  return sun_sigreturn (p, uap, retval);
+#endif
 
 	scp = uap->sigcntxp;
 #ifdef DEBUG
