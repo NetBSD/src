@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.112 1997/10/19 19:00:20 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.113 1997/10/20 20:07:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -376,9 +376,13 @@ fdcattach(parent, self, aux)
 
 	iot = ia->ia_iot;
 
+	printf("\n");
+
 	/* Re-map the I/O space. */
-	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh))
-		panic("fdcattach: couldn't map I/O ports");
+	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh)) {
+		printf("%s: can't map i/o space\n", fdc->sc_dev.dv_xname);
+		return;
+	}
 
 	fdc->sc_iot = iot;
 	fdc->sc_ioh = ioh;
@@ -386,8 +390,6 @@ fdcattach(parent, self, aux)
 	fdc->sc_drq = ia->ia_drq;
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
-
-	printf("\n");
 
 	if (isa_dmamap_create(parent, fdc->sc_drq, FDC_MAXIOSIZE,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
