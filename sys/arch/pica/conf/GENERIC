@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8 1997/08/23 19:18:45 mjacob Exp $
+#	$NetBSD: GENERIC,v 1.9 1997/10/15 23:00:50 thorpej Exp $
 #
 #	Generic configuration file for MIPS R4400 PICA system
 #
@@ -70,8 +70,8 @@ pica*		at mainbus0
 clock0		at pica?
 pc0		at pica?
 pms0		at pica?
-com0		at pica?
-com1		at pica?
+pcom0		at pica?
+pcom1		at pica?
 lpt0		at pica?
 sn0		at pica?
 
