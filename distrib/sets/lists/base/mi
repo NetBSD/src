@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.316 2002/04/07 15:45:01 wiz Exp $
+# $NetBSD: mi,v 1.317 2002/04/16 18:39:13 kleink Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -2037,6 +2037,7 @@
 ./usr/share/zoneinfo/Asia/Macao		base-sys-share
 ./usr/share/zoneinfo/Asia/Macau		base-sys-share
 ./usr/share/zoneinfo/Asia/Magadan		base-sys-share
+./usr/share/zoneinfo/Asia/Makassar		base-sys-share
 ./usr/share/zoneinfo/Asia/Manila		base-sys-share
 ./usr/share/zoneinfo/Asia/Muscat		base-sys-share
 ./usr/share/zoneinfo/Asia/Nicosia		base-sys-share
