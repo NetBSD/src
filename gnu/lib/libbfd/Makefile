@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2001/01/04 09:10:25 itojun Exp $
+#	$NetBSD: Makefile,v 1.18 2001/01/04 09:11:47 itojun Exp $
 
 LIB=		bfd
 
@@ -171,11 +171,13 @@ SRCS+=			cpu-powerpc.c elf32-ppc.c ppc-dis.c ppc-opc.c \
 .if (${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el" || !defined(BFD_SLIM))
 ARCHES+=		sh
 .if defined(ELF_PLEASE)
-DEFAULT_VEC.sh3=	bfd_elf32_shunx_vec
+DEFAULT_VEC.sh3eb=	bfd_elf32_shunx_vec
+DEFAULT_VEC.sh3el=	bfd_elf32_shunx_vec
 SELECT_VECS+=		${DEFAULT_VEC.sh3} bfd_elf32_shlunx_vec \
 			shcoff_vec shlcoff_vec
 .else
-DEFAULT_VEC.sh3=	shcoff_vec
+DEFAULT_VEC.sh3el=	shcoff_vec
+DEFAULT_VEC.sh3eb=	shcoff_vec
 SELECT_VECS+=		${DEFAULT_VEC.sh3} shlcoff_vec \
 			bfd_elf32_shunx_vec bfd_elf32_shlunx_vec
 .endif
