@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.21 2003/12/15 10:24:47 sekiya Exp $	*/
+/*	$NetBSD: ip2x.c,v 1.1 2003/12/15 13:02:28 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.21 2003/12/15 10:24:47 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip2x.c,v 1.1 2003/12/15 13:02:28 sekiya Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"
@@ -56,16 +56,16 @@ static struct evcnt mips_int5_evcnt =
 static struct evcnt mips_spurint_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "spurious interrupts");
 
-void		ip22_init(void);
-void 		ip22_bus_reset(void);
-int 		ip22_local0_intr(void);
-int		ip22_local1_intr(void);
-int 		ip22_mappable_intr(void *);
-void		ip22_intr(u_int, u_int, u_int, u_int);
-void		ip22_intr_establish(int, int, int (*)(void *), void *);
+void		ip2x_init(void);
+void 		ip2x_bus_reset(void);
+int 		ip2x_local0_intr(void);
+int		ip2x_local1_intr(void);
+int 		ip2x_mappable_intr(void *);
+void		ip2x_intr(u_int, u_int, u_int, u_int);
+void		ip2x_intr_establish(int, int, int (*)(void *), void *);
 
-unsigned long 	ip22_clkread(void);
-unsigned long	ip22_cal_timer(u_int32_t, u_int32_t);
+unsigned long 	ip2x_clkread(void);
+unsigned long	ip2x_cal_timer(u_int32_t, u_int32_t);
 
 /* ip22_cache.S */
 extern void	ip22_sdcache_do_wbinv(vaddr_t, vaddr_t);
@@ -73,7 +73,7 @@ extern void	ip22_sdcache_enable(void);
 extern void	ip22_sdcache_disable(void);
 
 void
-ip22_init(void)
+ip2x_init(void)
 {
 	u_int i;
 	u_int32_t sysid;
@@ -103,10 +103,10 @@ ip22_init(void)
 		mach_boardrev = (sysid >> 1) & 0x0f;
 
 		/* Hardcode interrupts 7, 11 to mappable interrupt 0,1 handlers */
-		intrtab[7].ih_fun = ip22_mappable_intr;
+		intrtab[7].ih_fun = ip2x_mappable_intr;
 		intrtab[7].ih_arg	= (void*) 0;
 
-		intrtab[11].ih_fun = ip22_mappable_intr;
+		intrtab[11].ih_fun = ip2x_mappable_intr;
 		intrtab[11].ih_arg	= (void*) 1;
 	}
 
@@ -125,9 +125,9 @@ ip22_init(void)
 	/* Reset timer interrupts */
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(int23addr + 0x20) = 3;
 
-	platform.iointr = ip22_intr;
-	platform.bus_reset = ip22_bus_reset;
-	platform.intr_establish = ip22_intr_establish;
+	platform.iointr = ip2x_intr;
+	platform.bus_reset = ip2x_bus_reset;
+	platform.intr_establish = ip2x_intr_establish;
 
 	biomask = 0x0700;
 	netmask = 0x0700;
@@ -135,12 +135,12 @@ ip22_init(void)
 	clockmask = 0xbf00;
 
 	/* Prime cache */
-	ip22_cal_timer(int23addr + 0x3c, int23addr + 0x38);
+	ip2x_cal_timer(int23addr + 0x3c, int23addr + 0x38);
 
 	cps = 0;
 	for(i = 0; i < sizeof(ctrdiff) / sizeof(ctrdiff[0]); i++) {
 		do {
-			ctrdiff[i] = ip22_cal_timer(int23addr + 0x3c,
+			ctrdiff[i] = ip2x_cal_timer(int23addr + 0x3c,
 			    int23addr + 0x38);
 		} while (ctrdiff[i] == 0);
 
@@ -152,7 +152,7 @@ ip22_init(void)
 	printf("Timer calibration, got %lu cycles (%lu, %lu, %lu)\n", cps,
 	    ctrdiff[0], ctrdiff[1], ctrdiff[2]);
 
-	platform.clkread = ip22_clkread;
+	platform.clkread = ip2x_clkread;
 
 	/* Counter on R4k/R4400/R4600/R5k counts at half the CPU frequency */
 	curcpu()->ci_cpu_freq = 2 * cps * hz;
@@ -169,7 +169,7 @@ ip22_init(void)
 }
 
 void
-ip22_bus_reset(void)
+ip2x_bus_reset(void)
 {
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000ec) = 0;
 	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000fc) = 0;
@@ -180,7 +180,7 @@ ip22_bus_reset(void)
  * sorts of Bad Things(tm) to happen, including kernel stack overflows.
  */
 void
-ip22_intr(status, cause, pc, ipending)
+ip2x_intr(status, cause, pc, ipending)
 	u_int32_t status;
 	u_int32_t cause;
 	u_int32_t pc;
@@ -220,23 +220,23 @@ ip22_intr(status, cause, pc, ipending)
 	}
 
 	if (ipending & MIPS_INT_MASK_0) {
-		if (ip22_local0_intr())
+		if (ip2x_local0_intr())
 			cause &= ~MIPS_INT_MASK_0;
 	}
 
 	if (ipending & MIPS_INT_MASK_1) {
-		if (ip22_local1_intr())
+		if (ip2x_local1_intr())
 			cause &= ~MIPS_INT_MASK_1;
 	}
 
 	if (ipending & MIPS_INT_MASK_4) {
-		printf("IP22 bus error: cpu_stat %08x addr %08x, "
+		printf("IP2x bus error: cpu_stat %08x addr %08x, "
 		    "gio_stat %08x addr %08x\n",
 		    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000ec),
 		    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000e4),
 		    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000fc),
 		    *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000f4));
-		ip22_bus_reset();
+		ip2x_bus_reset();
 		cause &= ~MIPS_INT_MASK_4;
 	}
 
@@ -245,7 +245,7 @@ ip22_intr(status, cause, pc, ipending)
 }
 
 int
-ip22_mappable_intr(void* arg)
+ip2x_mappable_intr(void* arg)
 {
 	int i;
 	int ret;
@@ -277,7 +277,7 @@ ip22_mappable_intr(void* arg)
 }
 
 int
-ip22_local0_intr()
+ip2x_local0_intr()
 {
 	int i;
 	int ret;
@@ -303,7 +303,7 @@ ip22_local0_intr()
 }
 
 int
-ip22_local1_intr()
+ip2x_local1_intr()
 {
 	int i;
 	int ret;
@@ -331,7 +331,7 @@ ip22_local1_intr()
 }
 
 void
-ip22_intr_establish(level, ipl, handler, arg)
+ip2x_intr_establish(level, ipl, handler, arg)
 	int level;
 	int ipl;
 	int (*handler) __P((void *));
@@ -378,7 +378,7 @@ ip22_intr_establish(level, ipl, handler, arg)
 }
 
 unsigned long
-ip22_clkread(void)
+ip2x_clkread(void)
 {
 	uint32_t res, count;
 
@@ -388,7 +388,7 @@ ip22_clkread(void)
 }
 
 unsigned long
-ip22_cal_timer(u_int32_t tctrl, u_int32_t tcount)
+ip2x_cal_timer(u_int32_t tctrl, u_int32_t tcount)
 {
 	int s;
 	int roundtime;
