@@ -1,6 +1,6 @@
-# $NetBSD: md.evbsh3,v 1.21 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.evbsh3,v 1.22 2004/02/27 23:02:45 uwe Exp $
 ./usr/include/evbsh3				comp-c-include
-./usr/include/evbsh3/_G_config.h		comp-c-include
+./usr/include/evbsh3/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbsh3/ansi.h			comp-c-include
 ./usr/include/evbsh3/aout_machdep.h		comp-c-include
 ./usr/include/evbsh3/asm.h			comp-c-include
