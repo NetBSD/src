@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.20 2003/10/18 13:27:17 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.21 2003/10/25 18:38:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.20 2003/10/18 13:27:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.21 2003/10/25 18:38:07 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -454,7 +454,7 @@ darwin_ioframebuffer_connect_map_memory(args)
 	mach_io_connect_map_memory_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct proc *p = args->l->l_proc;
-	int error;
+	int error = 0;
 	size_t memsize;
 	size_t len;
 	vaddr_t pvaddr;

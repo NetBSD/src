@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.17 2003/09/14 09:48:43 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.18 2003/10/25 18:38:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.17 2003/09/14 09:48:43 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.18 2003/10/25 18:38:07 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -181,7 +181,9 @@ darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 		error = uvm_vslock(p, oldp, oldlen, 
 		    VM_PROT_READ|VM_PROT_WRITE);
 		savelen = oldlen;
-	}
+	} else
+		savelen = 0;
+
 
 	error = (*fn)(name + 1, namelen - 1, oldp, oldlenp, newp, newlen, p);
 

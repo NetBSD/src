@@ -1,6 +1,6 @@
 #undef DEBUG_DARWIN
 #undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.9 2003/06/29 22:29:15 fvdl Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.10 2003/10/25 18:38:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.9 2003/06/29 22:29:15 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.10 2003/10/25 18:38:07 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,7 @@ darwin_sys_load_shared_file(l, v, retval)
 	} */ *uap = v;
 	struct file *fp;
 	struct filedesc *fdp;
-	struct vnode *vp;
+	struct vnode *vp = NULL;
 	vaddr_t base;
 	struct proc *p = l->l_proc;
 	int flags;
