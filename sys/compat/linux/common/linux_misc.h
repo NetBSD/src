@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.8 2003/01/18 08:02:53 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.9 2004/09/20 18:41:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,6 +108,13 @@ struct linux_sysinfo {
 #define	LINUX_SYSV_MAGIC_BASE		0x012FF7B3
 #define	LINUX_USBDEVICE_SUPER_MAGIC	0x00009fa2
 #define	LINUX_XENIX_SUPER_MAGIC		(LINUX_SYSV_MAGIC_BASE + 1)
+
+struct linux_mnttypes {
+	const char *bsd;
+	int linux;
+};
+extern const struct linux_mnttypes linux_fstypes[];
+extern const int linux_fstypes_cnt;
 
 #ifdef _KERNEL
 __BEGIN_DECLS
