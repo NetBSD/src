@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.58 2000/01/31 14:28:18 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.59 2000/03/06 19:52:13 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.58 2000/01/31 14:28:18 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.59 2000/03/06 19:52:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1223,12 +1223,21 @@ FILE	*fconfig = NULL;
 struct	servtab serv;
 char	line[LINE_MAX];
 char    *defhost;
+#ifdef IPSEC
+static char *policy = NULL;
+#endif
 
 int
 setconfig()
 {
-	if (defhost) free(defhost);
+	if (defhost)
+		free(defhost);
 	defhost = newstr("*");
+#ifdef IPSEC
+	if (policy)
+		free(policy);
+	policy = NULL;
+#endif
 	if (fconfig != NULL) {
 		fseek(fconfig, 0L, SEEK_SET);
 		return (1);
@@ -1259,9 +1268,6 @@ getconfigent()
 	static char TCPMUX_TOKEN[] = "tcpmux/";
 #define MUX_LEN		(sizeof(TCPMUX_TOKEN)-1)
 	char *hostdelim;
-#ifdef IPSEC
-	char *policy = NULL;
-#endif
 
 more:
 	while ((cp = nextline(fconfig))) {
