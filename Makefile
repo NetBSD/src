@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.145 2001/10/30 17:59:10 tv Exp $
+#	$NetBSD: Makefile,v 1.146 2001/10/31 01:20:09 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -54,7 +54,11 @@
 #   do-gnu-lib:      builds and installs prerequisites from gnu/lib.
 #   do-build:        builds and installs the entire system.
 
-.include "${.CURDIR}/share/mk/bsd.own.mk"
+.if ${.MAKEFLAGS:M${.CURDIR}/share/mk} == ""
+.MAKEFLAGS: -m ${.CURDIR}/share/mk
+.endif
+
+.include <bsd.own.mk>
 
 # Sanity check: make sure that "make build" is not invoked simultaneously
 # with a standard recursive target.
@@ -73,10 +77,7 @@
 _J=		-j${NBUILDJOBS}
 .endif
 
-.if ${USETOOLS} == "yes"
-_SUBDIR+=	tools
-.endif
-_SUBDIR+=	lib include gnu bin games libexec sbin usr.bin \
+_SUBDIR=	tools lib include gnu bin games libexec sbin usr.bin \
 		usr.sbin share sys etc distrib regress
 
 # Weed out directories that don't exist.
@@ -90,13 +91,13 @@ SUBDIR+=	${dir}
 .if exists(regress)
 regression-tests:
 	@echo Running regression tests...
-	@cd ${.CURDIR}/regress && ${MAKE} ${_M} regress
+	@cd ${.CURDIR}/regress && ${MAKE} regress
 .endif
 
 .if ${MKMAN} != "no"
 afterinstall: whatis.db
 whatis.db:
-	cd ${.CURDIR}/share/man && ${MAKE} ${_M} makedb
+	cd ${.CURDIR}/share/man && ${MAKE} makedb
 .endif
 
 # Targets (in order!) called by "make build".
@@ -132,7 +133,7 @@ build:
 .else
 	@echo -n "Build started at: " && date
 .for tgt in ${BUILDTARGETS}
-	${MAKE} ${_J} ${_M} ${tgt}
+	${MAKE} ${_J} ${tgt}
 .endfor
 	@echo -n "Build finished at: " && date
 .endif
@@ -140,27 +141,27 @@ build:
 # Build a release or snapshot (implies "make build").
 
 release snapshot: build
-	cd ${.CURDIR}/etc && ${MAKE} ${_M} INSTALL_DONE=1 release
+	cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 release
 
 # Special components of the "make build" process.
 
 do-make-tools:
-	cd ${.CURDIR}/tools && ${MAKE} ${_M} build
+	cd ${.CURDIR}/tools && ${MAKE} build
 
 do-distrib-dirs:
-	cd ${.CURDIR}/etc && ${MAKE} ${_M} DESTDIR=${DESTDIR} distrib-dirs
+	cd ${.CURDIR}/etc && ${MAKE} DESTDIR=${DESTDIR} distrib-dirs
 
 .for dir in lib/csu lib gnu/lib
 do-${dir:S/\//-/}:
 .for targ in dependall install
 	cd ${.CURDIR}/${dir} && \
-		${MAKE} ${_M} ${_J} MKSHARE=no MKLINT=no ${targ}
+		${MAKE} ${_J} MKSHARE=no MKLINT=no ${targ}
 .endfor
 .endfor
 
 do-build:
-	${MAKE} ${_M} ${_J} dependall
-	${MAKE} ${_M} ${_J} install
+	${MAKE} ${_J} dependall
+	${MAKE} ${_J} install
 
 # Speedup stubs for some subtrees that don't need to run these rules.
 # (Tells <bsd.subdir.mk> not to recurse for them.)
@@ -171,9 +172,7 @@ dependall-tools depend-tools all-tools install-tools install-regress \
 dependall-distrib depend-distrib all-distrib install-distrib includes-distrib:
 	@true
 
-.include "${.CURDIR}/share/mk/bsd.subdir.mk"
-
-_M:=	-m ${.CURDIR}/share/mk
+.include <bsd.subdir.mk>
 
 # Rules for building the BUILDING.* documentation files.
 
