@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2 1997/04/16 22:45:26 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -281,7 +281,7 @@ pmap_bootstrap(kernelstart, kernelend)
 {
 	struct mem_region *mp, *mp1;
 	int cnt, i;
-	u_int s, sz;
+	u_int s, e, sz;
 
 	/*
 	 * Get memory.
@@ -298,62 +298,58 @@ pmap_bootstrap(kernelstart, kernelend)
 
 	/*
 	 * Page align all regions.
-	 * Non-page memory isn't very interesting to us.
+	 * Non-page aligned memory isn't very interesting to us.
 	 * Also, sort the entries for ascending addresses.
 	 */
 	kernelstart &= ~PGOFSET;
 	kernelend = (kernelend + PGOFSET) & ~PGOFSET;
 	for (mp = avail; mp->size; mp++) {
+		s = mp->start;
+		e = mp->start + mp->size;
 		/*
 		 * Check whether this region holds all of the kernel.
 		 */
-		s = mp->start + mp->size;
-		if (mp->start < kernelstart && s > kernelend) {
+		if (s < kernelstart && e > kernelend) {
 			avail[cnt].start = kernelend;
-			avail[cnt++].size = s - kernelend;
-			mp->size = kernelstart - mp->start;
+			avail[cnt++].size = e - kernelend;
+			e = kernelstart;
 		}
 		/*
 		 * Look whether this regions starts within the kernel.
 		 */
-		if (mp->start >= kernelstart && mp->start < kernelend) {
-			s = kernelend - mp->start;
-			if (mp->size > s)
-				mp->size -= s;
-			else
-				mp->size = 0;
-			mp->start = kernelend;
+		if (s >= kernelstart && s < kernelend) {
+			if (e <= kernelend)
+				goto empty;
+			s = kernelend;
 		}
 		/*
 		 * Now look whether this region ends within the kernel.
 		 */
-		s = mp->start + mp->size;
-		if (s > kernelstart && s < kernelend)
-			mp->size -= s - kernelstart;
-		/*
-		 * Now page align the start of the region.
-		 */
-		s = mp->start % NBPG;
-		if (mp->size >= s) {
-			mp->size -= s;
-			mp->start += s;
+		if (e > kernelstart && e <= kernelend) {
+			if (s >= kernelstart)
+				goto empty;
+			e = kernelstart;
 		}
 		/*
-		 * And now align the size of the region.
+		 * Now page align the start and size of the region.
 		 */
-		mp->size -= mp->size % NBPG;
+		s = s & ~PGOFSET;
+		e = e & ~PGOFSET;
+		sz = e - s;
 		/*
 		 * Check whether some memory is left here.
 		 */
-		if (mp->size == 0) {
+		if (sz == 0) {
+		empty:
 			bcopy(mp + 1, mp,
 			      (cnt - (mp - avail)) * sizeof *mp);
 			cnt--;
 			mp--;
 			continue;
 		}
-		s = mp->start;
-		sz = mp->size;
+		/*
+		 * Do an insertion sort.
+		 */
 		npgs += btoc(sz);
 		for (mp1 = avail; mp1 < mp; mp1++)
 			if (s < mp1->start)
@@ -362,6 +358,9 @@ pmap_bootstrap(kernelstart, kernelend)
 			bcopy(mp1, mp1 + 1, (void *)mp - (void *)mp1);
 			mp1->start = s;
 			mp1->size = sz;
+		} else {
+			mp->start = s;
+			mp->size = sz;
 		}
 	}
 	/*
@@ -393,6 +392,8 @@ pmap_bootstrap(kernelstart, kernelend)
 	}
 	if (!mp->size)
 		panic("not enough memory?");
+
+	npgs -= btoc(HTABSIZE);
 	bzero((void *)ptable, HTABSIZE);
 	ptab_mask = ptab_cnt - 1;
 	
@@ -407,6 +408,8 @@ pmap_bootstrap(kernelstart, kernelend)
 			break;
 	if (!mp->size)
 		panic("not enough memory?");
+
+	npgs -= btoc(sz);
 	potable = (struct pte_ovtab *)mp->start;
 	mp->size -= sz;
 	mp->start += sz;
@@ -426,7 +429,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	for (i = 0; i < 16; i++) {
 		pmap_kernel()->pm_sr[i] = EMPTY_SEGMENT;
 		asm volatile ("mtsrin %0,%1"
-			      :: "r"(i << ADDR_SR_SHFT), "r"(EMPTY_SEGMENT));
+			      :: "r"(EMPTY_SEGMENT), "r"(i << ADDR_SR_SHFT));
 	}
 	pmap_kernel()->pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
 	asm volatile ("mtsr %0,%1"
