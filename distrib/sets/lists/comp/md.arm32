@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.49 2001/06/23 12:24:05 bjh21 Exp $
+# $NetBSD: md.arm32,v 1.50 2001/06/23 12:24:52 bjh21 Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -33,7 +33,7 @@
 ./usr/include/arm/int_const.h		comp-c-include
 ./usr/include/arm/int_fmtio.h		comp-c-include
 ./usr/include/arm/int_limits.h		comp-c-include
-./usr/include/arm/int_mwgwtypes.h		comp-c-include
+./usr/include/arm/int_mwgwtypes.h	comp-c-include
 ./usr/include/arm/int_types.h		comp-c-include
 ./usr/include/arm/ipkdb.h		comp-c-include
 ./usr/include/arm/isa_machdep.h		comp-c-include
