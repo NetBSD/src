@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.20 1999/01/19 08:30:47 lukem Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.21 1999/01/21 22:21:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.20 1999/01/19 08:30:47 lukem Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.21 1999/01/21 22:21:13 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -83,6 +83,14 @@ static int		 in_find __P((StringList *, char *, const char *,
 static char		*in_lookup1 __P((const char *, const char *, int));
 static int		 in_lookup __P((const char *, const char *,
 					const char *, int));
+
+static const ns_src default_files_nis[] = {
+	{ NSSRC_FILES,	NS_SUCCESS },
+#ifdef YP
+	{ NSSRC_NIS,	NS_SUCCESS },
+#endif
+	{ 0 }
+};
 
 /*
  * getstring(): Get a string delimited by the character, skipping leading and
@@ -301,11 +309,11 @@ lookup(name, line, bywhat)
 	int		r;
 	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_local_lookup, NULL)
-		NS_DNS_CB(_nis_lookup, NULL)
+		NS_NIS_CB(_nis_lookup, NULL)
 		{ 0 }
 	};
 
-	r = nsdispatch(NULL, dtab, NSDB_NETGROUP, "lookup", __nsdefaultsrc,
+	r = nsdispatch(NULL, dtab, NSDB_NETGROUP, "lookup", default_files_nis,
 	    name, line, bywhat);
 	return (r == NS_SUCCESS) ? 1 : 0;
 }
