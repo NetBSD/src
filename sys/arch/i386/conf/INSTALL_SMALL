@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.43 1999/12/12 11:53:42 soren Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.44 2000/01/13 19:10:22 ad Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -263,6 +263,7 @@ com2	at isa? port 0x3e8 irq 5
 ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
 ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 bha*	at eisa? slot ?			# BusLogic 7xx SCSI
+dpt*	at eisa? slot ?			# DPT SmartCache/SmartRAID
 uha*	at eisa? slot ?			# UltraStor 24f SCSI
 
 # PCMCIA SCSI controllers

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.12 1999/12/12 11:53:42 soren Exp $
+#	$NetBSD: INSTALL_TINY,v 1.13 2000/01/13 19:10:22 ad Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -262,6 +262,7 @@ com2	at isa? port 0x3e8 irq 5
 #ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
 #ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 #bha*	at eisa? slot ?			# BusLogic 7xx SCSI
+#dpt*	at eisa? slot ?			# DPT SmartCache/SmartRAID
 #uha*	at eisa? slot ?			# UltraStor 24f SCSI
 
 # PCMCIA SCSI controllers

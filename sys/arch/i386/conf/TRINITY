@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.88 1999/12/12 11:53:42 soren Exp $
+#	$NetBSD: TRINITY,v 1.89 2000/01/13 19:10:23 ad Exp $
 #	From: GENERIC,v 1.260 1999/09/28 18:07:29 thorpej Exp
 #
 #	TRINITY -- Mycroft's laptop
@@ -317,6 +317,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
 #ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 #bha*	at eisa? slot ?			# BusLogic 7xx SCSI
+#dpt*	at eisa? slot ?			# DPT SmartCache/SmartRAID
 #uha*	at eisa? slot ?			# UltraStor 24f SCSI
 
 # PCMCIA SCSI controllers
