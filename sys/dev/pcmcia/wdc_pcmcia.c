@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.17 1998/11/22 21:58:50 pk Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.18 1998/12/03 18:24:31 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -325,7 +325,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
 	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
-	sc->sc_wdcdev.pio_mode = 0;
+	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanptr = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
 	sc->sc_wdcdev.nchannels = 1;

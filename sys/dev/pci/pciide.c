@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.26 1998/12/03 17:27:57 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.27 1998/12/03 18:24:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -1061,8 +1061,8 @@ default_setup_cap(sc)
 {
 	if (sc->sc_dma_ok)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
-	sc->sc_wdcdev.pio_mode = 0;
-	sc->sc_wdcdev.dma_mode = 0;
+	sc->sc_wdcdev.PIO_cap = 0;
+	sc->sc_wdcdev.DMA_cap = 0;
 }
 
 void
@@ -1181,9 +1181,9 @@ piix_setup_cap(sc)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE |
 	    WDC_CAPABILITY_DMA;
-	sc->sc_wdcdev.pio_mode = 4;
-	sc->sc_wdcdev.dma_mode = 2;
-	sc->sc_wdcdev.udma_mode = 2;
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap = 2;
 }
 
 void
@@ -1548,9 +1548,9 @@ apollo_setup_cap(sc)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE |
 	    WDC_CAPABILITY_DMA;
-	sc->sc_wdcdev.pio_mode = 4;
-	sc->sc_wdcdev.dma_mode = 2;
-	sc->sc_wdcdev.udma_mode = 2;
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap = 2;
 
 }
 void
@@ -1712,8 +1712,8 @@ cmd0643_6_setup_cap(sc)
 {
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE |
 	    WDC_CAPABILITY_DMA;
-	sc->sc_wdcdev.pio_mode = 4;
-	sc->sc_wdcdev.dma_mode = 2;
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
 }
 
 void
@@ -1788,8 +1788,8 @@ cy693_setup_cap(sc)
 {
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE |
 	    WDC_CAPABILITY_DMA;
-	sc->sc_wdcdev.pio_mode = 4;
-	sc->sc_wdcdev.dma_mode = 2;
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
 }
 
 void
@@ -1908,9 +1908,9 @@ sis_setup_cap(sc)
 {
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE |
 	    WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-	sc->sc_wdcdev.pio_mode = 4;
-	sc->sc_wdcdev.dma_mode = 2;
-	sc->sc_wdcdev.udma_mode = 2;
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	sc->sc_wdcdev.UDMA_cap = 2;
 }
 
 void
