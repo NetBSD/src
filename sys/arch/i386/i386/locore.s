@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.150 1996/09/08 15:43:38 jtk Exp $	*/
+/*	$NetBSD: locore.s,v 1.151 1996/09/08 15:51:39 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -2196,6 +2196,9 @@ _biostramp_image_size:
  * void bioscall(int function, struct apmregs *regs):
  * 	call the BIOS interrupt "function" from real mode with
  *	registers as specified in "regs"
+ *	for the flags, though, only these flags are passed to the BIOS--
+ *	the remainder come from the flags register at the time of the call:
+ *	(PSL_C|PSL_PF|PSL_AF|PSL_Z|PSL_N|PSL_D|PSL_V)
  *
  *	Fills in *regs with registers as returned by BIOS.
  */
