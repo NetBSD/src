@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.4 2000/10/15 20:46:33 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.5 2000/10/16 21:53:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.4 2000/10/15 20:46:33 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.5 2000/10/16 21:53:19 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 
 const u_char **keylist = 0;
 u_char *buffer = 0, *linebuf = 0;
+size_t bufsize, linebuf_size;
 struct tempfile fstack[MAXFCT];
 extern char *toutpath;
 #define FSORTMAX 4
@@ -91,12 +92,15 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 	tfield[0].icol.num = 1;
 	weights = ftbl[0].weights;
 	if (!buffer) {
-		buffer = malloc(BUFSIZE);
+		bufsize = BUFSIZE;
+		buffer = malloc(bufsize);
 		keylist = malloc(MAXNUM * sizeof(u_char *));
-		if (!SINGL_FLD)
-			linebuf = malloc(MAXLLEN);
+		if (!SINGL_FLD) {
+			linebuf_size = DEFLLEN;
+			linebuf = malloc(linebuf_size);
+		}
 	}
-	bufend = buffer + BUFSIZE;
+	bufend = buffer + bufsize;
 	if (binno >= 0) {
 		tfiles.top = infiles.top + nfiles;
 		get = getnext;
@@ -133,6 +137,17 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 				}
 				crec =(RECHEADER *)	((char *) crec +
 				SALIGN(crec->length) + sizeof(TRECHEADER));
+			}
+			if (c == BUFFEND && nelem == 0) {
+				/* buffer was too small for data, allocate
+				 * bigger buffer */
+				bufsize *= 2;
+				buffer = realloc(buffer, bufsize);
+				bufend = buffer + bufsize;
+				if (!buffer)
+					err(2, "failed to realloc buffer to %ld bytes",
+						(unsigned long) bufsize);
+				continue;
 			}
 			if (c == BUFFEND || ntfiles || mfct) {	/* push */
 				if (panic >= PANIC) {
@@ -262,7 +277,7 @@ onepass(a, depth, n, sizes, tr, fp)
 	an = a + n;
 	for (ak = a; ak < an; ak++) {
 		histo[c = tr[**ak]]++;
-		tsizes[c] += ((RECHEADER *) (*ak -= depth))->length;
+		tsizes[c] += ((const RECHEADER *) (*ak -= depth))->length;
 	}
 
 	bin[0] = a;
@@ -286,6 +301,6 @@ onepass(a, depth, n, sizes, tr, fp)
 		EWRITE(tsizes+c, sizeof(long), 1, fp);
 		sizes[c] += tsizes[c];
 		for (; ak < an; ++ak)
-			putrec((RECHEADER *) *ak, fp);
+			putrec((const RECHEADER *) *ak, fp);
 	}
 }
