@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal,v 1.6 2002/05/20 23:48:47 itojun Exp $
+.\"	$NetBSD: legal,v 1.6.2.1 2002/06/18 13:28:51 lukem Exp $
 .
 .It
 This product includes software developed by the Alice Group.
@@ -9,7 +9,7 @@ This product includes software at the Helsinki University of
 Technology.
 .It
 Some files have the following copyright:
-.(item -offset indent
+.(item -offset indent -compact
 Copyright (c) 1992 Helsinki University of Technology
 All Rights Reserved.
 
@@ -26,7 +26,7 @@ USE OF THIS SOFTWARE.
 .item)
 .It
 At least one file contains:
-.(item -offset indent
+.(item -offset indent -compact
 Copyright 1990 by Open Software Foundation,
 Grenoble, FRANCE
 
@@ -51,7 +51,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .item)
 .It
 Some files have the following copyright:
-.(item -offset indent
+.(item -offset indent -compact
 Mach Operating System
 Copyright (c) 1992 Carnegie Mellon University
 Copyright (c) 1992 Helsinki University of Technology
@@ -82,7 +82,7 @@ the rights to redistribute these changes.
 The IEEE floating point support in
 .Pa /usr/src/sys/arch/pc532/fpu
 has the following copyright:
-.(item -offset indent
+.(item -offset indent -compact
 IEEE floating point support for NS32081 and NS32381 fpus.
 Copyright (c) 1995 Ian Dall
 All Rights Reserved.
