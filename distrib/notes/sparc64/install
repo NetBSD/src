@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.24 2005/03/16 07:24:53 martin Exp $
+.\"	$NetBSD: install,v 1.25 2005/03/16 12:47:06 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -234,7 +234,7 @@ or
 .Sx "Installing NetBSD by using a NetBSD kernel on a Solaris partition" .
 .Pp
 Manual installation from Solaris 10 is not possible because NetBSD
-cannot use the resultng UFS filesystem.  It is possible to install
+cannot use the resulting UFS file system.  It is possible to install
 Solaris 10 and NetBSD on the same disk.  To do so, partition the disk
 with the Solaris format command, then boot NetBSD and perform a manual
 installation.  Be careful not to write a NetBSD disklabel.  Use the
