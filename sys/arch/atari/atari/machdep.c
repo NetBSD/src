@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 1995/05/14 15:23:30 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 1995/05/21 13:55:16 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -366,6 +366,7 @@ setregs(p, pack, stack, retval)
 	
 	frame->f_pc = pack->ep_entry & ~1;
 	frame->f_regs[SP] = stack;
+	frame->f_regs[A2] = (int)PS_STRINGS;
 
 #ifdef FPCOPROC
 	/* restore a null state frame */
