@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.2 1999/12/07 04:54:54 sato Exp $	*/
+/*	$NetBSD: rtc.c,v 1.3 2000/01/17 04:06:06 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -49,13 +49,11 @@
 #include <hpcmips/vr/rtcreg.h>
 #include <dev/dec/clockvar.h>
 
-#if 0
-#define RTCDEBUG	/* rtc debugging infomation */
-#define RTC_HEARTBEAT	/* HEARTBEAT print */
-#define RECALC_CPUSPEED	/* cpuspeed recalculaton */
-#define RECALC_CPUSPEED_DEBUG	/* XXX */
-#endif
-
+/*
+ * for debugging definitions
+ * 	RTCDEBUG	print rtc debugging infomation
+ *	RTC_HEARTBEAT	print HEARTBEAT (too many print...)
+ */
 
 struct vrrtc_softc {
 	struct device sc_dev;
@@ -83,8 +81,6 @@ struct cfattach vrrtc_ca = {
 void	vrrtc_write __P((struct vrrtc_softc *, int, unsigned short));
 unsigned short	vrrtc_read __P((struct vrrtc_softc *, int));
 void	cvt_timehl_ct __P((u_long, u_long, struct clocktime *));
-int	vrrtc_recalc_cpuspeed __P((struct device *));
-
 
 extern int rtc_offset;
 
@@ -196,46 +192,6 @@ vrrtc_intr(arg, pc, statusReg)
 	return 0;
 }
 
-
-int
-vrrtc_recalc_cpuspeed(dev)
-	struct device *dev;
-{
-	struct vrrtc_softc *sc = (struct vrrtc_softc *)dev;
-	u_long otimeh;
-	u_long otimel;
-	u_long timeh;
-	u_long timel;
-
-	otimeh = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_H_REG_W);
-	otimel = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_M_REG_W);
-	otimel = (otimel << 16) 
-		| bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_L_REG_W);
-
-#define MSEC 1000
-	/* wait 1msec */
-	DELAY(MSEC);
-
-	timeh = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_H_REG_W);
-	timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_M_REG_W);
-	timel = (timel << 16) 
-		| bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_L_REG_W);
-
-	if (timeh-otimeh > 0){
-		/* cpuspeed is too large (> 2 sec)*/
-		cpuspeed = cpuspeed/((timeh-otimeh)*2*MSEC);
-		cpuspeed +=1;
-		return 0;
-	}
-	if (timel-otimel < (ETIME_L_HZ/MSEC/10)) {
-		/* cpuspeed is too small (< 0.1msec) */ 
-		cpuspeed *=10;
-		return -1;
-	}
-	cpuspeed = cpuspeed * (ETIME_L_HZ/MSEC) / (timel-otimel);
-	return 0;
-}
-
 void
 clock_init(dev)
 	struct device *dev;
@@ -244,12 +200,7 @@ clock_init(dev)
 #ifdef RTCDEBUG
 	int timeh;
 	int timel;
-#endif /* RTCDEBUG */
-#ifdef RECALC_CPUSPEED
-	int maxrecalc = 3;
-#endif /* RECALC_CPUSPEED */
 
-#ifdef RTCDEBUG
 	timeh = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_H_REG_W);
 	timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_M_REG_W);
 	timel = (timel << 16) 
@@ -292,15 +243,6 @@ clock_init(dev)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, RTCL1_H_REG_W, 0);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, 
 			  RTCL1_L_REG_W, RTCL1_L_HZ/CLOCK_RATE);
-
-#ifdef RECALC_CPUSPEED
-	/* calcurate cpu speed */
-	while (maxrecalc-- > 0 && vrrtc_recalc_cpuspeed(dev))
-		;
-#ifdef RECALC_CPUSPEED_DEBUG
-	printf("clock_init() cpuspeed = %d\n", cpuspeed);
-#endif /* RECALC_CPUSPEED_DEBUG */
-#endif /* RECALC_CPUSPEED */
 }
 
 static int m2d[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
