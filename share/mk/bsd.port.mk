@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.14 1997/10/28 12:46:37 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.15 1997/11/05 13:36:31 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -413,6 +413,9 @@ RUN_DEPENDS+=	${EXEC_DEPENDS}
 .endif
 .if defined(USE_GMAKE)
 BUILD_DEPENDS+=		gmake:${PORTSDIR}/devel/gmake
+MAKE_PROGRAM=		${GMAKE}
+.else
+MAKE_PROGRAM=		${MAKE}
 .endif
 .if defined(USE_PERL5)
 BUILD_DEPENDS+=		perl5.00401:${PORTSDIR}/lang/perl5
@@ -610,6 +613,10 @@ ECHO_MSG?=		${ECHO}
 ALL_TARGET?=		all
 INSTALL_TARGET?=	install
 
+.if defined(USE_IMAKE) && !defined(NO_INSTALL_MANPAGES)
+INSTALL_TARGET+=	install.man
+.endif
+
 # Popular master sites
 MASTER_SITE_XCONTRIB+=	\
 	ftp://crl.dec.com/pub/X11/contrib/%SUBDIR%/ \
@@ -753,6 +760,7 @@ MANPREFIX?=	${PREFIX}
 
 .for sect in 1 2 3 4 5 6 7 8 9
 MAN${sect}PREFIX?=	${MANPREFIX}
+CAT${sect}PREFIX?=	${MANPREFIX}
 .endfor
 MANLPREFIX?=	${MANPREFIX}
 MANNPREFIX?=	${MANPREFIX}
@@ -764,6 +772,9 @@ MANLANG?=	""	# english only by default
 .for sect in 1 2 3 4 5 6 7 8 9
 .if defined(MAN${sect})
 _MANPAGES+=	${MAN${sect}:S%^%${MAN${sect}PREFIX}/man/${lang}/man${sect}/%}
+.endif
+.if defined(CAT${sect})
+_CATPAGES+=	${CAT${sect}:S%^%${CAT${sect}PREFIX}/man/${lang}/cat${sect}/%}
 .endif
 .endfor
 
@@ -1086,28 +1097,14 @@ do-configure:
 
 .if !target(do-build)
 do-build:
-.if defined(USE_GMAKE)
-	@(cd ${WRKSRC}; ${SETENV} ${MAKE_ENV} ${GMAKE} ${MAKE_FLAGS} ${MAKEFILE} ${ALL_TARGET})
-.else defined(USE_GMAKE)
-	@(cd ${WRKSRC}; ${SETENV} ${MAKE_ENV} ${MAKE} ${MAKE_FLAGS} ${MAKEFILE} ${ALL_TARGET})
-.endif
+	@(cd ${WRKSRC}; ${SETENV} ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} ${MAKEFILE} ${ALL_TARGET})
 .endif
 
 # Install
 
 .if !target(do-install)
 do-install:
-.if defined(USE_GMAKE)
-	@(cd ${WRKSRC} && ${SETENV} ${MAKE_ENV} ${GMAKE} ${MAKE_FLAGS} ${MAKEFILE} ${INSTALL_TARGET})
-.if defined(USE_IMAKE) && !defined(NO_INSTALL_MANPAGES)
-	@(cd ${WRKSRC} && ${SETENV} ${MAKE_ENV} ${GMAKE} ${MAKE_FLAGS} ${MAKEFILE} install.man)
-.endif
-.else defined(USE_GMAKE)
-	@(cd ${WRKSRC} && ${SETENV} ${MAKE_ENV} ${MAKE} ${MAKE_FLAGS} ${MAKEFILE} ${INSTALL_TARGET})
-.if defined(USE_IMAKE) && !defined(NO_INSTALL_MANPAGES)
-	@(cd ${WRKSRC} && ${SETENV} ${MAKE_ENV} ${MAKE} ${MAKE_FLAGS} ${MAKEFILE} install.man)
-.endif
-.endif
+	@(cd ${WRKSRC} && ${SETENV} ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} ${MAKEFILE} ${INSTALL_TARGET})
 .endif
 
 # Package
@@ -1223,15 +1220,15 @@ _PORT_USE: .USE
 		cd ${.CURDIR} && ${SETENV} ${SCRIPTS_ENV} ${SH} \
 			${SCRIPTDIR}/${.TARGET:S/^real-/post-/}; \
 	fi
-.if make(real-install) && defined(_MANPAGES)
+.if make(real-install) && (defined(_MANPAGES) || defined(_CATPAGES))
 .if defined(MANCOMPRESSED) && !defined(MANZ)
 	@${ECHO_MSG} "===>   Uncompressing manual pages for ${PKGNAME}"
-.for manpage in ${_MANPAGES}
+.for manpage in ${_MANPAGES} ${_CATPAGES}
 	@${GUNZIP_CMD} ${manpage}.gz
 .endfor
 .elif !defined(MANCOMPRESSED) && defined(MANZ)
 	@${ECHO_MSG} "===>   Compressing manual pages for ${PKGNAME}"
-.for manpage in ${_MANPAGES}
+.for manpage in ${_MANPAGES} ${_CATPAGES}
 	@${GZIP_CMD} ${manpage}
 .endfor
 .endif
