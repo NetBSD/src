@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 1996/08/09 10:30:23 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.67 1996/08/10 13:47:54 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -617,6 +617,8 @@ sys_sigreturn(p, v, retval)
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;
 	return (EJUSTRETURN);
 }
+
+int	waittime = -1;
 
 void
 boot(howto, user_boot_string)
