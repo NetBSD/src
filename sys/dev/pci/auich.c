@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.81 2004/11/17 15:14:38 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.82 2004/11/17 15:19:30 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.81 2004/11/17 15:14:38 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.82 2004/11/17 15:19:30 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,9 +175,13 @@ struct auich_softc {
 	struct device *sc_audiodev;
 	audio_device_t sc_audev;
 
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_pt;
 	bus_space_tag_t iot;
 	bus_space_handle_t mix_ioh;
+	bus_size_t mix_size;
 	bus_space_handle_t aud_ioh;
+	bus_size_t aud_size;
 	bus_dma_tag_t dmat;
 
 	struct ac97_codec_if *codec_if;
@@ -202,10 +206,6 @@ struct auich_softc {
 
 	struct auich_dma *sc_dmas;
 
-#ifdef DIAGNOSTIC
-	pci_chipset_tag_t sc_pc;
-	pcitag_t sc_pt;
-#endif
 	/* SiS 7012 hack */
 	int  sc_sample_shift;
 	int  sc_sts_reg;
@@ -239,10 +239,12 @@ int auich_debug = 0xfffe;
 
 static int	auich_match(struct device *, struct cfdata *, void *);
 static void	auich_attach(struct device *, struct device *, void *);
+static int	auich_detach(struct device *, int);
+static int	auich_activate(struct device *, enum devact);
 static int	auich_intr(void *);
 
 CFATTACH_DECL(auich, sizeof(struct auich_softc),
-    auich_match, auich_attach, NULL, NULL);
+    auich_match, auich_attach, auich_detach, auich_activate);
 
 static int	auich_open(void *, int);
 static void	auich_close(void *);
@@ -394,7 +396,6 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	struct auich_softc *sc = (struct auich_softc *)self;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
-	bus_size_t mix_size, aud_size;
 	pcireg_t v;
 	const char *intrstr;
 	const struct auich_devtype *d;
@@ -407,10 +408,8 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	if (d == NULL)
 		panic("auich_attach: impossible");
 
-#ifdef DIAGNOSTIC
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pt = pa->pa_tag;
-#endif
 
 	aprint_normal(": %s\n", d->name);
 
@@ -419,26 +418,26 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		 * Use native mode for ICH4/ICH5/ICH6
 		 */
 		if (pci_mapreg_map(pa, ICH_MMBAR, PCI_MAPREG_TYPE_MEM, 0,
-				   &sc->iot, &sc->mix_ioh, NULL, &mix_size)) {
+				   &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
 			v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
 			pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG,
 				       v | ICH_CFG_IOSE);
 			if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO,
 					   0, &sc->iot, &sc->mix_ioh, NULL,
-					   &mix_size)) {
+					   &sc->mix_size)) {
 				aprint_error("%s: can't map codec i/o space\n",
 					     sc->sc_dev.dv_xname);
 				return;
 			}
 		}
 		if (pci_mapreg_map(pa, ICH_MBBAR, PCI_MAPREG_TYPE_MEM, 0,
-				   &sc->iot, &sc->aud_ioh, NULL, &aud_size)) {
+				   &sc->iot, &sc->aud_ioh, NULL, &sc->aud_size)) {
 			v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
 			pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG,
 				       v | ICH_CFG_IOSE);
 			if (pci_mapreg_map(pa, ICH_NABMBAR, PCI_MAPREG_TYPE_IO,
 					   0, &sc->iot, &sc->aud_ioh, NULL,
-					   &aud_size)) {
+					   &sc->aud_size)) {
 				aprint_error("%s: can't map device i/o space\n",
 					     sc->sc_dev.dv_xname);
 				return;
@@ -446,13 +445,13 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		}
 	} else {
 		if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
-				   &sc->iot, &sc->mix_ioh, NULL, &mix_size)) {
+				   &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
 			aprint_error("%s: can't map codec i/o space\n",
 				     sc->sc_dev.dv_xname);
 			return;
 		}
 		if (pci_mapreg_map(pa, ICH_NABMBAR, PCI_MAPREG_TYPE_IO, 0,
-				   &sc->iot, &sc->aud_ioh, NULL, &aud_size)) {
+				   &sc->iot, &sc->aud_ioh, NULL, &sc->aud_size)) {
 			aprint_error("%s: can't map device i/o space\n",
 				     sc->sc_dev.dv_xname);
 			return;
@@ -576,23 +575,55 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	return;			/* failure of sysctl is not fatal. */
 }
 
-#if 0
+static int
+auich_activate(struct device *self, enum devact act)
+{
+	struct auich_softc *sc;
+	int ret;
+
+	sc = (struct auich_softc *)self;
+	ret = 0;
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return EOPNOTSUPP;
+	case DVACT_DEACTIVATE:
+		if (sc->sc_audiodev != NULL)
+			ret = config_deactivate(sc->sc_audiodev);
+		return ret;
+	}
+	return EOPNOTSUPP;
+}
+
 static int
 auich_detach(struct device *self, int flags)
 {
 	struct auich_softc *sc;
 
 	sc = (struct auich_softc *)self;
-	/* sysctl */
-	sysctl_teardown(&sc->sc_log);
+
 	/* audio */
 	if (sc->sc_audiodev != NULL)
 		config_detach(sc->sc_audiodev, flags);
-	/* XXX ac97 */
-	/* XXX memory */
+
+	/* sysctl */
+	sysctl_teardown(&sc->sc_log);
+
+	/* audio_encoding_set */
+	auconv_delete_encodings(sc->sc_encodings);
+
+	/* ac97 */
+	if (sc->codec_if != NULL)
+		sc->codec_if->vtbl->detach(sc->codec_if);
+
+	/* PCI */
+	if (sc->sc_ih != NULL)
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+	if (sc->mix_size != 0)
+		bus_space_unmap(sc->iot, sc->mix_ioh, sc->mix_size);
+	if (sc->aud_size != 0)
+		bus_space_unmap(sc->iot, sc->aud_ioh, sc->aud_size);
 	return 0;
 }
-#endif
 
 static int
 auich_sysctl_verify(SYSCTLFN_ARGS)
