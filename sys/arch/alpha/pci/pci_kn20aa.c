@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.27 1998/04/14 22:21:00 thorpej Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.28 1998/04/16 19:50:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.27 1998/04/14 22:21:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.28 1998/04/16 19:50:55 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,7 +125,7 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
                 return 1;
         }
         if (buspin > 4) {
-                printf("pci_map_int: bad interrupt pin %d\n", buspin);
+                printf("dec_kn20aa_intr_map: bad interrupt pin %d\n", buspin);
                 return 1;
         }
 
@@ -167,7 +167,7 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 
 	kn20aa_irq += buspin - 1;
 	if (kn20aa_irq > KN20AA_MAX_IRQ)
-		panic("pci_kn20aa_map_int: kn20aa_irq too large (%d)\n",
+		panic("dec_kn20aa_intr_map: kn20aa_irq too large (%d)\n",
 		    kn20aa_irq);
 
 	*ihp = kn20aa_irq;
