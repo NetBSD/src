@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.72 2000/10/04 21:12:40 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.73 2000/10/04 22:37:41 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1147,11 +1147,6 @@ ifioctl(so, cmd, data, p)
 #ifdef INET6
 	case SIOCSIFPHYADDR_IN6:
 #endif
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (error);
-		error = (*ifp->if_ioctl)(ifp, cmd, data);
-		break;
-
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
