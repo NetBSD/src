@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.15 2003/09/07 08:05:48 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.16 2003/09/13 08:32:11 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.15 2003/09/07 08:05:48 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.16 2003/09/13 08:32:11 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -617,7 +617,7 @@ darwin_fill_kproc(p, dkp)
 	dep->p_stat = p->p_stat; /* XXX Neary the same */
 	dep->p_pid = p->p_pid;
 	dep->p_oppid = p->p_opptr->p_pid;
-	dep->p_dupfd = p->p_dupfd;
+	dep->p_dupfd = curlwp->l_dupfd;	/* XXX */
 	/* dep->userstack */
 	/* dep->exit_thread */
 	/* dep->p_debugger */
