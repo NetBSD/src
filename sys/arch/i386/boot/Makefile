@@ -25,7 +25,10 @@
 #
 # HISTORY
 # $Log: Makefile,v $
-# Revision 1.4  1993/06/18 08:03:14  cgd
+# Revision 1.5  1993/07/04 14:03:03  cgd
+# do the right thing, so things aren't built in /usr/src/sys
+#
+# Revision 1.4  1993/06/18  08:03:14  cgd
 # install floppy boot block, too.
 #
 # Revision 1.3  1993/06/08  03:36:39  deraadt
@@ -46,9 +49,12 @@
 # julian@tfs.com
 #
 
-CFLAGS	= -O -DDO_BAD144
+NOPROG=	noprog
+NOMAN=	noman
+
+CFLAGS	= -O -DDO_BAD144 -I${.CURDIR}
 LIBS= -lc
-INC= -I../..
+INC= -I${.CURDIR}/../..
 
 # start.o should be first, table.o should be second
 OBJS = start.o table.o boot2.o boot.o asm.o bios.o io.o disk.o sys.o
@@ -61,7 +67,7 @@ OBJS = start.o table.o boot2.o boot.o asm.o bios.o io.o disk.o sys.o
 	-@trap "/bin/rm -f $*.i $*.s; exit 0" 0 1 2 3 10 15; \
 	$(CC)  $(CFLAGS) $(INC) -S $<;	\
 	if [ $$? != 0 ]; then :; else \
-		sed -f boot.sed $*.s > $*.i;	\
+		sed -f ${.CURDIR}/boot.sed $*.s > $*.i;	\
 		$(AS) $*.i -o $@; \
 	fi
 
@@ -69,7 +75,7 @@ OBJS = start.o table.o boot2.o boot.o asm.o bios.o io.o disk.o sys.o
 	@echo $(AS) -o $*.o $<
 	-@trap "/bin/rm -f $*.i X$*.c; exit 0" 0 1 2 3 10 15; \
 	/bin/rm -f X$*.c;	\
-	ln $*.s X$*.c;	\
+	ln -s $< X$*.c;	\
 	$(CC) -E $(CFLAGS) X$*.c > $*.i;	\
 	if [ $$? != 0 ]; then :;	\
 	else \
@@ -81,7 +87,7 @@ boot: boot.sed $(OBJS)
 	$(LD) -N -T 0 -o boot $(OBJS) $(LIBS)
 	cp boot boot.sym
 	@strip boot
-	@sh ./rmaouthdr boot boot.tmp
+	@sh ${.CURDIR}/rmaouthdr boot boot.tmp
 	@mv -f boot.tmp boot
 	@ls -l boot
 
@@ -117,22 +123,12 @@ sd:	/usr/mdec/bootsd /usr/mdec/sdboot
 wd:	/usr/mdec/bootwd /usr/mdec/wdboot
 fd:	/usr/mdec/bootfd /usr/mdec/fdboot
 
-#wd0:	/usr/mdec/bootwd /usr/mdec/wdboot
-#	disklabel -r -w wd0 julian julian5 /usr/mdec/wdboot /usr/mdec/bootwd
-#
-
-#sd0:	/usr/mdec/bootsd /usr/mdec/sdboot
-#	disklabel -r -w sd0 XT-8760 scsitest /usr/mdec/sdboot /usr/mdec/bootsd
-#
-
-#fd0:	/usr/mdec/bootfd /usr/mdec/fdboot
-#	disklabel -r -w fd0 floppy5 bootflpy /usr/mdec/fdboot /usr/mdec/bootfd
-#
+all: biosboot bootbios
 
 # Beware: the floppy boot block is *slow*...
 install: wd sd fd
 
-clean:
+clean cleandir:
 	/bin/rm -f *.o *.d boot bootbios biosboot boot.sym
 
-
+.include <bsd.prog.mk>

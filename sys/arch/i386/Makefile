@@ -1,10 +1,13 @@
 #	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
-#	$Id: Makefile,v 1.2 1993/05/22 07:59:30 cgd Exp $
+#	$Id: Makefile,v 1.3 1993/07/04 14:03:00 cgd Exp $
 
-# Makefile for i386 tags file
+# Makefile for i386 tags file and boot blocks
 
-all:
-	@echo "make tags or links only"
+NOPROG=	noprog
+NOMAN=	noman
+NOOBJ=	noobj
+
+SUBDIR=	boot
 
 TI386=	../i386/tags
 SI386=	../i386/i386/*.[ch] ../i386/include/*.h ../i386/isa/*.[ch]
@@ -23,3 +26,5 @@ tags:
 links:
 	-for i in ${DI386}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
+
+.include <bsd.prog.mk>
