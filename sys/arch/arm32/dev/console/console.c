@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.6 1996/04/19 20:03:37 mark Exp $ */
+/* $NetBSD: console.c,v 1.7 1996/04/26 20:56:04 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -89,7 +89,7 @@ struct vconsole *vconsole_master = &vconsole_master_store;
 struct vconsole *vconsole_current;
 struct vconsole *vconsole_head;
 struct vconsole *vconsole_default;
-struct cfdriver rpc_cd;
+/*struct cfdriver rpc_cd;*/
 extern struct vconsole *debug_vc;	/* rename this to vconsole_debug */
 int physcon_major=4;
 static char undefined_string[] = "UNDEFINED";
@@ -141,6 +141,7 @@ find_tp(dev)
 	int s;
 
 	s = spltty();
+
 	for (vc=vconsole_head; vc != NULL; vc=vc->next) {
 		if (vc->number==unit) {
 			if (vc != vconsole_head) {
@@ -964,10 +965,11 @@ rpcconsolecnprobe(cp)
 #define RPC_BUF_LEN	(64)
 char rpc_buf[RPC_BUF_LEN];
 int rpc_buf_ptr = 0;
+static int cnpolling = 0;
 
 #define RPC_BUF_FLUSH	\
 {			\
-	vconsole_current->PUTSTRING ( rpc_buf, rpc_buf_ptr, vconsole_current );	\
+	vconsole_current->PUTSTRING(rpc_buf, rpc_buf_ptr, vconsole_current);	\
 	rpc_buf_ptr=0;	\
 }
 
@@ -985,26 +987,26 @@ rpcconsolecnputc(dev, character)
 {
 	extern int cold;
 
-	if (( rpc_buf_ptr==RPC_BUF_LEN ) || (cold==0) )
+	if (rpc_buf_ptr==RPC_BUF_LEN)
 		RPC_BUF_FLUSH
 
 	rpc_buf[rpc_buf_ptr++] = character;
 
-	if ((character == 0x0a )||(character==0x0d)||(character=='.'))
+	if ((character == 0x0a) || (character == 0x0d) || (character == '.') || (cold == 0) || cnpolling)
 		RPC_BUF_FLUSH
 }
 
 int
 console_switchdown()
 {
-	physcon_switchdown ();
+	physcon_switchdown();
 	return 0;
 }
 
 int
 console_switchup()
 {
-	physcon_switchup ();
+	physcon_switchup();
 	return 0;
 }
 
@@ -1012,17 +1014,17 @@ int
 console_unblank()
 {
 	vconsole_blankcounter = vconsole_blankinit;
-	vconsole_current->BLANK ( vconsole_current, BLANK_NONE );
+	vconsole_current->BLANK(vconsole_current, BLANK_NONE);
 	return 0;
 }
 
 int
 console_scrollback ()
 {
-	if (vconsole_current==NULL)
+	if (vconsole_current == NULL)
 		return 0;
-	if ( vconsole_current->R_SCROLLBACK(vconsole_current) ==-1 ) {
-		if ( vconsole_current->T_SCROLLBACK(vconsole_current)==-1 ) {  
+	if (vconsole_current->R_SCROLLBACK(vconsole_current) == -1) {
+		if (vconsole_current->T_SCROLLBACK(vconsole_current) == -1) {  
 		}
 	}
 	return 0;
@@ -1031,23 +1033,23 @@ console_scrollback ()
 int
 console_scrollforward ()
 {
-	if (vconsole_current==NULL)
+	if (vconsole_current == NULL)
 		return 0;
-	if ( vconsole_current->R_SCROLLFORWARD(vconsole_current) ==-1 ) {
-		if ( vconsole_current->T_SCROLLFORWARD(vconsole_current)==-1 ) {  
+	if (vconsole_current->R_SCROLLFORWARD(vconsole_current) == -1) {
+		if (vconsole_current->T_SCROLLFORWARD(vconsole_current) == -1) {  
 		}
 	}
 	return 0;
 }
 
 int
-console_switchlast ()
+console_switchlast()
 {
-	return (physcon_switch ( lastconsole ));
+	return (physcon_switch(lastconsole));
 }
 
 int
-physcon_switchdown ()
+physcon_switchdown()
 {
 	int start;
 	int next = (vconsole_current->number);
@@ -1055,8 +1057,8 @@ physcon_switchdown ()
 	do {	
 		next--;
 		next = next&0xff;
-		if (next==start) return 0;
-	} while (physcon_switch ( next ));
+		if (next == start) return 0;
+	} while (physcon_switch(next));
         return 0;
 }
 
@@ -1069,8 +1071,8 @@ physcon_switchup ()
 	do {	
 		next++;
 		next = next&0xff;
-		if (next==start) return 0;
-	} while (physcon_switch ( next ));
+		if (next == start) return 0;
+	} while (physcon_switch(next));
 	return 0;
 }
 
@@ -1078,7 +1080,7 @@ void
 console_switch(number)
 	u_int number;
 {
-	physcon_switch ( number );
+	physcon_switch(number);
 }
 
 /* switchto */
@@ -1090,25 +1092,25 @@ physcon_switch(number)
         int s = spltty ();
         int ret;
 
-	if ( locked!=0 ) {
+	if (locked != 0) {
 		ret=0;
 		goto out;
         }
 
-	if ( printing ) {
+	if (printing) {
 		want_switch = number;
 		ret=0;
 		goto out;
 	}
 
-	vc = find_vc ( makedev ( physcon_major, number ) );
+	vc = find_vc(makedev(physcon_major, number));
 
-	if ( vc==0 ) {
+	if (vc == 0) {
 		ret = 1;
 		goto out;
 	}
 
-	if ( vc==vconsole_current ) {
+	if (vc == vconsole_current) {
 		ret = 1;
 		goto out;
  	}
@@ -1165,6 +1167,7 @@ rpcconsolecnpollc(dev, on)
 	int on;
 {
 	RPC_BUF_FLUSH
+	cnpolling = on;
 }
 
 int
