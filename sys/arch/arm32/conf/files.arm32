@@ -42,8 +42,6 @@ file    arch/arm32/mainbus/fd.c			fdc needs-flag
 major   {fd = 17}
 
 # Memory disk driver
-pseudo-device	md
-file	dev/md.c				md needs-count
 file	arch/arm32/dev/md_hooks.c		md | memory_disk_hooks
 major   {md = 18}
 
@@ -249,7 +247,6 @@ file	arch/arm32/arm32/setstack.S
 file	arch/arm32/kshell/shell_input.c		kshell
 file	arch/arm32/kshell/shell_shell.c		kshell
 file	arch/arm32/kshell/shell_disassem.c	kshell
-file	arch/arm32/kshell/strchr.c		kshell
 file	arch/arm32/kshell/dumphex.c		kshell
 
 # files related to debugging

@@ -1,4 +1,4 @@
-/* $NetBSD: vidcconsole.c,v 1.13 1997/01/12 20:28:04 mark Exp $ */
+/* $NetBSD: vidcconsole.c,v 1.13.2.1 1997/01/30 05:27:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -138,19 +138,19 @@ int p_cursor_normal;
 int p_cursor_transparent;
 
 /* Local function prototypes */
-static void	vidcconsole_cls		__P(( struct vconsole */*vc*/ ));
-static int	vidc_cursor_init	__P(( struct vconsole */*vc*/ ));
-int		vidcconsole_cursorintr	__P(( struct vconsole */*vc*/ ));
-int		vidcconsole_flashintr	__P(( struct vconsole */*vc*/ ));
-static int	vidcconsole_textpalette	__P(( struct vconsole */*vc*/ ));
-static void	vidcconsole_render	__P(( struct vconsole */*vc*/, char /*c*/ ));
-static void	vidcconsole_mode	__P(( struct vconsole */*vc*/, struct vidc_mode */*mode*/ ));
-int		vidcconsole_flash	__P(( struct vconsole */*vc*/, int /*flash*/ ));
-int		vidcconsole_cursorflash	__P(( struct vconsole */*vc*/, int /*flash*/ ));
-int		vidcconsole_flash_go	__P(( struct vconsole */*vc*/ ));
-int		vidcconsole_blank	__P(( struct vconsole */*vc*/, int /*type*/ ));
-void 		vidcconsole_putchar	__P(( dev_t dev, char c, struct vconsole *vc));
-extern int	vidcconsolemc_cls	__P(( unsigned char *, unsigned char *, int ));
+static void	vidcconsole_cls		__P((struct vconsole *vc));
+static int	vidc_cursor_init	__P((struct vconsole *vc));
+int		vidcconsole_cursorintr	__P((void *arg));
+int		vidcconsole_flashintr	__P((void *arg));
+static int	vidcconsole_textpalette	__P((struct vconsole *vc));
+static void	vidcconsole_render	__P((struct vconsole *vc, char c));
+static void	vidcconsole_mode	__P((struct vconsole *vc, struct vidc_mode *mode));
+int		vidcconsole_flash	__P((struct vconsole *vc, int flash));
+int		vidcconsole_cursorflash	__P((struct vconsole *vc, int flash));
+int		vidcconsole_flash_go	__P((struct vconsole *vc));
+int		vidcconsole_blank	__P((struct vconsole *vc, int /*type*/));
+void 		vidcconsole_putchar	__P((dev_t dev, char c, struct vconsole *vc));
+extern int	vidcconsolemc_cls	__P((unsigned char *, unsigned char *, int));
 
 struct vconsole *vconsole_spawn_re	__P((dev_t dev, struct vconsole *vc));
 
@@ -1222,9 +1222,10 @@ static int pretty=0xff;
 static int cursor_col = 0x0;
 
 int
-vidcconsole_cursorintr(vc)
-	struct vconsole *vc;
+vidcconsole_cursorintr(arg)
+	void *arg;
 {
+	struct vconsole *vc = arg;
 	if ( cursor_flash==0 )
 		return 0;
 
@@ -1266,9 +1267,10 @@ vidcconsole_cursorintr(vc)
 }
 
 int
-vidcconsole_flashintr(vc)
-	struct vconsole *vc;
+vidcconsole_flashintr(arg)
+	void *arg;
 {
+	struct vconsole *vc = arg;
 	if ( flash==0 )
 		return 0;
 

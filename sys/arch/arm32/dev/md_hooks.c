@@ -1,4 +1,4 @@
-/* $NetBSD: md_hooks.c,v 1.7 1997/01/01 23:31:50 pk Exp $ */
+/*	$NetBSD: md_hooks.c,v 1.7.2.1 1997/01/30 05:27:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -42,11 +42,11 @@
 #define MEMORY_DISK_SIZE 0
 #endif
 
-/*extern int boothowto;*/
 extern u_int memory_disc_size;
 struct md_conf *bootmd = NULL;
 
-int load_memory_disc_from_floppy __P((struct md_conf *md, dev_t dev));
+int md_match_hook __P((struct device *parent, void *self, void *aux));
+extern int load_memory_disc_from_floppy __P((struct md_conf *md, dev_t dev));
 
 /*
  * This is called during autoconfig.
@@ -89,7 +89,7 @@ md_open_hook(unit, md)
 	int unit;
 	struct md_conf *md;
 {
-/* I use the ramdisc for other testing ... */
+/* I use the memory disc for other testing ... */
 #if 0
 	if (unit == 0) {
 		/* The root memory disk only works single-user. */

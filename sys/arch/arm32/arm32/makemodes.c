@@ -1,4 +1,4 @@
-/* $NetBSD: makemodes.c,v 1.7 1996/10/15 02:33:28 mark Exp $ */
+/* $NetBSD: makemodes.c,v 1.7.2.1 1997/01/30 05:24:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -73,7 +73,9 @@ int	md;	/* Number of modes defined in the mds array */
 
 void makemode __P((FILE *, int, int, int, int));
 
-void
+int main __P((int argc, char *argv[]));
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];

@@ -1,7 +1,7 @@
-/* $NetBSD: psl.h,v 1.5.2.1 1997/01/30 05:28:11 thorpej Exp $ */
+/*	$NetBSD: cpufunc.h,v 1.1.2.2 1997/01/30 05:28:07 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995 Mark Brinicombe.
+ * Copyright (c) 1997 Mark Brinicombe.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Mark Brinicombe.
+ *	This product includes software developed by Mark Brinicombe
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
@@ -33,58 +33,54 @@
  *
  * RiscBSD kernel project
  *
- * psl.h
+ * cpufunc.h
  *
- * spl prototypes.
- * Eventually this will become a set of defines.
- *
- * Created      : 21/07/95
+ * Prototypes for cpu related functions.
  */
 
-/*
- * These are the different SPL states
- *
- * Each state has an interrupt mask associated with it which
- * indicate which interrupts are allowed.
- */
+#ifndef _ARM32_CPUFUNC_H_
+#define _ARM32_CPUFUNC_H_
 
-#define SPL_0		0
-#define SPL_SOFT	1
-#define SPL_BIO		2
-#define SPL_NET		3
-#define SPL_TTY		4
-#define SPL_CLOCK	5
-#define SPL_IMP		6
-#define SPL_HIGH	7
-#define SPL_LEVELS	8
-
-#define spl0()		splx(SPL_0)
-#define splsoft()	raisespl(SPL_SOFT)
-#define splsoftnet()	splsoft()
-#define splsoftclock()	lowerspl(SPL_SOFT)
-#define splbio()	raisespl(SPL_BIO)
-#define splnet()	raisespl(SPL_NET)
-#define spltty()	raisespl(SPL_TTY)
-#define splimp()	raisespl(SPL_IMP)
-#define splclock()	raisespl(SPL_CLOCK)
-#define splstatclock()	raisespl(SPL_CLOCK)
-#define splhigh()	splx(SPL_HIGH)
+#include <sys/types.h>
 
 #ifdef _KERNEL
-#ifndef _LOCORE
-int raisespl	__P((int));
-int lowerspl	__P((int));
-int splx	__P((int));
 
-void setsoftnet	__P((void));
-void setsoftast	__P((void));
-void setsoftclock __P((void));
-void setsoftintr __P((u_int intrmask));
+/* Assembly modules */
 
-extern int current_spl_level;
+/*
+ * Functions to manipulate the CPSR
+ * (in arm32/arm32/setcpsr.S)
+ */
 
-extern u_int spl_masks[SPL_LEVELS];
-#endif /* _LOCORE */
-#endif /* _KERNEL */
+u_int SetCPSR		__P((u_int bic, u_int eor));
+u_int GetCPSR		__P((void));
 
-/* End of psl.h */
+/*
+ * Functions to manipulate coproc #15 registers
+ * (in arm32/arm32/coproc15.S
+ */
+
+void tlb_flush		__P((void));
+void cache_clean	__P((void));
+void sync_caches	__P((void));
+void sync_icache	__P((void));
+void cpu_control	__P((u_int control));
+void cpu_domains	__P((u_int domains));
+void setttb		__P((u_int ttb));
+
+u_int cpu_id		__P((void));
+u_int cpu_faultstatus	__P((void));
+u_int cpu_faultaddress	__P((void));
+
+/*
+ * Functions to manipulate cpu r13
+ * (in arm32/arm32/setstack.S)
+ */
+
+void set_stackptr	__P((u_int mode, u_int address));
+u_int get_stackptr	__P((u_int mode));
+
+#endif	/* _KERNEL */
+#endif	/* _ARM32_CPUFUNC_H_ */
+
+/* End of cpufunc.h */

@@ -1,4 +1,4 @@
-/* $NetBSD: katelib.h,v 1.9 1996/10/15 00:44:58 mark Exp $ */
+/* $NetBSD: katelib.h,v 1.9.2.1 1997/01/30 05:28:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -51,34 +51,11 @@
  */
 
 #include <sys/types.h>
+#include <machine/cpufunc.h>
 
 #ifdef _KERNEL
 
 /* Assembly modules */
-
-/* In setcpsr.S */
-
-u_int SetCPSR		__P((u_int, u_int));
-u_int GetCPSR		__P((void));
-
-/* In coproc15.S */
-
-void tlb_flush		__P((void));
-void cache_clean	__P((void));
-void sync_caches	__P((void));
-void sync_icache	__P((void));
-void cpu_control	__P((u_int));
-void cpu_domains	__P((u_int));
-void setttb		__P((u_int));
-
-u_int cpu_id		__P((void));
-u_int cpu_faultstatus	__P((void));
-u_int cpu_faultaddress	__P((void));
-
-/* In setstack.S */
-
-void set_stackptr	__P((u_int, u_int));
-u_int get_stackptr	__P((u_int));
 
 /* In locore.S */
 
@@ -135,11 +112,11 @@ void outsl	__P((u_int io, void *src, u_int size));
 #ifdef _ARM32_FRAME_H_
 void postmortem		__P((trapframe_t *frame));
 #endif
-u_int traceback		__P(());
-u_int simpletraceback	__P(());
+u_int traceback		__P((void));
+u_int simpletraceback	__P((void));
 u_int irqtraceback	__P((u_int, u_int));
 u_int user_traceback	__P((u_int));
-int shell		__P(());
+int shell		__P((void));
 void kstack_stuff	__P((struct proc */*p*/));
 void bootsync		__P((void));
 void boot0		__P((void))
