@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.35 2002/10/13 12:09:43 isaki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36 2002/10/13 12:11:36 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -249,7 +249,8 @@ scsi_find(bdev)
 		 * old boot didn't pass interface type
 		 * try "scsibus0"
 		 */
-		printf("warning: scsi_find: can't get boot interface -- update boot loader\n");
+		printf("warning: scsi_find: can't get boot interface -- "
+		       "update boot loader\n");
 		scsibus = find_dev_byname("scsibus0");
 #else
 		/* can't determine interface type */
