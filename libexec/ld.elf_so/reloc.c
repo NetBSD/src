@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.13 1999/02/26 22:07:47 pk Exp $	 */
+/*	$NetBSD: reloc.c,v 1.14 1999/02/27 10:44:26 pk Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -52,7 +52,7 @@
 #include "debug.h"
 #include "rtld.h"
 
-#if defined(__alpha__) || defined(__powerpc__) || defined(__i386__)
+#ifndef RTLD_INHIBIT_COPY_RELOCS
 /*
  * XXX: These don't work for the alpha and i386; don't know about powerpc
  *	The alpha and the i386 avoid the problem by compiling everything PIC.
@@ -85,16 +85,16 @@ _rtld_do_copy_relocation(
 	if (srcobj == NULL) {
 		_rtld_error("Undefined symbol \"%s\" referenced from COPY"
 		    " relocation in %s", name, dstobj->path);
-		return -1;
+		return (-1);
 	}
 	srcaddr = (const void *)(srcobj->relocbase + srcsym->st_value);
 	(void)memcpy(dstaddr, srcaddr, size);
 	rdbg(dodebug, "COPY %s %s %s --> src=%p dst=%p *dst= %p size %d",
 	    dstobj->path, srcobj->path, name, (void *)srcaddr,
 	    (void *)dstaddr, (void *)*(long *)dstaddr, size);
-	return 0;
+	return (0);
 }
-#endif /* __alpha__ || __powerpc__ || __i386__ */
+#endif /* RTLD_INHIBIT_COPY_RELOCS */
 
 
 /*
@@ -109,10 +109,11 @@ _rtld_do_copy_relocations(
 	const Obj_Entry *dstobj,
 	bool dodebug)
 {
-	assert(dstobj->mainprog);	/* COPY relocations are invalid
-					 * elsewhere */
+#ifndef RTLD_INHIBIT_COPY_RELOCS
 
-#if defined(__alpha__) || defined(__powerpc__) || defined(__i386__)
+	/* COPY relocations are invalid elsewhere */
+	assert(dstobj->mainprog);
+
 	if (dstobj->rel != NULL) {
 		const Elf_Rel  *rel;
 		for (rel = dstobj->rel; rel < dstobj->rellim; ++rel) {
@@ -123,7 +124,7 @@ _rtld_do_copy_relocations(
 				ourrela.r_addend = 0;
 				if (_rtld_do_copy_relocation(dstobj,
 				    &ourrela, dodebug) < 0)
-					return -1;
+					return (-1);
 			}
 		}
 	}
@@ -133,13 +134,13 @@ _rtld_do_copy_relocations(
 			if (ELF_R_TYPE(rela->r_info) == R_TYPE(COPY)) {
 				if (_rtld_do_copy_relocation(dstobj, rela,
 				    dodebug) < 0)
-					return -1;
+					return (-1);
 			}
 		}
 	}
-#endif /* __alpha__ || __powerpc__ || __i386__ */
+#endif /* RTLD_INHIBIT_COPY_RELOCS */
 
-	return 0;
+	return (0);
 }
 
 
