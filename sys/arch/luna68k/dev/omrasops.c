@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
+/* $NetBSD: omrasops.c,v 1.2 2002/05/30 21:09:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.2 2002/05/30 21:09:54 thorpej Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -378,6 +378,7 @@ om_copycols(cookie, startrow, srccol, dstcol, ncols)
 
     hardluckalignment:
 	/* alignments painfully disagree */
+	return;
 }
 
 /*
