@@ -5,7 +5,7 @@ machine		"i386"
 cpu		"i486"
 ident		SUN_LAMP
 timezone	8 dst
-maxusers	16
+maxusers	24
 options		INET,NFS,MFS,ISOFS
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
@@ -52,7 +52,7 @@ pseudo-device	loop
 pseudo-device	ether
 pseudo-device	sl
 pseudo-device	log
-pseudo-device	pty	12
+pseudo-device	pty	16
 
 pseudo-device	bpfilter	4
 
