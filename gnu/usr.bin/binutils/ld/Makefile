@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2003/03/01 13:09:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2003/04/11 22:46:02 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,11 @@ DPADD=		${LIBINTL}
 
 BFDOBJ!=	cd ${TOP}/lib/libbfd && ${PRINTOBJDIR}
 LDADD+=		-L${BFDOBJ} -lbfd
+.if ${MKPICLIB} != "no"
 DPADD+=		${BFDOBJ}/libbfd_pic.a
+.else
+DPADD+=		${BFDOBJ}/libbfd.a
+.endif
 
 IBERTYOBJ!=	cd ${TOP}/lib/libiberty && ${PRINTOBJDIR}
 LDADD+=		-L${IBERTYOBJ} -liberty

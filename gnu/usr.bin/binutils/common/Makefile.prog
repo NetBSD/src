@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.prog,v 1.5 2003/04/09 22:38:25 thorpej Exp $
+#	$NetBSD: Makefile.prog,v 1.6 2003/04/11 22:46:02 thorpej Exp $
 #
 # Common Makefile fragment for a binutils program.
 #
@@ -26,7 +26,7 @@ DPADD=		${LIBINTL}
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libopcodes*)
 OPCODESOBJ!=	cd ${TOP}/lib/libopcodes && ${PRINTOBJDIR}
 LDADD+=		-L${OPCODESOBJ} -lopcodes
-.if ${MKPIC} != "no"
+.if ${MKPICLIB} != "no"
 DPADD+=		${OPCODESOBJ}/libopcodes_pic.a
 .else
 DPADD+=		${OPCODESOBJ}/libopcodes.a
@@ -36,7 +36,7 @@ DPADD+=		${OPCODESOBJ}/libopcodes.a
 .if !empty(G_${BUPROG}_DEPENDENCIES:M*/libbfd*)
 BFDOBJ!=	cd ${TOP}/lib/libbfd && ${PRINTOBJDIR}
 LDADD+=		-L${BFDOBJ} -lbfd
-.if ${MKPIC} != "no"
+.if ${MKPICLIB} != "no"
 DPADD+=		${BFDOBJ}/libbfd_pic.a
 .else
 DPADD+=		${BFDOBJ}/libbfd.a
