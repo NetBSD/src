@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.14 1998/10/12 12:03:26 agc Exp $	*/
+/*	$NetBSD: plist.c,v 1.15 1998/10/13 10:00:10 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.14 1998/10/12 12:03:26 agc Exp $");
+__RCSID("$NetBSD: plist.c,v 1.15 1998/10/13 10:00:10 agc Exp $");
 #endif
 #endif
 
@@ -181,7 +181,7 @@ new_plist_entry(void)
 	plist_t *ret;
 
 	if ((ret = (plist_t *)malloc(sizeof(plist_t))) == (plist_t *) NULL) {
-		err(1, "can't allocate %d bytes", sizeof(plist_t));
+		err(1, "can't allocate %ld bytes", (long) sizeof(plist_t));
 	}
 	memset(ret, 0, sizeof(plist_t));
 	return ret;
@@ -339,15 +339,18 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 	   "this packing list is incorrect - ignoring delete request", tmp);
 	    }
 	    else {
-		if (p->next && p->next->type == PLIST_COMMENT && !strncmp(p->next->name, "MD5:", 4)) {
+		if (p->next &&
+		    p->next->type == PLIST_COMMENT &&
+		    strncmp(p->next->name, CHECKSUM_HEADER, ChecksumHeaderLen) == 0) {
 		    char *cp, buf[LegibleChecksumLen];
 
 		    if ((cp = MD5File(tmp, buf)) != NULL) {
 			/* Mismatch? */
-			if (strcmp(cp, p->next->name + 4)) {
-			    if (Verbose)
+			if (strcmp(cp, p->next->name + ChecksumHeaderLen) != 0) {
+			    if (Verbose) {
 				printf("%s fails original MD5 checksum - %s\n",
 				       tmp, Force ? "deleted anyway." : "not deleted.");
+			    }
 			    if (!Force) {
 				fail = FAIL;
 				continue;
@@ -359,7 +362,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 		    printf("Delete file %s\n", tmp);
 		if (!Fake) {
 		    if (delete_hierarchy(tmp, ign_err, nukedirs))
-		    fail = FAIL;
+			    fail = FAIL;
 		    if (preserve && name) {
 			char tmp2[FILENAME_MAX];
 			    
