@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.10 1998/04/01 14:18:10 christos Exp $	*/
+/*	$NetBSD: cond.c,v 1.11 1998/09/18 20:35:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: cond.c,v 1.10 1998/04/01 14:18:10 christos Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.11 1998/09/18 20:35:11 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.10 1998/04/01 14:18:10 christos Exp $");
+__RCSID("$NetBSD: cond.c,v 1.11 1998/09/18 20:35:11 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1071,44 +1071,48 @@ CondE(doEval)
  *-----------------------------------------------------------------------
  */
 int
-Cond_EvalExpression(int dosetup, char *line, Boolean *value)
+Cond_EvalExpression(dosetup, line, value, eprint)
+    int dosetup;
+    char *line;
+    Boolean *value;
+    int eprint;
 {
-	if (dosetup) {
-		condDefProc = CondDoDefined;
-		condInvert = 0;
+    if (dosetup) {
+	condDefProc = CondDoDefined;
+	condInvert = 0;
+    }
+
+    while (*line == ' ' || *line == '\t')
+	line++;
+
+    condExpr = line;
+    condPushBack = None;
+
+    switch (CondE(TRUE)) {
+    case True:
+	if (CondToken(TRUE) == EndOfFile) {
+	    *value = TRUE;
+	    break;
 	}
-
-	while (*line == ' ' || *line == '\t') {
-	    line++;
+	goto err;
+	/*FALLTHRU*/
+    case False:
+	if (CondToken(TRUE) == EndOfFile) {
+	    *value = FALSE;
+	    break;
 	}
-
-	condExpr = line;
-	condPushBack = None;
-
-	switch (CondE(TRUE)) {
-	    case True:
-		if (CondToken(TRUE) == EndOfFile) {
-		    *value = TRUE;
-		    break;
-		}
-		goto err;
-		/*FALLTHRU*/
-	    case False:
-		if (CondToken(TRUE) == EndOfFile) {
-		    *value = FALSE;
-		    break;
-		}
-		/*FALLTHRU*/
-	    case Err:
+	/*FALLTHRU*/
+    case Err:
 err:
-		Parse_Error (PARSE_FATAL, "Malformed conditional (%s)",
-			     line);
-		return (COND_INVALID);
-	    default:
-		break;
-	}
-    
-	return COND_PARSE;
+	if (eprint)
+	    Parse_Error (PARSE_FATAL, "Malformed conditional (%s)",
+			 line);
+	return (COND_INVALID);
+    default:
+	break;
+    }
+
+    return COND_PARSE;
 }
 
 
@@ -1242,7 +1246,7 @@ Cond_Eval (line)
 	condInvert = ifp->doNot;
 
 	line += ifp->formlen;
-	if (Cond_EvalExpression(0, line, &value) == COND_INVALID)
+	if (Cond_EvalExpression(0, line, &value, 1) == COND_INVALID)
 		return COND_INVALID;
     }
     if (!isElse) {
