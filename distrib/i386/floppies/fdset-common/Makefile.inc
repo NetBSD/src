@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 1999/11/09 00:22:40 he Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2000/01/19 16:40:12 tsutsui Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -15,7 +15,7 @@ FSTMP=		ustar.tmp
 KERN?=		netbsd-xxx
 MDEC=		${DESTDIR}/usr/mdec
 BOOTCODE=	${MDEC}/biosboot.sym
-STRIP?=		strip
+STRIPPROG?=	strip
 
 RAMDISK	!=cd $(.CURDIR)/../ramdisk/; \
         printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
@@ -79,7 +79,7 @@ all:	netbsd boot
 netbsd.ram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK}
-	${STRIP} netbsd.tmp
+	${STRIPPROG} netbsd.tmp
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 

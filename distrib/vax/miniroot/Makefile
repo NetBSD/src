@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/03/12 18:36:52 ragge Exp $
+#	$NetBSD: Makefile,v 1.2 2000/01/19 16:40:12 tsutsui Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -13,7 +13,7 @@ VND_CRDEV=	/dev/r${VND}c
 IMAGE?=		miniroot.fs
 KERN?=		${.CURDIR}/../../../sys/arch/vax/compile/INSTALL/netbsd
 MDEC=		${DESTDIR}/usr/mdec
-STRIP?=		strip
+STRIPPROG?=	strip
 
 LISTS=		${.CURDIR}/list
 RAMDISK	!=cd $(.CURDIR)/../ramdisk/; \
@@ -59,7 +59,7 @@ unconfig:
 netbsd.ram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
-	${STRIP} netbsd.tmp
+	${STRIPPROG} netbsd.tmp
 	gzip netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
