@@ -1,7 +1,7 @@
-/*	$NetBSD: sd_scsi.c,v 1.28 2003/04/03 22:18:26 fvdl Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.29 2003/09/05 00:28:55 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.28 2003/04/03 22:18:26 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.29 2003/09/05 00:28:55 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,6 @@ sd_scsibus_get_parms(sd, dp, flags)
 {
 	struct sd_scsibus_mode_sense_data scsipi_sense;
 	u_int64_t sectors;
-	int page;
 	int error;
 
 	dp->rot_rate = 3600;		/* XXX any way of getting this? */
@@ -328,15 +327,18 @@ sd_scsibus_get_parms(sd, dp, flags)
 	if (sd->type == T_SIMPLE_DIRECT)
 		return (sd_scsibus_get_simplifiedparms(sd, dp, flags));
 
-	if ((error = sd_scsibus_mode_sense(sd, &scsipi_sense, page = 4,
-	    flags)) == 0) {
+	sectors = scsipi_size(sd->sc_periph, flags);
+
+	if ((error = sd_scsibus_mode_sense(sd, &scsipi_sense, 4, flags)) == 0) {
+		union scsi_disk_pages *pages = (void *)(((u_int8_t *)&scsipi_sense.blk_desc) + scsipi_sense.header.blk_desc_len);
+
 		SC_DEBUG(sd->sc_periph, SCSIPI_DB3,
 		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
-		    _3btol(scsipi_sense.pages.rigid_geometry.ncyl),
-		    scsipi_sense.pages.rigid_geometry.nheads,
-		    _2btol(scsipi_sense.pages.rigid_geometry.st_cyl_wp),
-		    _2btol(scsipi_sense.pages.rigid_geometry.st_cyl_rwc),
-		    _2btol(scsipi_sense.pages.rigid_geometry.land_zone)));
+		    _3btol(pages->rigid_geometry.ncyl),
+		    pages->rigid_geometry.nheads,
+		    _2btol(pages->rigid_geometry.st_cyl_wp),
+		    _2btol(pages->rigid_geometry.st_cyl_rwc),
+		    _2btol(pages->rigid_geometry.land_zone)));
 
 		/*
 		 * KLUDGE!! (for zone recorded disks)
@@ -344,61 +346,71 @@ sd_scsibus_get_parms(sd, dp, flags)
 		 * is <= disk_size
 		 * can lead to wasted space! THINK ABOUT THIS !
 		 */
-		dp->heads = scsipi_sense.pages.rigid_geometry.nheads;
-		dp->cyls = _3btol(scsipi_sense.pages.rigid_geometry.ncyl);
-		dp->blksize = _3btol(scsipi_sense.blk_desc.blklen);
+		dp->heads = pages->rigid_geometry.nheads;
+		dp->cyls = _3btol(pages->rigid_geometry.ncyl);
+		dp->rot_rate = _2btol(pages->rigid_geometry.rpm);
 
 		if (dp->heads == 0 || dp->cyls == 0)
-			goto fake_it;
+			goto page5;
+		if (dp->rot_rate == 0)
+			dp->rot_rate = 3600;
 
-		if (dp->blksize == 0)
+		if (scsipi_sense.header.blk_desc_len >= 8) {
+			dp->blksize = _3btol(scsipi_sense.blk_desc.blklen);
+			if (dp->blksize == 0)
+				dp->blksize = 512;
+		} else
 			dp->blksize = 512;
 
-		sectors = scsipi_size(sd->sc_periph, flags);
 		dp->disksize = sectors;
 		dp->disksize512 = (sectors * dp->blksize) / DEV_BSIZE;
-		sectors /= (dp->heads * dp->cyls);
-		dp->sectors = sectors;	/* XXX dubious on SCSI */
+		dp->sectors = sectors / (dp->heads * dp->cyls);	/* XXX */
 
+		printf("page 4 ok\n");
 		return (SDGP_RESULT_OK);
 	}
 
-	if ((error = sd_scsibus_mode_sense(sd, &scsipi_sense, page = 5,
-	    flags)) == 0) {
-		dp->heads = scsipi_sense.pages.flex_geometry.nheads;
-		dp->cyls = _2btol(scsipi_sense.pages.flex_geometry.ncyl);
-		dp->blksize = _3btol(scsipi_sense.blk_desc.blklen);
-		dp->sectors = scsipi_sense.pages.flex_geometry.ph_sec_tr;
-		dp->disksize = dp->heads * dp->cyls * dp->sectors;
-		if (dp->disksize == 0)
+page5:
+	if ((error = sd_scsibus_mode_sense(sd, &scsipi_sense, 5, flags)) == 0) {
+		union scsi_disk_pages *pages = (void *)(((u_int8_t *)&scsipi_sense.blk_desc) + scsipi_sense.header.blk_desc_len);
+
+		SC_DEBUG(sd->sc_periph, SCSIPI_DB3,
+		    ("%d cyls, %d heads, %d sec, %d bytes/sec\n",
+		    _3btol(pages->flex_geometry.ncyl),
+		    pages->flex_geometry.nheads,
+		    pages->flex_geometry.ph_sec_tr,
+		    _2btol(pages->flex_geometry.bytes_s)));
+
+		dp->heads = pages->flex_geometry.nheads;
+		dp->cyls = _2btol(pages->flex_geometry.ncyl);
+		dp->sectors = pages->flex_geometry.ph_sec_tr;
+		dp->blksize = _2btol(pages->flex_geometry.bytes_s);
+
+		if (dp->heads == 0 || dp->cyls == 0 || dp->sectors == 0)
 			goto fake_it;
 
 		if (dp->blksize == 0)
 			dp->blksize = 512;
 
-		dp->disksize512 = (dp->disksize * dp->blksize) / DEV_BSIZE;
+		dp->disksize = sectors;
+		dp->disksize512 = (sectors * dp->blksize) / DEV_BSIZE;
 
+		printf("page 5 ok\n");
 		return (SDGP_RESULT_OK);
 	}
 
 fake_it:
-	if ((sd->sc_periph->periph_quirks & PQUIRK_NOMODESENSE) == 0) {
-		if (error == 0)
-			printf("%s: mode sense (%d) returned nonsense",
-			    sd->sc_dev.dv_xname, page);
-		else
-			printf("%s: could not mode sense (4/5)",
-			    sd->sc_dev.dv_xname);
-		printf("; using fictitious geometry\n");
-	}
+	if (sectors == 0)
+		return (SDGP_RESULT_OFFLINE);		/* XXX? */
+
+	if ((sd->sc_periph->periph_quirks & PQUIRK_NOMODESENSE) == 0)
+		printf("%s: using fictitious geometry\n", sd->sc_dev.dv_xname);
+
 	/*
 	 * use adaptec standard fictitious geometry
 	 * this depends on which controller (e.g. 1542C is
 	 * different. but we have to put SOMETHING here..)
 	 */
-	sectors = scsipi_size(sd->sc_periph, flags);
-	if (sectors == 0)
-		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 	dp->blksize = 512;
 	dp->disksize512 = dp->disksize = sectors;
 	/* Try calling driver's method for figuring out geometry. */
