@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.48 2000/06/17 05:57:41 jhawk Exp $	*/
+/*	$NetBSD: db_command.c,v 1.49 2000/06/27 17:55:39 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -58,8 +58,6 @@
 #include <ddb/db_interface.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_ddb.h>
