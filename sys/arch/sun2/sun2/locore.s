@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.9 2001/08/26 17:12:11 fredette Exp $	*/
+/*	$NetBSD: locore.s,v 1.10 2001/12/06 21:05:12 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -69,15 +69,15 @@ ASGLOBAL(start)
 | boot loader loads us exactly where we are linked, so we don't have
 | to worry about writing position independent code or moving the 
 | kernel around.
-	movw	#PSL_HIGHIPL, %sr	| no interrupts
-	moveq	#FC_CONTROL, %d0	| make movs access "control"
-	movc	%d0, %sfc		| space where the sun2 designers
-	movc	%d0, %dfc		| put all the "useful" stuff
+	movw	#PSL_HIGHIPL,%sr	| no interrupts
+	moveq	#FC_CONTROL,%d0		| make movs access "control"
+	movc	%d0,%sfc		| space where the sun2 designers
+	movc	%d0,%dfc		| put all the "useful" stuff
 
 | Set context zero and stay there until pmap_bootstrap.
-	moveq	#0, %d0
-	movsb	%d0, CONTEXT_REG
-	movsb	%d0, SCONTEXT_REG
+	moveq	#0,%d0
+	movsb	%d0,CONTEXT_REG
+	movsb	%d0,SCONTEXT_REG
 
 | Jump around the g0 and g4 entry points.
 	jra	L_high_code
@@ -108,15 +108,15 @@ L_high_code:
 | Do bootstrap stuff needed before main() gets called.
 | Make sure the initial frame pointer is zero so that
 | the backtrace algorithm used by KGDB terminates nicely.
-	lea	_ASM_LABEL(tmpstk), %sp
+	lea	_ASM_LABEL(tmpstk),%sp
 	movl	#0,%a6
 	jsr	_C_LABEL(_bootstrap)	| See locore2.c
 
 | Now that _bootstrap() is done using the PROM functions,
-| we can safely set the sfc/dfc to something != FC_CONTROL
-	moveq	#FC_USERD, %d0		| make movs access "user data"
-	movc	%d0, %sfc		| space for copyin/copyout
-	movc	%d0, %dfc
+| we can safely set the %sfc/dfc to something != FC_CONTROL
+	moveq	#FC_USERD,%d0		| make movs access "user data"
+	movc	%d0,%sfc		| space for copyin/copyout
+	movc	%d0,%dfc
 
 | Setup process zero user/kernel stacks.
 	movl	_C_LABEL(proc0paddr),%a1 | get proc0 pcb addr
@@ -144,7 +144,7 @@ L_high_code:
 	movw	#PSL_USER,%sp@-		| tf_sr for user mode
 	clrl	%sp@-			| tf_stackadj
 	lea	%sp@(-64),%sp		| tf_regs[16]
-	movl	%sp,%a1			| a1=trapframe
+	movl	%sp,%a1			| %a1=trapframe
 	lea	_C_LABEL(proc0),%a0	| proc0.p_md.md_regs = 
 	movl	%a1,%a0@(P_MDREGS)	|   trapframe
 	movl	%a2,%a1@(FR_SP)		| a2 == usp (from above)
@@ -223,13 +223,13 @@ GLOBAL(addrerr)
  */
 sun2_mmu_specific:
 	clrl %d0			| make sure top bits are cleard too
-	movl %d1, %sp@-			| save d1
-	movc %sfc, %d1			| save sfc to d1
-	moveq #FC_CONTROL, %d0		| sfc = FC_CONTROL
-	movc %d0, %sfc
-	movsw BUSERR_REG, %d0		| get value of bus error register
-	movc %d1, %sfc			| restore sfc
-	movl %sp@+, %d1			| restore d1
+	movl %d1,%sp@-			| save %d1
+	movc %sfc,%d1			| save %sfc to %d1
+	moveq #FC_CONTROL,%d0		| %sfc = FC_CONTROL
+	movc %d0,%sfc
+	movsw BUSERR_REG,%d0		| get value of bus error register
+	movc %d1,%sfc			| restore %sfc
+	movl %sp@+,%d1			| restore %d1
 #ifdef	DEBUG
 	movw %d0, _C_LABEL(buserr_reg)	| save bus error register value
 #endif
@@ -285,7 +285,7 @@ GLOBAL(badtrap)
 	moveml	#0xFFFF,%sp@-		| save std frame regs
 	jbsr	_C_LABEL(straytrap)	| report
 	moveml	%sp@+,#0xFFFF		| restore regs
-	addql	#4, %sp			| stack adjust count
+	addql	#4,%sp			| stack adjust count
 	jra	_ASM_LABEL(rei)		| all done
 
 /*
@@ -308,7 +308,7 @@ GLOBAL(trap0)
 /*
  * Trap 12 is the entry point for the cachectl "syscall"
  *	cachectl(command, addr, length)
- * command in d0, addr in a1, length in d1
+ * command in %d0, addr in %a1, length in %d1
  */
 GLOBAL(trap12)
 	jra	_ASM_LABEL(rei)		| all done
@@ -350,7 +350,7 @@ GLOBAL(trap15)
 	jra	_ASM_LABEL(fault)	| no, user-mode fault
 
 ASLOCAL(kbrkpt)
-	| Kernel-mode breakpoint or trace trap. (d0=trap_type)
+	| Kernel-mode breakpoint or trace trap. (%d0=trap_type)
 	| Save the system sp rather than the user sp.
 	movw	#PSL_HIGHIPL,%sr	| lock out interrupts
 	lea	%sp@(FR_SIZE),%a6	| Save stack pointer
@@ -362,8 +362,8 @@ ASLOCAL(kbrkpt)
 	cmpl	#_ASM_LABEL(tmpstk),%d1
 	jls	Lbrkpt2 		| already on tmpstk
 	| Copy frame to the temporary stack
-	movl	%sp,%a0			| a0=src
-	lea	_ASM_LABEL(tmpstk)-96,%a1	| a1=dst
+	movl	%sp,%a0			| %a0=src
+	lea	_ASM_LABEL(tmpstk)-96,%a1	| %a1=dst
 	movl	%a1,%sp			| sp=new frame
 	moveq	#FR_SIZE,%d1
 Lbrkpt1:
@@ -376,7 +376,7 @@ Lbrkpt2:
 	| Do not call trap() to handle it, so that we can
 	| set breakpoints in trap() if we want.  We know
 	| the trap type is either T_TRACE or T_BREAKPOINT.
-	movl	%d0,%sp@-			| push trap type
+	movl	%d0,%sp@-		| push trap type
 	jbsr	_C_LABEL(trap_kdebug)
 	addql	#4,%sp			| pop args
 
@@ -414,7 +414,7 @@ Lbrkpt2:
  * for which the CPU provides the vector=0x18+level.
  * These are installed in the interrupt vector table.
  */
-#ifdef	__ELF__
+#ifdef __ELF__
 	.align	4
 #else
 	.align	2
@@ -426,7 +426,7 @@ GLOBAL(_isr_autovec)
 	jra	_ASM_LABEL(rei)
 
 /* clock: see clock.c */
-#ifdef	__ELF__
+#ifdef __ELF__
 	.align	4
 #else
 	.align	2
@@ -438,7 +438,7 @@ GLOBAL(_isr_clock)
 	jra	_ASM_LABEL(rei)
 
 | Handler for all vectored interrupts (i.e. VME interrupts)
-#ifdef	__ELF__
+#ifdef __ELF__
 	.align	4
 #else
 	.align	2
@@ -502,7 +502,7 @@ Lrei1:
 	movw	#PSL_LOWIPL,%sr		| lower SPL
 	clrl	%sp@-			| stack adjust
 	moveml	#0xFFFF,%sp@-		| save all registers
-	movl	%usp,%a1			| including
+	movl	%usp,%a1		| including
 	movl	%a1,%sp@(FR_SP)		|    the users SP
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
@@ -511,7 +511,7 @@ Lrei1:
 	lea	%sp@(12),%sp		| pop value args
 	movl	%sp@(FR_SP),%a0		| restore user SP
 	movl	%a0,%usp		|   from save area
-	movw	%sp@(FR_ADJ),%d0		| need to adjust stack?
+	movw	%sp@(FR_ADJ),%d0	| need to adjust stack?
 	jne	Laststkadj		| yes, go to it
 	moveml	%sp@+,#0x7FFF		| no, restore most user regs
 	addql	#8,%sp			| toss SP and stack adjust
@@ -703,7 +703,7 @@ Lsw2:
 	 * Now that we have saved all the registers that must be
 	 * preserved, we are free to use those registers until
 	 * we load the registers for the switched-to process.
-	 * In this section, keep:  a0=curproc, a1=curpcb
+	 * In this section, keep:  %a0=curproc, %a1=curpcb
 	 */
 
 	clrl	%a0@(P_BACK)		| clear back link
@@ -732,7 +732,7 @@ Lsw2:
 
 	/*
 	 * Reload the registers for the new process.
-	 * After this point we can only use d0,d1,a0,a1
+	 * After this point we can only use %d0,%d1,%a0,%a1
 	 */
 	moveml	%a1@(PCB_REGS),#0xFCFC	| reload registers
 	movl	%a1@(PCB_USP),%a0
@@ -858,7 +858,7 @@ ENTRY(m68881_restore)
 GLOBAL(_delay)
 	| %d0 = arg = (usecs << 8)
 	movl	%sp@(4),%d0
-	| d1 = delay_divisor;
+	| %d1 = delay_divisor;
 	movl	_C_LABEL(delay_divisor),%d1
 
 	/*
@@ -868,7 +868,7 @@ GLOBAL(_delay)
 	 * operations and that the loop will run from a single cache
 	 * half-line.
 	 */
-#ifdef	__ELF__
+#ifdef __ELF__
 	.align	8
 #else
 	.align	3
