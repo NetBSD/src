@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.134 2003/09/25 19:29:49 mycroft Exp $ */
+/*	$NetBSD: wdc.c,v 1.135 2003/10/06 21:51:31 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.134 2003/09/25 19:29:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.135 2003/10/06 21:51:31 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -427,11 +427,12 @@ wdc_channel_attach(chp)
 		 * Then issue a IDENTIFY command, to try to detect slave ghost
 		 */
 		delay(5000);
-		error = ata_get_params(&chp->ch_drive[i], AT_WAIT, &params);
+		error = ata_get_params(&chp->ch_drive[i],
+		    AT_POLL, &params);
 		if (error != CMD_OK) {
 			delay(1000000);
-			error = ata_get_params(&chp->ch_drive[i], AT_WAIT,
-			    &params);
+			error = ata_get_params(&chp->ch_drive[i],
+			    AT_POLL, &params);
 		}
 		if (error == CMD_OK) {
 			/* If IDENTIFY succeded, this is not an OLD ctrl */
@@ -1414,6 +1415,7 @@ __wdccommand_start(chp, xfer)
 {   
 	int drive = xfer->drive;
 	struct wdc_command *wdc_c = xfer->cmd;
+	int st;
 
 	WDCDEBUG_PRINT(("__wdccommand_start %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive),
@@ -1430,24 +1432,26 @@ __wdccommand_start(chp, xfer)
 		__wdccommand_done(chp, xfer);
 		return;
 	}
+	if (wdc_c->flags & AT_POLL) {
+		/* polled command, disable interrupts */
+		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
+		    WDCTL_4BIT | WDCTL_IDS);
+	}
 	wdccommand(chp, drive, wdc_c->r_command, wdc_c->r_cyl, wdc_c->r_head,
 	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_precomp);
-#if 0
-	if (wdc_c->r_command == WDCC_IDENTIFY) {
+	if ((wdc_c->flags & (AT_POLL | AT_READ)) == (AT_POLL | AT_READ)) {
 		/*
-		 * This is an IDENTIFY command.  Do an immediate poll of the
-		 * status to try to determine if there's actually a device
-		 * there.  Since this is a data-bearing command, it should go
-		 * to either BSY or DRQ within 400ns.
+		 * This is a data in command, so we should have either
+		 * BSY or DRQ in 400ns, or error.
 		 */
 		delay(10);	/* 400ns delay */
-		if ((bus_space_read_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_altsts) &
-		    (WDCS_BSY | WDCS_DRQ | WDCS_ERR)) == 0) {
-			__wdccommand_intr(chp, xfer, 0);
+		st = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
+		if (st == 0) {
+			wdc_c->flags |= AT_TIMEOU;
+			__wdccommand_done(chp, xfer);
 			return;
 		}
 	}
-#endif
 	if ((wdc_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT; /* wait for interrupt */
 		callout_reset(&chp->ch_callout, wdc_c->timeout / 1000 * hz,
@@ -1578,6 +1582,11 @@ __wdccommand_done(chp, xfer)
 						  wd_error);
 		wdc_c->r_precomp = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 						    wd_precomp);
+	}
+	if (wdc_c->flags & AT_POLL) {
+		/* enable interrupts */
+		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
+		    WDCTL_4BIT);
 	}
 	wdc_free_xfer(chp, xfer);
 	if (wdc_c->flags & AT_WAIT)
