@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: lorder.sh,v 1.4 1997/04/17 06:48:10 thorpej Exp $
+#	$NetBSD: lorder.sh,v 1.5 1997/07/20 23:25:12 cgd Exp $
 #
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -35,6 +35,22 @@
 #	@(#)lorder.sh	8.1 (Berkeley) 6/6/93
 #
 
+# If the user has set ${NM} then we use it, otherwise we use 'nm'.
+# We try to find the compiler in the user's path, and if that fails we
+# try to find it in the default path.  If we can't find it, we punt.
+# Once we find it, we canonicalize its name and set the path to the
+# default path so that other commands we use are picked properly.
+
+if ! type ${NM:=nm} > /dev/null 2>&1; then
+        PATH=/bin:/usr/bin
+        export PATH
+        if ! type ${NM} > /dev/null 2>&1; then
+                echo "lorder: ${NM}: not found"
+                exit 1
+        fi
+fi
+cmd='set `type ${NM}` ; eval echo \$$#'
+NM=`eval $cmd`
 PATH=/bin:/usr/bin
 export PATH
 
@@ -47,12 +63,6 @@ case $# in
 		echo $1 $1;
 		exit ;;
 esac
-
-# What to use for "nm"
-if [ X$NM = "X" ]; then
-	NM="nm"
-	export NM
-fi
 
 # temporary files
 R=/tmp/_reference_$$
