@@ -593,7 +593,7 @@ label:	\
 	NOTREACHED; \
 	TA32
 	
-	/* Spill either 32-bit or 64-bit register window. */
+	/* fill either 32-bit or 64-bit register window. */
 #define FILLBOTH(label64,label32,as) \
 	TRACEWIN; \
 	andcc	%sp, 1, %i0; \
