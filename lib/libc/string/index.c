@@ -1,4 +1,4 @@
-/*	$NetBSD: index.c,v 1.5 1997/07/13 20:24:15 christos Exp $	*/
+/*	$NetBSD: index.c,v 1.6 1998/01/21 21:13:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,11 +38,16 @@
 #if 0
 static char *sccsid = "@(#)index.c	5.7 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: index.c,v 1.5 1997/07/13 20:24:15 christos Exp $");
+__RCSID("$NetBSD: index.c,v 1.6 1998/01/21 21:13:09 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#ifndef _KERNEL
 #include <string.h>
+#else
+#include <lib/libkern/libkern.h>
+#define	NULL	((char *)0)
+#endif
 
 char *
 #ifdef STRCHR
