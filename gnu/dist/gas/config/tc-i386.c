@@ -638,7 +638,8 @@ pi (line, x)
       fprintf (stdout, "    #%d:  ", i + 1);
       pt (x->types[i]);
       fprintf (stdout, "\n");
-      if (x->types[i] & Reg)
+      if (x->types[i]
+	  & (Reg | SReg2 | SReg3 | Control | Debug | Test | RegMMX))
 	fprintf (stdout, "%s\n", x->regs[i]->reg_name);
       if (x->types[i] & Imm)
 	pe (x->imms[i]);
@@ -737,6 +738,7 @@ type_names[] =
   { FloatReg, "FReg" },
   { FloatAcc, "FAcc" },
   { JumpAbsolute, "Jump Absolute" },
+  { RegMMX, "rMMX" },
   { 0, "" }
 };
 
@@ -1415,14 +1417,23 @@ md_assemble (line)
 	    if (i.reg_operands == 2)
 	      {
 		unsigned int source, dest;
-		source = (i.types[0] & (Reg | SReg2 | SReg3 | Control | Debug | Test)) ? 0 : 1;
+		source = ((i.types[0]
+			   & (Reg
+			      | SReg2
+			      | SReg3
+			      | Control
+			      | Debug
+			      | Test
+			      | RegMMX))
+			  ? 0 : 1);
 		dest = source + 1;
 		i.rm.mode = 3;
 		/* We must be careful to make sure that all
-		   segment/control/test/debug registers go into the i.rm.reg
-		   field (despite the whether they are source or destination
-		   operands). */
-		if (i.regs[dest]->reg_type & (SReg2 | SReg3 | Control | Debug | Test))
+		   segment/control/test/debug/MMX registers go into
+		   the i.rm.reg field (despite the whether they are
+		   source or destination operands). */
+		if (i.regs[dest]->reg_type
+		    & (SReg2 | SReg3 | Control | Debug | Test | RegMMX))
 		  {
 		    i.rm.reg = i.regs[dest]->reg_num;
 		    i.rm.regmem = i.regs[source]->reg_num;
@@ -1550,15 +1561,23 @@ md_assemble (line)
 		      }
 		  }
 
-		/* Fill in i.rm.reg or i.rm.regmem field with register operand
-		   (if any) based on t->extension_opcode. Again, we must be
-		   careful to make sure that segment/control/debug/test
+		/* Fill in i.rm.reg or i.rm.regmem field with register
+		   operand (if any) based on
+		   t->extension_opcode. Again, we must be careful to
+		   make sure that segment/control/debug/test/MMX
 		   registers are coded into the i.rm.reg field. */
 		if (i.reg_operands)
 		  {
 		    unsigned int op =
-		    (i.types[0] & (Reg | SReg2 | SReg3 | Control | Debug | Test)) ? 0 :
-		    (i.types[1] & (Reg | SReg2 | SReg3 | Control | Debug | Test)) ? 1 : 2;
+		      ((i.types[0]
+			& (Reg | SReg2 | SReg3 | Control | Debug
+			   | Test | RegMMX))
+		       ? 0
+		       : ((i.types[1]
+			   & (Reg | SReg2 | SReg3 | Control | Debug
+			      | Test | RegMMX))
+			  ? 1
+			  : 2));
 		    /* If there is an extension opcode to put here, the
 		       register number must be put into the regmem field. */
 		    if (t->extension_opcode != None)
@@ -2963,7 +2982,21 @@ md_section_align (segment, size)
      segT segment;
      valueT size;
 {
-  return size;			/* Byte alignment is fine */
+#ifdef OBJ_AOUT
+#ifdef BFD_ASSEMBLER
+  /* For a.out, force the section size to be aligned.  If we don't do
+     this, BFD will align it for us, but it will not write out the
+     final bytes of the section.  This may be a bug in BFD, but it is
+     easier to fix it here since that is how the other a.out targets
+     work.  */
+  int align;
+
+  align = bfd_get_section_alignment (stdoutput, segment);
+  size = ((size + (1 << align) - 1) & ((valueT) -1 << align));
+#endif
+#endif
+
+  return size;
 }
 
 /* Exactly what point is a PC-relative offset relative TO?  On the

@@ -22,7 +22,7 @@ sparc*-*-aout)		targ_emul=sparcaout ;;
 sparc*-*-coff)		targ_emul=coff_sparc ;;
 sparc*-*-elf)		targ_emul=elf32_sparc ;;
 sparc*-*-sysv4*)	targ_emul=elf32_sparc ;;
-sparc*-*-linuxaout*)	targ_emul=sparclinux
+sparc*-*-linux*aout*)	targ_emul=sparclinux
 			targ_extra_emuls="elf32_sparc sun4"
 			tdir_elf32_sparc=`echo ${targ_alias} | sed -e 's/aout//'`
 			tdir_sun4=sparc-sun-sunos4
@@ -62,7 +62,7 @@ i[3456]86-*-bsd)	targ_emul=i386bsd ;;
 i[3456]86-*-bsd386)	targ_emul=i386bsd ;;
 i[3456]86-*-bsdi*)	targ_emul=i386bsd ;;
 i[3456]86-*-aout)	targ_emul=i386aout ;;
-i[3456]86-*-linuxaout*)	targ_emul=i386linux
+i[3456]86-*-linux*aout*)	targ_emul=i386linux
 			targ_extra_emuls=elf_i386
 			tdir_elf_i386=`echo ${targ_alias} | sed -e 's/aout//'`
 			;;
@@ -110,7 +110,7 @@ m68*-*-aout)		targ_emul=m68kaout ;;
 m68*-*-coff)		targ_emul=m68kcoff ;;
 m68*-*-elf)		targ_emul=m68kelf ;;
 m68*-*-hpux*)		targ_emul=hp3hpux ;;
-m68k-*-linuxaout*)	targ_emul=m68klinux
+m68k-*-linux*aout*)	targ_emul=m68klinux
 			targ_extra_emuls=m68kelf
 			tdir_m68kelf=`echo ${targ_alias} | sed -e 's/aout//'`
 			;;

@@ -1285,7 +1285,7 @@ const struct m68k_opcode m68k_opcodes[] =
 
 /* The move opcode can generate the movea and moveq instructions.  */
 {"moveb",	one(0010000),	one(0170000), ";b$d", m68000up },
-{"moveb",	one(0010000),	one(0170000), "ms$d", mcf5200 },
+{"moveb",	one(0010000),	one(0170000), "ms%d", mcf5200 },
 {"moveb",	one(0010000),	one(0170000), "nspd", mcf5200 },
 {"moveb",	one(0010000),	one(0170000), "obmd", mcf5200 },
 

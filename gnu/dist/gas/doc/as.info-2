@@ -26,8 +26,8 @@ versions.
 
 File: as.info,  Node: Ld Sections,  Next: As Sections,  Prev: Secs Background,  Up: Sections
 
-ld Sections
-===========
+Linker Sections
+===============
 
    `ld' deals with just four kinds of sections, summarized below.
 
@@ -87,8 +87,8 @@ addresses are on the horizontal axis.
 
 File: as.info,  Node: As Sections,  Next: Sub-Sections,  Prev: Ld Sections,  Up: Sections
 
-as Internal Sections
-====================
+Assembler Internal Sections
+===========================
 
    These sections are meant only for the internal use of `as'.  They
 have no meaning at run-time.  You do not really need to know about these

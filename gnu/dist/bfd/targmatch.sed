@@ -20,9 +20,13 @@ H
 d
 	:lab3
 G
+s/\n/%EOL%/g
 s/\(defined (HAVE_\)\([^)]*\)\(.*\)/\1\2\3\
 \&\2 },\
 #endif/
+s/%EOL%/\
+/g
 p
 s/.*//g
+s/\n//g
 h

@@ -597,7 +597,8 @@ int gen_to_words PARAMS ((LITTLENUM_TYPE * words, int precision,
 			  long exponent_bits));
 int had_err PARAMS ((void));
 int ignore_input PARAMS ((void));
-void cond_finish_check PARAMS ((void));
+void cond_finish_check PARAMS ((int));
+void cond_exit_macro PARAMS ((int));
 int seen_at_least_1_file PARAMS ((void));
 void app_pop PARAMS ((char *arg));
 void as_howmuch PARAMS ((FILE * stream));

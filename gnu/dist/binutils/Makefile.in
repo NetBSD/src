@@ -75,7 +75,7 @@ LEX_OPTIONS =
 LEX = `if [ -f ../flex/flex ] ; then echo ../flex/flex ; else echo flex ; fi`
 
 # Distribution version
-VERSION=2.8
+VERSION=2.8.1
 # Distribution name
 DIST_NAME=binutils-${VERSION}
 

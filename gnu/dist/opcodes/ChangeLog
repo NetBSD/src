@@ -1,3 +1,17 @@
+Mon May 12 15:10:53 1997  Jim Wilson  <wilson@cygnus.com>
+
+	* m68k-opc.c (moveb): Change $d to %d.
+
+Mon May  5 14:28:41 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* i386-dis.c: (dis386_twobyte): Add MMX instructions.
+	(twobyte_has_modrm): Likewise.
+	(grps): Likewise.
+	(OP_MMX, OP_EM, OP_MS): New static functions.
+
+	* i386-dis.c: Revert patch of April 4.  The output now matches
+	what gcc generates.
+
 Mon Apr 14 12:13:51 1997  Ian Lance Taylor  <ian@cygnus.com>
 
 	From Thomas Graichen <graichen@rzpd.de>:

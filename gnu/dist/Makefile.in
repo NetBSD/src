@@ -517,11 +517,15 @@ CHECK_MODULES=$(NATIVE_CHECK_MODULES) $(CROSS_CHECK_MODULES)
 
 # This is a list of the install targets for all of the modules which are
 # compiled using $(FLAGS_TO_PASS).
+# We put install-opcodes before install-binutils because the installed
+# binutils might be on PATH, and they might need the shared opcodes
+# library.
 INSTALL_MODULES = \
 	install-apache \
 	install-autoconf \
 	install-bash \
 	install-bfd \
+	install-opcodes \
 	install-binutils \
 	install-byacc \
 	install-cvs \
@@ -550,7 +554,6 @@ INSTALL_MODULES = \
 	install-m4 \
 	install-make \
 	install-mmalloc \
-	install-opcodes \
 	install-patch \
 	install-perl \
 	install-prms \
@@ -1436,7 +1439,7 @@ taz: $(DEVO_SUPPORT) $(SUPPORT_FILES) \
 	# Take out texinfo from a few places; make simple BISON=bison line.
 	sed -e '/^all\.normal: /s/\all-texinfo //' \
 	    -e '/^	install-texinfo /d' \
-	    -e '/^BISON = /,/^$$/d' \
+	    -e '/^BISON = `if/,/^$$/d' \
 	    -e '/^# BISON:/s/.*/BISON = bison -y/' \
 	<Makefile.in >tmp
 	mv -f tmp Makefile.in

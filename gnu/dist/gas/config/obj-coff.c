@@ -1909,6 +1909,9 @@ coff_header_append (abfd, h)
   unsigned int i;
   char buffer[1000];
   char buffero[1000];
+#ifdef COFF_LONG_SECTION_NAMES
+  unsigned long string_size = 4;
+#endif
 
   bfd_seek (abfd, 0, 0);
 
@@ -1931,10 +1934,6 @@ coff_header_append (abfd, h)
 
   for (i = SEG_E0; i < SEG_LAST; i++)
     {
-#ifdef COFF_LONG_SECTION_NAMES
-      unsigned long string_size = 4;
-#endif
-
       if (segment_info[i].scnhdr.s_name[0])
 	{
 	  unsigned int size;
@@ -3145,10 +3144,8 @@ write_object_file ()
 #define SUB_SEGMENT_ALIGN(SEG) 1
 #endif
 #ifdef md_do_align
-      {
-	static char nop = NOP_OPCODE;
-	md_do_align (SUB_SEGMENT_ALIGN (now_seg), &nop, 1, 0, alignment_done);
-      }
+      md_do_align (SUB_SEGMENT_ALIGN (now_seg), (char *) NULL, 0, 0,
+		   alignment_done);
 #endif
       frag_align (SUB_SEGMENT_ALIGN (now_seg), NOP_OPCODE, 0);
 #ifdef md_do_align

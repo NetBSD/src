@@ -166,7 +166,7 @@ case "${targ}" in
     targ_defvec=bfd_elf32_i386_vec
     targ_selvecs="nlm32_i386_vec i386coff_vec i386aout_vec"
     ;;
-  i[3456]86-*-linuxaout*)
+  i[3456]86-*-linux*aout*)
     targ_defvec=i386linux_vec
     targ_selvecs=bfd_elf32_i386_vec
     targ_underscore=yes
@@ -272,7 +272,7 @@ case "${targ}" in
     targ_defvec=hp300hpux_vec
     targ_underscore=yes
     ;;
-  m68*-*-linuxaout*)
+  m68*-*-linux*aout*)
     targ_defvec=m68klinux_vec
     targ_selvecs=bfd_elf32_m68k_vec
     targ_underscore=yes
@@ -467,7 +467,7 @@ case "${targ}" in
     targ_selvecs=sparcle_aout_vec
     targ_underscore=yes
     ;;
-  sparc-*-linuxaout*)
+  sparc-*-linux*aout*)
     targ_defvec=sparclinux_vec
     targ_selvecs="bfd_elf32_sparc_vec sunos_big_vec"
     targ_underscore=yes
@@ -513,14 +513,14 @@ case "${targ}" in
     targ_underscore=yes
     ;;
 
-#if 0
+#if HAVE_host_aout_vec
   tahoe-*-*)
     targ_defvec=host_aout_vec
     targ_underscore=yes
     ;;
 #endif
 
-#if 0
+#if HAVE_host_aout_vec
   vax-*-bsd* | vax-*-ultrix*)
     targ_defvec=host_aout_vec
     targ_underscore=yes

@@ -1,3 +1,8 @@
+Mon May 12 11:17:55 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config/default.exp: Use $base_dir rather than $objdir when
+	setting ld.  From John David Anglin <dave@hiauly1.hia.nrc.ca>.
+
 Wed Mar 26 13:56:10 1997  Ian Lance Taylor  <ian@cygnus.com>
 
 	* ld-srec/srec.exp: Don't expect failures on mips*-*-elf*.

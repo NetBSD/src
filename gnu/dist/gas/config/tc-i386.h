@@ -243,6 +243,7 @@ extern int tc_coff_sizemachdep PARAMS ((fragS *frag));
 #define Abs16 0x10000000
 #define Abs32 0x20000000
 #define Abs (Abs8|Abs16|Abs32)
+#define RegMMX 0x40000000	/* MMX register */
 
 #define Byte (Reg8|Imm8|Imm8S)
 #define Word (Reg16|Imm16)

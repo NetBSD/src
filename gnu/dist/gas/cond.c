@@ -19,6 +19,7 @@
    02111-1307, USA.  */
 
 #include "as.h"
+#include "macro.h"
 
 #include "obstack.h"
 
@@ -48,6 +49,8 @@ struct conditional_frame
   int ignoring;
   /* Whether a conditional at a higher level is ignoring input.  */
   int dead_tree;
+  /* Macro nesting level at which this conditional was created.  */
+  int macro_nest;
 };
 
 static void initialize_cframe PARAMS ((struct conditional_frame *cframe));
@@ -401,14 +404,22 @@ initialize_cframe (cframe)
 	    &cframe->if_file_line.line);
   cframe->previous_cframe = current_cframe;
   cframe->dead_tree = current_cframe != NULL && current_cframe->ignoring;
+  cframe->macro_nest = macro_nest;
 }
 
+/* Give an error if a conditional is unterminated inside a macro or
+   the assembly as a whole.  If NEST is non negative, we are being
+   called because of the end of a macro expansion.  If NEST is
+   negative, we are being called at the of the input files.  */
+
 void
-cond_finish_check ()
+cond_finish_check (nest)
+     int nest;
 {
-  if (current_cframe != NULL)
+  if (current_cframe != NULL && current_cframe->macro_nest >= nest)
     {
-      as_bad ("end of file inside conditional");
+      as_bad ("end of %s inside conditional",
+	      nest >= 0 ? "macro" : "file");
       as_bad_where (current_cframe->if_file_line.file,
 		    current_cframe->if_file_line.line,
 		    "here is the start of the unterminated conditional");
@@ -416,6 +427,24 @@ cond_finish_check ()
 	as_bad_where (current_cframe->else_file_line.file,
 		      current_cframe->else_file_line.line,
 		      "here is the \"else\" of the unterminated conditional");
+    }
+}
+
+/* This function is called when we exit out of a macro.  We assume
+   that any conditionals which began within the macro are correctly
+   nested, and just pop them off the stack.  */
+
+void
+cond_exit_macro (nest)
+     int nest;
+{
+  while (current_cframe != NULL && current_cframe->macro_nest >= nest)
+    {
+      struct conditional_frame *hold;
+
+      hold = current_cframe;
+      current_cframe = current_cframe->previous_cframe;
+      obstack_free (&cond_obstack, hold);
     }
 }
 

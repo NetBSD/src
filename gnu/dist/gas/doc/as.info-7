@@ -66,8 +66,8 @@ Index
 * 29K support:                          AMD29K-Dependent.
 * @word modifier, D10V:                 D10V-Word.
 * $ in symbol names <1>:                H8/500-Chars.
-* $ in symbol names <2>:                SH-Chars.
-* $ in symbol names:                    D10V-Chars.
+* $ in symbol names <2>:                D10V-Chars.
+* $ in symbol names:                    SH-Chars.
 * -+ option, VAX/VMS:                   VAX-Opts.
 * -A options, i960:                     Options-i960.
 * -b option, i960:                      Options-i960.
@@ -81,7 +81,7 @@ Index
 * -no-relax option, i960:               Options-i960.
 * -nocpp ignored (MIPS):                MIPS Opts.
 * -S, ignored on VAX:                   VAX-Opts.
-* -T, ignored on VAX:                   VAX-Opts.
+* -t, ignored on VAX:                   VAX-Opts.
 * -V, redundant on VAX:                 VAX-Opts.
 * .insn:                                MIPS insn.
 * .param on HPPA:                       HPPA Directives.
@@ -90,8 +90,6 @@ Index
 * .set push:                            MIPS option stack.
 * . (symbol):                           Dot.
 * : (label):                            Statements.
-* as bugs, reporting:                   Bug Reporting.
-* as version:                           v.
 * \" (doublequote character):           Strings.
 * \DDD (octal character code):          Strings.
 * \XD... (hex character code):          Strings.
@@ -102,8 +100,8 @@ Index
 * \r (carriage return character):       Strings.
 * \t (tab):                             Strings.
 * a.out symbol attributes:              a.out Symbols.
-* abort directive:                      Abort.
 * ABORT directive:                      ABORT.
+* abort directive:                      Abort.
 * align directive:                      Align.
 * align directive, SPARC:               Sparc-Directives.
 * app-file directive:                   App-File.
@@ -280,8 +278,10 @@ Index
 * arguments in expressions:             Arguments.
 * arithmetic functions:                 Operators.
 * arithmetic operands:                  Arguments.
+* assembler bugs, reporting:            Bug Reporting.
 * assembler crash:                      Bug Criteria.
 * assembler internal logic error:       As Sections.
+* assembler version:                    v.
 * assembler, and linker:                Secs Background.
 * assembly listings, enabling:          a.
 * assigning values to symbols <1>:      Setting Symbols.
@@ -306,7 +306,7 @@ Index
 * bss section:                          Ld Sections.
 * bug criteria:                         Bug Criteria.
 * bug reports:                          Bug Reporting.
-* bugs in as:                           Reporting Bugs.
+* bugs in assembler:                    Reporting Bugs.
 * bus lock prefixes, i386:              i386-prefixes.
 * bval:                                 Z8000 Directives.
 * call instructions, i386:              i386-Opcodes.
@@ -397,16 +397,16 @@ Index
 * expressions, integer:                 Integer Exprs.
 * faster processing (-f):               f.
 * fatal signal:                         Bug Criteria.
-* file name, logical <1>:               File.
-* file name, logical:                   App-File.
+* file name, logical <1>:               App-File.
+* file name, logical:                   File.
 * files, including:                     Include.
 * files, input:                         Input Files.
 * filling memory <1>:                   Skip.
 * filling memory:                       Space.
 * floating point numbers:               Flonums.
 * floating point numbers (double):      Double.
-* floating point numbers (single) <1>:  Float.
-* floating point numbers (single):      Single.
+* floating point numbers (single) <1>:  Single.
+* floating point numbers (single):      Float.
 * floating point, AMD 29K (IEEE):       AMD29K Floating Point.
 * floating point, D10V:                 D10V-Float.
 * floating point, H8/300 (IEEE):        H8/300 Floating Point.
@@ -509,7 +509,7 @@ Index
 * integers, hexadecimal:                Integers.
 * integers, octal:                      Integers.
 * integers, one byte:                   Byte.
-* internal as sections:                 As Sections.
+* internal assembler sections:          As Sections.
 * invalid input:                        Bug Criteria.
 * invocation summary:                   Overview.
 * joining text and data sections:       R.
@@ -587,7 +587,7 @@ Index
 * manual, structure and purpose:        Manual.
 * memory references, i386:              i386-Memory.
 * merging text and data sections:       R.
-* messages from as:                     Errors.
+* messages from assembler:              Errors.
 * minus, permitted arguments:           Infix Ops.
 * MIPS architecture options:            MIPS Opts.
 * MIPS big-endian output:               MIPS Opts.
@@ -654,7 +654,7 @@ Index
 * options for i386 (none):              i386-Options.
 * options for SPARC:                    Sparc-Opts.
 * options for VAX/VMS:                  VAX-Opts.
-* options, all versions of as:          Invoking.
+* options, all versions of assembler:   Invoking.
 * options, command line:                Command Line.
 * options, D10V:                        D10V-Opts.
 * options, H8/300 (none):               H8/300 Options.
@@ -684,7 +684,7 @@ Index
 * pseudo-opcodes, M680x0:               M68K-Branch.
 * pseudo-ops for branch, VAX:           VAX-branch.
 * pseudo-ops, machine independent:      Pseudo Ops.
-* purpose of GNU as:                    GNU Assembler.
+* purpose of GNU assembler:             GNU Assembler.
 * real-mode code, i386:                 i386-16bit.
 * register names, AMD 29K:              AMD29K-Regs.
 * register names, H8/300:               H8/300-Regs.
@@ -698,7 +698,7 @@ Index
 * relocation:                           Sections.
 * relocation example:                   Ld Sections.
 * repeat prefixes, i386:                i386-prefixes.
-* reporting bugs in as:                 Reporting Bugs.
+* reporting bugs in assembler:          Reporting Bugs.
 * return instructions, i386:            i386-Syntax.
 * rsect:                                Z8000 Directives.
 * search path for .include:             I.
@@ -739,7 +739,7 @@ Index
 * SPARC support:                        Sparc-Dependent.
 * special characters, M680x0:           M68K-Chars.
 * special purpose registers, AMD 29K:   AMD29K-Regs.
-* standard as sections:                 Secs Background.
+* standard assembler sections:          Secs Background.
 * standard input, as input file:        Command Line.
 * statement on multiple lines:          Statements.
 * statement separator character:        Statements.
@@ -819,7 +819,7 @@ Index
 * VAX support:                          Vax-Dependent.
 * Vax-11 C compatibility:               VAX-Opts.
 * VAX/VMS options:                      VAX-Opts.
-* version of as:                        v.
+* version of assembler:                 v.
 * versions of symbols:                  Symver.
 * VMS (VAX) options:                    VAX-Opts.
 * warning for altered difference tables: K.

@@ -1469,7 +1469,7 @@ expr (rank, resultP)
 	       && SEG_NORMAL (S_GET_SEGMENT (right.X_add_symbol)))
 
 	{
-	  resultP->X_add_number += right.X_add_number;
+	  resultP->X_add_number -= right.X_add_number;
 	  resultP->X_add_number += (S_GET_VALUE (resultP->X_add_symbol)
 				    - S_GET_VALUE (right.X_add_symbol));
 	  resultP->X_op = O_constant;

@@ -291,7 +291,7 @@ processor.
 * Menu:
 
 * Manual::                      Structure of this Manual
-* GNU Assembler::               as, the GNU Assembler
+* GNU Assembler::               The GNU Assembler
 * Object Formats::              Object File Formats
 * Command Line::                Command Line
 * Input Files::                 Input Files
@@ -323,8 +323,8 @@ machine architecture manual for this information.
 
 File: as.info,  Node: GNU Assembler,  Next: Object Formats,  Prev: Manual,  Up: Overview
 
-as, the GNU Assembler
-=====================
+The GNU Assembler
+=================
 
    GNU `as' is really a family of assemblers.  If you use (or have
 used) the GNU assembler on one architecture, you should find a fairly
@@ -1244,8 +1244,8 @@ Sections and Relocation
 * Menu:
 
 * Secs Background::             Background
-* Ld Sections::                 ld Sections
-* As Sections::                 as Internal Sections
+* Ld Sections::                 Linker Sections
+* As Sections::                 Assembler Internal Sections
 * Sub-Sections::                Sub-Sections
 * bss::                         bss Section
 

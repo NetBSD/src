@@ -2163,6 +2163,7 @@ void
 s_mexit (ignore)
      int ignore;
 {
+  cond_exit_macro (macro_nest);
   buffer_limit = input_scrub_next_buffer (&input_line_pointer);
 }
 

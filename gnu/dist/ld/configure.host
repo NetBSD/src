@@ -74,7 +74,7 @@ i[3456]86-*-sco* | i[3456]86-*-isc*)
   HOSTING_LIBS='`if [ -f ../gcc/libgcc.a ] ; then echo ../gcc/libgcc.a ; else gcc -print-libgcc-file-name; fi` -lc `if [ -f ../gcc/crtend.o ]; then echo ../gcc/crtend.o; else gcc -print-file-name=crtend.o; fi` /lib/crtn.o'
   ;;
 
-i[3456]86-*-linuxaout* | i[3456]86-*-linuxoldld)
+i[3456]86-*-linux*aout* | i[3456]86-*-linuxoldld)
   HOSTING_CRT0=/usr/lib/crt0.o
   ;;
 
@@ -102,7 +102,7 @@ mips*-sgi-irix[56]*)
   HOSTING_LIBS='`if [ -f ../gcc/libgcc.a ] ; then echo ../gcc/libgcc.a ; else gcc -print-libgcc-file-name; fi` -lc /usr/lib/crtn.o'
   ;;
 
-m68*-*-linuxaout*)
+m68*-*-linux*aout*)
   HOSTING_CRT0=/usr/lib/crt0.o
   ;;
 

@@ -1,3 +1,7 @@
+Tue May 13 10:43:11 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* gprof.c (VERSION): Define as "2.8.1".
+
 Thu Apr  3 18:55:05 1997  Ian Lance Taylor  <ian@cygnus.com>
 
 	* gprof.c (VERSION): Define as "2.8".

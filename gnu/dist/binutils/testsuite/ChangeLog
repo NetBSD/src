@@ -1,3 +1,8 @@
+Wed May 21 12:02:41 1997  Manfred Hollstein  <manfred@s-direktnet.de>
+
+	* binutils-all/ar.exp (long_filenames): Use `cd ./tmpdir' to avoid
+	output from the shell if tmpdir is found via $CDPATH.
+
 Mon Apr 14 12:36:41 1997  Ian Lance Taylor  <ian@cygnus.com>
 
 	* binutils-all/ar.exp (long_filenames): Check for a file system

@@ -107,7 +107,7 @@ SECTIONS
 
   /* Adjust the address for the data segment.  We want to adjust up to
      the same address within the page on the next page up.  */
-  ${RELOCATING+. = ${DATA_ADDR-ALIGN(${MAXPAGESIZE}) + (ALIGN(8) & (${MAXPAGESIZE} - 1))};}
+  ${RELOCATING+. = ${DATA_ADDR-ALIGN(${MAXPAGESIZE}) + (. & (${MAXPAGESIZE} - 1))};}
 
   .data  ${RELOCATING-0} :
   {

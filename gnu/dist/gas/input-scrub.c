@@ -74,7 +74,7 @@ static int sb_index = -1;
 static sb from_sb;
 
 /* The number of nested sb structures we have included.  */
-static int macro_nest;
+int macro_nest;
 
 /* We can have more than one source file open at once, though the info for all
    but the latest one are saved off in a struct input_save.  These files remain
@@ -293,6 +293,7 @@ input_scrub_next_buffer (bufp)
       if (sb_index >= from_sb.len)
 	{
 	  sb_kill (&from_sb);
+	  cond_finish_check (macro_nest);
 	  --macro_nest;
 	  partial_where = NULL;
 	  if (next_saved_file != NULL)
