@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.91 2001/11/13 06:24:56 lukem Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.92 2001/11/16 01:57:47 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.91 2001/11/13 06:24:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.92 2001/11/16 01:57:47 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,6 +354,9 @@ usbd_reset_port(usbd_device_handle dev, int port, usb_port_status_t *ps)
 				 err));
 			return (err);
 		}
+		/* If the device disappeared, just give up. */
+		if (!(UGETW(ps->wPortStatus) & UPS_CURRENT_CONNECT_STATUS))
+			return (USBD_NORMAL_COMPLETION);
 	} while ((UGETW(ps->wPortChange) & UPS_C_PORT_RESET) == 0 && --n > 0);
 	if (n == 0)
 		return (USBD_TIMEOUT);
