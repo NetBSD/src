@@ -1,7 +1,8 @@
-#	$NetBSD: bsd.obj.mk,v 1.43 2003/07/28 00:57:25 lukem Exp $
+#	$NetBSD: bsd.obj.mk,v 1.44 2003/07/28 02:38:33 lukem Exp $
 
-.if !target(__initialized_obj__)
-__initialized_obj__:
+.if !defined(_BSD_OBJ_MK_)
+_BSD_OBJ_MK_=1
+
 .include <bsd.own.mk>
 
 __curdir:=	${.CURDIR}
@@ -102,4 +103,5 @@ print-objdir:
 	@echo ${.OBJDIR}
 
 .include <bsd.sys.mk>
-.endif
+
+.endif	# !defined(_BSD_OBJ_MK_)
