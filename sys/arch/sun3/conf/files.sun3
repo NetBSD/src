@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.63 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: files.sun3,v 1.64 2002/10/03 16:13:25 uwe Exp $
 
 #
 # sun3-specific configuration info
@@ -240,6 +240,7 @@ file dev/sun/event.c			zsevent
 device kbd: zsevent
 attach kbd at zsc with kbd_zs
 file dev/sun/kbd_zs.c			kbd_zs
+file dev/sun/kbdsun.c			kbd_zs
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c 		kbd
 file arch/sun3/dev/kd.c 		kbd

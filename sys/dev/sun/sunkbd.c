@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.12 2002/10/02 16:52:59 thorpej Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.13 2002/10/03 16:13:26 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,9 +45,8 @@
  */
 
 /*
- * Keyboard driver (/dev/kbd -- note that we do not have minor numbers
- * [yet?]).  Translates incoming bytes to ASCII or to `firm_events' and
- * passes them up to the appropriate reader.
+ * /dev/kbd lower layer for sun keyboard off a tty (line discipline).
+ * This driver uses kbdsun middle layer to hook up to /dev/kbd.
  */
 
 /*
@@ -56,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.12 2002/10/02 16:52:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.13 2002/10/03 16:13:26 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.12 2002/10/02 16:52:59 thorpej Exp $");
 #include <dev/sun/event_var.h>
 #include <dev/sun/kbd_xlate.h>
 #include <dev/sun/kbdvar.h>
+#include <dev/sun/kbdsunvar.h>
 #include <dev/sun/kbd_ms_ttyvar.h>
 
 #include "kbd.h"
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.12 2002/10/02 16:52:59 thorpej Exp $");
 
 static int	sunkbd_match(struct device *, struct cfdata *, void *);
 static void	sunkbd_attach(struct device *, struct device *, void *);
-static void	sunkbd_write_data(struct kbd_softc *, int);
+static void	sunkbd_write_data(struct kbd_sun_softc *, int);
 static int	sunkbdiopen(struct device *, int mode);
 
 int	sunkbdinput(int, struct tty *);
@@ -99,7 +99,7 @@ int	sunkbdstart(struct tty *);
 /* Default keyboard baud rate */
 int	sunkbd_bps = KBD_DEFAULT_BPS;
 
-CFATTACH_DECL(kbd, sizeof(struct kbd_softc),
+CFATTACH_DECL(kbd_tty, sizeof(struct kbd_sun_softc),
     sunkbd_match, sunkbd_attach, NULL, NULL);
 
 struct  linesw sunkbd_disc =
@@ -127,14 +127,11 @@ void
 sunkbd_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
-
 {
-	struct kbd_softc *k = (void *) self;
+	struct kbd_sun_softc *k = (void *) self;
 	struct kbd_ms_tty_attach_args *args = aux;
-	struct cfdata *cf;
 	struct tty *tp = args->kmta_tp;
 	struct cons_channel *cc;
-	int kbd_unit;
 
 	/* Set up the proper line discipline. */
 	ttyldisc_init();
@@ -148,9 +145,10 @@ sunkbd_attach(parent, self, aux)
 	k->k_priv = tp;
 	tp->t_sc = (void *)k;
 
-	cf = k->k_dev.dv_cfdata;
-	kbd_unit = k->k_dev.dv_unit;
+	/* provide upper layer with a link to the middle layer */
+	k->k_kbd.k_ops = &kbd_ops_sun;
 
+	/* provide middle layer with a link to the lower layer (i.e. us) */
 	k->k_deviopen = sunkbdiopen;
 	k->k_deviclose = NULL;
 	k->k_write_data = sunkbd_write_data;
@@ -174,7 +172,7 @@ sunkbd_attach(parent, self, aux)
 
 		/* Tell our parent what the console should be. */
 		args->kmta_consdev = cn_tab;
-		k->k_isconsole = 1;
+		k->k_kbd.k_isconsole = 1;
 		printf(" (console input)");
 
 		/* Set magic to "L1-A" */
@@ -187,14 +185,14 @@ sunkbd_attach(parent, self, aux)
 
 		kd_attach_input(cc);
 	}
-	k->k_cc = cc;
+	k->k_kbd.k_cc = cc;
 
 	printf("\n");
 
 	callout_init(&k->k_repeat_ch);
 
 	/* Do this before any calls to kbd_rint(). */
-	kbd_xlate_init(&k->k_state);
+	kbd_xlate_init(&k->k_kbd.k_state);
 
 	/* XXX - Do this in open? */
 	k->k_repeat_start = hz/2;
@@ -215,7 +213,7 @@ sunkbdiopen(dev, flags)
 	struct device *dev;
 	int flags;
 {
-	struct kbd_softc *k = (void *) dev;
+	struct kbd_sun_softc *k = (void *) dev;
 	struct tty *tp = (struct tty *)k->k_priv;
 	struct proc *p = curproc;
 	struct termios t;
@@ -252,7 +250,7 @@ sunkbdinput(c, tp)
 	int c;
 	struct tty *tp;
 {
-	struct kbd_softc *k = (void *) tp->t_sc;
+	struct kbd_sun_softc *k = (void *) tp->t_sc;
 	u_char *cc;
 	int error;
 
@@ -268,7 +266,7 @@ sunkbdinput(c, tp)
 		 * send a reset to resync key translation.
 		 */
 		log(LOG_ERR, "%s: input error (0x%x)\n",
-			k->k_dev.dv_xname, c);
+			k->k_kbd.k_dev.dv_xname, c);
 		c &= TTY_CHARMASK;
 		if (!k->k_txflags & K_TXBUSY) {
 			ttyflush(tp, FREAD | FWRITE);
@@ -281,17 +279,17 @@ sunkbdinput(c, tp)
 	 */
 	if (tp->t_rawq.c_cc + tp->t_canq.c_cc >= TTYHOG) {
 		log(LOG_ERR, "%s: input overrun\n",
-		    k->k_dev.dv_xname);
+		    k->k_kbd.k_dev.dv_xname);
 		goto send_reset;
 	}
 
 	/* Pass this up to the "middle" layer. */
-	kbd_input_raw(k, c);
+	kbd_sun_input(k, c);
 	return (-1);
 
 send_reset:
 	/* Send a reset to resync translation. */
-	kbd_output(k, KBD_CMD_RESET);
+	kbd_sun_output(k, KBD_CMD_RESET);
 	return (ttstart(tp));
 
 }
@@ -300,23 +298,23 @@ int
 sunkbdstart(tp)
 	struct tty *tp;
 {
-	struct kbd_softc *k = (void *) tp->t_sc;
+	struct kbd_sun_softc *k = (void *) tp->t_sc;
 
 	/*
 	 * Transmit done.  Try to send more, or
 	 * clear busy and wakeup drain waiters.
 	 */
 	k->k_txflags &= ~K_TXBUSY;
-	kbd_start_tx(k);
+	kbd_sun_start_tx(k);
 	ttstart(tp);
 	return (0);
 }
 /*
- * used by kbd_start_tx();
+ * used by kbd_sun_start_tx();
  */
 void
 sunkbd_write_data(k, c)
-	struct kbd_softc *k;
+	struct kbd_sun_softc *k;
 	int c;
 {
 	struct tty *tp = (struct tty *)k->k_priv;

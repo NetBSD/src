@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.67 2002/09/29 04:12:02 chs Exp $
+#	$NetBSD: files.sparc64,v 1.68 2002/10/03 16:13:24 uwe Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -137,21 +137,18 @@ device sabtty: tty
 attach sabtty at sab
 # file arch/sparc64/dev/sabtty.c	sabtty needs-flag
 
-device kbd
-attach kbd at zs with kbd_zs
-attach kbd at zstty, com
-file dev/sun/kbd_zs.c			kbd_zs
-file dev/sun/kbd.c			kbd needs-flag
-file dev/sun/kbd_tables.c 		kbd
 file arch/sparc64/dev/kd.c 		kbd
-file dev/sun/sunkbd.c			kbd needs-flag
 
-device ms
+attach kbd at zs with kbd_zs
+attach kbd at zstty, com with kbd_tty
+file dev/sun/kbd_zs.c			kbd_zs
+file dev/sun/sunkbd.c			kbd_tty
+file dev/sun/kbdsun.c			kbd_zs | kbd_tty
+
 attach ms at zs with ms_zs
-attach ms at zstty, com
+attach ms at zstty, com with ms_tty
 file dev/sun/ms_zs.c			ms_zs
-file dev/sun/ms.c			ms needs-flag
-file dev/sun/sunms.c			ms needs-flag
+file dev/sun/sunms.c			ms_tty
 
 #
 # Machine-independent SCSI drivers
