@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.17 1998/04/16 17:51:46 drochner Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.18 1998/04/18 10:26:56 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -286,7 +286,7 @@ le_isa_attach(parent, lesc, ia, p)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	bus_dma_tag_t dmat = lesc->sc_dmat;
+	bus_dma_tag_t dmat = ia->ia_dmat;
 	bus_dma_segment_t seg;
 	int i, rseg;
 
@@ -304,7 +304,7 @@ le_isa_attach(parent, lesc, ia, p)
 
 	lesc->sc_iot = iot;
 	lesc->sc_ioh = ioh;
-	lesc->sc_dmat = ia->ia_dmat;
+	lesc->sc_dmat = dmat;
 	lesc->sc_rap = p->rap;
 	lesc->sc_rdp = p->rdp;
 
