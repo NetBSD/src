@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.10 2003/01/18 06:23:34 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.11 2003/01/19 00:01:09 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -125,7 +125,7 @@ process_set_pc(l, addr)
 {
 	struct trapframe *tf = trapframe(l);
 	
-	tf->srr0 = (int)addr;
+	tf->srr0 = (register_t)addr;
 	return 0;
 }
 
