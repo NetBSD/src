@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.29 2002/10/02 16:52:11 thorpej Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.30 2002/11/30 14:15:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.29 2002/10/02 16:52:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.30 2002/11/30 14:15:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,9 +292,9 @@ mbe_pcmcia_attach(parent, self, aux)
 
 	/* Perform generic initialization. */
 	if ((mpp->flags & MBH10302) != 0) 
-		mb86960_attach(sc, MB86960_TYPE_86960, pgea.enaddr);
-	else
-		mb86960_attach(sc, MB86960_TYPE_86965, pgea.enaddr);
+		sc->sc_flags |= FE_FLAGS_MB86960;
+
+	mb86960_attach(sc, pgea.enaddr);
 
 	mb86960_config(sc, NULL, 0, 0);
 
