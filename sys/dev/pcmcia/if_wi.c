@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.47 2000/12/20 04:36:26 jhawk Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.48 2000/12/30 07:57:52 castor Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -527,6 +527,10 @@ static void wi_rxeof(sc)
 		ifp->if_ierrors++;
 		return;
 	}
+
+	/* Align the data after the ethernet header */
+	m->m_data = (caddr_t) ALIGN(m->m_data + sizeof(struct ether_header)) 
+	    - sizeof(struct ether_header);
 
 	eh = mtod(m, struct ether_header *);
 	m->m_pkthdr.rcvif = ifp;
