@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.21 2001/05/31 18:46:09 scw Exp $	*/
+/*	$NetBSD: isr.c,v 1.22 2001/06/11 11:26:42 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -280,8 +280,8 @@ isrdispatch_autovec(evec, frame)
  * assembly language vectored interrupt routine.
  */
 void
-isrdispatch_vectored(pc, evec, frame)
-	int pc, evec;
+isrdispatch_vectored(evec, frame)
+	int evec;
 	void *frame;
 {
 	struct isr_vectored *isr;

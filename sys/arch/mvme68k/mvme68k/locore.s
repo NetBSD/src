@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.83 2001/06/11 11:24:40 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.84 2001/06/11 11:26:42 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1158,9 +1158,8 @@ ENTRY_NOPROFILE(intrhand_vectored)
 	movl	%a1,%sp@-
 	movw	%sp@(26),%d0
 	movl	%d0,%sp@-		| push exception vector info
-	movl	%sp@(26),%sp@-		| and PC
 	jbsr	_C_LABEL(isrdispatch_vectored) | call dispatcher
-	lea	%sp@(12),%sp		| pop value args
+	addql	#8,%sp			| pop value args
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)		| all done
 
