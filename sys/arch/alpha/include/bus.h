@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.23 1998/06/03 18:25:53 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.24 1998/06/08 03:42:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,36 @@
 #ifndef	__BUS_SPACE_COMPAT_OLDDEFS
 #define	__BUS_SPACE_COMPAT_OLDDEFS
 #endif
+
+/*
+ * Turn on BUS_SPACE_DEBUG if the global DEBUG option is enabled.
+ */
+#if defined(DEBUG) && !defined(BUS_SPACE_DEBUG)
+#define	BUS_SPACE_DEBUG
+#endif
+
+#ifdef BUS_SPACE_DEBUG
+/*
+ * Macros for checking the aligned-ness of pointers passed to bus
+ * space ops.  Strict alignment is required by the Alpha architecture,
+ * and a trap will occur if unaligned access is performed.  These
+ * may aid in the debugging of a broken device driver by displaying
+ * useful information about the problem.
+ */
+#define	__BUS_SPACE_ALIGNED_ADDRESS(p, t)				\
+	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+
+#define	__BUS_SPACE_ADDRESS_SANITY(p, t, d)				\
+({									\
+	if (__BUS_SPACE_ALIGNED_ADDRESS((p), t) == 0) {			\
+		printf("%s 0x%lx not aligned to %d bytes %s:%d\n",	\
+		    d, (u_long)(p), sizeof(t), __FILE__, __LINE__);	\
+	}								\
+	(void) 0;							\
+})
+#else
+#define	__BUS_SPACE_ADDRESS_SANITY(p, t, d)	(void) 0
+#endif /* BUS_SPACE_DEBUG */
 
 /*
  * Addresses (in bus space).
@@ -204,26 +234,35 @@ struct alpha_bus_space {
 #define	__abs_c(a,b)		__CONCAT(a,b)
 #define	__abs_opname(op,size)	__abs_c(__abs_c(__abs_c(abs_,op),_),size)
 
-#define	__abs_rs(sz, t, h, o)						\
-	(*(t)->__abs_opname(r,sz))((t)->abs_cookie, h, o)
-#define	__abs_ws(sz, t, h, o, v)					\
-	(*(t)->__abs_opname(w,sz))((t)->abs_cookie, h, o, v)
-#ifndef DEBUG
-#define	__abs_nonsingle(type, sz, t, h, o, a, c)			\
-	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, a, c)
-#else
-#define	__abs_nonsingle(type, sz, t, h, o, a, c)			\
-    do {								\
-	if (((unsigned long)a & (sz - 1)) != 0)				\
-		panic("bus non-single %d-byte unaligned (to %p) at %s:%d", \
-		    sz, a, __FILE__, __LINE__);				\
+#define	__abs_rs(sz, tn, t, h, o)					\
+	(__BUS_SPACE_ADDRESS_SANITY((h) + (o), tn, "bus addr"),		\
+	 (*(t)->__abs_opname(r,sz))((t)->abs_cookie, h, o))
+
+#define	__abs_ws(sz, tn, t, h, o, v)					\
+do {									\
+	__BUS_SPACE_ADDRESS_SANITY((h) + (o), tn, "bus addr");		\
+	(*(t)->__abs_opname(w,sz))((t)->abs_cookie, h, o, v);		\
+} while (0)
+
+#define	__abs_nonsingle(type, sz, tn, t, h, o, a, c)			\
+do {									\
+	__BUS_SPACE_ADDRESS_SANITY((a), tn, "buffer");			\
+	__BUS_SPACE_ADDRESS_SANITY((h) + (o), tn, "bus addr");		\
 	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, a, c);	\
-    } while (0)
-#endif
-#define	__abs_set(type, sz, t, h, o, v, c)				\
-	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, v, c)
-#define	__abs_copy(sz, t, h1, o1, h2, o2, cnt)			\
-	(*(t)->__abs_opname(c,sz))((t)->abs_cookie, h1, o1, h2, o2, cnt)
+} while (0)
+
+#define	__abs_set(type, sz, tn, t, h, o, v, c)				\
+do {									\
+	__BUS_SPACE_ADDRESS_SANITY((h) + (o), tn, "bus addr");		\
+	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, v, c);	\
+} while (0)
+
+#define	__abs_copy(sz, tn, t, h1, o1, h2, o2, cnt)			\
+do {									\
+	__BUS_SPACE_ADDRESS_SANITY((h1) + (o1), tn, "bus addr 1");	\
+	__BUS_SPACE_ADDRESS_SANITY((h2) + (o2), tn, "bus addr 2");	\
+	(*(t)->__abs_opname(c,sz))((t)->abs_cookie, h1, o1, h2, o2, cnt); \
+} while (0)
 
 
 /*
@@ -268,110 +307,110 @@ struct alpha_bus_space {
 /*
  * Bus read (single) operations.
  */
-#define	bus_space_read_1(t, h, o)	__abs_rs(1,(t),(h),(o))
-#define	bus_space_read_2(t, h, o)	__abs_rs(2,(t),(h),(o))
-#define	bus_space_read_4(t, h, o)	__abs_rs(4,(t),(h),(o))
-#define	bus_space_read_8(t, h, o)	__abs_rs(8,(t),(h),(o))
+#define	bus_space_read_1(t, h, o)	__abs_rs(1,u_int8_t,(t),(h),(o))
+#define	bus_space_read_2(t, h, o)	__abs_rs(2,u_int16_t,(t),(h),(o))
+#define	bus_space_read_4(t, h, o)	__abs_rs(4,u_int32_t,(t),(h),(o))
+#define	bus_space_read_8(t, h, o)	__abs_rs(8,u_int64_t,(t),(h),(o))
 
 
 /*
  * Bus read multiple operations.
  */
 #define	bus_space_read_multi_1(t, h, o, a, c)				\
-	__abs_nonsingle(rm,1,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rm,1,u_int8_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_2(t, h, o, a, c)				\
-	__abs_nonsingle(rm,2,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rm,2,u_int16_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_4(t, h, o, a, c)				\
-	__abs_nonsingle(rm,4,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rm,4,u_int32_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_8(t, h, o, a, c)				\
-	__abs_nonsingle(rm,8,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rm,8,u_int64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Bus read region operations.
  */
 #define	bus_space_read_region_1(t, h, o, a, c)				\
-	__abs_nonsingle(rr,1,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rr,1,u_int8_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_2(t, h, o, a, c)				\
-	__abs_nonsingle(rr,2,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rr,2,u_int16_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_4(t, h, o, a, c)				\
-	__abs_nonsingle(rr,4,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rr,4,u_int32_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_8(t, h, o, a, c)				\
-	__abs_nonsingle(rr,8,(t),(h),(o),(a),(c))
+	__abs_nonsingle(rr,8,u_int64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Bus write (single) operations.
  */
-#define	bus_space_write_1(t, h, o, v)	__abs_ws(1,(t),(h),(o),(v))
-#define	bus_space_write_2(t, h, o, v)	__abs_ws(2,(t),(h),(o),(v))
-#define	bus_space_write_4(t, h, o, v)	__abs_ws(4,(t),(h),(o),(v))
-#define	bus_space_write_8(t, h, o, v)	__abs_ws(8,(t),(h),(o),(v))
+#define	bus_space_write_1(t, h, o, v)	__abs_ws(1,u_int8_t,(t),(h),(o),(v))
+#define	bus_space_write_2(t, h, o, v)	__abs_ws(2,u_int16_t,(t),(h),(o),(v))
+#define	bus_space_write_4(t, h, o, v)	__abs_ws(4,u_int32_t,(t),(h),(o),(v))
+#define	bus_space_write_8(t, h, o, v)	__abs_ws(8,u_int64_t,(t),(h),(o),(v))
 
 
 /*
  * Bus write multiple operations.
  */
 #define	bus_space_write_multi_1(t, h, o, a, c)				\
-	__abs_nonsingle(wm,1,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wm,1,u_int8_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_2(t, h, o, a, c)				\
-	__abs_nonsingle(wm,2,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wm,2,u_int16_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_4(t, h, o, a, c)				\
-	__abs_nonsingle(wm,4,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wm,4,u_int32_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
-	__abs_nonsingle(wm,8,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wm,8,u_int64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Bus write region operations.
  */
 #define	bus_space_write_region_1(t, h, o, a, c)				\
-	__abs_nonsingle(wr,1,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wr,1,u_int8_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_2(t, h, o, a, c)				\
-	__abs_nonsingle(wr,2,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wr,2,u_int16_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_4(t, h, o, a, c)				\
-	__abs_nonsingle(wr,4,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wr,4,u_int32_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_8(t, h, o, a, c)				\
-	__abs_nonsingle(wr,8,(t),(h),(o),(a),(c))
+	__abs_nonsingle(wr,8,u_int64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Set multiple operations.
  */
 #define	bus_space_set_multi_1(t, h, o, v, c)				\
-	__abs_set(sm,1,(t),(h),(o),(v),(c))
+	__abs_set(sm,1,u_int8_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_multi_2(t, h, o, v, c)				\
-	__abs_set(sm,2,(t),(h),(o),(v),(c))
+	__abs_set(sm,2,u_int16_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_multi_4(t, h, o, v, c)				\
-	__abs_set(sm,4,(t),(h),(o),(v),(c))
+	__abs_set(sm,4,u_int32_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_multi_8(t, h, o, v, c)				\
-	__abs_set(sm,8,(t),(h),(o),(v),(c))
+	__abs_set(sm,8,u_int64_t,(t),(h),(o),(v),(c))
 
 
 /*
  * Set region operations.
  */
 #define	bus_space_set_region_1(t, h, o, v, c)				\
-	__abs_set(sr,1,(t),(h),(o),(v),(c))
+	__abs_set(sr,1,u_int8_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_region_2(t, h, o, v, c)				\
-	__abs_set(sr,2,(t),(h),(o),(v),(c))
+	__abs_set(sr,2,u_int16_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_region_4(t, h, o, v, c)				\
-	__abs_set(sr,4,(t),(h),(o),(v),(c))
+	__abs_set(sr,4,u_int32_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_region_8(t, h, o, v, c)				\
-	__abs_set(sr,8,(t),(h),(o),(v),(c))
+	__abs_set(sr,8,u_int64_t,(t),(h),(o),(v),(c))
 
 
 /*
  * Copy region operations.
  */
 #define	bus_space_copy_region_1(t, h1, o1, h2, o2, c)			\
-	__abs_copy(1, (t), (h1), (o1), (h2), (o2), (c))
+	__abs_copy(1, u_int8_t, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_2(t, h1, o1, h2, o2, c)			\
-	__abs_copy(2, (t), (h1), (o1), (h2), (o2), (c))
+	__abs_copy(2, u_int16_t, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_4(t, h1, o1, h2, o2, c)			\
-	__abs_copy(4, (t), (h1), (o1), (h2), (o2), (c))
+	__abs_copy(4, u_int32_t, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)			\
-	__abs_copy(8, (t), (h1), (o1), (h2), (o2), (c))
+	__abs_copy(8, u_int64_t, (t), (h1), (o1), (h2), (o2), (c))
 
 #ifdef __BUS_SPACE_COMPAT_OLDDEFS
 /* compatibility definitions; deprecated */
