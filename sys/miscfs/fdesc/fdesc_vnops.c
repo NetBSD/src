@@ -37,7 +37,7 @@
  * From:
  *	Id: fdesc_vnops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: fdesc_vnops.c,v 1.10 1994/01/05 15:11:32 cgd Exp $
+ *	$Id: fdesc_vnops.c,v 1.11 1994/01/09 17:33:19 ws Exp $
  */
 
 /*
@@ -572,6 +572,13 @@ fdesc_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 	struct filedesc *fdp;
 	int i;
 	int error;
+
+	/*
+	 * NFS mounting of fdesc doesn't make sense
+	 * See also fdesc_vptofh & fdesc_fhtovp in fdesc_vfsops.c
+	 */
+	if (cookies)
+		panic("fdesc_readdir");
 
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
