@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)creat.2	6.10 (Berkeley) 6/23/91
-.\"	$Id: creat.3,v 1.6 1993/12/15 18:10:20 jtc Exp $
+.\"	$Id: creat.3,v 1.7 1994/05/18 14:31:43 jtc Exp $
 .\"
 .Dd June 23, 1991
 .Dt CREAT 2
@@ -39,9 +39,11 @@
 .Nm creat
 .Nd create a new file
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/stat.h>
 .Fd #include <fcntl.h>
 .Ft int
-.Fn creat "char *path" "mode_t mode"
+.Fn creat "const char *path" "mode_t mode"
 .Sh DESCRIPTION
 .Bf -symbolic
 This interface is made obsolete by:
