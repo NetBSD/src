@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.30 1993/12/22 06:44:10 cgd Exp $
+#	$Id: Makefile,v 1.31 1994/01/08 12:22:47 cgd Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -25,9 +25,8 @@ LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm
 NOOBJ=	noobj
 
 # Change SYS_INCLUDE in bsd.own.mk to "symlinks" if you don't want copies
-.if !defined(SYS_INCLUDE)
-SYS_INCLUDE=	copies
-.endif
+.include <bsd.own.mk>
+SYS_INCLUDE?=	copies
 
 realinstall:
 	@echo installing ${FILES}
@@ -72,7 +71,16 @@ copies:
 	rm -rf ${DESTDIR}/usr/include/machine
 	mkdir ${DESTDIR}/usr/include/machine
 	cd ../sys/arch/${MACHINE}/include; \
-	tar cf - *.h | (cd ${DESTDIR}/usr/include/machine; tar xpfB -); \
+	    tar cf - *.h | (cd ${DESTDIR}/usr/include/machine; tar xpfB -);
+	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
+	if test ${MACHINE} != ${MACHINE_ARCH} ; then \
+		mkdir ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
+		cd ../sys/arch/${MACHINE_ARCH}/include ; \
+		tar cf - *.h | \
+		    (cd ${DESTDIR}/usr/include/${MACHINE_ARCH} ; tar xpfB -); \
+	else \
+		ln -s machine ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
+	fi
 
 symlinks:
 	@echo symlinks: ${LDIRS}
@@ -82,6 +90,13 @@ symlinks:
 	done
 	rm -rf ${DESTDIR}/usr/include/machine
 	ln -s /sys/arch/${MACHINE}/include ${DESTDIR}/usr/include/machine
+	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
+	if test ${MACHINE} != ${MACHINE_ARCH} ; then \
+		ln -s /sys/arch/${MACHINE_ARCH}/include \
+		    ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
+	else \
+		ln -s machine ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
+	fi
 
 .include <bsd.prog.mk>
 
