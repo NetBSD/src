@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.13.2.3 2004/09/21 13:17:24 skrll Exp $ */
+/* $NetBSD: siotty.c,v 1.13.2.4 2005/01/25 09:29:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.13.2.3 2004/09/21 13:17:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.13.2.4 2005/01/25 09:29:04 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -363,10 +363,10 @@ siomctl(sc, control, op)
 /*--------------------  cdevsw[] interface --------------------*/
 
 int
-sioopen(dev, flag, mode, p)
+sioopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct siotty_softc *sc;
 	struct tty *tp;
@@ -379,7 +379,7 @@ sioopen(dev, flag, mode, p)
 		tty_attach(tp);
 	}		
 	else if ((tp->t_state & TS_ISOPEN) && (tp->t_state & TS_XCLUDE)
-	    && p->p_ucred->cr_uid != 0)
+	    && l->l_proc->p_ucred->cr_uid != 0)
 		return EBUSY;
 
 	tp->t_oproc = siostart;
@@ -418,10 +418,10 @@ sioopen(dev, flag, mode, p)
 }
  
 int
-sioclose(dev, flag, mode, p)
+sioclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -468,34 +468,34 @@ siowrite(dev, uio, flag)
 }
 
 int
-siopoll(dev, events, p)
+siopoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-sioioctl(dev, cmd, data, flag, p)
+sioioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 

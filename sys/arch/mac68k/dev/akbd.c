@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.15.6.4 2005/01/17 19:29:35 skrll Exp $	*/
+/*	$NetBSD: akbd.c,v 1.15.6.5 2005/01/25 09:29:04 skrll Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.15.6.4 2005/01/17 19:29:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.15.6.5 2005/01/25 09:29:04 skrll Exp $");
 
 #include "opt_adb.h"
 
@@ -92,7 +92,7 @@ extern struct cfdriver akbd_cd;
 int kbd_intr(adb_event_t *, struct akbd_softc *);
 int akbd_enable(void *, int);
 void akbd_set_leds(void *, int);
-int akbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int akbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 struct wskbd_accessops akbd_accessops = {
 	akbd_enable,
@@ -460,7 +460,7 @@ akbd_set_leds(void *v, int on)
 }
 
 int
-akbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+akbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	switch (cmd) {
 

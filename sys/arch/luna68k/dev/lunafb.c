@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.11.2.3 2004/09/21 13:17:24 skrll Exp $ */
+/* $NetBSD: lunafb.c,v 1.11.2.4 2005/01/25 09:29:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.11.2.3 2004/09/21 13:17:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.11.2.4 2005/01/25 09:29:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ static const struct wsscreen_list omfb_screenlist = {
 	sizeof(_omfb_scrlist) / sizeof(struct wsscreen_descr *), _omfb_scrlist
 };
 
-static int   omfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static int   omfbioctl __P((void *, u_long, caddr_t, int, struct lwp *));
 static paddr_t omfbmmap __P((void *, off_t, int));
 static int   omfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
@@ -230,12 +230,12 @@ omfb_cnattach()
 }
 
 static int
-omfbioctl(v, cmd, data, flag, p)
+omfbioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct omfb_softc *sc = v;
 	struct om_hwdevconfig *dc = sc->sc_dc;

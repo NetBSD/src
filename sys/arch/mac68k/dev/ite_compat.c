@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_compat.c,v 1.6.6.4 2005/01/17 19:29:35 skrll Exp $	*/
+/*	$NetBSD: ite_compat.c,v 1.6.6.5 2005/01/25 09:29:04 skrll Exp $	*/
 
 /*
  * Copyright (C) 2000 Scott Reynolds
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.6.6.4 2005/01/17 19:29:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.6.6.5 2005/01/25 09:29:04 skrll Exp $");
 
 #include "ite.h"
 #include "wsdisplay.h"
@@ -102,14 +102,14 @@ iteattach(int n)
 
 /*ARGSUSED*/
 int
-iteopen(dev_t dev, int mode, int devtype, struct proc *p)
+iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 {
 	return ite_initted ? (0) : (ENXIO);
 }
 
 /*ARGSUSED*/
 int
-iteclose(dev_t dev, int flag, int mode, struct proc *p)
+iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	return ite_initted ? (0) : (ENXIO);
 }
@@ -139,7 +139,7 @@ itetty(dev_t dev)
 
 /*ARGSUSED*/
 int
-iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	if (!ite_initted)
 		return (ENXIO);
@@ -176,7 +176,7 @@ iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		}
 	default:
 		return ((*wsdisplay_cdevsw.d_ioctl)(cn_tab->cn_dev, cmd,
-						    addr, flag, p));
+						    addr, flag, l));
 	}
 
 	return (ENOTTY);
@@ -184,10 +184,10 @@ iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 /*ARGSUSED*/
 int
-itepoll(dev_t dev, int events, struct proc *p)
+itepoll(dev_t dev, int events, struct lwp *l)
 {
 	return ite_initted ?
-	    (*wsdisplay_cdevsw.d_poll)(cn_tab->cn_dev, events, p) : (ENXIO);
+	    (*wsdisplay_cdevsw.d_poll)(cn_tab->cn_dev, events, l) : (ENXIO);
 }
 
 int

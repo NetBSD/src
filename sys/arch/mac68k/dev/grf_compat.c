@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.12.2.4 2005/01/17 19:29:35 skrll Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.12.2.5 2005/01/25 09:29:04 skrll Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.12.2.4 2005/01/17 19:29:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.12.2.5 2005/01/25 09:29:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ grf_attach(struct macfb_softc *sc, int unit)
  * Standard device ops
  */
 int
-grfopen(dev_t dev, int flag, int mode, struct proc *p)
+grfopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct grf_softc *sc;
 	int unit = GRFUNIT(dev);
@@ -187,7 +187,7 @@ grfopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-grfclose(dev_t dev, int flag, int mode, struct proc *p)
+grfclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct grf_softc *sc;
 	int unit = GRFUNIT(dev);
@@ -206,7 +206,7 @@ grfclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct grf_softc *sc;
 	struct macfb_devconfig *dc;
@@ -252,11 +252,11 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 #if defined(GRF_COMPAT) || (NGRF > 0)
 	case GRFIOCMAP:
-		rv = grfmap(dev, sc->mfb_sc, (caddr_t *)data, p);
+		rv = grfmap(dev, sc->mfb_sc, (caddr_t *)data, l->l_proc);
 		break;
 
 	case GRFIOCUNMAP:
-		rv = grfunmap(dev, sc->mfb_sc, *(caddr_t *)data, p);
+		rv = grfunmap(dev, sc->mfb_sc, *(caddr_t *)data, l->l_proc);
 		break;
 #endif /* GRF_COMPAT || (NGRF > 0) */
 
