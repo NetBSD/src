@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.14 1998/03/29 03:50:30 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.15 1998/08/12 05:42:44 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -259,7 +259,9 @@ int	adb_cuda_serial = 0;		/* the current packet */
 
 extern struct mac68k_machine_S mac68k_machine;
 
+#if 0
 int	zshard __P((int));
+#endif
 
 void	pm_setup_adb __P((void));
 void	pm_check_adb_devices __P((int));
@@ -692,7 +694,11 @@ adb_intr_II(void)
 	ADB_VIA_INTR_DISABLE();	/* disable ADB interrupt on IIs. */
 
 	delay(ADB_DELAY);	/* yuck (don't remove) */
+#if 0
 	zshard(0);		/* grab any serial interrupts */
+#else
+	(void)intr_dispatch(0x70);
+#endif
 
 	if (ADB_INTR_IS_ON)
 		intr_on = 1;	/* save for later */
@@ -739,7 +745,11 @@ switch_start:
 			adbActionState = ADB_ACTION_IN;
 		}
 		delay(ADB_DELAY);
+#if 0
 		zshard(0);		/* grab any serial interrupts */
+#else
+		(void)intr_dispatch(0x70);
+#endif
 		goto switch_start;
 		break;
 	case ADB_ACTION_IDLE:
@@ -1224,7 +1234,11 @@ switch_start:
 		ADB_SET_STATE_ACKON();	/* start ACK to ADB chip */
 		delay(ADB_DELAY);	/* delay */
 		ADB_SET_STATE_ACKOFF();	/* end ACK to ADB chip */
+#if 0
 		zshard(0);	/* grab any serial interrupts */
+#else
+		(void)intr_dispatch(0x70);
+#endif
 		break;
 
 	case ADB_ACTION_IN:
@@ -1238,7 +1252,11 @@ switch_start:
 		ADB_SET_STATE_ACKON();	/* start ACK to ADB chip */
 		delay(ADB_DELAY);	/* delay */
 		ADB_SET_STATE_ACKOFF();	/* end ACK to ADB chip */
+#if 0
 		zshard(0);	/* grab any serial interrupts */
+#else
+		(void)intr_dispatch(0x70);
+#endif
 
 		if (1 == ending) {	/* end of message? */
 			ADB_SET_STATE_INACTIVE();	/* signal end of frame */
@@ -1286,7 +1304,11 @@ switch_start:
 				adbActionState = ADB_ACTION_OUT;	/* set next state */
 
 				delay(ADB_DELAY);	/* delay */
+#if 0
 				zshard(0);	/* grab any serial interrupts */
+#else
+				(void)intr_dispatch(0x70);
+#endif
 
 				if (ADB_INTR_IS_ON) {	/* ADB intr low during
 							 * write */
@@ -1327,13 +1349,21 @@ switch_start:
 			adbWriteDelay = 1;	/* must retry when done with
 						 * read */
 			delay(ADB_DELAY);	/* delay */
+#if 0
 			zshard(0);		/* grab any serial interrupts */
+#else
+			(void)intr_dispatch(0x70);
+#endif
 			goto switch_start;	/* process next state right
 						 * now */
 			break;
 		}
 		delay(ADB_DELAY);	/* required delay */
+#if 0
 		zshard(0);	/* grab any serial interrupts */
+#else
+		(void)intr_dispatch(0x70);
+#endif
 
 		if (adbOutputBuffer[0] == adbSentChars) {	/* check for done */
 			if (0 == adb_cmd_result(adbOutputBuffer)) {	/* do we expect data
