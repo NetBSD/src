@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.3 1997/08/13 20:10:30 kleink Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.4 1997/08/14 15:56:48 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -84,6 +84,7 @@ struct __kvm {
 void	 _kvm_err __P((kvm_t *kd, const char *program, const char *fmt, ...));
 void	 _kvm_freeprocs __P((kvm_t *kd));
 void	 _kvm_freevtop __P((kvm_t *));
+int	 _kvm_mdopen __P((kvm_t *));
 int	 _kvm_initvtop __P((kvm_t *));
 int	 _kvm_kvatop __P((kvm_t *, u_long, u_long *));
 void	*_kvm_malloc __P((kvm_t *kd, size_t));
