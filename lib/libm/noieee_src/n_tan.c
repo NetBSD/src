@@ -1,4 +1,4 @@
-/*	$NetBSD: n_tan.c,v 1.1 1995/10/10 23:37:07 ragge Exp $	*/
+/*	$NetBSD: n_tan.c,v 1.2 1998/08/22 12:49:09 ragge Exp $	*/
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)tan.c	8.1 (Berkeley) 6/4/93";
+#endif
 #endif /* not lint */
 
 #include "mathimpl.h"
@@ -56,7 +58,7 @@ double x;
 	else {
 		k = 0;
 		if (a < small) {
-			big+a;
+			z=big+a;
 			return x;
 		}
 	}
