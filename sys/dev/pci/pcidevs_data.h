@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.160 1999/09/11 06:27:36 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.161 1999/09/27 23:46:56 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.154 1999/09/10 19:55:54 augustss Exp 
+ *	NetBSD: pcidevs,v 1.156 1999/09/27 23:45:57 ad Exp 
  */
 
 /*
@@ -1333,7 +1333,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
 	    0,
 	    "Distributed Processing Technology",
-	    "SmartCache/Raid",
+	    "SmartCache/SmartRAID",
 	},
 	{
 	    PCI_VENDOR_DOLPHIN, PCI_PRODUCT_DOLPHIN_PCISCI,
