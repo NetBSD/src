@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4 2001/08/25 18:37:20 chs Exp $
+#	$NetBSD: GENERIC,v 1.5 2001/09/01 21:52:25 atatat Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -85,6 +85,7 @@ pseudo-device	pty		64	# pseudo ptys
 #pseudo-device	sl		4	# SLIP network interfaces
 #pseudo-device	ppp		4	# PPP network interfaces
 #pseudo-device	bpfilter	16	# Berkeley packet filter
+#pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	vnd		4	# vnode pseudo-disks
 #pseudo-device	ccd		4	# concatenated disk devices
 pseudo-device	loop			# loopback network interface
