@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.34 2004/03/19 02:27:44 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.35 2004/03/19 02:57:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.34 2004/03/19 02:27:44 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.35 2004/03/19 02:57:34 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -799,6 +799,8 @@ rf_ASMParityAdjust(RF_PhysDiskAddr_t *toAdjust,
 			/* create a second pda and copy the parity map info
 			 * into it */
 			RF_ASSERT(toAdjust->next == NULL);
+			/* the following will get freed in rf_FreeAccessStripeMap() via 
+			   rf_FreePDAList() */
 			new_pda = toAdjust->next = rf_AllocPhysDiskAddr();
 			*new_pda = *toAdjust;	/* structure assignment */
 			new_pda->next = NULL;
