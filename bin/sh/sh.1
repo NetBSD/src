@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.33.4.3 2000/09/21 21:32:35 phil Exp $
+.\"	$NetBSD: sh.1,v 1.33.4.4 2001/03/17 10:21:33 wulf Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1365,23 +1365,57 @@ by one. If there are zero positional parameters,
 .Ic shift
 does nothing.
 .It Xo trap
+.Op Fl l
+.Xc
+.It Xo trap
 .Op Ar action
 .Ar signal...
 .Xc
 Cause the shell to parse and execute action when any of the specified
-signals are received. The signals are specified by signal number. If
+signals are received. The signals are specified by signal number or as
+the name of the signal.
+If
 .Ar signal
 is
 .Li 0 ,
 the action is executed when the shell exits.
 .Ar action
-may be null or omitted; the former causes the specified signal to be
-ignored and the latter causes the default action to be taken. When the
-shell forks off a subshell, it resets trapped (but not ignored) signals to
-the default action. The
+may be null, which cause the specified signals to be ignored.
+With
+.Ar action
+omitted or set to `-' the specified signals are set to their default action.
+When the shell forks off a subshell, it resets trapped (but not ignored)
+signals to the default action. The
 .Ic trap
 command has no effect on signals that were
-ignored on entry to the shell.
+ignored on entry to the shell. 
+Issuing
+.Ic trap
+with option
+.Ar -l
+will print a list of valid signal names.
+.Ic trap
+without any arguments cause it to write a list of signals and their
+associated action to the standard output in a format that is suitable
+as an input to the shell that achieves the same trapping results.
+.Pp
+Examples:
+.Pp
+.Dl trap
+.Pp
+List trapped signals and their corresponding action
+.Pp
+.Dl trap -l
+.Pp
+Print a list of valid signals
+.Pp
+.Dl trap '' SIGINT QUIT tstp 30
+.Pp
+Ignore signals INT QUIT TSTP USR1
+.Pp
+.Dl trap date INT
+.Pp
+Print date upon receiving signal INT
 .It type Op Ar name ...
 Interpret each name as a command and print the resolution of the command
 search. Possible resolutions are:
