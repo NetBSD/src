@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4.2.3 2000/03/29 22:38:45 he Exp $
+#	$NetBSD: Makefile.inc,v 1.4.2.4 2000/09/26 15:24:17 he Exp $
 
 # Ross Harvey <ross@netbsd.org>
 
@@ -60,7 +60,7 @@ release:
 	@echo setenv RELEASEDIR first
 	@false
 .else
-release:
+release: all
 .for i in ${TARGS}
 	${ICMD} ${i} ${RELEASEDIR}/.
 .endfor
