@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.5 1997/04/25 18:02:47 gwr Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.6 1997/05/28 04:27:00 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -132,8 +132,11 @@ bus_print(args, name)
 
 label_t *nofault;
 
-/* This is defined in _startup.c */
+/* This is defined in pmap.c */
 extern vm_offset_t tmp_vpages[];
+extern u_char tmp_vpage0_inuse, tmp_vpage1_inuse;
+
+vm_offset_t pmap_extract_kernel(vm_offset_t);
 
 static const int bustype_to_patype[4] = {
 	0,		/* OBMEM  */
@@ -153,8 +156,8 @@ static const int bustype_to_patype[4] = {
 int bus_peek(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
-	int	offset, rtn;
-	vm_offset_t va_page;
+	int	offset, rtn, s;
+	vm_offset_t va_page, oldpaddr;
 	caddr_t va;
 
 	/* XXX - Must fix for VME support... */
@@ -166,7 +169,14 @@ int bus_peek(bustype, paddr, sz)
 	paddr |= bustype_to_patype[bustype];
 	paddr |= PMAP_NC;
 
-	va_page = tmp_vpages[0];
+	s = splimp();
+	oldpaddr = 0; /*XXXgcc*/
+	if (tmp_vpage1_inuse++) {
+		oldpaddr = pmap_extract_kernel(tmp_vpages[1]);
+	}
+	splx(s);
+
+	va_page = tmp_vpages[1];
 	va      = (caddr_t) va_page + offset;
 
 	pmap_enter(pmap_kernel(), va_page, paddr, (VM_PROT_READ|VM_PROT_WRITE),
@@ -187,8 +197,14 @@ int bus_peek(bustype, paddr, sz)
 			rtn = -1;
 	}
 
-	pmap_remove(pmap_kernel(), va_page, va_page + NBPG);
-
+	s = splimp();
+	if (--tmp_vpage1_inuse) {
+		pmap_enter(pmap_kernel(), tmp_vpages[1], oldpaddr,
+			VM_PROT_READ|VM_PROT_WRITE, TRUE);
+	} else {
+		pmap_remove(pmap_kernel(), va_page, va_page + NBPG);
+	}
+	splx(s);
 
 	return rtn;
 }
@@ -218,8 +234,8 @@ bus_mapin(bustype, paddr, sz)
 	retval = va + off;
 
 	/* Map it to the specified bus. */
-#if 0	/* XXX */
-	/* This has a problem with wrap-around... */
+#if 0
+	/* This has a problem with wrap-around... (on the sun3x? -j) */
 	pmap_map((int)va, pa | pmt, pa + sz, VM_PROT_ALL);
 #else
 	do {
