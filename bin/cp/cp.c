@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.13 1995/04/02 01:45:25 mycroft Exp $	*/
+/*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cp.c	8.2 (Berkeley) 4/1/94";
+static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: cp.c,v 1.13 1995/04/02 01:45:25 mycroft Exp $";
+static char rcsid[] = "$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -349,7 +349,7 @@ copy(argv, type, fts_options)
 			}
 			if (!S_ISDIR(curr->fts_statp->st_mode) &&
 			    S_ISDIR(to_stat.st_mode)) {
-				warnx("cannot overwrite directory %s with non-directory %s.",
+		warnx("cannot overwrite directory %s with non-directory %s",
 				    to.p_path, curr->fts_path);
 				rval = 1;
 				continue;
