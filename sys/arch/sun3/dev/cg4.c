@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.2 1995/04/07 02:43:25 gwr Exp $	*/
+/*	$NetBSD: cg4.c,v 1.3 1995/04/07 05:19:24 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,9 +132,17 @@ cg4match(parent, vcf, args)
 	if (ca->ca_paddr == -1)
 		ca->ca_paddr = 0xFF200000;
 
-	paddr = ca->ca_paddr + CG4REG_PIXMAP + CG4_PIXMAP_SIZE - 8;
+	paddr = ca->ca_paddr;
 	x = bus_peek(ca->ca_bustype, paddr, 1);
-	return (x != -1);
+	if (x == -1)
+		return (0);
+
+	paddr += CG4REG_PIXMAP;
+	x = bus_peek(ca->ca_bustype, paddr, 1);
+	if (x == -1)
+		return (0);
+
+	return (1);
 }
 
 /*
