@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.10 1995/06/18 10:58:32 cgd Exp $	*/
+/*	$NetBSD: opendir.c,v 1.10.4.1 1996/09/16 18:40:30 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-static char rcsid[] = "$NetBSD: opendir.c,v 1.10 1995/06/18 10:58:32 cgd Exp $";
+static char rcsid[] = "$NetBSD: opendir.c,v 1.10.4.1 1996/09/16 18:40:30 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
@@ -50,6 +51,10 @@ static char rcsid[] = "$NetBSD: opendir.c,v 1.10 1995/06/18 10:58:32 cgd Exp $";
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(opendir,_opendir);
+#endif
 
 /*
  * Open a directory.

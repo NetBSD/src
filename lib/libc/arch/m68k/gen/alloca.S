@@ -1,4 +1,4 @@
-/*	$NetBSD: alloca.S,v 1.2 1995/12/13 19:35:47 thorpej Exp $	*/
+/*	$NetBSD: alloca.S,v 1.2.2.1 1996/09/16 18:38:54 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,13 +37,13 @@
  * SUCH DAMAGE.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 	RCSID("from: @(#)alloca.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: alloca.S,v 1.2 1995/12/13 19:35:47 thorpej Exp $")
+	RCSID("$NetBSD: alloca.S,v 1.2.2.1 1996/09/16 18:38:54 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 

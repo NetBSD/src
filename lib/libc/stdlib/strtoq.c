@@ -35,12 +35,18 @@
 static char sccsid[] = "@(#)strtoq.c	5.1 (Berkeley) 6/26/92";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
+
+#ifdef __weak_alias
+__weak_alias(strtoq,_strtoq);
+__weak_alias(strtoll,_strtoq);
+#endif
 
 /*
  * Convert a string to a quad integer.

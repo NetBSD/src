@@ -1,4 +1,4 @@
-/*	$NetBSD: vwarn.c,v 1.1 1996/04/15 23:45:38 jtc Exp $	*/
+/*	$NetBSD: vwarn.c,v 1.1.2.1 1996/09/16 18:40:43 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: vwarn.c,v 1.1 1996/04/15 23:45:38 jtc Exp $";
+static char rcsid[] = "$NetBSD: vwarn.c,v 1.1.2.1 1996/09/16 18:40:43 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -52,10 +53,14 @@ static char rcsid[] = "$NetBSD: vwarn.c,v 1.1 1996/04/15 23:45:38 jtc Exp $";
 #include <varargs.h>
 #endif
 
+#ifdef __weak_alias
+__weak_alias(vwarn,_vwarn);
+#endif
+
 extern char *__progname;		/* Program name, from crt0. */
 
 void
-_vwarn(fmt, ap)
+vwarn(fmt, ap)
 	const char *fmt;
 	va_list ap;
 {

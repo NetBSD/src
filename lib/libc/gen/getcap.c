@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.10 1995/08/24 05:26:35 mycroft Exp $	*/
+/*	$NetBSD: getcap.c,v 1.10.4.1 1996/09/16 18:40:22 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,10 +40,11 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$NetBSD: getcap.c,v 1.10 1995/08/24 05:26:35 mycroft Exp $";
+static char rcsid[] = "$NetBSD: getcap.c,v 1.10.4.1 1996/09/16 18:40:22 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 
 #include <ctype.h>
@@ -248,7 +249,7 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 		 */
 
 		if (fd >= 0) {
-			(void)lseek(fd, (off_t)0, L_SET);
+			(void)lseek(fd, (off_t)0, SEEK_SET);
 			myfd = 0;
 		} else {
 			(void)snprintf(pbuf, sizeof(pbuf), "%s.db", *db_p);

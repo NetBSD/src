@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_debug.c,v 1.6 1996/05/03 21:50:41 cgd Exp $	*/
+/*	$NetBSD: bt_debug.c,v 1.6.2.1 1996/09/16 18:39:35 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,10 +40,11 @@
 #if 0
 static char sccsid[] = "@(#)bt_debug.c	8.5 (Berkeley) 8/17/94";
 #else
-static char rcsid[] = "$NetBSD: bt_debug.c,v 1.6 1996/05/03 21:50:41 cgd Exp $";
+static char rcsid[] = "$NetBSD: bt_debug.c,v 1.6.2.1 1996/09/16 18:39:35 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 
 #include <stdio.h>

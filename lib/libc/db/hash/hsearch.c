@@ -1,4 +1,4 @@
-/*	$NetBSD: hsearch.c,v 1.10 1996/05/03 22:16:32 cgd Exp $	*/
+/*	$NetBSD: hsearch.c,v 1.10.2.1 1996/09/16 18:39:53 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,10 +40,11 @@
 #if 0
 static char sccsid[] = "@(#)hsearch.c	8.4 (Berkeley) 7/21/94";
 #else
-static char rcsid[] = "$NetBSD: hsearch.c,v 1.10 1996/05/03 22:16:32 cgd Exp $";
+static char rcsid[] = "$NetBSD: hsearch.c,v 1.10.2.1 1996/09/16 18:39:53 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 
 #include <fcntl.h>
@@ -51,6 +52,12 @@ static char rcsid[] = "$NetBSD: hsearch.c,v 1.10 1996/05/03 22:16:32 cgd Exp $";
 
 #include <db.h>
 #include "search.h"
+
+#ifdef __weak_alias
+__weak_alias(hcreate,_hcreate);
+__weak_alias(hsearch,_hsearch);
+__weak_alias(hdestroy,_hdestroy);
+#endif
 
 static DB *dbp = NULL;
 static ENTRY retval;

@@ -1,4 +1,4 @@
-/*	$NetBSD: closedir.c,v 1.4 1995/06/16 07:05:27 jtc Exp $	*/
+/*	$NetBSD: closedir.c,v 1.4.4.1 1996/09/16 18:40:12 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,14 +37,19 @@
 #if 0
 static char sccsid[] = "@(#)closedir.c	8.1 (Berkeley) 6/10/93";
 #else
-static char rcsid[] = "$NetBSD: closedir.c,v 1.4 1995/06/16 07:05:27 jtc Exp $";
+static char rcsid[] = "$NetBSD: closedir.c,v 1.4.4.1 1996/09/16 18:40:12 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(closedir,_closedir);
+#endif
 
 /*
  * close a directory.

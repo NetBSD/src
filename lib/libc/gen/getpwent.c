@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.14 1995/07/28 05:43:01 phil Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.14.4.1 1996/09/16 18:40:27 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpwent.c,v 1.14 1995/07/28 05:43:01 phil Exp $";
+static char rcsid[] = "$NetBSD: getpwent.c,v 1.14.4.1 1996/09/16 18:40:27 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <fcntl.h>
 #include <db.h>

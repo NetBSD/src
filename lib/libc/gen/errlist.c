@@ -1,4 +1,4 @@
-/*	$NetBSD: errlist.c,v 1.4 1995/02/25 13:40:51 cgd Exp $	*/
+/*	$NetBSD: errlist.c,v 1.4.4.1 1996/09/16 18:40:15 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -37,11 +37,18 @@
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-static char *rcsid = "$NetBSD: errlist.c,v 1.4 1995/02/25 13:40:51 cgd Exp $";
+static char *rcsid = "$NetBSD: errlist.c,v 1.4.4.1 1996/09/16 18:40:15 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-const char *const _sys_errlist[] = {
+#include "namespace.h"
+
+#ifdef __weak_alias
+__weak_alias(sys_errlist,_sys_errlist);
+__weak_alias(sys_nerr,_sys_nerr);
+#endif
+
+const char *const sys_errlist[] = {
 	"Undefined error: 0",			/*  0 - ENOERROR */
 	"Operation not permitted",		/*  1 - EPERM */
 	"No such file or directory",		/*  2 - ENOENT */
@@ -141,4 +148,4 @@ const char *const _sys_errlist[] = {
 	"Function not implemented",		/* 78 - ENOSYS */
 	"Inappropriate file type or format",	/* 79 - EFTYPE */
 };
-int _sys_nerr = { sizeof _sys_errlist/sizeof _sys_errlist[0] };
+int sys_nerr = { sizeof sys_errlist/sizeof sys_errlist[0] };

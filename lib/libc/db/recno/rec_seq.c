@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_seq.c,v 1.7 1996/05/03 21:38:53 cgd Exp $	*/
+/*	$NetBSD: rec_seq.c,v 1.7.2.1 1996/09/16 18:40:08 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)rec_seq.c	8.3 (Berkeley) 7/14/94";
 #else
-static char rcsid[] = "$NetBSD: rec_seq.c,v 1.7 1996/05/03 21:38:53 cgd Exp $";
+static char rcsid[] = "$NetBSD: rec_seq.c,v 1.7.2.1 1996/09/16 18:40:08 jtc Exp $";
 #endif
 #endif /* not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 
 #include <errno.h>

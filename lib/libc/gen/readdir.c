@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.5 1995/02/25 08:51:35 cgd Exp $	*/
+/*	$NetBSD: readdir.c,v 1.5.4.1 1996/09/16 18:40:31 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,12 +37,17 @@
 #if 0
 static char sccsid[] = "@(#)readdir.c	8.3 (Berkeley) 9/29/94";
 #else
-static char rcsid[] = "$NetBSD: readdir.c,v 1.5 1995/02/25 08:51:35 cgd Exp $";
+static char rcsid[] = "$NetBSD: readdir.c,v 1.5.4.1 1996/09/16 18:40:31 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <dirent.h>
+
+#ifdef __weak_alias
+__weak_alias(readdir,_readdir);
+#endif
 
 /*
  * get next entry in a directory.

@@ -1,4 +1,4 @@
-/*	$NetBSD: warn.c,v 1.1 1996/04/15 23:45:42 jtc Exp $	*/
+/*	$NetBSD: warn.c,v 1.1.2.1 1996/09/16 18:40:46 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: warn.c,v 1.1 1996/04/15 23:45:42 jtc Exp $";
+static char rcsid[] = "$NetBSD: warn.c,v 1.1.2.1 1996/09/16 18:40:46 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <err.h>
 
 #ifdef __STDC__
@@ -49,11 +50,15 @@ static char rcsid[] = "$NetBSD: warn.c,v 1.1 1996/04/15 23:45:42 jtc Exp $";
 #include <varargs.h>
 #endif
 
+#ifdef __weak_alias
+__weak_alias(warn,_warn);
+#endif
+
 void
 #ifdef __STDC__
-_warn(const char *fmt, ...)
+warn(const char *fmt, ...)
 #else
-_warn(va_alist)
+warn(va_alist)
 	va_dcl
 #endif
 {
@@ -66,6 +71,6 @@ _warn(va_alist)
 	va_start(ap);
 	fmt = va_arg(ap, const char *);
 #endif
-	_vwarn(fmt, ap);
+	vwarn(fmt, ap);
 	va_end(ap);
 }
