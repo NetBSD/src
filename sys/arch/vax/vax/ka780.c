@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.20 2002/10/02 16:02:35 thorpej Exp $ */
+/*	$NetBSD: ka780.c,v 1.21 2002/10/04 17:09:51 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -58,7 +58,7 @@ static	int mem_sbi_match(struct device *, struct cfdata *, void *);
 static	void mem_sbi_attach(struct device *, struct device *, void *);
 static	int getsort(int type);
 
-CFATTACH_DECL(sbi, sizeof(struct mem_softc),
+CFATTACH_DECL(mem_sbi, sizeof(struct mem_softc),
     mem_sbi_match, mem_sbi_attach, NULL, NULL);
 
 int	
