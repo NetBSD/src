@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.99 2001/11/28 10:21:18 lukem Exp $
+#	$NetBSD: files.pmax,v 1.100 2002/03/13 02:55:13 simonb Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -189,7 +189,6 @@ file	arch/pmax/pmax/disksubr.c
 file	arch/pmax/pmax/machdep.c
 file	arch/pmax/pmax/mainbus.c
 file	arch/pmax/pmax/interrupt.c
-file	arch/pmax/pmax/procfs_machdep.c	procfs
 file	arch/pmax/pmax/promcall.c
 file	arch/pmax/pmax/sysconf.c
 file	arch/pmax/stand/common/callvec.c
