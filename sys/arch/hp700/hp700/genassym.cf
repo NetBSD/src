@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 2002/08/11 22:29:07 fredette Exp $
+#	$NetBSD: genassym.cf,v 1.3 2002/08/14 16:18:11 fredette Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -58,6 +58,8 @@ include <machine/frame.h>
 include <machine/pmap.h>
 include <machine/iomod.h>
 
+include <hp700/hp700/intr.h>
+
 include <hppa/hppa/hpt.h>
 
 # general constants
@@ -72,6 +74,12 @@ export	VM_MAXUSER_ADDRESS
 export	HPPA_BREAK_KERNEL
 export	HPPA_BREAK_GET_PSW
 export	HPPA_BREAK_SET_PSW
+
+# hp700_int_reg fields
+struct	hp700_int_reg
+member	INT_REG_REQ	int_reg_req
+member	INT_REG_BITS_MAP int_reg_bits_map
+export	INT_REG_BIT_REG_POS
 
 # pte things
 export	TLB_REF_POS

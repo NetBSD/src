@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.2 2002/08/05 20:23:56 fredette Exp $	*/
+/*	$NetBSD: softintr.c,v 1.3 2002/08/14 16:18:12 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2 2002/08/05 20:23:56 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.3 2002/08/14 16:18:12 fredette Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -84,12 +84,13 @@ softintr_bootstrap(void)
  *
  *	Initialize the software interrupt system.
  */
-int
-softintr_init(int spl_free)
+void
+softintr_init(void)
 {
 	struct hp700_soft_intr *si;
 	struct device dummy_device;
-	int i, bit_pos, bit_mask;
+	void *ih;
+	int i;
 
 	/* Initialize the soft interrupt "register". */
 	hp700_intr_reg_establish(&int_reg_soft);
@@ -98,27 +99,19 @@ softintr_init(int spl_free)
 	/* Initialize the soft interrupt "bits". */
 	for (i = 0; i < HP700_NSOFTINTR; i++) {
 	
-		/* Allocate an spl bit. */
-		bit_pos = ffs(spl_free);
-		if (bit_pos-- == 0)
-			panic("softintr_init: spl full");
-		bit_mask = (1 << bit_pos);
-		spl_free &= ~bit_mask;
-
 		/* Register our interrupt handler for this bit. */
 		strcpy(dummy_device.dv_xname, hp700_soft_intr_info[i].name);
-		hp700_intr_establish(&dummy_device, hp700_soft_intr_info[i].ipl,
+		ih = hp700_intr_establish(&dummy_device, 
+		    hp700_soft_intr_info[i].ipl,
 		    softintr_dispatch, (void *) (i + 1),
-		    &int_reg_soft, bit_pos);
+		    &int_reg_soft, i);
 		
 		si = &hp700_soft_intrs[i];
 		TAILQ_INIT(&si->softintr_q);
-		si->softintr_ssir = bit_mask;
+		si->softintr_ssir = _hp700_intr_spl_mask(ih);
 	}
 
 	softnetmask = hp700_soft_intrs[HP700_SOFTINTR_SOFTNET].softintr_ssir;
-
-	return spl_free;
 }
 
 /*
