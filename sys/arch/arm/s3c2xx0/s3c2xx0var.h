@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0var.h,v 1.2 2003/05/13 05:06:39 bsh Exp $ */
+/* $NetBSD: s3c2xx0var.h,v 1.3 2003/08/05 11:26:54 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -48,6 +48,8 @@ struct s3c2xx0_softc {
 	bus_space_handle_t	sc_gpio_ioh;  	/* GPIO */
 	bus_space_handle_t	sc_rtc_ioh; 	/* real time clock */
 
+	bus_dma_tag_t  		sc_dmat;
+
 	/* clock frequency */
 	int sc_fclk;			/* CPU clock */
 	int sc_hclk;			/* AHB bus clock */
@@ -63,9 +65,14 @@ struct s3c2xx0_attach_args {
 	bus_size_t		sa_size;
 	int			sa_intr;
 	int			sa_index;
+	bus_dma_tag_t    	sa_dmat;
 };
 
 extern struct bus_space s3c2xx0_bs_tag;
 extern struct s3c2xx0_softc *s3c2xx0_softc;
+extern struct arm32_bus_dma_tag s3c2xx0_bus_dma;
+
+/* Platform needs to provide this */
+bus_dma_tag_t s3c2xx0_bus_dma_init(struct arm32_bus_dma_tag *);
 
 #endif /* _ARM_S3C2XX0VAR_H_ */
