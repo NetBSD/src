@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.2 2005/01/24 22:40:00 joff Exp $ */
+/*	$NetBSD: if_atu.c,v 1.3 2005/02/24 06:06:11 joff Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.2 2005/01/24 22:40:00 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.3 2005/02/24 06:06:11 joff Exp $");
 
 #include "bpfilter.h"
 
@@ -1628,10 +1628,7 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	ieee80211_input(ifp, m, ni, h->rssi, UGETDW(h->rx_time));
 
-	if (ni == ic->ic_bss)
-		ieee80211_unref_node(&ni);
-	else
-		ieee80211_release_node(ic, ni);
+	ieee80211_release_node(ic, ni);
 done1:
 	splx(s);
 done:
@@ -1769,6 +1766,10 @@ atu_start(struct ifnet *ifp)
 	DPRINTFN(25, ("%s: atu_start: enter\n", USBDEVNAME(sc->atu_dev)));
 
 	s = splnet();
+	if ((ifp->if_flags & IFF_RUNNING) == 0) {
+		splx(s);
+		return;
+	}
 	if (ifp->if_flags & IFF_OACTIVE) {
 		DPRINTFN(30, ("%s: atu_start: IFF_OACTIVE\n",
 		    USBDEVNAME(sc->atu_dev)));
@@ -1814,7 +1815,7 @@ atu_start(struct ifnet *ifp)
 				break;
 			}
 
-			IF_DEQUEUE(&ifp->if_snd, m);
+			IFQ_DEQUEUE(&ifp->if_snd, m);
 			if (m == NULL) {
 				DPRINTFN(25, ("%s: nothing to send\n",
 				    USBDEVNAME(sc->atu_dev)));
@@ -1860,8 +1861,7 @@ bad:
 			cd->atu_tx_inuse--;
 			splx(s);
 			/* ifp_if_oerrors++; */
-			if (ni != NULL && ni != ic->ic_bss)
-				/* reclaim node */
+			if (ni != NULL)
 				ieee80211_release_node(ic, ni);
 			continue;
 		}
@@ -2114,7 +2114,7 @@ atu_watchdog(struct ifnet *ifp)
 
 	ifp->if_timer = 0;
 
-	if (sc->sc_state != ATU_S_OK)
+	if (sc->sc_state != ATU_S_OK || (ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
 	sc = ifp->if_softc;
