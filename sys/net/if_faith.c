@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.15 2001/01/17 00:30:51 thorpej Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.16 2001/01/17 04:05:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -91,7 +91,7 @@ struct faith_softc {
 static int faithioctl __P((struct ifnet *, u_long, caddr_t));
 int faithoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	struct rtentry *));
-static void faithrtrequest __P((int, struct rtentry *, struct sockaddr *));
+static void faithrtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 
 void faithattach __P((int));
 
@@ -248,10 +248,10 @@ faithoutput(ifp, m, dst, rt)
 
 /* ARGSUSED */
 static void
-faithrtrequest(cmd, rt, sa)
+faithrtrequest(cmd, rt, info)
 	int cmd;
 	struct rtentry *rt;
-	struct sockaddr *sa;
+	struct rt_addrinfo *info;
 {
 	if (rt) {
 		rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu; /* for ISO */

@@ -1,4 +1,4 @@
-/*	$NetBSD: eonvar.h,v 1.9 2000/07/28 12:13:34 kleink Exp $	*/
+/*	$NetBSD: eonvar.h,v 1.10 2001/01/17 04:05:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -181,7 +181,7 @@ void eonprotoinit __P((void));
 void eonattach   __P((void));
 int eonioctl    __P((struct ifnet *, u_long, caddr_t));
 void eoniphdr    __P((struct eon_iphdr *, caddr_t, struct route *, int, int));
-void eonrtrequest __P((int, struct rtentry *, struct sockaddr *));
+void eonrtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 int eonoutput   __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *));
 void eoninput    __P((struct mbuf *, ...));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.70 2000/08/15 20:24:57 jhawk Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.71 2001/01/17 04:05:44 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -360,10 +360,10 @@ arptimer(arg)
  * Parallel to llc_rtrequest.
  */
 void
-arp_rtrequest(req, rt, sa)
+arp_rtrequest(req, rt, info)
 	int req;
 	struct rtentry *rt;
-	struct sockaddr *sa;
+	struct rt_addrinfo *info;
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
