@@ -19,7 +19,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: read.c,v 1.5 1993/12/06 11:41:02 mycroft Exp $";
+static char rcsid[] = "$Id: read.c,v 1.6 1994/02/04 13:57:40 pk Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -408,6 +408,17 @@ char *name;
 				 *   [In case of pseudo-op, s->'.'.]
 				 * Input_line_pointer->'\0' where c was.
 				 */
+				if (c==' ' || c=='\t') {
+					int i=1;
+					while(input_line_pointer[i] != '\0' &&
+					      input_line_pointer[i] == ' ' &&
+					      input_line_pointer[i] == '\t') i++;
+					if (input_line_pointer[i] == ':') {
+						input_line_pointer += i;
+						*input_line_pointer = '\0';
+						c = ':';
+					}
+				}
 				if (c == ':') {
 					colon(s);	/* user-defined label */
 					* input_line_pointer ++ = ':'; /* Put ':' back for error messages' sake. */
