@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.8 1998/01/12 18:04:20 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9 1998/02/19 16:17:18 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -46,20 +46,21 @@
 
 #include <machine/cpu.h>
 #include <machine/iomap.h>
+#include <machine/mfp.h>
 #include <atari/atari/device.h>
+
+/*
+ * I/O and memory we assume 'reserved' when an vga card is detected on
+ * the PCI-bus.
+ */
+#define MAX_VGA_MEM	0x1000000	/* 16 MB mem	*/
+#define MAX_VGA_IO	0x0010000	/* 64 KB io	*/
 
 int	pcibusprint __P((void *auxp, const char *));
 int	pcibusmatch __P((struct device *, struct cfdata *, void *));
 void	pcibusattach __P((struct device *, struct device *, void *));
 
 static int pci_config_offset __P((pcitag_t));
-
-/*
- * Swap a long (abcd -> dcba). The pci-config area has the wrong
- * endianess....
- */
-#define swapl(x)	\
-	{ asm volatile ("rorw #8,%0\nswap %0\nrorw #8,%0" : : "r" (x)); }
 
 struct cfattach pcibus_ca = {
 	sizeof(struct device), pcibusmatch, pcibusattach
@@ -88,7 +89,11 @@ void		*auxp;
 	pba.pba_busname = "pci";
 	pba.pba_pc      = NULL;
 	pba.pba_bus     = 0;
+	pba.pba_iot     = PCI_IO_PHYS;
+	pba.pba_memt    = PCI_MEM_PHYS;
 	pba.pba_flags	= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+
+	MFP2->mf_aer &= ~(0x27); /* PCI interrupts: HIGH -> LOW */
 
 	printf("\n");
 
@@ -110,6 +115,122 @@ pci_attach_hook(parent, self, pba)
 	struct device *parent, *self;
 	struct pcibus_attach_args *pba;
 {
+}
+
+/*
+ * Initialize the PCI-bus. The Atari-BIOS does not do this, so....
+ */
+void
+init_pci_bus()
+{
+	pci_chipset_tag_t	pc = NULL; /* XXX */
+	pcitag_t		tag;
+	pcireg_t		csr, address, mask;
+	int			device, id, class, maxndevs;
+	int			reg;
+	u_int32_t		membase, iobase;
+
+	tag        = 0;
+	id = class = 0;
+	
+	membase = iobase = 0;
+
+	maxndevs = pci_bus_maxdevs(pc, 0);
+
+	/*
+	 * Scan the bus for prehistory (usually VGA) devices.
+	 */
+	for (device = 0; device < maxndevs; device++) {
+
+		tag = pci_make_tag(pc, 0, device, 0);
+		id  = pci_conf_read(pc, tag, PCI_ID_REG);
+		if (id == 0 || id == 0xffffffff)
+			continue;
+		class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+		switch (PCI_CLASS(class)) {
+			case PCI_CLASS_PREHISTORIC:
+			case PCI_CLASS_DISPLAY:
+
+				membase = MAX_VGA_MEM;
+				iobase  = MAX_VGA_IO;
+		}
+	}
+
+	for (device = 0; device < maxndevs; device++) {
+
+		tag = pci_make_tag(pc, 0, device, 0);
+		id  = pci_conf_read(pc, tag, PCI_ID_REG);
+		if (id == 0 || id == 0xffffffff)
+			continue;
+
+		class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+		switch (PCI_CLASS(class)) {
+			case PCI_CLASS_PREHISTORIC:
+			case PCI_CLASS_DISPLAY:
+				/*
+				 * XXX: We rely on the BIOS to do the
+				 * right thing here. Eventually, we should
+				 * take the initiative...
+				 */
+				continue;
+		}
+
+		csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+		csr &= ~(PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_IO_ENABLE);
+		csr &= ~PCI_COMMAND_MASTER_ENABLE;
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+		for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg += 4) {
+		    int	size, type;
+
+		    address = pci_conf_read(pc, tag, reg);
+		    pci_conf_write(pc, tag, reg, 0xffffffff);
+		    mask    = pci_conf_read(pc, tag, reg);
+		    pci_conf_write(pc, tag, reg, address);
+		    if (mask == 0)
+			continue; /* Register unused */
+
+		    if (mask & PCI_MAPREG_TYPE_IO) {
+			csr |= PCI_COMMAND_IO_ENABLE;
+			address = PCI_MAPREG_IO_ADDR(mask);
+			mask    = (~address << 1) | 1;
+			size    = (mask & address) & 0xffffffff;
+			address = iobase | PCI_MAPREG_TYPE_IO;
+			iobase += roundup(size, 4096); /* XXX */
+		    }
+		    else {
+			type = PCI_MAPREG_MEM_TYPE(address);
+			switch (type) {
+			    case PCI_MAPREG_MEM_TYPE_32BIT:
+				break;
+			    case PCI_MAPREG_MEM_TYPE_64BIT:
+				reg++;
+			    case PCI_MAPREG_MEM_TYPE_32BIT_1M:
+				/*
+				 * XXX: We can do better here!
+				 */
+				if (membase >= 0x100000)
+					continue;
+			}
+			csr |= PCI_COMMAND_MEM_ENABLE;
+			size = PCI_MAPREG_MEM_SIZE(mask);
+			address = membase | PCI_MAPREG_TYPE_MEM;
+			membase += roundup(size, 4096); /* XXX */
+		    }
+		    pci_conf_write(pc, tag, reg, address);
+		}
+		csr |= PCI_COMMAND_MASTER_ENABLE;
+		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+		/*
+		 * Both interrupt pin & line are set to the device (== slot)
+		 * number. This makes sense on the atari because the
+		 * individual slots are hard-wired to a specific MFP-pin.
+		 */
+		csr  = (device << PCI_INTERRUPT_PIN_SHIFT);
+		csr |= (device << PCI_INTERRUPT_LINE_SHIFT);
+		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, csr);
+	}
 }
 
 /*
@@ -149,8 +270,7 @@ pci_conf_read(pc, tag, reg)
 	u_long	data;
 
 	data = *(u_long *)(pci_conf_addr + pci_config_offset(tag) + reg);
-	swapl(data);
-	return(data);
+	return (bswap32(data));
 }
 
 void
@@ -160,13 +280,10 @@ pci_conf_write(pc, tag, reg, data)
 	int reg;
 	pcireg_t data;
 {
-	swapl(data);
-	*((u_long *)(pci_conf_addr + pci_config_offset(tag) + reg)) = data;
+	*((u_long *)(pci_conf_addr + pci_config_offset(tag) + reg))
+		= bswap32(data);
 }
 
-/*
- * XXX: All pci_intr_*() functions are no-op's for now...
- */
 int
 pci_intr_map(pc, intrtag, pin, line, ihp)
 	pci_chipset_tag_t pc;
@@ -174,9 +291,22 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 	int pin, line;
 	pci_intr_handle_t *ihp;
 {
-	/* XXXXXXXXX */
-	*ihp = -1;
-	return 1;
+	/*
+	 * According to the PCI-spec, 255 means `unknown' or `no connection'.
+	 * Interpret this as 'no interrupt assigned'.
+	 */
+	if (line == 255) {
+		*ihp = -1;
+		return 1;
+	}
+
+	/*
+	 * Values are pretty useless because the on the Hades all interrupt
+	 * lines for a card are tied together and hardwired to the TT-MFP
+	 * I/O port.
+	 */
+	*ihp = line;
+	return 0;
 }
 
 const char *
@@ -186,7 +316,7 @@ pci_intr_string(pc, ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
-	if (ih == 0)
+	if (ih == -1)
 		panic("pci_intr_string: bogus handle 0x%x\n", ih);
 
 	sprintf(irqstr, "irq %d", ih);
@@ -194,14 +324,84 @@ pci_intr_string(pc, ih)
 	
 }
 
-void *
-pci_intr_establish(pc, ih, level, func, arg)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
-	int level, (*func) __P((void *));
-	void *arg;
+/*
+ * The interrupt stuff is rather ugly. On the Hades, all interrupt lines
+ * for a slot are wired together and connected to IO 0,1,2 or 5 (slots:
+ * (0-3) on the TT-MFP. The Pci-config code initializes the irq. number
+ * to the slot position.
+ */
+static pci_intr_info_t iinfo[4] = { { -1 }, { -1 }, { -1 }, { -1 } };
+
+static int	iifun __P((int, int));
+
+static int
+iifun(slot, sr)
+int	slot;
+int	sr;
 {
-	/* XXXX */
+	pci_intr_info_t *iinfo_p;
+	int		s;
+
+	iinfo_p = &iinfo[slot];
+
+	/*
+	 * Disable the interrupts
+	 */
+	MFP2->mf_imrb  &= ~iinfo_p->imask;
+
+	if ((sr & PSL_IPL) >= iinfo_p->ipl) {
+		/*
+		 * We're running at a too high priority now.
+		 */
+		add_sicallback((si_farg)iifun, (void*)slot, 0);
+	}
+	else {
+		s = splx(iinfo_p->ipl);
+		(void) (iinfo_p->ifunc)(iinfo_p->iarg);
+		splx(s);
+
+		/*
+		 * Re-enable interrupts after handling
+		 */
+		MFP2->mf_imrb |= iinfo_p->imask;
+	}
+	return 1;
+}
+
+void *
+pci_intr_establish(pc, ih, level, ih_fun, ih_arg)
+	pci_chipset_tag_t	pc;
+	pci_intr_handle_t	ih;
+	int			level;
+	int			(*ih_fun) __P((void *));
+	void			*ih_arg;
+{
+	pci_intr_info_t *iinfo_p;
+	struct intrhand	*ihand;
+	int		slot;
+
+	slot    = ih;
+	iinfo_p = &iinfo[slot];
+
+	if (iinfo_p->ipl > 0)
+	    panic("pci_intr_establish: interrupt was already established\n");
+
+	ihand = intr_establish((slot == 3) ? 23 : 16 + slot, USER_VEC, 0,
+				(hw_ifun_t)iifun, (void *)slot);
+	if (ihand != NULL) {
+		iinfo_p->ipl   = level;
+		iinfo_p->imask = (slot == 3) ? 0x80 : (0x01 << slot);
+		iinfo_p->ifunc = ih_fun;
+		iinfo_p->iarg  = ih_arg;
+		iinfo_p->ihand = ihand;
+
+		/*
+		 * Enable (unmask) the interrupt
+		 */
+		MFP2->mf_imrb |= iinfo_p->imask;
+		MFP2->mf_ierb |= iinfo_p->imask;
+		return(iinfo_p);
+	}
 	return NULL;
 }
 
@@ -210,5 +410,13 @@ pci_intr_disestablish(pc, cookie)
 	pci_chipset_tag_t pc;
 	void *cookie;
 {
-	/* XXXX */
+	pci_intr_info_t *iinfo_p = (pci_intr_info_t *)cookie;
+
+	if (iinfo->ipl < 0)
+	    panic("pci_intr_disestablish: interrupt was not established\n");
+
+	MFP2->mf_imrb &= ~iinfo->imask;
+	MFP2->mf_ierb &= ~iinfo->imask;
+	(void) intr_disestablish(iinfo_p->ihand);
+	iinfo_p->ipl = -1;
 }

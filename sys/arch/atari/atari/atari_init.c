@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.34 1997/10/23 11:26:19 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.35 1998/02/19 16:16:51 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -614,6 +614,10 @@ atari_hwinit()
 		SCU->sys_mask |= SCU_IRQ7;
 #endif
 	}
+	/*
+	 * Configure PCI-bus
+	 */
+ 	init_pci_bus();
 }
 
 /*
