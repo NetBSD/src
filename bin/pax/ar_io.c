@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.41 2004/06/20 22:20:14 jmc Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.42 2004/06/21 13:38:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.41 2004/06/20 22:20:14 jmc Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.42 2004/06/21 13:38:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,8 +192,10 @@ ar_open(const char *name)
 		return(-1);
 
 	if (chdname != NULL)
-		if (chdir(chdname) != 0)
+		if (chdir(chdname) != 0) {
 			syswarn(1, errno, "Failed chdir to %s", chdname);
+			return(-1);
+		}
 	/*
 	 * set up is based on device type
 	 */
