@@ -1,4 +1,4 @@
-/*	$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $	*/
+/*	$NetBSD: gprof.c,v 1.9 1997/01/30 09:20:55 matthias Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: gprof.c,v 1.9 1997/01/30 09:20:55 matthias Exp $";
 #endif
 #endif /* not lint */
 
@@ -649,6 +649,8 @@ asgnsamples()
 		    }
 #		endif DEBUG
 		nl[j].time += overlap * time / scale;
+		if ( onlist( Elist , nl[j].name ) )
+			totime -= overlap * time / scale;
 	    }
 	}
     }

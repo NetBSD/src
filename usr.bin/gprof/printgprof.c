@@ -1,4 +1,4 @@
-/*	$NetBSD: printgprof.c,v 1.5 1995/04/19 07:16:21 cgd Exp $	*/
+/*	$NetBSD: printgprof.c,v 1.6 1997/01/30 09:20:56 matthias Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)printgprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: printgprof.c,v 1.5 1995/04/19 07:16:21 cgd Exp $";
+static char rcsid[] = "$NetBSD: printgprof.c,v 1.6 1997/01/30 09:20:56 matthias Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,6 +123,8 @@ flatprofline( np )
     register nltype	*np;
 {
 
+    if ( onlist( Elist , np -> name ) )
+    	return;
     if ( zflag == 0 && np -> ncall == 0 && np -> time == 0 ) {
 	return;
     }
