@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_svr4.8,v 1.17 2001/05/16 14:27:58 christos Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.18 2001/06/27 16:41:00 eeh Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
 .\" All rights reserved.
@@ -37,6 +37,8 @@
 .Sh NAME
 .Nm compat_svr4
 .Nd setup procedure for running SVR4/iBCS2 binaries
+.Nm compat_svr4_32
+.Nd setup procedure for running 32-bit SVR4/iBCS2 binaries
 .Sh DESCRIPTION
 .Nx
 supports running SVR4/iBCS2 binaries. This code has been tested on
@@ -76,6 +78,27 @@ should also typically include
 and/or
 .Dv EXEC_ELF64
 (for 64-bit ELF support).
+.Pp
+Another compatibility feature is 
+.Dv COMPAT_SVR4_32,
+which allows the execution of 32-bit SVR4 binaries on a machine
+with a 64-bit kernel. This requires
+.Dv EXEC_ELF32
+and
+.Dv COMPAT_NETBSD32
+options as well as
+.Dv COMPAT_SVR4.
+It is configured the same way as 
+.Dv COMPAT_SVR4
+but uses the /emul/svr4_32 directory instead of /emul/svr4.  But
+typically, /emul/svr4_32 can be made to point to /emul/svr4 if the
+operating system donating the libraries has support for both 32-bit 
+and 64-bit binaries.
+.Pp
+Execution of 32-bit SVR4 binaries on a machine with a 32-bit kernel uses
+.Dv COMPAT_SVR4,
+not
+.Dv COMPAT_SVR4_32.
 .Pp
 Most SVR4 programs are dynamically linked. This means that you will
 also need the shared libraries that the program depends on and the
