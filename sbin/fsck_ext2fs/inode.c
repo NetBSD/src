@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.3 1997/10/09 13:19:36 bouyer Exp $	*/
+/*	$NetBSD: inode.c,v 1.4 1998/04/01 15:22:57 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.3 1997/10/09 13:19:36 bouyer Exp $");
+__RCSID("$NetBSD: inode.c,v 1.4 1998/04/01 15:22:57 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: inode.c,v 1.3 1997/10/09 13:19:36 bouyer Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "fsck.h"
 #include "fsutil.h"
