@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.15 1999/06/06 03:33:08 thorpej Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.16 1999/11/15 15:59:24 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,6 +191,12 @@ main(argc, argv)
 				ntohs(from.sin_port));
 			continue;
 		}
+		if (cc < WHDRSIZE) {
+			syslog(LOG_WARNING, "Short packet from %s",
+				inet_ntoa(from.sin_addr));
+			continue;
+		}
+
 		if (wd.wd_vers != WHODVERSION)
 			continue;
 		if (wd.wd_type != WHODTYPE_STATUS)
