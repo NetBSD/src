@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.80 2001/01/13 06:01:18 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.81 2001/01/13 07:19:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -143,6 +143,7 @@
 #endif /*IPSEC*/
 
 static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
+static struct ifnet *ip_multicast_if __P((struct in_addr *, int *));
 static void ip_mloopback
 	__P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
 
@@ -1197,6 +1198,32 @@ bad:
 }
 
 /*
+ * following RFC1724 section 3.3, 0.0.0.0/8 is interpreted as interface index.
+ */
+static struct ifnet *
+ip_multicast_if(a, ifindexp)
+	struct in_addr *a;
+	int *ifindexp;
+{
+	int ifindex;
+	struct ifnet *ifp;
+
+	if (ifindexp)
+		*ifindexp = 0;
+	if (ntohl(a->s_addr) >> 24 == 0) {
+		ifindex = ntohl(a->s_addr) & 0xffffff;
+		if (ifindex < 0 || if_index < ifindex)
+			return NULL;
+		ifp = ifindex2ifnet[ifindex];
+		if (ifindexp)
+			*ifindexp = ifindex;
+	} else {
+		INADDR_TO_IFP(*a, ifp);
+	}
+	return ifp;
+}
+
+/*
  * Set the IP multicast options in response to user setsockopt().
  */
 int
@@ -1214,6 +1241,7 @@ ip_setmoptions(optname, imop, m)
 	struct ip_moptions *imo = *imop;
 	struct route ro;
 	struct sockaddr_in *dst;
+	int ifindex;
 
 	if (imo == NULL) {
 		/*
@@ -1227,6 +1255,7 @@ ip_setmoptions(optname, imop, m)
 			return (ENOBUFS);
 		*imop = imo;
 		imo->imo_multicast_ifp = NULL;
+		imo->imo_multicast_addr.s_addr = INADDR_ANY;
 		imo->imo_multicast_ttl = IP_DEFAULT_MULTICAST_TTL;
 		imo->imo_multicast_loop = IP_DEFAULT_MULTICAST_LOOP;
 		imo->imo_num_memberships = 0;
@@ -1257,12 +1286,16 @@ ip_setmoptions(optname, imop, m)
 		 * IP address.  Find the interface and confirm that
 		 * it supports multicasting.
 		 */
-		INADDR_TO_IFP(addr, ifp);
+		ifp = ip_multicast_if(&addr, &ifindex);
 		if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
 		imo->imo_multicast_ifp = ifp;
+		if (ifindex)
+			imo->imo_multicast_addr = addr;
+		else
+			imo->imo_multicast_addr.s_addr = INADDR_ANY;
 		break;
 
 	case IP_MULTICAST_TTL:
@@ -1322,7 +1355,7 @@ ip_setmoptions(optname, imop, m)
 			ifp = ro.ro_rt->rt_ifp;
 			rtfree(ro.ro_rt);
 		} else {
-			INADDR_TO_IFP(mreq->imr_interface, ifp);
+			ifp = ip_multicast_if(&mreq->imr_interface, NULL);
 		}
 		/*
 		 * See if we found an interface, and confirm that it
@@ -1383,7 +1416,7 @@ ip_setmoptions(optname, imop, m)
 		if (in_nullhost(mreq->imr_interface))
 			ifp = NULL;
 		else {
-			INADDR_TO_IFP(mreq->imr_interface, ifp);
+			ifp = ip_multicast_if(&mreq->imr_interface, NULL);
 			if (ifp == NULL) {
 				error = EADDRNOTAVAIL;
 				break;
@@ -1458,7 +1491,10 @@ ip_getmoptions(optname, imo, mp)
 		(*mp)->m_len = sizeof(struct in_addr);
 		if (imo == NULL || imo->imo_multicast_ifp == NULL)
 			*addr = zeroin_addr;
-		else {
+		else if (imo->imo_multicast_addr.s_addr) {
+			/* return the value user has set */
+			*addr = imo->imo_multicast_addr;
+		} else {
 			IFP_TO_IA(imo->imo_multicast_ifp, ia);
 			*addr = ia ? ia->ia_addr.sin_addr : zeroin_addr;
 		}
