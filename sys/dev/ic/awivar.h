@@ -1,4 +1,4 @@
-/* $NetBSD: awivar.h,v 1.12 2000/07/21 04:48:56 onoe Exp $ */
+/* $NetBSD: awivar.h,v 1.13 2001/01/18 20:28:17 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ struct awi_softc
 	u_int8_t		sc_wep_key[IEEE80211_WEP_NKID][AWI_MAX_KEYLEN];
 	int			sc_wep_defkid;
 	void			*sc_wep_ctx;	/* work area */
-	struct awi_wep_algo	*sc_wep_algo;
+	const struct awi_wep_algo	*sc_wep_algo;
 
 	u_char			sc_banner[AWI_BANNER_LEN];
 	struct awi_mib_local	sc_mib_local;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.35 2001/01/11 20:35:02 explorer Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.36 2001/01/18 20:28:23 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.13 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 extern int usbdebug;
 #endif
 
-Static struct usbd_quirk_entry {
+Static const struct usbd_quirk_entry {
 	u_int16_t idVendor;
 	u_int16_t idProduct;
 	u_int16_t bcdDevice;
@@ -82,12 +82,12 @@ Static struct usbd_quirk_entry {
  { 0, 0, 0, { 0 } }
 };
 
-struct usbd_quirks usbd_no_quirk = { 0 };
+const struct usbd_quirks usbd_no_quirk = { 0 };
 
-struct usbd_quirks *
+const struct usbd_quirks *
 usbd_find_quirk(usb_device_descriptor_t *d)
 {
-	struct usbd_quirk_entry *t;
+	const struct usbd_quirk_entry *t;
 
 	for (t = usb_quirks; t->idVendor != 0; t++) {
 		if (t->idVendor  == UGETW(d->idVendor) &&

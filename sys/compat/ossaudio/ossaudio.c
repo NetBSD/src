@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.32 2000/08/16 16:14:33 tron Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.33 2001/01/18 20:28:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -575,8 +575,8 @@ getdevinfo(fp, p)
 {
 	mixer_devinfo_t mi;
 	int i, j, e;
-	static struct {
-		char *name;
+	static const struct {
+		const char *name;
 		int code;
 	} *dp, devs[] = {
 		{ AudioNmicrophone,	OSS_SOUND_MIXER_MIC },
@@ -1112,7 +1112,8 @@ oss_ioctl_sequencer(p, uap, retval)
  * Check that the blocksize is a power of 2 as OSS wants.
  * If not, set it to be.
  */
-static void setblocksize(fp, info, p)
+static void
+setblocksize(fp, info, p)
 	struct file *fp;
 	struct audio_info *info;
 	struct proc *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.56 2001/01/14 02:08:35 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.57 2001/01/18 20:28:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -85,7 +85,7 @@ struct kmembuckets bucket[MINBUCKET + 16];
 struct kmemstats kmemstats[M_LAST];
 struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
-const char *memname[] = INITKMEMNAMES;
+const char * const memname[] = INITKMEMNAMES;
 
 #ifdef MALLOCLOG
 #ifndef MALLOCLOGSIZE
@@ -159,7 +159,7 @@ hitmlog(a)
 /*
  * This structure provides a set of masks to catch unaligned frees.
  */
-long addrmask[] = { 0,
+const long addrmask[] = { 0,
 	0x00000001, 0x00000003, 0x00000007, 0x0000000f,
 	0x0000001f, 0x0000003f, 0x0000007f, 0x000000ff,
 	0x000001ff, 0x000003ff, 0x000007ff, 0x00000fff,

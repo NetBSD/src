@@ -1,4 +1,4 @@
-/*	$NetBSD: eisadevs_data.h,v 1.23 2000/10/19 15:29:14 ad Exp $	*/
+/*	$NetBSD: eisadevs_data.h,v 1.24 2001/01/18 20:28:25 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -38,7 +38,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct eisa_knowndev eisa_knowndevs[] = {
+const struct eisa_knowndev eisa_knowndevs[] = {
 	{
 	    0,
 	    "ADP0000",

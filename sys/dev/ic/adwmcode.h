@@ -1,4 +1,4 @@
-/*      $NetBSD: adwmcode.h,v 1.5 2000/05/27 18:24:51 dante Exp $        */
+/*      $NetBSD: adwmcode.h,v 1.6 2001/01/18 20:28:17 jdolecek Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -97,7 +97,7 @@ typedef struct adw_carrier ADW_CARRIER;
 /******************************************************************************/
 
 struct adw_mcode {
-	const u_int8_t	*mcode_data;
+	const u_int8_t	* const mcode_data;
 	const u_int32_t	 mcode_chksum;
 	const u_int16_t	 mcode_size;
 };

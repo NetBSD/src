@@ -1,8 +1,8 @@
-/*	$NetBSD: tp_driver.c,v 1.12 2000/03/30 13:10:12 augustss Exp $	*/
+/*	$NetBSD: tp_driver.c,v 1.13 2001/01/18 20:28:28 jdolecek Exp $	*/
 
 #include "tp_states.h"
 
-static struct act_ent {
+static const struct act_ent {
 	int             a_newstate;
 	int             a_action;
 } statetable[] = {{
@@ -950,7 +950,7 @@ _Xebec_index(e, p)
 		return 0;
 	}			/* end switch */
 }				/* _Xebec_index() */
-static int      inx[26][9] =
+static const int      inx[26][9] =
 {
     {0, 0, 0, 0, 0, 0, 0, 0, 0,},
     {0x0, 0x0, 0x0, 0x0, 0x31, 0x0, 0x0, 0x0, 0x0,},
@@ -985,7 +985,7 @@ tp_driver(p, e)
 	struct tp_event *e;
 {
 	int    index, error = 0;
-	struct act_ent *a;
+	const struct act_ent *a;
 	static struct act_ent erroraction = {0, -1};
 
 	index = inx[1 + e->ev_number][p->tp_state];

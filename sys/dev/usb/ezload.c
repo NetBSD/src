@@ -1,4 +1,4 @@
-/*	$NetBSD: ezload.c,v 1.1 2001/01/02 18:49:56 augustss Exp $	*/
+/*	$NetBSD: ezload.c,v 1.2 2001/01/18 20:28:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -106,10 +106,10 @@ ezload_reset(usbd_device_handle dev, int reset)
 }
 
 usbd_status
-ezload_download(usbd_device_handle dev, struct ezdata *rec)
+ezload_download(usbd_device_handle dev, const struct ezdata *rec)
 {
 	usb_device_request_t req;
-	struct ezdata *ptr;
+	const struct ezdata *ptr;
 	usbd_status err;
 	u_int len, offs;
 	
@@ -145,7 +145,7 @@ ezload_download(usbd_device_handle dev, struct ezdata *rec)
 }
 
 usbd_status
-ezload_downloads_and_reset(usbd_device_handle dev, struct ezdata **recs)
+ezload_downloads_and_reset(usbd_device_handle dev, const struct ezdata **recs)
 {
 	usbd_status err;
 

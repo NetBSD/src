@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.16 1999/08/16 21:24:53 wrstuden Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.17 2001/01/18 20:28:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -421,7 +421,7 @@ umap_getattr(v)
 	u_long (*mapdata)[2];
 	u_long (*gmapdata)[2];
 	struct vnode **vp1p;
-	struct vnodeop_desc *descp = ap->a_desc;
+	const struct vnodeop_desc *descp = ap->a_desc;
 
 	if ((error = umap_bypass(ap)) != 0)
 		return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.39 2000/11/30 20:56:10 nathanw Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.40 2001/01/18 20:28:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -79,8 +79,8 @@ static int ffs_checkblk __P((struct inode *, ufs_daddr_t, long size));
 int ffs_log_changeopt = 0;
 
 /* in ffs_tables.c */
-extern int inside[], around[];
-extern u_char *fragtbl[];
+extern const int inside[], around[];
+extern const u_char * const fragtbl[];
 
 /*
  * Allocate a block in the file system.
