@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.26 1998/07/13 06:31:31 mrg Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.27 1998/07/29 07:26:29 fair Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,15 +28,15 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.26 1998/07/13 06:31:31 mrg Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.27 1998/07/29 07:26:29 fair Exp $");
 #endif
 
 
 /*
  * rarpd - Reverse ARP Daemon
  *
- * Usage:	rarpd -a [ -d -f ]
- *		rarpd [ -d -f ] interface
+ * Usage:	rarpd -a [-d|-f] [-l]
+ *		rarpd [-d|-f] [-l] interface
  */
 
 #include <sys/types.h>
@@ -287,8 +287,8 @@ init_all()
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: rarpd -a [ -d -f ]\n");
-	(void)fprintf(stderr, "       rarpd [ -d -f ] interface\n");
+	(void) fprintf(stderr, "usage: rarpd -a [-d|-f] [-l]\n");
+	(void) fprintf(stderr, "       rarpd [-d|-f] [-l] interface\n");
 	exit(1);
 }
 
