@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.60 2003/09/19 22:49:02 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.61 2003/09/20 00:17:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.60 2003/09/19 22:49:02 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.61 2003/09/20 00:17:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -707,11 +707,13 @@ ktrpsig(v, len)
 	}
 	switch (len) {
 	case sizeof(struct ktr_psig):
-		printf("\n");
+		if (psig->ps.code)
+			printf(" code=0x%x", psig->ps.code);
+		printf(psig->ps.action == SIG_DFL ? "\n" : ")\n");
 		return;
 	case sizeof(*psig):
 		if (si->si_code == 0) {
-			printf(": code=SI_USER sent by pid=%d, uid=%d\n",
+			printf(": code=SI_USER sent by pid=%d, uid=%d)\n",
 			    si->si_pid, si->si_uid); 
 			return;
 		}
@@ -719,7 +721,7 @@ ktrpsig(v, len)
 		if (si->si_code < 0) {
 			switch (si->si_code) {
 			case SI_TIMER:
-				printf(": code=SI_TIMER sigval %p\n",
+				printf(": code=SI_TIMER sigval %p)\n",
 				    si->si_sigval.sival_ptr);
 				return;
 			case SI_QUEUE:
@@ -736,9 +738,9 @@ ktrpsig(v, len)
 				break;
 			}
 			if (code)
-				printf(": code=%s unimplemented\n", code);
+				printf(": code=%s unimplemented)\n", code);
 			else
-				printf(": code=%d unimplemented\n",
+				printf(": code=%d unimplemented)\n",
 				    si->si_code);
 			return;
 		}
@@ -747,7 +749,7 @@ ktrpsig(v, len)
 		switch (si->si_signo) {
 		case SIGCHLD:
 			printf(": code=%s child pid=%d, uid=%d, "
-			    " status=%u, utime=%lu, stime=%lu\n", 
+			    " status=%u, utime=%lu, stime=%lu)\n", 
 			    code, si->si_pid,
 			    si->si_uid, si->si_status, si->si_utime,
 			    si->si_stime); 
@@ -757,15 +759,15 @@ ktrpsig(v, len)
 		case SIGSEGV:
 		case SIGBUS:
 		case SIGTRAP:
-			printf(": code=%s, addr=%p, trap=%d\n",
+			printf(": code=%s, addr=%p, trap=%d)\n",
 			    code, si->si_addr, si->si_trap);
 			return;
 		case SIGIO:
-			printf(": code=%s, fd=%d, band=%lx\n",
+			printf(": code=%s, fd=%d, band=%lx)\n",
 			    code, si->si_fd, si->si_band);
 			return;
 		default:
-			printf(": code=%s, errno=%d\n",
+			printf(": code=%s, errno=%d)\n",
 			    code, si->si_errno);
 			return;
 		}
