@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.14.2.2 2001/10/08 18:54:56 he Exp $	*/
+/*	$NetBSD: trap.c,v 1.14.2.3 2001/11/25 20:17:23 he Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -690,6 +690,7 @@ tlb_handler(p1, p2, p3, p4, frame)
 #else
 			SHREG_PTEL = pte & PTEL_VALIDBITS;
 #endif
+			__asm __volatile ("ldtlb; nop");
 
 			return;
 		}
@@ -846,6 +847,7 @@ tlb_handler(p1, p2, p3, p4, frame)
 				SHREG_PTEL = pte & PTEL_VALIDBITS;
 #endif
 
+				__asm __volatile ("ldtlb; nop");
 				return;
 			}
 		}
