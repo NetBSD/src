@@ -1,4 +1,4 @@
-.\"	$NetBSD: spl.9,v 1.8 2000/08/21 22:53:53 thorpej Exp $
+.\"	$NetBSD: spl.9,v 1.9 2000/08/21 23:16:01 thorpej Exp $
 .\"
 .\" Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Michael Long.
@@ -87,21 +87,21 @@ sections, in order to protect data structures (much like
 a locking primitive) or to ensure uninterrupted access to
 hardware devices which are sensitive to timing.
 .Pp
-Interrupt priorities are not arranged in a strict heirarchy, although
+Interrupt priorities are not arranged in a strict hierarchy, although
 interrupt hardware sometimes is.  For this reason the priorities
 listed here are arranged from
 .Dq highest
 to
 .Dq lowest .
 In other words, if a platform's hardware interrutps are arranged in
-a heirarchical manner, a priority level should also block all of the
+a hierarchical manner, a priority level should also block all of the
 levels listed below it.
 .Pp
-Note that a strict heirarchy is not required.  For example,
+Note that a strict hierarchy is not required.  For example,
 .Fn splnet
 is not required to block disk controller interrupts, as they
 do not access the same data structures.  However, the priorities
-are presented as a heirarchy in order to minimize data loss due
+are presented as a hierarchy in order to minimize data loss due
 to blocked interrupts, or interrupts not being serviced in a
 timely fashion.
 .Pp
