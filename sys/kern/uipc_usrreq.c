@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.78 2004/05/22 22:52:13 jonathan Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.79 2004/09/03 18:14:09 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.78 2004/05/22 22:52:13 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.79 2004/09/03 18:14:09 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,6 +152,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
 	    control) == 0) {
 		m_freem(control);
 		m_freem(m);
+		so2->so_rcv.sb_overflowed++;
 		return (ENOBUFS);
 	} else {
 		sorwakeup(so2);

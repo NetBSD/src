@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.123 2004/07/02 18:19:51 heas Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.124 2004/09/03 18:14:09 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.123 2004/07/02 18:19:51 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.124 2004/09/03 18:14:09 darrenr Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -511,6 +511,7 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 			m_freem(n);
 			if (opts)
 				m_freem(opts);
+			so->so_rcv.sb_overflowed++;
 			udpstat.udps_fullsock++;
 		} else
 			sorwakeup(so);
@@ -556,6 +557,7 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 			m_freem(n);
 			if (opts)
 				m_freem(opts);
+			so->so_rcv.sb_overflowed++;
 			udp6stat.udp6s_fullsock++;
 		} else
 			sorwakeup(so);
