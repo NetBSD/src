@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.4 2000/03/31 14:51:49 soren Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5 2000/05/16 05:45:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -44,15 +44,6 @@
 
 static struct mbr_partition *
 mbr_findslice(struct mbr_partition* dp, struct buf *bp);
-
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-
-	/* Nothing to do. */
-}
 
 /* 
  * Scan MBR for NetBSD partittion.  Return NO_MBR_SIGNATURE if no MBR found

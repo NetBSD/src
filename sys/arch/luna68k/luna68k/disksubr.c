@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.7 2000/03/07 15:59:24 tsutsui Exp $ */
+/* $NetBSD: disksubr.c,v 1.8 2000/05/16 05:45:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -308,20 +308,6 @@ bounds_check_with_label(bp, lp, wlabel)
 bad:
 	bp->b_flags |= B_ERROR;
 	return (-1);
-}
-
-/*
- * This function appears to be called by each disk driver.
- * Aparently this is to give this MD code a chance to do
- * additional "device registration" types of work. (?)
- * For example, the sparc port uses this to record the
- * device node for the PROM-specified boot device.
- */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
 }
 
 /************************************************************************

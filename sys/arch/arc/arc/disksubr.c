@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 2000/03/27 11:29:32 soda Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.10 2000/05/16 05:45:44 thorpej Exp $	*/
 /*	$OpenBSD: disksubr.c,v 1.14 1997/05/08 00:14:29 deraadt Exp $	*/
 /*	NetBSD: disksubr.c,v 1.40 1999/05/06 15:45:51 christos Exp	*/
 
@@ -558,13 +558,4 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	return (0);
-}
-
-/* For bootstrapping / device */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.30 2000/04/09 00:18:12 mark Exp $	*/
+/*	$NetBSD: fd.c,v 1.31 2000/05/16 05:45:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -551,10 +551,6 @@ fdattach(parent, self, aux)
 	fd->sc_dk.dk_driver = &fddkdriver;
 	disk_attach(&fd->sc_dk);
 
-#ifdef NEWCONFIG
-	/* XXX Need to do some more fiddling with sc_dk. */
-	dk_establish(&fd->sc_dk, &fd->sc_dev);
-#endif
 	/* Needed to power off if the motor is on when we halt. */
 
 }
