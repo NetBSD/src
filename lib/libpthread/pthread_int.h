@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.17 2001/12/30 02:13:00 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.18 2002/01/28 19:05:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,9 +62,11 @@ struct	pthread_st {
 
 	int	pt_type;	/* normal, upcall, or idle */
 	int	pt_state;	/* running, blocked, etc. */
-	int	pt_flags;	
+	pthread_spin_t pt_statelock;	/* lock on pt_state */
+	int	pt_flags;	/* see PT_FLAG_* below */
 	int	pt_cancel;	/* Deferred cancellation */
 	int	pt_spinlocks;	/* Number of spinlocks held. */
+	int	pt_blockedlwp;	/* LWP/SA number when blocked */
 
 	int	pt_errno;	/* Thread-specific errno. */
 
@@ -74,6 +76,10 @@ struct	pthread_st {
 	PTQ_ENTRY(pthread_st)	pt_allq;
 	/* Entry on the sleep queue (xxx should be same as run queue?) */
 	PTQ_ENTRY(pthread_st)	pt_sleep;
+	/* Queue we're sleeping on */
+	struct pthread_queue_t		*pt_sleepq;
+	/* Lock protecting that queue */
+	pthread_spin_t		*pt_sleeplock;
 
 	stack_t		pt_stack;	/* Our stack */
 	ucontext_t	*pt_uc;		/* Saved context when we're stopped */
@@ -139,10 +145,11 @@ struct	pthread_st {
 
 /* Thread states */
 #define PT_STATE_RUNNABLE	1
-#define PT_STATE_BLOCKED	2
-#define PT_STATE_ZOMBIE		3
-#define PT_STATE_DEAD		4
-#define PT_STATE_RECYCLABLE	5
+#define PT_STATE_BLOCKED_SYS	2
+#define PT_STATE_BLOCKED_QUEUE	3
+#define PT_STATE_ZOMBIE		4
+#define PT_STATE_DEAD		5
+#define PT_STATE_RECYCLABLE	6
 
 /* Flag values */
 
@@ -199,6 +206,14 @@ void	pthread__initmain(pthread_t *t);
 
 void	pthread__sa_start(void);
 void	pthread__sa_recycle(pthread_t old, pthread_t new);
+
+/* Alarm code */
+void	*pthread__alarm_add(pthread_t, const struct timespec *,
+    void (*)(void *), void *);
+void	pthread__alarm_del(pthread_t, void *);
+int	pthread__alarm_fired(void *);
+void	pthread__alarm_process(pthread_t self, void *arg);
+
 
 #include "pthread_md.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.7 2001/12/30 02:14:41 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.8 2002/01/28 19:05:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -136,11 +136,11 @@ int 	*pthread__errno(void);
 #define PTHREAD_CANCEL_DISABLE		1
 
 /* POSIX 1003.1-2001, section 2.5.9.3: "The symbolic constant
- * PTHREAD_CANCELLED expands to a constant expression of type (void *)
+ * PTHREAD_CANCELED expands to a constant expression of type (void *)
  * whose value matches no pointer to an object in memory nor the value
  * NULL."
  */
-#define PTHREAD_CANCELLED	((void *) 1)
+#define PTHREAD_CANCELED	((void *) 1)
 
 #define	_POSIX_THREADS
 
