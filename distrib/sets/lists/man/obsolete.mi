@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.45 2002/04/18 12:54:10 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.46 2002/05/03 15:43:41 lukem Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/g711conv.0
 /usr/share/man/cat1/i386
@@ -87,6 +87,7 @@
 /usr/share/man/cat5/uuencode.format.0
 /usr/share/man/cat5/ypserv.acl.0
 /usr/share/man/cat7/miscellaneous.0
+/usr/share/man/cat8/alpha/installboot.old.0
 /usr/share/man/cat8/arm26/BBBB.0
 /usr/share/man/cat8/arm26/MAKEDEV.0
 /usr/share/man/cat8/arm26/bbbb.0
@@ -211,6 +212,7 @@
 /usr/share/man/man5/securenet.5
 /usr/share/man/man5/uuencode.format.5
 /usr/share/man/man5/ypserv.acl.5
+/usr/share/man/man8/alpha/installboot.old.8
 /usr/share/man/man8/arm26/BBBB.8
 /usr/share/man/man8/arm26/MAKEDEV.8
 /usr/share/man/man8/arm26/bbbb.8
