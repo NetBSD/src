@@ -1,7 +1,7 @@
 #! /bin/sh
 
 # $Heimdal: heimdal2netbsd,v 1.3 2002/09/12 14:12:18 joda Exp $
-# $NetBSD: heimdal2netbsd,v 1.6 2003/01/27 06:19:40 elric Exp $
+# $NetBSD: heimdal2netbsd,v 1.7 2003/05/25 22:07:56 lha Exp $
 
 if [ \! -f kuser/kinit.c ]; then 
 	echo "`basename $0`: should be run in top src directory" 1>&2
@@ -21,7 +21,17 @@ rm doc/heimdal.info
 echo 'Fixing .Os in man pages.'
 perl -i~ -p -e 's/\.Os HEIMDAL/.Os/' `find . -name '*.[1358]'`
 
-echo 'Changing $Id: heimdal2netbsd,v 1.6 2003/01/27 06:19:40 elric Exp $ to $Heimdal$.'
+perl -i~ -p -e 's/\.Pa krb5.h/.Pa krb5\/krb5.h/' ./lib/krb5/krb5.3
+perl -i~ -p -e 's/\.Pa gssapi.h/.Pa gssapi\/gssapi.h/' ./lib/gssapi/gssapi.3
+
+perl -i~ -p -e 's/^#include <krb5.h>/#include <krb5\/krb5.h>/' \
+	./lib/krb5/krb5_verify_user.3
+perl -i~ -p -e 's/\.In krb5.h/.In krb5\/krb5.h/' \
+	`find . -name '*.[1358]'`
+perl -i~ -p -e 's/\.In gssapi.h/.In gssapi\/gssapi.h/' \
+	`find . -name '*.[1358]'`
+
+echo 'Changing CVS Id tags to Heimdal tags.'
 ## Ugh!
 set -- 'RCSID\("'	'"\)'	'__RCSID("'	'"\n        "\$NetBSD\$")' \
 	'/\* '		' \*/'	'/* '		'\n   \$NetBSD\$ */'       \
@@ -63,6 +73,8 @@ update_inc lib/krb5/krb5.h
 update_inc lib/hdb/hdb.h
 update_inc lib/sl/ss.h
 
+rm -r doc/standardisation
 echo 'Remember to update files in basesrc/include/heimdal/.'
+echo 'configure --prefix=/usr'
 
 exit 0
