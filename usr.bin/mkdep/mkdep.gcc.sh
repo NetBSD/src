@@ -71,7 +71,7 @@ TMP=/tmp/mkdep$$
 
 trap 'rm -f $TMP ; exit 1' 1 2 3 13 15
 
-if [ x${SED} != "x" ]
+if [ "x${SED}" != "x" ]
 then
 	cpp -M "$@" | sed -e "${SED}" > $TMP
 else
