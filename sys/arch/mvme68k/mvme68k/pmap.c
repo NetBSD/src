@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66 2001/07/30 21:25:08 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.67 2001/07/30 21:32:49 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2678,8 +2678,21 @@ _pmap_set_page_cacheable(pm, va)
 	if (!pmap_ste_v(pm, va))
 		return;
 
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040)
+	{
+#endif
 	if (pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), PG_CCB, ~PG_CI))
 		DCIS();
+
+#if defined(M68020) || defined(M68030)
+	} else
+		pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), 0, ~PG_CI);
+#endif
+#else
+	pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), 0, ~PG_CI);
+#endif
 }
 
 void
@@ -2691,8 +2704,20 @@ _pmap_set_page_cacheinhibit(pm, va)
 	if (!pmap_ste_v(pm, va))
 		return;
 
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040)
+	{
+#endif
 	if (pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), PG_CI, ~PG_CCB))
 		DCIS();
+#if defined(M68020) || defined(M68030)
+	} else
+		pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), PG_CI, ~0);
+#endif
+#else
+	pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), PG_CI, ~0);
+#endif
 }
 
 int
