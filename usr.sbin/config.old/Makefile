@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.12 (Berkeley) 1/16/91
-#	$Id: Makefile,v 1.10 1995/04/28 07:00:57 cgd Exp $
+#	$NetBSD: Makefile,v 1.11 1995/08/17 17:22:06 thorpej Exp $
 
 PROG=	config.old
 BINDIR=	/usr/sbin

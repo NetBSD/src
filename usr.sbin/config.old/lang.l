@@ -1,4 +1,6 @@
 %{
+/*	$NetBSD: lang.l,v 1.12 1995/08/17 17:22:11 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
  * All rights reserved.
@@ -32,7 +34,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lang.l	5.8 (Berkeley) 4/19/91
- *	$Id: lang.l,v 1.11 1994/06/24 14:22:13 hpeyerl Exp $
  */
 
 #include <ctype.h>

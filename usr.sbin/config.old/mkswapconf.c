@@ -1,3 +1,5 @@
+/*	$NetBSD: mkswapconf.c,v 1.11 1995/08/17 17:22:20 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1980 Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkswapconf.c	5.10 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkswapconf.c,v 1.10 1995/04/28 08:16:07 cgd Exp $";
+static char rcsid[] = "$NetBSD: mkswapconf.c,v 1.11 1995/08/17 17:22:20 thorpej Exp $";
 #endif /* not lint */
 
 /*

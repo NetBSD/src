@@ -75,6 +75,7 @@
 %type	<file>	swap_device_spec
 
 %{
+/*	$NetBSD: config.y,v 1.18 1995/08/17 17:22:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -109,7 +110,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.y	5.14 (Berkeley) 7/1/91
- *	$Id: config.y,v 1.17 1995/08/17 17:09:22 thorpej Exp $
  */
 
 #include <ctype.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.13 1995/08/17 17:22:12 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1980 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.17 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.12 1995/04/28 07:01:03 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.13 1995/08/17 17:22:12 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

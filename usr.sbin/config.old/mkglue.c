@@ -1,3 +1,5 @@
+/*	$NetBSD: mkglue.c,v 1.10 1995/08/17 17:22:14 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1980 Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkglue.c	5.10 (Berkeley) 1/15/91";*/
-static char rcsid[] = "$Id: mkglue.c,v 1.9 1994/02/23 00:23:25 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mkglue.c,v 1.10 1995/08/17 17:22:14 thorpej Exp $";
 #endif /* not lint */
 
 /*

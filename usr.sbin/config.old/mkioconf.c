@@ -1,3 +1,5 @@
+/*	$NetBSD: mkioconf.c,v 1.37 1995/08/17 17:22:17 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1980 Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkioconf.c	5.18 (Berkeley) 5/10/91";*/
-static char rcsid[] = "$Id: mkioconf.c,v 1.36 1995/08/17 16:43:35 thorpej Exp $";
+static char rcsid[] = "$NetBSD: mkioconf.c,v 1.37 1995/08/17 17:22:17 thorpej Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
