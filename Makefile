@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.193 2002/12/21 16:43:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.194 2002/12/26 12:01:48 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -184,7 +184,8 @@ build:
 #
 
 distribution buildworld:
-.if make(buildworld) && (${DESTDIR} == "" || ${DESTDIR} == "/")
+.if make(buildworld) && \
+    (!defined(DESTDIR) || ${DESTDIR} == "" || ${DESTDIR} == "/")
 	@echo "Won't make ${.TARGET} with DESTDIR=/"
 	@false
 .endif
@@ -206,7 +207,7 @@ HOST_UNAME_S!=	uname -s
 HOST_UNAME_M!=	uname -m
 
 installworld:
-.if (${DESTDIR} == "" || ${DESTDIR} == "/")
+.if (!defined(DESTDIR) || ${DESTDIR} == "" || ${DESTDIR} == "/")
 	@echo "Can't make ${.TARGET} to DESTDIR=/"
 	@false
 .endif
