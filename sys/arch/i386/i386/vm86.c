@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.2 1996/01/08 19:11:00 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.3 1996/01/08 22:23:35 mycroft Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -70,18 +70,9 @@ static void fast_intxx __P((struct proc *, int));
 #define	SETDIRECT	((~(PSL_USERSTATIC|PSL_NT)) & 0xffff)
 #define	GETDIRECT	(SETDIRECT|0x02a) /* add in two MBZ bits */
 
+#define	IP(tf)		(*(u_short *)&tf->tf_eip)
+#define	SP(tf)		(*(u_short *)&tf->tf_esp)
 
-/*
- * Boy are these ugly, but we need to do the correct 16-bit arithmetic.
- * Gcc makes a mess of it, so we do it inline and use non-obvious calling
- * conventions..
- */
-#define putbyte(base, ptr, val) \
-__asm__ __volatile__( \
-	"decw %w0\n\t" \
-	"movb %2,0(%1,%0)" \
-	: "=r" (ptr) \
-	: "r" (base), "q" (val), "0" (ptr))
 
 #define putword(base, ptr, val) \
 __asm__ __volatile__( \
@@ -94,13 +85,13 @@ __asm__ __volatile__( \
 
 #define putdword(base, ptr, val) \
 __asm__ __volatile__( \
-	"decw %w0\n\t" \
 	"rorl $16,%2\n\t" \
+	"decw %w0\n\t" \
 	"movb %h2,0(%1,%0)\n\t" \
 	"decw %w0\n\t" \
 	"movb %b2,0(%1,%0)\n\t" \
-	"decw %w0\n\t" \
 	"rorl $16,%2\n\t" \
+	"decw %w0\n\t" \
 	"movb %h2,0(%1,%0)\n\t" \
 	"decw %w0\n\t" \
 	"movb %b2,0(%1,%0)" \
@@ -230,10 +221,9 @@ fast_intxx(p, intrno)
 	 */
 	struct vm86_struct *u_vm86p;
 	struct { u_short ip, cs; } ihand;
-	struct { u_short short1, short2, short3; } threeshorts;
 
 	u_short cs;
-	u_long ss;
+	u_long ss, sp;
 
 	/* 
 	 * Note: u_vm86p points to user-space, we only compute offsets
@@ -274,13 +264,14 @@ fast_intxx(p, intrno)
 	 * simulate direct INT call.
 	 */
 	ss = tf->tf_ss << 4;
-	tf->tf_esp &= 0xffff;
+	sp = SP(tf);
 
-	putword(ss, tf->tf_esp, get_vflags(p));
-	putword(ss, tf->tf_esp, tf->tf_cs);
-	putword(ss, tf->tf_esp, tf->tf_eip);
+	putword(ss, sp, get_vflags(p));
+	putword(ss, sp, tf->tf_cs);
+	putword(ss, sp, IP(tf));
+	SP(tf) = sp;
 
-	tf->tf_eip = ihand.ip;
+	IP(tf) = ihand.ip;
 	tf->tf_cs = ihand.cs;
 
 	/* disable further "hardware" interrupts, turn off any tracing. */
@@ -345,18 +336,21 @@ vm86_gpfault(p, type)
 	 * address space for checking.  remember that the frame's
 	 * segment selectors are real-mode style selectors.
 	 */
-	u_long cs, ss;
+	u_char tmpbyte;
+	u_long cs, ip, ss, sp;
 
 	cs = tf->tf_cs << 4;
-	tf->tf_eip &= 0xffff;
+	ip = IP(tf);
 	ss = tf->tf_ss << 4;
-	tf->tf_esp &= 0xffff;
+	sp = SP(tf);
 
 	/*
 	 * For most of these, we must set all the registers before calling
 	 * macros/functions which might do a return_to_32bit.
 	 */
-	switch (getbyte(cs, tf->tf_eip)) {
+	tmpbyte = getbyte(cs, ip);
+	IP(tf) = ip;
+	switch (tmpbyte) {
 	case CLI:
 		/* simulate handling of IF */
 		VM86_EFLAGS(p) &= ~PSL_VIF;
@@ -373,42 +367,50 @@ vm86_gpfault(p, type)
 
 	case INTxx:
 		/* try fast intxx, or return to 32bit mode to handle it. */
-		fast_intxx(p, getbyte(cs, tf->tf_eip));
+		tmpbyte = getbyte(cs, ip);
+		IP(tf) = ip;
+		fast_intxx(p, tmpbyte);
 		break;
 
 	case PUSHF:
-		putword(ss, tf->tf_esp, get_vflags(p));
+		putword(ss, sp, get_vflags(p));
+		SP(tf) = sp;
 		break;
 
 	case IRET:
-		tf->tf_eip = getword(ss, tf->tf_esp);
-		tf->tf_cs = getword(ss, tf->tf_esp);
+		IP(tf) = getword(ss, sp);
+		tf->tf_cs = getword(ss, sp);
 	case POPF:
-		set_vflags_short(p, getword(ss, tf->tf_esp));
+		set_vflags_short(p, getword(ss, sp));
+		SP(tf) = sp;
 		break;
 
 	case OPSIZ:
-		switch (getbyte(cs, tf->tf_eip)) {
+		tmpbyte = getbyte(cs, ip);
+		IP(tf) = ip;
+		switch (tmpbyte) {
 		case PUSHF:
-			putdword(ss, tf->tf_esp, get_vflags(p));
+			putdword(ss, sp, get_vflags(p));
+			SP(tf) = sp;
 			break;
 
 		case IRET:
-			tf->tf_eip = getdword(ss, tf->tf_esp);
-			tf->tf_cs = getdword(ss, tf->tf_esp);
+			IP(tf) = getdword(ss, sp);
+			tf->tf_cs = getdword(ss, sp);
 		case POPF:
-			set_vflags(p, getdword(ss, tf->tf_esp));
+			set_vflags(p, getdword(ss, sp));
+			SP(tf) = sp;
 			break;
 
 		default:
-			tf->tf_eip -= 2;
+			IP(tf) -= 2;
 			goto bad;
 		}
 		break;
 
 	case LOCK:
 	default:
-		tf->tf_eip -= 1;
+		IP(tf) -= 1;
 		goto bad;
 	}
 	return;
@@ -426,7 +428,7 @@ i386_vm86(p, args, retval)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	struct vm86_kern vm86s;
-	int psl, err;
+	int err;
 
 	if (err = copyin(args, &vm86s, sizeof(vm86s)))
 		return err;
