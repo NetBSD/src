@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_bus_mem.c,v 1.13 1996/12/02 22:19:34 cgd Exp $	*/
+/* $NetBSD: tc_bus_mem.c,v 1.14 1997/04/06 22:32:04 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -30,6 +30,8 @@
 /*
  * Common TurboChannel Chipset "bus memory" functions.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
