@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_mount.h,v 1.2 2003/08/07 16:31:34 agc Exp $	*/
+/*	$NetBSD: cd9660_mount.h,v 1.3 2003/10/03 16:34:31 yamt Exp $	*/
 /*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -52,4 +52,4 @@ struct iso_args {
 
 #define ISOFSMNT_BITS "\177\20" \
     "b\00norrip\0b\01gens\0b\02extatt\0b\03nojoliet\0" \
-    "b\04nocasetrans\0b\05rrcaseins"
+    "b\04nocasetrans\0b\05rrcaseins\0"
