@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993, 1994
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,10 +32,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)cp.1	6.15 (Berkeley) 7/30/91
-.\"	$Id: cp.1,v 1.5 1993/08/07 03:14:54 mycroft Exp $
+.\"	from: @(#)cp.1	8.3 (Berkeley) 4/18/94
+.\"	$Id: cp.1,v 1.6 1994/09/22 09:24:38 mycroft Exp $
 .\"
-.Dd July 30, 1991
+.Dd April 18, 1994
 .Dt CP 1
 .Os BSD 4
 .Sh NAME
@@ -43,10 +43,18 @@
 .Nd copy files
 .Sh SYNOPSIS
 .Nm cp
-.Op Fl Rfhip
+.Oo
+.Fl R
+.Op Fl H | Fl L | Fl P
+.Oc
+.Op Fl fip
 .Ar source_file target_file
 .Nm cp
-.Op Fl Rfhip
+.Oo
+.Fl R
+.Op Fl H | Fl L | Fl P
+.Oc
+.Op Fl fip
 .Ar source_file ... target_directory
 .Sh DESCRIPTION
 In the first synopsis form, the
@@ -67,6 +75,19 @@ detects an attempt to copy a file to itself, the copy will fail.
 .Pp
 The following options are available:
 .Bl -tag -width flag
+.It Fl H
+If the
+.Fl R
+option is specified, symbolic links on the command line are followed.
+(Symbolic links encountered in the tree traversal are not followed.)
+.It Fl L
+If the
+.Fl R
+option is specified, all symbolic links are followed.
+.It Fl P
+If the
+.Fl R
+option is specified, no symbolic links are followed.
 .It Fl R
 If
 .Ar source_file
@@ -88,26 +109,19 @@ regardless of its permissions.
 option is ignored if the
 .Fl f
 option is specified.)
-.It Fl h
-Forces
-.Nm cp
-to follow symbolic links.
-Provided for the
-.Fl R
-option which does not follow symbolic links by default.
 .It Fl i
 Causes
 .Nm cp
-to write a prompt to standard error before copying a file that would
-overwrite an existing file.
+to write a prompt to the standard error output before copying a file
+that would overwrite an existing file.
 If the response from the standard input begins with the character
 .Sq Li y ,
-the file is copied if permissions allow the copy.
+the file copy is attempted.
 .It Fl p
 Causes
 .Nm cp
 to preserve in the copy as many of the modification time, access time,
-file mode, user ID, and group ID as allowed by permissions.
+file flags, file mode, user ID, and group ID as allowed by permissions.
 .Pp
 If the user ID and group ID cannot be preserved, no error message
 is displayed and the exit value is not altered.
@@ -118,8 +132,8 @@ in the copy's permissions.
 If the source file has its set group ID bit on and the group ID cannot
 be preserved, the set group ID bit is not preserved
 in the copy's permissions.
-If the source file has both the set user ID and set group ID bits
-on and either the user ID or group ID cannot be preserved, neither
+If the source file has both its set user ID and set group ID bits on,
+and either the user ID or group ID cannot be preserved, neither
 the set user ID or set group ID bits are preserved in the copy's
 permissions.
 .El
@@ -127,6 +141,14 @@ permissions.
 For each destination file that already exists, its contents are
 overwritten if permissions allow, but its mode, user ID, and group
 ID are unchanged.
+.Pp
+In the second synopsis form, 
+.Ar target_directory 
+must exist unless there is only one named
+.Ar source_file
+which is a directory and the 
+.Fl R 
+flag is specified.
 .Pp
 If the destination file does not exist, the mode of the source file is
 used as modified by the file mode creation mask
@@ -144,16 +166,44 @@ conditions must be fulfilled or both bits are removed.
 .Pp
 Appropriate permissions are required for file creation or overwriting.
 .Pp
-Symbolic links are followed unless the
+Symbolic links are always followed unless the 
+.Fl R 
+flag is set, in which case symbolic links are not followed, by default.
+The
+.Fl H
+or 
+.Fl L
+flags (in conjunction with the
 .Fl R
-option is specified, in which case the link itself is copied.
+flag) cause symbolic links to be followed as described above.
+The
+.Fl H ,
+.Fl L
+and
+.Fl P
+options are ignored unless the
+.Fl R
+option is specified.
+In addition, these options override each other and the
+command's actions are determined by the last one specified.
 .Pp
 .Nm Cp
 exits 0 on success, >0 if an error occurred.
+.Sh COMPATIBILITY
+Historic versions of the
+.Nm cp
+utility had a
+.Fl r
+option.
+This implementation supports that option, however, its use is strongly
+discouraged, as it does not correctly copy special files, symbolic links
+or fifo's.
 .Sh SEE ALSO
 .Xr mv 1 ,
 .Xr rcp 1 ,
-.Xr umask 2
+.Xr umask 2 , 
+.Xr fts 3 ,
+.Xr symlink 7
 .Sh HISTORY
 The
 .Nm cp
