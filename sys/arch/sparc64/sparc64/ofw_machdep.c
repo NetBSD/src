@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.24 2004/06/02 20:23:35 martin Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.25 2004/06/18 12:51:39 martin Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.24 2004/06/02 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.25 2004/06/18 12:51:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -586,6 +586,7 @@ prom_startcpu(u_int cpu, void *func, u_long arg)
 void
 prom_stopself(void)
 {
+	extern void openfirmware_exit(void*);
 	static struct {
 		cell_t  name;
 		cell_t  nargs;
