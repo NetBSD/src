@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.11 2003/08/22 05:06:29 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.12 2003/08/25 20:40:25 eeh Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -247,9 +247,9 @@ wsfont)
 
 ttyEstat)
 	chr=35
-	rm -f ttyEcfg
-	mknod ttyEcfg c $chr 254
-	chmod 600 ttyEcfg
+	rm -f ttyEstat
+	mknod ttyEstat c $chr 254
+	chmod 600 ttyEstat
 	;;
 
 ttyEcfg)
