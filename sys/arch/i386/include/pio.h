@@ -1,76 +1,119 @@
-/* 
- * Mach Operating System
- * Copyright (c) 1990 Carnegie-Mellon University
- * All rights reserved.  The CMU software License Agreement specifies
- * the terms and conditions for use and redistribution.
+/*
+ * Copyright (c) 1993 Charles Hannum.
+ * All rights reserved.
  *
- *	$Id: pio.h,v 1.3 1993/06/06 04:16:22 cgd Exp $
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Charles Hannum.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software withough specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *	$Id: pio.h,v 1.4 1993/12/20 09:07:22 mycroft Exp $
  */
-/* 
- * HISTORY
- * $Log: pio.h,v $
- * Revision 1.3  1993/06/06 04:16:22  cgd
- * incorporate Bruce Evans' interrupt changes, as hacked by Rod grimes,
- * for patchkit patch 158.  it appears to work well.
- *
- * Revision 1.2  1993/05/22  08:00:27  cgd
- * add rcsids to everything and clean up headers
- *
- * Revision 1.1  1993/03/21  18:09:48  cgd
- * after 0.2.2 "stable" patches applied
- *
- * Revision 1.1  1992/05/27  00:48:30  balsup
- * machkern/cor merge
- *
- * Revision 1.1  1991/10/10  20:11:39  balsup
- * Initial revision
- *
- * Revision 2.2  91/04/02  11:52:29  mbj
- * 	[90/08/14            mg32]
- * 
- * 	Now we know how types are factor in.
- * 	Cleaned up a bunch: eliminated ({ for output and flushed unused
- * 	output variables.
- * 	[90/08/14            rvb]
- * 
- * 	This is how its done in gcc:
- * 		Created.
- * 	[90/03/26            rvb]
- * 
- */
-
-
-#define inl(y) \
-({ unsigned long _tmp__; \
-	asm volatile("inl %1, %0" : "=a" (_tmp__) : "d" ((unsigned short)(y))); \
-	_tmp__; })
-
-#define inw(y) \
-({ unsigned short _tmp__; \
-	asm volatile(".byte 0x66; inl %1, %0" : "=a" (_tmp__) : "d" ((unsigned short)(y))); \
-	_tmp__; })
 
 /*
- * only do this if it has not already be defined.. this is a crock for the
- * patch kit for right now.  Need to clean up all the inx, outx stuff for
- * 0.1.5 to use 1 common header file, that has Bruces fast mode inb/outb
- * stuff in it.  Rgrimes 5/27/93
+ * Functions to provide access to i386 programmed I/O instructions.
  */
-#ifndef inb
-#define inb(y) \
-({ unsigned char _tmp__; \
-	asm volatile("inb %1, %0" : "=a" (_tmp__) : "d" ((unsigned short)(y))); \
-	_tmp__; })
-#endif
 
+static __inline u_char
+inb(u_short port)
+{
+	u_char	data;
+	__asm __volatile("inb %1,%0" : "=a" (data) : "d" (port));
+	return data;
+}
 
-#define outl(x, y) \
-{ asm volatile("outl %0, %1" : : "a" (y) , "d" ((unsigned short)(x))); }
+static __inline void
+insb(u_short port, void *addr, int cnt)
+{
+	__asm __volatile("cld\n\trep\n\tinsb" :
+			 : "d" (port), "D" (addr), "c" (cnt) : "D", "c");
+}
 
+static __inline u_short
+inw(u_short port)
+{
+	u_short	data;
+	__asm __volatile("inw %1,%0" : "=a" (data) : "d" (port));
+	return data;
+}
 
-#define outw(x, y) \
-{asm volatile(".byte 0x66; outl %0, %1" : : "a" ((unsigned short)(y)) , "d" ((unsigned short)(x))); }
+static __inline void
+insw(u_short port, void *addr, int cnt)
+{
+	__asm __volatile("cld\n\trep\n\tinsw" :
+			 : "d" (port), "D" (addr), "c" (cnt) : "D", "c");
+}
 
+static __inline u_int
+inl(u_short port)
+{
+	u_int	data;
+	__asm __volatile("inl %1,%0" : "=a" (data) : "d" (port));
+	return data;
+}
 
-#define outb(x, y) \
-{ asm volatile("outb %0, %1" : : "a" ((unsigned char)(y)) , "d" ((unsigned short)(x))); }
+static __inline void
+insl(u_short port, void *addr, int cnt)
+{
+	__asm __volatile("cld\n\trep\n\tinsl" :
+			 : "d" (port), "D" (addr), "c" (cnt) : "D", "c");
+}
+
+static __inline void
+outb(u_short port, u_char data)
+{
+	__asm __volatile("outb %0,%1" : : "a" (data), "d" (port));
+}
+
+static __inline void
+outsb(u_short port, void *addr, int cnt)
+{
+	__asm __volatile("cld\n\trep\n\toutsb" :
+			 : "d" (port), "S" (addr), "c" (cnt) : "S", "c");
+}
+
+static __inline void
+outw(u_short port, u_short data)
+{
+	__asm __volatile("outw %0,%1" : : "a" (data), "d" (port));
+}
+
+static __inline void
+outsw(u_short port, void *addr, int cnt)
+{
+	__asm __volatile("cld\n\trep\n\toutsw" :
+			 : "d" (port), "S" (addr), "c" (cnt) : "S", "c");
+}
+
+static __inline void
+outl(u_short port, u_int data)
+{
+	__asm __volatile("outl %0,%1" : : "a" (data), "d" (port));
+}
+
+static __inline void
+outsl(u_short port, void *addr, int cnt)
+{
+	__asm __volatile("cld\n\trep\n\toutsl" :
+			 : "d" (port), "S" (addr), "c" (cnt) : "S", "c");
+}
