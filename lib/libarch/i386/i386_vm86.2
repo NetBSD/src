@@ -1,4 +1,4 @@
-.\"	$NetBSD: i386_vm86.2,v 1.7 2001/07/04 17:15:07 kleink Exp $
+.\"	$NetBSD: i386_vm86.2,v 1.8 2002/02/08 01:28:13 ross Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,11 +45,11 @@
 .Sh LIBRARY
 .Lb libi386
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <signal.h>
-.Fd #include <machine/segments.h>
-.Fd #include <machine/sysarch.h>
-.Fd #include <machine/vm86.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]signal.h\*[Gt]
+.Fd #include \*[Lt]machine/segments.h\*[Gt]
+.Fd #include \*[Lt]machine/sysarch.h\*[Gt]
+.Fd #include \*[Lt]machine/vm86.h\*[Gt]
 .Ft int
 .Fn i386_vm86 "struct vm86_struct *vmcp"
 .Sh DESCRIPTION
@@ -58,14 +58,14 @@ will set the process into virtual 8086 mode using the registers and
 selectors specified by the context pointed to by
 .Ar vmcp .
 The processor registers are set from
-.Ar vmcp->substr.regs ,
+.Ar vmcp-\*[Gt]substr.regs ,
 and the emulated processor type from
-.Ar vmcp->substr.ss_cpu_type .
+.Ar vmcp-\*[Gt]substr.ss_cpu_type .
 .Pp
 The kernel keeps a pointer to the context, and uses the tables stored at
-.Ar vmcp->int_byuser
+.Ar vmcp-\*[Gt]int_byuser
 and
-.Ar vmcp->int21_byuser
+.Ar vmcp-\*[Gt]int21_byuser
 for fast virtual interrupt handling.  If the
 .Ar n th
 bit is clear in the first of
@@ -80,7 +80,7 @@ Since MS-DOS puts many DOS functions onto interrupt 21, it is handled
 specially:  the
 .Ar k
 th bit in the
-.Ar vmcp->int21_byuser
+.Ar vmcp-\*[Gt]int21_byuser
 array is checked when INT
 .Ar 21
 is requested and the

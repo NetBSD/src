@@ -1,4 +1,4 @@
-.\"	$NetBSD: math.3,v 1.11 2002/02/07 09:24:09 ross Exp $
+.\"	$NetBSD: math.3,v 1.12 2002/02/08 01:28:24 ross Exp $
 .\"
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
@@ -168,7 +168,7 @@ decimals.
 If x and x' are consecutive positive D_floating\-point
 numbers (they differ by 1 \*(up), then
 .br
-1.3e\-17 < 0.5**56 < (x'\-x)/x \(<= 0.5**55 < 2.8e\-17.
+1.3e\-17 \*[Lt] 0.5**56 \*[Lt] (x'\-x)/x \*[Le] 0.5**55 \*[Lt] 2.8e\-17.
 .RE
 .nf
 .ta \w'Range:'u+1n +\w'Underflow threshold'u+1n +\w'= 2.0**127'u+1n
@@ -340,7 +340,7 @@ decimals.
 If x and x' are consecutive positive Double\-Precision
 numbers (they differ by 1 \*(up), then
 .br
-1.1e\-16 < 0.5**53 < (x'\-x)/x \(<= 0.5**52 < 2.3e\-16.
+1.1e\-16 \*[Lt] 0.5**53 \*[Lt] (x'\-x)/x \*[Le] 0.5**52 \*[Lt] 2.3e\-16.
 .RE
 .nf
 .ta \w'Range:'u+1n +\w'Underflow threshold'u+1n +\w'= 2.0**1024'u+1n
@@ -362,7 +362,7 @@ division, and is preserved by addition of zeros
 with like signs; but x\-x yields +0 for every
 finite x.  The only operations that reveal zero's
 sign are division by zero and copysign(x,\(+-0).
-In particular, comparison (x > y, x \(>= y, etc.)
+In particular, comparison (x \*[Gt] y, x \*[Ge] y, etc.)
 cannot be affected by the sign of zero; but if
 finite x = y then
 .If

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.1,v 1.21 2000/01/07 20:23:41 mycroft Exp $
+.\"	$NetBSD: ld.1,v 1.22 2002/02/08 01:26:50 ross Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -144,7 +144,7 @@ This option specifies a library to be considered for inclusion in the
 output. If the
 .Fl B Ns Ar dynamic
 option is in effect, a shared library of the
-form lib<spec>.so.m.n
+form lib\*[Lt]spec\*[Gt].so.m.n
 .Po where \&
 .Em m
 is the major, and
@@ -154,7 +154,7 @@ is the minor version number, respectively
 library with the highest version found in the search path is selected.
 If no shared library is found or the
 .Fl B Ns Ar static
-option is in effect, an archive of the form lib<spec>.a is looked for in
+option is in effect, an archive of the form lib\*[Lt]spec\*[Gt].a is looked for in
 the library search path.
 .It Fl M
 Produce output about the mapping of segments of the input files and the

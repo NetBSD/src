@@ -1,4 +1,4 @@
-.\"	$NetBSD: identd.8,v 1.10 2002/01/15 02:22:28 wiz Exp $
+.\"	$NetBSD: identd.8,v 1.11 2002/02/08 01:30:07 ross Exp $
 .\"
 .\" @(#)identd.8 1.9 92/02/11 Lysator
 .\" Copyright (c) 1992 Peter Eriksson, Lysator, Linkoping University.
@@ -10,13 +10,13 @@ identd \- TCP/IP IDENT protocol server
 .SH SYNOPSIS
 .B identd
 .RB [ \-i | \-w | \-b ]
-.RB [ \-t<seconds> ]
-.RB [ \-u<uid> ]
-.RB [ \-g<gid> ]
-.RB [ \-p<port> ]
-.RB [ \-a<address> ]
-.RB [ \-c<charset> ]
-.RB [ \-C [ <keyfile> ]]
+.RB [ \-t\*[Lt]seconds\*[Gt] ]
+.RB [ \-u\*[Lt]uid\*[Gt] ]
+.RB [ \-g\*[Lt]gid\*[Gt] ]
+.RB [ \-p\*[Lt]port\*[Gt] ]
+.RB [ \-a\*[Lt]address\*[Gt] ]
+.RB [ \-c\*[Lt]charset\*[Gt] ]
+.RB [ \-C [ \*[Lt]keyfile\*[Gt] ]]
 .RB [ \-o ]
 .RB [ \-e ]
 .RB [ \-l ]
@@ -24,8 +24,8 @@ identd \- TCP/IP IDENT protocol server
 .RB [ \-m ]
 .RB [ \-N ]
 .RB [ \-d ]
-.RB [ \-F<format> ]
-.RB [ \-L<user name> ]
+.RB [ \-F\*[Lt]format\*[Gt] ]
+.RB [ \-L\*[Lt]user name\*[Gt] ]
 .RB [ "kernelfile" [ "kmemfile" ] ]
 .SH DESCRIPTION
 .IX "identd daemon" "" \fLidentd\fP daemon"
@@ -93,7 +93,7 @@ same advantage as the
 mode in that it parses the nlist only once.
 .PP
 The
-.B \-t<seconds>
+.B \-t\*[Lt]seconds\*[Gt]
 option is used to specify the timeout limit. This is the number
 of seconds a server started with the
 .B \-w
@@ -106,7 +106,7 @@ used. It defaults to no timeout (i.e. will wait forever, or until a
 fatal condition occurs in the server).
 .PP
 The
-.B \-u<uid>
+.B \-u\*[Lt]uid\*[Gt]
 option is used to specify a user id number which the
 .BR ident
 server should
@@ -117,7 +117,7 @@ port if using the
 mode of operation.
 .PP
 The
-.B \-g<gid>
+.B \-g\*[Lt]gid\*[Gt]
 option is used to specify a group id number which the
 .BR ident
 server should
@@ -128,7 +128,7 @@ port if using the
 mode of operation.
 .PP
 The
-.B \-p<port>
+.B \-p\*[Lt]port\*[Gt]
 option is used to specify an alternative port number to bind to if using
 the
 .B \-b
@@ -137,7 +137,7 @@ mode of operation. It can be specified by name or by number. Defaults to the
 port (113).
 .PP
 The
-.B \-a<address>
+.B \-a\*[Lt]address\*[Gt]
 option is used to specify the local address to bind the socket to if using
 the
 .B \-b
@@ -175,7 +175,7 @@ to always return "UNKNOWN-ERROR" instead of the "NO-USER" or
 "INVALID-PORT" errors.
 .PP
 The
-.B \-c<charset>
+.B \-c\*[Lt]charset\*[Gt]
 flags tells
 .B identd
 to add the optional (according to the IDENT protocol) character set
@@ -185,7 +185,7 @@ should be a valid character set as described in the MIME RFC in upper
 case characters.
 .PP
 The
-.BR \-C [ <keyfile> ]
+.BR \-C [ \*[Lt]keyfile\*[Gt] ]
 option tells
 .B identd
 to return encrypted tokens instead of user names.
@@ -243,7 +243,7 @@ be enabled since that breaks the protocol and may reveal information
 that should not be available to outsiders.
 .PP
 The
-.B \-F<format>
+.B \-F\*[Lt]format\*[Gt]
 option makes
 .B identd
 use the specified format to display info. The allowed format specifiers are:
@@ -281,7 +281,7 @@ Not implemented yet, but on my wish-list are the following:
 .fi
 .PP
 The
-.B \-L<user name>
+.B \-L\*[Lt]user name\*[Gt]
 option instructs
 .B identd
 to lie brazenly about the identity of the user in question.  You didn't
@@ -290,7 +290,7 @@ intend to trust my assertion about who I was anyway, right?
 .br
 This flag provides a way for a site to support services requiring the ident
 protocol while providing a standard answer to all ident queries.  All queries
-to identd will respond with a host type of `OTHER' and a username of <user name>.
+to identd will respond with a host type of `OTHER' and a username of \*[Lt]user name\*[Gt].
 .PP
 .B kernelfile
 defaults to the normally running kernel file.
@@ -305,18 +305,18 @@ flag enables more verbose output or messages. (Further occurences of the
 flag make things even more verbose.) Currently not used: ignored.
 .PP
 The
-.B \-f<config-file>
+.B \-f\*[Lt]config-file\*[Gt]
 option causes
 .B identd
 to use the named config file (instead of the default /etc/identd.conf ?).
 Currently not used: ignored, no config files are used.
 .PP
 The
-.B \-r<indirect_host>
+.B \-r\*[Lt]indirect_host\*[Gt]
 option is used in some way (for proxy queries?).
 .PP
 The
-.B \-C<keyfile>
+.B \-C\*[Lt]keyfile\*[Gt]
 option is used in some way for DES encryption.
 .SH INSTALLATION
 .B identd

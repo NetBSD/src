@@ -1,4 +1,4 @@
-.\"	$NetBSD: battlestar.6,v 1.9 2001/04/02 22:42:37 wiz Exp $
+.\"	$NetBSD: battlestar.6,v 1.10 2002/02/08 01:25:12 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -85,19 +85,19 @@ draw	---	carry an object you are wearing
 puton	---	take an object and wear it
 take off --	draw an object and drop it
 
-throw  <object> <direction>
+throw  \*[Lt]object\*[Gt] \*[Lt]direction\*[Gt]
 
-!	<shell esc>
+!	\*[Lt]shell esc\*[Gt]
 .Ed
 .Sh IMPLIED OBJECTS
 .Bd -literal -offset indent
->-: take watermelon
+\*[Gt]-: take watermelon
 watermelon:
 Taken.
->-: eat
+\*[Gt]-: eat
 watermelon:
 Eaten.
->-: take knife and sword and apple, drop all
+\*[Gt]-: take knife and sword and apple, drop all
 knife:
 Taken.
 broadsword:
@@ -110,7 +110,7 @@ broadsword:
 Dropped.
 apple:
 Dropped.
->-: get
+\*[Gt]-: get
 knife:
 Taken.
 .Ed
@@ -119,7 +119,7 @@ Notice that the "shadow" of the next word stays around if you
 want to take advantage of it.  That is, saying "take knife" and then
 "drop"
 will drop the knife you just took.
-.Sh SCORE & INVEN
+.Sh SCORE \*[Am] INVEN
 The two commands
 .Dq score
 and
@@ -154,7 +154,7 @@ The compass directions N, S, E, and W can be used if you have a compass.
 If you don't have a compass, you'll have to say R, L, A, or B, which
 stand for Right, Left, Ahead, and Back.
 Directions printed in room descriptions are
-always printed in R, L, A, & B relative directions.
+always printed in R, L, A, \*[Am] B relative directions.
 .Sh HISTORY
 I wrote Battlestar in 1979 in order to experiment with the niceties of
 the C Language.
@@ -163,7 +163,7 @@ code, so don't send me any hate mail about it!
 Instead, enjoy art for art's sake!
 .Sh AUTHOR
 David Riggle
-.Sh INSPIRATION & ASSISTANCE
+.Sh INSPIRATION \*[Am] ASSISTANCE
 .Bl -item -compact
 .It
 Chris Guthrie
@@ -174,7 +174,7 @@ Kevin Brown
 .It
 Edward Wang
 .It
-Ken Arnold & Company
+Ken Arnold \*[Am] Company
 .El
 .Sh BUGS
 Countless.
