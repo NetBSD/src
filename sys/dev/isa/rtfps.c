@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.2 1994/10/27 04:18:11 cgd Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.3 1994/11/04 18:35:18 mycroft Exp $	*/
 
 /*
  * Multi-port serial card interrupt demuxing support.
@@ -162,13 +162,13 @@ rt_resetintr(irq)
 {
 
 	switch (irq) {
-	case IRQ9:
+	case 9:
 		outb(0x2f2, 0);
 		break;
-	case IRQ10:
+	case 10:
 		outb(0x6f2, 0);
 		break;
-	case IRQ11:
+	case 11:
 		outb(0x6f3, 0);
 		break;
 	default:

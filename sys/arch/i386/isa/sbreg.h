@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.4 1994/10/27 04:18:14 cgd Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.5 1994/11/04 18:35:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -141,11 +141,11 @@
  * Macros to detect valid hardware configuration data.
  */
 #ifdef SBPRO
-#define SB_IRQ_VALID(mask)  ((mask) & 0x04a4)	/* IRQ 2,5,7,10 */
-#define SB_DRQ_VALID(chan)  ((chan) == 0 || (chan) == 1 || (chan) == 3)
+#define SB_IRQ_VALID(irq)  ((irq) == 2 || (irq) == 5 || (irq) == 7 || (irq) == 10)
+#define SB_DRQ_VALID(drq)  ((drq) == 0 || (drq) == 1 || (drq) == 3)
 #else /* !SBPRO */
-#define SB_IRQ_VALID(mask)  ((mask) & 0x00ac)	/* IRQ 2,3,5,7 */
-#define SB_DRQ_VALID(chan)  ((chan) == 1)
+#define SB_IRQ_VALID(irq)  ((irq) == 2 || (irq) == 3 || (irq) == 5 || (irq) == 7)
+#define SB_DRQ_VALID(drq)  ((drq) == 1)
 #endif /* !SBPRO */
 #define SB_BASE_VALID(base) ((base) == 0x220 || (base) == 0x240)
 
