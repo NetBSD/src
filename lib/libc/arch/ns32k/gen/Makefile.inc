@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 1999/08/29 19:08:44 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.13 1999/12/23 10:15:07 kleink Exp $
 
 # objects built from assembler sources (need lint stubs)
 ASSRCS+=alloca.S fabs.S modf.S
@@ -13,4 +13,5 @@ SRCS+=	setjmp.S sigsetjmp.S
 # objects built from C sources
 SRCS+=	flt_rounds.c fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
 	fpsetround.c fpsetsticky.c infinity.c frexp.c isinf.c isnan.c ldexp.c \
+	nanf.c \
 	bswap64.c

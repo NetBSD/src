@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.10 1999/09/29 13:19:16 takemura Exp $
+#	$NetBSD: Makefile.inc,v 1.11 1999/12/23 10:15:07 kleink Exp $
 
 .if  (${MACHINE} == "hpcmips")
 SRCS+=	sf_fabs.c frexp.c infinity.c sf_isinf.c sf_ldexp.c sf_modf.c
 SRCS+=	sf_flt_rounds.c sf_fpgetmask.c sf_fpgetround.c sf_fpgetsticky.c \
 	sf_fpsetmask.c sf_fpsetround.c sf_fpsetsticky.c
 .else
-SRCS+=	fabs.S frexp.c infinity.c isinf.c isnan.c ldexp.S modf.S
+SRCS+=	fabs.S frexp.c infinity.c isinf.c isnan.c ldexp.S modf.S nanf.c
 SRCS+=	flt_rounds.c fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
 	fpsetround.c fpsetsticky.c
 .endif
