@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.8 1998/06/12 16:39:05 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.9 1998/06/13 14:25:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -877,8 +877,9 @@ piix3_4_setup_chip(sc, pc, tag)
 				goto pio;
 			}
 			if (pciide_dma_table_setup(sc, channel, drive) != 0) {
+				/* Abort DMA setup */
 				drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
-				goto pio; /* Abort DMA setup */
+				goto pio;
 			}
 			if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) &&
 			    (drvp->drive_flags & DRIVE_UDMA)) {
