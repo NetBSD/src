@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.25 2004/04/21 01:05:32 christos Exp $	*/
+/*	$NetBSD: opendir.c,v 1.26 2005/01/19 00:53:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.25 2004/04/21 01:05:32 christos Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.26 2005/01/19 00:53:33 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,17 +85,15 @@ __opendir2(name, flags)
 
 	_DIAGASSERT(name != NULL);
 
-	if ((fd = open(name, O_RDONLY | O_NONBLOCK)) == -1)
-		return (NULL);
+	if ((fd = open(name, O_RDONLY | O_NONBLOCK)) == -1 ||
+	    fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
+		goto error;
 	if (fstat(fd, &sb) || !S_ISDIR(sb.st_mode)) {
-		close(fd);
 		errno = ENOTDIR;
-		return (NULL);
-	}
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 ||
-	    (dirp = (DIR *)malloc(sizeof(DIR))) == NULL) {
 		goto error;
 	}
+	if ((dirp = (DIR *)malloc(sizeof(DIR))) == NULL)
+		goto error;
 	dirp->dd_buf = NULL;
 
 	/*
@@ -200,7 +198,8 @@ retry:
 		 */
 		if (flags & DTF_REWIND) {
 			(void) close(fd);
-			if ((fd = open(name, O_RDONLY)) == -1) {
+			if ((fd = open(name, O_RDONLY)) == -1 ||
+			    fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
 				dirp->dd_buf = buf;
 				goto error;
 			}
