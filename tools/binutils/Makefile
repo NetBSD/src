@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/11/27 10:12:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2003/12/01 09:37:09 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ INSTALL_TARGET=	install-binutils install-gas install-ld
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
-CCADDFLAGS=	-I${DESTDIR}/usr/include -L${DESTDIR}/usr/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
+CCADDFLAGS=	-I${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
 MKNATIVE?=	${.CURDIR}/mknative-binutils
