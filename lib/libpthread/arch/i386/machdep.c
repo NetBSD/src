@@ -1,4 +1,6 @@
 /* ==== machdep.c ============================================================
+ * Copyright (c) 1993, 1994 Chris Provenzano, proven@athena.mit.edu
+ *
  * Copyright (c) 1993 by Chris Provenzano, proven@mit.edu
  * All rights reserved.
  *
@@ -13,20 +15,20 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *  This product includes software developed by Chris Provenzano.
- * 4. The name of Chris Provenzano may not be used to endorse or promote 
- *	  products derived from this software without specific prior written
- *	  permission.
+ * 4. The name of Chris Provenzano may not be used to endorse or promote
+ *      products derived from this software without specific prior written
+ *      permission.
  *
  * THIS SOFTWARE IS PROVIDED BY CHRIS PROVENZANO ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL CHRIS PROVENZANO BE LIABLE FOR ANY 
+ * ARE DISCLAIMED.  IN NO EVENT SHALL CHRIS PROVENZANO BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
  * Description : Machine dependent functions for NetBSD on i386
@@ -34,6 +36,10 @@
  *	1.00 93/08/04 proven
  *      -Started coding this file.
  */
+
+#ifndef lint
+static const char rcsid[] = "$Id: machdep.c,v 1.3 1994/02/07 22:00:44 proven Exp $";
+#endif
 
 #include "pthread.h"
 
