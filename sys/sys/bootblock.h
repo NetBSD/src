@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.14 2003/07/05 16:33:38 simonb Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.15 2003/10/06 05:24:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -282,8 +282,8 @@ struct apple_blockzeroblock {
 struct i386_boot_params {
 	uint32_t	bp_length;	/* length of patchable data */
 	uint32_t	bp_flags;
-#define BP_RESET_VIDEO		1
-#define BP_PASSWORD		2
+#define I386_BP_FLAGS_RESET_VIDEO	1
+#define I386_BP_FLAGS_PASSWORD		2
 	uint32_t	bp_timeout;	/* boot timeout in seconds */
 	uint32_t	bp_consdev;
 #define CONSDEV_PC	0
