@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.26 2000/05/01 12:30:30 blymn Exp $
+.\"	$NetBSD: curses.3,v 1.27 2000/05/05 11:57:46 blymn Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -274,11 +274,11 @@ as changed
 .Em win
 .It waddstr(win,str)	add string to
 .Em win
-.It wattron(attribute)	turn on attribute modes for
+.It wattron(win,attribute)	turn on attribute modes for
 .Em win
-.It wattroff(attribute)	turn off attribute modes for
+.It wattroff(win,attribute)	turn off attribute modes for
 .Em win
-.It wattrset(attribute)	set attribute modes for
+.It wattrset(win,attribute)	set attribute modes for
 .Em win
 .It wbkgd(win, ch)	set background rendition for
 .Em win and apply this rendition to
