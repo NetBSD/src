@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.114 2001/05/30 15:24:30 lukem Exp $	*/
+/*	$NetBSD: locore.s,v 1.115 2001/06/11 04:58:33 chs Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1636,7 +1636,7 @@ Lmotommu7:
  * and TBI*.
  */
 ENTRY(DCIA)
-__DCIA:
+_C_LABEL(_DCIA):
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
 	jne	Lmotommu8		| no, skip
