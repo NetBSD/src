@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.27 2003/03/06 07:34:56 matt Exp $	 */
+/*	$NetBSD: map_object.c,v 1.28 2003/03/06 17:01:27 taca Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -68,7 +68,9 @@ _rtld_map_object(path, fd, sb)
 	size_t		 mapsize;
 	int		 mapflags;
 	Elf_Off		 base_offset;
+#ifdef MAP_ALIGNED
 	Elf_Addr	 base_alignment;
+#endif
 	Elf_Addr	 base_vaddr;
 	Elf_Addr	 base_vlimit;
 	Elf_Addr	 text_vlimit;
