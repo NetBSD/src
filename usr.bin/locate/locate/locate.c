@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.c,v 1.8 1997/10/19 04:11:56 lukem Exp $	*/
+/*	$NetBSD: locate.c,v 1.9 1999/08/16 01:41:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)locate.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: locate.c,v 1.8 1997/10/19 04:11:56 lukem Exp $");
+__RCSID("$NetBSD: locate.c,v 1.9 1999/08/16 01:41:17 sjg Exp $");
 #endif /* not lint */
 
 /*
@@ -82,45 +82,105 @@ __RCSID("$NetBSD: locate.c,v 1.8 1997/10/19 04:11:56 lukem Exp $");
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <sys/queue.h>
 
 #include "locate.h"
 #include "pathnames.h"
 
-void	fastfind __P((char *));
+
+struct locate_db {
+	LIST_ENTRY(locate_db) db_link;
+	FILE *db_fp;
+};
+LIST_HEAD(db_list, locate_db) db_list;
+
+#ifndef NEW
+# define NEW(type)      (type *) malloc(sizeof (type))
+#endif
+
+void	add_db __P((char *));
+int	fastfind __P((FILE *, char *));
 int	main __P((int, char **));
 char   *patprep __P((char *));
 
-FILE *fp;
 
+void
+add_db(path)
+	char *path;
+{
+	FILE *fp;
+	struct locate_db *dbp;
+
+	if (!(path && *path))
+		path = _PATH_FCODES;
+	if ((fp = fopen(path, "r"))) {
+		dbp = NEW(struct locate_db);
+		dbp->db_fp = fp;
+		LIST_INSERT_HEAD(&db_list, dbp, db_link);
+	} else {
+		(void)fprintf(stderr, "locate: no database file %s.\n", path);
+	}
+}
+     
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	if (argc != 2) {
-		(void)fprintf(stderr, "usage: locate pattern\n");
+	char *locate_path = getenv("LOCATE_PATH");
+	char *cp;
+	struct locate_db *dbp;
+	int c;
+	int found = 0;
+	
+	LIST_INIT(&db_list);
+	
+	while ((c = getopt(argc, argv, "d:")) != EOF) {
+		switch (c) {
+		case 'd':
+			locate_path = optarg;
+			break;
+		}
+	}
+	if (argc <= optind) {
+		(void)fprintf(stderr, "usage: locate [-d dbpath] pattern ...\n");
 		exit(1);
 	}
-	if (!(fp = fopen(_PATH_FCODES, "r"))) {
-		(void)fprintf(stderr, "locate: no database file %s.\n",
-		    _PATH_FCODES);
-		exit(1);
+	if (!locate_path)
+		locate_path = _PATH_FCODES;
+	if ((cp = strrchr(locate_path, ':'))) {
+		locate_path = strdup(locate_path);
+		while ((cp = strrchr(locate_path, ':'))) {
+			*cp++ = '\0';
+			add_db(cp);
+		}
 	}
-	while (*++argv)
-		fastfind(*argv);
-	exit(0);
+	add_db(locate_path);
+	if (db_list.lh_first == NULL)
+		exit(1);
+	for (; optind < argc; ++optind) {
+		for (dbp = db_list.lh_first; dbp != NULL;
+		     dbp = dbp->db_link.le_next) {
+			found |= fastfind(dbp->db_fp, argv[optind]);
+		}
+	}
+	exit(found == 0);
 }
 
-void
-fastfind(pathpart)
+int
+fastfind(fp, pathpart)
+	FILE *fp;
 	char *pathpart;
 {
 	char *p, *s;
 	int c;
-	int count, found, globflag;
+	int count, found, globflag, printed;
 	char *cutoff, *patend, *q;
 	char bigram1[NBG], bigram2[NBG], path[MAXPATHLEN];
-
+	
+	rewind(fp);
+	
 	for (c = 0, p = bigram1, s = bigram2; c < NBG; c++)
 		p[c] = getc(fp), s[c] = getc(fp);
 
@@ -128,7 +188,7 @@ fastfind(pathpart)
 	globflag = strchr(p, '*') || strchr(p, '?') || strchr(p, '[');
 	patend = patprep(p);
 
-	found = 0;
+	found = printed = 0;
 	for (c = getc(fp), count = 0; c != EOF;) {
 		count += ((c == SWITCH) ? getw(fp) : c) - OFFSET;
 		/* overlay old path */
@@ -150,12 +210,15 @@ fastfind(pathpart)
 				if (*p == '\0') {	/* fast match success */
 					found = 1;
 					if (!globflag ||
-					    !fnmatch(pathpart, path, 0))
+					    !fnmatch(pathpart, path, 0)) {
 						(void)printf("%s\n", path);
+						++printed;
+					}
 					break;
 				}
 			}
 	}
+	return (printed);
 }
 
 /*
