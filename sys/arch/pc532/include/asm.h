@@ -98,7 +98,7 @@
 
 #ifdef PROF
 #define	MC1	.data; 1:; .long 0; .text
-#define MC2	addr 1b(pc),tos; bsr mcount
+#define MC2	addr 1b(pc),r0; bsr mcount
 #else
 #define MC1
 #define MC2
