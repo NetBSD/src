@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.77 2003/01/06 12:29:50 wiz Exp $	*/
+/*	$NetBSD: scc.c,v 1.78 2003/02/23 03:37:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.77 2003/01/06 12:29:50 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.78 2003/02/23 03:37:40 simonb Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -1164,7 +1164,7 @@ sccintr(xxxsc)
 	 */
 
 	/*
-	 * At elast some, maybe all DECstation chips have modem
+	 * At least some, maybe all DECstation chips have modem
 	 * leads crosswired: the data comes in one channel and the
 	 * bulkead modem signals for that port are wired to the
 	 * _other_ channel of the chip. Yes, really.
