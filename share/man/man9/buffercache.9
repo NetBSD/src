@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.12 2004/06/17 13:13:41 yamt Exp $
+.\"     $NetBSD: buffercache.9,v 1.13 2004/06/25 15:31:37 wiz Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -284,7 +284,7 @@ Allocate an empty, disassociated block of a given size
 .It Fn incore "vp" "blkno"
 Determine if a block associated to a given vnode and block offset
 is in the cache.
-If it's there, return a pointer to it.
+If it is there, return a pointer to it.
 Note that
 .Fn incore
 doesn't busy the buffer unlike
@@ -294,11 +294,13 @@ doesn't busy the buffer unlike
 Expand or contract the actual memory allocated to a buffer.
 If
 .Fa preserve
-is zero, entire data in the buffer will be lost.
-Otherwise, if the buffer shrinks, truncated part of data is lost,
-so it's up to the caller to have written
-it out *first* if needed; this routine will not start a write.
-If the buffer grows, it's the callers responsibility to fill out
+is zero, the entire data in the buffer will be lost.
+Otherwise, if the buffer shrinks, the truncated part of the data
+is lost, so it is up to the caller to have written
+it out
+.Em first
+if needed; this routine will not start a write.
+If the buffer grows, it is the callers responsibility to fill out
 the buffer's additional contents.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn brelse "bp"
