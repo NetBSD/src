@@ -1,0 +1,19 @@
+There are no upgrade program for NetBSD/vax, you will have to 
+upgrade your system by hand. Anyway, here are small hints about
+how to do it:
+
+	* First replace the kernel, /boot and the boot blocks
+	  with new ones. The boot system has changed since 1.2.
+
+	* Reboot the system to be sure you run with the new kernel.
+
+	* Untar the wanted distributions. Remember to use the --unlink
+	  flag to tar, otherwise you will run into trouble.
+
+	* Reboot the system once again.
+
+	* Now you will (hopefully) be up and running in the new world.
+
+NOTE: you SHOULD NOT extract the `etc' set if upgrading.  Instead, you
+should extract that set into another area and carefully merge the changes
+by hand.
