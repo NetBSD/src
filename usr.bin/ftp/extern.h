@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	8.2 (Berkeley) 4/3/94
+ *	from: @(#)extern.h	8.2 (Berkeley) 4/3/94
+ *	$Id: extern.h,v 1.3 1994/08/29 03:09:10 mycroft Exp $
  */
 
 struct timeval;
