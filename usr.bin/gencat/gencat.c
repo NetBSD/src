@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.10 2001/02/19 23:03:47 cgd Exp $	*/
+/*	$NetBSD: gencat.c,v 1.11 2001/09/20 15:56:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gencat.c,v 1.10 2001/02/19 23:03:47 cgd Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.11 2001/09/20 15:56:06 yamt Exp $");
 #endif
 
 /***********************************************************
@@ -269,6 +269,10 @@ getline(fd)
 			} else
 				*cptr = *bptr;
 		}
+		if (cptr == cend) {
+			cptr = curline = xrealloc(curline, curlen *= 2);
+			cend = curline + curlen;
+		}
 		if (bptr == bend) {
 			buflen = read(fd, buf, BUFSIZ);
 			if (buflen <= 0) {
@@ -280,10 +284,6 @@ getline(fd)
 			}
 			bend = buf + buflen;
 			bptr = buf;
-		}
-		if (cptr == cend) {
-			cptr = curline = xrealloc(curline, curlen *= 2);
-			cend = curline + curlen;
 		}
 	}
 }
