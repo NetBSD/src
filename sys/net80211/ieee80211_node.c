@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.19 2004/07/23 06:57:33 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.20 2004/07/23 08:25:25 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.19 2004/07/23 06:57:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.20 2004/07/23 08:25:25 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -178,10 +178,8 @@ ieee80211_begin_scan(struct ifnet *ifp)
 		ic->ic_stats.is_scan_active++;
 	} else
 		ic->ic_stats.is_scan_passive++;
-	if (ifp->if_flags & IFF_DEBUG)
-		if_printf(ifp, "begin %s scan\n",
-			(ic->ic_flags & IEEE80211_F_ASCAN) ?
-				"active" : "passive");
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_SCAN, ("begin %s scan\n",
+		(ic->ic_flags & IEEE80211_F_ASCAN) ?  "active" : "passive"));
 	/*
 	 * Clear scan state and flush any previously seen
 	 * AP's.  Note that the latter assumes we don't act
@@ -236,11 +234,9 @@ void
 ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 {
 	struct ieee80211_node *ni;
-	struct ifnet *ifp = &ic->ic_if;
 
 	ni = ic->ic_bss;
-	if (ifp->if_flags & IFF_DEBUG)
-		if_printf(ifp, "creating ibss\n");
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_SCAN, ("creating ibss\n"));
 	ic->ic_flags |= IEEE80211_F_SIBSS;
 	ni->ni_chan = chan;
 	ni->ni_rates = ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
@@ -391,8 +387,8 @@ ieee80211_end_scan(struct ifnet *ifp)
 		return;
 	}
 	selbs = NULL;
-	if (ifp->if_flags & IFF_DEBUG)
-		if_printf(ifp, "\tmacaddr          bssid         chan  rssi rate flag  wep  essid\n");
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_SCAN,
+		("\tmacaddr          bssid         chan  rssi rate flag  wep  essid\n"));
 	for (; ni != NULL; ni = nextbs) {
 		ieee80211_ref_node(ni);
 		nextbs = TAILQ_NEXT(ni, ni_list);
