@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.79 2004/10/10 22:05:26 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.80 2004/10/17 18:49:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.79 2004/10/10 22:05:26 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.80 2004/10/17 18:49:55 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,6 +123,7 @@ static int getline_error;
 #define	OPT_INSECURE			14
 #define	OPT_STRICT			15
 #define	OPT_SPARSE			16
+#define	OPT_CHROOT			17
 
 /*
  *	Format specific routine table - MUST BE IN SORTED ORDER BY NAME
@@ -724,6 +725,7 @@ struct option tar_longopts[] = {
 	{ "directory",		required_argument,	0,	'C' },
 	{ "to-stdout",		no_argument,		0,	'O' },
 	{ "absolute-paths",	no_argument,		0,	'P' },
+	{ "sparse",		no_argument,		0,	'S' },
 	{ "files-from",		required_argument,	0,	'T' },
 	{ "exclude-from",	required_argument,	0,	'X' },
 	{ "compress",		no_argument,		0,	'Z' },
@@ -742,7 +744,8 @@ struct option tar_longopts[] = {
 						OPT_INSECURE },
 	{ "exclude",		required_argument,	0,
 						OPT_EXCLUDE },
-	{ "sparse",		no_argument,		0,	'S' },
+	{ "chroot",		no_argument,		0,
+						OPT_CHROOT },
 #if 0 /* Not implemented */
 	{ "catenate",		no_argument,		0,	'A' },	/* F */
 	{ "concatenate",	no_argument,		0,	'A' },	/* F */
@@ -1063,6 +1066,9 @@ tar_options(int argc, char **argv)
 		case OPT_EXCLUDE:
 			if (tar_gnutar_minus_minus_exclude(optarg) != 0)
 				tar_usage();
+			break;
+		case OPT_CHROOT:
+			do_chroot = 1;
 			break;
 		default:
 			tar_usage();
@@ -2003,7 +2009,7 @@ pax_usage(void)
 void
 tar_usage(void)
 {
-	(void)fputs("usage: tar [-]{crtux}[-befhjlmopqvwzHLOPXZ014578] [archive] "
+	(void)fputs("usage: tar [-]{crtux}[-befhjlmopqvwzHOPSXZ014578] [archive] "
 		    "[blocksize]\n"
 		    "           [-C directory] [-T file] [-s replstr] "
 		    "[file ...]\n", stderr);

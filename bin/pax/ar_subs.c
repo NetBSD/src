@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.32 2004/10/10 22:03:08 christos Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.33 2004/10/17 18:49:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.32 2004/10/10 22:03:08 christos Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.33 2004/10/17 18:49:55 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,6 +198,10 @@ extract(void)
 		return;
 
 	now = time((time_t *)NULL);
+	if (do_chroot && fchroot(cwdfd) != 0) {
+		syswarn(1, errno, "Can't fchroot to \".\"");
+		return;
+	}
 
 	/*
 	 * When we are doing interactive rename, we store the mapping of names
