@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcisa.c,v 1.4 2002/10/02 05:04:26 thorpej Exp $	*/
+/*	$NetBSD: fdcisa.c,v 1.5 2003/07/15 01:19:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,10 @@
  *
  *	@(#)fd.c	7.4 (Berkeley) 5/25/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.5 2003/07/15 01:19:53 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

@@ -109,6 +109,9 @@
  *	and to when physical maps must be made correct.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2003/07/15 01:19:45 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>

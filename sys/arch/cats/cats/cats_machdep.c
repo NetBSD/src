@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.48 2003/06/14 17:01:09 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.49 2003/07/15 01:29:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -38,6 +38,9 @@
  *
  * Created      : 24/11/97
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.49 2003/07/15 01:29:18 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"

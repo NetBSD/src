@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28 2003/05/10 23:12:31 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.29 2003/07/15 01:19:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.29 2003/07/15 01:19:43 lukem Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */

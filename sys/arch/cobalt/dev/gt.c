@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.8 2003/06/15 23:08:58 fvdl Exp $	*/
+/*	$NetBSD: gt.c,v 1.9 2003/07/15 01:29:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.9 2003/07/15 01:29:23 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

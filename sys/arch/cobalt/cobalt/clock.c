@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2000/04/28 19:58:04 soren Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2003/07/15 01:29:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2003/07/15 01:29:22 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

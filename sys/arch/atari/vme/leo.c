@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.8 2002/10/23 09:10:55 jdolecek Exp $	*/
+/*	$NetBSD: leo.c,v 1.9 2003/07/15 01:19:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -52,6 +52,9 @@
  * This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.9 2003/07/15 01:19:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

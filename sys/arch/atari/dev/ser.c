@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.21 2002/10/23 09:10:53 jdolecek Exp $	*/
+/*	$NetBSD: ser.c,v 1.22 2003/07/15 01:19:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -102,6 +102,9 @@
  *    
  *      @(#)com.c       7.5 (Berkeley) 5/16/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.22 2003/07/15 01:19:52 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
