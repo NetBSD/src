@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.15 1998/07/19 17:47:08 drochner Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.16 1998/12/06 16:53:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.15 1998/07/19 17:47:08 drochner Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.16 1998/12/06 16:53:44 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -384,7 +384,7 @@ labelkre()
 #define Y(fld)	{t = s.fld; s.fld -= s1.fld; if(state == TIME) s1.fld = t;}
 #define Z(fld)	{t = s.nchstats.fld; s.nchstats.fld -= s1.nchstats.fld; \
 	if(state == TIME) s1.nchstats.fld = t;}
-#define PUTRATE(fld, l, c, w) Y(fld); putint((int)((float)s.fld/etime + 0.5), l, c, w)
+#define PUTRATE(fld, l, c, w) {Y(fld); putint((int)((float)s.fld/etime + 0.5), l, c, w);}
 #define MAXFAIL 5
 
 static	char cpuchar[CPUSTATES] = { '=' , '>', '-', ' ' };
@@ -558,6 +558,7 @@ showkre()
 	PUTRATE(Cnt.v_rev, VMSTATROW + 15, VMSTATCOL, 9);
 	if (LINES - 1 > VMSTATROW + 16)
 		PUTRATE(Cnt.v_intrans, VMSTATROW + 16, VMSTATCOL, 9);
+
 	PUTRATE(Cnt.v_pageins, PAGEROW + 2, PAGECOL + 5, 5);
 	PUTRATE(Cnt.v_pageouts, PAGEROW + 2, PAGECOL + 10, 5);
 	PUTRATE(Cnt.v_swpin, PAGEROW + 2, PAGECOL + 15, 5);	/* - */
@@ -566,6 +567,7 @@ showkre()
 	PUTRATE(Cnt.v_pgpgout, PAGEROW + 3, PAGECOL + 10, 5);	/* ? */
 	PUTRATE(Cnt.v_pswpin, PAGEROW + 3, PAGECOL + 15, 5);	/* - */
 	PUTRATE(Cnt.v_pswpout, PAGEROW + 3, PAGECOL + 20, 5);	/* - */
+
 	PUTRATE(Cnt.v_swtch, GENSTATROW + 1, GENSTATCOL, 5);
 	PUTRATE(Cnt.v_trap, GENSTATROW + 1, GENSTATCOL + 5, 5);
 	PUTRATE(Cnt.v_syscall, GENSTATROW + 1, GENSTATCOL + 10, 5);
