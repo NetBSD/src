@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.14 2003/06/23 21:50:12 martin Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.15 2003/07/04 12:45:05 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -214,7 +214,7 @@ usage()
 {
 	fprintf(stderr, 
 	    "usage:\n"
-	    "\tifwatchd [-hiv] [-A arrival-script] [-D departure-script]\n"
+	    "\tifwatchd [-hiqv] [-A arrival-script] [-D departure-script]\n"
 	    "\t\t  [-d down-script] [-u up-script] ifname(s)\n"
 	    "\twhere:\n"
 	    "\t -A <cmd> specify command to run on interface arrival event\n"
@@ -223,9 +223,9 @@ usage()
 	    "\t -h       show this help message\n"
 	    "\t -i       no (!) initial run of the up script if the interface\n"
 	    "\t          is already up on ifwatchd startup\n"
+	    "\t -q       quiet mode, don't syslog informational messages\n");
 	    "\t -u <cmd> specify command to run on interface up event\n"
 	    "\t -v       verbose/debug output, don't run in background\n"
-	    "\t -q       quiet mode, don't syslog informational messages\n");
 	exit(EXIT_FAILURE);
 }
 
