@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.166 2002/03/28 16:03:41 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.167 2002/03/28 19:50:21 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1631,7 +1631,7 @@ static struct {
 	{ "xdc",	BUSCLASS_XDC },
 	{ "xyc",	BUSCLASS_XYC },
 	{ "fdc",	BUSCLASS_FDC },
-	{ "msiiep",	BUSCLASS_PCIC },
+	{ "mspcic",	BUSCLASS_PCIC },
 	{ "pci",	BUSCLASS_PCI },
 };
 

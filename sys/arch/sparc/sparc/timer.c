@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.1 2002/03/28 11:54:17 pk Exp $ */
+/*	$NetBSD: timer.c,v 1.2 2002/03/28 19:50:21 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,6 +79,7 @@
 
 #if defined(MSIIEP)
 #include <sparc/sparc/msiiepreg.h>
+#include <sparc/sparc/msiiepvar.h>
 #endif
 
 static struct intrhand level10;
@@ -209,9 +210,9 @@ timermatch_msiiep(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	char *name = aux;
+	struct msiiep_attach_args *msa = aux;
 
-	return (strcmp("timer", name) == 0);
+	return (strcmp(msa->msa_name, "timer") == 0);
 }
 
 /* ARGSUSED */
@@ -552,7 +553,8 @@ clockintr_msiiep(cap)
 }
 #endif /* MSIIEP */
 
-static __inline u_long new_interval(void)
+static __inline__ u_long
+new_interval(void)
 {
 	u_long newint, r, var;
 

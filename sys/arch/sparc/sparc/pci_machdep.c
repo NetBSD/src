@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 2002/03/28 11:59:56 pk Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.4 2002/03/28 19:50:21 uwe Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -98,35 +98,35 @@ int sparc_pci_debug = 0;
  */
 
 
-struct msiiep_pci_intr_wiring {
+struct mspcic_pci_intr_wiring {
 	u_int		mpiw_bus;
 	u_int		mpiw_device;
 	u_int		mpiw_function;
 	pci_intr_line_t	mpiw_line;
 };
 
-static struct msiiep_pci_intr_wiring krups_pci_intr_wiring[] = {
+static struct mspcic_pci_intr_wiring krups_pci_intr_wiring[] = {
 	{ 0, 0, 1,    1 },	/* ethernet */
 	{ 0, 1, 0,    2 },	/* vga */
 };
 
 
-struct msiiep_known_model {
+struct mspcic_known_model {
 	const char *model;
-	struct msiiep_pci_intr_wiring *map;
+	struct mspcic_pci_intr_wiring *map;
 	int mapsize;
 };
 
-#define MSIIEP_MODEL_WIRING(name,map) \
+#define MSPCIC_MODEL_WIRING(name,map) \
 	{ name, map, sizeof(map)/sizeof(map[0]) }
 
-static struct msiiep_known_model msiiep_known_models[] = {
-	MSIIEP_MODEL_WIRING("SUNW,501-4267", krups_pci_intr_wiring),
+static struct mspcic_known_model mspcic_known_models[] = {
+	MSPCIC_MODEL_WIRING("SUNW,501-4267", krups_pci_intr_wiring),
 	{ NULL, NULL, 0}
 };
 
 
-static struct msiiep_pci_intr_wiring *wiring_map;
+static struct mspcic_pci_intr_wiring *wiring_map;
 static int wiring_map_size;
 
 
@@ -136,7 +136,7 @@ pci_attach_hook(parent, self, pba)
 	struct device *self;
 	struct pcibus_attach_args *pba;
 {
-	struct msiiep_known_model *p;
+	struct mspcic_known_model *p;
 	char buf[32];
 	char *model;
 
@@ -147,7 +147,7 @@ pci_attach_hook(parent, self, pba)
 
 	printf(": model %s", model);
 
-	for (p = msiiep_known_models; p->model != NULL; ++p)
+	for (p = mspcic_known_models; p->model != NULL; ++p)
 		if (strcmp(model, p->model) == 0) {
 			printf(": interrupt wiring known");
 			wiring_map = p->map;
@@ -178,7 +178,7 @@ pci_make_tag(pc, b, d, f)
 	int d;
 	int f;
 {
-	struct msiiep_softc *sc = (struct msiiep_softc *)pc->cookie;
+	struct mspcic_softc *sc = (struct mspcic_softc *)pc->cookie;
 	pcitag_t tag;
 	int node, len;
 #ifdef SPARC_PCI_DEBUG
@@ -386,7 +386,7 @@ pci_intr_map(pa, ihp)
 		 pa->pa_bus, pa->pa_device, pa->pa_function));
 
 	for (i = 0; i < wiring_map_size; ++i) {
-		struct msiiep_pci_intr_wiring *w = &wiring_map[i];
+		struct mspcic_pci_intr_wiring *w = &wiring_map[i];
 
 		if (pa->pa_bus == w->mpiw_bus
 		    && pa->pa_device == w->mpiw_device
@@ -411,7 +411,7 @@ pci_intr_string(pc, ih)
 	static char str[16];
 	int pil;
 
-	pil = msiiep_assigned_interrupt(ih);
+	pil = mspcic_assigned_interrupt(ih);
 	sprintf(str, "line %d (pil %d)", ih, pil);
 	return (str);
 }
@@ -436,7 +436,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 	int (*func)(void *);
 	void *arg;
 {
-	struct msiiep_softc *sc = (struct msiiep_softc *)pc->cookie;
+	struct mspcic_softc *sc = (struct mspcic_softc *)pc->cookie;
 	void *cookie = NULL;
 
 	DPRINTF(SPDB_INTR,
