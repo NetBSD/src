@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.21 2002/09/27 15:38:02 provos Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.22 2002/11/25 01:54:01 thorpej Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.21 2002/09/27 15:38:02 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.22 2002/11/25 01:54:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -911,7 +911,7 @@ ext2fs_dirremove(dvp, cnp)
 		 * First entry in block: set d_ino to zero.
 		 */
 		error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset,
-		    (char **)&ep, &bp);
+		    (void *)&ep, &bp);
 		if (error != 0)
 			return (error);
 		ep->e2d_ino = 0;
@@ -923,7 +923,7 @@ ext2fs_dirremove(dvp, cnp)
 	 * Collapse new free space into previous entry.
 	 */
 	error = VOP_BLKATOFF(dvp, (off_t)(dp->i_offset - dp->i_count),
-	    (char **)&ep, &bp);
+	    (void *)&ep, &bp);
 	if (error != 0)
 		return (error);
 	ep->e2d_reclen = h2fs16(fs2h16(ep->e2d_reclen) + dp->i_reclen);
@@ -947,7 +947,7 @@ ext2fs_dirrewrite(dp, ip, cnp)
 	struct vnode *vdp = ITOV(dp);
 	int error;
 
-	error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, (char **)&ep, &bp);
+	error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, (void *)&ep, &bp);
 	if (error != 0)
 		return (error);
 	ep->e2d_ino = h2fs32(ip->i_number);
