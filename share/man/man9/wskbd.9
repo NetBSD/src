@@ -1,4 +1,4 @@
-.\"     $NetBSD: wskbd.9,v 1.4 2002/02/13 08:18:58 ross Exp $
+.\"     $NetBSD: wskbd.9,v 1.5 2002/03/19 05:35:18 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -150,6 +150,67 @@ child device.  It has the following members:
 	void *accesscookie;
 .Ed
 .El
+.Ss Keymaps
+Keymaps are a dense stream of
+.Fa keysym_t .
+A declaration has the following fields:
+.Pp
+.Ar pos
+.Op Ar cmd
+.Ar normal
+.Op Ar shift
+.Op Ar altgr
+.Op Ar shift-altgr
+.Pp
+The fields have the following meanings:
+.Pp
+.Bl -tag -offset indent -width SHIFT-ALTGR -compact
+.It Ar pos
+Always specified as
+.Ns KC( Ns Ar pos )
+and starts the description of key
+.Ar pos .
+.It Ar cmd
+If the command modifier (KS_Cmd_XXX) is active, the optional command
+.Ar cmd
+is invoked.
+.It Ar normal
+The keysym if no modifiers are active.
+.It Ar shift
+The keysym if the shift modifier is active.
+.It Ar altgr
+The keysym if the alt-gr modifier is active.
+.It Ar shift-altgr
+The keysym if the shift-alt-gr modifier is active.
+.El
+.Pp
+If the keysym after
+.Ar pos
+is not KS_Cmd_XXX, then
+.Ar cmd is empty.
+The
+.Ar shift ,
+.Ar altgr
+and
+.Ar shift-altgr
+fields are determined from previous fields if they are not specified.
+Therefore, there are four valid keysym declarations:
+.Pp
+.Ar pos
+.Op Ar cmd
+.Ar normal
+.Pp
+.Ar pos
+.Op Ar cmd
+.Ar normal Ar shift
+.Pp
+.Ar pos
+.Op Ar cmd
+.Ar normal Ar shift Ar altgr
+.Pp
+.Ar pos
+.Op Ar cmd
+.Ar normal Ar shift Ar altgr Ar shift-altgr
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn wskbd_input "kbddev" "type" "value"
@@ -205,15 +266,15 @@ structure with the supported operations and callbacks and call
 .Fn config_found
 to perform the attach (see
 .Xr autoconf 9 ) .
-.\" The
-.\" .Fa keymap
-.\" member points to the
-.\" .Em wskbd_mapdata
-.\" structure which describes the keycode mapping operations.  The
-.\" .Fa accessops
-.\" member points to the
-.\" .Em wskbd_accessops
-.\" structure which describes the keyboard access operations.
+The
+.Fa keymap
+member points to the
+.Em wskbd_mapdata
+structure which describes the keycode mapping operations.  The
+.Fa accessops
+member points to the
+.Em wskbd_accessops
+structure which describes the keyboard access operations.
 The
 .Fa console
 member is a boolean to indicate to wscons whether this keyboard will
