@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.c,v 1.2 2001/06/25 19:59:56 itojun Exp $	*/
+/*	$NetBSD: addrtoname.c,v 1.3 2001/06/27 21:08:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/addrtoname.c,v 1.78 2001/06/24 21:49:25 itojun Exp (LBL)";
 #else
-__RCSID("$NetBSD: addrtoname.c,v 1.2 2001/06/25 19:59:56 itojun Exp $");
+__RCSID("$NetBSD: addrtoname.c,v 1.3 2001/06/27 21:08:41 itojun Exp $");
 #endif
 #endif
 
@@ -61,6 +61,9 @@ struct rtentry;
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -184,9 +187,7 @@ getname(const u_char *ap)
 	u_int32_t addr;
 	static struct hnamemem *p;		/* static for longjmp() */
 
-	addr = ((u_int32_t)ap[0] << 24) | ((u_int32_t)ap[1] << 16) |
-	    ((u_int32_t)ap[2] << 8) | ((u_int32_t)ap[3] << 0);
-
+	memcpy(&addr, ap, sizeof(addr));
 	p = &hnametable[addr & (HASHNAMESIZE-1)];
 	for (; p->nxt; p = p->nxt) {
 		if (p->addr == addr)
@@ -244,10 +245,8 @@ getname6(const u_char *ap)
 	static struct h6namemem *p;		/* static for longjmp() */
 	register char *cp;
 	char ntop_buf[INET6_ADDRSTRLEN];
-	int i;
 
-	for (i = 0; i < sizeof(addr); i++)
-		addr.s6_addr[i] = ap[i];
+	memcpy(&addr, ap, sizeof(addr));
 	p = &h6nametable[*(u_int16_t *)&addr.s6_addr[14] & (HASHNAMESIZE-1)];
 	for (; p->nxt; p = p->nxt) {
 		if (memcmp(&p->addr, &addr, sizeof(addr)) == 0)
@@ -358,7 +357,7 @@ lookup_bytestring(register const u_char *bs, const int nlen)
 		if (tp->e_addr0 == i &&
 		    tp->e_addr1 == j &&
 		    tp->e_addr2 == k &&
-		    bcmp((char *)bs, (char *)(tp->e_bs), nlen) == 0)
+		    memcmp((char *)bs, (char *)(tp->e_bs), nlen) == 0)
 			return tp;
 		else
 			tp = tp->e_nxt;
@@ -368,7 +367,7 @@ lookup_bytestring(register const u_char *bs, const int nlen)
 	tp->e_addr2 = k;
 
 	tp->e_bs = (u_char *) calloc(1, nlen + 1);
-	bcopy(bs, tp->e_bs, nlen);
+	memcpy(tp->e_bs, bs, nlen);
 	tp->e_nxt = (struct enamemem *)calloc(1, sizeof(*tp));
 	if (tp->e_nxt == NULL)
 		error("lookup_bytestring: calloc");
