@@ -1,4 +1,4 @@
-/*	$NetBSD: mset.c,v 1.5 1998/03/04 13:16:06 christos Exp $	*/
+/*	$NetBSD: mset.c,v 1.6 2002/06/13 23:41:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)mset.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mset.c,v 1.5 1998/03/04 13:16:06 christos Exp $");
+__RCSID("$NetBSD: mset.c,v 1.6 2002/06/13 23:41:18 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,12 +56,8 @@ __RCSID("$NetBSD: mset.c,v 1.5 1998/03/04 13:16:06 christos Exp $");
  */
 
 #include <stdio.h>
-#include <string.h>
-#ifdef __STDC__
 #include <stdlib.h>
-#else
-extern char *getenv();
-#endif
+#include <string.h>
 #include "../ctlr/function.h"
 
 #include "state.h"
@@ -84,15 +80,15 @@ static char array[5000];		/* lot's of room */
 static int toshell = 0;			/* export to shell */
 static int numbchars = 0;		/* number of chars in envir. var */
 
-static int MyStrcmp __P((char *, char *));
-static void forwRegister __P((struct regstate *, struct regstate *));
-static void backRegister __P((struct regstate *, struct regstate *));
-static struct regstate *doRegister __P((struct regstate *));
-static char *addString __P((int, int));
-static void printString __P((char *, char *, char *));
-static void recurse __P((int, state *));
+static int MyStrcmp(char *, char *);
+static void forwRegister(struct regstate *, struct regstate *);
+static void backRegister(struct regstate *, struct regstate *);
+static struct regstate *doRegister(struct regstate *);
+static char *addString(int, int);
+static void printString(char *, char *, char *);
+static void recurse(int, state *);
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 static int
 MyStrcmp(str1, str2)

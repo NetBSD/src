@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.4 1998/03/04 13:16:09 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.5 2002/06/13 23:41:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -121,7 +121,7 @@ EXTERN int AidByte;
 #if	defined(INCLUDED_STATE)
 #endif
 
-void init_system __P((void));
+void init_system(void);
 
 #if	defined(INCLUDED_OIA)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: termin.c,v 1.6 2002/01/06 01:02:48 sjg Exp $	*/
+/*	$NetBSD: termin.c,v 1.7 2002/06/13 23:41:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termin.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: termin.c,v 1.6 2002/01/06 01:02:48 sjg Exp $");
+__RCSID("$NetBSD: termin.c,v 1.7 2002/06/13 23:41:18 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,8 +91,8 @@ static state
 #define EmptyChar	(ourPTail == ourPHead)
 
 
-static void AddChar __P((int));
-static void FlushChar __P((void));
+static void AddChar(int);
+static void FlushChar(void);
 
 
 /*
