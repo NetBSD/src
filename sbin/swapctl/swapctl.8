@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.20 2001/06/05 11:22:53 wiz Exp $
+.\"	$NetBSD: swapctl.8,v 1.21 2001/10/01 23:15:59 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -61,8 +61,6 @@
 .Fl z
 .Nm swapon
 .Fl a | Ar path
-.Nm swapoff
-.Ar path
 .Sh DESCRIPTION
 The
 .Nm
@@ -80,7 +78,7 @@ itself is called with
 .Fl a
 in which case,
 .Nm swapon
-acts as 
+acts as
 .Nm
 with the
 .Fl A
@@ -93,7 +91,7 @@ This option causes
 .Nm
 to read the
 .Pa /etc/fstab
-file for devices and files with a 
+file for devices and files with a
 .Dq sw
 and
 .Dq dp
@@ -121,7 +119,7 @@ This option causes
 .Nm
 to read the
 .Pa /etc/fstab
-file for devices and files with a 
+file for devices and files with a
 .Dq sw
 type, and remove all these entries
 as swap devices.
@@ -225,7 +223,7 @@ This option is useful for swapping to NFS files.  It specifies
 the local mount point to mount an NFS filesystem.  Typically, once
 this mount has succeeded, the file to be used for swapping on will
 be available under this point mount.  For example:
-.Bd -literal 
+.Bd -literal
 server:/export/swap/client none swap sw,nfsmntpt=/swap
 .Ed
 .El
@@ -249,6 +247,10 @@ at all during system
 .Xr fsck 8
 and may run out of real memory, causing fsck to abnormally exit and
 startup scripts to fail.
+.Sh SEE ALSO
+.Xr swapctl 2 ,
+.Xr fstab 5 ,
+.Xr mount_nfs 8
 .Sh HISTORY
 The
 .Nm
@@ -258,11 +260,7 @@ The original
 .Nm swapon
 program, provided for backwards compatibility, appeared in
 .Bx 4.0 .
-.Sh AUTHOR
+.Sh AUTHORS
 The
 .Nm
 program was written by Matthew R. Green <mrg@eterna.com.au>.
-.Sh SEE ALSO
-.Xr swapctl 2 ,
-.Xr fstab 5 ,
-.Xr mount_nfs 8
