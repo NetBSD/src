@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.22 1998/02/24 11:05:37 thorpej Exp $
+#	$NetBSD: BASALT,v 1.23 1998/04/29 04:57:49 thorpej Exp $
 #
 # Kernel for basalt.og.org - thorpej's HP380 file server.
 #
@@ -41,7 +41,8 @@ options 	NFSSERVER	# Network filesystem server
 
 # Networking options
 options 	INET			# Internet protocols
-options 	TCP_COMPAT_42		# compatibility with 4.2BSD TCP/IP
+#options 	TCP_COMPAT_42		# compatibility with 4.2BSD TCP/IP
+options 	TCP_CWM			# use Congestion Window Monitoring
 options 	GATEWAY			# Packet forwarding + larger mb_map
 options 	NMBCLUSTERS=1024	# Crank this up
 options 	PFIL_HOOKS		# packet filter hooks
