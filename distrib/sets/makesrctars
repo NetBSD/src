@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.9 1998/10/28 11:02:37 mycroft Exp $
+#	$NetBSD: makesrctars,v 1.10 1998/11/07 16:59:13 he Exp $
 #
 # Make source code tarballs.
 
@@ -45,8 +45,12 @@ find gnu \
 	> ${DESTDIR}/sets/gnusrc.tgz
 
 find sys usr.sbin/config usr.sbin/dbsym \
-    \! \( -path 'sys/arch/*/compile/*' \! -path 'sys/arch/*/compile/CVS' -prune \) \
-    \! \( \( -type l -o -type d \) \( -name obj -o -name 'obj.*' \) \) \
+    \( \
+	-path 'sys/arch/*/compile/CVS' -o \
+	-name .keep_me -o \
+	! \( -path 'sys/arch/*/compile/*' -prune \) \
+    \) \
+    ! \( \( -type l -o -type d \) \( -name obj -o -name 'obj.*' \) \) \
 	-print | \
 	sort | pax -w -d -s'|^|usr/src/|' | gzip \
 	> ${DESTDIR}/sets/syssrc.tgz
