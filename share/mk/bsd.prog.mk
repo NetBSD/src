@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.83 1997/05/17 16:43:33 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.84 1997/05/18 20:21:54 kleink Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -45,6 +45,7 @@ LIBNTP?=	${DESTDIR}/usr/lib/libntp.a
 LIBPC?=		${DESTDIR}/usr/lib/libpc.a
 LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
 LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
+LIBPOSIX?=	${DESTDIR}/usr/lib/libposix.a
 LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
 LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
