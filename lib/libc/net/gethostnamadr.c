@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)gethostnamadr.c	6.45 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: gethostnamadr.c,v 1.6 1994/04/07 07:00:13 deraadt Exp $";
+static char *rcsid = "$Id: gethostnamadr.c,v 1.7 1994/04/14 07:47:37 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -458,6 +458,8 @@ _gethtbyname(name)
 	}
 found:
 	_endhtent();
+	if (p==NULL)
+		h_errno = HOST_NOT_FOUND;
 	return (p);
 }
 
@@ -473,6 +475,8 @@ _gethtbyaddr(addr, len, type)
 		if (p->h_addrtype == type && !bcmp(p->h_addr, addr, len))
 			break;
 	_endhtent();
+	if (p==NULL)
+		h_errno = HOST_NOT_FOUND;
 	return (p);
 }
 
@@ -593,6 +597,8 @@ _yp_gethtbyaddr(addr, len, type)
 		strlen(name), &__ypcurrent, &__ypcurrentlen);
 	if (r==0)
 		hp = _yphostent(__ypcurrent);
+	if (hp==NULL)
+		h_errno = HOST_NOT_FOUND;
 	return (hp);
 }
 
@@ -615,6 +621,8 @@ _yp_gethtbyname(name)
 		strlen(name), &__ypcurrent, &__ypcurrentlen);
 	if (r==0)
 		hp = _yphostent(__ypcurrent);
+	if (hp==NULL)
+		h_errno = HOST_NOT_FOUND;
 	return (hp);
 }
 #endif
