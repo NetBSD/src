@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.5 1998/01/06 20:50:24 is Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.6 1998/01/07 22:46:00 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -140,24 +140,6 @@ sendsig(catcher, sig, mask, code)
 		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
-	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
-#ifdef DEBUG
-		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig(%d): useracc failed on sig %d\n",
-			       p->p_pid, sig);
-#endif
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
-	}
 	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
 	/*
 	 * Build the argument list for the signal handler.
@@ -226,7 +208,20 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_sc.sc_ap = (int)&fp->sf_state;
 	kfp->sf_sc.sc_pc = frame->f_pc;
 	kfp->sf_sc.sc_ps = frame->f_sr;
-	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
+	if (copyout((caddr_t)kfp, (caddr_t)fp, fsize)) {
+		free((caddr_t)kfp, M_TEMP);
+#ifdef DEBUG
+		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+			printf("sendsig(%d): copyout failed on sig %d\n",
+			       p->p_pid, sig);
+#endif
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
+	}
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -282,32 +277,23 @@ sys_sigreturn(p, v, retval)
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
-	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
-	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
+	if (copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
 		return (EINVAL);
 	scp = &tsigc;
 	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
 		return (EINVAL);
+
 	/*
-	 * Restore the user supplied information
+	 * We'll restore infomation in this structure.
 	 */
-	if (scp->sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
-	frame->f_regs[SP] = scp->sc_sp;
-	frame->f_regs[A6] = scp->sc_fp;
-	frame->f_pc = scp->sc_pc;
-	frame->f_sr = scp->sc_ps;
 
 	/*
 	 * Grab pointer to hardware state information.
 	 * If zero, the user is probably doing a longjmp.
 	 */
 	if ((rf = scp->sc_ap) == 0)
-		return (EJUSTRETURN);
+		goto restore;
 	/*
 	 * See if there is anything to do before we go to the
 	 * expense of copying in close to 1/2K of data
@@ -324,20 +310,13 @@ sys_sigreturn(p, v, retval)
 	if (flags == -1)
 		return (EINVAL);
 	if (flags == 0 || copyin((caddr_t)rf, (caddr_t)&tstate, sizeof tstate))
-		return (EJUSTRETURN);
+		goto restore;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sigreturn(%d): ssp %p usp %x scp %p ft %d\n",
 		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
 		       (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
-	/*
-	 * Restore most of the users registers except for A6 and SP
-	 * which were handled above.
-	 */
-	if (flags & SS_USERREGS)
-		bcopy((caddr_t)tstate.ss_frame.f_regs,
-		      (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*NBPW);
 	/*
 	 * Restore long stack frames.  Note that we do not copy
 	 * back the saved SR or PC, they were picked up above from
@@ -348,7 +327,8 @@ sys_sigreturn(p, v, retval)
 
 		/* grab frame type and validate */
 		sz = tstate.ss_frame.f_format;
-		if (sz > 15 || (sz = exframesize[sz]) < 0)
+		if (sz > 15 || (sz = exframesize[sz]) < 0
+				|| frame->f_stackadj < sz)
 			return (EINVAL);
 		frame->f_stackadj -= sz;
 		frame->f_format = tstate.ss_frame.f_format;
@@ -362,10 +342,35 @@ sys_sigreturn(p, v, retval)
 	}
 
 	/*
-	 * Finally we restore the original FP context
+	 * Restore most of the users registers except for A6 and SP
+	 * which will be handled below.
+	 */
+	if (flags & SS_USERREGS)
+		bcopy((caddr_t)tstate.ss_frame.f_regs,
+		      (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*NBPW);
+	/*
+	 * Restore the original FP context
 	 */
 	if (fputype && (flags & SS_FPSTATE))
 		m68881_restore(&tstate.ss_fpstate);
+
+	/*
+	 * Restore the user supplied information.
+	 * This should be at the last so that the error (EINVAL)
+	 * is reported to the sigreturn caller, not to the
+	 * jump destination.
+	 */
+restore:
+	if (scp->sc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigmask = scp->sc_mask &~ sigcantmask;
+	frame->f_regs[SP] = scp->sc_sp;
+	frame->f_regs[A6] = scp->sc_fp;
+	frame->f_pc = scp->sc_pc;
+	frame->f_sr = scp->sc_ps;
+
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
 		printf("sigreturn(%d): copied in FP state (%x) at %p\n",
