@@ -1,4 +1,4 @@
-$NetBSD: IMPLEMENTATION,v 1.13 2000/06/10 08:21:11 itojun Exp $
+$NetBSD: IMPLEMENTATION,v 1.14 2000/06/12 10:47:17 itojun Exp $
 
 # NOTE: this is from original KAME distribution.
 # Some portion of this document is not applicable to the code merged into
@@ -8,7 +8,7 @@ $NetBSD: IMPLEMENTATION,v 1.13 2000/06/10 08:21:11 itojun Exp $
 
 			KAME Project
 			http://www.kame.net/
-			KAME Date: 2000/06/10 08:18:06
+			KAME Date: 2000/06/12 09:29:16
 
 1. IPv6
 
@@ -905,8 +905,8 @@ mapped address or not.  This adds many twists:
   For example, if you would like to reject packets from 10.0.0.0/8,
   you need to reject packets to AF_INET socket from 10.0.0.0/8,
   and to AF_INET6 socket from ::ffff:10.0.0.0/104.
-- If a protocol on top of IPv4 is defined differently with IPv6, we will get
-  very tricky situation.
+- If a protocol on top of IPv4 is defined differently with IPv6, we need to be
+  really careful when we determine which protocol to use.
   For example, with FTP protocol, we can not simply use sa_family to determine
   FTP command sets.  The following example is incorrect:
 	if (sa_family == AF_INET)
@@ -924,7 +924,9 @@ mapped address or not.  This adds many twists:
 		use EPSV/EPRT or LPSV/LPRT;	/*IPv6*/
 	else
 		error;
-  (not sure if the above code fragment is perfect for all situations)
+  It is too much to ask for every body to be careful like this.
+  The problem is, we are not sure if the above code fragment is perfect for
+  all situations.
 - By enabling kernel support for IPv4 mapped address (outgoing direction),
   servers on the kernel can be hosed by IPv6 native packet that has IPv4
   mapped address in IPv6 header source, and can generate unwanted IPv4 packets.
