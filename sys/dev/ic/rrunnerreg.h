@@ -1,7 +1,7 @@
-/*	$NetBSD: rrunnerreg.h,v 1.1 1998/05/14 00:04:58 kml Exp $	*/
+/*	$NetBSD: rrunnerreg.h,v 1.2 1998/05/17 16:46:28 kml Exp $	*/
 
 /*
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code contributed to The NetBSD Foundation by Kevin M. Lahey
