@@ -1,8 +1,8 @@
-#	$Header: /cvsroot/src/sbin/init/Makefile,v 1.5 1993/04/26 14:54:38 cgd Exp $
+#	$Id: Makefile,v 1.6 1993/06/10 01:02:59 cgd Exp $
 
 PROG=	init
 #SRCS=	init.c 
-CFLAGS+= -DSECURE_CONSOLE
+CFLAGS+= -DSECURE_CONSOLE -DUSE_DEVFS
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
 NOMAN=noman
