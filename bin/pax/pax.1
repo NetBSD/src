@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.28 2001/11/07 03:17:24 hubertf Exp $
+.\"	$NetBSD: pax.1,v 1.29 2001/11/08 00:02:10 hubertf Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -1137,7 +1137,18 @@ will copy the entire
 .Pa olddir
 directory hierarchy to
 .Pa newdir ,
-preserving permissions.
+preserving permissions and access times.
+.Pp
+When running as root, one may also wish to preserve file
+ownership when copying directory trees. This can
+be done with the following commands:
+.Dl cd olddir
+.Dl pax -rw -pe .\ .../newdir
+which will copy the contents of
+.Pa olddir
+into
+.Pa .../newdir ,
+preserving ownership, permissions and access times.
 .Pp
 The command:
 .Dl pax -r -s ',^//*usr//*,,' -f a.pax
