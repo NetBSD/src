@@ -1,4 +1,4 @@
-/*	$NetBSD: pramasm.s,v 1.1 1995/02/15 23:55:56 briggs Exp $	*/
+/*	$NetBSD: pramasm.s,v 1.2 1995/06/21 03:59:07 briggs Exp $	*/
 
 /*
  * RTC toolkit version 1.08b, copyright 1995, erik vogan
@@ -249,7 +249,8 @@ tagain:
 _Transfer:
 	movew	sr,sp@-		| store the SR (we'll change it!)
 	oriw	#0x0700,sr	| disable all interrupts
-	moveal	#0x50F00000,a1	| move VIA1 addr in reference reg
+	.globl _IOBase
+	movl	_IOBase,a1	| move VIA1 addr in reference reg
 	moveq	#0,d2		| zero out d2 (it'll hold VIA1 reg B contents)
 	moveb	a1@,d2		| and get VIA1 reg B contents
 	andib	#0xF8,d2	| don't touch any but RTC bits
