@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_pci_dma.c,v 1.1 2002/03/27 21:45:48 thorpej Exp $	*/
+/*	$NetBSD: i80321_pci_dma.c,v 1.2 2002/03/27 23:17:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -127,7 +127,6 @@ i80321_pci_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 
 		/*
 		 * Make sure we're in an allowed DMA range.
-		 * XXX Limited to Secondary bus for now.
 		 */
 		if (curaddr < sc->sc_iwin[2].iwin_xlate ||
 		    curaddr >= (sc->sc_iwin[2].iwin_xlate +
@@ -136,10 +135,10 @@ i80321_pci_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 
 		/*
 		 * Translate the physical memory address to an address
-		 * in the Secondary Inbound window.
+		 * in the SDRAM Inbound window.
 		 */
 		curaddr = (curaddr - sc->sc_iwin[2].iwin_xlate) +
-		    sc->sc_iwin[2].iwin_base_lo;
+		    PCI_MAPREG_MEM_ADDR(sc->sc_iwin[2].iwin_base_lo);
 
 		/* Compute the segment size, and adjust counts. */
 		sgsize = PAGE_SIZE - (vaddr & PAGE_MASK);
