@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.12 1998/02/02 05:20:31 perry Exp $
+.\"	$NetBSD: mmap.2,v 1.13 1998/02/10 05:51:00 mrg Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -97,9 +97,10 @@ parameter specifies the type of the mapped object, mapping options and
 whether modifications made to the mapped copy of the page are private
 to the process or are to be shared with other references.
 Note that either
-.Dv MAP_SHARED
-or
+.Dv MAP_SHARED ,
 .Dv MAP_PRIVATE
+or
+.Dv MAP_COPY
 must be specified.
 Sharing, mapping type and options are specified in the
 .Fa flags
@@ -135,9 +136,14 @@ Permit regions to be inherited across
 .Xr execve 2
 system calls.
 .It Dv MAP_PRIVATE
-Modifications are private.
+Modifications made by this process are private, however modifications made by
+other processes using
+.Dv MAP_SHARED
+will be seen.
 .It Dv MAP_SHARED
 Modifications are shared.
+.It Dv MAP_COPY
+Modifications are private, including other processes.
 .El
 .Pp
 The 
@@ -221,3 +227,11 @@ was specified and insufficient memory was available.
 .Xr msync 2 ,
 .Xr munmap 2 ,
 .Xr getpagesize 3
+.Sh BUGS
+The
+.Dv MAP_COPY
+flag is not implemented.  The current
+.Dv MAP_COPY
+semantics are the same as those of the
+.Dv MAP_PRIVATE
+flag.
