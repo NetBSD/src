@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.5 1996/10/29 00:02:01 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: popen.c,v 1.5 1996/10/29 00:02:01 christos Exp $";
+static char rcsid[] = "$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,7 @@ prepare_child(nset, infd, outfd)
 	if (nset == NULL)
 		return;
 	if (nset != NULL) {
-		for (i = 1; i <= NSIG; i++)
+		for (i = 1; i < NSIG; i++)
 			if (sigismember(nset, i))
 				(void) signal(i, SIG_IGN);
 	}
