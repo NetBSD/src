@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.23 2000/10/29 14:08:07 lukem Exp $
+.\"	$NetBSD: install,v 1.24 2002/04/15 20:57:55 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -279,7 +279,7 @@ before proceeding.
 If your version of the Memory control panel does not have a 32-bit
 addressing mode radio button, this means that your system is already
 32-bit clean and is running in 32-bit addressing mode by default.  If the
-Booter complains that your are not in 32-bit mode, it may be necessary
+Booter complains that you are not in 32-bit mode, it may be necessary
 for you to press the
 .Dq Use Defaults
 button in the Memory control panel to
