@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.35 2004/06/18 15:04:04 christos Exp $
+#	$NetBSD: GENERIC.in,v 1.36 2004/06/22 14:09:50 itojun Exp $
 #
 # Generic atari
 #
@@ -248,6 +248,8 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
 #endif
 
 #if defined(HADES_KERNEL) || defined(MILAN_KERNEL)
