@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.95 1999/02/18 16:09:01 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.96 1999/02/22 02:16:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1247,7 +1247,7 @@ sbdsp_trigger_input(addr, start, end, blksize, intr, arg, param)
 	    start, end, sc->sc_i.dmachan));
 	isa_dmastart(sc->sc_ic, sc->sc_i.dmachan, start, 
 	    (char *)end - (char *)start, NULL,
-	    DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
+	    DMAMODE_READ | DMAMODE_LOOPDEMAND, BUS_DMA_NOWAIT);
 
 	return sbdsp_block_input(addr);
 }
@@ -1383,7 +1383,7 @@ sbdsp_trigger_output(addr, start, end, blksize, intr, arg, param)
 	    start, end, sc->sc_o.dmachan));
 	isa_dmastart(sc->sc_ic, sc->sc_o.dmachan, start, 
 	    (char *)end - (char *)start, NULL,
-	    DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
+	    DMAMODE_WRITE | DMAMODE_LOOPDEMAND, BUS_DMA_NOWAIT);
 
 	return sbdsp_block_output(addr);
 }
