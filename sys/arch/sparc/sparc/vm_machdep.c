@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60 2001/09/10 21:19:25 chris Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.61 2001/12/30 16:41:29 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -266,7 +266,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	/* Duplicate efforts of syscall(), but slightly differently */
 	if (tf2->tf_global[1] & SYSCALL_G2RFLAG) {
 		/* jmp %g2 (or %g7, deprecated) on success */
-		tf2->tf_npc = tf2->tf_global[2];
+		tf2->tf_pc = tf2->tf_global[2];
 	} else {
 		/*
 		 * old system call convention: clear C on success
@@ -274,7 +274,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		 * returning to user mode.
 		 */
 		/*tf2->tf_psr &= ~PSR_C;   -* success */
+		tf2->tf_pc = tf2->tf_npc;
 	}
+	/* proc_trampoline() will do npc = pc + 4 */
 
 	/* Set return values in child mode */
 	tf2->tf_out[0] = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.149 2001/12/11 03:46:59 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.150 2001/12/30 16:41:29 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4837,14 +4837,14 @@ ENTRY(proc_trampoline)
 	 mov	%l1, %o0
 
 	/*
-	 * Here we finish up as in syscall, but simplified.  We need to
-	 * fiddle pc and npc a bit, as execve() / setregs() will have
-	 * set npc only, anticipating that trap.c will advance past the
-	 * trap instruction; but we bypass that, so we must do it manually.
+	 * Here we finish up as in syscall, but simplified.
+	 * cpu_fork() or sendsig() (if we took a pending signal
+	 * in child_return()) will have set the user-space return
+	 * address in tf_pc. In both cases, %npc should be %pc + 4.
 	 */
 	mov	PSR_S, %l0		! user psr (no need to load it)
 	!?wr	%g0, 2, %wim		! %wim = 2
-	ld	[%sp + CCFSZ + 8], %l1	! pc = tf->tf_npc from execve/fork
+	ld	[%sp + CCFSZ + 4], %l1	! pc = tf->tf_pc from cpu_fork()
 	b	return_from_syscall
 	 add	%l1, 4, %l2		! npc = pc+4
 
