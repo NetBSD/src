@@ -14,7 +14,7 @@
  * Elite Ultra (8216), the 3Com 3c503, the NE1000 and NE2000, and a variety of
  * similar clones.
  *
- *	$Id: if_ed.c,v 1.50 1994/10/01 07:13:32 mycroft Exp $
+ *	$Id: if_ed.c,v 1.51 1994/10/01 07:19:32 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -1264,10 +1264,7 @@ ed_init(sc)
 	for (i = 0; i < 8; i++)
 		outb(sc->nic_addr + ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
 
-	/*
-	 * Set command register for page 0, remote DMA complete, and interface
-	 * stop.
-	 */
+	/* Program command register for page 0. */
 	outb(sc->nic_addr + ED_P1_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
 
 	i = ED_RCR_AB | ED_RCR_AM;
@@ -1307,10 +1304,7 @@ ed_init(sc)
 		break;
 	}
 
-	/*
-	 * Set command register for page 0, remote DMA complete, and interface
-	 * start.
-	 */
+	/* Fire up the interface. */
 	outb(sc->nic_addr + ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
 
 	/* Set 'running' flag, and clear output active flag. */
