@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.3 2000/07/06 03:52:25 tsubai Exp $	*/
+/*	$NetBSD: lock.h,v 1.4 2000/07/08 04:36:56 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,12 +60,12 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	int old;
 
-	__asm __volatile ("	\n\
+	__asm __volatile ("	\
 				\n\
 1:	lwarx	%0,0,%1		\n\
 	cmpwi	%0,%2		\n\
 	beq+	3f		\n\
-2:	lwz	%0,0(%1)	\n\
+2:	lwzx	%0,0,%1		\n\
 	cmpwi	%0,%2		\n\
 	beq+	1b		\n\
 	b	2b		\n\
@@ -81,19 +81,21 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
-	int old;
+	int old, dummy;
 
-	__asm __volatile ("	\n\
+	__asm __volatile ("	\
 				\n\
 1:	lwarx	%0,0,%1		\n\
 	cmpwi	%0,%2		\n\
 	bne	2f		\n\
 	stwcx.	%3,0,%1		\n\
 	bne-	1b		\n\
+2:	stwcx.	%3,0,%4		\n\
 	isync			\n\
-2:				\n"
+				\n"
 	: "=&r"(old)
-	: "r"(alp), "I"(__SIMPLELOCK_UNLOCKED), "r"(__SIMPLELOCK_LOCKED)
+	: "r"(alp), "I"(__SIMPLELOCK_UNLOCKED), "r"(__SIMPLELOCK_LOCKED),
+	  "r"(&dummy)
 	: "memory");
 
 	return (old == __SIMPLELOCK_UNLOCKED);
