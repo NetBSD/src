@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.1 1998/08/11 00:09:26 thorpej Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.2 1998/08/15 16:49:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -63,8 +63,8 @@ struct tl_softc {
 	struct Rx_list *active_Rx, *last_Rx;
 	struct Tx_list *active_Tx, *last_Tx;
 	struct Tx_list *Free_Tx;
-	int opkt;			/* used to detect link up/down for AUI/BNC */
-	int stats_exesscoll; /* idem */
+	int opkt;		/* used to detect link up/down for AUI/BNC */
+	int stats_exesscoll;	/* idem */
 #ifdef TL_PRIV_STATS
 	int ierr_overr;
 	int ierr_code;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.16 1998/08/13 02:10:54 eeh Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.17 1998/08/15 16:49:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -178,14 +178,14 @@ static __inline void netsio_clr(sc, bits)
 	u_int8_t bits;
 {
 	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetSio,
-		tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) & (~bits));
+	    tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) & (~bits));
 }
 static __inline void netsio_set(sc, bits)
 	tl_softc_t* sc;
 	u_int8_t bits;
 {
 	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetSio,
-		tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) | bits);
+	    tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) | bits);
 }
 static __inline u_int8_t netsio_read(sc, bits)
 	tl_softc_t* sc;
@@ -342,7 +342,7 @@ tl_pci_attach(parent, self, aux)
 
 #ifdef TLDEBUG
 	printf("default values of INTreg: 0x%x\n",
-		tl_intreg_read(sc, TL_INT_Defaults));
+	    tl_intreg_read(sc, TL_INT_Defaults));
 #endif
 
 	/* read mac addr */
@@ -357,17 +357,17 @@ tl_pci_attach(parent, self, aux)
 		}
 	}
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-		ether_sprintf(sc->tl_enaddr));
+	    ether_sprintf(sc->tl_enaddr));
 
 	/* Map and establish interrupts */
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-		pa->pa_intrline, &intrhandle)) {
+	    pa->pa_intrline, &intrhandle)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 	sc->tl_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
-		tl_intr, sc);
+	    tl_intr, sc);
 	if (sc->tl_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
@@ -401,7 +401,7 @@ tl_pci_attach(parent, self, aux)
 	ifmedia_init(&sc->tl_mii.mii_media, IFM_IMASK, tl_mediachange,
 	    tl_mediastatus);
 	mii_phy_probe(self, &sc->tl_mii, 0xffffffff);
-#ifdef notyet	/* XXX XXX XXX */
+#ifndef notyet	/* XXX XXX XXX */
 	if (LIST_FIRST(&sc->tl_mii.mii_phys) == NULL) { 
 		ifmedia_add(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -422,7 +422,7 @@ tl_pci_attach(parent, self, aux)
 	ether_ifattach(&(sc)->tl_if, (sc)->tl_enaddr);
 #if NBPFILTER > 0
 	bpfattach(&sc->tl_bpf, &sc->tl_if, DLT_EN10MB,
-		sizeof(struct ether_header));
+	    sizeof(struct ether_header));
 #endif
 }
 
@@ -439,7 +439,7 @@ tl_reset(sc)
 	}
 	/* Reset adapter */
 	TL_HR_WRITE(sc, TL_HOST_CMD,
-		TL_HR_READ(sc, TL_HOST_CMD) | HOST_CMD_Ad_Rst);
+	    TL_HR_READ(sc, TL_HOST_CMD) | HOST_CMD_Ad_Rst);
 	DELAY(100000);
 	/* Disable interrupts */
 	TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_IntOff);
@@ -453,7 +453,7 @@ tl_reset(sc)
 #endif
 	/* Setup NetConfig */
 	tl_intreg_write(sc, TL_INT_NetConfig,
-		TL_NETCONFIG_1F | TL_NETCONFIG_1chn | TL_NETCONFIG_PHY_EN);
+	    TL_NETCONFIG_1F | TL_NETCONFIG_1chn | TL_NETCONFIG_PHY_EN);
 	/* Bsize: accept default */
 	/* TX commit in Acommit: accept default */
 	/* Load Ld_tmr and Ld_thr */
@@ -480,11 +480,10 @@ static void tl_shutdown(v)
 	if ((sc->tl_if.if_flags & IFF_RUNNING) == 0)
 		return;
 	/* disable interrupts */
-	TL_HR_WRITE(sc, TL_HOST_CMD,
-		HOST_CMD_IntOff);
+	TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_IntOff);
 	/* stop TX and RX channels */
 	TL_HR_WRITE(sc, TL_HOST_CMD,
-		HOST_CMD_STOP | HOST_CMD_RT | HOST_CMD_Nes);
+	    HOST_CMD_STOP | HOST_CMD_RT | HOST_CMD_Nes);
 	TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_STOP);
 	DELAY(100000);
 
@@ -496,7 +495,7 @@ static void tl_shutdown(v)
 	for (i=0; i< TL_NBUF; i++) {
 		if (sc->Rx_list[i].m)
 			m_freem(sc->Rx_list[i].m);
-			sc->Rx_list[i].m = NULL;
+		sc->Rx_list[i].m = NULL;
 	}
 	free(sc->Rx_list, M_DEVBUF);
 	sc->Rx_list = NULL;
@@ -539,11 +538,11 @@ static int tl_init(sc)
 	/* setup NetCmd in promisc mode if needed */
 	i = (ifp->if_flags & IFF_PROMISC) ? TL_NETCOMMAND_CAF : 0;
 	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetCmd,
-		TL_NETCOMMAND_NRESET | TL_NETCOMMAND_NWRAP | i);
+	    TL_NETCOMMAND_NRESET | TL_NETCOMMAND_NWRAP | i);
 	/* Max receive size : MCLBYTES */
 	tl_intreg_write_byte(sc, TL_INT_MISC + TL_MISC_MaxRxL, MCLBYTES & 0xff);
 	tl_intreg_write_byte(sc, TL_INT_MISC + TL_MISC_MaxRxH,
-		(MCLBYTES >> 8) & 0xff);
+	    (MCLBYTES >> 8) & 0xff);
 
 	/* init MAC addr */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
@@ -557,8 +556,10 @@ static int tl_init(sc)
 #endif
 
 	/* Pre-allocate receivers mbuf, make the lists */
-	sc->Rx_list = malloc(sizeof(struct Rx_list) * TL_NBUF, M_DEVBUF, M_NOWAIT);
-	sc->Tx_list = malloc(sizeof(struct Tx_list) * TL_NBUF, M_DEVBUF, M_NOWAIT);
+	sc->Rx_list = malloc(sizeof(struct Rx_list) * TL_NBUF, M_DEVBUF,
+	    M_NOWAIT);
+	sc->Tx_list = malloc(sizeof(struct Tx_list) * TL_NBUF, M_DEVBUF,
+	    M_NOWAIT);
 	if (sc->Rx_list == NULL || sc->Tx_list == NULL) {
 		printf("%s: out of memory for lists\n", sc->sc_dev.dv_xname);
 		sc->tl_if.if_flags &= ~IFF_UP;
@@ -566,19 +567,23 @@ static int tl_init(sc)
 		return ENOMEM;
 	}
 	for (i=0; i< TL_NBUF; i++) {
-		if(tl_add_RxBuff(&sc->Rx_list[i], NULL) == 0) {
-			printf("%s: out of mbuf for receive list\n", sc->sc_dev.dv_xname);
+		if (tl_add_RxBuff(&sc->Rx_list[i], NULL) == 0) {
+			printf("%s: out of mbuf for receive list\n",
+			    sc->sc_dev.dv_xname);
 			sc->tl_if.if_flags &= ~IFF_UP;
 			splx(s);
 			return ENOMEM;
 		}
 		if (i > 0) { /* chain the list */
 			sc->Rx_list[i-1].next = &sc->Rx_list[i];
-			sc->Rx_list[i-1].hw_list.fwd = vtophys(&sc->Rx_list[i].hw_list);
+			sc->Rx_list[i-1].hw_list.fwd =
+			    vtophys(&sc->Rx_list[i].hw_list);
 #ifdef DIAGNOSTIC
 			if (sc->Rx_list[i-1].hw_list.fwd & 0x7)
-				printf("%s: physical addr 0x%x of list not properly aligned\n",
-					sc->sc_dev.dv_xname, sc->Rx_list[i-1].hw_list.fwd);
+				printf("%s: physical addr 0x%x of list not "
+				    "properly aligned\n",
+				    sc->sc_dev.dv_xname,
+				    sc->Rx_list[i-1].hw_list.fwd);
 #endif
 			sc->Tx_list[i-1].next = &sc->Tx_list[i];
 		}
@@ -596,7 +601,7 @@ static int tl_init(sc)
 		nullbuf = malloc(ETHER_MIN_TX, M_DEVBUF, M_NOWAIT);
 	if (nullbuf == NULL) {
 		printf("%s: can't allocate space for pad buffer\n",
-			sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		sc->tl_if.if_flags &= ~IFF_UP;
 		splx(s);
 		return ENOMEM;
@@ -611,7 +616,7 @@ static int tl_init(sc)
 	/* write adress of Rx list and enable interrupts */
 	TL_HR_WRITE(sc, TL_HOST_CH_PARM, vtophys(&sc->Rx_list[0].hw_list));
 	TL_HR_WRITE(sc, TL_HOST_CMD,
-		HOST_CMD_GO | HOST_CMD_RT | HOST_CMD_Nes | HOST_CMD_IntOn);
+	    HOST_CMD_GO | HOST_CMD_RT | HOST_CMD_Nes | HOST_CMD_IntOn);
 	sc->tl_if.if_flags |= IFF_RUNNING;
 	sc->tl_if.if_flags &= ~IFF_OACTIVE;
 	return 0;
@@ -633,7 +638,7 @@ tl_intreg_read_byte(sc, reg)
 	u_int32_t reg;
 {
 	TL_HR_WRITE(sc, TL_HOST_INTR_DIOADR,
-		(reg & (~0x07)) & TL_HOST_DIOADR_MASK);
+	    (reg & (~0x07)) & TL_HOST_DIOADR_MASK);
 	return TL_HR_READ_BYTE(sc, TL_HOST_DIO_DATA + (reg & 0x07));
 }
 
@@ -654,7 +659,7 @@ tl_intreg_write_byte(sc, reg, val)
 	u_int8_t val;
 {
 	TL_HR_WRITE(sc, TL_HOST_INTR_DIOADR,
-		(reg & (~0x03)) & TL_HOST_DIOADR_MASK);
+	    (reg & (~0x03)) & TL_HOST_DIOADR_MASK);
 	TL_HR_WRITE_BYTE(sc, TL_HOST_DIO_DATA + (reg & 0x03), val);
 }
 
@@ -865,7 +870,7 @@ tl_intr(v)
 		return 0;
 #if defined(TLDEBUG_RX) || defined(TLDEBUG_TX)
 	printf("%s: interrupt type %x, intr_reg %x\n", sc->sc_dev.dv_xname,
-		int_type, int_reg);
+	    int_type, int_reg);
 #endif
 	/* disable interrupts */
 	TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_IntOff);
@@ -879,18 +884,22 @@ tl_intr(v)
 			m = Rx->m;
 			size = Rx->hw_list.stat >> 16;
 #ifdef TLDEBUG_RX
-			printf("tl_intr: RX list complete, Rx %p, size=%d\n", Rx, size);
+			printf("tl_intr: RX list complete, Rx %p, size=%d\n",
+			    Rx, size);
 #endif
 			if (tl_add_RxBuff(Rx, m ) == 0) {
-				/* No new mbuf, reuse the same. This means that this packet
-					is lost */
+				/*
+				 * No new mbuf, reuse the same. This means
+				 * that this packet
+				 * is lost
+				 */
 				m = NULL;
 #ifdef TL_PRIV_STATS
 				sc->ierr_nomem++;
 #endif
 #ifdef TLDEBUG
 				printf("%s: out of mbuf, lost input packet\n",
-					sc->sc_dev.dv_xname);
+				    sc->sc_dev.dv_xname);
 #endif
 			}
 			Rx->next = NULL;
@@ -898,8 +907,10 @@ tl_intr(v)
 			sc->last_Rx->hw_list.fwd = vtophys(&Rx->hw_list);
 #ifdef DIAGNOSTIC
 			if (sc->last_Rx->hw_list.fwd & 0x7)
-				printf("%s: physical addr 0x%x of list not properly aligned\n",
-					sc->sc_dev.dv_xname, sc->last_Rx->hw_list.fwd);
+				printf("%s: physical addr 0x%x of list not "
+				    "properly aligned\n",
+				    sc->sc_dev.dv_xname,
+				    sc->last_Rx->hw_list.fwd);
 #endif
 			sc->last_Rx->next = Rx;
 			sc->last_Rx = Rx;
@@ -922,16 +933,17 @@ tl_intr(v)
 #if NBPFILTER > 0
 				if (ifp->if_bpf) {
 					bpf_tap(ifp->if_bpf,
-						mtod(m, caddr_t),
-						size);
+					    mtod(m, caddr_t), size);
 					/*
-				 	* Only pass this packet up
-				 	* if it is for us.
-				 	*/
+				 	 * Only pass this packet up
+				 	 * if it is for us.
+				 	 */
 					if ((ifp->if_flags & IFF_PROMISC) &&
-						(eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-						bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-							sizeof(eh->ether_dhost)) != 0) {
+					    /* !mcast and !bcast */
+					    (eh->ether_dhost[0] & 1) == 0 &&
+					    bcmp(eh->ether_dhost,
+						LLADDR(ifp->if_sadl),
+						sizeof(eh->ether_dhost)) != 0) {
 						m_freem(m);
 						continue;
 					}
@@ -946,7 +958,7 @@ tl_intr(v)
 #else
 		if (ack == 0) {
 			printf("%s: EOF intr without anything to read !\n",
-				sc->sc_dev.dv_xname);
+			    sc->sc_dev.dv_xname);
 			tl_reset(sc);
 			/* shedule reinit of the board */
 			timeout(tl_restart, sc, 1);
@@ -961,19 +973,21 @@ tl_intr(v)
 #endif
 #ifdef DIAGNOSTIC
 		if (sc->active_Rx->hw_list.stat & TL_RX_CSTAT_CPLT) {
-			printf("%s: Rx EOC interrupt and active Rx list not cleared\n",
-				sc->sc_dev.dv_xname);
+			printf("%s: Rx EOC interrupt and active Rx list not "
+			    "cleared\n", sc->sc_dev.dv_xname);
 			return 0;
 		} else
 #endif			
 		{
-		/* write adress of Rx list and send Rx GO command, ack interrupt
-		 and enable interrupts in one command */
+		/*
+		 * write adress of Rx list and send Rx GO command, ack
+		 * interrupt and enable interrupts in one command
+		 */
 		TL_HR_WRITE(sc, TL_HOST_CH_PARM,
-			vtophys(&sc->active_Rx->hw_list));
+		    vtophys(&sc->active_Rx->hw_list));
 		TL_HR_WRITE(sc, TL_HOST_CMD,
-			HOST_CMD_GO | HOST_CMD_RT | HOST_CMD_Nes | ack | int_type |
-			HOST_CMD_ACK | HOST_CMD_IntOn);
+		    HOST_CMD_GO | HOST_CMD_RT | HOST_CMD_Nes | ack | int_type |
+		    HOST_CMD_ACK | HOST_CMD_IntOn);
 		return 1;
 		}
 	case TL_INTR_TxEOF:
@@ -983,7 +997,8 @@ tl_intr(v)
 				break;
 			ack++;
 #ifdef TLDEBUG_TX
-			printf("TL_INTR_TxEOC: list 0x%xp done\n", vtophys(&Tx->hw_list));
+			printf("TL_INTR_TxEOC: list 0x%xp done\n",
+			    vtophys(&Tx->hw_list));
 #endif
 			Tx->hw_list.stat = 0;
 			m_freem(Tx->m);
@@ -997,13 +1012,15 @@ tl_intr(v)
 		/* if this was an EOC, ACK immediatly */
 		if (int_type == TL_INTR_TxEOC) {
 #ifdef TLDEBUG_TX
-			printf("TL_INTR_TxEOC: ack %d (will be set to 1)\n", ack);
+			printf("TL_INTR_TxEOC: ack %d (will be set to 1)\n",
+			    ack);
 #endif
-			TL_HR_WRITE(sc, TL_HOST_CMD, 1 | int_type | HOST_CMD_ACK | 
-				HOST_CMD_IntOn);
-			if ( sc->active_Tx != NULL) { /* needs a Tx go command */
+			TL_HR_WRITE(sc, TL_HOST_CMD, 1 | int_type |
+			    HOST_CMD_ACK | HOST_CMD_IntOn);
+			if ( sc->active_Tx != NULL) {
+				/* needs a Tx go command */
 				TL_HR_WRITE(sc, TL_HOST_CH_PARM,
-					vtophys(&sc->active_Tx->hw_list));
+				    vtophys(&sc->active_Tx->hw_list));
 				TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_GO);
 			}
 			sc->tl_if.if_timer = 0;
@@ -1030,9 +1047,10 @@ tl_intr(v)
 	case TL_INTR_Adc:
 		if (int_reg & TL_INTVec_MASK) {
 			/* adapter check conditions */
-			printf("%s: check condition, intvect=0x%x, ch_param=0x%x\n",
-				sc->sc_dev.dv_xname, int_reg & TL_INTVec_MASK,
-				TL_HR_READ(sc, TL_HOST_CH_PARM));
+			printf("%s: check condition, intvect=0x%x, "
+			    "ch_param=0x%x\n", sc->sc_dev.dv_xname,
+			    int_reg & TL_INTVec_MASK,
+			    TL_HR_READ(sc, TL_HOST_CH_PARM));
 			tl_reset(sc);
 			/* shedule reinit of the board */
 			timeout(tl_restart, sc, 1);
@@ -1040,24 +1058,26 @@ tl_intr(v)
 		} else {
 			u_int8_t netstat;
 			/* Network status */
-			netstat = tl_intreg_read_byte(sc, TL_INT_NET+TL_INT_NetSts);
+			netstat =
+			    tl_intreg_read_byte(sc, TL_INT_NET+TL_INT_NetSts);
 			printf("%s: network status, NetSts=%x\n",
-				sc->sc_dev.dv_xname, netstat);
+			    sc->sc_dev.dv_xname, netstat);
 			/* Ack interrupts */
-			tl_intreg_write_byte(sc, TL_INT_NET+TL_INT_NetSts, netstat);	
+			tl_intreg_write_byte(sc, TL_INT_NET+TL_INT_NetSts,
+			    netstat);	
 			ack++;
 		}
 		break;
 	default:
 		printf("%s: unhandled interrupt code %x!\n",
-			sc->sc_dev.dv_xname, int_type);
+		    sc->sc_dev.dv_xname, int_type);
 		ack++;
 	}
 
 	if (ack) {
 		/* Ack the interrupt and enable interrupts */
 		TL_HR_WRITE(sc, TL_HOST_CMD, ack | int_type | HOST_CMD_ACK | 
-			HOST_CMD_IntOn);
+		    HOST_CMD_IntOn);
 		return 1;
 	}
 	/* ack = 0 ; interrupt was perhaps not our. Just enable interrupts */
@@ -1095,7 +1115,8 @@ tl_ifioctl(ifp, cmd, data)
 			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
-				ina->x_host  = *(union ns_host*) LLADDR(ifp->if_sadl);
+				ina->x_host  = 
+				    (union ns_host*) LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
 					ifp->if_addrlen);
@@ -1121,28 +1142,43 @@ tl_ifioctl(ifp, cmd, data)
 				break;
 			}
 			error = 0;
-			reg = tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetCmd);
+			reg = tl_intreg_read_byte(sc,
+			    TL_INT_NET + TL_INT_NetCmd);
 			if (ifp->if_flags & IFF_PROMISC)
 				reg |= TL_NETCOMMAND_CAF;
 			else
 				reg &= ~TL_NETCOMMAND_CAF;
-			tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetCmd, reg);
+			tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetCmd,
+			    reg);
 #ifdef TL_PRIV_STATS
 			if (ifp->if_flags & IFF_LINK0) {
 				ifp->if_flags &= ~IFF_LINK0;
-				printf("%s errors statistics\n", sc->sc_dev.dv_xname);
-				printf("    %4d RX buffer overrun\n",sc->ierr_overr);
-				printf("    %4d RX code error\n", sc->ierr_code);
-				printf("    %4d RX crc error\n", sc->ierr_crc);
-				printf("    %4d RX out of memory\n", sc->ierr_nomem);
-				printf("    %4d TX buffer underrun\n", sc->oerr_underr);
-				printf("    %4d TX deffered frames\n", sc->oerr_deffered);
-				printf("    %4d TX single collisions\n", sc->oerr_coll);
-				printf("    %4d TX multi collisions\n", sc->oerr_multicoll);
-				printf("    %4d TX exessive collisions\n", sc->oerr_exesscoll);
-				printf("    %4d TX late collisions\n", sc->oerr_latecoll);
-				printf("    %4d TX carrier loss\n", sc->oerr_carrloss);
-				printf("    %4d TX mbuf copy\n", sc->oerr_mcopy);
+				printf("%s errors statistics\n",
+				    sc->sc_dev.dv_xname);
+				printf("    %4d RX buffer overrun\n",
+				    sc->ierr_overr);
+				printf("    %4d RX code error\n",
+				    sc->ierr_code);
+				printf("    %4d RX crc error\n",
+				    sc->ierr_crc);
+				printf("    %4d RX out of memory\n",
+				    sc->ierr_nomem);
+				printf("    %4d TX buffer underrun\n",
+				    sc->oerr_underr);
+				printf("    %4d TX deffered frames\n",
+				    sc->oerr_deffered);
+				printf("    %4d TX single collisions\n",
+				    sc->oerr_coll);
+				printf("    %4d TX multi collisions\n",
+				    sc->oerr_multicoll);
+				printf("    %4d TX exessive collisions\n",
+				    sc->oerr_exesscoll);
+				printf("    %4d TX late collisions\n",
+				    sc->oerr_latecoll);
+				printf("    %4d TX carrier loss\n",
+				    sc->oerr_carrloss);
+				printf("    %4d TX mbuf copy\n",
+				    sc->oerr_mcopy);
 			}
 #endif
 		} else {
@@ -1226,8 +1262,8 @@ tbdinit:
 	}
 	if (m != NULL || (size < ETHER_MIN_TX && segment == TL_NSEG)) {
 		/*
-		 * We ran out of segments, or we will. We have to recopy this mbuf
-		 * chain first.
+		 * We ran out of segments, or we will. We have to recopy this
+		 * mbuf chain first.
 		 */
 		struct mbuf *mn;
 #ifdef TLDEBUG_TX
@@ -1250,7 +1286,7 @@ tbdinit:
 			}
 		}
 		m_copydata(mb_head, 0, mb_head->m_pkthdr.len,
-			mtod(mn, caddr_t));
+		    mtod(mn, caddr_t));
 		mn->m_pkthdr.len = mn->m_len = mb_head->m_pkthdr.len;
 		m_freem(mb_head);
 		mb_head = mn;
@@ -1269,25 +1305,25 @@ tbdinit:
 	 	 * add the nullbuf in the seg
 	 	 */
 		Tx->hw_list.seg[segment].data_count =
-			ETHER_MIN_TX - size;
+		    ETHER_MIN_TX - size;
 		Tx->hw_list.seg[segment].data_addr =
-			vtophys(nullbuf);
+		    vtophys(nullbuf);
 		size = ETHER_MIN_TX;
 		segment++;
 	}
 	/* The list is done, finish the list init */
 	Tx->hw_list.seg[segment-1].data_count |=
-		TL_LAST_SEG;
+	    TL_LAST_SEG;
 	Tx->hw_list.stat = (size << 16) | 0x3000;
 #ifdef TLDEBUG_TX
 	printf("%s: sending, Tx : stat = 0x%x\n", sc->sc_dev.dv_xname,
-		Tx->hw_list.stat);
+	    Tx->hw_list.stat);
 #if 0 
 	for(segment = 0; segment < TL_NSEG; segment++) {
 		printf("    seg %d addr 0x%x len 0x%x\n",
-			segment,
-			Tx->hw_list.seg[segment].data_addr,
-			Tx->hw_list.seg[segment].data_count);
+		    segment,
+		    Tx->hw_list.seg[segment].data_addr,
+		    Tx->hw_list.seg[segment].data_count);
 	}
 #endif
 #endif
@@ -1296,22 +1332,23 @@ tbdinit:
 		sc->active_Tx = sc->last_Tx = Tx;
 #ifdef TLDEBUG_TX
 		printf("%s: Tx GO, addr=0x%x\n", sc->sc_dev.dv_xname,
-			vtophys(&Tx->hw_list));
+		    vtophys(&Tx->hw_list));
 #endif
 		TL_HR_WRITE(sc, TL_HOST_CH_PARM, vtophys(&Tx->hw_list));
 		TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_GO);
 	} else {
 #ifdef TLDEBUG_TX
 		printf("%s: Tx addr=0x%x queued\n", sc->sc_dev.dv_xname,
-			vtophys(&Tx->hw_list));
+		    vtophys(&Tx->hw_list));
 #endif
 		sc->last_Tx->hw_list.fwd = vtophys(&Tx->hw_list);
 		sc->last_Tx->next = Tx;
 		sc->last_Tx = Tx;
 #ifdef DIAGNOSTIC
 		if (sc->last_Tx->hw_list.fwd & 0x7)
-				printf("%s: physical addr 0x%x of list not properly aligned\n",
-					sc->sc_dev.dv_xname, sc->last_Rx->hw_list.fwd);
+			printf("%s: physical addr 0x%x of list not properly "
+			   "aligned\n",
+			   sc->sc_dev.dv_xname, sc->last_Rx->hw_list.fwd);
 #endif
 	}
 #if NBPFILTER > 0
@@ -1319,9 +1356,10 @@ tbdinit:
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, mb_head);
 #endif
-	/* Set a 5 second timer just in case we don't hear from the card again. */
+	/*
+	 * Set a 5 second timer just in case we don't hear from the card again.
+	 */
 	ifp->if_timer = 5;
-
 	goto txloop;
 bad:
 #ifdef TLDEBUG
@@ -1411,177 +1449,188 @@ static void tl_ticks(v)
 
 	tl_read_stats(sc);
 	if (sc->opkt > 0) {
-		if (sc->oerr_exesscoll > sc->opkt / 100) { /* exess collisions */
+		if (sc->oerr_exesscoll > sc->opkt / 100) {
+			/* exess collisions */
 			if (sc->tl_flags & TL_IFACT) /* only print once */
-						printf("%s: no carrier\n", sc->sc_dev.dv_xname);
-					sc->tl_flags &= ~TL_IFACT;
-				} else
-					sc->tl_flags |= TL_IFACT;
-				sc->oerr_exesscoll = sc->opkt = 0;
-				sc->tl_lasttx = 0;
-			} else {
-				sc->tl_lasttx++;
-				if (sc->tl_lasttx >= TL_IDLETIME) {
-					/* 
-					 * No TX activity in the last TL_IDLETIME seconds.
-					 * sends a LLC Class1 TEST pkt
-					 */
-					struct mbuf *m;
-					int s;
-					MGETHDR(m, M_DONTWAIT, MT_DATA);
-					if (m != NULL) {
-		#ifdef TLDEBUG
-						printf("tl_ticks: sending LLC test pkt\n");
-		#endif
-						bcopy(sc->tl_enaddr,
-							mtod(m, struct ether_header *)->ether_dhost, 6);
-						bcopy(sc->tl_enaddr,
-							mtod(m, struct ether_header *)->ether_shost, 6);
-						mtod(m, struct ether_header *)->ether_type = htons(3);
-						mtod(m, unsigned char *)[14] = 0;
-						mtod(m, unsigned char *)[15] = 0;
-						mtod(m, unsigned char *)[16] = 0xE3;
-													/* LLC Class1 TEST (no poll) */
-						m->m_len = m->m_pkthdr.len = sizeof(struct ether_header) + 3;
-						s = splnet();
-						IF_PREPEND(&sc->tl_if.if_snd, m);
-						tl_ifstart(&sc->tl_if);
-						splx(s);
-					}
-				}
+				printf("%s: no carrier\n",
+				    sc->sc_dev.dv_xname);
+				sc->tl_flags &= ~TL_IFACT;
+		} else
+			sc->tl_flags |= TL_IFACT;
+		sc->oerr_exesscoll = sc->opkt = 0;
+		sc->tl_lasttx = 0;
+	} else {
+		sc->tl_lasttx++;
+		if (sc->tl_lasttx >= TL_IDLETIME) {
+			/* 
+			 * No TX activity in the last TL_IDLETIME seconds.
+			 * sends a LLC Class1 TEST pkt
+			 */
+			struct mbuf *m;
+			int s;
+			MGETHDR(m, M_DONTWAIT, MT_DATA);
+			if (m != NULL) {
+#ifdef TLDEBUG
+				printf("tl_ticks: sending LLC test pkt\n");
+#endif
+				bcopy(sc->tl_enaddr,
+				    mtod(m, struct ether_header *)->ether_dhost,
+				    6);
+				bcopy(sc->tl_enaddr,
+				    mtod(m, struct ether_header *)->ether_shost,
+				    6);
+				mtod(m, struct ether_header *)->ether_type =
+				    htons(3);
+				mtod(m, unsigned char *)[14] = 0;
+				mtod(m, unsigned char *)[15] = 0;
+				mtod(m, unsigned char *)[16] = 0xE3;
+				/* LLC Class1 TEST (no poll) */
+				m->m_len = m->m_pkthdr.len =
+				    sizeof(struct ether_header) + 3;
+				s = splnet();
+				IF_PREPEND(&sc->tl_if.if_snd, m);
+				tl_ifstart(&sc->tl_if);
+				splx(s);
 			}
-
-			/* read statistics every seconds */
-			timeout(tl_ticks, v, hz);
 		}
+	}
 
-		static void
-		tl_read_stats(sc)
-			tl_softc_t *sc;
-		{
-			u_int32_t reg;
-			int ierr_overr;
-			int ierr_code;
-			int ierr_crc;
-			int oerr_underr;
-			int oerr_deffered;
-			int oerr_coll;
-			int oerr_multicoll;
-			int oerr_exesscoll;
-			int oerr_latecoll;
-			int oerr_carrloss;
-			struct ifnet *ifp = &sc->tl_if;
+	/* read statistics every seconds */
+	timeout(tl_ticks, v, hz);
+}
 
-			reg =  tl_intreg_read(sc, TL_INT_STATS_TX);
-			ifp->if_opackets += reg & 0x00ffffff;
-			oerr_underr = reg >> 24;
+static void
+tl_read_stats(sc)
+	tl_softc_t *sc;
+{
+	u_int32_t reg;
+	int ierr_overr;
+	int ierr_code;
+	int ierr_crc;
+	int oerr_underr;
+	int oerr_deffered;
+	int oerr_coll;
+	int oerr_multicoll;
+	int oerr_exesscoll;
+	int oerr_latecoll;
+	int oerr_carrloss;
+	struct ifnet *ifp = &sc->tl_if;
 
-			reg =  tl_intreg_read(sc, TL_INT_STATS_RX);
-			ifp->if_ipackets += reg & 0x00ffffff;
-			ierr_overr = reg >> 24;
+	reg =  tl_intreg_read(sc, TL_INT_STATS_TX);
+	ifp->if_opackets += reg & 0x00ffffff;
+	oerr_underr = reg >> 24;
 
-			reg =  tl_intreg_read(sc, TL_INT_STATS_FERR);
-			ierr_crc = (reg & TL_FERR_CRC) >> 16;
-			ierr_code = (reg & TL_FERR_CODE) >> 24;
-			oerr_deffered = (reg & TL_FERR_DEF);
+	reg =  tl_intreg_read(sc, TL_INT_STATS_RX);
+	ifp->if_ipackets += reg & 0x00ffffff;
+	ierr_overr = reg >> 24;
 
-			reg =  tl_intreg_read(sc, TL_INT_STATS_COLL);
-			oerr_multicoll = (reg & TL_COL_MULTI);
-			oerr_coll = (reg & TL_COL_SINGLE) >> 16;
+	reg =  tl_intreg_read(sc, TL_INT_STATS_FERR);
+	ierr_crc = (reg & TL_FERR_CRC) >> 16;
+	ierr_code = (reg & TL_FERR_CODE) >> 24;
+	oerr_deffered = (reg & TL_FERR_DEF);
 
-			reg =  tl_intreg_read(sc, TL_INT_LERR);
-			oerr_exesscoll = (reg & TL_LERR_ECOLL);
-			oerr_latecoll = (reg & TL_LERR_LCOLL) >> 8;
-			oerr_carrloss = (reg & TL_LERR_CL) >> 16;
+	reg =  tl_intreg_read(sc, TL_INT_STATS_COLL);
+	oerr_multicoll = (reg & TL_COL_MULTI);
+	oerr_coll = (reg & TL_COL_SINGLE) >> 16;
+
+	reg =  tl_intreg_read(sc, TL_INT_LERR);
+	oerr_exesscoll = (reg & TL_LERR_ECOLL);
+	oerr_latecoll = (reg & TL_LERR_LCOLL) >> 8;
+	oerr_carrloss = (reg & TL_LERR_CL) >> 16;
 
 
-			sc->stats_exesscoll += oerr_exesscoll;
-			ifp->if_oerrors += oerr_underr + oerr_exesscoll + oerr_latecoll +
-				oerr_carrloss;
-			ifp->if_collisions += oerr_coll + oerr_multicoll;
-			ifp->if_ierrors += ierr_overr + ierr_code + ierr_crc;
+	sc->stats_exesscoll += oerr_exesscoll;
+	ifp->if_oerrors += oerr_underr + oerr_exesscoll + oerr_latecoll +
+	   oerr_carrloss;
+	ifp->if_collisions += oerr_coll + oerr_multicoll;
+	ifp->if_ierrors += ierr_overr + ierr_code + ierr_crc;
 
-			if (ierr_overr)
-				printf("%s: receiver ring buffer overrun\n", sc->sc_dev.dv_xname);
-			if (oerr_underr)
-				printf("%s: transmit buffer underrun\n", sc->sc_dev.dv_xname);
-		#ifdef TL_PRIV_STATS
-			sc->ierr_overr		+= ierr_overr;
-			sc->ierr_code		+= ierr_code;
-			sc->ierr_crc		+= ierr_crc;
-			sc->oerr_underr		+= oerr_underr;
-			sc->oerr_deffered	+= oerr_deffered;
-			sc->oerr_coll		+= oerr_coll;
-			sc->oerr_multicoll	+= oerr_multicoll;
-			sc->oerr_exesscoll	+= oerr_exesscoll;
-			sc->oerr_latecoll	+= oerr_latecoll;
-			sc->oerr_carrloss	+= oerr_carrloss;
-		#endif
+	if (ierr_overr)
+		printf("%s: receiver ring buffer overrun\n",
+		    sc->sc_dev.dv_xname);
+	if (oerr_underr)
+		printf("%s: transmit buffer underrun\n",
+		    sc->sc_dev.dv_xname);
+#ifdef TL_PRIV_STATS
+	sc->ierr_overr		+= ierr_overr;
+	sc->ierr_code		+= ierr_code;
+	sc->ierr_crc		+= ierr_crc;
+	sc->oerr_underr		+= oerr_underr;
+	sc->oerr_deffered	+= oerr_deffered;
+	sc->oerr_coll		+= oerr_coll;
+	sc->oerr_multicoll	+= oerr_multicoll;
+	sc->oerr_exesscoll	+= oerr_exesscoll;
+	sc->oerr_latecoll	+= oerr_latecoll;
+	sc->oerr_carrloss	+= oerr_carrloss;
+#endif
+}
+
+static void tl_addr_filter(sc)
+	tl_softc_t *sc;
+{
+	struct ether_multistep step;
+	struct ether_multi *enm;
+	u_int32_t hash[2] = {0, 0};
+	int i;
+
+	sc->tl_if.if_flags &= ~IFF_ALLMULTI;
+	ETHER_FIRST_MULTI(step, &sc->tl_ec, enm);
+	while (enm != NULL) {
+#ifdef TLDEBUG
+		printf("tl_addr_filter: addrs %s %s\n",
+		   ether_sprintf(enm->enm_addrlo),
+		   ether_sprintf(enm->enm_addrhi));
+#endif
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
+			i = tl_multicast_hash(enm->enm_addrlo);
+			hash[i/32] |= 1 << (i%32);
+		} else {
+			hash[0] = hash[1] = 0xffffffff;
+			sc->tl_if.if_flags |= IFF_ALLMULTI;
+			break;
 		}
+		ETHER_NEXT_MULTI(step, enm);
+	}
+#ifdef TLDEBUG
+	printf("tl_addr_filer: hash1 %x has2 %x\n", hash[0], hash[1]);
+#endif
+	tl_intreg_write(sc, TL_INT_HASH1, hash[0]);
+	tl_intreg_write(sc, TL_INT_HASH2, hash[1]);
+}
 
-		static void tl_addr_filter(sc)
-			tl_softc_t *sc;
-		{
-			struct ether_multistep step;
-			struct ether_multi *enm;
-			u_int32_t hash[2] = {0, 0};
-			int i;
+static int tl_multicast_hash(a)
+	u_int8_t *a;
+{
+	int hash;
 
-			sc->tl_if.if_flags &= ~IFF_ALLMULTI;
-			ETHER_FIRST_MULTI(step, &sc->tl_ec, enm);
-			while (enm != NULL) {
-		#ifdef TLDEBUG
-				printf("tl_addr_filter: addrs %s %s\n", ether_sprintf(enm->enm_addrlo), ether_sprintf(enm->enm_addrhi));
-		#endif
-				if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
-					i = tl_multicast_hash(enm->enm_addrlo);
-					hash[i/32] |= 1 << (i%32);
-				} else {
-					hash[0] = hash[1] = 0xffffffff;
-					sc->tl_if.if_flags |= IFF_ALLMULTI;
-					break;
-				}
-				ETHER_NEXT_MULTI(step, enm);
-			}
-		#ifdef TLDEBUG
-			printf("tl_addr_filer: hash1 %x has2 %x\n", hash[0], hash[1]);
-		#endif
-			tl_intreg_write(sc, TL_INT_HASH1, hash[0]);
-			tl_intreg_write(sc, TL_INT_HASH2, hash[1]);
-		}
+#define DA(addr,bit) (addr[5 - (bit/8)] & (1 << bit%8))
+#define xor8(a,b,c,d,e,f,g,h) (((a != 0) + (b != 0) + (c != 0) + (d != 0) + (e != 0) + (f != 0) + (g != 0) + (h != 0)) & 1)
 
-		static int tl_multicast_hash(a)
-			u_int8_t *a;
-		{
-			int hash;
+	hash  = xor8( DA(a,0), DA(a, 6), DA(a,12), DA(a,18), DA(a,24), DA(a,30),
+	    DA(a,36), DA(a,42));
+	hash |= xor8( DA(a,1), DA(a, 7), DA(a,13), DA(a,19), DA(a,25), DA(a,31),
+	    DA(a,37), DA(a,43)) << 1;
+	hash |= xor8( DA(a,2), DA(a, 8), DA(a,14), DA(a,20), DA(a,26), DA(a,32),
+	    DA(a,38), DA(a,44)) << 2;
+	hash |= xor8( DA(a,3), DA(a, 9), DA(a,15), DA(a,21), DA(a,27), DA(a,33),
+	    DA(a,39), DA(a,45)) << 3;
+	hash |= xor8( DA(a,4), DA(a,10), DA(a,16), DA(a,22), DA(a,28), DA(a,34),
+	    DA(a,40), DA(a,46)) << 4;
+	hash |= xor8( DA(a,5), DA(a,11), DA(a,17), DA(a,23), DA(a,29), DA(a,35),
+	    DA(a,41), DA(a,47)) << 5;
 
-		#define DA(addr,bit) (addr[5 - (bit/8)] & (1 << bit%8))
-		#define xor8(a,b,c,d,e,f,g,h) (((a != 0) + (b != 0) + (c != 0) + (d != 0) + (e != 0) + (f != 0) + (g != 0) + (h != 0)) & 1)
+	return hash;
+}
 
-			hash  = xor8( DA(a,0), DA(a, 6), DA(a,12), DA(a,18), DA(a,24), DA(a,30),
-				DA(a,36), DA(a,42));
-			hash |= xor8( DA(a,1), DA(a, 7), DA(a,13), DA(a,19), DA(a,25), DA(a,31),
-				DA(a,37), DA(a,43)) << 1;
-			hash |= xor8( DA(a,2), DA(a, 8), DA(a,14), DA(a,20), DA(a,26), DA(a,32),
-				DA(a,38), DA(a,44)) << 2;
-			hash |= xor8( DA(a,3), DA(a, 9), DA(a,15), DA(a,21), DA(a,27), DA(a,33),
-				DA(a,39), DA(a,45)) << 3;
-			hash |= xor8( DA(a,4), DA(a,10), DA(a,16), DA(a,22), DA(a,28), DA(a,34),
-				DA(a,40), DA(a,46)) << 4;
-			hash |= xor8( DA(a,5), DA(a,11), DA(a,17), DA(a,23), DA(a,29), DA(a,35),
-				DA(a,41), DA(a,47)) << 5;
-
-			return hash;
-		}
-
-		#if defined(TLDEBUG_RX) 
-		void ether_printheader(eh)
-			struct ether_header *eh;
-		{
-			u_char *c = (char*)eh;
-			int i;
-			for (i=0; i<sizeof(struct ether_header); i++)
-				printf("%x ", (u_int)c[i]);
-			printf("\n");
-		}
+#if defined(TLDEBUG_RX) 
+void
+ether_printheader(eh)
+	struct ether_header *eh;
+{
+	u_char *c = (char*)eh;
+	int i;
+	for (i=0; i<sizeof(struct ether_header); i++)
+		printf("%x ", (u_int)c[i]);
+		printf("\n");
+}
 #endif
