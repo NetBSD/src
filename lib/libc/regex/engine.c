@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.17 2004/03/26 22:42:17 enami Exp $	*/
+/*	$NetBSD: engine.c,v 1.18 2004/04/03 17:00:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -675,6 +675,8 @@ sopno lev;			/* PLUS nesting level */
 			return(NULL);
 		assert(m->pmatch[i].rm_so != (regoff_t)-1);
 		len = (size_t)(m->pmatch[i].rm_eo - m->pmatch[i].rm_so);
+		if (len == 0)
+			return(NULL);
 		assert(stop - m->beginp >= len);
 		if (sp > stop - len)
 			return(NULL);	/* not enough left to match */
