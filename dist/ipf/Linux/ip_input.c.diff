@@ -1,0 +1,35 @@
+*** ip_input.c.dist	Wed Sep 17 15:00:47 1997
+--- ip_input.c	Wed May 20 13:57:00 1998
+***************
+*** 175,180 ****
+--- 175,187 ----
+  struct ip_mib ip_statistics={2,64,};	/* Forwarding=No, Default TTL=64 */
+  #endif
+  
++ #if !defined(CONFIG_FIREWALL_IPFILTER) && defined(CONFIG_FIREWALL_IPFILTER_MODULE)
++ # define CONFIG_FIREWALL_IPFILTER
++ #endif
++ #ifdef CONFIG_FIREWALL_IPFILTER
++ int (*fr_checkp)(struct iphdr *, struct device *, int, struct sk_buff **) = NULL;
++ #endif
++ 
+  /*
+   *	Handle the issuing of an ioctl() request
+   *	for the ip device. This is scheduled to
+***************
+*** 417,422 ****
+--- 424,437 ----
+  			is_frag|=IPFWD_LASTFRAG;
+  	}
+  	
++ #endif
++ #ifdef CONFIG_FIREWALL_IPFILTER
++ 	if (fr_checkp && (*fr_checkp)(iph, skb->dev, 0, &skb))
++ 	{
++ 		if (skb)
++ 			kfree_skb(skb, FREE_WRITE);
++ 		return 0;	
++ 	}
+  #endif
+  	/*
+  	 *	Do any IP forwarding required.  chk_addr() is expensive -- avoid it someday.

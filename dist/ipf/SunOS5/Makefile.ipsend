@@ -1,0 +1,59 @@
+OBJS=ipsend.o ip.o ipsopt.o y.tab.o lex.yy.o
+IPFTO=ipft_ef.o ipft_hx.o ipft_pc.o ipft_sn.o ipft_td.o ipft_tx.o
+ROBJS=ipresend.o ip.o resend.o $(IPFTO) inet_addr.o opt.o
+TOBJS=iptest.o iptests.o ip.o
+UNIXOBJS=dlcommon.o sdlpi.o arp.o
+LIBS=-lsocket -lnsl
+
+CC=gcc
+CFLAGS=-g -I$$(TOP) -Dsolaris
+
+all build dlpi sunos5 : ipsend ipresend iptest
+
+.c.o:
+	$(CC) $(DEBUG) $(CFLAGS) -c $< -o $@
+
+y.tab.o: $(TOP)/iplang/iplang_y.y
+	(cd $(TOP)/iplang; $(MAKE) ../SunOS5/$(CPUDIR)/$@ 'DESTDIR=../SunOS5/$(CPUDIR)' 'CFLAGS=$(CFLAGS)')
+
+lex.yy.o: $(TOP)/iplang/iplang_l.l
+	(cd $(TOP)/iplang; $(MAKE) ../SunOS5/$(CPUDIR)/$@ 'DESTDIR=../SunOS5/$(CPUDIR)' 'CFLAGS=$(CFLAGS)')
+
+ipsend: $(OBJS) $(UNIXOBJS)
+	$(CC) $(DEBUG) $(OBJS) $(UNIXOBJS) -o $@ $(LIBS) -ll
+
+ipresend: $(ROBJS) $(UNIXOBJS)
+	$(CC) $(DEBUG) $(ROBJS) $(UNIXOBJS) -o $@ $(LIBS)
+
+iptest: $(TOBJS) $(UNIXOBJS)
+	$(CC) $(DEBUG) $(TOBJS) $(UNIXOBJS) -o $@ $(LIBS)
+
+clean:
+	rm -rf *.o core a.out ipsend ipresend iptest
+
+ipsend.o: $(TOP)/ipsend/ipsend.c
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/ipsend.c -o $@
+ipsopt.o: $(TOP)/ipsend/ipsopt.c
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/ipsopt.c -o $@
+ipresend.o: $(TOP)/ipsend/ipresend.c
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/ipresend.c -o $@
+ip.o: $(TOP)/ipsend/ip.c
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/ip.c -o $@
+resend.o: $(TOP)/ipsend/resend.c
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/resend.c -o $@
+ipft_sn.o: $(TOP)/ipft_sn.c
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_sn.c -o $@
+ipft_pc.o: $(TOP)/ipft_pc.c
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipft_pc.c -o $@
+iptest.o: $(TOP)/ipsend/iptest.c
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/iptest.c -o $@
+iptests.o: $(TOP)/ipsend/iptests.c
+	$(CC) $(DEBUG) $(CFLAGS) -Dsolaris -c $(TOP)/ipsend/iptests.c -o $@
+sock.o: $(TOP)/ipsend/sock.c
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/sock.c -o $@
+arp.o: $(TOP)/ipsend/arp.c
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/arp.c -o $@
+dlcommon.o: $(TOP)/ipsend/dlcommon.c
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/dlcommon.c -o $@
+sdlpi.o: $(TOP)/ipsend/sdlpi.c
+	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/ipsend/sdlpi.c -o $@
