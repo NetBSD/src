@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.29 1996/02/04 02:04:08 christos Exp $	*/
+/*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -157,7 +157,7 @@ cnstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-
+	return (0);
 }
  
 int
