@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.433 2005/01/12 00:39:48 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.434 2005/01/13 00:03:56 manu Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -561,7 +561,7 @@ MK${var}:=	yes
 	MAN \
 	NLS \
 	OBJ \
-	PAM PIC PICINSTALL PICLIB POSTFIX PROFILE \
+	PIC PICINSTALL PICLIB POSTFIX PROFILE \
 	SENDMAIL SHARE SKEY STATICLIB \
 	UUCP \
 	YP
@@ -571,8 +571,16 @@ MK${var}?=	yes
 #
 # MK* options which default to "no".
 #
+# XXX Please do not change PAM default to yes. PAM is being worked
+# on but is still very immature. Because PAM bugs can lead to 
+# very annoying problems (you can't log on your machine), it
+# is disabled by default during its integration. Users willing 
+# to experiment with early PAM support just have to drop MKPAM=YES 
+# in /etc/mk.conf. PAM will be enabled by default the day we will 
+# have a reliable PAM support.
+#
 .for var in \
-	CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 \
+	CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 PAM \
 	MANZ OBJDIRS PRIVATELIB SOFTFLOAT UNPRIVED UPDATE X11
 MK${var}?=	no
 .endfor
