@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.5 1999/03/02 03:18:49 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.5.2.1 1999/09/26 02:14:21 cgd Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -136,6 +136,11 @@ struct RF_Raid_s {
 	int     serial_number;  /* a "serial number" for this set */
 	int     mod_counter;    /* modification counter for component labels */
 	int     clean;          /* the clean bit for this array. */
+
+	int     openings;       /* Number of IO's which can be scheduled
+				   simultaneously (high-level - not a 
+				   per-component limit)*/
+
 	/*
          * Cleanup stuff
          */
