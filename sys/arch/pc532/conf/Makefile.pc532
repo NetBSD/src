@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.26 1996/05/11 16:12:34 mycroft Exp $
+#	$NetBSD: Makefile.pc532,v 1.27 1996/08/10 05:29:44 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -21,22 +21,20 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS?=	as
 CC?=	cc
-CPP?=	cpp
 LD?=	ld
+MKDEP?=	mkdep
 STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
-S=	$(.CURDIR)/../../../..
-PC532=	$(.CURDIR)/../..
-KERNREL=
-COMPATREL=
+S!=	cd ../../../..; pwd
+PC532=	$S/arch/pc532
 
-INCLUDES=	-I$(.CURDIR) -I$S/arch -I$S
+INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
-CFLAGS=		${DEBUG} -O2 -Werror -msb
+CWARNFLAGS=	-Werror
+CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msb
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-z -Ttext FE002000 -e start
 
@@ -96,7 +94,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} $@; ${STRIP} $@
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S
 .endif
 
 %LOAD
@@ -150,10 +148,10 @@ SRCS=	${PC532}/pc532/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${PC532}/pc532/locore.s
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${PC532}/pc532/genassym.c
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PC532}/pc532/locore.s
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${PC532}/pc532/genassym.c
 
 
 # depend on root or device configuration
