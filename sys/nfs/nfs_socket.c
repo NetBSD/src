@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.102.2.1 2004/07/10 12:56:04 tron Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.102.2.2 2004/07/14 11:06:28 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.102.2.1 2004/07/10 12:56:04 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.102.2.2 2004/07/14 11:06:28 tron Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2153,7 +2153,7 @@ nfsrv_getstream(slp, waitflag)
 				slp->ns_flag &= ~SLP_GETSTREAM;
 				return (EWOULDBLOCK);
 			}
-			m_claim(recm, &nfs_mowner);
+			m_claimm(recm, &nfs_mowner);
 			slp->ns_raw = m;
 			if (m->m_next == NULL)
 				slp->ns_rawend = m;
