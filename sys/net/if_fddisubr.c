@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.9.4.2 1997/02/20 16:41:07 is Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.9.4.3 1997/03/09 20:59:04 is Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -61,10 +61,14 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #endif
+
 #if defined(__NetBSD__)
 #include <net/if_ether.h>
-#endif
+#include <netinet/if_inarp.h>
+#else
 #include <netinet/if_ether.h>
+#endif
+
 #if defined(__FreeBSD__)
 #include <netinet/if_fddi.h>
 #else

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.21 1996/11/12 23:58:03 thorpej Exp $
+#	$NetBSD: files.pci,v 1.21.4.1 1997/03/09 21:05:41 is Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -21,7 +21,7 @@ attach	bha at pci with bha_pci
 file	dev/pci/bha_pci.c		bha_pci
 
 # Ethernet driver for DC21040-based boards
-device	de: ether, ifnet
+device	de: ether, ifnet, arp
 attach	de at pci
 file	dev/pci/if_de.c			de
 
@@ -36,7 +36,7 @@ attach	ep at pci with ep_pci
 file	dev/pci/if_ep_pci.c		ep_pci
 
 # Digital DEFPA PCI FDDI Controller
-device	fpa: pdq, fddi, ifnet
+device	fpa: pdq, fddi, ifnet, arp
 attach	fpa at pci
 file	dev/pci/if_fpa.c		fpa
 

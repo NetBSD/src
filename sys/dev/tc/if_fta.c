@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.8.6.1 1997/02/27 19:39:18 is Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.8.6.2 1997/03/09 21:12:38 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -52,6 +52,9 @@
 
 #ifdef INET
 #include <netinet/in.h>
+#if defined(__NetBSD__)
+#include <netinet/if_inarp.h>
+#else
 #include <netinet/if_ether.h>
 #endif
 #include <net/if_fddi.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.11.4.3 1997/02/11 16:28:24 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.11.4.4 1997/03/09 20:59:00 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -56,12 +56,16 @@
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/if_arp.h>
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #endif
 #include <netinet/if_arc.h>
+
+#define ARCNET_ALLOW_BROKEN_ARP
 
 #ifndef	ARC_PHDSMTU
 #define	ARC_PHDSMTU	1500
@@ -147,8 +151,10 @@ arc_output(ifp, m0, dst, rt0)
 		 */
 		if (m->m_flags & (M_BCAST|M_MCAST)) 
 			adst = arcbroadcastaddr; /* ARCnet broadcast address */
-		else
+		else if (ifp->if_flags & IFF_NOARP)
 			adst = ntohl(SIN(dst)->sin_addr.s_addr) & 0xFF;
+		else if (!arpresolve(ifp, rt, m, dst, &adst))
+			return 0;	/* not resolved yet */
 
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & (M_BCAST|M_MCAST)) && 
@@ -161,6 +167,50 @@ arc_output(ifp, m0, dst, rt0)
 			atype = ARCTYPE_IP_OLD;
 			newencoding = 0;
 		}
+		break;
+
+	case AF_ARP:
+		ah = mtod(m, struct arphdr *);
+		if (m->m_flags & M_BCAST)
+			adst = arcbroadcastaddr;
+		else
+			adst = *ar_tha(ah);
+
+		switch(ntohs(ah->ar_op)) {
+		case ARPOP_REVREQUEST:
+		case ARPOP_REVREPLY:
+			if (!(ifp->if_flags & IFF_LINK0)) {
+				printf("%s: can't handle af%d\n",
+				    ifp->if_xname, dst->sa_family);
+				senderr(EAFNOSUPPORT);
+			}
+
+			atype = htons(ARCTYPE_REVARP);
+			newencoding = 1;
+			break;
+
+		case ARPOP_REQUEST:
+		case ARPOP_REPLY:
+		default:
+			if (ifp->if_flags & IFF_LINK0) {
+				atype = htons(ARCTYPE_ARP);
+				newencoding = 1;
+			} else {
+				atype = htons(ARCTYPE_ARP_OLD);
+				newencoding = 0;
+			}
+		}
+#ifdef ARCNET_ALLOW_BROKEN_ARP
+		/*
+		 * XXX It's not clear per RFC826 if this is needed, but
+		 * "assigned numbers" say this is wrong.
+		 * However, e.g., AmiTCP 3.0Beta used it... we make this
+		 * switchable for emergency cases. Not perfect, but...
+		 */
+		if (ifp->if_flags & IFF_LINK2) {
+			ah->ar_pro = atype;
+		}
+#endif
 		break;
 #endif
 
@@ -506,6 +556,24 @@ arc_input(ifp, m)
 		m_adj(m, ARC_HDRLEN);
 		schednetisr(NETISR_IP);
 		inq = &ipintrq;
+		break;
+
+	case ARCTYPE_ARP:
+		m_adj(m, ARC_HDRNEWLEN);
+		schednetisr(NETISR_ARP);
+		inq = &arpintrq;
+#ifdef ARCNET_ALLOW_BROKEN_ARP
+		mtod(m, struct arphdr *)->ar_pro = htons(ETHERTYPE_ARP);
+#endif
+		break;
+
+	case ARCTYPE_ARP_OLD:
+		m_adj(m, ARC_HDRLEN);
+		schednetisr(NETISR_ARP);
+		inq = &arpintrq;
+#ifdef ARCNET_ALLOW_BROKEN_ARP
+		mtod(m, struct arphdr *)->ar_pro = htons(ETHERTYPE_ARP);
+#endif
 		break;
 #endif
 	default:

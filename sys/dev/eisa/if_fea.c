@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.11.2.4 1997/03/06 12:36:38 is Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.11.2.5 1997/03/09 21:08:59 is Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -50,8 +50,12 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
-#include <net/if_ether.h>
 
+#if defined(__NetBSD__)
+#include <net/if_inarp.h>
+#else
+#include <net/if_ether.h>
+#endif
 
 #include "bpfilter.h"
 #if NBPFILTER > 0

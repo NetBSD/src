@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_dec.c,v 1.3.6.1 1997/02/27 19:39:19 is Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.3.6.2 1997/03/09 21:12:39 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -53,7 +53,7 @@
 
 #ifdef INET
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include <dev/ic/am7990reg.h>
