@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.57 2003/11/03 18:51:31 mycroft Exp $	*/
+/*	$NetBSD: acpi.c,v 1.58 2004/03/23 14:08:17 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.57 2003/11/03 18:51:31 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.58 2004/03/23 14:08:17 kochi Exp $");
 
 #include "opt_acpi.h"
 
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.57 2003/11/03 18:51:31 mycroft Exp $");
 #endif
 
 #ifdef ACPI_PCI_FIXUP
-#include <dev/acpi/acpica/Subsystem/acnamesp.h> /* AcpiNsGetNodeByPath() */
 #include <dev/pci/pcidevs.h>
 #endif
 
@@ -1011,21 +1010,6 @@ acpi_pci_fixup(struct acpi_softc *sc)
 	    acpi_pci_fixup_bus, sc, NULL);
 }
 
-static ACPI_HANDLE
-acpi_get_node(char *name)
-{
-	ACPI_NAMESPACE_NODE *ObjDesc;
-	ACPI_STATUS Status;
-
-	Status = AcpiNsGetNodeByPath(name, NULL, 0, &ObjDesc);
-	if (ACPI_FAILURE (Status)) {
-		printf("acpi_get_node: could not find: %s\n",
-		       AcpiFormatException (Status));
-		return NULL;
-	}
-	return ObjDesc;
-}
-
 static uint
 acpi_get_intr(ACPI_HANDLE handle)
 {
@@ -1119,7 +1103,6 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 	ACPI_PCI_ROUTING_TABLE *PrtElement;
 	ACPI_HANDLE link;
 	uint line;
-	ACPI_NAMESPACE_NODE *node;
 	ACPI_INTEGER val;
 
 	rv = acpi_get(handle, &buf, AcpiGetIrqRoutingTable);
@@ -1134,8 +1117,7 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 	 * case should be ok, so we'll ignore that.
 	 */
 	if (level == 1) {
-		node = AcpiNsMapHandleToNode(handle);
-		rv = AcpiUtEvaluateNumericObject(METHOD_NAME__BBN, node, &val);
+		rv = acpi_eval_integer(handle, METHOD_NAME__BBN, &val);
 		if (!ACPI_FAILURE(rv)) {
 #ifdef ACPI_DEBUG
 			printf("%s: fixup: _BBN success, bus # was %d now %d\n",
@@ -1159,8 +1141,8 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 		if (PrtElement->Source[0] == 0)
 			continue;
 
-		link = acpi_get_node(PrtElement->Source);
-		if (link == NULL)
+		rv = AcpiGetHandle(NULL, PrtElement->Source, &link);
+		if (ACPI_FAILURE(rv))
 			continue;
 		line = acpi_get_intr(link);
 		if (line == -1) {
