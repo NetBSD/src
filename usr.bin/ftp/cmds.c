@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.20 1997/03/14 01:39:32 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.21 1997/03/16 14:24:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: cmds.c,v 1.20 1997/03/14 01:39:32 christos Exp $";
+static char rcsid[] = "$NetBSD: cmds.c,v 1.21 1997/03/16 14:24:14 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -1866,7 +1866,8 @@ setpassive(argc, argv)
 	char *argv[];
 {
 
-	code = togglevar(argc, argv, &passivemode, "Passive mode");
+	code = togglevar(argc, argv, &passivemode, 
+	    verbose ? "Passive mode" : NULL);
 }
 
 void
@@ -2085,14 +2086,14 @@ page(argc, argv)
 		p = PAGER;
 	if ((pager = malloc(strlen(p) + 2)) == NULL)
 		errx(1, "Can't allocate memory for $PAGER");
-	sprintf(pager, "|%s", p);
+	(void)sprintf(pager, "|%s", p);
 
 	orestart_point = restart_point;
 	ohash = hash;
 	overbose = verbose;
 	restart_point = hash = verbose = 0;
 	recvrequest("RETR", pager, argv[1], "r+w", 1);
-	free(pager);
+	(void)free(pager);
 	restart_point = orestart_point;
 	hash = ohash;
 	verbose = overbose;

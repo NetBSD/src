@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.5 1997/03/14 01:39:35 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.6 1997/03/16 14:24:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef SMALL
 #ifndef lint
-static char rcsid[] = "$NetBSD: complete.c,v 1.5 1997/03/14 01:39:35 christos Exp $";
+static char rcsid[] = "$NetBSD: complete.c,v 1.6 1997/03/16 14:24:16 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -58,7 +58,7 @@ static int
 comparstr(a, b)
 	const void *a, *b;
 {
-	return strcmp(*(char **)a, *(char **)b);
+	return (strcmp(*(char **)a, *(char **)b));
 }
 
 /*
@@ -83,14 +83,14 @@ complete_ambiguous(word, list, words)
 
 	wordlen = strlen(word);
 	if (words->sl_cur == 0)
-		return CC_ERROR;	/* no choices available */
+		return (CC_ERROR);	/* no choices available */
 
 	if (words->sl_cur == 1) {	/* only once choice available */
-		strcpy(insertstr, words->sl_str[0]);
+		(void)strcpy(insertstr, words->sl_str[0]);
 		if (el_insertstr(el, insertstr + wordlen) == -1)
-			return CC_ERROR;
+			return (CC_ERROR);
 		else
-			return CC_REFRESH;
+			return (CC_REFRESH);
 	}
 
 	if (!list) {
@@ -105,22 +105,22 @@ complete_ambiguous(word, list, words)
 				matchlen = j;
 		}
 		if (matchlen > wordlen) {
-			strncpy(insertstr, lastmatch, matchlen);
+			(void)strncpy(insertstr, lastmatch, matchlen);
 			insertstr[matchlen] = '\0';
 			if (el_insertstr(el, insertstr + wordlen) == -1)
-				return CC_ERROR;
+				return (CC_ERROR);
 			else	
 					/*
 					 * XXX: really want CC_REFRESH_BEEP
 					 */
-				return CC_REFRESH;
+				return (CC_REFRESH);
 		}
 	}
 
 	putchar('\n');
 	qsort(words->sl_str, words->sl_cur, sizeof(char *), comparstr);
 	list_vertical(words);
-	return CC_REDISPLAY;
+	return (CC_REDISPLAY);
 }
 
 /*
@@ -148,7 +148,7 @@ complete_command(word, list)
 
 	rv = complete_ambiguous(word, list, words);
 	sl_free(words, 0);
-	return rv;
+	return (rv);
 }
 
 /*
@@ -167,20 +167,22 @@ complete_local(word, list)
 	unsigned char rv;
 
 	if ((file = strrchr(word, '/')) == NULL) {
-		strcpy(dir, ".");
+		dir[0] = '.';
+		dir[1] = '\0';
 		file = word;
 	} else {
-		if (file == word)
-			strcpy(dir, "/");
-		else {
-			strncpy(dir, word, file - word);
+		if (file == word) {
+			dir[0] = '/';
+			dir[1] = '\0';
+		} else {
+			(void)strncpy(dir, word, file - word);
 			dir[file - word] = '\0';
 		}
-		++file;
+		file++;
 	}
 
 	if ((dd = opendir(dir)) == NULL)
-		return CC_ERROR;
+		return (CC_ERROR);
 
 	words = sl_init();
 
@@ -202,7 +204,7 @@ complete_local(word, list)
 
 	rv = complete_ambiguous(file, list, words);
 	sl_free(words, 1);
-	return rv;
+	return (rv);
 }
 
 /*
@@ -224,16 +226,18 @@ complete_remote(word, list)
 	char *dummyargv[] = { "complete", dir, NULL };
 
 	if ((file = strrchr(word, '/')) == NULL) {
-		strcpy(dir, ".");
+		dir[0] = '.';
+		dir[1] = '\0';
 		file = word;
 	} else {
 		cp = file;
 		while (*cp == '/' && cp > word)
 			cp--;
-		if (cp == word)
-			strcpy(dir, "/");
-		else {
-			strncpy(dir, word, cp - word + 1);
+		if (cp == word) {
+			dir[0] = '/';
+			dir[1] = '\0';
+		} else {
+			(void)strncpy(dir, word, cp - word + 1);
 			dir[cp - word + 1] = '\0';
 		}
 		file++;
@@ -281,9 +285,9 @@ complete_remote(word, list)
 		}
 		if (emesg != NULL) {
 			printf("\n%s\n", emesg);
-			return CC_REDISPLAY;
+			return (CC_REDISPLAY);
 		}
-		strcpy(lastdir, dir);
+		(void)strcpy(lastdir, dir);
 		dirchange = 0;
 	}
 
@@ -297,7 +301,7 @@ complete_remote(word, list)
 	}
 	rv = complete_ambiguous(file, list, words);
 	sl_free(words, 0);
-	return rv;
+	return (rv);
 }
 
 /*
@@ -318,8 +322,8 @@ complete(el, ch)
 	lf = el_line(el);
 	len = lf->lastchar - lf->buffer;
 	if (len >= sizeof(line))
-		return CC_ERROR;
-	strncpy(line, lf->buffer, len);
+		return (CC_ERROR);
+	(void)strncpy(line, lf->buffer, len);
 	line[len] = '\0';
 	cursor_pos = line + (lf->cursor - lf->buffer);
 	lastc_argc = cursor_argc;	/* remember last cursor pos */
@@ -327,7 +331,7 @@ complete(el, ch)
 	makeargv();			/* build argc/argv of current line */
 
 	if (cursor_argo >= sizeof(word))
-		return CC_ERROR;
+		return (CC_ERROR);
 
 	dolist = 0;
 			/* if cursor and word is same, list alternatives */
@@ -335,15 +339,15 @@ complete(el, ch)
 	    && strncmp(word, margv[cursor_argc], cursor_argo) == 0)
 		dolist = 1;
 	else
-	    strncpy(word, margv[cursor_argc], cursor_argo);
+	    (void)strncpy(word, margv[cursor_argc], cursor_argo);
 	word[cursor_argo] = '\0';
 
 	if (cursor_argc == 0)
-		return complete_command(word, dolist);
+		return (complete_command(word, dolist));
 
 	c = getcmd(margv[0]);
 	if (c == (struct cmd *)-1 || c == 0)
-		return CC_ERROR;
+		return (CC_ERROR);
 	celems = strlen(c->c_complete);
 
 		/* check for 'continuation' completes (which are uppercase) */
@@ -352,27 +356,27 @@ complete(el, ch)
 		cursor_argc = celems;
 
 	if (cursor_argc > celems)
-		return CC_ERROR;
+		return (CC_ERROR);
 
 	switch (c->c_complete[cursor_argc - 1]) {
 		case 'l':			/* local complete */
 		case 'L':
-			return complete_local(word, dolist);
+			return (complete_local(word, dolist));
 		case 'r':			/* remote complete */
 		case 'R':
 			if (!connected) {
 				puts("\nMust be connected to complete.");
-				return CC_REDISPLAY;
+				return (CC_REDISPLAY);
 			}
-			return complete_remote(word, dolist);
+			return (complete_remote(word, dolist));
 		case 'c':			/* command complete */
 		case 'C':
-			return complete_command(word, dolist);
+			return (complete_command(word, dolist));
 		case 'n':			/* no complete */
 		default:
-			return CC_ERROR;
+			return (CC_ERROR);
 	}
 
-	return CC_ERROR;
+	return (CC_ERROR);
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.23 1997/03/13 06:23:17 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.24 1997/03/16 14:24:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: ftp.c,v 1.23 1997/03/13 06:23:17 lukem Exp $";
+static char rcsid[] = "$NetBSD: ftp.c,v 1.24 1997/03/16 14:24:19 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -584,7 +584,7 @@ sendrequest(cmd, local, remote, printnames)
 		}
 		closefunc = fclose;
 		if (fstat(fileno(fin), &st) < 0 ||
-		    (st.st_mode&S_IFMT) != S_IFREG) {
+		    (st.st_mode & S_IFMT) != S_IFREG) {
 			printf("%s: not a plain file.\n", local);
 			(void)signal(SIGINT, oldintr);
 			(void)signal(SIGINFO, oldinti);
@@ -807,12 +807,14 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	time_t mtime;
 	struct timeval tval[2];
 	int oprogress;
+	int opreserve;
 
 	hashbytes = mark;
 	direction = "received";
 	bytes = 0;
 	filesize = -1;
 	oprogress = progress;
+	opreserve = preserve;
 	is_retr = strcmp(cmd, "RETR") == 0;
 	if (is_retr && verbose && printnames) {
 		if (local && *local != '-')
@@ -841,6 +843,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 		if (oldinti)
 			(void)signal(SIGINFO, oldinti);
 		progress = oprogress;
+		preserve = opreserve;
 		code = -1;
 		return;
 	}
@@ -930,6 +933,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	if (strcmp(local, "-") == 0) {
 		fout = stdout;
 		progress = 0;
+		preserve = 0;
 	} else if (*local == '|') {
 		oldintp = signal(SIGPIPE, SIG_IGN);
 		fout = popen(local + 1, "w");
@@ -938,6 +942,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 			goto abort;
 		}
 		progress = 0;
+		preserve = 0;
 		closefunc = pclose;
 	} else {
 		fout = fopen(local, lmode);
@@ -960,6 +965,10 @@ recvrequest(cmd, local, remote, lmode, printnames)
 		}
 		bufsize = st.st_blksize;
 	}
+	if ((st.st_mode & S_IFMT) != S_IFREG) {
+		progress = 0;
+		preserve = 0;
+	}
 	progressmeter(-1);
 	switch (curtype) {
 
@@ -969,6 +978,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 		    lseek(fileno(fout), restart_point, SEEK_SET) < 0) {
 			warn("local: %s", local);
 			progress = oprogress;
+			preserve = opreserve;
 			if (closefunc != NULL)
 				(*closefunc)(fout);
 			return;
@@ -1022,6 +1032,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 done:
 				warn("local: %s", local);
 				progress = oprogress;
+				preserve = opreserve;
 				if (closefunc != NULL)
 					(*closefunc)(fout);
 				return;
@@ -1077,6 +1088,7 @@ break2:
 	}
 	progressmeter(1);
 	progress = oprogress;
+	preserve = opreserve;
 	if (closefunc != NULL)
 		(*closefunc)(fout);
 	(void)signal(SIGINT, oldintr);
@@ -1110,6 +1122,7 @@ abort:
 /* abort using RFC959 recommended IP,SYNC sequence */
 
 	progress = oprogress;
+	preserve = opreserve;
 	if (oldintp)
 		(void)signal(SIGPIPE, oldintp);
 	(void)signal(SIGINT, SIG_IGN);
