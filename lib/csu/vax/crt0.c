@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.5 1997/10/20 16:09:27 christos Exp $	*/
+/*	$NetBSD: crt0.c,v 1.6 1998/02/03 20:01:43 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -50,8 +50,8 @@ start()
 	/*
 	 *	ALL REGISTER VARIABLES!!!
 	 */
-	register struct kframe *kfp;
-	register char **argv, *ap;
+	struct kframe *kfp;
+	char **argv, *ap;
 
 #ifdef lint
 	kfp = 0;
@@ -106,7 +106,7 @@ asm ("__callmain:");		/* Defined for the benefit of debuggers */
 #include "common.c"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.5 1997/10/20 16:09:27 christos Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.6 1998/02/03 20:01:43 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef MCRT0

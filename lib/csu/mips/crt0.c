@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.5 1997/10/20 03:24:49 jonathan Exp $	*/
+/*	$NetBSD: crt0.c,v 1.6 1998/02/03 20:01:37 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -124,14 +124,14 @@ asm(".text; .align 4;  .globl _start; _start:");
 
 void
 __start(sp, cleanup, obj, ps_strings)
-	register u_long sp;
-	register void (*cleanup) __P((void));	/* from shared loader */
-	register const Obj_Entry *obj;		/* from shared loader */
-	register struct ps_strings *ps_strings;
+	u_long sp;
+	void (*cleanup) __P((void));	/* from shared loader */
+	const Obj_Entry *obj;		/* from shared loader */
+	struct ps_strings *ps_strings;
 {
-	register char **ksp;
-	register char **argv, *namep;
-	register int argc;
+	char **ksp;
+	char **argv, *namep;
+	int argc;
 
 	/*
 	 * Grab the argc, argv, and envp set up by the kernel.
@@ -227,15 +227,15 @@ __start(sp, cleanup, obj, ps_strings)
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.5 1997/10/20 03:24:49 jonathan Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.6 1998/02/03 20:01:37 perry Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 
 static char *
 _strrchr(p, ch)
-register char *p, ch;
+char *p, ch;
 {
-	register char *save;
+	char *save;
 
 	for (save = NULL; ; ++p) {
 		if (*p == ch)

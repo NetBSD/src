@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.6 1997/01/03 22:37:58 scottr Exp $	*/
+/*	$NetBSD: common.c,v 1.7 1998/02/03 20:01:32 perry Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -219,8 +219,8 @@ dlerror()
 #ifdef DEBUG
 static int
 _strncmp(s1, s2, n)
-	register char *s1, *s2;
-	register int n;
+	char *s1, *s2;
+	int n;
 {
 
 	if (n == 0)
@@ -236,11 +236,11 @@ _strncmp(s1, s2, n)
 
 static char *
 _getenv(name)
-	register char *name;
+	char *name;
 {
 	extern char **environ;
-	register int len;
-	register char **P, *C;
+	int len;
+	char **P, *C;
 
 	for (C = name, len = 0; *C && *C != '='; ++C, ++len);
 	for (P = environ; *P; ++P)
@@ -254,9 +254,9 @@ _getenv(name)
 
 static char *
 _strrchr(p, ch)
-register char *p, ch;
+char *p, ch;
 {
-	register char *save;
+	char *save;
 
 	for (save = NULL;; ++p) {
 		if (*p == ch)
