@@ -69,7 +69,7 @@
  *		added DCD event detection
  *		added software fifo's
  *
- * $Id: ser.c,v 1.3 1994/01/10 23:52:04 briggs Exp $
+ * $Id: ser.c,v 1.4 1994/01/30 01:10:33 briggs Exp $
  *
  *	Mac II serial device interface
  *
@@ -80,32 +80,35 @@
 
 #define NSER 2	/* Could be more later with proprietary serial iface? */
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/ioctl.h"
-#include "sys/tty.h"
-#include "sys/proc.h"
-#include "sys/conf.h"
-#include "sys/file.h"
-#include "sys/uio.h"
-#include "sys/kernel.h"
-#include "sys/syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/proc.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
 
-#include "sys/device.h"
+#include <sys/device.h>
 #include "serreg.h"
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 /*#define DEBUG*/
 #undef DEBUG
 
-
 volatile unsigned char *sccA = (unsigned char *) 0x50004000;
 
-int	serstart(), serparam(), serintr();
-int	ser_active = 0;
-int	nser = NSER;
-int	serdefaultrate = TTYDEF_SPEED;
-int	sermajor;
+static void	serstart __P((register struct tty *));
+static int	serparam __P((register struct tty *, register struct termios *));
+static int	serctl   __P((dev_t dev, int bits, int how));
+extern int	serintr  __P((void));
+
+static int	ser_active = 0;
+static int	nser = NSER;
+static int	serdefaultrate = TTYDEF_SPEED;
+
 struct	tty *ser_tty[NSER];
 
 extern	struct tty *constty;
@@ -125,13 +128,13 @@ struct ser_status {
 #define	SCC_INT		10
 #define	SCC_SPEED	11
 
-char serial_id_string[] = "Two MacII serial devices built in.";
-char serial_debug_id_string[] = "Two MacII serial devices--one in use for debugging.";
-char serial_0_string[] = "MacBSD Serial Driver, Port 0\n\r";
-char serial_1_string[] = "MacBSD Serial Driver, Port 1\n\r";
+static char serial_id_string[] = "Two MacII serial devices built in.";
+static char serial_debug_id_string[] = "Two MacII serial devices--one in use for debugging.";
+static char serial_0_string[] = "MacBSD Serial Driver, Port 0\n\r";
+static char serial_1_string[] = "MacBSD Serial Driver, Port 1\n\r";
 
 
-unsigned char ser_0_init_bytes[]={
+static unsigned char ser_0_init_bytes[]={
 #if 0	/* BG -- I made this table from scratch according to the docs. */
 	9, SER_W9_NV | SER_W9_DLC,	/* No interrupt vector */
 					/* Disable lower chain */	
@@ -168,7 +171,7 @@ unsigned char ser_0_init_bytes[]={
 #endif
 };
 
-unsigned char ser_1_init_bytes[]={
+static unsigned char ser_1_init_bytes[]={
 	2, 0,
 	10, 0,
 	11, 0x50,
@@ -184,43 +187,6 @@ unsigned char ser_1_init_bytes[]={
 	0, 0x20,
 	9, 0x08
 };
-
-#if 0
-int
-serinit(register struct macdriver *md)
-{
-extern	int serial_boot_echo;
-	int bcount;
-	int i, s;
-
-
-	md->hwfound = 1;
-	md->name = serial_id_string;
-
-	if (serial_boot_echo) {
-		md->name = serial_debug_id_string;
-	}
-
-	SER_DOCNTL(0, 9, 0xc0);	/* force hardware reset */
-
-	s = splhigh();
-
-	/* initialize port 0 */
-	bcount = sizeof(ser_0_init_bytes);
-	for(i = 0; i < bcount; i += 2){
-		SER_DOCNTL(0, ser_0_init_bytes[i], ser_0_init_bytes[i + 1]);
-	}
-
-	/* initialize port 1 */
-	bcount = sizeof(ser_1_init_bytes);
-	for(i = 0; i < bcount; i += 2){
-		SER_DOCNTL(1, ser_1_init_bytes[i], ser_1_init_bytes[i + 1]);
-	}
-
-	splx(s);
-	return(1);
-}
-#endif
 
 extern int matchbyname();
 
@@ -262,6 +228,7 @@ struct cfdriver sercd =
 	DV_TTY, sizeof(struct device), NULL, 0 };
 
 /* ARGSUSED */
+extern int
 seropen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	register struct tty *tp;
@@ -336,6 +303,7 @@ seropen(dev_t dev, int flag, int mode, struct proc *p)
 }
  
 /*ARGSUSED*/
+extern int
 serclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	register struct tty *tp;
@@ -373,6 +341,7 @@ serclose(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 }
  
+extern int
 serread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -386,6 +355,7 @@ serread(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
  
+extern int
 serwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -419,8 +389,8 @@ static volatile unsigned int ser_outtail[NSER] = {0,0};
    a software interrupt.
 */
  
-int
-serintr()
+extern int
+serintr(void)
 {
     /* serial interrupt code */
     unsigned char reg0, reg1, ch, ch1, c, bits;
@@ -512,8 +482,8 @@ serintr()
    not do at splscc();
 */
 
-void
-sersir()
+extern void
+sersir(void)
 {
 	int unit, s, c;
 	register struct tty *tp;
@@ -582,12 +552,8 @@ sersir()
 	}
 }
 
-int
-serioctl(dev, cmd, data, flag)
-	dev_t dev;
-	int cmd;
-	caddr_t data;
-	int flag;
+extern int
+serioctl(dev_t dev, int cmd, caddr_t data, int flag)
 {
 	register struct tty *tp;
 	register int unit = UNIT(dev);
@@ -648,10 +614,51 @@ serioctl(dev, cmd, data, flag)
 	return (0);
 }
 
-int
-serparam(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
+static int
+ser_calc_regs(int unit, int cflag, unsigned char *preg3, unsigned char *preg4,
+	      unsigned char *preg5)
+{
+	unsigned char r3, r4, r5;
+
+	r3 = SER_W3_ENBRX;
+	r5 = SER_W5_ENBTX;
+	if (ser_status[unit].dtr)
+		r5 |= SER_W5_DTR;
+	if (ser_status[unit].rts)
+		r5 |= SER_W5_RTS;
+	switch (cflag&CSIZE) {
+	    case CS5:
+		r3 |= SER_W3_RX5DBITS;
+		r5 |= SER_W5_TX5DBITS;
+		break;
+	    case CS6:
+		r3 |= SER_W3_RX6DBITS;
+		r5 |= SER_W5_TX6DBITS;
+		break;
+	    case CS7:
+		r3 |= SER_W3_RX7DBITS;
+		r5 |= SER_W5_TX7DBITS;
+		break;
+	    case CS8:
+		r3 |= SER_W3_RX8DBITS;
+		r5 |= SER_W5_TX8DBITS;
+		break;
+	}
+	r4 = 0;
+	if(cflag & PARENB)
+		r4 |= (cflag & PARODD) ? SER_W4_PARODD : SER_W4_PAREVEN;
+	if(cflag & CSTOPB)
+		r4 |= SER_W4_2SBIT;
+	else
+		r4 |= SER_W4_1SBIT;
+	
+	*preg3 = r3;
+	*preg4 = r4;
+	*preg5 = r5;
+}
+ 
+static int
+serparam(register struct tty *tp, register struct termios *t)
 {
 	register int cflag = t->c_cflag;
 	unsigned char reg3, reg4, reg5;
@@ -700,52 +707,8 @@ serparam(tp, t)
 	return (0);
 }
 
-ser_calc_regs(unit, cflag, preg3, preg4, preg5)
-	int unit;
-	unsigned char *preg3, *preg4, *preg5;
-{
-	unsigned char r3, r4, r5;
-
-	r3 = SER_W3_ENBRX;
-	r5 = SER_W5_ENBTX;
-	if (ser_status[unit].dtr)
-		r5 |= SER_W5_DTR;
-	if (ser_status[unit].rts)
-		r5 |= SER_W5_RTS;
-	switch (cflag&CSIZE) {
-	    case CS5:
-		r3 |= SER_W3_RX5DBITS;
-		r5 |= SER_W5_TX5DBITS;
-		break;
-	    case CS6:
-		r3 |= SER_W3_RX6DBITS;
-		r5 |= SER_W5_TX6DBITS;
-		break;
-	    case CS7:
-		r3 |= SER_W3_RX7DBITS;
-		r5 |= SER_W5_TX7DBITS;
-		break;
-	    case CS8:
-		r3 |= SER_W3_RX8DBITS;
-		r5 |= SER_W5_TX8DBITS;
-		break;
-	}
-	r4 = 0;
-	if(cflag & PARENB)
-		r4 |= (cflag & PARODD) ? SER_W4_PARODD : SER_W4_PAREVEN;
-	if(cflag & CSTOPB)
-		r4 |= SER_W4_2SBIT;
-	else
-		r4 |= SER_W4_1SBIT;
-	
-	*preg3 = r3;
-	*preg4 = r4;
-	*preg5 = r5;
-}
- 
-int
-serstart(tp)
-	register struct tty *tp;
+extern void
+serstart(register struct tty *tp)
 {
 	int s, s1;
 	int i, space, unit, c, need_start, first_char;
@@ -808,9 +771,8 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
-serstop(tp, flag)
-	register struct tty *tp;
-	int flag;
+extern int
+serstop(register struct tty *tp, int flag)
 {
 	register int s;
 
@@ -828,9 +790,8 @@ serstop(tp, flag)
 	splx(s);
 }
 
-serctl(dev, bits, how)
-	dev_t dev;
-	int bits, how;
+static int
+serctl(dev_t dev, int bits, int how)
 {
 	int unit, s;
 
@@ -876,5 +837,3 @@ serctl(dev, bits, how)
 	(void) splx(s);
 	return(bits);
 }
-
-
