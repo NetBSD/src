@@ -1,3 +1,5 @@
+/*	$NetBSD: asctime.c,v 1.2 1995/03/09 23:41:11 jtc Exp $	*/
+
 #ifndef lint
 #ifndef NOID
 static char	elsieid[] = "@(#)asctime.c	7.6";

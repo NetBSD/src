@@ -1,5 +1,6 @@
-#ifndef TZFILE_H
+/*	$NetBSD: tzfile.h,v 1.3 1995/03/09 23:41:24 jtc Exp $	*/
 
+#ifndef TZFILE_H
 #define TZFILE_H
 
 /*
