@@ -1,4 +1,4 @@
-/*	$NetBSD: lastlogin.c,v 1.9 2004/11/11 20:17:36 christos Exp $	*/
+/*	$NetBSD: lastlogin.c,v 1.10 2004/11/13 00:11:03 he Exp $	*/
 /*
  * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lastlogin.c,v 1.9 2004/11/11 20:17:36 christos Exp $");
+__RCSID("$NetBSD: lastlogin.c,v 1.10 2004/11/13 00:11:03 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -447,9 +447,9 @@ output(struct output *o)
 {
 	time_t t = (time_t)o->o_tv.tv_sec;
 	printf("%-*.*s  %-*.*s %-*.*s   %s",
-		namelen, namelen, o->o_name,
-		linelen, linelen, o->o_line,
-		hostlen, hostlen, gethost(o),
+		(int)namelen, (int)namelen, o->o_name,
+		(int)linelen, (int)linelen, o->o_line,
+		(int)hostlen, (int)hostlen, gethost(o),
 		t ? ctime(&t) : "Never logged in\n");
 }
 
