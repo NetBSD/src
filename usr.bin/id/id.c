@@ -38,8 +38,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)id.c	8.2 (Berkeley) 2/16/94"; */
-static char *rcsid = "$Id: id.c,v 1.5 1994/05/05 23:24:47 cgd Exp $";
+/*static char sccsid[] = "from: @(#)id.c	8.2 (Berkeley) 2/16/94";*/
+static char *rcsid = "$Id: id.c,v 1.6 1994/10/06 15:43:08 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
