@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.36 2003/06/29 22:32:45 fvdl Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.37 2003/08/05 15:45:48 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -129,7 +129,7 @@ void ufs_makedirentry __P((struct inode *, struct componentname *,
 int ufs_direnter __P((struct vnode *, struct vnode *, struct direct *,
 		      struct componentname *, struct buf *));
 int ufs_dirremove __P((struct vnode *, struct inode *, int, int));
-int ufs_dirrewrite __P((struct inode *, struct inode *, ino_t, int, int));
+int ufs_dirrewrite __P((struct inode *, struct inode *, ino_t, int, int, int));
 int ufs_dirempty __P((struct inode *, ino_t, struct ucred *));
 int ufs_checkpath __P((struct inode *, struct inode *, struct ucred *));
 
