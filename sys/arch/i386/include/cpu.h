@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.6 2000/06/25 19:37:10 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.7 2000/06/25 20:44:54 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -106,11 +106,20 @@ struct cpu_info {
 	int		ci_astpending;
 };
 
-#define	CPUF_BSP	0x0001		/* CPU is the BSP */
+/*
+ * Processor flag notes: The "primary" CPU has certain MI-defined
+ * roles (mostly relating to hardclock handling); we distinguish
+ * betwen the processor which booted us, and the processor currently
+ * holding the "primary" role just to give us the flexibility later to
+ * change primaries should we be sufficiently twisted.  
+ */
+
+#define	CPUF_BSP	0x0001		/* CPU is the original BSP */
 #define	CPUF_AP		0x0002		/* CPU is an AP */
 #define	CPUF_SP		0x0004		/* CPU is only processor */
+#define	CPUF_PRIMARY	0x0008		/* CPU is active primary processor */
 
-#define CPUF_APIC_CD    0x0008		/* CPU has apic configured */
+#define CPUF_APIC_CD    0x0010		/* CPU has apic configured */
 
 #define	CPUF_PRESENT	0x1000		/* CPU is present */
 #define	CPUF_RUNNING	0x2000		/* CPU is running */
@@ -124,6 +133,9 @@ struct cpu_info {
 
 #define cpu_number() 	(i82489_readreg(LAPIC_ID)>>LAPIC_ID_SHIFT)
 #define curcpu()	(cpu_info[cpu_number()])
+
+#define CPU_IS_PRIMARY(ci) ((ci)->ci_flags & CPUF_PRIMARY)
+
 #define	curpcb		curcpu()->ci_curpcb
 
 extern	struct cpu_info *cpu_info[I386_MAXPROCS];
