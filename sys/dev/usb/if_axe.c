@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.3 2004/10/24 08:49:13 augustss Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.4 2004/10/24 12:53:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.3 2004/10/24 08:49:13 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.4 2004/10/24 12:53:26 augustss Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1275,29 +1275,32 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return(error);
 }
 
+/*
+ * XXX
+ * You can't call axe_txeof since the USB transfer has not
+ * completed yet.
+ */
 Static void
 axe_watchdog(struct ifnet *ifp)
 {
 	struct axe_softc	*sc;
 	struct axe_chain	*c;
 	usbd_status		stat;
+	int			s;
 
 	sc = ifp->if_softc;
-	axe_lock_mii(sc);
 
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", USBDEVNAME(sc->axe_dev));
 
+	s = splusb();
 	c = &sc->axe_cdata.axe_tx_chain[0];
 	usbd_get_xfer_status(c->axe_xfer, NULL, NULL, NULL, &stat);
 	axe_txeof(c->axe_xfer, c, stat);
 
-	axe_unlock_mii(sc);
-
 	if (ifp->if_snd.ifq_head != NULL)
 		axe_start(ifp);
-
-	return;
+	splx(s);
 }
 
 /*
