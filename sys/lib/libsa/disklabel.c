@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.4 1996/01/13 22:25:36 leo Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.5 1999/03/31 01:50:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,13 +51,21 @@ getdisklabel(buf, lp)
 	for (dlp = (struct disklabel *)buf; dlp <= elp;
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
+#if defined(LIBSA_NO_DISKLABEL_MSGS)
+			msg = (char *)1;
+#else
 			if (msg == (char *)0)
 				msg = "no disk label";
+#endif
 		} else if (dlp->d_npartitions > MAXPARTITIONS ||
 			   dkcksum(dlp) != 0)
+#if defined(LIBSA_NO_DISKLABEL_MSGS)
+			msg = (char *)1;
+#else
 			msg = "disk label corrupted";
+#endif
 		else {
-			*lp = *dlp;
+			bcopy(dlp, lp, sizeof *lp);
 			msg = (char *)0;
 			break;
 		}
