@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.260 1999/09/28 18:07:29 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.261 1999/10/06 08:13:17 itohy Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -107,7 +107,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 
 # File system options
 options 	QUOTA		# UFS quotas
-#options 	FFS_EI		# FFS Endian Independant support
+#options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -331,7 +331,7 @@ ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI
 bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 bha1	at isa? port 0x334 irq ? drq ?
-nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 contoller
+nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 controller
 nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
@@ -380,7 +380,7 @@ wdc*	at pcmcia? function ?
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
-# fall back to 16bits I/O if 32bits I/O are not functionnal).
+# fall back to 16bits I/O if 32bits I/O are not functional).
 # Some controllers pass the initial 32bit test, but will fail later.
 wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 wdc1	at isa? port 0x170 irq 15 flags 0x00
@@ -574,13 +574,14 @@ sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
-# OPL[23] FM syntheziers
+# OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 opl*	at eso?
 opl*	at ess?
 opl*	at sb?
 opl*	at sv?
 opl*	at wss?
+opl*	at ym?
 
 # Audio support
 #audio*	at aria?
@@ -601,6 +602,7 @@ audio*	at ym?
 #mpu*	at isa? port 0x330 irq 9        # MPU401 or compatible card
 mpu*	at eso?
 mpu*	at sb?
+mpu*	at ym?
 
 # MIDI support
 midi*	at mpu?			# MPU 401
