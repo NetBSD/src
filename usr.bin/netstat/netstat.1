@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.29 2001/05/06 23:48:32 wiz Exp $
+.\"	$NetBSD: netstat.1,v 1.30 2001/05/28 04:22:56 assar Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Nm ""
-.Op Fl dgiLmnrsv
+.Op Fl dgiLmnrsSv
 .Op Fl f Ar address_family
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -203,11 +203,15 @@ Show statistics recorded by the memory management routines
 Extract the name list from the specified system instead of the default
 .Pa /netbsd .
 .It Fl n
-Show network addresses as numbers (normally
+Show network addresses and ports as numbers (normally
 .Nm
-interprets addresses and attempts to display them
+interprets addresses and ports and attempts to display them
 symbolically).
 This option may be used with any of the display formats.
+.It Fl S
+Show network addresses as numbers (as with
+.Fl n )
+but show ports symboically).
 .It Fl P Ar pcbaddr
 Dump the contents of the protocol control block (PCB) located at kernel
 virtual address

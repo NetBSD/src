@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.45 2001/04/06 05:10:28 itojun Exp $	*/
+/*	$NetBSD: inet.c,v 1.46 2001/05/28 04:22:55 assar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.45 2001/04/06 05:10:28 itojun Exp $");
+__RCSID("$NetBSD: inet.c,v 1.46 2001/05/28 04:22:55 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ protopr(off, name)
 
 	compact = 0;
 	if (Aflag) {
-		if (!nflag)
+		if (!numeric_addr)
 			width = 18;
 		else {
 			width = 21;
@@ -171,7 +171,7 @@ protopr(off, name)
 		}
 		printf("%-5.5s %6ld %6ld%s", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc, compact ? "" : " ");
-		if (nflag) {
+		if (numeric_port) {
 			inetprint(&inpcb.inp_laddr, inpcb.inp_lport, name, 1);
 			inetprint(&inpcb.inp_faddr, inpcb.inp_fport, name, 1);
 		} else if (inpcb.inp_flags & INP_ANONPORT) {
@@ -561,23 +561,23 @@ arp_stats(off, name)
 
 /*
  * Pretty print an Internet address (net address + port).
- * If the nflag was specified, use numbers instead of names.
+ * Take numeric_addr and numeric_port into consideration.
  */
 void
-inetprint(in, port, proto, numeric)
+inetprint(in, port, proto, numeric_port)
 	struct in_addr *in;
 	u_int16_t port;
 	const char *proto;
-	int numeric;
+	int numeric_port;
 {
 	struct servent *sp = 0;
 	char line[80], *cp;
 	size_t space;
 
 	(void)snprintf(line, sizeof line, "%.*s.",
-	    (Aflag && !nflag) ? 12 : 16, inetname(in));
+	    (Aflag && !numeric_addr) ? 12 : 16, inetname(in));
 	cp = strchr(line, '\0');
-	if (!numeric && port)
+	if (!numeric_port && port)
 		sp = getservbyport((int)port, proto);
 	space = sizeof line - (cp-line);
 	if (sp || port == 0)
@@ -589,7 +589,7 @@ inetprint(in, port, proto, numeric)
 
 /*
  * Construct an Internet address representation.
- * If the nflag has been supplied, give
+ * If numeric_addr has been supplied, give
  * numeric value, otherwise try for symbolic name.
  */
 char *
@@ -603,7 +603,7 @@ inetname(inp)
 	static char domain[MAXHOSTNAMELEN + 1];
 	static int first = 1;
 
-	if (first && !nflag) {
+	if (first && !numeric_addr) {
 		first = 0;
 		if (gethostname(domain, sizeof domain) == 0) {
 			domain[sizeof(domain) - 1] = '\0';
@@ -615,7 +615,7 @@ inetname(inp)
 			domain[0] = 0;
 	}
 	cp = 0;
-	if (!nflag && inp->s_addr != INADDR_ANY) {
+	if (!numeric_addr && inp->s_addr != INADDR_ANY) {
 		int net = inet_netof(*inp);
 		int lna = inet_lnaof(*inp);
 

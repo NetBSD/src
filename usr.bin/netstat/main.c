@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 2001/02/19 23:03:50 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.33 2001/05/28 04:22:56 assar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.32 2001/02/19 23:03:50 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.33 2001/05/28 04:22:56 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -328,7 +328,7 @@ main(argc, argv)
 	af = AF_UNSPEC;
 	pcbaddr = 0;
 
-	while ((ch = getopt(argc, argv, "Aabdf:ghI:LliM:mN:nP:p:rstuvw:")) != -1)
+	while ((ch = getopt(argc, argv, "Aabdf:ghI:LliM:mN:nP:p:rsStuvw:")) != -1)
 		switch(ch) {
 		case 'A':
 			Aflag = 1;
@@ -392,7 +392,7 @@ main(argc, argv)
 			nlistf = optarg;
 			break;
 		case 'n':
-			nflag = 1;
+			numeric_addr = numeric_port = 1;
 			break;
 		case 'P':
 			pcbaddr = strtoul(optarg, &cp, 16);
@@ -412,6 +412,9 @@ main(argc, argv)
 			break;
 		case 's':
 			++sflag;
+			break;
+		case 'S':
+			numeric_addr = 1;
 			break;
 		case 't':
 			tflag = 1;
@@ -719,7 +722,7 @@ usage()
 	(void)fprintf(stderr,
 "usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n", progname);
 	(void)fprintf(stderr,
-"       %s [-gimnrsv] [-f address_family] [-M core] [-N system]\n", 
+"       %s [-gimnrsSv] [-f address_family] [-M core] [-N system]\n", 
 	progname);
 	(void)fprintf(stderr,
 "       %s [-n] [-I interface] [-M core] [-N system] [-w wait]\n", progname);

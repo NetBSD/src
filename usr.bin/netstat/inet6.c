@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.19 2001/04/06 05:10:28 itojun Exp $	*/
+/*	$NetBSD: inet6.c,v 1.20 2001/05/28 04:22:55 assar Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.19 2001/04/06 05:10:28 itojun Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.20 2001/05/28 04:22:55 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -1102,9 +1102,8 @@ pim6_stats(off, name)
 
 /*
  * Pretty print an Internet address (net address + port).
- * If the nflag was specified, use numbers instead of names.
+ * Take numeric_addr and numeric_port into consideration.
  */
-
 void
 inet6print(in6, port, proto)
 	register struct in6_addr *in6;
@@ -1129,7 +1128,7 @@ do {\
 		width = strlen(inet6name(in6));
 	snprintf(line, sizeof(line), "%.*s.", width, inet6name(in6));
 	cp = index(line, '\0');
-	if (!nflag && port)
+	if (!numeric_port && port)
 		GETSERVBYPORT6(port, proto, sp);
 	if (sp || port == 0)
 		snprintf(cp, sizeof(line) - (cp - line),
@@ -1145,7 +1144,7 @@ do {\
 
 /*
  * Construct an Internet address representation.
- * If the nflag has been supplied, give
+ * If the numeric_addr has been supplied, give
  * numeric value, otherwise try for symbolic name.
  */
 
@@ -1166,7 +1165,7 @@ inet6name(in6p)
 	const int niflag = NI_NUMERICHOST;
 #endif
 
-	if (first && !nflag) {
+	if (first && !numeric_addr) {
 		first = 0;
 		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
 		    (cp = index(domain, '.')))
@@ -1175,7 +1174,7 @@ inet6name(in6p)
 			domain[0] = 0;
 	}
 	cp = 0;
-	if (!nflag && !IN6_IS_ADDR_UNSPECIFIED(in6p)) {
+	if (!numeric_addr && !IN6_IS_ADDR_UNSPECIFIED(in6p)) {
 		hp = gethostbyaddr((char *)in6p, sizeof(*in6p), AF_INET6);
 		if (hp) {
 			if ((cp = index(hp->h_name, '.')) &&
