@@ -1,4 +1,4 @@
-/* $NetBSD: blockio.S,v 1.4 1996/10/15 01:00:29 mark Exp $ */
+/* $NetBSD: blockio.S,v 1.5 1997/01/17 00:56:24 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -317,3 +317,224 @@ outsw16loop:
 	ldmfd	sp!, {r4-r7}
 
 	mov	pc, lr
+
+	.global	_inswm8
+/*
+ * reads short ints (16 bits) from an I/O address into a block of memory
+ * The I/O address is assumed to be mapped multiple times in a block of
+ * 8 words.
+ * The destination address should be word aligned.
+ *
+ * r0 = address to read from (IO)
+ * r1 = address to write to (memory)
+ * r2 = length
+ */
+
+_inswm8:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
+
+/* Make sure that we have a positive length */
+	cmp	r2, #0x00000000
+	movle	pc, lr
+
+/* If the destination address is word aligned and the size suitably aligned, do it fast */
+
+	tst	r1, #0x00000003
+
+	bne	_insw
+
+/* Word aligned insw */
+
+	stmfd	r13!, {r4-r11}
+
+	mov	r11, #0xff000000
+	orr	r11, r11, #0x00ff0000
+
+inswm8_loop8:
+	cmp	r2, #8
+	bcc	inswm8_l8
+
+	ldmia	r0, {r3-r10}
+
+	bic	r3, r3, r11
+	orr	r3, r3, r4, lsl #16
+	bic	r5, r5, r11
+	orr	r4, r5, r6, lsl #16
+	bic	r7, r7, r11
+	orr	r5, r7, r8, lsl #16
+	bic	r9, r9, r11
+	orr	r6, r9, r10, lsl #16
+
+	stmia	r1!, {r3-r6}
+
+	subs	r2, r2, #0x00000008	/* Next */
+	bne	inswm8_loop8
+	beq	inswm8_l1
+
+inswm8_l8:
+	cmp	r2, #4
+	bcc	inswm8_l4
+
+	ldmia	r0, {r3-r6}
+
+	bic	r3, r3, r11
+	orr	r3, r3, r4, lsl #16
+	bic	r5, r5, r11
+	orr	r4, r5, r6, lsl #16
+
+	stmia	r1!, {r3-r4}
+
+	subs	r2, r2, #0x00000004
+	beq	inswm8_l1
+
+inswm8_l4:
+	cmp	r2, #2
+	bcc	inswm8_l2
+
+	ldmia	r0, {r3-r4}
+
+	bic	r3, r3, r11
+	orr	r3, r3, r4, lsl #16
+	str	r3, [r1], #0x0004
+
+	subs	r2, r2, #0x00000002
+	beq	inswm8_l1
+
+inswm8_l2:
+	cmp	r2, #1
+	bcc	inswm8_l1
+
+	ldr	r3, [r0]
+
+	strb	r3, [r1], #0x0001
+	mov	r3, r3, lsr #8
+	strb	r3, [r1], #0x0001
+
+	subs	r2, r2, #0x00000001
+
+inswm8_l1:
+	ldmfd	r13!, {r4-r11}
+
+	mov	pc, lr
+
+	.global	_outswm8
+/*
+ * write short ints (16 bits) to an I/O address from a block of memory
+ * The I/O address is assumed to be mapped multiple times in a block of
+ * 8 words.
+ * The source address should be word aligned.
+ *
+ * r0 = address to read to (IO)
+ * r1 = address to write from (memory)
+ * r2 = length
+ */
+
+_outswm8:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
+
+/* Make sure that we have a positive length */
+	cmp	r2, #0x00000000
+	movle	pc, lr
+
+/* If the destination address is word aligned and the size suitably aligned, do it fast */
+
+	tst	r1, #0x00000003
+
+	bne	_outsw
+
+/* Word aligned outsw */
+
+	stmfd	r13!, {r4-r10}
+
+outswm8_loop8:
+	cmp	r2, #8
+	bcc	outswm8_l8
+
+	ldmia	r1!, {r3,r5,r7,r9}
+
+	mov	r4, r3, lsr #16
+	orr	r4, r4, r4, lsl #16
+	mov	r3, r3, lsl #16
+	orr	r3, r3, r3, lsr #16
+	mov	r6, r5, lsr #16
+	orr	r6, r6, r6, lsl #16
+	mov	r5, r5, lsl #16
+	orr	r5, r5, r5, lsr #16
+	mov	r8, r7, lsr #16
+	orr	r8, r8, r8, lsl #16
+	mov	r7, r7, lsl #16
+	orr	r7, r7, r7, lsr #16
+	mov	r10, r9, lsr #16
+	orr	r10, r10, r10, lsl #16
+	mov	r9, r9, lsl #16
+	orr	r9, r9, r9, lsr #16
+
+	stmia	r0, {r3-r10}
+
+	subs	r2, r2, #0x00000008	/* Next */
+	bne	outswm8_loop8
+	beq	outswm8_l1
+
+outswm8_l8:
+	cmp	r2, #4
+	bcc	outswm8_l4
+
+	ldmia	r1!, {r3-r4}
+
+	mov	r5, r3, lsl #16
+	orr	r5, r5, r5, lsr #16
+	mov	r6, r3, lsr #16
+	orr	r6, r6, r6, lsl #16
+	mov	r7, r4, lsl #16
+	orr	r7, r7, r7, lsr #16
+	mov	r8, r4, lsr #16
+	orr	r8, r8, r8, lsl #16
+
+	stmia	r0, {r5-r8}
+
+	subs	r2, r2, #0x00000004
+	beq	outswm8_l1
+
+outswm8_l4:
+	cmp	r2, #2
+	bcc	outswm8_l2
+
+	ldr	r3, [r1], #0x0004
+
+	mov	r4, r3, lsl #16
+	orr	r4, r4, r4, lsr #16
+	mov	r5, r3, lsr #16
+	orr	r5, r5, r5, lsl #16
+
+	stmia	r0, {r4, r5}
+
+	subs	r2, r2, #0x00000002
+	beq	outswm8_l1
+
+outswm8_l2:
+	cmp	r2, #1
+	bcc	outswm8_l1
+
+	ldrb	r3, [r1], #0x0001
+	ldrb	r4, [r1], #0x0001
+	orr	r3, r3, r4, lsl #8
+	orr	r3, r3, r3, lsl #16
+	str	r3, [r0]
+
+	subs	r2, r2, #0x00000001
+
+outswm8_l1:
+	ldmfd	r13!, {r4-r10}
+
+	mov	pc, lr
+
