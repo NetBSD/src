@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.9 1999/08/16 20:26:53 augustss Exp $
+#	$NetBSD: files.usb,v 1.10 1999/08/23 07:07:47 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -42,7 +42,7 @@ file	dev/usb/uhid.c			uhid		needs-flag
 # Keyboards
 device	ukbd: wskbddev
 attach	ukbd at uhub
-file	dev/usb/ukbd.c			ukbd		needs-flag
+file	dev/usb/ukbd.c			ukbd
 file	dev/usb/ukbdmap.c		ukbd
 
 # Printers
@@ -51,9 +51,9 @@ attach	ulpt at uhub
 file	dev/usb/ulpt.c			ulpt		needs-flag
 
 # Mass storage
-#device	umass: scsi
-#attach	umass at uhub
-#file	dev/usb/umass.c			umass		needs-flag
+device	umass: scsi
+attach	umass at uhub
+file	dev/usb/umass.c			umass
 
 # Modems
 device	umodem
@@ -63,6 +63,6 @@ file	dev/usb/umodem.c		umodem		needs-flag
 # Mice
 device	ums: wsmousedev
 attach	ums at uhub
-file	dev/usb/ums.c			ums		needs-flag
+file	dev/usb/ums.c			ums
 
 
