@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.12 2002/10/23 09:13:25 jdolecek Exp $	*/
+/*	$NetBSD: spkr.c,v 1.13 2003/04/20 22:02:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.12 2002/10/23 09:13:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.13 2003/04/20 22:02:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,14 +269,18 @@ playstring(cp, slen)
 	    {
 		if (abs(pitch-lastpitch) > abs(pitch+OCTAVE_NOTES-lastpitch))
 		{
-		    ++octave;
-		    pitch += OCTAVE_NOTES;
+		    if (octave < NOCTAVES - 1) {
+			++octave;
+			pitch += OCTAVE_NOTES;
+		    }
 		}
 
 		if (abs(pitch-lastpitch) > abs((pitch-OCTAVE_NOTES)-lastpitch))
 		{
-		    --octave;
-		    pitch -= OCTAVE_NOTES;
+		    if (octave > 0) {
+			--octave;
+			pitch -= OCTAVE_NOTES;
+		    }
 		}
 	    }
 	    octprefix = FALSE;
