@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.39 2003/10/27 00:12:41 lukem Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.40 2004/05/11 17:12:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.39 2003/10/27 00:12:41 lukem Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.40 2004/05/11 17:12:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,9 @@ __RCSID("$NetBSD: ar_io.c,v 1.39 2003/10/27 00:12:41 lukem Exp $");
 #define EXT_MODE	O_RDONLY	/* open mode for list/extract */
 #define AR_MODE		(O_WRONLY | O_CREAT | O_TRUNC)	/* mode for archive */
 #define APP_MODE	O_RDWR		/* mode for append */
-#define STDO		"<STDOUT>"	/* pseudo name for stdout */
-#define STDN		"<STDIN>"	/* pseudo name for stdin */
+static char STDO[] =	"<STDOUT>";	/* pseudo name for stdout */
+static char STDN[] =	"<STDIN>";	/* pseudo name for stdin */
+static char NONE[] =	"<NONE>";	/* pseudo name for none */
 static int arfd = -1;			/* archive file descriptor */
 static int artyp = ISREG;		/* archive type: file/FIFO/tape */
 static int arvol = 1;			/* archive volume number */
@@ -183,7 +184,7 @@ ar_open(const char *name)
 		/*
 		 * arfd not used in COPY mode
 		 */
-		arcname = "<NONE>";
+		arcname = NONE;
 		lstrval = 1;
 		return(0);
 	}
@@ -1396,7 +1397,7 @@ int
 ar_next(void)
 {
 	char buf[PAXPATHLEN+2];
-	static int freeit = 0;
+	static char *arcfree = NULL;
 	sigset_t o_mask;
 
 	/*
@@ -1525,17 +1526,17 @@ ar_next(void)
 		 * try to open new archive
 		 */
 		if (ar_open(buf) >= 0) {
-			if (freeit) {
-				(void)free((char *)arcname);
-				freeit = 0;
+			if (arcfree) {
+				(void)free(arcfree);
+				arcfree = NULL;
 			}
-			if ((arcname = strdup(buf)) == NULL) {
+			if ((arcfree = strdup(buf)) == NULL) {
 				done = 1;
 				lstrval = -1;
 				tty_warn(0, "Cannot save archive name.");
 				return(-1);
 			}
-			freeit = 1;
+			arcname = arcfree;
 			break;
 		}
 		tty_prnt("Cannot open %s, try again\n", buf);

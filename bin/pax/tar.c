@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.52 2004/04/25 15:52:30 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.53 2004/05/11 17:12:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.52 2004/04/25 15:52:30 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.53 2004/05/11 17:12:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,15 @@ static int gnu_hack_len;		/* len of gnu_hack_string */
 char *gnu_name_string;			/* ././@LongLink hackery name */
 char *gnu_link_string;			/* ././@LongLink hackery link */
 static int gnu_short_trailer;		/* gnu short trailer */
+
+#ifdef _PAX_
+char DEV_0[] = "/dev/rst0";
+char DEV_1[] = "/dev/rst1";
+char DEV_4[] = "/dev/rst4";
+char DEV_5[] = "/dev/rst5";
+char DEV_7[] = "/dev/rst7";
+char DEV_8[] = "/dev/rst8";
+#endif
 
 static int
 check_sum(char *hd, size_t hdlen, char *bl, size_t bllen, int quiet)
