@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.46 1999/02/12 12:38:44 lukem Exp $
+#	$NetBSD: bsd.README,v 1.47 1999/02/12 15:10:22 tv Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -59,8 +59,9 @@ the regular libraries.  A new suffix, ".po", is used to denote a profiled
 object, and ".so" denotes a shared (position-independent) object.
 
 The following variables that control how things are made/installed that
-are not set by default. These should not be set by Makefiles; they're
-for the user to define in /etc/mk.conf or on the make(1) command line:
+are not set by default. These should not be set by Makefiles; they're for
+the user to define in MAKECONF (see bsd.own.mk, below) or on the make(1)
+command line:
 
 BUILD 		If defined, 'make install' checks that the targets in the
 		source directories are up-to-date and remakes them if they
@@ -75,14 +76,8 @@ MKCATPAGES	If "no", don't build or install the catman pages.
 
 MKDOC		If "no", don't build or install the documentation.
 
-MKLINKLIB	If "no", act as "MKPICINSTALL=no MKPROFILE=no".
-		Also:
-			- don't install the .a libraries
-			- don't install _pic.a libraries on PIC systems
-			- don't build .a libraries on PIC systems
-			- don't install the .so symlink on ELF systems
-		I.e, only install the shared library (and the .so.major
-		symlink on ELF).
+MKINFO		If "no", don't build or install Info documentation from
+		Texinfo source files.
 
 MKLINT		If "no", don't build or install the lint libraries.
 
@@ -100,8 +95,7 @@ MKPICINSTALL	If "no", don't install the *_pic.a libraries.
 MKPROFILE	If "no", don't build or install the profiling libraries.
 
 MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKMAN=no MKNLS=no".
-		I.e, don't build documentation, info pages, man pages,
-		NLS files, etc.
+		I.e, don't build documentation, man pages, NLS files, etc.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -157,8 +151,6 @@ is included.  These files may define any of the variables described below.
 
 bsd.own.mk sets the following variables, if they are not already defined
 (defaults are in brackets):
-
-
 
 BSDSRCDIR	The real path to the system sources, so that 'make obj'
 		will work correctly. [/usr/src]
@@ -463,6 +455,23 @@ the documentation in that file up to date.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+The include file <bsd.info.mk> is used to generate and install GNU Info
+documentation from respective Texinfo source files.  It defines three
+implicit targets (.txi.info, .texi.info, and .texinfo.info), and uses the
+following variables:
+
+TEXINFO		List of Texinfo source files.  Info documentation will
+		consist of single files with the extension replaced by
+		.info.
+
+INFOFLAGS	Flags to pass to makeinfo.  []
+
+INSTALL_INFO	Name of install-info program.  [install-info]
+
+MAKEINFO	Name of makeinfo program.  [makeinfo]
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
 The include file <bsd.sys.mk> is used by <bsd.prog.mk> and
 <bsd.lib.mk>.  It contains overrides that are used when building
 the NetBSD source tree.  For instance, if "PARALLEL" is defined by
@@ -495,6 +504,15 @@ LIBMODE		Library mode.
 LDADD		Additional loader objects.
 
 MAN		The manual pages to be installed (use a .1 - .9 suffix).
+
+MKLINKLIB	If "no", act as "MKPICINSTALL=no MKPROFILE=no".
+		Also:
+			- don't install the .a libraries
+			- don't install _pic.a libraries on PIC systems
+			- don't build .a libraries on PIC systems
+			- don't install the .so symlink on ELF systems
+		I.e, only install the shared library (and the .so.major
+		symlink on ELF).
 
 NOCHECKVER_<library>
 NOCHECKVER	If set, disables checking for installed shared object
