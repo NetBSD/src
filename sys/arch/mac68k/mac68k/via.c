@@ -32,6 +32,10 @@
  *
  */
 
+/*
+ *	This code handles both the VIA and RBV functionality.
+ */
+
 #include "sys/param.h"
 #include "machine/frame.h"
 #include "via.h"
@@ -39,9 +43,11 @@
 /* #include "stand.h" */
 
 long via1_noint(), via2_noint();
-long adb_intr(), rtclock_intr(), scsi_drq_intr(), scsi_irq_intr(), profclock();
+long adb_intr_II(), rtclock_intr(), scsi_drq_intr(), scsi_irq_intr(), profclock();
 long nubus_intr();
 int  slot_noint();
+int VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
+long adb_intr_PB();
 
 long via1_spent[2][7]={
 	{0,0,0,0,0,0,0}, 
@@ -51,7 +57,7 @@ long via1_spent[2][7]={
 long (*via1itab[7])()={
 	via1_noint,
 	via1_noint,
-	adb_intr,
+	adb_intr_II,
 	via1_noint,
 	via1_noint,
 	via1_noint,
@@ -61,13 +67,13 @@ long (*via1itab[7])()={
 long (*via2itab[7])()={
 	scsi_drq_intr,
 	nubus_intr,
-	via2_noint,
+	adb_intr_PB,	/* BARF BARF BARF - BG on hunch */
 	scsi_irq_intr,
-	via2_noint, /* snd_intr */
-	via2_noint, /* via2t2_intr */
+	via2_noint,	/* snd_intr */
+	via2_noint,	/* via2t2_intr */
 #if defined(GPROF) && defined(PROFTIMER)
+/*	profclock, we don't have the right parameters for this. */
 	via2_noint,
-/*	profclock,  parameters are wrong... */
 #else
 	via2_noint,
 #endif
@@ -103,7 +109,7 @@ void VIA_initialize()
 	via_reg(VIA1, vT2C) = 0;
 	via_reg(VIA1, vT2CH) = 0;
 
-#ifdef do_we_really_want_to
+#if not_on_all_machines_ugh
 	/* program direction and data for VIA #1 */
 	via_reg(VIA1, vBufA) = 0x01;
 	via_reg(VIA1, vDirA) = 0x3f;
@@ -118,43 +124,58 @@ void VIA_initialize()
 	/* enable specific interrupts */
 	/* via_reg(VIA1, vIER) = (VIA1_INTS & (~(V1IF_T1))) | 0x80; */
 	via_reg(VIA1, vIER) = V1IF_ADBRDY | 0x80;
-				/*  could put ^--- || V1IF_ADBRDY in here */
 
 	/* turn off timer latch */
 	via_reg(VIA1, vACR) &= 0x3f;
 
-	/* Initialize VIA2 */
-	via_reg(VIA2, vT1L) = 0;
-	via_reg(VIA2, vT1LH) = 0;
-	via_reg(VIA2, vT1C) = 0;
-	via_reg(VIA2, vT1CH) = 0;
-	via_reg(VIA2, vT2C) = 0;
-	via_reg(VIA2, vT2CH) = 0;
+	if(VIA2 == VIA2OFF){
+		/* Initialize VIA2 */
+		via_reg(VIA2, vT1L) = 0;
+		via_reg(VIA2, vT1LH) = 0;
+		via_reg(VIA2, vT1C) = 0;
+		via_reg(VIA2, vT1CH) = 0;
+		via_reg(VIA2, vT2C) = 0;
+		via_reg(VIA2, vT2CH) = 0;
 
-	/* turn off timer latch */
-	via_reg(VIA2, vACR) &= 0x3f;
+		/* turn off timer latch */
+		via_reg(VIA2, vACR) &= 0x3f;
 
-#ifdef do_we_really_want_to
-	/* program direction and data for VIA #2 */
-	via_reg(VIA2, vBufA) = via_reg(VIA2, vBufA);
-	via_reg(VIA2, vDirA) = 0xc0;
-	via_reg(VIA2, vBufB) = 0x05;
-	via_reg(VIA2, vDirB) = 0x80;
+#if not_on_all_machines_ugh
+		/* program direction and data for VIA #2 */
+		via_reg(VIA2, vBufA) = via_reg(VIA2, vBufA);
+		via_reg(VIA2, vDirA) = 0xc0;
+		via_reg(VIA2, vBufB) = 0x05;
+		via_reg(VIA2, vDirB) = 0x80;
 #endif
 
-	/* unlock nubus */
-	via_reg(VIA2, vPCR)   = 0x06;
-	via_reg(VIA2, vBufB) |= 0x02;
-	via_reg(VIA2, vDirB) |= 0x02;
+		/* unlock nubus */
+		via_reg(VIA2, vPCR)   = 0x06;
+		via_reg(VIA2, vBufB) |= 0x02;
+		via_reg(VIA2, vDirB) |= 0x02;
 
 #ifdef never
-	/* disable all interrupts */
-	via_reg(VIA2, vIER) = 0x7f;
-	via_reg(VIA2, vIFR) = 0x7f;
+		/* disable all interrupts */
+		via_reg(VIA2, vIER) = 0x7f;
+		via_reg(VIA2, vIFR) = 0x7f;
 
-	/* enable specific interrupts */
-	via_reg(VIA2, vIER) = VIA2_INTS | 0x80;
+		/* enable specific interrupts */
+		switch(machineid){	/* Argh!  setmachdep()! */
+			case MACH_MACPB140:
+			case MACH_MACPB170:
+				/* below, we will keep track of interrupts. */
+				via_reg(VIA2, vIER) = 0xff /*VIA2_INTS | 0x80 | V1IF_ADBRDY*/;
+				break;
+			default:
+				via_reg(VIA2, vIER) = VIA2_INTS | 0x80;
+				break;
+		}
 #endif
+	}else{	/* RBV */
+		/* I'm sure that I'll find something to put in here
+			someday. -- BG */
+		/* enable specific interrupts */
+		/* via_reg(VIA2, rIER) = RBV_INTS | 0x80; */
+	}
 	via_inited=1;
 }
 
@@ -203,9 +224,17 @@ void via2_intr(struct frame *fp)
 	register unsigned char intbits, enbbits;
 	register char bitnum, bitmsk;
 
-	intbits = via_reg(VIA2, vIFR);	/* get interrupts pending */
-	intbits &= via_reg(VIA2, vIER);	/* only care about enabled ones */
+	if(VIA2 == VIA2OFF){
+		intbits = via_reg(VIA2, vIFR);	/* get interrupts pending */
+/*		if(via_inited)printf("via2 %02x\n", intbits); */
+		intbits &= via_reg(VIA2, vIER);	/* only care about enabled ones */
+	}else{/* assume RBV */
+		intbits = via_reg(VIA2, rIFR);	/* get interrupts pending */
+/*		if(via_inited)printf("rbv %02x\n", intbits); */
+		intbits &= via_reg(VIA2, rIER);	/* only care about enabled ones */
+	}
 	intbits &= ~ intpend;  		/* to stop recursion */
+
 
 	bitmsk = 1;
 	bitnum = 0;
@@ -214,7 +243,10 @@ void via2_intr(struct frame *fp)
 			intpend |= bitmsk;	/* don't process this twice */
 			via2itab[bitnum](bitnum);	/* run interrupt handler */
 			intpend &= ~bitmsk;	/* fix previous pending */
-			via_reg(VIA2, vIFR) = bitmsk;
+			if(VIA2 == VIA2OFF)
+				via_reg(VIA2, vIFR) = bitmsk;
+			else	/* Assume RBV */
+				via_reg(VIA2, rIFR) = bitmsk;
 					/* turn off interrupt pending. */
 		}
 		bitnum++;
@@ -225,13 +257,13 @@ void via2_intr(struct frame *fp)
 
 long via1_noint(int bitnum)
 {
-  printf("via1_noint(%d)\n", bitnum);
+  /* printf("via1_noint(%d)\n", bitnum); */
   return 1;
 }
 
 long via2_noint(int bitnum)
 {
-  printf("via2_noint(%d)\n", bitnum);
+  /* printf("via2_noint(%d)\n", bitnum); */
   return 1;
 }
 
@@ -287,7 +319,24 @@ int slot_noint(int unit, int slot)
 
 void via_shutdown()
 {
-  via_reg(VIA2, vDirB) |= 0x04;  /* Set write for bit 2 */
-  via_reg(VIA2, vBufB) &= ~0x04; /* Shut down */
+	if(VIA2 == VIA2OFF){
+		via_reg(VIA2, vDirB) |= 0x04;  /* Set write for bit 2/
+		via_reg(VIA2, vBufB) &= ~0x04; /* Shut down */
+	}else if(VIA2 == RBVOFF){
+		via_reg(VIA2, rBufB) &= ~0x04;
+	}
 }
 
+int rbv_vidstatus(void)
+{
+	int montype;
+
+	montype = via_reg(VIA2, rMonitor) & RBVMonitorMask;
+	if(montype == RBVMonIDNone)
+		montype = RBVMonIDOff;
+
+   ddprintf("Monitor type: %d\n", montype);
+
+   return(0);
+	return(montype);
+}
