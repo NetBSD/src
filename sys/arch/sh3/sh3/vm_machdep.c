@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 1999/12/04 21:21:27 ragge Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5 2000/01/07 00:13:24 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -144,7 +144,7 @@ cpu_set_kpc(p, pc, arg)
 	sf->sf_pr  = (int) proc_trampoline;
 
 	tf = (struct trapframe *)(sf+1);
-	tf->tf_ssr |= 0x000000f0; /* disable external interrupt */
+	tf->tf_ssr |= PSL_IMASK; /* disable external interrupt */
 }
 
 void
