@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.71 2002/08/19 23:23:22 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.72 2002/09/04 07:22:28 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.71 2002/08/19 23:23:22 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.72 2002/09/04 07:22:28 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -517,7 +517,8 @@ nd6_timer(ignored_arg)
 		if (IFA6_IS_INVALID(ia6)) {
 			in6_purgeaddr(&ia6->ia_ifa);
 		}
-		if (IFA6_IS_DEPRECATED(ia6)) {
+		if ((ia6->ia6_flags & IN6_IFF_DEPRECATED) != 0 ||
+		    IFA6_IS_DEPRECATED(ia6)) {
 			ia6->ia6_flags |= IN6_IFF_DEPRECATED;
 		} else {
 			/*
