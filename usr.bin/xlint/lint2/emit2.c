@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.6 2001/05/28 12:40:38 lukem Exp $ */
+/* $NetBSD: emit2.c,v 1.7 2001/07/26 15:05:10 wiz Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: emit2.c,v 1.6 2001/05/28 12:40:38 lukem Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.7 2001/07/26 15:05:10 wiz Exp $");
 #endif
 
 #include <err.h>
@@ -197,7 +197,7 @@ dumpname(hte_t *hte)
 
 	/*
 	 * If there is a definition, write it. Otherwise write a tentative
-	 * definition. This is neccessary because more than one tentative
+	 * definition. This is necessary because more than one tentative
 	 * definition is allowed (except with sflag).
 	 */
 	def = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.6 2001/01/25 22:50:56 jdolecek Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.7 2001/07/26 15:05:08 wiz Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -660,7 +660,7 @@ static struct netconfig *
 	 * adjust some of the member pointer to a pre-allocated buffer where
 	 * contains part of the data.
 	 * To follow the convention used in parse_ncp(), we store all the
-	 * neccessary information in the pre-allocated buffer and let each
+	 * necessary information in the pre-allocated buffer and let each
 	 * of the netconfig char pointer member point to the right address
 	 * in the buffer.
 	 */

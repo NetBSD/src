@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.8 2001/04/06 16:52:41 wiz Exp $	*/
+/*	$NetBSD: ext.h,v 1.9 2001/07/26 15:05:08 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -94,7 +94,7 @@ int readfat __P((int, struct bootblock *, int, struct fatEntry **));
 
 /*
  * Check two FAT copies for consistency and merge changes into the
- * first if neccessary.
+ * first if necessary.
  */
 int comparefat __P((struct bootblock *, struct fatEntry *, struct fatEntry *, int));
 

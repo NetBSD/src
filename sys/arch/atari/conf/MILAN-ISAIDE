@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.4 2001/07/09 14:01:10 leo Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.5 2001/07/26 15:05:09 wiz Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -218,7 +218,7 @@ fdisa0 		at fdcisa0 drive 0
 #swap the bytelanes on the IDE controller. So all data on the disk was
 #byteswapped and all CDROM drivers had to byteswap the data to make
 #this nice idea work... To remain compatible with the 'current' drivers,
-#this sceme was adopted by the Hades hardware (hence wdc_mb.c). On the Milan
+#this scheme was adopted by the Hades hardware (hence wdc_mb.c). On the Milan
 #however, the change was reverted. But... now the hardware is connected to
 #a little endian (ISA) bus, in PIO mode this is essentially the same as
 #swapping the bytelanes. The fun starts when you use the PCIIDE DMA mode

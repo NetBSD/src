@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 1998/10/06 14:31:58 ws Exp $	*/
+/*	$NetBSD: boot.c,v 1.7 2001/07/26 15:05:08 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.6 1998/10/06 14:31:58 ws Exp $");
+__RCSID("$NetBSD: boot.c,v 1.7 2001/07/26 15:05:08 wiz Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -261,7 +261,7 @@ writefsinfo(dosfs, boot)
 	 * correctly, it has to be fixed pretty often.
 	 *
 	 * Therefor, we handle the FSINFO block only informally,
-	 * fixing it if neccessary, but otherwise ignoring the
+	 * fixing it if necessary, but otherwise ignoring the
 	 * fact that it was incorrect.
 	 */
 	return 0;

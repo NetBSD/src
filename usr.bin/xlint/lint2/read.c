@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.9 2001/05/28 12:40:38 lukem Exp $ */
+/* $NetBSD: read.c,v 1.10 2001/07/26 15:05:10 wiz Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: read.c,v 1.9 2001/05/28 12:40:38 lukem Exp $");
+__RCSID("$NetBSD: read.c,v 1.10 2001/07/26 15:05:10 wiz Exp $");
 #endif
 
 #include <stdio.h>
@@ -227,7 +227,7 @@ setsrc(const char *cp)
 
 /*
  * setfnid() gets as input an index as used in an input file and the
- * associated file name. If neccessary, it creates a new lint2 file
+ * associated file name. If necessary, it creates a new lint2 file
  * name index for this file name and creates the mapping of the index
  * as used in the input file to the index used in lint2.
  */

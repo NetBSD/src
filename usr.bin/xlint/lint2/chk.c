@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.10 2001/05/28 12:40:38 lukem Exp $ */
+/* $NetBSD: chk.c,v 1.11 2001/07/26 15:05:10 wiz Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: chk.c,v 1.10 2001/05/28 12:40:38 lukem Exp $");
+__RCSID("$NetBSD: chk.c,v 1.11 2001/07/26 15:05:10 wiz Exp $");
 #endif
 
 #include <stdlib.h>
@@ -563,7 +563,7 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	/*
 	 * Other lint implementations print warnings as soon as the type
 	 * of an argument does not match exactly the expected type. The
-	 * result are lots of warnings which are really not neccessary.
+	 * result are lots of warnings which are really not necessary.
 	 * We print a warning only if
 	 *   (0) at least one type is not an interger type and types differ
 	 *   (1) hflag is set and types differ
