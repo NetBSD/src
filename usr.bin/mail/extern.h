@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.13 2002/03/02 14:59:38 wiz Exp $	*/
+/*	$NetBSD: extern.h,v 1.14 2002/03/05 19:25:16 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.13 2002/03/02 14:59:38 wiz Exp $
+ *	$NetBSD: extern.h,v 1.14 2002/03/05 19:25:16 wiz Exp $
  */
 
 struct name;
@@ -89,7 +89,6 @@ int	 _respond(int *);
 void	 alter(char *);
 int	 alternates(void *);
 void	 announce(void);
-int	 anyof(char *, char *);
 int	 append(struct message *, FILE *);
 int	 argcount(char **);
 void	 assign(char [], char []);
