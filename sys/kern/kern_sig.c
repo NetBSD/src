@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.177 2003/11/03 22:34:51 cl Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.178 2003/11/12 21:07:38 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.177 2003/11/03 22:34:51 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.178 2003/11/12 21:07:38 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1587,12 +1587,15 @@ static void
 proc_stop(struct proc *p)
 {
 	struct lwp *l;
+	struct proc *parent;
 
 	SCHED_ASSERT_LOCKED();
 
 	/* XXX lock process LWP state */
-	p->p_stat = SSTOP;
 	p->p_flag &= ~P_WAITED;
+	p->p_stat = SSTOP;
+	parent = p->p_pptr;
+	parent->p_nstopchild++;
 
 	if (p->p_flag & P_SA) {
 		/*
@@ -1698,6 +1701,8 @@ proc_unstop(struct proc *p)
 	 * interruptable LWPs if this is the case.
 	 */
 
+	if (!(p->p_flag & P_WAITED))
+		p->p_pptr->p_nstopchild--;
 	p->p_stat = SACTIVE;
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		if (l->l_stat == LSRUN) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.127 2003/11/06 09:30:13 dsl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.128 2003/11/12 21:07:38 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.127 2003/11/06 09:30:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.128 2003/11/12 21:07:38 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -308,6 +308,22 @@ exit1(struct lwp *l, int rv)
 		(*p->p_emul->e_proc_exit)(p);
 
 	/*
+	 * Reset p_opptr pointer of all former children which got
+	 * traced by another process and were reparented. We reset
+	 * it to NULL here; the trace detach code then reparents
+	 * the child to initproc. We only check allproc list, since
+	 * eventual former children on zombproc list won't reference
+	 * p_opptr anymore.
+	 */
+	s = proclist_lock_write();
+	if (p->p_flag & P_CHTRACED) {
+		LIST_FOREACH(q, &allproc, p_list) {
+			if (q->p_opptr == p)
+				q->p_opptr = NULL;
+		}
+	}
+
+	/*
 	 * Give orphaned children to init(8).
 	 */
 	q = LIST_FIRST(&p->p_children);
@@ -336,27 +352,7 @@ exit1(struct lwp *l, int rv)
 			proc_reparent(q, initproc);
 		}
 	}
-
-	/*
-	 * Reset p_opptr pointer of all former children which got
-	 * traced by another process and were reparented. We reset
-	 * it to NULL here; the trace detach code then reparents
-	 * the child to initproc. We only check allproc list, since
-	 * eventual former children on zombproc list won't reference
-	 * p_opptr anymore.
-	 */
-	if (p->p_flag & P_CHTRACED) {
-		struct proc *t;
-
-		proclist_lock_read();
-
-		LIST_FOREACH(t, &allproc, p_list) {
-			if (t->p_opptr == p)
-				t->p_opptr = NULL;
-		}
-
-		proclist_unlock_read();
-	}
+	proclist_unlock_write(s);
 
 	/*
 	 * Save exit status and final rusage info, adding in child rusage
@@ -501,7 +497,7 @@ exit_lwps(struct lwp *l)
 	 */
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 		l2->l_flag &= ~(L_DETACHED|L_SA);
-	
+
 		if (l2->l_wchan == &l2->l_upcallstack)
 			wakeup(&l2->l_upcallstack);
 
@@ -570,7 +566,7 @@ exit2(struct lwp *l)
 void
 reaper(void *arg)
 {
-	struct proc *p;
+	struct proc *p, *parent;
 	struct lwp *l;
 
 	KERNEL_PROC_UNLOCK(curlwp);
@@ -636,6 +632,14 @@ reaper(void *arg)
 			
 			/* Process is now a true zombie. */
 			p->p_stat = SZOMB;
+			parent = p->p_pptr;
+			parent->p_nstopchild++;
+			if (LIST_FIRST(&parent->p_children) != p) {
+				/* Put child where it can be found quickly */
+				LIST_REMOVE(p, p_sibling);
+				LIST_INSERT_HEAD(&parent->p_children,
+						p, p_sibling);
+			}
 			
 			/* Wake up the parent so it can get exit status. */
 			if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
@@ -698,7 +702,7 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 	/* child state must be SSTOP */
 	if (SCARG(uap, status)) {
 		status = W_STOPCODE(child->p_xstat);
-		return copyout(&status, SCARG(uap, status), sizeof (status));
+		return copyout(&status, SCARG(uap, status), sizeof(status));
 	}
 	return 0;
 }
@@ -712,15 +716,26 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 	struct proc **child_p)
 {
 	struct proc *child;
-	int c_found, error;
+	int error;
 
 	for (;;) {
-		c_found = 0;
+		proclist_lock_read();
+		error = ECHILD;
 		LIST_FOREACH(child, &parent->p_children, p_sibling) {
-			if (pid != WAIT_ANY &&
-			    child->p_pid != pid &&
-			    child->p_pgid != -pid)
-				continue;
+			if (pid >= 0) {
+				if (child->p_pid != pid) {
+					child = p_find(pid, PFIND_ZOMBIE |
+								PFIND_LOCKED);
+					if (child == NULL
+					    || child->p_pptr != parent) {
+						child = NULL;
+						break;
+					}
+				}
+			} else
+				if (pid != WAIT_ANY && child->p_pgid != -pid)
+					/* child not in correct pgrp */
+					continue;
 			/*
 			 * Wait for processes with p_exitsig != SIGCHLD
 			 * processes only if WALTSIG is set; wait for
@@ -729,30 +744,36 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 			 */
 			if (((options & WALLSIG) == 0) &&
 			    (options & WALTSIG ? child->p_exitsig == SIGCHLD
-						: P_EXITSIG(child) != SIGCHLD))
+						: P_EXITSIG(child) != SIGCHLD)){
+				if (child->p_pid == pid) {
+					child = NULL;
+					break;
+				}
 				continue;
-
-			c_found = 1;
-			if (child->p_stat == SZOMB &&
-			    (options & WNOZOMBIE) == 0) {
-				*child_p = child;
-				return 0;
 			}
+
+			error = 0;
+			if (child->p_stat == SZOMB && !(options & WNOZOMBIE))
+				break;
 
 			if (child->p_stat == SSTOP &&
 			    (child->p_flag & P_WAITED) == 0 &&
 			    (child->p_flag & P_TRACED || options & WUNTRACED)) {
-				if ((options & WNOWAIT) == 0)
+				if ((options & WNOWAIT) == 0) {
 					child->p_flag |= P_WAITED;
-				*child_p = child;
-				return 0;
+					parent->p_nstopchild--;
+				}
+				break;
+			}
+			if (parent->p_nstopchild == 0 || child->p_pid == pid) {
+				child = NULL;
+				break;
 			}
 		}
-		if (c_found == 0)
-			return ECHILD;
-		if (options & WNOHANG) {
-			*child_p = NULL;
-			return 0;
+		proclist_unlock_read();
+		if (child != NULL || error != 0 || options & WNOHANG) {
+			*child_p = child;
+			return error;
 		}
 		error = tsleep(parent, PWAIT | PCATCH, "wait", 0);
 		if (error != 0)
@@ -814,6 +835,7 @@ proc_free(struct proc *p)
 
 	s = proclist_lock_write();
 	LIST_REMOVE(p, p_list);	/* off zombproc */
+	p->p_pptr->p_nstopchild--;
 	LIST_REMOVE(p, p_sibling);
 	proclist_unlock_write(s);
 
@@ -850,6 +872,8 @@ proc_free(struct proc *p)
 
 /*
  * make process 'parent' the new parent of process 'child'.
+ *
+ * Must be called with proclist_lock_write() held.
  */
 void
 proc_reparent(struct proc *child, struct proc *parent)
@@ -858,6 +882,11 @@ proc_reparent(struct proc *child, struct proc *parent)
 	if (child->p_pptr == parent)
 		return;
 
+	if (child->p_stat == SZOMB
+	    || (child->p_stat == SSTOP && !(child->p_flag & P_WAITED))) {
+		child->p_pptr->p_nstopchild--;
+		parent->p_nstopchild++;
+	}
 	if (parent == initproc)
 		child->p_exitsig = SIGCHLD;
 
