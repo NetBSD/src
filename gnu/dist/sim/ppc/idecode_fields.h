@@ -100,3 +100,6 @@
 #define BO_2_ ((BO & BIT5(2)) != 0)
 #define BO_3_ ((BO & BIT5(3)) != 0)
 #define BO_4_ ((BO & BIT5(4)) != 0)
+
+#define GOTO(dest)   goto XCONCAT4(label__,dest,__,MY_PREFIX)
+#define LABEL(dest)  XCONCAT4(label__,dest,__,MY_PREFIX)

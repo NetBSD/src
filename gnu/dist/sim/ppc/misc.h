@@ -19,6 +19,31 @@
     */
 
 
+/* Frustrating header junk */
+
+#include "config.h"
+
+#include <stdio.h>
+#include <ctype.h>
+
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
+#endif
+
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+
+#if !defined (__attribute__) && (!defined(__GNUC__) || __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7))
+#define __attribute__(arg)
+#endif
+
+
+
 #include "filter_filename.h"
 
 extern void error
@@ -40,10 +65,6 @@ extern void *zalloc
 extern void dumpf
 (int indent, char *msg, ...);
 
-extern int it_is
-(const char *flag,
- const char *flags);
-
 extern unsigned target_a2i
 (int ms_bit_nr,
  const char *a);
@@ -54,3 +75,20 @@ extern unsigned i2target
 
 extern unsigned a2i
 (const char *a);
+
+/* Try looking for name in the map table (returning the corresponding
+   integer value).  If that fails, try converting the name into an
+   integer */
+
+typedef struct _name_map {
+  const char *name;
+  int i;
+} name_map;
+
+extern int name2i
+(const char *name,
+ const name_map *map);
+
+extern const char *i2name
+(const int i,
+ const name_map *map);

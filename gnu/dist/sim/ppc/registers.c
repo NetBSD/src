@@ -130,6 +130,21 @@ register_description(const char reg[])
     description.index = spr_ctr;
     description.size = sizeof(spreg);
   }
+  else if (!strcmp(reg, "insns")) {
+    description.type = reg_insns;
+    description.index = spr_ctr;
+    description.size = sizeof(unsigned_word);
+  }
+  else if (!strcmp(reg, "stalls")) {
+    description.type = reg_stalls;
+    description.index = spr_ctr;
+    description.size = sizeof(unsigned_word);
+  }
+  else if (!strcmp(reg, "cycles")) {
+    description.type = reg_cycles;
+    description.index = spr_ctr;
+    description.size = sizeof(unsigned_word);
+  }
   else {
     sprs spr = find_spr(reg);
     if (spr != nr_of_sprs) {
