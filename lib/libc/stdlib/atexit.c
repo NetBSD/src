@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.14 2003/03/01 04:19:37 thorpej Exp $	*/
+/*	$NetBSD: atexit.c,v 1.15 2003/03/04 18:09:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -149,31 +149,71 @@ __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 /*
  * Run the list of atexit handlers.  If dso is NULL, run all of them,
  * otherwise run only those matching the specified dso.
+ *
+ * Note that we can be recursively invoked; rtld cleanup is via an
+ * atexit handler, and rtld cleanup invokes _fini() for DSOs, which
+ * in turn invokes __cxa_finalize() for the DSO.
  */
 void
 __cxa_finalize(void *dso)
 {
+	static thr_t owner;
+	static u_int call_depth;
 	struct atexit_handler *ah, *dead_handlers = NULL, **prevp;
+	void (*cxa_func)(void *);
+	void (*atexit_func)(void);
 
-	mutex_lock(&atexit_mutex);
+	/*
+	 * We implement our own recursive mutex here because we need
+	 * to keep track of the call depth anyway, and it saves us
+	 * having to dynamically initialize the mutex.
+	 */
+	if (mutex_trylock(&atexit_mutex) == 0)
+		owner = thr_self();
+	else if (owner != thr_self()) {
+		mutex_lock(&atexit_mutex);
+		owner = thr_self();
+	}
 
+	call_depth++;
+
+	/*
+	 * If we are at call depth 1 (which is usually the "do everything"
+	 * call from exit(3)), we go ahead and remove elements from the
+	 * list as we call them.  This will prevent any nested calls from
+	 * having to traverse elements we've already processed.  If we are
+	 * at call depth > 1, we simply mark elements we process as unused.
+	 * When the depth 1 caller sees those, it will simply unlink them
+	 * for us.
+	 */
 	for (prevp = &atexit_handler_stack; (ah = (*prevp)) != NULL;) {
-		if (dso == NULL || dso == ah->ah_dso) {
-			if (ah->ah_dso != NULL)
-				(*ah->ah_cxa_atexit)(ah->ah_arg);
-			else
-				(*ah->ah_atexit)();
-
-			*prevp = ah->ah_next;
-			if (STATIC_HANDLER_P(ah))
-				ah->ah_atexit = NULL;	/* mark it free */
-			else {
-				ah->ah_next = dead_handlers;
-				dead_handlers = ah;
+		if (dso == NULL || dso == ah->ah_dso || ah->ah_atexit == NULL) {
+			if (ah->ah_atexit != NULL) {
+				if (ah->ah_dso != NULL) {
+					cxa_func = ah->ah_cxa_atexit;
+					ah->ah_cxa_atexit = NULL;
+					(*cxa_func)(ah->ah_arg);
+				} else {
+					atexit_func = ah->ah_atexit;
+					ah->ah_atexit = NULL;
+					(*atexit_func)();
+				}
 			}
+
+			if (call_depth == 1) {
+				*prevp = ah->ah_next;
+				if (! STATIC_HANDLER_P(ah)) {
+					ah->ah_next = dead_handlers;
+					dead_handlers = ah;
+				}
+			} else
+				prevp = &ah->ah_next;
 		} else
 			prevp = &ah->ah_next;
 	}
+
+	if (call_depth > 1)
+		return;
 
 	mutex_unlock(&atexit_mutex);
 
