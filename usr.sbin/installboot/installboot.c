@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.9 2002/05/15 02:18:22 lukem Exp $	*/
+/*	$NetBSD: installboot.c,v 1.10 2002/05/20 14:38:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.9 2002/05/15 02:18:22 lukem Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.10 2002/05/20 14:38:38 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -310,58 +310,63 @@ no_clearboot(ib_params *params)
 static int
 getmachine(ib_params *param, const char *mach, const char *provider)
 {
+	const char *prefix;
 	int	i;
 
-	assert(param != NULL);
-	assert(mach != NULL);
-	assert(provider != NULL);
-
-	for (i = 0; machines[i].name != NULL; i++) {
-		if (strcmp(machines[i].name, mach) == 0) {
-			param->machine = &machines[i];
-			return (1);
+	if (param != NULL && mach != NULL && provider != NULL) {
+		for (i = 0; machines[i].name != NULL; i++) {
+			if (strcmp(machines[i].name, mach) == 0) {
+				param->machine = &machines[i];
+				return (1);
+			}
 		}
+		warnx("Invalid machine `%s' from %s", mach, provider);
 	}
-	warnx("Invalid machine `%s' from %s", mach, provider);
 	warnx("Supported machines are:");
-#define MACHS_PER_LINE	10
+#define MACHS_PER_LINE	9
+	prefix="";
 	for (i = 0; machines[i].name != NULL; i++) {
-		fputs((i % MACHS_PER_LINE) ? ", " : "\t", stderr);
-		fputs(machines[i].name, stderr);
-		if ((i % MACHS_PER_LINE) == (MACHS_PER_LINE - 1))
-			fputs("\n", stderr);
+		if (i == 0)
+			prefix="\t";
+		else if (i % MACHS_PER_LINE)
+			prefix=", ";
+		else
+			prefix=",\n\t";
+		fprintf(stderr, "%s%s", prefix, machines[i].name);
 	}
-	if ((i % MACHS_PER_LINE) != 0)
-		fputs("\n", stderr);
+	fputs("\n", stderr);
 	return (0);
 }
 
 static int
 getfstype(ib_params *param, const char *fstype, const char *provider)
 {
+	const char *prefix;
 	int	i;
 
-	assert(param != NULL);
-	assert(fstype != NULL);
-	assert(provider != NULL);
-
-	for (i = 0; fstypes[i].name != NULL; i++) {
-		if (strcmp(fstypes[i].name, fstype) == 0) {
-			param->fstype = &fstypes[i];
-			return (1);
+	if (param != NULL && fstype != NULL && provider != NULL) {
+		for (i = 0; fstypes[i].name != NULL; i++) {
+			if (strcmp(fstypes[i].name, fstype) == 0) {
+				param->fstype = &fstypes[i];
+				return (1);
+			}
 		}
+		warnx("Invalid file system type `%s' from %s",
+		    fstype, provider);
 	}
-	warnx("Invalid file system type `%s' from %s", fstype, provider);
 	warnx("Supported file system types are:");
-#define FSTYPES_PER_LINE	10
+#define FSTYPES_PER_LINE	9
+	prefix="";
 	for (i = 0; fstypes[i].name != NULL; i++) {
-		fputs((i % FSTYPES_PER_LINE) ? ", " : "\t", stderr);
-		fputs(fstypes[i].name, stderr);
-		if ((i % FSTYPES_PER_LINE) == (FSTYPES_PER_LINE - 1))
-			fputs("\n", stderr);
+		if (i == 0)
+			prefix="\t";
+		else if (i % FSTYPES_PER_LINE)
+			prefix=", ";
+		else
+			prefix=",\n\t";
+		fprintf(stderr, "%s%s", prefix, fstypes[i].name);
 	}
-	if ((i % FSTYPES_PER_LINE) != 0)
-		fputs("\n", stderr);
+	fputs("\n", stderr);
 	return (0);
 }
 
@@ -376,5 +381,7 @@ usage(void)
 "\t\t   [-b s1start] [-B s2start] filesystem primary [secondary]\n"
 "Usage: %s -c [-nv] [-m machine] [-o options] [-t fstype] filesystem\n",
 	    prog, prog);
+	getmachine(NULL, NULL, NULL);
+	getfstype(NULL, NULL, NULL);
 	exit(1);
 }
