@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.30 2003/02/02 10:21:14 wiz Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.31 2003/02/09 18:27:10 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.30 2003/02/02 10:21:14 wiz Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.31 2003/02/09 18:27:10 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,8 @@ file_creat(ARCHD *arcn)
 			break;
 		oerrno = errno;
 		if (nodirs || chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
-			syswarn(1, oerrno, "Unable to create %s", arcn->name);
+			(void)fflush(listf);
+			syswarn(1, oerrno, "Cannot create %s", arcn->name);
 			return(-1);
 		}
 	}
@@ -146,7 +147,7 @@ file_close(ARCHD *arcn, int fd)
 	if (fd < 0)
 		return;
 	if (close(fd) < 0)
-		syswarn(0, errno, "Unable to close file descriptor on %s",
+		syswarn(0, errno, "Cannot close file descriptor on %s",
 		    arcn->name);
 
 	/*
@@ -192,7 +193,7 @@ lnk_creat(ARCHD *arcn)
 	 * is not a directory, so we lstat and check
 	 */
 	if (lstat(arcn->ln_name, &sb) < 0) {
-		syswarn(1,errno,"Unable to link to %s from %s", arcn->ln_name,
+		syswarn(1, errno, "Cannot link to %s from %s", arcn->ln_name,
 		    arcn->name);
 		return(-1);
 	}
@@ -295,7 +296,7 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 		 * make sure it is not the same file, protect the user
 		 */
 		if ((to_sb->st_dev==sb.st_dev)&&(to_sb->st_ino == sb.st_ino)) {
-			tty_warn(1, "Unable to link file %s to itself", to);
+			tty_warn(1, "Cannot link file %s to itself", to);
 			return(-1);
 		}
 
@@ -304,12 +305,12 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 		 */
 		if (S_ISDIR(sb.st_mode)) {
 			if (rmdir(from) < 0) {
-				syswarn(1, errno, "Unable to remove %s", from);
+				syswarn(1, errno, "Cannot remove %s", from);
 				return(-1);
 			}
 		} else if (unlink(from) < 0) {
 			if (!ign) {
-				syswarn(1, errno, "Unable to remove %s", from);
+				syswarn(1, errno, "Cannot remove %s", from);
 				return(-1);
 			}
 			return(1);
@@ -328,7 +329,7 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 		if (chk_path(from, to_sb->st_uid, to_sb->st_gid) == 0)
 			continue;
 		if (!ign) {
-			syswarn(1, oerrno, "Could not link to %s from %s", to,
+			syswarn(1, oerrno, "Cannot link to %s from %s", to,
 			    from);
 			return(-1);
 		}
@@ -454,7 +455,7 @@ badlink:
 			continue;
 
 		if (nodirs || chk_path(nm,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
-			syswarn(1, oerrno, "Could not create: %s", nm);
+			syswarn(1, oerrno, "Cannot create %s", nm);
 			return(-1);
 		}
 	}
@@ -497,7 +498,7 @@ badlink:
 		 */
 		if (access(nm, R_OK | W_OK | X_OK) < 0) {
 			if (lstat(nm, &sb) < 0) {
-				syswarn(0, errno,"Could not access %s (stat)",
+				syswarn(0, errno,"Cannot access %s (stat)",
 				    arcn->name);
 				set_pmode(nm,file_mode | S_IRWXU);
 			} else {
@@ -569,7 +570,7 @@ unlnk_exist(char *name, int type)
 		if (rmdir(name) < 0) {
 			if (type == PAX_DIR)
 				return(1);
-			syswarn(1,errno,"Unable to remove directory %s", name);
+			syswarn(1, errno, "Cannot remove directory %s", name);
 			return(-1);
 		}
 		return(0);
@@ -579,7 +580,8 @@ unlnk_exist(char *name, int type)
 	 * try to get rid of all non-directory type nodes
 	 */
 	if (unlink(name) < 0) {
-		syswarn(1, errno, "Could not unlink %s", name);
+		(void)fflush(listf);
+		syswarn(1, errno, "Cannot unlink %s", name);
 		return(-1);
 	}
 	return(0);
@@ -712,7 +714,7 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
 				tv[1].tv_sec = sb.st_mtime;
 #endif
 		} else
-			syswarn(0,errno,"Unable to obtain file stats %s", fnm);
+			syswarn(0, errno, "Cannot obtain file stats %s", fnm);
 	}
 
 	/*
@@ -746,7 +748,7 @@ set_ids(char *fnm, uid_t uid, gid_t gid)
 #endif
 		{
 			(void)fflush(listf);
-			syswarn(1, errno, "Unable to set file uid/gid of %s",
+			syswarn(1, errno, "Cannot set file uid/gid of %s",
 			    fnm);
 			return(-1);
 		}
@@ -767,7 +769,8 @@ set_pmode(char *fnm, mode_t mode)
 #else
 	if (chmod(fnm, mode))
 #endif
-		syswarn(1, errno, "Could not set permissions on %s", fnm);
+		(void)fflush(listf);
+		syswarn(1, errno, "Cannot set permissions on %s", fnm);
 	return;
 }
 
@@ -781,7 +784,7 @@ set_chflags(char *fnm, u_int32_t flags)
 	
 #if 0
 	if (chflags(fnm, flags) < 0 && errno != EOPNOTSUPP)
-		syswarn(1, errno, "Could not set file flags on %s", fnm);
+		syswarn(1, errno, "Cannot set file flags on %s", fnm);
 #endif
 	return;
 }
@@ -885,7 +888,7 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 				 */
 				if (fd > -1 &&
 				    lseek(fd, (off_t)wcnt, SEEK_CUR) < 0) {
-					syswarn(1,errno,"File seek on %s",
+					syswarn(1, errno, "File seek on %s",
 					    name);
 					return(-1);
 				}

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.18 2003/02/02 10:21:13 wiz Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.19 2003/02/09 18:27:10 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.18 2003/02/02 10:21:13 wiz Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.19 2003/02/09 18:27:10 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -693,7 +693,8 @@ rd_wrfile(ARCHD *arcn, int ofd, off_t *left)
 		if (sb.st_blksize > 0)
 			sz = (int)sb.st_blksize;
 	} else
-		syswarn(0,errno,"Unable to obtain block size for file %s",fnm);
+		syswarn(0, errno,
+		    "Unable to obtain block size for file %s", fnm);
 	rem = sz;
 	*left = 0L;
 
@@ -789,7 +790,8 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 		if (sb.st_blksize > 0)
 			sz = sb.st_blksize;
 	} else
-		syswarn(0,errno,"Unable to obtain block size for file %s",fnm);
+		syswarn(0, errno,
+		    "Unable to obtain block size for file %s", fnm);
 	rem = sz;
 
 	/*
