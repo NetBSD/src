@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.509 2004/11/12 05:32:27 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.510 2004/11/12 05:37:28 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7897,3 +7897,11 @@ lib/libc/gen/sysctl.3				1.140
 
 	Add vm.bufcache, vm.bufmem, vm.bufmem_lowater, m.bufmem_hiwater
 	[daniel, ticket #926]
+
+xfree/xc/programs/Xserver/hw/netbsd/amiga/cirrus/clwindow.c	1.2
+xfree/xc/programs/Xserver/hw/netbsd/amiga/s3/amigaCVblt.c	1.4
+xfree/xc/programs/Xserver/hw/netbsd/dec/px/pxwindow.c		1.3
+
+	Some more REGION_INIT(..Nullbox,0) -> REGION_NULL() changes. 
+	Fixes Xamiga.
+	[mitch, ticket #927]
