@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x86_64,v 1.6 2001/12/29 02:24:06 thorpej Exp $
+#	$NetBSD: Makefile.x86_64,v 1.7 2002/01/22 18:57:39 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -32,7 +32,7 @@ GENASSYM=	${X86_64}/x86_64/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-Dx86_64
-#CFLAGS+=	-mcmodel=large
+CFLAGS+=	-mcmodel=large
 CFLAGS+=	-mno-red-zone
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 
