@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.3 1997/12/11 09:23:54 sakamoto Exp $ */
+/*	$NetBSD: pio.h,v 1.4 1997/12/11 09:31:00 sakamoto Exp $ */
 /*	$OpenBSD: pio.h,v 1.1 1997/10/13 10:53:47 pefo Exp $ */
 
 /*
@@ -42,7 +42,7 @@
 static __inline void
 __outb(a,v)
 	volatile u_int8_t *a;
-	int v;
+	u_int8_t v;
 {
 	*a = v;
 	__asm__ volatile("eieio; sync");
@@ -60,7 +60,7 @@ __outw(a,v)
 static __inline void
 __outl(a,v)
 	volatile u_int32_t *a;
-	int v;
+	u_int32_t v;
 {
 	*a = v;
 	__asm__ volatile("eieio; sync");
@@ -278,7 +278,7 @@ __inswrb(a,d,c)
 static __inline void
 __inslrb(a,d,c)
 	volatile u_int32_t *a;
-	u_int16_t *d;
+	u_int32_t *d;
 	int c;
 {
 	u_int32_t _p_ = (u_int32_t)a;
