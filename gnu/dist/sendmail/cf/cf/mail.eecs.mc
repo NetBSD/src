@@ -23,6 +23,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: mail.eecs.mc,v 8.18 1999/02/07 07:26:04 gshapiro Exp')
+VERSIONID(`$NetBSD: mail.eecs.mc,v 1.3 2003/06/01 14:06:44 atatat Exp $')
 OSTYPE(ultrix4)dnl
 DOMAIN(EECS.Berkeley.EDU)dnl
 MASQUERADE_AS(EECS.Berkeley.EDU)dnl

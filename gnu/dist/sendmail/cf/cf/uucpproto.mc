@@ -27,6 +27,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: uucpproto.mc,v 8.15 1999/02/07 07:26:05 gshapiro Exp')
+VERSIONID(`$NetBSD: uucpproto.mc,v 1.3 2003/06/01 14:06:44 atatat Exp $')
 OSTYPE(unknown)
 FEATURE(promiscuous_relay)dnl
 FEATURE(accept_unresolvable_domains)dnl

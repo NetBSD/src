@@ -1,3 +1,4 @@
+/* $NetBSD: conf.h,v 1.11 2003/06/01 14:07:05 atatat Exp $ */
 /*
  * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

@@ -1,3 +1,9 @@
+/* $NetBSD: arpadate.c,v 1.5 2003/06/01 14:07:04 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: arpadate.c,v 1.5 2003/06/01 14:07:04 atatat Exp $");
+#endif
+
 /*
  * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

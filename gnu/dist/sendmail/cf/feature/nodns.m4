@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: nodns.m4,v 8.14 1999/07/22 17:55:35 gshapiro Exp')
+VERSIONID(`$NetBSD: nodns.m4,v 1.3 2003/06/01 14:06:46 atatat Exp $')
 divert(-1)
 
 undefine(`confBIND_OPTS')dnl

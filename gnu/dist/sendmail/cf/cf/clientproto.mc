@@ -24,6 +24,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: clientproto.mc,v 8.16 2000/03/21 21:05:26 ca Exp')
+VERSIONID(`$NetBSD: clientproto.mc,v 1.3 2003/06/01 14:06:42 atatat Exp $')
 
 OSTYPE(unknown)
 FEATURE(nullclient, mailhost.$m)

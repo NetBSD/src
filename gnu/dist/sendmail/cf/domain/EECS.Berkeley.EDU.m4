@@ -13,5 +13,6 @@ divert(-1)
 #
 divert(0)
 VERSIONID(`Id: EECS.Berkeley.EDU.m4,v 8.10 1999/02/07 07:26:06 gshapiro Exp')
+VERSIONID(`$NetBSD: EECS.Berkeley.EDU.m4,v 1.3 2003/06/01 14:06:45 atatat Exp $')
 DOMAIN(Berkeley.EDU)dnl
 MASQUERADE_AS(EECS.Berkeley.EDU)dnl

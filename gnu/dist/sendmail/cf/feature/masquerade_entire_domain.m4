@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: masquerade_entire_domain.m4,v 8.9 1999/02/07 07:26:10 gshapiro Exp')
+VERSIONID(`$NetBSD: masquerade_entire_domain.m4,v 1.3 2003/06/01 14:06:46 atatat Exp $')
 divert(-1)
 
 define(`_MASQUERADE_ENTIRE_DOMAIN_', 1)

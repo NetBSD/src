@@ -23,6 +23,7 @@ ifelse(defn(`_ARG_'), `', `errprint(`Feature "nullclient" requires argument')',
 
 divert(0)
 VERSIONID(`Id: nullclient.m4,v 8.24 2000/09/17 17:30:00 gshapiro Exp')
+VERSIONID(`$NetBSD: nullclient.m4,v 1.6 2003/06/01 14:06:46 atatat Exp $')
 divert(-1)
 
 undefine(`ALIAS_FILE')

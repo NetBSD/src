@@ -11,6 +11,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: relay_mail_from.m4,v 8.3 2001/02/06 16:07:12 ca Exp')
+VERSIONID(`$NetBSD: relay_mail_from.m4,v 1.4 2003/06/01 14:06:47 atatat Exp $')
 divert(-1)
 
 ifdef(`_ACCESS_TABLE_',

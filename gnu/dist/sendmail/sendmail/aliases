@@ -1,5 +1,6 @@
 #
 #	Id: aliases,v 8.5 2002/06/05 22:54:26 gshapiro Exp
+#	$NetBSD: aliases,v 1.5 2003/06/01 14:07:04 atatat Exp $
 #	@(#)aliases	8.2 (Berkeley) 3/5/94
 #
 #  Aliases in this file will NOT be expanded in the header from
