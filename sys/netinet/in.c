@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.80 2002/09/11 02:46:43 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.81 2002/10/22 02:28:47 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.80 2002/09/11 02:46:43 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.81 2002/10/22 02:28:47 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -323,7 +323,6 @@ in_control(so, cmd, data, ifp, p)
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
 	struct sockaddr_in oldaddr;
 	int error, hostIsNew, maskIsNew;
-	int newifaddr;
 
 	switch (cmd) {
 	case SIOCALIFADDR:
@@ -402,9 +401,7 @@ in_control(so, cmd, data, ifp, p)
 			}
 			ia->ia_ifp = ifp;
 			LIST_INIT(&ia->ia_multiaddrs);
-			newifaddr = 1;
-		} else
-			newifaddr = 0;
+		}
 		break;
 
 	case SIOCSIFBRDADDR:
