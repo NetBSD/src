@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.21 1996/09/16 18:00:31 scottr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.22 1997/03/15 05:39:45 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -261,9 +261,6 @@ pagemove(from, to, size)
 	}
 }
 
-void	physaccess __P((caddr_t, caddr_t, register int, register int));
-void	TBIAS __P((void));
-
 /*
  * Map `size' bytes of physical memory starting at `paddr' into
  * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
@@ -285,8 +282,6 @@ physaccess(vaddr, paddr, size, prot)
 	}
 	TBIAS();
 }
-
-void	physunaccess __P((caddr_t, register int));
 
 void
 physunaccess(vaddr, size)
