@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.15 1997/05/01 13:26:54 pk Exp $
+#	$NetBSD: install.sh,v 1.16 1997/09/08 23:25:01 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -372,6 +372,13 @@ install_sets $ALLSETS $MDSETS
 			echo "done."
 		fi
 	done
+
+	# Enable rc.conf
+	if [ -e /mnt/etc/rc.conf ]; then
+		cp /mnt/etc/rc.conf /tmp
+		sed 's/^rc_configured=NO/rc_configured=YES/' /tmp/rc.conf \
+			> /mnt/etc/rc.conf
+	fi
 
 	# If no zoneinfo on the installfs, give them a second chance
 	if [ ! -e /usr/share/zoneinfo ]; then
