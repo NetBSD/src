@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.56 1998/11/16 05:47:19 lukem Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.56.2.1 1998/12/11 04:53:08 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -170,6 +170,7 @@ in_pcbbind(v, nam, p)
 	register struct socket *so = inp->inp_socket;
 	register struct inpcbtable *table = inp->inp_table;
 	register struct sockaddr_in *sin;
+	register struct ifaddr	*ifa;
 	u_int16_t lport = 0;
 	int wild = 0, reuseport = (so->so_options & SO_REUSEPORT);
 #ifndef IPNOPRIVPORTS
@@ -208,8 +209,9 @@ in_pcbbind(v, nam, p)
 			reuseport = SO_REUSEADDR|SO_REUSEPORT;
 	} else if (!in_nullhost(sin->sin_addr)) {
 		sin->sin_port = 0;		/* yech... */
-		if (ifa_ifwithaddr(sintosa(sin)) == 0)
+		if ((ifa = ifa_ifwithaddr(sintosa(sin))) == 0)
 			return (EADDRNOTAVAIL);
+		ifa_delref(ifa);
 	}
 	if (lport) {
 		struct inpcb *t;
@@ -285,10 +287,10 @@ in_pcbconnect(v, nam)
 	struct mbuf *nam;
 {
 	register struct inpcb *inp = v;
-	struct in_ifaddr *ia;
+	struct in_ifaddr *ia = NULL;
 	struct sockaddr_in *ifaddr = NULL;
 	register struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
-	int error;
+	int	s, error;
 
 	if (nam->m_len != sizeof (*sin))
 		return (EINVAL);
@@ -296,6 +298,7 @@ in_pcbconnect(v, nam)
 		return (EAFNOSUPPORT);
 	if (sin->sin_port == 0)
 		return (EADDRNOTAVAIL);
+	s = splimp();
 	if (in_ifaddr.tqh_first != 0) {
 		/*
 		 * If the destination address is INADDR_ANY,
@@ -314,7 +317,9 @@ in_pcbconnect(v, nam)
 			    sin->sin_addr = ia->ia_broadaddr.sin_addr;
 			    break;
 			}
+		ia = NULL;
 	}
+	splx(s);
 	/*
 	 * If we haven't bound which network number to use as ours,
 	 * we will use the number of the outgoing interface.
@@ -330,7 +335,6 @@ in_pcbconnect(v, nam)
 	if (in_nullhost(inp->inp_laddr)) {
 		register struct route *ro;
 
-		ia = (struct in_ifaddr *)0;
 		/* 
 		 * If route is known or can be allocated now,
 		 * our src addr is taken from the i/f, else punt.
@@ -360,6 +364,7 @@ in_pcbconnect(v, nam)
 		 * 
 		 * XXX Is this still true?  Do we care?
 		 */
+		s = splimp();
 		if (ro->ro_rt && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
 			ia = ifatoia(ro->ro_rt->rt_ifa);
 		if (ia == 0) {
@@ -367,15 +372,24 @@ in_pcbconnect(v, nam)
 
 		    sin->sin_port = 0;
 		    ia = ifatoia(ifa_ifwithladdr(sintosa(sin)));
+		    if (ia)
+			ifa_delref(&ia->ia_ifa);
+		    /*
+		     * We're at splimp, so we're safe. ALL the other
+		     * ways of setting ia don't add a reference, so add
+		     * it at the end & don't keep it now.
+		     */
 		    sin->sin_port = fport;
 		    if (ia == 0)
-			/* Find 1st non-loopback AF_INET address */
-			for (ia = in_ifaddr.tqh_first ; ia != NULL ;
+		    /* Find 1st non-loopback AF_INET address */
+		    for (ia = in_ifaddr.tqh_first ; ia != NULL ;
 				ia = ia->ia_list.tqe_next)
 			    if (!(ia->ia_ifp->if_flags & IFF_LOOPBACK))
 				break;
-		    if (ia == 0)
+		    if (ia == 0) {
+			splx(s);
 			return (EADDRNOTAVAIL);
+		    }
 		}
 		/*
 		 * If the destination address is multicast and an outgoing
@@ -391,16 +405,23 @@ in_pcbconnect(v, nam)
 			if (imo->imo_multicast_ifp != NULL) {
 				ifp = imo->imo_multicast_ifp;
 				IFP_TO_IA(ifp, ia);		/* XXX */
-				if (ia == 0)
+				if (ia == 0) {
+					splx(s);
 					return (EADDRNOTAVAIL);
+				}
 			}
 		}
+		ifa_addref(&ia->ia_ifa);
+		splx(s);
 		ifaddr = satosin(&ia->ia_addr);
 	}
 	if (in_pcblookup_connect(inp->inp_table, sin->sin_addr, sin->sin_port,
 	    !in_nullhost(inp->inp_laddr) ? inp->inp_laddr : ifaddr->sin_addr,
-	    inp->inp_lport) != 0)
+	    inp->inp_lport) != 0) {
+		if (ia != NULL)
+			ifa_delref(&ia->ia_ifa);
 		return (EADDRINUSE);
+	}
 	if (in_nullhost(inp->inp_laddr)) {
 		if (inp->inp_lport == 0) {
 			error = in_pcbbind(inp, (struct mbuf *)0,
@@ -411,14 +432,19 @@ in_pcbconnect(v, nam)
 			 * ephemeral port shortage.
 			 * XXX Should we check for other errors, too?
 			 */
-			if (error == EAGAIN)
+			if (error == EAGAIN) {
+				if (ia != NULL)
+					ifa_delref(&ia->ia_ifa);
 				return (error);
+			}
 		}
 		inp->inp_laddr = ifaddr->sin_addr;
 	}
 	inp->inp_faddr = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;
 	in_pcbstate(inp, INP_CONNECTED);
+	if (ia != NULL)
+		ifa_delref(&ia->ia_ifa);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.25 1998/11/25 17:19:09 bouyer Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.25.2.1 1998/12/11 04:53:03 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -450,7 +450,9 @@ fxp_attach(parent, self, aux)
 	printf("%s: Ethernet address %s%s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(enaddr), sc->phy_10Mbps_only ? ", 10Mbps" : "");
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = if_alloc();
+	sc->sc_ethercom.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 
 	/*
 	 * Get info about our media interface, and initialize it.  Note
@@ -479,7 +481,7 @@ fxp_attach(parent, self, aux)
 	ifp->if_snd.ifq_maxlen = FXP_NTXCB;
 	ether_ifattach(ifp, enaddr);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
 
@@ -872,7 +874,7 @@ fxp_intr(arg)
 	void *arg;
 {
 	struct fxp_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = sc->sc_if;
 	u_int8_t statack;
 	int claimed = 0;
 
@@ -929,6 +931,7 @@ fxp_intr(arg)
 						goto rcvloop;
 					}
 					m->m_pkthdr.rcvif = ifp;
+					if_addref(ifp);
 					m->m_pkthdr.len = m->m_len =
 					    total_len -
 					    sizeof(struct ether_header);
@@ -1027,7 +1030,7 @@ fxp_tick(arg)
 	void *arg;
 {
 	struct fxp_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = sc->sc_if;
 	struct fxp_stats *sp = &sc->control_data->fcd_stats;
 	int s = splnet();
 
@@ -1113,7 +1116,7 @@ static void
 fxp_stop(sc)
 	struct fxp_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = sc->sc_if;
 	struct fxp_rxdesc *rxd;
 	struct fxp_cb_tx *txp;
 	int i;
@@ -1190,7 +1193,7 @@ fxp_init(xsc)
 	void *xsc;
 {
 	struct fxp_softc *sc = xsc;
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = sc->sc_if;
 	struct fxp_cb_config *cbp;
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_cb_tx *txp;
@@ -1739,7 +1742,7 @@ fxp_mc_setup(sc)
 	struct fxp_softc *sc;
 {
 	struct fxp_cb_mcs *mcsp = &sc->control_data->fcd_mcscb;
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = sc->sc_if;
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ether_multi *enm;
 	struct ether_multistep step;

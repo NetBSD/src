@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.47 1998/09/03 14:12:36 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.47.4.1 1998/12/11 04:53:05 kenh Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -191,24 +191,31 @@ pppattach()
 {
     register struct ppp_softc *sc;
     register int i = 0;
+    register struct ifnet *ifp;
 
     for (sc = ppp_softc; i < NPPP; sc++) {
 	sc->sc_unit = i;	/* XXX */
-	sprintf(sc->sc_if.if_xname, "ppp%d", i++);
-	sc->sc_if.if_softc = sc;
-	sc->sc_if.if_mtu = PPP_MTU;
-	sc->sc_if.if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
-	sc->sc_if.if_type = IFT_PPP;
-	sc->sc_if.if_hdrlen = PPP_HDRLEN;
-	sc->sc_if.if_ioctl = pppsioctl;
-	sc->sc_if.if_output = pppoutput;
-	sc->sc_if.if_snd.ifq_maxlen = IFQ_MAXLEN;
+#ifdef _HAS_IF_ALLOC
+	ifp = if_alloc();
+	sc->sc_if = ifp;
+#else
+	ifp = &sc->sc_if;
+#endif
+	sprintf(ifp->if_xname, "ppp%d", i++);
+	ifp->if_softc = sc;
+	ifp->if_mtu = PPP_MTU;
+	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
+	ifp->if_type = IFT_PPP;
+	ifp->if_hdrlen = PPP_HDRLEN;
+	ifp->if_ioctl = pppsioctl;
+	ifp->if_output = pppoutput;
+	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
 	sc->sc_inq.ifq_maxlen = IFQ_MAXLEN;
 	sc->sc_fastq.ifq_maxlen = IFQ_MAXLEN;
 	sc->sc_rawq.ifq_maxlen = IFQ_MAXLEN;
-	if_attach(&sc->sc_if);
+	if_attach(ifp);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_bpf, &sc->sc_if, DLT_PPP, PPP_HDRLEN);
+	bpfattach(&sc->sc_bpf, ifp, DLT_PPP, PPP_HDRLEN);
 #endif
     }
 }
@@ -266,8 +273,13 @@ pppdealloc(sc)
 {
     struct mbuf *m;
 
+#ifdef _HAS_IF_ALLOC
+    if_down(sc->sc_if);
+    sc->sc_if->if_flags &= ~(IFF_UP|IFF_RUNNING);
+#else
     if_down(&sc->sc_if);
     sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
+#endif
     sc->sc_devp = NULL;
     sc->sc_xfer = 0;
     for (;;) {
@@ -336,6 +348,7 @@ pppioctl(sc, cmd, data, flag, p)
     struct ppp_option_data *odp;
     struct compressor **cp;
     struct npioctl *npi;
+    struct ifnet *ifp;
     time_t t;
 #ifdef PPP_FILTER
     struct bpf_program *bp, *nbp;
@@ -344,6 +357,11 @@ pppioctl(sc, cmd, data, flag, p)
 #endif /* PPP_FILTER */
 #ifdef	PPP_COMPRESS
     u_char ccp_option[CCP_MAX_OPTION_LENGTH];
+#endif
+#ifdef _HAS_IF_ALLOC
+    ifp = sc->sc_if;
+#else
+    ifp = &sc->sc_if;
 #endif
 
     switch (cmd) {
@@ -431,7 +449,7 @@ pppioctl(sc, cmd, data, flag, p)
 		    if (sc->sc_xc_state == NULL) {
 			if (sc->sc_flags & SC_DEBUG)
 			    printf("%s: comp_alloc failed\n",
-				sc->sc_if.if_xname);
+				ifp->if_xname);
 			error = ENOBUFS;
 		    }
 		    splimp();
@@ -446,7 +464,7 @@ pppioctl(sc, cmd, data, flag, p)
 		    if (sc->sc_rc_state == NULL) {
 			if (sc->sc_flags & SC_DEBUG)
 			    printf("%s: decomp_alloc failed\n",
-				sc->sc_if.if_xname);
+				ifp->if_xname);
 			error = ENOBUFS;
 		    }
 		    splimp();
@@ -457,7 +475,7 @@ pppioctl(sc, cmd, data, flag, p)
 	    }
 	if (sc->sc_flags & SC_DEBUG)
 	    printf("%s: no compressor for [%x %x %x], %x\n",
-		sc->sc_if.if_xname, ccp_option[0], ccp_option[1],
+		ifp->if_xname, ccp_option[0], ccp_option[1],
 		ccp_option[2], nb);
 	return (EINVAL);	/* no handler found */
 #endif /* PPP_COMPRESS */
@@ -575,11 +593,11 @@ pppsioctl(ifp, cmd, data)
     case SIOCSIFMTU:
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 	    break;
-	sc->sc_if.if_mtu = ifr->ifr_mtu;
+	ifp->if_mtu = ifr->ifr_mtu;
 	break;
 
     case SIOCGIFMTU:
-	ifr->ifr_mtu = sc->sc_if.if_mtu;
+	ifr->ifr_mtu = ifp->if_mtu;
 	break;
 
     case SIOCADDMULTI:
@@ -795,7 +813,7 @@ pppoutput(ifp, m0, dst, rtp)
 	if (IF_QFULL(ifq) && dst->sa_family != AF_UNSPEC) {
 	    IF_DROP(ifq);
 	    splx(s);
-	    sc->sc_if.if_oerrors++;
+	    ifp->if_oerrors++;
 	    sc->sc_stats.ppp_oerrors++;
 	    error = ENOBUFS;
 	    goto bad;
@@ -826,7 +844,14 @@ ppp_requeue(sc)
 {
     struct mbuf *m, **mpp;
     struct ifqueue *ifq;
+    struct ifnet *ifp;
     enum NPmode mode;
+
+#ifdef _HAS_IF_ALLOC
+    ifp = sc->sc_if;
+#else
+    ifp = &sc->sc_if;
+#endif
 
     for (mpp = &sc->sc_npqueue; (m = *mpp) != NULL; ) {
 	switch (PPP_PROTOCOL(mtod(m, u_char *))) {
@@ -844,10 +869,10 @@ ppp_requeue(sc)
 	     */
 	    *mpp = m->m_nextpkt;
 	    m->m_nextpkt = NULL;
-	    ifq = (m->m_flags & M_HIGHPRI)? &sc->sc_fastq: &sc->sc_if.if_snd;
+	    ifq = (m->m_flags & M_HIGHPRI)? &sc->sc_fastq: &ifp->if_snd;
 	    if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
-		sc->sc_if.if_oerrors++;
+		ifp->if_oerrors++;
 		sc->sc_stats.ppp_oerrors++;
 	    } else
 		IF_ENQUEUE(ifq, m);
@@ -893,9 +918,16 @@ ppp_dequeue(sc)
     struct ppp_softc *sc;
 {
     struct mbuf *m, *mp;
+    struct ifnet *ifp;
     u_char *cp;
     int address, control, protocol;
     int s;
+
+#ifdef _HAS_IF_ALLOC
+    ifp = sc->sc_if;
+#else
+    ifp = &sc->sc_if;
+#endif
 
     /*
      * Grab a packet to send: first try the fast queue, then the
@@ -904,7 +936,7 @@ ppp_dequeue(sc)
     s = splimp();    
     IF_DEQUEUE(&sc->sc_fastq, m);
     if (m == NULL)
-	IF_DEQUEUE(&sc->sc_if.if_snd, m);
+	IF_DEQUEUE(&ifp->if_snd, m);
     splx(s);
     
     if (m == NULL)
@@ -978,7 +1010,7 @@ ppp_dequeue(sc)
 	for (mp = m; mp != NULL; mp = mp->m_next)
 	    slen += mp->m_len;
 	clen = (*sc->sc_xcomp->compress)
-	    (sc->sc_xc_state, &mcomp, m, slen, sc->sc_if.if_mtu + PPP_HDRLEN);
+	    (sc->sc_xc_state, &mcomp, m, slen, ifp->if_mtu + PPP_HDRLEN);
 	if (mcomp != NULL) {
 	    if (sc->sc_flags & SC_CCP_UP) {
 		/* Send the compressed packet instead of the original. */
@@ -1031,7 +1063,7 @@ pppintr()
     s = splsoftnet();
     for (i = 0; i < NPPP; ++i, ++sc) {
 	if (!(sc->sc_flags & SC_TBUSY)
-	    && (sc->sc_if.if_snd.ifq_head || sc->sc_fastq.ifq_head
+	    && (sc->sc_if->if_snd.ifq_head || sc->sc_fastq.ifq_head
 		|| sc->sc_outm)) {
 	    s2 = splimp();
 	    sc->sc_flags |= SC_TBUSY;
@@ -1200,7 +1232,11 @@ ppp_inproc(sc, m)
     struct ppp_softc *sc;
     struct mbuf *m;
 {
+#ifdef _HAS_IF_ALLOC
+    struct ifnet *ifp = sc->sc_if;
+#else
     struct ifnet *ifp = &sc->sc_if;
+#endif
     struct ifqueue *inq;
     int s, ilen, xlen, proto, rv;
     u_char *cp, adrs, ctrl;
@@ -1383,6 +1419,7 @@ ppp_inproc(sc, m)
     }
     m->m_pkthdr.len = ilen;
     m->m_pkthdr.rcvif = ifp;
+    if_addref(ifp);
 
 #if defined(PPP_FILTER) || NBPFILTER > 0
     *mtod(m, u_char *) = SLIPDIR_IN;
@@ -1483,7 +1520,7 @@ ppp_inproc(sc, m)
 
  bad:
     m_freem(m);
-    sc->sc_if.if_ierrors++;
+    ifp->if_ierrors++;
     sc->sc_stats.ppp_ierrors++;
 }
 

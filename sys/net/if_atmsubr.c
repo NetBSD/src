@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.18 1998/07/05 22:48:07 jonathan Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.18.6.1 1998/12/11 04:53:04 kenh Exp $       */
 
 /*
  *
@@ -301,6 +301,9 @@ atm_ifattach(ifp)
 {
 	register struct ifaddr *ifa;
 	register struct sockaddr_dl *sdl;
+#ifdef	_HAS_IFA_ADDREF
+	int	s = splimp();
+#endif
 
 	ifp->if_type = IFT_ATM;
 	ifp->if_addrlen = 0;
@@ -332,4 +335,7 @@ atm_ifattach(ifp)
 #endif
 			break;
 		}
+#ifdef _HAS_IFA_ADDREF
+	splx(s);
+#endif
 }

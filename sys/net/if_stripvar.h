@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stripvar.h,v 1.6 1998/02/09 17:43:53 perry Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.6.6.1 1998/12/11 04:53:05 kenh Exp $	*/
 
 #ifndef _NET_IF_STRIPVAR_H_
 #define _NET_IF_STRIPVAR_H_
@@ -8,7 +8,11 @@
  * 
  */
 struct strip_softc {
+#ifdef _HAS_IF_ALLOC
+	struct	ifnet *sc_if;		/* network-visible interface */
+#else
 	struct	ifnet sc_if;		/* network-visible interface */
+#endif
 	int	sc_unit;		/* XXX unit number */
 	struct	ifqueue sc_fastq;	/* interactive output queue */
 	struct	tty *sc_ttyp;		/* pointer to tty structure */

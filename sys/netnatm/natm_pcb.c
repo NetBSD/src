@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_pcb.c,v 1.5 1998/07/04 22:18:52 jonathan Exp $	*/
+/*	$NetBSD: natm_pcb.c,v 1.5.6.1 1998/12/11 04:53:10 kenh Exp $	*/
 
 /*
  *
@@ -101,6 +101,7 @@ int op;
     if (npcb->npcb_inq) {
       npcb->npcb_flags = NPCB_DRAIN;	/* flag for distruction */
     } else {
+      if_delref(npcb->npcb_if);
       FREE(npcb, M_PCB);		/* kill it! */
     }
   }
@@ -158,6 +159,7 @@ u_int8_t vpi;
   }
 
   cpcb->npcb_ifp = ifp;
+  if_addref(ifp);
   cpcb->ipaddr.s_addr = 0;
   cpcb->npcb_vci = vci;
   cpcb->npcb_vpi = vpi;

@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.18 1998/02/13 18:21:40 tls Exp $	*/
+/*	$NetBSD: igmp.c,v 1.18.6.1 1998/12/11 04:53:08 kenh Exp $	*/
 
 /*
  * Internet Group Management Protocol (IGMP) routines.
@@ -116,7 +116,7 @@ igmp_input(m, va_alist)
 	struct in_multistep step;
 	struct router_info *rti;
 	register struct in_ifaddr *ia;
-	int timer;
+	int timer, s;
 	va_list ap;
 
 	va_start(ap, m);
@@ -182,7 +182,9 @@ igmp_input(m, va_alist)
 			 * except those that are already running and those
 			 * that belong to a "local" group (224.0.0.X).
 			 */
+			s = splimp();
 			IN_FIRST_MULTI(step, inm);
+			splx(s);
 			while (inm != NULL) {
 				if (inm->inm_ifp == ifp &&
 				    inm->inm_timer == 0 &&
@@ -192,7 +194,9 @@ igmp_input(m, va_alist)
 					    IGMP_MAX_HOST_REPORT_DELAY * PR_FASTHZ);
 					igmp_timers_are_running = 1;
 				}
+				s = splimp();
 				IN_NEXT_MULTI(step, inm);
+				splx(s);
 			}
 		} else {
 			if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
@@ -211,7 +215,9 @@ igmp_input(m, va_alist)
 			 * timers already running, check if they need to be
 			 * reset.
 			 */
+			s = splimp();
 			IN_FIRST_MULTI(step, inm);
+			splx(s);
 			while (inm != NULL) {
 				if (inm->inm_ifp == ifp &&
 				    !IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
@@ -237,7 +243,9 @@ igmp_input(m, va_alist)
 						break;
 					}
 				}
+				s = splimp();
 				IN_NEXT_MULTI(step, inm);
+				splx(s);
 			}
 		}
 
@@ -266,16 +274,20 @@ igmp_input(m, va_alist)
 		 * determine the arrival interface of an incoming packet.
 		 */
 		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
+			s = splimp();
 			IFP_TO_IA(ifp, ia);		/* XXX */
 			if (ia)
 				ip->ip_src.s_addr = ia->ia_subnet;
+			splx(s);
 		}
 
 		/*
 		 * If we belong to the group being reported, stop
 		 * our timer for that group.
 		 */
+		s = splimp();
 		IN_LOOKUP_MULTI(igmp->igmp_group, ifp, inm);
+		splx(s);
 		if (inm != NULL) {
 			inm->inm_timer = 0;
 			++igmpstat.igps_rcv_ourreports;
@@ -305,19 +317,32 @@ igmp_input(m, va_alist)
 		 * leave requires knowing that we are the only member of a
 		 * group.
 		 */
+		s = splimp();
 		IFP_TO_IA(ifp, ia);			/* XXX */
-		if (ia && in_hosteq(ip->ip_src, ia->ia_addr.sin_addr))
+		if (ia && in_hosteq(ip->ip_src, ia->ia_addr.sin_addr)) {
+			splx(s);
 			break;
+		}
+		ifa_addref(&ia->ia_ifa);
+		splx(s);
+
 #endif
 
 		++igmpstat.igps_rcv_reports;
 
-		if (ifp->if_flags & IFF_LOOPBACK)
+		if (ifp->if_flags & IFF_LOOPBACK) {
+#ifdef MROUTING
+			ifa_delref(&ia->ia_ifa);
+#endif
 			break;
+		}
 
 		if (!IN_MULTICAST(igmp->igmp_group.s_addr) ||
 		    !in_hosteq(igmp->igmp_group, ip->ip_dst)) {
 			++igmpstat.igps_rcv_badreports;
+#ifdef MROUTING
+			ifa_delref(&ia->ia_ifa);
+#endif
 			m_freem(m);
 			return;
 		}
@@ -333,17 +358,26 @@ igmp_input(m, va_alist)
 		 */
 		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
 #ifndef MROUTING
+			s = splimp();
 			IFP_TO_IA(ifp, ia);		/* XXX */
 #endif
 			if (ia)
 				ip->ip_src.s_addr = ia->ia_subnet;
+#ifndef MROUTING
+			splx(s);
+#endif
 		}
 
+#ifdef MROUTING
+		ifa_delref(&ia->ia_ifa);
+#endif
 		/*
 		 * If we belong to the group being reported, stop
 		 * our timer for that group.
 		 */
+		s = splimp();
 		IN_LOOKUP_MULTI(igmp->igmp_group, ifp, inm);
+		splx(s);
 		if (inm != NULL) {
 			inm->inm_timer = 0;
 			++igmpstat.igps_rcv_ourreports;
@@ -416,7 +450,7 @@ igmp_fasttimo()
 {
 	register struct in_multi *inm;
 	struct in_multistep step;
-	int s;
+	int s, s1;
 
 	/*
 	 * Quick check to see if any work needs to be done, in order
@@ -427,7 +461,9 @@ igmp_fasttimo()
 
 	s = splsoftnet();
 	igmp_timers_are_running = 0;
+	s1 = splimp();
 	IN_FIRST_MULTI(step, inm);
+	splx(s1);
 	while (inm != NULL) {
 		if (inm->inm_timer == 0) {
 			/* do nothing */
@@ -444,7 +480,9 @@ igmp_fasttimo()
 		} else {
 			igmp_timers_are_running = 1;
 		}
+		s1 = splimp();
 		IN_NEXT_MULTI(step, inm);
+		splx(s1);
 	}
 	splx(s);
 }
@@ -455,6 +493,7 @@ igmp_slowtimo()
 	register struct router_info *rti;
 	int s;
 
+	/* XXX wrs switch to splimp? */
 	s = splsoftnet();
 	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
 		if (rti->rti_type == IGMP_v1_ROUTER &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_output.c,v 1.9 1997/07/18 19:30:40 thorpej Exp $	*/
+/*	$NetBSD: ns_output.c,v 1.9.12.1 1998/12/11 04:53:11 kenh Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -113,6 +113,11 @@ ns_output(m0, va_alist)
 				goto bad;
 			}
 			ifp = ia->ia_ifp;
+			if_addref(ifp);
+			ifa_delref(&ia->ia_ifa);
+			/* above works as we had a ref to the ifaddr, which is
+			 * an implicit ref to the ifp. So the ifp couldn't
+			 * die on us */
 			goto gotif;
 		}
 		rtalloc(ro);
@@ -128,6 +133,7 @@ ns_output(m0, va_alist)
 		error = ENETUNREACH;
 		goto bad;
 	}
+	if_addref(ifp);	/* XXX what happened if the route died? */
 	ro->ro_rt->rt_use++;
 	if (ro->ro_rt->rt_flags & (RTF_GATEWAY|RTF_HOST))
 		dst = satosns(ro->ro_rt->rt_gateway);
@@ -169,5 +175,6 @@ done:
 		RTFREE(ro->ro_rt);
 		ro->ro_rt = 0;
 	}
+	if (ifp) if_delref(ifp);
 	return (error);
 }

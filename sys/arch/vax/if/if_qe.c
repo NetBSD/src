@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.33 1998/11/29 14:48:52 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.33.2.1 1998/12/11 04:52:57 kenh Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -379,7 +379,7 @@ qeattach(parent, self, aux)
 {
 	struct	uba_attach_args *ua = aux;
 	struct	qe_softc *sc = (struct qe_softc *)self;
-	struct	ifnet *ifp = (struct ifnet *)&sc->qe_if;
+	struct	ifnet *ifp;
 	struct qedevice *addr =(struct qedevice *)ua->ua_addr;
 	int i;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
@@ -387,6 +387,9 @@ qeattach(parent, self, aux)
 	printf("\n");
 	sc->ipl = 0x15;
 	sc->qe_vaddr = addr;
+	ifp = if_alloc();
+	sc->qe_if = ifp;
+	ifp->if_ifcom = &sc->qe_ec;
 	bcopy(sc->qe_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	/*
@@ -437,7 +440,7 @@ qereset(unit)
 	struct	qe_softc *sc = qe_cd.cd_devs[unit];
 
 	printf(" %s", sc->qe_dev.dv_xname);
-	sc->qe_if.if_flags &= ~IFF_RUNNING;
+	sc->qe_if->if_flags &= ~IFF_RUNNING;
 	qeinit(sc);
 }
 
@@ -450,7 +453,7 @@ qeinit(sc)
 {
 	struct qedevice *addr = sc->qe_vaddr;
 	struct uba_softc *ubasc = (void *)sc->qe_dev.dv_parent;
-	struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
+	struct ifnet *ifp = sc->qe_if;
 	int i;
 	int s;
 
@@ -484,7 +487,7 @@ qeinit(sc)
 	fail:
 			printf("%s: can't allocate uba resources\n", 
 			    sc->qe_dev.dv_xname);
-			sc->qe_if.if_flags &= ~IFF_UP;
+			ifp->if_flags &= ~IFF_UP;
 			return;
 		}
 	}
@@ -533,7 +536,7 @@ qeinit(sc)
 	sc->qe_flags |= QEF_RUNNING;
 	qesetup( sc );
 	qestart( ifp );
-	sc->qe_if.if_timer = QESLOWTIMEOUT;	/* Start watchdog */
+	ifp->if_timer = QESLOWTIMEOUT;	/* Start watchdog */
 	splx( s );
 }
 
@@ -575,7 +578,7 @@ qestart(ifp)
 			rp->qe_setup = 1;
 			sc->setupqueued = 0;
 		} else {
-			IF_DEQUEUE(&sc->qe_if.if_snd, m);
+			IF_DEQUEUE(&ifp->if_snd, m);
 			if (m == 0) {
 				splx(s);
 				return;
@@ -606,7 +609,7 @@ qestart(ifp)
 		rp->qe_valid = 1;
 		if (sc->nxmit++ == 0) {
 			sc->qe_flags |= QEF_FASTTIMEO;
-			sc->qe_if.if_timer = QETIMEOUT;
+			ifp->if_timer = QETIMEOUT;
 		}
 
 		/*
@@ -637,7 +640,7 @@ qeintr(unit)
 	addr = sc->qe_vaddr;
 	splx(sc->ipl);
 	if (!(sc->qe_flags & QEF_FASTTIMEO))
-		sc->qe_if.if_timer = QESLOWTIMEOUT; /* Restart timer clock */
+		sc->qe_if->if_timer = QESLOWTIMEOUT; /* Restart timer clock */
 	csr = addr->qe_csr;
 	addr->qe_csr = QE_RCV_ENABLE | QE_INT_ENABLE |
 	    QE_XMIT_INT | QE_RCV_INT | QE_ILOOP;
@@ -664,6 +667,7 @@ qetint(unit)
 	int unit;
 {
 	register struct qe_softc *sc = qe_cd.cd_devs[unit];
+	register struct ifnet *ifp = sc->qe_if;
 	register struct qe_ring *rp;
 	register struct ifxmt *ifxp;
 	int status1, setupflag;
@@ -688,16 +692,16 @@ qetint(unit)
 		bzero((caddr_t)rp, sizeof(struct qe_ring));
 		if( --sc->nxmit == 0 ) {
 			sc->qe_flags &= ~QEF_FASTTIMEO;
-			sc->qe_if.if_timer = QESLOWTIMEOUT;
+			ifp->if_timer = QESLOWTIMEOUT;
 		}
 		if( !setupflag ) {
 			/*
 			 * Do some statistics.
 			 */
-			sc->qe_if.if_opackets++;
-			sc->qe_if.if_collisions += ( status1 & QE_CCNT ) >> 4;
+			ifp->if_opackets++;
+			ifp->if_collisions += ( status1 & QE_CCNT ) >> 4;
 			if (status1 & QE_ERROR)
-				sc->qe_if.if_oerrors++;
+				ifp->if_oerrors++;
 			ifxp = &sc->qe_ifw[sc->otindex];
 			if (ifxp->ifw_xtofree) {
 				m_freem(ifxp->ifw_xtofree);
@@ -706,7 +710,7 @@ qetint(unit)
 		}
 		sc->otindex = ++sc->otindex % NXMT;
 	}
-	qestart(&sc->qe_if);
+	qestart(ifp);
 }
 
 /*
@@ -720,6 +724,7 @@ qerint(unit)
 	int unit;
 {
 	register struct qe_softc *sc = qe_cd.cd_devs[unit];
+	register struct ifnet *ifp = sc->qe_if;
 	register struct qe_ring *rp;
 	register int nrcv = 0;
 	int len, status1, status2;
@@ -769,11 +774,11 @@ qerint(unit)
 		if( (status1 & QE_MASK) == QE_MASK )
 			panic("qe: chained packet");
 		len = ((status1 & QE_RBL_HI) | (status2 & QE_RBL_LO)) + 60;
-		sc->qe_if.if_ipackets++;
+		ifp->if_ipackets++;
 
 		if (status1 & QE_ERROR) {
 			if ((status1 & QE_RUNT) == 0)
-				sc->qe_if.if_ierrors++;
+				ifp->if_ierrors++;
 		} else {
 			/*
 			 * We don't process setup packets.
@@ -883,13 +888,14 @@ qe_setaddr(physaddr, sc)
 	u_char *physaddr;
 	struct qe_softc *sc;
 {
+	register ifnet *ifp = sc->qe_if;
 	register int i;
 
 	for (i = 0; i < 6; i++)
-		sc->setup_pkt[i][1] = LLADDR(sc->qe_if.if_sadl)[i] 
+		sc->setup_pkt[i][1] = LLADDR(ifp->if_sadl)[i] 
 		    = physaddr[i];
 	sc->qe_flags |= QEF_SETADDR;
-	if (sc->qe_if.if_flags & IFF_RUNNING)
+	if (ifp->if_flags & IFF_RUNNING)
 		qesetup(sc);
 	qeinit(sc);
 }
@@ -924,6 +930,7 @@ qesetup(sc)
 	struct qe_softc *sc;
 {
 	register int i, j;
+	register struct ifnet *ifp = sc->qe_if;
 
 	/*
 	 * Copy the target address to the rest of the entries in this row.
@@ -952,10 +959,10 @@ qesetup(sc)
 		sc->setup_pkt[i][6] = all_l2is_snpa[i];
 #endif
 	}
-	if (sc->qe_if.if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC) {
 		sc->setuplength = QE_PROMISC;
 	/* XXX no IFF_ALLMULTI support in 4.4bsd */
-	} else if (sc->qe_if.if_flags & IFF_ALLMULTI) {
+	} else if (ifp->if_flags & IFF_ALLMULTI) {
 		sc->setuplength = QE_ALLMULTI;
 	} else {
 		register int k;
@@ -1002,6 +1009,7 @@ qeread(sc, ifrw, len)
 	struct ifrw *ifrw;
 	int len;
 {
+	struct	ifnet *ifp = sc->qe_if;
 	struct ether_header *eh;
 	struct mbuf *m;
 
@@ -1021,7 +1029,7 @@ qeread(sc, ifrw, len)
 	 * information to be at the front, but we still have to drop
 	 * the type and length which are at the front of any trailer data.
 	 */
-	m = if_ubaget(&sc->qe_uba, ifrw, len, &sc->qe_if);
+	m = if_ubaget(&sc->qe_uba, ifrw, len, ifp);
 #ifdef notdef
 if (m) {
 *(((u_long *)m->m_data)+0),
@@ -1040,14 +1048,14 @@ if (m) {
 	 * since BPF just looks at the data.  (It doesn't try to free the mbuf,
 	 * tho' it will make a copy for tcpdump.)
 	 */
-	if (sc->qe_if.if_bpf) {
+	if (ifp->if_bpf) {
 		struct mbuf m0;
 		m0.m_len = sizeof (struct ether_header);
 		m0.m_data = (caddr_t)eh;
 		m0.m_next = m;
  
 		/* Pass it up */
-		bpf_mtap(sc->qe_if.if_bpf, &m0);
+		bpf_mtap(ifp->if_bpf, &m0);
 
 		/*
 		 * Note that the interface cannot be in promiscuous mode if
@@ -1056,7 +1064,7 @@ if (m) {
 		 */
 		if ((sc->qe_if.if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, LLADDR(sc->qe_if.if_sadl),
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return;
@@ -1065,7 +1073,7 @@ if (m) {
 #endif /* NBPFILTER > 0 */
 
 	if (m)
-		ether_input((struct ifnet *)&sc->qe_if, eh, m);
+		ether_input(ifp, eh, m);
 }
 
 /*
@@ -1092,7 +1100,7 @@ void
 qerestart(sc)
 	struct qe_softc *sc;
 {
-	register struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
+	register struct ifnet *ifp = sc->qe_if;
 	register struct qedevice *addr = sc->addr;
 	register struct qe_ring *rp;
 	register int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.26 1998/03/01 02:25:05 fvdl Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.26.6.1 1998/12/11 04:53:06 kenh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -160,7 +160,7 @@ route_output(m, va_alist)
 	struct rt_addrinfo info;
 	int len, error = 0;
 	struct ifnet *ifp = 0;
-	struct ifaddr *ifa = 0;
+	struct ifaddr *ifa = 0, *ifa1 = 0, *ifa2=0;
 	struct socket *so;
 	va_list ap;
 
@@ -295,13 +295,24 @@ route_output(m, va_alist)
 			   flags may also be different; ifp may be specified
 			   by ll sockaddr when protocol address is ambiguous */
 			if (ifpaddr && (ifa = ifa_ifwithnet(ifpaddr)) &&
-			    (ifp = ifa->ifa_ifp) && (ifaaddr || gate))
+			    (ifp = ifa->ifa_ifp) && (ifaaddr || gate)) {
+				ifa_delref(ifa);
 				ifa = ifaof_ifpforaddr(ifaaddr ? ifaaddr : gate,
 				    ifp);
-			else if ((ifaaddr && (ifa = ifa_ifwithaddr(ifaaddr))) ||
-			    (gate && (ifa = ifa_ifwithroute(rt->rt_flags,
-			    rt_key(rt), gate))))
+			}
+			else if ((ifaaddr && (ifa1= ifa_ifwithaddr(ifaaddr))) ||
+			    (gate && (ifa2 = ifa_ifwithroute(rt->rt_flags,
+			    rt_key(rt), gate)))) {
+				if (ifa)
+					ifa_delref(ifa);
+				if ((ifa1) && (ifa2)) {
+					printf("Double whammy in RTM_CHANGE\n");
+					ifa_delref(ifa1);
+					ifa1 = 0;
+				}
+				ifa = (ifa1) ? ifa1 : ifa2;
 				ifp = ifa->ifa_ifp;
+			}
 			if (ifa) {
 				register struct ifaddr *oifa = rt->rt_ifa;
 				if (oifa != ifa) {
@@ -310,9 +321,11 @@ route_output(m, va_alist)
 					rt, gate);
 				    IFAFREE(rt->rt_ifa);
 				    rt->rt_ifa = ifa;
-				    ifa->ifa_refcnt++;
+				    ifa_addref(ifa);
 				    rt->rt_ifp = ifp;
+				    if_addref(ifp);
 				}
+				ifa_delref(ifa);
 			}
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &rt->rt_rmx);
@@ -707,7 +720,7 @@ sysctl_iflist(af, w)
 	register struct ifnet *ifp;
 	register struct ifaddr *ifa;
 	struct	rt_addrinfo info;
-	int	len, error = 0;
+	int	len, error = 0, s = splimp();
 
 	bzero(&info, sizeof(info));
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
@@ -726,8 +739,10 @@ sysctl_iflist(af, w)
 			ifm->ifm_data = ifp->if_data;
 			ifm->ifm_addrs = info.rti_addrs;
 			error = copyout(ifm, w->w_where, len);
-			if (error)
+			if (error) {
+				splx(s);
 				return (error);
+			}
 			w->w_where += len;
 		}
 		while ((ifa = ifa->ifa_list.tqe_next) != NULL) {
@@ -746,13 +761,16 @@ sysctl_iflist(af, w)
 				ifam->ifam_metric = ifa->ifa_metric;
 				ifam->ifam_addrs = info.rti_addrs;
 				error = copyout(w->w_tmem, w->w_where, len);
-				if (error)
+				if (error) {
+					splx(s);
 					return (error);
+				}
 				w->w_where += len;
 			}
 		}
 		ifaaddr = netmask = brdaddr = 0;
 	}
+	splx(s);
 	return (0);
 }
 

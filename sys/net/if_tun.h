@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.8 1998/03/18 21:21:48 tv Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.8.6.1 1998/12/11 04:53:06 kenh Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -34,7 +34,11 @@ struct tun_softc {
 
 #define	TUN_READY	(TUN_OPEN | TUN_INITED | TUN_IASET)
 
+#ifdef _HAS_IF_ALLOC
+	struct	ifnet *tun_if;		/* the interface */
+#else
 	struct	ifnet tun_if;		/* the interface */
+#endif
 	int	tun_pgrp;		/* the process group - if any */
 	struct	selinfo	tun_rsel;	/* read select */
 	struct	selinfo	tun_wsel;	/* write select (not used) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.53 1998/10/26 17:31:01 ws Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.53.4.1 1998/12/11 04:53:09 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -121,13 +121,13 @@ ip_output(m0, va_alist)
 #endif
 {
 	register struct ip *ip, *mhip;
-	register struct ifnet *ifp;
+	register struct ifnet *ifp = 0;
 	register struct mbuf *m = m0;
 	register int hlen = sizeof (struct ip);
 	int len, off, error = 0;
 	struct route iproute;
 	struct sockaddr_in *dst;
-	struct in_ifaddr *ia;
+	struct in_ifaddr *ia = 0;
 	struct mbuf *opt;
 	struct route *ro;
 	int flags;
@@ -207,6 +207,7 @@ ip_output(m0, va_alist)
 			goto bad;
 		}
 		ifp = ia->ia_ifp;
+		if (ifp != NULL) if_addref(ifp);
 		mtu = ifp->if_mtu;
 		ip->ip_ttl = 1;
 	} else {
@@ -218,7 +219,9 @@ ip_output(m0, va_alist)
 			goto bad;
 		}
 		ia = ifatoia(ro->ro_rt->rt_ifa);
+		if (ia != NULL) ifa_addref(&ia->ia_ifa);
 		ifp = ro->ro_rt->rt_ifp;
+		if (ifp != NULL) if_addref(ifp);
 		if ((mtu = ro->ro_rt->rt_rmx.rmx_mtu) == 0)
 			mtu = ifp->if_mtu;
 		ro->ro_rt->rt_use++;
@@ -241,7 +244,9 @@ ip_output(m0, va_alist)
 		if (imo != NULL) {
 			ip->ip_ttl = imo->imo_multicast_ttl;
 			if (imo->imo_multicast_ifp != NULL) {
+				if (ifp != NULL) if_delref(ifp);
 				ifp = imo->imo_multicast_ifp;
+				if (ifp != NULL) if_addref(ifp);
 				mtu = ifp->if_mtu;
 			}
 		} else
@@ -259,10 +264,13 @@ ip_output(m0, va_alist)
 		 * of outgoing interface.
 		 */
 		if (in_nullhost(ip->ip_src)) {
-			register struct in_ifaddr *ia;
+			register struct in_ifaddr *ia1;
+			register int s = splimp();
 
-			IFP_TO_IA(ifp, ia);
-			ip->ip_src = ia->ia_addr.sin_addr;
+			IFP_TO_IA(ifp, ia1);
+			ip->ip_src = ia1->ia_addr.sin_addr;
+			ifa_delref(&ia1->ia_ifa);
+			splx(s);
 		}
 
 		IN_LOOKUP_MULTI(ip->ip_dst, ifp, inm);
@@ -481,6 +489,10 @@ done:
 		RTFREE(ro->ro_rt);
 		ro->ro_rt = 0;
 	}
+	if (ifp)
+		if_delref(ifp);
+	if (ia)
+		ifa_delref(&ia->ia_ifa);
 	return (error);
 bad:
 	m_freem(m);
@@ -909,10 +921,10 @@ ip_setmoptions(optname, imop, m)
 {
 	register int error = 0;
 	u_char loop;
-	register int i;
+	register int i, s;
 	struct in_addr addr;
 	register struct ip_mreq *mreq;
-	register struct ifnet *ifp;
+	register struct ifnet *ifp = NULL;
 	register struct ip_moptions *imo = *imop;
 	struct route ro;
 	register struct sockaddr_in *dst;
@@ -959,12 +971,16 @@ ip_setmoptions(optname, imop, m)
 		 * IP address.  Find the interface and confirm that
 		 * it supports multicasting.
 		 */
+		s = splimp();
 		INADDR_TO_IFP(addr, ifp);
+		splx(s);
 		if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
 			error = EADDRNOTAVAIL;
 			break;
 		}
 		imo->imo_multicast_ifp = ifp;
+		if_addref(ifp);
+/* When exactly should we if_delref this reference? */
 		break;
 
 	case IP_MULTICAST_TTL:
@@ -1022,9 +1038,12 @@ ip_setmoptions(optname, imop, m)
 				break;
 			}
 			ifp = ro.ro_rt->rt_ifp;
+			if (ifp != NULL) if_addref(ifp);
 			rtfree(ro.ro_rt);
 		} else {
+			s = splimp();
 			INADDR_TO_IFP(mreq->imr_interface, ifp);
+			splx(s);
 		}
 		/*
 		 * See if we found an interface, and confirm that it
@@ -1082,10 +1101,10 @@ ip_setmoptions(optname, imop, m)
 		 * If an interface address was specified, get a pointer
 		 * to its ifnet structure.
 		 */
-		if (in_nullhost(mreq->imr_interface))
-			ifp = NULL;
-		else {
+		if (!in_nullhost(mreq->imr_interface)) {
+			s = splimp();
 			INADDR_TO_IFP(mreq->imr_interface, ifp);
+			splx(s);
 			if (ifp == NULL) {
 				error = EADDRNOTAVAIL;
 				break;
@@ -1134,6 +1153,8 @@ ip_setmoptions(optname, imop, m)
 		*imop = NULL;
 	}
 
+	if (ifp)
+		if_delref(ifp);
 	return (error);
 }
 
@@ -1150,6 +1171,7 @@ ip_getmoptions(optname, imo, mp)
 	u_char *loop;
 	struct in_addr *addr;
 	struct in_ifaddr *ia;
+	int s;
 
 	*mp = m_get(M_WAIT, MT_SOOPTS);
 
@@ -1161,8 +1183,12 @@ ip_getmoptions(optname, imo, mp)
 		if (imo == NULL || imo->imo_multicast_ifp == NULL)
 			*addr = zeroin_addr;
 		else {
+			s = splimp();
 			IFP_TO_IA(imo->imo_multicast_ifp, ia);
+			splx(s);
 			*addr = ia ? ia->ia_addr.sin_addr : zeroin_addr;
+			if (ia)
+				ifa_delref(&ia->ia_ifa);
 		}
 		return (0);
 

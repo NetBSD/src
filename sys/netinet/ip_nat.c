@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.23 1998/11/22 15:17:19 mrg Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.23.2.1 1998/12/11 04:53:09 kenh Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -566,6 +566,9 @@ int direction;
 	tcphdr_t *tcp = NULL;
 	nat_t *nat, **natp;
 	u_short nflags;
+#if defined(_HAS_IFA_ADDREF) && defined(_KERNEL)
+	int s;
+#endif
 
 	nflags = flags & np->in_flags;
 	if (flags & IPN_TCPUDP) {
@@ -596,6 +599,9 @@ int direction;
 		 * If it's an outbound packet which doesn't match any existing
 		 * record, then create a new port
 		 */
+#if defined(_HAS_IFA_ADDREF) && defined(_KERNEL)
+		s = splimp();
+#endif
 		l = 0;
 		st_ip = np->in_nip;
 		st_port = np->in_pnext;
@@ -616,11 +622,17 @@ int direction;
 				if ((l > 1) ||
 				    nat_ifpaddr(nat, fin->fin_ifp, &in) == -1) {
 					KFREE(nat);
+#if defined(_HAS_IFA_ADDREF) && defined(_KERNEL)
+					splx(s);
+#endif
 					return NULL;
 				}
 			} else if (!in.s_addr && !np->in_outmsk) {
 				if (l > 1) {
 					KFREE(nat);
+#if defined(_HAS_IFA_ADDREF) && defined(_KERNEL)
+					splx(s);
+#endif
 					return NULL;
 				}
 				in.s_addr = ntohl(ip->ip_src.s_addr);
@@ -659,6 +671,9 @@ int direction;
 
 		} while (nat_inlookup(fin->fin_ifp, flags, ip->ip_dst,
 				      dport, in, port));
+#if defined(_HAS_IFA_ADDREF) && defined(_KERNEL)
+		splx(s);
+#endif
 
 		if (np->in_space > 1)
 			np->in_space--;
@@ -758,6 +773,9 @@ int direction;
 	nat->nat_bytes = 0;
 	nat->nat_pkts = 0;
 	nat->nat_ifp = fin->fin_ifp;
+#ifdef _KERNEL
+	if_addref(nat->nat_ifp);
+#endif
 	nat->nat_dir = direction;
 	nat->nat_age = fr_defnatage;
 	if (direction == NAT_OUTBOUND) {
@@ -929,6 +947,9 @@ u_short sport, mapdport;
 #endif
 {
 	register nat_t *nat;
+#if defined(_HAS_IF_ADDREF) && defined(_KERNEL)
+	int s = splimp();
+#endif
 
 	flags &= IPN_TCPUDP;
 
@@ -939,8 +960,15 @@ u_short sport, mapdport;
 		    nat->nat_outip.s_addr == mapdst.s_addr &&
 		    flags == nat->nat_flags && (!flags ||
 		     (nat->nat_oport == sport &&
-		      nat->nat_outport == mapdport)))
+		      nat->nat_outport == mapdport))) {
+#if defined(_HAS_IF_ADDREF) && defined(_KERNEL)
+			splx(s);
+#endif
 			return nat;
+	}
+#if defined(_HAS_IF_ADDREF) && defined(_KERNEL)
+	splx(s);
+#endif
 	return NULL;
 }
 
@@ -962,6 +990,9 @@ u_short sport, dport;
 #endif
 {
 	register nat_t *nat;
+#if defined(_HAS_IF_ADDREF) && defined(_KERNEL)
+	int s = splimp();
+#endif
 
 	flags &= IPN_TCPUDP;
 
@@ -971,9 +1002,16 @@ u_short sport, dport;
 		    nat->nat_inip.s_addr == src.s_addr &&
 		    nat->nat_oip.s_addr == dst.s_addr &&
 		    flags == nat->nat_flags && (!flags ||
-		     (nat->nat_inport == sport && nat->nat_oport == dport)))
+		     (nat->nat_inport == sport && nat->nat_oport == dport))) {
+#if defined(_HAS_IF_ADDREF) && defined(_KERNEL)
+			splx(s);
+#endif
 			return nat;
+		}
 	}
+#if defined(_HAS_IF_ADDREF) && defined(_KERNEL)
+	splx(s);
+#endif
 	return NULL;
 }
 
@@ -994,6 +1032,9 @@ u_short mapsport, dport;
 #endif
 {
 	register nat_t *nat;
+#if defined(_HAS_IF_ADDREF) && defined(_KERNEL)
+	int s = splimp();
+#endif
 
 	flags &= IPN_TCPUDP;
 
@@ -1004,8 +1045,15 @@ u_short mapsport, dport;
 		    nat->nat_outip.s_addr == mapsrc.s_addr &&
 		    flags == nat->nat_flags && (!flags ||
 		     (nat->nat_outport == mapsport &&
-		      nat->nat_oport == dport)))
+		      nat->nat_oport == dport))) {
+#if defined(_HAS_IF_ADDREF) && defined(_KERNEL)
+			splx(s);
+#endif
 			return nat;
+		}
+#if defined(_HAS_IF_ADDREF) && defined(_KERNEL)
+	splx(s);
+#endif
 	return NULL;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.14 1998/08/02 15:09:50 sommerfe Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.14.4.1 1998/12/11 04:53:06 kenh Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -206,8 +206,13 @@ pppopen(dev, tp)
     sc->sc_relinq = pppasyncrelinq;
     sc->sc_outm = NULL;
     pppgetm(sc);
+#ifdef _HAS_IF_ALLOC
+    sc->sc_if->if_flags |= IFF_RUNNING;
+    sc->sc_if->if_baudrate = tp->t_ospeed;
+#else
     sc->sc_if.if_flags |= IFF_RUNNING;
     sc->sc_if.if_baudrate = tp->t_ospeed;
+#endif
 
     tp->t_sc = (caddr_t) sc;
     ttyflush(tp, FREAD | FWRITE);
@@ -338,6 +343,11 @@ pppwrite(tp, uio, flag)
     int flag;
 {
     register struct ppp_softc *sc = (struct ppp_softc *)tp->t_sc;
+#ifdef _HAS_IF_ALLOC
+    struct ifnet *ifp = sc->sc_if;
+#else
+    struct ifnet *ifp = &sc->sc_if;
+#endif
     struct mbuf *m, *m0, **mp;
     struct sockaddr dst;
     int len, error;
@@ -348,7 +358,7 @@ pppwrite(tp, uio, flag)
 	return (EINVAL);
     if (sc == NULL || tp != (struct tty *) sc->sc_devp)
 	return EIO;
-    if (uio->uio_resid > sc->sc_if.if_mtu + PPP_HDRLEN ||
+    if (uio->uio_resid > ifp->if_mtu + PPP_HDRLEN ||
 	uio->uio_resid < PPP_HDRLEN)
 	return (EMSGSIZE);
     for (mp = &m0; uio->uio_resid; mp = &m->m_next) {
@@ -373,7 +383,7 @@ pppwrite(tp, uio, flag)
     bcopy(mtod(m0, u_char *), dst.sa_data, PPP_HDRLEN);
     m0->m_data += PPP_HDRLEN;
     m0->m_len -= PPP_HDRLEN;
-    return ((*sc->sc_if.if_output)(&sc->sc_if, m0, &dst, (struct rtentry *)0));
+    return ((*ifp->if_output)(ifp, m0, &dst, (struct rtentry *)0));
 }
 
 /*
@@ -539,7 +549,11 @@ pppasyncstart(sc)
 
 	    /* Calculate the FCS for the first mbuf's worth. */
 	    sc->sc_outfcs = pppfcs(PPP_INITFCS, mtod(m, u_char *), m->m_len);
+#ifdef _HAS_IF_ALLOC
+	    sc->sc_if->if_lastchange = time;
+#else
 	    sc->sc_if.if_lastchange = time;
+#endif
 	}
 
 	for (;;) {
@@ -788,6 +802,7 @@ pppinput(c, tp)
     register struct tty *tp;
 {
     register struct ppp_softc *sc;
+    register struct ifnet *ifp;
     struct mbuf *m;
     int ilen, s;
 
@@ -795,13 +810,19 @@ pppinput(c, tp)
     if (sc == NULL || tp != (struct tty *) sc->sc_devp)
 	return 0;
 
+#ifdef _HAS_IF_ALLOC
+    ifp = sc->sc_if;
+#else
+    ifp = &sc->sc_if;
+#endif
+
     ++tk_nin;
     ++sc->sc_stats.ppp_ibytes;
 
     if (c & TTY_FE) {
 	/* framing error or overrun on this char - abort packet */
 	if (sc->sc_flags & SC_DEBUG)
-	    printf("%s: bad char %x\n", sc->sc_if.if_xname, c);
+	    printf("%s: bad char %x\n", ifp->if_xname, c);
 	goto flush;
     }
 
@@ -857,9 +878,9 @@ pppinput(c, tp)
 	    sc->sc_flags |= SC_PKTLOST;	/* note the dropped packet */
 	    if ((sc->sc_flags & (SC_FLUSH | SC_ESCAPED)) == 0){
 		if (sc->sc_flags & SC_DEBUG)
-		    printf("%s: bad fcs %x\n", sc->sc_if.if_xname,
+		    printf("%s: bad fcs %x\n", ifp->if_xname,
 			sc->sc_fcs);
-		sc->sc_if.if_ierrors++;
+		ifp->if_ierrors++;
 		sc->sc_stats.ppp_ierrors++;
 	    } else
 		sc->sc_flags &= ~(SC_FLUSH | SC_ESCAPED);
@@ -870,9 +891,9 @@ pppinput(c, tp)
 	if (ilen < PPP_HDRLEN + PPP_FCSLEN) {
 	    if (ilen) {
 		if (sc->sc_flags & SC_DEBUG)
-		    printf("%s: too short (%d)\n", sc->sc_if.if_xname, ilen);
+		    printf("%s: too short (%d)\n", ifp->if_xname, ilen);
 		s = spltty();
-		sc->sc_if.if_ierrors++;
+		ifp->if_ierrors++;
 		sc->sc_stats.ppp_ierrors++;
 		sc->sc_flags |= SC_PKTLOST;
 		splx(s);
@@ -942,7 +963,7 @@ pppinput(c, tp)
 	    pppgetm(sc);
 	    if (sc->sc_m == NULL) {
 		if (sc->sc_flags & SC_DEBUG)
-		    printf("%s: no input mbufs!\n", sc->sc_if.if_xname);
+		    printf("%s: no input mbufs!\n", ifp->if_xname);
 		goto flush;
 	    }
 	}
@@ -956,7 +977,7 @@ pppinput(c, tp)
 	    if (sc->sc_flags & SC_REJ_COMP_AC) {
 		if (sc->sc_flags & SC_DEBUG)
 		    printf("%s: garbage received: 0x%x (need 0xFF)\n",
-		    sc->sc_if.if_xname, c);
+		    ifp->if_xname, c);
 		goto flush;
 	    }
 	    *sc->sc_mp++ = PPP_ALLSTATIONS;
@@ -968,7 +989,7 @@ pppinput(c, tp)
     if (sc->sc_ilen == 1 && c != PPP_UI) {
 	if (sc->sc_flags & SC_DEBUG)
 	    printf("%s: missing UI (0x3), got 0x%x\n",
-		sc->sc_if.if_xname, c);
+		ifp->if_xname, c);
 	goto flush;
     }
     if (sc->sc_ilen == 2 && (c & 1) == 1) {
@@ -979,7 +1000,7 @@ pppinput(c, tp)
     }
     if (sc->sc_ilen == 3 && (c & 1) == 0) {
 	if (sc->sc_flags & SC_DEBUG)
-	    printf("%s: bad protocol %x\n", sc->sc_if.if_xname,
+	    printf("%s: bad protocol %x\n", ifp->if_xname,
 		(sc->sc_mp[-1] << 8) + c);
 	goto flush;
     }
@@ -987,7 +1008,7 @@ pppinput(c, tp)
     /* packet beyond configured mru? */
     if (++sc->sc_ilen > sc->sc_mru + PPP_HDRLEN + PPP_FCSLEN) {
 	if (sc->sc_flags & SC_DEBUG)
-	    printf("%s: packet too big\n", sc->sc_if.if_xname);
+	    printf("%s: packet too big\n", ifp->if_xname);
 	goto flush;
     }
 
@@ -998,7 +1019,7 @@ pppinput(c, tp)
 	    pppgetm(sc);
 	    if (m->m_next == NULL) {
 		if (sc->sc_flags & SC_DEBUG)
-		    printf("%s: too few input mbufs!\n", sc->sc_if.if_xname);
+		    printf("%s: too few input mbufs!\n", ifp->if_xname);
 		goto flush;
 	    }
 	}
@@ -1016,7 +1037,7 @@ pppinput(c, tp)
  flush:
     if (!(sc->sc_flags & SC_FLUSH)) {
 	s = spltty();
-	sc->sc_if.if_ierrors++;
+	ifp->if_ierrors++;
 	sc->sc_stats.ppp_ierrors++;
 	sc->sc_flags |= SC_FLUSH;
 	splx(s);
@@ -1037,7 +1058,11 @@ ppplogchar(sc, c)
 	sc->sc_rawin[sc->sc_rawin_count++] = c;
     if (sc->sc_rawin_count >= sizeof(sc->sc_rawin)
 	|| (c < 0 && sc->sc_rawin_count > 0)) {
+#ifdef _HAS_IF_ALLOC
+	printf("%s input: ", sc->sc_if->if_xname);
+#else
 	printf("%s input: ", sc->sc_if.if_xname);
+#endif
 	pppdumpb(sc->sc_rawin, sc->sc_rawin_count);
 	sc->sc_rawin_count = 0;
     }

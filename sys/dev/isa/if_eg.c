@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.43 1998/07/05 06:49:13 jonathan Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.43.6.1 1998/12/11 04:53:01 kenh Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -394,7 +394,7 @@ egattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
 	printf("\n");
@@ -478,6 +478,9 @@ egattach(parent, self, aux)
 	}
 
 	/* Initialize ifnet structure. */
+	ifp = if_alloc();
+	sc->sc_ethercom.ec_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = egstart;
@@ -505,7 +508,7 @@ void
 eginit(sc)
 	register struct eg_softc *sc;
 {
-	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	register struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -701,13 +704,13 @@ egintr(arg)
 			if (sc->eg_pcb[6] || sc->eg_pcb[7]) {
 				DPRINTF(("%s: packet dropped\n",
 				    sc->sc_dev.dv_xname));
-				sc->sc_ethercom.ec_if.if_oerrors++;
+				sc->sc_ethercom.ec_if->if_oerrors++;
 			} else
-				sc->sc_ethercom.ec_if.if_opackets++;
-			sc->sc_ethercom.ec_if.if_collisions +=
+				sc->sc_ethercom.ec_if->if_opackets++;
+			sc->sc_ethercom.ec_if->if_collisions +=
 			    sc->eg_pcb[8] & 0xf;
-			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
-			egstart(&sc->sc_ethercom.ec_if);
+			sc->sc_ethercom.ec_if->if_flags &= ~IFF_OACTIVE;
+			egstart(sc->sc_ethercom.ec_if);
 			serviced = 1;
 			break;
 
@@ -754,7 +757,7 @@ egread(sc, buf, len)
 	caddr_t buf;
 	int len;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 	
@@ -815,7 +818,7 @@ egget(sc, buf, totlen)
 	caddr_t buf;
 	int totlen;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = sc->sc_ethercom.ec_if;
 	struct mbuf *top, **mp, *m;
 	int len;
 
@@ -823,6 +826,7 @@ egget(sc, buf, totlen)
 	if (m == 0)
 		return 0;
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
@@ -961,7 +965,7 @@ egwatchdog(ifp)
 	struct eg_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	sc->sc_ethercom.ec_if.if_oerrors++;
+	ifp->if_oerrors++;
 
 	egreset(sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.25 1998/07/05 06:49:17 jonathan Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.25.6.1 1998/12/11 04:53:05 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -96,7 +96,7 @@
 
 #define	LOMTU	(32768 +  MHLEN + MLEN)
 
-struct	ifnet loif[NLOOP];
+struct	ifnet *loif[NLOOP];
 
 void
 loopattach(n)
@@ -106,7 +106,8 @@ loopattach(n)
 	register struct ifnet *ifp;
 
 	for (i = 0; i < NLOOP; i++) {
-		ifp = &loif[i];
+		ifp = if_alloc();
+		loif[i] = ifp;
 		sprintf(ifp->if_xname, "lo%d", i);
 		ifp->if_softc = NULL;
 		ifp->if_mtu = LOMTU;
@@ -156,6 +157,7 @@ looutput(ifp, m, dst, rt)
 	}
 #endif
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 
 	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
 		m_freem(m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.11 1998/07/08 04:18:53 scottr Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.11.6.1 1998/12/11 04:52:56 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -158,7 +158,7 @@ mcsetup(sc, lladdr)
 	struct mc_softc	*sc;
 	u_int8_t *lladdr;
 {
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp;
 
 	/* reset the chip and disable all interrupts */
 	NIC_PUT(sc, MACE_BIUCC, SWRST);
@@ -168,6 +168,9 @@ mcsetup(sc, lladdr)
 	bcopy(lladdr, sc->sc_enaddr, ETHER_ADDR_LEN);
 	printf(": address %s\n", ether_sprintf(lladdr));
 
+	ifp = ifalloc();
+	sc->sc_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = mcioctl;
@@ -346,7 +349,7 @@ mcinit(sc)
 	int s;
 	u_int8_t maccc, ladrf[8];
 
-	if (sc->sc_if.if_flags & IFF_RUNNING)
+	if (sc->sc_if->if_flags & IFF_RUNNING)
 		/* already running */
 		return (0);
 
@@ -386,7 +389,7 @@ mcinit(sc)
 	NIC_PUT(sc, MACE_RCVFC, 0);
 
 	maccc = ENXMT | ENRCV;
-	if (sc->sc_if.if_flags & IFF_PROMISC)
+	if (sc->sc_if->if_flags & IFF_PROMISC)
 		maccc |= PROM;
 
 	NIC_PUT(sc, MACE_MACCC, maccc);
@@ -401,8 +404,8 @@ mcinit(sc)
 	NIC_PUT(sc, MACE_IMR, RCVINTM);
 
 	/* flag interface as "running" */
-	sc->sc_if.if_flags |= IFF_RUNNING;
-	sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	sc->sc_if->if_flags |= IFF_RUNNING;
+	sc->sc_if->if_flags &= ~IFF_OACTIVE;
 
 	splx(s);
 	return (0);
@@ -422,8 +425,8 @@ mcstop(sc)
 	NIC_PUT(sc, MACE_BIUCC, SWRST);
 	DELAY(100);
 
-	sc->sc_if.if_timer = 0;
-	sc->sc_if.if_flags &= ~(IFF_RUNNING | IFF_UP);
+	sc->sc_if->if_timer = 0;
+	sc->sc_if->if_flags &= ~(IFF_RUNNING | IFF_UP);
 
 	splx(s);
 	return (0);
@@ -483,7 +486,7 @@ maceput(sc, m)
 
 	(*sc->sc_putpacket)(sc, totlen);
 
-	sc->sc_if.if_timer = 5;	/* 5 seconds to watch for failing to transmit */
+	sc->sc_if->if_timer = 5;	/* 5 seconds to watch for failing to transmit */
 	return (totlen);
 }
 
@@ -499,19 +502,19 @@ struct mc_softc *sc = arg;
 #ifdef MCDEBUG
 		printf("%s: jabber error\n", sc->sc_dev.dv_xname);
 #endif
-		sc->sc_if.if_oerrors++;
+		sc->sc_if->if_oerrors++;
 	}
 
 	if (ir & BABL) {
 #ifdef MCDEBUG
 		printf("%s: babble\n", sc->sc_dev.dv_xname);
 #endif
-		sc->sc_if.if_oerrors++;
+		sc->sc_if->if_oerrors++;
 	}
 
 	if (ir & CERR) {
 		printf("%s: collision error\n", sc->sc_dev.dv_xname);
-		sc->sc_if.if_collisions++;
+		sc->sc_if->if_collisions++;
 	}
 
 	/*
@@ -547,29 +550,29 @@ mc_tint(sc)
 
 	if (xmtfs & LCOL) {
 		printf("%s: late collision\n", sc->sc_dev.dv_xname);
-		sc->sc_if.if_oerrors++;
-		sc->sc_if.if_collisions++;
+		sc->sc_if->if_oerrors++;
+		sc->sc_if->if_collisions++;
 	}
 
 	if (xmtfs & MORE)
 		/* Real number is unknown. */
-		sc->sc_if.if_collisions += 2;
+		sc->sc_if->if_collisions += 2;
 	else if (xmtfs & ONE)
-		sc->sc_if.if_collisions++;
+		sc->sc_if->if_collisions++;
 	else if (xmtfs & RTRY) {
-		sc->sc_if.if_collisions += 16;
-		sc->sc_if.if_oerrors++;
+		sc->sc_if->if_collisions += 16;
+		sc->sc_if->if_oerrors++;
 	}
 
 	if (xmtfs & LCAR) {
 		sc->sc_havecarrier = 0;
 		printf("%s: lost carrier\n", sc->sc_dev.dv_xname);
-		sc->sc_if.if_oerrors++;
+		sc->sc_if->if_oerrors++;
 	}
 
-	sc->sc_if.if_flags &= ~IFF_OACTIVE;
-	sc->sc_if.if_timer = 0;
-	mcstart(&sc->sc_if);
+	sc->sc_if->if_flags &= ~IFF_OACTIVE;
+	sc->sc_if->if_timer = 0;
+	mcstart(sc->sc_if);
 }
 
 void
@@ -590,18 +593,18 @@ mc_rint(sc)
 
 	if (rxf.rx_rcvsts & OFLO) {
 		printf("%s: receive FIFO overflow\n", sc->sc_dev.dv_xname);
-		sc->sc_if.if_ierrors++;
+		sc->sc_if->if_ierrors++;
 		return;
 	}
 
 	if (rxf.rx_rcvsts & CLSN)
-		sc->sc_if.if_collisions++;
+		sc->sc_if->if_collisions++;
 
 	if (rxf.rx_rcvsts & FRAM) {
 #ifdef MCDEBUG
 		printf("%s: framing error\n", sc->sc_dev.dv_xname);
 #endif
-		sc->sc_if.if_ierrors++;
+		sc->sc_if->if_ierrors++;
 		return;
 	}
 
@@ -609,7 +612,7 @@ mc_rint(sc)
 #ifdef MCDEBUG
 		printf("%s: frame control checksum error\n", sc->sc_dev.dv_xname);
 #endif
-		sc->sc_if.if_ierrors++;
+		sc->sc_if->if_ierrors++;
 		return;
 	}
 
@@ -623,7 +626,7 @@ mace_read(sc, pkt, len)
 	caddr_t pkt;
 	int len;
 {
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = sc->sc_if;
 	struct ether_header *eh = (struct ether_header *)pkt;
 	struct mbuf *m;
 
@@ -683,7 +686,8 @@ mace_get(sc, pkt, totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m->m_pkthdr.rcvif = sc->sc_if;
+	if_addref(sc->sc_if);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
@@ -727,7 +731,7 @@ mace_calcladrf(ac, af)
 	struct ethercom *ac;
 	u_int8_t *af;
 {
-	struct ifnet *ifp = &ac->ec_if;
+	struct ifnet *ifp = ac->ec_if;
 	struct ether_multi *enm;
 	register u_char *cp;
 	register u_int32_t crc;

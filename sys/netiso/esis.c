@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.20 1998/07/05 04:37:42 jonathan Exp $	*/
+/*	$NetBSD: esis.c,v 1.20.6.1 1998/12/11 04:53:10 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -555,7 +555,7 @@ esis_eshinput(m, shp)
 	int             naddr;
 	u_char         *buf = (u_char *) (pdu + 1);
 	u_char         *buflim = pdu->esis_hdr_len + (u_char *) pdu;
-	int             new_entry = 0;
+	int             new_entry = 0, s;
 
 	esis_stat.es_eshrcvd++;
 
@@ -575,6 +575,7 @@ esis_eshinput(m, shp)
 		 * See if we want to compress out multiple nsaps
 		 * differing only by nsel
 		 */
+		s = splimp();
 		for (ifa = shp->snh_ifp->if_addrlist.tqh_first; ifa != 0;
 		     ifa = ifa->ifa_list.tqe_next)
 			if (ifa->ifa_addr->sa_family == AF_ISO) {
@@ -582,6 +583,7 @@ esis_eshinput(m, shp)
 				((struct iso_ifaddr *) ifa)->ia_addr.siso_tlen;
 				break;
 			}
+		splx(s);
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ESISINPUT]) {
 			printf(
@@ -823,6 +825,7 @@ esis_config(v)
 	void *v;
 {
 	register struct ifnet *ifp;
+	int	s;
 
 	timeout(esis_config, (caddr_t) 0, hz * esis_config_time);
 
@@ -837,6 +840,7 @@ esis_config(v)
 	 * work to advantage for non-broadcast media
 	 */
 
+	s = splimp();
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
 		if ((ifp->if_flags & IFF_UP) &&
 		    (ifp->if_flags & IFF_BROADCAST)) {
@@ -856,6 +860,7 @@ esis_config(v)
 			}
 		}
 	}
+	splx(s);
 }
 
 /*
@@ -883,7 +888,7 @@ esis_shoutput(ifp, type, ht, sn_addr, sn_len, isoa)
 	int             naddr = 0;
 	struct esis_fixed *pdu;
 	struct iso_ifaddr *ia;
-	int             len;
+	int             len, s;
 	struct sockaddr_iso siso;
 
 	if (type == ESIS_ESH)
@@ -945,6 +950,7 @@ esis_shoutput(ifp, type, ht, sn_addr, sn_len, isoa)
 		(void) esis_insert_addr(&cp, &len, isoa, m, 0);
 		naddr = 1;
 	}
+	s = splimp();
 	for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
 		int nsellen = (type == ESIS_ISH ? ia->ia_addr.siso_tlen : 0);
 		int n = ia->ia_addr.siso_nlen;
@@ -980,6 +986,7 @@ esis_shoutput(ifp, type, ht, sn_addr, sn_len, isoa)
 		}
 		naddr++;
 	}
+	splx(s);
 
 	if (type == ESIS_ESH)
 		*naddrp = naddr;
@@ -1154,6 +1161,8 @@ isis_output(m, va_alist)
 		}
 #endif
 	}
+	if (ifa)
+		ifa_delref(ifa);
 	return (error);
 
 release:
@@ -1183,14 +1192,18 @@ esis_ctlinput(req, siso, dummy)
 	void *dummy;
 {
 	register struct iso_ifaddr *ia;	/* scan through interface addresses */
+	int	s;
 
-	if (req == PRC_IFDOWN)
+	if (req == PRC_IFDOWN) {
+		s = splimp();
 		for (ia = iso_ifaddr.tqh_first; ia != 0;
 		     ia = ia->ia_list.tqe_next) {
 			if (iso_addrmatch(IA_SIS(ia),
 					  (struct sockaddr_iso *) siso))
 				snpac_flushifp(ia->ia_ifp);
 		}
+		splx(s);
+	}
 	return NULL;
 }
 

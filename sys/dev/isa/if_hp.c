@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.27 1998/07/05 06:49:13 jonathan Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.27.6.1 1998/12/11 04:53:01 kenh Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -124,7 +124,7 @@ struct mbuf *hpget();
  */
 struct hp_softc {
 	struct ethercom ns_ec;	/* Ethernet common part */
-#define	ns_if		ns_ac.ac_if	/* network-visible interface */
+#define	ns_if		ns_ec.ec_if	/* network-visible interface */
 	int     ns_flags;
 #define	DSF_LOCK	1	/* block re-entering enstart */
 	int     ns_oactive;
@@ -411,8 +411,12 @@ hpattach(dvp)
 {
 	int     unit = dvp->id_unit;
 	register struct hp_softc *ns = &hp_softc[unit];
-	register struct ifnet *ifp = &ns->ns_if;
+	register struct ifnet *ifp;
 
+	ifp = if_alloc();
+	ns->ns_if = ifp;
+	ifp->if_ifcom = ns->ns_ec;
+	ifp->if_softc = ns;
 	ifp->if_unit = unit;
 	ifp->if_name = hpdriver.name;
 	ifp->if_mtu = ETHERMTU;
@@ -445,7 +449,7 @@ hpinit(unit)
 	int     unit;
 {
 	register struct hp_softc *ns = &hp_softc[unit];
-	struct ifnet *ifp = &ns->ns_if;
+	struct ifnet *ifp = ns->ns_if;
 	int     s;
 	int     i;
 	char   *cp;
@@ -461,11 +465,11 @@ hpinit(unit)
 #ifdef HP_DEBUG
 	printf("hpinit: hp%d at 0x%x irq %d\n", unit, hpc, (int) ns->hp_irq);
 	printf("hpinit: promiscuous mode %s\n",
-	    ns->ns_if.if_flags & IFF_PROMISC ? "on" : "off");
+	    ifp->if_flags & IFF_PROMISC ? "on" : "off");
 #endif
 
-	ns->ns_rcr = (ns->ns_if.if_flags & IFF_BROADCAST ? DSRC_AB : 0) |
-	    (ns->ns_if.if_flags & IFF_PROMISC ? DSRC_PRO : 0);
+	ns->ns_rcr = (ifp->if_flags & IFF_BROADCAST ? DSRC_AB : 0) |
+	    (ifp->if_flags & IFF_PROMISC ? DSRC_PRO : 0);
 #ifdef HP_LOG_ERRORS
 	ns->ns_rcr |= DSRC_SEP;
 #endif
@@ -504,7 +508,7 @@ hpinit(unit)
 	outb(hpc + ds0_tcr, 0);
 	outb(hpc + ds0_imr, 0xff);
 
-	ns->ns_if.if_flags |= IFF_RUNNING;
+	ifp->if_flags |= IFF_RUNNING;
 	ns->ns_flags &= ~DSF_LOCK;
 	ns->ns_oactive = 0;
 	ns->ns_mask = ~0;
@@ -527,6 +531,7 @@ hpstart(ifp)
 {
 	register struct hp_softc *ns = &hp_softc[ifp->if_unit];
 	struct mbuf *m0, *m;
+	struct ifnet *ifp = ns->ns_if;
 	int     buffer;
 	int     len, i, total;
 	register hpc = ns->ns_port;
@@ -541,10 +546,10 @@ hpstart(ifp)
 	if (inb(hpc + ds_cmd) & DSCM_TRANS)
 		return;
 
-	if ((ns->ns_if.if_flags & IFF_RUNNING) == 0)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 
-	IF_DEQUEUE(&ns->ns_if.if_snd, m);
+	IF_DEQUEUE(&ifp->if_snd, m);
 
 	if (m == 0)
 		return;
@@ -609,6 +614,7 @@ hpintr(unit)
 	register struct hp_softc *ns = &hp_softc[unit];
 	u_char  cmd, isr;
 	register hpc = ns->ns_port;
+	struct ifnet *ifp = ns->ns_if;
 	u_char  err;
 
 	/* Save cmd, clear interrupt */
@@ -625,7 +631,7 @@ loop:
 		(void) inb(hpc + 0xD);
 		(void) inb(hpc + 0xE);
 		(void) inb(hpc + 0xF);
-		ns->ns_if.if_ierrors++;
+		ifp->if_ierrors++;
 #ifdef HP_LOG_ERRORS
 		isr |= DSIS_RX;
 #endif
@@ -709,7 +715,7 @@ loop:
 			}
 #endif
 
-			ns->ns_if.if_ipackets++;
+			ifp->if_ipackets++;
 			len = ns->ns_ph.pr_sz0 + (ns->ns_ph.pr_sz1 << 8);
 			if (len < ETHER_MIN_LEN || len > ETHER_MAX_LEN) {
 				printf("hpintr: bnry %x curr %x\n", bnry, curr);
@@ -756,14 +762,14 @@ loop:
 	if (isr & DSIS_TXE) {
 		ns->ns_flags &= ~DSF_LOCK;
 		/* Need to read these registers to clear status */
-		ns->ns_if.if_collisions += inb(hpc + ds0_tbcr0);
-		ns->ns_if.if_oerrors++;
+		ifp->if_collisions += inb(hpc + ds0_tbcr0);
+		ifp->if_oerrors++;
 	}
 	/* Packet Transmitted */
 	if (isr & DSIS_TX) {
 		ns->ns_flags &= ~DSF_LOCK;
-		++ns->ns_if.if_opackets;
-		ns->ns_if.if_collisions += inb(hpc + ds0_tbcr0);
+		++ifp->if_opackets;
+		ifp->if_collisions += inb(hpc + ds0_tbcr0);
 	}
 	/* Receiver ovverun? */
 	if (isr & DSIS_ROVRN) {
@@ -779,7 +785,7 @@ loop:
 	}
 	/* Any more to send? */
 	outb(hpc + ds_cmd, DSCM_NODMA | DSCM_PG0 | DSCM_START);
-	hpstart(&ns->ns_if);
+	hpstart(ifp);
 	outb(hpc + ds_cmd, cmd);
 	outb(hpc + ds0_imr, 0xff);
 
@@ -806,6 +812,7 @@ hpread(ns, buf, len)
 	struct mbuf *m;
 	int     off, resid;
 	register struct ifqueue *inq;
+	struct ifnet *ifp = ns->ns_if;
 	u_short etype;
 
 	/*
@@ -837,7 +844,7 @@ hpread(ns, buf, len)
 		bpf_tap(ns->ns_bpf, buf, len + sizeof(struct ether_header));
 #endif
 
-	if ((ns->ns_if.if_flags & IFF_PROMISC)
+	if ((ifp->if_flags & IFF_PROMISC)
 	    && bcmp(eh->ether_dhost, ns->ns_addrp,
 		sizeof(eh->ether_dhost)) != 0
 	    && bcmp(eh->ether_dhost, etherbroadcastaddr,
@@ -850,11 +857,11 @@ hpread(ns, buf, len)
 	       * information to be at the front, but we still have to drop
 	       * the type and length which are at the front of any trailer data.
 	       */
-	m = hpget(buf, len, off, &ns->ns_if);
+	m = hpget(buf, len, off, ifp);
 	if (m == 0)
 		return;
 
-	ether_input(&ns->ns_if, eh, m);
+	ether_input(ifp, eh, m);
 }
 /*
  * Supporting routines
@@ -893,6 +900,7 @@ hpget(buf, totlen, off0, ifp)
 	if (m == 0)
 		return (0);
 	m->m_pkthdr.rcvif = ifp;
+	if_addref(ifp);
 	m->m_pkthdr.len = totlen;
 	m->m_len = MHLEN;
 

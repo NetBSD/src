@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.14 1998/10/28 00:13:48 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.14.4.1 1998/12/11 04:53:00 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -233,7 +233,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 	/* Clear any pending interrupts that might have occurred above. */
 	bus_space_write_1(nict, nich, ED_P0_ISR, 0xff);
 
-	if (dp8390_config(dsc, media, nmedia, defmedia)) {
+	if (dp8390_config(dsc, media, nmedia, defmedia, NULL)) {
 		printf("%s: setup failed\n", dsc->sc_dev.dv_xname);
 		return;
 	}

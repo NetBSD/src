@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.19 1998/07/05 00:51:09 jonathan Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.19.6.1 1998/12/11 04:52:56 kenh Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -118,7 +118,7 @@ snsetup(sc, lladdr)
 	struct sn_softc	*sc;
 	u_int8_t *lladdr;
 {
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp;
 	u_char	*p;
 	u_char	*pp;
 	int	i;
@@ -247,6 +247,9 @@ snsetup(sc, lladdr)
 	    sc->p_rda, sc->mtda[0].mtd_txp);
 #endif
 
+	ifp = if_alloc();
+	sc->sc_if = ifp;
+	ifp->if_ifcom = &sc->sc_ethercom;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = snioctl;
@@ -424,9 +427,10 @@ sninit(sc)
 	struct sn_softc *sc;
 {
 	u_long	s_rcr;
+	struct ifnet *ifp = sc->sc_if;
 	int	s;
 
-	if (sc->sc_if.if_flags & IFF_RUNNING)
+	if (ifp->if_flags & IFF_RUNNING)
 		/* already running */
 		return (0);
 
@@ -440,9 +444,9 @@ sninit(sc)
 	NIC_PUT(sc, SNR_DCR2, sc->snr_dcr2);
 
 	s_rcr = RCR_BRD | RCR_LBNONE;
-	if (sc->sc_if.if_flags & IFF_PROMISC)
+	if (ifp->if_flags & IFF_PROMISC)
 		s_rcr |= RCR_PRO;
-	if (sc->sc_if.if_flags & IFF_ALLMULTI)
+	if (ifp->if_flags & IFF_ALLMULTI)
 		s_rcr |= RCR_AMC;
 	NIC_PUT(sc, SNR_RCR, s_rcr);
 
@@ -478,8 +482,8 @@ sninit(sc)
 	wbflush();
 
 	/* flag interface as "running" */
-	sc->sc_if.if_flags |= IFF_RUNNING;
-	sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	splx(s);
 	return (0);
@@ -495,6 +499,7 @@ snstop(sc)
 	struct sn_softc *sc;
 {
 	struct mtd *mtd;
+	struct ifnet *ifp = sc->sc_if;
 	int	s = splnet();
 
 	/* stick chip in reset */
@@ -511,8 +516,8 @@ snstop(sc)
 		if (++sc->mtd_hw == NTDA) sc->mtd_hw = 0;
 	}
 
-	sc->sc_if.if_timer = 0;
-	sc->sc_if.if_flags &= ~(IFF_RUNNING | IFF_UP);
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_UP);
 
 	splx(s);
 	return (0);
@@ -557,6 +562,7 @@ sonicput(sc, m0, mtd_next)
 {
 	struct mtd *mtdp;
 	struct mbuf *m;
+	struct ifnet *ifp = sc->sc_if;
 	u_char	*buff;
 	void	*txp;
 	u_int	len = 0;
@@ -628,7 +634,7 @@ sonicput(sc, m0, mtd_next)
 	wbflush();
 	NIC_PUT(sc, SNR_CR, CR_TXP);
 	wbflush();
-	sc->sc_if.if_timer = 5;	/* 5 seconds to watch for failing to transmit */
+	ifp->if_timer = 5;	/* 5 seconds to watch for failing to transmit */
 
 	return (totlen);
 }
@@ -689,7 +695,7 @@ camprogram(sc)
 
 	caminitialise(sc);
 
-	ifp = &sc->sc_if;
+	ifp = sc->sc_if;
 
 	/* Always load our own address first. */
 	camentry (sc, mcount, LLADDR(ifp->if_sadl));
@@ -917,7 +923,7 @@ snintr(arg)
 				sc->sc_mptally++;
 #endif
 		}
-		snstart(&sc->sc_if);
+		snstart(sc->sc_if);
 	}
 	return;
 }
@@ -933,7 +939,7 @@ sonictxint(sc)
 	void		*txp;
 	unsigned short	txp_status;
 	int		mtd_hw;
-	struct ifnet	*ifp = &sc->sc_if;
+	struct ifnet	*ifp = sc->sc_if;
 
 	mtd_hw = sc->mtd_hw;
 
@@ -1006,6 +1012,7 @@ sonicrxint(sc)
 	struct sn_softc *sc;
 {
 	caddr_t	rda;
+	struct ifnet *ifp = sc->sc_if;
 	int	orra;
 	int	len;
 	int	rramark;
@@ -1026,11 +1033,11 @@ sonicrxint(sc)
 			caddr_t pkt =
 			    sc->rbuf[orra & RBAMASK] + (rxpkt_ptr & PGOFSET);
 			if (sonic_read(sc, pkt, len))
-				sc->sc_if.if_ipackets++;
+				ifp->if_ipackets++;
 			else
-				sc->sc_if.if_ierrors++;
+				ifp->if_ierrors++;
 		} else
-			sc->sc_if.if_ierrors++;
+			ifp->if_ierrors++;
 
 		/*
 		 * give receive buffer area back to chip.
@@ -1098,7 +1105,7 @@ sonic_read(sc, pkt, len)
 	caddr_t pkt;
 	int len;
 {
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = sc->sc_if;
 	struct ether_header *et;
 	struct mbuf *m;
 
@@ -1163,7 +1170,8 @@ sonic_get(sc, eh, datalen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m->m_pkthdr.rcvif = sc->sc_if;
+	if_addref(sc->sc_if);
 	m->m_pkthdr.len = datalen;
 	len = MHLEN;
 	top = 0;

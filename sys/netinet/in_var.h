@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.31 1998/09/30 21:52:25 tls Exp $	*/
+/*	$NetBSD: in_var.h,v 1.31.4.1 1998/12/11 04:53:08 kenh Exp $	*/
 
 /*
  * Copyright (c) 1985, 1986, 1993
@@ -144,6 +144,8 @@ void	in_socktrim __P((struct sockaddr_in *));
 /*
  * Macro for finding whether an internet address (in_addr) belongs to one
  * of our interfaces (in_ifaddr).  NULL if the address isn't ours.
+ *
+ * Caller MUST be at splimp when calling this macro
  */
 #define INADDR_TO_IA(addr, ia) \
 	/* struct in_addr addr; */ \
@@ -153,12 +155,16 @@ void	in_socktrim __P((struct sockaddr_in *));
 	    ia != NULL && !in_hosteq(ia->ia_addr.sin_addr, (addr)); \
 	    ia = ia->ia_hash.le_next) \
 		 continue; \
+	if (ia) \
+		ifa_addref(&(ia)->ia_ifa); \
 }
 
 /*
  * Macro for finding the next in_ifaddr structure with the same internet
  * address as ia. Call only with a valid ia pointer.
- * Will set ia to NULL if none found.
+ * Will set ia to NULL if none found, and ifa_addref(ia) if found.
+ *
+ * MUST be called at splimp!
  */
 
 #define NEXT_IA_WITH_SAME_ADDR(ia) \
@@ -166,14 +172,19 @@ void	in_socktrim __P((struct sockaddr_in *));
 { \
 	struct in_addr addr; \
 	addr = ia->ia_addr.sin_addr; \
+	ifa_delref(&(ia)->ia_ifa); \
 	do { \
 		ia = ia->ia_hash.le_next; \
 	} while ((ia != NULL) && !in_hosteq(ia->ia_addr.sin_addr, addr)); \
+	if (ia) \
+		ifa_addref(&(ia)->ia_ifa); \
 }
 
 /*
  * Macro for finding the interface (ifnet structure) corresponding to one
  * of our IP addresses.
+ *
+ * Caller MUST be at splimp when calling this macro
  */
 #define INADDR_TO_IFP(addr, ifp) \
 	/* struct in_addr addr; */ \
@@ -183,11 +194,17 @@ void	in_socktrim __P((struct sockaddr_in *));
 \
 	INADDR_TO_IA(addr, ia); \
 	(ifp) = (ia == NULL) ? NULL : ia->ia_ifp; \
+	if (ifp) \
+		if_addref((ifp)); \
+	if (ia) \
+		ifa_delref(&ia->ia_ifa); \
 }
 
 /*
  * Macro for finding an internet address structure (in_ifaddr) corresponding
  * to a given interface (ifnet structure).
+ *
+ * Caller MUST be at splimp when calling this macro
  */
 #define IFP_TO_IA(ifp, ia) \
 	/* struct ifnet *ifp; */ \
@@ -200,6 +217,8 @@ void	in_socktrim __P((struct sockaddr_in *));
 	    ifa = ifa->ifa_list.tqe_next) \
 		continue; \
 	(ia) = ifatoia(ifa); \
+	if (ia) \
+		ifa_addref(&ia->ia_ifa); \
 }
 #endif
 
@@ -243,6 +262,8 @@ struct in_multistep {
 /*
  * Macro for looking up the in_multi record for a given IP multicast address
  * on a given interface.  If no matching record is found, "inm" returns NULL.
+ *
+ * Caller MUST be at splimp when calling this macro
  */
 #define IN_LOOKUP_MULTI(addr, ifp, inm) \
 	/* struct in_addr addr; */ \
@@ -254,11 +275,13 @@ struct in_multistep {
 	IFP_TO_IA((ifp), ia); 			/* multicast */ \
 	if (ia == NULL) \
 		(inm) = NULL; \
-	else \
+	else {\
 		for ((inm) = ia->ia_multiaddrs.lh_first; \
 		    (inm) != NULL && !in_hosteq((inm)->inm_addr, (addr)); \
 		     (inm) = inm->inm_list.le_next) \
 			 continue; \
+		ifa_delref(&ia->ia_ifa);\
+	} \
 }
 
 /*

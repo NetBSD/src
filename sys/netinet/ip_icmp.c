@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.30 1998/09/30 21:52:25 tls Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.30.4.1 1998/12/11 04:53:08 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -231,7 +231,7 @@ icmp_input(m, va_alist)
 	register struct ip *ip = mtod(m, struct ip *);
 	int icmplen = ip->ip_len;
 	register int i;
-	struct in_ifaddr *ia;
+	struct in_ifaddr *ia = 0;
 	void *(*ctlfunc) __P((int, struct sockaddr *, void *));
 	int code;
 	extern u_char ip_protox[];
@@ -411,6 +411,8 @@ reflect:
 		icmpstat.icps_reflect++;
 		icmpstat.icps_outhist[icp->icmp_type]++;
 		icmp_reflect(m);
+		if (ia)
+			ifa_delref(&ia->ia_ifa);
 		return;
 
 	case ICMP_REDIRECT:
@@ -472,11 +474,11 @@ icmp_reflect(m)
 	struct mbuf *m;
 {
 	register struct ip *ip = mtod(m, struct ip *);
-	register struct in_ifaddr *ia;
+	register struct in_ifaddr *ia = 0;
 	register struct ifaddr *ifa;
 	struct in_addr t;
 	struct mbuf *opts = 0;
-	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
+	int optlen = (ip->ip_hl << 2) - sizeof(struct ip), s;
 
 	if (!in_canforward(ip->ip_src) &&
 	    ((ip->ip_src.s_addr & IN_CLASSA_NET) !=
@@ -492,6 +494,7 @@ icmp_reflect(m)
 	 * or anonymous), use the address which corresponds
 	 * to the incoming interface.
 	 */
+	s = splimp();
 	INADDR_TO_IA(t, ia);
 	if (ia == NULL && (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST)) {
 		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;  
@@ -499,8 +502,10 @@ icmp_reflect(m)
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			ia = ifatoia(ifa);
-			if (in_hosteq(t, ia->ia_broadaddr.sin_addr))
+			if (in_hosteq(t, ia->ia_broadaddr.sin_addr)) {
+				ifa_addref(&ia->ia_ifa);
 				break;
+			}
 		}
 	}
 
@@ -519,9 +524,20 @@ icmp_reflect(m)
 		    ia = ia->ia_list.tqe_next) {
 			if (ia->ia_ifp->if_flags & IFF_LOOPBACK)
 				continue;
+			t = ia->ia_addr.sin_addr;
 			break;
 		}
-	t = ia->ia_addr.sin_addr;
+	else {
+		t = ia->ia_addr.sin_addr;
+		ifa_delref(&ia->ia_ifa);
+	}
+	/*
+	 * As we only want to copy the sin_addr into t, we don't add
+	 * and then delete a reference to the address in the for loop above.
+	 * We just directly copy (at splimp). Otherwise, we copy the
+	 * address and throw away the reference
+	 */
+	splx(s);
 	ip->ip_src = t;
 	ip->ip_ttl = MAXTTL;
 

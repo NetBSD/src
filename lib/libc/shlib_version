@@ -1,4 +1,0 @@
-#	$NetBSD: shlib_version,v 1.61 1998/11/30 20:46:55 thorpej Exp $
-#
-major=12
-minor=34

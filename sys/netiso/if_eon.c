@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.24 1998/07/05 01:06:50 jonathan Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.24.6.1 1998/12/11 04:53:10 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -116,7 +116,7 @@ extern struct ifnet loif;
 
 #define EOK 0
 
-struct ifnet    eonif[1];
+struct ifnet    *eonif[1];
 
 void
 eonprotoinit()
@@ -139,7 +139,8 @@ struct eon_llinfo eon_llinfo;
 void
 eonattach()
 {
-	register struct ifnet *ifp = eonif;
+	register struct ifnet *ifp = if_alloc();
+	eonif[0]=ifp;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
@@ -200,6 +201,11 @@ eonioctl(ifp, cmd, data)
 		register struct ifaddr *ifa;
 
 	case SIOCSIFADDR:
+/*
+ * WRS XXX I _HOPE_ the only place this is called from is above.
+ * I don't see how we can handle reference counting if USERLAND
+ * can have valid ifa address floating around!
+ */
 		if ((ifa = (struct ifaddr *) data) != NULL) {
 			ifp->if_flags |= IFF_UP;
 			if (ifa->ifa_addr->sa_family != AF_LINK)
@@ -471,8 +477,14 @@ eoninput(m, va_alist)
 	iphlen = va_arg(ap, int);
 	va_end(ap);
 
-	eonifp = &eonif[0];	/* kludge - really want to give CLNP the ifp
+	if (m == 0)
+		return;
+
+	s = splimp();
+	eonifp = eonif[0];	/* kludge - really want to give CLNP the ifp
 				 * for eon, not for the real device */
+	if_addref(eonifp);
+	splx(s);
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
@@ -481,8 +493,6 @@ eoninput(m, va_alist)
 	}
 #endif
 
-	if (m == 0)
-		return;
 	if (iphlen > sizeof(struct ip))
 		ip_stripoptions(m, (struct mbuf *) 0);
 	if (m->m_len < EONIPLEN) {
@@ -495,12 +505,13 @@ eoninput(m, va_alist)
 			}
 #endif
 			eonifp->if_ierrors++;
+			if_delref(eonifp);
 			m_freem(m);
 			return;
 		}
 	}
-	eonif->if_ibytes += m->m_pkthdr.len;
-	eonif->if_lastchange = time;
+	eonifp->if_ibytes += m->m_pkthdr.len;
+	eonifp->if_lastchange = time;
 	iphdr = mtod(m, struct ip *);
 	/* do a few checks for debugging */
 	if (iphdr->ip_p != IPPROTO_EON) {
@@ -554,7 +565,9 @@ eoninput(m, va_alist)
 		struct ifqueue *ifq;
 		extern struct ifqueue clnlintrq;
 
-		m->m_pkthdr.rcvif = eonifp;	/* KLUDGE */
+		M_UNSETCTX(m, eonifp);	/* KLUDGE */
+		/* from now on, the received packet keeps the reference
+		 * added to eonifp above */
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_EON]) {
 			printf("eoninput to clnl IFQ\n");
@@ -564,9 +577,9 @@ eoninput(m, va_alist)
 		s = splimp();
 		if (IF_QFULL(ifq)) {
 			IF_DROP(ifq);
-			m_freem(m);
 			eonifp->if_iqdrops++;
 			eonifp->if_ipackets--;
+			m_freem(m);
 			splx(s);
 			return;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.74 1998/11/13 03:24:22 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.74.2.1 1998/12/11 04:53:08 kenh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -359,13 +359,22 @@ next:
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
 	 */
+	s = splimp();
 	INADDR_TO_IA(ip->ip_dst, ia);
-	if (ia != NULL) goto ours;
+	if (ia != NULL) {
+		ifa_delref(&ia->ia_ifa);
+		splx(s);
+		goto ours;
+	}
 	if (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
 		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;
 		    ifa != NULL; ifa = ifa->ifa_list.tqe_next) {
 			if (ifa->ifa_addr->sa_family != AF_INET) continue;
 			ia = ifatoia(ifa);
+			/* 
+			 * Don't ifa_addref ia as we don't use it after
+			 * we splx(s) below
+			 */
 			if (in_hosteq(ip->ip_dst, ia->ia_broadaddr.sin_addr) ||
 			    in_hosteq(ip->ip_dst, ia->ia_netbroadcast) ||
 			    /*
@@ -373,16 +382,21 @@ next:
 			     * either for subnet or net.
 			     */
 			    ip->ip_dst.s_addr == ia->ia_subnet ||
-			    ip->ip_dst.s_addr == ia->ia_net)
+			    ip->ip_dst.s_addr == ia->ia_net) {
+				splx(s);
 				goto ours;
+			}
 			/*
 			 * An interface with IP address zero accepts
 			 * all packets that arrive on that interface.
 			 */
-			if (in_nullhost(ia->ia_addr.sin_addr))
+			if (in_nullhost(ia->ia_addr.sin_addr)) {
+				splx(s);
 				goto ours;
+			}
 		}
 	}
+	splx(s);
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 		struct in_multi *inm;
 #ifdef MROUTING
@@ -831,6 +845,7 @@ ip_dooptions(m)
 				 * End of source route.  Should be for us.
 				 */
 				save_rte(cp, ip->ip_src);
+				ifa_delref(&ia->ia_ifa);
 				break;
 			}
 			/*
@@ -838,6 +853,7 @@ ip_dooptions(m)
 			 */
 			bcopy((caddr_t)(cp + off), (caddr_t)&ipaddr.sin_addr,
 			    sizeof(ipaddr.sin_addr));
+			ifa_delref(&ia->ia_ifa);
 			if (opt == IPOPT_SSRR) {
 #define	INA	struct in_ifaddr *
 #define	SA	struct sockaddr *
@@ -857,6 +873,7 @@ ip_dooptions(m)
 			 * Let ip_intr's mcast routing check handle mcast pkts
 			 */
 			forward = !IN_MULTICAST(ip->ip_dst.s_addr);
+			ifa_delref(&ia->ia_ifa);
 			break;
 
 		case IPOPT_RR:
@@ -885,6 +902,7 @@ ip_dooptions(m)
 			bcopy((caddr_t)&ia->ia_addr.sin_addr,
 			    (caddr_t)(cp + off), sizeof(struct in_addr));
 			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
+			ifa_delref(&ia->ia_ifa);
 			break;
 
 		case IPOPT_TS:
@@ -914,6 +932,7 @@ ip_dooptions(m)
 					continue;
 				bcopy((caddr_t)&ia->ia_addr.sin_addr,
 				    (caddr_t)sin, sizeof(struct in_addr));
+				ifa_delref(&ia->ia_ifa);
 				ipt->ipt_ptr += sizeof(struct in_addr);
 				break;
 
@@ -923,8 +942,10 @@ ip_dooptions(m)
 					goto bad;
 				bcopy((caddr_t)sin, (caddr_t)&ipaddr.sin_addr,
 				    sizeof(struct in_addr));
-				if (ifa_ifwithaddr((SA)&ipaddr) == 0)
+				ia = (INA)ifa_ifwithaddr((SA)&ipaddr);
+				if (ia == 0)
 					continue;
+				ifa_delref(&ia->ia_ifa);
 				ipt->ipt_ptr += sizeof(struct in_addr);
 				break;
 
@@ -963,6 +984,8 @@ ip_rtaddr(dst)
 	 struct in_addr dst;
 {
 	register struct sockaddr_in *sin;
+	struct in_ifaddr *ia;
+	int s;
 
 	sin = satosin(&ipforward_rt.ro_dst);
 
@@ -979,7 +1002,11 @@ ip_rtaddr(dst)
 	}
 	if (ipforward_rt.ro_rt == 0)
 		return ((struct in_ifaddr *)0);
-	return (ifatoia(ipforward_rt.ro_rt->rt_ifa));
+	s = splimp();
+	ia = (ifatoia(ipforward_rt.ro_rt->rt_ifa));
+	ifa_addref(&ia->ia_ifa);
+	splx(s);
+	return ia;
 }
 
 /*
