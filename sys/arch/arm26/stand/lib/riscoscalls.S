@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.3 2001/07/27 00:37:38 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.4 2001/07/27 01:02:44 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -96,7 +96,7 @@ ENTRY(xosgbpb_read)
 	mov	r1, r0
 	mov	r0, #OSGBPB_Read
 	swi	XOS_GBPB
-	teq	r3, #0
+	teq	ip, #0
 	strne	r3, [ip]
 	movvc	r0, #0
 	ldmdb	fp, {r4, fp, sp, pc}
