@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.22 2004/01/19 03:26:14 sekiya Exp $	*/
+/*	$NetBSD: console.c,v 1.23 2004/04/08 14:45:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.22 2004/01/19 03:26:14 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.23 2004/04/08 14:45:13 pooka Exp $");
 
 #include "opt_kgdb.h"
 
@@ -86,51 +86,53 @@ consinit()
 	speed = strtoul(dbaud, NULL, 10);
 
 	switch (mach_type) {
-		case MACH_SGI_IP20:
-		case MACH_SGI_IP22:
+	case MACH_SGI_IP20:
+	case MACH_SGI_IP22:
 #if (NGIO > 0) && (NPCKBC > 0) 
-			if (strcmp(consdev, "video()") == 0) {
-				/* XXX Assumes that if output is video()
-				   input must be keyboard(). */
-				gio_cnattach();
+		if (strcmp(consdev, "video()") == 0) {
+			/*
+			 * XXX Assumes that if output is video()
+			 * input must be keyboard().
+			 */
+			gio_cnattach();
 
-				/* XXX Hardcoded iotag, HPC address XXX */
-				pckbc_cnattach(1,
-			    	  0x1fb80000+HPC_PBUS_CH6_DEVREGS+IOC_KB_REGS,
-			    	  KBCMDP, PCKBC_KBD_SLOT);
-			}
+			/* XXX Hardcoded iotag, HPC address XXX */
+			pckbc_cnattach(1,
+			    0x1fb80000+HPC_PBUS_CH6_DEVREGS+IOC_KB_REGS,
+			    KBCMDP, PCKBC_KBD_SLOT);
+		}
 #endif
 #if (NZSC > 0)
-			if ( (strlen(consdev) == 9) &&
-		    	     (!strncmp(consdev, "serial", 6)) &&
-		    	     (consdev[7] == '0' || consdev[7] == '1')) {
-				cn_tab = &zs_cn;
-				(*cn_tab->cn_init)(cn_tab);
-			}
+		if ((strlen(consdev) == 9) &&
+		    (!strncmp(consdev, "serial", 6)) &&
+		    (consdev[7] == '0' || consdev[7] == '1')) {
+			cn_tab = &zs_cn;
+			(*cn_tab->cn_init)(cn_tab);
+		}
 #endif
-			break;
+		break;
 
-		case MACH_SGI_IP32:
+	case MACH_SGI_IP32:
 #if (NCOM > 0)
-			if ( (strlen(consdev) == 9) &&
-		    	     (!strncmp(consdev, "serial", 6)) &&
-		    	     (consdev[7] == '0' || consdev[7] == '1')) {
-				delay(10000);
-				/* XXX: hardcoded MACE iotag */
-				if (comcnattach(3,
-					MIPS_PHYS_TO_KSEG1(MACE_BASE +
-			    		((consdev[7] == '0') ?
-			    		MACE_ISA_SER1_BASE:MACE_ISA_SER2_BASE)),
-			    		speed, COM_FREQ, COM_TYPE_NORMAL,
-					comcnmode) == 0)
-					break;
-			}
+		if ((strlen(consdev) == 9) &&
+	    	    (!strncmp(consdev, "serial", 6)) &&
+	    	    (consdev[7] == '0' || consdev[7] == '1')) {
+			delay(10000);
+			/* XXX: hardcoded MACE iotag */
+			if (comcnattach(3,
+			    MIPS_PHYS_TO_KSEG1(MACE_BASE +
+			    ((consdev[7] == '0') ?
+			    MACE_ISA_SER1_BASE:MACE_ISA_SER2_BASE)),
+			    speed, COM_FREQ, COM_TYPE_NORMAL,
+			    comcnmode) == 0)
+				break;
+		}
 #endif
-			panic("ip32 supports serial console only.  sorry.");
-			break;
-		default:
-			printf("Using ARCS for console I/O.\n");
-			break;
+		panic("ip32 supports serial console only.  sorry.");
+		break;
+	default:
+		printf("Using ARCS for console I/O.\n");
+		break;
 	}
 }
 
@@ -151,4 +153,3 @@ kgdb_port_init()
 # endif
 }
 #endif	/* KGDB */
-
