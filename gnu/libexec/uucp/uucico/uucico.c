@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char uucico_rcsid[] = "$Id: uucico.c,v 1.3 1995/08/24 05:23:12 jtc Exp $";
+const char uucico_rcsid[] = "$Id: uucico.c,v 1.4 2002/07/10 23:16:33 wiz Exp $";
 #endif
 
 #include <ctype.h>
@@ -995,7 +995,7 @@ fcall (puuconf, zconfig, fuuxqt, qorigsys, qport, fifwork, fforce, fdetach,
       if (fcalled && ! ftrynext)
 	return FALSE;
 
-      /* Now we have to dump that port so that we can aquire a new
+      /* Now we have to dump that port so that we can acquire a new
 	 one.  On Unix this means that we will fork and get a new
 	 process ID, so we must unlock and relock the system.  */
       if (fdetach)
