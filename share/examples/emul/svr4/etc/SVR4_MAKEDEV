@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: SVR4_MAKEDEV,v 1.5 1999/04/19 14:46:27 kleink Exp $
+#	$NetBSD: SVR4_MAKEDEV,v 1.6 1999/04/19 21:47:49 kleink Exp $
 #
 # Copyright (c) 1995 Christos Zoulas
 # All rights reserved.
@@ -46,8 +46,16 @@ MACHINE=${MACHINE:-`/usr/bin/uname -m`}
 umask 77
 
 case $MACHINE in
+amiga)		major=51;;
+atari)		major=51;;
+hp300)		major=36;;
 i386)		major=43;;
+mac68k)		major=44;;
+mvme68k)	major=38;;
+next68k)	major=44;;
 sparc)		major=43;;
+sun3)		major=83;;
+x68k)		major=42;;
 *)
 		echo $MACHINE: unsupported machine >&2
 		exit 1
@@ -143,10 +151,18 @@ ticots)
 wabi)
 	rm -f $i
 	case $MACHINE in
-	sparc)
-		mknod $i	c 3 2;;	# /dev/null
+	amiga)
+	atari)
+	hp300)
 	i386)
+	mac68k)
+	mvme68k)
+	next68k)
+	x68k)
 		mknod $i	c 2 2;;	# /dev/null
+	sparc)
+	sun3)
+		mknod $i	c 3 2;;	# /dev/null
 	esac
 	chown bin.bin $i
 	chmod 666 $i
