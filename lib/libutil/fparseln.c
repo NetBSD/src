@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.1 1997/11/16 22:15:55 christos Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.2 1997/11/16 22:19:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fparseln.c,v 1.1 1997/11/16 22:15:55 christos Exp $");
+__RCSID("$NetBSD: fparseln.c,v 1.2 1997/11/16 22:19:54 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -75,7 +75,7 @@ char *
 fparseln(fp, size, lineno, str)
 	FILE *fp;
 	size_t *size, *lineno;
-	const char str[4];
+	const char str[3];
 {
 	size_t s, len = 0;
 	char *buf = NULL;
