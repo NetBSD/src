@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.2 1996/10/11 00:09:21 christos Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.3 1996/10/11 21:01:26 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -62,9 +62,10 @@
 #include <atari/atari/device.h>
 #include <atari/dev/grfioctl.h>
 #include <atari/dev/grfabs_reg.h>
+#include <atari/dev/grfabs_et.h>
 #include <atari/dev/grf_etreg.h>
 
-#define	SAVEBUF_SIZE	(32*1024)
+#define	SAVEBUF_SIZE	(32*1024 + sizeof(save_area_t))
 
 /*
  * Function decls
@@ -75,13 +76,10 @@ static void	  et_display_view __P((view_t *));
 static view_t	  *et_alloc_view __P((dmode_t *, dimen_t *, u_char));
 static void	  et_boardinit __P((void));
 static void	  et_free_view __P((view_t *));
-static void	  et_loadmode __P((struct grfvideo_mode *));
+static void	  et_loadmode __P((struct grfvideo_mode *, et_sv_reg_t *));
 static void	  et_remove_view __P((view_t *));
 static void	  et_save_view __P((view_t *));
 static int	  et_use_colormap __P((view_t *, colormap_t *));
-
-int	  et_probe_card __P((void)); /* XXX: to include file */
-void	pccninit(void);	/* XXX: remove me */
 
 /*
  * Our function switch table
@@ -96,26 +94,25 @@ struct grfabs_sw et_vid_sw = {
 };
 
 static struct grfvideo_mode hw_modes[] = {
-#if 1
-    { 
-	0, "", 25175000,		/* num, descr, pix-clock	*/
-	640, 480, 4,			/* width, height, depth		*/
-	640/8, 672/8, 688/8, 752/8, 768/8,/* HBS, HBE, HSS, HSE, HT	*/
-	481, 522, 490, 498, 522		/* VBS, VBE, VSS, VSE, VT	*/
-    }
-#else
     { 
 	0, "", 25175000,		/* num, descr, pix-clock	*/
 	640, 400, 4,			/* width, height, depth		*/
 	640/8, 672/8, 688/8, 752/8, 768/8,/* HBS, HBE, HSS, HSE, HT	*/
 	399, 450, 408, 413, 449		/* VBS, VBE, VSS, VSE, VT	*/
+    },
+    { 
+	0, "", 25175000,		/* num, descr, pix-clock	*/
+	640, 480, 4,			/* width, height, depth		*/
+	640/8, 672/8, 704/8, 752/8, 760/8,/* HBS, HBE, HSS, HSE, HT	*/
+	481, 522, 490, 498, 522		/* VBS, VBE, VSS, VSE, VT	*/
     }
-#endif
 };
 
 static dmode_t vid_modes[] = {
     { { NULL, NULL },
-	"ethigh", { 640, 480 }, 1, (void*)&hw_modes[0], &et_vid_sw },
+	"640x400", { 640, 400 }, 1, (void*)&hw_modes[0], &et_vid_sw },
+    { { NULL, NULL },
+	"640x480", { 640, 480 }, 1, (void*)&hw_modes[1], &et_vid_sw },
     { { NULL, NULL }, NULL,  }
 };
 
@@ -140,14 +137,12 @@ struct grfabs_et_priv {
 	volatile caddr_t	memkva;
 	int			regsz;
 	int			memsz;
-	struct grfvideo_mode	*curr_mode;
 } et_priv;
 
 /*
  * XXX: called from ite console init routine.
  * Initialize list of posible video modes.
  */
-void et_probe_video __P((MODES *));
 void
 et_probe_video(modelp)
 MODES	*modelp;
@@ -166,9 +161,9 @@ view_t *v;
 {
 	dmode_t		*dm = v->mode;
 	bmap_t		*bm = v->bitmap;
-	u_char		font_height;
 	int		sv_size;
 	u_short		*src, *dst;
+	save_area_t	*sa;
 
 	if (dm->current_view && (dm->current_view != v)) {
 		/*
@@ -179,29 +174,24 @@ view_t *v;
 	dm->current_view = v;
 	v->flags |= VF_DISPLAY;
 
-	if (et_priv.curr_mode != (struct grfvideo_mode *)dm->data) {
-		et_loadmode(dm->data);
-		et_priv.curr_mode = dm->data;
-	}
-	et_use_colormap(v, v->colormap);
-	bm->plane = et_priv.memkva;
-
-	if (v->save_area == NULL)
+	if ((sa = (save_area_t*)v->save_area) == NULL)
 		return; /* XXX: Can't happen.... */
-	if (RGfx(et_priv.regkva, GCT_ID_MISC) & 1) {
-		kprintf("et_display_view: Don't know how to restore"
-			" a graphics mode\n");
-		return;
-	}
 
 	/*
-	 * Calculate the size of the copy
+	 * Restore register settings and turn the plane pointer
+	 * to the card-memory
 	 */
-	font_height = RCrt(et_priv.regkva, CRT_ID_MAX_ROW_ADDRESS) & 0x1f;
-	sv_size = bm->bytes_per_row * (bm->rows / (font_height + 1));
+	et_hwrest(&sa->sv_regs);
+	bm->plane = et_priv.memkva;
 
-	src = (u_short *)v->save_area;
-	dst = (u_short *)bm->plane;
+	et_use_colormap(v, v->colormap);
+
+	/*
+	 * Copy the backing store to card-memory
+	 */
+	sv_size = sa->fb_size;
+	src     = sa->sv_fb;
+	dst     = (u_short *)bm->plane;
 	while (sv_size--)
 		*dst++ = *src++;
 }
@@ -226,16 +216,20 @@ void
 et_save_view(v)
 view_t *v;
 {
-	bmap_t	*bm = v->bitmap;
-	u_char	font_height;
-	int	sv_size;
-	u_short	*src, *dst;
+	bmap_t		*bm = v->bitmap;
+	u_char		font_height;
+	int		sv_size;
+	u_short		*src, *dst;
+	save_area_t	*sa;
 
 	if (!atari_realconfig)
 		return;
+
 	if (RGfx(et_priv.regkva, GCT_ID_MISC) & 1) {
+#if 0 /* XXX: Can't use kprintf here.... */
 		kprintf("et_save_view: Don't know how to save"
 			" a graphics mode\n");
+#endif
 		return;
 	}
 	if (v->save_area == NULL)
@@ -246,12 +240,19 @@ view_t *v;
 	 */
 	font_height = RCrt(et_priv.regkva, CRT_ID_MAX_ROW_ADDRESS) & 0x1f;
 	sv_size = bm->bytes_per_row * (bm->rows / (font_height + 1));
+	sv_size = min(SAVEBUF_SIZE, sv_size);
 
+	/*
+	 * Save all we need to know....
+	 */
+	sa  = (save_area_t *)v->save_area;
+	et_hwsave(&sa->sv_regs);
+	sa->fb_size = sv_size;
 	src = (u_short *)bm->plane;
-	dst = (u_short *)v->save_area;
+	dst = sa->sv_fb;
 	while (sv_size--)
 		*dst++ = *src++;
-	bm->plane = (u_char *)v->save_area;
+	bm->plane = (u_char *)sa->sv_fb;
 }
 
 void
@@ -285,9 +286,10 @@ dmode_t	*mode;
 dimen_t	*dim;
 u_char   depth;
 {
-	view_t *v;
-	bmap_t *bm;
-	box_t   box;
+	view_t		*v;
+	bmap_t		*bm;
+	box_t		box;
+	save_area_t	*sa;
 
 	if (!atari_realconfig) {
 		v  = &gra_con_view;
@@ -316,11 +318,14 @@ u_char   depth;
 	 * Allocate a save_area.
 	 * Note: If atari_realconfig is false, no save area is (can be)
 	 * allocated. This means that the plane is the video memory,
-	 * wich is what's wanted in this case.
+	 * which is what's wanted in this case.
 	 */
 	if (atari_realconfig) {
 		v->save_area = malloc(SAVEBUF_SIZE, M_DEVBUF, M_WAITOK);
-		bm->plane    = (u_char *)v->save_area;
+		sa           = (save_area_t*)v->save_area;
+		sa->fb_size  = 0;
+		bm->plane    = (u_char *)sa->sv_fb;
+		et_loadmode(mode->data, &sa->sv_regs);
 	}
 	else v->save_area = NULL;
 	
@@ -418,7 +423,7 @@ et_probe_card()
 
 	if (found && !atari_realconfig) {
 		et_boardinit();
-		et_loadmode(&hw_modes[0]);
+		et_loadmode(&hw_modes[0], NULL);
 		return (1);
 	}
 
@@ -426,14 +431,20 @@ et_probe_card()
 }
 
 static void
-et_loadmode(mode)
-struct grfvideo_mode *mode;
+et_loadmode(mode, regs)
+struct grfvideo_mode	*mode;
+et_sv_reg_t		*regs;
 {
 	unsigned short	HDE, VDE;
 	int	    	lace, dblscan;
 	int     	uplim, lowlim;
+	int		i;
 	unsigned char	clock, tmp;
 	volatile u_char	*ba;
+	et_sv_reg_t	loc_regs;
+
+	if (regs == NULL)
+		regs = &loc_regs;
 
 	ba  = et_priv.regkva;
 	HDE = mode->disp_width / 8 - 1;
@@ -452,11 +463,15 @@ struct grfvideo_mode *mode;
 	if (lace)
 		VDE /= 2;
 
-	WSeq(ba, SEQ_ID_CLOCKING_MODE,   0x21); /* Turn off screen	*/
-	WSeq(ba, SEQ_ID_MEMORY_MODE,     0x0e);	/* Seq. Memory mode	*/
-	WSeq(ba, SEQ_ID_MAP_MASK,        0xff);	/* Cpu writes all planes*/
-	WSeq(ba, SEQ_ID_CHAR_MAP_SELECT, 0x00); /* Char. generator 0	*/
-	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x00);	/* Cpu reads plane 0	*/
+	regs->misc_output = 0x23; /* Page 0, Color mode */
+	regs->seg_sel     = 0x00;
+	regs->state_ctl   = 0x00;
+
+	regs->seq[SEQ_ID_RESET]           = 0x03; /* reset off		*/
+	regs->seq[SEQ_ID_CLOCKING_MODE]   = 0x21; /* Turn off screen	*/
+	regs->seq[SEQ_ID_MAP_MASK]        = 0xff; /* Cpu writes all planes*/
+	regs->seq[SEQ_ID_CHAR_MAP_SELECT] = 0x00; /* Char. generator 0	*/
+	regs->seq[SEQ_ID_MEMORY_MODE]     = 0x0e; /* Seq. Memory mode	*/
 
 	/*
 	 * Set the clock...
@@ -465,27 +480,40 @@ struct grfvideo_mode *mode;
 		if (et_clockfreqs[clock] <= mode->pixel_clock)
 			break;
 	}
-	tmp = vgar(ba, GREG_MISC_OUTPUT_R) & 0xf3;
-	vgaw(ba, GREG_MISC_OUTPUT_W, tmp | ((clock & 3) << 2));
-	WSeq(ba, SEQ_ID_AUXILIARY_MODE, ((clock & 8) << 3) |
-		(RSeq(ba, SEQ_ID_AUXILIARY_MODE) & 0xbf));
-	WCrt(ba, CRT_ID_6845_COMPAT, (clock & 4) ? 0x0a : 0x08);
+	regs->misc_output |= (clock & 3) << 2;
+	regs->aux_mode     = 0xb4 | ((clock & 8) << 3);
+	regs->compat_6845  = (clock & 4) ? 0x0a : 0x08;
 
 	/*
-	 * load display parameters into board
+	 * The display parameters...
 	 */
-	WCrt(ba, CRT_ID_HOR_TOTAL, mode->htotal);
-	WCrt(ba, CRT_ID_HOR_DISP_ENA_END, ((HDE >= mode->hblank_start)
-					  ? mode->hblank_stop - 1
-					  : HDE));
-	WCrt(ba, CRT_ID_START_HOR_BLANK, mode->hblank_start);
-	WCrt(ba, CRT_ID_END_HOR_BLANK, (mode->hblank_stop & 0x1f) | 0x80);
-	WCrt(ba, CRT_ID_START_HOR_RETR, mode->hsync_start);
-	WCrt(ba, CRT_ID_END_HOR_RETR,
-		(mode->hsync_stop & 0x1f) |
-		((mode->hblank_stop & 0x20) ? 0x80 : 0x00));
-	WCrt(ba, CRT_ID_VER_TOTAL, mode->vtotal);
-	WCrt(ba, CRT_ID_OVERFLOW, 
+	regs->crt[CRT_ID_HOR_TOTAL]        =  mode->htotal;
+	regs->crt[CRT_ID_HOR_DISP_ENA_END] = ((HDE >= mode->hblank_start)
+						? mode->hblank_stop - 1
+						: HDE);
+	regs->crt[CRT_ID_START_HOR_BLANK]  = mode->hblank_start;
+	regs->crt[CRT_ID_END_HOR_BLANK]    = (mode->hblank_stop & 0x1f) | 0x80;
+	regs->crt[CRT_ID_START_HOR_RETR]   = mode->hsync_start;
+	regs->crt[CRT_ID_END_HOR_RETR]     = (mode->hsync_stop & 0x1f)
+						| ((mode->hblank_stop & 0x20)
+							? 0x80 : 0x00);
+	regs->crt[CRT_ID_VER_TOTAL]        = mode->vtotal;
+	regs->crt[CRT_ID_START_VER_RETR]   = mode->vsync_start;
+	regs->crt[CRT_ID_END_VER_RETR]     = (mode->vsync_stop & 0x0f) | 0x30;
+	regs->crt[CRT_ID_VER_DISP_ENA_END] = VDE;
+	regs->crt[CRT_ID_START_VER_BLANK]  = mode->vblank_start;
+	regs->crt[CRT_ID_END_VER_BLANK]    = mode->vblank_stop;
+	regs->crt[CRT_ID_MODE_CONTROL]     = 0xab;
+	regs->crt[CRT_ID_START_ADDR_HIGH]  = 0x00;
+	regs->crt[CRT_ID_START_ADDR_LOW]   = 0x00;
+	regs->crt[CRT_ID_LINE_COMPARE]     = 0xff;
+	regs->crt[CRT_ID_UNDERLINE_LOC]    = 0x00;
+	regs->crt[CRT_ID_OFFSET]           = mode->disp_width/16;
+	regs->crt[CRT_ID_MAX_ROW_ADDRESS]  =
+		0x40 |
+		(dblscan ? 0x80 : 0x00) |
+		((mode->vblank_start & 0x200) ? 0x20 : 0x00);
+	regs->crt[CRT_ID_OVERFLOW] =
 		0x10 |
 		((mode->vtotal       & 0x100) ? 0x01 : 0x00) |
 		((VDE                & 0x100) ? 0x02 : 0x00) |
@@ -493,36 +521,37 @@ struct grfvideo_mode *mode;
 		((mode->vblank_start & 0x100) ? 0x08 : 0x00) |
 		((mode->vtotal       & 0x200) ? 0x20 : 0x00) |
 		((VDE                & 0x200) ? 0x40 : 0x00) |
-		((mode->vsync_start  & 0x200) ? 0x80 : 0x00));
-	WCrt(ba, CRT_ID_OVERFLOW_HIGH,
+		((mode->vsync_start  & 0x200) ? 0x80 : 0x00);
+	regs->overfl_high =
 		0x10 |
 		((mode->vblank_start & 0x400) ? 0x01 : 0x00) |
 		((mode->vtotal       & 0x400) ? 0x02 : 0x00) |
 		((VDE                & 0x400) ? 0x04 : 0x00) |
 		((mode->vsync_start  & 0x400) ? 0x08 : 0x00) |
-		(lace ? 0x80 : 0x00));
-	WCrt(ba, CRT_ID_HOR_OVERFLOW,
+		(lace ? 0x80 : 0x00);
+	regs->hor_overfl =
 		((mode->htotal       & 0x100) ? 0x01 : 0x00) |
 		((mode->hblank_start & 0x100) ? 0x04 : 0x00) |
-		((mode->hsync_start  & 0x100) ? 0x10 : 0x00));
-	WCrt(ba, CRT_ID_MAX_ROW_ADDRESS,
-		0x40 |
-		(dblscan ? 0x80 : 0x00) |
-		((mode->vblank_start & 0x200) ? 0x20 : 0x00));
-	WCrt(ba, CRT_ID_START_VER_RETR, mode->vsync_start);
-	WCrt(ba, CRT_ID_END_VER_RETR, (mode->vsync_stop & 0x0f) | 0x30);
-	WCrt(ba, CRT_ID_VER_DISP_ENA_END, VDE);
-	WCrt(ba, CRT_ID_START_VER_BLANK, mode->vblank_start);
-	WCrt(ba, CRT_ID_END_VER_BLANK, mode->vblank_stop);
+		((mode->hsync_start  & 0x100) ? 0x10 : 0x00);
 
-	WCrt(ba, CRT_ID_MODE_CONTROL, 0xab);
-	WCrt(ba, CRT_ID_START_ADDR_HIGH, 0x00);
-	WCrt(ba, CRT_ID_START_ADDR_LOW, 0x00);
-	WCrt(ba, CRT_ID_LINE_COMPARE, 0xff);
+	regs->grf[GCT_ID_SET_RESET]        = 0x00;
+	regs->grf[GCT_ID_ENABLE_SET_RESET] = 0x00;
+	regs->grf[GCT_ID_COLOR_COMPARE]    = 0x00;
+	regs->grf[GCT_ID_DATA_ROTATE]      = 0x00;
+	regs->grf[GCT_ID_READ_MAP_SELECT]  = 0x00;
+	regs->grf[GCT_ID_GRAPHICS_MODE]    = mode->depth == 1 ? 0x00: 0x40;
+	regs->grf[GCT_ID_MISC]             = 0x01;
+	regs->grf[GCT_ID_COLOR_XCARE]      = 0x0f;
+	regs->grf[GCT_ID_BITMASK]          = 0xff;
 
-	/* depth dependent stuff */
-	WGfx(ba, GCT_ID_GRAPHICS_MODE, mode->depth == 1 ? 0x00: 0x40);
-	WGfx(ba, GCT_ID_MISC, 0x01);
+	for (i = 0; i < 0x10; i++)
+		regs->attr[i] = i;
+	regs->attr[ACT_ID_ATTR_MODE_CNTL]  = 0x01;
+	regs->attr[ACT_ID_OVERSCAN_COLOR]  = 0x00;
+	regs->attr[ACT_ID_COLOR_PLANE_ENA] = 0x0f;
+	regs->attr[ACT_ID_HOR_PEL_PANNING] = 0x00;
+	regs->attr[ACT_ID_COLOR_SELECT]    = 0x00;
+	regs->attr[ACT_ID_MISCELLANEOUS]   = 0x00;
 
 	/*
 	 * XXX: This works for depth == 4. I need some better docs
@@ -535,12 +564,6 @@ struct grfvideo_mode *mode;
 	vgar(ba, VDAC_MASK);
 
 	vgaw(ba, VDAC_MASK, 0);
-	HDE = mode->disp_width / 16; /* XXX */
-
-	WAttr(ba, ACT_ID_ATTR_MODE_CNTL, 0x01);
-	WAttr(ba, 0x20 | ACT_ID_COLOR_PLANE_ENA, mode->depth == 1 ? 0: 0x0f);
-
-	WCrt(ba, CRT_ID_OFFSET, HDE);
 	/*
 	 * End of depth stuff
 	 */
@@ -549,7 +572,7 @@ struct grfvideo_mode *mode;
 	 * Compute Hsync & Vsync polarity
 	 * Note: This seems to be some kind of a black art :-(
 	 */
-	tmp = vgar(ba, GREG_MISC_OUTPUT_R) & 0x3f;
+	tmp = regs->misc_output & 0x3f;
 #if 0 /* This is according to my BW monitor & Xfree... */
 	if (VDE < 400) 
 		tmp |= 0x40;	/* -hsync +vsync */
@@ -562,9 +585,10 @@ struct grfvideo_mode *mode;
 		tmp |= 0x80;	/* +hsync -vsync */
 #endif
 	/* I'm unable to try the rest.... */
-	vgaw(ba, GREG_MISC_OUTPUT_W, tmp);
+	regs->misc_output = tmp;
 
-	WSeq(ba, SEQ_ID_CLOCKING_MODE, 0x01); /* Turn on screen	*/
+	if(regs == &loc_regs)
+		et_hwrest(regs);
 }
 
 static void
@@ -647,4 +671,91 @@ et_boardinit()
 		vgaw(ba, VDAC_DATA, i);
 		vgaw(ba, VDAC_DATA, i);
 	}
+}
+
+void
+et_hwsave(et_regs)
+et_sv_reg_t	*et_regs;
+{
+	volatile u_char *ba;
+	int		i, s;
+
+	ba = et_priv.regkva;
+
+	s = splhigh();
+
+	/*
+	 * General VGA registers
+	 */
+	et_regs->misc_output = vgar(ba, GREG_MISC_OUTPUT_R);
+	for(i = 0; i < 25; i++)
+		et_regs->crt[i]  = RCrt(ba, i);
+	for(i = 0; i < 21; i++)
+		et_regs->attr[i] = RAttr(ba, i | 0x20);
+	for(i = 0; i < 9; i++)
+		et_regs->grf[i]  = RGfx(ba, i);
+	for(i = 0; i < 5; i++)
+		et_regs->seq[i]  = RSeq(ba, i);
+
+	/*
+	 * ET4000 extensions
+	 */
+	et_regs->ext_start   = RCrt(ba, CTR_ID_EXT_START);
+	et_regs->compat_6845 = RCrt(ba, CRT_ID_6845_COMPAT);
+	et_regs->overfl_high = RCrt(ba, CRT_ID_OVERFLOW_HIGH);
+	et_regs->hor_overfl  = RCrt(ba, CRT_ID_HOR_OVERFLOW);
+	et_regs->state_ctl   = RSeq(ba, SEQ_ID_STATE_CONTROL);
+	et_regs->aux_mode    = RSeq(ba, SEQ_ID_AUXILIARY_MODE);
+	et_regs->seg_sel     = vgar(ba, GREG_SEGMENTSELECT);
+
+	s = splx(s);
+}
+
+void
+et_hwrest(et_regs)
+et_sv_reg_t	*et_regs;
+{
+	volatile u_char *ba;
+	int		i, s;
+
+	ba = et_priv.regkva;
+
+	s = splhigh();
+
+	vgaw(ba, GREG_SEGMENTSELECT, 0);
+	vgaw(ba, GREG_MISC_OUTPUT_W, et_regs->misc_output);
+
+	/*
+	 * General VGA registers
+	 */
+	for(i = 0; i < 5; i++)
+		WSeq(ba, i, et_regs->seq[i]);
+
+	/*
+	 * Make sure we're allowed to write all crt-registers
+	 */
+	WCrt(ba, CRT_ID_END_VER_RETR,
+		et_regs->crt[CRT_ID_END_VER_RETR] & 0x7f);
+	for(i = 0; i < 25; i++)
+		WCrt(ba, i, et_regs->crt[i]);
+	for(i = 0; i < 9; i++)
+		WGfx(ba, i, et_regs->grf[i]);
+	for(i = 0; i < 21; i++)
+		WAttr(ba, i | 0x20, et_regs->attr[i]);
+
+	/*
+	 * ET4000 extensions
+	 */
+	WSeq(ba, SEQ_ID_STATE_CONTROL, et_regs->state_ctl);
+	WSeq(ba, SEQ_ID_AUXILIARY_MODE, et_regs->aux_mode);
+	WCrt(ba, CTR_ID_EXT_START, et_regs->ext_start);
+	WCrt(ba, CRT_ID_6845_COMPAT, et_regs->compat_6845);
+	WCrt(ba, CRT_ID_OVERFLOW_HIGH, et_regs->overfl_high);
+	WCrt(ba, CRT_ID_HOR_OVERFLOW, et_regs->hor_overfl);
+	vgaw(ba, GREG_SEGMENTSELECT, et_regs->seg_sel);
+
+	i = et_regs->seq[SEQ_ID_CLOCKING_MODE] & ~0x20;
+	WSeq(ba, SEQ_ID_CLOCKING_MODE, i);
+
+	s = splx(s);
 }

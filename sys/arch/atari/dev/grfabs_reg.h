@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.8 1996/10/04 07:27:56 leo Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.9 1996/10/11 21:01:26 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -75,7 +75,7 @@ struct view {
     dmode_t	*mode;		/* the mode for this view		*/
     colormap_t	*colormap;	/* the colormap for this view		*/
     int		flags;
-    caddr_t	*save_area;	/* Save frame-buffer when not on screen	*/
+    void	*save_area;	/* Save frame-buffer when not on screen	*/
 };
 typedef struct view view_t;
 

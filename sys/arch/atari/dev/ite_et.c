@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.2 1996/10/11 00:09:25 christos Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.3 1996/10/11 21:01:27 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -44,15 +44,15 @@
 #include <atari/dev/itevar.h>
 #include <atari/dev/iteioctl.h>
 #include <atari/dev/grfioctl.h>
-#include <atari/dev/grf_etreg.h> /* XXX: clean it up */
+#include <atari/dev/grf_etreg.h>
 #include <atari/dev/grfabs_reg.h>
+#include <atari/dev/grfabs_et.h>
 #include <atari/dev/grfvar.h>
 #include <atari/dev/font.h>
 #include <atari/dev/viewioctl.h>
 #include <atari/dev/viewvar.h>
 
 #include "grfet.h"
-#if NGRFET > 0
 
 /*
  * This is what ip->priv points to;
@@ -78,8 +78,10 @@ extern font_info	font_info_8x16;
 static void grfet_iteinit __P((struct grf_softc *));
 static void view_init __P((struct ite_softc *));
 static void view_deinit __P((struct ite_softc *));
+static int  iteet_ioctl __P((struct ite_softc *, u_long, caddr_t, int,
+							struct proc *));
 static int  ite_newsize __P((struct ite_softc *, struct itewinsize *));
-static void et_inittextmode __P((struct ite_softc *));
+static void et_inittextmode __P((struct ite_softc *, et_sv_reg_t *, int));
 void et_cursor __P((struct ite_softc *ip, int flag));
 void et_clear __P((struct ite_softc *ip, int sy, int sx, int h, int w));
 void et_putc __P((struct ite_softc *ip, int c, int dy, int dx, int mode));
@@ -112,13 +114,6 @@ struct cfdriver grfet_cd = {
  * only used in console init.
  */
 static struct cfdata *cfdata_grf   = NULL;
-
-int	et_probe_card __P((void));	/* XXX: To .h-file	*/
-
-/*
- * Probe functions we can use:
- */
-void	et_probe_video __P((MODES *));
 
 int
 grfetmatch(pdp, match, auxp)
@@ -302,9 +297,12 @@ register struct ite_softc *ip;
 	struct itewinsize	wsz;
 	ipriv_t			*cci;
 	view_t			*view;
+	save_area_t		*et_save;
 
 	if((cci = ip->priv) != NULL)
 		return;
+
+	ip->itexx_ioctl = iteet_ioctl;
 
 #if defined(KFONT_8X8)
 	ip->font = font_info_8x8;
@@ -340,9 +338,16 @@ register struct ite_softc *ip;
 	if(ip->flags & ITE_ISCONS)
 		ip->grf->g_mode(ip->grf, GM_GRFON, NULL, 0, 0);
 
-	if (view->flags & VF_DISPLAY)
-		et_inittextmode(ip);
-	et_clear(ip, 0, 0, ip->rows, ip->cols);
+	/*
+	 * Activate text-mode settings
+	 */
+	et_save = (save_area_t *)view->save_area;
+	if (et_save == NULL)
+		et_inittextmode(ip, NULL, view->flags & VF_DISPLAY);
+	else {
+		et_inittextmode(ip, &et_save->sv_regs, view->flags&VF_DISPLAY);
+		et_save->fb_size = ip->cols * ip->rows;
+	}
 }
 
 static int
@@ -352,6 +357,7 @@ struct itewinsize	*winsz;
 {
 	struct view_size	vs;
 	int			error = 0;
+	save_area_t		*et_save;
 	view_t			*view;
 
 	vs.x      = winsz->x;
@@ -380,7 +386,93 @@ struct itewinsize	*winsz;
 	ite_default_y      = view->display.y;
 	ite_default_depth  = view->bitmap->depth;
 
+	et_save = (save_area_t *)view->save_area;
+	if (et_save == NULL)
+	    et_inittextmode(ip, NULL, view->flags & VF_DISPLAY);
+	else {
+	    et_inittextmode(ip, &et_save->sv_regs, view->flags & VF_DISPLAY);
+	    et_save->fb_size = ip->cols * ip->rows;
+	}
+	et_clear(ip, 0, 0, ip->rows, ip->cols);
+
 	return(error);
+}
+
+int
+iteet_ioctl(ip, cmd, addr, flag, p)
+struct ite_softc	*ip;
+u_long			cmd;
+caddr_t			addr;
+int			flag;
+struct proc		*p;
+{
+	struct winsize		ws;
+	struct itewinsize	*is;
+	int			error = 0;
+	view_t			*view = viewview(ip->grf->g_viewdev);
+#if 0 /* LWP: notyet */
+	struct itebell		*ib;
+#endif
+
+	switch (cmd) {
+	case ITEIOCSWINSZ:
+		is = (struct itewinsize *)addr;
+
+		if(ite_newsize(ip, is))
+			error = ENOMEM;
+		else {
+			view         = viewview(ip->grf->g_viewdev);
+			ws.ws_row    = ip->rows;
+			ws.ws_col    = ip->cols;
+			ws.ws_xpixel = view->display.width;
+			ws.ws_ypixel = view->display.height;
+			ite_reset(ip);
+			/*
+			 * XXX tell tty about the change 
+			 * XXX this is messy, but works 
+			 */
+			iteioctl(ip->grf->g_itedev,TIOCSWINSZ,(caddr_t)&ws,0,p);
+		}
+		break;
+	case ITEIOCGBELL:
+#if 0 /* LWP */
+		/* XXX This won't work now			*/
+		/* XXX Should the bell be device dependent?	*/
+		ib         = (struct itebell *)addr;
+		ib->volume = bvolume;
+		ib->pitch  = bpitch;
+		ib->msec   = bmsec;
+#endif
+		break;
+	case ITEIOCSBELL:
+#if 0 /* LWP */
+		/* XXX See above				*/
+		ib = (struct itebell *)addr;
+		/* bounds check */
+		if(ib->pitch > MAXBPITCH || ib->pitch < MINBPITCH ||
+		    ib->volume > MAXBVOLUME || ib->msec > MAXBTIME)
+			error = EINVAL;
+		else {
+			bvolume = ib->volume;
+			bpitch  = ib->pitch;
+			bmsec   = ib->msec;
+		}
+#endif
+		break;
+	case VIOCSCMAP:
+	case VIOCGCMAP:
+		/*
+		 * XXX watchout for that NOPROC. its not really the kernel
+		 * XXX talking these two commands don't use the proc pointer
+		 * XXX though.
+		 */
+		error = viewioctl(ip->grf->g_viewdev, cmd, addr, flag, NOPROC);
+		break;
+	default:
+		error = -1;
+		break;
+	}
+	return (error);
 }
 
 void
@@ -517,8 +609,10 @@ et_scroll(ip, sy, sx, count, dir)
 }
 
 static void
-et_inittextmode(ip)
+et_inittextmode(ip, etregs, loadfont)
 	struct ite_softc *ip;
+	et_sv_reg_t	 *etregs;
+	int		 loadfont;
 {
 	volatile u_char *ba;
 	font_info	*fd;
@@ -527,7 +621,12 @@ et_inittextmode(ip)
 	u_short		z, y;
 	int		s;
 	view_t		*v   = viewview(ip->grf->g_viewdev);
+	et_sv_reg_t	loc_regs;
 
+	if (etregs == NULL) {
+		etregs = &loc_regs;
+		et_hwsave(etregs);
+	}
 
 	ba = ((ipriv_t*)ip->priv)->regkva;
 	fb = v->bitmap->plane;
@@ -538,77 +637,84 @@ et_inittextmode(ip)
 	fd = &font_info_8x16;
 #endif
 
-	/*
-	 * set colors (B&W)
-	 */
-	vgaw(ba, VDAC_ADDRESS_W, 0);
-	for (z = 0; z < 256; z++) {
-		y = (z & 1) ? ((z > 7) ? 2 : 1) : 0;
+	if (loadfont) { /* XXX: We should set the colormap */
+		/*
+		 * set colors (B&W)
+		 */
+		vgaw(ba, VDAC_ADDRESS_W, 0);
+		for (z = 0; z < 256; z++) {
+			y = (z & 1) ? ((z > 7) ? 2 : 1) : 0;
     
-		vgaw(ba, VDAC_DATA, etconscolors[y][0]);
-		vgaw(ba, VDAC_DATA, etconscolors[y][1]);
-		vgaw(ba, VDAC_DATA, etconscolors[y][2]);
-	}
-
-	/*
-	 * Enter a suitable mode to download the font
-	 */
-	s = splhigh();
-
-	WAttr(ba, 0x20 | ACT_ID_ATTR_MODE_CNTL, 0x0a); /* IBM attr's	*/
-	WSeq(ba, SEQ_ID_MAP_MASK,	 0x04);	/* Write to map 2 only	*/
-	WSeq(ba, SEQ_ID_MEMORY_MODE,	 0x06);	/* Seq. addressing	*/
-	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x02);	/* Select map 2		*/
-	WGfx(ba, GCT_ID_GRAPHICS_MODE,	 0x00); /* Seq. addressing	*/
-	WGfx(ba, GCT_ID_MISC,		 0x04); /* Map at 0xb0000	*/
-	splx(s);
-	
-	/*
-	 * load text font into beginning of display memory. Each character
-	 * cell is 32 bytes long (enough for 4 planes)
-	 */
-	for (z = 0, c = fb; z < 256 * 32; z++)
-		*c++ = 0;
-
-	c = (unsigned char *) (fb) + (32 * fd->font_lo);
-	f = fd->font_p;
-	for (z = fd->font_lo; z <= fd->font_hi; z++, c += (32 - fd->height))
-		for (y = 0; y < fd->height; y++) {
-			*c++ = *f++;
+			vgaw(ba, VDAC_DATA, etconscolors[y][0]);
+			vgaw(ba, VDAC_DATA, etconscolors[y][1]);
+			vgaw(ba, VDAC_DATA, etconscolors[y][2]);
 		}
 
-	/*
-	 * Setup for text-mode
-	 */
-	s = splhigh();
+		/*
+		 * Enter a suitable mode to download the font. This
+		 * basically means sequential addressing mode
+		 */
+		s = splhigh();
+
+		WAttr(ba, 0x20 | ACT_ID_ATTR_MODE_CNTL, 0x0a);
+		WSeq(ba, SEQ_ID_MAP_MASK,	 0x04);
+		WSeq(ba, SEQ_ID_MEMORY_MODE,	 0x06);
+		WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x02);
+		WGfx(ba, GCT_ID_GRAPHICS_MODE,	 0x00);
+		WGfx(ba, GCT_ID_MISC,		 0x04);
+		splx(s);
+	
+		/*
+		 * load text font into beginning of display memory. Each
+		 * character cell is 32 bytes long (enough for 4 planes)
+		 */
+		for (z = 0, c = fb; z < 256 * 32; z++)
+			*c++ = 0;
+
+		c = (unsigned char *) (fb) + (32 * fd->font_lo);
+		f = fd->font_p;
+		z = fd->font_lo;
+		for (; z <= fd->font_hi; z++, c += (32 - fd->height))
+			for (y = 0; y < fd->height; y++) {
+				*c++ = *f++;
+			}
+	}
 
 	/*
 	 * Odd/Even addressing
 	 */
-	WSeq(ba, SEQ_ID_MAP_MASK,	 0x03);	/* Write to maps 0 & 1	*/
-	WSeq(ba, SEQ_ID_MEMORY_MODE, 	 0x03); /* Odd/Even addressing	*/
-	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x00);	/* Select map 0		*/
-	WGfx(ba, GCT_ID_GRAPHICS_MODE,	 0x10);	/* Odd/Even addressing	*/
-	WGfx(ba, GCT_ID_MISC,		 0x06); /* Map at 0xb0000 & COE	*/
+	etregs->seq[SEQ_ID_MAP_MASK]        = 0x03;
+	etregs->seq[SEQ_ID_MEMORY_MODE]     = 0x03;
+	etregs->grf[GCT_ID_READ_MAP_SELECT] = 0x00;
+	etregs->grf[GCT_ID_GRAPHICS_MODE]   = 0x10;
+	etregs->grf[GCT_ID_MISC]            = 0x06;
 
 	/*
 	 * Font height + underline location
 	 */
-	tmp = RCrt(ba, CRT_ID_MAX_ROW_ADDRESS) & 0xe0;
-	WCrt(ba, CRT_ID_MAX_ROW_ADDRESS, tmp | (fd->height - 1));
-	tmp = RCrt(ba, CRT_ID_UNDERLINE_LOC) & 0xe0;
-	WCrt(ba, CRT_ID_UNDERLINE_LOC, tmp | (fd->height - 1));
+	tmp = etregs->crt[CRT_ID_MAX_ROW_ADDRESS] & 0xe0;
+	etregs->crt[CRT_ID_MAX_ROW_ADDRESS] = tmp | (fd->height - 1);
+	tmp = etregs->crt[CRT_ID_UNDERLINE_LOC] & 0xe0;
+	etregs->crt[CRT_ID_UNDERLINE_LOC] = tmp | (fd->height - 1);
 
 	/*
 	 * Cursor setup
 	 */
-	WCrt(ba, CRT_ID_CURSOR_START,	 0x00);
-	WCrt(ba, CRT_ID_CURSOR_END,	 fd->height - 1);
-	WCrt(ba, CRT_ID_CURSOR_LOC_HIGH, 0x00);
-	WCrt(ba, CRT_ID_CURSOR_LOC_LOW,	 0x00);
+	etregs->crt[CRT_ID_CURSOR_START]    = 0x00;
+	etregs->crt[CRT_ID_CURSOR_END]      = fd->height - 1;
+	etregs->crt[CRT_ID_CURSOR_LOC_HIGH] = 0x00;
+	etregs->crt[CRT_ID_CURSOR_LOC_LOW]  = 0x00;
 
-	WCrt(ba, CRT_ID_MODE_CONTROL,	 0xa3);
+	/*
+	 * Enter text mode
+	 */
+	etregs->crt[CRT_ID_MODE_CONTROL]    = 0xa3;
+	etregs->attr[ACT_ID_ATTR_MODE_CNTL] = 0x0a;
 
-	splx(s);
+#if 1
+	if (loadfont || (etregs == &loc_regs))
+#else
+	if (etregs == &loc_regs)
+#endif
+		et_hwrest(etregs);
 }
-#endif /* NGRFET > 0 */
