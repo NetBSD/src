@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.14 1996/01/07 06:21:02 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.15 1996/02/05 21:11:10 scottr Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1222,6 +1222,7 @@ audiostartp(sc)
     
 	if (sc->pr.nblk > 0) {
 		u_char *hp = sc->pr.hp;
+		sc->sc_silence = 0;
 		if (rval = sc->hw_if->start_output(sc->hw_hdl, hp, sc->sc_blksize,
 		    				   audio_pint, (void *)sc)) {
 		    	DPRINTF(("audiostartp: failed: %d\n", rval));
@@ -1258,7 +1259,9 @@ audio_pint(sc)
 	 * always fails and the output is always silence after the
 	 * first block.
 	 */
-	if (--cb->nblk > 0) {
+	if (!sc->sc_silence)
+		cb->nblk--;
+	if (cb->nblk > 0) {
 		hp = cb->hp;
 		if (cb->cb_pause) {
 		    cb->cb_pdrops++;
@@ -1296,6 +1299,7 @@ audio_pint(sc)
 		    Dprintf("audio_pint: drops=%d auzero %d 0x%x\n", cb->cb_drops, cc, *(int *)auzero_block);
 #endif
  psilence:
+		sc->sc_silence = 1;
 		if (err = hw->start_output(sc->hw_hdl,
 		    			   auzero_block, cc,
 					   audio_pint, (void *)sc)) {

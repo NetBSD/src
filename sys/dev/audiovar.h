@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.3 1995/05/08 22:01:44 brezak Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.4 1996/02/05 21:11:11 scottr Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -118,4 +118,5 @@ struct audio_softc {
 	int	sc_rblks;	/* number of phantom record blocks */
 	int	sc_pencoding;	/* current encoding; play */
 	int	sc_rencoding;	/* current encoding; record */
+	int	sc_silence;	/* currently outputting audio_zero */
 };
