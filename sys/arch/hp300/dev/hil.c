@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.29 1996/10/14 07:09:41 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.30 1997/03/20 08:07:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,8 +112,8 @@ hilsoftinit(unit, hilbase)
 	register int i;
 
 	/* XXX ITE interface */
-	extern char *us_keymap, *us_shiftmap, *us_ctrlmap,
-		    *us_ctrlshiftmap, **us_stringmap;
+	extern char us_keymap[], us_shiftmap[], us_ctrlmap[],
+		    us_ctrlshiftmap[], *us_stringmap[];
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
@@ -1186,7 +1186,7 @@ kbdcninit()
 	u_char lang;
 
 	/* XXX from hil_keymaps.c */
-	extern char *us_keymap, *us_shiftmap, *us_ctrlmap;
+	extern char us_keymap[], us_shiftmap[], us_ctrlmap[];
 
 	hilkbd_cn_device = h;
 
