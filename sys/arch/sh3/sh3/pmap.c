@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 2000/04/24 08:40:21 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 2000/06/02 17:46:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -3337,6 +3337,7 @@ pmap_growkernel(maxkvaddr)
 
 			if (uvm_page_physget(&ptaddr) == FALSE)
 				panic("pmap_growkernel: out of memory");
+			pmap_zero_page(ptaddr);
 
 			kpm->pm_pdir[PDSLOT_KERN + nkpde] =
 				ptaddr | PG_RW | PG_V | PG_N | PG_4K | PG_M;
