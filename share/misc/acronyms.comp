@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.16 2003/10/01 20:11:11 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.17 2003/10/02 13:33:29 jmmv Exp $
 
 ABI	application binary interface
 AGP	accelerated graphics port
@@ -31,6 +31,7 @@ ESDRAM	enhanced synchronous dynamic random access memory
 FBRAM	frame buffer random access memory
 FFS	fast file system
 FLOPS	floating [point] operations per second
+FPM	fast page mode
 FQDN	fully qualified domain name
 FTP	file transfer protocol
 GIF	graphics interchange format
