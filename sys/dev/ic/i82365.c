@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.53 2000/02/26 17:24:44 thorpej Exp $	*/
+/*	$NetBSD: i82365.c,v 1.54 2000/02/27 20:01:05 mycroft Exp $	*/
 
 #define	PCICDEBUG
 
@@ -171,75 +171,75 @@ void
 pcic_attach(sc)
 	struct pcic_softc *sc;
 {
-	int count, i, reg, chip, socket, intr;
+	int i, reg, chip, socket, intr;
+	struct pcic_handle *h;
 
 	DPRINTF(("pcic ident regs:"));
 
 	lockinit(&sc->sc_pcic_lock, PWAIT, "pciclk", 0, 0);
 
 	/* find and configure for the available sockets */
-	count = 0;
 	for (i = 0; i < PCIC_NSLOTS; i++) {
+		h = &sc->handle[i];
 		chip = i / 2;
 		socket = i % 2;
-		sc->handle[i].ph_parent = (struct device *)sc;
-		sc->handle[i].chip = chip;
-		sc->handle[i].sock = chip * PCIC_CHIP_OFFSET +
-		    socket * PCIC_SOCKET_OFFSET;
+
+		h->ph_parent = (struct device *)sc;
+		h->chip = chip;
+		h->sock = chip * PCIC_CHIP_OFFSET + socket * PCIC_SOCKET_OFFSET;
+		h->laststate = PCIC_LASTSTATE_EMPTY;
 		/* initialize pcic_read and pcic_write functions */
-		sc->handle[i].ph_read = st_pcic_read;
-		sc->handle[i].ph_write = st_pcic_write;
-		sc->handle[i].ph_bus_t = sc->iot;
-		sc->handle[i].ph_bus_h = sc->ioh;
+		h->ph_read = st_pcic_read;
+		h->ph_write = st_pcic_write;
+		h->ph_bus_t = sc->iot;
+		h->ph_bus_h = sc->ioh;
+
 		/* need to read vendor -- for cirrus to report no xtra chip */
 		if (socket == 0)
-			sc->handle[i].vendor = sc->handle[i + 1].vendor =
-			    pcic_vendor(&sc->handle[i]);
-		reg = pcic_read(&sc->handle[i], PCIC_IDENT);
-		if (!pcic_ident_ok(reg)) {
-			sc->handle[i].flags = 0;
-		} else {
-			sc->handle[i].flags = PCIC_FLAG_SOCKETP;
-			count++;
-		}
-		sc->handle[i].laststate = PCIC_LASTSTATE_EMPTY;
-		DPRINTF(("ident reg 0x%02x\n", reg));
+			h->vendor = (h+1)->vendor = pcic_vendor(h);
+
+		reg = pcic_read(h, PCIC_IDENT);
+		printf("ident reg 0x%02x\n", reg);
+		if (pcic_ident_ok(reg))
+			h->flags = PCIC_FLAG_SOCKETP;
+		else
+			h->flags = 0;
 	}
-	if (count == 0)
-		panic("pcic_attach: attach found no sockets");
 
 	for (i = 0; i < PCIC_NSLOTS; i++) {
-		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP) {
-			SIMPLEQ_INIT(&sc->handle[i].events);
+		h = &sc->handle[i];
+
+		if (h->flags & PCIC_FLAG_SOCKETP) {
+			SIMPLEQ_INIT(&h->events);
 
 			/* disable interrupts -- for now */
-			pcic_write(&sc->handle[i], PCIC_CSC_INTR, 0);
-			intr = pcic_read(&sc->handle[i], PCIC_INTR);
+			pcic_write(h, PCIC_CSC_INTR, 0);
+			intr = pcic_read(h, PCIC_INTR);
 			DPRINTF(("intr was 0x%02x\n", intr));
 			intr &= ~(PCIC_INTR_RI_ENABLE | PCIC_INTR_ENABLE |
 			    PCIC_INTR_IRQ_MASK);
-			pcic_write(&sc->handle[i], PCIC_INTR, intr);
-			pcic_read(&sc->handle[i], PCIC_CSC);
+			pcic_write(h, PCIC_INTR, intr);
+			(void) pcic_read(h, PCIC_CSC);
 		}
 	}
 
 	/* print detected info */
 	for (i = 0; i < PCIC_NSLOTS; i += 2) {
+		h = &sc->handle[i];
 		chip = i / 2;
-		if ((sc->handle[i].flags & PCIC_FLAG_SOCKETP) == 0 &&
-		    (sc->handle[i + 1].flags & PCIC_FLAG_SOCKETP) == 0)
-			continue;
 
 		printf("%s: controller %d (%s) has ", sc->dev.dv_xname, chip,
 		    pcic_vendor_to_string(sc->handle[i].vendor));
 
-		if ((sc->handle[i].flags & PCIC_FLAG_SOCKETP) &&
-		    (sc->handle[i + 1].flags & PCIC_FLAG_SOCKETP))
+		if ((h->flags & PCIC_FLAG_SOCKETP) &&
+		    ((h+1)->flags & PCIC_FLAG_SOCKETP))
 			printf("sockets A and B\n");
-		else if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
+		else if (h->flags & PCIC_FLAG_SOCKETP)
 			printf("socket A only\n");
-		else
+		else if ((h+1)->flags & PCIC_FLAG_SOCKETP)
 			printf("socket B only\n");
+		else
+			printf("no sockets\n");
 	}
 }
 
