@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.14 2001/06/19 13:45:55 wiz Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.15 2001/06/29 02:40:28 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -143,7 +143,7 @@ pv_addr_t kernelstack;
 char *boot_args = NULL;
 char *boot_file = NULL;
 
-vm_offset_t msgbufphys;
+vaddr_t msgbufphys;
 
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
@@ -180,14 +180,14 @@ vaddr_t sa11x0_idle_mem;
 void physcon_display_base	__P((u_int addr));
 extern void consinit		__P((void));
 
-void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
+void map_section	__P((vaddr_t pt, vaddr_t va, vaddr_t pa,
 			     int cacheable));
-void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
-			     vm_offset_t pa, vm_size_t size, u_int acc,
+void map_pagetable	__P((vaddr_t pt, vaddr_t va, vaddr_t pa));
+void map_entry		__P((vaddr_t pt, vaddr_t va, vaddr_t pa));
+void map_entry_nc	__P((vaddr_t pt, vaddr_t va, vaddr_t pa));
+void map_entry_ro	__P((vaddr_t pt, vaddr_t va, vaddr_t pa));
+vm_size_t map_chunk	__P((vaddr_t pd, vaddr_t pt, vaddr_t va,
+			     vaddr_t pa, vm_size_t size, u_int acc,
 			     u_int flg));
 
 void data_abort_handler		__P((trapframe_t *frame));
@@ -211,7 +211,7 @@ void dumppages(char *, int);
 extern int db_trapper();
 
 extern void dump_spl_masks	__P((void));
-extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
+extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vaddr_t va));
 extern void db_machine_init	__P((void));
 
 extern void dumpsys	__P((void));
@@ -304,7 +304,7 @@ initarm(argc, argv, bi)
 	u_int kerneldatasize, symbolsize;
 	u_int l1pagetable;
 	u_int l2pagetable;
-	vm_offset_t freemempos;
+	vaddr_t freemempos;
 	extern char page0[], page0_end[];
 	pv_addr_t kernel_l1pt;
 	pv_addr_t kernel_ptpt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.5 2001/06/20 02:30:47 toshii Exp $	*/
+/*	$NetBSD: stubs.c,v 1.6 2001/06/29 02:40:28 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -164,7 +164,7 @@ dumpsys()
 	int addr;
 	int block;
 	int len;
-	vm_offset_t dumpspace;
+	vaddr_t dumpspace;
 
 	/* Save registers. */
 	savectx(&dumppcb);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.2 2001/04/24 04:30:57 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.3 2001/06/29 02:40:28 toshii Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,7 +89,7 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
+	register vaddr_t o, v;
 	register int c;
 	register struct iovec *iov;
 	int error = 0;
@@ -122,14 +122,14 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
-			pmap_enter(pmap_kernel(), (vm_offset_t)memhook,
+			pmap_enter(pmap_kernel(), (vaddr_t)memhook,
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update();
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)memhook + o, c, uio);
-			pmap_remove(pmap_kernel(), (vm_offset_t)memhook,
-			    (vm_offset_t)memhook + NBPG);
+			pmap_remove(pmap_kernel(), (vaddr_t)memhook,
+			    (vaddr_t)memhook + NBPG);
 			pmap_update();
 			continue;
 
