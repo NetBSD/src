@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.183 2000/10/14 01:54:28 wiz Exp $
+# $NetBSD: mi,v 1.184 2000/10/16 13:35:05 simonb Exp $
 .
 ./altroot
 ./bin
@@ -1125,12 +1125,6 @@
 ./usr/share/sendmail/ostype
 ./usr/share/sendmail/sh
 ./usr/share/sendmail/siteconfig
-./usr/share/skel
-./usr/share/skel/dot.cshrc
-./usr/share/skel/dot.login
-./usr/share/skel/dot.mailrc
-./usr/share/skel/dot.profile
-./usr/share/skel/dot.rhosts
 ./usr/share/tabset
 ./usr/share/tabset/3101
 ./usr/share/tabset/9837
