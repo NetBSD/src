@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.20 2001/01/16 02:50:32 cgd Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.21 2001/09/11 03:33:52 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -232,6 +232,7 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/mount.h>
+#include <sys/socket.h>
 #ifndef HAS_POSIX_DIR
 #include <sys/dir.h>
 #else
@@ -500,9 +501,9 @@ void
 usage ()
 {
 #ifdef LIBWRAP
-	quit (1,"Usage: supfilesrv [ -l | -d | -P | -N | -C <max children> | -H <host> <user> <cryptfile> <supargs> ]\n");
+	quit (1,"Usage: supfilesrv [ -4 | -6 | -l | -d | -P | -N | -C <max children> | -H <host> <user> <cryptfile> <supargs> ]\n");
 #else
-	quit (1,"Usage: supfilesrv [ -d | -P | -N | -C <max children> | -H <host> <user> <cryptfile> <supargs> ]\n");
+	quit (1,"Usage: supfilesrv [ -4 | -6 | -d | -P | -N | -C <max children> | -H <host> <user> <cryptfile> <supargs> ]\n");
 #endif
 }
 
@@ -518,6 +519,7 @@ char **argv;
 	char buf[STRINGLENGTH];
 	int maxsleep;
 	register FILE *f;
+	int af = AF_INET;
 
 #ifdef RCS
         candorcs = FALSE;
@@ -574,6 +576,12 @@ char **argv;
                         candorcs = TRUE;
                         break;
 #endif
+		case '4':
+			af = AF_INET;
+			break;
+		case '6':
+			af = AF_INET6;
+			break;
 		default:
 			fprintf (stderr,"Unknown flag %s ignored\n",argv[0]);
 			break;
@@ -584,7 +592,7 @@ char **argv;
 	if (clienthost == NULL) {
 		if (argc != 0)
 			usage ();
-		x = servicesetup (dbgportsq ? DEBUGFPORT : FILEPORT);
+		x = servicesetup (dbgportsq ? DEBUGFPORT : FILEPORT, af);
 		if (x != SCMOK)
 			quit (1,"Error in network setup");
 		for (i = 0; i < HASHSIZE; i++)
