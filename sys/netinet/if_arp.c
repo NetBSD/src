@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.98 2004/05/25 04:33:59 atatat Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.99 2004/09/29 21:26:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.98 2004/05/25 04:33:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.99 2004/09/29 21:26:52 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1174,17 +1174,20 @@ arplookup(m, addr, create, proxy)
 		return (0);
 	rt->rt_refcnt--;
 
-	if (rt->rt_flags & RTF_GATEWAY)
-		why = "host is not on local network";
-	else if ((rt->rt_flags & RTF_LLINFO) == 0) {
-		arpstat.as_allocfail++;
-		why = "could not allocate llinfo";
-	} else if (rt->rt_gateway->sa_family != AF_LINK)
-		why = "gateway route is not ours";
-	else
+	if ((rt->rt_flags & (RTF_GATEWAY | RTF_LLINFO)) == RTF_LLINFO &&
+	    rt->rt_gateway->sa_family == AF_LINK)
 		return ((struct llinfo_arp *)rt->rt_llinfo);
 
+
+
 	if (create) {
+		if (rt->rt_flags & RTF_GATEWAY)
+			why = "host is not on local network";
+		else if ((rt->rt_flags & RTF_LLINFO) == 0) {
+			arpstat.as_allocfail++;
+			why = "could not allocate llinfo";
+		} else 
+			why = "gateway route is not ours";
 		log(LOG_DEBUG, "arplookup: unable to enter address"
 		    " for %s@%s on %s (%s)\n",
 		    in_fmtaddr(*addr), lla_snprintf(ar_sha(ah), ah->ar_hln),
