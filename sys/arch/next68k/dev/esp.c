@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.26 2000/06/04 19:14:53 cgd Exp $	*/
+/*	$NetBSD: esp.c,v 1.27 2000/06/05 07:59:51 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -145,13 +145,6 @@ int esp_dma_nest = 0;
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch_intio, espattach_intio
-};
-
-struct scsipi_device esp_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -397,8 +390,7 @@ espattach_intio(parent, self, aux)
 	}
 
 	/* Establish interrupt channel */
-	isrlink_autovec((int(*)__P((void*)))ncr53c9x_intr, sc,
-			NEXT_I_IPL(NEXT_I_SCSI), 0);
+	isrlink_autovec(ncr53c9x_intr, sc, NEXT_I_IPL(NEXT_I_SCSI), 0);
 	INTR_ENABLE(NEXT_I_SCSI);
 
 	/* register interrupt stats */
@@ -406,9 +398,7 @@ espattach_intio(parent, self, aux)
 	    sc->sc_dev.dv_xname, "intr");
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys; 
-	ncr53c9x_attach(sc, &esp_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 }
 
 /*
