@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.30 1998/01/12 09:40:11 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.31 1998/01/31 00:37:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -131,8 +131,27 @@ pciattach(parent, self, aux)
 	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
 	int bus, device, maxndevs, function, nfunctions;
+	int io_enabled, mem_enabled;
 
 	pci_attach_hook(parent, self, pba);
+	printf("\n");
+
+	io_enabled = (pba->pba_flags & PCI_FLAGS_IO_ENABLED);
+	mem_enabled = (pba->pba_flags & PCI_FLAGS_MEM_ENABLED);
+
+	if (io_enabled == 0 && mem_enabled == 0) {
+		printf("%s: no spaces enabled!\n", self->dv_xname);
+		return;
+	}
+
+	printf("%s: ", self->dv_xname);
+	if (io_enabled)
+		printf("i/o enabled");
+	if (mem_enabled) {
+		if (io_enabled)
+			printf(", ");
+		printf("memory enabled");
+	}
 	printf("\n");
 
 	iot = pba->pba_iot;
