@@ -605,6 +605,15 @@ of
 and
 .Vn x .
 .Ds
+.Fn halfdelay "int timeout"
+.De
+Sets the terminal into a mode similar to that done by
+.Fn cbreak
+with the exception that the input routines will wait for
+.Vn timeout
+number of tenths of a second, if at this time there is no input then
+ERR will be returned.
+.Ds
 .Fn has_colors ""
 .De
 Check if terminal has colors.
