@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.6 1998/08/04 19:08:23 dbj Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.7 1998/08/28 22:56:08 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -42,7 +42,7 @@ void    next68k_bootargs __P((unsigned char *args[]));
 int mon_getc(void);
 int mon_putc(int c);
 
-struct mon_global *mg;
+volatile struct mon_global *mg;
 
 
 #define	MON(type, off) (*(type *)((u_int) (mg) + off))
@@ -50,7 +50,7 @@ struct mon_global *mg;
 #define RELOC(v, t)	(*((t *)((u_int)&(v) + NEXT_RAMBASE)))
 
 #define	MONRELOC(type, off) \
-     (*(type *)((u_int) RELOC(mg,struct mon_global *) + off))
+     (*(volatile type *)((u_int) RELOC(mg,volatile struct mon_global *) + off))
 
 
 typedef int (*getcptr)(void);
@@ -60,15 +60,22 @@ typedef int (*putcptr)(int);
  * Print a string on the rom console before the MMU is turned on
  */
 
+/* #define DISABLE_ROM_PRINT 1 */
+
+#ifdef DISABLE_ROM_PRINT
+#define ROM_PUTS(xs) /* nop */
+#define ROM_PUTX(v)  /* nop */
+#else
+
 #define ROM_PUTS(xs) \
-  do { char *_s = xs + NEXT_RAMBASE; \
-		while(_s && *_s) (*MONRELOC(putcptr,MG_putc))(*_s++); \
+  do { volatile char *_s = xs + NEXT_RAMBASE; \
+     while(_s && *_s) (*MONRELOC(putcptr,MG_putc))(*_s++); \
 	} while(0)
 
 /* Print a hex byte on the rom console */
 
-char romprint_hextable[] = "0123456789abcdef";
-
+#if 1
+static char romprint_hextable[] = "0123456789abcdef@";
 #define ROM_PUTX(v) \
   do { \
     (*MONRELOC(putcptr,MG_putc)) \
@@ -76,6 +83,17 @@ char romprint_hextable[] = "0123456789abcdef";
     (*MONRELOC(putcptr,MG_putc)) \
 			 ((romprint_hextable+NEXT_RAMBASE)[(v)&0xf]); \
 	} while(0);
+#else
+#define lookup_hex(v)  ((v)>9?('a'+(v)-0xa):('0'+(v)))
+#define ROM_PUTX(v) \
+  do { \
+    (*MONRELOC(putcptr,MG_putc)) \
+			 (lookup_hex(((v)>>4)&0xf)); \
+    (*MONRELOC(putcptr,MG_putc)) \
+			 (lookup_hex((v)&0xf)); \
+	} while(0);
+#endif
+#endif
 
 u_char rom_enetaddr[6];
 
@@ -185,7 +203,7 @@ next68k_bootargs(args)
     }
   }
 
-
+#if 1
 	{
 		int i;
 		ROM_PUTS("Memory segments found:\r\n");
@@ -203,10 +221,12 @@ next68k_bootargs(args)
 			ROM_PUTS("\r\n");
 		}
 	}
+#endif
 
   /* Read the ethernet address from rom, this should be done later
    * in device driver somehow.
    */
+#if 1
   {
     int i;
 		ROM_PUTS("Ethernet address: ");
@@ -217,6 +237,29 @@ next68k_bootargs(args)
     }
 		ROM_PUTS("\r\n");
   }
+#else
+  {
+		ROM_PUTS("Ethernet address: ");
+		RELOC(rom_enetaddr[0], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[0];
+		ROM_PUTX(RELOC(rom_enetaddr[0],u_char));
+		ROM_PUTS(":");
+		RELOC(rom_enetaddr[1], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[1];
+		ROM_PUTX(RELOC(rom_enetaddr[1],u_char));
+		ROM_PUTS(":");
+		RELOC(rom_enetaddr[2], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[2];
+		ROM_PUTX(RELOC(rom_enetaddr[2],u_char));
+		ROM_PUTS(":");
+		RELOC(rom_enetaddr[3], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[3];
+		ROM_PUTX(RELOC(rom_enetaddr[3],u_char));
+		ROM_PUTS(":");
+		RELOC(rom_enetaddr[4], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[4];
+		ROM_PUTX(RELOC(rom_enetaddr[4],u_char));
+		ROM_PUTS(":");
+		RELOC(rom_enetaddr[5], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[5];
+		ROM_PUTX(RELOC(rom_enetaddr[5],u_char));
+		ROM_PUTS("\r\n");
+  }
+#endif
 
 	ROM_PUTS("Check serial port A for console.\r\n");
 
