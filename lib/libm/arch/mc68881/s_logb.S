@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 _rcsid:
-.asciz	"$Id: s_logb.S,v 1.1 1994/02/14 21:55:25 jtc Exp $"
+.asciz	"$Id: s_logb.S,v 1.2 1994/03/12 01:09:29 jtc Exp $"
 
 
 | logb(x)
@@ -63,4 +63,9 @@ Lfinite:
 	jra	Ldone
 Lnonz:
 	fgetexpx	fp0	| get exponent
-	jra	Ldone
+Ldone:
+	fmoved	fp0,sp@-
+	movel	sp@+,d0
+	movel	sp@+,d1
+	rts
+
