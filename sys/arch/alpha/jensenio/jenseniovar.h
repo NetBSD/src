@@ -1,4 +1,4 @@
-/* $NetBSD: jenseniovar.h,v 1.1 2000/07/12 20:36:10 thorpej Exp $ */
+/* $NetBSD: jenseniovar.h,v 1.2 2004/08/30 15:05:15 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ struct jensenio_attach_args {
 		struct isabus_attach_args jaun_isa;
 	} ja_un;
 
+	const char *ja_name;
 	bus_addr_t ja_ioaddr;		/* I/O space address */
 	int ja_irq[2];			/* Jensen IRQs */
 
@@ -56,7 +57,6 @@ struct jensenio_attach_args {
 #define	ja_isa		ja_un.jaun_isa
 
 /* For attaching built-in devices. */
-#define	ja_name		ja_eisa.eba_busname
 #define	ja_iot		ja_eisa.eba_iot
 #define	ja_ec		ja_eisa.eba_ec
 };

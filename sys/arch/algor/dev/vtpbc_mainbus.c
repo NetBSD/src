@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc_mainbus.c,v 1.12 2003/07/14 22:57:47 lukem Exp $	*/
+/*	$NetBSD: vtpbc_mainbus.c,v 1.13 2004/08/30 15:05:15 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vtpbc_mainbus.c,v 1.12 2003/07/14 22:57:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vtpbc_mainbus.c,v 1.13 2004/08/30 15:05:15 drochner Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -73,8 +73,6 @@ CFATTACH_DECL(vtpbc_mainbus, sizeof(struct vtpbc_softc),
     vtpbc_mainbus_match, vtpbc_mainbus_attach, NULL, NULL);
 extern struct cfdriver vtpbc_cd;
 
-int	vtpbc_mainbus_print(void *, const char *);
-
 int
 vtpbc_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -109,7 +107,6 @@ vtpbc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: PCI DMA window base: 0x%08lx\n", sc->sc_dev.dv_xname,
 	    (u_long) vt->vt_dma_winbase);
 
-	pba.pba_busname = "pci";
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
@@ -139,18 +136,5 @@ vtpbc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	    }
 #endif /* ALGOR_P4032 || ALGOR_P5064 */
 
-	(void) config_found(self, &pba, vtpbc_mainbus_print);
-}
-
-int
-vtpbc_mainbus_print(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pba = aux;
-
-	/* only PCIs can attach to VTPBCs; easy. */
-	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-	aprint_normal(" bus %d", pba->pba_bus);
-
-	return (UNCONF);
+	(void) config_found_ia(self, "pcibus", &pba, pcibusprint);
 }

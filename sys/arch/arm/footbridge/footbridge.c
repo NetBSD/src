@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.14 2003/06/15 23:08:56 fvdl Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.15 2004/08/30 15:05:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.14 2003/06/15 23:08:56 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.15 2004/08/30 15:05:16 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,8 +120,6 @@ footbridge_print(aux, pnp)
 
 	if (pnp)
 		aprint_normal("%s at %s", fba->fba_name, pnp);
-	if (strcmp(fba->fba_name, "pci") == 0)
-		aprint_normal(" bus %d", fba->fba_pba.pba_bus);
 	return(UNCONF);
 }
 
@@ -208,7 +206,6 @@ footbridge_attach(parent, self, aux)
 	/* calibrate the delay loop */
 	calibrate_delay();
 	/* Attach the PCI bus */
-	fba.fba_pba.pba_busname = "pci";
 	fba.fba_pba.pba_pc = &footbridge_pci_chipset;
 	fba.fba_pba.pba_iot = &footbridge_pci_io_bs_tag;
 	fba.fba_pba.pba_memt = &footbridge_pci_mem_bs_tag;
@@ -217,7 +214,7 @@ footbridge_attach(parent, self, aux)
 	fba.fba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	fba.fba_pba.pba_bus = 0;
 	fba.fba_pba.pba_bridgetag = NULL;
-	config_found(self, &fba.fba_pba, footbridge_print);
+	config_found_ia(self, "pcibus", &fba.fba_pba, pcibusprint);
 
 	/* Attach a time-of-day clock device */
 	fba.fba_tca.ta_name = "todclock";
@@ -225,7 +222,7 @@ footbridge_attach(parent, self, aux)
 	fba.fba_tca.ta_rtc_write = NULL;
 	fba.fba_tca.ta_rtc_read = NULL;
 	fba.fba_tca.ta_flags = TODCLOCK_FLAG_FAKE;
-	config_found(self, &fba.fba_tca, footbridge_print); 
+	config_found_ia(self, "todservice", &fba.fba_tca, footbridge_print); 
 
 	/* Attach uart device */
 	fba.fba_fca.fca_name = "fcom";
@@ -233,7 +230,7 @@ footbridge_attach(parent, self, aux)
 	fba.fba_fca.fca_ioh = sc->sc_ioh;
 	fba.fba_fca.fca_rx_irq = IRQ_SERIAL_RX;
 	fba.fba_fca.fca_tx_irq = IRQ_SERIAL_TX;
-	config_found(self, &fba.fba_fca, footbridge_print); 
+	config_found_ia(self, "footbridge", &fba.fba_fca, footbridge_print); 
 	
 	/* Setup fast SA110 cache clean area */
 #ifdef CPU_SA110

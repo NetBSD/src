@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2003/10/19 03:33:50 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2004/08/30 15:05:17 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -104,7 +104,7 @@ mainbus_attach(parent, self, aux)
 
 	ca.ca_name = "cpu";
 	ca.ca_node = 0;
-	config_found(self, &ca, mainbus_print);
+	config_found_ia(self, "mainbus", &ca, mainbus_print);
 
 #if NOBIO > 0
 	obio_reserve_resource_map();
@@ -131,7 +131,6 @@ mainbus_attach(parent, self, aux)
 	extent_destroy(memext);
 #endif
 
-	mba.mba_pba.pba_busname = "pci";
 	mba.mba_pba.pba_iot = &io_bus_space_tag;
 	mba.mba_pba.pba_memt = &mem_bus_space_tag;
 	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
@@ -139,7 +138,7 @@ mainbus_attach(parent, self, aux)
 	mba.mba_pba.pba_bus = 0;
 	mba.mba_pba.pba_bridgetag = NULL;
 	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-	config_found(self, &mba.mba_pba, mainbus_print);
+	config_found_ia(self, "pcibus", &mba.mba_pba, pcibusprint);
 #endif
 
 #if NOBIO > 0
@@ -148,10 +147,10 @@ mainbus_attach(parent, self, aux)
 
 	if (platform->obiodevs != obiodevs_nodev) {
 		bzero(&mba, sizeof(mba));
-		mba.mba_pba.pba_busname = "obio";
+		mba.mba_busname = "obio"; /* XXX needs placeholder in pba */
 		mba.mba_pba.pba_iot = &isa_io_space_tag;
 		mba.mba_pba.pba_memt = &isa_mem_space_tag;
-		config_found(self, &mba.mba_pba, mainbus_print);
+		config_found_ia(self, "mainbus", &mba.mba_pba, mainbus_print);
 	}
 #endif
 #endif
@@ -166,8 +165,6 @@ mainbus_print(aux, pnp)
 
 	if (pnp)
 		aprint_normal("%s at %s", mba->mba_busname, pnp);
-	if (!strcmp(mba->mba_busname, "pci"))
-		aprint_normal(" bus %d", mba->mba_pba.pba_bus);
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.12 2004/05/07 15:51:04 cl Exp $
+#	$NetBSD: files.xen,v 1.13 2004/08/30 15:05:19 drochner Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -81,9 +81,6 @@ file	crypto/blowfish/arch/i386/bf_cbc.S	blowfish & !i386_cpu
 # Memory Disk for install floppy
 file	dev/md_root.c			memory_disk_hooks
 
-#
-define  mainbus { [apid = -1] }
-
 file	arch/x86/x86/bus_dma.c
 file	arch/xen/x86/bus_space.c
 file	arch/x86/x86/cacheinfo.c
@@ -95,17 +92,26 @@ file	arch/x86/x86/softintr.c
 
 include	"arch/xen/conf/files.compat"
 
+# i386 specific mainbus attributes
+define cpubus { [apid = -1] }
+define apmbus {}
+define pnpbiosbus {}
+define vesabiosbus {}
+define hypervisorbus {}
+
 #
 # System bus types
 #
 
-device	mainbus: mainbus
+device	mainbus: isabus, eisabus, mcabus, pcibus, acpibus,
+	cpubus, apmbus, pnpbiosbus, vesabiosbus,
+	hypervisorbus
 attach	mainbus at root
 file	arch/xen/i386/mainbus.c		mainbus
 
 # Xen hypervisor
 device	hypervisor { }
-attach	hypervisor at mainbus
+attach	hypervisor at hypervisorbus
 file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
 
 # Numeric Processing Extension; Math Co-processor
@@ -127,9 +133,8 @@ include	"dev/pckbport/files.pckbport"
 
 # CPUS
 
-define cpu { [apid = -1] }
 device cpu
-attach cpu at mainbus
+attach cpu at cpubus
 file	arch/xen/i386/cpu.c		cpu
 
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.8 2004/04/24 15:49:00 kleink Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.9 2004/08/30 15:05:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.8 2004/04/24 15:49:00 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.9 2004/08/30 15:05:16 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,19 +221,6 @@ sspci_match(struct device *parent, struct cfdata *match, void *aux)
 	return 1;
 }
 
-static int
-sspci_print(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pci_pba = (struct pcibus_attach_args *) aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", pci_pba->pba_busname, pnp);
-	if (strcmp(pci_pba->pba_busname, "pci") == 0)
-		aprint_normal(" bus %d", pci_pba->pba_bus);
-
-	return UNCONF;
-}
-
 static void
 sspci_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -332,7 +319,6 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 	/* Platform provides PCI DMA tag */
 	pci_dma_tag = s3c2800_pci_dma_init();
 
-	pci_pba.pba_busname = "pci";
 	pci_pba.pba_pc = &sspci_chipset;
 	pci_pba.pba_iot = &sspci_io_tag;
 	pci_pba.pba_memt = &sspci_mem_tag;
@@ -342,7 +328,7 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 	pci_pba.pba_bus = 0;
 	pci_pba.pba_bridgetag = NULL;
 
-	config_found(self, &pci_pba, sspci_print);
+	config_found_ia(self, "pcibus", &pci_pba, pcibusprint);
 
 	return;
 

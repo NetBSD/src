@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.7 2004/08/30 10:30:38 drochner Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.8 2004/08/30 15:05:20 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -35,7 +35,7 @@
 #include <sys/lock.h>
 
 struct agpbus_attach_args {
-	char	*apa_busname;
+	char	*_apa_busname; /* XXX placeholder */
 	struct pci_attach_args apa_pci_args;
 };
 
