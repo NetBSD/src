@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200debug.c,v 1.2 2003/07/15 02:29:29 lukem Exp $	*/
+/*	$NetBSD: mq200debug.c,v 1.3 2004/04/06 16:49:56 tv Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin
@@ -31,7 +31,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200debug.c,v 1.2 2003/07/15 02:29:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200debug.c,v 1.3 2004/04/06 16:49:56 tv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,9 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: mq200debug.c,v 1.2 2003/07/15 02:29:29 lukem Exp $")
 
 #define ENABLE(b)	((b)?"enable":"disable")
 
-#ifdef MQ200_DEBUG
-
 char *mq200_clknames[] = { "BUS", "PLL1", "PLL2", "PLL3" };
+
+#ifdef MQ200_DEBUG
 
 void
 mq200_dump_pll(struct mq200_softc *sc)
