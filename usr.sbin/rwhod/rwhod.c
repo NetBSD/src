@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.14 1998/07/08 15:17:57 mrg Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.15 1999/06/06 03:33:08 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,7 @@ __RCSID("$NetBSD: rwhod.c,v 1.14 1998/07/08 15:17:57 mrg Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 #include <utmp.h>
 
 /*
@@ -132,6 +133,7 @@ main(argc, argv)
 		errx(1, "udp/who: unknown service");
 #ifndef DEBUG
 	daemon(1, 0);
+	pidfile(NULL);
 #endif
 	if (chdir(_PATH_RWHODIR) < 0)
 		err(1, "%s", _PATH_RWHODIR);

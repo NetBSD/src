@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.10 1998/07/06 07:06:13 mrg Exp $	*/
+/*	$NetBSD: timed.c,v 1.11 1999/06/06 03:37:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,12 +44,12 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.10 1998/07/06 07:06:13 mrg Exp $");
+__RCSID("$NetBSD: timed.c,v 1.11 1999/06/06 03:37:28 thorpej Exp $");
 #endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.10 $"
+#ident "$Revision: 1.11 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: timed.c,v 1.10 1998/07/06 07:06:13 mrg Exp $");
 #include <sys/syssgi.h>
 #include <sys/schedctl.h>
 #endif /* sgi */
+#include <util.h>
 
 int trace = 0;
 int sock, sock_raw = -1;
@@ -499,8 +500,10 @@ main(int argc, char **argv)
 #ifdef sgi
 	(void)_daemonize(debug ? _DF_NOFORK|_DF_NOCHDIR : 0, sock, -1, -1);
 #else
-	if (!debug)
+	if (!debug) {
 		daemon(debug, 0);
+		pidfile(NULL);
+	}
 #endif /* sgi */
 
 	if (trace)
