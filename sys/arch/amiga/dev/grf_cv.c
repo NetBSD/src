@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.10 1996/03/17 01:17:13 thorpej Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.11 1996/03/17 05:58:36 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -63,7 +63,7 @@
 #include <amiga/dev/grf_cvreg.h>
 #include <amiga/dev/zbusvar.h>
 
-int	grfcvmatch  __P((struct device *, struct cfdata *, void *));
+int	grfcvmatch  __P((struct device *, void *, void *));
 void	grfcvattach __P((struct device *, struct device *, void *));
 int	grfcvprint  __P((void *, char *));
 

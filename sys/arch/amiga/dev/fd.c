@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.26 1996/03/17 01:17:06 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.27 1996/03/17 05:58:32 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -192,6 +192,7 @@ int nfdtype = sizeof(fdtype) / sizeof(*fdtype);
 
 struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fdmatch, fdattach
+};
 
 struct cfdriver fd_cd = {
 	NULL, "fd", DV_DISK, NULL, 0

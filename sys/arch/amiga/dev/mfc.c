@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.10 1996/03/17 01:17:43 thorpej Exp $ */
+/*	$NetBSD: mfc.c,v 1.11 1996/03/17 05:58:52 mhitch Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -191,7 +191,7 @@ int mfcpmatch __P((struct device *, void *, void *));
 int mfcintr __P((struct mfc_softc *));
 void mfcsmint __P((register int unit));
 
-struct mfc_ca = {
+struct cfattach mfc_ca = {
 	sizeof(struct mfc_softc), mfcmatch, mfcattach
 };
 

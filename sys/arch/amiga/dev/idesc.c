@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.16 1996/03/17 01:17:24 thorpej Exp $	*/
+/*	$NetBSD: idesc.c,v 1.17 1996/03/17 05:58:43 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -266,7 +266,7 @@ struct scsi_device idesc_scsidev = {
 	NULL,		/* Use default done routine */
 };
 
-struct cfdriver idesc_ca = {
+struct cfattach idesc_ca = {
 	sizeof(struct idec_softc), idescmatch, idescattach
 };
 

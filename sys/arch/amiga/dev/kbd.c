@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.16 1996/03/17 01:17:42 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.17 1996/03/17 05:58:50 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -61,8 +61,8 @@ struct kbd_softc {
 };
 struct kbd_softc kbd_softc;
 
-void kbdattach __P((struct device *, void *, void *));
-int kbdmatch __P((struct device *, struct cfdata *, void *));
+int kbdmatch __P((struct device *, void *, void *));
+void kbdattach __P((struct device *, struct device *, void *));
 
 struct cfattach kbd_ca = {
 	sizeof(struct device), kbdmatch, kbdattach
