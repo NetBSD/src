@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.27 2002/01/17 10:15:51 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.28 2002/01/19 22:07:50 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1354,3 +1354,20 @@ sys/arch/macppc/dev/wdc_obio.c			1.13,1.15-1.19 via patch
   The machine-independent driver is updated to optionally use the
   WDC_CAPABILITY_SELECT callback whenever a target is selected on
   a channel.
+
+sys/dev/pci/emuxkireg.h					1.1-1.2 (new)
+sys/dev/pci/emuxkivar.h					1.1-1.3 (new)
+sys/dev/pci/emuxki.c					1.1-1.7 (new) via patch
+sys/dev/pci/files.pci					1.142
+sys/dev/DEVNAMES					1.81 via patch
+sys/arch/i386/conf/GENERIC				1.432 via patch
+sys/arch/i386/conf/GENERIC_LAPTOP			1.26 via patch
+sys/arch/i386/conf/CARDBUS				patch
+share/man/man4/emuxki.4					1.1-1.4 (new)
+share/man/man4/audio.4					1.43
+share/man/man4/pci.4					1.58 via patch
+share/man/man4/Makefile					1.229 via patch
+distrib/sets/lists/man/mi				1.412 via patch
+
+  Add driver for Creative Labs SBLive! EMU10000 and (probably) PCI512.
+  Fixes PR#15260.
