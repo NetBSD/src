@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.15 1999/11/04 00:22:07 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.16 1999/11/12 18:13:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -233,4 +233,18 @@ mii_pollstat(mii)
 	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
 	     child = LIST_NEXT(child, mii_list))
 		(void) (*child->mii_service)(child, mii, MII_POLLSTAT);
+}
+
+/*
+ * Inform the PHYs that the interface is down.
+ */
+void
+mii_down(mii)
+	struct mii_data *mii;
+{
+	struct mii_softc *child;
+
+	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
+	     child = LIST_NEXT(child, mii_list))
+		(void) (*child->mii_service)(child, mii, MII_DOWN);
 }
