@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetc.c,v 1.6 1997/07/13 20:14:53 christos Exp $	*/
+/*	$NetBSD: fgetc.c,v 1.7 1998/01/19 07:38:43 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,15 +41,21 @@
 #if 0
 static char sccsid[] = "@(#)fgetc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetc.c,v 1.6 1997/07/13 20:14:53 christos Exp $");
+__RCSID("$NetBSD: fgetc.c,v 1.7 1998/01/19 07:38:43 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
+#include "reentrant.h"
 
 int
 fgetc(fp)
 	FILE *fp;
 {
-	return (__sgetc(fp));
+	int r;
+
+	FLOCKFILE(fp);
+	r = __sgetc(fp);
+	FUNLOCKFILE(fp);
+	return r;
 }
