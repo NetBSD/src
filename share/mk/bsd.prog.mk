@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.89 1997/10/28 12:46:30 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.90 1997/11/03 22:51:28 cgd Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -184,7 +184,7 @@ scriptsinstall::
 
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
-	@${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
+	${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
 .endif
 
 .include <bsd.man.mk>
