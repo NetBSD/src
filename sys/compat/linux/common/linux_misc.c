@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.53 1999/02/09 20:37:19 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.53.2.1 2000/08/15 21:33:15 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -868,6 +868,37 @@ linux_sys_setregid(p, v, retval)
 		(uid_t)-1 : SCARG(uap, egid);
 
 	return sys_setregid(p, &bsa, retval);
+}
+
+/*
+ * We have nonexistant fsuid == uid.
+ * If call is no-op return 0, otherwise ENOSYS.
+ */
+int
+linux_sys_setfsuid(p, v, retval)
+	 struct proc *p;
+	 void *v;
+	 register_t *retval;
+{
+	 struct linux_sys_setfsuid_args /* {
+		 syscallarg(uid_t) uid;
+	 } */ *uap = v;
+	 uid_t uid;
+
+	 uid = SCARG(uap, uid);
+	 if (p->p_cred->p_ruid != uid)
+		 return (ENOSYS);
+	 else
+		 return (0);
+}
+
+int
+linux_sys_getfsuid(p, v, retval)
+	 struct proc *p;
+	 void *v;
+	 register_t *retval;
+{
+	 return sys_getuid(p, v, retval);
 }
 
 int
