@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.9 2000/11/15 21:32:03 scw Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.10 2000/11/20 19:35:29 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,6 +89,6 @@ void	zs_cnconfig __P((int, int, struct zsdevice *, int));
 #ifdef MVME147
 int	zshard_shared __P((void *));
 #endif
-#ifdef MVME162
+#if defined(MVME162) || defined(MVME172)
 int	zshard_unshared(void *);
 #endif

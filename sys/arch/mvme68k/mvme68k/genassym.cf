@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17 2000/06/29 08:04:04 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.18 2000/11/20 19:35:30 scw Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -95,6 +95,7 @@ define	CPU_68060		CPU_68060
 define	FPU_68881		FPU_68881
 define	FPU_68882		FPU_68882
 define	FPU_68040		FPU_68040
+define	FPU_68060		FPU_68060
 
 # values for machineid
 define	MVME_147		MVME_147
@@ -162,13 +163,16 @@ define	SPL6			PSL_S | PSL_IPL6
 define	FC_USERD		FC_USERD
 define	INTIOBASE147	INTIOBASE147
 define	INTIOTOP147		INTIOTOP147
-define	INTIOBASE167	INTIOBASE167
-define	INTIOTOP167		INTIOTOP167
+define	INTIOBASE1xx	INTIOBASE1xx
+define	INTIOTOP1xx		INTIOTOP1xx
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
+define	CACHE40_OFF		CACHE40_OFF
 define	CACHE_CLR		CACHE_CLR
 define	IC_CLEAR		IC_CLEAR
 define	DC_CLEAR		DC_CLEAR
+define	IC60_CUBC		IC60_CUBC
+define	IC60_CABC		IC60_CABC
 
 # pte/ste bits
 define	PG_V			PG_V

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.24 2000/11/18 22:46:07 scw Exp $	*/
+/*	$NetBSD: zs.c,v 1.25 2000/11/20 19:35:29 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -235,7 +235,7 @@ zsc_print(aux, name)
 	return UNCONF;
 }
 
-#ifdef MVME162
+#if defined(MVME162) || defined(MVME172)
 /*
  * Our ZS chips each have their own interrupt vector.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrsc_pcctwo.c,v 1.6 2000/09/06 19:51:43 scw Exp $ */
+/*	$NetBSD: ncrsc_pcctwo.c,v 1.7 2000/11/20 19:35:29 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -127,12 +127,12 @@ ncrsc_pcctwo_attach(parent, self, args)
 	sc = (struct siop_softc *) self;
 
 	/*
-	 * On the '177 the siop's clock is the same as the cpu clock.
+	 * On the '17x the siop's clock is the same as the cpu clock.
 	 * On the other boards, the siop runs at twice the cpu clock.
-	 * Also, the 177 cannot do proper bus-snooping (the 68060 is
+	 * Also, the 17x cannot do proper bus-snooping (the 68060 is
 	 * lame in this repspect) so don't enable it on that board.
 	 */
-	if (machineid == MVME_177) {
+	if (machineid == MVME_172 || machineid == MVME_177) {
 		clk = cpuspeed;
 		ctest7 = 0;
 	} else {
