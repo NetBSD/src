@@ -1,7 +1,7 @@
-/*	$NetBSD: lsystem.c,v 1.6 2002/06/15 18:27:20 wiz Exp $	*/
+/*	$NetBSD: lsystem.c,v 1.7 2003/04/14 02:56:47 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -134,11 +134,6 @@ lsystem(cmd, donemsg)
 		{
 			char *esccmd = shell_quote(cmd);
 			if (esccmd != NULL)
-			{
-				p = (char *) ecalloc(strlen(shell) +
-					strlen(cmd) + 7, sizeof(char));
-				sprintf(p, "%s -c \"%s\"", shell, cmd);
-			} else
 			{
 				p = (char *) ecalloc(strlen(shell) +
 					strlen(esccmd) + 5, sizeof(char));

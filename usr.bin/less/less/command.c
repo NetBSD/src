@@ -1,7 +1,7 @@
-/*	$NetBSD: command.c,v 1.9 2002/03/05 12:28:32 mrg Exp $	*/
+/*	$NetBSD: command.c,v 1.10 2003/04/14 02:56:46 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -68,7 +68,7 @@ static char *shellcmd = NULL;	/* For holding last shell command for "!!" */
 #endif
 static int mca;			/* The multicharacter command (action) */
 static int search_type;		/* The previous type of search */
-static int number;		/* The number typed by the user */
+static LINENUM number;		/* The number typed by the user */
 static char optchar;
 static int optflag;
 static int optgetname;
@@ -76,7 +76,6 @@ static POSITION bottompos;
 #if PIPEC
 static char pipec;
 #endif
-
 
 static void cmd_exec __P((void));
 static void start_mca __P((int, char *, constant void *, int));
@@ -201,7 +200,7 @@ exec_mca()
 	{
 	case A_F_SEARCH:
 	case A_B_SEARCH:
-		multi_search(cbuf, number);
+		multi_search(cbuf, (int) number);
 		break;
 	case A_FIRSTCMD:
 		/*
@@ -221,18 +220,20 @@ exec_mca()
 		optchar = '\0';
 		break;
 	case A_F_BRACKET:
-		match_brac(cbuf[0], cbuf[1], 1, number);
+		match_brac(cbuf[0], cbuf[1], 1, (int) number);
 		break;
 	case A_B_BRACKET:
-		match_brac(cbuf[1], cbuf[0], 0, number);
+		match_brac(cbuf[1], cbuf[0], 0, (int) number);
 		break;
 #if EXAMINE
 	case A_EXAMINE:
 		if (secure)
 			break;
 		edit_list(cbuf);
+#if TAGS
 		/* If tag structure is loaded then clean it up. */
 		cleantags();
+#endif
 		break;
 #endif
 #if SHELL_ESCAPE
@@ -1008,7 +1009,7 @@ commands()
 			 * Forward one window (and set the window size).
 			 */
 			if (number > 0)
-				swindow = number;
+				swindow = (int) number;
 			/* FALLTHRU */
 		case A_F_SCREEN:
 			/*
@@ -1019,7 +1020,7 @@ commands()
 			cmd_exec();
 			if (show_attn)
 				set_attnpos(bottompos);
-			forward(number, 0, 1);
+			forward((int) number, 0, 1);
 			break;
 
 		case A_B_WINDOW:
@@ -1027,7 +1028,7 @@ commands()
 			 * Backward one window (and set the window size).
 			 */
 			if (number > 0)
-				swindow = number;
+				swindow = (int) number;
 			/* FALLTHRU */
 		case A_B_SCREEN:
 			/*
@@ -1036,7 +1037,7 @@ commands()
 			if (number <= 0)
 				number = get_swindow();
 			cmd_exec();
-			backward(number, 0, 1);
+			backward((int) number, 0, 1);
 			break;
 
 		case A_F_LINE:
@@ -1048,7 +1049,7 @@ commands()
 			cmd_exec();
 			if (show_attn == OPT_ONPLUS && number > 1)
 				set_attnpos(bottompos);
-			forward(number, 0, 0);
+			forward((int) number, 0, 0);
 			break;
 
 		case A_B_LINE:
@@ -1058,7 +1059,7 @@ commands()
 			if (number <= 0)
 				number = 1;
 			cmd_exec();
-			backward(number, 0, 0);
+			backward((int) number, 0, 0);
 			break;
 
 		case A_FF_LINE:
@@ -1070,7 +1071,7 @@ commands()
 			cmd_exec();
 			if (show_attn == OPT_ONPLUS && number > 1)
 				set_attnpos(bottompos);
-			forward(number, 1, 0);
+			forward((int) number, 1, 0);
 			break;
 
 		case A_BF_LINE:
@@ -1080,7 +1081,7 @@ commands()
 			if (number <= 0)
 				number = 1;
 			cmd_exec();
-			backward(number, 1, 0);
+			backward((int) number, 1, 0);
 			break;
 		
 		case A_FF_SCREEN:
@@ -1092,7 +1093,7 @@ commands()
 			cmd_exec();
 			if (show_attn == OPT_ONPLUS)
 				set_attnpos(bottompos);
-			forward(number, 1, 0);
+			forward((int) number, 1, 0);
 			break;
 
 		case A_F_FOREVER:
@@ -1122,7 +1123,7 @@ commands()
 			 * (default same as last 'd' or 'u' command).
 			 */
 			if (number > 0)
-				wscroll = number;
+				wscroll = (int) number;
 			cmd_exec();
 			if (show_attn == OPT_ONPLUS)
 				set_attnpos(bottompos);
@@ -1135,7 +1136,7 @@ commands()
 			 * (default same as last 'd' or 'u' command).
 			 */
 			if (number > 0)
-				wscroll = number;
+				wscroll = (int) number;
 			cmd_exec();
 			backward(wscroll, 0, 0);
 			break;
@@ -1181,7 +1182,7 @@ commands()
 			if (number > 100)
 				number = 100;
 			cmd_exec();
-			jump_percent(number);
+			jump_percent((int) number);
 			break;
 
 		case A_GOEND:
@@ -1202,7 +1203,7 @@ commands()
 			cmd_exec();
 			if (number < 0)
 				number = 0;
-			jump_line_loc((POSITION)number, jump_sline);
+			jump_line_loc((POSITION) number, jump_sline);
 			break;
 
 		case A_STAT:
@@ -1250,7 +1251,7 @@ commands()
 #define	DO_SEARCH()	if (number <= 0) number = 1;	\
 			mca_search();			\
 			cmd_exec();			\
-			multi_search((char *)NULL, number);
+			multi_search((char *)NULL, (int) number);
 
 
 		case A_F_SEARCH:
@@ -1389,14 +1390,16 @@ commands()
 			/*
 			 * Examine next file.
 			 */
+#if TAGS
 			if (ntags())
 			{
 				error("No next file", NULL_PARG);
 				break;
 			}
+#endif
 			if (number <= 0)
 				number = 1;
-			if (edit_next(number))
+			if (edit_next((int) number))
 			{
 				if (quit_at_eof && hit_eof && 
 				    !(ch_getflags() & CH_HELPFILE))
@@ -1410,14 +1413,16 @@ commands()
 			/*
 			 * Examine previous file.
 			 */
+#if TAGS
 			if (ntags())
 			{
 				error("No previous file", NULL_PARG);
 				break;
 			}
+#endif
 			if (number <= 0)
 				number = 1;
-			if (edit_prev(number))
+			if (edit_prev((int) number))
 			{
 				parg.p_string = (number > 1) ? "(N-th) " : "";
 				error("No %sprevious file", &parg);
@@ -1425,9 +1430,10 @@ commands()
 			break;
 
 		case A_NEXT_TAG:
+#if TAGS
 			if (number <= 0)
 				number = 1;
-			tagfile = nexttag(number);
+			tagfile = nexttag((int) number);
 			if (tagfile == NULL)
 			{
 				error("No next tag", NULL_PARG);
@@ -1439,12 +1445,16 @@ commands()
 				if (pos != NULL_POSITION)
 					jump_loc(pos, jump_sline);
 			}
+#else
+			error("Command not available", NULL_PARG);
+#endif
 			break;
 
 		case A_PREV_TAG:
+#if TAGS
 			if (number <= 0)
 				number = 1;
-			tagfile = prevtag(number);
+			tagfile = prevtag((int) number);
 			if (tagfile == NULL)
 			{
 				error("No previous tag", NULL_PARG);
@@ -1456,6 +1466,9 @@ commands()
 				if (pos != NULL_POSITION)
 					jump_loc(pos, jump_sline);
 			}
+#else
+			error("Command not available", NULL_PARG);
+#endif
 			break;
 
 		case A_INDEX_FILE:
@@ -1464,7 +1477,7 @@ commands()
 			 */
 			if (number <= 0)
 				number = 1;
-			if (edit_index(number))
+			if (edit_index((int) number))
 				error("No such file", NULL_PARG);
 			break;
 

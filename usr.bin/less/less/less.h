@@ -1,7 +1,7 @@
-/*	$NetBSD: less.h,v 1.6 2002/03/05 12:28:34 mrg Exp $	*/
+/*	$NetBSD: less.h,v 1.7 2003/04/14 02:56:47 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -156,6 +156,8 @@ void free();
  * Special types and constants.
  */
 typedef off_t		POSITION;
+typedef off_t		LINENUM;
+#define MIN_LINENUM_WIDTH  7	/* Min printing width of a line number */
 
 #define	NULL_POSITION	((POSITION)(-1))
 
@@ -233,6 +235,7 @@ typedef union parg
 {
 	char *p_string;
 	int p_int;
+	LINENUM p_linenum;
 } PARG;
 
 #define	NULL_PARG	((PARG *)NULL)
@@ -411,3 +414,7 @@ struct textlist
 
 #include "funcs.h"
 
+/* Functions not included in funcs.h */
+void postoa();
+void linenumtoa();
+void inttoa();

@@ -1,7 +1,7 @@
-/*	$NetBSD: ch.c,v 1.6 2003/01/20 05:30:12 simonb Exp $	*/
+/*	$NetBSD: ch.c,v 1.7 2003/04/14 02:56:46 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -108,9 +108,10 @@ extern int logfile;
 extern char *namelogfile;
 #endif
 
-static int buffered __P((BLOCKNUM));
 static int ch_addbuf __P((void));
+static int buffered __P((BLOCKNUM));
 static void ch_delbufs __P((void));
+
 
 /*
  * Get the character pointed to by the read pointer.

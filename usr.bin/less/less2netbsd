@@ -1,8 +1,8 @@
 #! /bin/sh
 #
-#	$NetBSD: less2netbsd,v 1.5 2002/03/05 12:32:16 mrg Exp $
+#	$NetBSD: less2netbsd,v 1.6 2003/04/14 02:56:45 mrg Exp $
 #
-# Copyright (c) 1996 Matthew R. Green
+# Copyright (c) 1996, 2003 Matthew R. Green
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,9 @@
 # SUCH DAMAGE.
 
 # less2netbsd:  convert a less source tree into a netbsd less source
-# tree, under src/usr.bin/less ready for importing.
+# tree, under src/usr.bin/less ready for importing.  note that you need
+# to run ./configure to generate defines.h (a bug in less 381's configure
+# wrongly does not find sigset_t on NetBSD; correct this in defines.h.)
 
 if [ $# -ne 2 ]; then echo "less2netbsd src dest"; exit 1; fi
 
@@ -60,7 +62,9 @@ mkdir -p src/usr.bin/less/less src/usr.bin/less/lesskey src/usr.bin/less/lessech
 ### start less ###############################
 cd $r
 echo less:
-src='INSTALL LICENSE NEWS README acconfig.h brac.c ch.c charset.c cmd.h cmdbuf.c command.c decode.c defines.h edit.c filename.c forwback.c funcs.h help.c ifile.c input.c jump.c less.h less.nro lglob.h line.c linenum.c lsystem.c main.c mark.c optfunc.c option.c option.h opttbl.c os.c output.c pckeys.h position.c position.h prompt.c regexp.c regexp.h screen.c search.c signal.c tags.c ttyin.c version.c'
+src="main.c screen.c brac.c ch.c charset.c cmdbuf.c command.c decode.c edit.c filename.c forwback.c help.c ifile.c input.c jump.c line.c linenum.c lsystem.c mark.c optfunc.c option.c opttbl.c os.c output.c position.c prompt.c search.c signal.c tags.c ttyin.c version.c"
+src="$src cmd.h defines.h funcs.h less.h lesskey.h lglob.h option.h pckeys.h position.h regexp.h"
+src="$src INSTALL LICENSE NEWS README less.nro"
 
 pax -rvw $src $d/src/usr.bin/less/less
 

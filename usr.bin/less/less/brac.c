@@ -1,7 +1,7 @@
-/*	$NetBSD: brac.c,v 1.4 2001/07/26 13:43:43 mrg Exp $	*/
+/*	$NetBSD: brac.c,v 1.5 2003/04/14 02:56:46 mrg Exp $	*/
 
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
