@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.35 1994/07/03 09:22:37 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.36 1994/07/12 19:46:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1325,6 +1325,13 @@ nfs_link(ap)
 		return (EXDEV);
 	}
 
+	/*
+	 * Push all writes to the server, so that the attribute cache
+	 * doesn't get "out of sync" with the server.
+	 * XXX There should be a better way!
+	 */
+	VOP_FSYNC(tdvp, cnp->cn_cred, MNT_WAIT, cnp->cn_proc);
+
 	nfsstats.rpccnt[NFSPROC_LINK]++;
 	nfsm_reqhead(tdvp, NFSPROC_LINK,
 		NFSX_FH*2+NFSX_UNSIGNED+nfsm_rndup(cnp->cn_namelen));
@@ -1335,7 +1342,7 @@ nfs_link(ap)
 	nfsm_reqdone;
 	FREE(cnp->cn_pnbuf, M_NAMEI);
 	VTONFS(tdvp)->n_attrstamp = 0;
-	VTONFS(tdvp)->n_flag |= NMODIFIED;
+	VTONFS(vp)->n_flag |= NMODIFIED;
 	VTONFS(vp)->n_attrstamp = 0;
 	vrele(vp);
 	/*
