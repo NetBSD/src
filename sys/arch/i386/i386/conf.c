@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.120 2000/03/16 14:53:29 ad Exp $	*/
+/*	$NetBSD: conf.c,v 1.121 2000/04/14 14:44:49 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -219,6 +219,8 @@ cdev_decl(ugen);
 cdev_decl(ulpt);
 #include "ucom.h"
 cdev_decl(ucom);
+#include "urio.h"
+cdev_decl(urio);
 #include "vcoda.h"
 cdev_decl(vc_nb_);
 
@@ -386,6 +388,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lm78_init(NLM, lm),	/* 67: LM7[89] */
 	cdev_vmegen_init(NVMEGENERIC, vmegeneric), /* 68: generic VME access */
 	cdev_disk_init(NCA, ca),	/* 69: Compaq array */
+	cdev_usbdev_init(NURIO,urio),	/* 70: Diamond Rio 500 */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -497,6 +500,7 @@ static int chrtoblktbl[] = {
 	/* 67 */	NODEV,
 	/* 68 */	NODEV,
 	/* 69 */	19,
+	/* 70 */	NODEV,
 };
 
 /*
