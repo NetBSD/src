@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2003/09/14 06:36:59 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -7,9 +7,9 @@ SRCS=	BitEdit.c CutPaste.c Graphics.c ReqMach.c Bitmap.c Dialog.c Handlers.c
 
 MLINKS=	bitmap.1 bmtoa.1 bitmap.1 atobm.1
 
-INCS=	Dashes Down Excl FlipHoriz FlipVert Fold Left Right RotateLeft \
+FILES=	Dashes Down Excl FlipHoriz FlipVert Fold Left Right RotateLeft \
 	RotateRight Stipple Term Up
-INCSDIR=${X11INCDIR}/X11/bitmaps
+FILESDIR=${X11INCDIR}/X11/bitmaps
 
 APPDEFS=Bitmap.ad Bitmap-color.ad
 

@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2003/09/14 06:37:00 lukem Exp $
 
 .include <bsd.own.mk>
 
 .PATH:	${X11SRCDIR.xc}/include/bitmaps
 
-INCSDIR=${X11INCDIR}/X11/bitmaps
+FILESDIR=${X11INCDIR}/X11/bitmaps
 
-INCS=	1x1 2x2 black boxes calculator cntr_ptr cntr_ptrmsk cross_weave \
+FILES=	1x1 2x2 black boxes calculator cntr_ptr cntr_ptrmsk cross_weave \
 	dimple1 dimple3 dot dropbar7 dropbar8 escherknot flagdown flagup \
 	flipped_gray gray gray1 gray3 grid2 grid4 grid8 grid16 hlines2 \
 	hlines3 icon keyboard16 left_ptr left_ptrmsk letters light_gray \
