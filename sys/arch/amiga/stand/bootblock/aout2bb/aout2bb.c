@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2bb.c,v 1.10 2004/11/28 07:00:53 jmc Exp $	*/
+/*	$NetBSD: aout2bb.c,v 1.11 2005/01/27 11:00:46 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@
 
 #include <sys/mman.h>		/* of the machine we're running on */
 #include <sys/endian.h>		/* of the machine we're running on */
+
+#define BE32TOH(x)	do {(x) = be32toh(x);} while (0)
 
 #include <sys/exec_aout.h>	/* TARGET */
 
@@ -219,8 +221,8 @@ main(argc, argv)
 	for (rpi = (struct relocation_info_m68k *)(image+N_TRELOFF(*eh));
 	    (caddr_t)rpi < image+N_TRELOFF(*eh)+trsz; rpi++) {
 
-		ntohl(((u_int32_t *)rpi)[0]);
-		ntohl(((u_int32_t *)rpi)[1]);
+		BE32TOH(((u_int32_t *)rpi)[0]);
+		BE32TOH(((u_int32_t *)rpi)[1]);
 
 		dprintf(("0x%08x 0x%08x %c\n", *(u_int32_t *)rpi,
 		    ((u_int32_t *)rpi)[1], rpi->r_extern ? 'U' : ' '));
@@ -253,8 +255,8 @@ main(argc, argv)
 	for (rpi = (struct relocation_info_m68k *)(image+N_DRELOFF(*eh));
 	    (caddr_t)rpi < image+N_DRELOFF(*eh)+drsz; rpi++) {
 
-		ntohl(((u_int32_t *)rpi)[0]);
-		ntohl(((u_int32_t *)rpi)[1]);
+		BE32TOH(((u_int32_t *)rpi)[0]);
+		BE32TOH(((u_int32_t *)rpi)[1]);
 
 		dprintf(("0x%08x 0x%08x %c\n", *(u_int32_t *)rpi,
 		    ((u_int32_t *)rpi)[1], rpi->r_extern ? 'U' : ' '));
