@@ -1,4 +1,4 @@
-.\"	$NetBSD: strsuftoll.3,v 1.1 2002/11/29 12:58:17 lukem Exp $
+.\"	$NetBSD: strsuftoll.3,v 1.2 2002/11/29 19:19:39 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Sh NAME
 .Nm strsuftoll ,
 .Nm strsuftollx
-.Nd "convert a string to an long long, with suffix parsing"
+.Nd "convert a string to a long long, with suffix parsing"
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -82,7 +82,7 @@ Word; multiply by the number of bytes in an integer
 .Pp
 In the case of an error (range overflow or an invalid number),
 .Fn strsuftollx
-places a error message into
+places an error message into
 .Fa errbuf
 (which is
 .Fa errbuflen
