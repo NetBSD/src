@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.32 1997/10/19 07:41:46 augustss Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.33 1997/10/19 20:34:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -603,14 +603,14 @@ amd7930_set_port(addr, cp)
 		    sc->sc_mlevel = cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
 		    break;
 	    case SUNAUDIO_SOURCE:
-		    if (cp->un.e.ord != SUNAUDIO_MIC_PORT)
+		    if (cp->un.ord != SUNAUDIO_MIC_PORT)
 			    return EINVAL;
 		    break;
 	    case SUNAUDIO_OUTPUT:
-		    if (cp->un.e.ord != SUNAUDIO_SPEAKER &&
-			cp->un.e.ord != SUNAUDIO_HEADPHONES)
+		    if (cp->un.ord != SUNAUDIO_SPEAKER &&
+			cp->un.ord != SUNAUDIO_HEADPHONES)
 			    return EINVAL;
-			sc->sc_out_port = cp->un.e.ord;
+			sc->sc_out_port = cp->un.ord;
 		    break;
 	    default:
 		    return(EINVAL);
@@ -643,10 +643,10 @@ amd7930_get_port(addr, cp)
 		    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_mlevel;
 		    break;
 	    case SUNAUDIO_SOURCE:
-		    cp->un.e.ord = SUNAUDIO_MIC_PORT;
+		    cp->un.ord = SUNAUDIO_MIC_PORT;
 		    break;
 	    case SUNAUDIO_OUTPUT:
-		    cp->un.e.ord = sc->sc_out_port;
+		    cp->un.ord = sc->sc_out_port;
 		    break;
 	    default:
 		    return(EINVAL);
@@ -689,14 +689,6 @@ amd7930_query_devinfo(addr, dip)
 		    dip->mixer_class = SUNAUDIO_OUTPUT_CLASS;
 		    dip->prev = dip->next = AUDIO_MIXER_LAST;
 		    strcpy(dip->label.name, AudioNheadphone);
-		    dip->un.v.num_channels = 1;
-		    strcpy(dip->un.v.units.name, AudioNvolume);
-		    break;
-	    case SUNAUDIO_MONITOR:
-		    dip->type = AUDIO_MIXER_VALUE;
-		    dip->mixer_class = SUNAUDIO_OUTPUT_CLASS;
-		    dip->next = dip->prev = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioNmonitor);
 		    dip->un.v.num_channels = 1;
 		    strcpy(dip->un.v.units.name, AudioNvolume);
 		    break;
