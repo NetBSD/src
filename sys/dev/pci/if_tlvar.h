@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.4 2000/03/23 07:01:39 thorpej Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.5 2001/08/03 16:53:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -45,24 +45,24 @@ struct tl_softc {
 	struct device sc_dev;		/* base device */
 	bus_space_tag_t tl_bustag;
 	bus_space_handle_t tl_bushandle; /* CSR region handle */
+	bus_dma_tag_t tl_dmatag;
 	const struct tl_product_desc *tl_product;
 	void* tl_ih;
 	struct ethercom tl_ec;
 	struct callout tl_tick_ch;	/* tick callout */
 	struct callout tl_restart_ch;	/* restart callout */
 	u_int8_t tl_enaddr[ETHER_ADDR_LEN];	/* hardware adress */
-	u_int16_t tl_flags;
-#define TL_IFACT 0x0001 /* chip has interface activity */
-	u_int8_t tl_lasttx; /* we were without input this many seconds */
 	i2c_adapter_t i2cbus;		/* i2c bus, for eeprom */
 	mii_data_t tl_mii;		/* mii bus */
 	struct Rx_list *Rx_list;	/* Receive and transmit lists */
+	struct tl_Rx_list *hw_Rx_list;	/* and assocoated hw descriptor */
+	bus_dmamap_t Rx_dmamap;		/* and associated DMA maps */
 	struct Tx_list *Tx_list;
+	struct tl_Tx_list *hw_Tx_list;
+	bus_dmamap_t Tx_dmamap;
 	struct Rx_list *active_Rx, *last_Rx;
 	struct Tx_list *active_Tx, *last_Tx;
 	struct Tx_list *Free_Tx;
-	int opkt;		/* used to detect link up/down for AUI/BNC */
-	int stats_exesscoll;	/* idem */
 #ifdef TL_PRIV_STATS
 	int ierr_overr;
 	int ierr_code;
