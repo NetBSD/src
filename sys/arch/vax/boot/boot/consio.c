@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.10 2000/07/10 10:38:23 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.11 2000/07/19 00:58:24 matt Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,6 +40,7 @@
 #include "mtpr.h"
 #include "sid.h"
 #include "rpb.h"
+#include "ka630.h"
 
 #include "data.h"
 
@@ -57,32 +58,24 @@ void rom_putchar __P((int c));	/* putchar() using ROM routines */
 int rom_getchar __P((void));
 int rom_testchar __P((void));
 
-static int rom_putc;		/* ROM-address of put-routine */
-static int rom_getc;		/* ROM-address of get-routine */
+int rom_putc;		/* ROM-address of put-routine */
+int rom_getc;		/* ROM-address of get-routine */
 
-/* Location of address of KA630 console page */
-#define NVR_ADRS	0x200B8024
-/* Definitions for various locations in the KA630 console page */
-#define KA630_PUTC_POLL 0x20
-#define KA630_PUTC	0x24
-#define KA630_GETC	0x1C
-#define KA630_ROW	0x4C
-#define KA630_MINROW	0x4D
-#define KA630_MAXROW	0x4E
-#define KA630_COL	0x50
-#define KA630_MINCOL	0x51
-#define KA630_MAXCOL	0x52
 /* Pointer to KA630 console page, initialized by ka630_consinit */
 unsigned char  *ka630_conspage; 
+
 /* Function that initializes things for KA630 ROM console I/O */
 void ka630_consinit __P((void));
+
 /* Functions that use KA630 ROM for console I/O */
 void ka630_rom_putchar __P((int c));
 int ka630_rom_getchar __P((void));
 int ka630_rom_testchar __P((void));
+
 /* Also added such a thing for KA53 - MK-991208 */
 unsigned char  *ka53_conspage;
 void ka53_consinit(void);
+
 void ka53_rom_putchar(int c);
 int ka53_rom_getchar(void);
 int ka53_rom_testchar(void);
@@ -102,7 +95,7 @@ putchar(int c)
 }
 
 int
-getchar() 
+getchar(void) 
 {
 	int c;
 
@@ -115,7 +108,7 @@ getchar()
 }
 
 int
-testkey()
+testkey(void)
 {
 	return (*test_fp)();
 }
@@ -125,7 +118,7 @@ testkey()
  * initializes data which are globally used and is called before main().
  */
 void 
-consinit()
+consinit(void)
 {
 	put_fp = pr_putchar; /* Default */
 	get_fp = pr_getchar;
@@ -224,7 +217,7 @@ pr_putchar(int c)
  * getchar() using MFPR
  */
 int
-pr_getchar()
+pr_getchar(void)
 {
 	while ((mfpr(PR_RXCS) & GC_DON) == 0)
 		;	/* wait for char */
@@ -232,68 +225,24 @@ pr_getchar()
 }
 
 int
-pr_testchar()
+pr_testchar(void)
 {
 	if (mfpr(PR_RXCS) & GC_DON)
 		return mfpr(PR_RXDB);
 	else
 		return 0;
 }
-/*
- * int rom_putchar (int c)	==> putchar() using ROM-routines
- */
-asm("
-	.globl _rom_putchar
-	_rom_putchar:
-		.word 0x04		# save-mask: R2
-		movl	4(ap), r2	# move argument to R2
-		jsb	*_rom_putc	# write it
-		ret			# that's all
-");
-
-
-/*
- * int rom_getchar (void)	==> getchar() using ROM-routines
- */
-asm("
-	.globl _rom_getchar
-	_rom_getchar:
-		.word 0x02		# save-mask: R1
-	loop:				# do {
-		jsb	*_rom_getc	#   call the getc-routine
-		tstl	r0		#   check if char ready
-		beql	loop		# } while (R0 == 0)
-		movl	r1, r0		# R1 holds char
-		ret			# we're done
-
-	_rom_testchar:
-		.word	0
-		mnegl	$1,r0
-		jsb	*_rom_getc
-		tstl	r0
-		beql	1f
-		movl	r1,r0
-	1:	ret
-");
-
-void
-_rtt()
-{
-	asm("halt");
-}
-
-
 
 /*
  * void ka630_rom_getchar (void)  ==> initialize KA630 ROM console I/O
  */
-void ka630_consinit()
+void ka630_consinit(void)
 {
-	register short *NVR;
-	register int i;
+	short *NVR;
+	int i;
 
 	/* Find the console page */
-	NVR = (short *) NVR_ADRS;
+	NVR = (short *) KA630_NVR_ADRS;
    
 	i = *NVR++ & 0xFF;
 	i |= (*NVR++ & 0xFF) << 8;
@@ -314,48 +263,9 @@ void ka630_consinit()
 	
 
 /*
- * int ka630_rom_getchar (void) ==> getchar() using ROM-routines on KA630
- */
-asm("
-	.globl _ka630_rom_getchar
-	_ka630_rom_getchar:
-		.word 0x802		# save-mask: R1, R11
-		movl	_ka630_conspage,r11  # load location of console page
-	loop630g:			# do {
-		jsb	*0x1C(r11)	#   call the getc-routine (KA630_GETC)
-		blbc	r0, loop630g	# } while (R0 == 0)
-		movl	r1, r0		# R1 holds char
-		ret			# we're done
-
-	_ka630_rom_testchar:
-		.word	0
-		movl	_ka630_conspage,r3
-		jsb	*0x1C(r3)
-		blbc	r0,1f
-		movl	r1,r0
-	1:	ret
-");
-
-/*
- * int ka630_rom_putchar (int c) ==> putchar() using ROM-routines on KA630
- */
-asm("
-	.globl _ka630_rom_putchar
-	_ka630_rom_putchar:
-		.word 0x802		# save-mask: R1, R11
-		movl	_ka630_conspage,r11  # load location of console page
-	loop630p:			# do {
-		jsb	*0x20(r11)	#   is rom ready? (KA630_PUTC_POLL)
-		blbc	r0, loop630p	# } while (R0 == 0)
-		movl	4(ap), r1	# R1 holds char
-		jsb	*0x24(r11)	# output character (KA630_PUTC)
-		ret			# we're done
-");
-
-/*
  * void ka53_consinit (void)  ==> initialize KA53 ROM console I/O
  */
-void ka53_consinit()
+void ka53_consinit(void)
 {
 	ka53_conspage = (char *) 0x2014044b;
 
@@ -363,44 +273,3 @@ void ka53_consinit()
 	get_fp = ka53_rom_getchar;
 	test_fp = ka53_rom_testchar;
 }
-
-
-/*
- * int ka53_rom_getchar (void)	==> getchar() using ROM-routines on KA53
- */
-asm("
-	.globl _ka53_rom_getchar
-	_ka53_rom_getchar:
-		.word 0x802		# save-mask: R1, R11
-		movl	_ka53_conspage,r11	# load location of console page
-	loop53g:			# do {
-		jsb	*0x64(r11)	#   test for char
-		blbc	r0, loop53g	# } while (R0 == 0)
-		jsb	*0x6c(r11)	# get the char
-		ret			# we're done
-
-	_ka53_rom_testchar:
-		.word	0
-		movl	_ka53_conspage,r3
-		jsb	*0x64(r3)
-		blbc	r0,1f
-		jsb	*0x6c(r3)	# get the char
-	1:	ret
-");
-
-/*
- * int ka53_rom_putchar (int c) ==> putchar() using ROM-routines on KA53
- */
-asm("
-	.globl _ka53_rom_putchar
-	_ka53_rom_putchar:
-		.word 0x802		# save-mask: R1, R11
-		movl	_ka53_conspage,r11	# load location of console page
-	loop53p:			# do {
-		jsb	*0x20(r11)	#   is rom ready?
-		blbc	r0, loop53p	# } while (R0 == 0)
-		movl	4(ap), r1	# R1 holds char
-		jsb	*0x24(r11)	# output character
-		ret			# we're done
-");
-

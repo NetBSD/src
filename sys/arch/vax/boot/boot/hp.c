@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.4 2000/06/04 20:04:21 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.5 2000/07/19 00:58:25 matt Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -77,7 +77,8 @@ int
 hpopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
 	char *msg;
-	int i, err;
+	int err;
+	size_t i;
 
 	if (askname == 0) { /* Take info from RPB */
 		adpadr = bootrpb.adpphy;
