@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoectl.8,v 1.15 2002/10/01 13:40:49 wiz Exp $
+.\"	$NetBSD: pppoectl.8,v 1.16 2002/12/19 11:57:32 lukem Exp $
 .\"
 .\" Copyright (C) 1997 by Joerg Wunsch, Dresden
 .\" All rights reserved.
@@ -26,19 +26,25 @@
 .\"
 .\" From: spppcontrol.1,v 1.1.1.1 1997/10/11 11:30:30 joerg Exp
 .\"
-.\" $Id: pppoectl.8,v 1.15 2002/10/01 13:40:49 wiz Exp $
+.\" $Id: pppoectl.8,v 1.16 2002/12/19 11:57:32 lukem Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
-.Dd December 11, 2001
+.Dd December 19, 2002
 .Os
 .Dt PPPOECTL 8
 .Sh NAME
 .Nm pppoectl ,
-.Nm ipppcontrol
+.Nm ipppctl
 .Nd "display or set parameters for an pppoe or isdn ppp (ippp) interface"
 .Sh SYNOPSIS
-.Nm
+.Nm pppoectl
+.Op Fl v
+.Ar ifname
+.Op Ar parameter Ns Op \&= Ns Ar value
+.Op Ar ...
+.Pp
+.Nm ipppctl
 .Op Fl v
 .Ar ifname
 .Op Ar parameter Ns Op \&= Ns Ar value
