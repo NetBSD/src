@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.3 1998/07/04 22:18:20 jonathan Exp $       */
+/*      $NetBSD: pccons.c,v 1.4 1998/07/06 00:42:37 mark Exp $       */
 
 /*
  * Copyright 1997
@@ -101,6 +101,7 @@
 **--
 */
 #include "opt_ddb.h"
+#include "opt_xserver.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
