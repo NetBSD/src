@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.9 1998/08/13 02:11:01 eeh Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.10 1998/10/11 23:16:20 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -134,7 +134,7 @@ uvm_loanentry(ufi, output, flags)
 	void ***output;
 	int flags;
 {
-	vaddr_t curaddr = ufi->rvaddr;
+	vaddr_t curaddr = ufi->orig_rvaddr;
 	vsize_t togo = ufi->size;
 	struct vm_aref *aref = &ufi->entry->aref;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
@@ -479,7 +479,7 @@ uvm_loanuobj(ufi, output, flags, va)
 			
 		if ((pg->flags & PG_RELEASED) != 0 ||
 		    (locked && amap && amap_lookup(&ufi->entry->aref,
-		    ufi->rvaddr - ufi->entry->start))) {
+		    ufi->orig_rvaddr - ufi->entry->start))) {
 			
 			if (locked)
 				uvmfault_unlockall(ufi, amap, NULL, NULL);
