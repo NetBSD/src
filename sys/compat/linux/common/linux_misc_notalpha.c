@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.62 2002/03/16 20:43:53 christos Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.63 2002/04/03 14:28:36 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.62 2002/03/16 20:43:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.63 2002/04/03 14:28:36 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,7 +391,7 @@ linux_sys_getresgid(p, v, retval)
 			     sizeof(gid_t))) != 0)
 		return (error);
 
-	if ((error = copyout(&pc->pc_ucred->cr_uid, SCARG(uap, egid),
+	if ((error = copyout(&pc->pc_ucred->cr_gid, SCARG(uap, egid),
 			     sizeof(gid_t))) != 0)
 		return (error);
 
