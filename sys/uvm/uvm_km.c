@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.53 2001/11/06 08:07:50 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.54 2001/11/07 08:43:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -308,10 +308,12 @@ uvm_km_pgremove(uobj, start, end)
 	}
 	simple_unlock(&uobj->vmobjlock);
 
-	simple_lock(&uvm.swap_data_lock);
-	KASSERT(uvmexp.swpgonly >= swpgonlydelta);
-	uvmexp.swpgonly -= swpgonlydelta;
-	simple_unlock(&uvm.swap_data_lock);
+	if (swpgonlydelta > 0) {
+		simple_lock(&uvm.swap_data_lock);
+		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
+		uvmexp.swpgonly -= swpgonlydelta;
+		simple_unlock(&uvm.swap_data_lock);
+	}
 }
 
 
