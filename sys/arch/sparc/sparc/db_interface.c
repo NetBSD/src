@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.2 1994/11/20 20:54:12 deraadt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.3 1994/11/25 23:56:21 deraadt Exp $ */
 
 /* 
  * Mach Operating System
@@ -39,8 +39,8 @@
 
 #include <vm/vm.h>
 
-#include <ddb/db_command.h>
 #include <machine/db_machdep.h>
+#include <ddb/db_command.h>
 #include <machine/bsd_openprom.h>
 
 extern jmp_buf	*db_recover;
@@ -53,7 +53,7 @@ extern char *trap_type[];
  * Received keyboard interrupt sequence.
  */
 kdb_kbd_trap(regs)
-	struct i386_saved_state *regs;
+	struct sparc_saved_state *regs;
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
 		printf("\n\nkernel: keyboard interrupt\n");
