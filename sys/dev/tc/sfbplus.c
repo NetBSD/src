@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.16 2002/08/19 13:05:43 itohy Exp $ */
+/* $NetBSD: sfbplus.c,v 1.17 2002/10/01 01:12:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.16 2002/08/19 13:05:43 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.17 2002/10/01 01:12:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,9 +126,8 @@ struct sfbp_softc {
 static int  sfbpmatch __P((struct device *, struct cfdata *, void *));
 static void sfbpattach __P((struct device *, struct device *, void *));
 
-const struct cfattach sfbp_ca = {
-	sizeof(struct sfbp_softc), sfbpmatch, sfbpattach,
-};
+CFATTACH_DECL(sfbp, sizeof(struct sfbp_softc),
+    sfbpmatch, sfbpattach, NULL, NULL)
 
 static void sfbp_common_init __P((struct rasops_info *));
 static struct rasops_info sfbp_console_ri;
