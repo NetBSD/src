@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.23 1998/10/10 00:28:35 thorpej Exp $	*/
+/*	$NetBSD: afsc.c,v 1.24 1998/11/19 21:44:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -58,12 +58,6 @@ int afsc_dmaintr __P((void *));
 #ifdef DEBUG
 void afsc_dump __P((void));
 #endif
-
-struct scsipi_adapter afsc_scsiswitch = {
-	siop_scsicmd,
-	siop_minphys,
-	NULL,		/* scsipi_ioctl */
-};
 
 struct scsipi_device afsc_scsidev = {
 	NULL,		/* use default error handler */
@@ -145,10 +139,13 @@ afscattach(pdp, dp, auxp)
 	sc->sc_ctest7 = SIOP_CTEST7_CDIS;
 	sc->sc_dcntl = SIOP_DCNTL_EA;
 
+	sc->sc_adapter.scsipi_cmd = siop_scsicmd;
+	sc->sc_adapter.scsipi_minphys = siop_minphys;
+
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &afsc_scsiswitch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &afsc_scsidev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.3 1998/10/10 00:28:39 thorpej Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.4 1998/11/19 21:49:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -77,12 +77,6 @@ int	espmatch_obio	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach esp_obio_ca = {
 	sizeof(struct esp_softc), espmatch_obio, espattach_obio
-};
-
-static struct scsipi_adapter esp_obio_switch = {
-	ncr53c9x_scsi_cmd,
-	minphys,		/* no max at this level; handled by DMA code */
-	NULL,			/* scsipi_ioctl */
 };
 
 static struct scsipi_device esp_obio_dev = {
@@ -281,7 +275,9 @@ espattach_obio(parent, self, aux)
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, &esp_obio_switch, &esp_obio_dev);
+	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = minphys; 
+	ncr53c9x_attach(sc, &esp_obio_dev);
 
 	/* Turn on target selection using the `dma' method */
 	ncr53c9x_dmaselect = 1;

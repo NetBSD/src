@@ -1,4 +1,4 @@
-/* $NetBSD: sfasvar.h,v 1.5 1997/08/27 11:23:37 bouyer Exp $ */
+/* $NetBSD: sfasvar.h,v 1.6 1998/11/19 21:45:00 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -156,6 +156,7 @@ struct nexus {
 struct	sfas_softc {
 	struct	device		 sc_dev;	/* System required struct */
 	struct	scsipi_link	 sc_link;	/* For sub devices */
+	struct	scsipi_adapter	 sc_adapter;
 	irqhandler_t		 sc_ih;		/* Interrupt chain struct */
 
 	TAILQ_HEAD(,sfas_pending) sc_xs_pending;

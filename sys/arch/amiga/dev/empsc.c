@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.16 1998/10/10 00:28:36 thorpej Exp $	*/
+/*	$NetBSD: empsc.c,v 1.17 1998/11/19 21:44:35 thorpej Exp $	*/
 
 /*
 
@@ -53,12 +53,6 @@
 void empscattach __P((struct device *, struct device *, void *));
 int empscmatch __P((struct device *, struct cfdata *, void *));
 int empsc_intr __P((void *));
-
-struct scsipi_adapter empsc_scsiswitch = {
-	sci_scsicmd,
-	sci_minphys,
-	NULL,		/* scsipi_ioctl */
-};
 
 struct scsipi_device empsc_scsidev = {
 	NULL,		/* use default error handler */
@@ -135,10 +129,13 @@ empscattach(pdp, dp, auxp)
 
 	scireset(sc);
 
+	sc->sc_adapter.scsipi_cmd = sci_scsicmd;
+	sc->sc_adapter.scsipi_minphys = sci_minphys;
+
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &empsc_scsiswitch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &empsc_scsidev;
 	sc->sc_link.openings = 1;
 	sc->sc_link.scsipi_scsi.max_target = 7;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.27 1998/08/15 10:51:18 mycroft Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.28 1998/11/19 21:53:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -149,9 +149,8 @@ const char *ncr53c9x_variant_names[] = {
  * Attach this instance, and then all the sub-devices
  */
 void
-ncr53c9x_attach(sc, adapter, dev)
+ncr53c9x_attach(sc, dev)
 	struct ncr53c9x_softc *sc;
-	struct scsipi_adapter *adapter;
 	struct scsipi_device *dev;
 {
 
@@ -217,7 +216,7 @@ ncr53c9x_attach(sc, adapter, dev)
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_id;
-	sc->sc_link.adapter = adapter;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;

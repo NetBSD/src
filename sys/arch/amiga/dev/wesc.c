@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.22 1998/10/10 00:28:37 thorpej Exp $	*/
+/*	$NetBSD: wesc.c,v 1.23 1998/11/19 21:44:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -58,12 +58,6 @@ int wesc_dmaintr __P((void *));
 void wesc_dump __P((void));
 #endif
 
-struct scsipi_adapter wesc_scsiswitch = {
-	siop_scsicmd,
-	siop_minphys,
-	NULL,		/* scsipi_ioctl */
-};
-
 struct scsipi_device wesc_scsidev = {
 	NULL,		/* use default error handler */
 	NULL,		/* do not have a start functio */
@@ -119,10 +113,13 @@ wescattach(pdp, dp, auxp)
 	sc->sc_ctest7 = SIOP_CTEST7_SC0 | SIOP_CTEST7_TT1;
 	sc->sc_dcntl = 0x00;
 
+	sc->sc_adapter.scsipi_cmd = siop_scsicmd;
+	sc->sc_adapter.scsipi_minphys = siop_minphys;
+
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &wesc_scsiswitch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &wesc_scsidev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;

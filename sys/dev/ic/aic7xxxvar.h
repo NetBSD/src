@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.17 1998/06/22 20:02:54 sommerfe Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.18 1998/11/19 21:53:00 thorpej Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -269,6 +269,7 @@ struct ahc_data {
 #ifdef __NetBSD__
 	struct	scsipi_link sc_link;
 	struct	scsipi_link sc_link_b;	/* Second bus for Twin channel cards */
+	struct	scsipi_adapter sc_adapter;
 #else
 	struct	scsi_link sc_link;
 	struct	scsi_link sc_link_b;	/* Second bus for Twin channel cards */

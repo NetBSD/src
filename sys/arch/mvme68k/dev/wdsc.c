@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.12 1998/10/10 00:28:31 thorpej Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.13 1998/11/19 21:47:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -64,12 +64,6 @@ void    wdsc_dmastop    __P((struct sbic_softc *));
 int     wdsc_dmaintr    __P((void *));
 int     wdsc_scsiintr   __P((void *));
 
-struct scsipi_adapter wdsc_scsiswitch = {
-    sbic_scsicmd,
-    sbic_minphys,
-    NULL,	/* scsipi_ioctl */
-};
-
 struct scsipi_device wdsc_scsidev = {
     NULL,       /* use default error handler */
     NULL,       /* do not have a start functio */
@@ -132,10 +126,13 @@ wdsc_pcc_attach(pdp, dp, auxp)
     sc->sc_dmastop = wdsc_dmastop;
     sc->sc_dmacmd  = 0;
 
+    sc->sc_adapter.scsipi_cmd = sbic_scsicmd;
+    sc->sc_adapter.scsipi_minphys = sbic_minphys;
+
     sc->sc_link.scsipi_scsi.channel        = SCSI_CHANNEL_ONLY_ONE;
     sc->sc_link.adapter_softc  = sc;
     sc->sc_link.scsipi_scsi.adapter_target = 7;
-    sc->sc_link.adapter        = &wdsc_scsiswitch;
+    sc->sc_link.adapter        = &sc->sc_adapter;
     sc->sc_link.device         = &wdsc_scsidev;
     sc->sc_link.openings       = 2;
     sc->sc_link.scsipi_scsi.max_target     = 7;

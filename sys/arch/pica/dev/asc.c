@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.14 1998/10/10 00:28:32 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.15 1998/11/19 21:48:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -427,6 +427,7 @@ struct asc_softc {
 	int		timeout_250;	/* 250ms timeout */
 	int		tb_ticks;	/* 4ns. ticks/tb channel ticks */
 	struct scsipi_link sc_link;	/* scsi link struct */
+	struct scsipi_adapter sc_adapter;
 };
 
 #define	ASC_STATE_IDLE		0	/* idle state */
@@ -453,12 +454,6 @@ struct cfattach asc_ca = {
  */
 int asc_scsi_cmd __P((struct scsipi_xfer *));
 void asc_minphys __P((struct buf *));
-
-struct scsipi_adapter asc_switch = {
-	asc_scsi_cmd,
-/*XXX*/	asc_minphys,	/* no max transfer size, DMA driver negotiates */
-	NULL,		/* scsipi_ioctl */
-};
 
 struct scsipi_device asc_dev = {
 /*XXX*/	NULL,		/* Use default error handler */
@@ -584,12 +579,18 @@ ascattach(parent, self, aux)
 	printf(": NCR53C94, target %d\n", id);
 
 	/*
+	 * Fill in the adapter.
+	 */
+	asc->sc_adapter.scsipi_cmd = asc_scsi_cmd;
+	asc->sc_adapter.scsipi_minphys = asc_minphys;
+
+	/*
 	 * Fill in the prototype scsipi link.
 	 */
 	asc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	asc->sc_link.adapter_softc = asc;
 	asc->sc_link.scsipi_scsi.adapter_target = asc->sc_id;
-	asc->sc_link.adapter = &asc_switch;
+	asc->sc_link.adapter = &asc->sc_adapter;
 	asc->sc_link.device = &asc_dev;
 	asc->sc_link.openings = 2;
 	asc->sc_link.scsipi_scsi.max_target = 7;

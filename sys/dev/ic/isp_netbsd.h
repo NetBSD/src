@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.4 1998/09/17 22:50:53 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.5 1998/11/19 21:53:00 thorpej Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  *
@@ -68,6 +68,7 @@
 struct isposinfo {
 	struct device		_dev;
 	struct scsipi_link	_link;
+	struct scsipi_adapter	_adapter;
 };
 #define	MAXISPREQUEST	256
 

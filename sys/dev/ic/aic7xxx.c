@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.31 1998/10/10 00:28:33 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.32 1998/11/19 21:52:59 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -218,20 +218,18 @@ static inline void unpause_sequencer __P((struct ahc_data *ahc,
 					  int unpause_always));
 static inline void restart_sequencer __P((struct ahc_data *ahc));
 
+#if !defined(__NetBSD__)
 static struct scsipi_adapter ahc_switch =
 {
         ahc_scsi_cmd,
         ahcminphys,
-#if defined(__NetBSD__)
-	NULL,			/* scsipi_ioctl */
-#elif defined(__FreeBSD__)
         0,
         0,
         0,
         "ahc",
         { 0, 0 }
-#endif
 };
+#endif
 
 /* the below structure is so we have a default dev struct for our link struct */
 static struct scsipi_device ahc_dev =
@@ -659,6 +657,15 @@ ahc_attach(ahc)
 	if (cpu_class == CPUCLASS_386)	/* doesn't have "wbinvd" instruction */
 		ahc_broken_cache = 0;
 #endif
+
+#if defined(__NetBSD__)
+	/*
+	 * Fill in the adapter.
+	 */
+	ahc->sc_adapter.scsipi_cmd = ahc_scsi_cmd;
+	ahc->sc_adapter.scsipi_minphys = ahcminphys;
+#endif
+
 	/*
 	 * fill in the prototype scsi_links.
 	 */
@@ -676,7 +683,11 @@ ahc_attach(ahc)
 	ahc->sc_link.scsipi_scsi.max_target = (ahc->type & AHC_WIDE) ? 15 : 7;
 #endif
 	ahc->sc_link.adapter_softc = ahc;
+#if defined(__NetBSD__)
+	ahc->sc_link.adapter = &ahc->sc_adapter;
+#else
 	ahc->sc_link.adapter = &ahc_switch;
+#endif
 	ahc->sc_link.opennings = 2;
 	ahc->sc_link.device = &ahc_dev;
 #ifndef __NetBSD__

@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.26 1998/10/10 00:28:35 thorpej Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.27 1998/11/19 21:44:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -64,12 +64,6 @@ int atzsc_dmago __P((struct sbic_softc *, char *, int, int));
 #ifdef DEBUG
 void atzsc_dump __P((void));
 #endif
-
-struct scsipi_adapter atzsc_scsiswitch = {
-	sbic_scsicmd,
-	sbic_minphys,
-	NULL,		/* scsipi_ioctl */
-};
 
 struct scsipi_device atzsc_scsidev = {
 	NULL,		/* use default error handler */
@@ -160,10 +154,13 @@ atzscattach(pdp, dp, auxp)
 	
 	printf(": dmamask 0x%lx\n", ~sc->sc_dmamask);
 
+	sc->sc_adapter.scsipi_cmd = sbic_scsicmd;
+	sc->sc_adapter.scsipi_minphys = sbic_minphys;
+
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &atzsc_scsiswitch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &atzsc_scsidev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
