@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.13 2001/01/04 00:57:14 lukem Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.14 2001/02/04 20:08:24 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.13 2001/01/04 00:57:14 lukem Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.14 2001/02/04 20:08:24 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -63,6 +63,7 @@ int	nbsdtype(int);
 u_int32_t getlong(void *p);
 
 struct disklabel label;
+extern char *__progname;
 
 void
 getlabel(int sd)
@@ -250,9 +251,7 @@ getparts(int sd, int np, u_int32_t off, u_int32_t extoff, int verbose)
 void
 usage(void)
 {
-	extern char *__progname;
-
-	fprintf(stderr, "usage: %s [-fqrw] rawdisk\n", __progname);
+	fprintf(stderr, "Usage: %s [-fqrw] rawdisk\n", __progname);
 	exit(1);
 }
 
