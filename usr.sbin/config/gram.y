@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.12.2.1 1997/01/14 21:28:56 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.12.2.2 1997/01/14 23:25:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -364,7 +364,6 @@ fs_spec:
 
 sysparam_list:
 	sysparam_list sysparam |
-	sysparam |
 	/* empty */;
 
 sysparam:
