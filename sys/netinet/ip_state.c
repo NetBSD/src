@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.42 2002/09/19 08:12:54 martti Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.43 2004/02/24 15:22:01 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995-2002 by Darren Reed.
@@ -96,7 +96,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.42 2002/09/19 08:12:54 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.43 2004/02/24 15:22:01 wiz Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.74 2002/07/27 15:58:10 darrenr Exp";
@@ -952,7 +952,7 @@ tcphdr_t *tcp;
 		 * total packet in advance.
 		 * We do know the total length from the fragment cache though.
 		 * Note however that there might be more sessions with
-		 * exactly the same source and destination paramters in the
+		 * exactly the same source and destination parameters in the
 		 * state cache (and source and destination is the only stuff
 		 * that is saved in the fragment cache). Note further that
 		 * some TCP connections in the state cache are hashed with

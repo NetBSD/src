@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.8 2003/11/09 22:11:12 christos Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.9 2004/02/24 15:22:01 wiz Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.11 2002/10/04 14:24:09 kjc Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.8 2003/11/09 22:11:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.9 2004/02/24 15:22:01 wiz Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -193,7 +193,7 @@ cbq_modify_class(acp)
  *		struct rm_class *borrow)
  *
  * This function create a new traffic class in the CBQ class hierarchy of
- * given paramters.  The class that created is either the root, default,
+ * given parameters.  The class that created is either the root, default,
  * or a new dynamic class.  If CBQ is not initilaized, the the root class
  * will be created.
  */

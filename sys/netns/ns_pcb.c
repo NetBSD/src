@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.19 2003/08/07 16:33:46 agc Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.20 2004/02/24 15:22:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.19 2003/08/07 16:33:46 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.20 2004/02/24 15:22:01 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ ns_setpeeraddr(nsp, nam)
  * Pass some notification to all connections of a protocol
  * associated with address dst.  Call the
  * protocol specific routine to handle each connection.
- * Also pass an extra paramter via the nspcb. (which may in fact
+ * Also pass an extra parameter via the nspcb. (which may in fact
  * be a parameter list!)
  */
 void

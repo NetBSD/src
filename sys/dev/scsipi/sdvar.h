@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.20 2003/09/18 00:06:40 mycroft Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.21 2004/02/24 15:22:01 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ struct sd_softc {
 #endif
 };
 
-#define	SDGP_RESULT_OK		0	/* paramters obtained */
+#define	SDGP_RESULT_OK		0	/* parameters obtained */
 #define	SDGP_RESULT_OFFLINE	1	/* no media, or otherwise losing */
 #define	SDGP_RESULT_UNFORMATTED	2	/* unformatted media (max params) */
 

@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.17 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.18 2004/02/24 15:22:01 wiz Exp $");
 
 /*
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
@@ -782,7 +782,7 @@ daic_assign(
 	struct daic_softc *sc,	/* our state and port no */
 	int port,
 	u_int classid,		/* Diehl calls this "global instance id" */
-	bus_size_t parmsize, 	/* sizeof paramter arra */
+	bus_size_t parmsize, 	/* sizeof parameter arra */
 	const u_int8_t *parms)	/* task instance parameters */
 {
 	static char wchan[] = "daic assign";
