@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.3 1996/08/26 23:41:22 mrg Exp $
+#	$NetBSD: ALL,v 1.4 1996/09/10 22:48:05 thorpej Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -42,6 +42,7 @@ options 	COMPAT_09		# compatibility with NetBSD 0.9
 options 	COMPAT_10		# compatibility with NetBSD 1.0
 options 	COMPAT_11		# compatibility with NetBSD 1.1
 options		COMPAT_12
+options 	COMPAT_M68K4K		# NetBSD/m68k4k binaries
 options 	TCP_COMPAT_42		# compatibility with 4.2BSD TCP/IP
 
 # file system options
