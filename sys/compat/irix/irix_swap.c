@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_swap.c,v 1.2 2002/03/16 20:43:52 christos Exp $ */
+/*	$NetBSD: irix_swap.c,v 1.3 2002/03/18 17:21:24 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.2 2002/03/16 20:43:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.3 2002/03/18 17:21:24 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h> 
@@ -48,6 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.2 2002/03/16 20:43:52 christos Exp $
 #include <sys/systm.h>
 #include <sys/swap.h>
 #include <sys/syscallargs.h>
+
+#include <uvm/uvm_page.h>
+#include <uvm/uvm_swap.h>
 
 #include <compat/common/compat_util.h>
 
@@ -67,7 +70,6 @@ irix_sys_swapctl(p, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
 	struct sys_swapctl_args cup;
 	int error = 0;
 
@@ -75,12 +77,12 @@ irix_sys_swapctl(p, v, retval)
 	printf("irix_sys_swapctl(): cmd = %d, arg = %p\n", SCARG(uap, cmd),
 	    SCARG(uap, arg));
 #endif
-	SCARG(&cup, arg) = NULL;
-	SCARG(&cup, misc) = 0;
 
 	switch (SCARG(uap, cmd)) {
 	case IRIX_SC_GETNSWP: /* Get number of swap items */
 		SCARG(&cup, cmd) = SWAP_NSWAP;
+		SCARG(&cup, arg) = NULL;
+		SCARG(&cup, misc) = 0;
 		return sys_swapctl(p, &cup, retval);
 		break;
 
@@ -88,7 +90,7 @@ irix_sys_swapctl(p, v, retval)
 		struct irix_swaptable ist;
 		struct swapent *bse;
 		struct irix_swapent *ise, *uise;
-		int len, ilen;
+		int len, ilen, pathlen;
 		int i;
 
 		if ((error = copyin(SCARG(uap, arg), &ist, sizeof(ist))) != 0)
@@ -106,19 +108,13 @@ irix_sys_swapctl(p, v, retval)
 		if ((error = copyin(uise, ise, ilen)) != 0)
 			return error;
 
-		SCARG(&cup, cmd) = SWAP_STATS;
-		SCARG(&cup, arg) = stackgap_alloc(p, &sg, len);
-		SCARG(&cup, misc) = ist.swt_n;
-		if ((error = sys_swapctl(p, &cup, retval)) != 0) /*sets retval*/
-			goto bad;
+		uvm_swap_stats(SWAP_STATS, bse, ist.swt_n, retval);
 
-		if ((error = copyin(SCARG(&cup, arg), bse, len)) != 0)
-			goto bad;
-		
 		for (i = 0; i < ist.swt_n; i++) {
+			pathlen = MIN(strlen(bse[i].se_path), IRIX_PATH_MAX);
 			if (ise[i].ste_path != NULL && 
 			    ((error = copyout(&(bse[i].se_path), 
-			    ise[i].ste_path, IRIX_PATH_MAX)) != 0))
+			    ise[i].ste_path, pathlen)) != 0))
 				goto bad;
 			ise[i].ste_start = 0;
 			ise[i].ste_length = bse[i].se_nblks;
