@@ -1,9 +1,11 @@
-# $NetBSD: Makefile,v 1.4 2000/05/18 01:10:25 matt Exp $
+# $NetBSD: Makefile,v 1.5 2001/08/20 12:19:44 martin Exp $
 # Small Shell (i.e. for boot media)
 
 PROG=	ssh
 MKMAN=	no
+.if ${MACHINE_ARCH} != "sparc64"
 COPTS+= -Os
+.endif
 LDSTATIC?=-static
 
 all: ${PROG}

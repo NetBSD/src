@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2000/09/19 20:40:19 wrstuden Exp $
+# $NetBSD: Makefile,v 1.12 2001/08/20 12:19:43 martin Exp $
 # Build a "small init" (i.e. for boot media)
 
 PROG=	init
@@ -11,7 +11,9 @@ LDSTATIC?=-static
 
 SRCDIR= ${.CURDIR}/../../../sbin/init
 CPPFLAGS+= -DLETS_GET_SMALL -I${SRCDIR}
+.if ${MACHINE_ARCH} != "sparc64"
 COPTS+= -Os
+.endif
 
 all: ${PROG}
 
