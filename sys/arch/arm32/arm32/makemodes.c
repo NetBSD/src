@@ -1,4 +1,4 @@
-/* $NetBSD: makemodes.c,v 1.6 1996/10/13 03:05:55 christos Exp $ */
+/* $NetBSD: makemodes.c,v 1.7 1996/10/15 02:33:28 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -69,6 +69,7 @@ struct md {
 
 int	md;	/* Number of modes defined in the mds array */
 
+#define MOD(x)	(((x) > 0) ? (x) : -(x))
 
 void makemode __P((FILE *, int, int, int, int));
 
@@ -282,7 +283,8 @@ void makemode(out_fd, x, y, c, f)
 	float framerate;	/* frame rate */
 	int fr;			/* integer frame rate */
 	int found = -1;		/* array index of found mode */
-	int max = -1;		/* maximum frame rate found */
+	int closest = 200;	/* closest frame rate found */
+/*	int max = -1;*/		/* maximum frame rate found */
 	int pos = -1;		/* array index of max frame rate */
  
 /* Print some info */
@@ -322,8 +324,15 @@ void makemode(out_fd, x, y, c, f)
 
 /* Is this a new maximum ? */
 
-			if (max < fr) {
+/*			if (max < fr) {
 				max = fr;
+				pos = loop;
+			}*/
+
+/* Is this the closest ? */
+
+			if (closest > MOD(fr - f)) {
+				closest = MOD(fr - f);
 				pos = loop;
 			}			
 
@@ -342,6 +351,7 @@ void makemode(out_fd, x, y, c, f)
 /* Do we have an entry for this X & Y resolution */
 		
 	if (found != -1) {
+		printf("- %d", mds[found].md_framerate);
 		fprintf(out_fd, "  { %d,/**/%d, %d, %d, %d, %d, %d,/**/%d, %d, %d, %d, %d, %d,/**/%d,/**/%d, %d },\n",
 			mds[found].md_pixelrate,
 			mds[found].md_htimings[0],
