@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.12 1998/02/06 07:21:46 mrg Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.13 1998/02/06 07:53:29 thorpej Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -171,14 +171,17 @@ mainbus0 at root
 
 # PCI bridges
 #pchb*	at pci? dev ? function ?	# PCI-Host bridges
+#pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 #pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 #ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 # EISA bus support
 eisa*	at mainbus?
+#eisa*	at pceb?
 
 # ISA bus support
 isa*	at mainbus?
+#eisa*	at pceb?
 #isa*	at pcib?
 
 # PCMCIA bus support
