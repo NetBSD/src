@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.333 2001/04/24 03:20:43 thorpej Exp $
+#	$NetBSD: mi,v 1.334 2001/04/25 22:19:13 kleink Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1994,8 +1994,10 @@
 ./usr/share/man/cat3/getbootfile.0	comp-c-catman
 ./usr/share/man/cat3/getbsize.0	comp-c-catman
 ./usr/share/man/cat3/getc.0	comp-c-catman
+./usr/share/man/cat3/getc_unlocked.0	comp-c-catman
 ./usr/share/man/cat3/getcap.0	comp-c-catman
 ./usr/share/man/cat3/getchar.0	comp-c-catman
+./usr/share/man/cat3/getchar_unlocked.0	comp-c-catman
 ./usr/share/man/cat3/getcwd.0	comp-c-catman
 ./usr/share/man/cat3/getdirentries.0	comp-c-catman
 ./usr/share/man/cat3/getdiskbyname.0	comp-c-catman
@@ -2383,7 +2385,9 @@
 ./usr/share/man/cat3/printf.0	comp-c-catman
 ./usr/share/man/cat3/psignal.0	comp-c-catman
 ./usr/share/man/cat3/putc.0	comp-c-catman
+./usr/share/man/cat3/putc_unlocked.0	comp-c-catman
 ./usr/share/man/cat3/putchar.0	comp-c-catman
+./usr/share/man/cat3/putchar_unlocked.0	comp-c-catman
 ./usr/share/man/cat3/putenv.0	comp-c-catman
 ./usr/share/man/cat3/puts.0	comp-c-catman
 ./usr/share/man/cat3/putw.0	comp-c-catman
@@ -3935,8 +3939,10 @@
 ./usr/share/man/man3/getbootfile.3	comp-c-man
 ./usr/share/man/man3/getbsize.3		comp-c-man
 ./usr/share/man/man3/getc.3		comp-c-man
+./usr/share/man/man3/getc_unlocked.3		comp-c-man
 ./usr/share/man/man3/getcap.3		comp-c-man
 ./usr/share/man/man3/getchar.3		comp-c-man
+./usr/share/man/man3/getchar_unlocked.3		comp-c-man
 ./usr/share/man/man3/getcwd.3		comp-c-man
 ./usr/share/man/man3/getdirentries.3		comp-c-man
 ./usr/share/man/man3/getdiskbyname.3		comp-c-man
@@ -4324,7 +4330,9 @@
 ./usr/share/man/man3/printf.3		comp-c-man
 ./usr/share/man/man3/psignal.3		comp-c-man
 ./usr/share/man/man3/putc.3		comp-c-man
+./usr/share/man/man3/putc_unlocked.3		comp-c-man
 ./usr/share/man/man3/putchar.3		comp-c-man
+./usr/share/man/man3/putchar_unlocked.3		comp-c-man
 ./usr/share/man/man3/putenv.3		comp-c-man
 ./usr/share/man/man3/puts.3		comp-c-man
 ./usr/share/man/man3/putw.3		comp-c-man
