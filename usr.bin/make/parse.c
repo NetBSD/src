@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.94 2003/08/07 11:14:56 agc Exp $	*/
+/*	$NetBSD: parse.c,v 1.95 2004/03/06 03:57:07 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.94 2003/08/07 11:14:56 agc Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.95 2004/03/06 03:57:07 enami Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.94 2003/08/07 11:14:56 agc Exp $");
+__RCSID("$NetBSD: parse.c,v 1.95 2004/03/06 03:57:07 enami Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -315,7 +315,7 @@ static void ParseTraditionalInclude(char *);
 #endif
 static int ParseEOF(int);
 static char *ParseReadLine(void);
-static char *ParseSkipLine(int);
+static char *ParseSkipLine(int, int);
 static void ParseFinishLine(void);
 static void ParseMark(GNode *);
 
@@ -2071,12 +2071,12 @@ ParseSetParseFile(char *filename)
  *---------------------------------------------------------------------
  */
 void
-Parse_FromString(char *str)
+Parse_FromString(char *str, int lineno)
 {
     IFile         *oldFile;	/* state associated with this file */
 
     if (DEBUG(FOR))
-	(void) fprintf(stderr, "%s\n----\n", str);
+	(void) fprintf(stderr, "%s\n---- at line %d\n", str, lineno);
 
     oldFile = (IFile *) emalloc (sizeof (IFile));
     memcpy(oldFile, &curFile, sizeof (IFile));
@@ -2086,7 +2086,7 @@ Parse_FromString(char *str)
     curFile.F = NULL;
     curFile.P = (PTR *) emalloc (sizeof (PTR));
     curFile.P->str = curFile.P->ptr = str;
-    curFile.lineno = 0;
+    curFile.lineno = lineno;
     curFile.fname = estrdup(curFile.fname);
 }
 
@@ -2349,10 +2349,11 @@ ParseUnreadc(int c)
  *
  * Input:
  *	skip		Skip lines that don't start with .
+ *	keep_newline	Keep newline character as is.
  *
  */
 static char *
-ParseSkipLine(int skip)
+ParseSkipLine(int skip, int keep_newline)
 {
     char *line;
     int c, lastc, lineLength = 0;
@@ -2367,7 +2368,10 @@ ParseSkipLine(int skip)
         while (((c = ParseReadc()) != '\n' || lastc == '\\')
                && c != EOF) {
             if (c == '\n') {
-                Buf_ReplaceLastByte(buf, (Byte)' ');
+                if (keep_newline)
+                    Buf_AddByte(buf, (Byte)c);
+                else
+                    Buf_ReplaceLastByte(buf, (Byte)' ');
                 curFile.lineno++;
 
                 while ((c = ParseReadc()) == ' ' || c == '\t');
@@ -2427,6 +2431,7 @@ ParseReadLine(void)
     char 	  *line;    	/* Result */
     char          *ep;		/* to strip trailing blanks */
     int	    	  lineLength;	/* Length of result */
+    int	    	  lineno;	/* Saved line # */
 
     semiNL = FALSE;
     ignDepOp = FALSE;
@@ -2615,7 +2620,7 @@ test_char:
 		 */
 		do {
 		    free (line);
-		    line = ParseSkipLine(1);
+		    line = ParseSkipLine(1, 0);
 		} while (line && Cond_Eval(line) != COND_PARSE);
 		if (line == NULL)
 		    break;
@@ -2625,6 +2630,7 @@ test_char:
 		line = ParseReadLine();
 		break;
 	    case COND_INVALID:
+		lineno = curFile.lineno;
 		if (For_Eval(line)) {
 		    int ok;
 		    free(line);
@@ -2632,7 +2638,7 @@ test_char:
 			/*
 			 * Skip after the matching end
 			 */
-			line = ParseSkipLine(0);
+			line = ParseSkipLine(0, 1);
 			if (line == NULL) {
 			    Parse_Error (PARSE_FATAL,
 				     "Unexpected end of file in for loop.\n");
@@ -2643,7 +2649,7 @@ test_char:
 		    }
 		    while (ok);
 		    if (line != NULL)
-			For_Run();
+			For_Run(lineno);
 		    line = ParseReadLine();
 		}
 		break;
