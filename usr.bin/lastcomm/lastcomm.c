@@ -1,4 +1,4 @@
-/*	$NetBSD: lastcomm.c,v 1.10 1997/05/19 10:01:52 kleink Exp $	*/
+/*	$NetBSD: lastcomm.c,v 1.11 1997/10/19 03:47:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$NetBSD: lastcomm.c,v 1.10 1997/05/19 10:01:52 kleink Exp $";
+__RCSID("$NetBSD: lastcomm.c,v 1.11 1997/10/19 03:47:53 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,6 +54,7 @@ static char rcsid[] = "$NetBSD: lastcomm.c,v 1.10 1997/05/19 10:01:52 kleink Exp
 #include <err.h>
 #include <fcntl.h>
 #include <math.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,16 +67,16 @@ static char rcsid[] = "$NetBSD: lastcomm.c,v 1.10 1997/05/19 10:01:52 kleink Exp
 time_t	 expand __P((u_int));
 char	*flagbits __P((int));
 char	*getdev __P((dev_t));
+int	 main __P((int, char **));
 int	 requested __P((char *[], struct acct *));
 void	 usage __P((void));
-char	*user_from_uid();
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char *p;
+	char *p;
 	struct acct ab;
 	struct stat sb;
 	FILE *fp;
@@ -136,13 +137,15 @@ main(argc, argv)
 
 			t = expand(ab.ac_utime) + expand(ab.ac_stime);
 			(void)printf(
-				     "%-*.*s %-7s %-*.*s %-*.*s %6.2f secs %.16s",
-				     fldsiz(acct, ac_comm), fldsiz(acct, ac_comm), ab.ac_comm,
-				     flagbits(ab.ac_flag), UT_NAMESIZE, UT_NAMESIZE,
-				     user_from_uid(ab.ac_uid, 0), UT_LINESIZE, UT_LINESIZE,
-				     getdev(ab.ac_tty), t / (double)AHZ, ctime(&ab.ac_btime));
+			    "%-*.*s %-7s %-*.*s %-*.*s %6.2f secs %.16s",
+			     fldsiz(acct, ac_comm), (int)fldsiz(acct, ac_comm),
+			     ab.ac_comm, flagbits(ab.ac_flag),
+			     UT_NAMESIZE, UT_NAMESIZE,
+			     user_from_uid(ab.ac_uid, 0), UT_LINESIZE,
+			     UT_LINESIZE, getdev(ab.ac_tty),
+			     t / (double)AHZ, ctime(&ab.ac_btime));
 			delta = expand(ab.ac_etime) / (double)AHZ;
-			printf(" (%1.0lf:%02.0lf:%05.2lf)\n",
+			printf(" (%1.0f:%02.0f:%05.2f)\n",
 			       delta / SECSPERHOUR,
 			       fmod(delta, SECSPERHOUR) / SECSPERMIN,
 			       fmod(delta, SECSPERMIN));
@@ -163,7 +166,7 @@ time_t
 expand(t)
 	u_int t;
 {
-	register time_t nt;
+	time_t nt;
 
 	nt = t & 017777;
 	t >>= 13;
@@ -176,7 +179,7 @@ expand(t)
 
 char *
 flagbits(f)
-	register int f;
+	int f;
 {
 	static char flags[20] = "-";
 	char *p;
@@ -195,8 +198,8 @@ flagbits(f)
 
 int
 requested(argv, acp)
-	register char *argv[];
-	register struct acct *acp;
+	char *argv[];
+	struct acct *acp;
 {
 	do {
 		if (!strcmp(user_from_uid(acp->ac_uid, 0), *argv))
