@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.7 2001/02/27 18:30:46 reinoud Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.8 2001/02/27 18:33:26 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -312,7 +312,7 @@ dma_init(ch, extp, dmasize, ipl)
 	dp->dc_ih.ih_arg = dp;
 	dp->dc_ih.ih_level = ipl;
 	dp->dc_ih.ih_name = "dma";
-	dp->dc_ih.ih_maskaddr = IOMD_ADDRESS(IOMD_DMARQ);
+	dp->dc_ih.ih_maskaddr = (u_int) IOMD_ADDRESS(IOMD_DMARQ);
 	dp->dc_ih.ih_maskbits = (1 << ch);
 
 	if (irq_claim(IRQ_DMACH0 + ch, &dp->dc_ih))
