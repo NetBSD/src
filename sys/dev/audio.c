@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.113 1999/02/26 01:18:09 nathanw Exp $	*/
+/*	$NetBSD: audio.c,v 1.114 1999/05/30 00:21:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -304,7 +304,7 @@ audioattach(parent, self, aux)
 		au_check_ports(sc, &sc->sc_outports, &mi, oclass, 
 			       AudioNoutput, AudioNmaster, otable);
 		if (mi.mixer_class == oclass && 
-		    strcmp(mi.label.name, AudioNmonitor))
+		    (strcmp(mi.label.name, AudioNmonitor) == 0))
 			sc->sc_monitor_port = mi.index;
 	}
 	DPRINTF(("audio_attach: inputs ports=0x%x, output ports=0x%x\n",
@@ -2509,7 +2509,7 @@ audiosetinfo(sc, ai)
 		ct.type = AUDIO_MIXER_VALUE;
 		ct.un.value.num_channels = 1;
 		ct.un.value.level[AUDIO_MIXER_LEVEL_MONO] = ai->monitor_gain;
-		error = sc->hw_if->get_port(sc->hw_hdl, &ct);
+		error = sc->hw_if->set_port(sc->hw_hdl, &ct);
 		if (error)
 			return(error);
 	}
