@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.1.1.1.2.5 2000/10/02 23:41:32 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.1.1.1.2.6 2001/03/11 21:11:21 he Exp $	*/
 /*	$KAME: esp_input.c,v 1.33 2000/09/12 08:51:49 itojun Exp $	*/
 
 /*
@@ -418,9 +418,14 @@ noreplaycheck:
 
 		key_sa_recordxfer(sav, m);
 
-		if (nxt != IPPROTO_DONE)
+		if (nxt != IPPROTO_DONE) {
+			if ((inetsw[ip_protox[nxt]].pr_flags & PR_LASTHDR) != 0 &&
+			    ipsec4_in_reject(m, NULL)) {
+				ipsecstat.in_polvio++;
+				goto bad;
+			}
 			(*inetsw[ip_protox[nxt]].pr_input)(m, off, nxt);
-		else
+		} else
 			m_freem(m);
 		m = NULL;
 	}

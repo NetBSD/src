@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.10.4.2 2000/10/02 23:41:32 itojun Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.10.4.3 2001/03/11 21:11:40 he Exp $	*/
 /*	$KAME: ipcomp_input.c,v 1.19 2000/10/01 12:37:20 itojun Exp $	*/
 
 /*
@@ -213,9 +213,14 @@ ipcomp4_input(m, va_alist)
 		sav = NULL;
 	}
 
-	if (nxt != IPPROTO_DONE)
+	if (nxt != IPPROTO_DONE) {
+		if ((inetsw[ip_protox[nxt]].pr_flags & PR_LASTHDR) != 0 &&
+		    ipsec4_in_reject(m, NULL)) {
+			ipsecstat.in_polvio++;
+			goto fail;
+		}
 		(*inetsw[ip_protox[nxt]].pr_input)(m, off, nxt);
-	else
+	} else
 		m_freem(m);
 	m = NULL;
 
