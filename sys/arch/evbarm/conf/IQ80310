@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.22 2003/04/16 23:34:31 thorpej Exp $
+#	$NetBSD: IQ80310,v 1.23 2003/05/23 14:23:46 thorpej Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -215,3 +215,4 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
