@@ -1,12 +1,13 @@
-#	$NetBSD: files.mac68k,v 1.92 1999/06/28 08:20:44 itojun Exp $
+#	$NetBSD: files.mac68k,v 1.93 2000/02/14 07:01:44 scottr Exp $
 
 # mac68k-specific configuration info
 
 # options understood by the mac68k-specific part of the kernel
 # (note, these are case-sensitive)
 defopt	opt_adb.h	ADB_DEBUG MRG_ADB ALTXBUTTONS 
-defopt	opt_grf.h	GRF_COMPAT
 defopt	opt_mac68k.h	DISABLE_EXT_CACHE ZS_CONSOLE_ABORT
+
+defopt	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_ITEFONT
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
@@ -16,15 +17,13 @@ maxusers 2 8 64
 device mainbus { }			# no locators (yet?)
 attach mainbus at root
 
+include "dev/wscons/files.wscons"
+
 define obio_norm { [addr = -1], ["no drq" = -1], ["no hsk" = -1] }
 define obio_scsi5380 { [addr = -1], [drq = -1], [hsk = -1] }
 device	obio: obio_norm, obio_scsi5380
 attach	obio at mainbus
 file	arch/mac68k/obio/obio.c		obio
-
-device	nubus { }
-attach	nubus at mainbus
-file	arch/mac68k/nubus/nubus.c	nubus
 
 device	adb { }
 attach	adb at obio_norm
@@ -37,17 +36,21 @@ device	aed
 attach	aed at adb
 file	arch/mac68k/dev/aed.c		aed needs-flag
 
-device	kbd
-attach	kbd at adb
-file	arch/mac68k/dev/kbd.c		kbd needs-flag
+device	akbd: wskbddev
+attach	akbd at adb
+file	arch/mac68k/dev/akbd.c		akbd needs-flag
 
-device	ms
-attach	ms at adb
-file	arch/mac68k/dev/ms.c		ms needs-flag
+device	ams: wsmousedev
+attach	ams at adb
+file	arch/mac68k/dev/ams.c		ams needs-flag
 
 device	asc
 attach	asc at obio_norm
 file	arch/mac68k/obio/asc.c		asc needs-flag
+
+device	nubus { }
+attach	nubus at mainbus
+file	arch/mac68k/nubus/nubus.c	nubus
 
 define grfbus { }
 file	arch/mac68k/dev/grf_subr.c	grfbus
@@ -60,13 +63,15 @@ device	macvid: grfbus
 attach	macvid at nubus
 file	arch/mac68k/nubus/grf_nubus.c	macvid
 
-device	grf { }
-attach	grf at grfbus
-file	arch/mac68k/dev/grf.c		grf needs-flag
+device	macfb: wsemuldisplaydev, wsrasteremulops
+attach	macfb at grfbus
+file	arch/mac68k/dev/macfb.c		macfb needs-flag
 
-device	ite: tty
-attach	ite at grf
-file	arch/mac68k/dev/ite.c		ite needs-flag
+file	arch/mac68k/dev/maccons.c	akbd & macfb
+
+#device	ite: wsemuldisplaydev
+#attach	ite at wsdisplay
+#file	arch/mac68k/dev/ite_compat.c	ite needs-flag
 
 device	ae: ifnet, ether, arp, dp8390nic
 attach	ae at nubus with ae_nubus
@@ -130,6 +135,10 @@ file	arch/mac68k/mac68k/fpu.c	fpu
 file	arch/m68k/m68k/db_memrw.c	ddb | kgdb
 include "arch/m68k/fpe/files.fpe"
 
+# legitimate pseudo-devices
+defpseudo grf
+defpseudo ite
+
 file	arch/mac68k/mac68k/autoconf.c
 file	arch/mac68k/mac68k/bus_space.c
 file	arch/mac68k/mac68k/clock.c
@@ -152,6 +161,9 @@ file	arch/mac68k/mac68k/sys_machdep.c
 file	arch/mac68k/mac68k/trap.c
 file	arch/mac68k/mac68k/via.c
 file	arch/mac68k/mac68k/vm_machdep.c
+
+file	arch/mac68k/dev/grf_compat.c		grf needs-flag
+file	arch/mac68k/dev/ite_compat.c		ite needs-flag
 
 file	dev/cons.c
 file	dev/cninit.c

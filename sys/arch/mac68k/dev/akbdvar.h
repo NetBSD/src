@@ -1,4 +1,4 @@
-/*	$NetBSD: msvar.h,v 1.3 1999/02/16 01:08:16 ender Exp $	*/
+/*	$NetBSD: akbdvar.h,v 1.5 2000/02/14 07:01:46 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -30,35 +30,32 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MAC68K_MSVAR_H_
-#define _MAC68K_MSVAR_H_
+#ifndef _MAC68K_KBDVAR_H_
+#define _MAC68K_KBDVAR_H_
+
+#include <machine/adbsys.h>
 
 /*
- * State info, per mouse instance.
+ * State info, per keyboard instance.
  */
-struct ms_softc {
-	struct	device	sc_dev;
+struct akbd_softc {
+	struct  device  sc_dev;
 
 	/* ADB info */
-	int		origaddr;	/* ADB device type (ADBADDR_MS) */
-	int		adbaddr;	/* current ADB address */
-	int		handler_id;	/* type of mouse */
+	int	        origaddr;       /* ADB device type (ADBADDR_KBD) */
+	int	        adbaddr;        /* current ADB address */
+	int	        handler_id;     /* type of keyboard */
 
-	/* Extended Mouse Protocol info, faked for non-EMP mice */
-	u_int8_t	sc_class;	/* mouse class (mouse, trackball) */
-	u_int8_t	sc_buttons;	/* number of buttons */
-	u_int32_t	sc_res;		/* mouse resolution (dpi) */
-	char		sc_devid[5];	/* device indentifier */
-
-	int		sc_mb;		/* current button state */
+	u_int8_t	sc_leds;	/* current LED state */
+	struct device	*sc_wskbddev;
 };
 
-/* EMP device classes */
-#define MSCLASS_TABLET		0
-#define MSCLASS_MOUSE		1
-#define MSCLASS_TRACKBALL	2       
+/* LED register bits, inverse of actual register value */
+#define LED_NUMLOCK	0x1
+#define LED_CAPSLOCK	0x2
+#define LED_SCROLL_LOCK	0x4
 
-void	ms_adbcomplete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-void	ms_handoff __P((adb_event_t *event, struct ms_softc *));
+int	akbd_cnattach __P((void));
+void    akbd_adbcomplete __P((caddr_t buffer, caddr_t data_area, int adb_command));
 
-#endif /* _MAC68K_MSVAR_H_ */
+#endif /* _MAC68K_KBDVAR_H_ */

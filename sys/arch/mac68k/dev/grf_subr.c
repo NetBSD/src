@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.14 1998/08/12 02:36:37 scottr Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.15 2000/02/14 07:01:46 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,8 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "opt_grf.h"
 
 #include <sys/param.h>
 #include <sys/device.h>

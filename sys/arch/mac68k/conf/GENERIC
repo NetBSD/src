@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.95 2000/01/23 23:46:13 hubertf Exp $
+#	$NetBSD: GENERIC,v 1.96 2000/02/14 07:01:44 scottr Exp $
 #
 # GENERIC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.95 $"
+#ident 		"GENERIC-$Revision: 1.96 $"
 
 maxusers	16		# estimated number of users
 
@@ -82,7 +82,7 @@ file-system 	CODA		# Venus/Coda distributed file system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
+#options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -126,6 +126,16 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 # Warning, these may compile large string tables into the kernel!
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
+# wscons options
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WSDISPLAY_COMPAT_ITEFONT # use ite font (6x10)
+
+# rcons options; note that 1-bit and 8-bit displays are supported by default.
+options 	RCONS_2BPP		# Support for 2-bit display
+options 	RCONS_4BPP		# Support for 4-bit display
+options 	RCONS_16BPP		# Support for 16-bit display
+
 # Mac-specific options
 #options 	ALTXBUTTONS	# Map Opt-{1,2,3} to mouse buttons
 #options 	DISABLE_EXT_CACHE # If really paranoid, disable IIci ext. cache
@@ -161,19 +171,21 @@ nubus0 at mainbus?
 # Apple Desktop Bus interface
 adb0	at obio?
 aed*	at adb?				# ADB event device
-kbd*	at adb?				# ADB keyboard
-ms*	at adb?				# ADB mouse
+akbd*	at adb?				# ADB keyboard
+ams*	at adb?				# ADB mouse
 
 # Basic frame buffer support
 intvid0	at obio?			# Internal video hardware
 macvid*	at nubus?			# NuBus video card
 
 # Device-independent frame buffer interface
-grf*	at intvid?
-grf*	at macvid?
+macfb*	at intvid?
+macfb*	at macvid?
 
-# Integrated Terminal Emulator (console) support
-ite0	at grf?
+# Workstation Console devices
+wsdisplay0 at macfb? console ?
+wskbd0	at akbd? console ?
+wsmouse0 at ams?
 
 
 # Serial Devices
@@ -250,6 +262,8 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 
 # miscellaneous pseudo-devices
+pseudo-device	grf		2	# grf emulation for wscons
+pseudo-device	ite		1	# ite emulation for wscons
 pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 
