@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.23 2001/11/02 05:30:56 lukem Exp $	*/
+/*	$NetBSD: if.c,v 1.24 2002/11/30 04:04:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,12 +37,12 @@
 #include "pathnames.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: if.c,v 1.23 2001/11/02 05:30:56 lukem Exp $");
+__RCSID("$NetBSD: if.c,v 1.24 2002/11/30 04:04:23 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
-__RCSID("Revision: 2.24 ");
-#ident "Revision: 2.24 "
+__RCSID("Revision: 2.27 ");
+#ident "Revision: 2.27 "
 #endif
 
 struct interface *ifnet;		/* all interfaces */
@@ -745,9 +745,8 @@ ifinit(void)
 		ifam2 = (struct ifa_msghdr*)((char*)ifam + ifam->ifam_msglen);
 
 #ifdef RTM_OIFINFO
-		if (ifam->ifam_type == RTM_OIFINFO) {
-			continue; /* just ignore compat message */
-		}
+		if (ifam->ifam_type == RTM_OIFINFO)
+			continue;	/* just ignore compat message */
 #endif
 		if (ifam->ifam_type == RTM_IFINFO) {
 			struct sockaddr_dl *sdl;

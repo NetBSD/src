@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.15 2001/11/02 05:30:57 lukem Exp $	*/
+/*	$NetBSD: table.c,v 1.16 2002/11/30 04:04:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,12 +36,12 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: table.c,v 1.15 2001/11/02 05:30:57 lukem Exp $");
+__RCSID("$NetBSD: table.c,v 1.16 2002/11/30 04:04:24 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
-__RCSID("Revision: 2.23 ");
-#ident "Revision: 2.23 "
+__RCSID("Revision: 2.27 ");
+#ident "Revision: 2.27 "
 #endif
 
 static struct rt_spare *rts_better(struct rt_entry *);
@@ -255,8 +255,6 @@ ag_flush(naddr lim_dst_h,		/* flush routes to here */
 				 * then mark the suppressor redundant.
 				 */
 				if (ag_cors->ag_pref <= ag->ag_pref) {
-				    if (ag_cors->ag_seqno > ag->ag_seqno)
-					ag_cors->ag_seqno = ag->ag_seqno;
 				    if (AG_IS_REDUN(ag->ag_state)
 					&& ag_cors->ag_mask==ag->ag_mask<<1) {
 					if (ag_cors->ag_dst_h == dst_h)
@@ -291,7 +289,7 @@ ag_check(naddr	dst,
 	 naddr	nhop,
 	 char	metric,
 	 char	pref,
-	 u_int	seqno,
+	 u_int	new_seqno,
 	 u_short tag,
 	 u_short state,
 	 void (*out)(struct ag_info *))	/* output using this */
@@ -318,7 +316,7 @@ ag_check(naddr	dst,
 		nc_ag.ag_pref = pref;
 		nc_ag.ag_tag = tag;
 		nc_ag.ag_state = state;
-		nc_ag.ag_seqno = seqno;
+		nc_ag.ag_seqno = new_seqno;
 		out(&nc_ag);
 		return;
 	}
@@ -348,8 +346,6 @@ ag_check(naddr	dst,
 		    && (ag_cors->ag_gate == ag->ag_gate
 			|| (ag->ag_state & AGS_FINE_GATE)
 			|| (ag_cors->ag_state & AGS_CORS_GATE))) {
-			if (ag_cors->ag_seqno > ag->ag_seqno)
-				ag_cors->ag_seqno = ag->ag_seqno;
 			/*  If the suppressed target was redundant,
 			 * then mark the suppressor redundant.
 			 */
@@ -408,16 +404,12 @@ ag_check(naddr	dst,
 				ag->ag_tag = tag;
 				ag->ag_metric = metric;
 				ag->ag_pref = pref;
+				if (ag->ag_seqno < new_seqno)
+					ag->ag_seqno = new_seqno;
 				x = ag->ag_state;
 				ag->ag_state = state;
 				state = x;
 			}
-
-			/* The sequence number controls flash updating,
-			 * and should be the smaller of the two.
-			 */
-			if (ag->ag_seqno > seqno)
-				ag->ag_seqno = seqno;
 
 			/* Some bits are set if they are set on either route,
 			 * except when the route is for an interface.
@@ -458,8 +450,8 @@ ag_check(naddr	dst,
 			 *
 			 * Combine and promote (aggregate) the pair of routes.
 			 */
-			if (seqno > ag->ag_seqno)
-				seqno = ag->ag_seqno;
+			if (new_seqno < ag->ag_seqno)
+				new_seqno = ag->ag_seqno;
 			if (!AG_IS_REDUN(state))
 				state &= ~AGS_REDUN1;
 			if (AG_IS_REDUN(ag->ag_state))
@@ -520,10 +512,10 @@ ag_check(naddr	dst,
 			pref = x;
 
 			/* take the newest sequence number */
-			if (seqno >= ag->ag_seqno)
-				seqno = ag->ag_seqno;
+			if (new_seqno <= ag->ag_seqno)
+				new_seqno = ag->ag_seqno;
 			else
-				ag->ag_seqno = seqno;
+				ag->ag_seqno = new_seqno;
 
 		} else {
 			if (!(state & AGS_AGGREGATE))
@@ -539,10 +531,10 @@ ag_check(naddr	dst,
 			if (!AG_IS_REDUN(state))
 				state &= ~AGS_REDUN1;
 			state &= ~AGS_REDUN0;
-			if (seqno > ag->ag_seqno)
-				seqno = ag->ag_seqno;
+			if (new_seqno < ag->ag_seqno)
+				new_seqno = ag->ag_seqno;
 			else
-				ag->ag_seqno = seqno;
+				ag->ag_seqno = new_seqno;
 		}
 
 		mask <<= 1;
@@ -603,7 +595,7 @@ ag_check(naddr	dst,
 	nag->ag_pref = pref;
 	nag->ag_tag = tag;
 	nag->ag_state = state;
-	nag->ag_seqno = seqno;
+	nag->ag_seqno = new_seqno;
 
 	nag->ag_fine = ag;
 	if (ag != 0)
@@ -649,7 +641,7 @@ rtm_type_name(u_char type)
 
 	if (type > sizeof(rtm_types)/sizeof(rtm_types[0])
 	    || type == 0) {
-		sprintf(name0, "RTM type %#x", type);
+		snprintf(name0, sizeof(name0), NEW_RTM_PAT, type);
 		return name0;
 	} else {
 		return rtm_types[type-1];
@@ -1120,6 +1112,13 @@ flush_kern(void)
 		if (rtm->rtm_flags & RTF_LLINFO)
 			continue;
 
+#if defined(RTF_CLONED) && defined(__bsdi__)
+		/* ignore cloned routes
+		 */
+		if (rtm->rtm_flags & RTF_CLONED)
+			continue;
+#endif
+
 		/* ignore multicast addresses
 		 */
 		if (IN_MULTICAST(ntohl(S_ADDR(INFO_DST(&info)))))
@@ -1228,9 +1227,8 @@ read_rt(void)
 			continue;
 		}
 #ifdef RTM_OIFINFO
-		if (m.r.rtm.rtm_type == RTM_OIFINFO) {
-			continue; /* ignore compat message */
-		}
+		if (m.r.rtm.rtm_type == RTM_OIFINFO)
+			continue;	/* ignore compat message */
 #endif
 
 		strcpy(str, rtm_type_name(m.r.rtm.rtm_type));
@@ -1270,6 +1268,13 @@ read_rt(void)
 			trace_act("ignore ARP %s", str);
 			continue;
 		}
+
+#if defined(RTF_CLONED) && defined(__bsdi__)
+		if (m.r.rtm.rtm_flags & RTF_CLONED) {
+			trace_act("ignore cloned %s", str);
+			continue;
+		}
+#endif
 
 		if (get_info_gate(&INFO_GATE(&info), &gate_sin)) {
 			gate = S_ADDR(INFO_GATE(&info));

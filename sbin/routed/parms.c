@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.16 2002/08/08 15:10:51 itojun Exp $	*/
+/*	$NetBSD: parms.c,v 1.17 2002/11/30 04:04:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,12 +38,12 @@
 #include <sys/stat.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: parms.c,v 1.16 2002/08/08 15:10:51 itojun Exp $");
+__RCSID("$NetBSD: parms.c,v 1.17 2002/11/30 04:04:23 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
-__RCSID("Revision: 2.24 ");
-#ident "Revision: 2.24 "
+__RCSID("Revision: 2.26 ");
+#ident "Revision: 2.26 "
 #endif
 
 
@@ -87,8 +87,10 @@ get_parms(struct interface *ifp)
 				ifp->int_rdisc_pref = parmp->parm_rdisc_pref;
 			if (parmp->parm_rdisc_int != 0)
 				ifp->int_rdisc_int = parmp->parm_rdisc_int;
-			if (parmp->parm_d_metric != 0)
-				ifp->int_d_metric = parmp->parm_d_metric;
+			if (parmp->parm_adj_inmetric != 0)
+			    ifp->int_adj_inmetric = parmp->parm_adj_inmetric;
+			if (parmp->parm_adj_outmetric != 0)
+			    ifp->int_adj_outmetric = parmp->parm_adj_outmetric;
 		}
 	}
 
@@ -783,10 +785,24 @@ parse_parms(char *line,
 		} else if (PARSEQ("fake_default")) {
 			if (parm.parm_d_metric != 0
 			    || IS_RIP_OUT_OFF(parm.parm_int_state)
-			    || (parm.parm_d_metric = (int)strtoul(buf,&p,0),
-				*p != '\0')
-			    || parm.parm_d_metric > HOPCNT_INFINITY-1)
+			    || (i = strtoul(buf,&p,0), *p != '\0')
+			    || i > HOPCNT_INFINITY-1)
 				return bad_str(tgt);
+			parm.parm_d_metric = i;
+
+		} else if (PARSEQ("adj_inmetric")) {
+			if (parm.parm_adj_inmetric != 0
+			    || (i = strtoul(buf,&p,0), *p != '\0')
+			    || i > HOPCNT_INFINITY-1)
+				return bad_str(tgt);
+			parm.parm_adj_inmetric = i;
+
+		} else if (PARSEQ("adj_outmetric")) {
+			if (parm.parm_adj_outmetric != 0
+			    || (i = strtoul(buf,&p,0), *p != '\0')
+			    || i > HOPCNT_INFINITY-1)
+				return bad_str(tgt);
+			parm.parm_adj_outmetric = i;
 
 		} else if (PARSEQ("trust_gateway")) {
 			/* look for trust_gateway=x.y.z|net/mask|...) */
@@ -874,11 +890,11 @@ check_parms(struct parm *new)
 		if ((0 != (new->parm_int_state & GROUP_IS_SOL_OUT)
 		     && 0 != (parmp->parm_int_state & GROUP_IS_SOL_OUT)
 		     && 0 != ((new->parm_int_state ^ parmp->parm_int_state)
-			      & GROUP_IS_SOL_OUT))
+			      && GROUP_IS_SOL_OUT))
 		    || (0 != (new->parm_int_state & GROUP_IS_ADV_OUT)
 			&& 0 != (parmp->parm_int_state & GROUP_IS_ADV_OUT)
 			&& 0 != ((new->parm_int_state ^ parmp->parm_int_state)
-				 & GROUP_IS_ADV_OUT))
+				 && GROUP_IS_ADV_OUT))
 		    || (new->parm_rdisc_pref != 0
 			&& parmp->parm_rdisc_pref != 0
 			&& new->parm_rdisc_pref != parmp->parm_rdisc_pref)
@@ -896,9 +912,23 @@ check_parms(struct parm *new)
 			return ("conflicting, duplicate poor man's router"
 				" discovery or fake default metric");
 		}
+
+		if (new->parm_adj_inmetric != 0
+		    && parmp->parm_adj_inmetric != 0
+		    && new->parm_adj_inmetric != parmp->parm_adj_inmetric) {
+			return ("conflicting interface input "
+				"metric adjustments");
+		}
+
+		if (new->parm_adj_outmetric != 0
+		    && parmp->parm_adj_outmetric != 0
+		    && new->parm_adj_outmetric != parmp->parm_adj_outmetric) {
+			return ("conflicting interface output "
+				"metric adjustments");
+		}
 	}
 
-	/* link new entry on the so that when the entries are scanned,
+	/* link new entry on the list so that when the entries are scanned,
 	 * they affect the result in the order the operator specified.
 	 */
 	parmp = (struct parm*)rtmalloc(sizeof(*parmp), "check_parms");
