@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.248 2003/03/02 21:37:21 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.249 2003/03/03 22:43:58 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -6356,13 +6356,21 @@ pmap_kenter_pa4m(va, pa, prot)
 	sp = &rp->rg_segmap[vs];
 
 	s = splvm();
+#ifdef notyet
+	/* XXX - we can be called with the kernel map already locked
+	 *	 pmap_enter4m()->pv_link()->pool_get()
+	 *	 figure out another way to protect `sg_npte' update.
+	 */
 	simple_lock(&pm->pm_lock);
+#endif
 	tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
 	KASSERT((tpte & SRMMU_TETYPE) != SRMMU_TEPTE);
 
 	sp->sg_npte++;
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+#ifdef notyet
 	simple_unlock(&pm->pm_lock);
+#endif
 	splx(s);
 }
 
