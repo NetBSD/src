@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.17 1996/03/17 01:33:27 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.18 1996/03/29 02:06:35 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,7 +64,7 @@
 #include <sys/device.h>
 #include <dev/cons.h>
 
-#include "../mac68k/via.h"
+#include <machine/viareg.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.41 1996/03/17 01:33:24 thorpej Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.42 1996/03/29 02:06:50 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -56,7 +56,7 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include "../mac68k/via.h"
+#include <machine/viareg.h>
 #include "nubus.h"
 #include <dev/ic/dp8390reg.h>
 #include "if_aereg.h"

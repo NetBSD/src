@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_sbc.c,v 1.5 1996/03/21 04:49:20 scottr Exp $	*/
+/*	$NetBSD: ncr_sbc.c,v 1.6 1996/03/29 02:06:19 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -71,7 +71,7 @@
 #include <dev/ic/ncr5380var.h>
 
 #include "ncr_sbcreg.h"
-#include "../mac68k/via.h"
+#include <machine/viareg.h>
 
 #ifdef SBCTEST
 # define SBC_DEBUG

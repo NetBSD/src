@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96.c,v 1.15 1996/03/24 16:58:46 briggs Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.16 1996/03/29 02:06:28 briggs Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -47,7 +47,7 @@
 #include <scsi/scsiconf.h>
 
 #include <machine/scsi96reg.h>
-#include "../mac68k/via.h"
+#include <machine/viareg.h>
 
 /* Support for the NCR 53C96 SCSI processor--primarily for '040 Macs. */
 
