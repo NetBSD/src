@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.10 2002/12/12 00:29:24 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.11 2002/12/15 00:40:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.10 2002/12/12 00:29:24 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.11 2002/12/15 00:40:25 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.10 2002/12/12 00:29:24 manu Exp $");
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_errno.h>
+#include <compat/mach/mach_exec.h>
+#include <compat/mach/mach_port.h>
 #include <compat/mach/mach_task.h>
 #include <compat/mach/mach_syscallargs.h>
 
@@ -64,10 +66,37 @@ mach_task_get_special_port(p, msgh, maxlen, dst)
 {
 	mach_task_get_special_port_request_t req;
 	mach_task_get_special_port_reply_t rep;
+	struct mach_emuldata *med;
+	struct mach_right *mr;
 	int error;
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
+	
+	med = (struct mach_emuldata *)p->p_emuldata;
+
+	switch (req.req_which_port) {
+	case MACH_TASK_KERNEL_PORT:
+		mr = mach_right_get(med->med_kernel, p, MACH_PORT_RIGHT_SEND);
+		break;
+
+	case MACH_TASK_HOST_PORT:
+		mr = mach_right_get(med->med_host, p, MACH_PORT_RIGHT_SEND);
+		break;
+
+	case MACH_TASK_BOOTSTRAP_PORT:
+		mr = mach_right_get(med->med_bootstrap, 
+		    p, MACH_PORT_RIGHT_SEND);
+		break;
+
+	case MACH_TASK_WIRED_LEDGER_PORT:
+	case MACH_TASK_PAGED_LEDGER_PORT:
+	default:
+		uprintf("mach_task_get_special_port(): unimpl. port %d\n",
+		    req.req_which_port);
+		return MACH_MSG_ERROR(p, msgh, &req, &rep, error, maxlen, dst);
+		break;
+	}
 
 	bzero(&rep, sizeof(rep));
 
@@ -77,8 +106,8 @@ mach_task_get_special_port(p, msgh, maxlen, dst)
 	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
 	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
 	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
-	rep.rep_msgh_body.msgh_descriptor_count = 1;	/* XXX why ? */
-	rep.rep_special_port.name = 0x90f; /* XXX why? */
+	rep.rep_msgh_body.msgh_descriptor_count = 1;
+	rep.rep_special_port.name = (mach_port_t)mr;
 	rep.rep_special_port.disposition = 0x11; /* XXX why? */
 	rep.rep_trailer.msgh_trailer_size = 8;
 
@@ -100,6 +129,12 @@ mach_ports_lookup(p, msgh, maxlen, dst)
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 	
+	/* 
+	 * This is some out of band data sent with the reply. In the 
+	 * encoutered situation the out of band data has laways been
+	 * null. We have to see more of his in order to fully understand
+	 * How this trap works.
+	 */
 	bzero(&evc, sizeof(evc));
 	evc.ev_addr = 0x00008000;
 	evc.ev_len = PAGE_SIZE;
