@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.10.6.1 2005/02/02 12:30:37 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.10.6.2 2005/02/11 13:57:16 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.10.6.1 2005/02/02 12:30:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.10.6.2 2005/02/11 13:57:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	len = sh5_round_page(off + len);
 	pmap_kremove(kva, len);
 	pmap_update(pmap_kernel());
-	uvm_km_free_wakeup(phys_map, kva, len, UVM_KMF_VAONLY);
+	uvm_km_free(phys_map, kva, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
