@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.27 2001/05/08 03:19:52 sommerfeld Exp $
+#	$NetBSD: bsd.nls.mk,v 1.28 2001/06/01 17:49:33 tv Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -9,7 +9,7 @@ __initialized__:
 .endif
 
 .PHONY:		cleannls nlsinstall
-cleandir distclean: cleannls
+cleandir: cleannls
 
 .SUFFIXES: .cat .msg
 

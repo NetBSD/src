@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.38 2000/06/06 09:53:30 mycroft Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.39 2001/06/01 17:49:33 tv Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -13,7 +13,7 @@ __initialized__:
 
 .PHONY:		cleankmod kmodinstall load unload
 realinstall:	kmodinstall
-clean cleandir distclean: cleankmod
+clean cleandir: cleankmod
 
 S?=		/sys
 KERN=		$S/kern
