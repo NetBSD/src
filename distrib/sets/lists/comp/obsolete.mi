@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.100 2003/10/08 04:25:43 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.101 2003/10/15 17:10:20 jmc Exp $
 ./usr/bin/genclass
 ./usr/bin/gettextize
 ./usr/include/bfd
@@ -537,6 +537,7 @@
 ./usr/include/milter
 ./usr/include/milter/mfapi.h
 ./usr/include/milter/mfdef.h
+./usr/include/net/if_ieee80211.h
 ./usr/include/netinet/if_arc.h
 ./usr/include/netinet6/icmp6.h
 ./usr/include/netinet6/ip6.h
