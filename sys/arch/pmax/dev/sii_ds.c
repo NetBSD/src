@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.6 1998/04/19 01:27:02 jonathan Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.7 1999/03/22 13:08:51 mrg Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/tty.h>
+
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 #include <machine/bus.h>

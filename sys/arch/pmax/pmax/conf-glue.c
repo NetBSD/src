@@ -1,4 +1,4 @@
-/*	$NetBSD: conf-glue.c,v 1.17 1998/05/08 00:05:20 simonb Exp $	*/
+/*	$NetBSD: conf-glue.c,v 1.18 1999/03/22 13:08:51 mrg Exp $	*/
 
 /*
  * conf-glue.c:
@@ -36,7 +36,6 @@
 #include "sii.h"
 #include "rz.h"
 #include "tz.h"
-
 
 /* declarations for glue to 4.4bsd pmax port SCSI drivers and autoconfig */
 #if NASC > 0
