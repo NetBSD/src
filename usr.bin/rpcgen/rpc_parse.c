@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_parse.c,v 1.11 2002/01/31 19:36:49 tv Exp $	*/
+/*	$NetBSD: rpc_parse.c,v 1.12 2002/02/05 22:02:15 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_parse.c,v 1.11 2002/01/31 19:36:49 tv Exp $");
+__RCSID("$NetBSD: rpc_parse.c,v 1.12 2002/02/05 22:02:15 christos Exp $");
 #endif
 #endif
 
@@ -460,8 +460,8 @@ get_declaration(dec, dkind)
 			}
 			dec->rel = REL_ARRAY;
 			if (peekscan(TOK_RANGLE, &tok)) {
-				dec->array_max = "~0";	/* unspecified size, use
-							 * max */
+				dec->array_max = "(u_int)~0";
+				/* unspecified size, use * max */
 			} else {
 				scan_num(&tok);
 				dec->array_max = tok.str;
@@ -529,7 +529,8 @@ get_prog_declaration(dec, dkind, num)
 		}
 		dec->rel = REL_ARRAY;
 		if (peekscan(TOK_RANGLE, &tok)) {
-			dec->array_max = "~0";	/* unspecified size, use max */
+			dec->array_max = "(u_int)~0";
+			/* unspecified size, use max */
 		} else {
 			scan_num(&tok);
 			dec->array_max = tok.str;
@@ -541,7 +542,8 @@ get_prog_declaration(dec, dkind, num)
 						 * type of argument - make it
 						 * string<> */
 			dec->rel = REL_ARRAY;
-			dec->array_max = "~0";	/* unspecified size, use max */
+			dec->array_max = "(u_int)~0";
+			/* unspecified size, use max */
 		}
 	}
 }
