@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.393 2001/11/05 15:05:55 hubertf Exp $
+#	$NetBSD: mi,v 1.394 2001/11/07 05:27:14 enami Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3291,7 +3291,7 @@
 ./usr/share/man/cat9/vn_ioctl.0		comp-sys-catman
 ./usr/share/man/cat9/vn_isunder.0		comp-sys-catman
 ./usr/share/man/cat9/vn_lock.0		comp-sys-catman
-./usr/share/man/cat9/vn_marktext.0		comp-sys-catman
+./usr/share/man/cat9/vn_markexec.0		comp-sys-catman
 ./usr/share/man/cat9/vn_open.0		comp-sys-catman
 ./usr/share/man/cat9/vn_poll.0		comp-sys-catman
 ./usr/share/man/cat9/vn_read.0		comp-sys-catman
@@ -5628,7 +5628,7 @@
 ./usr/share/man/man9/vn_ioctl.9		comp-sys-man
 ./usr/share/man/man9/vn_isunder.9		comp-sys-man
 ./usr/share/man/man9/vn_lock.9		comp-sys-man
-./usr/share/man/man9/vn_marktext.9		comp-sys-man
+./usr/share/man/man9/vn_markexec.9		comp-sys-man
 ./usr/share/man/man9/vn_open.9		comp-sys-man
 ./usr/share/man/man9/vn_poll.9		comp-sys-man
 ./usr/share/man/man9/vn_read.9		comp-sys-man
