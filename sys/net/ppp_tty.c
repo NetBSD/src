@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.14 1998/08/02 15:09:50 sommerfe Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.15 1998/12/12 18:21:32 christos Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -79,6 +79,7 @@
 #include "ppp.h"
 #if NPPP > 0
 
+#include "opt_ppp.h"
 #define VJC
 #define PPP_COMPRESS
 
