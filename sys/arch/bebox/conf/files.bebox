@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.22 2001/01/17 00:07:22 fvdl Exp $
+#	$NetBSD: files.bebox,v 1.23 2001/01/19 01:51:17 manu Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -17,6 +17,18 @@ file	arch/bebox/bebox/procfs_machdep.c	procfs
 
 # General files
 file	dev/cons.c
+
+#
+# Compatibility modules
+#
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/powerpc/files.linux_powerpc"
+file arch/powerpc/powerpc/linux_sigcode.S        compat_linux
 
 #
 # Machine-independent SCSI drivers
