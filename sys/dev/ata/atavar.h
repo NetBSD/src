@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.29 2003/10/08 10:58:12 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.30 2003/12/14 02:45:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -27,7 +27,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 /* Hight-level functions and structures used by both ATA and ATAPI devices */
@@ -183,15 +182,14 @@ struct ata_smart_thresholds {
 	int8_t			checksum;
 } __attribute__((packed));
 
-int  wdc_downgrade_mode __P((struct ata_drive_datas *, int));
+int	wdc_downgrade_mode(struct ata_drive_datas *, int);
 
 struct ataparams;
-int ata_get_params __P((struct ata_drive_datas *, u_int8_t,
-	 struct ataparams *));
-int ata_set_mode __P((struct ata_drive_datas *, u_int8_t, u_int8_t));
+int	ata_get_params(struct ata_drive_datas *, u_int8_t, struct ataparams *);
+int	ata_set_mode(struct ata_drive_datas *, u_int8_t, u_int8_t);
 /* return code for these cmds */
 #define CMD_OK    0
 #define CMD_ERR   1
 #define CMD_AGAIN 2
 
-void ata_dmaerr __P((struct ata_drive_datas *, int));
+void	ata_dmaerr(struct ata_drive_datas *, int);
