@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.10 2000/10/11 14:46:01 is Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.11 2000/12/16 01:36:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Andrew Doran.
@@ -50,13 +50,13 @@
  */
 
 /*
- * XXX there are too many oppertunities to trash the stack from the command
+ * XXX there are too many opportunities to trash the stack from the command
  * line - ad
  */
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.10 2000/10/11 14:46:01 is Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.11 2000/12/16 01:36:00 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/endian.h>
@@ -72,6 +72,7 @@ __RCSID("$NetBSD: cdplay.c,v 1.10 2000/10/11 14:46:01 is Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <machine/disklabel.h>
 
@@ -1032,26 +1033,11 @@ int
 opencd()
 {
 	char devbuf[80];
-	size_t len;
 
 	if (fd > -1)
 		return (1);
 
-	if (*cdname == '/')
-		strcpy(devbuf, cdname);
-	else
-		if (*cdname == 'r')
-			len = sprintf(devbuf, "/dev/%s", cdname);
-		else
-			len = sprintf(devbuf, "/dev/r%s", cdname);
-
-	fd = open(devbuf, O_RDONLY);
-
-	if (fd < 0 && errno == ENOENT) {
-		devbuf[len] = 'a' + RAW_PART;
-		devbuf[len + 1] = '\0';
-		fd = open(devbuf, O_RDONLY);
-	}
+	fd = opendisk(cdname, O_RDONLY, devbuf, sizeof(devbuf), 0);
 
 	if (fd < 0) {
 		if (errno == ENXIO) {
