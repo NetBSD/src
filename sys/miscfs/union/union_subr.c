@@ -34,8 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)union_subr.c	8.4 (Berkeley) 2/17/94
- *	$Id: union_subr.c,v 1.1 1994/06/08 11:34:00 mycroft Exp $
+ *	from: @(#)union_subr.c	8.9 (Berkeley) 5/17/94
+ *	$Id: union_subr.c,v 1.2 1994/06/15 23:07:59 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -49,6 +49,8 @@
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/queue.h>
+#include <sys/mount.h>
+#include <vm/vm.h>		/* for vnode_pager_setsize */
 #include <miscfs/union/union.h>
 
 /* must be power of two, otherwise change UNION_HASH() */
@@ -108,30 +110,34 @@ union_updatevp(un, uppervp, lowervp)
 {
 	int ohash = UNION_HASH(un->un_uppervp, un->un_lowervp);
 	int nhash = UNION_HASH(uppervp, lowervp);
+	int docache = (lowervp != NULLVP || uppervp != NULLVP);
 
-	if (ohash != nhash) {
-		/*
-		 * Ensure locking is ordered from lower to higher
-		 * to avoid deadlocks.
-		 */
-		if (nhash < ohash) {
-			int t = ohash;
-			ohash = nhash;
-			nhash = t;
-		}
+	/*
+	 * Ensure locking is ordered from lower to higher
+	 * to avoid deadlocks.
+	 */
+	if (nhash < ohash) {
+		int t = ohash;
+		ohash = nhash;
+		nhash = t;
+	}
 
+	if (ohash != nhash)
 		while (union_list_lock(ohash))
 			continue;
 
-		while (union_list_lock(nhash))
-			continue;
+	while (union_list_lock(nhash))
+		continue;
 
-		LIST_REMOVE(un, un_cache);
-		union_list_unlock(ohash);
-	} else {	
-		while (union_list_lock(nhash))
-			continue;
+	if (ohash != nhash || !docache) {
+		if (un->un_flags & UN_CACHED) {
+			LIST_REMOVE(un, un_cache);
+			un->un_flags &= ~UN_CACHED;
+		}
 	}
+
+	if (ohash != nhash)
+		union_list_unlock(ohash);
 
 	if (un->un_lowervp != lowervp) {
 		if (un->un_lowervp) {
@@ -146,6 +152,7 @@ union_updatevp(un, uppervp, lowervp)
 			}
 		}
 		un->un_lowervp = lowervp;
+		un->un_lowersz = VNOVAL;
 	}
 
 	if (un->un_uppervp != uppervp) {
@@ -153,10 +160,13 @@ union_updatevp(un, uppervp, lowervp)
 			vrele(un->un_uppervp);
 
 		un->un_uppervp = uppervp;
+		un->un_uppersz = VNOVAL;
 	}
 
-	if (ohash != nhash)
+	if (docache && (ohash != nhash)) {
 		LIST_INSERT_HEAD(&unhead[nhash], un, un_cache);
+		un->un_flags |= UN_CACHED;
+	}
 
 	union_list_unlock(nhash);
 }
@@ -177,6 +187,47 @@ union_newupper(un, uppervp)
 {
 
 	union_updatevp(un, uppervp, un->un_lowervp);
+}
+
+/*
+ * Keep track of size changes in the underlying vnodes.
+ * If the size changes, then callback to the vm layer
+ * giving priority to the upper layer size.
+ */
+void
+union_newsize(vp, uppersz, lowersz)
+	struct vnode *vp;
+	off_t uppersz, lowersz;
+{
+	struct union_node *un;
+	off_t sz;
+
+	/* only interested in regular files */
+	if (vp->v_type != VREG)
+		return;
+
+	un = VTOUNION(vp);
+	sz = VNOVAL;
+
+	if ((uppersz != VNOVAL) && (un->un_uppersz != uppersz)) {
+		un->un_uppersz = uppersz;
+		if (sz == VNOVAL)
+			sz = un->un_uppersz;
+	}
+
+	if ((lowersz != VNOVAL) && (un->un_lowersz != lowersz)) {
+		un->un_lowersz = lowersz;
+		if (sz == VNOVAL)
+			sz = un->un_lowersz;
+	}
+
+	if (sz != VNOVAL) {
+#ifdef UNION_DIAGNOSTIC
+		printf("union: %s size now %ld\n",
+			uppersz != VNOVAL ? "upper" : "lower", (long) sz);
+#endif
+		vnode_pager_setsize(vp, sz);
+	}
 }
 
 /*
@@ -224,7 +275,9 @@ union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp)
 	struct union_node *un;
 	struct union_node **pp;
 	struct vnode *xlowervp = NULLVP;
+	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	int hash;
+	int vflag;
 	int try;
 
 	if (uppervp == NULLVP && lowervp == NULLVP)
@@ -233,6 +286,18 @@ union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp)
 	if (uppervp && lowervp && (uppervp->v_type != lowervp->v_type)) {
 		xlowervp = lowervp;
 		lowervp = NULLVP;
+	}
+
+	/* detect the root vnode (and aliases) */
+	vflag = 0;
+	if ((uppervp == um->um_uppervp) &&
+	    ((lowervp == NULLVP) || lowervp == um->um_lowervp)) {
+		if (lowervp == NULLVP) {
+			lowervp = um->um_lowervp;
+			if (lowervp != NULLVP)
+				VREF(lowervp);
+		}
+		vflag = VROOT;
 	}
 
 loop:
@@ -394,6 +459,7 @@ loop:
 	MALLOC((*vpp)->v_data, void *, sizeof(struct union_node),
 		M_TEMP, M_WAITOK);
 
+	(*vpp)->v_flag |= vflag;
 	if (uppervp)
 		(*vpp)->v_type = uppervp->v_type;
 	else
@@ -401,7 +467,9 @@ loop:
 	un = VTOUNION(*vpp);
 	un->un_vnode = *vpp;
 	un->un_uppervp = uppervp;
+	un->un_uppersz = VNOVAL;
 	un->un_lowervp = lowervp;
+	un->un_lowersz = VNOVAL;
 	un->un_openl = 0;
 	un->un_flags = UN_LOCKED;
 	if (un->un_uppervp)
@@ -426,6 +494,7 @@ loop:
 	}
 
 	LIST_INSERT_HEAD(&unhead[hash], un, un_cache);
+	un->un_flags |= UN_CACHED;
 
 	if (xlowervp)
 		vrele(xlowervp);
@@ -442,13 +511,16 @@ union_freevp(vp)
 {
 	struct union_node *un = VTOUNION(vp);
 
-	LIST_REMOVE(un, un_cache);
+	if (un->un_flags & UN_CACHED) {
+		LIST_REMOVE(un, un_cache);
+		un->un_flags &= ~UN_CACHED;
+	}
 
-	if (un->un_uppervp)
+	if (un->un_uppervp != NULLVP)
 		vrele(un->un_uppervp);
-	if (un->un_lowervp)
+	if (un->un_lowervp != NULLVP)
 		vrele(un->un_lowervp);
-	if (un->un_dirvp)
+	if (un->un_dirvp != NULLVP)
 		vrele(un->un_dirvp);
 	if (un->un_path)
 		free(un->un_path, M_TEMP);
@@ -465,11 +537,11 @@ union_freevp(vp)
  * and (tvp) are locked on entry and exit.
  */
 int
-union_copyfile(p, cred, fvp, tvp)
-	struct proc *p;
-	struct ucred *cred;
+union_copyfile(fvp, tvp, cred, p)
 	struct vnode *fvp;
 	struct vnode *tvp;
+	struct ucred *cred;
+	struct proc *p;
 {
 	char *buf;
 	struct uio uio;
@@ -530,6 +602,76 @@ union_copyfile(p, cred, fvp, tvp)
 
 	free(buf, M_TEMP);
 	return (error);
+}
+
+/*
+ * (un) is assumed to be locked on entry and remains
+ * locked on exit.
+ */
+int
+union_copyup(un, docopy, cred, p)
+	struct union_node *un;
+	int docopy;
+	struct ucred *cred;
+	struct proc *p;
+{
+	int error;
+	struct vnode *lvp, *uvp;
+
+	error = union_vn_create(&uvp, un, p);
+	if (error)
+		return (error);
+
+	/* at this point, uppervp is locked */
+	union_newupper(un, uvp);
+	un->un_flags |= UN_ULOCK;
+
+	lvp = un->un_lowervp;
+
+	if (docopy) {
+		/*
+		 * XX - should not ignore errors
+		 * from VOP_CLOSE
+		 */
+		VOP_LOCK(lvp);
+		error = VOP_OPEN(lvp, FREAD, cred, p);
+		if (error == 0) {
+			error = union_copyfile(lvp, uvp, cred, p);
+			VOP_UNLOCK(lvp);
+			(void) VOP_CLOSE(lvp, FREAD);
+		}
+#ifdef UNION_DIAGNOSTIC
+		if (error == 0)
+			uprintf("union: copied up %s\n", un->un_path);
+#endif
+
+	}
+	un->un_flags &= ~UN_ULOCK;
+	VOP_UNLOCK(uvp);
+	union_vn_close(uvp, FWRITE, cred, p);
+	VOP_LOCK(uvp);
+	un->un_flags |= UN_ULOCK;
+
+	/*
+	 * Subsequent IOs will go to the top layer, so
+	 * call close on the lower vnode and open on the
+	 * upper vnode to ensure that the filesystem keeps
+	 * its references counts right.  This doesn't do
+	 * the right thing with (cred) and (FREAD) though.
+	 * Ignoring error returns is not right, either.
+	 */
+	if (error == 0) {
+		int i;
+
+		for (i = 0; i < un->un_openl; i++) {
+			(void) VOP_CLOSE(lvp, FREAD);
+			(void) VOP_OPEN(uvp, FREAD, cred, p);
+		}
+		un->un_openl = 0;
+	}
+
+	return (error);
+
 }
 
 /*
@@ -733,10 +875,11 @@ union_lowervp(vp)
 {
 	struct union_node *un = VTOUNION(vp);
 
-	if (un->un_lowervp && (vp->v_type == un->un_lowervp->v_type)) {
-		if (vget(un->un_lowervp, 0))
-			return (NULLVP);
+	if ((un->un_lowervp != NULLVP) &&
+	    (vp->v_type == un->un_lowervp->v_type)) {
+		if (vget(un->un_lowervp, 0) == 0)
+			return (un->un_lowervp);
 	}
 
-	return (un->un_lowervp);
+	return (NULLVP);
 }
