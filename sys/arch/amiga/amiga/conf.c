@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.38 1996/11/30 01:13:05 is Exp $	*/
+/*	$NetBSD: conf.c,v 1.39 1996/12/20 17:16:49 veego Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -57,6 +57,8 @@
 #include "fd.h"
 #include "ccd.h"
 #include "ss.h"
+#include "ch.h"
+#include "uk.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -120,7 +122,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
-	cdev_scanner_init(NSS,ss),	/* 25: SCSI scanner */
+	cdev_lkm_dummy(),		/* 25 */
 	cdev_lkm_dummy(),		/* 26 */
 	cdev_lkm_dummy(),		/* 27 */
 	cdev_lkm_dummy(),		/* 28 */
@@ -128,6 +130,13 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 30 */
  	cdev_tty_init(NMSC,msc),	/* 31: A2232 MSC Multiport serial */
 	cdev_tty_init(NDRCOM,drcom),	/* 32: DraCo com ports */
+	cdev_lkm_dummy(),		/* 33 */
+	cdev_lkm_dummy(),		/* 34 */
+	cdev_lkm_dummy(),		/* 35 */
+	cdev_lkm_dummy(),		/* 36 */
+	cdev_scanner_init(NSS,ss),	/* 37: SCSI scanner */
+	cdev_ch_init(NCH,ch),		/* 38: SCSI autochanger */
+	cdev_uk_init(NUK,uk),		/* 39: SCSI unknown */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -197,9 +206,9 @@ static int chrtoblktab[] = {
 	/*  4 */	NODEV,
 	/*  5 */	NODEV,
 	/*  6 */	NODEV,
-	/*  7 */	8,
-	/*  8 */	4,
-	/*  9 */	7,
+	/*  7 */	8,		/* ccd */
+	/*  8 */	4,		/* sd */
+	/*  9 */	7,		/* cd */
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
 	/* 12 */	NODEV,
@@ -208,9 +217,9 @@ static int chrtoblktab[] = {
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
-	/* 18 */	2,
-	/* 19 */	6,
-	/* 20 */	5,
+	/* 18 */	2,		/* fd */
+	/* 19 */	6,		/* vnd */
+	/* 20 */	5,		/* st */
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
 	/* 23 */	NODEV,
@@ -221,7 +230,15 @@ static int chrtoblktab[] = {
 	/* 28 */	NODEV,
 	/* 29 */	NODEV,
 	/* 30 */	NODEV,
-+ 	/* 31 */	NODEV,
+ 	/* 31 */	NODEV,
+ 	/* 32 */	NODEV,
+ 	/* 33 */	NODEV,
+ 	/* 34 */	NODEV,
+ 	/* 35 */	NODEV,
+ 	/* 36 */	NODEV,
+ 	/* 37 */	NODEV,
+ 	/* 38 */	NODEV,
+ 	/* 39 */	NODEV,
 };
 
 /*
