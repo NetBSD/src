@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.20 2004/07/12 23:56:57 wiz Exp $
+# $NetBSD: mi,v 1.21 2004/07/30 15:30:30 wiz Exp $
 ./etc/mtree/set.text				text-sys-root
 ./usr/bin/addftinfo				text-groff-bin
 ./usr/bin/checknr				text-groff-bin
@@ -247,11 +247,15 @@
 ./usr/share/groff_font/devlbp/TBI		text-groff-font		share
 ./usr/share/groff_font/devlbp/TI		text-groff-font		share
 ./usr/share/groff_font/devlbp/TR		text-groff-font		share
+./usr/share/groff_font/devlj4/AB		text-groff-font		share
+./usr/share/groff_font/devlj4/ABI		text-groff-font		share
+./usr/share/groff_font/devlj4/AI		text-groff-font		share
 ./usr/share/groff_font/devlj4/ALBB		text-groff-font		share
 ./usr/share/groff_font/devlj4/ALBR		text-groff-font		share
 ./usr/share/groff_font/devlj4/AOB		text-groff-font		share
 ./usr/share/groff_font/devlj4/AOI		text-groff-font		share
 ./usr/share/groff_font/devlj4/AOR		text-groff-font		share
+./usr/share/groff_font/devlj4/AR		text-groff-font		share
 ./usr/share/groff_font/devlj4/CB		text-groff-font		share
 ./usr/share/groff_font/devlj4/CBI		text-groff-font		share
 ./usr/share/groff_font/devlj4/CI		text-groff-font		share
@@ -273,8 +277,13 @@
 ./usr/share/groff_font/devlj4/OI		text-groff-font		share
 ./usr/share/groff_font/devlj4/OR		text-groff-font		share
 ./usr/share/groff_font/devlj4/S			text-groff-font		share
+./usr/share/groff_font/devlj4/SYMBOL		text-groff-font		share
 ./usr/share/groff_font/devlj4/TB		text-groff-font		share
 ./usr/share/groff_font/devlj4/TBI		text-groff-font		share
+./usr/share/groff_font/devlj4/TNRB		text-groff-font		share
+./usr/share/groff_font/devlj4/TNRBI		text-groff-font		share
+./usr/share/groff_font/devlj4/TNRI		text-groff-font		share
+./usr/share/groff_font/devlj4/TNRR		text-groff-font		share
 ./usr/share/groff_font/devlj4/TI		text-groff-font		share
 ./usr/share/groff_font/devlj4/TR		text-groff-font		share
 ./usr/share/groff_font/devlj4/UB		text-groff-font		share
@@ -285,11 +294,15 @@
 ./usr/share/groff_font/devlj4/UCR		text-groff-font		share
 ./usr/share/groff_font/devlj4/UI		text-groff-font		share
 ./usr/share/groff_font/devlj4/UR		text-groff-font		share
+./usr/share/groff_font/devlj4/WINGDINGS		text-groff-font		share
 ./usr/share/groff_font/devlj4/generate/Makefile	text-groff-font		obsolete
 ./usr/share/groff_font/devlj4/generate/special.map	text-groff-font		obsolete
 ./usr/share/groff_font/devlj4/generate/text.map	text-groff-font		obsolete
+./usr/share/groff_font/devlj4/special.awk	text-groff-font		share
 ./usr/share/groff_font/devlj4/special.map	text-groff-font		share
+./usr/share/groff_font/devlj4/symbol.map	text-groff-font		share
 ./usr/share/groff_font/devlj4/text.map		text-groff-font		share
+./usr/share/groff_font/devlj4/wingdings.map	text-groff-font		share
 ./usr/share/groff_font/devps/AB			text-groff-font		share
 ./usr/share/groff_font/devps/ABI		text-groff-font		share
 ./usr/share/groff_font/devps/AI			text-groff-font		share
@@ -391,6 +404,7 @@
 ./usr/share/man/cat5/groff_font.0		text-groff-catman	.cat
 ./usr/share/man/cat5/groff_out.0		text-groff-catman	.cat
 ./usr/share/man/cat5/groff_tmac.0		text-groff-catman	.cat
+./usr/share/man/cat5/lj4_font.0		text-groff-catman	.cat
 ./usr/share/man/cat5/tmac.0			text-groff-catman	.cat
 ./usr/share/man/cat7/ditroff.0			text-groff-catman	.cat
 ./usr/share/man/cat7/groff.0			text-groff-catman	.cat
@@ -443,6 +457,7 @@
 ./usr/share/man/man5/groff_font.5		text-groff-man		.man
 ./usr/share/man/man5/groff_out.5		text-groff-man		.man
 ./usr/share/man/man5/groff_tmac.5		text-groff-man		.man
+./usr/share/man/man5/lj4_font.5		text-groff-man		.man
 ./usr/share/man/man5/tmac.5			text-groff-man		.man
 ./usr/share/man/man7/ditroff.7			text-groff-man		.man
 ./usr/share/man/man7/groff.7			text-groff-man		.man
@@ -510,6 +525,7 @@
 ./usr/share/tmac/hyphenex.us			text-groff-share	share
 ./usr/share/tmac/latin1.tmac			text-groff-share	share
 ./usr/share/tmac/latin2.tmac			text-groff-share	share
+./usr/share/tmac/latin5.tmac			text-groff-share	share
 ./usr/share/tmac/latin9.tmac			text-groff-share	share
 ./usr/share/tmac/lbp.tmac			text-groff-share	share
 ./usr/share/tmac/lj4.tmac			text-groff-share	share
