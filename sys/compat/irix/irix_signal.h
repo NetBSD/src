@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.h,v 1.7 2002/04/06 22:58:43 manu Exp $ */
+/*	$NetBSD: irix_signal.h,v 1.8 2002/04/12 18:44:58 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -73,13 +73,6 @@ typedef struct irix_sigcontext {
 #define IRIX_SS_ONSTACK	0x00000001
 #define IRIX_SS_DISABLE 0x00000002
 
-/* From IRIX sigreturn(2) man page */
-struct irix_sigreturna {
-	irix_sigcontext_t *scp;
-	void *ucp;
-	int signo;
-};
-
 /* From IRIX's <sys/ucontext.h> */
 #define IRIX_UC_SIGMASK	001
 #define IRIX_UC_STACK	002
@@ -87,6 +80,11 @@ struct irix_sigreturna {
 #define IRIX_UC_MAU	010
 #define IRIX_UC_MCONTEXT (IRIX_UC_CPU|IRIX_UC_MAU)
 #define IRIX_UC_ALL	(IRIX_UC_SIGMASK|IRIX_UC_STACK|IRIX_UC_MCONTEXT)
+
+#define IRIX_CTX_MDLO	32
+#define IRIX_CTX_MDHI	33
+#define IRIX_CTX_CAUSE	34
+#define IRIX_CTX_EPC	35
 
 #if 1 /* _MIPS_SZLONG == 32 */
 typedef struct irix__sigaltstack {
@@ -159,6 +157,19 @@ typedef struct irix_irix5_siginfo {
 #define isi_status	__data.__proc.__pdata.__cld.__status
 #define isi_addr	__data.__fault.__addr;
 #define isi_trap
+
+struct irix_sigframe {
+	int isf_pad1[7];
+	int *isf_errno;
+	int isf_pad2;
+	int isf_signo;
+	struct irix_sigcontext *isf_scp;
+	struct irix_ucontext *isf_ucp;
+	union {
+		struct irix_ucontext iuc;	
+		struct irix_sigcontext isc;
+	} isf_ctx;
+};
 
 
 #ifdef _KERNEL
