@@ -35,28 +35,31 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.10 1993/10/12 23:30:55 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.11 1993/10/16 06:41:37 mycroft Exp $
  */
 
-#include "param.h"
-#include "dkbad.h"
-#include "systm.h"
-#include "conf.h"
-#include "file.h"
-#include "ioctl.h"
-#include "disklabel.h"
-#include "buf.h"
-#include "uio.h"
-#include "syslog.h"
-#include "sys/device.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/device.h>
+#include <sys/disklabel.h>
+#include <sys/dkstat.h>
+#include <sys/dkbad.h>
+#include <sys/disk.h>
+#include <sys/buf.h>
+#include <sys/uio.h>
+#include <sys/syslog.h>
 
-#include "machine/cpu.h"
-#include "machine/pio.h"
+#include <machine/cpu.h>
+#include <machine/pio.h>
 
-#include "i386/isa/isavar.h"
-#include "i386/isa/icu.h"
-#include "i386/isa/fdreg.h"
-#include "i386/isa/nvram.h"
+#include <i386/isa/isavar.h>
+#include <i386/isa/icu.h>
+#include <i386/isa/fdreg.h>
+#include <i386/isa/nvram.h>
 
 #define	FDUNIT(s)	((s)>>3)
 #define	FDTYPE(s)	((s)&7)
@@ -120,7 +123,7 @@ static void fdcattach __P((struct device *, struct device *, void *));
 static int fdcintr __P((void *));
 
 struct	cfdriver fdccd =
-{ NULL, "fdc", fdcprobe, fdcattach, sizeof(struct fdc_softc) };
+{ NULL, "fdc", fdcprobe, fdcattach, DV_DULL, sizeof(struct fdc_softc) };
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -151,7 +154,7 @@ static struct fd_type fd_types[] = {
 
 /* software state, per disk (with up to 2 disks per ctlr) */
 struct fd_softc {
-	struct	device sc_dev;
+	struct	dkdevice sc_dk;
 
 	struct	fd_type *sc_deftype;	/* default type descriptor */
 	struct	fd_type *sc_type;	/* current type descriptor */
@@ -180,12 +183,13 @@ static int fdmatch __P((struct device *, struct cfdata *, void *));
 static void fdattach __P((struct device *, struct device *, void *));
 
 struct	cfdriver fdcd =
-{ NULL, "fd", fdmatch, fdattach, sizeof(struct fd_softc) };
+{ NULL, "fd", fdmatch, fdattach, DV_DISK, sizeof(struct fd_softc) };
 
-extern int hz;
+void fdstrategy __P((struct buf *));
+
+static struct dkdriver fddkdriver = { fdstrategy };
 
 static struct fd_type *fd_nvtotype __P((char *, int, int));
-
 static void set_motor __P((struct fd_softc *fd, int reset));
 static void fd_turnoff __P((struct fd_softc *fd));
 static void fd_motor_on __P((struct fd_softc *fd));
@@ -354,6 +358,8 @@ fdattach(parent, self, aux)
 	fd->sc_track = -1;
 	fd->sc_drive = fa->fa_drive;
 	fd->sc_deftype = type;
+	fd->sc_dk.dk_driver = &fddkdriver;
+	/* XXX need to do some more fiddling with sc_dk */
 	fdc->sc_fd[fd->sc_drive] = fd;
 }
 
@@ -398,7 +404,7 @@ fdstrategy(bp)
 {
 	int	fdu = FDUNIT(minor(bp->b_dev));
 	struct	fd_softc *fd = fdcd.cd_devs[fdu];
-	struct	fdc_softc *fdc = (struct fdc_softc *)fd->sc_dev.dv_parent;
+	struct	fdc_softc *fdc = (struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent;
 	struct	fd_type *type = fd->sc_type;
 	register struct buf *dp;
 	int	nblks;
@@ -440,7 +446,7 @@ set_motor(fd, reset)
 	struct fd_softc *fd;
 	int reset;
 {
-	struct	fdc_softc *fdc = (struct fdc_softc *)fd->sc_dev.dv_parent;
+	struct	fdc_softc *fdc = (struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent;
 	u_char	status = fd->sc_drive | (reset ? 0 : (FDO_FRST|FDO_FDMAEN));
 
 	if ((fd = fdc->sc_fd[0]) && (fd->sc_flags & FD_MOTOR))
@@ -466,7 +472,7 @@ static void
 fd_motor_on(fd)
 	struct fd_softc *fd;
 {
-	struct fdc_softc *fdc = (struct fdc_softc *)fd->sc_dev.dv_parent;
+	struct fdc_softc *fdc = (struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent;
 	int s = splbio();
 
 	fd->sc_flags &= ~FD_MOTOR_WAIT;
@@ -609,7 +615,7 @@ fd_timeout(fdc)
 	st0 = in_fdc(iobase);
 	cyl = in_fdc(iobase);
 
-	printf("fd%d: timeout st0 %b cyl %d st3 %b\n", fd->sc_dev.dv_unit,
+	printf("%s: timeout st0 %b cyl %d st3 %b\n", fd->sc_dk.dk_dev.dv_xname,
 		st0, NE7_ST0BITS, cyl, st3, NE7_ST3BITS);
 
 	if (bp) {
@@ -667,22 +673,21 @@ fdcstate(fdc)
 		fdc->sc_state = DEVIDLE;
 #ifdef DIAGNOSTIC
 		if (fd) {
-			printf("fdc%d: stray afd fd%d\n", fdc->sc_dev.dv_unit,
-				fd->sc_dev.dv_unit);
+			printf("%s: stray afd %s\n", fdc->sc_dev.dv_xname,
+				fd->sc_dk.dk_dev.dv_xname);
 			fdc->sc_afd = NULL;
 		}
 #endif
-		TRACE1("[fdc%d IDLE]", fdc->sc_dev.dv_unit);
+		TRACE1("[%s IDLE]", fdc->sc_dev.dv_xname);
  		return 0;
 	}
 	fdu = FDUNIT(minor(bp->b_dev));
 #ifdef DIAGNOSTIC
 	if (fd && (fd != fdcd.cd_devs[fdu]))
-		printf("fdc%d: confused fd pointers\n",
-			fdc->sc_dev.dv_unit);
+		printf("%s: confused fd pointers\n", fdc->sc_dev.dv_xname);
 #endif
 	read = bp->b_flags & B_READ;
-	TRACE1("fd%d", fdu);
+	TRACE1("%s", fd->sc_dk.dk_dev.dv_xname);
 	TRACE1("[%s]", fdc_states[fdc->sc_state]);
 	TRACE1("(0x%x)", fd->sc_flags);
 	untimeout((timeout_t)fd_turnoff, (caddr_t)fd);
@@ -736,8 +741,9 @@ fdcstate(fdc)
 			st0 = in_fdc(iobase);
 			cyl = in_fdc(iobase);
 			if (cyl != descyl) {
-				printf("fd%d: seek failed; expected %d got %d st0 %b\n", fdu,
-				descyl, cyl, st0, NE7_ST0BITS);
+				printf("%s: seek failed; expected %d got %d st0 %b\n",
+				       fd->sc_dk.dk_dev.dv_xname, descyl, cyl, st0,
+				       NE7_ST0BITS);
 				return fdcretry(fdc);
 			}
 		}
@@ -828,8 +834,8 @@ fdcstate(fdc)
 		st0 = in_fdc(iobase);
 		cyl = in_fdc(iobase);
 		if (cyl != 0) {
-			printf("fd%d: recalibrate failed st0 %b cyl %d\n",
-				fdu, st0, NE7_ST0BITS, cyl);
+			printf("%s: recalibrate failed st0 %b cyl %d\n",
+				fd->sc_dk.dk_dev.dv_xname, st0, NE7_ST0BITS, cyl);
 			return fdcretry(fdc);
 		}
 		fd->sc_track = 0;
@@ -847,8 +853,8 @@ fdcstate(fdc)
 		out_fdc(iobase, NE7CMD_SENSEI);
 		st0 = in_fdc(iobase);
 		cyl = in_fdc(iobase);
-		printf("fdc%d: stray interrupt st0 %b cyl %lx ", st0,
-			NE7_ST0BITS, cyl);
+		printf("%s: stray interrupt st0 %b cyl %lx ", fdc->sc_dev.dv_xname,
+		       st0, NE7_ST0BITS, cyl);
 		out_fdc(iobase, 0x4a); 		/* XXXX */
 		out_fdc(iobase, fd->sc_drive);
 		for (i = 0; i < 7; i++)
