@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.183 2000/01/11 17:20:24 matt Exp $
+$NetBSD: pcidevs,v 1.184 2000/01/12 09:08:36 haya Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1323,6 +1323,7 @@ product TOSHIBA2 HOST		0x0601  Host Bridge/Controller
 product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI Bridge
 product TOSHIBA2 ToPIC95B	0x060a	ToPIC95B CardBus-PCI Bridge
 product TOSHIBA2 ToPIC97	0x060f	ToPIC97 CardBus-PCI Bridge
+product TOSHIBA2 ToPIC100	0x0617	ToPIC100 CardBus-PCI Bridge
 product TOSHIBA2 FIRO		0x0701	Fast Infrared Type O
 
 /* Trident products */
