@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.2 1998/07/12 20:32:30 augustss Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.3 1998/07/12 20:40:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <err.h>
+#include <errno.h>
 #include <dev/usb/usb.h>
 
 #define USBDEV "/dev/usb"
@@ -188,6 +189,9 @@ main(argc, argv)
 			if (f >= 0) {
 				dumpone(buf, f, addr);
 				close(f);
+			} else {
+				if (errno == EACCES)
+					warn("%s", buf);
 			}
 		}
 	} else {
