@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.34 2002/06/02 14:59:11 drochner Exp $
+.\"	$NetBSD: uvm.9,v 1.35 2002/09/22 07:22:27 chs Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -129,6 +129,10 @@ initialises the swap sub-system.
 .Fn uvmspace_share "struct proc *p1" "struct proc *p2"
 .Ft void
 .Fn uvmspace_unshare "struct proc *p"
+.Ft vaddr_t
+.Fn uvm_uarea_alloc "void"
+.Ft void
+.Fn uvm_uarea_free "vaddr_t va"
 .nr nS 0
 .Pp
 .Fn uvm_map
@@ -342,6 +346,16 @@ ensures that process
 has its own, unshared address space, by creating a new one if
 necessary by calling
 .Fn uvmspace_fork .
+.Pp
+.Fn uvm_uarea_alloc
+allocates virtual space for a u-area (ie. a kernel stack) and returns
+its virtual address.
+.Pp
+.Fn uvm_uarea_free
+frees a u-area allocated with
+.Fn uvm_uarea_alloc ,
+freeing both the virtual space and any physical pages which may have been
+allocated to back that virtual space later.
 .Sh PAGE FAULT HANDLING
 .nr nS 1
 .Ft int
@@ -482,6 +496,7 @@ The flags can be any of:
 .Bd -literal
 #define UVM_KMF_NOWAIT  0x1                     /* matches M_NOWAIT */
 #define UVM_KMF_VALLOC  0x2                     /* allocate VA only */
+#define UVM_KMF_CANFAIL 0x4			/* caller handles failure */
 #define UVM_KMF_TRYLOCK UVM_FLAG_TRYLOCK        /* try locking only */
 .Ed
 .Pp
@@ -490,13 +505,25 @@ causes
 .Fn uvm_km_kmemalloc
 to return immediately if no memory is available.
 .Dv UVM_KMF_VALLOC
-causes no pages to be allocated, only a virtual address.
+causes no physical pages to be allocated, only virtual space.
 .Dv UVM_KMF_TRYLOCK
 causes
 .Fn uvm_km_kmemalloc
 to use
 .Fn simple_lock_try
 when locking maps.
+.Dv UVM_KMF_CANFAIL
+indicates that
+.Fn uvm_km_kmemalloc
+can return 0 even if
+.Dv UVM_KMF_NOWAIT
+is not specified.  (If neither
+.Dv UVM_KMF_NOWAIT
+nor
+.Dv UVM_KMF_CANFAIL
+is specified,
+.Fn uvm_km_kmemalloc
+will never fail, but rather sleep indefinitely until the allocation succeeds.)
 .Pp
 .Fn uvm_km_valloc
 and

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.16 2002/08/14 15:30:11 wiz Exp $
+.\"	$NetBSD: pmap.9,v 1.17 2002/09/22 07:22:28 chs Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,6 +70,8 @@
     "int flags"
 .Ft void
 .Fn "pmap_remove" "pmap_t pmap" "vaddr_t sva" "vaddr_t eva"
+.Ft void
+.Fn "pmap_remove_all" "pmap_t pmap"
 .Ft void
 .Fn "pmap_protect" "pmap_t pmap" "vaddr_t sva" "vaddr_t eva" "vm_prot_t prot"
 .Ft void
@@ -514,6 +516,39 @@ Remove mappings from the virtual address range
 to
 .Fa eva
 from the specified physical map.
+.It void Fn "pmap_remove_all" "pmap_t pmap"
+This function is a hint to the
+.Nm pmap
+implementation that all entries in
+.Fa pmap
+will be removed before any more entries are entered.
+Following this call, there will be
+.Fn pmap_remove
+calls resulting in every mapping being removed, followed by either
+.Fn pmap_destroy
+or
+.Fn pmap_update .
+No other
+.Nm pmap
+interfaces which take
+.Fa pmap
+as an argument will called during this process.  Other interfaces which
+might need to access
+.Fa pmap
+(such as
+.Fn pmap_page_protect )
+are permitted during this process.
+.Pp
+The
+.Nm pmap
+implementation is free to either remove all the
+.Nm pmap 's
+mappings immediately in
+.Fn pmap_remove_all ,
+or to use the knowledge of the upcoming
+.Fn pmap_remove
+calls to optimize the removals (or to just ignore this call).
+.Pp
 .It void Fn "pmap_protect" "pmap_t pmap" "vaddr_t sva" "vaddr_t eva" \
     "vm_prot_t prot"
 Set the protection of the mappings in the virtual address range
