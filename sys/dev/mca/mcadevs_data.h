@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.12 2001/04/20 07:38:11 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.13 2001/04/20 10:05:17 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.11 2001/04/20 07:37:42 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.12 2001/04/20 10:03:35 jdolecek Exp 
  */
 
 /*-
@@ -177,7 +177,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x678C,	"NeoTecH S2M100 Dual RS-232 Async. Adapter" },
     { 0x678D,	"NeoTecH MSP/4 4-Channel Serial/Parallel Adapter" },
     { 0x678F,	"BBS GPIB-3000 IEEE-488 Adapter" },
-    { 0x6781,	"NeoTecH Single RS-232 Async. Adapter, SM110" },
+    { 0x6791,	"NeoTecH Single RS-232 Async. Adapter, SM110" },
     { 0x6792,	"NeoTecH SPM121/SPM321 Serial/Parallel Adapter" },
     { 0x6795,	"NeoTecH S1M200 Single RS-422/485 Async. Adapter" },
     { 0x6796,	"NeoTecH PM101 Single Bidirectional Parallel Adapter" },
