@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 1997/03/22 09:03:29 thorpej Exp $	 */
+/*	$NetBSD: conf.c,v 1.3 1998/12/19 19:44:56 he Exp $	 */
 
 /*
  * Copyright (c) 1997
@@ -36,6 +36,7 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
+#include <lib/libsa/ustarfs.h>
 
 #include <biosdisk.h>
 
@@ -45,6 +46,8 @@ struct devsw devsw[] = {
 int ndevs = sizeof(devsw) / sizeof(struct devsw);
 
 struct fs_ops file_system[] = {
-	{ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat},
+	{ ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write, 
+		ustarfs_seek, ustarfs_stat },
+	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
 };
 int nfsys = sizeof(file_system) / sizeof(struct fs_ops);
