@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.61 2000/01/10 03:24:41 simonb Exp $	*/
+/*	$NetBSD: scc.c,v 1.62 2000/01/18 12:19:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.61 2000/01/10 03:24:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.62 2000/01/18 12:19:49 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -231,8 +231,10 @@ static void	rr __P((char *, scc_regmap_t *));
 static void	scc_modem_intr __P((dev_t));
 static void	sccreset __P((struct scc_softc *));
 
+#if NRASTERCONSOLE > 0
 static void	scc_kbd_init __P((struct scc_softc *sc, dev_t dev));
 static void	scc_mouse_init __P((struct scc_softc *sc, dev_t dev));
+#endif
 static void	scc_tty_init __P((struct scc_softc *sc, dev_t dev));
 
 static void	scc_txintr __P((struct scc_softc *, int, scc_regmap_t *));
@@ -450,6 +452,7 @@ scc_tty_init(sc, dev)
 	splx(s);
 }
 
+#if NRASTERCONSOLE > 0
 static void
 scc_kbd_init(sc, dev)
 	struct scc_softc *sc;
@@ -512,6 +515,7 @@ done:
 
 	splx(s);
 }
+#endif
 
 
 /*
