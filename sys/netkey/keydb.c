@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.c,v 1.9 2003/02/01 06:23:47 thorpej Exp $	*/
+/*	$NetBSD: keydb.c,v 1.10 2003/06/28 14:33:39 simonb Exp $	*/
 /*	$KAME: keydb.c,v 1.64 2000/05/11 17:02:30 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.9 2003/02/01 06:23:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keydb.c,v 1.10 2003/06/28 14:33:39 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -217,7 +217,7 @@ keydb_newsecreplay(wsize)
 
 	bzero(p, sizeof(*p));
 	if (wsize != 0) {
-		p->bitmap = (caddr_t)malloc(wsize, M_SECA, M_NOWAIT);
+		p->bitmap = malloc(wsize, M_SECA, M_NOWAIT);
 		if (!p->bitmap) {
 			free(p, M_SECA);
 			return NULL;
