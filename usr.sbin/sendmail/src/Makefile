@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 1997/07/13 20:15:16 cjs Exp $
+#	$NetBSD: Makefile,v 1.32 1997/07/13 20:42:17 cjs Exp $
 #
 #  NetBSD Makefile
 #
@@ -33,8 +33,6 @@ SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	mci.c mime.c parseaddr.c queue.c readcf.c recipient.c safefile.c \
 	savemail.c srvrsmtp.c stab.c stats.c sysexits.c trace.c udb.c \
 	usersmtp.c util.c version.c
-DPADD=	
-LDADD=	
 MAN=	aliases.5 mailq.1 newaliases.1 sendmail.8
 LINKS=	/usr/sbin/sendmail /usr/bin/newaliases \
 	/usr/sbin/sendmail /usr/bin/mailq
