@@ -20,7 +20,7 @@ strip \- Discard symbols from object files.
 .RB "[\|" \-O\ \fIbfdname\fR\ |\ \fB\-\-output\-target=\fIbfdname\fP "\|]"
 .RB "[\|" \-R\ \fIsectionname\fR\ |\ \fB\-\-remove\-section=\fIsectionname\fP "\|]"
 .RB "[\|" \-s\fR\ |\ \fB\-\-strip\-all "\|]"
-.RB "[\|" \-S\fR\ |\ \fB\-g\fR\ |\ \fB\-\-strip\-debug "\|]"
+.RB "[\|" \-S\fR\ |\ \fB\-g\fR\ |\ \fB\-d\fR\ |\ \fB\-\-strip\-debug "\|]"
 .RB "[\|" \-\-strip\-unneeded\fR "\|]"
 .RB "[\|" \-x\fR\ |\ \fB\-\-discard\-all "\|]"
 .RB "[\|" \-X\fR\ |\ \fB\-\-discard\-locals "\|]"
@@ -92,6 +92,8 @@ Remove all symbols.
 .B \-S
 .TP
 .B \-g
+.TP
+.B \-d
 .TP
 .B \-\-strip\-debug
 Remove debugging symbols only.
