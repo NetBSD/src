@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2004/11/14 11:26:48 yamt Exp $
+#	$NetBSD: Makefile,v 1.3 2004/11/14 20:27:13 yamt Exp $
+
+.include <bsd.own.mk>
 
 SUBDIR=		authpf
 SUBDIR+=	ftp-proxy
@@ -10,6 +12,8 @@ SUBDIR+=	spamdb
 SUBDIR+=	spamlogd
 
 SUBDIR+=	man
-SUBDIR+=	etc
+
+configinstall:
+	${MAKEDIRTARGET} etc configinstall
 
 .include <bsd.subdir.mk>
