@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rhreg.h,v 1.4 1995/02/16 21:57:38 chopps Exp $	*/
+/*	$NetBSD: grf_rhreg.h,v 1.5 1995/08/20 02:54:36 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -36,12 +36,6 @@
 #define EMPTY_ALPHA 0x2010 /* this is the char and the attribute
                               that AlphaErase will fill into the
                               text-screen  */
-
-#define MEMCLK 65000000  /* this is the memory clock value, you shouldn't
-                            set it to less than 65000000, higher values may
-                            speed up blits a little bit, if you raise this
-                            value too much, some trash will appear on your
-                            screen. */
 
 #define MEMSIZE 4        /* Set this to 1 or 4 (MB), according to the
                             RAM on your Retina BLT Z3 board */
