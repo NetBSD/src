@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.195 2004/02/01 12:38:24 uwe Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.196 2004/06/19 04:15:30 itohy Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.193 2004/02/01 12:35:59 uwe Exp 
+ *	NetBSD: pcmciadevs,v 1.194 2004/06/19 04:13:12 itohy Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1224,6 +1224,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Corega K.K.",
 	    "Corega FEther PCC-TXF",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_FETHER_II_PCC_TXD,
+	    PCMCIA_CIS_COREGA_FETHER_II_PCC_TXD,
+	    0,
+	    "Corega K.K.",
+	    "Corega FEtherII PCC-TXD",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11,
