@@ -1,4 +1,4 @@
-/*	$NetBSD: sccreg.h,v 1.4 1994/10/26 21:09:17 cgd Exp $	*/
+/*	$NetBSD: sccreg.h,v 1.5 1998/11/15 11:21:52 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -70,7 +70,7 @@
  * some registers are used for the other channel, the following macros
  * are used to access the register ports.
  */
-typedef struct {
+typedef struct scc_regmap {
     /* Channel B is first, then A */
     struct {
 	char		scc_pad0;
