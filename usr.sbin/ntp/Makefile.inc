@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.10 2003/10/21 10:01:22 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2003/12/04 16:41:56 drochner Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=1
 
 .include <bsd.own.mk>
-
-NTPDOCDIR?=	${HTMLDOCDIR}/ntp
 
 DIST=		${NETBSDSRCDIR}/dist/ntp
 
@@ -13,7 +11,8 @@ CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/include -DHAVE_CONFIG_H
 
 .if defined(PROG)
 LIBNTP!=	cd ${.CURDIR}/../libntp && ${PRINTOBJDIR}
-LDADD+=		-L${LIBNTP} -lntp
+LIBISC!=	cd ${.CURDIR}/../libisc && ${PRINTOBJDIR}
+LDADD+=		-L${LIBNTP} -lntp -lcrypto
 DPADD+=		${LIBNTP}/libntp.a
 
 SRCS+=	version.c

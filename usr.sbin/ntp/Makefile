@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2001/04/19 17:48:18 drochner Exp $
+#	$NetBSD: Makefile,v 1.6 2003/12/04 16:41:56 drochner Exp $
 
-SUBDIR=	html libntp libparse .WAIT ntpd ntpdate ntpdc ntpq ntptime \
-	ntptimeset ntptrace
+SUBDIR=	libisc libntp libparse .WAIT
+SUBDIR+= ntp-keygen ntpd ntpdate ntpdc ntpq ntptime
+SUBDIR+= ntptrace
 
 .include <bsd.subdir.mk>
