@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.32 1996/10/13 02:10:56 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.32.4.1 1997/02/07 18:06:53 is Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -70,6 +70,8 @@
 
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
+
+#include <net/if_ether.h>
 
 #include <netinet/in.h>
 #include <netinet/if_arc.h>
