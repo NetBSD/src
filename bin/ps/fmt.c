@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.17 2002/02/14 06:54:41 enami Exp $	*/
+/*	$NetBSD: fmt.c,v 1.18 2002/02/14 06:57:19 enami Exp $	*/
 
 #include <kvm.h>
 #include <stdio.h>
@@ -36,9 +36,8 @@ fmt_puts(s, leftp)
 		v = nv;
 		maxlen = nlen;
 	}
-	strvis(v, s, VIS_TAB | VIS_NL | VIS_CSTYLE);
+	len = strvis(v, s, VIS_TAB | VIS_NL | VIS_CSTYLE);
 	if (*leftp != -1) {
-		len = strlen(v);
 		if (len > *leftp) {
 			v[*leftp] = '\0';
 			*leftp = 0;
