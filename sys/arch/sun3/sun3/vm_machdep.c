@@ -72,6 +72,13 @@ cpu_fork(p1, p2)
 	int offset;
 	extern caddr_t getsp();
 	extern char kstack[];
+	
+	/* copy over the machdep part of struct proc, so we don't lose
+	   any emulator-properties of processes. */
+	bcopy (&p1->p_md, &p2->p_md, sizeof (struct mdproc));
+
+	/* need to copy current frame pointer */
+	p2->p_regs = p1->p_regs;
 
 	/*
 	 * Copy pcb and stack from proc p1 to p2. 
