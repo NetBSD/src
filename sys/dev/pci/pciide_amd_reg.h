@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_amd_reg.h,v 1.3 2001/05/06 20:06:35 fvdl Exp $	*/
+/*	$NetBSD: pciide_amd_reg.h,v 1.4 2001/10/21 18:49:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 David Sainty.
@@ -80,4 +80,5 @@ static const int8_t amd7x6_pio_rec[] = {0x08, 0x08, 0x08, 0x02, 0x00};
 #define AMD7X6_UDMA_EN_MTH(channel, drive) (0x80 << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
 
-static const int8_t amd7x6_udma_tim[] = {0x02, 0x01, 0x00, 0x04, 0x05, 0x06};
+static const int8_t amd7x6_udma_tim[] __attribute__((__unused__)) =
+    {0x02, 0x01, 0x00, 0x04, 0x05, 0x06};

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_cy693_reg.h,v 1.4 2000/05/15 08:46:01 bouyer Exp $	*/
+/*	$NetBSD: pciide_cy693_reg.h,v 1.5 2001/10/21 18:49:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -63,11 +63,15 @@
 #define CY_CMD_CTRL_IOR_PULSE_OFF(drive)	(4 + 16 * (drive))
 #define CY_CMD_CTRL_IOR_REC_OFF(drive)		(0 + 16 * (drive))
 
-static int8_t cy_pio_pulse[] = {9, 4, 3, 2, 2};
-static int8_t cy_pio_rec[] =   {9, 7, 4, 2, 0};
+static const int8_t cy_pio_pulse[] __attribute__((__unused__)) =
+    {9, 4, 3, 2, 2};
+static const int8_t cy_pio_rec[] __attribute__((__unused__)) =
+    {9, 7, 4, 2, 0};
 #ifdef unused
-static int8_t cy_dma_pulse[] = {7, 2, 2};
-static int8_t cy_dma_rec[] =   {7, 1, 0};
+static const int8_t cy_dma_pulse[] __attribute__((__unused__)) =
+    {7, 2, 2};
+static const int8_t cy_dma_rec[] __attribute__((__unused__)) =
+    {7, 1, 0};
 #endif
 
 /*
