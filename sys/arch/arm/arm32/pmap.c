@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 2002/01/17 03:06:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 2002/01/20 03:41:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2002/01/17 03:06:21 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2002/01/20 03:41:48 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -303,8 +303,6 @@ int l1pt_reuse_count;			/* stat - L1's reused count */
 
 /* Local function prototypes (not used outside this file) */
 pt_entry_t *pmap_pte __P((struct pmap *pmap, vaddr_t va));
-void map_pagetable __P((vaddr_t pagetable, vaddr_t va,
-    paddr_t pa, unsigned int flags));
 void pmap_copy_on_write __P((paddr_t pa));
 void pmap_pinit __P((struct pmap *));
 void pmap_freepagedir __P((struct pmap *));
