@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.8 2003/01/27 15:22:47 tsutsui Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.9 2003/01/27 15:27:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -830,9 +830,9 @@ vga_setup_regs(struct videomode *mode, struct vga_moderegs *regs)
 			mode->vdisplay *= 2;
 		if (mode->vdisplay < 400)
 			regs->miscout = 0xa3;
-		if (mode->vdisplay < 480)
+		else if (mode->vdisplay < 480)
 			regs->miscout = 0x63;
-		if (mode->vdisplay < 768)
+		else if (mode->vdisplay < 768)
 			regs->miscout = 0xe3;
 		else
 			regs->miscout = 0x23;
