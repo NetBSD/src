@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.18 2002/08/02 20:58:04 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.19 2002/10/05 00:57:00 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,9 +91,10 @@ int sigpid = 0;
 	      ((struct fpframe060 *)(fp))->fpf6_frmfmt == FPF6_FMT_NULL) || \
 	     (fputype != FPU_68060  &&					    \
 	      ((union FPF_u1 *)(fp))->FPF_nonnull.FPF_version == 0))
-#endif
+#else
 #define FPFRAME_IS_NULL(fp) \
 	    (((union FPF_u1 *)(fp))->FPF_nonnull.FPF_version == 0)
+#endif
 #else
 #define FPFRAME_IS_NULL(fp) \
 	    (((struct fpframe060 *)(fp))->fpf6_frmfmt == FPF6_FMT_NULL)
