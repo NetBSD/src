@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.34 2003/02/20 22:16:08 atatat Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.35 2003/09/10 13:38:20 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -219,8 +219,8 @@ struct vm_map {
 	int			flags;		/* flags */
 	struct simplelock	flags_lock;	/* Lock for flags field */
 	unsigned int		timestamp;	/* Version number */
-#define	min_offset		header.start
-#define max_offset		header.end
+#define	min_offset		header.end
+#define	max_offset		header.start
 };
 
 /* vm_map flags */
