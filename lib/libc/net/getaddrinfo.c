@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.36 2000/04/02 21:30:37 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.37 2000/04/03 01:12:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1462,7 +1462,8 @@ nextline:
 			if (pai->ai_flags & AI_CANONNAME)
 				(void)get_canonname(pai, res, canonname);
 		}
-	}
+	} else
+		res0 = NULL;
 	if (res0) {
 		cur->ai_next = res0;
 		while (cur && cur->ai_next)
