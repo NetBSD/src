@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.8 1996/03/17 01:38:56 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.9 1996/05/07 01:12:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -461,8 +461,8 @@ plipattach(struct lpt_softc *sc, int unit)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	sc->sc_ifbuf = NULL;
-	ifp->if_unit = unit;
-	ifp->if_name = "plip";
+	sprintf(ifp->if_xname, "plip%d", unit);
+	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 	ifp->if_output = ether_output;
 	ifp->if_start = plipstart;
@@ -486,7 +486,7 @@ static int
 plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct proc *p = curproc;
-	struct lpt_softc *sc = (struct lpt_softc *) lpt_cd.cd_devs[ifp->if_unit];
+	struct lpt_softc *sc = (struct lpt_softc *)(ifp->if_softc);
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data; 
@@ -686,7 +686,7 @@ plipinput(struct lpt_softc *sc)
 		if (plipreceive(i8255, minibuf, 2) < 0) goto err;
 		len = (minibuf[1] << 8) | minibuf[0];
 		if (len > (ifp->if_mtu + ifp->if_hdrlen)) {
-			log(LOG_NOTICE, "plip%d: packet > MTU\n", ifp->if_unit);
+			log(LOG_NOTICE, "%s: packet > MTU\n", ifp->if_softc);
 			goto err;
 		}
 		if ((cksum = plipreceive(i8255, p, len)) < 0) goto err;
@@ -694,7 +694,7 @@ plipinput(struct lpt_softc *sc)
 
 	if (plipreceive(i8255, minibuf, 1) < 0) goto err;
 	if (cksum != minibuf[0]) {
-		log(LOG_NOTICE, "plip%d: checksum error\n", ifp->if_unit);
+		log(LOG_NOTICE, "%s: checksum error\n", ifp->if_xname);
 		goto err;
 	}
 	i8255->port_b = 0x00;
@@ -725,7 +725,7 @@ err:
 		 * disabled.
 		 */
 		if (sc->sc_ifierrs == PLIPMXERRS)
-			log(LOG_NOTICE, "plip%d: rx hard error\n", ifp->if_unit);
+			log(LOG_NOTICE, "%s: rx hard error\n", ifp->if_xname);
 		i8255->port_a |= LPA_ACTIVE;
 	}
 	ifp->if_ierrors++;
@@ -761,7 +761,7 @@ pliptransmit(volatile struct i8255 *i8255, u_char *buf, int len)
 static void
 plipstart(struct ifnet *ifp)
 {
-	struct lpt_softc *sc = (struct lpt_softc *) lpt_cd.cd_devs[ifp->if_unit];
+	struct lpt_softc *sc = (struct lpt_softc *)(ifp->if_softc);
 	sc->sc_pending |= PLIP_OPENDING;
 	softintr(sc->sc_ifsoftint);
 }
@@ -862,7 +862,7 @@ retry:
 		timeout((void (*)(void *))plipoutput, sc, PLIPRETRY);
 	} else {
 		if (sc->sc_ifoerrs == PLIPMXRETRY) {
-			log(LOG_NOTICE, "plip%d: tx hard error\n", ifp->if_unit);
+			log(LOG_NOTICE, "%s: tx hard error\n", ifp->if_xname);
 		}
 		s = splimp();
 		m_freem(m0);
