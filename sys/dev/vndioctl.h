@@ -1,4 +1,4 @@
-/*	$NetBSD: vndioctl.h,v 1.4 1995/01/25 04:45:40 cgd Exp $	*/
+/*	$NetBSD: vndioctl.h,v 1.5 1995/01/25 04:46:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,9 +45,6 @@
 /*
  * Ioctl definitions for file (vnode) disk pseudo-device.
  */
-
-#define _PATH_VNTAB	"/etc/vntab"	/* default config file */
-
 struct vnd_ioctl {
 	char	*vnd_file;	/* pathname of file to mount */
 	int	vnd_size;	/* (returned) size of disk */
