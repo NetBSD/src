@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14 1993/09/04 01:29:24 cgd Exp $
+ *	$Id: trap.c,v 1.15 1993/09/16 03:24:24 brezak Exp $
  */
 
 /*
@@ -114,7 +114,6 @@ copyfault:
 	if (ISPL(frame.tf_cs) == SEL_UPL) {
 		type |= T_USER;
 		p->p_regs = (int *)&frame;
-		curpcb->pcb_flags |= FM_TRAP;	/* used by sendsig */
 	}
 
 	ucode=0;
@@ -393,7 +392,6 @@ out:
 		}
 	}
 	curpri = p->p_pri;
-	curpcb->pcb_flags &= ~FM_TRAP;	/* used by sendsig */
 }
 
 /*
@@ -418,7 +416,7 @@ int trapwrite(unsigned addr) {
  */
 /*ARGSUSED*/
 syscall(frame)
-	volatile struct syscframe frame;
+	volatile struct trapframe frame;
 {
 	register int *locr0 = ((int *)&frame);
 	register caddr_t params;
@@ -434,18 +432,17 @@ syscall(frame)
 	r0 = 0; r0 = r0; r1 = 0; r1 = r1;
 #endif
 	syst = p->p_stime;
-	if (ISPL(frame.sf_cs) != SEL_UPL)
+	if (ISPL(frame.tf_cs) != SEL_UPL)
 		panic("syscall");
 
-	code = frame.sf_eax;
-	curpcb->pcb_flags &= ~FM_TRAP;	/* used by sendsig */
+	code = frame.tf_eax;
 	p->p_regs = (int *)&frame;
-	params = (caddr_t)frame.sf_esp + sizeof (int) ;
+	params = (caddr_t)frame.tf_esp + sizeof (int) ;
 
 	/*
 	 * Reconstruct pc, assuming lcall $X,y is 7 bytes, as it is always.
 	 */
-	opc = frame.sf_eip - 7;
+	opc = frame.tf_eip - 7;
         if (code == 0) {                        /* indir */
                 code = fuword(params);
                 params += sizeof(int);
@@ -456,8 +453,8 @@ syscall(frame)
                 callp = &sysent[code];
 	if ((i = callp->sy_narg * sizeof (int)) &&
 	    (error = copyin(params, (caddr_t)args, (u_int)i))) {
-		frame.sf_eax = error;
-		frame.sf_eflags |= PSL_C;	/* carry bit */
+		frame.tf_eax = error;
+		frame.tf_eflags |= PSL_C;	/* carry bit */
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
 			ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
@@ -469,20 +466,20 @@ syscall(frame)
 		ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
 #endif
 	rval[0] = 0;
-	rval[1] = frame.sf_edx;
+	rval[1] = frame.tf_edx;
 /*pg("%d. s %d\n", p->p_pid, code);*/
 	error = (*callp->sy_call)(p, args, rval);
 	if (error == ERESTART)
-		frame.sf_eip = opc;
+		frame.tf_eip = opc;
 	else if (error != EJUSTRETURN) {
 		if (error) {
 /*pg("error %d", error);*/
-			frame.sf_eax = error;
-			frame.sf_eflags |= PSL_C;	/* carry bit */
+			frame.tf_eax = error;
+			frame.tf_eflags |= PSL_C;	/* carry bit */
 		} else {
-			frame.sf_eax = rval[0];
-			frame.sf_edx = rval[1];
-			frame.sf_eflags &= ~PSL_C;	/* carry bit */
+			frame.tf_eax = rval[0];
+			frame.tf_edx = rval[1];
+			frame.tf_eflags &= ~PSL_C;	/* carry bit */
 		}
 	}
 	/* else if (error == EJUSTRETURN) */
@@ -522,10 +519,10 @@ done:
 		if (ticks) {
 #ifdef PROFTIMER
 			extern int profscale;
-			addupc(frame.sf_eip, &p->p_stats->p_prof,
+			addupc(frame.tf_eip, &p->p_stats->p_prof,
 			    ticks * profscale);
 #else
-			addupc(frame.sf_eip, &p->p_stats->p_prof, ticks);
+			addupc(frame.tf_eip, &p->p_stats->p_prof, ticks);
 #endif
 		}
 	}
@@ -536,13 +533,13 @@ done:
 #endif
 #ifdef	DIAGNOSTICx
 { extern int _udatasel, _ucodesel;
-	if (frame.sf_ss != _udatasel)
-		printf("ss %x call %d\n", frame.sf_ss, code);
-	if ((frame.sf_cs&0xffff) != _ucodesel)
-		printf("cs %x call %d\n", frame.sf_cs, code);
-	if (frame.sf_eip > VM_MAXUSER_ADDRESS) {
-		printf("eip %x call %d\n", frame.sf_eip, code);
-		frame.sf_eip = 0;
+	if (frame.tf_ss != _udatasel)
+		printf("ss %x call %d\n", frame.tf_ss, code);
+	if ((frame.tf_cs&0xffff) != _ucodesel)
+		printf("cs %x call %d\n", frame.tf_cs, code);
+	if (frame.tf_eip > VM_MAXUSER_ADDRESS) {
+		printf("eip %x call %d\n", frame.tf_eip, code);
+		frame.tf_eip = 0;
 	}
 }
 #endif
