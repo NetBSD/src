@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 2002/03/09 21:30:58 bjh21 Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22 2002/03/10 11:06:01 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -177,6 +177,7 @@ struct cpu_info {
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
+	struct device *ci_dev;		/* Device corresponding to this CPU */
 	u_int32_t ci_cpuid;		/* The CPU id */
 	u_int32_t ci_ctrl;		/* The CPU control register */
 	struct evcnt ci_arm700bugcount;
