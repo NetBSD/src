@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.22 1996/02/05 01:53:57 christos Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.23 1996/02/10 00:08:08 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -288,8 +288,8 @@ vm_map_entry_create(map)
 
 	isspecial = (map == kernel_map || map == kmem_map ||
 		     map == mb_map || map == pager_map);
-	if (isspecial && map->entries_pageable ||
-	    !isspecial && !map->entries_pageable)
+	if ((isspecial && map->entries_pageable) ||
+	    (!isspecial && !map->entries_pageable))
 		panic("vm_map_entry_create: bogus map");
 #endif
 	if (map->entries_pageable) {
@@ -321,8 +321,8 @@ vm_map_entry_dispose(map, entry)
 
 	isspecial = (map == kernel_map || map == kmem_map ||
 		     map == mb_map || map == pager_map);
-	if (isspecial && map->entries_pageable ||
-	    !isspecial && !map->entries_pageable)
+	if ((isspecial && map->entries_pageable) ||
+	    (!isspecial && !map->entries_pageable))
 		panic("vm_map_entry_dispose: bogus map");
 #endif
 	if (map->entries_pageable) {
@@ -2581,8 +2581,6 @@ vm_map_print(map, full)
 	register vm_map_t	map;
 	boolean_t		full;
 {
-        extern void _vm_map_print();
-        
         _vm_map_print(map, full, printf);
 }
 

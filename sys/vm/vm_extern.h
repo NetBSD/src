@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.18 1996/02/05 20:32:25 christos Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.19 1996/02/10 00:08:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,6 +81,7 @@ void		 loadav __P((struct loadavg *));
 void		 munmapfd __P((struct proc *, int));
 int		 pager_cache __P((vm_object_t, boolean_t));
 void		 sched __P((void));
+void		 scheduler __P((void));
 int		 svm_allocate __P((struct proc *, void *, int *));
 int		 svm_deallocate __P((struct proc *, void *, int *));
 int		 svm_inherit __P((struct proc *, void *, int *));

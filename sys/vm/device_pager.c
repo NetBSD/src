@@ -1,4 +1,4 @@
-/*	$NetBSD: device_pager.c,v 1.19 1996/02/05 01:53:47 christos Exp $	*/
+/*	$NetBSD: device_pager.c,v 1.20 1996/02/10 00:07:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -115,7 +115,7 @@ dev_pager_alloc(handle, size, prot, foff)
 
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_alloc(%x, %x, %x, %x)\n",
+		printf("dev_pager_alloc(%p, %x, %x, %x)\n",
 		       handle, size, prot, foff);
 #endif
 #ifdef DIAGNOSTIC
@@ -196,7 +196,7 @@ top:
 		TAILQ_INSERT_TAIL(&dev_pager_list, pager, pg_list);
 #ifdef DEBUG
 		if (dpagerdebug & DDB_ALLOC) {
-			printf("dev_pager_alloc: pager %x devp %x object %x\n",
+			printf("dev_pager_alloc: pager %p devp %p object %p\n",
 			       pager, devp, object);
 			vm_object_print(object, FALSE);
 		}
@@ -226,7 +226,7 @@ dev_pager_dealloc(pager)
 
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_dealloc(%x)\n", pager);
+		printf("dev_pager_dealloc(%p)\n", pager);
 #endif
 	TAILQ_REMOVE(&dev_pager_list, pager, pg_list);
 	/*
@@ -238,7 +238,7 @@ dev_pager_dealloc(pager)
 	object = devp->devp_object;
 #ifdef DEBUG
 	if (dpagerdebug & DDB_ALLOC)
-		printf("dev_pager_dealloc: devp %x object %x\n", devp, object);
+		printf("dev_pager_dealloc: devp %p object %p\n", devp, object);
 #endif
 	/*
 	 * Free up our fake pages.
@@ -267,7 +267,7 @@ dev_pager_getpage(pager, mlist, npages, sync)
 
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_getpage(%x, %x, %x, %x)\n",
+		printf("dev_pager_getpage(%p, %p, %x, %x)\n",
 		       pager, mlist, npages, sync);
 #endif
 
@@ -320,7 +320,7 @@ dev_pager_putpage(pager, mlist, npages, sync)
 {
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_putpage(%x, %x, %x, %x)\n",
+		printf("dev_pager_putpage(%p, %p, %x, %x)\n",
 		       pager, mlist, npages, sync);
 #endif
 	if (pager == NULL)
@@ -335,7 +335,7 @@ dev_pager_haspage(pager, offset)
 {
 #ifdef DEBUG
 	if (dpagerdebug & DDB_FOLLOW)
-		printf("dev_pager_haspage(%x, %x)\n", pager, offset);
+		printf("dev_pager_haspage(%p, %x)\n", pager, offset);
 #endif
 	return(TRUE);
 }
