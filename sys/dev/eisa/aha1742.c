@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.58 1996/03/17 00:47:16 thorpej Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.59 1996/04/09 22:47:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -262,12 +262,12 @@ struct ahb_ecb {
 
 struct ahb_softc {
 	struct device sc_dev;
-	struct isadev sc_id;
-	void *sc_ih;
 	bus_chipset_tag_t sc_bc;
-	bus_io_handle_t sc_ioh;
+	eisa_chipset_tag_t sc_ec;
 
+	bus_io_handle_t sc_ioh;
 	int sc_irq;
+	void *sc_ih;
 
 	struct ahb_ecb *immed_ecb;	/* an outstanding immediete command */
 	struct ahb_ecb *ecbhash[ECB_HASH_SIZE];
@@ -469,9 +469,13 @@ ahbattach(parent, self, aux)
 	struct ahb_softc *ahb = (void *)self;
 	bus_chipset_tag_t bc = ea->ea_bc;
 	bus_io_handle_t ioh;
-	char *model;
+	eisa_chipset_tag_t ec = ea->ea_ec;
+	eisa_intr_handle_t ih;
+	const char *model, *intrstr;
 
 	ahb->sc_bc = bc;
+	ahb->sc_ec = ec;
+
 	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, &ioh))
 		panic("ahbattach: could not map I/O addresses");
 	ahb->sc_ioh = ioh;
@@ -500,13 +504,27 @@ ahbattach(parent, self, aux)
 		model = EISA_PRODUCT_ADP0400;
 	else
 		model = "unknown model!";
-	printf(" irq %d: %s\n", ahb->sc_irq, model);
+	printf(": %s\n", model);
 
-#ifdef NEWCONFIG
-	isa_establish(&ahb->sc_id, &ahb->sc_dev);
-#endif
-	ahb->sc_ih = eisa_intr_establish(ahb->sc_irq, IST_LEVEL, IPL_BIO,
+	if (eisa_intr_map(ec, ahb->sc_irq, &ih)) {
+		printf("%s: couldn't map interrupt (%d)\n",
+		    ahb->sc_dev.dv_xname, ahb->sc_irq);
+		return;
+	}
+	intrstr = eisa_intr_string(ec, ih);
+	ahb->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    ahbintr, ahb);
+	if (ahb->sc_ih == NULL) {
+		printf("%s: couldn't establish interrupt",
+		    ahb->sc_dev.dv_xname);
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	if (intrstr != NULL)
+		printf("%s: interrupting at %s\n", ahb->sc_dev.dv_xname,
+		    intrstr);
 
 	/*
 	 * ask the adapter what subunits are present
