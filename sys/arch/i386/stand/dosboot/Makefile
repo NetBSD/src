@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2000/08/23 21:00:48 jhawk Exp $
+#	$NetBSD: Makefile,v 1.16 2000/09/05 05:05:16 enami Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -35,7 +35,7 @@ release:
 	@false
 .else
 release:
-	cp ${.CURDIR}/dosboot.com ${RELEASEDIR}/installation/misc
+	cp dosboot.com ${RELEASEDIR}/installation/misc
 .endif
 
 .include "../Makefile.booters"
