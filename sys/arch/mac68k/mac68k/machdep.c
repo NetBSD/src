@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171.2.7 1998/11/23 04:59:09 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171.2.8 1998/11/23 05:24:16 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2042,6 +2042,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACPB170, "PowerBook", " 170 ", MACH_CLASSPB, &romvecs[1]},
 	{MACH_MACPB180, "PowerBook", " 180 ", MACH_CLASSPB, &romvecs[5]},
 	{MACH_MACPB180C, "PowerBook", " 180c ", MACH_CLASSPB, &romvecs[5]},
+	{MACH_MACPB190, "PowerBook", " 190 ", MACH_CLASSPB, &romvecs[8]},
 	{MACH_MACPB500, "PowerBook", " 500 ", MACH_CLASSPB, &romvecs[8]},
 
 /* The Duos */
@@ -2089,28 +2090,30 @@ struct {
 	{ MACH_MACPB165,	(caddr_t)0x60000000,	128 * 1024 },
 	{ MACH_MACPB180,	(caddr_t)0x60000000,	128 * 1024 },
 	{ MACH_MACCCLASSIC,	(caddr_t)0x50f40000,	512 * 1024 },
+	{ MACH_MACLCII,		(caddr_t)0x50f40000,	512 * 1024 }, /*??*/
 	{ MACH_MACPB165C,	(caddr_t)0xfc040000,	512 * 1024 },
 	{ MACH_MACPB180C,	(caddr_t)0xfc040000,	512 * 1024 },
+	{ MACH_MACPB190,	(caddr_t)0x60000000,	512 * 1024 },
 	{ MACH_MACPB500,	(caddr_t)0x60000000,	512 * 1024 },
-	{ MACH_MACLC520,	(caddr_t)0x60000000,	1024 * 1024 },
-#ifdef MADHATTER
-	{ MACH_MACLC475,	(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACLC475_33,	(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACLC575,	(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACC610,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACC650,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ605,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ605_33,	(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ610,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ630,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ650,		(caddr_t)0xf9000000,	1024 * 1024 },
-#endif
-	{ MACH_MACQ700,		(caddr_t)0xf9000000,	1024 * 1024 },
-#ifdef MADHATTER
-	{ MACH_MACQ800,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ900,		(caddr_t)0xf9000000,	1024 * 1024 },
-	{ MACH_MACQ950,		(caddr_t)0xf9000000,	1024 * 1024 },
-#endif
+	{ MACH_MACLCIII,	(caddr_t)0x60b00000,	768 * 1024 },
+	{ MACH_MACLC520,	(caddr_t)0x60000000,	1 * 1024 * 1024 },
+	{ MACH_MACLC475,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACLC475_33,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACLC575,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACC610,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACC650,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACP580,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ605,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ605_33,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ610,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ630,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ650,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACC660AV,	(caddr_t)0x50100000,	1 * 1024 * 1024 },
+	{ MACH_MACQ700,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ800,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ900,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ950,		(caddr_t)0xf9000000,	1 * 1024 * 1024 },
+	{ MACH_MACQ840AV,	(caddr_t)0x50100000,	2 * 1024 * 1024 },
 	{ 0,			(caddr_t)0x0,		0 },
 };				/* End of intvid_info[] initialization. */
 
