@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.17 2003/08/07 16:42:41 agc Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.18 2005/01/19 00:23:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_open.c	8.10 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_open.c,v 1.17 2003/08/07 16:42:41 agc Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.18 2005/01/19 00:23:44 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -207,9 +207,10 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 			goto einval;
 		}
 		
-		if ((t->bt_fd = open(fname, flags, mode)) < 0)
+		if ((t->bt_fd = open(fname, flags, mode)) == -1)
 			goto err;
-
+		if (fcntl(t->bt_fd, F_SETFD, FD_CLOEXEC) == -1)
+			goto err;
 	} else {
 		if ((flags & O_ACCMODE) != O_RDWR)
 			goto einval;

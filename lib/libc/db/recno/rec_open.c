@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_open.c,v 1.12 2003/08/07 16:42:44 agc Exp $	*/
+/*	$NetBSD: rec_open.c,v 1.13 2005/01/19 00:23:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_open.c	8.10 (Berkeley) 9/1/94";
 #else
-__RCSID("$NetBSD: rec_open.c,v 1.12 2003/08/07 16:42:44 agc Exp $");
+__RCSID("$NetBSD: rec_open.c,v 1.13 2005/01/19 00:23:44 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,8 +73,12 @@ __rec_open(fname, flags, mode, openinfo, dflags)
 	int sverrno;
 
 	/* Open the user's file -- if this fails, we're done. */
-	if (fname != NULL && (rfd = open(fname, flags, mode)) < 0)
-		return (NULL);
+	if (fname != NULL) {
+		if ((rfd = open(fname, flags, mode)) == -1)
+			return (NULL);
+		if (fcntl(rfd, F_SETFD, FD_CLOEXEC) == -1)
+			goto err;
+	}
 
 	/* Create a btree in memory (backed by disk). */
 	dbp = NULL;
