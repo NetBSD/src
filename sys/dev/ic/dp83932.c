@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.5 2001/11/13 13:14:36 lukem Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.5.10.1 2003/01/26 16:19:28 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.5 2001/11/13 13:14:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.5.10.1 2003/01/26 16:19:28 he Exp $");
 
 #include "bpfilter.h"
 
@@ -90,6 +90,8 @@ void	sonic_rxintr(struct sonic_softc *);
 
 int	sonic_copy_small = 0;
 
+#define ETHER_PAD_LEN (ETHER_MIN_LEN - ETHER_CRC_LEN)
+
 /*
  * sonic_attach:
  *
@@ -102,6 +104,7 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	int i, rseg, error;
 	bus_dma_segment_t seg;
 	size_t cdatasize;
+	char *nullbuf;
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -112,7 +115,7 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	else
 		cdatasize = sizeof(struct sonic_control_data16);
 
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, cdatasize,
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, cdatasize + ETHER_PAD_LEN,
 	     PAGE_SIZE, (64 * 1024), &seg, 1, &rseg,
 	     BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate control data, error = %d\n",
@@ -121,12 +124,14 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    cdatasize, (caddr_t *) &sc->sc_cdata16,
+	    cdatasize + ETHER_PAD_LEN, (caddr_t *) &sc->sc_cdata16,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
 	}
+	nullbuf = (char *)sc->sc_cdata16 + cdatasize;
+	memset(nullbuf, 0, ETHER_PAD_LEN);
 
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	     cdatasize, 1, cdatasize, 0, BUS_DMA_NOWAIT,
@@ -171,6 +176,25 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	}
 
 	/*
+	 * create and map the pad buffer
+	 */
+	if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_PAD_LEN, 1,
+	    ETHER_PAD_LEN, 0, BUS_DMA_NOWAIT, &sc->sc_nulldmamap)) != 0) {
+		printf("%s: unable to create pad buffer DMA map, "
+		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		goto fail_5;
+	}
+
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_nulldmamap,
+	    nullbuf, ETHER_PAD_LEN, NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to load pad buffer DMA map, "
+		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		goto fail_6;
+	}
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_nulldmamap, 0, ETHER_PAD_LEN,
+	    BUS_DMASYNC_PREWRITE);
+
+	/*
 	 * Reset the chip to a known state.
 	 */
 	sonic_reset(sc);
@@ -207,6 +231,8 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	 * Free any resources we've allocated during the failed attach
 	 * attempt.  Do this in reverse order and fall through.
 	 */
+ fail_6:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_nulldmamap);
  fail_5:
 	for (i = 0; i < SONIC_NRXDESC; i++) {
 		if (sc->sc_rxsoft[i].ds_dmamap != NULL)
@@ -296,8 +322,12 @@ sonic_start(struct ifnet *ifp)
 		 * short on resources.  In this case, we'll copy and try
 		 * again.
 		 */
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
+		if ((error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
+		    BUS_DMA_WRITE|BUS_DMA_NOWAIT)) != 0 ||
+		    (m0->m_pkthdr.len < ETHER_PAD_LEN &&
+		    dmamap->dm_nsegs == SONIC_NTXFRAGS)) {
+			if (error == 0)
+				bus_dmamap_unload(sc->sc_dmat, dmamap);
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -361,19 +391,18 @@ sonic_start(struct ifnet *ifp)
 				    htosonic32(sc, dmamap->dm_segs[seg].ds_len);
 				totlen += dmamap->dm_segs[seg].ds_len;
 			}
-
-			/*
-			 * Pad the packet out if it's less than the
-			 * minimum Ethernet frame size.
-			 */
-			if (totlen < (ETHER_MIN_LEN - ETHER_CRC_LEN)) {
-				tda32->tda_frags[seg - 1].frag_size =
+			if (totlen < ETHER_PAD_LEN) {
+				tda32->tda_frags[seg].frag_ptr1 =
 				    htosonic32(sc,
-				    dmamap->dm_segs[seg - 1].ds_len +
-				    ((ETHER_MIN_LEN - ETHER_CRC_LEN) - totlen));
-				totlen = ETHER_MIN_LEN - ETHER_CRC_LEN;
+				    (sc->sc_nulldma >> 16) & 0xffff);
+				tda32->tda_frags[seg].frag_ptr0 =
+				    htosonic32(sc, sc->sc_nulldma & 0xffff);
+				tda32->tda_frags[seg].frag_size =
+				    htosonic32(sc, ETHER_PAD_LEN - totlen);
+				totlen = ETHER_PAD_LEN;
+				seg++;
 			}
-
+				    
 			tda32->tda_status = 0;
 			tda32->tda_pktconfig = 0;
 			tda32->tda_pktsize = htosonic32(sc, totlen);
@@ -401,17 +430,16 @@ sonic_start(struct ifnet *ifp)
 				    htosonic16(sc, dmamap->dm_segs[seg].ds_len);
 				totlen += dmamap->dm_segs[seg].ds_len;
 			}
-
-			/*
-			 * Pad the packet out if it's less than the
-			 * minimum Ethernet frame size.
-			 */
-			if (totlen < (ETHER_MIN_LEN - ETHER_CRC_LEN)) {
-				tda16->tda_frags[seg - 1].frag_size =
+			if (totlen < ETHER_PAD_LEN) {
+				tda16->tda_frags[seg].frag_ptr1 =
 				    htosonic16(sc,
-				    dmamap->dm_segs[seg - 1].ds_len +
-				    ((ETHER_MIN_LEN - ETHER_CRC_LEN) - totlen));
-				totlen = ETHER_MIN_LEN - ETHER_CRC_LEN;
+				    (sc->sc_nulldma >> 16) & 0xffff);
+				tda16->tda_frags[seg].frag_ptr0 =
+				    htosonic16(sc, sc->sc_nulldma & 0xffff);
+				tda16->tda_frags[seg].frag_size =
+				    htosonic16(sc, ETHER_PAD_LEN - totlen);
+				totlen = ETHER_PAD_LEN;
+				seg++;
 			}
 
 			tda16->tda_status = 0;
