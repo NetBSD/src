@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.6 1999/01/12 12:06:46 tsubai Exp $	*/
+/*	$NetBSD: extintr.c,v 1.7 1999/01/17 11:53:52 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -407,6 +407,7 @@ do_pending_int()
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
 	imen &= ~hwpend;
 	enable_irq(~imen);
+	hwpend &= HWIRQ_MASK;
 	while (hwpend) {
 		irq = 31 - cntlzw(hwpend);
 		hwpend &= ~(1L << irq);
