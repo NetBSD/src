@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.11 1994/11/21 21:39:11 gwr Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.12 1995/02/24 04:59:51 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -53,8 +53,10 @@ static int ffs_mountroot() { return ENOSYS; }
 #endif	/* FFS */
 
 #ifdef	NFSCLIENT
-extern int nfs_mountroot();
+extern char	*nfsbootdevname;	/* nfs_boot.c */
+extern int nfs_mountroot(); 	/* nfs_vfsops.c */
 #else	/* NFSCLIENT */
+static char	*nfsbootdevname;
 static int nfs_mountroot() { return ENOSYS; }
 #endif	/* NFSCLIENT */
 
@@ -72,18 +74,46 @@ struct	swdevt swdevt[] = {
 char boot_ifname[NAMESZ];
 
 /*
+ * Functions to convert PROM ctlr/unit into our unit numbers
+ */
+static int net_mkunit(ctlr, unit)
+	int ctlr, unit;
+{
+	/* XXX - Not sure which is set. */
+	return (ctlr + unit);
+}
+
+static int sd_mkunit(ctlr, unit)
+	int ctlr, unit;
+{
+	int target, lun;
+
+	/* This only supports LUNs 0, 1 */
+	target = unit >> 3;
+	lun = unit & 1;
+	return (target + lun);
+}
+
+static int xx_mkunit(ctlr, unit)
+	int ctlr, unit;
+{
+	return (ctlr * 2 + unit);
+}
+
+/*
  * Devices which MIGHT be available.
  * If gc_root is NODEV, use NFS root.
  */
 static struct genconf {
 	char gc_name[4];
 	int  gc_major;
+	int  (*gc_mkunit)();
 } genconf[] = {
-	{ "ie", -1 },
-	{ "le", -1 },
-	{ "xy",	3 },
-	{ "sd",	7 },
-	{ "xd",	10 },
+	{ "ie", -1, net_mkunit },
+	{ "le", -1, net_mkunit },
+	{ "sd",	7,  sd_mkunit },
+	{ "xy",	3,  xx_mkunit },
+	{ "xd",	10, xx_mkunit },
 	{ 0 },
 };
 
@@ -215,8 +245,6 @@ static void ds_from_boot(ds)
 {
 	MachMonBootParam *bpp;
 	struct genconf *gc;
-	char *p;
-	int len, unit, part;
 
 	bpp = *romp->bootParam;
 
@@ -226,22 +254,18 @@ static void ds_from_boot(ds)
 	ds->name[0] = bpp->devName[0];
 	ds->name[1] = bpp->devName[1];
 
-	/* Unit number */
-	unit = (bpp->ctlrNum << 3) & 3;
-	unit |= (bpp->unitNum & 7);
-	ds->unit = unit;
-
-	/* Partition letter */
-	part = bpp->partNum & 7;
-	ds->part = part;
-
+	/* Is this device known? */
 	gc = gc_lookup(ds->name);
-	if (gc)
-		ds->major = gc->gc_major;
-	else {
+	if (gc == NULL) {
 		/* Boot device not in genconf, so ask. */
 		boothowto |= RB_ASKNAME;
+		return;
 	}
+
+	/* Compute our equivalents of the prom info. */
+	ds->major = gc->gc_major;
+	ds->unit = gc->gc_mkunit(bpp->ctlrNum, bpp->unitNum);
+	ds->part = bpp->partNum;
 }
 
 /*
@@ -314,9 +338,10 @@ swapgeneric()
 	 * XXX - Hard coded for now.
 	 */
 	if (rootdev == NODEV) {
-		mountroot = nfs_mountroot;
-		/* XXX - Set boot interface name for nfs_mountroot. */
+		/* Set boot interface name for nfs_mountroot. */
+		nfsbootdevname = boot_ifname;
 		ds_tostr(&ds, boot_ifname);
+		mountroot = nfs_mountroot;
 	} else {
 		/* XXX - Should ask for the root fstype here. -gwr */
 		mountroot = ffs_mountroot;
