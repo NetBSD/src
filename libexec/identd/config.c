@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.4 1997/10/08 07:07:44 mrg Exp $	*/
+/*	$NetBSD: config.c,v 1.5 1998/07/15 07:31:56 msaitoh Exp $	*/
 
 /*
 ** config.c                         This file handles the config file
@@ -13,22 +13,29 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 #include "error.h"
 #include "identd.h"
 #include "paths.h"
 
+#define MAXLINE         1024
+#define MAXNETS         1024
+ 
+u_long localnet[MAXNETS], localmask[MAXNETS];
+int netcnt;
 
 int parse_config(path, silent_flag)
   char *path;
   int silent_flag;
 {
   FILE *fp;
+  char *start, buf[MAXLINE];
 
   if (!path)
     path = PATH_CONFIG;
@@ -42,12 +49,41 @@ int parse_config(path, silent_flag)
     ERROR1("error opening %s", path);
   }
 
-  /*
-  ** Code should go here to parse the config file data.
-  ** For now we just ignore the contents...
-  */
-  
-  
+  netcnt = 0;
+  while ((start = fgets(buf, sizeof buf, fp)) != NULL) {
+    char *net, *mask;
+    char *cmd = strtok(buf, " \t");
+    if (cmd) {
+      if (!strcmp("trusted-net:", cmd)) {
+        if (netcnt >= MAXNETS) {
+          if (!silent_flag)
+            ERROR1("too many networks defined in %s", path);
+          return 0;
+        }
+        net = strtok(NULL, " \t");
+        if (net) {
+          localnet[netcnt] = inet_network(net);
+          mask = strtok(NULL, " \t");
+          if (mask) {
+            localmask[netcnt] = inet_network(mask);
+          } else {
+            localmask[netcnt] = 0xFFFFFFFFL;
+          }
+          if ((localnet[netcnt] & localmask[netcnt]) == localnet[netcnt]) {
+            netcnt++;
+          } else if (!silent_flag) {
+            ERROR1("netmask does not match network %s", net);
+          }
+        } else {
+          if (!silent_flag)
+            ERROR2("format error in %s cmd %s", path, cmd);
+        }
+      } else if (*cmd != '#') {
+        ERROR2("unknown config statement %s in file %s", cmd, path);
+      }
+    }
+  }
+
   fclose(fp);
   return 0;
 }

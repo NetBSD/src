@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/08 09:07:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 1998/07/15 07:31:55 msaitoh Exp $
 
 PROG=	identd
-SRCS=	config.c identd.c netbsd.c parse.c proxy.c version.c
-MAN=	identd.8
+MAN=	identd.8 
 
-LDADD=	-lkvm
-DPADD=	${LIBKVM}
+CPPFLAGS+= -DINCLUDE_EXTENSIONS -DSTRONG_LOG -DALLOW_FORMAT
+LDADD+=	-lutil -lkvm
+DPADD+=	${LIBUTIL} ${LIBKVM}
+
+SRCS=	netbsd.c version.c proxy.c config.c parse.c identd.c 
 
 .include <bsd.prog.mk>
