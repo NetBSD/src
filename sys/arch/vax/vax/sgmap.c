@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.4 2000/03/07 00:04:13 matt Exp $ */
+/* $NetBSD: sgmap.c,v 1.5 2000/04/10 03:49:57 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -128,8 +128,14 @@ vax_sgmap_alloc(map, origlen, sgmap, flags)
 		panic("vax_sgmap_alloc: already have sgva space");
 #endif
 
-	map->_dm_sgvalen = vax_round_page(len);
+	/* If we need a spill page (for the VS4000 SCSI), make sure we 
+	 * allocate enough space for an extra page.
+	 */
+	if (flags & VAX_BUS_DMA_SPILLPAGE) {
+		len += VAX_NBPG;
+	}
 
+	map->_dm_sgvalen = vax_round_page(len);
 #if 0
 	printf("len %x -> %x, _dm_sgvalen %x _dm_boundary %x boundary %x -> ",
 	    origlen, len, map->_dm_sgvalen, map->_dm_boundary, boundary);
@@ -244,6 +250,13 @@ vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
 		 * Load the current PTE with this page.
 		 */
 		*pte = (pa >> VAX_PGSHIFT) | PG_V;
+	}
+	/* The VS4000 SCSI prefetcher doesn't like to end on a page boundary
+	 * so add an extra page to quiet it down.
+	 */
+	if (flags & VAX_BUS_DMA_SPILLPAGE) {
+		*pte = pte[-1];
+		map->_dm_ptecnt++;
 	}
 
 	map->dm_mapsize = buflen;

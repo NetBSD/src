@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.h,v 1.1 1999/06/06 18:58:50 ragge Exp $ */
+/* $NetBSD: sgmap.h,v 1.2 2000/04/10 03:49:56 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -83,4 +83,4 @@ int	vax_sgmap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
 void	vax_sgmap_unload __P(( bus_dma_tag_t, bus_dmamap_t, 
 	    struct vax_sgmap *));
 
-#endif	/* _ALPHA_COMMON_SGMAPVAR_H */
+#endif	/* _VAX_COMMON_SGMAPVAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.6 2000/03/09 02:02:12 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.7 2000/04/10 03:49:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.6 2000/03/09 02:02:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.7 2000/04/10 03:49:57 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -387,7 +387,7 @@ asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 		if (bus_dmamap_load(asc->sc_dmat, asc->sc_dmamap,
 				*asc->sc_dmaaddr, asc->sc_dmasize,
 				NULL /* kernel address */,   
-				BUS_DMA_NOWAIT))
+				BUS_DMA_NOWAIT|VAX_BUS_DMA_SPILLPAGE))
 			panic("%s: cannot load dma map", sc->sc_dev.dv_xname);
 		bus_dmamap_sync(asc->sc_dmat, asc->sc_dmamap,
 				0, asc->sc_dmasize,
