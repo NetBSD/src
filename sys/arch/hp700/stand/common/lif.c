@@ -1,4 +1,4 @@
-/*	$NetBSD: lif.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
+/*	$NetBSD: lif.c,v 1.3 2003/10/11 03:57:32 matt Exp $	*/
 
 /*	$OpenBSD: lif.c,v 1.7 2001/06/09 03:54:41 mickey Exp $	*/
 
@@ -53,13 +53,14 @@ struct file {
 };
 
 int
-lif_open(char *path, struct open_file *f)
+lif_open(const char *path, struct open_file *f)
 {
 	struct file *fp;
 	struct lifdir *dp;
-	char *p, *q;
+	const char *p, *q;
 	struct lif_load load;
-	int err, buf_size, l;
+	int err, l;
+	size_t buf_size;
 
 #ifdef LIFDEBUG
 	if (debug)

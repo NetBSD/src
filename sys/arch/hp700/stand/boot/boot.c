@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2003/08/07 16:27:45 agc Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 2003/10/11 03:57:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -72,6 +72,7 @@
 #include <lib/libsa/loadfile.h>
 
 #include <machine/pdc.h>
+#include <machine/vmparam.h>
 
 #include <arch/hp700/stand/common/dev_hppa.h>
 
