@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.4 1997/04/01 22:08:18 gwr Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.5 1997/04/27 22:08:53 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -61,7 +61,7 @@
  */
 
 /* Set this to 1 for normal debug, or 2 for per-target tracing. */
-#define NCR53C9X_DEBUG		0
+#define NCR53C9X_DEBUG		1
 
 #define	NCR_ABORT_TIMEOUT	2000	/* time to wait for abort */
 #define	NCR_SENSE_TIMEOUT	1000	/* time to wait for sense */
@@ -98,8 +98,11 @@ struct ncr53c9x_ecb {
 #define	ECB_RESET	0x80
 	int timeout;
 
-	struct scsi_generic cmd;  /* SCSI command block */
-	int	 clen;
+	struct {
+		u_char	id;			/* Selection Id msg */
+		struct scsi_generic cmd;	/* SCSI command block */
+	} cmd;
+	int	 clen;		/* Size of command in cmd.cmd */
 	char	*daddr;		/* Saved data pointer */
 	int	 dleft;		/* Residue */
 	u_char 	 stat;		/* SCSI status byte */
@@ -267,6 +270,9 @@ struct ncr53c9x_softc {
 	caddr_t	sc_imp;	/* Message pointer (for multibyte messages) */
 	size_t	sc_imlen;
 
+	caddr_t	sc_cmdp;	/* Command pointer (for DMAed commands) */
+	size_t	sc_cmdlen;	/* Size of command in transit */
+
 	/* hardware/openprom stuff */
 	int sc_freq;				/* Freq in HZ */
 	int sc_id;				/* our scsi id */
@@ -293,6 +299,7 @@ struct ncr53c9x_softc {
 #define NCR_ICCS	0x10	/* Expect status phase results */
 #define NCR_WAITI	0x20	/* Waiting for non-DMA data to arrive */
 #define	NCR_ATN		0x40	/* ATN asserted */
+#define	NCR_EXPECT_ILLCMD	0x80	/* Expect Illegal Command Interrupt */
 
 /* values for sc_msgout */
 #define SEND_DEV_RESET		0x01
