@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.29 1997/02/28 05:01:21 mycroft Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.30 1997/03/16 10:13:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1190,8 +1190,6 @@ hpux_sys_getaccess(p, v, retval)
 }
 
 /* hpux_to_bsd_uoff() is found in hpux_machdep.c */
-
-/* hpux_dumpu() is found in hpux_machdep.c */
 
 /*
  * Ancient HP-UX system calls.  Some 9.x executables even use them!
