@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ucontext.h,v 1.4 1998/09/04 19:54:41 christos Exp $	 */
+/*	$NetBSD: svr4_ucontext.h,v 1.5 1999/01/21 23:22:35 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ typedef struct svr4_ucontext {
 	svr4_sigset_t		 uc_sigmask;
 	struct svr4_sigaltstack	 uc_stack;
 	svr4_mcontext_t		 uc_mcontext;
-	long			 uc_pad[5];
+	long			 uc_pad[SVR4_UC_MACHINE_PAD];
 } svr4_ucontext_t;
 
 #define SVR4_UC_GETREGSET	0
@@ -81,5 +81,12 @@ struct svr4_sigframe {
 	struct	svr4_ucontext sf_uc;
 	union	svr4_siginfo  sf_si;
 };
+
+
+void *svr4_getmcontext __P((struct proc *, struct svr4_mcontext *, u_long *));
+int svr4_setmcontext __P((struct proc *, struct svr4_mcontext *, u_long));
+
+void svr4_getcontext __P((struct proc *, struct svr4_ucontext *, sigset_t *));
+int svr4_setcontext __P((struct proc *, struct svr4_ucontext *));
 
 #endif /* !_SVR4_UCONTEXT_H_ */
