@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.18 1995/05/30 00:15:26 briggs Exp $	*/
+/*	$NetBSD: signal.h,v 1.19 1995/08/13 22:51:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -124,7 +124,8 @@ struct	sigaction {
 #ifndef _POSIX_SOURCE
 #define SA_ONSTACK	0x0001	/* take signal on signal stack */
 #define SA_RESTART	0x0002	/* restart system on signal return */
-#define	SA_DISABLE	0x0004	/* disable taking signals on alternate stack */
+#define SA_RESETHAND	0x0004	/* reset to SIG_DFL when taking signal */
+#define SA_NODEFER	0x0010	/* don't mask the signal we're delivering */
 #ifdef COMPAT_SUNOS
 #define	SA_USERTRAMP	0x0100	/* do not bounce off kernel's sigtramp */
 #endif
@@ -150,8 +151,10 @@ typedef	void (*sig_t) __P((int));	/* type of signal function */
 struct	sigaltstack {
 	char	*ss_base;		/* signal stack base */
 	int	ss_size;		/* signal stack length */
-	int	ss_flags;		/* SA_DISABLE and/or SA_ONSTACK */
+	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
 };
+#define SS_ONSTACK	0x0001	/* take signals on alternate stack */
+#define SS_DISABLE	0x0004	/* disable taking signals on alternate stack */
 #define	MINSIGSTKSZ	8192			/* minimum allowable stack */
 #define	SIGSTKSZ	(MINSIGSTKSZ + 32768)	/* recommended stack size */
 
@@ -164,9 +167,9 @@ struct	sigvec {
 	int	sv_mask;		/* signal mask to apply */
 	int	sv_flags;		/* see signal options below */
 };
-
 #define SV_ONSTACK	SA_ONSTACK
 #define SV_INTERRUPT	SA_RESTART	/* same bit, opposite sense */
+#define SV_RESETHAND	SA_RESETHAND
 #define sv_onstack sv_flags	/* isn't compatibility wonderful! */
 
 /*
