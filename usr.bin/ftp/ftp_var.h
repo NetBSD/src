@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.13 1997/02/01 10:45:05 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.14 1997/03/13 06:23:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -56,6 +56,8 @@
 
 #define	FTP_PORT	21	/* default if getservbyname("ftp/tcp") fails */
 #define	HTTP_PORT	80	/* default if getservbyname("http/tcp") fails */
+
+#define PAGER		"less"	/* default pager if $PAGER isn't set */
 
 /*
  * Options and other state info.

@@ -1,4 +1,4 @@
-/*	$NetBSD: domacro.c,v 1.8 1997/01/19 14:19:08 lukem Exp $	*/
+/*	$NetBSD: domacro.c,v 1.9 1997/03/13 06:23:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: domacro.c,v 1.8 1997/01/19 14:19:08 lukem Exp $";
+static char rcsid[] = "$NetBSD: domacro.c,v 1.9 1997/03/13 06:23:14 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ domacro(argc, argv)
 	struct cmd *c;
 
 	if (argc < 2 && !another(&argc, &argv, "macro name")) {
-		printf("Usage: %s macro_name.\n", argv[0]);
+		printf("usage: %s macro_name\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -72,7 +72,7 @@ domacro(argc, argv)
 		code = -1;
 		return;
 	}
-	(void) strcpy(line2, line);
+	(void)strcpy(line2, line);
 TOP:
 	cp1 = macros[i].mac_start;
 	while (cp1 != macros[i].mac_end) {
@@ -93,7 +93,7 @@ TOP:
 				    }
 				    cp1--;
 				    if (argc - 2 >= j) {
-					(void) strcpy(cp2, argv[j+1]);
+					(void)strcpy(cp2, argv[j+1]);
 					cp2 += strlen(argv[j+1]);
 				    }
 				    break;
@@ -102,7 +102,7 @@ TOP:
 					loopflg = 1;
 					cp1++;
 					if (count < argc) {
-					   (void) strcpy(cp2, argv[count]);
+					   (void)strcpy(cp2, argv[count]);
 					   cp2 += strlen(argv[count]);
 					}
 					break;
@@ -120,26 +120,25 @@ TOP:
 		makeargv();
 		c = getcmd(margv[0]);
 		if (c == (struct cmd *)-1) {
-			printf("?Ambiguous command\n");
+			puts("?Ambiguous command.");
 			code = -1;
 		}
 		else if (c == 0) {
-			printf("?Invalid command\n");
+			puts("?Invalid command.");
 			code = -1;
 		}
 		else if (c->c_conn && !connected) {
-			printf("Not connected.\n");
+			puts("Not connected.");
 			code = -1;
 		}
 		else {
-			if (verbose) {
-				printf("%s\n", line);
-			}
+			if (verbose)
+				puts(line);
 			(*c->c_handler)(margc, margv);
 			if (bell && c->c_bell) {
-				(void) putchar('\007');
+				(void)putchar('\007');
 			}
-			(void) strcpy(line, line2);
+			(void)strcpy(line, line2);
 			makeargv();
 			argc = margc;
 			argv = margv;
