@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwovar.h,v 1.3 2000/09/06 19:51:44 scw Exp $	*/
+/*	$NetBSD: pcctwovar.h,v 1.4 2000/11/24 09:36:41 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@ struct pcctwo_attach_args {
 	bus_dma_tag_t	pa_dmat;	/* DMA tag */
 	bus_space_tag_t	pa_bust;	/* Bus tag */
 	bus_addr_t	pa_offset;	/* Offset with 'Bus tag' bus space */
+
+	bus_addr_t	_pa_base;
 };
 
 /* Shorthand for locators. */
