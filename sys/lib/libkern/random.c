@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.2 1994/10/26 06:42:42 cgd Exp $	*/
+/*	$NetBSD: random.c,v 1.3 1996/11/13 19:30:39 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  *	@(#)random.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <sys/types.h>
+#include <lib/libkern/libkern.h>
 
 /*
  * Pseudo-random number generator for randomizing the profiling clock,
