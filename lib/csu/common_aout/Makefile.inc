@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2000/01/22 19:37:57 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2001/06/07 15:22:49 mrg Exp $
 #	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
 
 CPPFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/../common_aout
@@ -36,6 +36,6 @@ afterdepend: .depend
 	mv $$TMP .depend)
 
 FILES=${OBJS}
-FILESDIR=/usr/lib
+FILESDIR=${LIBDIR}
 
 .include <bsd.prog.mk>
