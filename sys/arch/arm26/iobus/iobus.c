@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.1 2000/05/09 21:56:01 bjh21 Exp $ */
+/* $NetBSD: iobus.c,v 1.2 2000/10/14 23:44:42 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iobus.c,v 1.1 2000/05/09 21:56:01 bjh21 Exp $");
+__RCSID("$NetBSD: iobus.c,v 1.2 2000/10/14 23:44:42 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: iobus.c,v 1.1 2000/05/09 21:56:01 bjh21 Exp $");
 
 static int iobus_match __P((struct device *parent, struct cfdata *cf, void *aux));
 static void iobus_attach __P((struct device *parent, struct device *self, void *aux));
+static int iobus_search_ioc __P((struct device *parent, struct cfdata *cf, void *aux));
 static int iobus_search __P((struct device *parent, struct cfdata *cf, void *aux));
 static int iobus_print __P((void *aux, const char *pnp));
 
@@ -81,10 +82,32 @@ iobus_attach(parent, self, aux)
 
 	printf("\n");
 
+	/*
+	 * Always look for the IOC first, since stuff under there determines
+	 * what else is present.
+	 */
+	config_search(iobus_search_ioc, self, NULL);
 	config_search(iobus_search, self, NULL);
 }
 
 extern struct bus_space iobus_bs_tag;
+
+static int
+iobus_search_ioc(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct iobus_attach_args ioa;
+
+	ioa.ioa_tag = 2;
+	ioa.ioa_base = cf->cf_loc[IOBUSCF_BASE];
+	if (strcmp(cf->cf_driver->cd_name, "ioc") == 0 &&
+	    (cf->cf_attach->ca_match)(parent, cf, &ioa) > 0)
+		config_attach(parent, cf, &ioa, iobus_print);
+
+	return 0;
+}
 
 static int
 iobus_search(parent, cf, aux)
