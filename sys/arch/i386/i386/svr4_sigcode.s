@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.s,v 1.3 2001/05/30 12:28:44 mrg Exp $	*/
+/*	$NetBSD: svr4_sigcode.s,v 1.4 2001/06/17 21:01:36 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,15 +148,7 @@ NENTRY(svr4_sigcode)
 	call	SVR4_SIGF_HANDLER(%esp)
 	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
 					# copy at SIGF_UCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,SVR4_UC_EFLAGS(%eax)
-	jnz	1f
-#endif
-	movl	SVR4_UC_FS(%eax),%ecx
-	movl	SVR4_UC_GS(%eax),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax
+	pushl	%eax
 	pushl	$1			# setcontext(p) == syscontext(1, p) 
 	pushl	%eax			# junk to fake return address
 	movl	$SVR4_SYS_context,%eax

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.58 2001/06/10 17:30:41 sommerfeld Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.59 2001/06/17 21:01:36 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,7 +138,6 @@ i386_set_ldt(p, args, retval)
 	int error, i, n;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	int fsslot, gsslot;
 	struct i386_set_ldt_args ua;
 	union descriptor *descv;
 
@@ -209,10 +208,6 @@ i386_set_ldt(p, args, retval)
 #endif
 	}
 
-	if (pcb == curpcb)
-		savectx(curpcb);
-	fsslot = IDXSEL(pcb->pcb_fs);
-	gsslot = IDXSEL(pcb->pcb_gs);
 	error = 0;
 
 	/* Check descriptors for access violations. */
@@ -237,11 +232,6 @@ i386_set_ldt(p, args, retval)
 			     (gdt[IDXSEL(desc->gd.gd_selector)].sd.sd_dpl !=
 				 SEL_UPL))) {
 				error = EACCES;
-				goto out;
-			}
-			/* Can't replace in use descriptor with gate. */
-			if (n == fsslot || n == gsslot) {
-				error = EBUSY;
 				goto out;
 			}
 			break;
@@ -283,12 +273,6 @@ i386_set_ldt(p, args, retval)
 		if (desc->sd.sd_p != 0) {
 			/* Only user (ring-3) descriptors may be present. */
 			if (desc->sd.sd_dpl != SEL_UPL) {
-				error = EACCES;
-				goto out;
-			}
-		} else {
-			/* Must be "present" if in use. */
-			if (n == fsslot || n == gsslot) {
 				error = EACCES;
 				goto out;
 			}
