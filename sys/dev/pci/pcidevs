@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.236.2.12 2001/02/26 21:48:27 he Exp $
+$NetBSD: pcidevs,v 1.236.2.13 2001/03/20 17:23:32 he Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -560,6 +560,9 @@ product 3COM 3C590	0x5900	3c590 Ethernet
 product 3COM 3C595TX	0x5950	3c595-TX 10/100 Ethernet
 product 3COM 3C595T4	0x5951	3c595-T4 10/100 Ethernet
 product 3COM 3C595MII	0x5952	3c595-MII 10/100 Ethernet
+product 3COM 3C555	0x5055	3c555 10/100 MiniPCI Ethernet
+product 3COM 3C556	0x6055	3c556 10/100 MiniPCI Ethernet
+product 3COM 3C556B	0x6056	3c556B 10/100 MiniPCI Ethernet
 product 3COM 3CSOHO100TX 0x7646 3cSOHO100-TX 10/100 Ethernet
 product	3COM 3C900TPO	0x9000	3c900-TPO Ethernet
 product	3COM 3C900COMBO	0x9001	3c900-COMBO Ethernet
