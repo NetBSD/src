@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.43 2003/05/03 03:29:06 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.44 2003/05/03 03:49:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -800,7 +800,8 @@ initarm(bootargs)
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va);
+	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
+	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 	/* Setup the IRQ system */
 	printf("irq ");

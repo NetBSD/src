@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.64 2003/05/03 03:29:10 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.65 2003/05/03 03:49:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -689,7 +689,8 @@ initarm(argc, argv, bi)
 	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va);
+	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
+	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 	if (cputype == CPU_ID_SA110)
 		rpc_sa110_cc_setup();	

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.26 2003/05/03 03:29:12 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.27 2003/05/03 03:49:08 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -956,7 +956,8 @@ ofw_configmem(void)
 	}
 
 	/* Initialize pmap module. */
-	pmap_bootstrap((pd_entry_t *)proc0_ttbbase.pv_va);
+	pmap_bootstrap((pd_entry_t *)proc0_ttbbase.pv_va, KERNEL_VM_BASE,
+	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
 }
 
 
