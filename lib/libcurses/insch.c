@@ -1,4 +1,4 @@
-/*	$NetBSD: insch.c,v 1.11 1999/04/13 14:08:18 mrg Exp $	*/
+/*	$NetBSD: insch.c,v 1.11.6.1 2000/01/09 20:43:19 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insch.c,v 1.11 1999/04/13 14:08:18 mrg Exp $");
+__RCSID("$NetBSD: insch.c,v 1.11.6.1 2000/01/09 20:43:19 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,11 +52,11 @@ __RCSID("$NetBSD: insch.c,v 1.11 1999/04/13 14:08:18 mrg Exp $");
  */
 int
 winsch(win, ch)
-	WINDOW *win;
-	int     ch;
+	WINDOW	*win;
+	chtype	 ch;
 {
 
-	__LDATA *end, *temp1, *temp2;
+	__LDATA	*end, *temp1, *temp2;
 
 	end = &win->lines[win->cury]->line[win->curx];
 	temp1 = &win->lines[win->cury]->line[win->maxx - 1];
@@ -65,8 +65,8 @@ winsch(win, ch)
 		(void) memcpy(temp1, temp2, sizeof(__LDATA));
 		temp1--, temp2--;
 	}
-	temp1->ch = ch;
-	temp1->attr &= ~__STANDOUT;
+	temp1->ch = (wchar_t) ch & __CHARTEXT;
+	temp1->attr = (attr_t) ch & __ATTRIBUTES;
 	__touchline(win, (int) win->cury, (int) win->curx, (int) win->maxx - 1, 0);
 	if (win->cury == LINES - 1 &&
 	    (win->lines[LINES - 1]->line[COLS - 1].ch != ' ' ||

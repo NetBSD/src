@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.1 1999/04/13 14:08:17 mrg Exp $	*/
+/*	$NetBSD: attributes.c,v 1.1.6.1 2000/01/09 20:43:17 jdc Exp $	*/
 
 /*
  * Copyright (c) 1999 Julian. D. Coleman
@@ -34,12 +34,13 @@
  *	Modes are blinking, bold (extra bright), dim (half-bright),
  *	blanking (invisible), protected and reverse video
  */
+
 int
 wattron(win, attr)
 	WINDOW	*win;
-	int	attr;
+	int	 attr;
 {
-	if (attr & __BLINK) {
+	if ((attr_t) attr & __BLINK) {
 		/*
 	 	 * If can do blink, set the screen blink bit.
 	 	 */
@@ -47,10 +48,10 @@ wattron(win, attr)
 #ifdef DEBUG
 			__CTRACE("wattron: BLINK\n");
 #endif
-			win->flags |= __WBLINK;
+			win->wattr |= __BLINK;
 		}
 	}
-	if (attr & __BOLD) {
+	if ((attr_t) attr & __BOLD) {
 		/*
 		 * If can do bold, set the screen bold bit.
 		 */
@@ -58,10 +59,10 @@ wattron(win, attr)
 #ifdef DEBUG
 			__CTRACE("wattron: BOLD\n");
 #endif
-			win->flags |= __WBOLD;
+			win->wattr |= __BOLD;
 		}
 	}
-	if (attr & __DIM) {
+	if ((attr_t) attr & __DIM) {
 		/*
 		 * If can do dim, set the screen dim bit.
 		 */
@@ -69,10 +70,10 @@ wattron(win, attr)
 #ifdef DEBUG
 			__CTRACE("wattron: DIM\n");
 #endif
-			win->flags |= __WDIM;
+			win->wattr |= __DIM;
 		}
 	}
-	if (attr & __BLANK) {
+	if ((attr_t) attr & __BLANK) {
 		/*
 		 * If can do blink, set the screen blink bit.
 		 */
@@ -80,10 +81,10 @@ wattron(win, attr)
 #ifdef DEBUG
 			__CTRACE("wattron: BLANK\n");
 #endif
-			win->flags |= __WBLANK;
+			win->wattr |= __BLANK;
 		}
 	}
-	if (attr & __PROTECT) {
+	if ((attr_t) attr & __PROTECT) {
 		/*
 		 * If can do protected, set the screen protected bit.
 		 */
@@ -91,10 +92,10 @@ wattron(win, attr)
 #ifdef DEBUG
 			__CTRACE("wattron: PROTECT\n");
 #endif
-			win->flags |= __WPROTECT;
+			win->wattr |= __PROTECT;
 		}
 	}
-	if (attr & __REVERSE) {
+	if ((attr_t) attr & __REVERSE) {
 		/*
 		 * If can do reverse video, set the screen reverse video bit.
 		 */
@@ -103,8 +104,11 @@ wattron(win, attr)
 #ifdef DEBUG
 			__CTRACE("wattron: REVERSE\n");
 #endif
-			win->flags |= __WREVERSE;
+			win->wattr |= __REVERSE;
 		}
+	}
+	if ((attr_t) attr & __STANDOUT) {
+		wstandout(win);
 	}
 	if (attr & __UNDERSCORE) {
 		wunderscore(win);
@@ -122,58 +126,61 @@ wattron(win, attr)
 int
 wattroff(win, attr)
 	WINDOW	*win;
-	int	attr;
+	int	 attr;
 {
 	/*
 	 * If can do exit modes, unset the relevent attribute bits.
 	 */
-	if (attr & __BLINK) {
+	if ((attr_t) attr & __BLINK) {
 		if (ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattroff: BLINK\n");
 #endif
-			win->flags &= ~__WBLINK;
+			win->wattr &= ~__BLINK;
 		}
 	}
-	if (attr & __BOLD) {
+	if ((attr_t) attr & __BOLD) {
 		if (ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattroff: BOLD\n");
 #endif
-			win->flags &= ~__WBOLD;
+			win->wattr &= ~__BOLD;
 		}
 	}
-	if (attr & __DIM) {
+	if ((attr_t) attr & __DIM) {
 		if (ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattroff: DIM\n");
 #endif
-			win->flags &= ~__WDIM;
+			win->wattr &= ~__DIM;
 		}
 	}
-	if (attr & __BLANK) {
+	if ((attr_t) attr & __BLANK) {
 		if (ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattroff: BLANK\n");
 #endif
-			win->flags &= ~__WBLANK;
+			win->wattr &= ~__BLANK;
 		}
 	}
-	if (attr & __PROTECT) {
+	if ((attr_t) attr & __PROTECT) {
 		if (ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattroff: PROTECT\n");
 #endif
-			win->flags &= ~__WPROTECT;
+			win->wattr &= ~__PROTECT;
 		}
 	}
-	if (attr & __REVERSE) {
+	if ((attr_t) attr & __REVERSE) {
 		if (ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattroff: REVERSE\n");
 #endif
-			win->flags &= ~__WREVERSE;
+			win->wattr &= ~__REVERSE;
 		}
+	}
+	if ((attr_t) attr & __STANDOUT) {
+		wstandend(win);
 	}
 	if (attr & __UNDERSCORE) {
 		wunderend(win);
@@ -185,103 +192,107 @@ wattroff(win, attr)
  * wattrset
  *	Set specific attribute modes.
  *	Unset others.
- *	XXX does not change __STANDOUT
  */
 int
 wattrset(win, attr)
 	WINDOW	*win;
-	int	attr;
+	int	 attr;
 {
-	if (attr & __BLINK) {
+	if ((attr_t) attr & __BLINK) {
 		if (MB != NULL && ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattrset: BLINK\n");
 #endif
-			win->flags |= __WBLINK;
+			win->wattr |= __BLINK;
 		}
 	} else {
 		if (ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattrset: !BLINK\n");
 #endif
-			win->flags &= ~__WBLINK;
+			win->wattr &= ~__BLINK;
 		}
 	}
-	if (attr & __BOLD) {
+	if ((attr_t) attr & __BOLD) {
 		if (MD != NULL && ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattrset: BOLD\n");
 #endif
-			win->flags |= __WBOLD;
+			win->wattr |= __BOLD;
 		}
 	} else {
 		if (ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattrset: !BOLD\n");
 #endif
-			win->flags &= ~__WBOLD;
+			win->wattr &= ~__BOLD;
 		}
 	}
-	if (attr & __DIM) {
+	if ((attr_t) attr & __DIM) {
 		if (MH != NULL && ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattrset: DIM\n");
 #endif
-			win->flags |= __WDIM;
+			win->wattr |= __DIM;
 		}
 	} else {
 		if (ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattrset: !DIM\n");
 #endif
-			win->flags &= ~__WDIM;
+			win->wattr &= ~__DIM;
 		}
 	}
-	if (attr & __BLANK) {
+	if ((attr_t) attr & __BLANK) {
 		if (MK != NULL && ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattrset: BLANK\n");
 #endif
-			win->flags |= __WBLANK;
+			win->wattr |= __BLANK;
 		}
 	} else {
 		if (ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattrset: !BLANK\n");
 #endif
-			win->flags &= ~__WBLANK;
+			win->wattr &= ~__BLANK;
 		}
 	}
-	if (attr & __PROTECT) {
+	if ((attr_t) attr & __PROTECT) {
 		if (MP != NULL && ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattrset: PROTECT\n");
 #endif
-			win->flags |= __WPROTECT;
+			win->wattr |= __PROTECT;
 		}
 	} else {
 		if (ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattrset: !PROTECT\n");
 #endif
-			win->flags &= ~__WPROTECT;
+			win->wattr &= ~__PROTECT;
 		}
 	}
-	if (attr & __REVERSE) {
+	if ((attr_t) attr & __REVERSE) {
 		if (MR != NULL && ME != NULL)
 		{
 #ifdef DEBUG
 			__CTRACE("wattrset: REVERSE\n");
 #endif
-			win->flags |= __WREVERSE;
+			win->wattr |= __REVERSE;
 		}
 	} else {
 		if (ME != NULL) {
 #ifdef DEBUG
 			__CTRACE("wattrset: !REVERSE\n");
 #endif
-			win->flags &= ~__WREVERSE;
+			win->wattr &= ~__REVERSE;
 		}
+	}
+	if ((attr_t) attr & __STANDOUT) {
+		wstandout(win);
+	} else {
+		wstandend(win);
 	}
 	if (attr & __UNDERSCORE) {
 		wunderscore(win);

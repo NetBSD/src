@@ -1,9 +1,0 @@
-#! /bin/csh -f
-#
-#	$NetBSD: dogrn,v 1.2 1998/01/09 06:34:41 perry Exp $
-#
-set dev=fa
-foreach m ($argv)
-	echo grn -P$dev $m.grn ">" $m.nr
-	grn -P$dev $m.grn > $m.nr
-end

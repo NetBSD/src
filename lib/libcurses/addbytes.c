@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.14 1999/06/28 13:32:43 simonb Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.14.6.1 2000/01/09 20:43:17 jdc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.14 1999/06/28 13:32:43 simonb Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.14.6.1 2000/01/09 20:43:17 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -53,15 +53,15 @@ __RCSID("$NetBSD: addbytes.c,v 1.14 1999/06/28 13:32:43 simonb Exp $");
  */
 int
 __waddbytes(win, bytes, count, attr)
-	WINDOW	*win;
+	WINDOW		*win;
 	const char	*bytes;
-	int	count;
-	int	attr;
+	int		 count;
+	attr_t		 attr;
 {
-	static char	blanks[] = "        ";
-	int	c, newx, x, y;
-	char	attributes;
-	__LINE	*lp;
+	static char	 blanks[] = "        ";
+	int		 c, newx, x, y;
+	attr_t		 attributes;
+	__LINE		*lp;
 
 	SYNCH_IN;
 
@@ -105,21 +105,21 @@ __waddbytes(win, bytes, count, attr)
 			}
 
 			attributes = '\0';
-			if (win->flags & __WSTANDOUT || attr & __STANDOUT)
+			if (win->wattr & __STANDOUT || attr & __STANDOUT)
 				attributes |= __STANDOUT;
-			if (win->flags & __WUNDERSCORE || attr & __UNDERSCORE)
+			if (win->wattr & __UNDERSCORE || attr & __UNDERSCORE)
 				attributes |= __UNDERSCORE;
-			if (win->flags & __WREVERSE || attr & __REVERSE)
+			if (win->wattr & __REVERSE || attr & __REVERSE)
 				attributes |= __REVERSE;
-			if (win->flags & __WBLINK || attr & __BLINK)
+			if (win->wattr & __BLINK || attr & __BLINK)
 				attributes |= __BLINK;
-			if (win->flags & __WDIM || attr & __DIM)
+			if (win->wattr & __DIM || attr & __DIM)
 				attributes |= __DIM;
-			if (win->flags & __WBOLD || attr & __BOLD)
+			if (win->wattr & __BOLD || attr & __BOLD)
 				attributes |= __BOLD;
-			if (win->flags & __WBLANK || attr & __BLANK)
+			if (win->wattr & __BLANK || attr & __BLANK)
 				attributes |= __BLANK;
-			if (win->flags & __WPROTECT || attr & __PROTECT)
+			if (win->wattr & __PROTECT || attr & __PROTECT)
 				attributes |= __PROTECT;
 #ifdef DEBUG
 			__CTRACE("ADDBYTES: 1: y = %d, x = %d, firstch = %d, lastch = %d\n",

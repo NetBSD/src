@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.14 1999/09/17 14:21:04 simonb Exp $	*/
+/*	$NetBSD: refresh.c,v 1.14.6.1 2000/01/09 20:43:21 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.14 1999/09/17 14:21:04 simonb Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.14.6.1 2000/01/09 20:43:21 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -329,33 +329,29 @@ makech(win, wy)
 				if ((clsp - nlsp >= strlen(CE)
 				    && clsp < win->maxx * __LDATASIZE) ||
 				    wy == win->maxy - 1) {
-					if ((curscr->flags & __WSTANDOUT) &&
-					    SE != NULL && UE != NULL &&
-					    ME != NULL) {
+					if (curscr->wattr & __STANDOUT) {
 						tputs(SE, 0, __cputchar);
-						curscr->flags &= ~__WSTANDOUT;
-						if (*SE == *UE) {
+						curscr->wattr &= ~__STANDOUT;
+						if (UE != NULL &&
+						    !strcmp(SE, UE))
 							curscr->flags &=
-						    ~__WUNDERSCORE;
-						}
-						if (*SE == *ME) {
+							    ~__UNDERSCORE;
+						if (ME != NULL &&
+						    !strcmp(SE, ME))
 							curscr->flags &=
-						    ~__WATTRIBUTES;
-						}
+							    ~__TERMATTR;
 					}
-					if ((curscr->flags & __WUNDERSCORE) &&
-					    UE != NULL && ME != NULL) {
+					if (curscr->wattr & __UNDERSCORE) {
 						tputs(UE, 0, __cputchar);
-						curscr->flags &= ~__WUNDERSCORE;
-						if (*UE == *ME) {
+						curscr->wattr &= ~__UNDERSCORE;
+						if (ME != NULL &&
+						    !strcmp(UE, ME))
 							curscr->flags &=
-						    ~__WATTRIBUTES;
-						}
+							    ~__TERMATTR;
 					}
-					if ((curscr->flags & __WATTRIBUTES) &&
-					    UE != NULL) {
-						tputs(UE, 0, __cputchar);
-						curscr->flags &= ~__WATTRIBUTES;
+					if (curscr->wattr & __TERMATTR) {
+						tputs(ME, 0, __cputchar);
+						curscr->wattr &= ~__TERMATTR;
 					}
 					tputs(CE, 0, __cputchar);
 					lx = wx + win->begx;
@@ -375,79 +371,67 @@ makech(win, wy)
 			 * (because termcap 'me' unsets 'mb', 'md', 'mh',
 			 * 'mk', 'mp' and 'mr').  However, 'me' might also
 			 * do 'se' and/or 'ue'.  If so, we change the
-			 * screen flags to reflect this.
+			 * screen flags to reflect this.  Check to see if
+			 * we also turn off standout and attributes.
 			 */
 			if ((!(nsp->attr & __BLINK) &&
-			    curscr->flags & __WBLINK) ||
+			    curscr->wattr & __BLINK) ||
 			    (!(nsp->attr & __BOLD) &&
-			    curscr->flags & __WBOLD) ||
+			    curscr->wattr & __BOLD) ||
 			    (!(nsp->attr & __DIM) &&
-			    curscr->flags & __WDIM) ||
+			    curscr->wattr & __DIM) ||
 			    (!(nsp->attr & __BLANK) &&
-			    curscr->flags & __WBLANK) ||
+			    curscr->wattr & __BLANK) ||
 			    (!(nsp->attr & __PROTECT) &&
-			    curscr->flags & __WPROTECT) ||
+			    curscr->wattr & __PROTECT) ||
 			    (!(nsp->attr & __REVERSE) &&
-			    curscr->flags & __WREVERSE) ||
-			    (!(nsp->attr & __BOLD) &&
-			    curscr->flags & __WBOLD)) {
-				if (ME != NULL && SE != NULL && UE != NULL) {
-					tputs(ME, 0, __cputchar);
-					curscr->flags &= ~__WATTRIBUTES;
-					if (*ME == *SE) {
-						curscr->flags &= ~__WSTANDOUT;
-					}
-					if (*ME == *UE) {
-						curscr->flags &= ~__WUNDERSCORE;
-					}
-				}
+			    curscr->wattr & __REVERSE)) {
+				tputs(ME, 0, __cputchar);
+				curscr->wattr &= ~__TERMATTR;
+				if (SE != NULL && !strcmp(ME, SE))
+					curscr->wattr &= ~__STANDOUT;
+				if (UE != NULL && !strcmp(ME, UE))
+					curscr->wattr &= ~__UNDERSCORE;
 			}
 
 			/*
 			 * Exit underscore mode if appropriate.
-			 *
-			 * Note: check to see if we also turn off attributes
-			 * and standout.
+			 * Check to see if we also turn off standout
+			 * and attributes.
 			 */
 			if (!(nsp->attr & __UNDERSCORE) &&
-			    (curscr->flags & __WUNDERSCORE) &&
-			    UE != NULL && ME != NULL && SE != NULL) {
+			    (curscr->wattr & __UNDERSCORE)) {
 				tputs(UE, 0, __cputchar);
-				curscr->flags &= ~__WUNDERSCORE;
-				if (*UE == *ME) {
-					curscr->flags &= ~__WATTRIBUTES;
-				}
-				if (*UE == *SE) {
-					curscr->flags &= ~__WSTANDOUT;
-				}
+				curscr->wattr &= ~__UNDERSCORE;
+				if (SE != NULL && !strcmp(UE, SE))
+					curscr->wattr &= ~__STANDOUT;
+				if (ME != NULL && !strcmp(UE, ME))
+					curscr->wattr &= ~__TERMATTR;
 			}
 
 			/*
 			 * Enter/exit standout mode as appropriate.
+			 * Check to see if we also turn off underscore
+			 * and attributes.
 			 * XXX
 			 * Should use UC if SO/SE not available.
-			 *
-			 * Note: check to see if we also turn off attributes
-			 * and underscore.  If we have turned off underscore
-			 * and it should be on, turn it back on.
 			 */
 			if (nsp->attr & __STANDOUT) {
-				if (!(curscr->flags & __WSTANDOUT) &&
+				if (!(curscr->wattr & __STANDOUT) &&
 				    SO != NULL && SE != NULL) {
 					tputs(SO, 0, __cputchar);
-					curscr->flags |= __WSTANDOUT;
+					curscr->wattr |= __STANDOUT;
 				}
 			} else {
-				if ((curscr->flags & __WSTANDOUT) &&
-				    SE != NULL && ME != NULL && UE != NULL) {
+				if (curscr->wattr & __STANDOUT) {
 					tputs(SE, 0, __cputchar);
-					curscr->flags &= ~__WSTANDOUT;
-					if (*SE == *ME) {
-						curscr->flags &= ~__WATTRIBUTES;
-					}
-					if (*SE == *UE) {
-						curscr->flags &= ~__WUNDERSCORE;
-					}
+					curscr->wattr &= ~__STANDOUT;
+					if (UE != NULL && !strcmp(SE, UE))
+						curscr->flags &=
+						    ~__UNDERSCORE;
+					if (ME != NULL && !strcmp(SE, ME))
+						curscr->flags &=
+						    ~__ATTRIBUTES;
 				}
 			}
 
@@ -455,96 +439,106 @@ makech(win, wy)
 			 * Enter underscore mode if appropriate.
 			 * XXX
 			 * Should use UC if US/UE not available.
-			 *
-			 * Note: check to see if we also turn off attributes
-			 * and standout.
 			 */
 			if (nsp->attr & __UNDERSCORE &&
-			    !(curscr->flags & __WUNDERSCORE) &&
+			    !(curscr->wattr & __UNDERSCORE) &&
 			    US != NULL && UE != NULL) {
 				tputs(US, 0, __cputchar);
-				curscr->flags |= __WUNDERSCORE;
+				curscr->wattr |= __UNDERSCORE;
 			}
 
 			/*
 			 * Set other attributes as appropriate.
 			 */
-			if (nsp->attr & __REVERSE) {
-				if (!(curscr->flags & __WREVERSE) &&
-				    MR != NULL && ME != NULL) {
-					tputs(MR, 0, __cputchar);
-					curscr->flags |= __WREVERSE;
-				}
-			}
 			if (nsp->attr & __BLINK) {
-				if (!(curscr->flags & __WBLINK) &&
+				if (!(curscr->wattr & __BLINK) &&
 				    MB != NULL && ME != NULL) {
 					tputs(MB, 0, __cputchar);
-					curscr->flags |= __WBLINK;
-				}
-			}
-			if (nsp->attr & __DIM) {
-				if (!(curscr->flags & __WDIM) &&
-				    MH != NULL && ME != NULL) {
-					tputs(MH, 0, __cputchar);
-					curscr->flags |= __WDIM;
+					curscr->wattr |= __BLINK;
 				}
 			}
 			if (nsp->attr & __BOLD) {
-				if (!(curscr->flags & __WBOLD) &&
+				if (!(curscr->wattr & __BOLD) &&
 				    MD != NULL && ME != NULL) {
 					tputs(MD, 0, __cputchar);
-					curscr->flags |= __WBOLD;
+					curscr->wattr |= __BOLD;
+				}
+			}
+			if (nsp->attr & __DIM) {
+				if (!(curscr->wattr & __DIM) &&
+				    MH != NULL && ME != NULL) {
+					tputs(MH, 0, __cputchar);
+					curscr->wattr |= __DIM;
 				}
 			}
 			if (nsp->attr & __BLANK) {
-				if (!(curscr->flags & __WBLANK) &&
+				if (!(curscr->wattr & __BLANK) &&
 				    MK != NULL && ME != NULL) {
 					tputs(MK, 0, __cputchar);
-					curscr->flags |= __WBLANK;
+					curscr->wattr |= __BLANK;
 				}
 			}
 			if (nsp->attr & __PROTECT) {
-				if (!(curscr->flags & __WPROTECT) &&
+				if (!(curscr->wattr & __PROTECT) &&
 				    MP != NULL && ME != NULL) {
 					tputs(MP, 0, __cputchar);
-					curscr->flags |= __WPROTECT;
+					curscr->wattr |= __PROTECT;
+				}
+			}
+			if (nsp->attr & __REVERSE) {
+				if (!(curscr->wattr & __REVERSE) &&
+				    MR != NULL && ME != NULL) {
+					tputs(MR, 0, __cputchar);
+					curscr->wattr |= __REVERSE;
 				}
 			}
 
 			wx++;
 			if (wx >= win->maxx && wy == win->maxy - 1 && !curwin)
 				if (win->flags & __SCROLLOK) {
-					if (curscr->flags & __WSTANDOUT
+					if (curscr->wattr & __STANDOUT
 					    && win->flags & __ENDLINE)
-						if (!MS) {
+						if (!MS && SE != NULL) {
 							tputs(SE, 0,
 							    __cputchar);
 							curscr->flags &=
-							    ~__WSTANDOUT;
+							    ~__STANDOUT;
+							if (UE != NULL &&
+							    !strcmp(SE, UE))
+								curscr->flags &=
+							    ~__UNDERSCORE;
+							if (ME != NULL &&
+							    !strcmp(SE, ME))
+								curscr->flags &=
+							    ~__TERMATTR;
 						}
-					if (curscr->flags & __WUNDERSCORE
+					if (curscr->wattr & __UNDERSCORE
 					    && win->flags & __ENDLINE)
-						if (!MS) {
+						if (!MS && UE != NULL) {
 							tputs(UE, 0,
 							    __cputchar);
 							curscr->flags &=
-							    ~__WUNDERSCORE;
+							    ~__UNDERSCORE;
+							if (ME != NULL &&
+							  !strcmp(UE, ME))
+								curscr->flags &=
+							    ~__TERMATTR;
 						}
-					if (curscr->flags & __WATTRIBUTES
+					if (curscr->wattr & __TERMATTR
 					    && win->flags & __ENDLINE)
-						if (!MS) {
+						if (!MS && ME != NULL) {
 							tputs(ME, 0,
 							    __cputchar);
 							curscr->flags &=
-							    ~__WATTRIBUTES;
+							    ~__TERMATTR;
 						}
 					if (!(win->flags & __SCROLLWIN)) {
 						if (!curwin) {
 							csp->attr = nsp->attr;
-							putchar(csp->ch = nsp->ch);
+							putchar((int) (csp->ch = nsp->ch));
+
 						} else
-							putchar(nsp->ch);
+							putchar((int) nsp->ch);
 					}
 					if (wx + win->begx < curscr->maxx) {
 						domvcur(ly, (int) (wx + win->begx),
@@ -559,10 +553,10 @@ makech(win, wy)
 			    !(win->flags & __SCROLLWIN)) {
 				if (!curwin) {
 					csp->attr = nsp->attr;
-					putchar(csp->ch = nsp->ch);
+					putchar((int) (csp->ch = nsp->ch));
 					csp++;
 				} else
-					putchar(nsp->ch);
+					putchar((int) nsp->ch);
 			}
 #ifdef DEBUG
 			__CTRACE("makech: putchar(%c)\n", nsp->ch & 0177);
@@ -593,19 +587,25 @@ makech(win, wy)
 	}
 
 	/* Don't leave the screen in standout mode. */
-	if (curscr->flags & __WSTANDOUT) {
+	if (curscr->wattr & __STANDOUT) {
 		tputs(SE, 0, __cputchar);
-		curscr->flags &= ~__WSTANDOUT;
+		curscr->wattr &= ~__STANDOUT;
+		if (UE != NULL && !strcmp(SE, UE))
+			curscr->wattr &= ~__UNDERSCORE;
+		if (ME != NULL && !strcmp(SE, ME))
+			curscr->wattr &= ~__TERMATTR;
 	}
 	/* Don't leave the screen in underscore mode. */
-	if (curscr->flags & __WUNDERSCORE) {
+	if (curscr->wattr & __UNDERSCORE) {
 		tputs(UE, 0, __cputchar);
-		curscr->flags &= ~__WUNDERSCORE;
+		curscr->wattr &= ~__UNDERSCORE;
+		if (ME != NULL && !strcmp(UE, ME))
+			curscr->wattr &= ~__TERMATTR;
 	}
 	/* Don't leave the screen with attributes set. */
-	if (curscr->flags & __WATTRIBUTES) {
+	if (curscr->wattr & __TERMATTR) {
 		tputs(ME, 0, __cputchar);
-		curscr->flags &= ~__WATTRIBUTES;
+		curscr->wattr &= ~__TERMATTR;
 	}
 	return (OK);
 }
@@ -618,17 +618,23 @@ static void
 domvcur(oy, ox, ny, nx)
 	int	oy, ox, ny, nx;
 {
-	if (curscr->flags & __WSTANDOUT && !MS && SE) {
+	if (curscr->wattr & __STANDOUT && !MS) {
 		tputs(SE, 0, __cputchar);
-		curscr->flags &= ~__WSTANDOUT;
+		curscr->wattr &= ~__STANDOUT;
+		if (UE != NULL && !strcmp(SE, UE))
+			curscr->wattr &= ~__UNDERSCORE;
+		if (ME != NULL && !strcmp(SE, ME))
+			curscr->wattr &= ~__TERMATTR;
 	}
-	if (curscr->flags & __WUNDERSCORE && !MS && UE) {
+	if (curscr->wattr & __UNDERSCORE && !MS) {
 		tputs(UE, 0, __cputchar);
-		curscr->flags &= ~__WUNDERSCORE;
+		curscr->wattr &= ~__UNDERSCORE;
+		if (ME != NULL && !strcmp(UE, ME))
+			curscr->wattr &= ~__TERMATTR;
 	}
-	if (curscr->flags & __WATTRIBUTES && !MS && ME) {
+	if (curscr->wattr & __TERMATTR && !MS) {
 		tputs(ME, 0, __cputchar);
-		curscr->flags &= ~__WATTRIBUTES;
+		curscr->wattr &= ~__TERMATTR;
 	}
 
 	__mvcur(oy, ox, ny, nx, 1);
@@ -663,7 +669,7 @@ quickch(win)
 		    win->lines[top]->hash != curscr->lines[top]->hash
 		    || memcmp(win->lines[top]->line,
 			curscr->lines[top]->line,
-			win->maxx * __LDATASIZE) != 0)
+			(size_t) win->maxx * __LDATASIZE) != 0)
 			break;
 		else
 			win->lines[top]->flags &= ~__ISDIRTY;
@@ -675,7 +681,7 @@ quickch(win)
 		    win->lines[bot]->hash != curscr->lines[bot]->hash
 		    || memcmp(win->lines[bot]->line,
 			curscr->lines[bot]->line,
-			win->maxx * __LDATASIZE) != 0)
+			(size_t) win->maxx * __LDATASIZE) != 0)
 			break;
 		else
 			win->lines[bot]->flags &= ~__ISDIRTY;
@@ -714,7 +720,7 @@ quickch(win)
 						curscr->lines[curs]->hash ||
 						memcmp(win->lines[curw]->line,
 						    curscr->lines[curs]->line,
-						    win->maxx * __LDATASIZE) != 0))
+						    (size_t) win->maxx * __LDATASIZE) != 0))
 						break;
 				if (curs == starts + bsize)
 					goto done;
@@ -830,9 +836,9 @@ done:
 			if ((n > 0 && target >= top && target < top + n) ||
 			    (n < 0 && target <= bot && target > bot + n)) {
 				if (clp->hash != blank_hash || memcmp(clp->line,
-				    buf, win->maxx * __LDATASIZE) !=0) {
+				    buf, (size_t) win->maxx * __LDATASIZE) !=0) {
 					(void)memcpy(clp->line,  buf,
-					    win->maxx * __LDATASIZE);
+					    (size_t) win->maxx * __LDATASIZE);
 #ifdef DEBUG
 					__CTRACE("-- blanked out: dirty");
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: deleteln.c,v 1.11 1999/09/17 13:44:31 simonb Exp $	*/
+/*	$NetBSD: deleteln.c,v 1.11.6.1 2000/01/09 20:43:18 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)deleteln.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: deleteln.c,v 1.11 1999/09/17 13:44:31 simonb Exp $");
+__RCSID("$NetBSD: deleteln.c,v 1.11.6.1 2000/01/09 20:43:18 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -69,7 +69,7 @@ wdeleteln(win)
 		else
 			(void) memcpy(win->lines[y]->line,
 			    win->lines[y + 1]->line,
-			    win->maxx * __LDATASIZE);
+			    (size_t) win->maxx * __LDATASIZE);
 		__touchline(win, y, 0, (int) win->maxx - 1, 0);
 	}
 

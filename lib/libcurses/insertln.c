@@ -1,4 +1,4 @@
-/*	$NetBSD: insertln.c,v 1.10 1999/04/13 14:08:18 mrg Exp $	*/
+/*	$NetBSD: insertln.c,v 1.10.6.1 2000/01/09 20:43:19 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)insertln.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insertln.c,v 1.10 1999/04/13 14:08:18 mrg Exp $");
+__RCSID("$NetBSD: insertln.c,v 1.10.6.1 2000/01/09 20:43:19 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -74,7 +74,7 @@ winsertln(win)
 		else
 			(void) memcpy(win->lines[y]->line,
 			    win->lines[y - 1]->line,
-			    win->maxx * __LDATASIZE);
+			    (size_t) win->maxx * __LDATASIZE);
 		__touchline(win, y, 0, (int) win->maxx - 1, 0);
 	}
 	if (win->orig == NULL)

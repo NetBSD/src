@@ -1,4 +1,4 @@
-/*	$NetBSD: longname.c,v 1.9 1999/04/13 14:08:18 mrg Exp $	*/
+/*	$NetBSD: longname.c,v 1.9.6.1 2000/01/09 20:43:20 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993
@@ -38,28 +38,44 @@
 #if 0
 static char sccsid[] = "@(#)longname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: longname.c,v 1.9 1999/04/13 14:08:18 mrg Exp $");
+__RCSID("$NetBSD: longname.c,v 1.9.6.1 2000/01/09 20:43:20 jdc Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
 
 /*
- * longname --
+ * __longname --
  *	Fill in "def" with the long name of the terminal.
+ *      This is the original BSD version of longname(), modified to return
+ *	at most 128 characters.
  */
 char   *
-longname(bp, def)
+__longname(bp, def)
 	char   *bp, *def;
 {
 	char   *cp;
+	int	i = 0;
 
 	while (*bp && *bp != ':' && *bp != '|')
 		bp++;
 	if (*bp == '|') {
-		for (cp = def, ++bp; *bp && *bp != ':' && *bp != '|';)
+		for (cp = def, ++bp; *bp && *bp != ':' && *bp != '|' &&
+		    i < 127;)
 			*cp++ = *bp++;
+			i++;
 		*cp = '\0';
 	}
 	return (def);
+}
+
+/*
+ * longname --
+ *	Return to pointer to the long name of the terminal. 
+ *	This is the SUS version of longname()
+ */
+char	*
+longname(void)
+{
+	return (ttytype);
 }

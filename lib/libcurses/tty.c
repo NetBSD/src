@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.12 1999/06/28 13:32:43 simonb Exp $	*/
+/*	$NetBSD: tty.c,v 1.12.6.1 2000/01/09 20:43:23 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.12 1999/06/28 13:32:43 simonb Exp $");
+__RCSID("$NetBSD: tty.c,v 1.12.6.1 2000/01/09 20:43:23 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -421,10 +421,10 @@ endwin()
 	return __stopwin();
 }
 
-int
+bool
 isendwin()
 {
-	return (__endwin);
+	return (__endwin ? TRUE : FALSE);
 }
 
 int
