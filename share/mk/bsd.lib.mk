@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.189 2001/11/02 07:25:58 simonb Exp $
+#	$NetBSD: bsd.lib.mk,v 1.190 2001/11/14 21:49:53 tv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -9,6 +9,8 @@ realinstall:	checkver libinstall
 clean:		cleanlib
 
 ##### Build and install rules
+CPPFLAGS+=	${DESTDIR:D-nostdinc -isystem ${DESTDIR}/usr/include}
+
 .if !defined(SHLIB_MAJOR) && exists(${SHLIB_VERSION_FILE})
 SHLIB_MAJOR != . ${SHLIB_VERSION_FILE} ; echo $$major
 SHLIB_MINOR != . ${SHLIB_VERSION_FILE} ; echo $$minor
