@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.149 2000/11/19 03:16:34 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.150 2000/11/22 08:39:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.149 2000/11/19 03:16:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.150 2000/11/22 08:39:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4131,9 +4131,9 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
  *	Process pending TLB shootdown operations for this processor.
  */
 void
-pmap_do_tlb_shootdown(void)
+pmap_do_tlb_shootdown(struct cpu_info *ci, struct trapframe *framep)
 {
-	u_long cpu_id = cpu_number();
+	u_long cpu_id = ci->ci_cpuid;
 	u_long cpu_mask = (1UL << cpu_id);
 	struct pmap_tlb_shootdown_q *pq = &pmap_tlb_shootdown_q[cpu_id];
 	struct pmap_tlb_shootdown_job *pj;

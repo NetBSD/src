@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.47 2000/11/20 19:25:43 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.48 2000/11/22 08:39:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -129,8 +129,9 @@ struct cpu_info {
 	u_long ci_want_resched;		/* preempt current process */
 	u_long ci_astpending;		/* AST is pending */
 	u_long ci_intrdepth;		/* interrupt trap depth */
+	struct trapframe *ci_db_regs;	/* registers for debuggers */
 #if defined(MULTIPROCESSOR)
-	u_long ci_flags;		/* flags; see below */
+	__volatile u_long ci_flags;	/* flags; see below */
 	__volatile u_long ci_ipis;	/* interprocessor interrupts pending */
 #endif
 };
@@ -138,6 +139,7 @@ struct cpu_info {
 #define	CPUF_PRIMARY	0x01		/* CPU is primary CPU */
 #define	CPUF_PRESENT	0x02		/* CPU is present */
 #define	CPUF_RUNNING	0x04		/* CPU is running */
+#define	CPUF_PAUSED	0x08		/* CPU is paused */
 
 #if defined(MULTIPROCESSOR)
 extern	__volatile u_long cpus_running;
