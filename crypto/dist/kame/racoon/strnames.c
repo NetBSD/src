@@ -1,4 +1,4 @@
-/*	$KAME: strnames.c,v 1.19 2001/07/31 09:17:11 itojun Exp $	*/
+/*	$KAME: strnames.c,v 1.21 2001/08/14 14:55:27 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -620,6 +620,10 @@ static struct ksmap name_attr_isakmp_desc[] = {
 { OAKLEY_ATTR_GRP_DESC_EC2N155,		"EC2N group on GP[2^155]",	NULL },
 { OAKLEY_ATTR_GRP_DESC_EC2N185,		"EC2N group on GP[2^185]",	NULL },
 { OAKLEY_ATTR_GRP_DESC_MODP1536,	"1536-bit MODP group",	NULL },
+{ OAKLEY_ATTR_GRP_DESC_MODP2048,	"2048-bit MODP group",	NULL },
+{ OAKLEY_ATTR_GRP_DESC_MODP3072,	"3072-bit MODP group",	NULL },
+{ OAKLEY_ATTR_GRP_DESC_MODP4096,	"4096-bit MODP group",	NULL },
+{ OAKLEY_ATTR_GRP_DESC_MODP8192,	"8192-bit MODP group",	NULL },
 };
 
 char *
@@ -693,24 +697,6 @@ s_ipsec_level(k)
 	for (i = 0; i < ARRAYLEN(name_ipsec_level); i++)
 		if (name_ipsec_level[i].key == k)
 			return name_ipsec_level[i].str;
-	return num2str(k);
-}
-
-/* algorithm.h */
-static struct ksmap name_algstrength[] = {
-{ algstrength_ehigh,	"extra high",	NULL },
-{ algstrength_high,	"high",		NULL },
-{ algstrength_normal,	"normal",	NULL },
-};
-
-char *
-s_algstrength(k)
-	int k;
-{
-	int i;
-	for (i = 0; i < ARRAYLEN(name_algstrength); i++)
-		if (name_algstrength[i].key == k)
-			return name_algstrength[i].str;
 	return num2str(k);
 }
 
