@@ -1,4 +1,4 @@
-/*	$NetBSD: pciio.h,v 1.1 2001/09/13 21:49:40 thorpej Exp $	*/
+/*	$NetBSD: pciio.h,v 1.2 2001/09/14 06:09:42 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@ struct pciio_bdf_cfgreg {
 /*
  * pciio_businfo:
  *
- *	Unformation for a PCI bus (autconfiguration node) instance.
+ *	Information for a PCI bus (autconfiguration node) instance.
  */
 struct pciio_businfo {
 	u_int	busno;		/* bus number */
