@@ -224,7 +224,8 @@ begin again from scratch.
 
 		You should also be able to use SLIP or PPP as the network
 		connection.
->>> Instructions for using SLIP or PPP need to go here? <<<
+		[XXX instructions for ppp or slip would be usefull
+		perhaps the next release]
 
 		If the NFS server or FTP server is not on a directly-
 		connected network, you should set up a route to it

@@ -3,7 +3,6 @@ to make users upgrade by compiling and installing the 1.1 sources, and
 it would be very difficult to even compile a set of instructions that
 allowed them to do so.  Because of the various changes to the system,
 the largest being the 64-bit file size support and shared libraries,
->>> just what are the major differences between 1.0 and 1.1?? <<<<<<<<<<<<<<<<
 it is impractical to upgrade by recompiling from the sources and
 installing.
 
@@ -61,9 +60,6 @@ To upgrade your system, follow the following instructions:
 	probably do it manually after the install process is complete,
 	by using "fsck -c 2". Read the fsck(8) manual page for more
 	details.
->>>  Is this needed for 1.0 to 1.1 upgrade?  Or mention that the upgrade
->>>  should be done if it wasn't previously done?  [It shouldn't hurt
->>>  to run through the upgrade steps.]
 
 	The upgrade program will then check your root file system,
 	and, if you approved, will upgrade it to the new file system
@@ -152,7 +148,6 @@ After a new kernel has been copied to your hard disk, your
 	NFS.  (Note that the information for mounts of type "ufs",
 	i.e. Fast File Systems, are contained in the mount(8) man
 	page.)
->>> Is this needed for 1.0 -> 1.1 upgrade?
 
 	Finally, you will want to delete old binaries that were part
 	of the version of NetBSD that you upgraded from and have since
