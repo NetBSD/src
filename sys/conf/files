@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.354 2000/03/15 02:10:09 fvdl Exp $
+#	$NetBSD: files,v 1.355 2000/03/16 14:52:23 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -210,6 +210,14 @@ file	dev/ic/aic77xx.c		ahc_aic77xx
 # DPT EATA SCSI controllers
 device	dpt: scsi
 file	dev/ic/dpt.c			dpt
+
+# Compaq Smart ARRAY controllers
+device	cac {unit = -1}
+file	dev/ic/cac.c			cac
+
+device	ca: disk
+attach	ca at cac
+file	dev/ic/ca.c			ca	needs-flag
 
 # AdvanSys 1200A, 1200B and ULTRA SCSI controllers
 device	adv: scsi

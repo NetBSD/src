@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.77 2000/03/04 10:27:59 elric Exp $
+#	$NetBSD: files.pci,v 1.78 2000/03/16 14:52:23 ad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -17,6 +17,10 @@ file	dev/pci/pci_subr.c		pci
 # device declaration in sys/conf/files
 attach	ahc at pci with ahc_pci: ahc_seeprom, smc93cx6
 file	dev/pci/ahc_pci.c		ahc_pci
+
+# Compaq RAID controllers
+attach	cac at pci with cac_pci
+file	dev/pci/cac_pci.c		cac_pci
 
 # DPT EATA SCSI controllers
 attach	dpt at pci with dpt_pci
