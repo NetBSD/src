@@ -1,4 +1,4 @@
-.\" $NetBSD: userdel.8,v 1.14.2.1 2002/06/04 12:10:36 lukem Exp $ */
+.\" $NetBSD: userdel.8,v 1.14.2.2 2002/06/10 17:44:58 tv Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -60,7 +60,10 @@ without any further options,
 .Fl D
 will show the current defaults which will be used by the
 .Nm
-utility. Together with one of the options shown for the first version
+utility.  Additionally, if running as root and the
+.Pa /etc/usermgmt.conf 
+file does not exist, it is created using the default values.
+Together with one of the options shown for the first version
 of the command,
 .Fl D
 will set the default to be the new value.
