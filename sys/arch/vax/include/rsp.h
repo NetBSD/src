@@ -1,4 +1,4 @@
-/*	$NetBSD: rsp.h,v 1.1 1996/02/17 18:14:50 ragge Exp $ */
+/*	$NetBSD: rsp.h,v 1.2 2001/05/15 18:59:45 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -70,7 +70,7 @@ struct rsp {
 #define	RSP_OP_DIAG		007	/* internal diagnose */
 #define	RSP_OP_GSTAT		010	/* Get status */
 #define	RSP_OP_SSTAT		011	/* Set status */
-#define	RSP_OP_END		100	/* End packet */
+#define	RSP_OP_END		0100	/* End packet */
 
 /* Modifier */
 #define	RSP_MOD_VERIFY		001	/* Verify read data */
