@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.33 2004/11/02 00:38:23 erh Exp $
+.\" $NetBSD: pkg_delete.1,v 1.34 2004/11/03 13:58:23 wiz Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     from FreeBSD: @(#)pkg_delete.1
 .\"
-.Dd September 2, 2003
+.Dd November 2, 2004
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nd a utility for deleting previously installed software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl DdFfnORrVv
+.Op Fl DdFfNnORrVv
 .Bk -words
 .Op Fl K Ar pkg_dbdir
 .Ek
@@ -111,13 +111,13 @@ taken from the value of the environment variable
 .Ev PKG_DBDIR
 if it's set, otherwise it defaults to
 .Pa /var/db/pkg .
+.It Fl N
+Remove the package's registration and its entries from the package database,
+but leave the files installed.
+Don't run any deinstall scripts or @unexec lines either.
 .It Fl n
 Don't actually deinstall a package, just report the steps that
 would be taken if it were.
-.It Fl N
-Remove the package's registration and its entries from the package database,
-but leave the files installed.  Don't run any deinstall scripts or @unexec lines
-either.
 .It Fl O
 Only delete the package's entries from the package database, do not
 touch the package or its files itself.
