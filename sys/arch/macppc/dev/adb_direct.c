@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.23 2002/05/05 18:29:06 tsutsui Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.24 2002/05/05 18:36:03 tsutsui Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1891,6 +1891,9 @@ adb_read_date_time(unsigned long *time)
 
 		while (0 == flag)	/* wait for result */
 			;
+
+		/* XXX to avoid wrong reordering by gcc 2.95.x with -fgcse */
+		__asm volatile ("" ::: "memory");
 
 		memcpy(time, output + 1, 4);
 		return 0;
