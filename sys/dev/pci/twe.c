@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.34 2002/12/16 18:27:20 fvdl Exp $	*/
+/*	$NetBSD: twe.c,v 1.35 2003/01/01 00:10:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.34 2002/12/16 18:27:20 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.35 2003/01/01 00:10:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,8 +480,8 @@ twe_print(void *aux, const char *pnp)
 	twea = aux;
 
 	if (pnp != NULL)
-		printf("block device at %s", pnp);
-	printf(" unit %d", twea->twea_unit);
+		aprint_normal("block device at %s", pnp);
+	aprint_normal(" unit %d", twea->twea_unit);
 	return (UNCONF);
 }
 

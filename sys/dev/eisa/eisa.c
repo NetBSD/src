@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.30 2002/10/02 16:33:47 thorpej Exp $	*/
+/*	$NetBSD: eisa.c,v 1.31 2003/01/01 00:10:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.30 2002/10/02 16:33:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.31 2003/01/01 00:10:17 thorpej Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -84,9 +84,9 @@ eisaprint(void *aux, const char *pnp)
 
 	if (pnp) {
 		eisa_devinfo(ea->ea_idstring, devinfo);
-		printf("%s at %s", devinfo, pnp);
+		aprint_normal("%s at %s", devinfo, pnp);
 	}
-	printf(" slot %d", ea->ea_slot);
+	aprint_normal(" slot %d", ea->ea_slot);
 	return (UNCONF);
 }
 

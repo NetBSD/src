@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.32 2002/12/11 13:02:31 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.33 2003/01/01 00:10:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.32 2002/12/11 13:02:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.33 2003/01/01 00:10:18 thorpej Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -880,9 +880,9 @@ iop_print(void *aux, const char *pnp)
 
 	if (pnp != NULL) {
 		iop_devinfo(ia->ia_class, devinfo);
-		printf("%s at %s", devinfo, pnp);
+		aprint_normal("%s at %s", devinfo, pnp);
 	}
-	printf(" tid %d", ia->ia_tid);
+	aprint_normal(" tid %d", ia->ia_tid);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.32 2002/11/07 07:41:22 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.33 2003/01/01 00:10:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.32 2002/11/07 07:41:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.33 2003/01/01 00:10:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -220,11 +220,11 @@ mii_print(void *aux, const char *pnp)
 	struct mii_attach_args *ma = aux;
 
 	if (pnp != NULL)
-		printf("OUI 0x%06x model 0x%04x rev %d at %s",
+		aprint_normal("OUI 0x%06x model 0x%04x rev %d at %s",
 		    MII_OUI(ma->mii_id1, ma->mii_id2), MII_MODEL(ma->mii_id2),
 		    MII_REV(ma->mii_id2), pnp);
 
-	printf(" phy %d", ma->mii_phyno);
+	aprint_normal(" phy %d", ma->mii_phyno);
 	return (UNCONF);
 }
 
