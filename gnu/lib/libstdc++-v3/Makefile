@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/10/19 14:52:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2003/12/21 07:05:25 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -20,7 +20,7 @@ INCSDIR=	/usr/include/g++
 
 .include "${.CURDIR}/../libsupc++/Makefile.common"
 
-SRCS=		${LIBMATHSRCS} ${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS} xmalloc.c xexit.c
+SRCS=		${LIBMATHSRCS} ${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS}
 # affects profiling; can't switch it off just for profiling easily.
 #CXXFLAGS+=	${G_SECTION_FLAGS}
 #CXXFLAGS+=	-ffunction-sections -fdata-sections 
