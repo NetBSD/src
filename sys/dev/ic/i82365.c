@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.30 2000/01/25 09:17:35 enami Exp $	*/
+/*	$NetBSD: i82365.c,v 1.31 2000/01/25 19:38:18 chopps Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1295,13 +1295,18 @@ pcic_wait_ready(h)
 {
 	int i;
 
-	for (i = 0; i < 10000; i++) {
+	/* wait an initial 10ms for quick cards */
+	if (pcic_read(h, PCIC_IF_STATUS) & PCIC_IF_STATUS_READY)
+		return;
+	pcic_delay(h, 10, "wait_ready initial");
+	for (i = 0; i < 50; i++) {
 		if (pcic_read(h, PCIC_IF_STATUS) & PCIC_IF_STATUS_READY)
 			return;
-		delay(500);
+		/* wait .1s (100ms) each iteration now */
+		pcic_delay(h, 100, "wait_ready loop");
 #ifdef PCICDEBUG
 		if (pcic_debug) {
-			if ((i>5000) && (i%100 == 99))
+			if ((i>20) && (i%100 == 99))
 				printf(".");
 		}
 #endif
