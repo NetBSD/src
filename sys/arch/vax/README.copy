@@ -1,4 +1,4 @@
-	$NetBSD: README.copy,v 1.2 1995/09/29 16:33:38 ragge Exp $
+	$NetBSD: README.copy,v 1.3 1997/03/15 20:08:35 ragge Exp $
 
                 How to use copy
                 ------------------
@@ -24,10 +24,10 @@ and install this miniroot onto disk.
 
 Specify the device to read from as xx(N,0), where
 xx is the device-name and N is the unit-number, e.g.
-"tms(0,1)" for the first TMSCP-tape (TK50),
+"mt(0,1)" for the first TMSCP-tape (TK50),
 "ra(2,0)" for the third MSCP-disk/floppy (RX33/RX50)
 
-device to read from ? tms(0,1) /* Tape 0, file 1 */
+device to read from ? mt(0,1) /* Tape 0, file 1 */
                       ^^^^^^^^
 Specify number of blocks to transfer. Usually this is
 sizeof(miniroot) / 512.
