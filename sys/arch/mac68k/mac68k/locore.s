@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.59 1996/03/12 23:46:32 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.60 1996/03/14 05:50:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1456,8 +1456,10 @@ __TBIA:
 Lmotommu3:
 #endif
 	pflusha
+#if defined(M68020)
 	tstl	_mmutype
 	jgt	Ltbia851
+#endif
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 Ltbia851:
@@ -1539,14 +1541,16 @@ ENTRY(TBIAU)
 	.word	0xf518			| yes, pflusha (for now) XXX
 Lmotommu6:
 #endif
+#if defined(M68020)
 	tstl	_mmutype
-	jgt	Ltbiau851
+	jle	Ltbiau851
+	pflush	#0,#4			| flush user TLB entries
+	rts
+Ltbiau851:
+#endif
 	pflush	#0,#4			| flush user TLB entries
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
-	rts
-Ltbiau851:
-	pflush	#0,#4			| flush user TLB entries
 	rts
 
 /*
