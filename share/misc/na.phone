@@ -1,32 +1,28 @@
 # Area Code : City : State/Province : State/Province Abbrev.
-#	$NetBSD: na.phone,v 1.7 1997/03/26 06:30:58 mikel Exp $
+#	$NetBSD: na.phone,v 1.8 1997/04/01 07:36:12 mikel Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 201:Ashbury Park:New Jersey:NJ
 201:Newark:New Jersey:NJ
 202::District of Columbia:DC
 203:New Haven:Connecticut:CT
 204:Winnipeg:Manitoba:MB
-205:Burmingham Huntsville:Alabama:AL
+205:Birmingham:Alabama:AL
+205:Huntsville:Alabama:AL
 206:Seattle:Washington:WA
 206:Tacoma:Washington:WA
 207::Maine:ME
 208::Idaho:ID
 209:Fresno:California:CA
 209:Stockton:California:CA
-210:San Antonio:Texax:TX
+210:San Antonio:Texas:TX
 212:Manhattan:New York:NY
 212:New York City:New York:NY
 213:Beverly Hills:California:CA
-213:Long Beach:California:CA
 213:Los Angeles:California:CA
 214:Dallas:Texas:TX
 215:Bethlehem:Pennsylvania:PA
 215:Philadelphia:Pennsylvania:PA
-216:Akron:Ohio:OH
-216:Canton:Ohio:OH
 216:Cleveland:Ohio:OH
-216:Massillon:Ohio:OH
-216:Youngstown:Ohio:OH
 217:Champaign:Illinois:IL
 217:Springfield:Illinois:IL
 218:Duluth:Minnesota:MN
@@ -34,6 +30,12 @@
 219:Gary:Indiana:IN
 219:Hammond:Indiana:IN
 219:South Bend:Indiana:IN
+242::Bahamas:
+246::Barbados:
+250:Vancouver Island:British Columbia:BC
+264::Anguilla:
+268::Antigua:
+268::Barbuda:
 281:Houston:Texas:TX
 301:Frederick:Maryland:MD
 301:Silver Spring:Maryland:MD
@@ -44,10 +46,7 @@
 303:Durango:Colorado:CO
 303:Ft. Collins:Colorado:CO
 304::West Virginia:WV
-305:Cape Canaveral:Florida:FL
 305:Cape Kennedy:Florida:FL
-305:Fort Lauderdale:Florida:FL
-305:Key West:Florida:FL
 305:Miami Beach:Florida:FL
 305:Miami:Florida:FL
 306::Saskatchewan:SK
@@ -65,8 +64,6 @@
 312:Chicago:Illinois:IL
 313:Ann Arbor:Michigan:MI
 313:Detroit:Michigan:MI
-314:Columbia:Missouri:MO
-314:Jefferson City:Missouri:MO
 314:St. Louis:Missouri:MO
 315:Oswego:New York:NY
 315:Syracuse:New York:NY
@@ -75,7 +72,6 @@
 316:Hutchinson:Kansas:KS
 316:Wichita:Kansas:KS
 317:Indianapolis:Indiana:IN
-317:Kokomo:Indiana:IN
 318:Alexandria:Louisiana:LA
 318:Lake Charles:Louisiana:LA
 318:Shreveport:Louisiana:LA
@@ -83,7 +79,16 @@
 319:Dubuque:Iowa:IA
 319:Iowa City:Iowa:IA
 320:St. Cloud:Minnesota:MN
+330:Akron:Ohio:OH
+330:Canton:Ohio:OH
+330:Cleveland:Ohio:OH
+330:Massillon:Ohio:OH
+330:Youngstown:Ohio:OH
+334:Auburn:Alabama:AL
+334:Mobile:Alabama:AL
 334:Montgomery:Alabama:AL
+334:Selma:Alabama:AL
+345::Cayman Islands:
 352:Gainsville:Florida:FL
 360:Bellingham:Washington:WA
 360:Olympia:Washington:WA
@@ -104,9 +109,9 @@
 405:Oklahoma City:Oklahoma:OK
 406::Montana:MT
 407:Orlando:Florida:FL
-407:West Palm Beach:Florida:FL
 408:San Jose:California:CA
 408:Sunnyvale:California:CA
+409:Beaumont:Texas:TX
 409:Galveston:Texas:TX
 409:Port Arthur:Texas:TX
 410:Annapolis:Maryland:MD
@@ -126,11 +131,16 @@
 418:Quebec:Quebec:PQ
 419:Lima:Ohio:OH
 419:Toledo:Ohio:OH
+423:Chattanooga:Tennessee:TN
+423:Johnson City:Tennessee:TN
+423:Knoxville:Tennessee:TN
+441::Bermuda:
 501::Arkansas:AR
 502:Louisville:Kentucky:KY
 502:Paducah:Kentucky:KY
 502:Shelbyville:Kentucky:KY
 503:Portland:Oregon:OR
+503:Salem:Oregon:OR
 504:Baton Rouge:Louisiana:LA
 504:New Orleans:Louisiana:LA
 505::New Mexico:NM
@@ -144,9 +154,9 @@
 510:Oakland:California:CA
 510:Berkeley:California:CA
 512:Alamo:Texas:TX
-513:Camden:Ohio:OH
+512:Austin:Texas:TX
+512:Corpus Christi:Texas:TX
 513:Cincinnati:Ohio:OH
-513:Dayton:Ohio:OH
 514:Montreal:Quebec:PQ
 515:Des Moines:Iowa:IA
 515:Mason City:Iowa:IA
@@ -156,13 +166,27 @@
 518:Albany:New York:NY
 518:Schenectady:New York:NY
 519:London:Ontario:ON
+520:Flagstaff:Arizona:AZ
+520:Prescott:Arizona:AZ
+520:Tucson:Arizona:AZ
+520:Yuma:Arizona:AZ
 540:Blacksburg:Virginia:VA
 540:Roanoke:Virginia:VA
-541::Oregon:OR
+541:Bend:Oregon:OR
+561:Boca Raton:Florida:FL
+561:Sebastian:Florida:FL
+561:West Palm Beach:Florida:FL
+562:Long Beach:California:CA
+573:Columbia:Missouri:MO
+573:Jefferson City:Missouri:MO
 601::Mississippi:MS
-602::Arizona:AZ
+602:Phoenix:Arizona:AZ
+602:Scottsdale:Arizona:AZ
+602:Tempe:Arizona:AZ
 603::New Hampshire:NH
-604::British Columbia:BC
+604:Sunshine:British Columbia:BC
+604:Vancouver:British Columbia:BC
+604:Whistler:British Columbia:BC
 605::South Dakota:SD
 606:Ashland:Kentucky:KY
 606:Winchester:Kentucky:KY
@@ -183,7 +207,6 @@
 613:Ottawa:Ontario:ON
 614:Columbus:Ohio:OH
 614:Zanesville:Ohio:OH
-615:Chattanooga:Tennessee:TN
 615:Madison:Tennessee:TN
 615:Nashville:Tennessee:TN
 616:Battle Creek:Michigan:MI
@@ -195,13 +218,12 @@
 618:Alton:Illinois:IL
 618:Centralia:Illinois:IL
 618:Madison:Illinois:IL
-619:Imperial Valley:California:CA
-619:Palm Springs:California:CA
 619:San Diego:California:CA
+630:Aurora:Illinois:IL
 630:Chicago:Illinois:IL
+664::Montserrat:
 701::North Dakota:ND
 702::Nevada:NV
-703:Arlington:Virginia:VA
 703:Fredericksburg:Virginia:VA
 703:Manassas:Virginia:VA
 704:Asheville:North Carolina:NC
@@ -240,10 +262,19 @@
 719:Lamar:Colorado:CO
 719:Pueblo:Colorado:CO
 719:South Fork:Colorado:CO
+757:Norfolk:Virginia:VA
+758::St. Lucia:
+760:Imperial Valley:California:CA
+760:Palm Springs:California:CA
+765:Kokomo:Indiana:IN
 770:Atlanta:Georgia:GA
+773:Chicago:Illinois:IL
+787::Puerto Rico:PR
 801::Utah:UT
 802::Vermont:VT
-803::South Carolina:SC
+803:Charleston:South Carolina:SC
+803:Columbia:South Carolina:SC
+803:Florence:South Carolina:SC
 804:Charlottesville:Virginia:VA
 804:Norfolk:Virginia:VA
 804:Richmond:Virginia:VA
@@ -254,7 +285,7 @@
 807:Fort William:Ontario:ON
 807:Thunder Bay:Ontario:ON
 808::Hawaii:HI
-809::Puerto Rico:PR
+809::Caribbean Islands:
 809::Virgin Islands:VI
 810:Flint:Michigan:MI
 810:Pontiac:Michigan:MI
@@ -272,9 +303,7 @@
 816:Independence:Missouri:MO
 816:Kansas City:Missouri:MO
 816:Saint Joseph:Missouri:MO
-817:Fort Worth:Texas:TX
-817:Temple:Texas:TX
-817:Waco:Texas:TX
+817:Arlington:Texas:TX
 818:Encino:California:CA
 818:North Hollywood:California:CA
 818:Pasadena:California:CA
@@ -282,16 +311,22 @@
 818:Van Nuys:California:CA
 819:Hull:Quebec:PQ
 819:Sherbrooke:Quebec:PQ
+847:Chicago:Illinois:IL
+847:Evanston:Illinois:IL
+847:Waukegan:Illinois:IL
 860:Hartford:Connecticut:CT
+864:Greenville:South Carolina:SC
+869::Nevis:
+869::St. Kitts:
 901:Jackson:Tennessee:TN
 901:Memphis:Tennessee:TN
 902::Nova Scotia:NS
 902::Prince Edward Island:PE
 903:Paris:Texas:TX
 903:Texarkana:Texas:TX
-904:Apalachicola:Florida:FL
-904:Atlantic Beach:Florida:FL
+904:Daytona Beach:Florida:FL
 904:Jacksonville:Florida:FL
+904:Panama City:Florida:FL
 904:Pensacola:Florida:FL
 904:Tallahassee:Florida:FL
 905:Hamilton:Ontario:ON
@@ -317,6 +352,7 @@
 914:White Plains:New York:NY
 915:Abilene:Texas:TX
 915:El Paso:Texas:TX
+915:Odessa:Texas:TX
 916:Davis:California:CA
 916:Sacramento:California:CA
 917:New York City:New York:NY
@@ -327,12 +363,14 @@
 919:Burlington:North Carolina:NC
 919:Greenville:North Carolina:NC
 919:Williamston:North Carolina:NC
+937:Camden:Ohio:OH
+937:Dayton:Ohio:OH
 941:Avon Park:Florida:FL
 941:Fort Myers:Florida:FL
 941:Winter Haven:Florida:FL
 954:Fort Lauderdale:Florida:FL
 954:Key West:Florida:FL
-954:Miami:Florida:FL
 970:Fort Collins:Colorado:CO
 970:Grand Junction:Colorado:CO
 970:Vail:Colorado:CO
+972:Dallas:Texas:TX
