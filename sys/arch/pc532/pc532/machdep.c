@@ -73,6 +73,7 @@ vm_map_t buffer_map;
 #include "machine/psl.h"
 #include "machine/reg.h"
 #include "machine/cpu.h"
+#include "machine/pmap.h"
 #include "icu.h"
 
 extern vm_offset_t avail_end;
@@ -117,6 +118,13 @@ int IdlePTD;
 int start_page;
 int _istack;
 
+#if 0
+#include <pc532/umprintf.c> 
+#else
+umprintf (char *fmt,...)
+{} /* Dummy procedure. */
+#endif
+
 void
 _low_level_init ()
 {
@@ -124,33 +132,39 @@ _low_level_init ()
   int  p0, p1, p2;
   extern int _mapped;
 
+umprintf ("starting low level init\n");
+
   mem_size = ram_size(end);
   physmem = btoc(mem_size);
-  start_page = ((int)&end + PAGE_SIZE) & ~(PAGE_SIZE-1);
+  start_page = (((int)&end + NS532_PAGE_SIZE) & ~(NS532_PAGE_SIZE-1)) & 0xfffff;
   avail_start = start_page; 
-  avail_end   = mem_size - PAGE_SIZE;
+  avail_end   = mem_size - NS532_PAGE_SIZE;
   
+
+umprintf ("mem_size = 0x%x\nphysmem=%x\nstart_page=0x%x\navail_end=0x%x\n",
+mem_size, physmem, start_page, avail_end);
 
   /* Initialize the mmu with a simple memory map. */
 
   /* A new interrupt stack, i.e. not the rom monitor's. */
   _istack = avail_start;
-  avail_start += PAGE_SIZE;
+  avail_start += NS532_PAGE_SIZE;
 
   /* The page directory that starts the entire mapping. */
   p0 = (int) avail_start;
   IdlePTD = p0;
   KPTphys = p0;
-  avail_start += PAGE_SIZE;
+  avail_start += NS532_PAGE_SIZE;
 
   /* First clear out the page table directory. */
-  bzero((char *)p0, PAGE_SIZE);
+  bzero((char *)p0, NS532_PAGE_SIZE);
 
   /* Now for the memory mapped I/O, the ICU and the eprom. */
   p1 = (int) avail_start;
-  avail_start += PAGE_SIZE;
-  bzero ((char *)p1, PAGE_SIZE);
+  avail_start += NS532_PAGE_SIZE;
+  bzero ((char *)p1, NS532_PAGE_SIZE);
 
+umprintf ("point 1,");
   /* Addresses here start at FFC00000... */
 
   /* Map the interrupt stack to FFC00000 - FFC00FFF */
@@ -158,30 +172,39 @@ _low_level_init ()
 
   /* All futhur entries are cache inhibited.  => 0x4? in low bits. */
 
+umprintf ("2\n");
+
   /* The Duarts and Parity.  Addresses FFC80000 */
   WR_ADR(int, p1+4*0x80, 0x28000043);
 
+umprintf ("3 .. p1 = 0x%x\n", p1);
   /* SCSI Polled  (Reduced space.)  Addresses FFD00000 - FFDFFFFF */
   for (ix = 0x100; ix < 0x200; ix++)
     WR_ADR(int, p1 + ix*4, 0x30000043 + ((ix - 0x100)<<12));
 
+umprintf ("4,");
   /* SCSI "DMA"  (Reduced space.)  Addresses FFE00000 - FFEEFFFF */
   for (ix = 0x200; ix < 0x2ff; ix++)
     WR_ADR(int, p1 + ix*4, 0x38000043 + ((ix - 0x200)<<12));
 
+umprintf ("5,");
   /* SCSI "DMA" With A22 (EOP)  Addresses FFEFF000 - FFEFFFFF */
   WR_ADR(int, p1 + 0x2ff*4, 0x38400043);
 
+umprintf ("6,");
   /* The e-prom  Addresses FFF00000 - FFF3FFFF */
   for (ix = 0x300; ix < 0x340; ix++)
     WR_ADR(int, p1 + ix*4, 0x10000043 + ((ix - 0x300)<<12));
 
+umprintf ("7,");
   /* Finally the ICU!  Addresses FFFFF000 - FFFFFFFF */
   WR_ADR(int, p1+4*0x3ff, 0xFFFFF043);
 
+umprintf ("8,");
   /* Add the memory mapped I/O entry in the directory. */
   WR_ADR(int, p0+4*1023, p1 + 0x43);
 
+umprintf ("9,");
 
   /* Map the kernel pages starting at FE00000 and at 0.
 	It also maps any pages past the end of the kernel,
@@ -195,16 +218,18 @@ _low_level_init ()
    */
 
   p2 = (int) avail_start;
-  avail_start += PAGE_SIZE;
-  bzero ((char *)p2, PAGE_SIZE);
+  avail_start += NS532_PAGE_SIZE;
+  bzero ((char *)p2, NS532_PAGE_SIZE);
   WR_ADR(int,p0+4*pdei(KERNBASE), p2 + 3);
   WR_ADR(int,p0, p2+3);
 
-  for (ix = 0; ix < (avail_start)/PAGE_SIZE; ix++) {
-    WR_ADR(int, p2 + ix*4, PAGE_SIZE * ix + 3);
+umprintf ("10,");
+  for (ix = 0; ix < (avail_start)/NS532_PAGE_SIZE; ix++) {
+    WR_ADR(int, p2 + ix*4, NS532_PAGE_SIZE * ix + 3);
   }
 
   /* Load the ptb0 register and start mapping. */
+umprintf ("exiting low level init\n");
 
   _mapped = 1;
   _load_ptb0 (p0);
@@ -223,7 +248,9 @@ init532()
   void (**int_tab)();
   extern int _save_sp;
 
-#ifdef DEBUG
+umprintf ("starting init532\n");
+
+#if 1
   /*  Initial testing messages .... Removed at a later time. */
 
   printf ("Welcome to the first initial bits of NetBSD/532!\n");
@@ -236,12 +263,14 @@ init532()
   printf ("IdlePTD         = 0x%x\n", IdlePTD);
   printf ("avail_start     = 0x%x\n", avail_start);
 
-  printf ("number of kernel pages = %d (0x%x)\n", start_page / PAGE_SIZE,
-		start_page / PAGE_SIZE);
+  printf ("number of kernel pages = %d (0x%x)\n", start_page / NS532_PAGE_SIZE,
+		start_page / NS532_PAGE_SIZE);
 
-  free_pages = (mem_size - start_page) / PAGE_SIZE;
+  free_pages = (mem_size - start_page) / NS532_PAGE_SIZE;
   printf ("number of free pages = %d\n", free_pages);
 #endif
+
+umprintf ("after init532 printfs\n");
 
 /*#include "ddb.h" */
 #if NDDB > 0
@@ -396,7 +425,7 @@ again:
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t)&buffers,
+	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
 				   &maxaddr, size, FALSE);
 	minaddr = (vm_offset_t)buffers;
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
@@ -447,7 +476,7 @@ again:
 	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
 				   M_MBUF, M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 	/*
 	 * Initialize callouts
@@ -456,11 +485,9 @@ again:
 	for (i = 1; i < ncallout; i++)
 		callout[i-1].c_next = &callout[i];
 
-	printf("avail mem = 0x%x\n", ptoa(vm_page_free_count));
+	printf("avail mem = 0x%x\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
-
-	/* CPU-specific ... ??? PAN */
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -581,6 +608,7 @@ sendsig(catcher, sig, mask, code)
 	fp->sf_sc.sc_fp = regs[FP];
 	fp->sf_sc.sc_pc = regs[PC];
 	fp->sf_sc.sc_ps = regs[PSR];
+	fp->sf_sc.sc_sb = regs[SB];
 	regs[SP] = (int)fp;
 	regs[PC] = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 }
@@ -632,6 +660,7 @@ sigreturn(p, uap, retval)
 	regs[SP] = scp->sc_sp;
 	regs[PC] = scp->sc_pc;
 	regs[PSR] = scp->sc_ps;
+	regs[SB] = scp->sc_sb;
 	return(EJUSTRETURN);
 }
 

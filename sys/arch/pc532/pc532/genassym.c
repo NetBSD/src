@@ -35,7 +35,7 @@
  *
  *	@(#)genassym.c	5.11 (Berkeley) 5/10/91
  *
- *	$Id: genassym.c,v 1.2 1994/04/05 17:37:41 phil Exp $
+ *	$Id: genassym.c,v 1.3 1994/04/19 17:14:14 phil Exp $
  */
 
 #include "sys/param.h"
@@ -92,6 +92,7 @@ main()
 	printf("#define\tKSTK_SIZE %d\n", UPAGES*NBPG);
 	printf("#define\tON_STK_SIZE %d\n", sizeof(struct on_stack));
 	printf("#define\tREGS_USP %d\n", &regs->pcb_usp);
+	printf("#define\tREGS_SB %d\n", &regs->pcb_sb);
 	printf("#define\tREGS_PSR %d\n", &regs->pcb_psr);
 
 	printf("#define\tPCB_ONSTACK %d\n", &pcb->pcb_onstack);

@@ -306,7 +306,7 @@ ENTRY(bpt_to_monitor)
 	sprd	sp, r1  		/* save kernel's sp */
 	sprd	fp, r2  		/* save kernel's fp */
 	sprd	intbase, r3		/* Save current intbase. */
-	smr	ptb0, r4		/* Save current ptd! */		
+	smr	ptb0, r4		/* Save current ptd! */	
 
 /* Change to low addresses */
 	lmr	ptb0, _IdlePTD(pc)	/* Load the idle ptd */
@@ -770,42 +770,47 @@ m_ll_fork: .asciz "_low_level_fork: kstack not double alligned."
 
 /* Interrupt and trap processing. */
 ENTRY(_trap_nvi)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movqd	0, tos
 	br	all_trap
 
 ENTRY(_trap_nmi)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movqd	1, tos
 	br	all_trap
 
 ENTRY(_trap_abt)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movqd	2, tos
 	smr 	tear, tos
 	smr	msr, tos
 	br	abt_trap
 
 ENTRY(_trap_slave)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movqd	3, tos
 	br	all_trap
 
 ENTRY(_trap_ill)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movqd	4, tos
 	br	all_trap
 
 ENTRY(_trap_svc)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
-
-	/* Save the usp in the pcb. */
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
+	lprd    sb, 0			/* for the kernel */
 
 	/* Have an fpu? */
 	cmpqd	0, __have_fpu(pc)
@@ -838,8 +843,9 @@ ENTRY(_trap_svc)
 	movl	PCB_F6(r3),f6
 	movl	PCB_F7(r3),f7
 
-	/* Restore the usp. */
+	/* Restore the usp and sb. */
 	lprd	usp, REGS_USP(sp)
+	lprd	sb, REGS_SB(sp)
 
 	exit	[r0,r1,r2,r3,r4,r5,r6,r7]
 	rett	0
@@ -848,75 +854,87 @@ svc_no_fpu:
 	/* Call the system. */
 	bsr	_syscall
 
-	/* Restore the usp. */
+	/* Restore the usp and sb. */
 	lprd	usp, REGS_USP(sp)
+	lprd	sb, REGS_SB(sp)
 
 	exit	[r0,r1,r2,r3,r4,r5,r6,r7]
 	rett	0
 
 ENTRY(_trap_dvz)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movqd	6, tos
 	br	all_trap
 
 ENTRY(_trap_flg)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movqd	7, tos
 	br	all_trap
 
 ENTRY(_trap_bpt)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movd	8, tos
 	br	all_trap
 
 ENTRY(_trap_trc)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movd	9, tos
 	br	all_trap
 
 ENTRY(_trap_und)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movd	10, tos
 	br	all_trap
 
 ENTRY(_trap_rbe)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movd	11, tos
 	br	all_trap
 
 ENTRY(_trap_nbe)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movd	12, tos
 	br	all_trap
 
 ENTRY(_trap_ovf)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movd	13, tos
 	br	all_trap
 
 ENTRY(_trap_dbg)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movd	14, tos
 	br	all_trap
 
 ENTRY(_trap_reserved)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movd	15, tos
 all_trap:
 	movqd	0,tos	/* Add 2 zeros for msr,tear in frame. */
 	movqd	0,tos
 
 abt_trap:
+	lprd    sb, 0			/* for the kernel */
 
 	/* Was this a real process? */
 	cmpqd	0, _curproc(pc)
@@ -952,8 +970,9 @@ abt_trap:
 	movl	PCB_F6(r3),f6
 	movl	PCB_F7(r3),f7
 
-	/* Reload the usp just in case anything has changed. */
+	/* Reload the usp and sb just in case anything has changed. */
 	lprd	usp, REGS_USP(sp)
+	lprd	sb, REGS_SB(sp)
 
 	exit	[r0,r1,r2,r3,r4,r5,r6,r7]
 	rett  0
@@ -962,8 +981,9 @@ trap_no_fpu:
 	bsr _trap
 	adjspb	-12	/* Pop off software part of trap frame. */
 
-	/* Reload the usp just in case anything has changed. */
+	/* Reload the usp and sb just in case anything has changed. */
 	lprd	usp, REGS_USP(sp)
+	lprd	sb, REGS_SB(sp)
 
 	exit	[r0,r1,r2,r3,r4,r5,r6,r7]
 	rett  0
@@ -971,8 +991,10 @@ trap_no_fpu:
 /* Interrupt service routines.... */
 
 ENTRY(_int_clk)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
+	lprd    sb, 0			/* for the kernel */
 	movd	Cur_pl(pc), tos
 	movqd	0,tos
 	addr	0(sp),tos	/* The address of the frame. */
@@ -981,8 +1003,10 @@ ENTRY(_int_clk)
 	br	exit_int
 
 ENTRY(_int_scsi0)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
+	lprd    sb, 0			/* for the kernel */
 	movd	Cur_pl(pc), tos
 #if NAIC > 0
 	movqd	0,tos
@@ -994,8 +1018,9 @@ ENTRY(_int_scsi0)
 	br	exit_int
 
 ENTRY(_int_scsi1)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
 	movd	Cur_pl(pc), tos
 #if NDP > 0
 	movqd	1,tos
@@ -1012,36 +1037,46 @@ ENTRY(_int_scsi1)
 	br	exit_int
 
 ENTRY(_int_uart0)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
+	lprd    sb, 0			/* for the kernel */
 	movd	Cur_pl(pc), tos
 	movqd	0,tos
 	bsr _scnintr
 	br	exit_int
 ENTRY(_int_uart1)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
+	lprd    sb, 0			/* for the kernel */
 	movd	Cur_pl(pc), tos
 	movqd	1,tos
 	bsr _scnintr
 	br	exit_int
 ENTRY(_int_uart2)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
+	lprd    sb, 0			/* for the kernel */
 	movd	Cur_pl(pc), tos
 	movqd	2,tos
 	bsr _scnintr
 	br	exit_int
 ENTRY(_int_uart3)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
+	lprd    sb, 0			/* for the kernel */
 	movd	Cur_pl(pc), tos
 	movqd	3,tos
 	bsr _scnintr
 	br	exit_int
 ENTRY(_int_bad)
-	enter	[r0,r1,r2,r3,r4,r5,r6,r7],4
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
+	lprd    sb, 0			/* for the kernel */
 	movd	Cur_pl(pc), tos
 	movqd	0,tos
 	bsr _bad_intr
@@ -1054,6 +1089,7 @@ exit_int:
 	bfs	do_user_intr		/* branch if yes! */
 
 	lprd	usp, REGS_USP(sp)
+	lprd	sb, REGS_SB(sp)
 	exit	[r0,r1,r2,r3,r4,r5,r6,r7]
 	reti
 
@@ -1162,6 +1198,7 @@ do_usr_ret:
 
 intr_ret_no_fpu:
 	lprd	usp, REGS_USP(sp)
+	lprd	sb, REGS_SB(sp)
 	exit	[r0,r1,r2,r3,r4,r5,r6,r7]
 	rett	0
 
