@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.9 1996/02/13 22:14:13 christos Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.10 1996/02/18 05:43:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -617,7 +617,7 @@ spp_ctlinput(cmd, sa, arg)
 	case PRC_IFDOWN:
 	case PRC_HOSTDEAD:
 	case PRC_HOSTUNREACH:
-		sns = arg;
+		sns = (struct sockaddr_ns *) sa;
 		if (sns->sns_family != AF_NS)
 			return NULL;
 		na = &sns->sns_addr;
