@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.34 1999/03/24 15:13:46 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.35 1999/03/29 17:01:49 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.34 1999/03/24 15:13:46 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.35 1999/03/29 17:01:49 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,7 @@ struct passwd *pp;
 struct group *gp;
 int dobackup=0, docopy=0, dodir=0, dostrip=0, dolink=0, dopreserve=0,
     dorename = 0;
+static int numberedbackup = 0;
 int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char pathbuf[MAXPATHLEN];
 uid_t uid;
@@ -117,6 +118,20 @@ main(argc, argv)
 		switch((char)ch) {
 		case 'B':
 			suffix = optarg;
+			numberedbackup = 0;
+			{
+				/* Check if given suffix really generates
+				   different suffixes - catch e.g. ".%" */
+				char suffix_expanded0[FILENAME_MAX],
+				     suffix_expanded1[FILENAME_MAX];
+				(void)snprintf(suffix_expanded0, FILENAME_MAX,
+					       suffix, 0);
+				(void)snprintf(suffix_expanded1, FILENAME_MAX,
+					       suffix, 1);
+				if (strcmp(suffix_expanded0, suffix_expanded1)
+				    != 0)
+					numberedbackup = 1;
+			}
 			/* fall through; -B implies -b */
 		case 'b':
 			dobackup = 1;
@@ -570,7 +585,7 @@ backup(to_name)
 {
 	char backup[FILENAME_MAX];
 	
-	if (strchr(suffix, '%')) {
+	if (numberedbackup) {
 		/* Do numbered backup */
 		int cnt;
 		char suffix_expanded[FILENAME_MAX];
