@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.41 1994/06/21 04:06:33 jtc Exp $
+#	$Id: Makefile,v 1.42 1994/06/22 00:21:37 cgd Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -8,7 +8,7 @@
 
 # Missing: mp.h
 
-FILES=	a.out.h ar.h assert.h bitstring.h ctype.h db.h dirent.h disktab.h \
+FILES=	a.out.h ar.h assert.h bitstring.h bm.h ctype.h db.h dirent.h disktab.h \
 	err.h fnmatch.h fstab.h fts.h glob.h grp.h kvm.h langinfo.h limits.h \
 	locale.h math.h memory.h mpool.h ndbm.h netdb.h nlist.h nl_types.h \
 	paths.h pwd.h ranlib.h regex.h regexp.h resolv.h \
