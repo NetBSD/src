@@ -1,4 +1,4 @@
-#	$NetBSD: files.sa11x0,v 1.1 2001/07/08 23:20:05 rjs Exp $
+#	$NetBSD: files.sa11x0,v 1.2 2001/07/30 10:50:59 rjs Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -27,15 +27,6 @@ file	arch/arm/sa11x0/sa11x0_com.c		sacom needs-flag
 device	sacc { [addr=-1], [size=0], [membase=-1], [memsize=0], [intr=-1] }
 attach	sacc at saip
 file	arch/arm/sa11x0/sa1111.c		sacc
-
-# LCD
-#device	salcd: hpcfbif
-#attach	salcd at saip
-#file	arch/arm/sa11x0/sa11x0_lcd.c		salcd
-
-#device	sed: hpcfbif
-#attach	sed at saip
-#file	arch/arm/dev/sed_saip.c			sed
 
 #
 # Workstation Console
