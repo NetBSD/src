@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 1999/11/27 14:03:22 minoura Exp $ */
+/*	$NetBSD: md.c,v 1.6 2000/06/22 14:22:41 minoura Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,9 +67,7 @@ int md_need_newdisk = 0;
 
 /* prototypes */
 static int md_newdisk __P((void));
-#define COPYRIGHT "NetBSD/x68k SCSI primary boot. "		\
-		  "(C) 1999 by The NetBSD Foundation, Inc. "	\
-		  "Written by sysinst."
+
 
 int
 md_get_info(void)
@@ -142,106 +140,6 @@ md_get_info(void)
 	return 1;
 }
 
-#ifndef DEBUG
-static int
-md_newdisk(void)
-{
-	int mbootfd;
-	char devname[100];
-	int fd;
-	char buf[1024];
-	size_t size = dlsize + 64;
-
-	snprintf(devname, 100, "/dev/r%sc", diskdev);
-	fd = open(devname, O_WRONLY);
-	if (fd < 0) {
-		endwin();
-		fprintf(stderr, "Can't open %s\n", devname);
-		exit(1);
-	}
-
-	msg_display(MSG_newdisk, diskdev, diskdev);
-
-	/* Write disk mark */
-	memset(buf, 0, 1024);
-	sprintf(buf, "X68SCSI1%c%c%c%c%c%c%c%c%s",
-		2, 0,
-		(size>>24)&0xff, (size>>16)&0xff, (size>>8)&0xff, size&0xff,
-		1, 0, COPYRIGHT);
-	lseek(fd, 0, SEEK_SET);
-	if (write(fd, buf, 1024) < 0) {
-		endwin();
-		close(fd);
-		fprintf(stderr, "Can't write mark on %s\n", devname);
-		exit(1);
-	}
-
-	/* Write primary boot */
-	memset(buf, 0, 1024);
-	mbootfd = open("/usr/mdec/mboot", O_RDONLY);
-	if (mbootfd < 0) {
-		endwin();
-		close(fd);
-		fprintf(stderr, "Can't read mboot.\n");
-		exit(1);
-	}
-	if (read(mbootfd, buf, 1024) < 0) {
-		endwin();
-		close(fd);
-		close(mbootfd);
-		fprintf(stderr, "Can't read mboot.\n");
-		exit(1);
-	}
-	close(mbootfd);
-	if (write(fd, buf, 1024) != 1024) {
-		endwin();
-		close(fd);
-		fprintf(stderr, "Can't write mboot.\n");
-		exit(1);
-	}
-
-	/* Create empty partition map */
-#ifdef notyet
-	memset(&md_disklabel, 0, sizeof(md_disklabel));
-	sprintf((char*) md_disklabel, "X68K%c%c%c%c%c%c%c%c%c%c%c%c",
-		0, 0, 0, 32,
-		(size>>24)&0xff, (size>>16)&0xff, (size>>8)&0xff, size&0xff,
-		(size>>24)&0xff, (size>>16)&0xff, (size>>8)&0xff, size&0xff);
-	if (write(fd, md_disklabel, 1024) < 0) {
-		endwin();
-		close(fd);
-		fprintf(stderr, "Can't create partition table.\n");
-		exit(1);
-	}
-#else
-	memset(buf, 0, 1024);
-	sprintf(buf, "X68K%c%c%c%c%c%c%c%c%c%c%c%c",
-		0, 0, 0, 32,
-		(size>>24)&0xff, (size>>16)&0xff, (size>>8)&0xff, size&0xff,
-		(size>>24)&0xff, (size>>16)&0xff, (size>>8)&0xff, size&0xff);
-	if (write(fd, buf, 1024) < 0) {
-		endwin();
-		close(fd);
-		fprintf(stderr, "Can't create partition table.\n");
-		exit(1);
-	}
-#endif
-
-	close (fd);
-
-	return 0;
-}
-#else
-static int
-md_newdisk(fd, size, buf)
-	int fd;
-	size_t size;
-	char *buf;
-{
-	return 0;
-}
-#endif
-
 #ifdef notyet
 static int
 md_check_partitions(void)
@@ -299,6 +197,14 @@ md_check_partitions(void)
 	/* Partitions should be preserved in md_make_bsdpartitions() */
 }
 #endif
+
+static int
+md_newdisk(void)
+{
+	msg_display(MSG_newdisk, diskdev, diskdev);
+
+	return run_prog(1, 1, MSG_NONE, "/usr/mdec/newdisk -v %s", diskdev);
+}
 
 /*
  * hook called before writing new disklabel.
