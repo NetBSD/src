@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 1998/01/06 06:51:42 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22 1998/01/06 07:03:00 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -48,7 +48,6 @@
 struct pmap {
 	pt_entry_t		*pm_ptab;	/* KVA of page table */
 	st_entry_t		*pm_stab;	/* KVA of segment table */
-	int			pm_stchanged;	/* ST changed */
 	int			pm_stfree;	/* 040: free lev2 blocks */
 	u_int			*pm_stpa;	/* 040: ST phys addr */
 	short			pm_sref;	/* segment table ref count */
