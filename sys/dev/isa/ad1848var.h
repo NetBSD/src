@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.34 2000/12/06 18:57:37 matt Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.35 2000/12/18 21:31:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -89,8 +89,10 @@ struct ad1848_isa_softc {
 	bus_size_t sc_rec_maxsize;	/* record/capture DMA size */
 	
 	u_long	sc_interrupts;		/* number of interrupts taken */
-	void	(*sc_intr)(void *);	/* dma completion intr handler */
-	void	*sc_arg;		/* arg for sc_intr() */
+	void	(*sc_pintr)(void *);	/* play dma completion intr handler */
+	void	*sc_parg;		/* arg for sc_pintr() */
+	void	(*sc_rintr)(void *);	/* rec. dma completion intr handler */
+	void	*sc_rarg;		/* arg for sc_rintr() */
 
 	/* Only used by pss XXX */
 	int	sc_iobase;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.16 2000/06/28 16:27:51 mrg Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.17 2000/12/18 21:31:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -521,7 +521,7 @@ ad1848_isa_close(addr)
 	ad1848_isa_halt_output(isc);
 	ad1848_isa_halt_input(isc);
 
-	isc->sc_intr = 0;
+	isc->sc_pintr = isc->sc_rintr = NULL;
 
 	if (isc->sc_playdrq != -1)
 		isa_dmamap_destroy(isc->sc_ic, isc->sc_playdrq);
@@ -556,8 +556,13 @@ ad1848_isa_trigger_input(addr, start, end, blksize, intr, arg, param)
 	    DMAMODE_READ | DMAMODE_LOOPDEMAND, BUS_DMA_NOWAIT);
 
 	isc->sc_recrun = 1;
-	isc->sc_intr = intr;
-	isc->sc_arg = arg;
+	if (sc->mode == 2 && isc->sc_playdrq != isc->sc_recdrq) {
+		isc->sc_rintr = intr;
+		isc->sc_rarg = arg;
+	} else {
+		isc->sc_pintr = intr;
+		isc->sc_parg = arg;
+	}
 
 	blksize = (blksize * 8) / (param->precision * param->factor * param->channels) - 1;
 
@@ -593,8 +598,8 @@ ad1848_isa_trigger_output(addr, start, end, blksize, intr, arg, param)
 	    DMAMODE_WRITE | DMAMODE_LOOPDEMAND, BUS_DMA_NOWAIT);
 
 	isc->sc_playrun = 1;
-	isc->sc_intr = intr;
-	isc->sc_arg = arg;
+	isc->sc_pintr = intr;
+	isc->sc_parg = arg;
 
 	blksize = (blksize * 8) / (param->precision * param->factor * param->channels) - 1;
 
@@ -664,15 +669,27 @@ ad1848_isa_intr(arg)
 	isc->sc_interrupts++;
 
 	/* Handle interrupt */
-	if (isc->sc_intr && (status & INTERRUPT_STATUS)) {
-		(*isc->sc_intr)(isc->sc_arg);
-		retval = 1;
-	}
+	if ((status & INTERRUPT_STATUS) != 0) {
+		if (sc->mode == 2 && isc->sc_playdrq != isc->sc_recdrq) {
+			status = ad_read(sc, CS_IRQ_STATUS);
+			if ((status & CS_IRQ_PI) && isc->sc_pintr != NULL) {
+				(*isc->sc_pintr)(isc->sc_parg);
+				retval = 1;
+			}
+			if ((status & CS_IRQ_CI) && isc->sc_rintr != NULL) {
+				(*isc->sc_rintr)(isc->sc_rarg);
+				retval = 1;
+			}
+		} else {
+			if (isc->sc_pintr != NULL) {
+				(*isc->sc_pintr)(isc->sc_parg);
+				retval = 1;
+			}
+		}
 
-	/* clear interrupt */
-	if (status & INTERRUPT_STATUS)
+		/* Clear interrupt */
 		ADWRITE(sc, AD1848_STATUS, 0);
-
+	}
 	return(retval);
 }
 
