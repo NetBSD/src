@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.1 1998/08/20 06:31:34 thorpej Exp $	*/
+/*	$NetBSD: joy.c,v 1.2 1998/09/22 01:42:21 mark Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -54,7 +54,7 @@
 
 #include <dev/ic/i8253reg.h>
 
-#include <bebox/isa/joyvar.h>
+#include <arm32/isa/joyvar.h>
 
 
 /*
