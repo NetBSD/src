@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.75 2003/11/28 06:03:09 cube Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.76 2004/03/17 13:54:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.75 2003/11/28 06:03:09 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.76 2004/03/17 13:54:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -64,6 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.75 2003/11/28 06:03:09 cube Exp $")
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#ifdef __sparc__
+#include <machine/promlib.h>
+#endif
 
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii_bitbang.h>
@@ -924,8 +927,7 @@ tlp_pci_attach(parent, self, aux)
 #ifdef __sparc__
 			if (!sc->sc_srom[20] && !sc->sc_srom[21] &&
 			    !sc->sc_srom[22]) {
-				extern void myetheraddr __P((u_char *));
-				myetheraddr(enaddr);
+				prom_getether(PCITAG_NODE(pa->pa_tag), enaddr);
 			} else 
 #endif
 			memcpy(enaddr, &sc->sc_srom[20], ETHER_ADDR_LEN);
