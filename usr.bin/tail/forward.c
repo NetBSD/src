@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.17 2001/11/21 06:47:07 explorer Exp $	*/
+/*	$NetBSD: forward.c,v 1.18 2001/11/24 02:30:17 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.17 2001/11/21 06:47:07 explorer Exp $");
+__RCSID("$NetBSD: forward.c,v 1.18 2001/11/24 02:30:17 explorer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -263,11 +263,11 @@ rlines(fp, off, sbp)
 		return (0);
 	file_remaining = file_size;
 
-	if (mmap_size > MMAP_MAXSIZE) {
+	if (file_remaining > MMAP_MAXSIZE) {
 		mmap_size = MMAP_MAXSIZE;
-		mmap_offset = file_size - MMAP_MAXSIZE;
+		mmap_offset = file_remaining - MMAP_MAXSIZE;
 	} else {
-		mmap_size = file_size;
+		mmap_size = file_remaining;
 		mmap_offset = 0;
 	}
 
@@ -290,6 +290,9 @@ rlines(fp, off, sbp)
 		file_remaining -= mmap_size - mmap_remaining;
 
 		if (off == 0)
+			break;
+
+		if (file_remaining == 0)
 			break;
 
 		if (munmap(start, mmap_size)) {
