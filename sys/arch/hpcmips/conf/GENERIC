@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.87 2001/04/20 12:08:45 sato Exp $
+# 	$NetBSD: GENERIC,v 1.88 2001/04/21 15:56:55 sato Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.87 $"
+#ident 		"GENERIC-$Revision: 1.88 $"
 
 maxusers	8
 
@@ -185,7 +185,7 @@ wskbd*		at	btnmgr0 mux 1
 #  + Open/Close button: 3
 #  + Application button: 2
 # (PCIC-ISA : 9)
-# (COM power:14)
+# (COM power:46)
 #
 # MC-R700
 # Button to GPIO port # mapping
@@ -210,7 +210,9 @@ button0 at vrgiu? platform IBM_WORKPAD id BTN_REC port 1 active 0
 button1 at vrgiu? platform NEC_MCR_430 id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_510 id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_520 id BTN_COVER port 3
+#button1 at vrgiu? platform NEC_MCR_520A id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_530 id BTN_COVER port 3
+#button1 at vrgiu? platform NEC_MCR_530A id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_SIGMARION id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_7XX id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_3XX id BTN_COVER port 6
@@ -222,6 +224,7 @@ pwctl0 at vrgiu? platform NEC_MCR_3XX id PWCTL_COM0 port 14
 pwctl0 at vrgiu? platform NEC_MCR_430 id PWCTL_COM0 port 46
 pwctl0 at vrgiu? platform NEC_MCR_500 id PWCTL_COM0 port 14
 pwctl0 at vrgiu? platform NEC_MCR_530 id PWCTL_COM0 port 46
+pwctl0 at vrgiu? platform NEC_MCR_530A id PWCTL_COM0 port 46
 #pwctl0 at vrgiu? platform NEC_MCR_SIGMARION id PWCTL_COM0 port 46
 pwctl0 at vrgiu? platform NEC_MCR_7XX id PWCTL_COM0 port 46
 pwctl0 at vrgiu? platform NEC_MCCS id PWCTL_COM0 port 14
@@ -238,7 +241,10 @@ pwctl3 at vrgiu? platform NEC_MCR_430 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform NEC_MCR_500 id PWCTL_SPEAKER port 12
 pwctl3 at vrgiu? platform NEC_MCR_510 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform NEC_MCR_520 id PWCTL_SPEAKER port 44
+#pwctl3 at vrgiu? platform NEC_MCR_520A id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform NEC_MCR_530 id PWCTL_SPEAKER port 44
+#pwctl3 at vrgiu? platform NEC_MCR_530A id PWCTL_SPEAKER port 44
+#pwctl3 at vrgiu? platform NEC_MCR_SIGMARION id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform IBM_WORKPAD id PWCTL_SPEAKER port 49
 #pwctl4 at vrgiu? platform NEC_MCR_430 id PWCTL_COM1 port 47
 #pwctl4 at vrgiu? platform NEC_MCR_530 id PWCTL_COM1 port 47
