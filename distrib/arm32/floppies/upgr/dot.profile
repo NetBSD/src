@@ -1,4 +1,4 @@
-# $NetBSD
+#	$NetBSD: dot.profile,v 1.2 1998/01/09 18:56:45 perry Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
