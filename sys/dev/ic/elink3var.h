@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.4 1996/05/10 05:28:11 thorpej Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.5 1996/05/14 22:22:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -58,6 +58,6 @@ struct ep_softc {
 };
 
 u_int16_t epreadeeprom __P((bus_chipset_tag_t, bus_io_handle_t, int));
-void	epconfig __P((struct ep_softc *, u_int));
+void	epconfig __P((struct ep_softc *, u_int16_t));
 int	epintr __P((void *));
 void	epstop __P((struct ep_softc *));
