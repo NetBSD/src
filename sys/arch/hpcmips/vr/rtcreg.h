@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcreg.h,v 1.7 2002/02/09 14:47:57 sato Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.8 2002/02/10 14:36:52 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -115,8 +115,8 @@
 #define TCLK_H_REG_W		VR4122_TCLK_H_REG_W	/* TCLK H */
 #endif /* VRGROUP_4122_4131 */
 #if defined VRGROUP_4181
-#define TCLK_L_REG_W		RTC_NOREG_W
-#define TCLK_H_REG_W		RTC_NOREG_W
+#define TCLK_L_REG_W		RTC_NO_REG_W
+#define TCLK_H_REG_W		RTC_NO_REG_W
 #endif /* VRGROUP_4181 */
 #endif /* defined SINGLE_VRIP_BASE */
 
@@ -135,8 +135,8 @@
 #define TCLK_CNT_H_REG_W	VR4122_TCLK_CNT_H_REG_W	/* TCLK Count H */
 #endif /* VRGROUP_4122_4131 */
 #if defined VRGROUP_4181
-#define TCLK_CNT_L_REG_W	RTC_NOREG_W
-#define TCLK_CNT_H_REG_W	RTC_NOREG_W
+#define TCLK_CNT_L_REG_W	RTC_NO_REG_W
+#define TCLK_CNT_H_REG_W	RTC_NO_REG_W
 #endif /* VRGROUP_4181 */
 #endif /* defined SINGLE_VRIP_BASE */
 
