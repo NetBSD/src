@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.64 2004/03/06 14:41:59 itojun Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.65 2004/03/06 20:29:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.64 2004/03/06 14:41:59 itojun Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.65 2004/03/06 20:29:25 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,7 +198,7 @@ int	UseNameService = 1;	/* make domain name queries */
 int	NumForwards = 0;	/* number of forwarding actions in conf file */
 char	**LogPaths;		/* array of pathnames to read messages from */
 int	NoRepeat = 0;		/* disable "repeated"; log always */
-int	gothup = 0;		/* got SIGHUP */
+volatile sig_atomic_t gothup = 0; /* got SIGHUP */
 
 void	cfline(char *, struct filed *);
 char   *cvthname(struct sockaddr_storage *);
