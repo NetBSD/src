@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.28 2001/07/23 21:06:37 eeh Exp $
+# 	$NetBSD: NONPLUS,v 1.29 2001/10/24 18:49:39 thorpej Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -12,7 +12,6 @@ maxusers	64
 # We currently support three architecture types; at least one is required.
 options		SUN4U		# sun4u - UltraSPARC
 options		__ELF__		# we use elf 
-#options	_LP64		# we're using a 64-bit compiler
 #options	__SWAP_BROKEN
 makeoptions	SPARC_BINARIES=1
 
@@ -136,7 +135,6 @@ options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
 options 	EXEC_ELF32	# Exec module for NetBSD/sparc 1.5 binaries.
-#options	EXEC_ELF64	# Exec module for NetBSD/sparc64 binaries.
 #options	SYSCALL_DEBUG
 options 	EXEC_AOUT	# Exec module for NetBSD/sparc pre-1.5 binaries.
 
