@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.12 1999/07/29 10:37:14 augustss Exp $
+#	$NetBSD: CATS,v 1.13 1999/08/16 22:27:14 augustss Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -260,8 +260,11 @@ uhid* at uhub? port ? configuration ? interface ?
 # USB Printer
 ulpt* at uhub? port ? configuration ? interface ?
 
+# USB Modem
+umodem*	at uhub? port ? configuration ?
+
 # USB Generic driver
-ugen* at uhub? port ? configuration ? interface ?
+ugen* at uhub? port ?
 
 # Audio Devices
 

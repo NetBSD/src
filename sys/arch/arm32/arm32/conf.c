@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.39 1999/07/29 19:14:36 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.40 1999/08/16 22:27:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -183,6 +183,7 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ugen.h"
 #include "ugen.h"
 #include "ulpt.h"
+#include "umodem.h"
 #include "vcoda.h"			/* coda file system */
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -284,6 +285,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NRAID,raid),    	/* 71: RAIDframe disk driver */
 	cdev_ugen_init(NUGEN,ugen),	/* 72: USB generic driver */
 	cdev_mouse_init(NWSMUX,wsmux),	/* 73: ws multiplexor */
+	cdev_tty_init(NUMODEM,umodem),	/* 74: USB modem */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -399,6 +401,7 @@ static int chrtoblktbl[] = {
     /* 71 */	    71,
     /* 72 */	    NODEV,
     /* 73 */	    NODEV,
+    /* 74 */	    NODEV,
 };
 
 /*

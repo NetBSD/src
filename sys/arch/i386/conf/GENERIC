@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.253 1999/08/14 21:20:45 augustss Exp $
+#	$NetBSD: GENERIC,v 1.254 1999/08/16 22:27:14 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -525,6 +525,9 @@ uhid*	at uhub? port ? configuration ? interface ?
 
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Modem
+umodem*	at uhub? port ? configuration ?
 
 # USB Generic driver
 ugen*	at uhub? port ?

@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.99 1999/08/07 07:40:40 thorpej Exp $
+# $NetBSD: ALPHA,v 1.100 1999/08/16 22:27:13 augustss Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -306,27 +306,29 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 # Floppy drives
 fd*	at	fdc? drive ?
 
-# USB bus support
-usb*	at	uhci?
-usb*	at	ohci?
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ? interface ?
 
-# USB hubs
-uhub*	at	usb?
-uhub*	at	uhub? port ?
+# USB Mice
+ums*	at uhub? port ? configuration ? interface ?
+wsmouse*	at ums?
 
-# USB mice
-ums*	at	uhub? port ?
-wsmouse* at	ums?
-
-# USB keyboards
-ukbd*	at	uhub? port ?
-wskbd*	at	ukbd? console ?
+# USB Keyboards
+ukbd*	at uhub? port ? configuration ? interface ?
+wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
-uhid*	at	uhub? port ?
+uhid*	at uhub? port ? configuration ? interface ?
 
-# USB Printers
-ulpt*	at	uhub? port ?
+# USB Printer
+ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Modem
+umodem*	at uhub? port ? configuration ?
+
+# USB Generic driver
+ugen*	at uhub? port ?
 
 # Workstation Console attachments
 #wsdisplay*	at	cfb?
