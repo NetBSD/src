@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.90 2000/03/27 04:52:11 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.91 2000/03/28 00:24:04 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -312,6 +312,7 @@ NESTED(cpu_switch, CALLFRAME_SIZ, ra)
 /*
  * Entered here from idle() and switch_exit().
  */
+	.globl	cpu_switch_queuescan
 cpu_switch_queuescan:
 	nop					# wait for intrs disabled
 	nop
