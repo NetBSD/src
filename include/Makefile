@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.67 1997/01/30 01:05:58 thorpej Exp $
+#	$NetBSD: Makefile,v 1.68 1997/03/27 09:29:29 mycroft Exp $
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
 
 # Missing: mp.h
 
-FILES=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
+INCS=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
 	disktab.h dlfcn.h err.h fnmatch.h fstab.h fts.h glob.h grp.h ieeefp.h \
 	iso646.h kvm.h langinfo.h limits.h locale.h malloc.h math.h md4.h \
 	md5.h memory.h mpool.h ndbm.h netdb.h netgroup.h nlist.h nl_types.h \
@@ -11,33 +11,15 @@ FILES=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
 	search.h setjmp.h sgtty.h signal.h stab.h stddef.h stdio.h stdlib.h \
 	string.h strings.h stringlist.h struct.h sysexits.h tar.h time.h \
 	ttyent.h tzfile.h unistd.h util.h utime.h utmp.h vis.h
-
-DIRS=	arpa protocols rpc rpcsvc
+INCS+=	arpa/ftp.h arpa/inet.h arpa/nameser.h arpa/telnet.h arpa/tftp.h
+INCS+=	protocols/dumprestore.h protocols/routed.h protocols/rwhod.h \
+	protocols/talkd.h protocols/timed.h
+INCS+=	rpc/auth.h rpc/auth_unix.h rpc/clnt.h rpc/pmap_clnt.h rpc/pmap_prot.h \
+	rpc/pmap_rmt.h rpc/rpc.h rpc/rpc_msg.h rpc/svc.h rpc/svc_auth.h \
+	rpc/types.h rpc/xdr.h
+INCS+=	rpcsvc/yp_prot.h rpcsvc/ypclnt.h
+INCSDIR=/usr/include
 
 NOOBJ=	noobj
-
-includes: ${SYS_INCLUDE}
-
-includes:
-	@echo installing ${FILES}
-	@-for i in ${FILES}; do \
-		cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-		    ${INSTALL} -c -m 444 $$i ${DESTDIR}/usr/include/$$i; \
-	done
-	@echo installing ${DIRS}
-	@-for i in ${DIRS}; do \
-		${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
-			${DESTDIR}/usr/include/$$i; \
-		(cd $$i; for j in *.[ih]; do \
-			cmp -s $$j ${DESTDIR}/usr/include/$$i/$$j || \
-			${INSTALL} -c -m 444 $$j \
-			${DESTDIR}/usr/include/$$i/$$j; \
-		done); \
-	done
-	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include
-	find ${DESTDIR}/usr/include -type f | \
-		xargs chmod a=r
-	find ${DESTDIR}/usr/include -type d | \
-		xargs chmod u=rwx,go=rx
 
 .include <bsd.prog.mk>
