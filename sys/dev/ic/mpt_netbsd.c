@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.1 2003/04/16 22:03:00 thorpej Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -204,8 +204,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	}
 
 	error = bus_dmamem_map(mpt->sc_dmat, &request_seg, request_rseg,
-	    MPT_REQ_MEM_SIZE(mpt), (caddr_t *) &mpt->request,
-	    BUS_DMA_COHERENT/*XXX*/);
+	    MPT_REQ_MEM_SIZE(mpt), (caddr_t *) &mpt->request, 0);
 	if (error) {
 		aprint_error("%s: unable to map request area, error = %d\n",
 		    mpt->sc_dev.dv_xname, error);
@@ -451,6 +450,7 @@ mpt_done(mpt_softc_t *mpt, uint32_t reply)
 		return;
 	}
 
+	MPT_SYNC_REQ(mpt, req, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	mpt_req = req->req_vbuf;
 
 	/* Short cut for task management replies; nothing more for us to do. */
