@@ -1,4 +1,4 @@
-/*	$NetBSD: slattach.c,v 1.28 2004/01/05 23:23:33 jmmv Exp $	*/
+/*	$NetBSD: slattach.c,v 1.29 2005/02/05 12:38:58 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: slattach.c,v 1.28 2004/01/05 23:23:33 jmmv Exp $");
+__RCSID("$NetBSD: slattach.c,v 1.29 2005/02/05 12:38:58 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,14 +70,11 @@ int	slipdisc = SLIPDISC;
 
 char	devicename[32];
 
-int	main __P((int, char *[]));
-int	ttydisc __P((char *));
-void	usage __P((void));
+int	ttydisc(char *);
+void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int fd;
 	char *dev = argv[1];
@@ -150,8 +147,7 @@ main(argc, argv)
 }
 
 int
-ttydisc(name)
-     char *name;
+ttydisc(char *name)
 {
 	if (strcmp(name, "slip") == 0)
 		return(SLIPDISC);
@@ -166,7 +162,7 @@ ttydisc(name)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
