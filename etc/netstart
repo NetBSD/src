@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.27 1997/01/05 12:01:54 mrg Exp $
+#	$NetBSD: netstart,v 1.28 1997/01/28 06:33:36 mrg Exp $
 #	@(#)netstart	5.9 (Berkeley) 3/30/91
 
 # /etc/myname contains my symbolic name
@@ -14,7 +14,7 @@ fi
 # install and enable packet filter rules before configuring interfaces.
 if [ "X$ipfilter" != XNO -a -f /etc/ipf.conf ]; then
 	echo 'installing packet filter rules ... '
-	ipf -f /etc/ipf.conf -E
+	ipf -f /etc/ipf.conf
 fi
 
 # configure all of the interfaces which we know about.
