@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.24 2002/07/15 16:27:16 ichiro Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.25 2002/08/14 21:55:52 briggs Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -403,14 +403,33 @@ void	xscale_setup		__P((char *string));
  * Macros for manipulating CPU interrupts
  */
 #ifdef __PROG32
+static __inline u_int32_t __set_cpsr_c(u_int bic, u_int eor) __attribute__((__unused__));
+
+static __inline u_int32_t
+__set_cpsr_c(u_int bic, u_int eor)
+{
+	u_int32_t	tmp, ret;
+
+	__asm __volatile(
+		"mrs     %0, cpsr\n"	/* Get the CPSR */
+		"bic	 %1, %0, %2\n"	/* Clear bits */
+		"eor	 %1, %1, %3\n"	/* XOR bits */
+		"msr     cpsr_c, %1\n"	/* Set the control field of CPSR */
+	: "=&r" (ret), "=&r" (tmp)
+	: "r" (bic), "r" (eor));
+
+	return ret;
+}
+
 #define disable_interrupts(mask)					\
-	(SetCPSR((mask) & (I32_bit | F32_bit), (mask) & (I32_bit | F32_bit)))
+	(__set_cpsr_c((mask) & (I32_bit | F32_bit), \
+		      (mask) & (I32_bit | F32_bit)))
 
 #define enable_interrupts(mask)						\
-	(SetCPSR((mask) & (I32_bit | F32_bit), 0))
+	(__set_cpsr_c((mask) & (I32_bit | F32_bit), 0))
 
 #define restore_interrupts(old_cpsr)					\
-	(SetCPSR((I32_bit | F32_bit), (old_cpsr) & (I32_bit | F32_bit)))
+	(__set_cpsr_c((I32_bit | F32_bit), (old_cpsr) & (I32_bit | F32_bit)))
 #else /* ! __PROG32 */
 #define	disable_interrupts(mask)					\
 	(set_r15((mask) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE),		\

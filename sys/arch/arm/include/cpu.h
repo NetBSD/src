@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2002/05/08 22:22:46 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 2002/08/14 21:55:52 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -92,21 +92,21 @@
 #ifdef _LOCORE
 #define IRQdisable \
 	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr_all ; \
+	mrs	r0, cpsr ; \
 	orr	r0, r0, #(I32_bit) ; \
-	msr	cpsr_all, r0 ; \
+	msr	cpsr_c, r0 ; \
 	ldmfd	sp!, {r0}
 
 #define IRQenable \
 	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr_all ; \
+	mrs	r0, cpsr ; \
 	bic	r0, r0, #(I32_bit) ; \
-	msr	cpsr_all, r0 ; \
+	msr	cpsr_c, r0 ; \
 	ldmfd	sp!, {r0}		
 
 #else
-#define IRQdisable SetCPSR(I32_bit, I32_bit);
-#define IRQenable SetCPSR(I32_bit, 0);
+#define IRQdisable __set_cpsr_c(I32_bit, I32_bit);
+#define IRQenable __set_cpsr_c(I32_bit, 0);
 #endif	/* _LOCORE */
 #endif
 
