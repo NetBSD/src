@@ -1,3 +1,4 @@
+.\" $NetBSD: isdnd.rates.5,v 1.2 2001/04/09 13:38:50 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -22,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.rates.5,v 1.1.1.1 2001/01/06 13:00:16 martin Exp $ 
+.\"	$Id: isdnd.rates.5,v 1.2 2001/04/09 13:38:50 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -41,14 +42,14 @@ contains descriptions how long charging units last at a given time of day,
 day of week and the distance to the destination. If this file is available,
 this information may be used by the
 .Xr isdnd 8
-ISDN connection management daemon to calculate the short hold time for a 
+ISDN connection management daemon to calculate the short hold time for a
 connection.
 .Pp
 The format of a rate entry line is as follows:
 .Pp
 The first field, the
 .Pq Fa rate-code
-defines a collection of rates (for each day of the week) which can be 
+defines a collection of rates (for each day of the week) which can be
 referenced in the
 .Xr isdnd 8
 configuration file
@@ -83,8 +84,6 @@ For example,
 .Pp
 defines, that between 2:00 PM and 6:00 PM the length of one charging unit
 lasts 90 seconds.
-.Pp
-
 .Sh FILES
 .Bl -tag -width /etc/isdn/isdnd.rates -compact
 .It Pa /etc/isdn/isdnd.rates
@@ -92,7 +91,6 @@ The default rates specification file for the
 .Nm isdnd
 ISDN daemon.
 .El
-
 .Sh EXAMPLES
 The line:
 .Bd -literal
@@ -100,21 +98,19 @@ ra0 0 00.00-05.00:240 05.00-21.00:150 21.00-24.00:240
 .Ed
 .Pp
 defines the unit lengths for a Sunday.
-
 .Sh SEE ALSO
-.Xr isdnd 8 ,
-.Xr isdnd.rc 5
-
-.Sh AUTHOR
+.Xr isdnd.rc 5 ,
+.Xr isdnd 8
+.Sh AUTHORS
 The rates subsystem for the
 .Xr isdnd 8
 daemon to which
 .Nm
-belongs was designed and written by 
+belongs was designed and written by
 .An Gary Jennejohn .
 .Pp
 The
 .Xr isdnd 8
-daemon and this manual page were written by 
+daemon and this manual page were written by
 .An Hellmuth Michaelis Aq hm@kts.org .
 
