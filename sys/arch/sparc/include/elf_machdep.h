@@ -1,12 +1,15 @@
-/*	$NetBSD: elf_machdep.h,v 1.2 1998/07/01 20:43:56 tv Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.3 1999/05/14 00:18:51 eeh Exp $	*/
 
 #define ELF32_MACHDEP_ENDIANNESS	Elf_ed_2msb
 #define	ELF32_MACHDEP_ID_CASES						\
 		case Elf_em_sparc:					\
+		case Elf_em_sparc32plus:				\
 			break;
 
-#define	ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
+#define	ELF64_MACHDEP_ENDIANNESS	Elf_ed_2msb
 #define	ELF64_MACHDEP_ID_CASES						\
+		case Elf_em_sparc32plus:				\
+		case Elf_em_sparc64:					\
 		/* no 64-bit ELF machine types supported */
 
 #define R_SPARC_NONE		0
