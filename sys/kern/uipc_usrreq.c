@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_usrreq.c	7.26 (Berkeley) 6/3/91
- *	$Id: uipc_usrreq.c,v 1.5 1993/06/27 06:02:02 andrew Exp $
+ *	$Id: uipc_usrreq.c,v 1.5.4.1 1993/09/14 18:24:28 mycroft Exp $
  */
 
 #include "param.h"
@@ -607,7 +607,7 @@ unp_externalize(rights)
 	int newfds = (cm->cmsg_len - sizeof(*cm)) / sizeof (int);
 	int f;
 
-	if (fdavail(p, newfds)) {
+	if (!fdavail(p, newfds)) {
 		for (i = 0; i < newfds; i++) {
 			fp = *rp;
 			unp_discard(fp);
