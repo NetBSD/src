@@ -1,4 +1,4 @@
-.\"	$NetBSD: ls.1,v 1.41 2003/08/28 19:44:09 wiz Exp $
+.\"	$NetBSD: ls.1,v 1.42 2003/09/02 08:36:20 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nd list directory contents
 .Sh SYNOPSIS
 .Nm
-.Op Fl ACFLRSTWacdfgiklmnopqrstux1
+.Op Fl AaCcdFfgikLlmnopqRrSsTtuWx1
 .Op Ar
 .Sh DESCRIPTION
 For each operand that names a
@@ -73,8 +73,17 @@ List all entries except for
 and
 .Ql \&.. .
 Always set for the super-user.
+.It Fl a
+Include directory entries whose names begin with a
+dot
+.Pq Sq \&. .
 .It Fl C
 Force multi-column output; this is the default when output is to a terminal.
+.It Fl c
+Use time when file status was last changed for sorting or printing.
+.It Fl d
+Directories are listed as plain files (not searched recursively) and
+symbolic links in the argument list are not indirected through.
 .It Fl F
 Display a slash
 .Pq Sq \&/
@@ -95,31 +104,6 @@ and a vertical bar
 .Pq Sq \&|
 after each that is a
 .Tn FIFO .
-.It Fl L
-If argument is a symbolic link, list the file or directory the link references
-rather than the link itself.
-.It Fl R
-Recursively list subdirectories encountered.
-.It Fl S
-Sort by size, largest file first.
-.It Fl T
-When used with the
-.Fl l
-(the lowercase letter
-.Dq ell )
-option, display complete time information for the file, including
-month, day, hour, minute, second, and year.
-.It Fl W
-Display whiteouts when scanning directories.
-.It Fl a
-Include directory entries whose names begin with a
-dot
-.Pq Sq \&. .
-.It Fl c
-Use time when file status was last changed for sorting or printing.
-.It Fl d
-Directories are listed as plain files (not searched recursively) and
-symbolic links in the argument list are not indirected through.
 .It Fl f
 Output is not sorted.
 .It Fl g
@@ -132,6 +116,9 @@ For each file, print the file's file serial number (inode number).
 Modifies the
 .Fl s
 option, causing the sizes to be reported in kilobytes.
+.It Fl L
+If argument is a symbolic link, list the file or directory the link references
+rather than the link itself.
 .It Fl l
 (The lowercase letter
 .Dq ell ) .
@@ -165,14 +152,25 @@ Force printing of non-graphic characters in file names as
 the character
 .Sq \&? ;
 this is the default when output is to a terminal.
+.It Fl R
+Recursively list subdirectories encountered.
 .It Fl r
 Reverse the order of the sort to get reverse
 lexicographical order or the smallest or oldest entries first.
+.It Fl S
+Sort by size, largest file first.
 .It Fl s
 Display the number of file system blocks actually used by each file, in units
 of 512 bytes, where partial units are rounded up to the next integer value.
 If the output is to a terminal, a total sum for all the file
 sizes is output on a line before the listing.
+.It Fl T
+When used with the
+.Fl l
+(the lowercase letter
+.Dq ell )
+option, display complete time information for the file, including
+month, day, hour, minute, second, and year.
 .It Fl t
 Sort by time modified (most recently modified
 first) before sorting the operands by lexicographical
@@ -184,6 +182,8 @@ of the file for sorting
 .Pq Fl t
 or printing
 .Pq Fl l .
+.It Fl W
+Display whiteouts when scanning directories.
 .It Fl x
 Multi-column output sorted across the page rather than down the page.
 .It Fl \&1
