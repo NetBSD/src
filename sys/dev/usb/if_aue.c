@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.61 2001/07/16 13:49:20 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.62 2001/07/16 16:15:12 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -160,26 +160,29 @@ int	auedebug = 0;
 struct aue_type {
 	u_int16_t		aue_vid;
 	u_int16_t		aue_did;
-	char			aue_linksys;
+	u_int16_t		aue_flags;
+#define LSYS	0x0001		/* use Linksys reset */
+#define PNA	0x0002		/* has Home PNA */
+#define PII	0x0004		/* Pegasus II chip */
 };
 
 Static const struct aue_type aue_devs[] = {
-  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_DSB650TX_PNA, 0 },
-  { USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUS,	0 },
-  { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100,	0 },
+  { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_DSB650TX_PNA,  0 },
+  { USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUS,	  PNA },
+  { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100,	  0 },
   { USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_FETHER_USB_TX, 0 },
-  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650,	1 },
-  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX,	1 },
-  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX_PNA,	0 },
-  { USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTX,	0 },
-  { USB_VENDOR_KINGSTON,	USB_PRODUCT_KINGSTON_KNU101TX,  0 },
-  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100TX,	1 },
-  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100H1,	1 },
-  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TA,	1 },
-  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX1, 	0 },
-  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX5, 	0 },
-  { USB_VENDOR_SOHOWARE,	USB_PRODUCT_SOHOWARE_NUB100,	0 },
-  { USB_VENDOR_SMC,		USB_PRODUCT_SMC_2202USB,	0 },
+  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650,	  0 },
+  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX,	  LSYS },
+  { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX_PNA,	  PNA },
+  { USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTX,	  0 },
+  { USB_VENDOR_KINGSTON,	USB_PRODUCT_KINGSTON_KNU101TX,    0 },
+  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100TX,	  LSYS },
+  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100H1,	  LSYS|PNA },
+  { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TA,	  LSYS },
+  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX1, 	  0 },
+  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX5, 	  0 },
+  { USB_VENDOR_SOHOWARE,	USB_PRODUCT_SOHOWARE_NUB100,	  0 },
+  { USB_VENDOR_SMC,		USB_PRODUCT_SMC_2202USB,	  0 },
   { 0, 0, 0 }
 };
 
@@ -505,7 +508,7 @@ aue_miibus_statchg(device_ptr_t dev)
 	 * This turns on the 'dual link LED' bin in the auxmode
 	 * register of the Broadcom PHY.
 	 */
-	if (sc->aue_linksys) {
+	if (sc->aue_flags & LSYS) {
 		u_int16_t auxmode;
 		auxmode = aue_miibus_readreg(dev, 0, 0x1b);
 		aue_miibus_writereg(dev, 0, 0x1b, auxmode | 0x04);
@@ -606,8 +609,16 @@ aue_reset(struct aue_softc *sc)
   	aue_csr_write_1(sc, AUE_GPIO0,
 	    AUE_GPIO_OUT0 | AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
   
+#if 0
+	/* XXX what is mii_mode supposed to be */
+	if (sc->aue_mii_mode && (sc->aue_flags & PNA))
+		aue_csr_write_1(sc, AUE_GPIO1, 0x34);
+	else
+		aue_csr_write_1(sc, AUE_GPIO1, 0x26);
+#endif
+
 	/* Grrr. LinkSys has to be different from everyone else. */
-	if (sc->aue_linksys) {
+	if (sc->aue_flags & LSYS) {
 		aue_csr_write_1(sc, AUE_GPIO0, 
 		    AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
 		aue_csr_write_1(sc, AUE_GPIO0,
@@ -686,7 +697,7 @@ USB_ATTACH(aue)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	sc->aue_linksys = aue_lookup(uaa->vendor, uaa->product)->aue_linksys;
+	sc->aue_flags = aue_lookup(uaa->vendor, uaa->product)->aue_flags;
 
 	sc->aue_udev = dev;
 	sc->aue_iface = iface;
