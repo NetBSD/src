@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.163 2002/02/14 07:08:07 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.164 2002/02/16 16:22:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163 2002/02/14 07:08:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.164 2002/02/16 16:22:04 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -170,7 +170,7 @@ trap(frame)
 {
 	register struct proc *p = curproc;
 	int type = frame.tf_trapno;
-	struct pcb *pcb = NULL;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	extern char fusubail[],
 		    resume_iret[], resume_pop_ds[], resume_pop_es[],
 		    resume_pop_fs[], resume_pop_gs[],
@@ -194,6 +194,7 @@ trap(frame)
 	if (!KERNELMODE(frame.tf_cs, frame.tf_eflags)) {
 		type |= T_USER;
 		p->p_md.md_regs = &frame;
+		pcb->pcb_cr2 = 0;
 	}
 
 	switch (type) {
@@ -234,7 +235,6 @@ trap(frame)
 	case T_ALIGNFLT:
 	case T_TSSFLT:
 		/* Check for copyin/copyout fault. */
-		pcb = &p->p_addr->u_pcb;
 		if (pcb->pcb_onfault != 0) {
 copyefault:
 			error = EFAULT;
@@ -375,7 +375,6 @@ copyfault:
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (p == 0)
 			goto we_re_toast;
-		pcb = &p->p_addr->u_pcb;
 		/*
 		 * fusubail is used by [fs]uswintr() to prevent page faulting
 		 * from inside the profiling interrupt.
@@ -399,7 +398,8 @@ copyfault:
 
 		if (vm == NULL)
 			goto we_re_toast;
-		va = trunc_page((vaddr_t)rcr2());
+		pcb->pcb_cr2 = rcr2();
+		va = trunc_page((vaddr_t)pcb->pcb_cr2);
 		/*
 		 * It is only a kernel address space fault iff:
 		 *	1. (type & T_USER) == 0  and
@@ -444,10 +444,10 @@ copyfault:
 		}
 
 		/* Fault the original page in. */
-		onfault = p->p_addr->u_pcb.pcb_onfault;
-		p->p_addr->u_pcb.pcb_onfault = NULL;
+		onfault = pcb->pcb_onfault;
+		pcb->pcb_onfault = NULL;
 		error = uvm_fault(map, va, 0, ftype);
-		p->p_addr->u_pcb.pcb_onfault = onfault;
+		pcb->pcb_onfault = onfault;
 		if (error == 0) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
