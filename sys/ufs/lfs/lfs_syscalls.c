@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.57 2001/07/13 20:30:24 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.58 2001/08/03 06:02:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -95,6 +95,9 @@
 #define FVG_UNLOCK 0x01	  /* Needs to be unlocked */
 #define FVG_PUT	   0x02	  /* Needs to be vput() */
 
+/* Max block count for lfs_markv() */
+#define MARKV_MAXBLKCNT		65536
+
 struct buf *lfs_fakebuf(struct vnode *, int, size_t, caddr_t);
 int lfs_fasthashget(dev_t, ino_t, int *, struct vnode **);
 
@@ -157,6 +160,9 @@ sys_lfs_markv(struct proc *p, void *v, register_t *retval)
 		return (error);
 
 	blkcnt = SCARG(uap, blkcnt);
+	if ((u_int) blkcnt > MARKV_MAXBLKCNT)
+		return (EINVAL);
+
 	blkiov = malloc(blkcnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov,
 			    blkcnt * sizeof(BLOCK_INFO))) != 0)
@@ -190,6 +196,9 @@ sys_lfs_markv(struct proc *p, void *v, register_t *retval)
 		return (error);
 
 	blkcnt = SCARG(uap, blkcnt);
+	if ((u_int) blkcnt > MARKV_MAXBLKCNT)
+		return (EINVAL);
+
 	blkiov = malloc(blkcnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
 	blkiov15 = malloc(blkcnt * sizeof(BLOCK_INFO_15), M_SEGMENT, M_WAITOK);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov15,
