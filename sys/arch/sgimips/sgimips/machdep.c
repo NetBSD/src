@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 2004/01/12 12:32:00 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 2004/01/13 05:51:07 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72 2004/01/12 12:32:00 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2004/01/13 05:51:07 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -142,6 +142,10 @@ u_int32_t clockmask;
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
+
+#if defined(IP1X)
+void	ip1x_init(void);
+#endif
 
 #if defined(IP2X)
 void	ip2x_init(void);
@@ -383,6 +387,13 @@ mach_init(argc, argv, magic, btinfo)
 #endif
 
 	switch (mach_type) {
+	case MACH_SGI_IP12:
+#if defined(IP1X)
+		ip1x_init();
+#else
+		unconfigured_system_type(mach_type);
+#endif
+		break;
 	case MACH_SGI_IP20:
 	case MACH_SGI_IP22:
 #if defined(IP2X)
