@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.11 2001/10/23 22:13:35 scw Exp $
+.\"	$NetBSD: xfer,v 1.12 2002/04/10 19:02:00 scw Exp $
 .
 Installation is supported from several media types, including:
 .(bullet
@@ -43,7 +43,7 @@ The boot tape is created as follows:
 .Dl # Ic "mt -f $T rewind"
 .Dl # Ic "dd if=tapeimage/stboot of=$T"
 .Dl # Ic "dd if=tapeimage/bootst of=$T obs=8k conv=osync"
-.Dl # Ic "gzip -dc tapeimage/netbsd-rd.gz | dd of=$T obs=8k conv=osync"
+.Dl # Ic "gzip -dc tapeimage/netbsd.RAMDISK.gz | dd of=$T obs=8k conv=osync"
 .Dl # Ic "gzip -dc miniroot/miniroot.fs.gz  | dd of=$T obs=8k conv=osync"
 .Dl # Ic "mt -f $T rewind"
 .Pp
@@ -124,14 +124,14 @@ program as is used for
 .Pp
 The netboot program will query a bootparamd server to find the NFS
 server address and path name for its root, and then load a kernel from
-that location. The server should have a copy of the netbsd-rd kernel in
+that location. The server should have a copy of the netbsd.RAMDISK kernel in
 the root area for your client (no other files are needed in the client
 root, although it might be a convenient place to put the uncompressed
 miniroot image) and
 .Pa /etc/bootparams
 on the server should have an entry for your client and its root directory.
 Note that you should rename the
-.Pa netbsd-rd
+.Pa netbsd.RAMDISK
 kernel to just
 .Pa netbsd
 in the client's root directory before trying to netboot the client.
@@ -145,7 +145,7 @@ If you will be installing
 .Nx
 on several clients, it may be useful
 to know that you can use a single NFS root for all the clients as long
-as they only use the netbsd-rd kernel. There will be no conflict
+as they only use the netbsd.RAMDISK kernel. There will be no conflict
 between clients because the RAM-disk kernel will not use the NFS root.
 No swap file is needed; the RAM-disk kernel does not use that either.
 .
@@ -154,7 +154,7 @@ No swap file is needed; the RAM-disk kernel does not use that either.
 This method requires that you boot from another device (i.e. tape
 or network, as described above). You may need to make a boot tape
 on another machine using the files provided on the CD-ROM. Once
-you have booted netbsd-rd (the RAMDISK kernel) and loaded the
+you have booted netbsd.RAMDISK (the RAMDISK kernel) and loaded the
 miniroot, you can load any of the distribution sets directly from
 the CD-ROM. The
 .Ic install
@@ -166,7 +166,7 @@ work required to mount the CD-ROM and extract the files.
 This method requires that you boot from another device (i.e. tape
 or network, as described above). You may need to make a boot tape
 on another machine using the files in .../install (which you get
-via FTP). Once you have booted netbsd-rd (the RAM-disk kernel)
+via FTP). Once you have booted netbsd.RAMDISK (the RAM-disk kernel)
 and loaded the miniroot, you can load any of the distribution sets
 over the net using FTP. The
 .Ic install
