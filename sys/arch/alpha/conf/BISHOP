@@ -1,4 +1,4 @@
-#	$NetBSD: BISHOP,v 1.9 1998/08/11 00:28:53 thorpej Exp $
+#	$NetBSD: BISHOP,v 1.10 1999/01/23 16:10:47 drochner Exp $
 #
 # Kernel for bishop.nas.nasa.gov and ripley.nas.nasa.gov (AlphaStation 500
 # and AlphaStation 600, respectively).
@@ -112,7 +112,7 @@ fea*	at	eisa? slot ?			# DEFEA FDDI controller
 mcclock* at	isa? port 0x70
 pckbc*	at	isa?				# PC keyboard controller
 pckbd*	at	pckbc?				# PC keyboard (kbd port)
-psm*	at	pckbc?				# PS/2-style mouse (aux port)
+pms*	at	pckbc?				# PS/2-style mouse (aux port)
 pcppi*	at	isa? port ?			# PC prog. periph. interface
 spkr*	at	pcppi?				# PC speaker (IBM BASIC'ish)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
@@ -164,7 +164,7 @@ wsdisplay*	at	vga?
 #wsdisplay*	at	sfb?
 wsdisplay*	at	tga?
 wskbd*		at	pckbd?
-wsmouse*	at	psm?
+wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4

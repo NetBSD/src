@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.19 1998/10/14 18:31:34 matt Exp $
+# $NetBSD: INSTALL,v 1.20 1999/01/23 16:10:47 drochner Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -145,7 +145,7 @@ isa*	at	sio?
 mcclock* at	isa? port 0x70
 pckbc*	at	isa?				# PC keyboard controller
 pckbd*	at	pckbc?				# PC keyboard (kbd port)
-psm*	at	pckbc?				# PS/2-style mouse (aux port)
+pms*	at	pckbc?				# PS/2-style mouse (aux port)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
@@ -190,7 +190,7 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 wsdisplay*	at	vga?
 wsdisplay*	at	tga?
 wskbd*		at	pckbd?
-wsmouse*	at	psm?
+wsmouse*	at	pms?
 
 pseudo-device	loop		1
 pseudo-device	md		1

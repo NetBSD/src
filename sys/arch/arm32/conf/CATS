@@ -285,12 +285,11 @@ isapnp0	at isa?
 # wscons
 pckbc0	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
-# "pms" should not be enabled together with "psm" or "psmi"
-psm*		at pckbc?		# PS/2 mouse for wsmouse
-psmi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
+pms*		at pckbc?		# PS/2 mouse for wsmouse
+pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
 wskbd*		at pckbd? console ?
-wsmouse*	at psm?
-wsmouse*	at psmi?
+wsmouse*	at pms?
+wsmouse*	at pmsi?
 
 pcppi0	at isa?
 sysbeep0	at pcppi?

@@ -1,4 +1,4 @@
-# $NetBSD: CANE,v 1.2 1998/06/26 01:53:45 lukem Exp $
+# $NetBSD: CANE,v 1.3 1999/01/23 16:10:47 drochner Exp $
 #
 # cane.nas.nasa.gov - thorpej's Multia
 #
@@ -171,7 +171,7 @@ isa*	at	sio?
 mcclock* at	isa? port 0x70
 pckbc*	at	isa?				# PC keyboard controller
 pckbd*	at	pckbc?				# PC keyboard (kbd port)
-psm*	at	pckbc?				# PS/2-style mouse (aux port)
+pms*	at	pckbc?				# PS/2-style mouse (aux port)
 pcppi*	at	isa?				# PC prog. periph. interface
 spkr0	at	pcppi?				# IBM BASIC emulation
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
@@ -249,7 +249,7 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 #wsdisplay*	at	sfb?
 wsdisplay*	at	tga?
 wskbd*		at	pckbd?
-wsmouse*	at	psm?
+wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
