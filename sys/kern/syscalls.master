@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.108.2.5 2002/01/28 18:29:52 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.108.2.6 2002/02/25 00:37:34 nathanw Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -150,7 +150,7 @@
 48	COMPAT_13	{ int sys_sigprocmask(int how, \
 			    int mask); } sigprocmask13
 49	STD		{ int sys___getlogin(char *namebuf, size_t namelen); }
-50	STD		{ int sys_setlogin(const char *namebuf); }
+50	STD		{ int sys___setlogin(const char *namebuf); }
 51	STD		{ int sys_acct(const char *path); }
 52	COMPAT_13	{ int sys_sigpending(void); } sigpending13
 53	COMPAT_13	{ int sys_sigaltstack( \
