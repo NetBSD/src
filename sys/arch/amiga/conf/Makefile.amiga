@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.57 1997/06/21 22:13:46 is Exp $
+#	$NetBSD: Makefile.amiga,v 1.58 1997/06/23 23:46:27 is Exp $
 
 # Makefile for NetBSD
 #
@@ -172,8 +172,10 @@ uipc_proto.o vfs_conf.o: Makefile
 machdep.o: Makefile
 
 # depend on CPU configuration 
-amiga_init.o locore.o pmap.o sys_machdep.o aucc.o bzsc.o flsc.o sbic.o sfas.o: Makefile
+amiga_init.o locore.o pmap.o sys_machdep.o bzsc.o flsc.o sbic.o sfas.o: Makefile
 
+# LEV6_DEFER blocks usage of audio interupt 3:
+aucc.o cc.o: Makefile
 
 locore.o: ${AMIGA}/amiga/locore.s assym.h
 	${NORMAL_S}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.h,v 1.8 1997/06/14 22:24:02 is Exp $	*/
+/*	$NetBSD: cc.h,v 1.9 1997/06/23 23:46:24 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -47,12 +47,24 @@
 /* 
  * Audio stuff 
  */
- struct audio_channel {
+struct audio_channel {
 	u_short play_count;
 	short	isaudio;
 	void  (*handler)(int);
 };
 
+#ifdef LEV6_DEFER
+#define AUCC_MAXINT 3 
+#define AUCC_ALLINTF (INTF_AUD0|INTF_AUD1|INTF_AUD2)
+#else 
+#define AUCC_MAXINT 4 
+#define AUCC_ALLINTF (INTF_AUD0|INTF_AUD1|INTF_AUD2|INTF_AUD3)
+#endif
+/*
+ * Define this one unconditionally; we may use AUD3 as slave channel
+ * with LEV6_DEFER
+ */
+#define AUCC_ALLDMAF (DMAF_AUD0|DMAF_AUD1|DMAF_AUD2|DMAF_AUD3)
 
 /*
  * Vertical blank iterrupt sever chains.
