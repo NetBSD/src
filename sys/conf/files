@@ -1,4 +1,4 @@
-#	$Id: files,v 1.36 1994/02/02 01:15:59 hpeyerl Exp $
+#	$Id: files,v 1.37 1994/02/10 17:27:45 mycroft Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -108,7 +108,6 @@ msdosfs/msdosfs_fat.c		optional msdosfs
 msdosfs/msdosfs_lookup.c	optional msdosfs
 msdosfs/msdosfs_vfsops.c	optional msdosfs
 msdosfs/msdosfs_vnops.c	optional msdosfs
-net/af.c		standard
 net/bpf.c		optional bpfilter
 net/bpf_filter.c	optional bpfilter device-driver
 net/if.c		standard
