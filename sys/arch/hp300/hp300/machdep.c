@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 1996/10/04 22:19:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 1996/10/05 09:22:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -122,6 +122,21 @@ extern	short exframesize[];
 #ifdef COMPAT_HPUX
 extern struct emul emul_hpux;
 #endif
+
+/* prototypes for local functions */
+void	parityenable __P((void));
+int	parityerror __P((struct frame *));
+int	parityerrorfind __P((void));
+void    identifycpu __P((void));
+void    initcpu __P((void));
+void    ledinit __P((void));
+void	dumpmem __P((int *, int, int));
+char	*hexstr __P((int, int));
+
+/* functions called from locore.s */
+void    dumpsys __P((void));
+void    straytrap __P((int, u_short));
+void	nmihand __P((struct frame));
 
 /*
  * Select code of console.  Set to -1 if console is on
@@ -492,6 +507,7 @@ setregs(p, pack, stack, retval)
 char	cpu_model[120];
 extern	char version[];
 
+void
 identifycpu()
 {
 	char *t, *mc;
@@ -603,6 +619,7 @@ identifycpu()
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -641,6 +658,7 @@ char *ledaddr;
 /*
  * Map the LED page and setup the KVA to access it.
  */
+void
 ledinit()
 {
 	extern caddr_t ledbase;
@@ -659,6 +677,7 @@ ledinit()
  * They are expensive and we really don't need to be that precise.
  * Besides we would like to be able to profile this routine.
  */
+void
 ledcontrol(ons, offs, togs)
 	register int ons, offs, togs;
 {
@@ -1214,6 +1233,7 @@ dumpconf()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
+void
 dumpsys()
 {
 
@@ -1256,6 +1276,7 @@ dumpsys()
 	}
 }
 
+void
 initcpu()
 {
 #ifdef MAPPEDCOPY
@@ -1279,6 +1300,7 @@ initcpu()
 #endif
 }
 
+void
 straytrap(pc, evec)
 	int pc;
 	u_short evec;
@@ -1287,17 +1309,17 @@ straytrap(pc, evec)
 	       evec & 0xFFF, pc);
 }
 
+/* XXX should change the interface, and make one badaddr() function */
+
 int	*nofault;
 
+int
 badaddr(addr)
 	register caddr_t addr;
 {
 	register int i;
 	label_t	faultbuf;
 
-#ifdef lint
-	i = *addr; if (i) return(0);
-#endif
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
@@ -1308,15 +1330,13 @@ badaddr(addr)
 	return(0);
 }
 
+int
 badbaddr(addr)
 	register caddr_t addr;
 {
 	register int i;
 	label_t	faultbuf;
 
-#ifdef lint
-	i = *addr; if (i) return(0);
-#endif
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
@@ -1334,6 +1354,8 @@ badbaddr(addr)
 int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int candbdiv = 2;	/* give em half a second (hz / candbdiv) */
 
+void	candbtimer __P((void *));
+
 int crashandburn;
 
 void
@@ -1350,6 +1372,7 @@ static int innmihand;	/* simple mutex */
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
+void
 nmihand(frame)
 	struct frame frame;
 {
@@ -1417,6 +1440,7 @@ int ignorekperr = 0;	/* ignore kernel parity errors */
 /*
  * Enable parity detection
  */
+void
 parityenable()
 {
 	label_t	faultbuf;
@@ -1424,23 +1448,20 @@ parityenable()
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
-#ifdef DEBUG
 		printf("No parity memory\n");
-#endif
 		return;
 	}
 	*PARREG = 1;
 	nofault = (int *) 0;
 	gotparmem = 1;
-#ifdef DEBUG
 	printf("Parity detection enabled\n");
-#endif
 }
 
 /*
  * Determine if level 7 interrupt was caused by a parity error
  * and deal with it if it was.  Returns 1 if it was a parity error.
  */
+int
 parityerror(fp)
 	struct frame *fp;
 {
@@ -1453,7 +1474,7 @@ parityerror(fp)
 		printf("parity error after panic ignored\n");
 		return(1);
 	}
-	if (!findparerror())
+	if (!parityerrorfind())
 		printf("WARNING: transient parity error ignored\n");
 	else if (USERMODE(fp->f_sr)) {
 		printf("pid %d: parity error\n", curproc->p_pid);
@@ -1475,7 +1496,8 @@ parityerror(fp)
  * Yuk!  There has got to be a better way to do this!
  * Searching all of memory with interrupts blocked can lead to disaster.
  */
-findparerror()
+int
+parityerrorfind()
 {
 	static label_t parcatch;
 	static int looking = 0;
@@ -1533,6 +1555,7 @@ done:
 	return(found);
 }
 
+void
 regdump(fp, sbytes)
 	struct frame *fp; /* must not be register */
 	int sbytes;
@@ -1540,7 +1563,6 @@ regdump(fp, sbytes)
 	static int doingdump = 0;
 	register int i;
 	int s;
-	extern char *hexstr();
 
 	if (doingdump)
 		return;
@@ -1576,12 +1598,12 @@ regdump(fp, sbytes)
 
 #define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
 
+void
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
 	int sz, ustack;
 {
 	register int i, val;
-	extern char *hexstr();
 
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
