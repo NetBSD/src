@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/08/24 00:58:02 jhawk Exp $
+#	$NetBSD: Makefile,v 1.8 2000/09/10 18:48:36 jlam Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -49,7 +49,7 @@ release:
 	cp ${KERNELSYMS} ${RELEASEDIR}/binary/kernel
 
 clean cleandir distclean:
-	rm -f *.core ${KERNELS}
+	rm -f *.core ${KERNELS} ${KERNELSYMS}
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
