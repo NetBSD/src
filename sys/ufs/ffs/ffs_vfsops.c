@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.113 2003/04/16 21:44:27 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.114 2003/05/03 16:24:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.113 2003/04/16 21:44:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.114 2003/05/03 16:24:35 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -408,6 +408,9 @@ ffs_mount(mp, path, data, ndp, p)
 
 	error = set_statfs_info(path, UIO_USERSPACE, args.fspec,
 	    UIO_USERSPACE, mp, p);
+	if (error == 0)
+		(void)strncpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
+		    sizeof(fs->fs_fsmnt));
 	if (mp->mnt_flag & MNT_SOFTDEP)
 		fs->fs_flags |= FS_DOSOFTDEP;
 	else
