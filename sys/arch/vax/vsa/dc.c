@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.5 1998/01/12 20:53:01 thorpej Exp $	*/
+/*	$NetBSD: dc.c,v 1.6 1998/03/22 09:37:47 jonathan Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -83,13 +83,13 @@
  * #include <pmax/include/dc7085cons.h>
  * #include <pmax/include/pmioctl.h>
  *
+ * #include <dev/dec/lk201.h>
  * #include <pmax/dev/pdma.h>
- * #include <pmax/dev/lk201.h>
  */
 #include "dc7085cons.h"			/* this one is modified !!! */
 #include <pmax/include/pmioctl.h>
 #include <pmax/dev/pdma.h>
-#include <pmax/dev/lk201.h>
+#include <dev/dec/lk201.h>
 
 #include <sys/device.h>
 
