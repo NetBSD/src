@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.17 1998/01/05 21:56:31 cgd Exp $
+#	$NetBSD: Makefile,v 1.18 1998/12/15 22:36:24 pk Exp $
 
-SUBDIR=	ld ldconfig ldd
+SUBDIR=	ld
 
 .include <bsd.own.mk>	# for NOPIC definition
 
