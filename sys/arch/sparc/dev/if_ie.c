@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.22 1996/03/31 22:38:44 pk Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.23 1996/04/10 20:46:16 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -691,7 +691,7 @@ ieattach(parent, self, aux)
 	bp = ca->ca_ra.ra_bp;
 	if (bp != NULL && strcmp(bp->name, "ie") == 0 &&
 	    sc->sc_dev.dv_unit == bp->val[1])
-		bootdv = &sc->sc_dev;
+		bp->dev = &sc->sc_dev;
 }
 
 
