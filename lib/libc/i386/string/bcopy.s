@@ -2,7 +2,7 @@
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
+ * This code is derived from locore.s.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,11 +32,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bcopy.s,v 1.6 1993/08/16 17:06:29 jtc Exp $
+ *	$Id: bcopy.s,v 1.7 1993/08/24 16:59:00 jtc Exp $
  */
 
 #if defined(LIBC_RCS) && !defined(lint)
-	.asciz "$Id: bcopy.s,v 1.6 1993/08/16 17:06:29 jtc Exp $"
+	.asciz "$Id: bcopy.s,v 1.7 1993/08/24 16:59:00 jtc Exp $"
 #endif /* LIBC_RCS and not lint */
 
 #include "DEFS.h"
@@ -64,7 +64,6 @@ ENTRY(bcopy)
 	movsb
 	popl	%edi
 	popl	%esi
-	xorl	%eax,%eax
 	ret
 1:
 	addl	%ecx,%edi	/* copy backwards. */
@@ -83,6 +82,4 @@ ENTRY(bcopy)
 	movsl
 	popl	%edi
 	popl	%esi
-	xorl	%eax,%eax
-	cld
 	ret
