@@ -1,11 +1,14 @@
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/do_command.c,v 1.2 1993/03/28 17:24:44 glass Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/do_command.c,v 1.3 1993/05/26 18:45:07 guido Exp $";
 #endif
 
 /* $Source: /cvsroot/src/libexec/crond/Attic/do_command.c,v $
- * $Revision: 1.2 $
+ * $Revision: 1.3 $
  * $Log: do_command.c,v $
- * Revision 1.2  1993/03/28 17:24:44  glass
+ * Revision 1.3  1993/05/26 18:45:07  guido
+ * Weird security hole removed. Thanks to cor@hacktic.nl
+ *
+ * Revision 1.2  1993/03/28  17:24:44  glass
  * cleanup so that crond compiles quietly
  *
  * Revision 1.1.1.1  93/03/21  09:52:52  cgd
@@ -437,6 +440,11 @@ child_process(cmd, u)
 
 				(void) gethostname(hostname, MAXHOSTNAMELEN);
 				(void) sprintf(mailcmd, MAILCMD, mailto);
+				setgid(u->gid);
+# if defined(BSD)
+				initgroups(env_get(USERENV, u->envp), u->gid);
+# endif
+				setuid(u->uid);		/* you aren't root after this... */
 				if (!(mail = popen(mailcmd, "w")))
 				{
 					perror(MAILCMD);
