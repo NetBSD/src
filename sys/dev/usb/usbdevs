@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.96 2000/04/27 15:26:50 augustss Exp $
+$NetBSD: usbdevs,v 1.97 2000/05/06 18:28:01 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -449,6 +449,7 @@ product LEXMARK S2450		0x0009	Optra S 2450
 /* Linksys products */
 product LINKSYS USB10T		0x2202	USB10T Ethernet
 product LINKSYS USB100TX	0x2203	USB100TX Ethernet
+product LINKSYS USB100H1	0x2204	USB100H1 Ethernet/HPNA
 product LINKSYS USB10TA		0x2206	USB10TA Ethernet
 
 /* Logitech products */
