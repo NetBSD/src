@@ -1,7 +1,7 @@
+#	$NetBSD: Makefile.inc,v 1.9 1997/09/20 03:09:18 mikel Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.8 1997/08/31 23:22:02 pk Exp $
 
 .ifdef DESTDIR
 snap_md: netbsd netbsd.scsi3
