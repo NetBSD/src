@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx_12.c,v 1.1 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: kern_xxx_12.c,v 1.2 1997/03/26 23:44:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -59,7 +59,7 @@ compat_12_sys_reboot(p, v, retval)
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
-	boot(SCARG(uap, opt), NULL);
+	cpu_reboot(SCARG(uap, opt), NULL);
 	return (0);
 }
 /*#endif COMPAT_12 */

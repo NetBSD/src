@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.23 1997/01/15 01:37:49 perry Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.24 1997/03/26 23:44:29 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -1157,10 +1157,10 @@ ibcs2_sys_uadmin(p, v, retval)
 		case SCO_AD_HALT:
 		case SCO_AD_PWRDOWN:
 		case SCO_AD_PWRNAP:
-			boot(RB_HALT, NULL);
+			cpu_reboot(RB_HALT, NULL);
 		case SCO_AD_BOOT:
 		case SCO_AD_IBOOT:
-			boot(RB_AUTOBOOT, NULL);
+			cpu_reboot(RB_AUTOBOOT, NULL);
 		}
 		return EINVAL;
 	case SCO_A_REMOUNT:
