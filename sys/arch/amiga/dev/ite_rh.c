@@ -1,9 +1,9 @@
 /*
- *	$Id: ite_rh.c,v 1.1 1994/06/05 07:48:48 chopps Exp $
+ *	$Id: ite_rh.c,v 1.2 1994/06/15 19:06:18 chopps Exp $
  */
 
-#include "ite.h"
-#if NITE > 0
+#include "grfrh.h"
+#if NGRFRH > 0
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -228,4 +228,4 @@ rh_scroll(ip, sy, sx, count, dir)
 		RZ3AlphaErase(ip->grf, ip->cols - count, sy, count, 1);
 	}
 }
-#endif
+#endif /* NGRFRH */
