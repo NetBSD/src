@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.21 2002/06/26 23:05:37 christos Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.22 2002/07/04 14:37:14 junyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -56,7 +56,7 @@ struct wsdisplay_emulops {
 	void	(*erasecols)(void *c, int row, int startcol, int ncols, long);
 	void	(*copyrows)(void *c, int srcrow, int dstrow, int nrows);
 	void	(*eraserows)(void *c, int row, int nrows, long);
-	int	(*alloc_attr)(void *c, int fg, int bg, int flags, long *);
+	int	(*allocattr)(void *c, int fg, int bg, int flags, long *);
 /* fg / bg values. Made identical to ANSI terminal color codes. */
 #define WSCOL_BLACK	0
 #define WSCOL_RED	1

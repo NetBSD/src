@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.58 2002/07/01 16:56:09 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.59 2002/07/04 14:37:11 junyoung Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.58 2002/07/01 16:56:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.59 2002/07/04 14:37:11 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ void vga_init(struct vga_config *, bus_space_tag_t, bus_space_tag_t);
 static void vga_setfont(struct vga_config *, struct vgascreen *);
 
 static int vga_mapchar(void *, int, unsigned int *);
-static int vga_alloc_attr(void *, int, int, int, long *);
+static int vga_allocattr(void *, int, int, int, long *);
 static void vga_copyrows(void *, int, int, int);
 
 const struct wsdisplay_emulops vga_emulops = {
@@ -122,7 +122,7 @@ const struct wsdisplay_emulops vga_emulops = {
 	pcdisplay_erasecols,
 	vga_copyrows,
 	pcdisplay_eraserows,
-	vga_alloc_attr
+	vga_allocattr
 };
 
 /*
@@ -525,11 +525,11 @@ vga_init_screen(struct vga_config *vc, struct vgascreen *scr,
 		/*
 		 * DEC firmware uses a blue background.
 		 */
-		res = vga_alloc_attr(scr, WSCOL_WHITE, WSCOL_BLUE,
+		res = vga_allocattr(scr, WSCOL_WHITE, WSCOL_BLUE,
 				     WSATTR_WSCOLORS, attrp);
 	else
 #endif
-	res = vga_alloc_attr(scr, 0, 0, 0, attrp);
+	res = vga_allocattr(scr, 0, 0, 0, attrp);
 #ifdef DIAGNOSTIC
 	if (res)
 		panic("vga_init_screen: attribute botch");
@@ -1053,7 +1053,7 @@ vga_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 }
 
 static int
-vga_alloc_attr(void *id, int fg, int bg, int flags, long *attrp)
+vga_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 {
 	struct vgascreen *scr = id;
 	struct vga_config *vc = scr->cfg;
