@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.28 1998/09/06 02:33:56 mark Exp $	*/
+/*	$NetBSD: conf.c,v 1.29 1998/09/09 19:04:04 phil Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -179,6 +179,9 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ugen.h"
 #include "ulpt.h"
 
+#include "vcfs.h"			/* coda file system */
+cdev_decl(vc_nb_);
+
 /* Character devices */
 
 struct cdevsw cdevsw[] = {
@@ -258,7 +261,7 @@ struct cdevsw cdevsw[] = {
 	cdev_joy_init(NJOY,joy),	/* 56: ISA joystick */
 	cdev_midi_init(NMIDI,midi),	/* 57: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 58: sequencer I/O */
-	cdev_lkm_dummy(),		/* 59: reserved for CODA */
+	cdev_vc_nb_init(NVCFS,vc_nb_),  /* 59: coda file system psdev */
 	cdev_lkm_dummy(),		/* 60: reserved for wsdisplay */
 	cdev_lkm_dummy(),		/* 61: reserved for wskbd */
 	cdev_lkm_dummy(),		/* 62: reserved for wsmouse */
