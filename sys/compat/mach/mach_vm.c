@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.30.2.5 2004/09/21 13:25:42 skrll Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.30.2.6 2004/10/12 06:00:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.30.2.5 2004/09/21 13:25:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.30.2.6 2004/10/12 06:00:41 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -780,7 +780,7 @@ mach_vm_read(args)
 
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0) 
-		ktrmool(l->l_proc, buf, size, (void *)va);
+		ktrmool(l, buf, size, (void *)va);
 #endif
 
 	free(buf, M_WAITOK);
@@ -838,7 +838,7 @@ mach_vm_write(args)
 
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0) 
-		ktrmool(l->l_proc, buf, size, (void *)addr);
+		ktrmool(l, buf, size, (void *)addr);
 #endif
 
 	free(buf, M_WAITOK);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7.2.2 2004/08/12 11:41:11 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.7.2.3 2004/10/12 06:00:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.7.2.2 2004/08/12 11:41:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.7.2.3 2004/10/12 06:00:41 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -928,7 +928,7 @@ child_return(void *arg)
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 #endif
 #ifdef DEBUG
 	frame_sanity_check(l->l_md.md_regs, l);
