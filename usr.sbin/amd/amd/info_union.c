@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
+ *	@(#)info_union.c	8.1 (Berkeley) 6/6/93
  *
- * $Id: info_union.c,v 1.2 1993/12/22 18:24:11 cgd Exp $
+ * $Id: info_union.c,v 1.3 1994/06/13 19:47:40 mycroft Exp $
  *
  */
 
@@ -52,7 +52,7 @@
 
 #ifdef HAS_UNION_MAPS
 
-#if defined(_POSIX_SOURCE) || defined(__NetBSD__)
+#ifdef _POSIX_SOURCE
 #include <dirent.h>
 #define	DIRENT struct dirent
 #else

@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
+ *	@(#)afs_ops.c	8.1 (Berkeley) 6/6/93
  *
- * $Id: afs_ops.c,v 1.1 1993/11/27 21:16:59 mycroft Exp $
+ * $Id: afs_ops.c,v 1.2 1994/06/13 19:47:18 mycroft Exp $
  *
  */
 
@@ -54,7 +54,7 @@ typedef nfs_fh fhandle_t;
 #include NFS_HDR
 #endif /* NFS_HDR */
 #include <sys/mount.h>
-#include <rpcsvc/mount.h>
+#include "mount.h"
 
 /*
  * Automount file system
@@ -187,15 +187,9 @@ char *opts;
 #endif /* HOSTNAMESZ */
 
 #ifdef NFSMNT_DUMBTIMR
-	/*
-	 * Don't let the kernel start computing throughput of Amd
-	 * The numbers will be meaningless because of the way Amd
-	 * does mount retries.
-	 */
 	nfs_args.flags |= NFSMNT_DUMBTIMR;
-	plog(XLOG_INFO, "%s: disabling nfs congestion window", dir);
+	plog(XLOG_INFO, "defeating nfs window computation");
 #endif
-
 
 	/*
 	 * Parse a subset of the standard nfs options.  The

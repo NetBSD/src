@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
+ *	@(#)os-bsd44.h	8.1 (Berkeley) 6/6/93
  *
- * $Id: os-bsd44.h,v 1.5 1994/04/14 03:21:36 cgd Exp $
+ * $Id: os-bsd44.h,v 1.6 1994/06/13 19:48:48 mycroft Exp $
  *
  * 4.4 BSD definitions for Amd (automounter)
  */
@@ -68,11 +68,14 @@
 #define OS_HAS_NDBM
 
 /*
- * 4.4 doesn't provide NIS, but NetBSD does.
+ * 4.4 doesn't provide NIS.
  */
-#ifndef __NetBSD__
 #undef HAS_NIS_MAPS
-#endif
+
+/*
+ * OS provides strerror()
+ */
+#define HAS_STRERROR
 
 /*
  * The mount table is obtained from the kernel
@@ -104,20 +107,12 @@
  * How to copy an address into an NFS filehandle
  */
 #undef NFS_SA_DREF
-#ifndef __NetBSD__
 #define	NFS_SA_DREF(dst, src) { \
 		(dst).addr = (struct sockaddr *) (src); \
 		(dst).addrlen = sizeof(*src); \
 		(dst).sotype = SOCK_DGRAM; \
 		(dst).proto = 0; \
 	}
-#else /* __NetBSD__ */
-#define	NFS_SA_DREF(dst, src) { \
-		(dst).addr = (struct sockaddr *) (src); \
-		(dst).sotype = SOCK_DGRAM; \
-		(dst).proto = 0; \
-	}
-#endif /* __NetBSD__ */
 
 /*
  * Byte ordering
@@ -159,17 +154,7 @@ XXX - Probably no hope of running Amd on this machine!
 #define	MNTOPT_SOFT	"soft"		/* soft mount */
 #define	MNTOPT_INTR	"intr"		/* interrupts allowed */
 
-#ifndef __NetBSD__
 #define NFSMNT_HOSTNAME	0		/* hostname on 4.4 is not optional */
-#endif
-
-#ifdef __NetBSD__
-/*
- * Type of filesystem type
- */
-#undef MTYPE_TYPE
-#define	MTYPE_TYPE	char *
-#endif
 
 struct mntent {
 	char	*mnt_fsname;	/* name of mounted file system */
@@ -203,8 +188,4 @@ struct mntent {
  * 4.4 has RE support built in
  */
 #undef RE_HDR
-#ifdef __NetBSD__
-#define RE_HDR <regex.h>
-#else
 #define RE_HDR <regexp.h>
-#endif

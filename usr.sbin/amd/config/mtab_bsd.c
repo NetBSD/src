@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
+ *	@(#)mtab_bsd.c	8.1 (Berkeley) 6/6/93
  *
- * $Id: mtab_bsd.c,v 1.2 1994/04/14 03:21:32 cgd Exp $
+ * $Id: mtab_bsd.c,v 1.3 1994/06/13 19:48:40 mycroft Exp $
  *
  */
 
@@ -55,23 +55,12 @@ struct statfs *mp;
 
 	new_mp->mnt_fsname = strdup(mp->f_mntfromname);
 	new_mp->mnt_dir = strdup(mp->f_mntonname);
-#ifndef __NetBSD__
 	switch (mp->f_type) {
 	case MOUNT_UFS:  ty = MTAB_TYPE_UFS; break;
 	case MOUNT_NFS:  ty = MTAB_TYPE_NFS; break;
 	case MOUNT_MFS:  ty = MTAB_TYPE_MFS; break;
 	default:  ty = "unknown"; break;
 	}
-#else
-	if (strncmp(mp->f_fstypename, MOUNT_UFS, MFSNAMELEN) == 0)
-		ty = MTAB_TYPE_UFS;
-	else if (strncmp(mp->f_fstypename, MOUNT_NFS, MFSNAMELEN) == 0)
-		ty = MTAB_TYPE_NFS;
-	else if (strncmp(mp->f_fstypename, MOUNT_MFS, MFSNAMELEN) == 0)
-		ty = MTAB_TYPE_MFS;
-	else
-		ty = "unknown";
-#endif
 	new_mp->mnt_type = strdup(ty);
 	new_mp->mnt_opts = strdup("unset");
 	new_mp->mnt_freq = 0;
@@ -113,6 +102,11 @@ char *fs;
 		 */
 		mpp = &(*mpp)->mnext;
 	}
+
+	/*
+	 * Terminate the list
+	 */
+	*mpp = 0;
 
 	return mhp;
 }
