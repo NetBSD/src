@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.12 1997/10/09 00:08:00 briggs Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.13 1997/11/05 03:27:29 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -109,6 +109,8 @@ sn_obio_attach(parent, self, aux)
 	sc->snr_dcr = DCR_WAIT0 | DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 	sc->snr_dcr2 = 0;
 
+	sc->slotno = 9;
+
 	switch (current_mac_model->machineid) {
 	case MACH_MACC610:
 	case MACH_MACC650:
@@ -120,6 +122,10 @@ sn_obio_attach(parent, self, aux)
 	case MACH_MACQ950:
 		sc->snr_dcr |= DCR_EXBUS;
 		sc->bitmode = 1;
+		break;
+
+	case MACH_MACLC575:
+	case MACH_MACQ630:
 		break;
 
 	case MACH_MACPB500:
@@ -140,11 +146,27 @@ sn_obio_attach(parent, self, aux)
 		return;
 	}
 
-	sc->slotno = 9;
-
 	/* regs are addressed as words, big-endian. */
 	for (i = 0; i < SN_NREGS; i++) {
 		sc->sc_reg_map[i] = (bus_size_t)((i * 4) + 2);
+	}
+
+	/*
+	 * Kind of kludge this.  Comm-slot cards do not really
+	 * have a visible type, as far as I can tell at this time,
+	 * so assume that MacOS had it properly configured and use
+	 * that configuration.
+	 */
+	switch (current_mac_model->machineid) {
+	case MACH_MACLC575:
+	case MACH_MACQ630:
+		NIC_PUT(sc, SNR_CR, CR_RST);	wbflush();
+		i = NIC_GET(sc, SNR_DCR);
+		sc->snr_dcr |= (i & 0xfff0);
+		sc->bitmode = (i & DCR_DW) ? 1 : 0;
+		break;
+	default:
+		break;
 	}
 
 	if (sn_obio_getaddr(sc, myaddr) &&
