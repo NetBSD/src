@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.10 2002/05/15 17:15:18 thorpej Exp $	*/
+/*	$NetBSD: necpb.c,v 1.11 2002/05/16 01:01:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -244,6 +244,7 @@ necpbattach(parent, self, aux)
 	pba.pba_pc = &sc->sc_ncp->nc_pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 
 	config_found(self, &pba, necpbprint);
 }

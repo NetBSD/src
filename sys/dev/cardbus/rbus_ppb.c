@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.2 2001/11/13 12:51:13 lukem Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.3 2002/05/16 01:01:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.2 2001/11/13 12:51:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.3 2002/05/16 01:01:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,7 @@ unsigned int rbus_round_up __P((unsigned int size, unsigned int min));
 
 struct ppb_cardbus_softc {
   struct device sc_dev;
+  pcitag_t sc_tag;
   int foo;
 };
 
@@ -704,6 +705,8 @@ ppb_cardbus_attach(parent, self, aux)
 	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(ca->ca_class));
 
+	sc->sc_tag = ca->ca_tag;	/* XXX cardbustag_t == pcitag_t */
+
 	busdata = cardbus_conf_read(cc, cf, ca->ca_tag, PPB_REG_BUSINFO);
 	minbus = pcibios_max_bus;
 
@@ -777,6 +780,7 @@ ppb_cardbus_attach(parent, self, aux)
 	pba.pba_pc   = psc->sc_pc;
 	pba.pba_flags    = PCI_FLAGS_IO_ENABLED|PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus      = PPB_BUSINFO_SECONDARY(busdata);
+	pba.pba_bridgetag = &sc->sc_tag;
 	/*pba.pba_intrswiz = parent_sc->sc_intrswiz; */
 	pba.pba_intrtag  = psc->sc_pa.pa_intrtag;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1 2001/06/19 00:20:45 fvdl Exp $	*/
+/*	$NetBSD: pchb.c,v 1.2 2002/05/16 01:01:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -246,6 +246,7 @@ pchbattach(parent, self, aux)
 		pba.pba_memt = pa->pa_memt;
 		pba.pba_dmat = pa->pa_dmat;
 		pba.pba_bus = pbnum;
+		pba.pba_bridgetag = NULL;
 		pba.pba_flags = pa->pa_flags;
 		pba.pba_pc = pa->pa_pc;
 		config_found(self, &pba, pchb_print);

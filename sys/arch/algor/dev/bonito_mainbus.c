@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_mainbus.c,v 1.1 2001/06/25 20:15:57 thorpej Exp $	*/
+/*	$NetBSD: bonito_mainbus.c,v 1.2 2002/05/16 01:01:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@ bonito_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_busname = "pci";
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 
 #if defined(ALGOR_P6032)
 	    {

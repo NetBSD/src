@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.2 2002/03/13 19:28:25 eeh Exp $	*/
+/*	$NetBSD: pchb.c,v 1.3 2002/05/16 01:01:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -165,6 +165,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = galaxy_make_bus_space_tag(0, 0);
 	pba.pba_dmat = &galaxy_default_bus_dma_tag;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
 	config_found(self, &pba, phcbprint);
 }

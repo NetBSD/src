@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc_mainbus.c,v 1.5 2001/06/22 03:45:24 thorpej Exp $	*/
+/*	$NetBSD: vtpbc_mainbus.c,v 1.6 2002/05/16 01:01:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@ vtpbc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_busname = "pci";
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;
+	pba.pba_bridgetag = NULL;
 
 	if (vt->vt_pci_iobase == (bus_addr_t) -1)
 		pba.pba_flags &= ~PCI_FLAGS_IO_ENABLED;
