@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.8 1999/11/20 18:05:24 veego Exp $
+#	$NetBSD: bind2netbsd,v 1.9 1999/11/20 18:21:56 veego Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,9 +67,9 @@ mkdir -p $d/man
 ### Copy the files and directories
 cd $r/src
 pax -rvw LICENSE README bin include lib $d
-cd port/netbsd/include
+cd $r/src/port/netbsd/include
 pax -rvw port_after.h port_before.h prand_conf.h $d/include
-cd bin
+cd $r/src/port/netbsd/bin
 pax -rvw probe_ipv6 $d/bin
 cd $r/doc/man
 pax -rvw dig.1 dnskeygen.1 dnsquery.1 host.1 named-bootconf.8 named-xfer.8 named.8 named.conf.5 ndc.8 nslookup.8 nsupdate.8 $d/man
@@ -83,10 +83,14 @@ find $d -name '.cvsignore' -exec rm {} \;
 find $d -name 'Makefile' -exec rm {} \;
 cd $d/lib/isc && rm *.mdoc
 
-### Remove the $'s around the Id: and add our NetBSD RCS Id
+### Remove the $'s around the Id:
+find $d -type f -print | while read f; do
+	sed -e ' s/\$\(Id.*\) \$/\1/' < $f > /tmp/bind1f$$ && mv /tmp/bind1f$$ $f && \
+	echo removed \$Id tag from $f
+done
+
+### Add our NetBSD RCS Id
 find $d -name '*.[chly]' -print | while read c; do
-	sed -e ' s/\$\(Id.*\) \$/\1/' < $c > /tmp/bind2n$$ && mv /tmp/bind2n$$ $c && \
-	echo removed \$Id tag from $c
 	sed 1q < $c | grep -q '\$NetBSD' || (
 echo "/*	\$NetBSD\$	*/" >/tmp/bind3n$$
 echo "" >>/tmp/bind3n$$
@@ -96,9 +100,6 @@ mv /tmp/bind3n$$ $c && echo added RCS tag to $c
 done
 
 find $d/man -name '*.[0-9]' -print | while read m; do
-	sed -e ' s/\$\(Id.*\) \$/\1/' < $m > /tmp/bind1m$$ && \
-	mv /tmp/bind1m$$ $m && echo removed \$Id tag from $m
-
 	sed 1q < $m | grep -q '\$NetBSD' || (
 echo ".\\\"     \$NetBSD\$" >/tmp/bind2m$$
 echo ".\\\"" >>/tmp/bind2m$$
@@ -118,6 +119,24 @@ echo ".\\\"" >>/tmp/bind2m$$
 	mv /tmp/bind3m$$ $m && echo fixup $m
 	)
 done
+
+# XXX Not all files contains now the NetBSD RCS Id.
+# Make sure you add the RCS Id before you do the import.
+# This is the list of missing files as of 8.2.2-P5:
+# LICENSE
+# README
+# bin/probe_ipv6
+# bin/irpd/irs-irpd.conf
+# bin/named/named.conf
+# bin/named/test/127.0.0.zone
+# bin/named/test/localhost.zone
+# bin/named/test/named.conf
+# bin/named/test/root.hint
+# bin/named-bootconf/Grot/named-bootconf.pl
+# bin/nslookup/nslookup.help
+# lib/dst/README
+# lib/irs/Makefile.BSD
+# lib/irs/README
 
 echo done
 
