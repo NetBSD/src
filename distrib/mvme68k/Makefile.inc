@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.3 2000/05/02 16:06:51 sjg Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2002/04/10 15:05:43 lukem Exp $
 
 .include "../../../Makefile.inc"
 
-REV!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh -s
+REV!=sh ${_SRC_TOP_}/sys/conf/osrelease.sh -s
 
 LDSTATIC=	-static		# only static compilation makes sense here
 
 # Hack needed to find kernel images...
-BSDSRCDIR?=	/usr/src
-SRCSYSDIR?=	${BSDSRCDIR}/sys
+SRCSYSDIR?=	${_SRC_TOP_}/sys
