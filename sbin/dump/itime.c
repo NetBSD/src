@@ -1,4 +1,4 @@
-/*	$NetBSD: itime.c,v 1.6 1998/03/18 16:54:56 bouyer Exp $	*/
+/*	$NetBSD: itime.c,v 1.7 1998/04/01 16:13:40 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: itime.c,v 1.6 1998/03/18 16:54:56 bouyer Exp $");
+__RCSID("$NetBSD: itime.c,v 1.7 1998/04/01 16:13:40 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: itime.c,v 1.6 1998/03/18 16:54:56 bouyer Exp $");
 #ifdef __STDC__
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #endif
 
