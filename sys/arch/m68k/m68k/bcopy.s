@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.s,v 1.2 1998/02/27 21:38:31 thorpej Exp $	*/
+/*	$NetBSD: bcopy.s,v 1.3 1999/03/12 22:42:30 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,11 +48,10 @@
 	.text
 
 /*
- * {ov}bcopy(from, to, len)
+ * bcopy(from, to, len)
  *
  * Works for counts up to 128K.
  */
-ALTENTRY(ovbcopy, _bcopy)
 ENTRY(bcopy)
 	movl	sp@(12),d0		| get count
 	jeq	Lbccpyexit		| if zero, return
