@@ -1,14 +1,14 @@
-#	$NetBSD: rand.inc,v 1.1.1.1.2.1 2000/06/22 06:55:05 thorpej Exp $
+#	$NetBSD: rand.inc,v 1.1.1.1.2.2 2000/07/17 06:00:00 mrg Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
-#	SRCS extracted from ../../dist/openssl/crypto/rand/Makefile.ssl
+#	SRCS extracted from /home/current/src/lib/libcrypto/../../crypto/dist/openssl/crypto/rand/Makefile.ssl
 #
 
 .PATH:	${OPENSSLSRC}/crypto/rand
 
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/rand
 
-SRCS+=md_rand.c randfile.c rand_lib.c
+SRCS+=md_rand.c randfile.c rand_lib.c rand_err.c rand_egd.c
 
 

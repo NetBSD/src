@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.4 2000/07/05 18:30:07 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3.2.5 2000/07/17 05:59:57 mrg Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -55,8 +55,8 @@ CLEANFILES+= buildinf.h
 # This list is built from the contents of the include/openssl
 # directory in the OpenSSL source distribution.
 INCS+=	asn1.h asn1_mac.h bio.h blowfish.h bn.h buffer.h cast.h comp.h
-INCS+=	conf.h crypto.h des.h dh.h dsa.h e_os.h e_os2.h err.h evp.h hmac.h
-INCS+=	lhash.h md2.h mdc2.h md5.h objects.h opensslconf.h
+INCS+=	conf.h crypto.h des.h dh.h dsa.h e_os.h e_os2.h ebcdic.h err.h evp.h
+INCS+=	hmac.h lhash.h md2.h mdc2.h md5.h objects.h opensslconf.h
 INCS+=	opensslv.h pem.h pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h
 INCS+=	ripemd.h safestack.h sha.h stack.h tmdiff.h
 INCS+=	txt_db.h x509.h x509_vfy.h x509v3.h

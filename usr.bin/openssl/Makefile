@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2000/06/24 06:59:36 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2000/07/17 06:00:01 mrg Exp $
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.2.2.2 2000/06/24 06:59:36 thorpej Exp $
+#	$Id: Makefile,v 1.2.2.3 2000/07/17 06:00:01 mrg Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -24,10 +24,11 @@ WARNS=0
 PROG=	openssl
 
 SRCS=	openssl.c
-SRCS+=	verify.c asn1pars.c req.c dgst.c dh.c enc.c gendh.c gendsa.c \
-	errstr.c ca.c pkcs12.c pkcs7.c pkcs8.c crl2p7.c crl.c dsa.c \
-	dsaparam.c x509.c s_server.c s_client.c speed.c s_time.c apps.c \
-	s_cb.c s_socket.c version.c sess_id.c ciphers.c nseq.c
+SRCS+=	app_rand.c apps.c asn1pars.c ca.c ciphers.c crl.c crl2p7.c dgst.c \
+	dh.c dhparam.c dsa.c dsaparam.c enc.c errstr.c gendh.c gendsa.c \
+	nseq.c passwd.c pkcs12.c pkcs7.c pkcs8.c rand.c req.c s_cb.c \
+	s_client.c s_server.c s_socket.c s_time.c sess_id.c smime.c \
+	speed.c spkac.c verify.c version.c x509.c
 
 LDADD+=	-lssl -lcrypto
 
