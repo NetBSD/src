@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 2002/09/22 03:21:44 dbj Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34 2002/11/25 02:13:59 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -82,7 +82,7 @@ cpu_configure()
 	 * Now allow hardware interrupts.
 	 */
 	asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
-		      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
+		      : "=r"(msr) : "K"(PSL_EE|PSL_RI));
 }
 
 void
