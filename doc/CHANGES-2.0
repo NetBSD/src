@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.357 2004/07/25 07:54:26 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.358 2004/07/26 07:16:30 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -996,7 +996,7 @@ sys/arch/hpcmips/conf/LROUTER			1.18
 sys/arch/hpcmips/conf/NULLCONF			1.18
 sys/arch/hpcmips/conf/VR41XX			1.18
 sys/arch/hpcmips/conf/MPC303			1.26
-sys/arch/hpcmips/conf/Makefile.hpcmips.inc	deleted
+sys/arch/hpcmips/conf/Makefile.hpcmips.inc	delete
 sys/arch/hpcmips/conf/TX3912			1.50
 sys/arch/hpcmips/conf/TX3922			1.53
 sys/arch/hpcmips/conf/std.lcard			1.4
@@ -2572,7 +2572,7 @@ gnu/dist/cvs/lib/system.h			patch
 gnu/dist/cvs/man/ChangeLog			patch
 gnu/dist/cvs/man/Makefile.in			patch
 gnu/dist/cvs/man/Makefile.am       		patch
-gnu/dist/cvs/man/cvs.1            		deleted
+gnu/dist/cvs/man/cvs.1            		delete
 gnu/dist/cvs/man/cvs.5       			patch
 gnu/dist/cvs/src/ChangeLog			patch
 gnu/dist/cvs/src/Makefile.am			patch
@@ -2780,8 +2780,8 @@ sys/arch/xen/xen/clock.c			1.2-1.5
 sys/arch/xen/xen/events.c			1.2-1.5
 sys/arch/xen/xen/if_xennet.c			1.2-1.10
 sys/arch/xen/xen/xen_debug.c			1.2
-sys/arch/xen/i386/hypervisor.c			deleted
-sys/arch/xen/xen/console.c			deleted
+sys/arch/xen/i386/hypervisor.c			delete
+sys/arch/xen/xen/console.c			delete
 
 	Upgrade xen support:
 	 - add block device driver
@@ -3452,8 +3452,8 @@ lib/libc/sys/close.2				patch
 
 distrib/acorn32/mksparkive.sh					0-1.2
 distrib/acorn32/stand/Makefile					1.12
-distrib/acorn32/stand/BtNetBSD/!BtNetBSD/!Sprites.uue		deleted
-distrib/acorn32/stand/BtNetBSD/!BtNetBSD/!Sprites22.uue		deleted
+distrib/acorn32/stand/BtNetBSD/!BtNetBSD/!Sprites.uue		delete
+distrib/acorn32/stand/BtNetBSD/!BtNetBSD/!Sprites22.uue		delete
 distrib/acorn32/stand/BtNetBSD/!BtNetBSD/pling.Sprites.uue	0-1.3
 distrib/acorn32/stand/BtNetBSD/!BtNetBSD/pling.Sprites22.uue	0-1.3
 
@@ -3983,7 +3983,7 @@ crypto/dist/kame/racoon/dhgroup.h			patch
 crypto/dist/kame/racoon/eaytest.c			patch
 crypto/dist/kame/racoon/grabmyaddr.c			patch
 crypto/dist/kame/racoon/gssapi.c			patch
-crypto/dist/kame/racoon/gssapi.h			deleted
+crypto/dist/kame/racoon/gssapi.h			delete
 crypto/dist/kame/racoon/handler.c			patch
 crypto/dist/kame/racoon/ipsec_doi.c			patch
 crypto/dist/kame/racoon/isakmp.c			patch
@@ -6163,4 +6163,21 @@ etc/postinstall					1.78
 	Add a: to the getopt string so that the -a option is actually 
 	recognized.
 	[thorpej, ticket #713]
+
+lib/libpthread/pthread_stack.c			1.15
+
+	In pthread__initmain(), don't reuse the part of the initial stack that
+	is occupied by the argv and environment (and MD stuff like the
+	page-table mapping on x86). Fixes PR 26392.
+	[chs, ticket #714]
+
+sys/compat/linux/arch/powerpc/files.linux_powerpc	1.5
+sys/compat/linux/arch/powerpc/linux_exec.h		1.18
+sys/compat/linux/arch/powerpc/linux_exec_powerpc.c	1.15
+sys/compat/linux/arch/powerpc/linux_sp_wrap_powerpc.S	delete
+
+	Remove the LINUX_SP_WRAP hack since it doesn't seem to be needed
+	anymore, and removing it lets us go back to mapping the stack
+	non-executable again.
+	[chs, ticket #715]
 
