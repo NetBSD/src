@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5 2002/09/10 11:53:14 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.6 2002/10/04 09:23:27 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -137,9 +137,11 @@ Lmapped_start:
 	/*
 	 * Bootstrap the pmap:
 	 *
-	 * void pmap_bootstrap(vaddr_t avail, struct mem_region *mr);
+	 * void pmap_bootstrap(vaddr_t avail, paddr_t kseg0base,
+	 *                     struct mem_region *mr);
 	 */
-	LEA(Lmem_regions, r3)
+	LDSC32(0x80000000, r3)
+	LEA(Lmem_regions, r4)
 	LEAF(_C_LABEL(pmap_bootstrap), r0)
 	ptabs/l	r0, tr0
 	blink	tr0, r18
