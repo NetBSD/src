@@ -289,6 +289,12 @@ and
 is retained for backwards compatibility
 with ealier versions of the library.
 .Ds
+.Fn delay_output "int ms"
+.De
+Pause output for
+.Vn ms
+milliseconds using the terminal pad character.
+.Ds
 .Fn def_prog_mode ""
 .De
 Save the current terminal modes as the \'in curses\' state for use with
@@ -420,10 +426,19 @@ it will do the
 .Fn fflush ,
 otherwise it will not.
 .Ds
+.Fn getattrs "WINDOW *win"
+Gets the attributes for
+.Vn win .
+.Ds
 .Fn getbkgd "WINDOW *win"
 .De
 Gets the background rendition for
 .Vn win .
+.Ds
+.Fn getcap "char *name"
+.De
+Get the terminal capability
+.Vn name .
 .Ds
 .Fn getch "" \(dg
 .De
@@ -446,6 +461,36 @@ whatever routine you call to read characters will set
 .i cbreak
 for you,
 and then reset to the original mode when finished.
+.Ds
+.Fn getcury "WINDOW *win"
+.Ds
+Get current y position on
+.Vn win .
+.Ds
+.Fn getcurx "WINDOW *win"
+.Ds
+Get current x position on
+.Vn win .
+.Ds
+.Fn getbegy "WINDOW *win"
+.Ds
+Get start y position on
+.Vn win .
+.Ds
+.Fn getbegx "WINDOW *win"
+.Ds
+Get start x position on
+.Vn win .
+.Ds
+.Fn getmaxy "WINDOW *win"
+.Ds
+Get maximum y position on
+.Vn win .
+.Ds
+.Fn getmaxx "WINDOW *win"
+.Ds
+Get maximum x position on
+.Vn win .
 .Ds
 .Fn getstr "char *str" \(dg
 .De
@@ -775,6 +820,12 @@ Equivalent to:
 wmove(win, y, x);
 scanw(fmt, ...);
 .)l
+.Ds
+.Fn napms "int ms"
+.De
+Sleep for
+.Vn ms
+milliseconds.
 .Ds
 .Ft "WINDOW *"
 .Fn newwin "int lines" "int cols" "int begin_y" "int begin_x"
