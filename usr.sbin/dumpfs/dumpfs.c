@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.14 1997/10/17 00:21:25 lukem Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.15 1997/10/19 09:25:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.14 1997/10/17 00:21:25 lukem Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.15 1997/10/19 09:25:33 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -262,7 +262,7 @@ dumpcg(name, fd, c)
 	printf("magic\t%x\ttell\t%qx\ttime\t%s",
 	    afs.fs_postblformat == FS_42POSTBLFMT ?
 	    ((struct ocg *)&acg)->cg_magic : acg.cg_magic,
-	    cur, ctime(&acg.cg_time));
+	    (long long)cur, ctime(&acg.cg_time));
 	printf("cgx\t%d\tncyl\t%d\tniblk\t%d\tndblk\t%d\n",
 	    acg.cg_cgx, acg.cg_ncyl, acg.cg_niblk, acg.cg_ndblk);
 	printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
