@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.88 2000/10/10 10:25:55 ad Exp $
+#	$NetBSD: files.pmax,v 1.89 2000/11/23 09:44:14 nisimura Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -138,9 +138,9 @@ file	arch/pmax/dev/rz.c		rz needs-count
 #
 device  xasc: ncr53c9x,scsi
 attach  xasc at tc with xasc_pmaz
-file    arch/pmax/tc/asc_pmaz.c         xasc_pmaz needs-flag
+file    arch/pmax/tc/asc_pmaz.c         xasc_pmaz
 attach  xasc at ioasic with xasc_ioasic   
-file    arch/pmax/tc/asc_ioasic.c       xasc_ioasic needs-flag
+file    arch/pmax/tc/asc_ioasic.c       xasc_ioasic
 
 
 # DC7085 (DZ-like four-port serial device) on ibus
