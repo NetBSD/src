@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.20 1999/05/16 13:51:05 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.21 1999/06/14 17:09:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@ struct usbd_pipe;
 
 struct usbd_endpoint {
 	usb_endpoint_descriptor_t *edesc;
-	usbd_endpoint_state	state;
 	int			refcnt;
 	int			toggle;	/* XXX */
 };
@@ -96,7 +95,6 @@ struct usbd_bus {
 
 struct usbd_device {
 	struct usbd_bus	       *bus;
-	usbd_device_state	state;
 	struct usbd_pipe       *default_pipe;
 	u_int8_t		address;
 	u_int8_t		depth;
@@ -119,7 +117,6 @@ struct usbd_device {
 
 struct usbd_interface {
 	struct usbd_device     *device;
-	usbd_interface_state	state;
 	usb_interface_descriptor_t *idesc;
 	int			index;
 	int			altindex;
@@ -132,8 +129,7 @@ struct usbd_pipe {
 	struct usbd_interface  *iface;
 	struct usbd_device     *device;
 	struct usbd_endpoint   *endpoint;
-	usbd_pipe_state		state;
-	int32_t			refcnt;
+	int			refcnt;
 	char			running;
 	SIMPLEQ_HEAD(, usbd_request) queue;
 	LIST_ENTRY(usbd_pipe)	next;
