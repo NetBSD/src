@@ -1,4 +1,4 @@
-/*	$NetBSD: atomicio.c,v 1.1.1.1 2000/09/28 22:09:38 thorpej Exp $	*/
+/*	$NetBSD: atomicio.c,v 1.1.1.2 2001/01/14 04:49:56 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995,1999 Theo de Raadt
@@ -25,11 +25,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: atomicio.c,v 1.5 2000/09/07 20:27:49 deraadt Exp */
+/* from OpenBSD: atomicio.c,v 1.7 2000/10/18 18:04:02 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: atomicio.c,v 1.1.1.1 2000/09/28 22:09:38 thorpej Exp $");
+__RCSID("$NetBSD: atomicio.c,v 1.1.1.2 2001/01/14 04:49:56 itojun Exp $");
 #endif
 
 #include "includes.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1.1.1 2000/09/28 22:10:43 thorpej Exp $	*/
+/*	$NetBSD: util.c,v 1.1.1.2 2001/01/14 04:50:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -24,14 +24,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: util.c,v 1.5 2000/09/07 20:27:55 deraadt Exp */
+/* from OpenBSD: util.c,v 1.6 2000/10/27 07:32:19 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.1.1.1 2000/09/28 22:10:43 thorpej Exp $");
+__RCSID("$NetBSD: util.c,v 1.1.1.2 2001/01/14 04:50:05 itojun Exp $");
 #endif
 
 #include "includes.h"
+
 #include "ssh.h"
 
 char *
@@ -53,18 +54,15 @@ void
 set_nonblock(int fd)
 {
 	int val;
-	if (isatty(fd)) {
-		/* do not mess with tty's */
-		debug("no set_nonblock for tty fd %d", fd);
-		return;
-	}
 	val = fcntl(fd, F_GETFL, 0);
 	if (val < 0) {
 		error("fcntl(%d, F_GETFL, 0): %s", fd, strerror(errno));
 		return;
 	}
-	if (val & O_NONBLOCK)
+	if (val & O_NONBLOCK) {
+		debug("fd %d IS O_NONBLOCK", fd);
 		return;
+	}
 	debug("fd %d setting O_NONBLOCK", fd);
 	val |= O_NONBLOCK;
 	if (fcntl(fd, F_SETFL, val) == -1)

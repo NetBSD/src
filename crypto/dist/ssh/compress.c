@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.1.1.1 2000/09/28 22:10:00 thorpej Exp $	*/
+/*	$NetBSD: compress.c,v 1.1.1.2 2001/01/14 04:50:16 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,11 +13,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: compress.c,v 1.9 2000/09/07 20:27:50 deraadt Exp */
+/* from OpenBSD: compress.c,v 1.11 2000/12/20 19:37:21 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: compress.c,v 1.1.1.1 2000/09/28 22:10:00 thorpej Exp $");
+__RCSID("$NetBSD: compress.c,v 1.1.1.2 2001/01/14 04:50:16 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -48,7 +48,7 @@ buffer_compress_init(int level)
 /* Frees any data structures allocated for compression. */
 
 void
-buffer_compress_uninit()
+buffer_compress_uninit(void)
 {
 	debug("compress outgoing: raw data %lu, compressed %lu, factor %.2f",
 	      outgoing_stream.total_in, outgoing_stream.total_out,
@@ -82,13 +82,13 @@ buffer_compress(Buffer * input_buffer, Buffer * output_buffer)
 		return;
 
 	/* Input is the contents of the input buffer. */
-	outgoing_stream.next_in = (unsigned char *) buffer_ptr(input_buffer);
+	outgoing_stream.next_in = (u_char *) buffer_ptr(input_buffer);
 	outgoing_stream.avail_in = buffer_len(input_buffer);
 
 	/* Loop compressing until deflate() returns with avail_out != 0. */
 	do {
 		/* Set up fixed-size output buffer. */
-		outgoing_stream.next_out = (unsigned char *)buf;
+		outgoing_stream.next_out = (u_char *)buf;
 		outgoing_stream.avail_out = sizeof(buf);
 
 		/* Compress as much data into the buffer as possible. */
@@ -121,12 +121,12 @@ buffer_uncompress(Buffer * input_buffer, Buffer * output_buffer)
 	char buf[4096];
 	int status;
 
-	incoming_stream.next_in = (unsigned char *) buffer_ptr(input_buffer);
+	incoming_stream.next_in = (u_char *) buffer_ptr(input_buffer);
 	incoming_stream.avail_in = buffer_len(input_buffer);
 
 	for (;;) {
 		/* Set up fixed-size output buffer. */
-		incoming_stream.next_out = (unsigned char *) buf;
+		incoming_stream.next_out = (u_char *) buf;
 		incoming_stream.avail_out = sizeof(buf);
 
 		status = inflate(&incoming_stream, Z_PARTIAL_FLUSH);

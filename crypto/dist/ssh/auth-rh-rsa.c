@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rh-rsa.c,v 1.1.1.1 2000/09/28 22:09:39 thorpej Exp $	*/
+/*	$NetBSD: auth-rh-rsa.c,v 1.1.1.2 2001/01/14 04:49:58 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,11 +14,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: auth-rh-rsa.c,v 1.16 2000/09/07 21:13:36 markus Exp */
+/* from OpenBSD: auth-rh-rsa.c,v 1.19 2000/12/21 15:10:16 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: auth-rh-rsa.c,v 1.1.1.1 2000/09/28 22:09:39 thorpej Exp $");
+__RCSID("$NetBSD: auth-rh-rsa.c,v 1.1.1.2 2001/01/14 04:49:58 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -48,9 +48,9 @@ auth_rhosts_rsa(struct passwd *pw, const char *client_user, RSA *client_host_key
 	HostStatus host_status;
 	Key *client_key, *found;
 
-	debug("Trying rhosts with RSA host authentication for %.100s", client_user);
+	debug("Trying rhosts with RSA host authentication for client user %.100s", client_user);
 
-	if (client_host_key == NULL)
+	if (pw == NULL || client_host_key == NULL)
 		return 0;
 
 	/* Check if we would accept it using rhosts authentication. */
@@ -62,14 +62,14 @@ auth_rhosts_rsa(struct passwd *pw, const char *client_user, RSA *client_host_key
 	debug("Rhosts RSA authentication: canonical host %.900s", canonical_hostname);
 
 	/* wrap the RSA key into a 'generic' key */
-	client_key = key_new(KEY_RSA);
+	client_key = key_new(KEY_RSA1);
 	BN_copy(client_key->rsa->e, client_host_key->e);
 	BN_copy(client_key->rsa->n, client_host_key->n);
-	found = key_new(KEY_RSA);
+	found = key_new(KEY_RSA1);
 
 	/* Check if we know the host and its host key. */
 	host_status = check_host_in_hostfile(_PATH_SSH_SYSTEM_HOSTFILE, canonical_hostname,
-	    client_key, found);
+	    client_key, found, NULL);
 
 	/* Check user host file unless ignored. */
 	if (host_status != HOST_OK && !options.ignore_user_known_hosts) {
@@ -89,7 +89,7 @@ auth_rhosts_rsa(struct passwd *pw, const char *client_user, RSA *client_host_key
 			/* XXX race between stat and the following open() */
 			temporarily_use_uid(pw->pw_uid);
 			host_status = check_host_in_hostfile(user_hostfile, canonical_hostname,
-			    client_key, found);
+			    client_key, found, NULL);
 			restore_uid();
 		}
 		xfree(user_hostfile);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uuencode.c,v 1.1.1.1 2000/09/28 22:10:45 thorpej Exp $	*/
+/*	$NetBSD: uuencode.c,v 1.1.1.2 2001/01/14 04:51:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -24,11 +24,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: uuencode.c,v 1.7 2000/09/07 20:27:55 deraadt Exp */
+/* from OpenBSD: uuencode.c,v 1.8 2000/12/19 23:17:59 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: uuencode.c,v 1.1.1.1 2000/09/28 22:10:45 thorpej Exp $");
+__RCSID("$NetBSD: uuencode.c,v 1.1.1.2 2001/01/14 04:51:05 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -38,14 +38,14 @@ __RCSID("$NetBSD: uuencode.c,v 1.1.1.1 2000/09/28 22:10:45 thorpej Exp $");
 #include <resolv.h>
 
 int
-uuencode(unsigned char *src, unsigned int srclength,
+uuencode(u_char *src, u_int srclength,
     char *target, size_t targsize)
 {
 	return __b64_ntop(src, srclength, target, targsize);
 }
 
 int
-uudecode(const char *src, unsigned char *target, size_t targsize)
+uudecode(const char *src, u_char *target, size_t targsize)
 {
 	int len;
 	char *encoded, *p;
@@ -65,9 +65,9 @@ uudecode(const char *src, unsigned char *target, size_t targsize)
 }
 
 void
-dump_base64(FILE *fp, unsigned char *data, int len)
+dump_base64(FILE *fp, u_char *data, int len)
 {
-	unsigned char *buf = xmalloc(2*len);
+	u_char *buf = xmalloc(2*len);
 	int i, n;
 	n = uuencode(data, len, buf, 2*len);
 	for (i = 0; i < n; i++) {

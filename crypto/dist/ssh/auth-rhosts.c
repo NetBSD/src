@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rhosts.c,v 1.1.1.1 2000/09/28 22:09:40 thorpej Exp $	*/
+/*	$NetBSD: auth-rhosts.c,v 1.1.1.2 2001/01/14 04:49:58 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,11 +15,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: auth-rhosts.c,v 1.15 2000/09/07 20:27:49 deraadt Exp */
+/* from OpenBSD: auth-rhosts.c,v 1.17 2000/12/19 23:17:55 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: auth-rhosts.c,v 1.1.1.1 2000/09/28 22:09:40 thorpej Exp $");
+__RCSID("$NetBSD: auth-rhosts.c,v 1.1.1.2 2001/01/14 04:49:58 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -161,8 +161,11 @@ auth_rhosts(struct passwd *pw, const char *client_user)
 	const char *hostname, *ipaddr;
 	struct stat st;
 	static const char *rhosts_files[] = {".shosts", ".rhosts", NULL};
-	unsigned int rhosts_file_index;
+	u_int rhosts_file_index;
 
+	/* no user given */
+	if (pw == NULL)
+		return 0;
 	/* Switch to the user's uid. */
 	temporarily_use_uid(pw->pw_uid);
 	/*
@@ -252,7 +255,8 @@ auth_rhosts(struct passwd *pw, const char *client_user)
 			continue;
 		}
 		/* Check if we have been configured to ignore .rhosts and .shosts files. */
-		if (options.ignore_rhosts) {
+		if ((pw->pw_uid == 0 && options.ignore_root_rhosts) ||
+		    (pw->pw_uid != 0 && options.ignore_rhosts)) {
 			packet_send_debug("Server has been configured to ignore %.100s.",
 					  rhosts_files[rhosts_file_index]);
 			continue;
