@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.21 2002/09/25 19:09:50 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.22 2002/09/25 19:39:16 manu Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.21 2002/09/25 19:09:50 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.22 2002/09/25 19:39:16 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -413,6 +413,8 @@ irix_set_sigcontext (scp, mask, code, p)
 	scp->isc_mdhi = f->f_regs[MULHI];
 	scp->isc_mdlo = f->f_regs[MULLO];
 	scp->isc_pc = f->f_regs[PC];
+	scp->isc_badvaddr = f->f_regs[BADVADDR];
+	scp->isc_cause = f->f_regs[CAUSE];
 
 	/* 
 	 * Save the floating-pointstate, if necessary, then copy it. 
@@ -463,6 +465,7 @@ irix_set_ucontext(ucp, mask, code, p)
 	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_MDLO] = f->f_regs[MULLO];
 	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_MDHI] = f->f_regs[MULHI];
 	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_EPC] = f->f_regs[PC];
+	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_CAUSE] = f->f_regs[CAUSE];
 
 	/* 
 	 * Save the floating-pointstate, if necessary, then copy it. 
