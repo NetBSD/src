@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.9 2001/06/08 00:32:01 matt Exp $	*/
+/*	$NetBSD: adb.c,v 1.9.16.1 2002/07/16 08:48:16 gehenna Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -48,6 +48,7 @@
 #include <dev/ofw/openfirm.h>
 
 #include "aed.h"
+#include "apm.h"
 
 /*
  * Function declarations.
@@ -71,8 +72,6 @@ int	adb_debug = 0;		/* Output debugging messages */
 struct cfattach adb_ca = {
 	sizeof(struct adb_softc), adbmatch, adbattach
 };
-
-extern int adbHardware;
 
 static int
 adbmatch(parent, cf, aux)
@@ -161,6 +160,15 @@ adbattach(parent, self, aux)
 
 		(void)config_found(self, &aa_args, adbprint);
 	}
+
+#if NAPM > 0
+	/* Magic for signalling the apm driver to match. */
+	aa_args.origaddr = ADBADDR_APM;
+	aa_args.adbaddr = ADBADDR_APM;
+	aa_args.handler_id = ADBADDR_APM;
+
+	(void)config_found(self, &aa_args, NULL);
+#endif
 
 	if (adbHardware == ADB_HW_CUDA)
 		adb_cuda_autopoll();

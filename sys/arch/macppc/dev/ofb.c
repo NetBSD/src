@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.26 2002/03/17 19:40:44 atatat Exp $	*/
+/*	$NetBSD: ofb.c,v 1.26.4.1 2002/07/16 08:48:17 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -41,6 +41,7 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pciio.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -175,6 +176,9 @@ ofbattach(parent, self, aux)
 	}
 	sc->sc_dc = dc;
 
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_pcitag = pa->pa_tag;
+
 	/* XXX */
 	if (OF_getprop(node, "assigned-addresses", sc->sc_addrs,
 	    sizeof(sc->sc_addrs)) == -1) {
@@ -246,11 +250,23 @@ ofb_common_init(node, dc)
 	OF_call_method_1("color!", dc->dc_ih, 4, 255, 255, 255, 255);
 
 	/* Enable write-through cache. */
-	if (ofb_enable_cache && battable[0xc].batu == 0) {
-		battable[0xc].batl = BATL(addr & 0xf0000000, BAT_W, BAT_PP_RW);
-		battable[0xc].batu = BATL(0xc0000000, BAT_BL_256M, BAT_Vs);
-		addr &= 0x0fffffff;
-		addr |= 0xc0000000;
+	if (ofb_enable_cache) {
+		vaddr_t va;
+		/*
+		 * Let's try to find an empty BAT to use 
+		 */
+		for (va = SEGMENT_LENGTH; va < (USER_SR << ADDR_SR_SHFT);
+		     va += SEGMENT_LENGTH) {
+			if (battable[va >> ADDR_SR_SHFT].batu == 0) {
+				battable[va >> ADDR_SR_SHFT].batl =
+				    BATL(addr & 0xf0000000, BAT_W, BAT_PP_RW);
+				battable[va >> ADDR_SR_SHFT].batu =
+				    BATL(va, BAT_BL_256M, BAT_Vs);
+				addr &= 0x0fffffff;
+				addr |= va;
+				break;
+			}
+		}
 	}
 
 	/* initialize rasops */
@@ -347,6 +363,11 @@ ofb_ioctl(v, cmd, data, flag, p)
 		gm->gd_fbaddr = (caddr_t)dc->dc_paddr;
 		gm->gd_fbrowbytes = dc->dc_ri.ri_stride;
 		return 0;
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
+		    cmd, data, flag, p));
 	}
 	return EPASSTHROUGH;
 }
@@ -399,7 +420,7 @@ ofb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = ri;			/* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
 	return 0;
@@ -460,7 +481,7 @@ ofb_cnattach()
 		crow = 0;
 	}
 
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&ofb_stdscreen, ri, 0, crow, defattr);
 
 	return 0;

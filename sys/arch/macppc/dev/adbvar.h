@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.5 2001/06/08 00:32:02 matt Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.5.16.1 2002/07/16 08:48:16 gehenna Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -82,6 +82,9 @@ struct adb_softc {
 	struct device sc_dev;
 	char *sc_regbase;
 };
+
+/* adb_direct.c */
+extern int adbHardware;
 
 /* types of adb hardware that we (will eventually) support */
 #define ADB_HW_UNKNOWN		0x01	/* don't know */

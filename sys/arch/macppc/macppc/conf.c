@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.39.2.2 2002/07/14 18:37:12 gehenna Exp $	*/
+/*	$NetBSD: conf.c,v 1.39.2.3 2002/07/16 08:48:21 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
