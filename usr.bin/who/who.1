@@ -1,4 +1,4 @@
-.\"	$NetBSD: who.1,v 1.6 1997/03/08 14:25:06 mouse Exp $
+.\"	$NetBSD: who.1,v 1.7 1997/07/23 20:08:53 kleink Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd display who is logged in
 .Sh SYNOPSIS
 .Nm who
-.Op Fl mTu
+.Op Fl mTuH
 .Op Ar file 
 .Nm who
 .Ar am i
@@ -73,6 +73,8 @@ and
 if a bad line is encountered.
 .It Fl u
 Print the idle time for each user.
+.It Fl H
+Write column headings above the regular output.
 .It Ar \&am I
 Returns the invoker's real user name. 
 .It Ar file
