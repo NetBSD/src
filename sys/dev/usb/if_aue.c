@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.26 2000/03/02 12:37:50 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.27 2000/03/06 20:58:18 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -744,19 +744,19 @@ USB_ATTACH(aue)
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(iface, i);
-		if (!ed) {
+		if (ed == NULL) {
 			printf("%s: couldn't get endpoint descriptor %d\n",
 			    USBDEVNAME(sc->aue_dev), i);
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
-		    (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
+		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			sc->aue_ed[AUE_ENDPT_RX] = ed->bEndpointAddress;
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
-		    (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
+			   UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			sc->aue_ed[AUE_ENDPT_TX] = ed->bEndpointAddress;
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
-		    (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
+			   UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
 			sc->aue_ed[AUE_ENDPT_INTR] = ed->bEndpointAddress;
 		}
 	}
