@@ -1,4 +1,4 @@
-#	$NetBSD: LAGER,v 1.11 1996/09/10 22:26:53 thorpej Exp $
+#	$NetBSD: LAGER,v 1.12 1996/10/03 01:25:37 thorpej Exp $
 #
 # LAGER (hpeyerl's hp380)
 #
@@ -27,6 +27,7 @@ options		"COMPAT_43"
 options		"COMPAT_12"
 options		"TCP_COMPAT_42"
 options		GATEWAY
+options 	EXEC_AOUT		# support for exec'ing a.out
 
 # Options for all HP machines
 options		SYSVSHM
