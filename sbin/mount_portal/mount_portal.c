@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.21 2002/09/21 18:32:46 mycroft Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.22 2002/09/21 18:43:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.21 2002/09/21 18:32:46 mycroft Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.22 2002/09/21 18:43:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: mount_portal.c,v 1.21 2002/09/21 18:32:46 mycroft Exp $");
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
+	MOPT_GETARGS,
 	{ NULL }
 };
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2002/09/01 08:10:53 taca Exp $
+#	$NetBSD: Makefile,v 1.24 2002/09/21 18:43:31 christos Exp $
 #	@(#)Makefile	8.6 (Berkeley) 5/8/95
 
 .include <bsd.own.mk>
@@ -38,6 +38,9 @@ LINKS+= ${BINDIR}/mount_ffs ${BINDIR}/mount_ufs
 MLINKS+= mount_ffs.8 mount_ufs.8
 
 CLEANFILES+=	checkname.c
+
+DPADD+=${LIBUTIL}
+LDADD+=-lutil
 
 # generate checkname.c - code which runs appropriate mount_FOO() routine
 # according to program name
