@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.27 1998/07/31 02:14:40 thorpej Exp $ */
+/* $NetBSD: isp_pci.c,v 1.28 1998/08/12 00:03:23 mjacob Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -247,7 +247,7 @@ isp_pci_attach(parent, self, aux)
 #ifdef DEBUG
 	if (oneshot) {
 		oneshot = 0;
-		printf("***Qlogic ISP Driver, NetBSD (pci) Platform Version "
+		printf("Qlogic ISP Driver, NetBSD (pci) Platform Version "
 		    "%d.%d Core Version %d.%d\n",
 		    ISP_PLATFORM_VERSION_MAJOR, ISP_PLATFORM_VERSION_MINOR,
 		    ISP_CORE_VERSION_MAJOR, ISP_CORE_VERSION_MINOR);

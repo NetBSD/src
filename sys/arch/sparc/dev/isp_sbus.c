@@ -1,5 +1,5 @@
-/* $NetBSD: isp_sbus.c,v 1.16 1998/07/31 15:53:11 pk Exp $ */
-/* $Id: isp_sbus.c,v 1.16 1998/07/31 15:53:11 pk Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.17 1998/08/12 00:03:55 mjacob Exp $ */
+/* $Id: isp_sbus.c,v 1.17 1998/08/12 00:03:55 mjacob Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -115,7 +115,7 @@ isp_match(parent, cf, aux)
 #ifdef DEBUG
 	if (rv && oneshot) {
 		oneshot = 0;
-		printf("***Qlogic ISP Driver, NetBSD (sbus) Platform Version "
+		printf("Qlogic ISP Driver, NetBSD (sbus) Platform Version "
 		    "%d.%d Core Version %d.%d\n",
 		    ISP_PLATFORM_VERSION_MAJOR, ISP_PLATFORM_VERSION_MINOR,
 		    ISP_CORE_VERSION_MAJOR, ISP_CORE_VERSION_MINOR);
