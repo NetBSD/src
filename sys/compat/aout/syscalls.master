@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.10 2000/08/07 17:59:35 bjh21 Exp $
+	$NetBSD: syscalls.master,v 1.11 2000/12/06 21:02:00 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -34,6 +34,7 @@
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
 
+if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
@@ -43,6 +44,7 @@
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
+endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
