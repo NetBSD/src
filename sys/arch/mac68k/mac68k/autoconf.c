@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.39 1997/01/31 01:51:53 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.40 1997/02/14 06:13:50 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -117,7 +117,7 @@ configure()
  * Yanked from i386/i386/autoconf.c (and tweaked a bit)
  */
 
-u_long	bootdev;		/* XXX should be dev_t */
+u_long	bootdev;
 
 static void
 findbootdev()
