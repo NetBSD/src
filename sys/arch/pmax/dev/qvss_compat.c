@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.27 2001/07/07 14:21:00 simonb Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.27.2.1 2001/09/09 06:07:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -228,7 +228,7 @@ fbKbdEvent(ch, fi)
 	eventPtr->time = TO_MS(time);
 	eventPtr->key = ch;
 	fbu->scrInfo.qe.eTail = i;
-	selwakeup(&fi->fi_selp);
+	selnotify(&fi->fi_selp, 0);
 }
 
 /*
@@ -349,7 +349,7 @@ fbMouseEvent(newRepPtr, fi)
 	eventPtr->y = fbu->scrInfo.mouse.y;
 	eventPtr->device = MOUSE_DEVICE;
 	fbu->scrInfo.qe.eTail = PM_EVROUND(fbu->scrInfo.qe.eTail + 1);
-	selwakeup(&fi->fi_selp);
+	selnotify(&fi->fi_selp, 0);
 }
 
 /*
@@ -428,7 +428,7 @@ fbMouseButtons(newRepPtr, fi)
 		eventPtr->y = fbu->scrInfo.mouse.y;
 		fbu->scrInfo.qe.eTail = i;
 	}
-	selwakeup(&fi->fi_selp);
+	selnotify(&fi->fi_selp, 0);
 
 	lastRep = *newRepPtr;
 	fbu->scrInfo.mswitches = newSwitch;
