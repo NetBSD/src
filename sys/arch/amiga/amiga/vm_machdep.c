@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 1995/04/10 13:08:46 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19 1995/05/11 23:05:27 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,6 +56,16 @@
 #include <vm/vm_kern.h>
 #include <machine/pte.h>
 
+struct trapframe {
+	int	f_regs[16];
+	short	f_pad;
+	short	f_stackadj;
+	u_short	f_sr;
+	u_int	f_pc;
+	u_short	f_format:4,
+		f_vector:12;
+};
+
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the kernel stack and pcb, making the child
@@ -69,67 +79,77 @@ cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
 	register struct user *up = p2->p_addr;
+	u_long *p2stack, *p1stack;
 	int offset;
-	extern caddr_t getsp();
-	extern char kstack[];
+	extern void call_finish_child(void);
 
 	/* copy over the machdep part of struct proc, so we don't lose
 	   any emulator-properties of processes. */
 	bcopy (&p1->p_md, &p2->p_md, sizeof (struct mdproc));
 
-	/* need to copy current frame pointer */
-	p2->p_md.md_regs = p1->p_md.md_regs;
-
 	/*
-	 * Copy pcb and stack from proc p1 to p2. 
-	 * We do this as cheaply as possible, copying only the active
-	 * part of the stack.  The stack and pcb need to agree;
-	 * this is tricky, as the final pcb is constructed by savectx,
-	 * but its frame isn't yet on the stack when the stack is copied.
-	 * cpu_switch compensates for this when the child eventually runs.
-	 * This should be done differently, with a single call
-	 * that copies and updates the pcb+stack,
-	 * replacing the bcopy and savectx.
+	 * Copy the pcb and create a stack that returns to the
+	 * call_finish_child in locore.s.  call_finish_child()
+	 * simply invokes finish_child() which does the equivelent
+	 * of the tail end of syscall() processing.
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	offset = getsp() - kstack;
-	bcopy((caddr_t)kstack + offset, (caddr_t)p2->p_addr + offset,
-	    (unsigned) ctob(UPAGES) - offset);
+	p1stack = (u_long *)
+	    ((caddr_t)p1->p_addr + (ctob(UPAGES) - sizeof(struct trapframe)));
+	p2stack = (u_long *)
+	    ((caddr_t)p2->p_addr + (ctob(UPAGES) - sizeof(struct trapframe)));
+	bcopy(p1stack, p2stack, sizeof(struct trapframe));	/* copy frame */
+	p2->p_md.md_regs = (int *)p2stack;		/* frame pointer */
+	*--p2stack = (u_long)call_finish_child;		/* resume pc */
+	p2->p_addr->u_pcb.pcb_regs[11] =(u_long)p2stack;	/* set ksp */
 
 	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &up->u_pcb, 0);
 
-	/*
-	 * Arrange for a non-local goto when the new process
-	 * is started, to resume here, returning nonzero from setjmp.
-	 */
-	if (savectx(up, 1)) {
-		/*
-		 * Return 1 in child.
-		 */
-		return (1);
-	}
 	return (0);
+}
+
+/*
+ * cpu_set_kpc:
+ *
+ * Arrange for in-kernel execution of a process to continue at the
+ * named pc, as if the code at that address were called as a function
+ * with argument, the current process's process pointer.
+ *
+ * Note that it's assumed that when the named process returns, rei()
+ * should be invoked, to return to user mode.
+ */
+void
+cpu_set_kpc(p, pc)
+	struct proc *p;
+	u_int32_t pc;
+{
+	struct pcb *pcbp;
+	u_long *stack;
+	extern void proc_trampoline(void);
+
+	pcbp = &p->p_addr->u_pcb;
+	stack = (u_long *)pcbp->pcb_regs[11];	/* get current stack pointer */
+	pcbp->pcb_regs[6] = pc;			/* function in a2 */
+	pcbp->pcb_regs[7] = p;			/* arg in a3 */
+	*stack = (u_long)proc_trampoline;	/* resume at tramp code */
 }
 
 /*
  * cpu_exit is called as the last action during exit.
  * We release the address space and machine-dependent resources,
- * including the memory for the user structure and kernel stack.
- * Once finished, we call switch_exit, which switches to a temporary
- * pcb and stack and never returns.  We block memory allocation
- * until switch_exit has made things safe again.
+ * Block context switches and then call switch_exit() which will
+ * free our stack and user area and switch to another process
+ * thus we never return.
  */
 void
 cpu_exit(p)
 	struct proc *p;
 {
-
 	vmspace_free(p->p_vmspace);
 	
-	(void) splimp();
+	(void)splhigh();
 	cnt.v_swtch++;
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-	switch_exit();
+	switch_exit(p);
 	/* NOTREACHED */
 }
 
