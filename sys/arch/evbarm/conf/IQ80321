@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.5.4.1 2002/08/01 04:19:01 lukem Exp $
+#	$NetBSD: IQ80321,v 1.5.4.2 2002/11/11 23:07:19 he Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -146,7 +146,9 @@ com*		at obio? addr ?		# on-board TI 165C50 UART
 
 # i80321 I/O Processor peripheral support
 iopxs*		at mainbus?
-pci0		at iopxs? bus ?
+
+iopwdog*	at iopxs?		# Watchdog timer
+pci0		at iopxs? bus ?		# PCI/PCI-X support
 
 # PCI-PCI bridges
 ppb*		at pci? dev ? function ?
@@ -157,9 +159,11 @@ pci*		at ppb? bus ?
 #
 
 # PCI network devices
+fxp*		at pci? dev ? function ?	# Intel i8255x 10/100 Ethernet
 wm*		at pci? dev ? function ?	# Intel i82544 Gig-E
 
 # MII/PHY support
+inphy*		at mii? phy ?			# Intel i82555 10/100 PHYs
 makphy*		at mii? phy ?			# Marvell 88E1000 PHYs
 ukphy*		at mii? phy ?			# Generic IEEE 802.3u PHYs
 
