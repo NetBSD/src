@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.21 1997/04/08 10:11:55 kleink Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.22 1997/04/08 16:11:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -177,8 +177,12 @@ namei(ndp)
 		if ((cnp->cn_flags & ISSYMLINK) == 0) {
 			/*
 			 * If trailing '/'s implied a directory, verify this.
+			 * Always check ndp->ni_vp: CREATE and RENAME may
+			 * succeed without returning a vnode!
 			 */
-			if (forcedir && ndp->ni_vp->v_type != VDIR) {
+			if (forcedir &&
+			    ndp->ni_vp != NULL &&
+			    ndp->ni_vp->v_type != VDIR) {
 				if ((cnp->cn_flags & LOCKPARENT) &&
 				    ndp->ni_pathlen == 1)
 					VOP_UNLOCK(ndp->ni_dvp);
