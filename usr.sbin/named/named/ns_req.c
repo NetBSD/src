@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_req.c,v 1.4 1997/10/04 15:12:07 mrg Exp $	*/
+/*	$NetBSD: ns_req.c,v 1.5 1998/04/07 04:51:36 mrg Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
@@ -1010,7 +1010,7 @@ req_iquery(hp, cpp, eom, buflenp, msg, from)
 	switch (type) {
 	case T_A:
 #ifndef INVQ
-		if (!fake_iquery)
+		if (!fake_iquery || dlen != INT32SZ)
 			return (Refuse);
 #endif
 #ifdef INVQ
