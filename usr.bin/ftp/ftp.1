@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.12 1996/11/25 05:13:22 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.13 1996/11/28 03:12:35 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -118,8 +118,10 @@ supports an auto-fetch feature.
 To enable auto-fetch, simply pass the list of hostnames/files
 on the command line.
 The hostnames/files may be specified in URL-style format
-(ftp://ftp.NetBSD.ORG/pub/NetBSD/README) or in the format
-ftp.NetBSD.ORG:/pub/NetBSD/README.
+.Dq ftp://host/file
+or in the classic
+.Dq host:/file 
+format.
 .Pp
 The client host with which
 .Nm
@@ -191,7 +193,7 @@ Terminate the
 .Tn FTP
 session with the remote server
 and exit
-.Nm ftp  .
+.Nm ftp .
 An end of file will also terminate the session and exit.
 .It Ic case
 Toggle remote computer file name case mapping during
@@ -205,7 +207,7 @@ to lower case.
 .It Ic \&cd Ar remote-directory
 Change the working directory on the remote machine
 to
-.Ar remote-directory  .
+.Ar remote-directory .
 .It Ic cdup
 Change the remote machine working directory to the parent of the
 current remote machine working directory.
@@ -214,7 +216,7 @@ Change the permission modes of the file
 .Ar file-name
 on the remote
 system to
-.Ar mode  .
+.Ar mode .
 .It Ic close
 Terminate the
 .Tn FTP
@@ -263,7 +265,7 @@ Print a listing of the directory contents in the
 directory,
 .Ar remote-directory  ,
 and, optionally, placing the output in
-.Ar local-file  .
+.Ar local-file .
 If interactive prompting is on,
 .Nm
 will prompt the user to verify that the last argument is indeed the
@@ -280,15 +282,18 @@ is
 output comes to the terminal.
 .It Ic disconnect
 A synonym for
-.Ar close  .
+.Ic close .
+.It Ic exit
+A synonym for
+.Ic bye .
 .It Ic ftp Ar host Op Ar port
-Synonymous with
-.Ic open Ar host Op Ar port
+A synonym for
+.Ic open .
 .It Ic form Ar format
 Set the file transfer
 .Ic form
 to
-.Ar format  .
+.Ar format .
 The default format is \*(Lqfile\*(Rq.
 .It Ic get Ar remote-file Op Ar local-file
 Retrieve the
@@ -315,7 +320,7 @@ Toggle filename expansion for
 .Ic mdelete  ,
 .Ic mget
 and
-.Ic mput  .
+.Ic mput .
 If globbing is turned off with
 .Ic glob  ,
 the file name arguments
@@ -354,7 +359,7 @@ This can be changed by specifying
 in bytes.
 .It Ic help Op Ar command
 Print an informative message about the meaning of
-.Ar command  .
+.Ar command .
 If no argument is given,
 .Nm
 prints a list of the known commands.
@@ -371,6 +376,8 @@ If
 no
 .Ar directory
 is specified, the user's home directory is used.
+.It Ic lpwd
+Print the working directory on the local machine.
 .It Xo
 .Ic \&ls
 .Op Ar remote-directory
@@ -476,7 +483,7 @@ output.
 Set the file transfer
 .Ic mode
 to
-.Ar mode-name  .
+.Ar mode-name .
 The default mode is \*(Lqstream\*(Rq mode.
 .It Ic modtime Ar file-name
 Show the last modification time of the file on the remote machine.
@@ -493,20 +500,23 @@ Resulting file names will then be processed according to
 and
 .Ic nmap
 settings.
+.It Ic msend Ar local-files
+A synonym for
+.Ic mput .
 .It Ic newer Ar file-name
 Get the file only if the modification time of the remote file is more
 recent that the file on the current system.
 If the file does not
 exist on the current system, the remote file is considered
-.Ic newer  .
+.Ic newer .
 Otherwise, this command is identical to
-.Ar get  .
+.Ar get .
 .It Xo
 .Ic nlist
 .Op Ar remote-directory
 .Op Ar local-file
 .Xc
-Print a  list of the files in a
+Print a list of the files in a
 directory on the remote machine.
 If
 .Ar remote-directory
@@ -542,7 +552,7 @@ with different file naming conventions or practices.
 The mapping follows the pattern set by
 .Ar inpattern
 and
-.Ar outpattern  .
+.Ar outpattern .
 .Op Ar Inpattern
 is a template for incoming filenames (which may have already been
 processed according to the
@@ -552,7 +562,7 @@ and
 settings).
 Variable templating is accomplished by including the
 sequences `$1', `$2', ..., `$9' in
-.Ar inpattern  .
+.Ar inpattern .
 Use `\\' to prevent this special treatment of the `$' character.
 All other characters are treated literally, and are used to determine the
 .Ic nmap
@@ -616,7 +626,7 @@ with different file naming conventions or practices.
 Characters in a filename matching a character in
 .Ar inchars
 are replaced with the corresponding character in
-.Ar outchars  .
+.Ar outchars .
 If the character's position in
 .Ar inchars
 is longer than the length of
@@ -662,6 +672,8 @@ traffic.
 (Note that though ftp servers are required to support the
 .Dv PASV
 command by RFC 1123, some do not.)
+.It Ic preserve
+Toggle preservation of modification times on retreived files.
 .It Ic prompt
 Toggle interactive prompting.
 Interactive prompting
@@ -674,6 +686,29 @@ or
 will transfer all files, and any
 .Ic mdelete
 will delete all files.
+.Pp
+When prompting is on, the following commands are available at a prompt:
+.Bl -tag -width Fl -offset indent
+.It Ic n
+Do not transfer the file.
+.It Ic a
+Answer
+.Sq yes
+to the current file, and automatically answer
+.Sq yes
+to any remaining files for the current command.
+.It Ic p
+Answer
+.Dq yes
+to the current file, and turn off prompt mode
+(as is
+.Dq prompt off
+had been given).
+.El
+.Pp
+Any other reponse will answer
+.Sq yes
+to the current file.
 .It Ic proxy Ar ftp-command
 Execute an ftp command on a secondary control connection.
 This command allows simultaneous connection to two remote ftp
@@ -722,19 +757,20 @@ current settings for
 .Ic format ,
 .Ic mode  ,
 and
-.Ic structure  .
+.Ic structure .
 .It Ic pwd
 Print the name of the current working directory on the remote
 machine.
 .It Ic quit
 A synonym for
-.Ic bye  .
+.Ic bye .
 .It Ic quote Ar arg1 arg2 ...
 The arguments specified are sent, verbatim, to the remote
 .Tn FTP
 server.
 .It Ic recv Ar remote-file Op Ar local-file
-A synonym for get.
+A synonym for
+.Ic get .
 .It Ic reget Ar remote-file Op Ar local-file
 Reget acts like get, except that if
 .Ar local-file
@@ -772,7 +808,7 @@ on remote machine.
 Rename the file
 .Ar from
 on the remote machine, to the file
-.Ar to  .
+.Ar to .
 .It Ic reset
 Clear reply queue.
 This command re-synchronizes command/reply sequencing with the remote
@@ -786,7 +822,7 @@ or
 .Ic put
 at the
 indicated
-.Ar marker  .
+.Ar marker .
 On
 .Ux
 systems, marker is usually a byte
@@ -812,7 +848,8 @@ will not affect local files generated from a shell command
 (see below).
 The default value is off.
 .It Ic send Ar local-file Op Ar remote-file
-A synonym for put.
+A synonym for
+.Ic put .
 .It Ic sendport
 Toggle the use of
 .Dv PORT
@@ -855,7 +892,7 @@ Return size of
 on remote machine.
 .It Ic status
 Show the current status of
-.Nm ftp  .
+.Nm ftp .
 .It Ic struct Op Ar struct-name
 Set the file transfer
 .Ar structure
@@ -883,14 +920,14 @@ Toggle packet tracing.
 Set the file transfer
 .Ic type
 to
-.Ar type-name  .
+.Ar type-name .
 If no type is specified, the current type
 is printed.
 The default type is network
 .Tn ASCII .
 .It Ic umask Op Ar newmask
 Set the default umask on the remote server to
-.Ar newmask  .
+.Ar newmask .
 If
 .Ar newmask
 is omitted, the current umask is printed.
@@ -938,11 +975,18 @@ regarding the efficiency of the transfer are reported.
 By default,
 verbose is on.
 .It Ic ? Op Ar command
-A synonym for help.
+A synonym for
+.Ic help .
 .El
 .Pp
 Command arguments which have embedded spaces may be quoted with
 quote `"' marks.
+.Pp
+Commands which toggle settings can take an explicit
+.Ic on
+or
+.Ic off
+argument to force the setting appropriately.
 .Pp
 If
 .Nm
@@ -1077,7 +1121,7 @@ file transfer parameters:
 .Ic mode  ,
 .Ic form ,
 and
-.Ic struct  .
+.Ic struct .
 .Sh THE .netrc FILE
 The
 .Pa .netrc

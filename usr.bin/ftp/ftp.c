@@ -1,4 +1,4 @@
-/*      $NetBSD: ftp.c,v 1.14 1996/11/25 05:13:23 lukem Exp $      */
+/*      $NetBSD: ftp.c,v 1.15 1996/11/28 03:12:37 lukem Exp $      */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: ftp.c,v 1.14 1996/11/25 05:13:23 lukem Exp $";
+static char rcsid[] = "$NetBSD: ftp.c,v 1.15 1996/11/28 03:12:37 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ FILE	*cin, *cout;
 
 char *
 hookup(host, port)
-	char *host;
+	const char *host;
 	int port;
 {
 	struct hostent *hp = 0;
@@ -122,7 +122,8 @@ hookup(host, port)
 		return (0);
 	}
 	hisctladdr.sin_port = port;
-	while (connect(s, (struct sockaddr *)&hisctladdr, sizeof (hisctladdr)) < 0) {
+	while (connect(s, (struct sockaddr *)&hisctladdr,
+			sizeof (hisctladdr)) < 0) {
 		if (hp && hp->h_addr_list[1]) {
 			int oerrno = errno;
 			char *ia;
@@ -199,7 +200,7 @@ bad:
 
 int
 login(host)
-	char *host;
+	const char *host;
 {
 	char tmp[80];
 	char *user, *pass, *acct;
@@ -301,7 +302,7 @@ cmdabort()
 	(void) fflush(stdout);
 	abrtflag++;
 	if (ptflag)
-		longjmp(ptabort,1);
+		longjmp(ptabort, 1);
 }
 
 /*VARARGS*/
@@ -389,13 +390,15 @@ getreply(expecteof)
 			dig++;
 			if (c == EOF) {
 				if (expecteof) {
-					(void) signal(SIGINT,oldintr);
+					(void) signal(SIGINT, oldintr);
 					code = 221;
 					return (0);
 				}
 				lostpeer();
 				if (verbose) {
-					printf("421 Service not available, remote server has closed connection\n");
+					printf("421 Service not available, "
+					   "remote server has closed "
+					   "connection\n");
 					(void) fflush(stdout);
 				}
 				code = 421;
@@ -405,7 +408,7 @@ getreply(expecteof)
 			    (verbose > -1 && n == '5' && dig > 4))) {
 				if (proxflag &&
 				   (dig == 1 || dig == 5 && verbose == 0))
-					printf("%s:",hostname);
+					printf("%s:", hostname);
 				(void) putchar(c);
 			}
 			if (dig < 4 && isdigit(c))
@@ -444,7 +447,7 @@ getreply(expecteof)
 		*cp = '\0';
 		if (n != '1')
 			cpend = 0;
-		(void) signal(SIGINT,oldintr);
+		(void) signal(SIGINT, oldintr);
 		if (code == 421 || originalcode == 421)
 			lostpeer();
 		if (abrtflag && oldintr != cmdabort && oldintr != SIG_IGN)
@@ -480,7 +483,7 @@ abortsend()
 
 void
 sendrequest(cmd, local, remote, printnames)
-	char *cmd, *local, *remote;
+	const char *cmd, *local, *remote;
 	int printnames;
 {
 	struct stat st;
@@ -519,11 +522,11 @@ sendrequest(cmd, local, remote, printnames)
 			data = -1;
 		}
 		if (oldintr)
-			(void) signal(SIGINT,oldintr);
+			(void) signal(SIGINT, oldintr);
 		if (oldintp)
-			(void) signal(SIGPIPE,oldintp);
+			(void) signal(SIGPIPE, oldintp);
 		if (oldinti)
-			(void) signal(SIGINFO,oldinti);
+			(void) signal(SIGINFO, oldinti);
 		code = -1;
 		return;
 	}
@@ -532,7 +535,7 @@ sendrequest(cmd, local, remote, printnames)
 	if (strcmp(local, "-") == 0)
 		fin = stdin;
 	else if (*local == '|') {
-		oldintp = signal(SIGPIPE,SIG_IGN);
+		oldintp = signal(SIGPIPE, SIG_IGN);
 		fin = popen(local + 1, "r");
 		if (fin == NULL) {
 			warn("%s", local + 1);
@@ -750,7 +753,7 @@ abortrecv()
 
 void
 recvrequest(cmd, local, remote, lmode, printnames)
-	char *cmd, *local, *remote, *lmode;
+	const char *cmd, *local, *remote, *lmode;
 	int printnames;
 {
 	FILE *fout, *din = 0;
@@ -762,6 +765,8 @@ recvrequest(cmd, local, remote, lmode, printnames)
 	long hashbytes = mark;
 	struct timeval stop;
 	struct stat st;
+	time_t mtime;
+	struct timeval tval;
 
 	direction = "received";
 	bytes = 0;
@@ -791,7 +796,7 @@ recvrequest(cmd, local, remote, lmode, printnames)
 		if (oldintr)
 			(void) signal(SIGINT, oldintr);
 		if (oldinti)
-			(void) signal(SIGINFO,oldinti);
+			(void) signal(SIGINFO, oldinti);
 		code = -1;
 		return;
 	}
@@ -999,7 +1004,8 @@ done:
 		}
 break2:
 		if (bare_lfs) {
-			printf("WARNING! %d bare linefeeds received in ASCII mode\n", bare_lfs);
+			printf("WARNING! %d bare linefeeds received in ASCII "
+			    "mode\n", bare_lfs);
 			printf("File may not have transferred correctly.\n");
 		}
 		if (hash) {
@@ -1026,12 +1032,25 @@ break2:
 	(void) fclose(din);
 	(void) gettimeofday(&stop, (struct timezone *)0);
 	(void) getreply(0);
-	if (bytes > 0 && is_retr)
+	if (bytes > 0 && is_retr) {
 		ptransfer(direction, bytes, &start, &stop, 0);
+		if (preserve && (closefunc == fclose)) {
+			mtime = getmodtime(remote);
+			if (mtime != -1) {
+				tval.tv_sec = mtime;
+				tval.tv_usec = 0;
+				if (utimes(local, &tval) == -1) {
+					printf("Can't change modification time "
+						"on %s to %s", local,
+						asctime(localtime(&mtime)));
+				}
+			}
+		}
+	}
 	return;
 abort:
 
-/* abort using RFC959 recommended IP,SYNC sequence  */
+/* abort using RFC959 recommended IP,SYNC sequence */
 
 	if (oldintp)
 		(void) signal(SIGPIPE, oldintp);
@@ -1095,14 +1114,14 @@ initconn()
 		 * From that we'll prepare a sockaddr_in.
 		 */
 
-		if (sscanf(pasv,"%d,%d,%d,%d,%d,%d",
+		if (sscanf(pasv, "%d,%d,%d,%d,%d,%d",
 			   &a0, &a1, &a2, &a3, &p0, &p1) != 6) {
 			printf("Passive mode address scan failure. "
 			       "Shouldn't happen!\n");
 			goto bad;
 		}
 
-		bzero(&data_addr, sizeof(data_addr));
+		memset(&data_addr, 0, sizeof(data_addr));
 		data_addr.sin_family = AF_INET;
 		a = (char *)&data_addr.sin_addr.s_addr;
 		a[0] = a0 & 0xff;
@@ -1141,7 +1160,8 @@ noport:
 		return (1);
 	}
 	if (!sendport)
-		if (setsockopt(data, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof (on)) < 0) {
+		if (setsockopt(data, SOL_SOCKET, SO_REUSEADDR, (char *)&on,
+				sizeof (on)) < 0) {
 			warn("setsockopt (reuse address)");
 			goto bad;
 		}
@@ -1150,7 +1170,8 @@ noport:
 		goto bad;
 	}
 	if (options & SO_DEBUG &&
-	    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on, sizeof (on)) < 0)
+	    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on,
+			sizeof (on)) < 0)
 		warn("setsockopt (ignored)");
 	len = sizeof (data_addr);
 	if (getsockname(data, (struct sockaddr *)&data_addr, &len) < 0) {
@@ -1191,7 +1212,7 @@ bad:
 
 FILE *
 dataconn(lmode)
-	char *lmode;
+	const char *lmode;
 {
 	struct sockaddr_in from;
 	int s, fromlen = sizeof (from), tos;
@@ -1217,7 +1238,7 @@ dataconn(lmode)
 
 void
 ptransfer(direction, bytes, t0, t1, siginfo)
-	char *direction;
+	const char *direction;
 	long bytes;
 	struct timeval *t0, *t1;
 	int siginfo;
@@ -1367,7 +1388,7 @@ abortpt()
 
 void
 proxtrans(cmd, local, remote)
-	char *cmd, *local, *remote;
+	const char *cmd, *local, *remote;
 {
 	sig_t oldintr;
 	int secndflag = 0, prox_type, nfnd;
@@ -1387,7 +1408,8 @@ proxtrans(cmd, local, remote)
 	if (curtype != prox_type)
 		changetype(prox_type, 1);
 	if (command("PASV") != COMPLETE) {
-		printf("proxy server does not support third party transfers.\n");
+		printf("proxy server does not support third party "
+		    "transfers.\n");
 		return;
 	}
 	pswitch(0);
@@ -1495,7 +1517,7 @@ reset(argc, argv)
 	FD_ZERO(&mask);
 	while (nfnd > 0) {
 		FD_SET(fileno(cin), &mask);
-		if ((nfnd = empty(&mask,0)) < 0) {
+		if ((nfnd = empty(&mask, 0)) < 0) {
 			warn("reset");
 			code = -1;
 			lostpeer();
@@ -1508,7 +1530,7 @@ reset(argc, argv)
 
 char *
 gunique(local)
-	char *local;
+	const char *local;
 {
 	static char new[MAXPATHLEN];
 	char *cp = strrchr(local, '/');
@@ -1567,7 +1589,7 @@ abort_remote(din)
 	sprintf(buf, "%c%c%c", IAC, IP, IAC);
 	if (send(fileno(cout), buf, 3, MSG_OOB) != 3)
 		warn("abort");
-	fprintf(cout,"%cABOR\r\n", DM);
+	fprintf(cout, "%cABOR\r\n", DM);
 	(void) fflush(cout);
 	FD_ZERO(&mask);
 	FD_SET(fileno(cin), &mask);
