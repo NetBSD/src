@@ -1,4 +1,4 @@
-/*	$NetBSD: start_rom.S,v 1.5 1999/08/23 08:24:38 kleink Exp $	*/
+/*	$NetBSD: start_rom.S,v 1.6 1999/11/03 09:28:15 mycroft Exp $	*/
 	
 /*
  * ROM startup
@@ -160,16 +160,17 @@ START - Where all the fun begins....
 
 ENTRY(start)
 	cli
-	cld
-
-#ifdef ROMDEBUG
 	movl	%cs, %ax
 	movl	%ax, %ds
+
+#ifdef ROMDEBUG
 	data32
 	movl $(cmesg-textstart), %esi
 	data32
 	call message
 #endif
+
+	cld
 
 	/* copy to reloc and jump to copy */
         xorl	%esi, %esi
@@ -202,7 +203,9 @@ ENTRY(start)
 
 	/* clear bss */
 	xorl %eax, %eax
+	data32
 	movl $_C_LABEL(edata), %edi
+	data32
 	movl $_C_LABEL(end), %ecx
 	subl %edi, %ecx
 	cld
@@ -211,13 +214,17 @@ ENTRY(start)
 
 #ifdef ROMDEBUG
 	data32
-	movl $rmesg, %esi
+	movl $(rmesg-textstart), %esi
 	data32
 	call message
 #endif
 
 	data32
 	call	_C_LABEL(real_to_prot)
+
+	movw	$(reloc), gdt+bootrealseg+2
+	movb	$(reloc)>>16, gdt+bootrealseg+4
+
 	call	_C_LABEL(main)
 
 	.globl	_C_LABEL(exit)
@@ -226,7 +233,7 @@ _C_LABEL(exit):
 
 #ifdef ROMDEBUG
 	data32
-	movl $emesg, %esi
+	movl $(emesg-textstart), %esi
 	data32
 	call message
 #endif
@@ -276,7 +283,7 @@ bootdataseg = . - gdt
 	/* 16 bit real mode */
 bootrealseg = . - gdt
 	.word	0xffff, 0
-	.byte	0, 0x9b, 0x0f, 0
+	.byte	0, 0x9e, 0x00, 0
 gdtlen = . - gdt
 
 #ifdef __ELF__
@@ -329,7 +336,7 @@ ENTRY(prot_to_real)
 	sub	$reloc, %eax		/* Adjust return address */
 	push	%eax
 	sub	$reloc, %esp		/* Adjust stack pointer */
-	ljmp	$bootrealseg, $1f	/* jump to a 16 bit segment */
+	ljmp	$bootrealseg, $(1f-reloc)	/* jump to a 16 bit segment */
 1:
 	/* clear the PE bit of CR0 */
 	mov	%cr0, %eax
@@ -341,7 +348,7 @@ ENTRY(prot_to_real)
 	 * and reload CS register
 	 */
 	data32
-	ljmp	$(reloc)>>4, $2f-reloc
+	ljmp	$(reloc)>>4, $(2f-reloc)
 2:
 	/* we are in real mode now
 	 * set up the real mode segment registers : DS, SS, ES
