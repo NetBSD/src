@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.171 2000/11/30 11:31:05 simonb Exp $
+#	$NetBSD: Makefile,v 1.172 2000/12/02 18:04:45 jlam Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -12,8 +12,7 @@
 #   KERNSRCDIR points to kernel source; it is set by default to ../sys,
 #	but can be overridden.
 #   KERNOBJDIR is the kernel build directory, it defaults to
-#	${KERNSRCDIR}/arch/${MACHINE}/compile/KERNELNAME, but can be
-#	overridden.
+#	${KERNSRCDIR}/arch/${MACHINE}/compile, but can be overridden.
 #   KERNCONFDIR is where the configuration files for kernels are found;
 #	default is ${KERNSRCDIR}/arch/${MACHINE}/conf but can be overridden.
 #   UPDATE is normally undefined; if defined, don't do a 'make clean'
