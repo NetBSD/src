@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.17 1996/10/21 22:34:04 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.18 1996/12/02 19:06:41 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -325,6 +325,12 @@ static void	ahc_construct_sdtr __P((struct ahc_data *ahc, int start_byte,
 static void	ahc_construct_wdtr __P((struct ahc_data *ahc, int start_byte,
 					u_int8_t bus_width));
 
+#if defined(__NetBSD__)			/* XXX */
+static void	ahc_xxx_enqueue __P((struct ahc_data *ahc,
+		    struct scsi_xfer *xs, int infront));
+static struct scsi_xfer *ahc_xxx_dequeue __P((struct ahc_data *ahc));
+#endif
+
 #if defined(__FreeBSD__)
 
 char *ahc_name(ahc)
@@ -617,6 +623,13 @@ ahc_attach(ahc)
 {
 #if defined(__FreeBSD__)
 	struct scsibus_data *scbus;
+#endif
+
+#if defined(__NetBSD__)			/* XXX */
+	/*
+	 * Initialize the software queue.
+	 */
+	LIST_INIT(&ahc->sc_xxxq);
 #endif
 
 #ifdef AHC_BROKEN_CACHE
@@ -1986,6 +1999,19 @@ ahc_done(ahc, scb)
 #endif
 	ahc_free_scb(ahc, scb, xs->flags);
 	scsi_done(xs);
+
+#if defined(__NetBSD__)			/* XXX */
+	/*
+	 * If there are entries in the software queue, try to
+	 * run the first one.  We should be more or less guaranteed
+	 * to succeed, since we just freed an SCB.
+	 *
+	 * NOTE: ahc_scsi_cmd() relies on our calling it with
+	 * the first entry in the queue.
+	 */
+	if (ahc->sc_xxxq.lh_first != NULL)
+		(void) ahc_scsi_cmd(ahc->sc_xxxq.lh_first);
+#endif /* __NetBSD__ */
 }
 
 /*
@@ -2329,6 +2355,51 @@ ahcminphys(bp)
 #endif
 }
 
+#if defined(__NetBSD__)			/* XXX */
+/*
+ * Insert a scsi_xfer into the software queue.  We overload xs->free_list
+ * to to ensure we don't run into a queue resource shortage, and keep
+ * a pointer to the last entry around to make insertion O(C).
+ */
+static void
+ahc_xxx_enqueue(ahc, xs, infront)
+	struct ahc_data *ahc;
+	struct scsi_xfer *xs;
+	int infront;
+{
+
+	if (infront || ahc->sc_xxxq.lh_first == NULL) {
+		if (ahc->sc_xxxq.lh_first == NULL)
+			ahc->sc_xxxqlast = xs;
+		LIST_INSERT_HEAD(&ahc->sc_xxxq, xs, free_list);
+		return;
+	}
+
+	LIST_INSERT_AFTER(ahc->sc_xxxqlast, xs, free_list);
+	ahc->sc_xxxqlast = xs;
+}
+
+/*
+ * Pull a scsi_xfer off the front of the software queue.  When we
+ * pull the last one off, we need to clear the pointer to the last
+ * entry.
+ */
+static struct scsi_xfer *
+ahc_xxx_dequeue(ahc)
+	struct ahc_data *ahc;
+{
+	struct scsi_xfer *xs;
+
+	xs = ahc->sc_xxxq.lh_first;
+	LIST_REMOVE(xs, free_list);
+
+	if (ahc->sc_xxxq.lh_first == NULL)
+		ahc->sc_xxxqlast = NULL;
+
+	return (xs);
+}
+#endif
+
 /*
  * start a scsi operation given the command and
  * the data address, target, and lun all of which
@@ -2347,6 +2418,9 @@ ahc_scsi_cmd(xs)
 	struct	ahc_data *ahc;
 	u_short	mask;
 	int	s;
+#if defined(__NetBSD__)			/* XXX */
+	int	dontqueue = 0, fromqueue = 0;
+#endif
 
 	ahc = (struct ahc_data *)xs->sc_link->adapter_softc;
 	mask = (0x01 << (xs->sc_link->target
@@ -2355,7 +2429,53 @@ ahc_scsi_cmd(xs)
 #elif defined(__NetBSD__)
 			| (IS_SCSIBUS_B(ahc, xs->sc_link) ? SELBUSB : 0) ));
 #endif
+
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("ahc_scsi_cmd\n"));
+
+#if defined(__NetBSD__)			/* XXX */
+	/* must protect the queue */
+	s = splbio();
+
+	/*
+	 * If we're running the queue from ahc_done(), we're called
+	 * with the first entry in the queue as our argument.
+	 * Pull it off; if we can't run the job, it will get placed
+	 * back at the front.
+	 */
+	if (xs == ahc->sc_xxxq.lh_first) {
+		xs = ahc_xxx_dequeue(ahc);
+		fromqueue = 1;
+		goto get_scb;
+	}
+
+	/* determine safey of software queueing */
+	dontqueue = xs->flags & SCSI_POLL;
+
+	/*
+	 * Handle situations where there's already entries in the
+	 * queue.
+	 */
+	if (ahc->sc_xxxq.lh_first != NULL) {
+		/*
+		 * If we can't queue, we have to abort, since
+		 * we have to preserve order.
+		 */
+		if (dontqueue) {
+			splx(s);
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
+
+		/*
+		 * Swap with the first queue entry.
+		 */
+		ahc_xxx_enqueue(ahc, xs, 0);
+		xs = ahc_xxx_dequeue(ahc);
+		fromqueue = 1;
+	}
+
+ get_scb:
+#endif /* __NetBSD__ */
 	/*
 	 * get an scb to use. If the transfer
 	 * is from a buf (possibly from interrupt time)
@@ -2371,9 +2491,36 @@ ahc_scsi_cmd(xs)
 		xs->flags |= INUSE;
 	}
 	if (!(scb = ahc_get_scb(ahc, flags))) {
+#if defined(__NetBSD__)			/* XXX */
+		/*
+		 * If we can't queue, we lose.
+		 */
+		if (dontqueue) {
+			splx(s);
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
+
+		/*
+		 * If we were pulled off the queue, put ourselves
+		 * back in the front, otherwise tack ourselves onto
+		 * the end.
+		 */
+		ahc_xxx_enqueue(ahc, xs, fromqueue);
+
+		splx(s);
+		return (SUCCESSFULLY_QUEUED);
+#else
 		xs->error = XS_DRIVER_STUFFUP;
 		return (TRY_AGAIN_LATER);
+#endif /* __NetBSD__ */
 	}
+
+#if defined(__NetBSD__)
+	/* we're done playing with the queue */
+	splx(s);
+#endif
+
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("start scb(%p)\n", scb));
 	scb->xs = xs;
 	if (flags & SCSI_RESET) {
