@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.3 2000/01/25 20:19:14 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.4 2000/01/25 23:23:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1719,7 +1719,7 @@ static void ti_attach(parent, self, aux)
 	 */
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM, BUS_SPACE_MAP_LINEAR,
 	    &sc->ti_btag, &sc->ti_bhandle, NULL, NULL)) {
-		printf(": can't map i/o space\n");
+		printf(": can't map memory space\n");
 		goto fail;
 	}
 	sc->ti_vhandle = (void *)(sc->ti_bhandle); /* XXX XXX XXX */
