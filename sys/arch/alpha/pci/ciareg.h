@@ -1,4 +1,4 @@
-/* $NetBSD: ciareg.h,v 1.19 1998/06/05 00:53:02 thorpej Exp $ */
+/* $NetBSD: ciareg.h,v 1.20 1998/06/05 17:16:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -125,7 +125,10 @@
 #define	CIA_CSR_REV	(CIA_CSRS + 0x80)
 
 #define		REV_MASK		0x000000ff
-#define		REV_ALT_MEM		0x00000100
+#define		REV_ALT_MEM		0x00000100	/* not on Pyxis */
+
+#define		REV_PYXIS_ID_MASK	0x0000ff00
+#define		REV_PYXIS_ID_21174	0x00000100
 
 #define	CIA_CSR_CTRL	(CIA_CSRS + 0x100)
 
