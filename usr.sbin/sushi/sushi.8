@@ -1,4 +1,4 @@
-.\" $NetBSD: sushi.8,v 1.13 2003/02/14 16:11:36 grant Exp $
+.\" $NetBSD: sushi.8,v 1.14 2003/02/25 10:36:19 wiz Exp $
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -65,13 +65,13 @@ The following option is available:
 .It Ar quickname
 This option allows the user to jump directly to a known submenu or function
 within
-.Nm "" .
+.Nm .
 It can be used to avoid the need to navigate deeply nested menus, when the
 end destination is known.
 .El
 .Sh ENVIRONMENT
 The following environment variables are used by
-.Nm "" :
+.Nm :
 .Bl -tag -width "PKG_PATH"
 .It Ev LANG
 Determines the user's current language setting.
@@ -124,7 +124,7 @@ The
 .Pa /etc/sushi.conf
 file may also include key bindings, which will override the default use
 of function keys in
-.Nm "" .
+.Nm .
 These may be desired in situations where function keys are not available, or
 are not desirable because of a window-manager binding.  The format for
 binding a key is:

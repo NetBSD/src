@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.34 2002/11/16 23:54:16 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.35 2003/02/25 10:35:08 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,59 +67,59 @@
 .Nm raidctl
 .Nd configuration utility for the RAIDframe disk driver
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl v
 .Fl a Ar component Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl A Op yes | no | root
 .Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl B Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl c Ar config_file Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl C Ar config_file Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl f Ar component Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl F Ar component Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl g Ar component Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl G Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl i Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl I Ar serial_number Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl p Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl P Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl r Ar component Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl R Ar component Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl s Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl S Ar dev
-.Nm ""
+.Nm
 .Op Fl v
 .Fl u Ar dev
 .Sh DESCRIPTION
@@ -436,7 +436,7 @@ device special files.
 It is highly recommended that before using the RAID driver for real
 file systems that the system administrator(s) become quite familiar
 with the use of
-.Nm "" ,
+.Nm ,
 and that they understand how the component reconstruction process works.
 The examples in this section will focus on configuring a
 number of different RAID sets of varying degrees of redundancy.

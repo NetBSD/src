@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.27 2003/02/21 11:17:50 jmmv Exp $
+.\"	$NetBSD: su.1,v 1.28 2003/02/25 10:35:56 wiz Exp $
 .\"
 .Dd January 19, 2003
 .Dt SU 1
@@ -88,7 +88,7 @@ The invoked shell is the target login's.
 With the exception of
 .Ev SU_FROM
 this is the traditional behavior of
-.Nm "" .
+.Nm .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -195,7 +195,7 @@ returns the exit status of the executed subshell, or 1 if any error
 occurred while switching privileges.
 .Sh ENVIRONMENT
 Environment variables used by
-.Nm "" :
+.Nm :
 .Bl -tag -width "HOME"
 .It Ev HOME
 Default home directory of real user ID unless modified as

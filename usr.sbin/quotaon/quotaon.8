@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)quotaon.8	8.2 (Berkeley) 12/11/93
-.\"	$NetBSD: quotaon.8,v 1.6 1999/03/22 18:44:06 garbled Exp $
+.\"	$NetBSD: quotaon.8,v 1.7 2003/02/25 10:36:17 wiz Exp $
 .\"
 .Dd December 11, 1993
 .Dt QUOTAON 8
@@ -47,7 +47,7 @@
 .Op Fl u
 .Op Fl v
 .Ar filesystem Ar ...
-.Nm ""
+.Nm
 .Op Fl g
 .Op Fl u
 .Op Fl v
@@ -89,7 +89,7 @@ Available options:
 If the
 .Fl a
 flag is supplied in place of any filesystem names,
-.Nm "" Ns / Ns Nm quotaoff
+.Nm Ns / Ns Nm quotaoff
 will enable/disable all the filesystems indicated in
 .Pa /etc/fstab
 to be read-write with disk quotas.
