@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.1 2001/10/16 15:38:55 uch Exp $	*/
+/*	$NetBSD: kloader.c,v 1.2 2001/11/23 16:09:11 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <mips/cache.h>
 #include <playstation2/playstation2/kloader.h>
 
 #ifdef DEBUG
@@ -90,7 +91,6 @@ STATIC struct {
 	int setuped;
 } kloader;
 
-extern void r5900_FlushCache(void);
 extern paddr_t avail_start, avail_end;
 extern char kloader_boot_start[], kloader_boot_end[];
 
@@ -120,7 +120,6 @@ kloader_reboot_setup(const char *filename)
 	if (kloader_load() != 0)
 		goto end;
 
-	r5900_FlushCache();
 	kloader.setuped = 1;
 #ifdef KLOADER_DEBUG
 	kloader_dump(kloader.entry, kloader.tagstart);
@@ -136,7 +135,7 @@ kloader_reboot()
 	if (!kloader.setuped)
 		return;
 
-	r5900_FlushCache();
+	mips_icache_sync_all();
 	(*kloader.loader)(kloader.entry, kloader.tagstart);
 	/* NOTREACHED */
 }

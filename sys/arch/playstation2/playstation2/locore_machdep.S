@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.2 2001/11/14 18:15:33 thorpej Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.3 2001/11/23 16:09:11 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,10 +32,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "opt_builtin_kernel_loader.h"
+	
+#include "opt_kloader_kernel_path.h"
 
 #include <mips/asm.h>
+#include <mips/cache_r5900.h>	
 #include <mips/cpuregs.h>
 
 #define D_STAT_REG	0xb000e010
@@ -120,7 +121,7 @@ NESTED_NOPROFILE(spllowersofthigh, CALLFRAME_SIZ, ra)
 	addu	sp, sp, CALLFRAME_SIZ
 END(spllowersofthigh)
 
-#ifdef BUILTIN_KERNEL_LOADER	
+#ifdef KLOADER_KERNEL_PATH
 /*
  * kloader_boot(vaddr_t entry_addr, struct kloader_page_tag *p)	
  *	must be PIC.
@@ -155,8 +156,8 @@ LEAF_NOPROFILE(kloader_boot)
 	/* 
 	 * 2. Cache flush
 	 */
-	li	t1, R5900_C_SIZE_I
-	li	t2, R5900_C_SIZE_D
+	li	t1, CACHE_R5900_SIZE_I
+	li	t2, CACHE_R5900_SIZE_D
 
 	/*
 	 * Flush the data cache.
@@ -168,17 +169,17 @@ LEAF_NOPROFILE(kloader_boot)
 	sync.p
 1:
 	# line +0
-	cache	R5900_C_IWBINV_D,  0(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IWBINV_D,  1(t0);sync.l;sync.p	# way 1
+	cache	CACHEOP_R5900_IWBINV_D,  0(t0);sync.l;sync.p	# way 0
+	cache	CACHEOP_R5900_IWBINV_D,  1(t0);sync.l;sync.p	# way 1
 	# line +1
-	cache	R5900_C_IWBINV_D, 64(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IWBINV_D, 65(t0);sync.l;sync.p	# way 1
+	cache	CACHEOP_R5900_IWBINV_D, 64(t0);sync.l;sync.p	# way 0
+	cache	CACHEOP_R5900_IWBINV_D, 65(t0);sync.l;sync.p	# way 1
 	# line +2
-	cache	R5900_C_IWBINV_D,128(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IWBINV_D,129(t0);sync.l;sync.p	# way 1
+	cache	CACHEOP_R5900_IWBINV_D,128(t0);sync.l;sync.p	# way 0
+	cache	CACHEOP_R5900_IWBINV_D,129(t0);sync.l;sync.p	# way 1
 	# line +3
-	cache	R5900_C_IWBINV_D,192(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IWBINV_D,193(t0);sync.l;sync.p	# way 1
+	cache	CACHEOP_R5900_IWBINV_D,192(t0);sync.l;sync.p	# way 0
+	cache	CACHEOP_R5900_IWBINV_D,193(t0);sync.l;sync.p	# way 1
 	addu	t0, t0, 256	
 	bne	t0, t1, 1b
 	 nop
@@ -195,17 +196,17 @@ LEAF_NOPROFILE(kloader_boot)
 	#	[12:6]	... line
 	#	[0]	... way
 	# line +0
-	cache	R5900_C_IINV_I,  0(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IINV_I,  1(t0);sync.l;sync.p	# way 1
+	cache	CACHEOP_R5900_IINV_I,  0(t0);sync.l;sync.p	# way 0
+	cache	CACHEOP_R5900_IINV_I,  1(t0);sync.l;sync.p	# way 1
 	# line +1	
-	cache	R5900_C_IINV_I, 64(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IINV_I, 65(t0);sync.l;sync.p	# way 1
+	cache	CACHEOP_R5900_IINV_I, 64(t0);sync.l;sync.p	# way 0
+	cache	CACHEOP_R5900_IINV_I, 65(t0);sync.l;sync.p	# way 1
 	# line +2
-	cache	R5900_C_IINV_I,128(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IINV_I,129(t0);sync.l;sync.p	# way 1
+	cache	CACHEOP_R5900_IINV_I,128(t0);sync.l;sync.p	# way 0
+	cache	CACHEOP_R5900_IINV_I,129(t0);sync.l;sync.p	# way 1
 	# line +3	
-	cache	R5900_C_IINV_I,192(t0);sync.l;sync.p	# way 0
-	cache	R5900_C_IINV_I,193(t0);sync.l;sync.p	# way 1
+	cache	CACHEOP_R5900_IINV_I,192(t0);sync.l;sync.p	# way 0
+	cache	CACHEOP_R5900_IINV_I,193(t0);sync.l;sync.p	# way 1
 	addu	t0, t0, 256	
 	bne	t0, t1, 1b
 	 nop
@@ -219,7 +220,7 @@ LEAF_NOPROFILE(kloader_boot)
 END(kloader_boot)
 EXPORT(kloader_boot_end)	
 	
-#endif /* BUILTIN_KERNEL_LOADER */
+#endif /* KLOADER_KERNEL_PATH */
 
 /*
  * Unused. but for vmstat(8)
