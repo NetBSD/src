@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.43 1997/03/05 04:41:57 jonathan Exp $
+#	$NetBSD: Makefile.pmax,v 1.44 1997/03/16 11:54:03 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -45,9 +45,6 @@ AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80030000 -e start
 STRIPFLAGS=	-d
 
-HOSTED_CC=	${CC}
-HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
-HOSTED_CFLAGS=	${CFLAGS:S/-mno-abicalls//:S/-mno-half-pic//}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -70,8 +67,6 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-
-HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
@@ -109,14 +104,11 @@ SYSTEM_LD_TAIL+=;\
 
 %LOAD
 
-assym.h: genassym
-	./genassym >assym.h
+assym.h: $S/kern/genassym.sh ${MIPS}/mips/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    < ${MIPS}/mips/genassym.cf > assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
-genassym: genassym.o
-	${CC} -o $@ genassym.o
-
-genassym.o: $S/arch/mips/mips/genassym.c
-	${HOSTED_C}
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -136,7 +128,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 clean: cleankernel
 cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
@@ -164,8 +156,6 @@ depend: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore_machdep.S 
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-	    $S/arch/mips/mips/genassym.c
 
 
 # depend on root or device configuration
@@ -175,7 +165,7 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+machdep.o: Makefile
 
 # depend on CPU configuration 
 machdep.o mainbus.o trap.o: Makefile
