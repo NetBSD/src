@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.1 1996/01/31 23:24:49 mark Exp $ */
+/* $NetBSD: lpt.c,v 1.2 1996/02/15 21:33:52 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -49,8 +49,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from:$NetBSD: lpt.c,v 1.1 1996/01/31 23:24:49 mark Exp $
- *	$Id: lpt.c,v 1.1 1996/01/31 23:24:49 mark Exp $
+ *	from:$NetBSD: lpt.c,v 1.2 1996/02/15 21:33:52 mark Exp $
+ *	$Id: lpt.c,v 1.2 1996/02/15 21:33:52 mark Exp $
  */
 
 /*
@@ -574,7 +574,7 @@ lptintr(arg)
 	struct lpt_softc *sc = arg;
 	int iobase = sc->sc_iobase;
 
-printf("lptintr:\n");
+/*printf("lptintr:\n");*/
 
 #if defined(INET) && defined(PLIP)
 	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
