@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.114 2003/10/30 01:43:08 simonb Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.115 2004/06/06 04:44:05 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.114 2003/10/30 01:43:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.115 2004/06/06 04:44:05 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1109,6 +1109,11 @@ ether_ifdetach(struct ifnet *ifp)
 	struct ethercom *ec = (void *) ifp;
 	struct ether_multi *enm;
 	int s;
+
+#if NBRIDGE > 0
+	if (ifp->if_bridge)
+		bridge_ifdetach(ifp);
+#endif
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);
