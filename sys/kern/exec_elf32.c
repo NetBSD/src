@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.63 2001/05/07 17:09:13 jdolecek Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.64 2001/07/14 02:08:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -269,29 +269,6 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 }
 
 /*
- * elf_read_from():
- *
- *	Read from vnode into buffer at offset.
- */
-int
-ELFNAME(read_from)(struct proc *p, struct vnode *vp, u_long off,
-    caddr_t buf, int size)
-{
-	int error;
-	size_t resid;
-
-	if ((error = vn_rdwr(UIO_READ, vp, buf, size, off, UIO_SYSSPACE,
-	    0, p->p_ucred, &resid, p)) != 0)
-		return error;
-	/*
-	 * See if we got all of it
-	 */
-	if (resid != 0)
-		return ENOEXEC;
-	return 0;
-}
-
-/*
  * elf_load_file():
  *
  * Load a file (interpreter/library) pointed to by path
@@ -357,8 +334,7 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 #endif
 	VOP_UNLOCK(vp, 0);
 
-	if ((error = ELFNAME(read_from)(p, vp, 0, (caddr_t) &eh,
-	    sizeof(eh))) != 0)
+	if ((error = exec_read_from(p, vp, 0, &eh, sizeof(eh))) != 0)
 		goto bad;
 
 	if ((error = ELFNAME(check_header)(&eh, ET_DYN)) != 0)
@@ -367,8 +343,7 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 	phsize = eh.e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
 
-	if ((error = ELFNAME(read_from)(p, vp, eh.e_phoff,
-	    (caddr_t) ph, phsize)) != 0)
+	if ((error = exec_read_from(p, vp, eh.e_phoff, ph, phsize)) != 0)
 		goto bad;
 
 	/*
@@ -482,8 +457,8 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
 
-	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff,
-	    (caddr_t) ph, phsize)) != 0)
+	if ((error = exec_read_from(p, epp->ep_vp, eh->e_phoff, ph, phsize)) !=
+	    0)
 		goto bad;
 
 	epp->ep_taddr = epp->ep_tsize = ELFDEFNNAME(NO_ADDR);
@@ -497,9 +472,8 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 		if (pp->p_type == PT_INTERP) {
 			if (pp->p_filesz >= MAXPATHLEN)
 				goto bad;
-			if ((error = ELFNAME(read_from)(p, epp->ep_vp,
-			    pp->p_offset, (caddr_t) interp,
-			    pp->p_filesz)) != 0)
+			if ((error = exec_read_from(p, epp->ep_vp,
+			    pp->p_offset, interp, pp->p_filesz)) != 0)
 				goto bad;
 			break;
 		}
@@ -652,8 +626,7 @@ ELFNAME2(netbsd,signature)(struct proc *p, struct exec_package *epp,
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
-	error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff, (caddr_t)ph,
-	    phsize);
+	error = exec_read_from(p, epp->ep_vp, eh->e_phoff, ph, phsize);
 	if (error)
 		goto out;
 
@@ -667,8 +640,8 @@ ELFNAME2(netbsd,signature)(struct proc *p, struct exec_package *epp,
 			continue;
 
 		np = (Elf_Nhdr *)malloc(ephp->p_filesz, M_TEMP, M_WAITOK);
-		error = ELFNAME(read_from)(p, epp->ep_vp, ephp->p_offset,
-		    (caddr_t)np, ephp->p_filesz);
+		error = exec_read_from(p, epp->ep_vp, ephp->p_offset, np,
+		    ephp->p_filesz);
 		if (error)
 			goto next;
 
