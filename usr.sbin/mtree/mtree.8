@@ -1,4 +1,4 @@
-.\"	$NetBSD: mtree.8,v 1.5 1997/07/10 05:14:15 mikel Exp $
+.\"	$NetBSD: mtree.8,v 1.6 1997/08/20 15:14:51 agc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,11 +88,18 @@ of the files for which the keyword
 .Cm cksum
 was specified.
 The checksum is seeded with the specified value.
-.It Fl u
+.It Fl U
 Modify the owner, group, and permissions of existing files to match
 the specification and create any missing directories.
 User, group, and permissions must all be specified for missing directories
 to be created.
+Exit with a status of 0 on success, 1 if any error occurred;
+a mismatch is not considered to be an error if it was corrected.
+.It Fl u
+Same as
+.Fl U
+except a status of 2 is returned if the file hierarchy did not match 
+the specification.
 .It Fl x
 Don't descend below mount points in the file hierarchy.
 .El
