@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.521 2002/10/27 10:28:39 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.522 2002/11/07 21:56:56 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.521 $"
+#ident 		"GENERIC-$Revision: 1.522 $"
 
 maxusers	32		# estimated number of users
 
@@ -623,6 +623,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 #hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
