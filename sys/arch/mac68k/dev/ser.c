@@ -69,7 +69,7 @@
  *		added DCD event detection
  *		added software fifo's
  *
- * $Id: ser.c,v 1.12 1994/09/29 03:33:17 briggs Exp $
+ * $Id: ser.c,v 1.13 1994/09/30 00:52:44 briggs Exp $
  *
  *	Mac II serial device interface
  *
@@ -870,13 +870,13 @@ sercnprobe(struct consdev *cp)
     if (maj == nchrdev)
         goto nosercon;
 
+    cp->cn_pri = CN_NORMAL;     /* Lower than CN_INTERNAL */
     if (!(mac68k_machine.serial_console & 0x01))
-        goto nosercon;
+        cp->cn_pri = CN_REMOTE; /* Higher than CN_INTERNAL */
 
     unit = (mac68k_machine.serial_console & 0x02) ? 1 : 0;
 
     cp->cn_dev = makedev(maj, unit);
-    cp->cn_pri = CN_REMOTE;
 
     mac68k_machine.serial_boot_echo = 0;
     return 0;
