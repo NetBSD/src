@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2003/03/16 08:12:26 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2003/03/17 23:24:41 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ppcparam.h"
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -51,8 +52,8 @@ struct stop_time stop_time;
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
  */
 u_long tbhz = 0;		/* global timebase ticks/sec */
-u_long ticks_per_sec = 12500000;
-u_long ns_per_tick = 80;
+u_long ticks_per_sec = 25000000;
+u_long ns_per_tick = 40;
 static long ticks_per_intr;
 
 #if NRTC > 0
@@ -321,24 +322,20 @@ void calc_delayconst(void);
 void
 calc_delayconst()
 {
-	int omsr;
-	
 	/*
 	 * Get this info during autoconf?				XXX
 	 */
-	tbhz = 100000000;		/* 100 MHz */
-	ticks_per_sec = tbhz / 4;	/* decr 1:4 */
-	if (tbhz == 0)
-		panic("AFW_tbhz");
+#ifdef CLOCKBASE
+	ticks_per_sec = CLOCKBASE / 4;	/* from config file */
+#endif
+	cpu_timebase = ticks_per_sec;
 	/*
 	 * Should check for correct CPU here?		XXX
 	 */
-	omsr = extintr_disable();
 	ns_per_tick = 1000000000 / ticks_per_sec;
 	ticks_per_intr = ticks_per_sec / hz;
 	curcpu()->ci_lasttb = mftb();
 	__asm __volatile ("mtdec %0" :: "r"(ticks_per_intr));
-	extintr_restore(omsr);
 }
 
 /*
