@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.9,v 1.8 1999/01/16 16:39:52 msaitoh Exp $
+.\"	$NetBSD: sleep.9,v 1.9 1999/03/06 22:09:30 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,9 +71,9 @@ other processes.
 The function
 .Fn wakeup
 is used to notify sleeping processes of possible changes to the condition
-that caused them to go to sleep. Typically, an awakened process will --
-after it has acquired a context again -- retry the action that blocked
-its operation to see if the
+that caused them to go to sleep.
+Typically, an awakened process will -- after it has acquired a context
+again -- retry the action that blocked its operation to see if the
 .Dq blocking
 condition has cleared.
 .Pp
@@ -84,10 +84,10 @@ function takes the following arguments:
 .It Fa ident
 An identifier of the
 .Dq wait channel
-representing the resource for which the current process needs to wait. This
-typically is the virtual address of some kernel data-structure related
-to the resource for which the process is contending. The same identifier
-must be used in a call to
+representing the resource for which the current process needs to wait.
+This typically is the virtual address of some kernel data-structure related
+to the resource for which the process is contending.
+The same identifier must be used in a call to
 .Fn wakeup
 to get the process going again.
 .Fa ident
@@ -95,9 +95,11 @@ should not be
 .Dv NULL .
 .It Fa priority
 The process priority to be used when the process is awakened and put on
-the queue of runnable processes. This mechanism is used to optimize
+the queue of runnable processes.
+This mechanism is used to optimize
 .Dq throughput
-of processes executing in kernel mode. If the flag
+of processes executing in kernel mode.
+If the flag
 .Dv PCATCH
 is OR'ed into
 .Fa priority
@@ -111,7 +113,8 @@ for user level utilities such as
 .It Fa timo
 If non-zero, the process will sleep for at most
 .Li timo/hz
-seconds. If this amount of time elapses and no
+seconds.
+If this amount of time elapses and no
 .Fn wakeup "ident"
 has occurred, and no signal
 .Pq if Dv PCATCH No was set
@@ -123,8 +126,8 @@ will return
 .Pp
 The
 .Fn sleep
-function puts the process in an uninterruptable sleep. It is functionally
-equivalent to:
+function puts the process in an uninterruptable sleep.
+It is functionally equivalent to:
 .Bd -literal -offset indent
 tsleep(ident, priority & PRIMASK, 0, 0)
 .Ed
@@ -133,18 +136,19 @@ The
 .Fn wakeup
 function will mark all processes which are currently sleeping on the identifier
 .Fa ident
-as runnable. Eventually, each of the processes will resume execution in
-the kernel context, causing a return from
+as runnable.
+Eventually, each of the processes will resume execution in the kernel
+context, causing a return from
 .Fn [t]sleep .
 Note that processes returning from sleep should always re-evaluate the
 conditions that blocked them, since a call to
 .Fn wakeup
 merely signals a
 .Em possible
-change to the blocking conditions. For example, when two or more processes
-are waiting for an exclusive lock, only one of them will succeed in acquiring
-the lock when it is released. All others will have to go back to sleep and
-wait for the next opportunity.
+change to the blocking conditions.
+For example, when two or more processes are waiting for an exclusive lock,
+only one of them will succeed in acquiring the lock when it is released.
+All others will have to go back to sleep and wait for the next opportunity.
 .Sh RETURN VALUES
 .Fn tsleep
 returns 0 if it returns as a result of a

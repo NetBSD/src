@@ -1,4 +1,4 @@
-.\"	$NetBSD: access.9,v 1.5 1998/05/09 15:04:39 kleink Exp $
+.\"	$NetBSD: access.9,v 1.6 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,14 +69,15 @@ checks addresses in the kernel address space, while
 .Fn useracc
 considers
 .Fa addr
-to represent an user space address. The process context to use for this
-operation is taken from the global variable
+to represent an user space address.
+The process context to use for this operation is taken from the global variable
 .Va curproc .
 .Pp
 .Sh RETURN VALUES
 Both functions return 1 if the type of access specified by
 .Fa rw
-is permitted. Otherwise 0 is returned.
+is permitted.
+Otherwise 0 is returned.
 .Pp
 .Sh BUGS
 The process pointer should be passed in as an argument.

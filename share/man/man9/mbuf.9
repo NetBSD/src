@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.5 1998/09/03 08:12:57 msaitoh Exp $
+.\"	$NetBSD: mbuf.9,v 1.6 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -230,31 +230,37 @@ and is used instead of the internal data area; this is done when at least
 bytes of data must be stored.
 .Bl -tag -width compact
 .It Fn m_get "int nowait" "int type"
-Allocates an mbuf and initializes it to contain internal data. The
+Allocates an mbuf and initializes it to contain internal data.
+The
 .Fa nowait
 parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
 from caller.
 .Dv M_WAIT
-means the call cannot fail, but may take forever. The
+means the call cannot fail, but may take forever.
+The
 .Fa type
 parameter is an mbuf type.
 .It Fn m_getclr "int nowait" "int type"
 Allocates an mbuf and initializes it to contain internal data, then
-zeros the data area. The
+zeros the data area.
+The
 .Fa nowait
 parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
-from caller. The
+from caller.
+The
 .Fa type
 parameter is an mbuf type.
 .It Fn m_gethdr "int nowait" "int type"
 Allocates an mbuf and initializes it to contain a packet header and internal
-data. The
+data.
+The
 .Fa nowait
 parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
-from caller. The
+from caller.
+The
 .Fa type
 parameter is an mbuf type.
 .It Fn m_devget "char *buf" "int totlen" "int off0" "struct ifnet *ifp" "void (*copy) __P((const void *, void *, size_t))"
@@ -322,7 +328,8 @@ allocates new mbuf
 .Fa m
 of size
 .Fa len
-to prepend to the chain, copying junk along. The
+to prepend to the chain, copying junk along.
+The
 .Fa how
 parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
@@ -356,7 +363,8 @@ restore the chain to its original state.
 .It Fn m_adj "struct mbuf *mp" "int req_len"
 Shaves off
 .Fa req_len
-bytes from head or tail of the (valid) data area. If
+bytes from head or tail of the (valid) data area.
+If
 .Fa req_len
 is greater than zero, front bytes are being shaved off, if it's smaller,
 from the back (and if it is zero, the mbuf will stay bearded).
@@ -394,13 +402,15 @@ Implemented as a macro.
 .It Fn MGET "struct mbuf *m" "int how" "int type"
 Allocates mbuf
 .Fa m
-and initializes it to contain internal data. See
+and initializes it to contain internal data.
+See
 .Fn m_get .
 Implemented as a macro.
 .It Fn MGETHDR "struct mbuf *m" "int how" "int type"
 Allocates mbuf
 .Fa m
-and initializes it to contain a packet header. See
+and initializes it to contain a packet header.
+See
 .Fn m_gethdr .
 Implemented as a macro.
 .It Fn MEXTMALLOC "struct mbuf *m" "int len" "int how"
@@ -503,7 +513,8 @@ to mbuf
 .Fa m .
 If a new mbuf must be allocated,
 .Fa how
-specifies whether to wait. If
+specifies whether to wait.
+If
 .Fa how
 is
 .Dv M_DONTWAIT
