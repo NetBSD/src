@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.268 2000/10/12 02:54:14 itojun Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.269 2000/10/14 06:23:21 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.264 2000/10/12 02:52:58 itojun Exp 
+ *	NetBSD: pcidevs,v 1.265 2000/10/14 06:12:46 simonb Exp 
  */
 
 /*
@@ -920,6 +920,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Mach64 LD",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_M3_PCI,
+	    0,
+	    "ATI Technologies",
+	    "Mobility M3 (PCI)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_M3_AGP,
+	    0,
+	    "ATI Technologies",
+	    "Mobility M3 (AGP)",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_LG,
