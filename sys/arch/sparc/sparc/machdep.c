@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.237 2003/10/12 16:12:20 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.238 2003/10/12 17:08:08 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.237 2003/10/12 16:12:20 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.238 2003/10/12 17:08:08 pk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -736,7 +736,7 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * C stack frame.
 	 */
 	newsp = (int)fp - sizeof(struct frame);
-	if (copyout(ksi, &fp->sf_si, sizeof *ksi) ||
+	if (copyout(&ksi->ksi_info, &fp->sf_si, sizeof ksi->ksi_info) ||
 	    copyout(&uc, &fp->sf_uc, ucsz) ||
 	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
 		/*
