@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.11.2.1 1995/10/20 10:19:46 chopps Exp $	*/
+/*	$NetBSD: itevar.h,v 1.11.2.2 1995/10/20 11:01:11 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -50,9 +50,9 @@ enum ite_attr {
 
 struct ite_softc {
 	struct	device device;
+	struct	tty *tp;
 	char	argbuf[MAX_ARGSIZE];
 	struct  grf_softc *grf;		/* XXX */
-	struct	tty *tp;
 	void	*priv;
 	char	*ap;
 	u_char	*tabs;
