@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.6 1997/10/20 08:51:24 enami Exp $
+.\"	$NetBSD: dd.1,v 1.7 1998/02/06 05:39:31 perry Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -163,12 +163,15 @@ There are two conversion maps for
 .Tn ASCII .
 The value
 .Cm ascii
-specifies the recommended one which is compatible with System V.
+specifies the recommended one which is compatible with 
+.At V .
 The value
 .Cm oldascii
 specifies the one used in historic
 .Tn AT&T
-and pre-4.3BSD-reno systems.
+and pre-
+.Bx 4.3 Reno
+systems.
 .It Cm block
 Treats the input as a sequence of newline or end-of-file terminated variable
 length records independent of input and output block boundaries.
@@ -213,7 +216,9 @@ and
 .Cm oldibm
 are maps used in historic
 .Tn AT&T
-and pre-4.3BSD-reno systems.
+and pre
+.Bx 4.3 Reno
+systems.
 .It Cm lcase
 Transform uppercase characters into lowercase characters.
 .It Cm noerror
