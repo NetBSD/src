@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.8 1998/07/06 07:50:20 mrg Exp $	*/
+/*	$NetBSD: trpt.c,v 1.9 1999/07/01 19:15:03 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.8 1998/07/06 07:50:20 mrg Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.9 1999/07/01 19:15:03 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,6 +101,14 @@ __RCSID("$NetBSD: trpt.c,v 1.8 1998/07/06 07:50:20 mrg Exp $");
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
+
+#ifdef INET6
+#ifndef INET
+#include <netinet/in.h>
+#endif
+#include <netinet/ip6.h>
+#endif
+
 #include <netinet/tcp.h>
 #define TCPSTATES
 #include <netinet/tcp_fsm.h>
@@ -141,7 +149,7 @@ extern	char *__progname;
 int	main __P((int, char *[]));
 void	dotrace __P((caddr_t));
 void	tcp_trace __P((short, short, struct tcpcb *, struct tcpcb *,
-	    struct tcpiphdr *, int));
+	    int, void *, int));
 int	numeric __P((const void *, const void *));
 void	usage __P((void));
 
@@ -290,9 +298,25 @@ dotrace(tcpcb)
 		if (tcpcb && td->td_tcb != tcpcb)
 			continue;
 		ntime = ntohl(td->td_time);
-		tcp_trace(td->td_act, td->td_ostate,
-		    (struct tcpcb *)td->td_tcb, &td->td_cb, &td->td_ti,
-		    td->td_req);
+		switch (td->td_family) {
+		case AF_INET:
+			tcp_trace(td->td_act, td->td_ostate,
+			    (struct tcpcb *)td->td_tcb, &td->td_cb,
+			    td->td_family, &td->td_ti, td->td_req);
+			break;
+#ifdef INET6
+		case AF_INET6:
+			tcp_trace(td->td_act, td->td_ostate,
+			    (struct tcpcb *)td->td_tcb, &td->td_cb,
+			    td->td_family, &td->td_ti6, td->td_req);
+			break;
+#endif
+		default:
+			tcp_trace(td->td_act, td->td_ostate,
+			    (struct tcpcb *)td->td_tcb, &td->td_cb,
+			    td->td_family, NULL, td->td_req);
+			break;
+		}
 		if (i == tcp_debx)
 			goto done;
 	}
@@ -301,9 +325,25 @@ dotrace(tcpcb)
 		if (tcpcb && td->td_tcb != tcpcb)
 			continue;
 		ntime = ntohl(td->td_time);
-		tcp_trace(td->td_act, td->td_ostate,
-		    (struct tcpcb *)td->td_tcb, &td->td_cb, &td->td_ti,
-		    td->td_req);
+		switch (td->td_family) {
+		case AF_INET:
+			tcp_trace(td->td_act, td->td_ostate,
+			    (struct tcpcb *)td->td_tcb, &td->td_cb,
+			    td->td_family, &td->td_ti, td->td_req);
+			break;
+#ifdef INET6
+		case AF_INET6:
+			tcp_trace(td->td_act, td->td_ostate,
+			    (struct tcpcb *)td->td_tcb, &td->td_cb,
+			    td->td_family, &td->td_ti6, td->td_req);
+			break;
+#endif
+		default:
+			tcp_trace(td->td_act, td->td_ostate,
+			    (struct tcpcb *)td->td_tcb, &td->td_cb,
+			    td->td_family, NULL, td->td_req);
+			break;
+		}
 	}
  done:
 	if (follow) {
@@ -331,31 +371,86 @@ dotrace(tcpcb)
  */
 /*ARGSUSED*/
 void
-tcp_trace(act, ostate, atp, tp, ti, req)
+tcp_trace(act, ostate, atp, tp, family, packet, req)
 	short act, ostate;
 	struct tcpcb *atp, *tp;
-	struct tcpiphdr *ti;
+	int family;
+	void *packet;
 	int req;
 {
 	tcp_seq seq, ack;
 	int flags, len, win, timer;
+	struct tcphdr *th = NULL;
+	struct ip *ip = NULL;
+#ifdef INET6
+	struct ip6_hdr *ip6 = NULL;
+#endif
+	char hbuf[MAXHOSTNAMELEN];
+
+	switch (family) {
+	case AF_INET:
+		if (packet) {
+			ip = (struct ip *)packet;
+			th = (struct tcphdr *)(ip + 1);
+		}
+		break;
+#ifdef INET6
+	case AF_INET6:
+		if (packet) {
+			ip6 = (struct ip6_hdr *)packet;
+			th = (struct tcphdr *)(ip6 + 1);
+		}
+		break;
+#endif
+	default:
+		return;
+	}
 
 	printf("%03d %s:%s ", (ntime/10) % 1000, tcpstates[ostate],
 	    tanames[act]);
+
+#ifndef INET6
+	if (!ip)
+#else
+	if (!(ip || ip6))
+#endif
+		goto skipact;
+
 	switch (act) {
 	case TA_INPUT:
 	case TA_OUTPUT:
 	case TA_DROP:
 		if (aflag) {
+			inet_ntop(family,
+#ifndef INET6
+				(void *)&ip->ip_src,
+#else
+				family == AF_INET ? (void *)&ip->ip_src
+						  : (void *)&ip6->ip6_src, 
+#endif
+				hbuf, sizeof(hbuf));
 			printf("(src=%s,%u, ",
-			    inet_ntoa(ti->ti_src), ntohs(ti->ti_sport));
+			    hbuf, ntohs(th->th_sport));
+			inet_ntop(family,
+#ifndef INET6
+				(void *)&ip->ip_dst,
+#else
+				family == AF_INET ? (void *)&ip->ip_dst
+						  : (void *)&ip6->ip6_dst, 
+#endif
+				hbuf, sizeof(hbuf));
 			printf("dst=%s,%u)",
-			    inet_ntoa(ti->ti_dst), ntohs(ti->ti_dport));
+			    hbuf, ntohs(th->th_dport));
 		}
-		seq = ti->ti_seq;
-		ack = ti->ti_ack;
-		len = ti->ti_len;
-		win = ti->ti_win;
+		seq = th->th_seq;
+		ack = th->th_ack;
+		if (ip)
+			len = ip->ip_len;
+#ifdef INET6
+		else if (ip6)
+			len = ip6->ip6_plen;
+#endif
+		win = th->th_win;
 		if (act == TA_OUTPUT) {
 			NTOHL(seq);
 			NTOHL(ack);
@@ -371,11 +466,11 @@ tcp_trace(act, ostate, atp, tp, ti, req)
 		printf("@%x", ack);
 		if (win)
 			printf("(win=%x)", win);
-		flags = ti->ti_flags;
+		flags = th->th_flags;
 		if (flags) {
 			register char *cp = "<";
 #define	pf(flag, string) { \
-	if (ti->ti_flags&flag) { \
+	if (th->th_flags&flag) { \
 		(void)printf("%s%s", cp, string); \
 		cp = ","; \
 	} \
@@ -397,6 +492,8 @@ tcp_trace(act, ostate, atp, tp, ti, req)
 			printf("<%s>", tcptimers[timer]);
 		break;
 	}
+
+skipact:
 	printf(" -> %s", tcpstates[tp->t_state]);
 	/* print out internal state of tp !?! */
 	printf("\n");
