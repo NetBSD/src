@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.16 1999/09/22 03:32:26 mhitch Exp $ */
+/* $NetBSD: asc.c,v 1.16.2.1 1999/10/19 22:03:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.16 1999/09/22 03:32:26 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.16.2.1 1999/10/19 22:03:45 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,13 +113,6 @@ void	asc_tcds_attach	__P((struct device *, struct device *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach asc_tcds_ca = {
 	sizeof(struct asc_tcds_softc), asc_tcds_match, asc_tcds_attach
-};
-
-struct scsipi_device asc_tcds_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -233,9 +226,10 @@ asc_tcds_attach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-	ncr53c9x_attach(sc, &asc_tcds_dev);
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	sc->sc_adapter.adapt_minphys = minphys;
+
+	ncr53c9x_attach(sc);
 }
 
 /*
