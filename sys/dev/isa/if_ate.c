@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.37 2002/10/04 21:19:35 tsutsui Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.38 2002/10/05 17:52:32 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.37 2002/10/04 21:19:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.38 2002/10/05 17:52:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,11 +375,9 @@ ate_attach(parent, self, aux)
 	const char *typestr;
 	int type;
 
-	printf("\n");
-
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, ATE_NPORTS, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		printf(": can't map i/o space\n");
 		return;
 	}
 
@@ -407,11 +405,11 @@ ate_attach(parent, self, aux)
 
 	default:
 	  	/* Unknown card type: maybe a new model, but... */
-		printf("%s: where did the card go?!\n", sc->sc_dev.dv_xname);
+		printf(": where did the card go?!\n");
 		panic("unknown card");
 	}
 
-	printf("%s: %s Ethernet\n", sc->sc_dev.dv_xname, typestr);
+	printf(": %s Ethernet\n", typestr);
 
 	/* This interface is always enabled. */
 	sc->sc_flags |= FE_FLAGS_ENABLED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isapnp.c,v 1.1 2002/10/05 15:16:14 tsutsui Exp $	*/
+/*	$NetBSD: if_fmv_isapnp.c,v 1.2 2002/10/05 17:52:33 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.1 2002/10/05 15:16:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.2 2002/10/05 17:52:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,11 +92,8 @@ fmv_isapnp_attach(parent, self, aux)
 	struct mb86960_softc *sc = &isc->sc_mb86960;
 	struct isapnp_attach_args * const ipa = aux;
 
-	printf("\n");
-
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: can't configure isapnp resources\n",
-		   sc->sc_dev.dv_xname);
+		printf(": can't configure isapnp resources\n");
 		return;
 	}
 

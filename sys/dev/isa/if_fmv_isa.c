@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isa.c,v 1.1 2002/10/05 15:16:12 tsutsui Exp $	*/
+/*	$NetBSD: if_fmv_isa.c,v 1.2 2002/10/05 17:52:32 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.1 2002/10/05 15:16:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.2 2002/10/05 17:52:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,8 +283,6 @@ fmv_isa_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-
-	printf("\n");
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, FMV_NPORTS, 0, &ioh)) {
