@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.21 2000/09/06 22:22:27 thorpej Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.22 2000/11/23 21:44:52 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -1091,7 +1091,7 @@ db_disasm(loc, altfmt)
 	int	imm2;
 	int	len;
 	struct i_addr	address;
-	pt_entry_t *pte;
+	pt_entry_t *pte, *pde;
 
 	/*
 	 * Don't try to disassemble the location if the mapping is invalid.
@@ -1101,7 +1101,8 @@ db_disasm(loc, altfmt)
 		pte = kvtopte((vaddr_t)loc);
 	else
 		pte = vtopte((vaddr_t)loc);
-	if ((*pte & PG_V) == 0) {
+	pde = vtopte((vaddr_t)pte);
+	if ((*pde & PG_V) == 0 || (*pte & PG_V) == 0) {
 		db_printf("invalid address\n");
 		return (loc);
 	}
