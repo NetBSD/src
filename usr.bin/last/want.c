@@ -1,4 +1,4 @@
-/*	$NetBSD: want.c,v 1.3 2004/11/11 00:54:23 christos Exp $	*/
+/*	$NetBSD: want.c,v 1.4 2004/11/19 21:41:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -42,26 +42,9 @@ gethost(struct utmp* ut, int numeric)
 #else
 	if (numeric) {
 		static char buf[512];
-		const char *p;
-		struct sockaddr_storage *ss = &ut->ut_ss;
-		void *a;
-		switch (ss->ss_family) {
-		default:
-			(void)snprintf(buf, sizeof(buf), "%d: unknown family",
-				ss->ss_family);
-			return buf;
-		case 0:	/* reboot etc. entries */
-			return "";
-		case AF_INET:
-			a = &((struct sockaddr_in *)(void *)ss)->sin_addr;
-			break;
-		case AF_INET6:
-			a = &((struct sockaddr_in6 *)(void *)ss)->sin6_addr;
-			break;
-		}
-		if ((p = inet_ntop(ss->ss_family, a, buf, ss->ss_len)) != NULL)
-			return p;
-		(void)snprintf(buf, sizeof(buf), "%s", strerror(errno));
+		buf[0] = '\0';
+		(void)sockaddr_snprintf(buf, sizeof(buf), "%a",
+		    (struct sockaddr *)&ut->ut_ss);
 		return buf;
 	} else
 		return ut->ut_host;
