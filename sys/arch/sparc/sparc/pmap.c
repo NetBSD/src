@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.201 2001/12/15 09:00:50 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.202 2002/01/24 16:50:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -5667,7 +5667,7 @@ pmap_kenter_pa4_4c(va, pa, prot)
 	int vr, vs, i, s;
 	int pteproto, ctx;
 
-	pteproto = PG_V | PMAP_T2PTE_4(pa);
+	pteproto = PG_S | PG_V | PMAP_T2PTE_4(pa);
 	pa &= ~PMAP_TNC_4;
 	pteproto |= atop(pa) & PG_PFNUM;
 	if (prot & VM_PROT_WRITE)
