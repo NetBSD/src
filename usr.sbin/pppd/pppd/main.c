@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 2001/04/06 11:13:50 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2002/05/29 19:06:32 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: main.c,v 1.100 2000/07/06 11:17:02 paulus Exp "
+#define RCSID	"Id: main.c,v 1.105 2001/03/12 22:58:59 paulus Exp "
 #else
-__RCSID("$NetBSD: main.c,v 1.38 2001/04/06 11:13:50 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.39 2002/05/29 19:06:32 christos Exp $");
 #endif
 #endif
 
@@ -63,7 +63,6 @@ __RCSID("$NetBSD: main.c,v 1.38 2001/04/06 11:13:50 wiz Exp $");
 #include "chap.h"
 #include "ccp.h"
 #include "pathnames.h"
-#include "patchlevel.h"
 #include "tdb.h"
 
 #ifdef CBCP_SUPPORT
@@ -84,6 +83,8 @@ static const char rcsid[] = RCSID;
 /* interface vars */
 char ifname[32];		/* Interface name */
 int ifunit;			/* Interface unit number */
+
+struct channel *the_channel;
 
 char *progname;			/* Name of this program */
 char hostname[MAXNAMELEN];	/* Our hostname */
@@ -119,6 +120,9 @@ int phase;			/* where the link is at */
 int kill_link;
 int open_ccp_flag;
 int listen_time;
+int got_sigusr2;
+int got_sigterm;
+int got_sighup;
 
 static int waiting;
 static sigjmp_buf sigjmp;
@@ -182,6 +186,7 @@ static void update_db_entry __P((void));
 static void add_db_key __P((const char *));
 static void delete_db_key __P((const char *));
 static void cleanup_db __P((void));
+static void handle_events __P((void));
 
 extern	char	*ttyname __P((int));
 extern	char	*getlogin __P((void));
@@ -237,8 +242,6 @@ main(argc, argv)
     int i, t;
     char *p;
     struct passwd *pw;
-    struct timeval timo;
-    sigset_t mask;
     struct protent *protp;
     char numbuf[16];
 
@@ -288,6 +291,10 @@ main(argc, argv)
      */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
         (*protp->init)(0);
+
+    /*
+     * Initialize the default channel.
+     */
     tty_init();
 
     progname = *argv;
@@ -300,12 +307,17 @@ main(argc, argv)
 	|| !options_from_user()
 	|| !parse_args(argc-1, argv+1))
 	exit(EXIT_OPTION_ERROR);
+    devnam_fixed = 1;		/* can no longer change device name */
 
     /*
      * Work out the device name, if it hasn't already been specified,
      * and parse the tty's options file.
      */
-    tty_device_check();
+    if (the_channel->process_extra_options)
+	(*the_channel->process_extra_options)();
+
+    if (debug)
+	setlogmask(LOG_UPTO(LOG_DEBUG));
 
     /*
      * Check that we are running as root.
@@ -317,13 +329,14 @@ main(argc, argv)
     }
 
     if (!ppp_available()) {
-	option_error(no_ppp_msg);
+	option_error("%s", no_ppp_msg);
 	exit(EXIT_NO_KERNEL_SUPPORT);
     }
 
     /*
      * Check that the options given are valid and consistent.
      */
+    check_options();
     if (!sys_check_options())
 	exit(EXIT_OPTION_ERROR);
     auth_check_options();
@@ -333,14 +346,22 @@ main(argc, argv)
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->check_options != NULL)
 	    (*protp->check_options)();
-    tty_check_options();
+    if (the_channel->check_options)
+	(*the_channel->check_options)();
+
+
+    if (dump_options || dryrun) {
+	init_pr_log(NULL, LOG_INFO);
+	print_options(pr_log, NULL);
+	end_pr_log();
+	if (dryrun)
+	    die(0);
+    }
 
     /*
      * Initialize system-dependent stuff.
      */
     sys_init();
-    if (debug)
-	setlogmask(LOG_UPTO(LOG_DEBUG));
 
     pppdb = tdb_open(_PATH_PPPDB, 0, 0, O_RDWR|O_CREAT, 0644);
     if (pppdb != NULL) {
@@ -368,8 +389,7 @@ main(argc, argv)
 	else
 	    p = "(unknown)";
     }
-    syslog(LOG_NOTICE, "pppd %s.%d%s started by %s, uid %d",
-	   VERSION, PATCHLEVEL, IMPLEMENTATION, p, uid);
+    syslog(LOG_NOTICE, "pppd %s started by %s, uid %d", VERSION, p, uid);
     script_setenv("PPPLOGNAME", p, 0);
 
     if (devnam[0])
@@ -416,32 +436,15 @@ main(argc, argv)
 	    /*
 	     * Don't do anything until we see some activity.
 	     */
-	    kill_link = 0;
 	    new_phase(PHASE_DORMANT);
 	    demand_unblock();
 	    add_fd(fd_loop);
 	    for (;;) {
-		if (sigsetjmp(sigjmp, 1) == 0) {
-		    sigprocmask(SIG_BLOCK, &mask, NULL);
-		    if (kill_link || got_sigchld) {
-			sigprocmask(SIG_UNBLOCK, &mask, NULL);
-		    } else {
-			waiting = 1;
-			sigprocmask(SIG_UNBLOCK, &mask, NULL);
-			wait_input(timeleft(&timo));
-		    }
-		}
-		waiting = 0;
-		calltimeout();
-		if (kill_link) {
-		    if (!persist)
-			break;
-		    kill_link = 0;
-		}
+		handle_events();
+		if (kill_link && !persist)
+		    break;
 		if (get_loop_output())
 		    break;
-		if (got_sigchld)
-		    reap_kids(0);
 	    }
 	    remove_fd(fd_loop);
 	    if (kill_link && !persist)
@@ -456,13 +459,13 @@ main(argc, argv)
 
 	new_phase(PHASE_SERIALCONN);
 
-	devfd = connect_tty();
+	devfd = the_channel->connect();
 	if (devfd < 0)
 	    goto fail;
 
 	/* set up the serial device as a ppp interface */
 	tdb_writelock(pppdb);
-	fd_ppp = establish_ppp(devfd);
+	fd_ppp = the_channel->establish_ppp(devfd);
 	if (fd_ppp < 0) {
 	    tdb_writeunlock(pppdb);
 	    status = EXIT_FATAL_ERROR;
@@ -485,50 +488,21 @@ main(argc, argv)
 	script_unsetenv("BYTES_RCVD");
 	lcp_lowerup(0);
 
-	/*
-	 * If we are initiating this connection, wait for a short
-	 * time for something from the peer.  This can avoid bouncing
-	 * our packets off his tty before he has it set up.
-	 */
 	add_fd(fd_ppp);
-	if (listen_time != 0) {
-	    struct timeval t;
-	    t.tv_sec = listen_time / 1000;
-	    t.tv_usec = listen_time % 1000;
-	    wait_input(&t);
-	}
-
 	lcp_open(0);		/* Start protocol */
-	open_ccp_flag = 0;
 	status = EXIT_NEGOTIATION_FAILED;
 	new_phase(PHASE_ESTABLISH);
 	while (phase != PHASE_DEAD) {
-	    if (sigsetjmp(sigjmp, 1) == 0) {
-		sigprocmask(SIG_BLOCK, &mask, NULL);
-		if (kill_link || open_ccp_flag || got_sigchld) {
-		    sigprocmask(SIG_UNBLOCK, &mask, NULL);
-		} else {
-		    waiting = 1;
-		    sigprocmask(SIG_UNBLOCK, &mask, NULL);
-		    wait_input(timeleft(&timo));
-		}
-	    }
-	    waiting = 0;
-	    calltimeout();
+	    handle_events();
 	    get_input();
-	    if (kill_link) {
+	    if (kill_link)
 		lcp_close(0, "User request");
-		kill_link = 0;
-	    }
 	    if (open_ccp_flag) {
 		if (phase == PHASE_NETWORK || phase == PHASE_RUNNING) {
 		    ccp_fsm[0].flags = OPT_RESTART; /* clears OPT_SILENT */
 		    (*ccp_protent.open)(0);
 		}
-		open_ccp_flag = 0;
 	    }
-	    if (got_sigchld)
-		reap_kids(0);	/* Don't leave dead kids lying around */
 	}
 
 	/*
@@ -537,7 +511,7 @@ main(argc, argv)
 	if (link_stats_valid) {
 	    int t = (link_connect_time + 5) / 6;    /* 1/10ths of minutes */
 	    info("Connect time %d.%d minutes.", t/10, t%10);
-	    info("Sent %d bytes, received %d bytes.",
+	    info("Sent %u bytes, received %u bytes.",
 		 link_stats.bytes_out, link_stats.bytes_in);
 	}
 
@@ -560,9 +534,7 @@ main(argc, argv)
 	 */
 	remove_fd(fd_ppp);
 	clean_check();
-	if (demand)
-	    restore_loop();
-	disestablish_ppp(devfd);
+	the_channel->disestablish_ppp(devfd);
 	fd_ppp = -1;
 	if (!hungup)
 	    lcp_lowerdown(0);
@@ -575,10 +547,11 @@ main(argc, argv)
 	 */
     disconnect:
 	new_phase(PHASE_DISCONNECT);
-	disconnect_tty();
+	the_channel->disconnect();
 
     fail:
-	cleanup_tty();
+	if (the_channel->cleanup)
+	    (*the_channel->cleanup)();
 
 	if (!demand) {
 	    if (pidfilename[0] != 0
@@ -590,7 +563,6 @@ main(argc, argv)
 	if (!persist || (maxfail > 0 && unsuccess >= maxfail))
 	    break;
 
-	kill_link = 0;
 	if (demand)
 	    demand_discard();
 	t = need_holdoff? holdoff: 0;
@@ -600,24 +572,9 @@ main(argc, argv)
 	    new_phase(PHASE_HOLDOFF);
 	    TIMEOUT(holdoff_end, NULL, t);
 	    do {
-		if (sigsetjmp(sigjmp, 1) == 0) {
-		    sigprocmask(SIG_BLOCK, &mask, NULL);
-		    if (kill_link || got_sigchld) {
-			sigprocmask(SIG_UNBLOCK, &mask, NULL);
-		    } else {
-			waiting = 1;
-			sigprocmask(SIG_UNBLOCK, &mask, NULL);
-			wait_input(timeleft(&timo));
-		    }
-		}
-		waiting = 0;
-		calltimeout();
-		if (kill_link) {
-		    kill_link = 0;
+		handle_events();
+		if (kill_link)
 		    new_phase(PHASE_DORMANT); /* allow signal to end holdoff */
-		}
-		if (got_sigchld)
-		    reap_kids(0);
 	    } while (phase == PHASE_HOLDOFF);
 	    if (!persist)
 		break;
@@ -639,6 +596,50 @@ main(argc, argv)
 
     die(status);
     return 0;
+}
+
+/*
+ * handle_events - wait for something to happen and respond to it.
+ */
+static void
+handle_events()
+{
+    struct timeval timo;
+    sigset_t mask;
+
+    kill_link = open_ccp_flag = 0;
+    if (sigsetjmp(sigjmp, 1) == 0) {
+	sigprocmask(SIG_BLOCK, &mask, NULL);
+	if (got_sighup || got_sigterm || got_sigusr2 || got_sigchld) {
+	    sigprocmask(SIG_UNBLOCK, &mask, NULL);
+	} else {
+	    waiting = 1;
+	    sigprocmask(SIG_UNBLOCK, &mask, NULL);
+	    wait_input(timeleft(&timo));
+	}
+    }
+    waiting = 0;
+    calltimeout();
+    if (got_sighup) {
+	kill_link = 1;
+	got_sighup = 0;
+	if (status != EXIT_HANGUP)
+	    status = EXIT_USER_REQUEST;
+    }
+    if (got_sigterm) {
+	kill_link = 1;
+	persist = 0;
+	status = EXIT_USER_REQUEST;
+	got_sigterm = 0;
+    }
+    if (got_sigchld) {
+	reap_kids(0);	/* Don't leave dead kids lying around */
+	got_sigchld = 0;
+    }
+    if (got_sigusr2) {
+	open_ccp_flag = 1;
+	got_sigusr2 = 0;
+    }
 }
 
 /*
@@ -768,7 +769,7 @@ detach()
     close(1);
     close(2);
     detached = 1;
-    if (!log_to_file && !log_to_specific_fd)
+    if (log_default)
 	log_to_fd = -1;
     /* update pid files if they have been written already */
     if (pidfilename[0])
@@ -1046,8 +1047,9 @@ cleanup()
     sys_cleanup();
 
     if (fd_ppp >= 0)
-	disestablish_ppp(devfd);
-    cleanup_tty();
+	the_channel->disestablish_ppp(devfd);
+    if (the_channel->cleanup)
+	(*the_channel->cleanup)();
 
     if (pidfilename[0] != 0 && unlink(pidfilename) < 0 && errno != ENOENT) 
 	warn("unable to delete pid file %s: %m", pidfilename);
@@ -1098,18 +1100,19 @@ static struct timeval timenow;		/* Current time */
 /*
  * timeout - Schedule a timeout.
  *
- * Note that this timeout takes the number of seconds, NOT hz (as in
+ * Note that this timeout takes the number of milliseconds, NOT hz (as in
  * the kernel).
  */
 void
-timeout(func, arg, time)
+timeout(func, arg, secs, usecs)
     void (*func) __P((void *));
     void *arg;
-    int time;
+    int secs, usecs;
 {
     struct callout *newp, *p, **pp;
   
-    MAINDEBUG(("Timeout %p:%p in %d seconds.", func, arg, time));
+    MAINDEBUG(("Timeout %p:%p in %d.%03d seconds.", func, arg,
+	       time / 1000, time % 1000));
   
     /*
      * Allocate timeout.
@@ -1119,9 +1122,13 @@ timeout(func, arg, time)
     newp->c_arg = arg;
     newp->c_func = func;
     gettimeofday(&timenow, NULL);
-    newp->c_time.tv_sec = timenow.tv_sec + time;
-    newp->c_time.tv_usec = timenow.tv_usec;
-  
+    newp->c_time.tv_sec = timenow.tv_sec + secs;
+    newp->c_time.tv_usec = timenow.tv_usec + usecs;
+    if (newp->c_time.tv_usec >= 1000000) {
+	newp->c_time.tv_sec += newp->c_time.tv_usec / 1000000;
+	newp->c_time.tv_usec %= 1000000;
+    }
+
     /*
      * Find correct place and link it in.
      */
@@ -1238,9 +1245,7 @@ hup(sig)
     int sig;
 {
     info("Hangup (SIGHUP)");
-    kill_link = 1;
-    if (status != EXIT_HANGUP)
-	status = EXIT_USER_REQUEST;
+    got_sighup = 1;
     if (conn_running)
 	/* Send the signal to the [dis]connector process(es) also */
 	kill_my_pg(sig);
@@ -1261,9 +1266,7 @@ term(sig)
     int sig;
 {
     info("Terminating on signal %d.", sig);
-    persist = 0;		/* don't try to restart */
-    kill_link = 1;
-    status = EXIT_USER_REQUEST;
+    got_sigterm = 1;
     if (conn_running)
 	/* Send the signal to the [dis]connector process(es) also */
 	kill_my_pg(sig);
@@ -1316,7 +1319,7 @@ static void
 open_ccp(sig)
     int sig;
 {
-    open_ccp_flag = 1;
+    got_sigusr2 = 1;
     if (waiting)
 	siglongjmp(sigjmp, 1);
 }
@@ -1404,7 +1407,8 @@ device_script(program, in, out, dont_wait)
     close(1);
     close(2);
     sys_close();
-    tty_close_fds();
+    if (the_channel->close)
+	(*the_channel->close)();
     closelog();
 
     /* dup the in, out, err fds to 0, 1, 2 */
@@ -1486,7 +1490,8 @@ run_program(prog, args, must_exist, done, arg)
 	close (0);
 	close (1);
 	close (2);
-	tty_close_fds();
+	if (the_channel->close)
+	    (*the_channel->close)();
 
         /* Don't pass handles to the PPP device, even by accident. */
 	new_fd = open (_PATH_DEVNULL, O_RDWR);
@@ -1567,7 +1572,6 @@ reap_kids(waitfor)
     int pid, status;
     struct subprocess *chp, **prevp;
 
-    got_sigchld = 0;
     if (n_children == 0)
 	return 0;
     while ((pid = waitpid(-1, &status, (waitfor? 0: WNOHANG))) != -1

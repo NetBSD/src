@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.6 2002/01/23 18:23:02 thorpej Exp $	*/
+/*	$NetBSD: utils.c,v 1.7 2002/05/29 19:06:33 christos Exp $	*/
 
 /*
  * utils.c - various utility functions used in pppd.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: utils.c,v 1.10 2000/03/27 01:36:48 paulus Exp "
+#define RCSID	"Id: utils.c,v 1.13 2001/03/16 02:08:13 paulus Exp "
 #else
-__RCSID("$NetBSD: utils.c,v 1.6 2002/01/23 18:23:02 thorpej Exp $");
+__RCSID("$NetBSD: utils.c,v 1.7 2002/05/29 19:06:33 christos Exp $");
 #endif
 #endif
 
@@ -62,8 +62,8 @@ static const char rcsid[] = RCSID;
 extern char *strerror();
 #endif
 
-static void pr_log __P((void *, char *, ...));
 static void logit __P((int, char *, va_list));
+static void log_write __P((int, char *));
 static void vslp_printer __P((void *, char *, ...));
 static void format_packet __P((u_char *, int, void (*) (void *, char *, ...),
 			       void *));
@@ -224,6 +224,10 @@ vslprintf(buf, buflen, fmt, args)
 		val = -i;
 	    } else
 		val = i;
+	    base = 10;
+	    break;
+	case 'u':
+	    val = va_arg(args, unsigned int);
 	    base = 10;
 	    break;
 	case 'o':
@@ -416,12 +420,10 @@ vslp_printer __V((void *arg, char *fmt, ...))
     bi->len -= n;
 }
 
+#ifdef unused
 /*
  * log_packet - format a packet and log it.
  */
-
-char line[256];			/* line to be logged accumulated here */
-char *linep;
 
 void
 log_packet(p, len, prefix, level)
@@ -430,12 +432,11 @@ log_packet(p, len, prefix, level)
     char *prefix;
     int level;
 {
-    strlcpy(line, prefix, sizeof(line));
-    linep = line + strlen(line);
-    format_packet(p, len, pr_log, NULL);
-    if (linep != line)
-	syslog(level, "%s", line);
+	init_pr_log(prefix, level);
+	format_packet(p, len, pr_log, &level);
+	end_pr_log();
 }
+#endif /* unused */
 
 /*
  * format_packet - make a readable representation of a packet,
@@ -487,32 +488,92 @@ format_packet(p, len, printer, arg)
 	printer(arg, "%.*B", len, p);
 }
 
-static void
+/*
+ * init_pr_log, end_pr_log - initialize and finish use of pr_log.
+ */
+
+static char line[256];		/* line to be logged accumulated here */
+static char *linep;		/* current pointer within line */
+static int llevel;		/* level for logging */
+
+void
+init_pr_log(prefix, level)
+     char *prefix;
+     int level;
+{
+	linep = line;
+	if (prefix != NULL) {
+		strlcpy(line, prefix, sizeof(line));
+		linep = line + strlen(line);
+	}
+	llevel = level;
+}
+
+void
+end_pr_log()
+{
+	if (linep != line) {
+		*linep = 0;
+		log_write(llevel, line);
+	}
+}
+
+/*
+ * pr_log - printer routine for outputting to syslog
+ */
+void
 pr_log __V((void *arg, char *fmt, ...))
 {
-    int n;
-    va_list pvar;
-    char buf[256];
+	int l, n;
+	va_list pvar;
+	char *p, *eol;
+	char buf[256];
 
 #if defined(__STDC__)
-    va_start(pvar, fmt);
+	va_start(pvar, fmt);
 #else
-    void *arg;
-    char *fmt;
-    va_start(pvar);
-    arg = va_arg(pvar, void *);
-    fmt = va_arg(pvar, char *);
+	void *arg;
+	char *fmt;
+	va_start(pvar);
+	arg = va_arg(pvar, void *);
+	fmt = va_arg(pvar, char *);
 #endif
 
-    n = vslprintf(buf, sizeof(buf), fmt, pvar);
-    va_end(pvar);
+	n = vslprintf(buf, sizeof(buf), fmt, pvar);
+	va_end(pvar);
 
-    if (linep + n + 1 > line + sizeof(line)) {
-	syslog(LOG_DEBUG, "%s", line);
-	linep = line;
-    }
-    strlcpy(linep, buf, line + sizeof(line) - linep);
-    linep += n;
+	p = buf;
+	eol = strchr(buf, '\n');
+	if (linep != line) {
+		l = (eol == NULL)? n: eol - buf;
+		if (linep + l < line + sizeof(line)) {
+			if (l > 0) {
+				memcpy(linep, buf, l);
+				linep += l;
+			}
+			if (eol == NULL)
+				return;
+			p = eol + 1;
+			eol = strchr(p, '\n');
+		}
+		*linep = 0;
+		log_write(llevel, line);
+		linep = line;
+	}
+
+	while (eol != NULL) {
+		*eol = 0;
+		log_write(llevel, p);
+		p = eol + 1;
+		eol = strchr(p, '\n');
+	}
+
+	/* assumes sizeof(buf) <= sizeof(line) */
+	l = buf + n - p;
+	if (l > 0) {
+		memcpy(line, p, n);
+		linep = line + l;
+	}
 }
 
 /*
@@ -567,11 +628,22 @@ logit(level, fmt, args)
     char buf[1024];
 
     n = vslprintf(buf, sizeof(buf), fmt, args);
+    log_write(level, buf);
+}
+
+static void
+log_write(level, buf)
+    int level;
+    char *buf;
+{
     syslog(level, "%s", buf);
     if (log_to_fd >= 0 && (level != LOG_DEBUG || debug)) {
-	if (buf[n-1] != '\n')
-	    buf[n++] = '\n';
-	if (write(log_to_fd, buf, n) != n)
+	int n = strlen(buf);
+
+	if (n > 0 && buf[n-1] == '\n')
+	    --n;
+	if (write(log_to_fd, buf, n) != n
+	    || write(log_to_fd, "\n", 1) != 1)
 	    log_to_fd = -1;
     }
 }
