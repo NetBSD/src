@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.148 2004/07/20 10:40:21 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.149 2004/07/20 11:22:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.148 2004/07/20 10:40:21 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.149 2004/07/20 11:22:27 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1012,12 +1012,6 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			char **authp;
 			char *auser, *apass;
 
-			fprintf(ttyout, "%s\n", message);
-			if (EMPTYSTRING(auth)) {
-				warnx(
-			    "No authentication challenge provided by server");
-				goto cleanup_fetch_url;
-			}
 			if (hcode == 401) {
 				authp = &wwwauth;
 				auser = user;
@@ -1026,6 +1020,14 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				authp = &proxyauth;
 				auser = puser;
 				apass = ppass;
+			}
+			if (verbose || *authp == NULL ||
+			    auser == NULL || apass == NULL)
+				fprintf(ttyout, "%s\n", message);
+			if (EMPTYSTRING(auth)) {
+				warnx(
+			    "No authentication challenge provided by server");
+				goto cleanup_fetch_url;
 			}
 			if (*authp != NULL) {
 				char reply[10];
