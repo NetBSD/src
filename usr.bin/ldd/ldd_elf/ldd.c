@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.24 2004/05/23 06:51:05 skrll Exp $	*/
+/*	$NetBSD: ldd.c,v 1.25 2004/09/07 02:54:40 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -255,22 +255,26 @@ fmtprint(const char *libname, Obj_Entry *obj, const char *fmt1,
 	char *cp;
 	int c;
 
-	if (fmt1 == NULL)
-		fmt1 = "\t-l%o.%m => %p\n";
-	if (fmt2 == NULL)
-		fmt2 = "\t%o => %p\n";
-
-	if (strncmp(libname, "lib", 3) == 0
-	    && (cp = strstr(libname, ".so")) != NULL) {
+	if (strncmp(libname, "lib", 3) == 0 &&
+	    (cp = strstr(libname, ".so")) != NULL) {
 		int i = cp - (libname + 3);
+
 		if (i >= sizeof(libnamebuf))
 			i = sizeof(libnamebuf) - 1;
 		(void)memcpy(libnamebuf, libname + 3, i);
-	    libnamebuf[i] = '\0';
-	    if (cp[3] && isdigit((unsigned char)cp[4]))
-		    libmajor = &cp[4];
-	    libname = libnamebuf;
+		libnamebuf[i] = '\0';
+		if (cp[3] && isdigit((unsigned char)cp[4]))
+			libmajor = &cp[4];
+		libname = libnamebuf;
 	}
+
+	if (fmt1 == NULL)
+		fmt1 = libmajor != NULL ?
+		    "\t-l%o.%m => %p\n" :
+		    "\t-l%o => %p\n";
+	if (fmt2 == NULL)
+		fmt2 = "\t%o => %p\n";
+
 	fmt = libname == libnamebuf ? fmt1 : fmt2;
 	while ((c = *fmt++) != '\0') {
 		switch (c) {
