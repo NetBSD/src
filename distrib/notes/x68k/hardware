@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.11 2000/10/29 14:08:12 lukem Exp $
+.\"	$NetBSD: hardware,v 1.12 2000/12/01 08:02:34 minoura Exp $
 .
 .Nx*M
 \*V runs on the Sharp X68030 series PCs with a
@@ -56,9 +56,13 @@ is large and bulky to accommodate all people).
 Supported devices include:
 .(bullet -compact -offset indent
 Sharp genuine SCSI interface (builtin / optional)
-* SCSI harddisks, CD-ROM drives, tape drives, scanners,...
+.It
+SCSI harddisks, CD-ROM drives, tape drives, scanners,...
 .It
 Mankai Seisakusho Mach-2 SCSI interface
+.(Note
+Mach-2p is NOT reported to work.
+.Note)
 .It
 The builtin floppy drives
 .It
