@@ -1,4 +1,4 @@
-#	$NetBSD: LAGER,v 1.23 1998/05/19 15:20:40 hpeyerl Exp $
+#	$NetBSD: LAGER,v 1.24 1998/06/26 01:53:55 lukem Exp $
 #
 # LAGER (hpeyerl's hp425s)
 #
@@ -38,7 +38,6 @@ file-system	MFS		# Memory-based filesystem
 file-system	CD9660		# ISO 9660 + Rock Ridge filesystem
 
 # Filesystem options
-options 	FIFO		# POSIX fifo support (in all filesystems)
 options 	NFSSERVER	# Network filesystem server
 
 # Networking options

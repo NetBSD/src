@@ -66,7 +66,6 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 
-options 	FIFO		# FIFOs; RECOMMENDED
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

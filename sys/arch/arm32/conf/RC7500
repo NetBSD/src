@@ -1,4 +1,4 @@
-#	$NetBSD: RC7500,v 1.18 1998/06/09 01:15:49 tv Exp $
+#	$NetBSD: RC7500,v 1.19 1998/06/26 01:53:49 lukem Exp $
 #
 #	RC7500 - Config for the VLSI RC7500 board
 #
@@ -59,7 +59,6 @@ file-system	KERNFS		# /kern
 
 # File system options
 #options 	QUOTA		# UFS quotas
-options 	FIFO		# FIFOs; RECOMMENDED
 options 	NFSSERVER
 
 # Networking options

@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.4 1998/06/21 23:40:12 tv Exp $
+#	$NetBSD: SHARK,v 1.5 1998/06/26 01:53:50 lukem Exp $
 #
 #	SHARK
 #
@@ -57,7 +57,6 @@ file-system	KERNFS		# /kern
 
 # File system options
 #options 	QUOTA		# UFS quotas
-options 	FIFO		# FIFOs; RECOMMENDED
 #options 	NFSSERVER
 
 # Networking options

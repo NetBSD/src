@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.26 1997/12/01 15:19:31 kleink Exp $
+#	$NetBSD: ATARITT,v 1.27 1998/06/26 01:53:51 lukem Exp $
 #
 # ATARI-TT
 #
@@ -47,9 +47,6 @@ file-system	UNION		# union file system
 file-system	NULLFS		# Loopback filesystem
 file-system	MSDOSFS		# MSDOS filesystem
 file-system	CD9660		# ISO 9660 filesystem with Rock Ridge
-
-# File system options
-options 	FIFO		# FIFO operations on vnodes
 
 #
 # Misc. debugging options

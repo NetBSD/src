@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.24 1998/05/08 21:37:30 scw Exp $
+#	$NetBSD: VME147,v 1.25 1998/06/26 01:54:03 lukem Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -23,7 +23,6 @@ file-system 	KERNFS
 #file-system	UNION
 
 #options 	NFSSERVER
-options 	FIFO
 #options 	FFS_EI		# FFS Endian Independant support
 
 # Networking options
