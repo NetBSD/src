@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.15 2003/06/29 22:28:26 fvdl Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.16 2003/10/25 18:40:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15 2003/06/29 22:28:26 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.16 2003/10/25 18:40:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,9 @@ procfs_getcpuinfstr(char *buf, int *len)
 	if (cpu_info_list->ci_tsc_freq != 0) {
 		freq = (cpu_info_list->ci_tsc_freq + 4999) / 1000000;
 		fraq = ((cpu_info_list->ci_tsc_freq + 4999) / 10000) % 100;
+	} else {
+		freq = 0; /* XXX: gcc */
+		fraq = 0;
 	}
 
 	p = featurebuf;
