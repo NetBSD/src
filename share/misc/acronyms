@@ -1,7 +1,9 @@
-$NetBSD: acronyms,v 1.24 1999/07/22 23:56:25 hubertf Exp $
+$NetBSD: acronyms,v 1.25 1999/07/23 13:32:28 mrg Exp $
 
 AFAICT	as far as I can tell
+AFAICR	as far as I can recall
 AFAIK	as far as I know
+AFAIR	as far as I recall
 BBL	[I'll] be back later
 BFD	big fucking deal
 BIAB	back in a bit
@@ -9,6 +11,7 @@ BIAF	back in a few
 BIAS	back in a second
 BIAW	back in a while
 BRB	[I'll] be right back
+BTTH	butt to the head
 BTW	by the way
 DNDK	don't know, don't care
 DTRT	do the right thing
@@ -35,9 +38,12 @@ RTFB	read the fine book
 RTFM	read the fine manual
 RTFMP	read the fine man page
 RTFS	read the fine source
+SEP	someone else's problem
 SMOP	simple matter of programming
 SOL	shit out [of] luck
+SFA	sweet fuck all
 TIA	thanks in advance
+TMI	too much information
 TTFN	ta ta for now
 UTSL	use the source, Luke
 VEG	very evil grin
