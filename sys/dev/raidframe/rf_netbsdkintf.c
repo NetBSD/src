@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.156 2003/03/21 23:11:23 dsl Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.157 2003/04/10 03:36:02 simonb Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -111,7 +111,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.156 2003/03/21 23:11:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.157 2003/04/10 03:36:02 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2637,14 +2637,13 @@ void
 rf_ReconstructInPlaceThread(req)
 	struct rf_recon_req *req;
 {
-	int retcode;
 	int s;
 	RF_Raid_t *raidPtr;
 	
 	s = splbio();
 	raidPtr = req->raidPtr;
 	raidPtr->recon_in_progress = 1;
-	retcode = rf_ReconstructInPlace(raidPtr, req->row, req->col);
+	rf_ReconstructInPlace(raidPtr, req->row, req->col);
 	RF_Free(req, sizeof(*req));
 	raidPtr->recon_in_progress = 0;
 	splx(s);
