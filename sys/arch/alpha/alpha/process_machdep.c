@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.13 1999/08/10 23:35:45 thorpej Exp $ */
+/* $NetBSD: process_machdep.c,v 1.13.2.1 2000/11/20 19:56:37 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13 1999/08/10 23:35:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13.2.1 2000/11/20 19:56:37 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,11 +126,8 @@ process_read_fpregs(p, regs)
 	struct fpreg *regs;
 {
 
-	if (p == fpcurproc) {
-		alpha_pal_wrfen(1);
-		savefpstate(process_fpframe(p));
-		alpha_pal_wrfen(0);
-	}
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		synchronize_fpstate(p, 1);
 
 	bcopy(process_fpframe(p), regs, sizeof(struct fpreg));
 	return (0);
@@ -142,8 +139,8 @@ process_write_fpregs(p, regs)
 	struct fpreg *regs;
 {
 
-	if (p == fpcurproc)
-		fpcurproc = NULL;
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		synchronize_fpstate(p, 0);
 
 	bcopy(regs, process_fpframe(p), sizeof(struct fpreg));
 	return (0);

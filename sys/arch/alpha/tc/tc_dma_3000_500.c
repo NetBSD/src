@@ -1,4 +1,4 @@
-/* $NetBSD: tc_dma_3000_500.c,v 1.8 1998/06/03 18:25:54 thorpej Exp $ */
+/* $NetBSD: tc_dma_3000_500.c,v 1.8.14.1 2000/11/20 19:57:29 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,13 +39,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.8 1998/06/03 18:25:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.8.14.1 2000/11/20 19:57:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #define _ALPHA_BUS_DMA_PRIVATE
 #include <machine/bus.h>

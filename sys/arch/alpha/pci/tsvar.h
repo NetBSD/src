@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.1 1999/06/29 06:46:47 ross Exp $ */
+/* $NetBSD: tsvar.h,v 1.1.6.1 2000/11/20 19:57:19 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -71,6 +71,8 @@ struct tsp_attach_args {
 	char	*tsp_name;
 	int	tsp_slot;
 };
+
+extern int tsp_console_hose;
 
 struct	tsp_config *tsp_init __P((int, int));
 void	tsp_pci_init __P((pci_chipset_tag_t, void *));

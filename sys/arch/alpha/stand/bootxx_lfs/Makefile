@@ -1,8 +1,9 @@
-# $NetBSD: Makefile,v 1.1 1999/08/18 20:02:39 cgd Exp $
+# $NetBSD: Makefile,v 1.1.2.1 2000/11/20 19:57:22 bouyer Exp $
 
 PROG = bootxx_lfs
 CPPFLAGS += -DLIBSA_SINGLE_FILESYSTEM=lfs \
 	    -DBOOTXX_FS_NAME='"LFS"' \
+	    -DBOOTXX_RAID1_SUPPORT \
 	    -DNO_GETCHAR
 
 # not yet desired: -DBOOTXX_FS_TYPE=FS_BSDLFS

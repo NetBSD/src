@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia.c,v 1.5 1999/04/15 22:27:40 thorpej Exp $ */
+/* $NetBSD: mcpcia.c,v 1.5.2.1 2000/11/20 19:57:11 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.5 1999/04/15 22:27:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.5.2.1 2000/11/20 19:57:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.5 1999/04/15 22:27:40 thorpej Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
-#include <machine/pte.h>
+#include <machine/sysarch.h>
 
 #include <alpha/mcbus/mcbusreg.h>
 #include <alpha/mcbus/mcbusvar.h>
@@ -96,6 +96,12 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia.c,v 1.5 1999/04/15 22:27:40 thorpej Exp $");
 	((((unsigned long) (mc)->cc_gid) << MCBUS_GID_SHIFT) | \
 	 (((unsigned long) (mc)->cc_mid) << MCBUS_MID_SHIFT) | \
 	 (MCBUS_IOSPACE))
+
+#define	MCPCIA_PROBE(mid, gid)	\
+	badaddr((void *)KV(((((unsigned long) gid) << MCBUS_GID_SHIFT) | \
+	 (((unsigned long) mid) << MCBUS_MID_SHIFT) | \
+	 (MCBUS_IOSPACE) | MCPCIA_PCI_BRIDGE | _MCPCIA_PCI_REV)), \
+	sizeof(u_int32_t))
 
 static int	mcpciamatch __P((struct device *, struct cfdata *, void *));
 static void	mcpciaattach __P((struct device *, struct device *, void *));
@@ -113,6 +119,9 @@ void	mcpcia_init0 __P((struct mcpcia_config *, int));
  * MCPCIA with an EISA adapter attached to it).
  */
 struct mcpcia_config mcpcia_console_configuration;
+
+int	mcpcia_bus_get_window __P((int, int,
+	    struct alpha_bus_space_translation *abst));
 
 static int
 mcpciaprint(aux, pnp)
@@ -152,6 +161,14 @@ mcpciaattach(parent, self, aux)
 	struct pcibus_attach_args pba;
 	u_int32_t ctl;
 
+	/*
+	 * Make sure this MCPCIA exists...
+	 */
+	if (MCPCIA_PROBE(ma->ma_mid, ma->ma_gid)) {
+		mcp->mcpcia_cc = NULL;
+		printf(" (not present)\n");
+		return;
+	}
 	printf("\n");
 
 	/*
@@ -186,14 +203,7 @@ mcpciaattach(parent, self, aux)
 	 * Set up interrupts
 	 */
 	pci_kn300_pickintr(ccp, first);
-#ifdef EVCNT_COUNTERS
-	if (first == 1) {
-		evcnt_attach(self, "intr", kn300_intr_evcnt);
-		first = 0;
-	}
-#else
 	first = 0;
-#endif
 
 	/*
 	 * Attach PCI bus
@@ -205,7 +215,8 @@ mcpciaattach(parent, self, aux)
 	    alphabus_dma_get_tag(&ccp->cc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &ccp->cc_pc;
 	pba.pba_bus = 0;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	(void) config_found(self, &pba, mcpciaprint);
 
 	/*
@@ -245,6 +256,11 @@ mcpcia_init()
 
 		if (EISA_PRESENT(REGVAL(MCPCIA_PCI_REV(ccp)))) {
 			mcpcia_init0(ccp, 0);
+
+			alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_IO] = 2;
+			alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 3;
+
+			alpha_bus_get_window = mcpcia_bus_get_window;
 			return;
 		}
 	}
@@ -327,6 +343,8 @@ mcpcia_config_cleanup()
 			continue;
 		
 		ccp = mcp->mcpcia_cc;
+		if (ccp == NULL)
+			continue;
 
 		ctl = REGVAL(MCPCIA_INT_MASK0(ccp));
 		ctl |= MCPCIA_GEN_IENABL;
@@ -340,4 +358,28 @@ mcpcia_config_cleanup()
 	(void) timeout (die_heathen_dog, &mcpcia_console_configuration,
 	    30 * hz);
 #endif
+}
+
+int
+mcpcia_bus_get_window(type, window, abst)
+	int type, window;
+	struct alpha_bus_space_translation *abst;
+{
+	struct mcpcia_config *ccp = &mcpcia_console_configuration;
+	bus_space_tag_t st;
+
+	switch (type) {
+	case ALPHA_BUS_TYPE_PCI_IO:
+		st = &ccp->cc_iot;
+		break;
+
+	case ALPHA_BUS_TYPE_PCI_MEM:
+		st = &ccp->cc_memt;
+		break;
+
+	default:
+		panic("mcpcia_bus_get_window");
+	}
+
+	return (alpha_bus_space_get_window(st, window, abst));
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.32 1999/06/29 07:22:25 ross Exp $ */
+/* $NetBSD: rpb.h,v 1.32.2.1 2000/11/20 19:56:54 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -45,7 +45,8 @@ struct rpb {
 	u_int64_t	rpb_size;		/*  18: HWRPB size in bytes */
 	u_int64_t	rpb_primary_cpu_id;	/*  20 */
 	u_int64_t	rpb_page_size;		/*  28: (8192) */
-	u_int64_t	rpb_phys_addr_size;	/*  30:   (34) */
+	u_int32_t	rpb_phys_addr_size;	/*  30: physical address size */
+	u_int32_t	rpb_extended_va_size;	/*  34: extended VA size (4L) */
 	u_int64_t	rpb_max_asn;		/*  38:   (16) */
 	char		rpb_ssn[16];		/*  40: only first 10 valid */
 
@@ -77,6 +78,12 @@ struct rpb {
 #define	ST_DEC_EV56_PBP		32		/* "Takara" */
 #define	ST_DEC_ALPHAVME_320	33		/* "Yukon" (VME) */
 #define	ST_DEC_6600		34		/* EV6-Tsunami based systems */
+#define	ST_DEC_WILDFIRE		35		/* "Wildfire" */
+#define	ST_DEC_CUSCO		36		/* "CUSCO" */
+#define	ST_DEC_EIGER		37		/* "Eiger" */
+
+	/* Alpha Processor, Inc. systypes */
+#define	ST_API_NAUTILUS		201		/* EV6-AMD 751 UP1000 */
 
 	u_int64_t	rpb_type;		/*  50: */
 
@@ -270,7 +277,9 @@ struct pcs {
 #define	PCS_PROC_EV45		6			/* EV45: 21064A */
 #define	PCS_PROC_EV56		7			/* EV56: 21164A */
 #define	PCS_PROC_EV6		8			/* EV6: 21264 */
-#define	PCS_PROC_PCA56		9			/* PCA256: 21164PC */
+#define	PCS_PROC_PCA56		9			/* PCA56: 21164PC */
+#define	PCS_PROC_PCA57		10			/* PCA57: 21164?? */
+#define	PCS_PROC_EV67		11			/* EV67: 21246A */
 
 #define	PCS_CPU_MAJORTYPE(p) ((p)->pcs_proc_type & 0xffffffff)
 #define	PCS_CPU_MINORTYPE(p) ((p)->pcs_proc_type >> 32)
@@ -327,7 +336,7 @@ struct pcs {
  * CTB: Console Terminal Block
  */
 struct ctb {
-	u_int64_t	ctb_type;		/*   0: always 4 */
+	u_int64_t	ctb_type;		/*   0: CTB type */
 	u_int64_t	ctb_unit;		/*   8: */
 	u_int64_t	ctb_reserved;		/*  16: */
 	u_int64_t	ctb_len;		/*  24: bytes of info */
@@ -335,9 +344,12 @@ struct ctb {
 	u_long		ctb_tintr_vec;		/*  40: transmit vec (0x800) */
 	u_long		ctb_rintr_vec;		/*  48: receive vec (0x800) */
 
-#define	CTB_GRAPHICS	   3			/* graphics device */
-#define	CTB_NETWORK	0xC0			/* network device */
-#define	CTB_PRINTERPORT	   2			/* printer port on the SCC */
+#define	CTB_NONE		0x00		/* no console present */
+#define	CTB_SERVICE		0x01		/* service processor */
+#define	CTB_PRINTERPORT		0x02		/* printer port on the SCC */
+#define	CTB_GRAPHICS		0x03		/* graphics device */
+#define	CTB_TYPE4		0x04		/* type 4 CTB */
+#define	CTB_NETWORK		0xC0		/* network device */
 	u_int64_t	ctb_term_type;		/*  56: terminal type */
 
 	u_int64_t	ctb_keybd_type;		/*  64: keyboard nationality */
@@ -366,6 +378,20 @@ struct ctb {
 	u_int64_t	ctb_server_off;		/* 256: offset to server info */
 	u_int64_t	ctb_line_off;		/* 264: line parameter offset */
 	u_int8_t	ctb_csd;		/* 272: console specific data */
+};
+
+struct ctb_tt {
+	u_int64_t	ctb_type;		/*   0: CTB type */
+	u_int64_t	ctb_unit;		/*   8: console unit */
+	u_int64_t	ctb_reserved;		/*  16: reserved */
+	u_int64_t	ctb_length;		/*  24: length */
+	u_int64_t	ctb_csr;		/*  32: address */
+	u_int64_t	ctb_tivec;		/*  40: Tx intr vector */
+	u_int64_t	ctb_rivec;		/*  48: Rx intr vector */
+	u_int64_t	ctb_baud;		/*  56: baud rate */
+	u_int64_t	ctb_put_sts;		/*  64: PUTS status */
+	u_int64_t	ctb_get_sts;		/*  72: GETS status */
+	u_int64_t	ctb_reserved0;		/*  80: reserved */
 };
 
 /*
@@ -450,7 +476,7 @@ struct dsrdb {
 #define	HWRPB_DSRDB_MINVERS	5
 
 #ifdef	_KERNEL
-int	cputype;
+extern int cputype;
 extern struct rpb *hwrpb;
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.18 1999/02/12 06:09:01 thorpej Exp $ */
+/* $NetBSD: dwlpx.c,v 1.18.8.1 2000/11/20 19:57:08 bouyer Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,14 +32,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.18 1999/02/12 06:09:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.18.8.1 2000/11/20 19:57:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 
@@ -158,9 +158,6 @@ dwlpxattach(parent, self, aux)
 		 * Set up interrupts
 		 */
 		pci_kn8ae_pickintr(&sc->dwlpx_cc, 1);
-#ifdef	EVCNT_COUNTERS
-		evcnt_attach(self, "intr", kn8ae_intr_evcnt);
-#endif
 		once++;
 	} else {
 		pci_kn8ae_pickintr(&sc->dwlpx_cc, 0);
@@ -176,7 +173,8 @@ dwlpxattach(parent, self, aux)
 	    alphabus_dma_get_tag(&sc->dwlpx_cc.cc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &sc->dwlpx_cc.cc_pc;
 	pba.pba_bus = 0;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	config_found(self, &pba, dwlpxprint);
 }
 

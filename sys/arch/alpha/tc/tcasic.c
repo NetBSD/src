@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.27 1999/08/07 12:58:29 drochner Exp $ */
+/* $NetBSD: tcasic.c,v 1.27.2.1 2000/11/20 19:57:30 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.27 1999/08/07 12:58:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.27.2.1 2000/11/20 19:57:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.27 1999/08/07 12:58:29 drochner Exp $")
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
 #include <machine/alpha.h>
-#include <machine/intrcnt.h>
 
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tc_conf.h>
@@ -113,6 +112,7 @@ tcasicattach(parent, self, aux)
 			tba.tba_nbuiltins = tc_3000_500_nographics_nbuiltins;
 			tba.tba_builtins = tc_3000_500_nographics_builtins;
 		}
+		tba.tba_intr_evcnt = tc_3000_500_intr_evcnt;
 		tba.tba_intr_establish = tc_3000_500_intr_establish;
 		tba.tba_intr_disestablish = tc_3000_500_intr_disestablish;
 		tba.tba_get_dma_tag = tc_dma_get_tag_3000_500;
@@ -133,6 +133,7 @@ tcasicattach(parent, self, aux)
 		tba.tba_slots = tc_3000_300_slots;
 		tba.tba_nbuiltins = tc_3000_300_nbuiltins;
 		tba.tba_builtins = tc_3000_300_builtins;
+		tba.tba_intr_evcnt = tc_3000_300_intr_evcnt;
 		tba.tba_intr_establish = tc_3000_300_intr_establish;
 		tba.tba_intr_disestablish = tc_3000_300_intr_disestablish;
 		tba.tba_get_dma_tag = tc_dma_get_tag_3000_300;
@@ -172,9 +173,9 @@ tcasicprint(aux, pnp)
 
 #include "cfb.h"
 #include "sfb.h"
-#include <alpha/tc/sfbvar.h>
-#include <alpha/tc/cfbvar.h>
 
+extern int	sfb_cnattach __P((tc_addr_t));
+extern int	cfb_cnattach __P((tc_addr_t));
 extern int	tc_checkslot __P((tc_addr_t, char *));
 
 /*

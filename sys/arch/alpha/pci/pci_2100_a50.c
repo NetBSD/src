@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.25 1998/11/19 02:35:39 ross Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.25.10.1 2000/11/20 19:57:12 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.25 1998/11/19 02:35:39 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.25.10.1 2000/11/20 19:57:12 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -37,12 +37,12 @@ __KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.25 1998/11/19 02:35:39 ross Exp $
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/intrcnt.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcireg.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.25 1998/11/19 02:35:39 ross Exp $
 int	dec_2100_a50_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_2100_a50_intr_string __P((void *, pci_intr_handle_t));
+const struct evcnt *dec_2100_a50_intr_evcnt __P((void *, pci_intr_handle_t));
 void    *dec_2100_a50_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void    dec_2100_a50_intr_disestablish __P((void *, void *));
@@ -84,6 +85,7 @@ pci_2100_a50_pickintr(acp)
 	pc->pc_intr_v = acp;
 	pc->pc_intr_map = dec_2100_a50_intr_map;
 	pc->pc_intr_string = dec_2100_a50_intr_string;
+	pc->pc_intr_evcnt = dec_2100_a50_intr_evcnt;
 	pc->pc_intr_establish = dec_2100_a50_intr_establish;
 	pc->pc_intr_disestablish = dec_2100_a50_intr_disestablish;
 
@@ -229,6 +231,18 @@ dec_2100_a50_intr_string(acv, ih)
 #endif
 
 	return sio_intr_string(NULL /*XXX*/, ih);
+}
+
+const struct evcnt *
+dec_2100_a50_intr_evcnt(acv, ih)
+	void *acv;
+	pci_intr_handle_t ih;
+{
+#if 0
+	struct apecs_config *acp = acv;
+#endif
+
+	return sio_intr_evcnt(NULL /*XXX*/, ih);
 }
 
 void *

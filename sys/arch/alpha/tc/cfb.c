@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.22 1999/01/11 21:54:22 drochner Exp $ */
+/* $NetBSD: cfb.c,v 1.22.8.1 2000/11/20 19:57:26 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.22 1999/01/11 21:54:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.22.8.1 2000/11/20 19:57:26 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.22 1999/01/11 21:54:22 drochner Exp $");
 #include <dev/tc/tcvar.h>
 #include <machine/cfbreg.h>
 #include <alpha/tc/cfbvar.h>
-#if 0
-#include <alpha/tc/bt459reg.h>
-#endif
 
 #include <dev/rcons/raster.h>
 #include <dev/wscons/wscons_raster.h>
@@ -97,13 +94,14 @@ struct wsscreen_list cfb_screenlist = {
 };
 
 int	cfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	cfbmmap __P((void *, off_t, int));
+paddr_t	cfbmmap __P((void *, off_t, int));
 
 int	cfbintr __P((void *));
 static int	cfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void	cfb_free_screen __P((void *, void *));
-static void	cfb_show_screen __P((void *, void *));
+static int	cfb_show_screen __P((void *, void *, int,
+				     void (*) (void *, int, int), void *));
 
 struct wsdisplay_accessops cfb_accessops = {
 	cfbioctl,
@@ -298,7 +296,7 @@ cfbioctl(v, cmd, data, flag, p)
 	return (-1);
 }
 
-int
+paddr_t
 cfbmmap(v, offset, prot)
 	void *v;
 	off_t offset;
@@ -358,11 +356,16 @@ cfb_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-void
-cfb_show_screen(v, cookie)
+int
+cfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
+	int waitok;
+	void (*cb) __P((void *, int, int));
+	void *cbarg;
 {
+
+	return (0);
 }
 
 int

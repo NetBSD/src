@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.22 1999/09/10 07:31:17 ross Exp $ */
+/* $NetBSD: boot.c,v 1.22.2.1 2000/11/20 19:57:23 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,6 +72,7 @@ char *kernelnames[] = {
 	"netbsd.bak",		"netbsd.bak.gz",
 	"netbsd.old",		"netbsd.old.gz",
 	"onetbsd",		"onetbsd.gz",
+	"netbsd.alpha",		"netbsd.alpha.gz",
 	NULL
 };
 

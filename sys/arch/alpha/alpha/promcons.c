@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.13 1998/03/21 22:52:59 mycroft Exp $ */
+/* $NetBSD: promcons.c,v 1.13.14.1 2000/11/20 19:56:38 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.13 1998/03/21 22:52:59 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.13.14.1 2000/11/20 19:56:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.13 1998/03/21 22:52:59 mycroft Exp $"
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
-#include <vm/vm.h>		/* XXX for _PMAP_MAY_USE_PROM_CONSOLE */
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/conf.h>
 #include <machine/prom.h>
@@ -59,6 +60,8 @@ static int polltime;
 void	promstart __P((struct tty *));
 void	promtimeout __P((void *));
 int	promparam __P((struct tty *, struct termios *));
+
+struct callout prom_ch = CALLOUT_INITIALIZER;
 
 int
 promopen(dev, flag, mode, p)
@@ -108,7 +111,7 @@ promopen(dev, flag, mode, p)
 		polltime = hz / PROM_POLL_HZ;
 		if (polltime < 1)
 			polltime = 1;
-		timeout(promtimeout, tp, polltime);
+		callout_reset(&prom_ch, polltime, promtimeout, tp);
 	}
 	return error;
 }
@@ -122,7 +125,7 @@ promclose(dev, flag, mode, p)
 	int unit = minor(dev);
 	struct tty *tp = prom_tty[unit];
 
-	untimeout(promtimeout, tp);
+	callout_stop(&prom_ch);
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 	return 0;
@@ -232,7 +235,7 @@ promtimeout(v)
 		if (tp->t_state & TS_ISOPEN)
 			(*linesw[tp->t_line].l_rint)(c, tp);
 	}
-	timeout(promtimeout, tp, polltime);
+	callout_reset(&prom_ch, polltime, promtimeout, tp);
 }
 
 struct tty *

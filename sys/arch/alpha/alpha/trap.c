@@ -1,4 +1,41 @@
-/* $NetBSD: trap.c,v 1.49 1999/05/10 01:27:28 cgd Exp $ */
+/* $NetBSD: trap.c,v 1.49.2.1 2000/11/20 19:56:38 bouyer Exp $ */
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -61,14 +98,15 @@
 #include "opt_ktrace.h"
 #include "opt_compat_osf1.h"
 #include "opt_ddb.h"
+#include "opt_syscall_debug.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 1999/05/10 01:27:28 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.2.1 2000/11/20 19:56:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/syscall.h>
@@ -144,26 +182,31 @@ userret(p, pc, oticks)
 	u_int64_t pc;
 	u_quad_t oticks;
 {
-	int sig, s;
+	struct cpu_info *ci = curcpu();
+	int sig;
+
+	KDASSERT(p->p_cpu != NULL);
+	KDASSERT(p->p_cpu == ci);
+
+	/* Do any deferred user pmap operations. */
+	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
 	p->p_priority = p->p_usrpri;
-	if (want_resched) {
+	if (ci->ci_want_resched) {
 		/*
-		 * Since we are curproc, a clock interrupt could
-		 * change our priority without changing run queues
-		 * (the running process is not kept on a run queue).
-		 * If this happened after we setrunqueue ourselves but
-		 * before we switch()'ed, we might not be on the queue
-		 * indicated by our priority.
+		 * We are being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
+
+		ci = curcpu();		/* It may have changed! */
+
+		KDASSERT(p->p_cpu != NULL);
+		KDASSERT(p->p_cpu == ci);
+
+		PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
@@ -177,7 +220,7 @@ userret(p, pc, oticks)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 
-	curpriority = p->p_priority;
+	ci->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
 static void
@@ -252,24 +295,16 @@ trap(a0, a1, a2, entry, framep)
 	int call_debugger = 1;
 #endif
 
-	uvmexp.traps++;
 	p = curproc;
+
+	uvmexp.traps++;			/* XXXSMP: NOT ATOMIC */
 	ucode = 0;
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
 	if (user)  {
 		sticks = p->p_sticks;
 		p->p_md.md_tf = framep;
-#if	0
-/* This is to catch some wierd stuff on the UDB (mj) */
-		if (framep->tf_regs[FRAME_PC] > 0 && 
-		    framep->tf_regs[FRAME_PC] < 0x120000000) {
-			printf("PC Out of Whack\n");
-			printtrap(a0, a1, a2, entry, framep, 1, user);
-		}
-#endif
-	} else {
+	} else
 		sticks = 0;		/* XXX bogus -Wuninitialized warning */
-	}
 
 	switch (entry) {
 	case ALPHA_KENTRY_UNA:
@@ -279,7 +314,10 @@ trap(a0, a1, a2, entry, framep)
 		 * and per-process unaligned-access-handling flags).
 		 */
 		if (user) {
-			if ((i = unaligned_fixup(a0, a1, a2, p)) == 0)
+			KERNEL_PROC_LOCK(p);
+			i = unaligned_fixup(a0, a1, a2, p);
+			KERNEL_PROC_UNLOCK(p);
+			if (i == 0)
 				goto out;
 
 			ucode = a0;		/* VA */
@@ -326,7 +364,7 @@ trap(a0, a1, a2, entry, framep)
 		 * These are always fatal in kernel, and should never
 		 * happen.  (Debugger entry is handled in XentIF.)
 		 */
-		if (!user) {
+		if (user == 0) {
 #if defined(DDB)
 			/*
 			 * ...unless a debugger is configured.  It will
@@ -359,7 +397,10 @@ trap(a0, a1, a2, entry, framep)
 			break;
 
 		case ALPHA_IF_CODE_OPDEC:
-			if ((i = handle_opdec(p, &ucode)) == 0)
+			KERNEL_PROC_LOCK(p);
+			i = handle_opdec(p, &ucode);
+			KERNEL_PROC_UNLOCK(p);
+			if (i == 0)
 				goto out;
 			break;
 
@@ -374,11 +415,15 @@ trap(a0, a1, a2, entry, framep)
 				goto dopanic;
 			}
 	
+			if (fpcurproc != NULL)
+				release_fpu(1);
+			if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+				synchronize_fpstate(p, 1);
+
 			alpha_pal_wrfen(1);
-			if (fpcurproc)
-				savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
+			restorefpstate(&p->p_addr->u_pcb.pcb_fp);
+			p->p_addr->u_pcb.pcb_fpcpu = curcpu();
 			fpcurproc = p;
-			restorefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
 			alpha_pal_wrfen(0);
 
 			p->p_md.md_flags |= MDP_FPUSED;
@@ -409,24 +454,37 @@ trap(a0, a1, a2, entry, framep)
 			register vm_map_t map;
 			vm_prot_t ftype;
 			int rv;
-			extern vm_map_t kernel_map;
 
-			/*
-			 * If it was caused by fuswintr or suswintr,
-			 * just punt.  Note that we check the faulting
-			 * address against the address accessed by
-			 * [fs]uswintr, in case another fault happens
-			 * when they are running.
-			 */
-			if (!user &&
-			    p != NULL &&
-			    p->p_addr->u_pcb.pcb_onfault ==
-			      (unsigned long)fswintrberr &&
-			    p->p_addr->u_pcb.pcb_accessaddr == a0) {
-				framep->tf_regs[FRAME_PC] =
-				    p->p_addr->u_pcb.pcb_onfault;
-				p->p_addr->u_pcb.pcb_onfault = 0;
-				goto out;
+			if (user)
+				KERNEL_PROC_LOCK(p);
+			else {
+				if (p == NULL) {
+					/*
+					 * If there is no current process,
+					 * it can be nothing but a fatal
+					 * error (i.e. memory in this case
+					 * must be wired).
+					 */
+					goto dopanic;
+				}
+
+				/*
+				 * If it was caused by fuswintr or suswintr,
+				 * just punt.  Note that we check the faulting
+				 * address against the address accessed by
+				 * [fs]uswintr, in case another fault happens
+				 * when they are running.
+				 */
+				if (p->p_addr->u_pcb.pcb_onfault ==
+					(unsigned long)fswintrberr &&
+				    p->p_addr->u_pcb.pcb_accessaddr == a0) {
+					framep->tf_regs[FRAME_PC] =
+					    p->p_addr->u_pcb.pcb_onfault;
+					p->p_addr->u_pcb.pcb_onfault = 0;
+					goto out;
+				}
+
+				KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 			}
 
 			/*
@@ -437,8 +495,8 @@ trap(a0, a1, a2, entry, framep)
 			 * The last can occur during an exec() copyin where the
 			 * argument space is lazy-allocated.
 			 */
-			if (!user && (a0 >= VM_MIN_KERNEL_ADDRESS ||
-			    p == NULL || p->p_addr->u_pcb.pcb_onfault == 0))
+			if (user == 0 && (a0 >= VM_MIN_KERNEL_ADDRESS ||
+			    p->p_addr->u_pcb.pcb_onfault == 0))
 				map = kernel_map;
 			else {
 				vm = p->p_vmspace;
@@ -455,12 +513,18 @@ trap(a0, a1, a2, entry, framep)
 				break;
 #ifdef DIAGNOSTIC
 			default:		/* XXX gcc -Wuninitialized */
+				if (user)
+					KERNEL_PROC_UNLOCK(p);
+				else
+					KERNEL_UNLOCK();
 				goto dopanic;
 #endif
 			}
 	
 			va = trunc_page((vaddr_t)a0);
-			rv = uvm_fault(map, va, 0, ftype);
+			rv = uvm_fault(map, va,
+			    (a1 == ALPHA_MMCSR_INVALTRANS) ?
+			    VM_FAULT_INVALID : VM_FAULT_PROTECT, ftype);
 			/*
 			 * If this was a stack access we keep track of the
 			 * maximum accessed stack size.  Also, if vm_fault
@@ -474,18 +538,24 @@ trap(a0, a1, a2, entry, framep)
 				if (rv == KERN_SUCCESS) {
 					unsigned nss;
 	
-					nss = clrnd(btoc(USRSTACK -
-					    (unsigned long)va));
+					nss = btoc(USRSTACK -
+					    (unsigned long)va);
 					if (nss > vm->vm_ssize)
 						vm->vm_ssize = nss;
 				} else if (rv == KERN_PROTECTION_FAILURE)
 					rv = KERN_INVALID_ADDRESS;
 			}
 			if (rv == KERN_SUCCESS) {
+				if (user)
+					KERNEL_PROC_UNLOCK(p);
+				else
+					KERNEL_UNLOCK();
 				goto out;
 			}
 
-			if (!user) {
+			if (user == 0) {
+				KERNEL_UNLOCK();
+
 				/* Check for copyin/copyout fault */
 				if (p != NULL &&
 				    p->p_addr->u_pcb.pcb_onfault != 0) {
@@ -503,9 +573,9 @@ trap(a0, a1, a2, entry, framep)
 				       p->p_cred && p->p_ucred ?
 				       p->p_ucred->cr_uid : -1);
 				i = SIGKILL;
-			} else {
+			} else
 				i = SIGSEGV;
-			}
+			KERNEL_PROC_UNLOCK(p);
 			break;
 		    }
 
@@ -522,7 +592,9 @@ trap(a0, a1, a2, entry, framep)
 #ifdef DEBUG
 	printtrap(a0, a1, a2, entry, framep, 1, user);
 #endif
+	KERNEL_PROC_LOCK(p);
 	trapsignal(p, i, ucode);
+	KERNEL_PROC_UNLOCK(p);
 out:
 	if (user)
 		userret(p, framep->tf_regs[FRAME_PC], sticks);
@@ -579,8 +651,12 @@ syscall(code, framep)
 	if ((framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) == 0)
 		panic("syscall");
 #endif
-	uvmexp.syscalls++;
+
 	p = curproc;
+
+	KERNEL_PROC_LOCK(p);
+
+	uvmexp.syscalls++;
 	p->p_md.md_tf = framep;
 	opc = framep->tf_regs[FRAME_PC] - 4;
 	sticks = p->p_sticks;
@@ -645,7 +721,7 @@ syscall(code, framep)
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_argsize, args + hidden);
+		ktrsyscall(p, code, callp->sy_argsize, args + hidden);
 #endif
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args + hidden);
@@ -684,10 +760,15 @@ syscall(code, framep)
 	scdebug_ret(p, code, error, rval);
 #endif
 
+	KERNEL_PROC_UNLOCK(p);
+
 	userret(p, framep->tf_regs[FRAME_PC], sticks);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, code, error, rval[0]);
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
+		ktrsysret(p, code, error, rval[0]);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }
 
@@ -704,10 +785,15 @@ child_return(arg)
 	 * Return values in the frame set by cpu_fork().
 	 */
 
+	KERNEL_PROC_UNLOCK(p);
+
 	userret(p, p->p_md.md_tf->tf_regs[FRAME_PC], 0);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
+		ktrsysret(p, SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }
 
@@ -722,7 +808,20 @@ ast(framep)
 	register struct proc *p;
 	u_quad_t sticks;
 
+	curcpu()->ci_astpending = 0;
+
 	p = curproc;
+
+	/*
+	 * We may not have a current process to do AST processing
+	 * on.  This happens on multiprocessor systems in which
+	 * at least one CPU simply has no current process to run,
+	 * but roundrobin() (called via hardclock()) kicks us to
+	 * attempt to preempt the process running on our CPU.
+	 */
+	if (p == NULL)
+		return;
+
 	sticks = p->p_sticks;
 	p->p_md.md_tf = framep;
 
@@ -731,7 +830,6 @@ ast(framep)
 
 	uvmexp.softs++;
 
-	astpending = 0;
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
 		ADDUPROF(p);
@@ -763,12 +861,8 @@ const static int reg_to_framereg[32] = {
 	(&(p)->p_addr->u_pcb.pcb_fp.fpr_regs[(reg)])
 
 #define	dump_fp_regs()							\
-	if (p == fpcurproc) {						\
-		alpha_pal_wrfen(1);					\
-		savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);		\
-		alpha_pal_wrfen(0);					\
-		fpcurproc = NULL;					\
-	}
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)				\
+		synchronize_fpstate(p, 1)
 
 #define	unaligned_load(storage, ptrf, mod)				\
 	if (copyin((caddr_t)va, &(storage), sizeof (storage)) != 0)	\

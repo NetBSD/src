@@ -1,7 +1,7 @@
-/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.27 1998/08/30 23:29:10 cgd Exp $ */
+/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.27.12.1 2000/11/20 19:57:17 bouyer Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -95,12 +95,20 @@ void		__C(CHIP,_io_unmap) __P((void *, bus_space_handle_t,
 int		__C(CHIP,_io_subregion) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_size_t, bus_space_handle_t *));
 
+int		__C(CHIP,_io_translate) __P((void *, bus_addr_t, bus_size_t,
+		    int, struct alpha_bus_space_translation *));
+int		__C(CHIP,_io_get_window) __P((void *, int,
+		    struct alpha_bus_space_translation *));
+
 /* allocation/deallocation */
 int		__C(CHIP,_io_alloc) __P((void *, bus_addr_t, bus_addr_t,
 		    bus_size_t, bus_size_t, bus_addr_t, int, bus_addr_t *,
                     bus_space_handle_t *));
 void		__C(CHIP,_io_free) __P((void *, bus_space_handle_t,
 		    bus_size_t));
+
+/* get kernel virtual address */
+void *		__C(CHIP,_io_vaddr) __P((void *, bus_space_handle_t));
 
 /* barrier */
 inline void	__C(CHIP,_io_barrier) __P((void *, bus_space_handle_t,
@@ -196,15 +204,19 @@ void		__C(CHIP,_io_copy_region_4) __P((void *, bus_space_handle_t,
 void		__C(CHIP,_io_copy_region_8) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
 
-/* Internal */
-void		__C(CHIP,_io_mapit) __P((void *, bus_addr_t,
-		    bus_space_handle_t *));
-
 #ifndef	CHIP_IO_EX_STORE
 static long
     __C(CHIP,_io_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 #define	CHIP_IO_EX_STORE(v)		(__C(CHIP, _io_ex_storage))
 #define	CHIP_IO_EX_STORE_SIZE(v)	(sizeof __C(CHIP, _io_ex_storage))
+#endif
+
+#ifndef CHIP_ADDR_SHIFT
+#define	CHIP_ADDR_SHIFT		5
+#endif
+
+#ifndef CHIP_SIZE_SHIFT
+#define	CHIP_SIZE_SHIFT		3
 #endif
 
 void
@@ -226,9 +238,15 @@ __C(CHIP,_bus_io_init)(t, v)
 	t->abs_unmap =		__C(CHIP,_io_unmap);
 	t->abs_subregion =	__C(CHIP,_io_subregion);
 
+	t->abs_translate =	__C(CHIP,_io_translate);
+	t->abs_get_window =	__C(CHIP,_io_get_window);
+
 	/* allocation/deallocation */
 	t->abs_alloc =		__C(CHIP,_io_alloc);
 	t->abs_free = 		__C(CHIP,_io_free);
+
+	/* get kernel virtual address */
+	t->abs_vaddr =		__C(CHIP,_io_vaddr);
 
 	/* barrier */
 	t->abs_barrier =	__C(CHIP,_io_barrier);
@@ -316,42 +334,90 @@ __C(CHIP,_bus_io_init)(t, v)
 	CHIP_IO_EXTENT(v) = ex;
 }
 
-void
-__C(CHIP,_io_mapit)(v, ioaddr, iohp)
+int
+__C(CHIP,_io_translate)(v, ioaddr, iolen, flags, abst)
 	void *v;
 	bus_addr_t ioaddr;
-	bus_space_handle_t *iohp;
+	bus_size_t iolen;
+	int flags;
+	struct alpha_bus_space_translation *abst;
 {
+	bus_addr_t ioend = ioaddr + (iolen - 1);
+	int linear = flags & BUS_SPACE_MAP_LINEAR;
+
+	/*
+	 * Can't map i/o space linearly.
+	 */
+	if (linear)
+		return (EOPNOTSUPP);
 
 #ifdef CHIP_IO_W1_BUS_START
 	if (ioaddr >= CHIP_IO_W1_BUS_START(v) &&
-	    ioaddr <= CHIP_IO_W1_BUS_END(v)) {
-		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W1_SYS_START(v)) >> 5) +
-		    (ioaddr - CHIP_IO_W1_BUS_START(v));
-	} else
+	    ioend <= CHIP_IO_W1_BUS_END(v))
+		return (__C(CHIP,_io_get_window)(v, 0, abst));
 #endif
+
 #ifdef CHIP_IO_W2_BUS_START
 	if (ioaddr >= CHIP_IO_W2_BUS_START(v) &&
-	    ioaddr <= CHIP_IO_W2_BUS_END(v)) {
-		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W2_SYS_START(v)) >> 5) +
-		    (ioaddr - CHIP_IO_W2_BUS_START(v));
-	} else
+	    ioend <= CHIP_IO_W2_BUS_END(v))
+		return (__C(CHIP,_io_get_window)(v, 1, abst));
 #endif
-	{
-		printf("\n");
+
+#ifdef EXTENT_DEBUG
+	printf("\n");
 #ifdef CHIP_IO_W1_BUS_START
-		printf("%s: window[1]=0x%lx-0x%lx\n",
-		    __S(__C(CHIP,_io_map)), CHIP_IO_W1_BUS_START(v),
-		    CHIP_IO_W1_BUS_END(v));
+	printf("%s: window[1]=0x%lx-0x%lx\n",
+	    __S(__C(CHIP,_io_map)), CHIP_IO_W1_BUS_START(v),
+	    CHIP_IO_W1_BUS_END(v));
 #endif
 #ifdef CHIP_IO_W2_BUS_START
-		printf("%s: window[2]=0x%lx-0x%lx\n",
-		    __S(__C(CHIP,_io_map)), CHIP_IO_W2_BUS_START(v),
-		    CHIP_IO_W2_BUS_END(v));
+	printf("%s: window[2]=0x%lx-0x%lx\n",
+	    __S(__C(CHIP,_io_map)), CHIP_IO_W2_BUS_START(v),
+	    CHIP_IO_W2_BUS_END(v));
 #endif
-		panic("%s: don't know how to map %lx",
-		    __S(__C(CHIP,_io_mapit)), ioaddr);
+#endif /* EXTENT_DEBUG */
+	/* No translation. */
+	return (EINVAL);
+}
+
+int
+__C(CHIP,_io_get_window)(v, window, abst)
+	void *v;
+	int window;
+	struct alpha_bus_space_translation *abst;
+{
+
+	switch (window) {
+#ifdef CHIP_IO_W1_BUS_START
+	case 0:
+		abst->abst_bus_start = CHIP_IO_W1_BUS_START(v);
+		abst->abst_bus_end = CHIP_IO_W1_BUS_END(v);
+		abst->abst_sys_start = CHIP_IO_W1_SYS_START(v);
+		abst->abst_sys_end = CHIP_IO_W1_SYS_END(v);
+		abst->abst_addr_shift = CHIP_ADDR_SHIFT;
+		abst->abst_size_shift = CHIP_SIZE_SHIFT;
+		abst->abst_flags = 0;
+		break;
+#endif
+
+#ifdef CHIP_IO_W2_BUS_START
+	case 1:
+		abst->abst_bus_start = CHIP_IO_W2_BUS_START(v);
+		abst->abst_bus_end = CHIP_IO_W2_BUS_END(v);
+		abst->abst_sys_start = CHIP_IO_W2_SYS_START(v);
+		abst->abst_sys_end = CHIP_IO_W2_SYS_END(v);
+		abst->abst_addr_shift = CHIP_ADDR_SHIFT;
+		abst->abst_size_shift = CHIP_SIZE_SHIFT;
+		abst->abst_flags = 0;
+		break;
+#endif
+
+	default:
+		panic(__S(__C(CHIP,_io_get_window)) ": invalid window %d",
+		    window);
 	}
+
+	return (0);
 }
 
 int
@@ -363,25 +429,18 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp, acct)
 	bus_space_handle_t *iohp;
 	int acct;
 {
-	int linear = flags & BUS_SPACE_MAP_LINEAR;
+	struct alpha_bus_space_translation abst;
 	int error;
 
 	/*
-	 * Can't map i/o space linearly.
+	 * Get the translation for this address.
 	 */
-	if (linear)
-		return (EOPNOTSUPP);
+	error = __C(CHIP,_io_translate)(v, ioaddr, iosize, flags, &abst);
+	if (error)
+		return (error);
 
-	if (acct == 0) {
-		/*
-		 * XXX We should ensure that the region is actually
-		 * XXX mappable, but nothing should really be using
-		 * XXX this interface (only ISA PnP does, and only
-		 * XXX via a machine-dependent hook), so we don't
-		 * XXX bother.
-		 */
+	if (acct == 0)
 		goto mapit;
-	}
 
 #ifdef EXTENT_DEBUG
 	printf("io: allocating 0x%lx to 0x%lx\n", ioaddr, ioaddr + iosize - 1);
@@ -397,7 +456,8 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp, acct)
 	}
 
  mapit:
-	__C(CHIP,_io_mapit)(v, ioaddr, iohp);
+	*iohp = (ALPHA_PHYS_TO_K0SEG(abst.abst_sys_start) >>
+	    CHIP_ADDR_SHIFT) + (ioaddr - abst.abst_bus_start);
 
 	return (0);
 }
@@ -419,20 +479,20 @@ __C(CHIP,_io_unmap)(v, ioh, iosize, acct)
 	printf("io: freeing handle 0x%lx for 0x%lx\n", ioh, iosize);
 #endif
 
-	ioh = ALPHA_K0SEG_TO_PHYS(ioh << 5) >> 5;
+	ioh = ALPHA_K0SEG_TO_PHYS(ioh << CHIP_ADDR_SHIFT) >> CHIP_ADDR_SHIFT;
 
 #ifdef CHIP_IO_W1_BUS_START
-	if ((ioh << 5) >= CHIP_IO_W1_SYS_START(v) &&
-	    (ioh << 5) <= CHIP_IO_W1_SYS_END(v)) {
+	if ((ioh << CHIP_ADDR_SHIFT) >= CHIP_IO_W1_SYS_START(v) &&
+	    (ioh << CHIP_ADDR_SHIFT) <= CHIP_IO_W1_SYS_END(v)) {
 		ioaddr = CHIP_IO_W1_BUS_START(v) +
-		    (ioh - (CHIP_IO_W1_SYS_START(v) >> 5));
+		    (ioh - (CHIP_IO_W1_SYS_START(v) >> CHIP_ADDR_SHIFT));
 	} else
 #endif
 #ifdef CHIP_IO_W2_BUS_START
-	if ((ioh << 5) >= CHIP_IO_W2_SYS_START(v) &&
-	    (ioh << 5) <= CHIP_IO_W2_SYS_END(v)) {
+	if ((ioh << CHIP_ADDR_SHIFT) >= CHIP_IO_W2_SYS_START(v) &&
+	    (ioh << CHIP_ADDR_SHIFT) <= CHIP_IO_W2_SYS_END(v)) {
 		ioaddr = CHIP_IO_W2_BUS_START(v) +
-		    (ioh - (CHIP_IO_W2_SYS_START(v) >> 5));
+		    (ioh - (CHIP_IO_W2_SYS_START(v) >> CHIP_ADDR_SHIFT));
 	} else
 #endif
 	{
@@ -448,7 +508,7 @@ __C(CHIP,_io_unmap)(v, ioh, iosize, acct)
 		    CHIP_IO_W2_SYS_END(v));
 #endif
 		panic("%s: don't know how to unmap %lx",
-		    __S(__C(CHIP,_io_unmap)), (ioh << 5));
+		    __S(__C(CHIP,_io_unmap)), (ioh << CHIP_ADDR_SHIFT));
 	}
 
 #ifdef EXTENT_DEBUG
@@ -486,6 +546,7 @@ __C(CHIP,_io_alloc)(v, rstart, rend, size, align, boundary, flags,
 	int flags;
 	bus_space_handle_t *bshp;
 {
+	struct alpha_bus_space_translation abst;
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
 	bus_addr_t ioaddr;
 	int error;
@@ -518,8 +579,16 @@ __C(CHIP,_io_alloc)(v, rstart, rend, size, align, boundary, flags,
 	printf("io: allocated 0x%lx to 0x%lx\n", ioaddr, ioaddr + size - 1);
 #endif
 
+	error = __C(CHIP,_io_translate)(v, ioaddr, size, flags, &abst);
+	if (error) {
+		(void) extent_free(CHIP_IO_EXTENT(v), ioaddr, size,
+		    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+		return (error);
+	}
+
 	*addrp = ioaddr;
-	__C(CHIP,_io_mapit)(v, ioaddr, bshp);
+	*bshp = (ALPHA_PHYS_TO_K0SEG(abst.abst_sys_start) >>
+	    CHIP_ADDR_SHIFT) + (ioaddr - abst.abst_bus_start);
 
 	return (0);
 }
@@ -533,6 +602,18 @@ __C(CHIP,_io_free)(v, bsh, size)
 
 	/* Unmap does all we need to do. */
 	__C(CHIP,_io_unmap)(v, bsh, size, 1);
+}
+
+void *
+__C(CHIP,_io_vaddr)(v, bsh)
+	void *v;
+	bus_space_handle_t bsh;
+{
+	/*
+	 * _io_translate() catches BUS_SPACE_MAP_LINEAR,
+	 * so we shouldn't get here
+	 */
+	panic("_io_vaddr");
 }
 
 inline void
@@ -564,7 +645,8 @@ __C(CHIP,_io_read_1)(v, ioh, off)
 
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
-	port = (u_int32_t *)((tmpioh << 5) | (0 << 3));
+	port = (u_int32_t *)((tmpioh << CHIP_ADDR_SHIFT) |
+	    (0 << CHIP_SIZE_SHIFT));
 	val = *port;
 	rval = ((val) >> (8 * offset)) & 0xff;
 
@@ -586,7 +668,8 @@ __C(CHIP,_io_read_2)(v, ioh, off)
 
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
-	port = (u_int32_t *)((tmpioh << 5) | (1 << 3));
+	port = (u_int32_t *)((tmpioh << CHIP_ADDR_SHIFT) |
+	    (1 << CHIP_SIZE_SHIFT));
 	val = *port;
 	rval = ((val) >> (8 * offset)) & 0xffff;
 
@@ -608,7 +691,8 @@ __C(CHIP,_io_read_4)(v, ioh, off)
 
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
-	port = (u_int32_t *)((tmpioh << 5) | (3 << 3));
+	port = (u_int32_t *)((tmpioh << CHIP_ADDR_SHIFT) |
+	    (3 << CHIP_SIZE_SHIFT));
 	val = *port;
 #if 0
 	rval = ((val) >> (8 * offset)) & 0xffffffff;
@@ -683,7 +767,8 @@ __C(CHIP,_io_write_1)(v, ioh, off, val)
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
         nval = val << (8 * offset);
-        port = (u_int32_t *)((tmpioh << 5) | (0 << 3));
+        port = (u_int32_t *)((tmpioh << CHIP_ADDR_SHIFT) |
+            (0 << CHIP_SIZE_SHIFT));
         *port = nval;
         alpha_mb();
 }
@@ -702,7 +787,8 @@ __C(CHIP,_io_write_2)(v, ioh, off, val)
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
         nval = val << (8 * offset);
-        port = (u_int32_t *)((tmpioh << 5) | (1 << 3));
+        port = (u_int32_t *)((tmpioh << CHIP_ADDR_SHIFT) |
+            (1 << CHIP_SIZE_SHIFT));
         *port = nval;
         alpha_mb();
 }
@@ -721,7 +807,8 @@ __C(CHIP,_io_write_4)(v, ioh, off, val)
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
         nval = val /*<< (8 * offset)*/;
-        port = (u_int32_t *)((tmpioh << 5) | (3 << 3));
+        port = (u_int32_t *)((tmpioh << CHIP_ADDR_SHIFT) |
+            (3 << CHIP_SIZE_SHIFT));
         *port = nval;
         alpha_mb();
 }

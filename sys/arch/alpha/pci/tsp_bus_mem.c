@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_bus_mem.c,v 1.1 1999/06/29 06:46:46 ross Exp $ */
+/* $NetBSD: tsp_bus_mem.c,v 1.1.6.1 2000/11/20 19:57:18 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -36,7 +36,8 @@
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -53,5 +54,11 @@
 #define CHIP_MEM_EXTENT(v)       (((struct tsp_config *)(v))->pc_mem_ex)
 
 #define CHIP_MEM_SYS_START(v)    (((struct tsp_config *)(v))->pc_iobase)
+
+/* 
+ * Tsunami core logic appears on EV6.  We require at least EV56          
+ * support for the assembler to emit BWX opcodes.
+ */                                                                      
+__asm(".arch ev6");                                                      
 
 #include <alpha/pci/pci_bwx_bus_mem_chipdep.c>

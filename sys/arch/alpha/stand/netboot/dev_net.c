@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.8 1999/05/07 16:19:27 drochner Exp $ */
+/* $NetBSD: dev_net.c,v 1.8.2.1 2000/11/20 19:57:24 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross

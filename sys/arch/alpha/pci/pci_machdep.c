@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.13 1998/05/28 16:59:32 drochner Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.13.14.1 2000/11/20 19:57:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13 1998/05/28 16:59:32 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13.14.1 2000/11/20 19:57:16 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,7 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13 1998/05/28 16:59:32 drochner Ex
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcireg.h>

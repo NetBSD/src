@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.104 1999/08/04 07:17:50 nisimura Exp $
+# $NetBSD: files.alpha,v 1.104.2.1 2000/11/20 19:56:45 bouyer Exp $
 #
 # alpha-specific configuration info
 
@@ -10,6 +10,8 @@ maxusers 8 16 64
 # CPU support option headers
 defopt	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 defopt	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
+defopt	DEC_2100_A500	# Sable etc:	AlphaServer 2100
+defopt	DEC_2100A_A500	# Lynx etc:	AlphaServer 2100A
 defopt	DEC_3000_300	# Pelican etc:	3000/300*
 defopt	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 defopt	DEC_550		# Miata:	Personal Workstation (550)
@@ -25,6 +27,7 @@ defopt	DEC_1000A	# Corelle etc:	AlphaServer 800 and 1000A
 defopt	DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
 defopt	DEC_EB66	# EB66:		21066 Evaluation Board
 defopt	DEC_6600	# EV6		Various EV6 Systems
+defopt	API_UP1000	# EV6		Alpha Processor, Inc. UP1000
 
 # Miscellaneous CPU-specific option headers
 defopt	FIX_UNALIGNED_VAX_FP
@@ -81,6 +84,15 @@ major { wd = 4 }
 file	arch/alpha/alpha/md_root.c	memory_disk_hooks
 major { md = 6 }
 
+# RAIDframe 
+major { raid = 16 }
+
+# Logical storage unit 
+major { lsu = 17 }
+
+# Raster operations
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 
 #
 # "Workstation Console" glue.
@@ -126,7 +138,7 @@ file	arch/alpha/mcbus/mcmem.c	mcmem
 include "dev/dec/files.dec"
 
 #
-# TurboChannel Devices
+# TURBOchannel Devices
 #
 include "dev/tc/files.tc"
 
@@ -144,7 +156,7 @@ file	arch/alpha/tc/tc_sgmap.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_3000_500.c	tcasic & dec_3000_500
 file	arch/alpha/tc/tc_3000_300.c	tcasic & dec_3000_300
 
-# the TurboChannel IOCTL ASIC
+# the TURBOchannel IOCTL ASIC
 #  IOASIC device and attachment defined in sys/dev/tc/files.tc
 file	arch/alpha/tc/ioasic.c		ioasic
 
@@ -154,9 +166,9 @@ attach	cfb at tc
 file	arch/alpha/tc/cfb.c		cfb		needs-flag
 
 # Smart Frame buffer
-device	sfb: wsemuldisplaydev, wsrasteremulops
+device	sfb: wsemuldisplaydev, rasops8
 attach	sfb at tc
-file	arch/alpha/tc/sfb.c		sfb		needs-flag
+file	dev/tc/sfb.c			sfb		needs-flag
 
 # 8530 UARTs
 device	scc: tty
@@ -166,7 +178,7 @@ file	arch/alpha/tc/scc.c		scc		needs-count
 # 8530 UARTs using the MI 8530 driver   
 device	zsc { channel = -1 }
 attach	zsc at ioasic with zsc_ioasic
-file	arch/alpha/tc/zs_ioasic.c	zsc_ioasic
+file	dev/tc/zs_ioasic.c		zsc_ioasic	needs-flag
 file	dev/ic/z8530sc.c		zsc
 
 device	zstty: tty
@@ -175,22 +187,21 @@ file	dev/ic/z8530tty.c		zstty		needs-flag
 
 device	vsms: wsmousedev
 attach	vsms at zsc with zsms
-file	dev/dec/zsms.c			zsms
+file	dev/tc/zsms.c			zsms
 
 device	lkkbd: wskbddev
 attach	lkkbd at zsc with zskbd
-file	dev/dec/zskbd.c			zskbd		needs-flag
+file	dev/tc/zskbd.c			zskbd		needs-flag
 
 # the TCDS ASIC
 device	tcds { chip = -1 }
 attach	tcds at tc
-file	arch/alpha/tc/tcds.c		tcds
+file	dev/tc/tcds.c			tcds
 
 # 53C[F]90 SCSI
 device	asc: scsi, ncr53c9x
 attach	asc at tcds with asc_tcds
-file	arch/alpha/tc/asc.c		asc
-file	arch/alpha/tc/tcds_dma.c	asc
+file	dev/tc/asc_tcds.c		asc_tcds
 
 # TC and baseboard ioasic Lance ethernet are in files.tc
 
@@ -201,17 +212,14 @@ file	arch/alpha/tc/tcds_dma.c	asc
 include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
 include "dev/isa/files.isa"
 
-#file	arch/alpha/isa/isafcns_jensen.c	dec_2000_300
-
 #
 # ISA Bus devices
 #
 
-#device	ibus at mainbus { }
-#device	jcombo at ibus: isabus
-#device	jeisa at ibus: eisabus
-
 file	arch/alpha/isa/isa_machdep.c	isa
+
+define	isadma_bounce
+file	arch/alpha/isa/isadma_bounce.c	isadma_bounce
 
 include "dev/pckbc/files.pckbc"
 
@@ -220,11 +228,14 @@ device isabeep
 attach isabeep at pcppi
 
 # Floppy disk controller
-device	fdc { drive = -1 }
-attach	fdc at isa
-device	fd: disk, isadma
+device	fdc { drive = -1 }: isadma
+file	dev/isa/fd.c			fdc needs-flag
+
+attach	fdc at isa with fdc_isa
+file	dev/isa/fdc_isa.c		fdc_isa
+
+device	fd: disk
 attach	fd at fdc
-file	arch/alpha/isa/fd.c		fdc needs-flag
 major	{ fd = 0 }
 
 # ISA Plug 'n Play devices
@@ -236,6 +247,25 @@ file	arch/alpha/isa/isapnp_machdep.c	isapnp
 
 include "dev/eisa/files.eisa"
 
+file	arch/alpha/eisa/eisa_machdep.c	eisa
+
+device	jensenio {[port = -1]}: eisabus, isabus, isadma_bounce
+attach	jensenio at mainbus
+file	arch/alpha/jensenio/jensenio.c		 jensenio
+file	arch/alpha/jensenio/jensenio_bus_intio.c jensenio
+file	arch/alpha/jensenio/jensenio_bus_io.c	 jensenio
+file	arch/alpha/jensenio/jensenio_bus_mem.c	 jensenio
+file	arch/alpha/jensenio/jensenio_dma.c	 jensenio
+file	arch/alpha/jensenio/jensenio_intr.c	 jensenio
+
+attach	com at jensenio with com_jensenio
+file	arch/alpha/jensenio/com_jensenio.c	com_jensenio
+
+attach	lpt at jensenio with lpt_jensenio
+file	arch/alpha/jensenio/lpt_jensenio.c	lpt_jensenio
+
+attach	pckbc at jensenio with pckbc_jensenio
+file	arch/alpha/jensenio/pckbc_jensenio.c	pckbc_jensenio
 
 #
 # PCI Bus support
@@ -284,6 +314,14 @@ file	arch/alpha/pci/dwlpx_bus_mem.c	dwlpx
 file	arch/alpha/pci/dwlpx_dma.c	dwlpx
 file	arch/alpha/pci/dwlpx_pci.c	dwlpx
 
+device	irongate: pcibus, isadma_bounce
+attach	irongate at mainbus
+file	arch/alpha/pci/irongate.c		irongate
+file	arch/alpha/pci/irongate_bus_io.c	irongate
+file	arch/alpha/pci/irongate_bus_mem.c	irongate
+file	arch/alpha/pci/irongate_dma.c		irongate
+file	arch/alpha/pci/irongate_pci.c		irongate
+
 device	lca: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	lca at mainbus
 file	arch/alpha/pci/lca.c		lca
@@ -311,8 +349,40 @@ file	arch/alpha/pci/tsp_pci.c	tsp
 file	arch/alpha/pci/tsp_bus_io.c	tsp
 file	arch/alpha/pci/tsp_bus_mem.c	tsp
 
+device	ttwoga { hose = -1 }
+attach	ttwoga at mainbus
+device	ttwopci: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
+attach	ttwopci at ttwoga
+file	arch/alpha/pci/ttwoga.c		ttwoga
+file	arch/alpha/pci/ttwoga_bus_io.c	ttwoga
+file	arch/alpha/pci/ttwoga_bus_mem.c	ttwoga
+file	arch/alpha/pci/ttwoga_dma.c	ttwoga
+file	arch/alpha/pci/ttwoga_pci.c	ttwoga
+
+#
+# Sable STDIO support
+#
+device	sableio { port = -1 }
+attach	sableio at pcibus
+file	arch/alpha/sableio/sableio.c		sableio
+
+attach	com at sableio with com_sableio
+file	arch/alpha/sableio/com_sableio.c	com_sableio
+
+attach	lpt at sableio with lpt_sableio
+file	arch/alpha/sableio/lpt_sableio.c	lpt_sableio
+
+attach	pckbc at sableio with pckbc_sableio
+file	arch/alpha/sableio/pckbc_sableio.c	pckbc_sableio
+
+attach	fdc at sableio with fdc_sableio
+file	arch/alpha/sableio/fdc_sableio.c	fdc_sableio
+
 # CPU support files
+file	arch/alpha/alpha/dec_2000_300.c	dec_2000_300
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
+file	arch/alpha/pci/pci_2100_a500.c	dec_2100_a500 | dec_2100a_a500
+file	arch/alpha/pci/pci_up1000.c	api_up1000
 file	arch/alpha/pci/pci_a12.c	avalon_a12
 file	arch/alpha/pci/pci_alphabook1.c	dec_alphabook1
 file	arch/alpha/pci/pci_axppci_33.c	dec_axppci_33
@@ -337,9 +407,9 @@ file	arch/alpha/pci/pci_6600.c	dec_6600
 
 file	arch/alpha/pci/pci_machdep.c	pci
 
-device	sio: isabus, alpha_shared_intr
+device	sio: isabus, alpha_shared_intr, cy82c693
 attach	sio at pci
-device	pceb: isabus, eisabus
+device	pceb: isabus, eisabus, cy82c693
 attach	pceb at pci
 file	arch/alpha/pci/sio.c		sio | pceb	needs-flag
 file	arch/alpha/pci/sio_pic.c	sio | pceb
@@ -376,10 +446,12 @@ device	mcclock
 attach	mcclock at ioasic with mcclock_ioasic
 attach	mcclock at isa with mcclock_isa
 attach	mcclock at gbus with mcclock_tlsb
+attach	mcclock at jensenio with mcclock_jensenio
 file	arch/alpha/alpha/mcclock.c	mcclock
 file	arch/alpha/tc/mcclock_ioasic.c	mcclock_ioasic
 file	arch/alpha/isa/mcclock_isa.c	mcclock_isa
 file	arch/alpha/tlsb/mcclock_tlsb.c	mcclock_tlsb
+file	arch/alpha/jensenio/mcclock_jensenio.c	mcclock_jensenio
 
 
 #
@@ -392,7 +464,6 @@ file	arch/alpha/alpha/conf.c
 file	arch/alpha/alpha/cpuconf.c
 file	arch/alpha/alpha/interrupt.c
 file	arch/alpha/alpha/ipifuncs.c		multiprocessor
-file	arch/alpha/alpha/lock_machdep.c		multiprocessor
 file	arch/alpha/alpha/machdep.c
 file	arch/alpha/alpha/mainbus.c
 file	arch/alpha/alpha/mem.c
@@ -410,6 +481,7 @@ file	dev/cons.c
 
 # Network protocol checksum routines
 file	arch/alpha/alpha/in_cksum.c		inet
+file	netinet/in4_cksum.c			inet
 file	netns/ns_cksum.c			ns
 
 # PROM console support (for ports that don't have native console support)
@@ -417,6 +489,7 @@ file	arch/alpha/alpha/promcons.c
 
 # CPU support
 file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50
+file	arch/alpha/alpha/dec_2100_a500.c	dec_2100_a500 | dec_2100a_a500
 file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300
 file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500
 file	arch/alpha/alpha/dec_550.c		dec_550
@@ -428,6 +501,7 @@ file	arch/alpha/alpha/dec_eb66.c		dec_eb66
 file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa
 file	arch/alpha/alpha/dec_kn8ae.c		dec_kn8ae
 file	arch/alpha/alpha/dec_kn300.c		dec_kn300
+file	arch/alpha/alpha/api_up1000.c		api_up1000
 file	arch/alpha/alpha/avalon_a12.c		avalon_a12
 file	arch/alpha/alpha/dec_1000a.c		dec_1000 | dec_1000a
 file	arch/alpha/alpha/dec_6600.c		dec_6600

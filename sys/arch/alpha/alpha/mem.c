@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.24 1999/03/24 05:50:51 mrg Exp $ */
+/* $NetBSD: mem.c,v 1.24.8.1 2000/11/20 19:56:35 bouyer Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.24 1999/03/24 05:50:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.24.8.1 2000/11/20 19:56:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -59,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.24 1999/03/24 05:50:51 mrg Exp $");
 #include <machine/cpu.h>
 #include <machine/conf.h>
 #include <machine/alpha.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -122,7 +120,6 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 kmemphys:
 			if (v >= ALPHA_K0SEG_TO_PHYS((vaddr_t)msgbufaddr)) {
-				extern int msgbufmapped;
 				if (msgbufmapped == 0) {
 					printf("Message Buf not Mapped\n");
 					error = EFAULT;
@@ -177,10 +174,10 @@ kmemphys:
 			 */
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
-				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+				    malloc(NBPG, M_TEMP, M_WAITOK);
+				bzero(zeropage, NBPG);
 			}
-			c = min(iov->iov_len, CLBYTES);
+			c = min(iov->iov_len, NBPG);
 			error = uiomove(zeropage, c, uio);
 			break;
 
@@ -191,10 +188,10 @@ kmemphys:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off;			/* XXX */
+	off_t off;
 	int prot;
 {
 	/*
@@ -211,7 +208,7 @@ mmmmap(dev, off, prot)
 	/*
 	 * Allow access only in RAM.
 	 */
-	if ((prot & alpha_pa_access(atop((paddr_t)off))) != prot)
+	if ((prot & alpha_pa_access(atop(off))) != prot)
 		return (-1);
 	return (alpha_btop(off));
 }

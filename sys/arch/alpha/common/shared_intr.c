@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.7 1999/09/17 19:59:36 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.7.2.1 2000/11/20 19:56:40 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.7 1999/09/17 19:59:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.7.2.1 2000/11/20 19:56:40 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -47,8 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.7 1999/09/17 19:59:36 thorpej Exp 
 static const char *intr_typename __P((int));
 
 static const char *
-intr_typename(type)
-	int type;
+intr_typename(int type)
 {
 
 	switch (type) {
@@ -67,8 +66,7 @@ intr_typename(type)
 }
 
 struct alpha_shared_intr *
-alpha_shared_intr_alloc(n)
-	unsigned int n;
+alpha_shared_intr_alloc(unsigned int n, unsigned int namesize)
 {
 	struct alpha_shared_intr *intr;
 	unsigned int i;
@@ -84,18 +82,27 @@ alpha_shared_intr_alloc(n)
 		intr[i].intr_dfltsharetype = IST_NONE;
 		intr[i].intr_nstrays = 0;
 		intr[i].intr_maxstrays = 5;
+		intr[i].intr_private = NULL;
+		if (namesize != 0) {
+			intr[i].intr_string = malloc(namesize, M_DEVBUF,
+			    cold ? M_NOWAIT : M_WAITOK);
+			if (intr[i].intr_string == NULL)
+				panic("alpha_shared_intr_alloc: couldn't "
+				    "malloc intr string");
+		} else
+			intr[i].intr_string = NULL;
 	}
 
 	return (intr);
 }
 
 int
-alpha_shared_intr_dispatch(intr, num)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
+alpha_shared_intr_dispatch(struct alpha_shared_intr *intr, unsigned int num)
 {
 	struct alpha_shared_intrhand *ih;
 	int rv, handled;
+
+	atomic_add_ulong(&intr[num].intr_evcnt.ev_count, 1);
 
 	ih = intr[num].intr_q.tqh_first;
 	handled = 0;
@@ -118,13 +125,8 @@ alpha_shared_intr_dispatch(intr, num)
 }
 
 void *
-alpha_shared_intr_establish(intr, num, type, level, fn, arg, basename)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
-	int type, level;
-	int (*fn) __P((void *));
-	void *arg;
-	const char *basename;
+alpha_shared_intr_establish(struct alpha_shared_intr *intr, unsigned int num,
+    int type, int level, int (*fn)(void *), void *arg, const char *basename)
 {
 	struct alpha_shared_intrhand *ih;
 
@@ -169,6 +171,7 @@ alpha_shared_intr_establish(intr, num, type, level, fn, arg, basename)
 		break;
 	}
 
+	ih->ih_intrhead = intr;
 	ih->ih_fn = fn;
 	ih->ih_arg = arg;
 	ih->ih_level = level;
@@ -181,10 +184,8 @@ alpha_shared_intr_establish(intr, num, type, level, fn, arg, basename)
 }
 
 void
-alpha_shared_intr_disestablish(intr, cookie, basename)
-	struct alpha_shared_intr *intr;
-	void *cookie;
-	const char *basename;
+alpha_shared_intr_disestablish(struct alpha_shared_intr *intr, void *cookie,
+    const char *basename)
 {
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int num = ih->ih_num;
@@ -197,28 +198,23 @@ alpha_shared_intr_disestablish(intr, cookie, basename)
 }
 
 int
-alpha_shared_intr_get_sharetype(intr, num)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
+alpha_shared_intr_get_sharetype(struct alpha_shared_intr *intr,
+    unsigned int num)
 {
 
 	return (intr[num].intr_sharetype);
 }
 
 int
-alpha_shared_intr_isactive(intr, num)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
+alpha_shared_intr_isactive(struct alpha_shared_intr *intr, unsigned int num)
 {
 
 	return (intr[num].intr_q.tqh_first != NULL);
 }
 
 void
-alpha_shared_intr_set_dfltsharetype(intr, num, newdfltsharetype)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
-	int newdfltsharetype;
+alpha_shared_intr_set_dfltsharetype(struct alpha_shared_intr *intr,
+    unsigned int num, int newdfltsharetype)
 {
 
 #ifdef DIAGNOSTIC
@@ -231,26 +227,18 @@ alpha_shared_intr_set_dfltsharetype(intr, num, newdfltsharetype)
 }
 
 void
-alpha_shared_intr_set_maxstrays(intr, num, newmaxstrays)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
-	int newmaxstrays;
+alpha_shared_intr_set_maxstrays(struct alpha_shared_intr *intr,
+    unsigned int num, int newmaxstrays)
 {
-
-#ifdef DIAGNOSTIC
-	if (alpha_shared_intr_isactive(intr, num))
-		panic("alpha_shared_intr_set_maxstrays on active intr");
-#endif
-
+	int s = splhigh();
 	intr[num].intr_maxstrays = newmaxstrays;
 	intr[num].intr_nstrays = 0;
+	splx(s);
 }
 
 void
-alpha_shared_intr_stray(intr, num, basename)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
-	const char *basename;
+alpha_shared_intr_stray(struct alpha_shared_intr *intr, unsigned int num,
+    const char *basename)
 {
 
 	intr[num].intr_nstrays++;
@@ -262,4 +250,36 @@ alpha_shared_intr_stray(intr, num, basename)
 		log(LOG_ERR, "stray %s %d%s\n", basename, num,
 		    intr[num].intr_nstrays >= intr[num].intr_maxstrays ?
 		      "; stopped logging" : "");
+}
+
+void
+alpha_shared_intr_set_private(struct alpha_shared_intr *intr,
+    unsigned int num, void *v)
+{
+
+	intr[num].intr_private = v;
+}
+
+void *
+alpha_shared_intr_get_private(struct alpha_shared_intr *intr,
+    unsigned int num)
+{
+
+	return (intr[num].intr_private);
+}
+
+struct evcnt *
+alpha_shared_intr_evcnt(struct alpha_shared_intr *intr,
+    unsigned int num)
+{
+
+	return (&intr[num].intr_evcnt);
+}
+
+char *
+alpha_shared_intr_string(struct alpha_shared_intr *intr,
+    unsigned int num)
+{
+
+	return (intr[num].intr_string);
 }

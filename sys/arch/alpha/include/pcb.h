@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.6 1997/04/06 08:47:33 cgd Exp $ */
+/* $NetBSD: pcb.h,v 1.6.22.1 2000/11/20 19:56:53 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -51,6 +51,7 @@ struct pcb {
 	struct fpreg	pcb_fp;			/* FP registers		[SW] */
 	unsigned long	pcb_onfault;		/* for copy faults	[SW] */
 	unsigned long	pcb_accessaddr;		/* for [fs]uswintr	[SW] */
+	struct cpu_info * __volatile pcb_fpcpu;	/* CPU with our FP state[SW] */
 };
 
 /*

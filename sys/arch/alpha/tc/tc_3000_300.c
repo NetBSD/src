@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_300.c,v 1.20 1999/08/07 12:58:29 drochner Exp $ */
+/* $NetBSD: tc_3000_300.c,v 1.20.2.1 2000/11/20 19:57:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,28 +29,26 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.20 1999/08/07 12:58:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.20.2.1 2000/11/20 19:57:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/autoconf.h>
 #include <machine/pte.h>
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
 
 #include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicreg.h>
 #include <alpha/tc/tc_conf.h>
 #include <alpha/tc/tc_3000_300.h>
-#include <alpha/tc/ioasicreg.h>
 
 #include "wsdisplay.h"
 #include "sfb.h"
 
 #if NSFB > 0
-#include <alpha/tc/sfbvar.h>
+extern int	sfb_cnattach __P((tc_addr_t));
 #endif
 
 int	tc_3000_300_intrnull __P((void *));
@@ -69,17 +67,19 @@ int	tc_3000_300_intrnull __P((void *));
 struct tc_slotdesc tc_3000_300_slots[] = {
 	{ KV(0x100000000), C(TC_3000_300_DEV_OPT0), },	/* 0 - opt slot 0 */
 	{ KV(0x120000000), C(TC_3000_300_DEV_OPT1), },	/* 1 - opt slot 1 */
-	{ KV(0x180000000), C(TC_3000_300_DEV_BOGUS), },	/* 2 - TCDS ASIC */
-	{ KV(0x1a0000000), C(TC_3000_300_DEV_BOGUS), },	/* 3 - IOCTL ASIC */
-	{ KV(0x1c0000000), C(TC_3000_300_DEV_CXTURBO), }, /* 4 - CXTurbo */
+	{ KV(0x140000000), C(TC_3000_300_DEV_BOGUS), }, /* 2 - unused */
+	{ KV(0x160000000), C(TC_3000_300_DEV_BOGUS), }, /* 3 - unused */
+	{ KV(0x180000000), C(TC_3000_300_DEV_BOGUS), },	/* 4 - TCDS ASIC */
+	{ KV(0x1a0000000), C(TC_3000_300_DEV_BOGUS), }, /* 5 - IOCTL ASIC */
+	{ KV(0x1c0000000), C(TC_3000_300_DEV_BOGUS), }, /* 6 - CXTurbo */
 };
 int tc_3000_300_nslots =
     sizeof(tc_3000_300_slots) / sizeof(tc_3000_300_slots[0]);
 
 struct tc_builtin tc_3000_300_builtins[] = {
-	{ "PMAGB-BA",	4, 0x02000000, C(TC_3000_300_DEV_CXTURBO),	},
-	{ "FLAMG-IO",	3, 0x00000000, C(TC_3000_300_DEV_IOASIC),	},
-	{ "PMAZ-DS ",	2, 0x00000000, C(TC_3000_300_DEV_TCDS),		},
+	{ "PMAGB-BA",	6, 0x02000000, C(TC_3000_300_DEV_CXTURBO),	},
+	{ "FLAMG-IO",	5, 0x00000000, C(TC_3000_300_DEV_IOASIC),	},
+	{ "PMAZ-DS ",	4, 0x00000000, C(TC_3000_300_DEV_TCDS),		},
 };
 int tc_3000_300_nbuiltins =
     sizeof(tc_3000_300_builtins) / sizeof(tc_3000_300_builtins[0]);
@@ -87,18 +87,20 @@ int tc_3000_300_nbuiltins =
 struct tcintr {
 	int	(*tci_func) __P((void *));
 	void	*tci_arg;
+	struct evcnt tci_evcnt;
 } tc_3000_300_intr[TC_3000_300_NCOOKIES];
 
 void
 tc_3000_300_intr_setup()
 {
 	volatile u_int32_t *imskp;
+	char *cp;
 	u_long i;
 
 	/*
 	 * Disable all interrupts that we can (can't disable builtins).
 	 */
-	imskp = (volatile u_int32_t *)IOASIC_REG_IMSK(DEC_3000_300_IOASIC_ADDR);
+	imskp = (volatile u_int32_t *)(DEC_3000_300_IOASIC_ADDR + IOASIC_IMSK);
 	*imskp &= ~(IOASIC_INTR_300_OPT0 | IOASIC_INTR_300_OPT1);
 
 	/*
@@ -107,7 +109,28 @@ tc_3000_300_intr_setup()
 	for (i = 0; i < TC_3000_300_NCOOKIES; i++) {
                 tc_3000_300_intr[i].tci_func = tc_3000_300_intrnull;
                 tc_3000_300_intr[i].tci_arg = (void *)i;
+		
+		cp = malloc(12, M_DEVBUF, M_NOWAIT);
+		if (cp == NULL)
+			panic("tc_3000_300_intr_setup");
+		sprintf(cp, "slot %lu", i);
+		evcnt_attach_dynamic(&tc_3000_300_intr[i].tci_evcnt,
+		    EVCNT_TYPE_INTR, NULL, "tc", cp);
 	}
+}
+
+const struct evcnt *
+tc_3000_300_intr_evcnt(tcadev, cookie)
+	struct device *tcadev;
+	void *cookie;
+{
+	u_long dev = (u_long)cookie;
+
+#ifdef DIAGNOSTIC
+	/* XXX bounds-check cookie. */
+#endif
+
+	return (&tc_3000_300_intr[dev].tci_evcnt);
 }
 
 void
@@ -130,7 +153,7 @@ tc_3000_300_intr_establish(tcadev, cookie, level, func, arg)
 	tc_3000_300_intr[dev].tci_func = func;
 	tc_3000_300_intr[dev].tci_arg = arg;
 
-	imskp = (volatile u_int32_t *)IOASIC_REG_IMSK(DEC_3000_300_IOASIC_ADDR);
+	imskp = (volatile u_int32_t *)(DEC_3000_300_IOASIC_ADDR + IOASIC_IMSK);
 	switch (dev) {
 	case TC_3000_300_DEV_OPT0:
 		*imskp |= IOASIC_INTR_300_OPT0;
@@ -160,7 +183,7 @@ tc_3000_300_intr_disestablish(tcadev, cookie)
 		panic("tc_3000_300_intr_disestablish: cookie %lu bad intr",
 		    dev);
 
-	imskp = (volatile u_int32_t *)IOASIC_REG_IMSK(DEC_3000_300_IOASIC_ADDR);
+	imskp = (volatile u_int32_t *)(DEC_3000_300_IOASIC_ADDR + IOASIC_IMSK);
 	switch (dev) {
 	case TC_3000_300_DEV_OPT0:
 		*imskp &= ~IOASIC_INTR_300_OPT0;
@@ -211,9 +234,9 @@ tc_3000_300_iointr(framep, vec)
 		/* find out what interrupts/errors occurred */
 		tcir = *(volatile u_int32_t *)TC_3000_300_IR;
 		ioasicir = *(volatile u_int32_t *)
-		    IOASIC_REG_INTR(DEC_3000_300_IOASIC_ADDR);
+		    (DEC_3000_300_IOASIC_ADDR + IOASIC_INTR);
 		ioasicimr = *(volatile u_int32_t *)
-		    IOASIC_REG_IMSK(DEC_3000_300_IOASIC_ADDR);
+		    (DEC_3000_300_IOASIC_ADDR + IOASIC_IMSK);
 		tc_mb();
 
 		/* Ignore interrupts that aren't enabled out. */
@@ -226,12 +249,7 @@ tc_3000_300_iointr(framep, vec)
 
 		ifound = 0;
 
-#ifdef EVCNT_COUNTERS
-	/* No interrupt counting via evcnt counters */
-	XXX BREAK HERE XXX
-#else /* !EVCNT_COUNTERS */
-#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_KN16 + slot]++
-#endif /* EVCNT_COUNTERS */
+#define	INCRINTRCNT(slot)	tc_3000_300_intr[slot].tci_evcnt.ev_count++
 
 #define	CHECKINTR(slot, flag)						\
 		if (flag) {						\
