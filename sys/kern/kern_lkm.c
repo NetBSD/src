@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.80 2004/12/30 11:47:02 jdolecek Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.81 2004/12/30 12:12:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.80 2004/12/30 11:47:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.81 2004/12/30 12:12:16 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -525,7 +525,9 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 
 		if (error) {
+#ifdef DDB
     rdyfail:
+#endif
 			/*
 			 * Module may refuse loading or may have a
 			 * version mismatch...
