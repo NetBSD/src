@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.87 2001/06/15 18:15:56 christos Exp $
+$NetBSD: acronyms,v 1.88 2001/08/03 19:16:55 cjones Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -126,6 +126,7 @@ SUS	stupid user syndrome
 SWAG	silly, wild-assed guess
 SWAHBI	silly, wild-assed hare-brained idea
 TANSTAAFL	there ain't no such thing as a free lunch
+TBD	to be {decided,determined,done}
 TIA	thanks in advance
 TLA	three letter acronym
 TMA	too many abbreviations
