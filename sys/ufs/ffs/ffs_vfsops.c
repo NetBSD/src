@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.156 2004/11/21 19:21:51 jdolecek Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.157 2004/12/26 17:34:39 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,12 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.156 2004/11/21 19:21:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.157 2004/12/26 17:34:39 dbj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #include "opt_quota.h"
-#include "opt_compat_netbsd.h"
 #include "opt_softdep.h"
 #endif
 
