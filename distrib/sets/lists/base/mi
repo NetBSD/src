@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.120 1999/07/19 09:16:34 kleink Exp $
+# $NetBSD: mi,v 1.121 1999/07/28 01:56:03 enami Exp $
 .
 ./altroot
 ./bin
@@ -226,6 +226,7 @@
 ./usr/bin/jot
 ./usr/bin/kdump
 ./usr/bin/ktrace
+./usr/bin/ktruss
 ./usr/bin/lam
 ./usr/bin/last
 ./usr/bin/lastcomm
