@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.40 2001/09/16 16:34:23 wiz Exp $	*/
+/*	$NetBSD: jobs.c,v 1.41 2002/03/12 00:44:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.40 2001/09/16 16:34:23 wiz Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.41 2002/03/12 00:44:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -360,8 +360,11 @@ freejob(jp)
 		if (ps->cmd != nullstr)
 			ckfree(ps->cmd);
 	}
-	if (jp->ps != &jp->ps0)
+	if (jp->ps != &jp->ps0) {
 		ckfree(jp->ps);
+		jp->ps = &jp->ps0;
+	}
+	jp->nprocs = 0;
 	jp->used = 0;
 #if JOBS
 	if (curjob == jp - jobtab + 1)
