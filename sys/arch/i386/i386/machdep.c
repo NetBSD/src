@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.178 1995/10/11 04:19:44 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.179 1995/10/11 19:32:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -934,7 +934,7 @@ setregs(p, pack, stack, retval)
  * Initialize segments and descriptor tables
  */
 
-union descriptor gdt[NGDT + 2];
+union descriptor gdt[NGDT];
 union descriptor ldt[NLDT];
 struct gate_descriptor idt[NIDT];
 
@@ -1009,18 +1009,23 @@ init386(first_avail)
 	extern void lgdt();
 
 	proc0.p_addr = proc0paddr;
+	curpcb = pcb = &proc0.p_addr->u_pcb;
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
-	/* make gdt gates memory segments */
+	/* make gdt gates and memory segments */
 	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
+	setsegment(&gdt[GPROC0TSS_SEL].sd, &pcb->pcb_tss, sizeof(struct pcb) - 1,
+	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 	setsegment(&gdt[GUCODE_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
+	setsegment(&gdt[GPROC0LDT_SEL].sd, ldt, sizeof(ldt) - 1, SDT_SYSLDT, SEL_KPL,
+	    0, 0);
 
-	/* make ldt gates memory segments */
+	/* make ldt gates and memory segments */
 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1, SDT_SYS386CGT,
 	    SEL_UPL);
 	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
@@ -1055,7 +1060,6 @@ init386(first_avail)
 	lidt(&region);
 
 	/* Set up proc 0's PCB and TSS. */
-	curpcb = pcb = &proc0.p_addr->u_pcb;
 	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_ioopt =
 	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
@@ -1063,9 +1067,9 @@ init386(first_avail)
 		pcb->pcb_iomap[x] = 0xffffffff;
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
-	tss_alloc(pcb);
+	pcb->pcb_tss_sel = GSEL(GPROC0TSS_SEL, SEL_KPL);
 	ltr(pcb->pcb_tss_sel);
-	ldt_alloc(pcb, ldt, sizeof(ldt));
+	pcb->pcb_ldt_sel = GSEL(GPROC0LDT_SEL, SEL_KPL);
 	lldt(pcb->pcb_ldt_sel);
 
 	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;

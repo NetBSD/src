@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.18 1995/10/11 06:24:28 mycroft Exp $	*/
+/*	$NetBSD: segments.h,v 1.19 1995/10/11 19:33:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -214,9 +214,11 @@ void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
 #define	GNULL_SEL	0	/* Null descriptor */
 #define	GCODE_SEL	1	/* Kernel code descriptor */
 #define	GDATA_SEL	2	/* Kernel data descriptor */
+#define	GPROC0TSS_SEL	3	/* proc0 TSS descriptor */
 #define	GUCODE_SEL	4	/* User code descriptor */
 #define	GUDATA_SEL	5	/* User data descriptor */
-#define	NGDT 		6
+#define	GPROC0LDT_SEL	6	/* proc0 LDT descriptor */
+#define	NGDT 		7
 
 /*
  * Entries in the Local Descriptor Table (LDT)
