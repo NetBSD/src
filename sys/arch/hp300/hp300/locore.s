@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.11 1994/01/30 21:18:16 mycroft Exp $
+ *	$Id: locore.s,v 1.12 1994/02/04 22:19:28 mycroft Exp $
  */
 
 #include "assym.s"
@@ -579,8 +579,9 @@ Ltimer1:
 	lea	sp@(16),a1		| get pointer to PS
 	movl	a1@,sp@-		| push padded PS
 	movl	a1@(4),sp@-		| push PC
+	movl	sp,sp@-			| push pointer to frame
 	jbsr	_hardclock		| call generic clock int routine
-	addql	#8,sp			| pop params
+	lea	sp@(12),sp		| pop params
 	addql	#1,_intrcnt+28		| add another system clock interrupt
 #ifdef PROFTIMER
 Ltimend:
