@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.17 1996/06/12 01:42:46 cgd Exp $
+#	$NetBSD: ALPHA,v 1.18 1996/06/13 19:18:16 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -58,6 +58,7 @@ options		COMPAT_43
 # Binary compatibility with previous versions of NetBSD.
 #options	COMPAT_09
 options		COMPAT_10
+options		COMPAT_11
 
 # OSF/1 binary compatibility -- CURRENTLY DOES NOT WORK
 #options	COMPAT_OSF1
@@ -162,11 +163,11 @@ wscons*	at	pcivga?
 wscons*	at	sfb?
 wscons*	at	tga?
 
-pseudo-device	bpfilter
+pseudo-device	bpfilter	16
 pseudo-device	loop
-pseudo-device	ppp
-pseudo-device	pty
-pseudo-device	sl
-pseudo-device	strip
-pseudo-device	tun
-pseudo-device	vnd
+pseudo-device	ppp		4
+pseudo-device	pty		64
+pseudo-device	sl		4
+pseudo-device	strip		4
+pseudo-device	tun		4
+pseudo-device	vnd		4
