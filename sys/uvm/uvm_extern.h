@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.89 2004/02/13 13:47:16 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.90 2004/03/14 16:47:23 jdolecek Exp $	*/
 
 /*
  *
@@ -256,7 +256,7 @@ struct uvmexp {
 	int reserve_kernel;	/* number of pages reserved for kernel */
 	int anonpages;		/* number of pages used by anon mappings */
 	int filepages;		/* number of pages used by cached file data */
-	int execpages;		/* number of pages used by cached exec date */
+	int execpages;		/* number of pages used by cached exec data */
 
 	/* pageout params */
 	int freemin;    /* min number of free pages */
