@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.182 1999/12/17 01:04:48 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.183 1999/12/17 14:00:12 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.177 1999/12/17 01:04:29 soren Exp 
+ *	NetBSD: pcidevs,v 1.178 1999/12/17 13:59:44 augustss Exp 
  */
 
 /*
@@ -1564,34 +1564,34 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "SpeedStream 3000",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_0x0146,
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64010A,
 	    0,
 	    "Galileo Technology",
-	    "System Controller",
+	    "GT-64010A System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_0x4111,
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64115,
 	    0,
 	    "Galileo Technology",
-	    "System Controller",
+	    "GT-64115 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_0x4146,
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64011,
 	    0,
 	    "Galileo Technology",
-	    "System Controller",
+	    "GT-64011/GT-64111 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_0x4620,
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64120,
 	    0,
 	    "Galileo Technology",
-	    "System Controller",
+	    "GT-64120 System Controller",
 	},
 	{
-	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_0x6320,
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64130,
 	    0,
 	    "Galileo Technology",
-	    "System Controller",
+	    "GT-64130 System Controller",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,

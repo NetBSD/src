@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.184 1999/12/17 01:04:47 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.185 1999/12/17 14:00:12 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.177 1999/12/17 01:04:29 soren Exp 
+ *	NetBSD: pcidevs,v 1.178 1999/12/17 13:59:44 augustss Exp 
  */
 
 /*
@@ -935,11 +935,11 @@
 #define	PCI_PRODUCT_EFFICIENTNETS_SS3000	0x0005		/* SpeedStream 3000 */
 
 /* Galileo Technology products */
-#define	PCI_PRODUCT_GALILEO_0x0146	GT-64010A		/* System Controller */
-#define	PCI_PRODUCT_GALILEO_0x4111	GT-64115		/* System Controller */
-#define	PCI_PRODUCT_GALILEO_0x4146	GT-64011/GT-64111		/* System Controller */
-#define	PCI_PRODUCT_GALILEO_0x4620	GT-64120		/* System Controller */
-#define	PCI_PRODUCT_GALILEO_0x6320	GT-64130		/* System Controller */
+#define	PCI_PRODUCT_GALILEO_GT64010A	0x0146		/* GT-64010A System Controller */
+#define	PCI_PRODUCT_GALILEO_GT64115	0x4111		/* GT-64115 System Controller */
+#define	PCI_PRODUCT_GALILEO_GT64011	0x4146		/* GT-64011/GT-64111 System Controller */
+#define	PCI_PRODUCT_GALILEO_GT64120	0x4620		/* GT-64120 System Controller */
+#define	PCI_PRODUCT_GALILEO_GT64130	0x6320		/* GT-64130 System Controller */
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */
