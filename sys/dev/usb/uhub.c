@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.30 1999/10/11 09:15:34 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.31 1999/10/12 20:02:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -374,9 +374,8 @@ uhub_explore(dev)
 		if (up->device) {
 			/* Disconnected */
 			DPRINTF(("uhub_explore: device %d disappeared "
-				 "on port %d\n", 
-				 up->device->address, port));
-			usb_disconnect_port(up);
+				 "on port %d\n", up->device->address, port));
+			usb_disconnect_port(up, USBDEV(sc->sc_dev));
 			usbd_clear_port_feature(dev, port, 
 						UHF_C_PORT_CONNECTION);
 		}
@@ -479,7 +478,7 @@ uhub_detach(self, flags)
 	for(p = 0; p < nports; p++) {
 		rup = &dev->hub->ports[p];
 		if (rup->device)
-			usb_disconnect_port(rup);
+			usb_disconnect_port(rup, self);
 	}
 	
 	free(dev->hub, M_USBDEV);

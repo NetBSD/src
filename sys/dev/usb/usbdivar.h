@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.36 1999/10/12 11:54:57 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.37 1999/10/12 20:02:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@ void		usb_free_device __P((usbd_device_handle));
 
 usbd_status	usb_insert_transfer __P((usbd_request_handle reqh));
 void		usb_transfer_complete __P((usbd_request_handle reqh));
-void		usb_disconnect_port __P((struct usbd_port *up));
+void		usb_disconnect_port __P((struct usbd_port *up, device_ptr_t));
 
 /* Routines from usb.c */
 int		usb_bus_count __P((void));
