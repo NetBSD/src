@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.21 2001/05/22 00:27:01 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.22 2001/05/22 01:23:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -190,6 +190,7 @@ struct fxp_softc {
 	bus_dma_segment_t sc_cdseg;	/* control dma segment */
 	int	sc_cdnseg;
 
+	int	sc_rev;			/* chip revision */
 	int	sc_flags;		/* misc. flags */
 
 #define	FXPF_MII		0x01	/* device uses MII */
