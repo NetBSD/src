@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.3 2003/07/08 10:06:30 itojun Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.4 2003/07/26 06:15:57 thorpej Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -710,6 +710,7 @@ static __inline void
 ahd_swap_with_next_hscb(struct ahd_softc *ahd, struct scb *scb)
 {
 	struct hardware_scb *q_hscb;
+	struct map_node *q_hscb_map;
 	uint32_t saved_hscb_busaddr;
 
 	/*
@@ -725,6 +726,7 @@ ahd_swap_with_next_hscb(struct ahd_softc *ahd, struct scb *scb)
 	 * locate the correct SCB by SCB_TAG.
 	 */
 	q_hscb = ahd->next_queued_hscb;
+	q_hscb_map = ahd->next_queued_hscb_map;
 	saved_hscb_busaddr = q_hscb->hscb_busaddr;
 	memcpy(q_hscb, scb->hscb, sizeof(*scb->hscb));
 	q_hscb->hscb_busaddr = saved_hscb_busaddr;
@@ -732,7 +734,12 @@ ahd_swap_with_next_hscb(struct ahd_softc *ahd, struct scb *scb)
 
 	/* Now swap HSCB pointers. */
 	ahd->next_queued_hscb = scb->hscb;
+	ahd->next_queued_hscb_map = scb->hscb_map;
 	scb->hscb = q_hscb;
+	scb->hscb_map = q_hscb_map;
+
+	KASSERT((vaddr_t)scb->hscb >= (vaddr_t)scb->hscb_map->vaddr &&
+		(vaddr_t)scb->hscb < (vaddr_t)scb->hscb_map->vaddr + PAGE_SIZE);
 
 	/* Now define the mapping from tag to SCB in the scbindex */
 	ahd->scb_data.scbindex[SCB_GET_TAG(scb)] = scb;
@@ -804,7 +811,7 @@ static __inline void	ahd_minphys(struct buf *);
 static __inline void
 ahd_sync_qoutfifo(struct ahd_softc *ahd, int op)
 {
-	ahd_dmamap_sync(ahd, ahd->parent_dmat, ahd->shared_data_dmamap,
+	ahd_dmamap_sync(ahd, ahd->parent_dmat, ahd->shared_data_map.dmamap,
 			/*offset*/0, /*len*/AHD_SCB_MAX * sizeof(uint16_t), op);
 }
 
@@ -814,7 +821,7 @@ ahd_sync_tqinfifo(struct ahd_softc *ahd, int op)
 #ifdef AHD_TARGET_MODE
 	if ((ahd->flags & AHD_TARGETROLE) != 0) {
 		ahd_dmamap_sync(ahd, ahd->parent_dmat /*shared_data_dmat*/,
-				ahd->shared_data_dmamap,
+				ahd->shared_data_map.dmamap,
 				ahd_targetcmd_offset(ahd, 0),
 				sizeof(struct target_cmd) * AHD_TMODE_CMDS,
 				op);
@@ -834,7 +841,7 @@ ahd_check_cmdcmpltqueues(struct ahd_softc *ahd)
 	u_int retval;
 
 	retval = 0;
-	ahd_dmamap_sync(ahd, ahd->parent_dmat /*shared_data_dmat*/, ahd->shared_data_dmamap,
+	ahd_dmamap_sync(ahd, ahd->parent_dmat /*shared_data_dmat*/, ahd->shared_data_map.dmamap,
 			/*offset*/ahd->qoutfifonext, /*len*/2,
 			BUS_DMASYNC_POSTREAD);
 	if ((ahd->qoutfifo[ahd->qoutfifonext]
@@ -844,7 +851,7 @@ ahd_check_cmdcmpltqueues(struct ahd_softc *ahd)
 	if ((ahd->flags & AHD_TARGETROLE) != 0
 	 && (ahd->flags & AHD_TQINFIFO_BLOCKED) == 0) {
 		ahd_dmamap_sync(ahd, ahd->parent_dmat /*shared_data_dmat*/,
-				ahd->shared_data_dmamap,
+				ahd->shared_data_map.dmamap,
 				ahd_targetcmd_offset(ahd, ahd->tqinfifofnext),
 				/*len*/sizeof(struct target_cmd),
 				BUS_DMASYNC_POSTREAD);
