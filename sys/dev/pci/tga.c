@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.14 1999/04/28 23:24:33 ross Exp $ */
+/* $NetBSD: tga.c,v 1.15 1999/12/06 19:25:59 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -79,7 +79,8 @@ static void tga_copycols __P((void *, int, int, int, int));
 static int tga_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void tga_free_screen __P((void *, void *));
-static void tga_show_screen __P((void *, void *));
+static int tga_show_screen __P((void *, void *, int,
+				void (*) (void *, int, int), void *));
 static int tga_rop __P((struct raster *, int, int, int, int, int,
 	struct raster *, int, int));
 static int tga_rop_nosrc __P((struct raster *, int, int, int, int, int));
@@ -480,11 +481,16 @@ tga_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-void
-tga_show_screen(v, cookie)
+int
+tga_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
+	int waitok;
+	void (*cb) __P((void *, int, int));
+	void *cbarg;
 {
+
+	return (0);
 }
 
 int

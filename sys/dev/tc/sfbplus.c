@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.1 1999/12/03 09:50:53 nisimura Exp $ */
+/* $NetBSD: sfbplus.c,v 1.2 1999/12/06 19:26:01 drochner Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.1 1999/12/03 09:50:53 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.2 1999/12/06 19:26:01 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,8 @@ static int  sfbmmap __P((void *, off_t, int));
 static int  sfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void sfb_free_screen __P((void *, void *));
-static void sfb_show_screen __P((void *, void *));
+static int sfb_show_screen __P((void *, void *, int,
+				void (*) (void *, int, int), void *));
 /* EXPORT */ int  sfb_alloc_attr __P((void *, int, int, int, long *));
 
 static const struct wsdisplay_accessops sfb_accessops = {
@@ -528,11 +529,16 @@ sfb_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-static void
-sfb_show_screen(v, cookie)
+static int
+sfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
+	int waitok;
+	void (*cb) __P((void *, int, int));
+	void *cbarg;
 {
+
+	return (0);
 }
 
 int
