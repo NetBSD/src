@@ -1,4 +1,4 @@
-#!obj/sh
+#!/bin/sh
 # Variable quoting test.
 
 check() {
