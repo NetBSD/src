@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.61 2001/05/27 13:53:24 sommerfeld Exp $ */
+/* $NetBSD: interrupt.c,v 1.62 2001/07/03 13:55:42 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.61 2001/05/27 13:53:24 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.62 2001/07/03 13:55:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,6 +295,7 @@ fatal:
 	printf("    param   = 0x%lx\n", param);
 	printf("    pc      = 0x%lx\n", framep->tf_regs[FRAME_PC]);
 	printf("    ra      = 0x%lx\n", framep->tf_regs[FRAME_RA]);
+	printf("    code    = 0x%lx\n", *(unsigned long *)(param + 0x10));
 	printf("    curproc = %p\n", curproc);
 	if (curproc != NULL)
 		printf("        pid = %d, comm = %s\n", curproc->p_pid,
