@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.5 1999/10/25 13:55:08 kleink Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.6 2000/04/02 15:35:49 minoura Exp $ */
 
 #define	ELF32_MACHDEP_ENDIANNESS	XXX	/* break compilation */
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -9,6 +9,8 @@
 		case EM_ALPHA:						\
 		case EM_ALPHA_EXP:					\
 			break;
+
+#define ARCH_ELFSIZE		64	/* MD native binary size */
 
 /*
  * Alpha Relocation Types
