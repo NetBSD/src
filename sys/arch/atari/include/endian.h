@@ -1,3 +1,3 @@
-/*	$NetBSD: endian.h,v 1.2 1999/01/24 12:56:51 mycroft Exp $	*/
+/*	$NetBSD: endian.h,v 1.3 2000/03/17 00:09:19 mycroft Exp $	*/
 
-#include <m68k/endian.h>
+#include <sys/endian.h>
