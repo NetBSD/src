@@ -19,9 +19,9 @@
 ./usr/include/machine/ieee.h
 ./usr/include/machine/ieeefp.h
 ./usr/include/machine/iic.h
-./usr/include/machine/ipkdb.h
-./usr/include/machine/io.h
 ./usr/include/machine/intr.h
+./usr/include/machine/io.h
+./usr/include/machine/ipkdb.h
 ./usr/include/machine/irqhandler.h
 ./usr/include/machine/katelib.h
 ./usr/include/machine/kbd.h
@@ -49,6 +49,9 @@
 ./usr/include/machine/vconsole.h
 ./usr/include/machine/vidc.h
 ./usr/include/machine/vmparam.h
+./usr/lib/libarm32.a
+./usr/lib/libarm32_p.a
+./usr/lib/libarm32_pic.a
 ./usr/lib/libbfd_pic.a
 ./usr/lib/libc_pic.a
 ./usr/lib/libcrypt_pic.a
@@ -56,9 +59,6 @@
 ./usr/lib/libedit_pic.a
 ./usr/lib/libg++_pic.a
 ./usr/lib/libgnumalloc_pic.a
-./usr/lib/libarm32.a
-./usr/lib/libarm32_p.a
-./usr/lib/libarm32_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
 ./usr/lib/libntp_pic.a

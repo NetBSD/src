@@ -322,12 +322,12 @@
 ./usr/X11R6/lib/libxkbfile.a
 ./usr/X11R6/lib/libxkbui.a
 ./usr/X11R6/man/cat1/imake.0
-./usr/X11R6/man/cat1/makedepend.0
 ./usr/X11R6/man/cat1/lndir.0
-./usr/X11R6/man/cat1/xmkmf.0
-./usr/X11R6/man/cat1/mkdirhier.0
-./usr/X11R6/man/cat1/makestrs.0
+./usr/X11R6/man/cat1/makedepend.0
 ./usr/X11R6/man/cat1/makeg.0
+./usr/X11R6/man/cat1/makestrs.0
+./usr/X11R6/man/cat1/mkdirhier.0
+./usr/X11R6/man/cat1/xmkmf.0
 ./usr/X11R6/man/cat3/AllPlanes.0
 ./usr/X11R6/man/cat3/BitmapBitOrder.0
 ./usr/X11R6/man/cat3/BitmapPad.0
