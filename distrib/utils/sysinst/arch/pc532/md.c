@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 1999/01/25 23:34:25 garbled Exp $	*/
+/*	$NetBSD: md.c,v 1.12 1999/01/25 23:55:10 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -109,7 +109,12 @@ void	md_post_disklabel (void)
 	/* boot blocks ... */
 	printf (msg_string(MSG_dobootblks), diskdev);
 	sprintf(bimcmd, "bim -y -c init -c 'add /usr/mdec/boot boot' -c 'default 0' -c 'exit' /dev/%sc",
-		diskdev);
+		diskdev)
+	if (logging)
+		(void)fprintf(log, "%s\n", sedcmd);
+	if (scripting)
+		(void)fprintf(script, "%s\n", sedcmd);
+
 	do_system(bimcmd);
 }
 
