@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.23 2003/09/11 01:32:10 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.24 2003/09/16 13:46:24 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.23 2003/09/11 01:32:10 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.24 2003/09/16 13:46:24 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.23 2003/09/11 01:32:10 cl Exp $");
 static void sa_vp_donate(struct lwp *);
 static int sa_newcachelwp(struct lwp *);
 static struct lwp *sa_vp_repossess(struct lwp *l);
+
+static int sa_pagefault(struct lwp *, ucontext_t *);
 
 void sa_upcall_getstate(struct sadata_upcall *, struct lwp *, struct lwp *);
 
@@ -156,6 +158,10 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		sa->sa_stacks = malloc(sizeof(stack_t) * SA_NUMSTACKS,
 		    M_SA, M_WAITOK);
 		sa->sa_nstacks = 0;
+		sa->sa_vp_faultaddr = NULL;
+		sa->sa_vp_ofaultaddr = NULL;
+		sa->sa_vp_stacks_low = NULL;
+		sa->sa_vp_stacks_high = NULL;
 		LIST_INIT(&sa->sa_lwpcache);
 		SIMPLEQ_INIT(&sa->sa_upcalls);
 		p->p_sa = sa;
@@ -183,7 +189,8 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 		syscallarg(stack_t *) stacks;
 	} */ *uap = v;
 	struct sadata *sa = l->l_proc->p_sa;
-	int error, count;
+	struct lwp *l2;
+	int count, error, f, i;
 
 	/* We have to be using scheduler activations */
 	if (sa == NULL)
@@ -194,13 +201,34 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 		return (EINVAL);
 	count = min(count, SA_NUMSTACKS - sa->sa_nstacks);
 
+	SA_LWP_STATE_LOCK(l, f);
 	error = copyin(SCARG(uap, stacks), sa->sa_stacks + sa->sa_nstacks,
 	    sizeof(stack_t) * count);
+	SA_LWP_STATE_UNLOCK(l, f);
 	if (error)
 		return (error);
 
+	for (i = sa->sa_nstacks; i < sa->sa_nstacks + count; i++) {
+		LIST_FOREACH(l2, &l->l_proc->p_lwps, l_sibling) {
+			if ((l2->l_upcallstack == sa->sa_stacks[i].ss_sp)) {
+				l2->l_upcallstack = NULL;
+				wakeup(&l2->l_upcallstack);
+			}
+		}
+	}
+
 	if ((sa->sa_nstacks == 0) && (sa->sa_vp_wait_count != 0))
 		l->l_flag |= L_SA_UPCALL; 
+
+	if (sa->sa_vp_stacks_low == 0) {
+		sa->sa_vp_stacks_low = (uintptr_t)sa->sa_stacks[0].ss_sp;
+		sa->sa_vp_stacks_high = (uintptr_t)sa->sa_stacks[count - 1].ss_sp +
+			sa->sa_stacks[count - 1].ss_size;
+		DPRINTFN(11,("sys_sa_stacks(%d.%d): low 0x%llx high 0x%llx\n",
+			     l->l_proc->p_pid, l->l_lid,
+			     (unsigned long long)sa->sa_vp_stacks_low,
+			     (unsigned long long)sa->sa_vp_stacks_high));
+	}
 
 	sa->sa_nstacks += count;
 	DPRINTFN(9, ("sa_stacks(%d.%d) nstacks + %d = %2d\n",
@@ -278,8 +306,11 @@ sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
-	if (p->p_sa == NULL || !(p->p_flag & P_SA))
+	if (p->p_sa == NULL || !(p->p_flag & P_SA)) {
+		DPRINTFN(1,("sys_sa_yield(%d.%d) proc %p not SA (p_sa %p, flag %s)\n",
+		    p->p_pid, l->l_lid, p, p->p_sa, p->p_flag & P_SA ? "T" : "F"));
 		return (EINVAL);
+	}
 
 	sa_yield(l);
 
@@ -397,6 +428,127 @@ sa_preempt(struct lwp *l)
 }
 
 
+int
+sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys_sa_unblockyield_args /* {
+		syscallarg(int) sa_id;
+		syscallarg(void *) up_preempted;
+		syscallarg(stack_t *) up_stack;
+	} */ *uap = v;
+	struct sadata *sa = l->l_proc->p_sa;
+	struct proc *p = l->l_proc;
+	struct lwp *l2;
+	int error, f, s;
+	void *preempted;
+
+	if (sa == NULL)
+		return (EINVAL);
+
+	if (sa->sa_nstacks == SA_NUMSTACKS)
+		return (EINVAL);
+
+	SA_LWP_STATE_LOCK(l, f);
+	error = copyin(SCARG(uap, up_stack), sa->sa_stacks + sa->sa_nstacks,
+	    sizeof(stack_t));
+	if (error) {
+		SA_LWP_STATE_UNLOCK(l, f);
+		return (error);
+	}
+
+	if (SCARG(uap, up_preempted) != NULL) {
+		error = copyin(SCARG(uap, up_preempted), &preempted,
+		    sizeof(void *));
+		if (error) {
+			SA_LWP_STATE_UNLOCK(l, f);
+			return (error);
+		}
+	} else
+		preempted = (void *)-1;
+	SA_LWP_STATE_UNLOCK(l, f);
+
+	SCHED_LOCK(s);
+	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
+		if (l2->l_lid == SCARG(uap, sa_id)) {
+			KDASSERT(l2->l_upcallstack ==
+			    sa->sa_stacks[sa->sa_nstacks].ss_sp);
+			break;
+		}
+	}
+	KDASSERT(l2 != NULL);
+
+	/*
+	 * upcall not interrupted: (*up_preempted == NULL)
+	 * - lwp ready: (wchan == upcallstacks)
+	 * ==> recycle stack, put lwp on vp,
+	 *     unsleep lwp, make runnable, recycle upcall lwp (=l)
+	 * - lwp not ready:
+	 * ==> recycle stack, put lwp on vp, recycle upcall lwp (=l)
+	 *
+	 * upcall interrupted: (*up_preempted != NULL || up_preempted == NULL)
+	 * ==> recycle upcall lwp
+	 */
+
+	if (preempted != NULL) {
+		DPRINTFN(11,("sys_sa_unblockyield(%d.%d) recycle %d "
+			     "(was %sready) upcall stack %p\n",
+			     p->p_pid, l->l_lid, l2->l_lid, 
+			     (l2->l_wchan == &l2->l_upcallstack) ? "" :
+			     "not ", sa->sa_stacks[sa->sa_nstacks].ss_sp));
+
+		l2->l_upcallstack = (void *)-1;
+		if (l2->l_wchan == &l2->l_upcallstack) {
+			unsleep(l2);
+			if (l2->l_stat == LSSLEEP) {
+				l2->l_slptime = 0;
+				l2->l_stat = LSRUN;
+				l2->l_proc->p_nrlwps++;
+				if (l2->l_flag & L_INMEM)
+					setrunqueue(l2);
+				else
+					sched_wakeup((caddr_t)&proc0);
+			}
+		}
+	} else {
+		DPRINTFN(11,("sys_sa_unblockyield(%d.%d) resuming %d "
+			     "(is %sready) upcall stack %p\n",
+			     p->p_pid, l->l_lid, l2->l_lid, 
+			     (l2->l_wchan == &l2->l_upcallstack) ? "" :
+			     "not ", sa->sa_stacks[sa->sa_nstacks].ss_sp));
+
+		sa->sa_vp = l2;
+		sa->sa_nstacks += 1;
+		l2->l_flag &= ~L_SA_BLOCKING;
+		l2->l_upcallstack = NULL;
+
+		if (l2->l_wchan == &l2->l_upcallstack) {
+			unsleep(l2);
+			if (l2->l_stat == LSSLEEP) {
+				l2->l_slptime = 0;
+				l2->l_stat = LSRUN;
+				l2->l_proc->p_nrlwps++;
+				if (l2->l_flag & L_INMEM)
+					setrunqueue(l2);
+				else
+					sched_wakeup((caddr_t)&proc0);
+			}
+		}
+
+		p->p_nrlwps--;
+		sa_putcachelwp(p, l);
+		mi_switch(l, NULL);
+		/* mostly NOTREACHED */
+		SCHED_ASSERT_UNLOCKED();
+		splx(s);
+		KDASSERT(p->p_flag & P_WEXIT);
+		lwp_exit(l);
+	}
+
+	SCHED_UNLOCK(s);
+	return (0);
+}
+
+
 /*
  * Set up the user-level stack and trapframe to do an upcall.
  *
@@ -410,7 +562,7 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	struct sadata_upcall *sau;
 	struct sadata *sa = l->l_proc->p_sa;
 	stack_t st;
-	int f;
+	int error, f;
 
 	/* XXX prevent recursive upcalls if we sleep formemory */
 	SA_LWP_STATE_LOCK(l, f);
@@ -428,15 +580,23 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	DPRINTFN(9,("sa_upcall(%d.%d) nstacks--   = %2d\n", 
 	    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
 
-	return sa_upcall0(l, type, event, interrupted, argsize, arg, sau, &st);
+	error = sa_upcall0(l, type, event, interrupted, argsize, arg, sau, &st);
+	if (error) {
+		sa->sa_stacks[sa->sa_nstacks++] = st;
+		sadata_upcall_free(sau);
+		return (error);
+	}
+
+	SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
+	l->l_flag |= L_SA_UPCALL;
+
+	return (0);
 }
 
 int
 sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
     size_t argsize, void *arg, struct sadata_upcall *sau, stack_t *st)
 {
-	struct proc *p = l->l_proc;
-	struct sadata *sa = p->p_sa;
 
 	KDASSERT((event == NULL) || (event != interrupted));
 
@@ -452,9 +612,6 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 		sau->sau_flags = SAU_FLAG_DEFERRED;
 	} else
 		sa_upcall_getstate(sau, event, interrupted);
-
-	SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
-	l->l_flag |= L_SA_UPCALL;
 
 	return (0);
 }
@@ -493,6 +650,38 @@ sa_upcall_getstate(struct sadata_upcall *sau, struct lwp *event,
 	} else
 		sau->sau_state.captured.i_sa.sa_context = NULL;
 
+}
+
+
+static int
+sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
+{
+	struct proc *p;
+	struct sadata *sa;
+	vaddr_t usp;
+
+	p = l->l_proc;
+	sa = p->p_sa;
+
+	KDASSERT(sa->sa_vp == l);
+
+	if (sa->sa_vp_faultaddr == sa->sa_vp_ofaultaddr) {
+		DPRINTFN(10,("sa_check_upcall(%d.%d) double page fault\n",
+			     p->p_pid, l->l_lid));
+		return 1;
+	}
+
+	usp = (uintptr_t)_UC_MACHINE_SP(l_ctx);
+
+	if ((usp >= sa->sa_vp_stacks_low) &&
+	    (usp < sa->sa_vp_stacks_high)) {
+		DPRINTFN(10,("sa_check_upcall(%d.%d) upcall page fault\n",
+			     p->p_pid, l->l_lid));
+		return 1;
+	}
+
+	sa->sa_vp_ofaultaddr = sa->sa_vp_faultaddr;
+	return 0;
 }
 
 
@@ -592,7 +781,21 @@ sa_switch(struct lwp *l, int type)
 			goto sa_upcall_failed;
 		}
 
+		if (l->l_flag & L_SA_PAGEFAULT && sa_pagefault(l,
+			&sau->sau_state.captured.e_ctx) != 0) {
+			sadata_upcall_free(sau);
+			sa->sa_stacks[sa->sa_nstacks++] = st;
+			sa_putcachelwp(p, l2);
+			PRELE(l2); /* Remove the artificial hold-count */
+			mi_switch(l, NULL);
+			return;
+		}
+
+		SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
+		l2->l_flag |= L_SA_UPCALL;
+
 		l->l_flag |= L_SA_BLOCKING;
+		l->l_upcallstack = st.ss_sp;
 		l2->l_priority = l2->l_usrpri;
 		sa->sa_vp = l2;
 		setrunnable(l2);
@@ -835,7 +1038,7 @@ sa_upcall_userret(struct lwp *l)
 	stack_t st;
 	void *stack, *ap;
 	ucontext_t u, *up;
-	int i, nsas, nint, nevents, type, f, sig;
+	int f, i, nsas, nint, nevents, sig, s, type;
 
 	p = l->l_proc;
 	sa = p->p_sa;
@@ -847,6 +1050,33 @@ sa_upcall_userret(struct lwp *l)
 
 	DPRINTFN(7,("sa_upcall_userret(%d.%d %x) \n", p->p_pid, l->l_lid,
 	    l->l_flag));
+
+	while (l->l_upcallstack != NULL) {
+		if (l->l_upcallstack == (void *)-1) {
+			SCHED_LOCK(s);
+			l->l_flag &= ~(L_SA_UPCALL|L_SA_BLOCKING);
+			l->l_upcallstack = NULL;
+			p->p_nrlwps--;
+			sa_putcachelwp(p, l);
+			SA_LWP_STATE_UNLOCK(l, f);
+			KERNEL_PROC_UNLOCK(l);
+			mi_switch(l, NULL);
+			/* mostly NOTREACHED */
+			SCHED_ASSERT_UNLOCKED();
+			splx(s);
+			KERNEL_PROC_LOCK(l);
+			KDASSERT(p->p_flag & P_WEXIT);
+			lwp_exit(l);
+		}
+		if ((l->l_flag & L_SA_BLOCKING) == 0) {
+			l->l_upcallstack = NULL;
+			break;
+		}
+		tsleep((caddr_t) &l->l_upcallstack, PWAIT,
+		    "saunblock", 0);
+	       	if (p->p_flag & P_WEXIT)
+			lwp_exit(l);
+	}
 
 	if (l->l_flag & L_SA_BLOCKING) {
 		/* Invoke an "unblocked" upcall */
@@ -895,6 +1125,8 @@ sa_upcall_userret(struct lwp *l)
 			sigexit(l, SIGABRT);
 			/* NOTREACHED */
 		}
+		SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
+		l->l_flag |= L_SA_UPCALL;
 		l->l_flag &= ~L_SA_BLOCKING;
 
 		/* We migth have sneaked past signal handling and userret */
@@ -912,6 +1144,8 @@ sa_upcall_userret(struct lwp *l)
 		KERNEL_PROC_LOCK(l);
 		SA_LWP_STATE_LOCK(l, f);
 	}
+
+	KDASSERT(sa->sa_vp == l);
 
 	if (SIMPLEQ_EMPTY(&sa->sa_upcalls)) {		
 		l->l_flag &= ~L_SA_UPCALL;
@@ -1135,6 +1369,8 @@ sa_vp_repossess(struct lwp *l)
 
 	SCHED_ASSERT_UNLOCKED();
 
+	DPRINTFN(1,("sa_vp_repossess(%d.%d): want vp\n",
+		    p->p_pid, l->l_lid));		     
 	while(sa->sa_vp != l) {
 		tsleep((caddr_t) l, PWAIT, "saprocessor", 0);
 		
@@ -1145,6 +1381,8 @@ sa_vp_repossess(struct lwp *l)
 			return 0;
 		}
 	}
+	DPRINTFN(1,("sa_vp_repossess(%d.%d): on vp\n",
+		    p->p_pid, l->l_lid));		     
 
 	l2 = sa->sa_old_lwp;
 
