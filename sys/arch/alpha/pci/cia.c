@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.47.2.2 2000/02/06 17:29:37 he Exp $ */
+/* $NetBSD: cia.c,v 1.47.2.3 2000/02/07 19:35:10 he Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.47.2.2 2000/02/06 17:29:37 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.47.2.3 2000/02/07 19:35:10 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,6 +325,8 @@ ciaattach(parent, self, aux)
 		/* XXX no bets... */
 		printf("%s: WARNING: Pyxis pass 1 DMA bug; no bets...\n",
 		    self->dv_xname);
+
+		ccp->cc_flags |= CCF_PYXISBUG;
 
 		alpha_mb();
 		ctrl = REGVAL(CIA_CSR_CTRL);
