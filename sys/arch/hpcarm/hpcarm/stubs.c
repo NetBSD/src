@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.4 2001/05/22 17:25:16 toshii Exp $	*/
+/*	$NetBSD: stubs.c,v 1.5 2001/06/20 02:30:47 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -256,11 +256,13 @@ set_spl_masks()
 	for (loop = 0; loop < _SPL_LEVELS; ++loop)
 		spl_smasks[loop] = 0;
 
-	for (loop = 0; loop <= _SPL_BIO; loop++)
-		spl_masks[loop]	   = imask[IPL_BIO];
+	for (loop = 0; loop <= _SPL_SOFTCLOCK; loop++)
+		spl_masks[loop]	   = imask[IPL_SOFTCLOCK];
 
+	spl_masks[_SPL_SOFTNET]	   = imask[IPL_SOFTNET];
+	spl_masks[_SPL_BIO]	   = imask[IPL_BIO];
 	spl_masks[_SPL_NET]	   = imask[IPL_NET];
-	spl_masks[_SPL_SOFTSERIAL] = imask[IPL_TTY];
+	spl_masks[_SPL_SOFTSERIAL] = imask[IPL_SOFTSERIAL];
 	spl_masks[_SPL_TTY]	   = imask[IPL_TTY];
 	spl_masks[_SPL_IMP]	   = imask[IPL_IMP];
 	spl_masks[_SPL_AUDIO]	   = imask[IPL_AUDIO];
@@ -284,10 +286,16 @@ ipl_to_spl(ipl)
 {
 
 	switch(ipl) {
+	case IPL_SOFTCLOCK:
+		return _SPL_SOFTCLOCK;
+	case IPL_SOFTNET:
+		return _SPL_SOFTNET;
 	case IPL_BIO:
 		return _SPL_BIO;
 	case IPL_NET:
 		return _SPL_NET;
+	case IPL_SOFTSERIAL:
+		return _SPL_SOFTSERIAL;
 	case IPL_TTY:
 		return _SPL_TTY;
 	case IPL_IMP:
