@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.24 2003/01/01 00:10:16 thorpej Exp $	*/
+/*	$NetBSD: acpi.c,v 1.25 2003/01/04 05:32:15 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.24 2003/01/01 00:10:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.25 2003/01/04 05:32:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,29 +409,32 @@ acpi_build_tree(struct acpi_softc *sc)
 			aa.aa_pciflags = sc->sc_pciflags;
 			aa.aa_ic = sc->sc_ic;
 
-			/*
-			 * XXX We only attach devices which are:
-			 *
-			 *	- present
-			 *	- enabled
-			 *	- functioning properly
-			 *
-			 * However, if enabled, it's decoding resources,
-			 * so we should claim them, if possible.  Requires
-			 * changes to bus_space(9).
-			 */
-			if ((ad->ad_devinfo.CurrentStatus &
-			     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
-			      ACPI_STA_DEV_OK)) !=
-			    (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
-			     ACPI_STA_DEV_OK))
-				continue;
+			if (ad->ad_devinfo.Type == ACPI_TYPE_DEVICE) {
+				/*
+				 * XXX We only attach devices which are:
+				 *
+				 *	- present
+				 *	- enabled
+				 *	- functioning properly
+				 *
+				 * However, if enabled, it's decoding resources,
+				 * so we should claim them, if possible.
+				 * Requires changes to bus_space(9).
+				 */
+				if ((ad->ad_devinfo.CurrentStatus &
+				     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
+				      ACPI_STA_DEV_OK)) !=
+				    (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
+				     ACPI_STA_DEV_OK))
+					continue;
 
-			/*
-			 * XXX Same problem as above...
-			 */
-			if ((ad->ad_devinfo.Valid & ACPI_VALID_HID) == 0)
-				continue;
+				/*
+				 * XXX Same problem as above...
+				 */
+				if ((ad->ad_devinfo.Valid & ACPI_VALID_HID)
+				    == 0)
+					continue;
+			}
 
 			ad->ad_device = config_found(&sc->sc_dev,
 			    &aa, acpi_print);
@@ -561,7 +564,11 @@ acpi_print(void *aux, const char *pnp)
 #endif
 
 	if (pnp) {
-		aprint_normal("%s ", aa->aa_node->ad_devinfo.HardwareId);
+		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_HID)
+			aprint_normal("%s ",
+			    aa->aa_node->ad_devinfo.HardwareId);
+		else /* XXX print something more meaningful.. */
+			aprint_normal("%d ", aa->aa_node->ad_devinfo.Name);
 #if 0 /* Not until we fix acpi_eval_string */
 		if (acpi_eval_string(aa->aa_node->ad_handle,
 		    "_STR", &str) == AE_OK) {
