@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.6 2002/03/16 20:43:54 christos Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.6.6.1 2003/10/02 09:52:42 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.6 2002/03/16 20:43:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.6.6.1 2003/10/02 09:52:42 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,11 +136,9 @@ linux_sys_uselib(p, v, retval)
 	daddr = taddr + tsize;
 	dsize = hdr.a_data + hdr.a_bss;
 
-	if ((hdr.a_text != 0 || hdr.a_data != 0) && vp->v_writecount != 0) {
-		vrele(vp);
-                return ETXTBSY;
-        }
-	vp->v_flag |= VTEXT;
+	error = vn_marktext(vp);
+	if (error)
+		return (error);
 
 	vcset.evs_cnt = 0;
 	vcset.evs_used = 0;
