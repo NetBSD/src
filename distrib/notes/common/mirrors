@@ -4,7 +4,7 @@
 .\"	appropriate changes to the script.
 .\"
 .Ss2 "NetBSD Mirror Site List"
-The following sites mirror NetBSD as of October 22, 1999.
+The following sites mirror NetBSD as of October 28, 1999.
 .Pp
 If you wish to become a distribution site for NetBSD, contact
 .Mt mirrors@netbsd.org .
@@ -203,6 +203,11 @@ If you wish to become a distribution site for NetBSD, contact
 .El
 .It "AnonCVS mirrors"
 .Bl -tag -width 3n
+.
+.Country "France"
+.mirror "anoncvs.fr.netbsd.org" \
+"Universite Pierre et Marie Curie, Paris 06" \
+"Instructions: for ssh: 'CVSROOT=anoncvs@anoncvs.fr.netbsd.org:/pub/NetBSD-CVS; CVS_RSH=ssh'. for pserver: 'CVSROOT=:pserver:anoncvs@anoncvs.fr.netbsd.org:/pub/NetBSD-CVS'"
 .
 .Country "Norway"
 .mirror "anoncvs.no.netbsd.org" \
