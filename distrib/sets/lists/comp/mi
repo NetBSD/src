@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.452 2002/07/10 19:06:54 thorpej Exp $
+#	$NetBSD: mi,v 1.453 2002/07/10 19:07:48 thorpej Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3299,7 +3299,6 @@
 ./usr/share/man/cat9/pool_put.0		comp-sys-catman
 ./usr/share/man/cat9/pool_sethiwat.0		comp-sys-catman
 ./usr/share/man/cat9/pool_setlowat.0		comp-sys-catman
-./usr/share/man/cat9/postsig.0		comp-sys-catman
 ./usr/share/man/cat9/powerhook_disestablish.0		comp-sys-catman
 ./usr/share/man/cat9/powerhook_establish.0		comp-sys-catman
 ./usr/share/man/cat9/ppsratecheck.0		comp-sys-catman
@@ -5898,7 +5897,6 @@
 ./usr/share/man/man9/rt_timer_queue_destroy.9		comp-sys-man
 ./usr/share/man/man9/rt_timer_remove_all.9		comp-sys-man
 ./usr/share/man/man9/runtime.9		comp-sys-man
-./usr/share/man/man9/sched_psignal.9	comp-sys-catman
 ./usr/share/man/man9/scsipi.9		comp-sys-man
 ./usr/share/man/man9/sched_psignal.9	comp-sys-man
 ./usr/share/man/man9/sendsig.9		comp-sys-man
