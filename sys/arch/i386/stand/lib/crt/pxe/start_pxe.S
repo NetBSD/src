@@ -1,4 +1,4 @@
-/*	$NetBSD: start_pxe.S,v 1.4 2003/02/25 11:17:37 dsl Exp $	*/
+/*	$NetBSD: start_pxe.S,v 1.5 2003/03/11 12:37:35 dsl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@ start1:
 
 	/* change to protected mode */
 	calll	_C_LABEL(real_to_prot)
-	.code16
+	.code32
 
 	/* clear bss */
 	xorl	%eax, %eax
