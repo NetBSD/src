@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.22 1998/05/01 15:36:30 mark Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.23 1998/06/02 14:34:55 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -88,8 +88,11 @@ extern void child_return	__P((void));
 pt_entry_t *pmap_pte	__P((pmap_t, vm_offset_t));
 
 /*
- * Special compilation symbols
- * STACKCHECKS
+ * Special compilation symbols:
+ *
+ * STACKCHECKS - Fill undefined and supervisor stacks with a known pattern
+ *		 on forking and check the pattern on exit, reporting
+ *		 the amount of stack used.
  */
 
 /*
@@ -110,10 +113,6 @@ cpu_fork(p1, p2)
 	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
-#ifdef STACKCHECKS
-	int loop;
-	u_char *ptr;
-#endif	/* STACKCHECKS */
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
@@ -137,14 +136,11 @@ cpu_fork(p1, p2)
 
 #ifdef STACKCHECKS
 	/* Fill the undefined stack with a known pattern */
-	ptr = ((u_char *)p2->p_addr) + USPACE_UNDEF_STACK_BOTTOM;
-	for (loop = 0; loop < (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM); ++loop, ++ptr)
-		*ptr = 0xdd;
-
+	memset(((u_char *)p2->p_addr) + USPACE_UNDEF_STACK_BOTTOM, 0xdd,
+	    (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM));
 	/* Fill the kernel stack with a known pattern */
-	ptr = ((u_char *)p2->p_addr) + USPACE_SVC_STACK_BOTTOM;
-	for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM); ++loop, ++ptr)
-		*ptr = 0xdd;
+	memset(((u_char *)p2->p_addr) + USPACE_SVC_STACK_BOTTOM, 0xdd,
+	    (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM));
 #endif	/* STACKCHECKS */
 
 #ifdef PMAP_DEBUG
@@ -223,7 +219,6 @@ cpu_exit(p)
 		for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM)
 		    && *ptr == 0xdd; ++loop, ++ptr) ;
 		log(LOG_INFO, "%d bytes of svc stack fill pattern\n", loop);
-
 	}
 #endif	/* STACKCHECKS */
 
