@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.183 2003/10/14 09:59:32 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.184 2003/10/16 12:38:24 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2363,3 +2363,7 @@ sys/arch/sparc64/sparc64/pmap.c			1.145 (via patch)
 	this should fix PR 23093.
 	[martin, ticket #1522]
 
+distrib/sets/lists/xcomp4/mi			patch
+
+	remove bdftruncate.pl which was missed in a previous pullup.
+	[tron, ticket #1443]
