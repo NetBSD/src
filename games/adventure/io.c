@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.2 1995/03/21 12:05:05 cgd Exp $	*/
+/*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: io.c,v 1.2 1995/03/21 12:05:05 cgd Exp $";
+static char rcsid[] = "$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ static char rcsid[] = "$NetBSD: io.c,v 1.2 1995/03/21 12:05:05 cgd Exp $";
 
 #include "hdr.h"
 #include <stdio.h>
+#include <string.h>
 
 
 getin(wrd1,wrd2)                        /* get command from user        */

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.2 1995/03/21 12:14:44 cgd Exp $	*/
+/*	$NetBSD: timer.c,v 1.3 1995/04/24 12:22:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)timer.c	8.2 (Berkeley) 2/22/94";
 #else
-static char rcsid[] = "$NetBSD: timer.c,v 1.2 1995/03/21 12:14:44 cgd Exp $";
+static char rcsid[] = "$NetBSD: timer.c,v 1.3 1995/04/24 12:22:45 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,9 +67,9 @@ int
 timerch()
 {
 	extern int tlimit;
-	extern long start_t;
+	extern time_t start_t;
 	extern jmp_buf env;
-	long prevt, t;
+	time_t prevt, t;
 	int col, remaining, row;
 
 	getyx(stdscr, row, col);

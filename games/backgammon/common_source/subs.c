@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.3 1995/03/21 15:05:54 cgd Exp $	*/
+/*	$NetBSD: subs.c,v 1.4 1995/04/24 12:22:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: subs.c,v 1.3 1995/03/21 15:05:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: subs.c,v 1.4 1995/04/24 12:22:12 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -434,7 +434,7 @@ getout ()  {
 
 	/* fix terminal status */
 	fixtty (old);
-	exit();
+	exit(0);
 }
 roll ()  {
 	register char	c;

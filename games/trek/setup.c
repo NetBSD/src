@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.3 1995/04/22 10:59:26 cgd Exp $	*/
+/*	$NetBSD: setup.c,v 1.4 1995/04/24 12:26:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.3 1995/04/22 10:59:26 cgd Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.4 1995/04/24 12:26:06 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ setup()
 	while (1)
 	{
 		r = getcodpar("What length game", Lentab);
-		Game.length = (int) r->value;
+		Game.length = (long) r->value;
 		if (Game.length == 0)
 		{
 			if (restartgame())
@@ -100,7 +100,7 @@ setup()
 		break;
 	}
 	r = getcodpar("What skill game", Skitab);
-	Game.skill = (int) r->value;
+	Game.skill = (long) r->value;
 	Game.tourn = 0;
 	getstrpar("Enter a password", Game.passwd, 14, 0);
 	if (sequal(Game.passwd, "tournament"))

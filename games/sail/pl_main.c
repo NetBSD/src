@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_main.c,v 1.4 1995/04/22 10:37:20 cgd Exp $	*/
+/*	$NetBSD: pl_main.c,v 1.5 1995/04/24 12:25:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: pl_main.c,v 1.4 1995/04/22 10:37:20 cgd Exp $";
+static char rcsid[] = "$NetBSD: pl_main.c,v 1.5 1995/04/24 12:25:25 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -211,7 +211,7 @@ reprint:
 		    captain[strlen(captain) - 1] = '\0';
 	}
 	captain[sizeof captain - 1] = '\0';
-	Write(W_CAPTAIN, ms, 1, (int)captain, 0, 0, 0);
+	Write(W_CAPTAIN, ms, 1, (long)captain, 0, 0, 0);
 	for (n = 0; n < 2; n++) {
 		char buf[10];
 
@@ -247,6 +247,6 @@ reprint:
 	initscreen();
 	draw_board();
 	(void) sprintf(message, "Captain %s assuming command", captain);
-	Write(W_SIGNAL, ms, 1, (int)message, 0, 0, 0);
+	Write(W_SIGNAL, ms, 1, (long)message, 0, 0, 0);
 	newturn();
 }

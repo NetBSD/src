@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.3 1995/04/22 10:36:48 cgd Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.4 1995/04/24 12:25:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: dr_2.c,v 1.3 1995/04/22 10:36:48 cgd Exp $";
+static char rcsid[] = "$NetBSD: dr_2.c,v 1.4 1995/04/24 12:25:12 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ prizecheck()
 			continue;
 		if (sp->specs->crew1 + sp->specs->crew2 + sp->specs->crew3 > sp->file->pcrew * 6) {
 			Write(W_SIGNAL, sp, 1,
-				(int)"prize crew overthrown", 0, 0, 0);
+				(long)"prize crew overthrown", 0, 0, 0);
 			Write(W_POINTS, sp->file->captured, 0, sp->file->captured->file->points - 2 * sp->specs->pts, 0, 0, 0);
 			Write(W_CAPTURED, sp, 0, -1, 0, 0, 0);
 		}

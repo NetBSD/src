@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.h,v 1.3 1995/03/23 08:35:00 cgd Exp $	*/
+/*	$NetBSD: monop.h,v 1.4 1995/04/24 12:24:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,6 +36,8 @@
  */
 
 # include	<stdio.h>
+# include	<stdlib.h>
+# include	<string.h>
 
 # define	reg	register
 # define	shrt	char

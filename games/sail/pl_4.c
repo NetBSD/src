@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_4.c,v 1.3 1995/04/22 10:37:10 cgd Exp $	*/
+/*	$NetBSD: pl_4.c,v 1.4 1995/04/24 12:25:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_4.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: pl_4.c,v 1.3 1995/04/22 10:37:10 cgd Exp $";
+static char rcsid[] = "$NetBSD: pl_4.c,v 1.4 1995/04/24 12:25:17 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ acceptsignal()
 		;
 	p[-1] = '"';
 	*p = 0;
-	Write(W_SIGNAL, ms, 1, (int)buf, 0, 0, 0);
+	Write(W_SIGNAL, ms, 1, (long)buf, 0, 0, 0);
 }
 
 lookout()

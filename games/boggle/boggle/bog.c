@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.4 1995/03/21 12:14:30 cgd Exp $	*/
+/*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bog.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: bog.c,v 1.4 1995/03/21 12:14:30 cgd Exp $";
+static char rcsid[] = "$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ static char rcsid[] = "$NetBSD: bog.c,v 1.4 1995/03/21 12:14:30 cgd Exp $";
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "bog.h"
@@ -110,7 +111,7 @@ int tnmwords = 0, tnpwords = 0;
 #include <setjmp.h>
 jmp_buf env;
 
-long start_t;
+time_t start_t;
 
 static FILE *dictfp;
 
@@ -288,7 +289,7 @@ playgame()
 {
 	/* Can't use register variables if setjmp() is used! */
 	int i, *p, *q;
-	long t;
+	time_t t;
 	char buf[MAXWORDLEN + 1];
 
 	ngames++;
