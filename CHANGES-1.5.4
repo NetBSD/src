@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.150 2004/04/20 20:32:01 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.151 2004/04/21 19:55:31 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2454,7 +2454,7 @@ crypto/dist/openssl/ssl/ssl_ciph.c		patch
 
         Pull up major differences from openssl 0.9.6l->0.9.6m. Major fix is
         a null pointer check that can cause crashes. Also include defines
-	in opensslv.h for pkgsrc checks.
+	in opensslv.h for pkgsrc checks. SA#2004-005
 	[groo, ticket #129]
 	[jlam, ticket #126]
 
@@ -2615,4 +2615,5 @@ sys/netinet/tcp_var.h				patch
 	Respond to RST by ACK, as suggested in NISCC recommendation.
 	Rate-limit ACKs against RSTs and SYNs.
 	If SYN is coming and RCV.NXT == SEG.SEQ, then ACK with value - 1.
+	SA#2004-006.
 	[itojun, ticket #143]
