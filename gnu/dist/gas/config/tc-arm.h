@@ -39,6 +39,8 @@
 #ifdef OBJ_AOUT
 #ifdef TE_RISCIX
 #define TARGET_FORMAT "a.out-riscix"
+#elif defined (TE_NetBSD)
+#define TARGET_FORMAT "a.out-arm-netbsd"
 #else
 #if TARGET_BYTES_BIG_ENDIAN
 #define TARGET_FORMAT "a.out-arm-big"
@@ -116,5 +118,40 @@ char *arm_canonicalize_symbol_name PARAMS ((char *));
 #define LOCAL_LABEL(name)	((name)[0] == '.' && (name)[1] == 'L')
 #endif
 #endif
+
+extern boolean pic_code;
+
+/* This expression evaluates to false if the relocation is for a local
+   object for which we still want to do the relocation at runtime.
+   True if we are willing to perform this relocation while building
+   the .o file.
+
+   If the reloc is against an externally visible symbol, then the
+   a.out assembler should not do the relocation if generating PIC */
+
+#define obj_relocate_extern	(!pic_code)
+
+/* This expression evaluates to false if the relocation is for a local object
+   for which we still want to do the relocation at runtime.  True if we
+   are willing to perform this relocation while building the .o file.
+   This is only used for pcrel relocations, so GOTOFF does not need to be
+   checked here.  I am not sure if some of the others are ever used with
+   pcrel, but it is easier to be safe than sorry. */
+
+#define TC_RELOC_RTSYM_LOC_FIXUP(FIX)  \
+   ((FIX)->fx_r_type != BFD_RELOC_ARM_GOT12 \
+   && (FIX)->fx_r_type != BFD_RELOC_ARM_GOT32 \
+   && (FIX)->fx_r_type != BFD_RELOC_32)
+
+#define TC_CONS_FIX_NEW cons_fix_new_arm
+extern void cons_fix_new_arm	PARAMS ((fragS *frag,
+					int where,
+					int size,
+					expressionS *exp));
+
+#define GLOBAL_OFFSET_TABLE_NAME "__GLOBAL_OFFSET_TABLE_"
+
+#define TC_PARSE_CONS_EXPRESSION(EXP, NBYTES)\
+	parse_cons_expression_arm(EXP)
 
 /* end of tc-arm.h */
