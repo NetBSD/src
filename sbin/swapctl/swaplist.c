@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.11 2003/12/20 11:22:25 mrg Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.12 2003/12/20 13:31:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swaplist.c,v 1.11 2003/12/20 11:22:25 mrg Exp $");
+__RCSID("$NetBSD: swaplist.c,v 1.12 2003/12/20 13:31:43 mrg Exp $");
 #endif
 
 
@@ -66,7 +66,7 @@ list_swap(pri, kflag, pflag, tflag, dolong, hflag)
 {
 	struct	swapent *sep, *fsep;
 	long	blocksize;
-	char	*header;
+	char	*header, *suff;
 	char	szbuf[5], usbuf[5], avbuf[5]; /* size, used, avail */
 	size_t	l;
 	int	hlen, totalsize, size, totalinuse, inuse, ncounted, pathmax;
@@ -88,17 +88,36 @@ list_swap(pri, kflag, pflag, tflag, dolong, hflag)
 		    rnswap, nswap);
 
 	pathmax = 11;
-	if (dolong && tflag == 0) {
-		if (kflag) {
+	switch(kflag) {
+		case 1:
 			header = "1K-blocks";
 			blocksize = 1024;
-			hlen = strlen(header);
-		} else if (hflag) {
-			header = "Size";
-			blocksize = 1; /* unused */
-			hlen = strlen(header);
-		} else 
-			header = getbsize(&hlen, &blocksize);
+			suff = "KBytes";
+			break;
+		case 2:
+			suff = "MBytes";
+			header = "1M-blocks";
+			blocksize = 1024 * 1024;
+			break;
+		case 3:
+			header = "1G-blocks";
+			blocksize = 1024 * 1024 * 1024;
+			suff = "GBytes";
+			break;
+		default:
+			suff = "blocks";
+			if (!hflag) {
+				header = getbsize(&hlen, &blocksize);
+			} else {
+				header = "Size";
+				blocksize = 1; suff = ""; /* unused */
+			}
+			break;
+	}
+	if (hflag || kflag)
+		hlen = strlen(header);
+
+	if (dolong && tflag == 0) {
 		for (i = rnswap; i-- > 0; sep++)
 			if (pathmax < (l = strlen(sep->se_path)))
 				pathmax = l;
@@ -146,10 +165,22 @@ list_swap(pri, kflag, pflag, tflag, dolong, hflag)
 			}
 		}
 	}
-	if (tflag)
-		(void)printf("%dM/%dM swap space\n",
-		    (int)(dbtoqb(totalinuse) / (1024 * 1024)),
-		    (int)(dbtoqb(totalsize) / (1024 * 1024)));
+	if (tflag) {
+		if (hflag) {
+			if ((humanize_number(usbuf, sizeof(usbuf), (dbtoqb(totalinuse)),
+				"", HN_AUTOSCALE, (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
+				err(1, "humanize_number");
+			if ((humanize_number(szbuf, sizeof(szbuf), (dbtoqb(totalsize)),
+				"", HN_AUTOSCALE, (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
+				err(1, "humanize_number");
+			(void)printf("%s/%s swap space\n", usbuf, szbuf);
+		} else {
+			(void)printf("%ld/%ld %s swap space\n",
+				(long)(dbtoqb(totalinuse) / blocksize),
+				(long)(dbtoqb(totalsize) / blocksize),
+				suff);
+		}
+	}
 	else if (dolong == 0) {
 		if (hflag) {
 			if ((humanize_number(szbuf, sizeof(szbuf), (dbtoqb(totalsize)),
@@ -164,11 +195,11 @@ list_swap(pri, kflag, pflag, tflag, dolong, hflag)
 			(void)printf("total: %s allocated = %s used, %s available.\n",
 				szbuf, usbuf, avbuf);
 		} else {
-		    printf("total: %ldk bytes allocated = %ldk used, "
-			   "%ldk available\n",
-		    (long)(dbtoqb(totalsize) / 1024),
-		    (long)(dbtoqb(totalinuse) / 1024),
-		    (long)(dbtoqb(totalsize - totalinuse) / 1024));
+		    printf("total: %ld %s allocated = %ld %s used, "
+			   "%ld %s available\n",
+		    (long)(dbtoqb(totalsize) / blocksize), suff,
+		    (long)(dbtoqb(totalinuse) / blocksize), suff,
+		    (long)(dbtoqb(totalsize - totalinuse) / blocksize), suff);
 		}
 	} else if (ncounted > 1) {
 		if (hflag) {
