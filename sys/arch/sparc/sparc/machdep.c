@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 1996/11/09 23:02:17 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.72 1996/12/21 06:21:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -341,6 +341,14 @@ allocsys(v)
 		if (nbuf < 16)
 			nbuf = 16;
 	}
+
+	/*
+	 * XXX stopgap measure to prevent wasting too much KVM on
+	 * the sparsely filled buffer cache.
+	 */
+	if (nbuf > 128)
+		nbuf = 128;
+
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
 		if (nswbuf > 256)
