@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.12 2000/10/11 20:23:56 is Exp $	*/
+/*	$NetBSD: utils.c,v 1.13 2003/07/13 12:18:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utils.c,v 1.12 2000/10/11 20:23:56 is Exp $");
+__RCSID("$NetBSD: utils.c,v 1.13 2003/07/13 12:18:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -341,12 +341,11 @@ NewStr(str)
 {
 	char *stmp;
 
-	if ((stmp = (char *)malloc((unsigned) (strlen(str)+1))) == NULL) {
+	if ((stmp = strdup(str)) == NULL) {
 		syslog(LOG_ERR, "NewStr: out of memory (%s)", str);
 		return(NULL);
 	}
 
-	(void) strcpy(stmp, str);
 	return(stmp);
 }
 
