@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.47 2003/10/05 11:42:38 tron Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.48 2003/10/08 11:10:04 bouyer Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -360,6 +360,9 @@ wdc*	at pcmcia? function ?
 wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 wdc1	at isa? port 0x170 irq 15 flags 0x00
 
+atabus* at pciide? channel ?
+atabus* at wdc? channel ?
+
 # IDE drives
 # Flags are used only with controllers that support DMA operations
 # and mode settings (e.g. some pciide controllers)
@@ -371,8 +374,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-wd*	at wdc? channel ? drive ? flags 0x0000
-wd*	at pciide? channel ? drive ? flags 0x0000
+wd*	at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
 atapibus* at atapi?

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.100 2003/09/07 09:33:57 tron Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.101 2003/10/08 11:10:04 bouyer Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -342,8 +342,10 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 wdc1	at isa? port 0x170 irq 15 flags 0x00
 
+atabus* at wdc? channel ?
+
 # IDE drives
-wd*	at wdc? drive ?			# the drives themselves
+wd*	at atabus? drive ?		# the drives themselves
 
 # ATAPI bus support
 atapibus* at atapi?
