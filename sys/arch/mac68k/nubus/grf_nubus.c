@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.60 2000/12/09 05:14:31 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.61 2001/01/22 18:23:14 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -65,6 +65,7 @@ static void	grfmv_intr_formac __P((void *vsc));
 static void	grfmv_intr_vimage __P((void *vsc));
 static void	grfmv_intr_gvimage __P((void *vsc));
 static void	grfmv_intr_radius_gsc __P((void *vsc));
+static void	grfmv_intr_radius_gx __P((void *vsc));
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static int	grfmv_match __P((struct device *, struct cfdata *, void *));
@@ -280,6 +281,9 @@ bad:
 		break;
 	case NUBUS_DRHW_RADGSC:
 		add_nubus_intr(na->slot, grfmv_intr_radius_gsc, sc);
+		break;
+	case NUBUS_DRHW_RDCGX:
+		add_nubus_intr(na->slot, grfmv_intr_radius_gx, sc);
 		break;
 	case NUBUS_DRHW_FIILX:
 	case NUBUS_DRHW_FIISXDSP:
@@ -712,3 +716,16 @@ grfmv_intr_radius_gsc(vsc)
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xfb802, 0xff);
 }
 
+/*
+ * Routine to clear interrupts for the Radius GS/C
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_radius_gx(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x600000, 0x00);
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x600000, 0x20);
+}

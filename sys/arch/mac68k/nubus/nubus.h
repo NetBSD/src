@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.53 2000/12/08 14:28:44 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.54 2001/01/22 18:23:14 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -69,6 +69,7 @@
 #define    NUBUS_DRHW_VIMAGE	0x026E	/* Interware Co., Ltd. Vimage */
 #define    NUBUS_DRHW_CB364	0x026F	/* RasterOps ColorBoard 364 */
 #define    NUBUS_DRHW_LVIEW	0x0278	/* Sigma Designs L-View */
+#define    NUBUS_DRHW_RDCGX	0x027C	/* Radius DirectColor/GX */
 #define	   NUBUS_DRHW_RPC8	0x0291	/* Radius PrecisionColor 8 */
 #define	   NUBUS_DRHW_LAPIS	0x0292	/* SE/30 Lapis ProColorServer 8 PDS */
 #define	   NUBUS_DRHW_ROPS24LXI	0x02A0	/* RasterOps 8/24 XLi */
