@@ -1,7 +1,7 @@
-/*	$NetBSD: gettext.c,v 1.8 2001/02/15 10:48:31 minoura Exp $	*/
+/*	$NetBSD: gettext.c,v 1.9 2001/02/16 07:20:35 minoura Exp $	*/
 
 /*-
- * Copyright (c) 2000 Citrus Project,
+ * Copyright (c) 2000, 2001 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: gettext.c,v 1.8 2001/02/15 10:48:31 minoura Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.9 2001/02/16 07:20:35 minoura Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -50,19 +50,17 @@ __RCSID("$NetBSD: gettext.c,v 1.8 2001/02/15 10:48:31 minoura Exp $");
 #include "libintl_local.h"
 #include "pathnames.h"
 
-static struct mohandle mohandle;
-
 static const char *lookup_category __P((int));
 static const char *split_locale __P((const char *));
 static const char *lookup_mofile __P((char *, size_t, const char *,
-	char *, const char *, const char *));
+	char *, const char *, const char *, struct domainbinding *));
 static u_int32_t flip __P((u_int32_t, u_int32_t));
-static int validate __P((void *));
-static int mapit __P((const char *));
-static int unmapit __P((void));
-static const char *lookup_hash __P((const char *));
-static const char *lookup_bsearch __P((const char *));
-static const char *lookup __P((const char *));
+static int validate __P((void *, struct mohandle *));
+static int mapit __P((const char *, struct domainbinding *));
+static int unmapit __P((struct domainbinding *));
+static const char *lookup_hash __P((const char *, struct domainbinding *));
+static const char *lookup_bsearch __P((const char *, struct domainbinding *));
+static const char *lookup __P((const char *, struct domainbinding *));
 
 /*
  * shortcut functions.  the main implementation resides in dcngettext().
@@ -218,18 +216,20 @@ fail:
 }
 
 static const char *
-lookup_mofile(buf, len, dir, lpath, category, domainname)
+lookup_mofile(buf, len, dir, lpath, category, domainname, db)
 	char *buf;
 	size_t len;
 	const char *dir;
 	char *lpath;	/* list of locales to be tried */
 	const char *category;
 	const char *domainname;
+	struct domainbinding *db;
 {
 	struct stat st;
 	char *p, *q;
 
 	q = lpath;
+	/* CONSTCOND */
 	while (1) {
 		p = strsep(&q, ":");
 		if (!p)
@@ -256,7 +256,7 @@ lookup_mofile(buf, len, dir, lpath, category, domainname)
 		if ((st.st_mode & S_IFMT) != S_IFREG)
 			continue;
 
-		if (mapit(buf) == 0)
+		if (mapit(buf, db) == 0)
 			return buf;
 	}
 
@@ -282,22 +282,24 @@ flip(v, magic)
 }
 
 static int
-validate(arg)
+validate(arg, mohandle)
 	void *arg;
+	struct mohandle *mohandle;
 {
 	char *p;
 
 	p = (char *)arg;
-	if (p < (char *)mohandle.addr ||
-	    p > (char *)mohandle.addr + mohandle.len)
+	if (p < (char *)mohandle->addr ||
+	    p > (char *)mohandle->addr + mohandle->len)
 		return 0;
 	else
 		return 1;
 }
 
 int
-mapit(path)
+mapit(path, db)
 	const char *path;
+	struct domainbinding *db;
 {
 	int fd;
 	struct stat st;
@@ -309,12 +311,13 @@ mapit(path)
 	size_t l;
 	int i;
 	char *v;
+	struct mohandle *mohandle = &db->mohandle;
 
-	if (mohandle.addr && mohandle.addr != MAP_FAILED &&
-	    strcmp(path, mohandle.path) == 0)
+	if (mohandle->addr && mohandle->addr != MAP_FAILED &&
+	    mohandle->mo.mo_magic)
 		return 0;	/*already opened*/
 
-	unmapit();
+	unmapit(db);
 
 #if 0
 	if (secure_path(path) != 0)
@@ -337,80 +340,83 @@ mapit(path)
 		close(fd);
 		goto fail;
 	}
-	mohandle.addr = mmap(NULL, (size_t)st.st_size, PROT_READ,
+	mohandle->addr = mmap(NULL, (size_t)st.st_size, PROT_READ,
 	    MAP_FILE | MAP_SHARED, fd, (off_t)0);
-	if (!mohandle.addr || mohandle.addr == MAP_FAILED) {
+	if (!mohandle->addr || mohandle->addr == MAP_FAILED) {
 		close(fd);
 		goto fail;
 	}
 	close(fd);
-	mohandle.len = (size_t)st.st_size;
-	strlcpy(mohandle.path, path, sizeof(mohandle.path));
+	mohandle->len = (size_t)st.st_size;
 
-	base = mohandle.addr;
-	mo = (struct mo *)mohandle.addr;
+	base = mohandle->addr;
+	mo = (struct mo *)mohandle->addr;
 
 	/* flip endian.  do not flip magic number! */
-	mohandle.mo.mo_magic = mo->mo_magic;
-	mohandle.mo.mo_revision = flip(mo->mo_revision, magic);
-	mohandle.mo.mo_nstring = flip(mo->mo_nstring, magic);
+	mohandle->mo.mo_magic = mo->mo_magic;
+	mohandle->mo.mo_revision = flip(mo->mo_revision, magic);
+	mohandle->mo.mo_nstring = flip(mo->mo_nstring, magic);
 
 	/* validate otable/ttable */
 	otable = (struct moentry *)(base + flip(mo->mo_otable, magic));
 	ttable = (struct moentry *)(base + flip(mo->mo_ttable, magic));
-	if (!validate(otable) || !validate(&otable[mohandle.mo.mo_nstring])) {
-		unmapit();
+	if (!validate(otable, mohandle) ||
+	    !validate(&otable[mohandle->mo.mo_nstring], mohandle)) {
+		unmapit(db);
 		goto fail;
 	}
-	if (!validate(ttable) || !validate(&ttable[mohandle.mo.mo_nstring])) {
-		unmapit();
+	if (!validate(ttable, mohandle) ||
+	    !validate(&ttable[mohandle->mo.mo_nstring], mohandle)) {
+		unmapit(db);
 		goto fail;
 	}
 
 	/* allocate [ot]table, and convert to normal pointer representation. */
-	l = sizeof(struct moentry_h) * mohandle.mo.mo_nstring;
-	mohandle.mo.mo_otable = (struct moentry_h *)malloc(l);
-	if (!mohandle.mo.mo_otable) {
-		unmapit();
+	l = sizeof(struct moentry_h) * mohandle->mo.mo_nstring;
+	mohandle->mo.mo_otable = (struct moentry_h *)malloc(l);
+	if (!mohandle->mo.mo_otable) {
+		unmapit(db);
 		goto fail;
 	}
-	mohandle.mo.mo_ttable = (struct moentry_h *)malloc(l);
-	if (!mohandle.mo.mo_ttable) {
-		unmapit();
+	mohandle->mo.mo_ttable = (struct moentry_h *)malloc(l);
+	if (!mohandle->mo.mo_ttable) {
+		unmapit(db);
 		goto fail;
 	}
-	p = mohandle.mo.mo_otable;
-	for (i = 0; i < mohandle.mo.mo_nstring; i++) {
+	p = mohandle->mo.mo_otable;
+	for (i = 0; i < mohandle->mo.mo_nstring; i++) {
 		p[i].len = flip(otable[i].len, magic);
 		p[i].off = base + flip(otable[i].off, magic);
 
-		if (!validate(p[i].off) || !validate(p[i].off + p[i].len + 1)) {
-			unmapit();
+		if (!validate(p[i].off, mohandle) ||
+		    !validate(p[i].off + p[i].len + 1, mohandle)) {
+			unmapit(db);
 			goto fail;
 		}
 	}
-	p = mohandle.mo.mo_ttable;
-	for (i = 0; i < mohandle.mo.mo_nstring; i++) {
+	p = mohandle->mo.mo_ttable;
+	for (i = 0; i < mohandle->mo.mo_nstring; i++) {
 		p[i].len = flip(ttable[i].len, magic);
 		p[i].off = base + flip(ttable[i].off, magic);
 
-		if (!validate(p[i].off) || !validate(p[i].off + p[i].len + 1)) {
-			unmapit();
+		if (!validate(p[i].off, mohandle) ||
+		    !validate(p[i].off + p[i].len + 1, mohandle)) {
+			unmapit(db);
 			goto fail;
 		}
 	}
 
 	/* grab MIME-header and charset field */
-	mohandle.mo.mo_header = lookup("");
-	if (mohandle.mo.mo_header)
-		v = strstr(mohandle.mo.mo_header, "charset=");
+	mohandle->mo.mo_header = lookup("", db);
+	if (mohandle->mo.mo_header)
+		v = strstr(mohandle->mo.mo_header, "charset=");
 	else
 		v = NULL;
 	if (v) {
-		mohandle.mo.mo_charset = strdup(v + 8);
-		if (!mohandle.mo.mo_charset)
+		mohandle->mo.mo_charset = strdup(v + 8);
+		if (!mohandle->mo.mo_charset)
 			goto fail;
-		v = strchr(mohandle.mo.mo_charset, '\n');
+		v = strchr(mohandle->mo.mo_charset, '\n');
 		if (v)
 			*v = '\0';
 	}
@@ -430,27 +436,30 @@ fail:
 }
 
 static int
-unmapit()
+unmapit(db)
+	struct domainbinding *db;
 {
+	struct mohandle *mohandle = &db->mohandle;
 
 	/* unmap if there's already mapped region */
-	if (mohandle.addr && mohandle.addr != MAP_FAILED)
-		munmap(mohandle.addr, mohandle.len);
-	mohandle.addr = NULL;
-	mohandle.path[0] = '\0';
-	if (mohandle.mo.mo_otable)
-		free(mohandle.mo.mo_otable);
-	if (mohandle.mo.mo_ttable)
-		free(mohandle.mo.mo_ttable);
-	if (mohandle.mo.mo_charset)
-		free(mohandle.mo.mo_charset);
-	memset(&mohandle.mo, 0, sizeof(mohandle.mo));
+	if (mohandle->addr && mohandle->addr != MAP_FAILED)
+		munmap(mohandle->addr, mohandle->len);
+	mohandle->addr = NULL;
+	if (mohandle->mo.mo_otable)
+		free(mohandle->mo.mo_otable);
+	if (mohandle->mo.mo_ttable)
+		free(mohandle->mo.mo_ttable);
+	if (mohandle->mo.mo_charset)
+		free(mohandle->mo.mo_charset);
+	memset(&mohandle->mo, 0, sizeof(mohandle->mo));
 	return 0;
 }
 
+/* ARGSUSED */
 static const char *
-lookup_hash(msgid)
+lookup_hash(msgid, db)
 	const char *msgid;
+	struct domainbinding *db;
 {
 
 	/*
@@ -461,15 +470,18 @@ lookup_hash(msgid)
 }
 
 static const char *
-lookup_bsearch(msgid)
+lookup_bsearch(msgid, db)
 	const char *msgid;
+	struct domainbinding *db;
 {
 	int top, bottom, middle, omiddle;
 	int n;
+	struct mohandle *mohandle = &db->mohandle;
 
 	top = 0;
-	bottom = mohandle.mo.mo_nstring;
+	bottom = mohandle->mo.mo_nstring;
 	omiddle = -1;
+	/* CONSTCOND */
 	while (1) {
 		if (top > bottom)
 			break;
@@ -477,12 +489,12 @@ lookup_bsearch(msgid)
 		/* avoid possible infinite loop, when the data is not sorted */
 		if (omiddle == middle)
 			break;
-		if (middle < 0 || middle >= mohandle.mo.mo_nstring)
+		if (middle < 0 || middle >= mohandle->mo.mo_nstring)
 			break;
 
-		n = strcmp(msgid, mohandle.mo.mo_otable[middle].off);
+		n = strcmp(msgid, mohandle->mo.mo_otable[middle].off);
 		if (n == 0)
-			return (const char *)mohandle.mo.mo_ttable[middle].off;
+			return (const char *)mohandle->mo.mo_ttable[middle].off;
 		else if (n < 0)
 			bottom = middle;
 		else
@@ -494,16 +506,17 @@ lookup_bsearch(msgid)
 }
 
 static const char *
-lookup(msgid)
+lookup(msgid, db)
 	const char *msgid;
+	struct domainbinding *db;
 {
 	const char *v;
 
-	v = lookup_hash(msgid);
+	v = lookup_hash(msgid, db);
 	if (v)
 		return v;
 
-	return lookup_bsearch(msgid);
+	return lookup_bsearch(msgid, db);
 }
 
 char *
@@ -531,7 +544,7 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 		return NULL;
 
 	if (!domainname)
-		domainname = __binding.domainname;
+		domainname = __current_domainname;
 	cname = lookup_category(category);
 	if (!domainname || !cname)
 		goto fail;
@@ -555,20 +568,24 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 	} else
 		goto fail;
 
-	for (db = __binding.next; db; db = db->next)
+	for (db = __bindings; db; db = db->next)
 		if (strcmp(db->domainname, domainname) == 0)
 			break;
-	if (!db)
-		db = &__binding;
+	if (!db) {
+		if (!bindtextdomain(domainname, _PATH_TEXTDOMAIN))
+			goto fail;
+		db = __bindings;
+	}
 
 	/* don't bother looking it up if the values are the same */
 	if (odomainname && strcmp(domainname, odomainname) == 0 &&
-	    ocname && strcmp(cname, ocname) == 0 && strcmp(lpath, olpath) == 0)
+	    ocname && strcmp(cname, ocname) == 0 && strcmp(lpath, olpath) == 0 &&
+	    db->mohandle.mo.mo_magic)
 		goto found;
 
 	/* try to find appropriate file, from $LANGUAGE */
 	if (lookup_mofile(path, sizeof(path), db->path, lpath, cname,
-	    domainname) == NULL)
+	    domainname, db) == NULL)
 		goto fail;
 
 	if (odomainname)
@@ -589,7 +606,7 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 	strlcpy(olpath, lpath, sizeof(olpath));
 
 found:
-	v = lookup(msgid);
+	v = lookup(msgid, db);
 	if (v) {
 		/*
 		 * XXX call iconv() here, if translated text is encoded

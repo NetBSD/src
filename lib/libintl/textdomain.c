@@ -1,7 +1,7 @@
-/*	$NetBSD: textdomain.c,v 1.4 2000/11/03 14:29:23 itojun Exp $	*/
+/*	$NetBSD: textdomain.c,v 1.5 2001/02/16 07:20:35 minoura Exp $	*/
 
 /*-
- * Copyright (c) 2000 Citrus Project,
+ * Copyright (c) 2000, 2001 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: textdomain.c,v 1.4 2000/11/03 14:29:23 itojun Exp $");
+__RCSID("$NetBSD: textdomain.c,v 1.5 2001/02/16 07:20:35 minoura Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,7 +41,11 @@ __RCSID("$NetBSD: textdomain.c,v 1.4 2000/11/03 14:29:23 itojun Exp $");
 #include "libintl_local.h"
 #include "pathnames.h"
 
-struct domainbinding __binding = { NULL, DEFAULT_DOMAINNAME, _PATH_TEXTDOMAIN };
+static struct domainbinding __default_binding = {
+	NULL, DEFAULT_DOMAINNAME, _PATH_TEXTDOMAIN,
+};
+struct domainbinding *__bindings = &__default_binding;
+char __current_domainname[PATH_MAX] = DEFAULT_DOMAINNAME;
 
 /*
  * set the default domainname for dcngettext() and friends.
@@ -53,17 +57,17 @@ textdomain(domainname)
 
 	/* NULL pointer gives the current setting */
 	if (!domainname)
-		return __binding.domainname;
+		return __current_domainname;
 
 	/* empty string sets the value back to the default */
 	if (!*domainname) {
-		strlcpy(__binding.domainname, DEFAULT_DOMAINNAME,
-		    sizeof(__binding.domainname));
+		strlcpy(__current_domainname, DEFAULT_DOMAINNAME,
+		    sizeof(__current_domainname));
 	} else {
-		strlcpy(__binding.domainname, domainname,
-		    sizeof(__binding.domainname));
+		strlcpy(__current_domainname, domainname,
+		    sizeof(__current_domainname));
 	}
-	return __binding.domainname;
+	return __current_domainname;
 }
 
 char *
@@ -87,7 +91,7 @@ bindtextdomain(domainname, dirname)
 		return NULL;
 
 	/* lookup binding for the domainname */
-	for (p = __binding.next; p; p = p->next)
+	for (p = __bindings; p; p = p->next)
 		if (strcmp(p->domainname, domainname) == 0)
 			break;
 	if (!p) {
@@ -95,17 +99,19 @@ bindtextdomain(domainname, dirname)
 		if (!p)
 			return NULL;
 		memset(p, 0, sizeof(*p));
-		p->next = __binding.next;
-		__binding.next = p;
+		p->next = __bindings;
+		__bindings = p;
 	}
 
 	strlcpy(p->path, dirname, sizeof(p->path));
 	strlcpy(p->domainname, domainname, sizeof(p->domainname));
+	p->mohandle.mo.mo_magic = 0; /* invalidate current mapping */
 
 	/* LINTED const cast */
 	return (char *)domainname;
 }
 
+/* ARGSUSED */
 char *
 bind_textdomain_codeset(domainname, codeset)
 	const char *domainname;

@@ -1,7 +1,7 @@
-/*	$NetBSD: libintl_local.h,v 1.4 2000/11/03 14:29:23 itojun Exp $	*/
+/*	$NetBSD: libintl_local.h,v 1.5 2001/02/16 07:20:35 minoura Exp $	*/
 
 /*-
- * Copyright (c) 2000 Citrus Project,
+ * Copyright (c) 2000, 2001 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,6 @@ struct mo_h {
 };
 
 struct mohandle {
-	char path[PATH_MAX];
 	void *addr;		/* mmap'ed region */
 	size_t len;
 	struct mo_h mo;		/* endian-flipped mo file header */
@@ -77,6 +76,8 @@ struct domainbinding {
 	struct domainbinding *next;
 	char domainname[PATH_MAX];
 	char path[PATH_MAX];
+	struct mohandle mohandle;
 };
 
-extern struct domainbinding __binding;
+extern struct domainbinding *__bindings;
+extern char __current_domainname[PATH_MAX];
