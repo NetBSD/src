@@ -1,4 +1,4 @@
-#	$NetBSD: rc.hack,v 1.3 1997/02/17 20:15:40 cgd Exp $
+# $NetBSD: rc.hack,v 1.4 1997/04/18 18:05:26 cgd Exp $
 
 # Hackish /etc/rc to do basic setup for a distribution rz25 image to
 # make it slightly easier to use.
