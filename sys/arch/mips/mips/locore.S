@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.136 2002/04/12 18:44:57 manu Exp $	*/
+/*	$NetBSD: locore.S,v 1.137 2002/04/13 10:52:59 manu Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -207,13 +207,13 @@ XLEAF(linux_esigcode)
 LEAF_NOPROFILE(irix_sigcode)
 #	lw	t1,32(sp)
 #	lw	t0,28(sp)
-#	sw	t1,0(t0)
+#	sw	t1,0(t0)		# *sf.isf_uep = sf.isf_errno
 	lw	a0,40(sp)
 	lw	a1,44(sp)
 	lw	a2,36(sp)
 	li	v0, IRIX_SYS_sigreturn	+ SYSCALL_SHIFT
-	syscall				# sigreturn(scp, ucp, sig)
-	break	0			# just in case sigreturn fails
+	syscall		# sigreturn(sf.isf_scp, sf.isf_ucp, sf.isf_signo)
+	break	0	# just in case sigreturn fails
 END(irix_sigcode)
 XLEAF(irix_esigcode)
 #undef SYSCALL_SHIFT
