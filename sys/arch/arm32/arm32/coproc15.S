@@ -1,4 +1,4 @@
-/* $NetBSD: coproc15.S,v 1.1 1996/01/31 23:15:33 mark Exp $ */
+/* $NetBSD: coproc15.S,v 1.2 1996/06/03 21:38:05 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,11 +41,8 @@
  * Manipulation of the CPU internal coprocessor #15 registers
  *
  * Created      : 29/11/94
- * Last updated : 28/08/95
  *
  * Based on arm/readcoproc15.S & arm/writecoproc15.S
- *
- *    $Id: coproc15.S,v 1.1 1996/01/31 23:15:33 mark Exp $
  */
 
 lr	.req	r14
@@ -131,6 +128,8 @@ _cpu_domains:
 	mcr	15, 0, r0, c3, c0, 0
 	mov	pc, lr
 
+#ifndef CPU_SA110
+
 	.global	_tlbflush
 
 _tlbflush:
@@ -148,3 +147,18 @@ _tlbpurge:
 _idcflush:
 	mcr	15, 0, r0, c7, c0, 0
 	mov	pc, lr
+#else
+	.global	_tlbflush
+	.global	_tlbpurge
+
+_tlbflush:
+_tlbpurge:
+	mcr	15, 0, r0, c8, c7, 0
+	mov	pc, lr
+
+	.global	_idcflush
+
+_idcflush:
+	mcr	15, 0, r0, c7, c7, 0
+	mov	pc, lr
+#endif
