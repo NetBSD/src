@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.5 1998/07/15 07:31:56 msaitoh Exp $	*/
+/*	$NetBSD: config.c,v 1.6 2000/07/03 03:34:26 matt Exp $	*/
 
 /*
 ** config.c                         This file handles the config file
@@ -17,6 +17,7 @@
 #include <arpa/inet.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 
