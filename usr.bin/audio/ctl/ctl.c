@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.30 2002/01/27 18:21:52 jdolecek Exp $	*/
+/*	$NetBSD: ctl.c,v 1.31 2002/01/31 00:03:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -345,7 +345,7 @@ main(argc, argv)
 	const char *sep = "=";
 
 	file = getenv("AUDIOCTLDEVICE");
-	if (file == 0)
+	if (file == NULL)
 		file = _PATH_AUDIOCTL;
 
 	while ((ch = getopt(argc, argv, "ad:f:nw")) != -1) {
@@ -374,15 +374,13 @@ main(argc, argv)
 	fd = open(file, O_WRONLY);
 	if (fd < 0)
 		fd = open(file, O_RDONLY);
-#ifdef _PATH_OAUDIOCTL
-        /* Allow the non-unit device to be used. */
         if (fd < 0 && file == _PATH_AUDIOCTL) {
-        	file = _PATH_OAUDIOCTL;
+        	file = _PATH_AUDIOCTL0;
                 fd = open(file, O_WRONLY);
 		if (fd < 0)
 			fd = open(file, O_RDONLY);
         }
-#endif
+
 	if (fd < 0)
 		err(1, "%s", file);
 
