@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.169 2004/04/26 05:15:47 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.170 2004/04/26 05:18:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.169 2004/04/26 05:15:47 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.170 2004/04/26 05:18:13 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1747,6 +1747,7 @@ found:
 	 * tcp_output(), the underlying ip_len member has not yet been set.
 	 */
 	if (ip) {
+		memset(&ippseudo, 0, sizeof(ippseudo));
 		ipovly = (struct ipovly *)ip;
 		ippseudo.ippseudo_src = ipovly->ih_src;
 		ippseudo.ippseudo_dst = ipovly->ih_dst;
@@ -1756,6 +1757,7 @@ found:
 		    htons(len + sizeof(struct tcphdr) + optlen);
 		MD5Update(&ctx, (char *)&ippseudo, sizeof(ippseudo));
 	} else {
+		memset(&ip6pseudo, 0, sizeof(ip6pseudo));
 		ip6pseudo.ip6ph_src = ip6->ip6_src;
 		in6_clearscope(&ip6pseudo.ip6ph_src);
 		ip6pseudo.ip6ph_dst = ip6->ip6_dst;
