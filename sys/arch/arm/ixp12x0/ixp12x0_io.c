@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_io.c,v 1.7 2003/03/25 06:12:46 igy Exp $ */
+/*	$NetBSD: ixp12x0_io.c,v 1.8 2003/07/13 02:11:58 igy Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.7 2003/03/25 06:12:46 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.8 2003/07/13 02:11:58 igy Exp $");
 
 /*
  * bus_space I/O functions for ixp12x0
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.7 2003/03/25 06:12:46 igy Exp $");
 
 /* Proto types for all the bus_space structure functions */
 bs_protos(ixp12x0);
-bs_protos(ixp12x0_io);
-bs_protos(ixp12x0_mem);
 bs_protos(generic);
 bs_protos(generic_armv4);
 bs_protos(bs_notimpl);
@@ -64,19 +62,19 @@ struct bus_space ixp12x0_bs_tag = {
 	(void *) 0,
 
 	/* mapping/unmapping */
-	NULL,
-	NULL,
+	ixp12x0_bs_map,
+	ixp12x0_bs_unmap,
 	ixp12x0_bs_subregion,
 
 	/* allocation/deallocation */
-	NULL,
-	NULL,
+	ixp12x0_bs_alloc,
+	ixp12x0_bs_free,
 
 	/* get kernel virtual address */
 	ixp12x0_bs_vaddr,
 
 	/* mmap bus space for userland */
-	ixp12x0_bs_mmap,
+	bs_notimpl_bs_mmap,
 
 	/* barrier */
 	ixp12x0_bs_barrier,
@@ -94,7 +92,7 @@ struct bus_space ixp12x0_bs_tag = {
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
+	generic_bs_rr_1,
 	generic_armv4_bs_rr_2,
 	generic_bs_rr_4,
 	bs_notimpl_bs_rr_8,
@@ -112,7 +110,7 @@ struct bus_space ixp12x0_bs_tag = {
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_bs_wr_1,
+	generic_bs_wr_1,
 	generic_armv4_bs_wr_2,
 	generic_bs_wr_4,
 	bs_notimpl_bs_wr_8,
@@ -145,192 +143,64 @@ ixp12x0_bs_init(bs, cookie)
 	bs->bs_cookie = cookie;
 }
 
-void
-ixp12x0_io_bs_init(bs, cookie)
-	bus_space_tag_t bs;
-	void *cookie;
-{
-	*bs = ixp12x0_bs_tag;
-	bs->bs_cookie = cookie;
-
-	bs->bs_map = ixp12x0_io_bs_map;
-	bs->bs_unmap = ixp12x0_io_bs_unmap;
-	bs->bs_alloc = ixp12x0_io_bs_alloc;
-	bs->bs_free = ixp12x0_io_bs_free;
-
-	bs->bs_vaddr = ixp12x0_io_bs_vaddr;
-}
-void
-ixp12x0_mem_bs_init(bs, cookie)
-	bus_space_tag_t bs;
-	void *cookie;
-{
-	*bs = ixp12x0_bs_tag;
-	bs->bs_cookie = cookie;
-
-	bs->bs_map = ixp12x0_mem_bs_map;
-	bs->bs_unmap = ixp12x0_mem_bs_unmap;
-	bs->bs_alloc = ixp12x0_mem_bs_alloc;
-	bs->bs_free = ixp12x0_mem_bs_free;
-
-	bs->bs_mmap = ixp12x0_mem_bs_mmap;
-}
-
-/* mem bus space functions */
+/* Common routines */
 
 int
-ixp12x0_mem_bs_map(t, bpa, size, cacheable, bshp)
-	void *t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
+ixp12x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
+	       int flags, bus_space_handle_t *bshp)
 {
-	paddr_t pa, endpa;
-	vaddr_t va;
+	const struct pmap_devmap	*pd;
 
-	if ((bpa + size) >= IXP12X0_PCI_MEM_VBASE + IXP12X0_PCI_MEM_SIZE)
-		return (EINVAL);
-	/*
-	 * PCI MEM space is mapped same address as real memory
-	 *  see. PCI_ADDR_EXT
-	 */
-	pa = trunc_page(bpa);
+	paddr_t		startpa;
+	paddr_t		endpa;
+	paddr_t		pa;
+	paddr_t		offset;
+	vaddr_t		va;
+	pt_entry_t	*pte;
+
+	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
+		/* Device was statically mapped. */
+		*bshp = pd->pd_va + (bpa - pd->pd_pa);
+		return 0;
+	}
+
 	endpa = round_page(bpa + size);
+	offset = bpa & PAGE_MASK;
+	startpa = trunc_page(bpa);
+		
+	if ((va = uvm_km_valloc(kernel_map, endpa - startpa)) == 0)
+		return ENOMEM;
 
-	/* Get some VM.  */
-	va = uvm_km_valloc(kernel_map, endpa - pa);
-	if (va == 0)
-		return(ENOMEM);
+	*bshp = va + offset;
 
-	/* Store the bus space handle */
-	*bshp = va + (bpa & PAGE_MASK);
-
-	/* Now map the pages */
-	for(; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE,
-		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pte = vtopte(va);
+		*pte &= ~L2_S_CACHE_MASK;
+		PTE_SYNC(pte);
 	}
 	pmap_update(pmap_kernel());
 
-	return(0);
+	return 0;
 }
 
 void
-ixp12x0_mem_bs_unmap(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+ixp12x0_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
-	vaddr_t startva, endva;
+	vaddr_t	va;
+	vaddr_t	endva;
 
-	startva = trunc_page(bsh);
+	if (pmap_devmap_find_va(bsh, size) != NULL) {
+		/* Device was statically mapped; nothing to do. */
+		return;
+	}
+
 	endva = round_page(bsh + size);
+	va = trunc_page(bsh);
 
-	uvm_km_free(kernel_map, startva, endva - startva);
+	pmap_kremove(va, endva - va);
+	uvm_km_free(kernel_map, va, endva - va);
 }
-
-int
-ixp12x0_mem_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
-    bpap, bshp)
-	void *t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int cacheable;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
-{
-	panic("ixp12x0_mem_bs_alloc(): Help!");
-}
-
-void
-ixp12x0_mem_bs_free(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-{
-	panic("ixp12x0_mem_bs_free(): Help!");
-}
-
-paddr_t
-ixp12x0_mem_bs_mmap(t, addr, off, prot, flags)
-	void *t;
-	bus_addr_t addr;
-	off_t off;
-	int prot;
-	int flags;
-{
-	/* Not supported. */
-	return (-1);
-}
-
-/* I/O bus space functions */
-
-int
-ixp12x0_io_bs_map(t, bpa, size, cacheable, bshp)
-	void *t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int cacheable;
-	bus_space_handle_t *bshp;
-{
-	if ((bpa + size) >= IXP12X0_PCI_IO_SIZE)
-		return (EINVAL);
-
-	/*
-	 * PCI I/O space is mapped at virtual address of each evaluation board.
-	 * Translate the bus address(0x0) to the virtual address(0x54000000).
-	 */
-	*bshp = bpa + IXP12X0_PCI_IO_VBASE;
-
-	return(0);
-}
-
-void
-ixp12x0_io_bs_unmap(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-{
-	/*
-	 * Temporary implementation
-	 */
-}
-
-int
-ixp12x0_io_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
-    bpap, bshp)
-	void *t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int cacheable;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
-{
-	panic("ixp12x0_io_bs_alloc(): Help!");
-}
-
-void    
-ixp12x0_io_bs_free(t, bsh, size)
-	void *t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
-{
-	panic("ixp12x0_io_bs_free(): Help!");
-}
-
-void *
-ixp12x0_io_bs_vaddr(t, bsh)
-        void *t;
-        bus_space_handle_t bsh;
-{       
-	/* Not supported. */
-	return (NULL);
-}
-
-
-/* Common routines */
 
 int
 ixp12x0_bs_subregion(t, bsh, offset, size, nbshp)
@@ -352,16 +222,20 @@ ixp12x0_bs_vaddr(t, bsh)
 	return ((void *)bsh);
 }
 
-paddr_t
-ixp12x0_bs_mmap(t, addr, off, prot, flags)
-	void *t;
-	bus_addr_t addr;
-	off_t off;
-	int prot;
-	int flags;
+int
+ixp12x0_bs_alloc(void *t,
+		 bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
+		 bus_size_t alignment, bus_size_t boundary,
+		 int flags, bus_addr_t *bpap,
+		 bus_space_handle_t *bshp)
 {
-	/* Not supported. */
-	return (-1);
+	panic("ixp12x0_bs_alloc(): not implemented\n");
+}
+
+void    
+ixp12x0_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
+{
+	panic("ixp12x0_bs_free(): not implemented\n");
 }
 
 void
@@ -373,7 +247,5 @@ ixp12x0_bs_barrier(t, bsh, offset, len, flags)
 {
 /* NULL */
 }	
-
-
 
 /* End of ixp12x0_io.c */
