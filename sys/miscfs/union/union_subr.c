@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.38 2000/05/27 04:52:40 thorpej Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.39 2000/06/28 02:44:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -52,8 +52,6 @@
 #include <sys/queue.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.67 1999/08/25 14:42:35 sommerfeld Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.68 2000/06/28 02:44:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,8 +61,6 @@
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/kernfs/kernfs.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
