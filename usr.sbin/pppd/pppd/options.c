@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.27 1998/09/04 19:13:05 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.27.2.1 2000/10/19 17:01:51 he Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.43 1998/09/04 18:49:15 christos Exp ";
 #else
-__RCSID("$NetBSD: options.c,v 1.27 1998/09/04 19:13:05 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.27.2.1 2000/10/19 17:01:51 he Exp $");
 #endif
 #endif
 
@@ -435,7 +435,7 @@ static struct cmd {
 #define IMPLEMENTATION ""
 #endif
 
-static char *usage_string = "\
+static const char *usage_string = "\
 pppd version %s patch level %d%s\n\
 Usage: %s [ options ], where options are:\n\
 	<device>	Communicate over the named device\n\
