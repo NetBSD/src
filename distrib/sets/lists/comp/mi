@@ -560,6 +560,7 @@
 ./usr/include/net/if_pppvar.h
 ./usr/include/net/if_slvar.h
 ./usr/include/net/if_stripvar.h
+./usr/include/net/if_token.h
 ./usr/include/net/if_tun.h
 ./usr/include/net/if_types.h
 ./usr/include/net/netisr.h
