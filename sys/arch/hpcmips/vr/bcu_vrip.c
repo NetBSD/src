@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.20 2003/07/15 02:29:34 lukem Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.21 2003/10/23 19:55:14 he Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.20 2003/07/15 02:29:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.21 2003/10/23 19:55:14 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ static bus_addr_t vrbcu_addr(void);
 static bus_addr_t
 vrbcu_addr()
 {
-	static bus_addr_t addr = NULL;
+	static bus_addr_t addr = 0;
 	static struct platid_data addrs[] = {
 		{ &platid_mask_CPU_MIPS_VR_4102, (void *)VR4102_BCU_ADDR },
 		{ &platid_mask_CPU_MIPS_VR_4111, (void *)VR4102_BCU_ADDR },
@@ -95,7 +95,7 @@ vrbcu_addr()
 	};
 	struct platid_data *p;
 
-	if (addr == NULL) {
+	if (addr == 0) {
 		if ((p = platid_search_data(&platid, addrs)) == NULL)
 			panic("%s: can't find VR BCU address", __FUNCTION__);
 		addr = (bus_addr_t)p->data;
