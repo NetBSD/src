@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.1 1999/12/09 14:53:04 tsutsui Exp $	*/
+/*	$NetBSD: hb.c,v 1.2 1999/12/21 08:37:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -133,8 +133,8 @@ hb_intr_establish(hbvect, hand, ipl, arg)
 	}
 
 	if ((hbvect < 0) || (hbvect > 255)) {
-		printf("pcc: illegal vector offset: 0x%x\n", hbvect);
-		panic("pccintr_establish");
+		printf("hb: illegal vector offset: 0x%x\n", hbvect);
+		panic("hb_intr_establish");
 	}
 
 	isrlink_vectored(hand, arg, ipl, hbvect);
