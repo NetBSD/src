@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4.2.10 1998/05/29 04:04:47 mycroft Exp $ */
+/*	$NetBSD: md.c,v 1.4.2.11 1998/05/29 18:04:25 mycroft Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -369,4 +369,23 @@ md_update (void)
 	puts (CL);
 	wrefresh(stdscr);
 	return 1;
+}
+
+void
+md_cleanup_install(void)
+{
+	char realfrom[STRSIZE];
+	char realto[STRSIZE];
+
+	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
+	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
+
+	run_prog_or_die(
+	    "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
+	    realfrom, realto
+	    );
+	run_prog_or_die("mv -f %s %s", realto, realfrom);
+	run_prog("rm -f %s", target_expand("/sysinst"));
+	run_prog("rm -f %s", target_expand("/.termcap"));
+	run_prog("rm -f %s", target_expand("/.profile"));
 }
