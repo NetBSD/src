@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2000/08/11 15:11:22 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2000/09/26 22:23:55 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -916,7 +916,7 @@ InitializeBsc()
 #endif
 
 #if defined(BSC_SDMR3_VAL)
-#ifndef COMPUTEXEVB
+#if !(defined(COMPUTEXEVB) && defined(SH7709A))
 #define SDMR3	(*(volatile unsigned char  *)BSC_SDMR3_VAL)
 
 	SDMR3 = 0;
