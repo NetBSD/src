@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.6 2005/01/09 15:29:27 tsutsui Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.7 2005/02/27 18:24:49 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.6 2005/01/09 15:29:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.7 2005/02/27 18:24:49 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,17 +110,17 @@ vga_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 	if ((chosen_phandle = OF_finddevice("/chosen")) == -1 ||
 	    OF_getprop(chosen_phandle, "stdout", &stdout_ihandle, 
 	    sizeof(stdout_ihandle)) != sizeof(stdout_ihandle)) {
-		return 0;
+		return ENXIO;
 	}
 	stdout_ihandle = of_decode_int((unsigned char *)&stdout_ihandle);
 	if ((stdout_phandle = OF_instance_to_package(stdout_ihandle)) == -1 ||
 	    OF_getprop(stdout_phandle, "device_type", buf, sizeof(buf)) <= 0) {
-		return 0;
+		return ENXIO;
 	}
 
 	if (strcmp(buf, "display") != 0) {
 		/* The display is not stdout device. */
-		return 0;
+		return ENXIO;
 	}
 		
 	if (OF_call_method("text-mode3", stdout_ihandle, 0, 0) != 0) {
