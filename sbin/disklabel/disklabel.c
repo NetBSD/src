@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.133 2004/06/24 03:13:00 enami Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.134 2004/07/13 21:23:13 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.133 2004/06/24 03:13:00 enami Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.134 2004/07/13 21:23:13 enami Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1717,8 +1717,8 @@ gottype:
 int
 checklabel(struct disklabel *lp)
 {
-	struct partition *pp;
-	int	i, errors;
+	struct partition *pp, *qp;
+	int	i, j, errors;
 	char	part;
 
 	errors = 0;
@@ -1804,6 +1804,16 @@ checklabel(struct disklabel *lp)
 			    part);
 			errors++;
 		}
+		if (pp->p_fstype != FS_UNUSED)
+			for (j = i + 1; j < lp->d_npartitions; j++) {
+				qp = &lp->d_partitions[j];
+				if (qp->p_fstype == FS_UNUSED)
+					continue;
+				if (pp->p_offset < qp->p_offset + qp->p_size &&
+				    qp->p_offset < pp->p_offset + pp->p_size)
+					warnx("partitions %c and %c overlap",
+					    part, 'a' + j);
+			}
 	}
 	return (errors);
 }
