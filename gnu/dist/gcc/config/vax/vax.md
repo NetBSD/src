@@ -830,7 +830,7 @@
   ""
   "*
 {
-  if (rtx_equal_p(operands[1], operands[2]))
+  if (rtx_equal_p(operands[1], operands[0]))
     {
       if ((flag_pic || TARGET_HALFPIC)
 	  && vax_symbolic_operand (operands[2], GET_MODE (operands[2])))
