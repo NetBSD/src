@@ -1,5 +1,5 @@
-/*	$NetBSD: if_stf.c,v 1.1 2000/04/19 06:30:53 itojun Exp $	*/
-/*	$KAME: if_stf.c,v 1.31 2000/04/19 05:51:20 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.2 2000/04/21 02:40:53 itojun Exp $	*/
+/*	$KAME: if_stf.c,v 1.32 2000/04/21 02:39:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -44,7 +44,7 @@
  * Here are interesting symptoms due to the lack of link-local address:
  *
  * Unicast routing exchange:
- * - RIPng: Impossible.  Uses link-local multicast packet toward ff02::2,
+ * - RIPng: Impossible.  Uses link-local multicast packet toward ff02::9,
  *   and link-local addresses as nexthop.
  * - OSPFv6: Impossible.  OSPFv6 assumes that there's link-local address
  *   assigned to the link, and makes use of them.  Also, HELLO packets use
@@ -62,7 +62,9 @@
  *
  * 04 draft suggests to have link-local address onto 6to4 interface.
  * However, it seems to have no real use and does not help the above symptom
- * much.
+ * much.  Even if we assign link-locals to interface, we cannot really
+ * use link-local unicast/multicast on top of 6to4 cloud, and the above
+ * analysis does not change.
  *
  * 6to4 interface has security issues.  Refer to
  * http://playground.iijlab.net/i-d/draft-itojun-ipv6-transition-abuse-00.txt
