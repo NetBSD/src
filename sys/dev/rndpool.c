@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.6 1998/05/27 00:59:14 explorer Exp $        */
+/*      $NetBSD: rndpool.c,v 1.7 1998/05/27 01:29:13 explorer Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -270,8 +270,8 @@ rndpool_extract_data(rp, p, len, mode)
 			remain = 0;
 		} else {
 			bcopy(digest, buf, RND_ENTROPY_THRESHOLD);
-			buf += 20;
-			remain -= 20;
+			buf += RND_ENTROPY_THRESHOLD;
+			remain -= RND_ENTROPY_THRESHOLD;
 			if (rp->entropy >= 8 * RND_ENTROPY_THRESHOLD)
 				rp->entropy -= 8 * RND_ENTROPY_THRESHOLD;
 			else
