@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.5 2001/07/23 17:23:09 thorpej Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.6 2001/07/23 17:26:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1216,7 +1216,8 @@ ste_init(struct ifnet *ifp)
 				ste_rxdrain(sc);
 				goto out;
 			}
-		}
+		} else
+			STE_INIT_RXDESC(sc, i);
 	}
 	sc->sc_rxptr = 0;
 
