@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_sbus.c,v 1.2 2002/09/27 20:34:40 thorpej Exp $	*/
+/*	$NetBSD: ohci_sbus.c,v 1.3 2002/10/02 04:17:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,10 +106,8 @@ struct ohci_sbus_softc {
 	LIST_HEAD(, ohci_dma_segment) sc_dmaseg_head;
 };
 
-const struct cfattach ohci_sbus_ca = {
-	sizeof(struct ohci_sbus_softc), ohci_sbus_match,
-	ohci_sbus_attach,
-};
+CFATTACH_DECL(ohci_sbus, sizeof(struct ohci_sbus_softc),
+    ohci_sbus_match, ohci_sbus_attach, NULL, NULL);
 
 int
 ohci_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
