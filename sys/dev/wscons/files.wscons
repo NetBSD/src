@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.21 2001/02/24 01:59:48 lukem Exp $
+# $NetBSD: files.wscons,v 1.22 2001/10/05 22:08:29 eeh Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -46,10 +46,8 @@ file	dev/wscons/wskbdutil.c		wskbd			needs-flag
 file	dev/wscons/wsmouse.c		wsmouse			needs-flag
 
 # rcons bit-depth options
-defopt	opt_rcons.h	RCONS_2BPP RCONS_4BPP RCONS_16BPP
+include "dev/rcons/files.rcons"
 
-file	dev/rcons/raster_op.c		wsrasteremulops
-file	dev/rcons/raster_text.c		wsrasteremulops
 file	dev/wscons/wscons_rinit.c	wsrasteremulops
 file	dev/wscons/wscons_rops.c	wsrasteremulops
 
