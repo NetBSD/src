@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.522 2003/04/26 11:05:14 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.523 2003/06/23 11:01:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.522 2003/04/26 11:05:14 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.523 2003/06/23 11:01:19 martin Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.522 2003/04/26 11:05:14 ragge Exp $");
 #include "opt_realmem.h"
 #include "opt_compat_mach.h"	/* need to get the right segment def */
 #include "opt_mtrr.h"
+#include "opt_multiprocessor.h"
 #include "opt_beep.h"
 
 #include <sys/param.h>

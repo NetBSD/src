@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.10 2003/02/07 17:46:12 cgd Exp $ */
+/* $NetBSD: cpu.c,v 1.11 2003/06/23 11:01:37 martin Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -31,6 +31,8 @@
  *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *    OR OTHERWISE), EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.38 2003/02/26 06:31:11 matt Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.39 2003/06/23 11:02:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.38 2003/02/26 06:31:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.39 2003/06/23 11:02:06 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.38 2003/02/26 06:31:11 matt Exp $"
 #include "opt_ccitt.h"
 #include "opt_iso.h"
 #include "opt_ns.h"
+#include "opt_mbuftrace.h"
 #include "opt_natm.h"
 #include "arp.h"
 

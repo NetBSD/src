@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.1 2003/03/01 18:29:28 fvdl Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.2 2003/06/23 11:01:52 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -92,6 +92,8 @@ struct cpu_attach_args {
 #define MP_PICMODE	0x00000001      /* System booted in picmode */
 
 #ifdef _KERNEL
+
+#include "opt_multiprocessor.h"
 
 #ifdef MULTIPROCESSOR
 extern u_int32_t cpus_running;

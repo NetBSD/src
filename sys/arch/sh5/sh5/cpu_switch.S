@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.16 2003/01/22 13:38:51 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.17 2003/06/23 11:01:37 martin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_lockdebug.h"
 
 /*
  * ##########

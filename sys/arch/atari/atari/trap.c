@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66 2003/04/01 23:47:02 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.67 2003/06/23 11:01:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,6 +46,7 @@
 #include "opt_execfmt.h"
 #include "opt_kgdb.h"
 #include "opt_compat_sunos.h"
+#include "opt_fpu_emulate.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

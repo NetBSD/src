@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.2 2003/06/23 11:01:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -40,6 +40,8 @@
 /*
  * XXXfvdl update copyright notice. this started out as a stripped isa/npx.c
  */
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2003/06/23 11:01:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -90,10 +90,12 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2003/06/23 11:01:04 martin Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

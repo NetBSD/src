@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.181 2003/04/26 11:05:07 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.182 2003/06/23 11:01:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,9 +44,13 @@
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
+#include "opt_fpu_emulate.h"
+#include "opt_lev6_defer.h"
+#include "opt_m060sp.h"
+#include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 2003/04/26 11:05:07 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2003/06/23 11:01:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

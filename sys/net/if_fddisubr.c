@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.49 2003/05/16 04:54:55 itojun Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.50 2003/06/23 11:02:11 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.49 2003/05/16 04:54:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.50 2003/06/23 11:02:11 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -77,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.49 2003/05/16 04:54:55 itojun Exp 
 #include "opt_llc.h"
 #include "opt_iso.h"
 #include "opt_ns.h"
+#include "opt_ipx.h"
+#include "opt_mbuftrace.h"
 
 #include "bpfilter.h"
 
