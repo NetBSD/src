@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.3 2000/10/01 03:45:33 takemura Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.4 2000/10/02 03:45:10 sato Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -398,6 +398,21 @@ static u_int8_t sigmarion_jp_keytrans[] = {
 /*58*/	IGN,	IGN,	IGN,	 42,	 14,	 67,	IGN,	  1,
 };
 
+static const keysym_t sigmarion_cmdmap[] = {
+/*	pos      command		normal		shifted		*/
+	KC(184), KS_Cmd,		KS_Alt_R,	KS_Multi_key,
+	KC(64),  KS_Cmd_Screen1,	KS_f6,		KS_f1,
+	KC(65),  KS_Cmd_Screen2,	KS_f7,		KS_f2,
+	KC(66),  KS_Cmd_Screen3,	KS_f8,		KS_f3,
+	KC(67),  KS_Cmd_Screen4,	KS_f9,		KS_f4,
+	KC(68),  KS_Cmd_Screen5,	KS_f10,		KS_f5,
+	KC(26),  KS_Cmd_BrightnessUp,	KS_bracketleft,	KS_braceleft,
+	KC(27),  KS_Cmd_BrightnessDown,	KS_bracketright,KS_braceright,
+	KC(51),  KS_Cmd_ContrastDown,	KS_comma,	KS_less,
+	KC(52),  KS_Cmd_ContrastUp,	KS_period,	KS_greater,
+	KC(57),  KS_Cmd_BacklightToggle,KS_space,
+};
+
 const struct hpckbd_keymap_table {
 	platid_t	*ht_platform;
 	const u_int8_t	*ht_keymap;
@@ -461,7 +476,7 @@ const struct hpckbd_keymap_table {
 	{	&platid_mask_MACH_NEC_MCR_SIGMARION,
 		sigmarion_jp_keytrans,
 		NULL,
-		CMDMAP(mcr_jp_cmdmap),
+		CMDMAP(sigmarion_cmdmap),
 		KB_JP },
 	{	&platid_mask_MACH_NEC_MCR,
 		mcr_jp_keytrans,
