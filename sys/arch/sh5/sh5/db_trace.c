@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.5 2002/09/19 15:47:33 scw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.6 2002/09/22 20:31:19 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -125,12 +125,13 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	db_addr_t pc, fp;
 	db_addr_t nextpc, nextfp;
 	db_sym_t sym;
-	db_expr_t diff;
+	db_expr_t diff, pc_adj;
 	char *symp;
-	int trace_thread;
+	int trace_thread, dump_eframe;
 
 	/* trace_thread is non-zero if tracing a specific process */
 	trace_thread = (strchr(modif, 't') != NULL);
+	dump_eframe = (strchr(modif, 'e') != NULL);
 
 	if (have_addr == 0) {
 		/*
@@ -180,6 +181,8 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		}
 	}
 
+	pc_adj = 0;
+
 	/*
 	 * Walk the call stack until the PC or FP are not valid
 	 */
@@ -189,7 +192,8 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		 * Lookup the name of the current function
 		 */
 		symp = NULL;
-		if ((sym = db_search_symbol(pc, DB_STGY_PROC, &diff)) == NULL) {
+		sym = db_search_symbol(pc - pc_adj, DB_STGY_PROC, &diff);
+		if (sym == NULL) {
 			(*pr)("0x%lx: Symbol not found\n");
 			break;
 		}
@@ -201,27 +205,6 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		}
 
 		/*
-		 * Compensate for the <handy breakpoint location after
-		 * process "wakes"> symbol in ltsleep(), which matches
-		 * before the real function name.
-		 */
-		if (strcmp(symp, "bpendtsleep") == 0) {
-			symp = NULL;
-			sym = db_search_symbol(pc - 4, DB_STGY_PROC, &diff);
-			if (sym == NULL) {
-				(*pr)("0x%lx: Symbol not found\n");
-				break;
-			}
-			symp = NULL;
-			db_symbol_values(sym, &symp, NULL);
-			if (symp == NULL) {
-				(*pr)("0x%lx: No symbol string found\n");
-				break;
-			}
-			diff += 4;
-		}
-
-		/*
 		 * There's no point even trying to grovel for function
 		 * parameters. It's just Too Much Trouble.
 		 * A determined hacker should be able to use the Frame
@@ -229,7 +212,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		 * figure out what's what anyway.
 		 */
 		(*pr)("0x%lx: %s() at ", fp, symp);
-		db_printsym(pc, DB_STGY_PROC, pr);
+		db_printsym(pc - pc_adj, DB_STGY_PROC, pr);
 		(*pr)("\n");
 
 		/*
@@ -252,12 +235,17 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			pc = (db_addr_t) tf->tf_state.sf_spc & ~1;
 			fp = (db_addr_t) tf->tf_caller.r14;
 			cur_intrframe = &tf->tf_ifr;
+			pc_adj = 0;
 			(*pr)("\tTrap Type: %s\n",
 			    trap_type((int)tf->tf_state.sf_expevt));
-			(*pr)("\tSSR=0x%lx, TEA=0x%lx, TRA=0x%lx\n",
+			(*pr)("\tSSR=0x%lx, TEA=0x%lx, TRA=0x%lx",
 			    (long)tf->tf_state.sf_ssr,
 			    (long)tf->tf_state.sf_tea,
 			    (long)tf->tf_state.sf_tra);
+			if (dump_eframe)
+				dump_trapframe(pr, "\n\t", tf);
+			else
+				(*pr)("\n");
 		} else
 		if (strcmp(symp, "Lsh5_event_interrupt") == 0 ||
 		    strcmp(symp, "Lintrexit") == 0) {
@@ -271,26 +259,34 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			pc = (db_addr_t) tf->if_state.sf_spc & ~1;
 			fp = (db_addr_t) tf->if_caller.r14;
 			cur_intrframe = tf;
-			(*pr)("\tSSR=0x%lx, INTEVT=0x%lx\n",
+			pc_adj = 0;
+			(*pr)("\tSSR=0x%lx, INTEVT=0x%lx",
 			    (long)tf->if_state.sf_ssr,
 			    (long)tf->if_state.sf_intevt);
+			if (dump_eframe) {
+				struct trapframe tfr;
+				memset(&tfr, 0, sizeof(tfr));
+				tfr.tf_ifr = *tf;
+				dump_trapframe(pr, "\n\t", &tfr);
+			} else
+				(*pr)("\n");
 		} else
 		/*
 		 * Looks like we have to grovel the current function's
 		 * prologue to find out the next PC and FP. Start the
-		 * search from "PC - 4" to ensure we catch the actual
-		 * "blink" instruction which made the call. Without this,
-		 * we can fall foul of tail-calls and functions with
-		 * the "__noreturn__" attribute (depending on alignment,
-		 * we could pick up the symbol for the *next* function
-		 * and, hence, get the wrong prologue).
+		 * search from "PC - pc_adj" to ensure we catch the actual
+		 * call-site. Without this, we can fall foul of tail-calls
+		 * and functions with the "__noreturn__" attribute
+		 * (depending on alignment, we could pick up the symbol for
+		 * the *next* function and, hence, get the wrong prologue).
 		 */
-		if (prev_frame(fp, pc - 4, &nextfp, &nextpc) == 0) {
-			(*pr)("Can't find caller's stack frame.\n");
-			break;
-		} else {
+		if (prev_frame(fp, pc - pc_adj, &nextfp, &nextpc)) {
 			fp = nextfp;
 			pc = nextpc & ~1;
+			pc_adj = 4;
+		} else {
+			(*pr)("Can't find caller's stack frame.\n");
+			break;
 		}
 	}
 
