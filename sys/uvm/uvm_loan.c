@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.32 2001/09/15 20:36:46 chs Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.33 2001/09/22 05:58:04 jdolecek Exp $	*/
 
 /*
  *
@@ -110,6 +110,9 @@ static int	uvm_loanentry __P((struct uvm_faultinfo *, void ***, int));
 static int	uvm_loanuobj __P((struct uvm_faultinfo *, void ***,
 				int, vaddr_t));
 static int	uvm_loanzero __P((struct uvm_faultinfo *, void ***, int));
+static void	uvm_unloananon __P((struct vm_anon **, int, int));
+static void	uvm_unloanpage __P((struct vm_page **, int, int));
+
 
 /*
  * inlines
@@ -309,10 +312,10 @@ fail:
 	if (output - result) {
 		if (flags & UVM_LOAN_TOANON)
 			uvm_unloananon((struct vm_anon **)result,
-			    output - result);
+			    output - result, flags & UVM_LOAN_WIRED);
 		else
 			uvm_unloanpage((struct vm_page **)result,
-			    output - result);
+			    output - result, flags & UVM_LOAN_WIRED);
 	}
 	return (error);
 }
@@ -395,7 +398,9 @@ uvm_loananon(ufi, output, flags, anon)
 	if (pg->loan_count == 0)
 		pmap_page_protect(pg, VM_PROT_READ);
 	pg->loan_count++;
-	uvm_pagewire(pg);	/* always wire it */
+	/* If requested, wire */
+	if (flags & UVM_LOAN_WIRED)
+		uvm_pagewire(pg);
 	uvm_unlock_pageq();
 	**output = pg;
 	*output = (*output) + 1;
@@ -418,7 +423,7 @@ uvm_loananon(ufi, output, flags, anon)
  *	 1 = got it, everything still locked
  */
 
-int
+static int
 uvm_loanuobj(ufi, output, flags, va)
 	struct uvm_faultinfo *ufi;
 	void ***output;
@@ -537,7 +542,9 @@ uvm_loanuobj(ufi, output, flags, va)
 		if (pg->loan_count == 0)
 			pmap_page_protect(pg, VM_PROT_READ);
 		pg->loan_count++;
-		uvm_pagewire(pg);
+		/* If requested, wire */
+		if (flags & UVM_LOAN_WIRED)
+			uvm_pagewire(pg);
 		uvm_unlock_pageq();
 		**output = pg;
 		*output = (*output) + 1;
@@ -615,7 +622,7 @@ uvm_loanuobj(ufi, output, flags, va)
  *	 1 = got it, everything still locked
  */
 
-int
+static int
 uvm_loanzero(ufi, output, flags)
 	struct uvm_faultinfo *ufi;
 	void ***output;
@@ -647,8 +654,9 @@ uvm_loanzero(ufi, output, flags)
 		**output = pg;
 		*output = (*output) + 1;
 		uvm_lock_pageq();
-		/* wire it as we are loaning to kernel-page */
-		uvm_pagewire(pg);
+		/* If requested, wire */
+		if (flags & UVM_LOAN_WIRED)
+			uvm_pagewire(pg);
 		pg->loan_count = 1;
 		uvm_unlock_pageq();
 		return(1);
@@ -706,10 +714,10 @@ uvm_loanzero(ufi, output, flags)
  * => we expect all our resources to be unlocked
  */
 
-void
-uvm_unloananon(aloans, nanons)
+static void
+uvm_unloananon(aloans, nanons, wired)
 	struct vm_anon **aloans;
-	int nanons;
+	int nanons, wired;
 {
 	struct vm_anon *anon;
 
@@ -733,10 +741,10 @@ uvm_unloananon(aloans, nanons)
  * => we expect all our resources to be unlocked
  */
 
-void
-uvm_unloanpage(ploans, npages)
+static void
+uvm_unloanpage(ploans, npages, wired)
 	struct vm_page **ploans;
-	int npages;
+	int npages, wired;
 {
 	struct vm_page *pg;
 
@@ -749,7 +757,9 @@ uvm_unloanpage(ploans, npages)
 			panic("uvm_unloanpage: page %p isn't loaned", pg);
 
 		pg->loan_count--;		/* drop loan */
-		uvm_pageunwire(pg);		/* and unwire */
+		
+		if (wired)
+			uvm_pageunwire(pg);
 
 		/*
 		 * if page is unowned and we killed last loan, then we can
@@ -771,3 +781,16 @@ uvm_unloanpage(ploans, npages)
 	uvm_unlock_pageq();
 }
 
+/*
+ * Unloan the memory.
+ */
+void
+uvm_unloan(void **result, int npages, int flags)
+{
+	if (flags & UVM_LOAN_TOANON)
+		uvm_unloananon((struct vm_anon **)result, npages,
+		    flags & UVM_LOAN_WIRED);
+	else
+		uvm_unloanpage((struct vm_page **)result,
+		    npages, flags & UVM_LOAN_WIRED);
+}

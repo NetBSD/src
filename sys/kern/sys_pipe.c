@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.12 2001/09/20 19:09:13 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.13 2001/09/22 05:58:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -1083,7 +1083,7 @@ retry:
     cleanup:
 	pipelock(wpipe, 0);
 	if (res)
-		uvm_unloanpage(res, npages);
+		uvm_unloan((void **) res, npages, UVM_LOAN_TOPAGE);
 	if (error || amountpipekva > maxpipekva)
 		pipe_loan_free(wpipe);
 	pipeunlock(wpipe);
