@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.12 2001/09/11 01:01:57 wiz Exp $
+.\"	$NetBSD: login.conf.5,v 1.13 2003/03/24 11:11:23 lukem Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\" BSDI login.conf.5,v 2.19 1998/02/19 23:39:39 prb Exp
 .\"
-.Dd November 17, 2000
+.Dd March 24, 2003
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -104,6 +104,38 @@ Maximum data size limit.
 .sp
 .It Sy filesize Ta size Ta "" Ta
 Maximum file size limit.
+.\"
+.sp
+.It Sy host.allow Ta string Ta "" Ta
+A comma-separated list of host name or IP address patterns
+from which a class is allowed access.
+Access is instead denied from any hosts preceeded
+by
+.Sq Li ! .
+Patterns can contain the
+.Xr sh 1 -style
+.Sq Li *
+and
+.Sq Li ?
+wildcards.
+The
+.Sy host.deny
+entry is checked before
+.Sy host.allow .
+(Currently used only by
+.Xr sshd 8 . )
+.\"
+.sp
+.It Sy host.deny Ta string Ta "" Ta
+A comma-separated list of host name or IP address patterns
+from which a class is denied access.
+Patterns as per
+.Sy host.allow ,
+although a matched pattern that has been negated with
+.Sq Li !
+is ignored.
+(Currently used only by
+.Xr sshd 8 . )
 .\"
 .sp
 .It Sy hushlogin Ta bool Ta Li false Ta
@@ -332,7 +364,8 @@ hashed database built with
 .Xr getcap 3 ,
 .Xr login_cap 3 ,
 .Xr ttys 5 ,
-.Xr ftpd 8
+.Xr ftpd 8 ,
+.Xr sshd 8
 .Sh HISTORY
 The
 .Nm
