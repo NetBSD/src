@@ -1,4 +1,4 @@
-/*	$NetBSD: com6.c,v 1.11 1999/07/21 03:56:53 hubertf Exp $	*/
+/*	$NetBSD: com6.c,v 1.12 1999/09/08 21:45:25 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com6.c,v 1.11 1999/07/21 03:56:53 hubertf Exp $");
+__RCSID("$NetBSD: com6.c,v 1.12 1999/09/08 21:45:25 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -92,7 +92,7 @@ die()
 
 void
 diesig(dummy)
-	int     dummy;
+	int     dummy __attribute__((__unused__));
 {
 	die();
 }

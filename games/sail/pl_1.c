@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_1.c,v 1.6 1999/02/10 00:45:46 hubertf Exp $	*/
+/*	$NetBSD: pl_1.c,v 1.7 1999/09/08 21:45:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_1.c,v 1.6 1999/02/10 00:45:46 hubertf Exp $");
+__RCSID("$NetBSD: pl_1.c,v 1.7 1999/09/08 21:45:30 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ int conditions;
 /*ARGSUSED*/
 void
 choke(n)
-	int n;
+	int n __attribute__((__unused__));
 {
 	leave(LEAVE_QUIT);
 }
@@ -130,7 +130,7 @@ choke(n)
 /*ARGSUSED*/
 void
 child(n)
-	int n;
+	int n __attribute__((__unused__));
 {
 	union wait status;
 	int pid;
