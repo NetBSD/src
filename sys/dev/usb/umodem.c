@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.10 1999/08/22 20:12:39 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.11 1999/08/28 21:42:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -995,7 +995,7 @@ umodem_set_line_coding(sc, state)
 
 int
 umodem_activate(self, act)
-	struct device *self;
+	bdevice *self;
 	enum devact act;
 {
 	struct umodem_softc *sc = (struct umodem_softc *)self;
@@ -1014,7 +1014,7 @@ umodem_activate(self, act)
 
 int
 umodem_detach(self, flags)
-	struct device *self;
+	bdevice *self;
 	int flags;
 {
 	struct umodem_softc *sc = (struct umodem_softc *)self;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.23 1999/08/23 22:55:14 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.24 1999/08/28 21:42:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -487,7 +487,7 @@ uhub_disconnect_port(up)
 
 int
 uhub_activate(self, act)
-	struct device *self;
+	bdevice *self;
 	enum devact act;
 {
 	switch (act) {
@@ -507,7 +507,7 @@ uhub_activate(self, act)
  */
 int
 uhub_detach(self, flags)
-	struct device *self;
+	bdevice *self;
 	int flags;
 {
 	struct uhub_softc *sc = (struct uhub_softc *)self;
