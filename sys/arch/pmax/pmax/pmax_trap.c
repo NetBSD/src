@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.45 1997/06/15 18:04:31 mhitch Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.46 1997/06/16 03:29:07 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,6 +62,7 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/mips_opcode.h>
+#include <mips/locore.h>		/* wbflush() */
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -75,8 +76,6 @@
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/turbochannel.h>
-
-#include <machine/locore.h>	/* XXX wbflush() */
 
 #include <pmax/stand/dec_prom.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57 1997/06/15 17:49:53 mhitch Exp $	*/
+/*	$NetBSD: trap.c,v 1.58 1997/06/16 03:29:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,13 +60,14 @@
 #include <sys/ktrace.h>
 #endif
 
+#include <mips/locore.h>
+#include <mips/mips_opcode.h>
+
 #include <machine/trap.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/cpu.h>
-#include <machine/locore.h>
 #include <machine/pte.h>
-#include <machine/mips_opcode.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
