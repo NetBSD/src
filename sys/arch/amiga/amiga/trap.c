@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.100 2004/03/14 01:08:47 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.101 2004/05/16 15:44:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2004/03/14 01:08:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2004/05/16 15:44:10 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,8 +279,8 @@ panictrap(type, code, v, fp)
 	u_int code, v;
 	struct frame *fp;
 {
-	static int panicing = 0;
-	if (panicing++ == 0) {
+	static int panicking = 0;
+	if (panicking++ == 0) {
 		printf("trap type %d, code = %x, v = %x\n", type, code, v);
 		regdump((struct trapframe *)fp, 128);
 	}

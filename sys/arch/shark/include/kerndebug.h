@@ -1,4 +1,4 @@
-/*	$NetBSD: kerndebug.h,v 1.1 2002/02/10 01:57:26 thorpej Exp $	*/
+/*	$NetBSD: kerndebug.h,v 1.2 2004/05/16 15:44:10 wiz Exp $	*/
 
 /*
  * Copyright 1997
@@ -109,7 +109,7 @@ typedef unsigned int Kern_Debug_Flags;
 		      printf ("KERNEL:DEBUG PANIC"); \
 		      printf (KERN_DEBUG_LOC); \
 		      printf Output; \
-		      panic("KERN_DEBUG Panicing"); \
+		      panic("KERN_DEBUG Panicking"); \
 		} \
 		else \
 	        { \
