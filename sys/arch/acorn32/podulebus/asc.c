@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.6 2002/05/22 22:43:18 bjh21 Exp $	*/
+/*	$NetBSD: asc.c,v 1.7 2002/08/05 23:30:04 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -74,7 +74,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.6 2002/05/22 22:43:18 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.7 2002/08/05 23:30:04 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -113,8 +113,6 @@ int  asc_dmanext	(void *, bus_dma_tag_t, struct sbic_acb *, int);
 void asc_dmastop	(void *, bus_dma_tag_t, struct sbic_acb *);
 void asc_dmafinish	(void *, bus_dma_tag_t, struct sbic_acb *);
 
-void asc_scsi_request	(struct scsipi_channel *,
-			 scsipi_adapter_req_t, void *);
 int  asc_intr		(void *);
 void asc_minphys	(struct buf *);
 
@@ -201,7 +199,7 @@ ascattach(struct device *pdp, struct device *dp, void *auxp)
 	sbic->sc_adapter.adapt_max_periph = 1;
 	sbic->sc_adapter.adapt_ioctl = NULL; 
 	sbic->sc_adapter.adapt_minphys = asc_minphys;
-	sbic->sc_adapter.adapt_request = asc_scsi_request;
+	sbic->sc_adapter.adapt_request = sbic_scsi_request;
 
 	sbic->sc_channel.chan_adapter = &sbic->sc_adapter;
 	sbic->sc_channel.chan_bustype = &scsi_bustype;
@@ -221,8 +219,10 @@ ascattach(struct device *pdp, struct device *dp, void *auxp)
 		get_bootconf_option(boot_args, "ascpoll", BOOTOPT_TYPE_BOOLEAN,
 		    &asc_poll);
 
-	if (asc_poll)
+	if (asc_poll) {
+		sbic->sc_adapter.adapt_flags |= SCSIPI_ADAPT_POLL_ONLY;
 		printf(" polling");
+	}
 #endif
 	printf("\n");
 
@@ -319,33 +319,6 @@ asc_dump(void)
 		if (asc_cd.cd_devs[i])
 			sbic_dump(asc_cd.cd_devs[i]);
 }
-
-void
-asc_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
-    void *arg)
-{
-	struct scsipi_xfer *xs;
-
-	switch (req) {
-	case ADAPTER_REQ_RUN_XFER:
-		xs = arg;
-
-#if ASC_POLL > 0
-		/* ensure command is polling for the moment */
-
-		if (asc_poll)
-			xs->xs_control |= XS_CTL_POLL;
-#endif
-
-/*		printf("id=%d lun=%dcmdlen=%d datalen=%d opcode=%02x flags=%08x status=%02x blk=%02x %02x\n",
-		    xs->xs_periph->periph_target, xs->xs_periph->periph_lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
-		    xs->xs_control, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);*/
-
-	default:
-	}
-	sbic_scsi_request(chan, req, arg);
-}
-
 
 int
 asc_intr(void *arg)
