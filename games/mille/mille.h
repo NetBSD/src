@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.h,v 1.7 1997/10/12 00:54:11 lukem Exp $	*/
+/*	$NetBSD: mille.h,v 1.8 1998/07/26 16:11:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -233,7 +233,7 @@ void	check_go __P((void));
 void	check_more __P((void));
 void	die __P((int));
 void	domove __P((void));
-bool	error __P((char *, ...));
+bool	error __P((const char *, ...));
 void	extrapolate __P((PLAY *));
 void	finalscore __P((PLAY *));
 CARD	getcard __P((void));
