@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.8 2002/08/06 17:44:35 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.9 2002/08/06 19:20:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -467,26 +467,26 @@ Lidle_ret:
 	teq	r1, r6
 	beq	switch_return
 
+	/* Remember the old process in r0 */
+	mov	r0, r1
+
 	/*
 	 * If the curproc on entry to cpu_switch was zero then the
 	 * process that called it was exiting. This means that we do
 	 * not need to save the current context. Instead we can jump
 	 * straight to restoring the context for the new process.
 	 */
-	teq	r1, #0x00000000
+	teq	r0, #0x00000000
 	beq	switch_exited
 
-	/* rem: r1 = old proc */
+	/* rem: r0 = old proc */
 	/* rem: r6 = new process */
 	/* rem: interrupts are enabled */
 
 	/* Stage two : Save old context */
 
-	/* Remember the old process in r0 */
-	mov	r0, r1
-
 	/* Get the user structure for the old process. */
-	ldr	r1, [r1, #(P_ADDR)]
+	ldr	r1, [r0, #(P_ADDR)]
 
 	/* Save all the registers in the old process's pcb */
 	add	r7, r1, #(PCB_R8)
@@ -512,27 +512,36 @@ Lidle_ret:
 
 	/* What else needs to be saved  Only FPA stuff when that is supported */
 
+	/* r1 now free! */
+
 	/* Third phase : restore saved context */
 
-switch_exited:
-	/* Don't allow user space access beween the purge and the switch */
+	/* rem: r0 = old proc */
+	/* rem: r6 = new process */
+	/* rem: interrupts are enabled */
+
+	/*
+	 * Don't allow user space access between the purge and the switch.
+	 */
 	ldr	r3, Lblock_userspace_access
-	ldr	r2, [r3]
-	orr	r0, r2, #1
-	str	r0, [r3]
+	mov	r1, #0x00000001
+	mov	r2, #0x00000000
+	str	r1, [r3]
 
 	stmfd	sp!, {r0-r3}
-	ldr	r0, Lcpufuncs
+	ldr	r1, Lcpufuncs
 	add	lr, pc, #Lcs_cache_purged - . - 8
-	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
+	ldr	pc, [r1, #CF_IDCACHE_WBINV_ALL]
 
 Lcs_cache_purged:
 	ldmfd	sp!, {r0-r3}
 
+Lcs_cache_purge_skipped:
 	/* At this point we need to kill IRQ's again. */
 	IRQdisable
 
-	/* Interrupts are disabled so we can allow user space accesses again
+	/*
+	 * Interrupts are disabled so we can allow user space accesses again
 	 * as none will occur until interrupts are re-enabled after the
 	 * switch.
 	 */
@@ -591,6 +600,16 @@ switch_return:
 	 */
 	ldmfd	sp!, {r4-r7, pc}
 
+switch_exited:
+	/*
+	 * We skip the cache purge because switch_exit() already did
+	 * it.  Load up registers the way Lcs_cache_purge_skipped
+	 * expects.  Userspace access already blocked in switch_exit().
+	 */
+	ldr	r3, Lblock_userspace_access
+	mov	r2, #0x00000000
+	b	Lcs_cache_purge_skipped
+
 Lproc0:
 	.word	_C_LABEL(proc0)
 
@@ -619,6 +638,13 @@ ENTRY(switch_exit)
 
 /*	ldr	r0, Lcurpcb
 	str	r2, [r0]*/
+
+	/*
+	 * Don't allow user space access between the purge and the switch.
+	 */
+	ldr	r0, Lblock_userspace_access
+	mov	r2, #0x00000001
+	str	r2, [r0]
 
 	/* Switch to proc0 context */
 
