@@ -1,4 +1,4 @@
-.\"	$NetBSD: getrlimit.2,v 1.18 2001/11/23 19:50:13 jdolecek Exp $
+.\"	$NetBSD: getrlimit.2,v 1.19 2001/11/23 20:21:49 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -128,13 +128,13 @@ Because this information is stored in the per-process information,
 this system call must be executed directly by the shell if it
 is to affect all future processes created by the shell.
 Thus, shells provide built-in commands to change the limits
-.No ( Ic limit
+.Ic ( limit
 for
 .Xr csh 1 ,
 or
 .Ic ulimit
 for
-.Xr sh 1 No ).
+.Xr sh 1 ) .
 .Pp
 The system refuses to extend the data or stack space when the limits
 would be exceeded in the normal way: a
@@ -158,7 +158,7 @@ is sent to the
 offending process.
 .Sh RETURN VALUES
 A 0 return value indicates that the call succeeded, changing
-or returning the resource limit. Otherwise, a -1 is returned
+or returning the resource limit.  Otherwise, -1 is returned
 and the global variable
 .Va errno
 is set to indicate the error.
