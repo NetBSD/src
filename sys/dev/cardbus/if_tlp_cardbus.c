@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.14 2000/03/01 20:50:56 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.15 2000/03/07 00:43:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -111,14 +111,10 @@ struct tulip_cardbus_softc {
 
 	/* CardBus-specific goo. */
 	void	*sc_ih;			/* interrupt handle */
-
 	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
-	int	sc_intrline;		/* our interrupt line */
-	cardbustag_t sc_tag;
-
-	int	sc_cbenable;		/* what CardBus access type to enable */
 	int	sc_csr;			/* CSR bits */
 	bus_size_t sc_mapsize;		/* the size of mapped bus space region */
+	int	sc_attached;
 };
 
 int	tlp_cardbus_match __P((struct device *, struct cfdata *, void *));
@@ -187,7 +183,7 @@ tlp_cardbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct tulip_cardbus_softc *csc = (void *) self;
+	struct tulip_cardbus_softc *csc = (void *)self;
 	struct tulip_softc *sc = &csc->sc_tulip;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
@@ -196,12 +192,11 @@ tlp_cardbus_attach(parent, self, aux)
 	const struct tulip_cardbus_product *tcp;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	pcireg_t reg;
+	bus_addr_t adr;
 
 	sc->sc_devno = ca->ca_device;
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
-	csc->sc_tag = ca->ca_tag;
-	csc->sc_intrline = ca->ca_intrline;
 
 	tcp = tlp_cardbus_lookup(ca);
 	if (tcp == NULL) {
@@ -217,13 +212,6 @@ tlp_cardbus_attach(parent, self, aux)
 	sc->sc_regshift = 3;
 
 	/*
-	 * Some chips have a 128 byte SROM (6 address bits), and some
-	 * have a 512 byte SROM (8 address bits).  Default to 6; we'll
-	 * adjust below.
-	 */
-	sc->sc_srom_addrbits = 6;
-
-	/*
 	 * Get revision info, and set some chip-specific variables.
 	 */
 	sc->sc_rev = PCI_REVISION(ca->ca_class);
@@ -231,12 +219,6 @@ tlp_cardbus_attach(parent, self, aux)
 	case TULIP_CHIP_21142:
 		if (sc->sc_rev >= 0x20)
 			sc->sc_chip = TULIP_CHIP_21143;
-		if (sc->sc_rev >= 0x41) {
-			/*
-			 * 21143 rev. 4.1 has a larger SROM.
-			 */
-			sc->sc_srom_addrbits = 8;
-		}
 		break;
 
 	default:
@@ -255,6 +237,7 @@ tlp_cardbus_attach(parent, self, aux)
 	case TULIP_CHIP_21142:
 	case TULIP_CHIP_21143:
 	case TULIP_CHIP_X3201_3:
+#if 0
 		/*
 		 * Clear the "sleep mode" bit in the CFDA register.
 		 */
@@ -263,6 +246,7 @@ tlp_cardbus_attach(parent, self, aux)
 			cardbus_conf_write(cc, cf, ca->ca_tag, TULIP_PCI_CFDA,
 			    reg & ~(CFDA_SLEEP|CFDA_SNOOZE));
 		break;
+#endif
 
 	default:
 		/* Nothing. */
@@ -299,15 +283,23 @@ tlp_cardbus_attach(parent, self, aux)
 	 * Map the device.
 	 */
 	csc->sc_csr = PCI_COMMAND_MASTER_ENABLE;
-	if (Cardbus_mapreg_map(csc->sc_ct, TULIP_PCI_MMBA,
+	if (0 && Cardbus_mapreg_map(ct, TULIP_PCI_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->sc_st, &sc->sc_sh, NULL, &csc->sc_mapsize) == 0) {
-		csc->sc_cbenable = CARDBUS_MEM_ENABLE;
+	    &sc->sc_st, &sc->sc_sh, &adr, &csc->sc_mapsize) == 0) {
+#if rbus
+#else
+		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
+#endif
+		(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
 		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
-	} else if (Cardbus_mapreg_map(csc->sc_ct, TULIP_PCI_IOBA,
-	    PCI_MAPREG_TYPE_IO, 0, &sc->sc_st, &sc->sc_sh, NULL,
+	} else if (Cardbus_mapreg_map(ct, TULIP_PCI_IOBA,
+	    PCI_MAPREG_TYPE_IO, 0, &sc->sc_st, &sc->sc_sh, &adr,
 	    &csc->sc_mapsize) == 0) {
-		csc->sc_cbenable = CARDBUS_IO_ENABLE;
+#if rbus
+#else
+		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
+#endif
+		(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 	} else {
 		printf("%s: unable to map device registers\n",
@@ -316,7 +308,6 @@ tlp_cardbus_attach(parent, self, aux)
 	}
 
 	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cbenable);
 	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
@@ -339,7 +330,6 @@ tlp_cardbus_attach(parent, self, aux)
 	/*
 	 * Read the contents of the Ethernet Address ROM/SROM.
 	 */
-	memset(sc->sc_srom, 0, sizeof(sc->sc_srom));
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_X3201_3:
 		/*
@@ -348,22 +338,9 @@ tlp_cardbus_attach(parent, self, aux)
 		break;
 
 	default:
-		tlp_read_srom(sc, 0, TULIP_ROM_SIZE(sc->sc_srom_addrbits) >> 1,
-		    sc->sc_srom);
-#if 0
-		{
-			int i;
-
-			printf("SROM CONTENTS:");
-			for (i = 0; i <
-			    TULIP_ROM_SIZE(sc->sc_srom_addrbits); i++) {
-				if ((i % 8) == 0)
-					printf("\n\t");
-				printf("0x%02x ", sc->sc_srom[i]);
-			}
-			printf("\n");
-		}
-#endif
+		if (tlp_read_srom(sc) == 0)
+			goto cant_cope;
+		break;
 	}
 
 	/*
@@ -377,9 +354,11 @@ tlp_cardbus_attach(parent, self, aux)
 		/* Check for new format SROM. */
 		if (tlp_isv_srom_enaddr(sc, enaddr) == 0) {
 			/*
-			 * Not an ISV SROM; can't cope, for now.
+			 * Not an ISV SROM; try the old DEC Ethernet Address
+			 * ROM format.
 			 */
-			goto cant_cope;
+			if (tlp_parse_old_srom(sc, enaddr) == 0)
+				goto cant_cope;
 		} else {
 			/*
 			 * We start out with the 2114x ISV media switch.
@@ -398,7 +377,7 @@ tlp_cardbus_attach(parent, self, aux)
 
 	case TULIP_CHIP_X3201_3:
 		/*
-		 * The X3201 doens't have an SROM.  Lift the MAC address
+		 * The X3201 doesn't have an SROM.  Lift the MAC address
 		 * from the CIS.  Also, we have a special media switch:
 		 * MII-on-SIO, plus some special GPIO setup.
 		 */
@@ -430,6 +409,7 @@ tlp_cardbus_attach(parent, self, aux)
 	/*
 	 * Finish off the attach.
 	 */
+	csc->sc_attached = 1;
 	tlp_attach(sc, enaddr);
 }
 
@@ -438,7 +418,7 @@ tlp_cardbus_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-	struct tulip_cardbus_softc *csc = (void *) self;
+	struct tulip_cardbus_softc *csc = (void *)self;
 	struct tulip_softc *sc = &csc->sc_tulip;
 	struct cardbus_devfunc *ct = csc->sc_ct;
 	int rv;
@@ -450,25 +430,28 @@ tlp_cardbus_detach(self, flags)
 	}
 #endif
 
-	rv = tlp_detach(sc);
-	if (rv == 0) {
-		/*
-		 * Unhook the interrupt handler.
-		 */
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
-
-		/*
-		 * release bus space and close window
-		 */
-		if (csc->sc_cbenable == CARDBUS_MEM_ENABLE)
-			reg = TULIP_PCI_MMBA;
-		else
-			reg = TULIP_PCI_IOBA;
-
-		Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, 
-		    csc->sc_mapsize);
+	if (csc->sc_attached) {
+		rv = tlp_detach(sc);
+		if (rv)
+			return (rv);
 	}
-	return (rv);
+
+	/*
+	 * Unhook the interrupt handler.
+	 */
+	cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
+
+	/*
+	 * release bus space and close window
+	 */
+	if (csc->sc_csr & PCI_COMMAND_MEM_ENABLE)
+		reg = TULIP_PCI_MMBA;
+	else
+		reg = TULIP_PCI_IOBA;
+	Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, 
+	    csc->sc_mapsize);
+
+	return (0);
 }
 
 void
