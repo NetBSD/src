@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.56 2002/02/14 07:08:14 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.57 2002/02/22 13:51:40 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -102,6 +102,8 @@ trap(frame)
 	uvmexp.traps++;
 
 	switch (type) {
+	case EXC_RUNMODETRC|EXC_USER:
+		/* FALLTHROUGH */
 	case EXC_TRC|EXC_USER:
 		KERNEL_PROC_LOCK(p);
 		frame->srr1 &= ~PSL_SE;
