@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.15 2002/08/16 15:25:54 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.16 2002/08/17 01:08:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -233,42 +233,45 @@ Lblock_userspace_access:
 
 /*
  * Idle loop, exercised while waiting for a process to wake up.
+ *
+ * NOTE: When we jump back to .Lswitch_search, we must have a
+ * pointer to whichqs in r7, which is what it is when we arrive
+ * here.
  */
 /* LINTSTUB: Ignore */
 ASENTRY_NP(idle)
 #if defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
+	ldr	r3, .Lcpu_do_powersave
+
 	/* Enable interrupts */
 	IRQenable
 
 	/* If we don't want to sleep, use a simpler loop. */
-	ldr	r3, .Lcpu_do_powersave
-	ldr	r7, Lwhichqs			/* r7 = &whichqs */
-	ldr	r3, [r3]
+	ldr	r3, [r3]		/* r3 = cpu_do_powersave */
 	teq	r3, #0
-	beq	.Lidle_nosleep
+	bne	2f
 
-	/* Powersave idle. */
+	/* Non-powersave idle. */
+1:	/* should maybe do uvm pageidlezero stuff here */
+	ldr	r3, [r7]		/* r3 = whichqs */
+	teq	r3, #0x00000000
+	bne	.Lswitch_search
+	b	1b
+
+2:	/* Powersave idle. */
 	ldr	r4, Lcpufuncs
-.Lidle_sleep:
-	ldr	r3, [r7]
+3:	ldr	r3, [r7]		/* r3 = whichqs */
 	teq	r3, #0x00000000
 	bne	.Lswitch_search
 
 	/* if saving power, don't want to pageidlezero */
 	mov	r0, #0
-	add	lr, pc, #.Lidle_sleep - . - 8
+	add	lr, pc, #3b - . - 8
 	ldr	pc, [r4, #(CF_SLEEP)]
 	/* loops back around */
 
-	/* Non-powersave idle. */
-.Lidle_nosleep:
-	/* should maybe do uvm pageidlezero stuff here */
-	ldr	r3, [r7]
-	teq	r3, #0x00000000
-	bne	.Lswitch_search
-	b	.Lidle_nosleep
 
 /*
  * Find a new process to run, save the current context and
@@ -326,7 +329,10 @@ ENTRY(cpu_switch)
 
 	/* First phase : find a new process */
 
+	ldr	r7, Lwhichqs
+
 	/* rem: r5 = old proc */
+	/* rem: r7 = &whichqs */
 
 .Lswitch_search:
 	IRQdisable
@@ -335,7 +341,6 @@ ENTRY(cpu_switch)
 #endif
 
 	/* Do we have any active queues  */
-	ldr	r7, Lwhichqs
 	ldr	r3, [r7]
 
 	/* If not we must idle until we do. */
@@ -695,6 +700,7 @@ ENTRY(switch_exit)
 	mov	r0, #0x00000000
 	str	r0, [r1]
 
+	ldr	r7, Lwhichqs		/* r7 = &whichqs */
 	mov	r5, #0x00000000		/* r5 = old proc = NULL */
 	b	.Lswitch_search
 
