@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 2001/09/10 21:19:18 chris Exp $	*/
+/*	$NetBSD: pmap.h,v 1.38 2002/03/05 15:37:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -121,21 +121,21 @@ extern struct pmap kernel_pmap_store;
 /*
  *	Bootstrap the system enough to run with virtual memory.
  */
-void	pmap_bootstrap __P((void));
+void	pmap_bootstrap(void);
 
-void	pmap_set_modified __P((paddr_t));
+void	pmap_set_modified(paddr_t);
 
-void	pmap_procwr __P((struct proc *, vaddr_t, size_t));
+void	pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	PMAP_NEED_PROCWR
 
 /*
  * pmap_prefer() helps reduce virtual-coherency exceptions in
  * the virtually-indexed cache on mips3 CPUs.
  */
-#ifdef MIPS3
+#ifdef MIPS3_PLUS
 #define PMAP_PREFER(pa, va)             pmap_prefer((pa), (va))
-void	pmap_prefer __P((vaddr_t, vaddr_t *));
-#endif /* MIPS3 */
+void	pmap_prefer(vaddr_t, vaddr_t *);
+#endif /* MIPS3_PLUS */
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
 
@@ -144,6 +144,11 @@ void	pmap_prefer __P((vaddr_t, vaddr_t *));
  */
 #define	PMAP_MAP_POOLPAGE(pa)	MIPS_PHYS_TO_KSEG0((pa))
 #define	PMAP_UNMAP_POOLPAGE(va)	MIPS_KSEG0_TO_PHYS((va))
+
+/*
+ * Select CCA to use for unmanaged pages.
+ */
+#define	PMAP_CCA_FOR_PA(pa)	2		/* uncached */
 
 #endif	/* _KERNEL */
 #endif	/* _PMAP_MACHINE_ */
