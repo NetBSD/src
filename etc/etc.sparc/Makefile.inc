@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15.4.2 2000/10/22 19:03:07 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.15.4.3 2000/11/01 03:18:05 tv Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -12,7 +12,8 @@ BUILD_KERNELS+= INSTALL
 
 # Add sparc installation directories
 MD_INSTALLATION_DIRS= \
-	installation/miniroot installation/netboot installation/bootfs
+	installation/miniroot installation/netboot installation/bootfs \
+	installation/tape installation/floppy
 INSTALLATION_DIRS+=$(MD_INSTALLATION_DIRS) 
 
 snap_pre_md:
@@ -28,23 +29,37 @@ snap_md_post:
 	(cd $(TOP)/distrib; ${MAKE})
 
 	# transfer images to release hierarchy
-.for dir in notes miniroot sparc/ramdisk sparc/bootfs sparc/instfs
+.for dir in notes miniroot sparc/bootfs sparc/instfs
 	(cd $(TOP)/distrib/$(dir); ${MAKE} release)
 .endfor
 
-	# install boot image and installation scripts in netboot directory
+	# install boot image in netboot directory
 	cp -p $(DESTDIR)/usr/mdec/boot.net $(RELEASEDIR)/installation/netboot
-.for f in install.sh upgrade.sh install.sub ../sparc/install.md
-	cp -p $(TOP)/distrib/miniroot/$f $(RELEASEDIR)/installation/netboot
-.endfor
+
+	# install links to boot and installation utilities for various media
+	rm -f ${RELEASEDIR}/installation/tape/tapefile1.gz
+	rm -f ${RELEASEDIR}/installation/tape/tapefile2
+	rm -f ${RELEASEDIR}/installation/floppy/disk1.gz
+	rm -f ${RELEASEDIR}/installation/floppy/disk2
+	rm -f ${RELEASEDIR}/installation/netboot/rootfs.tgz
+	ln -s ../bootfs/netbsd.ram.aout.gz \
+			${RELEASEDIR}/installation/tape/tapefile1.gz
+	ln -s ../bootfs/instfs.tgz \
+			${RELEASEDIR}/installation/tape/tapefile2
+	ln -s ../bootfs/boot.fs.gz \
+			${RELEASEDIR}/installation/floppy/disk1.gz
+	ln -s ../bootfs/instfs.tgz \
+			${RELEASEDIR}/installation/floppy/disk2
+	ln -s ../bootfs/instfs.tgz \
+			${RELEASEDIR}/installation/netboot/rootfs.tgz
 
 	# compute checksums
 .for dir in ${MD_INSTALLATION_DIRS}
 	sh $(TOP)/distrib/sets/makesums -t ${RELEASEDIR}/${dir} '*'
 .endfor
 
-CDBOOTIMAGE!=	cd ${TOP}/distrib/miniroot; \
-		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/miniroot.fs\n" | \
+CDBOOTIMAGE!=	cd ${TOP}/distrib/sparc/bootfs; \
+		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/boot.fs\n" | \
 		${MAKE} -s -f-
 
 iso-image_md_post:
