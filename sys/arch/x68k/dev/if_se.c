@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.6 1998/07/05 06:49:10 jonathan Exp $	*/
+/*	$NetBSD: if_se.c,v 1.7 1999/03/25 23:17:35 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
@@ -216,11 +216,6 @@ static inline void se_xmit();
 static inline char *se_ring_copy();
 
 extern int ether_output();
-
-#define	ETHER_MIN_LEN	64
-#define ETHER_MAX_LEN	1518
-#define	ETHER_ADDR_LEN	6
-#define	ETHER_HDR_SIZE	14
 
 char se_name[] = "DP8390 SCSI Ethernet Adapter (Ether+)";
 static char zero = 0;
