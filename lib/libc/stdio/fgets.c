@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets.c,v 1.8 1998/02/03 18:41:09 perry Exp $	*/
+/*	$NetBSD: fgets.c,v 1.9 1998/09/07 14:31:57 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fgets.c	8.2 (Berkeley) 12/22/93";
 #else
-__RCSID("$NetBSD: fgets.c,v 1.8 1998/02/03 18:41:09 perry Exp $");
+__RCSID("$NetBSD: fgets.c,v 1.9 1998/09/07 14:31:57 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,8 +78,10 @@ fgets(buf, n, fp)
 		if ((len = fp->_r) <= 0) {
 			if (__srefill(fp)) {
 				/* EOF/error: stop with partial or no line */
-				if (s == buf)
+				if (s == buf) {
+					FUNLOCKFILE(fp);
 					return (NULL);
+				}
 				break;
 			}
 			len = fp->_r;
@@ -101,6 +103,7 @@ fgets(buf, n, fp)
 			fp->_p = t;
 			(void)memcpy((void *)s, (void *)p, len);
 			s[len] = 0;
+			FUNLOCKFILE(fp)
 			return (buf);
 		}
 		fp->_r -= len;
