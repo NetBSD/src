@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.67 2004/08/13 17:22:39 mycroft Exp $	*/
+/*	$NetBSD: init.c,v 1.68 2004/10/12 10:08:09 dan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.67 2004/08/13 17:22:39 mycroft Exp $");
+__RCSID("$NetBSD: init.c,v 1.68 2004/10/12 10:08:09 dan Exp $");
 #endif
 #endif /* not lint */
 
@@ -1446,6 +1446,7 @@ mfs_dev(void)
 		(void)execl(INIT_MOUNT_MFS, "mount_mfs",
 		    "-b", "4096", "-f", "512",
 		    "-s", fs_size, "-n", STR(NINODE),
+		    "-p", "0755",
 		    "swap", "/dev", NULL);
 		_exit(1);
 		/*NOTREACHED*/
