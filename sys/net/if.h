@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.74 2001/09/17 17:26:59 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.75 2002/03/17 10:21:42 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -730,7 +730,7 @@ do {									\
 #define	IFQ_INC_DROPS(ifq)		((ifq)->ifq_drops++)
 #define	IFQ_SET_MAXLEN(ifq, len)	((ifq)->ifq_maxlen = (len))
 
-struct ifnet_head ifnet;
+extern struct ifnet_head ifnet;
 extern struct ifnet **ifindex2ifnet;
 #if 0
 struct ifnet loif[];
