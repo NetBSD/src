@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.35 1997/01/21 23:45:54 cgd Exp $
+#	$NetBSD: files.alpha,v 1.36 1997/01/23 22:50:52 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -157,7 +157,7 @@ device	fdc { drive = -1 }
 attach	fdc at isa
 device	fd: disk, isadma
 attach	fd at fdc
-#file	arch/alpha/isa/fd.c		fdc needs-flag
+file	arch/alpha/isa/fd.c		fdc needs-flag
 major	{ fd = 0 }
 
 # PC speaker
