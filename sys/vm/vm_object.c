@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.46 1997/03/03 20:56:12 mycroft Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.47 1997/04/07 01:57:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -1406,7 +1406,7 @@ done:
 	/*
 	 * Since backing_object is no longer used, this will delete it.
 	 */
-#ifdef DIAGNOSTIC
+#ifdef notdef
 	if (backing_object->ref_count != 1)
 		panic("vm_object_overlay: backing_object still referenced");
 #endif
