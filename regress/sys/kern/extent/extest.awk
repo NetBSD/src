@@ -1,4 +1,4 @@
-# $NetBSD: extest.awk,v 1.5 2000/07/03 04:02:36 matt Exp $
+# $NetBSD: extest.awk,v 1.6 2002/02/21 03:59:25 mrg Exp $
 
 BEGIN {
 	first = 1;
@@ -58,6 +58,11 @@ $1 == "alloc_subregion" {
 	printf("\t%s, 0, %s, 0, &result);\n", align, boundary)
 	printf("if (error)\n\tprintf(\"error: %%s\\n\", strerror(error));\n")
 	printf("else\n\tprintf(\"result: 0x%%lx\\n\", result);\n")
+}
+
+$1 == "free" {
+	printf("error = extent_free(ex, %s, %s, 0);\n", $2, $3)
+	printf("if (error)\n\tprintf(\"error: %%s\\n\", strerror(error));\n")
 }
 
 $1 == "print" {

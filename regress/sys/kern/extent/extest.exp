@@ -1,4 +1,4 @@
-# $NetBSD: extest.exp,v 1.7 2002/02/20 01:26:37 enami Exp $
+# $NetBSD: extest.exp,v 1.8 2002/02/21 03:59:25 mrg Exp $
 # real output must start in line 4
 
 output for test1
@@ -51,3 +51,15 @@ extent `test9' (0x0 - 0x4f), flags = 0x0
      0x0 - 0x3
      0xd - 0xe
      0x10 - 0x17
+output for test10
+result: 0xc0010000
+result: 0xc0020000
+extent `test10' (0xc0002000 - 0xffffe000), flags = 0x0
+     0xc0010000 - 0xc0011fff
+     0xc0020000 - 0xc0021fff
+extent `test10' (0xc0002000 - 0xffffe000), flags = 0x0
+     0xc0010000 - 0xc0011fff
+result: 0xc0022000
+extent `test10' (0xc0002000 - 0xffffe000), flags = 0x0
+     0xc0010000 - 0xc0011fff
+     0xc0022000 - 0xc0031fff
