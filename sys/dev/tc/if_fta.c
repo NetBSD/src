@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.3 1996/05/20 01:31:07 cgd Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.4 1996/05/20 15:53:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -91,11 +91,11 @@ pdq_tc_attach(
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
-    printf(": DEFTA FDDI Controller\n");
-
     if (bus_mem_map(sc->sc_bc, ta->ta_addr + PDQ_TC_CSR_OFFSET,
-		    PDQ_TC_CSR_SPACE, 0, &sc->sc_membase))
+		    PDQ_TC_CSR_SPACE, 0, &sc->sc_membase)) {
+        printf("\n%s: can't map card memory!\n", sc->sc_dev.dv_xname);
 	return;
+    }
 
     sc->sc_pdq = pdq_initialize(sc->sc_bc, sc->sc_membase,
 				sc->sc_if.if_xname, 0,
