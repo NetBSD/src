@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.53 2004/09/12 15:32:55 jdolecek Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.54 2005/02/24 08:15:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.53 2004/09/12 15:32:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.54 2005/02/24 08:15:53 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -239,7 +239,8 @@ linux_to_bsd_msg_flags(lflag)
 	if (lflag == 0)
 		return (0);
 
-	for(i=0; i < sizeof(bsd_to_linux_msg_flags_)/2; i += 2) {
+	for(i=0; i < sizeof(bsd_to_linux_msg_flags_)/
+	    sizeof(bsd_to_linux_msg_flags_[0])/2; i += 2) {
 		bfl = bsd_to_linux_msg_flags_[i];
 		lfl = bsd_to_linux_msg_flags_[i+1];
 
@@ -267,7 +268,8 @@ bsd_to_linux_msg_flags(bflag)
 	if (bflag == 0)
 		return (0);
 
-	for(i=0; i < sizeof(bsd_to_linux_msg_flags_)/2; i += 2) {
+	for(i=0; i < sizeof(bsd_to_linux_msg_flags_)/
+	    sizeof(bsd_to_linux_msg_flags_[0])/2; i += 2) {
 		bfl = bsd_to_linux_msg_flags_[i];
 		lfl = bsd_to_linux_msg_flags_[i+1];
 
