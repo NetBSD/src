@@ -1,4 +1,4 @@
-/*	$NetBSD: wwinit.c,v 1.13 1998/12/20 15:03:15 christos Exp $	*/
+/*	$NetBSD: wwinit.c,v 1.14 1999/05/06 07:28:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: wwinit.c,v 1.13 1998/12/20 15:03:15 christos Exp $");
+__RCSID("$NetBSD: wwinit.c,v 1.14 1999/05/06 07:28:51 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,8 @@ wwinit()
 #define _POSIX_VDISABLE -1
 #endif
 	wwwintty.ww_termios.c_oflag &= ~OXTABS;
+	wwwintty.ww_termios.c_cflag &= ~CLOCAL;
+	wwwintty.ww_termios.c_cflag |= HUPCL;
 	wwnewtty.ww_termios = wwoldtty.ww_termios;
 	wwnewtty.ww_termios.c_iflag &=
 		~(ISTRIP | INLCR | IGNCR | ICRNL | IXON | IXOFF | IMAXBEL);
