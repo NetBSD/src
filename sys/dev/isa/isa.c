@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.60 1994/11/04 00:07:39 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.61 1994/11/04 00:53:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -88,6 +88,7 @@ isasubmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
+	struct device *self = match;
 	struct cfdata *cf = self->dv_cfdata;
 	struct isa_attach_args ia;
 
@@ -98,7 +99,7 @@ isasubmatch(parent, match, aux)
 	ia.ia_irq = cf->cf_loc[4];
 	ia.ia_drq = cf->cf_loc[5];
 
-	if ((*id->id_driver->cd_match)(parent, match, &ia) <= 0) {
+	if ((*cf->cf_driver->cd_match)(parent, match, &ia) <= 0) {
 		/*
 		 * If we don't do this, isaattach() will repeatedly try to
 		 * probe devices that weren't found.  But we need to be careful
@@ -106,7 +107,7 @@ isasubmatch(parent, match, aux)
 		 * `com0 at ast? slave ?' to not probe on the second ast.
 		 */
 		if (parent->dv_cfdata->cf_driver == &isacd)
-			id->id_state = FSTATE_FOUND;
+			cf->cf_fstate = FSTATE_FOUND;
 		return (0);
 	}
 
