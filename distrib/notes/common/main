@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.220 2002/11/18 12:39:49 lukem Exp $
+.\"	$NetBSD: main,v 1.221 2002/11/25 13:11:36 jmmv Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1811,6 +1811,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Jared D. McNeill Ta Mt jmcneill@netbsd.org
 .It Ta Neil J. McRae Ta Mt neil@netbsd.org
 .It Ta Perry Metzger Ta Mt perry@netbsd.org
+.It Ta Julio M. Merino Vidal Ta Mt jmmv@netbsd.org
 .It Ta Minoura Makoto Ta Mt minoura@netbsd.org
 .It Ta Luke Mewburn Ta Mt lukem@netbsd.org
 .It Ta der Mouse Ta Mt mouse@netbsd.org
