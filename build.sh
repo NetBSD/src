@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.2 2001/10/19 02:25:48 tv Exp $
+#  $NetBSD: build.sh,v 1.3 2001/10/19 16:43:47 tv Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -50,30 +50,30 @@ getarch () {
 
 usage () {
 	echo "Usage:"
-	echo "$0 [-nr] [-j njobs] [-m machine] [-D destdir] [-T tooldir]"
-	echo "    -j: set NBUILDJOBS to njobs"
-	echo "    -m: set target MACHINE to machine"
-	echo "    -n: do not build a release (just install to DESTDIR)"
+	echo "$0 [-r] [-j njob] [-m mach] [-D dest] [-R release] [-T tools]"
+	echo "    -j: set NBUILDJOBS to njob"
+	echo "    -m: set target MACHINE to mach"
 	echo "    -r: remove TOOLDIR and DESTDIR before the build"
-	echo "    -D: set DESTDIR to destdir"
-	echo "    -T: set TOOLDIR to tooldir"
+	echo "    -D: set DESTDIR to dest"
+	echo "    -R: build a release to release"
+	echo "    -T: set TOOLDIR to tools"
 	exit 1
 }
 
-while getopts j:m:nrD:T: opt; do case $opt in
+while getopts hj:m:rD:R:T: opt; do case $opt in
 	j)	buildjobs="NBUILDJOBS=$OPTARG";;
 
 	m)	MACHINE=$OPTARG; getarch;; # getarch overrides MACHINE_ARCH
-
-	n)	buildtarget=build;;
 
 	r)	removedirs=true;;
 
 	D)	DESTDIR="$OPTARG";;
 
+	R)	releasedir="RELEASEDIR=$OPTARG"; buildtarget=release;;
+
 	T)	TOOLDIR="$OPTARG";;
 
-	'?')	usage;;
+	'?'|h)	usage;;
 esac; done
 
 for var in DESTDIR TOOLDIR MACHINE; do
@@ -84,13 +84,14 @@ done
 # Set up environment.
 test -n "$MACHINE_ARCH" || getarch
 test -d usr.bin/make || bomb "build.sh must be run from the top source level"
-[ -d $TOOLDIR/bin ] || mkdir -p $TOOLDIR/bin || bomb "mkdir of $TOOLDIR/bin failed"
 
 # Remove the target directories.
 if ${removedirs-false}; then
 	echo "Removing DESTDIR and TOOLDIR...."
 	rm -rf $DESTDIR $TOOLDIR
 fi
+
+[ -d $TOOLDIR/bin ] || mkdir -p $TOOLDIR/bin || bomb "mkdir of $TOOLDIR/bin failed"
 
 # Test make source file timestamps against installed bmake binary.
 if [ -x $TOOLDIR/bin/bmake ]; then
@@ -124,6 +125,7 @@ if ${rebuildmake-false}; then
 	rm -f $srcdir/usr.bin/make/*.o $srcdir/usr.bin/make/lst.lib/*.o
 fi
 
-$TOOLDIR/bin/bmake ${buildtarget-release} -m `pwd`/share/mk \
+$TOOLDIR/bin/bmake ${buildtarget-build} -m `pwd`/share/mk \
 	MKTOOLS=yes DESTDIR="$DESTDIR" TOOLDIR="$TOOLDIR" \
-	MACHINE=$MACHINE MACHINE_ARCH=$MACHINE_ARCH $buildjobs
+	MACHINE=$MACHINE MACHINE_ARCH=$MACHINE_ARCH \
+	$buildjobs $releasedir
