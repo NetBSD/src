@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.118 1999/01/04 15:32:08 is Exp $	*/
+/*	$NetBSD: cd.c,v 1.119 1999/01/26 13:59:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/cdio.h>
+#include <sys/scsiio.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
 #if NRND > 0
@@ -234,6 +235,7 @@ cdopen(dev, flag, fmt, p)
 		return (ENXIO);
 
 	sc_link = cd->sc_link;
+	part = CDPART(dev);
 
 	SC_DEBUG(sc_link, SDEV_DB1,
 	    ("cdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
@@ -250,7 +252,7 @@ cdopen(dev, flag, fmt, p)
 	if ((error = cdlock(cd)) != 0)
 		goto bad4;
 
-	if (cd->sc_dk.dk_openmask != 0) {
+	if ((sc_link->flags & SDEV_OPEN) != 0) {
 		/*
 		 * If any partition is open, but the disk has been invalidated,
 		 * disallow further opens.
@@ -269,14 +271,22 @@ cdopen(dev, flag, fmt, p)
 		if (error)
 			goto bad3;
 
-		/* Start the pack spinning if necessary. */
+		/*
+		 * Start the pack spinning if necessary. Always allow the
+		 * raw parition to be opened, for raw IOCTLs. Data transfers
+		 * will check for SDEV_MEDIA_LOADED.
+		 */
 		error = scsipi_start(sc_link, SSS_START,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
 		    SCSI_SILENT);
 		SC_DEBUG(sc_link, SDEV_DB1,
 		    ("cdopen: scsipi_start, error=%d\n", error));
-		if (error)
-			goto bad3;
+		if (error) {
+			if (part != RAW_PART) 
+				goto bad3;
+			else
+				goto out;
+		}
 
 		sc_link->flags |= SDEV_OPEN;
 
@@ -304,8 +314,6 @@ cdopen(dev, flag, fmt, p)
 		}
 	}
 
-	part = CDPART(dev);
-
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
 	    (part >= cd->sc_dk.dk_label->d_npartitions ||
@@ -314,7 +322,7 @@ cdopen(dev, flag, fmt, p)
 		goto bad;
 	}
 
-	/* Insure only one open at a time. */
+out:	/* Insure only one open at a time. */
 	switch (fmt) {
 	case S_IFCHR:
 		cd->sc_dk.dk_copenmask |= (1 << part);
@@ -408,18 +416,18 @@ cdstrategy(bp)
 	SC_DEBUG(cd->sc_link, SDEV_DB1,
 	    ("%ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
 	/*
-	 * The transfer must be a whole number of blocks.
-	 */
-	if ((bp->b_bcount % cd->sc_dk.dk_label->d_secsize) != 0) {
-		bp->b_error = EINVAL;
-		goto bad;
-	}
-	/*
 	 * If the device has been made invalid, error out
 	 * maybe the media changed
 	 */
 	if ((cd->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 		bp->b_error = EIO;
+		goto bad;
+	}
+	/*
+	 * The transfer must be a whole number of blocks.
+	 */
+	if ((bp->b_bcount % cd->sc_dk.dk_label->d_secsize) != 0) {
+		bp->b_error = EINVAL;
 		goto bad;
 	}
 	/*
@@ -702,10 +710,40 @@ cdioctl(dev, cmd, addr, flag, p)
 	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdioctl 0x%lx ", cmd));
 
 	/*
-	 * If the device is not valid.. abandon ship
+	 * If the device is not valid, some IOCTLs can still be
+	 * handled on the raw partition. Check this here.
 	 */
-	if ((cd->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
-		return (EIO);
+	if ((cd->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+		switch (cmd) {
+		case DIOCWLABEL:
+		case DIOCLOCK:
+		case DIOCEJECT:
+		case SCIOCIDENTIFY:
+		case OSCIOCIDENTIFY:
+		case SCIOCCOMMAND:
+		case SCIOCDEBUG:
+		case CDIOCGETVOL:
+		case CDIOCSETVOL:
+		case CDIOCSETMONO:
+		case CDIOCSETSTEREO:
+		case CDIOCSETMUTE:
+		case CDIOCSETLEFT:
+		case CDIOCSETRIGHT:
+		case CDIOCCLOSE:
+		case CDIOCALLOW:
+		case CDIOCPREVENT:
+		case CDIOCSETDEBUG:
+		case CDIOCCLRDEBUG:
+		case CDIOCRESET:
+		case SCIOCRESET:
+		case CDIOCLOADUNLOAD:
+			if (CDPART(dev) == RAW_PART)
+				break;
+		/* FALLTHROUGH */
+		default:
+			return (EIO);
+		}
+	}
 
 	switch (cmd) {
 	case DIOCGDINFO:
@@ -938,6 +976,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		cd->sc_link->flags &= ~(SDEV_DB1 | SDEV_DB2);
 		return (0);
 	case CDIOCRESET:
+	case SCIOCRESET:
 		return (cd_reset(cd));
 	case CDIOCLOADUNLOAD: {
 		struct ioc_load_unload *args = (struct ioc_load_unload *)addr;
