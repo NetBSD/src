@@ -1,4 +1,4 @@
-/*	$NetBSD: kgmon.c,v 1.14 2004/11/17 13:32:16 hira Exp $	*/
+/*	$NetBSD: kgmon.c,v 1.15 2005/01/27 18:12:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: kgmon.c,v 1.14 2004/11/17 13:32:16 hira Exp $");
+__RCSID("$NetBSD: kgmon.c,v 1.15 2005/01/27 18:12:47 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: kgmon.c,v 1.14 2004/11/17 13:32:16 hira Exp $");
 #include <kvm.h>
 #include <limits.h>
 #include <nlist.h>
-#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -144,8 +143,6 @@ main(int argc, char **argv)
 		}
 	}
 #endif
-	if (system == NULL)
-		system = _PATH_UNIX;
 	accessmode = openfiles(system, kmemf, &kvmvars);
 	mode = getprof(&kvmvars);
 	if (hflag)
