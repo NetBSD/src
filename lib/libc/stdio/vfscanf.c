@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.18 1998/02/03 18:41:24 perry Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.19 1998/07/26 12:31:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.18 1998/02/03 18:41:24 perry Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.19 1998/07/26 12:31:39 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -126,7 +126,7 @@ __svfscanf(fp, fmt0, ap)
 	char buf[BUF];		/* buffer for numeric conversions */
 
 	/* `basefix' is used to avoid `if' tests in the integer scanner */
-	static short basefix[17] =
+	static const short basefix[17] =
 		{ 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
 
 	nassigned = 0;

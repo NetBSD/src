@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.16 1998/07/26 11:32:25 mycroft Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.17 1998/07/26 12:30:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.16 1998/07/26 11:32:25 mycroft Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.17 1998/07/26 12:30:15 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1129,7 +1129,7 @@ __p_time(value)
  * by 60*60*1000 for that.
  */
 
-static unsigned int poweroften[10] = {1, 10, 100, 1000, 10000, 100000,
+static const unsigned int poweroften[10] = {1, 10, 100, 1000, 10000, 100000,
 				      1000000,10000000,100000000,1000000000};
 
 /* takes an XeY precision/size value, returns a string representation. */
@@ -1415,7 +1415,7 @@ loc_ntoa(binary, ascii)
 	const u_char *binary;
 	char *ascii;
 {
-	static char *error = "?";
+	static const char *const error = "?";
 	register const u_char *cp = binary;
 
 	int latdeg, latmin, latsec, latsecfrac;
@@ -1429,7 +1429,7 @@ loc_ntoa(binary, ascii)
 	u_int32_t templ;
 	u_int8_t sizeval, hpval, vpval, versionval;
     
-	char *sizestr, *hpstr, *vpstr;
+	const char *sizestr, *hpstr, *vpstr;
 
 	versionval = *cp++;
 
@@ -1503,11 +1503,11 @@ loc_ntoa(binary, ascii)
 		altmeters, altfrac, sizestr, hpstr, vpstr);
 
 	if (sizestr != error)
-		free(sizestr);
+		free((char *)sizestr);
 	if (hpstr != error)
-		free(hpstr);
+		free((char *)hpstr);
 	if (vpstr != error)
-		free(vpstr);
+		free((char *)vpstr);
 
 	return (ascii);
 }

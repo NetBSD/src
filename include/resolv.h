@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.13 1998/02/03 04:21:46 perry Exp $	*/
+/*	$NetBSD: resolv.h,v 1.14 1998/07/26 12:29:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1987, 1989, 1993
@@ -178,9 +178,9 @@ typedef res_sendhookact (*res_send_rhook)__P((const struct sockaddr_in *ns,
 					      int *resplen));
 
 struct res_sym {
-	int	number;		/* Identifying number, like T_MX */
-	char *	name;		/* Its symbolic name, like "MX" */
-	char *	humanname;	/* Its fun name, like "mail exchanger" */
+	int		number;		/* Identifying number, like T_MX */
+	const char *	name;		/* Its symbolic name, like "MX" */
+	const char *	humanname;	/* Its fun name, like "mail exchanger" */
 };
 
 extern struct __res_state _res;
