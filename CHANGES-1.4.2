@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.59 1999/10/17 23:13:21 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.60 1999/10/18 00:06:33 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -762,3 +762,10 @@ sys/kern/kern_synch.c				1.66
   Correct use of `wrong' clock for %cpu calculation.  (This is not
   a functional change at present because all clock frequencies are
   the same.)
+
+sys/netinet/ip_input.c				1.93
+sys/netinet/ip_flow.c				1.14
+
+  Multicast storm prevention: don't attempt to forward link-level
+  multicast packets which contain ip unicast packets; these packets
+  would only be generated from misconfigured/buggy systems.
