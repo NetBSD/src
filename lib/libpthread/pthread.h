@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.20 2004/12/29 00:59:57 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.20.2.1 2005/03/22 15:23:08 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,8 +48,9 @@
 
 __BEGIN_DECLS
 int	pthread_atfork(void (*)(void), void (*)(void), void (*)(void));
-int	pthread_create(pthread_t *, const pthread_attr_t *, 
-	    void *(*)(void *), void *);
+int	pthread_create(pthread_t * __restrict,
+	    const pthread_attr_t * __restrict, void *(*)(void *),
+	    void * __restrict);
 void	pthread_exit(void *) __attribute__((__noreturn__));
 int	pthread_join(pthread_t, void **);
 int	pthread_equal(pthread_t, pthread_t);
@@ -62,23 +63,30 @@ int	pthread_setrrtimer_np(int);
 int	pthread_attr_init(pthread_attr_t *);
 int	pthread_attr_destroy(pthread_attr_t *);
 int	pthread_attr_get_np(pthread_t, pthread_attr_t *);
-int	pthread_attr_getguardsize(const pthread_attr_t *, size_t *);
+int	pthread_attr_getguardsize(const pthread_attr_t * __restrict,
+	    size_t * __restrict);
 int	pthread_attr_setguardsize(pthread_attr_t *, size_t);
-int	pthread_attr_getinheritsched(const pthread_attr_t *, int *);
+int	pthread_attr_getinheritsched(const pthread_attr_t * __restrict,
+	    int * __restrict);
 int	pthread_attr_setinheritsched(pthread_attr_t *, int);
-int	pthread_attr_getschedparam(const pthread_attr_t *,
-    struct sched_param *);
-int	pthread_attr_setschedparam(pthread_attr_t *,
-    const struct sched_param *);
-int	pthread_attr_getschedpolicy(const pthread_attr_t *, int *);
+int	pthread_attr_getschedparam(const pthread_attr_t * __restrict,
+	    struct sched_param * __restrict);
+int	pthread_attr_setschedparam(pthread_attr_t * __restrict,
+    const struct sched_param * __restrict);
+int	pthread_attr_getschedpolicy(const pthread_attr_t * __restrict,
+	    int * __restrict);
 int	pthread_attr_setschedpolicy(pthread_attr_t *, int);
-int	pthread_attr_getscope(const pthread_attr_t *, int *);
+int	pthread_attr_getscope(const pthread_attr_t * __restrict,
+	    int * __restrict);
 int	pthread_attr_setscope(pthread_attr_t *, int);
-int	pthread_attr_getstack(const pthread_attr_t *, void **, size_t *);
+int	pthread_attr_getstack(const pthread_attr_t * __restrict,
+	    void ** __restrict, size_t * __restrict);
 int	pthread_attr_setstack(pthread_attr_t *, void *, size_t);
-int	pthread_attr_getstacksize(const pthread_attr_t *, size_t *);
+int	pthread_attr_getstacksize(const pthread_attr_t * __restrict,
+	    size_t * __restrict);
 int	pthread_attr_setstacksize(pthread_attr_t *, size_t);
-int	pthread_attr_getstackaddr(const pthread_attr_t *, void **);
+int	pthread_attr_getstackaddr(const pthread_attr_t * __restrict,
+	    void ** __restrict);
 int	pthread_attr_setstackaddr(pthread_attr_t *, void *);
 int	pthread_attr_getdetachstate(const pthread_attr_t *, int *);
 int	pthread_attr_setdetachstate(pthread_attr_t *, int);
@@ -86,21 +94,25 @@ int	pthread_attr_getname_np(const pthread_attr_t *, char *,
 	    size_t, void **);
 int	pthread_attr_setname_np(pthread_attr_t *, const char *, void *);
 
-int	pthread_mutex_init(pthread_mutex_t *, const pthread_mutexattr_t *);
+int	pthread_mutex_init(pthread_mutex_t * __restrict,
+	    const pthread_mutexattr_t * __restrict);
 int	pthread_mutex_destroy(pthread_mutex_t *);
 int	pthread_mutex_lock(pthread_mutex_t *);
 int	pthread_mutex_trylock(pthread_mutex_t *);
 int	pthread_mutex_unlock(pthread_mutex_t *);
 int	pthread_mutexattr_init(pthread_mutexattr_t *);
 int	pthread_mutexattr_destroy(pthread_mutexattr_t *);
-int	pthread_mutexattr_gettype(const pthread_mutexattr_t *, int *);
+int	pthread_mutexattr_gettype(const pthread_mutexattr_t * __restrict,
+	    int * __restrict);
 int	pthread_mutexattr_settype(pthread_mutexattr_t *attr, int);
 
-int	pthread_cond_init(pthread_cond_t *, const pthread_condattr_t *);
+int	pthread_cond_init(pthread_cond_t * __restrict,
+	    const pthread_condattr_t * __restrict);
 int	pthread_cond_destroy(pthread_cond_t *);
-int	pthread_cond_wait(pthread_cond_t *, pthread_mutex_t *);
-int	pthread_cond_timedwait(pthread_cond_t *, pthread_mutex_t *,
-	    const struct timespec *);
+int	pthread_cond_wait(pthread_cond_t * __restrict,
+	    pthread_mutex_t * __restrict);
+int	pthread_cond_timedwait(pthread_cond_t * __restrict,
+	    pthread_mutex_t * __restrict, const struct timespec * __restrict);
 int	pthread_cond_signal(pthread_cond_t *);
 int	pthread_cond_broadcast(pthread_cond_t *);
 int	pthread_condattr_init(pthread_condattr_t *);
@@ -147,29 +159,30 @@ int	pthread_spin_lock(pthread_spinlock_t *);
 int	pthread_spin_trylock(pthread_spinlock_t *);
 int	pthread_spin_unlock(pthread_spinlock_t *);
 
-int	pthread_rwlock_init(pthread_rwlock_t *,
-	    const pthread_rwlockattr_t *);
+int	pthread_rwlock_init(pthread_rwlock_t * __restrict,
+	    const pthread_rwlockattr_t * __restrict);
 int	pthread_rwlock_destroy(pthread_rwlock_t *);
 int	pthread_rwlock_rdlock(pthread_rwlock_t *);
 int	pthread_rwlock_tryrdlock(pthread_rwlock_t *);
 int	pthread_rwlock_wrlock(pthread_rwlock_t *);
 int	pthread_rwlock_trywrlock(pthread_rwlock_t *);
-int	pthread_rwlock_timedrdlock(pthread_rwlock_t *,
-	    const struct timespec *);
-int	pthread_rwlock_timedwrlock(pthread_rwlock_t *,
-	    const struct timespec *);
+int	pthread_rwlock_timedrdlock(pthread_rwlock_t * __restrict,
+	    const struct timespec * __restrict);
+int	pthread_rwlock_timedwrlock(pthread_rwlock_t * __restrict,
+	    const struct timespec * __restrict);
 int	pthread_rwlock_unlock(pthread_rwlock_t *);
 int	pthread_rwlockattr_init(pthread_rwlockattr_t *);
 int	pthread_rwlockattr_destroy(pthread_rwlockattr_t *);
 
-int	pthread_barrier_init(pthread_barrier_t *,
-	    const pthread_barrierattr_t *, unsigned int);
+int	pthread_barrier_init(pthread_barrier_t * __restrict,
+	    const pthread_barrierattr_t * __restrict, unsigned int);
 int	pthread_barrier_wait(pthread_barrier_t *);
 int	pthread_barrier_destroy(pthread_barrier_t *);
 int	pthread_barrierattr_init(pthread_barrierattr_t *);
 int	pthread_barrierattr_destroy(pthread_barrierattr_t *);
 
-int	pthread_getschedparam(pthread_t, int *, struct sched_param *);
+int	pthread_getschedparam(pthread_t, int * __restrict,
+	    struct sched_param * __restrict);
 int	pthread_setschedparam(pthread_t, int, const struct sched_param *);
 
 int 	*pthread__errno(void);
@@ -257,7 +270,7 @@ __END_DECLS
 
 #ifndef __LIBPTHREAD_SOURCE__
 __BEGIN_DECLS
-int	__libc_mutex_init(pthread_mutex_t *, const pthread_mutexattr_t *);
+int	__libc_mutex_init(pthread_mutex_t * __restrict, const pthread_mutexattr_t * __restrict);
 int	__libc_mutex_lock(pthread_mutex_t *);
 int	__libc_mutex_trylock(pthread_mutex_t *);
 int	__libc_mutex_unlock(pthread_mutex_t *);
@@ -279,12 +292,14 @@ __END_DECLS
 #define	pthread_mutexattr_destroy	__libc_mutexattr_destroy
 
 __BEGIN_DECLS
-int	__libc_cond_init(pthread_cond_t *, const pthread_condattr_t *);
+int	__libc_cond_init(pthread_cond_t * __restrict,
+	    const pthread_condattr_t * __restrict);
 int	__libc_cond_signal(pthread_cond_t *);
 int	__libc_cond_broadcast(pthread_cond_t *);
-int	__libc_cond_wait(pthread_cond_t *, pthread_mutex_t *);
-int	__libc_cond_timedwait(pthread_cond_t *, pthread_mutex_t *,
-    const struct timespec *);
+int	__libc_cond_wait(pthread_cond_t * __restrict,
+	    pthread_mutex_t * __restrict);
+int	__libc_cond_timedwait(pthread_cond_t * __restrict,
+	    pthread_mutex_t * __restrict, const struct timespec * __restrict);
 int	__libc_cond_destroy(pthread_cond_t *);
 __END_DECLS
 
@@ -296,7 +311,8 @@ __END_DECLS
 #define	pthread_cond_destroy		__libc_cond_destroy
 
 __BEGIN_DECLS
-int	__libc_rwlock_init(pthread_rwlock_t *, const pthread_rwlockattr_t *);
+int	__libc_rwlock_init(pthread_rwlock_t * __restrict,
+	    const pthread_rwlockattr_t * __restrict);
 int	__libc_rwlock_rdlock(pthread_rwlock_t *);
 int	__libc_rwlock_wrlock(pthread_rwlock_t *);
 int	__libc_rwlock_tryrdlock(pthread_rwlock_t *);
