@@ -3,6 +3,11 @@
 ./usr/include/m68k/aout_machdep.h
 ./usr/include/m68k/asm.h
 ./usr/include/m68k/asm_single.h
+./usr/include/m68k/cacheops.h
+./usr/include/m68k/cacheops_20.h
+./usr/include/m68k/cacheops_30.h
+./usr/include/m68k/cacheops_40.h
+./usr/include/m68k/cacheops_60.h
 ./usr/include/m68k/cdefs.h
 ./usr/include/m68k/cpu.h
 ./usr/include/m68k/db_machdep.h
@@ -25,6 +30,7 @@
 ./usr/include/m68k/types.h
 ./usr/include/m68k/varargs.h
 ./usr/include/machine/ansi.h
+./usr/include/machine/aout_machdep.h
 ./usr/include/machine/asm.h
 ./usr/include/machine/cdefs.h
 ./usr/include/machine/conf.h
@@ -33,7 +39,6 @@
 ./usr/include/machine/db_machdep.h
 ./usr/include/machine/disklabel.h
 ./usr/include/machine/endian.h
-./usr/include/machine/exec.h
 ./usr/include/machine/fbio.h
 ./usr/include/machine/float.h
 ./usr/include/machine/frame.h

@@ -145,6 +145,8 @@
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
 ./usr/include/dev/pci/if_devar.h
+./usr/include/dev/pci/if_fxpreg.h
+./usr/include/dev/pci/if_fxpvar.h
 ./usr/include/dev/pci/if_levar.h
 ./usr/include/dev/pci/ncr_reg.h
 ./usr/include/dev/pci/pcidevs.h
@@ -1929,4 +1931,4 @@
 ./usr/share/mk/bsd.prog.mk
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
-./var/db/tags
+./var/db/libc.tags
