@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.71 1996/03/27 19:20:18 perry Exp $
+#	$NetBSD: files.i386,v 1.72 1996/04/09 22:59:03 cgd Exp $
 #
 # new style config file for i386 architecture
 #
@@ -147,6 +147,7 @@ file	arch/i386/isa/joy.c		joy needs-flag
 #
 
 include "../../../dev/eisa/files.eisa"
+file	arch/i386/eisa/eisa_machdep.c	eisa
 
 #
 # Compatibility modules
