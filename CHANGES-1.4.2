@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.69 1999/10/26 20:40:38 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.70 1999/10/26 21:12:55 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -928,3 +928,8 @@ sys/arch/i386/conf/INSTALL			patch
 sys/arch/i386/conf/GENERIC			patch
 
   Add "rl" PCI Ethernet device driver.
+
+sys/dev/cons.c					1.33
+
+  Catch a console configuration error.  Instead of jumping through
+  cdevsw indexed on major(NODEV), call panic, fixing PR#8690.
