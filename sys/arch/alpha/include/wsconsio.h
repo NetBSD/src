@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsio.h,v 1.1 1996/04/12 01:43:06 cgd Exp $	*/
+/* $NetBSD: wsconsio.h,v 1.2 1997/04/06 08:47:48 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.old.h,v 1.6 1996/11/13 21:13:19 cgd Exp $	*/
+/* $NetBSD: pmap.old.h,v 1.7 1997/04/06 08:47:35 cgd Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University

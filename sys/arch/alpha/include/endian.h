@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.3 1996/10/13 19:57:59 cgd Exp $	*/
+/* $NetBSD: endian.h,v 1.4 1997/04/06 08:47:24 cgd Exp $ */
 
 /*
  * Copyright (c) 1987, 1991, 1993

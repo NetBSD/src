@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.2 1995/03/28 18:14:07 jtc Exp $	*/
+/* $NetBSD: reg.h,v 1.3 1997/04/06 08:47:40 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
