@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.23 2000/03/07 02:28:05 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.24 2000/03/25 16:24:57 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -963,7 +963,6 @@ rf_CheckLabels( raidPtr, cfgPtr )
 	return(fatal_error);	
 }
 
-int rf_add_hot_spare(RF_Raid_t *, RF_SingleComponent_t *);
 int
 rf_add_hot_spare(raidPtr, sparePtr)
 	RF_Raid_t *raidPtr;
