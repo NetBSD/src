@@ -1,8 +1,8 @@
-/*	$NetBSD: sigreturn.S,v 1.4 1998/12/02 01:01:04 thorpej Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.5 2004/03/26 22:15:03 drochner Exp $	*/
 
 #include "SYS.h"
 
 WARN_REFERENCES(sigreturn, \
-    "warning: reference to compatibility sigreturn(); include <signal.h> for correct reference")
+    "warning: reference to compatibility sigreturn()")
 
 PSEUDO(sigreturn,compat_13_sigreturn13)

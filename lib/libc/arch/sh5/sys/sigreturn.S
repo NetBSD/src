@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.1 2002/07/05 13:31:36 scw Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.2 2004/03/26 22:15:03 drochner Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,6 @@
 #include "SYS.h"
 
 WARN_REFERENCES(sigreturn, \
-    "warning: reference to compatibility sigreturn(); include <signal.h> for correct reference")
+    "warning: reference to compatibility sigreturn()")
 
 PSEUDO(sigreturn,compat_13_sigreturn13)
