@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.24 1998/01/24 14:17:00 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.25 1998/03/13 11:40:19 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -153,6 +153,7 @@
 #include <sys/device.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/reboot.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -192,6 +193,7 @@ extern char all_es_snpa[], all_is_snpa[], all_l1is_snpa[], all_l2is_snpa[];
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
+#include <machine/rpb.h>
 
 #include <vax/if/if_qereg.h>
 #include <vax/if/if_uba.h>
@@ -416,6 +418,8 @@ qeattach(parent, self, aux)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
+	if (B_TYPE(bootdev) == BDEV_QE)
+		booted_from = self;
 }
 
 /*
