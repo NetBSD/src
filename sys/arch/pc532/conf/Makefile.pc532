@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.71 2003/10/27 07:26:17 simonb Exp $
+#	$NetBSD: Makefile.pc532,v 1.72 2003/10/27 07:39:10 simonb Exp $
 
 # Makefile for NetBSD
 #
@@ -19,6 +19,7 @@
 
 MACHINE_ARCH=ns32k
 USETOOLS?=	no
+USE_BINUTILS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
 
@@ -59,8 +60,12 @@ locore.o: ${PC532}/pc532/locore.s assym.h
 ##
 ## (5) link settings
 ##
+.if ${USE_BINUTILS} == "yes"
+TEXTADDR?=	E0002020
+.else
 LINKFORMAT=	-z
 TEXTADDR?=	E0002000
+.endif
 
 ##
 ## (6) port specific target dependencies
