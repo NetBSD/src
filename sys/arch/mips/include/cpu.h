@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 1996/03/23 20:21:49 jonathan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 1996/03/23 20:28:19 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@ struct clockframe {
 
 /* r4000 versions */
 #define	CLKF_USERMODE_R4K(framep)	((framep)->sr & MACH_SR_KSU_USER)
-#define	CLKF_BASEPRI_R4k(framep)	\
+#define	CLKF_BASEPRI_R4K(framep)	\
 	((~(framep)->sr & (MACH_INT_MASK | MACH_SR_INT_ENAB)) == 0)
 
 #define	CLKF_PC(framep)		((framep)->pc)
