@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.7 1995/03/06 10:56:08 mycroft Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.8 1995/03/06 10:58:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993
@@ -43,7 +43,6 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <net/bpf.h>
 
 #ifdef sun
 #include <netinet/in.h>
@@ -160,6 +159,8 @@ m_xhalf(m, k, err)
 	return 0;
 }
 #endif
+
+#include <net/bpf.h>
 
 /*
  * Execute the filter program starting at pc on the packet p
