@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.71 2000/08/01 18:42:08 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.72 2001/01/11 01:36:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.71 2000/08/01 18:42:08 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.72 2001/01/11 01:36:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -481,7 +481,7 @@ main(argc, argv, envp)
 
 	if (debug == 0)
 		daemon(0, 0);
-	openlog(__progname, LOG_PID | LOG_NOWAIT, LOG_DAEMON);
+	openlog("inetd", LOG_PID | LOG_NOWAIT, LOG_DAEMON);
 	pidfile(NULL);
 
 #ifdef RLIMIT_NOFILE
