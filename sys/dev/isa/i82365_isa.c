@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.8 1997/11/30 15:31:24 drochner Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.9 1998/05/23 18:32:30 matt Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -379,6 +379,7 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	void *arg;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
+	isa_chipset_tag_t ic = h->sc->intr_est;
 	int irq, ist;
 	void *ih;
 	int reg;
@@ -390,10 +391,10 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	else
 		ist = IST_LEVEL;
 
-	if (isa_intr_alloc(h->sc->intr_est,
+	if (isa_intr_alloc(ic,
 	    PCIC_INTR_IRQ_VALIDMASK & pcic_isa_intr_alloc_mask, ist, &irq))
 		return (NULL);
-	if ((ih = isa_intr_establish(h->sc->intr_est, irq, ist, ipl,
+	if ((ih = isa_intr_establish(ic, irq, ist, ipl,
 	    fct, arg)) == NULL)
 		return (NULL);
 
@@ -415,6 +416,7 @@ pcic_isa_chip_intr_disestablish(pch, ih)
 	void *ih;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
+	isa_chipset_tag_t ic = h->sc->intr_est;
 	int reg;
 
 	h->ih_irq = 0;
@@ -423,5 +425,5 @@ pcic_isa_chip_intr_disestablish(pch, ih)
 	reg &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
 	pcic_write(h, PCIC_INTR, reg);
 
-	isa_intr_disestablish(h->sc->intr_est, ih);
+	isa_intr_disestablish(ic, ih);
 }
