@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.18 1999/09/30 22:57:55 thorpej Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.19 2000/03/12 19:16:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -99,7 +99,7 @@ scanjet_attach(ss, sa)
 	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_attach: start\n"));
 	ss->sio.scan_scanner_type = 0;
 
-	printf("\n%s: ", ss->sc_dev.dv_xname);
+	printf("%s: ", ss->sc_dev.dv_xname);
 
 	/* first, check the model (which determines nothing yet) */
 
