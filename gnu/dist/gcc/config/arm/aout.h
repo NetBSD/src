@@ -143,7 +143,8 @@ do {					\
 #define ASM_OUTPUT_ADDR_VEC_ELT(STREAM,VALUE)  \
    fprintf (STREAM, "\t.word\t%sL%d\n", LOCAL_LABEL_PREFIX, VALUE)
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(STREAM,BODY,VALUE,REL)  \
+/* XXX temporary NetBSD egcs 1.0.2 merge artifact */
+#define ASM_OUTPUT_ADDR_DIFF_ELT(STREAM,VALUE,REL)  \
    fprintf (STREAM, "\tb\t%sL%d\n", LOCAL_LABEL_PREFIX, (VALUE))
 
 /* Output various types of constants.  For real numbers we output hex, with
