@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.14 2000/03/30 09:45:38 augustss Exp $	*/
+/*	$NetBSD: radix.c,v 1.15 2000/12/17 10:23:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -63,7 +63,7 @@ static char *rn_zeros, *rn_ones;
 #undef Bcmp
 #define Bcmp(a, b, l) (l == 0 ? 0 : bcmp((caddr_t)(a), (caddr_t)(b), (u_long)l))
 
-static int rn_satsifies_leaf __P((char *, struct radix_node *, int));
+static int rn_satisfies_leaf __P((char *, struct radix_node *, int));
 static int rn_lexobetter __P((void *, void *));
 static struct radix_mask *rn_new_radix_mask __P((struct radix_node *,
     struct radix_mask *));
@@ -186,7 +186,7 @@ rn_lookup(v_arg, m_arg, head)
 }
 
 static int
-rn_satsifies_leaf(trial, leaf, skip)
+rn_satisfies_leaf(trial, leaf, skip)
 	char *trial;
 	struct radix_node *leaf;
 	int skip;
@@ -274,7 +274,7 @@ on1:
 		if (t->rn_flags & RNF_NORMAL) {
 			if (rn_b <= t->rn_b)
 				return t;
-		} else if (rn_satsifies_leaf(v, t, matched_off))
+		} else if (rn_satisfies_leaf(v, t, matched_off))
 				return t;
 	t = saved_t;
 	/* start searching up the tree */
@@ -298,10 +298,10 @@ on1:
 					x = rn_search_m(v, t, m->rm_mask);
 					while (x && x->rn_mask != m->rm_mask)
 						x = x->rn_dupedkey;
-					if (x && rn_satsifies_leaf(v, x, off))
+					if (x && rn_satisfies_leaf(v, x, off))
 						    return x;
 				}
-			m = m->rm_mklist;
+				m = m->rm_mklist;
 			} while (m);
 		}
 	} while (t != top);
@@ -865,14 +865,24 @@ rn_inithead(head, off)
 	int off;
 {
 	struct radix_node_head *rnh;
-	struct radix_node *t, *tt, *ttt;
+
 	if (*head)
 		return (1);
 	R_Malloc(rnh, struct radix_node_head *, sizeof (*rnh));
 	if (rnh == 0)
 		return (0);
-	Bzero(rnh, sizeof (*rnh));
 	*head = rnh;
+	return rn_inithead0(rnh, off);
+}
+
+int
+rn_inithead0(rnh, off)
+	struct radix_node_head *rnh;
+	int off;
+{
+	struct radix_node *t, *tt, *ttt;
+
+	Bzero(rnh, sizeof (*rnh));
 	t = rn_newpair(rn_zeros, off, rnh->rnh_nodes);
 	ttt = rnh->rnh_nodes + 2;
 	t->rn_r = ttt;
