@@ -1,4 +1,4 @@
-.\" $NetBSD: pam_lastlog.8,v 1.6 2005/02/26 15:58:35 thorpej Exp $
+.\" $NetBSD: pam_lastlog.8,v 1.7 2005/03/03 02:11:49 christos Exp $
 .\" Copyright (c) 2001 Mark R V Murray
 .\" All rights reserved.
 .\" Copyright (c) 2001 Networks Associates Technology, Inc.
@@ -35,7 +35,7 @@
 .\"
 .\" $FreeBSD: src/lib/libpam/modules/pam_lastlog/pam_lastlog.8,v 1.7 2005/01/21 10:38:42 ru Exp $
 .\"
-.Dd February 1, 2005
+.Dd March 2, 2005
 .Dt PAM_LASTLOG 8
 .Os
 .Sh NAME
@@ -79,12 +79,16 @@ The
 function does nothing.
 .Pp
 The following options may be passed to the authentication module:
-.Bl -tag -width ".Cm no_warn"
+.Bl -tag -width ".Cm no_nested"
 .It Cm debug
 .Xr syslog 3
 debugging information at
 .Dv LOG_DEBUG
 level.
+.It Cm no_nested
+Don't update records or print messages if the user is
+.Dq nested ,
+i.e. logged in on the same tty on top of another user.
 .It Cm no_warn
 suppress warning messages to the user.
 .It Cm no_fail
