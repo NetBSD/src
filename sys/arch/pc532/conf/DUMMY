@@ -1,4 +1,4 @@
-#	$NetBSD: DUMMY,v 1.7 1997/03/20 12:03:20 matthias Exp $
+#	$NetBSD: DUMMY,v 1.8 1997/03/22 08:29:43 matthias Exp $
 #
 # DUMMY: Matthias Pfaller's second pc532
 #
@@ -49,7 +49,6 @@ options		PPP_BSDCOMP,PPP_DEFLATE	# compression for PPP
 options		CONSOLE_SPEED=B9600	# default console baud rate
 options		SCNDEF_CFLAG="CREAD+CS8+HUPCL"
 options		NS381			# FPU installed
-options		DEV_RTC			# RTC driver in pc532/mem.c
 options		NO_INLINE_SPLX
 
 config		netbsd root on ? type ?
