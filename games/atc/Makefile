@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1999/02/13 02:54:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.22 1999/07/17 19:57:03 hubertf Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -19,7 +19,7 @@ SETGIDGAME=yes
 .if ${MKSHARE} != "no"
 FILES=${GAMES:S@^@${.CURDIR}/games/@g}
 FILESDIR=/usr/share/games/atc
-FILESMODE=440
+FILESMODE=444
 .endif
 
 lex.o:	grammar.h
