@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.65 1998/09/07 23:02:40 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.66 1998/09/12 15:33:40 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -54,6 +54,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -90,6 +91,7 @@ struct cpu_softc {
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];
+int	ncpu;
 
 struct proc	*fpproc;
 
@@ -103,7 +105,7 @@ struct cfattach cpu_ca = {
 
 static char *fsrtoname __P((int, int, int, char *));
 void cache_print __P((struct cpu_softc *));
-void cpu_spinup __P((struct cpu_info *));
+void cpu_spinup __P((struct cpu_softc *));
 void fpu_init __P((struct cpu_info *));
 
 #define	IU_IMPL(psr)	((u_int)(psr) >> 28)
@@ -130,9 +132,9 @@ alloc_cpuinfo()
 	 * Allocate aligned KVA.
 	 */
 	align = NBPG;
-	if (cpuinfo.cacheinfo.c_totalsize > align)
+	if (CACHEINFO.c_totalsize > align)
 		/* Assumes `c_totalsize' is power of two */
-		align = cpuinfo.cacheinfo.c_totalsize;
+		align = CACHEINFO.c_totalsize;
 
 	sz = (sizeof(struct cpu_info) + NBPG - 1) & -NBPG;
 	esz = sz + align - NBPG;
@@ -238,6 +240,8 @@ static	struct cpu_softc *bootcpu;
 	char *fpuname;
 	char fpbuf[40];
 
+	ncpu++;	/* Another one */
+
 	node = ma->ma_node;
 
 	/*
@@ -249,24 +253,26 @@ static	struct cpu_softc *bootcpu;
 		cip = sc->sc_cpuinfo = (struct cpu_info *)CPUINFO_VA;
 		cip->master = 1;
 	} else {
-		cip = alloc_cpuinfo();
+		cip = sc->sc_cpuinfo = alloc_cpuinfo();
 	}
 
 	if (mid != 0)
 		printf(": mid %d", mid);
+
 	cip->mid = mid;
+	cip->node = node;
 
 	getcpuinfo(cip, node);
 
-	fpuname = "no";
 	if (cip->master) {
 		if (cip->hotfix)
 			cip->hotfix(cip);
 
 		fpu_init(cip);
-		if (cip->fpupresent)
-			fpuname = fsrtoname(cip->cpu_impl, cip->cpu_vers,
-					    cip->fpuvers, fpbuf);
+		fpuname = (cip->fpupresent)
+			? fsrtoname(cip->cpu_impl, cip->cpu_vers,
+				    cip->fpuvers, fpbuf)
+			: "no";
 
 		sprintf(cpu_model, "%s @ %s MHz, %s FPU",
 			cip->cpu_name,
@@ -282,31 +288,102 @@ static	struct cpu_softc *bootcpu;
 	}
 
 	/* Now start this CPU */
+	cpu_spinup(sc);
+
+#ifdef DEBUG
+	printf("***\n");
+	if (ncpu >= 4)
+		callrom();
+#endif
 }
 
-#if 0
+void	cpu_setup __P((struct cpu_softc *));
+
+/* */
+void *cpu_hatchstack = 0;
+void *cpu_hatch_sc = 0;
+volatile int cpu_hatched = 0;
+
 void
-cpu_hatch(sc)
+cpu_setup(sc)
 	struct cpu_softc *sc;
 {
-	if (sc->hotfix)
-		sc->hotfix(sc);
+	struct cpu_info *cip = sc->sc_cpuinfo;
+	char *fpuname;
+	char fpbuf[40];
+
+#ifdef DEBUG
+printf("[cpu_setup: cip @ %p; mid %d] ", cip, cip->mid);
+#endif
+	if (cip->hotfix)
+		cip->hotfix(cip);
 
 	/* Initialize FPU */
-	fpu_init(sc);
+	fpu_init(cip);
+	fpuname = (cip->fpupresent)
+		? fsrtoname(cip->cpu_impl, cip->cpu_vers, cip->fpuvers, fpbuf)
+		: "no";
 
+	printf("%s @ %s MHz, %s FPU\n", cip->cpu_name,
+		clockfreq(cip->hz), fpuname);
+
+	if (cip->cacheinfo.c_totalsize != 0)
+		cache_print(sc);
 	/* Enable the cache */
-	sc->cache_enable();
+	cip->cache_enable();
+	cpu_hatched = 1;
+	/* Flush cache line */
+	cpuinfo.cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched));
 }
-#endif
+
+#include <machine/bsd_openprom.h> /*XXX*/
+extern struct promvec *promvec;   /*XXX-make library functions */
 
 void
 cpu_spinup(sc)
-	struct cpu_info *sc;
+	struct cpu_softc *sc;
 {
-#if 0
-	pmap_cpusetup();
+	struct cpu_info *cip = sc->sc_cpuinfo;
+	int n;
+extern void cpu_hatch __P((void));
+	caddr_t pc = (caddr_t)cpu_hatch;
+	struct rom_reg rr;
+
+	/* Setup CPU-specific MMU tables */
+	pmap_alloc_cpu(cip);
+
+	cpu_hatched = 0;
+	cpu_hatchstack = malloc(USPACE,M_TEMP, M_NOWAIT);
+	cpu_hatch_sc = sc;
+
+	/*
+	 * The physical address of the context table is passed to
+	 * the PROM in a "physical address descriptor".
+	 */
+	rr.rr_iospace = 0;
+	rr.rr_paddr = (u_int32_t)cip->ctx_tbl_pa;
+	rr.rr_len = cip->mmu_ncontext * sizeof(cip->ctx_tbl[0]); /*???*/
+
+	/*
+	 * Flush entire cache here, since the CPU may start with
+	 * caches off, hence no cache-coherency may be assumed.
+	 */
+	/*XXX*/cpuinfo.cache_flush((caddr_t)KERNBASE, 0xff000000U - KERNBASE);
+	(*promvec->pv_v3cpustart)(cip->node, (u_int)&rr, 0, pc);
+
+	/*
+	 * Wait for this CPU to spin up.
+	 */
+	for (n = 10000; n != 0; n--) {
+		cpuinfo.cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched));
+		if (cpu_hatched != 0) {
+#ifdef DEBUG
+			printf("[CPU hatched]\n");
 #endif
+			break;
+		}
+		delay(100);
+	}
 }
 
 /*
@@ -917,7 +994,7 @@ viking_mmu_enable()
 /* ROSS Hypersparc */
 struct module_info module_hypersparc = {		/* UNTESTED */
 	CPUTYP_UNKNOWN,
-	VAC_NONE,
+	VAC_WRITETHROUGH, /* should be:VAC_NONE/VAC_WRITEBACK*/
 	cpumatch_hypersparc,
 	getcacheinfo_obp,
 	0,
