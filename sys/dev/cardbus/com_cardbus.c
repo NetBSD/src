@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.2 2000/04/13 16:17:55 joda Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.3 2000/04/15 06:29:25 veego Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -93,6 +93,8 @@ static struct csdev {
 } csdevs[] = {
 	/* example entry */
 	{ CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_MODEM56,
+	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	{ CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_MODEM56,
 	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO }
 };
 
