@@ -86,7 +86,7 @@ template <class charT, class traits>
 inline bool basic_string <charT, traits>::
 check_realloc (size_t s) const
 {
-  ++s;
+  s += sizeof (charT);
   return (rep ()->ref > 1
 	  || s > capacity ()
 	  || Rep::excess_slop (s, capacity ()));
@@ -154,7 +154,7 @@ replace (size_t pos, size_t n1, const charT* s, size_t n2)
   OUTOFRANGE (pos > len);
   if (n1 > len - pos)
     n1 = len - pos;
-  LENGTHERROR (len - n1 >= npos - n2);
+  LENGTHERROR (len - n1 > max_size () - n2);
   size_t newlen = len - n1 + n2;
 
   if (check_realloc (newlen))
@@ -190,7 +190,7 @@ replace (size_t pos, size_t n1, size_t n2, charT c)
   OUTOFRANGE (pos > len);
   if (n1 > len - pos)
     n1 = len - pos;
-  LENGTHERROR (len - n1 >= npos - n2);
+  LENGTHERROR (len - n1 > max_size () - n2);
   size_t newlen = len - n1 + n2;
 
   if (check_realloc (newlen))
@@ -215,7 +215,7 @@ template <class charT, class traits>
 void basic_string <charT, traits>::
 resize (size_t n, charT c)
 {
-  LENGTHERROR (n == npos);
+  LENGTHERROR (n > max_size ());
 
   if (n > length ())
     append (n - length (), c);
@@ -269,6 +269,9 @@ template <class charT, class traits>
 size_t basic_string <charT, traits>::
 rfind (const charT* s, size_t pos, size_t n) const
 {
+  if (n > length ())
+    return npos;
+
   size_t xpos = length () - n;
   if (xpos > pos)
     xpos = pos;
@@ -284,6 +287,9 @@ template <class charT, class traits>
 size_t basic_string <charT, traits>::
 rfind (charT c, size_t pos) const
 {
+  if (1 > length ())
+    return npos;
+
   size_t xpos = length () - 1;
   if (xpos > pos)
     xpos = pos;
