@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.6 1998/12/29 15:23:59 augustss Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.7 1999/01/07 02:22:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,10 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 
+#ifdef USB_DEBUG
+extern int usbdebug;
+#endif
+
 struct usbd_quirk_entry {
 	u_int16_t idVendor;
 	u_int16_t idProduct;
@@ -78,12 +82,10 @@ usbd_find_quirk(d)
 			break;
 	}
 #ifdef USB_DEBUG
-	{ extern int usbdebug;
 	if (usbdebug && t->quirks.uq_flags)
 		printf("usbd_find_quirk 0x%04x/0x%04x/%x: %d\n", 
 		       UGETW(d->idVendor), UGETW(d->idProduct),
 		       UGETW(d->bcdDevice), t->quirks.uq_flags);
-	}
 #endif
 	return (&t->quirks);
 }
