@@ -1,10 +1,10 @@
-# $NetBSD: shl.elf,v 1.21 2001/04/06 14:18:57 wiz Exp $
+# $NetBSD: shl.elf,v 1.22 2001/08/19 17:18:02 mrg Exp $
 ./usr/lib/crtbegin.o		comp-c-lib
 ./usr/lib/crtbeginS.o		comp-c-lib
 ./usr/lib/crtend.o		comp-c-lib
 ./usr/lib/crtendS.o		comp-c-lib
 ./usr/lib/libasn1.so		comp-c-lib
-./usr/lib/libbfd.so.3		comp-util-bin
+./usr/lib/libbfd.so.4		comp-util-bin
 ./usr/lib/libbz2.so		comp-c-lib
 ./usr/lib/libc.so		comp-c-lib
 ./usr/lib/libcdk.so		comp-c-lib
