@@ -1,10 +1,8 @@
-# $NetBSD: Makefile,v 1.1.2.3 2001/07/29 20:32:33 he Exp $
-#
-# Build umount(8) without network support
-#
+# $NetBSD: Makefile,v 1.1.2.2 2001/07/29 20:32:31 he Exp $
+# Build dmesg without kvm support
 
-SRCDIR= ${.CURDIR}/../../../sbin/umount
-PROG=	umount
+SRCDIR= ${.CURDIR}/../../../sbin/dmesg
+PROG=	dmesg
 MKMAN=	no
 LDSTATIC?=-static
 CPPFLAGS+= -DSMALL
