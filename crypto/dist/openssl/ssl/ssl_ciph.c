@@ -119,7 +119,9 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_3DES,0,SSL_3DES,  0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_RC4,	0,SSL_RC4,   0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_RC2,	0,SSL_RC2,   0,0,0,0,SSL_ENC_MASK,0},
+#if 0
 	{0,SSL_TXT_IDEA,0,SSL_IDEA,  0,0,0,0,SSL_ENC_MASK,0},
+#endif
 	{0,SSL_TXT_eNULL,0,SSL_eNULL,0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_eFZA,0,SSL_eFZA,  0,0,0,0,SSL_ENC_MASK,0},
 
@@ -158,8 +160,12 @@ static void load_ciphers(void)
 		EVP_get_cipherbyname(SN_rc4);
 	ssl_cipher_methods[SSL_ENC_RC2_IDX]= 
 		EVP_get_cipherbyname(SN_rc2_cbc);
+#if 0
 	ssl_cipher_methods[SSL_ENC_IDEA_IDX]= 
 		EVP_get_cipherbyname(SN_idea_cbc);
+#else
+	ssl_cipher_methods[SSL_ENC_IDEA_IDX] = NULL;
+#endif
 
 	ssl_digest_methods[SSL_MD_MD5_IDX]=
 		EVP_get_digestbyname(SN_md5);
@@ -518,7 +524,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER *list, CIPHER_ORDER **head_p,
 		curr = curr->next;
 		}
 
-	number_uses = Malloc((max_strength_bits + 1) * sizeof(int));
+	number_uses = OPENSSL_malloc((max_strength_bits + 1) * sizeof(int));
 	if (!number_uses)
 	{
 		SSLerr(SSL_F_SSL_CIPHER_STRENGTH_SORT,ERR_R_MALLOC_FAILURE);
@@ -545,7 +551,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER *list, CIPHER_ORDER **head_p,
 			ssl_cipher_apply_rule(0, 0, 0, 0, CIPHER_ORD, i,
 					list, head_p, tail_p);
 
-	Free(number_uses);
+	OPENSSL_free(number_uses);
 	return(1);
 	}
 
@@ -738,7 +744,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 * it is used for allocation.
 	 */
 	num_of_ciphers = ssl_method->num_ciphers();
-	list = (CIPHER_ORDER *)Malloc(sizeof(CIPHER_ORDER) * num_of_ciphers);
+	list = (CIPHER_ORDER *)OPENSSL_malloc(sizeof(CIPHER_ORDER) * num_of_ciphers);
 	if (list == NULL)
 		{
 		SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST,ERR_R_MALLOC_FAILURE);
@@ -759,10 +765,10 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	num_of_group_aliases = sizeof(cipher_aliases) / sizeof(SSL_CIPHER);
 	num_of_alias_max = num_of_ciphers + num_of_group_aliases + 1;
 	ca_list =
-		(SSL_CIPHER **)Malloc(sizeof(SSL_CIPHER *) * num_of_alias_max);
+		(SSL_CIPHER **)OPENSSL_malloc(sizeof(SSL_CIPHER *) * num_of_alias_max);
 	if (ca_list == NULL)
 		{
-		Free(list);
+		OPENSSL_free(list);
 		SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST,ERR_R_MALLOC_FAILURE);
 		return(NULL);	/* Failure */
 		}
@@ -788,20 +794,20 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		ok = ssl_cipher_process_rulestr(rule_p, list, &head, &tail,
 						ca_list);
 
-	Free(ca_list);	/* Not needed anymore */
+	OPENSSL_free(ca_list);	/* Not needed anymore */
 
 	if (!ok)
 		{	/* Rule processing failure */
-		Free(list);
+		OPENSSL_free(list);
 		return(NULL);
 		}
 	/*
 	 * Allocate new "cipherstack" for the result, return with error
 	 * if we cannot get one.
 	 */
-	if ((cipherstack = sk_SSL_CIPHER_new(NULL)) == NULL)
+	if ((cipherstack = sk_SSL_CIPHER_new_null()) == NULL)
 		{
-		Free(list);
+		OPENSSL_free(list);
 		return(NULL);
 		}
 
@@ -819,7 +825,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 #endif
 			}
 		}
-	Free(list);	/* Not needed any longer */
+	OPENSSL_free(list);	/* Not needed any longer */
 
 	/*
 	 * The following passage is a little bit odd. If pointer variables
@@ -872,7 +878,7 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	char *ver,*exp;
 	char *kx,*au,*enc,*mac;
 	unsigned long alg,alg2,alg_s;
-	static char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s\n";
+	static const char format[]="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s\n";
 	
 	alg=cipher->algorithms;
 	alg_s=cipher->algo_strength;
@@ -975,13 +981,14 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 
 	if (buf == NULL)
 		{
-		buf=Malloc(128);
-		if (buf == NULL) return("Malloc Error");
+		len=128;
+		buf=OPENSSL_malloc(len);
+		if (buf == NULL) return("OPENSSL_malloc Error");
 		}
 	else if (len < 128)
 		return("Buffer too small");
 
-	sprintf(buf,format,cipher->name,ver,kx,au,enc,mac,exp);
+	BIO_snprintf(buf,len,format,cipher->name,ver,kx,au,enc,mac,exp);
 	return(buf);
 	}
 
@@ -1036,7 +1043,8 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 	return(NULL);
 	}
 
-static int sk_comp_cmp(SSL_COMP **a,SSL_COMP **b)
+static int sk_comp_cmp(const SSL_COMP * const *a,
+			const SSL_COMP * const *b)
 	{
 	return((*a)->id-(*b)->id);
 	}
@@ -1051,7 +1059,7 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	SSL_COMP *comp;
 	STACK_OF(SSL_COMP) *sk;
 
-	comp=(SSL_COMP *)Malloc(sizeof(SSL_COMP));
+	comp=(SSL_COMP *)OPENSSL_malloc(sizeof(SSL_COMP));
 	comp->id=id;
 	comp->method=cm;
 	if (ssl_comp_methods == NULL)
