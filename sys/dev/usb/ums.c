@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.45 2000/10/08 20:52:18 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.46 2000/12/29 01:24:57 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 /*
- * HID spec: http://www.usb.org/developers/data/usbhid10.pdf
+ * HID spec: http://www.usb.org/developers/data/devclass/hid1_1.pdf
  */
 
 /* XXX complete SPUR_UP change */
