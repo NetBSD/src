@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.68 1995/05/01 22:36:45 cgd Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.69 1995/05/16 14:19:03 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -536,7 +536,7 @@ copyargs(pack, arginfo, stack, argp)
 	sp = argp;
 
 	/* XXX don't copy them out, remap them! */
-	arginfo->ps_argvstr = dp; /* remember location of argv for later */
+	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
 
 	for (; --argc >= 0; sp += len, dp += len)
 		if (copyout(&dp, cpp++, sizeof(dp)) ||
@@ -546,7 +546,7 @@ copyargs(pack, arginfo, stack, argp)
 	if (copyout(&nullp, cpp++, sizeof(nullp)))
 		return NULL;
 
-	arginfo->ps_envstr = dp; /* remember location of envp for later */
+	arginfo->ps_envstr = cpp; /* remember location of envp for later */
 
 	for (; --envc >= 0; sp += len, dp += len)
 		if (copyout(&dp, cpp++, sizeof(dp)) ||
