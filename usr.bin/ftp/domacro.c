@@ -1,4 +1,4 @@
-/*	$NetBSD: domacro.c,v 1.12 1998/06/04 08:28:35 lukem Exp $	*/
+/*	$NetBSD: domacro.c,v 1.13 1999/09/27 23:09:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,12 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: domacro.c,v 1.12 1998/06/04 08:28:35 lukem Exp $");
+__RCSID("$NetBSD: domacro.c,v 1.13 1999/09/27 23:09:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <ctype.h>
-#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 
