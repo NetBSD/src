@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.20 2004/07/18 20:57:34 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.21 2004/07/24 18:59:06 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.20 2004/07/18 20:57:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.21 2004/07/24 18:59:06 chs Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -606,7 +606,7 @@ trap(int type, struct trapframe *frame)
 
 	case T_EMULATION | T_USER:
 #ifdef FPEMUL
-		hppa_fpu_emulate(frame, l);
+		hppa_fpu_emulate(frame, l, opcode);
 #else  /* !FPEMUL */
 		/*
 		 * We don't have FPU emulation, so signal the
@@ -651,8 +651,44 @@ trap(int type, struct trapframe *frame)
 		/* pass to user debugger */
 		break;
 
-	case T_EXCEPTION | T_USER:	/* co-proc assist trap */
-		hppa_trapsignal_hack(l, SIGFPE, va);
+	case T_EXCEPTION | T_USER: {	/* co-proc assist trap */
+		uint64_t *fpp;
+		uint32_t *pex;
+		uint32_t ex, inst, stat;
+		int i, flt;
+
+		hppa_fpu_flush(l);
+		fpp = l->l_addr->u_pcb.pcb_fpregs;
+		pex = (uint32_t *)&fpp[0];
+		for (i = 0, pex++; i < 7 && !*pex; i++, pex++)
+			;
+		flt = 0;
+		if (i < 7) {
+			ex = *pex;
+			stat = HPPA_FPU_OP(ex);
+
+			if (stat & HPPA_FPU_UNMPL)
+				flt = FPE_FLTINV;
+			else if (stat & (HPPA_FPU_V << 1))
+				flt = FPE_FLTINV;
+			else if (stat & (HPPA_FPU_Z << 1))
+				flt = FPE_FLTDIV;
+			else if (stat & (HPPA_FPU_I << 1))
+				flt = FPE_FLTRES;
+			else if (stat & (HPPA_FPU_O << 1))
+				flt = FPE_FLTOVF;
+			else if (stat & (HPPA_FPU_U << 1))
+				flt = FPE_FLTUND;
+			/* still left: under/over-flow w/ inexact */
+			*pex = 0;
+		}
+		/* reset the trap flag, as if there was none */
+		fpp[0] &= ~(((uint64_t)HPPA_FPU_T) << 32);
+
+		/* XXX assume it's opcode 0C */
+		inst = (0x0c << 26) | (ex & 0x03ffffff);
+		hppa_fpu_emulate(frame, l, inst);
+		}
 		break;
 
 	case T_OVERFLOW | T_USER:

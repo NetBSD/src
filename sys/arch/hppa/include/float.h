@@ -1,9 +1,7 @@
-/*	$NetBSD: float.h,v 1.5 2003/10/30 22:46:17 kleink Exp $	*/
+/*	$NetBSD: float.h,v 1.6 2004/07/24 18:59:06 chs Exp $	*/
 
 #ifndef _HPPA_FLOAT_H_
 #define _HPPA_FLOAT_H_
-
-#define	FLT_ROUNDS	1
 
 #ifdef _LP64
 #define	LDBL_MANT_DIG	113

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 2004/07/18 23:31:26 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2004/07/24 18:59:05 chs Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -112,10 +112,31 @@ extern const struct hppa_cpu_info *hppa_cpu_info;
  */
 
 /*
+ * COPR/SFUs
+ */
+#define	HPPA_FPUVER(w)	(((w) & 0x003ff800) >> 11)
+#define	HPPA_FPU_OP(w)	((w) >> 26)
+#define	HPPA_FPU_UNMPL	0x01	/* exception reg, the rest is << 1 */
+#define	HPPA_FPU_ILL	0x80	/* software-only */
+#define	HPPA_FPU_I	0x01
+#define	HPPA_FPU_U	0x02
+#define	HPPA_FPU_O	0x04
+#define	HPPA_FPU_Z	0x08
+#define	HPPA_FPU_V	0x10
+#define	HPPA_FPU_D	0x20
+#define	HPPA_FPU_T	0x40
+#define	HPPA_FPU_XMASK	0x7f
+#define	HPPA_FPU_T_POS	25
+#define	HPPA_FPU_RM	0x00000600
+#define	HPPA_FPU_CQ	0x00fff800
+#define	HPPA_FPU_C	0x04000000
+#define	HPPA_FPU_INIT	(0)
+#define	HPPA_FPU_FORK(s) ((s) & ~((uint64_t)(HPPA_FPU_XMASK) << 32))
+
+/*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#undef	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
 #define	HPPA_PGALIAS	0x00100000
 #define	HPPA_PGAMASK	0xfff00000

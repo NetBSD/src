@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2004/03/24 15:34:49 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2004/07/24 18:59:05 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2004/03/24 15:34:49 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2004/07/24 18:59:05 chs Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1662,20 +1662,25 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_regs;
-	/* struct pcb *pcb = &l->l_addr->u_pcb; */
-#ifdef PMAPDEBUG
-	extern int pmapdebug;
-	pmapdebug = 0x180d;
-	pmapdebug = -1;
-	printf("setregs(%p, %p, %x), ep=%x, cr30=%x\n",
-	    l, pack, (u_int)stack, (u_int)pack->ep_entry, tf->tf_cr30);
-#endif
+	struct pcb *pcb = &l->l_addr->u_pcb;
 
 	tf->tf_iioq_tail = 4 +
 	    (tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER);
 	tf->tf_rp = 0;
 	tf->tf_arg0 = (u_long)p->p_psstr;
 	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
+
+	/* reset any of the pending FPU exceptions */
+	pcb->pcb_fpregs[0] = ((uint64_t)HPPA_FPU_INIT) << 32;
+	pcb->pcb_fpregs[1] = 0;
+	pcb->pcb_fpregs[2] = 0;
+	pcb->pcb_fpregs[3] = 0;
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs, 8 * 4);
+	if (tf->tf_cr30 == fpu_cur_uspace) {
+		fpu_cur_uspace = 0;
+		/* force an fpu ctxsw, we'll not be hugged by the cpu_switch */
+		mtctl(0, CR_CCR);
+	}
 
 	/* setup terminal stack frame */
 	stack = (u_long)STACK_ALIGN(stack, 63);
