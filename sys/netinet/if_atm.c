@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.4 1996/07/03 17:17:16 chuck Exp $       */
+/*      $NetBSD: if_atm.c,v 1.5 1996/10/10 23:12:44 christos Exp $       */
 
 /*
  *
@@ -96,7 +96,7 @@ atm_rtrequest(req, rt, sa)
 	switch (req) {
 
 	case RTM_RESOLVE: /* resolve: only happens when cloning */
-		printf("atm_rtrequest: RTM_RESOLVE request detected?\n");
+		kprintf("atm_rtrequest: RTM_RESOLVE request detected?\n");
 		break;
 
 	case RTM_ADD:
@@ -117,7 +117,7 @@ atm_rtrequest(req, rt, sa)
 		}
 
 		if ((rt->rt_flags & RTF_CLONING) != 0) {
-			printf("atm_rtrequest: cloning route detected?\n");
+			kprintf("atm_rtrequest: cloning route detected?\n");
 			break;
 		}
 		if (gate->sa_family != AF_LINK ||
@@ -156,7 +156,7 @@ atm_rtrequest(req, rt, sa)
 		api.rxhand = NULL;
 		if (rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMENA, 
 							(caddr_t)&api) != 0) {
-			printf("atm: couldn't add VC\n");
+			kprintf("atm: couldn't add VC\n");
 			goto failed;
 		}
 

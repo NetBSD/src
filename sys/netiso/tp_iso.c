@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.8 1996/03/16 23:13:54 christos Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.9 1996/10/10 23:22:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -180,7 +180,7 @@ iso_putsufx(v, sufxloc, sufxlen, which)
 		addr->siso_nlen = 0;
 		addr->siso_slen = 0;
 		addr->siso_plen = 0;
-		printf("iso_putsufx on un-initialized isopcb\n");
+		kprintf("iso_putsufx on un-initialized isopcb\n");
 	}
 	len = sufxlen + addr->siso_nlen +
 		(sizeof(*addr) - sizeof(addr->siso_data));
@@ -241,7 +241,7 @@ iso_putnetaddr(v, nm, which)
 
 	switch (which) {
 	default:
-		printf("iso_putnetaddr: should panic\n");
+		kprintf("iso_putnetaddr: should panic\n");
 		return;
 	case TP_LOCAL:
 		sisop = &isop->isop_laddr;
@@ -254,7 +254,7 @@ iso_putnetaddr(v, nm, which)
 	siso = ((*sisop == 0) ? (*sisop = backup) : *sisop);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPISO]) {
-		printf("ISO_PUTNETADDR\n");
+		kprintf("ISO_PUTNETADDR\n");
 		dump_isoaddr(isop->isop_faddr);
 	}
 #endif
@@ -284,7 +284,7 @@ iso_cmpnetaddr(v, nm, which)
 
 	switch (which) {
 	default:
-		printf("iso_cmpnetaddr: should panic\n");
+		kprintf("iso_cmpnetaddr: should panic\n");
 		return 0;
 	case TP_LOCAL:
 		sisop = &isop->isop_laddr;
@@ -297,7 +297,7 @@ iso_cmpnetaddr(v, nm, which)
 	siso = ((*sisop == 0) ? (*sisop = backup) : *sisop);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPISO]) {
-		printf("ISO_CMPNETADDR\n");
+		kprintf("ISO_CMPNETADDR\n");
 		dump_isoaddr(siso);
 	}
 #endif
@@ -359,7 +359,7 @@ tpclnp_mtu(v)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("tpclnp_mtu(tpcb %p)\n", tpcb);
+		kprintf("tpclnp_mtu(tpcb %p)\n", tpcb);
 	}
 #endif
 	tpcb->tp_routep = &(isop->isop_route.ro_rt);
@@ -410,12 +410,12 @@ tpclnp_output(m0, va_alist)
 	if (argo_debug[D_TPISO]) {
 		struct tpdu    *hdr = mtod(m0, struct tpdu *);
 
-		printf(
+		kprintf(
 		       "abt to call clnp_output: datalen 0x%x, hdr.li 0x%x, hdr.dutype 0x%x nocsum x%x dst addr:\n",
 		       datalen,
 		       (int) hdr->tpdu_li, (int) hdr->tpdu_type, nochksum);
 		dump_isoaddr(isop->isop_faddr);
-		printf("\nsrc addr:\n");
+		kprintf("\nsrc addr:\n");
 		dump_isoaddr(isop->isop_laddr);
 		dump_mbuf(m0, "at tpclnp_output");
 	}
@@ -465,7 +465,7 @@ tpclnp_output_dg(m0, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPISO]) {
-		printf("tpclnp_output_dg  datalen 0x%x m0 %p\n", datalen, m0);
+		kprintf("tpclnp_output_dg  datalen 0x%x m0 %p\n", datalen, m0);
 	}
 #endif
 
@@ -481,11 +481,11 @@ tpclnp_output_dg(m0, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPISO]) {
-		printf("tpclnp_output_dg  faddr: \n");
+		kprintf("tpclnp_output_dg  faddr: \n");
 		dump_isoaddr(&tmppcb.isop_sfaddr);
-		printf("\ntpclnp_output_dg  laddr: \n");
+		kprintf("\ntpclnp_output_dg  laddr: \n");
 		dump_isoaddr(&tmppcb.isop_sladdr);
-		printf("\n");
+		kprintf("\n");
 	}
 #endif
 
@@ -538,7 +538,7 @@ tpclnp_input(m, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tpclnp_input: m %p clnp_len 0x%x\n", m, clnp_len);
+		kprintf("tpclnp_input: m %p clnp_len 0x%x\n", m, clnp_len);
 		dump_mbuf(m, "at tpclnp_input");
 	}
 #endif
@@ -580,10 +580,10 @@ tpclnp_input(m, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPISO]) {
-		printf("calling %sinput : src %p, dst %p, src addr:\n",
+		kprintf("calling %sinput : src %p, dst %p, src addr:\n",
 		       (input == tp_input ? "tp_" : "clts_"), src, dst);
 		dump_isoaddr(src);
-		printf(" dst addr:\n");
+		kprintf(" dst addr:\n");
 		dump_isoaddr(dst);
 	}
 #endif
@@ -594,7 +594,7 @@ tpclnp_input(m, va_alist)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_QUENCH]) {{
 			if (time.tv_usec & 0x4 && time.tv_usec & 0x40) {
-				printf("tpclnp_input: FAKING %s\n",
+				kprintf("tpclnp_input: FAKING %s\n",
 				       tp_stat.ts_pkt_rcvd & 0x1 ? "QUENCH" : "QUENCH2");
 				if (tp_stat.ts_pkt_rcvd & 0x1)
 					tpclnp_ctlinput(PRC_QUENCH, 
@@ -665,7 +665,7 @@ tpclnp_ctlinput(cmd, saddr, dummy)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		printf("tpclnp_ctlinput1: cmd 0x%x addr: \n", cmd);
+		kprintf("tpclnp_ctlinput1: cmd 0x%x addr: \n", cmd);
 		dump_isoaddr(siso);
 	}
 #endif
@@ -753,7 +753,7 @@ tpiso_abort(isop)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		printf("tpiso_abort %p\n", isop);
+		kprintf("tpiso_abort %p\n", isop);
 	}
 #endif
 	e.ev_number = ER_TPDU;

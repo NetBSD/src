@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.8 1996/04/13 01:34:23 cgd Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.9 1996/10/10 23:21:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -148,16 +148,16 @@ clnp_fragment(ifp, m, first_hop, total_len, segoff, flags, rt)
 			if (argo_debug[D_FRAG]) {
 				struct mbuf    *mdump = frag_hdr;
 				int             tot_mlen = 0;
-				printf("clnp_fragment: total_len %d:\n",
-				       total_len);
+				kprintf("clnp_fragment: total_len %d:\n",
+				    total_len);
 				while (mdump != NULL) {
-					printf("\tmbuf %p, m_len %d\n",
-					       mdump, mdump->m_len);
+					kprintf("\tmbuf %p, m_len %d\n",
+					    mdump, mdump->m_len);
 					tot_mlen += mdump->m_len;
 					mdump = mdump->m_next;
 				}
-				printf("clnp_fragment: sum of mbuf chain %d:\n",
-				       tot_mlen);
+				kprintf("clnp_fragment: sum of mbuf chain %d:\n",
+				    tot_mlen);
 			}
 #endif
 
@@ -179,12 +179,12 @@ clnp_fragment(ifp, m, first_hop, total_len, segoff, flags, rt)
 
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_FRAG]) {
-				printf(
-				       "clnp_fragment: seg off %d, size %d, rem %d\n",
-				       ntohs(seg_part.cng_off), frag_size,
+				kprintf(
+				    "clnp_fragment: seg off %d, size %d, rem %d\n",
+				    ntohs(seg_part.cng_off), frag_size,
 				       total_len - frag_size);
 				if (last_frag)
-					printf(
+					kprintf(
 					  "clnp_fragment: last fragment\n");
 			}
 #endif
@@ -246,10 +246,10 @@ clnp_fragment(ifp, m, first_hop, total_len, segoff, flags, rt)
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_DUMPOUT]) {
 				struct mbuf    *mdump = frag_hdr;
-				printf("clnp_fragment: sending dg:\n");
+				kprintf("clnp_fragment: sending dg:\n");
 				while (mdump != NULL) {
-					printf("\tmbuf %p, m_len %d\n",
-					       mdump, mdump->m_len);
+					kprintf("\tmbuf %p, m_len %d\n",
+					    mdump, mdump->m_len);
 					mdump = mdump->m_next;
 				}
 			}
@@ -355,7 +355,7 @@ clnp_reass(m, src, dst, seg)
 		    iso_addrmatch1(dst, &cfh->cfl_dst)) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_REASS]) {
-				printf("clnp_reass: found packet\n");
+				kprintf("clnp_reass: found packet\n");
 			}
 #endif
 			/*
@@ -376,7 +376,7 @@ clnp_reass(m, src, dst, seg)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_REASS]) {
-		printf("clnp_reass: new packet!\n");
+		kprintf("clnp_reass: new packet!\n");
 	}
 #endif
 
@@ -493,12 +493,12 @@ clnp_insert_frag(cfh, m, seg)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_REASS]) {
-		printf("clnp_insert_frag: New fragment: [%d-%d], len %d\n",
-		       first, last, fraglen);
-		printf("clnp_insert_frag: current fragments:\n");
+		kprintf("clnp_insert_frag: New fragment: [%d-%d], len %d\n",
+		    first, last, fraglen);
+		kprintf("clnp_insert_frag: current fragments:\n");
 		for (cf = cfh->cfl_frags; cf != NULL; cf = cf->cfr_next) {
-			printf("\tcf %p: [%d-%d]\n",
-			       cf, cf->cfr_first, cf->cfr_last);
+			kprintf("\tcf %p: [%d-%d]\n",
+			    cf, cf->cfr_first, cf->cfr_last);
 		}
 	}
 #endif
@@ -517,18 +517,18 @@ clnp_insert_frag(cfh, m, seg)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REASS]) {
-			printf("clnp_insert_frag: Previous frag is ");
+			kprintf("clnp_insert_frag: Previous frag is ");
 			if (cf_prev == NULL)
-				printf("NULL\n");
+				kprintf("NULL\n");
 			else
-				printf("[%d-%d]\n", cf_prev->cfr_first,
-				       cf_prev->cfr_last);
-			printf("clnp_insert_frag: Subsequent frag is ");
+				kprintf("[%d-%d]\n", cf_prev->cfr_first,
+				    cf_prev->cfr_last);
+			kprintf("clnp_insert_frag: Subsequent frag is ");
 			if (cf_sub == NULL)
-				printf("NULL\n");
+				kprintf("NULL\n");
 			else
-				printf("[%d-%d]\n", cf_sub->cfr_first,
-				       cf_sub->cfr_last);
+				kprintf("[%d-%d]\n", cf_sub->cfr_first,
+				    cf_sub->cfr_last);
 		}
 #endif
 
@@ -543,9 +543,9 @@ clnp_insert_frag(cfh, m, seg)
 
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_REASS]) {
-					printf(
-					       "clnp_insert_frag: previous overlaps by %d\n",
-					       overlap);
+					kprintf(
+					    "clnp_insert_frag: previous overlaps by %d\n",
+					    overlap);
 				}
 #endif
 
@@ -584,9 +584,9 @@ clnp_insert_frag(cfh, m, seg)
 
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_REASS]) {
-					printf(
-					       "clnp_insert_frag: subsequent overlaps by %d\n",
-					       overlap);
+					kprintf(
+					    "clnp_insert_frag: subsequent overlaps by %d\n",
+					    overlap);
 				}
 #endif
 
@@ -600,8 +600,8 @@ clnp_insert_frag(cfh, m, seg)
 					 * after the new one!
 					 */
 					m_freem(m);
-					printf(
-					       "clnp_insert_frag: internal error!\n");
+					kprintf(
+					    "clnp_insert_frag: internal error!\n");
 					return;
 				} else {
 					/*
@@ -644,7 +644,7 @@ clnp_insert_frag(cfh, m, seg)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REASS]) {
-			printf(
+			kprintf(
 			"clnp_insert_frag: clnp %p requires %d alignment\n",
 			       clnp, pad);
 		}
@@ -659,7 +659,7 @@ clnp_insert_frag(cfh, m, seg)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REASS]) {
-			printf("clnp_insert_frag: cf now %p, cfr_bytes %d\n",
+			kprintf("clnp_insert_frag: cf now %p, cfr_bytes %d\n",
 			       cf, cf->cfr_bytes);
 		}
 #endif
@@ -711,9 +711,9 @@ clnp_comp_pdu(cfh)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REASS]) {
-			printf("clnp_comp_pdu: comparing: [%d-%d] to [%d-%d]\n",
+			kprintf("clnp_comp_pdu: comparing: [%d-%d] to [%d-%d]\n",
 			    cf->cfr_first, cf->cfr_last, cf_next->cfr_first,
-			       cf_next->cfr_last);
+			    cf_next->cfr_last);
 		}
 #endif
 
@@ -735,33 +735,33 @@ clnp_comp_pdu(cfh)
 			if (argo_debug[D_REASS]) {
 				struct mbuf    *mdump;
 				int             l;
-				printf("clnp_comp_pdu: merging fragments\n");
-				printf(
-				 "clnp_comp_pdu: 1st: [%d-%d] (bytes %d)\n",
-				       cf->cfr_first, cf->cfr_last,
-				       cf->cfr_bytes);
+				kprintf("clnp_comp_pdu: merging fragments\n");
+				kprintf(
+				    "clnp_comp_pdu: 1st: [%d-%d] (bytes %d)\n",
+				    cf->cfr_first, cf->cfr_last,
+				    cf->cfr_bytes);
 				mdump = cf->cfr_data;
 				l = 0;
 				while (mdump != NULL) {
-					printf("\tmbuf %p, m_len %d\n",
-					       mdump, mdump->m_len);
+					kprintf("\tmbuf %p, m_len %d\n",
+					    mdump, mdump->m_len);
 					l += mdump->m_len;
 					mdump = mdump->m_next;
 				}
-				printf("\ttotal len: %d\n", l);
-				printf(
-				 "clnp_comp_pdu: 2nd: [%d-%d] (bytes %d)\n",
-				       cf_next->cfr_first, cf_next->cfr_last,
+				kprintf("\ttotal len: %d\n", l);
+				kprintf(
+				    "clnp_comp_pdu: 2nd: [%d-%d] (bytes %d)\n",
+				    cf_next->cfr_first, cf_next->cfr_last,
 				       cf_next->cfr_bytes);
 				mdump = cf_next->cfr_data;
 				l = 0;
 				while (mdump != NULL) {
-					printf("\tmbuf %p, m_len %d\n",
+					kprintf("\tmbuf %p, m_len %d\n",
 					       mdump, mdump->m_len);
 					l += mdump->m_len;
 					mdump = mdump->m_next;
 				}
-				printf("\ttotal len: %d\n", l);
+				kprintf("\ttotal len: %d\n", l);
 			}
 #endif
 
@@ -773,7 +773,7 @@ clnp_comp_pdu(cfh)
 			 */
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_REASS]) {
-				printf("clnp_comp_pdu: shaving off %d bytes\n",
+				kprintf("clnp_comp_pdu: shaving off %d bytes\n",
 				       cf_next_hdr.cfr_bytes);
 			}
 #endif
@@ -791,11 +791,11 @@ clnp_comp_pdu(cfh)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_REASS]) {
 		struct mbuf    *mdump = cf->cfr_data;
-		printf("clnp_comp_pdu: first frag now: [%d-%d]\n",
-		       cf->cfr_first, cf->cfr_last);
-		printf("clnp_comp_pdu: data for frag:\n");
+		kprintf("clnp_comp_pdu: first frag now: [%d-%d]\n",
+		    cf->cfr_first, cf->cfr_last);
+		kprintf("clnp_comp_pdu: data for frag:\n");
 		while (mdump != NULL) {
-			printf("mbuf %p, m_len %d\n", mdump, mdump->m_len);
+			kprintf("mbuf %p, m_len %d\n", mdump, mdump->m_len);
 			/* dump_buf(mtod(mdump, caddr_t), mdump->m_len); */
 			mdump = mdump->m_next;
 		}
@@ -817,7 +817,7 @@ clnp_comp_pdu(cfh)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REASS]) {
-			printf("clnp_comp_pdu: complete pdu!\n");
+			kprintf("clnp_comp_pdu: complete pdu!\n");
 		}
 #endif
 
@@ -827,9 +827,9 @@ clnp_comp_pdu(cfh)
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_DUMPIN]) {
 			struct mbuf    *mdump = hdr;
-			printf("clnp_comp_pdu: pdu is:\n");
+			kprintf("clnp_comp_pdu: pdu is:\n");
 			while (mdump != NULL) {
-				printf("mbuf %p, m_len %d\n",
+				kprintf("mbuf %p, m_len %d\n",
 				       mdump, mdump->m_len);
 #if 0
 				dump_buf(mtod(mdump, caddr_t), mdump->m_len);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cons.c,v 1.8 1996/06/14 22:22:09 cgd Exp $	*/
+/*	$NetBSD: if_cons.c,v 1.9 1996/10/10 23:21:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -200,8 +200,8 @@ nibble_copy(src_octet, src_nibble, dst_octet, dst_nibble, len)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CADDR]) {
-		printf("nibble_copy ( 0x%x, 0x%x, 0x%x, 0x%x 0x%x)\n",
-		       src_octet, src_nibble, dst_octet, dst_nibble, len);
+		kprintf("nibble_copy ( 0x%x, 0x%x, 0x%x, 0x%x 0x%x)\n",
+		    src_octet, src_nibble, dst_octet, dst_nibble, len);
 	}
 #endif
 #define SHIFT 0x4
@@ -225,7 +225,7 @@ nibble_copy(src_octet, src_nibble, dst_octet, dst_nibble, len)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CADDR]) {
-		printf("nibble_copy DONE\n");
+		kprintf("nibble_copy DONE\n");
 	}
 #endif
 }
@@ -251,7 +251,7 @@ nibble_match(src_octet, src_nibble, dst_octet, dst_nibble, len)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CADDR]) {
-		printf("nibble_match ( 0x%x, 0x%x, 0x%x, 0x%x 0x%x)\n",
+		kprintf("nibble_match ( 0x%x, 0x%x, 0x%x, 0x%x 0x%x)\n",
 		       src_octet, src_nibble, dst_octet, dst_nibble, len);
 	}
 #endif
@@ -275,7 +275,7 @@ nibble_match(src_octet, src_nibble, dst_octet, dst_nibble, len)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CADDR]) {
-		printf("nibble_match DONE\n");
+		kprintf("nibble_match DONE\n");
 	}
 #endif
 	return 1;
@@ -299,7 +299,7 @@ cons_init()
 	TP_proto = pffindproto(AF_ISO, ISOPROTO_TP0, SOCK_SEQPACKET);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CCONS]) {
-		printf("cons_init end : cnlp_proto 0x%x cons proto 0x%x tp proto 0x%x\n",
+		kprintf("cons_init end : cnlp_proto 0x%x cons proto 0x%x tp proto 0x%x\n",
 		       CLNP_proto, X25_proto, TP_proto);
 	}
 #endif
@@ -407,11 +407,11 @@ cons_connect(isop)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CCONN]) {
-		printf("cons_connect(0x%x): ", isop);
+		kprintf("cons_connect(0x%x): ", isop);
 		dump_isoaddr(isop->isop_faddr);
-		printf("myaddr: ");
+		kprintf("myaddr: ");
 		dump_isoaddr(isop->isop_laddr);
-		printf("\n");
+		kprintf("\n");
 	}
 #endif
 	NSAPtoDTE(isop->isop_faddr, &lcp->lcd_faddr);
@@ -419,10 +419,10 @@ cons_connect(isop)
 	lcp->lcd_upnext = (caddr_t) isop;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CCONN]) {
-		printf(
-		     "calling make_partial_x25_packet( 0x%x, 0x%x, 0x%x)\n",
-		       &lcp->lcd_faddr, &lcp->lcd_laddr,
-		       isop->isop_socket->so_proto->pr_protocol);
+		kprintf(
+		    "calling make_partial_x25_packet( 0x%x, 0x%x, 0x%x)\n",
+		    &lcp->lcd_faddr, &lcp->lcd_laddr,
+		    isop->isop_socket->so_proto->pr_protocol);
 	}
 #endif
 	if ((error = make_partial_x25_packet(isop, lcp)) == 0)
@@ -512,9 +512,8 @@ find_error_reason(xp)
 	/* otherwise, a *hopefully* valid perror exists in the e_reason field */
 	error = xp->packet_data;
 	if (error == 0) {
-		printf("Incoming PKT TYPE 0x%x with reason 0x%x\n",
-		       pk_decode(xp),
-		       cause);
+		kprintf("Incoming PKT TYPE 0x%x with reason 0x%x\n",
+		    pk_decode(xp), cause);
 		error = E_CO_HLI_DISCA;
 	}
 done:
@@ -575,8 +574,8 @@ make_partial_x25_packet(isop, lcp)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CCONN]) {
-		printf("make_partial_x25_packet(0x%x, 0x%x, 0x%x, 0x%x, 0x%x)\n",
-		       isop->isop_laddr, isop->isop_faddr, proto, m, flag);
+		kprintf("make_partial_x25_packet(0x%x, 0x%x, 0x%x, 0x%x, 0x%x)\n",
+		    isop->isop_laddr, isop->isop_faddr, proto, m, flag);
 	}
 #endif
 	if (cons_use_udata) {
@@ -604,8 +603,8 @@ make_partial_x25_packet(isop, lcp)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CADDR]) {
-		printf("make_partial  calling: ptr 0x%x, len 0x%x\n", ptr,
-		       isop->isop_laddr->siso_addr.isoa_len);
+		kprintf("make_partial  calling: ptr 0x%x, len 0x%x\n", ptr,
+		    isop->isop_laddr->siso_addr.isoa_len);
 	}
 #endif
 	if (cons_use_facils) {
@@ -627,8 +626,8 @@ make_partial_x25_packet(isop, lcp)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CADDR]) {
-			printf("make_partial  called: ptr 0x%x, len 0x%x\n", ptr,
-			       isop->isop_faddr->siso_addr.isoa_len);
+			kprintf("make_partial  called: ptr 0x%x, len 0x%x\n", ptr,
+			    isop->isop_faddr->siso_addr.isoa_len);
 		}
 #endif
 		*ptr = 0xc9;	/* called facility code */
@@ -657,20 +656,20 @@ make_partial_x25_packet(isop, lcp)
 	if (argo_debug[D_CDUMP_REQ]) {
 		register int    i;
 
-		printf("ECN_CONNECT DATA buf 0x%x len %d (0x%x)\n",
-		       buf, buflen, buflen);
+		kprintf("ECN_CONNECT DATA buf 0x%x len %d (0x%x)\n",
+		    buf, buflen, buflen);
 		for (i = 0; i < buflen;) {
-			printf("+%d: %x %x %x %x    %x %x %x %x\n",
-			       i,
-			       *(buf + i), *(buf + i + 1), *(buf + i + 2), *(buf + i + 3),
-			       *(buf + i + 4), *(buf + i + 5), *(buf + i + 6), *(buf + i + 7));
+			kprintf("+%d: %x %x %x %x    %x %x %x %x\n",
+			    i,
+			    *(buf + i), *(buf + i + 1), *(buf + i + 2), *(buf + i + 3),
+			    *(buf + i + 4), *(buf + i + 5), *(buf + i + 6), *(buf + i + 7));
 			i += 8;
 		}
 	}
 #endif
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CADDR]) {
-		printf("make_partial returns buf 0x%x size 0x%x bytes\n",
+		kprintf("make_partial returns buf 0x%x size 0x%x bytes\n",
 		       mtod(m, caddr_t), buflen);
 	}
 #endif
@@ -717,8 +716,8 @@ NSAPtoDTE(siso, sx25)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CADDR]) {
-		printf("NSAPtoDTE: nsap: %s\n",
-			clnp_iso_addrp(&siso->siso_addr));
+		kprintf("NSAPtoDTE: nsap: %s\n",
+		    clnp_iso_addrp(&siso->siso_addr));
 	}
 #endif
 
@@ -788,8 +787,8 @@ FACILtoNSAP(addr, buf)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CADDR]) {
-		printf("FACILtoNSAP( 0x%x, 0x%x, 0x%x )\n",
-		       buf, buf_len, addr);
+		kprintf("FACILtoNSAP( 0x%x, 0x%x, 0x%x )\n",
+		    buf, buf_len, addr);
 	}
 #endif
 
@@ -899,8 +898,8 @@ parse_facil(lcp, isop, buf, buf_len)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CADDR]) {
-		printf("parse_facil(0x%x, 0x%x, 0x%x, 0x%x)\n",
-		       lcp, isop, buf, buf_len);
+		kprintf("parse_facil(0x%x, 0x%x, 0x%x, 0x%x)\n",
+		    lcp, isop, buf, buf_len);
 		dump_buf(buf, buf_len);
 	}
 #endif
@@ -921,7 +920,7 @@ parse_facil(lcp, isop, buf, buf_len)
 	facil_lim = ptr + facil_len;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CADDR]) {
-		printf("parse_facils: facil length is  0x%x\n", (int) facil_len);
+		kprintf("parse_facils: facil length is  0x%x\n", (int) facil_len);
 	}
 #endif
 
@@ -974,9 +973,9 @@ parse_facil(lcp, isop, buf, buf_len)
 			break;
 
 		default:
-			printf(
-			       "BOGUS FACILITY CODE facil_lim 0x%x facil_len %d, ptr 0x%x *ptr 0x%x\n",
-			       facil_lim, facil_len, ptr - 1, ptr[-1]);
+			kprintf(
+			    "BOGUS FACILITY CODE facil_lim 0x%x facil_len %d, ptr 0x%x *ptr 0x%x\n",
+			    facil_lim, facil_len, ptr - 1, ptr[-1]);
 			/*
 			 * facil that we don't handle return E_CO_HLI_REJI;
 			 */

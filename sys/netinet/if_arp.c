@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.32 1996/10/09 01:15:04 thorpej Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.33 1996/10/10 23:12:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -365,7 +365,7 @@ arpresolve(ac, rt, m, dst, desten)
 #ifdef	DIAGNOSTIC
 	if (rt->rt_expire == 0) {
 		/* This should never happen. (Should it? -gwr) */
-		printf("arpresolve: unresolved and rt_expire == 0\n");
+		kprintf("arpresolve: unresolved and rt_expire == 0\n");
 		/* Set expiration time to now (expired). */
 		rt->rt_expire = time.tv_sec;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_timer.c,v 1.8 1996/03/16 23:14:04 christos Exp $	*/
+/*	$NetBSD: tp_timer.c,v 1.9 1996/10/10 23:22:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -129,7 +129,7 @@ tp_etimeout(tpcb, fun, ticks)
 	register u_int *callp;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TIMER]) {
-		printf("etimeout pcb %p state 0x%x\n", tpcb, tpcb->tp_state);
+		kprintf("etimeout pcb %p state 0x%x\n", tpcb, tpcb->tp_state);
 	}
 #endif
 #ifdef TPPT
@@ -208,7 +208,7 @@ tp_slowtimo()
 				E.ev_number = t;
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_TIMER]) {
-					printf("tp_slowtimo: pcb %p t %d\n",
+					kprintf("tp_slowtimo: pcb %p t %d\n",
 					       tpcb, t);
 				}
 #endif
@@ -218,7 +218,7 @@ tp_slowtimo()
 					if (tpcb->tp_notdetached) {
 #ifdef ARGO_DEBUG
 						if (argo_debug[D_CONN]) {
-							printf("PRU_DETACH: not detached\n");
+							kprintf("PRU_DETACH: not detached\n");
 						}
 #endif
 						tp_detach(tpcb);
@@ -253,7 +253,7 @@ tp_data_retrans(tpcb)
 		 */
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ACKRECV]) {
-			printf("tp_data_retrans: 0 window tpcb %p una 0x%x\n",
+			kprintf("tp_data_retrans: 0 window tpcb %p una 0x%x\n",
 			       tpcb, tpcb->tp_snduna);
 		}
 #endif
@@ -291,7 +291,7 @@ tp_fasttimo()
 	E.ev_number = TM_sendack;
 	while ((t = tp_ftimeolist) != (struct tp_pcb *) & tp_ftimeolist) {
 		if (t == 0) {
-			printf("tp_fasttimeo: should panic");
+			kprintf("tp_fasttimeo: should panic");
 			tp_ftimeolist = (struct tp_pcb *) & tp_ftimeolist;
 		} else {
 			if (t->tp_flags & TPF_DELACK) {
@@ -373,7 +373,7 @@ tp_cuntimeout(tpcb, which)
 {
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TIMER]) {
-		printf("tp_cuntimeout(%p, %d) active %d\n",
+		kprintf("tp_cuntimeout(%p, %d) active %d\n",
 		       tpcb, which, tpcb->tp_timer[which]);
 	}
 #endif
