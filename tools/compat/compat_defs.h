@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.16 2002/07/03 17:16:27 pooka Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.17 2002/09/13 23:35:34 bjh21 Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -82,6 +82,8 @@ struct passwd;
 #define __aconst
 #undef __dead
 #define __dead
+#undef __restrict
+#define __restrict
 
 /* Dirent support. */
 
