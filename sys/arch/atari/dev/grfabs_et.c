@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.7 1997/04/25 19:25:39 leo Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.8 1998/04/23 09:22:15 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -241,7 +241,7 @@ view_t *v;
 		return;
 	}
 	if (v->save_area == NULL)
-		v->save_area = malloc(SAVEBUF_SIZE, M_DEVBUF, M_WAITOK);
+		v->save_area = malloc(SAVEBUF_SIZE, M_DEVBUF, M_NOWAIT);
 
 	/*
 	 * Calculate the size of the copy
