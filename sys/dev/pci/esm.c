@@ -1,4 +1,4 @@
-/*	$NetBSD: esm.c,v 1.5 2001/01/26 09:22:18 rh Exp $	*/
+/*	$NetBSD: esm.c,v 1.6 2001/01/26 10:04:43 rh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -206,7 +206,10 @@ static const struct esm_quirks esm_quirks[] = {
 	{ PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VA26D, ESM_QUIRKF_GPIO },
 
 	/* NEC Versa LX */
-	{ PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSALX, ESM_QUIRKF_GPIO }
+	{ PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSALX, ESM_QUIRKF_GPIO },
+
+	/* Toshiba Protege */
+	{ PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_PROTEGE, ESM_QUIRKF_SWAPPEDCH }
 };
 
 enum esm_quirk_flags
