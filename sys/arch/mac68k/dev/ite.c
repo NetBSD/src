@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.48 1999/03/27 05:53:05 briggs Exp $	*/
+/*	$NetBSD: ite.c,v 1.49 1999/04/21 05:18:17 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1252,6 +1252,9 @@ itecnprobe(struct consdev * cp)
 void
 itereset()
 {
+	u_char *p;
+	int i;
+
 	width = videosize & 0xffff;
 	height = (videosize >> 16) & 0xffff;
 	scrrows = height / CHARHEIGHT;
@@ -1290,6 +1293,13 @@ itereset()
 		screenrowbytes = width*4;
 		break;
   	}
+
+	/* Clear the buffer */
+	p = (u_char *)videoaddr;
+	for (i = height; i > 0; i--) {
+		bzero(p, screenrowbytes);
+		p += videorowbytes;
+	}
   
   	vt100_reset();
 }
@@ -1302,7 +1312,8 @@ itecninit(struct consdev * cp)
 
 	ite_initted = 1;
 	itereset();
-	return iteon(cp->cn_dev, 0);
+	drawcursor();
+	return 0;
 }
 
 int
