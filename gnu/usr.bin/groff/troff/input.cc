@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,32 +15,10 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
-
-#ifndef MACROPATH
-#define MACROPATH ".:/usr/local/lib/groff"
-#endif
-
-#ifndef DEVICE
-#define DEVICE "ps"
-#endif
-
-#ifndef HYPHENFILE
-#define HYPHENFILE "/usr/local/lib/groff/hyphen"
-#endif
-
-#define MACROPATH_ENVVAR "GROFF_TMAC_PATH"
-
-#define DEFAULT_INPUT_STACK_LIMIT 1000
-
-#ifndef DEFAULT_WARNING_MASK
-// warnings that are enabled by default
-#define DEFAULT_WARNING_MASK (WARN_CHAR|WARN_NUMBER|WARN_BREAK|WARN_SPACE)
-#endif
-
-#include "groff.h"
+#include "troff.h"
 #include "symbol.h"
 #include "dictionary.h"
 #include "hvunits.h"
@@ -52,6 +30,23 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 #include "div.h"
 #include "charinfo.h"
 #include "font.h"
+#include "searchpath.h"
+#include "macropath.h"
+#include "defs.h"
+
+// Needed for getpid().
+#include "posix.h"
+
+#define USAGE_EXIT_CODE 1
+#define MACRO_PREFIX "tmac."
+#define STARTUP_FILE "troffrc"
+#define DEFAULT_INPUT_STACK_LIMIT 1000
+
+#ifndef DEFAULT_WARNING_MASK
+// warnings that are enabled by default
+#define DEFAULT_WARNING_MASK \
+     (WARN_CHAR|WARN_NUMBER|WARN_BREAK|WARN_SPACE|WARN_FONT)
+#endif
 
 // initial size of buffer for reading names; expanded as necessary
 #define ABUF_SIZE 16
@@ -62,6 +57,7 @@ void init_column_requests();
 
 static node *read_draw_node();
 void handle_first_page_transition();
+static void push_token(const token &);
 void copy_file();
 #ifdef COLUMN
 void vjustify();
@@ -71,7 +67,6 @@ void transparent_file();
 
 const char *program_name = 0;
 token tok;
-const char *device = DEVICE;
 int break_flag = 0;
 static int backtrace_flag = 0;
 char *pipe_command = 0;
@@ -97,6 +92,7 @@ static symbol read_escape_name();
 static void interpolate_string(symbol);
 static void interpolate_macro(symbol);
 static void interpolate_number_format(symbol);
+static void interpolate_environment_variable(symbol);
 
 static void interpolate_arg(symbol);
 static request_or_macro *lookup_request(symbol);
@@ -111,7 +107,6 @@ struct input_iterator;
 input_iterator *make_temp_iterator(const char *);
 const char *input_char_description(int);
 
-const int ESCAPE_RIGHT_PARENTHESIS = 014;
 const int ESCAPE_QUESTION = 015;
 const int BEGIN_TRAP = 016;
 const int END_TRAP = 017;
@@ -139,15 +134,21 @@ const int TRANSPARENT_FILE_REQUEST = 0202;
 const int VJUSTIFY_REQUEST = 0203;
 #endif /* COLUMN */
 const int ESCAPE_E = 0204;
+const int LAST_PAGE_EJECTOR = 0205;
+const int ESCAPE_RIGHT_PARENTHESIS = 0206;
 
 void set_escape_char()
 {
-  if (!has_arg())
-    escape_char = '\\';
-  else if (!tok.ch())
-    error("bad escape character");
+  if (has_arg()) {
+    if (tok.ch() == 0) {
+      error("bad escape character");
+      escape_char = '\\';
+    }
+    else
+      escape_char = tok.ch();
+  }
   else
-    escape_char = tok.ch();
+    escape_char = '\\';
   skip_line();
 }
 
@@ -179,9 +180,10 @@ private:
   virtual int set_location(const char *, int)
     { return 0; }
   virtual int next_file(FILE *, const char *) { return 0; }
-  virtual void shift(int n) {}
+  virtual void shift(int) {}
   virtual int is_boundary();
   virtual int internal_level() { return 0; }
+  virtual int is_file() { return 0; }
 };
 
 input_iterator::input_iterator()
@@ -235,6 +237,7 @@ public:
   void backtrace();
   int set_location(const char *, int);
   int next_file(FILE *, const char *);
+  int is_file();
 };
 
 file_iterator::file_iterator(FILE *f, const char *fn)
@@ -248,6 +251,11 @@ file_iterator::~file_iterator()
     fclose(fp);
   else
     clearerr(stdin);
+}
+
+int file_iterator::is_file()
+{
+  return 1;
 }
 
 int file_iterator::next_file(FILE *f, const char *s)
@@ -347,6 +355,7 @@ public:
   static void backtrace();
   static void backtrace_all();
   static void next_file(FILE *, const char *);
+  static void end_file();
   static void shift(int n);
   static void add_boundary();
   static void remove_boundary();
@@ -438,7 +447,7 @@ void input_stack::push(input_iterator *in)
   if (in == 0)
     return;
   if (++level > limit && limit > 0)
-    fatal("input stack limit exceeded");
+    fatal("input stack limit exceeded (probable infinite loop)");
   in->next = top;
   top = in;
 }
@@ -479,7 +488,7 @@ int input_stack::get_location(int allow_macro, const char **filenamep, int *line
 
 void input_stack::backtrace()
 {
-  char *f;
+  const char *f;
   int n;
   // only backtrace down to (not including) the topmost file
   for (input_iterator *p = top;
@@ -504,22 +513,41 @@ int input_stack::set_location(const char *filename, int lineno)
 
 void input_stack::next_file(FILE *fp, const char *s)
 {
-  for (input_iterator *p = top; p; p = p->next)
-    if (p->next_file(fp, s))
+  for (input_iterator **pp = &top; *pp != &nil_iterator; pp = &(*pp)->next)
+    if ((*pp)->next_file(fp, s))
       return;
-  for (input_iterator **pp = &top; *pp; pp = &(*pp)->next)
-    ;
+  if (++level > limit && limit > 0)
+    fatal("input stack limit exceeded");
   *pp = new file_iterator(fp, s);
+  (*pp)->next = &nil_iterator;
+}
+
+void input_stack::end_file()
+{
+  for (input_iterator **pp = &top; *pp != &nil_iterator; pp = &(*pp)->next)
+    if ((*pp)->is_file()) {
+      input_iterator *tem = *pp;
+      *pp = (*pp)->next;
+      delete tem;
+      level--;
+      return;
+    }
 }
 
 void input_stack::clear()
 {
-  while (!top->is_boundary() && top != &nil_iterator) {
+  int nboundaries = 0;
+  while (top != &nil_iterator) {
+    if (top->is_boundary())
+      nboundaries++;
     input_iterator *tem = top;
     top = top->next;
     level--;
     delete tem;
   }
+  // Keep while_request happy.
+  for (; nboundaries > 0; --nboundaries)
+    add_boundary();
 }
 
 void backtrace_request()
@@ -531,10 +559,13 @@ void backtrace_request()
 
 void next_file()
 {
-  symbol nm = get_long_name(1);
+  symbol nm = get_long_name(0);
   while (!tok.newline() && !tok.eof())
     tok.next();
-  if (!nm.is_null()) {
+  if (nm.is_null())
+    input_stack::end_file();
+  else {
+    errno = 0;
     FILE *fp = fopen(nm.contents(), "r");
     if (!fp)
       error("can't open `%1': %2", nm.contents(), strerror(errno));
@@ -546,9 +577,10 @@ void next_file()
 
 void shift()
 {
-  int n = 1;
-  if (!has_arg() || get_integer(&n))
-    input_stack::shift(n);
+  int n;
+  if (!has_arg() || !get_integer(&n))
+    n = 1;
+  input_stack::shift(n);
   skip_line();
 }
 
@@ -590,6 +622,7 @@ static symbol read_two_char_escape_name()
 
 static symbol read_long_escape_name()
 {
+  int start_level = input_stack::get_level();
   char abuf[ABUF_SIZE];
   char *buf = abuf;
   int buf_size = ABUF_SIZE;
@@ -598,7 +631,7 @@ static symbol read_long_escape_name()
     int c = get_char_for_escape_name();
     if (c == 0) {
       if (buf != abuf)
-	delete buf;
+	a_delete buf;
       return NULL_SYMBOL;
     }
     if (i + 2 > buf_size) {
@@ -612,10 +645,10 @@ static symbol read_long_escape_name()
 	buf = new char[buf_size*2];
 	memcpy(buf, old_buf, buf_size);
 	buf_size *= 2;
-	delete old_buf;
+	a_delete old_buf;
       }
     }
-    if (c == ']')
+    if (c == ']' && input_stack::get_level() == start_level)
       break;
     buf[i++] = c;
   }
@@ -629,7 +662,7 @@ static symbol read_long_escape_name()
   }
   else {
     symbol s(buf);
-    delete buf;
+    a_delete buf;
     return s;
   }
 }
@@ -643,6 +676,36 @@ static symbol read_escape_name()
     return read_two_char_escape_name();
   if (c == '[' && !compatible_flag)
     return read_long_escape_name();
+  char buf[2];
+  buf[0] = c;
+  buf[1] = '\0';
+  return symbol(buf);
+}
+
+static symbol read_increment_and_escape_name(int *incp)
+{
+  int c = get_char_for_escape_name();
+  switch (c) {
+  case 0:
+    *incp = 0;
+    return NULL_SYMBOL;
+  case '(':
+    *incp = 0;
+    return read_two_char_escape_name();
+  case '+':
+    *incp = 1;
+    return read_escape_name();
+  case '-':
+    *incp = -1;
+    return read_escape_name();
+  case '[':
+    if (!compatible_flag) {
+      *incp = 0;
+      return read_long_escape_name();
+    }
+    break;
+  }
+  *incp = 0;
   char buf[2];
   buf[0] = c;
   buf[1] = '\0';
@@ -671,6 +734,12 @@ static int get_copy(node **nd, int defining)
       while ((c = input_stack::get(NULL)) != '\n' && c != EOF)
 	;
       return c;
+    case '#':			// Like \" but newline is ignored.
+      (void)input_stack::get(NULL);
+      while ((c = input_stack::get(NULL)) != '\n')
+	if (c == EOF)
+	  return EOF;
+      break;
     case '$':
       {
 	(void)input_stack::get(NULL);
@@ -699,18 +768,10 @@ static int get_copy(node **nd, int defining)
     case 'n':
       {
 	(void)input_stack::get(NULL);
-	int inc = 0;
-	symbol s = read_escape_name();
-	const char *p = s.contents();
-	if (p != 0) {
-	  if ((p[0] == '+' || p[0] == '-') && p[1] == '\0') {
-	    inc = p[0] == '+' ? 1 : -1;
-	    s = read_escape_name();
-	    if (s.is_null())
-	      break;
-	  }
+	int inc;
+	symbol s = read_increment_and_escape_name(&inc);
+	if (!s.is_null())
 	  interpolate_number_reg(s, inc);
-	}
 	break;
       }
     case 'g':
@@ -724,6 +785,14 @@ static int get_copy(node **nd, int defining)
     case 't':
       (void)input_stack::get(NULL);
       return '\t';
+    case 'V':
+      {
+        (void)input_stack::get(NULL);
+	symbol s = read_escape_name();
+	if (!s.is_null())
+	  interpolate_environment_variable(s);
+	break;
+      }
     case '\n':
       (void)input_stack::get(NULL);
       if (defining)
@@ -827,6 +896,7 @@ int non_interpreted_char_node::interpret(macro *mac)
 static void do_width();
 static node *do_non_interpreted();
 static node *do_special();
+static void do_register();
 
 static node *do_overstrike()
 {
@@ -839,15 +909,11 @@ static node *do_overstrike()
       warning(WARN_DELIM, "missing closing delimiter");
       break;
     }
-    if (tok.changes_env())
-      tok.process();
-    else {
-      charinfo *ci = tok.get_char(1);
-      if (ci) {
-	node *n = curenv->make_char_node(ci);
-	if (n)
-	  on->overstrike(n);
-      }
+    charinfo *ci = tok.get_char(1);
+    if (ci) {
+      node *n = curenv->make_char_node(ci);
+      if (n)
+	on->overstrike(n);
     }
     tok.next();
   }
@@ -870,15 +936,11 @@ static node *do_bracket()
       input_stack::push(make_temp_iterator("\n"));
       break;
     }
-    if (tok.changes_env())
-      tok.process();
-    else {
-      charinfo *ci = tok.get_char(1);
-      if (ci) {
-	node *n = curenv->make_char_node(ci);
-	if (n)
-	  bn->bracket(n);
-      }
+    charinfo *ci = tok.get_char(1);
+    if (ci) {
+      node *n = curenv->make_char_node(ci);
+      if (n)
+	bn->bracket(n);
     }
     tok.next();
   }
@@ -890,7 +952,8 @@ static int do_name_test()
   token start;
   start.next();
   int start_level = input_stack::get_level();
-  int result = 1;
+  int bad_char = 0;
+  int some_char = 0;
   for (;;) {
     tok.next();
     if (tok.newline() || tok.eof()) {
@@ -901,9 +964,10 @@ static int do_name_test()
 	&& (compatible_flag || input_stack::get_level() == start_level))
       break;
     if (!tok.ch())
-      result = 0;
+      bad_char = 1;
+    some_char = 1;
   }
-  return result;
+  return some_char && !bad_char;
 }
 
 #if 0
@@ -1024,14 +1088,18 @@ token::~token()
 token::token(const token &t)
 : nm(t.nm), c(t.c), val(t.val), dim(t.dim), type(t.type)
 {
-  nd = t.nd ? t.nd->copy() : 0;
+  // Use two statements to work around bug in SGI C++.
+  node *tem = t.nd;
+  nd = tem ? tem->copy() : 0;
 }
 
 void token::operator=(const token &t)
 {
   delete nd;
   nm = t.nm;
-  nd = t.nd ? t.nd->copy() : 0;
+  // Use two statements to work around bug in SGI C++.
+  node *tem = t.nd;
+  nd = tem ? tem->copy() : 0;
   c = t.c;
   val = t.val;
   dim = t.dim;
@@ -1092,6 +1160,9 @@ void token::next()
       case END_TRAP:
 	type = TOKEN_END_TRAP;
 	return;
+      case LAST_PAGE_EJECTOR:
+	seen_last_page_ejector = 1;
+	// fall through
       case PAGE_EJECTOR:
 	type = TOKEN_PAGE_EJECTOR;
 	return;
@@ -1191,13 +1262,17 @@ void token::next()
 	type = TOKEN_LEADER;
 	return;
       case 0:
-	assert(n != 0);
-	token_node *tn = n->get_token_node();
-	if (tn)
-	  *this = tn->tk;
-	else {
-	  nd = n;
-	  type = TOKEN_NODE;
+	{
+	  assert(n != 0);
+	  token_node *tn = n->get_token_node();
+	  if (tn) {
+	    *this = tn->tk;
+	    delete tn;
+	  }
+	  else {
+	    nd = n;
+	    type = TOKEN_NODE;
+	  }
 	}
 	return;
       default:
@@ -1253,6 +1328,10 @@ void token::next()
 	goto ESCAPE_BANG;
       case '?':
 	goto ESCAPE_QUESTION;
+      case '~':
+	nd = new unbreakable_space_node(curenv->get_space_width());
+	type = TOKEN_NODE;
+	return;
       case '"':
 	while ((cc = input_stack::get(NULL)) != '\n' && cc != EOF)
 	  ;
@@ -1261,6 +1340,13 @@ void token::next()
 	else
 	  type = TOKEN_EOF;
 	return;
+      case '#':			// Like \" but newline is ignored.
+	while ((cc = input_stack::get(NULL)) != '\n')
+	  if (cc == EOF) {
+	    type = TOKEN_EOF;
+	    return;
+	  }
+	break;
       case '$':
 	{
 	  symbol nm = read_escape_name();
@@ -1315,14 +1401,13 @@ void token::next()
 	  if (s.is_null())
 	    break;
 	  for (const char *p = s.contents(); *p != '\0'; p++)
-	    if (!csdigit(*p)) {
-	      type = TOKEN_FONT_NAME;
-	      nm = s;
-	      return;
-	    }
-	  type = TOKEN_FONT_POSITION;
-	  val = atoi(s.contents());
-	  return;
+	    if (!csdigit(*p))
+	      break;
+	  if (*p)
+	    curenv->set_font(s);
+	  else
+	    curenv->set_font(atoi(s.contents()));
+	  break;
 	}
       case 'g':
 	{
@@ -1338,11 +1423,9 @@ void token::next()
 	nd = new hmotion_node(x);
 	return;
       case 'H':
-	if (!get_delim_number(&x, 'z', curenv->get_requested_point_size()))
-	  break;
-	type = TOKEN_CHAR_HEIGHT;
-	val = x;
-	return;
+	if (get_delim_number(&x, 'z', curenv->get_requested_point_size()))
+	  curenv->set_char_height(x);
+	break;
       case 'k':
 	nm = read_escape_name();
 	if (nm.is_null())
@@ -1367,28 +1450,15 @@ void token::next()
 	}
       case 'n':
 	{
-	  symbol nm = read_escape_name();
-	  if (nm.is_null())
-	    break;
-	  int inc = 0;
-	  const char *p = nm.contents();
-	  if (p != 0 && (p[0] == '+' || p[0] == '-') && p[1] == '\0') {
-	    inc = p[0] == '+' ? 1 : -1;
-	    nm = read_escape_name();
-	    if (nm.is_null())
-	      break;
-	  }
-	  interpolate_number_reg(nm, inc);
+	  int inc;
+	  symbol nm = read_increment_and_escape_name(&inc);
+	  if (!nm.is_null())
+	    interpolate_number_reg(nm, inc);
 	  break;
 	}
       case 'N':
-	if (!get_delim_number(&x, 0))
+	if (!get_delim_number(&val, 0))
 	  break;
-	if (x < 0 || x > 255) {
-	  error("code %1 out of range", x);
-	  break;
-	}
-	c = (unsigned char)x;
 	type = TOKEN_NUMBERED_CHAR;
 	return;
       case 'o':
@@ -1402,18 +1472,17 @@ void token::next()
 	type = TOKEN_NODE;
 	nd = new vmotion_node(-curenv->get_size());
 	return;
+      case 'R':
+	do_register();
+	break;
       case 's':
-	if (!read_size(&x))
-	  break;
-	type = TOKEN_SIZE;
-	val = x;
-	return;
+	if (read_size(&x))
+	  curenv->set_size(x);
+	break;
       case 'S':
-	if (!get_delim_number(&x, 0))
-	  break;
-	type = TOKEN_CHAR_SLANT;
-	val = x;
-	return;
+	if (get_delim_number(&x, 0))
+	  curenv->set_char_slant(x);
+	break;
       case 't':
 	type = TOKEN_NODE;
 	nd = new non_interpreted_char_node('\t');
@@ -1428,6 +1497,13 @@ void token::next()
 	type = TOKEN_NODE;
 	nd = new vmotion_node(x);
 	return;
+      case 'V':
+        {
+	  symbol nm = read_escape_name();
+	  if (!nm.is_null())
+	    interpolate_environment_variable(nm);
+	  break;
+	}
       case 'w':
 	do_width();
 	break;
@@ -1451,7 +1527,7 @@ void token::next()
 	  request_or_macro *p = lookup_request(s);
 	  macro *m = p->to_macro();
 	  if (!m) {
-	    error("can transparently throughput a request");
+	    error("can't transparently throughput a request");
 	    break;
 	  }
 	  nd = new special_node(*m);
@@ -1461,14 +1537,18 @@ void token::next()
       case 'z':
 	{
 	  next();
-	  charinfo *ci = get_char(1);
-	  if (ci == 0)
-	    break;
-	  node *gn = curenv->make_char_node(ci);
-	  if (gn == 0)
-	    break;
-	  nd = new zero_width_node(gn);
-	  type = TOKEN_NODE;
+          if (type == TOKEN_NODE)
+            nd = new zero_width_node(nd);
+          else {
+  	    charinfo *ci = get_char(1);
+	    if (ci == 0)
+	      break;
+	    node *gn = curenv->make_char_node(ci);
+	    if (gn == 0)
+	      break;
+	    nd = new zero_width_node(gn);
+	    type = TOKEN_NODE;
+          }
 	  return;
 	}
       case 'Z':
@@ -1508,10 +1588,11 @@ int token::operator==(const token &t)
     return 0;
   switch(type) {
   case TOKEN_CHAR:
-  case TOKEN_NUMBERED_CHAR:
     return c == t.c;
   case TOKEN_SPECIAL:
     return nm == t.nm;
+  case TOKEN_NUMBERED_CHAR:
+    return val == t.val;
   default:
     return 1;
   }
@@ -1582,17 +1663,10 @@ const char *token::description()
     buf[2] = '\'';
     buf[3] = '\0';
     return buf;
-  case TOKEN_CHAR_HEIGHT:
-    return "`\\H'";
-  case TOKEN_CHAR_SLANT:
-    return "`\\S'";
   case TOKEN_DUMMY:
     return "`\\&'";
   case TOKEN_ESCAPE:
     return "`\\e'";
-  case TOKEN_FONT_NAME:
-  case TOKEN_FONT_POSITION:
-    return "`\\f'";
   case TOKEN_HYPHEN_INDICATOR:
     return "`\\%'";
   case TOKEN_INTERRUPT:
@@ -1613,8 +1687,6 @@ const char *token::description()
     return "`\\N'";
   case TOKEN_RIGHT_BRACE:
     return "`\\}'";
-  case TOKEN_SIZE:
-    return "`\\s'";
   case TOKEN_SPACE:
     return "a space";
   case TOKEN_SPECIAL:
@@ -1646,13 +1718,12 @@ void skip_line()
 void compatible()
 {
   int n;
-  if (!has_arg())
-    compatible_flag = 1;
-  else if (get_integer(&n))
+  if (has_arg() && get_integer(&n))
     compatible_flag = n != 0;
+  else
+    compatible_flag = 1;
   skip_line();
 }
-
 
 static void empty_name_warning(int required)
 {
@@ -1729,7 +1800,7 @@ symbol get_long_name(int required)
 	buf = new char[buf_size*2];
 	memcpy(buf, old_buf, buf_size);
 	buf_size *= 2;
-	delete old_buf;
+	a_delete old_buf;
       }
     }
     if ((buf[i] = tok.ch()) == 0)
@@ -1746,43 +1817,52 @@ symbol get_long_name(int required)
     return symbol(buf);
   else {
     symbol s(buf);
-    delete buf;
+    a_delete buf;
     return s;
   }
 }
 
-extern int exit_flag;
-
-NO_RETURN void exit_groff()
+NO_RETURN void exit_troff()
 {
-  exit_flag = 1;
+  exit_started = 1;
+  topdiv->set_last_page();
   if (!end_macro_name.is_null()) {
     spring_trap(end_macro_name);
     tok.next();
     process_input_stack();
   }
-  curenv->do_break();
+  curenv->final_break();
   tok.next();
   process_input_stack();
   end_diversions();
-  exit_flag = 2;
+  done_end_macro = 1;
+  topdiv->set_ejecting();
+  static unsigned char buf[2] = { LAST_PAGE_EJECTOR, '\0' };
+  input_stack::push(make_temp_iterator((char *)buf));
+  topdiv->space(topdiv->get_page_length(), 1);
+  tok.next();
+  process_input_stack();
+  seen_last_page_ejector = 1;	// should be set already
   topdiv->set_ejecting();
   push_page_ejector();
   topdiv->space(topdiv->get_page_length(), 1);
   tok.next();
   process_input_stack();
-  // This will only be if a trap-invoked macro starts a diversion,
+  // This will only happen if a trap-invoked macro starts a diversion,
   // or if vertical position traps have been disabled.
   cleanup_and_exit(0);
 }
 
 // This implements .ex.  The input stack must be cleared before calling
-// exit_groff().
+// exit_troff().
 
-NO_RETURN void exit_request()
+void exit_request()
 {
   input_stack::clear();
-  exit_groff();
+  if (exit_started)
+    tok.next();
+  else
+    exit_troff();
 }
 
 void end_macro()
@@ -1791,9 +1871,21 @@ void end_macro()
   skip_line();
 }
 
+void do_request()
+{
+  int saved_compatible_flag = compatible_flag;
+  compatible_flag = 0;
+  symbol nm = get_name();
+  if (nm.is_null())
+    skip_line();
+  else
+    interpolate_macro(nm);
+  compatible_flag = saved_compatible_flag;
+}
+
 inline int possibly_handle_first_page_transition()
 {
-  if (!topdiv->first_page_begun && curdiv == topdiv && !curenv->is_dummy()) {
+  if (topdiv->before_first_page && curdiv == topdiv && !curenv->is_dummy()) {
     handle_first_page_transition();
     return 1;
   }
@@ -1805,19 +1897,25 @@ static int transparent_translate(int cc)
 {
   if (!illegal_input_char(cc)) {
     charinfo *ci = charset_table[cc];
-    if (ci->get_special_translation() == charinfo::TRANSLATE_SPACE)
+    switch (ci->get_special_translation(1)) {
+    case charinfo::TRANSLATE_SPACE:
       return ' ';
-    if (ci->get_special_translation() == charinfo::TRANSLATE_DUMMY)
+    case charinfo::TRANSLATE_DUMMY:
       return ESCAPE_AMPERSAND;
-#if 0
-    // This is just too ugly.
-    ci = ci->get_translation();
+    case charinfo::TRANSLATE_HYPHEN_INDICATOR:
+      return ESCAPE_PERCENT;
+    }
+    // This is realy ugly.
+    ci = ci->get_translation(1);
     if (ci) {
       int c = ci->get_ascii_code();
       if (c != '\0')
 	return c;
+      error("can't translate %1 to special character `%2'"
+	    " in transparent throughput",
+	    input_char_description(cc),
+	    ci->nm.contents());
     }
-#endif
   }
   return cc;
 }
@@ -2001,7 +2099,6 @@ static void process_input_stack()
 	if (possibly_handle_first_page_transition())
 	  ;
 	else if (bol && !curenv->get_prev_line_interrupted()) {
-	  curenv->do_break();
 	  int nspaces = 0;
 	  do {
 	    nspaces += tok.nspaces();
@@ -2010,8 +2107,9 @@ static void process_input_stack()
 	  if (tok.newline())
 	    blank_line();
 	  else {
+	    push_token(tok);
+	    curenv->do_break();
 	    curenv->add_node(new hmotion_node(curenv->get_space_width()*nspaces));
-	    suppress_next = 1;
 	    bol = 0;
 	  }
 	}
@@ -2405,6 +2503,8 @@ string_iterator::string_iterator()
   ptr = eptr = 0;
   newline_flag = 0;
   how_invoked = 0;
+  lineno = 1;
+  count = 0;
 }
 
 int string_iterator::fill(node **np)
@@ -2508,25 +2608,22 @@ temp_iterator::temp_iterator(const char *s, int len)
 
 temp_iterator::~temp_iterator()
 {
-  delete base;
+  a_delete base;
 }
 
 class small_temp_iterator : public input_iterator {
 private:
   small_temp_iterator(const char *, int);
-#if 1
   ~small_temp_iterator();
   enum { BLOCK = 16 };
   static small_temp_iterator *free_list;
   void *operator new(size_t);
   void operator delete(void *);
-#endif
   enum { SIZE = 12 };
   unsigned char buf[SIZE];
   friend input_iterator *make_temp_iterator(const char *);
 };
 
-#if 1
 small_temp_iterator *small_temp_iterator::free_list = 0;
 
 void *small_temp_iterator::operator new(size_t n)
@@ -2559,7 +2656,6 @@ small_temp_iterator::~small_temp_iterator()
 {
 }
 
-#endif
 
 #ifdef __GNUG__
 inline
@@ -2591,9 +2687,14 @@ struct arg_list {
   macro mac;
   arg_list *next;
   arg_list(const macro &);
+  ~arg_list();
 };
 
 arg_list::arg_list(const macro &m) : mac(m), next(0)
+{
+}
+
+arg_list::~arg_list()
 {
 }
 
@@ -2689,13 +2790,18 @@ static void interpolate_macro(symbol nm)
     int warned = 0;
     const char *s = nm.contents();
     if (strlen(s) > 2) {
+      request_or_macro *r;
       char buf[3];
       buf[0] = s[0];
       buf[1] = s[1];
       buf[2] = '\0';
-      if (request_dictionary.lookup(symbol(buf)) != 0)
-	warned = warning(WARN_SPACE,
-			 "space required between `%1' and argument", buf);
+      r = (request_or_macro *)request_dictionary.lookup(symbol(buf));
+      if (r) {
+	macro *m = r->to_macro();
+	if (!m || !m->empty())
+	  warned = warning(WARN_SPACE,
+			   "space required between `%1' and argument", buf);
+      }
     }
     if (!warned) {
       warning(WARN_MAC, "`%1' not defined", nm.contents());
@@ -2763,6 +2869,11 @@ void macro::invoke(symbol nm)
 macro *macro::to_macro()
 {
   return this;
+}
+
+int macro::empty()
+{
+  return length == 0;
 }
 
 macro_iterator::macro_iterator(symbol s, macro &m)
@@ -2841,6 +2952,8 @@ void do_define_string(int append)
   }
   if (tok.newline())
     c = '\n';
+  else if (tok.tab())
+    c = '\t';
   else if (!tok.space()) {
     error("bad string definition");
     skip_line();
@@ -2895,6 +3008,8 @@ void define_character()
   tok.next();
   if (tok.newline())
     c = '\n';
+  else if (tok.tab())
+    c = '\t';
   else if (!tok.space()) {
     error("bad character definition");
     skip_line();
@@ -2921,6 +3036,23 @@ void define_character()
 }
 
 
+static void remove_character()
+{
+  tok.skip();
+  while (!tok.newline() && !tok.eof()) {
+    if (!tok.space() && !tok.tab()) {
+      charinfo *ci = tok.get_char(1);
+      if (!ci)
+	break;
+      macro *m = ci->set_macro(0);
+      if (m)
+	delete m;
+    }
+    tok.next();
+  }
+  skip_line();
+}
+    
 static void interpolate_string(symbol nm)
 {
   request_or_macro *p = lookup_request(nm);
@@ -2984,15 +3116,20 @@ static void interpolate_arg(symbol nm)
   }
 }
 
-/* We need to unget the current token; we fake this by wrapping it up
-in a token_node, and wrapping that up in a string_iterator. */
-
 void handle_first_page_transition()
 {
-  macro mac;
-  mac.append(new token_node(tok));
-  input_stack::push(new string_iterator(mac));
+  push_token(tok);
   topdiv->begin_page();
+}
+
+// We push back a token by wrapping it up in a token_node, and
+// wrapping that up in a string_iterator.
+
+static void push_token(const token &t)
+{
+  macro m;
+  m.append(new token_node(t));
+  input_stack::push(new string_iterator(m));
 }
 
 void push_page_ejector()
@@ -3080,6 +3217,10 @@ void do_define_macro(define_mode mode)
     term = dot_symbol;
   while (!tok.newline() && !tok.eof())
     tok.next();
+  const char *start_filename;
+  int start_lineno;
+  int have_start_location = input_stack::get_location(0, &start_filename,
+						      &start_lineno);
   node *n;
   // doing this here makes the line numbers come out right
   int c = get_copy(&n, 1);
@@ -3100,18 +3241,13 @@ void do_define_macro(define_mode mode)
 	mac.append(c);
       c = get_copy(&n, 1);
     }
-    if (c == EOF) {
-      error("end of file while defining macro");
-      tok.next();
-      return;
-    }
     if (bol && c == '.') {
-      const unsigned char *s = (const unsigned char *)term.contents();
-      unsigned char d;
+      const char *s = term.contents();
+      int d;
       // see if it matches term
       for (int i = 0; s[i] != 0; i++) {
 	d = get_copy(&n);
-	if (s[i] != d)
+	if ((unsigned char)s[i] != d)
 	  break;
       }
       if (s[i] == 0
@@ -3141,6 +3277,25 @@ void do_define_macro(define_mode mode)
 	  mac.append(s[j]);
       }
       c = d;
+    }
+    if (c == EOF) {
+      if (mode == DEFINE_NORMAL || mode == DEFINE_APPEND) {
+	if (have_start_location)
+	  error_with_file_and_line(start_filename, start_lineno,
+				   "end of file while defining macro `%1'",
+				   nm.contents());
+	else
+	  error("end of file while defining macro `%1'", nm.contents());
+      }
+      else {
+	if (have_start_location)
+	  error_with_file_and_line(start_filename, start_lineno,
+				   "end of file while ignoring input lines");
+	else
+	  error("end of file while ignoring input lines");
+      }
+      tok.next();
+      return;
     }
     if (mode == DEFINE_NORMAL || mode == DEFINE_APPEND) {
       if (c == 0)
@@ -3244,6 +3399,13 @@ void asciify_macro()
     }
   }
   skip_line();
+}
+
+static void interpolate_environment_variable(symbol nm)
+{
+  const char *s = getenv(nm.contents());
+  if (s && *s)
+    input_stack::push(make_temp_iterator(s));
 }
 
 void interpolate_number_reg(symbol nm, int inc)
@@ -3441,7 +3603,7 @@ static symbol get_delim_name()
 	buf = new char[buf_size*2];
 	memcpy(buf, old_buf, buf_size);
 	buf_size *= 2;
-	delete old_buf;
+	a_delete old_buf;
       }
     }
     tok.next();
@@ -3451,7 +3613,7 @@ static symbol get_delim_name()
     if ((buf[i] = tok.ch()) == 0) {
       error("missing delimiter (got %1)", tok.description());
       if (buf != abuf)
-	delete buf;
+	a_delete buf;
       return NULL_SYMBOL;
     }
     i++;
@@ -3467,9 +3629,39 @@ static symbol get_delim_name()
   }
   else {
     symbol s(buf);
-    delete buf;
+    a_delete buf;
     return s;
   }
+}
+
+
+// Implement \R
+
+static void do_register()
+{
+  token start;
+  start.next();
+  if (!start.delimiter(1))
+    return;
+  tok.next();
+  symbol nm = get_long_name(1);
+  if (nm.is_null())
+    return;
+  while (tok.space())
+    tok.next();
+  reg *r = (reg *)number_reg_dictionary.lookup(nm);
+  int prev_value;
+  if (!r || !r->get_value(&prev_value))
+    prev_value = 0;
+  int val;
+  if (!get_number(&val, 'u', prev_value))
+    return;
+  if (start != tok)
+    warning(WARN_DELIM, "closing delimiter does not match");
+  if (r)
+    r->set_value(val);
+  else
+    set_number_reg(nm, val);
 }
 
 // this implements the \w escape sequence
@@ -3484,8 +3676,13 @@ static void do_width()
   curenv = &env;
   for (;;) {
     tok.next();
-    if (tok.newline() || tok.eof()) {
+    if (tok.eof()) {
       warning(WARN_DELIM, "missing closing delimiter");
+      break;
+    }
+    if (tok.newline()) {
+      warning(WARN_DELIM, "missing closing delimiter");
+      input_stack::push(make_temp_iterator("\n"));
       break;
     }
     if (tok == start
@@ -3964,6 +4161,7 @@ void source()
   else {
     while (!tok.newline() && !tok.eof())
       tok.next();
+    errno = 0;
     FILE *fp = fopen(nm.contents(), "r");
     if (fp)
       input_stack::push(new file_iterator(fp, nm.contents()));
@@ -4080,11 +4278,13 @@ const char *input_char_description(int c)
 
 void terminal()
 {
-  int c;
-  while ((c = get_copy(NULL)) == ' ' || c == '\t')
-    ;
-  for (; c != '\n' && c != EOF; c = get_copy(NULL))
-    fputs(asciify(c), stderr);
+  if (!tok.newline() && !tok.eof()) {
+    int c;
+    while ((c = get_copy(NULL)) == ' ' || c == '\t')
+      ;
+    for (; c != '\n' && c != EOF; c = get_copy(NULL))
+      fputs(asciify(c), stderr);
+  }
   fputc('\n', stderr);
   fflush(stderr);
   tok.next();
@@ -4098,6 +4298,7 @@ void do_open(int append)
   if (!stream.is_null()) {
     symbol filename = get_long_name(1);
     if (!filename.is_null()) {
+      errno = 0;
       FILE *fp = fopen(filename.contents(), append ? "a" : "w");
       if (!fp) {
 	error("can't open `%1' for %2: %3",
@@ -4159,6 +4360,7 @@ void write_request()
   for (; c != '\n' && c != EOF; c = get_copy(NULL))
     fputs(asciify(c), fp);
   fputc('\n', fp);
+  fflush(fp);
   tok.next();
 }
 
@@ -4183,7 +4385,7 @@ static void init_charset_table()
   charset_table[']']->set_flags(charinfo::TRANSPARENT);
   charset_table['*']->set_flags(charinfo::TRANSPARENT);
   get_charinfo(symbol("dg"))->set_flags(charinfo::TRANSPARENT);
-  get_charinfo(symbol("hy"))->set_flags(charinfo::BREAK_AFTER);
+  get_charinfo(symbol("rq"))->set_flags(charinfo::TRANSPARENT);
   get_charinfo(symbol("em"))->set_flags(charinfo::BREAK_AFTER);
   get_charinfo(symbol("ul"))->set_flags(charinfo::OVERLAPS_HORIZONTALLY);
   get_charinfo(symbol("rn"))->set_flags(charinfo::OVERLAPS_HORIZONTALLY);
@@ -4192,34 +4394,61 @@ static void init_charset_table()
   page_character = charset_table['%'];
 }
 
-void translate()
+static
+void do_translate(int translate_transparent)
 {
   tok.skip();
   while (!tok.newline() && !tok.eof()) {
+    if (tok.space()) {
+      // This is a really bizarre troff feature.
+      tok.next();
+      translate_space_to_dummy = tok.dummy();
+      if (tok.newline() || tok.eof())
+	break;
+      tok.next();
+      continue;
+    }
     charinfo *ci1 = tok.get_char(1);
     if (ci1 == 0)
       break;
     tok.next();
-    if (tok.newline() || tok.space()) {
-      ci1->set_special_translation(charinfo::TRANSLATE_SPACE);
+    if (tok.newline() || tok.eof()) {
+      ci1->set_special_translation(charinfo::TRANSLATE_SPACE,
+				   translate_transparent);
       break;
     }
-    if (tok.dummy())
-      ci1->set_special_translation(charinfo::TRANSLATE_DUMMY);
+    if (tok.space())
+      ci1->set_special_translation(charinfo::TRANSLATE_SPACE,
+				   translate_transparent);
+    else if (tok.dummy())
+      ci1->set_special_translation(charinfo::TRANSLATE_DUMMY,
+				   translate_transparent);
+    else if (tok.hyphen_indicator())
+      ci1->set_special_translation(charinfo::TRANSLATE_HYPHEN_INDICATOR,
+				   translate_transparent);
     else {
       charinfo *ci2 = tok.get_char(1);
       if (ci2 == 0)
 	break;
       if (ci1 == ci2)
-	ci1->set_translation(0);
+	ci1->set_translation(0, translate_transparent);
       else
-	ci1->set_translation(ci2);
+	ci1->set_translation(ci2, translate_transparent);
     }
     tok.next();
   }
   skip_line();
 }
 
+void translate()
+{
+  do_translate(1);
+}
+
+void translate_no_transparent()
+{
+  do_translate(0);
+}
 
 void char_flags()
 {
@@ -4269,7 +4498,15 @@ charinfo *token::get_char(int required)
   if (type == TOKEN_SPECIAL)
     return get_charinfo(nm);
   if (type == TOKEN_NUMBERED_CHAR)
-    return get_charinfo_by_number(c);
+    return get_charinfo_by_number(val);
+  if (type == TOKEN_ESCAPE) {
+    if (escape_char != 0)
+      return charset_table[escape_char];
+    else {
+      error("`\\e' used while no current escape character");
+      return 0;
+    }
+  }
   if (required) {
     if (type == TOKEN_EOF || type == TOKEN_NEWLINE)
       warning(WARN_MISSING, "missing normal or special character");
@@ -4303,24 +4540,12 @@ int token::add_to_node_list(node **pp)
   case TOKEN_CHAR:
     *pp = (*pp)->add_char(charset_table[c], curenv, &w);
     break;
-  case TOKEN_CHAR_HEIGHT:
-    curenv->set_char_height(val);
-    break;
-  case TOKEN_CHAR_SLANT:
-    curenv->set_char_slant(val);
-    break;
   case TOKEN_DUMMY:
     n = new dummy_node;
     break;
   case TOKEN_ESCAPE:
     if (escape_char != 0)
       *pp = (*pp)->add_char(charset_table[escape_char], curenv, &w);
-    break;
-  case TOKEN_FONT_NAME:
-    curenv->set_font(nm);
-    break;
-  case TOKEN_FONT_POSITION:
-    curenv->set_font(val);
     break;
   case TOKEN_HYPHEN_INDICATOR:
     *pp = (*pp)->add_discretionary_hyphen();
@@ -4338,12 +4563,9 @@ int token::add_to_node_list(node **pp)
     nd = 0;
     break;
   case TOKEN_NUMBERED_CHAR:
-    *pp = (*pp)->add_char(get_charinfo_by_number(c), curenv, &w);
+    *pp = (*pp)->add_char(get_charinfo_by_number(val), curenv, &w);
     break;
   case TOKEN_RIGHT_BRACE:
-    break;
-  case TOKEN_SIZE:
-    curenv->set_size(val);
     break;
   case TOKEN_SPACE:
     n = new hmotion_node(curenv->get_space_width());
@@ -4372,12 +4594,6 @@ void token::process()
   case TOKEN_CHAR:
     curenv->add_char(charset_table[c]);
     break;
-  case TOKEN_CHAR_HEIGHT:
-    curenv->set_char_height(val);
-    break;
-  case TOKEN_CHAR_SLANT:
-    curenv->set_char_slant(val);
-    break;
   case TOKEN_DUMMY:
     curenv->add_node(new dummy_node);
     break;
@@ -4390,12 +4606,6 @@ void token::process()
   case TOKEN_ESCAPE:
     if (escape_char != 0)
       curenv->add_char(charset_table[escape_char]);
-    break;
-  case TOKEN_FONT_NAME:
-    curenv->set_font(nm);
-    break;
-  case TOKEN_FONT_POSITION:
-    curenv->set_font(val);
     break;
   case TOKEN_BEGIN_TRAP:
   case TOKEN_END_TRAP:
@@ -4427,15 +4637,12 @@ void token::process()
     nd = 0;
     break;
   case TOKEN_NUMBERED_CHAR:
-    curenv->add_char(get_charinfo_by_number(c));
+    curenv->add_char(get_charinfo_by_number(val));
     break;
   case TOKEN_REQUEST:
     // handled in process_input_stack
     break;
   case TOKEN_RIGHT_BRACE:
-    break;
-  case TOKEN_SIZE:
-    curenv->set_size(val);
     break;
   case TOKEN_SPACE:
     curenv->space();
@@ -4578,7 +4785,7 @@ char *read_string()
 	s = new char[len*2];
 	memcpy(s, tem, len);
 	len *= 2;
-	delete tem;
+	a_delete tem;
       }
       s[i++] = c;
     }
@@ -4587,7 +4794,7 @@ char *read_string()
   s[i] = '\0';
   tok.next();
   if (i == 0) {
-    delete s;
+    a_delete s;
     return 0;
   }
   return s;
@@ -4614,13 +4821,13 @@ void system_request()
     error("empty command");
   else {
     system_status = system(command);
-    delete command;
+    a_delete command;
   }
 }
 
 void copy_file()
 {
-  if (curdiv == topdiv && !topdiv->first_page_begun) {
+  if (curdiv == topdiv && topdiv->before_first_page) {
     handle_initial_request(COPY_FILE_REQUEST);
     return;
   }
@@ -4638,7 +4845,7 @@ void copy_file()
 
 void vjustify()
 {
-  if (curdiv == topdiv && !topdiv->first_page_begun) {
+  if (curdiv == topdiv && topdiv->before_first_page) {
     handle_initial_request(VJUSTIFY_REQUEST);
     return;
   }
@@ -4652,7 +4859,7 @@ void vjustify()
 
 void transparent_file()
 {
-  if (curdiv == topdiv && !topdiv->first_page_begun) {
+  if (curdiv == topdiv && topdiv->before_first_page) {
     handle_initial_request(TRANSPARENT_FILE_REQUEST);
     return;
   }
@@ -4662,6 +4869,7 @@ void transparent_file()
   if (break_flag)
     curenv->do_break();
   if (!filename.is_null()) {
+    errno = 0;
     FILE *fp = fopen(filename.contents(), "r");
     if (!fp)
       error("can't open `%1': %2", filename.contents(), strerror(errno));
@@ -4754,75 +4962,13 @@ static void parse_output_page_list(char *p)
   }
 }
 
-struct string_list {
-  const char *s;
-  string_list *next;
-  string_list(const char *ss) : s(ss), next(0) {}
-};
-
-string_list *mac_dirs;
-string_list *font_dirs;
-
-// open filename, searching in dirs and put the result in pathp
-
-static FILE *open_file(const char *filename, string_list *dirs, char **pathp)
-{
-  int fnlen = strlen(filename);
-  while (dirs) {
-    int dlen = 0;
-    int need_slash = 0;
-    if (dirs->s) {
-      dlen = strlen(dirs->s);
-      if (dlen && dirs->s[dlen-1] != '/')
-	need_slash = 1;
-    }
-    char *path = new char[dlen + need_slash + fnlen + 1];
-    if (dirs->s)
-      strcpy(path, dirs->s);
-    else
-      path[0] = 0;
-    if (need_slash)
-      strcat(path, "/");
-    strcat(path, filename);
-    FILE *fp = fopen(path, "r");
-    if (fp) {
-      *pathp = path;
-      return fp;
-    }
-    delete path;
-    dirs = dirs->next;
-  }
-  return 0;
-}
-
-static void add_string(const char *s, string_list **p)
-{
-  while (*p)
-    p = &((*p)->next);
-  *p = new string_list(s);
-}
-
-static void init_dirs(const char *e, const char *standard, string_list **dirs)
-{
-  char *var = getenv(e);
-  if (!var) {
-    var = new char[strlen(standard)+1];
-    strcpy(var, standard);
-  }
-  for (char *p = strtok(var, ":"); p; p = strtok(NULL, ":"))
-    add_string(p, dirs);
-}
-
-
-#define MACRO_PREFIX "tmac."
-
-FILE *open_mac_file(const char *mac, char **path)
+static FILE *open_mac_file(const char *mac, char **path)
 {
   char *s = new char[strlen(mac)+strlen(MACRO_PREFIX)+1];
   strcpy(s, MACRO_PREFIX);
   strcat(s, mac);
-  FILE *fp = open_file(s, mac_dirs, path);
-  delete s;
+  FILE *fp = macro_path.open_file(s, path);
+  a_delete s;
   return fp;
 }
 
@@ -4833,10 +4979,42 @@ static void process_macro_file(const char *mac)
   if (!fp)
     fatal("can't find macro file %1", mac);
   const char *s = symbol(path).contents();
-  delete path;
+  a_delete path;
   input_stack::push(new file_iterator(fp, s));
   tok.next();
   process_input_stack();
+}
+
+static void process_startup_file()
+{
+  char *path;
+  FILE *fp = macro_path.open_file(STARTUP_FILE, &path);
+  if (fp) {
+    input_stack::push(new file_iterator(fp, symbol(path).contents()));
+    a_delete path;
+    tok.next();
+    process_input_stack();
+  }
+}
+
+void macro_source()
+{
+  symbol nm = get_long_name(1);
+  if (nm.is_null())
+    skip_line();
+  else {
+    while (!tok.newline() && !tok.eof())
+      tok.next();
+    char *path;
+    FILE *fp = macro_path.open_file(nm.contents(), &path);
+    if (fp) {
+      input_stack::push(new file_iterator(fp, symbol(path).contents()));
+      a_delete path;
+    }
+    else
+      error("can't find macro file `%1'", nm.contents());
+    tok.next();
+  }
 }
 
 static void process_input_file(const char *name)
@@ -4847,6 +5025,7 @@ static void process_input_file(const char *name)
     fp = stdin;
   }
   else {
+    errno = 0;
     fp = fopen(name, "r");
     if (!fp)
       fatal("can't open `%1': %2", name, strerror(errno));
@@ -4886,15 +5065,15 @@ static void do_register_assignment(const char *s)
     units n;
     if (evaluate_expression(p + 1, &n))
       set_number_reg(buf, n);
-    delete buf;
+    a_delete buf;
   }
 }
 
 static void set_string(const char *name, const char *value)
 {
   macro *m = new macro;
-  for (const unsigned char *p = (const unsigned char *)value; *p; p++)
-    if (!illegal_input_char(*p))
+  for (const char *p = value; *p; p++)
+    if (!illegal_input_char((unsigned char)*p))
       m->append(*p);
   request_dictionary.define(name, m);
 }
@@ -4914,28 +5093,33 @@ static void do_string_assignment(const char *s)
     memcpy(buf, s, p - s);
     buf[p - s] = 0;
     set_string(buf, p + 1);
-    delete buf;
+    a_delete buf;
   }
 }
 
-#define USAGE_EXIT_CODE 1
+struct string_list {
+  const char *s;
+  string_list *next;
+  string_list(const char *ss) : s(ss), next(0) {}
+};
+
+static void add_string(const char *s, string_list **p)
+{
+  while (*p)
+    p = &((*p)->next);
+  *p = new string_list(s);
+}
 
 void usage(const char *prog)
 {
   errprint(
-"usage: %1 -abivzCE -wname -Wname -dcstring -mname -nN -olist -rcN\n"
-"       -Tname -Fdir -Mdir -Hfile [ files ]\n",
+"usage: %1 -abivzCER -wname -Wname -dcstring -mname -nN -olist -rcN\n"
+"       -Tname -Fdir -Mdir [ files ]\n",
 	  prog);
   exit(USAGE_EXIT_CODE);
 }
 
-int
-#ifdef DUMP
-normal_main
-#else
-main
-#endif
-    (int argc, char **argv)
+int main(int argc, char **argv)
 {
   program_name = argv[0];
   static char stderr_buf[BUFSIZ];
@@ -4944,21 +5128,16 @@ main
   string_list *macros = 0;
   string_list *register_assignments = 0;
   string_list *string_assignments = 0;
-  const char *hyphen_file = HYPHENFILE;
   int iflag = 0;
   int tflag = 0;
   int fflag = 0;
   int nflag = 0;
+  int no_rc = 0;		// don't process troffrc
   int next_page_number;
   opterr = 0;
   hresolution = vresolution = 1;
-  const char *tem = getenv("GROFF_TYPESETTER");
-  if (tem)
-    device = tem;
-  tem = getenv("GROFF_HYPHEN");
-  if (tem)
-    hyphen_file = tem;
-  while ((c = getopt(argc, argv, "abivw:W:zCEf:m:n:o:r:d:F:H:M:T:tqs:")) != EOF)
+  while ((c = getopt(argc, argv, "abivw:W:zCEf:m:n:o:r:d:F:M:T:tqs:R"))
+	 != EOF)
     switch(c) {
     case 'v':
       {
@@ -4975,19 +5154,19 @@ main
       compatible_flag = 1;
       break;
     case 'M':
-      add_string(optarg, &mac_dirs);
+      macro_path.command_line_dir(optarg);
       break;
     case 'F':
       font::command_line_font_dir(optarg);
-      break;
-    case 'H':
-      hyphen_file = optarg;
       break;
     case 'm':
       add_string(optarg, &macros);
       break;
     case 'E':
       inhibit_errors = 1;
+      break;
+    case 'R':
+      no_rc = 1;
       break;
     case 'w':
       enable_warning(optarg);
@@ -5043,9 +5222,7 @@ main
       assert(0);
     }
   set_string(".T", device);
-  init_dirs(MACROPATH_ENVVAR, MACROPATH, &mac_dirs);
   init_charset_table();
-  font::set_device_name(device);
   if (!font::load_desc())
     fatal("sorry, I can't continue");
   units_per_inch = font::res;
@@ -5062,8 +5239,11 @@ main
     for (i = 0; font::style_table[i]; i++)
       mount_style(j++, symbol(font::style_table[i]));
   }
-  for (i = 0; font::font_name_table[i]; i++)
-    mount_font(j++, symbol(font::font_name_table[i]));
+  for (i = 0; font::font_name_table[i]; i++, j++)
+    // In the DESC file a font name of 0 (zero) means leave this
+    // position empty.
+    if (strcmp(font::font_name_table[i], "0") != 0)
+      mount_font(j, symbol(font::font_name_table[i]));
   curdiv = topdiv = new top_level_diversion;
   if (nflag)
     topdiv->set_next_page_number(next_page_number);
@@ -5077,7 +5257,6 @@ main
   number_reg_dictionary.define(".T", new constant_reg(tflag ? "1" : "0"));
   init_registers();
   init_reg_requests();
-  read_hyphen_file(hyphen_file);
   init_hyphen_requests();
   init_environments();
   while (string_assignments) {
@@ -5092,6 +5271,8 @@ main
     register_assignments = register_assignments->next;
     delete tem;
   }
+  if (!no_rc)
+    process_startup_file();
   while (macros) {
     process_macro_file(macros->s);
     string_list *tem = macros;
@@ -5102,229 +5283,43 @@ main
     process_input_file(argv[i]);
   if (optind >= argc || iflag)
     process_input_file("-");
-  exit_groff();
+  exit_troff();
 }
-
-#ifdef DUMP
-
-int dumped_main(int argc, char **argv)
-{
-  program_name = argv[0];
-  int c;
-  string_list *macros = 0;
-  string_list *register_assignments = 0;
-  string_list *string_assignments = 0;
-  int iflag = 0;
-  int nflag = 0;
-  int next_page_number;
-  opterr = 0;
-  while ((c = getopt(argc, argv, "abivw:W:zECf:m:n:o:r:d:F:H:M:T:tqs:")) != EOF)
-    switch(c) {
-    case 'v':
-      {
-	extern const char *version_string;
-	fprintf(stderr, "GNU troff version %s\n", version_string);
-	fflush(stderr);
-	break;
-      }
-    case 'f':
-    case 'H':
-    case 'T':
-      error("`-%1' option illegal when dumped", char(c));
-      break;
-    case 'C':
-      compatible_flag = 1;
-      break;
-    case 'M':
-      add_string(optarg, &mac_dirs);
-      break;
-    case 'F':
-      font::command_line_font_dir(optarg);
-      break;
-    case 'm':
-      add_string(optarg, &macros);
-      break;
-    case 'E':
-      inhibit_errors = 1;
-      break;
-    case 'w':
-      enable_warning(optarg);
-      break;
-    case 'W':
-      disable_warning(optarg);
-      break;
-    case 'i':
-      iflag = 1;
-      break;
-    case 'b':
-      backtrace_flag = 1;
-      break;
-    case 'a':
-      ascii_output_flag = 1;
-      break;
-    case 'z':
-      suppress_output_flag = 1;
-      break;
-    case 'n':
-      if (sscanf(optarg, "%d", &next_page_number) == 1)
-	nflag++;
-      else
-	error("bad page number");
-      break;
-    case 'o':
-      parse_output_page_list(optarg);
-      break;
-    case 'd':
-      if (*optarg == '\0')
-	error("`-d' requires non-empty argument");
-      else
-	add_string(optarg, &string_assignments);
-      break;
-    case 'r':
-      if (*optarg == '\0')
-	error("`-r' requires non-empty argument");
-      else
-	add_string(optarg, &register_assignments);
-      break;
-    case 'q':
-    case 's':
-    case 't':
-      // silently ignore these
-      break;
-    case '?':
-      usage(argv[0]);
-    default:
-      assert(0);
-    }
-  init_dirs(MACROPATH_ENVVAR, MACROPATH, &mac_dirs);
-  init_registers();
-  if (nflag)
-    topdiv->set_next_page_number(next_page_number);
-  while (string_assignments) {
-    do_string_assignment(string_assignments->s);
-    string_list *tem = string_assignments;
-    string_assignments = string_assignments->next;
-    delete tem;
-  }
-  while (register_assignments) {
-    do_register_assignment(register_assignments->s);
-    string_list *tem = register_assignments;
-    register_assignments = register_assignments->next;
-    delete tem;
-  }
-  while (macros) {
-    process_macro_file(macros->s);
-    string_list *tem = macros;
-    macros = macros->next;
-    delete tem;
-  }
-  int i;
-  for (i = optind; i < argc; i++)
-    process_input_file(argv[i]);
-  if (optind >= argc || iflag)
-    process_input_file("-");
-  exit_groff();
-}
-
-static int dumped = 0;
-
-extern "C" {
-
-int unexec(const char *new_name, const char *a_name, unsigned data_start = 0,
-	   unsigned bss_start = 0, unsigned entry_address = 0);
-
-#ifdef __GNUG__
-#define CPLUS_INIT_FUNC __main
-#else
-#define CPLUS_INIT_FUNC _main
-#endif
-
-extern int CPLUS_INIT_FUNC();
-
-int c_main(int argc, char **argv)
-{
-  if (dumped)
-    return dumped_main(argc, argv);
-  else {
-    CPLUS_INIT_FUNC();
-    return normal_main(argc, argv);
-  }
-}
-
-#define OPTIND_INITIAL_VALUE 1
-
-}
-
-void dump_request()
-{
-  symbol new_name = get_long_name(1);
-  if (new_name.is_null()) {
-    skip_line();
-    return;
-  }
-  symbol a_name = get_long_name(1);
-  if (a_name.is_null()) {
-    skip_line();
-    return;
-  }
-  if (topdiv->first_page_begun)
-    fatal("can't dump after first page begun");
-  while (input_stack::get(NULL) != EOF)
-    ;
-  suppress_output_flag = 0;
-  ascii_output_flag = 0;
-  dumped = 1;
-  optind = OPTIND_INITIAL_VALUE;
-  number_reg_dictionary.remove(".A");
-  while (output_page_list) {
-    page_range *tem = output_page_list;
-    output_page_list = output_page_list->next;
-    delete tem;
-  }
-  while (mac_dirs) {
-    string_list *tem = mac_dirs;
-    mac_dirs = mac_dirs->next;
-    delete tem;
-  }
-  font::forget_command_line_font_dirs();
-  fflush(stderr);
-  clearerr(stdin);
-  // clean up the diversion_stack
-  // clean up environment stack
-  if (unexec(new_name.contents(), a_name.contents()) < 0)
-    exit(1);
-  else
-    exit(0);
-}
-
-#endif /* DUMP */
 
 void warn_request()
 {
   int n;
-  if (!has_arg())
-    warning_mask = WARN_TOTAL;
-  else if (get_integer(&n)) {
+  if (has_arg() && get_integer(&n)) {
     if (n & ~WARN_TOTAL) {
       warning(WARN_RANGE, "warning mask must be between 0 and %1", WARN_TOTAL);
       n &= WARN_TOTAL;
     }
     warning_mask = n;
   }
+  else
+    warning_mask = WARN_TOTAL;
   skip_line();
 }
 
 static void init_registers()
 {
-  long t;
-  time(&t);
-  tm *tt = localtime(&t);
+#ifdef LONG_FOR_TIME_T
+  long
+#else /* not LONG_FOR_TIME_T */
+  time_t
+#endif /* not LONG_FOR_TIME_T */
+    t = time(0);
+  // Use struct here to work around misfeature in old versions of g++.
+  struct tm *tt = localtime(&t);
   set_number_reg("dw", int(tt->tm_wday + 1));
   set_number_reg("dy", int(tt->tm_mday));
   set_number_reg("mo", int(tt->tm_mon + 1));
   set_number_reg("yr", int(tt->tm_year));
   set_number_reg("$$", getpid());
-  number_reg_dictionary.define(".A", new constant_reg(ascii_output_flag ? "1" : "0"));
+  number_reg_dictionary.define(".A",
+			       new constant_reg(ascii_output_flag
+						? "1"
+						: "0"));
 }
 
 void init_input_requests()
@@ -5346,9 +5341,10 @@ void init_input_requests()
   init_request("ec", set_escape_char);
   init_request("pc", set_page_character);
   init_request("tm", terminal);
-  init_request("ex", REQUEST_FUNCP(exit_request));
+  init_request("ex", exit_request);
   init_request("em", end_macro);
   init_request("tr", translate);
+  init_request("trnt", translate_no_transparent);
   init_request("ab", abort_request);
   init_request("pi", pipe_output);
   init_request("cf", copy_file);
@@ -5359,6 +5355,7 @@ void init_input_requests()
   init_request("rd", read_request);
   init_request("cp", compatible);
   init_request("char", define_character);
+  init_request("rchar", remove_character);
   init_request("hcode", hyphenation_code);
   init_request("while", while_request);
   init_request("break", while_break_request);
@@ -5368,9 +5365,6 @@ void init_input_requests()
   init_request("chop", chop_macro);
   init_request("asciify", asciify_macro);
   init_request("warn", warn_request);
-#ifdef DUMP
-  init_request("dump", dump_request);
-#endif
   init_request("open", open_request);
   init_request("opena", opena_request);
   init_request("close", close_request);
@@ -5384,6 +5378,8 @@ void init_input_requests()
 #ifdef COLUMN
   init_request("vj", vjustify);
 #endif /* COLUMN */
+  init_request("mso", macro_source);
+  init_request("do", do_request);
   number_reg_dictionary.define("systat", new variable_reg(&system_status));
   number_reg_dictionary.define("slimit",
 			       new variable_reg(&input_stack::limit));
@@ -5423,19 +5419,24 @@ static request_or_macro *lookup_request(symbol nm)
 }
 
 
-node *charinfo_to_node(charinfo *ci, const environment *envp)
+node *charinfo_to_node_list(charinfo *ci, const environment *envp)
 {
+  // Don't interpret character definitions in compatible mode.
+  int old_compatible_flag = compatible_flag;
+  compatible_flag = 0;
+  int old_escape_char = escape_char;
+  escape_char = '\\';
   macro *mac = ci->set_macro(0);
   assert(mac != 0);
   environment *oldenv = curenv;
   environment env(envp);
   curenv = &env;
-  font_size sz = env.get_font_size();
+  curenv->set_composite();
   token old_tok = tok;
   input_stack::add_boundary();
   string_iterator *si = new string_iterator(*mac, "composite character", ci->nm);
   input_stack::push(si);
-  // we don't use process_input_stack, because we don't to recognise
+  // we don't use process_input_stack, because we don't want to recognise
   // requests
   for (;;) {
     tok.next();
@@ -5451,12 +5452,13 @@ node *charinfo_to_node(charinfo *ci, const environment *envp)
       tok.process();
   }
   node *n = curenv->extract_output_line();
-  composite_node *cn = new composite_node(n, ci, sz);
   input_stack::remove_boundary();
   ci->set_macro(mac);
   tok = old_tok;
   curenv = oldenv;
-  return cn;
+  compatible_flag = old_compatible_flag;
+  escape_char = old_escape_char;
+  return n;
 }
 
 static node *read_draw_node()
@@ -5488,7 +5490,7 @@ static node *read_draw_node()
 	  for (int j = 0; j < maxpoints; j++)
 	    point[j] = oldpoint[j];
 	  maxpoints *= 2;
-	  delete oldpoint;
+	  a_delete oldpoint;
 	}
 	if (!get_hunits(&point[i].h, 'm')) {
 	  err = 1;
@@ -5546,11 +5548,11 @@ static node *read_draw_node()
 	}
 	draw_node *dn = new draw_node(type, point, npoints,
 				      curenv->get_font_size());
-	delete point;
+	a_delete point;
 	return dn;
       }
       else {
-	delete point;
+	a_delete point;
       }
     }
   }
@@ -5575,6 +5577,7 @@ static struct {
   "input", WARN_INPUT,
   "escape", WARN_ESCAPE,
   "space", WARN_SPACE,
+  "font", WARN_FONT,
   "di", WARN_DI,
   "mac", WARN_MAC,
   "reg", WARN_REG,
@@ -5719,7 +5722,8 @@ int charinfo::next_index = 0;
 
 charinfo::charinfo(symbol s)
 : nm(s), hyphenation_code(0), translation(0), flags(0), ascii_code(0),
-  special_translation(TRANSLATE_NONE), mac(0), not_found(0)
+  special_translation(TRANSLATE_NONE), mac(0), not_found(0),
+  transparent_translate(1)
 {
   index = next_index++;
 }
@@ -5729,16 +5733,18 @@ void charinfo::set_hyphenation_code(unsigned char c)
   hyphenation_code = c;
 }
 
-void charinfo::set_translation(charinfo *ci)
+void charinfo::set_translation(charinfo *ci, int tt)
 {
   translation = ci;
   special_translation = TRANSLATE_NONE;
+  transparent_translate = tt;
 }
 
-void charinfo::set_special_translation(int c)
+void charinfo::set_special_translation(int c, int tt)
 {
   special_translation = c;
   translation = 0;
+  transparent_translate = tt;
 }
 
 void charinfo::set_ascii_code(unsigned char c)
@@ -5753,30 +5759,48 @@ macro *charinfo::set_macro(macro *m)
   return tem;
 }
 
-void charinfo::set_number(unsigned char c)
+void charinfo::set_number(int n)
 {
-  number = c;
+  number = n;
   flags |= NUMBERED;
 }
 
 int charinfo::get_number()
 {
-  return (flags & NUMBERED) ? int(number) : -1;
+  assert(flags & NUMBERED);
+  return number;
 }
 
 symbol UNNAMED_SYMBOL("---");
 
-charinfo *get_charinfo_by_number(unsigned char n)
+// For numbered characters not between 0 and 255, we make a symbol out
+// of the number and store them in this dictionary.
+
+dictionary numbered_charinfo_dictionary(11);
+
+charinfo *get_charinfo_by_number(int n)
 {
   static charinfo *number_table[256];
 
-  charinfo *ci = number_table[n];
-  if (!ci) {
-    ci = new charinfo(UNNAMED_SYMBOL);
-    ci->set_number(n);
-    number_table[n] = ci;
+  if (n >= 0 && n < 256) {
+    charinfo *ci = number_table[n];
+    if (!ci) {
+      ci = new charinfo(UNNAMED_SYMBOL);
+      ci->set_number(n);
+      number_table[n] = ci;
+    }
+    return ci;
   }
-  return ci;
+  else {
+    symbol ns(itoa(n));
+    charinfo *ci = (charinfo *)numbered_charinfo_dictionary.lookup(ns);
+    if (!ci) {
+      ci = new charinfo(UNNAMED_SYMBOL);
+      ci->set_number(n);
+      numbered_charinfo_dictionary.lookup(ns, ci);
+    }
+    return ci;
+  }
 }
 
 int font::name_to_index(const char *nm)
@@ -5794,7 +5818,7 @@ int font::name_to_index(const char *nm)
     return ci->get_index();
 }
 
-int font::number_to_index(unsigned char c)
+int font::number_to_index(int n)
 {
-  return get_charinfo_by_number(c)->get_index();
+  return get_charinfo_by_number(n)->get_index();
 }

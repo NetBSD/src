@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1990, 1991 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,12 +15,12 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifdef COLUMN
 
-#include "groff.h"
+#include "troff.h"
 #include "symbol.h"
 #include "dictionary.h"
 #include "hvunits.h"
@@ -464,8 +464,8 @@ justification_spec::justification_spec(vunits h)
 
 justification_spec::~justification_spec()
 {
-  delete type;
-  delete amount;
+  a_delete type;
+  a_delete amount;
 }
 
 void justification_spec::append(symbol t, vunits v)
@@ -486,12 +486,12 @@ void justification_spec::append(symbol t, vunits v)
     int i;
     for (i = 0; i < n; i++)
       type[i] = old_type[i];
-    delete old_type;
+    a_delete old_type;
     vunits *old_amount = amount;
     amount = new vunits[maxn];
     for (i = 0; i < n; i++)
       amount[i] = old_amount[i];
-    delete old_amount;
+    a_delete old_amount;
   }
   assert(n < maxn);
   type[n] = t;

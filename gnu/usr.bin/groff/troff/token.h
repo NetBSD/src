@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 
@@ -36,14 +36,10 @@ class token {
     TOKEN_BACKSPACE,
     TOKEN_BEGIN_TRAP,
     TOKEN_CHAR,			// a normal printing character
-    TOKEN_CHAR_HEIGHT,		// \H
-    TOKEN_CHAR_SLANT,		// \S
     TOKEN_DUMMY,
     TOKEN_EMPTY,		// this is the initial value
     TOKEN_END_TRAP,
     TOKEN_ESCAPE,		// \e
-    TOKEN_FONT_NAME,		// \f followed by a name
-    TOKEN_FONT_POSITION,	// \f followed by a digit
     TOKEN_HYPHEN_INDICATOR,
     TOKEN_INTERRUPT,		// \c
     TOKEN_ITALIC_CORRECTION,	// \/
@@ -56,7 +52,6 @@ class token {
     TOKEN_PAGE_EJECTOR,
     TOKEN_REQUEST,
     TOKEN_RIGHT_BRACE,
-    TOKEN_SIZE,			// \s
     TOKEN_SPACE,		// ` ' -- ordinary space
     TOKEN_SPECIAL,		// a special character -- \' \` \- \(xx
     TOKEN_SPREAD,		// \p -- break and spread output line 
@@ -81,19 +76,17 @@ public:
   int leader();
   int backspace();
   int delimiter(int warn = 0);	// is it suitable for use as a delimiter?
-  symbol special();
   int dummy();
   int transparent();
   int left_brace();
   int right_brace();
   int page_ejector();
+  int hyphen_indicator();
   int operator==(const token &); // need this for delimiters, and for conditions
   int operator!=(const token &); // ditto
   unsigned char ch();
   charinfo *get_char(int required = 0);
   int add_to_node_list(node **);
-  int changes_env();
-  int is_size();
   int title();
   void make_space();
   void make_newline();
@@ -166,19 +159,9 @@ inline int token::eof()
   return type == TOKEN_EOF;
 }
 
-inline symbol token::special()
-{
-  return type == TOKEN_SPECIAL ? nm : symbol();
-}
-
 inline int token::dummy()
 {
   return type == TOKEN_DUMMY;
-}
-
-inline int token::is_size()
-{
-  return type == TOKEN_SIZE;
 }
 
 inline int token::left_brace()
@@ -189,15 +172,6 @@ inline int token::left_brace()
 inline int token::right_brace()
 {
   return type == TOKEN_RIGHT_BRACE;
-}
-
-inline int token::changes_env()
-{
-  return (type == TOKEN_CHAR_HEIGHT
-	  || type == TOKEN_CHAR_SLANT
-	  || type == TOKEN_FONT_NAME
-	  || type == TOKEN_FONT_POSITION
-	  || type == TOKEN_SIZE);
 }
 
 inline int token::tab()
@@ -213,6 +187,11 @@ inline int token::leader()
 inline int token::backspace()
 {
   return type == TOKEN_BACKSPACE;
+}
+
+inline int token::hyphen_indicator()
+{
+  return type == TOKEN_HYPHEN_INDICATOR;
 }
 
 int has_arg();

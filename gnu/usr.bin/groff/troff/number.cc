@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,11 +15,11 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 
-#include "groff.h"
+#include "troff.h"
 #include "symbol.h"
 #include "hvunits.h"
 #include "env.h"
@@ -388,10 +388,6 @@ static int parse_term(units *v, int scale_indicator, int parenthesised)
       tok.next();
       negative = !negative;
     }
-    else if (tok.is_size()) {
-      tok.process();
-      tok.next();
-    }
     else
       break;
   unsigned char c = tok.ch();
@@ -402,12 +398,21 @@ static int parse_term(units *v, int scale_indicator, int parenthesised)
     tok.next();
     if (!parse_term(v, scale_indicator, parenthesised))
       return 0;
-    int tem = (scale_indicator == 'v'
-	       ? curdiv->get_vertical_position().to_units()
-	       : curenv->get_input_line_position().to_units());
-    if (*v < INT_MIN + tem) {
-      error("numeric overflow");
-      return 0;
+    int tem;
+    tem = (scale_indicator == 'v'
+	   ? curdiv->get_vertical_position().to_units()
+	   : curenv->get_input_line_position().to_units());
+    if (tem >= 0) {
+      if (*v < INT_MIN + tem) {
+	error("numeric overflow");
+	return 0;
+      }
+    }
+    else {
+      if (*v > INT_MAX + tem) {
+	error("numeric overflow");
+	return 0;
+      }
     }
     *v -= tem;
     if (negative) {
@@ -434,7 +439,8 @@ static int parse_term(units *v, int scale_indicator, int parenthesised)
 	scale_indicator = c;
       }
       else {
-	error("expected `;' after scale-indicator");
+	error("expected `;' after scale-indicator (got %1)",
+	      tok.description());
 	return 0;
       }
     }
@@ -446,7 +452,7 @@ static int parse_term(units *v, int scale_indicator, int parenthesised)
       return 0;
     tok.skip();
     if (tok.ch() != ')') {
-      warning(WARN_SYNTAX, "missing ')'");
+      warning(WARN_SYNTAX, "missing `)' (got %1)", tok.description());
     }
     else
       tok.next();
@@ -478,7 +484,7 @@ static int parse_term(units *v, int scale_indicator, int parenthesised)
 	return 0;
       }
       *v *= 10;
-      if (*v > INT_MAX - (c - '0')) {
+      if (*v > INT_MAX - (int(c) - '0')) {
 	error("numeric overflow");
 	return 0;
       }
@@ -520,6 +526,7 @@ static int parse_term(units *v, int scale_indicator, int parenthesised)
     }
   }
   int si = scale_indicator;
+  int do_next = 0;
   if ((c = tok.ch()) != 0 && strchr(SCALE_INDICATOR_CHARS, c) != 0) {
     switch (scale_indicator) {
     case 'z':
@@ -544,7 +551,9 @@ static int parse_term(units *v, int scale_indicator, int parenthesised)
       si = c;
       break;
     }
-    tok.next();
+    // Don't do tok.next() here because the next token might be \s, which
+    // would affect the interpretation of m.
+    do_next = 1;
   }
   switch (si) {
   case 'i':
@@ -600,10 +609,8 @@ static int parse_term(units *v, int scale_indicator, int parenthesised)
   default:
     assert(0);
   }
-  if (tok.is_size()) {
-    tok.process();
+  if (do_next)
     tok.next();
-  }
   if (negative) {
     if (*v == INT_MIN) {
       error("numeric overflow");

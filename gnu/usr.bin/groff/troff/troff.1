@@ -7,20 +7,30 @@
 .ns
 .TP \\$1
 ..
-.TH GTROFF 1 "19 October 1990" "Groff Version @VERSION@"
+.\" Like TP, but if specified indent is more than half
+.\" the current line-length - indent, use the default indent.
+.de Tp
+.ie \\n(.$=0:((0\\$1)*2u>(\\n(.lu-\\n(.iu)) .TP
+.el .TP "\\$1"
+..
+.\" The BSD man macros can't handle " in arguments to font change macros,
+.\" so use \(ts instead of ".
+.tr \(ts"
+.TH TROFF 1 "1 April 1993" "Groff Version 1.08"
 .SH NAME
-gtroff \- format documents
-.SH SYNOPIS
+troff \- format documents
+.SH SYNOPSIS
+.nr a \n(.j
 .ad l
 .nr i \n(.i
-.in +\w'\fBgtroff 'u
+.in +\w'\fBtroff 'u
 .ti \niu
-.B gtroff
+.B troff
 .de OP
 .ie \\n(.$-1 .RI "[\ \fB\\$1\fP" "\\$2" "\ ]"
 .el .RB "[\ " "\\$1" "\ ]"
 ..
-.OP \-abivzCE
+.OP \-abivzCER
 .OP \-w name
 .OP \-W name
 .OP \-d cs
@@ -32,13 +42,14 @@ gtroff \- format documents
 .OP \-T name
 .OP \-F dir
 .OP \-M dir
-.OP \-H file
 .RI "[\ " files\|.\|.\|. "\ ]"
 .br
-.ad b
+.ad \na
 .SH DESCRIPTION
-gtroff is the central part of the groff document formatting system.
-It is highly compatible with device-independent troff.
+This manual page describes the GNU version of
+.BR troff ,
+which is part of the groff document formatting system.
+It is highly compatible with Unix troff.
 Usually it should be invoked using the groff command, which will
 also run preprocessors and postprocessors in the appropriate
 order and with the appropriate options.
@@ -52,7 +63,7 @@ approximation of the typeset output.
 .B \-b
 Print a backtrace with each warning or error message.  This backtrace
 should help track down the cause of the error.  The line numbers given
-in the backtrace may not always correct: gtroff's idea of line numbers
+in the backtrace may not always correct: troff's idea of line numbers
 gets confused by
 .B as
 or 
@@ -111,7 +122,11 @@ as the default font family.
 .BI \-m name
 Read in the file
 .BI tmac. name\fR.
-Normally this will be searched for in @MACRODIR@.
+Normally this will be searched for in /usr/share/tmac.
+.TP
+.B \-R
+Don't load
+.BR troffrc .
 .TP
 .BI \-n num
 Number the first page
@@ -130,7 +145,7 @@ means print every page between
 and
 .IR n ,
 .BI \- n
-mans print every page up to
+means print every page up to
 .IR n ,
 .IB n \-
 means print every page from
@@ -148,13 +163,13 @@ to
 .I c
 must be a one character name;
 .I n
-can be any gtroff numeric expression.
+can be any troff numeric expression.
 .TP
 .BI \-T name
 Prepare output for device
 .IR name ,
 rather than the default
-.BR @DEVICE@ .
+.BR ps .
 .TP
 .BI \-F dir
 Search
@@ -166,21 +181,15 @@ is the name of the device)
 for the
 .B DESC
 file and font files before the normal
-.BR @FONTDIR@ .
-.TP
-.BI \-H file
-Read hyphenation patterns from
-.IR file ,
-rather than the default
-.BR @HYPHENFILE@ .
+.BR /usr/share/groff_font .
 .TP
 .BI \-M dir
 Search directory
 .I dir
 for macro files before the normal
-.BR @MACRODIR@ .
+.BR /usr/share/tmac .
 .SH USAGE
-Only the features not in device-independent troff are described here.
+Only the features not in Unix troff are described here.
 .SS Long names
 The names of number registers, fonts, strings/macros/diversions,
 special characters can be of any length. In escape sequences, where
@@ -217,7 +226,7 @@ file (1 by default.)
 There is a new scale indicator
 .B z
 which has the effect of multiplying by sizescale.
-Requests and escape sequences in gtroff 
+Requests and escape sequences in troff 
 interpret arguments that represent a pointsize as being in units
 of scaled points, but they evaluate each such argument
 using a default scale indicator of
@@ -263,7 +272,7 @@ whose default scale indicator was neither
 nor
 .BR z ,
 and so
-.B gtroff
+.B troff
 disallows this.
 Similarily it would make no sense to use a scaling indicator
 other than
@@ -273,7 +282,7 @@ or
 in a numeric expression whose default scale indicator was
 .BR z ,
 and so
-.B gtroff
+.B troff
 disallows this as well.
 .LP
 There is also new scale indicator
@@ -319,6 +328,23 @@ is missing, ignore scaling indicators in the evaluation of
 .IR e .
 .SS New escape sequences
 .TP
+.BI \eA' anything '
+This expands to
+.B 1
+or
+.B 0
+according as
+.I anything
+is or is not acceptable as the name of a string, macro, diversion,
+number register, environment or font.
+It will return
+.B 0
+if
+.I anything
+is empty.
+This is useful if you want to lookup user input in some sort of
+associative table.
+.TP
 .BI \eC' xxx '
 Typeset character named
 .IR xxx .
@@ -354,8 +380,9 @@ Typeset the character with code
 .I n
 in the current font.
 .I n
-must be a decimal integer between 0 and 255.
-If the current font does not contain the character,
+can be any integer.
+Most devices only have characters with codes between 0 and 255.
+If the current font does not contain a character with that code,
 special fonts will
 .I not
 be searched.
@@ -381,6 +408,13 @@ the
 .B \eN
 escape sequence is the only way to use these.
 .TP
+.BI \eR' name\ \(+-n '
+This has the same effect as
+.RS
+.IP
+.BI .nr\  name\ \(+-n
+.RE
+.TP
 .BI \es( nn
 .TQ
 .BI \es\(+-( nn
@@ -404,6 +438,18 @@ scaled points;
 is a numeric expression with a default scale indicator of
 .BR z .
 .TP
+.BI \eV x
+.TQ
+.BI \eV( xx
+.TQ
+.BI \eV[ xxx ]
+Interpolate the contents of the environment variable
+.I xxx ,
+as returned by
+.BR getenv (3).
+.B \eV
+is interpreted in copy-mode.
+.TP
 .BI \eY x
 .TQ
 .BI \eY( xx
@@ -420,7 +466,7 @@ to have been defined as a macro and thus contain newlines
 (it is not permitted for the argument to
 .B \eX
 to contain newlines).
-The inclusion of newlines requires an extension to the troff output
+The inclusion of newlines requires an extension to the Unix troff output
 format, and will confuse drivers that do not know about this
 extension.
 .TP
@@ -434,7 +480,7 @@ may not contain tabs or leaders.
 The name by which the current macro was invoked.
 The
 .B als
-request can make a macro can have more than one name.
+request can make a macro have more than one name.
 .TP
 .B \e$*
 In a macro, the concatenation of all the arguments separated by spaces.
@@ -467,7 +513,7 @@ may not contain newlines; use
 .B \e!
 if you want to embed newlines in a diversion.
 The escape sequence
-.B \e!
+.B \e?
 is also recognised in copy mode and turned into a single internal
 code; it is this code that terminates
 .IR anything .
@@ -538,6 +584,19 @@ Like
 except that it behaves like a character declared with the
 .B cflags
 request to be transparent for the purposes of end of sentence recognition.
+.TP
+.B \e~
+This produces an unbreakable space that stretches like a normal inter-word
+space when a line is adjusted.
+.TP
+.B \e#
+Everything up to and including the next newline is ignored.
+This is interpreted in copy mode.
+This is like
+.B \e%
+except that
+.B \e%
+does not ignore the terminating newline.
 .SS New requests
 .TP
 .BI .aln\  xx\ yy
@@ -578,7 +637,7 @@ request; normally they modify the value of an existing object.
 .TP
 .BI .asciify\  xx
 This request only exists in order to make it possible
-to make certain gross troff hacks work with gtroff.
+to make certain gross hacks work with GNU troff.
 It `unformats' the diversion
 .I xx
 in such a way that
@@ -671,7 +730,7 @@ the character is transparent for the purposes of end of sentence
 recognition;
 this is the same as having a zero space factor in \*(tx
 (initially characters
-.B """')]*\e(dg"
+.B \(ts')]*\e(dg\e(rq
 have this property).
 .RE
 .TP
@@ -686,6 +745,15 @@ needs to be printed,
 .I string
 will be processed in a temporary environment and the result
 will be wrapped up into a single object.
+Compatibility mode will be turned off
+and the escape character will be set to
+.B \e
+while
+.I string
+is being processed.
+Any emboldening, constant spacing or track kerning will be applied
+to this object rather than to individual characters in
+.IR string .
 A character defined by this request can be used just like
 a normal character provided by the output device.
 In particular other characters can be translated to it
@@ -708,6 +776,9 @@ There is a special anti-recursion feature:
 use of character within the character's definition
 will be handled like normal characters not defined with
 .BR char .
+A character definition can be removed with the
+.B rchar
+request.
 .TP
 .BI .chop\  xx
 Chop the last character off macro, string, or diversion
@@ -741,6 +812,28 @@ is non-zero or missing, enable compatibility mode, otherwise
 disable it.
 In compatibility mode, long names are not recognised, and the
 incompatibilities caused by long names do not arise.
+.TP
+.BI .do\  xxx
+Interpret
+.I .xxx
+with compatibility mode disabled.
+For example,
+.RS
+.IP
+.B
+\&.do fam T
+.LP
+would have the same effect as
+.IP
+.B
+\&.fam T
+.LP
+except that it would work even if compatibility mode had been enabled.
+Note that the previous compatibility mode is restored before any files
+sourced by
+.I xxx
+are interpreted.
+.RE
 .TP
 .BI .fam\  xx
 Set the current font family to
@@ -812,12 +905,23 @@ character (not a special character) other than a digit or a space.
 Initially each lower-case letter has a hyphenation code, which
 is itself, and each upper-case letter has a hyphenation code
 which is the lower case version of itself.
-Hyphenation is controlled by a file of hyphenation patterns
-(normally @HYPHENFILE@);
-this file should have the same format as the argument to
-the \epatterns primitive in \*(tx;
-the letters appearing in this file are interpreted as hyphenation
-codes.
+See also the
+.B hpf
+request.
+.TP
+.BI .hla\  lang
+Set the current hyphenation language to
+.IR lang .
+Hyphenation exceptions specified with the
+.B hw
+request and hyphenation patterns specified with the
+.B hpf
+request are both associated with the current hyphenation language.
+The
+.B hla
+request is usually invoked by the
+.B troffrc
+file.
 .TP
 .BI .hlm\  n
 Set the maximum number of consecutive hyphenated lines to
@@ -832,6 +936,33 @@ with that environment.
 Hyphens resulting from
 .B \e%
 are counted; explicit hyphens are not.
+.TP
+.BI .hpf\  file
+Read hyphenation patterns from
+.IR file ;
+this will be searched for in the same way that
+.BI tmac. name
+is searched for when the
+.BI \-m name
+option is specified.
+It should have the same format as the argument to
+the \epatterns primitive in \*(tx;
+the letters appearing in this file are interpreted as hyphenation
+codes.
+A
+.B %
+character in the patterns file introduces a comment that continues
+to the end of the line.
+The set of hyphenation patterns is associated with the current language
+set by the
+.B hla
+request.
+The
+.B hpf
+request
+is usually invoked by the
+.B troffrc
+file.
 .TP
 .BI .hym\  n
 Set the
@@ -874,6 +1005,17 @@ If
 .I n
 is non-zero or missing, enable pairwise kerning, otherwise disable it.
 .TP
+.BI .mso\  file
+The same as the
+.B so
+request except that
+.I file
+is searched for in the same way that
+.BI tmac. name
+is searched for when the
+.BI \-m name
+option is specified.
+.TP
 .B .nroff
 Make the
 .B n
@@ -914,6 +1056,14 @@ traps and diversion traps) on stderr.  Empty slots in the page trap
 list are printed as well, because they can affect the priority of
 subsequently planted traps.
 .TP
+.BI .rchar\  c1\ c2\|.\|.\|.
+Remove the definitions of characters
+.IR c1 ,
+.IR c2 ,\|.\|.\|.
+This undoes the effect of a
+.B char
+request.
+.TP
 .B .rj
 .TQ
 .BI .rj\  n
@@ -936,6 +1086,27 @@ Rename number register
 .I xx
 to
 .IR yy .
+.TP
+.BI .shc\  c
+Set the soft hyphen character to
+.IR c .
+If
+.I c
+is omitted,
+the soft hyphen character will be set to the default
+.BR \e(hy .
+The soft hyphen character is the character which will be inserted
+when a word is hyphenated at a line break.
+If the soft hyphen character does not exist in the font of the character
+immediately preceding a potential break point,
+then the line will not be broken at that point.
+Neither definitions (specified with the
+.B char
+request)
+nor translations (specified with the
+.B tr
+request)
+are considered when finding the soft hyphen character.
 .TP
 .BI .shift\  n
 In a macro, shift the arguments by
@@ -1010,7 +1181,7 @@ the width of every character will be increased by an amount
 between
 .I n1
 and
-.IR n2 :
+.IR n2 ;
 when the current point size is less than or equal to
 .I s1
 the width will be increased by
@@ -1051,7 +1222,36 @@ Unlike with the
 request,
 the file cannot contain characters such as
 .SM NUL
-that are not legal gtroff input characters.
+that are not legal troff input characters.
+.RE
+.TP
+.B .trnt abcd
+This is the same as the
+.B tr
+request except that the translations do not apply to text that is
+transparently throughput into a diversion with
+.BR \e! .
+For example,
+.RS
+.LP
+.nf
+.ft B
+\&.tr ab
+\&.di x
+\e!.tm a
+\&.di
+\&.x
+.fi
+.ft
+.LP
+will print
+.BR b ;
+if
+.B trnt
+is used instead of
+.B tr
+it will print
+.BR a .
 .RE
 .TP
 .B .troff
@@ -1130,7 +1330,7 @@ request.
 .I anything
 is read in copy mode;
 a leading
-.B """"
+.B \(ts
 will be stripped.
 .SS Extended requests
 .TP
@@ -1138,7 +1338,8 @@ will be stripped.
 When used in a diversion, this will embed in the diversion an object which,
 when reread, will cause the contents of
 .I filename
-to be transparently copied through to the output.  In troff, the
+to be transparently copied through to the output.
+In Unix troff, the
 contents of
 .I filename
 is immediately copied through to the output regardless of whether
@@ -1163,7 +1364,7 @@ request has an optional third argument.
 This argument gives the external name of the font,
 which is used for finding the font description file.
 The second argument gives the internal name of the font
-which is used to refer to the font in gtroff after it has been mounted.
+which is used to refer to the font in troff after it has been mounted.
 If there is no third argument then the internal name will be used
 as the external name.
 This feature allows you to use fonts with long names in compatibility mode.
@@ -1184,11 +1385,11 @@ if the end of a sentence occurs at the end of a line in fill mode, then
 both an inter-word space and a sentence space will be added;
 if two spaces follow the end of a sentence in the middle of a line,
 then the second space will be a sentence space.
-Note that the behaviour of troff will be exactly
-that exhibited by gtroff if a second argument is never given to the
+Note that the behaviour of Unix troff will be exactly
+that exhibited by GNU troff if a second argument is never given to the
 .B ss
 request.
-In gtroff, as in troff, you should always
+In GNU troff, as in Unix troff, you should always
 follow a sentence with either a newline or two spaces.
 .TP
 .BI .ta\  n1\ n2\|.\|.\|.nn \ T\  r1\ r2\|.\|.\|.\|rn
@@ -1253,7 +1454,12 @@ The number of the next free font position.
 .B \en[.g]
 Always 1.
 Macros should use this to determine whether they are running
-under gtroff.
+under GNU troff.
+.TP
+.B \en[.hla]
+The current hyphenation language as set by the
+.B hla
+request.
 .TP
 .B \en[.hlc]
 The number of immediately preceding consecutive hyphenated lines.
@@ -1280,6 +1486,17 @@ request.)
 .TP
 .B \en[.in]
 The indent that applies to the current output line.
+.TP
+.B \en[.kern]
+.B 1
+if pairwise kerning is enabled,
+.B 0
+otherwise.
+.TP
+.B \en[.lg]
+The current ligature mode (as set by the
+.B lg
+request.)
 .TP
 .B \en[.ll]
 The line length that applies to the current output line.
@@ -1425,7 +1642,7 @@ which can be found in the
 .B \en[.fp]
 register;
 although
-.B gtroff
+.B troff
 does not enforce this strictly,
 it will not allow a font to be mounted at a position whose number is much
 greater than that of any currently used position.
@@ -1467,6 +1684,11 @@ The implementation of
 ensures that the double quotes surrounding an argument
 will appear the same input level, which will be different
 to the input level of the argument itself.
+In a long escape name
+.B ]
+will not be recognized as a closing delimiter except
+when it occurs at the same input level as the opening
+.BR ] .
 In compatibility mode, no attention is paid to the input-level.
 .LP
 There are some new types of condition:
@@ -1498,7 +1720,7 @@ has been defined by the
 request.
 .SS Warnings
 The warnings that can be given by
-.B gtroff
+.B troff
 are divided into the following categories.
 The name associated with each warning is used by the
 .B \-w
@@ -1594,9 +1816,11 @@ and the first two characters of the name make a defined name.
 The request or macro will not be invoked.
 When this warning is given, no macro is automatically defined.
 This is enabled by default.
-.B mac
-is given.
 This warning will never occur in compatibility mode.
+.TP
+.BR font \t131072
+Non-existent fonts.
+This is enabled by default.
 .LP
 There are also names that can be used to refer to groups of warnings:
 .TP
@@ -1614,7 +1838,7 @@ All warnings.
 .SS Incompatibilities
 .LP
 Long names cause some incompatibilities.
-Troff will interpret
+Unix troff will interpret
 .IP
 .B
 \&.dsabcd
@@ -1623,19 +1847,19 @@ as defining a string
 .B ab
 with contents
 .BR cd .
-Normally, gtroff will interpret this as a call of a macro named
+Normally, GNU troff will interpret this as a call of a macro named
 .BR dsabcd .
-Also troff will interpret
+Also Unix troff will interpret
 .B \e*[
 or
 .B \en[
 as references to a string or number register called
 .BR [ .
-In gtroff, however, this will normally be interpreted as the start
+In GNU troff, however, this will normally be interpreted as the start
 of a long name.
 In
 .I compatibility mode
-gtroff will interpret these things in the traditional way.
+GNU troff will interpret these things in the traditional way.
 In compatibility mode, however, long names are not recognised.
 Compatibility mode can be turned on with the
 .B \-C
@@ -1646,20 +1870,27 @@ The number register
 .B \en(.C
 is 1 if compatibility mode is on, 0 otherwise.
 .LP
+GNU troff
+does not allow the use of the escape sequences
+.BR \\e\e|\e^\e&\e}\e{\e (space) \e'\e`\e-\e_\e!\e%\ec
+in names of strings, macros, diversions, number registers,
+fonts or environments; Unix troff does.
+The
+.B \eA
+escape sequence may be helpful in avoiding use of these
+escape sequences in names.
+.LP
 Fractional pointsizes cause one noteworthy incompatibility.
-In
-.B troff
-the
+In Unix troff the
 .B ps 
 request ignores scale indicators and so
 .IP
 .B .ps\ 10u
 .LP
 will set the pointsize to 10 points, whereas in
-.B gtroff
-it will set the pointsize to 10 scaled points.
+GNU troff it will set the pointsize to 10 scaled points.
 .LP
-In gtroff there is a fundamental difference between unformatted,
+In GNU troff there is a fundamental difference between unformatted,
 input characters, and formatted, output characters.
 Everything that affects how an output character
 will be output is stored with the character; once an output
@@ -1696,7 +1927,7 @@ For example,
 .LP
 will print
 .B \e\e
-in gtroff;
+in GNU troff;
 each pair of input
 .BR \e s
 is turned into one output
@@ -1704,7 +1935,7 @@ is turned into one output
 and the resulting output
 .BR \e s
 are not interpreted as escape characters when they are reread.
-Troff would interpret them as escape characters
+Unix troff would interpret them as escape characters
 when they were reread and would end up printing one
 .BR \e .
 The correct way to obtain a printable
@@ -1713,7 +1944,7 @@ is to use the
 .B \ee
 escape sequence: this will always print a single instance of the
 current escape character, regardless of whether or not it is used in a
-diversion; it will also work in both gtroff and troff.
+diversion; it will also work in both GNU troff and Unix troff.
 If you wish for some reason to store in a diversion an escape
 sequence that will be interpreted when the diversion is reread,
 you can either use the traditional
@@ -1737,41 +1968,37 @@ Default device.
 A colon separated list of directories in which to search for the
 .BI dev name
 directory.
-Gtroff will search in directories given in the
+.B troff
+will search in directories given in the
 .B \-F
 option before these, and in standard directories
-.RB ( @FONTPATH@ )
+.RB ( /usr/share/groff_font )
 after these.
-.TP
-.SM
-.B GROFF_HYPHEN
-File containing hyphenation patterns.
 .SH FILES
-.TP \w'@FONTDIR@/devname/DESC'u+3n
-.B @HYPHENFILE@
-Hyphenation patterns
+.Tp \w'/usr/share/groff_font/devname/DESC'u+3n
+.B /usr/share/tmac/troffrc
+Initialization file
 .TP
-.BI @MACRODIR@/tmac. name
+.BI /usr/share/tmac/tmac. name
 Macro files
 .TP
-.BI @FONTDIR@/dev name /DESC
+.BI /usr/share/groff_font/dev name /DESC
 Device description file for device
 .IR name .
 .TP
-.BI @FONTDIR@/dev name / F
+.BI /usr/share/groff_font/dev name / F
 Font file for font
 .I F
 of device
 .IR name .
 .SH "SEE ALSO"
-.BR groff (@MAN1EXT@)
-.BR gtbl (@MAN1EXT@),
-.BR gpic (@MAN1EXT@),
-.BR geqn (@MAN1EXT@),
-.BR grops (@MAN1EXT@),
-.BR grodvi (@MAN1EXT@),
-.BR grotty (@MAN1EXT@),
-.BR groff_font (@MAN5EXT@),
-.BR groff_out (@MAN5EXT@)
-.br
-.I "Groff Character Names"
+.BR groff (1)
+.BR tbl (1),
+.BR pic (1),
+.BR eqn (1),
+.BR grops (1),
+.BR grodvi (1),
+.BR grotty (1),
+.BR groff_font (5),
+.BR groff_out (5),
+.BR groff_char (7)

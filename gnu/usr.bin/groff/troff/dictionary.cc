@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,11 +15,11 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 
-#include "groff.h"
+#include "troff.h"
 #include "symbol.h"
 #include "dictionary.h"
   
@@ -49,7 +49,7 @@ dictionary::dictionary(int n) : threshold(0.5), factor(1.5), used(0), size(n)
 
 void *dictionary::lookup(symbol s, void *v)
 {
-  for (int i = s.hash() % size; 
+  for (int i = int(s.hash() % size); 
        table[i].v != 0;
        i == 0 ? i = size - 1: --i)
     if (s == table[i].s) {
@@ -77,6 +77,7 @@ void *dictionary::lookup(symbol s, void *v)
     for (i = 0; i < old_size; i++)
       if (old_table[i].v != 0)
 	(void)lookup(old_table[i].s, old_table[i].v);
+    a_delete old_table;
   }
   return 0;
 }
@@ -95,7 +96,7 @@ void *dictionary::lookup(const char *p)
 void *dictionary::remove(symbol s)
 {
   // this relies on the fact that we are using linear probing
-  for (int i = s.hash() % size;
+  for (int i = int(s.hash() % size);
        table[i].v != 0 && s != table[i].s;
        i == 0 ? i = size - 1: --i)
     ;
@@ -110,7 +111,7 @@ void *dictionary::remove(symbol s)
 	i = size - 1;
       if (table[i].v == 0)
 	break;
-      r = table[i].s.hash() % size;
+      r = int(table[i].s.hash() % size);
     } while ((i <= r && r < j) || (j < i && i <= r));
     table[j] = table[i];
   }

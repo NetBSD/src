@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 
@@ -28,21 +28,21 @@ public:
   int is_zero();
   vunits& operator+=(const vunits&);
   vunits& operator-=(const vunits&);
-  friend vunits scale(vunits n, units x, units y); // scale n by x/y
-  friend vunits scale(vunits n, vunits x, vunits y);
-  friend vunits operator +(const vunits&, const vunits&);
-  friend vunits operator -(const vunits&, const vunits&);
-  friend vunits operator -(const vunits&);
-  friend int operator /(const vunits&, const vunits&);
-  friend vunits operator /(const vunits&, int);
-  friend vunits operator *(const vunits&, int);
-  friend vunits operator *(int, const vunits&);
-  friend int operator <(const vunits&, const vunits&);
-  friend int operator >(const vunits&, const vunits&);
-  friend int operator <=(const vunits&, const vunits&);
-  friend int operator >=(const vunits&, const vunits&);
-  friend int operator ==(const vunits&, const vunits&);
-  friend int operator !=(const vunits&, const vunits&);
+  friend inline vunits scale(vunits n, units x, units y); // scale n by x/y
+  friend inline vunits scale(vunits n, vunits x, vunits y);
+  friend inline vunits operator +(const vunits&, const vunits&);
+  friend inline vunits operator -(const vunits&, const vunits&);
+  friend inline vunits operator -(const vunits&);
+  friend inline int operator /(const vunits&, const vunits&);
+  friend inline vunits operator /(const vunits&, int);
+  friend inline vunits operator *(const vunits&, int);
+  friend inline vunits operator *(int, const vunits&);
+  friend inline int operator <(const vunits&, const vunits&);
+  friend inline int operator >(const vunits&, const vunits&);
+  friend inline int operator <=(const vunits&, const vunits&);
+  friend inline int operator >=(const vunits&, const vunits&);
+  friend inline int operator ==(const vunits&, const vunits&);
+  friend inline int operator !=(const vunits&, const vunits&);
 };
 
 extern vunits V0;
@@ -57,21 +57,21 @@ public:
   int is_zero();
   hunits& operator+=(const hunits&);
   hunits& operator-=(const hunits&);
-  friend hunits scale(hunits n, units x, units y); // scale n by x/y
-  friend hunits scale(hunits n, double x);
-  friend hunits operator +(const hunits&, const hunits&);
-  friend hunits operator -(const hunits&, const hunits&);
-  friend hunits operator -(const hunits&);
-  friend int operator /(const hunits&, const hunits&);
-  friend hunits operator /(const hunits&, int);
-  friend hunits operator *(const hunits&, int);
-  friend hunits operator *(int, const hunits&);
-  friend int operator <(const hunits&, const hunits&);
-  friend int operator >(const hunits&, const hunits&);
-  friend int operator <=(const hunits&, const hunits&);
-  friend int operator >=(const hunits&, const hunits&);
-  friend int operator ==(const hunits&, const hunits&);
-  friend int operator !=(const hunits&, const hunits&);
+  friend inline hunits scale(hunits n, units x, units y); // scale n by x/y
+  friend inline hunits scale(hunits n, double x);
+  friend inline hunits operator +(const hunits&, const hunits&);
+  friend inline hunits operator -(const hunits&, const hunits&);
+  friend inline hunits operator -(const hunits&);
+  friend inline int operator /(const hunits&, const hunits&);
+  friend inline hunits operator /(const hunits&, int);
+  friend inline hunits operator *(const hunits&, int);
+  friend inline hunits operator *(int, const hunits&);
+  friend inline int operator <(const hunits&, const hunits&);
+  friend inline int operator >(const hunits&, const hunits&);
+  friend inline int operator <=(const hunits&, const hunits&);
+  friend inline int operator >=(const hunits&, const hunits&);
+  friend inline int operator ==(const hunits&, const hunits&);
+  friend inline int operator !=(const hunits&, const hunits&);
 };
 
 extern hunits H0;

@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 struct size_range {
@@ -62,6 +62,13 @@ inline int font_size::to_points()
   return p/sizescale;
 }
 
+struct environment;
+
+hunits env_digit_width(environment *);
+hunits env_space_width(environment *);
+hunits env_sentence_space_width(environment *);
+hunits env_narrow_space_width(environment *);
+hunits env_half_narrow_space_width(environment *);
 
 struct tab;
 
@@ -81,6 +88,9 @@ public:
   void add_tab(hunits pos, tab_type type, int repeated);
   const char *to_string();
 };
+
+const unsigned MARGIN_CHARACTER_ON = 1;
+const unsigned MARGIN_CHARACTER_NEXT = 2;
 
 struct charinfo;
 struct node;
@@ -147,6 +157,7 @@ class environment {
   int tab_precedes_field;
   int discarding;
   int spread_flag;		// set by \p
+  unsigned margin_character_flags;
   node *margin_character_node;
   hunits margin_character_distance;
   node *numbering_nodes;
@@ -160,6 +171,7 @@ class environment {
   int hyphen_line_max;
   hunits hyphenation_space;
   hunits hyphenation_margin;
+  int composite;		// used for construction of composite char?
   pending_output_line *pending_lines;
 #ifdef WIDOW_CONTROL
   int widow_control;
@@ -179,6 +191,7 @@ class environment {
   void hyphenate_line();
   void start_field();
   void wrap_up_field();
+  void add_padding();
   node *make_tab_node(hunits d, node *next = 0);
   node *get_prev_char();
 public:
@@ -192,6 +205,8 @@ public:
   ~environment();
   int is_dummy() { return dummy; }
   int is_empty();
+  int is_composite() { return composite; }
+  void set_composite() { composite = 1; }
   vunits get_vertical_spacing(); // .v
   int get_line_spacing();	 // .L
   int get_point_size() { return size.to_scaled_points(); }
@@ -218,11 +233,12 @@ public:
   vunits get_prev_char_depth();
   hunits get_text_length();	// .k 
   hunits get_prev_text_length(); // .n
-  hunits get_space_width();
-  int get_space_size();		// in ems/36
-  int get_sentence_space_size();
-  hunits get_narrow_space_width();
-  hunits get_half_narrow_space_width();
+  hunits get_space_width() { return env_space_width(this); }
+  int get_space_size() { return space_size; }	// in ems/36
+  int get_sentence_space_size() { return sentence_space_size; }
+  hunits get_narrow_space_width() { return env_narrow_space_width(this); }
+  hunits get_half_narrow_space_width()
+    { return env_half_narrow_space_width(this); }
   hunits get_input_line_position();
   const char *get_tabs();
   int get_hyphenation_flags();
@@ -247,6 +263,7 @@ public:
   void interrupt();
   void spread() { spread_flag = 1; }
   void do_break();			// .br
+  void final_break();
   void newline();
   void handle_tab(int is_leader = 0); // do a tab or leader
   void add_node(node *);
@@ -307,3 +324,4 @@ void read_hyphen_file(const char *name);
 
 extern int break_flag;
 extern symbol default_family;
+extern int translate_space_to_dummy;

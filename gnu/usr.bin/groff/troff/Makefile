@@ -1,21 +1,35 @@
-#	@(#)Makefile	6.2 (Berkeley) 3/3/91
-
-.include "../Makefile.g++"
-.include "../../Makefile.inc"
+# Makefile for troff
 
 PROG=		troff
-HYPHENDIR=	/usr/share/misc
-SRCS=		column.cc dictionary.cc div.cc env.cc input.cc \
-		node.cc number.cc reg.cc symbol.cc
-LDADD+=		$(.CURDIR)/../libgroff/obj/libgroff.a -lm
-# Delete the -Ig++-include after we fix libg++ and install it
-CXXFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libgroff \
-		-I$(.CURDIR)/../../../lib/libg++/g++-include \
-		-DMACROPATH=\"/usr/share/tmac\" -DSTORE_WIDTH \
-		-DHYPHENFILE=\"$(HYPHENDIR)/hyphen\"
+SRCS=		env.cc node.cc input.cc div.cc symbol.cc dictionary.cc reg.cc \
+		number.cc majorminor.cc
+CFLAGS+=	-I$(.CURDIR)/../include
+LDADD+=		$(LIBGROFF) -lm
+DPADD+=		$(LIBGROFF) $(LIBMATH)
+
+CLEANFILES+=	majorminor.cc
+majorminor.cc: $(.CURDIR)/../VERSION
+	@echo Making $@
+	@-rm -f $@
+	@echo const char \*major_version = \
+	\"`sed -e 's/^\([^.]*\)\..*$$/\1/' $(.CURDIR)/../VERSION`\"\; >$@
+	@echo const char \*minor_version = \
+	\"`sed -e 's/^[^.]*\.\([0-9]*\).*$$/\1/' $(.CURDIR)/../VERSION`\"\; >>$@
+
+install_data: hyphen.us
+	-test -d $(datadir) || mkdir $(datadir)
+	-test -d $(datasubdir) || mkdir $(datasubdir)
+	-test -d $(tmacdir) || mkdir $(tmacdir)
+	-rm -f $(tmacdir)/hyphen.us
+	$(INSTALL_DATA) $(srcdir)/hyphen.us $(tmacdir)/hyphen.us
+
+uninstall_sub:
+	-rm -f $(tmacdir)/hyphen.us
 
 afterinstall:
-	install -c -o bin -g bin -m 444 $(.CURDIR)/hyphen \
-		$(DESTDIR)$(HYPHENDIR)/hyphen
+	install -c -o bin -g bin -m 444 $(.CURDIR)/hyphen.us \
+		$(DESTDIR)$(tmacdir)/hyphen.us
 
 .include <bsd.prog.mk>
+.include "../../Makefile.inc"
+.include "../Makefile.cfg"
