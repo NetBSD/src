@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.16 2001/05/26 21:27:21 chs Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.17 2001/06/27 21:18:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -232,11 +232,7 @@ out:
 	 * the pagedaemon.
 	 */
 
-	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
-	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
-	     uvmexp.inactive < uvmexp.inactarg)) {
-		wakeup(&uvm.pagedaemon);
-	}
+	UVM_KICK_PDAEMON();
 
 	uvm_unlock_fpageq(s);
 
