@@ -1,4 +1,4 @@
-# $NetBSD: ENIWETOK,v 1.22 2000/04/03 01:04:36 mycroft Exp $
+# $NetBSD: ENIWETOK,v 1.23 2000/04/19 08:44:34 haya Exp $
 # From: GENERIC,v 1.139 2000/01/19 03:01:46 mycroft Exp
 #
 # Mycroft's AS200.
@@ -209,7 +209,7 @@ ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 #pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 #ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
-#rl*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
+#rtk*	at	pci? dev ? function ?		# RealTek 8129/8139 Ethernet
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 #sip*	at	pci? dev ? function ?		# SiS 900 Ethernet
 sv*	at	pci? dev ? function ?		# S3 SonicVibes
