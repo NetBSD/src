@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa_machdep.h,v 1.2 1998/05/01 21:13:55 cgd Exp $	*/
+/*	$NetBSD: ofisa_machdep.h,v 1.3 1998/07/06 02:36:52 mark Exp $	*/
 
 /*
  * Copyright 1998
@@ -35,6 +35,10 @@
 
 int	ofisa_get_isabus_data __P((int, struct isabus_attach_args *));
 int	ofisa_ignore_child __P((int pphandle, int cphandle));
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_old_ofw.h"
+#endif
 
 #ifdef COMPAT_OLD_OFW
 
