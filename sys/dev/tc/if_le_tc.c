@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.6 1997/03/17 03:19:13 thorpej Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.7 1997/07/22 03:44:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -53,11 +53,7 @@
 #include <dev/tc/if_levar.h>
 #include <dev/tc/tcvar.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	le_tc_match __P((struct device *, void *, void *));
-#else
 int	le_tc_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	le_tc_attach __P((struct device *, struct device *, void *));
 
 struct cfattach le_tc_ca = {
@@ -71,11 +67,7 @@ struct cfattach le_tc_ca = {
 int
 le_tc_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct tc_attach_args *d = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.6 1997/03/17 03:19:13 thorpej Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.7 1997/07/22 03:44:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -56,11 +56,7 @@
 
 extern caddr_t le_iomem;
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	le_ioasic_match __P((struct device *, void *, void *));
-#else
 int	le_ioasic_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	le_ioasic_attach __P((struct device *, struct device *, void *));
 
 hide void le_ioasic_copytobuf_gap2 __P((struct am7990_softc *, void *,
@@ -81,11 +77,7 @@ struct cfattach le_ioasic_ca = {
 int
 le_ioasic_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct ioasicdev_attach_args *d = aux;
