@@ -5,9 +5,9 @@
 
 #include <sys/cdefs.h>
 
-#ifdef __weak_reference
-__weak_reference(_sys_errlist, sys_errlist);
-__weak_reference(_sys_errlist, __sys_errlist); /* Backwards compat with v.12 */
+#ifdef __indr_reference
+__indr_reference(_sys_errlist, sys_errlist);
+__indr_reference(_sys_errlist, __sys_errlist); /* Backwards compat with v.12 */
 #else
 
 #undef _sys_errlist
