@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4 2002/01/23 15:54:34 bjh21 Exp $
+	$NetBSD: syscalls.master,v 1.5 2002/01/27 14:08:56 bjh21 Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -53,7 +53,8 @@
 #include <compat/linux/linux_syscallargs.h>
 
 %%
-0	UNIMPL
+; XXX We have to explicitly declare linux_sys_nosys.
+0	NOARGS		{ int linux_sys_nosys(void); }
 1	NOARGS		{ int sys_exit(int rval); }
 2	NOARGS		{ int sys_fork(void); }
 3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
