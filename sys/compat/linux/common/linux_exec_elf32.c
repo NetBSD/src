@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.62 2003/06/28 14:21:21 darrenr Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.63 2003/06/29 11:02:25 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.62 2003/06/28 14:21:21 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.63 2003/06/29 11:02:25 darrenr Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -102,8 +102,8 @@ static int ELFNAME2(linux,atexit_signature) __P((struct lwp *l,
  * have a Linux binary if we find this section.
  */
 static int
-ELFNAME2(linux,atexit_signature)(p, epp, eh)
-	struct proc *p;
+ELFNAME2(linux,atexit_signature)(l, epp, eh)
+	struct lwp *l;
 	struct exec_package *epp;
 	Elf_Ehdr *eh;
 {
@@ -121,7 +121,7 @@ ELFNAME2(linux,atexit_signature)(p, epp, eh)
 	 */
 	shsize = eh->e_shnum * sizeof(Elf_Shdr);
 	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
-	error = exec_read_from(p, epp->ep_vp, eh->e_shoff, sh, shsize);
+	error = exec_read_from(l, epp->ep_vp, eh->e_shoff, sh, shsize);
 	if (error)
 		goto out;
 
@@ -140,7 +140,7 @@ ELFNAME2(linux,atexit_signature)(p, epp, eh)
 	 * s->sh_name is the offset of the section name in strtable.
 	 */
 	strtable = malloc(sh[strndx].sh_size, M_TEMP, M_WAITOK);
-	error = exec_read_from(p, epp->ep_vp, sh[strndx].sh_offset, strtable,
+	error = exec_read_from(l, epp->ep_vp, sh[strndx].sh_offset, strtable,
 	    sh[strndx].sh_size);
 	if (error)
 		goto out;

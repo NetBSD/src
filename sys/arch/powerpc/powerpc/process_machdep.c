@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.13 2003/06/28 14:21:05 darrenr Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.14 2003/06/29 11:02:24 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -173,7 +173,7 @@ process_machdep_write_vecregs(struct lwp *l, struct vreg *vregs)
 }
 
 int
-ptrace_machdep_dorequest(struct proc *p, struct lwp *l,
+ptrace_machdep_dorequest(struct lwp *curl, struct lwp *l,
 	int req, caddr_t addr, int data)
 {
 	struct uio uio;
@@ -197,7 +197,7 @@ ptrace_machdep_dorequest(struct proc *p, struct lwp *l,
 		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_lwp = l;
-		return process_machdep_dovecregs(p, l, &uio);
+		return process_machdep_dovecregs(l, l, &uio);
 	}
 
 #ifdef DIAGNOSTIC
@@ -212,14 +212,14 @@ ptrace_machdep_dorequest(struct proc *p, struct lwp *l,
  */
 
 int
-process_machdep_dovecregs(struct proc *curp, struct lwp *l, struct uio *uio)
+process_machdep_dovecregs(struct lwp *curl, struct lwp *l, struct uio *uio)
 {
 	struct vreg r;
 	int error;
 	char *kv;
 	int kl;
 
-	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
+	if ((error = process_checkioperm(curl, l->l_proc)) != 0)
 		return (error);
 
 	kl = sizeof(r);

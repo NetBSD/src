@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.18 2003/02/03 17:10:11 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.19 2003/06/29 11:02:23 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -109,14 +109,14 @@ setregs(l, pack, stack)
  * Machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
