@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.9 2000/01/08 20:46:29 chopps Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.10 2000/01/09 14:47:43 chopps Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -842,7 +842,7 @@ sca_output(ifp, m, dst, rt0)
 		hdlc = mtod(m, struct hdlc_header *);
 		llc = mtod(m, struct hdlc_llc_header *);
 		llc->hl_dsap = llc->hl_ssap = LLC_ISO_LSAP;
-		llc->hl_control = 0;	/* XXX */
+		llc->hl_ffb = 0;
 		break;
 #endif
 	default:
@@ -1584,13 +1584,6 @@ sca_frame_process(sca_port_t *scp)
                        goto dropit;
 		/* if not a std iso pdu drop it */
 		llc = (struct hdlc_llc_header *)hdlc;
-#if 0
-		/* XXX cisco puts either 0 or the iso irpd here */
-		if (llc->hl_control != LLC_UI) {
-			scp->sp_if.if_noproto++;
-			goto dropit;
-		}
-#endif
 		m->m_pkthdr.rcvif = &scp->sp_if;
 		m->m_pkthdr.len -= sizeof(struct hdlc_llc_header);
 		m->m_data += sizeof(struct hdlc_llc_header);

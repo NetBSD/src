@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570reg.h,v 1.4 2000/01/08 20:46:30 chopps Exp $	*/
+/*	$NetBSD: hd64570reg.h,v 1.5 2000/01/09 14:47:43 chopps Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -74,7 +74,7 @@ struct hdlc_llc_header {
 	u_int8_t	hl_resv;
 	u_int8_t	hl_dsap;
 	u_int8_t	hl_ssap;
-	u_int8_t	hl_control;
+	u_int8_t	hl_ffb;		/* cisco: friendly fudge byte */
 };
 
 /*
