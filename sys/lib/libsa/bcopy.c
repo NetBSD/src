@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.4 1994/10/26 05:44:37 cgd Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.5 1995/04/22 13:46:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,6 +35,8 @@
  *	@(#)bcopy.c	8.1 (Berkeley) 6/11/93
  */
 
+#include <sys/types.h>
+
 /*
  * This is designed to be small, not fast.
  */
@@ -42,7 +44,7 @@ void
 bcopy(s1, s2, n)
 	const void *s1;
 	void *s2;
-	unsigned n;
+	size_t n;
 {
 	register const char *f = s1;
 	register char *t = s2;
@@ -57,11 +59,12 @@ bcopy(s1, s2, n)
 			*t++ = *f++;
 }
 
-void
+void *
 memcpy(s1, s2, n)
 	void *s1;
 	const void *s2;
-	unsigned n;
+	size_t n;
 {
 	bcopy(s2, s1, n);
+	return s1;
 }
