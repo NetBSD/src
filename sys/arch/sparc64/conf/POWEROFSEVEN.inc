@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.3 2001/10/22 16:42:44 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.4 2001/10/24 18:49:40 thorpej Exp $
 #
 # from: $NetBSD: POWEROFSEVEN32,v 1.10 2001/08/25 15:04:26 mrg Exp
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
@@ -15,7 +15,6 @@ maxusers	64
 # Options for variants of the Sun SPARC architecure.
 # We currently support three architecture types; at least one is required.
 options		SUN4U		# sun4u - UltraSPARC
-#options 	_LP64		# we're using a 64-bit compiler
 
 ## System options specific to the sparc machine type
 
@@ -138,7 +137,6 @@ options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 #options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 #options 	EXEC_ELF32	# Exec module for 32 bit ELF binaries.
-#options 	EXEC_ELF64	# Exec module for 64 bit ELF binaries. -- 64-bit only
 #options 	EXEC_AOUT	# execve(2) support for a.out binaries
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.39 2001/10/21 19:46:16 thorpej Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.40 2001/10/24 18:49:39 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -11,6 +11,11 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/sparc64/conf/Makefile.sparc64
 # after which config should be rerun for all machines of that type.
+
+# Always use sparc64 as the MACHINE_ARCH, so we select the correct
+# toolchain (i.e. need v9 instruction support in the assembler, etc.)
+# 32-bit vs. 64-bit will be selected based on compiler/assember options.
+MACHINE_ARCH=sparc64
 
 .include <bsd.own.mk>
 
@@ -46,10 +51,25 @@ CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 # XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
 CWARNFLAGS+=	-Wno-main
+
+# Select the compiler, assembler, and linker flags based on the
+# LP64 variable.
+LP64?=	no
+.if ${LP64} == "yes"
+CC:=		${CC} -m64
+AS:=		${AS} -64
+LD:=		${LD} -m elf64_sparc
+CPPFLAGS+=	-D_LP64
+.else
+CC:=		${CC} -m32
+AS:=		${AS} -32
+LD:=		${LD} -m elf32_sparc
+.endif
+
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -Wa,-Av9a -mno-fpu
 .if defined(PROF)
 # We need to run the compiler in medlow memory model.
-CFLAGS += -mcmodel=medlow
+CFLAGS+=	-mcmodel=medlow
 .endif
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -Wa,-Av9a
 
@@ -61,7 +81,7 @@ LINKFLAGS=	-Ttext 01000000 -Tdata 01800000 -e start
 #LINKFLAGS=	-Ttext f1000000 -Tdata f1400000 -e start
 
 LINKFLAGS+=	-n -T ${SPARC64}/conf/${KERN_LDSCRIPT}
-.if ${MACHINE_ARCH} == "sparc64"
+.if ${LP64} == "yes"
 KERN_LDSCRIPT?= kern.ldscript
 .else
 KERN_LDSCRIPT?= kern32.ldscript
