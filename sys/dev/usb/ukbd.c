@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.39 1999/08/14 14:49:32 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.40 1999/08/23 22:55:14 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -194,6 +194,8 @@ struct ukbd_softc {
 	int sc_npollchar;
 	u_int16_t sc_pollchars[MAXKEYS];
 #endif /* defined(__NetBSD__) */
+
+	u_char sc_dying;
 };
 
 #define	UKBDUNIT(dev)	(minor(dev))
@@ -355,6 +357,9 @@ ukbd_enable(v, on)
 	struct ukbd_softc *sc = v;
 	usbd_status r;
 
+	if (on && sc->sc_dying)
+		return (EIO);
+
 	/* Should only be called to change state */
 	if (sc->sc_enabled == on) {
 #ifdef DIAGNOSTIC
@@ -388,6 +393,17 @@ ukbd_activate(self, act)
 	struct device *self;
 	enum devact act;
 {
+	struct ukbd_softc *sc = (struct ukbd_softc *)self;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return (EOPNOTSUPP);
+		break;
+
+	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
+		break;
+	}
 	return (0);
 }
 
@@ -554,6 +570,9 @@ ukbd_set_leds(v, leds)
 	u_int8_t res;
 
 	DPRINTF(("ukbd_set_leds: sc=%p leds=%d\n", sc, leds));
+
+	if (sc->sc_dying)
+		return;
 
 	sc->sc_leds = leds;
 	res = 0;

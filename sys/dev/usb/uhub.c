@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.22 1999/08/22 20:12:39 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.23 1999/08/23 22:55:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -490,6 +490,14 @@ uhub_activate(self, act)
 	struct device *self;
 	enum devact act;
 {
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return (EOPNOTSUPP);
+		break;
+
+	case DVACT_DEACTIVATE:
+		break;
+	}
 	return (0);
 }
 

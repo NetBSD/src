@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.27 1999/08/16 23:36:25 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.28 1999/08/23 22:55:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,6 +107,8 @@ struct ums_softc {
 
 	u_int32_t sc_buttons;	/* mouse button status */
 	struct device *sc_wsmousedev;
+
+	char			sc_dying;
 };
 
 #define MOUSE_FLAGS_MASK (HIO_CONST|HIO_RELATIVE)
@@ -298,6 +300,17 @@ ums_activate(self, act)
 	struct device *self;
 	enum devact act;
 {
+	struct ums_softc *sc = (struct ums_softc *)self;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return (EOPNOTSUPP);
+		break;
+
+	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
+		break;
+	}
 	return (0);
 }
 
@@ -381,8 +394,12 @@ ums_enable(v)
 	usbd_status r;
 
 	DPRINTFN(1,("ums_enable: sc=%p\n", sc));
+
+	if (sc->sc_dying)
+		return (EIO);
+
 	if (sc->sc_enabled)
-		return EBUSY;
+		return (EBUSY);
 
 	sc->sc_enabled = 1;
 	sc->sc_buttons = 0;
