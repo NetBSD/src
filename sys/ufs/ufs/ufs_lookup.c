@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.51 2003/09/11 17:33:43 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.52 2003/09/15 15:08:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.51 2003/09/11 17:33:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.52 2003/09/15 15:08:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,16 +294,16 @@ searchloop:
 		 */
 		if (ep->d_ino) {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-				if (vdp->v_mount->mnt_maxsymlinklen > 0 ||
-				    needswap != 0)
-					namlen = ep->d_namlen;
-				else
-					namlen = ep->d_type;
+			if (vdp->v_mount->mnt_maxsymlinklen > 0 ||
+			    needswap != 0)
+				namlen = ep->d_namlen;
+			else
+				namlen = ep->d_type;
 #else
-				if (vdp->v_mount->mnt_maxsymlinklen <= 0
-				    && needswap != 0) 
-					namlen = ep->d_type;
-				else
+			if (vdp->v_mount->mnt_maxsymlinklen <= 0
+			    && needswap != 0) 
+				namlen = ep->d_type;
+			else
 				namlen = ep->d_namlen;
 #endif
 			if (namlen == cnp->cn_namelen &&
