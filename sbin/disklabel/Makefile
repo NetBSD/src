@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2004/01/18 22:34:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.51 2004/06/28 18:21:43 jkunz Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -8,7 +8,7 @@ LDADD+= -lutil
 DPADD+= ${LIBUTIL}
 
 .if (${MACHINE} == "hp300") || (${MACHINE} == "vax") \
-	|| (${MACHINE} == "arm32")
+	|| (${MACHINE} == "arm32") || (${MACHINE} == "hp700")
 CPPFLAGS+= -DNUMBOOT=1
 .endif
 
@@ -18,7 +18,7 @@ CPPFLAGS+= -DNUMBOOT=1
 CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
 .endif
 
-.if (${MACHINE} == "alpha") || (${MACHINE} == "x68k")
+.if (${MACHINE} == "alpha") || (${MACHINE} == "x68k") || (${MACHINE} == "hp700")
 # preserve the non-disklabel portions of the first 8KB of the disk
 CPPFLAGS+= -DSAVEBOOTAREA
 .endif
