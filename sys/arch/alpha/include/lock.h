@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.13 2000/11/22 07:44:01 thorpej Exp $ */
+/* $NetBSD: lock.h,v 1.14 2001/04/16 17:05:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 		"3:	br	1b		\n"
 		"4:				\n"
 		"	# END __cpu_simple_lock\n"
-		: "=r" (t0), "=m" (*alp)
+		: "=r" (t0), "+m" (*alp)
 		: "i" (__SIMPLELOCK_LOCKED), "1" (*alp));
 }
 
@@ -112,7 +112,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 		"3:	br	1b		\n"
 		"4:				\n"
 		"	# END __cpu_simple_lock_try"
-		: "=r" (t0), "=r" (v0), "=m" (*alp)
+		: "=r" (t0), "=r" (v0), "+m" (*alp)
 		: "i" (__SIMPLELOCK_LOCKED), "2" (*alp));
 
 	return (v0 != 0);
