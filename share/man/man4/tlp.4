@@ -1,4 +1,4 @@
-.\"	$NetBSD: tlp.4,v 1.6 2000/05/26 16:41:52 thorpej Exp $
+.\"	$NetBSD: tlp.4,v 1.7 2001/06/11 01:13:28 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -158,7 +158,7 @@ must know specific programming information for that particular board.
 .Pp
 Boards that include the 21140 and 21140A include the DEC EB140, DE-500XA,
 DE-500AA, Asante EtherFast, DaynaPORT BlueStreak, Cogent EM100TX, EM110TX,
-EM440T4 multi-port, Kingston KNE100TX, older verions of the NetGear FA-310TX,
+EM440T4 multi-port, Kingston KNE100TX, older versions of the NetGear FA-310TX,
 SMC 9332, SMC 9334, ZNYX ZX34x multi-port, and Adaptec ANA-6944A/TX multi-port.
 .It
 .Em DECchip 21142 and 21143
@@ -208,8 +208,8 @@ appearing on low-cost boards when it became difficult for board
 vendors to obtain DECchip 21140A parts.  They include support for
 10Mb/s speeds over a built-in 10baseT encoder/decoder, and 100Mb/s
 speeds over a built-in PCS function.  Support for 100baseTX and
-100baseT4 is provided by a built-in scrambler and transciever
-module.  The transciever module also includes support for NWay,
+100baseT4 is provided by a built-in scrambler and transceiver
+module.  The transceiver module also includes support for NWay,
 for negotiating duplex mode and link speed with the link partner.
 These chips also include support for 10Mb/s and 100Mb/s speeds over
 and MII interface connected to one or more PHYs.
@@ -302,7 +302,7 @@ which uses this chip, please contact the author (listed below).
 -- This chip is a CardBus 21143 clone with a loosely-coupled modem
 function (the modem is on a separate CardBus function, but the MAC
 portion includes a shadow of its interrupt status).  Media is provided
-by an IEEE 802.3u-compliant PHY conntected to an MII interface.  These
+by an IEEE 802.3u-compliant PHY connected to an MII interface.  These
 chips have no SROM; instead, the MAC address must be obtained from the
 card's CIS information.  Unlike most other Tulip-like chips, the X3201-3
 requires that transmit buffers be aligned to a 4-byte boundary.  This
