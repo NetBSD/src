@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdir.c,v 1.13 1995/06/25 21:44:38 mycroft Exp $	*/
+/*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-char copyright[] =
+static char copyright[] =
 "@(#) Copyright (c) 1983, 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$NetBSD: mkdir.c,v 1.13 1995/06/25 21:44:38 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,53 +67,57 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch, exitval, pflag;
-	void *set;
+	mode_t *set;
 	mode_t mode, dir_mode;
 
 	setlocale(LC_ALL, "");
 
-	/* default file mode is a=rwx (777) with selected permissions
-	   removed in accordance with the file mode creation mask.
-	   For intermediate path name components, the mode is the default
-	   modified by u+wx so that the subdirectories can always be 
-	   created. */
+	/*
+	 * The default file mode is a=rwx (0777) with selected permissions
+	 * removed in accordance with the file mode creation mask.  For
+	 * intermediate path name components, the mode is the default modified
+	 * by u+wx so that the subdirectories can always be created.
+	 */
 	mode = 0777 & ~umask(0);
 	dir_mode = mode | S_IWUSR | S_IXUSR;
 
 	pflag = 0;
-	while ((ch = getopt(argc, argv, "pm:")) != -1)
+	while ((ch = getopt(argc, argv, "m:p")) != -1)
 		switch(ch) {
 		case 'p':
 			pflag = 1;
 			break;
 		case 'm':
-			if ((set = setmode(optarg)) == NULL) {
-				errx(1, "invalid file mode.");
-				/* NOTREACHED */
-			}
-			mode = getmode (set, S_IRWXU | S_IRWXG | S_IRWXO);
+			if ((set = setmode(optarg)) == NULL)
+				errx(1, "invalid file mode: %s", optarg);
+			mode = getmode(set, S_IRWXU | S_IRWXG | S_IRWXO);
 			break;
 		case '?':
 		default:
 			usage();
 		}
+	argc -= optind;
+	argv += optind;
 
-	if (!*(argv += optind))
+	if (*argv == NULL)
 		usage();
 	
-	for (exitval = 0; *argv; ++argv) {
+	for (exitval = 0; *argv != NULL; ++argv) {
 		register char *slash;
 
-		/* delete trailing slashes */
+		/* Remove trailing slashes, per POSIX. */
 		slash = strrchr(*argv, '\0');
 		while (--slash > *argv && *slash == '/')
 			*slash = '\0';
 
 		if (pflag) {
-			exitval |= mkpath(*argv, mode, dir_mode);
-		} else if (mkdir(*argv, mode) < 0) {
-			warn("%s", *argv);
-			exitval = 1;
+			if (mkpath(*argv, mode, dir_mode) < 0)
+				exitval = 1;
+		} else {
+			if (mkdir(*argv, mode) < 0) {
+				warn("%s", *argv);
+				exitval = 1;
+			}
 		}
 	}
 	exit(exitval);
@@ -147,11 +151,11 @@ mkpath(path, mode, dir_mode)
 		if (stat(path, &sb)) {
 			if (errno != ENOENT || mkdir(path, dir_mode)) {
 				warn("%s", path);
-				return 1;
+				return (-1);
 			}
 		} else if (!S_ISDIR(sb.st_mode)) {
 		        warnx("%s: %s", path, strerror(ENOTDIR));
-			return 1;
+			return (-1);
 		}
 		    
 		*slash = '/';
@@ -163,6 +167,7 @@ mkpath(path, mode, dir_mode)
 void
 usage()
 {
+
 	(void)fprintf(stderr, "usage: mkdir [-p] [-m mode] dirname ...\n");
-	exit (1);
+	exit(1);
 }
