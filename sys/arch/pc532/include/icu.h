@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.7 1996/02/01 22:31:58 mycroft Exp $	*/
+/*	$NetBSD: icu.h,v 1.8 1996/10/09 07:28:47 matthias Exp $	*/
 
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
@@ -45,7 +45,7 @@
 #define ICU_ADR		0xfffffe00
 
 /* ICU clock speed. */
-#define ICU_CLK_HZ	3686400/4	/* raw ICU clock speed */
+#define ICU_CLK_HZ	(3686400/4)	/* raw ICU clock speed */
 
 /* ICU registers
  */
