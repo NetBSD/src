@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.5 1999/08/13 09:45:46 ad Exp $ */
+/* 	$NetBSD: rasops8.c,v 1.6 1999/08/19 11:20:34 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.5 1999/08/13 09:45:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.6 1999/08/19 11:20:34 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,7 +53,7 @@ static void 	rasops8_putchar __P((void *, int, int, u_int, long attr));
 static void 	rasops8_putchar8 __P((void *, int, int, u_int, long attr));
 static void 	rasops8_putchar12 __P((void *, int, int, u_int, long attr));
 static void 	rasops8_putchar16 __P((void *, int, int, u_int, long attr));
-static void	rasops8_makestamp __P((long));
+static void	rasops8_makestamp __P((struct rasops_info *ri, long));
 void		rasops8_init __P((struct rasops_info *ri));
 
 /* 
@@ -174,7 +174,8 @@ rasops8_putchar(cookie, row, col, uc, attr)
  * Recompute the 4x1 blitting stamp.
  */
 static void
-rasops8_makestamp(attr)
+rasops8_makestamp(ri, attr)
+	struct rasops_info *ri;
 	long attr;
 {
 	int i;
@@ -238,7 +239,7 @@ rasops8_putchar8(cookie, row, col, uc, attr)
 
 	/* Recompute stamp? */
 	if (attr != stamp_attr)
-		rasops8_makestamp(attr);
+		rasops8_makestamp(ri, attr);
 	
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 	height = ri->ri_font->fontheight;
@@ -312,7 +313,7 @@ rasops8_putchar12(cookie, row, col, uc, attr)
 
 	/* Recompute stamp? */
 	if (attr != stamp_attr)
-		rasops8_makestamp(attr);
+		rasops8_makestamp(ri, attr);
 	
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 	height = ri->ri_font->fontheight;
@@ -389,7 +390,7 @@ rasops8_putchar16(cookie, row, col, uc, attr)
 
 	/* Recompute stamp? */
 	if (attr != stamp_attr)
-		rasops8_makestamp(attr);
+		rasops8_makestamp(ri, attr);
 	
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 	height = ri->ri_font->fontheight;
