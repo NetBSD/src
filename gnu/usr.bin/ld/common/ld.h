@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.h,v 1.21 1998/08/26 14:37:41 matt Exp $	*/
+/*	$NetBSD: ld.h,v 1.22 1998/08/28 14:45:46 matt Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -56,6 +56,21 @@ extern int	netzmagic;
 #endif
 #endif
 
+#ifndef nounderscore
+#define ETEXT_SYM	"_etext"
+#define EDATA_SYM	"_edata"
+#define END_SYM		"_end"
+#define DYN_SYM		"__DYNAMIC"
+#define GOT_SYM		"__GLOBAL_OFFSET_TABLE_"
+#define PLT_SYM		"__PROCEDURE_LINKAGE_TABLE_"
+#else
+#define ETEXT_SYM	"etext"
+#define EDATA_SYM	"edata"
+#define END_SYM		"end"
+#define DYN_SYM		"_DYNAMIC"
+#define GOT_SYM		"_GLOBAL_OFFSET_TABLE_"
+#define PLT_SYM		"_PROCEDURE_LINKAGE_TABLE_"
+#endif
 
 /*
  * Ok.  Following are the relocation information macros.  If your
