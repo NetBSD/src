@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.145 2001/11/26 00:19:57 jhawk Exp $
+.\"	$NetBSD: main,v 1.146 2001/12/01 22:44:37 jmcneill Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1590,6 +1590,7 @@ them, and would like to mentioned, tell us!)
 .It Ta David Maxwell Ta Mt david@netbsd.org
 .It Ta Dan McMahill Ta Mt dmcmahill@netbsd.org
 .It Ta Gregory McGarry Ta Mt gmcgarry@netbsd.org
+.It Ta Jared D. McNeill Ta Mt jmcneill@netbsd.org
 .It Ta Neil J. McRae Ta Mt neil@netbsd.org
 .It Ta Perry Metzger Ta Mt perry@netbsd.org
 .It Ta der Mouse Ta Mt mouse@netbsd.org
