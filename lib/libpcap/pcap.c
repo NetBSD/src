@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.c,v 1.5 1997/10/03 15:53:16 christos Exp $	*/
+/*	$NetBSD: pcap.c,v 1.6 1998/07/26 14:49:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: pcap.c,v 1.27 96/11/27 18:43:25 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: pcap.c,v 1.5 1997/10/03 15:53:16 christos Exp $");
+__RCSID("$NetBSD: pcap.c,v 1.6 1998/07/26 14:49:36 mycroft Exp $");
 #endif
 #endif
 
@@ -168,7 +168,7 @@ pcap_geterr(pcap_t *p)
 /*
  * Not all systems have strerror().
  */
-char *
+const char *
 pcap_strerror(int errnum)
 {
 #ifdef HAVE_STRERROR
