@@ -1,29 +1,71 @@
-#	$NetBSD: GENERIC,v 1.3 1994/10/26 08:01:40 cgd Exp $
+#	$NetBSD: GENERIC,v 1.4 1995/02/13 00:41:55 ragge Exp $
 #
 # GENERIC VAX, currently only supports 11/750 anyway.
 #
 
 include "std.vax"
 
+# Here are all different supported CPU types listed.
 options         "VAX750"
 
-options		SWAPPAGER, DEVPAGER, VNODEPAGER
-options         INET
-options		FFS
-options		COMPAT_43
-options		COMPAT_09
-maxusers	16
-
+# Kernel identification
 options         GENERIC
 
+# Max users on system; this is just a hint
+maxusers	16
+
+# Paging system, we always have them all.
+options		SWAPPAGER, DEVPAGER, VNODEPAGER
+
+# Kernel compiled-in symbolic debugger
+#options		DDB
+
+# Network support
+options         INET
+options         ETHER
+
+# All supported filesystem types
+options		FFS
+
+# Old compat stuff; needed to run 4.3BSD Reno programs
+options		COMPAT_43
+options		COMPAT_09
+options		COMPAT_10
+options		COMPAT_RENO
+
+# Kernel(s) to compile
 config          vmunix          swap generic
 
-uba0		at nexus ?
+# All supported CPU:s
+cpu0		at backplane0
 
+# Main buses at backplane
+sbi*		at backplane0
+#bi*		at backplane0
+
+# Devices connected at sbi
+mem*		at sbi? tr?	# Memory subsystems
+uba0		at sbi? tr?	# Unibus adapters
+uba1		at sbi? tr?	# Unibus adapters
+uba2		at sbi? tr?	# Unibus adapters
+uba3		at sbi? tr?	# Unibus adapters
+
+# Disk controllers at Unibus
 uda0		at uba?	csr 0172150
 ra0		at uda0 drive 0
+ra1		at uda0 drive 1
+ra2		at uda0 drive 2
+ra3		at uda0 drive 3
 
+uda1		at uba?	csr 0172550
+ra4		at uda1 drive 0
+ra5		at uda1 drive 1
+ra6		at uda1 drive 2
+ra7		at uda1 drive 3
+
+# Ethernet cards
 de0		at uba? csr 0174510
+de1		at uba? csr 0175510
 
 pseudo-device   loop
 pseudo-device   pty	48
