@@ -1,6 +1,6 @@
-# GENERIC + NFS services
+# GENERIC
 #
-#     $Id: NFSTEST,v 1.2 1994/02/27 03:44:26 briggs Exp $
+#     $Id: NOFPU,v 1.1 1994/02/27 03:44:26 briggs Exp $
 
 include	"std.mac68k"
 
@@ -24,8 +24,8 @@ options		DDB
 options		FFS
 options		QUOTA		# fast filesystem with user and group quotas
 options		MFS		# memory-based filesystem
-options		NFSSERVER	# Sun NFS-compatible filesystem
-options		NFSCLIENT	# Sun NFS-compatible filesystem
+#options	NFSSERVER	# Sun NFS-compatible filesystem
+#options	NFSCLIENT	# Sun NFS-compatible filesystem
 options		LOFS		# Loop-back filesystem
 options		ISOFS		# ISO-9660 w/ RockRidge
 options		KERNFS		# kernel data-structure filesystem
@@ -50,9 +50,6 @@ options		COMPAT_43
 options		NS
 options		MAPMEM
 options		SYSVSHM,SYSVSEM,SYSVMSG
-
-# Macintosh-specific options
-options		FPCOPROC
 
 config		netbsd	swap generic
 
