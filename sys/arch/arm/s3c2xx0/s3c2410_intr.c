@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_intr.c,v 1.1 2003/07/31 19:49:42 bsh Exp $ */
+/* $NetBSD: s3c2410_intr.c,v 1.2 2003/08/04 12:41:44 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.1 2003/07/31 19:49:42 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.2 2003/08/04 12:41:44 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,13 +80,7 @@ static const int si_to_ipl[SI_NQUEUES] = {
 	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
 };
 
-/*
- *   Clearing interrupt pending bits affects some built-in
- * peripherals.  For example, IIC starts transmitting next data when
- * its interrupt pending bit is cleared.
- *   We need to leave those bits to peripheral handlers.
- */
-#define PENDING_CLEAR_MASK	(~(1<<S3C24X0_INT_IIC))
+#define PENDING_CLEAR_MASK	(~0)
 
 /*
  * called from irq_entry.
@@ -101,23 +95,31 @@ s3c2410_irq_handler(struct clockframe *frame)
 
 	saved_spl_level = current_spl_level;
 
+#ifdef	DIAGNOSTIC
+	if (current_intr_depth > 10)
+		panic("nested intr too deep");
+#endif
+
 	while ((irqbits = icreg(INTCTL_INTPND)) != 0) {
 
-		/* XXX: Use INTOFFSET register */
+		/* Note: Only one bit in INTPND register is set */
 
-		for (irqno = ICU_LEN-1; irqno >= 0; --irqno)
-			if (irqbits & (1<<irqno))
-				break;
+		irqno = icreg(INTCTL_INTOFFSET);
 
-		if (irqno < 0)
+#ifdef	DIAGNOSTIC
+		if (__predict_false((irqbits & (1<<irqno)) == 0)) {
+			/* This shouldn't happen */
+			printf("INTOFFSET=%d, INTPND=%x\n", irqno, irqbits);
 			break;
-
+		}
+#endif
 		/* raise spl to stop interrupts of lower priorities */
 		if (saved_spl_level < handler[irqno].level)
 			s3c2xx0_setipl(handler[irqno].level);
 
 		/* clear pending bit */
 		icreg(INTCTL_SRCPND) = PENDING_CLEAR_MASK & (1 << irqno);
+		icreg(INTCTL_INTPND) = PENDING_CLEAR_MASK & (1 << irqno);
 
 		enable_interrupts(I32_bit); /* allow nested interrupts */
 
@@ -129,11 +131,13 @@ s3c2410_irq_handler(struct clockframe *frame)
 
 		/* restore spl to that was when this interrupt happen */
 		s3c2xx0_setipl(saved_spl_level);
+
 	}
 
 
 	if (get_pending_softint())
 		s3c2xx0_do_pending(1);
+
 }
 
 /*
@@ -142,19 +146,23 @@ s3c2410_irq_handler(struct clockframe *frame)
 static int
 cascade_irq_handler(void *cookie)
 {
-	int index = (int)cookie;
+	int index = (int)cookie - 1;
 	uint32_t irqbits;
 	int irqno, i;
 	int save = disable_interrupts(I32_bit);
 
-	irqbits = icreg(INTCTL_SUBSRCPND) & (0x07 << (3*index));
+	KASSERT(0 <= index && index <= 3);
+
+	irqbits = icreg(INTCTL_SUBSRCPND) &
+	    ~icreg(INTCTL_INTSUBMSK) & (0x07 << (3*index));
 
 	for (irqno = 3*index; irqbits; ++irqno) {
 		if ((irqbits & (1<<irqno)) == 0)
 			continue;
 
 		/* clear pending bit */
-		icreg(INTCTL_SRCPND) = PENDING_CLEAR_MASK & (1 << irqno);
+		irqbits &= ~(1<<irqno);
+		icreg(INTCTL_SUBSRCPND) = (1 << irqno);
 
 		/* allow nested interrupts. SPL is already set
 		 * correctly by main handler. */
@@ -180,7 +188,7 @@ static const u_char s3c24x0_ist[] = {
 	EXTINTR_BOTH,
 };
 
-const static uint8_t subirq_to_main[] = {
+static const uint8_t subirq_to_main[] = {
 	S3C2410_INT_UART0,
 	S3C2410_INT_UART0,
 	S3C2410_INT_UART0,
@@ -213,24 +221,29 @@ s3c24x0_intr_establish(int irqno, int level, int type,
 	if (irqno >= S3C2410_SUBIRQ_MIN) {
 		/* cascaded interrupts. */
 		int main_irqno;
+		int i = (irqno - S3C2410_SUBIRQ_MIN);
 
-		/* unmask it in submask register */
-		icreg(INTCTL_INTSUBMSK) &= ~(1<<(irqno - S3C2410_SUBIRQ_MIN));
+		main_irqno = subirq_to_main[i];
 
-		restore_interrupts(save);
-
-		main_irqno = subirq_to_main[irqno - S3C2410_SUBIRQ_MIN];
-
-		/* establish main irq if first time */
+		/* establish main irq if first time
+		 * be careful that cookie shouldn't be 0 */
 		if (handler[main_irqno].func != cascade_irq_handler)
 			s3c24x0_intr_establish(main_irqno, level, type,
-			    cascade_irq_handler, (void *)(irqno/3));
+			    cascade_irq_handler, (void *)((i/3) + 1));
 
+		/* unmask it in submask register */
+		icreg(INTCTL_INTSUBMSK) &= ~(1<<i);
+
+		restore_interrupts(save);
 		return &handler[irqno];
 	}
 
 	s3c2xx0_update_intr_masks(irqno, level);
 
+	/*
+	 * set trigger type for external interrupts 0..3
+	 * TODO: handle EXTINT[4:23].
+	 */
 	if (irqno <= S3C24X0_INT_EXT(3)) {
 		/*
 		 * Update external interrupt control
@@ -302,7 +315,11 @@ s3c2410_intr_init(struct s3c24x0_softc *sc)
 	s3c2xx0_intr_mask_reg = (uint32_t *)(intctl_base + INTCTL_INTMSK);
 
 	/* clear all pending interrupt */
-	icreg(INTCTL_SRCPND) = 0xffffffff;
+	icreg(INTCTL_SRCPND) = ~0;
+	icreg(INTCTL_INTPND) = ~0;
+
+	/* mask all sub interrupts */
+	icreg(INTCTL_INTSUBMSK) = 0x7ff;
 
 	init_interrupt_masks();
 
