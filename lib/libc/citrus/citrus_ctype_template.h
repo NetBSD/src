@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.2 2002/03/18 08:09:28 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.3 2002/03/18 10:01:12 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -238,7 +238,6 @@ _FUNCNAME(mbsrtowcs_priv)(_ENCODING_INFO * __restrict ei,
 		if (siz == (size_t)-2)
 			err = EILSEQ;
 		if (err) {
-			errno = err;
 			cnt = -1;
 			goto bye;
 		}
