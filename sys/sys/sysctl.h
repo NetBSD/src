@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.70 2001/10/05 19:05:06 eeh Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.71 2002/01/27 12:41:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -444,7 +444,7 @@ struct kinfo_proc2 {
 #define	HW_PHYSMEM	 5		/* int: total memory */
 #define	HW_USERMEM	 6		/* int: non-kernel memory */
 #define	HW_PAGESIZE	 7		/* int: software page size */
-#define	HW_DISKNAMES	 8		/* strings: disk drive names */
+#define	HW_DISKNAMES	 8		/* string: disk drive names */
 #define	HW_DISKSTATS	 9		/* struct: diskstats[] */
 #define	HW_MACHINE_ARCH	10		/* string: machine architecture */
 #define	HW_ALIGNBYTES	11		/* int: ALIGNBYTES for the kernel */
@@ -460,7 +460,7 @@ struct kinfo_proc2 {
 	{ "physmem", CTLTYPE_INT }, \
 	{ "usermem", CTLTYPE_INT }, \
 	{ "pagesize", CTLTYPE_INT }, \
-	{ "disknames", CTLTYPE_STRUCT }, \
+	{ "disknames", CTLTYPE_STRING }, \
 	{ "diskstats", CTLTYPE_STRUCT }, \
 	{ "machine_arch", CTLTYPE_STRING }, \
 	{ "alignbytes", CTLTYPE_INT }, \
@@ -650,6 +650,8 @@ int sysctl_struct(void *, size_t *, void *, size_t, void *, int);
 int sysctl_rdstruct(void *, size_t *, void *, const void *, int);
 int sysctl_rdminstruct(void *, size_t *, void *, const void *, int);
 int sysctl_clockrate(void *, size_t *);
+int sysctl_disknames(void *, size_t *);
+int sysctl_diskstats(int *, u_int, void *, size_t *);
 int sysctl_vnode(char *, size_t *, struct proc *);
 int sysctl_ntptime(void *, size_t *);
 #ifdef GPROF
