@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucontext.5,v 1.2 2003/01/21 14:21:47 wiz Exp $
+.\"	$NetBSD: ucontext.5,v 1.3 2003/01/22 11:06:01 kleink Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,7 +49,7 @@ thread of control within the execution of a process.
 .Pp
 .Nm ucontext_t
 includes the following members:
-.Bd -literal -offset "XXXXXXXX"
+.Bd -literal -offset indent
 ucontext_t *  uc_link
 sigset_t      uc_sigmask
 stack_t       uc_stack
