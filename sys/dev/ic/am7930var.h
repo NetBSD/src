@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930var.h,v 1.4 1997/10/19 07:41:49 augustss Exp $ */
+/*	$NetBSD: am7930var.h,v 1.5 1998/06/24 11:09:23 jonathan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,26 +46,10 @@
 
 #ifndef _LOCORE
 
-#define SUNAUDIO_MIC_PORT	0
-#define SUNAUDIO_SPEAKER	1
-#define SUNAUDIO_HEADPHONES	2
-#define SUNAUDIO_MONITOR	3
-#define SUNAUDIO_SOURCE		4
-#define SUNAUDIO_OUTPUT		5
-#define SUNAUDIO_INPUT_CLASS	6
-#define SUNAUDIO_OUTPUT_CLASS	7
-#define SUNAUDIO_RECORD_CLASS	8
-#define SUNAUDIO_MONITOR_CLASS	9
-
-struct auio {
-	volatile struct amd7930 *au_amd;/* chip registers */
-
-	u_char	*au_rdata;		/* record data */
-	u_char	*au_rend;		/* end of record data */
-	u_char	*au_pdata;		/* play data */
-	u_char	*au_pend;		/* end of play data */
-	struct	evcnt au_intrcnt;	/* statistics */
-};
+/*
+ * MI Software state, per AMD79C30 audio chip.
+ */
+struct intrhand;
 
 /*
  * Chip interface
@@ -82,5 +66,100 @@ struct mapreg {
         u_char  mr_mmr1;
         u_char  mr_mmr2;
 };
+
+/*
+ * pdma state
+ */
+struct auio {
+	volatile struct am7930 *au_amd;/* chip registers */
+
+	u_char	*au_rdata;		/* record data */
+	u_char	*au_rend;		/* end of record data */
+	u_char	*au_pdata;		/* play data */
+	u_char	*au_pend;		/* end of play data */
+	struct	evcnt au_intrcnt;	/* statistics */
+};
+
+
+
+struct am7930_softc {
+	struct	device sc_dev;		/* base device */
+	bus_space_tag_t	sc_bustag;
+
+	int	sc_open;		/* single use device */
+	int	sc_locked;		/* true when transfering data */
+	struct	mapreg sc_map;		/* current contents of map registers */
+
+	u_char	sc_rlevel;		/* record level */
+	u_char	sc_plevel;		/* play level */
+	u_char	sc_mlevel;		/* monitor level */
+	u_char	sc_out_port;		/* output port */
+
+	volatile struct am7930	*sc_amd;/* chip registers */
+
+	/* Callbacks */
+	void	(*sc_wam16) __P((volatile struct am7930 *amd, u_int16_t val));
+#define	WAMD16(sc, amd, v) (sc)->sc_wam16((amd), (v))
+	void	(*sc_onopen) __P((struct am7930_softc *sc));
+	void	(*sc_onclose) __P((struct am7930_softc *sc));
+
+
+	/* 
+	 * interface to the sparc MD interrupt handlers.
+	 *  XXX should really either be in MD sparc derived softc struct,
+	 *  or replaced with an MI pdma type.
+	 */
+
+	/*struct intrhand sc_hwih;	-* hardware interrupt vector */
+	struct	intrhand sc_swih;	/* software interrupt vector */
+	void	(*sc_rintr)(void*);	/* input completion intr handler */
+	void	*sc_rarg;		/* arg for sc_rintr() */
+	void	(*sc_pintr)(void*);	/* output completion intr handler */
+	void	*sc_parg;		/* arg for sc_pintr() */
+
+        /* sc_au is special in that the hardware interrupt handler uses it */
+        struct  auio sc_au;		/* recv and xmit buffers, etc */
+#define sc_intrcnt	sc_au.au_intrcnt	/* statistics */
+};
+
+extern int     am7930debug;
+/* Write 16 bits of data from variable v to the data port of the audio chip */
+
+/*
+ * Sun-specific audio channel definitions.
+ */
+
+#define SUNAUDIO_MIC_PORT	0
+#define SUNAUDIO_SPEAKER	1
+#define SUNAUDIO_HEADPHONES	2
+#define SUNAUDIO_MONITOR	3
+#define SUNAUDIO_SOURCE		4
+#define SUNAUDIO_OUTPUT		5
+#define SUNAUDIO_INPUT_CLASS	6
+#define SUNAUDIO_OUTPUT_CLASS	7
+#define SUNAUDIO_RECORD_CLASS	8
+#define SUNAUDIO_MONITOR_CLASS	9
+
+
+/* declarations */
+void am7930_init __P((struct am7930_softc *));
+
+/*
+ * audio(9) MI callbacks from upper-level audio layer.
+ */
+struct audio_device;
+struct audio_encoding;
+struct audio_params;
+
+int	am7930_open __P((void *, int));
+void	am7930_close __P((void *));
+int	am7930_query_encoding __P((void *, struct audio_encoding *));
+int	am7930_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
+int	am7930_commit_settings __P((void *));
+int	am7930_round_blocksize __P((void *, int));
+int	am7930_halt_output __P((void *));
+int	am7930_halt_input __P((void *));
+int	am7930_getdev __P((void *, struct audio_device *));
+int	am7930_get_props __P((void *));
 
 #endif /* !_LOCORE */
