@@ -1,4 +1,4 @@
-.\" @(#) $Header: /cvsroot/src/libexec/rarpd/Attic/rarpd.8,v 1.1 1993/09/07 02:32:36 cassidy Exp $ (LBL)
+.\" @(#) $Header: /cvsroot/src/libexec/rarpd/Attic/rarpd.8,v 1.2 1993/10/06 19:38:15 jtc Exp $ (LBL)
 .\"
 .\" Copyright (c) 1988-1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -19,75 +19,74 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.TH RARPD 8 "26 Oct 1990"
-.SH NAME
-rarpd \- Reverse ARP Daemon
-.SH SYNOPSIS
-.na
-.B rarpd 
-[
-.B \-adf
-]
-[
-.I interface
-]
-.br
-.ad
-.SH DESCRIPTION
-.LP
-.I Rarpd
+.Dd October 26, 1990
+.Dt RARPD 8
+.Sh NAME
+.Nm rarpd 
+.Nd Reverse ARP Daemon
+.Sh SYNOPSIS
+.Nm rarpd 
+.Op Fl adf
+.Op Ar interface
+.Sh DESCRIPTION
+.Nm Rarpd
 services Reverse ARP requests on the Ethernet connected to
-.I interface.
+.Ar interface.
 Upon receiving a request, 
-.Irarpd
+.Nm rarpd
 maps the target hardware address to an IP address via its name, which 
 must be present in both the
-.I ethers(5)
+.Xr ethers 5
 and 
-.I hosts(5)
+.Xr hosts 5
 databases.
 If a host does not exist in both databses, the translation cannot
 proceed and a reply will not be sent.
-
+.Pp
 Additionally, a request is honored only if the server
 (i.e., the host that rarpd is running on)
 can "boot" the target; that is, if the directory 
-/tftpboot/\fIipaddr\fP
-exists, where \fIipaddr\fP is the target IP address.
-
+.Pa /tftpboot/ Ns Em ipaddr
+exists, where 
+.Rm ipaddr
+is the target IP address.
+.Pp
 In normal operation, 
-.I rarpd
+.Nm rarpd
 forks a copy of itself and runs in
 the background.  Anomalies and errors are reported via 
-.I syslog(3).
-
-.SH OPTIONS
-.LP
-.TP
-.B \-a
+.Xr syslog 3 .
+.Sh OPTIONS
+.Bl -tag -width indent
+.It Fl a
 Listen on all the Ethernets attached to the system.
-If `-a' is omitted, an interface must be specified.
-.TP
-.B \-d
+If 
+.Sq Fl a 
+is omitted, an interface must be specified.
+.It Fl d
 Run in debug mode, with all the output to stderr.
-This option implies the -f option.
-.TP
-.B \-f
+This option implies the 
+.Fl f
+option.
+.It Fl f
 Run in the foreground.
-
-.SH FILES
-/etc/ethers
-.br
-/etc/hosts
-.br
-/tftpboot
-.SH SEE ALSO
-bpf(4)
-.br
-RFC 903: Finlayson, R.; Mann, T.; Mogul, J.C.; Theimer, M.  Reverse Address 
-Resolution Protocol.  1984 June; 4 p.
-.SH AUTHORS
-Craig Leres (leres@ee.lbl.gov) and
-Steven McCanne (mccanne@ee.lbl.gov).
+.El
+.Sh FILES
+.Bl -tag -width Pa -compact
+.It Pa /etc/ethers
+.It Pa /etc/hosts
+.It Pa /tftpboot
+.El
+.Sh SEE ALSO
+.Xr bpf 4 ,
+.Rs 
+.%R A Reverse Address  Resolution Protocol
+.%N RFC 903
+.%A Finlayson, R.
+.%A Mann, T.
+.%A Mogul, J.C.
+.%A Theimer, M.
+.Re
+.Sh AUTHORS
+Craig Leres (leres@ee.lbl.gov) and Steven McCanne (mccanne@ee.lbl.gov).
 Lawrence Berkeley Laboratory, University of California, Berkeley, CA.
-.SH BUGS
