@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.9 1998/02/26 19:30:59 gwr Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.10 2000/09/24 12:32:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
+#include <sys/boot_flag.h>
 
 #include <machine/mon.h>
 
@@ -279,19 +280,8 @@ sunmon_init()
 #ifdef	DEBUG
 		mon_printf("boot option: %s\n", p);
 #endif
-		for (++p; *p; p++) {
-			switch (*p) {
-			case 'a':
-				boothowto |= RB_ASKNAME;
-				break;
-			case 's':
-				boothowto |= RB_SINGLE;
-				break;
-			case 'd':
-				boothowto |= RB_KDB;
-				break;
-			}
-		}
+		for (++p; *p; p++)
+			BOOT_FLAG(*p, boothowto);
 		argp++;
 	}
 

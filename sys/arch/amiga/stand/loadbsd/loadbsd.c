@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.24 2000/06/15 13:43:35 is Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.25 2000/09/24 12:32:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -114,8 +114,9 @@ void warnx __P((const char *, ...));
  *	2.15	07/28/96 is - Add first version of kludges needed to
  *		get FusionForty kickrom'd memory back. Hope this doesn't
  *		break anything else.
+ *	2.16	07/08/00 - added bootverbose support
  */
-static const char _version[] = "$VER: LoadBSD 2.15 (28.7.96)";
+static const char _version[] = "$VER: LoadBSD 2.16 (19.9.2000)";
 
 /*
  * Kernel startup interface version
@@ -202,7 +203,7 @@ main(argc, argv)
 	if ((ExpansionBase=(void *)OpenLibrary(EXPANSIONNAME, 0)) == NULL)
 		err(20, "can't open expansion library");
 
-	while ((ch = getopt(argc, argv, "aAbc:DhI:km:n:ptsSVZ")) != -1) {
+	while ((ch = getopt(argc, argv, "aAbc:DhI:km:n:qptsSvVZ")) != -1) {
 		switch (ch) {
 		case 'k':
 			k_flag = 1;
@@ -226,6 +227,12 @@ main(argc, argv)
 		case 's':
 			boothowto &= ~(RB_AUTOBOOT);
 			boothowto |= RB_SINGLE;
+			break;
+		case 'q':
+			boothowto |= AB_QUIET;
+			break
+		case 'v':
+			boothowto |= AB_VERBOSE;
 			break;
 		case 'V':
 			fprintf(stderr,"%s\n",_version + 6);
@@ -879,11 +886,13 @@ OPTIONS
 \t    segment. The higher priority segment is usually faster
 \t    (i.e. 32 bit memory), but some people have smaller amounts
 \t    of 32 bit memory.
+\t-q  Boot up in quiet mode.
 \t-s  Boot up in singleuser mode (default).
 \t-S  Include kernel symbol table.
 \t-t  This is a *test* option.  It prints out the memory
 \t    list information being passed to the kernel and also
 \t    exits without actually starting NetBSD.
+\t-v  Boot up in verbose mode.
 \t-V  Version of loadbsd program.
 \t-Z  Force kernel load to chipmem.
 HISTORY

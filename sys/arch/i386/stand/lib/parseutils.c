@@ -1,4 +1,4 @@
-/*	$NetBSD: parseutils.c,v 1.2 2000/08/31 07:21:46 jdolecek Exp $	*/
+/*	$NetBSD: parseutils.c,v 1.3 2000/09/24 12:32:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -39,6 +39,7 @@
 
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
+#include <sys/boot_flag.h>
 
 #include "libi386.h"
 
@@ -73,8 +74,9 @@ parseopts(opts, howto)
 
 	opts++; 	/* skip - */
 	while (*opts && *opts != ' ') {
-		r = netbsd_opt(*opts);
-		if (r == -1) {
+		r = 0;
+		BOOT_FLAG(*opts, r);
+		if (r == 0) {
 			printf("-%c: unknown flag\n", *opts);
 			command_help(NULL);
 			return(0);
@@ -103,7 +105,7 @@ parseboot(arg, filename, howto)
 		return(1);
 
 	/* format is... */
-	/* [[xxNx:]filename] [-adrs] */
+	/* [[xxNx:]filename] [-adqsv] */
 
 	/* check for just args */
 	if (arg[0] == '-')

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.141 2000/07/29 20:06:29 jdolecek Exp $ */
+/*	$NetBSD: autoconf.c,v 1.142 2000/09/24 12:32:38 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -64,6 +64,7 @@
 #include <sys/queue.h>
 #include <sys/msgbuf.h>
 #include <sys/user.h>
+#include <sys/boot_flag.h>
 
 #include <net/if.h>
 
@@ -348,6 +349,7 @@ bootpath_build()
 {
 	char *cp, *pp;
 	struct bootpath *bp;
+	int fl;
 
 	/*
 	 * Grab boot path from PROM and split into `bootpath' components.
@@ -404,19 +406,18 @@ bootpath_build()
 		if (*cp++ == '\0')
 			return;
 
-	for (;;) {
-		switch (*++cp) {
+	for (;*++cp;) {
+		fl = 0;
+		BOOT_FLAG(*cp, fl);
+		if (!fl) {
+			printf("unknown option `%c'\n", *cp);
+			continue;
+		}
+		boothowto |= fl;
 
-		case '\0':
-			return;
-
-		case 'a':
-			boothowto |= RB_ASKNAME;
-			break;
-
-		case 'd':	/* kgdb - always on zs	XXX */
+		/* specialties */
+		if (*cp == 'd') {
 #if defined(KGDB)
-			boothowto |= RB_KDB;	/* XXX unused */
 			kgdb_debug_panic = 1;
 			kgdb_connect(1);
 #elif defined(DDB)
@@ -424,14 +425,6 @@ bootpath_build()
 #else
 			printf("kernel has no debugger\n");
 #endif
-			break;
-
-		case 's':
-			boothowto |= RB_SINGLE;
-			break;
-
-		default:
-			printf("unknown option `%c'\n", *cp);
 		}
 	}
 }
