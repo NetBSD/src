@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.1 1999/07/14 22:24:08 sommerfeld Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.2 1999/07/14 23:07:29 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.1 1999/07/14 22:24:08 sommerfeld Exp $
+ *	$Id: if_wi.c,v 1.2 1999/07/14 23:07:29 sommerfeld Exp $
  */
 
 /*
@@ -98,7 +98,7 @@
 #include <netinet/if_inarp.h>
 #endif
 
-#if NBPF > 0
+#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 #endif
@@ -115,7 +115,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.1 1999/07/14 22:24:08 sommerfeld Exp $";
+	"$Id: if_wi.c,v 1.2 1999/07/14 23:07:29 sommerfeld Exp $";
 #endif
 
 #ifdef foo
@@ -151,6 +151,7 @@ static int wi_alloc_nicmem	__P((struct wi_softc *, int, int *));
 static void wi_inquire		__P((void *));
 static void wi_setdef		__P((struct wi_softc *, struct wi_req *));
 static int wi_mgmt_xmit		__P((struct wi_softc *, caddr_t, int));
+static void wi_shutdown		__P((void *));
 
 static int wi_enable __P((struct wi_softc *));
 static int wi_disable __P((struct wi_softc *));
@@ -322,15 +323,12 @@ wi_attach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, mac.wi_mac_addr);
 
-#if NBPF > 0
+#if NBPFILTER > 0
 	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
 
-#if 0
-	/* XXX should use NetBSD shutdown hooks here */
-	at_shutdown(wi_shutdown, sc, SHUTDOWN_POST_SYNC);
-#endif
+	sc->sc_sdhook = shutdownhook_establish(wi_shutdown, sc);
 }
 
 static void wi_rxeof(sc)
@@ -425,12 +423,12 @@ static void wi_rxeof(sc)
 
 	ifp->if_ipackets++;
 
-#if NBPF > 0
+#if NBPFILTER > 0
 	/* Handle BPF listeners. */
 	if (ifp->if_bpf) {
-		bpf_mtap(ifp, m);
+		bpf_mtap(ifp->if_bpf, m);
 		if (ifp->if_flags & IFF_PROMISC &&
-		    (bcmp(eh->ether_dhost, sc->sc_ethercom.ec_enaddr,
+		    (bcmp(eh->ether_dhost, sc->sc_macaddr,
 		    ETHER_ADDR_LEN) && (eh->ether_dhost[0] & 1) == 0)) {
 			m_freem(m);
 			return;
@@ -1233,13 +1231,13 @@ static void wi_start(ifp)
 		    m0->m_pkthdr.len + 2);
 	}
 
-#if NBPF > 0
+#if NBPFILTER > 0
 	/*
 	 * If there's a BPF listner, bounce a copy of
 	 * this frame to him.
 	 */
 	if (ifp->if_bpf)
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp->if_bpf, m0);
 #endif
 
 	m_freem(m0);
@@ -1330,16 +1328,12 @@ static void wi_watchdog(ifp)
 	return;
 }
 
-#if 0
-static void wi_shutdown(howto, arg)
-	int			howto;
+static void wi_shutdown(arg)
 	void			*arg;
 {
 	struct wi_softc		*sc;
 
 	sc = arg;
-	wi_stop(sc);
-
+	wi_disable(sc);
 	return;
 }
-#endif

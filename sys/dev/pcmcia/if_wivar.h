@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wivar.h,v 1.1 1999/07/14 22:24:11 sommerfeld Exp $	*/
+/*	$NetBSD: if_wivar.h,v 1.2 1999/07/14 23:07:29 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wivar.h,v 1.1 1999/07/14 22:24:11 sommerfeld Exp $
+ *	$Id: if_wivar.h,v 1.2 1999/07/14 23:07:29 sommerfeld Exp $
  */
 
 
@@ -75,6 +75,7 @@ struct wi_softc	{
 	bus_space_tag_t		wi_btag;
 	bus_space_handle_t	wi_bhandle;
 
+  	void *sc_sdhook;	/* saved shutdown hook for card */
 	void *sc_ih;
 	u_int8_t		sc_macaddr[6];
 	
