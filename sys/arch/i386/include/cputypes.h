@@ -24,24 +24,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cputypes.h,v 1.3 1993/12/19 06:58:23 mycroft Exp $
+ *	$Id: cputypes.h,v 1.4 1993/12/19 07:54:52 mycroft Exp $
  */
 
 /*
  *	Classes of Processor
  */
 
-#define	CPUCLASS_386	1
-#define	CPUCLASS_486	2
-#define	CPUCLASS_586	3
+#define	CPUCLASS_386	0
+#define	CPUCLASS_486	1
+#define	CPUCLASS_586	2
 
 /*
  *	Kinds of Processor
  */
 
-#define	CPU_386SX	1	/* Intel 80386SX */
-#define	CPU_386		2	/* Intel 80386DX */
-#define	CPU_486SX	3	/* Intel 80486SX */
-#define	CPU_486		4	/* Intel 80486DX */
-#define	CPU_586		5	/* Intel P.....m (I hate lawyers; it's TM) */
+#define	CPU_386SX	0	/* Intel 80386SX */
+#define	CPU_386		1	/* Intel 80386DX */
+#define	CPU_486SX	2	/* Intel 80486SX */
+#define	CPU_486		3	/* Intel 80486DX */
+#define	CPU_586		4	/* Intel P.....m (I hate lawyers; it's TM) */
 
