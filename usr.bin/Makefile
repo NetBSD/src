@@ -1,6 +1,5 @@
-#	@(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
-#
-#	$Id: Makefile,v 1.24 1993/06/21 12:43:56 brezak Exp $
+#	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
+#	$Id: Makefile,v 1.25 1993/07/30 22:14:05 mycroft Exp $
 
 SUBDIR=	ar biff basename cal calendar cap_mkdb \
 	checknr chpass cksum cmp col colcrt colrm column comm compress \

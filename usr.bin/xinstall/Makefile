@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.5 (Berkeley) 6/24/90
+#	from: @(#)Makefile	5.5 (Berkeley) 6/24/90
+#	$Id: Makefile,v 1.5 1993/07/30 22:14:18 mycroft Exp $
 
 PROG=	xinstall
 MAN1=	install.0

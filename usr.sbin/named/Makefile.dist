@@ -1,4 +1,5 @@
-#	@(#)Makefile.dist	5.5 (Berkeley) 8/23/90
+#	from: @(#)Makefile.dist	5.5 (Berkeley) 8/23/90
+#	$Id: Makefile.dist,v 1.2 1993/07/30 22:11:55 mycroft Exp $
 
 STDDEF= -DDEBUG -DSTATS
 ### -DSIG_FN=void -DALLOW_T_UNSPEC -Dmalloc=rt_malloc -Dfree=rt_free

@@ -1,7 +1,5 @@
-#	@(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#
-#	$Header: /cvsroot/src/usr.sbin/Makefile,v 1.10 1993/06/03 19:34:02 brezak Exp $
-#
+#	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
+#	$Id: Makefile,v 1.11 1993/07/30 22:13:52 mycroft Exp $
 
 SUBDIR=	accountant accton arp chroot config dbsym dev_mkdb diskpart \
 	edquota flcopy gettable htable inetd iostat kgmon \
