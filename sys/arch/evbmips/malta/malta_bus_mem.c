@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_bus_mem.c,v 1.2 2002/03/23 14:33:35 simonb Exp $	*/
+/*	$NetBSD: malta_bus_mem.c,v 1.3 2002/04/09 03:40:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 /* MEM region 1 */
-#define	CHIP_W1_BUS_START(v)	0x08000000UL
+#define	CHIP_W1_BUS_START(v)	MALTA_PCIMEM1_BASE
 #define	CHIP_W1_BUS_END(v)	MALTA_PCIMEM1_SIZE + \
 				MALTA_PCIMEM2_SIZE
 #define	CHIP_W1_SYS_START(v)	((u_long)MALTA_PCIMEM1_BASE)
@@ -72,14 +72,14 @@
 #else
 
 /* MEM region 1 */
-#define	CHIP_W1_BUS_START(v)	0x08000000UL
+#define	CHIP_W1_BUS_START(v)	MALTA_PCIMEM1_BASE
 #define	CHIP_W1_BUS_END(v)	MALTA_PCIMEM1_SIZE
 #define	CHIP_W1_SYS_START(v)	((u_long)MALTA_PCIMEM1_BASE)
 #define	CHIP_W1_SYS_END(v)	((u_long)MALTA_PCIMEM1_BASE + \
 				 CHIP_W1_BUS_END(v))
 
 /* MEM region 2 */
-#define	CHIP_W2_BUS_START(v)	0x10000000UL
+#define	CHIP_W2_BUS_START(v)	MALTA_PCIMEM2_BASE
 #define	CHIP_W2_BUS_END(v)	MALTA_PCIMEM2_SIZE
 #define	CHIP_W2_SYS_START(v)	((u_long)MALTA_PCIMEM2_BASE)
 #define	CHIP_W2_SYS_END(v)	((u_long)MALTA_PCIMEM2_BASE + \
