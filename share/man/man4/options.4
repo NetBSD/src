@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.114 2000/07/31 11:40:04 ad Exp $
+.\"	$NetBSD: options.4,v 1.115 2000/08/03 00:34:08 jeffs Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -271,6 +271,11 @@ Note that this sets the value of the
 variable which may be changed at run time -- see
 .Xr sysctl 8
 for details.
+.It Cd options DDB_BREAK_CHAR=integer
+This option overrides the using break to enter the kernel debugger
+on the serial console.
+The value given will is the ascii value to be used instead.
+This is currently only supported by the com driver.
 .It Cd options KGDB
 Compiles in a remote kernel debugger stub for diagnosing kernel problems
 using the
