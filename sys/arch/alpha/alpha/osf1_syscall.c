@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.5 2001/05/30 12:28:38 mrg Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.6 2002/04/10 04:18:31 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.5 2001/05/30 12:28:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.6 2002/04/10 04:18:31 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ osf1_syscall_plain(struct proc *p, u_int64_t code, struct trapframe *framep)
 		break;
 	default:
 	bad:
-		error = osf1_errno_rxlist[error];
+		error = native_to_osf1_errno[error];
 		framep->tf_regs[FRAME_V0] = error;
 		framep->tf_regs[FRAME_A3] = 1;
 		break;
