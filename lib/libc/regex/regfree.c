@@ -1,4 +1,4 @@
-/*	$NetBSD: regfree.c,v 1.11 1999/09/20 04:39:20 lukem Exp $	*/
+/*	$NetBSD: regfree.c,v 1.12 2000/01/22 22:19:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regfree.c	8.3 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regfree.c,v 1.11 1999/09/20 04:39:20 lukem Exp $");
+__RCSID("$NetBSD: regfree.c,v 1.12 2000/01/22 22:19:17 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: regfree.c,v 1.11 1999/09/20 04:39:20 lukem Exp $");
 #include <stdlib.h>
 
 #ifdef __weak_alias
-__weak_alias(regfree,_regfree);
+__weak_alias(regfree,_regfree)
 #endif
 
 #include "utils.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.35 1999/09/20 04:39:55 lukem Exp $	 */
+/*	$NetBSD: yplib.c,v 1.36 2000/01/22 22:19:22 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yplib.c,v 1.35 1999/09/20 04:39:55 lukem Exp $");
+__RCSID("$NetBSD: yplib.c,v 1.36 2000/01/22 22:19:22 mycroft Exp $");
 #endif
 
 #include "namespace.h"
@@ -72,9 +72,9 @@ struct timeval _yplib_rpc_timeout = { YPLIB_TIMEOUT / YPLIB_RPC_RETRIES,
 int _yplib_nerrs = 5;
 
 #ifdef __weak_alias
-__weak_alias(yp_bind, _yp_bind);
-__weak_alias(yp_unbind, _yp_unbind);
-__weak_alias(yp_get_default_domain, _yp_get_default_domain);
+__weak_alias(yp_bind, _yp_bind)
+__weak_alias(yp_unbind, _yp_unbind)
+__weak_alias(yp_get_default_domain, _yp_get_default_domain)
 #endif
 
 int

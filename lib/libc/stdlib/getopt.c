@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.16 1999/12/02 13:15:56 kleink Exp $	*/
+/*	$NetBSD: getopt.c,v 1.17 2000/01/22 22:19:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getopt.c,v 1.16 1999/12/02 13:15:56 kleink Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.17 2000/01/22 22:19:19 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: getopt.c,v 1.16 1999/12/02 13:15:56 kleink Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(getopt,_getopt);
+__weak_alias(getopt,_getopt)
 #endif
 
 

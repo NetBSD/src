@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_addr.c,v 1.9 1999/09/20 04:39:16 lukem Exp $	*/
+/*	$NetBSD: nsap_addr.c,v 1.10 2000/01/22 22:19:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -53,7 +53,7 @@
 #if 0
 static char rcsid[] = "Id: nsap_addr.c,v 8.3 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: nsap_addr.c,v 1.9 1999/09/20 04:39:16 lukem Exp $");
+__RCSID("$NetBSD: nsap_addr.c,v 1.10 2000/01/22 22:19:16 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,8 +69,8 @@ __RCSID("$NetBSD: nsap_addr.c,v 1.9 1999/09/20 04:39:16 lukem Exp $");
 #include <resolv.h>
 
 #ifdef __weak_alias
-__weak_alias(inet_nsap_addr,_inet_nsap_addr);
-__weak_alias(inet_nsap_ntoa,_inet_nsap_ntoa);
+__weak_alias(inet_nsap_addr,_inet_nsap_addr)
+__weak_alias(inet_nsap_ntoa,_inet_nsap_ntoa)
 #endif
 
 static char xtob __P((int));

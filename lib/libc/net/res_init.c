@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.27 1999/09/16 11:45:18 lukem Exp $	*/
+/*	$NetBSD: res_init.c,v 1.28 2000/01/22 22:19:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.27 1999/09/16 11:45:18 lukem Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.28 2000/01/22 22:19:16 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,7 +83,7 @@ __RCSID("$NetBSD: res_init.c,v 1.27 1999/09/16 11:45:18 lukem Exp $");
 #include <unistd.h>
 
 #if defined(_LIBC) && defined(__weak_alias)
-__weak_alias(res_init,_res_init);
+__weak_alias(res_init,_res_init)
 #endif
 
 static void res_setoptions __P((char *, char *));

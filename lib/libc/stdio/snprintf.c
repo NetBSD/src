@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf.c,v 1.11 2000/01/21 19:51:37 mycroft Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.12 2000/01/22 22:19:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)snprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: snprintf.c,v 1.11 2000/01/21 19:51:37 mycroft Exp $");
+__RCSID("$NetBSD: snprintf.c,v 1.12 2000/01/22 22:19:19 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: snprintf.c,v 1.11 2000/01/21 19:51:37 mycroft Exp $");
 #endif
 
 #ifdef __weak_alias
-__weak_alias(snprintf,_snprintf);
+__weak_alias(snprintf,_snprintf)
 #endif
 
 int

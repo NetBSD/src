@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.17 1999/09/20 04:39:42 lukem Exp $	*/
+/*	$NetBSD: setenv.c,v 1.18 2000/01/22 22:19:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.17 1999/09/20 04:39:42 lukem Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.18 2000/01/22 22:19:20 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,8 +52,8 @@ __RCSID("$NetBSD: setenv.c,v 1.17 1999/09/20 04:39:42 lukem Exp $");
 #include "reentrant.h"
 
 #ifdef __weak_alias
-__weak_alias(setenv,_setenv);
-__weak_alias(unsetenv,_unsetenv);
+__weak_alias(setenv,_setenv)
+__weak_alias(unsetenv,_unsetenv)
 #endif
 
 #ifdef _REENT

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.c,v 1.13 1999/04/17 13:16:39 drochner Exp $	*/
+/*	$NetBSD: pmap_clnt.c,v 1.14 2000/01/22 22:19:18 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_clnt.c 1.37 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_clnt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_clnt.c,v 1.13 1999/04/17 13:16:39 drochner Exp $");
+__RCSID("$NetBSD: pmap_clnt.c,v 1.14 2000/01/22 22:19:18 mycroft Exp $");
 #endif
 #endif
 
@@ -55,8 +55,8 @@ __RCSID("$NetBSD: pmap_clnt.c,v 1.13 1999/04/17 13:16:39 drochner Exp $");
 #include <rpc/pmap_clnt.h>
 
 #ifdef __weak_alias
-__weak_alias(pmap_set,_pmap_set);
-__weak_alias(pmap_unset,_pmap_unset);
+__weak_alias(pmap_set,_pmap_set)
+__weak_alias(pmap_unset,_pmap_unset)
 #endif
 
 static const struct timeval tottimeout = { 60, 0 };

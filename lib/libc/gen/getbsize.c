@@ -1,4 +1,4 @@
-/*	$NetBSD: getbsize.c,v 1.12 1999/09/20 04:38:59 lukem Exp $	*/
+/*	$NetBSD: getbsize.c,v 1.13 2000/01/22 22:19:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getbsize.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getbsize.c,v 1.12 1999/09/20 04:38:59 lukem Exp $");
+__RCSID("$NetBSD: getbsize.c,v 1.13 2000/01/22 22:19:10 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: getbsize.c,v 1.12 1999/09/20 04:38:59 lukem Exp $");
 #include <string.h>
 
 #ifdef __weak_alias
-__weak_alias(getbsize,_getbsize);
+__weak_alias(getbsize,_getbsize)
 #endif
 
 char *

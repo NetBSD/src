@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.22 2000/01/05 18:40:06 drochner Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.23 2000/01/22 22:19:17 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_perror.c,v 1.22 2000/01/05 18:40:06 drochner Exp $");
+__RCSID("$NetBSD: clnt_perror.c,v 1.23 2000/01/22 22:19:17 mycroft Exp $");
 #endif
 #endif
 
@@ -58,12 +58,12 @@ __RCSID("$NetBSD: clnt_perror.c,v 1.22 2000/01/05 18:40:06 drochner Exp $");
 #include <rpc/clnt.h>
 
 #ifdef __weak_alias
-__weak_alias(clnt_pcreateerror,_clnt_pcreateerror);
-__weak_alias(clnt_perrno,_clnt_perrno);
-__weak_alias(clnt_perror,_clnt_perror);
-__weak_alias(clnt_spcreateerror,_clnt_spcreateerror);
-__weak_alias(clnt_sperrno,_clnt_sperrno);
-__weak_alias(clnt_sperror,_clnt_sperror);
+__weak_alias(clnt_pcreateerror,_clnt_pcreateerror)
+__weak_alias(clnt_perrno,_clnt_perrno)
+__weak_alias(clnt_perror,_clnt_perror)
+__weak_alias(clnt_spcreateerror,_clnt_spcreateerror)
+__weak_alias(clnt_sperrno,_clnt_sperrno)
+__weak_alias(clnt_sperror,_clnt_sperror)
 #endif
 
 static char *buf;

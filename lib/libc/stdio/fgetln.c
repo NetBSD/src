@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.9 1999/09/20 04:39:26 lukem Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.10 2000/01/22 22:19:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetln.c,v 1.9 1999/09/20 04:39:26 lukem Exp $");
+__RCSID("$NetBSD: fgetln.c,v 1.10 2000/01/22 22:19:19 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: fgetln.c,v 1.9 1999/09/20 04:39:26 lukem Exp $");
 #include "reentrant.h"
 
 #ifdef __weak_alias
-__weak_alias(fgetln,_fgetln);
+__weak_alias(fgetln,_fgetln)
 #endif
 
 int __slbexpand __P((FILE *, size_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: l64a.c,v 1.11 1999/09/20 04:39:38 lukem Exp $	*/
+/*	$NetBSD: l64a.c,v 1.12 2000/01/22 22:19:19 mycroft Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: l64a.c,v 1.11 1999/09/20 04:39:38 lukem Exp $");
+__RCSID("$NetBSD: l64a.c,v 1.12 2000/01/22 22:19:19 mycroft Exp $");
 #endif
 
 #include "namespace.h"
@@ -17,8 +17,8 @@ __RCSID("$NetBSD: l64a.c,v 1.11 1999/09/20 04:39:38 lukem Exp $");
 #include <stdlib.h>
 
 #ifdef __weak_alias
-__weak_alias(l64a,_l64a);
-__weak_alias(l64a_r,_l64a_r);
+__weak_alias(l64a,_l64a)
+__weak_alias(l64a_r,_l64a_r)
 #endif
 
 char *

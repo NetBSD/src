@@ -1,4 +1,4 @@
-/*	$NetBSD: getloadavg.c,v 1.9 1999/09/20 04:39:01 lukem Exp $	*/
+/*	$NetBSD: getloadavg.c,v 1.10 2000/01/22 22:19:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getloadavg.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getloadavg.c,v 1.9 1999/09/20 04:39:01 lukem Exp $");
+__RCSID("$NetBSD: getloadavg.c,v 1.10 2000/01/22 22:19:10 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: getloadavg.c,v 1.9 1999/09/20 04:39:01 lukem Exp $");
 #include <stdlib.h>
 
 #ifdef __weak_alias
-__weak_alias(getloadavg,_getloadavg);
+__weak_alias(getloadavg,_getloadavg)
 #endif
 
 /*

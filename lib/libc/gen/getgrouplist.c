@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.14 1999/09/20 04:39:00 lukem Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.15 2000/01/22 22:19:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.2 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: getgrouplist.c,v 1.14 1999/09/20 04:39:00 lukem Exp $");
+__RCSID("$NetBSD: getgrouplist.c,v 1.15 2000/01/22 22:19:10 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: getgrouplist.c,v 1.14 1999/09/20 04:39:00 lukem Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(getgrouplist,_getgrouplist);
+__weak_alias(getgrouplist,_getgrouplist)
 #endif
 
 int

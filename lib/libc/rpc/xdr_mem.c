@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_mem.c,v 1.14 1998/11/15 17:32:47 christos Exp $	*/
+/*	$NetBSD: xdr_mem.c,v 1.15 2000/01/22 22:19:18 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_mem.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_mem.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_mem.c,v 1.14 1998/11/15 17:32:47 christos Exp $");
+__RCSID("$NetBSD: xdr_mem.c,v 1.15 2000/01/22 22:19:18 mycroft Exp $");
 #endif
 #endif
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: xdr_mem.c,v 1.14 1998/11/15 17:32:47 christos Exp $");
 #include <rpc/xdr.h>
 
 #ifdef __weak_alias
-__weak_alias(xdrmem_create,_xdrmem_create);
+__weak_alias(xdrmem_create,_xdrmem_create)
 #endif
 
 static void xdrmem_destroy __P((XDR *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.c,v 1.6 1997/07/21 14:07:48 jtc Exp $	*/
+/*	$NetBSD: wait.c,v 1.7 2000/01/22 22:19:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)wait.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wait.c,v 1.6 1997/07/21 14:07:48 jtc Exp $");
+__RCSID("$NetBSD: wait.c,v 1.7 2000/01/22 22:19:13 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: wait.c,v 1.6 1997/07/21 14:07:48 jtc Exp $");
 #include <sys/resource.h>
 
 #ifdef __weak_alias
-__weak_alias(wait,_wait);
+__weak_alias(wait,_wait)
 #endif
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_master.c,v 1.10 1999/01/31 20:46:12 christos Exp $	 */
+/*	$NetBSD: yp_master.c,v 1.11 2000/01/22 22:19:22 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_master.c,v 1.10 1999/01/31 20:46:12 christos Exp $");
+__RCSID("$NetBSD: yp_master.c,v 1.11 2000/01/22 22:19:22 mycroft Exp $");
 #endif
 
 #include "namespace.h"
@@ -48,7 +48,7 @@ extern struct timeval _yplib_timeout;
 extern int _yplib_nerrs;
 
 #ifdef __weak_alias
-__weak_alias(yp_master,_yp_master);
+__weak_alias(yp_master,_yp_master)
 #endif
 
 int

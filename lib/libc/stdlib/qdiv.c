@@ -1,4 +1,4 @@
-/*	$NetBSD: qdiv.c,v 1.4 1997/07/21 14:09:00 jtc Exp $	*/
+/*	$NetBSD: qdiv.c,v 1.5 2000/01/22 22:19:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990 Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "from: @(#)ldiv.c	5.2 (Berkeley) 4/16/91";
 #else
-__RCSID("$NetBSD: qdiv.c,v 1.4 1997/07/21 14:09:00 jtc Exp $");
+__RCSID("$NetBSD: qdiv.c,v 1.5 2000/01/22 22:19:20 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: qdiv.c,v 1.4 1997/07/21 14:09:00 jtc Exp $");
 #include <stdlib.h>		/* qdiv_t */
 
 #ifdef __weak_alias
-__weak_alias(qdiv,_qdiv);
+__weak_alias(qdiv,_qdiv)
 #endif
 
 qdiv_t

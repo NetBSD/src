@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.18 1999/09/20 04:39:41 lukem Exp $	*/
+/*	$NetBSD: random.c,v 1.19 2000/01/22 22:19:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.18 1999/09/20 04:39:41 lukem Exp $");
+__RCSID("$NetBSD: random.c,v 1.19 2000/01/22 22:19:20 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,10 +50,10 @@ __RCSID("$NetBSD: random.c,v 1.18 1999/09/20 04:39:41 lukem Exp $");
 #include "reentrant.h"
 
 #ifdef __weak_alias
-__weak_alias(initstate,_initstate);
-__weak_alias(random,_random);
-__weak_alias(setstate,_setstate);
-__weak_alias(srandom,_srandom);
+__weak_alias(initstate,_initstate)
+__weak_alias(random,_random)
+__weak_alias(setstate,_setstate)
+__weak_alias(srandom,_srandom)
 #endif
 
 static void srandom_unlocked __P((unsigned long));

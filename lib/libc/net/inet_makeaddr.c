@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_makeaddr.c,v 1.7 1998/11/13 15:46:53 christos Exp $	*/
+/*	$NetBSD: inet_makeaddr.c,v 1.8 2000/01/22 22:19:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_makeaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_makeaddr.c,v 1.7 1998/11/13 15:46:53 christos Exp $");
+__RCSID("$NetBSD: inet_makeaddr.c,v 1.8 2000/01/22 22:19:15 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: inet_makeaddr.c,v 1.7 1998/11/13 15:46:53 christos Exp $");
 #include <arpa/inet.h>
 
 #ifdef __weak_alias
-__weak_alias(inet_makeaddr,_inet_makeaddr);
+__weak_alias(inet_makeaddr,_inet_makeaddr)
 #endif
 
 /*

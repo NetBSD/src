@@ -1,4 +1,4 @@
-/*	$NetBSD: tcsetattr.c,v 1.6 1999/09/20 04:39:53 lukem Exp $	*/
+/*	$NetBSD: tcsetattr.c,v 1.7 2000/01/22 22:19:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcsetattr.c,v 1.6 1999/09/20 04:39:53 lukem Exp $");
+__RCSID("$NetBSD: tcsetattr.c,v 1.7 2000/01/22 22:19:21 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: tcsetattr.c,v 1.6 1999/09/20 04:39:53 lukem Exp $");
 #include <termios.h>
 
 #ifdef __weak_alias
-__weak_alias(tcsetattr,_tcsetattr);
+__weak_alias(tcsetattr,_tcsetattr)
 #endif
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: strdup.c,v 1.11 1999/09/20 04:39:46 lukem Exp $	*/
+/*	$NetBSD: strdup.c,v 1.12 2000/01/22 22:19:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strdup.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strdup.c,v 1.11 1999/09/20 04:39:46 lukem Exp $");
+__RCSID("$NetBSD: strdup.c,v 1.12 2000/01/22 22:19:20 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: strdup.c,v 1.11 1999/09/20 04:39:46 lukem Exp $");
 #include <string.h>
 
 #ifdef __weak_alias
-__weak_alias(strdup,_strdup);
+__weak_alias(strdup,_strdup)
 #endif
 
 char *

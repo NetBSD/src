@@ -1,4 +1,4 @@
-/*	$NetBSD: lcong48.c,v 1.6 1999/09/20 04:39:38 lukem Exp $	*/
+/*	$NetBSD: lcong48.c,v 1.7 2000/01/22 22:19:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -20,7 +20,7 @@
 #include "rand48.h"
 
 #ifdef __weak_alias
-__weak_alias(lcong48,_lcong48);
+__weak_alias(lcong48,_lcong48)
 #endif
 
 void

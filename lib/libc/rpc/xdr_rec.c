@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.16 1999/03/04 05:26:48 lukem Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.17 2000/01/22 22:19:18 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.16 1999/03/04 05:26:48 lukem Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.17 2000/01/22 22:19:18 mycroft Exp $");
 #endif
 #endif
 
@@ -71,10 +71,10 @@ __RCSID("$NetBSD: xdr_rec.c,v 1.16 1999/03/04 05:26:48 lukem Exp $");
 #include <rpc/xdr.h>
 
 #ifdef __weak_alias
-__weak_alias(xdrrec_create,_xdrrec_create);
-__weak_alias(xdrrec_endofrecord,_xdrrec_endofrecord);
-__weak_alias(xdrrec_eof,_xdrrec_eof);
-__weak_alias(xdrrec_skiprecord,_xdrrec_skiprecord);
+__weak_alias(xdrrec_create,_xdrrec_create)
+__weak_alias(xdrrec_endofrecord,_xdrrec_endofrecord)
+__weak_alias(xdrrec_eof,_xdrrec_eof)
+__weak_alias(xdrrec_skiprecord,_xdrrec_skiprecord)
 #endif
 
 static bool_t	xdrrec_getlong __P((XDR *, long *));

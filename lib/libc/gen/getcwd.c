@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.23 1999/09/20 04:38:59 lukem Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.24 2000/01/22 22:19:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.23 1999/09/20 04:38:59 lukem Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.24 2000/01/22 22:19:10 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,8 +61,8 @@ __RCSID("$NetBSD: getcwd.c,v 1.23 1999/09/20 04:38:59 lukem Exp $");
 #include "extern.h"
 
 #ifdef __weak_alias
-__weak_alias(getcwd,_getcwd);
-__weak_alias(realpath,_realpath);
+__weak_alias(getcwd,_getcwd)
+__weak_alias(realpath,_realpath)
 #endif
 
 #define	ISDOT(dp) \

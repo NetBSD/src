@@ -1,4 +1,4 @@
-/*	$NetBSD: psignal.c,v 1.18 1998/11/17 16:15:45 christos Exp $	*/
+/*	$NetBSD: psignal.c,v 1.19 2000/01/22 22:19:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)psignal.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: psignal.c,v 1.18 1998/11/17 16:15:45 christos Exp $");
+__RCSID("$NetBSD: psignal.c,v 1.19 2000/01/22 22:19:11 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: psignal.c,v 1.18 1998/11/17 16:15:45 christos Exp $");
 #include "extern.h"
 
 #ifdef __weak_alias
-__weak_alias(psignal,_psignal);
+__weak_alias(psignal,_psignal)
 #endif
 
 void

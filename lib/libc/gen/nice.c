@@ -1,4 +1,4 @@
-/*	$NetBSD: nice.c,v 1.8 1998/06/09 06:58:41 mikel Exp $	*/
+/*	$NetBSD: nice.c,v 1.9 2000/01/22 22:19:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nice.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nice.c,v 1.8 1998/06/09 06:58:41 mikel Exp $");
+__RCSID("$NetBSD: nice.c,v 1.9 2000/01/22 22:19:11 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: nice.c,v 1.8 1998/06/09 06:58:41 mikel Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(nice,_nice);
+__weak_alias(nice,_nice)
 #endif
 
 /*

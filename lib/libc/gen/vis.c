@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.17 1999/12/07 18:20:28 wennmach Exp $	*/
+/*	$NetBSD: vis.c,v 1.18 2000/01/22 22:19:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.17 1999/12/07 18:20:28 wennmach Exp $");
+__RCSID("$NetBSD: vis.c,v 1.18 2000/01/22 22:19:13 mycroft Exp $");
 #endif /* not lint */
 
 #include "namespace.h"
@@ -51,12 +51,12 @@ __RCSID("$NetBSD: vis.c,v 1.17 1999/12/07 18:20:28 wennmach Exp $");
 #include <vis.h>
 
 #ifdef __weak_alias
-__weak_alias(strsvis,_strsvis);
-__weak_alias(strsvisx,_strsvisx);
-__weak_alias(strvis,_strvis);
-__weak_alias(strvisx,_strvisx);
-__weak_alias(svis,_svis);
-__weak_alias(vis,_vis);
+__weak_alias(strsvis,_strsvis)
+__weak_alias(strsvisx,_strsvisx)
+__weak_alias(strvis,_strvis)
+__weak_alias(strvisx,_strvisx)
+__weak_alias(svis,_svis)
+__weak_alias(vis,_vis)
 #endif
 
 #undef BELL

@@ -1,4 +1,4 @@
-/*	$NetBSD: getlogin.c,v 1.9 1997/07/21 14:07:08 jtc Exp $	*/
+/*	$NetBSD: getlogin.c,v 1.10 2000/01/22 22:19:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getlogin.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getlogin.c,v 1.9 1997/07/21 14:07:08 jtc Exp $");
+__RCSID("$NetBSD: getlogin.c,v 1.10 2000/01/22 22:19:10 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: getlogin.c,v 1.9 1997/07/21 14:07:08 jtc Exp $");
 #include "extern.h"
 
 #ifdef __weak_alias
-__weak_alias(getlogin,_getlogin);
+__weak_alias(getlogin,_getlogin)
 #endif
 
 int	__logname_valid;		/* known to setlogin() */

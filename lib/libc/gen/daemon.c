@@ -1,4 +1,4 @@
-/*	$NetBSD: daemon.c,v 1.7 1997/07/21 14:06:51 jtc Exp $	*/
+/*	$NetBSD: daemon.c,v 1.8 2000/01/22 22:19:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)daemon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: daemon.c,v 1.7 1997/07/21 14:06:51 jtc Exp $");
+__RCSID("$NetBSD: daemon.c,v 1.8 2000/01/22 22:19:09 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: daemon.c,v 1.7 1997/07/21 14:06:51 jtc Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(daemon,_daemon);
+__weak_alias(daemon,_daemon)
 #endif
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_pton.c,v 1.10 1999/09/20 04:39:13 lukem Exp $	*/
+/*	$NetBSD: inet_net_pton.c,v 1.11 2000/01/22 22:19:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_pton.c,v 8.3 1996/11/11 06:36:52 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_net_pton.c,v 1.10 1999/09/20 04:39:13 lukem Exp $");
+__RCSID("$NetBSD: inet_net_pton.c,v 1.11 2000/01/22 22:19:15 mycroft Exp $");
 #endif
 #endif
 
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: inet_net_pton.c,v 1.10 1999/09/20 04:39:13 lukem Exp $");
 #include <stdlib.h>
 
 #ifdef __weak_alias
-__weak_alias(inet_net_pton,_inet_net_pton);
+__weak_alias(inet_net_pton,_inet_net_pton)
 #endif
 
 #ifdef SPRINTF_CHAR

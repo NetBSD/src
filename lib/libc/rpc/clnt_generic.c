@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_generic.c,v 1.14 1999/09/20 04:39:20 lukem Exp $	*/
+/*	$NetBSD: clnt_generic.c,v 1.15 2000/01/22 22:19:17 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";
 static char *sccsid = "@(#)clnt_generic.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_generic.c,v 1.14 1999/09/20 04:39:20 lukem Exp $");
+__RCSID("$NetBSD: clnt_generic.c,v 1.15 2000/01/22 22:19:17 mycroft Exp $");
 #endif
 #endif
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: clnt_generic.c,v 1.14 1999/09/20 04:39:20 lukem Exp $");
 #include <rpc/rpc.h>
 
 #ifdef __weak_alias
-__weak_alias(clnt_create,_clnt_create);
+__weak_alias(clnt_create,_clnt_create)
 #endif
 
 /*

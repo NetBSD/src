@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.11 1998/12/09 12:42:48 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.12 2000/01/22 22:19:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)db.c	8.4 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: db.c,v 1.11 1998/12/09 12:42:48 christos Exp $");
+__RCSID("$NetBSD: db.c,v 1.12 2000/01/22 22:19:07 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: db.c,v 1.11 1998/12/09 12:42:48 christos Exp $");
 static int __dberr __P((void));
 
 #ifdef __weak_alias
-__weak_alias(dbopen,_dbopen);
+__weak_alias(dbopen,_dbopen)
 #endif
 
 DB *

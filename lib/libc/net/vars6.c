@@ -1,4 +1,4 @@
-/*	$NetBSD: vars6.c,v 1.3 1999/09/20 15:07:21 kleink Exp $	*/
+/*	$NetBSD: vars6.c,v 1.4 2000/01/22 22:19:16 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -34,10 +34,10 @@
 #include <netinet/in.h>
 
 #ifdef __weak_alias
-__weak_alias(in6addr_any, _in6addr_any);
-__weak_alias(in6addr_loopback, _in6addr_loopback);
-__weak_alias(in6addr_nodelocal_allnodes, _in6addr_nodelocal_allnodes);
-__weak_alias(in6addr_linklocal_allnodes, _in6addr_linklocal_allnodes);
+__weak_alias(in6addr_any, _in6addr_any)
+__weak_alias(in6addr_loopback, _in6addr_loopback)
+__weak_alias(in6addr_nodelocal_allnodes, _in6addr_nodelocal_allnodes)
+__weak_alias(in6addr_linklocal_allnodes, _in6addr_linklocal_allnodes)
 #endif
 
 /*

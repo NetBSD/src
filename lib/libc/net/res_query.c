@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.24 1999/09/20 04:39:18 lukem Exp $	*/
+/*	$NetBSD: res_query.c,v 1.25 2000/01/22 22:19:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.24 1999/09/20 04:39:18 lukem Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.25 2000/01/22 22:19:16 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,8 +81,8 @@ __RCSID("$NetBSD: res_query.c,v 1.24 1999/09/20 04:39:18 lukem Exp $");
 #include <string.h>
 
 #if defined(_LIBC) && defined(__weak_alias)
-__weak_alias(res_query,_res_query);
-__weak_alias(res_search,_res_search);
+__weak_alias(res_query,_res_query)
+__weak_alias(res_search,_res_search)
 #endif
 
 #if PACKETSZ > 1024

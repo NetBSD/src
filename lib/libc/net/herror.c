@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.14 1998/11/30 20:15:41 thorpej Exp $	*/
+/*	$NetBSD: herror.c,v 1.15 2000/01/22 22:19:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1993
@@ -59,7 +59,7 @@
 static char rcsid[] = "Id: herror.c,v 8.3 1996/08/05 08:31:35 vixie Exp ";
 static char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: herror.c,v 1.14 1998/11/30 20:15:41 thorpej Exp $");
+__RCSID("$NetBSD: herror.c,v 1.15 2000/01/22 22:19:15 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: herror.c,v 1.14 1998/11/30 20:15:41 thorpej Exp $");
 #include <string.h>
 
 #ifdef __weak_alias
-__weak_alias(herror,_herror);
+__weak_alias(herror,_herror)
 #endif
 
 /*

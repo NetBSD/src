@@ -1,4 +1,4 @@
-/*	$NetBSD: heapsort.c,v 1.11 1999/09/20 04:39:37 lukem Exp $	*/
+/*	$NetBSD: heapsort.c,v 1.12 2000/01/22 22:19:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)heapsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: heapsort.c,v 1.11 1999/09/20 04:39:37 lukem Exp $");
+__RCSID("$NetBSD: heapsort.c,v 1.12 2000/01/22 22:19:19 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: heapsort.c,v 1.11 1999/09/20 04:39:37 lukem Exp $");
 #include <stdlib.h>
 
 #ifdef __weak_alias
-__weak_alias(heapsort,_heapsort);
+__weak_alias(heapsort,_heapsort)
 #endif
 
 /*

@@ -5,7 +5,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: a64l.c,v 1.7 1999/09/20 04:39:36 lukem Exp $");
+__RCSID("$NetBSD: a64l.c,v 1.8 2000/01/22 22:19:19 mycroft Exp $");
 #endif
 
 #include "namespace.h"
@@ -14,7 +14,7 @@ __RCSID("$NetBSD: a64l.c,v 1.7 1999/09/20 04:39:36 lukem Exp $");
 #include <stdlib.h>
 
 #ifdef __weak_alias
-__weak_alias(a64l,_a64l);
+__weak_alias(a64l,_a64l)
 #endif
 
 long

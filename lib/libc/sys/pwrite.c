@@ -1,4 +1,4 @@
-/*	$NetBSD: pwrite.c,v 1.4 1998/11/15 17:23:00 christos Exp $	*/
+/*	$NetBSD: pwrite.c,v 1.5 2000/01/22 22:19:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pwrite.c,v 1.4 1998/11/15 17:23:00 christos Exp $");
+__RCSID("$NetBSD: pwrite.c,v 1.5 2000/01/22 22:19:20 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: pwrite.c,v 1.4 1998/11/15 17:23:00 christos Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(pwrite,_pwrite);
+__weak_alias(pwrite,_pwrite)
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.19 1999/09/20 04:39:03 lukem Exp $	*/
+/*	$NetBSD: opendir.c,v 1.20 2000/01/22 22:19:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.19 1999/09/20 04:39:03 lukem Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.20 2000/01/22 22:19:11 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: opendir.c,v 1.19 1999/09/20 04:39:03 lukem Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(opendir,_opendir);
+__weak_alias(opendir,_opendir)
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_lnaof.c,v 1.6 1997/07/21 14:08:02 jtc Exp $	*/
+/*	$NetBSD: inet_lnaof.c,v 1.7 2000/01/22 22:19:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_lnaof.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_lnaof.c,v 1.6 1997/07/21 14:08:02 jtc Exp $");
+__RCSID("$NetBSD: inet_lnaof.c,v 1.7 2000/01/22 22:19:15 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: inet_lnaof.c,v 1.6 1997/07/21 14:08:02 jtc Exp $");
 #include <arpa/inet.h>
 
 #ifdef __weak_alias
-__weak_alias(inet_lnaof,_inet_lnaof);
+__weak_alias(inet_lnaof,_inet_lnaof)
 #endif
 
 /*

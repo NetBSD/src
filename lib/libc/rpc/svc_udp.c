@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_udp.c,v 1.19 1999/05/09 20:11:23 christos Exp $	*/
+/*	$NetBSD: svc_udp.c,v 1.20 2000/01/22 22:19:18 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_udp.c,v 1.19 1999/05/09 20:11:23 christos Exp $");
+__RCSID("$NetBSD: svc_udp.c,v 1.20 2000/01/22 22:19:18 mycroft Exp $");
 #endif
 #endif
 
@@ -62,9 +62,9 @@ __RCSID("$NetBSD: svc_udp.c,v 1.19 1999/05/09 20:11:23 christos Exp $");
 #include <rpc/rpc.h>
 
 #ifdef __weak_alias
-__weak_alias(svcudp_bufcreate,_svcudp_bufcreate);
-__weak_alias(svcudp_create,_svcudp_create);
-__weak_alias(svcudp_enablecache,_svcudp_enablecache);
+__weak_alias(svcudp_bufcreate,_svcudp_bufcreate)
+__weak_alias(svcudp_create,_svcudp_create)
+__weak_alias(svcudp_enablecache,_svcudp_enablecache)
 #endif
 
 #define rpc_buffer(xprt) ((xprt)->xp_p1)

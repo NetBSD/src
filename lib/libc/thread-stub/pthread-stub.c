@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread-stub.c,v 1.2 1999/12/03 06:36:55 explorer Exp $	*/
+/*	$NetBSD: pthread-stub.c,v 1.3 2000/01/22 22:19:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Graff <explorer@flame.org>.
@@ -37,17 +37,17 @@
 #include <stdio.h>
 
 #ifdef __weak_alias
-__weak_alias(pthread_mutex_init, _pthread_mutex_init);
-__weak_alias(pthread_mutex_lock, _pthread_mutex_lock);
-__weak_alias(pthread_mutex_unlock, _pthread_mutex_unlock);
+__weak_alias(pthread_mutex_init, _pthread_mutex_init)
+__weak_alias(pthread_mutex_lock, _pthread_mutex_lock)
+__weak_alias(pthread_mutex_unlock, _pthread_mutex_unlock)
 
-__weak_alias(pthread_rwlock_init, _pthread_rwlock_init);
-__weak_alias(pthread_rwlock_rdlock, _pthread_rwlock_rdlock);
-__weak_alias(pthread_rwlock_wrlock, _pthread_rwlock_wrlock);
-__weak_alias(pthread_rwlock_unlock, _pthread_rwlock_unlock);
+__weak_alias(pthread_rwlock_init, _pthread_rwlock_init)
+__weak_alias(pthread_rwlock_rdlock, _pthread_rwlock_rdlock)
+__weak_alias(pthread_rwlock_wrlock, _pthread_rwlock_wrlock)
+__weak_alias(pthread_rwlock_unlock, _pthread_rwlock_unlock)
 
-__weak_alias(flockfile, _flockfile);
-__weak_alias(funlockfile, _funlockfile);
+__weak_alias(flockfile, _flockfile)
+__weak_alias(funlockfile, _funlockfile)
 #endif
 
 int _pthread_mutex_init(pthread_mutex_t *, pthread_mutexattr_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.16 1999/09/20 04:39:11 lukem Exp $	*/
+/*	$NetBSD: ethers.c,v 1.17 2000/01/22 22:19:14 mycroft Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -27,11 +27,11 @@
 #endif
 
 #ifdef __weak_alias
-__weak_alias(ether_aton,_ether_aton);
-__weak_alias(ether_hostton,_ether_hostton);
-__weak_alias(ether_line,_ether_line);
-__weak_alias(ether_ntoa,_ether_ntoa);
-__weak_alias(ether_ntohost,_ether_ntohost);
+__weak_alias(ether_aton,_ether_aton)
+__weak_alias(ether_hostton,_ether_hostton)
+__weak_alias(ether_line,_ether_line)
+__weak_alias(ether_ntoa,_ether_ntoa)
+__weak_alias(ether_ntohost,_ether_ntohost)
 #endif
 
 #ifndef _PATH_ETHERS

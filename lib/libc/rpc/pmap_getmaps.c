@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getmaps.c,v 1.14 1999/09/20 04:39:22 lukem Exp $	*/
+/*	$NetBSD: pmap_getmaps.c,v 1.15 2000/01/22 22:19:18 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getmaps.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getmaps.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getmaps.c,v 1.14 1999/09/20 04:39:22 lukem Exp $");
+__RCSID("$NetBSD: pmap_getmaps.c,v 1.15 2000/01/22 22:19:18 mycroft Exp $");
 #endif
 #endif
 
@@ -66,7 +66,7 @@ __RCSID("$NetBSD: pmap_getmaps.c,v 1.14 1999/09/20 04:39:22 lukem Exp $");
 #include <rpc/pmap_clnt.h>
 
 #ifdef __weak_alias
-__weak_alias(pmap_getmaps,_pmap_getmaps);
+__weak_alias(pmap_getmaps,_pmap_getmaps)
 #endif
 
 #define NAMELEN 255

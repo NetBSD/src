@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_maplist.c,v 1.8 1999/09/16 09:54:07 lukem Exp $	 */
+/*	$NetBSD: yp_maplist.c,v 1.9 2000/01/22 22:19:22 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_maplist.c,v 1.8 1999/09/16 09:54:07 lukem Exp $");
+__RCSID("$NetBSD: yp_maplist.c,v 1.9 2000/01/22 22:19:22 mycroft Exp $");
 #endif
 
 #include "namespace.h"
@@ -47,7 +47,7 @@ extern struct timeval _yplib_timeout;
 extern int _yplib_nerrs;
 
 #ifdef __weak_alias
-__weak_alias(yp_maplist,_yp_maplist);
+__weak_alias(yp_maplist,_yp_maplist)
 #endif
 
 int
