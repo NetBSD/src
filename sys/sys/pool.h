@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.19 2000/12/07 05:45:57 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.20 2000/12/11 05:22:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,6 +68,14 @@ struct pool_cache {
 	int		(*pc_ctor)(void *, void *, int);
 	void		(*pc_dtor)(void *, void *);
 	void		*pc_arg;
+
+	/* Statistics. */
+	unsigned long	pc_hits;	/* cache hits */
+	unsigned long	pc_misses;	/* cache misses */
+
+	unsigned long	pc_ngroups;	/* # cache groups */
+
+	unsigned long	pc_nitems;	/* # objects currently in cache */
 };
 
 struct pool {
