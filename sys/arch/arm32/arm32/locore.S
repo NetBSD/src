@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.7 1996/03/16 00:13:11 thorpej Exp $ */
+/* $NetBSD: locore.S,v 1.8 1996/03/20 18:57:58 mark Exp $ */
 
 /*
  * Copyright (C) 1994 Mark Brinicombe
@@ -557,3 +557,7 @@ ENTRY(longjmp)
 
 	.global _esym
 _esym:	.word	_end
+
+	.global	_abort
+_abort:
+	b	_abort
