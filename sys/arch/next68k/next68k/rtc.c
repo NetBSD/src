@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.5 2001/05/13 16:55:40 chs Exp $        */
+/*      $NetBSD: rtc.c,v 1.6 2002/09/11 01:46:35 mycroft Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -42,6 +42,7 @@
 #include <sys/cdefs.h>          /* for __P */
 #include <sys/systm.h>          /* for panic */
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
 
 #include <dev/clock_subr.h>
@@ -49,6 +50,7 @@
 #include <next68k/next68k/rtc.h>
 
 #include <next68k/dev/clockreg.h>
+#include <next68k/dev/intiovar.h>
 
 /* #define RTC_DEBUG */
 

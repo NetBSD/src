@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/07/11 16:03:16 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2002/09/11 01:46:36 mycroft Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -20,6 +20,8 @@ SAMISCMAKEFLAGS= SA_USE_LOADFILE=yes # SA_USE_CREAD=yes
 
 RELOC=	4380000
 
+DEFS+=		-DDISABLE_NEXT_BMAP_CHIP
+DEFS+=		-g
 # XXX make defs arch-indep.
 INCLUDES+=	-I${.OBJDIR} -I${S}/arch -I${S} -I${S}/lib/libsa 
 DEFS+=		-D_STANDALONE -DMC68040 -DSUPPORT_BOOTP -DSUPPORT_DHCP  -DDEBUG -DSD_DEBUG -DSCSI_DEBUG # -DEN_DEBUG   -DNETIF_DEBUG  
@@ -48,9 +50,9 @@ LIBS=	${SALIB} ${KERNLIB}
 STRIPFLAG=	# defined
 
 AWKPROG='\
-function x(v) { printf "\\0\\0%o\\0%o\\0%o", (v / 65536) % 256, (v / 256) % 256, v % 256 } \
+function x(v) { printf "\\0\\%o\\%o\\%o", (v / 65536) % 256, (v / 256) % 256, v % 256 } \
 { \
-	printf "\047\\0\\0207\\01\\07"; \
+	printf "\047\\0\\207\\01\\07"; \
 	x($$1); \
 	x($$2); \
 	x($$3); \
@@ -59,9 +61,9 @@ function x(v) { printf "\\0\\0%o\\0%o\\0%o", (v / 65536) % 256, (v / 256) % 256,
 
 ${PROG}: srt0.o ${OBJS} ${LIBS}
 	${LD} -N -Ttext ${RELOC} -e start srt0.o ${OBJS} ${LIBS} -o $@.elf
-	@${SIZE} $@.elf
-	@${OBJCOPY} -O binary $@.elf $@.raw
-	@(${SIZE} $@.elf | tail +2 | awk ${AWKPROG} | xargs printf ; cat $@.raw) > $@
+	${SIZE} $@.elf
+	${OBJCOPY} -O binary $@.elf $@.raw
+	(${SIZE} $@.elf | tail +2 | awk ${AWKPROG} | xargs printf ; cat $@.raw) > $@
 
 # startup
 

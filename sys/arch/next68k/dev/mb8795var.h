@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.6 2002/07/11 16:03:12 christos Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.7 2002/09/11 01:46:32 mycroft Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -36,17 +36,42 @@
 
 #define MB8795_NRXBUFS (32)
 
+struct mb8795_softc;
+
+/*
+ * Function switch used as glue to MD code.
+ */
+struct mb8795_glue {
+	/* Mandatory entry points. */
+	u_char	(*gl_read_reg)(struct mb8795_softc *, int);
+	void	(*gl_write_reg)(struct mb8795_softc *, int, u_char);
+	void	(*gl_dma_reset)(struct mb8795_softc *);
+	void	(*gl_dma_rx_setup)(struct mb8795_softc *);
+	void	(*gl_dma_rx_go)(struct mb8795_softc *);
+	struct mbuf *	(*gl_dma_rx_mbuf)(struct mb8795_softc *);
+	void	(*gl_dma_tx_setup)(struct mb8795_softc *);
+	void	(*gl_dma_tx_go)(struct mb8795_softc *);
+	int	(*gl_dma_tx_mbuf)(struct mb8795_softc *, struct mbuf *);
+	int	(*gl_dma_tx_isactive)(struct mb8795_softc *);
+#if 0
+	int	(*gl_dma_setup)(struct mb8795_softc *,
+		    caddr_t *, size_t *, int, size_t *);
+	void	(*gl_dma_go)(struct mb8795_softc *);
+	void	(*gl_dma_stop)(struct mb8795_softc *);
+	int	(*gl_dma_isactive)(struct mb8795_softc *);
+#endif
+	/* Optional entry points. */
+};
+
 struct mb8795_softc {
-	struct	device sc_dev;		/* base device glue */
-	struct	ethercom sc_ethercom;	/* Ethernet common part */
+	struct device		sc_dev;		/* base device glue */
+	struct ethercom		sc_ethercom;	/* Ethernet common part */
+
+	struct	mb8795_glue 	*sc_glue;	/* glue to MD code */
 
 	void	*sc_sh;		/* shutdownhook cookie */
 
 	int sc_debug;
-
-	bus_space_tag_t sc_bst;    /* bus space tag */
-
-	bus_space_handle_t sc_bsh; /* bus space handle */
 
 	bus_space_tag_t sc_bmap_bst;    /* bus space tag */
 
@@ -54,34 +79,39 @@ struct mb8795_softc {
 
 	u_int8_t sc_enaddr[6];
 
-	bus_dma_tag_t sc_tx_dmat;
-	bus_dmamap_t sc_tx_dmamap; /* should we have multiple of these? */
-	struct mbuf *sc_tx_mb_head;   /* pointer to data for this command */
-	int sc_tx_loaded;
-
-	u_char *sc_txbuf; 	/* to solve alignment problems, we
-				 * copy the mbuf into this buffer before
-				 * trying to dma it */
-
 	struct ifaltq sc_tx_snd;
 
 	struct ifmedia sc_media;
-
-	bus_dma_tag_t sc_rx_dmat;
-	bus_dmamap_t sc_rx_dmamap[MB8795_NRXBUFS];
-	struct mbuf *sc_rx_mb_head[MB8795_NRXBUFS];
-	int sc_rx_loaded_idx;
-	int sc_rx_completed_idx;
-	int sc_rx_handled_idx;
-
-	struct nextdma_config *sc_tx_nd;		/* @@@ this shouldn't be here */
-	struct nextdma_config *sc_rx_nd;		/* @@@ this shouldn't be here */
 
 #if NRND > 0
 	rndsource_element_t     rnd_source;
 #endif /* NRND */
 
 };
+
+/*
+ * Macros to read and write the chip's registers.
+ */
+#define	MB_READ_REG(sc, reg)		\
+	(*(sc)->sc_glue->gl_read_reg)((sc), (reg))
+#define	MB_WRITE_REG(sc, reg, val)	\
+	(*(sc)->sc_glue->gl_write_reg)((sc), (reg), (val))
+
+/*
+ * DMA macros for mb8795
+ */
+#define	MBDMA_RESET(sc)	(*(sc)->sc_glue->gl_dma_reset)((sc))
+#define	MBDMA_SETUP(sc, addr, len, datain, dmasize)	\
+     (*(sc)->sc_glue->gl_dma_setup)((sc), (addr), (len), (datain), (dmasize))
+#define	MBDMA_GO(sc)		(*(sc)->sc_glue->gl_dma_go)((sc))
+#define	MBDMA_ISACTIVE(sc)	(*(sc)->sc_glue->gl_dma_isactive)((sc))
+#define MBDMA_RX_SETUP(sc)	(*(sc)->sc_glue->gl_dma_rx_setup) ((sc))
+#define MBDMA_RX_GO(sc)		(*(sc)->sc_glue->gl_dma_rx_go) ((sc))
+#define MBDMA_RX_MBUF(sc)	(*(sc)->sc_glue->gl_dma_rx_mbuf) ((sc))
+#define MBDMA_TX_SETUP(sc)	(*(sc)->sc_glue->gl_dma_tx_setup) ((sc))
+#define MBDMA_TX_GO(sc)		(*(sc)->sc_glue->gl_dma_tx_go) ((sc))
+#define MBDMA_TX_MBUF(sc,m)	(*(sc)->sc_glue->gl_dma_tx_mbuf) ((sc), (m))
+#define	MBDMA_TX_ISACTIVE(sc)	(*(sc)->sc_glue->gl_dma_tx_isactive)((sc))
 
 void mb8795_config __P((struct mb8795_softc *, int *, int, int));
 void mb8795_init __P((struct mb8795_softc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.37 2002/05/17 06:44:04 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.38 2002/09/11 01:46:35 mycroft Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -292,6 +292,7 @@ trap(type, code, v, frame)
 	u_int ucode;
 	u_quad_t sticks = 0 /* XXX initialiser works around compiler bug */;
 	int bit;
+	static int panicing = 0;
 
 	uvmexp.traps++;
 	p = curproc;
@@ -314,15 +315,16 @@ trap(type, code, v, frame)
 
 	default:
 	dopanic:
-		printf("trap type %d, code = 0x%x, v = 0x%x\n", type, code, v);
-		printf("%s program counter = 0x%x\n",
-		    (type & T_USER) ? "user" : "kernel", frame.f_pc);
 		/*
 		 * Let the kernel debugger see the trap frame that
 		 * caused us to panic.  This is a convenience so
 		 * one can see registers at the point of failure.
 		 */
 		s = splhigh();
+		panicing = 1;
+		printf("trap type %d, code = 0x%x, v = 0x%x\n", type, code, v);
+		printf("%s program counter = 0x%x\n",
+		    (type & T_USER) ? "user" : "kernel", frame.f_pc);
 #ifdef KGDB
 		/* If connected, step or cont returns 1 */
 		if (kgdb_trap(type, (db_regs_t *)&frame))
@@ -611,6 +613,13 @@ trap(type, code, v, frame)
 			goto dopanic;
 		}
 
+#ifdef DIAGNOSTIC
+		if (interrupt_depth && !panicing) {
+			printf("trap: calling uvm_fault() from interrupt!\n");
+			goto dopanic;
+		}
+#endif
+		
 #ifdef COMPAT_HPUX
 		if (ISHPMMADDR(va)) {
 			int pmap_mapmulti __P((pmap_t, vaddr_t));

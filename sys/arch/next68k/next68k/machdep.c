@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 2002/09/11 01:46:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -158,7 +158,6 @@ void	cpu_init_kcore_hdr __P((void));
 /* functions called from locore.s */
 void next68k_init __P((void));
 void straytrap __P((int, u_short));
-void nmihand __P((struct frame));
 
 /*
  * Machine-independent crash dump header info.
@@ -973,15 +972,15 @@ badaddr(addr, nbytes)
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
-void
+int
 nmihand(frame)
-	struct frame frame;
+	void *frame;
 {
   static int innmihand;	/* simple mutex */
 
   /* Prevent unwanted recursion. */
   if (innmihand)
-    return;
+    return 0;
   innmihand = 1;
   
   printf("Got a NMI");
@@ -1004,6 +1003,8 @@ nmihand(frame)
 	INTR_ENABLE(NEXT_I_NMI);
   
   innmihand = 0;
+
+  return 0;
 }
 
 
