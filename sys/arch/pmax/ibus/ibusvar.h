@@ -1,7 +1,7 @@
-/* $NetBSD: ibusvar.h,v 1.14 2000/01/14 13:45:21 simonb Exp $ */
+/*	$NetBSD: ibusvar.h,v 1.15 2000/01/14 15:52:00 ad Exp $	*/
 
-#ifndef _IBUSVAR_H_
-#define _IBUSVAR_H_ 1
+#ifndef _PMAX_IBUS_IBUSVAR_H_
+#define _PMAX_IBUS_IBUSVAR_H_
 
 #include <machine/bus.h>
 
@@ -45,4 +45,4 @@ void	ibus_intr_establish __P((struct device *, void * cookie, int level,
 	    int (*handler)(void *), void *arg));
 void	ibus_intr_disestablish __P((struct device *, void *));
 
-#endif /* _IBUSVAR_H_ */
+#endif	/* !_PMAX_IBUS_IBUSVAR_H_ */
