@@ -185,6 +185,12 @@ static void cleanup_rewrite_sender(CLEANUP_STATE *state, HEADER_OPTS *hdr_opts)
 	if (hdr_opts->type == HDR_RESENT_FROM && state->resent_from == 0)
 	    state->resent_from =
 		cleanup_extract_internal(state->header_buf, *tpp);
+	if (hdr_opts->type == HDR_RETURN_RECEIPT_TO && !state->return_receipt)
+	    state->return_receipt =
+		cleanup_extract_internal(state->header_buf, *tpp);
+	if (hdr_opts->type == HDR_ERRORS_TO && !state->errors_to)
+	    state->errors_to =
+		cleanup_extract_internal(state->header_buf, *tpp);
     }
     vstring_sprintf(state->header_buf, "%s: ", hdr_opts->name);
     tok822_externalize(state->header_buf, tree, TOK822_STR_HEAD);
@@ -232,12 +238,6 @@ static void cleanup_rewrite_recip(CLEANUP_STATE *state, HEADER_OPTS *hdr_opts)
 	}
 	if (cleanup_masq_domains)
 	    cleanup_masquerade_tree(*tpp, cleanup_masq_domains);
-	if (hdr_opts->type == HDR_RETURN_RECEIPT_TO && !state->return_receipt)
-	    state->return_receipt =
-		cleanup_extract_internal(state->header_buf, *tpp);
-	if (hdr_opts->type == HDR_ERRORS_TO && !state->errors_to)
-	    state->errors_to =
-		cleanup_extract_internal(state->header_buf, *tpp);
     }
     vstring_sprintf(state->header_buf, "%s: ", hdr_opts->name);
     tok822_externalize(state->header_buf, tree, TOK822_STR_HEAD);
