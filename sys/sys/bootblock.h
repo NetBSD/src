@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.12 2003/01/11 19:14:18 christos Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.13 2003/04/15 13:59:35 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -250,15 +250,15 @@ struct apple_part_map_entry {
  * NetBSD/mac68k only uses Magic, Cluster, Type, and Flags.
  */
 struct apple_blockzeroblock {
-	u_int32_t       bzbMagic;
-	u_int8_t        bzbCluster;
-	u_int8_t        bzbType;
-	u_int16_t       bzbBadBlockInode;
-	u_int16_t       bzbFlags;
-	u_int16_t       bzbReserved;
-	u_int32_t       bzbCreationTime;
-	u_int32_t       bzbMountTime;
-	u_int32_t       bzbUMountTime;
+	uint32_t       bzbMagic;
+	uint8_t        bzbCluster;
+	uint8_t        bzbType;
+	uint16_t       bzbBadBlockInode;
+	uint16_t       bzbFlags;
+	uint16_t       bzbReserved;
+	uint32_t       bzbCreationTime;
+	uint32_t       bzbMountTime;
+	uint32_t       bzbUMountTime;
 };
 
 #define APPLE_BZB_MAGIC	0xABADBABE
@@ -266,6 +266,38 @@ struct apple_blockzeroblock {
 #define APPLE_BZB_TYPESWAP	3
 #define APPLE_BZB_ROOTFS	0x8000
 #define APPLE_BZB_USRFS	0x4000
+
+/* ------------------------------------------
+ * i386
+ *
+ */
+
+#define X86_BOOT_MAGIC_1	('x' << 24 | 0x86b << 12 | 'm' << 4 | 1)
+#define X86_BOOT_MAGIC_2	('x' << 24 | 0x86b << 12 | 'm' << 4 | 2)
+
+/*
+ * Parameters for NetBSD /boot written to start of pbr code by installboot
+ */
+
+struct i386_boot_params {
+	uint32_t	bp_length;	/* length of patchable data */
+	uint32_t	bp_flags;
+#define BP_RESET_VIDEO		1
+#define BP_PASSWORD		2
+	uint32_t	bp_timeout;	/* boot timeout in seconds */
+	uint32_t	bp_consdev;
+#define CONSDEV_PC	0
+#define CONSDEV_COM0	1
+#define CONSDEV_COM1	2
+#define CONSDEV_COM2	3
+#define CONSDEV_COM3	4
+#define CONSDEV_COM0KBD	5 
+#define CONSDEV_COM1KBD	6
+#define CONSDEV_COM2KBD	7
+#define CONSDEV_COM3KBD	8
+	uint32_t	bp_conspeed;
+	char		bp_password[16];	/* md5 hash of password */
+};
 
 /* ------------------------------------------
  * macppc
