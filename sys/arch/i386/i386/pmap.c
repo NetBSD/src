@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 1996/10/17 05:11:47 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 1996/10/18 09:03:42 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -684,7 +684,7 @@ pmap_release(pmap)
 		printf("pmap_release(%p)\n", pmap);
 #endif
 
-#ifdef DIAGNOSTICx
+#ifdef DIAGNOSTIC
 	/* sometimes 1, sometimes 0; could rearrange pmap_destroy */
 	if (pmap->pm_count != 1)
 		panic("pmap_release count");
@@ -1374,7 +1374,8 @@ pmap_collect(pmap)
 	pmap_t pmap;
 {
 #ifdef DEBUG
-	printf("pmap_collect(%p) ", pmap);
+	if (pmapdebug & PDB_COLLECT)
+		printf("pmap_collect(%p)\n", pmap);
 #endif
 
 	if (pmap != pmap_kernel())
@@ -1392,14 +1393,14 @@ pmap_dump_pvlist(phys, m)
 
 	if (!pmap_initialized)
 		return;
-	printf("%s %08x:", m, phys);
+	printf("%s %08lx:", m, phys);
 	pv = &pv_table[pmap_page_index(phys)];
 	if (pv->pv_pmap == NULL) {
 		printf(" no mappings\n");
 		return;
 	}
 	for (; pv; pv = pv->pv_next)
-		printf(" pmap %08x va %08x", pv->pv_pmap, pv->pv_va);
+		printf(" pmap %08p va %08lx", pv->pv_pmap, pv->pv_va);
 	printf("\n");
 }
 #else
@@ -1524,7 +1525,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 
 #ifdef needsomethinglikethis
 		if (pmapdebug & PDB_PTPAGE)
-			printf("pmap_pageable: PT page %x(%x) unmodified\n",
+			printf("pmap_pageable: PT page %lx(%lx) unmodified\n",
 			       sva, *pmap_pte(pmap, sva));
 		if (pmapdebug & PDB_WIRING)
 			pmap_check_wiring("pageable", sva);
@@ -1682,7 +1683,7 @@ pmap_check_wiring(str, va)
 		return;
 
 	if (!vm_map_lookup_entry(pt_map, va, &entry)) {
-		printf("wired_check: entry for %x not found\n", va);
+		printf("wired_check: entry for %lx not found\n", va);
 		return;
 	}
 	count = 0;
@@ -1690,7 +1691,7 @@ pmap_check_wiring(str, va)
 		if (*pte)
 			count++;
 	if (entry->wired_count != count)
-		printf("*%s*: %x: w%d/a%d\n",
+		printf("*%s*: %lx: w%d/a%d\n",
 		       str, va, entry->wired_count, count);
 }
 #endif
