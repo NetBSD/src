@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.8 2001/11/22 17:59:59 thorpej Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.9 2001/11/23 19:21:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.8 2001/11/22 17:59:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.9 2001/11/23 19:21:47 thorpej Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.8 2001/11/22 17:59:59 thorpej Exp 
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #ifndef arm26
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 #endif
 
 static __inline struct trapframe *

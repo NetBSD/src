@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.2 2001/10/17 23:28:20 reinoud Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.3 2001/11/23 19:21:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -53,7 +53,9 @@
 #include <sys/device.h>
 
 #include <machine/irqhandler.h>
-#include <machine/cpufunc.h>
+
+#include <arm/cpufunc.h>
+
 #include <arm/iomd/iomdvar.h>
 #include <arm/iomd/iomdreg.h>
 

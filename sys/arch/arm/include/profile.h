@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.3 2001/07/16 05:42:50 matt Exp $	*/
+/*	$NetBSD: profile.h,v 1.4 2001/11/23 19:21:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -93,7 +93,7 @@ extern void int_restore(int);
 #define	MCOUNT_ENTER	(s = int_off_save())
 #define	MCOUNT_EXIT	int_restore(s)
 #else
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 /*
  * splhigh() and splx() are heavyweight, and call mcount().  Therefore
  * we disabled interrupts (IRQ, but not FIQ) directly on the CPU.
