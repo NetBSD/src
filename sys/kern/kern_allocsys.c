@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.3 1999/05/21 00:05:12 thorpej Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.4 1999/06/01 00:40:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -161,9 +161,13 @@ allocsys(v, mdcallback)
 	 *	  the remaining.
 	 */
 	if (bufpages == 0) {
-		if (bufcache != 0)
+		if (bufcache != 0) {
+			if (bufcache < 5 || bufcache > 95)
+				panic("bufcache is out of range (%d)\n",
+				    bufcache);
 			bufpages = physmem / CLSIZE * bufcache / 100;
-		else {
+
+		} else {
 			if (physmem < btoc(2 * 1024 * 1024))
 				bufpages = physmem / (10 * CLSIZE);
 			else
