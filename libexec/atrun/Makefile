@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1994/12/22 10:26:35 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 1996/08/30 20:24:49 thorpej Exp $
 
 PROG=	atrun
 BINDIR=	/usr/libexec

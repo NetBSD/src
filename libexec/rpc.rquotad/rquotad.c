@@ -1,3 +1,5 @@
+/*	$NetBSD: rquotad.c,v 1.7 1996/08/30 20:15:10 thorpej Exp $	*/
+
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
  * 

@@ -1,3 +1,5 @@
+/*	$NetBSD: rwalld.c,v 1.10 1996/08/30 20:22:15 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
  * All rights reserved.
@@ -28,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rwalld.c,v 1.9 1995/07/09 00:30:17 pk Exp $";
+static char rcsid[] = "$NetBSD: rwalld.c,v 1.10 1996/08/30 20:22:15 thorpej Exp $";
 #endif /* not lint */
 
 #include <unistd.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: atrun.c,v 1.3 1996/08/30 20:24:51 thorpej Exp $	*/
+
 /*
  * atrun.c - run jobs queued by at; run with root privileges.
  * Copyright (c) 1993 by Thomas Koenig
@@ -54,7 +56,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$Id: atrun.c,v 1.2 1995/03/02 22:06:06 cgd Exp $";
+static char rcsid[] = "$NetBSD: atrun.c,v 1.3 1996/08/30 20:24:51 thorpej Exp $";
 
 /* Local functions */
 static void

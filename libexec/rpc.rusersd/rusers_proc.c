@@ -1,3 +1,5 @@
+/*	$NetBSD: rusers_proc.c,v 1.13 1996/08/30 20:19:44 thorpej Exp $	*/
+
 /*-
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
@@ -27,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers_proc.c,v 1.12 1995/12/14 21:58:33 thorpej Exp $";
+static char rcsid[] = "$NetBSD: rusers_proc.c,v 1.13 1996/08/30 20:19:44 thorpej Exp $";
 #endif /* not lint */
 
 #include <signal.h>
