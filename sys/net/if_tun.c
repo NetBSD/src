@@ -6,7 +6,7 @@
  *
  *  if_tun.c - tunnel interface module & driver
  *
- * $Id: if_tun.c,v 1.6 1993/11/14 20:07:20 deraadt Exp $
+ * $Id: if_tun.c,v 1.7 1993/11/14 20:33:26 deraadt Exp $
  */
 
 #include "tun.h"
@@ -139,11 +139,8 @@ tunclose(dev, flag)
 		splx(s);
 	}
 	tp->tun_pgrp = 0;
-	if (tp->tun_rsel)
-		selwakeup(&tp->tun_rsel);
+	selwakeup(&tp->tun_rsel);
 		
-	tp->tun_rsel = tp->tun_wsel = (struct proc *)0;
-
 	TUNDEBUG ("%s%d: closed\n", ifp->if_name, ifp->if_unit);
 	return (0);
 }
@@ -447,9 +444,10 @@ tunwrite(dev, uio)
  * anyway, it either accepts the packet or drops it.
  */
 int
-tunselect(dev, rw)
+tunselect(dev, rw, p)
 	dev_t		dev;
 	int		rw;
+	struct proc	*p;
 {
 	int		unit = minor(dev), s;
 	struct tunctl	*tp = &tunctl[unit];
