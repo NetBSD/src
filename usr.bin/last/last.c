@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.14 2000/06/25 13:44:43 simonb Exp $	*/
+/*	$NetBSD: last.c,v 1.15 2000/06/30 06:19:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.14 2000/06/25 13:44:43 simonb Exp $");
+__RCSID("$NetBSD: last.c,v 1.15 2000/06/30 06:19:58 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -66,8 +66,8 @@ __RCSID("$NetBSD: last.c,v 1.14 2000/06/25 13:44:43 simonb Exp $");
 #define	YES	1			/* true/yes */
 
 #define	TBUFLEN	30			/* length of time string buffer */
-#define	TFMT	"%a %b %R"		/* strftime format string */
-#define	LTFMT	"%a %b %Y %T"		/* strftime long format string */
+#define	TFMT	"%a %b %d %R"		/* strftime format string */
+#define	LTFMT	"%a %b %d %Y %T"	/* strftime long format string */
 #define	TFMTS	"%R"			/* strftime format string - time only */
 #define	LTFMTS	"%T"			/* strftime long format string - " */
 
