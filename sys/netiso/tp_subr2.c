@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.10 1996/03/16 23:14:02 christos Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.11 1996/03/26 22:27:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -122,9 +122,6 @@ SOFTWARE.
 
 #if 0
 static void copyQOSparms __P((struct tp_conn_param *, struct tp_conn_param *));
-#endif
-#if 0
-static void pk_flowcontrol __P((struct pklcd *, int, int));
 #endif
 
 /*
@@ -762,8 +759,7 @@ done:
 	return error;
 }
 
-#if 0
-static
+#ifndef CCITT
 void
 pk_flowcontrol(lcp, foo, bar)
 	struct pklcd *lcp;
