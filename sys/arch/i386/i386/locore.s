@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.145.4.2 1996/12/10 05:47:30 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.145.4.3 1997/02/02 06:01:51 rat Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1878,7 +1878,7 @@ IDTVEC(fpu)
 	pushl	%esp
 	incl	_cnt+V_TRAP
 	call	_npxintr
-	addl	$4,%esp
+	addl	$8,%esp
 	INTRFASTEXIT
 #else
 	ZTRAP(T_ARITHTRAP)
