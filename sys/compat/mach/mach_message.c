@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.23 2003/02/04 22:47:41 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.24 2003/02/05 23:58:10 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.23 2003/02/04 22:47:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.24 2003/02/05 23:58:10 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -177,9 +177,7 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 		 */
 		med = (struct mach_emuldata *)p->p_emuldata;
 		mp = rr->mr_port;
-		if ((mp == med->med_host) || (mp == med->med_kernel) ||
-		    (mp == mach_clock_port) || (mp == mach_io_master_port) ||
-		    (mp == mach_saved_bootstrap_port)) {
+		if (mp->mp_flags & MACH_MP_INKERNEL) {
 			struct mach_trap_args args;
 			mach_msg_header_t *rm;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.18 2003/02/02 19:07:18 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.19 2003/02/05 23:58:10 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -267,7 +267,11 @@ struct mach_port {
 	    mach_message) mp_msglist;
 	struct lock mp_msglock;		/* Lock for the queue */
 	int mp_refcount;		/* Reference count */
+	int mp_flags;
 };
+
+/* mp_flags for struct mach_port */
+#define MACH_MP_INKERNEL	0x1	/* Receiver is inside the kernel */
 
 void mach_port_init(void);
 struct mach_port *mach_port_get(void);

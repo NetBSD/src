@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.1 2003/02/04 22:47:41 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.2 2003/02/05 23:58:09 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -53,12 +53,26 @@ typedef struct {
 
 typedef struct {
 	mach_msg_header_t rep_msgh; 
-	mach_ndr_record_t rep_ndr;
-	mach_io_object_t rep_io_object;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_match;
 	mach_msg_trailer_t rep_trailer;
 } mach_io_service_get_matching_services_reply_t;
 
+/* mach_io_iterator_next */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+} mach_io_iterator_next_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_object;
+	mach_msg_trailer_t rep_trailer;
+} mach_io_iterator_next_reply_t;
+
 int mach_io_service_get_matching_services(struct mach_trap_args *);
+int mach_io_iterator_next(struct mach_trap_args *);
 
 #endif /* _MACH_IOKIT_H_ */
 
