@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.25 1999/01/10 11:13:36 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.26 1999/01/10 13:11:25 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ static u_int8_t ukbd_trtab[256] = {
 	 127, 210, 199, 201, 211, 207, 209, 205, /* 48 - 4F */
 	 203, 208, 200,  69, 181,  55,  74,  78, /* 50 - 57 */
 	 156,  79,  80,  81,  75,  76,  77,  71, /* 58 - 5F */
-          72,  73,  82,  83,  NN,  NN,  NN,  NN, /* 60 - 67 */
+          72,  73,  82,  83, 221,  NN,  NN,  NN, /* 60 - 67 */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 68 - 6F */
           NN,  NN,  NN,  NN,  NN,  NN, 221,  NN, /* 70 - 77 */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 78 - 7F */
@@ -164,8 +164,8 @@ static u_int8_t ukbd_trtab[256] = {
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* C8 - CF */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* D0 - D7 */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* D8 - DF */
-          29,  42,  56,  NN,  58,  54,  184, NN, /* E0 - E7 */
-          NN,  NN,  NN, 219,  NN,  NN,  NN, 220, /* E8 - EF */
+          29,  42,  56, 219,  157, 54,  184,220, /* E0 - E7 */
+          NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* E8 - EF */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* F0 - F7 */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* F8 - FF */
 };
