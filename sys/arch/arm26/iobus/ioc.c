@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.9 2001/01/23 23:58:32 bjh21 Exp $ */
+/* $NetBSD: ioc.c,v 1.10 2001/04/16 14:12:38 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.9 2001/01/23 23:58:32 bjh21 Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.10 2001/04/16 14:12:38 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -344,11 +344,22 @@ void ioc_counter_start(struct device *self, int counter, int value)
 
 /* Cache to save microtime recalculating it */
 static int t0_count;
+/*
+ * Statistics clock interval and variance, in ticks.  Variance must be a
+ * power of two.  Since this gives us an even number, not an odd number,
+ * we discard one case and compensate.  That is, a variance of 1024 would
+ * give us offsets in [0..1023].  Instead, we take offsets in [1..1023].
+ * This is symmetric about the point 512, or statvar/2, and thus averages
+ * to that value (assuming uniform random numbers).
+ */
+int statvar = 8192;
+int statmin;
 	
 void
 cpu_initclocks(void)
 {
 	struct ioc_softc *sc;
+	int minint, statint;
 
 	KASSERT(the_ioc != NULL);
 	sc = (struct ioc_softc *)the_ioc;
@@ -367,7 +378,19 @@ cpu_initclocks(void)
 		    the_ioc->dv_xname, hz, irq_string(sc->sc_clkirq));
 	
 	if (stathz) {
-		setstatclockrate(stathz);
+		profhz = stathz; /* Makes life simpler */
+		
+		if (stathz == 0 || IOC_TIMER_RATE % stathz != 0 ||
+		    (statint = IOC_TIMER_RATE / stathz) > 65535)
+			panic("Impossible statclock rate: %d Hz", stathz);
+
+		minint = statint / 2 + 100;
+		while (statvar > minint)
+			statvar >>= 1;
+		statmin = statint - (statvar >> 1);
+
+		ioc_counter_start(the_ioc, 1, statint);
+
 		evcnt_attach_dynamic(&sc->sc_sclkev, EVCNT_TYPE_INTR, NULL,
 		    sc->sc_dev.dv_xname, "statclock");
 		sc->sc_sclkirq = irq_establish(IOC_IRQ_TM1, IPL_STATCLOCK,
@@ -390,22 +413,34 @@ ioc_irq_clock(void *cookie)
 static int
 ioc_irq_statclock(void *cookie)
 {
+	struct ioc_softc *sc = (void *)the_ioc;
+	bus_space_tag_t bst = sc->sc_bst;
+	bus_space_handle_t bsh = sc->sc_bsh;
+	int r, newint;
 
 	statclock(cookie);
+
+	/* Generate a new randomly-distributed clock period. */
+	do {
+		r = random() & (statvar - 1);
+	} while (r == 0);
+	newint = statmin + r;
+
+	/*
+	 * Load the next clock period into the latch, but don't do anything
+	 * with it.  It'll be used for the _next_ statclock reload.
+	 */
+	bus_space_write_1(bst, bsh, IOC_T1LOW, newint & 0xff);
+	bus_space_write_1(bst, bsh, IOC_T1HIGH, newint >> 8 & 0xff);
 	return IRQ_HANDLED;
 }
 
 void
 setstatclockrate(int hzrate)
 {
-	int count;
 
-	KASSERT(the_ioc != NULL);
-	/* XXX This currently restarts the counter -- should it? */
-	if (hzrate == 0 || IOC_TIMER_RATE % hzrate != 0 ||
-	    (count = IOC_TIMER_RATE / hz) > 65535)
-		panic("Impossible statclock rate: %d Hz", hzrate);
-	ioc_counter_start(the_ioc, 1, count);
+	/* Nothing to do here -- we've forced stathz == profhz above. */
+	KASSERT(hzrate == stathz);
 }
 
 void
