@@ -1,4 +1,4 @@
-/* $NetBSD: tlsbvar.h,v 1.4 1998/04/15 00:51:00 mjacob Exp $ */
+/* $NetBSD: tlsbvar.h,v 1.5 1998/05/13 23:23:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -42,7 +42,6 @@
  * The structure used to attach devices to the TurboLaser.
  */
 struct tlsb_dev_attach_args {
-	char *		ta_name;	/* so things aren't confused */
 	int		ta_node;	/* node number */
 	u_int16_t	ta_dtype;	/* device type */
 	u_int8_t	ta_swrev;	/* software revision */
