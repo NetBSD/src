@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.4 2002/10/02 15:45:18 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.5 2002/10/03 01:57:24 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcivar.h>
