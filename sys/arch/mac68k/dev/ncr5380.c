@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.24 1996/03/20 05:15:54 scottr Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.25 1996/03/29 02:12:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -353,7 +353,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	}
 	if (!(flags & INUSE)) {
 		ncr_tprint(reqp, "scsi_cmd: command not in use.....\n");
-		xs->flags |= ~INUSE;
+		xs->flags |= INUSE;
 	}
 
 #ifdef REAL_DMA
