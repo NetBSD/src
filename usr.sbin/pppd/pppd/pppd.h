@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.23 2002/07/01 22:19:40 itojun Exp $	*/
+/*	$NetBSD: pppd.h,v 1.24 2003/05/17 21:00:58 itojun Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -209,7 +209,7 @@ struct notifier {
 extern int	hungup;		/* Physical layer has disconnected */
 extern int	ifunit;		/* Interface unit number */
 extern char	ifname[];	/* Interface name */
-extern char	hostname[];	/* Our hostname */
+extern char	hostname[MAXNAMELEN];	/* Our hostname */
 extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
 extern int	phase;		/* Current state of link - see values below */
 extern int	baud_rate;	/* Current link speed in bits/sec */
