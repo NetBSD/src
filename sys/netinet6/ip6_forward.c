@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.17 2000/09/22 05:50:23 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.18 2001/02/10 04:14:28 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.56 2000/09/22 04:01:37 itojun Exp $	*/
 
 /*
@@ -60,10 +60,6 @@
 #include <netkey/key.h>
 #endif /* IPSEC */
 
-#ifdef IPV6FIREWALL
-#include <netinet6/ip6_fw.h>
-#endif
-
 #include <net/net_osdep.h>
 
 struct	route_in6 ip6_forward_rt;
@@ -87,8 +83,8 @@ ip6_forward(m, srcrt)
 	int srcrt;
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-	register struct sockaddr_in6 *dst;
-	register struct rtentry *rt;
+	struct sockaddr_in6 *dst;
+	struct rtentry *rt;
 	int error, type = 0, code = 0;
 	struct mbuf *mcopy = NULL;
 	struct ifnet *origifp;	/* maybe unnecessary */
@@ -421,29 +417,13 @@ ip6_forward(m, srcrt)
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0)
 		type = ND_REDIRECT;
 
-#ifdef IPV6FIREWALL
-	/*
-	 * Check with the firewall...
-	 */
-	if (ip6_fw_chk_ptr) {
-		u_short port = 0;
-		/* If ipfw says divert, we have to just drop packet */
-		if ((*ip6_fw_chk_ptr)(&ip6, rt->rt_ifp, &port, &m)) {
-			m_freem(m);
-			goto freecopy;
-		}
-		if (!m)
-			goto freecopy;
-	}
-#endif
-
 	/*
 	 * Fake scoped addresses. Note that even link-local source or
 	 * destinaion can appear, if the originating node just sends the
 	 * packet to us (without address resolution for the destination).
 	 * Since both icmp6_error and icmp6_redirect_output fill the embedded
-	 * link identifiers, we can do this stuff after make a copy for
-	 * returning error.
+	 * link identifiers, we can do this stuff after making a copy for
+	 * returning an error.
 	 */
 	if ((rt->rt_ifp->if_flags & IFF_LOOPBACK) != 0) {
 		/*
