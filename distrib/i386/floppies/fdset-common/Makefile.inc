@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2000/05/02 16:06:49 sjg Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2000/05/04 14:12:13 hubertf Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -17,6 +17,7 @@ FSTMP=		ustar.tmp
 KERN?=		netbsd-xxx
 MDEC=		${DESTDIR}/usr/mdec
 BOOTCODE=	${MDEC}/biosboot.sym
+#BOOTCODE=	${MDEC}/biosboot_com0.sym	# Serial output
 STRIP?=		strip
 
 RAMDISK	!=cd $(.CURDIR)/../ramdisk/; \
