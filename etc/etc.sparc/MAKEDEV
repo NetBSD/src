@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.51 1999/10/18 22:41:29 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.52 1999/12/15 09:17:24 garbled Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -99,7 +99,7 @@ all)
 	sh -$- $0 bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0
 	sh -$- $0 cgeight0 tcx0
 	sh -$- $0 scsibus0 scsibus1 scsibus2 scsibus3
-	sh -$- $0 lkm random local ipl cfs0
+	sh -$- $0 lkm random local ipl cfs0 apm apmctl tctrl0
 	;;
 floppy)
 	sh -$- $0 std ttya ttyb ttyc ttyd pty0
@@ -455,6 +455,22 @@ scsibus*)
 	mknod scsibus$unit c 120 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
+	;;
+
+apm*)
+	rm -f apm apmctl
+	ln -s tctrl0 apm
+	mknod apmctl c 71 8
+	chown root:wheel apm apmctl
+	chmod 644 apmctl
+	;;
+
+tctrl*)
+	unit=${i#tctrl}
+	rm -f tctrl$unit
+	mknod tctrl$unit	c 71 $unit
+	chown root:wheel tctrl$unit
+	chmod 666 tctrl$unit
 	;;
 
 local)
