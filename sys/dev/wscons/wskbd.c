@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.72 2003/11/28 13:32:55 drochner Exp $ */
+/* $NetBSD: wskbd.c,v 1.73 2004/02/08 13:49:43 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.72 2003/11/28 13:32:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.73 2004/02/08 13:49:43 bjh21 Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -404,7 +404,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_keyrepeat_data = wskbd_default_keyrepeat_data;
 
 	if (ap->console) {
-		KASSERT(wskbd_console_initted); 
+		KASSERT(wskbd_console_initted);
 		KASSERT(wskbd_console_device == NULL);
 
 		wskbd_console_device = sc;
@@ -429,7 +429,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
-void    
+void
 wskbd_cnattach(const struct wskbd_consops *consops, void *conscookie,
 	const struct wskbd_mapdata *mapdata)
 {
@@ -448,7 +448,7 @@ wskbd_cnattach(const struct wskbd_consops *consops, void *conscookie,
 	wskbd_console_initted = 1;
 }
 
-void    
+void
 wskbd_cndetach(void)
 {
 	KASSERT(wskbd_console_initted);
@@ -558,7 +558,7 @@ wskbd_detach(struct device  *self, int flags)
 void
 wskbd_input(struct device *dev, u_int type, int value)
 {
-	struct wskbd_softc *sc = (struct wskbd_softc *)dev; 
+	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
 	struct wscons_event *ev;
 	struct wseventvar *evar;
 	struct timeval thistime;
@@ -772,7 +772,7 @@ wskbd_do_open(struct wskbd_softc *sc, struct wseventvar *evp)
 int
 wskbdclose(dev_t dev, int flags, int mode, struct proc *p)
 {
-	struct wskbd_softc *sc = 
+	struct wskbd_softc *sc =
 	    (struct wskbd_softc *)wskbd_cd.cd_devs[minor(dev)];
 	struct wseventvar *evar = sc->sc_base.me_evp;
 
@@ -835,7 +835,7 @@ wskbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 /* A wrapper around the ioctl() workhorse to make reference counting easy. */
 int
-wskbd_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag, 
+wskbd_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 	struct proc *p)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)dv;
@@ -853,7 +853,7 @@ wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
 		  struct proc *p)
 {
 
-	/*      
+	/*
 	 * Try the generic ioctls that the wskbd interface supports.
 	 */
 	switch (cmd) {
@@ -1145,7 +1145,7 @@ wskbd_set_display(struct device *dv, struct wsevsrc *me)
 	int error;
 
 	DPRINTF(("wskbd_set_display: %s me=%p odisp=%p disp=%p cons=%d\n",
-		 dv->dv_xname, me, sc->sc_base.me_dispdv, displaydv, 
+		 dv->dv_xname, me, sc->sc_base.me_dispdv, displaydv,
 		 sc->sc_isconsole));
 
 	if (sc->sc_isconsole)
