@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.10 1999/04/05 06:56:23 cgd Exp $
+$NetBSD: version,v 1.10.18.1 2000/09/26 15:48:36 simonb Exp $
 
 # The newvers.sh looks for the line below.  We use this method
 # rather than $3 of the dollar-NetBSD-dollar line above so that
@@ -18,3 +18,4 @@ Version: 1.10
 1.8:	Search for a kernel, if none specified.
 1.9:	Add support for gzipped kernels.
 1.10:	The Great Boot Block Cleanup of April 1999.
+1.11:	Add support for booting off RAIDframe RAID1 mirrors.
