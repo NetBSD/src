@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.25 2000/01/18 19:52:50 deberg Exp $ */
+/* $NetBSD: wsconsio.h,v 1.26 2000/02/28 12:34:31 takemura Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -187,8 +187,8 @@ struct wsmouse_calibcoords {
 		int x, y;	/* translated coordinate */
 	} samples[WSMOUSE_CALIBCOORDS_MAX];	/* sample coordinates */
 };
-#define	WSMOUSEIO_SCALIBCOORDS	_IOR('W', 36, struct wsmouse_calibcoords)
-#define	WSMOUSEIO_GCALIBCOORDS	_IOR('R', 37, struct wsmouse_calibcoords)
+#define	WSMOUSEIO_SCALIBCOORDS	_IOW('W', 36, struct wsmouse_calibcoords)
+#define	WSMOUSEIO_GCALIBCOORDS	_IOR('W', 37, struct wsmouse_calibcoords)
 
 /*
  * Display ioctls (64 - 95)
