@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.2 1995/08/19 12:36:21 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.3 1995/09/16 14:15:10 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -91,6 +91,10 @@
 				/*    fails on older atari's		*/
 #define	ENABLE_NCR5380(sc)	cur_softc = sc;
 
+/*
+ * Functions that do nothing on the atari
+ */
+#define	pdma_ready()		0
 
 #if defined(TT_SCSI)
 /*
