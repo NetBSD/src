@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.66 2004/01/09 22:23:18 dbj Exp $	*/
+/*	$NetBSD: setup.c,v 1.67 2004/01/10 14:28:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.66 2004/01/09 22:23:18 dbj Exp $");
+__RCSID("$NetBSD: setup.c,v 1.67 2004/01/10 14:28:37 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,12 +65,12 @@ __RCSID("$NetBSD: setup.c,v 1.66 2004/01/09 22:23:18 dbj Exp $");
 
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
-static void badsb __P((int, char *));
-static int calcsb __P((const char *, int, struct fs *));
-static struct disklabel *getdisklabel __P((const char *, int));
-static struct partition *getdisklabelpart __P((const char *, struct disklabel *));
-static int readsb __P((int));
-static int readappleufs __P((void));
+static void badsb(int, char *);
+static int calcsb(const char *, int, struct fs *);
+static struct disklabel *getdisklabel(const char *, int);
+static struct partition *getdisklabelpart(const char *, struct disklabel *);
+static int readsb(int);
+static int readappleufs(void);
 
 int16_t sblkpostbl[256];
 
@@ -486,7 +486,8 @@ readappleufs()
 	/* XXX do we have to deal with APPLEUFS_LABEL_OFFSET not
 	 * being block aligned (CD's?)
 	 */
-	if (bread(fsreadfd, (char *)appleufsblk.b_un.b_fs, label, (long)APPLEUFS_LABEL_SIZE) != 0)
+	if (bread(fsreadfd, (char *)appleufsblk.b_un.b_fs, label,
+	    (long)APPLEUFS_LABEL_SIZE) != 0)
 		return 0;
 	appleufsblk.b_bno = label;
 	appleufsblk.b_size = APPLEUFS_LABEL_SIZE;
@@ -716,8 +717,10 @@ readsb(listerr)
 			for ( ; olp < endlp; olp++, nlp++) {
 				if (*olp == *nlp)
 					continue;
-				printf("offset %#x, original 0x%08x, alternate 0x%08x\n",
-				    (uint8_t *)olp-(uint8_t *)sblock, *olp, *nlp);
+				printf("offset %#x, original 0x%08x, alternate"
+				       "0x%08x\n",
+				    (int)((uint8_t *)olp-(uint8_t *)sblock),
+				    *olp, *nlp);
 			}
 		}
 		badsb(listerr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.38 2003/08/07 10:04:19 agc Exp $	*/
+/*	$NetBSD: dir.c,v 1.39 2004/01/10 14:28:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.38 2003/08/07 10:04:19 agc Exp $");
+__RCSID("$NetBSD: dir.c,v 1.39 2004/01/10 14:28:37 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -457,7 +457,8 @@ mkentry(idesc)
 	newent.d_reclen = iswap16(iswap16(dirp->d_reclen) - oldlen);
 	dirp->d_reclen = iswap16(oldlen);
 	dirp = (struct direct *)(((char *)dirp) + oldlen);
-	dirp->d_ino = iswap32(idesc->id_parent);	/* ino to be entered is in id_parent */
+	/* ino to be entered is in id_parent */
+	dirp->d_ino = iswap32(idesc->id_parent);
 	dirp->d_reclen = newent.d_reclen;
 	if (newinofmt)
 		dirp->d_type = inoinfo(idesc->id_parent)->ino_type;
