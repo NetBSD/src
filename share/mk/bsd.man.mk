@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.30 1997/05/07 15:53:32 mycroft Exp $
+#	$NetBSD: bsd.man.mk,v 1.31 1997/05/07 16:45:40 mycroft Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(.MAIN)
@@ -10,7 +10,7 @@
 .endif
 .PHONY:		catinstall maninstall catpages manpages catlinks manlinks cleanman
 install:	${MANINSTALL}
-
+cleandir:	cleanman
 
 MANTARGET?=	cat
 NROFF?=		nroff
@@ -123,10 +123,12 @@ manlinks: manpages
 		fi; \
 	done
 .endif
+
 .if defined(CATPAGES)
 all: ${CATPAGES}
 
-cleandir: cleanman
 cleanman:
 	rm -f ${CATPAGES}
+.else
+cleanman:
 .endif
