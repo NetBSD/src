@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.138.2.12 2002/07/12 01:40:14 nathanw Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.138.2.13 2002/07/12 03:09:57 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.12 2002/07/12 01:40:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.13 2002/07/12 03:09:57 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.12 2002/07/12 01:40:14 nathanw
 #include <sys/syscall.h>
 
 #include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -340,6 +341,12 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	char			**tmpfap;
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
+	int			oldlwpflags;
+
+	/* Disable scheduler activation upcalls. */
+	oldlwpflags = l->l_flag & (L_SA | L_SA_UPCALL);
+	if (l->l_flag & L_SA)
+		l->l_flag &= ~(L_SA | L_SA_UPCALL);
 
 	p = l->l_proc;
 	/*
@@ -479,6 +486,26 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		error = ENOMEM;
 		goto bad;
 	}
+
+	/* Get rid of other LWPs/ */
+	p->p_flag |= P_WEXIT; /* XXX hack. lwp-exit stuff wants to see it. */
+	exit_lwps(l);
+	p->p_flag &= ~P_WEXIT;
+
+	/* This is now LWP 1 */
+	l->l_lid = 1;
+	p->p_nlwpid = 1;
+
+	/* Release any SA state. */
+	if (p->p_sa) {
+		p->p_flag &= ~P_SA;
+		free(p->p_sa->sa_stacks, M_SA);
+		pool_put(&sadata_pool, p->p_sa);
+		p->p_sa = NULL;
+	}
+
+	/* Remove POSIX timers */
+	timers_free(p, TIMERS_POSIX);
 
 	/* adjust "active stack depth" for process VSZ */
 	pack.ep_ssize = len;	/* maybe should go elsewhere, but... */
@@ -732,6 +759,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
  freehdr:
+	l->l_flag |= oldlwpflags;
 	p->p_flag &= ~P_INEXEC;
 #ifdef LKM
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
