@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.23 1999/03/09 17:25:52 bouyer Exp $	*/
+/*	$NetBSD: traverse.c,v 1.24 1999/03/23 14:22:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.23 1999/03/09 17:25:52 bouyer Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.24 1999/03/23 14:22:59 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -695,77 +695,4 @@ getino(inum)
 	minino = inum - (inum % INOPB(sblock));
 	maxino = minino + INOPB(sblock);
 	return (&inoblock[inum - minino]);
-}
-
-/*
- * Read a chunk of data from the disk.
- * Try to recover from hard errors by reading in sector sized pieces.
- * Error recovery is attempted at most BREADEMAX times before seeking
- * consent from the operator to continue.
- */
-int	breaderrors = 0;		
-#define	BREADEMAX 32
-
-void
-bread(blkno, buf, size)
-	daddr_t blkno;
-	char *buf;
-	int size;	
-{
-	int cnt, i;
-	extern int errno;
-
-loop:
-	if (lseek(diskfd, ((off_t)blkno << dev_bshift), 0) < 0)
-		msg("bread: lseek fails\n");
-	if ((cnt = read(diskfd, buf, size)) == size)
-		return;
-	if (blkno + (size / dev_bsize) > fsbtodb(sblock, sblock->fs_size)) {
-		/*
-		 * Trying to read the final fragment.
-		 *
-		 * NB - dump only works in TP_BSIZE blocks, hence
-		 * rounds `dev_bsize' fragments up to TP_BSIZE pieces.
-		 * It should be smarter about not actually trying to
-		 * read more than it can get, but for the time being
-		 * we punt and scale back the read only when it gets
-		 * us into trouble. (mkm 9/25/83)
-		 */
-		size -= dev_bsize;
-		goto loop;
-	}
-	if (cnt == -1)
-		msg("read error from %s: %s: [block %d]: count=%d\n",
-			disk, strerror(errno), blkno, size);
-	else
-		msg("short read error from %s: [block %d]: count=%d, got=%d\n",
-			disk, blkno, size, cnt);
-	if (++breaderrors > BREADEMAX) {
-		msg("More than %d block read errors from %d\n",
-			BREADEMAX, disk);
-		broadcast("DUMP IS AILING!\n");
-		msg("This is an unrecoverable error.\n");
-		if (!query("Do you want to attempt to continue?")){
-			dumpabort(0);
-			/*NOTREACHED*/
-		} else
-			breaderrors = 0;
-	}
-	/*
-	 * Zero buffer, then try to read each sector of buffer separately.
-	 */
-	memset(buf, 0, size);
-	for (i = 0; i < size; i += dev_bsize, buf += dev_bsize, blkno++) {
-		if (lseek(diskfd, ((off_t)blkno << dev_bshift), 0) < 0)
-			msg("bread: lseek2 fails!\n");
-		if ((cnt = read(diskfd, buf, (int)dev_bsize)) == dev_bsize)
-			continue;
-		if (cnt == -1) {
-			msg("read error from %s: %s: [sector %d]: count=%d\n",
-				disk, strerror(errno), blkno, dev_bsize);
-			continue;
-		}
-		msg("short read error from %s: [sector %d]: count=%d, got=%d\n",
-			disk, blkno, dev_bsize, cnt);
-	}
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dump.8,v 1.31 1999/03/09 17:25:52 bouyer Exp $
+.\"	$NetBSD: dump.8,v 1.32 1999/03/23 14:22:59 bouyer Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	 Regents of the University of California.
@@ -49,7 +49,9 @@
 .Op Fl d Ar density
 .Op Fl f Ar file
 .Op Fl h Ar level
+.Op Fl k Ar read blocksize
 .Op Fl L Ar label
+.Op Fl r Ar cachesize
 .Op Fl s Ar feet
 .Op Fl T Ar date
 .Ar files-to-dump
@@ -170,6 +172,9 @@ only for dumps at or above the given
 The default honor level is 1,
 so that incremental backups omit such files
 but full backups retain them.
+.It Fl k Ar read blocksize
+The size in kilobyte of the read buffers, rounded up to a multiple of the
+filesystem block size. Default is 32k.
 .It Fl L Ar label
 The user-supplied text string
 .Ar label
@@ -190,6 +195,14 @@ notify all operators in the group
 .Qq operator
 by means similar to a
 .Xr wall 1 .
+.It Fl r Ar cachesize
+Use that many buffers for read cache operations. 
+A value of zero disables the read cache altogether, higher values
+improve read performance by reading larger data blocks from the
+disk and maintaining them in an LRU cache. See the 
+.Fl k
+option for the size of the buffers. Maximum is 512, the size of the cache is
+limited to 15% of the avail RAM by default.
 .It Fl s Ar feet
 Attempt to calculate the amount of tape needed
 at a particular density.
