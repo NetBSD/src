@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.62 1998/08/31 23:20:17 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.63 1998/09/01 01:02:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -306,6 +306,7 @@ struct proc *initproc;			/* Process slots for init, pager. */
 extern struct pool proc_pool;		/* memory pool for procs */
 extern struct pool pcred_pool;		/* memory pool for pcreds */
 extern struct pool plimit_pool;		/* memory pool for plimits */
+extern struct pool rusage_pool;		/* memory pool for rusages */
 
 #define	NQS	32			/* 32 run queues. */
 int	whichqs;			/* Bit mask summary of non-empty Q's. */
