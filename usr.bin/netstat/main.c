@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.42 2003/08/07 11:15:20 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.43 2003/09/04 09:23:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.42 2003/08/07 11:15:20 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.43 2003/09/04 09:23:40 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,63 +148,59 @@ struct nlist nl[] = {
 	{ "_divstat"},
 #define N_IP6STAT	40
 	{ "_ip6stat" },
-#define N_TCB6		41
-	{ "_tcb6" },
-#define N_TCP6STAT	42
+#define N_TCP6STAT	41
 	{ "_tcp6stat" },
-#define N_UDB6		43
-	{ "_udb6" },
-#define N_UDP6STAT	44
+#define N_UDP6STAT	42
 	{ "_udp6stat" },
-#define N_ICMP6STAT	45
+#define N_ICMP6STAT	43
 	{ "_icmp6stat" },
-#define N_IPSECSTAT	46
+#define N_IPSECSTAT	44
 	{ "_ipsecstat" },
-#define N_IPSEC6STAT	47
+#define N_IPSEC6STAT	45
 	{ "_ipsec6stat" },
-#define N_PIM6STAT	48
+#define N_PIM6STAT	46
 	{ "_pim6stat" },
-#define N_MRT6PROTO	49
+#define N_MRT6PROTO	47
 	{ "_ip6_mrtproto" },
-#define N_MRT6STAT	50
+#define N_MRT6STAT	48
 	{ "_mrt6stat" },
-#define N_MF6CTABLE	51
+#define N_MF6CTABLE	49
 	{ "_mf6ctable" },
-#define N_MIF6TABLE	52
+#define N_MIF6TABLE	50
 	{ "_mif6table" },
-#define N_PFKEYSTAT	53
+#define N_PFKEYSTAT	51
 	{ "_pfkeystat" },
-#define N_ARPSTAT	54
+#define N_ARPSTAT	52
 	{ "_arpstat" },
-#define N_RIP6STAT	55
+#define N_RIP6STAT	53
 	{ "_rip6stat" },
-#define	N_ARPINTRQ	56
+#define	N_ARPINTRQ	54
 	{ "_arpintrq" },
-#define	N_IPINTRQ	57
+#define	N_IPINTRQ	55
 	{ "_ipintrq" },
-#define	N_IP6INTRQ	58
+#define	N_IP6INTRQ	56
 	{ "_ip6intrq" },
-#define	N_ATINTRQ1	59
+#define	N_ATINTRQ1	57
 	{ "_atintrq1" },
-#define	N_ATINTRQ2	60
+#define	N_ATINTRQ2	58
 	{ "_atintrq2" },
-#define	N_NSINTRQ	61
+#define	N_NSINTRQ	59
 	{ "_nsintrq" },
-#define	N_CLNLINTRQ	62
+#define	N_CLNLINTRQ	60
 	{ "_clnlintrq" },
-#define	N_LLCINTRQ	63
+#define	N_LLCINTRQ	61
 	{ "_llcintrq" },
-#define	N_HDINTRQ	64
+#define	N_HDINTRQ	62
 	{ "_hdintrq" },
-#define	N_NATMINTRQ	65
+#define	N_NATMINTRQ	63
 	{ "_natmintrq" },
-#define	N_PPPOEDISCINQ	66
+#define	N_PPPOEDISCINQ	64
 	{ "_ppoediscinq" },
-#define	N_PPPOEINQ	67
+#define	N_PPPOEINQ	65
 	{ "_ppoeinq" },
-#define	N_PKINTRQ	68
+#define	N_PKINTRQ	66
 	{ "_pkintrq" },
-#define	N_HARDCLOCK_TICKS 69
+#define	N_HARDCLOCK_TICKS 67
 	{ "_hardclock_ticks" },
 	{ "" },
 };
@@ -248,13 +244,13 @@ struct protox ip6protox[] = {
 	{ -1,		N_ICMP6STAT,	1,	0,
 	  icmp6_stats,	icmp6_ifstats,	0,	"icmp6" },
 #ifdef TCP6
-	{ N_TCB6,	N_TCP6STAT,	1,	ip6protopr,
+	{ N_TCBTABLE,	N_TCP6STAT,	1,	ip6protopr,
 	  tcp6_stats,	NULL,		tcp6_dump,	"tcp6" },
 #else
-	{ N_TCB6,	N_TCP6STAT,	1,	ip6protopr,
+	{ N_TCBTABLE,	N_TCP6STAT,	1,	ip6protopr,
 	  tcp_stats,	NULL,		tcp_dump,	"tcp6" },
 #endif
-	{ N_UDB6,	N_UDP6STAT,	1,	ip6protopr,
+	{ N_UDBTABLE,	N_UDP6STAT,	1,	ip6protopr,
 	  udp6_stats,	NULL,		0,	"udp6" },
 #ifdef IPSEC
 	{ -1,		N_IPSEC6STAT,	1,	0,

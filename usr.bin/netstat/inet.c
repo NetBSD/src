@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.58 2003/08/07 11:15:19 agc Exp $	*/
+/*	$NetBSD: inet.c,v 1.59 2003/09/04 09:23:38 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.58 2003/08/07 11:15:19 agc Exp $");
+__RCSID("$NetBSD: inet.c,v 1.59 2003/09/04 09:23:38 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ protopr(off, name)
 	kread(off, (char *)&table, sizeof table);
 	prev = head =
 	    (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
-	next = table.inpt_queue.cqh_first;
+	next = (struct inpcb *)table.inpt_queue.cqh_first;
 
 	compact = 0;
 	if (Aflag) {
@@ -130,12 +130,15 @@ protopr(off, name)
 		width = 22;
 	while (next != head) {
 		kread((u_long)next, (char *)&inpcb, sizeof inpcb);
-		if (inpcb.inp_queue.cqe_prev != prev) {
+		if ((struct inpcb *)inpcb.inp_queue.cqe_prev != prev) {
 			printf("???\n");
 			break;
 		}
 		prev = next;
-		next = inpcb.inp_queue.cqe_next;
+		next = (struct inpcb *)inpcb.inp_queue.cqe_next;
+
+		if (inpcb.inp_af != AF_INET)
+			continue;
 
 		if (!aflag &&
 		    inet_lnaof(inpcb.inp_laddr) == INADDR_ANY)
