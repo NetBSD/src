@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.48.2.2 1997/06/01 09:22:56 mrg Exp $
+	$NetBSD: syscalls.master,v 1.48.2.3 1997/06/01 10:23:26 mrg Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -462,7 +462,7 @@
 239	UNIMPL		timer_getoverrun
 240	STD		{ int sys_nanosleep(const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
-241	STD		{ int sys_swapctl(int cmd, void *arg, int misc); }
+241	UNIMPL
 242	UNIMPL
 243	UNIMPL
 244	UNIMPL
@@ -493,3 +493,4 @@
 269	UNIMPL
 270	STD		{ int sys_posix_rename(const char *from, \
 			    const char *to); }
+271	STD		{ int sys_swapctl(int cmd, void *arg, int misc); }
