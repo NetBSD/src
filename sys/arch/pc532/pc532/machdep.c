@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 1995/10/07 06:25:56 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40.2.1 1995/10/17 00:19:08 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -1040,7 +1040,7 @@ void reboot_cpu()
 }
 
 int
-sysarch(p, v, retval)
+sys_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
