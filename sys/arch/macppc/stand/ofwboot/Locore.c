@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.3 1998/07/24 15:52:04 tsubai Exp $	*/
+/*	$NetBSD: Locore.c,v 1.4 1999/02/02 16:29:25 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -71,6 +71,32 @@ _start:
 	lis	1,stack@ha
 	addi	1,1,stack@l
 	addi	1,1,4096
+
+	mfmsr	8
+	li	0,0
+	mtmsr	0
+	isync
+
+	mtibatu	0,0
+	mtibatu	1,0
+	mtibatu	2,0
+	mtibatu	3,0
+	mtdbatu	0,0
+	mtdbatu	1,0
+	mtdbatu	2,0
+	mtdbatu	3,0
+
+	li	9,0x12		/* BATL(0, BAT_M) */
+	mtibatl	0,9
+	mtdbatl	0,9
+	li	9,0x1ffe	/* BATU(0) */
+	mtibatu	0,9
+	mtdbatu	0,9
+	isync
+
+	mtmsr	8
+	isync
+
 	b	startup
 ");
 
