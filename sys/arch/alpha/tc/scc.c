@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.45 1999/04/12 20:38:17 pk Exp $ */
+/* $NetBSD: scc.c,v 1.46 1999/08/08 01:44:57 ross Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.45 1999/04/12 20:38:17 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.46 1999/08/08 01:44:57 ross Exp $");
 
 #include "opt_ddb.h"
 #ifdef alpha
@@ -528,10 +528,12 @@ sccattach(parent, self, aux)
 	 */
 	if ((cputype == ST_DEC_3000_500 && sc->sc_dv.dv_unit == 1) ||
 	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0)) {
+		if (alpha_donot_kludge_scc)
+			printf("\nSWITCHING TO SERIAL CONSOLE!\n");
 		cn_tab = &scccons;
 		cn_tab->cn_dev = makedev(SCCDEV, sc->sc_dv.dv_unit * 2);
 
-		printf(": console\n");
+		printf("%s console\n", alpha_donot_kludge_scc ? "\n***" : ":");
 
 		/* wire carrier for console. */
 		sc->scc_softCAR |= SCCLINE(cn_tab->cn_dev);
