@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.1 2004/03/12 13:46:52 ragge Exp $	*/
+/*	$NetBSD: if_dge.c,v 1.2 2004/04/13 11:40:06 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -74,14 +74,13 @@
  *
  * TODO (in no specific order):
  *	HW VLAN support.
- *	Large jumbo buffers (16k).
  *	TSE offloading (needs kernel changes...)
  *	RAIDC (receive interrupt delay adaptation)
  *	Use memory > 4GB.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.1 2004/03/12 13:46:52 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.2 2004/04/13 11:40:06 ragge Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -215,6 +214,11 @@ struct dge_control_data {
 #define	DGE_CDOFF(x)	offsetof(struct dge_control_data, x)
 #define	DGE_CDTXOFF(x)	DGE_CDOFF(wcd_txdescs[(x)])
 #define	DGE_CDRXOFF(x)	DGE_CDOFF(wcd_rxdescs[(x)])
+
+/*
+ * The DGE interface have a higher max MTU size than normal jumbo frames.
+ */
+#define DGE_MAX_MTU     16288   /* Max MTU size for this interface */
 
 /*
  * Software state for transmit jobs.
@@ -616,7 +620,7 @@ dge_attach(struct device *parent, struct device *self, void *aux)
 	 * Create the transmit buffer DMA maps.
 	 */
 	for (i = 0; i < DGE_TXQUEUELEN; i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_MAX_LEN_JUMBO,
+		if ((error = bus_dmamap_create(sc->sc_dmat, DGE_MAX_MTU,
 		    DGE_NTXSEGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			aprint_error("%s: unable to create Tx DMA map %d, "
@@ -1234,6 +1238,17 @@ dge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		break;
+
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > DGE_MAX_MTU) {
+			error = EINVAL;
+		} else {
+			error = 0;
+			ifp->if_mtu = ifr->ifr_mtu;
+			if (ifp->if_flags & IFF_UP)
+				error = (*ifp->if_init)(ifp);
+		}
 		break;
 
         case SIOCSIFFLAGS:
