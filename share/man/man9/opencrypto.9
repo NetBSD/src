@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.1 2003/12/20 20:25:28 lha Exp $
+.\"	$NetBSD: opencrypto.9,v 1.2 2003/12/20 21:49:31 wiz Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -35,7 +35,7 @@
 .Nm crypto_freereq
 .Nd API for cryptographic services in the kernel
 .Sh SYNOPSIS
-.Fd #include <opencrypto/cryptodev.h>
+.In opencrypto/cryptodev.h
 .Ft int32_t
 .Fn crypto_get_driverid "u_int32_t"
 .Ft int
@@ -153,7 +153,7 @@ request may be re-submitted immediately with the new session number.
 Errors are only returned to the invoking function if not
 enough information to call the callback is available (meaning, there
 was a fatal error in verifying the arguments).
-For session initialization and teardown there is no callback mechanism used.
+No callback mechanism is used for session initialization and teardown.
 .Pp
 The
 .Fn crypto_newsession
