@@ -39,7 +39,7 @@
  * from: Utah $Hdr: mem.c 1.13 89/10/08$
  *	@(#)mem.c	7.2 (Berkeley) 5/9/91
  *
- *	$Id: mem.c,v 1.1.1.1 1993/09/09 23:53:47 phil Exp $
+ *	mem.c,v 1.1.1.1 1993/09/09 23:53:47 phil Exp
  */
 
 /*
@@ -239,10 +239,14 @@ mmrw(dev, uio, flags)
 }
 
 
-#ifdef RD_SIZE
 /* Ram disk stuff.... */
-#define RAM_IMAGE	0x200000	
-u_char ram_disk[RD_SIZE];
+#ifdef RAMD_SIZE
+
+#ifndef RAMD_ADR
+#define RAMD_ADR	0x200000	
+#endif
+
+u_char ram_disk[RAMD_SIZE];
 
 int rdopen(dev_t dev, int flag)
 {
@@ -280,7 +284,7 @@ int rdstrategy(struct buf *bp)
 int rdsize(dev_t dev)
 {
   if (minor(dev) == 0)
-    return (RD_SIZE / DEV_BSIZE);
+    return (RAMD_SIZE / DEV_BSIZE);
   else
     return (0);
 }
@@ -288,6 +292,6 @@ int rdsize(dev_t dev)
 
 void load_ram_disk()
 {
-  bcopy ((char *)RAM_IMAGE, ram_disk, RD_SIZE);
+  bcopy ((char *)RAMD_ADR, ram_disk, RAMD_SIZE);
 }
 #endif

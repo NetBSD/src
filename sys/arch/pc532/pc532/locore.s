@@ -158,7 +158,7 @@ here_we_go:	/* This is the actual start of the locore code! */
 	addr	_edata(pc),tos	# push address
 	bsr	_bzero		# zero the bss segment
 
-#ifdef RD_SIZE
+#ifdef RAMD_SIZE
 	bsr	_load_ram_disk	# Temporary ???
 #endif
 
@@ -980,7 +980,7 @@ ENTRY(_int_scsi1)
 	bsr _dp_intr
 #else
 	movqd	4,tos
-	bsr _bad_intr
+	bsd _bad_intr
 #endif
 	br	exit_int
 
