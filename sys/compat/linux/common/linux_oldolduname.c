@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.56 2001/11/13 02:08:56 lukem Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.57 2003/01/18 21:26:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.56 2001/11/13 02:08:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.57 2003/01/18 21:26:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.56 2001/11/13 02:08:56 lukem
 /* Not used on: alpha, m68k, sparc, sparc64 */
 
 int
-linux_sys_oldolduname(p, v, retval)
-	struct proc *p;
+linux_sys_oldolduname(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
