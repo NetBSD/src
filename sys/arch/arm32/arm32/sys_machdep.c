@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.4 1996/10/13 03:05:59 christos Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.5 1996/10/15 01:12:02 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -55,6 +55,8 @@
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 
+#include <machine/sysarch.h>
+
 int
 sys_sysarch(p, v, retval)
 	struct proc *p;
@@ -65,11 +67,18 @@ sys_sysarch(p, v, retval)
 		syscallarg(int) op;
 		syscallarg(char *) parms;
 	} */ *uap = v;
+	int error = 0;
 
-	printf("sys_sysarch: Currently stoned - Cannot support the operation (%d)\n",
-	    SCARG(uap, op));
+	switch(SCARG(uap, op)) {
+	case ARM32_SYNC_ICACHE : 
+		sync_icache();	/* Make sure the icache is in sync */
+		break;
 
-	return(EINVAL);
+	default:
+		error = EINVAL;
+		break;
+	}
+	return (error);
 }
   
 /* End of sys_machdep.c */
