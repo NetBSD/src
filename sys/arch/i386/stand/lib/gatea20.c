@@ -1,4 +1,4 @@
-/*	$NetBSD: gatea20.c,v 1.2 1997/10/29 00:32:49 fvdl Exp $	*/
+/*	$NetBSD: gatea20.c,v 1.3 2000/05/11 16:11:54 jdolecek Exp $	*/
 
 /* extracted from freebsd:sys/i386/boot/biosboot/io.c */
 
@@ -27,13 +27,15 @@
 /*
  * Gate A20 for high memory
  */
+#ifndef IBM_L40
 static unsigned char	x_20 = KB_A20;
+#endif
 void gateA20()
 {
 	__asm("pushfl ; cli");
 #ifdef	IBM_L40
 	outb(0x92, 0x2);
-#else	IBM_L40
+#else	/* !IBM_L40 */
 	while (inb(K_STATUS) & K_IBUF_FUL);
 	while (inb(K_STATUS) & K_OBUF_FUL)
 		(void)inb(K_RDWR);
@@ -44,6 +46,6 @@ void gateA20()
 	outb(K_RDWR, x_20);
 	delay(100);
 	while (inb(K_STATUS) & K_IBUF_FUL);
-#endif	IBM_L40
+#endif	/* IBM_L40 */
 	__asm("popfl");
 }
