@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.12 1997/02/22 01:50:46 thorpej Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.13 1997/07/24 08:53:48 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: local_passwd.c,v 1.12 1997/02/22 01:50:46 thorpej Exp $";
+static char rcsid[] = "$NetBSD: local_passwd.c,v 1.13 1997/07/24 08:53:48 phil Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,6 +129,7 @@ local_passwd(uname)
 	char *uname;
 {
 	struct passwd *pw;
+	struct passwd old_pw;
 	int pfd, tfd;
 	char *getnewpasswd();
 
@@ -143,13 +144,8 @@ local_passwd(uname)
 		return (1);
 	}
 
-	pw_init();
-	tfd = pw_lock(0);
-	if (tfd < 0)
-		errx(1, "the passwd file is busy.");
-	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
-	if (pfd < 0)
-		pw_error(_PATH_MASTERPASSWD, 1, 1);
+	/* Save the old pw information for comparing on pw_copy(). */
+	old_pw = *pw;
 
 	/*
 	 * Get the new password.  Reset passwd change time to zero; when
@@ -158,7 +154,26 @@ local_passwd(uname)
 	 */
 	pw->pw_passwd = getnewpasswd(pw);
 	pw->pw_change = 0;
-	pw_copy(pfd, tfd, pw);
+
+	/* Now that the user has given us a new password, let us
+	 * change the database.
+	 */
+
+	pw_init();
+	tfd = pw_lock(0);
+	if (tfd < 0) {
+		warnx ("The passwd file is busy, waiting...");
+		tfd = pw_lock(10);
+		if (tfd < 0)
+			errx(1, "The passwd file is still busy, "
+			     "try again later.");
+	}
+
+	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
+	if (pfd < 0)
+		pw_error(_PATH_MASTERPASSWD, 1, 1);
+
+	pw_copy(pfd, tfd, pw, &old_pw);
 
 	if (pw_mkdb() < 0)
 		pw_error((char *)NULL, 0, 1);
