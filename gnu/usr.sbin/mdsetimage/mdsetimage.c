@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.6 2002/03/02 12:21:14 mrg Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.7 2002/09/13 15:29:08 thorpej Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdsetimage.c,v 1.6 2002/03/02 12:21:14 mrg Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.7 2002/09/13 15:29:08 thorpej Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -65,9 +65,9 @@ struct symbols {
 	size_t offset;
 } md_root_symbols[] = {
 #define	X_MD_ROOT_IMAGE	0
-	{ "_md_root_image", NULL, 0 },
+	{ "_md_root_image", 0, 0 },
 #define	X_MD_ROOT_SIZE	1
-	{ "_md_root_size", NULL, 0 },
+	{ "_md_root_size", 0, 0 },
 	{ NULL }
 };
 
@@ -281,7 +281,7 @@ find_md_root(abfd, symbols)
 	free(symbol_table);
 
 	for (s = symbols; s->name != NULL; s++) {
-		if (s->vma == NULL)
+		if (s->vma == 0)
 			return (1);
 
 		for (p = abfd->sections; p != NULL; p = p->next) {
