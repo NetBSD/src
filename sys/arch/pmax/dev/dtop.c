@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.36.2.2 1999/04/12 21:27:05 pk Exp $	*/
+/*	$NetBSD: dtop.c,v 1.36.2.3 1999/12/04 19:25:54 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.36.2.2 1999/04/12 21:27:05 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.36.2.3 1999/12/04 19:25:54 he Exp $");
 
 #include "rasterconsole.h"
 
@@ -946,7 +946,7 @@ dtop_keyboard_handler(dev, msg, event, outc)
 		 * XXX when in debugger, don't return multi-char sequences
 		 */
 		if (cp && (cp[1] == '\0') &&(retc == 0))
-		    retc = c;
+		    retc = cp[0];
 	    }
 	outc = retc;
 	/* install new scan state */
