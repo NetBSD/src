@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.3 1999/12/06 22:44:47 simonb Exp $
+# $NetBSD: Makefile,v 1.4 1999/12/06 22:52:18 simonb Exp $
 #
+.include <bsd.own.mk>
+
 CPPFLAGS+= -DEXTENSIONS
 
 SKEL_DIR=	/etc/skel
 EXAMPLE_DIR=	${DESTDIR}/usr/share/examples/usermgmt
-
-INSTALL_DATA?= ${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m 0444
 
 PROG= user
 LINKS+=	${BINDIR}/user ${BINDIR}/useradd
@@ -16,20 +16,18 @@ LINKS+=	${BINDIR}/user ${BINDIR}/groupadd
 LINKS+=	${BINDIR}/user ${BINDIR}/groupdel
 LINKS+=	${BINDIR}/user ${BINDIR}/groupmod
 LDADD+= -lutil 
-DPADD+= -lutil
+DPADD+= ${LIBUTIL}
 MAN= user.8 useradd.8 userdel.8 usermod.8 group.8 groupadd.8 groupdel.8 groupmod.8
 
-.include <bsd.prog.mk>
+.if ${MKSHARE} != "no"
+FILES=			dot.cshrc dot.login dot.profile
+FILESNAME_dot.cshrc=	.cshrc
+FILESNAME_dot.login=	.login
+FILESNAME_dot.profile=	.profile
+FILESDIR=		/usr/share/examples/usermgmt
+.endif
 
-install: ${PROG}
-	${INSTALL_DATA} dot.cshrc ${EXAMPLE_DIR}/.cshrc
-	${INSTALL_DATA} dot.login ${EXAMPLE_DIR}/.login
-	${INSTALL_DATA} dot.profile ${EXAMPLE_DIR}/.profile
-	@echo "**********************************************************************"
-	@echo "Any files matching ${SKEL_DIR}/.[A-z]* will be copied"
-	@echo "to a new user's home directory."
-	@echo "Example dot files can be found in ${EXAMPLE_DIR}."
-	@echo "**********************************************************************"
+.include <bsd.prog.mk>
 
 test: ${PROG}
 	@echo "No news is good news"
