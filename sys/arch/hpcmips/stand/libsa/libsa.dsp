@@ -128,6 +128,10 @@ SOURCE=.\../../../../lib/libsa/cread.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\../../../../lib/libsa/files.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\panic.c
 # End Source File
 # Begin Source File
