@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.199 2002/03/04 02:30:27 simonb Exp $	*/
+/*	$NetBSD: init_main.c,v 1.199.8.1 2002/12/15 11:21:52 jmc Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199 2002/03/04 02:30:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.8.1 2002/12/15 11:21:52 jmc Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -137,6 +137,8 @@ struct	proc *curproc = &proc0;
 #endif
 struct	proc *initproc;
 
+int	nofile = NOFILE;
+int	maxuprc = MAXUPRC;
 int	cmask = CMASK;
 extern	struct user *proc0paddr;
 
@@ -283,12 +285,12 @@ main(void)
 		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
 
 	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_max = maxfiles;
-	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur = 
-	    maxfiles < NOFILE ? maxfiles : NOFILE;
+	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur =
+	    maxfiles < nofile ? maxfiles : nofile;
 
 	limit0.pl_rlimit[RLIMIT_NPROC].rlim_max = maxproc;
 	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur =
-	    maxproc < MAXUPRC ? maxproc : MAXUPRC;
+	    maxproc < maxuprc ? maxproc : maxuprc;
 
 	lim = ptoa(uvmexp.free);
 	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = lim;
