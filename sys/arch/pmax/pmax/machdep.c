@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.143 1999/05/20 08:21:46 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.144 1999/05/25 04:17:57 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 1999/05/20 08:21:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 1999/05/25 04:17:57 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -126,6 +126,8 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
  */
 int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
+struct splvec	splvec;			/* XXX will go XXX */
+
 void	mach_init __P((int, char *[], int, int, u_int, char *));
 
 unsigned (*clkread) __P((void)); /* high resolution timer if available */
@@ -145,20 +147,6 @@ void	(*tc_enable_interrupt)
      __P ((u_int slotno, int (*handler) __P((void *sc)),
           void *sc, int onoff));
 
-#include <pmax/pmax/machdep.h>		/* splXXX() function pointer hack */
-/*
- * pmax still doesnt have code to build spl masks for both CPU hard-interrupt
- * register and baseboard interrupt-control registers at runtime.
- * Instead, we declare the standard splXXX names as function pointers,
- * and initialie them to point to the above functions to match
- * the way a specific motherboard is  wired up.
- */
-int	(*Mach_splbio) __P((void)) = splhigh;
-int	(*Mach_splnet)__P((void)) = splhigh;
-int	(*Mach_spltty)__P((void)) = splhigh;
-int	(*Mach_splimp)__P((void)) = splhigh;
-int	(*Mach_splclock)__P((void)) = splhigh;
-int	(*Mach_splstatclock)__P((void)) = splhigh;
 volatile struct chiptime *mcclock_addr;
 /*XXXjrs*/
 const	struct callback *callv;	/* pointer to PROM entry points */
