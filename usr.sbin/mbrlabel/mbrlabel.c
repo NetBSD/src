@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.1 1998/11/16 18:44:26 ws Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.2 1998/12/03 11:20:50 fair Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.1 1998/11/16 18:44:26 ws Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.2 1998/12/03 11:20:50 fair Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -139,7 +139,9 @@ getparts(sd, np, off)
 {
 	unsigned char buf[DEV_BSIZE];
 	struct mbr_partition *mpart, *epart;
-	off_t loff = (off_t)off * DEV_BSIZE;
+	off_t loff = 0;	/* XXX this nonsense shuts up GCC 2.7.2.2 */
+
+	loff = (off_t)off * DEV_BSIZE;
 
 	if (lseek(sd, loff, SEEK_SET) != loff) {
 		perror("seek label");
