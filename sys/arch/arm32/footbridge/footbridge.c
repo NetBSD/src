@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.4 2000/02/13 05:00:57 mark Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.5 2001/02/25 21:31:14 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -230,7 +230,7 @@ footbridge_attach(parent, self, aux)
 
 	/* Setup fast SA110 cache clean area */
 #ifdef CPU_SA110
-	if (cputype == ID_SA110)
+	if (cputype == CPU_ID_SA110)
 		footbridge_sa110_cc_setup();
 #endif	/* CPU_SA110 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.39 2001/02/25 17:17:55 reinoud Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.40 2001/02/25 21:31:15 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -919,7 +919,7 @@ initarm_new_bootloader(bootconf)
 		    cmos_read(RTC_ADDR_REBOOTCNT));
 
 #ifdef CPU_SA110
-	if (cputype == ID_SA110)
+	if (cputype == CPU_ID_SA110)
 		rpc_sa110_cc_setup();	
 #endif	/* CPU_SA110 */
 
@@ -1975,7 +1975,7 @@ initarm_old_bootloader(bootconf)
 		    cmos_read(RTC_ADDR_REBOOTCNT));
 
 #ifdef CPU_SA110
-	if (cputype == ID_SA110)
+	if (cputype == CPU_ID_SA110)
 		rpc_sa110_cc_setup();	
 #endif	/* CPU_SA110 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.1 2001/02/23 03:48:09 ichiro Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.2 2001/02/25 21:31:15 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -139,8 +139,8 @@ set_cpufuncs()
 	switch (cputype) {
 
 #if defined(CPU_SA110) || defined(CPU_SA1110)
-	case ID_SA110:
-	case ID_SA1110:
+	case CPU_ID_SA110:
+	case CPU_ID_SA1110:
 		cpufuncs = sa110_cpufuncs;
 		break;
 #endif	/* CPU_SA110 */

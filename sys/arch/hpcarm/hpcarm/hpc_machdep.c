@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.3 2001/02/24 12:48:58 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.4 2001/02/25 21:31:16 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -675,7 +675,7 @@ initarm(bi)
 
 
 #ifdef CPU_SA110
-	if (cputype == ID_SA110)
+	if (cputype == CPU_ID_SA110)
 		rpc_sa110_cc_setup();	
 #endif	/* CPU_SA110 */
 

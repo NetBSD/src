@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.13 2000/05/26 03:34:26 jhawk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14 2001/02/25 21:31:14 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -103,7 +103,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 		pc = frame->fr_pc;
 		/* Adjust the PC so the same address is printed no matter what CPU */
-		if (cputype == ID_SA110 || cputype == ID_ARM810)
+		if (cputype == CPU_ID_SA110 || cputype == CPU_ID_ARM810)
 			pc += 4;
 		if (!INKERNEL(pc))
 			break;
