@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.52 2000/09/24 15:59:38 jdolecek Exp $
+#	$NetBSD: GENERIC,v 1.53 2000/10/04 03:35:56 itojun Exp $
 
 #
 #	GENERIC
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"GENERIC-$Revision: 1.52 $"
+#ident 		"GENERIC-$Revision: 1.53 $"
 
 maxusers	8
 
@@ -310,4 +310,4 @@ pseudo-device	pty			# pseudo-terminals
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
 
-#pseudo-device	rnd
+pseudo-device	rnd
