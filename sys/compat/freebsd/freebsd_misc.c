@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.19 2003/06/29 22:29:16 fvdl Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.20 2003/09/18 14:44:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.19 2003/06/29 22:29:16 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.20 2003/09/18 14:44:09 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.19 2003/06/29 22:29:16 fvdl Exp $
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
+#include <sys/mman.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -62,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.19 2003/06/29 22:29:16 fvdl Exp $
 #include <compat/freebsd/freebsd_rtprio.h>
 #include <compat/freebsd/freebsd_timex.h>
 #include <compat/freebsd/freebsd_signal.h>
+#include <compat/freebsd/freebsd_mman.h>
 
 int
 freebsd_sys_msync(l, v, retval)
@@ -85,6 +87,59 @@ freebsd_sys_msync(l, v, retval)
 	SCARG(&bma, len) = SCARG(uap, len);
 	SCARG(&bma, flags) = SCARG(uap, flags);
 	return sys___msync13(l, &bma, retval);
+}
+
+int
+freebsd_sys_mmap(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct freebsd_sys_mmap_args /* {
+		syscallarg(caddr_t) addr;
+		syscallarg(size_t) len;
+		syscallarg(int) prot;
+		syscallarg(int) flags;
+		syscallarg(int) fd;
+		syscallarg(long) pad;
+		syscallarg(off_t) pos;
+	} */ *uap = v;
+	struct sys_mmap_args bma;
+	int flags, prot, fd;
+	off_t pos;
+
+	prot = SCARG(uap, prot);
+	flags = SCARG(uap, flags);
+	fd = SCARG(uap, fd);
+	pos = SCARG(uap, pos);
+
+	/*
+	 * If using MAP_STACK on FreeBSD:
+	 *
+	 * + fd has to be -1
+	 * + prot must have read and write
+	 * + MAP_STACK implies MAP_ANON
+	 * + MAP_STACK implies offset of 0
+	 */
+	if (flags & FREEBSD_MAP_STACK) {
+		if ((fd != -1)
+		    ||((prot & (PROT_READ|PROT_WRITE))!=(PROT_READ|PROT_WRITE)))
+			return (EINVAL);
+
+		flags |= (MAP_ANON | MAP_FIXED);
+		flags &= ~FREEBSD_MAP_STACK;
+
+		pos = 0;
+	}
+
+	SCARG(&bma, addr) = SCARG(uap, addr);
+	SCARG(&bma, len) = SCARG(uap, len);
+	SCARG(&bma, prot) = prot;
+	SCARG(&bma, flags) = flags;
+	SCARG(&bma, fd) = fd;
+	SCARG(&bma, pos) = pos;
+
+	return sys_mmap(l, &bma, retval);
 }
 
 /* just a place holder */
