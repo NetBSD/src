@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.140 2005/02/03 23:13:20 perry Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.141 2005/02/12 12:31:07 manu Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.140 2005/02/03 23:13:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.141 2005/02/12 12:31:07 manu Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -139,6 +139,9 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.140 2005/02/03 23:13:20 perry Exp $"
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
+#ifdef IPSEC_NAT_T
+#include <netinet/udp.h>
+#endif
 #endif /*IPSEC*/
 
 #ifdef FAST_IPSEC
@@ -182,6 +185,9 @@ ip_output(struct mbuf *m0, ...)
 	va_list ap;
 #ifdef IPSEC
 	struct secpolicy *sp = NULL;
+#ifdef IPSEC_NAT_T
+	int natt_frag = 0;
+#endif
 #endif /*IPSEC*/
 #ifdef FAST_IPSEC
 	struct inpcb *inp;
@@ -503,6 +509,22 @@ sendit:
 	default:
 		printf("ip_output: Invalid policy found. %d\n", sp->policy);
 	}
+
+#ifdef IPSEC_NAT_T
+	/*
+	 * NAT-T ESP fragmentation: don't do IPSec processing now, 
+	 * we'll do it on each fragmented packet. 
+	 */
+	if (sp->req->sav &&
+	    ((sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP) ||
+	     (sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP_NON_IKE))) {
+		if (ntohs(ip->ip_len) > sp->req->sav->esp_frag) {
+			natt_frag = 1;
+			mtu = sp->req->sav->esp_frag;
+			goto skip_ipsec;
+		}
+	}
+#endif /* IPSEC_NAT_T */
 
 	/*
 	 * ipsec4_output() expects ip_len and ip_off in network
@@ -828,11 +850,26 @@ spd_done:
 #ifdef IPSEC
 			/* clean ipsec history once it goes out of the node */
 			ipsec_delaux(m);
-#endif
-			KASSERT((m->m_pkthdr.csum_flags &
-			    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
-			error = (*ifp->if_output)(ifp, m, sintosa(dst),
-			    ro->ro_rt);
+
+#ifdef IPSEC_NAT_T
+			/* 
+			 * If we get there, the packet has not been handeld by
+			 * IPSec whereas it should have. Now that it has been 
+			 * fragmented, re-inject it in ip_output so that IPsec
+			 * processing can occur.
+			 */
+			if (natt_frag) {
+				error = ip_output(m, opt, 
+				    ro, flags, imo, so, mtu_p);
+			} else 
+#endif /* IPSEC_NAT_T */
+#endif /* IPSEC */
+			{
+				KASSERT((m->m_pkthdr.csum_flags &
+				    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
+				error = (*ifp->if_output)(ifp, m, sintosa(dst),
+				    ro->ro_rt);
+			}
 		} else
 			m_freem(m);
 	}

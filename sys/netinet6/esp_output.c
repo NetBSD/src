@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.18 2003/09/07 15:59:36 itojun Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.19 2005/02/12 12:31:08 manu Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.18 2003/09/07 15:59:36 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.19 2005/02/12 12:31:08 manu Exp $");
 
 #include "opt_inet.h"
 
@@ -59,6 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.18 2003/09/07 15:59:36 itojun Exp $
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_var.h>
+#ifdef IPSEC_NAT_T
+#include <netinet/udp.h>
+#endif
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -136,6 +139,17 @@ esp_hdrsiz(isr)
 		    esp_max_padbound() - 1 + 2 + authlen;
 	}
 
+#ifdef IPSEC_NAT_T
+	/*
+	 * If NAT-T is enabled, add the space for UDP encapsulation
+	 */
+	if (sav->natt_type != 0) {
+		hdrsiz += sizeof(struct udphdr);
+		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE)
+			hdrsiz += sizeof(u_int64_t);
+	}
+#endif
+
 	return hdrsiz;
 
    estimate:
@@ -147,9 +161,15 @@ esp_hdrsiz(isr)
 	 *	   maximum padding length without random padding length
 	 *	2 = (Pad Length field) + (Next Header field).
 	 *	AH_MAXSUMSIZE = maximum ICV we support.
+	 *	sizeof(u_int64_t) = non IKE marker (NAT-T)
+	 * 	sizeof(struct udphdr) = UDP encapsulation (NAT-T)
 	 */
 	return sizeof(struct newesp) + esp_max_ivlen() +
-	    esp_max_padbound() - 1 + 2 + AH_MAXSUMSIZE;
+	    esp_max_padbound() - 1 + 2 + AH_MAXSUMSIZE + 
+#ifdef IPSEC_NAT_T
+	    sizeof(u_int64_t) + sizeof(struct udphdr) +
+#endif
+	    0;
 }
 
 /*
@@ -195,6 +215,9 @@ esp_output(m, nexthdrp, md, isr, af)
 	size_t extendsiz;
 	int error = 0;
 	struct ipsecstat *stat;
+#ifdef IPSEC_NAT_T
+	struct udphdr *udp = NULL;
+#endif
 
 	switch (af) {
 #ifdef INET
@@ -329,10 +352,25 @@ esp_output(m, nexthdrp, md, isr, af)
 
 	espoff = m->m_pkthdr.len - plen;
 
+#ifdef IPSEC_NAT_T
+	if (sav->natt_type != 0) {
+		esphlen += sizeof(struct udphdr);
+		espoff += sizeof(struct udphdr);
+
+		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE) {
+			/* NON-IKE marker */
+			esphlen += sizeof(u_int64_t);
+			espoff += sizeof(u_int64_t);
+		}
+	}
+#endif
+
 	/*
 	 * grow the mbuf to accomodate ESP header.
 	 * before: IP ... payload
-	 * after:  IP ... ESP IV payload
+	 * after (without NAT-T):  IP ... ESP IV payload
+	 * after (with older NAT-T):  IP ... UDP non-IKE-marker ESP IV payload
+	 * after (with newer NAT-T):  IP ... UDP ESP IV payload
 	 */
 	if (M_LEADINGSPACE(md) < esphlen || (md->m_flags & M_EXT) != 0) {
 		MGET(n, M_DONTWAIT, MT_DATA);
@@ -345,6 +383,7 @@ esp_output(m, nexthdrp, md, isr, af)
 		mprev->m_next = n;
 		n->m_next = md;
 		m->m_pkthdr.len += esphlen;
+
 		esp = mtod(n, struct esp *);
 	} else {
 		md->m_len += esphlen;
@@ -352,6 +391,20 @@ esp_output(m, nexthdrp, md, isr, af)
 		m->m_pkthdr.len += esphlen;
 		esp = mtod(md, struct esp *);
 	}
+
+#ifdef IPSEC_NAT_T
+	if (sav->natt_type != 0) {
+		udp = (struct udphdr *)esp;
+		esp = (struct esp *)(udp + 1);
+
+		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE) {
+			u_int64_t *data = (u_int64_t *)esp;
+
+			*data = 0; /* NON-IKE marker */
+			esp = (struct esp *)(data + 1);
+		}
+	}
+#endif
 
 	nxt = *nexthdrp;
 	*nexthdrp = IPPROTO_ESP;
@@ -468,6 +521,26 @@ esp_output(m, nexthdrp, md, isr, af)
 			extend[i] = (i + 1) & 0xff;
 		break;
 	}
+
+#ifdef IPSEC_NAT_T
+	if (sav->natt_type != 0) {
+		*nexthdrp = IPPROTO_UDP;
+
+		/* 
+		 * Create the UDP encapsulation header for NAT-T
+		 * uh_len is set later, when the size is known.
+		 */
+		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE)
+			udp->uh_sport = htons(UDP_ENCAP_ESPINUDP_PORT);
+		else
+			udp->uh_sport = htons(sav->local_ike_port);
+
+		udp->uh_dport = htons(sav->remote_ike_port);
+		udp->uh_sum = 0;
+	} else {
+		*nexthdrp = IPPROTO_ESP;
+	}
+#endif
 
 	/* initialize esp trailer. */
 	esptail = (struct esptail *)
@@ -611,6 +684,20 @@ esp_output(m, nexthdrp, md, isr, af)
 #endif
 	}
     }
+
+#ifdef IPSEC_NAT_T
+	if (sav->natt_type != 0) {
+		struct ip *ip;
+		ip = mtod(m, struct ip *);
+#ifdef _IP_VHL
+		udp->uh_ulen = 
+		    htons(ntohs(ip->ip_len) - (IP_VHL_HL(ip->ip_vhl) << 2));
+#else
+		udp->uh_ulen = htons(ntohs(ip->ip_len) - (ip->ip_hl << 2));
+#endif
+
+	}
+#endif /* IPSEC_NAT_T */
 
 noantireplay:
 	if (!m) {
