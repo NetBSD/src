@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.27 2003/08/11 16:20:11 itojun Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.28 2004/04/21 01:05:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -96,7 +96,7 @@
  * 	routines probably should have been in another module, but only
  * 	supfilesrv needs to do the check and none of its other modules seemed
  * 	appropriate.  Note, the implementation should be changed once we have
- * 	direct kernel support, for example the fstatfs(2) system call, for
+ * 	direct kernel support, for example the fstatvfs(2) system call, for
  * 	detecting the type of file system a file resides.  Also, I changed
  * 	the routines which read the crosspatch crypt file or collection crypt
  * 	file to save the uid and gid from the stat information obtained via
@@ -1832,7 +1832,7 @@ fmttime(time_t time)
  * the major device number and seeing if it matches the known values for
  * MACH NSF/Sun OS 3.x or Sun OS 4.x.
  *
- * Having the fstatfs() system call would make this routine easier and
+ * Having the fstatvfs() system call would make this routine easier and
  * more reliable.
  *
  * Note, in order to make the checks simpler, the file referenced by the
@@ -1906,16 +1906,20 @@ local_file(int handle, struct stat * sinfo)
 	 *
 	 * Our current implementation and Sun OS 3.x use major device
 	 * 255 for NFS files; Sun OS 4.x seems to use 130 (I have only
-	 * determined this empirically -- DLC).  Without a fstatfs()
+	 * determined this empirically -- DLC).  Without a fstatvfs()
 	 * system call, this will have to do for now.
 	 */
-#ifdef __SVR4
+#if defined(__SVR4) || __NetBSD_Version__ > 200030000
 	{
 		struct statvfs sf;
 
 		if (fstatvfs(handle, &sf) == -1)
 			return (-1);
+#ifdef __SVR4
 		return strncmp(sf.f_basetype, "nfs", 3) != 0;
+#else
+		return strncmp(sf.f_fstypename, "nfs", 3) != 0;
+#endif
 	}
 #elif defined(__NetBSD__)
 	{

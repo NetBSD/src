@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscallargs.h,v 1.10 2004/03/26 15:29:29 drochner Exp $ */
+/* $NetBSD: pecoff_syscallargs.h,v 1.11 2004/04/21 01:05:37 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -56,6 +56,9 @@ struct pecoff_sys_chown_args {
 	syscallarg(uid_t) uid;
 	syscallarg(gid_t) gid;
 };
+#ifdef COMPAT_20
+#else
+#endif
 #ifdef COMPAT_43
 #else
 #endif
@@ -128,8 +131,11 @@ struct pecoff_sys_utimes_args {
 
 struct pecoff_sys_statfs_args {
 	syscallarg(const char *) path;
-	syscallarg(struct statfs *) buf;
+	syscallarg(struct statvfs12 *) buf;
 };
+#ifdef COMPAT_20
+#else
+#endif
 
 struct pecoff_sys_getfh_args {
 	syscallarg(const char *) fname;
@@ -229,6 +235,9 @@ struct pecoff_sys___posix_lchown_args {
 #ifdef COMPAT_16
 #else
 #endif
+#ifdef COMPAT_20
+#else
+#endif
 #if defined(SYSVSEM) || !defined(_KERNEL)
 #else
 #endif
@@ -278,8 +287,11 @@ int	pecoff_sys_chown(struct lwp *, void *, register_t *);
 
 int	sys_obreak(struct lwp *, void *, register_t *);
 
-int	sys_getfsstat(struct lwp *, void *, register_t *);
+#ifdef COMPAT_20
+int	compat_20_sys_getfsstat(struct lwp *, void *, register_t *);
 
+#else
+#endif
 #ifdef COMPAT_43
 int	sys_getpid_with_ppid(struct lwp *, void *, register_t *);
 
@@ -469,8 +481,11 @@ int	sys_nfssvc(struct lwp *, void *, register_t *);
 #endif
 int	pecoff_sys_statfs(struct lwp *, void *, register_t *);
 
-int	sys_fstatfs(struct lwp *, void *, register_t *);
+#ifdef COMPAT_20
+int	compat_20_sys_fstatfs(struct lwp *, void *, register_t *);
 
+#else
+#endif
 int	pecoff_sys_getfh(struct lwp *, void *, register_t *);
 
 int	sys_sysarch(struct lwp *, void *, register_t *);
@@ -689,8 +704,11 @@ int	sys_fhopen(struct lwp *, void *, register_t *);
 
 int	sys_fhstat(struct lwp *, void *, register_t *);
 
-int	sys_fhstatfs(struct lwp *, void *, register_t *);
+#ifdef COMPAT_20
+int	compat_20_sys_fhstatfs(struct lwp *, void *, register_t *);
 
+#else
+#endif
 #if defined(SYSVSEM) || !defined(_KERNEL)
 int	sys_____semctl13(struct lwp *, void *, register_t *);
 

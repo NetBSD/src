@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.24 2004/01/25 18:06:49 hannken Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.25 2004/04/21 01:05:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.24 2004/01/25 18:06:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.25 2004/04/21 01:05:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,7 +424,7 @@ umap_getattr(v)
 	if ((error = umap_bypass(ap)) != 0)
 		return (error);
 	/* Requires that arguments be restored. */
-	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsid.val[0];
+	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 
 	flags = MOUNTTOUMAPMOUNT(ap->a_vp->v_mount)->umapm_flags;
 	/*

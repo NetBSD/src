@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.62 2003/08/07 16:34:21 agc Exp $	*/
+/*	$NetBSD: types.h,v 1.63 2004/04/21 01:05:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -130,6 +130,16 @@ typedef	uint64_t	u_longlong_t;	/* for XDR */
 
 typedef	int64_t		blkcnt_t;	/* fs block count */
 typedef	uint32_t	blksize_t;	/* fs optimal block size */
+
+#ifndef	fsblkcnt_t
+typedef	__fsblkcnt_t	fsblkcnt_t;	/* fs block count (statvfs) */
+#define fsblkcnt_t	__fsblkcnt_t
+#endif
+
+#ifndef	fsfilcnt_t
+typedef	__fsfilcnt_t	fsfilcnt_t;	/* fs file count */
+#define fsfilcnt_t	__fsfilcnt_t
+#endif
 
 #ifndef	caddr_t
 typedef	__caddr_t	caddr_t;	/* core address */

@@ -1,4 +1,4 @@
-/*	$NetBSD: checkmount_bsd44.c,v 1.1.1.6 2003/03/09 01:13:20 christos Exp $	*/
+/*	$NetBSD: checkmount_bsd44.c,v 1.2 2004/04/21 01:05:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -47,6 +47,9 @@
 # include <config.h>
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
+#if __NetBSD_Version__ > 200030000
+#define statfs statvfs
+#endif
 
 extern int is_same_host(char *name1, char *name2, struct in_addr addr2);
 int fixmount_check_mount(char *host, struct in_addr hostaddr, char *path);

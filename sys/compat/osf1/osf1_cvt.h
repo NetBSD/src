@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.h,v 1.8 2002/03/31 22:22:48 christos Exp $ */
+/* $NetBSD: osf1_cvt.h,v 1.9 2004/04/21 01:05:37 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -72,7 +72,7 @@ void	osf1_cvt_stat_from_native(const struct stat *nst,
 				  struct osf1_stat *ost);
 void	osf1_cvt_stat2_from_native(const struct stat *nst,
 				  struct osf1_stat2 *ost);
-void	osf1_cvt_statfs_from_native(const struct statfs *nsfs,
+void	osf1_cvt_statfs_from_native(const struct statvfs *nsfs,
 				    struct osf1_statfs *osfs);
 
 extern const int native_to_osf1_errno[];

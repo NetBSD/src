@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.150 2004/03/26 15:29:28 drochner Exp $ */
+/* $NetBSD: syscalls.c,v 1.151 2004/04/21 01:05:38 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.150 2004/03/26 15:29:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.151 2004/04/21 01:05:38 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -47,7 +47,7 @@ const char *const syscallnames[] = {
 	"chmod",			/* 15 = chmod */
 	"chown",			/* 16 = chown */
 	"break",			/* 17 = break */
-	"getfsstat",			/* 18 = getfsstat */
+	"compat_20_getfsstat",	/* 18 = compat_20 getfsstat */
 	"compat_43_olseek",	/* 19 = compat_43 olseek */
 #ifdef COMPAT_43
 	"getpid",			/* 20 = getpid */
@@ -206,8 +206,8 @@ const char *const syscallnames[] = {
 	"#155 (excluded nfssvc)",		/* 155 = excluded nfssvc */
 #endif
 	"compat_43_ogetdirentries",	/* 156 = compat_43 ogetdirentries */
-	"statfs",			/* 157 = statfs */
-	"fstatfs",			/* 158 = fstatfs */
+	"compat_20_statfs",	/* 157 = compat_20 statfs */
+	"compat_20_fstatfs",	/* 158 = compat_20 fstatfs */
 	"#159 (unimplemented)",		/* 159 = unimplemented */
 	"#160 (unimplemented)",		/* 160 = unimplemented */
 	"getfh",			/* 161 = getfh */
@@ -423,7 +423,7 @@ const char *const syscallnames[] = {
 	"fchroot",			/* 297 = fchroot */
 	"fhopen",			/* 298 = fhopen */
 	"fhstat",			/* 299 = fhstat */
-	"fhstatfs",			/* 300 = fhstatfs */
+	"compat_20_fhstatfs",	/* 300 = compat_20 fhstatfs */
 #if defined(SYSVSEM) || !defined(_KERNEL)
 	"____semctl13",			/* 301 = ____semctl13 */
 #else
@@ -491,4 +491,8 @@ const char *const syscallnames[] = {
 	"#353 (unimplemented sys_sched_rr_get_interval)",		/* 353 = unimplemented sys_sched_rr_get_interval */
 	"fsync_range",			/* 354 = fsync_range */
 	"uuidgen",			/* 355 = uuidgen */
+	"getvfsstat",			/* 356 = getvfsstat */
+	"statvfs1",			/* 357 = statvfs1 */
+	"fstatvfs1",			/* 358 = fstatvfs1 */
+	"fhstatvfs1",			/* 359 = fhstatvfs1 */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.66 2004/03/24 15:34:55 atatat Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.67 2004/04/21 01:05:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.66 2004/03/24 15:34:55 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.67 2004/04/21 01:05:44 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -126,7 +126,7 @@ struct vfsops ext2fs_vfsops = {
 	ext2fs_unmount,
 	ufs_root,
 	ufs_quotactl,
-	ext2fs_statfs,
+	ext2fs_statvfs,
 	ext2fs_sync,
 	ext2fs_vget,
 	ext2fs_fhtovp,
@@ -229,7 +229,7 @@ ext2fs_mountroot()
 		(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs.e2fs_fsmnt,
 		    sizeof(fs->e2fs.e2fs_fsmnt) - 1, 0);
 	}
-	(void)ext2fs_statfs(mp, &mp->mnt_stat, p);
+	(void)ext2fs_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	inittodr(fs->e2fs.e2fs_wtime);
 	return (0);
@@ -370,7 +370,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 	}
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
-	error = set_statfs_info(path, UIO_USERSPACE, args.fspec,
+	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
 	    UIO_USERSPACE, mp, p);
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt,
 	    sizeof(fs->e2fs_fsmnt) - 1, &size);
@@ -643,8 +643,10 @@ ext2fs_mountfs(devvp, mp, p)
 	}
 
 	mp->mnt_data = ump;
-	mp->mnt_stat.f_fsid.val[0] = (long)dev;
-	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_EXT2FS);
+	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
+	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_EXT2FS);
+	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_maxsymlinklen = EXT2_MAXSYMLINKLEN;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
@@ -736,9 +738,9 @@ ext2fs_flushfiles(mp, flags, p)
  * Get file system statistics.
  */
 int
-ext2fs_statfs(mp, sbp, p)
+ext2fs_statvfs(mp, sbp, p)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct proc *p;
 {
 	struct ufsmount *ump;
@@ -749,13 +751,7 @@ ext2fs_statfs(mp, sbp, p)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
 	if (fs->e2fs.e2fs_magic != E2FS_MAGIC)
-		panic("ext2fs_statfs");
-
-#ifdef COMPAT_09
-	sbp->f_type = 1;
-#else
-	sbp->f_type = 0;
-#endif
+		panic("ext2fs_statvfs");
 
 	/*
 	 * Compute the overhead (FS structures)
@@ -777,13 +773,20 @@ ext2fs_statfs(mp, sbp, p)
 	overhead += ngroups * (1 + fs->e2fs_ngdb);
 
 	sbp->f_bsize = fs->e2fs_bsize;
+	sbp->f_frsize = fs->e2fs.e2fs_fsize;
 	sbp->f_iosize = fs->e2fs_bsize;
 	sbp->f_blocks = fs->e2fs.e2fs_bcount - overhead;
 	sbp->f_bfree = fs->e2fs.e2fs_fbcount;
-	sbp->f_bavail = sbp->f_bfree - fs->e2fs.e2fs_rbcount;
+	sbp->f_bresvd = fs->e2fs.e2fs_rbcount;
+	if (sbp->f_bfree > sbp->f_bresvd)
+		sbp->f_bavail = sbp->f_bfree - sbp->f_bresvd;
+	else
+		sbp->f_bavail = 0;
 	sbp->f_files =  fs->e2fs.e2fs_icount;
 	sbp->f_ffree = fs->e2fs.e2fs_ficount;
-	copy_statfs_info(sbp, mp);
+	sbp->f_favail = fs->e2fs.e2fs_ficount;
+	sbp->f_fresvd = 0;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.24 2003/08/07 16:42:55 agc Exp $	*/
+/*	$NetBSD: opendir.c,v 1.25 2004/04/21 01:05:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.24 2003/08/07 16:42:55 agc Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.25 2004/04/21 01:05:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,7 +81,7 @@ __opendir2(name, flags)
 	int pagesz;
 	int incr;
 	int unionstack, nfsdir;
-	struct statfs sfb;
+	struct statvfs sfb;
 
 	_DIAGASSERT(name != NULL);
 
@@ -113,12 +113,12 @@ __opendir2(name, flags)
 	 * Determine whether this directory is the top of a union stack.
 	 */
 
-	if (fstatfs(fd, &sfb) < 0)
+	if (fstatvfs1(fd, &sfb, ST_NOWAIT) < 0)
 		goto error;
 
 	if (flags & DTF_NODUP)
 		unionstack = !(strncmp(sfb.f_fstypename, MOUNT_UNION,
-		    MFSNAMELEN)) || (sfb.f_flags & MNT_UNION);
+		    MFSNAMELEN)) || (sfb.f_flag & MNT_UNION);
 	else
 		unionstack = 0;
 

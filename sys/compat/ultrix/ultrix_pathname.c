@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.19 2003/08/07 16:30:48 agc Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.20 2004/04/21 01:05:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.19 2003/08/07 16:30:48 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.20 2004/04/21 01:05:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.19 2003/08/07 16:30:48 agc Exp
 #include <compat/ultrix/ultrix_syscallargs.h>
 #include <compat/common/compat_util.h>
 
-static int ultrixstatfs __P((struct statfs *sp, caddr_t buf));
+static int ultrixstatfs __P((struct statvfs *sp, caddr_t buf));
 
 int
 ultrix_sys_creat(l, v, retval)
@@ -255,7 +255,7 @@ struct ultrix_statfs {
  */
 static int
 ultrixstatfs(sp, buf)
-	struct statfs *sp;
+	struct statvfs *sp;
 	caddr_t buf;
 {
 	struct ultrix_statfs ssfs;
@@ -268,7 +268,7 @@ ultrixstatfs(sp, buf)
 	ssfs.f_bavail = sp->f_bavail;
 	ssfs.f_files = sp->f_files;
 	ssfs.f_ffree = sp->f_ffree;
-	ssfs.f_fsid = sp->f_fsid;
+	ssfs.f_fsid = sp->f_fsidx.__fsid_val[0];
 	return copyout((caddr_t)&ssfs, buf, sizeof ssfs);
 }
 
@@ -282,7 +282,7 @@ ultrix_sys_statfs(l, v, retval)
 	struct ultrix_sys_statfs_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	int error;
 	struct nameidata nd;
 
@@ -296,15 +296,15 @@ ultrix_sys_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	return ultrixstatfs(sp, (caddr_t)SCARG(uap, buf));
+	return ultrixstatvfs(sp, (caddr_t)SCARG(uap, buf));
 }
 
 /*
  * sys_fstatfs() takes an fd, not a path, and so needs no emul
- * pathname processing;  but it's similar enough to sys_statfs() that
+ * pathname processing;  but it's similar enough to sys_statvfs() that
  * it goes here anyway.
  */
 int
@@ -317,7 +317,7 @@ ultrix_sys_fstatfs(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
@@ -325,7 +325,7 @@ ultrix_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		goto out;
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = ultrixstatfs(sp, (caddr_t)SCARG(uap, buf));

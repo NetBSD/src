@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.53 2003/08/07 16:33:50 agc Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.54 2004/04/21 01:05:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.53 2003/08/07 16:33:50 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.54 2004/04/21 01:05:42 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -204,7 +204,7 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 		/*
 		 * Find the lease by searching the hash list.
 		 */
-		fh.fh_fsid = vp->v_mount->mnt_stat.f_fsid;
+		fh.fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
 		error = VFS_VPTOFH(vp, &fh.fh_fid);
 		if (error) {
 			splx(s);
@@ -212,8 +212,8 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 		}
 		lpp = NQFHHASH(fh.fh_fid.fid_data);
 		LIST_FOREACH (lp, lpp, lc_hash) {
-			if (fh.fh_fsid.val[0] == lp->lc_fsid.val[0] &&
-			    fh.fh_fsid.val[1] == lp->lc_fsid.val[1] &&
+			if (fh.fh_fsid.__fsid_val[0] == lp->lc_fsid.__fsid_val[0] &&
+			    fh.fh_fsid.__fsid_val[1] == lp->lc_fsid.__fsid_val[1] &&
 			    !memcmp(fh.fh_fid.fid_data, lp->lc_fiddata,
 				  fh.fh_fid.fid_len - sizeof (int32_t))) {
 				/* Found it */
@@ -514,7 +514,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 				NFSX_V3FH + NFSX_UNSIGNED);
 			fhp = &nfh.fh_generic;
 			memset((caddr_t)fhp, 0, sizeof(nfh));
-			fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
+			fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
 			VFS_VPTOFH(vp, &fhp->fh_fid);
 			nfsm_srvfhtom(fhp, 1);
 			m = mreq;
@@ -794,8 +794,8 @@ nqnfsrv_vacated(nfsd, slp, procp, mrq)
 	 * Find the lease by searching the hash list.
 	 */
 	LIST_FOREACH(lp, NQFHHASH(fhp->fh_fid.fid_data), lc_hash) {
-		if (fhp->fh_fsid.val[0] == lp->lc_fsid.val[0] &&
-		    fhp->fh_fsid.val[1] == lp->lc_fsid.val[1] &&
+		if (fhp->fh_fsid.__fsid_val[0] == lp->lc_fsid.__fsid_val[0] &&
+		    fhp->fh_fsid.__fsid_val[1] == lp->lc_fsid.__fsid_val[1] &&
 		    !memcmp(fhp->fh_fid.fid_data, lp->lc_fiddata,
 			  MAXFIDSZ)) {
 			/* Found it */

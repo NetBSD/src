@@ -1,4 +1,4 @@
-/* $NetBSD: aout_syscallargs.h,v 1.26 2004/03/26 15:29:28 drochner Exp $ */
+/* $NetBSD: aout_syscallargs.h,v 1.27 2004/04/21 01:05:35 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -56,6 +56,9 @@ struct aout_sys_chown_args {
 	syscallarg(uid_t) uid;
 	syscallarg(gid_t) gid;
 };
+#ifdef COMPAT_20
+#else
+#endif
 
 struct aout_sys_unmount_args {
 	syscallarg(const char *) path;
@@ -134,8 +137,11 @@ struct aout_sys_utimes_args {
 
 struct aout_sys_statfs_args {
 	syscallarg(const char *) path;
-	syscallarg(struct statfs *) buf;
+	syscallarg(struct statfs12 *) buf;
 };
+#ifdef COMPAT_20
+#else
+#endif
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 
 struct aout_sys_getfh_args {
@@ -241,6 +247,9 @@ struct aout_sys___posix_chown_args {
 #ifdef COMPAT_16
 #else
 #endif
+#ifdef COMPAT_20
+#else
+#endif
 #if defined(SYSVSEM) || !defined(_KERNEL)
 #else
 #endif
@@ -287,8 +296,11 @@ int	aout_sys_chown(struct lwp *, void *, register_t *);
 
 int	sys_obreak(struct lwp *, void *, register_t *);
 
-int	sys_getfsstat(struct lwp *, void *, register_t *);
+#ifdef COMPAT_20
+int	compat_20_sys_getfsstat(struct lwp *, void *, register_t *);
 
+#else
+#endif
 int	compat_43_sys_lseek(struct lwp *, void *, register_t *);
 
 int	sys_getpid(struct lwp *, void *, register_t *);
@@ -545,8 +557,11 @@ int	compat_43_sys_getdirentries(struct lwp *, void *, register_t *);
 
 int	aout_sys_statfs(struct lwp *, void *, register_t *);
 
-int	sys_fstatfs(struct lwp *, void *, register_t *);
+#ifdef COMPAT_20
+int	compat_20_sys_fstatfs(struct lwp *, void *, register_t *);
 
+#else
+#endif
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 int	aout_sys_getfh(struct lwp *, void *, register_t *);
 
@@ -771,8 +786,11 @@ int	sys_fhopen(struct lwp *, void *, register_t *);
 
 int	sys_fhstat(struct lwp *, void *, register_t *);
 
-int	sys_fhstatfs(struct lwp *, void *, register_t *);
+#ifdef COMPAT_20
+int	compat_20_sys_fhstatfs(struct lwp *, void *, register_t *);
 
+#else
+#endif
 #if defined(SYSVSEM) || !defined(_KERNEL)
 int	sys_____semctl13(struct lwp *, void *, register_t *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.21 2004/03/24 15:34:54 atatat Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.22 2004/04/21 01:05:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.21 2004/03/24 15:34:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.22 2004/04/21 01:05:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ ov_mount(mp, path, data, ndp, p)
 	vp->v_flag |= VROOT;
 	nmp->ovm_rootvp = vp;
 
-	error = set_statfs_info(path, UIO_USERSPACE, args.la.target,
+	error = set_statvfs_info(path, UIO_USERSPACE, args.la.target,
 	    UIO_USERSPACE, mp, p);
 #ifdef OVERLAYFS_DIAGNOSTIC
 	printf("ov_mount: lower %s, alias at %s\n",
@@ -290,7 +290,7 @@ struct vfsops overlay_vfsops = {
 	ov_unmount,
 	layerfs_root,
 	layerfs_quotactl,
-	layerfs_statfs,
+	layerfs_statvfs,
 	layerfs_sync,
 	layerfs_vget,
 	layerfs_fhtovp,

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.128 2004/03/25 19:36:26 atatat Exp $
+#	$NetBSD: Makefile.inc,v 1.129 2004/04/21 01:05:32 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -10,7 +10,8 @@ SRCS+= 	_errno.c alarm.c arc4random.c assert.c basename.c clock.c closedir.c \
 	execle.c execlp.c execv.c execvp.c fmtcheck.c fmtmsg.c fnmatch.c \
 	fstab.c ftok.c __fts13.c fts.c getbsize.c getcap.c getcwd.c \
 	getdomainname.c getgrent.c getgrouplist.c gethostname.c \
-	getloadavg.c getlogin.c getmntinfo.c getnetgrent.c getpagesize.c \
+	getloadavg.c getlogin.c getmntinfo.c __getmntinfo13.c \
+	getnetgrent.c getpagesize.c \
 	getpass.c getprogname.c getpwent.c getsubopt.c getttyent.c \
 	getusershell.c __glob13.c glob.c humanize_number.c initgroups.c \
 	isascii.c isatty.c isctype.c lockf.c nice.c nlist.c nlist_aout.c \

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.1 2001/02/07 15:22:39 mrg Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.2 2004/04/21 01:05:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -64,7 +64,7 @@ static __inline void netbsd32_to_rusage __P((struct netbsd32_rusage *, struct ru
 static __inline int netbsd32_to_iovecin __P((struct netbsd32_iovec *, struct iovec *, int));
 static __inline void netbsd32_to_msghdr __P((struct netbsd32_msghdr *, struct msghdr *));
 static __inline void netbsd32_from_msghdr __P((struct netbsd32_msghdr *, struct msghdr *));
-static __inline void netbsd32_from_statfs __P((struct statfs *, struct netbsd32_statfs *));
+static __inline void netbsd32_from_statvfs __P((struct statvfs *, struct netbsd32_statfs *));
 static __inline void netbsd32_from_timex __P((struct timex *, struct netbsd32_timex *));
 static __inline void netbsd32_to_timex __P((struct netbsd32_timex *, struct timex *));
 static __inline void netbsd32_from___stat13 __P((struct stat *, struct netbsd32_stat *));
@@ -252,8 +252,8 @@ netbsd32_from_msghdr(mhp32, mhp)
 }
 
 static __inline void
-netbsd32_from_statfs(sbp, sb32p)
-	struct statfs *sbp;
+netbsd32_from_statvfs(sbp, sb32p)
+	struct statvfs *sbp;
 	struct netbsd32_statfs *sb32p;
 {
 	sb32p->f_type = sbp->f_type;
@@ -265,7 +265,7 @@ netbsd32_from_statfs(sbp, sb32p)
 	sb32p->f_bavail = (netbsd32_long)sbp->f_bavail;
 	sb32p->f_files = (netbsd32_long)sbp->f_files;
 	sb32p->f_ffree = (netbsd32_long)sbp->f_ffree;
-	sb32p->f_fsid = sbp->f_fsid;
+	sb32p->f_fsid = sbp->f_fsidx;
 	sb32p->f_owner = sbp->f_owner;
 	sb32p->f_spare[0] = 0;
 	sb32p->f_spare[1] = 0;

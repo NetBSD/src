@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.13 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.14 2004/04/21 01:05:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.13 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.14 2004/04/21 01:05:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -144,37 +144,41 @@ layerfs_quotactl(mp, cmd, uid, arg, p)
 }
 
 int
-layerfs_statfs(mp, sbp, p)
+layerfs_statvfs(mp, sbp, p)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct proc *p;
 {
 	int error;
-	struct statfs mstat;
+	struct statvfs mstat;
 
 #ifdef LAYERFS_DIAGNOSTIC
-	printf("layerfs_statfs(mp = %p, vp = %p->%p)\n", mp,
+	printf("layerfs_statvfs(mp = %p, vp = %p->%p)\n", mp,
 	    MOUNTTOLAYERMOUNT(mp)->layerm_rootvp,
 	    LAYERVPTOLOWERVP(MOUNTTOLAYERMOUNT(mp)->layerm_rootvp));
 #endif
 
 	memset(&mstat, 0, sizeof(mstat));
 
-	error = VFS_STATFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, &mstat, p);
+	error = VFS_STATVFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, &mstat, p);
 	if (error)
 		return (error);
 
 	/* now copy across the "interesting" information and fake the rest */
-	sbp->f_type = mstat.f_type;
-	sbp->f_flags = mstat.f_flags;
+	sbp->f_flag = mstat.f_flag;
 	sbp->f_bsize = mstat.f_bsize;
+	sbp->f_frsize = mstat.f_frsize;
 	sbp->f_iosize = mstat.f_iosize;
 	sbp->f_blocks = mstat.f_blocks;
 	sbp->f_bfree = mstat.f_bfree;
 	sbp->f_bavail = mstat.f_bavail;
+	sbp->f_bresvd = mstat.f_bresvd;
 	sbp->f_files = mstat.f_files;
 	sbp->f_ffree = mstat.f_ffree;
-	copy_statfs_info(sbp, mp);
+	sbp->f_favail = mstat.f_favail;
+	sbp->f_fresvd = mstat.f_fresvd;
+	sbp->f_namemax = mstat.f_namemax;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.11 2004/03/24 15:34:52 atatat Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.12 2004/04/21 01:05:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.11 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.12 2004/04/21 01:05:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ int union_start __P((struct mount *, int, struct proc *));
 int union_unmount __P((struct mount *, int, struct proc *));
 int union_root __P((struct mount *, struct vnode **));
 int union_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
-int union_statfs __P((struct mount *, struct statfs *, struct proc *));
+int union_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int union_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int union_vget __P((struct mount *, ino_t, struct vnode **));
 int union_fhtovp __P((struct mount *, struct fid *, struct vnode **));
@@ -258,7 +258,7 @@ union_mount(mp, path, data, ndp, p)
 	mp->mnt_data = um;
 	vfs_getnewfsid(mp);
 
-	error = set_statfs_info( path, UIO_USERSPACE, NULL, UIO_USERSPACE,
+	error = set_statvfs_info( path, UIO_USERSPACE, NULL, UIO_USERSPACE,
 	    mp, p);
 	if (error)
 		goto bad;
@@ -474,25 +474,25 @@ union_quotactl(mp, cmd, uid, arg, p)
 }
 
 int
-union_statfs(mp, sbp, p)
+union_statvfs(mp, sbp, p)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct proc *p;
 {
 	int error;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
-	struct statfs mstat;
+	struct statvfs mstat;
 	int lbsize;
 
 #ifdef UNION_DIAGNOSTIC
-	printf("union_statfs(mp = %p, lvp = %p, uvp = %p)\n", mp,
+	printf("union_statvfs(mp = %p, lvp = %p, uvp = %p)\n", mp,
 	    um->um_lowervp, um->um_uppervp);
 #endif
 
 	memset(&mstat, 0, sizeof(mstat));
 
 	if (um->um_lowervp) {
-		error = VFS_STATFS(um->um_lowervp->v_mount, &mstat, p);
+		error = VFS_STATVFS(um->um_lowervp->v_mount, &mstat, p);
 		if (error)
 			return (error);
 	}
@@ -502,13 +502,13 @@ union_statfs(mp, sbp, p)
 	sbp->f_blocks = mstat.f_blocks - mstat.f_bfree;
 	sbp->f_files = mstat.f_files - mstat.f_ffree;
 
-	error = VFS_STATFS(um->um_uppervp->v_mount, &mstat, p);
+	error = VFS_STATVFS(um->um_uppervp->v_mount, &mstat, p);
 	if (error)
 		return (error);
 
-	sbp->f_type = 0;
-	sbp->f_flags = mstat.f_flags;
+	sbp->f_flag = mstat.f_flag;
 	sbp->f_bsize = mstat.f_bsize;
+	sbp->f_frsize = mstat.f_frsize;
 	sbp->f_iosize = mstat.f_iosize;
 
 	/*
@@ -523,10 +523,13 @@ union_statfs(mp, sbp, p)
 	sbp->f_blocks += mstat.f_blocks;
 	sbp->f_bfree = mstat.f_bfree;
 	sbp->f_bavail = mstat.f_bavail;
+	sbp->f_bresvd = mstat.f_bresvd;
 	sbp->f_files += mstat.f_files;
 	sbp->f_ffree = mstat.f_ffree;
+	sbp->f_favail = mstat.f_favail;
+	sbp->f_fresvd = mstat.f_fresvd;
 
-	copy_statfs_info(sbp, mp);
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 
@@ -623,7 +626,7 @@ struct vfsops union_vfsops = {
 	union_unmount,
 	union_root,
 	union_quotactl,
-	union_statfs,
+	union_statvfs,
 	union_sync,
 	union_vget,
 	union_fhtovp,

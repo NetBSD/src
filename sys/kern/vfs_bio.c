@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.122 2004/03/26 00:31:55 simonb Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.123 2004/04/21 01:05:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.122 2004/03/26 00:31:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.123 2004/04/21 01:05:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,6 +522,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
 	struct buf *bp;
 	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
 	struct proc *p = l->l_proc;
+	struct mount *mp;
 
 	bp = getblk(vp, blkno, size, 0, 0);
 
@@ -549,6 +550,27 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
 		p->p_stats->p_ru.ru_inblock++;
 	} else if (async) {
 		brelse(bp);
+	}
+
+	if (vp != NULL) {
+		if (vp->v_type == VBLK)
+			mp = vp->v_specmountpoint;
+		else
+			mp = vp->v_mount;
+	} else {
+		mp = NULL;
+	}
+
+	/*
+	 * Collect statistics on synchronous and asynchronous reads.
+	 * Reads from block devices are charged to their associated
+	 * filesystem (if any).
+	 */
+	if (mp != NULL) {
+		if (async == 0)
+			mp->mnt_stat.f_syncreads++;
+		else
+			mp->mnt_stat.f_asyncreads++;
 	}
 
 	return (bp);

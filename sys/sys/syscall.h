@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.148 2004/03/26 15:29:28 drochner Exp $ */
+/* $NetBSD: syscall.h,v 1.149 2004/04/21 01:05:43 christos Exp $ */
 
 /*
  * System call numbers.
@@ -59,8 +59,8 @@
 /* syscall: "break" ret: "int" args: "char *" */
 #define	SYS_break	17
 
-/* syscall: "getfsstat" ret: "int" args: "struct statfs *" "long" "int" */
-#define	SYS_getfsstat	18
+/* syscall: "compat_20_getfsstat" ret: "int" args: "struct statfs12 *" "long" "int" */
+#define	SYS_compat_20_getfsstat	18
 
 /* syscall: "compat_43_olseek" ret: "long" args: "int" "long" "int" */
 #define	SYS_compat_43_olseek	19
@@ -468,11 +468,11 @@
 /* syscall: "compat_43_ogetdirentries" ret: "int" args: "int" "char *" "u_int" "long *" */
 #define	SYS_compat_43_ogetdirentries	156
 
-/* syscall: "statfs" ret: "int" args: "const char *" "struct statfs *" */
-#define	SYS_statfs	157
+/* syscall: "compat_20_statfs" ret: "int" args: "const char *" "struct statfs12 *" */
+#define	SYS_compat_20_statfs	157
 
-/* syscall: "fstatfs" ret: "int" args: "int" "struct statfs *" */
-#define	SYS_fstatfs	158
+/* syscall: "compat_20_fstatfs" ret: "int" args: "int" "struct statfs12 *" */
+#define	SYS_compat_20_fstatfs	158
 
 /* syscall: "getfh" ret: "int" args: "const char *" "fhandle_t *" */
 #define	SYS_getfh	161
@@ -859,8 +859,8 @@
 /* syscall: "fhstat" ret: "int" args: "const fhandle_t *" "struct stat *" */
 #define	SYS_fhstat	299
 
-/* syscall: "fhstatfs" ret: "int" args: "const fhandle_t *" "struct statfs *" */
-#define	SYS_fhstatfs	300
+/* syscall: "compat_20_fhstatfs" ret: "int" args: "const fhandle_t *" "struct statfs12 *" */
+#define	SYS_compat_20_fhstatfs	300
 
 #if defined(SYSVSEM) || !defined(_KERNEL)
 /* syscall: "____semctl13" ret: "int" args: "int" "int" "int" "..." */
@@ -968,5 +968,17 @@
 /* syscall: "uuidgen" ret: "int" args: "struct uuid *" "int" */
 #define	SYS_uuidgen	355
 
-#define	SYS_MAXSYSCALL	356
+/* syscall: "getvfsstat" ret: "int" args: "struct statvfs *" "size_t" "int" */
+#define	SYS_getvfsstat	356
+
+/* syscall: "statvfs1" ret: "int" args: "const char *" "struct statvfs *" "int" */
+#define	SYS_statvfs1	357
+
+/* syscall: "fstatvfs1" ret: "int" args: "int" "struct statvfs *" "int" */
+#define	SYS_fstatvfs1	358
+
+/* syscall: "fhstatvfs1" ret: "int" args: "const fhandle_t *" "struct statvfs *" "int" */
+#define	SYS_fhstatvfs1	359
+
+#define	SYS_MAXSYSCALL	360
 #define	SYS_NSYSENT	512
