@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.12 1998/12/02 21:16:46 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.13 1998/12/23 15:09:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,10 +61,18 @@
 #define PIC_GOTOFF(x)	x
 #endif
 
-#ifdef __STDC__
-# define _C_LABEL(x)	_ ## x
+#ifdef __ELF__
+# ifdef __STDC__
+#  define _C_LABEL(x)	x
+# else
+#  define _C_LABEL(x)	x
+# endif
 #else
-# define _C_LABEL(x)	_/**/x
+# ifdef __STDC__
+#  define _C_LABEL(x)	_ ## x
+# else
+#  define _C_LABEL(x)	_/**/x
+# endif
 #endif
 #define	_ASM_LABEL(x)	x
 
