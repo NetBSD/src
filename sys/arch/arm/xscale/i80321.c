@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.5 2002/07/31 17:34:25 thorpej Exp $	*/
+/*	$NetBSD: i80321.c,v 1.6 2002/08/01 19:40:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,6 +43,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#define	_ARM32_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <arm/xscale/i80321reg.h>
@@ -61,8 +62,8 @@ struct bus_space i80321_bs_tag;
  */
 struct i80321_softc *i80321_softc;
 
-int	i80321_iopxs_print(void *, const char *);
-int	i80321_pcibus_print(void *, const char *);
+static int i80321_iopxs_print(void *, const char *);
+static int i80321_pcibus_print(void *, const char *);
 
 /* Built-in devices. */
 static const struct iopxs_device {
@@ -76,6 +77,9 @@ static const struct iopxs_device {
 	{ "iopwdog",	0,			0 },
 	{ NULL,		0,			0 }
 };
+
+static void i80321_pci_dma_init(struct i80321_softc *);
+static void i80321_local_dma_init(struct i80321_softc *);
 
 /*
  * i80321_attach:
@@ -204,8 +208,8 @@ i80321_attach(struct i80321_softc *sc)
 	i80321_pci_init(&sc->sc_pci_chipset, sc);
 
 	/* Initialize the DMA tags. */
-	i80321_pci_dma_init(&sc->sc_pci_dmat, sc);
-	i80321_local_dma_init(&sc->sc_local_dmat, sc);
+	i80321_pci_dma_init(sc);
+	i80321_local_dma_init(sc);
 
 	/*
 	 * Attach all the IOP built-ins.
@@ -248,7 +252,7 @@ i80321_attach(struct i80321_softc *sc)
  *	Autoconfiguration cfprint routine when attaching
  *	to the "iopxs" device.
  */
-int
+static int
 i80321_iopxs_print(void *aux, const char *pnp)
 {
 
@@ -261,7 +265,7 @@ i80321_iopxs_print(void *aux, const char *pnp)
  *	Autoconfiguration cfprint routine when attaching
  *	to the "pcibus" attribute.
  */
-int
+static int
 i80321_pcibus_print(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;
@@ -272,4 +276,67 @@ i80321_pcibus_print(void *aux, const char *pnp)
 	printf(" bus %d", pba->pba_bus);
 
 	return (UNCONF);
+}
+
+/*
+ * i80321_pci_dma_init:
+ *
+ *	Initialize the PCI DMA tag.
+ */
+static void
+i80321_pci_dma_init(struct i80321_softc *sc)
+{
+	bus_dma_tag_t dmat = &sc->sc_pci_dmat;
+	struct arm32_dma_range *dr = &sc->sc_pci_dma_range;
+
+	dr->dr_sysbase = sc->sc_iwin[2].iwin_xlate;
+	dr->dr_busbase = PCI_MAPREG_MEM_ADDR(sc->sc_iwin[2].iwin_base_lo);
+	dr->dr_len = sc->sc_iwin[2].iwin_size;
+
+	dmat->_ranges = dr;
+	dmat->_nranges = 1;
+
+	dmat->_dmamap_create = _bus_dmamap_create;
+	dmat->_dmamap_destroy = _bus_dmamap_destroy;
+	dmat->_dmamap_load = _bus_dmamap_load;
+	dmat->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
+	dmat->_dmamap_load_uio = _bus_dmamap_load_uio;
+	dmat->_dmamap_load_raw = _bus_dmamap_load_raw;
+	dmat->_dmamap_unload = _bus_dmamap_unload;
+	dmat->_dmamap_sync = _bus_dmamap_sync;
+
+	dmat->_dmamem_alloc = _bus_dmamem_alloc;
+	dmat->_dmamem_free = _bus_dmamem_free;
+	dmat->_dmamem_map = _bus_dmamem_map;
+	dmat->_dmamem_unmap = _bus_dmamem_unmap;
+	dmat->_dmamem_mmap = _bus_dmamem_mmap;
+}
+
+/*
+ * i80321_local_dma_init:
+ *
+ *	Initialize the local DMA tag.
+ */
+static void
+i80321_local_dma_init(struct i80321_softc *sc)
+{
+	bus_dma_tag_t dmat = &sc->sc_local_dmat;
+
+	dmat->_ranges = NULL;
+	dmat->_nranges = 0;
+
+	dmat->_dmamap_create = _bus_dmamap_create;
+	dmat->_dmamap_destroy = _bus_dmamap_destroy;
+	dmat->_dmamap_load = _bus_dmamap_load;
+	dmat->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
+	dmat->_dmamap_load_uio = _bus_dmamap_load_uio;
+	dmat->_dmamap_load_raw = _bus_dmamap_load_raw;
+	dmat->_dmamap_unload = _bus_dmamap_unload;
+	dmat->_dmamap_sync = _bus_dmamap_sync;
+
+	dmat->_dmamem_alloc = _bus_dmamem_alloc;
+	dmat->_dmamem_free = _bus_dmamem_free;
+	dmat->_dmamem_map = _bus_dmamem_map;
+	dmat->_dmamem_unmap = _bus_dmamem_unmap;
+	dmat->_dmamem_mmap = _bus_dmamem_mmap;
 }
