@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.2 2002/11/28 21:23:54 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.3 2002/11/29 13:18:09 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.2 2002/11/28 21:23:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.3 2002/11/29 13:18:09 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -188,6 +188,32 @@ darwin_kern_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	switch (name[0]) {
+	/* sysctl with the same definition */
+	case DARWIN_KERN_OSTYPE:
+	case DARWIN_KERN_OSRELEASE:
+	case DARWIN_KERN_OSREV:
+	case DARWIN_KERN_VERSION:
+	case DARWIN_KERN_MAXVNODES:
+	case DARWIN_KERN_MAXPROC:
+	case DARWIN_KERN_MAXFILES:
+	case DARWIN_KERN_ARGMAX:
+	case DARWIN_KERN_SECURELVL:
+	case DARWIN_KERN_HOSTNAME:
+	case DARWIN_KERN_HOSTID:
+	case DARWIN_KERN_CLOCKRATE:
+	case DARWIN_KERN_VNODE:
+	case DARWIN_KERN_PROC:
+	case DARWIN_KERN_FILE:
+	case DARWIN_KERN_PROF:
+	case DARWIN_KERN_POSIX1:
+	case DARWIN_KERN_NGROUPS:
+	case DARWIN_KERN_JOB_CONTROL:
+	case DARWIN_KERN_SAVED_IDS:
+	case DARWIN_KERN_BOOTTIME:
+	case DARWIN_KERN_NISDOMAINNAME:
+	case DARWIN_KERN_MAXPARTITIONS:
+		return kern_sysctl(name, 1, oldp, oldlenp, newp, newlen, p);
+		break;
 	default:
 		return EOPNOTSUPP;
 	}
