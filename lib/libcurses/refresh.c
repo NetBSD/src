@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.50 2002/12/23 12:17:55 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.51 2003/01/12 12:53:51 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.50 2002/12/23 12:17:55 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.51 2003/01/12 12:53:51 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -160,10 +160,8 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 
 	/* Copy the window flags from "win" to "__virtscr" */
 	if (win->flags & __CLEAROK) {
-		if (win->flags & __FULLWIN) {
+		if (win->flags & __FULLWIN)
 			screen->__virtscr->flags |= __CLEAROK;
-			werase(screen->__virtscr);
-		}
 		win->flags &= ~__CLEAROK;
 	}
 	screen->__virtscr->flags &= ~__LEAVEOK;
