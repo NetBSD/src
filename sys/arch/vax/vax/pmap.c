@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.127 2003/05/10 21:10:43 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.128 2003/07/15 02:15:05 lukem Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128 2003/07/15 02:15:05 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.17 2003/05/03 18:11:06 wiz Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.18 2003/07/15 02:15:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,9 @@
  *
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_le_vsbus.c,v 1.18 2003/07/15 02:15:01 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.39 2002/10/02 16:02:32 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.40 2003/07/15 02:15:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -44,6 +44,9 @@
  * TODO:
  *	timeout routine (get statistics)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.40 2003/07/15 02:15:00 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"

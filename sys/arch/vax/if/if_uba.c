@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.17 2002/09/25 22:21:27 thorpej Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.18 2003/07/15 02:15:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -35,6 +35,8 @@
  *	@(#)if_uba.c	7.16 (Berkeley) 12/16/90
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.18 2003/07/15 02:15:01 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -33,6 +33,9 @@
 
 /*** needs to be completed MK-990306 ***/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ka48.c,v 1.13 2003/07/15 02:15:04 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>

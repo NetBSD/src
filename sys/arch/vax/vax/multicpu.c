@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.14 2003/04/01 15:23:07 thorpej Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.15 2003/07/15 02:15:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -33,6 +33,9 @@
 /*
  * CPU-type independent code to spin up other VAX CPU's.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.15 2003/07/15 02:15:05 lukem Exp $");
 
 #include "opt_multiprocessor.h"
 

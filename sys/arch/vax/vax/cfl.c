@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.9 2002/10/23 09:12:36 jdolecek Exp $	*/
+/*	$NetBSD: cfl.c,v 1.10 2003/07/15 02:15:02 lukem Exp $	*/
 /*-
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -40,6 +40,9 @@
  *	XXX - Does not work. (Not completed)
  *	Included here if someone wants to finish it.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.10 2003/07/15 02:15:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
