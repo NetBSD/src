@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 2000/02/11 16:14:32 hubertf Exp $
+#	$NetBSD: Makefile,v 1.9 2000/03/06 01:23:11 perry Exp $
 
 MAN=	mbr.8
+MLINKS=	mbr.8 bootselect.8
 
 BINDIR=	/usr/mdec
 BINMODE=444
