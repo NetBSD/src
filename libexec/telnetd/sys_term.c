@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.23 2001/07/19 04:57:50 itojun Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.24 2001/08/20 11:04:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.23 2001/07/19 04:57:50 itojun Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.24 2001/08/20 11:04:52 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -2261,7 +2261,7 @@ cleantmpdir(jid, tpath, user)
 		    tpath);
 		break;
 	case 0:
-		execl(CLEANTMPCMD, CLEANTMPCMD, user, tpath, 0);
+		execl(CLEANTMPCMD, CLEANTMPCMD, user, tpath, NULL);
 		syslog(LOG_ERR, "TMPDIR cleanup(%s): execl(%s) failed: %m\n",
 		    tpath, CLEANTMPCMD);
 		exit(1);
