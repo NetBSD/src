@@ -1,3 +1,4 @@
+/*	$NetBSD: pfctl_altq.c,v 1.2 2004/06/22 15:16:30 itojun Exp $	*/
 /*	$OpenBSD: pfctl_altq.c,v 1.83 2004/03/14 21:51:44 dhartmei Exp $	*/
 
 /*
@@ -21,6 +22,10 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#ifdef __NetBSD__
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#endif
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -865,7 +870,9 @@ print_hfsc_opts(const struct pf_altq *a, const struct node_queue_opt *qopts)
 /*
  * admission control using generalized service curve
  */
+#ifdef __OpenBSD__
 #define	INFINITY	HUGE_VAL  /* positive infinity defined in <math.h> */
+#endif
 
 /* add a new service curve to a generalized service curve */
 static void

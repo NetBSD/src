@@ -1,3 +1,4 @@
+/*	$NetBSD: pfctl.h,v 1.2 2004/06/22 15:16:30 itojun Exp $	*/
 /*	$OpenBSD: pfctl.h,v 1.33 2004/02/19 21:37:01 cedric Exp $ */
 
 /*

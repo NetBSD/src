@@ -1,3 +1,4 @@
+/*	$NetBSD: parse.y,v 1.2 2004/06/22 15:16:30 itojun Exp $	*/
 /*	$OpenBSD: parse.y,v 1.449 2004/03/20 23:20:20 david Exp $	*/
 
 /*
@@ -991,7 +992,7 @@ tabledef	: TABLE '<' STRING '>' table_opts {
 				}
 			free($3);
 			for (ti = SIMPLEQ_FIRST(&$5.init_nodes);
-			    ti != SIMPLEQ_END(&$5.init_nodes); ti = nti) {
+			    ti != NULL; ti = nti) {
 				if (ti->file)
 					free(ti->file);
 				for (h = ti->host; h != NULL; h = nh) {

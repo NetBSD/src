@@ -1,3 +1,4 @@
+/*	$NetBSD: pfctl_parser.c,v 1.2 2004/06/22 15:16:30 itojun Exp $	*/
 /*	$OpenBSD: pfctl_parser.c,v 1.194.2.1 2004/05/05 04:00:50 brad Exp $ */
 
 /*
@@ -52,6 +53,9 @@
 #include <errno.h>
 #include <err.h>
 #include <ifaddrs.h>
+#ifdef __NetBSD__
+#include <limits.h>
+#endif
 
 #include "pfctl_parser.h"
 #include "pfctl.h"
@@ -77,7 +81,9 @@ static const struct icmptypeent icmp_type[] = {
 	{ "unreach",	ICMP_UNREACH },
 	{ "squench",	ICMP_SOURCEQUENCH },
 	{ "redir",	ICMP_REDIRECT },
+#ifdef ICMP_ALTHOSTADDR 
 	{ "althost",	ICMP_ALTHOSTADDR },
+#endif
 	{ "routeradv",	ICMP_ROUTERADVERT },
 	{ "routersol",	ICMP_ROUTERSOLICIT },
 	{ "timex",	ICMP_TIMXCEED },
@@ -88,15 +94,33 @@ static const struct icmptypeent icmp_type[] = {
 	{ "inforep",	ICMP_IREQREPLY },
 	{ "maskreq",	ICMP_MASKREQ },
 	{ "maskrep",	ICMP_MASKREPLY },
+#ifdef ICMP_TRACEROUTE 
 	{ "trace",	ICMP_TRACEROUTE },
+#endif
+#ifdef ICMP_DATACONVERR 
 	{ "dataconv",	ICMP_DATACONVERR },
+#endif
+#ifdef ICMP_MOBILE_REDIRECT 
 	{ "mobredir",	ICMP_MOBILE_REDIRECT },
+#endif
+#ifdef ICMP_IPV6_WHEREAREYOU 
 	{ "ipv6-where",	ICMP_IPV6_WHEREAREYOU },
+#endif
+#ifdef ICMP_IPV6_IAMHERE 
 	{ "ipv6-here",	ICMP_IPV6_IAMHERE },
+#endif
+#ifdef ICMP_MOBILE_REGREQUEST 
 	{ "mobregreq",	ICMP_MOBILE_REGREQUEST },
+#endif
+#ifdef ICMP_MOBILE_REGREPLY 
 	{ "mobregrep",	ICMP_MOBILE_REGREPLY },
+#endif
+#ifdef ICMP_SKIP 
 	{ "skip",	ICMP_SKIP },
+#endif
+#ifdef ICMP_PHOTURIS 
 	{ "photuris",	ICMP_PHOTURIS }
+#endif
 };
 
 static const struct icmptypeent icmp6_type[] = {
@@ -142,23 +166,39 @@ static const struct icmpcodeent icmp_code[] = {
 	{ "host-prohib",	ICMP_UNREACH,	ICMP_UNREACH_HOST_PROHIB },
 	{ "net-tos",		ICMP_UNREACH,	ICMP_UNREACH_TOSNET },
 	{ "host-tos",		ICMP_UNREACH,	ICMP_UNREACH_TOSHOST },
+#ifdef ICMP_UNREACH_FILTER_PROHIB 
 	{ "filter-prohib",	ICMP_UNREACH,	ICMP_UNREACH_FILTER_PROHIB },
+#endif
+#ifdef ICMP_UNREACH_HOST_PRECEDENCE 
 	{ "host-preced",	ICMP_UNREACH,	ICMP_UNREACH_HOST_PRECEDENCE },
+#endif
+#ifdef ICMP_UNREACH_PRECEDENCE_CUTOFF 
 	{ "cutoff-preced",	ICMP_UNREACH,	ICMP_UNREACH_PRECEDENCE_CUTOFF },
+#endif
 	{ "redir-net",		ICMP_REDIRECT,	ICMP_REDIRECT_NET },
 	{ "redir-host",		ICMP_REDIRECT,	ICMP_REDIRECT_HOST },
 	{ "redir-tos-net",	ICMP_REDIRECT,	ICMP_REDIRECT_TOSNET },
 	{ "redir-tos-host",	ICMP_REDIRECT,	ICMP_REDIRECT_TOSHOST },
+#ifdef ICMP_ROUTERADVERT_NORMAL 
 	{ "normal-adv",		ICMP_ROUTERADVERT, ICMP_ROUTERADVERT_NORMAL },
+#endif
+#ifdef ICMP_ROUTERADVERT_NOROUTE_COMMON 
 	{ "common-adv",		ICMP_ROUTERADVERT, ICMP_ROUTERADVERT_NOROUTE_COMMON },
+#endif
 	{ "transit",		ICMP_TIMXCEED,	ICMP_TIMXCEED_INTRANS },
 	{ "reassemb",		ICMP_TIMXCEED,	ICMP_TIMXCEED_REASS },
+#ifdef ICMP_PARAMPROB_ERRATPTR 
 	{ "badhead",		ICMP_PARAMPROB,	ICMP_PARAMPROB_ERRATPTR },
+#endif
 	{ "optmiss",		ICMP_PARAMPROB,	ICMP_PARAMPROB_OPTABSENT },
+#ifdef ICMP_PARAMPROB_LENGTH 
 	{ "badlen",		ICMP_PARAMPROB,	ICMP_PARAMPROB_LENGTH },
+#endif
+#ifdef ICMP_PHOTURIS
 	{ "unknown-ind",	ICMP_PHOTURIS,	ICMP_PHOTURIS_UNKNOWN_INDEX },
 	{ "auth-fail",		ICMP_PHOTURIS,	ICMP_PHOTURIS_AUTH_FAILED },
 	{ "decrypt-fail",	ICMP_PHOTURIS,	ICMP_PHOTURIS_DECRYPT_FAILED }
+#endif
 };
 
 static const struct icmpcodeent icmp6_code[] = {

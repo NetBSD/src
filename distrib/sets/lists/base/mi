@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.483 2004/05/25 10:31:46 lha Exp $
+# $NetBSD: mi,v 1.484 2004/06/22 15:16:29 itojun Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -166,6 +166,7 @@
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
 ./sbin/nologin					base-sysutil-root
+./sbin/pfctl					base-netutil-root
 ./sbin/ping					base-netutil-root
 ./sbin/ping6					base-netutil-root
 ./sbin/poweroff					base-sysutil-root

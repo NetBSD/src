@@ -1,3 +1,4 @@
+/*	$NetBSD: pfctl_parser.h,v 1.2 2004/06/22 15:16:30 itojun Exp $	*/
 /*	$OpenBSD: pfctl_parser.h,v 1.74 2004/02/10 22:26:56 dhartmei Exp $ */
 
 /*
