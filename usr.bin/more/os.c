@@ -34,7 +34,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)os.c	5.12 (Berkeley) 3/1/91"; */
-static char *rcsid = "$Id: os.c,v 1.2 1993/11/09 05:11:24 cgd Exp $";
+static char *rcsid = "$Id: os.c,v 1.3 1994/12/24 17:17:10 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -55,6 +55,7 @@ static char *rcsid = "$Id: os.c,v 1.2 1993/11/09 05:11:24 cgd Exp $";
 #include <signal.h>
 #include <setjmp.h>
 #include <stdio.h>
+#include <string.h>
 #include <less.h>
 #include "pathnames.h"
 

@@ -34,11 +34,12 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)tags.c	5.5 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: tags.c,v 1.2 1993/11/09 05:13:47 cgd Exp $";
+static char *rcsid = "$Id: tags.c,v 1.3 1994/12/24 17:17:14 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <stdio.h>
+#include <string.h>
 #include <less.h>
 
 #define	WHITESP(c)	((c)==' ' || (c)=='\t')

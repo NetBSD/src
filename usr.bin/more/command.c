@@ -34,11 +34,12 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)command.c	5.22 (Berkeley) 6/21/92"; */
-static char *rcsid = "$Id: command.c,v 1.4 1994/04/06 17:51:04 cgd Exp $";
+static char *rcsid = "$Id: command.c,v 1.5 1994/12/24 17:17:05 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include <less.h>
 #include "pathnames.h"
