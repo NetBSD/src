@@ -161,7 +161,7 @@ onehost(char *host)
 
 	bzero((char *)&host_stat, sizeof(host_stat));
 	if (clnt_call(rstat_clnt, RSTATPROC_STATS, xdr_void, NULL, xdr_statstime, &host_stat, NULL) != RPC_SUCCESS) {
-		fprintf(stderr, "%s: %s: %s\n", argv0, host, clnt_sperror(rstat_clnt));
+		fprintf(stderr, "%s: %s\n", argv0, host, clnt_sperror(rstat_clnt, host));
 		return(-1);
 	}
 
