@@ -1156,9 +1156,20 @@ changequote([,])dnl
 		tmake_file=t-freebsd
 		;;
 changequote(,)dnl
+	i[34567]86-*-netbsdelf* | \
+	i[34567]86-*-netbsd1.4[I-Z]* | \
+	i[34567]86-*-netbsd1.[5-9]* | \
+	i[34567]86-*-netbsd2*)
+changequote([,])dnl
+		tm_file=i386/netbsd-elf.h
+		xm_file=i386/xm-netbsd.h
+		tmake_file=t-netbsd
+		;;
+changequote(,)dnl
 	i[34567]86-*-netbsd*)
 changequote([,])dnl
 		tm_file=i386/netbsd.h
+		xm_file=i386/xm-netbsd.h
 		tmake_file=t-netbsd
        use_collect2=yes
 		;;
