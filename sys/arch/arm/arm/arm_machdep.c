@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.6 2003/01/17 22:28:48 thorpej Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.7 2003/10/25 19:44:42 scw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -72,10 +72,11 @@
  */
 
 #include "opt_compat_netbsd.h"
+#include "opt_execfmt.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.6 2003/01/17 22:28:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.7 2003/10/25 19:44:42 scw Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -133,6 +134,11 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_spsr = PSR_USR32_MODE;
 #endif
 
+#if defined(COMPAT_15) && defined(EXEC_AOUT)
+	if (pack->ep_es->es_check == exec_aout_makecmds)
+		l->l_addr->u_pcb.pcb_flags = PCB_NOALIGNFLT;
+	else
+#endif
 	l->l_addr->u_pcb.pcb_flags = 0;
 }
 
