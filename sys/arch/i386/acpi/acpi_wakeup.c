@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.6 2002/11/22 16:16:56 fvdl Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.7 2003/06/13 10:56:41 abs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.6 2002/11/22 16:16:56 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.7 2003/06/13 10:56:41 abs Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -195,70 +195,70 @@ clear_reg(void)
 	memset(&r_gdt, 0, sizeof(r_gdt));
 }
 
-__asm__("
-	.text
-	.p2align 2, 0x90
-	.type acpi_restorecpu, @function
-acpi_restorecpu:
-	.align 4
-	movl	r_eax,%eax
-	movl	r_ebx,%ebx
-	movl	r_ecx,%ecx
-	movl	r_edx,%edx
-	movl	r_ebp,%ebp
-	movl	r_esi,%esi
-	movl	r_edi,%edi
-	movl	r_esp,%esp
-
-	pushl	r_efl
-	popfl
-
-	pushl	ret_addr
-	xorl	%eax,%eax
-	ret
-
-	.text
-	.p2align 2, 0x90
-	.type acpi_savecpu, @function
-acpi_savecpu:
-	movw	%cs,r_cs
-	movw	%ds,r_ds
-	movw	%es,r_es
-	movw	%fs,r_fs
-	movw	%gs,r_gs
-	movw	%ss,r_ss
-
-	movl	%eax,r_eax
-	movl	%ebx,r_ebx
-	movl	%ecx,r_ecx
-	movl	%edx,r_edx
-	movl	%ebp,r_ebp
-	movl	%esi,r_esi
-	movl	%edi,r_edi
-
-	movl	%cr0,%eax
-	movl	%eax,r_cr0
-	movl	%cr2,%eax
-	movl	%eax,r_cr2
-	movl	%cr3,%eax
-	movl	%eax,r_cr3
-	movl	%cr4,%eax
-	movl	%eax,r_cr4
-
-	pushfl
-	popl	r_efl
-
-	movl	%esp,r_esp
-
-	sgdt	r_gdt
-	sidt	r_idt
-	sldt	r_ldt
-	str	r_tr
-
-	movl	(%esp),%eax
-	movl	%eax,ret_addr
-	movl	$1,%eax
-	ret
+__asm__("							\
+	.text;							\
+	.p2align 2, 0x90;					\
+	.type acpi_restorecpu, @function;			\
+acpi_restorecpu:						\
+	.align 4;						\
+	movl	r_eax,%eax;					\
+	movl	r_ebx,%ebx;					\
+	movl	r_ecx,%ecx;					\
+	movl	r_edx,%edx;					\
+	movl	r_ebp,%ebp;					\
+	movl	r_esi,%esi;					\
+	movl	r_edi,%edi;					\
+	movl	r_esp,%esp;					\
+								\
+	pushl	r_efl;						\
+	popfl;							\
+								\
+	pushl	ret_addr;					\
+	xorl	%eax,%eax;					\
+	ret;							\
+								\
+	.text;							\
+	.p2align 2, 0x90;					\
+	.type acpi_savecpu, @function;				\
+acpi_savecpu:							\
+	movw	%cs,r_cs;					\
+	movw	%ds,r_ds;					\
+	movw	%es,r_es;					\
+	movw	%fs,r_fs;					\
+	movw	%gs,r_gs;					\
+	movw	%ss,r_ss;					\
+								\
+	movl	%eax,r_eax;					\
+	movl	%ebx,r_ebx;					\
+	movl	%ecx,r_ecx;					\
+	movl	%edx,r_edx;					\
+	movl	%ebp,r_ebp;					\
+	movl	%esi,r_esi;					\
+	movl	%edi,r_edi;					\
+								\
+	movl	%cr0,%eax;					\
+	movl	%eax,r_cr0;					\
+	movl	%cr2,%eax;					\
+	movl	%eax,r_cr2;					\
+	movl	%cr3,%eax;					\
+	movl	%eax,r_cr3;					\
+	movl	%cr4,%eax;					\
+	movl	%eax,r_cr4;					\
+								\
+	pushfl;							\
+	popl	r_efl;						\
+								\
+	movl	%esp,r_esp;					\
+								\
+	sgdt	r_gdt;						\
+	sidt	r_idt;						\
+	sldt	r_ldt;						\
+	str	r_tr;						\
+								\
+	movl	(%esp),%eax;					\
+	movl	%eax,ret_addr;					\
+	movl	$1,%eax;					\
+	ret;							\
 ");
 
 #ifdef ACPI_PRINT_REG
