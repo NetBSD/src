@@ -1,4 +1,4 @@
-/*	$NetBSD: ulimit.c,v 1.1 1999/09/13 18:38:06 kleink Exp $	*/
+/*	$NetBSD: ulimit.c,v 1.2 2002/05/26 14:03:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,37 +38,22 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ulimit.c,v 1.1 1999/09/13 18:38:06 kleink Exp $");
+__RCSID("$NetBSD: ulimit.c,v 1.2 2002/05/26 14:03:20 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/resource.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <ulimit.h>
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 long int
-#if __STDC__
 ulimit(int cmd, ...)
-#else
-ulimit(cmd, va_alist)
-	int cmd;
-	va_dcl
-#endif
 {
 	va_list ap;
 	struct rlimit rlimit;
 	long int new_limit, result;
 
-#if __STDC__
 	va_start(ap, cmd);
-#else
-	va_start(ap);
-#endif
 
 	result = -1L;
 	switch (cmd) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.50 2002/04/16 19:10:07 groo Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.51 2002/05/26 14:03:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.50 2002/04/16 19:10:07 groo Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.51 2002/05/26 14:03:20 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: getpwent.c,v 1.50 2002/04/16 19:10:07 groo Exp $");
 #include <netgroup.h>
 #include <nsswitch.h>
 #include <pwd.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
@@ -69,12 +70,6 @@ __RCSID("$NetBSD: getpwent.c,v 1.50 2002/04/16 19:10:07 groo Exp $");
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
-#endif
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
 #endif
 
 #include "pw_private.h"

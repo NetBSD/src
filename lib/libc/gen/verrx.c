@@ -1,4 +1,4 @@
-/*	$NetBSD: verrx.c,v 1.9 2002/01/31 22:43:38 tv Exp $	*/
+/*	$NetBSD: verrx.c,v 1.10 2002/05/26 14:03:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: verrx.c,v 1.9 2002/01/31 22:43:38 tv Exp $");
+__RCSID("$NetBSD: verrx.c,v 1.10 2002/05/26 14:03:20 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,14 +49,9 @@ __RCSID("$NetBSD: verrx.c,v 1.9 2002/01/31 22:43:38 tv Exp $");
 #include "config.h"
 #endif
 #include <err.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef __weak_alias
 __weak_alias(verrx, _verrx)
