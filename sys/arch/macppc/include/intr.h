@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2002/07/28 07:07:46 chs Exp $	*/
+/*	$NetBSD: intr.h,v 1.16 2003/02/02 20:43:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,6 @@
 struct intrhand {
 	int	(*ih_fun) __P((void *));
 	void	*ih_arg;
-	u_long	ih_count;
 	struct	intrhand *ih_next;
 	int	ih_level;
 	int	ih_irq;

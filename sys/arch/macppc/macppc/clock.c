@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 2002/08/06 06:14:33 chs Exp $	*/
+/*	$NetBSD: clock.c,v 1.20 2003/02/02 20:43:20 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,14 +32,16 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/ofw/openfirm.h>
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
+
+#include <powerpc/spr.h>
 
 #include "adb.h"
 
@@ -50,14 +52,6 @@ static u_long ticks_per_sec = 50*1000*1000/4;
 static u_long ns_per_tick = 80;
 long ticks_per_intr;
 static int clockinitted;
-
-#ifdef MULTIPROCESSOR
-#define lasttb (curcpu()->ci_lasttb)
-#define tickspending (curcpu()->ci_tickspending)
-#else
-static volatile u_long lasttb;
-volatile int tickspending;
-#endif
 
 #ifdef TIMEBASE_FREQ
 u_int timebase_freq = TIMEBASE_FREQ;
@@ -127,6 +121,7 @@ resettodr()
 void
 decr_intr(struct clockframe *frame)
 {
+	struct cpu_info * const ci = curcpu();
 	u_long tb;
 	long tick;
 	int nticks;
@@ -142,27 +137,27 @@ decr_intr(struct clockframe *frame)
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
-	asm ("mfdec %0" : "=r"(tick));
+	tick = mfspr(SPR_DEC);
 	for (nticks = 0; tick < 0; nticks++)
 		tick += ticks_per_intr;
-	asm volatile ("mtdec %0" :: "r"(tick));
+	mtspr(SPR_DEC, tick);
 
 	uvmexp.intrs++;
-	intrcnt[CNT_CLOCK]++;
+	ci->ci_ev_clock.ev_count++;
 
 	pri = splclock();
 	if (pri & (1 << SPL_CLOCK))
-		tickspending += nticks;
+		ci->ci_tickspending += nticks;
 	else {
-		nticks += tickspending;
-		tickspending = 0;
+		nticks += ci->ci_tickspending;
+		ci->ci_tickspending = 0;
 
 		/*
 		 * lasttb is used during microtime. Set it to the virtual
 		 * start of this tick interval.
 		 */
-		asm ("mftb %0" : "=r"(tb));
-		lasttb = tb + tick - ticks_per_intr;
+		tb = mftbl();
+		ci->ci_lasttb = tb + tick - ticks_per_intr;
 
 		/*
 		 * Reenable interrupts
@@ -228,9 +223,9 @@ found:
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
 	ns_per_tick = 1000000000 / ticks_per_sec;
 	ticks_per_intr = ticks_per_sec / hz;
-	asm volatile ("mftb %0" : "=r"(lasttb));
-	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	curcpu()->ci_lasttb = mftbl();
+	mtspr(SPR_DEC, ticks_per_intr);
+	mtmsr(msr);
 }
 
 /*
@@ -246,10 +241,10 @@ microtime(tvp)
 	
 	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
-	asm ("mftb %0" : "=r"(tb));
-	ticks = (tb - lasttb) * ns_per_tick;
+	tb = mftbl();
+	ticks = (tb - curcpu()->ci_lasttb) * ns_per_tick;
 	*tvp = time;
-	asm volatile ("mtmsr %0" :: "r"(msr));
+	mtmsr(msr);
 	ticks /= 1000;
 	tvp->tv_usec += ticks;
 	while (tvp->tv_usec >= 1000000) {

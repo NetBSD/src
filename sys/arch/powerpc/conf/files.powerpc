@@ -1,8 +1,8 @@
-#	$NetBSD: files.powerpc,v 1.42 2002/11/25 22:25:13 manu Exp $
+#	$NetBSD: files.powerpc,v 1.43 2003/02/02 20:43:22 matt Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
-defparam		L2CR_CONFIG
+defparam opt_ppcparam.h	L2CR_CONFIG INTSTK SPILLSTK
 defflag	opt_ppcarch.h	PPC_MPC6XX PPC_MPC8XX PPC_IBM4XX
 defflag opt_pmap.h	PMAPDEBUG PMAPCHECK PMAPCOUNTERS
 
@@ -18,6 +18,7 @@ file	arch/powerpc/powerpc/openpic.c			openpic
 file	arch/powerpc/powerpc/pmap_subr.c		ppc_mpc6xx & !oldpmap
 file	arch/powerpc/powerpc/powerpc_machdep.c
 file	arch/powerpc/powerpc/process_machdep.c
+file	arch/powerpc/powerpc/setfault.S
 file	arch/powerpc/powerpc/sig_machdep.c
 file	arch/powerpc/powerpc/sigcode.S
 file	arch/powerpc/powerpc/subyte.c
