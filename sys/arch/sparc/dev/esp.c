@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.41 1996/03/14 19:44:53 christos Exp $ */
+/*	$NetBSD: esp.c,v 1.42 1996/03/16 23:28:30 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -805,7 +805,7 @@ esp_done(ecb)
 			ecb->flags |= ECB_CHKSENSE;
 /*XXX - must take off queue here */
 			if (ecb != sc->sc_nexus) {
-				panic("%s: esp_sched: floating ecb %x",
+				panic("%s: esp_sched: floating ecb %p",
 					sc->sc_dev.dv_xname, ecb);
 			}
 			TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
