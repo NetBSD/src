@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_compat.c,v 1.23 1995/10/05 02:45:06 mycroft Exp $	*/
+/*	$NetBSD: tty_compat.c,v 1.24 1995/10/05 08:38:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -272,7 +272,7 @@ ttcompatgetflags(tp)
 			else
 				SET(flags, EVENP);
 		} else
-			SET(flags, EVENP|ODDP);
+			SET(flags, ANYP);
 	}
 	if (ISSET(cflag, CSIZE) == CS8) {
 		if (!ISSET(iflag, ISTRIP))
@@ -345,6 +345,7 @@ ttcompatsetflags(tp, t)
 	if (ISSET(flags, RAW)) {
 		iflag &= IXOFF;
 		CLR(lflag, ISIG|ICANON|IEXTEN);
+		CLR(cflag, PARENB);
 	} else {
 		SET(iflag, BRKINT|IXON|IMAXBEL);
 		SET(lflag, ISIG|IEXTEN);
@@ -352,24 +353,29 @@ ttcompatsetflags(tp, t)
 			CLR(lflag, ICANON);
 		else
 			SET(lflag, ICANON);
-	}
-
-	switch (ISSET(flags, ANYP)) {
-	case EVENP:
-		SET(iflag, INPCK);
-		CLR(cflag, PARODD);
-		break;
-	case ODDP:
-		SET(iflag, INPCK);
-		SET(cflag, PARODD);
-		break;
-	default:
-		CLR(iflag, INPCK);
-		break;
+		switch (ISSET(flags, ANYP)) {
+		case 0:
+			CLR(cflag, PARENB);
+			break;
+		case ANYP:
+			SET(cflag, PARENB);
+			CLR(iflag, INPCK);
+			break;
+		case EVENP:
+			SET(cflag, PARENB);
+			SET(iflag, INPCK);
+			CLR(cflag, PARODD);
+			break;
+		case ODDP:
+			SET(cflag, PARENB);
+			SET(iflag, INPCK);
+			SET(cflag, PARODD);
+			break;
+		}
 	}
 
 	if (ISSET(flags, RAW|LITOUT|PASS8)) {
-		CLR(cflag, CSIZE|PARENB);
+		CLR(cflag, CSIZE);
 		SET(cflag, CS8);
 		if (!ISSET(flags, RAW|PASS8))
 			SET(iflag, ISTRIP);
@@ -381,7 +387,7 @@ ttcompatsetflags(tp, t)
 			CLR(oflag, OPOST);
 	} else {
 		CLR(cflag, CSIZE);
-		SET(cflag, CS7|PARENB);
+		SET(cflag, CS7);
 		SET(iflag, ISTRIP);
 		SET(oflag, OPOST);
 	}
