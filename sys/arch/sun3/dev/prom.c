@@ -40,6 +40,9 @@ struct cfdriver promcd =
       if (unit >= promcd.cd_ndevs || (promcd.cd_devs[unit] == NULL)) \
 	  return ENXIO
 #define UNIT_TO_PROM_SC(unit) promcd.cd_devs[unit]
+#ifndef PROM_RECEIVE_FREQ
+#define PROM_RECEIVE_FREQ 10
+#endif    
 
 int promopen __P((dev_t, int, int, struct proc *));
 int promclose __P((dev_t, int, int, struct proc *));
@@ -99,7 +102,7 @@ int promopen(dev, flag, mode, p)
     result = (*linesw[tp->t_line].l_open)(dev, tp);
     if (result)
 	return result;
-    timeout((timeout_t) promreceive, (caddr_t) tp, hz/2);
+    timeout((timeout_t) promreceive, (caddr_t) tp, hz/PROM_RECEIVE_FREQ);
     return 0;
 }
 
@@ -241,9 +244,7 @@ static void promreceive(arg)
 		(*linesw[tp->t_line].l_rint)(c, tp);
 	    }
 	}
-	timeout((timeout_t) promreceive, (caddr_t) tp, hz/3);
-    }
-    else {
+	timeout((timeout_t) promreceive, (caddr_t) tp, hz/PROM_RECEIVE_FREQ);
     }
     splx(s);
 }
