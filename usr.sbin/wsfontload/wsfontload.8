@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsfontload.8,v 1.5 1999/04/06 04:54:22 cgd Exp $
+.\"	$NetBSD: wsfontload.8,v 1.6 2000/01/05 18:46:43 ad Exp $
 .\"
 .Dd January 13, 1999
 .Os
@@ -22,6 +22,12 @@
 .Ek
 .Bk -words
 .Op Fl N Ar name
+.Ek
+.Bk -words
+.Op Fl b
+.Ek
+.Bk -words
+.Op Fl B
 .Ek
 .Op Ar fontfile
 .Sh DESCRIPTION
@@ -68,6 +74,12 @@ Specifies a name which can be used later to refer to the font.
 In none is given, the
 .Ar fontfile
 name is used to create one.
+.It Fl b
+Specifies that the font data is ordered right-to-left bit wise. The default
+is left-to-right.
+.It Fl B
+Specifies that the font data is ordered right-to-left byte wise. The default
+is left-to-right.
 .El
 .Pp
 Typically, the

@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.1 1999/01/13 19:02:34 drochner Exp $ */
+/* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -82,8 +82,10 @@ main(argc, argv)
 	f.stride = 0;
 	f.encoding = DEFENC;
 	f.name = 0;
+	f.bitorder = WSDISPLAY_FONTORDER_L2R;
+	f.byteorder = WSDISPLAY_FONTORDER_L2R;
 
-	while ((c = getopt(argc, argv, "f:w:h:e:N:")) != -1) {
+	while ((c = getopt(argc, argv, "f:w:h:e:N:bB")) != -1) {
 		switch (c) {
 		case 'f':
 			wsdev = optarg;
@@ -101,6 +103,12 @@ main(argc, argv)
 			break;
 		case 'N':
 			f.name = optarg;
+			break;
+		case 'b':
+			f.bitorder = WSDISPLAY_FONTORDER_R2L;
+			break;
+		case 'B':
+			f.byteorder = WSDISPLAY_FONTORDER_R2L;
 			break;
 		case '?':
 		default:
