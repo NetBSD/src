@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.65 2002/09/28 01:25:01 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.66 2002/10/23 13:25:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.65 2002/09/28 01:25:01 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.66 2002/10/23 13:25:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -805,7 +805,7 @@ normal_fork:
 #endif
 			if (forkshell(jp, cmd, mode) != 0)
 				goto parent;	/* at end of routine */
-			INTON;
+			FORCEINTON;
 #ifdef DO_SHAREDVFORK
 		}
 #endif
@@ -953,7 +953,7 @@ parent:	/* parent process gets here (if we forked) */
 		close(pip[1]);
 		backcmd->jp = jp;
 	}
-	INTON;
+	FORCEINTON;
 
 out:
 	if (lastarg)
