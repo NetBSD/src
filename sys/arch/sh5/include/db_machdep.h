@@ -1,9 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.8 2003/04/29 17:06:06 scw Exp $	*/
-
-/*
- * This is still very much experimental. There is as yet no DB support
- * for SH-5.
- */
+/*	$NetBSD: db_machdep.h,v 1.9 2003/04/29 17:07:56 scw Exp $	*/
 
 /*
  * Mach Operating System
