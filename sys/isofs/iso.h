@@ -1,5 +1,5 @@
 /*
- *	$Id: iso.h,v 1.5 1993/09/07 15:40:52 ws Exp $
+ *	$Id: iso.h,v 1.6 1993/10/28 17:38:42 ws Exp $
  */
 
 #define ISODCL(from, to) (to - from + 1)
@@ -107,11 +107,10 @@ struct iso_mnt {
 	
 	struct mount *im_mountp;
 	dev_t im_dev;
-
+	
 	int im_bshift;
 	int im_bmask;
-	int im_bsize;
-
+	
 	char root[ISODCL (157, 190)];
 	int root_extent;
 	int root_size;
@@ -123,9 +122,9 @@ struct iso_mnt {
 
 #define VFSTOISOFS(mp)	((struct iso_mnt *)((mp)->mnt_data))
 
-#define iso_blkoff(imp, loc) ((loc) & ~(imp)->im_bmask)
+#define iso_blkoff(imp, loc) ((loc) & (imp)->im_bmask)
 #define iso_lblkno(imp, loc) ((loc) >> (imp)->im_bshift)
-#define iso_blksize(imp, ip, lbn) ((imp)->im_bsize)
+#define iso_blksize(imp, ip, lbn) ((imp)->logical_block_size)
 #define iso_lblktosize(imp, blk) ((blk) << (imp)->im_bshift)
 
 
@@ -143,8 +142,8 @@ int isofs_init __P(());
 struct iso_node;
 int iso_bmap __P((struct iso_node *ip, int lblkno, daddr_t *result)); 
 int iso_blkatoff __P((struct iso_node *ip, off_t offset, struct buf **bpp)); 
-int iso_iget __P((struct iso_node *xp, ino_t ino, struct iso_node **ipp, 
-		  struct iso_directory_record *isodir));
+int iso_iget __P((struct iso_node *xp, ino_t ino, int relocated,
+		  struct iso_node **ipp, struct iso_directory_record *isodir));
 int iso_iput __P((struct iso_node *ip)); 
 int iso_ilock __P((struct iso_node *ip)); 
 int iso_iunlock __P((struct iso_node *ip)); 
@@ -210,9 +209,9 @@ int isofncmp __P((unsigned char *fn, int fnlen,
 		  unsigned char *isofn, int isolen));
 void isofntrans __P((unsigned char *infn, int infnlen,
 		     unsigned char *outfn, unsigned short *outfnlen,
-		     int stripgen, int assoc));
+		     int original, int assoc));
 
 /*
- * Associated files have a trailing '@'.
+ * Associated files have a leading '='.
  */
-#define	ASSOCCHAR	'@'
+#define	ASSOCCHAR	'='

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
- *	$Id: isofs_lookup.c,v 1.9 1993/10/18 22:42:22 cgd Exp $
+ *	$Id: isofs_lookup.c,v 1.10 1993/10/28 17:38:44 ws Exp $
  */
 
 #include "param.h"
@@ -95,10 +95,10 @@ isofs_lookup(vdp, ndp, p)
 	register struct iso_mnt *imp;	/* file system that directory is in */
 	struct buf *bp = 0;		/* a buffer of directory entries */
 	struct iso_directory_record *ep;/* the current directory entry */
-	int entryoffsetinblock;		/* offset of ep in bp's buffer */
-	int saveoffset;			/* offset of last directory entry in dir */
+	off_t entryoffsetinblock;	/* offset of ep in bp's buffer */
+	off_t saveoffset;		/* offset of last directory entry in dir */
 	int numdirpasses;		/* strategy for directory search */
-	int endsearch;			/* offset to end directory search */
+	off_t endsearch;		/* offset to end directory search */
 	struct iso_node *pdp;		/* saved dp during symlink work */
 	struct iso_node *tdp;		/* returned by iget */
 	int flag;			/* LOOKUP, CREATE, RENAME, or DELETE */
@@ -111,6 +111,7 @@ isofs_lookup(vdp, ndp, p)
 	char altname[NAME_MAX];
 	int res;
 	int assoc, len;
+	char *name;
 	
 	ndp->ni_dvp = vdp;
 	ndp->ni_vp = NULL;
@@ -119,7 +120,7 @@ isofs_lookup(vdp, ndp, p)
 	lockparent = ndp->ni_nameiop & LOCKPARENT;
 	flag = ndp->ni_nameiop & OPMASK;
 	wantparent = ndp->ni_nameiop & (LOCKPARENT|WANTPARENT);
-
+	
 	/*
 	 * Check accessiblity of directory.
 	 */
@@ -135,7 +136,7 @@ isofs_lookup(vdp, ndp, p)
 	 */
 	if (error = cache_lookup(ndp)) {
 		int vpid;	/* capability number of vnode */
-
+		
 		if (error == ENOENT)
 			return (error);
 #ifdef PARANOID
@@ -182,11 +183,15 @@ isofs_lookup(vdp, ndp, p)
 	}
 	
 	/*
-	 * A traling `@' means, we are looking for an associated file
+	 * A leading `=' means, we are looking for an associated file
 	 */
 	len = ndp->ni_namelen;
-	if (assoc = ndp->ni_ptr[len - 1] == ASSOCCHAR)
+	name = ndp->ni_ptr;
+	if (assoc = *name == ASSOCCHAR) {
 		len--;
+		name++;
+	}
+	
 	/*
 	 * If there is cached information on a previous search of
 	 * this directory, pick up where we last left off.
@@ -211,8 +216,8 @@ isofs_lookup(vdp, ndp, p)
 		numdirpasses = 2;
 		iso_nchstats.ncs_2passes++;
 	}
-	endsearch = roundup(dp->i_size, imp->logical_block_size);
-
+	endsearch = roundup(dp->i_size,imp->logical_block_size);
+	
 searchloop:
 	while (ndp->ni_ufs.ufs_offset < endsearch) {
 		/*
@@ -220,7 +225,7 @@ searchloop:
 		 * read the next directory block.
 		 * Release previous if it exists.
 		 */
-		if (iso_blkoff(imp, ndp->ni_ufs.ufs_offset) == 0) {
+		if (iso_blkoff(imp,ndp->ni_ufs.ufs_offset) == 0) {
 			if (bp != NULL)
 				brelse(bp);
 			if (error = iso_blkatoff(dp,ndp->ni_ufs.ufs_offset,&bp))
@@ -230,41 +235,41 @@ searchloop:
 		/*
 		 * Get pointer to next entry.
 		 */
-
+		
 		ep = (struct iso_directory_record *)
 			(bp->b_un.b_addr + entryoffsetinblock);
-
+		
 		reclen = isonum_711 (ep->length);
 		if (reclen == 0) {
 			/* skip to next block, if any */
 			ndp->ni_ufs.ufs_offset =
-				roundup (ndp->ni_ufs.ufs_offset,
-					 imp->logical_block_size);
+				roundup(ndp->ni_ufs.ufs_offset,
+					imp->logical_block_size);
 			continue;
 		}
-
+		
 		if (reclen < ISO_DIRECTORY_RECORD_SIZE)
 			/* illegal entry, stop */
 			break;
-
-		if (entryoffsetinblock + reclen -1 >= imp->logical_block_size)
+		
+		if (entryoffsetinblock + reclen >= imp->logical_block_size)
 			/* entries are not allowed to cross boundaries */
 			break;
-
+		
 		/*
 		 * Check for a name match.
 		 */
-		namelen = isonum_711 (ep->name_len);
-
+		namelen = isonum_711(ep->name_len);
+		
 		if (reclen < ISO_DIRECTORY_RECORD_SIZE + namelen)
 			/* illegal entry, stop */
 			break;
-
+		
 		switch (imp->iso_ftype) {
 		default:
 			if ((!(isonum_711(ep->flags)&4)) == !assoc) {
 				if ((len == 1
-				     && ndp->ni_ptr[0] == '.')
+				     && *name == '.')
 				    || ndp->ni_isdotdot) {
 					if (namelen == 1
 					    && ep->name[0] == (ndp->ni_isdotdot ? 1 : 0)) {
@@ -273,15 +278,19 @@ searchloop:
 						 * reclen in ndp->ni_ufs area, and release
 						 * directory buffer.
 						 */
-						isofs_defino(ep,&ndp->ni_ufs.ufs_ino);
+						isodirino(&ndp->ni_ufs.ufs_ino,ep,imp);
 						goto found;
 					}
 					if (namelen != 1
 					    || ep->name[0] != 0)
 						goto notfound;
-				} else if (!(res = isofncmp(ndp->ni_ptr,len,
+				} else if (!(res = isofncmp(name,len,
 							    ep->name,namelen))) {
-					isofs_defino(ep,&ino);
+					if (isonum_711(ep->flags)&2)
+						isodirino(&ino,ep,imp);
+					else
+						ino = (bp->b_blkno << DEV_BSHIFT)
+						      + entryoffsetinblock;
 					saveoffset = ndp->ni_ufs.ufs_offset;
 				} else if (ino)
 					goto foundino;
@@ -294,10 +303,16 @@ searchloop:
 			}
 			break;
 		case ISO_FTYPE_RRIP:
+			if (isonum_711(ep->flags)&2)
+				isodirino(&ino,ep,imp);
+			else
+				ino = (bp->b_blkno << DEV_BSHIFT) + entryoffsetinblock;
+			ndp->ni_ufs.ufs_ino = ino;
 			isofs_rrip_getname(ep,altname,&namelen,&ndp->ni_ufs.ufs_ino,imp);
 			if (namelen == ndp->ni_namelen
-			    && !bcmp(ndp->ni_ptr,altname,namelen))
+			    && !bcmp(name,altname,namelen))
 				goto found;
+			ino = 0;
 			break;
 		}
 		ndp->ni_ufs.ufs_offset += reclen;
@@ -339,11 +354,11 @@ notfound:
 	if (ndp->ni_makeentry)
 		cache_enter(ndp);
 	return (ENOENT);
-
+	
 found:
 	if (numdirpasses > 1)
 		iso_nchstats.ncs_pass2++;
-
+	
 	/*
 	 * Found component in pathname.
 	 * If the final component of path name, save information
@@ -351,7 +366,7 @@ found:
 	 */
 	if (*ndp->ni_next == '\0' && flag == LOOKUP)
 		dp->i_diroff = ndp->ni_ufs.ufs_offset;
-
+	
 	/*
 	 * Step through the translation in the name.  We do not `iput' the
 	 * directory because we may need it again if a symbolic link
@@ -372,12 +387,18 @@ found:
 	 * that point backwards in the directory structure.
 	 */
 	pdp = dp;
+	/*
+	 * If ino is different from ndp->ni_ufs.ufs_ino,
+	 * it's a relocated directory.
+	 */
 	if (ndp->ni_isdotdot) {
 		ISO_IUNLOCK(pdp);	/* race to get the inode */
-		if (error = iso_iget(dp, ndp->ni_ufs.ufs_ino, &tdp, ep)) {
+		if (error = iso_iget(dp,ndp->ni_ufs.ufs_ino,
+				     ndp->ni_ufs.ufs_ino != ino,
+				     &tdp,ep)) {
 			brelse(bp);
 			ISO_ILOCK(pdp);
-			return (error);
+			return error;
 		}
 		if (lockparent && *ndp->ni_next == '\0')
 			ISO_ILOCK(pdp);
@@ -386,9 +407,11 @@ found:
 		VREF(vdp);	/* we want ourself, ie "." */
 		ndp->ni_vp = vdp;
 	} else {
-		if (error = iso_iget(dp, ndp->ni_ufs.ufs_ino, &tdp, ep)) {
+		if (error = iso_iget(dp,ndp->ni_ufs.ufs_ino,
+				     ndp->ni_ufs.ufs_ino != ino,
+				     &tdp,ep)) {
 			brelse(bp);
-			return (error);
+			return error;
 		}
 		if (!lockparent || *ndp->ni_next != '\0')
 			ISO_IUNLOCK(pdp);
@@ -402,9 +425,8 @@ found:
 	 */
 	if (ndp->ni_makeentry)
 		cache_enter(ndp);
-	return (0);
+	return 0;
 }
-
 
 /*
  * Return buffer with contents of block "offset"
@@ -418,17 +440,17 @@ iso_blkatoff(ip, offset, bpp)
 	struct buf **bpp;
 {
 	register struct iso_mnt *imp = ip->i_mnt;
-	daddr_t lbn = iso_lblkno (imp, offset);
-	int bsize = iso_blksize (imp, ip, lbn);
+	daddr_t lbn = iso_lblkno(imp,offset);
+	int bsize = iso_blksize(imp,ip,lbn);
 	struct buf *bp;
 	int error;
-
-	if (error = bread(ITOV(ip), lbn, bsize, NOCRED, &bp)) {
+	
+	if (error = bread(ITOV(ip),lbn,bsize,NOCRED,&bp)) {
 		brelse(bp);
 		*bpp = 0;
 		return error;
 	}
 	*bpp = bp;
-
+	
 	return 0;
 }
