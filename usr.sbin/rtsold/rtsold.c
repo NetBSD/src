@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.4 1999/12/16 05:55:52 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.5 2000/01/22 10:05:13 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -212,7 +212,6 @@ main(argc, argv)
 	FD_ZERO(&fdset);
 	FD_SET(s, &fdset);
 	while (1) {		/* main loop */
-		extern int errno;
 		int e;
 		struct fd_set select_fd = fdset;
 
