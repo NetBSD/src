@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.8 2003/07/15 00:24:53 lukem Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.9 2003/12/03 19:55:37 scw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.8 2003/07/15 00:24:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.9 2003/12/03 19:55:37 scw Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -513,6 +513,12 @@ i80321_intr_dispatch(struct clockframe *frame)
 		/* Re-enable this interrupt now that's it's cleared. */
 		intr_enabled |= ibit;
 		i80321_set_intrmask();
+
+		/*
+		 * Don't forget to include interrupts which may have
+		 * arrived in the meantime.
+		 */
+		hwpend |= ((i80321_ipending & ICU_INT_HWMASK) & ~pcpl);
 	}
 
 	/* Check for pendings soft intrs. */
