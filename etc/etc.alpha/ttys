@@ -1,10 +1,13 @@
 #
-#	$NetBSD: ttys,v 1.1 1995/02/23 05:59:35 cgd Exp $
+#	$NetBSD: ttys,v 1.2 1995/04/11 04:27:02 cgd Exp $
 #
 # name	getty				type	status		comments
 
-# console redirector; leave getty turned off, turn it on on the real port.
-console	"/usr/libexec/getty std.9600"	unknown	off secure
+# In normal operation, getty on 'console' pseudo-device is disabled, and is
+# enabled for the correct 'real' device (e.g. one of the serial ports).
+
+# console pseudo-device
+console	"/usr/libexec/getty Pc"		unknown	on secure
 
 # DEC 3000 on-board zs8530-based serial ports
 tty00	"/usr/libexec/getty std.9600"	unknown	off secure
