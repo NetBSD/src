@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.30 1998/03/22 23:13:52 scottr Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.31 1998/03/22 23:40:52 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -105,8 +105,10 @@ grfiv_match(parent, cf, aux)
 
 		sense = (bus_space_read_4(oa->oa_tag, bsh, 0x1C) & 7);
 
+#if 0 /* XXX - fails on Quadras with certain 17" monitors */
 		if (sense == 0)
 			found = 0;
+#endif
 
 		/* Set "Turbo SCSI" configuration to default */
 		bus_space_write_4(oa->oa_tag, bsh, 0x24, 0x1d1); /* ch0 */
