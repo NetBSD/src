@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.9 2000/11/14 16:08:15 tv Exp $
+.\"	$NetBSD: main,v 1.61.2.10 2000/11/14 16:45:22 tv Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -219,7 +219,7 @@ file system (read-only at this stage).
 .It
 Support for revision 1 of the
 .Tn Linux
-.Sq extfs
+.Sq ext2fs
 file system.
 .It
 Enhanced stability and usability of LFS (the
@@ -270,7 +270,7 @@ Several code audits were performed. One audit replaced
 string routines that were used without bound checking, and another 
 one to identify and disable
 places where format strings were used in an
-unsafe way, allowing arbitrary data enterred by (possibly) mallicious
+unsafe way, allowing arbitrary data entered by (possibly) malicious
 users to overwrite application code, and leading from Denial of
 Service attacks to compromised system.
 .bullet)
