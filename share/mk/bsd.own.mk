@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.31 1997/03/24 21:54:19 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.32 1997/03/29 21:17:22 thorpej Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -67,9 +67,15 @@ STRIP?=		-s
 # which don't support PIC.
 .if  (${MACHINE_ARCH} == "vax") || \
     ((${MACHINE_ARCH} == "mips") && defined(STATIC_TOOLCHAIN)) || \
-    ((${MACHINE_ARCH} == "alpha") && defined(ECOFF_TOOLCHAIN))
+    ((${MACHINE_ARCH} == "alpha") && defined(ECOFF_TOOLCHAIN)) || \
+    (${MACHINE_ARCH} == "powerpc")
 NOPIC=
 .endif
 
 # No lint, for now.
 NOLINT=
+
+# Profiling doesn't work on PowerPC yet.
+.if (${MACHINE_ARCH} == "powerpc")
+NOPROFILE=
+.endif
