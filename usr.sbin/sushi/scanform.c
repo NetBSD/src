@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.18 2001/04/06 07:57:05 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.19 2001/08/01 09:08:55 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -530,7 +530,8 @@ my_driver(FORM * form, int c, char *path)
 				}
 			free(otmp);
 			tmp = buf;
-			set_field_buffer(curfield, 0, tmp);
+			if (n)
+				set_field_buffer(curfield, 0, tmp);
 			destroyCDKSelection(slist);
 		} else if (*tmp ==  's') {
 			plist = newCDKScroll(cdkscreen, RIGHT, CENTER, RIGHT,
