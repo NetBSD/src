@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2000/06/29 07:52:40 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.5 2001/08/05 05:47:43 tsutsui Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -62,6 +62,7 @@ define	PCB_SP		offsetof(struct pcb, pcb_sp)
 define	PCB_SPL		offsetof(struct pcb, pcb_spl)
 define	PCB_FAULT	offsetof(struct pcb, pcb_onfault)
 
+define	PM_SR		offsetof(struct pmap, pm_sr[0])
 define	PM_USRSR	offsetof(struct pmap, pm_sr[USER_SR])
 define	PM_KERNELSR	offsetof(struct pmap, pm_sr[KERNEL_SR])
 
