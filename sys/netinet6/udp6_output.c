@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.7 2002/06/08 20:06:45 itojun Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.8 2002/08/14 00:23:40 itojun Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.7 2002/06/08 20:06:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.8 2002/08/14 00:23:40 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_inet.h"
@@ -382,11 +382,9 @@ udp6_output(in6p, m, addr6, control, p)
 		if (udp6->uh_sum == 0)
 			udp6->uh_sum = 0xffff;
 
-		ip->ip_len = hlen + plen;
+		ip->ip_len = htons(hlen + plen);
 		ip->ip_ttl = in6_selecthlim(in6p, NULL); /* XXX */
 		ip->ip_tos = 0;	/* XXX */
-
-		ip->ip_len = hlen + plen; /* XXX */
 
 		udpstat.udps_opackets++;
 #ifdef IPSEC
