@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.120 2000/04/28 13:51:56 ad Exp $
+# $NetBSD: ALPHA,v 1.121 2000/05/02 08:04:24 augustss Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 maxusers 32
 
-ident		"ALPHA-$Revision: 1.120 $"
+ident		"ALPHA-$Revision: 1.121 $"
 
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
@@ -182,6 +182,8 @@ mcclock* at	ioasic? offset ?
 le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
+bba0	at	ioasic? offset ?
+audio*	at	bba?
 tcds*	at	tc? slot ? offset ?
 asc*	at	tcds? chip ?
 #cfb*	at	tc? slot ? offset ?
