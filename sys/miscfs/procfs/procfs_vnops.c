@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.62 1999/07/08 01:26:29 wrstuden Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.63 1999/07/14 23:52:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -745,7 +745,7 @@ procfs_lookup(v)
 		if (p == 0)
 			break;
 
-		error = procfs_allocvp(dvp->v_mount, vpp, 0, Pproc);
+		error = procfs_allocvp(dvp->v_mount, vpp, pid, Pproc);
 		if ((error == 0) && (wantpunlock)) {
 			VOP_UNLOCK(dvp, 0);
 			cnp->cn_flags |= PDIRUNLOCK;
