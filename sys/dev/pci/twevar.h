@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.14 2003/09/21 18:35:32 thorpej Exp $	*/
+/*	$NetBSD: twevar.h,v 1.15 2003/09/21 19:20:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -43,6 +43,15 @@
 
 #define	TWE_MAX_QUEUECNT	129
 
+/* Per-array drive information. */
+struct twe_drive {
+	uint32_t		td_size;
+	uint8_t			td_type;
+	uint8_t			td_stripe;
+
+	struct device		*td_dev;
+};
+
 /* Per-controller state. */
 struct twe_softc {
 	struct device		sc_dv;
@@ -59,7 +68,7 @@ struct twe_softc {
 	SLIST_HEAD(, twe_ccb)	sc_ccb_freelist;
 	int			sc_flags;
 	int			sc_nunits;
-	u_int			sc_dsize[TWE_MAX_UNITS];
+	struct twe_drive	sc_units[TWE_MAX_UNITS];
 };
 #define	TWEF_AEN	0x01	/* retrieving an AEN */
 #define	TWEF_OPEN	0x02	/* control device is opened */
