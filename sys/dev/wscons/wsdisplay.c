@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.72 2003/01/20 02:16:55 simonb Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.73 2003/03/06 00:38:28 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.72 2003/01/20 02:16:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.73 2003/03/06 00:38:28 matt Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -206,7 +206,7 @@ static void (*wsdisplay_cons_kbd_pollc)(dev_t, int);
 
 static struct consdev wsdisplay_cons = {
 	NULL, NULL, wsdisplay_getc_dummy, wsdisplay_cnputc,
-	wsdisplay_pollc, NULL, NODEV, CN_NORMAL
+	wsdisplay_pollc, NULL, NULL, NULL, NODEV, CN_NORMAL
 };
 
 #ifndef WSDISPLAY_DEFAULTSCREENS

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.202 2003/01/31 00:26:28 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.203 2003/03/06 00:38:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.202 2003/01/31 00:26:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.203 2003/03/06 00:38:27 matt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2320,7 +2320,7 @@ cominit(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
  * Following are all routines needed for COM to act as console
  */
 struct consdev comcons = {
-	NULL, NULL, comcngetc, comcnputc, comcnpollc, NULL,
+	NULL, NULL, comcngetc, comcnputc, comcnpollc, NULL, NULL, NULL,
 	NODEV, CN_NORMAL
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.20 2003/01/01 00:10:25 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.21 2003/03/06 00:38:28 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.20 2003/01/01 00:10:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.21 2003/03/06 00:38:28 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -97,7 +97,7 @@ void	zs_ioasic_cnpollc __P((dev_t, int));
 
 struct consdev zs_ioasic_cons = {
 	NULL, NULL, zs_ioasic_cngetc, zs_ioasic_cnputc,
-	zs_ioasic_cnpollc, NULL, NODEV, CN_NORMAL,
+	zs_ioasic_cnpollc, NULL, NULL, NULL, NODEV, CN_NORMAL,
 };
 
 tc_offset_t zs_ioasic_console_offset;
