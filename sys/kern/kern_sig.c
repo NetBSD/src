@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.85 1998/11/13 17:23:52 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.86 1999/02/13 15:25:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -295,7 +295,7 @@ sigprocmask1(p, how, nss, oss)
 		*oss = p->p_sigmask;
 
 	if (nss) {
-		(void) splhigh();
+		(void)splhigh();
 		switch (how) {
 		case SIG_BLOCK:
 			sigplusset(nss, &p->p_sigmask);
@@ -309,10 +309,11 @@ sigprocmask1(p, how, nss, oss)
 			p->p_sigcheck = 1;
 			break;
 		default:
+			(void)spl0();
 			return (EINVAL);
 		}
 		sigminusset(&sigcantmask, &p->p_sigmask);
-		(void) spl0();
+		(void)spl0();
 	}
 
 	return (0);
