@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.95 1998/01/09 21:34:47 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.96 1998/01/19 02:57:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 1998/01/09 21:34:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 1998/01/19 02:57:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,8 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 1998/01/09 21:34:47 thorpej Exp $")
 #include <ddb/db_interface.h>
 #endif
 
-#include "le_ioasic.h"			/* for le_iomem creation */
-
 vm_map_t buffer_map;
 
 /*
@@ -172,9 +170,6 @@ struct	user *proc0paddr;
 
 /* Number of machine cycles per microsecond */
 u_int64_t	cycles_per_usec;
-
-/* some memory areas for device DMA.  "ick." */
-caddr_t		le_iomem;		/* XXX iomem for LANCE DMA */
 
 /* number of cpus in the box.  really! */
 int		ncpus;
@@ -472,26 +467,6 @@ alpha_init(pfn, ptb, bim, bip)
 	/* XXX On single-CPU boxes, the primary should always be CPU 0. */
 	if (cputype != ST_DEC_21000)					/*XXX*/
 		assert(hwrpb->rpb_primary_cpu_id == 0);			/*XXX*/
-
-#if NLE_IOASIC > 0
-	/*
-	 * Grab 128K at the top of physical memory for the lance chip
-	 * on machines where it does dma through the I/O ASIC.
-	 * It must be physically contiguous and aligned on a 128K boundary.
-	 *
-	 * Note that since this is conditional on the presence of
-	 * IOASIC-attached 'le' units in the kernel config, the
-	 * message buffer may move on these systems.  This shouldn't
-	 * be a problem, because once people have a kernel config that
-	 * they use, they're going to stick with it.
-	 */
-	if (cputype == ST_DEC_3000_500 ||
-	    cputype == ST_DEC_3000_300) {	/* XXX possibly others? */
-		lastusablepage -= btoc(128 * 1024);
-		le_iomem =
-		    (caddr_t)ALPHA_PHYS_TO_K0SEG(ctob(lastusablepage + 1));
-	}
-#endif /* NLE_IOASIC */
 
 	/*
 	 * Initialize error message buffer (at end of core).
