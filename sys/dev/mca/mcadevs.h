@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs.h,v 1.5 2001/03/19 22:24:17 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs.h,v 1.6 2001/03/23 18:12:45 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.4 2001/03/19 22:23:58 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.5 2001/03/23 18:12:13 jdolecek Exp 
  */
 
 /*-
@@ -50,10 +50,18 @@
 
 #define	MCA_PRODUCT_AHA1640	0x0F1F	/* Adaptec AHA-1640 SCSI Adapter */
 #define	MCA_PRODUCT_3C523	0x6042	/* 3Com EtherLink/MC Ethernet Adapter (3C523) */
+#define	MCA_PRODUCT_WD_8013EP	0x61C8	/* EtherCard PLUS Elite/A (8013EP/A) */
+#define	MCA_PRODUCT_WD_8013WP	0x61C9	/* EtherCard PLUS Elite 10T/A (8013WP/A) */
 #define	MCA_PRODUCT_3C529	0x627C	/* 3Com 3C529 Ethernet Adapter */
 #define	MCA_PRODUCT_3C529_TP	0x627D	/* 3Com 3C529-TP Ethernet Adapter */
 #define	MCA_PRODUCT_3C529_TM	0x62DB	/* 3Com 3C529 Ethernet Adapter (test mode) */
 #define	MCA_PRODUCT_3C529_2T	0x62F6	/* 3Com 3C529 Ethernet Adapter (10base2/T) */
 #define	MCA_PRODUCT_3C529_T	0x62F7	/* 3Com 3C529 Ethernet Adapter (10baseT) */
+#define	MCA_PRODUCT_WD_8003E	0x6FC0	/* WD EtherCard PLUS/A (WD8003E/A or WD8003ET/A) */
+#define	MCA_PRODUCT_WD_8003ST	0x6FC1	/* WD StarCard PLUS/A (WD8003ST/A) */
+#define	MCA_PRODUCT_WD_8003W	0x6FC2	/* WD EtherCard PLUS 10T/A (WD8003W/A) */
 #define	MCA_PRODUCT_ITR	0xE001	/* IBM Token Ring 16/4 Adapter/A */
 #define	MCA_PRODUCT_IBM_MOD	0xEDFF	/* IBM Internal Modem */
+#define	MCA_PRODUCT_IBM_WD_2	0xEFD4	/* IBM PS/2 Adapter/A for Ethernet Networks (UTP) */
+#define	MCA_PRODUCT_IBM_WD_T	0xEFD5	/* IBM PS/2 Adapter/A for Ethernet Networks (BNC) */
+#define	MCA_PRODUCT_IBM_WD_O	0xEFE5	/* IBM PS/2 Adapter/A for Ethernet Networks */
