@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.8 1998/12/02 22:51:50 augustss Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.9 1998/12/11 17:44:41 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.8 1998/12/02 22:49:51 augustss Exp 
+ *	NetBSD: usbdevs,v 1.9 1998/12/11 17:43:31 augustss Exp 
  */
 
 /*
@@ -133,6 +133,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "U.S.Robotics 56000 Voice USB Modem",
+	},
+	{
+	    USB_VENDOR_SHUTTLE, USB_PRODUCT_SHUTTLE_EUSB,
+	    0,
+	    "Shuttle Technology",
+	    "E-USB Bridge",
 	},
 	{
 	    USB_VENDOR_JAZZ, USB_PRODUCT_JAZZ_J6502,
@@ -282,6 +288,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    USB_VENDOR_3COM, 0,
 	    USB_KNOWNDEV_NOPROD,
 	    "3Com",
+	    NULL,
+	},
+	{
+	    USB_VENDOR_SHUTTLE, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "Shuttle Technology",
 	    NULL,
 	},
 	{

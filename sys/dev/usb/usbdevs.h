@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.8 1998/12/02 22:51:50 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.9 1998/12/11 17:44:41 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.8 1998/12/02 22:49:51 augustss Exp 
+ *	NetBSD: usbdevs,v 1.9 1998/12/11 17:43:31 augustss Exp 
  */
 
 /*
@@ -61,6 +61,7 @@
 #define	USB_VENDOR_CONNECTIX	0x0478		/* Connectix */
 #define	USB_VENDOR_CYPRESS	0x04b4		/* Cypress Semiconductor */
 #define	USB_VENDOR_3COM	0x04c1		/* 3Com */
+#define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
 #define	USB_VENDOR_JAZZ	0x04fa		/* Jazz */
 #define	USB_VENDOR_ATEN	0x0557		/* ATen */
 #define	USB_VENDOR_EIZO	0x056d		/* EIZO */
@@ -112,6 +113,9 @@
 
 /* 3Com products */
 #define	USB_PRODUCT_3COM_USR56K	0x3021		/* U.S.Robotics 56000 Voice USB Modem */
+
+/* Shuttle Technology products */
+#define	USB_PRODUCT_SHUTTLE_EUSB	0x0001		/* E-USB Bridge */
 
 /* Jazz products */
 #define	USB_PRODUCT_JAZZ_J6502	0x4201		/* J-6502 speakers */
