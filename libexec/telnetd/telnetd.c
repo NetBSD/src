@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.26 2001/07/19 04:57:50 itojun Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.27 2001/08/20 11:01:48 wiz Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.26 2001/07/19 04:57:50 itojun Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.27 2001/08/20 11:01:48 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -731,7 +731,7 @@ getterminaltype(name)
 	static unsigned char sb[] =
 			{ IAC, SB, TELOPT_TSPEED, TELQUAL_SEND, IAC, SE };
 
-	output_datalen(sb, sizeof sb);
+	output_datalen((const char *)sb, sizeof sb);
 	DIAG(TD_OPTIONS, printsub('>', sb + 2, sizeof sb - 2););
     }
 #ifdef	ENCRYPTION
@@ -747,26 +747,26 @@ getterminaltype(name)
 	static unsigned char sb[] =
 			{ IAC, SB, TELOPT_XDISPLOC, TELQUAL_SEND, IAC, SE };
 
-	output_datalen(sb, sizeof sb);
+	output_datalen((const char *)sb, sizeof sb);
 	DIAG(TD_OPTIONS, printsub('>', sb + 2, sizeof sb - 2););
     }
     if (his_state_is_will(TELOPT_NEW_ENVIRON)) {
 	static unsigned char sb[] =
 			{ IAC, SB, TELOPT_NEW_ENVIRON, TELQUAL_SEND, IAC, SE };
 
-	output_datalen(sb, sizeof sb);
+	output_datalen((const char *)sb, sizeof sb);
 	DIAG(TD_OPTIONS, printsub('>', sb + 2, sizeof sb - 2););
     }
     else if (his_state_is_will(TELOPT_OLD_ENVIRON)) {
 	static unsigned char sb[] =
 			{ IAC, SB, TELOPT_OLD_ENVIRON, TELQUAL_SEND, IAC, SE };
 
-	output_datalen(sb, sizeof sb);
+	output_datalen((const char *)sb, sizeof sb);
 	DIAG(TD_OPTIONS, printsub('>', sb + 2, sizeof sb - 2););
     }
     if (his_state_is_will(TELOPT_TTYPE)) {
 
-	output_datalen(ttytype_sbbuf, sizeof ttytype_sbbuf);
+	output_datalen((const char *)ttytype_sbbuf, sizeof ttytype_sbbuf);
 	DIAG(TD_OPTIONS, printsub('>', ttytype_sbbuf + 2,
 					sizeof ttytype_sbbuf - 2););
     }
@@ -845,7 +845,7 @@ _gettermname()
     if (his_state_is_wont(TELOPT_TTYPE))
 	return;
     settimer(baseline);
-    output_datalen(ttytype_sbbuf, sizeof ttytype_sbbuf);
+    output_datalen((const char *)ttytype_sbbuf, sizeof ttytype_sbbuf);
     DIAG(TD_OPTIONS, printsub('>', ttytype_sbbuf + 2,
 					sizeof ttytype_sbbuf - 2););
     while (sequenceIs(ttypesubopt, baseline))
