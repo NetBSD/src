@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.61 2001/02/05 12:27:18 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.62 2001/02/18 15:52:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1298,7 +1298,11 @@ out:
 			}
 			if (pgs[i]->flags & PG_FAKE) {
 				uvm_pagefree(pgs[i]);
+				continue;
 			}
+			uvm_pageactivate(pgs[i]);
+			pgs[i]->flags &= ~(PG_WANTED|PG_BUSY);
+			UVM_PAGE_OWN(pgs[i], NULL);
 		}
 		uvm_unlock_pageq();
 		simple_unlock(&uobj->vmobjlock);
@@ -1369,7 +1373,7 @@ nfs_putpages(v)
 	struct vm_page **pgs = ap->a_m;
 	int flags = ap->a_flags;
 	int npages = ap->a_count;
-	int s, error = 0, i;
+	int s, error, i;
 	size_t bytes, iobytes, skipbytes;
 	vaddr_t kva;
 	off_t offset, origoffset, commitoff;
@@ -1384,6 +1388,7 @@ nfs_putpages(v)
 
 	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
 
+	error = 0;
 	origoffset = pgs[0]->offset;
 	bytes = MIN(ap->a_count << PAGE_SHIFT, vp->v_uvm.u_size - origoffset);
 	skipbytes = 0;
@@ -1490,7 +1495,9 @@ nfs_putpages(v)
 	if (async) {
 		return EINPROGRESS;
 	}
-	error = biowait(mbp);
+	if (bp != NULL) {
+		error = biowait(mbp);
+	}
 
 	s = splbio();
 	vwakeup(mbp);
