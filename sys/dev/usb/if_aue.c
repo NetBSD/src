@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.7 2000/01/16 15:52:03 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.8 2000/01/16 16:07:42 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -149,15 +149,11 @@
 #ifdef AUE_DEBUG
 #define DPRINTF(x)	if (auedebug) logprintf x
 #define DPRINTFN(n,x)	if (auedebug >= (n)) logprintf x
-int	auedebug = 1;
+int	auedebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-int aue_cutoff = AUE_CUTOFF;
-#undef AUE_CUTOFF
-#define AUE_CUTOFF aue_cutoff
 
 /*
  * Various supported device vendors/types and their names.
