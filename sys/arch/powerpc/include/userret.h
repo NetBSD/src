@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.8 2004/04/06 02:25:22 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.9 2004/04/15 21:07:07 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,13 +44,13 @@
 static __inline void
 userret(struct lwp *l, struct trapframe *frame)
 {
-	struct cpu_info *ci = curcpu();
-	struct pcb *pcb;
+	struct cpu_info * const ci = curcpu();
+	struct pcb * const pcb = &l->l_addr->u_pcb;
 
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-	pcb = &l->l_addr->u_pcb;
+	frame->srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */
 
 	/*
 	 * If someone stole the fp or vector unit while we were away,
@@ -64,9 +64,16 @@ userret(struct lwp *l, struct trapframe *frame)
 	}
 #endif
 #ifdef ALTIVEC
-	if ((frame->srr1 & PSL_VEC) &&
-	    (l != ci->ci_veclwp || pcb->pcb_veccpu != ci)) {
-		frame->srr1 &= ~PSL_VEC;
+	/*
+	 * We need to manually restore PSL_VEC each time we return
+	 * to user mode since PSL_VEC is not preserved in SRR1.
+	 */
+	if (frame->srr1 & PSL_VEC) {
+		if (l != ci->ci_veclwp)
+			frame->srr1 &= ~PSL_VEC;
+	} else {
+		if (l == ci->ci_veclwp)
+			frame->srr1 |= PSL_VEC;
 	}
 
 	/*

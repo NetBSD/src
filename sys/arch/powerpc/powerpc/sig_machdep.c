@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.21 2004/04/04 17:26:10 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.22 2004/04/15 21:07:07 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,10 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.21 2004/04/04 17:26:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.22 2004/04/15 21:07:07 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
+#include "opt_altivec.h"
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -47,7 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.21 2004/04/04 17:26:10 matt Exp $"
 #include <sys/ucontext.h>
 #include <sys/user.h>
 
-#include <machine/fpu.h>
+#include <powerpc/fpu.h>
+#include <powerpc/altivec.h>
 
 /*
  * Send a signal to process.
@@ -150,7 +152,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 {
 	const struct trapframe *tf = trapframe(l);
 	__greg_t *gr = mcp->__gregs;
-#ifdef PPC_HAVE_FPU
+#if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
 	struct pcb *pcb = &l->l_addr->u_pcb;
 #endif
 
@@ -159,9 +161,12 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 	gr[_REG_CR]  = tf->cr;
 	gr[_REG_LR]  = tf->lr;
 	gr[_REG_PC]  = tf->srr0;
-	gr[_REG_MSR] = tf->srr1;
+	gr[_REG_MSR] = tf->srr1 & PSL_USERSRR1;
 #ifdef PPC_HAVE_FPU
 	gr[_REG_MSR] |= pcb->pcb_flags & (PCB_FE0|PCB_FE1);
+#endif
+#ifdef ALTIVEC
+	gr[_REG_MSR] |= pcb->pcb_flags & PCB_ALTIVEC ? PSL_VEC : 0;
 #endif
 	gr[_REG_CTR] = tf->ctr;
 	gr[_REG_XER] = tf->xer;
@@ -188,8 +193,23 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 #endif
 		memset(&mcp->__fpregs, 0, sizeof(mcp->__fpregs));
 
-	/* No AltiVec support, for now. */
-	memset(&mcp->__vrf, 0, sizeof (mcp->__vrf));
+#ifdef ALTIVEC
+	/* Save AltiVec context, if any. */
+	if ((pcb->pcb_flags & PCB_ALTIVEC) != 0) {
+		/*
+		 * If we're the AltiVec owner, dump its context
+		 * to the PCB first.
+		 */
+		if (pcb->pcb_veccpu)
+			save_vec_lwp(l);
+		(void)memcpy(mcp->__vrf.__vrs, pcb->pcb_vr.vreg,
+		    sizeof (mcp->__vrf.__vrs));
+		mcp->__vrf.__vscr = pcb->pcb_vr.vscr;
+		mcp->__vrf.__vrsave = pcb->pcb_vr.vrsave;
+		*flagp |= _UC_POWERPC_VEC;
+	} else
+#endif
+		memset(&mcp->__vrf, 0, sizeof (mcp->__vrf));
 }
 
 int
@@ -203,8 +223,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 	/* Restore GPR context, if any. */
 	if (flags & _UC_CPU) {
-		if ((gr[_REG_MSR] & PSL_USERSTATIC) !=
-		    (tf->srr1 & PSL_USERSTATIC))
+		if (!PSL_USEROK_P(gr[_REG_MSR]))
 			return (EINVAL);
 
 #ifdef PPC_HAVE_FPU
@@ -227,8 +246,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #endif
 	}
 
-#ifdef PPC_HAVE_FPU
-	/* Restore FPR context, if any. */
+#ifdef PPC_HAVE_FPU /* Restore FPR context, if any. */
 	if ((flags & _UC_FPU) && mcp->__fpregs.__fpu_valid != 0) {
 		/* XXX we don't need to save the state, just to drop it */
 		save_fpu_lwp(l);
@@ -236,6 +254,18 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		    sizeof (pcb->pcb_fpu.fpr));
 		((int *)&pcb->pcb_fpu.fpscr)[_QUAD_LOWWORD] = 
 		    mcp->__fpregs.__fpu_fpscr;
+	}
+#endif
+
+#ifdef ALTIVEC
+	/* Restore AltiVec context, if any. */
+	if (flags & _UC_POWERPC_VEC) {
+		/* XXX we don't need to save the state, just to drop it */
+		save_vec_lwp(l);
+		(void)memcpy(pcb->pcb_vr.vreg, &mcp->__vrf.__vrs,
+		    sizeof (pcb->pcb_vr.vreg));
+		pcb->pcb_vr.vscr = mcp->__vrf.__vscr;
+		pcb->pcb_vr.vrsave = mcp->__vrf.__vrsave;
 	}
 #endif
 
