@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.204 2004/08/07 17:18:09 mycroft Exp $
+$NetBSD: pcmciadevs,v 1.205 2004/08/10 03:03:11 mycroft Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -49,6 +49,7 @@ vendor NEWMEDIA			0x0057	New Media Corporation
 vendor INTEL			0x0089	Intel
 vendor IBM			0x00a4	IBM Corporation
 vendor SHARP			0x00b0	Sharp Corporation
+vendor DIGITAL			0x0100	Digital Equipment Corporation
 vendor 3COM			0x0101	3Com Corporation
 vendor MEGAHERTZ		0x0102	Megahertz Corporation
 vendor SOCKET			0x0104	Socket Communications
@@ -405,7 +406,6 @@ vendor AMBICOM			-1	AmbiCom Inc
 vendor AMD			-1	AMD
 vendor BILLIONTON		-1	Billionton Systems Inc.
 vendor CNET			-1	CNet
-vendor DIGITAL			-1	Digital Equipment Corporation
 vendor DLINK			-1	D-Link
 vendor DYNALINK			-1	DynaLink
 vendor EIGERLABS		-1	Eiger labs,Inc.
@@ -451,7 +451,6 @@ product COREGA WIRELESS_LAN_PCCB_11	{ "corega_K.K.", "Wireless_LAN_PCCB-11", NUL
 product COREGA WIRELESS_LAN_PCCL_11	{ "corega", "WL&spPCCL-11", NULL, NULL } Corega Wireless LAN PCCL-11
 product COREGA WIRELESS_LAN_WLCFL_11	{ "corega", "WLCFL-11", NULL, NULL } Corega Wireless LAN WLCFL-11
 
-product DIGITAL DEPCMXX		{ "DIGITAL", "DEPCM-XX", NULL, NULL } DEC DEPCM-BA
 product DLINK DE650		{ "D-Link", "DE-650", NULL, NULL } D-Link DE-650
 product DLINK DE660		{ "D-Link", "DE-660", NULL, NULL } D-Link DE-660
 product DLINK DE660PLUS		{ "D-Link", "DE-660+", NULL, NULL } D-Link DE-660+
