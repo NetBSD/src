@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.5 1995/10/07 19:54:58 chopps Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.6 1995/10/09 02:08:45 chopps Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -52,7 +52,8 @@
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_ulreg.h>
-#include <amiga/dev/grf_ultmscode.h>
+
+#include <grf_ultmscode.h>
 
 int ul_ioctl __P((struct grf_softc *, u_long, void *, dev_t));
 int ul_getcmap __P((struct grf_softc *, struct grf_colormap *, dev_t));

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.45 1995/10/07 18:05:10 chopps Exp $
+#	$NetBSD: GENERIC,v 1.46 1995/10/09 02:08:37 chopps Exp $
 
 #
 # GENERIC AMIGA
@@ -136,12 +136,14 @@ grfrt0		at zbus0		# retina II
 grfrh0		at zbus0		# retina III
 grfcl*		at zbus0		# Picasso II/Piccalo/Spectrum
 grful0		at zbus0		# A2410
+grfcv0		at zbus0		# CyverVision 64
 
 grf0		at grfcc0
 grf1		at grfrt0
 grf2		at grfrh0
 grf3		at grfcl?
 grf4		at grful0
+grf5		at grfcv0
 
 ite0		at grf0			# terminal emulators for grf's
 ite1		at grf1			# terminal emulators for grf's
@@ -197,6 +199,7 @@ scsibus*	at mgnsc0
 scsibus*	at wesc0
 scsibus*	at idesc0
 scsibus*	at afsc0
+scsibus*	at aftsc0
 scsibus*	at flsc0
 scsibus*	at bzsc0
 
