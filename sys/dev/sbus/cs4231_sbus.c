@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.7 1999/01/12 02:28:55 kleink Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.8 1999/02/17 02:37:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -237,7 +237,7 @@ struct audio_device cs4231_device = {
  */
 int	cs4231_open __P((void *, int));
 void	cs4231_close __P((void *));
-u_long	cs4231_round_buffersize __P((void *, u_long));
+size_t	cs4231_round_buffersize __P((void *, int, size_t));
 int	cs4231_round_blocksize __P((void *, int));
 int	cs4231_halt_output __P((void *));
 int	cs4231_halt_input __P((void *));
@@ -247,7 +247,7 @@ int	cs4231_get_port __P((void *, mixer_ctrl_t *));
 int	cs4231_query_devinfo __P((void *, mixer_devinfo_t *));
 int	cs4231_get_props __P((void *));
 
-void   *cs4231_malloc __P((void *, u_long, int, int));
+void   *cs4231_malloc __P((void *, int, size_t, int, int));
 void	cs4231_free __P((void *, void *, int));
 int	cs4231_trigger_output __P((void *, void *, void *, int,
 				   void (*)(void *), void *,
@@ -456,11 +456,11 @@ cs4231_init(sc)
 }
 
 void *
-cs4231_malloc(addr, size, pool, flags)
+cs4231_malloc(addr, direction, size, pool, flags)
 	void *addr;
-	u_long size;
-	int pool;
-	int flags;
+	int direction;
+	size_t size;
+	int pool, flags;
 {
 	struct cs4231_softc *sc = addr;
 	struct cs_dma *p;
@@ -566,10 +566,11 @@ cs4231_close(addr)
 	DPRINTF(("sa_close: closed.\n"));
 }
 
-u_long
-cs4231_round_buffersize(addr, size)
+size_t
+cs4231_round_buffersize(addr, direction, size)
 	void *addr;
-	u_long size;
+	int direction;
+	size_t size;
 {
 #if 0
 	if (size > APC_MAX)

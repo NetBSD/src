@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.1 1998/12/10 18:47:19 augustss Exp $ */
+/*      $NetBSD: sv.c,v 1.2 1999/02/17 02:37:42 mycroft Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -113,9 +113,9 @@ int	sv_getdev __P((void *, struct audio_device *));
 int	sv_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	sv_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	sv_query_devinfo __P((void *, mixer_devinfo_t *));
-void   *sv_malloc __P((void *, u_long, int, int));
+void   *sv_malloc __P((void *, int, size_t, int, int));
 void	sv_free __P((void *, void *, int));
-u_long	sv_round __P((void *, u_long));
+size_t	sv_round_buffersize __P((void *, int, size_t));
 int	sv_mappage __P((void *, void *, int, int));
 int	sv_get_props __P((void *));
 
@@ -145,7 +145,7 @@ struct audio_hw_if sv_hw_if = {
 	sv_query_devinfo,
 	sv_malloc,
 	sv_free,
-	sv_round,
+	sv_round_buffersize,
 	sv_mappage,
 	sv_get_props,
 };
@@ -1367,11 +1367,11 @@ sv_init_mixer(sc)
 }
 
 void *
-sv_malloc(addr, size, pool, flags)
+sv_malloc(addr, direction, size, pool, flags)
 	void *addr;
-	u_long size;
-	int pool;
-	int flags;
+	int direction;
+	size_t size;
+	int pool, flags;
 {
 	struct sv_softc *sc = addr;
         struct sv_dma *p;
@@ -1409,10 +1409,11 @@ sv_free(addr, ptr, pool)
         }
 }
 
-u_long
-sv_round(addr, size)
+size_t
+sv_round_buffersize(addr, direction, size)
 	void *addr;
-	u_long size;
+	int direction;
+	size_t size;
 {
 	return (size);
 }

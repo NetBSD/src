@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.63 1998/08/17 21:16:15 augustss Exp $	*/
+/*	$NetBSD: sb.c,v 1.64 1999/02/17 02:37:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -120,7 +120,7 @@ struct audio_hw_if sb_hw_if = {
 	sbdsp_mixer_query_devinfo,
 	sb_malloc,
 	sb_free,
-	sb_round,
+	sb_round_buffersize,
         sb_mappage,
 	sbdsp_get_props,
 	sbdsp_trigger_output,

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.63 1998/09/09 04:40:34 thorpej Exp $	*/
+/*	$NetBSD: gus.c,v 1.64 1999/02/17 02:37:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -605,7 +605,7 @@ struct audio_hw_if gus_hw_if = {
 	gus_mixer_query_devinfo,
 	ad1848_isa_malloc,
 	ad1848_isa_free,
-	ad1848_isa_round, 
+	ad1848_isa_round_buffersize, 
 	ad1848_isa_mappage, 
 	gus_get_props,
 };
@@ -640,7 +640,7 @@ static struct audio_hw_if gusmax_hw_if = {
 	gusmax_mixer_query_devinfo,
 	ad1848_isa_malloc,
 	ad1848_isa_free,
-	ad1848_isa_round, 
+	ad1848_isa_round_buffersize, 
 	ad1848_isa_mappage, 
 	gusmax_get_props,
 };

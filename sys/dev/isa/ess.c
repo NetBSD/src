@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.29 1999/02/17 01:25:32 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.30 1999/02/17 02:37:39 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -137,9 +137,9 @@ int	ess_getdev __P((void *, struct audio_device *));
 int	ess_set_port __P((void *, mixer_ctrl_t *));
 int	ess_get_port __P((void *, mixer_ctrl_t *));
 
-void   *ess_malloc __P((void *, unsigned long, int, int));
+void   *ess_malloc __P((void *, int, size_t, int, int));
 void	ess_free __P((void *, void *, int));
-unsigned long ess_round __P((void *, unsigned long));
+size_t	ess_round_buffersize __P((void *, int, size_t));
 int	ess_mappage __P((void *, void *, int, int));
 
 
@@ -213,7 +213,7 @@ struct audio_hw_if ess_hw_if = {
 	ess_query_devinfo,
 	ess_malloc,
 	ess_free,
-	ess_round,
+	ess_round_buffersize,
         ess_mappage,
 	ess_get_props,
 	ess_trigger_output,
@@ -1788,15 +1788,20 @@ ess_query_devinfo(addr, dip)
 }
 
 void *
-ess_malloc(addr, size, pool, flags)
+ess_malloc(addr, direction, size, pool, flags)
 	void *addr;
-	unsigned long size;
-	int pool;
-	int flags;
+	int direction;
+	size_t size;
+	int pool, flags;
 {
 	struct ess_softc *sc = addr;
+	int drq;
 
-	return isa_malloc(sc->sc_ic, min(sc->sc_in.drq, sc->sc_out.drq), size, pool, flags);
+	if (direction == AUMODE_PLAY)
+		drq = sc->sc_out.drq;
+	else
+		drq = sc->sc_in.drq;
+	return (isa_malloc(sc->sc_ic, drq, size, pool, flags));
 }
 
 void
@@ -1808,14 +1813,15 @@ ess_free(addr, ptr, pool)
 	isa_free(ptr, pool);
 }
 
-unsigned long
-ess_round(addr, size)
+size_t
+ess_round_buffersize(addr, direction, size)
 	void *addr;
-	unsigned long size;
+	int direction;
+	size_t size;
 {
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;
-	return size;
+	return (size);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.8 1998/08/17 21:16:12 augustss Exp $	*/
+/*	$NetBSD: interwave.c,v 1.9 1999/02/17 02:37:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1030,7 +1030,7 @@ iw_init_input(addr, buf, cc)
 
 	DPRINTF(("iw_init_input\n"));
 
-	isa_dmastart(sc->sc_ic, sc->sc_playdrq, buf,
+	isa_dmastart(sc->sc_ic, sc->sc_recdrq, buf,
 		     cc, NULL, DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 	return 0;
 }
@@ -1077,7 +1077,6 @@ iw_start_output(addr, p, cc, intr, arg)
 		cc >>= 2;
 	if (sc->play_precision == 16)
 		cc >>= 1;
-
 
 	if (sc->play_channels == 2 && sc->play_encoding != AUDIO_ENCODING_ADPCM)
 		cc >>= 1;
@@ -1140,9 +1139,8 @@ iw_start_input(addr, p, cc, intr, arg)
 		     cc, NULL, DMAMODE_READ, BUS_DMA_NOWAIT);
 
 
-	if (sc->rec_encoding == AUDIO_ENCODING_ADPCM) {
+	if (sc->rec_encoding == AUDIO_ENCODING_ADPCM)
 		cc >>= 2;
-	}
 	if (sc->rec_precision == 16)
 		cc >>= 1;
 
@@ -1611,15 +1609,20 @@ iw_query_devinfo(addr, dip)
 
 
 void *
-iw_malloc(addr, size, pool, flags)
+iw_malloc(addr, direction, size, pool, flags)
 	void	*addr;
-	u_long	size;
-	int	pool;
-	int	flags;
+	int	direction;
+	size_t	size;
+	int	pool, flags;
 {
 	struct iw_softc *sc = addr;
+	int drq;
 
-	return isa_malloc(sc->sc_ic, 4, size, pool, flags);
+	if (direction == AUMODE_PLAY)
+		drq = sc->sc_playdrq;
+	else
+		drq = sc->sc_recdrq;
+	return (isa_malloc(sc->sc_ic, drq, size, pool, flags));
 }
 
 void
@@ -1632,13 +1635,14 @@ iw_free(addr, ptr, pool)
 }
 
 u_long
-iw_round(addr, size)
+iw_round_buffersize(addr, direction, size)
 	void	*addr;
-	u_long	size;
+	int	direction;
+	size_t	size;
 {
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;
-	return size;
+	return (size);
 }
 
 int

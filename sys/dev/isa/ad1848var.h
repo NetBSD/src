@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.25 1998/08/25 22:34:29 pk Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.26 1999/02/17 02:37:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -92,9 +92,9 @@ int	ad1848_isa_dma_input __P((void *, void *, int,
 
 int	ad1848_isa_intr __P((void *));
 
-void   *ad1848_isa_malloc __P((void *, unsigned long, int, int));
+void   *ad1848_isa_malloc __P((void *, int, size_t, int, int));
 void	ad1848_isa_free __P((void *, void *, int));
-unsigned long ad1848_isa_round __P((void *, unsigned long));
+size_t	ad1848_isa_round_buffersize __P((void *, int, size_t));
 int	ad1848_isa_mappage __P((void *, void *, int, int));
 int	ad1848_isa_get_props __P((void *));
 #endif

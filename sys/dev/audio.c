@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.110 1998/12/27 23:25:32 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.111 1999/02/17 02:37:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -141,7 +141,7 @@ static __inline void audio_pint_silence
 	__P((struct audio_softc *, struct audio_ringbuffer *, u_char *, int));
 
 int	audio_alloc_ring 
-	__P((struct audio_softc *, struct audio_ringbuffer *, int));
+	__P((struct audio_softc *, struct audio_ringbuffer *, int, size_t));
 void	audio_free_ring __P((struct audio_softc *, struct audio_ringbuffer *));
 
 int	audioprobe __P((struct device *, struct cfdata *, void *));
@@ -243,13 +243,13 @@ audioattach(parent, self, aux)
 	sc->hw_hdl = hdlp;
 	sc->sc_dev = parent;
 
-	error = audio_alloc_ring(sc, &sc->sc_pr, AU_RING_SIZE);
+	error = audio_alloc_ring(sc, &sc->sc_pr, AUMODE_PLAY, AU_RING_SIZE);
 	if (error) {
 		sc->hw_if = 0;
 		printf("audio: could not allocate play buffer\n");
 		return;
 	}
-	error = audio_alloc_ring(sc, &sc->sc_rr, AU_RING_SIZE);
+	error = audio_alloc_ring(sc, &sc->sc_rr, AUMODE_RECORD, AU_RING_SIZE);
 	if (error) {
 		audio_free_ring(sc, &sc->sc_pr);
 		sc->hw_if = 0;
@@ -428,28 +428,29 @@ audio_print_params(s, p)
 #endif
 
 int
-audio_alloc_ring(sc, r, bufsize)
+audio_alloc_ring(sc, r, direction, bufsize)
 	struct audio_softc *sc;
 	struct audio_ringbuffer *r;
-	int bufsize;
+	int direction;
+	size_t bufsize;
 {
 	struct audio_hw_if *hw = sc->hw_if;
 	void *hdl = sc->hw_hdl;
 	/*
 	 * Alloc DMA play and record buffers
 	 */
-	ROUNDSIZE(bufsize);
 	if (bufsize < AUMINBUF)
 		bufsize = AUMINBUF;
+	ROUNDSIZE(bufsize);
 	if (hw->round_buffersize)
-		bufsize = hw->round_buffersize(hdl, bufsize);
-	r->bufsize = bufsize;
+		bufsize = hw->round_buffersize(hdl, direction, bufsize);
 	if (hw->allocm)
-	    r->start = hw->allocm(hdl, r->bufsize, M_DEVBUF, M_WAITOK);
+		r->start = hw->allocm(hdl, direction, bufsize, M_DEVBUF, M_WAITOK);
 	else
-	    r->start = malloc(bufsize, M_DEVBUF, M_WAITOK);
+		r->start = malloc(bufsize, M_DEVBUF, M_WAITOK);
 	if (r->start == 0)
 		return ENOMEM;
+	r->bufsize = bufsize;
 	return 0;
 }
 
@@ -458,11 +459,12 @@ audio_free_ring(sc, r)
 	struct audio_softc *sc;
 	struct audio_ringbuffer *r;
 {
-	if (sc->hw_if->freem) {
-	    sc->hw_if->freem(sc->hw_hdl, r->start, M_DEVBUF);
-	} else {
-	    free(r->start, M_DEVBUF);
-	}
+
+	if (sc->hw_if->freem)
+		sc->hw_if->freem(sc->hw_hdl, r->start, M_DEVBUF);
+	else
+		free(r->start, M_DEVBUF);
+	r->start = 0;
 }
 
 int

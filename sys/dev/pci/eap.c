@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.20 1999/01/08 19:22:36 augustss Exp $	*/
+/*	$NetBSD: eap.c,v 1.21 1999/02/17 02:37:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -306,9 +306,9 @@ int	eap_getdev __P((void *, struct audio_device *));
 int	eap_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	eap_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	eap_query_devinfo __P((void *, mixer_devinfo_t *));
-void   *eap_malloc __P((void *, u_long, int, int));
+void   *eap_malloc __P((void *, int, size_t, int, int));
 void	eap_free __P((void *, void *, int));
-u_long	eap_round __P((void *, u_long));
+size_t	eap_round_buffersize __P((void *, int, size_t));
 int	eap_mappage __P((void *, void *, int, int));
 int	eap_get_props __P((void *));
 void	eap_write_codec __P((struct eap_softc *sc, int a, int d));
@@ -336,7 +336,7 @@ struct audio_hw_if eap_hw_if = {
 	eap_query_devinfo,
 	eap_malloc,
 	eap_free,
-	eap_round,
+	eap_round_buffersize,
 	eap_mappage,
 	eap_get_props,
 	eap_trigger_output,
@@ -1262,11 +1262,11 @@ eap_query_devinfo(addr, dip)
 }
 
 void *
-eap_malloc(addr, size, pool, flags)
+eap_malloc(addr, direction, size, pool, flags)
 	void *addr;
-	u_long size;
-	int pool;
-	int flags;
+	int direction;
+	size_t size;
+	int pool, flags;
 {
 	struct eap_softc *sc = addr;
 	struct eap_dma *p;
@@ -1304,10 +1304,11 @@ eap_free(addr, ptr, pool)
 	}
 }
 
-u_long
-eap_round(addr, size)
+size_t
+eap_round_buffersize(addr, direction, size)
 	void *addr;
-	u_long size;
+	int direction;
+	size_t size;
 {
 	return (size);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.44 1998/08/17 21:16:14 augustss Exp $	*/
+/*	$NetBSD: pas.c,v 1.45 1999/02/17 02:37:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -141,7 +141,7 @@ struct audio_hw_if pas_hw_if = {
 	sbdsp_mixer_query_devinfo,
 	sb_malloc,
 	sb_free,
-	sb_round,
+	sb_round_buffersize,
         sb_mappage,
 	sbdsp_get_props,
 	sbdsp_trigger_output,
