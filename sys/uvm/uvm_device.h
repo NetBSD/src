@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.h,v 1.5 1998/03/09 00:58:56 mrg Exp $	*/
+/*	$NetBSD: uvm_device.h,v 1.6 1999/03/24 03:52:41 cgd Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -71,6 +71,6 @@ struct uvm_device {
  * prototypes
  */
 
-struct uvm_object *udv_attach __P((void *, vm_prot_t));
+struct uvm_object *udv_attach __P((void *, vm_prot_t, vaddr_t, vsize_t));
 
 #endif /* _UVM_UVM_DEVICE_H_ */
