@@ -1,15 +1,15 @@
-.\"	$NetBSD: wsfontload.8,v 1.13 2001/08/12 23:51:15 uwe Exp $
+.\"	$NetBSD: wsfontload.8,v 1.14 2001/10/29 17:59:00 drochner Exp $
 .\"
 .Dd November 8, 2000
 .Os
 .Dt WSFONTLOAD 8
 .Sh NAME
 .Nm wsfontload
-.Nd load a font bitmap into a wscons display device
+.Nd load a font bitmap into the wsfont pool or a wscons display device
 .Sh SYNOPSIS
 .Nm ""
 .Bk -words
-.Op Fl f Ar ctldev
+.Op Fl f Ar wsdev
 .Ek
 .Bk -words
 .Op Fl w Ar width
@@ -36,8 +36,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility loads a font bitmap to a wscons device if the device driver
-supports this.
+utility loads a font bitmap into the wsfont font pool 
+(or a wscons device if the device driver supports this).
 The font gets assigned a name in this process which it can be referred to
 by later for use on a display screen.
 The font is loaded from the specified
@@ -48,10 +48,10 @@ is not provided.
 .Pp
 The options are:
 .Bl -tag -width xxxxxxxxxxx
-.It Fl f Ar ctldev
-Specify the control device of the wscons display to operate on.
+.It Fl f Ar wsdev
+Specify the device to operate on.
 Default is
-.Pa /dev/ttyEcfg .
+.Pa /dev/wsfont .
 .It Fl w Ar width
 Sets the width of a font character in pixels. Default is 8.
 .It Fl h Ar height
