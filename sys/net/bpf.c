@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.104 2004/08/19 20:58:23 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.105 2004/11/30 04:28:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,9 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.104 2004/08/19 20:58:23 christos Exp $");
-
-#include "bpfilter.h"
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.105 2004/11/30 04:28:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.104 2004/08/19 20:58:23 christos Exp $");
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
+#include <sys/queue.h>
 
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/tty.h>
 #include <sys/uio.h>
 
@@ -106,7 +106,7 @@ int bpf_maxbufsize = BPF_DFLTBUFSIZE;	/* XXX set dynamically, see above */
  *  bpf_dtab holds the descriptors, indexed by minor device #
  */
 struct bpf_if	*bpf_iflist;
-struct bpf_d	bpf_dtab[NBPFILTER];
+LIST_HEAD(, bpf_d) bpf_list;
 
 static int	bpf_allocbufs(struct bpf_d *);
 static void	bpf_deliver(struct bpf_if *,
@@ -129,17 +129,31 @@ static void	reset_d(struct bpf_d *);
 static int	bpf_getdltlist(struct bpf_d *, struct bpf_dltlist *);
 static int	bpf_setdlt(struct bpf_d *, u_int);
 
+static int	bpf_read(struct file *, off_t *, struct uio *, struct ucred *,
+    int);
+static int	bpf_write(struct file *, off_t *, struct uio *, struct ucred *,
+    int);
+static int	bpf_ioctl(struct file *, u_long, void *, struct proc *);
+static int	bpf_poll(struct file *, int, struct proc *);
+static int	bpf_close(struct file *, struct proc *);
+static int	bpf_kqfilter(struct file *, struct knote *);
+
+static const struct fileops bpf_fileops = {
+	bpf_read,
+	bpf_write,
+	bpf_ioctl,
+	fnullop_fcntl,
+	bpf_poll,
+	fbadop_stat,
+	bpf_close,
+	bpf_kqfilter,
+};
+
 dev_type_open(bpfopen);
-dev_type_close(bpfclose);
-dev_type_read(bpfread);
-dev_type_write(bpfwrite);
-dev_type_ioctl(bpfioctl);
-dev_type_poll(bpfpoll);
-dev_type_kqfilter(bpfkqfilter);
 
 const struct cdevsw bpf_cdevsw = {
-	bpfopen, bpfclose, bpfread, bpfwrite, bpfioctl,
-	nostop, notty, bpfpoll, nommap, bpfkqfilter,
+	bpfopen, noclose, noread, nowrite, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 static int
@@ -339,9 +353,6 @@ bpf_detachd(d)
  * This is probably cheaper than marking with a constant since
  * the address should be in a register anyway.
  */
-#define D_ISFREE(d) ((d) == (d)->bd_next)
-#define D_MARKFREE(d) ((d)->bd_next = (d))
-#define D_MARKUSED(d) ((d)->bd_next = 0)
 
 /*
  * bpfilterattach() is called at boot time.
@@ -351,18 +362,11 @@ void
 bpfilterattach(n)
 	int n;
 {
-	int i;
-	/*
-	 * Mark all the descriptors free.
-	 */
-	for (i = 0; i < NBPFILTER; ++i)
-		D_MARKFREE(&bpf_dtab[i]);
-
+	LIST_INIT(&bpf_list);
 }
 
 /*
- * Open ethernet device.  Returns ENXIO for illegal minor device number,
- * EBUSY if file is open by another process.
+ * Open ethernet device. Clones.
  */
 /* ARGSUSED */
 int
@@ -373,24 +377,22 @@ bpfopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	struct bpf_d *d;
+	struct file *fp;
+	int error, fd;
 
-	if (minor(dev) >= NBPFILTER)
-		return (ENXIO);
-	/*
-	 * Each minor can be opened by only one process.  If the requested
-	 * minor is in use, return EBUSY.
-	 */
-	d = &bpf_dtab[minor(dev)];
-	if (!D_ISFREE(d))
-		return (EBUSY);
+	/* falloc() will use the descriptor for us. */
+	if ((error = falloc(p, &fp, &fd)) != 0)
+		return error;
 
-	/* Mark "free" and do most initialization. */
-	memset((char *)d, 0, sizeof(*d));
+	d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK);
+	(void)memset(d, 0, sizeof(*d));
 	d->bd_bufsize = bpf_bufsize;
 	d->bd_seesent = 1;
 	callout_init(&d->bd_callout);
 
-	return (0);
+	LIST_INSERT_HEAD(&bpf_list, d, bd_list);
+
+	return fdclone(p, fp, fd, &bpf_fileops, d);
 }
 
 /*
@@ -398,14 +400,10 @@ bpfopen(dev, flag, mode, p)
  * deallocating its buffers, and marking it free.
  */
 /* ARGSUSED */
-int
-bpfclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+static int
+bpf_close(struct file *fp, struct proc *p)
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d = fp->f_data;
 	int s;
 
 	s = splnet();
@@ -416,6 +414,9 @@ bpfclose(dev, flag, mode, p)
 		bpf_detachd(d);
 	splx(s);
 	bpf_freed(d);
+	LIST_REMOVE(d, bd_list);
+	free(d, M_DEVBUF);
+	fp->f_data = NULL;
 
 	return (0);
 }
@@ -434,13 +435,11 @@ bpfclose(dev, flag, mode, p)
 /*
  *  bpfread - read next chunk of packets from buffers
  */
-int
-bpfread(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+static int
+bpf_read(struct file *fp, off_t *offp, struct uio *uio,
+    struct ucred *cred, int flags)
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d = fp->f_data;
 	int timed_out;
 	int error;
 	int s;
@@ -463,7 +462,7 @@ bpfread(dev, uio, ioflag)
 	 * have arrived to fill the store buffer.
 	 */
 	while (d->bd_hbuf == 0) {
-		if (ioflag & IO_NDELAY) {
+		if (fp->f_flag & FNONBLOCK) {
 			if (d->bd_slen == 0) {
 				splx(s);
 				return (EWOULDBLOCK);
@@ -567,13 +566,11 @@ bpf_timed_out(arg)
 }
 
 
-int
-bpfwrite(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+static int
+bpf_write(struct file *fp, off_t *offp, struct uio *uio,
+    struct ucred *cred, int flags)
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d = fp->f_data;
 	struct ifnet *ifp;
 	struct mbuf *m;
 	int error, s;
@@ -650,15 +647,14 @@ extern struct bpf_insn *bpf_udp_filter;
  *  BIOSHDRCMPLT	Set "header already complete" flag.
  */
 /* ARGSUSED */
-int
-bpfioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
+static int
+bpf_ioctl(struct file *fp, u_long cmd, void *addr, struct proc *p)
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d = fp->f_data;
 	int s, error = 0;
 #ifdef BPF_KERN_FILTER
 	struct bpf_insn **p;
 #endif
-	void *addr = arg;
 
 	s = splnet();
 	if (d->bd_state == BPF_WAITING)
@@ -1074,10 +1070,10 @@ bpf_ifname(struct ifnet *ifp, struct ifreq *ifr)
  * ability to write to the BPF device.
  * Otherwise, return false but make a note that a selwakeup() must be done.
  */
-int
-bpfpoll(dev_t dev, int events, struct proc *p)
+static int
+bpf_poll(struct file *fp, int events, struct proc *p)
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d = fp->f_data;
 	int s = splnet();
 	int revents;
 
@@ -1134,10 +1130,10 @@ filt_bpfread(struct knote *kn, long hint)
 static const struct filterops bpfread_filtops =
 	{ 1, NULL, filt_bpfrdetach, filt_bpfread };
 
-int
-bpfkqfilter(dev_t dev, struct knote *kn)
+static int
+bpf_kqfilter(struct file *fp, struct knote *kn)
 {
-	struct bpf_d *d = &bpf_dtab[minor(dev)];
+	struct bpf_d *d = fp->f_data;
 	struct klist *klist;
 	int s;
 
@@ -1501,8 +1497,6 @@ bpf_freed(struct bpf_d *d)
 	}
 	if (d->bd_filter)
 		free(d->bd_filter, M_DEVBUF);
-
-	D_MARKFREE(d);
 }
 
 /*
@@ -1560,16 +1554,11 @@ bpfdetach(struct ifnet *ifp)
 {
 	struct bpf_if *bp, **pbp;
 	struct bpf_d *d;
-	int i, s, cmaj;
-
-	/* locate the major number */
-	cmaj = cdevsw_lookup_major(&bpf_cdevsw);
+	int s;
 
 	/* Nuke the vnodes for any open instances */
-	for (i = 0; i < NBPFILTER; ++i) {
-		d = &bpf_dtab[i];
-		if (!D_ISFREE(d) && d->bd_bif != NULL &&
-		    d->bd_bif->bif_ifp == ifp) {
+	for (d = LIST_FIRST(&bpf_list); d != NULL; d = LIST_NEXT(d, bd_list)) {
+		if (d->bd_bif != NULL && d->bd_bif->bif_ifp == ifp) {
 			/*
 			 * Detach the descriptor from an interface now.
 			 * It will be free'ed later by close routine.
@@ -1578,7 +1567,6 @@ bpfdetach(struct ifnet *ifp)
 			d->bd_promisc = 0;	/* we can't touch device. */
 			bpf_detachd(d);
 			splx(s);
-			vdevgone(cmaj, i, i, VCHR);
 		}
 	}
 

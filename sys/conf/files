@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.699 2004/11/25 06:52:14 yamt Exp $
+#	$NetBSD: files,v 1.700 2004/11/30 04:28:43 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1279,7 +1279,7 @@ file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs | lkm
 file	miscfs/specfs/spec_vnops.c
 file	miscfs/syncfs/sync_subr.c
 file	miscfs/syncfs/sync_vnops.c
-file	net/bpf.c			bpfilter		needs-count
+file	net/bpf.c			bpfilter		needs-flag
 file	net/bpf_filter.c		bpf_filter
 file	net/bsd-comp.c			ppp & ppp_bsdcomp
 file	net/if.c
