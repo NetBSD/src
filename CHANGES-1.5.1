@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.51 2001/04/21 22:15:02 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.52 2001/04/22 18:40:54 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -3851,3 +3851,74 @@ sys/arch/alpha/alpha/vm_machdep.c		1.65 via patch
   This appears to fix the NTP clock stability problems observed on
   some alpha systems; the clock appears stable even when there's
   heavy raidframe (i.e., kthread-intensive) I/O under way.
+
+sys/netinet6/icmp6.c				patch
+
+  Avoid passing NULL pointer to in6_ifawithscope.
+
+usr.bin/vis/vis.1				1.8
+
+  Minor documentation fix; move a line to its proper place.
+
+gnu/usr.bin/gas.new/Makefile			1.13
+gnu/usr.bin/gdb/Makefile			1.48 via patch
+gnu/usr.bin/ld.new/Makefile			1.19
+
+  Don't build these (binutils 2.9.1) on sparc64.
+
+sys/arch/sparc/sparc/locore.s			1.139 via patch
+
+  In proc_trampoline() make the new process run at base interrupt
+  priority level.  Especially important for kernel threads, which
+  would otherwise keep running at splclock().
+
+  Eliminates system clock instability.
+
+libexec/makewhatis/makewhatis.c			1.14-1.16
+
+  Major improvments of parsing formatted and unformatted manual
+  pages.  Includes fixes for PR#12390 and PR#12535.
+
+sys/arch/bebox/stand/mkbootimage/mkbootimage.c	1.3
+
+  Allow the file to be built on a big-endian (like the BeBox!)
+  system.
+
+sys/netinet6/ip6_output.c			1.35
+
+  Disallow addresses that are not supposed to be put into IPv6
+  source, on IPV6_PKTINFO setsockopt.
+
+distrib/sets/lists/comp/mi			patch
+
+  Fix kadm5 / krb5 include file confusion.
+
+usr.sbin/pkg_install/lib/ftpio.c		1.30
+
+  Do not terminate on EINTR.  With previous behavior pkg_add
+  terminates if we suspend/change window size.
+
+usr.bin/fdformat/Makefile			1.6
+
+  Build on bebox, too.
+
+distrib/sets/lists/comp/md.bebox		1.11
+distrib/sets/lists/comp/obsolete.bebox		1.1 (new)
+distrib/sets/lists/etc/md.bebox			1.4-1.5
+
+  Update to reflect reality.
+
+distrib/sets/lists/base/md.sparc		patch
+
+  Add ./usr/mdec/boot.388000 to set list.
+
+distrib/utils/sysinst/arch/bebox/md.c		1.23
+distrib/utils/sysinst/arch/bebox/msg.md.en	1.11
+
+  Remove duplicate definition of "nobiosgeom"
+  Update to "new" edit_mbr() and define a basic md_bios_info().
+
+usr.bin/top/top.c				1.7
+
+  If the read() on stdin for a command fails, exit.  Prevents
+  the program from spinning in certain conditions.
