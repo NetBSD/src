@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs.c,v 1.1 2000/02/23 06:57:46 itojun Exp $	*/
+/*	$NetBSD: getifaddrs.c,v 1.2 2000/02/23 15:29:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -22,7 +22,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	BSDI getifaddrs.c,v 2.11 1999/03/15 20:57:20 jch Exp
+ *	BSDI getifaddrs.c,v 2.12 2000/02/23 14:51:59 dab Exp
  */
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -366,4 +366,10 @@ getifaddrs(struct ifaddrs **pif)
 		free(ifa);
 	}
 	return (0);
+}
+
+void
+freeifaddrs(struct ifaddrs *ifp)
+{
+	free(ifp);
 }
