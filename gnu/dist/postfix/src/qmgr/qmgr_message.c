@@ -389,8 +389,17 @@ static int qmgr_message_sort_compare(const void *p1, const void *p2)
 
     /*
      * Compare most significant to least significant recipient attributes.
+     * The comparison function must be transitive, so NULL values need to be
+     * assigned an ordinal (we set NULL last).
      */
-    if ((queue1 = rcpt1->queue) != 0 && (queue2 = rcpt2->queue) != 0) {
+
+    queue1 = rcpt1->queue;
+    queue2 = rcpt2->queue;
+    if (queue1 != 0 && queue2 == 0)
+	return (-1);
+    if (queue1 == 0 && queue2 != 0)
+	return (1);
+    if (queue1 != 0 && queue2 != 0) {
 
 	/*
 	 * Compare message transport.
@@ -409,8 +418,13 @@ static int qmgr_message_sort_compare(const void *p1, const void *p2)
     /*
      * Compare recipient domain.
      */
-    if ((at1 = strrchr(rcpt1->address, '@')) != 0
-	&& (at2 = strrchr(rcpt2->address, '@')) != 0
+    at1 = strrchr(rcpt1->address, '@');
+    at2 = strrchr(rcpt2->address, '@');
+    if (at1 == 0 && at2 != 0)
+	return (1);
+    if (at1 != 0 && at2 == 0)
+	return (-1);
+    if (at1 != 0 && at2 != 0
 	&& (result = strcasecmp(at1, at2)) != 0)
 	return (result);
 
@@ -588,7 +602,7 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	    queue = 0;
 	}
 	if (transport->recipient_limit == 1) {
-	    VSTRING_SPACE(reply.nexthop, len + 1);
+	    VSTRING_SPACE(reply.nexthop, len + 2);
 	    memmove(STR(reply.nexthop) + len + 1, STR(reply.nexthop),
 		    LEN(reply.nexthop) + 1);
 	    memcpy(STR(reply.nexthop), STR(reply.recipient), len);

@@ -26,7 +26,7 @@ SRCS	= alldig.c argv.c argv_split.c attr_print0.c attr_print64.c \
 	unix_connect.c unix_listen.c unix_trigger.c unsafe.c username.c \
 	valid_hostname.c vbuf.c vbuf_print.c vstream.c vstream_popen.c \
 	vstring.c vstring_vstream.c watchdog.c writable.c write_buf.c \
-	write_wait.c
+	write_wait.c strcasecmp.c
 OBJS	= alldig.o argv.o argv_split.o attr_print0.o attr_print64.o \
 	attr_scan0.o attr_scan64.o base64_code.o basename.o binhash.o \
 	chroot_uid.o clean_env.o close_on_exec.o concatenate.o ctable.o \
@@ -54,7 +54,7 @@ OBJS	= alldig.o argv.o argv_split.o attr_print0.o attr_print64.o \
 	unix_connect.o unix_listen.o unix_trigger.o unsafe.o username.o \
 	valid_hostname.o vbuf.o vbuf_print.o vstream.o vstream_popen.o \
 	vstring.o vstring_vstream.o watchdog.o writable.o write_buf.o \
-	write_wait.o
+	write_wait.o $(STRCASE)
 HDRS	= argv.h attr.h base64_code.h binhash.h chroot_uid.h clean_env.h \
 	connect.h ctable.h dict.h dict_db.h dict_dbm.h dict_env.h \
 	dict_ht.h dict_ldap.h dict_mysql.h dict_ni.h dict_nis.h \
@@ -1062,6 +1062,8 @@ stat_as.o: sys_defs.h
 stat_as.o: msg.h
 stat_as.o: set_eugid.h
 stat_as.o: stat_as.h
+strcasecmp.o: strcasecmp.c
+strcasecmp.o: sys_defs.h
 stream_connect.o: stream_connect.c
 stream_connect.o: sys_defs.h
 stream_connect.o: msg.h

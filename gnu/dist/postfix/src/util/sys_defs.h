@@ -651,6 +651,7 @@ extern int h_errno;
 /* It's amazing what is all missing...	*/
 #define isascii(c)	((unsigned)(c)<=0177)
 extern int opterr;
+typedef unsigned short  mode_t;
 
 #define MISSING_PID_T
 #define MISSING_STRFTIME_E
@@ -701,6 +702,7 @@ extern int opterr;
 /* It's amazing what is all missing...	*/
 #define isascii(c)	((unsigned)(c)<=0177)
 extern int opterr;
+typedef unsigned short  mode_t;
 
 #define MISSING_PID_T
 #define MISSING_STRFTIME_E

@@ -47,6 +47,7 @@ typedef struct CLEANUP_STATE {
     int     err_mask;			/* allowed badness */
     VSTRING *header_buf;		/* multi-record header */
     int     headers_seen;		/* which headers were seen */
+    int     long_header;		/* multi-record physical header line */
     int     hop_count;			/* count of received: headers */
     ARGV   *recipients;			/* recipients from regular headers */
     ARGV   *resent_recip;		/* recipients from resent headers */
