@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.21 1999/07/11 02:06:57 thorpej Exp $	*/
+/*	$NetBSD: dir.c,v 1.22 1999/07/12 17:29:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: dir.c,v 1.21 1999/07/11 02:06:57 thorpej Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.22 1999/07/12 17:29:32 thorpej Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.21 1999/07/11 02:06:57 thorpej Exp $");
+__RCSID("$NetBSD: dir.c,v 1.22 1999/07/12 17:29:32 thorpej Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -915,7 +915,7 @@ Dir_FindFile (name, path)
     register char *file;		/* the current filename to check */
     register Path *p;			/* current path member */
     register char *cp;			/* index of first slash, if any */
-    Boolean	  lastDot = TRUE;	/* true we should search dot last */
+    Boolean	  lastDot = FALSE;	/* true we should search dot last */
     Boolean	  hasSlash;		/* true if 'name' contains a / */
     struct stat	  stb;			/* Buffer for stat, if necessary */
     Hash_Entry	  *entry;		/* Entry for mtimes table */
