@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.615.2.13 2004/08/30 09:43:46 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.615.2.14 2004/09/18 16:51:17 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.13 2004/08/30 09:43:14 tron Exp 
+ *	NetBSD: pcidevs,v 1.615.2.14 2004/09/18 16:50:30 he Exp 
  */
 
 /*
@@ -1979,6 +1979,7 @@
 #define	PCI_PRODUCT_SYMBIOS_FC929_1	0x0623		/* FC929 */
 #define	PCI_PRODUCT_SYMBIOS_FC919	0x0624		/* FC919 */
 #define	PCI_PRODUCT_SYMBIOS_FC919_1	0x0625		/* FC919 */
+#define	PCI_PRODUCT_SYMBIOS_FC929X	0x0626		/* FC929X */
 
 /* Packet Engines products */
 #define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC Ethernet */
