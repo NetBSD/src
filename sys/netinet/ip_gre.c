@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.25 2003/04/21 07:02:31 itojun Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.26 2003/04/21 08:14:45 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.25 2003/04/21 07:02:31 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.26 2003/04/21 08:14:45 itojun Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -221,7 +221,6 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 		return (EINVAL);
 	}
 	m_adj(m, hlen);
-	m->m_pkthdr.len -= hlen;
 
 #if NBPFILTER > 0
 	if (sc->sc_if.if_bpf) {
