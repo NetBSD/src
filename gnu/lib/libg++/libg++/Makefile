@@ -13,16 +13,15 @@ CFLAGS+=-+
 .endif
 GXX=		g++
 GXXFLAGS=	${CFLAGS} -felide-constructors
-LDXX=		/usr/libexec/ld++
 
 .cc.o:
 	$(GXX) $(GXXFLAGS) -c $(.IMPSRC)
-	@$(LDXX) -x -r $(.TARGET)
+	@$(LD) -x -r $(.TARGET)
 	@mv a.out $(.TARGET)
 
 .cc.po:
 	$(GXX) -p $(GXXFLAGS) -c $(.IMPSRC) -o $(.TARGET)
-	@$(LDXX) -X -r $(.TARGET)
+	@$(LD) -X -r $(.TARGET)
 	@mv a.out $(.TARGET)
 
 #
