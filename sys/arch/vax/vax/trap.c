@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52 2000/05/27 00:40:43 sommerfeld Exp $     */
+/*	$NetBSD: trap.c,v 1.53 2000/05/27 16:33:04 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -421,3 +421,17 @@ bad:
 		ktrsysret(p, frame->code, err, rval[0]);
 #endif
 }
+
+void
+child_return(void *arg)
+{
+        struct proc *p = arg;
+
+	userret(p, p->p_addr->u_pcb.framep, 0);
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p, SYS_fork, 0, 0);
+#endif
+}
+
