@@ -1,4 +1,4 @@
-	$NetBSD: prep.RISCOS,v 1.6 2001/03/30 22:56:15 chris Exp $
+	$NetBSD: prep.RISCOS,v 1.7 2001/07/26 22:47:34 wiz Exp $
 
 These instructions are specific to NetBSD/arm32 on Acorn RISCOS platforms
 (RiscPC/A7000/A7000+) running RiscOS, but may be relevant to futures
@@ -201,7 +201,7 @@ Here is the procedure you should use:
 		partition init.
 
 	Partition init
-		Set a tick on all RiscOs: partitons, give them a name
+		Set a tick on all RiscOs: partitions, give them a name
 		and set LFAU to auto.
 
 		Unset the tick on your Empty: partition.
