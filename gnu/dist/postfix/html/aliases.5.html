@@ -1,5 +1,4 @@
 <html> <head> </head> <body> <pre>
-
 ALIASES(5)                                             ALIASES(5)
 
 <b>NAME</b>
@@ -129,12 +128,19 @@ ALIASES(5)                                             ALIASES(5)
               Delimiter  that  separates  recipients from address
               extensions.
 
+<b>BUGS</b>
+       Regular expression alias lookup tables  are  allowed,  but
+       substitution  of  $1  etc. is forbidden because that would
+       open a security loophole.
+
 <b>STANDARDS</b>
        <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a> (ARPA Internet Text Messages)
 
 <b>SEE</b> <b>ALSO</b>
        <a href="local.8.html">local(8)</a> local delivery agent
-       <a href="postalias.1.html">postalias(1)</a> alias database management
+       <a href="newaliases.1.html">newaliases(1)</a> alias database management
+       <a href="regexp_table.5.html">regexp_table(5)</a> POSIX regular expression table format
+       <a href="pcre_table.5.html">pcre_table(5)</a> Perl Compatible Regular Expression table format
 
 <b>LICENSE</b>
        The Secure Mailer license must be  distributed  with  this
@@ -146,6 +152,5 @@ ALIASES(5)                                             ALIASES(5)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-                                                                1
-
+                                                       ALIASES(5)
 </pre> </body> </html>

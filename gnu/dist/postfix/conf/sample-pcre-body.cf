@@ -1,12 +1,9 @@
-#	$NetBSD: sample-pcre-body.cf,v 1.1.1.2 2002/06/08 22:36:16 itojun Exp $
 #
-# 
 #	Sample pcre (PERL-compatible regular expression) map file for
 #	mail body filtering. See pcre_table(5) for syntax description.
 #
-#	Mail body lines are filtered one line at a time. In particular,
-#	multi-line MIME headers in the message body are filtered one text
-#	line at a time.
+#	Mail body lines are filtered one line at a time. MIME headers are
+#	filtered as message headers, i.e. not as part of the mail body.
 #
 #	The first field is a perl-like regular expression. The expression
 #	delimiter can be any character except whitespace, or characters
@@ -20,14 +17,41 @@
 #	matching ungreedy (see PCRE documentation and source for more
 #	info).
 #
-#	The second field is the "replacement" string - the text
-#	returned by the match. 
+#       A block of table entries may be "enclosed" by a line with    
+#       `if /pattern/flags' and a line with `endif'.  This causes
+#       the block of table entries to be examined only when the
+#       pattern produces a successful match. The `if..endif' may
+#       be nested. There currently is no `else' operator.
 #
-#	REJECT		The entire message is rejected.
-#	REJECT text.... The text is sent to the originator.
-#	IGNORE		The line is silently discarded.
-#	WARN		The line is logged (not rejected) with a warning.
-#	WARN text....	As above, and the text is logged, too.
+#	The second field is the "replacement" string - the text
+#	returned by the match.
+#
+#	REJECT [optional text...]
+#			Reject the entire message. The optional text is sent to
+#			the originator and is logged to the maillog file.
+#	IGNORE		Silently discard the body line.
+#	WARN [optional text...]
+#			Log the body line and the optional text. This is
+#			useful for testing. When the pattern is OK, change the
+#			WARN into a REJECT or into a DISCARD.
+#	HOLD [optional text...]
+#			Place the message on the hold queue. Mail on hold can
+#			be inspected with the postcat command, and can be
+#			destroyed or taken off hold (i.e. delivered) with the
+#			postsuper command.  The matched body line is logged
+#			together with the optional text.
+#	DISCARD [optional text...]
+#			Claim successful delivery and silently discard the
+#			message.  The matched body line is logged together
+#			with the optional text.
+#	FILTER transport:nexthop
+#			After the message is queued, send the entire
+#			message through a content filter. This
+#			requires different cleanup servers before
+#			and after the filter, with header/body
+#			checks turned off in the second cleanup
+#			server. More information about content filters
+#			is in the Postfix FILTER_README file.
 #
 #	Substitution of sub-strings from the matched expression is
 #	possible using the conventional perl syntax. The macros in the
@@ -39,3 +63,10 @@
 #	appended to the previous line (there should be no whitespace
 #	before your regular expression!)
 #
+
+# Skip over base 64 encoded blocks. This saves lots of CPU cycles.
+# Expressions by Liviu Daia, amended by Victor Duchovni.
+# Requires PCRE version 3.
+~^[[:alnum:]+/]{60,}\s*$~	OK
+
+# Your own body patterns go here.

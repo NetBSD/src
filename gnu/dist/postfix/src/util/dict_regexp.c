@@ -12,9 +12,11 @@
 /*	int	dict_flags;
 /* DESCRIPTION
 /*	dict_regexp_open() opens the named file and compiles the contained
-/*	regular expressions.
+/*	regular expressions. The result object can be used to match strings
+/*	against the table.
 /* SEE ALSO
 /*	dict(3) generic dictionary manager
+/*	regexp_table(5) format of Postfix regular expression tables
 /* AUTHOR(S)
 /*	LaMont Jones
 /*	lamont@hp.com
@@ -25,7 +27,7 @@
 /*	Level 3, 213 Miller St
 /*	North Sydney, NSW, Australia
 /*
-/*	Wietse Venema
+/*	Heavily rewritten by Wietse Venema
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
@@ -42,6 +44,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <regex.h>
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
 
 /* Utility library. */
 
@@ -56,126 +61,250 @@
 #include "dict_regexp.h"
 #include "mac_parse.h"
 
-typedef struct dict_regexp_list {
-    struct dict_regexp_list *next;	/* Next regexp in dict */
-    regex_t *expr[2];			/* The compiled pattern(s) */
-    char   *replace;			/* Replacement string */
-    int     lineno;			/* Source file line number */
+ /*
+  * Support for IF/ENDIF based on an idea by Bert Driehuis.
+  */
+#define DICT_REGEXP_OP_MATCH	1	/* Match this regexp */
+#define DICT_REGEXP_OP_IF	2	/* Increase if/endif nesting on match */
+#define DICT_REGEXP_OP_ENDIF	3	/* Decrease if/endif nesting on match */
+
+ /*
+  * Regular expression before compiling.
+  */
+typedef struct {
+    char   *regexp;			/* regular expression */
+    int     options;			/* regcomp() options */
+    int     match;			/* positive or negative match */
+} DICT_REGEXP_PATTERN;
+
+ /*
+  * Compiled generic rule, and subclasses that derive from it.
+  */
+typedef struct DICT_REGEXP_RULE {
+    int     op;				/* DICT_REGEXP_OP_MATCH/IF/ENDIF */
+    int     nesting;			/* Level of search nesting */
+    int     lineno;			/* source file line number */
+    struct DICT_REGEXP_RULE *next;	/* next rule in dict */
 } DICT_REGEXP_RULE;
 
 typedef struct {
+    DICT_REGEXP_RULE rule;		/* generic part */
+    regex_t *first_exp;			/* compiled primary pattern */
+    int     first_match;		/* positive or negative match */
+    regex_t *second_exp;		/* compiled secondary pattern */
+    int     second_match;		/* positive or negative match */
+    char   *replacement;		/* replacement text */
+    size_t  max_sub;			/* largest $number in replacement */
+} DICT_REGEXP_MATCH_RULE;
+
+typedef struct {
+    DICT_REGEXP_RULE rule;		/* generic members */
+    regex_t *expr;			/* the condition */
+    int     match;			/* positive or negative match */
+} DICT_REGEXP_IF_RULE;
+
+ /*
+  * Regexp map.
+  */
+typedef struct {
     DICT    dict;			/* generic members */
-    char   *map;			/* map name */
-    int     flags;			/* unused at the moment */
-    regmatch_t *pmatch;			/* Cut substrings */
-    int     nmatch;			/* number of elements in pmatch */
+    regmatch_t *pmatch;			/* matched substring info */
     DICT_REGEXP_RULE *head;		/* first rule */
 } DICT_REGEXP;
 
-/*
- * Context for macro expansion callback.
- */
-struct dict_regexp_context {
-    DICT_REGEXP *dict;			/* the dictionary entry */
-    DICT_REGEXP_RULE *rule;		/* the rule we matched */
-    VSTRING *buf;			/* target string buffer */
-    const char *subject;		/* str against which we match */
-};
+ /*
+  * Macros to make dense code more readable.
+  */
+#define NULL_SUBSTITUTIONS	(0)
+#define NULL_MATCH_RESULT	((regmatch_t *) 0)
 
-/*
- * Macro expansion callback - replace $0-${99} with strings cut from
- * matched string.
- */
-static int dict_regexp_action(int type, VSTRING *buf, char *ptr)
+ /*
+  * Context for $number expansion callback.
+  */
+typedef struct {
+    DICT_REGEXP *dict_regexp;		/* the dictionary entry */
+    DICT_REGEXP_MATCH_RULE *match_rule;	/* the rule we matched */
+    const char *lookup_string;		/* matched text */
+    VSTRING *expansion_buf;		/* buffer for $number expansion */
+} DICT_REGEXP_EXPAND_CONTEXT;
+
+ /*
+  * Context for $number pre-scan callback.
+  */
+typedef struct {
+    const char *mapname;		/* name of regexp map */
+    int     lineno;			/* where in file */
+    size_t  max_sub;			/* largest $number seen */
+} DICT_REGEXP_PRESCAN_CONTEXT;
+
+ /*
+  * Compatibility.
+  */
+#ifndef MAC_PARSE_OK
+#define MAC_PARSE_OK 0
+#endif
+
+/* dict_regexp_expand - replace $number with substring from matched text */
+
+static int dict_regexp_expand(int type, VSTRING *buf, char *ptr)
 {
-    struct dict_regexp_context *ctxt = (struct dict_regexp_context *) ptr;
-    DICT_REGEXP_RULE *rule = ctxt->rule;
-    DICT_REGEXP *dict = ctxt->dict;
-    int     n;
+    DICT_REGEXP_EXPAND_CONTEXT *ctxt = (DICT_REGEXP_EXPAND_CONTEXT *) ptr;
+    DICT_REGEXP_MATCH_RULE *match_rule = ctxt->match_rule;
+    DICT_REGEXP *dict_regexp = ctxt->dict_regexp;
+    regmatch_t *pmatch;
+    size_t  n;
 
+    /*
+     * Replace $number by the corresponding substring from the matched text.
+     * We pre-scanned the replacement text at compile time, so any out of
+     * range $number means that something impossible has happened.
+     */
     if (type == MAC_PARSE_VARNAME) {
 	n = atoi(vstring_str(buf));
-	if (n >= dict->nmatch)
-	    msg_fatal("regexp %s, line %d: replacement index out of range",
-		      dict->dict.name, rule->lineno);
-	if (dict->pmatch[n].rm_so < 0 ||
-	    dict->pmatch[n].rm_so == dict->pmatch[n].rm_eo) {
-	    return (MAC_PARSE_UNDEF);		/* empty string or not
-						 * matched */
-	}
-	vstring_strncat(ctxt->buf, ctxt->subject + dict->pmatch[n].rm_so,
-			dict->pmatch[n].rm_eo - dict->pmatch[n].rm_so);
-    } else
-	/* Straight text - duplicate with no substitution */
-	vstring_strcat(ctxt->buf, vstring_str(buf));
-    return (0);
+	if (n < 1 || n > match_rule->max_sub)
+	    msg_panic("regexp map %s, line %d: out of range replacement index \"%s\"",
+		      dict_regexp->dict.name, match_rule->rule.lineno,
+		      vstring_str(buf));
+	pmatch = dict_regexp->pmatch + n;
+	if (pmatch->rm_so < 0 || pmatch->rm_so == pmatch->rm_eo)
+	    return (MAC_PARSE_UNDEF);		/* empty or not matched */
+	vstring_strncat(ctxt->expansion_buf,
+			ctxt->lookup_string + pmatch->rm_so,
+			pmatch->rm_eo - pmatch->rm_so);
+	return (MAC_PARSE_OK);
+    }
+
+    /*
+     * Straight text - duplicate with no substitution.
+     */
+    else {
+	vstring_strcat(ctxt->expansion_buf, vstring_str(buf));
+	return (MAC_PARSE_OK);
+    }
 }
 
-/*
- * Look up regexp dict and perform string substitution on matched
- * strings.
- */
-static const char *dict_regexp_lookup(DICT *dict, const char *name)
+/* dict_regexp_regerror - report regexp compile/execute error */
+
+static void dict_regexp_regerror(const char *mapname, int lineno, int error,
+				         const regex_t *expr)
+{
+    char    errbuf[256];
+
+    (void) regerror(error, expr, errbuf, sizeof(errbuf));
+    msg_warn("regexp map %s, line %d: %s", mapname, lineno, errbuf);
+}
+
+ /*
+  * Inlined to reduce function call overhead in the time-critical loop.
+  */
+#define DICT_REGEXP_REGEXEC(err, map, line, expr, match, str, nsub, pmatch) \
+    ((err) = regexec((expr), (str), (nsub), (pmatch), 0), \
+     ((err) == REG_NOMATCH ? !(match) : \
+      (err) == 0 ? (match) : \
+      (dict_regexp_regerror((map), (line), (err), (expr)), 0)))
+
+/* dict_regexp_lookup - match string and perform optional substitution */
+
+static const char *dict_regexp_lookup(DICT *dict, const char *lookup_string)
 {
     DICT_REGEXP *dict_regexp = (DICT_REGEXP *) dict;
     DICT_REGEXP_RULE *rule;
-    struct dict_regexp_context ctxt;
-    static VSTRING *buf;
+    DICT_REGEXP_IF_RULE *if_rule;
+    DICT_REGEXP_MATCH_RULE *match_rule;
+    DICT_REGEXP_EXPAND_CONTEXT expand_context;
+    static VSTRING *expansion_buf;
     int     error;
+    int     nesting = 0;
 
     dict_errno = 0;
 
     if (msg_verbose)
-	msg_info("dict_regexp_lookup: %s: %s", dict_regexp->dict.name, name);
+	msg_info("dict_regexp_lookup: %s: %s", dict->name, lookup_string);
 
-    /* Search for a matching expression */
     for (rule = dict_regexp->head; rule; rule = rule->next) {
-	error = regexec(rule->expr[0], name, rule->expr[0]->re_nsub + 1,
-			dict_regexp->pmatch, 0);
-	if (!error) {
-	    if (rule->expr[1]) {
-		error = regexec(rule->expr[1], name, rule->expr[1]->re_nsub + 1,
-		       dict_regexp->pmatch + rule->expr[0]->re_nsub + 1, 0);
-		if (!error) {
-		    continue;
-		} else if (error != REG_NOMATCH) {
-		    char    errbuf[256];
 
-		    (void) regerror(error, rule->expr[1], errbuf, sizeof(errbuf));
-		    msg_fatal("regexp map %s, line %d: %s.",
-			      dict_regexp->dict.name, rule->lineno, errbuf);
-		}
-	    }
+	/*
+	 * Skip rules inside failed IF/ENDIF.
+	 */
+	if (nesting < rule->nesting)
+	    continue;
+
+	switch (rule->op) {
 
 	    /*
-	     * We found a match. Do some final initialization on the
-	     * subexpression fields, and perform substitution on replacement
-	     * string
+	     * Search for the first matching primary expression. Limit the
+	     * overhead for substring substitution to the bare minimum.
 	     */
-	    if (!buf)
-		buf = vstring_alloc(10);
-	    VSTRING_RESET(buf);
-	    ctxt.buf = buf;
-	    ctxt.subject = name;
-	    ctxt.rule = rule;
-	    ctxt.dict = dict_regexp;
+	case DICT_REGEXP_OP_MATCH:
+	    match_rule = (DICT_REGEXP_MATCH_RULE *) rule;
+	    if (!DICT_REGEXP_REGEXEC(error, dict->name, rule->lineno,
+				     match_rule->first_exp,
+				     match_rule->first_match,
+				     lookup_string,
+				     match_rule->max_sub > 0 ?
+				     match_rule->max_sub + 1 : 0,
+				     dict_regexp->pmatch))
+		continue;
+	    if (match_rule->second_exp
+		&& !DICT_REGEXP_REGEXEC(error, dict->name, rule->lineno,
+					match_rule->second_exp,
+					match_rule->second_match,
+					lookup_string,
+					NULL_SUBSTITUTIONS,
+					NULL_MATCH_RESULT))
+		continue;
 
-	    if (mac_parse(rule->replace, dict_regexp_action, (char *) &ctxt) & MAC_PARSE_ERROR)
-		msg_fatal("regexp map %s, line %d: bad replacement syntax.",
-			  dict_regexp->dict.name, rule->lineno);
+	    /*
+	     * Skip $number substitutions when the replacement text contains
+	     * no $number strings (as learned during the pre-scan).
+	     */
+	    if (match_rule->max_sub == 0)
+		return (match_rule->replacement);
 
-	    VSTRING_TERMINATE(buf);
-	    return (vstring_str(buf));
-	} else if (error && error != REG_NOMATCH) {
-	    char    errbuf[256];
+	    /*
+	     * Perform $number substitutions on the replacement text. We
+	     * pre-scanned the replacement text at compile time. Any macro
+	     * expansion errors at this point mean something impossible has
+	     * happened.
+	     */
+	    if (!expansion_buf)
+		expansion_buf = vstring_alloc(10);
+	    VSTRING_RESET(expansion_buf);
+	    expand_context.expansion_buf = expansion_buf;
+	    expand_context.lookup_string = lookup_string;
+	    expand_context.match_rule = match_rule;
+	    expand_context.dict_regexp = dict_regexp;
 
-	    (void) regerror(error, rule->expr[0], errbuf, sizeof(errbuf));
-	    msg_fatal("regexp map %s, line %d: %s.",
-		      dict_regexp->dict.name, rule->lineno, errbuf);
-	    return ((char *) 0);
+	    if (mac_parse(match_rule->replacement, dict_regexp_expand,
+			  (char *) &expand_context) & MAC_PARSE_ERROR)
+		msg_panic("regexp map %s, line %d: bad replacement syntax",
+			  dict->name, rule->lineno);
+	    VSTRING_TERMINATE(expansion_buf);
+	    return (vstring_str(expansion_buf));
+
+	    /*
+	     * Conditional.
+	     */
+	case DICT_REGEXP_OP_IF:
+	    if_rule = (DICT_REGEXP_IF_RULE *) rule;
+	    if (DICT_REGEXP_REGEXEC(error, dict->name, rule->lineno,
+			       if_rule->expr, if_rule->match, lookup_string,
+				    NULL_SUBSTITUTIONS, NULL_MATCH_RESULT))
+		nesting++;
+	    continue;
+
+	    /*
+	     * ENDIF after successful IF.
+	     */
+	case DICT_REGEXP_OP_ENDIF:
+	    nesting--;
+	    continue;
+
+	default:
+	    msg_panic("dict_regexp_lookup: impossible operation %d", rule->op);
 	}
     }
-    return ((char *) 0);
+    return (0);
 }
 
 /* dict_regexp_close - close regexp dictionary */
@@ -183,19 +312,39 @@ static const char *dict_regexp_lookup(DICT *dict, const char *name)
 static void dict_regexp_close(DICT *dict)
 {
     DICT_REGEXP *dict_regexp = (DICT_REGEXP *) dict;
-    DICT_REGEXP_RULE *rule,
-           *next;
-    int     i;
+    DICT_REGEXP_RULE *rule;
+    DICT_REGEXP_RULE *next;
+    DICT_REGEXP_MATCH_RULE *match_rule;
+    DICT_REGEXP_IF_RULE *if_rule;
 
     for (rule = dict_regexp->head; rule; rule = next) {
 	next = rule->next;
-	for (i = 0; i < 2; i++) {
-	    if (rule->expr[i]) {
-		regfree(rule->expr[i]);
-		myfree((char *) rule->expr[i]);
+	switch (rule->op) {
+	case DICT_REGEXP_OP_MATCH:
+	    match_rule = (DICT_REGEXP_MATCH_RULE *) rule;
+	    if (match_rule->first_exp) {
+		regfree(match_rule->first_exp);
+		myfree((char *) match_rule->first_exp);
 	    }
+	    if (match_rule->second_exp) {
+		regfree(match_rule->second_exp);
+		myfree((char *) match_rule->second_exp);
+	    }
+	    if (match_rule->replacement)
+		myfree((char *) match_rule->replacement);
+	    break;
+	case DICT_REGEXP_OP_IF:
+	    if_rule = (DICT_REGEXP_IF_RULE *) rule;
+	    if (if_rule->expr) {
+		regfree(if_rule->expr);
+		myfree((char *) if_rule->expr);
+	    }
+	    break;
+	case DICT_REGEXP_OP_ENDIF:
+	    break;
+	default:
+	    msg_panic("dict_regexp_close: unknown operation %d", rule->op);
 	}
-	myfree((char *) rule->replace);
 	myfree((char *) rule);
     }
     if (dict_regexp->pmatch)
@@ -203,19 +352,39 @@ static void dict_regexp_close(DICT *dict)
     dict_free(dict);
 }
 
-static regex_t *dict_regexp_get_expr(int lineno, char **bufp, VSTREAM *map_fp)
+/* dict_regexp_get_pat - extract one pattern with options from rule */
+
+static int dict_regexp_get_pat(const char *mapname, int lineno, char **bufp,
+			               DICT_REGEXP_PATTERN *pat)
 {
-    char   *p = *bufp,
-           *regexp,
-            re_delim;
-    int     re_options,
-            error;
-    regex_t *expr;
+    char   *p = *bufp;
+    char    re_delim;
 
+    /*
+     * Process negation operators.
+     */
+    pat->match = 1;
+    while (*p == '!') {
+	pat->match = !pat->match;
+	p++;
+    }
+
+    /*
+     * Grr...aceful handling of whitespace after '!'.
+     */
+    while (*p && ISSPACE(*p))
+	p++;
+    if (*p == 0) {
+	msg_warn("regexp map %s, line %d: no regexp: skipping this rule",
+		 mapname, lineno);
+	return (0);
+    }
+
+    /*
+     * Search for the closing delimiter, handling backslash escape.
+     */
     re_delim = *p++;
-    regexp = p;
-
-    /* Search for second delimiter, handling backslash escape */
+    pat->regexp = p;
     while (*p) {
 	if (*p == '\\') {
 	    if (p[1])
@@ -228,124 +397,305 @@ static regex_t *dict_regexp_get_expr(int lineno, char **bufp, VSTREAM *map_fp)
 	++p;
     }
     if (!*p) {
-	msg_warn("%s, line %d: no closing regexp delimiter: %c",
-		 VSTREAM_PATH(map_fp), lineno, re_delim);
-	return NULL;
+	msg_warn("regexp map %s, line %d: no closing regexp delimiter \"%c\": "
+		 "skipping this rule", mapname, lineno, re_delim);
+	return (0);
     }
-    *p++ = '\0';				/* Null term the regexp */
+    *p++ = 0;					/* null terminate */
 
-    re_options = REG_EXTENDED | REG_ICASE;
-    while (*p) {
-	if (!*p || ISSPACE(*p) || (*p == '!' && p[1] == re_delim)) {
-	    /* end of the regexp */
-	    expr = (regex_t *) mymalloc(sizeof(*expr));
-	    error = regcomp(expr, regexp, re_options);
-	    if (error != 0) {
-		char    errbuf[256];
-
-		(void) regerror(error, expr, errbuf, sizeof(errbuf));
-		msg_warn("%s, line %d: error in regexp: %s.",
-			 VSTREAM_PATH(map_fp), lineno, errbuf);
-		myfree((char *) expr);
-		return NULL;
-	    }
-	    *bufp = p;
-	    return expr;
-	} else {
-	    switch (*p) {
-	    case 'i':
-		re_options ^= REG_ICASE;
-		break;
-	    case 'm':
-		re_options ^= REG_NEWLINE;
-		break;
-	    case 'x':
-		re_options ^= REG_EXTENDED;
-		break;
-	    default:
-		msg_warn("%s, line %d: unknown regexp option '%c'",
-			 VSTREAM_PATH(map_fp), lineno, *p);
-	    }
-	    ++p;
+    /*
+     * Search for options.
+     */
+    pat->options = REG_EXTENDED | REG_ICASE;
+    while (*p && !ISSPACE(*p) && *p != '!') {
+	switch (*p) {
+	case 'i':
+	    pat->options ^= REG_ICASE;
+	    break;
+	case 'm':
+	    pat->options ^= REG_NEWLINE;
+	    break;
+	case 'x':
+	    pat->options ^= REG_EXTENDED;
+	    break;
+	default:
+	    msg_warn("regexp map %s, line %d: unknown regexp option \"%c\": "
+		     "skipping this rule", mapname, lineno, *p);
+	    return (0);
 	}
+	++p;
     }
-    return NULL;
+    *bufp = p;
+    return (1);
 }
 
-static DICT_REGEXP_RULE *dict_regexp_parseline(int lineno, char *line, int *nsub, VSTREAM *map_fp)
+/* dict_regexp_get_pats - get the primary and second patterns and flags */
+
+static int dict_regexp_get_pats(const char *mapname, int lineno, char **p,
+				        DICT_REGEXP_PATTERN *first_pat,
+				        DICT_REGEXP_PATTERN *second_pat)
+{
+
+    /*
+     * Get the primary and optional secondary patterns and their flags.
+     */
+    if (dict_regexp_get_pat(mapname, lineno, p, first_pat) == 0)
+	return (0);
+    if (**p == '!') {
+#if 0
+	static int bitrot_warned = 0;
+
+	if (bitrot_warned == 0) {
+	    msg_warn("regexp file %s, line %d: /pattern1/!/pattern2/ goes away,"
+		 " use \"if !/pattern2/ ... /pattern1/ ... endif\" instead",
+		     mapname, lineno);
+	    bitrot_warned = 1;
+	}
+#endif
+	if (dict_regexp_get_pat(mapname, lineno, p, second_pat) == 0)
+	    return (0);
+    } else {
+	second_pat->regexp = 0;
+    }
+    return (1);
+}
+
+/* dict_regexp_prescan - find largest $number in replacement text */
+
+static int dict_regexp_prescan(int type, VSTRING *buf, char *context)
+{
+    DICT_REGEXP_PRESCAN_CONTEXT *ctxt = (DICT_REGEXP_PRESCAN_CONTEXT *) context;
+    size_t  n;
+
+    if (type == MAC_PARSE_VARNAME) {
+	if (!alldig(vstring_str(buf))) {
+	    msg_warn("regexp map %s, line %d: non-numeric replacement index \"%s\"",
+		     ctxt->mapname, ctxt->lineno, vstring_str(buf));
+	    return (MAC_PARSE_ERROR);
+	}
+	n = atoi(vstring_str(buf));
+	if (n > ctxt->max_sub)
+	    ctxt->max_sub = n;
+    }
+    return (MAC_PARSE_OK);
+}
+
+/* dict_regexp_compile_pat - compile one pattern */
+
+static regex_t *dict_regexp_compile_pat(const char *mapname, int lineno,
+					        DICT_REGEXP_PATTERN *pat)
+{
+    int     error;
+    regex_t *expr;
+
+    expr = (regex_t *) mymalloc(sizeof(*expr));
+    error = regcomp(expr, pat->regexp, pat->options);
+    if (error != 0) {
+	dict_regexp_regerror(mapname, lineno, error, expr);
+	myfree((char *) expr);
+	return (0);
+    }
+    return (expr);
+}
+
+/* dict_regexp_rule_alloc - fill in a generic rule structure */
+
+static DICT_REGEXP_RULE *dict_regexp_rule_alloc(int op, int nesting,
+						        int lineno,
+						        size_t size)
 {
     DICT_REGEXP_RULE *rule;
-    char   *p,
-            re_delim;
-    regex_t *expr1,
-           *expr2;
-    int     total_nsub;
 
-    p = line;
-    re_delim = *p;
-
-    expr1 = dict_regexp_get_expr(lineno, &p, map_fp);
-    if (!expr1) {
-	return NULL;
-    } else if (*p == '!' && p[1] == re_delim) {
-	p++;
-	expr2 = dict_regexp_get_expr(lineno, &p, map_fp);
-	if (!expr2) {
-	    myfree((char *) expr1);
-	    return NULL;
-	}
-	total_nsub = expr1->re_nsub + expr2->re_nsub + 2;
-    } else {
-	expr2 = NULL;
-	total_nsub = expr1->re_nsub + 1;
-    }
-    if (nsub)
-	*nsub = total_nsub;
-
-    if (!ISSPACE(*p)) {
-	msg_warn("%s, line %d: Too many expressions.",
-		 VSTREAM_PATH(map_fp), lineno);
-	myfree((char *) expr1);
-	if (expr2)
-	    myfree((char *) expr2);
-	return NULL;
-    }
-    rule = (DICT_REGEXP_RULE *) mymalloc(sizeof(DICT_REGEXP_RULE));
-
-    while (*p && ISSPACE(*p))
-	++p;
-
-    if (!*p) {
-	msg_warn("%s, line %d: no replacement text: using empty string",
-		 VSTREAM_PATH(map_fp), lineno);
-	p = "";
-    }
-    rule->expr[0] = expr1;
-    rule->expr[1] = expr2;
-    rule->replace = mystrdup(p);
+    rule = (DICT_REGEXP_RULE *) mymalloc(size);
+    rule->op = op;
+    rule->nesting = nesting;
     rule->lineno = lineno;
-    rule->next = NULL;
-    return rule;
+    rule->next = 0;
+
+    return (rule);
 }
 
-/*
- * dict_regexp_open - load and compile a file containing regular expressions
- */
-DICT   *dict_regexp_open(const char *map, int unused_flags, int dict_flags)
+/* dict_regexp_parseline - parse one rule */
+
+static DICT_REGEXP_RULE *dict_regexp_parseline(const char *mapname, int lineno,
+					            char *line, int nesting,
+					               int dict_flags)
+{
+    char   *p;
+
+    p = line;
+
+    /*
+     * An ordinary rule takes one or two patterns and replacement text.
+     */
+    if (!ISALNUM(*p)) {
+	DICT_REGEXP_PATTERN first_pat;
+	DICT_REGEXP_PATTERN second_pat;
+	DICT_REGEXP_PRESCAN_CONTEXT prescan_context;
+	regex_t *first_exp;
+	regex_t *second_exp;
+	DICT_REGEXP_MATCH_RULE *match_rule;
+
+	/*
+	 * Get the primary and the optional secondary patterns.
+	 */
+	if (!dict_regexp_get_pats(mapname, lineno, &p, &first_pat, &second_pat))
+	    return (0);
+
+	/*
+	 * Get the replacement text.
+	 */
+	while (*p && ISSPACE(*p))
+	    ++p;
+	if (!*p) {
+	    msg_warn("regexp map %s, line %d: using empty replacement string",
+		     mapname, lineno);
+	}
+
+	/*
+	 * Find the highest-numbered $number in the replacement text. We can
+	 * speed up pattern matching 1) by passing hints to the regexp
+	 * compiler, setting the REG_NOSUB flag when the replacement text
+	 * contains no $number string; 2) by passing hints to the regexp
+	 * execution code, limiting the amount of text that is made available
+	 * for substitution.
+	 */
+	prescan_context.mapname = mapname;
+	prescan_context.lineno = lineno;
+	prescan_context.max_sub = 0;
+
+	if (mac_parse(p, dict_regexp_prescan, (char *) &prescan_context)
+	    & MAC_PARSE_ERROR) {
+	    msg_warn("regexp map %s, line %d: bad replacement syntax: "
+		     "skipping this rule", mapname, lineno);
+	    return (0);
+	}
+
+	/*
+	 * Compile the primary and the optional secondary pattern. Speed up
+	 * execution when no matched text needs to be substituted into the
+	 * result string, or when the highest numbered substring is less than
+	 * the total number of () subpatterns.
+	 */
+#define FREE_EXPR_AND_RETURN(expr, rval) \
+	{ regfree(expr); myfree((char *) (expr)); return (rval); }
+
+	if (prescan_context.max_sub == 0 || first_pat.match == 0) {
+	    first_pat.options |= REG_NOSUB;
+	} else if (dict_flags & DICT_FLAG_NO_REGSUB) {
+	    msg_warn("regexp map %s, line %d: "
+		      "regular expression substitution is not allowed: "
+		      "skipping this rule", mapname, lineno);
+	    return(0);
+	}
+	if ((first_exp = dict_regexp_compile_pat(mapname, lineno,
+						 &first_pat)) == 0)
+	    return (0);
+	if (prescan_context.max_sub > 0 && first_pat.match == 0) {
+	    msg_warn("regexp map %s, line %d: $number found in negative match replacement text: "
+		     "skipping this rule", mapname, lineno);
+	    FREE_EXPR_AND_RETURN(first_exp, 0);
+	}
+	if (prescan_context.max_sub > first_exp->re_nsub) {
+	    msg_warn("regexp map %s, line %d: out of range replacement index \"%d\": "
+		     "skipping this rule", mapname, lineno,
+		     prescan_context.max_sub);
+	    FREE_EXPR_AND_RETURN(first_exp, 0);
+	}
+	if (second_pat.regexp != 0) {
+	    second_pat.options |= REG_NOSUB;
+	    if ((second_exp = dict_regexp_compile_pat(mapname, lineno,
+						      &second_pat)) == 0)
+		FREE_EXPR_AND_RETURN(first_exp, 0);
+	} else {
+	    second_exp = 0;
+	}
+	match_rule = (DICT_REGEXP_MATCH_RULE *)
+	    dict_regexp_rule_alloc(DICT_REGEXP_OP_MATCH, nesting, lineno,
+				   sizeof(DICT_REGEXP_MATCH_RULE));
+	match_rule->first_exp = first_exp;
+	match_rule->first_match = first_pat.match;
+	match_rule->max_sub =
+	    (prescan_context.max_sub > 0 ? prescan_context.max_sub + 1 : 0);
+	match_rule->second_exp = second_exp;
+	match_rule->second_match = second_pat.match;
+	match_rule->replacement = mystrdup(p);
+	return ((DICT_REGEXP_RULE *) match_rule);
+    }
+
+    /*
+     * The IF operator takes one pattern but no replacement text.
+     */
+    else if (strncasecmp(p, "IF", 2) == 0 && !ISALNUM(p[2])) {
+	DICT_REGEXP_PATTERN pattern;
+	regex_t *expr;
+	DICT_REGEXP_IF_RULE *if_rule;
+
+	p += 2;
+	while (*p && ISSPACE(*p))
+	    p++;
+	if (!dict_regexp_get_pat(mapname, lineno, &p, &pattern))
+	    return (0);
+	if (*p)
+	    msg_warn("regexp map %s, line %d: ignoring extra text after IF",
+		     mapname, lineno);
+	if ((expr = dict_regexp_compile_pat(mapname, lineno, &pattern)) == 0)
+	    return (0);
+	if_rule = (DICT_REGEXP_IF_RULE *)
+	    dict_regexp_rule_alloc(DICT_REGEXP_OP_IF, nesting, lineno,
+				   sizeof(DICT_REGEXP_IF_RULE));
+	if_rule->expr = expr;
+	if_rule->match = pattern.match;
+	return ((DICT_REGEXP_RULE *) if_rule);
+    }
+
+    /*
+     * The ENDIF operator takes no patterns and no replacement text.
+     */
+    else if (strncasecmp(p, "ENDIF", 5) == 0 && !ISALNUM(p[5])) {
+	DICT_REGEXP_RULE *rule;
+
+	p += 5;
+	if (nesting == 0) {
+	    msg_warn("regexp map %s, line %d: ignoring ENDIF without matching IF",
+		     mapname, lineno);
+	    return (0);
+	}
+	if (*p)
+	    msg_warn("regexp map %s, line %d: ignoring extra text after ENDIF",
+		     mapname, lineno);
+	rule = dict_regexp_rule_alloc(DICT_REGEXP_OP_ENDIF, nesting, lineno,
+				      sizeof(DICT_REGEXP_RULE));
+	return (rule);
+    }
+
+    /*
+     * Unrecognized input.
+     */
+    else {
+	msg_warn("regexp map %s, line %d: ignoring unrecognized request",
+		 mapname, lineno);
+	return (0);
+    }
+}
+
+/* dict_regexp_open - load and compile a file containing regular expressions */
+
+DICT   *dict_regexp_open(const char *mapname, int unused_flags, int dict_flags)
 {
     DICT_REGEXP *dict_regexp;
     VSTREAM *map_fp;
     VSTRING *line_buffer;
-    DICT_REGEXP_RULE *rule,
-           *last_rule = NULL;
+    DICT_REGEXP_RULE *rule;
+    DICT_REGEXP_RULE *last_rule = 0;
     int     lineno = 0;
-    int     max_nsub = 0;
-    int     nsub;
+    size_t  max_sub = 0;
+    int     nesting = 0;
     char   *p;
 
     line_buffer = vstring_alloc(100);
 
-    dict_regexp = (DICT_REGEXP *) dict_alloc(DICT_TYPE_REGEXP, map,
+    dict_regexp = (DICT_REGEXP *) dict_alloc(DICT_TYPE_REGEXP, mapname,
 					     sizeof(*dict_regexp));
     dict_regexp->dict.lookup = dict_regexp_lookup;
     dict_regexp->dict.close = dict_regexp_close;
@@ -353,36 +703,54 @@ DICT   *dict_regexp_open(const char *map, int unused_flags, int dict_flags)
     dict_regexp->head = 0;
     dict_regexp->pmatch = 0;
 
-    if ((map_fp = vstream_fopen(map, O_RDONLY, 0)) == 0) {
-	msg_fatal("open %s: %m", map);
-    }
+    /*
+     * Parse the regexp table.
+     */
+    if ((map_fp = vstream_fopen(mapname, O_RDONLY, 0)) == 0)
+	msg_fatal("open %s: %m", mapname);
+
     while (readlline(line_buffer, map_fp, &lineno)) {
 	p = vstring_str(line_buffer);
-
-	trimblanks(p, 0)[0] = 0;		/* Trim space at end */
-
-	rule = dict_regexp_parseline(lineno, p, &nsub, map_fp);
-	if (rule) {
-	    if (nsub > max_nsub)
-		max_nsub = nsub;
-
-	    if (last_rule == NULL)
-		dict_regexp->head = rule;
-	    else
-		last_rule->next = rule;
-	    last_rule = rule;
+	trimblanks(p, 0)[0] = 0;
+	if (*p == 0)
+	    continue;
+	rule = dict_regexp_parseline(mapname, lineno, p, nesting, dict_flags);
+	if (rule == 0)
+	    continue;
+	if (rule->op == DICT_REGEXP_OP_MATCH) {
+	    if (((DICT_REGEXP_MATCH_RULE *) rule)->max_sub > max_sub)
+		max_sub = ((DICT_REGEXP_MATCH_RULE *) rule)->max_sub;
+	} else if (rule->op == DICT_REGEXP_OP_IF) {
+	    nesting++;
+	} else if (rule->op == DICT_REGEXP_OP_ENDIF) {
+	    nesting--;
 	}
+	if (last_rule == 0)
+	    dict_regexp->head = rule;
+	else
+	    last_rule->next = rule;
+	last_rule = rule;
     }
 
-    if (max_nsub > 0)
-	dict_regexp->pmatch =
-	    (regmatch_t *) mymalloc(sizeof(regmatch_t) * max_nsub);
-    dict_regexp->nmatch = max_nsub;
+    if (nesting)
+	msg_warn("regexp map %s, line %d: more IFs than ENDIFs",
+		 mapname, lineno);
 
+    /*
+     * Allocate space for only as many matched substrings as used in the
+     * replacement text.
+     */
+    if (max_sub > 0)
+	dict_regexp->pmatch =
+	    (regmatch_t *) mymalloc(sizeof(regmatch_t) * (max_sub + 1));
+
+    /*
+     * Clean up.
+     */
     vstring_free(line_buffer);
     vstream_fclose(map_fp);
 
-    return (DICT_DEBUG(&dict_regexp->dict));
+    return (DICT_DEBUG (&dict_regexp->dict));
 }
 
 #endif

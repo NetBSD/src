@@ -38,6 +38,7 @@
 #include <msg.h>
 #include <htable.h>
 #include <vstring.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -51,13 +52,19 @@ static HEADER_OPTS header_opts[] = {
     "Apparently-To", HDR_APPARENTLY_TO, HDR_OPT_RECIP,
     "Bcc", HDR_BCC, HDR_OPT_DROP | HDR_OPT_XRECIP,
     "Cc", HDR_CC, HDR_OPT_XRECIP,
+    "Content-Description", HDR_CONTENT_DESCRIPTION, HDR_OPT_MIME,
+    "Content-Disposition", HDR_CONTENT_DISPOSITION, HDR_OPT_MIME,
+    "Content-ID", HDR_CONTENT_ID, HDR_OPT_MIME,
     "Content-Length", HDR_CONTENT_LENGTH, HDR_OPT_DROP,
+    "Content-Transfer-Encoding", HDR_CONTENT_TRANSFER_ENCODING, HDR_OPT_MIME,
+    "Content-Type", HDR_CONTENT_TYPE, HDR_OPT_MIME,
     "Delivered-To", HDR_DELIVERED_TO, 0,
     "Date", HDR_DATE, 0,
     "Errors-To", HDR_ERRORS_TO, HDR_OPT_SENDER,
     "From", HDR_FROM, HDR_OPT_SENDER,
     "Mail-Followup-To", HDR_MAIL_FOLLOWUP_TO, HDR_OPT_SENDER,
     "Message-Id", HDR_MESSAGE_ID, 0,
+    "MIME-Version", HDR_MIME_VERSION, HDR_OPT_MIME,
     "Received", HDR_RECEIVED, 0,
     "Reply-To", HDR_REPLY_TO, HDR_OPT_SENDER,
     "Resent-Bcc", HDR_RESENT_BCC, HDR_OPT_DROP | HDR_OPT_XRECIP | HDR_OPT_RR,
@@ -119,6 +126,9 @@ HEADER_OPTS *header_opts_find(const char *string)
 	    msg_panic("header_opts_find: no colon in header: %.30s", string);
 	VSTRING_ADDCH(header_key, TOLOWER(*cp));
     }
+    vstring_truncate(header_key,
+		     trimblanks(vstring_str(header_key), cp - string)
+		     - vstring_str(header_key));
     VSTRING_TERMINATE(header_key);
     return ((HEADER_OPTS *) htable_find(header_hash, vstring_str(header_key)));
 }

@@ -167,7 +167,7 @@ int     smtp_site_fail(SMTP_STATE *state, int code, char *format,...)
 	if (rcpt->offset == 0)
 	    continue;
 	status = (soft_error ? defer_append : bounce_append)
-	    (KEEP, request->queue_id, rcpt->address,
+	    (KEEP, request->queue_id, rcpt->orig_addr, rcpt->address,
 	     session ? session->namaddr : "none",
 	     request->arrival_time, "%s", vstring_str(why));
 	if (status == 0) {
@@ -214,7 +214,7 @@ int     smtp_mesg_fail(SMTP_STATE *state, int code, char *format,...)
 	if (rcpt->offset == 0)
 	    continue;
 	status = (SMTP_SOFT(code) ? defer_append : bounce_append)
-	    (KEEP, request->queue_id, rcpt->address,
+	    (KEEP, request->queue_id, rcpt->orig_addr, rcpt->address,
 	     session->namaddr, request->arrival_time,
 	     "%s", vstring_str(why));
 	if (status == 0) {
@@ -248,8 +248,8 @@ void    smtp_rcpt_fail(SMTP_STATE *state, int code, RECIPIENT *rcpt,
      */
     va_start(ap, format);
     status = (SMTP_SOFT(code) ? vdefer_append : vbounce_append)
-	(KEEP, request->queue_id, rcpt->address, session->namaddr,
-	 request->arrival_time, format, ap);
+	(KEEP, request->queue_id, rcpt->orig_addr, rcpt->address,
+	 session->namaddr, request->arrival_time, format, ap);
     va_end(ap);
     if (status == 0) {
 	deliver_completed(state->src, rcpt->offset);
@@ -294,7 +294,8 @@ int     smtp_stream_except(SMTP_STATE *state, int code, char *description)
 	if (rcpt->offset == 0)
 	    continue;
 	state->status |= defer_append(KEEP, request->queue_id,
-				      rcpt->address, session->namaddr,
+				      rcpt->orig_addr, rcpt->address,
+				      session->namaddr,
 				      request->arrival_time,
 				      "%s", vstring_str(why));
     }

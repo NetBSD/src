@@ -8,9 +8,13 @@ Purpose of this software
 You can use the virtual delivery agent for mailbox delivery of some
 or all domains that are handled by a machine.
 
-This mechanism is different from virtual domains that are implemented
-by translating each virtual address into a real local user. For
-that, see the virtual(5) manual page.
+This mechanism is different from simulated virtual domains. Those
+are implemented by translating every recipient address into a
+different address. For that, see the virtual(5) manual page.
+
+With the virtual delivery agent, every recipient adress can have
+its own mailbox. There is no translation from recipient addresses
+into different addresses.
 
 This is what Andrew McNamara wrote when he made the virtual delivery
 agent available.
@@ -59,6 +63,13 @@ virtual_mailbox_base
     litter the filesystem with mailboxes (or worse). While it could
     be set to "/", this isn't recommended.
 
+virtual_mailbox_domains
+
+    Specifies the list of domains that should be delivered to the
+    $virtual_transport delivery agent (default: virtual). As of
+    version 1.2, Postfix is smart enough that you don't have to
+    list every virtual domain in a Postfix transport map.
+
 virtual_mailbox_maps
 
     Recipients are looked up in this map to determine the path to
@@ -68,10 +79,16 @@ virtual_mailbox_maps
     directory is unconditionally prepended to this path. If the
     recipient is not found the mail is bounced.
 
+    In a lookup table, specify a left-hand side of @domain.tld to
+    match any user in the specified domain that does not have her
+    own user@domain.tld entry. While searching a lookup table, an
+    address extension (user+foo@domain.tld) is ignored.
+
     If a recipient is not found the mail is returned to the sender.
 
-    For security reasons, regexp maps are not allowed here, because
-    their $1 etc. substitutions would open a security hole.
+    Regular expression maps are allowed. For security reasons,
+    regular expression substitution of $1 etc. is disallowed,
+    because that would open a security hole.
 
     The mail administrator is expected to create and chown recipient
     mailbox files or maildir directories ahead of time.
@@ -87,8 +104,14 @@ virtual_uid_maps
     Recipients are looked up in this map to determine the UID (owner
     privileges) to be used when writing to the target mailbox.
 
-    For security reasons, regexp maps are not allowed here, because
-    their $1 etc. substitutions would open a security hole.
+    In a lookup table, specify a left-hand side of @domain.tld to
+    match any user in the specified domain that does not have a
+    specific user@domain.tld entry. While searching a lookup table,
+    an address extension (user+foo@domain.tld) is ignored.
+
+    Regular expression maps are allowed. For security reasons,
+    regular expression substitution of $1 etc. is disallowed,
+    because that would open a security hole.
 
     Specify a static map if all mailboxes should be owned by the same
     UID. For example, to specify that all mailboxes are owned by the
@@ -101,8 +124,14 @@ virtual_gid_maps
     Recipients are looked up in this map to determine the GID (group
     privileges) to be used when writing to the target mailbox.
 
-    For security reasons, regexp maps are not allowed here, because
-    their $1 etc. substitutions would open a security hole.
+    In a lookup table, specify a left-hand side of @domain.tld to
+    match any user in the specified domain that does not have a
+    specific user@domain.tld entry. While searching a lookup table,
+    an address extension (user+foo@domain.tld) is ignored.
+
+    Regular expression maps are allowed. For security reasons,
+    regular expression substitution of $1 etc. is disallowed,
+    because that would open a security hole.
 
     Specify a static map if all mailboxes should be owned by the same
     GID. For example, to specify that all mailboxes are owned by the
@@ -120,10 +149,10 @@ virtual_mailbox_lock
     requires that the recipient UID or GID has write access to the
     parent directory of the mailbox file.
 
-    Use the "postconf -m" command to find out what locking methods
+    Use the "postconf -l" command to find out what locking methods
     Postfix supports on your system.
 
-virtual_mailbox_size
+virtual_mailbox_limit
 
     An upper limit on the size of a mailbox file or maildir file.
 
@@ -140,18 +169,21 @@ type.  The command "postconf -m" displays possible lookup table
 types.
 
     /etc/postfix/main.cf:
-	local_transport = virtual
+	# Don't send mail to the local delivery agent.
+	mydestination =
+
+	# All domains that are listed in $virtual_mailbox_domains
+	# are delivered via $virtual_transport, which is the virtual
+	# delivery agent by default.
+	virtual_mailbox_domains = 
+	    $myhostname localhost.$mydomain virtual1.domain virtual2.domain
+
+	virtual_transport = virtual
 	virtual_mailbox_base = /var/mail/vhosts
 	virtual_mailbox_maps = hash:/etc/postfix/vmailbox
 	virtual_minimum_uid = 100
 	virtual_uid_maps = hash:/etc/postfix/vuid
 	virtual_gid_maps = hash:/etc/postfix/vgid
-
-	# All domains that are listed in $mydestination are delivered
-	# with $local_transport, which is the virtual delivery agent.
-
-	mydestination = 
-	    $myhostname localhost.$mydomain virtual1.domain virtual2.domain
 
 Define a virtual delivery agent if the entry doesn't already exist:
 
@@ -198,19 +230,22 @@ type.  The command "postconf -m" displays possible lookup table
 types.
 
     /etc/postfix/main.cf:
+	# All domains and users delivered by the virtual local delivery agent.
+
+	virtual_transport = virtual
 	virtual_mailbox_base = /var/mail/vhosts
 	virtual_mailbox_maps = hash:/etc/postfix/vmailbox
+	virtual_mailbox_domains = $virtual_mailbox_maps
 	virtual_minimum_uid = 100
 	virtual_uid_maps = static:5000
 	virtual_gid_maps = static:5000
-	transport_maps = hash:/etc/postfix/transport
 
-	# All domains that are delivered by the local delivery agent.
+	# All domains and users delivered by the local delivery agent.
+	# local_recipient_maps is used by the SMTP server to reject mail
+	# for unknown users.
 
+	local_transport = local
 	mydestination = $myhostname $localhost.$mydomain
-
-	# Reject unknown local recipients at the SMTP port.
-
 	local_recipient_maps = unix:passwd.byname $alias_maps
 
 Define a virtual delivery agent if the entry doesn't already exist:
@@ -218,19 +253,15 @@ Define a virtual delivery agent if the entry doesn't already exist:
     /etc/postfix/master.cf:
 	virtual     unix  -       n       n       -       -       virtual
 
-Route virtual domains to the virtual delivery agent:
-
-    /etc/postfix/transport:
-	virtual1.domain		virtual
-	virtual2.domain		virtual
-
 Example recipients, one UNIX-style mailbox, one qmail-style maildir:
 
     /etc/postfix/vmailbox:
-	virtual1.domain		required to prevent relay access denied errors
-	virtual2.domain		required to prevent relay access denied errors
 	test1@virtual1.domain test1
 	test2@virtual2.domain test2/
+
+    /etc/postfix/vmaildomains:
+	virtual1.domain		required to prevent relay access denied errors
+	virtual2.domain		required to prevent relay access denied errors
 
 Execute something like the following commands for each mailbox recipient:
 
@@ -245,7 +276,66 @@ Execute something like the following commands for each maildir recipient:
 Remember that each domain is required to have a postmaster contact
 address.
 
-Example 3: forwarding mail for an old account to a new address
+Example 3: hosting many virtual users
+=====================================
+
+Example 2 is fine if you host only a few virtual users.  With many
+users you will want to separate the information that changes often
+(the user addresses) from the information that changes rarely (the
+names of hosted domains).
+
+This example is the same as above, with co-existing local and
+virtual domains, but it uses a separate table for specifying the
+virtual domain names.
+
+    /etc/postfix/main.cf:
+	# All domains and users delivered by the virtual local delivery agent.
+
+	virtual_transport = virtual
+	virtual_mailbox_base = /var/mail/vhosts
+	virtual_mailbox_maps = hash:/etc/postfix/vmailbox
+	virtual_mailbox_domains = hash:/etc/postfix/vmaildomains
+	virtual_minimum_uid = 100
+	virtual_uid_maps = static:5000
+	virtual_gid_maps = static:5000
+
+	# All domains and users delivered by the local delivery agent.
+	# local_recipient_maps is used by the SMTP server to reject mail
+	# for unknown users.
+
+	local_transport = local
+	mydestination = $myhostname $localhost.$mydomain
+	local_recipient_maps = unix:passwd.byname $alias_maps
+
+Define a virtual delivery agent if the entry doesn't already exist:
+
+    /etc/postfix/master.cf:
+	virtual     unix  -       n       n       -       -       virtual
+
+Example recipients, one UNIX-style mailbox, one qmail-style maildir:
+
+    /etc/postfix/vmailbox:
+	test1@virtual1.domain test1
+	test2@virtual2.domain test2/
+
+    /etc/postfix/vmaildomains:
+	virtual1.domain		required to prevent relay access denied errors
+	virtual2.domain		required to prevent relay access denied errors
+
+Execute something like the following commands for each mailbox recipient:
+
+    # touch /var/mail/vhosts/test1
+    # chown 5000:5000 /var/mail/vhosts/test1
+
+Execute something like the following commands for each maildir recipient:
+
+    # mkdir /var/mail/vhosts/test2
+    # chown 5000:5000 /var/mail/vhosts/test2
+
+Remember that each domain is required to have a postmaster contact
+address.
+
+Example 4: forwarding mail for an old account to a new address
 ==============================================================
 
 In order to forward mail for a user who no longer exists, one would
@@ -258,7 +348,7 @@ virtual configuration file about virtual domains):
     /etc/postfix/virtual:
 	old_user@old.domain	new_user@new.domain
 
-Example 4: setting up a virtual vacation autoresponder
+Example 5: setting up a virtual vacation autoresponder
 ======================================================
 
 In order to set up an autoreply for virtual recipients while still

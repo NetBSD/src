@@ -20,7 +20,7 @@
 /* SYSTEM-WIDE AND USER-LEVEL ALIASING
 /* .ad
 /* .fi
-/*	The system adminstrator can set up one or more system-wide
+/*	The system administrator can set up one or more system-wide
 /*	\fBsendmail\fR-style alias databases.
 /*	Users can have \fBsendmail\fR-style ~/.\fBforward\fR files.
 /*	Mail for \fIname\fR is delivered to the alias \fIname\fR, to
@@ -109,6 +109,8 @@
 /*	In the case of UNIX-style mailbox delivery,
 /*	the \fBlocal\fR daemon prepends a "\fBFrom \fIsender time_stamp\fR"
 /*	envelope header to each message, prepends an
+/*	\fBX-Original-To:\fR header with the recipient address as given to
+/*	Postfix, prepends an
 /*	optional \fBDelivered-To:\fR header
 /*	with the envelope recipient address, prepends a \fBReturn-Path:\fR
 /*	header with the envelope sender address, prepends a \fB>\fR character
@@ -119,7 +121,10 @@
 /*
 /*	In the case of \fBmaildir\fR delivery, the local daemon prepends
 /*	an optional
-/*	\fBDelivered-To:\fR header with the envelope recipient address
+/*	\fBDelivered-To:\fR header with the final envelope recipient address,
+/*	prepends an
+/*	\fBX-Original-To:\fR header with the recipient address as given to
+/*	Postfix,
 /*	and prepends a \fBReturn-Path:\fR header with the envelope sender
 /*	address.
 /* EXTERNAL COMMAND DELIVERY
@@ -162,15 +167,20 @@
 /*	rightmost @ character).
 /* .IP \fBRECIPIENT\fR
 /*	The entire recipient address.
+/* .IP \fBSENDER\fR
+/*	The entire sender address.
 /* .PP
 /*	The \fBPATH\fR environment variable is always reset to a
-/*	system-dependent default path, and the \fBTZ\fR (time zone)
-/*	environment variable is always passed on without change.
+/*	system-dependent default path, and environment variables
+/*	whose names are blessed by the \fBexport_environment\fR
+/*	configuration parameter are exported unchanged.
 /*
 /*	The current working directory is the mail queue directory.
 /*
 /*	The \fBlocal\fR daemon prepends a "\fBFrom \fIsender time_stamp\fR"
 /*	envelope header to each message, prepends an
+/*	\fBX-Original-To:\fR header with the recipient address as given to
+/*	Postfix, prepends an
 /*	optional \fBDelivered-To:\fR
 /*	header with the recipient envelope address, prepends a
 /*	\fBReturn-Path:\fR header with the sender envelope address,
@@ -189,6 +199,8 @@
 /*	In the case of UNIX-style mailbox delivery,
 /*	the \fBlocal\fR daemon prepends a "\fBFrom \fIsender time_stamp\fR"
 /*	envelope header to each message, prepends an
+/*	\fBX-Original-To:\fR header with the recipient address as given to
+/*	Postfix, prepends an
 /*	optional \fBDelivered-To:\fR
 /*	header with the recipient envelope address, prepends a \fB>\fR
 /*	character to lines beginning with "\fBFrom \fR", and appends an
@@ -201,7 +213,10 @@
 /*
 /*	In the case of \fBmaildir\fR delivery, the local daemon prepends
 /*	an optional
-/*	\fBDelivered-To:\fR header with the envelope recipient address.
+/*	\fBDelivered-To:\fR header with the envelope recipient address, and
+/*	prepends an
+/*	\fBX-Original-To:\fR header with the recipient address as given to
+/*	Postfix.
 /*	The envelope sender address is available in the \fBReturn-Path:\fR
 /*	header.
 /* ADDRESS EXTENSION
@@ -298,12 +313,22 @@
 /*	Message transport for recipients that are not found in the UNIX
 /*	passwd database.
 /*	This parameter overrides \fBluser_relay\fR.
+/* .sp
+/*	Note: you must update the \fBlocal_recipient_maps\fR
+/*	setting in the \fBmain.cf\fR file, otherwise the Postfix SMTP
+/*	server will reject mail for non-UNIX accounts with "\fBUser
+/*	unknown in local recipient table\fR".
 /* .IP \fBhome_mailbox\fR
 /*	Pathname of a mailbox relative to a user's home directory.
 /*	Specify a path ending in \fB/\fR for maildir-style delivery.
 /* .IP \fBluser_relay\fR
 /*	Destination (\fI@domain\fR or \fIaddress\fR) for non-existent users.
 /*	The \fIaddress\fR is subjected to \fI$name\fR expansion.
+/* .sp
+/*	Note: you must specify "\fBlocal_recipient_maps =\fR"
+/*	(i.e. empty) in the \fBmain.cf\fR file, otherwise the Postfix SMTP
+/*	server will reject mail for non-UNIX accounts with "\fBUser
+/*	unknown in local recipient table\fR".
 /* .IP \fBmail_spool_directory\fR
 /*	Directory with UNIX-style mailboxes. The default pathname is system
 /*	dependent.
@@ -320,6 +345,12 @@
 /*	recipients, whether or not they are found in the UNIX passwd database.
 /*	This parameter overrides all other configuration parameters that
 /*	control mailbox delivery, including \fBluser_relay\fR.
+/* .sp
+/*	Note: if you use this feature to receive mail for non-UNIX
+/*	accounts then you must update the \fBlocal_recipient_maps\fR
+/*	setting in the \fBmain.cf\fR file, otherwise the Postfix SMTP
+/*	server will reject mail for non-UNIX accounts with "\fBUser
+/*	unknown in local recipient table\fR".
 /* .SH "Locking controls"
 /* .ad
 /* .fi
@@ -435,6 +466,7 @@
 #include <been_here.h>
 #include <mail_params.h>
 #include <ext_prop.h>
+#include <maps.h>
 
 /* Single server skeleton. */
 
@@ -478,6 +510,7 @@ int     local_file_deliver_mask;
 int     local_ext_prop_mask;
 int     local_deliver_hdr_mask;
 int     local_mbox_lock_mask;
+MAPS   *alias_maps;
 
 /* local_deliver - deliver message with extreme prejudice */
 
@@ -514,6 +547,7 @@ static int local_deliver(DELIVER_REQUEST *rqst, char *service)
     state.msg_attr.queue_id = rqst->queue_id;
     state.msg_attr.fp = rqst->fp;
     state.msg_attr.offset = rqst->data_offset;
+    state.msg_attr.encoding = rqst->encoding;
     state.msg_attr.sender = rqst->sender;
     state.msg_attr.relay = service;
     state.msg_attr.arrival_time = rqst->arrival_time;
@@ -531,6 +565,7 @@ static int local_deliver(DELIVER_REQUEST *rqst, char *service)
     for (msg_stat = 0, rcpt = rqst->rcpt_list.info; rcpt < rcpt_end; rcpt++) {
 	state.dup_filter = been_here_init(var_dup_filter_limit, BH_FLAG_FOLD);
 	forward_init();
+	state.msg_attr.orig_rcpt = rcpt->orig_addr;
 	state.msg_attr.recipient = rcpt->address;
 	rcpt_stat = deliver_recipient(state, usr_attr);
 	rcpt_stat |= forward_finish(state.msg_attr, rcpt_stat);
@@ -661,6 +696,8 @@ static void pre_init(char *unused_name, char **unused_argv)
 		      VAR_MAILBOX_LIMIT, VAR_MESSAGE_LIMIT);
 	set_file_limit(var_mailbox_limit);
     }
+    alias_maps = maps_create("aliases", var_alias_maps,
+			     DICT_FLAG_LOCK | DICT_FLAG_NO_REGSUB);
 }
 
 /* main - pass control to the single-threaded skeleton */

@@ -5,7 +5,7 @@
 /*	Postfix alias database maintenance
 /* SYNOPSIS
 /* .fi
-/*	\fBpostalias\fR [\fB-Nfinrvw\fR] [\fB-c \fIconfig_dir\fR]
+/*	\fBpostalias\fR [\fB-Nfinorvw\fR] [\fB-c \fIconfig_dir\fR]
 /*		[\fB-d \fIkey\fR] [\fB-q \fIkey\fR]
 /*		[\fIfile_type\fR:]\fIfile_name\fR ...
 /* DESCRIPTION
@@ -13,6 +13,9 @@
 /*	alias databases, or updates an existing one. The input and output
 /*	file formats are expected to be compatible with Sendmail version 8,
 /*	and are expected to be suitable for the use as NIS alias maps.
+/*
+/*	If the result files do not exist they will be created with the
+/*	same group and other read permissions as the source file.
 /*
 /*	While a database update is in progress, signal delivery is
 /*	postponed, and an exclusive, advisory, lock is placed on the
@@ -40,11 +43,15 @@
 /* .IP \fB-i\fR
 /*	Incremental mode. Read entries from standard input and do not
 /*	truncate an existing database. By default, \fBpostalias\fR creates
-/*	a new database from the entries in \fBfile_name\fR.
+/*	a new database from the entries in \fIfile_name\fR.
 /* .IP \fB-n\fR
 /*	Don't include the terminating null character that terminates lookup
 /*	keys and values. By default, Postfix does whatever is the default for
 /*	the host operating system.
+/* .IP \fB-o\fR
+/*	Do not release root privileges when processing a non-root
+/*	input file. By default, \fBpostalias\fR drops root privileges
+/*	and runs as the source file owner instead.
 /* .IP "\fB-q \fIkey\fR"
 /*	Search the specified maps for \fIkey\fR and print the first value
 /*	found on the standard output stream. The exit status is zero
@@ -79,19 +86,23 @@
 /*	The output is a hashed file, named \fIfile_name\fB.db\fR.
 /*	This is available only on systems with support for \fBdb\fR databases.
 /* .PP
+/*	Use the command \fBpostconf -m\fR to find out what types of database
+/*	your Postfix installation can support.
+/*
 /*	When no \fIfile_type\fR is specified, the software uses the database
-/*	type specified via the \fBdatabase_type\fR configuration parameter.
+/*	type specified via the \fBdefault_database_type\fR configuration
+/*	parameter.
 /*	The default value for this parameter depends on the host environment.
 /* .RE
 /* .IP \fIfile_name\fR
-/*	The name of the alias database source file when rebuilding a database.
+/*	The name of the alias database source file when creating a database.
 /* DIAGNOSTICS
 /*	Problems are logged to the standard error stream. No output means
 /*	no problems were detected. Duplicate entries are skipped and are
 /*	flagged with a warning.
 /*
 /*	\fBpostalias\fR terminates with zero exit status in case of success
-/*	(including successful \fBpostmap -q\fR lookup) and terminates
+/*	(including successful \fBpostalias -q\fR lookup) and terminates
 /*	with non-zero exit status in case of failure.
 /* ENVIRONMENT
 /* .ad
@@ -106,9 +117,15 @@
 /*	The following \fBmain.cf\fR parameters are especially relevant to
 /*	this program. See the Postfix \fBmain.cf\fR file for syntax details
 /*	and for default values.
-/* .IP \fBdatabase_type\fR
-/*	Default alias database type. On many UNIX systems, the default type
+/* .IP \fBdefault_database_type\fR
+/*	Default database type. On many UNIX systems, the default type
 /*	is either \fBdbm\fR or \fBhash\fR.
+/* .IP \fBberkeley_db_create_buffer_size\fR
+/*	Amount of buffer memory to be used when creating a Berkeley DB
+/*	\fBhash\fR or \fBbtree\fR lookup table.
+/* .IP \fBberkeley_db_read_buffer_size\fR
+/*	Amount of buffer memory to be used when reading a Berkeley DB
+/*	\fBhash\fR or \fBbtree\fR lookup table.
 /* STANDARDS
 /*	RFC 822 (ARPA Internet Text Messages)
 /* SEE ALSO
@@ -145,8 +162,8 @@
 #include <readlline.h>
 #include <stringops.h>
 #include <split_at.h>
-#include <get_hostname.h>
 #include <vstring_vstream.h>
+#include <set_eugid.h>
 
 /* Global library. */
 
@@ -159,9 +176,11 @@
 
 #define STR	vstring_str
 
+#define POSTALIAS_FLAG_AS_OWNER	(1<<0)	/* open dest as owner of source */
+
 /* postalias - create or update alias database */
 
-static void postalias(char *map_type, char *path_name,
+static void postalias(char *map_type, char *path_name, int postalias_flags,
 		              int open_flags, int dict_flags)
 {
     VSTREAM *source_fp;
@@ -174,6 +193,8 @@ static void postalias(char *map_type, char *path_name,
     TOK822 *key_list;
     TOK822 *colon;
     TOK822 *value_list;
+    struct stat st;
+    mode_t  saved_mask;
 
     /*
      * Initialize.
@@ -187,12 +208,36 @@ static void postalias(char *map_type, char *path_name,
     } else if ((source_fp = vstream_fopen(path_name, O_RDONLY, 0)) == 0) {
 	msg_fatal("open %s: %m", path_name);
     }
+    if (fstat(vstream_fileno(source_fp), &st) < 0)
+	msg_fatal("fstat %s: %m", path_name);
+
+    /*
+     * Turn off group/other read permissions as indicated in the source file.
+     */
+    if (S_ISREG(st.st_mode))
+	saved_mask = umask(022 | (~st.st_mode & 077));
+
+    /*
+     * If running as root, run as the owner of the source file, so that the
+     * result shows proper ownership, and so that a bug in postalias does not
+     * allow privilege escalation.
+     */
+    if ((postalias_flags & POSTALIAS_FLAG_AS_OWNER) && getuid() == 0
+	&& (st.st_uid != geteuid() || st.st_gid != getegid()))
+	set_eugid(st.st_uid, st.st_gid);
+
 
     /*
      * Open the database, create it when it does not exist, truncate it when
      * it does exist, and lock out any spectators.
      */
     mkmap = mkmap_open(map_type, path_name, open_flags, dict_flags);
+
+    /*
+     * And restore the umask, in case it matters.
+     */
+    if (S_ISREG(st.st_mode))
+	umask(saved_mask);
 
     /*
      * Add records to the database.
@@ -283,8 +328,10 @@ static void postalias(char *map_type, char *path_name,
     mkmap->dict->flags &= ~DICT_FLAG_TRY1NULL;
     mkmap->dict->flags |= DICT_FLAG_TRY0NULL;
     vstring_sprintf(value_buffer, "%010ld", (long) time((time_t *) 0));
+#if (defined(HAS_NIS) || defined(HAS_NISPLUS))
     mkmap_append(mkmap, "YP_LAST_MODIFIED", STR(value_buffer));
-    mkmap_append(mkmap, "YP_MASTER_NAME", get_hostname());
+    mkmap_append(mkmap, "YP_MASTER_NAME", var_myhostname);
+#endif
 
     /*
      * Close the alias database, and release the lock.
@@ -439,7 +486,7 @@ static int postalias_delete(const char *map_type, const char *map_name,
 
 static NORETURN usage(char *myname)
 {
-    msg_fatal("usage: %s [-Nfinrvw] [-c config_dir] [-d key] [-q key] [map_type:]file...",
+    msg_fatal("usage: %s [-Nfinorvw] [-c config_dir] [-d key] [-q key] [map_type:]file...",
 	      myname);
 }
 
@@ -450,6 +497,7 @@ int     main(int argc, char **argv)
     int     fd;
     char   *slash;
     struct stat st;
+    int     postalias_flags = POSTALIAS_FLAG_AS_OWNER;
     int     open_flags = O_RDWR | O_CREAT | O_TRUNC;
     int     dict_flags = DICT_FLAG_DUP_WARN | DICT_FLAG_FOLD_KEY;
     char   *query = 0;
@@ -489,7 +537,7 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "Nc:d:finq:rvw")) > 0) {
+    while ((ch = GETOPT(argc, argv, "Nc:d:finoq:rvw")) > 0) {
 	switch (ch) {
 	default:
 	    usage(argv[0]);
@@ -516,6 +564,9 @@ int     main(int argc, char **argv)
 	case 'n':
 	    dict_flags |= DICT_FLAG_TRY0NULL;
 	    dict_flags &= ~DICT_FLAG_TRY1NULL;
+	    break;
+	case 'o':
+	    postalias_flags &= ~POSTALIAS_FLAG_AS_OWNER;
 	    break;
 	case 'q':
 	    if (query || delkey)
@@ -580,9 +631,11 @@ int     main(int argc, char **argv)
 	    usage(argv[0]);
 	while (optind < argc) {
 	    if ((path_name = split_at(argv[optind], ':')) != 0) {
-		postalias(argv[optind], path_name, open_flags, dict_flags);
+		postalias(argv[optind], path_name, postalias_flags,
+			  open_flags, dict_flags);
 	    } else {
-		postalias(var_db_type, argv[optind], open_flags, dict_flags);
+		postalias(var_db_type, argv[optind], postalias_flags,
+			  open_flags, dict_flags);
 	    }
 	    optind++;
 	}

@@ -5,9 +5,13 @@
 #	format of Postfix transport table
 # SYNOPSIS
 #	\fBpostmap /etc/postfix/transport\fR
+#
+#	\fBpostmap -q "\fIstring\fB" /etc/postfix/transport\fR
+#
+#	\fBpostmap -q - /etc/postfix/transport <\fIinputfile\fR
 # DESCRIPTION
-#	The optional \fBtransport\fR table specifies a mapping from domain
-#	hierarchies to message delivery transports and/or relay hosts. The
+#	The optional \fBtransport\fR table specifies a mapping from email
+#	addresses to message delivery transports and/or relay hosts. The
 #	mapping is used by the \fBtrivial-rewrite\fR(8) daemon.
 #
 #	Normally, the \fBtransport\fR table is specified as a text file
@@ -22,14 +26,15 @@
 #
 #	Alternatively, the table can be provided as a regular-expression
 #	map where patterns are given as regular expressions. In that case,
-#	the lookups are done in a slightly different way as described below.
+#	the lookups are done in a slightly different way as described
+#	in section "REGULAR EXPRESSION TABLES".
 # TABLE FORMAT
 # .ad
 # .fi
 #	The format of the transport table is as follows:
 # .IP "\fIpattern result\fR"
-#	When \fIpattern\fR matches the domain, use the corresponding
-#	\fIresult\fR.
+#	When \fIpattern\fR matches the recipient address or domain, use the
+#	corresponding \fIresult\fR.
 # .IP "blank lines and comments"
 #	Empty lines and whitespace-only lines are ignored, as
 #	are lines whose first non-whitespace character is a `#'.
@@ -37,9 +42,27 @@
 #	A logical line starts with non-whitespace text. A line that
 #	starts with whitespace continues a logical line.
 # .PP
+#	The \fIpattern\fR specifies an email address, a domain name, or
+#	a domain name hierarchy, as described in section "TABLE LOOKUP".
+#
+#	The \fIresult\fR is of the form \fItransport\fB:\fInexthop\fR.
+#	The \fItransport\fR field specifies a mail delivery transport
+#	such as \fBsmtp\fR or \fBlocal\fR. The \fInexthop\fR field
+#	specifies where and how to deliver mail. More details are given
+#	in section "RESULT FORMAT".
+# TABLE LOOKUP
+# .ad
+# .fi
 #	With lookups from indexed files such as DB or DBM, or from networked
 #	tables such as NIS, LDAP or SQL, patterns are tried in the order as
 #	listed below:
+# .IP "\fIuser+extension@domain transport\fR:\fInexthop\fR"
+#	Mail for \fIuser+extension@domain\fR is delivered through
+#	\fItransport\fR to
+#	\fInexthop\fR.
+# .IP "\fIuser@domain transport\fR:\fInexthop\fR"
+#	Mail for \fIuser@domain\fR is delivered through \fItransport\fR to
+#	\fInexthop\fR.
 # .IP "\fIdomain transport\fR:\fInexthop\fR"
 #	Mail for \fIdomain\fR is delivered through \fItransport\fR to
 #	\fInexthop\fR.
@@ -50,25 +73,50 @@
 #	\fBparent_domain_matches_subdomains\fR configuration setting.
 #	Otherwise, a domain name matches itself and its subdomains.
 # .PP
-#	Note: transport map entries take precedence over domains
-#	specified in the \fBmydestination\fR parameter. If you use
-#	the optional transport map, it may be safer to specify explicit
-#	entries for all domains specified in \fBmydestination\fR,
-#	for example:
+#	Note 1: the special pattern \fB*\fR represents any address (i.e. it
+#	functions as the wild-card pattern).
 #
-# .ti +5
-#	\fBhostname.my.domain	local:\fR
-# .ti +5
-#	\fBlocalhost.my.domain      local:\fR
+#	Note 2: the null recipient address is looked up as
+#	\fB$empty_address_recipient\fR@\fB$myhostname\fR (default:
+#	mailer-daemon@hostname).
+# RESULT FORMAT
+# .ad
+# .fi
+#	The transport field specifies the name of a mail delivery transport
+#	(the first name of a mail delivery service entry in the Postfix
+#	\fBmaster.cf\fR file).
 #
-#	The interpretation of the \fInexthop\fR field is transport
+#	The interpretation of the nexthop field is transport
 #	dependent. In the case of SMTP, specify \fIhost\fR:\fIservice\fR for a
 #	non-default server port, and use [\fIhost\fR] or [\fIhost\fR]:\fIport\fR
 #	in order to disable MX (mail exchanger) DNS lookups. The [] form
 #	can also be used with IP addresses instead of hostnames.
+#
+#	A null \fItransport\fR and null \fInexthop\fR result means "do
+#	not change": use the delivery transport and nexthop information
+#	that would be used when the entire transport table did not exist.
+#
+#	A non-null \fItransport\fR field with a null \fInexthop\fR field
+#	resets the nexthop information to the recipient domain.
+#
+#	A null \fItransport\fR field with non-null \fInexthop\fR field
+#	does not modify the transport information.
 # EXAMPLES
 # .ad
 # .fi
+#	In order to deliver internal mail directly, while using a
+#	mail relay for all other mail, specify a null entry for
+#	internal destinations (do not change the delivery transport or
+#	the nexthop information) and specify a wildcard for all other
+#	destinations.
+#
+# .ti +5
+#	\fB\&my.domain    :\fR
+# .ti +5
+#	\fB\&.my.domain   :\fR
+# .ti +5
+#	\fB*            smtp:outbound-relay.my.domain\fR
+#
 #	In order to send mail for \fBfoo.org\fR and its subdomains
 #	via the \fBuucp\fR transport to the UUCP host named \fBfoo\fR:
 #
@@ -77,7 +125,7 @@
 # .ti +5
 #	\fB\&.foo.org     uucp:foo\fR
 #
-#	When no \fInexthop\fR host name is specified, the destination domain
+#	When no nexthop host name is specified, the destination domain
 #	name is used instead. For example, the following directs mail for
 #	\fIuser\fR@\fBfoo.org\fR via the \fBslow\fR transport to a mail
 #	exchanger for \fBfoo.org\fR.  The \fBslow\fR transport could be
@@ -86,9 +134,9 @@
 # .ti +5
 #	\fBfoo.org      slow:\fR
 #
-#	When no \fItransport\fR is specified, the default transport is
-#	used, as specified via the \fBdefault_transport\fR configuration
-#	parameter. The following sends all mail for \fBfoo.org\fR and its
+#	When no transport is specified, Postfix uses the transport that
+#	matches the address domain class (see TRANSPORT FIELD discussion
+#	above).  The following sends all mail for \fBfoo.org\fR and its
 #	subdomains to host \fBgateway.foo.org\fR:
 #
 # .ti +5
@@ -141,18 +189,14 @@
 #	this topic. See the Postfix \fBmain.cf\fR file for syntax details
 #	and for default values. Use the \fBpostfix reload\fR command after
 #	a configuration change.
+# .IP \fBempty_address_recipient\fR
+#	The address that is looked up instead of the null sender address.
 # .IP \fBparent_domain_matches_subdomains\fR
 #	List of Postfix features that use \fIdomain.tld\fR patterns
 #	to match \fIsub.domain.tld\fR (as opposed to
 #	requiring \fI.domain.tld\fR patterns).
 # .IP \fBtransport_maps\fR
 #	List of transport lookup tables.
-# .PP
-#	Other parameters of interest:
-# .IP \fBdefault_transport\fR
-#	The transport to use when no transport is explicitly specified.
-# .IP \fBrelayhost\fR
-#	The default host to send to when no transport table entry matches.
 # SEE ALSO
 #	postmap(1) create mapping table
 #	trivial-rewrite(8) rewrite and resolve addresses
