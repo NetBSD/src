@@ -1,6 +1,0 @@
-.\"	$NetBSD: whatis,v 1.5 1999/01/13 07:30:09 ross Exp $	
-.
-For the sun3,
-.Nx \*V
-brings support for the Sun3/E, and
-significantly improved VM and context switch performance.

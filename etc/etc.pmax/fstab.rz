@@ -1,5 +1,0 @@
-#	$NetBSD: fstab.rz,v 1.3 1998/01/09 06:09:43 perry Exp $
-#
-/dev/rz0a	/		ffs	rw 1 1
-#/dev/rz0d	/var		ffs	rw 1 2
-#/dev/rz0h	/usr		ffs	rw 1 3
