@@ -36,6 +36,7 @@ integer G77_hostnm_0 (char *name, ftnlen Lname)
 
 #if HAVE_GETHOSTNAME
     ret = gethostname (name, Lname);
+    name[Lname - 1] = '\0';
     if (ret==0) {
 	/* Pad with blanks (assuming gethostname will make an error
            return if it can't fit in the null). */
