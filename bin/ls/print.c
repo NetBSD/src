@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
+/*	$NetBSD: print.c,v 1.16 1997/07/20 18:53:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $";
+__RCSID("$NetBSD: print.c,v 1.16 1997/07/20 18:53:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +102,7 @@ printlong(dp)
 			continue;
 		sp = p->fts_statp;
 		if (f_inode)
-			(void)printf("%*lu ", dp->s_inode, sp->st_ino);
+			(void)printf("%*u ", dp->s_inode, sp->st_ino);
 		if (f_size)
 			(void)printf("%*qd ",
 			    dp->s_block, howmany(sp->st_blocks, blocksize));
@@ -143,7 +144,7 @@ printcol(dp)
 	static FTSENT **array;
 	static int lastentries = -1;
 	FTSENT *p;
-	int base, chcnt, cnt, col, colwidth, num;
+	int base, chcnt, col, colwidth, num;
 	int numcols, numrows, row;
 
 	/*
@@ -154,7 +155,7 @@ printcol(dp)
 		lastentries = dp->entries;
 		if ((array =
 		    realloc(array, dp->entries * sizeof(FTSENT *))) == NULL) {
-			warn(NULL);
+			warn("%s", "");
 			printscol(dp);
 		}
 	}
@@ -212,7 +213,7 @@ printaname(p, inodefield, sizefield)
 	sp = p->fts_statp;
 	chcnt = 0;
 	if (f_inode)
-		chcnt += printf("%*lu ", (int)inodefield, sp->st_ino);
+		chcnt += printf("%*u ", (int)inodefield, sp->st_ino);
 	if (f_size)
 		chcnt += printf("%*qd ",
 		    (int)sizefield, howmany(sp->st_blocks, blocksize));
