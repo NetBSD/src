@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.8 2001/03/17 11:43:06 simonb Exp $	*/
+/*	$NetBSD: jot.c,v 1.9 2002/09/27 20:54:51 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.8 2001/03/17 11:43:06 simonb Exp $");
+__RCSID("$NetBSD: jot.c,v 1.9 2002/09/27 20:54:51 atatat Exp $");
 #endif /* not lint */
 
 /*
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: jot.c,v 1.8 2001/03/17 11:43:06 simonb Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #define	REPS_DEF	100
 #define	BEGIN_DEF	1
@@ -102,7 +103,7 @@ main(argc, argv)
 	getargs(argc, argv);
 	if (randomize) {
 		*x = (ender - begin) * (ender > begin ? 1 : -1);
-		srandom((int) s);
+		srandom((unsigned long) s);
 		for (*i = 1; *i <= reps || infinity; (*i)++) {
 			*y = (double) random() / INT_MAX;
 			putdata(*y * *x + begin, reps - *i);
@@ -258,7 +259,7 @@ getargs(argc, argv)
 			mask = 015;
 			break;
 		case 012:
-			s = (randomize ? time(NULL) : STEP_DEF);
+			s = (randomize ? time(NULL) * getpid() : STEP_DEF);
 			mask = 013;
 			break;
 		case 013:
@@ -270,7 +271,7 @@ getargs(argc, argv)
 			mask = 0;
 			break;
 		case 014:
-			s = (randomize ? time(NULL) : STEP_DEF);
+			s = (randomize ? time(NULL) * getpid() : STEP_DEF);
 			mask = 015;
 			break;
 		case 015:
@@ -282,7 +283,7 @@ getargs(argc, argv)
 			break;
 		case 016:
 			if (randomize)
-				s = time(NULL);
+				s = time(NULL) * getpid();
 			else if (reps == 0)
 				errx(1, "Infinite sequences cannot be bounded");
 			else if (reps == 1)
