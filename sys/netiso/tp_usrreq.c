@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.23 2003/08/11 15:17:31 itojun Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.24 2004/04/19 05:16:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.23 2003/08/11 15:17:31 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.24 2004/04/19 05:16:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,9 +103,7 @@ struct tp_pcb  *tp_listeners, *tp_intercepts;
  *  print (str) followed by the control info in the mbufs of an mbuf chain (n)
  */
 void
-dump_mbuf(n, str)
-	struct mbuf    *n;
-	char           *str;
+dump_mbuf(struct mbuf *n, char *str)
 {
 	struct mbuf    *nextrecord;
 
@@ -164,12 +162,8 @@ dump_mbuf(n, str)
  *  E* whatever is returned from the fsm.
  */
 int
-tp_rcvoob(tpcb, so, m, outflags, inflags)
-	struct tp_pcb  *tpcb;
-	struct socket *so;
-	struct mbuf *m;
-	int            *outflags;
-	int             inflags;
+tp_rcvoob(struct tp_pcb *tpcb, struct socket *so, struct mbuf *m,
+	int *outflags, int inflags)
 {
 	struct mbuf *n;
 	struct sockbuf *sb = &so->so_rcv;
@@ -278,11 +272,8 @@ restart:
  *  ENOBUFS if ran out of mbufs
  */
 int
-tp_sendoob(tpcb, so, xdata, outflags)
-	struct tp_pcb  *tpcb;
-	struct socket *so;
-	struct mbuf *xdata;
-	int            *outflags;	/* not used */
+tp_sendoob(struct tp_pcb *tpcb, struct socket *so, struct mbuf *xdata,
+	int *outflags)
 {
 	/*
 	 * Each mbuf chain represents a sequence # in the XPD seq space.
@@ -385,11 +376,8 @@ tp_sendoob(tpcb, so, xdata, outflags)
  */
 /* ARGSUSED */
 int
-tp_usrreq(so, req, m, nam, control, p)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct proc *p;
+tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+	struct mbuf *control, struct proc *p)
 {
 	struct tp_pcb *tpcb;
 	int             s;
@@ -434,7 +422,7 @@ tp_usrreq(so, req, m, nam, control, p)
 			error = EISCONN;
 			break;
 		}
-		error = tp_attach(so, (long)nam);
+		error = tp_attach(so, (int)(long)nam);
 		if (error)
 			break;
 		tpcb = sototpcb(so);
@@ -767,9 +755,7 @@ release:
 }
 
 void
-tp_ltrace(so, uio)
-	struct socket  *so;
-	struct uio     *uio;
+tp_ltrace(struct socket *so, struct uio *uio)
 {
 #ifdef TPPT
 	if (tp_traceflags[D_DATA]) {
@@ -783,8 +769,7 @@ tp_ltrace(so, uio)
 }
 
 int
-tp_confirm(tpcb)
-	struct tp_pcb *tpcb;
+tp_confirm(struct tp_pcb *tpcb)
 {
 	struct tp_event E;
 	if (tpcb->tp_state == TP_CONFIRMING)
@@ -798,10 +783,7 @@ tp_confirm(tpcb)
  * Process control data sent with sendmsg()
  */
 int
-tp_snd_control(m, so, data)
-	struct mbuf    *m;
-	struct socket  *so;
-	struct mbuf **data;
+tp_snd_control(struct mbuf *m, struct socket *so, struct mbuf **data)
 {
 	struct cmsghdr *ch;
 	int             error = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.27 2003/09/26 22:23:58 wiz Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.28 2004/04/19 05:16:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.27 2003/09/26 22:23:58 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.28 2004/04/19 05:16:45 matt Exp $");
 
 #include "opt_iso.h"
 
@@ -121,7 +121,7 @@ struct clnp_stat clnp_stat;
  * NOTES:
  */
 void
-clnp_init()
+clnp_init(void)
 {
 	struct protosw *pr;
 
@@ -293,13 +293,7 @@ next:
  *	will it be correctly aligned?
  */
 void
-#if __STDC__
 clnp_input(struct mbuf *m, ...)
-#else
-clnp_input(m, va_alist)
-	struct mbuf    *m;	/* ptr to first mbuf of pkt */
-	va_dcl
-#endif
 {
 	struct snpa_hdr *shp;	/* subnetwork header */
 	struct ifaddr *ifa;
