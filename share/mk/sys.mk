@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.31 1997/05/17 02:01:09 mycroft Exp $
+#	$NetBSD: sys.mk,v 1.32 1997/05/27 18:09:02 cjs Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -28,6 +28,8 @@ CXXFLAGS?=	${CFLAGS}
 COMPILE.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} -c
 LINK.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
+# Note: CPPFLAGS is passed to all programs that pass the input
+# through cpp (cc, pc, etc.)
 CPP?=		cpp
 CPPFLAGS?=	
 
