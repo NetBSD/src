@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.2 1998/07/28 14:04:08 pk Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.3 1998/07/31 22:21:35 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -211,7 +211,8 @@ leattach_obio(parent, self, aux)
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	bus_space_handle_t bh;
-	u_long laddr;
+	bus_dma_segment_t seg;
+	int rseg;
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr __P((u_char *));
 
@@ -222,7 +223,7 @@ leattach_obio(parent, self, aux)
 			 0, sizeof(struct lereg1),
 			 0, 0,
 			 &bh) != 0) {
-		printf("leattach_obio: cannot map registers\n");
+		printf("%s @ obio: cannot map registers\n", self->dv_xname);
 		return;
 	}
 	lesc->sc_r1 = (struct lereg1 *)bh;
@@ -233,8 +234,21 @@ leattach_obio(parent, self, aux)
 		oba->oba_bp->dev = &sc->sc_dev;
 
 
-	laddr = (u_long)dvma_malloc(MEMSIZE, &sc->sc_mem, M_NOWAIT);
-	sc->sc_addr = laddr & 0xffffff;
+	if (bus_dmamem_alloc(lesc->sc_dmatag, MEMSIZE, NBPG, 0,
+			     &seg, 1, &rseg,
+			     BUS_DMA_NOWAIT | BUS_DMA_24BIT) != 0) {
+		printf("%s @ obio: DMA memory allocation error\n",
+			self->dv_xname);
+		return;
+	}
+	if (bus_dmamem_map(lesc->sc_dmatag, &seg, rseg, MEMSIZE,
+			   (caddr_t *)&sc->sc_mem,
+			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0) {
+		printf("%s @ obio: DMA memory map error\n", self->dv_xname);
+		bus_dmamem_free(lesc->sc_dmatag, &seg, rseg);
+		return;
+	}
+	sc->sc_addr = seg.ds_addr & 0xffffff;
 	sc->sc_memsize = MEMSIZE;
 	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 
