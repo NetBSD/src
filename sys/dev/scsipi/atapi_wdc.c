@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.78 2004/08/12 04:57:19 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.79 2004/08/12 05:02:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.78 2004/08/12 04:57:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.79 2004/08/12 05:02:50 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -211,7 +211,7 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	ata_c.r_st_pmask = 0;
 	ata_c.flags = AT_WAIT | AT_POLL;
 	ata_c.timeout = WDC_RESET_WAIT;
-	if (wdc_exec_command(&chp->ch_drive[drive], &ata_c) != WDC_COMPLETE) {
+	if (wdc_exec_command(&chp->ch_drive[drive], &ata_c) != ATACMD_COMPLETE) {
 		printf("wdc_atapi_get_params: ATAPI_SOFT_RESET failed for"
 		    " drive %s:%d:%d: driver failed\n",
 		    wdc->sc_dev.dv_xname, chp->ch_channel, drive);

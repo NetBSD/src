@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.63 2004/08/11 18:41:46 mycroft Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.64 2004/08/12 05:02:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.63 2004/08/11 18:41:46 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.64 2004/08/12 05:02:50 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -166,8 +166,8 @@ int to48(int cmd32)
 }
 
 /*
- * Handle block I/O operation. Return WDC_COMPLETE, WDC_QUEUED, or
- * WDC_TRY_AGAIN. Must be called at splbio().
+ * Handle block I/O operation. Return ATACMD_COMPLETE, ATACMD_QUEUED, or
+ * ATACMD_TRY_AGAIN. Must be called at splbio().
  */
 static int
 wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
@@ -178,7 +178,7 @@ wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 
 	xfer = wdc_get_xfer(WDC_NOSLEEP);
 	if (xfer == NULL)
-		return WDC_TRY_AGAIN;
+		return ATACMD_TRY_AGAIN;
 	if (wdc->cap & WDC_CAPABILITY_NOIRQ)
 		ata_bio->flags |= ATA_POLL;
 	if (ata_bio->flags & ATA_POLL)
@@ -194,7 +194,7 @@ wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 	xfer->c_intr = wdc_ata_bio_intr;
 	xfer->c_kill_xfer = wdc_ata_bio_kill_xfer;
 	wdc_exec_xfer(chp, xfer);
-	return (ata_bio->flags & ATA_ITSDONE) ? WDC_COMPLETE : WDC_QUEUED;
+	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
 static void
