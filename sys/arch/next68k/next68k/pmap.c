@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 1999/09/16 14:52:07 chs Exp $        */
+/*	$NetBSD: pmap.c,v 1.20 1999/09/21 11:03:53 dbj Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -334,6 +334,10 @@ int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
 #if defined(M68040)
 int		protostfree;	/* prototype (default) free ST map */
 #endif
+
+struct pv_entry *pmap_alloc_pv __P((void));
+void	pmap_free_pv __P((struct pv_entry *));
+void	pmap_collect_pv __P((void));
 
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized &&			\
 				 vm_physseg_find(atop((pa)), NULL) != -1)
@@ -1528,6 +1532,41 @@ validate:
 		pmap_check_wiring("enter", trunc_page(pte));
 #endif
 }
+
+void
+pmap_kenter_pa(va, pa, prot)
+	vaddr_t va;
+	paddr_t pa;
+	vm_prot_t prot;
+{
+	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
+}
+
+void
+pmap_kenter_pgs(va, pgs, npgs)
+	vaddr_t va;
+	struct vm_page **pgs;
+	int npgs;
+{
+	int i;
+
+	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
+		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
+				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+	}
+}
+
+void
+pmap_kremove(va, len)
+	vaddr_t va;
+	vsize_t len;
+{
+	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
+		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	}
+}
+
+
 
 /*
  *	Routine:	pmap_unwire
