@@ -1,6 +1,7 @@
-/* $NetBSD: sbic.c,v 1.13.2.6 2001/04/23 09:41:38 bouyer Exp $ */
+/* $NetBSD: sbic.c,v 1.13.2.7 2001/04/24 08:22:42 bouyer Exp $ */
 
 /*
+ * Copyright (c) 2001 Richard Earnshaw
  * Copyright (c) 1994 Christian E. Hopps
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -93,8 +94,8 @@
 
 extern u_int kvtop();
 
-static int  sbicicmd		(struct sbic_softc *, int, int, void *,
-				 int, void *, int);
+static int  sbicicmd		(struct sbic_softc *, int, int,
+				 struct sbic_acb *);
 static int  sbicgo		(struct sbic_softc *, struct scsipi_xfer *);
 static int  sbicdmaok		(struct sbic_softc *, struct scsipi_xfer *);
 static int  sbicwait		(sbic_regmap_p, char, int , int);
@@ -278,8 +279,8 @@ sbic_save_ptrs(struct sbic_softc *dev, sbic_regmap_p regs, int target, int lun)
 	    acb->sc_dmacmd, asr), data_pointer_debug == -1);
 
 	/* Fixup partial xfers */
-	acb->sc_kv.dc_addr += (dev->sc_tcnt - count);
-	acb->sc_kv.dc_count -= (dev->sc_tcnt - count);
+	acb->data += (dev->sc_tcnt - count);
+	acb->datalen -= (dev->sc_tcnt - count);
 	acb->sc_pa.dc_addr += (dev->sc_tcnt - count);
 	acb->sc_pa.dc_count -= ((dev->sc_tcnt - count)>>1);
 
@@ -307,7 +308,7 @@ sbic_load_ptrs(struct sbic_softc *dev, sbic_regmap_p regs, int target, int lun)
 
 	SBIC_TRACE(dev);
 	acb = dev->sc_nexus;
-	if (!acb->sc_kv.dc_count) {
+	if (!acb->datalen) {
 		/* No data to xfer */
 		SBIC_TRACE(dev);
 		return;
@@ -327,19 +328,19 @@ sbic_load_ptrs(struct sbic_softc *dev, sbic_regmap_p regs, int target, int lun)
 		/* do kvm to pa mappings */
 #if 0 /* mark */
 		paddr = acb->sc_pa.dc_addr =
-			(char *) kvtop(acb->sc_kv.dc_addr);
+			(char *) kvtop(acb->data);
 #endif
-		vaddr = acb->sc_kv.dc_addr;
-		count = acb->sc_kv.dc_count;
+		vaddr = acb->data;
+		count = acb->datalen;
 #if 0 /* mark */
 		for (count = (NBPG - ((int)vaddr & PGOFSET));
-		    count < acb->sc_kv.dc_count
+		    count < acb->datalen
 		    && (char*)kvtop(vaddr + count + 4) == paddr + count + 4;
 		    count += NBPG);
 #endif
 		/* If it's all contiguous... */
-		if (count > acb->sc_kv.dc_count) {
-			count = acb->sc_kv.dc_count;
+		if (count > acb->datalen) {
+			count = acb->datalen;
 
 			DBG(sbicdma_hits++);
 		} else {
@@ -349,7 +350,7 @@ sbic_load_ptrs(struct sbic_softc *dev, sbic_regmap_p regs, int target, int lun)
 		acb->sc_pa.dc_count = count >> 1;
 
 		DBGPRINTF(("DMA recalc:kv(%p,%x)pa(%p,%lx)\n",
-		    acb->sc_kv.dc_addr, acb->sc_kv.dc_count,
+		    acb->data, acb->datalen,
 		    acb->sc_pa.dc_addr, acb->sc_tcnt),
 		    data_pointer_debug);
 	}
@@ -369,7 +370,7 @@ sbic_load_ptrs(struct sbic_softc *dev, sbic_regmap_p regs, int target, int lun)
  * so I will too.  I could plug it in, however so could they
  * in scsi_scsi_cmd().
  */
-static void
+void
 sbic_scsi_request(struct scsipi_channel *chan,
 			scsipi_adapter_req_t req, void *arg)
 {
@@ -416,12 +417,13 @@ sbic_scsi_request(struct scsipi_channel *chan,
 		acb->xs = xs;
 		bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
 		acb->clen = xs->cmdlen;
-		acb->sc_kv.dc_addr = xs->data;
-		acb->sc_kv.dc_count = xs->datalen;
+		acb->data = xs->data;
+		acb->datalen = xs->datalen;
 		if (flags & XS_CTL_POLL) {
 			s = splbio();
 			/*
-			 * This has major side effects -- it locks up the machine
+			 * This has major side effects -- it locks up the
+			 * machine
 			 */
 
 			dev->sc_flags |= SBICF_ICMD;
@@ -430,13 +432,10 @@ sbic_scsi_request(struct scsipi_channel *chan,
 					sbicpoll(dev);
 				dev->sc_nexus = acb;
 				dev->sc_stat[0] = -1;
-				dev->sc_xs = xs;
 				dev->target = periph->periph_target;
 				dev->lun = periph->periph_lun;
-				stat = sbicicmd(dev,
-				    periph->periph_target, periph->periph_lun,
-				    &acb->cmd, acb->clen,
-				    acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
+				stat = sbicicmd(dev, periph->periph_target,
+				    periph->periph_lun, acb);
 			} while (dev->sc_nexus != acb);
 			sbic_scsidone(acb, stat);
 			splx(s);
@@ -444,22 +443,23 @@ sbic_scsi_request(struct scsipi_channel *chan,
 			return;
 		}
 
-	acb->flags = ACB_ACTIVE;
-	if (flags & XS_CTL_DATA_IN)
-		acb->flags |= ACB_DATAIN;
-	acb->xs = xs;
-	memcpy(&acb->cmd, xs->cmd, xs->cmdlen);
-	acb->clen = xs->cmdlen;
-	acb->sc_kv.dc_addr = xs->data;
-	acb->sc_kv.dc_count = xs->datalen;
-
-	if (flags & XS_CTL_POLL) {
+		s = splbio();
+		TAILQ_INSERT_TAIL(&dev->ready_list, acb, chain);
+		if (dev->sc_nexus) {
+			splx(s);
+			SBIC_TRACE(dev);
+			return;
+		}
+		/*
+		 * nothing is active, try to start it now.
+		 */
 		sbic_sched(dev);
 		splx(s);
 
 		SBIC_TRACE(dev);
 /* TODO:  add sbic_poll to do XS_CTL_POLL operations */
 		return;
+
 	case ADAPTER_REQ_GROW_RESOURCES:
 	case ADAPTER_REQ_SET_XFER_MODE:
 		/* XXX Not supported. */
@@ -503,7 +503,7 @@ sbic_sched(struct sbic_softc *dev)
 	if (acb == NULL)
 		return;			/* did not find an available command */
 
-	dev->sc_xs = xs = acb->xs;
+	xs = acb->xs;
 	periph = xs->xs_periph;
 	flags = xs->xs_control;
 
@@ -515,11 +515,10 @@ sbic_sched(struct sbic_softc *dev)
 	dev->sc_stat[0] = -1;
 	dev->target = periph->periph_target;
 	dev->lun = periph->periph_lun;
-	if ((flags & XS_CTL_POLL) || ( !sbic_parallel_operations
-				 && (sbicdmaok(dev, xs) == 0) ) )
+	if ((flags & XS_CTL_POLL) ||
+	    ( !sbic_parallel_operations && (sbicdmaok(dev, xs) == 0) ) )
 		stat = sbicicmd(dev, periph->periph_target,
-		    periph->periph_lun, &acb->cmd, acb->clen,
-		    acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
+		    periph->periph_lun, acb);
 	else if (sbicgo(dev, xs) == 0 && xs->error != XS_SELTIMEOUT) {
 		SBIC_TRACE(dev);
 		return;
@@ -557,7 +556,8 @@ sbic_scsidone(struct sbic_acb *acb, int stat)
 	if( data_pointer_debug > 1 )
 	DBGPRINTF(("scsidone: (%d,%d)->(%d,%d)%02x\n",
 	    periph->periph_target, periph->periph_lun,
-	    dev->target,  dev->lun,  stat), data_pointer_debug > 1);
+	    dev->target,  dev->lun,  stat),
+	    data_pointer_debug > 1);
 	DBG(if( xs->xs_periph->periph_target == dev->sc_channel.chan_id )
 		panic("target == hostid"));
 
@@ -577,8 +577,8 @@ sbic_scsidone(struct sbic_acb *acb, int stat)
 	 */
 	if (acb == dev->sc_nexus) {
 		dev->sc_nexus = NULL;
-		dev->sc_xs = NULL;
-		dev->sc_tinfo[periph->periph_target].lubusy &= ~(1<<periph->periph_lun);
+		dev->sc_tinfo[periph->periph_target].lubusy &=
+		    ~(1<<periph->periph_lun);
 		if (dev->ready_list.tqh_first)
 			dosched = 1;	/* start next command */
 	} else if (dev->ready_list.tqh_last == &acb->chain.tqe_next) {
@@ -791,7 +791,6 @@ sbicinit(struct sbic_softc *dev)
 		TAILQ_INIT(&dev->free_list);
 		callout_init(&dev->sc_timo_ch);
 		dev->sc_nexus = NULL;
-		dev->sc_xs = NULL;
 		acb = dev->sc_acb;
 		memset(acb, 0, sizeof(dev->sc_acb));
 
@@ -914,7 +913,6 @@ sbicreset(struct sbic_softc *dev)
 		TAILQ_INIT(&dev->nexus_list);
 		TAILQ_INIT(&dev->free_list);
 		dev->sc_nexus = NULL;
-		dev->sc_xs = NULL;
 		acb = dev->sc_acb;
 		memset(acb, 0, sizeof(dev->sc_acb));
 		for (i = 0; i < sizeof(dev->sc_acb) / sizeof(*acb); i++) {
@@ -941,15 +939,11 @@ sbicreset(struct sbic_softc *dev)
 static void
 sbicerror(struct sbic_softc *dev, sbic_regmap_p regs, u_char csr)
 {
-	struct scsipi_xfer *xs;
-
-	xs = dev->sc_xs;
-
 #ifdef DIAGNOSTIC
-	if (xs == NULL)
+	if (dev->sc_nexus == NULL)
 		panic("sbicerror");
 #endif
-	if (xs->xs_control & XS_CTL_SILENT)
+	if (dev->sc_nexus->xs->xs_control & XS_CTL_SILENT)
 		return;
 
 	printf("%s: ", dev->sc_dev.dv_xname);
@@ -1085,7 +1079,7 @@ sbicselectbus(struct sbic_softc *dev, sbic_regmap_p regs, u_char target,
 
 
 		if (dev->sc_sync[id].state != SYNC_START){
-			if ((dev->sc_xs->xs_control & XS_CTL_POLL)
+			if ((dev->sc_nexus->xs->xs_control & XS_CTL_POLL)
 			    || (dev->sc_flags & SBICF_ICMD)
 			    || !sbic_enable_reselect)
 				SEND_BYTE(regs, MSG_IDENTIFY | lun);
@@ -1134,7 +1128,7 @@ sbicselectbus(struct sbic_softc *dev, sbic_regmap_p regs, u_char target,
 			dev->sc_flags |= SBICF_SELECTED;
 	}
 	if (csr == SBIC_CSR_SEL_TIMEO)
-		dev->sc_xs->error = XS_SELTIMEOUT;
+		dev->sc_nexus->xs->error = XS_SELTIMEOUT;
 
 	QPRINTF(("\n"));
 
@@ -1308,17 +1302,18 @@ sbicxfin(sbic_regmap_p regs, int len, void *bp)
  * command must supply no data.
  */
 static int
-sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
-    void *buf, int len)
+sbicicmd(struct sbic_softc *dev, int target, int lun, struct sbic_acb *acb)
 {
 	sbic_regmap_p regs;
 	u_char phase, csr, asr;
 	int wait;
 /*	int newtarget, cmd_sent, parity_err;*/
-	struct sbic_acb *acb;
 
 /*	int discon;*/
 	int i;
+
+	void *cbuf, *buf;
+	int clen, len;
 
 #define CSR_LOG_BUF_SIZE 0
 #if CSR_LOG_BUF_SIZE
@@ -1327,20 +1322,22 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 	bufptr=0;
 #endif
 
+	cbuf = &acb->cmd;
+	clen = acb->clen;
+	buf = acb->data;
+	len = acb->datalen;
+
 	SBIC_TRACE(dev);
 	regs = &dev->sc_sbicp;
-	acb = dev->sc_nexus;
 
 	/* Make sure pointers are OK */
 	dev->sc_last = dev->sc_cur = &acb->sc_pa;
 	dev->sc_tcnt = acb->sc_tcnt = 0;
 	acb->sc_pa.dc_count = 0; /* No DMA */
-	acb->sc_kv.dc_addr = buf;
-	acb->sc_kv.dc_count = len;
 
 	DBG(routine = 3);
 	DBG(debug_sbic_regs = regs); /* store this to allow debug calls */
-	DBGPRINTF(("sbicicmd(%d,%d):%d\n", target, lun, acb->sc_kv.dc_count),
+	DBGPRINTF(("sbicicmd(%d,%d):%d\n", target, lun, len),
 	    data_pointer_debug > 1);
 
 	/*
@@ -1431,26 +1428,20 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 		case SBIC_CSR_MIS_1   | DATA_IN_PHASE:
 		case SBIC_CSR_MIS_2   | DATA_OUT_PHASE:
 		case SBIC_CSR_MIS_2   | DATA_IN_PHASE:
-			if (acb->sc_kv.dc_count <= 0)
+			if (acb->datalen <= 0)
 				i = sbicabort(dev, regs, "icmd out of data");
 			else {
 			  wait = sbic_data_wait;
-			  if (sbicxfstart(regs,
-					  acb->sc_kv.dc_count,
+			  if (sbicxfstart(regs, acb->datalen,
 					  SBIC_PHASE(csr), wait))
 			    if (csr & 0x01)
 			      /* data in? */
-			      i=sbicxfin(regs,
-					 acb->sc_kv.dc_count,
-					 acb->sc_kv.dc_addr);
+			      i = sbicxfin(regs, acb->datalen, acb->data);
 			    else
-			      i=sbicxfout(regs,
-					  acb->sc_kv.dc_count,
-					  acb->sc_kv.dc_addr,
-					     SBIC_PHASE(csr));
-			  acb->sc_kv.dc_addr +=
-				  (acb->sc_kv.dc_count - i);
-			  acb->sc_kv.dc_count = i;
+			      i = sbicxfout(regs, acb->datalen, acb->data,
+				  SBIC_PHASE(csr));
+			  acb->data += (acb->datalen - i);
+			  acb->datalen = i;
 			  i = 1;
 			}
 			break;
@@ -1534,7 +1525,7 @@ sbicicmd(struct sbic_softc *dev, int target, int lun, void *cbuf, int clen,
 
 	DBGPRINTF(("sbicicmd done(%d,%d):%d =%d=\n",
 	    dev->target, lun,
-	    acb->sc_kv.dc_count,
+	    acb->datalen,
 	    dev->sc_stat[0]),
 	    data_pointer_debug > 1);
 
@@ -1651,8 +1642,8 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 	 * Deal w/bounce buffers.
 	 */
 
-	addr = acb->sc_kv.dc_addr;
-	count = acb->sc_kv.dc_count;
+	addr = acb->data;
+	count = acb->datalen;
 #if 0 /* mark */
 	if (count && (char *)kvtop(addr) != acb->sc_pa.dc_addr)	{ /* XXXX check */
 		printf("sbic: DMA buffer mapping changed %x->%x\n",
@@ -1707,7 +1698,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 			memcpy(dev->sc_tinfo[dev->target].bounce, addr, count);
 		}
 		addr = dev->sc_tinfo[dev->target].bounce;/* and use dma buffer */
-		acb->sc_kv.dc_addr = addr;
+		acb->data = addr;
 
 		DBG(++sbicdma_bounces);		/* count number of bounced */
 	}
@@ -1718,8 +1709,8 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 
 	/* Set start KVM addresses */
 #if 0
-	acb->sc_kv.dc_addr = addr;
-	acb->sc_kv.dc_count = count;
+	acb->data = addr;
+	acb->datalen = count;
 #endif
 
 	/* Mark end of segment */
@@ -2242,7 +2233,8 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 		}
 #endif
 		DBGPRINTF(("next dmastop: %d(%p:%lx)\n",
-		       dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt));
+		    dev->target,dev->sc_cur->dc_addr,dev->sc_tcnt),
+		    data_pointer_debug > 1);
 		DBG(dev->sc_dmatimo = 0);
 		dev->sc_dmastop(dev); /* was dmafree */
 		if (acb->flags & ACB_BBUF) {
@@ -2277,37 +2269,33 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 	{
 		int i = 0;
 
-		if ((dev->sc_xs->xs_control & XS_CTL_POLL) ||
+		if ((acb->xs->xs_control & XS_CTL_POLL) ||
 		    (dev->sc_flags & SBICF_ICMD) ||
 		    acb->sc_dmacmd == 0) {
 			/* Do PIO */
 			SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI);
-			if (acb->sc_kv.dc_count <= 0) {
+			if (acb->datalen <= 0) {
 				printf("sbicnextstate:xfer count %d asr%x csr%x\n",
-				       acb->sc_kv.dc_count, asr, csr);
+				    acb->datalen, asr, csr);
 				goto abort;
 			}
 			wait = sbic_data_wait;
-			if (sbicxfstart(regs,
-					acb->sc_kv.dc_count,
-					SBIC_PHASE(csr), wait)) {
+			if (sbicxfstart(regs, acb->datalen,
+			    SBIC_PHASE(csr), wait)) {
 				if (SBIC_PHASE(csr) == DATA_IN_PHASE)
 					/* data in? */
-					i = sbicxfin(regs,
-					    acb->sc_kv.dc_count,
-					    acb->sc_kv.dc_addr);
+					i = sbicxfin(regs, acb->datalen,
+					    acb->data);
 				else
-					i = sbicxfout(regs,
-					    acb->sc_kv.dc_count,
-					    acb->sc_kv.dc_addr,
-					    SBIC_PHASE(csr));
+					i = sbicxfout(regs, acb->datalen,
+					    acb->data, SBIC_PHASE(csr));
 			}
-			acb->sc_kv.dc_addr += (acb->sc_kv.dc_count - i);
-			acb->sc_kv.dc_count = i;
+			acb->data += (acb->datalen - i);
+			acb->datalen = i;
 		} else {
-			if (acb->sc_kv.dc_count <= 0) {
+			if (acb->datalen <= 0) {
 				printf("sbicnextstate:xfer count %d asr%x csr%x\n",
-				       acb->sc_kv.dc_count, asr, csr);
+				       acb->datalen, asr, csr);
 				goto abort;
 			}
 			/*
@@ -2384,7 +2372,6 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 		TAILQ_INSERT_HEAD(&dev->nexus_list, acb, chain);
 		++dev->sc_tinfo[dev->target].dconns;
 		dev->sc_nexus = NULL;
-		dev->sc_xs = NULL;
 
 		if ((acb->xs->xs_control & XS_CTL_POLL)
 		    || (dev->sc_flags & SBICF_ICMD)
@@ -2455,7 +2442,6 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 			    chain);
 			dev->sc_tinfo[dev->target].lubusy &= ~(1 << dev->lun);
 			dev->sc_nexus = NULL;
-			dev->sc_xs = NULL;
 		}
 		/* Reload sync values for this target */
 		if (dev->sc_sync[newtarget].state == SYNC_DONE)
@@ -2471,7 +2457,6 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 				continue;
 			TAILQ_REMOVE(&dev->nexus_list, acb, chain);
 			dev->sc_nexus = acb;
-			dev->sc_xs = acb->xs;
 			dev->sc_flags |= SBICF_SELECTED;
 			dev->target = newtarget;
 			dev->lun = newlun;
@@ -2672,7 +2657,7 @@ sbic_dump_acb(struct sbic_acb *acb)
 	printf("\n");
 	printf("  xs: %8p data %8p:%04x ", acb->xs, acb->xs->data,
 	    acb->xs->datalen);
-	printf("va %8p:%04x ", acb->sc_kv.dc_addr, acb->sc_kv.dc_count);
+	printf("va %8p:%04x ", acb->data, acb->datalen);
 	printf("pa %8p:%04x tcnt %lx\n", acb->sc_pa.dc_addr,
 	    acb->sc_pa.dc_count, acb->sc_tcnt);
 }
@@ -2822,8 +2807,8 @@ sbic_dump(struct sbic_softc *dev)
 		printf("nexus:\n");
 		sbic_dump_acb(dev->sc_nexus);
 	}
-	printf("sc_xs %p targ %d lun %d flags %x tcnt %lx dmacmd %x mask %lx\n",
-	    dev->sc_xs, dev->target, dev->lun, dev->sc_flags, dev->sc_tcnt,
+	printf("targ %d lun %d flags %x tcnt %lx dmacmd %x mask %lx\n",
+	    dev->target, dev->lun, dev->sc_flags, dev->sc_tcnt,
 	    dev->sc_dmacmd, dev->sc_dmamask);
 	for (i = 0; i < 8; ++i) {
 		if (dev->sc_tinfo[i].cmds > 2) {
