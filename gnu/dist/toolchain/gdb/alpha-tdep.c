@@ -1468,28 +1468,75 @@ alpha_next_pc (pc)
   unsigned int insn;
   unsigned int op;
   int offset;
+  LONGEST rav;
 
   insn = read_memory_unsigned_integer (pc, sizeof (insn));
 
   /* Opcode is top 6 bits. */
   op = (insn >> 26) & 0x3f;
 
-  if ((op & 0x30) == 0x30)
-    {
-      /* Branch format: target PC is:
-	 (new PC) + (4 * sext(displacement))  */
-      offset = ((short)(insn & 0xffff)) * 4;
-      return (pc + 4 + offset);
-    }
-
   if (op == 0x1a)
     {
       /* Jump format: target PC is:
 	 RB & ~3  */
-      return (read_register ((insn >> 21) & 0x1f));
+      return (read_register ((insn >> 16) & 0x1f) & ~3);
     }
 
-  /* Not a branch; target PC is:
+  if ((op & 0x30) == 0x30)
+    {
+      /* Branch format: target PC is:
+         (new PC) + (4 * sext(displacement))  */
+      if (op == 0x30 ||		/* BR */
+          op == 0x34)		/* BSR */
+	{
+ branch_taken:
+          offset = (insn & 0x001fffff);
+          if (offset & 0x00100000)
+	    offset  |= 0xffe00000;
+          offset *= 4;
+          return (pc + 4 + offset);
+	}
+
+      /* Need to determine if branch is taken; read RA.  */
+      rav = (LONGEST) read_register ((insn >> 21) & 0x1f);
+      switch (op)
+	{
+	case 0x38:		/* BLBC */
+	  if ((rav & 1) == 0)
+	    goto branch_taken;
+	  break;
+	case 0x3c:		/* BLBS */
+	  if (rav & 1)
+	    goto branch_taken;
+	  break;
+	case 0x39:		/* BEQ */
+	  if (rav == 0)
+	    goto branch_taken;
+	  break;
+	case 0x3d:		/* BNE */
+	  if (rav != 0)
+	    goto branch_taken;
+	  break;
+	case 0x3a:		/* BLT */
+	  if (rav < 0)
+	    goto branch_taken;
+	  break;
+	case 0x3b:		/* BLE */
+	  if (rav <= 0)
+	    goto branch_taken;
+	  break;
+	case 0x3f:		/* BGT */
+	  if (rav > 0)
+	    goto branch_taken;
+	  break;
+	case 0x3e:		/* BGE */
+	  if (rav >= 0)
+	    goto branch_taken;
+	  break;
+	}
+    }
+
+  /* Not a branch or branch not taken; target PC is:
      pc + 4  */
   return (pc + 4);
 }
