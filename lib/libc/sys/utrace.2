@@ -1,4 +1,4 @@
-.\"	$NetBSD: utrace.2,v 1.9 2003/04/16 13:34:57 wiz Exp $
+.\"	$NetBSD: utrace.2,v 1.10 2003/04/20 17:40:45 david Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Os
 .Sh NAME
 .Nm utrace
-.Nd insert user record to ktrace records
+.Nd insert user record in ktrace log 
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -50,14 +50,14 @@
 .Ft int
 .Fn utrace "const char *label" "void *addr" "size_t len"
 .Sh DESCRIPTION
-Adds a record to process trace with information supplied by user.
+Adds a record to the process trace with information supplied by user.
 The record is identified by
 .Fa label
 and contains
 .Fa len
 bytes from memory pointed to by
 .Fa addr .
-This call has only effect if the caller process is being traced.
+This call only has an effect if the calling process is being traced.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
 Otherwise, a value of -1 is returned and
@@ -93,6 +93,6 @@ in
 .Nx 1.6 .
 The
 .Fa label
-argument is
+argument is a
 .Nx
 extension.
