@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.17 2005/01/07 20:41:35 briggs Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.18 2005/01/07 21:31:04 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.17 2005/01/07 20:41:35 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.18 2005/01/07 21:31:04 briggs Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -352,6 +352,16 @@ cpu_setup(self, ci)
 	 * Configure power-saving mode.
 	 */
 	switch (vers) {
+	case MPC604:
+	case MPC604e:
+	case MPC604ev:
+		/*
+		 * Do not have HID0 support settings, but can support
+		 * MSR[POW] off
+		 */
+		powersave = 1;
+		break;
+
 	case MPC603:
 	case MPC603e:
 	case MPC603ev:
