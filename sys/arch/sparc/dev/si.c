@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.9 1996/01/04 00:20:19 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.10 1996/01/09 02:06:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -338,7 +338,7 @@ si_attach(parent, self, args)
 	 * I don't know why (yet).  -- thorpej
 	 */
 	if (ca->ca_bustype == BUS_OBIO)
-		sc->sc_options &= ~(SI_DMA_INTR|SI_DO_RESELECT);
+		sc->sc_options &= ~(SI_ENABLE_DMA|SI_DMA_INTR|SI_DO_RESELECT);
 
 	/* Map the controller registers. */
 	regs = (struct si_regs *)mapiodev(ra->ra_reg, 0,
