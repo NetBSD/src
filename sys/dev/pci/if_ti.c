@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.23 2001/06/03 03:46:43 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.24 2001/06/07 14:35:58 bouyer Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1404,10 +1404,11 @@ static int ti_chipinit(sc)
 	 * I don't think this is a good idea, but without it
 	 * the firmware racks up lots of nicDmaReadRingFull
 	 * errors.
+	 * Incompatible with hardware assisted checksums.
 	 */
-#ifndef TI_CSUM_OFFLOAD /* XXXJRT */
-	TI_SETBIT(sc, TI_GCR_OPMODE, TI_OPMODE_1_DMA_ACTIVE);
-#endif
+	if ((sc->ethercom.ec_if.if_capenable &
+	    (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4|IFCAP_CSUM_IPv4)) == 0)
+		TI_SETBIT(sc, TI_GCR_OPMODE, TI_OPMODE_1_DMA_ACTIVE);
 
 	/* Recommended settings from Tigon manual. */
 	CSR_WRITE_4(sc, TI_GCR_DMA_WRITECFG, TI_DMA_STATE_THRESH_8W);
