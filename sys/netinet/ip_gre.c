@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.6 1998/12/22 01:49:04 thorpej Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.7 1999/01/11 21:32:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /*
  * deencapsulate tunneled packets and send them on
  * output half is in net/if_gre.[ch]
- * This currently handles IPPROTO_IPIP, IPPROTO_GRE, IPPROTO_MOBILE
+ * This currently handles IPPROTO_GRE, IPPROTO_MOBILE
  */
 
 
@@ -133,7 +133,6 @@ gre_input(m, va_alist)
 /*
  * decapsulate.
  * Does the real work and is called from gre_input() (above)
- * and also from ipip_input()  (ip_mroute.c)
  * returns 0 if packet is not yet processed 
  * and 1 if it needs no further processing
  * proto is the protocol number of the "calling" foo_input()
@@ -196,9 +195,6 @@ gre_input2(struct mbuf *m ,int hlen,u_char proto)
 		default:	   /* others not yet supported */
 			return(0);
 		}
-		break;
-	case IPPROTO_IPIP:
-		ifq = &ipintrq;
 		break;
 	default:
 		/* others not yet supported */
@@ -295,44 +291,6 @@ gre_mobile_input(m, va_alist)
 	}       
 	splx(s);
 }
-
-
-
-#ifndef MROUTING
-
-/*
- * Well if MROUTING is not defined, the ipip_input function in 
- * ip_mroute.c gets never called, so IPIP packets coming over the
- * tunnel can't be processed. (Not exactly true. They go to raw ip
- * that also can't cope ).
- */
-
-void     
-#if __STDC__
-gre_ipip_input(struct mbuf *m, ...)
-#else    
-ipip_input(m, va_alist)
-        struct mbuf *m;
-        va_dcl
-#endif
-{
-        register int hlen;
-	va_list ap;
-
-        va_start(ap, m);
-        hlen = va_arg(ap, int);
-        va_end(ap);
-
-	/*
-	 * return == 0 means, that the packet is not preocessed, but
-	 * as we are the only ones to decapsulate IPIP, and are not able,
-	 * then we can just dump it.
-	 */
-	if(gre_input2(m,hlen,IPPROTO_IPIP)==0)
-		m_freem(m);
-
-}
-#endif /* ifndef MROUTING */
 
 /*
  * Find the gre interface associated with our src/dst/proto set.
