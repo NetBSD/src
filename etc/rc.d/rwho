@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# $NetBSD: rwho,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: rwho
+# REQUIRE: daemon
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="rwhod"
+command="/usr/sbin/${name}"
+
+run_rc_command "$1"

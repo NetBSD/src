@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# $NetBSD: ppp,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+#	should provide `network' perhaps?
+# PROVIDE: ppp
+#	note that this means that syslogd will not be listening on
+#	any PPP addresses.  this is considered a feature.
+# REQUIRE: systemfs syslogd
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="ppp"
+start_cmd="ppp_start"
+stop_cmd=":"
+
+ppp_start()
+{
+	#	/etc/ppp/peers and $ppp_peers contain boot configuration
+	#	information for pppd.  each value in $ppp_peers that has a
+	#	file in /etc/ppp/peers of the same name, will be run as
+	#	`pppd <peer>'.
+	#
+	if [ -n "$ppp_peers" ]; then
+		set -- $ppp_peers
+		echo -n "Starting pppd:"
+		while [ $# -ge 1 ]; do
+			peer=$1
+			shift
+			if [ -f /etc/ppp/peers/$peer ]; then
+				pppd call $peer
+				echo -n " $peer"
+			fi
+		done
+		echo "."
+	fi
+}
+
+run_rc_command "$1"

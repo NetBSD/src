@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# $NetBSD: mountd,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: mountd
+# REQUIRE: beforemountlkm network portmap
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="mountd"
+rcvar="nfs_server"
+command="/usr/sbin/${name}"
+required_files="/etc/exports"
+start_precmd="mountd_precmd"
+
+mountd_precmd()
+{
+	rm -f /var/db/mountdtab
+	echo -n > /var/db/mountdtab
+	return 0
+}
+
+run_rc_command "$1" "reload"
