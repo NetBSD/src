@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.6 2001/07/24 21:17:34 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.7 2001/08/01 23:45:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -125,6 +125,8 @@ pthread__initthread(pthread_t t)
 	t->pt_flags = 0;
 	t->pt_parent = NULL;
 	t->pt_heldlock = NULL;
+	t->pt_switchto = NULL;
+	t->pt_sleepuc = NULL;
 	sigemptyset(&t->pt_siglist);
 	sigemptyset(&t->pt_sigmask);
 	PTQ_INIT(&t->pt_joiners);
