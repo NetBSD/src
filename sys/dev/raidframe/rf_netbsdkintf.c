@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.115 2001/12/16 22:57:32 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.116 2002/01/09 04:21:43 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.115 2001/12/16 22:57:32 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.116 2002/01/09 04:21:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -203,9 +203,11 @@ struct raidbuf {
 	RF_DiskQueueData_t *req;/* the request that this was part of.. */
 };
 
+/* component buffer pool */
+struct pool raidframe_cbufpool;
 
-#define RAIDGETBUF(rs) pool_get(&(rs)->sc_cbufpool, PR_NOWAIT)
-#define	RAIDPUTBUF(rs, cbp) pool_put(&(rs)->sc_cbufpool, cbp)
+#define RAIDGETBUF(rs) pool_get(&raidframe_cbufpool, PR_NOWAIT)
+#define	RAIDPUTBUF(rs, cbp) pool_put(&raidframe_cbufpool, cbp)
 
 /* XXX Not sure if the following should be replacing the raidPtrs above,
    or if it should be used in conjunction with that... 
@@ -217,7 +219,6 @@ struct raid_softc {
 	size_t  sc_size;        /* size of the raid device */
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
-	struct pool sc_cbufpool;	/* component buffer pool */
 	struct buf_queue buf_queue;	/* used for the device queue */
 };
 /* sc_flags */
@@ -325,7 +326,11 @@ raidattach(num)
 	if (raidPtrs == NULL) {
 		panic("raidPtrs is NULL!!\n");
 	}
-	
+
+	/* Initialize the component buffer pool. */
+	pool_init(&raidframe_cbufpool, sizeof(struct raidbuf), 0,
+	    0, 0, "raidpl", 0, NULL, NULL, M_RAIDFRAME);
+
 	rc = rf_mutex_init(&rf_sparet_wait_mutex);
 	if (rc) {
 		RF_PANIC();
@@ -640,7 +645,6 @@ raidclose(dev, flags, fmt, p)
 			/* last one, and we're going down, so
 			   lights out for this RAID set too. */
 			error = rf_Shutdown(raidPtrs[unit]);
-			pool_destroy(&rs->sc_cbufpool);
 			
 			/* It's no longer initialized... */
 			rs->sc_flags &= ~RAIDF_INITED;
@@ -973,8 +977,6 @@ raidioctl(dev, cmd, data, flag, p)
 		}
 
 		retcode = rf_Shutdown(raidPtr);
-
-		pool_destroy(&rs->sc_cbufpool);
 
 		/* It's no longer initialized... */
 		rs->sc_flags &= ~RAIDF_INITED;
@@ -1566,9 +1568,6 @@ raidinit(raidPtr)
 	unit = raidPtr->raidid;
 
 	rs = &raid_softc[unit];
-	pool_init(&rs->sc_cbufpool, sizeof(struct raidbuf), 0,
-		  0, 0, "raidpl", 0, NULL, NULL, M_RAIDFRAME);
-
 
 	/* XXX should check return code first... */
 	rs->sc_flags |= RAIDF_INITED;
