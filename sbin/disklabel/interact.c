@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.17 2000/12/24 07:08:03 lukem Exp $	*/
+/*	$NetBSD: interact.c,v 1.18 2001/05/26 19:48:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.17 2000/12/24 07:08:03 lukem Exp $");
+__RCSID("$NetBSD: interact.c,v 1.18 2001/05/26 19:48:32 christos Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -438,12 +438,14 @@ cmd_part(struct disklabel *lp, char *s, int fd)
 	char	line[BUFSIZ];
 	char	def[BUFSIZ];
 	int	part;
-	struct partition *p;
+	struct partition *p, ps;
 
 	part = s[0] - 'a';
 	p = &lp->d_partitions[part];
 	if (part >= lp->d_npartitions)
 		lp->d_npartitions = part + 1;
+
+	(void)memcpy(&ps, p, sizeof(ps));
 
 	for (;;) {
 		i = p->p_fstype;
@@ -502,16 +504,18 @@ cmd_part(struct disklabel *lp, char *s, int fd)
 	}
 
 	if (chaining) {
-		int offs = p[0].p_offset + p[0].p_size;
-		p = lp->d_partitions;
-		part = getrawpartition();
-		for (i = 1; i < lp->d_npartitions; i++) {
-			if (i != part && p[i].p_fstype) {
-				p[i].p_offset = offs;
-				offs = p[i].p_offset + p[i].p_size;
+		int offs = -1;
+		struct partition *cp = lp->d_partitions;
+		for (i = 0; i < lp->d_npartitions; i++) {
+			if (cp[i].p_fstype != FS_UNUSED) {
+				if (offs != -1)
+					cp[i].p_offset = offs;
+				offs = cp[i].p_offset + cp[i].p_size;
 			}
 		}
 	}
+	if (memcmp(&ps, p, sizeof(ps)))
+		showpartition(stdout, lp, part, Cflag);
 }
 
 
