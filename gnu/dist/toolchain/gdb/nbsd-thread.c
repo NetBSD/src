@@ -325,8 +325,11 @@ nbsd_thread_fetch_registers (regno)
   struct reg gregs;
   struct fpreg fpregs;
   int val;
+  struct cleanup *old_chain;
 
-  if (nbsd_thread_active)
+  old_chain = save_inferior_pid ();
+
+  if (nbsd_thread_active && IS_THREAD (inferior_pid))
     {
       if ((val = td_map_id2thr (main_ta, GET_THREAD (inferior_pid), &thread)) != 0)
 	error ("nbsd_thread_fetch_registers: td_map_id2thr: %s\n",
@@ -342,11 +345,16 @@ nbsd_thread_fetch_registers (regno)
     }
   else
     {
+      if (nbsd_thread_active)
+	inferior_pid = BUILD_LWP (GET_LWP (inferior_pid), 
+				  GET_PROCESS (inferior_pid));
       if (target_has_execution)
 	child_ops.to_fetch_registers (regno);
       else
 	orig_core_ops.to_fetch_registers (regno);
     }
+  
+  do_cleanups (old_chain);
 }
 
 static void
@@ -357,8 +365,11 @@ nbsd_thread_store_registers (regno)
   struct reg gregs;
   struct fpreg fpregs;
   int val;
+  struct cleanup *old_chain;
 
-  if (nbsd_thread_active)
+  old_chain = save_inferior_pid ();
+
+  if (nbsd_thread_active && IS_THREAD (inferior_pid))
     {
       val = td_map_id2thr (main_ta, GET_THREAD (inferior_pid), &thread);
       if (val != 0)
@@ -379,11 +390,16 @@ nbsd_thread_store_registers (regno)
     }
   else
     {
-    if (target_has_execution)
-      child_ops.to_store_registers (regno);
-    else
-      orig_core_ops.to_store_registers (regno);
+      if (nbsd_thread_active)
+	inferior_pid = BUILD_LWP (GET_LWP (inferior_pid), 
+				  GET_PROCESS (inferior_pid));
+      if (target_has_execution)
+	child_ops.to_store_registers (regno);
+      else
+	orig_core_ops.to_store_registers (regno);
     }
+
+  do_cleanups (old_chain);
 }
 
 
@@ -479,7 +495,10 @@ nbsd_pid_to_str (pid)
 {
   static char buf[100];
 
-  sprintf (buf, "Thread %d", GET_THREAD (pid));
+  if (IS_THREAD (pid))
+    sprintf (buf, "Thread %d", GET_THREAD (pid));
+  else
+    sprintf (buf, "LWP %d", GET_LWP (pid));
 
   return buf;
 }
@@ -545,25 +564,34 @@ nbsd_thread_alive (pid)
 {
   td_thread_t *th;
   td_thread_info_t ti;
-  int val;
+  int retval;
+  struct cleanup *old_chain;
 
-  if (IS_THREAD (pid))
+  old_chain = save_inferior_pid ();
+
+  if (nbsd_thread_active && IS_THREAD (pid))
     {
+      retval = 0;
       if (td_map_id2thr (main_ta, GET_THREAD (pid), &th) == 0)
 	{
 	  /* Thread found */
 	  if (td_thr_info (th, &ti) == 0)
-	    return 1;
+	    retval = 1;
 	}
-      return 1;
     }
   else
     {
+      if (nbsd_thread_active)
+	inferior_pid = BUILD_LWP (GET_LWP (inferior_pid), 
+				  GET_PROCESS (inferior_pid));
       if (target_has_execution)
-	return child_ops.to_thread_alive (GET_PROCESS (pid));
+	retval = child_ops.to_thread_alive (GET_PROCESS (pid));
       else
-	return orig_core_ops.to_thread_alive (GET_PROCESS (pid));
+	retval = orig_core_ops.to_thread_alive (GET_PROCESS (pid));
     }
+
+  do_cleanups (old_chain);
+  return retval;
 }
 
 
@@ -957,7 +985,7 @@ nbsd_add_to_thread_list (abfd, asect, reg_sect_arg)
      asection *asect;
      PTR reg_sect_arg;
 {
-  int thread_id;
+  int regval;
   td_thread_t *dummy;
 
   asection *reg_sect = (asection *) reg_sect_arg;
@@ -965,9 +993,11 @@ nbsd_add_to_thread_list (abfd, asect, reg_sect_arg)
   if (strncmp (bfd_section_name (abfd, asect), ".reg/", 5) != 0)
     return;
 
-  thread_id = atoi (bfd_section_name (abfd, asect) + 5);
+  regval = atoi (bfd_section_name (abfd, asect) + 5);
 
-  td_map_lwp2thr (main_ta, thread_id >> 16, &dummy);
+  td_map_lwp2thr (main_ta, regval >> 16, &dummy);
+
+  add_thread (BUILD_LWP(regval >> 16, main_pid));
 }
 
 static void
