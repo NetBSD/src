@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.28 1997/10/19 19:17:07 thorpej Exp $	*/
+/*	$NetBSD: mms.c,v 1.29 1997/10/19 20:31:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -91,14 +91,17 @@ mmsprobe(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	int rv = 0;
+	int rv;
 
 	/* Disallow wildcarded i/o address. */
 	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
 		return 0;
 
+	/* Map the i/o space. */
 	if (bus_space_map(iot, ia->ia_iobase, MMS_NPORTS, 0, &ioh))
 		return 0;
+
+	rv = 0;
 
 	/* Read identification register to see if present */
 	if (bus_space_read_1(iot, ioh, MMS_IDENT) != 0xde)
@@ -110,7 +113,8 @@ mmsprobe(parent, match, aux)
 	rv = 1;
 	ia->ia_iosize = MMS_NPORTS;
 	ia->ia_msize = 0;
- out:
+
+out:
 	bus_space_unmap(iot, ioh, MMS_NPORTS);
 	return rv;
 }
@@ -299,11 +303,11 @@ mmsintr(arg)
 	void *arg;
 {
 	struct mms_softc *sc = arg;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char buttons, changed, status;
 	char dx, dy;
 	u_char buffer[5];
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
 
 	if ((sc->sc_state & MMS_OPEN) == 0)
 		/* Interrupts are not expected. */
