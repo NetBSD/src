@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.1 1995/02/21 01:37:22 brezak Exp $	*/
+/*	$NetBSD: audioio.h,v 1.2 1995/05/08 22:21:29 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Header: /cvsroot/src/sys/sys/audioio.h,v 1.1 1995/02/21 01:37:22 brezak Exp $ (LBL)
  */
 
 #ifndef _AUDIOIO_H_
