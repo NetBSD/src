@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.19 1998/05/09 12:10:31 augustss Exp $
+.\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -480,6 +480,18 @@ typedef struct mixer_ctrl {
 		mixer_level_t value;	/* value */
 	} un;
 } mixer_ctrl_t;
+.Ed
+.Bd -literal
+#define AUDIO_MIN_GAIN  0
+#define AUDIO_MAX_GAIN  255
+typedef struct mixer_level {
+        int num_channels;
+        u_char level[8];               /* [num_channels] */
+} mixer_level_t;
+#define AUDIO_MIXER_LEVEL_MONO  0
+#define AUDIO_MIXER_LEVEL_LEFT  0
+#define AUDIO_MIXER_LEVEL_RIGHT 1
+
 .Ed
 These commands read the current mixer state or set new mixer state for
 the specified device
