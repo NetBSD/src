@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18 2000/01/27 15:41:19 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.19 2000/04/14 13:29:57 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -160,7 +160,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 9: Openfirmware RTC */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 10: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 11: network tunnel */
-	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8350 serial port */
+	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8530 serial port */
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
