@@ -1,4 +1,4 @@
-.\"        $NetBSD: route.conf.5,v 1.1 2004/06/25 16:31:20 wiz Exp $
+.\"        $NetBSD: route.conf.5,v 1.2 2004/06/28 13:44:12 wiz Exp $
 .\"
 .\" Copyright (c) 2004 Thomas Klausner
 .\" All rights reserved.
@@ -51,9 +51,9 @@ are run during system shutdown.
 All other lines are passed to
 .Xr route 8 .
 During start-up, they are passed behind a
-.Ic route add
+.Dq Ic route add \-
 command and during shutdown behind a
-.Ic route delete
+.Dq Ic route delete \-
 command.
 .Sh FILES
 .Bl -tag -width XXetcXrouteXconfXX
