@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.2 2004/11/11 19:19:59 jdolecek Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.3 2004/11/19 04:42:45 atatat Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.2 2004/11/11 19:19:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.3 2004/11/19 04:42:45 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -809,7 +809,6 @@ ptyfs_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
         struct timespec ts;
-	ptyfs_time(ptyfs, &ts, &ts);
  
         simple_lock(&vp->v_interlock);
         if (vp->v_usecount > 1) {
