@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.64 2003/03/03 14:21:09 pooka Exp $
+#	$NetBSD: 3RDPARTY,v 1.65 2003/03/03 19:44:34 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -653,7 +653,7 @@ Notes:
 
 Package:	sendmail
 Version:	8.11.6
-Current Vers:	8.12.7
+Current Vers:	8.12.8
 Maintainer:	Eric P. Allman
 Archive Site:	ftp://ftp.sendmail.org/pub/sendmail/
 Mailing List:
