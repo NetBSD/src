@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.14 1999/11/27 12:14:26 mrg Exp $ */
+/*	$NetBSD: param.h,v 1.15 1999/12/04 21:21:34 ragge Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,10 +129,6 @@ extern int nbpg, pgofset, pgshift;
 #define	BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)
 
-#define	CLSIZE		1
-#define	CLSIZELOG2	0
-
-/* NOTE: SSIZE must be multiple of CLSIZE */
 #ifdef __arch64__
 /* We get stack overflows w/8K stacks in 64-bit mode */
 #define	SSIZE		2		/* initial stack size in pages */
@@ -143,7 +139,7 @@ extern int nbpg, pgofset, pgshift;
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
@@ -168,10 +164,10 @@ extern int nbpg, pgofset, pgshift;
 #define MSGBUFSIZE	NBPG
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages.
+ * Size of kernel malloc arena in NBPG-sized logical pages.
  */
 #ifndef	NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / CLBYTES)
+#define	NKMEMCLUSTERS	(6 * 1024 * 1024 / NBPG)
 #endif
 
 /* pages ("clicks") to disk blocks */

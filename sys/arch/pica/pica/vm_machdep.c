@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.7 1999/05/26 22:19:37 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8 1999/12/04 21:21:17 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -211,7 +211,7 @@ pagemove(from, to, size)
 {
 	register pt_entry_t *fpte, *tpte;
 
-	if (size % CLBYTES)
+	if (size % NBPG)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);

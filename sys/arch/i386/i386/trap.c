@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133 1999/10/04 17:36:37 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.134 1999/12/04 21:20:32 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -470,7 +470,7 @@ trap(frame)
 		if ((caddr_t)va >= vm->vm_maxsaddr
 		    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
 		    && map != kernel_map) {
-			nss = clrnd(btoc(USRSTACK-(unsigned)va));
+			nss = btoc(USRSTACK-(unsigned)va);
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
 				/*
 				 * We used to fail here. However, it may
@@ -581,7 +581,7 @@ trapwrite(addr)
 	p = curproc;
 	vm = p->p_vmspace;
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		nss = clrnd(btoc(USRSTACK-(unsigned)va));
+		nss = btoc(USRSTACK-(unsigned)va);
 		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
 			nss = 0;
 	}

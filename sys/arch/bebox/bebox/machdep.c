@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 1999/12/03 22:48:23 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 1999/12/04 21:20:17 ragge Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -510,7 +510,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -553,7 +553,7 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -754,7 +754,7 @@ long dumplo = -1;			/* blocks */
 
 /*
  * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first CLBYTES of disk space
+ * Dumps always skip the first NBPG of disk space
  * in case there might be a disk label stored there.
  * If there is extra space, put dump at the end to
  * reduce the chance that swapping trashes it.
@@ -778,7 +778,7 @@ cpu_dumpconf()
 
 	dumpsize = physmem;
 
-	/* Always skip the first CLBYTES, in case there is a label there. */
+	/* Always skip the first NBPG, in case there is a label there. */
 	if (dumplo < ctod(1))
 		dumplo = ctod(1);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72 1999/11/13 00:30:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.73 1999/12/04 21:20:07 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -418,7 +418,7 @@ cpu_startup()
 		struct vm_page *pg;
 
 		curbuf = (vm_offset_t) buffers + (loop * MAXBSIZE);
-		curbufsize = CLBYTES * ((loop < residual) ? (base+1) : base);
+		curbufsize = NBPG * ((loop < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -462,7 +462,7 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*

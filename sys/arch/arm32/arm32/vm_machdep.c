@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.46 1999/11/13 00:30:28 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.47 1999/12/04 21:20:09 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -281,7 +281,7 @@ pagemove(from, to, size)
 {
 	register pt_entry_t *fpte, *tpte;
 
-	if (size % CLBYTES)
+	if (size % NBPG)
 		panic("pagemove: size=%08x", size);
 
 #ifdef PMAP_DEBUG

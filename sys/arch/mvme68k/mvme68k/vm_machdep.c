@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26 1999/11/13 00:30:40 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.27 1999/12/04 21:20:56 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -221,7 +221,7 @@ cpu_coredump(p, vp, cred, chdr)
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
+ * and size must be a multiple of NBPG.
  */
 void
 pagemove(from, to, size)
@@ -232,7 +232,7 @@ pagemove(from, to, size)
 	boolean_t rv;
 
 #ifdef DEBUG
-	if (size & CLOFSET)
+	if (size & PGOFSET)
 		panic("pagemove");
 #endif
 	while (size > 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.22 1999/11/13 00:32:17 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.23 1999/12/04 21:21:37 ragge Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -86,7 +86,7 @@ pagemove(from, to, size)
 {
 	paddr_t pa;
 
-	if (size & CLOFSET || (long)from & CLOFSET || (long)to & CLOFSET)
+	if (size & PGOFSET || (long)from & PGOFSET || (long)to & PGOFSET)
 		panic("pagemove 1");
 #if 1
 	cache_flush((caddr_t)from, size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 1998/09/01 05:55:14 sakamoto Exp $	*/
+/*	$NetBSD: param.h,v 1.6 1999/12/04 21:21:06 ragge Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,9 +57,6 @@
 #define	BLKDEV_IOSIZE	NBPG
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
-#define	CLSIZELOG2	0
-#define	CLSIZE		(1 << CLSIZELOG2)
-
 #define	UPAGES		4
 #define	USPACE		(UPAGES * NBPG)
 
@@ -71,7 +68,7 @@
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
@@ -94,10 +91,10 @@
 #endif
 
 /*
- * Size of kernel malloc arena in CLBYTES-sized logical pages.
+ * Size of kernel malloc arena in NBPG-sized logical pages.
  */
 #ifndef	NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(128 * 1024 * 1024 / CLBYTES)
+#define	NKMEMCLUSTERS	(128 * 1024 * 1024 / NBPG)
 #endif
 
 /*
