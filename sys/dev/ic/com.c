@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.229 2004/07/04 09:28:05 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.230 2004/07/04 09:46:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.229 2004/07/04 09:28:05 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.230 2004/07/04 09:46:44 mycroft Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1512,8 +1512,7 @@ comparam(struct tty *tp, struct termios *t)
 		sc->sc_fifo = FIFO_DMA_MODE | FIFO_ENABLE | FIFO_TRIGGER_8;
 	else if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
 		sc->sc_fifo = FIFO_ENABLE |
-		    (t->c_ospeed <= 1200 ? FIFO_TRIGGER_1 :
-		     t->c_ospeed <= 38400 ? FIFO_TRIGGER_8 : FIFO_TRIGGER_14);
+		    (t->c_ospeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8);
 	else
 		sc->sc_fifo = 0;
 
