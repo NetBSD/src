@@ -1,6 +1,5 @@
 #!/bin/sh -
-#
-#	$NetBSD: nologin.sh,v 1.3 1995/03/18 14:59:11 cgd Exp $
+#	$NetBSD: nologin.sh,v 1.4 1995/04/23 10:33:30 cgd Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
