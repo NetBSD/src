@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethers.3,v 1.6 1998/02/05 18:48:43 perry Exp $
+.\"	$NetBSD: ethers.3,v 1.7 1998/02/06 05:40:54 perry Exp $
 .\"
 .\" Written by roland@frob.com.  Public domain.
 .\"
@@ -107,8 +107,10 @@ The
 .Fn ether_hostton ,
 and
 .Fn ether_line
-functions were adopted from SunOS and appeared in
-NetBSD 0.9b.
+functions were adopted from
+.Tn SunOS
+and appeared in
+.Nx 1.0 .
 .Sh BUGS
 The data space used by these functions is static; if future use
 requires the data, it should be copied before any subsequent calls to

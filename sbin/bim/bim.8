@@ -1,4 +1,4 @@
-.\"	$NetBSD: bim.8,v 1.3 1997/09/15 01:29:27 lukem Exp $
+.\"	$NetBSD: bim.8,v 1.4 1998/02/06 05:43:48 perry Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -45,7 +45,9 @@ bim
 .Op Ar device
 .Sh DESCRIPTION
 The pc532 has available an autoboot ROM monitor.  This ROM monitor understands
-the BSD disklabel and expects a boot image directory following the
+the
+.Bx
+disklabel and expects a boot image directory following the
 disklabel.  Also, it expects an image partition for the storage of bootable
 images.  The image directory and the image partition is managed by
 .Nm "" .

@@ -1,9 +1,9 @@
-.\"	$NetBSD: ptrace.2,v 1.4 1997/03/08 13:45:29 mouse Exp $
+.\"	$NetBSD: ptrace.2,v 1.5 1998/02/06 05:41:35 perry Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
 .Dt PTRACE 2
-.Os NetBSD 1.0BETA
+.Os NetBSD 1.0
 .Sh NAME
 .Nm ptrace
 .Nd process tracing and debugging
@@ -74,7 +74,9 @@ and data, which is why there are two requests: conceptually,
 .Dv PT_READ_I
 reads from the instruction space and
 .Dv PT_READ_D
-reads from the data space.  In the current NetBSD implementation, these
+reads from the data space.  In the current
+.Nx
+implementation, these
 two requests are completely identical.  The
 .Fa addr
 argument specifies the address (in the traced process' virtual address
