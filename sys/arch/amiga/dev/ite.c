@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.27 1995/04/10 09:11:41 mycroft Exp $	*/
+/*	$NetBSD: ite.c,v 1.28 1995/04/23 18:24:35 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -436,6 +436,13 @@ itewrite(dev, uio, flag)
 
 	KDASSERT(tp);
 	return ((*linesw[tp->t_line].l_write) (tp, uio, flag));
+}
+
+struct tty *
+itetty(dev)
+	dev_t dev;
+{
+	return (ite_tty[ITEUNIT(dev)]);
 }
 
 int

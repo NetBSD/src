@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 1995/04/22 20:24:55 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 1995/04/23 18:24:24 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -408,7 +408,7 @@ again:
  * but would break init; should be fixed soon.
  */
 void
-setregs(p, entry, stack, retval)
+setregs(p, pack, stack, retval)
 	register struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
