@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.4 1997/05/02 18:15:32 kleink Exp $ */
+/*	$NetBSD: SYS.h,v 1.5 1998/10/20 06:46:19 matt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,9 +48,9 @@
 	SYSTRAP(y)
 
 #define _SYSCALL(x,y)							\
-	err: jmp cerror;						\
+	err: nop; nop; jmp cerror+2;					\
 	_SYSCALL_NOERROR(x,y);						\
-	jcs err
+	jcs err+2
 
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)
