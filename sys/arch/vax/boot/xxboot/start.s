@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.7 2000/06/19 20:05:17 ragge Exp $ */
+/*	$NetBSD: start.s,v 1.8 2000/07/10 09:55:36 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -16,8 +16,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
- *      Lule}, Sweden and its contributors.
+ *	This product includes software developed at Ludd, University of 
+ *	Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -36,14 +36,14 @@
  /* All bugs are subject to removal without further notice */
 		
 
-#define	_LOCORE
+#define _LOCORE
 
 #include "sys/disklabel.h"
 
 #include "../include/mtpr.h"
 #include "../include/asm.h"		
 
-_start:	.globl _start		# this is the symbolic name for the start
+_start: .globl _start		# this is the symbolic name for the start
 				# of code to be relocated. We can use this
 				# to get the actual/real adress (pc-rel)
 				# or to get the relocated address (abs).
@@ -52,7 +52,7 @@ _start:	.globl _start		# this is the symbolic name for the start
 	brb	from_0x00	# continue behind dispatch-block
 
 .org	0x02			# information used by uVAX-ROM
-	.byte (LABELOFFSET + d_end_)/2 # offset in words to identification area 
+	.byte	0xcf		# offset in words to identification area 
 	.byte	1		# this byte must be 1
 	.word	0		# logical block number (word swapped) 
 	.word	0		# of the secondary image
@@ -69,23 +69,39 @@ from_0x00:			# uVAX from TK50
 	brw	start_uvax	# all uVAXen continue there
 
 from_0x08:			# Any machine from VMB
-	movzbl	$4,_from		# Booted from full VMB
-	halt			# Cannot handle this...
+	movzbl	$4,_from	# Booted from full VMB
+	brw	start_vmb
 
 # the complete area reserved for label
 # must be empty (i.e. filled with zeroes).
 # disklabel(8) checks that before installing
 # the bootblocks over existing label.
 
+.org	LABELOFFSET + d_end_
+start_vmb:
+	/*
+	 * Read in block 1-15.
+	 */
+	movl	52(r11), r7	# load iovec/bqo into r7
+	addl3	(r7), r7, r6	# load qio into r6
+	pushl	r11		# base of rpb
+	pushl	$0		# virtual-flag 
+	pushl	$33		# read-logical-block
+	pushl	$1		# lbn to start reading
+	pushl	$7680		# number of bytes to read
+	pushab	start_uvax	# buffer-address 
+	calls	$6, (r6)	# call the qio-routine
+	brw	start_uvax
+
 /*
  * Parameter block for uVAX boot.
  */
-#define VOLINFO         0	/* 1=single-sided  81=double-sided volumes */
-#define SISIZE          16	/* size in blocks of secondary image */
-#define SILOAD          0	/* load offset (usually 0) from the default */
-#define SIOFF           0x200	/* byte offset into secondary image */
+#define VOLINFO		0	/* 1=single-sided  81=double-sided volumes */
+#define SISIZE		16	/* size in blocks of secondary image */
+#define SILOAD		0	/* load offset (usually 0) from the default */
+#define SIOFF		0x200	/* byte offset into secondary image */
 
-.org    LABELOFFSET + d_end_
+.org	0x19e
 	.byte	0x18		# must be 0x18 
 	.byte	0x00		# must be 0x00 (MBZ) 
 	.byte	0x00		# any value 
@@ -99,7 +115,7 @@ from_0x08:			# Any machine from VMB
 
 	.long	SISIZE		# size in blocks of secondary image 
 	.long	SILOAD		# load offset (usually 0) 
-	.long 	SIOFF		# byte offset into secondary image 
+	.long	SIOFF		# byte offset into secondary image 
 	.long	(SISIZE + SILOAD + SIOFF)	# sum of previous 3 
 
 
@@ -112,7 +128,7 @@ _from:	.long	0
  * of good memory by 11/750's ROM-code (transfer address
  * of bootblock-code is: base of good memory + 0x0C) registers
  * are initialized as:
- * 	R0:	type of boot-device
+ *	R0:	type of boot-device
  *			0:	Massbus device
  *			1:	RK06/RK07
  *			2:	RL02
@@ -121,7 +137,7 @@ _from:	.long	0
  *			64:	TU58
  *	R1:	(UBA) address of UNIBUS I/O-page
  *		(MBA) address of boot device's adapter
- * 	R2:	(UBA) address of the boot device's CSR
+ *	R2:	(UBA) address of the boot device's CSR
  *		(MBA) controller number of boot device
  *	R6:	address of driver subroutine in ROM
  *
@@ -172,7 +188,7 @@ start_all:
 	
 	movpsl	-(sp)
 	movl	$relocated, -(sp)	# return-address on top of stack 
-	rei	 			# can be replaced with new address
+	rei				# can be replaced with new address
 relocated:				# now relocation is done !!!
 	movl	sp, _bootregs
 	calls	$0, _Xmain		# call Xmain (gcc workaround)which is 
@@ -182,14 +198,15 @@ relocated:				# now relocation is done !!!
  * hoppabort() is called when jumping to the newly loaded program.
  */
 ENTRY(hoppabort, 0)
-	movl    4(ap),r6
+	movl	4(ap),r6
 	movl	_rpb,r11
 	mnegl	$1,ap		# Hack to figure out boot device.
 	jmp	2(r6)
-#	calls   $0,(r6)
+#	calls	$0,(r6)
 	halt
 
 ENTRY(unit_init, R6|R7|R8|R9|R10|R11)
+	mfpr	$17,r7			# Wanted bu KDB
 	movl	4(ap),r0		# init routine address
 	movl	8(ap),r9		# RPB in r9
 	movl	12(ap),r1		# VMB argument list
@@ -200,11 +217,13 @@ ENTRY(unit_init, R6|R7|R8|R9|R10|R11)
 ENTRY(getchar, 0)
 	halt
 
+#ifndef USE_PRINTF
 ENTRY(putchar, 0)
 	ret
 
 ENTRY(printf, 0)
 	ret
+#endif
 
 ENTRY(panic, 0)
 	halt
