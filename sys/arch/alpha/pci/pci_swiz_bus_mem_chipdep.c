@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.24 1997/10/25 01:22:00 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_mem_chipdep.c,v 1.25 1998/07/31 04:37:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -62,9 +62,9 @@
 
 /* mapping/unmapping */
 int		__C(CHIP,_mem_map) __P((void *, bus_addr_t, bus_size_t, int,
-		    bus_space_handle_t *));
+		    bus_space_handle_t *, int));
 void		__C(CHIP,_mem_unmap) __P((void *, bus_space_handle_t,
-		    bus_size_t));
+		    bus_size_t, int));
 int		__C(CHIP,_mem_subregion) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_size_t, bus_space_handle_t *));
 
@@ -461,12 +461,13 @@ __C(CHIP,_xlate_sparse_handle_to_addr)(v, memh, memaddrp)
 }
 
 int
-__C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp)
+__C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp, acct)
 	void *v;
 	bus_addr_t memaddr;
 	bus_size_t memsize;
 	int flags;
 	bus_space_handle_t *memhp;
+	int acct;
 {
 	bus_space_handle_t dh = 0, sh = 0;	/* XXX -Wuninitialized */
 	int didd, dids, errord, errors, mustd, musts;
@@ -475,6 +476,14 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, flags, memhp)
 
 	/* Requests for linear uncacheable space can't be satisfied. */
 	if (linear && !cacheable)
+		return (EOPNOTSUPP);
+
+	/*
+	 * XXX Too hairy to not do accounting in this space.  Nothing
+	 * XXX much uses this anyhow (only ISA PnP does, and only via
+	 * XXX a machine-dependent hook), so we don't have to care.
+	 */
+	if (acct == 0)
 		return (EOPNOTSUPP);
 
 	mustd = 1;
@@ -577,14 +586,18 @@ bad:
 }
 
 void
-__C(CHIP,_mem_unmap)(v, memh, memsize)
+__C(CHIP,_mem_unmap)(v, memh, memsize, acct)
 	void *v;
 	bus_space_handle_t memh;
 	bus_size_t memsize;
+	int acct;
 {
 	bus_addr_t memaddr;
 	bus_space_handle_t temph;
 	int sparse, haves, haved;
+
+	if (acct == 0)
+		return;
 
 #ifdef EXTENT_DEBUG
 	printf("mem: freeing handle 0x%lx for 0x%lx\n", memh, memsize);
