@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.9 1999/07/28 01:45:42 hubertf Exp $	*/
+/*	$NetBSD: cypher.c,v 1.10 1999/09/18 16:41:38 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cypher.c,v 1.9 1999/07/28 01:45:42 hubertf Exp $");
+__RCSID("$NetBSD: cypher.c,v 1.10 1999/09/18 16:41:38 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -138,6 +138,7 @@ cypher()
 						switch(n) {
 						case BATHGOD:
 							wordvalue[wordnumber + 1] = NORMGOD;
+							/* FALLTHROUGH */
 						case NORMGOD:
 						case AMULET:
 						case MEDALION:
