@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.111 1997/05/27 18:51:12 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.112 1997/05/28 11:16:19 veego Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -217,12 +217,12 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .if (${SHLIB_TYPE} == "a.out")
 	$(LD) -x -Bshareable -Bforcearchive \
-	    -o ${.TARGET} lib${LIB}_pic.a ${LDADD}
+	    -o ${.TARGET} lib${LIB}_pic.a -nostdlib -L${BUILDDIR}/usr/lib ${LDADD}
 .elif (${SHLIB_TYPE} == "ELF")
 	$(LD) -x -shared -o ${.TARGET} \
 	    -soname lib${LIB}.so.${SHLIB_SOVERSION}  ${SHLIB_LDSTARTFILE} \
-	    --whole-archive lib${LIB}_pic.a --no-whole-archive ${LDADD} \
-	    ${SHLIB_LDENDFILE}
+	    --whole-archive lib${LIB}_pic.a --no-whole-archive -nostdlib \
+	    -L${BUILDDIR}/usr/lib ${LDADD} ${SHLIB_LDENDFILE}
 .endif
 .if defined(OBJDIR)
 	@echo install -d ${BUILDDIR}${LIBDIR}
