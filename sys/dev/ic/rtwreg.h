@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.10 2005/01/03 03:07:12 dyoung Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.11 2005/01/14 10:13:55 dyoung Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -767,11 +767,11 @@
 #define RTW_TPPOLL_SHPQ	BIT(2)	/* Host writes 1 to tell RTL8180 to
 				 * stop high-priority DMA.
 				 */
-#define RTW_TPPOLL_SNPQ	BIT(2)	/* Host writes 1 to tell RTL8180 to
+#define RTW_TPPOLL_SNPQ	BIT(1)	/* Host writes 1 to tell RTL8180 to
 				 * stop normal-priority DMA. This bit is invalid
 				 * when RTW_CONFIG2_DPS is set.
 				 */
-#define RTW_TPPOLL_SLPQ	BIT(2)	/* Host writes 1 to tell RTL8180 to
+#define RTW_TPPOLL_SLPQ	BIT(0)	/* Host writes 1 to tell RTL8180 to
 				 * stop low-priority DMA.
 				 */
 #define RTW_TPPOLL_FSWINT	BIT(0)	/* Force software interrupt. From
