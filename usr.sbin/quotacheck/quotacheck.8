@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotacheck.8,v 1.13 2003/08/07 11:25:39 agc Exp $
+.\"	$NetBSD: quotacheck.8,v 1.14 2004/01/05 00:17:07 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,11 +42,13 @@
 .Nm
 .Op Fl g
 .Op Fl u
+.Op Fl q
 .Op Fl v
 .Ar filesystem Ar ...
 .Nm
 .Op Fl g
 .Op Fl u
+.Op Fl q
 .Op Fl v
 .Fl a
 .Sh DESCRIPTION
@@ -82,9 +84,18 @@ are to be checked.
 Only user quotas listed in
 .Pa /etc/fstab
 are to be checked.
+.It Fl q
+.Nm
+runs more quickly,
+particularly on systems with sparse user id usage,
+but fails to correct quotas for users [groups]
+not in the system user [group] database,
+and owning no files on the filesystem,
+if the quota file incorrectly believes that they do.
 .It Fl v
 .Nm
-reports discrepancies between the
+is more verbose,
+and reports corrected discrepancies between the
 calculated and recorded disk quotas.
 .El
 .Pp
