@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.9 2000/05/26 21:20:18 thorpej Exp $ */
+/*	$NetBSD: locore2.c,v 1.9.12.1 2001/11/20 16:31:56 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/lwp.h>
 #include <sys/sched.h>
 #include <sys/resourcevar.h>
 
@@ -62,21 +63,21 @@
  * Calls should be made at splstatclock(), and p->p_stat should be SRUN.
  */
 void
-setrunqueue(p)
-	register struct proc *p;
+setrunqueue(l)
+	struct lwp *l;
 {
-	register struct prochd *q;
-	register struct proc *oldlast;
-	register int which = p->p_priority >> 2;
+	struct prochd *q;
+	struct lwp *oldlast;
+	int which = l->l_priority >> 2;
 
-	if (p->p_back != NULL)
+	if (l->l_back != NULL)
 		panic("setrunqueue");
 	q = &sched_qs[which];
 	sched_whichqs |= 1 << which;
-	p->p_forw = (struct proc *)q;
-	p->p_back = oldlast = q->ph_rlink;
-	q->ph_rlink = p;
-	oldlast->p_forw = p;
+	l->l_forw = (struct lwp *)q;
+	l->l_back = oldlast = q->ph_rlink;
+	q->ph_rlink = l;
+	oldlast->l_forw = l;
 }
 
 /*
@@ -84,18 +85,18 @@ setrunqueue(p)
  * indicated by its priority.  Calls should be made at splstatclock().
  */
 void
-remrunqueue(p)
-	register struct proc *p;
+remrunqueue(l)
+	struct lwp *l;
 {
-	register int which = p->p_priority >> 2;
-	register struct prochd *q;
+	int which = l->l_priority >> 2;
+	struct prochd *q;
 
 	if ((sched_whichqs & (1 << which)) == 0)
 		panic("remrunqueue");
-	p->p_forw->p_back = p->p_back;
-	p->p_back->p_forw = p->p_forw;
-	p->p_back = NULL;
+	l->l_forw->l_back = l->l_back;
+	l->l_back->l_forw = l->l_forw;
+	l->l_back = NULL;
 	q = &sched_qs[which];
-	if (q->ph_link == (struct proc *)q)
+	if (q->ph_link == (struct lwp *)q)
 		sched_whichqs &= ~(1 << which);
 }
