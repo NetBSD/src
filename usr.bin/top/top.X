@@ -60,8 +60,8 @@ terminal.
 .SH OPTIONS
 .TP
 .B \-S
-Show system processes in the display.  Normally, system processes such as
-the pager and the swapper are not shown.  This option makes them visible.
+Toggle displaying of system processes in the display.  Normally, system
+processes such as the pager and the swapper are shown.
 .TP
 .B \-b
 Use \*(lqbatch\*(rq mode.  In this mode, all input from the terminal is
