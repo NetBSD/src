@@ -1,4 +1,4 @@
-/*	$NetBSD: bicons.c,v 1.4 1999/11/30 18:42:02 uch Exp $	*/
+/*	$NetBSD: bicons.c,v 1.5 2000/03/06 21:36:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -130,6 +130,7 @@ struct consdev builtincd = {
 	(int  (*)(dev_t))     bicons_getc,	/* getc */
 	(void (*)(dev_t, int))bicons_putc,	/* putc */
 	(void (*)(dev_t, int))bicons_pollc,	/* pollc */
+	NULL,					/* bell */
 	makedev (0, 0),
 	CN_DEAD,
 };
