@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2003/07/24 16:28:59 tron Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2005/03/09 03:11:21 christos Exp $
 
 .include <bsd.own.mk>
 CRYPTODIST=${NETBSDSRCDIR}/crypto/dist
@@ -7,8 +7,8 @@ CRYPTODIST=${NETBSDSRCDIR}/crypto/dist
 .PATH:	${OPENSSLSRC}/crypto/bn
 
 CPPFLAGS+=	-I${OPENSSLSRC}
-DPADD+=		${LIBCRYPTO}
-LDADD+=		-lcrypto
+DPADD+=		${LIBCRYPTO} ${LIBCRYPT}
+LDADD+=		-lcrypto -lcrypt
 
 # do not install regression test programs
 proginstall::
