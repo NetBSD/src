@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_util.h,v 1.6 1995/04/22 19:49:00 christos Exp $	 */
+/*	$NetBSD: svr4_util.h,v 1.7 1995/06/24 20:29:31 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -30,28 +30,7 @@
 #ifndef	_SVR4_UTIL_H_
 #define	_SVR4_UTIL_H_
 
-#include <machine/vmparam.h>
-#include <sys/exec.h>
-
-extern char     svr4_sigcode[], svr4_esigcode[];
-
-static __inline caddr_t
-stackgap_init()
-{
-#define szsigcode (svr4_esigcode - svr4_sigcode)
-	return STACKGAPBASE;
-}
-
-
-static __inline void *
-stackgap_alloc(sgp, sz)
-	caddr_t	*sgp;
-	size_t   sz;
-{
-	void	*p = (void *) *sgp;
-	*sgp += ALIGN(sz);
-	return p;
-}
+#include <compat/common/compat_util.h>
 
 #ifdef DEBUG_SVR4
 #define DPRINTF(a)	printf a;
@@ -60,12 +39,8 @@ stackgap_alloc(sgp, sz)
 #endif
 
 extern const char svr4_emul_path[];
-extern int svr4_error[];
 
-int svr4_emul_find __P((struct proc *, caddr_t *, 
-			const char *, char *, char **));
-
-#define CHECKALT(p, sgp, path) \
-    svr4_emul_find(p, sgp, svr4_emul_path, path, &(path))
+#define SVR4_CHECK_ALT_EXIST(p, sgp, path) \
+    CHECK_ALT_EXIST(p, sgp, svr4_emul_path, path)
 
 #endif /* !_SVR4_UTIL_H_ */
