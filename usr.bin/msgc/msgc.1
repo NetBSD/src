@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgc.1,v 1.18 2003/06/04 19:00:26 dsl Exp $
+.\"	$NetBSD: msgc.1,v 1.19 2003/09/25 18:32:10 dsl Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -49,6 +49,7 @@
 .Nm msg_prompt_add ,
 .Nm msg_prompt_win ,
 .Nm msg_prompt_noecho ,
+.Nm msg_row ,
 .Nm msg_table_add
 .Nd simple message list compiler
 .Sh SYNOPSIS
@@ -79,6 +80,8 @@ msgc
 .Fn msg_prompt_win  "msg msg_no" "WINDOW *win" "const char *def" "char *val" "int max_chars" ...
 .Ft void
 .Fn msg_prompt_noecho  "msg msg_no" "const char *def" "char *val" "int max_chars" ...
+.Ft int
+.Fn msg_row "void"
 .Ft void
 .Fn msg_table_add "msg msg_no" ...
 .Sh DESCRIPTION
@@ -198,5 +201,8 @@ is typed by the user.
 .Pp
 .Fn msg_prompt_win
 uses the specified curses window instead of the default one.
+.Pp
+.Fn msg_row
+return the current row - i.e.: getcury(msg_win) + getbegy(msg_win).
 .Sh AUTHORS
 Philip A. Nelson for Piermont Information Systems Inc.
