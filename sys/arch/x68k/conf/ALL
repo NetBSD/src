@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.25 1998/12/23 23:01:52 itohy Exp $
+#	$NetBSD: ALL,v 1.26 1999/01/18 07:39:51 itohy Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -22,7 +22,6 @@ options 	M68060
 
 options 	UVM			# new virtual memory system
 options 	MACHINE_NONCONTIG	# support for noncontiguous memory
-options 	MACHINE_NEW_NONCONTIG	# new i/f for noncontig memory support
 options 	FPU_EMULATE		# software fpu emulation for MC68030
 options 	FPSP			# floating point emulation for MC68040
 options 	M060SP			# int/fp emulation for MC68060

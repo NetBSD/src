@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 1999/01/09 22:10:23 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 1999/01/18 07:39:52 itohy Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -130,9 +130,7 @@ vm_map_t phys_map = NULL;
 vm_map_t buffer_map;
 #endif
 
-#if defined(MACHINE_NEW_NONCONTIG)
 extern paddr_t avail_start;
-#endif
 
 #ifdef MACHINE_NONCONTIG
 extern int numranges;
@@ -196,9 +194,7 @@ void	intrhand __P((int));
 void
 consinit()
 {
-#if defined(MACHINE_NEW_NONCONTIG)
 	int i;
-#endif
 
 	/*
 	 * Set cpuspeed immediately since cninit() called routines
@@ -230,7 +226,6 @@ consinit()
 		Debugger();
 #endif
 
-#if defined(MACHINE_NEW_NONCONTIG)
 	/*
 	 * Tell the VM system about available physical memory.
 	 */
@@ -261,7 +256,6 @@ consinit()
 			atop(avail_start), atop(avail_end));
 #endif
 #endif
-#endif	/* MACHINE_NEW_NONCONTIG */
 }
 
 /*

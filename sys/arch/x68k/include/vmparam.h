@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.7 1998/09/03 14:13:18 minoura Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8 1999/01/18 07:39:52 itohy Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -237,9 +237,6 @@
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
 
-/* Use new VM page bootstrap interface. */
-#ifdef	MACHINE_NEW_NONCONTIG
-
 /*
  * Constants which control the way the VM system deals with memory segments.
  */
@@ -257,6 +254,5 @@ struct pmap_physseg {
 	struct pv_entry *pvent;		/* pv table for this seg */
 	char *attrs;			/* page attributes for this seg */
 };
-#endif
 
 #endif /* _X68K_VMPARAM_H_ */
