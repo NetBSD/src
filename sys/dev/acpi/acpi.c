@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.51 2003/11/01 08:03:24 mycroft Exp $	*/
+/*	$NetBSD: acpi.c,v 1.52 2003/11/01 19:24:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.51 2003/11/01 08:03:24 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.52 2003/11/01 19:24:42 yamt Exp $");
 
 #include "opt_acpi.h"
 
@@ -480,6 +480,8 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO *di)
 	ACPI_STATUS rv;
 
 #ifdef ACPI_DEBUG
+	ACPI_BUFFER buf;
+
 	printf("acpi_activate_device: %s, old status=%x\n", 
 	       di->HardwareId.Value, di->CurrentStatus);
 #endif
@@ -492,7 +494,9 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO *di)
 	}
 
 #ifdef ACPI_DEBUG
-	(void)AcpiGetObjectInfo(handle, di);
+	buf.Pointer = di;
+	buf.Length = sizeof(*di);
+	(void)AcpiGetObjectInfo(handle, &buf);
 	printf("acpi_activate_device: %s, new status=%x\n", 
 	       di->HardwareId.Value, di->CurrentStatus);
 #endif
