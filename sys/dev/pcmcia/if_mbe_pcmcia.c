@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.34 2004/08/10 20:47:17 mycroft Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.35 2004/08/11 03:56:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.34 2004/08/10 20:47:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.35 2004/08/11 03:56:03 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,17 +194,10 @@ mbe_pcmcia_attach(parent, self, aux)
 	sc->sc_bst = cfe->iospace[0].handle.iot;
 	sc->sc_bsh = cfe->iospace[0].handle.ioh;
 
-	error = mbe_pcmcia_enable(sc);
-	if (error)
-		goto fail;
-
 	mpp = pcmcia_product_lookup(pa, mbe_pcmcia_products,
 	    mbe_pcmcia_nproducts, sizeof(mbe_pcmcia_products[0]), NULL);
 	if (!mpp)
 		panic("mbe_pcmcia_attach: impossible");
-
-	sc->sc_enable = mbe_pcmcia_enable;
-	sc->sc_disable = mbe_pcmcia_disable;
 
 	/* Read station address from io/mem or CIS. */
 	if (mpp->mpp_enet_maddr >= 0) {
@@ -212,7 +205,7 @@ mbe_pcmcia_attach(parent, self, aux)
 		if (mbe_pcmcia_get_enaddr_from_mem(psc, &pgea) != 0) {
 			printf("%s: couldn't get ethernet address "
 			    "from memory\n", self->dv_xname);
-			goto fail2;
+			goto fail;
 		}
 	} else if (mpp->mpp_flags & MBH10302) {
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, FE_MBH0 ,
@@ -220,13 +213,13 @@ mbe_pcmcia_attach(parent, self, aux)
 		if (mbe_pcmcia_get_enaddr_from_io(psc, &pgea) != 0) {
 			printf("%s: couldn't get ethernet address from i/o\n",
 			    self->dv_xname);
-			goto fail2;
+			goto fail;
 		}
 	} else {
 		if (pa->pf->pf_funce_lan_nidlen != ETHER_ADDR_LEN) {
 			printf("%s: couldn't get ethernet address from CIS\n",
 			    self->dv_xname);
-			goto fail2;
+			goto fail;
 		}
 		memcpy(pgea.enaddr, pa->pf->pf_funce_lan_nid, ETHER_ADDR_LEN);
 	}
@@ -235,16 +228,20 @@ mbe_pcmcia_attach(parent, self, aux)
 	if (mpp->mpp_flags & MBH10302)
 		sc->sc_flags |= FE_FLAGS_MB86960;
 
-	mb86960_attach(sc, pgea.enaddr);
+	sc->sc_enable = mbe_pcmcia_enable;
+	sc->sc_disable = mbe_pcmcia_disable;
 
+	error = mbe_pcmcia_enable(sc);
+	if (error)
+		goto fail;
+
+	mb86960_attach(sc, pgea.enaddr);
 	mb86960_config(sc, NULL, 0, 0);
 
 	mbe_pcmcia_disable(sc);
 	psc->sc_state = MBE_PCMCIA_ATTACHED;
 	return;
 
-fail2:
-	mbe_pcmcia_disable(sc);
 fail:
 	pcmcia_function_unconfigure(pa->pf);
 }
