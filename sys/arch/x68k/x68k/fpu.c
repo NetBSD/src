@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1 1996/05/05 12:17:25 oki Exp $	*/
+/*	$NetBSD: fpu.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross

@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.32 1996/05/22 03:50:06 mrg Exp $	*/
+/*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.32 1996/05/22 03:50:06 mrg Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $";
 #endif
 #endif /* not lint */
 
@@ -274,13 +274,13 @@ main(argc, argv)
 		strcpy(exname, _PATH_EXPORTS);
 	openlog("mountd", LOG_PID, LOG_DAEMON);
 	if (debug)
-		fprintf(stderr, "Getting export list.\n");
+		fprintf(stderr,"Getting export list.\n");
 	get_exportlist();
 	if (debug)
-		fprintf(stderr, "Getting mount list.\n");
+		fprintf(stderr,"Getting mount list.\n");
 	get_mountlist();
 	if (debug)
-		fprintf(stderr, "Here we go.\n");
+		fprintf(stderr,"Here we go.\n");
 	if (debug == 0) {
 		daemon(0, 0);
 		signal(SIGINT, SIG_IGN);
@@ -409,7 +409,7 @@ mntsrv(rqstp, transp)
 				add_mlist(inet_ntoa(transp->xp_raddr.sin_addr),
 					dirpath);
 			if (debug)
-				fprintf(stderr, "Mount successfull.\n");
+				fprintf(stderr,"Mount successfull.\n");
 		} else {
 			bad = EACCES;
 			if (!svc_sendreply(transp, xdr_long, (caddr_t)&bad))
@@ -709,13 +709,13 @@ get_exportlist()
 	 * mount() as we go along to push the export rules into the kernel.
 	 */
 	if ((exp_file = fopen(exname, "r")) == NULL) {
-		syslog(LOG_ERR, "Can't open %s: %m", exname);
+		syslog(LOG_ERR, "Can't open %s", exname);
 		exit(2);
 	}
 	dirhead = (struct dirlist *)NULL;
 	while (get_line()) {
 		if (debug)
-			fprintf(stderr, "Got line %s\n", line);
+			fprintf(stderr,"Got line %s\n",line);
 		cp = line;
 		nextfield(&cp, &endcp);
 		if (*cp == '#')
@@ -854,7 +854,7 @@ get_exportlist()
 		if (!has_host) {
 			grp->gr_type = GT_HOST;
 			if (debug)
-				fprintf(stderr, "Adding a default entry\n");
+				fprintf(stderr,"Adding a default entry\n");
 			/* add a default group and make the grp list NULL */
 			hpe = (struct hostent *)malloc(sizeof(struct hostent));
 			if (hpe == (struct hostent *)NULL)
@@ -1352,7 +1352,7 @@ get_host(cp, grp)
 		if (isdigit(*cp)) {
 			saddr = inet_addr(cp);
 			if (saddr == -1) {
-				syslog(LOG_ERR, "inet_addr failed for %s", cp);
+				syslog(LOG_ERR, "Inet_addr failed for %s", cp);
 				return (1);
 			}
 			if ((hp = gethostbyaddr((caddr_t)&saddr, sizeof (saddr),
@@ -1366,8 +1366,7 @@ get_host(cp, grp)
 				aptr[1] = (char *)NULL;
 			}
 		} else {
-			syslog(LOG_ERR, "gethostbyname failed for %s: %s", cp,
-				hstrerror(h_errno));
+			syslog(LOG_ERR, "Gethostbyname failed for %s", cp);
 			return (1);
 		}
 	}
@@ -1601,12 +1600,7 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 				cp = dirp + dirplen - 1;
 			if (errno == EPERM) {
 				syslog(LOG_ERR,
-				    "Can't change attributes for %s to %s.\n",
-				    dirp, (grp->gr_type == GT_HOST) ? 
-					grp->gr_ptr.gt_hostent->h_name :
-				    (grp->gr_type == GT_NET) ?
-					grp->gr_ptr.gt_net.nt_name :
-					"Unknown");
+				   "Can't change attributes for %s.\n", dirp);
 				return (1);
 			}
 			if (opt_flags & OP_ALLDIRS) {
@@ -1853,7 +1847,7 @@ get_mountlist()
 	FILE *mlfile;
 
 	if ((mlfile = fopen(_PATH_RMOUNTLIST, "r")) == NULL) {
-		syslog(LOG_ERR, "Can't open %s: %m", _PATH_RMOUNTLIST);
+		syslog(LOG_ERR, "Can't open %s", _PATH_RMOUNTLIST);
 		return;
 	}
 	mlpp = &mlhead;
@@ -1900,7 +1894,7 @@ del_mlist(hostp, dirp)
 	}
 	if (fnd) {
 		if ((mlfile = fopen(_PATH_RMOUNTLIST, "w")) == NULL) {
-			syslog(LOG_ERR,"Can't update %s: %m", _PATH_RMOUNTLIST);
+			syslog(LOG_ERR,"Can't update %s", _PATH_RMOUNTLIST);
 			return;
 		}
 		mlp = mlhead;
@@ -1935,7 +1929,7 @@ add_mlist(hostp, dirp)
 	mlp->ml_next = (struct mountlist *)NULL;
 	*mlpp = mlp;
 	if ((mlfile = fopen(_PATH_RMOUNTLIST, "a")) == NULL) {
-		syslog(LOG_ERR, "Can't update %s: %m", _PATH_RMOUNTLIST);
+		syslog(LOG_ERR, "Can't update %s", _PATH_RMOUNTLIST);
 		return;
 	}
 	fprintf(mlfile, "%s %s\n", mlp->ml_host, mlp->ml_dirp);

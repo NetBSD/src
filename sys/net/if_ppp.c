@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.32 1996/05/22 13:55:10 mycroft Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.31 1996/05/07 02:40:36 thorpej Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -528,6 +528,7 @@ pppsioctl(ifp, cmd, data)
     u_long cmd;
     caddr_t data;
 {
+    struct proc *p = curproc;	/* XXX */
     register struct ppp_softc *sc = ifp->if_softc;
     register struct ifaddr *ifa = (struct ifaddr *)data;
     register struct ifreq *ifr = (struct ifreq *)data;
@@ -554,6 +555,8 @@ pppsioctl(ifp, cmd, data)
 	break;
 
     case SIOCSIFMTU:
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	    break;
 	sc->sc_if.if_mtu = ifr->ifr_mtu;
 	break;
 

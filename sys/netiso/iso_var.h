@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.9 1996/05/22 13:56:02 mycroft Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.8 1996/02/13 22:10:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -141,8 +141,7 @@ int iso_netmatch __P((struct sockaddr_iso *, struct sockaddr_iso *));
 u_long iso_hashchar __P((caddr_t, int));
 int iso_hash __P((struct sockaddr_iso *, struct afhash *));
 int iso_netof __P((struct iso_addr *, caddr_t));
-int iso_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
-		     struct proc *));
+int iso_control __P((struct socket *, u_long, caddr_t, struct ifnet *));
 void iso_ifscrub __P((struct ifnet *, struct iso_ifaddr *));
 int iso_ifinit __P((struct ifnet *, struct iso_ifaddr *, struct sockaddr_iso *,
 		    int ));
@@ -167,7 +166,7 @@ int iso_snparesolve __P((struct ifnet *, struct sockaddr_iso *,
 void snpac_free __P((struct llinfo_llc *));
 int snpac_add __P((struct ifnet *, struct iso_addr *, caddr_t, int,
 		   u_short, int));
-int snpac_ioctl __P((struct socket *, u_long, caddr_t, struct proc *));
+int snpac_ioctl __P((struct socket *, u_long, caddr_t));
 void snpac_logdefis __P((struct rtentry *));
 void snpac_age __P((void *));
 int snpac_ownmulti __P((caddr_t, u_int));

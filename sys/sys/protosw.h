@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.11 1996/05/22 13:56:34 mycroft Exp $	*/
+/*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -82,7 +82,7 @@ struct protosw {
 /* user-protocol hook */
 	int	(*pr_usrreq)		/* user request: see list below */
 			__P((struct socket *, int, struct mbuf *,
-			     struct mbuf *, struct mbuf *, struct proc *));
+			     struct mbuf *, struct mbuf *));
 
 /* utility hooks */
 	void	(*pr_init)		/* initialization hook */
@@ -114,12 +114,11 @@ struct protosw {
 
 /*
  * The arguments to usrreq are:
- *	(*protosw[].pr_usrreq)(up, req, m, nam, opt, p);
+ *	(*protosw[].pr_usrreq)(up, req, m, nam, opt);
  * where up is a (struct socket *), req is one of these requests,
  * m is a optional mbuf chain containing a message,
  * nam is an optional mbuf chain containing an address,
- * opt is a pointer to a socketopt structure or nil,
- * and p is a pointer to the process requesting the action (if any).
+ * and opt is a pointer to a socketopt structure or nil.
  * The protocol is responsible for disposal of the mbuf chain m,
  * the caller is responsible for any space held by nam and opt.
  * A non-zero return from usrreq gives an

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.5 1996/05/22 15:39:43 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.4 1996/05/12 23:52:53 mycroft Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -410,27 +410,10 @@ struct iy_softc *sc;
 
 	temp = inb(iobase + MEDIA_SELECT);
 #ifdef IYDEBUG
-	printf("%s: media select was 0x%b ", sc->sc_dev.dv_xname,
+	printf("%s: media select was 0x%b", sc->sc_dev.dv_xname,
 	    temp, "\020\1LnkInDis\2PolCor\3TPE\4JabberDis\5NoAport\6BNC");
 #endif
-	temp = (temp & TEST_MODE_MASK);
-
-	switch(ifp->if_flags & (IFF_LINK0 | IFF_LINK1)) {
-	case IFF_LINK0:
-	    temp &= ~ (BNC_BIT | TPE_BIT);
-	    break;
-
-	case IFF_LINK1:
-	    temp = temp & ~TPE_BIT | BNC_BIT;
-	    break;
-
-	case IFF_LINK0|IFF_LINK1:
-	    temp = temp & ~BNC_BIT | TPE_BIT;
-	    break;
-	default:
-	    /* nothing; leave as it is */
-	}
-
+	temp = (temp & TEST_MODE_MASK) /* | BNC_BIT XXX*/;
 	outb(iobase + MEDIA_SELECT, temp);
 #ifdef IYDEBUG
 	printf("changed to 0x%b\n", 

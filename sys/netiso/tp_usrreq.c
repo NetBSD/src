@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.10 1996/05/22 13:56:08 mycroft Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.9 1996/03/16 23:14:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -389,11 +389,10 @@ tp_sendoob(tpcb, so, xdata, outflags)
  */
 /* ARGSUSED */
 int
-tp_usrreq(so, req, m, nam, control, p)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct proc *p;
+tp_usrreq(so, req, m, nam, controlp)
+	struct socket  *so;
+	int             req;
+	struct mbuf    *m, *nam, *controlp;
 {
 	register struct tp_pcb *tpcb = sototpcb(so);
 	int             s = splsoftnet();
@@ -473,7 +472,7 @@ tp_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_BIND:
-		error = tp_pcbbind(tpcb, nam, p);
+		error = tp_pcbbind(tpcb, nam);
 		break;
 
 	case PRU_LISTEN:
@@ -514,9 +513,7 @@ tp_usrreq(so, req, m, nam, control, p)
 		}
 #endif
 		if (tpcb->tp_lsuffixlen == 0) {
-			error = tp_pcbbind(tpcb, (struct mbuf *)0,
-			    (struct proc *)0);
-			if (error) {
+			if ((error = tp_pcbbind(tpcb, MNULL)) != 0) {
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_CONN]) {
 					printf("pcbbind returns error 0x%x\n", error);
@@ -635,9 +632,9 @@ tp_usrreq(so, req, m, nam, control, p)
 
 	case PRU_SEND:
 	case PRU_SENDOOB:
-		if (control) {
-			error = tp_snd_control(control, so, &m);
-			control = NULL;
+		if (controlp) {
+			error = tp_snd_control(controlp, so, &m);
+			controlp = NULL;
 			if (error)
 				break;
 		}
@@ -755,8 +752,8 @@ tp_usrreq(so, req, m, nam, control, p)
 			    tpcb ? tpcb->tp_state : 0);
 	}
 #endif
-	if (control) {
-		m_freem(control);
+	if (controlp) {
+		m_freem(controlp);
 		printf("control data unexpectedly retained in tp_usrreq()");
 	}
 	splx(s);
@@ -814,9 +811,8 @@ tp_snd_control(m, so, data)
 				m_freem(*data);
 				*data = 0;
 			}
-			error = tp_usrreq(so, PRU_DISCONNECT, (struct mbuf *)0,
-			    (struct mbuf *)0, (struct mbuf *)0,
-			    (struct proc *)0);
+			error = tp_usrreq(so, PRU_DISCONNECT, NULL,
+					  NULL, NULL);
 		}
 	}
 	if (m)

@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.23 1996/05/23 13:49:04 christos Exp $	 */
+/*	$NetBSD: yplib.c,v 1.22 1996/05/18 18:43:24 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yplib.c,v 1.23 1996/05/23 13:49:04 christos Exp $";
+static char rcsid[] = "$NetBSD: yplib.c,v 1.22 1996/05/18 18:43:24 jtc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -57,7 +57,6 @@ struct dom_binding *_ypbindlist;
 char _yp_domain[MAXHOSTNAMELEN];
 
 struct timeval _yplib_timeout = { 10, 0 };
-int _yplib_nerrs = 5;
 
 void _yp_unbind __P((struct dom_binding *));
 

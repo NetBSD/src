@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.1 1996/05/05 12:17:24 oki Exp $	*/
+/*	$NetBSD: Locore.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.

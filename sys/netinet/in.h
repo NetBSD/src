@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.21 1996/05/22 14:42:29 mycroft Exp $	*/
+/*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -268,6 +268,5 @@ void	   in_socktrim __P((struct sockaddr_in *));
 #define	satosin(sa)	((struct sockaddr_in *)(sa))
 #define	sintosa(sin)	((struct sockaddr *)(sin))
 #define	ifatoia(ifa)	((struct in_ifaddr *)(ifa))
-#define	SAME_INADDR(a, b)	((a)->sin_addr.s_addr == (b)->sin_addr.s_addr)
 #endif
 #endif /* !_NETINET_IN_H_ */

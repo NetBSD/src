@@ -5,7 +5,7 @@
 #  old make program (I recommend that you get and port the new make if you
 #  are going to be doing any signficant work on sendmail).
 #
-#	@(#)Makefile.dist	8.2 (Berkeley) 11/27/93
+#	@(#)Makefile.dist	8.1 (Berkeley) 11/27/93
 #
 
 # use O=-O (usual) or O=-g (debugging)
@@ -38,7 +38,7 @@ LIBDIRS=-L/usr/sww/lib
 # libraries required on your system
 LIBS=	-ldb -ldbm
 
-# location of makemap binary (usually /usr/sbin or /usr/etc)
+# location of praliases binary (usually /usr/sbin or /usr/etc)
 BINDIR=	${DESTDIR}/usr/sbin
 
 # additional .o files needed
@@ -48,33 +48,33 @@ OBJADD=
 
 CFLAGS=	-I. $O ${INCDIRS} ${DBMDEF} ${ENVDEF}
 
-OBJS=	makemap.o ${OBJADD}
+OBJS=	praliases.o ${OBJADD}
 
 LINKS=	${DESTDIR}/usr/ucb/newaliases ${DESTDIR}/usr/ucb/mailq
 BINOWN=	bin
 BINGRP=	bin
 BINMODE=555
 
-ALL=	makemap makemap.0
+ALL=	praliases praliases.0
 
 all: ${ALL}
 
-makemap: ${BEFORE} ${OBJS}
-	${CC} -o makemap ${LDOPTS} ${OBJS} ${LIBDIRS} ${LIBS}
+praliases: ${BEFORE} ${OBJS}
+	${CC} -o praliases ${LDOPTS} ${OBJS} ${LIBDIRS} ${LIBS}
 
-makemap.0: makemap.8
-	nroff -h -mandoc makemap.8 > makemap.0
+praliases.0: praliases.8
+	nroff -h -mandoc praliases.8 > praliases.0
 
-install: install-makemap install-docs
+install: install-praliases install-docs
 
-install-makemap: makemap
-	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} makemap ${BINDIR}
+install-praliases: praliases
+	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} praliases ${BINDIR}
 
 # doesn't actually install them -- you may want to install pre-nroff versions
-install-docs: makemap.0
+install-docs: praliases.0
 
 clean:
-	rm -f ${OBJS} makemap makemap.0
+	rm -f ${OBJS} praliases praliases.0
 
 # dependencies
 #   gross overkill, and yet still not quite enough....

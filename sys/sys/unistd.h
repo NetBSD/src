@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.11 1996/05/21 23:39:57 mycroft Exp $	*/
+/*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,18 +42,10 @@
 #define	_POSIX_JOB_CONTROL	/* implementation supports job control */
 
 /*
- * According to POSIX 1003.1:
- * "The saved set-user-ID capability allows a program to regain the
- * effective user ID established at the last exec call."
- * However, the setuid/setgid function as specified by POSIX 1003.1 does
- * not allow changing the effective ID from the super-user without also
- * changed the saved ID, so it is impossible to get super-user privileges
- * back later.  Instead we provide this feature independent of the current
- * effective ID through the seteuid/setegid function.  In addition, we do
- * not use the saved ID as specified by POSIX 1003.1 in setuid/setgid,
- * because this would make it impossible for a set-user-ID executable
- * owned by a user other than the super-user to permanently revoke its
- * extra privileges.
+ * Although we have saved user/group IDs, we do not use them in setuid
+ * as described in POSIX 1003.1, because the feature does not work for
+ * root.  We use the saved IDs in seteuid/setegid, which are not currently
+ * part of the POSIX 1003.1 specification.
  */
 #ifdef	_NOT_AVAILABLE
 #define	_POSIX_SAVED_IDS	/* saved set-user-ID and set-group-ID */

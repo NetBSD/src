@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.29 1996/05/22 17:16:45 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.28 1996/05/06 22:26:26 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -2028,9 +2028,7 @@ scsi_show()
 	SC_REQ	*tmp;
 	int	sps = splhigh();
 	u_char	idstat, dmstat;
-#ifdef	DBG_PID
 	int	i;
-#endif
 
 	printf("scsi_show: scsi_main is%s running\n",
 		main_running ? "" : " not");

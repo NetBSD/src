@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.47 1996/05/23 22:47:29 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.46 1996/03/24 23:58:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -592,12 +592,6 @@ nfs_mount(mp, path, data, ndp, p)
 
 		if (nmp == NULL)
 			return (EIO);
-		/*
-		 * When doing an update, we can't change from or to
-		 * v3 and/or nqnfs.
-		 */
-		args.flags = (args.flags & ~(NFSMNT_NFSV3|NFSMNT_NQNFS)) |
-		    (nmp->nm_flag & (NFSMNT_NFSV3|NFSMNT_NQNFS));
 		nfs_decode_args(nmp, &args);
 		return (0);
 	}
@@ -635,7 +629,6 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	register struct nfsmount *nmp;
 	struct nfsnode *np;
 	int error;
-	struct vattr attrs;
 
 	if (mp->mnt_flag & MNT_UPDATE) {
 		nmp = VFSTONFS(mp);
@@ -718,7 +711,6 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	if (error)
 		goto bad;
 	*vpp = NFSTOV(np);
-	VOP_GETATTR(*vpp, &attrs, curproc->p_ucred, curproc); /* XXX */
 
 	return (0);
 bad:
@@ -820,8 +812,7 @@ nfs_root(mp, vpp)
 	if (error)
 		return (error);
 	vp = NFSTOV(np);
-	if (vp->v_type == VNON)
-		vp->v_type = VDIR;
+	vp->v_type = VDIR;
 	vp->v_flag = VROOT;
 	*vpp = vp;
 	return (0);

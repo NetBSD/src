@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.2 1996/05/23 02:06:53 briggs Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.1 1996/05/18 18:54:32 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -228,12 +228,10 @@ zstty_attach(parent, self, aux)
 		/* This unit is the console. */
 		zst->zst_swflags |= TIOCFLAG_SOFTCAR;
 		/* Call _param so interrupts get enabled. */
-		bcopy(&zst->zst_termios, &tp->t_termios, sizeof(struct termios));
-		/* copy the whole termios in as the first "first open" won't
-		 * do it since the speed != 0 */
 		cs->cs_defspeed = zs_getspeed(cs);
 		tp->t_ispeed = cs->cs_defspeed;
 		tp->t_ospeed = cs->cs_defspeed;
+		tp->t_cflag = ZSTTY_DEF_CFLAG;
 		(void) zsparam(tp, &tp->t_termios);
 	} else {
 		/* Not the console; may need reset. */

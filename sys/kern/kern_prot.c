@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.34 1996/05/22 02:22:47 mycroft Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -342,13 +342,12 @@ sys_setgid(p, v, retval)
 #else
 	gid = SCARG(uap, gid);
 #endif
-	if (gid != pc->p_rgid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
+	if (gid != pc->p_rgid && (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = gid;
 	pc->p_rgid = gid;
-	pc->p_svgid = gid;
+	pc->p_svgid = gid;		/* ??? */
 	p->p_flag |= P_SUGID;
 	return (0);
 }

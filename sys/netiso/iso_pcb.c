@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.11 1996/05/22 13:55:57 mycroft Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.10 1996/04/13 01:34:56 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,6 @@ SOFTWARE.
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/errno.h>
-#include <sys/proc.h>
 
 #include <netiso/argo_debug.h>
 #include <netiso/iso.h>
@@ -150,10 +149,9 @@ iso_pcballoc(so, v)
  * NOTES:
  */
 int
-iso_pcbbind(v, nam, p)
+iso_pcbbind(v, nam)
 	register void *v;
-	struct mbuf *nam;
-	struct proc *p;
+	struct mbuf    *nam;
 {
 	register struct isopcb *isop = v;
 	register struct isopcb *head = isop->isop_head;
@@ -163,7 +161,6 @@ iso_pcbbind(v, nam, p)
 		char            data[2];
 		u_short         s;
 	} suf;
-	int error;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
@@ -233,8 +230,8 @@ iso_pcbbind(v, nam, p)
 	if (siso->siso_tlen <= 2) {
 		bcopy(TSEL(siso), suf.data, sizeof(suf.data));
 		suf.s = ntohs(suf.s);
-		if (suf.s < ISO_PORT_RESERVED &&
-		    (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))))
+		if ((suf.s < ISO_PORT_RESERVED) &&
+		    (isop->isop_socket->so_state && SS_PRIV) == 0)
 			return EACCES;
 	} else {
 		register char  *cp;
@@ -358,8 +355,7 @@ iso_pcbconnect(v, nam)
 		caddr_t         oldtsel, newtsel;
 		siso = isop->isop_laddr;
 		if (siso == 0 || siso->siso_tlen == 0)
-			(void) iso_pcbbind(isop, (struct mbuf *)0,
-			    (struct proc *)0);
+			(void) iso_pcbbind(isop, NULL);
 		/*
 		 * Here we have problem of squezeing in a definite network address
 		 * into an existing sockaddr_iso, which in fact may not have room

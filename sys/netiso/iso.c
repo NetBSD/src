@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.15 1996/05/22 13:55:55 mycroft Exp $	*/
+/*	$NetBSD: iso.c,v 1.14 1996/04/13 01:34:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -74,7 +74,6 @@ SOFTWARE.
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/errno.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -445,12 +444,11 @@ iso_netof(isoa, buf)
  */
 /* ARGSUSED */
 int
-iso_control(so, cmd, data, ifp, p)
-	struct socket *so;
-	u_long cmd;
-	caddr_t data;
+iso_control(so, cmd, data, ifp)
+	struct socket  *so;
+	u_long          cmd;
+	caddr_t         data;
 	register struct ifnet *ifp;
-	struct proc *p;
 {
 	register struct iso_ifreq *ifr = (struct iso_ifreq *) data;
 	register struct iso_ifaddr *ia = 0;
@@ -475,7 +473,7 @@ iso_control(so, cmd, data, ifp, p)
 				SAME_ISOADDR(&ia->ia_addr, &ifra->ifra_addr))
 					break;
 			}
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+		if ((so->so_state & SS_PRIV) == 0)
 			return (EPERM);
 		if (ifp == 0)
 			panic("iso_control");
@@ -507,7 +505,7 @@ iso_control(so, cmd, data, ifp, p)
 #define cmdbyte(x)	(((x) >> 8) & 0xff)
 	default:
 		if (cmdbyte(cmd) == 'a')
-			return (snpac_ioctl(so, cmd, data, p));
+			return (snpac_ioctl(so, cmd, data));
 		if (ia == 0)
 			return (EADDRNOTAVAIL);
 		break;

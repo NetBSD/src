@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.12 1996/05/22 13:56:26 mycroft Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.11 1996/03/27 14:44:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -1311,11 +1311,10 @@ spp_ctloutput(req, so, level, name, value)
 
 /*ARGSUSED*/
 int
-spp_usrreq(so, req, m, nam, control, p)
+spp_usrreq(so, req, m, nam, controlp)
 	struct socket *so;
 	int req;
-	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct mbuf *m, *nam, *controlp;
 {
 	struct nspcb *nsp = sotonspcb(so);
 	register struct sppcb *cb = NULL;
@@ -1325,7 +1324,7 @@ spp_usrreq(so, req, m, nam, control, p)
 
 	if (req == PRU_CONTROL)
                 return (ns_control(so, (long)m, (caddr_t)nam,
-		    (struct ifnet *)control, p));
+			(struct ifnet *)controlp));
 	if (nsp == NULL) {
 		if (req != PRU_ATTACH) {
 			error = EINVAL;
@@ -1399,13 +1398,12 @@ spp_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_BIND:
-		error = ns_pcbbind(nsp, nam, p);
+		error = ns_pcbbind(nsp, nam);
 		break;
 
 	case PRU_LISTEN:
 		if (nsp->nsp_lport == 0)
-			error = ns_pcbbind(nsp, (struct mbuf *)0,
-			    (struct proc *)0);
+			error = ns_pcbbind(nsp, (struct mbuf *)0);
 		if (error == 0)
 			cb->s_state = TCPS_LISTEN;
 		break;
@@ -1418,8 +1416,7 @@ spp_usrreq(so, req, m, nam, control, p)
 	 */
 	case PRU_CONNECT:
 		if (nsp->nsp_lport == 0) {
-			error = ns_pcbbind(nsp, (struct mbuf *)0,
-			    (struct proc *)0);
+			error = ns_pcbbind(nsp, (struct mbuf *)0);
 			if (error)
 				break;
 		}
@@ -1517,16 +1514,16 @@ spp_usrreq(so, req, m, nam, control, p)
 		cb->s_oobflags |= SF_SOOB;
 		/* fall into */
 	case PRU_SEND:
-		if (control) {
-			u_short *p = mtod(control, u_short *);
+		if (controlp) {
+			u_short *p = mtod(controlp, u_short *);
 			spp_newchecks[2]++;
 			if ((p[0] == 5) && p[1] == 1) { /* XXXX, for testing */
 				cb->s_shdr.sp_dt = *(u_char *)(&p[2]);
 				spp_newchecks[3]++;
 			}
-			m_freem(control);
+			m_freem(controlp);
 		}
-		control = NULL;
+		controlp = NULL;
 		error = spp_output(m, cb);
 		m = NULL;
 		break;
@@ -1556,8 +1553,8 @@ spp_usrreq(so, req, m, nam, control, p)
 	if (cb && (so->so_options & SO_DEBUG || traceallspps))
 		spp_trace(SA_USER, (u_char)ostate, cb, (struct spidp *)0, req);
 release:
-	if (control != NULL)
-		m_freem(control);
+	if (controlp != NULL)
+		m_freem(controlp);
 	if (m != NULL)
 		m_freem(m);
 	splx(s);
@@ -1565,13 +1562,12 @@ release:
 }
 
 int
-spp_usrreq_sp(so, req, m, nam, control, p)
+spp_usrreq_sp(so, req, m, nam, controlp)
 	struct socket *so;
 	int req;
-	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct mbuf *m, *nam, *controlp;
 {
-	int error = spp_usrreq(so, req, m, nam, control, p);
+	int error = spp_usrreq(so, req, m, nam, controlp);
 
 	if (req == PRU_ATTACH && error == 0) {
 		struct nspcb *nsp = sotonspcb(so);
@@ -1745,8 +1741,7 @@ spp_slowtimo()
 			if (cb->s_timer[i] && --cb->s_timer[i] == 0) {
 				(void) spp_usrreq(cb->s_nspcb->nsp_socket,
 				    PRU_SLOWTIMO, (struct mbuf *)0,
-				    (struct mbuf *)i, (struct mbuf *)0,
-				    (struct proc *)0);
+				    (struct mbuf *)i, (struct mbuf *)0);
 				if (ipnxt->nsp_prev != ip)
 					goto tpgone;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.18 1996/05/22 13:55:35 mycroft Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -281,6 +281,6 @@ struct tcpcb *
 	 tcp_usrclosed __P((struct tcpcb *));
 int	 tcp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	 tcp_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
+	    int, struct mbuf *, struct mbuf *, struct mbuf *));
 void	 tcp_xmit_timer __P((struct tcpcb *, int));
 #endif

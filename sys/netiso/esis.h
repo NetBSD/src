@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.h,v 1.10 1996/05/22 13:55:51 mycroft Exp $	*/
+/*	$NetBSD: esis.h,v 1.9 1996/02/13 22:09:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -128,7 +128,7 @@ struct sockaddr_dl;
 
 void esis_init __P((void));
 int esis_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		     struct mbuf *, struct proc *));
+		     struct mbuf *));
 void esis_input __P((struct mbuf *, ...));
 void esis_rdoutput __P((struct snpa_hdr *, struct mbuf *, struct clnp_optidx *,
 			struct iso_addr *, struct rtentry *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.11 1996/05/22 13:56:23 mycroft Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.10 1996/03/27 14:44:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -42,7 +42,6 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -72,14 +71,12 @@ ns_pcballoc(so, head)
 }
 	
 int
-ns_pcbbind(nsp, nam, p)
+ns_pcbbind(nsp, nam)
 	register struct nspcb *nsp;
 	struct mbuf *nam;
-	struct proc *p;
 {
 	register struct sockaddr_ns *sns;
 	u_short lport = 0;
-	int error;
 
 	if (nsp->nsp_lport || !ns_nullhost(nsp->nsp_laddr))
 		return (EINVAL);
@@ -98,9 +95,10 @@ ns_pcbbind(nsp, nam, p)
 	}
 	lport = sns->sns_port;
 	if (lport) {
+		u_short aport = ntohs(lport);
 
-		if (ntohs(lport) < NSPORT_RESERVED &&
-		    (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))))
+		if (aport < NSPORT_RESERVED &&
+		    (nsp->nsp_socket->so_state & SS_PRIV) == 0)
 			return (EACCES);
 		if (ns_pcblookup(&zerons_addr, lport, 0))
 			return (EADDRINUSE);
@@ -216,8 +214,7 @@ ns_pcbconnect(nsp, nam)
 		return (EADDRINUSE);
 	if (ns_nullhost(nsp->nsp_laddr)) {
 		if (nsp->nsp_lport == 0)
-			(void) ns_pcbbind(nsp, (struct mbuf *)0,
-			    (struct proc *)0);
+			(void) ns_pcbbind(nsp, (struct mbuf *)0);
 		nsp->nsp_laddr.x_host = ns_thishost;
 	}
 	nsp->nsp_faddr = sns->sns_addr;

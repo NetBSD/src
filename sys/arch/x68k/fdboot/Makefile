@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1996/05/05 12:17:16 oki Exp $
+#	$NetBSD: Makefile,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
 
 #G=-g
 #M=-m68020 -fall-bsr

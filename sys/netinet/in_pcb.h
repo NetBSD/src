@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.15 1996/05/22 13:55:27 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -83,7 +83,7 @@ struct inpcbtable {
 #ifdef _KERNEL
 void	 in_losing __P((struct inpcb *));
 int	 in_pcballoc __P((struct socket *, void *));
-int	 in_pcbbind __P((void *, struct mbuf *, struct proc *));
+int	 in_pcbbind __P((void *, struct mbuf *));
 int	 in_pcbconnect __P((void *, struct mbuf *));
 void	 in_pcbdetach __P((void *));
 void	 in_pcbdisconnect __P((void *));

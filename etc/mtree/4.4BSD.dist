@@ -1,4 +1,4 @@
-#	$NetBSD: 4.4BSD.dist,v 1.24 1996/05/22 15:49:45 oki Exp $
+#	$NetBSD: 4.4BSD.dist,v 1.22 1996/05/20 04:59:29 mrg Exp $
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -125,11 +125,6 @@ g++		gname=bin uname=bin mode=0755
 # ./usr/include/g++/gen
 gen		gname=bin uname=bin mode=0755
 # ./usr/include/g++/gen
-..
-
-# ./usr/include/g++/std
-std		gname=bin uname=bin mode=0755
-# ./usr/include/g++/std
 ..
 
 # ./usr/include/g++
@@ -952,11 +947,6 @@ vax
 # ./usr/share/man/cat4/vax
 ..
 
-# ./usr/share/man/cat4/x68k
-x68k
-# ./usr/share/man/cat4/x68k
-..
-
 # ./usr/share/man/cat4
 ..
 
@@ -1031,11 +1021,6 @@ tahoe
 # ./usr/share/man/cat8/vax
 vax
 # ./usr/share/man/cat8/vax
-..
-
-# ./usr/share/man/cat8/x68k
-x68k
-# ./usr/share/man/cat8/x68k
 ..
 
 # ./usr/share/man/cat8
@@ -1124,11 +1109,6 @@ vax
 # ./usr/share/man/man4/vax
 ..
 
-# ./usr/share/man/man4/x68k
-x68k
-# ./usr/share/man/man4/x68k
-..
-
 # ./usr/share/man/man4
 ..
 
@@ -1203,11 +1183,6 @@ tahoe
 # ./usr/share/man/man8/vax
 vax
 # ./usr/share/man/man8/vax
-..
-
-# ./usr/share/man/man8/x68k
-x68k
-# ./usr/share/man/man8/x68k
 ..
 
 # ./usr/share/man/man8

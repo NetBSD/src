@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.10 1996/05/22 13:55:17 mycroft Exp $	*/
+/*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -241,7 +241,7 @@ struct	socket;
 void	 route_init __P((void));
 int	 route_output __P((struct mbuf *, ...));
 int	 route_usrreq __P((struct socket *, int, struct mbuf *,
-			   struct mbuf *, struct mbuf *, struct proc *));
+			   struct mbuf *, struct mbuf *));
 void	 rt_ifmsg __P((struct ifnet *));
 void	 rt_maskedcopy __P((struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *));
