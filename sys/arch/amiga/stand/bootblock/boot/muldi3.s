@@ -1,4 +1,4 @@
-/*	$NetBSD: muldi3.s,v 1.5 2001/03/01 21:32:53 is Exp $ */
+/*	$NetBSD: muldi3.s,v 1.6 2001/03/02 16:43:26 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@
 #include <machine/asm.h>
 
 ENTRY_NOPROFILE(__muldi3)
-	movml %d2/d3/%d4/d5/%d6,sp@-	| 0..4 regs, 5 %pc, 6..9 parameters
-	movml %sp@(24),%d2-d5
+	movml %d2/%d3/%d4/%d5/%d6,%sp@-	| 0..4 regs, 5 %pc, 6..9 parameters
+	movml %sp@(24),%d2-%d5
 |	movl %sp@(24),%d2
 |	movl %sp@(28),%d3
 |	movl %sp@(32),%d4
@@ -51,12 +51,12 @@ L4:
 	asrl #1,%d2
 	roxrl #1,%d3
 	jcc L5
-	addl %d5,d1
-	addxl %d4,d0
+	addl %d5,%d1
+	addxl %d4,%d0
 L5:
-	addl %d5,d5
-	addxl %d4,d4
+	addl %d5,%d5
+	addxl %d4,%d4
 L7:
 	dbra %d6,L4
-	movml %sp@+,%d2/d3/%d4/d5/%d6
+	movml %sp@+,%d2/%d3/%d4/%d5/%d6
 	rts

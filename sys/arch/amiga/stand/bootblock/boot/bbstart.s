@@ -1,4 +1,4 @@
-/* $NetBSD: bbstart.s,v 1.7 2001/03/01 21:32:53 is Exp $ */
+/* $NetBSD: bbstart.s,v 1.8 2001/03/02 16:43:26 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,28 +80,28 @@ Lreltab:
  * autoload
  */
 Lautoload:
-	movl	%a6,sp@-			|SysBase
-	movl	%a1,sp@-			|IORequest
+	movl	%a6,%sp@-			|SysBase
+	movl	%a1,%sp@-			|IORequest
 
 	movl	#AUTOLOAD,%d0		|Howmuch
-	movl	%d0,a1@(IOlen)		| for the actual read...
+	movl	%d0,%a1@(IOlen)		| for the actual read...
 	movl	#0x10001,%d1		|MEMF_CLEAR|MEMF_PUBLIC
 	jsr	%a6@(LVOAllocMem)
 	movl	%sp@+,%a1			|IORequest
 	movl	%sp@+,%a6			|SysBase
-	orl	%d0,d0
+	orl	%d0,%d0
 	jne	Lgotmem
 	movql	#1,%d0
 	rts
 
 Lgotmem:
-	movl	%d0,sp@-			|Address
+	movl	%d0,%sp@-			|Address
 	movl	%a1@(IOoff),%sp@-		|Old offset
-	movl	%a1,sp@-
-	movl	%a6,sp@-
+	movl	%a1,%sp@-
+	movl	%a6,%sp@-
 
 /* we've set IOlen above */
-	movl	%d0,a1@(IObuf)
+	movl	%d0,%a1@(IObuf)
 	movw	#Cmd_Rd,%a1@(IOcmd)
 	jsr	%a6@(LVODoIO)
 
@@ -113,7 +113,7 @@ Lgotmem:
 	jne	Lioerr
 	addl	#Lrelocate-Lzero,%sp@
 
-	movl	%a6,sp@-
+	movl	%a6,%sp@-
 	jsr	%a6@(LVOCacheClearU)
 	movl	%sp@+,%a6
 	rts
@@ -140,17 +140,17 @@ Lioerr:
  
 Lrelocate:
 	lea	%pc@(Lzero),%a0
-	movl	%a0,d1
+	movl	%a0,%d1
 	movw	%pc@(Lreltab),%a2
-	addl	%d1,a2
+	addl	%d1,%a2
 	jra	Loopend
 	
 Loopw:
 	clrw	%a2@+
-	movl	%d1,a0	| for a variant with relative words, erase this line
+	movl	%d1,%a0	| for a variant with relative words, erase this line
 Loopb:
-	addl	%d0,a0
-	addl	%d1,a0@
+	addl	%d0,%a0
+	addl	%d1,%a0@
 Loopend:
 	movq	#0,%d0
 	movb	%a2@,%d0
@@ -162,15 +162,15 @@ Loopend:
 	jne	Loopw
 
 Lendtab:
-	movl	%a6,sp@-
+	movl	%a6,%sp@-
 	jsr	%a6@(LVOCacheClearU)
 	movl	%sp@+,%a6
 
 /* We are relocated. Now it is safe to initialize _SysBase: */
 
-	movl	%a6,_SysBase
+	movl	%a6,_C_LABEL(SysBase)
 
-	movl	%a1,sp@-
+	movl	%a1,%sp@-
 	bsr	_C_LABEL(pain)
 
 Lerr:

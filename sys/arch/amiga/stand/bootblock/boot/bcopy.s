@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.s,v 1.6 2001/03/01 21:32:53 is Exp $	*/
+/*	$NetBSD: bcopy.s,v 1.7 2001/03/02 16:43:26 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ ENTRY_NOPROFILE(bcopy)
 Lcpy:
 	movel %sp@(12),%d0
 	jeq L1
-	cmpl %a1,a0
+	cmpl %a1,%a0
 	jcc L3
 L4:
 	moveb %a1@+,%a0@+
@@ -64,8 +64,8 @@ L4:
 	jne L4
 	rts
 L3:
-	addl %d0,a1
-	addl %d0,a0
+	addl %d0,%a1
+	addl %d0,%a0
 L9:
 	moveb %a1@-,%a0@-
 	subql #1,%d0
