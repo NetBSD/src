@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.37 2001/01/22 12:17:43 jdolecek Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.37.6.1 2001/07/10 13:53:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,6 +42,7 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/buf.h>
+#include <sys/event.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
@@ -82,6 +83,7 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, ufs_poll },			/* poll */
+	{ &vop_kqfilter_desc, ufs_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, ufs_revoke },		/* revoke */
 	{ &vop_mmap_desc, ufs_mmap },			/* mmap */
 	{ &vop_fsync_desc, ffs_fsync },			/* fsync */
