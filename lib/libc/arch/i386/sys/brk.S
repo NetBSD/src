@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)brk.s	5.2 (Berkeley) 12/17/90
- *	$Id: brk.S,v 1.2 1993/10/21 02:19:26 jtc Exp $
+ *	$Id: brk.S,v 1.3 1993/12/06 23:28:08 pk Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: brk.S,v 1.2 1993/10/21 02:19:26 jtc Exp $"
+	.asciz "$Id: brk.S,v 1.3 1993/12/06 23:28:08 pk Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -55,8 +55,8 @@ ENTRY(brk)
 #ifdef PIC
 	movl	4(%esp),%eax
 	PIC_PROLOGUE
-	movl	%edx,PIC_GOT(curbrk)	# set up GOT addressing
-	movl	%ecx,PIC_GOT(minbrk)	#
+	movl	PIC_GOT(curbrk),%edx	# set up GOT addressing
+	movl	PIC_GOT(minbrk),%ecx	#
 	cmpl	%eax,(%ecx)
 	PIC_EPILOGUE
 	jl	ok
