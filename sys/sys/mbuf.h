@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.87 2003/08/07 16:34:08 agc Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.88 2003/11/13 01:48:12 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -892,6 +892,7 @@ void	m_tag_prepend(struct mbuf *, struct m_tag *);
 void	m_tag_unlink(struct mbuf *, struct m_tag *);
 void	m_tag_delete(struct mbuf *, struct m_tag *);
 void	m_tag_delete_chain(struct mbuf *, struct m_tag *);
+void	m_tag_delete_nonpersistent(struct mbuf *);
 struct	m_tag *m_tag_find(struct mbuf *, int, struct m_tag *);
 struct	m_tag *m_tag_copy(struct m_tag *);
 int	m_tag_copy_chain(struct mbuf *, struct mbuf *);
