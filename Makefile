@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.176 2002/06/19 00:17:11 lukem Exp $
+#	$NetBSD: Makefile,v 1.177 2002/06/20 08:21:23 enami Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -102,7 +102,7 @@ afterinstall:
 	(cd ${.CURDIR}/gnu/usr.bin/texinfo/install-info && ${MAKE} infodir-meta)
 .endif
 .if !defined(DESTDIR) || ${DESTDIR} == "" || ${DESTDIR} == "/"
-	(${MAKE} postinstall-check)
+	(cd ${.CURDIR} && ${MAKE} postinstall-check)
 .endif
 
 postinstall-check:
