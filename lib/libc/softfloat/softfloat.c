@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.1 2000/06/06 08:15:10 bjh21 Exp $ */
+/* $NetBSD: softfloat.c,v 1.2 2000/07/15 13:26:51 bjh21 Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.1 2000/06/06 08:15:10 bjh21 Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.2 2000/07/15 13:26:51 bjh21 Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -5391,3 +5391,108 @@ flag float128_lt_quiet( float128 a, float128 b )
 
 #endif
 
+/* Since about GCC 2.95, these functions have been in libgcc2.c */
+
+#if defined(SOFTFLOAT_FOR_GCC) && !__GNUC_PREREQ__(2,95)
+
+/*
+ * These two routines are not part of the original softfloat distribution.
+ *
+ * They are based on the corresponding conversions to integer but return
+ * unsigned numbers instead since these functions are required by GCC.
+ *
+ * Added by Mark Brinicombe <mark@netbsd.org>	27/09/97
+ *
+ * float64 version overhauled for SoftFloat 2a [bjh21 2000-07-15]
+ */
+
+/*
+-------------------------------------------------------------------------------
+Returns the result of converting the double-precision floating-point value
+`a' to the 32-bit unsigned integer format.  The conversion is
+performed according to the IEC/IEEE Standard for Binary Floating-point
+Arithmetic, except that the conversion is always rounded toward zero.  If
+`a' is a NaN, the largest positive integer is returned.  If the conversion
+overflows, the largest integer positive is returned.
+-------------------------------------------------------------------------------
+*/
+uint32 float64_to_uint32_round_to_zero( float64 a )
+{
+    flag aSign;
+    int16 aExp, shiftCount;
+    bits64 aSig, savedASig;
+    uint32 z;
+
+    aSig = extractFloat64Frac( a );
+    aExp = extractFloat64Exp( a );
+    aSign = extractFloat64Sign( a );
+
+    if (aSign) {
+        float_raise( float_flag_invalid );
+    	return(0);
+    }
+
+    if ( 0x41E < aExp ) {
+        float_raise( float_flag_invalid );
+        return 0xffffffff;
+    }
+    else if ( aExp < 0x3FF ) {
+        if ( aExp || aSig ) float_exception_flags |= float_flag_inexact;
+        return 0;
+    }
+    aSig |= LIT64( 0x0010000000000000 );
+    shiftCount = 0x433 - aExp;
+    savedASig = aSig;
+    aSig >>= shiftCount;
+    z = aSig;
+    if ( ( aSig<<shiftCount ) != savedASig ) {
+        float_exception_flags |= float_flag_inexact;
+    }
+    return z;
+
+}
+
+/*
+-------------------------------------------------------------------------------
+Returns the result of converting the single-precision floating-point value
+`a' to the 32-bit unsigned integer format.  The conversion is
+performed according to the IEC/IEEE Standard for Binary Floating-point
+Arithmetic, except that the conversion is always rounded toward zero.  If
+`a' is a NaN, the largest positive integer is returned.  If the conversion
+overflows, the largest positive integer is returned.
+-------------------------------------------------------------------------------
+*/
+uint32 float32_to_uint32_round_to_zero( float32 a )
+{
+    flag aSign;
+    int16 aExp, shiftCount;
+    bits32 aSig;
+    uint32 z;
+
+    aSig = extractFloat32Frac( a );
+    aExp = extractFloat32Exp( a );
+    aSign = extractFloat32Sign( a );
+    shiftCount = aExp - 0x9E;
+
+    if (aSign) {
+        float_raise( float_flag_invalid );
+    	return(0);
+    }
+    if ( 0 < shiftCount ) {
+        float_raise( float_flag_invalid );
+        return 0xFFFFFFFF;
+    }
+    else if ( aExp <= 0x7E ) {
+        if ( aExp | aSig ) float_exception_flags |= float_flag_inexact;
+        return 0;
+    }
+    aSig = ( aSig | 0x800000 )<<8;
+    z = aSig>>( - shiftCount );
+    if ( aSig<<( shiftCount & 31 ) ) {
+        float_exception_flags |= float_flag_inexact;
+    }
+    return z;
+
+}
+
+#endif
