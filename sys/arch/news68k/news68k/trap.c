@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 2001/02/17 18:34:57 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 2001/02/25 13:28:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -702,7 +702,7 @@ writeback(fp, docachepush)
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(f->f_fa), VM_PROT_WRITE,
 			    VM_PROT_WRITE|PMAP_WIRED);
-			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
+			fa = (u_int)&vmmap[m68k_page_offset(f->f_fa) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
