@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.113 2001/11/28 10:21:11 lukem Exp $
+#	$NetBSD: files.amiga,v 1.114 2001/12/23 12:01:12 aymeric Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -463,6 +463,9 @@ major	{md = 15}	# Memory disk (for mini-kernel)
 major	{raid = 16}	# RAIDframe
 
 # Compatibility modules
+
+# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
+include "compat/aoutm68k/files.aoutm68k"
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
