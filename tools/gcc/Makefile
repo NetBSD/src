@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2003/11/27 01:05:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2003/11/27 10:21:24 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,6 @@ INSTALL_TARGET=	install-gcc
 CCADDFLAGS=	-isystem ${DESTDIR}/usr/include -isystem-cxx ${DESTDIR}/usr/include/g++ -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
-
 MKNATIVE?=	${.CURDIR}/mknative-gcc
 
 bootstrap-libgcc: .configure_done
