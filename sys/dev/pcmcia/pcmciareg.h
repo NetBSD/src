@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciareg.h,v 1.4 1998/03/22 04:07:43 enami Exp $	*/
+/*	$NetBSD: pcmciareg.h,v 1.5 1998/05/29 16:21:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -57,7 +57,7 @@
 #define	PCMCIA_DSPEED_200NS					0x02
 #define	PCMCIA_DSPEED_150NS					0x03
 #define	PCMCIA_DSPEED_100NS					0x04
-#define	PCMCIA_DSPEED_EXT					0x05
+#define	PCMCIA_DSPEED_EXT					0x07
 
 /*
  * the 2.1 docs have 0x02-0x07 as reserved, but the linux drivers list the
@@ -67,12 +67,14 @@
  */
 
 #define	PCMCIA_CISTPL_LONGLINK_CB		0x02
+#define	PCMCIA_CISTPL_INDIRECT		0x03
 #define	PCMCIA_CISTPL_CONFIG_CB			0x04
 #define	PCMCIA_CISTPL_CFTABLE_ENTRY_CB		0x05
 #define	PCMCIA_CISTPL_LONGLINK_MFC		0x06
 #define	PCMCIA_MFC_MEM_ATTR				0x00
 #define	PCMCIA_MFC_MEM_COMMON				0x01
 #define	PCMCIA_CISTPL_BAR			0x07
+#define	PCMCIA_CISTPL_PWR_MGMNT			0x08
 
 #define	PCMCIA_CISTPL_CHECKSUM			0x10
 #define	PCMCIA_CISTPL_LONGLINK_A		0x11
@@ -155,9 +157,6 @@
 #define	PCMCIA_CISTPL_DEVICE_OA			0x1D
 #define	PCMCIA_CISTPL_DEVICE_GEO		0x1E
 #define	PCMCIA_CISTPL_DEVICE_GEO_A		0x1F
-
-/* Layer 2 Data Recording Format Tuples */
-
 #define	PCMCIA_CISTPL_MANFID			0x20
 #define	PCMCIA_CISTPL_FUNCID			0x21
 #define	PCMCIA_CISTPL_FUNCE			0x22
@@ -166,6 +165,10 @@
 #define	PCMCIA_TPLFE_TYPE_LAN_MEDIA			0x03
 #define	PCMCIA_TPLFE_TYPE_LAN_NID			0x04
 #define	PCMCIA_TPLFE_TYPE_LAN_CONN			0x05
+#define	PCMCIA_CISTPL_END			0xFF
+
+/* Layer 2 Data Recording Format Tuples */
+
 #define	PCMCIA_CISTPL_SWIL			0x23
 /* #define	PCMCIA_CISTPL_RESERVED		0x24-0x3F */
 #define	PCMCIA_CISTPL_VERS_2			0x40
@@ -174,6 +177,7 @@
 #define	PCMCIA_CISTPL_BYTEORDER			0x43
 #define	PCMCIA_CISTPL_DATE			0x44
 #define	PCMCIA_CISTPL_BATTERY			0x45
+#define	PCMCIA_CISTPL_FORAMT_A			0x47
 
 /* Layer 3 Data Organization Tuples */
 
@@ -182,8 +186,9 @@
 
 /* Layer 4 System-Specific Standard Tuples */
 
-/* #define	PCMCIA_CISTPL_RESERVED		0x80-0xFE */
-#define	PCMCIA_CISTPL_END			0xFF
+/* #define	PCMCIA_CISTPL_RESERVED		0x80-0x8F */
+#define	PCMCIA_CISTPL_SPCL			0x90
+/* #define	PCMCIA_CISTPL_RESERVED		0x90-0xFE */
 
 /*
  * Card Configuration Registers
