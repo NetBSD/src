@@ -1,4 +1,4 @@
-/*	$NetBSD: leave.c,v 1.3 1994/12/22 01:09:52 jtc Exp $	*/
+/*	$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)leave.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: leave.c,v 1.3 1994/12/22 01:09:52 jtc Exp $";
+static char rcsid[] = "$NetBSD: leave.c,v 1.4 1995/07/03 16:50:13 phil Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,7 +74,7 @@ main(argc, argv)
 #define	MSG1	"When do you have to leave? "
 		(void)write(1, MSG1, sizeof(MSG1) - 1);
 		cp = fgets(buf, sizeof(buf), stdin);
-		if (*cp == '\n')
+		if (cp == NULL || *cp == '\n')
 			exit(0);
 	} else
 		cp = argv[1];
