@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.70 2001/09/18 18:15:49 wiz Exp $	*/
+/*	$NetBSD: kvm.c,v 1.70.4.1 2003/06/16 13:41:19 grant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.70 2001/09/18 18:15:49 wiz Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.70.4.1 2003/06/16 13:41:19 grant Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,6 +78,7 @@ static int	_kvm_get_header __P((kvm_t *));
 static kvm_t	*_kvm_open __P((kvm_t *, const char *, const char *,
 		    const char *, int, char *));
 static int	clear_gap __P((kvm_t *, FILE *, int));
+static int	open_cloexec  __P((const char *, int, int));
 static off_t	Lseek __P((kvm_t *, int, off_t, int));
 static ssize_t	Pread __P((kvm_t *, int, void *, size_t, off_t));
 
@@ -171,6 +172,29 @@ _kvm_malloc(kd, n)
 	if ((p = malloc(n)) == NULL)
 		_kvm_err(kd, kd->program, "%s", strerror(errno));
 	return (p);
+}
+
+/*
+ * Open a file setting the close on exec bit.
+ */
+static int
+open_cloexec(fname, flags, mode)
+	const char *fname;
+	int flags, mode;
+{
+	int fd;
+
+	if ((fd = open(fname, flags, mode)) == -1)
+		return fd;
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
+		goto error;
+
+	return fd;
+error:
+	flags = errno;
+	(void)close(fd);
+	errno = flags;
+	return -1;
 }
 
 /*
@@ -280,7 +304,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	if (sf == 0)
 		sf = _PATH_DRUM;
 
-	if ((kd->pmfd = open(mf, flag, 0)) < 0) {
+	if ((kd->pmfd = open_cloexec(mf, flag, 0)) < 0) {
 		_kvm_syserr(kd, kd->program, "%s", mf);
 		goto failed;
 	}
@@ -300,12 +324,12 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 				 "%s: not physical memory device", mf);
 			goto failed;
 		}
-		if ((kd->vmfd = open(_PATH_KMEM, flag)) < 0) {
+		if ((kd->vmfd = open_cloexec(_PATH_KMEM, flag, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", _PATH_KMEM);
 			goto failed;
 		}
 		kd->alive = KVM_ALIVE_FILES;
-		if ((kd->swfd = open(sf, flag, 0)) < 0) {
+		if ((kd->swfd = open_cloexec(sf, flag, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", sf);
 			goto failed;
 		}
@@ -317,7 +341,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 		 * revert to slow nlist() calls.
 		 */
 		if ((ufgiven || kvm_dbopen(kd) < 0) &&
-		    (kd->nlfd = open(uf, O_RDONLY, 0)) < 0) {
+		    (kd->nlfd = open_cloexec(uf, O_RDONLY, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", uf);
 			goto failed;
 		}
@@ -327,7 +351,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 		 * Initialize the virtual address translation machinery,
 		 * but first setup the namelist fd.
 		 */
-		if ((kd->nlfd = open(uf, O_RDONLY, 0)) < 0) {
+		if ((kd->nlfd = open_cloexec(uf, O_RDONLY, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", uf);
 			goto failed;
 		}
@@ -726,10 +750,17 @@ kvm_dbopen(kd)
 	struct nlist nitem;
 	char dbversion[_POSIX2_LINE_MAX];
 	char kversion[_POSIX2_LINE_MAX];
+	int fd;
 
 	kd->db = dbopen(_PATH_KVMDB, O_RDONLY, 0, DB_HASH, NULL);
 	if (kd->db == 0)
 		return (-1);
+	if ((fd = (*kd->db->fd)(kd->db)) >= 0) {
+		if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
+		       (*kd->db->close)(kd->db);
+		       return (-1);
+		}
+	}
 	/*
 	 * read version out of database
 	 */
@@ -852,7 +883,7 @@ kvm_t	*kd;
 
 	errno = 0;
 	val = 0;
-	if (pwrite(kd->pmfd, (void *) &val, sizeof(val),
+	if (pwrite(kd->pmfd, (void *)&val, sizeof(val),
 	    _kvm_pa2off(kd, pa)) == -1) {
 		_kvm_syserr(kd, 0, "cannot invalidate dump - pwrite");
 		return (-1);
