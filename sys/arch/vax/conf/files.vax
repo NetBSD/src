@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.93 2002/02/24 00:08:21 matt Exp $
+#	$NetBSD: files.vax,v 1.94 2002/02/25 14:58:06 ad Exp $
 #
 # new style config file for vax architecture
 #
@@ -189,14 +189,6 @@ file	arch/vax/if/if_le_vsbus.c	le_vsbus
 device	asc: scsi, ncr53c9x
 attach	asc at vsbus with asc_vsbus
 file	arch/vax/vsa/asc_vsbus.c	asc_vsbus
-
-device	lkkbd: wskbddev
-attach	lkkbd at dz with dzkbd
-file	dev/dec/dzkbd.c			dzkbd needs-flag
-
-device	lkms: wsmousedev
-attach	lkms at dz with dzms
-file	dev/dec/dzms.c			dzms needs-flag
 
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)
