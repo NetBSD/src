@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.27 2002/05/29 09:32:01 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.28 2002/05/30 05:06:29 itojun Exp $	*/
 /*	$KAME: nd6.h,v 1.52 2001/02/19 04:40:37 itojun Exp $	*/
 
 /*
@@ -323,7 +323,7 @@ void nd6_option_init __P((void *, int, union nd_opts *));
 struct nd_opt_hdr *nd6_option __P((union nd_opts *));
 int nd6_options __P((union nd_opts *));
 struct	rtentry *nd6_lookup __P((struct in6_addr *, int, struct ifnet *));
-void nd6_setmtu __P((struct ifnet *, struct nd_ifinfo *));
+void nd6_setmtu __P((struct ifnet *));
 void nd6_timer __P((void *));
 void nd6_purge __P((struct ifnet *));
 void nd6_nud_hint __P((struct rtentry *, struct in6_addr *, int));
