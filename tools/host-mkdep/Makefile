@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/12/08 20:20:01 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 2003/06/06 17:30:25 christos Exp $
 
 TIMESTAMP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
 
@@ -9,8 +9,8 @@ CLEANFILES+=	config.cache config.log config.status host-mkdep
 realall: host-mkdep
 host-mkdep: configure host-mkdep.in
 	-rm -f $@
-	CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} LDFLAGS=${HOST_LDFLAGS:Q} \
-		${.CURDIR}/configure --cache-file=config.cache
+	CC=${HOST_CC:Q} ${.CURDIR}/configure --cache-file=config.cache
+	chmod +x $@
 
 # This is the only program that comes before binstall.
 install: ${TIMESTAMP}
