@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.141 1999/05/03 19:04:10 cgd Exp $
+# $NetBSD: mi,v 1.142 1999/05/11 20:30:14 veego Exp $
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
 ./usr/share/info/cpp.info
@@ -603,6 +603,7 @@
 ./usr/share/man/cat8/bootpef.0
 ./usr/share/man/cat8/bootpgw.0
 ./usr/share/man/cat8/bootptest.0
+./usr/share/man/cat8/catman.0
 ./usr/share/man/cat8/ccdconfig.0
 ./usr/share/man/cat8/chat.0
 ./usr/share/man/cat8/chown.0
@@ -705,6 +706,7 @@
 ./usr/share/man/cat8/mount_mfs.0
 ./usr/share/man/cat8/mount_msdos.0
 ./usr/share/man/cat8/mount_nfs.0
+./usr/share/man/cat8/mount_ntfs.0
 ./usr/share/man/cat8/mount_null.0
 ./usr/share/man/cat8/mount_portal.0
 ./usr/share/man/cat8/mount_procfs.0
@@ -1388,6 +1390,7 @@
 ./usr/share/man/man1/sum.1
 ./usr/share/man/man1/sup.1
 ./usr/share/man/man1/suspend.1
+./usr/share/man/man1/sysstat.1
 ./usr/share/man/man1/systat.1
 ./usr/share/man/man1/tail.1
 ./usr/share/man/man1/talk.1
@@ -1716,6 +1719,7 @@
 ./usr/share/man/man8/bootpef.8
 ./usr/share/man/man8/bootpgw.8
 ./usr/share/man/man8/bootptest.8
+./usr/share/man/man8/catman.8
 ./usr/share/man/man8/ccdconfig.8
 ./usr/share/man/man8/chat.8
 ./usr/share/man/man8/chown.8
@@ -1818,6 +1822,7 @@
 ./usr/share/man/man8/mount_mfs.8
 ./usr/share/man/man8/mount_msdos.8
 ./usr/share/man/man8/mount_nfs.8
+./usr/share/man/man8/mount_ntfs.8
 ./usr/share/man/man8/mount_null.8
 ./usr/share/man/man8/mount_portal.8
 ./usr/share/man/man8/mount_procfs.8
