@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.38 2002/09/11 01:46:31 mycroft Exp $	*/
+/*	$NetBSD: esp.c,v 1.39 2002/09/21 16:18:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
 #include <next68k/dev/espvar.h>
 
 #ifdef DEBUG
-#define ESP_DEBUG
+#undef ESP_DEBUG
 #endif
 
 #ifdef ESP_DEBUG
@@ -368,7 +368,7 @@ espattach_intio(parent, self, aux)
 	 * Since the chip's clock is given in MHz, we have the following
 	 * formula: 4 * period = (1000 / freq) * 4
 	 */
-	sc->sc_minsync = 1000 / sc->sc_freq;
+	sc->sc_minsync = /* 1000 / sc->sc_freq */ 0;
 
 	/*
 	 * Alas, we must now modify the value a bit, because it's
@@ -384,7 +384,7 @@ espattach_intio(parent, self, aux)
 	case NCR_VARIANT_ESP100A:
 		sc->sc_maxxfer = 64 * 1024;
 		/* Min clocks/byte is 5 */
-		sc->sc_minsync = ncr53c9x_cpb2stp(sc, 5);
+		sc->sc_minsync = /* ncr53c9x_cpb2stp(sc, 5) */ 0;
 		break;
 
 	case NCR_VARIANT_ESP200:
