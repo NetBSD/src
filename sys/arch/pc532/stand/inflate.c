@@ -31,7 +31,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: inflate.c,v 1.1 1995/08/29 21:55:46 phil Exp $
+ *	$Id: inflate.c,v 1.2 1995/09/26 20:16:38 phil Exp $
  */
 
 #include <sys/param.h>
@@ -152,7 +152,7 @@ int nextbyte()
 {
 	extern int input_len;
 
-	if (!(input_len & 0x3ff))
+	if (!(input_len & 0x1fff))
 		twiddle();
 	if (input_len-- > 0)
 		return(*datap++);

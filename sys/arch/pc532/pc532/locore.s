@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.28 1995/08/25 07:49:08 phil Exp $	*/
+/*	$NetBSD: locore.s,v 1.29 1995/09/26 20:16:29 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -128,10 +128,6 @@ zero_bss:
 	movd	r0,tos		# push length
 	addr	_edata(pc),tos	# push address
 	bsr	_bzero		# zero the bss segment
-
-#ifdef RAMD_SIZE
-	bsr	_load_ram_disk	# Temporary ???
-#endif
 
 	bsr __low_level_init	/* Do the low level setup. */
 
@@ -1004,7 +1000,8 @@ ENTRY(_int)
 	orw	r1,@ICU_ADR+IMSK	/* and to IMSK */
 					/* bits set by idisabled in IMSK */
 					/* have to be preserved */
-	ints_on
+	ints_off			/* flush pending writes */
+	ints_on				/* and now turn ints on */
 	addqd	1,_intrcnt(pc)[r0:d]
 	lshd	4,r0
 	addqd	1,_cnt+V_INTR(pc)
@@ -1018,7 +1015,7 @@ ENTRY(_int)
 	jsr	0(r0)
 
 	adjspd	-8			/* Remove arg and vec from stack */
-	bsr	_splx			/* Restore Cur_pl */
+	bsr	_splx_di		/* Restore Cur_pl */
 	cmpqd	0,tos
 
 	tbitw	8, REGS_PSR(sp)		/* In system mode? */
@@ -1153,7 +1150,7 @@ _PDRPDROFF:
 
 /* vmstat -i uses the following labels and __int even increments the
  * counters. This information is also availiable from ivt[n].iv_use 
- * andivt[n].iv_cnt in much better form.
+ * and ivt[n].iv_cnt in much better form.
  */
 	.globl	_intrnames, _eintrnames, _intrcnt, _eintrcnt
 _intrnames:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.19 1995/08/29 22:44:33 phil Exp $ */
+/*	$NetBSD: ncr.c,v 1.20 1995/09/26 20:16:08 phil Exp $ */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -29,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ncr.c,v 1.19 1995/08/29 22:44:33 phil Exp $
+ *	$Id: ncr.c,v 1.20 1995/09/26 20:16:08 phil Exp $
  */
 
 #include <sys/param.h>
@@ -74,10 +74,11 @@ static struct ncr_softc	*cur_softc;
 /*
  * Function decls:
  */
-static void transfer_pdma __P((u_char *, u_char *, u_long *));
+static int transfer_pdma __P((u_char *, u_char *, u_long *));
 static void ncr_intr __P((void *));
 static void ncr_soft_intr __P((void *));
-#define scsi_dmaok(x) 0
+#define scsi_dmaok(x)		0
+#define pdma_ready()		0
 #define fair_to_keep_dma()	1
 #define claimed_dma()		1
 #define reconsider_dma()
@@ -184,7 +185,7 @@ ncr_soft_intr(sc)
 					*phase = (idstat >> 2) & 7; \
 				else \
 					*phase = NR_PHASE; \
-				return; \
+				return(1); \
 			} \
 			if (NCR5380->ncr_dmstat & SC_DMA_REQ) break; \
 			delay(1); \
@@ -202,7 +203,7 @@ ncr_soft_intr(sc)
 #define R1(n)	*(data + n) = *byte_data
 #define R4(n)	*((u_long *)data + n) = *long_data
 
-static void
+static int
 transfer_pdma(phase, data, count)
 	u_char *phase;
 	u_char *data;
@@ -213,8 +214,8 @@ transfer_pdma(phase, data, count)
 
 	if (len < 256) {
 		__asm volatile ("lmr ivar0,%0" : : "g" (data));
-		transfer_pio(phase, data, count);
-		return;
+		transfer_pio(phase, data, count, 0);
+		return(1);
 	}
 	NCR5380->ncr_tcom = *phase;
 	scsi_clr_ipend();
@@ -287,7 +288,7 @@ ncr_timeout_error:
 	else
 		*phase = NR_PHASE;
 	*count = len;
-	return;
+	return(1);
 }
 
 /*

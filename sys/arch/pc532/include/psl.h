@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.12 1995/09/22 23:19:30 phil Exp $	*/
+/*	$NetBSD: psl.h,v 1.13 1995/09/26 20:16:21 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,18 +60,23 @@
 #define	PSL_USERSET	(PSL_USER | PSL_US | PSL_I)
 #define	PSL_USERSTATIC	(PSL_USER | PSL_US | PSL_I)
 
+/* The PSR versions ... */
+#define PSR_USR PSL_USER
+
 #ifdef _KERNEL
 #include <machine/icu.h>
-
 /*
  * Interrupt levels
  */
 #define	IPL_NONE	-1
-#define IPL_ZERO	0
-#define	IPL_BIO		1
-#define	IPL_NET		2
-#define	IPL_TTY		3
-#define	IPL_CLOCK	4
+#define IPL_ZERO	0	/* level 0 */
+#define	IPL_BIO		1	/* block I/O */
+#define	IPL_NET		2	/* network */
+#define	IPL_TTY		3	/* terminal */
+#define	IPL_CLOCK	4	/* clock */
+#define IPL_IMP		5	/* memory allocation */
+#define	NIPL		6	/* number of interrupt priority levels */
+#define IPL_NAMES	{"zero", "bio", "net", "tty", "clock", "imp"}
 
 /*
  * Preassigned software interrupts
@@ -81,14 +86,9 @@
 #define	SIR_CLOCKMASK	(1 << SIR_CLOCK)
 #define	SIR_NET		(SOFTINT+1)
 #define	SIR_NETMASK	((1 << SIR_NET) | SIR_CLOCKMASK)
+#define SIR_ALLMASK	0xffff0000
 
 #ifndef LOCORE
-extern unsigned int imask[], Cur_pl, idisabled, sirpending, astpending;
-extern void intr_init();
-extern void check_sir();
-extern int intr_establish(int, void (*)(), void *, char *, int, int);
-extern struct iv ivt[];
-
 /*
  * Structure of the software interrupt table
  */
@@ -99,10 +99,17 @@ struct iv {
 	char *iv_use;
 };
 
+extern unsigned int imask[], Cur_pl, idisabled, sirpending, astpending;
+extern void intr_init();
+extern void check_sir();
+extern int intr_establish(int, void (*)(), void *, char *, int, int);
+extern struct iv ivt[];
+
 /*
  * Disable/Enable CPU-Interrupts
  */
-#define di() __asm __volatile("bicpsrw 0x800 ; nop" : : : "cc")
+#define di() /* Removing the nop will give you *BIG* trouble */ \
+	__asm __volatile("bicpsrw 0x800 ; nop" : : : "cc")
 #define ei() __asm __volatile("bispsrw 0x800" : : : "cc")
 
 /*
@@ -124,7 +131,11 @@ struct iv {
 /*
  * Add a mask to Cur_pl, and return the old value of Cur_pl.
  */
-static __inline int
+#if !defined(NO_INLINE_SPLX) || defined(DEFINE_SPLX)
+# ifndef NO_INLINE_SPLX
+static __inline
+# endif
+int
 splraise(register int ncpl)
 {
 	register int ocpl;
@@ -144,10 +155,13 @@ splraise(register int ncpl)
  * the benefit of some splsoftclock() callers.  This extra work is
  * usually optimized away by the compiler.
  */
-#ifndef DEFINE_SPLX
+# ifndef DEFINE_SPLX
 static
-#endif
-__inline int
+# endif
+# ifndef NO_INLINE_SPLX
+__inline
+# endif
+int
 splx(register int ncpl)
 {
 	register int ocpl;
@@ -155,11 +169,36 @@ splx(register int ncpl)
 	ocpl = Cur_pl;
 	ICUW(IMSK) = ncpl | idisabled;
 	Cur_pl = ncpl;
-	ei();
-	if (ncpl == imask[IPL_ZERO])
+	if (sirpending && ncpl == imask[IPL_ZERO]) {
+		Cur_pl |= SIR_ALLMASK;
 		check_sir();
+		Cur_pl = ncpl;
+	}
+	ei();
 	return (ocpl);
 }
+
+/*
+ * This special version of splx returns with interrupts disabled.
+ */
+# ifdef DEFINE_SPLX
+int
+splx_di(register int ncpl)
+{
+	register int ocpl;
+	di();
+	ocpl = Cur_pl;
+	ICUW(IMSK) = ncpl | idisabled;
+	Cur_pl = ncpl;
+	if (sirpending && ncpl == imask[IPL_ZERO]) {
+		Cur_pl |= SIR_ALLMASK;
+		check_sir();
+		Cur_pl = ncpl;
+	}
+	return (ocpl);
+}
+# endif
+#endif
 
 /*
  * Hardware interrupt masks
@@ -167,8 +206,8 @@ splx(register int ncpl)
 #define splbio()	splraise(imask[IPL_BIO])
 #define splnet()	splraise(imask[IPL_NET])
 #define spltty()	splraise(imask[IPL_TTY])
-#define splimp()	splraise(imask[IPL_NET])	/* XXX */
 #define splclock()	splraise(imask[IPL_CLOCK])
+#define splimp()	splraise(imask[IPL_IMP])
 #define	splstatclock()	splclock()
 
 /*
@@ -185,7 +224,7 @@ splx(register int ncpl)
  */
 #define	splhigh()	splraise(-1)
 #define	spl0()		splx(imask[IPL_ZERO])
-#define	splnone()	spl0()
+#define splnone()	spl0()
 
 /*
  * Software interrupt registration

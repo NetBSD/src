@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4 1995/09/19 23:16:01 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5 1995/09/26 20:16:34 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,18 +38,18 @@
  *	@(#)sys_machdep.c	5.5 (Berkeley) 1/19/91
  */
 
-#include "param.h"
-#include "systm.h"
-#include "ioctl.h"
-#include "file.h"
-#include "time.h"
-#include "proc.h"
-#include "uio.h"
-#include "kernel.h"
-#include "mtio.h"
-#include "buf.h"
-#include "trace.h"
-
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/time.h>
+#include <sys/proc.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/mtio.h>
+#include <sys/buf.h>
+#include <sys/trace.h>
+#include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #ifdef TRACE

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.25 1995/08/17 17:40:56 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.26 1995/09/26 20:16:25 phil Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -45,21 +45,12 @@
 
 int	ttselect	__P((dev_t, int, struct proc *));
 
-#define	bdev_rd_init(c,n) { \
-	dev_init(c,n,open), (dev_type_close((*))) nullop, \
-	dev_init(c,n,strategy), (dev_type_ioctl((*))) enodev, \
-	(dev_type_dump((*))) enodev, 0 }
-
 #include "sd.h"
 bdev_decl(sd);
 bdev_decl(sw);
 #include "st.h"
 bdev_decl(st);
-#ifdef RAMD_SIZE
-#define NRD 1
-#else
-#define NRD 0
-#endif
+#include "rd.h"
 bdev_decl(rd);
 #include "cd.h"
 bdev_decl(cd);
@@ -73,7 +64,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NSD,sd),		/* 0: SCSI disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_tape_init(NST,st),		/* 2: SCSI tape */
-	bdev_rd_init(NRD,rd),		/* 3: ram disk */
+	bdev_disk_init(NRD,rd),		/* 3: ram disk */
 	bdev_disk_init(NCD,cd),		/* 4: SCSI CD-ROM */
 	bdev_disk_init(NVND,vnd),	/* 5: vnode disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 6: concatenated disk driver */
@@ -104,6 +95,7 @@ cdev_decl(ptc);
 cdev_decl(log);
 #include "scn.h"
 cdev_decl(scn);
+cdev_decl(rd);
 cdev_decl(st);
 cdev_decl(fd);
 cdev_decl(cd);
@@ -127,7 +119,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
 	cdev_log_init(1,log),		/* 7: /dev/klog */
 	cdev_tty_init(NSCN,scn),	/* 8: serial ports */
-	cdev_notdef(),			/* 9 */
+	cdev_disk_init(NRD,rd),		/* 9: RAM disk */
 	cdev_tape_init(NST,st),		/* 10: SCSI tape */
 	cdev_fd_init(1,fd),		/* 11: file descriptor pseudo-device */
 	cdev_disk_init(NCD,cd),		/* 12: SCSI CD-ROM */
@@ -135,7 +127,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NBPFILTER,bpf),/* 14: Berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 15: network tunnel */
 	cdev_notdef(),			/* 16 */
-	cdev_lpt_init(NLPT, lpt),	/* 17: Centronix */
+	cdev_lpt_init(NLPT, lpt),	/* 17: Centronics */
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -185,7 +177,7 @@ static int chrtoblktbl[] = {
 	/*  6 */	NODEV,
 	/*  7 */	NODEV,
 	/*  8 */	NODEV,
-	/*  9 */	NODEV,
+	/*  9 */	3,
 	/* 10 */	2,
 	/* 11 */	NODEV,
 	/* 12 */	4,
@@ -194,7 +186,7 @@ static int chrtoblktbl[] = {
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
-	/* 18 */	6,
+	/* 18 */	6
 };
 
 /*

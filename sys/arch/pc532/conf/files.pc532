@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.14 1995/08/29 22:48:02 phil Exp $
+#	$NetBSD: files.pc532,v 1.15 1995/09/26 20:16:03 phil Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -10,9 +10,11 @@ maxusers 2 16 64
 
 device	membus at root {[addr = -1], [irq = -1]}
 
-device  rd at membus: disk
-major	{rd = 3}
 major	{vnd = 5}
+
+device  rd at membus: disk
+file	arch/pc532/dev/rd.c		rd needs-count
+major	{rd = 3}
 
 #device	timer at membus
 #device	clock at membus
@@ -21,7 +23,7 @@ file	arch/pc532/pc532/clock.c	# clock timer
 device	scn at membus: tty
 file	arch/pc532/dev/scn.c		scn needs-flag
 
-device  lpt at membus: tty, ether, ifnet
+device  lpt at membus: ether, ifnet
 file    arch/pc532/dev/lpt.c            lpt needs-count
 
 define	scsi {}

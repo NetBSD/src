@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.3 1995/08/29 22:44:37 phil Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.4 1995/09/26 20:16:11 phil Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -160,6 +160,17 @@ extern __inline__ int wait_req_false(void)
 	return (!(GET_5380_REG(NCR5380_IDSTAT) & SC_S_REQ));
 }
 
+extern __inline__ void ack_message()
+{
+	SET_5380_REG(NCR5380_ICOM, 0);
+}
+
+extern __inline__ void nack_message(SC_REQ *reqp)
+{
+	SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
+	reqp->msgout = MSG_ABORT;
+}
+
 extern __inline__ void finish_req(SC_REQ *reqp)
 {
 	int			sps;
@@ -234,6 +245,12 @@ void		*auxp;
 	sc->sc_link.adapter         = &ncr5380_switch;
 	sc->sc_link.device          = &ncr5380_dev;
 	sc->sc_link.openings        = NREQ - 1;
+
+	/*
+	 * bitmasks
+	 */
+	sc->sc_noselatn = 0;
+	sc->sc_selected = 0;
 
 	/*
 	 * Initialize machine-type specific things...
@@ -325,7 +342,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	reqp->targ_lun  = xs->sc_link->lun;
 	reqp->xdata_ptr = (u_char*)xs->data;
 	reqp->xdata_len = xs->datalen;
-	memcpy(&reqp->xcmd, xs->cmd, sizeof(struct scsi_generic));
+	bcopy(xs->cmd, &reqp->xcmd, sizeof(struct scsi_generic));
 	reqp->xcmd.bytes[0] |= reqp->targ_lun << 5;
 
 	/*
@@ -576,7 +593,11 @@ main_exit:
 #ifdef REAL_DMA
 			else dma_ready();
 #else
-			else panic("Got DMA interrupt without DMA");
+			else {
+				if (pdma_ready())
+					goto connected;
+				panic("Got DMA interrupt without DMA");
+			}
 #endif
 			scsi_clr_ipend();
 			goto connected;
@@ -642,6 +663,8 @@ struct ncr_softc *sc;
 				return;
 			    }
 #else
+			    if (pdma_ready())
+				return;
 			    panic("Got DMA interrupt without DMA\n");
 #endif
 			}
@@ -672,6 +695,8 @@ SC_REQ	*reqp;
 	u_char			phase;
 	u_long			cnt;
 	int			sps;
+	u_int8_t		atn_flag;
+	u_int8_t		targ_bit;
 	struct ncr_softc	*sc;
 
 	sc = reqp->xs->sc_link->adapter_softc;
@@ -730,7 +755,7 @@ SC_REQ	*reqp;
 				u_char	phase = PH_MSGOUT;
 				u_char	msg   = MSG_ABORT;
 
-				transfer_pio(&phase, &msg, &len);
+				transfer_pio(&phase, &msg, &len, 0);
 			}
 			else if (GET_5380_REG(NCR5380_IDSTAT) & SC_S_BSY)
 					scsi_reset(sc);
@@ -771,17 +796,24 @@ SC_REQ	*reqp;
 	delay(2);
 	DBG_SELPRINT ("Arbitration complete\n", 0);
 
+	targ_bit = 1 << reqp->targ_id;
+
 	/*
 	 * Now that we won the arbitration, start the selection.
 	 */
-	SET_5380_REG(NCR5380_DATA, SC_HOST_ID | (1 << reqp->targ_id));
+	SET_5380_REG(NCR5380_DATA, SC_HOST_ID | targ_bit);
+
+	if (sc->sc_noselatn & targ_bit)
+		atn_flag = 0;
+	else
+		atn_flag = SC_A_ATN;
 
 	/*
 	 * Raise ATN while SEL is true before BSY goes false from arbitration,
 	 * since this is the only way to guarantee that we'll get a MESSAGE OUT
 	 * phase immediately after the selection.
 	 */
-	SET_5380_REG(NCR5380_ICOM, SC_A_BSY | SC_A_SEL | SC_A_ATN | SC_ADTB);
+	SET_5380_REG(NCR5380_ICOM, SC_A_BSY | SC_A_SEL | atn_flag | SC_ADTB);
 	SET_5380_REG(NCR5380_MODE, IMODE_BASE);
 
 	/*
@@ -794,7 +826,7 @@ SC_REQ	*reqp;
 	 * 5380 which causes us to see our own BSY signal instead of that of
 	 * the target.
 	 */
-	SET_5380_REG(NCR5380_ICOM, SC_A_SEL | SC_A_ATN | SC_ADTB);
+	SET_5380_REG(NCR5380_ICOM, SC_A_SEL | atn_flag | SC_ADTB);
 	delay(1);
 
 	/*
@@ -826,7 +858,7 @@ SC_REQ	*reqp;
 			return (0);
 		}
 	}
-	SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
+	SET_5380_REG(NCR5380_ICOM, atn_flag);
 
 	DBG_SELPRINT ("Target %d responding to select.\n", reqp->targ_id);
 
@@ -836,28 +868,54 @@ SC_REQ	*reqp;
 	scsi_idisable();
 
 	/*
-	 * Since we followed the SCSI-spec and raised ATN while SEL was true
-	 * but before BSY was false during the selection, a 'MESSAGE OUT'
-	 * phase should follow. Here we send an 'IDENTIFY' message.
+	 * If we did not request ATN, then don't try to send IDENTIFY.
+	 */
+	if (atn_flag == 0) {
+		reqp->phase = PH_CMD;
+		goto identify_failed;
+	}
+
+	/*
+	 * Here we prepare to send an 'IDENTIFY' message.
 	 * Allow disconnect only when interrups are allowed.
 	 */
 	tmp[0] = MSG_IDENTIFY(reqp->targ_lun,
-				(reqp->dr_flag & DRIVER_NOINT) ? 0 : 1);
+			(reqp->dr_flag & DRIVER_NOINT) ? 0 : 1);
 	cnt    = 1;
 	phase  = PH_MSGOUT;
-	if (transfer_pio(&phase, tmp, &cnt) || cnt) {
+
+	/*
+	 * Since we followed the SCSI-spec and raised ATN while SEL was true
+	 * but before BSY was false during the selection, a 'MESSAGE OUT'
+	 * phase should follow.  Unfortunately, this does not happen on
+	 * all targets (Asante ethernet devices, for example), so we must 
+	 * check the actual mode if the message transfer fails--if the
+	 * new phase is PH_CMD and has never been successfully selected
+	 * w/ATN in the past, then we assume that it is an old device
+	 * that doesn't support select w/ATN.
+	 */
+	if (transfer_pio(&phase, tmp, &cnt, 0) || cnt) {
+
+		if ((phase == PH_CMD) && !(sc->sc_selected & targ_bit)) {
+			DBG_SELPRINT ("Target %d: not responding to ATN.\n",
+							reqp->targ_id);
+			sc->sc_noselatn |= targ_bit;
+			reqp->phase = PH_CMD;
+			goto identify_failed;
+		}
+
 		DBG_SELPRINT ("Target %d: failed to send identify\n",
 							reqp->targ_id);
 		/*
-		 * Try to disconnect from the target. We cannot leave it just
-		 * hanging here.
+		 * Try to disconnect from the target.  We cannot leave
+		 * it just hanging here.
 		 */
 		if (!reach_msg_out(sc, sizeof(struct scsi_generic))) {
 			u_long	len   = 1;
 			u_char	phase = PH_MSGOUT;
 			u_char	msg   = MSG_ABORT;
 
-			transfer_pio(&phase, &msg, &len);
+			transfer_pio(&phase, &msg, &len, 0);
 		}
 		else scsi_reset(sc);
 
@@ -869,6 +927,9 @@ SC_REQ	*reqp;
 	}
 	reqp->phase = PH_MSGOUT;
 
+identify_failed:
+	sc->sc_selected |= targ_bit;
+
 #ifdef notyet /* LWP: Do we need timeouts in the driver? */
 	/*
 	 * Command is connected, start timer ticking.
@@ -877,7 +938,7 @@ SC_REQ	*reqp;
 #endif
 
 	connected  = reqp;
-	busy      |= 1 << reqp->targ_id;
+	busy      |= targ_bit;
 	PID("scsi_select9");
 	return (0);
 }
@@ -885,7 +946,7 @@ SC_REQ	*reqp;
 /*
  * Return codes:
  *	-1: quit main, trigger on interrupt
- *   0: keep on running main.
+ *	 0: keep on running main.
  */
 static int
 information_transfer()
@@ -956,9 +1017,10 @@ information_transfer()
 			PID("info_transf3");
 			len = reqp->xdata_len;
 #ifdef USE_PDMA
-			transfer_pdma(&phase, reqp->xdata_ptr, &len);
+			if (transfer_pdma(&phase, reqp->xdata_ptr, &len) == 0)
+				return (0);
 #else
-			transfer_pio(&phase, reqp->xdata_ptr, &len);
+			transfer_pio(&phase, reqp->xdata_ptr, &len, 0);
 #endif
 			reqp->xdata_ptr += reqp->xdata_len - len;
 			reqp->xdata_len  = len;
@@ -969,12 +1031,12 @@ information_transfer()
 		 * We only expect single byte messages here.
 		 */
 		len = 1;
-		transfer_pio(&phase, &tmp, &len);
+		transfer_pio(&phase, &tmp, &len, 1);
 		reqp->message = tmp;
 		return (handle_message(reqp, tmp));
 	   case PH_MSGOUT:
 		len = 1;
-		transfer_pio(&phase, &reqp->msgout, &len);
+		transfer_pio(&phase, &reqp->msgout, &len, 0);
 		if (reqp->msgout == MSG_ABORT) {
 			busy     &= ~(1 << reqp->targ_id);
 			connected = NULL;
@@ -987,12 +1049,12 @@ information_transfer()
 		return (-1);
 	   case PH_CMD :
 		len = command_size(reqp->xcmd.opcode);
-		transfer_pio(&phase, (u_char *)&reqp->xcmd, &len);
+		transfer_pio(&phase, (u_char *)&reqp->xcmd, &len, 0);
 		PID("info_transf5");
 		return (-1);
 	   case PH_STATUS:
 		len = 1;
-		transfer_pio(&phase, &tmp, &len);
+		transfer_pio(&phase, &tmp, &len, 0);
 		reqp->status = tmp;
 		PID("info_transf6");
 		return (-1);
@@ -1029,11 +1091,11 @@ u_int	msg;
 		case MSG_LINK_CMD_COMPLETEF:
 			if (reqp->link == NULL) {
 				ncr_tprint(reqp, "No link for linked command");
-				reqp->msgout = MSG_ABORT;
-				SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
+				nack_message(reqp);
 				PID("hmessage2");
 				return (-1);
 			}
+			ack_message();
 			reqp->xs->error = 0;
 
 #ifdef AUTO_SENSE
@@ -1051,6 +1113,7 @@ u_int	msg;
 			return (-1);
 		case MSG_ABORT:
 		case MSG_CMDCOMPLETE:
+			ack_message();
 			connected = NULL;	
 			busy     &= ~(1 << reqp->targ_id);
 			if (!(reqp->dr_flag & DRIVER_AUTOSEN)) {
@@ -1069,9 +1132,11 @@ u_int	msg;
 			PID("hmessage5");
 			return (0);
 		case MSG_MESSAGE_REJECT:
+			ack_message();
 			PID("hmessage6");
 			return (-1);
 		case MSG_DISCONNECT:
+			ack_message();
 #ifdef DBG_REQ
 			if (dbg_target_mask & (1 << reqp->targ_id))
 				show_request(reqp, "DISCON");
@@ -1089,13 +1154,18 @@ u_int	msg;
 			 * We save pointers implicitely at disconnect.
 			 * So we can ignore these messages.
 			 */
+			ack_message();
 			PID("hmessage8");
+			return (-1);
+		case MSG_EXTENDED:
+			nack_message(reqp);
+			PID("hmessage9");
 			return (-1);
 		default: 
 			ncr_tprint(reqp, "Unkown message %x\n", msg);
 			return (-1);
 	}
-	PID("hmessage9");
+	PID("hmessage10");
 	return (-1);
 }
 
@@ -1123,12 +1193,21 @@ struct ncr_softc *sc;
 	 * SEL is true and BSY was false for at least one bus settle
 	 * delay (400 ns.).
 	 * We must assert BSY ourselves, until the target drops the SEL signal.
-	 * This should happen within 2 deskew delays (2 * 45ns.)
+	 * The SCSI-spec specifies no maximum time for this, so we have to
+	 * choose something long enough to suit all targets.
 	 */
 	SET_5380_REG(NCR5380_ICOM, SC_A_BSY);
-	while (GET_5380_REG(NCR5380_IDSTAT) & SC_S_SEL)
-		;
-	
+	len = 1000;
+	while ((GET_5380_REG(NCR5380_IDSTAT) & SC_S_SEL) && (len > 0)) {
+		delay(1);
+		len--;
+	}
+	if (GET_5380_REG(NCR5380_IDSTAT) & SC_S_SEL) {
+		/* Damn SEL isn't dropping */
+		scsi_reset(sc);
+		return;
+	}
+
 	SET_5380_REG(NCR5380_ICOM, 0);
 	
 	/*
@@ -1136,7 +1215,7 @@ struct ncr_softc *sc;
 	 */
 	phase = PH_MSGIN;
 	len   = 1;
-	transfer_pio(&phase, &msg, &len);
+	transfer_pio(&phase, &msg, &len, 0);
 	if (len || !MSG_ISIDENTIFY(msg)) {
 		ncr_aprint(sc, "Expecting IDENTIFY, got 0x%x\n", msg);
 		abort = 1;
@@ -1166,7 +1245,7 @@ struct ncr_softc *sc;
 		phase = PH_MSGOUT;
 
 		SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
-		transfer_pio(&phase, &msg, &len);
+		transfer_pio(&phase, &msg, &len, 0);
 	}
 	else {
 		connected = tmp;
@@ -1181,18 +1260,19 @@ struct ncr_softc *sc;
 /*
  * Transfer data in a given phase using programmed I/O.
  * Returns -1 when a different phase is entered without transferring the
- * maximum number of bytes, 0 if all bytes or exit is in the same
+ * maximum number of bytes, 0 if all bytes transferred or exit is in the same
  * phase.
  */
 static int
-transfer_pio(phase, data, len)
+transfer_pio(phase, data, len, dont_drop_ack)
 u_char	*phase;
 u_char	*data;
 u_long	*len;
+int	dont_drop_ack;
 {
 	u_int	cnt = *len;
 	u_char	ph  = *phase;
-	u_char	tmp;
+	u_char	tmp, new_icom;
 
 	DBG_PIOPRINT ("SCSI: transfer_pio start: phase: %d, len: %d\n", ph,cnt);
 	PID("tpio1");
@@ -1209,6 +1289,9 @@ u_long	*len;
 	    if (PH_IN(ph)) {
 		*data++ = GET_5380_REG(NCR5380_DATA);
 		SET_5380_REG(NCR5380_ICOM, SC_A_ACK);
+		if ((cnt == 1) && dont_drop_ack)
+			new_icom = SC_A_ACK;
+		else new_icom = 0;
 	    }
 	    else {
 		SET_5380_REG(NCR5380_DATA, *data++);
@@ -1222,20 +1305,20 @@ u_long	*len;
 		if (!( (ph == PH_MSGOUT) && (cnt > 1) )) {
 			SET_5380_REG(NCR5380_ICOM, SC_ADTB);
 			SET_5380_REG(NCR5380_ICOM, SC_ADTB | SC_A_ACK);
+			new_icom = 0;
 		}
 		else {
 			SET_5380_REG(NCR5380_ICOM, SC_ADTB | SC_A_ATN);
 			SET_5380_REG(NCR5380_ICOM, SC_ADTB|SC_A_ATN|SC_A_ACK);
+			new_icom = SC_A_ATN;
 		}
 	    }
 	    if (!wait_req_false()) {
 		DBG_PIOPRINT ("SCSI: transfer_pio - REQ not dropping\n", 0, 0);
 		break;
 	    }
+	    SET_5380_REG(NCR5380_ICOM, new_icom);
 
-	    if (!( (ph == PH_MSGOUT) && (cnt > 1) ))
-		SET_5380_REG(NCR5380_ICOM, 0);
-	    else SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
 	} while (--cnt);
 
 	if ((tmp = GET_5380_REG(NCR5380_IDSTAT)) & SC_S_REQ)
@@ -1429,7 +1512,7 @@ int	linked;
 	PID("cautos1");
 	if (!(reqp->dr_flag & DRIVER_AUTOSEN)) {
 		if (reqp->status == SCSCHKC) {
-			memcpy(&reqp->xcmd, sense_cmd, sizeof(sense_cmd));
+			bcopy(sense_cmd, &reqp->xcmd, sizeof(sense_cmd));
 			reqp->xdata_ptr = (u_char *)&reqp->xs->sense;
 			reqp->xdata_len = sizeof(reqp->xs->sense);
 			reqp->dr_flag  |= DRIVER_AUTOSEN;
@@ -1769,10 +1852,37 @@ char	*qtxt;
 		show_data_sense(reqp->xs);
 }
 
+static char *sig_names[] = {
+	"PAR", "SEL", "I/O", "C/D", "MSG", "REQ", "BSY", "RST",
+	"ACK", "ATN", "LBSY", "PMATCH", "IRQ", "EPAR", "DREQ", "EDMA"
+};
+
+static void
+show_signals(dmstat, idstat)
+u_char	dmstat, idstat;
+{
+	u_short	tmp, mask;
+	int	i, j, need_pipe;
+
+	tmp = idstat | ((dmstat & 3) << 8);
+	printf("Bus signals (%02x/%02x): ", idstat, dmstat & 3);
+	for (mask = 1, j = need_pipe = 0; mask <= tmp; mask <<= 1, j++) {
+		if (tmp & mask)
+			printf("%s%s", need_pipe++ ? "|" : "", sig_names[j]);
+	}
+	printf("\nDma status (%02x): ", dmstat);
+	for (mask = 4, j = 10, need_pipe = 0; mask <= dmstat; mask <<= 1, j++) {
+		if (dmstat & mask)
+			printf("%s%s", need_pipe++ ? "|" : "", sig_names[j]);
+	}
+	printf("\n");
+}
+
 scsi_show()
 {
 	SC_REQ	*tmp;
 	int	sps = splhigh();
+	u_char	idstat, dmstat;
 
 #ifndef DBG_PID
 	#define	last_hit	""
@@ -1785,9 +1895,9 @@ scsi_show()
 		show_request(tmp, "DISCONNECTED");
 	if (connected)
 		show_request(connected, "CONNECTED");
-	printf("idstat: %x, dmstat: %x\n", GET_5380_REG(NCR5380_IDSTAT),
-					   GET_5380_REG(NCR5380_DMSTAT));
-	/* show_signals(); */
+	idstat = GET_5380_REG(NCR5380_IDSTAT);
+	dmstat = GET_5380_REG(NCR5380_DMSTAT);
+	show_signals(dmstat, idstat);
 	if (connected)
 		printf("phase = %d, ", connected->phase);
 	printf("busy:%x, last_hit:%s, olast_hit:%s spl:%04x\n", busy,
