@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)init_disp.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: init_disp.c,v 1.2 1993/08/01 18:07:50 mycroft Exp $";
+static char rcsid[] = "$Id: init_disp.c,v 1.3 1993/08/10 00:07:05 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -43,6 +43,7 @@ static char rcsid[] = "$Id: init_disp.c,v 1.2 1993/08/01 18:07:50 mycroft Exp $"
 
 #include "talk.h"
 #include <signal.h>
+#include <termios.h>
 
 /* 
  * Set up curses, catch the appropriate signals,
@@ -94,17 +95,15 @@ set_edit_chars()
 {
 	char buf[3];
 	int cc;
-	struct sgttyb tty;
-	struct ltchars ltc;
+	struct termios tty;
 	
-	ioctl(0, TIOCGETP, &tty);
-	ioctl(0, TIOCGLTC, (struct sgttyb *)&ltc);
-	my_win.cerase = tty.sg_erase;
-	my_win.kill = tty.sg_kill;
-	if (ltc.t_werasc == (char) -1)
+	tcgetattr(0, &tty);
+	my_win.cerase = tty.c_cc[VERASE];
+	my_win.kill = tty.c_cc[VKILL];
+	if (tty.c_cc[VWERASE] == (char) -1)
 		my_win.werase = '\027';	 /* control W */
 	else
-		my_win.werase = ltc.t_werasc;
+		my_win.werase = tty.c_cc[VWERASE];
 	buf[0] = my_win.cerase;
 	buf[1] = my_win.kill;
 	buf[2] = my_win.werase;
