@@ -1,10 +1,12 @@
-# $NetBSD: nls.alias,v 1.1 2002/02/13 07:54:23 yamt Exp $
+# $NetBSD: nls.alias,v 1.2 2003/04/13 09:48:19 jmmv Exp $
 #
 # This file defines aliase names of nls catalogs.
 # Syntax is similar to X11's locale.alias.
 # (The first word is an alias name and the second
 # one is nls catalog name.)
 
+ca_ES.ISO8859-1	ca
+ca_ES.ISO8859-15	ca
 cs_CZ.ISO8859-2	cs
 #da_DK.ISO8859-1	da
 #da_DK.ISO8859-15	da
