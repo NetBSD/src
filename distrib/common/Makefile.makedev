@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.makedev,v 1.7 2003/10/25 04:29:24 lukem Exp $
+#	$NetBSD: Makefile.makedev,v 1.8 2003/12/21 17:37:26 lukem Exp $
 #
 # Makefile snippet to add ${MAKEDEVTARGETS} devices to the mtree list
 # (if set), otherwise copy .OJBDIR-of-etc/MAKEDEV to ./dev
@@ -39,16 +39,12 @@ CLEANFILES+=	${MAKEDEVSPEC} ${MAKEDEVSPEC}.tmp
 #	MAKEDEVTARGETS is set; add those devices to the mtree spec that's
 #	used to build the file system
 #
-_MAKEDEVWRAP=	${DISTRIBDIR}/common/MAKEDEV.wrapper
-_MAKEDEV2SPEC=	${DISTRIBDIR}/common/makedev2spec.awk
-
 MTREECONF+=	${MAKEDEVSPEC}
 
-${MAKEDEVSPEC}:	${MAKEDEVSCRIPT} ${_MAKEDEVWRAP} ${_MAKEDEV2SPEC}
+${MAKEDEVSPEC}:	${MAKEDEVSCRIPT}
 	-rm -f ${.TARGET} ${.TARGET}.tmp
-	MAKEDEVSCRIPT=${MAKEDEVSCRIPT:Q} \
-	    ${HOST_SH} ${_MAKEDEVWRAP} ${MAKEDEVTARGETS} | \
-	    awk -f ${_MAKEDEV2SPEC} > ${.TARGET}.tmp \
+	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
+	    ${HOST_SH} ${MAKEDEVSCRIPT} -s ${MAKEDEVTARGETS} > ${.TARGET}.tmp \
 	&& sort -o ${.TARGET} ${.TARGET}.tmp
 
 .else	# ! MAKEDEVTARGETS
