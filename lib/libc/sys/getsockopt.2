@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getsockopt.2	6.9 (Berkeley) 5/1/91
-.\"	$Id: getsockopt.2,v 1.5 1994/01/10 23:54:18 jtc Exp $
+.\"	$Id: getsockopt.2,v 1.6 1994/03/16 02:04:14 cgd Exp $
 .\"
 .Dd May 1, 1991
 .Dt GETSOCKOPT 2
@@ -245,10 +245,10 @@ In general, receive calls will block until any (non-zero) amount of data
 is received, then return with smaller of the amount available or the amount
 requested.
 The default value for
-.Dv SO_SNDLOWAT
+.Dv SO_RCVLOWAT
 is 1.
 If 
-.Dv SO_SNDLOWAT
+.Dv SO_RCVLOWAT
 is set to a larger value, blocking receive calls normally
 wait until they have received the smaller of the low water mark value
 or the requested amount.
