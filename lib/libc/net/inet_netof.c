@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_netof.c,v 1.8 2003/05/05 13:56:14 bjh21 Exp $	*/
+/*	$NetBSD: inet_netof.c,v 1.9 2003/05/05 19:53:29 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_netof.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_netof.c,v 1.8 2003/05/05 13:56:14 bjh21 Exp $");
+__RCSID("$NetBSD: inet_netof.c,v 1.9 2003/05/05 19:53:29 bjh21 Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,7 +59,7 @@ in_addr_t
 inet_netof(in)
 	struct in_addr in;
 {
-	register u_long i = ntohl(in.s_addr);
+	in_addr_t i = ntohl(in.s_addr);
 
 	if (IN_CLASSA(i))
 		return (((i)&IN_CLASSA_NET) >> IN_CLASSA_NSHIFT);
