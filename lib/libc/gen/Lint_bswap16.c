@@ -1,4 +1,4 @@
-/*      $NetBSD: */
+/* $NetBSD: Lint_bswap16.c,v 1.3 2001/02/27 19:04:40 cgd Exp $ */
 /* Written by Manuel Bouyer. Public Domain */
 
 #include <sys/types.h>
