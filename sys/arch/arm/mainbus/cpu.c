@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2001/02/23 03:48:20 ichiro Exp $	*/
+/*	$NetBSD: cpu.c,v 1.1 2001/02/24 19:38:01 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -56,6 +56,7 @@
 #include <machine/cpu.h>
 #include <machine/cpus.h>
 #include <machine/undefined.h>
+
 #ifdef ARMFPE
 #include <arm32/fpe-arm/armfpe.h>
 #endif	/* ARMFPE */
@@ -197,6 +198,32 @@ identify_master_cpu(cpu_number, dev_name)
 		printf("%s: SA-110 with bugged STM^ instruction\n", dev_name);
 	}
 
+#ifdef CPU_ARM8
+	if (cpus[CPU_MASTER].cpu_class == CPU_CLASS_ARM
+	    && (cpus[CPU_MASTER].cpu_id & CPU_ID_CPU_MASK) == ID_ARM810) {
+		int clock = arm8_clock_config(0, 0);
+		char *fclk;
+		printf("%s: ARM810 cp15=%02x", dev_name, clock);
+		printf(" clock:%s", (clock & 1) ? " dynamic" : "");
+		printf("%s", (clock & 2) ? " sync" : "");
+		switch ((clock >> 2) & 3) {
+		case 0 :
+			fclk = "bus clock";
+			break;
+		case 1 :
+			fclk = "ref clock";
+			break;
+		case 3 :
+			fclk = "pll";
+			break;
+		default :
+			fclk = "illegal";
+			break;
+		}
+		printf(" fclk source=%s\n", fclk);
+ 	}
+#endif
+
 	/*
 	 * Ok now we test for an FPA
 	 * At this point no floating point emulator has been installed.
@@ -318,6 +345,23 @@ identify_arm_cpu(cpu_number)
 		printf("Unrecognised designer ID = %08x\n", cpuid);*/
 
 	switch (cpuid & CPU_ID_CPU_MASK) {
+#ifdef CPU_ARM6
+        case ID_ARM610:
+        	cpu->cpu_type = cpuid & CPU_ID_CPU_MASK;
+		break;
+#endif
+#ifdef CPU_ARM7
+	case ID_ARM710 :
+	case ID_ARM700 :
+		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
+		break;
+#endif
+#ifdef CPU_ARM8
+	case ID_ARM810 :
+		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
+		break;
+#endif
+#ifdef CPU_SA110
 	case ID_SA110 :
 		cpu->cpu_type = (cpuid & CPU_ID_CPU_MASK) >> 4;
 		cpu->cpu_class = CPU_CLASS_SARM;
@@ -336,6 +380,7 @@ identify_arm_cpu(cpu_number)
 		sprintf(cpu->cpu_model, "SA-1110 rev %d",
 		    cpuid & CPU_ID_REVISION_MASK);
 		break;
+#endif
 	default :
 		printf("Unrecognised processor ID = %08x\n", cpuid);
 		cpu->cpu_type = cpuid & CPU_ID_CPU_MASK;

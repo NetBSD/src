@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.1 2001/02/23 03:48:20 ichiro Exp $ */
+/* $NetBSD: mainbus.c,v 1.1 2001/02/24 19:38:02 reinoud Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -50,7 +50,7 @@
 
 #include <machine/io.h>
 #include <machine/bus.h>
-#include <hpcarm/mainbus/mainbus.h>
+#include <arm/mainbus/mainbus.h>
 #include "locators.h"
 
 /*
