@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.8 1997/10/17 00:08:38 mark Exp $	*/
+/*	$NetBSD: undefined.c,v 1.9 1998/02/21 22:41:34 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -64,14 +64,13 @@
 #include <machine/irqhandler.h>
 #include <machine/trap.h>
 
+#include <arm32/arm32/disassem.h>
+
 #ifdef FAST_FPE
 extern int want_resched;
 #endif
 
 undef_handler_t undefined_handlers[MAX_COPROCS];
-
-extern u_int disassemble __P((u_int));
-
 
 int
 default_undefined_handler(address, instruction, frame, fault_code)
