@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.2 1997/09/30 20:51:03 drochner Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.3 1998/01/09 15:13:44 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@
 #include <sys/socketvar.h>
 
 #include <net/if.h>
+#include <net/if_types.h>
 #include <net/if_arp.h> 	/* ARPHRD_ETHER, etc. */
 #include <net/if_dl.h>
 #include <net/if_ether.h>
@@ -470,7 +471,17 @@ bootpc_call(so, ifp, nd, procp)
 
 	/* Record our H/W (Ethernet) address. */
 	{	struct sockaddr_dl *sdl = ifp->if_sadl;
-		hafmt = HTYPE_ETHERNET; /* XXX: sdl->sdl_type? */
+		switch (sdl->sdl_type) {
+		    case IFT_ETHER:
+		    case IFT_FDDI:
+			hafmt = HTYPE_ETHERNET;
+			break;
+		    default:
+			printf("bootp: unsupported interface type %d\n",
+			       sdl->sdl_type);
+			error = EINVAL;
+			goto out;
+		}
 		halen = sdl->sdl_alen;
 		haddr = (unsigned char *)LLADDR(sdl);
 	}
