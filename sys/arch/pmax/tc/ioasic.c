@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.4 2000/01/08 01:02:39 simonb Exp $ */
+/*	$NetBSD: ioasic.c,v 1.5 2000/01/09 23:12:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.5 2000/01/09 23:12:30 ad Exp $);
 
 #include <sys/param.h>
 #include <sys/systm.h>
