@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 2005/02/27 07:57:29 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 2005/02/27 08:02:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2005/02/27 07:57:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2005/02/27 08:02:43 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -881,7 +881,7 @@ news1700_init(void)
 
 	lance_mem	= (u_char *)IIOV(0xe0e00000);
 	sccport0a	= (u_char *)IIOV(0xe0d40002);
-	ctrl_led        = (u_char *)IIOV(ctrl_led_phys);
+	ctrl_led	= (u_char *)IIOV(ctrl_led_phys);
 
 	p = (u_char *)idrom_addr;
 	q = (u_char *)&idrom;
@@ -972,7 +972,7 @@ news1200_init(void)
 
 	lance_mem	= (u_char *)IIOV(0xe1a00000);
 	sccport0a	= (u_char *)IIOV(0xe1780002);
-	ctrl_led        = (u_char *)IIOV(ctrl_led_phys);
+	ctrl_led	= (u_char *)IIOV(ctrl_led_phys);
 
 	p = (u_char *)idrom_addr;
 	q = (u_char *)&idrom;
