@@ -142,10 +142,22 @@ else
 fi
 
 # Find out some information.
-SYSTEM=`( [ -f /bin/uname ] && /bin/uname -a ) || \
-        ( [ -f /usr/bin/uname ] && /usr/bin/uname -a ) || echo ""`
-ARCH=`[ -f /bin/arch ] && /bin/arch`
-MACHINE=`[ -f /bin/machine ] && /bin/machine`
+if [ -f /bin/uname ]; then
+  UNAME="/bin/uname"
+elif [ -f /usr/bin/uname ]; then
+  UNAME="/usr/bin/uname"
+else
+  UNAME="echo"
+fi
+SYSTEM=`$UNAME -a`
+ARCH=`$UNAME -p`
+if [ -z "$ARCH" -a -f /bin/arch ]; then
+  ARCH=`/bin/arch`
+fi
+MACHINE=`$UNAME -m`
+if [ -z "$ARCH" -a -f /bin/machine ]; then
+  ARCH=`/bin/arch`
+fi
 
 COMMAND=`echo $0 | sed -e 's,.*/,,'`
 USAGE="Usage: $COMMAND [-PVL] [-t address] [-f filename] [--request-id] 
