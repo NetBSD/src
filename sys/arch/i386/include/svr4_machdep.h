@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.8 1998/12/13 19:27:51 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.9 1999/01/21 23:11:45 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -75,16 +75,14 @@ typedef struct {
     long	f_weitek[33]; 	/* weitek */
 } svr4_fregset_t;
 
-struct svr4_ucontext;
+struct svr4_mcontext;
 
-void svr4_getcontext __P((struct proc *, struct svr4_ucontext *, sigset_t *));
-int svr4_setcontext __P((struct proc *, struct svr4_ucontext *));
-void svr4_sendsig __P((sig_t, int, sigset_t *, u_long));
-
-typedef struct {
+typedef struct svr4_mcontext {
 	svr4_gregset_t	greg;
 	svr4_fregset_t	freg;
 } svr4_mcontext_t;
+
+#define SVR4_UC_MACHINE_PAD	5
 
 /*
  * SYSARCH numbers
