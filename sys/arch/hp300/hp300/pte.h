@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: pte.h 1.11 89/09/03$
- *
+ *	from: Utah Hdr: pte.h 1.11 89/09/03
  *	from: @(#)pte.h	7.3 (Berkeley) 5/8/91
- *	$Id: pte.h,v 1.2 1993/05/22 07:57:42 cgd Exp $
+ *	$Id: pte.h,v 1.3 1993/08/01 19:24:48 mycroft Exp $
  */
 
 /*

@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: ite_gb.c 1.18 91/01/21$
- *
+ *	from: Utah Hdr: ite_gb.c 1.18 91/01/21
  *	from: @(#)ite_gb.c	7.5 (Berkeley) 5/7/91
- *	$Id: ite_gb.c,v 1.2 1993/05/22 07:56:28 cgd Exp $
+ *	$Id: ite_gb.c,v 1.3 1993/08/01 19:24:24 mycroft Exp $
  */
 
 #include "ite.h"

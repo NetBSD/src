@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ct.c	7.3 (Berkeley) 5/4/91
+ *	from: @(#)ct.c	7.3 (Berkeley) 5/4/91
+ *	$Id: ct.c,v 1.2 1993/08/01 19:23:54 mycroft Exp $
  */
 
 #include "ct.h"

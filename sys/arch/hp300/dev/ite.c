@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: ite.c 1.1 90/07/09$
- *
+ *	from: Utah Hdr: ite.c 1.1 90/07/09
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.8 1993/07/12 11:38:13 mycroft Exp $
+ *	$Id: ite.c,v 1.9 1993/08/01 19:24:22 mycroft Exp $
  */
 
 /*

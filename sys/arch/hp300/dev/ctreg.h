@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ctreg.h	7.1 (Berkeley) 5/8/90
+ *	from: @(#)ctreg.h	7.1 (Berkeley) 5/8/90
+ *	$Id: ctreg.h,v 1.2 1993/08/01 19:23:56 mycroft Exp $
  */
 
 struct	ct_iocmd {

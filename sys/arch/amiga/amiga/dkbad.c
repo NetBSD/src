@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dkbad.c	7.2 (Berkeley) 12/16/90
+ *	from: @(#)dkbad.c	7.2 (Berkeley) 12/16/90
+ *	$Id: dkbad.c,v 1.2 1993/08/01 19:22:35 mycroft Exp $
  */
 
 #ifndef NOBADSECT

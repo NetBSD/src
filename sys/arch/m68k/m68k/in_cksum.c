@@ -30,10 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: in_cksum.c 1.1 90/07/09$
- *
+ *	from: Utah Hdr: in_cksum.c 1.1 90/07/09
  *	from: @(#)in_cksum.c	7.3 (Berkeley) 12/16/90
- *	$Id: in_cksum.c,v 1.2 1993/05/22 07:57:25 cgd Exp $
+ *	$Id: in_cksum.c,v 1.3 1993/08/01 19:24:43 mycroft Exp $
  */
 
 /*

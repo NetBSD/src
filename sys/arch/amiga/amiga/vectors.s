@@ -30,7 +30,8 @@
 | OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 | SUCH DAMAGE.
 |
-|	@(#)vectors.s	7.2 (Berkeley) 5/7/91
+|	from: @(#)vectors.s	7.2 (Berkeley) 5/7/91
+!	$Id: vectors.s,v 1.2 1993/08/01 19:22:54 mycroft Exp $
 |
 #define	_fpbsun		_fpfault
 #define	_fpinex		_fpfault

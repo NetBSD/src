@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: trap.h 1.1 90/07/09$
- *
+ *	from: Utah Hdr: trap.h 1.1 90/07/09
  *	from: @(#)trap.h	7.5 (Berkeley) 5/9/91
- *	$Id: trap.h,v 1.2 1993/05/22 07:58:35 cgd Exp $
+ *	$Id: trap.h,v 1.3 1993/08/01 19:25:06 mycroft Exp $
  */
 
 /*

@@ -28,7 +28,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)isofs_rrip.h
+ *	from: @(#)isofs_rrip.h
+ *	$Id: isofs_rrip.h,v 1.2 1993/08/01 19:25:53 mycroft Exp $
  */
 
 typedef struct {

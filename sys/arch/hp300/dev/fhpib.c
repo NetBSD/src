@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fhpib.c	7.3 (Berkeley) 12/16/90
+ *	from: @(#)fhpib.c	7.3 (Berkeley) 12/16/90
+ *	$Id: fhpib.c,v 1.2 1993/08/01 19:24:06 mycroft Exp $
  */
 
 /*

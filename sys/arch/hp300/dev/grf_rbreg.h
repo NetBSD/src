@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: grf_rbreg.h 1.1 90/07/09$
- *
- *	@(#)grf_rbreg.h	7.2 (Berkeley) 11/4/90
+ *	from: Utah Hdr: grf_rbreg.h 1.1 90/07/09
+ *	from: @(#)grf_rbreg.h	7.2 (Berkeley) 11/4/90
+ *	$Id: grf_rbreg.h,v 1.2 1993/08/01 19:24:15 mycroft Exp $
  */
 
 /*

@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: locore.s 1.58 91/04/22$
- *
+ *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.2 1993/05/22 07:57:30 cgd Exp $
+ *	$Id: locore.s,v 1.3 1993/08/01 19:24:44 mycroft Exp $
  */
 
 #include "assym.s"

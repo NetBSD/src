@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)autoconf.c	7.1 (Berkeley) 5/9/91
- *	$Id: autoconf.c,v 1.5 1993/05/22 07:59:38 cgd Exp $
+ *	$Id: autoconf.c,v 1.6 1993/08/01 19:25:32 mycroft Exp $
  */
 
 /*
@@ -169,13 +169,6 @@ setroot()
 	 */
 	if (rootdev == orootdev)
 		return;
-	if (devname[majdev][0] == 'f' && devname[majdev][1] == 'd') {
-		printf("");
-		printf("* insert the floppy you want to have mounted as\n");
-		printf("* root, and hit any key to continue booting:\n");
-		cngetc();
-		printf("");
-	}
 	printf("changing root device to %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
 		mindev >> PARTITIONSHIFT, part + 'a');

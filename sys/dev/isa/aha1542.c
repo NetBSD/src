@@ -12,65 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.12 1993/07/06 06:06:26 deraadt Exp $
- */
-
-/*
- * HISTORY
- * $Log: aha1542.c,v $
- * Revision 1.12  1993/07/06 06:06:26  deraadt
- * clean up code for timeout/untimeout/wakeup prototypes.
- *
- * Revision 1.11  1993/06/14  04:16:03  andrew
- * Reduced bus-on time from the default of 11ms -> 9ms, to prevent floppy from
- * becoming data-starved during simultaneous fd & scsi activity.
- *
- * Revision 1.10  1993/06/09  22:36:40  deraadt
- * minor silliness related to two or more controllers
- *
- * Revision 1.9  1993/05/22  08:00:56  cgd
- * add rcsids to everything and clean up headers
- *
- * Revision 1.8  1993/05/04  08:32:40  deraadt
- * support for making dev->id_alive be set, this is for iostat to
- * find disk devices. wee bit of a kludge. sub-device attach()
- * routines must now return 1 for successful attach(), 0 otherwise.
- * Other bsd's do this too..
- *
- * Revision 1.7  1993/04/19  06:02:16  mycroft
- * Fix subtle word-size error.
- *
- * Revision 1.6  1993/04/15  07:57:50  deraadt
- * ioconf changes, see previous cvs's that dumped core
- *
- * Revision 1.4  1993/04/12  08:17:23  deraadt
- * new scsi subsystem.
- * changes also in config/mkioconf.c & sys/scsi/*
- *
- * Revision 1.1  1993/03/21  18:09:54  cgd
- * after 0.2.2 "stable" patches applied
- *
- * Revision 1.6  1992/08/24  21:01:58  jason
- * many changes and bugfixes for osf1
- *
- * Revision 1.5  1992/07/31  01:22:03  julian
- * support improved scsi.h layout
- *
- * Revision 1.4  1992/07/25  03:11:26  julian
- * check each request fro sane flags.
- *
- * Revision 1.3  1992/07/24  00:52:45  julian
- * improved timeout handling.
- * added support for two arguments to the sd_done (or equiv) call so that
- * they can pre-queue several arguments.
- * slightly clean up error handling
- *
- * Revision 1.2  1992/07/17  22:03:54  julian
- * upgraded the timeout code.
- * added support for UIO-based i/o (as used for pmem operations)
- *
- * Revision 1.1  1992/05/27  00:51:12  balsup
- * machkern/cor merge
+ *	$Id: aha1542.c,v 1.13 1993/08/01 19:25:38 mycroft Exp $
  */
 
 /*
@@ -544,6 +486,7 @@ ahaattach(struct isa_device *dev)
 	int r;
 
 	if(!(speedprint & (1<<masunit))) {
+		DELAY(1000000);
 		speedprint |= (1<<masunit);
 		printf("aha%d: bus speed %dns\n", masunit, speed[masunit]);
 	}

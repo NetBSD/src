@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: vm_mmap.c 1.3 90/01/21$
- *
+ *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.10 1993/07/17 15:24:54 mycroft Exp $
+ *	$Id: vm_mmap.c,v 1.11 1993/08/01 19:26:40 mycroft Exp $
  */
 
 /*
