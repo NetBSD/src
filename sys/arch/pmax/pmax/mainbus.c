@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 1995/08/10 10:49:46 jonathan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 1995/09/12 07:41:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -53,16 +53,16 @@ struct cfdriver mainbuscd =
     { NULL, "mainbus", mbmatch, mbattach, DV_DULL,
 	sizeof (struct mainbus_softc) };
 void	mb_intr_establish __P((struct confargs *ca,
-			       int (*handler)(handler_arg_t),
-			       handler_arg_t val ));
+			       int (*handler)(intr_arg_t),
+			       intr_arg_t val ));
 void	mb_intr_disestablish __P((struct confargs *));
 caddr_t	mb_cvtaddr __P((struct confargs *));
 int	mb_matchname __P((struct confargs *, char *));
 
 /* KN01 has devices directly on the system bus */
 void	kn01_intr_establish __P((struct confargs *ca,
-			       int (*handler)(handler_arg_t),
-			       handler_arg_t val ));
+			       int (*handler)(intr_arg_t),
+			       intr_arg_t val ));
 void	kn01_intr_disestablish __P((struct confargs *));
 caddr_t	kn01_cvtaddr __P((struct confargs *));
 static void	kn01_attach __P((struct device *, struct device *, void *));
@@ -187,17 +187,6 @@ struct confargs kn01_devs[KN01_MAXDEVS] = {
 	{ "dallas_rtc",	4,    16,  (u_int)KV(KN01_SYS_CLOCK)	}
 };
 
-#if 0
-struct { void* addr; } kn01_addrs[KN01_MAXDEVS] = {
-	{ /*"pm"*/	KV(KN01_PHYS_FBUF_START)	},
-	{ /*"dc"*/	KV(KN01_SYS_DZ)			},
-	{ /*"le"*/	KV(KN01_SYS_LANCE)		},
-	{ /*"sii"*/	KV(KN01_SYS_SII)		},
-	{ /*"rtc"*/	KV(KN01_SYS_CLOCK)		}
-};
-#endif
-
-
 /*
  * Configure baseboard devices on KN01 attached directly to mainbus 
  */
@@ -251,8 +240,8 @@ mbprint(aux, pnp)
 void
 mb_intr_establish(ca, handler, val)
 	struct confargs *ca;
-	int (*handler) __P((handler_arg_t));
-	handler_arg_t val;
+	int (*handler) __P((intr_arg_t));
+	intr_arg_t val;
 {
 
 	panic("can never mb_intr_establish");
@@ -286,17 +275,18 @@ mb_matchname(ca, name)
 void
 kn01_intr_establish(ca, handler, val)
 	struct confargs *ca;
-	int (*handler) __P((handler_arg_t));
-	handler_arg_t val;
+	int (*handler) __P((intr_arg_t));
+	intr_arg_t val;
 {
-	printf("Ignoring kn01_intr_establish: interrupts hardcoded\n");
+	/* Interrupts on the KN01 are currently hardcoded. */
+	printf(" (kn01: intr_establish hardcoded) ");
 }
 
 void
 kn01_intr_disestablish(ca)
 	struct confargs *ca;
 {
-	printf("Ignorigng kn01_intr_establish\n");
+	printf("(kn01: ignoring intr_disestablish) ");
 }
 
 caddr_t
