@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.77 1998/05/24 23:45:30 thorpej Exp $
+# $NetBSD: files.alpha,v 1.78 1998/05/26 23:34:23 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -167,7 +167,7 @@ file	arch/alpha/tc/tcds.c		tcds
 
 # 53C[F]90 SCSI
 device	asc: scsi, ncr53c9x
-attach	asc at tcds
+attach	asc at tcds with asc_tcds
 file	arch/alpha/tc/asc.c		asc
 file	arch/alpha/tc/tcds_dma.c	asc
 
