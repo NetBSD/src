@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.495 2002/06/17 16:33:06 christos Exp $
+# $NetBSD: GENERIC,v 1.496 2002/06/18 03:06:58 itojun Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.495 $"
+#ident 		"GENERIC-$Revision: 1.496 $"
 
 maxusers	32		# estimated number of users
 
@@ -69,7 +69,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-options		SYSTRACE	# system call vetting via systrace(1)
+options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
