@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.43 2000/05/31 05:10:54 thorpej Exp $	   */
+/*	$NetBSD: subr.s,v 1.44 2000/06/02 21:51:16 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -223,7 +223,7 @@ setrq:	.asciz	"setrunqueue"
 #endif
 1:	extzv	$2,$6,P_PRIORITY(r0),r1 # get priority
 	movaq	_sched_qs[r1],r2	# get address of queue
-	insque	(r0),*4(r2)		# put proc last in queue
+	insque	(r0),*PH_RLINK(r2)	# put proc last in queue
 	bbss	r1,_sched_whichqs,1f	# set queue bit.
 1:	rsb
 
@@ -236,18 +236,17 @@ JSBENTRY(Remrq)
 remrq:	.asciz	"remrunqueue"
 #endif
 1:	remque	(r0),r2
-	bneq	1f		# Not last process on queue
+	bneq	1f			# Not last process on queue
 	bbsc	r1,_sched_whichqs,1f
-1:	clrl	4(r0)		# saftey belt
+1:	clrl	P_BACK(r0)		# saftey belt
 	rsb
 
 #
 # Idle loop. Here we could do something fun, maybe, like calculating
 # pi or something.
 #
-idle:	mtpr	$0,$PR_IPL		# Enable all types of interrupts
-1:	movab	_uvm,r0
-	tstl	UVM_PAGE_IDLE_ZERO(r0)
+idle:	mtpr	$IPL_NONE,$PR_IPL 	# Enable all types of interrupts
+1:	tstl	_uvm+UVM_PAGE_IDLE_ZERO
 	beql	2f
 #if 0
 	calls	$0,_uvm_pageidlezero
@@ -264,12 +263,13 @@ idle:	mtpr	$0,$PR_IPL		# Enable all types of interrupts
 JSBENTRY(Swtch)
 	mfpr	$PR_SSP,r1		# Get ptr to this cpu_info struct
 	clrl	CI_CURPROC(r1)		# Stop process accounting
-	mtpr	$0x1f,$PR_IPL		# block all interrupts
-	ffs	$0,$32,_sched_whichqs,r3	# Search for bit set
+	mtpr	$IPL_HIGH,$PR_IPL	# block all interrupts
+	ffs	$0,$32,_sched_whichqs,r3 # Search for bit set
 	beql	idle			# no bit set, go to idle loop
 
 	movaq	_sched_qs[r3],r1	# get address of queue head
 	remque	*(r1),r2		# remove proc pointed to by queue head
+					# proc ptr is now in r2
 #ifdef DIAGNOSTIC
 	bvc	1f			# check if something on queue
 	pushab	noque
@@ -277,8 +277,8 @@ JSBENTRY(Swtch)
 noque:	.asciz	"swtch"
 #endif
 1:	bneq	2f			# more processes on queue?
-	bbsc	r3,_sched_whichqs,2f		# no, clear bit in whichqs
-2:	clrl	4(r2)			# clear proc backpointer
+	bbsc	r3,_sched_whichqs,2f	# no, clear bit in whichqs
+2:	clrl	P_BACK(r2)		# clear proc backpointer
 	mfpr	$PR_SSP,r1		# Get ptr to this cpu_info struct
 	/* p->p_cpu initialized in fork1() for single-processor */
 #if defined(MULTIPROCESSOR)
@@ -293,9 +293,9 @@ noque:	.asciz	"swtch"
 1:	movl	P_ADDR(r2),r0		# Get pointer to new pcb.
 	addl3	r0,$IFTRAP,r1		# Save for copy* functions.
 	mtpr	r1,$PR_ESP		# Use ESP as CPU-specific pointer
-	movl	r1,4(r0)		# Must save in PCB also.
+	movl	r1,ESP(r0)		# Must save in PCB also.
 	mfpr	$PR_SSP,r1		# New process must inherit cpu_info
-	movl	r1,8(r0)		# Put it in new PCB
+	movl	r1,SSP(r0)		# Put it in new PCB
 
 #
 # Nice routine to get physical from virtual adresses.
@@ -318,7 +318,7 @@ noque:	.asciz	"swtch"
 
 ENTRY(cpu_exit,0)
 	movl	4(ap),r6	# Process pointer in r6
-	mtpr	$0x18,$PR_IPL	# Block almost everything
+	mtpr	$IPL_CLOCK,$PR_IPL # Block almost everything
 	mfpr	$PR_SSP,r7	# get cpu_info ptr
 	movl	CI_EXIT(r7),r8	# scratch page address
 	movab	512(r8),sp	# change stack

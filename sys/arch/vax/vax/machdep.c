@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.100 2000/05/29 20:00:55 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.101 2000/06/02 21:51:15 matt Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -138,6 +138,9 @@ vm_map_t phys_map = NULL;
 #ifdef DEBUG
 int iospace_inited = 0;
 #endif
+
+struct softintr_head softnet_head = { IPL_SOFTNET };
+struct softintr_head softserial_head = { IPL_SOFTSERIAL };
 
 void
 cpu_startup()
@@ -749,4 +752,37 @@ vax_unmap_physmem(addr, size)
 		uvm_km_free(kernel_map, addr, size * VAX_NBPG);
 	else
 		rmfree(iomap, size, pageno);
+}
+
+void *
+softintr_establish(int ipl, void (*func)(void *), void *arg)
+{
+	struct softintr_handler *sh;
+	struct softintr_head *shd;
+
+	switch (ipl) {
+	case IPL_SOFTNET: shd = &softnet_head; break;
+	case IPL_SOFTSERIAL: shd = &softserial_head; break;
+	default: panic("softintr_establish: unsupported soft IPL");
+	}
+
+	sh = malloc(sizeof(*sh), M_SOFTINTR, M_NOWAIT);
+	if (sh == NULL)
+		return NULL;
+
+	LIST_INSERT_HEAD(&shd->shd_intrs, sh, sh_link);
+	sh->sh_head = shd;
+	sh->sh_pending = 0;
+	sh->sh_func = func;
+	sh->sh_arg = arg;
+
+	return sh;
+}
+
+void
+softintr_disestablish(void *arg)
+{
+	struct softintr_handler *sh = arg;
+	LIST_REMOVE(sh, sh_link);
+	free(sh, M_SOFTINTR);
 }
