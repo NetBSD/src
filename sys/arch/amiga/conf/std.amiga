@@ -1,4 +1,4 @@
-#	$NetBSD: std.amiga,v 1.14 1998/10/28 22:41:25 is Exp $
+#	$NetBSD: std.amiga,v 1.15 1999/01/16 20:07:37 chuck Exp $
 
 # standard amiga information
 
@@ -14,7 +14,6 @@ options 	SWAPPAGER		# paging
 options 	VNODEPAGER		# mmap() of files
 options 	DEVPAGER		# mmap() of devices
 
-options		MACHINE_NEW_NONCONTIG	# old interface isn't supported anymore
 options		UVM
 
 options 	EXEC_AOUT
