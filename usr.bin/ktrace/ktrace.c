@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.19 2000/07/07 15:13:24 itojun Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.20 2000/11/13 21:35:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.19 2000/07/07 15:13:24 itojun Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.20 2000/11/13 21:35:38 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ __RCSID("$NetBSD: ktrace.c,v 1.19 2000/07/07 15:13:24 itojun Exp $");
 int	main __P((int, char **));
 int	rpid __P((char *));
 void	usage __P((void));
-int	do_ktrace __P((char *, int, int,int));
+int	do_ktrace __P((const char *, int, int,int));
 void	no_ktrace __P((int));
 
 #ifdef KTRUSS
@@ -86,7 +86,7 @@ main(argc, argv)
 {
 	enum { NOTSET, CLEAR, CLEARALL } clear;
 	int append, ch, fd, inherit, ops, pid, pidset, trpoints;
-	char *infile, *outfile;
+	const char *infile, *outfile;
 #ifdef KTRUSS
 	const char *emul_name = "netbsd";
 #endif
@@ -278,7 +278,7 @@ no_ktrace(sig)
 
 int
 do_ktrace(tracefile, ops, trpoints, pid)
-	char *tracefile;
+	const char *tracefile;
 	int ops;
 	int trpoints;
 	int pid;
