@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/01/16 03:00:22 cgd Exp $
+#	$NetBSD: Makefile,v 1.8 1997/01/18 00:35:23 cgd Exp $
 
 .PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
 
@@ -37,6 +37,8 @@ clean:
 	    ${BOOT_PROG}.hdr ${BOOT_PROG}.nohdr ${HEADERSIZE_PROG}
 
 cleandir: clean
+
+depend:
 
 .include "${.CURDIR}/../Makefile.inc"
 .include <bsd.obj.mk>
