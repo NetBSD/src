@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.17 1995/06/04 05:06:55 mycroft Exp $	*/
+/*	$NetBSD: in.h,v 1.18 1996/01/15 21:11:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -243,7 +243,8 @@ struct ip_mreq {
 #ifdef notyet
 #define	IPCTL_DEFMTU		4	/* default MTU */
 #endif
-#define	IPCTL_MAXID		5
+#define	IPCTL_FORWSRCRT		5	/* allow source-routed packets */
+#define	IPCTL_MAXID		6
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -251,6 +252,7 @@ struct ip_mreq {
 	{ "redirect", CTLTYPE_INT }, \
 	{ "ttl", CTLTYPE_INT }, \
 	{ "mtu", CTLTYPE_INT }, \
+	{ "forwsrcrt", CTLTYPE_INT }, \
 }
 
 
