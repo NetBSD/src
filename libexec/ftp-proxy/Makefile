@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/07/01 01:41:16 kleink Exp $
+#	$NetBSD: Makefile,v 1.4 2004/10/01 20:01:51 christos Exp $
 #	$OpenBSD: Makefile,v 1.4 2003/11/20 23:23:09 avsm Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
@@ -8,8 +8,8 @@ MAN=	ftp-proxy.8
 
 WARNS?=	2
 
-CPPFLAGS+=-I${NETBSDSRCDIR}/sys
-CPPFLAGS+=-DLIBWRAP
+CPPFLAGS+=-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/sys/dist/ipf
+CPPFLAGS+=-DLIBWRAP -I
 LDADD+=	-lwrap
 DPADD+=	${LIBWRAP}
 
