@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.35 2004/10/04 07:17:41 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.36 2004/10/04 07:35:48 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.35 2004/10/04 07:17:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.36 2004/10/04 07:35:48 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -762,6 +762,10 @@ ieee80211_find_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh)
 
 /*
  * Like find but search based on the channel too.
+ *
+ * Note that ieee80211_find_node_for_beacon does not increase the
+ * reference count before returning the node, because drivers are not
+ * expected to call it.
  */
 struct ieee80211_node *
 ieee80211_find_node_for_beacon(struct ieee80211com *ic, u_int8_t *macaddr,
@@ -789,9 +793,7 @@ ieee80211_find_node_for_beacon(struct ieee80211com *ic, u_int8_t *macaddr,
 			continue;
 
 		if (score > best_score) {
-			if (best != NULL)
-				(void)ieee80211_node_decref(best);
-			best = ieee80211_ref_node(ni);
+			best = ni;
 			best_score = score;
 		}
 	}
