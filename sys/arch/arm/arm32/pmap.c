@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.84 2002/04/09 19:44:22 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.85 2002/04/09 21:00:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2002/04/09 19:44:22 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2002/04/09 21:00:43 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3607,3 +3607,87 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 #endif
 	return (size);
 }
+
+/********************** PTE initialization routines **************************/
+
+/*
+ * These routines are called when the CPU type is identified to set up
+ * the PTE prototypes, cache modes, etc.
+ *
+ * The variables are always here, just in case LKMs need to reference
+ * them (though, they shouldn't).
+ */
+
+pt_entry_t	pte_cache_mode;
+pt_entry_t	pte_cache_mask;
+
+pt_entry_t	pte_l2_s_prot_u;
+pt_entry_t	pte_l2_s_prot_w;
+pt_entry_t	pte_l2_s_prot_mask;
+
+pt_entry_t	pte_l1_s_proto;
+pt_entry_t	pte_l1_c_proto;
+pt_entry_t	pte_l2_s_proto;
+
+#if ARM_MMU_GENERIC == 1
+void
+pmap_pte_init_generic(void)
+{
+
+	pte_cache_mode = L2_B|L2_C;
+	pte_cache_mask = L2_CACHE_MASK_generic;
+
+	pte_l2_s_prot_u = L2_S_PROT_U_generic;
+	pte_l2_s_prot_w = L2_S_PROT_W_generic;
+	pte_l2_s_prot_mask = L2_S_PROT_MASK_generic;
+
+	pte_l1_s_proto = L1_S_PROTO_generic;
+	pte_l1_c_proto = L1_C_PROTO_generic;
+	pte_l2_s_proto = L2_S_PROTO_generic;
+}
+
+#if defined(CPU_ARM9)
+void
+pmap_pte_init_arm9(void)
+{
+
+	/*
+	 * ARM9 is compatible with generic, but we want to use
+	 * write-through caching for now.
+	 */
+	pmap_pte_init_generic();
+	pte_cache_mode = L2_C;
+}
+#endif /* CPU_ARM9 */
+#endif /* ARM_MMU_GENERIC == 1 */
+
+#if ARM_MMU_XSCALE == 1
+void
+pmap_pte_init_xscale(void)
+{
+
+	pte_cache_mode = L2_B|L2_C;
+	pte_cache_mask = L2_CACHE_MASK_xscale;
+
+	pte_l2_s_prot_u = L2_S_PROT_U_xscale;
+	pte_l2_s_prot_w = L2_S_PROT_W_xscale;
+	pte_l2_s_prot_mask = L2_S_PROT_MASK_xscale;
+
+	pte_l1_s_proto = L1_S_PROTO_xscale;
+	pte_l1_c_proto = L1_C_PROTO_xscale;
+	pte_l2_s_proto = L2_S_PROTO_xscale;
+}
+
+#if defined(CPU_XSCALE_80200)
+void
+pmap_pte_init_i80200(void)
+{
+
+	/*
+	 * Use write-through caching on the i80200.
+	 */
+	pmap_pte_init_xscale();
+	pte_cache_mode = L2_C;
+}
+#endif /* CPU_XSCALE_80200 */
+#endif /* ARM_MMU_XSCALE == 1 */

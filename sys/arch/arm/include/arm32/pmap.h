@@ -1,4 +1,39 @@
-/*	$NetBSD: pmap.h,v 1.45 2002/04/09 19:37:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.46 2002/04/09 21:00:44 thorpej Exp $	*/
+
+/*
+ * Copyright (c 2002 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Jason R. Thorpe for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed for the NetBSD Project by
+ *	Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -219,6 +254,60 @@ extern vaddr_t	pmap_curmaxkvaddr;
 #define KERNEL_PD_SIZE	\
 	(L1_TABLE_SIZE - (KERNEL_BASE >> L1_S_SHIFT) * sizeof(pd_entry_t))
 
+/************************* ARM MMU configuration *****************************/
+
+/*
+ * We define several classes of ARM MMU, here:
+ *
+ *	ARM_MMU_GENERIC		Generic ARM MMU, compatible with ARM6.
+ *
+ *	ARM_MMU_XSCALE		XScale MMU.  Compatible with generic ARM
+ *				MMU, but also has several extensions which
+ *				require different PTE layout to use.
+ */
+
+#if defined(_LKM) || defined(CPU_ARM6) || defined(CPU_ARM7) || \
+    defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
+    defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110)
+#define	ARM_MMU_GENERIC		1
+
+void	pmap_pte_init_generic(void);
+#if defined(CPU_ARM9)
+void	pmap_pte_init_arm9(void);
+#endif /* CPU_ARM9 */
+#else
+#define	ARM_MMU_GENERIC		0
+#endif
+
+#if defined(_LKM) || defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
+#define	ARM_MMU_XSCALE		1
+
+void	pmap_pte_init_xscale(void);
+#if defined(CPU_XSCALE_80200)
+void	pmap_pte_init_i80200(void);
+#endif /* CPU_XSCALE_80200 */
+#else
+#define	ARM_MMU_XSCALE		0
+#endif
+
+#define	ARM_NMMUS		(ARM_MMU_GENERIC + ARM_MMU_XSCALE)
+#if ARM_NMMUS == 0
+#error ARM_NMMUS is 0
+#endif
+
+extern pt_entry_t		pte_cache_mode;
+extern pt_entry_t		pte_cache_mask;
+
+extern pt_entry_t		pte_l2_s_prot_u;
+extern pt_entry_t		pte_l2_s_prot_w;
+extern pt_entry_t		pte_l2_s_prot_mask;
+ 
+extern pt_entry_t		pte_l1_s_proto;
+extern pt_entry_t		pte_l1_c_proto;
+extern pt_entry_t		pte_l2_s_proto;
+
+/*****************************************************************************/
+
 /*
  * tell MI code that the cache is virtually-indexed *and* virtually-tagged.
  */
@@ -240,11 +329,59 @@ extern vaddr_t	pmap_curmaxkvaddr;
 #define	L2_L_PROT_W		(L2_AP(AP_W))
 #define	L2_L_PROT_MASK		(L2_L_PROT_U|L2_L_PROT_W)
 
-#define	L2_S_PROT_U		(L2_AP(AP_U))
-#define	L2_S_PROT_W		(L2_AP(AP_W))
-#define	L2_S_PROT_MASK		(L2_S_PROT_U|L2_S_PROT_W)
+#define	L2_S_PROT_U_generic	(L2_AP(AP_U))
+#define	L2_S_PROT_W_generic	(L2_AP(AP_W))
+#define	L2_S_PROT_MASK_generic	(L2_S_PROT_U|L2_S_PROT_W)
 
-#define	L2_CACHE_MASK		(L2_B|L2_C)
+#define	L2_S_PROT_U_xscale	(L2_AP(AP_U))
+#define	L2_S_PROT_W_xscale	(L2_AP(AP_W))
+#define	L2_S_PROT_MASK_xscale	(L2_S_PROT_U|L2_S_PROT_W)
+
+#define	L2_CACHE_MASK_generic	(L2_B|L2_C)
+
+#define	L2_CACHE_MASK_xscale	(L2_B|L2_C)
+
+#define	L1_S_PROTO_generic	(L1_TYPE_S | L1_S_IMP)
+#define	L1_S_PROTO_xscale	(L1_TYPE_S | L1_S_IMP)	/* XXX IMP */
+
+#define	L1_C_PROTO_generic	(L1_TYPE_C | L1_C_IMP2)
+#define	L1_C_PROTO_xscale	(L1_TYPE_C | L1_C_IMP2)	/* XXX IMP */
+
+#define	L2_L_PROTO		(L2_TYPE_L)
+
+#define	L2_S_PROTO_generic	(L2_TYPE_S)
+#define	L2_S_PROTO_xscale	(L2_TYPE_S)
+
+/*
+ * User-visible names for the ones that vary with MMU class.
+ */
+
+#if ARM_NMMUS > 1
+/* More than one MMU class configured; use variables. */
+#define	L2_S_PROT_U		pte_l2_s_prot_u
+#define	L2_S_PROT_W		pte_l2_s_prot_w
+#define	L2_S_PROT_MASK		pte_l2_s_prot_mask
+
+#define	L1_S_PROTO		pte_l1_s_proto
+#define	L1_C_PROTO		pte_l1_c_proto
+#define	L2_S_PROTO		pte_l2_s_proto
+#elif ARM_MMU_GENERIC == 1
+#define	L2_S_PROT_U		L2_S_PROT_U_generic
+#define	L2_S_PROT_W		L2_S_PROT_W_generic
+#define	L2_S_PROT_MASK		L2_S_PROT_MASK_generic
+
+#define	L1_S_PROTO		L1_S_PROTO_generic
+#define	L1_C_PROTO		L1_C_PROTO_generic
+#define	L2_S_PROTO		L2_S_PROTO_generic
+#elif ARM_MMU_XSCALE == 1
+#define	L2_S_PROT_U		L2_S_PROT_U_xscale
+#define	L2_S_PROT_W		L2_S_PROT_W_xscale
+#define	L2_S_PROT_MASK		L2_S_PROT_MASK_xscale
+
+#define	L1_S_PROTO		L1_S_PROTO_xscale
+#define	L1_C_PROTO		L1_C_PROTO_xscale
+#define	L2_S_PROTO		L2_S_PROTO_xscale
+#endif /* ARM_NMMUS > 1 */
 
 /*
  * These macros return various bits based on kernel/user and protection.
@@ -258,18 +395,6 @@ extern vaddr_t	pmap_curmaxkvaddr;
 
 #define	L2_S_PROT(ku, pr)	((((ku) == PTE_USER) ? L2_S_PROT_U : 0) | \
 				 (((pr) & VM_PROT_WRITE) ? L2_S_PROT_W : 0))
-
-extern pt_entry_t		pte_cache_mode;
-
-/*
- * The following macros are used to construct prototype PTEs.
- */
-#define	L1_S_PROTO		(L1_TYPE_S | L1_S_IMP)	/* XXX IMP */
-#define	L1_C_PROTO		(L1_TYPE_C | L1_C_IMP2)	/* XXX IMP */
-
-#define	L2_L_PROTO		(L2_TYPE_L)
-
-#define	L2_S_PROTO		(L2_TYPE_S)
 
 #endif /* _KERNEL */
 
