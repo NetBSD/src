@@ -1,6 +1,11 @@
-#	$NetBSD: bsd.x11.mk,v 1.2 2003/09/13 00:16:10 lukem Exp $
+#	$NetBSD: bsd.x11.mk,v 1.3 2003/09/13 20:10:44 lukem Exp $
 
 .include <bsd.init.mk>
+
+
+BINDIR=			${X11BINDIR}
+LIBDIR=			${X11USRLIBDIR}
+MANDIR=			${X11MANDIR}
 
 
 X11FLAGS.VERSION=	-DOSMAJORVERSION=1 -DOSMINORVERSION=6		# XXX
@@ -29,12 +34,14 @@ X11TOOL_UNXCOMM=	sed -e '/^\#  *[0-9][0-9]*  *.*$$/d' \
 			    -e '/^XCOMM$$/s//\#/' \
 			    -e '/^XCOMM[^a-zA-Z0-9_]/s/^XCOMM/\#/'
 
+
 CPPFLAGS+=		-DCSRG_BASED -DFUNCPROTO=15 -DNARROWPROTO
 CPPFLAGS+=		-I${DESTDIR}${X11INCDIR}
 
 LDFLAGS+=		-Wl,-rpath-link,${DESTDIR}${X11USRLIBDIR} \
 			-R${X11USRLIBDIR} \
 			-L${DESTDIR}${X11USRLIBDIR}
+
 
 #
 # .cpp -> "" handling
