@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.495 2004/07/23 21:22:02 cube Exp $
+# $NetBSD: mi,v 1.496 2004/08/12 13:36:20 lukem Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -772,18 +772,6 @@
 ./usr/include/vm				base-obsolete		obsolete
 ./usr/lib					base-sys-usr
 ./usr/lib/i18n					base-i18n-root
-./usr/lib/i18n/libBIG5.so.4.0			base-obsolete		obsolete
-./usr/lib/i18n/libBIG5.so.4.1			base-obsolete		obsolete
-./usr/lib/i18n/libEUC.so.4.0			base-obsolete		obsolete
-./usr/lib/i18n/libEUC.so.4.1			base-obsolete		obsolete
-./usr/lib/i18n/libEUCTW.so.4.0			base-obsolete		obsolete
-./usr/lib/i18n/libEUCTW.so.4.1			base-obsolete		obsolete
-./usr/lib/i18n/libISO2022.so.4.0		base-obsolete		obsolete
-./usr/lib/i18n/libISO2022.so.4.1		base-obsolete		obsolete
-./usr/lib/i18n/libMSKanji.so.4.0		base-obsolete		obsolete
-./usr/lib/i18n/libMSKanji.so.4.1		base-obsolete		obsolete
-./usr/lib/i18n/libUTF8.so.4.0			base-obsolete		obsolete
-./usr/lib/i18n/libUTF8.so.4.1			base-obsolete		obsolete
 ./usr/lib/libntp.so.0				base-obsolete		obsolete
 ./usr/lib/libntp.so.0.0				base-obsolete		obsolete
 ./usr/lib/libusb.a				base-obsolete		obsolete
