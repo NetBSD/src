@@ -41,6 +41,11 @@ NON_MACH_DEFINES	= -UMACH
 #DEFS			= -UCMUCS -UCMU  ${${SITE}_DEFINES}
 DEFS			= -UCMUCS -UCMU  ${NETBSD_DEFINES}
 
+#INSTALLATION PARAMETERS
+NETBSD_BINDIR		= /usr/local/sbin
+NETBSD_MAN1		= /usr/local/man/man1
+NETBSD_MAN8		= /usr/local/man/man8
+
 CFLAGS			= ${DEFS} -O -I.
 
 # unlicensed non-crypting version
@@ -56,6 +61,8 @@ EXTRA			= atoo.o errmsg.o expand.o ffilecopy.o filecopy.o nxtarg.o  \
 
 
 PROGRAMS		= sup supscan supfilesrv
+MAN1			= sup.1
+MAN8			= supservers.8
 
 NETBSD_LIBS		= -lcrypt
 CMUCS_LIBS		= -lsys
@@ -85,6 +92,10 @@ libextra.a: ${EXTRA}
 clean:
 	rm -f ${PROGRAMS} libextra.a *.o core a.out
 
+install: ${PROGRAMS}
+	install -cs -m 555 -o bin -g bin ${PROGRAMS} ${NETBSD_BINDIR}
+	install -c -m 444 -o bin -g bin ${MAN1} ${NETBSD_MAN1}
+	install -c -m 444 -o bin -g bin ${MAN8} ${NETBSD_MAN8}
 
 scan.o:	sup.h
 scm.o:	sup.h
