@@ -1,4 +1,4 @@
-/*      $NetBSD: blabel.c,v 1.8 2001/01/14 21:23:23 garbled Exp $       */
+/*      $NetBSD: blabel.c,v 1.9 2001/03/03 13:54:22 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,8 +51,13 @@ extern CDKSCREEN *cdkscreen;
 extern char **searchpaths;
 extern char *keylabel[10];
 extern chtype keybinding[10];
+extern int scripting;
+extern int logging;
 
 WINDOW *labelwin;
+
+#define BLABEL_WIDTH 13
+#define BLABEL_SIZE 12
 
 /* if type=1, only show basic.
    2 = show additional for form manipulation
@@ -60,7 +65,7 @@ WINDOW *labelwin;
 void
 bottom_help(int type)
 {
-	char *label[10];
+	char *label[BLABEL_SIZE];
 	int i, j;
 
 	label[0] = catgets(catalog, 2, 1, "F1=Help");
@@ -73,6 +78,8 @@ bottom_help(int type)
 	label[7] = catgets(catalog, 2, 8, "F8=Image");
 	label[8] = catgets(catalog, 2, 9, "F9=Shell");
 	label[9] = catgets(catalog, 2, 10, "F10=Exit");
+	label[10]= catgets(catalog, 2, 13, "Script:");
+	label[11]= catgets(catalog, 2, 14, "Log:");
 
 	/* check for key overrides from the config file */
 	for (i=0; i < 10; i++)
@@ -85,17 +92,30 @@ bottom_help(int type)
 		    "failed to allocate bottomhelp window"));
 	wattron(labelwin, A_BOLD);
 
-	for (i=0,j=0; i < 10; i+=2, j+=17)
+	for (i=0,j=0; i < BLABEL_SIZE; i+=2, j+=BLABEL_WIDTH)
 		if (i < 3 || i > 6 || type == 2) {
 			mvwaddstr(labelwin, 0, j, label[i]);
-			wrefresh(labelwin);
 		}
-	for (i=1,j=0; i < 10; i+=2, j+=17)
+	for (i=1,j=0; i < BLABEL_SIZE; i+=2, j+=BLABEL_WIDTH)
 		if (i < 3 || i > 6 || type == 2) {
 			mvwaddstr(labelwin, 1, j, label[i]);
-			wrefresh(labelwin);
 		}
 
+	if (scripting)
+		mvwaddstr(labelwin, 0, ws.ws_col-4,
+		    catgets(catalog, 2, 15, "ON "));
+	else
+		mvwaddstr(labelwin, 0, ws.ws_col-4,
+		    catgets(catalog, 2, 16, "OFF"));
+
+	if (logging)
+		mvwaddstr(labelwin, 1, ws.ws_col-4,
+		    catgets(catalog, 2, 15, "ON "));
+	else
+		mvwaddstr(labelwin, 1, ws.ws_col-4,
+		    catgets(catalog, 2, 16, "OFF"));
+
+	wrefresh(labelwin);
 	wattroff(labelwin, A_BOLD);
 }
 
