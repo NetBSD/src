@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.83 2003/10/09 17:55:44 bouyer Exp $ */
+/*	$NetBSD: autoconf.c,v 1.84 2003/10/21 08:26:31 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.83 2003/10/09 17:55:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.84 2003/10/21 08:26:31 petrov Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -876,9 +876,9 @@ node_has_property(node, prop)	/* returns 1 if node has given property */
  */
 int
 romgetcursoraddr(rowp, colp)
-	register int **rowp, **colp;
+	int **rowp, **colp;
 {
-	cell_t row = NULL, col = NULL;
+	cell_t row = 0UL, col = 0UL;
 
 	OF_interpret("stdout @ is my-self addr line# addr column# ", 0, 2,
 		&col, &row);
@@ -889,7 +889,7 @@ romgetcursoraddr(rowp, colp)
 	 */
 	*rowp = (int *)(row+4);
 	*colp = (int *)(col+4);
-	return (row == NULL || col == NULL);
+	return (row == 0UL || col == 0UL);
 }
 #endif /* RASTERCONSOLE */
 
