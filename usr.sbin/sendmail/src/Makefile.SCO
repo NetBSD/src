@@ -5,35 +5,34 @@
 #  old make program (I recommend that you get and port the new make if you
 #  are going to be doing any signficant work on sendmail).
 #
-#  This has been tested on HP-UX 8.07 on 7xx series.
+#  This has been tested on SCO.
 #
 
 # use O=-O (usual) or O=-g (debugging)
-# +O is OK on 7xx, and 300xx at 9.0
-O=	+O1
+O=	-O
 
-# define the database mechanism used for alias lookups:
+# define the database mechanisms available for map & alias lookups:
 #	-DNDBM -- use new DBM
 #	-DNEWDB -- use new Berkeley DB
 #	-DNIS -- include NIS support
 # The really old (V7) DBM library is no longer supported.
 # See READ_ME for a description of how these flags interact.
 #
-DBMDEF=	-DNDBM -DNEWDB -DNIS
+DBMDEF=
 
 # environment definitions (e.g., -D_AIX3)
-ENVDEF=	
+ENVDEF=	-D_SCO_unix_
 
 # see also conf.h for additional compilation flags
 
 # include directories
-INCDIRS=-I/usr/sww/include/db
+INCDIRS=
 
 # library directories
-LIBDIRS=-L/usr/sww/lib
+LIBDIRS=
 
 # libraries required on your system
-LIBS=	-ldb -ldbm
+LIBS=	-lsocket
 
 # location of sendmail binary (usually /usr/sbin or /usr/lib)
 BINDIR=	${DESTDIR}/usr/lib
@@ -45,8 +44,7 @@ STDIR=	${DESTDIR}/usr/lib
 HFDIR=	${DESTDIR}/usr/lib
 
 # additional .o files needed
-OBJADD=
-
+OBJADD=	fsync.o
 
 ###################  end of user configuration flags  ######################
 
@@ -58,9 +56,9 @@ OBJS=	alias.o arpadate.o clock.o collect.o conf.o convtime.o daemon.o \
 	savemail.o srvrsmtp.o stab.o stats.o sysexits.o \
 	trace.o udb.o usersmtp.o util.o version.o ${OBJADD}
 
-LINKS=	${DESTDIR}/usr/bin/newaliases ${DESTDIR}/usr/bin/mailq
+LINKS=	${DESTDIR}/usr/ucb/newaliases ${DESTDIR}/usr/ucb/mailq
 BINOWN=	root
-BINGRP=	mail
+BINGRP=	kmem
 BINMODE=6555
 
 ALL=	sendmail aliases.0 newaliases.0 sendmail.0
@@ -82,10 +80,11 @@ sendmail.0: sendmail.8
 install: install-sendmail install-docs
 
 install-sendmail: sendmail
-	cpset sendmail ${BINDIR} ${BINMODE} ${BINOWN} ${BINGRP}
+	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} sendmail ${BINDIR}
 	for i in ${LINKS}; do rm -f $$i; ln -s ${BINDIR}/sendmail $$i; done
-	cpset /dev/null ${STDIR}/sendmail.st 644 ${BINOWN} ${BINGRP}
-	cpset sendmail.hf ${HFDIR} 444 ${BINOWN} ${BINGRP}
+	install -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+	    ${STDIR}/sendmail.st
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 sendmail.hf ${HFDIR}
 
 # doesn't actually install them -- you may want to install pre-nroff versions
 install-docs: aliases.0 newaliases.0 sendmail.0
