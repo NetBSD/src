@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.24 1998/03/21 19:42:22 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,10 +60,8 @@
 #include <machine/kbd.h>
 #include <machine/fbvar.h>
 #include <machine/conf.h>
-#if defined(SUN4)
 #include <machine/eeprom.h>
 #include <sparc/dev/pfourreg.h>
-#endif
 
 static struct fbdevice *devfb;
 
@@ -201,167 +199,138 @@ fbmmap(dev, off, prot)
 }
 
 void
-fb_setsize(fb, depth, def_width, def_height, node, bustype)
+fb_setsize_obp(fb, depth, def_width, def_height, node)
 	struct fbdevice *fb;
-	int depth, def_width, def_height, node, bustype;
+	int depth, def_width, def_height, node;
 {
+	fb->fb_type.fb_width = getpropint(node, "width", def_width);
+	fb->fb_type.fb_height = getpropint(node, "height", def_height);
+	fb->fb_linebytes = getpropint(node, "linebytes",
+				     (fb->fb_type.fb_width * depth) / 8);
+}
 
-	/*
-	 * The defaults below match my screen, but are not guaranteed
-	 * to be correct as defaults go...
-	 */
-	switch (bustype) {
-	case BUS_VME16:
-	case BUS_VME32:
-	case BUS_OBIO:
-		if (CPU_ISSUN4M) {   /* 4m has framebuffer on obio */
-			fb->fb_type.fb_width = getpropint(node, "width",
-							  def_width);
-			fb->fb_type.fb_height = getpropint(node, "height",
-							   def_height);
-			fb->fb_linebytes = getpropint(node, "linebytes",
-			    (fb->fb_type.fb_width * depth) / 8);
-			break;
-		}
-		/* Set up some defaults. */
-		fb->fb_type.fb_width = def_width;
-		fb->fb_type.fb_height = def_height;
+void
+fb_setsize_eeprom(fb, depth, def_width, def_height)
+	struct fbdevice *fb;
+	int depth, def_width, def_height;
+{
+#if defined(SUN4)
+	struct eeprom *eep = (struct eeprom *)eeprom_va;
+
+	if (!CPU_ISSUN4) {
+		printf("fb_setsize_eeprom: not sun4\n");
+		return;
+	}
+
+	/* Set up some defaults. */
+	fb->fb_type.fb_width = def_width;
+	fb->fb_type.fb_height = def_height;
+
+	if (fb->fb_flags & FB_PFOUR) {
+		volatile u_int32_t pfour;
 
 		/*
-		 * This is not particularly useful on Sun 4 VME framebuffers.
-		 * The EEPROM only contains info about the built-in.
+		 * Some pfour framebuffers, e.g. the
+		 * cgsix, don't encode resolution the
+		 * same, so the driver handles that.
+		 * The driver can let us know that it
+		 * needs to do this by not mapping in
+		 * the pfour register by the time this
+		 * routine is called.
 		 */
-		if (CPU_ISSUN4 && (bustype == BUS_VME16 ||
-		    bustype == BUS_VME32))
+		if (fb->fb_pfour == NULL)
 			goto donesize;
 
-#if defined(SUN4)
-		if (CPU_ISSUN4) {
-			struct eeprom *eep = (struct eeprom *)eeprom_va;
+		pfour = *fb->fb_pfour;
 
-			if (fb->fb_flags & FB_PFOUR) {
-				volatile u_int32_t pfour;
+		/*
+		 * Use the pfour register to determine
+		 * the size.  Note that the cgsix and
+		 * cgeight don't use this size encoding.
+		 * In this case, we have to settle
+		 * for the defaults we were provided
+		 * with.
+		 */
+		if ((PFOUR_ID(pfour) == PFOUR_ID_COLOR24) ||
+		    (PFOUR_ID(pfour) == PFOUR_ID_FASTCOLOR))
+			goto donesize;
 
-				/*
-				 * Some pfour framebuffers, e.g. the
-				 * cgsix, don't encode resolution the
-				 * same, so the driver handles that.
-				 * The driver can let us know that it
-				 * needs to do this by not mapping in
-				 * the pfour register by the time this
-				 * routine is called.
-				 */
-				if (fb->fb_pfour == NULL)
-					goto donesize;
+		switch (PFOUR_SIZE(pfour)) {
+		case PFOUR_SIZE_1152X900:
+			fb->fb_type.fb_width = 1152;
+			fb->fb_type.fb_height = 900;
+			break;
 
-				pfour = *fb->fb_pfour;
+		case PFOUR_SIZE_1024X1024:
+			fb->fb_type.fb_width = 1024;
+			fb->fb_type.fb_height = 1024;
+			break;
 
-				/*
-				 * Use the pfour register to determine
-				 * the size.  Note that the cgsix and
-				 * cgeight don't use this size encoding.
-				 * In this case, we have to settle
-				 * for the defaults we were provided
-				 * with.
-				 */
-				if ((PFOUR_ID(pfour) == PFOUR_ID_COLOR24) ||
-				    (PFOUR_ID(pfour) == PFOUR_ID_FASTCOLOR))
-					goto donesize;
+		case PFOUR_SIZE_1280X1024:
+			fb->fb_type.fb_width = 1280;
+			fb->fb_type.fb_height = 1024;
+			break;
 
-				switch (PFOUR_SIZE(pfour)) {
-				case PFOUR_SIZE_1152X900:
-					fb->fb_type.fb_width = 1152;
-					fb->fb_type.fb_height = 900;
-					break;
+		case PFOUR_SIZE_1600X1280:
+			fb->fb_type.fb_width = 1600;
+			fb->fb_type.fb_height = 1280;
+			break;
 
-				case PFOUR_SIZE_1024X1024:
-					fb->fb_type.fb_width = 1024;
-					fb->fb_type.fb_height = 1024;
-					break;
+		case PFOUR_SIZE_1440X1440:
+			fb->fb_type.fb_width = 1440;
+			fb->fb_type.fb_height = 1440;
+			break;
 
-				case PFOUR_SIZE_1280X1024:
-					fb->fb_type.fb_width = 1280;
-					fb->fb_type.fb_height = 1024;
-					break;
+		case PFOUR_SIZE_640X480:
+			fb->fb_type.fb_width = 640;
+			fb->fb_type.fb_height = 480;
+			break;
 
-				case PFOUR_SIZE_1600X1280:
-					fb->fb_type.fb_width = 1600;
-					fb->fb_type.fb_height = 1280;
-					break;
-
-				case PFOUR_SIZE_1440X1440:
-					fb->fb_type.fb_width = 1440;
-					fb->fb_type.fb_height = 1440;
-					break;
-
-				case PFOUR_SIZE_640X480:
-					fb->fb_type.fb_width = 640;
-					fb->fb_type.fb_height = 480;
-					break;
-
-				default:
-					/*
-					 * XXX: Do nothing, I guess.
-					 * Should we print a warning about
-					 * an unknown value? --thorpej
-					 */
-					break;
-				}
-			} else if (eep != NULL) {
-				switch (eep->eeScreenSize) {
-				case EE_SCR_1152X900:
-					fb->fb_type.fb_width = 1152;
-					fb->fb_type.fb_height = 900;
-					break;
-
-				case EE_SCR_1024X1024:
-					fb->fb_type.fb_width = 1024;
-					fb->fb_type.fb_height = 1024;
-					break;
-
-				case EE_SCR_1600X1280:
-					fb->fb_type.fb_width = 1600;
-					fb->fb_type.fb_height = 1280;
-					break;
-
-				case EE_SCR_1440X1440:
-					fb->fb_type.fb_width = 1440;
-					fb->fb_type.fb_height = 1440;
-					break;
-
-				default:
-					/*
-					 * XXX: Do nothing, I guess.
-					 * Should we print a warning about
-					 * an unknown value? --thorpej
-					 */
-					break;
-				}
-			}
+		default:
+			/*
+			 * XXX: Do nothing, I guess.
+			 * Should we print a warning about
+			 * an unknown value? --thorpej
+			 */
+			break;
 		}
-#endif /* SUN4 */
-#if defined(SUN4M)
-		if (CPU_ISSUN4M) {
-			/* XXX: need code to find 4/600 vme screen size */
+	} else if (eep != NULL) {
+		switch (eep->eeScreenSize) {
+		case EE_SCR_1152X900:
+			fb->fb_type.fb_width = 1152;
+			fb->fb_type.fb_height = 900;
+			break;
+
+		case EE_SCR_1024X1024:
+			fb->fb_type.fb_width = 1024;
+			fb->fb_type.fb_height = 1024;
+			break;
+
+		case EE_SCR_1600X1280:
+			fb->fb_type.fb_width = 1600;
+			fb->fb_type.fb_height = 1280;
+			break;
+
+		case EE_SCR_1440X1440:
+			fb->fb_type.fb_width = 1440;
+			fb->fb_type.fb_height = 1440;
+			break;
+
+		default:
+			/*
+			 * XXX: Do nothing, I guess.
+			 * Should we print a warning about
+			 * an unknown value? --thorpej
+			 */
+			break;
 		}
-#endif /* SUN4M */
-
- donesize:
-		fb->fb_linebytes = (fb->fb_type.fb_width * depth) / 8;
-		break;
-
-	case BUS_SBUS:
-		fb->fb_type.fb_width = getpropint(node, "width", def_width);
-		fb->fb_type.fb_height = getpropint(node, "height", def_height);
-		fb->fb_linebytes = getpropint(node, "linebytes",
-		    (fb->fb_type.fb_width * depth) / 8);
-		break;
-
-	default:
-		panic("fb_setsize: inappropriate bustype");
-		/* NOTREACHED */
 	}
+
+donesize:
+	fb->fb_linebytes = (fb->fb_type.fb_width * depth) / 8;
+#endif /* SUN4 */
 }
+
 
 
 #ifdef RASTERCONSOLE
@@ -466,7 +435,6 @@ fbrcons_cols()
 }
 #endif /* RASTERCONSOLE */
 
-#if defined(SUN4)
 /*
  * Support routines for pfour framebuffers.
  */
@@ -481,8 +449,9 @@ fbrcons_cols()
  */
 int
 fb_pfour_id(va)
-	void *va;
+	volatile void *va;
 {
+#if defined(SUN4)
 	volatile u_int32_t val, save, *pfour = va;
 
 	/* Read the pfour register. */
@@ -501,6 +470,9 @@ fb_pfour_id(va)
 	}
 
 	return (PFOUR_ID(val));
+#else
+	return (PFOUR_NOTPFOUR);
+#endif /* SUN4 */
 }
 
 /*
@@ -527,4 +499,3 @@ fb_pfour_set_video(fb, enable)
 	pfour = *fb->fb_pfour & ~(PFOUR_REG_INTCLR|PFOUR_REG_VIDEO);
 	*fb->fb_pfour = pfour | (enable ? PFOUR_REG_VIDEO : 0);
 }
-#endif /* SUN4 */
