@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.19 2002/12/06 02:03:18 thorpej Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.20 2003/03/03 19:05:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.19 2002/12/06 02:03:18 thorpej Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.20 2003/03/03 19:05:09 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,6 +203,7 @@ doit(sa)
 	if (initgroups(pw->pw_name, pw->pw_gid) < 0 ||
 	    setgid(pw->pw_gid) < 0 ||
 	    chdir(pw->pw_dir) < 0 ||
+	    setsid() < 0 ||
 	    setlogin(user) < 0 ||
 	    setuid(pw->pw_uid) < 0) {
 		fprintf(stderr, "Could not set permissions.\n");
