@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.2 2001/10/31 01:51:43 thorpej Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.3 2001/10/31 17:20:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,6 +75,11 @@
  *	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
 
+/* If not included by exec_elf64.c, ELFSIZE won't be defined. */
+#ifndef ELFSIZE
+#define	ELFSIZE	32
+#endif
+
 #ifdef _STANDALONE
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -93,10 +98,13 @@
 
 #include "loadfile.h"
 
-#ifdef BOOT_ELF
+#if ((ELFSIZE == 32) && defined(BOOT_ELF32)) || \
+    ((ELFSIZE == 64) && defined(BOOT_ELF64))
+
+#define	ELFROUND	(ELFSIZE / 8)
 
 int
-loadfile_elf(fd, elf, marks, flags)
+ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 	int fd;
 	Elf_Ehdr *elf;
 	u_long *marks;
@@ -176,7 +184,7 @@ loadfile_elf(fd, elf, marks, flags)
 	/*
 	 * Copy the ELF and section headers.
 	 */
-	maxp = roundup(maxp, sizeof(long));
+	maxp = roundup(maxp, ELFROUND);
 	if (flags & (LOAD_HDR|COUNT_HDR)) {
 		elfp = maxp;
 		maxp += sizeof(Elf_Ehdr);
@@ -197,7 +205,7 @@ loadfile_elf(fd, elf, marks, flags)
 		}
 
 		shpp = maxp;
-		maxp += roundup(sz, sizeof(long));
+		maxp += roundup(sz, ELFROUND);
 
 		/*
 		 * Now load the symbol sections themselves.  Make sure
@@ -236,8 +244,7 @@ loadfile_elf(fd, elf, marks, flags)
 					}
 				}
 				shp[i].sh_offset = maxp - elfp;
-				maxp += roundup(shp[i].sh_size,
-				    sizeof(long));
+				maxp += roundup(shp[i].sh_size, ELFROUND);
 				first = 0;
 			}
 			/* Since we don't load .shstrtab, zero the name. */
@@ -280,4 +287,4 @@ loadfile_elf(fd, elf, marks, flags)
 	return 0;
 }
 
-#endif /* BOOT_ELF */
+#endif /* (ELFSIZE == 32 && BOOT_ELF32) || (ELFSIZE == 64 && BOOT_ELF64) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.h,v 1.2 2001/10/31 01:51:43 thorpej Exp $	 */
+/*	$NetBSD: loadfile.h,v 1.3 2001/10/31 17:20:50 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,10 +74,15 @@ int	loadfile(const char *, u_long *, int);
 int	loadfile_coff(int, struct ecoff_exechdr *, u_long *, int);
 #endif
 
-#ifdef BOOT_ELF
+#if defined(BOOT_ELF32) || defined(BOOT_ELF64)
 #include <sys/exec_elf.h>
-int	loadfile_elf(int, Elf_Ehdr *, u_long *, int);
+#ifdef BOOT_ELF32
+int	loadfile_elf32(int, Elf32_Ehdr *, u_long *, int);
 #endif
+#ifdef BOOT_ELF64
+int	loadfile_elf64(int, Elf64_Ehdr *, u_long *, int);
+#endif
+#endif /* BOOT_ELF32 || BOOT_ELF64 */
 
 #ifdef BOOT_AOUT
 #include <sys/exec_aout.h>
