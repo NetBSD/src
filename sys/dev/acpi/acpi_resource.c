@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.14 2004/04/11 10:36:35 kochi Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.15 2004/04/12 15:11:04 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.14 2004/04/11 10:36:35 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.15 2004/04/12 15:11:04 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,8 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 	struct resource_parse_callback_arg *arg = context;
 	const struct acpi_resource_parse_ops *ops;
 	int i;
+
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	ops = arg->ops;
 
@@ -262,7 +264,7 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 		break;
 	}
 
-	return AE_OK;
+	return_ACPI_STATUS(AE_OK);
 }
 
 
