@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: ypinit.sh,v 1.7 1997/11/18 00:44:19 lukem Exp $
+#	$NetBSD: ypinit.sh,v 1.8 1998/06/08 06:29:25 lukem Exp $
 #
 # ypinit.sh - setup a master or slave YP server
 #
@@ -13,13 +13,16 @@ PATH=/bin:/usr/sbin:/usr/bin:${PATH}
 DOMAINNAME=/bin/domainname
 HOSTNAME=/bin/hostname
 ID=/usr/bin/id
+INSTALL=/usr/bin/install
 MAKEDBM=/usr/sbin/makedbm
 YPWHICH=/usr/bin/ypwhich
 YPXFR=/usr/sbin/ypxfr
 
 progname=`basename $0`
 yp_dir=/var/yp
-error=usage				# assume usage error
+tmpfile=/tmp/ypservers.$$
+
+trap 'rm -f ${tmpfile} ; exit 0' 0 2 3
 
 umask 077				# protect created directories
 
@@ -28,49 +31,50 @@ if [ `${ID} -u` != 0 ]; then
 	exit 1
 fi
 
-case $# in
-1)
-	if [ $1 = "-m" ]; then		# ypinit -m
+args=`getopt cms: $*`
+if [ $? -eq 0 ]; then
+	set -- $args
+	for i; do
+		case $i in
+		"-c")
+			servertype=client
+			shift
+			;;
+		"-m")
+			servertype=master
+			shift
+			;;
+		"-s")
+			servertype=slave
+			master=${2}
+			shift
+			shift
+			;;
+		"--")
+			shift
+			break
+			;;
+		esac
+	done
+
+	if [ $# -eq 1 ]; then
+		domain=${1}
+		shift;
+	else
 		domain=`${DOMAINNAME}`
-		servertype=master
-		error=
 	fi
-	;;
+fi
 
-2)
-	if [ $1 = "-m" ]; then		# ypinit -m domainname
-		domain=${2}
-		servertype=master
-		error=
-	fi
-	if [ $1 = "-s" ]; then		# ypinit -s master_server
-		domain=`${DOMAINNAME}`
-		servertype=slave
-		master=${2}
-		error=
-	fi
-	;;
-
-3)
-	if [ $1 = "-s" ]; then		# ypinit -s master_server domainname
-		domain=${3}
-		servertype=slave
-		master=${2}
-		error=
-	fi
-	;;
-esac
-
-if [ "${error}" = "usage" ]; then
+if [ -z ${servertype} ]; then
 	cat 1>&2 << __usage 
-usage: ${progname} -m [domainname]
-       ${progname} -s master_server [domainname]
+usage: 	${progname} -c [domainname]
+	${progname} -m [domainname]
+	${progname} -s master_server [domainname]
 
-The \`-m' flag builds a master YP server, and the \`-s' flag builds
-a slave YP server.  When building a slave YP server, \`master_server'
-must be an existing, reachable YP server.
+The \`-c' flag sets up a YP client, the \`-m' flag builds a master YP
+server, and the \`-s' flag builds a slave YP server.  When building a
+slave YP server, \`master_server' must be an existing, reachable YP server.
 __usage
-
 	exit 1
 fi
 
@@ -95,6 +99,11 @@ __no_hostname
 
 	exit 1
 fi
+if [ "${servertype}" = "slave" -a "${host}" = "${master}" ]; then
+	echo 1>&2 \
+	    "$progname: cannot setup a YP slave server off the local host."
+	exit 1
+fi
 
 # Check if the YP directory exists.
 if [ ! -d ${yp_dir} -o -f ${yp_dir} ]; then
@@ -108,10 +117,84 @@ fi
 
 echo "Server type: ${servertype}"
 echo "Domain:      ${domain}"
-if [ "${servertype}" != "master" ]; then
+if [ "${servertype}" = "slave" ]; then
 	echo "Master:      ${master}"
 fi
 echo ""
+
+binding_dir=${yp_dir}/binding
+if [ ! -d ${binding_dir} ]; then
+$progname: The directory ${binding_dir} does not exist.
+	Restore it from the distribution.
+__no_dir
+	exit 1
+fi
+
+cat << __client_setup
+A YP client needs a list of YP servers to bind to.
+Whilst ypbind supports -broadcast, its use is not recommended.
+__client_setup
+
+done=
+while [ -z "${done}" ]; do
+	rm -f ${tmpfile}
+	touch ${tmpfile}
+	cat <<__list_of_servers
+
+Please enter a list of YP servers, in order of preference.
+When finished, press RETURN on a blank line or enter EOF.
+
+__list_of_servers
+
+	if [ "${servertype}" != "client" ]; then
+		echo ${host} >> ${tmpfile}
+		echo "	next host: ${host}";
+	fi
+	echo -n "	next host: ";
+
+	while read nextserver ; test -n "${nextserver}"
+	do
+		echo ${nextserver} >> ${tmpfile}
+		echo -n "	next host: ";
+	done
+
+	if [ -s ${tmpfile} ]; then
+		echo ""
+		echo "The current servers are:"
+		echo ""
+		cat ${tmpfile}
+		echo ""
+		echo -n "Is this correct? [y/n: n] "
+		read DONE
+		case ${DONE} in
+		y*|Y*)
+			done=yes
+			;;
+		esac
+	else
+		echo    ""
+		echo    "You have not supplied any servers."
+	fi
+	if [ -z "${done}" ]; then
+		echo -n "Do you wish to abort? [y/n: n] "
+		read ABORT
+		case ${ABORT} in
+		y*|Y*)
+			exit 0
+			;;
+		esac
+	fi
+done
+
+if [ -s ${tmpfile} ]; then
+	${INSTALL} -c -m 0444 ${tmpfile} ${binding_dir}/${domain}.ypservers
+fi
+rm -f ${tmpfile}
+
+if [ "${servertype}" = "client" ]; then
+	exit 0
+fi
+
 cat << __notice1
 
 Installing the YP database may require that you answer a few questions.
@@ -124,28 +207,21 @@ if [ -d "${yp_dir}/${domain}" ]; then
 	echo -n	"and its contents? [y/n: n]  "
 	read KILL
 
-	error=
 	case ${KILL} in
 	y*|Y*)
-		error="delete"
-		;;
-
-	*)
-		error=
-		;;
-	esac
-
-	if [ "${error}" = "delete" ]; then
 		rm -rf ${yp_dir}/${domain}
 		if [ $? != 0 ]; then
 			echo 1>&2 \
 		"$progname: Can't clean up old directory ${yp_dir}/${domain}"
 			exit 1
 		fi
-	else
+		;;
+
+	*)
 		echo "OK, please clean it up by hand and start again."
 		exit 0
-	fi
+		;;
+	esac
 fi
 
 if ! mkdir "${yp_dir}/${domain}"; then
