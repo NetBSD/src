@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.128 2004/08/09 22:02:11 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.129 2004/08/10 05:24:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.128 2004/08/09 22:02:11 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.129 2004/08/10 05:24:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.128 2004/08/09 22:02:11 mycroft E
 #include <dev/ic/ax88190var.h>
 
 int	ne_pcmcia_match __P((struct device *, struct cfdata *, void *));
+int	ne_pcmcia_validate_config __P((struct pcmcia_config_entry *));
 void	ne_pcmcia_attach __P((struct device *, struct device *, void *));
 int	ne_pcmcia_detach __P((struct device *, int));
 
@@ -74,13 +75,11 @@ void	ne_pcmcia_disable __P((struct dp8390_softc *));
 struct ne_pcmcia_softc {
 	struct ne2000_softc sc_ne2000;		/* real "ne2000" softc */
 
-	/* PCMCIA-specific goo */
-	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o information */
-	struct pcmcia_io_handle sc_pcioh2;	/* PCMCIA i/o information */
-	int sc_io_window;			/* i/o window */
-	int sc_io_window2;			/* i/o window */
-	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handle */
+
+	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
+	int sc_state;
+#define	NE_PCMCIA_ATTACHED	3
 };
 
 u_int8_t *
@@ -90,6 +89,7 @@ u_int8_t *
 	ne_pcmcia_dl10019_get_enaddr __P((struct ne_pcmcia_softc *,
 	    u_int8_t [ETHER_ADDR_LEN]));
 int	ne_pcmcia_ax88190_set_iobase __P((struct ne_pcmcia_softc *));
+int	ne_pcmcia_ax88790_power_up __P((struct ne_pcmcia_softc *));
 
 CFATTACH_DECL(ne_pcmcia, sizeof(struct ne_pcmcia_softc),
     ne_pcmcia_match, ne_pcmcia_attach, ne_pcmcia_detach, dp8390_activate);
@@ -528,6 +528,20 @@ ne_pcmcia_match(parent, match, aux)
 	return (0);
 }
 
+int
+ne_pcmcia_validate_config(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_iospace < 1 || cfe->num_iospace > 2)
+		return (EINVAL);
+	/* Some cards have a memory space, but we don't use it. */
+	cfe->num_memspace = 0;
+	/* Some cards don't have IO8 in their CIS. */
+	cfe->flags |= PCMCIA_CFE_IO8;
+	return (0);
+}
+
 void
 ne_pcmcia_attach(parent, self, aux)
 	struct device *parent, *self;
@@ -542,86 +556,40 @@ ne_pcmcia_attach(parent, self, aux)
 	int i;
 	u_int8_t myea[6], *enaddr;
 	const char *typestr = "";
+	int error;
 
 	aprint_normal("\n");
 	psc->sc_pf = pa->pf;
 
-	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
-		if (cfe->num_iospace < 1)
-			continue;
-
-		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-		    cfe->iospace[0].length, cfe->iospace[0].length,
-		    &psc->sc_pcioh)) {
-#ifdef DIAGNOSTIC
-			aprint_error("%s: can't allocate i/o space %lx (ignored\n)",
-			    self->dv_xname, cfe->iospace[0].start);
-#endif
-			continue;
-		}
-
-		/*
-		 * Try to make the second chunk contiguous with the
-		 * first.
-		 */
-		if (cfe->num_iospace >= 2 &&
-		    pcmcia_io_alloc(pa->pf,
-		    cfe->iospace[0].start + cfe->iospace[0].length,
-		    cfe->iospace[1].length, cfe->iospace[1].length,
-		    &psc->sc_pcioh2)) {
-#ifdef DIAGNOSTIC
-			aprint_error("%s: can't allocate i/o space %lx (ignored\n)",
-			    self->dv_xname,
-			    cfe->iospace[0].start + cfe->iospace[0].length);
-#endif
-			pcmcia_io_free(pa->pf, &psc->sc_pcioh2);
-			continue;
-		}
-
-		/* Ok, found. */
-		break;
-	}
-	if (!cfe) {
-		aprint_error("%s: no suitable config entry\n", self->dv_xname);
-		goto fail_1;
+	error = pcmcia_function_configure(pa->pf, ne_pcmcia_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
+		return;
 	}
 
-	dsc->sc_regt = psc->sc_pcioh.iot;
-	dsc->sc_regh = psc->sc_pcioh.ioh;
+	cfe = pa->pf->cfe;
+	dsc->sc_regt = cfe->iospace[0].handle.iot;
+	dsc->sc_regh = cfe->iospace[0].handle.ioh;
 
 	if (cfe->num_iospace == 1) {
-		nsc->sc_asict = psc->sc_pcioh.iot;
+		nsc->sc_asict = dsc->sc_regt;
 		if (bus_space_subregion(dsc->sc_regt, dsc->sc_regh,
-		    NE2000_ASIC_OFFSET, NE2000_ASIC_NPORTS,
-		    &nsc->sc_asich)) {
+		    NE2000_ASIC_OFFSET, NE2000_ASIC_NPORTS, &nsc->sc_asich)) {
 			aprint_error("%s: can't get subregion for asic\n",
 			    self->dv_xname);
-			goto fail_2;
+			goto fail;
 		}
 	} else {
-		nsc->sc_asict = psc->sc_pcioh2.iot;
-		nsc->sc_asich = psc->sc_pcioh2.ioh;
+		nsc->sc_asict = cfe->iospace[1].handle.iot;
+		nsc->sc_asich = cfe->iospace[1].handle.ioh;
 	}
 
-	/* Enable the card. */
-	pcmcia_function_init(pa->pf, cfe);
-
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh,
-	    &psc->sc_io_window)) {
-		aprint_error("%s: can't map NIC i/o space\n", self->dv_xname);
-		goto fail_2;
-	}
-
-	if (cfe->num_iospace >= 2 &&
-	    pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh2,
-	    &psc->sc_io_window2)) {
-		aprint_error("%s: can't map ASIC i/o space\n", self->dv_xname);
-		goto fail_3;
-	}
-
-	if (pcmcia_function_enable(pa->pf)) {
-		aprint_error("%s: function enable failed\n", self->dv_xname);
-		goto fail_4;
+	error = ne_pcmcia_enable(dsc);
+	if (error) {
+		aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
+		    error);
+		goto fail;
 	}
 
 	/* Set up power management hooks. */
@@ -651,7 +619,7 @@ again:
 	if (enaddr != NULL)
 		aprint_error("%s: ethernet vendor code %02x:%02x:%02x\n",
 	            self->dv_xname, enaddr[0], enaddr[1], enaddr[2]);
-	goto fail_5;
+	goto fail2;
 
 found:
 	if ((ne_dev->flags & NE2000DVF_DL10019) != 0) {
@@ -738,24 +706,16 @@ found:
 	}
 
 	if (ne2000_attach(nsc, enaddr))
-		goto fail_5;
+		goto fail2;
 
-	pcmcia_function_disable(pa->pf);
+	psc->sc_state = NE_PCMCIA_ATTACHED;
+	ne_pcmcia_disable(dsc);
 	return;
 
-fail_5:
-	pcmcia_function_disable(pa->pf);
-fail_4:
-	if (cfe->num_iospace >= 2)
-		pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window2);
-fail_3:
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
-fail_2:
-	if (cfe->num_iospace >= 2)
-		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh2);
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
-fail_1:
-	psc->sc_io_window = -1;
+fail2:
+	ne_pcmcia_disable(dsc);
+fail:
+	pcmcia_function_unconfigure(pa->pf);
 }
 
 int
@@ -767,23 +727,14 @@ ne_pcmcia_detach(self, flags)
 	struct pcmcia_function *pf = psc->sc_pf;
 	int error;
 
-	if (psc->sc_io_window == -1)
-		/* Nothing to detach. */
+	if (psc->sc_state != NE_PCMCIA_ATTACHED)
 		return (0);
 
 	error = ne2000_detach(&psc->sc_ne2000, flags);
-	if (error != 0)
+	if (error)
 		return (error);
 
-	/* Unmap our i/o windows. */
-	if (pf->cfe->num_iospace >= 2)
-		pcmcia_io_unmap(pf, psc->sc_io_window2);
-	pcmcia_io_unmap(pf, psc->sc_io_window);
-
-	/* Free our i/o space. */
-	if (pf->cfe->num_iospace >= 2)
-		pcmcia_io_free(pf, &psc->sc_pcioh2);
-	pcmcia_io_free(pf, &psc->sc_pcioh);
+	pcmcia_function_unconfigure(pf);
 
 	return (0);
 }
@@ -794,7 +745,6 @@ ne_pcmcia_enable(dsc)
 {
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dsc;
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
-	struct pcmcia_mem_handle pcmh;
 
 	/* set up the interrupt */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, dp8390_intr,
@@ -812,40 +762,18 @@ ne_pcmcia_enable(dsc)
 	    nsc->sc_type == NE2000_TYPE_AX88790) {
 		if (ne_pcmcia_ax88190_set_iobase(psc))
 			goto fail_3;
-		if (nsc->sc_type == NE2000_TYPE_AX88790) {
-			bus_size_t offset;
-			int mwindow;
-
-			if (pcmcia_mem_alloc(psc->sc_pf,
-			    AX88790_CSR_SIZE, &pcmh)) {
-				printf("%s: can't alloc mem for CSR\n",
-				    dsc->sc_dev.dv_xname);
-				goto fail_3;
-			}
-
-			if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR,
-			    AX88790_CSR, AX88790_CSR_SIZE,
-			    &pcmh, &offset, &mwindow)) {
-				printf("%s: can't map mem for CSR\n",
-				    dsc->sc_dev.dv_xname);
-				goto fail_4;
-			}
-
-			bus_space_write_1(pcmh.memt, pcmh.memh, offset, 0x4);
-			pcmcia_mem_unmap(psc->sc_pf, mwindow);
-			pcmcia_mem_free(psc->sc_pf, &pcmh);
-		}
+		if (nsc->sc_type == NE2000_TYPE_AX88790 &&
+		    ne_pcmcia_ax88790_power_up(psc))
+			goto fail_3;
 	}
 
 	return (0);
 
- fail_4:
-	pcmcia_mem_free(psc->sc_pf, &pcmh);
- fail_3:
+fail_3:
 	pcmcia_function_disable(psc->sc_pf);
- fail_2:
+fail_2:
 	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
- fail_1:
+fail_1:
 	return (1);
 }
 
@@ -857,6 +785,7 @@ ne_pcmcia_disable(dsc)
 
 	pcmcia_function_disable(psc->sc_pf);
 	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	psc->sc_ih = 0;
 }
 
 u_int8_t *
@@ -924,51 +853,34 @@ int
 ne_pcmcia_ax88190_set_iobase(psc)
 	struct ne_pcmcia_softc *psc;
 {
-	struct ne2000_softc *nsc = &psc->sc_ne2000;
-	struct dp8390_softc *dsc = &nsc->sc_dp8390;
-	struct pcmcia_mem_handle pcmh;
-	bus_size_t offset;
-	int rv = 1, mwindow;
-	u_int last_liobase, new_liobase;
+	struct pcmcia_function *pf = psc->sc_pf;
+	bus_addr_t iobase = pf->cfe->iospace[0].handle.addr;
+	bus_addr_t oldiobase, newiobase;
 
-	if (pcmcia_mem_alloc(psc->sc_pf, AX88190_LAN_IOSIZE, &pcmh)) {
-#if 0
-		printf("%s: can't alloc mem for LAN iobase\n",
-		    dsc->sc_dev.dv_xname);
-#endif
-		goto fail_1;
-	}
-	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR,
-	    AX88190_LAN_IOBASE, AX88190_LAN_IOSIZE,
-	    &pcmh, &offset, &mwindow)) {
-		printf("%s: can't map mem for LAN iobase\n",
-		    dsc->sc_dev.dv_xname);
-		goto fail_2;
-	}
+	oldiobase = (pcmcia_ccr_read(pf, PCMCIA_CCR_IOBASE0) << 0) |
+		    (pcmcia_ccr_read(pf, PCMCIA_CCR_IOBASE1) << 8);
+	pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0, (iobase >> 0) & 0xff);
+	pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1, (iobase >> 8) & 0xff);
+	newiobase = (pcmcia_ccr_read(pf, PCMCIA_CCR_IOBASE0) << 0) |
+		    (pcmcia_ccr_read(pf, PCMCIA_CCR_IOBASE1) << 8);
 
-	last_liobase = bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
-	    (bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8);
 #ifdef DIAGNOSTIC
-	printf("%s: LAN iobase 0x%x (0x%x) ->", dsc->sc_dev.dv_xname,
-	    last_liobase, (u_int)psc->sc_pcioh.addr);
+	printf("%s: iobase %lx -> %lx -> %lx\n",
+	    psc->sc_ne2000.sc_dp8390.sc_dev.dv_xname,
+	    (long)oldiobase, (long)iobase, (long)newiobase);
 #endif
-	bus_space_write_1(pcmh.memt, pcmh.memh, offset,
-	    psc->sc_pcioh.addr & 0xff);
-	bus_space_write_1(pcmh.memt, pcmh.memh, offset + 2,
-	    psc->sc_pcioh.addr >> 8);
 
-	new_liobase = bus_space_read_1(pcmh.memt, pcmh.memh, offset + 0) |
-	    (bus_space_read_1(pcmh.memt, pcmh.memh, offset + 2) << 8);
-#ifdef DIAGNOSTIC
-	printf(" 0x%x\n", new_liobase);
-#endif
-	if ((last_liobase == psc->sc_pcioh.addr)
-	    || (last_liobase != new_liobase))
-		rv = 0;
+	if (oldiobase == iobase || oldiobase != newiobase)
+		return (0);
+	return (EIO);
+}
 
-	pcmcia_mem_unmap(psc->sc_pf, mwindow);
- fail_2:
-	pcmcia_mem_free(psc->sc_pf, &pcmh);
- fail_1:
-	return (rv);
+int
+ne_pcmcia_ax88790_power_up(psc)
+	struct ne_pcmcia_softc *psc;
+{
+	struct pcmcia_function *pf = psc->sc_pf;
+
+	pcmcia_ccr_write(pf, PCMCIA_CCR_STATUS, 0x04);
+	return (0);
 }
