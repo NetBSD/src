@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.43 1994/02/23 00:54:45 mycroft Exp $
+ *	$Id: pccons.c,v 1.44 1994/02/23 18:42:04 mycroft Exp $
  */
 
 /*
@@ -945,11 +945,30 @@ sput(cp, n)
 					vs.state = 0;
 					break;
 				}
+				case 'M': { /* delete cx rows */
+					u_short *crtAt = crtat - vs.col;
+					int cx = vs.cx,
+					    row = (crtAt - Crtat) / vs.ncol,
+					    nrow = vs.nrow - row;
+					if (cx <= 0)
+						cx = 1;
+					else if (cx > nrow)
+						cx = nrow;
+					if (cx < nrow)
+						bcopy(crtAt + vs.ncol * cx,
+						    crtAt, vs.ncol * (nrow -
+						    cx) * CHR);
+					fillw((vs.at << 8) | ' ',
+					    crtAt + vs.ncol * (nrow - cx),
+					    vs.ncol * cx);
+					vs.state = 0;
+					break;
+				}
 				case 'S': { /* scroll up cx lines */
 					int cx = vs.cx;
 					if (cx <= 0)
 						cx = 1;
-					if (cx > vs.nrow)
+					else if (cx > vs.nrow)
 						cx = vs.nrow;
 					if (cx < vs.nrow)
 						bcopy(Crtat + vs.ncol * cx,
@@ -962,11 +981,30 @@ sput(cp, n)
 					vs.state = 0;
 					break;
 				}
+				case 'L': { /* insert cx rows */
+					u_short *crtAt = crtat - vs.col;
+					int cx = vs.cx,
+					    row = (crtAt - Crtat) / vs.ncol,
+					    nrow = vs.nrow - row;
+					if (cx <= 0)
+						cx = 1;
+					else if (cx > nrow)
+						cx = nrow;
+					if (cx < nrow)
+						bcopy(crtAt,
+						    crtAt + vs.ncol * cx,
+						    vs.ncol * (nrow - cx) *
+						    CHR);
+					fillw((vs.at << 8) | ' ', crtAt,
+					    vs.ncol * cx);
+					vs.state = 0;
+					break;
+				}
 				case 'T': { /* scroll down cx lines */
 					int cx = vs.cx;
 					if (cx <= 0)
 						cx = 1;
-					if (cx > vs.nrow)
+					else if (cx > vs.nrow)
 						cx = vs.nrow;
 					if (cx < vs.nrow)
 						bcopy(Crtat,
