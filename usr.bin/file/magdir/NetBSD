@@ -25,6 +25,7 @@
 0	belong&0377777777	041400407	NetBSD/i386
 >0	byte			&0x80		dynamically linked executable
 >0	byte			^0x80
+>>0	byte			&0x40		position independent
 >>20	lelong			!0		executable
 >>20	lelong			=0		object file
 >16	lelong			>0		not stripped
@@ -45,6 +46,7 @@
 0	belong&0377777777	041600407	NetBSD/m68k
 >0	byte			&0x80		dynamically linked executable
 >0	byte			^0x80
+>>0	byte			&0x40		position independent
 >>20	belong			!0		executable
 >>20	belong			=0		object file
 >16	belong			>0		not stripped
@@ -65,6 +67,7 @@
 0	belong&0377777777	042000407	NetBSD/m68k4k
 >0	byte			&0x80		dynamically linked executable
 >0	byte			^0x80
+>>0	byte			&0x40		position independent
 >>20	belong			!0		executable
 >>20	belong			=0		object file
 >16	belong			>0		not stripped
@@ -85,6 +88,7 @@
 0	belong&0377777777	042200407	NetBSD/ns32532
 >0	byte			&0x80		dynamically linked executable
 >0	byte			^0x80
+>>0	byte			&0x40		position independent
 >>20	lelong			!0		executable
 >>20	lelong			=0		object file
 >16	lelong			>0		not stripped
@@ -105,6 +109,7 @@
 0	belong&0377777777	042400407	NetBSD/sparc
 >0	byte			&0x80		dynamically linked executable
 >0	byte			^0x80
+>>0	byte			&0x40		position independent
 >>20	belong			!0		executable
 >>20	belong			=0		object file
 >16	belong			>0		not stripped
@@ -125,6 +130,7 @@
 0	belong&0377777777	042600407	NetBSD/pmax
 >0	byte			&0x80		dynamically linked executable
 >0	byte			^0x80
+>>0	byte			&0x40		position independent
 >>20	lelong			!0		executable
 >>20	lelong			=0		object file
 >16	lelong			>0		not stripped
@@ -145,6 +151,7 @@
 0	belong&0377777777	043000407	NetBSD/vax
 >0	byte			&0x80		dynamically linked executable
 >0	byte			^0x80
+>>0	byte			&0x40		position independent
 >>20	lelong			!0		executable
 >>20	lelong			=0		object file
 >16	lelong			>0		not stripped
@@ -165,6 +172,7 @@
 0	belong&0377777777	043400407	NetBSD/mips
 >0	byte			&0x80		dynamically linked executable
 >0	byte			^0x80
+>>0	byte			&0x40		position independent
 >>20	belong			!0		executable
 >>20	belong			=0		object file
 >16	belong			>0		not stripped
