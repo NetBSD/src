@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acdos16.h - DOS specific defines, etc.
- *       $Revision: 1.1.1.1 $
+ *       $Revision: 1.1.1.2 $
  *
  *****************************************************************************/
 
@@ -126,7 +126,7 @@
  * Calling conventions:
  *
  * ACPI_SYSTEM_XFACE        - Interfaces to host OS (handlers, threads)
- * ACPI_EXTERNAL_XFACE      - External ACPI interfaces 
+ * ACPI_EXTERNAL_XFACE      - External ACPI interfaces
  * ACPI_INTERNAL_XFACE      - Internal ACPI interfaces
  * ACPI_INTERNAL_VAR_XFACE  - Internal variable-parameter list interfaces
  */
@@ -142,7 +142,6 @@
 #define halt()
 #define ACPI_ACQUIRE_GLOBAL_LOCK(GLptr, Acq)
 #define ACPI_RELEASE_GLOBAL_LOCK(GLptr, Acq)
-
 
 
 /* This macro is used to tag functions as "printf-like" because

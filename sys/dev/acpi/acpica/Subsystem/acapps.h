@@ -1,7 +1,6 @@
 /******************************************************************************
  *
- * Name: aclinux.h - OS specific defines, etc.
- *       $Revision: 1.1.1.2 $
+ * Module Name: acapps - common include for ACPI applications/tools
  *
  *****************************************************************************/
 
@@ -114,51 +113,78 @@
  *
  *****************************************************************************/
 
-#ifndef __ACLINUX_H__
-#define __ACLINUX_H__
+#ifndef _ACAPPS
+#define _ACAPPS
 
-#define ACPI_OS_NAME                "Linux"
 
-#define ACPI_USE_SYSTEM_CLIBRARY
-
-#ifdef __KERNEL__
-
-#include <linux/config.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/ctype.h>
-#include <asm/system.h>
-#include <asm/atomic.h>
-#include <asm/div64.h>
-#include <asm/acpi.h>
-
-#define strtoul simple_strtoul
-
-#define ACPI_MACHINE_WIDTH	BITS_PER_LONG
-
-#else /* !__KERNEL__ */
-
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <unistd.h>
-
-#if defined(__ia64__) || defined(__x86_64__)
-#define ACPI_MACHINE_WIDTH		64
-#define COMPILER_DEPENDENT_INT64	long
-#define COMPILER_DEPENDENT_UINT64	unsigned long
-#else
-#define ACPI_MACHINE_WIDTH		32
-#define COMPILER_DEPENDENT_INT64	long long
-#define COMPILER_DEPENDENT_UINT64	unsigned long long
-#define ACPI_USE_NATIVE_DIVIDE
+#ifdef _MSC_VER                 /* disable some level-4 warnings */
+#pragma warning(disable:4100)   /* warning C4100: unreferenced formal parameter */
 #endif
 
-#endif /* __KERNEL__ */
+extern UINT8                    *DsdtPtr;
+extern UINT32                   AcpiDsdtLength;
+extern UINT8                    *AmlStart;
+extern UINT32                   AmlLength;
 
-/* Linux uses GCC */
 
-#include "acgcc.h"
+extern int                      AcpiGbl_Optind;
+extern NATIVE_CHAR              *AcpiGbl_Optarg;
 
-#endif /* __ACLINUX_H__ */
+int
+AcpiGetopt(
+    int                     argc, 
+    char                    **argv, 
+    char                    *opts);
+
+ACPI_STATUS
+AdInitialize (
+    void);
+
+char *
+FlGenerateFilename (
+    char                    *InputFilename,
+    char                    *Suffix);
+
+ACPI_STATUS
+FlSplitInputPathname (
+    char                    *InputPath,
+    char                    **OutDirectoryPath,
+    char                    **OutFilename);
+
+ACPI_STATUS
+AdAmlDisassemble (
+    BOOLEAN                 OutToFile,
+    char                    *Filename,
+    char                    *Prefix,
+    char                    **OutFilename,
+    BOOLEAN                 GetAllTables);
+
+void
+AdPrintStatistics (void);
+
+ACPI_STATUS
+AdFindDsdt(
+    UINT8                   **DsdtPtr,
+    UINT32                  *DsdtLength);
+
+void
+AdDumpTables (void);
+
+ACPI_STATUS
+AdGetTables (
+    char                    *Filename,
+    BOOLEAN                 GetAllTables);
+
+ACPI_STATUS
+AdParseTables (void);
+
+ACPI_STATUS
+AdDisplayTables (
+    char                    *Filename);
+
+ACPI_STATUS
+AdDisplayStatistics (void);
+
+
+#endif /* _ACAPPS */
+
