@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.54 2000/03/26 20:42:45 kleink Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.55 2000/04/15 16:49:40 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -106,7 +106,8 @@ struct shmid_ds *shm_find_segment_by_shmid __P((int));
 #define	SHMSEG_ALLOCATED	0x0800
 #define	SHMSEG_WANTED		0x1000
 
-int shm_last_free, shm_nused, shm_committed;
+int	shm_last_free, shm_nused, shm_committed;
+struct	shmid_ds *shmsegs;
 
 struct shm_handle {
 	struct uvm_object *shm_object;
