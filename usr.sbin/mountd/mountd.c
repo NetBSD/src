@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.70 2000/06/19 23:44:16 fvdl Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.71 2000/06/21 02:48:31 enami Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.70 2000/06/19 23:44:16 fvdl Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.71 2000/06/21 02:48:31 enami Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1975,7 +1975,8 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	while (!done) {
 		switch (grp->gr_type) {
 		case GT_HOST:
-			if (addrp->sa_family == AF_INET6 && have_v6 == 0)
+			if (addrp != NULL && addrp->sa_family == AF_INET6 &&
+			    have_v6 == 0)
 				goto skip;
 			args.ua.export.ex_addr = addrp;
 			args.ua.export.ex_addrlen = addrlen;
