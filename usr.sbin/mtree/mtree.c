@@ -1,3 +1,5 @@
+/*	$NetBSD: mtree.c,v 1.5 1995/03/07 21:12:10 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1989, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: mtree.c,v 1.5 1995/03/07 21:12:10 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
