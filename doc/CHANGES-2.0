@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.191 2004/05/09 08:24:00 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.192 2004/05/09 08:36:18 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1913,10 +1913,12 @@ sbin/mount_nfs/mount_nfs.8			1.25
 	[fair, ticket #264]
 
 usr.bin/vi/common/line.c			1.7
+usr.bin/vi/ex/version.h				r1.15
 
 	Flush the current line cache on every operation on the DB.
 	We can't keep a reference to data returned by libdb after a
 	subsequent call to  any other libdb function on that DB.
+	Bump version.
 	[aymeric, ticket #261]
 
 sys/dev/ata/atareg.h				1.18
@@ -1931,4 +1933,17 @@ bin/pax/pax.1					1.48
 
 	Documentation fixes.
 	[grant, ticket #263]
+
+sys/arch/x86/x86/intr.c				1.16
+
+	Fix parameters for PPB_INTERRUPT_SWIZZLE macro.
+	The macro expects pin = 1..4 (previously 0..3 were passed).
+	[kochi, ticket #265]
+
+sys/dev/pci/pciide_common.c			1.10
+
+	default_chip_map(): We can't use pciide_mapchan() here, because
+	pciide_mapchan() will attach an atabus, and we don't know yet if
+	this channel is enabled or not.  PR#25455.
+	[bouyer, ticket #267]
 
