@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.538 2003/06/13 07:14:58 kent Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.539 2003/06/14 10:00:09 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.537 2003/06/13 07:14:18 kent Exp 
+ *	NetBSD: pcidevs,v 1.538 2003/06/14 09:58:55 ichiro Exp 
  */
 
 /*
@@ -1563,7 +1563,6 @@
 #define	PCI_PRODUCT_INTEL_82820_MCH	0x2501		/* 82820 MCH (Camino) */
 #define	PCI_PRODUCT_INTEL_82820_AGP	0x250f		/* 82820 AGP */
 #define	PCI_PRODUCT_INTEL_82850_HB	0x2530		/* 82850 Host */
-#define	PCI_PRODUCT_INTEL_82850_AGP	0x2532		/* 82850/82860 AGP */
 #define	PCI_PRODUCT_INTEL_82860_HB	0x2531		/* 82860 Host */
 #define	PCI_PRODUCT_INTEL_82850_AGP	0x2532		/* 82850/82860 AGP */
 #define	PCI_PRODUCT_INTEL_82860_PCI1	0x2533		/* 82860 PCI-PCI */

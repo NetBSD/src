@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.536 2003/06/13 07:15:01 kent Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.537 2003/06/14 10:00:09 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.537 2003/06/13 07:14:18 kent Exp 
+ *	NetBSD: pcidevs,v 1.538 2003/06/14 09:58:55 ichiro Exp 
  */
 
 /*
@@ -4550,12 +4550,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82850 Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82850_AGP,
-	    0,
-	    "Intel",
-	    "82850/82860 AGP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_HB,
