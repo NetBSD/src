@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005reg.h,v 1.3 2001/03/24 13:40:41 bjh21 Exp $ */
+/* $NetBSD: seeq8005reg.h,v 1.4 2001/04/01 21:15:15 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995-1998 Mark Brinicombe
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  */
 /*
- * SEEQ 8005 registers
+ * SEEQ 8005/80C04/80C04A registers
  *
  * Note that A0 is only used to distinguish halves of 16-bit registers in
  * 8-bit mode.
@@ -85,15 +85,19 @@
 #define	SEEQ_STATUS_FIFO_READ	(1 << 15)
 
 #define	SEEQ_BUFCODE_STATION_ADDR0	0x00
-#define	SEEQ_BUFCODE_STATION_ADDR1	0x01	/* 8005 and 80C04.AE */
+#define	SEEQ_BUFCODE_STATION_ADDR1	0x01	/* 8005 and 80C04A */
 #define	SEEQ_BUFCODE_STATION_ADDR2	0x02	/* 8005 */
+#define SEEQ_BUFCODE_CRCERR_COUNT      	0x02	/* 80C04A */
 #define	SEEQ_BUFCODE_STATION_ADDR3	0x03	/* 8005 */
+#define SEEQ_BUFCODE_DRIBBLE_COUNT	0x03	/* 80C04A */
 #define	SEEQ_BUFCODE_STATION_ADDR4	0x04	/* 8005 */
+#define SEEQ_BUFCODE_OVERSIZE_COUNT	0x04	/* 80C04A */
 #define	SEEQ_BUFCODE_STATION_ADDR5	0x05	/* 8005 */
 #define	SEEQ_BUFCODE_ADDRESS_PROM	0x06
 #define	SEEQ_BUFCODE_TX_EAP		0x07
 #define	SEEQ_BUFCODE_LOCAL_MEM		0x08
 #define	SEEQ_BUFCODE_INT_VECTOR		0x09	/* 8005 */
+#define SEEQ_BUFCODE_LC_DFR_COUNT	0x09	/* 80C04A */
 #define	SEEQ_BUFCODE_TX_COLLS		0x0b	/* 8004 */
 #define	SEEQ_BUFCODE_CONFIG3		0x0c	/* 8004 */
 #define	SEEQ_BUFCODE_PRODUCTID		0x0d	/* 8004 */
@@ -137,16 +141,19 @@
 #define	SEEQ_CFG2_RESET			(1 << 15)
 
 #define	SEEQ_CFG3_AUTOPAD		(1 << 0)	/* 80C04 */
+#define SEEQ_CFG3_SAHASHENABLE		(1 << 1)	/* 80C04A */
 #define	SEEQ_CFG3_SQEENABLE		(1 << 2)	/* 80C04 */
 #define	SEEQ_CFG3_SLEEP			(1 << 3)	/* 80C04 */
-#define	SEEQ_CFG3_READYADVD		(1 << 4)	/* 80C04 */
-#define	SEEQ_CFG3_SECONDADDRENABLE	(1 << 5)	/* 80C04.AE ? */
+#define	SEEQ_CFG3_READYADVD		(1 << 4)	/* 80C04 only */
+#define	SEEQ_CFG3_SECONDADDRENABLE	(1 << 5)	/* 80C04A */
 #define	SEEQ_CFG3_GROUPADDR		(1 << 6)	/* 80C04 */
 #define	SEEQ_CFG3_NPPBYTE		(1 << 7)	/* 80C04 */
 
 #define	SEEQ_PRODUCTID_MASK		0xf0
 #define	SEEQ_PRODUCTID_8004		0xa0
 #define	SEEQ_PRODUCTID_REV_MASK		0x0f
+#define SEEQ_PRODUCTID_REV_80C04	0x0f
+#define SEEQ_PRODUCTID_REV_80C04A	0x0e
 
 #define	SEEQ_PKTCMD_TX			(1 << 7)
 #define	SEEQ_PKTCMD_RX			(0 << 7)
@@ -160,6 +167,10 @@
 #define	SEEQ_TXSTAT_COLLISION16		(1 << 2)
 #define	SEEQ_TXSTAT_COLLISIONS_SHIFT	3		/* SEEQ 8004 */
 #define	SEEQ_TXSTAT_COLLISION_MASK	0x0f		/* SEEQ 8004 */
+#define SEEQ_TXSTAT_CARRIER_DROPOUT	(1 << 3)	/* SEEQ 80C04A */
+#define SEEQ_TXSTAT_OK_BUT_DEFERRED	(1 << 4)	/* SEEQ 80C04A */
+#define SEEQ_TXSTAT_OK_BUT_COLLISIONS	(1 << 5)	/* SEEQ 80C04A */
+#define SEEQ_TXSTAT_OK_BUT_COLLISION	(1 << 6)	/* SEEQ 80C04A */
 
 #define	SEEQ_TXCMD_BABBLE_INT		(1 << 0)
 #define	SEEQ_TXCMD_COLLISION_INT	(1 << 1)
