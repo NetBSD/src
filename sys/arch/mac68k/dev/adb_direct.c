@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.25 1999/06/29 04:45:59 briggs Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.26 1999/11/06 22:25:20 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -265,6 +265,7 @@ int	tickle_serial = 0;		/* the last packet tickled */
 int	adb_cuda_serial = 0;		/* the current packet */
 
 extern struct mac68k_machine_S mac68k_machine;
+extern int adb_initted;
 extern int ite_polling;			/* Are we polling?  (Debugger mode) */
 
 void	pm_setup_adb __P((void));
@@ -689,7 +690,8 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 		    || (adbWaiting == 1))
 			if (ADB_SR_INTR_IS_ON) {	/* wait for "interrupt" */
 				adb_intr_cuda(NULL);	/* process it */
-				adb_soft_intr();
+				if (!adb_initted)
+					adb_soft_intr();
 				}
 
 	return 0;
@@ -1131,7 +1133,8 @@ send_adb_II(u_char * in, u_char * buffer, void *compRout, void *data, int comman
 		    || (adbWaiting == 1))
 			if (ADB_SR_INTR_IS_ON) { /* wait for "interrupt" */
 				adb_intr_II(NULL); /* go process "interrupt" */
-				adb_soft_intr();
+				if (!adb_initted)
+					adb_soft_intr();
 			}
 
 	return 0;
@@ -1513,7 +1516,8 @@ send_adb_IIsi(u_char * in, u_char * buffer, void *compRout, void *data, int
 		    || (adbWaiting == 1))
 			if (ADB_SR_INTR_IS_ON) {	/* wait for "interrupt" */
 				adb_intr_IIsi(NULL);	/* process it */
-				adb_soft_intr();
+				if (!adb_initted)
+					adb_soft_intr();
 			}
 
 	 return 0;
