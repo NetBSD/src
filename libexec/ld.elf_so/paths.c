@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.1 1996/12/16 20:38:01 cgd Exp $	*/
+/*	$NetBSD: paths.c,v 1.2 1997/10/08 08:55:36 mrg Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -42,6 +42,8 @@
 
 #include "debug.h"
 #include "rtld.h"
+
+Search_Path *_rtld_find_path(Search_Path *, const char *, size_t);
 
 Search_Path *
 _rtld_find_path(

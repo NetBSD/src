@@ -1,4 +1,4 @@
-/*	$NetBSD: rtldenv.h,v 1.1 1996/12/16 20:38:05 cgd Exp $	*/
+/*	$NetBSD: rtldenv.h,v 1.2 1997/10/08 08:55:38 mrg Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -40,6 +40,7 @@ extern char *xstrdup(const char *);
 #ifdef RTLD_LOADER
 extern void xprintf(const char *fmt, ...);
 extern void xvprintf(const char *fmt, va_list ap);
+extern void xsnprintf(char *buf, size_t buflen, const char *fmt, ...);
 extern size_t xvsnprintf(char *buf, size_t buflen, const char *fmt, va_list ap);
 extern void xwarn(const char *fmt, ...);
 extern void xwarnx(const char *fmt, ...);
@@ -58,6 +59,7 @@ extern const char *xstrerror(int error);
 
 #define	xprintf		printf
 #define	xvprintf	vprintf
+#define	xsnprintf	snprintf
 #define	xvsnprintf	vsnprintf
 #define	xwarn		warn
 #define	xwarnx		warnx
