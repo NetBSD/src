@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:44 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2000/11/13 15:05:30 jdolecek Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/com_err
 
@@ -15,7 +15,7 @@ INCS=	com_err.h com_right.h
 includes: compile_et
 
 compile_et:
-	cd ${.CURDIR}/compile_et && $(MAKE) compile_et
+	@cd ${.CURDIR}/compile_et && ${MAKE}
 
 INCSDIR=/usr/include/krb5
 
