@@ -188,7 +188,7 @@ look something like:
 
 Also, don't forget to add /usr/X11R6/bin to your path in your shell's dot
 file so that you have access to the X binaries.  Many other files in /etc
-will probably need to be modified, as well.  Many of these files are
+will probably need to be modified, as well.  Most of these files are
 described in section 5 of the manual pages.  See intro(5) for more
 information.  If you are unfamiliar with UN*X-like operating systems or
 system administration, it's recommended that you buy a book that discusses
