@@ -53,13 +53,14 @@
 #include "cache.h"
 
 #define	CACHE_LINE	16	/* bytes */
+#define	VAC_FLUSH_INCR	512	/* bytes */
 #define VADDR_MASK	0xfFFffFF	/* 28 bits */
 
 void
 cache_flush_page(pgva)
 	vm_offset_t pgva;
 {
-	register int *va, *endva;
+	register char *va, *endva;
 	register int old_dfc, ctl_dfc;
 	register int data;
 
@@ -72,13 +73,13 @@ cache_flush_page(pgva)
 	__asm __volatile ("movc %0, dfc" : : "d" (ctl_dfc));
 
 	/* Write to control space for each cache line. */
-	va = (int*) pgva;
-	endva = (int*) (pgva + NBPG);
+	va = (char *) pgva;
+	endva = (char *) (pgva + NBPG);
 	data = VAC_FLUSH_PAGE;
 
 	do {
 		__asm __volatile ("movsl %0, %1@" : : "d" (data), "a" (va));
-		va += (CACHE_LINE / sizeof(*va));
+		va += VAC_FLUSH_INCR;
 	} while (va < endva);
 
 	/* Restore destination function code. */
@@ -89,7 +90,7 @@ void
 cache_flush_segment(sgva)
 	vm_offset_t sgva;
 {
-	register int *va, *endva;
+	register char *va, *endva;
 	register int old_dfc, ctl_dfc;
 	register int data;
 
@@ -102,13 +103,13 @@ cache_flush_segment(sgva)
 	__asm __volatile ("movc %0, dfc" : : "d" (ctl_dfc));
 
 	/* Write to control space for each cache line. */
-	va = (int*) sgva;
-	endva = (int*) (sgva + cache_size);
+	va = (char *) sgva;
+	endva = (char *) (sgva + cache_size);
 	data = VAC_FLUSH_SEGMENT;
 
 	do {
 		__asm __volatile ("movsl %0, %1@" : : "d" (data), "a" (va));
-		va += (CACHE_LINE / sizeof(*va));
+		va += VAC_FLUSH_INCR;
 	} while (va < endva);
 
 	/* Restore destination function code. */
@@ -118,7 +119,7 @@ cache_flush_segment(sgva)
 void
 cache_flush_context()
 {
-	register int *va, *endva;
+	register char *va, *endva;
 	register int old_dfc, ctl_dfc;
 	register int data;
 
@@ -128,13 +129,13 @@ cache_flush_context()
 	__asm __volatile ("movc %0, dfc" : : "d" (ctl_dfc));
 
 	/* Write to control space for each cache line. */
-	va = (int*) VAC_FLUSH_BASE;
-	endva = (int*) (VAC_FLUSH_BASE + cache_size);
+	va = (char *) VAC_FLUSH_BASE;
+	endva = (char *) (VAC_FLUSH_BASE + cache_size);
 	data = VAC_FLUSH_CONTEXT;
 
 	do {
 		__asm __volatile ("movsl %0, %1@" : : "d" (data), "a" (va));
-		va += (CACHE_LINE / sizeof(*va));
+		va += VAC_FLUSH_INCR;
 	} while (va < endva);
 
 	/* Restore destination function code. */
@@ -144,7 +145,7 @@ cache_flush_context()
 static void
 cache_clear_tags()
 {
-	register int *va, *endva;
+	register char *va, *endva;
 	register int old_dfc, ctl_dfc;
 	register int data;
 
@@ -154,13 +155,13 @@ cache_clear_tags()
 	__asm __volatile ("movc %0, dfc" : : "d" (ctl_dfc));
 
 	/* Write to control space for each cache line. */
-	va = (int*) VAC_CACHE_TAGS;
-	endva = (int*) (VAC_CACHE_TAGS + cache_size);
+	va = (char *) VAC_CACHE_TAGS;
+	endva = (char *) (VAC_CACHE_TAGS + cache_size);
 	data = 0;	/* invalid tags */
 
 	do {
 		__asm __volatile ("movsl %0, %1@" : : "d" (data), "a" (va));
-		va += (CACHE_LINE / sizeof(*va));
+		va += CACHE_LINE;
 	} while (va < endva);
 
 	/* Restore destination function code. */
