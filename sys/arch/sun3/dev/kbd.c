@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.10 1995/05/24 20:51:31 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.11 1995/10/08 23:40:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -322,8 +322,13 @@ kbd_iopen()
 	error = tsleep((caddr_t)k, PZERO | PCATCH,
 				   devopn, hz);
 	if (error == EWOULDBLOCK) { 	/* no response */
-		printf("keyboard not responding\n");
-		error = EIO;
+		log(LOG_ERR, "keyboard reset failed\n");
+		/*
+		 * Allow the open anyway (to keep getty happy)
+		 * but assume the "least common denominator".
+		 */
+		k->k_state.kbd_id = KB_SUN2;
+		error = 0;
 	}
 
 	if (error == 0)
@@ -466,11 +471,9 @@ kbd_rint(register int c)
 
 	/*
 	 * Reset keyboard after serial port overrun, so we can resynch.
-	 * The printf below should be shortened and/or replaced with a
-	 * call to log() after this is tested (and how will we test it?!).
 	 */
 	if (c & (TTY_FE|TTY_PE)) {
-		printf("keyboard input parity or framing error (0x%x)\n", c);
+		log(LOG_ERR, "keyboard input error (0x%x)\n", c);
 		(void) ttyoutput(KBD_CMD_RESET, k->k_kbd);
 		(*k->k_kbd->t_oproc)(k->k_kbd);
 		return;
@@ -539,6 +542,24 @@ int
 kbdopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int error;
+
+#if 1	/* XXX - temporary hack */
+	/* XXX - Should make login chown devices in /etc/fbtab */
+	/* Require root or same UID as the kd session leader. */
+	if (p->p_ucred->cr_uid) {
+		struct tty *kd_tp;
+		struct proc *kd_p;
+		extern struct tty *kdtty();
+
+		/* Make sure kd is attached and open. */
+		kd_tp = kdtty(0);
+		if ((kd_tp == NULL) || (kd_tp->t_session == NULL))
+			return (EPERM);
+		kd_p = kd_tp->t_session->s_leader;
+		if (p->p_ucred->cr_uid != kd_p->p_ucred->cr_uid)
+			return (EACCES);
+	}
+#endif
 
 	/* Exclusive open required for /dev/kbd */
 	if (kbd_softc.k_events.ev_io)
