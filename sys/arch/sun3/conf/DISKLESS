@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.23.2.1 1998/01/27 19:13:57 gwr Exp $
+# $NetBSD: DISKLESS,v 1.23.2.2 1998/01/28 19:11:58 gwr Exp $
 
 # DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Root and swap on NFS
@@ -76,6 +76,7 @@ options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
 # Work-around for root on slow servers (insurance...)
 options 	NFS_BOOT_RWSIZE=1024
+options 	NFS_BOOT_BOOTPARAM
 
 config		netbsd root on ? type nfs
 
