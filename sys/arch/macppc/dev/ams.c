@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.9 2000/12/19 02:50:11 tsubai Exp $	*/
+/*	$NetBSD: ams.c,v 1.10 2000/12/19 02:59:23 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -134,6 +134,9 @@ amsattach(parent, self, aux)
 	case ADBMS_UCONTOUR:
 		printf("Contour mouse, default parameters\n");
 		break;
+	case ADBMS_TURBO:
+		printf("Kensington Turbo Mouse\n");
+		break;
 	case ADBMS_EXTENDED:
 		if (sc->sc_devid[0] == '\0') {
 			printf("Logitech ");
@@ -244,6 +247,23 @@ ems_init(sc)
 		sc->sc_buttons = 3;
 		sc->sc_res = 200;
 		return;
+	}
+	if (sc->handler_id == ADBMS_TURBO) {
+		/* Found Kensington Turbo Mouse */
+		static u_char data1[] =
+			{ 8, 0xe7, 0x8c, 0, 0, 0, 0xff, 0xff, 0x94 };
+		static u_char data2[] =
+			{ 8, 0xa5, 0x14, 0, 0, 0x69, 0xff, 0xff, 0x27 };
+
+		buffer[0] = 0;
+		adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, ADBFLUSH(adbaddr));
+
+		adb_op_sync((Ptr)data1, (Ptr)0, (Ptr)0, ADBLISTEN(adbaddr, 2));
+
+		buffer[0] = 0;
+		adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, ADBFLUSH(adbaddr));
+
+		adb_op_sync((Ptr)data2, (Ptr)0, (Ptr)0, ADBLISTEN(adbaddr, 2));
 	}
 	if ((sc->handler_id == ADBMS_100DPI) ||
 	    (sc->handler_id == ADBMS_200DPI)) {
