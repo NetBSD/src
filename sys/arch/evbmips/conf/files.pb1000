@@ -1,4 +1,4 @@
-#	$NetBSD: files.pb1000,v 1.1.4.4 2002/09/01 08:15:04 gehenna Exp $
+#	$NetBSD: files.pb1000,v 1.1.4.5 2002/09/01 12:15:22 gehenna Exp $
 
 file	arch/evbmips/alchemy/pb1000_intr.c
 
@@ -8,6 +8,7 @@ file	arch/evbmips/alchemy/machdep.c
 
 file	arch/mips/mips/bus_dma.c
 file	arch/evbmips/evbmips/clock.c
+file	arch/evbmips/evbmips/conf_common.c
 file	arch/evbmips/evbmips/interrupt.c
 file	arch/evbmips/evbmips/yamon.c
 
