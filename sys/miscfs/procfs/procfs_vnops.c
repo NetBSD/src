@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.91 2003/01/03 13:21:18 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.92 2003/01/03 13:54:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.91 2003/01/03 13:21:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.92 2003/01/03 13:54:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -902,16 +902,14 @@ procfs_lookup(v)
 		p = PFIND(pfs->pfs_pid);
 		if (p == NULL)
 			return ESRCH;
-		/* XXX: avoid locking issue */
-		if (p == curproc)
-			return EDEADLK;
 		if ((fp = p->p_fd->fd_ofiles[fd]) == NULL)
 			return ENOENT;
 		switch (fp->f_type) {
 		case DTYPE_VNODE:
 			fvp = (struct vnode *)fp->f_data;
 			VREF(fvp);
-			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
+			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY | 
+			    (p == curproc ? LK_CANRECURSE : 0));
 			*vpp = fvp;
 			error = 0;
 			break;
