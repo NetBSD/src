@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.17 1998/05/01 03:44:52 thorpej Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.18 1998/05/01 03:58:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -605,7 +605,7 @@ fddi_input(ifp, fh, m)
 #ifdef INET
 		case ETHERTYPE_IP:
 #ifdef GATEWAY
-			if (ipflow_fastfoward(m))
+			if (ipflow_fastforward(m))
 				return;
 #endif
 			schednetisr(NETISR_IP);
