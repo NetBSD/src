@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.52 2001/07/23 15:17:50 nathanw Exp $	*/
+/*	$NetBSD: usb.h,v 1.53 2001/11/06 12:29:48 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -158,6 +158,9 @@ typedef struct {
 #define  UDESC_STRING		0x03
 #define  UDESC_INTERFACE	0x04
 #define  UDESC_ENDPOINT		0x05
+#define  UDESC_DEVICE_QUALIFIER	0x06
+#define  UDESC_OTHER_SPEED_CONFIGURATION 0x07
+#define  UDESC_INTERFACE_POWER	0x08
 #define  UDESC_CS_DEVICE	0x21	/* class specific */
 #define  UDESC_CS_CONFIG	0x22
 #define  UDESC_CS_STRING	0x23
@@ -187,6 +190,8 @@ typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uWord		bcdUSB;
+#define UD_USB_2_0		0x0200
+#define UD_IS_USB2(d) (UGETW((d)->bcdUSB) >= UD_USB_2_0)
 	uByte		bDeviceClass;
 	uByte		bDeviceSubClass;
 	uByte		bDeviceProtocol;
@@ -308,6 +313,19 @@ typedef struct {
 	/* deprecated */ uByte		PortPowerCtrlMask[1];
 } UPACKED usb_hub_descriptor_t;
 #define USB_HUB_DESCRIPTOR_SIZE 9 /* includes deprecated PortPowerCtrlMask */
+
+typedef struct {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uWord		bcdUSB;
+	uByte		bDeviceClass;
+	uByte		bDeviceSubClass;
+	uByte		bDeviceProtocol;
+	uByte		bMaxPacketSize0;
+	uByte		bNumConfigurations;
+	uByte		bReserved;
+} UPACKED usb_device_qualifier_t;
+#define USB_DEVICE_QUALIFIER_SIZE 10
 
 typedef struct {
 	uWord		wStatus;
@@ -587,6 +605,7 @@ struct usb_event {
 #define USB_SET_IMMED		_IOW ('U', 22, int)
 #define USB_GET_REPORT		_IOWR('U', 23, struct usb_ctl_report)
 #define USB_SET_REPORT		_IOW ('U', 24, struct usb_ctl_report)
+#define USB_GET_REPORT_ID	_IOR ('U', 25, int)
 
 /* Generic USB device */
 #define USB_GET_CONFIG		_IOR ('U', 100, int)
