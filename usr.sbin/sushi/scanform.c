@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.28 2003/07/16 06:40:47 itojun Exp $       */
+/*      $NetBSD: scanform.c,v 1.29 2003/10/16 06:19:11 itojun Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -579,10 +579,13 @@ LABEL(FIELD_RECORD *x)
 	size_t l;
 
 	if (f) {
-		x->v = realloc(x->v, sizeof(char *) * (strlen(x->v)+2));
+		tmp = realloc(x->v, sizeof(char *) * (strlen(x->v)+2));
+		if (tmp == NULL)
+			bailout("realloc: %s", strerror(errno));
+		x->v = tmp;
 		l = strlen(x->v);
 		tmp = malloc(sizeof(char *) * l);
-		if (x->v == NULL || tmp == NULL)
+		if (tmp == NULL)
 			bailout("malloc: %s", strerror(errno));
 
 		if (x->required == 1)
@@ -781,7 +784,7 @@ process_preform(FORM *form, char *path)
 	char *p;
 	int fc, lcnt, i, j;
 	FIELD **f;
-	char **args;
+	char **args, **nargs;
 
 	if (lang_id == NULL) {
 		snprintf(file, sizeof(file), "%s/%s", path, FORMFILE);
@@ -796,9 +799,10 @@ process_preform(FORM *form, char *path)
 	if (args == NULL)
 		bailout("malloc: %s", strerror(errno));
 	fc = lcnt = field_count(form);
-	args = realloc(args, sizeof(char *) * (lcnt+1));
-	if (args == NULL)
+	nargs = realloc(args, sizeof(char *) * (lcnt+1));
+	if (nargs == NULL)
 		bailout("malloc: %s", strerror(errno));
+	args = nargs;
 
 	f = form_fields(form);
 	for (lcnt=0, i=0; lcnt < fc; lcnt++)
@@ -845,7 +849,7 @@ process_form(FORM *form, char *path)
 	size_t len;
 	int fc, lcnt, i, j;
 	FIELD **f;
-	char **args;
+	char **args, **nargs;
 
 	/* handle the preform somewhere else */
 	if (strcmp("pre", form_userptr(form)) == 0)
@@ -887,9 +891,10 @@ process_form(FORM *form, char *path)
 				continue;
 			p = strsep(&exec, " ");
 			for (i = 0; p != NULL; p = strsep(&exec, " "), i++) {
-				args = realloc(args, sizeof(char *) * (i+2));
-				if (args == NULL)
+				nargs = realloc(args, sizeof(char *) * (i+2));
+				if (nargs == NULL)
 					bailout("realloc: %s", strerror(errno));
+				args = nargs;
 				args[i] = strdup(p);
 			}
 			t = NULL;
@@ -902,9 +907,10 @@ process_form(FORM *form, char *path)
 		bailout(catgets(catalog, 1, 13, "no files"));
 
 	fc = lcnt = field_count(form);
-	args = realloc(args, sizeof(char *) * (lcnt+1+i));
-	if (args == NULL)
+	nargs = realloc(args, sizeof(char *) * (lcnt+1+i));
+	if (nargs == NULL)
 		bailout("malloc: %s", strerror(errno));
+	args = nargs;
 
 	f = form_fields(form);
 	for (lcnt=0; lcnt < fc; lcnt++)
@@ -1034,6 +1040,7 @@ gen_list(FTREE_ENTRY *ftp, int max, char **args)
 	int lmax = 10;
 	int cur;
 	char *p, *q;
+	char **nlist;
 
 	ftp->list = malloc(sizeof(char*) * lmax);
 	if (ftp->list == NULL)
@@ -1048,10 +1055,11 @@ gen_list(FTREE_ENTRY *ftp, int max, char **args)
 				ftp->list[i++] = strdup(q);
 		}
 		if (i == lmax - 2) {
-			lmax += 10;
-			ftp->list = realloc(ftp->list, sizeof(char*) * lmax);
-			if (ftp->list == NULL)
+			nlist = realloc(ftp->list, sizeof(char*) * (lmax + 10));
+			if (nlist == NULL)
 				bailout("realloc: %s", strerror(errno));
+			ftp->list = nlist;
+			lmax += 10;
 		}
 	}
 	ftp->list[i] = NULL;
@@ -1083,7 +1091,7 @@ gen_func(FTREE_ENTRY *ftp, int max, char **args)
 static void
 gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 {
-	char *p, *q, *qo, *po, *comm, *test;
+	char *p, *q, *qo, *po, *comm, *test, *n;
 	FILE *file;
 	char buf[PATH_MAX+30];
 #if 0
@@ -1093,6 +1101,7 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 	int i, cur;
 	int lmax = 10;
 	size_t l;
+	char **nlist;
 
 	qo = q = strdup(ftp->data);
 	l = strlen(q) + 2;
@@ -1115,15 +1124,17 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 			cur = tstring(max, p);
 			if (cur) {
 				l = strlen(comm) + strlen(args[cur-1]) + 2;
-				comm = realloc(comm, sizeof(char) * l);
-				if (comm == NULL)
+				n = realloc(comm, sizeof(char) * l);
+				if (n == NULL)
 					bailout("malloc: %s", strerror(errno));
+				comm = n;
 				(void)strlcat(comm, args[cur-1], l);
 			} else {
 				l = strlen(comm) + strlen(p) + 2;
-				comm = realloc(comm, sizeof(char) * l);
-				if (comm == NULL)
+				n = realloc(comm, sizeof(char) * l);
+				if (n == NULL)
 					bailout("malloc: %s", strerror(errno));
+				comm = n;
 				(void)strlcat(comm, p, l);
 			}
 		}
@@ -1155,10 +1166,11 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 		memcpy(ftp->list[i], p, len);
 		ftp->list[i][len - 1] = '\0';
 		if (++i == lmax - 2) {
-			lmax += 10; 
-			ftp->list = realloc(ftp->list, sizeof(char *) * lmax);
-			if (ftp->list == NULL)
+			nlist = realloc(ftp->list, sizeof(char *) * (lmax + 10));
+			if (nlist == NULL)
 				bailout("realloc: %s", strerror(errno));
+			ftp->list = nlist;
+			lmax += 10; 
 		}
 	}
 	pclose(file);
@@ -1174,7 +1186,7 @@ gen_script(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 static char *
 gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 {
-	char *p, *q, *qo, *po, *test, *comm;
+	char *p, *q, *qo, *po, *test, *comm, *n;
 	FILE *file;
 	char buf[PATH_MAX+30];
 	size_t len;
@@ -1208,15 +1220,17 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 			cur = tstring(max, p);
 			if (cur) {
 				l = strlen(comm) + strlen(args[cur-1]) + 2;
-				comm = realloc(comm, sizeof(char) * l);
-				if (comm == NULL)
+				n = realloc(comm, sizeof(char) * l);
+				if (n == NULL)
 					bailout("malloc: %s", strerror(errno));
+				comm = n;
 				(void)strlcat(comm, args[cur-1], l);
 			} else {
 				l = strlen(comm) + strlen(p) + 2;
-				comm = realloc(comm, sizeof(char) * l);
-				if (comm == NULL)
+				n = realloc(comm, sizeof(char) * l);
+				if (n == NULL)
 					bailout("malloc: %s", strerror(errno));
+				comm = n;
 				(void)strlcat(comm, p, l);
 			}
 		}
@@ -1286,7 +1300,7 @@ gen_integer(FTREE_ENTRY *ftp, int max, char **args)
 static char *
 gen_iscript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 {
-	char *p, *q, *qo, *po, *test, *comm, *tmp;
+	char *p, *q, *qo, *po, *test, *comm, *tmp, *n;
 	FILE *file;
 	char buf[PATH_MAX+30];
 /*	struct stat sb; */
@@ -1322,15 +1336,17 @@ gen_iscript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 			cur = tstring(max, p);
 			if (cur) {
 				l = strlen(comm) + strlen(args[cur-1]) + 2;
-				comm = realloc(comm, sizeof(char) * l);
-				if (comm == NULL)
+				n = realloc(comm, sizeof(char) * l);
+				if (n == NULL)
 					bailout("malloc: %s", strerror(errno));
+				comm = n;
 				(void)strlcat(comm, args[cur-1], l);
 			} else {
 				l = strlen(comm) + strlen(p) + 2;
-				comm = realloc(comm, sizeof(char) * l);
-				if (comm == NULL)
+				n = realloc(comm, sizeof(char) * l);
+				if (n == NULL)
 					bailout("malloc: %s", strerror(errno));
+				comm = n;
 				(void)strlcat(comm, p, l);
 			}
 		}

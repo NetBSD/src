@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.14 2003/06/13 07:26:41 itojun Exp $       */
+/*      $NetBSD: sushi.c,v 1.15 2003/10/16 06:19:11 itojun Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -172,6 +172,7 @@ parse_config(void)
 	int i, j;
 	char *p, *t, *word;
 	char *key;
+	char **n;
 
 	conf = fopen("/etc/sushi.conf", "r");
 	if (conf == NULL) {
@@ -204,10 +205,11 @@ parse_config(void)
 			key = strdup(word);
 			if (strcmp(key, "searchpath") == 0) {
 				word = next_word(&p);
-				searchpaths = (char **)realloc(searchpaths,
+				n = (char **)realloc(searchpaths,
 				    sizeof(char *) * (i + 2));
-				if (searchpaths == NULL)
+				if (n == NULL)
 					bailout("malloc: %s", strerror(errno));
+				searchpaths = n;
 				searchpaths[i] = (char *)malloc(sizeof(char)
 				    * len + 1);
 				if (searchpaths[i] == NULL)
