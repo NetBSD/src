@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.5 1994/06/29 06:46:32 cgd Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.5.2.1 1994/10/19 04:29:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -163,7 +163,7 @@ ffs_truncate(ap)
 	int aflags, error, allerror;
 	off_t osize;
 
-	if (length < 0)
+	if (length < 0 || length > 0xffffffffLL)
 		return (EINVAL);
 	oip = VTOI(ovp);
 	tv = time;
