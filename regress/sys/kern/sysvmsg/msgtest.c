@@ -1,4 +1,4 @@
-/*	$NetBSD: msgtest.c,v 1.4 1999/08/24 23:03:03 thorpej Exp $	*/
+/*	$NetBSD: msgtest.c,v 1.5 1999/08/24 23:17:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -179,6 +179,8 @@ main(argc, argv)
 	if (msgrcv(sender_msqid, &m, sizeof(m), MTYPE_1_ACK, 0) != sizeof(m))
 		err(1, "sender: msgrcv 1 ack");
 
+	print_msqid_ds(&m_ds, 0600);
+
 	/*
 	 * Send the second message to the receiver and wait for the ACK.
 	 */
@@ -318,6 +320,8 @@ receiver()
 		err(1, "receiver: msgrcv 1");
 
 	printf("%s\n", m.mtext);
+	if (strcmp(m.mtext, m1_str) != 0)
+		err(1, "receiver: message 1 data isn't correct");
 
 	m.mtype = MTYPE_1_ACK;
 
@@ -332,6 +336,8 @@ receiver()
 		err(1, "receiver: msgrcv 2");
 
 	printf("%s\n", m.mtext);
+	if (strcmp(m.mtext, m2_str) != 0)
+		err(1, "receiver: message 2 data isn't correct");
 
 	m.mtype = MTYPE_2_ACK;
 
