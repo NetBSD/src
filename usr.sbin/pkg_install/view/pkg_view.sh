@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.4 2003/09/08 07:09:34 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.5 2004/06/01 16:08:10 minskim Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -207,7 +207,7 @@ while [ $# -gt 0 ]; do
 		# a view.
 		#
 		case "$doit" in
-		"")	(cd ${depot_pkg_dbdir}/$1; $paxprog -rwpe '-s|\./\+VIEWS$||' '-s|\./\+REQUIRED_BY$||' ./+* ${pkg_dbdir}/$1)
+		"")	(cd ${depot_pkg_dbdir}/$1; $paxprog -rwpe '-s|\./+VIEWS$||' '-s|\./+REQUIRED_BY$||' ./+* ${pkg_dbdir}/$1)
 			$sedprog -e 's|'${depot_pkg_dbdir}/$1'|'${targetdir}'|g' < ${depot_pkg_dbdir}/$1/+CONTENTS > ${pkg_dbdir}/$1/+CONTENTS
 			echo "${depot_pkg_dbdir}/$1" > ${pkg_dbdir}/$1/+DEPOT
 			;;
