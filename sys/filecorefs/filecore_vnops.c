@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.1 1998/08/14 03:26:13 mark Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.2 1998/08/14 18:04:08 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -109,7 +109,7 @@ filecore_getattr(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);
-	register struct vattr *vap = ap->a_vap;
+	struct vattr *vap = ap->a_vap;
 	struct filecore_mnt *fcmp = ip->i_mnt;
 
 	vap->va_fsid	= ip->i_dev;
@@ -126,7 +126,7 @@ filecore_getattr(v)
 
 	vap->va_size	= (u_quad_t) ip->i_size;
 	vap->va_flags	= 0;
-	vap->va_gen = 1;
+	vap->va_gen	= 1;
 	vap->va_blocksize = fcmp->blksize;
 	vap->va_bytes	= vap->va_size;
 	vap->va_type	= vp->v_type;
@@ -147,9 +147,9 @@ filecore_read(v)
 		struct ucred *a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	register struct uio *uio = ap->a_uio;
-	register struct filecore_node *ip = VTOI(vp);
-	register struct filecore_mnt *fcmp;
+	struct uio *uio = ap->a_uio;
+	struct filecore_node *ip = VTOI(vp);
+	struct filecore_mnt *fcmp;
 	struct buf *bp;
 	daddr_t lbn, rablock;
 	off_t diff;
@@ -186,14 +186,14 @@ filecore_read(v)
 				error = breadn(vp, lbn, size, &rablock,
 					       &rasize, 1, NOCRED, &bp);
 #ifdef FILECORE_DEBUG_BR
-		printf("breadn(%p, %x, %ld, CRED, %p)=%d\n",vp,
-		       lbn, size, bp, error);
+				printf("breadn(%p, %x, %ld, CRED, %p)=%d\n",
+				    vp, lbn, size, bp, error);
 #endif
 			} else {
 				error = bread(vp, lbn, size, NOCRED, &bp);
 #ifdef FILECORE_DEBUG_BR
-		printf("bread(%p, %x, %ld, CRED, %p)=%d\n",vp, lbn, size,
-		       bp, error);
+				printf("bread(%p, %x, %ld, CRED, %p)=%d\n",
+				    vp, lbn, size, bp, error);
 #endif
 			}
 		}
@@ -201,7 +201,7 @@ filecore_read(v)
 		n = min(n, size - bp->b_resid);
 		if (error) {
 #ifdef FILECORE_DEBUG_BR
-			printf("brelse(%p) vn1\n",bp);
+			printf("brelse(%p) vn1\n", bp);
 #endif
 			brelse(bp);
 			return (error);
@@ -209,7 +209,7 @@ filecore_read(v)
 
 		error = uiomove(bp->b_data + on, (int)n, uio);
 #ifdef FILECORE_DEBUG_BR
-		printf("brelse(%p) vn2\n",bp);
+		printf("brelse(%p) vn2\n", bp);
 #endif
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
@@ -245,7 +245,7 @@ filecore_readdir(v)
 		off_t **a_cookies;
 		int *a_ncookies;
 	} */ *ap = v;
-	register struct uio *uio = ap->a_uio;
+	struct uio *uio = ap->a_uio;
 	struct vnode *vdp = ap->a_vp;
 	struct filecore_node *dp;
 	struct filecore_mnt *fcmp;
@@ -262,11 +262,11 @@ filecore_readdir(v)
 	if ((dp->i_dirent.attr & FILECORE_ATTR_DIR) == 0)
 		return (ENOTDIR);
 
-	if (uio->uio_offset % FILECORE_DIRENT_SIZE !=0 ||
+	if (uio->uio_offset % FILECORE_DIRENT_SIZE != 0 ||
 	    uio->uio_resid < FILECORE_DIRENT_SIZE)
 		return (EINVAL);
-	nent=uio->uio_resid / FILECORE_DIRENT_SIZE;
-	i=uio->uio_offset / FILECORE_DIRENT_SIZE;
+	nent = uio->uio_resid / FILECORE_DIRENT_SIZE;
+	i = uio->uio_offset / FILECORE_DIRENT_SIZE;
 	uio->uio_resid=nent * FILECORE_DIRENT_SIZE;
 
 	fcmp = dp->i_mnt;
@@ -284,8 +284,8 @@ filecore_readdir(v)
 		    M_WAITOK);
 	}
 
-	nent+=i;
-	for (; i<nent; i++) {
+	nent += i;
+	for (; i < nent; i++) {
 		switch (i) {
 		case 0:
 			/* Fake the '.' entry */
@@ -303,14 +303,14 @@ filecore_readdir(v)
 			break;
 		default:
 			de.d_fileno = dp->i_dirent.addr +
-					((i-2)<<FILECORE_INO_INDEX);
-			dep = fcdirentry(bp->b_data, i-2);
+					((i - 2) << FILECORE_INO_INDEX);
+			dep = fcdirentry(bp->b_data, i - 2);
 			if (dep->attr & FILECORE_ATTR_DIR)
 				de.d_type = DT_DIR;
 			else
 				de.d_type = DT_REG;
 			if (filecore_fn2unix(dep->name, de.d_name,
-					     &de.d_namlen))
+			    &de.d_namlen))
 				goto out;
 			break;
 		}
@@ -334,13 +334,13 @@ out:
 			*ap->a_cookies = NULL;
 		}
 	}
-	if (dep != NULL && dep->name[0]==0)
+	if (dep != NULL && dep->name[0] == 0)
 		*ap->a_eofflag = 1;
 	else
 		*ap->a_eofflag = 0;
 
 #ifdef FILECORE_DEBUG_BR
-	printf("brelse(%p) vn3\n",bp);
+	printf("brelse(%p) vn3\n", bp);
 #endif
 	brelse (bp);
 
@@ -412,7 +412,7 @@ filecore_lock(v)
 		int a_flags;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 
 	return (lockmgr(&VTOI(vp)->i_lock, ap->a_flags, &vp->v_interlock));
 }
@@ -446,9 +446,9 @@ filecore_strategy(v)
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
 	} */ *ap = v;
-	register struct buf *bp = ap->a_bp;
-	register struct vnode *vp = bp->b_vp;
-	register struct filecore_node *ip;
+	struct buf *bp = ap->a_bp;
+	struct vnode *vp = bp->b_vp;
+	struct filecore_node *ip;
 	int error;
 
 	ip = VTOI(vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore.h,v 1.1 1998/08/14 03:26:12 mark Exp $	*/
+/*	$NetBSD: filecore.h,v 1.2 1998/08/14 18:04:04 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -85,7 +85,7 @@ struct filecore_disc_record {
 	unsigned disc_size_2;		/* disc size in bytes (high word) */
 	unsigned share_size:8;		/* base 2 log sharing granularity */
 	unsigned big_flag:8;		/* 1 if disc > 512Mb */
-	char	 reserved[18];  
+	char	 reserved[18];
 };
 
 struct filecore_direntry {

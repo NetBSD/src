@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_mount.h,v 1.1 1998/08/14 03:26:13 mark Exp $	*/
+/*	$NetBSD: filecore_mount.h,v 1.2 1998/08/14 18:04:05 mark Exp $	*/
 
 /*
  * Copyright (c) 1998 Andrew McMurry
@@ -42,14 +42,14 @@
 struct filecore_args {
 	char	*fspec;			/* block special device to mount */
 	struct	export_args export;	/* network export info */
-        uid_t   uid;			/* uid that owns filecore files */
-        gid_t   gid;			/* gid that owns filecore files */
+	uid_t	uid;			/* uid that owns filecore files */
+	gid_t	gid;			/* gid that owns filecore files */
 	int	flags;			/* mounting flags, see below */
 };
 
-#define FILECOREMNT_ROOT 0
-#define FILECOREMNT_OWNACCESS 1		/* Only user has Owner access */
-#define FILECOREMNT_ALLACCESS 2		/* World has Owner access */
-#define FILECOREMNT_OWNREAD 4		/* All files have Owner read access */
-#define FILECOREMNT_USEUID 8		/* Use uid of mount process */
-#define FILECOREMNT_FILETYPE 16		/* Include filetype in filename */
+#define	FILECOREMNT_ROOT	0
+#define	FILECOREMNT_OWNACCESS	1	/* Only user has Owner access */
+#define	FILECOREMNT_ALLACCESS	2	/* World has Owner access */
+#define	FILECOREMNT_OWNREAD	4	/* All files have Owner read access */
+#define	FILECOREMNT_USEUID	8	/* Use uid of mount process */
+#define	FILECOREMNT_FILETYPE	16	/* Include filetype in filename */

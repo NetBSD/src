@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.1 1998/08/14 03:26:13 mark Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.2 1998/08/14 18:04:07 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -204,12 +204,12 @@ filecore_mount(mp, path, data, ndp, p)
  */
 static int
 filecore_mountfs(devvp, mp, p, argp)
-	register struct vnode *devvp;
+	struct vnode *devvp;
 	struct mount *mp;
 	struct proc *p;
 	struct filecore_args *argp;
 {
-	register struct filecore_mnt *fcmp = (struct filecore_mnt *)0;
+	struct filecore_mnt *fcmp = (struct filecore_mnt *)0;
 	struct buf *bp = NULL;
 	dev_t dev = devvp->v_rdev;
 	int error = EINVAL;
@@ -243,7 +243,7 @@ filecore_mountfs(devvp, mp, p, argp)
 	error = bread(devvp, FILECORE_BOOTBLOCK_BLKN,
 			   FILECORE_BOOTBLOCK_SIZE, NOCRED, &bp);
 #ifdef FILECORE_DEBUG_BR
-		printf("bread(%p, %x, %d, CRED, %p)=%d\n",devvp,
+		printf("bread(%p, %x, %d, CRED, %p)=%d\n", devvp,
 		       FILECORE_BOOTBLOCK_BLKN, FILECORE_BOOTBLOCK_SIZE,
 		       bp, error);
 #endif
@@ -254,45 +254,47 @@ filecore_mountfs(devvp, mp, p, argp)
 		goto out;
 	}
 	fcdr = (struct filecore_disc_record *)(bp->b_data+FILECORE_BB_DISCREC);
-	map = ((((8<<fcdr->log2secsize)-fcdr->zone_spare)*(fcdr->nzones/2) -
-	      8*FILECORE_DISCREC_SIZE) << fcdr->log2bpmb) >> fcdr->log2secsize;
+	map = ((((8 << fcdr->log2secsize) - fcdr->zone_spare)
+	    * (fcdr->nzones / 2) - 8 * FILECORE_DISCREC_SIZE)
+	    << fcdr->log2bpmb) >> fcdr->log2secsize;
 	log2secsize = fcdr->log2secsize;
 	bp->b_flags |= B_AGE;
 #ifdef FILECORE_DEBUG_BR
-	printf("brelse(%p) vf1\n",bp);
+	printf("brelse(%p) vf1\n", bp);
 #endif
 	brelse(bp);
 	bp = NULL;
 
 	/* Read the bootblock in the map */
-	error = bread(devvp, map, 1<<log2secsize, NOCRED, &bp);
+	error = bread(devvp, map, 1 << log2secsize, NOCRED, &bp);
 #ifdef FILECORE_DEBUG_BR
-		printf("bread(%p, %x, %d, CRED, %p)=%d\n",devvp,
-		       map, 1<<log2secsize, bp, error);
+		printf("bread(%p, %x, %d, CRED, %p)=%d\n", devvp,
+		       map, 1 << log2secsize, bp, error);
 #endif
 	if (error != 0)
 		goto out;
-       	fcdr = (struct filecore_disc_record *)(bp->b_data+4);
+       	fcdr = (struct filecore_disc_record *)(bp->b_data + 4);
 	fcmp = malloc(sizeof *fcmp, M_FILECOREMNT, M_WAITOK);
 	memset((caddr_t)fcmp, 0, sizeof *fcmp);
 	if (fcdr->log2bpmb > fcdr->log2secsize)
 		fcmp->log2bsize = fcdr->log2bpmb;
 	else	fcmp->log2bsize = fcdr->log2secsize;
-	fcmp->blksize = 1<<fcmp->log2bsize;
+	fcmp->blksize = 1 << fcmp->log2bsize;
 	memcpy((caddr_t)&fcmp->drec, (caddr_t)fcdr, sizeof(*fcdr));
-	fcmp->map=map;
-	fcmp->idspz=((8<<fcdr->log2secsize)-fcdr->zone_spare)/(fcdr->idlen+1);
-	fcmp->mask=(1<<fcdr->idlen)-1;
+	fcmp->map = map;
+	fcmp->idspz = ((8 << fcdr->log2secsize) - fcdr->zone_spare)
+	    / (fcdr->idlen + 1);
+	fcmp->mask = (1 << fcdr->idlen) - 1;
 	if (fcdr->big_flag & 1) {
-	  fcmp->nblks=((((u_int64_t)fcdr->disc_size_2)<<32)+fcdr->disc_size) /
-		fcmp->blksize;
+		fcmp->nblks = ((((u_int64_t)fcdr->disc_size_2) << 32)
+		    + fcdr->disc_size) / fcmp->blksize;
 	} else {
-	  fcmp->nblks=fcdr->disc_size / fcmp->blksize;
+		fcmp->nblks=fcdr->disc_size / fcmp->blksize;
 	}
 
 	bp->b_flags |= B_AGE;
 #ifdef FILECORE_DEBUG_BR
-	printf("brelse(%p) vf2\n",bp);
+	printf("brelse(%p) vf2\n", bp);
 #endif
 	brelse(bp);
 	bp = NULL;
@@ -307,11 +309,11 @@ filecore_mountfs(devvp, mp, p, argp)
 	fcmp->fc_devvp = devvp;
 	fcmp->fc_mntflags = argp->flags;
 	if (argp->flags & FILECOREMNT_USEUID) {
-	  fcmp->fc_uid = p->p_cred->p_ruid;
-	  fcmp->fc_gid = p->p_cred->p_rgid;
+		fcmp->fc_uid = p->p_cred->p_ruid;
+		fcmp->fc_gid = p->p_cred->p_rgid;
 	} else {
-	  fcmp->fc_uid = argp->uid;
-	  fcmp->fc_gid = argp->gid;
+		fcmp->fc_uid = argp->uid;
+		fcmp->fc_gid = argp->gid;
 	}
 	
 	devvp->v_specflags |= SI_MOUNTEDON;
@@ -320,7 +322,7 @@ filecore_mountfs(devvp, mp, p, argp)
 out:
 	if (bp) {
 #ifdef FILECORE_DEBUG_BR
-		printf("brelse(%p) vf3\n",bp);
+		printf("brelse(%p) vf3\n", bp);
 #endif
 		brelse(bp);
 	}
@@ -355,7 +357,7 @@ filecore_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	register struct filecore_mnt *fcmp;
+	struct filecore_mnt *fcmp;
 	int error, flags = 0;
 	
 	if (mntflags & MNT_FORCE)
@@ -418,10 +420,10 @@ filecore_quotactl(mp, cmd, uid, arg, p)
 int
 filecore_statfs(mp, sbp, p)
 	struct mount *mp;
-	register struct statfs *sbp;
+	struct statfs *sbp;
 	struct proc *p;
 {
-	register struct filecore_mnt *fcmp = VFSTOFILECORE(mp);
+	struct filecore_mnt *fcmp = VFSTOFILECORE(mp);
 
 #ifdef COMPAT_09
 	sbp->f_type = 255;
@@ -473,7 +475,7 @@ struct ifid {
 /* ARGSUSED */
 int
 filecore_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
-	register struct mount *mp;
+	struct mount *mp;
 	struct fid *fhp;
 	struct mbuf *nam;
 	struct vnode **vpp;
@@ -481,8 +483,8 @@ filecore_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	struct ucred **credanonp;
 {
 	struct ifid *ifhp = (struct ifid *)fhp;
-	register struct netcred *np;
-	register struct filecore_mnt *fcmp = VFSTOFILECORE(mp);
+	struct netcred *np;
+	struct filecore_mnt *fcmp = VFSTOFILECORE(mp);
 	struct vnode *nvp;
 	struct filecore_node *ip;
 	int error;
@@ -510,12 +512,12 @@ filecore_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 }
 
 /* This looks complicated. Look at other vgets as well as the iso9660 one.
-
-   The filecore inode number is made up of 1 byte directory entry index and
-   3 bytes of the internal disc address of the directory. On a read-only
-   filesystem this is unique. For a read-write version we may not be able to
-   do vget, see msdosfs.
-*/
+ *
+ * The filecore inode number is made up of 1 byte directory entry index and
+ * 3 bytes of the internal disc address of the directory. On a read-only
+ * filesystem this is unique. For a read-write version we may not be able to
+ * do vget, see msdosfs.
+ */
 
 int
 filecore_vget(mp, ino, vpp)
@@ -523,7 +525,7 @@ filecore_vget(mp, ino, vpp)
 	ino_t ino;
 	struct vnode **vpp;
 {
-	register struct filecore_mnt *fcmp;
+	struct filecore_mnt *fcmp;
 	struct filecore_node *ip;
 	struct buf *bp;
 	struct vnode *vp;
@@ -536,7 +538,8 @@ filecore_vget(mp, ino, vpp)
 		return (0);
 
 	/* Allocate a new vnode/filecore_node. */
-	if ((error=getnewvnode(VT_FILECORE,mp,filecore_vnodeop_p,&vp)) != 0) {
+	if ((error = getnewvnode(VT_FILECORE, mp, filecore_vnodeop_p, &vp))
+	    != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -559,22 +562,22 @@ filecore_vget(mp, ino, vpp)
 	 */
 	filecore_ihashins(ip);
 
-	if (ino==FILECORE_ROOTINO) {
+	if (ino == FILECORE_ROOTINO) {
 		/* Here we need to construct a root directory inode */
-		memcpy((caddr_t)ip->i_dirent.name,(caddr_t)"root",4);
-		ip->i_dirent.load=0;
-		ip->i_dirent.exec=0;
-		ip->i_dirent.len=FILECORE_DIR_SIZE;
-		ip->i_dirent.addr=fcmp->drec.root;
-		ip->i_dirent.attr=FILECORE_ATTR_DIR | FILECORE_ATTR_READ;
+		memcpy((caddr_t)ip->i_dirent.name, (caddr_t)"root", 4);
+		ip->i_dirent.load = 0;
+		ip->i_dirent.exec = 0;
+		ip->i_dirent.len = FILECORE_DIR_SIZE;
+		ip->i_dirent.addr = fcmp->drec.root;
+		ip->i_dirent.attr = FILECORE_ATTR_DIR | FILECORE_ATTR_READ;
 
 	} else {
 		/* Read in Data from Directory Entry */
-		if ((error=filecore_bread(fcmp, ino & FILECORE_INO_MASK,
-				       FILECORE_DIR_SIZE, NOCRED, &bp)) != 0) {
+		if ((error = filecore_bread(fcmp, ino & FILECORE_INO_MASK,
+		    FILECORE_DIR_SIZE, NOCRED, &bp)) != 0) {
 			vput(vp);
 #ifdef FILECORE_DEBUG_BR
-			printf("brelse(%p) vf4\n",bp);
+			printf("brelse(%p) vf4\n", bp);
 #endif
 			brelse(bp);
 			*vpp = NULL;
@@ -582,10 +585,10 @@ filecore_vget(mp, ino, vpp)
 		}
 		
 		memcpy((caddr_t)&ip->i_dirent,
-		    (caddr_t)fcdirentry(bp->b_data, ino>>FILECORE_INO_INDEX),
+		    (caddr_t)fcdirentry(bp->b_data, ino >> FILECORE_INO_INDEX),
 		    sizeof(struct filecore_direntry));
 #ifdef FILECORE_DEBUG_BR
-		printf("brelse(%p) vf5\n",bp);
+		printf("brelse(%p) vf5\n", bp);
 #endif
 		brelse(bp);
 	}
@@ -599,7 +602,8 @@ filecore_vget(mp, ino, vpp)
 	 * Setup type
 	 */
 	vp->v_type = VREG;
-	if (ip->i_dirent.attr & FILECORE_ATTR_DIR) vp->v_type = VDIR;
+	if (ip->i_dirent.attr & FILECORE_ATTR_DIR)
+		vp->v_type = VDIR;
 
 	/*
 	 * Initialize the associated vnode
@@ -642,8 +646,8 @@ filecore_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
-	register struct filecore_node *ip = VTOI(vp);
-	register struct ifid *ifhp;
+	struct filecore_node *ip = VTOI(vp);
+	struct ifid *ifhp;
 	
 	ifhp = (struct ifid *)fhp;
 	ifhp->ifid_len = sizeof(struct ifid);
