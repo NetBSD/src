@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.40 1995/02/21 21:49:10 brezak Exp $
+#	$NetBSD: files.i386.newconf,v 1.41 1995/02/28 23:10:28 cgd Exp $
 #
 # new style config file for i386 architecture
 #
@@ -217,3 +217,15 @@ file	compat/ibcs2/ibcs2_exec.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_ioctl.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_misc.c	compat_ibcs2
 file	compat/ibcs2/ibcs2_sysent.c	compat_ibcs2
+
+file	compat/linux/linux_exec.c		compat_linux
+file	compat/linux/linux_file.c		compat_linux
+file	compat/linux/linux_sysent.c		compat_linux
+file	compat/linux/linux_ioctl.c		compat_linux
+file	compat/linux/linux_misc.c		compat_linux
+file	compat/linux/linux_signal.c		compat_linux
+file	compat/linux/linux_syscalls.c		compat_linux
+file	compat/linux/linux_util.c		compat_linux
+file	compat/linux/linux_error.c		compat_linux
+file	compat/linux/linux_socket.c		compat_linux
+file	compat/linux/linux_ipc.c		compat_linux
