@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.9 2003/04/06 18:33:24 tshiozak Exp $	*/
+/*	$NetBSD: lex.l,v 1.10 2003/04/21 02:03:41 christos Exp $	*/
 
 %{
 /*-
@@ -42,13 +42,13 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
+#ifndef lint
 #if 0
 static char sccsid[] = "@(#)lex.l	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lex.l,v 1.9 2003/04/06 18:33:24 tshiozak Exp $");
+__RCSID("$NetBSD: lex.l,v 1.10 2003/04/21 02:03:41 christos Exp $");
 #endif
-#endif /* LIBC_SCCS and not lint */
+#endif /* not lint */
 
 #include "locale/runetype.h"
 #include <stdio.h>
