@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.4 1999/03/13 22:43:30 is Exp $	*/
+/*	$NetBSD: siop2.c,v 1.5 1999/03/22 19:30:57 is Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -177,7 +177,7 @@ void siopng_dump_trace __P((void));
 
 static char *siopng_chips[] = {
 	"720", "720SE", "770", "0x3",
-	"0x4", "0x5", "0x6", "0x7",
+	"810A", "0x5", "0x6", "0x7",
 	"0x8", "0x9", "0xA", "0xB",
 	"0xC", "0xD", "0xE", "0xF",
 };
