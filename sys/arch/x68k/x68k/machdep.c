@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 1999/03/16 16:30:23 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 1999/03/17 12:30:31 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -138,7 +138,7 @@ vm_map_t buffer_map;
 
 extern paddr_t avail_start;
 
-#ifdef MACHINE_NONCONTIG
+#ifdef EXTENDED_MEMORY
 extern int numranges;
 extern u_long low[8];
 extern u_long high[8];
@@ -236,7 +236,7 @@ consinit()
 	 * Tell the VM system about available physical memory.
 	 */
 #if defined(UVM)
-#ifdef MACHINE_NONCONTIG
+#ifdef EXTENDED_MEMORY
 	for (i = 0; i < numranges; i++) {
 		paddr_t startmem = i == 0 ? avail_start : low[i];
 
@@ -250,7 +250,7 @@ consinit()
 			VM_FREELIST_DEFAULT);
 #endif
 #else	/* not UVM */
-#ifdef MACHINE_NONCONTIG
+#ifdef EXTENDED_MEMORY
 	for (i = 0; i < numranges; i++) {
 		paddr_t startmem = i == 0 ? avail_start : low[i];
 
@@ -291,7 +291,7 @@ cpu_startup()
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-#ifdef MACHINE_NONCONTIG
+#ifdef EXTENDED_MEMORY
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
 		    high[numranges - 1] + i * NBPG, VM_PROT_ALL, TRUE);
 #else
@@ -838,7 +838,7 @@ reserve_dumppages(p)
 	return (p + BYTES_PER_DUMP);
 }
 
-#ifdef MACHINE_NONCONTIG
+#ifdef EXTENDED_MEMORY
 static int find_range __P((paddr_t));
 static int find_next_range __P((paddr_t));
 
@@ -920,7 +920,7 @@ dumpsys()
 	blkno = dumplo;
 	dump = bdevsw[major(dumpdev)].d_dump;
 	for (i = 0; i < bytes; i += n) {
-#ifdef MACHINE_NONCONTIG
+#ifdef EXTENDED_MEMORY
 		/*
 		 * Avoid dumping "holes."
 		 */
