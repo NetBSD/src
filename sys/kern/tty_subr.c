@@ -19,7 +19,7 @@
  * 4. The name of Theo de Raadt may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- *	$Id: tty_subr.c,v 1.3 1993/12/18 04:22:19 mycroft Exp $
+ *	$Id: tty_subr.c,v 1.4 1994/01/07 18:03:56 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -274,7 +274,7 @@ putc(c, clp)
 	if (clp->c_cc == 0) {
 		if (!clp->c_cs) {
 #if defined(DIAGNOSTIC) || 1
-			printf("b_to_q: required clalloc\n");
+			printf("putc: required clalloc\n");
 #endif
 			if(clalloc(clp, 1024, 1)) {
 out:
