@@ -41,7 +41,7 @@ int rhbufi;			/* rhs substitution buffer index */
 int
 extract_subst_tail(flagp, np)
 	int *flagp;
-	int *np;
+	long *np;
 {
 	char delimiter;
 
