@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 1999/06/07 20:16:13 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.20 1999/08/23 22:29:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -58,7 +58,6 @@
 #include <sys/disk.h>
 #include <sys/dkstat.h>
 #include <sys/conf.h>
-#include <sys/dmap.h>
 #include <sys/reboot.h>
 #include <sys/socket.h>
 #include <sys/malloc.h>
