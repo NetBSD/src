@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.15.2.3 2000/10/18 17:04:38 tv Exp $	*/
+/*	$NetBSD: ping6.c,v 1.15.2.4 2000/12/15 05:01:30 he Exp $	*/
 /*	$KAME: ping6.c,v 1.91 2000/10/07 06:23:06 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.15.2.3 2000/10/18 17:04:38 tv Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.15.2.4 2000/12/15 05:01:30 he Exp $");
 #endif
 #endif
 
@@ -488,11 +488,13 @@ main(argc, argv)
 #ifdef IPSEC_POLICY_IPSEC
 		case 'P':
 			options |= F_POLICY;
-			if (!strncmp("in", optarg, 2))
-				policy_in = strdup(optarg);
-			else if (!strncmp("out", optarg, 3))
-				policy_out = strdup(optarg);
-			else
+			if (!strncmp("in", optarg, 2)) {
+				if ((policy_in = strdup(optarg)) == NULL)
+					errx(1, "strdup");
+			} else if (!strncmp("out", optarg, 3)) {
+				if ((policy_out = strdup(optarg)) == NULL)
+					errx(1, "strdup");
+			} else
 				errx(1, "invalid security policy");
 			break;
 #else
@@ -1154,25 +1156,21 @@ dnsdecode(sp, ep, base, buf, bufsiz)
 	u_char *buf;
 	size_t bufsiz;
 {
-	int i, l;
+	int i;
 	const u_char *cp;
-	char *q;
-	const char *eq;
 	char cresult[MAXDNAME + 1];
 	const u_char *comp;
 
 	cp = *sp;
-	q = buf;
-	eq = buf + bufsiz;
+	*buf = '\0';
 
 	if (cp >= ep)
 		return NULL;
 	while (cp < ep) {
 		i = *cp;
 		if (i == 0 || cp != *sp) {
-			if (q >= eq - 1)
+			if (strlcat(buf, ".", bufsiz) >= bufsiz)
 				return NULL;	/*result overrun*/
-			*q++ = '.';
 		}
 		if (i == 0)
 			break;
@@ -1187,31 +1185,25 @@ dnsdecode(sp, ep, base, buf, bufsiz)
 			if (dnsdecode(&comp, cp, base, cresult,
 			    sizeof(cresult)) == NULL)
 				return NULL;
-			if (eq - q < strlen(cresult) + 1)
+			if (strlcat(buf, cresult, bufsiz) >= bufsiz)
 				return NULL;	/*result overrun*/
-			strcpy(q, cresult);	/*XXX should be strlcpy*/
-			q += strlen(q);
 			break;
 		} else if ((i & 0x3f) == i) {
 			if (i > ep - cp)
 				return NULL;	/*source overrun*/
 			while (i-- > 0 && cp < ep) {
-				if (eq - q < (isprint(*cp) ? 2 : 5))
-					return NULL;	/*result overrun*/
-				l = snprintf(q, eq - q,
+				(void)snprintf(cresult, sizeof(cresult),
 				    isprint(*cp) ? "%c" : "\\%03o", *cp & 0xff);
+				if (strlcat(buf, cresult, bufsiz) >= bufsiz)
+					return NULL;	/*result overrun*/
 				cp++;
-				q += l;
 			}
 		} else
 			return NULL;	/*invalid label*/
 	}
-	if (q >= eq)
-		return NULL;	/*result overrun*/
 	if (i != 0)
 		return NULL;	/*not terminated*/
 	cp++;
-	*q = '\0';
 	*sp = cp;
 	return buf;
 }
@@ -1682,6 +1674,9 @@ get_hoplim(mhdr)
 
 	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(mhdr); cm;
 	     cm = (struct cmsghdr *)CMSG_NXTHDR(mhdr, cm)) {
+		if (cm->cmsg_len == 0)
+			return(-1);
+
 		if (cm->cmsg_level == IPPROTO_IPV6 &&
 		    cm->cmsg_type == IPV6_HOPLIMIT &&
 		    cm->cmsg_len == CMSG_LEN(sizeof(int)))
@@ -1699,6 +1694,9 @@ get_rcvpktinfo(mhdr)
 
 	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(mhdr); cm;
 	     cm = (struct cmsghdr *)CMSG_NXTHDR(mhdr, cm)) {
+		if (cm->cmsg_len == 0)
+			return(NULL);
+
 		if (cm->cmsg_level == IPPROTO_IPV6 &&
 		    cm->cmsg_type == IPV6_PKTINFO &&
 		    cm->cmsg_len == CMSG_LEN(sizeof(struct in6_pktinfo)))
@@ -1929,7 +1927,7 @@ pr_icmph(icp, end)
 		if (!inet_ntop(AF_INET6, &red->nd_rd_target, ntop_buf,
 		    sizeof(ntop_buf)))
 			strncpy(ntop_buf, "?", sizeof(ntop_buf));
-		(void)printf("New Target: %s", ntop_buf);
+		(void)printf(" New Target: %s", ntop_buf);
 		break;
 	case ICMP6_NI_QUERY:
 		(void)printf("Node Information Query");
