@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.2 2003/01/18 10:34:19 thorpej Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.3 2003/06/13 07:45:17 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,26 +60,6 @@
 	illegal
 
 /*
- * void	pthread__switch(pthread_t self, pthread_t next);
- *
- * Plain switch that doesn't do any special checking or handle
- * spin-preemption. It isn't used much by normal code, actually; it's
- * main purpose is to be a basic switch engine when the MI code is
- * already dealing with spin-preemption or other gunk.  
- */
-
-ENTRY(pthread__switch)
-	movl	%sp@(4),%a0		/* a0 = self */
-	movl	%sp@(8),%a1		/* a1 = next */
-	lea	%sp@(-RND_CTXSIZE),%sp	/* Allocate space for the ucontext_t */
-	movl	%sp,%a0@(PT_UC)
-	movl	%a1@(PT_UC),%sp@-
-	movl	%a0@(PT_UC),%sp@-
-	jbsr	PIC_PLT(_C_LABEL(_swapcontext_u))
-	lea	%sp@(RND_CTXSIZE+8),%sp	/* Pop ucontext_t and args */
-	rts
-
-/*
  * Utility macro to switch to the stack of another thread.
  * WARNING: This is more subtle than it looks.
  *
@@ -125,6 +105,54 @@ ENTRY(pthread__switch)
 #define STACK_SWITCH(pt,tmp)			\
 	movl	%pt@(PT_UC),%tmp	;	\
 	lea	%tmp@(-STACKSPACE),%sp
+
+/*
+ * void	pthread__switch(pthread_t self, pthread_t next);
+ *
+ * Plain switch that doesn't do any special checking or handle
+ * spin-preemption. It isn't used much by normal code, actually; it's
+ * main purpose is to be a basic switch engine when the MI code is
+ * already dealing with spin-preemption or other gunk.  
+ */
+
+ENTRY(pthread__switch)
+	lea	%sp@(-RND_CTXSIZE),%sp	/* Allocate space for the ucontext_t */
+
+	/*
+	 * Save `self's context
+	 */
+	movl	%sp,%sp@-
+	jbsr	PIC_PLT(_C_LABEL(_getcontext_u))
+	addql	#4,%sp
+
+	/*
+	 * Edit the context so that it continues as if returning from
+	 * the _setcontext_u below.  
+	 */
+	lea	%pc@(Lswitch_return_point),%a0
+	movl	%a0,%sp@(UC_PC)
+
+	movl	%sp@(RND_CTXSIZE+4),%a0	/* `self': Thread to switch from */
+	movl	%sp@(RND_CTXSIZE+8),%a1	/* `next': Thread to switch to */
+	movl	%sp,%a2			/* a3 = &context */
+
+	STACK_SWITCH(a1,a3)		/* side effect: a3 = next->pt_uc */
+
+	movl	%a2,%a0@(PT_UC)		/* self->pt_uc = &context */
+
+	/*
+	 * Restore `next's context
+	 */
+	pea	%a3@
+	jbsr	PIC_PLT(_C_LABEL(_setcontext_u))
+	NOTREACHED
+
+ENTRY_NOPROFILE(pthread__switch_return_point)
+Lswitch_return_point:
+	/* We're back on the original stack. */
+	lea	%sp@(RND_CTXSIZE+4),%sp	/* Ditch the ucontext_t */
+	rts
+
 
 /*
  * Helper switch code used by pthread__locked_switch() and 
@@ -209,9 +237,9 @@ ENTRY(pthread__locked_switch)
 	 * PT_SWITCHTO will be stomped by another switch_lock and
 	 * preemption.
          */
-	movl	%a1,%a2@(PT_SWITCHTO)
-	movl	%a3,%a2@(PT_SWITCHTOUC)
 	movl	%a0,%a2@(PT_HELDLOCK)
+	movl	%a3,%a2@(PT_SWITCHTOUC)
+	movl	%a1,%a2@(PT_SWITCHTO)
 	subql	#1,%a2@(PT_SPINLOCKS)
 
 	/* Save the context we previously stored in self->pt_uc
@@ -245,8 +273,8 @@ Llocked_no_old_preempt:
 	beqs	Llocked_no_new_preempt	/* Yup */
 
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	movl	%a1,%a1@(PT_SWITCHTO)	/* next->pt_switchto = next */
 	movl	%a3,%a1@(PT_SWITCHTOUC)
+	movl	%a1,%a1@(PT_SWITCHTO)	/* next->pt_switchto = next */
 	movl	%d0,%a2
 	jbra	Lpthread__switch_away_no_decrement
 
@@ -286,10 +314,10 @@ ENTRY(pthread__upcall_switch)
 	/* Yes, it was. Stash the thread we were going to
 	 * switch to, and go to the next thread in the chain.
 	 */
-	movl	%a3,%a2@(PT_SWITCHTO)
-	movl	%a4,%a2@(PT_SWITCHTOUC)
 	moveql	#PT_STATE_RECYCLABLE,%d1
 	movl	%d1,%a2@(PT_STATE)
+	movl	%a4,%a2@(PT_SWITCHTOUC)
+	movl	%a3,%a2@(PT_SWITCHTO)
 	movl	%a3,%a1			/* from(a1) = next */
 	movl	%d0,%a2			/* to(a2)   = self->pt_next */
 	jbra	Lpthread__switch_away_decrement
@@ -310,8 +338,8 @@ Lupcall_no_old_preempt:
 	beqs	Lupcall_no_new_preempt
 
 	/* Yes, we were. Bummer. Go to the next element in the chain. */
-	movl	%a3,%a3@(PT_SWITCHTO)
 	movl	%a4,%a3@(PT_SWITCHTOUC)
+	movl	%a3,%a3@(PT_SWITCHTO)
 	movl	%d0,%a2			/* to(a2)   = self->pt_next */
 	jbra	Lpthread__switch_away_no_decrement
 	/* NOTREACHED */
