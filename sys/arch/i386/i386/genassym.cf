@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.28.10.2 2002/03/17 23:07:44 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.28.10.3 2002/03/22 00:24:44 thorpej Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -226,6 +226,10 @@ define	BIOSCALLREG_EFLAGS	offsetof(struct bioscallregs, EFLAGS)
 endif
 
 define	MUTEX_WAITERS		MUTEX_WAITERS
+ifdef MUTEX_DEBUG
+define	MTX_DBG_LOCKED		offsetof(kmutex_t, mtx_debug.mtx_locked)
+define	MTX_DBG_UNLOCKED	offsetof(kmutex_t, mtx_debug.mtx_unlocked)
+endif
 
 if defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
 define	__HAVE_GENERIC_SOFT_INTERRUPTS 1
