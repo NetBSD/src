@@ -1,4 +1,4 @@
-/*	$NetBSD: sboot.h,v 1.3 1998/01/05 07:03:07 perry Exp $	*/
+/*	$NetBSD: sboot.h,v 1.4 1998/11/23 20:45:26 scw Exp $	*/
 
 /*
  *
@@ -47,7 +47,6 @@ extern caddr_t end;
 #define NULL ((char *)0)
 
 void bcopy(const void *, void *, size_t); /* libc_sa */
-void *memset(void *, int, size_t); /* libc_sa */
 void printf(const char *, ...); /* libc_sa */
 
 /* console */
