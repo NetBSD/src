@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.30 1998/03/01 02:25:11 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.31 1998/04/20 16:48:05 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -111,7 +111,7 @@ loop:
 		    dep->de_refcnt != 0) {
 			vp = DETOV(dep);
 			simple_lock(&vp->v_interlock);
-			simple_unlock(&ufs_ihash_slock);
+			simple_unlock(&msdosfs_ihash_slock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
 			return (dep);
