@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.7 1997/03/29 02:32:31 mycroft Exp $	*/
+/*	$NetBSD: uha.c,v 1.8 1997/06/06 23:31:05 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -6,6 +6,43 @@
 #else
 #define	integrate	static inline
 #endif
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -83,7 +120,7 @@
 #define Debugger() panic("should call debugger here (uha.c)")
 #endif /* ! DDB */
 
-#define KVTOPHYS(x)	vtophys(x)
+#define	UHA_MAXXFER	((UHA_NSEG - 1) << PGSHIFT)
 
 integrate void uha_reset_mscp __P((struct uha_softc *, struct uha_mscp *));
 void uha_free_mscp __P((struct uha_softc *, struct uha_mscp *));
@@ -91,6 +128,7 @@ integrate void uha_init_mscp __P((struct uha_softc *, struct uha_mscp *));
 struct uha_mscp *uha_get_mscp __P((struct uha_softc *, int));
 void uhaminphys __P((struct buf *));
 int uha_scsi_cmd __P((struct scsi_xfer *));
+int uha_create_mscps __P((struct uha_softc *, void *, size_t));
 
 struct scsi_adapter uha_switch = {
 	uha_scsi_cmd,
@@ -113,6 +151,9 @@ struct cfdriver uha_cd = {
 
 #define	UHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
+/* XXX Should put this in a better place. */
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
+
 /*
  * Attach all the sub-devices we can find
  */
@@ -122,8 +163,9 @@ uha_attach(sc, upd)
 	struct uha_probe_data *upd;
 {
 
-	(sc->init)(sc);
 	TAILQ_INIT(&sc->sc_free_mscp);
+
+	(sc->init)(sc);
 
 	/*
 	 * fill in the prototype scsi_link.
@@ -181,18 +223,92 @@ uha_init_mscp(sc, mscp)
 	struct uha_softc *sc;
 	struct uha_mscp *mscp;
 {
+	bus_dma_tag_t dmat = sc->sc_dmat;
 	int hashnum;
 
+	/*
+	 * XXX Should we put a DIAGNOSTIC check for multiple
+	 * XXX MSCP inits here?
+	 */
+
 	bzero(mscp, sizeof(struct uha_mscp));
+
+	/*
+	 * Create the DMA maps for this MSCP.
+	 */
+	if (bus_dmamap_create(dmat, sizeof(struct uha_mscp), 1,
+	    sizeof(struct uha_mscp), 0, BUS_DMA_NOWAIT | sc->sc_dmaflags,
+	    &mscp->dmamap_self) ||
+
+					/* XXX What's a good value for this? */
+	    bus_dmamap_create(dmat, UHA_MAXXFER, UHA_NSEG, UHA_MAXXFER,
+	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW | sc->sc_dmaflags,
+	    &mscp->dmamap_xfer))
+		panic("uha_init_mscp: can't create DMA maps");
+
+	/*
+	 * Load the permanent DMA maps.
+	 */
+	if (bus_dmamap_load(dmat, mscp->dmamap_self, mscp,
+	    sizeof(struct uha_mscp), NULL, BUS_DMA_NOWAIT))
+		panic("uha_init_mscp: can't load permanent maps");
+
 	/*
 	 * put in the phystokv hash table
 	 * Never gets taken out.
 	 */
-	mscp->hashkey = KVTOPHYS(mscp);
+	mscp->hashkey = mscp->dmamap_self->dm_segs[0].ds_addr;
 	hashnum = MSCP_HASH(mscp->hashkey);
 	mscp->nexthash = sc->sc_mscphash[hashnum];
 	sc->sc_mscphash[hashnum] = mscp;
 	uha_reset_mscp(sc, mscp);
+}
+
+/*
+ * Create a set of MSCPs and add them to the free list.
+ */
+int
+uha_create_mscps(sc, mem, size)
+	struct uha_softc *sc;
+	void *mem;
+	size_t size;
+{
+	bus_dma_segment_t seg;
+	struct uha_mscp *mscp;
+	int rseg, error;
+
+	if (sc->sc_nummscps >= UHA_MSCP_MAX)
+		return (0);
+
+	if ((mscp = mem) != NULL)
+		goto have_mem;
+
+	size = NBPG;
+	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, &rseg,
+	    BUS_DMA_NOWAIT);
+	if (error)
+		return (error);
+
+	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
+	    (caddr_t *)&mscp, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
+	if (error) {
+		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		return (error);
+	}
+
+ have_mem:
+	bzero(mscp, size);
+	while (size > sizeof(struct uha_mscp)) {
+		uha_init_mscp(sc, mscp);
+		sc->sc_nummscps++;
+		TAILQ_INSERT_TAIL(&sc->sc_free_mscp, mscp, chain);
+		(caddr_t)mscp += ALIGN(sizeof(struct uha_mscp));
+		size -= ALIGN(sizeof(struct uha_mscp));
+		if (sc->sc_nummscps >= UHA_MSCP_MAX)
+			break;
+	}
+
+	return (0);
 }
 
 /*
@@ -222,16 +338,12 @@ uha_get_mscp(sc, flags)
 			break;
 		}
 		if (sc->sc_nummscps < UHA_MSCP_MAX) {
-			mscp = (struct uha_mscp *) malloc(sizeof(struct uha_mscp),
-			    M_TEMP, M_NOWAIT);
-			if (!mscp) {
-				printf("%s: can't malloc mscp\n",
+			if (uha_create_mscps(sc, NULL, 0)) {
+				printf("%s: can't allocate mscps\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
 			}
-			uha_init_mscp(sc, mscp);
-			sc->sc_nummscps++;
-			break;
+			continue;
 		}
 		if ((flags & SCSI_NOSLEEP) != 0)
 			goto out;
@@ -273,10 +385,23 @@ uha_done(sc, mscp)
 	struct uha_softc *sc;
 	struct uha_mscp *mscp;
 {
+	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct scsi_sense_data *s1, *s2;
 	struct scsi_xfer *xs = mscp->xs;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("uha_done\n"));
+
+	/*
+	 * If we were a data transfer, unload the map that described
+	 * the data buffer.
+	 */
+	if (xs->datalen) {
+		bus_dmamap_sync(dmat, mscp->dmamap_xfer,
+		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(dmat, mscp->dmamap_xfer);
+	}
+
 	/*
 	 * Otherwise, put the results of the operation
 	 * into the xfer and call whoever started it
@@ -326,8 +451,8 @@ uhaminphys(bp)
 	struct buf *bp;
 {
 
-	if (bp->b_bcount > ((UHA_NSEG - 1) << PGSHIFT))
-		bp->b_bcount = ((UHA_NSEG - 1) << PGSHIFT);
+	if (bp->b_bcount > UHA_MAXXFER)
+		bp->b_bcount = UHA_MAXXFER;
 	minphys(bp);
 }
 
@@ -341,12 +466,10 @@ uha_scsi_cmd(xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 	struct uha_softc *sc = sc_link->adapter_softc;
+	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct uha_mscp *mscp;
 	struct uha_dma_seg *sg;
-	int seg;		/* scatter gather seg being worked on */
-	u_long thiskv, thisphys, nextphys;
-	int bytes_this_seg, bytes_this_page, datalen, flags;
-	int s;
+	int error, seg, flags, s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("uha_scsi_cmd\n"));
 	/*
@@ -380,7 +503,8 @@ uha_scsi_cmd(xs)
 	mscp->target = sc_link->target;
 	mscp->lun = sc_link->lun;
 	mscp->scsi_cmd_length = xs->cmdlen;
-	mscp->sense_ptr = KVTOPHYS(&mscp->mscp_sense);
+	mscp->sense_ptr = mscp->dmamap_self->dm_segs[0].ds_addr +
+	    offsetof(struct uha_mscp, mscp_sense);
 	mscp->req_sense_length = sizeof(mscp->mscp_sense);
 	mscp->host_stat = 0x00;
 	mscp->target_stat = 0x00;
@@ -390,84 +514,49 @@ uha_scsi_cmd(xs)
 		seg = 0;
 #ifdef	TFS
 		if (flags & SCSI_DATA_UIO) {
-			struct iovec *iovp;
-			iovp = ((struct uio *) xs->data)->uio_iov;
-			datalen = ((struct uio *) xs->data)->uio_iovcnt;
-			xs->datalen = 0;
-			while (datalen && seg < UHA_NSEG) {
-				sg->seg_addr = (physaddr)iovp->iov_base;
-				sg->seg_len = iovp->iov_len;
-				xs->datalen += iovp->iov_len;
-				SC_DEBUGN(sc_link, SDEV_DB4, ("(0x%x@0x%x)",
-				    iovp->iov_len, iovp->iov_base));
-				sg++;
-				iovp++;
-				seg++;
-				datalen--;
-			}
+			error = bus_dmamap_load_uio(dmat,
+			    mscp->dmamap_xfer, (struct uio *)xs->data,
+			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    BUS_DMA_WAITOK);
 		} else
 #endif /*TFS */
 		{
-			/*
-			 * Set up the scatter gather block
-			 */
-			SC_DEBUG(sc_link, SDEV_DB4,
-			    ("%d @0x%x:- ", xs->datalen, xs->data));
-			datalen = xs->datalen;
-			thiskv = (int) xs->data;
-			thisphys = KVTOPHYS(thiskv);
-
-			while (datalen && seg < UHA_NSEG) {
-				bytes_this_seg = 0;
-
-				/* put in the base address */
-				sg->seg_addr = thisphys;
-
-				SC_DEBUGN(sc_link, SDEV_DB4, ("0x%x", thisphys));
-
-				/* do it at least once */
-				nextphys = thisphys;
-				while (datalen && thisphys == nextphys) {
-					/*
-					 * This page is contiguous (physically)
-					 * with the the last, just extend the
-					 * length
-					 */
-					/* how far to the end of the page */
-					nextphys = (thisphys & ~PGOFSET) + NBPG;
-					bytes_this_page = nextphys - thisphys;
-					/**** or the data ****/
-					bytes_this_page = min(bytes_this_page,
-							      datalen);
-					bytes_this_seg += bytes_this_page;
-					datalen -= bytes_this_page;
-
-					/* get more ready for the next page */
-					thiskv = (thiskv & ~PGOFSET) + NBPG;
-					if (datalen)
-						thisphys = KVTOPHYS(thiskv);
-				}
-				/*
-				 * next page isn't contiguous, finish the seg
-				 */
-				SC_DEBUGN(sc_link, SDEV_DB4,
-				    ("(0x%x)", bytes_this_seg));
-				sg->seg_len = bytes_this_seg;
-				sg++;
-				seg++;
-			}
+			error = bus_dmamap_load(dmat,
+			    mscp->dmamap_xfer, xs->data, xs->datalen, NULL,
+			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    BUS_DMA_WAITOK);
 		}
-		/* end of iov/kv decision */
-		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
-		if (datalen) {
-			/*
-			 * there's still data, must have run out of segs!
-			 */
-			printf("%s: uha_scsi_cmd, more than %d dma segs\n",
-			    sc->sc_dev.dv_xname, UHA_NSEG);
+
+		if (error) {
+			if (error == EFBIG) {
+				printf("%s: uha_scsi_cmd, more than %d"
+				    " dma segments\n",
+				    sc->sc_dev.dv_xname, UHA_NSEG);
+			} else {
+				printf("%s: uha_scsi_cmd, error %d loading"
+				    " dma map\n",
+				    sc->sc_dev.dv_xname, error);
+			}
 			goto bad;
 		}
-		mscp->data_addr = KVTOPHYS(mscp->uha_dma);
+
+		bus_dmamap_sync(dmat, mscp->dmamap_xfer,
+		    (flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+		    BUS_DMASYNC_PREWRITE);
+
+		/*
+		 * Load the hardware scatter/gather map with the
+		 * contents of the DMA map.
+		 */
+		for (seg = 0; seg < mscp->dmamap_xfer->dm_nsegs; seg++) {
+			mscp->uha_dma[seg].seg_addr =
+			    mscp->dmamap_xfer->dm_segs[seg].ds_addr;
+			mscp->uha_dma[seg].seg_len =
+			    mscp->dmamap_xfer->dm_segs[seg].ds_len;
+		}
+
+		mscp->data_addr = mscp->dmamap_self->dm_segs[0].ds_addr +
+		    offsetof(struct uha_mscp, uha_dma);
 		mscp->data_length = xs->datalen;
 		mscp->sgth = 0x01;
 		mscp->sg_num = seg;
