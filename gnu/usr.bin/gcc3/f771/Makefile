@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/09/26 06:53:30 tron Exp $
+#	$NetBSD: Makefile,v 1.8 2003/09/26 06:55:48 tron Exp $
 
 PROG=		f771
 SRCS=		${G_F77_OBJS:.o=.c} main.c
@@ -15,6 +15,8 @@ fini: fini.c
 	${HOST_LINK.c} -o $@ $> ${HOSTLIBIBERTY}
 CLEANFILES+=	fini
 
+.include "../Makefile.backend"
+
 .for f in 1t 2t fo io nq op ot
 CLEANFILES+=	str-${f}.h str-${f}.j
 
@@ -29,5 +31,3 @@ main.c: ${DIST}/gcc/main.c
 	ln -s $> main.c
 
 .PATH: ${DIST}/gcc/f ${DIST}/libiberty ${G_out_file:H}
-
-.include "../Makefile.backend"
