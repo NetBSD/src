@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.10 2001/01/20 17:14:20 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.11 2001/01/22 22:10:43 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -41,7 +41,7 @@
 /* RCSID is at the end of the file in case it gets put in the text segment. */
 
 #include <sys/syscall.h>
-#include <machine/armreg.h>
+#include <arm/armreg.h>
 #include "assym.h"
 
 #include "opt_cputypes.h"
@@ -456,4 +456,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.10 2001/01/20 17:14:20 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.11 2001/01/22 22:10:43 bjh21 Exp $")

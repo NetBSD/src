@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.1 2000/08/20 15:16:51 bjh21 Exp $ */
+/* $NetBSD: process_machdep.c,v 1.2 2001/01/22 22:10:43 bjh21 Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -32,14 +32,14 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: process_machdep.c,v 1.1 2000/08/20 15:16:51 bjh21 Exp $");
+__RCSID("$NetBSD: process_machdep.c,v 1.2 2001/01/22 22:10:43 bjh21 Exp $");
 
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/user.h>
 
-#include <machine/armreg.h>
+#include <arm/armreg.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <machine/reg.h>
