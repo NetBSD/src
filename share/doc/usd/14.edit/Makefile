@@ -1,10 +1,14 @@
 #	@(#)Makefile	6.2 (Berkeley) 6/30/90
 
 DIR=	usd/14.edit
-SRCS=	edittut.ms
-MACROS=	-msU
+DOC=	14.edit
 
-paper.${PRINTER}: ${SRCS}
+SRCS=	edittut.ms
+MACROS=	-ms
+
+.include <bsd.doc.mk>
+
+${DOC}.${PRINTER}: ${SRCS}
 	${TBL} ${SRCS} | ${ROFF} > ${.TARGET}
 
 # index for versatec is different from the one in edit.tut
@@ -14,5 +18,3 @@ paper.${PRINTER}: ${SRCS}
 
 editvindex:
 	${TROFF} ${MACROS} -n22 edit.vindex
-
-.include <bsd.doc.mk>

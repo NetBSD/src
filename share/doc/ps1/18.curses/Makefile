@@ -1,13 +1,17 @@
 #	@(#)Makefile	6.4 (Berkeley) 6/30/90
 
 DIR=	ps1/18.curses
+DOC=	18.curses
+
 SRCS=	Master macros appen.A appen.B appen.C intro.0 intro.1 \
 	intro.2 intro.3 intro.4 intro.5
 MACROS=	-me
 
 CLEANFILES+=win_st.gr twinkle1.gr twinkle2.gr life.gr intro.2.tbl appen.A.tbl
 
-paper.${PRINTER}: ${SRCS}
+.include <bsd.doc.mk>
+
+${DOC}.${PRINTER}: ${SRCS}
 	${ROFF} ${SRCS} > ${.TARGET}
 
 .SUFFIXES:
@@ -33,5 +37,3 @@ intro.2.tbl: intro.2
 
 appen.A.tbl: appen.A
 	${TBL} appen.A > appen.A.tbl
-
-.include <bsd.doc.mk>
