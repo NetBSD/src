@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs_data.h,v 1.15 1999/01/03 11:06:31 augustss Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.16 1999/01/03 23:57:11 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -140,6 +140,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    0,
 	    "Connectix",
 	    "QuickCam",
+	},
+	{
+	    USB_VENDOR_ACER, USB_PRODUCT_ACER_ACERSCAN_C310U,
+	    0,
+	    "Acer Peripherals",
+	    "Acerscan C310U",
 	},
 	{
 	    USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_MOUSE,
@@ -319,6 +325,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    USB_VENDOR_CONNECTIX, 0,
 	    USB_KNOWNDEV_NOPROD,
 	    "Connectix",
+	    NULL,
+	},
+	{
+	    USB_VENDOR_ACER, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "Acer Peripherals",
 	    NULL,
 	},
 	{

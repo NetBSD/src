@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.h,v 1.15 1999/01/03 11:06:31 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.16 1999/01/03 23:57:11 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -61,6 +61,7 @@
 #define	USB_VENDOR_BTC	0x046e		/* BTC */
 #define	USB_VENDOR_PHILIPS	0x0471		/* Philips */
 #define	USB_VENDOR_CONNECTIX	0x0478		/* Connectix */
+#define	USB_VENDOR_ACER	0x04a5		/* Acer Peripherals */
 #define	USB_VENDOR_CYPRESS	0x04b4		/* Cypress Semiconductor */
 #define	USB_VENDOR_3COM	0x04c1		/* 3Com */
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
@@ -119,6 +120,9 @@
 
 /* Connectix products */
 #define	USB_PRODUCT_CONNECTIX_QUICKCAM	0x0001		/* QuickCam */
+
+/* Acer products */
+#define	USB_PRODUCT_ACER_ACERSCAN_C310U	0x12a6		/* Acerscan C310U */
 
 /* Cypress Semiconduuctor products */
 #define	USB_PRODUCT_CYPRESS_MOUSE	0x0001		/* mouse */
