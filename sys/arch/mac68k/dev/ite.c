@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.14 1995/04/21 02:47:57 briggs Exp $	*/
+/*	$NetBSD: ite.c,v 1.15 1995/07/09 15:36:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -513,16 +513,16 @@ putc_gotpars(char ch)
 	vt100state = ESnormal;
 	switch (ch) {
 	case 'A':		/* Up			 */
-		y--;
+		y-= par[0] ? par[0] : 1;
 		break;
 	case 'B':		/* Down			 */
-		y++;
+		y+= par[0] ? par[0] : 1;
 		break;
 	case 'C':		/* Right		 */
-		x++;
+		x+= par[0] ? par[0] : 1;
 		break;
 	case 'D':		/* Left			 */
-		x--;
+		x-= par[0] ? par[0] : 1;
 		break;
 	case 'H':		/* Set cursor position	 */
 		x = par[1] - 1;
