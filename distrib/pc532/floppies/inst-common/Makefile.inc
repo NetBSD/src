@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2000/05/02 16:06:53 sjg Exp $ 
+#	$NetBSD: Makefile.inc,v 1.15 2000/08/30 23:51:51 jhawk Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -75,7 +75,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 netbsd.gz: ramdisk.fs
 	cp ${KERNEL} /var/tmp/$$$$; \

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2000/05/02 16:06:46 sjg Exp $
+# $NetBSD: Makefile,v 1.25 2000/08/30 23:51:49 jhawk Exp $
 
 .include "../../../Makefile.inc"
 
@@ -33,15 +33,15 @@ mount-fs:
 	mount /dev/${DESTDISK}d ${DESTDIR}/usr
 
 build-fs:
-	cd ${.CURDIR}/../../../etc && make distribution
+	cd ${.CURDIR}/../../../etc && ${MAKE} distribution
 	if [ -d ${.CURDIR}/../../../toolchain ]; then \
 		cd ${.CURDIR}/../../../toolchain && \
-		    make prefix=${DESTDIR}/usr/local install; \
+		    ${MAKE} prefix=${DESTDIR}/usr/local install; \
 	else \
 		true; \
 	fi
 	if [ -d ${.CURDIR}/../../../xc ]; then \
-		cd ${.CURDIR}/../../../xc && make install install.man; \
+		cd ${.CURDIR}/../../../xc && ${MAKE} install install.man; \
 	else \
 		true; \
 	fi
