@@ -1,7 +1,7 @@
 /*
  *	A fairly close approximation of ipcs with some extensions
  *
- *	$Id: ipcs.c,v 1.4 1994/06/18 21:09:43 cgd Exp $
+ *	$Id: ipcs.c,v 1.5 1994/06/18 21:20:28 cgd Exp $
  */
 
 #include <stdio.h>
@@ -22,9 +22,8 @@
 #include <sys/shm.h>
 #include <sys/msg.h>
 
-char   *user_from_uid __P((uid_t, int));
-char   *group_from_gid __P((gid_t, int));
-int semconfig __P((int,...));
+int	semconfig __P((int,...));
+void	usage __P((void));
 
 static struct nlist symbols[] = {
 	{"_sema"},
@@ -153,7 +152,7 @@ main(argc, argv)
 			option |= TIME;
 			break;
 		default:
-			errx(1, "usage:  ipcs [-abcmopqst] [-C corefile] [-N namelist]\n");
+			usage();
 		}
 	if ((kd = kvm_open(namelist, core, NULL, O_RDONLY, "ipcs")) == NULL)
 		exit(1);
@@ -162,15 +161,16 @@ main(argc, argv)
 	case 0:
 		break;
 	case -1:
-		errx(1, "ipcs:  unable to read kernel symbol table!\n");
+		errx(1, "unable to read kernel symbol table.");
 	default:
-		warnx("ipcs:  nlist failed\n");
-		for (i = 0; symbols[i].n_name != NULL; i++) {
-			if (symbols[i].n_value == 0) {
-				warnx("\tsymbol %s not found\n", symbols[i].n_name);
-			}
-		}
+#ifdef notdef		/* they'll be told more civilly later */
+		warnx("nlist failed");
+		for (i = 0; symbols[i].n_name != NULL; i++)
+			if (symbols[i].n_value == 0)
+				warnx("symbol %s not found",
+				    symbols[i].n_name);
 		break;
+#endif
 	}
 
 	if ((display & (MSGINFO | MSGTOTAL)) &&
@@ -442,4 +442,13 @@ main(argc, argv)
 	kvm_close(kd);
 
 	exit(0);
+}
+
+void
+usage()
+{
+
+	fprintf(stderr,
+	    "usage: ipcs [-abcmopqst] [-C corefile] [-N namelist]\n");
+	exit(1);
 }
