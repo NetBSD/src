@@ -1,7 +1,7 @@
 #
 # PATEK -- Mycroft's 486 test box
 #
-#	$Id: PATEK,v 1.6 1994/02/17 03:35:12 mycroft Exp $
+#	$Id: PATEK,v 1.7 1994/02/18 17:23:51 mycroft Exp $
 #
 
 machine		"i386"
@@ -79,6 +79,7 @@ device		sb0	at isa? port 0x220 bio irq 5 drq 1 vector sbintr
 
 device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
+device		lpt0	at isa? port "IO_LPT1" tty irq 7 vector lptintr
 
 #device		lms0	at isa? port "IO_BMS1" tty irq 5 vector lmsintr
 device		mms0	at isa? port "IO_BMS1" tty irq 5 vector mmsintr
