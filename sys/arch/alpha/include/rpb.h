@@ -1,7 +1,7 @@
-/*	$NetBSD: rpb.h,v 1.9 1996/11/13 21:13:21 cgd Exp $	*/
+/*	$NetBSD: rpb.h,v 1.10 1996/11/13 22:21:05 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Keith Bostic, Chris G. Demetriou
