@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.33 2003/04/06 17:23:25 fvdl Exp $	*/
+/*	$NetBSD: fsck.h,v 1.34 2003/04/24 20:08:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -281,9 +281,9 @@ int	got_siginfo;		/* received a SIGINFO */
 #define	clearinode(dp) \
 do { \
 	if (is_ufs2) 			\
-		(dp)->dp1 = ufs1_zino;	\
-	else				\
 		(dp)->dp2 = ufs2_zino;	\
+	else				\
+		(dp)->dp1 = ufs1_zino;	\
 } while (0)
 
 struct	ufs1_dinode ufs1_zino;
