@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.8 2001/01/11 14:05:24 jdolecek Exp $	*/
+/*	$NetBSD: files.c,v 1.9 2001/01/12 19:24:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.8 2001/01/11 14:05:24 jdolecek Exp $");
+__RCSID("$NetBSD: files.c,v 1.9 2001/01/12 19:24:42 jdolecek Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -288,15 +288,6 @@ seq(fp, line, key)
 			pos = linebuf + (pos - buf);
 			line->data = buf = (char *)linebuf;
 			continue;
-#if 0
-			line->size = DEFLLEN;
-			*--pos = REC_D;
-			while ((c = getc(fp)) != EOF) {
-				if (c == REC_D)
-					return (BUFFEND);
-			}
-			break;
-#endif
 		}
 	}
 	if (pos != buf) {
