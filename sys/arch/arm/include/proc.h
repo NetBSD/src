@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.4 2003/01/17 22:28:48 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.5 2003/03/01 04:36:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -39,11 +39,14 @@
  * Machine-dependent part of the proc structure for arm.
  */
 
+struct trapframe;
+
 struct mdlwp {
 	int	md_dummy;		/* must have at least one member */
 };
 
 struct mdproc {
+	void	(*md_syscall)(struct trapframe *, struct lwp *, u_int32_t);
 	int	pmc_enabled;		/* bitfield of enabled counters */
 	void	*pmc_state;		/* port-specific pmc state */
 };

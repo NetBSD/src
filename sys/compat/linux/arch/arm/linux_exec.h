@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.3 2002/11/13 15:16:30 jdolecek Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.4 2003/03/01 04:36:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,5 @@
 
 #define LINUX_ELF_AUX_ARGSIZ \
 	(howmany(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)))
-
-#define LINUX_SYSCALL_FUNCTION linux_syscall
 
 #endif /* !_I386_LINUX_EXEC_H */

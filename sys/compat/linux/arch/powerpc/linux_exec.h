@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.13 2002/11/13 15:16:31 jdolecek Exp $  */
+/*	$NetBSD: linux_exec.h,v 1.14 2003/03/01 04:36:39 thorpej Exp $  */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -102,8 +102,5 @@
 
 /* we have special powerpc ELF copyargs */
 #define LINUX_MACHDEP_ELF_COPYARGS
-
-/* NetBSD/powerpc doesn't use e_syscall, so use the default. */
-#define LINUX_SYSCALL_FUNCTION syscall
 
 #endif /* !_POWERPC_LINUX_EXEC_H */
