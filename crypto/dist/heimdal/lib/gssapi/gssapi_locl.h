@@ -32,7 +32,7 @@
  */
 
 /* $Heimdal: gssapi_locl.h,v 1.21 2001/08/29 02:21:09 assar Exp $
-   $NetBSD: gssapi_locl.h,v 1.1.1.6 2002/09/12 12:41:40 joda Exp $ */
+   $NetBSD: gssapi_locl.h,v 1.2 2002/11/28 11:21:17 elric Exp $ */
 
 #ifndef GSSAPI_LOCL_H
 #define GSSAPI_LOCL_H
@@ -50,6 +50,27 @@ extern krb5_context gssapi_krb5_context;
 extern krb5_keytab gssapi_krb5_keytab;
 
 krb5_error_code gssapi_krb5_init (void);
+
+/*
+ * we define this as a macro since it must be able to return from the
+ * calling function.  It is passed either a ptr to ``minor status'' or NULL.
+ */
+
+#define GSSAPI_KRB5_INIT() do {					\
+		if (gssapi_krb5_init())				\
+			return GSS_S_FAILURE;			\
+	} while (0);
+
+#define GSSAPI_KRB5_INIT_MS(_ms) do {				\
+		krb5_error_code kret;				\
+								\
+		kret = gssapi_krb5_init();			\
+		if (kret) {					\
+			if (_ms)				\
+				*_ms = kret;			\
+			return GSS_S_FAILURE;			\
+		}						\
+	} while (0);
 
 OM_uint32
 gssapi_krb5_create_8003_checksum (

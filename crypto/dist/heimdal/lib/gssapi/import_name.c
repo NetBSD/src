@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: import_name.c,v 1.11 2002/06/20 20:05:42 nectar Exp $"
-        "$NetBSD: import_name.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: import_name.c,v 1.2 2002/11/28 11:21:17 elric Exp $");
 
 static OM_uint32
 import_krb5_name (OM_uint32 *minor_status,
@@ -143,7 +143,7 @@ OM_uint32 gss_import_name
             gss_name_t * output_name
            )
 {
-    gssapi_krb5_init ();
+    GSSAPI_KRB5_INIT_MS(minor_status);
 
     if (oid_equal(input_name_type, GSS_C_NT_HOSTBASED_SERVICE))
 	return import_hostbased_name (minor_status,

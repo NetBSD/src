@@ -34,14 +34,14 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: release_name.c,v 1.5 2000/04/12 09:48:27 assar Exp $"
-        "$NetBSD: release_name.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: release_name.c,v 1.2 2002/11/28 11:21:17 elric Exp $");
 
 OM_uint32 gss_release_name
            (OM_uint32 * minor_status,
             gss_name_t * input_name
            )
 {
-  gssapi_krb5_init ();
+  GSSAPI_KRB5_INIT_MS(minor_status);
   krb5_free_principal(gssapi_krb5_context,
 		      *input_name);
   *input_name = GSS_C_NO_NAME;
