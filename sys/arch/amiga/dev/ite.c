@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.44 1996/10/10 23:56:11 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.45 1996/10/12 17:27:28 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,7 +58,6 @@
 #include <sys/proc.h>
 #include <dev/cons.h>
 #include <amiga/amiga/cc.h>
-#include <amiga/amiga/kdassert.h>
 #include <amiga/amiga/color.h>	/* DEBUG */
 #include <amiga/amiga/custom.h>	/* DEBUG */
 #include <amiga/amiga/device.h>
