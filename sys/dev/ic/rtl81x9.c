@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.25 2000/12/14 06:27:26 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.26 2000/12/19 00:06:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1255,6 +1255,7 @@ STATIC void rtk_start(ifp)
 		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
+		m_new = NULL;
 
 		idx = sc->rtk_cdata.cur_tx;
 
@@ -1285,10 +1286,8 @@ STATIC void rtk_start(ifp)
 			    mtod(m_new, caddr_t));
 			m_new->m_pkthdr.len = m_new->m_len =
 			    m_head->m_pkthdr.len;
-			m_freem(m_head);
-			m_head = m_new;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat,
-			    sc->snd_dmamap[idx], m_head, BUS_DMA_NOWAIT);
+			    sc->snd_dmamap[idx], m_new, BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
@@ -1296,6 +1295,10 @@ STATIC void rtk_start(ifp)
 			}
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		if (m_new != NULL) {
+			m_freem(m_head);
+			m_head = m_new;
+		}
 
 		RTK_CUR_TXMBUF(sc) = m_head;
 

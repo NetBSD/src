@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.42 2000/12/14 06:42:57 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.43 2000/12/19 00:12:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -951,6 +951,7 @@ vr_start(ifp)
 		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
+		m = NULL;
 
 		/*
 		 * Get the next available transmit descriptor.
@@ -984,10 +985,8 @@ vr_start(ifp)
 			}
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
-			m_freem(m0);
-			m0 = m;
 			error = bus_dmamap_load_mbuf(sc->vr_dmat,
-			    ds->ds_dmamap, m0, BUS_DMA_NOWAIT);
+			    ds->ds_dmamap, m, BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->vr_dev.dv_xname, error);
@@ -996,6 +995,10 @@ vr_start(ifp)
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		if (m != NULL) {
+			m_freem(m0);
+			m0 = m;
+		}
 
 		/* Sync the DMA map. */
 		bus_dmamap_sync(sc->vr_dmat, ds->ds_dmamap, 0,
