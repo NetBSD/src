@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.18.2.1 2000/06/22 16:26:13 matt Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.18.2.2 2000/11/05 22:43:40 tv Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -59,7 +59,7 @@
  */
 
 void
-new_vmcmd(evsp, proc, len, addr, vp, offset, prot)
+new_vmcmd(evsp, proc, len, addr, vp, offset, prot, flags)
 	struct	exec_vmcmd_set *evsp;
 	int	(*proc) __P((struct proc * p, struct exec_vmcmd *));
 	u_long	len;
@@ -67,6 +67,7 @@ new_vmcmd(evsp, proc, len, addr, vp, offset, prot)
 	struct	vnode *vp;
 	u_long	offset;
 	u_int	prot;
+	int	flags;
 {
 	struct exec_vmcmd    *vcp;
 
@@ -80,6 +81,7 @@ new_vmcmd(evsp, proc, len, addr, vp, offset, prot)
 		vref(vp);
 	vcp->ev_offset = offset;
 	vcp->ev_prot = prot;
+	vcp->ev_flags = flags;
 }
 #endif /* DEBUG */
 
