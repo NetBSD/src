@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.355 2001/09/05 13:46:51 drochner Exp $
+$NetBSD: pcidevs,v 1.356 2001/09/10 15:07:50 eeh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1692,6 +1692,7 @@ product SUN EBUSIII	0x1100	PCIO Ebus2 (US III)
 product SUN ERINETWORK	0x1101	ERI Ethernet
 product SUN FIREWIRE	0x1102	FireWire controller
 product SUN USB		0x1103	USB controller
+product SUN GEMNETWORK	0x2bad	GEM Gigabit Ethernet
 product SUN SIMBA	0x5000	Simba PCI bridge
 product SUN PSYCHO	0x8000	psycho PCI controller
 product SUN MS_IIep	0x9000	microSPARC IIep PCI
