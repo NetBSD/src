@@ -1,4 +1,4 @@
-/*	$NetBSD: c_jazz_eisa.c,v 1.9 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: c_jazz_eisa.c,v 1.10 2005/01/22 07:56:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.9 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.10 2005/01/22 07:56:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,7 @@ c_jazz_eisa_init(void)
 void
 c_jazz_eisa_cons_init(void)
 {
+
 	if (!com_console) {
 
 #if NRASDISPLAY_JAZZIO > 0
