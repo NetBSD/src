@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.44 2002/06/20 22:10:24 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.45 2002/11/24 08:32:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.44 2002/06/20 22:10:24 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.45 2002/11/24 08:32:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,8 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
 	int error, slept;
 
 	slept = 0;
-	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail)) {
+	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail) &&
+	    vp != fs->lfs_unlockvp) {
 		VOP_UNLOCK(vp, 0);
 
 		if (!slept) {
