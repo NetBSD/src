@@ -91,7 +91,7 @@ prompt(const char *msg)
 		saved_alarm = alarm((unsigned int)openpam_ttyconv_timeout);
 	ch = '\0';
 	for (len = 0; ch != '\n' && !eof && !error; ++len) {
-		switch (read(fd, &ch, 1)) {
+		switch (read(fd, &ch, (size_t)1)) {
 		case 1:
 			if (len < PAM_MAX_RESP_SIZE - 1) {
 				buf[len + 1] = '\0';

@@ -72,7 +72,7 @@ pam_vprompt(pam_handle_t *pamh,
 		openpam_log(PAM_LOG_ERROR, "no conversation function");
 		RETURNC(PAM_SYSTEM_ERR);
 	}
-	vsnprintf(msgbuf, PAM_MAX_MSG_SIZE, fmt, ap);
+	vsnprintf(msgbuf, (size_t)PAM_MAX_MSG_SIZE, fmt, ap);
 	msg.msg_style = style;
 	msg.msg = msgbuf;
 	msgp = &msg;
