@@ -1,3 +1,5 @@
+/*	$NetBSD: gencode.h,v 1.2 1995/03/06 11:38:24 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
