@@ -1,4 +1,4 @@
-.\"	$NetBSD: glob.3,v 1.12 1998/02/05 18:46:59 perry Exp $
+.\"	$NetBSD: glob.3,v 1.13 1998/03/31 20:37:20 kleink Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\"
 .\"     @(#)glob.3	8.3 (Berkeley) 4/16/94
 .\"
-.Dd April 16, 1994
+.Dd March 31, 1998
 .Dt GLOB 3
 .Os
 .Sh NAME
@@ -295,7 +295,7 @@ If
 returns non-zero,
 .Fn glob
 stops the scan and returns
-.Dv GLOB_ABEND
+.Dv GLOB_ABORTED
 after setting
 .Fa gl_pathc
 and
@@ -372,13 +372,19 @@ in the include file
 .Bl -tag -width GLOB_NOCHECK
 .It Dv GLOB_NOSPACE
 An attempt to allocate memory failed.
-.It Dv GLOB_ABEND
+.It Dv GLOB_ABORTED
 The scan was stopped because an error was encountered and either
 .Dv GLOB_ERR
 was set or
 .Fa (*errfunc)()
 returned non-zero.
 .El
+.Pp
+The historical
+.Dv GLOB_ABEND
+return constant is no longer supported.  Portable applications should use the
+.Dv GLOB_ABORTED
+constant instead.
 .Pp
 The arguments
 .Fa pglob\->gl_pathc
