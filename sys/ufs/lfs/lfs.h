@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.57 2003/03/11 02:47:39 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.58 2003/03/15 06:58:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -187,6 +187,7 @@ typedef struct lfs_res_blk {
 #define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_ACCESSED|IN_CLEANING)
 
 #define LFS_SET_UINO(ip, flags) do {					\
+	simple_lock(&(ip)->i_lfs->lfs_interlock);			\
 	if (((flags) & IN_ACCESSED) && !((ip)->i_flag & IN_ACCESSED))	\
 		++(ip)->i_lfs->lfs_uinodes;				\
 	if (((flags) & IN_CLEANING) && !((ip)->i_flag & IN_CLEANING))	\
@@ -194,9 +195,11 @@ typedef struct lfs_res_blk {
 	if (((flags) & IN_MODIFIED) && !((ip)->i_flag & IN_MODIFIED))	\
 		++(ip)->i_lfs->lfs_uinodes;				\
 	(ip)->i_flag |= (flags);					\
+	simple_unlock(&(ip)->i_lfs->lfs_interlock);			\
 } while (0)
 
 #define LFS_CLR_UINO(ip, flags) do {					\
+	simple_lock(&(ip)->i_lfs->lfs_interlock);			\
 	if (((flags) & IN_ACCESSED) && ((ip)->i_flag & IN_ACCESSED))	\
 		--(ip)->i_lfs->lfs_uinodes;				\
 	if (((flags) & IN_CLEANING) && ((ip)->i_flag & IN_CLEANING))	\
@@ -207,6 +210,7 @@ typedef struct lfs_res_blk {
 	if ((ip)->i_lfs->lfs_uinodes < 0) {				\
 		panic("lfs_uinodes < 0");				\
 	}								\
+	simple_unlock(&(ip)->i_lfs->lfs_interlock);			\
 } while (0)
 
 #ifdef DEBUG
@@ -527,6 +531,7 @@ struct lfs {
 #define LFS_MAX_CLEANIND 64
 	int32_t  lfs_cleanint[LFS_MAX_CLEANIND]; /* Active cleaning intervals */
 	int 	 lfs_cleanind;	/* Index into intervals */
+	struct simplelock lfs_interlock;  /* lock for lfs_seglock */
 };
 
 /*
