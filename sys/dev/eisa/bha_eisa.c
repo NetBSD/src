@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.23 2002/10/02 16:33:46 thorpej Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.24 2004/08/23 06:03:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.23 2002/10/02 16:33:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.24 2004/08/23 06:03:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,18 +61,15 @@ __KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.23 2002/10/02 16:33:46 thorpej Exp $"
 
 #define	BHA_EISA_IOCONF		0x0c
 
-int	bha_eisa_address __P((bus_space_tag_t, bus_space_handle_t, int *));
-int	bha_eisa_match __P((struct device *, struct cfdata *, void *));
-void	bha_eisa_attach __P((struct device *, struct device *, void *));
+static int	bha_eisa_address(bus_space_tag_t, bus_space_handle_t, int *);
+static int	bha_eisa_match(struct device *, struct cfdata *, void *);
+static void	bha_eisa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(bha_eisa, sizeof(struct bha_softc),
     bha_eisa_match, bha_eisa_attach, NULL, NULL);
 
-int
-bha_eisa_address(iot, ioh, portp)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int *portp;
+static int
+bha_eisa_address(bus_space_tag_t iot, bus_space_handle_t ioh, int *portp)
 {
 	int port;
 
@@ -108,11 +105,8 @@ bha_eisa_address(iot, ioh, portp)
  * If we find one, note it's address (slot) and call
  * the actual probe routine to check it out.
  */
-int
-bha_eisa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+bha_eisa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
@@ -147,10 +141,8 @@ bha_eisa_match(parent, match, aux)
 /*
  * Attach all the sub-devices we can find
  */
-void
-bha_eisa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+bha_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	struct bha_softc *sc = (void *)self;
