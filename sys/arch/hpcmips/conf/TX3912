@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.50 2004/04/15 14:58:30 tv Exp $
+#	$NetBSD: TX3912,v 1.51 2004/07/01 17:45:12 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -112,8 +112,8 @@ options 	USE_POLL	# keyboard / touchpanel device requires this
 
 # IO module manager (virtual bridge) DO NOT DELETE
 txioman* at txsim?
-# iochip 0 TX39 internal IO
-#	 1 TX39 internal MFIO
+# iochip 0 TX39 internal MFIO
+#	 1 TX39 internal IO
 #	 2 BETTY IO
 #	(3 ITE IO notyet)
 # edge  0 no interrupt.
@@ -122,35 +122,35 @@ txioman* at txsim?
 # edge  3 both edge
 # initial ... set initial state (on/off)
 hpcioman3 at txioman? platform COMPAQ_C_2010
-hpcout*	at hpcioman3 iochip 1 evtype POWER  id PWCTL_LED	port 3  initvalue 0
-hpcin*	at hpcioman3 iochip 0 evtype BUTTON id BTN_REC		port 6  edge 1
-hpcin*	at hpcioman3 iochip 0 evtype BUTTON id BTN_APP0		port 5  edge 1
-hpcin*	at hpcioman3 iochip 1 evtype EVENT  id PME_AC		port 28 edge 1
-hpcin*	at hpcioman3 iochip 1 evtype EVENT  id COM0_DCD		port 30 edge 3
-hpcin*	at hpcioman3 iochip 1 evtype EVENT  id COM0_CTS		port 5  edge 3
-hpcout*	at hpcioman3 iochip 1 evtype SET    id COM0_DTR		port 31
-hpcout*	at hpcioman3 iochip 1 evtype SET    id COM0_RTS		port 6
+hpcout*	at hpcioman3 iochip 0 evtype POWER  id PWCTL_LED	port 3  initvalue 0
+hpcin*	at hpcioman3 iochip 1 evtype BUTTON id BTN_REC		port 6  edge 1
+hpcin*	at hpcioman3 iochip 1 evtype BUTTON id BTN_APP0		port 5  edge 1
+hpcin*	at hpcioman3 iochip 0 evtype EVENT  id PME_AC		port 28 edge 1
+hpcin*	at hpcioman3 iochip 0 evtype EVENT  id COM0_DCD		port 30 edge 3
+hpcin*	at hpcioman3 iochip 0 evtype EVENT  id COM0_CTS		port 5  edge 3
+hpcout*	at hpcioman3 iochip 0 evtype SET    id COM0_DTR		port 31
+hpcout*	at hpcioman3 iochip 0 evtype SET    id COM0_RTS		port 6
 
 hpcioman4 at txioman? platform COMPAQ_C_810
-hpcout*	at hpcioman4 iochip 1 evtype POWER  id PWCTL_LED	port 3  initvalue 0
-hpcin*	at hpcioman4 iochip 0 evtype BUTTON id BTN_REC		port 6  edge 1
-hpcin*	at hpcioman4 iochip 0 evtype BUTTON id BTN_APP0		port 5  edge 1
-hpcin*	at hpcioman4 iochip 1 evtype EVENT  id PME_AC		port 28 edge 1
-hpcin*	at hpcioman4 iochip 1 evtype EVENT  id COM0_DCD		port 30 edge 3
-hpcin*	at hpcioman4 iochip 1 evtype EVENT  id COM0_CTS		port 5  edge 3
-hpcout*	at hpcioman4 iochip 1 evtype SET    id COM0_DTR		port 31
-hpcout*	at hpcioman4 iochip 1 evtype SET    id COM0_RTS		port 6
+hpcout*	at hpcioman4 iochip 0 evtype POWER  id PWCTL_LED	port 3  initvalue 0
+hpcin*	at hpcioman4 iochip 1 evtype BUTTON id BTN_REC		port 6  edge 1
+hpcin*	at hpcioman4 iochip 1 evtype BUTTON id BTN_APP0		port 5  edge 1
+hpcin*	at hpcioman4 iochip 0 evtype EVENT  id PME_AC		port 28 edge 1
+hpcin*	at hpcioman4 iochip 0 evtype EVENT  id COM0_DCD		port 30 edge 3
+hpcin*	at hpcioman4 iochip 0 evtype EVENT  id COM0_CTS		port 5  edge 3
+hpcout*	at hpcioman4 iochip 0 evtype SET    id COM0_DTR		port 31
+hpcout*	at hpcioman4 iochip 0 evtype SET    id COM0_RTS		port 6
 hpcout*	at hpcioman4 iochip 2 evtype BUTTON id BTN_LIGHT	port 5
 
 hpcioman5 at txioman? platform SHARP_MOBILON
-hpcout*	at hpcioman5 iochip 1 evtype POWER  id PWCTL_LCDLIGHT	port 14
-hpcin*	at hpcioman5 iochip 0 evtype BUTTON id BTN_REC		port 0  edge 1
-hpcin*	at hpcioman5 iochip 1 evtype BUTTON id BTN_APP0		port 31 edge 1
-hpcin*	at hpcioman5 iochip 1 evtype BUTTON id BTN_COVER	port 29 edge 1
-#hpcin*	at hpcioman5 iochip 0 evtype EVENT  id COM0_CTS		port 4  edge 3 # DANGER
-#hpcin*	at hpcioman5 iochip 0 evtype EVENT  id COM0_DCD		port 6  edge 3 # DANGER
-hpcout*	at hpcioman5 iochip 0 evtype SET    id COM0_RTS		port 5
-hpcout*	at hpcioman5 iochip 1 evtype SET    id COM0_DTR		port 15
+hpcout*	at hpcioman5 iochip 0 evtype POWER  id PWCTL_LCDLIGHT	port 14
+hpcin*	at hpcioman5 iochip 1 evtype BUTTON id BTN_REC		port 0  edge 1
+hpcin*	at hpcioman5 iochip 0 evtype BUTTON id BTN_APP0		port 31 edge 1
+hpcin*	at hpcioman5 iochip 0 evtype BUTTON id BTN_COVER	port 29 edge 1
+#hpcin*	at hpcioman5 iochip 1 evtype EVENT  id COM0_CTS		port 4  edge 3 # DANGER
+#hpcin*	at hpcioman5 iochip 1 evtype EVENT  id COM0_DCD		port 6  edge 3 # DANGER
+hpcout*	at hpcioman5 iochip 1 evtype SET    id COM0_RTS		port 5
+hpcout*	at hpcioman5 iochip 0 evtype SET    id COM0_DTR		port 15
 
 # Chip select manager
 txcsbus3	at tx39biu? platform COMPAQ_C
