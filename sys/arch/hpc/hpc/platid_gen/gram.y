@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.2 2001/02/04 05:19:15 takemura Exp $	*/
+/*	$NetBSD: gram.y,v 1.3 2001/03/03 12:51:44 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -101,7 +101,8 @@ sub_list:
 sub_item:
   sym '=' sym { $$ = new_node(N_MODIFIER, 0, $1, $3, NULL); }|
   ent { $$ = $1; } |
-  '{' sub_list '}' { $$ = $2; };
+  '{' sub_list '}' { $$ = $2; } |
+   DIRECTIVE { $$ = new_node(N_DIRECTIVE, 0, $1, NULL, NULL); };
 
 ent : sym name_opt {
 	$2->ptr1 = $1;
