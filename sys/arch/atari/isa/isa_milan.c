@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_milan.c,v 1.1 2001/04/24 06:39:48 leo Exp $	*/
+/*	$NetBSD: isa_milan.c,v 1.2 2001/05/16 08:45:50 leo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,6 +77,9 @@ isa_bus_init()
 }
 
 #if 0
+/*
+ * XXX: For some reason, this does not work at all... (Leo).
+ */
 static void
 init_icu()
 {
@@ -137,20 +140,10 @@ int	vector;
 {
 	isa_intr_info_t *iinfo_p;
 
-if(vector != 6)
-    printf("milan_isa_intr: vector: %d\n", vector);
 	if (vector >= MILAN_MAX_ISA_INTS) {
 		printf("milan_isa_intr: Bogus vector %d\n", vector);
 		return;
 	}
-/* DEBUGGING LWP */
-if (vector == 1) { /* Keyboard */
-	printf("kbd scancode: 0x%x, 0x%x, 0x%x, 0x%x\n",
-		*((u_char *)(pci_io_addr + 0x60)),
-		*((u_char *)(pci_io_addr + 0x61)),
-		*((u_char *)(pci_io_addr + 0x62)),
-		*((u_char *)(pci_io_addr + 0x63)));
-}
 
 	/* Acknowledge interrupt XXX 0x20 == EOI	*/
 	if (vector > 7)
@@ -233,7 +226,6 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	iinfo_p->ipl   = level;
 	iinfo_p->ifunc = ih_fun;
 	iinfo_p->iarg  = ih_arg;
-printf("Irq %d established\n", irq);
 
 	calc_imask();
 	return(iinfo_p);
