@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.4 2002/11/08 14:58:26 tsutsui Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.5 2002/11/10 04:30:10 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -393,6 +393,7 @@ void
 tmu1_oneshot()
 {
 
+	_reg_bclr_1(SH_(TSTR), TSTR_STR1);
 	_reg_write_4(SH_(TCNT1), 0);
 	_reg_bset_1(SH_(TSTR), TSTR_STR1);
 }
@@ -414,6 +415,7 @@ void
 tmu2_oneshot()
 {
 
+	_reg_bclr_1(SH_(TSTR), TSTR_STR2);
 	_reg_write_4(SH_(TCNT2), 0);
 	_reg_bset_1(SH_(TSTR), TSTR_STR2);
 }
