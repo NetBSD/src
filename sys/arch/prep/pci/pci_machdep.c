@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 2000/06/04 19:15:00 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3.2.1 2000/06/26 16:13:42 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -62,11 +62,7 @@
 #define	PCI_MODE1_ADDRESS_REG	(PREP_BUS_SPACE_IO + 0xcf8)
 #define	PCI_MODE1_DATA_REG	(PREP_BUS_SPACE_IO + 0xcfc)
 
-/*
- * PCI constants.
- * XXX These should be in a common file!
- */
-#define	PCI_CBIO	0x10
+#define	o2i(off)	((off)/sizeof(pcireg_t))
 
 /*
  * PCI doesn't have any special needs; just use the generic versions
@@ -96,6 +92,8 @@ pci_attach_hook(parent, self, pba)
 {
 	pci_chipset_tag_t pc;
 	int bus, device, maxndevs, function, nfunctions;
+	int iq = 2;		/* fixup ioaddr: 0x02000000~ */
+	int mq = 1;		/* fixup memaddr: 0x01000000~ */
 
 	pc = pba->pba_pc;
 	bus = pba->pba_bus;
@@ -104,7 +102,7 @@ pci_attach_hook(parent, self, pba)
 
 	for (device = 0; device < maxndevs; device++) {
 		pcitag_t tag;
-		pcireg_t id, intr, bhlcr, csr, address;
+		pcireg_t id, intr, bhlcr, csr, adr;
 		int line;
 
 		tag = pci_make_tag(pc, bus, device, 0);
@@ -124,7 +122,11 @@ pci_attach_hook(parent, self, pba)
 			nfunctions = 1;
 
 		for (function = 0; function < nfunctions; function++) {
-			int i;
+			pcireg_t regs[256/sizeof(pcireg_t)];
+			pcireg_t mask;
+			pcireg_t rval;
+			int off;
+			int memfound, iofound;
 
 			tag = pci_make_tag(pc, bus, device, function);
 			id = pci_conf_read(pc, tag, PCI_ID_REG);
@@ -137,24 +139,87 @@ pci_attach_hook(parent, self, pba)
 				continue;
 
 			/* Enable io/mem */
-			/* XXX: ibm_machdep : ppc830 depend */
-			switch (device) {
-			case 12:
-			case 18:
-			case 22:
-				csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-				csr |= (PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
-				pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-				break;
+			memfound = 0;
+			iofound = 0;
+			for (off = 0; off < 256; off += sizeof(pcireg_t))
+				regs[o2i(off)] = pci_conf_read(pc, tag, off);
+			/* is it a std device header? */
+			if (PCI_HDRTYPE_TYPE(regs[o2i(PCI_BHLC_REG)]) != 0)
+				continue;
+			for (off = PCI_MAPREG_START;
+			    off < PCI_MAPREG_END; off += sizeof(pcireg_t)) {
+				rval = regs[o2i(off)];
+				if (rval != 0) {
+					pci_conf_write(pc, tag, off, 0xffffffff);
+					mask = pci_conf_read(pc, tag, off);
+					pci_conf_write(pc, tag, off, rval);
+				} else
+					mask = 0;
+#ifdef DEBUG
+				printf("\n");
+				printf("dev %d func %d ", device, function);
+				printf("off %02x addr %08x mask %08x",
+				    off, rval, mask);
+#endif
+				if (rval == 0)
+					continue;
+				/* find IO or MEM space */
+				if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM)
+					memfound = 1;
+				else
+					iofound = 1;
+			}
+			if (memfound) {
+				csr = pci_conf_read(pc, tag,
+				    PCI_COMMAND_STATUS_REG);
+				csr |= PCI_COMMAND_MEM_ENABLE;
+				pci_conf_write(pc, tag,
+				    PCI_COMMAND_STATUS_REG, csr);
+#ifdef DEBUG
+				printf("\n");
+				printf("dev %d func %d: mem", device, function);
+#endif
+			}
+			if (iofound) {
+				csr = pci_conf_read(pc, tag,
+				    PCI_COMMAND_STATUS_REG);
+				csr |= PCI_COMMAND_IO_ENABLE;
+				pci_conf_write(pc, tag,
+				    PCI_COMMAND_STATUS_REG, csr);
+#ifdef DEBUG
+				printf("\n");
+				printf("dev %d func %d: io", device, function);
+#endif
 			}
 
 			/* Fixup insane address */
-			for (i = 0; i < 6; i ++) {
-			address = pci_conf_read(pc, tag, PCI_CBIO + i * 4);
-				if (address > 0x10000000) {
-					address &= 0x00ffffff;
-					address |= 0x01000000;
-					pci_conf_write(pc, tag, PCI_CBIO + i * 4, address);
+			for (off = PCI_MAPREG_START;
+			    off < PCI_MAPREG_END; off += sizeof(pcireg_t)) {
+				int need_fixup;
+
+				need_fixup = 0;
+				adr = pci_conf_read(pc, tag, off);
+				if (adr > 0x10000000 ||
+				    (adr < 0x1000 && adr != 0))
+					need_fixup = 1;
+
+				if (need_fixup) {
+#ifdef DEBUG
+					printf("\n");
+					printf("dev %d func %d %saddr %08x -> ",
+					    device, function,
+					    PCI_MAPREG_TYPE(adr) ==
+					      PCI_MAPREG_TYPE_MEM ? "mem":"io",
+					    adr);
+#endif
+					adr &= 0x00ffffff;
+					adr |= 0x01000000 *
+					    (PCI_MAPREG_TYPE(adr) ==
+					      PCI_MAPREG_TYPE_MEM ? mq++:iq++);
+#ifdef DEBUG
+					printf("%08x", adr);
+#endif
+					pci_conf_write(pc, tag, off, adr);
 				}
 			}
 
