@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.8 2002/10/02 16:02:42 thorpej Exp $	*/
+/*	$NetBSD: neptune.c,v 1.9 2003/01/01 02:31:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ neptune_print(aux, name)
 	struct neptune_attach_args *na = aux;
 
 /*	if (na->na_addr > 0)	*/
-		printf (" addr 0x%06x", na->na_addr);
+		aprint_normal (" addr 0x%06x", na->na_addr);
 
 	return (QUIET);
 }
