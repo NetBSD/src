@@ -189,6 +189,13 @@ run_exec (stin, stout, sterr, flags)
 #endif
     if (pid == 0)
     {
+#ifdef SETXID_SUPPORT
+	if (flags & RUN_UNSETXID) {
+	    (void) setgid (getgid ());
+	    (void) setuid (getuid ());
+	}   
+#endif 
+
 	if (shin != 0)
 	{
 	    (void) dup2 (shin, 0);

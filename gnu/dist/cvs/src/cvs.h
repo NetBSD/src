@@ -667,6 +667,7 @@ void sleep_past PROTO ((time_t desttime));
 #define	RUN_STDOUT_APPEND	0x0004	/* append to stdout, don't truncate */
 #define	RUN_STDERR_APPEND	0x0008	/* append to stderr, don't truncate */
 #define	RUN_SIGIGNORE		0x0010	/* ignore interrupts for command */
+#define	RUN_UNSETXID		0x0020	/* undo setxid in child */
 #define	RUN_TTY		(char *)0	/* for the benefit of lint */
 
 void run_arg PROTO((const char *s));
