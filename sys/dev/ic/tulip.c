@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.11 1999/09/17 21:57:36 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.12 1999/09/19 20:51:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1261,9 +1261,16 @@ tlp_reset(sc)
 	TULIP_WRITE(sc, CSR_BUSMODE, BUSMODE_SWR);
 
 	for (i = 0; i < 1000; i++) {
+		/*
+		 * Wait at least 50 PCI cycles for the reset to
+		 * complete before peeking at the Tulip again.
+		 * 10 uSec is a bit longer than 50 PCI cycles
+		 * (at 33MHz), but it doesn't hurt have the extra
+		 * wait.
+		 */
+		delay(10);
 		if (TULIP_ISSET(sc, CSR_BUSMODE, BUSMODE_SWR) == 0)
 			break;
-		delay(10);
 	}
 
 	if (TULIP_ISSET(sc, CSR_BUSMODE, BUSMODE_SWR))
