@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.106 1995/02/04 14:24:05 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.107 1995/02/04 14:54:57 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -800,8 +800,6 @@ ENTRY(copyout)
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
 	movl	20(%esp),%eax
-	testl	%eax,%eax		# anything to do?
-	jz	done_copyout
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -821,6 +819,9 @@ ENTRY(copyout)
 	cmpl	$CPUCLASS_386,_cpu_class
 	jne	3f
 #endif /* I486_CPU || I586_CPU */
+
+	testl	%eax,%eax		# anything to do?
+	jz	3f
 
 	/*
 	 * We have to check each PTE for (write) permission, since the CPU
@@ -859,8 +860,8 @@ ENTRY(copyout)
 	popl	%ecx
 	testl	%eax,%eax		# if not ok, return EFAULT
 	popl	%eax
-	jnz	_copy_fault
-	jmp	4b
+	jz	4b
+	jmp	_copy_fault
 #endif /* I386_CPU */
 
 3:	/* bcopy(%esi, %edi, %eax); */
@@ -875,7 +876,6 @@ ENTRY(copyout)
 	movsb
 	xorl	%eax,%eax
 
-done_copyout:
 	popl	%edi
 	popl	%esi
 	movl	_curpcb,%edx
@@ -895,8 +895,6 @@ ENTRY(copyin)
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
 	movl	20(%esp),%eax
-	testl	%eax,%eax		# anything to do?
-	jz	done_copyin
 
 	/*
 	 * We check that the end of the destination buffer is not past the end
@@ -921,7 +919,6 @@ ENTRY(copyin)
 	movsb
 	xorl	%eax,%eax
 
-done_copyin:	
 	popl	%edi
 	popl	%esi
 	movl	_curpcb,%edx
@@ -959,10 +956,15 @@ ENTRY(copyoutstr)
 	jne	5f
 #endif /* I486_CPU || I586_CPU */
 
+	/* Compute number of bytes in first page. */
 	movl	%edi,%eax
 	andl	$PGOFSET,%eax
 	movl	$NBPG,%ecx
 	subl	%eax,%ecx		# ecx = NBPG - (src % NBPG)
+
+	/* Compute PTE offset for start address. */
+	movl	%edi,%eax
+	shrl	$PGSHIFT,%eax		# calculate pte address
 
 1:	/*
 	 * Once per page, check that we are still within the bounds of user
@@ -971,18 +973,18 @@ ENTRY(copyoutstr)
 	cmpl	$VM_MAXUSER_ADDRESS,%edi
 	jae	_copystr_fault
 
-	movl	%edi,%eax
-	shrl	$PGSHIFT,%eax		# calculate pte address
 	testb	$PG_RW,_PTmap(,%eax,4)
 	jnz	2f
 
 	/* Simulate a trap. */
+	pushl	%eax
 	pushl	%edx
 	pushl	%edi
 	call	_trapwrite		# trapwrite(addr)
 	addl	$4,%esp			# clear argument from stack
 	popl	%edx
 	testl	%eax,%eax
+	popl	%eax
 	jnz	_copystr_fault
 
 2:	/* Copy up to end of this page. */
@@ -1005,6 +1007,7 @@ ENTRY(copyoutstr)
 
 4:	/* Go to next page, if any. */
 	movl	$NBPG,%ecx
+	incl	%eax
 	testl	%edx,%edx
 	jnz	1b
 
