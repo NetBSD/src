@@ -1,19 +1,33 @@
-#	$NetBSD: Makefile.inc,v 1.29 1997/04/22 06:55:36 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.29.2.1 1997/05/23 21:14:42 lukem Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
 
-SRCS+=	base64.c gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
-	getproto.c getprotoent.c getprotoname.c getservbyname.c \
-	getservbyport.c getservent.c herror.c inet_addr.c inet_lnaof.c \
-	inet_makeaddr.c inet_net_ntop.c inet_net_pton.c inet_neta.c \
-	inet_ntop.c inet_pton.c inet_netof.c inet_network.c inet_ntoa.c \
-	iso_addr.c linkaddr.c ns_addr.c ns_ntoa.c nsap_addr.c rcmd.c recv.c \
-	res_comp.c res_data.c res_debug.c res_init.c res_mkquery.c res_query.c \
-	res_send.c send.c sethostent.c ethers.c
+SRCS+=	base64.c ethers.c gethostnamadr.c getnetbyaddr.c getnetbyname.c \
+	getnetent.c getproto.c getprotoent.c getprotoname.c getservbyname.c \
+	getservbyport.c getservent.c herror.c hesiod.c inet_addr.c \
+	inet_lnaof.c inet_makeaddr.c inet_net_ntop.c inet_net_pton.c \
+	inet_neta.c inet_ntop.c inet_pton.c inet_netof.c inet_network.c \
+	inet_ntoa.c iso_addr.c linkaddr.c nsdispatch.c nsparser.c nslexer.c \
+	ns_addr.c ns_ntoa.c nsap_addr.c rcmd.c recv.c res_comp.c res_data.c \
+	res_debug.c res_init.c res_mkquery.c res_query.c res_send.c send.c \
+	sethostent.c
 
 SRCS+=	__dn_comp.c __res_close.c __res_send.c
+
+
+CFLAGS+=      -I.
+
+CLEANFILES+= nsparser.tab.h nsparser.c nslexer.c
+
+nsparser.c: nsparser.y
+	${YACC.y} -p_nsyy -b ${.TARGET:R} ${.IMPSRC}
+	mv ${.TARGET:R}.tab.c ${.TARGET}
+
+nslexer.c: nslexer.l nsparser.c
+	${LEX.l} -P_nsyy -o${.TARGET} ${.IMPSRC}
+
 
 # machine-dependent net sources
 # m-d Makefile.inc must include sources for:
@@ -21,8 +35,9 @@ SRCS+=	__dn_comp.c __res_close.c __res_send.c
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/net/Makefile.inc"
 
-MAN+=	byteorder.3 gethostbyname.3 getnetent.3 getprotoent.3 getservent.3 \
-	inet.3 iso_addr.3 linkaddr.3 ns.3 rcmd.3 resolver.3 ethers.3
+MAN+=	byteorder.3 ethers.3 gethostbyname.3 getnetent.3 getprotoent.3 \
+	getservent.3 inet.3 iso_addr.3 linkaddr.3 ns.3 nsdispatch.3 \
+	rcmd.3 resolver.3
 
 MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
 	byteorder.3 ntohs.3

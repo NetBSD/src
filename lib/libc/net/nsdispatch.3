@@ -1,0 +1,144 @@
+.\"	$NetBSD: nsdispatch.3,v 1.1.4.1 1997/05/23 21:14:46 lukem Exp $
+.\" 
+.\"  Copyright (c) 1997 Luke Mewburn <lukem@netbsd.org>
+.\"  All rights reserved.
+.\" 
+.\"  Redistribution and use in source and binary forms, with or without
+.\"  modification, are permitted provided that the following conditions
+.\"  are met:
+.\"  1. Redistributions of source code must retain the above copyright
+.\"     notice, this list of conditions and the following disclaimer.
+.\"  2. Redistributions in binary form must reproduce the above copyright
+.\"     notice, this list of conditions and the following disclaimer in the
+.\"     documentation and/or other materials provided with the distribution.
+.\"  3. All advertising materials mentioning features or use of this software
+.\"     must display the following acknowledgement:
+.\"  	This product includes software developed by Luke Mewburn.
+.\"  4. The name of the author may not be used to endorse or promote products
+.\"     derived from this software without specific prior written permission.
+.\"  
+.\"  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\"  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\"  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\"  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\"  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\"  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+.\"  OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+.\"  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+.\"  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+.\"  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 24, 1997
+.Dt NSDISPATCH 3
+.Os NetBSD
+.Sh NAME
+.Nm nsdispatch
+.Nd name-service switch dispatcher routine
+.Sh SYNOPSIS
+.Fd #include <nsswitch.h>
+.Ft int
+.Fn nsdispatch "void *retval" "ns_dtab dtab" "const char *database" "..."
+.Sh DESCRIPTION
+The
+.Fn nsdispatch
+function invokes the callback functions specified in 
+.Va dtab
+in the order given in
+.Pa /etc/nsswitch.conf
+for the database
+.Va database
+until a successful entry is found.
+.Pp
+The return value from the last function invoked is stored at
+the location specified in
+.Va retval .
+.Pp
+The optional extra arguments given in
+.Va ...
+are passed to the appropriate callback function as a variable argument
+list of the type
+.Va va_list .
+.Pp
+The format of the
+.Va ns_dtab
+structure is as follows:
+.Bd -literal -offset indent
+typedef struct {
+	int (*cb)(void *retval, void *cb_data, va_list ap);
+	void *cb_data;
+} ns_dtab [NS_MAXSOURCE];
+.Ed
+.Pp
+For each source type,
+.Va cb
+should be defined as a function which handles that source, or set to
+.Dv NULL .
+.Va cb_data
+is used to pass arbritrary data to the callback function.
+.Ss Valid source types
+For a given source, the following #defines are available.
+.Bl -column NS_NISPLUS NISPLUS -offset indent
+.Sy #define	Source
+.It NS_FILES	files
+.It NS_DNS	dns
+.It NS_NIS	nis
+.It NS_NISPLUS	nisplus
+.It NS_COMPAT	compat
+.El
+Refer to
+.Xr nsswitch.conf 5
+for a complete description of what each source type is.
+.Pp
+.Ss Callback return values
+The callback functions should return one of the following values
+depending upon status of the lookup. :
+.Bl -column NS_NOTFOUND -offset indent
+.Sy "Return value"	Status code
+.It NS_SUCCESS	success
+.It NS_NOTFOUND	notfound
+.It NS_UNAVAIL	unavail
+.It NS_TRYAGAIN	tryagain
+.El
+Refer to
+.Xr nsswitch.conf 5
+for a complete description of what each status code is.
+.Pp
+.Nm
+returns the value of the callback that caused the dispatcher to finish,
+or NS_NOTFOUND otherwise.
+.Sh SEE ALSO
+.Xr hesiod 3 ,
+.Xr stdarg 3 ,
+.Xr ypclnt 3 ,
+.Xr nsswitch.conf 5
+.Sh HISTORY
+The
+.Nm
+routines first appeared in
+.Nx 1.3 .
+.Sh AUTHORS
+Luke Mewburn
+.Aq lukem@netbsd.org
+wrote this freely distributable name-service switch implementation,
+using ideas from the
+.Tn ULTRIX
+.Xr svc.conf 5
+and
+.Tn SOLARIS
+.Xr nsswitch.conf 4
+manual pages.
+.Sh BUGS
+The bounds checking on
+.Va ns_dtab
+is with
+.Sy NS_MAXSOURCE
+as compiled in with the
+.Nm
+function.
+If
+.Sy NS_MAXSOURCE
+is reduced and a program is compiled with the newer value without
+re-compilation of
+.Nm
+then you will lose big time.
+It is not expected that this scenario is likely to occur.
