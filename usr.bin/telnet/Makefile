@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/03/24 21:59:51 christos Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/20 00:37:47 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -34,6 +34,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 
+WARNS=	0
 PROG=	telnet
 
 CFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO -Dunix
