@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 1999/11/15 19:18:25 fvdl Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2000/12/13 03:04:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.34 1999/11/15 19:18:25 fvdl Exp $");
+__RCSID("$NetBSD: main.c,v 1.35 2000/12/13 03:04:51 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -240,8 +240,10 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	 * 1b: locate first references to duplicates, if any
 	 */
 	if (duplist) {
-		if (preen || usedsoftdep)
-			pfatal("INTERNAL ERROR: dups with -p");
+		if (preen)
+			pfatal("INTERNAL ERROR: dups with -p\n");
+		if (usedsoftdep)
+			pfatal("INTERNAL ERROR: dups with softdep\n");
 		printf("** Phase 1b - Rescan For More DUPS\n");
 		pass1b();
 	}
