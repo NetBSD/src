@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.1 1994/01/08 11:13:06 cgd Exp $
+ *	$Id: process_machdep.c,v 1.2 1994/01/09 15:02:24 mycroft Exp $
  */
 
 /*
@@ -118,40 +118,33 @@ process_write_regs(p, regs)
 {
 	void *ptr;
 	struct trapframe *tp;
-	u_int eflags;
+	int eflags;
 
 	if ((p->p_flag & SLOAD) == 0)
 		return (EIO);
 
 	ptr = (char *)p->p_addr + ((char *) p->p_regs - (char *) kstack);
+	tp = ptr;
 
 	eflags = regs->r_eflags;
-#ifdef notdef	/* BSDI's got a per-proc bitmap possible, apparently */
 	if ((eflags & PSL_USERCLR) != 0 ||
 	    (eflags & PSL_USERSET) != PSL_USERSET ||
-	    (eflags & PSL_IOPL &&
-		(p->p_md.md_flags & MDP_IOPL) == 0))
-			return (EPERM);
-#else	/* XXX - MORE THAN THIS! */
-	if ((eflags & PSL_USERCLR) != 0 ||
-	    (eflags & PSL_USERSET) != PSL_USERSET)
+	    (eflags & PSL_IOPL) > (tp->tf_eflags & PSL_IOPL))
 		return (EPERM);
-#endif
 
-	tp = ptr;
-	tp->tf_es = regs->r_es;
-	tp->tf_ds = regs->r_ds;
-	tp->tf_edi = regs->r_edi;
-	tp->tf_esi = regs->r_esi;
 	tp->tf_ebp = regs->r_ebp;
-	tp->tf_ebx = regs->r_ebx;
-	tp->tf_edx = regs->r_edx;
-	tp->tf_ecx = regs->r_ecx;
-	tp->tf_eax = regs->r_eax;
-	tp->tf_eip = regs->r_eip;
-	tp->tf_cs = regs->r_cs;
-	tp->tf_eflags = eflags;
 	tp->tf_esp = regs->r_esp;
+	tp->tf_eip = regs->r_eip;
+	tp->tf_eflags = eflags;
+	tp->tf_eax = regs->r_eax;
+	tp->tf_ebx = regs->r_ebx;
+	tp->tf_ecx = regs->r_ecx;
+	tp->tf_edx = regs->r_edx;
+	tp->tf_esi = regs->r_esi;
+	tp->tf_edi = regs->r_edi;
+	tp->tf_cs = regs->r_cs;
+	tp->tf_ds = regs->r_ds;
+	tp->tf_es = regs->r_es;
 	tp->tf_ss = regs->r_ss;
 
 	return (0);
@@ -161,16 +154,18 @@ int
 process_sstep(p)
 	struct proc *p;
 {
-	int error;
-	struct reg r;
+	void *ptr;
+	struct trapframe *tp;
 
-	error = process_read_regs(p, &r);
-	if (error == 0) {
-		r.r_eflags |= PSL_T;
-		error = process_write_regs(p, &r);
-	}
+	if ((p->p_flag & SLOAD) == 0)
+		return (EIO);
 
-	return (error);
+	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
+
+	tp = ptr;
+	tp->tf_eflags |= PSL_T;
+
+	return (0);
 }
 
 int
@@ -185,14 +180,16 @@ process_set_pc(p, addr)
 	struct proc *p;
 	u_int addr;
 {
-	int error;
-	struct reg r;
+	void *ptr;
+	struct trapframe *tp;
 
-	error = process_read_regs(p, &r);
-	if (error == 0) {
-		r.r_eip = addr;
-		error = process_write_regs(p, &r);
-	}
+	if ((p->p_flag & SLOAD) == 0)
+		return (EIO);
 
-	return (error);
+	ptr = (char *) p->p_addr + ((char *) p->p_regs - (char *) kstack);
+
+	tp = ptr;
+	tp->tf_eip = addr;
+
+	return (0);
 }
