@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.83 2000/10/31 18:08:51 mason Exp $
+.\"	$NetBSD: main,v 1.84 2000/11/01 03:42:18 tv Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -157,14 +157,9 @@ release. Some highlights include:
 .(bullet
 Ports to new platforms including:
 arc,
-arm26,
 cobalt,
-evbsh3,
 hpcmips,
-luna68k,
-mmeye,
 news68k,
-prep,
 sgimips,
 and
 sparc64.
