@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.4 1997/10/17 21:10:39 phil Exp $	*/
+/*	$NetBSD: install.c,v 1.5 1997/10/20 06:13:29 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -109,13 +109,16 @@ void do_install(void)
 		/* Configure the system */
 		run_makedev ();
 
-		/* Network configuration. */
-		/* process_menu (MENU_confignet); */
+		/* Other configuration. */
+		mnt_net_config();
 		
 		/* Clean up ... */
-		if (clean_dist_dir) {
+		if (clean_dist_dir)
 			run_prog ("/bin/rm -rf %s", dist_dir);
-		}
+
+		/* Mounted dist dir? */
+		if (mnt2_mounted)
+			run_prog ("/sbin/umount /mnt2");
 		
 		/* Install complete ... reboot */
 		msg_display (MSG_instcomplete);

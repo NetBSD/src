@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.6 1997/10/17 22:17:28 phil Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.7 1997/10/20 06:13:35 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -235,6 +235,11 @@ message instcomplete
 reboot your machine and NetBSD should boot from your hard drive.
 }
 
+message upgrcomplete
+{The upgrade to NetBSD-@@VERSION@@ is now complete.  You may
+reboot your machine and NetBSD should boot from your hard drive.
+}
+
 message distmedium
 {Your disk is now ready for installing the kernel and the distribution
 sets.  As noted in your INSTALL notes, you have several options.  For
@@ -269,6 +274,9 @@ message passwd
 message email
 {e-mail address}
 
+message dev
+{device}
+
 message nfssource
 {Enter the nfs host and directory where the distribution is located.
 Remember, the directory should contain the tar.gz files and be nfs
@@ -280,6 +288,18 @@ directory: %s
 
 message nfsbadmount
 {The directory %s:%s could not be nfs mounted.}
+
+message cdromsource
+{Enter the CDROM device to be used and directory on the CDROM where
+the distribution is located.  Remember, the directory should contain
+the tar.gz files.
+
+device:    %s
+directory: %s
+}
+
+message cdrombadmount
+{The CDROM could not be mounted on device %s.}
 
 message asknetdev
 {I have found the following network interfaces: %s
@@ -365,6 +385,11 @@ message abortinst
 by hand.  Installation aborted.
 }
 
+message abortupgr
+{The distribution was not successfully loaded.  You will need to proceed
+by hand.  Upgrade aborted.
+}
+
 message openmsgbuf
 {Could not open /kern/msgbuf.
 }
@@ -417,3 +442,8 @@ message fdremount
 
     Not load any more files from floppy and abort the process.
 }
+
+
+message mntnetconfig
+{Is the network information you entered accurate for this machine
+in regular operation and do you want it installed in etc? }

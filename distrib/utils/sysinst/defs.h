@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.6 1997/10/17 22:17:05 phil Exp $	*/
+/*	$NetBSD: defs.h,v 1.7 1997/10/20 06:13:25 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -145,6 +145,11 @@ EXTERN char ftp_pass[STRSIZE] INIT("");
 EXTERN char nfs_host[STRSIZE] INIT("");
 EXTERN char nfs_dir[STRSIZE] INIT("");
 
+EXTERN char cdrom_dev[SSTRSIZE] INIT("cd0");
+EXTERN char cdrom_dir[STRSIZE] INIT("/Release/NetBSD/NetBSD-" REL "/" MACH);
+
+EXTERN int  mnt2_mounted INIT(0);
+
 /* Vars for runing commands ... */
 EXTERN char command[STRSIZE];
 
@@ -198,6 +203,7 @@ int	get_geom __P((char *, struct disklabel *));
 /* from net.c */
 int	get_via_ftp __P((void));
 int	get_via_nfs __P((void));
+void	mnt_net_config __P((void));
 
 /* From run.c */
 int	collect __P((int kind, char **buffer, char *name, ...));
@@ -213,3 +219,4 @@ int	ask_ynquestion __P((char *quest, char def, ...));
 void	extract_dist __P((void));
 void	run_makedev __P((void));
 int	get_via_floppy __P((void));
+int	get_via_cdrom __P((void));
