@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.1 2001/01/17 05:21:48 itojun Exp $
+#	$NetBSD: files.hpcsh,v 1.2 2001/01/21 18:33:53 uch Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -8,6 +8,16 @@ include "arch/hpcsh/conf/files.shbus"
 file	arch/hpcsh/hpcsh/conf.c
 file	arch/hpcsh/hpcsh/machdep.c
 file	arch/hpcsh/hpcsh/procfs_machdep.c	procfs
+
+# Raster operations
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+
+#
+# Workstation Console
+#
+include "dev/wscons/files.wscons"
+
 
 defopt	opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
 defopt  opt_led_addr.h	LED_ADDR
