@@ -1,4 +1,4 @@
-/* $NetBSD: sfas.c,v 1.1 1996/01/31 23:26:41 mark Exp $ */
+/* $NetBSD: sfas.c,v 1.2 1996/02/22 23:25:10 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -40,7 +40,7 @@
  *
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
  *
- *	$Id: sfas.c,v 1.1 1996/01/31 23:26:41 mark Exp $
+ *	$Id: sfas.c,v 1.2 1996/02/22 23:25:10 mark Exp $
  */
 
 /*
@@ -65,14 +65,13 @@
 #include <machine/cpu.h>
 #include <machine/io.h>
 #include <machine/irqhandler.h>
+#include <machine/katelib.h>
 #include <arm32/podulebus/podulebus.h>
 #include <arm32/podulebus/sfasreg.h>
 #include <arm32/podulebus/sfasvar.h>
 
 /* Externs */
 extern pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
-extern void tlbflush __P((void));
-extern void delay __P((int));
 
 void sfasinitialize __P((struct sfas_softc *));
 void sfas_minphys   __P((struct buf *bp));
