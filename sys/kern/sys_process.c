@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.78 2003/01/18 10:06:34 thorpej Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.79 2003/01/23 17:35:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993 Jan-Simon Pendry.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.78 2003/01/18 10:06:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.79 2003/01/23 17:35:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,7 @@ sys_ptrace(l, v, retval)
 		break;
 
 	case  PT_ATTACH:
+	case  PT_DUMPCORE:
 		/*
 		 * You can't attach to a process if:
 		 *	(1) it's the process that's doing the attaching,
@@ -313,6 +314,9 @@ sys_ptrace(l, v, retval)
 		piod.piod_len -= uio.uio_resid;
 		(void) copyout(&piod, SCARG(uap, addr), sizeof(piod));
 		return (error);
+
+	case  PT_DUMPCORE:
+		return coredump(lt);
 
 #ifdef PT_STEP
 	case  PT_STEP:
