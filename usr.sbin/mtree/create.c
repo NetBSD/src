@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.21 1999/02/11 15:32:23 mrg Exp $	*/
+/*	$NetBSD: create.c,v 1.22 1999/07/06 12:59:12 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.21 1999/02/11 15:32:23 mrg Exp $");
+__RCSID("$NetBSD: create.c,v 1.22 1999/07/06 12:59:12 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: create.c,v 1.21 1999/02/11 15:32:23 mrg Exp $");
 #include <fcntl.h>
 #include <fts.h>
 #include <grp.h>
+#include <md5.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <string.h>
@@ -132,6 +133,7 @@ statf(p)
 	struct passwd *pw;
 	u_int32_t len, val;
 	int fd, indent;
+	char md5buf[33], *md5cp;
 
 	if (S_ISDIR(p->fts_statp->st_mode))
 		indent = printf("%s", p->fts_name); 
@@ -180,6 +182,11 @@ statf(p)
 			mtree_err("%s: %s", p->fts_accpath, strerror(errno));
 		(void)close(fd);
 		output(&indent, "cksum=%lu", val);
+	}
+	if (keys & F_MD5 && S_ISREG(p->fts_statp->st_mode)) {
+		if ((md5cp = MD5File(p->fts_accpath, md5buf)) == NULL)
+			mtree_err("%s: %s", p->fts_accpath, "MD5File");
+				  output(&indent, "md5=%s", md5cp);
 	}
 	if (keys & F_SLINK &&
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE))
