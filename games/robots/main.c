@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,13 +32,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 2/28/91";
+static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 # include	"robots.h"
@@ -147,6 +147,13 @@ char	**av;
 	quit();
 }
 
+void
+__cputchar(ch)
+	int ch;
+{
+	(void)putchar(ch);
+}
+
 /*
  * quit:
  *	Leave the program elegantly.
@@ -154,17 +161,7 @@ char	**av;
 void
 quit()
 {
-	extern int	_putchar();
-
-	mvcur(0, COLS - 1, LINES - 1, 0);
-	if (CE) {
-		tputs(CE, 1, _putchar);
-		endwin();
-	}
-	else {
-		endwin();
-		putchar('\n');
-	}
+	endwin();
 	exit(0);
 	/* NOTREACHED */
 }

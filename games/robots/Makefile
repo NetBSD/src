@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.10 (Berkeley) 5/11/90
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	robots
 CFLAGS+=-DMAX_PER_UID=5
