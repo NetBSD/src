@@ -1,14 +1,15 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/12 01:48:57 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 23:09:13 lukem Exp $
+
+NOLINT=		# defined
+NOPROFILE=	# defined
+NOPIC=		# defined
+NOLINKLIB=	# defined
 
 .include <bsd.own.mk>
 
 .if defined(USE_NEW_TOOLCHAIN)
 
 LIB=		iberty
-NOLINT=		# defined
-NOPROFILE=	# defined
-NOPIC=		# defined
-NOLINKLIB=	# defined
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
