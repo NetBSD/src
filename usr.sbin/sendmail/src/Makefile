@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25.4.1 1996/12/06 00:51:56 rat Exp $
+#	$NetBSD: Makefile,v 1.25.4.2 1997/02/03 04:36:21 rat Exp $
 #
 #  NetBSD Makefile
 #
