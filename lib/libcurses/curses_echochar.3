@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_echochar.3,v 1.1 2004/03/28 08:58:13 jdc Exp $
+.\"	$NetBSD: curses_echochar.3,v 1.2 2004/03/28 12:23:21 wiz Exp $
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .Nm curses_echochar ,
 .Nm echochar ,
 .Nm wechochar ,
-.Nm pechochar ,
+.Nm pechochar
 .Nd curses add characters and then refresh routines
 .Sh LIBRARY
 .Lb libcurses
@@ -51,7 +51,8 @@
 These functions add characters to
 .Dv stdscr
 or to the specified window or pad and then cause an immediate
-.Fn refresh of that window or pad.
+.Fn refresh
+of that window or pad.
 .Pp
 The
 .Fn echochar
@@ -114,8 +115,11 @@ An error occurred in the function.
 .Xr curses_refresh 3
 .Sh STANDARDS
 The
-.Nx
-Curses library complies with the X/Open Curses specification, part of the
+.Fn echochar ,
+.Fn wechochar ,
+and
+.Fn pechochar
+functions comply with the X/Open Curses specification, part of the
 Single Unix Specification.
 .Sh HISTORY
 The Curses package appeared in
