@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.2 1996/08/10 01:29:30 thorpej Exp $	*/
+/*	$NetBSD: parms.c,v 1.3 1996/09/24 16:24:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,13 +33,11 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi)
-#if 0
+#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
 static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
-#else
-static char rcsid[] = "$NetBSD: parms.c,v 1.2 1996/08/10 01:29:30 thorpej Exp $";
+#elif defined(__NetBSD__)
+static char rcsid[] = "$NetBSD: parms.c,v 1.3 1996/09/24 16:24:17 christos Exp $";
 #endif
-#endif /* not lint */
 
 #include "defs.h"
 #include "pathnames.h"
@@ -114,7 +112,8 @@ get_parms(struct interface *ifp)
 		ifp->int_state |= IS_NO_RDISC;
 	if (ifp->int_state & IS_PASSIVE)
 		ifp->int_state |= (IS_NO_RIP | IS_NO_RDISC);
-	if ((ifp->int_state&(IS_NO_RIP|IS_NO_RDISC)) == (IS_NO_RIP|IS_NO_RDISC))
+	if ((ifp->int_state & (IS_NO_RIP | IS_NO_RDISC))
+	    == (IS_NO_RIP|IS_NO_RDISC))
 		ifp->int_state |= IS_PASSIVE;
 }
 
@@ -274,8 +273,8 @@ gwkludge(void)
 			state |= IS_NO_RDISC;
 		if (state & IS_PASSIVE)
 			state |= (IS_NO_RIP | IS_NO_RDISC);
-		if ((state & (IS_NO_RIP|IS_NO_RDISC)) ==
-		    (IS_NO_RIP|IS_NO_RDISC))
+		if ((state & (IS_NO_RIP | IS_NO_RDISC))
+		    == (IS_NO_RIP|IS_NO_RDISC))
 			state |= IS_PASSIVE;
 
 		parmp = (struct parm*)malloc(sizeof(*parmp));
@@ -476,13 +475,6 @@ parse_parms(char *line)
 	if (tgt != 0)
 		return tgt;
 
-	if (parm.parm_int_state & IS_NO_ADV_IN)
-		parm.parm_int_state |= IS_NO_SOL_OUT;
-
-	if ((parm.parm_int_state & (IS_NO_RIP | IS_NO_RDISC))
-	    == (IS_NO_RIP | IS_NO_RDISC))
-		parm.parm_int_state |= IS_PASSIVE;
-
 	return check_parms(&parm);
 #undef DELIMS
 #undef PARS
@@ -497,6 +489,21 @@ check_parms(struct parm *new)
 	struct parm *parmp;
 
 
+	/* set implicit values
+	 */
+	if (!supplier && supplier_set)
+		new->parm_int_state |= (IS_NO_RIPV1_OUT
+					| IS_NO_RIPV2_OUT
+					| IS_NO_ADV_OUT);
+	if (new->parm_int_state & IS_NO_ADV_IN)
+		new->parm_int_state |= IS_NO_SOL_OUT;
+
+	if ((new->parm_int_state & (IS_NO_RIP | IS_NO_RDISC))
+	    == (IS_NO_RIP | IS_NO_RDISC))
+		new->parm_int_state |= IS_PASSIVE;
+
+	/* compare with existing sets of parameters
+	 */
 	for (parmp = parms; parmp != 0; parmp = parmp->parm_next) {
 		if (strcmp(new->parm_name, parmp->parm_name))
 			continue;

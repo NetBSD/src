@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.7 1996/08/10 01:29:34 thorpej Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.8 1996/09/24 16:24:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,6 +33,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)pathnames.h	8.1 (Berkeley) 6/5/93
+ *
+ *	$NetBSD: pathnames.h,v 1.8 1996/09/24 16:24:18 christos Exp $
  */
 
 #include <paths.h>
@@ -43,5 +45,8 @@
  * or be the same as the tracefile specified when the daemon was started.
  * If this is a directory, routed will create log files in it.  That
  * might be a security problem.
+ *
+ * Leave this undefined, and only the trace file originally specified
+ * when routed was started, if any, will be appended to.
  */
-#define _PATH_TRACE	"/tmp/routed.log"
+#define _PATH_TRACE	"/etc/routed.trace"
