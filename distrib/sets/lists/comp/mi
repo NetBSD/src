@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.246 2000/07/08 14:17:46 kleink Exp $
+#	$NetBSD: mi,v 1.247 2000/07/17 05:49:28 mrg Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -822,6 +822,7 @@
 ./usr/include/openssl/dsa.h	comp-c-include
 ./usr/include/openssl/e_os.h	comp-c-include
 ./usr/include/openssl/e_os2.h	comp-c-include
+./usr/include/openssl/ebcdic.h	comp-c-include
 ./usr/include/openssl/err.h	comp-c-include
 ./usr/include/openssl/evp.h	comp-c-include
 ./usr/include/openssl/hmac.h	comp-c-include
