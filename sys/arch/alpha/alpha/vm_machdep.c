@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.71 2001/07/15 21:57:01 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.72 2001/07/18 22:22:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.71 2001/07/15 21:57:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.72 2001/07/18 22:22:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,9 +161,13 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 
 	/*
 	 * Copy pcb and user stack pointer from proc p1 to p2.
+	 * If specificed, give the child a different stack.
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	p2->p_addr->u_pcb.pcb_hw.apcb_usp = alpha_pal_rdusp();
+	if (stack != NULL)
+		p2->p_addr->u_pcb.pcb_hw.apcb_usp = (u_long)stack + stacksize;
+	else
+		p2->p_addr->u_pcb.pcb_hw.apcb_usp = alpha_pal_rdusp();
 	simple_lock_init(&p2->p_addr->u_pcb.pcb_fpcpu_slock);
 
 	/*
@@ -203,12 +207,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 		p2tf->tf_regs[FRAME_V0] = p1->p_pid;	/* parent's pid */
 		p2tf->tf_regs[FRAME_A3] = 0;		/* no error */
 		p2tf->tf_regs[FRAME_A4] = 1;		/* is child */
-
-		/*
-		 * If specificed, give the child a different stack.
-		 */
-		if (stack != NULL)
-			p2tf->tf_regs[FRAME_SP] = (u_long)stack + stacksize;
 
 		up->u_pcb.pcb_hw.apcb_ksp = (u_int64_t)p2tf;	
 		up->u_pcb.pcb_context[0] =
