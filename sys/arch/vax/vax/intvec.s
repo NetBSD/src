@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.43 2000/06/02 21:51:15 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.44 2000/06/04 02:19:27 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -219,8 +219,9 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
  * put in a need for an extra check when the fault is gotten during
  * PTE reference. Handled in pmap.c.
  */
-		.align	2
-transl_v: .globl transl_v	# Translation violation, 20
+	.align	2
+	.globl	transl_v	# 20: Translation violation
+transl_v:
 	pushr	$0x3f
 	pushl	28(sp)
 	pushl	28(sp)
@@ -233,8 +234,9 @@ transl_v: .globl transl_v	# Translation violation, 20
 1:	popr	$0x3f
 	brb	access_v
 
-		.align	2
-access_v:.globl access_v	# Access cntrl viol fault,	24
+	.align	2
+	.globl	access_v	# 24: Access cntrl viol fault
+access_v:
 	blbs	(sp), ptelen
 	pushl	$T_ACCFLT
 	bbc	$1,4(sp),1f
@@ -278,7 +280,7 @@ ENTRY(cmrerr)
 	rei
 
 ENTRY(sbiflt);
-	movab	sbifltmsg, -(sp)
+	pushab	sbifltmsg
 	calls	$1, _panic
 
 TRAPCALL(astintr, T_ASTFLT)
@@ -288,14 +290,18 @@ FASTINTR(softclock,softclock)
 ENTRY(softnet)
 	PUSHR
 
+#	tstl	_netisr			# any netisr's set
+#	beql	2f			# no, skip looking at them one by one
 #define DONETISR(bit, fn) \
-	bbcc	$bit,_netisr,1f; calls $0,__CONCAT(_,fn); 1:
+	bbcc	$bit,_netisr,1f; \
+	calls	$0,__CONCAT(_,fn); \
+	1:
 
 #include <net/netisr_dispatch.h>
 
 #undef DONETISR
 
-	movab	_softnet_head,r0
+2:	movab	_softnet_head,r0
 	jsb	softintr_dispatch
 	POPR
 	rei

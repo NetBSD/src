@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.23 2000/05/08 17:53:24 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.24 2000/06/04 02:19:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -287,19 +287,19 @@ gencninit(cndev)
 {
 
 	/* Allocate interrupt vectors */
-	scb_vecalloc(SCB_G0R, gencnrint, &gencn_tty[0], SCB_ISTACK);
-	scb_vecalloc(SCB_G0T, gencntint, &gencn_tty[0], SCB_ISTACK);
+	scb_vecalloc(SCB_G0R, gencnrint, &gencn_tty[0], SCB_ISTACK, NULL);
+	scb_vecalloc(SCB_G0T, gencntint, &gencn_tty[0], SCB_ISTACK, NULL);
 
 	if (vax_cputype == VAX_TYP_8SS) {
 		maxttys = 4;
-		scb_vecalloc(SCB_G1R, gencnrint, &gencn_tty[1], SCB_ISTACK);
-		scb_vecalloc(SCB_G1T, gencntint, &gencn_tty[1], SCB_ISTACK);
+		scb_vecalloc(SCB_G1R, gencnrint, &gencn_tty[1], SCB_ISTACK, NULL);
+		scb_vecalloc(SCB_G1T, gencntint, &gencn_tty[1], SCB_ISTACK, NULL);
 
-		scb_vecalloc(SCB_G2R, gencnrint, &gencn_tty[2], SCB_ISTACK);
-		scb_vecalloc(SCB_G2T, gencntint, &gencn_tty[2], SCB_ISTACK);
+		scb_vecalloc(SCB_G2R, gencnrint, &gencn_tty[2], SCB_ISTACK, NULL);
+		scb_vecalloc(SCB_G2T, gencntint, &gencn_tty[2], SCB_ISTACK, NULL);
 
-		scb_vecalloc(SCB_G3R, gencnrint, &gencn_tty[3], SCB_ISTACK);
-		scb_vecalloc(SCB_G3T, gencntint, &gencn_tty[3], SCB_ISTACK);
+		scb_vecalloc(SCB_G3R, gencnrint, &gencn_tty[3], SCB_ISTACK, NULL);
+		scb_vecalloc(SCB_G3T, gencntint, &gencn_tty[3], SCB_ISTACK, NULL);
 	}
 	mtpr(0, PR_TBIA); /* ??? */
 }
