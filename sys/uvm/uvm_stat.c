@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_stat.c,v 1.7 1998/02/13 05:33:55 thorpej Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.8 1998/02/13 05:34:30 thorpej Exp $	 */
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
