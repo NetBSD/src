@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.4 2003/09/23 15:59:09 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.5 2003/10/13 04:20:23 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -95,6 +95,11 @@ struct ieee80211_node {
 	u_int16_t		ni_timoffset;
 #endif
 
+	/* power saving mode */
+
+	u_int8_t		ni_pwrsave;
+	struct ifqueue		ni_savedq;	/* packets queued for pspoll */
+
 	/* others */
 	u_int16_t		ni_associd;	/* assoc response */
 	u_int16_t		ni_txseq;	/* seq to be transmitted */
@@ -174,6 +179,8 @@ extern	void ieee80211_iterate_nodes(struct ieee80211com *ic,
 		ieee80211_iter_func *, void *);
 extern	void ieee80211_timeout_nodes(struct ieee80211com *);
 
+extern	int ieee80211_match_bss(struct ieee80211com *,
+		struct ieee80211_node *);
 extern	void ieee80211_create_ibss(struct ieee80211com* ,
 		struct ieee80211_channel *);
 #endif /* _NET80211_IEEE80211_NODE_H_ */
