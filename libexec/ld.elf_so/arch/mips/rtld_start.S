@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.4 1999/03/28 11:56:51 simonb Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.5 2002/09/12 17:08:32 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -29,6 +29,9 @@
 
 #include <mips/asm.h>
 
+.globl _C_LABEL(_rtld_relocate_nonplt_self)
+.globl _C_LABEL(_rtld)
+
 LEAF(rtld_start)
 	.set	noreorder
 
@@ -38,10 +41,23 @@ LEAF(rtld_start)
 					# -> 4(sp) for atexit
 					# -> 8(sp) for obj_main
 	move	s0,a0			# save stack pointer from a0
-	addu	a0, sp, 4		# _rtld argument
 	move	s1,a3			# save ps_strings pointer
-	jal	_C_LABEL(_rtld)		# v0 = _rtld(sp)
-	nop				# [BD if jal not expanded]
+
+	la	a1, 1f
+	bal	1f
+	 la	t9,_C_LABEL(_rtld_relocate_nonplt_self)
+1:	subu	a1, ra, a1		# relocbase
+	move	s2,a1
+	la	a0,_DYNAMIC
+	addu	t9, a1, t9
+	jalr	t9
+	 addu	a0, a1, a0		# &_DYNAMIC
+
+	move	a1,s2			# relocbase
+	addu	a0, sp, 4		# sp
+	jal	_C_LABEL(_rtld)		# v0 = _rtld(sp, relocbase)
+	 nop
+
 	lw	a1, 4(sp)		# our atexit function
 	lw	a2, 8(sp)		# obj_main entry
 	addu	sp, sp,12		# readjust stack

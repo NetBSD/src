@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.16 2002/09/06 15:17:57 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.17 2002/09/12 17:08:32 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -35,9 +35,7 @@
 #include "debug.h"
 #include "rtld.h"
 
-/*
- * _rtld_bind_mips(symbol_index, return_address, old_gp, stub_return_addr)
- */
+void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind_mips(Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr);
 
 caddr_t
@@ -75,24 +73,19 @@ _rtld_setup_pltgot(obj)
 	while (i < obj->local_gotno)
 		got[i++] += (Elf_Word)obj->relocbase;
 	got += obj->local_gotno;
-	i = obj->symtabno - obj->gotsym;
 	sym += obj->gotsym;
 	/* Now do the global GOT entries */
-	while (i--) {
-		rdbg(1, (" doing got %d sym %p (%s, %x)",  
-				obj->symtabno - obj->gotsym - i - 1, 
-				sym, sym->st_name + obj->strtab, *got));
+	for (i = obj->gotsym; i < obj->symtabno; i++) {
+		rdbg(1, (" doing got %d sym %p (%s, %x)", i - obj->gotsym, 
+		    sym, sym->st_name + obj->strtab, *got));
 
-		def = _rtld_find_symdef(obj->symtabno - i - 1, obj, &defobj,
-		    true);
+		def = _rtld_find_symdef(i, obj, &defobj, true);
 		if (def == NULL)
 			_rtld_error(
 	    "%s: Undefined PLT symbol \"%s\" (section type = %ld, symnum = %ld)",
 			    obj->path, sym->st_name + obj->strtab,
-			    (u_long) ELF_ST_TYPE(sym->st_info), 
-			    (u_long) obj->symtabno - i - 1);
+			    (u_long) ELF_ST_TYPE(sym->st_info), (u_long) i);
 		else {
-
 			if (sym->st_shndx == SHN_UNDEF) {
 #if 0	/* These don't seem to work? */
 
@@ -133,6 +126,53 @@ _rtld_setup_pltgot(obj)
 	obj->pltgot[1] |= (Elf_Addr) obj;
 }
 
+void
+_rtld_relocate_nonplt_self(dynp, relocbase)
+	Elf_Dyn *dynp;
+	Elf_Addr relocbase;
+{
+	const Elf_Rel *rel = 0, *rellim;
+	Elf_Addr relsz = 0;
+	Elf_Addr *where;
+	const Elf_Sym *def, *symtab;
+
+	for (; dynp->d_tag != DT_NULL; dynp++) {
+		switch (dynp->d_tag) {
+		case DT_REL:
+			rel = (const Elf_Rel *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case DT_RELSZ:
+			relsz = dynp->d_un.d_val;
+			break;
+		case DT_SYMTAB:
+			symtab = (const Elf_Sym *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		}
+	}
+	rellim = (const Elf_Rel *)((caddr_t)rel + relsz);
+	for (; rel < rellim; rel++) {
+		where = (Elf_Addr *)(relocbase + rel->r_offset);
+
+		switch (ELF_R_TYPE(rel->r_info)) {
+		case R_TYPE(NONE):
+			break;
+
+		case R_TYPE(REL32):
+			def = symtab + ELF_R_SYM(rel->r_info);
+			if (ELF_ST_BIND(def->st_info) == STB_LOCAL &&
+			    ELF_ST_TYPE(def->st_info) == STT_SECTION) {
+				*where += (Elf_Addr)def->st_value;
+				*where += (Elf_Addr)relocbase;
+			} else
+				abort();
+			break;
+
+		default:
+			abort();
+		}
+	}
+}
+
 int
 _rtld_relocate_nonplt_objects(obj, self, dodebug)
 	const Obj_Entry *obj;
@@ -140,6 +180,9 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 	bool dodebug;
 {
 	const Elf_Rel *rel;
+
+	if (self)
+		return 0;
 
 	for (rel = obj->rel; rel < obj->rellim; rel++) {
 		Elf_Addr        *where;
@@ -182,8 +225,8 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 				 * --rkb, Oct 6, 2001
 				 */
 				if (def->st_info == STT_SECTION &&
-					    (*where < def->st_value))
-				    *where += (Elf_Addr) def->st_value;
+				    *where < def->st_value)
+					*where += (Elf_Addr)def->st_value;
 
 				*where += (Elf_Addr)obj->relocbase;
 
