@@ -1,4 +1,4 @@
-#	$NetBSD: KARLA,v 1.8 2000/02/12 03:32:48 thorpej Exp $
+#	$NetBSD: KARLA,v 1.9 2000/09/24 15:59:32 jdolecek Exp $
 #
 # KARLA
 #
@@ -97,7 +97,7 @@ oscsi*		at dio? scode?		# old HP SCSI
 sd*		at oscsi? target ? lun ?
 st*		at oscsi? target ? lun ?
 
-pseudo-device	pty		32
+pseudo-device	pty
 #pseudo-device	sl		1
 pseudo-device	ppp		1
 pseudo-device	bpfilter	8

@@ -1,4 +1,4 @@
-#	$NetBSD: A7000,v 1.37 2000/03/06 03:16:24 mark Exp $
+#	$NetBSD: A7000,v 1.38 2000/09/24 15:59:29 jdolecek Exp $
 #
 #	A7000 - Full A7000 configuration
 #
@@ -256,7 +256,7 @@ pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	ipfilter 1		# ip filter
 #pseudo-device	strip	4		# STRIP 
-pseudo-device	pty     32              # pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd     4               # disk-like interface to files
 pseudo-device	ccd	2		# concatenated disk devices

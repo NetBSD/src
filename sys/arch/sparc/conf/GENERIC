@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.116 2000/08/13 01:31:21 itojun Exp $
+# 	$NetBSD: GENERIC,v 1.117 2000/09/24 15:59:37 jdolecek Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.116 $"
+#ident 		"GENERIC-$Revision: 1.117 $"
 
 maxusers	32
 
@@ -562,12 +562,8 @@ pnozz0		at sbus? slot ? offset ?
 tctrl0 at obio0
 
 ## Pseudo ttys, required for network logins and programs like screen.
-## 32 is a good number for average systems; you may have as many as you
-## like, though 256 is more or less the upper limit.  Increasing this
-## number still requires you to run /dev/MAKEDEV to create the files
-## for the ptys.
 
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.

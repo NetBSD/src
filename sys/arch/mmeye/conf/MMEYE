@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.6 2000/03/22 00:58:21 cgd Exp $
+#	$NetBSD: MMEYE,v 1.7 2000/09/24 15:59:35 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -92,7 +92,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	bpfilter	8	# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	pty		16	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 
 # Enable the hooks used for initializing the root memory-disk.
 #options 	MEMORY_DISK_HOOKS

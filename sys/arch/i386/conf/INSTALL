@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.151 2000/09/13 16:26:15 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.152 2000/09/24 15:59:33 jdolecek Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -654,7 +654,7 @@ pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.

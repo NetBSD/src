@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ATARITT,v 1.31 2000/02/12 03:31:48 thorpej Exp $
+#	$NetBSD: ATARITT,v 1.32 2000/09/24 15:59:30 jdolecek Exp $
 #
 # ATARI-TT
 #
@@ -97,7 +97,7 @@ pseudo-device	mouse		1	# mouse
 pseudo-device	view		4	# View (graphics mapping)
 pseudo-device	sl			# Slip
 pseudo-device	ppp			# ppp
-pseudo-device	pty		16	# Pseudo-tty support
+pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
 pseudo-device	md		2	# Boot memory disk

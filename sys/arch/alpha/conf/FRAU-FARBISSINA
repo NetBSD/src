@@ -1,11 +1,11 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.6 2000/08/11 03:05:20 thorpej Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.7 2000/09/24 15:59:27 jdolecek Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.6 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.7 $"
 
 maxusers 64
 
@@ -403,7 +403,7 @@ pseudo-device	raid		4		# RAIDframe disk driver
 pseudo-device	loop		1
 #pseudo-device	md		1
 #pseudo-device	ppp		4
-pseudo-device	pty		64
+pseudo-device	pty
 #pseudo-device	sl		4
 pseudo-device	vnd		4
 #pseudo-device	gre		2	# generic L3 over IP tunnel

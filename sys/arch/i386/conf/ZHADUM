@@ -1,4 +1,4 @@
-#	$NetBSD: ZHADUM,v 1.23 2000/07/09 01:36:07 mycroft Exp $
+#	$NetBSD: ZHADUM,v 1.24 2000/09/24 15:59:34 jdolecek Exp $
 #
 #	ZHADUM -- zhadum.netbsd.org, the new CVS server
 #
@@ -505,7 +505,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	tun		2	# network tunneling over tty
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		128	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 
 # rnd works; RND_COM does not on port i386 yet.

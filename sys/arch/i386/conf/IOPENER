@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.10 2000/08/21 07:39:44 itohy Exp $
+#	$NetBSD: IOPENER,v 1.11 2000/09/24 15:59:33 jdolecek Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"IOPENER-$Revision: 1.10 $"
+#ident 		"IOPENER-$Revision: 1.11 $"
 
 maxusers	32		# estimated number of users
 
@@ -387,7 +387,7 @@ pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 # miscellaneous pseudo-devices
-pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
