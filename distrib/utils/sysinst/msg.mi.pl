@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.3 2002/05/27 08:55:57 zuntum Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.4 2002/05/27 09:09:13 zuntum Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -62,9 +62,9 @@ message upgrade
 
 message hello
 {Witaj w sysinst,  systemie instalacyjnym  NetBSD-@@VERSION@@.
-To oparte na menu narzedzie zostalo stworzone aby pomoc ci zainstalowac
+To, oparte na menu, narzedzie zostalo stworzone aby pomoc ci zainstalowac
 NetBSD na twardym dysku, lub zaktualizowac istniejacy system NetBSD,
-zuzywajac minimum czasu.  W ponizszych menu, mozesz zmienic aktualne
+zuzywajac minimum czasu.  W ponizszych menu mozesz zmienic aktualne
 ustawienia poprzez naciskanie klawiszy (a, b, c, ...). Klawisze strzalek
 takze moga dzialac.  Aktywujesz ustawienie poprzez nacisniecie ENTER.
 
@@ -83,7 +83,7 @@ rozpoczeciem tej procedury!  Zostana wykonane nastepujace czynnosci:
 	c) Wgranie i zainstalowanie pakietow dystrybucji
 
 (Po wprowadzeniu informacji o partycjach, ale jeszcze zanim twoj dysk
-zostanie zmieniony, bedziesz mial mozliwosc przerwac ta procedure.)
+zostanie zmieniony, bedziesz mial mozliwosc przerwac te procedure.)
 
 Czy kontynuowac?
 }
@@ -116,7 +116,7 @@ przeniesiony do menu glownego.
 }
 
 message onedisk
-{Znalazlem tylko jeden dysk, %s.  Dlatego rozumiem, ze chcesz %s
+{Znalazlem tylko jeden dysk, %s.  Stad przyjmuje, ze chcesz %s
 NetBSD wlasnie na nim.
 }
 
@@ -200,7 +200,7 @@ message sizechoice
 lub na niektorych portach, dla plastrow MBR). Musisz najpierw wybrac
 jednostke rozmiaru. Wybranie Megabajtow nada partycji rozmiar bliski
 twojemu wyborowi, ale dopasowany do granic cylindrow. Wybranie sektorow
-pozwoli ci na bardziej dokladne okreslenie rozmiarow. Na nowych dyskach ZBR,
+pozwoli ci na bardziej dokladne okreslenie rozmiarow. Na nowych dyskach ZBR
 rozmiar cylindra zmienia sie w zaleznosci od miejsca na dysku, jest wiec
 niewielka korzysc z dopasowania cylindrow. Na starszych dyskach bardziej
 wydajne jest podawanie rozmiaru dysku, ktore sa wielokrotnoscia aktualnego
@@ -222,7 +222,7 @@ twojej partycji zostal zmniejszony do %d %s.
 }
 
 message fspart
-{Mamy teraz twoje  partycje BSD-disklabel jako (Rozmiar i Przesuniecie w %s):
+{Mamy teraz twoje partycje BSD-disklabel jako (Rozmiar i Przesuniecie w %s):
 
 }
 
@@ -315,7 +315,7 @@ message renamed_dir
 
 message cleanup_warn
 {Wyczyszczenie istniejacej instalacji nie powiodlo sie. Moze to spowodowac
-nie powodzenie rozpakowywania pakietow.
+niepowodzenie przy rozpakowywaniu pakietow.
 }
 
 message nomount
@@ -547,7 +547,7 @@ message resolv
 }
 
 message realdir
-{Nie moglem przejsc do katalogu %s: %s. Instalacja przerwana.
+{Nie moglem przejsc do katalogu %s: %s.  Instalacja przerwana.
 }
 
 message ftperror_cont
