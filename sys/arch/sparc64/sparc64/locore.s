@@ -8934,9 +8934,14 @@ ENTRY(random)
 _C_LABEL(cpu_clockrate):	
 	.xword	142857143					! 1/7ns or ~ 143MHz  Really should be 142857142.85
 	.text
+
+#ifdef _LP64
+	/* Use %tick on 64-bit kernels 'cause the other stuff don't work */
+#define TRY_TICK
+#endif
+	
 	
 ENTRY(microtime)
-#define TRY_TICK
 #ifdef TRY_TICK
 	rdpr	%tick, %o1
 	sethi	%hi(_C_LABEL(cpu_clockrate)), %o4
