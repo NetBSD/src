@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.122 2003/01/20 20:24:21 christos Exp $
+	$NetBSD: syscalls.master,v 1.123 2003/01/23 23:29:46 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -516,7 +516,7 @@
 244	UNIMPL		sys_sigwaitinfo
 245	UNIMPL		sys_sigtimedwait
 246	UNIMPL		sys_sigqueue
-#ifdef P1003_1B_SEMAPHORE
+#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
 247	STD		{ int sys__ksem_init(unsigned int value, semid_t *idp); }
 248	STD		{ int sys__ksem_open(const char *name, int oflag, \
 			    mode_t mode, unsigned int value, semid_t *idp); }
