@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	6.12 (Berkeley) 7/29/91
-.\"	$Id: su.1,v 1.5 1994/01/11 18:38:03 jtc Exp $
+.\"	$Id: su.1,v 1.6 1994/05/24 06:52:19 deraadt Exp $
 .\"
 .Dd July 29, 1991
 .Dt SU 1
@@ -60,6 +60,11 @@ If
 is executed by root, no password is requested and a shell
 with the appropriate user ID is executed; no additional Kerberos tickets
 are obtained.
+.Pp
+Alternately, if the user enters the password "s/key", they will be
+authenticated using the S/Key one-time password system as described in
+.Xr skey 1 .
+S/Key is a Trademark of Bellcore.
 .Pp
 By default, the environment is unmodified with the exception of
 .Ev USER ,
@@ -144,6 +149,7 @@ to remind one of its awesome power.
 .Xr csh 1 ,
 .Xr login 1 ,
 .Xr sh 1 ,
+.Xr skey 1 ,
 .Xr kinit 1 ,
 .Xr kerberos 1 ,
 .Xr passwd 5 ,
