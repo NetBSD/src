@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.20 1998/11/19 21:44:37 thorpej Exp $	*/
+/*	$NetBSD: mlhsc.c,v 1.21 1998/11/28 14:46:53 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -132,8 +132,8 @@ mlhscattach(pdp, dp, auxp)
 
 	scireset(sc);
 
-	sc->sc_link.scsipi_cmd = sci_scsicmd;
-	sc->sc_link.scsipi_minphys = sci_minphys;
+	sc->sc_adapter.scsipi_cmd = sci_scsicmd;
+	sc->sc_adapter.scsipi_minphys = sci_minphys;
 
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
