@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.23 2003/03/28 10:47:09 chris Exp $
+#	$NetBSD: inter.phone,v 1.24 2003/04/10 20:27:40 salo Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -388,7 +388,31 @@
 358:19:Uusimaa:Finland
 359:2:Sofia:Bulgaria
 420:2:Prague:Czech Republic
-421:7:Bratislava:Slovak Republic
+421:2:Bratislava:Slovak Republic
+421:31:Dunajska Streda:Slovak Republic
+421:32:Trencin:Slovak Republic
+421:33:Trnava:Slovak Republic
+421:34:Senica:Slovak Republic
+421:35:Nove Zamky:Slovak Republic
+421:36:Levice:Slovak Republic
+421:37:Nitra:Slovak Republic
+421:38:Topolcany:Slovak Republic
+421:41:Zilina:Slovak Republic
+421:42:Povazska Bystrica:Slovak Republic
+421:43:Martin:Slovak Republic
+421:44:Liptovsky Mikulas:Slovak Republic
+421:45:Zvolen:Slovak Republic
+421:46:Prievidza:Slovak Republic
+421:47:Lucenec:Slovak Republic
+421:48:Banska Bystrica:Slovak Republic
+421:51:Presov:Slovak Republic
+421:52:Poprad:Slovak Republic
+421:53:Spisska Nova Ves:Slovak Republic
+421:54:Bardejov:Slovak Republic
+421:55:Kosice:Slovak Republic
+421:56:Michalovce:Slovak Republic
+421:57:Humenne:Slovak Republic
+421:58:Roznava:Slovak Republic
 501:2:Belize City:Belize
 501:8:Belmopan:Belize
 502:2:Guatemala City:Guatemala
