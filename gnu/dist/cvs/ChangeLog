@@ -1,3 +1,260 @@
+2004-04-13  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note validation of paths passed to the client.
+
+2004-04-07  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Clarify relative-path up-reference article.
+
+2004-04-07  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note ignoring of method options in CVSROOTs.
+
+2004-04-06  Derek Price  <derek@ximbiot.com>
+
+	* TODO (196, 217, 219, 220, 222, 226): Remove completed items.
+	(230): New item.
+
+2004-04-06  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note this change.
+	* configure.in: Do not try and use TMP, TEMP, or TMPDIR as default
+	temporary directories.
+	* configure: Regenerated.
+
+2004-04-04  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note Cygwin handles paths like X:\.
+
+2004-04-02  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note Windows ISDIRSEP fix.
+
+2004-04-02  Derek Price  <derek@ximbiot.com>
+
+	* INSTALL: Instruct users to use the Workspace file and not the project
+	file for MSVC++.
+	(Patch from Conrad T. Pino <conrad@pino.com>.)
+
+2004-04-02  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Make some notes as to client/serverness of changes.
+
+2004-04-02  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note relative path fix.
+
+2004-04-01  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Record run race removal.
+
+2004-03-31  Mark D. Baushke  <mdb@cvshome.org>
+
+	* cvs.spec.in (BuildRequires): Do not fail if info DIR file does
+	not exist. (Not everyone has an install-info that generates the
+	dir file that we want deleted.)
+	(Report from Geoff Beier <geoff@caradas.com>.)
+
+2004-03-25  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note failure of Cygwin to convert back slashes to slashes.
+
+2004-03-25  Derek Price  <derek@ximbiot.com>
+
+	* cvs.spec.in (BuildRoot): Use a more unique directory name.
+
+2004-03-22  Derek Price  <derek@ximbiot.com>
+
+	* INSTALL: Note compilation & --without-gssapi requirement for HPPA
+	with HP-UX 11.11.
+	(Report from Nicolas Vervelle <nicolas.vervelle@steria.com>.)
+
+2004-03-20  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note resurrection fixes.
+
+2004-03-18  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Back out previous NEWS change at Larry Jones' suggestion.
+
+2004-03-17  Derek Price  <derek@ximbiot.com>
+
+	* configure.in (--enable-password-authentication-client): Correct
+	error message text.
+	* NEWS: Note this change.
+	* configure: Regenerated.
+
+2004-03-15  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note cvs release + Kerberos fix.
+
+2004-03-15  Derek Price  <derek@ximbiot.com>
+
+	* configure.in: Correct grammar in help text.
+	* configure: Regenerated.
+
+2004-03-15  Derek Price  <derek@ximbiot.com>
+
+	* macintosh/.cvsignore: Complete pruning of directory started in 1999.
+
+2004-03-14  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note resurrection fix.
+
+2004-03-14  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note error & status message corrections.
+
+2004-03-14  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note diff of added files against arbitrary revisions fix.
+
+2004-03-12  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note Larry's recent documentation fixes.
+
+2004-03-03  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note that directories and files named `CVS' are now also
+	rejected by import.
+
+2004-02-25  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Update dying gasp note.
+
+2004-02-25  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note `cvs release' Entries corruption fix.
+
+2004-02-20  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note that the dying gasp check has now been completely removed.
+
+2004-02-17  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note spec file fix.
+	* cvs.spec: Update to avoid the error checking algorithm's of more
+	recent version of RPM.
+
+2004-02-17  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note recent commenting of src/checkout.c and Mark's leak fixes.
+
+2004-02-12  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note Mark D. Baushke's recent memory leak plugs.
+
+2004-02-12  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note Ville Skyttä's other recent man page patch.
+
+2004-02-12  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note Ville Skyttä's recent man page patch.
+
+2004-02-11  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note :fork: segfault avoidance.
+
+2004-02-11  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note readability improvements.
+
+2004-02-10  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note dying gasp check.
+
+2004-02-10  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note flow control pipe race fix.
+
+2004-02-10  Derek Price  <derek@ximbiot.com>
+
+	* BUGS: Note problems building with MSVC++ under Windows and
+	workaround.
+	* INSTALL: Ditto.
+
+2004-02-10  Derek Price  <derek@ximbiot.com>
+
+	* cvsnt.mak: Add stack.c and stack.h in order to compile under Windows.
+	* NEWS: Note Windows fixes.
+	* README: Update copyright notice.
+
+2004-02-09  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note new tests in sanity.sh.
+
+2004-02-06  Derek Price  <derek@ximbiot.com>
+
+	* README: Undo accidental overwrite.
+
+2004-02-04  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note that alias module recursion is now more comprehensive.
+
+2004-02-03  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note case insensitive client directory case preservation.
+
+2004-02-02  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note new join-rm tests.
+
+2004-02-02  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note removal from the server of support for case insensitive
+	clients.
+
+2004-01-30  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note man page fix.
+
+2004-01-30  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note contrib/log_accum tidy.
+
+2004-01-25  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note Kerberos 4 fix.
+
+2004-01-22  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note recent infinite alias loop fix.
+
+2004-01-22  Derek Price  <derek@ximbiot.com>
+
+	* INSTALL: Remove a note about an Automake bug that has been fixed for
+	quite awhile.
+
+2004-01-22  Derek Price  <derek@ximbiot.com>
+
+	* INSTALL: s/Automake 1.7.5/Automake 1.7.9/.
+
+2004-01-14  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note Larrys recent mktemp.sh inclusion, documentation reorg,
+	and zlib code fix.
+
+2003-12-23  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* Makefile.am: Add mktemp.sh to EXTRA_DIST.
+	* Makefile.in: Regenerated.
+
+	* configure.in: Get mktemp.sh from $srcdir.
+	* configure: Regenerated.
+	(Reported by Matt Selsky <selsky@columbia.edu>.)
+
+2003-12-18  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Add since 1.11.11 section.
+	* configure.in: Update for dev 1.11.11.1.
+	* configure: Regenerated.
+
+2003-12-18  Derek Price  <derek@ximbiot.com>
+
+	* configure.in: Update for release 1.11.11.
+	* configure: Regenerated.
+
 2003-12-18  Derek Price  <derek@ximbiot.com>
 
 	* NEWS: Note syslog of root attempts.

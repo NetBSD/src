@@ -217,6 +217,10 @@ formats.
 * `release' of a project subdir does not remove the `subdir' entry from
   `./CVS/Entries'.
 
+* The Windows Microsoft Visual C++ project files are out of date, but the
+  project can still be built under Windows using `nmake'.  See the INSTALL
+  file for more.
+
 * Status
 
                              /*-------.
