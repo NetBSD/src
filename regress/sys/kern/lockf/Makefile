@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2000/06/12 14:42:03 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:16 tv Exp $
 
-PROG=	lockf
-MKMAN=	no
-WARNS=	2
+PROG=		lockf
+NOMAN=		# defined
+WARNS=		2
 
 regress:
 	@if ./lockf ; then \

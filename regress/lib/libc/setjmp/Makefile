@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/12 01:24:03 tv Exp $
 
-PROG=	setjmptest
-SRCS=	jmptest.c
-MKMAN=	no
+PROG=		setjmptest
+SRCS=		jmptest.c
+NOMAN=		# defined
+CPPFLAGS+=	-DTEST_SETJMP
 
-CPPFLAGS+= -DTEST_SETJMP
-
-.PATH:	${.CURDIR}/../setjmp
+.PATH:		${.CURDIR}/../setjmp
 
 regress: ${PROG}
 	./${PROG}

@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2001/10/31 15:57:54 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:24:09 tv Exp $
 
-PROG=	rc5test
-NOMAN=	yes
-
-LDADD+=	-lcrypto_rc5 -lcrypto
-DPADD+=	${LIBCRYPTO}
+PROG=		rc5test
+NOMAN=		# defined
+DPADD+=		${LIBCRYPTO}
+LDADD+=		-lcrypto_rc5 -lcrypto
 
 regress:	${PROG}
 	@echo "==> running ${PROG}"

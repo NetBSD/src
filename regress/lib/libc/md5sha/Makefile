@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2000/08/19 17:51:19 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:03 tv Exp $
 
-PROG=	test
-SRCS=	test.c 
-MKMAN=	no
-WARNS=	1
-LDSTATIC= -static
+PROG=		test
+NOMAN=		# defined
+WARNS=		1
+LDSTATIC=	-static
 
 # MD5 tests from RFC1321
 # SHA1 tests from FIPS-180-1
