@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.29 1993/11/25 20:16:11 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.30 1993/12/13 12:48:44 mycroft Exp $
  */
 
 /*
@@ -147,7 +147,7 @@ static u_short *Crtat,		/* pointer to backing store */
 	       *crtat;		/* pointer to current char */
 static u_char ack, nak, async,	/* Don't ask. */
 	      kernel, polling;	/* Really, you don't want to know. */
-static u_char leds,		/* all off */
+static u_char lock_state,		/* all off */
 	      typematic = 0xff;	/* don't update until set by software */
 
 int pcopen __P((dev_t, int, int, struct proc *));
@@ -258,10 +258,10 @@ do_async_update(poll)
 		old_pos = pos;
 	}
 
-	if (leds != old_leds) {
-		old_leds = leds;
+	if (lock_state != old_leds) {
+		old_leds = lock_state;
 		if (!kbd_cmd(KBC_MODEIND, poll) ||
-		    !kbd_cmd(leds, poll)) {
+		    !kbd_cmd(lock_state, poll)) {
 			printf("pc: timeout updating leds\n");
 			(void) kbd_cmd(KBC_ENABLE, poll);
 		}
@@ -1019,9 +1019,9 @@ sput(ps, cp, n)
 			if (crtat >= Crtat + COL * ROW) { /* scroll check */
 				if (!kernel) {
 					int s = spltty();
-					if (leds & SCROLL)
-						tsleep((caddr_t)&leds, PUSER,
-						       "pcputc", 0);
+					if (lock_state & SCROLL)
+						tsleep((caddr_t)&lock_state,
+						       PUSER, "pcputc", 0);
 					splx(s);
 				}
 				bcopyw(Crtat + COL, Crtat, COL*(ROW-1)*CHR);
@@ -1457,7 +1457,7 @@ sget(ps, noblock)
 	int noblock;
 {
 	u_char dt;
-	static u_char extended = 0, lock_down = 0;
+	static u_char extended = 0, shift_state = 0;
 	static u_char capchar[2];
 
 	dt = inb(KBDATAP);
@@ -1472,29 +1472,29 @@ sget(ps, noblock)
 		{
 			case NUM:
 				if (dt & 0x80) {
-					lock_down &= ~NUM;
+					shift_state &= ~NUM;
 					break;
 				}
-				lock_down |= NUM;
-				leds ^= NUM;
+				shift_state |= NUM;
+				lock_state ^= NUM;
 				break;
 			case CAPS:
 				if (dt & 0x80) {
-					lock_down &= ~CAPS;
+					shift_state &= ~CAPS;
 					break;
 				}
-				lock_down |= CAPS;
-				leds ^= CAPS;
+				shift_state |= CAPS;
+				lock_state ^= CAPS;
 				break;
 			case SCROLL:
 				if (dt & 0x80) {
-					lock_down &= ~SCROLL;
+					shift_state &= ~SCROLL;
 					break;
 				}
-				lock_down |= SCROLL;
-				leds ^= SCROLL;
-				if ((leds & SCROLL) == 0)
-					wakeup((caddr_t)&leds);
+				shift_state |= SCROLL;
+				lock_state ^= SCROLL;
+				if ((lock_state & SCROLL) == 0)
+					wakeup((caddr_t)&lock_state);
 				break;
 		}
 		return capchar;
@@ -1516,7 +1516,7 @@ sget(ps, noblock)
 	/*
 	 *   Check for cntl-alt-esc
 	 */
-	if ((dt == 1) && (lock_down & (CTL | ALT)) == (CTL | ALT)) {
+	if ((dt == 1) && (shift_state & (CTL | ALT)) == (CTL | ALT)) {
 		Debugger();
 		dt |= 0x80;	/* discard esc (ddb discarded CTL-alt) */
 	}
@@ -1533,22 +1533,22 @@ sget(ps, noblock)
 		switch (scan_codes[dt].type)
 		{
 			case NUM:
-				lock_down &=~ NUM;
+				shift_state &=~ NUM;
 				break;
 			case CAPS:
-				lock_down &=~ CAPS;
+				shift_state &=~ CAPS;
 				break;
 			case SCROLL:
-				lock_down &=~ SCROLL;
+				shift_state &=~ SCROLL;
 				break;
 			case SHIFT:
-				lock_down &=~ SHIFT;
+				shift_state &=~ SHIFT;
 				break;
 			case ALT:
-				lock_down &=~ ALT;
+				shift_state &=~ ALT;
 				break;
 			case CTL:
-				lock_down &=~ CTL;
+				shift_state &=~ CTL;
 				break;
 		}
 	} else {
@@ -1561,62 +1561,62 @@ sget(ps, noblock)
 			 *   Locking keys
 			 */
 			case NUM:
-				if (lock_down & NUM)
+				if (shift_state & NUM)
 					break;
-				lock_down |= NUM;
-				leds ^= NUM;
+				shift_state |= NUM;
+				lock_state ^= NUM;
 				async_update();
 				break;
 			case CAPS:
-				if (lock_down & CAPS)
+				if (shift_state & CAPS)
 					break;
-				lock_down |= CAPS;
-				leds ^= CAPS;
+				shift_state |= CAPS;
+				lock_state ^= CAPS;
 				async_update();
 				break;
 			case SCROLL:
-				if (lock_down & SCROLL)
+				if (shift_state & SCROLL)
 					break;
-				lock_down |= SCROLL;
-				leds ^= SCROLL;
-				if ((leds & SCROLL) == 0)
-					wakeup((caddr_t)&leds);
+				shift_state |= SCROLL;
+				lock_state ^= SCROLL;
+				if ((lock_state & SCROLL) == 0)
+					wakeup((caddr_t)&lock_state);
 				async_update();
 				break;
 			/*
 			 *   Non-locking keys
 			 */
 			case SHIFT:
-				lock_down |= SHIFT;
+				shift_state |= SHIFT;
 				break;
 			case ALT:
-				lock_down |= ALT;
+				shift_state |= ALT;
 				break;
 			case CTL:
-				lock_down |= CTL;
+				shift_state |= CTL;
 				break;
 			case ASCII:
 				/* control has highest priority */
-				if (lock_down & CTL)
+				if (shift_state & CTL)
 					capchar[0] = scan_codes[dt].ctl[0];
-				else if (lock_down & SHIFT)
+				else if (shift_state & SHIFT)
 					capchar[0] = scan_codes[dt].shift[0];
 				else
 					capchar[0] = scan_codes[dt].unshift[0];
-				if ((lock_down & CAPS) && (capchar[0] >= 'a'
+				if ((lock_state & CAPS) && (capchar[0] >= 'a'
 					 && capchar[0] <= 'z')) {
 					capchar[0] = capchar[0] - ('a' - 'A');
 				}
-				capchar[0] |= (lock_down & ALT);
+				capchar[0] |= (shift_state & ALT);
 				extended = 0;
 				return capchar;
 			case NONE:
 				break;
 			case FUNC: {
 				char	*more_chars;
-				if (lock_down & SHIFT)
+				if (shift_state & SHIFT)
 					more_chars = scan_codes[dt].shift;
-				else if (lock_down & CTL)
+				else if (shift_state & CTL)
 					more_chars = scan_codes[dt].ctl;
 				else
 					more_chars = scan_codes[dt].unshift;
@@ -1625,8 +1625,8 @@ sget(ps, noblock)
 			}
 			case KP: {
 				char  	*more_chars;
-				if (lock_down & (SHIFT | CTL) ||
-				    (leds & NUM) == 0 || extended)
+				if (shift_state & (SHIFT | CTL) ||
+				    (lock_state & NUM) == 0 || extended)
 					more_chars = scan_codes[dt].shift;
 				else
 					more_chars = scan_codes[dt].unshift;
