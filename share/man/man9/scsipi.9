@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.1 2001/05/11 08:51:15 bouyer Exp $
+.\"	$NetBSD: scsipi.9,v 1.2 2001/05/23 15:56:48 bouyer Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -511,7 +511,12 @@ channel's freeze counter is increased by
 .It Fn scsipi_channel_thaw "struct scsipi_channel *chan" "int count"
 Decrement the channel's freeze counter by
 .Fa count
-and process the queue if the counter goes to 0.
+and process the queue if the counter goes to 0. In order to preserve command
+ordering, HBA drivers should not call
+.Fn scsipi_channel_thaw
+before calling
+.Fn scsipi_done
+for all commands in the HBA's queue which need to be requeued.
 .It Fn scsipi_periph_timed_thaw "void *arg"
 Call
 .Fn scsipi_channel_thaw "arg" "1" .
