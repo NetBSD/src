@@ -1,4 +1,4 @@
-.\"	$NetBSD: termcap.5,v 1.32 2003/06/27 22:42:21 wiz Exp $
+.\"	$NetBSD: termcap.5,v 1.33 2003/07/02 08:20:39 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -791,8 +791,7 @@ for example.
 If the terminal has switch-selectable automatic margins,
 the
 .Nm
-description usually assumes that this feature is on,
-.Em i.e. ,
+description usually assumes that this feature is on, i.e.,
 .Sy \&am .
 If the terminal has a command
 that moves to the first column of the next line,
@@ -927,9 +926,7 @@ can be given as single parameter capabilities
 Sometimes these are shorter than the more general two-parameter sequence
 (as with the Hewlett-Packard 2645) and can be used in preference to
 .Sy \&cm .
-If there are parameterized local motions
-.Pf ( Em e.g. ,
-move
+If there are parameterized local motions (e.g., move
 .Ar n
 positions to the right)
 these can be given as
@@ -1134,9 +1131,7 @@ will repeat the effects of
 times.
 .Pp
 It is occasionally necessary to move around while in insert mode
-to delete characters on the same line
-.Pf ( Em e.g. ,
-if there is a tab after
+to delete characters on the same line (e.g., if there is a tab after
 the insertion position).
 If your terminal allows motion while in
 insert mode, you can give the capability
@@ -1628,8 +1623,7 @@ A string that turns off the status line (or otherwise erases its contents)
 should be given as
 .Sy \&ds .
 The status line is normally assumed to be the same width as the
-rest of the screen,
-.Em i.e. ,
+rest of the screen, i.e.,
 .Sy \&co .
 If the status line is a different width (possibly because the terminal
 does not allow an entire line to be loaded), then its width in columns
