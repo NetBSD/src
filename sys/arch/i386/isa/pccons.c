@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.64 1994/05/05 05:36:53 cgd Exp $
+ *	$Id: pccons.c,v 1.65 1994/05/05 08:28:35 mycroft Exp $
  */
 
 /*
@@ -304,13 +304,13 @@ async_update()
 
 	if (kernel || polling) {
 		if (async)
-			untimeout(do_async_update, 0);
+			untimeout(do_async_update, NULL);
 		do_async_update(1);
 	} else {
 		if (async)
 			return;
 		async = 1;
-		timeout(do_async_update, 0, 1);
+		timeout(do_async_update, NULL, 1);
 	}
 }
 
@@ -608,7 +608,7 @@ pcstart(tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, (caddr_t)tp, 1);
+		timeout(ttrstrt, tp, 1);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
