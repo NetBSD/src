@@ -1,3 +1,5 @@
+/*	$NetBSD: grf_cv.c,v 1.3.2.2 1995/10/21 15:15:41 chopps Exp $	*/
+
 /*
  * Copyright (c) 1995 Michael Teske
  * All rights reserved. 
