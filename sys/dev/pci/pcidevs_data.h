@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.132 1999/06/02 08:57:02 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.133 1999/06/05 09:44:03 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.127 1999/06/02 08:56:03 drochner Exp 
+ *	NetBSD: pcidevs,v 1.128 1999/06/05 09:43:21 tron Exp 
  */
 
 /*
@@ -1930,6 +1930,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Imagine-128 II",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT,
+	    0,
+	    "Nvidia Corporation",
+	    "Riva TNT",
+	},
+	{
+	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
+	    0,
+	    "Nvidia Corporation & SGS Thomson Microelectric",
+	    "Riva 128",
+	},
+	{
 	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007,
 	    0,
 	    "Oak Technology",
@@ -2390,12 +2402,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Standard Microsystems",
 	    "83C170 (\"EPIC/100\") Fast Ethernet",
-	},
-	{
-	    PCI_VENDOR_STB2, PCI_PRODUCT_STB2_VELOCITY128,
-	    0,
-	    "STB Systems (2nd PCI Vendor ID)",
-	    "Velocity128 (AGP)",
 	},
 	{
 	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
@@ -5812,9 +5818,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_STB2, 0,
+	    PCI_VENDOR_NVIDIA_SGS, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "STB Systems (2nd PCI Vendor ID)",
+	    "Nvidia Corporation & SGS Thomson Microelectric",
 	    NULL,
 	},
 	{

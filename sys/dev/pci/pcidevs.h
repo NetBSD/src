@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.134 1999/06/02 08:57:02 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.135 1999/06/05 09:44:03 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.127 1999/06/02 08:56:03 drochner Exp 
+ *	NetBSD: pcidevs,v 1.128 1999/06/05 09:43:21 tron Exp 
  */
 
 /*
@@ -508,7 +508,7 @@
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
 #define	PCI_VENDOR_RISCOM	0x12aa		/* RISCom */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
-#define	PCI_VENDOR_STB2	0x12d2		/* STB Systems (2nd PCI Vendor ID) */
+#define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia Corporation & SGS Thomson Microelectric */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
@@ -1005,6 +1005,12 @@
 #define	PCI_PRODUCT_NUMBER9_I128	0x2309		/* Imagine-128 */
 #define	PCI_PRODUCT_NUMBER9_I128_2	0x2339		/* Imagine-128 II */
 
+/* Nvidia Corporationn products */
+#define	PCI_PRODUCT_NVIDIA_RIVATNT	0x0020		/* Riva TNT */
+
+/* Nvidia Corporation & SGS Thomson Microelectric */
+#define	PCI_PRODUCT_NVIDIA_SGS_RIVA128	0x0018		/* Riva 128 */
+
 /* Oak Technologies products */
 #define	PCI_PRODUCT_OAKTECH_OTI1007	0x0107		/* OTI107 */
 
@@ -1113,9 +1119,6 @@
 #define	PCI_PRODUCT_SMC_37C665	0x1000		/* FDC 37C665 */
 #define	PCI_PRODUCT_SMC_37C922	0x1001		/* FDC 37C922 */
 #define	PCI_PRODUCT_SMC_83C170	0x0005		/* 83C170 (\"EPIC/100\") Fast Ethernet */
-
-/* STB Systems products */
-#define	PCI_PRODUCT_STB2_VELOCITY128	0x0018		/* Velocity128 (AGP) */
 
 /* Surecom Technology products */
 #define	PCI_PRODUCT_SURECOM_NE34	0x0e34		/* NE-34 Ethernet */
