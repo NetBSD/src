@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1997/10/18 07:45:00 mark Exp $
+#	$NetBSD: Makefile,v 1.3 1998/01/26 23:51:01 bad Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -49,13 +49,11 @@ all: ${AUXTARGETS} ${CBIN}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
-	cat /*bin/* > /dev/null
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_CDEV}
 	-/bin/rm -f ${IMAGE}
-	cat /*bin/* > /dev/null
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}

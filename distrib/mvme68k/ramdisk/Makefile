@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1997/12/17 22:13:32 scw Exp $
+#	$NetBSD: Makefile,v 1.2 1998/01/26 23:51:09 bad Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -46,13 +46,11 @@ ${IMAGE}:	${TREE} ${LISTS} ${CBIN}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
-	cat /*bin/* > /dev/null
 
 unconfig:
 	-umount -f ${MOUNT_POINT}     
 	-vnconfig -u ${VND_CDEV}      
 	-/bin/rm -f ${IMAGE}
-	cat /*bin/* > /dev/null
 
 # Do not delete this if I change my mind and kill make...
 .PRECIOUS: ${IMAGE}
