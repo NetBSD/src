@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.10 2003/06/06 08:13:44 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.11 2004/11/17 13:35:32 hira Exp $	*/
 /*	$KAME: mld6.c,v 1.9 2000/12/04 06:29:37 itojun Exp $	*/
 
 /*
@@ -301,6 +301,6 @@ quit(int signum) {
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: mld6query ifname [addr]\n");
+	(void)fprintf(stderr, "usage: %s [-dr] ifname [addr]\n", getprogname());
 	exit(1);
 }
