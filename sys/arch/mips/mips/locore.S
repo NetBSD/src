@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.45 1997/08/09 03:41:03 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.46 1997/10/17 04:44:10 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,6 +89,7 @@
 #include <sys/errno.h>
 #include <sys/syscall.h>
 
+#include <machine/endian.h>	/* byteorder for bcopy(), bzero(), byteswap */
 #include <mips/cpuregs.h>	/* XXX - misnomer ? */
 #include <mips/regnum.h>	/* XXX - ditto */
 #include <mips/asm.h>
@@ -259,6 +260,7 @@ END(__main)
  * netorder = htonl(hostorder)
  * hostorder = ntohl(netorder)
  */
+#if BYTE_ORDER == LITTLE_ENDIAN
 LEAF(htonl)				# a0 = 0x11223344, return 0x44332211
 ALEAF(ntohl)
 	srl	v1, a0, 24		# v1 = 0x00000011
@@ -286,6 +288,7 @@ ALEAF(ntohs)
 	j	ra
 	or	v0, v0, v1
 END(htons)
+#endif
 
 /*
  * strlen(str)
@@ -335,7 +338,7 @@ LEAF(bzero)
 	and	a3, a3, 3
 	beq	a3, zero, 1f		# skip if word aligned
 	subu	a1, a1, a3		# subtract from remaining count
-	swr	zero, 0(a0)		# clear 1, 2, or 3 bytes to align
+	SWHI	zero, 0(a0)		# clear 1, 2, or 3 bytes to align
 	addu	a0, a0, a3
 1:
 	and	v0, a1, 3		# compute number of words left
@@ -372,8 +375,8 @@ LEAF(bcmp)
 	beq	a3, zero, 1f
 	subu	a2, a2, a3		# subtract from remaining count
 	move	v0, v1			# init v0,v1 so unmodified bytes match
-	lwr	v0, 0(a0)		# read 1, 2, or 3 bytes
-	lwr	v1, 0(a1)
+	LWHI	v0, 0(a0)		# read 1, 2, or 3 bytes
+	LWHI	v1, 0(a1)
 	addu	a1, a1, a3
 	bne	v0, v1, nomatch
 	addu	a0, a0, a3
@@ -408,8 +411,8 @@ unalignedcmp:
 	subu	a2, a2, a3		#   which has to be >= (16-3) & ~3
 	addu	a3, a3, a0		# compute ending address
 3:
-	lwr	v0, 0(a0)		# compare words a0 unaligned, a1 aligned
-	lwl	v0, 3(a0)
+	LWHI	v0, 0(a0)		# compare words a0 unaligned, a1 aligned
+	LWLO	v0, 3(a0)
 	lw	v1, 0(a1)
 	addu	a0, a0, 4
 	bne	v0, v1, nomatch
@@ -552,13 +555,8 @@ destaligned:
 	addu	a3,a0,a3	# stop point
 
 3:
-#if MIPSEL	/* little-endian */
-	lwr	v0,0(a0)
-	lwl	v0,3(a0)
-#else		/* big-endian */
-	lwl	v0,0(a0)
-	lwr	v0,3(a0)
-#endif
+	LWHI	v0,0(a0)
+	LWLO	v0,3(a0)
 	addi	a0,4
 	sw	v0,0(a1)
 	bne	a0,a3,3b

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.5 1996/03/23 18:49:29 jonathan Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.6 1997/10/17 04:43:57 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -79,6 +79,38 @@ typedef union {
 		unsigned fmt: 4;
 		unsigned : 1;		/* always '1' */
 		unsigned op: 6;		/* always '0x11' */
+	} FRType;
+#endif
+#if BYTE_ORDER == BIG_ENDIAN
+	struct {
+		unsigned op: 6;
+		unsigned rs: 5;
+		unsigned rt: 5;
+		unsigned imm: 16;
+	} IType;
+
+	struct {
+		unsigned op: 6;
+		unsigned target: 26;
+	} JType;
+
+	struct {
+		unsigned op: 6;
+		unsigned rs: 5;
+		unsigned rt: 5;
+		unsigned rd: 5;
+		unsigned shamt: 5;
+		unsigned func: 6;
+	} RType;
+
+	struct {
+		unsigned op: 6;		/* always '0x11' */
+		unsigned : 1;		/* always '1' */
+		unsigned fmt: 4;
+		unsigned ft: 5;
+		unsigned fs: 5;
+		unsigned fd: 5;
+		unsigned func: 6;
 	} FRType;
 #endif
 } InstFmt;
