@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.20 2004/02/13 11:36:09 wiz Exp $
+#	$NetBSD: INSTALL,v 1.21 2004/03/13 18:25:25 bjh21 Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.20 $"
+#ident		"INSTALL-$Revision: 1.21 $"
 
 # estimated number of users
 maxusers	32
@@ -196,6 +196,18 @@ options 	FONT_SONY12x25		# looks like VT220 font
 vidcvideo0	at vidc?		# wscons driver for VIDC
 wsdisplay*	at vidcvideo? console ?	# display itself
 
+vidcvideo0	at vidc?		# wscons driver for VIDC
+wsdisplay*	at vidcvideo? console ?	# display itself
+
+iomdkbc*	at iomd?		# IOMD keyboard/mouse interface
+
+#pckbd*		at iomdkbc? slot ?	# PS/2 keyboard
+#options 	PCKBD_LAYOUT=KB_UK
+#wskbd*		at pckbd?
+
+pms*		at iomdkbc? slot ?	# PS/2 mouse
+wsmouse*	at pms?
+
 rpckbd*		at iomd?		# based on old `kbd' driver
 wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
 
@@ -209,8 +221,6 @@ pseudo-device	wsmux
 # vidcconsole PS2 mouse at IOMD
 #vidcconsole0	at vidc?		# display + vt100 emulation
 #kbd*		at iomd?		# PS/2 keyboard for vidcconsole
-#qms*		at iomd?		# RiscPC mouse for vidcconsole
-#opms*		at iomd?		# A7000/NC? mouse for vidcconsole
 
 # generic VT console device
 #vt0		at vidc?
