@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_rawdcf.c,v 1.2 1998/01/09 06:06:30 perry Exp $	*/
+/*	$NetBSD: clk_rawdcf.c,v 1.3 1998/04/01 15:01:20 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/v4/libparse/clk_rawdcf.c,v 3.23 1997/01/19 12:44:39 kardel Exp
@@ -86,15 +86,20 @@
  * 59		      - usually missing (minute indication), except for leap insertion
  */
 
-static u_long cvt_rawdcf();
-static u_long pps_rawdcf();
-static u_long snt_rawdcf();
+/* clk_rawdcf.c */
+static u_long ext_bf P((char *, int, char *));
+static unsigned pcheck P((char *, int, char *));
+struct dcfparam;
+static u_long convert_rawdcf P((unsigned char *, int, struct dcfparam *, clocktime_t *));
+static u_long cvt_rawdcf P((char *, unsigned int, void *, clocktime_t *, void *));
+static u_long pps_rawdcf P((parse_t *, int, timestamp_t *));
+static u_long snt_rawdcf P((parse_t *, timestamp_t *));
 
 clockformat_t clock_rawdcf =
 {
-  (unsigned long (*)())0,	/* no input handling */
+  NULL,				/* no input handling */
   cvt_rawdcf,			/* raw dcf input conversion */
-  (void (*)())0,		/* no character bound synchronisation */
+  NULL,				/* no character bound synchronisation */
   pps_rawdcf,			/* examining PPS information */
   snt_rawdcf,			/* synthesize time code from input */
   (void *)0,			/* buffer bit representation */
@@ -316,12 +321,14 @@ static u_long convert_rawdcf(buffer, size, dcfparam, clock)
  * raw dcf input routine - needs to fix up 50 baud
  * characters for 1/0 decision
  */
-static u_long cvt_rawdcf(buffer, size, param, clock)
-  register unsigned char   *buffer;
-  register int              size;
-  register void            *param;
+static u_long cvt_rawdcf(bp, size, vf, clock, vt)
+  register char   	   *bp;
+  register unsigned int     size;
+  register void            *vf;
   register clocktime_t     *clock;
+  register void            *vt;
 {
+  register unsigned char *buffer = (unsigned char *) bp;
   register unsigned char *s = buffer;
   register unsigned char *e = buffer + size;
   register unsigned char *b = dcfparam.onebits;

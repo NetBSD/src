@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_hopf6021.c,v 1.4 1998/03/06 18:17:20 christos Exp $	*/
+/*	$NetBSD: clk_hopf6021.c,v 1.5 1998/04/01 15:01:20 christos Exp $	*/
 
 /*
  *
@@ -115,15 +115,16 @@ static struct format hopf6021_fmt =
     ('A' <= (x) && (x) <= 'F') ? (x) - 'A' + 10 : \
     -1)
             
-static unsigned long cvt_hopf6021();
+
+static u_long cvt_hopf6021 P((char *, unsigned int, void *, clocktime_t *, void *));
 
 clockformat_t clock_hopf6021 =
 {
-  (unsigned long (*)())0,       /* no input handling */
+  NULL,				/* no input handling */
   cvt_hopf6021,                 /* Radiocode clock conversion */
   syn_simple,                   /* easy time stamps for RS232 (fallback) */
-  (unsigned long (*)())0,       /* no direct PPS monitoring */
-  (unsigned long (*)())0,       /* no time code synthesizer monitoring */
+  NULL,		 		/* no direct PPS monitoring */
+  NULL, 			/* no time code synthesizer monitoring */
   (void *)&hopf6021_fmt,        /* conversion configuration */
   "hopf Funkuhr 6021",          /* clock format name */
   19,                           /* string buffer */
@@ -135,13 +136,15 @@ clockformat_t clock_hopf6021 =
   0                             /* sync symbol */
 };
 
-static unsigned long
-cvt_hopf6021(buffer, size, format, clock)
+static u_long
+cvt_hopf6021(buffer, size, vf, clock, vt)
     register char          *buffer;
-    register int            size;
-    register struct format *format;
+    register unsigned int   size;
+    register void          *vf;
     register clocktime_t   *clock;
+    register void          *vt;
 {
+    register struct format *format = vf;
     int status,weekday;
 
     if (!Strok(buffer, format->fixed_string))

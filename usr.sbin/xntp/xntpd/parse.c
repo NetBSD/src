@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.5 1998/03/06 18:17:22 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.6 1998/04/01 15:01:23 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/v4/libparse/parse.c,v 3.43 1997/01/26 18:12:21 kardel Exp
@@ -75,7 +75,11 @@ static char rcsid[] = "parse.c,v 3.43 1997/01/26 18:12:21 kardel Exp";
 extern clockformat_t *clockformats[];
 extern unsigned short nformats;
 
-static u_long timepacket();
+static int Strlen P((char *));
+static int Strcmp P((char *, char *));
+static int timedout P((parse_t *, timestamp_t *));
+static int setup_bitmaps P((parse_t *, unsigned int, unsigned int));
+static u_long timepacket P((parse_t *));
 
 /*
  * strings support usually not in kernel - duplicated, but what the heck
@@ -162,8 +166,8 @@ timedout(parseio, ctime)
 static int
 setup_bitmaps(parseio, low, high)
   register parse_t *parseio;
-  register unsigned short low;
-  register unsigned short high;
+  register unsigned int low;
+  register unsigned int high;
 {
   register unsigned short i;
   register int f = 0;
@@ -836,10 +840,10 @@ updatetimeinfo(parseio, t, usec, flags)
  */
 /*ARGSUSED*/
 void
-syn_simple(parseio, ts, format, why)
+syn_simple(parseio, ts, vf, why)
   register parse_t *parseio;
   register timestamp_t *ts;
-  register struct format *format;
+  register void *vf;
   register u_long why;
 {
   parseio->parse_dtime.parse_stime = *ts;
