@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1997/07/20 20:32:26 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 1997/09/14 14:54:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -55,8 +55,8 @@ void ar_close __P((void));
 void ar_drain __P((void));
 int ar_set_wr __P((void));
 int ar_app_ok __P((void));
-int ar_read __P((register char *, register int));
-int ar_write __P((register char *, register int));
+int ar_read __P((char *, int));
+int ar_write __P((char *, int));
 int ar_rdsync __P((void));
 int ar_fow __P((off_t, off_t *));
 int ar_rev __P((off_t ));
@@ -90,14 +90,14 @@ int rd_sync __P((void));
 void pback __P((char *, int));
 int rd_skip __P((off_t));
 void wr_fin __P((void));
-int wr_rdbuf __P((register char *, register int));
-int rd_wrbuf __P((register char *, register int));
+int wr_rdbuf __P((char *, int));
+int rd_wrbuf __P((char *, int));
 int wr_skip __P((off_t));
 int wr_rdfile __P((ARCHD *, int, off_t *));
 int rd_wrfile __P((ARCHD *, int, off_t *));
 void cp_file __P((ARCHD *, int, int));
 int buf_fill __P((void));
-int buf_flush __P((register int));
+int buf_flush __P((int));
 
 /*
  * cache.c
@@ -115,65 +115,65 @@ int gid_name __P((char *, gid_t *));
  * cpio.c
  */
 int cpio_strd __P((void));
-int cpio_subtrail __P((register ARCHD *));
+int cpio_subtrail __P((ARCHD *));
 int cpio_endwr __P((void));
 int cpio_id __P((char *, int));
-int cpio_rd __P((register ARCHD *, register char *));
+int cpio_rd __P((ARCHD *, char *));
 off_t cpio_endrd __P((void));
 int cpio_stwr __P((void));
-int cpio_wr __P((register ARCHD *));
+int cpio_wr __P((ARCHD *));
 int vcpio_id __P((char *, int));
 int crc_id __P((char *, int));
 int crc_strd __P((void));
-int vcpio_rd __P((register ARCHD *, register char *));
+int vcpio_rd __P((ARCHD *, char *));
 off_t vcpio_endrd __P((void));
 int crc_stwr __P((void));
-int vcpio_wr __P((register ARCHD *));
+int vcpio_wr __P((ARCHD *));
 int bcpio_id __P((char *, int));
-int bcpio_rd __P((register ARCHD *, register char *));
+int bcpio_rd __P((ARCHD *, char *));
 off_t bcpio_endrd __P((void));
-int bcpio_wr __P((register ARCHD *));
+int bcpio_wr __P((ARCHD *));
 
 /*
  * file_subs.c
  */
-int file_creat __P((register ARCHD *));
-void file_close __P((register ARCHD *, int));
-int lnk_creat __P((register ARCHD *));
-int cross_lnk __P((register ARCHD *));
-int chk_same __P((register ARCHD *));
-int node_creat __P((register ARCHD *));
-int unlnk_exist __P((register char *, register int));
-int chk_path __P((register char *, uid_t, gid_t));
+int file_creat __P((ARCHD *));
+void file_close __P((ARCHD *, int));
+int lnk_creat __P((ARCHD *));
+int cross_lnk __P((ARCHD *));
+int chk_same __P((ARCHD *));
+int node_creat __P((ARCHD *));
+int unlnk_exist __P((char *, int));
+int chk_path __P((char *, uid_t, gid_t));
 void set_ftime __P((char *fnm, time_t mtime, time_t atime, int frc));
 int set_ids __P((char *, uid_t, gid_t));
 void set_pmode __P((char *, mode_t));
-int file_write __P((int, char *, register int, int *, int *, int, char *));
+int file_write __P((int, char *, int, int *, int *, int, char *));
 void file_flush __P((int, char *, int));
-void rdfile_close __P((register ARCHD *, register int *));
-int set_crc __P((register ARCHD *, register int));
+void rdfile_close __P((ARCHD *, int *));
+int set_crc __P((ARCHD *, int));
 
 /*
  * ftree.c
  */
 int ftree_start __P((void));
-int ftree_add __P((register char *));
-void ftree_sel __P((register ARCHD *));
+int ftree_add __P((char *));
+void ftree_sel __P((ARCHD *));
 void ftree_chk __P((void));
-int next_file __P((register ARCHD *));
+int next_file __P((ARCHD *));
 
 /*
  * gen_subs.c
  */
-void ls_list __P((register ARCHD *, time_t));
-void ls_tty __P((register ARCHD *));
-void zf_strncpy __P((register char *, register char *, int));
-int l_strncpy __P((register char *, register char *, int));
-u_long asc_ul __P((register char *, int, register int));
-int ul_asc __P((u_long, register char *, register int, register int));
+void ls_list __P((ARCHD *, time_t));
+void ls_tty __P((ARCHD *));
+void zf_strncpy __P((char *, char *, int));
+int l_strncpy __P((char *, char *, int));
+u_long asc_ul __P((char *, int, int));
+int ul_asc __P((u_long, char *, int, int));
 #ifndef NET2_STAT
-u_quad_t asc_uqd __P((register char *, int, register int));
-int uqd_asc __P((u_quad_t, register char *, register int, register int));
+u_quad_t asc_uqd __P((char *, int, int));
+int uqd_asc __P((u_quad_t, char *, int, int));
 #endif
 
 /* 
@@ -186,21 +186,21 @@ int getoldopt __P((int, char **, char *));
  */
 extern FSUB fsub[];
 extern int ford[];
-void options __P((register int, register char **));
+void options __P((int, char **));
 OPLIST * opt_next __P((void));
-int opt_add __P((register char *));
+int opt_add __P((char *));
 int bad_opt __P((void));
 
 /*
  * pat_rep.c
  */
-int rep_add __P((register char *));
+int rep_add __P((char *));
 int pat_add __P((char *));
 void pat_chk __P((void));
-int pat_sel __P((register ARCHD *));
-int pat_match __P((register ARCHD *));
-int mod_name __P((register ARCHD *));
-int set_dest __P((register ARCHD *, char *, int));
+int pat_sel __P((ARCHD *));
+int pat_match __P((ARCHD *));
+int mod_name __P((ARCHD *));
+int set_dest __P((ARCHD *, char *, int));
 
 /*
  * pax.c
@@ -239,26 +239,26 @@ void sig_cleanup __P((int));
 /*
  * sel_subs.c
  */
-int sel_chk __P((register ARCHD *));
-int grp_add __P((register char *));
-int usr_add __P((register char *));
-int trng_add __P((register char *));
+int sel_chk __P((ARCHD *));
+int grp_add __P((char *));
+int usr_add __P((char *));
+int trng_add __P((char *));
 
 /*
  * tables.c
  */
 int lnk_start __P((void));
-int chk_lnk __P((register ARCHD *));
-void purg_lnk __P((register ARCHD *));
+int chk_lnk __P((ARCHD *));
+void purg_lnk __P((ARCHD *));
 void lnk_end __P((void));
 int ftime_start __P((void));
-int chk_ftime __P((register ARCHD *));
+int chk_ftime __P((ARCHD *));
 int name_start __P((void));
-int add_name __P((register char *, int, char *));
-void sub_name __P((register char *, int *));
+int add_name __P((char *, int, char *));
+void sub_name __P((char *, int *));
 int dev_start __P((void));
-int add_dev __P((register ARCHD *));
-int map_dev __P((register ARCHD *, u_long, u_long));
+int add_dev __P((ARCHD *));
+int map_dev __P((ARCHD *, u_long, u_long));
 int atdir_start __P((void));
 void atdir_end __P((void));
 void add_atdir __P((char *, dev_t, ino_t, time_t, time_t));
@@ -273,16 +273,16 @@ u_int st_hash __P((char *, int, int));
  */
 int tar_endwr __P((void));
 off_t tar_endrd __P((void));
-int tar_trail __P((register char *, register int, register int *));
-int tar_id __P((register char *, int));
+int tar_trail __P((char *, int, int *));
+int tar_id __P((char *, int));
 int tar_opt __P((void));
-int tar_rd __P((register ARCHD *, register char *));
-int tar_wr __P((register ARCHD *));
+int tar_rd __P((ARCHD *, char *));
+int tar_wr __P((ARCHD *));
 int ustar_strd __P((void));
 int ustar_stwr __P((void));
 int ustar_id __P((char *, int));
-int ustar_rd __P((register ARCHD *, register char *));
-int ustar_wr __P((register ARCHD *));
+int ustar_rd __P((ARCHD *, char *));
+int ustar_wr __P((ARCHD *));
 
 /*
  * tty_subs.c
