@@ -1,3 +1,5 @@
+/*	$NetBSD: inet6.c,v 1.2 1999/07/06 13:18:46 itojun Exp $	*/
+
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$Id: inet6.c,v 1.1 1999/07/01 18:40:36 itojun Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.2 1999/07/06 13:18:46 itojun Exp $");
 #endif
 #endif /* not lint */
 
