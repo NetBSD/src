@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.85 2004/04/21 18:40:40 itojun Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.86 2004/08/19 20:58:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.85 2004/04/21 18:40:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.86 2004/08/19 20:58:24 christos Exp $");
 
 #include "sl.h"
 #if NSL > 0
@@ -766,31 +766,9 @@ slintr(void *arg)
 				    &sc->sc_comp, 1);
 		}
 #if NBPFILTER > 0
-		if (sc->sc_if.if_bpf && bpf_m != NULL) {
-			/*
-			 * Put the SLIP pseudo-"link header" in
-			 * place.  The compressed header is now
-			 * at the beginning of the mbuf.
-			 */
-			struct mbuf n;
-			u_char *hp;
-
-			n.m_flags = 0;
-			n.m_next = bpf_m;
-			n.m_data = n.m_dat;
-			n.m_len = SLIP_HDRLEN;
-
-			hp = mtod(&n, u_char *);
-
-			hp[SLX_DIR] = SLIPDIR_OUT;
-			memcpy(&hp[SLX_CHDR], mtod(m, caddr_t),
-			    CHDR_LEN);
-
-			s = splnet();
-			bpf_mtap(sc->sc_if.if_bpf, &n);
-			splx(s);
-			m_freem(bpf_m);
-		}
+		if (sc->sc_if.if_bpf && bpf_m != NULL)
+			bpf_mtap_sl_out(sc->sc_if.if_bpf, mtod(m, u_char *),
+			    bpf_m);
 #endif
 		sc->sc_lastpacket = time;
 
@@ -951,27 +929,9 @@ slintr(void *arg)
 		m->m_pkthdr.len = m->m_len = len;
 #if NBPFILTER > 0
 		if (sc->sc_if.if_bpf) {
-			/*
-			 * Put the SLIP pseudo-"link header" in place.
-			 * Note this M_PREPEND() should bever fail,
-			 * since we know we always have enough space
-			 * in the input buffer.
-			 */
-			u_char *hp;
-
-			M_PREPEND(m, SLIP_HDRLEN, M_DONTWAIT);
+			bpf_mtap_sl_in(sc->sc_if.if_bpf, chdr, &m);
 			if (m == NULL)
 				continue;
-
-			hp = mtod(m, u_char *);
-			hp[SLX_DIR] = SLIPDIR_IN;
-			memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
-
-			s = splnet();
-			bpf_mtap(sc->sc_if.if_bpf, m);
-			splx(s);
-
-			m_adj(m, SLIP_HDRLEN);
 		}
 #endif /* NBPFILTER > 0 */
 		/*
