@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.102 1999/12/03 15:09:01 simonb Exp $
+#	$NetBSD: Makefile,v 1.103 1999/12/04 03:52:28 simonb Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -97,13 +97,12 @@ build: beforeinstall
 .endif
 .if ${MKSHARE} != "no"
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
-.if ${MKOBJDIRS} != "no"
-	${MAKE} obj
-.endif
-	(cd ${.CURDIR}/share/tmac && ${MAKE} && ${MAKE} install)
 .endif
 .if !defined(UPDATE)
 	${MAKE} cleandir
+.endif
+.if ${MKOBJDIRS} != "no"
+	${MAKE} obj
 .endif
 .if empty(HAVE_GCC28)
 .if defined(DESTDIR)
@@ -127,6 +126,9 @@ build: beforeinstall
 	(cd ${.CURDIR}/gnu/lib && \
 	    ${MAKE} ${_J} dependall MKMAN=no MKINFO=no && \
 	    ${MAKE} MKMAN=no MKINFO=no install)
+.if ${MKSHARE} != "no"
+	(cd ${.CURDIR}/share/tmac && ${MAKE} && ${MAKE} install)
+.endif
 	${MAKE} ${_J} dependall && ${MAKE} _BUILD= install
 .if defined(DOMESTIC) && !defined(EXPORTABLE_SYSTEM)
 	(cd ${.CURDIR}/${DOMESTIC} && ${MAKE} ${_J} _SLAVE_BUILD= build)
