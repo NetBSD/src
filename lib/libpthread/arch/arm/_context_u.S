@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.4 2001/11/20 22:00:15 thorpej Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.5 2001/11/21 18:24:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,6 +36,7 @@
  */
 
 #include <machine/asm.h>
+#include <arm/armreg.h>
 #include "assym.h"
 
 /*
@@ -58,24 +59,6 @@
  */
 
 /*
- * XXX We use MRS/MSR here.  Those are not available pre-ARMv3.
- * XXX Either the kernel will have to emulate them, or Ben Harris
- * XXX will have to fix this up to work with older processors.
- */
-
-#ifdef __APCS_26__
-#define	SAVE_FLAGS(reg)			/* nothing; in r15 */
-#define	RESTORE_FLAGS(reg)		/* nothing; in r15 */
-#else
-#define	SAVE_FLAGS(reg)							\
-	mrs	r2, cpsr					;	\
-	str	r2, [reg, #(_REG_CPSR)]
-
-#define	RESTORE_FLAGS							\
-	msr	cpsr, r3
-#endif /* __APCS_26__ */
-
-/*
  * NOTE: Clobbers r2.
  */
 #define	GETC(reg)							\
@@ -83,18 +66,21 @@
 	 * We're only saving the callee-saved registers, here,		\
 	 * so make a note of it for SETC() later.			\
 	 *								\
-	 * Make sure to save the flags first, since ORR changes them.	\
+	 * And, yes, even if we're only saving callee-saved regs,	\
+	 * we need to provide a valid CPSR in case the context is	\
+	 * used in a setcontext(2) system call later.  (The CPSR	\
+	 * is only used in 32-bit mode, and ignored in 26-bit mode.)	\
 	 */								\
-	SAVE_FLAGS(reg)						;	\
-	ldr	r2, [reg, #(UC_FLAGS)]				;	\
-	orr	r2, r2, #(_UC_USER)				;	\
+	mov	r2, #(_UC_USER)					;	\
 	orr	r2, r2, #(_UC_CPU)				;	\
 	str	r2, [reg, #(UC_FLAGS)]				;	\
+	mov	r2, #(PSR_USR32_MODE)				;	\
+	str	r2, [reg, #(_REG_CPSR)]				;	\
 	add	reg, reg, #(_REG_R4)				;	\
 	stmia	reg, {r4-r15}
 
 /*
- * NOTE: Clobbers r2, r3.
+ * NOTE: Clobbers r2.
  */
 #define	SETC(reg)							\
 	/*								\
@@ -102,26 +88,30 @@
 	 * callee-saved registers (i.e. we were saved by		\
 	 * _getcontext_u().  If it is not set, we need to		\
 	 * restore the caller-saved regs, too.				\
-	 *								\
-	 * Restore flags after we fixup the pointer, since		\
-	 * ADD changes them.						\
 	 */								\
 	ldr	r2, [reg, #(UC_FLAGS)]				;	\
 	tst	r2, #(_UC_USER)					;	\
-	beq	1f						;	\
 									\
 	/* _UC_USER case */					;	\
-	ldr	r3, [reg, #(_REG_CPSR)]				;	\
-	add	reg, reg, #(_REG_R4)				;	\
-	RESTORE_FLAGS						;	\
-	ldmia	reg, {r4-r15}					;	\
+	addne	reg, reg, #(_REG_R4)				;	\
+	ldmneia	reg, {r4-r15}					;	\
 	/* NOTREACHED */						\
 									\
 	/* ! _UC_USER case */						\
-1:	ldr	r3, [reg, #(_REG_CPSR)]				;	\
+	teq	r0, r0		/* set Z */			;	\
+	teq	pc, r15		/* EQ => 32, NE => 26 */	;	\
+	bne	1f						;	\
+									\
+	/* 32-bit */							\
+	ldr	r2, [reg, #(_REG_CPSR)]				;	\
 	add	reg, reg, #(_REG_R0)				;	\
-	RESTORE_FLAGS						;	\
+	msr	cpsr, r2					;	\
 	ldmia	reg, {r0-r15}					;	\
+	/* NOTREACHED */						\
+									\
+1:	/* 26-bit */							\
+	add	reg, reg, #(_REG_R0)				;	\
+	ldmia	reg, {r0-r15}^					;	\
 	/* NOTREACHED */
 
 ENTRY(_getcontext_u)
