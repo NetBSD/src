@@ -1,8 +1,12 @@
-/*	$NetBSD: isinfl.c,v 1.2 2003/08/07 16:42:31 agc Exp $	*/
+/*	$NetBSD: isinff_ieee754.c,v 1.1 2004/03/04 23:42:39 kleink Exp $	*/
 
-/*-
- * Copyright (c) 1991, 1993
+/*
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,6 +31,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * from: Header: isinf.c,v 1.1 91/07/08 19:03:34 torek Exp
  */
 
 #include <sys/cdefs.h>
@@ -34,22 +40,24 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isinfl.c,v 1.2 2003/08/07 16:42:31 agc Exp $");
+__RCSID("$NetBSD: isinff_ieee754.c,v 1.1 2004/03/04 23:42:39 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include "namespace.h"
+#include <machine/ieee.h>
 #include <math.h>
 
-#if 0	/* XXX Currently limted to internal use. */
-#ifdef __weak_alias
-__weak_alias(isinfl,_isinfl)
-#endif
-#endif
-
-/* ARGSUSED */
+/*
+ * 7.12.3.3 isinf - test for infinity
+ *          IEEE 754 single-precision version
+ */
 int
-isinfl(long double d)
+__isinff(float x)
 {
-	return (0);
+	union ieee_single_u u;
+
+	u.sngu_f = x;
+
+	return (u.sngu_sng.sng_exp == SNG_EXP_INFNAN &&
+	    u.sngu_sng.sng_frac == 0);
 }
