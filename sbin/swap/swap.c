@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.1 1997/02/14 19:07:00 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2 1997/03/17 00:20:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -78,7 +78,7 @@ main(argc, argv)
 	char	*argv[];
 {
 	int	c;
-	int	swapon = 0;
+	int	am_swapon = 0;
 #ifdef SWAP_OFF_WORKS
 	int	swapoff = 0;
 	static	char getoptstr[] = "Aadlkp:";
@@ -88,7 +88,7 @@ main(argc, argv)
 	extern	char *__progname;		/* XXX */
 
 	if (strcmp(__progname, "swapon") == 0)
-		aflag = swapon = 1;
+		aflag = am_swapon = 1;
 #ifdef SWAP_OFF_WORKS
 	else if (strcmp(__progname, "swapoff") == 0)
 		dflag = swapoff = 1;
@@ -105,7 +105,7 @@ main(argc, argv)
 				usage();
 			}
 #endif /* SWAP_OFF_WORKS */
-			if (swapon)
+			if (am_swapon)
 				Aflag = 1;
 			else
 				aflag = 1;
@@ -130,21 +130,15 @@ main(argc, argv)
 			break;
 		}
 	}
-	if (!aflag &&
-#ifdef SWAP_OFF_WORKS
-	    !dflag &&
-#endif /* SWAP_OFF_WORKS */
-	    !lflag)
+	/* SWAP_OFF_WORKS */
+	if (!aflag && /* !dflag && */ !lflag)
 		usage();
 
 	argv += optind;
 	if (!*argv && !lflag)
 		usage();
-	if (pri && !aflag
-#ifdef SWAP_OFF_WORKS
-	    && !dflag
-#endif /* SWAP_OFF_WORKS */
-	    )
+	/* SWAP_OFF_WORKS */
+	if (pri && !aflag /* && !dflag */ )
 		usage();
 
 	if (lflag)
@@ -190,7 +184,7 @@ list_swap()
 #if 0
 	/*
 	 * XXX write me.  use kflag and BLOCKSIZE to determine size??  how
-	 * does df do it?
+	 * does df do it?  it uses getbsize(3) ...
 	 */
 	for (sep = sip->si_ent; *sep; sep++)
 		printf("%s\n", sep->se_name);
@@ -232,11 +226,11 @@ do_fstab()
 	char	*s;
 	long	priority;
 
-#define PRIORITYE	"priority="
+#define PRIORITYEQ	"priority="
 	while (fp = getfsent()) {
 		if (strcmp(fp->fs_type, "sw") == 0) {
-			if (s = strstr(fp->fs_mntops, PRIORITYE)) {
-				s += sizeof(PRIORITYE);
+			if (s = strstr(fp->fs_mntops, PRIORITYEQ)) {
+				s += sizeof(PRIORITYEQ);
 				pri = atol(s);
 			} else
 				priority = pri;
