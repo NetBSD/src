@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.20 2001/11/26 00:56:33 enami Exp $	*/
+/*	$NetBSD: args.c,v 1.21 2002/11/29 13:11:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.20 2001/11/26 00:56:33 enami Exp $");
+__RCSID("$NetBSD: args.c,v 1.21 2002/11/29 13:11:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,6 @@ __RCSID("$NetBSD: args.c,v 1.20 2001/11/26 00:56:33 enami Exp $");
 
 #include "dd.h"
 #include "extern.h"
-#include "strsuftoull.h"
 
 static int	c_arg(const void *, const void *);
 #ifndef	NO_CONV
@@ -189,21 +188,21 @@ static void
 f_bs(char *arg)
 {
 
-	in.dbsz = out.dbsz = strsuftoull("block size", arg, 1, UINT_MAX);
+	in.dbsz = out.dbsz = strsuftoll("block size", arg, 1, UINT_MAX);
 }
 
 static void
 f_cbs(char *arg)
 {
 
-	cbsz = strsuftoull("conversion record size", arg, 1, UINT_MAX);
+	cbsz = strsuftoll("conversion record size", arg, 1, UINT_MAX);
 }
 
 static void
 f_count(char *arg)
 {
 
-	cpy_cnt = strsuftoull("block count", arg, 0, ULLONG_MAX);
+	cpy_cnt = strsuftoll("block count", arg, 0, LLONG_MAX);
 	if (!cpy_cnt)
 		terminate(0);
 }
@@ -212,7 +211,7 @@ static void
 f_files(char *arg)
 {
 
-	files_cnt = (u_int)strsuftoull("file count", arg, 0, UINT_MAX);
+	files_cnt = (u_int)strsuftoll("file count", arg, 0, UINT_MAX);
 	if (!files_cnt)
 		terminate(0);
 }
@@ -222,7 +221,7 @@ f_ibs(char *arg)
 {
 
 	if (!(ddflags & C_BS))
-		in.dbsz = strsuftoull("input block size", arg, 1, UINT_MAX);
+		in.dbsz = strsuftoll("input block size", arg, 1, UINT_MAX);
 }
 
 static void
@@ -237,7 +236,7 @@ f_obs(char *arg)
 {
 
 	if (!(ddflags & C_BS))
-		out.dbsz = strsuftoull("output block size", arg, 1, UINT_MAX);
+		out.dbsz = strsuftoll("output block size", arg, 1, UINT_MAX);
 }
 
 static void
@@ -251,14 +250,14 @@ static void
 f_seek(char *arg)
 {
 
-	out.offset = strsuftoull("seek blocks", arg, 0, ULLONG_MAX);
+	out.offset = strsuftoll("seek blocks", arg, 0, LLONG_MAX);
 }
 
 static void
 f_skip(char *arg)
 {
 
-	in.offset = strsuftoull("skip blocks", arg, 0, ULLONG_MAX);
+	in.offset = strsuftoll("skip blocks", arg, 0, LLONG_MAX);
 }
 
 static void
