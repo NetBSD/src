@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.10 1996/12/18 05:17:44 scottr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.11 1997/07/17 02:01:26 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -68,6 +68,7 @@
 /* #include <dev/ic/z8530reg.h> */
 #include "z8530reg.h"
 #include <machine/z8530var.h>
+#include "locators.h"
 
 #ifdef KGDB
 extern int zs_check_kgdb();
@@ -124,11 +125,11 @@ zstty_match(parent, cf, aux)
 	struct zsc_attach_args *args = aux;
 
 	/* Exact match is better than wildcard. */
-	if (cf->cf_loc[0] == args->channel)
+	if (cf->cf_loc[ZSCCF_CHANNEL] == args->channel)
 		return 2;
 
 	/* This driver accepts wildcard. */
-	if (cf->cf_loc[0] == -1)
+	if (cf->cf_loc[ZSCCF_CHANNEL] == ZSCCF_CHANNEL_DEFAULT)
 		return 1;
 
 	return 0;
