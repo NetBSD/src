@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnetgrent.3,v 1.4 1995/02/25 08:51:17 cgd Exp $
+.\"	$NetBSD: getnetgrent.3,v 1.5 1997/05/26 14:02:53 lukem Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,10 +43,11 @@
 .Nm endnetgrent
 .Nd netgroup database operations
 .Sh SYNOPSIS
+.Fd #include <netgroup.h>
 .Ft int
-.Fn getnetgrent "char **host, char **user, char **domain"
+.Fn getnetgrent "char **host" "char **user" "char **domain"
 .Ft int
-.Fn innetgr "const char *netgroup, const char *host, const char *user, const char *domain"
+.Fn innetgr "const char *netgroup" "const char *host" "const char *user" "const char *domain"
 .Ft void
 .Fn setnetgrent "const char *netgroup"
 .Ft void
@@ -58,7 +59,7 @@ which is described
 in
 .Xr netgroup 5 .
 If that file does not exist, and the system supports 
-.Sy YP,
+.Sy YP ,
 then the
 .Sy netgroup 
 .Sy YP
@@ -77,7 +78,7 @@ The function
 sets the three pointer arguments to the strings of the next member of the
 current netgroup.
 If any of the string pointers are
-.Sy (char *)0
+.Dv NULL
 that field is considered a wildcard.
 .Pp
 The functions
@@ -102,7 +103,7 @@ If any of the
 or
 .Sy domain
 arguments are
-.Sy (char *)0
+.Dv NULL
 those fields will match any string value in the netgroup member.
 .Sh RETURN VALUES
 The function
@@ -122,7 +123,7 @@ have no return value.
 netgroup database file
 .El
 .Sh SEE ALSO
-.Fn netgroup 5
+.Xr netgroup 5
 .Sh BUGS
 The function
 .Fn getnetgrent
