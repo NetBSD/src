@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.49 2001/05/02 10:32:18 scw Exp $	*/
+/*	$NetBSD: rcons.c,v 1.50 2001/07/07 14:21:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -453,7 +453,7 @@ rconsstart(tp)
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)cl);
+			wakeup(cl);
 		}
 		selwakeup(&tp->t_wsel);
 	}

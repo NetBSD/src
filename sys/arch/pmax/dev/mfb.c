@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.45 2000/02/03 04:09:14 nisimura Exp $	*/
+/*	$NetBSD: mfb.c,v 1.46 2001/07/07 14:21:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.45 2000/02/03 04:09:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.46 2001/07/07 14:21:00 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -223,7 +223,7 @@ mfbattach(parent, self, aux)
 	void *aux;
 {
 	struct tc_attach_args *ta = aux;
-	caddr_t mfbaddr = (caddr_t) ta->ta_addr;
+	caddr_t mfbaddr = (caddr_t)ta->ta_addr;
 	int unit = self->dv_unit;
 	struct fbinfo *fi;
 	
@@ -354,16 +354,16 @@ bt431_cursor_off(fi)
 	u_char cursor_save [6];
 
 	/* Stash the current cursor color (and overlay). */
-	bcopy (cursor_RGB, cursor_save, 6);
+	memcpy(cursor_save, cursor_RGB, sizeof(cursor_RGB));
 	/* Zero the cursor colors. */
-	bzero(cursor_RGB, 6);
+	memset(cursor_RGB, 0, sizeof(cursor_RGB));
 	/* Write the zeroed colors to the hardware and fb color map. */
 	mfbRestoreCursorColor (fi);
 	/*
 	 * Replace stashed colors, so the cursor will be visible next
 	 * time the cursor color map is restored.
 	 */
-	bcopy (cursor_save, cursor_RGB, 6);
+	memcpy(cursor_RGB, cursor_save, sizeof(cursor_RGB));
 }
 
 
@@ -650,7 +650,7 @@ mfbGetColorMap(fi, bits, index, count)
 	cmap_bits = (u_char *)bits;
 	cmap = (u_char *)(fi -> fi_cmap_bits) + index * 3;
 
-	bcopy (cmap, cmap_bits, count * 3);
+	memcpy(cmap_bits, cmap, count * 3);
 	return 0;
 }
 

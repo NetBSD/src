@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.64 2001/07/07 07:52:02 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.65 2001/07/07 14:21:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.64 2001/07/07 07:52:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.65 2001/07/07 14:21:00 simonb Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -270,12 +270,12 @@ rzready(sc)
 			0, 0, (ScsiGroup0Cmd *)sc->sc_cdb.cdb);
 		sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_READ;
 		sc->sc_buf.b_bcount = 0;
-		sc->sc_buf.b_data = (caddr_t)0;
+		sc->sc_buf.b_data = NULL;
 		BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 
 		sc->sc_cmd.cmd = sc->sc_cdb.cdb;
 		sc->sc_cmd.cmdlen = sc->sc_cdb.len;
-		sc->sc_cmd.buf = (caddr_t)0;
+		sc->sc_cmd.buf = NULL;
 		sc->sc_cmd.buflen = 0;
 		/* setup synchronous data transfers if the device supports it */
 		if (tries == 10 && (sc->sc_flags & RZF_TRYSYNC))
@@ -317,7 +317,7 @@ rzready(sc)
 			cp->control = 0;
 			sc->sc_buf.b_flags = B_BUSY | B_PHYS | B_READ;
 			sc->sc_buf.b_bcount = 0;
-			sc->sc_buf.b_data = (caddr_t)0;
+			sc->sc_buf.b_data = NULL;
 			BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 			rzstart(sc->sc_cmd.unit);
 			if (biowait(&sc->sc_buf))
@@ -423,13 +423,13 @@ rzprobe(xxxsd)
 	sc->sc_rwcmd.unitNumber = sd->sd_slave;
 
 	/* XXX set up the external name */
-	bzero(&sc->sc_dev, sizeof(sc->sc_dev));			/* XXX */
+	memset(&sc->sc_dev, 0, sizeof(sc->sc_dev));		/* XXX */
 	sprintf(sc->sc_dev.dv_xname, "rz%d", sd->sd_unit);	/* XXX */
 	sc->sc_dev.dv_unit = sd->sd_unit;			/* XXX */
 	sc->sc_dev.dv_class = DV_DISK;				/* XXX */
 
 	/* Initialize the disk structure. */
-	bzero(&sc->sc_dkdev, sizeof(sc->sc_dkdev));
+	memset(&sc->sc_dkdev, 0, sizeof(sc->sc_dkdev));
 	sc->sc_dkdev.dk_name = sc->sc_dev.dv_xname;
 
 	/* try to find out what type of device this is */
@@ -483,9 +483,9 @@ rzprobe(xxxsd)
 	else {
 		char vid[9], pid[17], revl[5];
 
-		bcopy((caddr_t)inqbuf.vendorID, (caddr_t)vid, 8);
-		bcopy((caddr_t)inqbuf.productID, (caddr_t)pid, 16);
-		bcopy((caddr_t)inqbuf.revLevel, (caddr_t)revl, 4);
+		memcpy(vid, inqbuf.vendorID, 8);
+		memcpy(pid, inqbuf.productID, 16);
+		memcpy(revl, inqbuf.revLevel, 4);
 		for (i = 8; --i > 0; )
 			if (vid[i] != ' ')
 				break;
@@ -566,9 +566,9 @@ rzlblkstrat(bp, bsize)
 	int bn, resid;
 	caddr_t addr;
 
-	cbp = (struct buf *)malloc(sizeof(struct buf), M_DEVBUF, M_WAITOK);
-	cbuf = (caddr_t)malloc(bsize, M_DEVBUF, M_WAITOK);
-	bzero((caddr_t)cbp, sizeof(*cbp));
+	cbp = malloc(sizeof(struct buf), M_DEVBUF, M_WAITOK);
+	cbuf = malloc(bsize, M_DEVBUF, M_WAITOK);
+	memset(cbp, 0, sizeof(*cbp));
 	cbp->b_proc = curproc;
 	cbp->b_dev = bp->b_dev;
 	bn = bp->b_blkno;
@@ -604,10 +604,10 @@ rzlblkstrat(bp, bsize)
 				break;
 			}
 			if (bp->b_flags & B_READ) {
-				bcopy(&cbuf[boff], addr, count);
+				memcpy(addr, &cbuf[boff], count);
 				goto done;
 			}
-			bcopy(addr, &cbuf[boff], count);
+			memcpy(&cbuf[boff], addr, count);
 #ifdef DEBUG
 			if (rzdebug & RZB_PARTIAL)
 				printf(" writeback: bn %x cnt %x off %x addr %p\n",
@@ -873,7 +873,7 @@ rzdone(unit, error, resid, status)
 		sc->sc_active = 0;
 		/* finish close protocol */
 		if (sc->sc_openpart == 0)
-			wakeup((caddr_t)&sc->sc_tab);
+			wakeup(&sc->sc_tab);
 	}
 }
 
@@ -1160,7 +1160,7 @@ rzioctl(dev, cmd, data, flag, p)
 			return (EPERM);
 		if (legal_cmds[((struct scsi_fmt_cdb *)data)->cdb[0]] == 0)
 			return (EINVAL);
-		bcopy(data, (caddr_t)&sc->sc_cdb, sizeof(sc->sc_cdb));
+		memcpy(&sc->sc_cdb, data, sizeof(sc->sc_cdb));
 		return (0);
 
 	case SDIOCSENSE:
@@ -1168,7 +1168,7 @@ rzioctl(dev, cmd, data, flag, p)
 		 * return the SCSI sense data saved after the last
 		 * operation that completed with "check condition" status.
 		 */
-		bcopy((caddr_t)&sc->sc_sense, data, sizeof(sc->sc_sense));
+		memcpy(data, &sc->sc_sense, sizeof(sc->sc_sense));
 		return (0);
 
 	case DIOCGDINFO:
@@ -1276,7 +1276,7 @@ rz_cdsize(cd, flags)
 	 * make up a scsi command and ask the scsi driver to do
 	 * it for you.
 	 */
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = READ_CD_CAPACITY;
 
 	/*
@@ -1359,11 +1359,11 @@ rz_command(sc, scsi_cmd, cmdlen, data_addr, datalen, nretries, timeout,
 	/*
 	 * Zero out the data buffer.
 	 */
-	bzero(data_addr, datalen);
+	memset(data_addr, 0, datalen);
 
  again:
 	/* copy request into cdb */
-	bcopy(scsi_cmd, &sc->sc_cdb.cdb, cmdlen);
+	memcpy(&sc->sc_cdb.cdb, scsi_cmd, cmdlen);
 	sc->sc_cdb.len = cmdlen;
 
 	/*
@@ -1418,9 +1418,9 @@ rz_mode_sense(sd, scsipi_sense, page, pagelen, flags)
 	 * the mode sense, so that checks for bogus values of
 	 * 0 will work in case the mode sense fails.
 	 */
-	bzero(scsipi_sense, sizeof(*scsipi_sense));
+	memset(scsipi_sense, 0, sizeof(*scsipi_sense));
 
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	memset(&scsipi_cmd, 0, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = SCSI_MODE_SENSE;
 	scsipi_cmd.page = page;
 	scsipi_cmd.u_len.scsi.length = 0x20;	/* XXX verbatim from MI scsi sd.c */
@@ -1561,7 +1561,7 @@ rzgetdefaultlabel(sc, lp)
 {
 	int i;
 
-	bzero(lp, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
 
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_magic = DISKMAGIC;

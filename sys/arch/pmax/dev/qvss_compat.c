@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.26 2000/06/29 07:51:08 mrg Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.27 2001/07/07 14:21:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -466,8 +466,8 @@ fbmmap_fb(fi, dev, data, p)
 	 * user space.
 	 */
 	error = uvm_mmap(&p->p_vmspace->vm_map, &addr, len,
-		VM_PROT_ALL, VM_PROT_ALL, MAP_SHARED, (caddr_t)&vn,
-		(vaddr_t)0, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
+		VM_PROT_ALL, VM_PROT_ALL, MAP_SHARED, &vn, 0,
+		p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 	if (error)
 		return (error);
 	fbp = (struct fbuaccess *)(addr + ((vaddr_t)fbu & PGOFSET));
