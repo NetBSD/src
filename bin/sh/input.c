@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.17 1995/09/26 13:25:19 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.18 1995/10/06 21:38:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.17 1995/09/26 13:25:19 christos Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.18 1995/10/06 21:38:18 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -187,7 +187,7 @@ retry:
 		const char *rl_cp;
 		int len;
 
-		rl_cp = el_gets(el, &parsenleft);
+		rl_cp = el_gets(el, &nr);
 		if (rl_cp == NULL)
 			nr = 0;
 		else {
