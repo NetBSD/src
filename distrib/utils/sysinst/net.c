@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.68 2000/12/31 13:08:05 jdc Exp $	*/
+/*	$NetBSD: net.c,v 1.69 2001/01/07 13:07:57 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -744,7 +744,7 @@ get_via_ftp()
 			/* Error getting the file.  Bad host name ... ? */
 			msg_display(MSG_ftperror_cont);
 			getchar();
-			clearok(stdscr, TRUE);
+			wrefresh(curscr);
 			wmove(stdscr, 0, 0);
 			touchwin(stdscr);
 			wclear(stdscr);
@@ -759,7 +759,7 @@ get_via_ftp()
 			list++;
 
 	}
-	clearok(stdscr, TRUE);
+	wrefresh(curscr);
 	wmove(stdscr, 0, 0);
 	touchwin(stdscr);
 	wclear(stdscr);
