@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_llseek.c,v 1.16 1996/10/10 17:51:57 christos Exp $	*/
+/*	$NetBSD: linux_llseek.c,v 1.17 1997/06/27 05:29:36 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -717,7 +717,7 @@ linux_sys_rename(p, v, retval)
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
 	LINUX_CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
 
-	return sys_rename(p, uap, retval);
+	return sys_posix_rename(p, uap, retval);
 }
 
 int
