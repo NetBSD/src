@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.9 2002/05/07 01:31:33 eeh Exp $	*/
+/*	$NetBSD: SYS.h,v 1.10 2002/05/07 01:32:46 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,18 +86,18 @@
 
 /*
  * RSYSCALL is used when the system call should just return.  Here
- * we use the SYSCALL_G2RFLAG to put the `success' return address in %g2
+ * we use the SYSCALL_G7RFLAG to put the `success' return address in %g7
  * and avoid a branch.
  */
 #define	RSYSCALL(x) \
-	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G7RFLAG,%g1; add %o7,8,%g7; \
 	t ST_SYSCALL; ERROR()
 
 /*
  * PSEUDO(x,y) is like RSYSCALL(y) except that the name is x.
  */
 #define	PSEUDO(x,y) \
-	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G7RFLAG,%g1; add %o7,8,%g7; \
 	t ST_SYSCALL; ERROR()
 
 /*
@@ -124,16 +124,16 @@
  * XXX - This should be optimized.
  */
 #define RSYSCALL_NOERROR(x) \
-	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+	ENTRY(x); mov (_CAT(SYS_,x))|SYSCALL_G7RFLAG,%g1; add %o7,8,%g7; \
 	t ST_SYSCALL
 
 /*
  * PSEUDO_NOERROR(x,y) is like RSYSCALL_NOERROR(y) except that the name is x.
  */
 #define PSEUDO_NOERROR(x,y) \
-	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
+	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G7RFLAG,%g1; add %o7,8,%g7; \
 	t ST_SYSCALL
 
-	.register	%g2,#scratch
+	.register	%g7,#scratch
 
 	.globl	_C_LABEL(__cerror)
