@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.27 1996/10/21 05:42:23 scottr Exp $	*/
+/*	$NetBSD: nubus.c,v 1.28 1996/12/16 16:17:10 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -47,9 +47,10 @@ static int	nubus_debug = 0x01;
 #define NDB_ARITH	0x4
 #endif
 
-static int	nubusprint __P((void *, const char *));
-static int	nubusmatch __P((struct device *, void *, void *));
-static void	nubusattach __P((struct device *, struct device *, void *));
+static int	nubus_print __P((void *, const char *));
+static int	nubus_match __P((struct device *, struct cfdata *, void *));
+static void	nubus_attach __P((struct device *, struct device *, void *));
+int		nubus_video_resource __P((int));
 
 static int	probe_slot __P((int slot, nubus_slot *fmt));
 static u_long	IncPtr __P((nubus_slot *fmt, u_long base, long amt));
@@ -61,60 +62,103 @@ static u_char	GetByte __P((nubus_slot *fmt, u_long ptr));
 static u_long	GetLong __P((nubus_slot *fmt, u_long ptr));
 
 struct cfattach nubus_ca = {
-	sizeof(struct nubus_softc), nubusmatch, nubusattach
+	sizeof(struct nubus_softc), nubus_match, nubus_attach
 };
 
 struct cfdriver nubus_cd = {
-	NULL, "nubus", DV_DULL, 1
+	NULL, "nubus", DV_DULL,
 };
 
 static int
-nubusmatch(parent, vcf, aux)
+nubus_match(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct confargs *ca = aux;
 
 	if (ca->ca_bustype != BUS_NUBUS)
-		return (0);
-	return(1);
+		return 0;
+	return 1;
 }
 
 static void
-nubusattach(parent, self, aux)
-	struct	device	*parent, *self;
-	void		*aux;
+nubus_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	nubus_slot		fmtblock;
-	int			i;
+	struct nubus_attach_args na_args;
+	nubus_slot fmtblock;
+	nubus_dir dir;
+	nubus_dirent dirent;
+	nubus_type slottype;
+	int i, rsrcid;
 
 	printf("\n");
 
 	for (i = NUBUS_MIN_SLOT; i <= NUBUS_MAX_SLOT; i++) {
-		if (probe_slot(i, &fmtblock)) {
-			/*config_search(bus_scan, &fmtblock, nubusprint);*/
-			config_found(self, &fmtblock, nubusprint);
-		}
+		if (probe_slot(i, &fmtblock) <= 0)
+			continue;
+
+		if ((rsrcid = nubus_video_resource(i)) == (-1))
+			rsrcid = 0x80;
+
+		nubus_get_main_dir(&fmtblock, &dir);
+
+		if (nubus_find_rsrc(&fmtblock, &dir, rsrcid, &dirent) <= 0)
+			continue;
+
+		nubus_get_dir_from_rsrc(&fmtblock, &dirent, &dir);
+
+		if (nubus_find_rsrc(&fmtblock, &dir, NUBUS_RSRC_TYPE,
+		    &dirent) <= 0)
+			continue;
+
+		if (nubus_get_ind_data(&fmtblock, &dirent,
+		    (caddr_t) &slottype, sizeof(nubus_type)) <= 0)
+			continue;
+
+		na_args.slot = i;
+		na_args.rsrcid = rsrcid;
+		na_args.category = slottype.category;
+		na_args.type = slottype.type;
+		na_args.drsw = slottype.drsw;
+		na_args.drhw = slottype.drhw;
+		na_args.fmt = &fmtblock;
+
+		config_found(self, &na_args, nubus_print);
 	}
 }
 
 static int
-nubusprint(aux, name)
-	void	*aux;
-	const char	*name;
+nubus_print(aux, name)
+	void *aux;
+	const char *name;
 {
-	nubus_slot	*fmt;
+	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
 
-	fmt = (nubus_slot *) aux;
 	if (name) {
-		printf("%s: slot %x: %s ", name, fmt->slot,
-				nubus_get_card_name(fmt));
+		printf("%s: slot %x: %s ", name, na->fmt->slot,
+		    nubus_get_card_name(na->fmt));
 		printf("(Vendor: %s, ",
-				nubus_get_vendor(fmt, NUBUS_RSRC_VEND_ID));
-		printf("Part: %s) ",
-				nubus_get_vendor(fmt, NUBUS_RSRC_VEND_PART));
+		    nubus_get_vendor(na->fmt, NUBUS_RSRC_VEND_ID));
+		printf("Part: %s)",
+		    nubus_get_vendor(na->fmt, NUBUS_RSRC_VEND_PART));
 	}
 	return (UNCONF);
+}
+
+int
+nubus_video_resource(slot)
+	int slot;
+{
+	extern u_int16_t mac68k_vrsrc_vec[];
+	int i;
+
+	for (i = 0 ; i < 6 ; i++)
+		if ((mac68k_vrsrc_vec[i] & 0xff) == slot)
+			return ((mac68k_vrsrc_vec[i] >> 8) & 0xff);
+	return (-1);
 }
 
 /*
