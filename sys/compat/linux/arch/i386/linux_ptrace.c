@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.1 1999/12/12 00:00:16 tron Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.2 1999/12/12 01:30:49 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -53,6 +53,29 @@
 
 #include <compat/linux/linux_syscallargs.h>
 
+#define LINUX_PTRACE_GETREGS		12
+#define LINUX_PTRACE_SETREGS		13
+#define LINUX_PTRACE_GETFPREGS		14
+#define LINUX_PTRACE_SETFPREGS		15
+
+struct linux_reg {
+	long ebx;
+	long ecx;
+	long edx;
+	long esi;
+	long edi;
+	long ebp;
+	long eax;
+	int  xds;
+	int  xes;
+	long orig_eax;
+	long eip;
+	int  xcs;
+	long eflags;
+	long esp;
+	int  xss;
+};
+
 int
 linux_sys_ptrace(p, v, retval)
 	struct proc *p;
@@ -77,6 +100,21 @@ linux_sys_ptrace(p, v, retval)
 	switch (SCARG(uap, request)) {
 	case LINUX_PTRACE_TRACEME:
 		SCARG(&pta, req) = PT_TRACE_ME;
+		break;
+	case LINUX_PTRACE_PEEKTEXT:
+		SCARG(&pta, req) = PT_READ_I;
+		break;
+	case LINUX_PTRACE_PEEKDATA:
+		SCARG(&pta, req) = PT_READ_D;
+		break;
+	case LINUX_PTRACE_POKETEXT:
+		SCARG(&pta, req) = PT_WRITE_I;
+		break;
+	case LINUX_PTRACE_POKEDATA:
+		SCARG(&pta, req) = PT_WRITE_D;
+		break;
+	case LINUX_PTRACE_CONT:
+		SCARG(&pta, req) = PT_CONTINUE;
 		break;
 	case LINUX_PTRACE_KILL:
 		SCARG(&pta, req) = PT_KILL;
