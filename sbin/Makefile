@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.51 1998/12/15 16:07:24 ws Exp $
+#	$NetBSD: Makefile,v 1.52 1998/12/15 22:45:16 pk Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
 # Missing: icheck ncheck
+
+.include <bsd.own.mk>	# get OBJECT_FMT definition
 
 SUBDIR=	atactl badsect bim ccdconfig disklabel dmesg edlabel fastboot fdisk \
 	fsck fsirand ifconfig init mknod modload modunload mount nologin ping \
@@ -26,5 +28,9 @@ SUBDIR+= mount_portal
 SUBDIR+= mount_procfs
 SUBDIR+= mount_umap
 SUBDIR+= mount_union
+
+.if (${OBJECT_FMT} != "ELF")
+SUBDIR+= ldconfig
+.endif
 
 .include <bsd.subdir.mk>
