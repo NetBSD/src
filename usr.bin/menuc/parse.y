@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.7 1999/06/20 02:07:18 cgd Exp $	*/
+/*	$NetBSD: parse.y,v 1.8 1999/07/26 06:19:01 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,7 +56,8 @@ static optn_info *cur_optn;
 
 
 %token <i_value> X Y W H NO BOX SUB HELP MENU NEXT EXIT ACTION ENDWIN OPTION 
-%token <i_value> TITLE DEFAULT DISPLAY ERROR ALLOW DYNAMIC MENUS SCROLLABLE
+%token <i_value> TITLE DEFAULT DISPLAY ERROR EXITSTRING ALLOW DYNAMIC MENUS
+		 SCROLLABLE
 %token <s_value> STRING NAME CODE INT_CONST CHAR_CONST
 
 %type <s_value> init_code system helpstr
