@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.8 1996/03/17 21:12:03 cgd Exp $	*/
+/*	$NetBSD: sem.c,v 1.9 1996/08/31 21:15:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -350,13 +350,13 @@ badname:
 
 /*
  * Define some of a device's allowable parent attachments.
- * There may be a list of vectors and a list of (plain) attributes.
+ * There may be a list of (plain) attributes.
  */
 void
-defdevattach(deva, dev, atlist, vectors, attrs)
+defdevattach(deva, dev, atlist, attrs)
 	register struct deva *deva;
 	struct devbase *dev;
-	struct nvlist *atlist, *vectors, *attrs;
+	struct nvlist *atlist, *attrs;
 {
 	register struct nvlist *nv;
 	register struct attr *a;
@@ -395,7 +395,6 @@ defdevattach(deva, dev, atlist, vectors, attrs)
 	/* Committed!  Set up fields. */
 	deva->d_attrs = attrs;
 	deva->d_atlist = atlist;
-	deva->d_vectors = vectors;
 	deva->d_devbase = dev;
 
 	/*
@@ -437,7 +436,6 @@ defdevattach(deva, dev, atlist, vectors, attrs)
 	return;
 bad:
 	nvfreel(atlist);
-	nvfreel(vectors);
 	nvfreel(attrs);
 }
 
@@ -473,7 +471,6 @@ badname:
 		deva->d_isdef = 0;
 		deva->d_devbase = NULL;
 		deva->d_atlist = NULL;
-		deva->d_vectors = NULL;
 		deva->d_attrs = NULL;
 		deva->d_ihead = NULL;
 		deva->d_ipp = &deva->d_ihead;
@@ -858,11 +855,6 @@ findattachment:
 ok:
 	if ((i->i_locs = fixloc(name, attr, loclist)) == NULL)
 		goto bad;
-	if (i->i_unit == STAR && iba->d_vectors != NULL) {
-		error("%s's cannot be *'d as they have preset vectors",
-		    ib->d_name);
-		goto bad;
-	}
 	i->i_at = at;
 	i->i_atattr = attr;
 	i->i_atdev = ab;
