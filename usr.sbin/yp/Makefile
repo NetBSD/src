@@ -4,6 +4,6 @@ NOPROG=
 MAN8=	yp.0
 
 CFLAGS+=-DYP
-SUBDIR=	ypbind ypwhich ypcat ypmatch ypset # yppasswd
+SUBDIR=	ypbind ypwhich ypcat ypmatch ypset yppoll # yppasswd
 
 .include <bsd.prog.mk>
