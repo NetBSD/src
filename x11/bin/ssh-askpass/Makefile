@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/11/08 13:57:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2004/01/29 01:00:42 lukem Exp $
 
 NOMAN=		yes
 
@@ -13,7 +13,18 @@ BUILDSYMLINKS=	SshAskpass-default.ad SshAskpass.ad
 
 FILESDIR=	${X11ROOTDIR}/share/examples/ssh-askpass
 FILES=		SshAskpass-1337.ad SshAskpass-NeXTish.ad \
-		SshAskpass-default.ad SshAskpass-green.ad SshAskpass-motif.ad
+		SshAskpass.ad SshAskpass-green.ad SshAskpass-motif.ad
+
+# XXX:	We use the following two lines instead of just having
+# XXX:		FILES+= SshAskpass-default.ad
+# XXX:	because of an obscure bug with "make -j" where it doesn't find
+# XXX:	SshAskpass-default.ad in the .PATH correctly, probably because
+# XXX:	of the rule created for it from BUILDSYMLINKS by <bsd.files.mk>.
+# XXX:	This is not the correct long-term solution.
+#
+FILES+=			SshAskpass.ad
+FILESNAME_SshAskpass.ad=SshAskpass-default.ad
+
 
 CPPFLAGS+=	-I.
 DPSRCS+=	SshAskpass_ad.h
