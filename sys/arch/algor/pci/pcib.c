@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.6 2001/06/21 05:20:54 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.7 2001/06/21 19:00:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.6 2001/06/21 05:20:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7 2001/06/21 19:00:18 thorpej Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -192,11 +192,11 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 
 	/* reset, program device, 4 bytes */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_ICW1,
-	    ICW_SELECT(1) | ICW1_IC4);
+	    ICW1_SELECT | ICW1_IC4);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_ICW2,
 	    ICW2_VECTOR(32)/*XXX*/);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_ICW3,
-	    ICW3_CASCADE);
+	    ICW3_CASCADE(2));
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_ICW4,
 	    ICW4_8086);
 
@@ -206,16 +206,15 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 
 	/* enable special mask mode */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_OCW3,
-	    OCW3_SELECT | OCW3_ESMM | OCW3_SMM);
+	    OCW3_SELECT | OCW3_SSMM | OCW3_SMM);
 
 	/* read IRR by default */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_OCW3,
-	    OCW3_SELECT | OCW3_RR_CMD(OCW3_RR_CMD_READ_IRQ));
-
+	    OCW3_SELECT | OCW3_RR);
 
 	/* reset; program device, 4 bytes */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_ICW1,
-	    ICW_SELECT(1) | ICW1_IC4);
+	    ICW1_SELECT | ICW1_IC4);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_ICW2,
 	    ICW2_VECTOR(32 + 8)/*XXX*/);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_ICW3,
@@ -229,11 +228,11 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 
 	/* enable special mask mode */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_OCW3,
-	    OCW3_SELECT | OCW3_ESMM | OCW3_SMM);
+	    OCW3_SELECT | OCW3_SSMM | OCW3_SMM);
 
 	/* read IRR by default */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_OCW3,
-	    OCW3_SELECT | OCW3_RR_CMD(OCW3_RR_CMD_READ_IRQ));
+	    OCW3_SELECT | OCW3_RR);
 
 	/*
 	 * Default all interrupts to edge-triggered.
@@ -250,6 +249,7 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_reserved =
 		(1U << 0) |	/* timer */
 		(1U << 1) |	/* keyboard controller */
+		(1U << 2) |	/* PIC cascade */
 		(1U << 3) |	/* COM 2 */
 		(1U << 4) |	/* COM 1 */
 		(1U << 6) |	/* floppy */
@@ -373,35 +373,43 @@ pcib_intr(void *v)
 	struct algor_intrhand *ih;
 	int irq;
 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_OCW3,
-	    OCW3_SELECT | OCW3_POLL);
-	irq = bus_space_read_1(sc->sc_iot, sc->sc_ioh_icu1,
-	    PIC_OCW3) & 0x7f;
-
-	if (irq == 2) {
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2, PIC_OCW3,
+	for (;;) {
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_OCW3,
 		    OCW3_SELECT | OCW3_POLL);
-		irq = (bus_space_read_1(sc->sc_iot, sc->sc_ioh_icu2,
-		    PIC_OCW3) & 0x7f) + 8;
+		irq = bus_space_read_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_OCW3);
+		if ((irq & OCW3_POLL_PENDING) == 0)
+			return (1);
+
+		irq = OCW3_POLL_IRQ(irq);
+
+		if (irq == 2) {
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2,
+			    PIC_OCW3, OCW3_SELECT | OCW3_POLL);
+			irq = bus_space_read_1(sc->sc_iot, sc->sc_ioh_icu2,
+			    PIC_OCW3);
+			if (irq & OCW3_POLL_PENDING)
+				irq = OCW3_POLL_IRQ(irq) + 8;
+			else
+				irq = 2;
+		}
+
+		sc->sc_intrtab[irq].intr_count.ev_count++;
+		for (ih = LIST_FIRST(&sc->sc_intrtab[irq].intr_q);
+		     ih != NULL; ih = LIST_NEXT(ih, ih_q)) {
+			(*ih->ih_func)(ih->ih_arg);
+		}
+
+		/* Send a specific EOI to the 8259. */
+		if (irq > 7) {
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2,
+			    PIC_OCW2, OCW2_SELECT | OCW3_EOI | OCW3_SL |
+			    OCW2_ILS(irq & 7));
+			irq = 2;
+		}
+
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_OCW2,
+		    OCW2_SELECT | OCW3_EOI | OCW3_SL | OCW2_ILS(irq));
 	}
-
-	sc->sc_intrtab[irq].intr_count.ev_count++;
-	for (ih = LIST_FIRST(&sc->sc_intrtab[irq].intr_q);
-	     ih != NULL; ih = LIST_NEXT(ih, ih_q)) {
-		(*ih->ih_func)(ih->ih_arg);
-	}
-
-	/* Send a specific EOI to the 8259. */
-	if (irq > 7)
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2,
-		    PIC_OCW2, OCW2_SELECT | OCW2_OP(OCW2_OP_SPECIFIC_EOI_CMD) |
-		    OCW2_ILS(irq & 7));
-
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_OCW2,
-	    OCW2_SELECT | OCW2_OP(OCW2_OP_SPECIFIC_EOI_CMD) |
-	    (irq > 7 ? OCW2_ILS(2) : OCW2_ILS(irq)));
-
-	return (1);
 }
 
 const struct evcnt *
@@ -522,16 +530,14 @@ pcib_isa_intr_alloc(void *v, int mask, int type, int *irq)
 	bestirq = -1;
 	count = -1;
 
-#if defined(ALGOR_P5064)
 	mask &= ~sc->sc_reserved;
-#endif
 
 #if 0
 	printf("pcib_intr_alloc: mask = 0x%04x\n", mask);
 #endif
 
 	for (i = 0; i < 16; i++) {
-		if (i == 2 || (mask & (1 << i)) == 0)
+		if ((mask & (1 << i)) == 0)
 			continue;
 
 		switch (sc->sc_intrtab[i].intr_type) {
