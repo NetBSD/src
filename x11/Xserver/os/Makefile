@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/02/07 06:52:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2004/02/21 08:35:28 rtr Exp $
 
 .include "../Makefile.serverlib"
 
@@ -9,7 +9,6 @@ LIB=		os
 SRCS=		WaitFor.c access.c connection.c io.c oscolor.c osinit.c \
 		utils.c auth.c mitauth.c secauth.c xdmauth.c xdmcp.c \
 		decompress.c transport.c lbxio.c
-
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${XSERVERINCDIR} \
@@ -28,8 +27,13 @@ CPPFLAGS+=	-DXSERV_t -DTRANS_SERVER \
 
 .include "../Makefile.common"
 
-.if ${XSERVER_XFREE86} == "no"
-CPPFLAGS+=	-UDDXTIME
+# XXX The XFree86 Xserver has its own GetTimeInMillis(), however if we are
+#     building XFree86 and Xmacppc or Xsun* we want both copies.  The copy
+#     here is linked into the non XFree86 server.
+.if ${XSERVER_XFREE86} == "no" || \
+    ${XSERVER_XMACPPC} != "no" || \
+    ${XSERVER_XSUN} != "no"
+SRCS+=	GetTimeInMillis.c
 .endif
 
 CPPFLAGS.WaitFor.c=	${X11FLAGS.EXTENSION}
