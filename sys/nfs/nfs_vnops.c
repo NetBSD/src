@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.78 1997/07/04 20:22:12 drochner Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.79 1997/07/14 20:46:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2197,10 +2197,10 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	register u_int32_t *tl;
 	register caddr_t cp;
 	register int32_t t1, t2;
-	register struct vnode *newvp;
 	register nfsuint64 *cookiep;
-	caddr_t bpos, dpos, cp2, dpossav1, dpossav2;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2, *mdsav1, *mdsav2;
+	struct vnode *newvp;
+	caddr_t bpos, dpos, cp2;
+	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	struct nameidata nami, *ndp = &nami;
 	struct componentname *cnp = &ndp->ni_cnd;
 	nfsuint64 cookie;
@@ -2211,6 +2211,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	u_quad_t fileno;
 	int error = 0, tlen, more_dirs = 1, blksiz = 0, doit, bigenough = 1, i;
 	int attrflag, fhsize;
+	struct nfs_fattr fattr, *fp;
 
 #ifndef DIAGNOSTIC
 	if (uiop->uio_iovcnt != 1 || (uiop->uio_offset & (NFS_DIRBLKSIZ - 1)) ||
@@ -2319,9 +2320,8 @@ nfs_readdirplusrpc(vp, uiop, cred)
 			 */
 			attrflag = fxdr_unsigned(int, *tl);
 			if (attrflag) {
-			    dpossav1 = dpos;
-			    mdsav1 = md;
-			    nfsm_adv(NFSX_V3FATTR);
+			    nfsm_dissect(fp, struct nfs_fattr *, NFSX_V3FATTR);
+			    bcopy(fp, &fattr, NFSX_V3FATTR);
 			    nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 			    doit = fxdr_unsigned(int, *tl);
 			    if (doit) {
@@ -2333,30 +2333,23 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				} else {
 				    error = nfs_nget(vp->v_mount, fhp,
 					fhsize, &np);
-				    if (error)
-					doit = 0;
-				    else
+				    if (!error)
 					newvp = NFSTOV(np);
 				}
-			    }
-			    if (doit) {
-				dpossav2 = dpos;
-				dpos = dpossav1;
-				mdsav2 = md;
-				md = mdsav1;
-				nfsm_loadattr(newvp, (struct vattr *)0);
-				dpos = dpossav2;
-				md = mdsav2;
-				dp->d_type =
-				    IFTODT(VTTOIF(np->n_vattr.va_type));
-				ndp->ni_vp = newvp;
-				cnp->cn_hash = 0;
-				for (hcp = cnp->cn_nameptr, i = 1; i <= len;
-				    i++, hcp++)
-				    cnp->cn_hash += *hcp * i;
-				if (cnp->cn_namelen <= NCHNAMLEN)
-				    cache_enter(ndp->ni_dvp, ndp->ni_vp, cnp);
-			    }
+				if (!error) {
+				    nfs_loadattrcache(&newvp, &fattr, 0);
+				    dp->d_type =
+				        IFTODT(VTTOIF(np->n_vattr.va_type));
+				    ndp->ni_vp = newvp;
+				    cnp->cn_hash = 0;
+				    for (hcp = cnp->cn_nameptr, i = 1; i <= len;
+				        i++, hcp++)
+				        cnp->cn_hash += *hcp * i;
+				    if (cnp->cn_namelen <= NCHNAMLEN)
+				        cache_enter(ndp->ni_dvp, ndp->ni_vp,
+						    cnp);
+				}
+			   }
 			} else {
 			    /* Just skip over the file handle */
 			    nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
