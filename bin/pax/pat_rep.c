@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.5 1997/01/11 02:06:42 tls Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.6 1997/03/29 15:29:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: pat_rep.c,v 1.5 1997/01/11 02:06:42 tls Exp $";
+static char rcsid[] = "$NetBSD: pat_rep.c,v 1.6 1997/03/29 15:29:31 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -1006,7 +1006,7 @@ rep_name(name, nlen, prnt)
 #			ifdef NET2_REGEX
 			inpt = pt->rcmp->endp[0];
 #			else
-			inpt += pm[0].rm_eo;
+			inpt += pm[0].rm_eo - pm[0].rm_so;
 #			endif
 
 			if ((outpt == endpt) || (*inpt == '\0'))
