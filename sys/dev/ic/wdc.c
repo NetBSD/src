@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.133 2003/09/25 09:38:09 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.134 2003/09/25 19:29:49 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.133 2003/09/25 09:38:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.134 2003/09/25 19:29:49 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -142,6 +142,7 @@ void  __wdccommand_done __P((struct channel_softc *, struct wdc_xfer *));
 void  __wdccommand_start __P((struct channel_softc *, struct wdc_xfer *));	
 int   __wdccommand_intr __P((struct channel_softc *, struct wdc_xfer *, int));
 int   wdprint __P((void *, const char *));
+void wdc_finish_attach __P((struct device *));
 void wdc_channel_attach __P((struct channel_softc *));
 
 #define DEBUG_INTR   0x01
@@ -354,7 +355,15 @@ wdcprobe(chp)
 }
 
 void
-wdcattach(self)
+wdcattach(wdc)
+	struct wdc_softc *wdc;
+{
+
+	config_interrupts(&wdc->sc_dev, wdc_finish_attach);
+}
+
+void
+wdc_finish_attach(self)
 	struct device *self;
 {
 	struct wdc_softc *wdc = (void *)self;
@@ -1423,6 +1432,22 @@ __wdccommand_start(chp, xfer)
 	}
 	wdccommand(chp, drive, wdc_c->r_command, wdc_c->r_cyl, wdc_c->r_head,
 	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_precomp);
+#if 0
+	if (wdc_c->r_command == WDCC_IDENTIFY) {
+		/*
+		 * This is an IDENTIFY command.  Do an immediate poll of the
+		 * status to try to determine if there's actually a device
+		 * there.  Since this is a data-bearing command, it should go
+		 * to either BSY or DRQ within 400ns.
+		 */
+		delay(10);	/* 400ns delay */
+		if ((bus_space_read_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_altsts) &
+		    (WDCS_BSY | WDCS_DRQ | WDCS_ERR)) == 0) {
+			__wdccommand_intr(chp, xfer, 0);
+			return;
+		}
+	}
+#endif
 	if ((wdc_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT; /* wait for interrupt */
 		callout_reset(&chp->ch_callout, wdc_c->timeout / 1000 * hz,
@@ -1433,7 +1458,7 @@ __wdccommand_start(chp, xfer)
 	 * Polled command. Wait for drive ready or drq. Done in intr().
 	 * Wait for at last 400ns for status bit to be valid.
 	 */
-	delay(10);
+	delay(10);	/* 400ns delay */
 	__wdccommand_intr(chp, xfer, 0);
 }
 

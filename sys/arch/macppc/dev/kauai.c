@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.4 2003/09/19 21:35:59 mycroft Exp $	*/
+/*	$NetBSD: kauai.c,v 1.5 2003/09/25 19:29:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.4 2003/09/19 21:35:59 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.5 2003/09/25 19:29:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ kauai_attach(parent, self, aux)
 	chp->wdc = &sc->sc_wdcdev;
 	chp->ch_queue = &sc->wdc_queue;
 
-	config_interrupts(self, wdcattach);
+	wdcattach(&sc->sc_wdcdev);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.20 2003/09/19 21:36:04 mycroft Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.21 2003/09/25 19:29:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.20 2003/09/19 21:36:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.21 2003/09/25 19:29:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ wdc_isapnp_attach(parent, self, aux)
 	sc->wdc_channel.wdc = &sc->sc_wdcdev;
 	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
 
-	config_interrupts(self, wdcattach);
+	wdcattach(&sc->sc_wdcdev);
 }
 
 #ifdef notyet

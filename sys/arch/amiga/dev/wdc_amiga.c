@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.11 2003/09/19 21:35:57 mycroft Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.12 2003/09/25 19:29:48 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.11 2003/09/19 21:35:57 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.12 2003/09/25 19:29:48 mycroft Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -142,7 +142,7 @@ wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_a1200)
 		gayle.intena |= GAYLE_INT_IDE;
 
-	config_interrupts(self, wdcattach);
+	wdcattach(&sc->sc_wdcdev);
 }
 
 int

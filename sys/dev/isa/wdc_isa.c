@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.34 2003/09/23 09:19:24 mycroft Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.35 2003/09/25 19:29:49 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.34 2003/09/23 09:19:24 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.35 2003/09/25 19:29:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ wdc_isa_attach(parent, self, aux)
 
 	printf("\n");
 
-	config_interrupts(self, wdcattach);
+	wdcattach(&sc->sc_wdcdev);
 }
 
 #if 0

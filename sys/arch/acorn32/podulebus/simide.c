@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.10 2003/09/24 07:15:52 mycroft Exp $	*/
+/*	$NetBSD: simide.c,v 1.11 2003/09/25 19:29:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.10 2003/09/24 07:15:52 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.11 2003/09/25 19:29:48 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,7 +293,7 @@ simide_attach(parent, self, aux)
 		bus_space_write_1(sc->sc_ctliot, sc->sc_ctlioh,
 		    CONTROL_REGISTER_OFFSET, sc->sc_ctl_reg);
 	}
-	config_interrupts(self, wdcattach);
+	wdcattach(&sc->sc_wdcdev);
 }
 
 /*
