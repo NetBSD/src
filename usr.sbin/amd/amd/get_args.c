@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: get_args.c,v 1.5 1997/09/22 22:10:16 christos Exp $
+ * $Id: get_args.c,v 1.6 1997/10/17 00:07:21 lukem Exp $
  *
  */
 
@@ -124,7 +124,7 @@ get_args(int c, char *v[])
   int opt_ch;
   FILE *fp = stdin;
 
-  while ((opt_ch = getopt(c, v, "nprvSa:c:d:k:l:o:t:w:x:y:C:D:F:T:H")) != EOF)
+  while ((opt_ch = getopt(c, v, "nprvSa:c:d:k:l:o:t:w:x:y:C:D:F:T:H")) != -1)
 
     switch (opt_ch) {
 
