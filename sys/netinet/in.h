@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.18 1996/01/15 21:11:53 thorpej Exp $	*/
+/*	$NetBSD: in.h,v 1.19 1996/01/16 04:17:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -244,7 +244,8 @@ struct ip_mreq {
 #define	IPCTL_DEFMTU		4	/* default MTU */
 #endif
 #define	IPCTL_FORWSRCRT		5	/* allow source-routed packets */
-#define	IPCTL_MAXID		6
+#define	IPCTL_DIRECTEDBCAST	6	/* default broadcast behavior */
+#define	IPCTL_MAXID		7
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -253,6 +254,7 @@ struct ip_mreq {
 	{ "ttl", CTLTYPE_INT }, \
 	{ "mtu", CTLTYPE_INT }, \
 	{ "forwsrcrt", CTLTYPE_INT }, \
+	{ "directed-broadcast", CTLTYPE_INT }, \
 }
 
 

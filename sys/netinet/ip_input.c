@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.26 1996/01/15 21:11:55 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.27 1996/01/16 04:17:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -70,10 +70,22 @@
 #ifndef IPFORWSRCRT
 #define	IPFORWSRCRT	1	/* allow source-routed packets */
 #endif
+/*
+ * Note: DIRECTED_BROADCAST is handled this way so that previous
+ * configuration using this option will Just Work.
+ */
+#ifndef IPDIRECTEDBCAST
+#ifdef DIRECTED_BROADCAST
+#define IPDIRECTEDBCAST	1
+#else
+#define	IPDIRECTEDBCAST	0
+#endif /* DIRECTED_BROADCAST */
+#endif /* IPDIRECTEDBCAST */
 int	ipforwarding = IPFORWARDING;
 int	ipsendredirects = IPSENDREDIRECTS;
 int	ip_defttl = IPDEFTTL;
 int	ip_forwsrcrt = IPFORWSRCRT;
+int	ip_directedbcast = IPDIRECTEDBCAST;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
@@ -237,10 +249,8 @@ next:
 	for (ia = in_ifaddr.tqh_first; ia; ia = ia->ia_list.tqe_next) {
 		if (ip->ip_dst.s_addr == ia->ia_addr.sin_addr.s_addr)
 			goto ours;
-		if (
-#ifdef	DIRECTED_BROADCAST
-		    ia->ia_ifp == m->m_pkthdr.rcvif &&
-#endif
+		if (((ip_directedbcast == 0) || (ip_directedbcast &&
+		    ia->ia_ifp == m->m_pkthdr.rcvif)) &&
 		    (ia->ia_ifp->if_flags & IFF_BROADCAST)) {
 			if (ip->ip_dst.s_addr == ia->ia_broadaddr.sin_addr.s_addr ||
 			    ip->ip_dst.s_addr == ia->ia_netbroadcast.s_addr ||
@@ -1071,11 +1081,8 @@ ip_forward(m, srcrt)
 		}
 	}
 
-	error = ip_output(m, (struct mbuf *)0, &ipforward_rt, IP_FORWARDING
-#ifdef DIRECTED_BROADCAST
-			    | IP_ALLOWBROADCAST
-#endif
-						, 0);
+	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
+	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)), 0);
 	if (error)
 		ipstat.ips_cantforward++;
 	else {
@@ -1158,6 +1165,9 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			return (EPERM);
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_forwsrcrt));
+	case IPCTL_DIRECTEDBCAST:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ip_directedbcast));
 	default:
 		return (EOPNOTSUPP);
 	}
