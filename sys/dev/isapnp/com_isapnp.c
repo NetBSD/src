@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.12 1998/04/25 10:58:24 drochner Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.13 1998/07/23 19:30:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
+#include <dev/isapnp/isapnpdevs.h>
 
 #include <dev/ic/comvar.h>
 
@@ -75,19 +76,7 @@ com_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct isapnp_attach_args *ipa = aux;
-
-
-	if (strcmp(ipa->ipa_devlogic, "BDP3336") && /* Best Data Prods. 336F */
-	    strcmp(ipa->ipa_devlogic, "OZO8039") && /* Zoom 56k flex */
-	    strcmp(ipa->ipa_devlogic, "BRI1400") && /* Boca 33.6 PnP */
-	    strcmp(ipa->ipa_devlogic, "ROK0010") && /* Rockwell ? */
-	    strcmp(ipa->ipa_devlogic, "USR2070") && /* USR Sportster 56k */
-	    strcmp(ipa->ipa_devcompat, "PNP0500") && /* generic 8250/16450 */
-	    strcmp(ipa->ipa_devcompat, "PNP0501")) /* generic 16550A */
-		return (0);
-
-	return (1);
+	return isapnp_devmatch(aux, &isapnp_com_devinfo);
 }
 
 void

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.14 1998/07/21 17:36:06 drochner Exp $
+#	$NetBSD: files.isapnp,v 1.15 1998/07/23 19:30:44 christos Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -12,6 +12,7 @@ attach	isapnp at isa
 file	dev/isapnp/isapnp.c			isapnp
 file	dev/isapnp/isapnpdebug.c		isapnp
 file	dev/isapnp/isapnpres.c			isapnp
+file	dev/isapnp/isapnpdevs.c			isapnp
 
 # 3Com 3C509B
 attach	ep at isapnp with ep_isapnp

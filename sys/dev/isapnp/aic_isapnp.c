@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isapnp.c,v 1.2 1998/06/09 07:28:30 thorpej Exp $	*/
+/*	$NetBSD: aic_isapnp.c,v 1.3 1998/07/23 19:30:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
+#include <dev/isapnp/isapnpdevs.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
@@ -73,12 +74,7 @@ aic_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct isapnp_attach_args *ipa = aux;
-
-	if (strcmp(ipa->ipa_devlogic, "ADP1520")) /* Adaptec AHA-1520B */ 
-		return (0);
-
-	return (1);
+	return isapnp_devmatch(aux, &isapnp_aic_devinfo);
 }
 
 void

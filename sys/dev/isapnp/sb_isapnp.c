@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.26 1998/06/29 22:42:32 thorpej Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.27 1998/07/23 19:30:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -53,6 +53,7 @@
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
+#include <dev/isapnp/isapnpdevs.h>
 
 #include <dev/isa/sbreg.h>
 #include <dev/isa/sbvar.h>
@@ -79,28 +80,8 @@ sb_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct isapnp_attach_args *ipa = aux;
-
-	if (strcmp(ipa->ipa_devlogic, "ADS7150") && /* AD1815 */
-	    strcmp(ipa->ipa_devlogic, "ADS7180") && /* AD1816 */
-	    strcmp(ipa->ipa_devlogic, "CTL0001") &&
-	    strcmp(ipa->ipa_devlogic, "CTL0031") && /* SB AWE32 */
-	    strcmp(ipa->ipa_devlogic, "CTL0041") && /* SB16 PnP (CT4131) */
-	    strcmp(ipa->ipa_devlogic, "CTL0043") && /* SB16 PnP (CT4170) */
-	    strcmp(ipa->ipa_devlogic, "CTL0042") && /* SB AWE64 Value */
-	    strcmp(ipa->ipa_devlogic, "CTL0044") && /* SB AWE64 Gold */
-	    strcmp(ipa->ipa_devlogic, "CTL0045") && /* SB AWE64 Value */
-	    strcmp(ipa->ipa_devlogic, "ESS1868") &&
-	    strcmp(ipa->ipa_devlogic, "OPT9250") && /* Televideo card, Opti */
-	    strcmp(ipa->ipa_devcompat, "PNPB000") && /* generic SB 1.5 */
-	    strcmp(ipa->ipa_devcompat, "PNPB001") && /* generic SB 2.0 */
-	    strcmp(ipa->ipa_devcompat, "PNPB002") && /* generic SB Pro */
-	    strcmp(ipa->ipa_devcompat, "PNPB003")) /* generic SB 16 */
-		return (0);
-
-	return (1);
+	return isapnp_devmatch(aux, &isapnp_sb_devinfo);
 }
-
 
 
 /*

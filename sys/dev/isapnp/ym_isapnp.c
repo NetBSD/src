@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.3 1998/06/09 00:05:20 thorpej Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.4 1998/07/23 19:30:46 christos Exp $ */
 
 
 /*
@@ -58,6 +58,7 @@
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
+#include <dev/isapnp/isapnpdevs.h>
 
 #include <dev/ic/ad1848reg.h>
 #include <dev/isa/ad1848var.h>
@@ -89,12 +90,7 @@ ym_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct isapnp_attach_args *ipa = aux;
-
-	if (strcmp(ipa->ipa_devlogic, "YMH0021")) /* OPL3-SA3 */
-        	return 0;
-
-	return 1;
+	return isapnp_devmatch(aux, &isapnp_ym_devinfo);
 }
 
 /*

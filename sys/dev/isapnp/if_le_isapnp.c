@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.14 1998/07/21 17:36:06 drochner Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.15 1998/07/23 19:30:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
+#include <dev/isapnp/isapnpdevs.h>
 
 #include <dev/ic/lancereg.h>
 #include <dev/ic/lancevar.h>
@@ -130,14 +131,6 @@ int	le_isapnp_intredge __P((void *));
 static void le_isapnp_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
 static u_int16_t le_isapnp_rdcsr __P((struct lance_softc *, u_int16_t));
 
-
-/*
- * Names accepted by the match routine.
- */
-static char *if_le_isapnp_devnames[] = {
-    "TKN0010",
-    0
-};
 
 #define	LE_ISAPNP_MEMSIZE	16384
 
@@ -175,14 +168,7 @@ le_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct isapnp_attach_args *ipa = aux;
-	char **card_name = &if_le_isapnp_devnames[0];
-
-	while (*card_name)
-	    if(!strcmp(ipa->ipa_devlogic, *card_name++))
-		return(1);
-
-	return (0);
+	return isapnp_devmatch(ipa, &isapnp_le_dev);
 }
 
 void
