@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: cpu.h 1.16 91/03/25
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.6 1994/05/07 06:26:03 mycroft Exp $
+ *	$Id: cpu.h,v 1.7 1994/05/17 10:30:33 cgd Exp $
  */
 
 /*
@@ -62,6 +62,7 @@
 
 #define	cpu_exec(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
+#define	cpu_swapin(p)	/* nothing */
 
 /*
  * Arguments to hardclock, softclock and gatherstats
@@ -91,7 +92,8 @@ struct clockframe {
  * interrupt.  On hp300, request an ast to send us through trap(),
  * marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	{ (p)->p_flag |= SOWEUPC; aston(); }
+#define	profile_tick(p, framep)	{ (p)->p_flag |= P_OWEUPC; aston(); }
+#define	need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
 
 /*
  * Notify the current process (p) that it has a signal pending,
