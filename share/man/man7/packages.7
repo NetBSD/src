@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.21 1999/10/07 12:45:38 hubertf Exp $
+.\"	$NetBSD: packages.7,v 1.22 1999/10/31 19:45:17 rh Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -503,10 +503,19 @@ Used to print all the
 style prompts - override this
 to turn them off.  The default is
 .Pa /bin/echo .
+.It CLEAR_DIRLIST
+If set, cause the
+.Dq clean-update
+target to completely clean up and lose the list of dependent packages.  Use
+with care!
 .It DEPENDS_TARGET
 The target to execute when a package is calling a dependency.  The default
 is
 .Dq install .
+.It NOCLEAN
+If set, prevent the 
+.Dq update
+target from cleaning up after itself.
 .It PATCH_DEBUG
 If set, print out more information about the patches as it attempts to
 apply them.
@@ -603,9 +612,17 @@ flag.
 .It deinstall	
 Remove the installation.
 .It update	
-Update the installation of the current and all dependent packages.
+Update the installation of the current and all dependent packages that
+are installed on the system.
 .It package	
 Create a binary package other people can use.
+.It clean	
+Clean the source tree for a package.
+.It clean-depends	
+Clean the source tree for a package and the packages it depends upon.
+.It clean-update	
+Clean the source tree for a package and all dependent packages that
+are installed on the system.
 .It describe
 Try to generate a one-line description for each package for
 use in INDEX files and the like.
