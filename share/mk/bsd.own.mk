@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.104 1998/11/25 04:04:13 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.105 1998/11/28 22:46:16 eeh Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -90,8 +90,9 @@ PMAP_NEW?=	yes
 
 # The sparc64 port is incomplete.
 .if (${MACHINE_ARCH} == "sparc64")
-NOPROFILE=
-NOPIC=
+NOPROFILE=1
+NOPIC=1
+NOLINT=1
 .endif
 
 # The PowerPC port is incomplete.
@@ -138,11 +139,17 @@ GNU_ARCH.mipsel=mipsel
 GNU_ARCH.ns32k=ns32k
 GNU_ARCH.powerpc=powerpc
 GNU_ARCH.sparc=sparc
-GNU_ARCH.sparc64=sparc64
+GNU_ARCH.sparc64=sparc
 GNU_ARCH.vax=vax
 # XXX temporary compatibility
 GNU_ARCH.mips=mipsel
+
+# 
+.if (${MACHINE_ARCH} == "sparc64")
+MACHINE_GNU_ARCH=${MACHINE_ARCH}
+.else
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}}
+.endif
 
 TARGETS+=	all clean cleandir depend distclean includes install lint obj \
 		regress tags
