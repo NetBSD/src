@@ -1,4 +1,4 @@
-/*	$NetBSD: dlcommon.c,v 1.1.1.1 1999/12/11 22:24:07 veego Exp $	*/
+/*	$NetBSD: dlcommon.c,v 1.1.1.2 2004/03/28 08:56:14 martti Exp $	*/
 
 /*
  * Common (shared) DLPI test routines.
@@ -20,7 +20,11 @@ typedef	unsigned long	ulong;
 #include	<sys/types.h>
 #include	<sys/stream.h>
 #include	<sys/stropts.h>
-#include	<sys/dlpi.h>
+#ifdef __osf__
+# include	<sys/dlpihdr.h>
+#else
+# include	<sys/dlpi.h>
+#endif
 #include	<sys/signal.h>
 #include	<stdio.h>
 #include	<string.h>
@@ -37,6 +41,7 @@ char	*dlstyle();
 char	*dlmactype();
 
 
+void
 dlinforeq(fd)
 int	fd;
 {
@@ -56,6 +61,7 @@ int	fd;
 		syserr("dlinforeq:  putmsg");
 }
 
+void
 dlinfoack(fd, bufp)
 int	fd;
 char	*bufp;
@@ -84,6 +90,7 @@ char	*bufp;
 		err("dlinfoack:  short response ctl.len:  %d", ctl.len);
 }
 
+void
 dlattachreq(fd, ppa)
 int	fd;
 u_long	ppa;
@@ -105,6 +112,7 @@ u_long	ppa;
 		syserr("dlattachreq:  putmsg");
 }
 
+void
 dlenabmultireq(fd, addr, length)
 int	fd;
 char	*addr;
@@ -133,6 +141,7 @@ int	length;
 		syserr("dlenabmultireq:  putmsg");
 }
 
+void
 dldisabmultireq(fd, addr, length)
 int	fd;
 char	*addr;
@@ -161,6 +170,7 @@ int	length;
 		syserr("dldisabmultireq:  putmsg");
 }
 
+void
 dlpromisconreq(fd, level)
 int	fd;
 u_long	level;
@@ -183,6 +193,7 @@ u_long	level;
 
 }
 
+void
 dlpromiscoff(fd, level)
 int	fd;
 u_long	level;
@@ -204,6 +215,7 @@ u_long	level;
 		syserr("dlpromiscoff:  putmsg");
 }
 
+void
 dlphysaddrreq(fd, addrtype)
 int	fd;
 u_long	addrtype;
@@ -225,6 +237,7 @@ u_long	addrtype;
 		syserr("dlphysaddrreq:  putmsg");
 }
 
+void
 dlsetphysaddrreq(fd, addr, length)
 int	fd;
 char	*addr;
@@ -253,6 +266,7 @@ int	length;
 		syserr("dlsetphysaddrreq:  putmsg");
 }
 
+void
 dldetachreq(fd)
 int	fd;
 {
@@ -272,6 +286,7 @@ int	fd;
 		syserr("dldetachreq:  putmsg");
 }
 
+void
 dlbindreq(fd, sap, max_conind, service_mode, conn_mgmt, xidtest)
 int	fd;
 u_long	sap;
@@ -301,6 +316,7 @@ u_long	xidtest;
 		syserr("dlbindreq:  putmsg");
 }
 
+void
 dlunitdatareq(fd, addrp, addrlen, minpri, maxpri, datap, datalen)
 int	fd;
 u_char	*addrp;
@@ -335,6 +351,7 @@ int	datalen;
 		syserr("dlunitdatareq:  putmsg");
 }
 
+void
 dlunbindreq(fd)
 int	fd;
 {
@@ -354,6 +371,7 @@ int	fd;
 		syserr("dlunbindreq:  putmsg");
 }
 
+void
 dlokack(fd, bufp)
 int	fd;
 char	*bufp;
@@ -382,6 +400,7 @@ char	*bufp;
 		err("dlokack:  short response ctl.len:  %d", ctl.len);
 }
 
+void
 dlerrorack(fd, bufp)
 int	fd;
 char	*bufp;
@@ -410,6 +429,7 @@ char	*bufp;
 		err("dlerrorack:  short response ctl.len:  %d", ctl.len);
 }
 
+void
 dlbindack(fd, bufp)
 int	fd;
 char	*bufp;
@@ -435,6 +455,7 @@ char	*bufp;
 		err("dlbindack:  short response ctl.len:  %d", ctl.len);
 }
 
+void
 dlphysaddrack(fd, bufp)
 int	fd;
 char	*bufp;
@@ -697,10 +718,11 @@ union	DL_primitives	*dlp;
 printdlerrorack(dlp)
 union	DL_primitives	*dlp;
 {
-	(void) printf("DL_ERROR_ACK:  error_primitive %s errno %s unix_errno %d\n",
+	(void) printf("DL_ERROR_ACK:  error_primitive %s errno %s unix_errno %d: %s\n",
 		dlprim(dlp->error_ack.dl_error_primitive),
 		dlerrno(dlp->error_ack.dl_errno),
-		dlp->error_ack.dl_unix_errno);
+		dlp->error_ack.dl_unix_errno,
+		strerror(dlp->error_ack.dl_unix_errno));
 }
 
 printdlenabmultireq(dlp)
