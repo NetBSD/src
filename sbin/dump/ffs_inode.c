@@ -1,4 +1,4 @@
-/*      $NetBSD: ffs_inode.c,v 1.5 2001/05/28 00:41:14 lukem Exp $ */
+/*      $NetBSD: ffs_inode.c,v 1.6 2001/08/14 05:44:15 lukem Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: ffs_inode.c,v 1.5 2001/05/28 00:41:14 lukem Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.6 2001/08/14 05:44:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ struct fs *sblock;
 
 /*
  * Read the superblock from disk, and check its magic number.
- * Determine whether byte-swapping needs to be done on this filesystem.
+ * Determine whether byte-swapping needs to be done on this file system.
  */
 int
 fs_read_sblock(char *sblock_buf)
@@ -115,7 +115,7 @@ fs_parametrize(void)
 		spcl.c_flags = iswap32(iswap32(spcl.c_flags) | DR_NEWINODEFMT);
 	} else {
 		/*
-		 * Determine parameters for older filesystems. From
+		 * Determine parameters for older file systems. From
 		 *	/sys/ufs/ffs/ffs_vfsops.c::ffs_oldfscompat()
 		 *
 		 * XXX: not sure if other variables (fs_npsect, fs_interleave,
