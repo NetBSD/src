@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.19 2001/01/10 23:15:42 lukem Exp $	*/
+/*	$NetBSD: vacation.c,v 1.20 2003/02/18 19:21:33 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.19 2001/01/10 23:15:42 lukem Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.20 2003/02/18 19:21:33 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -199,7 +199,7 @@ main(int argc, char **argv)
  *	read mail headers
  */
 void
-readheaders()
+readheaders(void)
 {
 	alias_t *cur;
 	char *p;
@@ -283,7 +283,7 @@ nsearch(const char *name, const char *str)
  *	read the header and return if automagic/junk/bulk/list mail
  */
 int
-junkmail()
+junkmail(void)
 {
 	static struct ignore {
 		char	*name;
@@ -332,7 +332,7 @@ junkmail()
  *	use memmove for machines with alignment restrictions
  */
 int
-recent()
+recent(void)
 {
 	DBT key, data;
 	time_t then, next;
@@ -378,7 +378,7 @@ setinterval(time_t interval)
  *	store that this user knows about the vacation.
  */
 void
-setreply()
+setreply(void)
 {
 	DBT key, data;
 	time_t now;
@@ -438,7 +438,7 @@ sendmessage(const char *myname)
 }
 
 void
-usage()
+usage(void)
 {
 
 	syslog(LOG_ERR, "uid %u: usage: vacation [-i] [-a alias] login",
