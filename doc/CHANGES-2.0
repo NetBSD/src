@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.372 2004/08/11 19:41:35 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.373 2004/08/11 19:44:58 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6326,3 +6326,16 @@ lib/libc/rpc/getrpcent.c			1.19
 	Fix a long standing bug in getrpcbyname() where it would not find 
 	any matches when an alias was used. PR#23294
 	[ginsbach, ticket #737]
+
+sys/dev/scsipi/atapi_wdc.c			1.71
+sys/dev/ic/wdc.c				1.182
+sys/dev/ata/wd.c				1.281
+sys/dev/ata/atavar.h				1.44
+sys/dev/ata/ata_wdc.c				1.58
+
+	Implement asynchronous channel reset.
+	Use this to reset the channel before doing a dump, instead of the hack 
+	in wdc_exec_xfer() based on C_POLL. This hack was causing problems on
+	controllers with a shared queue, because we now can have C_POLL set 
+	during concurent channels probes
+	[bouyer, ticket #733]
