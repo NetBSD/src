@@ -1,9 +1,9 @@
 alias mail Mail
 set history=1000
-set path=(/sbin /usr/sbin /bin /usr/bin)
+set path=(/sbin /usr/sbin /usr/local/sbin /bin /usr/bin /usr/local/bin)
 
 # directory stuff: cdpath/cd/back
-set cdpath=(/sys /usr/src/{bin,sbin,usr.{bin,sbin},pgrm,lib,libexec,share,contrib,local,devel,games,old,})
+set cdpath=(/sys /usr/src/{bin,sbin,usr.{bin,sbin},pgrm,lib,libexec,share,contrib,local,devel,games,old,gnu/{usr.bin,libexec,lib,games}})
 
 setenv BLOCKSIZE 1k
 
