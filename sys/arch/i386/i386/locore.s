@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.250 2002/04/02 04:02:32 gson Exp $	*/
+/*	$NetBSD: locore.s,v 1.251 2002/04/09 16:16:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -703,12 +703,6 @@ begin:
 
 	call 	_C_LABEL(main)
 
-/*
- * XXX We need a comment here (lightly) explaining this. Probably a
- * detailed section 9 man page, too, explaining the proc_trampoline.
- * Almost every port has a proc_trampoline, so it needs documentation, IMHO.
- * -- Perry Metzger, May 7, 2001
- */
 /* LINTSTUB: Func: void proc_trampoline(void) */
 NENTRY(proc_trampoline)
 	pushl	%ebx
@@ -719,11 +713,6 @@ NENTRY(proc_trampoline)
 
 /*****************************************************************************/
 
-/*
- * XXX No section 9 man page for sigcode or esigcode. IMHO,
- * Since it is part of the MI/MD interface, it needs documentation.
- * -- Perry Metzger, May 7, 2001
- */
 /*
  * Signal trampoline; copied to top of user stack.
  */
@@ -777,13 +766,6 @@ ENTRY(fillw)
 	popl	%edi
 	ret
 
-/*
- * XXX No section 9 man page for kcopy. IMHO,
- * Since it is part of the MI/MD interface, it needs documentation.
- * so far as I can tell it is used only in one function in the MI kernel,
- * but it still counts.
- * -- Perry Metzger, May 7, 2001
- */
 /*
  * int kcopy(const void *from, void *to, size_t len);
  * Copy len bytes, abort on fault.
@@ -1625,13 +1607,6 @@ NENTRY(lgdt)
 	lret
 
 
-/*
- * XXX We need a comment here (lightly) explaining this. Probably a
- * short section 9 man page, too, explaining how kernel setjmp differs
- * from userland.
- * Since it is part of the MI/MD interface, it needs documentation, IMHO.
- * -- Perry Metzger, May 7, 2001
- */
 /* LINTSTUB: Func: int setjmp (label_t *l) */
 ENTRY(setjmp)
 	movl	4(%esp),%eax
@@ -1645,13 +1620,6 @@ ENTRY(setjmp)
 	xorl	%eax,%eax		# return (0);
 	ret
 
-/*
- * XXX We need a comment here (lightly) explaining this. Probably a
- * short section 9 man page, too, explaining how kernel longjmp differs
- * from userland.
- * Since it is part of the MI/MD interface, it needs documentation, IMHO.
- * -- Perry Metzger, May 7, 2001
- */
 /* LINTSTUB: Func: void longjmp (label_t *l) */
 ENTRY(longjmp)
 	movl	4(%esp),%eax
@@ -2361,7 +2329,6 @@ ipkdbrestore:
 	pushl	%ecx
 	ret
 
-/* XXX: Documentation! grrr! --Perry Metzger, May 7, 2001 */
 /* LINTSTUB: Func: int ipkdbfbyte(u_char *c) */
 NENTRY(ipkdbfbyte)
 	pushl	%ebp
@@ -2374,7 +2341,6 @@ faultexit:
 	popl	%ebp
 	ret
 
-/* XXX: Documentation! grrr! --Perry Metzger, May 7, 2001 */
 /* LINTSTUB: Func: int ipkdbsbyte(u_char *c, int i) */
 NENTRY(ipkdbsbyte)
 	pushl	%ebp
@@ -2398,7 +2364,6 @@ fault:
 /*
  * Old call gate entry for syscall
  */
-/* XXX Manually doing Xblah is wrong. Yuck. --Perry */
 /* LINTSTUB: Var: char Xosyscall[1]; */
 IDTVEC(osyscall)
 	/* Set eflags in trap frame. */
@@ -2410,7 +2375,6 @@ IDTVEC(osyscall)
 /*
  * Trap gate entry for syscall
  */
-/* XXX Manually doing Xblah is wrong. Yuck. --Perry */
 /* LINTSTUB: Var: char Xsyscall[1]; */
 IDTVEC(syscall)
 	pushl	$2		# size of instruction for restart
