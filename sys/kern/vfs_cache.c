@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.58 2004/05/06 22:02:02 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.59 2004/05/07 12:05:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.58 2004/05/06 22:02:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.59 2004/05/07 12:05:41 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -405,6 +405,7 @@ void
 cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 {
 	struct namecache *ncp;
+	struct namecache *oncp;
 	struct nchashhead *ncpp;
 	struct ncvhashhead *nvcpp;
 
@@ -419,15 +420,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	 */
 	simple_lock(&namecache_slock);
 
-	/*
-	 * Concurrent lookups in the same directory may race for a
-	 * cache entry.  if there's a duplicated entry, overwrite it.
-	 */
-	ncp = cache_lookup_entry(dvp, cnp);
-	if (ncp) {
-		cache_remove(ncp);
-		KASSERT(cache_lookup_entry(dvp, cnp) == NULL);
-	} else if (numcache < numvnodes) {
+	if (numcache < numvnodes) {
 		numcache++;
 		simple_unlock(&namecache_slock);
 		ncp = pool_get(&namecache_pool, PR_WAITOK);
@@ -439,6 +432,17 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 		simple_unlock(&namecache_slock);
 		return;
 	}
+
+	/*
+	 * Concurrent lookups in the same directory may race for a
+	 * cache entry.  if there's a duplicated entry, free it.
+	 */
+	oncp = cache_lookup_entry(dvp, cnp);
+	if (oncp) {
+		cache_remove(oncp);
+		cache_free(oncp);
+	}
+	KASSERT(cache_lookup_entry(dvp, cnp) == NULL);
 
 	/* Grab the vnode we just found. */
 	ncp->nc_vp = vp;
