@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.7 1994/02/13 21:13:21 chopps Exp $
+ *	$Id: genassym.c,v 1.8 1994/02/23 10:15:08 chopps Exp $
  */
 
 #define KERNEL
@@ -87,7 +87,7 @@ main()
 	printf("#define\tV_PGREC %d\n", &vm->v_pgrec);
 	printf("#define\tV_FASTPGREC %d\n", &vm->v_fastpgrec);
 	printf("#define\tUPAGES %d\n", UPAGES);
-	printf("#define\tHIGHPAGES %d\n", HIGHPAGES);
+	printf("#define\tKUSER_AREA %d\n", KUSER_AREA);
 	printf("#define\tCLSIZE %d\n", CLSIZE);
 	printf("#define\tNBPG %d\n", NBPG);
 	printf("#define\tNPTEPG %d\n", NPTEPG);
