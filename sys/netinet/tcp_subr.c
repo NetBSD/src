@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.127 2002/05/12 20:33:50 matt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.127.4.1 2002/07/02 06:55:16 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.127 2002/05/12 20:33:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.127.4.1 2002/07/02 06:55:16 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1406,6 +1406,9 @@ tcp_ctlinput(cmd, sa, v)
 	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
 	int errno;
 	int nmatch;
+#ifdef INET6
+	struct in6_addr src6, dst6;
+#endif
 
 	if (sa->sa_family != AF_INET ||
 	    sa->sa_len != sizeof(struct sockaddr_in))
@@ -1426,9 +1429,22 @@ tcp_ctlinput(cmd, sa, v)
 		 * Boundary check is made in icmp_input(), with ICMP_ADVLENMIN.
 		 */
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
-		if (in_pcblookup_connect(&tcbtable,
-					 ip->ip_dst, th->th_dport,
-					 ip->ip_src, th->th_sport) == NULL)
+#ifdef INET6
+		memset(&src6, 0, sizeof(src6));
+		memset(&dst6, 0, sizeof(dst6));
+		src6.s6_addr16[5] = dst6.s6_addr16[5] = 0xffff;
+		memcpy(&src6.s6_addr32[3], &ip->ip_src, sizeof(struct in_addr));
+		memcpy(&dst6.s6_addr32[3], &ip->ip_dst, sizeof(struct in_addr));
+#endif
+		if (in_pcblookup_connect(&tcbtable, ip->ip_dst, th->th_dport,
+		    ip->ip_src, th->th_sport) != NULL)
+			;
+#ifdef INET6
+		else if (in6_pcblookup_connect(&tcb6, &dst6,
+		    th->th_dport, &src6, th->th_sport, 0) != NULL)
+			;
+#endif
+		else
 			return NULL;
 
 		/*
@@ -1508,8 +1524,17 @@ void
 tcp_mtudisc_callback(faddr)
 	struct in_addr faddr;
 {
+#ifdef INET6
+	struct in6_addr in6;
+#endif
 
 	in_pcbnotifyall(&tcbtable, faddr, EMSGSIZE, tcp_mtudisc);
+#ifdef INET6
+	memset(&in6, 0, sizeof(in6));
+	in6.s6_addr16[5] = 0xffff;
+	memcpy(&in6.s6_addr32[3], &faddr, sizeof(struct in_addr));
+	tcp6_mtudisc_callback(&in6);
+#endif
 }
 
 /*
