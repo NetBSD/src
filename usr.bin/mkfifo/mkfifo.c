@@ -39,16 +39,18 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkfifo.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: mkfifo.c,v 1.5 1993/10/13 18:34:41 jtc Exp $";
+static char rcsid[] = "$Id: mkfifo.c,v 1.6 1993/12/31 19:35:37 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <err.h>
 
 static void usage();
 
@@ -61,17 +63,19 @@ main(argc, argv)
 	void * set;
 	mode_t mode;
 
+	setlocale (LC_ALL, "");
+
 	/* The default mode is the value of the bitwise inclusive or of
 	   S_IRUSR, S_IWUSR, S_IRGRP, S_IWGRP, S_IROTH, and S_IWOTH
 	   modified by the file creation mask */
 	mode = 0666 & ~umask(0);
 
-	while ((ch = getopt(argc, argv, "m:")) != EOF)
+	while ((ch = getopt(argc, argv, "m:")) != -1)
 		switch(ch) {
 		case 'm':
 			if (!(set = setmode(optarg))) {
-				(void)fprintf(stderr, "mkfifo: invalid file mode.\n");
-				exit(1);
+				errx(1, "invalid file mode.");
+				/* NOTREACHED */
 			}
 			/* In symbolic mode strings, the + and - operators are
 			   interpreted relative to an assumed initial mode of
@@ -88,8 +92,7 @@ main(argc, argv)
 
 	for (exitval = 0; *argv; ++argv) {
 		if (mkfifo(*argv, mode) < 0) {
-			(void)fprintf(stderr, "mkfifo: %s: %s\n",
-			    *argv, strerror(errno));
+			warn("%s", *argv);
 			exitval = 1;
 		}
 	}
