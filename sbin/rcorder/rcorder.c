@@ -1,4 +1,4 @@
-/*	$NetBSD: rcorder.c,v 1.8 2002/04/10 12:38:26 christos Exp $	*/
+/*	$NetBSD: rcorder.c,v 1.9 2002/06/30 13:31:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Matthew R. Green
@@ -367,13 +367,8 @@ add_before(fnode, s)
 	filenode *fnode;
 	char *s;
 {
-	strnodelist *bf_ent;
 
-	bf_ent = emalloc(sizeof *bf_ent + strlen(s));
-	bf_ent->node = fnode;
-	strcpy(bf_ent->s, s);
-	bf_ent->next = bl_list;
-	bl_list = bf_ent;
+	strnode_add(&bl_list, s, fnode);
 }
 
 /*
