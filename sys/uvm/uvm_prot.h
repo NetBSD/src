@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_prot.h,v 1.6 1994/06/29 06:48:42 cgd Exp $	*/
+/*	$NetBSD: uvm_prot.h,v 1.1 2000/06/25 13:37:56 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -68,8 +68,8 @@
  *	Virtual memory protection definitions.
  */
 
-#ifndef	_VM_PROT_
-#define	_VM_PROT_
+#ifndef	_UVM_PROT_
+#define	_UVM_PROT_
 
 /*
  *	Types defined:
@@ -101,4 +101,4 @@ typedef int		vm_prot_t;
 
 #define VM_PROT_ALL	(VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)
 
-#endif /* _VM_PROT_ */
+#endif /* _UVM_PROT_ */
