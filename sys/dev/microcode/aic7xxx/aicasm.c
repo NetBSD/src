@@ -1,9 +1,10 @@
-/*	$NetBSD: aicasm.c,v 1.3 2001/01/22 14:30:44 jdolecek Exp $	*/
+/*	$NetBSD: aicasm.c,v 1.4 2003/04/19 19:26:10 fvdl Exp $	*/
 
 /*
  * Aic7xxx SCSI host adapter firmware asssembler
  *
- * Copyright (c) 1997, 1998 Justin T. Gibbs.
+ * Copyright (c) 1997, 1998, 2000, 2001 Justin T. Gibbs.
+ * Copyright (c) 2001, 2002 Adaptec Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -11,37 +12,56 @@
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification, immediately at the beginning of the file.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    substantially similar to the "NO WARRANTY" disclaimer below
+ *    ("Disclaimer") and any redistribution must be conditioned upon
+ *    including a substantially similar Disclaimer requirement for further
+ *    binary redistribution.
+ * 3. Neither the names of the above-listed copyright holders nor the names
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
- * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
+ *
+ * NO WARRANTY
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aicasm.c,v 1.23 1999/08/28 00:41:25 peter Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm.c,v 1.35 2002/08/31 06:39:40 gibbs Exp $
  */
 #include <sys/types.h>
 #include <sys/mman.h>
 
 #include <ctype.h>
+#include <inttypes.h>
+#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
 
+#if linux
+#include <endian.h>
+#else
+#include <machine/endian.h>
+#endif
+
 #include "aicasm.h"
 #include "aicasm_symbol.h"
-#include "sequencer.h"
+#include "aicasm_insformat.h"
 
 typedef struct patch {
 	STAILQ_ENTRY(patch) links;
@@ -55,8 +75,8 @@ STAILQ_HEAD(patch_list, patch) patches;
 
 static void usage(void);
 static void back_patch(void);
-static void output_code(FILE *ofile);
-static void output_listing(FILE *listfile, char *ifilename);
+static void output_code(void);
+static void output_listing(char *ifilename);
 static void dump_scope(scope_t *scope);
 static void emit_patch(scope_t *scope, int patch);
 static int check_patch(patch_t **start_patch, int start_instr,
@@ -65,28 +85,36 @@ static int check_patch(patch_t **start_patch, int start_instr,
 struct path_list search_path;
 int includes_search_curdir;
 char *appname;
+char *stock_include_file;
 FILE *ofile;
 char *ofilename;
 char *regfilename;
 FILE *regfile;
 char *listfilename;
 FILE *listfile;
+char *regdiagfilename;
+FILE *regdiagfile;
+int   src_mode;
+int   dst_mode;
 
 static STAILQ_HEAD(,instruction) seq_program;
+struct cs_tailq cs_tailq;
 struct scope_list scope_stack;
 symlist_t patch_functions;
 
 #if DEBUG
 extern int yy_flex_debug;
+extern int mm_flex_debug;
 extern int yydebug;
+extern int mmdebug;
 #endif
 extern FILE *yyin;
-extern int yyparse __P((void));
+extern int yyparse(void);
+
+int main(int argc, char *argv[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
@@ -98,6 +126,7 @@ main(argc, argv)
 	STAILQ_INIT(&patches);
 	SLIST_INIT(&search_path);
 	STAILQ_INIT(&seq_program);
+	TAILQ_INIT(&cs_tailq);
 	SLIST_INIT(&scope_stack);
 
 	/* Set Sentinal scope node */
@@ -110,16 +139,20 @@ main(argc, argv)
 	listfile = NULL;
 #if DEBUG
 	yy_flex_debug = 0;
+	mm_flex_debug = 0;
 	yydebug = 0;
+	mmdebug = 0;
 #endif
-	while ((ch = getopt(argc, argv, "d:l:n:o:r:I:O:")) != -1) {
+	while ((ch = getopt(argc, argv, "d:i:l:n:o:p:r:I:")) != -1) {
 		switch(ch) {
 		case 'd':
 #if DEBUG
 			if (strcmp(optarg, "s") == 0) {
 				yy_flex_debug = 1;
+				mm_flex_debug = 1;
 			} else if (strcmp(optarg, "p") == 0) {
 				yydebug = 1;
+				mmdebug = 1;
 			} else {
 				fprintf(stderr, "%s: -d Requires either an "
 					"'s' or 'p' argument\n", appname);
@@ -129,6 +162,9 @@ main(argc, argv)
 			stop("-d: Assembler not built with debugging "
 			     "information", EX_SOFTWARE);
 #endif
+			break;
+		case 'i':
+			stock_include_file = optarg;
 			break;
 		case 'l':
 			/* Create a program listing */
@@ -154,6 +190,14 @@ main(argc, argv)
 			}
 			ofilename = optarg;
 			break;
+		case 'p':
+			/* Create Register Diagnostic "printing" Functions */
+			if ((regdiagfile = fopen(optarg, "w")) == NULL) {
+				perror(optarg);
+				stop(NULL, EX_CANTCREAT);
+			}
+			regdiagfilename = optarg;
+			break;
 		case 'r':
 			if ((regfile = fopen(optarg, "w")) == NULL) {
 				perror(optarg);
@@ -174,8 +218,8 @@ main(argc, argv)
 				includes_search_curdir = 0;
 				for (include_dir = SLIST_FIRST(&search_path);
 				     include_dir != NULL;
-				     include_dir =
-					SLIST_NEXT(include_dir, links))
+				     include_dir = SLIST_NEXT(include_dir,
+							      links))
 					/*
 					 * All entries before a '-I-' only
 					 * apply to includes specified with
@@ -215,6 +259,14 @@ main(argc, argv)
 		/* NOTREACHED */
 	}
 
+	if (regdiagfile != NULL
+	 && (regfile == NULL || stock_include_file == NULL)) {
+		fprintf(stderr,
+			"%s: The -p option requires the -r and -i options.\n",
+			appname);
+		usage();
+		/* NOTREACHED */
+	}
 	symtable_open();
 	inputfilename = *argv;
 	include_file(*argv, SOURCE_FILE);
@@ -222,8 +274,7 @@ main(argc, argv)
 	if (retval == 0) {
 		if (SLIST_FIRST(&scope_stack) == NULL
 		 || SLIST_FIRST(&scope_stack)->type != SCOPE_ROOT) {
-			stop("Unterminated conditional expression",
-			     EX_DATAERR);
+			stop("Unterminated conditional expression", EX_DATAERR);
 			/* NOTREACHED */
 		}
 
@@ -241,12 +292,11 @@ main(argc, argv)
 		back_patch();
 
 		if (ofile != NULL)
-			output_code(ofile);
-		if (regfile != NULL) {
-			symtable_dump(regfile);
-		}
+			output_code();
+		if (regfile != NULL)
+			symtable_dump(regfile, regdiagfile);
 		if (listfile != NULL)
-			output_listing(listfile, inputfilename);
+			output_listing(inputfilename);
 	}
 
 	stop(NULL, 0);
@@ -259,10 +309,10 @@ usage()
 {
 
 	(void)fprintf(stderr,
-"usage: %-16s [-nostdinc] [-I-] [-I directory] [-o output_file]
-			[-r register_output_file] [-l program_list_file]
-			input_file\n",
-			appname);
+"usage: %-16s [-nostdinc] [-I-] [-I directory] [-o output_file]\n"
+"	[-r register_output_file [-p register_diag_file -i includefile]]\n"
+"	[-l program_list_file]\n"
+"	input_file\n", appname);
 	exit(EX_USAGE);
 }
 
@@ -271,9 +321,9 @@ back_patch()
 {
 	struct instruction *cur_instr;
 
-	for(cur_instr = STAILQ_FIRST(&seq_program);
-	    cur_instr != NULL;
-	    cur_instr = STAILQ_NEXT(cur_instr, links)) {
+	for (cur_instr = STAILQ_FIRST(&seq_program);
+	     cur_instr != NULL;
+	     cur_instr = STAILQ_NEXT(cur_instr, links)) {
 		if (cur_instr->patch_label != NULL) {
 			struct ins_format3 *f3_instr;
 			u_int address;
@@ -296,78 +346,113 @@ back_patch()
 }
 
 static void
-output_code(ofile)
-	FILE *ofile;
+output_code()
 {
 	struct instruction *cur_instr;
 	patch_t *cur_patch;
+	critical_section_t *cs;
 	symbol_node_t *cur_node;
 	int instrcount;
 
 	instrcount = 0;
 	fprintf(ofile,
-"/*
-  * DO NOT EDIT - This file is automatically generated.
-  */\n");
+"/*\n"
+" * DO NOT EDIT - This file is automatically generated\n"
+" *		 from the following source files:\n"
+" *\n"
+"%s */\n", versions);
 
-	fprintf(ofile, "static const u_int8_t seqprog[] = {\n");
-	for(cur_instr = STAILQ_FIRST(&seq_program);
-	    cur_instr != NULL;
-	    cur_instr = STAILQ_NEXT(cur_instr, links)) {
+	fprintf(ofile, "static uint8_t seqprog[] = {\n");
+	for (cur_instr = STAILQ_FIRST(&seq_program);
+	     cur_instr != NULL;
+	     cur_instr = STAILQ_NEXT(cur_instr, links)) {
 
-		fprintf(ofile, "\t0x%02x, 0x%02x, 0x%02x, 0x%02x,\n",
-#if _BYTE_ORDER == _BIG_ENDIAN
-			cur_instr->format.bytes[3],
-			cur_instr->format.bytes[2],
-			cur_instr->format.bytes[1],
-			cur_instr->format.bytes[0]);
-#else
+		fprintf(ofile, "%s\t0x%02x, 0x%02x, 0x%02x, 0x%02x",
+			cur_instr == STAILQ_FIRST(&seq_program) ? "" : ",\n",
+#if BYTE_ORDER == LITTLE_ENDIAN
 			cur_instr->format.bytes[0],
 			cur_instr->format.bytes[1],
 			cur_instr->format.bytes[2],
 			cur_instr->format.bytes[3]);
+#else
+			cur_instr->format.bytes[3],
+			cur_instr->format.bytes[2],
+			cur_instr->format.bytes[1],
+			cur_instr->format.bytes[0]);
 #endif
 		instrcount++;
 	}
-	fprintf(ofile, "};\n\n");
+	fprintf(ofile, "\n};\n\n");
+
+	if (patch_arg_list == NULL)
+		stop("Patch argument list not defined",
+		     EX_DATAERR);
 
 	/*
 	 *  Output patch information.  Patch functions first.
 	 */
-	for(cur_node = SLIST_FIRST(&patch_functions);
-	    cur_node != NULL;
-	    cur_node = SLIST_NEXT(cur_node,links)) {
-		fprintf(ofile,
-"static int ahc_patch%d_func(struct ahc_softc *ahc);
+	fprintf(ofile,
+"typedef int %spatch_func_t (%s);\n", prefix, patch_arg_list);
 
-static int
-ahc_patch%d_func(struct ahc_softc *ahc)
-{
-	return (%s);
-}\n\n",
+	for (cur_node = SLIST_FIRST(&patch_functions);
+	     cur_node != NULL;
+	     cur_node = SLIST_NEXT(cur_node,links)) {
+		fprintf(ofile,
+"static %spatch_func_t %spatch%d_func;\n"
+"\n"
+"static int\n"
+"%spatch%d_func(%s)\n"
+"{\n"
+"	return (%s);\n"
+"}\n\n",
+			prefix,
+			prefix,
 			cur_node->symbol->info.condinfo->func_num,
+			prefix,
 			cur_node->symbol->info.condinfo->func_num,
+			patch_arg_list,
 			cur_node->symbol->name);
 	}
 
 	fprintf(ofile,
-"typedef int patch_func_t __P((struct ahc_softc *));
-const struct patch {
-	patch_func_t	*patch_func;
-	u_int32_t	begin	   :10,
-			skip_instr :10,
-			skip_patch :12;
-} patches[] = {\n");
+"static struct patch {\n"
+"	%spatch_func_t		*patch_func;\n"
+"	uint32_t		 begin		:10,\n"
+"				 skip_instr	:10,\n"
+"				 skip_patch	:12;\n"
+"} patches[] = {\n", prefix);
 
-	for(cur_patch = STAILQ_FIRST(&patches);
-	    cur_patch != NULL;
-	    cur_patch = STAILQ_NEXT(cur_patch,links)) {
-		fprintf(ofile, "\t{ ahc_patch%d_func, %d, %d, %d },\n",
+	for (cur_patch = STAILQ_FIRST(&patches);
+	     cur_patch != NULL;
+	     cur_patch = STAILQ_NEXT(cur_patch,links)) {
+		fprintf(ofile, "%s\t{ %spatch%d_func, %d, %d, %d }",
+			cur_patch == STAILQ_FIRST(&patches) ? "" : ",\n",
+			prefix,
 			cur_patch->patch_func, cur_patch->begin,
 			cur_patch->skip_instr, cur_patch->skip_patch);
 	}
 
-	fprintf(ofile, "\n};\n");
+	fprintf(ofile, "\n};\n\n");
+
+	fprintf(ofile,
+"static struct cs {\n"
+"	uint16_t	begin;\n"
+"	uint16_t	end;\n"
+"} critical_sections[] = {\n");
+
+	for (cs = TAILQ_FIRST(&cs_tailq);
+	     cs != NULL;
+	     cs = TAILQ_NEXT(cs, links)) {
+		fprintf(ofile, "%s\t{ %d, %d }",
+			cs == TAILQ_FIRST(&cs_tailq) ? "" : ",\n",
+			cs->begin_addr, cs->end_addr);
+	}
+
+	fprintf(ofile, "\n};\n\n");
+
+	fprintf(ofile,
+"static const int num_critical_sections = sizeof(critical_sections)\n"
+"				       / sizeof(*critical_sections);\n");
 
 	fprintf(stderr, "%s: %d instructions used\n", appname, instrcount);
 }
@@ -432,7 +517,7 @@ emit_patch(scope_t *scope, int patch)
 }
 
 void
-output_listing(FILE *listfile, char *ifilename)
+output_listing(char *ifilename)
 {
 	char buf[1024];
 	FILE *ifile;
@@ -463,6 +548,7 @@ output_listing(FILE *listfile, char *ifilename)
 	    cur_func = SLIST_NEXT(cur_func, links))
 		func_count++;
 
+	func_values = NULL;
 	if (func_count != 0) {
 		func_values = (int *)malloc(func_count * sizeof(int));
 
@@ -509,9 +595,9 @@ output_listing(FILE *listfile, char *ifilename)
 
 	/* Now output the listing */
 	cur_patch = STAILQ_FIRST(&patches);
-	for(cur_instr = STAILQ_FIRST(&seq_program);
-	    cur_instr != NULL;
-	    cur_instr = STAILQ_NEXT(cur_instr, links), instrcount++) {
+	for (cur_instr = STAILQ_FIRST(&seq_program);
+	     cur_instr != NULL;
+	     cur_instr = STAILQ_NEXT(cur_instr, links), instrcount++) {
 
 		if (check_patch(&cur_patch, instrcount,
 				&skip_addr, func_values) == 0) {
@@ -527,10 +613,17 @@ output_listing(FILE *listfile, char *ifilename)
 				line++;
 		}
 		fprintf(listfile, "%03x %02x%02x%02x%02x", instrptr,
+#if BYTE_ORDER == LITTLE_ENDIAN
 			cur_instr->format.bytes[0],
 			cur_instr->format.bytes[1],
 			cur_instr->format.bytes[2],
 			cur_instr->format.bytes[3]);
+#else
+			cur_instr->format.bytes[3],
+			cur_instr->format.bytes[2],
+			cur_instr->format.bytes[1],
+			cur_instr->format.bytes[0]);
+#endif
 		fgets(buf, sizeof(buf), ifile);
 		fprintf(listfile, "\t%s", buf);
 		line++;
@@ -583,9 +676,7 @@ check_patch(patch_t **start_patch, int start_instr,
  * terminating the program.
  */
 void
-stop(string, err_code)
-	const char *string;
-	int  err_code;
+stop(const char *string, int err_code)
 {
 	if (string != NULL) {
 		fprintf(stderr, "%s: ", appname);
@@ -641,6 +732,20 @@ seq_alloc()
 	STAILQ_INSERT_TAIL(&seq_program, new_instr, links);
 	new_instr->srcline = yylineno;
 	return new_instr;
+}
+
+critical_section_t *
+cs_alloc()
+{
+	critical_section_t *new_cs;
+
+	new_cs= (critical_section_t *)malloc(sizeof(critical_section_t));
+	if (new_cs == NULL)
+		stop("Unable to malloc critical_section object", EX_SOFTWARE);
+	memset(new_cs, 0, sizeof(*new_cs));
+	
+	TAILQ_INSERT_TAIL(&cs_tailq, new_cs, links);
+	return new_cs;
 }
 
 scope_t *
