@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.89 2002/09/23 03:37:59 simonb Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.90 2002/09/26 15:06:47 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.89 2002/09/23 03:37:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.90 2002/09/26 15:06:47 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1160,8 +1160,8 @@ parsedisk(str, len, defpart, devp)
  *	bytes		result
  *	-----		------
  *	99999		`99999 B'
- *	100000		`97 KB'
- *	66715648	`65152 KB'
+ *	100000		`97 kB'
+ *	66715648	`65152 kB'
  *	252215296	`240 MB'
  */
 int
@@ -1172,8 +1172,8 @@ humanize_number(buf, len, bytes, suffix, divisor)
 	const char	*suffix;
 	int 		divisor;
 {
-		/* prefixes are: (none), Kilo, Mega, Giga, Tera, Peta, Exa */
-	static const char prefixes[] = " KMGTPE";
+		/* prefixes are: (none), kilo, Mega, Giga, Tera, Peta, Exa */
+	static const char prefixes[] = " kMGTPE";
 
 	int		r;
 	u_int64_t	max;

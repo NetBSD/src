@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.1 2002/08/22 17:24:10 abs Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.2 2002/09/26 15:08:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2002\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: humanize_number.c,v 1.1 2002/08/22 17:24:10 abs Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.2 2002/09/26 15:08:00 wiz Exp $");
 #endif /* !__lint */
 
 #include <assert.h>
@@ -55,7 +55,7 @@ int
 humanize_number(char *buf, size_t len, int64_t bytes,
     const char *suffix, int scale, int flags)
 {
-	static const char prefixes[] = " KMGTPE";
+	static const char prefixes[] = " kMGTPE";
 
 	int	i, r;
 	int64_t	divisor, max, s1, s2, sign;
