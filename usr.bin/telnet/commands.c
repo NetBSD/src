@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.24 1998/07/26 22:35:48 mycroft Exp $	*/
+/*	$NetBSD: commands.c,v 1.25 1998/11/06 19:54:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.24 1998/07/26 22:35:48 mycroft Exp $");
+__RCSID("$NetBSD: commands.c,v 1.25 1998/11/06 19:54:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,7 @@ static int slccmd P((int, char *[]));
 static struct env_lst *env_help P((unsigned char *, unsigned char *));
 static struct envlist *getenvcmd P((char *));
 #ifdef AUTHENTICATION
-static int auth_help P((void));
+static int auth_help P((char *));
 #endif
 #if	defined(unix) && defined(TN3270)
 static void filestuff P((int));
@@ -181,7 +181,7 @@ makeargv()
     }
     while ((c = *cp) != '\0') {
 	register int inquote = 0;
-	while (isspace(c))
+	while (isspace((unsigned char)c))
 	    c = *++cp;
 	if (c == '\0')
 	    break;
@@ -203,7 +203,7 @@ makeargv()
 		} else if (c == '\'') {
 		    inquote = '\'';
 		    continue;
-		} else if (isspace(c))
+		} else if (isspace((unsigned char)c))
 		    break;
 	    }
 	    *cp2++ = c;
@@ -695,11 +695,13 @@ static struct togglelist Togglelist[] = {
 	    0,
 		&autologin,
 		    "send login name and/or authentication information" },
+#if 0
     { "authdebug",
 	"Toggle authentication debugging",
 	    auth_togdebug,
 		0,
 		     "print authentication debugging information" },
+#endif
 #endif
     { "skiprc",
 	"don't read ~/.telnetrc file",
@@ -1944,16 +1946,9 @@ unknown:
 struct authlist {
 	char	*name;
 	char	*help;
-	int	(*handler)();
+	int	(*handler) P((char *));
 	int	narg;
 };
-
-extern int
-	auth_enable P((char *)),
-	auth_disable P((char *)),
-	auth_status P((void));
-static int
-	auth_help P((void));
 
 struct authlist AuthList[] = {
     { "status",	"Display current status of authentication information",
@@ -1968,7 +1963,8 @@ struct authlist AuthList[] = {
 };
 
     static int
-auth_help()
+auth_help(s)
+    char *s;
 {
     struct authlist *c;
 
@@ -1983,6 +1979,7 @@ auth_help()
     return 0;
 }
 
+    int
 auth_cmd(argc, argv)
     int  argc;
     char *argv[];
@@ -2014,7 +2011,7 @@ auth_cmd(argc, argv)
 		c->narg, c->narg == 1 ? "" : "s", c->name);
 	return 0;
     }
-    return((*c->handler)(argv[2], argv[3]));
+    return((*c->handler)(argv[2]));
 }
 #endif
 
@@ -2644,11 +2641,11 @@ cmdrc(m1, m2)
 	if (line[0] == '#')
 	    continue;
 	if (gotmachine) {
-	    if (!isspace(line[0]))
+	    if (!isspace((unsigned char)line[0]))
 		gotmachine = 0;
 	}
 	if (gotmachine == 0) {
-	    if (isspace(line[0]))
+	    if (isspace((unsigned char)line[0]))
 		continue;
 	    if (strncasecmp(line, m1, l1) == 0)
 		strncpy(line, &line[l1], sizeof(line) - l1);
