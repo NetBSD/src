@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.21 2001/11/02 05:30:56 lukem Exp $	*/
+/*	$NetBSD: output.c,v 1.22 2002/11/30 04:04:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,12 +36,12 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: output.c,v 1.21 2001/11/02 05:30:56 lukem Exp $");
+__RCSID("$NetBSD: output.c,v 1.22 2002/11/30 04:04:23 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
-__RCSID("Revision: 2.23 ");
-#ident "Revision: 2.23 "
+__RCSID("Revision: 2.27 ");
+#ident "Revision: 2.27 "
 #endif
 
 
@@ -286,7 +286,7 @@ clr_ws_buf(struct ws_buf *wb,
 		na->a_family = RIP_AF_AUTH;
 		na->a_type = RIP_AUTH_MD5;
 		na->au.a_md5.md5_keyid = ap->keyid;
-		na->au.a_md5.md5_auth_len = RIP_AUTH_MD5_LEN;
+		na->au.a_md5.md5_auth_len = RIP_AUTH_MD5_KEY_LEN;
 		na->au.a_md5.md5_seqno = htonl(clk.tv_sec);
 		wb->n++;
 		wb->lim--;		/* make room for trailer */
@@ -310,8 +310,8 @@ end_md5_auth(struct ws_buf *wb,
 	na2->a_type = htons(1);
 	na->au.a_md5.md5_pkt_len = htons(len);
 	MD5Init(&md5_ctx);
-	MD5Update(&md5_ctx, (u_char *)wb->buf, len);
-	MD5Update(&md5_ctx, ap->key, RIP_AUTH_MD5_LEN);
+	MD5Update(&md5_ctx, (u_char *)wb->buf, len + RIP_AUTH_MD5_HASH_XTRA);
+	MD5Update(&md5_ctx, ap->key, RIP_AUTH_MD5_KEY_LEN);
 	MD5Final(na2->au.au_pw, &md5_ctx);
 	wb->n++;
 }
@@ -554,8 +554,7 @@ walk_supply(struct radix_node *rn,
 		 * without confusing RIPv1 listeners into thinking the
 		 * network routes are host routes.
 		 */
-		if ((ws.state & WS_ST_AG)
-		    && !(ws.state & WS_ST_RIP2_ALL))
+		if ((ws.state & WS_ST_AG) && (ws.state & WS_ST_RIP2_ALL))
 			ags |= AGS_AGGREGATE;
 
 	} else {
@@ -599,6 +598,11 @@ walk_supply(struct radix_node *rn,
 	 *
 	 * Notice spare routes with the same metric that we are about to
 	 * advertise, to split the horizon on redundant, inactive paths.
+	 *
+	 * Do not suppress advertisements of interface-related addresses on
+	 * non-point-to-point interfaces.  This ensures that we have something
+	 * to say every 30 seconds to help detect broken Ethernets or
+	 * other interfaces where one packet every 30 seconds costs nothing.
 	 */
 	if (ws.ifp != 0
 	    && !(ws.state & WS_ST_QUERY)
@@ -718,7 +722,7 @@ supply(struct sockaddr_in *dst,
 		/* Adjust the advertised metric by the outgoing interface
 		 * metric.
 		 */
-		ws.metric = ifp->int_metric+1;
+		ws.metric = ifp->int_metric + 1 + ifp->int_adj_outmetric;
 	}
 
 	ripv12_buf.rip.rip_vers = vers;
