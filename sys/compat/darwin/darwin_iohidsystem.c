@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.2 2003/02/20 22:39:43 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.3 2003/03/09 18:33:30 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.2 2003/02/20 22:39:43 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.3 2003/03/09 18:33:30 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.2 2003/02/20 22:39:43 manu 
 struct mach_iokit_devclass darwin_iohidsystem_devclass = {
 	"<dict ID=\"0\"><key>IOProviderClass</key>"
 	    "<string ID=\"1\">IOHIDSystem</string></dict>",
+	NULL,
 	NULL,
 	darwin_iohidsystem_connect_method_scalari_scalaro,
 	"IOHIDSystem",
