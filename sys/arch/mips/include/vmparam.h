@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 1997/07/12 16:19:28 perry Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 1998/02/02 22:21:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -99,13 +99,6 @@
 #ifndef SHMMAXPGS
 #define SHMMAXPGS	1024		/* 4mb */
 #endif
-
-/*
- * Boundary at which to place first MAPMEM segment if not explicitly
- * specified.  Should be a power of two.  This allows some slop for
- * the data segment to grow underneath the first mapped segment.
- */
-#define MMSEG		0x200000
 
 /*
  * The size of the clock loop.
