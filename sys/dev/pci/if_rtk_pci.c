@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.6 2001/06/11 06:36:23 tron Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.7 2001/06/12 22:28:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -105,10 +105,7 @@
 #include <net/if_ether.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
+
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>

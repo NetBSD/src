@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.15 2000/12/28 22:59:13 sommerfeld Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.16 2001/06/12 22:28:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,8 +37,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h" 
  
 #include <sys/param.h>
@@ -56,19 +54,6 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h> 
-#include <netinet/if_inarp.h>
-#endif
- 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-  
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
