@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.24 2001/10/04 07:34:47 jmc Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.25 2001/10/05 22:52:56 jmc Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.24 2001/10/04 07:34:47 jmc Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.25 2001/10/05 22:52:56 jmc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -804,7 +804,11 @@ void top_makefile_rules(FILE *outmk)
 
     fprintf(outmk, "DBG=%s\n", dbg);
     fprintf(outmk, "STRIP?=strip\n");
+#ifdef NEW_TOOLCHAIN
+    fprintf(outmk, "OBJCOPY?=objcopy\n");
+#else
     fprintf(outmk, "CRUNCHIDE?=crunchide\n");
+#endif
 
     fprintf(outmk, "CRUNCHED_OBJS=");
     for(p = progs; p != NULL; p = p->next)
@@ -869,8 +873,13 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 		p->name, p->name, p->ident);
     fprintf(outmk, "\t${LD} -dc -r -o %s.cro %s_stub.o $(%s_OBJPATHS)\n", 
 	    p->name, p->name, p->ident);
+#ifdef NEW_TOOLCHAIN
+    fprintf(outmk, "\t${OBJCOPY} -S -K _crunched_%s_stub %s.cro\n",
+  	    p->ident, p->name);
+#else
     fprintf(outmk, "\t${CRUNCHIDE} -k _crunched_%s_stub %s.cro\n", 
 	    p->ident, p->name);
+#endif
 }
 
 void output_strlst(FILE *outf, strlst_t *lst)
