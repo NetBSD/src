@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 1998/07/04 22:18:45 jonathan Exp $     */
+/*	$NetBSD: trap.c,v 1.39 1998/11/29 15:04:05 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -202,10 +202,8 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			rv = vm_fault(pte_map, addr,
 			    VM_PROT_WRITE|VM_PROT_READ, FALSE);
 #endif
-			if (rv != KERN_SUCCESS) {
+			if (rv != KERN_SUCCESS)
 				goto ufault;
-			} else
-				trapsig = 0;
 		}
 		addr = trunc_page(frame->code);
 		if ((umode == 0) && (frame->code < 0))
@@ -273,7 +271,9 @@ ufault:			if (rv == KERN_RESOURCE_SHORTAGE)
 		break;
 
 #ifdef DDB
+	case T_BPTFLT: /* Kernel breakpoint */
 	case T_KDBTRAP:
+	case T_TRCTRAP:
 		kdb_trap(frame);
 		return;
 #endif
