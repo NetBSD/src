@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.132 1998/01/23 20:42:34 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.133 1998/01/29 01:53:03 tron Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -116,6 +116,7 @@ options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	IPFILTER_LOG	# ipmon(8) log support
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
