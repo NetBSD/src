@@ -1,10 +1,24 @@
-#	$NetBSD: GENERIC,v 1.6 2001/11/20 12:56:23 lukem Exp $
+# $NetBSD: GENERIC,v 1.7 2001/12/14 05:34:46 gmcgarry Exp $
 #
-# Generic kernel - one size fits all.
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
 #
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
-# Include attributes common to all cesfics
-include "arch/cesfic/conf/std.cesfic"
+include 	"arch/cesfic/conf/std.cesfic"
 
 # Need to set locally
 maxusers	32

@@ -1,11 +1,29 @@
-# $NetBSD: GENERIC,v 1.85 2001/11/23 05:00:29 atatat Exp $
+# $NetBSD: GENERIC,v 1.86 2001/12/14 05:34:53 gmcgarry Exp $
+#
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
-# GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
+# Supports Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Supports root on: ie0, le0, sd*, ...
 
-include "arch/sun3/conf/std.sun3"
+include 	"arch/sun3/conf/std.sun3"
 
-#ident 		"GENERIC-$Revision: 1.85 $"
+#ident 		"GENERIC-$Revision: 1.86 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
