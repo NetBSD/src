@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.h,v 1.5 1997/07/17 23:29:28 is Exp $	*/
+/*	$NetBSD: rtc.h,v 1.6 1999/03/14 22:42:12 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,8 +38,8 @@
 /* this is a hook set by a clock driver for the configured realtime clock,
    returning plain current unix-time */
 
-time_t (*gettod) __P((void));
-int (*settod) __P((time_t));
+int (*ugettod) __P((struct timeval *));
+int (*usettod) __P((struct timeval *));
 
 struct rtclock2000 {
 	u_int  :28, second2:4;	/* lower digit */

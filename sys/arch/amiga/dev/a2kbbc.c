@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.5 1998/01/12 10:39:04 thorpej Exp $	*/
+/*	$NetBSD: a2kbbc.c,v 1.6 1999/03/14 22:42:12 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,8 +64,8 @@ struct cfattach a2kbbc_ca = {
 };  
 
 void *a2kclockaddr;
-time_t a2gettod __P((void));
-int a2settod __P((time_t));
+int a2kugettod __P((struct timeval *));
+int a2kusettod __P((struct timeval *));
 
 int
 a2kbbc_match(pdp, cfp, auxp)
@@ -87,7 +87,7 @@ a2kbbc_match(pdp, cfp, auxp)
 		return (0);
 
 	a2kclockaddr = (void *)ztwomap(0xdc0000);
-	if (a2gettod() == 0)
+	if (a2kugettod(0) == 0)
 		return (0);
 
 	return (1);
@@ -104,12 +104,13 @@ a2kbbc_attach(pdp, dp, auxp)
 	printf("\n");
 	a2kclockaddr = (void *)ztwomap(0xdc0000);
 
-	gettod = a2gettod;
-	settod = a2settod;
+	ugettod = a2kugettod;
+	usettod = a2kusettod;
 }
 
-time_t
-a2gettod()
+int
+a2kugettod(tvp)
+	struct timeval *tvp;
 {
 	struct rtclock2000 *rt;
 	struct clock_ymdhms dt;
@@ -176,17 +177,21 @@ a2gettod()
 		return (0);
   
 	secs = clock_ymdhms_to_secs(&dt);
-	return (secs);
+	tvp->tv_sec = secs;
+	tvp->tv_usec = 0;
+	return (1);
 }
 
 int
-a2settod(secs)
-	time_t secs;
+a2kusettod(tvp)
+	struct timeval *tvp;
 {
 	struct rtclock2000 *rt;
 	struct clock_ymdhms dt;
 	int ampm, i;
+	time_t secs;
 
+	secs = tvp->tv_sec;
 	rt = a2kclockaddr;
 	/* 
 	 * there seem to be problems with the bitfield addressing
