@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.222 2003/03/25 18:26:53 tshiozak Exp $
+#	$NetBSD: NetBSD.dist,v 1.223 2003/04/04 07:53:12 jdolecek Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -241,6 +241,7 @@
 ./usr/share/examples/postfix
 ./usr/share/examples/racoon
 ./usr/share/examples/rtadvd
+./usr/share/examples/smbfs
 ./usr/share/examples/supfiles
 ./usr/share/examples/syslogd
 ./usr/share/examples/veriexecctl
