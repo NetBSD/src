@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.20 1999/01/23 16:10:47 drochner Exp $
+# $NetBSD: INSTALL,v 1.21 1999/01/25 07:55:32 ross Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -129,6 +129,7 @@ sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
+ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 
 # MII/PHY support
 inphy*	at	mii? phy ?
