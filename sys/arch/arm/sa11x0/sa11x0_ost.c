@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.4 2001/11/23 19:21:48 thorpej Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.5 2002/01/08 11:21:02 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -270,11 +270,16 @@ void
 microtime(tvp)
 	register struct timeval *tvp;
 {
-	int s = splhigh();
-	int tm;
-	int deltatm;
+	int s, tm, deltatm;
 	static struct timeval lasttime;
 
+	if(saost_sc == NULL) {
+		tvp->tv_sec = 0;
+		tvp->tv_usec = 0;
+		return;
+	}
+
+	s = splhigh();
 	tm = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh,
 			SAOST_CR);
 
