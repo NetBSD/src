@@ -1,5 +1,5 @@
+./dev/mouse
 ./sbin/binpatch
-./sbin/bootpref
 ./sbin/edahdi
 ./sbin/edlabel
 ./usr/bin/fdformat
@@ -12,6 +12,7 @@
 ./usr/mdec/wdb00t.ahdi
 ./usr/mdec/wdboot
 ./usr/mdec/xxboot.ahdi
+./usr/sbin/bootpref
 ./usr/sbin/iteconfig
 ./usr/sbin/loadkmap
 ./usr/share/keymaps/atari/de.map
