@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_node.c	7.34 (Berkeley) 5/15/91
- *	$Id: nfs_node.c,v 1.4 1993/12/18 00:44:56 mycroft Exp $
+ *	$Id: nfs_node.c,v 1.5 1994/02/15 21:07:10 pk Exp $
  */
 
 #include <sys/param.h>
@@ -161,6 +161,8 @@ loop:
 	np->n_size = 0;
 	np->n_mtime = 0;
 	np->n_lockf = 0;
+	np->n_delayed_mtime.tv_sec = VNOVAL;
+	np->n_delayed_atime.tv_sec = VNOVAL;
 	*npp = np;
 	return (0);
 }

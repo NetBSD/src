@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.21 1994/02/06 11:28:40 mycroft Exp $
+ *	$Id: nfs_vnops.c,v 1.22 1994/02/15 21:07:14 pk Exp $
  */
 
 /*
@@ -118,12 +118,12 @@ struct vnodeops spec_nfsv2nodeops = {
 	spec_create,		/* create */
 	spec_mknod,		/* mknod */
 	spec_open,		/* open */
-	spec_close,		/* close */
+	nfsspec_close,		/* close */
 	nfs_access,		/* access */
 	nfs_getattr,		/* getattr */
 	nfs_setattr,		/* setattr */
-	spec_read,		/* read */
-	spec_write,		/* write */
+	nfsspec_read,		/* read */
+	nfsspec_write,		/* write */
 	spec_ioctl,		/* ioctl */
 	spec_select,		/* select */
 	spec_mmap,		/* mmap */
@@ -155,12 +155,12 @@ struct vnodeops fifo_nfsv2nodeops = {
 	fifo_create,		/* create */
 	fifo_mknod,		/* mknod */
 	fifo_open,		/* open */
-	fifo_close,		/* close */
+	nfsfifo_close,		/* close */
 	nfs_access,		/* access */
 	nfs_getattr,		/* getattr */
 	nfs_setattr,		/* setattr */
-	fifo_read,		/* read */
-	fifo_write,		/* write */
+	nfsfifo_read,		/* read */
+	nfsfifo_write,		/* write */
 	fifo_ioctl,		/* ioctl */
 	fifo_select,		/* select */
 	fifo_mmap,		/* mmap */
@@ -333,11 +333,24 @@ nfs_dogetattr(vp, vap, cred, tryhard, p)
 	u_long xid;
 	int error = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct nfsnode *np;
 	
 	/* First look in the cache.. */
 	/* cred == NOCRED when we are called by mountroot */
 	if (cred != NOCRED && nfs_getattrcache(vp, vap) == 0)
 		return (0);
+
+	np = VTONFS(vp);
+	if (np->n_delayed_atime.tv_sec != VNOVAL ||
+			np->n_delayed_mtime.tv_sec != VNOVAL) {
+
+		VATTR_NULL(vap);
+		error = nfs_setattr(vp, vap, cred, p);
+		bcopy((caddr_t)&np->n_vattr, (caddr_t)vap, sizeof(*vap));
+		if ((np->n_flag & NMODIFIED) && (np->n_size > vap->va_size))
+			vap->va_size = np->n_size;
+		return error;
+	}
 	nfsstats.rpccnt[NFSPROC_GETATTR]++;
 	nfsm_reqhead(nfs_procids[NFSPROC_GETATTR], cred, NFSX_FH);
 	nfsm_fhtom(vp);
@@ -363,7 +376,7 @@ nfs_setattr(vp, vap, cred, p)
 	u_long xid;
 	int error = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	struct nfsnode *np;
+	struct nfsnode *np = VTONFS(vp);
 
 	nfsstats.rpccnt[NFSPROC_SETATTR]++;
 	nfsm_reqhead(nfs_procids[NFSPROC_SETATTR], cred, NFSX_FH+NFSX_SATTR);
@@ -387,12 +400,24 @@ nfs_setattr(vp, vap, cred, p)
 	sp->sa_atime.tv_sec = txdr_unsigned(vap->va_atime.tv_sec);
 	sp->sa_atime.tv_usec = txdr_unsigned(vap->va_flags);
 #else
-	txdr_time(&vap->va_atime, &sp->sa_atime);
+	if (vap->va_atime.tv_sec == VNOVAL &&
+				np->n_delayed_atime.tv_sec != VNOVAL) {
+		txdr_time(&np->n_delayed_atime, &sp->sa_atime);
+	} else {
+		txdr_time(&vap->va_atime, &sp->sa_atime);
+	}
 #endif
-	txdr_time(&vap->va_mtime, &sp->sa_mtime);
+	if (vap->va_mtime.tv_sec == VNOVAL &&
+				np->n_delayed_mtime.tv_sec != VNOVAL) {
+		txdr_time(&np->n_delayed_mtime, &sp->sa_mtime);
+	} else {
+		txdr_time(&vap->va_mtime, &sp->sa_mtime);
+	}
+	np->n_delayed_atime.tv_sec = VNOVAL;
+	np->n_delayed_mtime.tv_sec = VNOVAL;
+
 	if (vap->va_size != VNOVAL || vap->va_mtime.tv_sec != VNOVAL ||
 	    vap->va_atime.tv_sec != VNOVAL) {
-		np = VTONFS(vp);
 		if (np->n_flag & NMODIFIED) {
 			np->n_flag &= ~NMODIFIED;
 			if (vap->va_size == 0)
@@ -1928,9 +1953,119 @@ nfs_getattrcache(vp, vap)
 			vnode_pager_setsize(vp, np->n_size);
 		} else if (np->n_size > vap->va_size)
 			vap->va_size = np->n_size;
+		if (np->n_delayed_atime.tv_sec != VNOVAL)
+			vap->va_atime = np->n_delayed_atime; 
+		if (np->n_delayed_mtime.tv_sec != VNOVAL)
+			vap->va_mtime = np->n_delayed_mtime; 
 		return (0);
 	} else {
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}
 }
+
+/*
+ * Read wrapper for special devices.
+ */
+nfsspec_read(vp, uio, ioflag, cred)
+	struct vnode *vp;
+	struct uio *uio;
+	int ioflag;
+	struct ucred *cred;
+{
+	/*
+	 * Set access time.
+	 */
+	VTONFS(vp)->n_delayed_atime = time;
+	return (spec_read(vp, uio, ioflag, cred));
+}
+
+/*
+ * Write wrapper for special devices.
+ */
+nfsspec_write(vp, uio, ioflag, cred)
+	struct vnode *vp;
+	struct uio *uio;
+	int ioflag;
+	struct ucred *cred;
+{
+	/*
+	 * Set change time.
+	 */
+	VTONFS(vp)->n_delayed_mtime = time;
+	return (spec_write(vp, uio, ioflag, cred));
+}
+
+/*
+ * Close wrapper for special devices.
+ *
+ * Update the times then do device close.
+ */
+nfsspec_close(vp, fflag, cred, p)
+	struct vnode *vp;
+	int fflag;
+	struct ucred *cred;
+	struct proc *p;
+{
+	if (VTONFS(vp)->n_delayed_mtime.tv_sec != VNOVAL ||
+			VTONFS(vp)->n_delayed_atime.tv_sec != VNOVAL) {
+		struct vattr va;
+		VATTR_NULL(&va);
+		nfs_setattr(vp, &va, cred, p);
+	}
+	return (spec_close(vp, fflag, cred, p));
+}
+
+#ifdef FIFO
+/*
+ * Read wrapper for special devices.
+ */
+nfsfifo_read(vp, uio, ioflag, cred)
+	struct vnode *vp;
+	struct uio *uio;
+	int ioflag;
+	struct ucred *cred;
+{
+	/*
+	 * Set access time.
+	 */
+	VTONFS(vp)->n_delayed_atime = time;
+	return (fifo_read(vp, uio, ioflag, cred));
+}
+
+/*
+ * Write wrapper for special devices.
+ */
+nfsfifo_write(vp, uio, ioflag, cred)
+	struct vnode *vp;
+	struct uio *uio;
+	int ioflag;
+	struct ucred *cred;
+{
+	/*
+	 * Set change time.
+	 */
+	VTONFS(vp)->n_delayed_mtime = time;
+	return (fifo_write(vp, uio, ioflag, cred));
+}
+
+/*
+ * Close wrapper for special devices.
+ *
+ * Update the times then do device close.
+ */
+nfsfifo_close(vp, fflag, cred, p)
+	struct vnode *vp;
+	int fflag;
+	struct ucred *cred;
+	struct proc *p;
+{
+	if (VTONFS(vp)->n_delayed_mtime.tv_sec != VNOVAL ||
+			VTONFS(vp)->n_delayed_atime.tv_sec != VNOVAL) {
+		struct vattr va;
+		VATTR_NULL(&va);
+		nfs_setattr(vp, &va, cred, p);
+	}
+	return (fifo_close(vp, fflag, cred, p));
+}
+#endif /* FIFO */
