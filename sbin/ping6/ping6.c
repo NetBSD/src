@@ -1,5 +1,5 @@
-/*	$NetBSD: ping6.c,v 1.21 2000/10/10 20:24:53 is Exp $	*/
-/*	$KAME: ping6.c,v 1.91 2000/10/07 06:23:06 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.22 2000/10/12 10:35:48 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.93 2000/10/12 10:27:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.21 2000/10/10 20:24:53 is Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.22 2000/10/12 10:35:48 itojun Exp $");
 #endif
 #endif
 
@@ -306,6 +306,7 @@ main(argc, argv)
 	char *policy_out = NULL;
 #endif
 	double intval;
+	size_t rthlen;
 
 	/* just to be sure */
 	memset(&smsghdr, 0, sizeof(&smsghdr));
@@ -518,11 +519,16 @@ main(argc, argv)
 
 	if (argc > 1) {
 #ifdef IPV6_RECVRTHDR	/* 2292bis */
-		ip6optlen += CMSG_SPACE(inet6_rth_space(IPV6_RTHDR_TYPE_0,
+		rthlen = CMSG_SPACE(inet6_rth_space(IPV6_RTHDR_TYPE_0,
 		    argc - 1));
 #else  /* RFC2292 */
-		ip6optlen += inet6_rthdr_space(IPV6_RTHDR_TYPE_0, argc - 1);
+		rthlen = inet6_rthdr_space(IPV6_RTHDR_TYPE_0, argc - 1);
 #endif
+		if (rthlen == 0) {
+			errx(1, "too many intermediate hops");
+			/*NOTREACHED*/
+		}
+		ip6optlen += rthlen;
 	}
 
 	if (options & F_NIGROUP) {
