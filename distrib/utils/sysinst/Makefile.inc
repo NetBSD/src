@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.38 2005/01/18 12:30:21 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.39 2005/02/19 17:00:38 dsl Exp $
 #
 # Makefile for sysinst
 
@@ -6,6 +6,15 @@ PROG=		sysinst
 NOMAN=		# defined
 
 WARNS=		3
+
+SRCS+=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
+	txtwalk.c run.c factor.c net.c disks.c disks_lfs.c util.c geom.c \
+	label.c target.c md.c sizemultname.c
+
+SRCS+=	${MD_OPTIONS:MAOUT2ELF:S/AOUT2ELF/aout2elf.c/}
+SRCS+=	${MENUS_MD:Mmenus.mbr:S/menus.mbr/mbr.c/}
+SRCS+=	${CPPFLAGS:M-DWSKBD:S/-DWSKBD/wskbd.c/}
+SRCS+=	${NODISKLABEL:D:Ubsddisklabel.c savenewlabel.c}
 
 SYSINSTLANG?=	en
 LANGUAGES?=	de en fr pl
