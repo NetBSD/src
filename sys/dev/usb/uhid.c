@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.21 1999/08/23 22:55:14 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.22 1999/08/28 21:42:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -239,7 +239,7 @@ USB_ATTACH(uhid)
 
 int
 uhid_activate(self, act)
-	struct device *self;
+	bdevice *self;
 	enum devact act;
 {
 	struct uhid_softc *sc = (struct uhid_softc *)self;
@@ -258,7 +258,7 @@ uhid_activate(self, act)
 
 int
 uhid_detach(self, flags)
-	struct device *self;
+	bdevice *self;
 	int flags;
 {
 	struct uhid_softc *sc = (struct uhid_softc *)self;

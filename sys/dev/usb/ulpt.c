@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.17 1999/08/23 22:55:14 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.18 1999/08/28 21:42:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -221,7 +221,7 @@ USB_ATTACH(ulpt)
 
 int
 ulpt_activate(self, act)
-	struct device *self;
+	bdevice *self;
 	enum devact act;
 {
 	struct ulpt_softc *sc = (struct ulpt_softc *)self;
@@ -240,7 +240,7 @@ ulpt_activate(self, act)
 
 int
 ulpt_detach(self, flags)
-	struct device  *self;
+	bdevice *self;
 	int flags;
 {
 	struct ulpt_softc *sc = (struct ulpt_softc *)self;
