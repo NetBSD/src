@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: installboot.c,v 1.1 1994/07/20 20:47:19 pk Exp $
+ *	$Id: installboot.c,v 1.2 1994/08/13 08:33:08 pk Exp $
  */
 
 #include <sys/param.h>
@@ -80,7 +80,6 @@ main(argc, argv)
 	int	devfd;
 	char	*protostore;
 	long	protosize;
-	struct	statfs statfsbuf;
 
 	while ((c = getopt(argc, argv, "vn")) != EOF) {
 		switch (c) {
@@ -116,12 +115,6 @@ main(argc, argv)
 	/* Open and check raw disk device */
 	if ((devfd = open(dev, O_RDONLY, 0)) < 0)
 		err(1, "open: %s", dev);
-
-	if (fstatfs(devfd, &statfsbuf) != 0)
-		err(1, "statfs: %s", dev);
-
-	if (strcmp(statfsbuf.f_fstypename, "ufs"))
-		errx(1, "%s: must be UFS filesystem", dev);
 
 	/* Extract and load block numbers */
 	if (loadblocknums(boot, devfd) != 0)
@@ -237,7 +230,8 @@ char	*boot;
 int	devfd;
 {
 	int		i, fd;
-	struct		stat statbuf;
+	struct	stat	statbuf;
+	struct	statfs	statfsbuf;
 	struct fs	*fs;
 	char		*buf;
 	daddr_t		blk, *ap;
@@ -250,6 +244,12 @@ int	devfd;
 	 */
 	if ((fd = open(boot, O_RDONLY)) < 0)
 		err(1, "open: %s", boot);
+
+	if (fstatfs(fd, &statfsbuf) != 0)
+		err(1, "statfs: %s", boot);
+
+	if (strcmp(statfsbuf.f_fstypename, "ufs"))
+		errx(1, "%s: must be on a UFS filesystem", boot);
 
 	if (fsync(fd) != 0)
 		err(1, "fsync: %s", boot);
