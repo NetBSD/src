@@ -1,6 +1,7 @@
-/*	$NetBSD: am7990.c,v 1.26 1997/03/15 18:11:25 is Exp $	*/
+/*	$NetBSD: am7990.c,v 1.27 1997/03/17 03:14:03 thorpej Exp $	*/
 
 /*-
+ * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -54,6 +55,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -98,9 +100,11 @@ integrate void am7990_read __P((struct am7990_softc *, int, int));
 
 hide void am7990_shutdown __P((void *));
 
+int am7990_mediachange __P((struct ifnet *));
+void am7990_mediastatus __P((struct ifnet *, struct ifmediareq *));
+
 #define	ifp	(&sc->sc_ethercom.ec_if)
 
-#ifdef	sun3	/* XXX what do we do about this?!  --thorpej */
 static inline u_int16_t ether_cmp __P((void *, void *));
 
 /*
@@ -119,19 +123,12 @@ ether_cmp(one, two)
 	register u_int16_t *b = (u_short *) two;
 	register u_int16_t diff;
 
-	diff  = *a++ - *b++;
-	diff |= *a++ - *b++;
-	diff |= *a++ - *b++;
+	diff = (a[0] - b[0]) | (a[1] - b[1]) | (a[2] - b[2]);
 
 	return (diff);
 }
 
 #define ETHER_CMP	ether_cmp
-#endif /* XXX */
-
-#ifndef	ETHER_CMP
-#define	ETHER_CMP(a, b) bcmp((a), (b), ETHER_ADDR_LEN)
-#endif
 
 /*
  * am7990 configuration driver.  Attachments are provided by
@@ -161,6 +158,18 @@ am7990_config(sc)
 #ifdef LANCE_REVC_BUG
 	ifp->if_flags &= ~IFF_MULTICAST;
 #endif
+
+	/* Initialize ifmedia structures. */
+	ifmedia_init(&sc->sc_media, 0, am7990_mediachange, am7990_mediastatus);
+	if (sc->sc_supmedia != NULL) {
+		for (i = 0; i < sc->sc_nsupmedia; i++)
+			ifmedia_add(&sc->sc_media, sc->sc_supmedia[i],
+			   0, NULL);
+		ifmedia_set(&sc->sc_media, sc->sc_defaultmedia);
+	} else {
+		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
+		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+	}
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -635,6 +644,7 @@ am7990_tint(sc)
 				return;
 			}
 			if (tmd.tmd3 & LE_T3_LCAR) {
+				sc->sc_havecarrier = 0;
 				if (sc->sc_nocarrier)
 					(*sc->sc_nocarrier)(sc);
 				else
@@ -735,6 +745,12 @@ am7990_intr(arg)
 		return (1);
 	}
 
+	/*
+	 * Pretend we have carrier; if we don't this will be cleared
+	 * shortly.
+	 */
+	sc->sc_havecarrier = 1;
+
 	if (isr & LE_C0_RINT)
 		am7990_rint(sc);
 	if (isr & LE_C0_TINT)
@@ -755,6 +771,35 @@ am7990_watchdog(ifp)
 	++ifp->if_oerrors;
 
 	am7990_reset(sc);
+}
+
+int
+am7990_mediachange(ifp)
+	struct ifnet *ifp;
+{
+	struct am7990_softc *sc = ifp->if_softc;
+
+	if (sc->sc_mediachange)
+		return ((*sc->sc_mediachange)(sc));
+	return (EINVAL);
+}
+
+void
+am7990_mediastatus(ifp, ifmr)
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
+{
+	struct am7990_softc *sc = ifp->if_softc;
+
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return;
+
+	ifmr->ifm_status = IFM_AVALID;
+	if (sc->sc_havecarrier)
+		ifmr->ifm_status |= IFM_ACTIVE;
+
+	if (sc->sc_mediastatus)
+		(*sc->sc_mediastatus)(sc, ifmr);
 }
 
 /*
@@ -951,6 +996,11 @@ am7990_ioctl(ifp, cmd, data)
 			am7990_reset(sc);
 			error = 0;
 		}
+		break;
+
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:
