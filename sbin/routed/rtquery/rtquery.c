@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.8 1998/06/02 18:02:56 thorpej Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.9 1998/10/25 14:56:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -13,7 +13,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -41,10 +41,11 @@ char copyright[] =
 static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rtquery.c,v 1.8 1998/06/02 18:02:56 thorpej Exp $");
+__RCSID("$NetBSD: rtquery.c,v 1.9 1998/10/25 14:56:09 christos Exp $");
 #endif
 
 #include <sys/param.h>
+#include <sys/cdefs.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -119,6 +120,7 @@ static void query_loop(char *argv[], int) __attribute((__noreturn__));
 static int getnet(char *, struct netinfo *);
 static u_int std_mask(u_int);
 static int parse_quote(char **, char *, char *, char *, int);
+static void usage(void);
 
 
 int
@@ -154,13 +156,13 @@ main(int argc,
 			wtime = (int)strtoul(optarg, &p, 0);
 			if (*p != '\0'
 			    || wtime <= 0)
-				goto usage;
+				usage();
 			break;
 
 		case 'r':
 			not_trace = 1;
 			if (rflag)
-				goto usage;
+				usage();
 			rflag = getnet(optarg, &OMSG.rip_nets[0]);
 			if (!rflag) {
 				struct hostent *hp = gethostbyname(optarg);
@@ -170,7 +172,7 @@ main(int argc,
 					herror(0);
 					exit(1);
 				}
-				memmove(&OMSG.rip_nets[0].n_dst, hp->h_addr,
+				memcpy(&OMSG.rip_nets[0].n_dst, hp->h_addr,
 				      sizeof(OMSG.rip_nets[0].n_dst));
 				OMSG.rip_nets[0].n_family = RIP_AF_INET;
 				OMSG.rip_nets[0].n_mask = -1;
@@ -198,28 +200,28 @@ main(int argc,
 					OMSG.rip_cmd = RIPCMD_TRACEON;
 					if (!value
 					    || strlen(value) > MAXPATHLEN)
-						goto usage;
+						usage();
 					break;
 				case TRACE_MORE:
 					if (value)
-						goto usage;
+						usage();
 					OMSG.rip_cmd = RIPCMD_TRACEON;
 					value = "";
 					break;
 				case TRACE_OFF:
 					if (value)
-						goto usage;
+						usage();
 					OMSG.rip_cmd = RIPCMD_TRACEOFF;
 					value = "";
 					break;
 				case TRACE_DUMP:
 					if (value)
-						goto usage;
+						usage();
 					OMSG.rip_cmd = RIPCMD_TRACEON;
 					value = "dump/../table";
 					break;
 				default:
-					goto usage;
+					usage();
 				}
 				strcpy((char*)OMSG.rip_tracefile, value);
 				omsg_len += strlen(value) - sizeof(OMSG.ripun);
@@ -230,40 +232,34 @@ main(int argc,
 			not_trace = 1;
 			p = strchr(optarg,'=');
 			if (!p)
-				goto usage;
+				usage();
 			*p++ = '\0';
 			if (!strcasecmp("passwd",optarg))
 				auth_type = RIP_AUTH_PW;
 			else if (!strcasecmp("md5_passwd",optarg))
 				auth_type = RIP_AUTH_MD5;
 			else
-				goto usage;
+				usage();
 			if (0 > parse_quote(&p,"|",&delim,
 					    passwd,sizeof(passwd)))
-				goto usage;
+				usage();
 			if (auth_type == RIP_AUTH_MD5
 			    && delim == '|') {
 				keyid = strtoul(p+1,&p,0);
 				if (keyid > 255 || *p != '\0')
-					goto usage;
+					usage();
 			} else if (delim != '\0') {
-				goto usage;
+				usage();
 			}
 			break;
 
 		default:
-			goto usage;
+			usage();
 	}
 	argv += optind;
 	argc -= optind;
-	if (not_trace && trace) {
-usage:		fprintf(stderr, "%s: [-np1] [-r tgt_rt] [-w wtime]"
-			" [-a type=passwd] host1 [host2 ...]\n"
-			"or\t-t {on=filename|more|off|dump}"
-			" host1 [host2 ...]\n",
-			pgmname);
-		exit(1);
-	}
+	if (not_trace && trace)
+		usage();
 	if (argc == 0) {
 		argc = 1;
 		argv = default_argv;
@@ -291,6 +287,19 @@ usage:		fprintf(stderr, "%s: [-np1] [-r tgt_rt] [-w wtime]"
 	else
 		query_loop(argv, argc);
 	/* NOTREACHED */
+	return 0;
+}
+
+
+static void
+usage(void)
+{
+	fprintf(stderr,
+		"usage:  rtquery [-np1] [-r tgt_rt] [-w wtime]"
+		" [-a type=passwd] host1 [host2 ...]\n"
+		"\trtquery -t {on=filename|more|off|dump}"
+				" host1 [host2 ...]\n");
+	exit(1);
 }
 
 
@@ -364,7 +373,7 @@ query_loop(char *argv[], int argc)
 			OMSG.rip_nets[1] = OMSG.rip_nets[0];
 			NA0.a_family = RIP_AF_AUTH;
 			NA0.a_type = RIP_AUTH_PW;
-			memmove(NA0.au.au_pw, passwd, RIP_AUTH_PW_LEN);
+			memcpy(NA0.au.au_pw, passwd, RIP_AUTH_PW_LEN);
 			omsg_len += sizeof(OMSG.rip_nets[0]);
 
 		} else if (auth_type == RIP_AUTH_MD5) {
@@ -372,15 +381,17 @@ query_loop(char *argv[], int argc)
 			NA0.a_family = RIP_AF_AUTH;
 			NA0.a_type = RIP_AUTH_MD5;
 			NA0.au.a_md5.md5_keyid = (int8_t)keyid;
-			NA0.au.a_md5.md5_auth_len = RIP_AUTH_PW_LEN;
+			NA0.au.a_md5.md5_auth_len = RIP_AUTH_MD5_LEN;
 			NA0.au.a_md5.md5_seqno = 0;
-			NA0.au.a_md5.md5_pkt_len = sizeof(OMSG.rip_nets[1]);
+			cc = (char *)&NA2-(char *)&OMSG;
+			NA0.au.a_md5.md5_pkt_len = htons(cc);
 			NA2.a_family = RIP_AF_AUTH;
-			NA2.a_type = 1;
-			memmove(NA2.au.au_pw, passwd, sizeof(NA2.au.au_pw));
+			NA2.a_type = htons(1);
 			MD5Init(&md5_ctx);
-			MD5Update(&md5_ctx, (u_char *)&NA0,
-				  (char *)(&NA2+1) - (char *)&NA0);
+			MD5Update(&md5_ctx,
+				  (u_char *)&OMSG, cc);
+			MD5Update(&md5_ctx,
+				  (u_char *)passwd, RIP_AUTH_MD5_LEN);
 			MD5Final(NA2.au.au_pw, &md5_ctx);
 			omsg_len += 2*sizeof(OMSG.rip_nets[0]);
 		}
@@ -425,6 +436,11 @@ query_loop(char *argv[], int argc)
 			}
 			if (sp == 0) {
 				sp = malloc(sizeof(*sp));
+				if (sp == 0) {
+					fprintf(stderr,
+						"rtquery: malloc failed\n");
+					exit(1);
+				}
 				sp->addr = from.sin_addr;
 				sp->next = seen;
 				seen = sp;
@@ -493,7 +509,7 @@ out(char *host)
 			herror(host);
 			return -1;
 		}
-		memmove(&router.sin_addr, hp->h_addr, sizeof(router.sin_addr));
+		memcpy(&router.sin_addr, hp->h_addr, sizeof(router.sin_addr));
 	}
 	router.sin_port = htons(RIP_PORT);
 
@@ -572,6 +588,9 @@ rip_input(struct sockaddr_in *from,
 	struct in_addr in;
 	char *name;
 	char net_buf[80];
+	u_char hash[RIP_AUTH_MD5_LEN];
+	MD5_CTX md5_ctx;
+	u_char md5_authed = 0;
 	u_int mask, dmask;
 	char *sp;
 	int i;
@@ -686,15 +705,18 @@ rip_input(struct sockaddr_in *from,
 
 			if (na->a_type == RIP_AUTH_MD5
 			    && n == IMSG.rip_nets) {
-				(void)printf("  MD5 Authentication"
+				(void)printf("  MD5 Auth"
 					     " len=%d KeyID=%d"
-					     " seqno=%d"
+					     " auth_len=%d"
+					     " seqno=%#x"
 					     " rsvd=%#x,%#x\n",
-					     na->au.a_md5.md5_pkt_len,
+					     ntohs(na->au.a_md5.md5_pkt_len),
 					     na->au.a_md5.md5_keyid,
-					     na->au.a_md5.md5_seqno,
+					     na->au.a_md5.md5_auth_len,
+					     ntohl(na->au.a_md5.md5_seqno),
 					     na->au.a_md5.rsvd[0],
 					     na->au.a_md5.rsvd[1]);
+				md5_authed = 1;
 				continue;
 			}
 			(void)printf("  Authentication type %d: ",
@@ -702,6 +724,19 @@ rip_input(struct sockaddr_in *from,
 			for (i = 0; i < sizeof(na->au.au_pw); i++)
 				(void)printf("%02x ", na->au.au_pw[i]);
 			putc('\n', stdout);
+			if (md5_authed && n+1 > lim
+			    && na->a_type == ntohs(1)) {
+				MD5Init(&md5_ctx);
+				MD5Update(&md5_ctx, (u_char *)&IMSG,
+					  (char *)na-(char *)&IMSG);
+				MD5Update(&md5_ctx, (u_char *)passwd,
+					  RIP_AUTH_MD5_LEN);
+				MD5Final(hash, &md5_ctx);
+				(void)printf("    %s hash\n",
+					     memcmp(hash, na->au.au_pw,
+						    sizeof(hash))
+					     ? "WRONG" : "correct");
+			}
 			continue;
 
 		} else {
@@ -829,7 +864,7 @@ parse_quote(char **linep,
 		if (c == '\0')
 			break;
 
-		if (c == '\\' && pc != '\0') {
+		if (c == '\\' && *pc != '\0') {
 			if ((c = *pc++) == 'n') {
 				c = '\n';
 			} else if (c == 'r') {

@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.11 1998/06/02 18:02:55 thorpej Exp $	*/
+/*	$NetBSD: parms.c,v 1.12 1998/10/25 14:56:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -13,7 +13,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parms.c,v 1.11 1998/06/02 18:02:55 thorpej Exp $");
+__RCSID("$NetBSD: parms.c,v 1.12 1998/10/25 14:56:08 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -77,7 +77,7 @@ get_parms(struct interface *ifp)
 				if (parmp->parm_auth[0].type == RIP_AUTH_NONE
 				    || num_passwds >= MAX_AUTH_KEYS)
 					break;
-				memmove(&ifp->int_auth[num_passwds++],
+				memcpy(&ifp->int_auth[num_passwds++],
 				    &parmp->parm_auth[i],
 				    sizeof(ifp->int_auth[0]));
 			}
@@ -371,8 +371,7 @@ parse_quote(char **linep,		/* look here */
 	    char *buf,			/* copy token to here */
 	    int	lim)			/* at most this many bytes */
 {
-	char c = '\0';
-	char *pc, *p;
+	char c = '\0', *pc, *p;
 
 
 	pc = *linep;
@@ -384,7 +383,7 @@ parse_quote(char **linep,		/* look here */
 		if (c == '\0')
 			break;
 
-		if (c == '\\' && pc != '\0') {
+		if (c == '\\' && *pc != '\0') {
 			if ((c = *pc++) == 'n') {
 				c = '\n';
 			} else if (c == 'r') {
@@ -435,7 +434,9 @@ parse_ts(time_t *tp,
 	 u_int bufsize)
 {
 	struct tm tm;
+#if defined(sgi) || defined(__NetBSD__)
 	char *ptr;
+#endif
 
 	if (0 > parse_quote(valp, "| ,\n\r", delimp,
 			    buf,bufsize)
@@ -446,12 +447,25 @@ parse_ts(time_t *tp,
 	}
 	strcat(buf,"\n");
 	memset(&tm, 0, sizeof(tm));
-
+#if defined(sgi) || defined(__NetBSD__)
 	ptr = strptime(buf, "%y/%m/%d@%H:%M\n", &tm);
 	if (ptr == NULL || *ptr != '\0') {
 		sprintf(buf,"bad timestamp %.25s", val0);
 		return buf;
 	}
+#else
+	if (5 != sscanf(buf, "%u/%u/%u@%u:%u\n",
+			&tm.tm_year, &tm.tm_mon, &tm.tm_mday,
+			&tm.tm_hour, &tm.tm_min)
+	    || tm.tm_mon < 1 || tm.tm_mon > 12
+	    || tm.tm_mday < 1 || tm.tm_mday > 31) {
+		sprintf(buf,"bad timestamp %.25s", val0);
+		return buf;
+	}
+	tm.tm_mon--;
+	if (tm.tm_year <= 37)		/* assume small years are in the */
+		tm.tm_year += 100;	/* 3rd millenium */
+#endif
 
 	if ((*tp = mktime(&tm)) == -1) {
 		sprintf(buf,"bad timestamp %.25s", val0);
@@ -469,7 +483,7 @@ static char *				/* 0 or error message */
 get_passwd(char *tgt,
 	   char *val,
 	   struct parm *parmp,
-	   u_char type,
+	   u_int16_t type,
 	   int safe)			/* 1=from secure file */
 {
 	static char buf[80];
@@ -569,11 +583,10 @@ parse_parms(char *line,
 	struct r1net *r1netp;
 	struct tgate *tg;
 	naddr addr, mask;
-	char delim, *val0, *tgt, *val, *p;
+	char delim, *val0 = 0, *tgt, *val, *p;
 	char buf[BUFSIZ], buf2[BUFSIZ];
 	int i;
 
-	val0 = NULL;			/* XXX gcc -Wuninitialized */
 
 	/* "subnet=x.y.z.u/mask[,metric]" must be alone on the line */
 	if (!strncasecmp(line, "subnet=", sizeof("subnet=")-1)
@@ -602,7 +615,10 @@ parse_parms(char *line,
 		return 0;
 	}
 
-	/* "ripv1_mask=x.y.z.u/mask,mask" must be alone on the line */
+	/* "ripv1_mask=x.y.z.u/mask1,mask2" must be alone on the line.
+	 * This requires that x.y.z.u/mask1 be considered a subnet of
+	 * x.y.z.u/mask2, as if x.y.z.u/mask2 were a class-full network.
+	 */
 	if (!strncasecmp(line, "ripv1_mask=", sizeof("ripv1_mask=")-1)
 	    && *(val = &line[sizeof("ripv1_mask=")-1]) != '\0') {
 		if (0 > parse_quote(&val, ",", &delim, buf, sizeof(buf))
@@ -616,7 +632,7 @@ parse_parms(char *line,
 		r1netp->r1net_mask = HOST_MASK << (32-i);
 		if (!getnet(buf, &r1netp->r1net_net, &r1netp->r1net_match)
 		    || r1netp->r1net_net == RIP_DEFAULT
-		    || r1netp->r1net_mask < r1netp->r1net_match) {
+		    || r1netp->r1net_mask > r1netp->r1net_match) {
 			free(r1netp);
 			return bad_str(line);
 		}
@@ -778,7 +794,7 @@ parse_parms(char *line,
 			tg = (struct tgate *)rtmalloc(sizeof(*tg),
 						      "parse_parms"
 						      "trust_gateway");
-			bzero(tg, sizeof(*tg));
+			memset(tg, 0, sizeof(*tg));
 			tg->tgate_addr = addr;
 			i = 0;
 			/* The default is to trust all routes. */
@@ -882,7 +898,7 @@ check_parms(struct parm *new)
 	 * they affect the result in the order the operator specified.
 	 */
 	parmp = (struct parm*)rtmalloc(sizeof(*parmp), "check_parms");
-	memmove(parmp, new, sizeof(*parmp));
+	memcpy(parmp, new, sizeof(*parmp));
 	*parmpp = parmp;
 
 	return 0;
@@ -994,7 +1010,7 @@ gethost(char *name,
 
 	hp = gethostbyname(name);
 	if (hp) {
-		memmove(addrp, hp->h_addr, sizeof(*addrp));
+		memcpy(addrp, hp->h_addr, sizeof(*addrp));
 		return 1;
 	}
 

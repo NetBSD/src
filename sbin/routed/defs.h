@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.16 1998/06/02 18:02:55 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.17 1998/10/25 14:56:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -13,7 +13,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -51,7 +51,7 @@
  *	tell the kernel hop counts
  *	do not advertise if ipforwarding=0
  *
- * The vestigual support for other protocols has been removed.  There
+ * The vestigial support for other protocols has been removed.  There
  * is no likelihood that IETF RIPv1 or RIPv2 will ever be used with
  * other protocols.  The result is far smaller, faster, cleaner, and
  * perhaps understandable.
@@ -73,6 +73,7 @@
 #include <stdarg.h>
 #include <syslog.h>
 #include <time.h>
+#include <sys/cdefs.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,6 +94,7 @@
 #define RIPVERSION RIPv2
 #include <protocols/routed.h>
 
+
 /* Type of an IP address.
  *	Some systems do not like to pass structures, so do not use in_addr.
  *	Some systems think a long has 64 bits, which would be a gross waste.
@@ -100,7 +102,7 @@
  * It should be defined somewhere netinet/in.h, but it is not.
  */
 #ifdef sgi
-#define naddr __uint32_t
+#define naddr u_int32_t
 #elif defined (__NetBSD__)
 #define naddr u_int32_t
 #define _HAVE_SA_LEN
@@ -114,7 +116,7 @@
 /* Turn on if IP_DROP_MEMBERSHIP and IP_ADD_MEMBERSHIP do not look at
  * the dstaddr of point-to-point interfaces.
  */
-#if defined(__NetBSD__)
+#ifdef __NetBSD__
 #define MCAST_PPP_BUG
 #endif
 
@@ -295,7 +297,7 @@ struct interface {
 	} int_data;
 #	define MAX_AUTH_KEYS 5
 	struct auth {			/* authentication info */
-	    u_char  type;
+	    u_int16_t type;
 	    u_char	key[RIP_AUTH_PW_LEN];
 	    u_char  keyid;
 	    time_t  start, end;
@@ -363,7 +365,7 @@ struct ag_info {
 	u_int	ag_seqno;
 	u_short	ag_tag;
 	u_short	ag_state;
-#define	    AGS_SUPPRESS    0x001	/* combine with coaser mask */
+#define	    AGS_SUPPRESS    0x001	/* combine with coarser mask */
 #define	    AGS_AGGREGATE   0x002	/* synthesize combined routes */
 #define	    AGS_REDUN0	    0x004	/* redundant, finer routes output */
 #define	    AGS_REDUN1	    0x008
@@ -375,7 +377,7 @@ struct ag_info {
 #define	    AGS_FINE_GATE   0x080	/* ignore differing ag_gate when this
 					 * has the finer netmask */
 #define	    AGS_CORS_GATE   0x100	/* ignore differing gate when this
-					 * has the coarser netmaks */
+					 * has the coarser netmask */
 #define	    AGS_SPLIT_HZ    0x200	/* suppress for split horizon */
 
 	/* some bits are set if they are set on either route */
@@ -394,7 +396,7 @@ extern struct parm {
 	char	parm_d_metric;
 	u_int	parm_int_state;
 	int	parm_rdisc_pref;	/* signed IRDP preference */
-	int	parm_rdisc_int;		/* IRDP advertising internval */
+	int	parm_rdisc_int;		/* IRDP advertising interval */
 	struct auth parm_auth[MAX_AUTH_KEYS];
 } *parms;
 
@@ -455,7 +457,7 @@ extern int	supplier_set;		/* -s or -q requested */
 extern int	lookforinterfaces;	/* 1=probe for new up interfaces */
 extern int	ridhosts;		/* 1=reduce host routes */
 extern int	mhome;			/* 1=want multi-homed host route */
-extern int	advertise_mhome;	/* 1=must continue adverising it */
+extern int	advertise_mhome;	/* 1=must continue advertising it */
 extern int	auth_ok;		/* 1=ignore auth if we do not care */
 
 extern struct timeval clk;		/* system clock's idea of time */
@@ -469,7 +471,7 @@ extern struct timeval next_bcast;	/* next general broadcast */
 extern struct timeval age_timer;	/* next check of old routes */
 extern struct timeval no_flash;		/* inhibit flash update until then */
 extern struct timeval rdisc_timer;	/* next advert. or solicitation */
-extern int rdisc_ok;			/* using solicted route */
+extern int rdisc_ok;			/* using solicited route */
 
 extern struct timeval ifinit_timer;	/* time to check interfaces */
 

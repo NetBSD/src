@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.6 1997/09/16 07:29:56 lukem Exp $	*/
+/*	$NetBSD: radix.c,v 1.7 1998/10/25 14:56:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -13,7 +13,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: radix.c,v 1.6 1997/09/16 07:29:56 lukem Exp $");
+__RCSID("$NetBSD: radix.c,v 1.7 1998/10/25 14:56:08 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -63,7 +63,7 @@ static char *rn_zeros, *rn_ones;
 #define Bcmp(a, b, l) (l == 0 ? 0 \
 				: memcmp((caddr_t)(a), (caddr_t)(b), (size_t)l))
 
-static int rn_satsifies_leaf(char *, struct radix_node *, int);
+static int rn_satisfies_leaf(char *, struct radix_node *, int);
 
 /*
  * The data structure for the keys is a radix tree with one way
@@ -179,7 +179,7 @@ rn_lookup(void *v_arg, void *m_arg, struct radix_node_head *head)
 }
 
 static int
-rn_satsifies_leaf(char *trial,
+rn_satisfies_leaf(char *trial,
 		  struct radix_node *leaf,
 		  int skip)
 {
@@ -272,7 +272,7 @@ on2:
 	 */
 	if ((saved_t = t)->rn_mask == 0)
 		t = t->rn_dupedkey;
-	for (; t; t = t->rn_dupedkey)
+	for (; t; t = t->rn_dupedkey) {
 		/*
 		 * Even if we don't match exactly as a host,
 		 * we may match if the leaf we wound up at is
@@ -281,8 +281,10 @@ on2:
 		if (t->rn_flags & RNF_NORMAL) {
 			if (rn_b <= t->rn_b)
 				return t;
-		} else if (rn_satsifies_leaf(v, t, matched_off))
+		} else if (rn_satisfies_leaf(v, t, matched_off)) {
 				return t;
+		}
+	}
 	t = saved_t;
 	/* start searching up the tree */
 	do {
@@ -304,7 +306,7 @@ on2:
 					x = rn_search_m(v, t, m->rm_mask);
 					while (x && x->rn_mask != m->rm_mask)
 						x = x->rn_dupedkey;
-					if (x && rn_satsifies_leaf(v, x, off))
+					if (x && rn_satisfies_leaf(v, x, off))
 						    return x;
 				}
 			} while ((m = m->rm_mklist));
@@ -443,9 +445,9 @@ rn_addmask(void *n_arg, int search, int skip)
 		x = 0;
 	if (x || search)
 		return (x);
-	R_Malloc(x, struct radix_node *, max_keylen + 2 * sizeof (*x));
-	if ((saved_x = x) == 0)
-		return (0);
+	x = (struct radix_node *)rtmalloc(max_keylen + 2*sizeof(*x),
+					  "rn_addmask");
+	saved_x = x;
 	Bzero(x, max_keylen + 2 * sizeof (*x));
 	netmask = cp = (caddr_t)(x + 2);
 	Bcopy(addmask_key, cp, mlen);
@@ -851,9 +853,7 @@ rn_inithead(void **head, int off)
 	struct radix_node *t, *tt, *ttt;
 	if (*head)
 		return (1);
-	R_Malloc(rnh, struct radix_node_head *, sizeof (*rnh));
-	if (rnh == 0)
-		return (0);
+	rnh = (struct radix_node_head *)rtmalloc(sizeof(*rnh), "rn_inithead");
 	Bzero(rnh, sizeof (*rnh));
 	*head = rnh;
 	t = rn_newpair(rn_zeros, off, rnh->rnh_nodes);
@@ -882,9 +882,7 @@ rn_init(void)
 		printf("rn_init: radix functions require max_keylen be set\n");
 		return;
 	}
-	R_Malloc(rn_zeros, char *, 3 * max_keylen);
-	if (rn_zeros == NULL)
-		panic("rn_init");
+	rn_zeros = (char *)rtmalloc(3 * max_keylen, "rn_init");
 	Bzero(rn_zeros, 3 * max_keylen);
 	rn_ones = cp = rn_zeros + max_keylen;
 	addmask_key = cplim = rn_ones + max_keylen;

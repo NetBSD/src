@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.4 1997/09/15 10:38:18 lukem Exp $	*/
+/*	$NetBSD: radix.h,v 1.5 1998/10/25 14:56:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -13,7 +13,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -104,7 +104,7 @@ extern struct radix_mask {
 		m = rn_mkfreelist; \
 		rn_mkfreelist = (m)->rm_mklist; \
 	} else \
-		R_Malloc(m, struct radix_mask *, sizeof (*(m))); }\
+		m = (struct radix_mask *)rtmalloc(sizeof(*(m)), "MKGet"); }\
 
 #define MKFree(m) { (m)->rm_mklist = rn_mkfreelist; rn_mkfreelist = (m);}
 
@@ -139,7 +139,6 @@ struct radix_node_head {
 #define Bcmp(a, b, n) memcmp(((void *)(a)), ((void *)(b)), (n))
 #define Bcopy(a, b, n) memmove(((void *)(b)), ((void *)(a)), (size_t)(n))
 #define Bzero(p, n) memset((void *)(p), 0, (size_t)(n));
-#define R_Malloc(p, t, n) (p = (t) malloc((size_t)(n)))
 #define Free(p) free((void *)p);
 
 void	 rn_init __P((void));

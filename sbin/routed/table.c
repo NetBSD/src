@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.7 1998/06/02 18:02:56 thorpej Exp $	*/
+/*	$NetBSD: table.c,v 1.8 1998/10/25 14:56:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -13,7 +13,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -37,7 +37,7 @@
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: table.c,v 1.7 1998/06/02 18:02:56 thorpej Exp $");
+__RCSID("$NetBSD: table.c,v 1.8 1998/10/25 14:56:09 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -192,11 +192,11 @@ ag_del(struct ag_info *ag)
 }
 
 
-/* Flush routes waiting for aggretation.
+/* Flush routes waiting for aggregation.
  *	This must not suppress a route unless it is known that among all
  *	routes with coarser masks that match it, the one with the longest
  *	mask is appropriate.  This is ensured by scanning the routes
- *	in lexical order, and with the most restritive mask first
+ *	in lexical order, and with the most restrictive mask first
  *	among routes to the same destination.
  */
 void
@@ -335,8 +335,8 @@ ag_check(naddr	dst,
 		 * A route to an address less than the current destination
 		 * will not be affected by the current route or any route
 		 * seen hereafter.  That means it is safe to suppress it.
-		 * This check keeps poor routes (eg. with large hop counts)
-		 * from preventing suppresion of finer routes.
+		 * This check keeps poor routes (e.g. with large hop counts)
+		 * from preventing suppression of finer routes.
 		 */
 		if (ag_cors != 0
 		    && ag->ag_dst_h < dst
@@ -833,7 +833,7 @@ kern_check_static(struct khash *k,
 	if (k->k_metric == 0)
 		return;
 
-	bzero(&new, sizeof(new));
+	memset(&new, 0, sizeof(new));
 	new.rts_ifp = ifp;
 	new.rts_gate = k->k_gate;
 	new.rts_router = (ifp != 0) ? ifp->int_addr : loopaddr;
@@ -1385,7 +1385,8 @@ kern_out(struct ag_info *ag)
 
 /* ARGSUSED */
 static int
-walk_kern(struct radix_node *rn, struct walkarg *argp)
+walk_kern(struct radix_node *rn,
+	struct walkarg *argp)
 {
 #define RT ((struct rt_entry *)rn)
 	char metric, pref;
@@ -1952,7 +1953,8 @@ rtbad_sub(struct rt_entry *rt)
  */
 /* ARGSUSED */
 int
-walk_bad(struct radix_node *rn, struct walkarg *argp)
+walk_bad(struct radix_node *rn,
+	struct walkarg *argp)
 {
 #define RT ((struct rt_entry *)rn)
 	struct rt_spare *rts;
@@ -1994,7 +1996,8 @@ walk_bad(struct radix_node *rn, struct walkarg *argp)
  */
 /* ARGSUSED */
 static int
-walk_age(struct radix_node *rn, struct walkarg *argp)
+walk_age(struct radix_node *rn,
+	struct walkarg *argp)
 {
 #define RT ((struct rt_entry *)rn)
 	struct interface *ifp;
