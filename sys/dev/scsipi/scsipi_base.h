@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.h,v 1.2 1997/08/27 11:26:51 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.h,v 1.3 1997/09/19 23:53:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -39,14 +39,9 @@ struct scsipi_xfer *scsipi_get_xs __P((struct scsipi_link *, int));
 void scsipi_free_xs __P((struct scsipi_xfer *, int));
 
 static __inline struct scsipi_xfer *scsipi_make_xs __P((struct scsipi_link *,
-						    struct scsipi_generic *,
-						    int cmdlen,
-						    u_char *data_addr,
-						    int datalen,
-						    int retries,
-						    int timeout,
-						    struct buf *,
-						    int flags));
+	    struct scsipi_generic *, int cmdlen, u_char *data_addr,
+	    int datalen, int retries, int timeout, struct buf *,
+	    int flags)) __attribute__ ((unused));
 
 /*
  * Make a scsipi_xfer, and return a pointer to it.
@@ -54,7 +49,7 @@ static __inline struct scsipi_xfer *scsipi_make_xs __P((struct scsipi_link *,
 
 static __inline struct scsipi_xfer *
 scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
-	     retries, timeout, bp, flags)
+    retries, timeout, bp, flags)
 	struct scsipi_link *sc_link;
 	struct scsipi_generic *scsipi_cmd;
 	int cmdlen;
