@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.116 2003/08/07 16:34:23 agc Exp $	*/
+/*	$NetBSD: vnode.h,v 1.117 2003/10/15 11:29:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -255,6 +255,12 @@ extern const int	vttoif_tab[];
 #define	WRITECLOSE	0x0004		/* vflush: only close writable files */
 #define	DOCLOSE		0x0008		/* vclean: close active files */
 #define	V_SAVE		0x0001		/* vinvalbuf: sync file first */
+					/* vn_start_write: */
+#define	V_WAIT		0x0001		/*  sleep for suspend */
+#define	V_NOWAIT	0x0002		/*  don't sleep for suspend */
+#define	V_SLEEPONLY	0x0004		/*  just return after sleep */
+#define V_PCATCH	0x0008		/*  sleep witch PCATCH set */
+#define V_LOWER		0x0010		/*  lower level operation */
 
 /*
  * Flags to various vnode operations.
@@ -506,6 +512,96 @@ struct vop_generic_args {
 #define	VOFFSET(OP) (VDESC(OP)->vdesc_offset)
 
 /*
+ * Functions to gate filesystem write operations. Declared static inline
+ * here because they usually go into time critical code paths.
+ */
+#include <sys/mount.h>
+
+/*
+ * Preparing to start a filesystem write operation. If the operation is
+ * permitted, then we bump the count of operations in progress and
+ * proceed. If a suspend request is in progress, we wait until the
+ * suspension is over, and then proceed.
+ * V_PCATCH    adds PCATCH to the tsleep flags.
+ * V_WAIT      waits until suspension is over. Otherwise returns EWOULDBLOCK.
+ * V_SLEEPONLY wait, but do not bump the operations count.
+ * V_LOWER     this is a lower level operation. No further vnodes should be
+ *             locked. Otherwise it is a upper level operation. No vnodes
+ *             should be locked.
+ */
+static inline int
+vn_start_write(struct vnode *vp, struct mount **mpp, int flags)
+{
+	struct mount *mp;
+	int error, mask, prio;
+
+	/*
+	 * If a vnode is provided, get and return the mount point that
+	 * to which it will write.
+	 */
+	if (vp != NULL) {
+		*mpp = vp->v_mount;
+	}
+	if ((mp = *mpp) == NULL)
+		return (0);
+	/*
+	 * Check on status of suspension.
+	 */
+	prio = PUSER - 1;
+	if (flags & V_PCATCH)
+		prio |= PCATCH;
+
+	if ((flags & V_LOWER) == 0)
+		mask = IMNT_SUSPEND;
+	else
+		mask = IMNT_SUSPENDLOW;
+
+	while ((mp->mnt_iflag & mask) != 0) {
+		if ((flags & V_WAIT) == 0)
+			return (EWOULDBLOCK);
+		error = tsleep(&mp->mnt_flag, prio, "suspfs", 0);
+		if (error)
+			return (error);
+	}
+	if (flags & V_SLEEPONLY)
+		return (0);
+	if ((flags & V_LOWER) == 0)
+		mp->mnt_writeopcountupper++;
+	else
+		mp->mnt_writeopcountlower++;
+	return (0);
+}
+
+/*
+ * Filesystem write operation has completed. If we are suspending and this
+ * operation is the last one, notify the suspender that the suspension is
+ * now in effect.
+ */
+static inline void
+vn_finished_write(struct mount *mp, int flags)
+{
+	if (mp == NULL)
+		return;
+	if ((flags & V_LOWER) == 0) {
+		mp->mnt_writeopcountupper--;
+		if (mp->mnt_writeopcountupper < 0)
+			printf("vn_finished_write: neg cnt upper=%d\n",
+			       mp->mnt_writeopcountupper);
+		if ((mp->mnt_iflag & IMNT_SUSPEND) != 0 &&
+		    mp->mnt_writeopcountupper <= 0)
+			wakeup(&mp->mnt_writeopcountupper);
+	} else {
+		mp->mnt_writeopcountlower--;
+		if (mp->mnt_writeopcountlower < 0)
+			printf("vn_finished_write: neg cnt lower=%d\n",
+			       mp->mnt_writeopcountlower);
+		if ((mp->mnt_iflag & IMNT_SUSPENDLOW) != 0 &&
+		    mp->mnt_writeopcountupper <= 0)
+			wakeup(&mp->mnt_writeopcountlower);
+	}
+}
+
+/*
  * Finally, include the default set of vnode operations.
  */
 #include <sys/vnode_if.h>
@@ -515,7 +611,6 @@ struct vop_generic_args {
  */
 struct file;
 struct filedesc;
-struct mount;
 struct nameidata;
 struct proc;
 struct stat;
@@ -586,6 +681,8 @@ int	vfs_drainvnodes(long target, struct proc *);
 #ifdef DDB
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));
 #endif /* DDB */
+void	vfs_write_resume(struct mount *);
+int	vfs_write_suspend(struct mount *);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_VNODE_H_ */

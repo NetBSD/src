@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.207 2003/10/14 14:02:56 dbj Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.208 2003/10/15 11:29:01 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.207 2003/10/14 14:02:56 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.208 2003/10/15 11:29:01 hannken Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -237,21 +237,24 @@ getcleanvnode(p)
 	struct proc *p;
 {
 	struct vnode *vp;
+	struct mount *mp;
 	struct freelst *listhd;
 
 	LOCK_ASSERT(simple_lock_held(&vnode_free_list_slock));
 	if ((vp = TAILQ_FIRST(listhd = &vnode_free_list)) == NULL)
 		vp = TAILQ_FIRST(listhd = &vnode_hold_list);
 	for (; vp != NULL; vp = TAILQ_NEXT(vp, v_freelist)) {
-		if (simple_lock_try(&vp->v_interlock)) {
-			if ((vp->v_flag & VLAYER) == 0) {
+		if (!simple_lock_try(&vp->v_interlock))
+			continue;
+		if ((vp->v_flag & VLAYER) == 0) {
+			if (vn_start_write(vp, &mp, V_NOWAIT) == 0)
 				break;
-			}
-			if (VOP_ISLOCKED(vp) == 0)
+		} else if (VOP_ISLOCKED(vp) == 0) {
+			if (vn_start_write(vp, &mp, V_NOWAIT) == 0)
 				break;
-			else
-				simple_unlock(&vp->v_interlock);
 		}
+		mp = NULL;
+		simple_unlock(&vp->v_interlock);
 	}
 
 	if (vp == NULLVP) {
@@ -271,6 +274,7 @@ getcleanvnode(p)
 		vgonel(vp, p);
 	else
 		simple_unlock(&vp->v_interlock);
+	vn_finished_write(mp, 0);
 #ifdef DIAGNOSTIC
 	if (vp->v_data || vp->v_uobj.uo_npages ||
 	    TAILQ_FIRST(&vp->v_uobj.memq))
@@ -1553,6 +1557,7 @@ vclean(vp, flags, p)
 	int flags;
 	struct proc *p;
 {
+	struct mount *mp;
 	int active;
 
 	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
@@ -1600,7 +1605,9 @@ vclean(vp, flags, p)
 	 * Clean out any cached data associated with the vnode.
 	 */
 	if (flags & DOCLOSE) {
+		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 		vinvalbuf(vp, V_SAVE, NOCRED, p, 0, 0);
+		vn_finished_write(mp, V_LOWER);
 		KASSERT((vp->v_flag & VONWORKLST) == 0);
 	}
 	LOCK_ASSERT(!simple_lock_held(&vp->v_interlock));

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.168 2003/10/12 20:09:50 pk Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.169 2003/10/15 11:28:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.168 2003/10/12 20:09:50 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.169 2003/10/15 11:28:59 hannken Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1933,6 +1933,7 @@ coredump(struct lwp *l)
 	struct ucred		*cred;
 	struct nameidata	nd;
 	struct vattr		vattr;
+	struct mount		*mp;
 	int			error, error1;
 	char			name[MAXPATHLEN];
 
@@ -1955,6 +1956,7 @@ coredump(struct lwp *l)
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur)
 		return (EFBIG);		/* better error code? */
 
+restart:
 	/*
 	 * The core dump will go in the current working directory.  Make
 	 * sure that the directory is still there and that the mount flags
@@ -1975,6 +1977,16 @@ coredump(struct lwp *l)
 		return (error);
 	vp = nd.ni_vp;
 
+	if (vn_start_write(vp, &mp, V_NOWAIT) != 0) {
+		VOP_UNLOCK(vp, 0);
+		if ((error = vn_close(vp, FWRITE, cred, p)) != 0)
+			return (error);
+		if ((error = vn_start_write(NULL, &mp,
+		    V_WAIT | V_SLEEPONLY | V_PCATCH)) != 0)
+			return (error);
+		goto restart;
+	}
+
 	/* Don't dump to non-regular files or files with links. */
 	if (vp->v_type != VREG ||
 	    VOP_GETATTR(vp, &vattr, cred, p) || vattr.va_nlink != 1) {
@@ -1991,6 +2003,7 @@ coredump(struct lwp *l)
 	error = (*p->p_execsw->es_coredump)(l, vp, cred);
  out:
 	VOP_UNLOCK(vp, 0);
+	vn_finished_write(mp, 0);
 	error1 = vn_close(vp, FWRITE, cred, p);
 	if (error == 0)
 		error = error1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.36 2003/10/05 17:48:49 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.37 2003/10/15 11:29:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.36 2003/10/05 17:48:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.37 2003/10/15 11:29:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,7 @@ ext2fs_inactive(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
+	struct mount *mp;
 	struct proc *p = ap->a_p;
 	struct timespec ts;
 	int error = 0;
@@ -117,6 +118,9 @@ ext2fs_inactive(v)
 
 	error = 0;
 	if (ip->i_e2fs_nlink == 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+		error = vn_start_write(vp, &mp, V_WAIT | V_LOWER);
+		if (error)
+			return (error);
 		if (ip->i_e2fs_size != 0) {
 			error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, NULL);
 		}
@@ -124,9 +128,16 @@ ext2fs_inactive(v)
 		ip->i_e2fs_dtime = ts.tv_sec;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		VOP_VFREE(vp, ip->i_number, ip->i_e2fs_mode);
+		vn_finished_write(mp, V_LOWER);
 	}
-	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED))
+	if (ip->i_flag &
+	    (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) {
+		error = vn_start_write(vp, &mp, V_WAIT | V_LOWER);
+		if (error)
+			return (error);
 		VOP_UPDATE(vp, NULL, NULL, 0);
+		vn_finished_write(mp, V_LOWER);
+	}
 out:
 	VOP_UNLOCK(vp, 0);
 	/*

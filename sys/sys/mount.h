@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.114 2003/10/14 14:02:56 dbj Exp $	*/
+/*	$NetBSD: mount.h,v 1.115 2003/10/15 11:29:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -140,8 +140,8 @@ struct mount {
 	void		*mnt_data;		/* private data */
 	int		mnt_wcnt;		/* count of vfs_busy waiters */
 	struct proc	*mnt_unmounter;		/* who is unmounting */
-	int		mnt_writeopcountupper;  /* upper writeops in progress */
-	int		mnt_writeopcountlower;  /* lower writeops in progress */
+	int		mnt_writeopcountupper;	/* upper writeops in progress */
+	int		mnt_writeopcountlower;	/* lower writeops in progress */
 };
 
 /*
@@ -251,6 +251,9 @@ struct mount {
 #define	IMNT_GONE	0x00000001	/* filesystem is gone.. */
 #define	IMNT_UNMOUNT	0x00000002	/* unmount in progress */
 #define	IMNT_WANTRDWR	0x00000004	/* upgrade to read/write requested */
+#define	IMNT_SUSPEND	0x00000008	/* request upper write suspension */
+#define	IMNT_SUSPENDLOW	0x00000010	/* request lower write suspension */
+#define	IMNT_SUSPENDED	0x00000020	/* write operations are suspended */
 
 #define __MNT_FLAGS \
 	__MNT_BASIC_FLAGS \
