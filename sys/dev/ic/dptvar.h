@@ -1,4 +1,4 @@
-/*	$NetBSD: dptvar.h,v 1.2 1999/09/28 23:35:29 ad Exp $	*/
+/*	$NetBSD: dptvar.h,v 1.3 1999/09/29 17:33:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -29,8 +29,9 @@
 
 #ifndef _IC_DPTVAR_H_
 #define _IC_DPTVAR_H_ 1
+#ifdef _KERNEL
 
-#define	DPT_CCB_OFF(sc,m)	((u_long)(m) - (u_long)((sc)->sc_ccbs))
+#define	CCB_OFF(sc,m)	((u_long)(m) - (u_long)((sc)->sc_ccbs))
 
 #define CCB_ALLOC	0x01	/* CCB allocated */
 #define CCB_ABORT	0x02	/* abort has been issued on this CCB */
@@ -53,29 +54,12 @@ struct dpt_ccb {
 	struct scsipi_xfer *ccb_xs;		/* initiating SCSI command */
 };
 
-#ifdef DPT_PROFILE
-struct dpt_profile {
-	int	dp_nsync;		/* synchronous writes */
-	int	dp_nasync;		/* asynchronous writes */
-	int	dp_nread;		/* reads */
-	int	dp_maxchargeccb;	/* maximum CCB queue charge */
-	int	dp_maxchargexs;		/* maximum SCSI queue charge */
-	int	dp_curchargeccb;	/* current CCB queue charge */
-	int	dp_curchargexs;		/* current SCSI queue charge */
-	int	dp_ncmds;		/* total commands recieved */
-	int	dp_nsleepccb;		/* times sleeping on a CCB */
-	int	dp_nintr;		/* interrupts */
-	int	dp_nintrloop;		/* intrs handled with one h/w intr */
-};
-#endif	/* DPT_PROFILE */
-
-#ifdef _KERNEL
-
 struct dpt_softc {
 	struct device sc_dv;		/* generic device data */
 	bus_space_handle_t sc_ioh;	/* bus space handle */
 	struct scsipi_adapter sc_adapter;/* scsipi adapter */
 	struct scsipi_link sc_link[3];	/* prototype link for each channel */
+	struct eata_cfg sc_ec;		/* EATA configuration data */
 	bus_space_tag_t	sc_iot;		/* bus space tag */
 	bus_dma_tag_t	sc_dmat;	/* bus DMA tag */
 	bus_dmamap_t	sc_dmamap_ccb;	/* maps the CCBs */
@@ -91,16 +75,13 @@ struct dpt_softc {
 	u_int32_t	sc_scrpa;	/* scratch area physical address */
 	int		sc_hbaid[3];	/* ID of HBA on each channel */
 	int		sc_nccbs;	/* number of CCBs available */
-#ifdef notdef
-	int		sc_pending;	/* cmds on sc_queue + HBA queue */
-#endif
 	TAILQ_HEAD(, dpt_ccb) sc_free_ccb;/* free ccb list */
 	TAILQ_HEAD(, scsipi_xfer) sc_queue;/* pending commands */
 };
 
 int	dpt_intr __P((void *));
+int	dpt_readcfg __P((struct dpt_softc *));
 void	dpt_init __P((struct dpt_softc *, const char *));
 
 #endif	/* _KERNEL */
-
 #endif	/* !defined _IC_DPTVAR_H_ */
