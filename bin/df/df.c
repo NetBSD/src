@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.26 1998/04/08 23:16:37 fair Exp $	*/
+/*	$NetBSD: df.c,v 1.27 1998/07/04 19:44:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,13 +49,14 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.26 1998/04/08 23:16:37 fair Exp $");
+__RCSID("$NetBSD: df.c,v 1.27 1998/07/04 19:44:32 mrg Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
+
 #include <ufs/ufs/ufsmount.h>
 
 #include <err.h>
@@ -149,11 +150,14 @@ main(argc, argv)
 					if (mount(MOUNT_FFS, mntpt, MNT_RDONLY,
 					    &mdev) != 0) {
 						(void)rmdir(mntpt);
-						if (!ufs_df(*argv, &mntbuf[mntsize]))
+						if (!ufs_df(*argv,
+						    &mntbuf[mntsize]))
 							++mntsize;
 						continue;
-					} else if (!statfs(mntpt, &mntbuf[mntsize])) {
-						mntbuf[mntsize].f_mntonname[0] = '\0';
+					} else if (!statfs(mntpt,
+					    &mntbuf[mntsize])) {
+						mntbuf[mntsize].f_mntonname[0] =
+						    '\0';
 						++mntsize;
 					} else
 						warn("%s", *argv);
