@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsdb.8,v 1.6 1997/07/31 00:21:53 jtc Exp $
+.\"	$NetBSD: fsdb.8,v 1.7 1997/09/14 14:56:57 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@ opens
 (usually a raw disk partition) and runs a command loop
 allowing manipulation of the file system's inode data.  You are prompted
 to enter a command with
-.Ic "fsdb (inum X)>"
+.Dq "fsdb (inum X)>"
 where
 .Va X
 is the currently selected i-number.  The initial selected inode is the
@@ -227,7 +227,7 @@ to implement most of the file system manipulation code.  The remainder of
 first appeared in 
 .Nx 1.1 .
 .Sh WARNING
-Use this tool with extreme caution--you can damage an FFS file system
+Use this tool with extreme caution -- you can damage an FFS file system
 beyond what
 .Xr fsck 8
 can repair. 
