@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.71.2.1 2001/10/24 17:38:09 thorpej Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.71.2.2 2001/11/04 03:38:48 shin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1642,6 +1642,7 @@ LEAF(mips3_TLBRead)
 	sw	t5, 12(a1)
 END(mips3_TLBRead)
 
+#ifndef MIPS3_5900
 /*----------------------------------------------------------------------------
  *
  * mips3_VCED --
