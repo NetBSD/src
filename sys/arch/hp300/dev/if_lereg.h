@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.8 1995/12/10 00:49:36 mycroft Exp $	*/
+/*	$NetBSD: if_lereg.h,v 1.9 1998/01/11 21:57:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -35,32 +35,32 @@
  *	@(#)if_lereg.h	7.1 (Berkeley) 5/8/90
  */
 
-#define	LEID		21
+/*
+ * DIO registers, offsets from lestd[0]
+ */
+#define	LER0_ID			0x01		/* ID */
+#define	LER0_STATUS		0x03		/* interrupt enable/status */
+
+#define	LER0_SIZE		4
 
 /*
- * DIO registers.
+ * Control and status bits -- LER0_STATUS
  */
-struct lereg0 {
-	u_int8_t		ler0_pad0;
-	volatile u_int8_t	ler0_id;	/* ID */
-	u_int8_t		ler0_pad1;
-	volatile u_int8_t	ler0_status;	/* interrupt enable/status */
-};
+#define	LE_IE			0x80		/* interrupt enable */
+#define	LE_IR			0x40		/* interrupt requested */
+#define	LE_LOCK			0x08		/* lock status register */
+#define	LE_ACK			0x04		/* ack of lock */
+#define	LE_JAB			0x02		/* loss of tx clock (???) */
 
 /*
- * Control and status bits -- lereg0
+ * LANCE registers, offsets from lestd[1]
  */
-#define	LE_IE		0x80		/* interrupt enable */
-#define	LE_IR		0x40		/* interrupt requested */
-#define	LE_LOCK		0x08		/* lock status register */
-#define	LE_ACK		0x04		/* ack of lock */
-#define	LE_JAB		0x02		/* loss of tx clock (???) */
-#define LE_IPL(x)	((((x) >> 4) & 0x3) + 3)
+#define	LER1_RDP		0x00		/* data port */
+#define	LER1_RAP		0x02		/* register select port */
+
+#define	LER1_SIZE		4
 
 /*
- * LANCE registers.
+ * LANCE buffer area.
  */
-struct lereg1 {
-	volatile u_int16_t	ler1_rdp;	/* data port */
-	volatile u_int16_t	ler1_rap;	/* register select port */
-};
+#define	LE_BUFSIZE		16384
