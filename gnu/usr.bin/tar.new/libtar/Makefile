@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/10/09 16:13:08 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2002/10/10 13:03:19 drochner Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -33,3 +33,6 @@ CLEANFILES+=	fnmatch.h
 .PATH:	${.CURDIR} ${DIST}/lib
 
 .include <bsd.lib.mk>
+
+# don't try to recreate getdate.c
+.y.c:
