@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 1995/09/16 15:33:54 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 1995/09/17 05:22:57 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1560,7 +1560,7 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080c5cc,	/* InitUtil */
 		(caddr_t) 0x4080b186,	/* ReadXPRam */
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
-		(caddr_t) 0x0,	/* jClkNoMem */
+		(caddr_t) 0x408b39b6,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
 		(caddr_t) 0x408147c4,	/* InitEgret */
 	},
