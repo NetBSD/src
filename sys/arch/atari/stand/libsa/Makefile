@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2003/08/29 19:50:26 dsl Exp $
+#	$NetBSD: Makefile,v 1.23 2003/10/28 11:41:46 he Exp $
 
 LIB=	sa
 
@@ -7,6 +7,7 @@ NOPROFILE=# defined
 OBJMACHINE=
 
 CPPFLAGS+=	${DEFS} ${INCL}
+CFLAGS+=	-ffreestanding
 CFLAGS+=	-fomit-frame-pointer -Wall -fno-function-cse -fstrength-reduce
 NO_NET=
 
