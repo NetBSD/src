@@ -1,4 +1,4 @@
-/*	$NetBSD: shlib.c,v 1.16.2.1 2000/06/01 17:46:23 he Exp $	*/
+/*	$NetBSD: shlib.c,v 1.16.2.2 2001/04/01 15:49:24 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ int	isdigit();
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
-#include <link.h>
+#include <link_aout.h>
 
 #include "shlib.h"
 
