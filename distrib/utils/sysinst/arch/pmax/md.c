@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 1997/11/14 23:47:49 simonb Exp $	*/
+/*	$NetBSD: md.c,v 1.14 1997/11/16 12:53:07 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -392,7 +392,7 @@ void	md_copy_filesystem (void)
 
 	/* Copy all the diskimage/ramdisk binaries to the target disk. */
 	printf ("%s", msg_string(MSG_dotar));
-	run_prog ("tar --one-file-system -cf - / |"
+	run_prog ("tar --one-file-system -cf - -C / . |"
 		  "(cd /mnt ; tar --unlink -xpf - )");
 
 	/* Make sure target has a copy of install kernel. */
