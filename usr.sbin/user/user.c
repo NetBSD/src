@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.22 2000/09/26 11:35:48 agc Exp $ */
+/* $NetBSD: user.c,v 1.23 2000/09/29 10:37:26 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 __COPYRIGHT(
 	"@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.22 2000/09/26 11:35:48 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.23 2000/09/29 10:37:26 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -373,6 +373,97 @@ modify_gid(char *group, char *newent)
 			} else {
 				cc = strlen(newent);
 				(void) strlcpy(buf, newent, sizeof(buf));
+			}
+		}
+		if (fwrite(buf, sizeof(char), (unsigned) cc, to) != cc) {
+			(void) fclose(from);
+			(void) close(fd);
+			(void) unlink(f);
+			warn("can't create gid: short write to `%s'", f);
+			return 0;
+		}
+	}
+	(void) fclose(from);
+	(void) fclose(to);
+	if (rename(f, _PATH_GROUP) < 0) {
+		warn("can't create gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
+		return 0;
+	}
+	(void) chmod(_PATH_GROUP, st.st_mode & 07777);
+	return 1;
+}
+
+/* modify the group entries for all `groups', by adding `user' */
+static int
+append_group(char *user, int ngroups, char **groups)
+{
+	struct group	*grp;
+	struct stat	st;
+	FILE		*from;
+	FILE		*to;
+	char		buf[MaxEntryLen];
+	char		f[MaxFileNameLen];
+	char		*colon;
+	int		groupc;
+	int		entc;
+	int		fd;
+	int		nc;
+	int		cc;
+	int		i;
+	int		j;
+
+	for (i = 0 ; i < ngroups ; i++) {
+		if ((grp = getgrnam(groups[i])) != NULL) {
+			for (j = 0 ; grp->gr_mem[j] ; j++) {
+				if (strcmp(user, grp->gr_mem[j]) == 0) {
+					/* already in it */
+					groups[i] = "";
+				}
+			}
+		}
+	}
+	if ((from = fopen(_PATH_GROUP, "r")) == (FILE *) NULL) {
+		warn("can't append group for %s: can't open %s", user, _PATH_GROUP);
+		return 0;
+	}
+	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
+		warn("can't lock `%s'", _PATH_GROUP);
+	}
+	(void) fstat(fileno(from), &st);
+	(void) snprintf(f, sizeof(f), "%s.XXXXXX", _PATH_GROUP);
+	if ((fd = mkstemp(f)) < 0) {
+		(void) fclose(from);
+		warn("can't create gid: mkstemp failed");
+		return 0;
+	}
+	if ((to = fdopen(fd, "w")) == (FILE *) NULL) {
+		(void) fclose(from);
+		(void) close(fd);
+		(void) unlink(f);
+		warn("can't create gid: fdopen `%s' failed", f);
+		return 0;
+	}
+	while (fgets(buf, sizeof(buf), from) != NULL) {
+		cc = strlen(buf);
+		if ((colon = strchr(buf, ':')) == NULL) {
+			warn("badly formed entry `%s'", buf);
+			continue;
+		}
+		entc = (int)(colon - buf);
+		for (i = 0 ; i < ngroups ; i++) {
+			if ((groupc = strlen(groups[i])) == 0) {
+				continue;
+			}
+			if (entc == groupc && strncmp(groups[i], buf, (unsigned) entc) == 0) {
+				if ((nc = snprintf(&buf[cc - 1],
+						sizeof(buf) - cc + 1,
+						"%s%s\n",
+						(buf[cc - 2] == ':') ? "" : ",",
+						user)) < 0) {
+					warnx(
+"Warning: group `%s' entry too long", groups[i]);
+				}
+				cc += nc - 1;
 			}
 		}
 		if (fwrite(buf, sizeof(char), (unsigned) cc, to) != cc) {
@@ -900,15 +991,27 @@ moduser(char *login, char *newlogin, user_t *up)
 			(void) close(masterfd);
 			(void) close(ptmpfd);
 			(void) pw_abort();
-			err(EXIT_FAILURE, "short write to /etc/ptmp (not %d chars)", cc);
+			err(EXIT_FAILURE,
+				"short write to /etc/ptmp (not %d chars)",
+				cc);
 		}
 	}
-	if (up != (user_t *) NULL &&
-	    up->u_mkdir &&
-	    asystem("%s %s %s", MV, oldhome, home) != 0) {
-		(void) close(ptmpfd);
-		(void) pw_abort();
-		err(EXIT_FAILURE, "can't move `%s' to `%s'", oldhome, home);
+	if (up != (user_t *) NULL) {
+		if (up->u_mkdir &&
+		    asystem("%s %s %s", MV, oldhome, home) != 0) {
+			(void) close(ptmpfd);
+			(void) pw_abort();
+			err(EXIT_FAILURE, "can't move `%s' to `%s'",
+					oldhome, home);
+		}
+		if (up->u_groupc > 0 &&
+		    !append_group(newlogin, up->u_groupc, up->u_groupv)) {
+			(void) close(ptmpfd);
+			(void) pw_abort();
+			errx(EXIT_FAILURE,
+				"can't append `%s' to new groups",
+				newlogin);
+		}
 	}
 	(void) close(ptmpfd);
 	if (pw_mkdb() < 0) {
