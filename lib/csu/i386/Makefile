@@ -25,7 +25,15 @@ gmon.o: gmon.c gmon.h
 	mv a.out ${.TARGET}
 
 install:
-	install -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
+	@if [ ! -d ${DESTDIR}/usr/lib ]; then \
+                /bin/rm -f ${DESTDIR}/usr/lib ; \
+                mkdir -p ${DESTDIR}/usr/lib ; \
+                chown root.wheel ${DESTDIR}/usr/lib ; \
+                chmod 755 ${DESTDIR}/usr/lib ; \
+        else \
+                true ; \
+        fi
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 	    ${DESTDIR}/usr/lib
 
 depend lint tags:
