@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.14 2002/06/18 12:59:18 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.15 2002/10/04 19:04:41 elric Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 18, 2002
+.Dd October  4, 2002
 .Dt MAKEDEV 8 sun3
 .Os
 .Sh NAME
@@ -114,6 +114,9 @@ Floppies
 . It Ar ccd#
 Concatenated disk driver, see
 .Xr \&ccd 4
+. It Ar cgd#
+Cryptographic disk driver, see
+.Xr \&cgd 4
 . It Ar raid#
 RAIDframe disk driver, see
 .Xr \&raid 4
