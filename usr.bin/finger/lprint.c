@@ -1,8 +1,8 @@
-/*	$NetBSD: lprint.c,v 1.8 1997/09/09 02:41:09 mrg Exp $	*/
+/*	$NetBSD: lprint.c,v 1.9 1997/10/19 08:13:38 mrg Exp $	*/
 
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Tony Nardo of the Johns Hopkins University/Applied Physics Lab.
@@ -36,49 +36,79 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)lprint.c	5.13 (Berkeley) 10/31/90";*/
-static char rcsid[] = "$NetBSD: lprint.c,v 1.8 1997/09/09 02:41:09 mrg Exp $";
+#if 0
+static char sccsid[] = "@(#)lprint.c	8.3 (Berkeley) 4/28/95";
+#else
+__RCSID( "$NetBSD: lprint.c,v 1.9 1997/10/19 08:13:38 mrg Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <fcntl.h>
+#include <time.h>
 #include <tzfile.h>
+#include <db.h>
+#include <err.h>
+#include <pwd.h>
+#include <utmp.h>
+#include <errno.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
+#include <string.h>
 #include <paths.h>
 #include <vis.h>
+
 #include "finger.h"
 #include "extern.h"
 
 #define	LINE_LEN	80
 #define	TAB_LEN		8		/* 8 spaces between tabs */
+#define	_PATH_FORWARD	".forward"
 #define	_PATH_PLAN	".plan"
 #define	_PATH_PROJECT	".project"
+
+static int	demi_print __P((char *, int));
+static void	lprint __P((PERSON *));
+static int	show_text __P((char *, char *, char *));
+static void	vputc __P((int));
 
 void
 lflag_print()
 {
 	PERSON *pn;
+	int sflag, r;
+	PERSON *tmp;
+	DBT data, key;
 
-	for (pn = phead;;) {
+	for (sflag = R_FIRST;; sflag = R_NEXT) {
+		r = (*db->seq)(db, &key, &data, sflag);
+		if (r == -1)
+			err(1, "db seq");
+		if (r == 1)
+			break;
+		memmove(&tmp, data.data, sizeof tmp);
+		pn = tmp;
+		if (sflag != R_FIRST)
+			putchar('\n');
 		lprint(pn);
 		if (!pplan) {
-			(void)show_text(pn->dir, _PATH_PROJECT, "Project:");
-			if (!show_text(pn->dir, _PATH_PLAN, "Plan:"))
+			(void)show_text(pn->dir,
+			    _PATH_FORWARD, "Mail forwarded to");
+			(void)show_text(pn->dir, _PATH_PROJECT, "Project");
+			if (!show_text(pn->dir, _PATH_PLAN, "Plan"))
 				(void)printf("No Plan.\n");
 		}
-		if (!(pn = pn->next))
-			break;
-		putchar('\n');
 	}
 }
 
-void
+static void
 lprint(pn)
 	PERSON *pn;
 {
@@ -115,20 +145,18 @@ lprint(pn)
 	if (pn->office && pn->officephone &&
 	    strlen(pn->office) + strlen(pn->officephone) +
 	    sizeof(OFFICE_TAG) + 2 <= 5 * TAB_LEN) {
-		(void)snprintf(tbuf, sizeof(tbuf),
-		    "%s: %s, %s", OFFICE_TAG, pn->office,
-		    prphone(pn->officephone));
+		(void)snprintf(tbuf, sizeof(tbuf), "%s: %s, %s",
+		    OFFICE_TAG, pn->office, prphone(pn->officephone));
 		oddfield = demi_print(tbuf, oddfield);
 	} else {
 		if (pn->office) {
-			(void)snprintf(tbuf, sizeof(tbuf),
-			    "%s: %s", OFFICE_TAG, pn->office);
+			(void)snprintf(tbuf, sizeof(tbuf), "%s: %s",
+			    OFFICE_TAG, pn->office);
 			oddfield = demi_print(tbuf, oddfield);
 		}
 		if (pn->officephone) {
-			(void)snprintf(tbuf, sizeof(tbuf),
-			    "%s: %s", OFFICE_PHONE_TAG,
-			    prphone(pn->officephone));
+			(void)snprintf(tbuf, sizeof(tbuf), "%s: %s",
+			    OFFICE_PHONE_TAG, prphone(pn->officephone));
 			oddfield = demi_print(tbuf, oddfield);
 		}
 	}
@@ -231,7 +259,7 @@ no_gecos:
 	}
 }
 
-int
+static int
 demi_print(str, oddfield)
 	char *str;
 	int oddfield;
@@ -271,18 +299,47 @@ demi_print(str, oddfield)
 	return(oddfield);
 }
 
-int
+static int
 show_text(directory, file_name, header)
 	char *directory, *file_name, *header;
 {
-	int ch, lastc;
+	struct stat sb;
 	FILE *fp;
+	int ch, cnt, lastc;
+	char *p;
+	int fd, nr;
 
 	lastc = 0;
 	(void)snprintf(tbuf, sizeof(tbuf), "%s/%s", directory, file_name);
-	if ((fp = fopen(tbuf, "r")) == NULL)
+	if ((fd = open(tbuf, O_RDONLY)) < 0 || fstat(fd, &sb) ||
+	    sb.st_size == 0)
 		return(0);
-	(void)printf("%s\n", header);
+
+	/* If short enough, and no newlines, show it on a single line.*/
+	if (sb.st_size <= LINE_LEN - strlen(header) - 5) {
+		nr = read(fd, tbuf, sizeof(tbuf));
+		if (nr <= 0) {
+			(void)close(fd);
+			return(0);
+		}
+		for (p = tbuf, cnt = nr; cnt--; ++p)
+			if (*p == '\n')
+				break;
+		if (cnt <= 1) {
+			(void)printf("%s: ", header);
+			for (p = tbuf, cnt = nr; cnt--; ++p)
+				vputc(lastc = *p);
+			if (lastc != '\n')
+				(void)putchar('\n');
+			(void)close(fd);
+			return(1);
+		}
+		else
+			(void)lseek(fd, 0L, SEEK_SET);
+	}
+	if ((fp = fdopen(fd, "r")) == NULL)
+		return(0);
+	(void)printf("%s:\n", header);
 	while ((ch = getc(fp)) != EOF)
 		vputc(lastc = ch);
 	if (lastc != '\n')
@@ -291,7 +348,7 @@ show_text(directory, file_name, header)
 	return(1);
 }
 
-void
+static void
 vputc(ch)
 	int ch;
 {
