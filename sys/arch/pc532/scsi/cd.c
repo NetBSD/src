@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.2 1994/06/30 01:12:44 phil Exp $
+ *	$Id: cd.c,v 1.3 1994/08/05 22:57:44 mycroft Exp $
  */
 
 #define SPLCD splbio
@@ -848,7 +848,7 @@ cdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
 				break;
 		}
 		break;
-	case CDIOCSETSTERIO:
+	case CDIOCSETSTEREO:
 		{
 			struct ioc_vol *arg = (struct ioc_vol *)addr;
 			struct	cd_mode_data data;
