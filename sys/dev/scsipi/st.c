@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.91 1998/07/15 20:13:57 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.92 1998/07/19 18:43:20 drochner Exp $ */
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1319,11 +1319,8 @@ stioctl(dev, cmd, arg, flag, p)
 		break;
 
 	default:
-		if (STMODE(dev) == CTLMODE)
-			error = scsipi_do_ioctl(st->sc_link, dev, cmd, arg,
-			    flag, p);
-		else
-			error = ENOTTY;
+		error = scsipi_do_ioctl(st->sc_link, dev, cmd, arg,
+					flag, p);
 		break;
 	}
 	return (error);
