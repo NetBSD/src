@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)split.c	4.8 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: split.c,v 1.2 1993/08/01 18:08:21 mycroft Exp $";
+static char rcsid[] = "$Id: split.c,v 1.3 1994/04/06 00:04:09 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -80,9 +80,11 @@ main(argc, argv)
 			case 'b':	/* byte count split */
 				if (numlines)
 					usage();
-				if (!argv[cnt][2])
-					bytecnt = atol(argv[++cnt]);
-				else
+				if (!argv[cnt][2]) {
+					if (++cnt >= argc)
+						usage();
+					bytecnt = atol(argv[cnt]);
+				} else
 					bytecnt = atol(argv[cnt] + 2);
 				if (bytecnt <= 0) {
 					fputs("split: byte count must be greater than zero.\n", stderr);
