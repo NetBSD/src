@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.49 2002/05/03 04:11:19 mbw Exp $
+.\"	$NetBSD: contents,v 1.50 2002/05/06 11:33:20 takemura Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -921,6 +921,16 @@ TX3922 CPU only.
 kernel with system installer (sysinst). This kernel runs on TX3912 CPU only.
 .br
 .Em 1.98 MB gzipped, 6.7 MB uncompressed
+.It Pa hpcboot.exe
+The
+.Nx*M
+boot loader utility. This program is used to boot the
+.Nx
+kernel from within
+.Tn "Windows CE"
+(version 2.11 and later).
+.br
+.Em 111 KB
 .It Pa pbsdboot.exe
 The
 .Nx*M
@@ -930,7 +940,7 @@ kernel from within
 .Tn "Windows CE"
 (version 2.0 and later).
 .br
-.Em 122k
+.Em 176 KB
 .It Pa pbsdboot1.exe
 The
 .Nx*M
@@ -938,16 +948,21 @@ boot loader utility. This program is used to boot the
 .Nx
 kernel from within
 .Tn "Windows CE"
-(version 1.0).
+(version 1.01).
 .br
-.Em 134k
+.Em 191 KB
 .tag)
 .Pp
-These files are
+These 
+.Pa *.exe
+files are
 .Tn "Windows CE
-binaries. If you need them,
+binaries.  If you need them,
 the sources for these utilities are in the
-.Pa src/arch/hpcmips/stand/ directory.
+.Pa src/arch/hpc/stand/
+and the
+.Pa src/arch/hpcmips/stand/
+directories.
 .\}
 .
 .
