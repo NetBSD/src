@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.11 2001/08/17 02:18:48 lukem Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.12 2001/09/03 14:52:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -77,7 +77,6 @@ ffs_sb_swap(struct fs *o, struct fs *n)
 		n32[i] = bswap32(o32[i]);
 
 	n->fs_cpc = bswap32(o->fs_cpc);
-	n->fs_fscktime = bswap32(o->fs_fscktime);
 	n->fs_contigsumsize = bswap32(o->fs_contigsumsize);
 	n->fs_maxsymlinklen = bswap32(o->fs_maxsymlinklen);
 	n->fs_inodefmt = bswap32(o->fs_inodefmt);
