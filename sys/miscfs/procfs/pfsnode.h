@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pfsnode.h,v 1.3 1993/08/24 16:47:23 pk Exp $
+ *	$Id: pfsnode.h,v 1.4 1993/08/25 09:28:39 pk Exp $
  */
 
 /*
@@ -38,7 +38,7 @@ struct pfsnode {
 	struct	pfsnode	*pfs_next;	/* next on list */
 	struct	vnode	*pfs_vnode;	/* vnode associated with this pfsnode */
 	pid_t	pfs_pid;
-	int	flags;
+	int	pfs_flags;
 	long	pfs_spare[4];
 };
 

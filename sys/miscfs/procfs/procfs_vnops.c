@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: procfs_vnops.c,v 1.3 1993/08/24 16:47:26 pk Exp $
+ *	$Id: procfs_vnops.c,v 1.4 1993/08/25 09:28:47 pk Exp $
  */
 
 /*
@@ -115,13 +115,13 @@ pfs_open(vp, mode, cred, p)
 	if ((pfsp->pfs_pid?pfind(pfsp->pfs_pid):&proc0) == NULL)
 		return ESRCH;
 
-	if (	(pfsp->flags & FWRITE) && (mode & O_EXCL) ||
-		(pfsp->flags & O_EXCL) && (mode & FWRITE)	)
+	if (	(pfsp->pfs_flags & FWRITE) && (mode & O_EXCL) ||
+		(pfsp->pfs_flags & O_EXCL) && (mode & FWRITE)	)
 		return EBUSY;
 
 
 	if (mode & FWRITE)
-		pfsp->flags = (mode & (FWRITE|O_EXCL));
+		pfsp->pfs_flags = (mode & (FWRITE|O_EXCL));
 	return 0;
 }
 
@@ -142,8 +142,8 @@ pfs_close(vp, flag, cred, p)
 	if (pfs_debug)
 		printf("pfs_close: vp 0x%x proc %d\n", vp, p->p_pid);
 #endif
-	if ((flag & FWRITE) && (pfsp->flags & O_EXCL))
-		pfsp->flags &= ~(FWRITE|O_EXCL);
+	if ((flag & FWRITE) && (pfsp->pfs_flags & O_EXCL))
+		pfsp->pfs_flags &= ~(FWRITE|O_EXCL);
 
 	return (0);
 }
@@ -519,6 +519,8 @@ pfs_lookup(vp, ndp, p)
 		pfsp = VTOPFS(nvp);
 		pfsp->pfs_pid = pid;
 		pfsp->pfs_vnode = nvp;
+		pfsp->pfs_flags = 0;
+		pfsp->pfs_next = NULL;
 		for (pp = &pfshead; *pp; pp = &(*pp)->pfs_next);
 		*pp = pfsp;
 
