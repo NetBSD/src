@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 1997/08/24 02:40:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 1997/10/19 14:27:25 lukem Exp $
 
 PROG = rusers
 
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc
-WARNS?=	1
 
 .include <bsd.prog.mk>
