@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.7.12.1 2000/07/14 22:05:34 tron Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.7.12.2 2000/07/15 19:47:04 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -173,13 +173,12 @@ epic_pci_attach(parent, self, aux)
 			 * The card has lost all configuration data in
 			 * this state, so punt.
 			 */
-			printf("%s: unable to wake up from power state D3\n",
-			    sc->sc_dev.dv_xname);
+			printf(": unable to wake up from power state D3\n");
 			return;
 		}
 		if (reg != 0) {
-			printf("%s: waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, reg);
+			printf(": waking up from power state D%d\n%s: ",
+			    reg, sc->sc_dev.dv_xname);
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
 		}
 	}
