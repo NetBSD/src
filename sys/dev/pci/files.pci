@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.172 2002/04/26 02:05:09 ad Exp $
+#	$NetBSD: files.pci,v 1.173 2002/05/18 07:23:06 matt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -111,6 +111,11 @@ file	dev/pci/bha_pci.c		bha_pci
 # device declaration in sys/conf/files
 attach	isp at pci with isp_pci
 file	dev/pci/isp_pci.c		isp_pci
+
+# LSILogic Fusion-MPT I/O Processor family
+# device declaration in sys/conf/files
+attach	lfmiop at pci with lfmiop_pci
+file	dev/pci/lfmiop_pci.c		lfmiop_pci
 
 # Ethernet driver for DC21040-based boards
 device	de: ether, ifnet, arp

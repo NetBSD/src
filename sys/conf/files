@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.527 2002/05/09 15:44:44 thorpej Exp $
+#	$NetBSD: files,v 1.528 2002/05/18 07:23:04 matt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -365,6 +365,11 @@ device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
 file	dev/ic/isp_target.c		isp
+
+# LSILogic Fusion-MPT I/O Processor SCSI/FC Controllers
+#
+device	lfmiop: scsi
+file	dev/ic/lfmiop.c			lfmiop
 
 # Symbios/NCR 53c710 SCSI controllers
 #
