@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.22 1994/10/26 08:25:07 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.23 1994/12/22 03:24:07 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -904,9 +904,17 @@ ENTRY(_trap_dvz)
 	br	all_trap
 
 ENTRY(_trap_flg)
+#if SMALL_INV	
 	cinv	i, r0		/* Invalidate first line */
 	addd	r1, r0
 	cinv	i, r0		/* Invalidate possible second line */
+#else
+	sprd	cfg, r0		/* Trying something different! PAN */
+	bicd	CFG_INS, r0
+	lprd	cfg, r0
+	ord	CFG_INS, r0
+	lprd	cfg, r0
+#endif	
 	addqd	1, tos		/* Increment return address */
 	rett	0
 
@@ -1436,7 +1444,8 @@ no_net1:
 	.globl	_kstack
 #endif
 	.set	PPDROFF,0x3F6
-	.set	PPTEOFF,0x400-UPAGES	# 0x3FE
+/* #	.set	PPTEOFF,0x400-UPAGES	# 0x3FE */
+	.set	PPTEOFF,0x3FE
 
 .data
 .globl _PDRPDROFF

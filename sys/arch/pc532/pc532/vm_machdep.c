@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 1994/10/26 08:25:21 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7 1994/12/22 03:24:10 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -43,7 +43,7 @@
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.6 1994/10/26 08:25:21 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.7 1994/12/22 03:24:10 phil Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,12 +52,13 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machd
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/user.h>
+#include <sys/core.h>
+#include <sys/exec.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
 #include <machine/cpu.h>
-
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -170,18 +171,48 @@ cpu_wait(p)
 
 
 /*
- * Dump the machine specific header information at the start of a core dump.
+ * Dump the machine specific segment at the start of a core dump.
  */     
-cpu_coredump(p, vp, cred)
+int
+cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;
 	struct vnode *vp;
 	struct ucred *cred;
+	struct core *chdr;
 {
+	int error;
+	register struct user *up = p->p_addr;
+	struct cpustate {
+		struct trapframe regs;
+	} cpustate;
+	struct coreseg cseg;
 
-	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
-	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
-	    p));
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_NS32532, 0);
+	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
+	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
+	chdr->c_cpusize = sizeof(cpustate);
+	cpustate.regs = *(struct trapframe *)p->p_md.md_regs;
+
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_NS32532, CORE_CPU);
+	cseg.c_addr = 0;
+	cseg.c_size = chdr->c_cpusize;
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
+	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	if (error)
+		return error;
+
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cpustate, sizeof(cpustate),
+	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+
+	if (!error)
+		chdr->c_nseg++;
+
+	return error;
 }
+
 
 /*
  * Set a red zone in the kernel stack after the u. area.
