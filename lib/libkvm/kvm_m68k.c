@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.c,v 1.8 1996/05/05 04:32:08 gwr Exp $	*/
+/*	$NetBSD: kvm_m68k.c,v 1.9 1996/05/07 06:09:11 leo Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_m68k.c,v 1.8 1996/05/05 04:32:08 gwr Exp $";
+static char *rcsid = "$NetBSD: kvm_m68k.c,v 1.9 1996/05/07 06:09:11 leo Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -229,5 +229,5 @@ _kvm_pa2off(kd, pa)
 		}
 		off += rsp->size;
 	}
-	return(kd->dump_off + off + pa)
+	return(kd->dump_off + off + pa);
 }
