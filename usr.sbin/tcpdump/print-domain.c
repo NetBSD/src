@@ -1,4 +1,4 @@
-/*	$NetBSD: print-domain.c,v 1.7 1999/07/06 13:05:14 itojun Exp $	*/
+/*	$NetBSD: print-domain.c,v 1.8 2000/04/24 13:01:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-domain.c,v 1.39 97/06/13 12:56:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-domain.c,v 1.7 1999/07/06 13:05:14 itojun Exp $");
+__RCSID("$NetBSD: print-domain.c,v 1.8 2000/04/24 13:01:23 itojun Exp $");
 #endif
 #endif
 
@@ -53,7 +53,6 @@ struct rtentry;
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 
 #ifdef NOERROR
 #undef NOERROR					/* Solaris sucks */
@@ -184,8 +183,11 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 	register u_int i;
 	register const u_char *rp;
 	register int compress;
+	int chars_processed;
+	int data_size = snapend - bp;
 
 	i = *cp++;
+	chars_processed = 1;
 	rp = cp + i;
 	if ((i & INDIR_MASK) == INDIR_MASK) {
 		rp = cp + 1;
@@ -197,13 +199,29 @@ ns_nprint(register const u_char *cp, register const u_char *bp)
 			if ((i & INDIR_MASK) == INDIR_MASK) {
 				cp = bp + (((i << 8) | *cp) & 0x3fff);
 				i = *cp++;
+				chars_processed++;
+
+				/*
+				 * If we've looked at every character in
+				 * the message, this pointer will make
+				 * us look at some character again,
+				 * which means we're looping.
+				 */
+				if (chars_processed >= data_size) {
+					fn_printn(cp, 6, "<LOOP>");
+					if (!compress)
+						rp += i + 1;
+					return (rp);
+				}
 				continue;
 			}
 			if (fn_printn(cp, i, snapend))
 				break;
 			cp += i;
+			chars_processed += i;
 			putchar('.');
 			i = *cp++;
+			chars_processed++;
 			if (!compress)
 				rp += i + 1;
 		}
