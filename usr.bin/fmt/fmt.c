@@ -39,10 +39,12 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fmt.c	5.10 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: fmt.c,v 1.2 1993/08/01 18:15:53 mycroft Exp $";
+static char rcsid[] = "$Id: fmt.c,v 1.3 1994/12/24 16:35:17 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 
 /*
@@ -68,7 +70,6 @@ int	pfx;			/* Current leading blank count */
 int	lineno;			/* Current input line */
 int	mark;			/* Last place we saw a head line */
 
-char	*malloc();		/* for lint . . . */
 char	*headnames[] = {"To", "Subject", "Cc", 0};
 
 /*
