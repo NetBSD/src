@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.30 2000/08/02 22:24:38 eeh Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.31 2000/09/28 19:56:15 eeh Exp $
 
 # Makefile for NetBSD
 #
@@ -72,8 +72,14 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -Wa,-Av9a -mno-fpu
 CFLAGS += -mcmodel=medlow
 .endif
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -Wa,-Av9a
-LINKFLAGS=	-Ttext f1000000 -Tdata f1400000 -e start
-#LINKFLAGS=	-N -Ttext f1000000 -e start
+
+#
+# Gotta find a way to make kernel base tuneable.
+#
+
+LINKFLAGS=	-Ttext 01000000 -Tdata 01400000 -e start
+
+#LINKFLAGS=	-Ttext f1000000 -Tdata f1400000 -e start
 STRIPFLAGS=	-g
 
 %INCLUDES

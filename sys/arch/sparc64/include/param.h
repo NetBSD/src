@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.22 2000/06/30 17:55:18 itojun Exp $ */
+/*	$NetBSD: param.h,v 1.23 2000/09/28 19:56:14 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -171,8 +171,8 @@ extern int nbpg, pgofset, pgshift;
  * 0x00000000fe000000:	IODEV_END -- end of device mapping space.
  *
  */
-#define	KERNBASE	0x0f1000000	/* start of kernel virtual space */
-#define	KERNEND		0x0fe000000	/* end of kernel virtual space */
+#define	KERNBASE	0x001000000	/* start of kernel virtual space */
+#define	KERNEND		0x0e0000000	/* end of kernel virtual space */
 #define	VM_MAX_KERNEL_BUF	((KERNEND-KERNBASE)/4)
 
 #define _MAXNBPG	8192	/* fixed VAs, independent of actual NBPG */
@@ -184,10 +184,10 @@ extern int nbpg, pgofset, pgshift;
  * Here's the location of the interrupt stack and CPU structure.
  */
 #define INTSTACK	(      KERNEND + 8*_MAXNBPG)/* 64K after kernel end */
-#define	EINTSTACK	(     INTSTACK + 2*USPACE)
+#define	EINTSTACK	(     INTSTACK + 2*USPACE)	/* 32KB */
 #define	CPUINFO_VA	(    EINTSTACK)
 #define	IODEV_BASE	(   CPUINFO_VA + 8*_MAXNBPG)/* 64K long */
-#define	IODEV_END	0x0ff000000UL		/* 16 MB of iospace */
+#define	IODEV_END	0x0f0000000UL		/* 16 MB of iospace */
 
 /*
  * Constants related to network buffer management.
@@ -228,7 +228,7 @@ extern int nbpg, pgofset, pgshift;
 
 /* pages to bytes */
 #define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
+#define	btoc(x)		(((vsize_t)(x) + PGOFSET) >> PGSHIFT)
 
 /* bytes to disk blocks */
 #define	btodb(x)	((x) >> DEV_BSHIFT)

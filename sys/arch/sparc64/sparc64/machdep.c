@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 2000/09/16 14:07:59 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.90 2000/09/28 19:56:14 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
 
 /* #include "fb.h" */
 
-int bus_space_debug = 0; /* This may be used by macros elsewhere. */
+int bus_space_debug = 1; /* This may be used by macros elsewhere. */
 #ifdef DEBUG
 #define DPRINTF(l, s)   do { if (bus_space_debug & l) printf s; } while (0)
 #else
@@ -407,7 +407,7 @@ setregs(p, pack, stack)
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_tstate = tstate;
-	tf->tf_global[1] = (vaddr_t)PS_STRINGS;
+	tf->tf_global[1] = (vaddr_t)p->p_psstr;
 	/* %g4 needs to point to the start of the data segment */
 	tf->tf_global[4] = 0; 
 	tf->tf_pc = pack->ep_entry & ~3;
@@ -1552,6 +1552,8 @@ static void     sparc_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
 					bus_size_t, bus_size_t, int));
 
 
+vaddr_t iobase = IODEV_BASE;
+
 int
 sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 	bus_space_tag_t t;
@@ -1565,7 +1567,6 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 	u_int64_t pa;
 	paddr_t	pm_flags = 0;
 	vm_prot_t pm_prot = VM_PROT_READ;
-static	vaddr_t iobase = IODEV_BASE;
 
 	t->type = iospace;
 	if (iobase == NULL)
