@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.10 2003/05/13 09:35:16 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.11 2003/06/26 16:47:15 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -184,7 +184,6 @@
 	.data
 
 	.globl	_C_LABEL(cpu)
-	.globl	_C_LABEL(cpu_feature)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 #ifdef COMPAT_OLDBOOT
@@ -224,8 +223,6 @@ _C_LABEL(lapic_tpr):
 
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
-_C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid'
-					#   instruction
 _C_LABEL(esym):		.long	0	# ptr to end of syms
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(proc0paddr):	.long	0
