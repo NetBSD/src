@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 2001/05/30 12:28:47 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11 2002/10/20 02:37:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -197,16 +197,6 @@ struct pcb;
 /* locore.s functions */
 void m68881_save __P((struct fpframe *));
 void m68881_restore __P((struct fpframe *));
-void DCIA __P((void));
-void DCIS __P((void));
-void DCIU __P((void));
-void ICIA __P((void));
-void ICPA __P((void));
-void PCIA __P((void));
-void TBIA __P((void));
-void TBIS __P((vaddr_t));
-void TBIAS __P((void));
-void TBIAU __P((void));
 
 int suline __P((caddr_t, caddr_t));
 void savectx __P((struct pcb *));

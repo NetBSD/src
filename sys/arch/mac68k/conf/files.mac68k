@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.107 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: files.mac68k,v 1.108 2002/10/20 02:37:28 chs Exp $
 
 # mac68k-specific configuration info
 
@@ -182,7 +182,7 @@ file	arch/mac68k/mac68k/psc.c
 file	arch/mac68k/mac68k/sys_machdep.c
 file	arch/mac68k/mac68k/trap.c
 file	arch/mac68k/mac68k/via.c
-file	arch/mac68k/mac68k/vm_machdep.c
+file	arch/m68k/m68k/vm_machdep.c
 
 file	arch/mac68k/dev/grf_compat.c		grf needs-flag
 file	arch/mac68k/dev/ite_compat.c		ite needs-flag
