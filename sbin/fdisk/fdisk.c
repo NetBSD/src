@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: fdisk.c,v 1.4 1994/09/23 04:30:15 mycroft Exp $";
+static char rcsid[] = "$Id: fdisk.c,v 1.5 1994/09/23 05:30:10 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -42,27 +42,16 @@ static char rcsid[] = "$Id: fdisk.c,v 1.4 1994/09/23 04:30:15 mycroft Exp $";
 static char lbuf[LBUF];
 
 /*
- *
- * Ported to 386bsd by Julian Elischer  Thu Oct 15 20:26:46 PDT 1992
- *
  * 14-Dec-89  Robert Baron (rvb) at Carnegie-Mellon University
  *	Copyright (c) 1989	Robert. V. Baron
  *	Created.
  */
 
-#define Decimal(str, ans, tmp) if (decimal(str, &tmp, ans)) ans = tmp
-#define Hex(str, ans, tmp) if (hex(str, &tmp, ans)) ans = tmp
-#define String(str, ans, len) {char *z = ans; char **dflt = &z; if (string(str, dflt)) strncpy(ans, *dflt, len); }
-
-#define RoundCyl(x) ((((x) + cylsecs - 1) / cylsecs) * cylsecs)
-
-#define SECSIZE 512
-
 char *disk = "/dev/rwd0d";
 
 struct disklabel disklabel;		/* disk parameters */
 
-int cyls, sectors, heads, cylsecs, disksecs;
+int cylinders, sectors, heads, cylindersectors, disksectors;
 
 struct mboot {
 	unsigned char padding[2]; /* force the longs to be long alligned */
@@ -75,10 +64,10 @@ struct mboot mboot;
 #define ACTIVE 0x80
 #define BOOT_MAGIC 0xAA55
 
-int dos_cyls;
+int dos_cylinders;
 int dos_heads;
 int dos_sectors;
-int dos_cylsecs;
+int dos_cylindersectors;
 
 #define DOSSECT(s,c)	(((s) & 0x3f) | (((c) >> 2) & 0xc0))
 #define DOSCYL(c)	((c) & 0xff)
@@ -182,9 +171,7 @@ int	get_params __P((void));
 int	read_s0 __P((void));
 int	write_s0 __P((void));
 int	yesno __P((char *));
-int	decimal __P((char *, int *, int));
-int	hex __P((char *, int *, int));
-int	string __P((char *, char **));
+void	decimal __P((char *, int *));
 int	type_match __P((const void *, const void *));
 char	*get_type __P((int));
 
@@ -298,16 +285,16 @@ print_part(part)
 		printf("<UNUSED>\n");
 		return;
 	}
-	printf("sysid %d,(%s)\n", partp->dp_typ, get_type(partp->dp_typ));
+	printf("sysid %d (%s)\n", partp->dp_typ, get_type(partp->dp_typ));
 	printf("    start %d, size %d (%d MB), flag %x\n",
 	    partp->dp_start, partp->dp_size,
 	    partp->dp_size * 512 / (1024 * 1024), partp->dp_flag);
-	printf("\tbeg: cyl %d/ sector %d/ head %d;\n",
-	    DPCYL(partp->dp_scyl, partp->dp_ssect), DPSECT(partp->dp_ssect),
-	    partp->dp_shd);
-	printf("\tend: cyl %d/ sector %d/ head %d\n",
-	    DPCYL(partp->dp_ecyl, partp->dp_esect), DPSECT(partp->dp_esect),
-	    partp->dp_ehd);
+	printf("\tbeg: cylinder %4d, head %3d, sector %2d\n",
+	    DPCYL(partp->dp_scyl, partp->dp_ssect),
+	    partp->dp_shd, DPSECT(partp->dp_ssect));
+	printf("\tend: cylinder %4d, head %3d, sector %2d\n",
+	    DPCYL(partp->dp_ecyl, partp->dp_esect),
+	    partp->dp_ehd, DPSECT(partp->dp_esect));
 }
 
 void
@@ -323,7 +310,7 @@ init_sector0(start)
 	partp->dp_typ = DOSPTYP_386BSD;
 	partp->dp_flag = ACTIVE;
 	partp->dp_start = start;
-	partp->dp_size = disksecs - start;
+	partp->dp_size = disksectors - start;
 
 	dos(partp->dp_start,
 	    &partp->dp_scyl, &partp->dp_shd, &partp->dp_ssect);
@@ -336,7 +323,6 @@ change_part(part)
 	int part;
 {
 	struct dos_partition *partp;
-	int tmp;
 
 	partp = &mboot.parts[part];
 
@@ -356,32 +342,42 @@ change_part(part)
 	}
 
 	do {
-		Decimal("sysid", partp->dp_typ, tmp);
-		Decimal("start", partp->dp_start, tmp);
-		Decimal("size", partp->dp_size, tmp);
+		{
+			int sysid, start, size;
+
+			sysid = partp->dp_typ,
+			start = partp->dp_start,
+			size = partp->dp_size;
+			decimal("sysid", &sysid);
+			decimal("start", &start);
+			decimal("size", &size);
+			partp->dp_typ = sysid;
+			partp->dp_start = start;
+			partp->dp_size = size;
+		}
 
 		if (yesno("Explicitly specifiy beg/end address ?")) {
-			int tsec, tcyl, thd;
+			int tsector, tcylinder, thead;
 
-			tcyl = DPCYL(partp->dp_scyl, partp->dp_ssect);
-			thd = partp->dp_shd;
-			tsec = DPSECT(partp->dp_ssect);
-			Decimal("beginning cylinder", tcyl, tmp);
-			Decimal("beginning head", thd, tmp);
-			Decimal("beginning sector", tsec, tmp);
-			partp->dp_scyl = DOSCYL(tcyl);
-			partp->dp_shd = thd;
-			partp->dp_ssect = DOSSECT(tsec, tcyl);
+			tcylinder = DPCYL(partp->dp_scyl, partp->dp_ssect);
+			thead = partp->dp_shd;
+			tsector = DPSECT(partp->dp_ssect);
+			decimal("beginning cylinder", &tcylinder);
+			decimal("beginning head", &thead);
+			decimal("beginning sector", &tsector);
+			partp->dp_scyl = DOSCYL(tcylinder);
+			partp->dp_shd = thead;
+			partp->dp_ssect = DOSSECT(tsector, tcylinder);
 
-			tcyl = DPCYL(partp->dp_ecyl, partp->dp_esect);
-			thd = partp->dp_ehd;
-			tsec = DPSECT(partp->dp_esect);
-			Decimal("ending cylinder", tcyl, tmp);
-			Decimal("ending head", thd, tmp);
-			Decimal("ending sector", tsec, tmp);
-			partp->dp_ecyl = DOSCYL(tcyl);
-			partp->dp_ehd = thd;
-			partp->dp_esect = DOSSECT(tsec, tcyl);
+			tcylinder = DPCYL(partp->dp_ecyl, partp->dp_esect);
+			thead = partp->dp_ehd;
+			tsector = DPSECT(partp->dp_esect);
+			decimal("ending cylinder", &tcylinder);
+			decimal("ending head", &thead);
+			decimal("ending sector", &tsector);
+			partp->dp_ecyl = DOSCYL(tcylinder);
+			partp->dp_ehd = thead;
+			partp->dp_esect = DOSSECT(tsector, tcylinder);
 		} else {
 			dos(partp->dp_start,
 			    &partp->dp_scyl, &partp->dp_shd, &partp->dp_ssect);
@@ -398,13 +394,13 @@ print_params()
 {
 
 	printf("parameters extracted from in-core disklabel are:\n");
-	printf("cylinders=%d heads=%d sectors/track=%d (%d blks/cyl)\n\n",
-	    cyls, heads, sectors, cylsecs);
-	if (dos_sectors > 63 || dos_cyls > 1023 || dos_heads > 255)
-		printf(" Figures below won't work with BIOS for partitions not in cyl 1\n");
+	printf("cylinders=%d heads=%d sectors/track=%d (%d sectors/cylinder)\n\n",
+	    cylinders, heads, sectors, cylindersectors);
+	if (dos_sectors > 63 || dos_cylinders > 1023 || dos_heads > 255)
+		printf("Figures below won't work with BIOS for partitions not in cylinder 1\n");
 	printf("parameters to be used for BIOS calculations are:\n");
-	printf("cylinders=%d heads=%d sectors/track=%d (%d blks/cyl)\n\n",
-	    dos_cyls, dos_heads, dos_sectors, dos_cylsecs);
+	printf("cylinders=%d heads=%d sectors/track=%d (%d sectors/cylinder)\n\n",
+	    dos_cylinders, dos_heads, dos_sectors, dos_cylindersectors);
 }
 
 void
@@ -413,7 +409,7 @@ change_active(which)
 {
 	struct dos_partition *partp;
 	int part;
-	int active = 3, tmp;
+	int active = 3;
 
 	partp = &mboot.parts[0];
 
@@ -426,7 +422,7 @@ change_active(which)
 	}
 	if (yesno("Do you want to change the active partition?")) {
 		do {
-			Decimal("active partition", active, tmp);
+			decimal("active partition", &active);
 		} while (!yesno("Are you happy with this choice?"));
 	}
 	for (part = 0; part < NDOSPART; part++)
@@ -437,15 +433,14 @@ change_active(which)
 void
 get_params_to_use()
 {
-	int tmp;
 
 	print_params();
 	if (yesno("Do you want to change our idea of what BIOS thinks?")) {
 		do {
-			Decimal("BIOS's idea of #cylinders", dos_cyls, tmp);
-			Decimal("BIOS's idea of #heads", dos_heads, tmp);
-			Decimal("BIOS's idea of #sectors", dos_sectors, tmp);
-			dos_cylsecs = dos_heads * dos_sectors;
+			decimal("BIOS's idea of #cylinders", &dos_cylinders);
+			decimal("BIOS's idea of #heads", &dos_heads);
+			decimal("BIOS's idea of #sectors", &dos_sectors);
+			dos_cylindersectors = dos_heads * dos_sectors;
 			print_params();
 		} while (!yesno("Are you happy with this choice?"));
 	}
@@ -455,21 +450,21 @@ get_params_to_use()
 * Change real numbers into strange dos numbers	*
 \***********************************************/
 void
-dos(sect, cylp, hdp, sectp)
-	int sect;
-	unsigned char *cylp, *hdp, *sectp;
+dos(sector, cylinderp, headp, sectorp)
+	int sector;
+	unsigned char *cylinderp, *headp, *sectorp;
 {
-	int cyl, hd;
+	int cylinder, head;
 
-	cyl = sect / dos_cylsecs;
-	sect -= cyl * dos_cylsecs;
+	cylinder = sector / dos_cylindersectors;
+	sector -= cylinder * dos_cylindersectors;
 
-	hd = sect / dos_sectors;
-	sect -= hd * dos_sectors;
+	head = sector / dos_sectors;
+	sector -= head * dos_sectors;
 
-	*cylp = DOSCYL(cyl);
-	*hdp = hd;
-	*sectp = DOSSECT(sect + 1, cyl);
+	*cylinderp = DOSCYL(cylinder);
+	*headp = head;
+	*sectorp = DOSSECT(sector + 1, cylinder);
 }
 
 int fd;
@@ -532,11 +527,11 @@ get_params()
 		return (-1);
 	}
 
-	dos_cyls = cyls = disklabel.d_ncylinders;
+	dos_cylinders = cylinders = disklabel.d_ncylinders;
 	dos_heads = heads = disklabel.d_ntracks;
 	dos_sectors = sectors = disklabel.d_nsectors;
-	dos_cylsecs = cylsecs = heads * sectors;
-	disksecs = cyls * heads * sectors;
+	dos_cylindersectors = cylindersectors = heads * sectors;
+	disksectors = cylinders * heads * sectors;
 
 	return (0);
 }
@@ -594,116 +589,33 @@ yesno(str)
 	return (first == 'y' || first == 'Y');
 }
 
-int
-decimal(str, num, deflt)
+void
+decimal(str, num)
 	char *str;
-	int *num, deflt;
+	int *num;
 {
 	int acc = 0, c;
 	char *cp;
 
-	while (1) {
-		printf("Supply a decimal value for \"%s\" [%d] ", str, deflt);
+	for (;; printf("%s is not a valid decimal number.\n", lbuf)) {
+		printf("Supply a decimal value for \"%s\" [%d] ", str, *num);
+
 		fgets(lbuf, LBUF, stdin);
 		lbuf[strlen(lbuf)-1] = 0;
+		if (lbuf[0] == '\0')
+			return;
 
-		if (!*lbuf)
-			return 0;
+		acc = strtol(lbuf, &cp, 10);
+		if (cp == lbuf)
+			continue;
+		cp += strspn(cp, " \t");
+		if (*cp != '\0')
+			continue;
 
-		cp = lbuf;
-		while ((c = *cp) && (c == ' ' || c == '\t')) cp++;
-		if (!c)
-			return 0;
-		while (c = *cp++) {
-			if (c <= '9' && c >= '0')
-				acc = acc * 10 + c - '0';
-			else
-				break;
-		}
-		if (c == ' ' || c == '\t')
-			while ((c = *cp) && (c == ' ' || c == '\t')) cp++;
-		if (!c) {
-			*num = acc;
-			return 1;
-		} else
-			printf("%s is an invalid decimal number.  Try again\n",
-				lbuf);
+		*num = acc;
+		return;
 	}
 
-}
-
-int
-hex(str, num, deflt)
-	char *str;
-	int *num, deflt;
-{
-	int acc = 0, c;
-	char *cp;
-
-	while (1) {
-		printf("Supply a hex value for \"%s\" [%x] ", str, deflt);
-		fgets(lbuf, LBUF, stdin);
-		lbuf[strlen(lbuf)-1] = 0;
-
-		if (!*lbuf)
-			return 0;
-
-		cp = lbuf;
-		while ((c = *cp) && (c == ' ' || c == '\t')) cp++;
-		if (!c)
-			return 0;
-		while (c = *cp++) {
-			if (c <= '9' && c >= '0')
-				acc = (acc << 4) + c - '0';
-			else if (c <= 'f' && c >= 'a')
-				acc = (acc << 4) + c - 'a' + 10;
-			else if (c <= 'F' && c >= 'A')
-				acc = (acc << 4) + c - 'A' + 10;
-			else
-				break;
-		}
-		if (c == ' ' || c == '\t')
-			while ((c = *cp) && (c == ' ' || c == '\t')) cp++;
-		if (!c) {
-			*num = acc;
-			return 1;
-		} else
-			printf("%s is an invalid hex number.  Try again\n",
-				lbuf);
-	}
-
-}
-
-int
-string(str, ans)
-	char *str;
-	char **ans;
-{
-	int c;
-	char *cp = lbuf;
-
-	while (1) {
-		printf("Supply a string value for \"%s\" [%s] ", str, *ans);
-		fgets(lbuf, LBUF, stdin);
-		lbuf[strlen(lbuf)-1] = 0;
-
-		if (!*lbuf)
-			return 0;
-
-		while ((c = *cp) && (c == ' ' || c == '\t')) cp++;
-		if (c == '"') {
-			c = *++cp;
-			*ans = cp;
-			while ((c = *cp) && c != '"') cp++;
-		} else {
-			*ans = cp;
-			while ((c = *cp) && c != ' ' && c != '\t') cp++;
-		}
-
-		if (c)
-			*cp = 0;
-		return 1;
-	}
 }
 
 int
