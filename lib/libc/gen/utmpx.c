@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.15 2002/11/17 20:49:33 itojun Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.16 2002/11/26 16:52:07 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.15 2002/11/17 20:49:33 itojun Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.16 2002/11/26 16:52:07 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -277,7 +277,7 @@ utmp_update(const struct utmpx *utx)
 	switch (pid = fork()) {
 	case 0:
 		(void)execl(_PATH_UTMP_UPDATE,
-		    strrchr(_PATH_UTMP_UPDATE, '/') + 1, buf);
+		    strrchr(_PATH_UTMP_UPDATE, '/') + 1, buf, NULL);
 		exit(1);
 		/*NOTREACHED*/
 	case -1:
