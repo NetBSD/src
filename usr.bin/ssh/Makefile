@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.16 2002/04/29 08:23:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 2002/06/26 16:54:43 tv Exp $
 
 .include <bsd.own.mk>
 
 SSHDIST?= ${.CURDIR}/../../crypto/dist/ssh
 
 SUBDIR=	libssh .WAIT ssh sshd ssh-add ssh-keygen ssh-agent scp sftp-server \
-	ssh-keyscan sftp
+	ssh-keysign ssh-keyscan sftp
+#SUBDIR+=scard
 
 distribution:
 	${INSTALL_FILE} -o root -g wheel -m 644 \

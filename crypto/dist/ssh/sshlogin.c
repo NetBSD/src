@@ -1,4 +1,4 @@
-/*	$NetBSD: sshlogin.c,v 1.3 2002/03/08 02:00:57 itojun Exp $	*/
+/*	$NetBSD: sshlogin.c,v 1.3.2.1 2002/06/26 16:54:36 tv Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshlogin.c,v 1.3 2001/12/19 07:18:56 deraadt Exp $");
+RCSID("$OpenBSD: sshlogin.c,v 1.4 2002/06/23 03:30:17 deraadt Exp $");
 
 #include <util.h>
 #include <utmp.h>
@@ -52,10 +52,9 @@ RCSID("$OpenBSD: sshlogin.c,v 1.3 2001/12/19 07:18:56 deraadt Exp $");
  * information is not available.  This must be called before record_login.
  * The host the user logged in from will be returned in buf.
  */
-
 u_long
 get_last_login_time(uid_t uid, const char *logname,
-		    char *buf, u_int bufsize)
+    char *buf, u_int bufsize)
 {
 	struct lastlog ll;
 	char *lastlog;
@@ -84,10 +83,9 @@ get_last_login_time(uid_t uid, const char *logname,
  * Records that the user has logged in.  I these parts of operating systems
  * were more standardized.
  */
-
 void
 record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
-	const char *host, struct sockaddr * addr)
+    const char *host, struct sockaddr * addr)
 {
 	int fd;
 	struct lastlog ll;
@@ -127,7 +125,6 @@ record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
 }
 
 /* Records that the user has logged out. */
-
 void
 record_logout(pid_t pid, const char *ttyname)
 {

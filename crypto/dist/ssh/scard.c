@@ -1,4 +1,4 @@
-/*	$NetBSD: scard.c,v 1.4 2002/04/22 07:59:42 itojun Exp $	*/
+/*	$NetBSD: scard.c,v 1.4.2.1 2002/06/26 16:53:42 tv Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
 
 #ifdef SMARTCARD
 #include "includes.h"
-RCSID("$OpenBSD: scard.c,v 1.25 2002/03/26 18:46:59 rees Exp $");
+RCSID("$OpenBSD: scard.c,v 1.26 2002/06/23 03:30:17 deraadt Exp $");
 
 #include <openssl/evp.h>
 #include <sectok.h>
@@ -192,7 +192,7 @@ sc_read_pubkey(Key * k)
 
 	status = 0;
 	p = key_fingerprint(k, SSH_FP_MD5, SSH_FP_HEX);
-	debug("fingerprint %d %s", key_size(k), p);
+	debug("fingerprint %u %s", key_size(k), p);
 	xfree(p);
 
 err:

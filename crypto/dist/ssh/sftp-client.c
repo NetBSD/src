@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.c,v 1.15 2002/04/22 07:59:44 itojun Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.15.2.1 2002/06/26 16:53:54 tv Exp $	*/
 /*
  * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
  *
@@ -29,7 +29,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-client.c,v 1.31 2002/04/06 00:30:08 djm Exp $");
+RCSID("$OpenBSD: sftp-client.c,v 1.33 2002/06/23 09:30:14 deraadt Exp $");
 
 #include <sys/queue.h>
 
@@ -89,7 +89,7 @@ get_msg(int fd, Buffer *m)
 
 	msg_len = GET_32BIT(buf);
 	if (msg_len > 256 * 1024)
-		fatal("Received message too long %d", msg_len);
+		fatal("Received message too long %u", msg_len);
 
 	while (msg_len) {
 		len = atomic_read(fd, buf, MIN(msg_len, sizeof(buf)));
@@ -114,7 +114,7 @@ send_string_request(int fd, u_int id, u_int code, char *s,
 	buffer_put_int(&msg, id);
 	buffer_put_string(&msg, s, len);
 	send_msg(fd, &msg);
-	debug3("Sent message fd %d T:%d I:%d", fd, code, id);
+	debug3("Sent message fd %d T:%u I:%u", fd, code, id);
 	buffer_free(&msg);
 }
 
@@ -130,12 +130,12 @@ send_string_attrs_request(int fd, u_int id, u_int code, char *s,
 	buffer_put_string(&msg, s, len);
 	encode_attrib(&msg, a);
 	send_msg(fd, &msg);
-	debug3("Sent message fd %d T:%d I:%d", fd, code, id);
+	debug3("Sent message fd %d T:%u I:%u", fd, code, id);
 	buffer_free(&msg);
 }
 
 static u_int
-get_status(int fd, int expected_id)
+get_status(int fd, u_int expected_id)
 {
 	Buffer msg;
 	u_int type, id, status;
@@ -146,15 +146,15 @@ get_status(int fd, int expected_id)
 	id = buffer_get_int(&msg);
 
 	if (id != expected_id)
-		fatal("ID mismatch (%d != %d)", id, expected_id);
+		fatal("ID mismatch (%u != %u)", id, expected_id);
 	if (type != SSH2_FXP_STATUS)
-		fatal("Expected SSH2_FXP_STATUS(%d) packet, got %d",
+		fatal("Expected SSH2_FXP_STATUS(%u) packet, got %u",
 		    SSH2_FXP_STATUS, type);
 
 	status = buffer_get_int(&msg);
 	buffer_free(&msg);
 
-	debug3("SSH2_FXP_STATUS %d", status);
+	debug3("SSH2_FXP_STATUS %u", status);
 
 	return(status);
 }
@@ -172,14 +172,14 @@ get_handle(int fd, u_int expected_id, u_int *len)
 	id = buffer_get_int(&msg);
 
 	if (id != expected_id)
-		fatal("ID mismatch (%d != %d)", id, expected_id);
+		fatal("ID mismatch (%u != %u)", id, expected_id);
 	if (type == SSH2_FXP_STATUS) {
 		int status = buffer_get_int(&msg);
 
 		error("Couldn't get handle: %s", fx2txt(status));
 		return(NULL);
 	} else if (type != SSH2_FXP_HANDLE)
-		fatal("Expected SSH2_FXP_HANDLE(%d) packet, got %d",
+		fatal("Expected SSH2_FXP_HANDLE(%u) packet, got %u",
 		    SSH2_FXP_HANDLE, type);
 
 	handle = buffer_get_string(&msg, len);
@@ -201,9 +201,9 @@ get_decode_stat(int fd, u_int expected_id, int quiet)
 	type = buffer_get_char(&msg);
 	id = buffer_get_int(&msg);
 
-	debug3("Received stat reply T:%d I:%d", type, id);
+	debug3("Received stat reply T:%u I:%u", type, id);
 	if (id != expected_id)
-		fatal("ID mismatch (%d != %d)", id, expected_id);
+		fatal("ID mismatch (%u != %u)", id, expected_id);
 	if (type == SSH2_FXP_STATUS) {
 		int status = buffer_get_int(&msg);
 
@@ -213,7 +213,7 @@ get_decode_stat(int fd, u_int expected_id, int quiet)
 			error("Couldn't stat remote file: %s", fx2txt(status));
 		return(NULL);
 	} else if (type != SSH2_FXP_ATTRS) {
-		fatal("Expected SSH2_FXP_ATTRS(%d) packet, got %d",
+		fatal("Expected SSH2_FXP_ATTRS(%u) packet, got %u",
 		    SSH2_FXP_ATTRS, type);
 	}
 	a = decode_attrib(&msg);
@@ -225,7 +225,8 @@ get_decode_stat(int fd, u_int expected_id, int quiet)
 struct sftp_conn *
 do_init(int fd_in, int fd_out, u_int transfer_buflen, u_int num_requests)
 {
-	int type, version;
+	u_int type;
+	int version;
 	Buffer msg;
 	struct sftp_conn *ret;
 
@@ -240,7 +241,7 @@ do_init(int fd_in, int fd_out, u_int transfer_buflen, u_int num_requests)
 
 	/* Expecting a VERSION reply */
 	if ((type = buffer_get_char(&msg)) != SSH2_FXP_VERSION) {
-		error("Invalid packet back from SSH2_FXP_INIT (type %d)",
+		error("Invalid packet back from SSH2_FXP_INIT (type %u)",
 		    type);
 		buffer_free(&msg);
 		return(NULL);
@@ -295,7 +296,7 @@ do_close(struct sftp_conn *conn, char *handle, u_int handle_len)
 	buffer_put_int(&msg, id);
 	buffer_put_string(&msg, handle, handle_len);
 	send_msg(conn->fd_out, &msg);
-	debug3("Sent message SSH2_FXP_CLOSE I:%d", id);
+	debug3("Sent message SSH2_FXP_CLOSE I:%u", id);
 
 	status = get_status(conn->fd_in, id);
 	if (status != SSH2_FX_OK)
@@ -340,7 +341,7 @@ do_lsreaddir(struct sftp_conn *conn, char *path, int printflag,
 
 		id = expected_id = conn->msg_id++;
 
-		debug3("Sending SSH2_FXP_READDIR I:%d", id);
+		debug3("Sending SSH2_FXP_READDIR I:%u", id);
 
 		buffer_clear(&msg);
 		buffer_put_char(&msg, SSH2_FXP_READDIR);
@@ -355,10 +356,10 @@ do_lsreaddir(struct sftp_conn *conn, char *path, int printflag,
 		type = buffer_get_char(&msg);
 		id = buffer_get_int(&msg);
 
-		debug3("Received reply T:%d I:%d", type, id);
+		debug3("Received reply T:%u I:%u", type, id);
 
 		if (id != expected_id)
-			fatal("ID mismatch (%d != %d)", id, expected_id);
+			fatal("ID mismatch (%u != %u)", id, expected_id);
 
 		if (type == SSH2_FXP_STATUS) {
 			int status = buffer_get_int(&msg);
@@ -374,7 +375,7 @@ do_lsreaddir(struct sftp_conn *conn, char *path, int printflag,
 				return(status);
 			}
 		} else if (type != SSH2_FXP_NAME)
-			fatal("Expected SSH2_FXP_NAME(%d) packet, got %d",
+			fatal("Expected SSH2_FXP_NAME(%u) packet, got %u",
 			    SSH2_FXP_NAME, type);
 
 		count = buffer_get_int(&msg);
@@ -585,7 +586,7 @@ do_realpath(struct sftp_conn *conn, char *path)
 	id = buffer_get_int(&msg);
 
 	if (id != expected_id)
-		fatal("ID mismatch (%d != %d)", id, expected_id);
+		fatal("ID mismatch (%u != %u)", id, expected_id);
 
 	if (type == SSH2_FXP_STATUS) {
 		u_int status = buffer_get_int(&msg);
@@ -593,7 +594,7 @@ do_realpath(struct sftp_conn *conn, char *path)
 		error("Couldn't canonicalise: %s", fx2txt(status));
 		return(NULL);
 	} else if (type != SSH2_FXP_NAME)
-		fatal("Expected SSH2_FXP_NAME(%d) packet, got %d",
+		fatal("Expected SSH2_FXP_NAME(%u) packet, got %u",
 		    SSH2_FXP_NAME, type);
 
 	count = buffer_get_int(&msg);
@@ -691,7 +692,7 @@ do_readlink(struct sftp_conn *conn, char *path)
 	id = buffer_get_int(&msg);
 
 	if (id != expected_id)
-		fatal("ID mismatch (%d != %d)", id, expected_id);
+		fatal("ID mismatch (%u != %u)", id, expected_id);
 
 	if (type == SSH2_FXP_STATUS) {
 		u_int status = buffer_get_int(&msg);
@@ -699,7 +700,7 @@ do_readlink(struct sftp_conn *conn, char *path)
 		error("Couldn't readlink: %s", fx2txt(status));
 		return(NULL);
 	} else if (type != SSH2_FXP_NAME)
-		fatal("Expected SSH2_FXP_NAME(%d) packet, got %d",
+		fatal("Expected SSH2_FXP_NAME(%u) packet, got %u",
 		    SSH2_FXP_NAME, type);
 
 	count = buffer_get_int(&msg);
@@ -791,7 +792,7 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 	attrib_clear(&junk); /* Send empty attributes */
 	encode_attrib(&msg, &junk);
 	send_msg(conn->fd_out, &msg);
-	debug3("Sent message SSH2_FXP_OPEN I:%d P:%s", id, remote_path);
+	debug3("Sent message SSH2_FXP_OPEN I:%u P:%s", id, remote_path);
 
 	handle = get_handle(conn->fd_in, id, &handle_len);
 	if (handle == NULL) {
@@ -836,7 +837,7 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 		get_msg(conn->fd_in, &msg);
 		type = buffer_get_char(&msg);
 		id = buffer_get_int(&msg);
-		debug3("Received reply T:%d I:%d R:%d", type, id, max_req);
+		debug3("Received reply T:%u I:%u R:%d", type, id, max_req);
 
 		/* Find the request in our queue */
 		for(req = TAILQ_FIRST(&requests);
@@ -863,7 +864,7 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 			    (unsigned long long)req->offset + len - 1);
 			if (len > req->len)
 				fatal("Received more data than asked for "
-				      "%d > %d", len, req->len);
+				      "%u > %u", len, req->len);
 			if ((lseek(local_fd, req->offset, SEEK_SET) == -1 ||
 			     atomic_write(local_fd, data, len) != len) &&
 			    !write_error) {
@@ -908,7 +909,7 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 			}
 			break;
 		default:
-			fatal("Expected SSH2_FXP_DATA(%d) packet, got %d",
+			fatal("Expected SSH2_FXP_DATA(%u) packet, got %u",
 			    SSH2_FXP_DATA, type);
 		}
 	}
@@ -1003,7 +1004,7 @@ do_upload(struct sftp_conn *conn, char *local_path, char *remote_path,
 	buffer_put_int(&msg, SSH2_FXF_WRITE|SSH2_FXF_CREAT|SSH2_FXF_TRUNC);
 	encode_attrib(&msg, &a);
 	send_msg(conn->fd_out, &msg);
-	debug3("Sent message SSH2_FXP_OPEN I:%d P:%s", id, remote_path);
+	debug3("Sent message SSH2_FXP_OPEN I:%u P:%s", id, remote_path);
 
 	buffer_clear(&msg);
 
@@ -1048,7 +1049,7 @@ do_upload(struct sftp_conn *conn, char *local_path, char *remote_path,
 			buffer_put_int64(&msg, offset);
 			buffer_put_string(&msg, data, len);
 			send_msg(conn->fd_out, &msg);
-			debug3("Sent message SSH2_FXP_WRITE I:%d O:%llu S:%u",
+			debug3("Sent message SSH2_FXP_WRITE I:%u O:%llu S:%u",
 			       id, (unsigned long long)offset, len);
 		} else if (TAILQ_FIRST(&acks) == NULL)
 			break;
@@ -1058,7 +1059,7 @@ do_upload(struct sftp_conn *conn, char *local_path, char *remote_path,
 
 		if (id == startid || len == 0 ||
 		    id - ackid >= conn->num_requests) {
-		    	u_int r_id;
+			u_int r_id;
 
 			buffer_clear(&msg);
 			get_msg(conn->fd_in, &msg);
@@ -1078,7 +1079,7 @@ do_upload(struct sftp_conn *conn, char *local_path, char *remote_path,
 			    ack = TAILQ_NEXT(ack, tq))
 				;
 			if (ack == NULL)
-				fatal("Can't find request for ID %d", r_id);
+				fatal("Can't find request for ID %u", r_id);
 			TAILQ_REMOVE(&acks, ack, tq);
 
 			if (status != SSH2_FX_OK) {
@@ -1088,7 +1089,7 @@ do_upload(struct sftp_conn *conn, char *local_path, char *remote_path,
 				close(local_fd);
 				goto done;
 			}
-			debug3("In write loop, ack for %u %d bytes at %llu",
+			debug3("In write loop, ack for %u %u bytes at %llu",
 			   ack->id, ack->len, (unsigned long long)ack->offset);
 			++ackid;
 			free(ack);
