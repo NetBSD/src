@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13 1996/03/31 23:35:20 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.14 1996/07/04 03:18:39 chuck Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -152,6 +152,10 @@ soft01intr(fp)
 #ifdef ISO
 			if (n & (1 << NETISR_ISO))
 				clnlintr();
+#endif
+#ifdef NATM
+			if (n & (1 << NETISR_NATM))
+				natmintr();
 #endif
 #if NPPP > 0
 			if (n & (1 << NETISR_PPP))
