@@ -1,4 +1,4 @@
-/*	$NetBSD: freopen.c,v 1.7 1998/02/03 18:41:13 perry Exp $	*/
+/*	$NetBSD: freopen.c,v 1.8 1999/01/06 13:57:14 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)freopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: freopen.c,v 1.7 1998/02/03 18:41:13 perry Exp $");
+__RCSID("$NetBSD: freopen.c,v 1.8 1999/01/06 13:57:14 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -158,5 +158,16 @@ freopen(file, mode, fp)
 	fp->_write = __swrite;
 	fp->_seek = __sseek;
 	fp->_close = __sclose;
+
+	/*
+	 * When reopening in append mode, even though we use O_APPEND,
+	 * we need to seek to the end so that ftell() gets the right
+	 * answer.  If the user then alters the seek pointer, or
+	 * the file extends, this will fail, but there is not much
+	 * we can do about this.  (We could set __SAPP and check in
+	 * fseek and ftell.)
+	 */
+	if (oflags & O_APPEND)
+		(void) __sseek((void *)fp, (fpos_t)0, SEEK_END);
 	return (fp);
 }
