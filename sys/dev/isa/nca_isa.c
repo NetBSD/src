@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.1 2000/03/18 13:05:25 mycroft Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.2 2000/03/18 13:17:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c)  1998 The NetBSD Foundation, Inc.
@@ -84,16 +84,17 @@
 
 #include <dev/isa/ncavar.h>
 
-int	nca_find __P((bus_space_tag_t, bus_space_handle_t, bus_size_t, struct nca_probe_data*));
-int	nca_match __P((struct device *, struct cfdata *, void *)); 
-void	nca_attach __P((struct device *, struct device *, void *));  
-int	nca_test __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+int	nca_isa_find __P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
+	    struct nca_isa_probe_data *));
+int	nca_isa_match __P((struct device *, struct cfdata *, void *)); 
+void	nca_isa_attach __P((struct device *, struct device *, void *));  
+int	nca_isa_test __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
 
-struct cfattach nca_ca = {
-	sizeof(struct nca_softc), nca_match, nca_attach
+struct cfattach nca_isa_ca = {
+	sizeof(struct nca_isa_softc), nca_isa_match, nca_isa_attach
 };
 
-struct scsipi_device nca_dev = {
+struct scsipi_device nca_isa_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
@@ -118,10 +119,10 @@ struct scsipi_device nca_dev = {
 
 
 /*
- * Initialization and test function used by nca_find()
+ * Initialization and test function used by nca_isa_find()
  */
 int
-nca_test(iot, ioh, reg_offset)
+nca_isa_test(iot, ioh, reg_offset)
 	bus_space_tag_t	iot;
 	bus_space_handle_t ioh;
 	bus_size_t reg_offset;
@@ -134,7 +135,7 @@ nca_test(iot, ioh, reg_offset)
 	/* Check that status cleared. */
 	if (bus_space_read_1(iot, ioh, reg_offset + C80_CSBR) != SCI_BUS_RST) {
 #ifdef DEBUG
-		printf("nca_find: reset status not cleared [0x%x]\n",
+		printf("nca_isa_find: reset status not cleared [0x%x]\n",
 		    bus_space_read_1(iot, ioh, reg_offset+C80_CSBR));
 #endif
 		bus_space_write_1(iot, ioh, reg_offset+C80_ICR, 0);
@@ -153,7 +154,7 @@ nca_test(iot, ioh, reg_offset)
 	if (bus_space_read_1(iot, ioh, reg_offset + C80_BSR) & (SCI_CSR_PERR |
 	    SCI_CSR_INT | SCI_CSR_DISC)) {
 #ifdef DEBUG
-		printf("nca_find: Parity/Interrupt/Busy not cleared [0x%x]\n",
+		printf("nca_isa_find: Parity/Interrupt/Busy not cleared [0x%x]\n",
 		    bus_space_read_1(iot, ioh, reg_offset+C80_BSR));
 #endif
 		return 0;
@@ -168,11 +169,11 @@ nca_test(iot, ioh, reg_offset)
  * Look for the board
  */
 int
-nca_find(iot, ioh, max_offset, epd)
+nca_isa_find(iot, ioh, max_offset, epd)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t max_offset;
-	struct nca_probe_data *epd;
+	struct nca_isa_probe_data *epd;
 {
 	/*
 	 * We check for the existence of a board by trying to initialize it,
@@ -197,7 +198,7 @@ nca_find(iot, ioh, max_offset, epd)
 
 	for (base_offset = 0; base_offset < max_offset; base_offset += 0x08) {
 #ifdef DEBUG
-		printf("nca_find: testing offset 0x%x\n", (int)base_offset);
+		printf("nca_isa_find: testing offset 0x%x\n", (int)base_offset);
 #endif
 
 		/* See if anything is there */
@@ -227,7 +228,7 @@ nca_find(iot, ioh, max_offset, epd)
 			}
 
 			/* Initialize controller and bus */
-			if (nca_test(iot, ioh, base_offset+reg_offset)) {
+			if (nca_isa_test(iot, ioh, base_offset+reg_offset)) {
 				epd->sc_reg_offset = base_offset;
 				epd->sc_host_type = cont_type;
 				return cont_type;	/* This must be it */
@@ -245,7 +246,7 @@ nca_find(iot, ioh, max_offset, epd)
  * If so, call the real probe to see what it is.
  */
 int
-nca_match(parent, match, aux)
+nca_isa_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
@@ -254,7 +255,7 @@ nca_match(parent, match, aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_tag_t memt = ia->ia_memt;
 	bus_space_handle_t ioh;
-	struct nca_probe_data epd;
+	struct nca_isa_probe_data epd;
 	int rv = 0;
 
 	/* See if we are looking for a port- or memory-mapped adapter */
@@ -264,7 +265,7 @@ nca_match(parent, match, aux)
 			return 0;
 
 		/* See if a 53C80/53C400 is there */
-		rv = nca_find(iot, ioh, 0x07, &epd);
+		rv = nca_isa_find(iot, ioh, 0x07, &epd);
 
 		bus_space_unmap(iot, ioh, NCA_ISA_IOSIZE);
 	} else {
@@ -273,7 +274,7 @@ nca_match(parent, match, aux)
 			return 0;
 
 		/* See if a 53C80/53C400 is somewhere in this para. */
-		rv = nca_find(memt, ioh, 0x03ff0, &epd);
+		rv = nca_isa_find(memt, ioh, 0x03ff0, &epd);
 
 		bus_space_unmap(memt, ioh, 0x04000);
 	}
@@ -298,16 +299,16 @@ nca_match(parent, match, aux)
  * Attach this instance, and then all the sub-devices
  */
 void
-nca_attach(parent, self, aux)
+nca_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct nca_softc *esc = (void *)self;
+	struct nca_isa_softc *esc = (void *)self;
 	struct ncr5380_softc *sc = &esc->sc_ncr5380;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	struct nca_probe_data epd;
+	struct nca_isa_probe_data epd;
 	isa_chipset_tag_t ic = ia->ia_ic;
 
 	printf("\n");
@@ -328,10 +329,10 @@ nca_attach(parent, self, aux)
 		}
 	}
 
-	switch (nca_find(iot, ioh, NCA_ISA_IOSIZE, &epd)) {
+	switch (nca_isa_find(iot, ioh, NCA_ISA_IOSIZE, &epd)) {
 	case 0:
 		/* Not found- must have gone away */
-		printf("%s: nca_find failed\n", sc->sc_dev.dv_xname);
+		printf("%s: nca_isa_find failed\n", sc->sc_dev.dv_xname);
 		return;
 	case CTLR_NCR_5380:
 		printf("%s: NCR 53C80 detected\n", sc->sc_dev.dv_xname);
@@ -429,7 +430,7 @@ nca_attach(parent, self, aux)
 	sc->sc_link.type = BUS_SCSI;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &nca_dev;
+	sc->sc_link.device = &nca_isa_dev;
 	sc->sc_link.openings = 1;
 
 	/*
