@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.13 2002/03/10 07:24:53 takemura Exp $
+# 	$NetBSD: MPC303,v 1.14 2002/03/10 10:13:31 takemura Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -7,7 +7,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.13 $"
+#ident 		"GENERIC-$Revision: 1.14 $"
 
 maxusers	16
 
@@ -148,7 +148,7 @@ pci*	at vrpciu?
 vrc4173bcu* at pci? dev ? function ?	# VRC4173 BCU
 vrkiu* at vrc4173bcu? addr 0x100 size 0x20 unit VRKIU # VRC4173 KIU
 hpckbd*	at vrkiu?
-#vrpiu* at vrc4173bcu? addr 0x0a0 size 0x40 unit VRPIU        # VRC4173 PIU
+vrpiu* at vrc4173bcu? addr 0x0a0 size 0x20 addr2 0x0c0 size2 0x20 unit VRPIU	# VRC4173 PIU
 
 #vrc4173cardu* at pci? dev ? function ?	# VRC4173 CARDU
 #pcmcia*	at vrc4173cardu?
