@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.14 1996/07/01 21:07:29 ragge Exp $
+#	$NetBSD: GENERIC,v 1.15 1996/07/10 23:51:53 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -84,12 +84,12 @@ uda1		at uba?	csr 0160334
 mscpbus*	at uda?
 
 # Tape drivers
-#mtc0		at uba? csr 0174500	# TMSCP ctlr
-#mscpbus*	at mtc?
+mtc0		at uba? csr 0174500	# TMSCP ctlr
+mscpbus*	at mtc?
 
 # MSCP devices
 ra*		at mscpbus? drive?	# MSCP disk
-#mt*		at mscpbus? drive?	# MSCP tape
+mt*		at mscpbus? drive?	# MSCP tape
 
 # Unibus tapes
 #ts0		at uba? csr 0172520	# TS11/TSV05 tape.
