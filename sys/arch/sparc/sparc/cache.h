@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.13 1997/03/22 22:03:27 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.14 1997/03/24 19:56:58 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -211,6 +211,7 @@ struct cacheinfo {
 	int	c_l2linesize;		/* log2(linesize) */
 	int	c_nlines;		/* number of cache lines */
 	int	c_physical;		/* true => cache is physical */
+	int 	c_associativity;	/* # of "buckets" in cache line */
 	int 	c_split;		/* true => cache is split */
 
 	int 	ic_totalsize;		/* instruction cache */
