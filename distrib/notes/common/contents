@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.111 2004/11/07 18:00:44 mbw Exp $
+.\"	$NetBSD: contents,v 1.112 2004/11/07 18:06:38 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,7 +79,8 @@ A gzipped
 .Nx
 kernel containing code for all of the hardware supported in this release
 with an embedded ramdisk-based installer.  This is the same kernel
-and installer that is present on the miniroot filesystem.
+that is present on the miniroot filesystem, but uses a newer more 
+user-friendly installation program.
 .			It Pa netbsd-RAMDISK.symbols.gz
 Symbols for
 .Pa netbsd-RAMDISK.gz .
