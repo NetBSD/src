@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.17 2002/10/02 03:10:48 thorpej Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.17.8.1 2004/07/23 22:46:49 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.17 2002/10/02 03:10:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.17.8.1 2004/07/23 22:46:49 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,21 +589,17 @@ ix_match(parent, cf, aux)
 	 */
 
 	val = ix_read_eeprom(iot, ioh, 6) & 0xff;
-	for(pg = 0; pg < 8; pg++) {
+	for (pg = 0; pg < 8; pg++) {
 		if (val & 1)
 			break;
-		val = val >> 1;
-	}
-
-	if (pg == 8) {
-		DPRINTF(("Invalid or unsupported memory config\n"));
-		goto out;
+		val >>= 1;
 	}
 
 	maddr = 0xc0000 + (pg * 0x4000);
 
 	switch (val) {
 	case 0x00:
+		maddr = 0;
 		msize = 0;
 		break;
 
