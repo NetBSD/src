@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.80 2003/07/15 00:05:01 lukem Exp $ */
+/*	$NetBSD: cache.c,v 1.81 2003/08/24 00:41:43 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.80 2003/07/15 00:05:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.81 2003/08/24 00:41:43 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -984,10 +984,10 @@ viking_pcache_flush_page(pa, invalidate_only)
 		 * V:  line valid bit
 		 */
 
-#define VIKING_DCACHETAG_S	0x0000010000000000UL	/* line valid bit */
-#define VIKING_DCACHETAG_D	0x0001000000000000UL	/* line dirty bit */
-#define VIKING_DCACHETAG_V	0x0100000000000000UL	/* line shared bit */
-#define VIKING_DCACHETAG_PAMASK	0x0000000000ffffffUL	/* PA tag field */
+#define VIKING_DCACHETAG_S	0x0000010000000000ULL	/* line valid bit */
+#define VIKING_DCACHETAG_D	0x0001000000000000ULL	/* line dirty bit */
+#define VIKING_DCACHETAG_V	0x0100000000000000ULL	/* line shared bit */
+#define VIKING_DCACHETAG_PAMASK	0x0000000000ffffffULL	/* PA tag field */
 
 		for (set = 0; set < 128; set++) {
 			/* Set set number and access type */
