@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.13 2003/06/15 23:08:57 fvdl Exp $	*/
+/*	$NetBSD: i80321.c,v 1.14 2003/07/15 00:24:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Autoconfiguration support for the Intel i80321 I/O Processor.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.14 2003/07/15 00:24:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

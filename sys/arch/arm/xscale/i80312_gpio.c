@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_gpio.c,v 1.1 2001/11/29 08:27:11 thorpej Exp $	*/
+/*	$NetBSD: i80312_gpio.c,v 1.2 2003/07/15 00:24:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Intel i80312 Companion I/O general purpose I/O support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80312_gpio.c,v 1.2 2003/07/15 00:24:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.17 2003/06/15 18:43:48 thorpej Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.18 2003/07/15 00:24:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -71,6 +71,9 @@
  * Machine dependant functions for kernel setup for the ADI Engineering
  * BRH i80200 evaluation platform.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.18 2003/07/15 00:24:56 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"

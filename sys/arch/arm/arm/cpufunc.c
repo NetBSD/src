@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.60 2003/05/25 01:30:52 ichiro Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.61 2003/07/15 00:24:38 lukem Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -44,6 +44,9 @@
  *
  * Created      : 30/01/97
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.61 2003/07/15 00:24:38 lukem Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.32 2003/06/29 22:28:09 fvdl Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.33 2003/07/15 00:24:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.33 2003/07/15 00:24:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

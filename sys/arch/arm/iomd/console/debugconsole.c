@@ -1,4 +1,4 @@
-/*	$NetBSD: debugconsole.c,v 1.1 2001/10/05 22:27:45 reinoud Exp $	*/
+/*	$NetBSD: debugconsole.c,v 1.2 2003/07/15 00:24:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -40,6 +40,9 @@
  *
  * Created      : 17/09/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: debugconsole.c,v 1.2 2003/07/15 00:24:43 lukem Exp $");
 
 #ifdef DEBUGTERM
 

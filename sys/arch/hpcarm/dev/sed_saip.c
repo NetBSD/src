@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.12 2002/10/02 05:18:53 thorpej Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.13 2003/07/15 00:25:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.13 2003/07/15 00:25:08 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

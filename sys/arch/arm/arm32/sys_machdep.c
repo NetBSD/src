@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5 2003/01/17 22:28:49 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.6 2003/07/15 00:24:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -39,6 +39,9 @@
  *
  * Created      : 10/01/96
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.6 2003/07/15 00:24:42 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

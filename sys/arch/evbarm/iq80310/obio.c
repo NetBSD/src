@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.14 2003/06/16 17:40:52 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.15 2003/07/15 00:25:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003  Wasabi Systems, Inc.
@@ -42,6 +42,9 @@
  * The "obio" device node handles all of the CPLD functions,
  * as well ... timer, interrupts, etc.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.15 2003/07/15 00:25:03 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_io.c,v 1.2 2002/09/27 15:35:46 provos Exp $	*/
+/*	$NetBSD: iomd_io.c,v 1.3 2003/07/15 00:24:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -36,6 +36,9 @@
 /*
  * bus_space I/O functions for iomd
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iomd_io.c,v 1.3 2003/07/15 00:24:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uda1341.c,v 1.4 2002/10/02 05:18:53 thorpej Exp $	*/
+/*	$NetBSD: uda1341.c,v 1.5 2003/07/15 00:25:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.5 2003/07/15 00:25:08 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_saip.c,v 1.13 2002/10/02 05:18:52 thorpej Exp $	*/
+/*	$NetBSD: ipaq_saip.c,v 1.14 2003/07/15 00:25:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -22,6 +22,10 @@
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipaq_saip.c,v 1.14 2003/07/15 00:25:07 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>

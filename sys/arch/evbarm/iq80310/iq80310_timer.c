@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.11 2002/04/14 19:47:03 thorpej Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.12 2003/07/15 00:25:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -45,6 +45,9 @@
  * The timer uses the SPCI clock.  The timer uses the 33MHz clock by
  * reading the SPCI_66EN signal and dividing the clock if necessary.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.12 2003/07/15 00:25:03 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
