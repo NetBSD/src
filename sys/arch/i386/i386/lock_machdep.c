@@ -1,4 +1,4 @@
-/* $NetBSD: lock_machdep.c,v 1.1.2.1 2000/02/20 17:06:36 sommerfeld Exp $ */
+/* $NetBSD: lock_machdep.c,v 1.1.2.2 2000/02/21 18:51:00 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,8 +38,6 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.1.2.1 2000/02/20 17:06:36 sommerfeld Exp $");
 
 /*
  * Machine-dependent spin lock operations.
