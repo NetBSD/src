@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.43 2003/08/07 16:31:56 agc Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.44 2004/03/23 13:22:33 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.43 2003/08/07 16:31:56 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.44 2004/03/23 13:22:33 junyoung Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_43.h"
@@ -55,57 +55,57 @@ __KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.43 2003/08/07 16:31:56 agc Exp $");
 
 #include "tb.h"
 #if NTB > 0
-int	tbopen __P((dev_t dev, struct tty *tp));
-int	tbclose __P((struct tty *tp, int flags));
-int	tbread __P((struct tty *tp, struct uio *uio, int flags));
-int	tbtioctl __P((struct tty *tp, u_long cmd, caddr_t data,
-			int flag, struct proc *p));
-int	tbinput __P((int c, struct tty *tp));
+int	tbopen(dev_t dev, struct tty *tp);
+int	tbclose(struct tty *tp, int flags);
+int	tbread(struct tty *tp, struct uio *uio, int flags);
+int	tbtioctl(struct tty *tp, u_long cmd, caddr_t data,
+		 int flag, struct proc *p);
+int	tbinput(int c, struct tty *tp);
 #endif
 
 #include "sl.h"
 #if NSL > 0
-int	slopen __P((dev_t dev, struct tty *tp));
-int	slclose __P((struct tty *tp, int flags));
-int	sltioctl __P((struct tty *tp, u_long cmd, caddr_t data,
-			int flag, struct proc *p));
-int	slinput __P((int c, struct tty *tp));
-int	slstart __P((struct tty *tp));
+int	slopen(dev_t dev, struct tty *tp);
+int	slclose(struct tty *tp, int flags);
+int	sltioctl(struct tty *tp, u_long cmd, caddr_t data,
+		 int flag, struct proc *p);
+int	slinput(int c, struct tty *tp);
+int	slstart(struct tty *tp);
 #endif
 
 #include "ppp.h"
 #if NPPP > 0
-int	pppopen __P((dev_t dev, struct tty *tp));
-int	pppclose __P((struct tty *tp, int flags));
-int	ppptioctl __P((struct tty *tp, u_long cmd, caddr_t data,
-			int flag, struct proc *p));
-int	pppinput __P((int c, struct tty *tp));
-int	pppstart __P((struct tty *tp));
-int	pppread __P((struct tty *tp, struct uio *uio, int flag));
-int	pppwrite __P((struct tty *tp, struct uio *uio, int flag));
+int	pppopen(dev_t dev, struct tty *tp);
+int	pppclose(struct tty *tp, int flags);
+int	ppptioctl(struct tty *tp, u_long cmd, caddr_t data,
+		  int flag, struct proc *p);
+int	pppinput(int c, struct tty *tp);
+int	pppstart(struct tty *tp);
+int	pppread(struct tty *tp, struct uio *uio, int flag);
+int	pppwrite(struct tty *tp, struct uio *uio, int flag);
 #endif
 
 #include "strip.h"
 #if NSTRIP > 0
-int	stripopen __P((dev_t dev, struct tty *tp));
-int	stripclose __P((struct tty *tp, int flags));
-int	striptioctl __P((struct tty *tp, u_long cmd, caddr_t data,
-			int flag, struct proc *p));
-int	stripinput __P((int c, struct tty *tp));
-int	stripstart __P((struct tty *tp));
+int	stripopen(dev_t dev, struct tty *tp);
+int	stripclose(struct tty *tp, int flags);
+int	striptioctl(struct tty *tp, u_long cmd, caddr_t data,
+		    int flag, struct proc *p);
+int	stripinput(int c, struct tty *tp);
+int	stripstart(struct tty *tp);
 #endif
 
 #include "irframetty.h"
 #if NIRFRAMETTY > 0
-int	irframetopen __P((dev_t dev, struct tty *tp));
-int	irframetclose __P((struct tty *tp, int flags));
-int	irframetioctl __P((struct tty *tp, u_long cmd, caddr_t data,
-			int flag, struct proc *p));
-int	irframetinput __P((int c, struct tty *tp));
-int	irframetstart __P((struct tty *tp));
-int	irframetread __P((struct tty *tp, struct uio *uio, int flag));
-int	irframetwrite __P((struct tty *tp, struct uio *uio, int flag));
-int	irframetpoll __P((struct tty *tp, int events, struct proc *p));
+int	irframetopen(dev_t dev, struct tty *tp);
+int	irframetclose(struct tty *tp, int flags);
+int	irframetioctl(struct tty *tp, u_long cmd, caddr_t data,
+		      int flag, struct proc *p);
+int	irframetinput(int c, struct tty *tp);
+int	irframetstart(struct tty *tp);
+int	irframetread(struct tty *tp, struct uio *uio, int flag);
+int	irframetwrite(struct tty *tp, struct uio *uio, int flag);
+int	irframetpoll(struct tty *tp, int events, struct proc *p);
 #endif
 
 
@@ -184,7 +184,7 @@ ttynullioctl(tp, cmd, data, flags, p)
  * failure.
  */
 int
-ttyldisc_add(disc, no) 
+ttyldisc_add(disc, no)
 	struct linesw *disc;
 	int no;
 {
@@ -193,11 +193,11 @@ ttyldisc_add(disc, no)
 	if (strlen(disc->l_name) >= TTLINEDNAMELEN)
 		return (-1);
 
-	/* 
-	 * You are not allowed to specify a line switch 
+	/*
+	 * You are not allowed to specify a line switch
 	 * compatibility number greater than 10.
 	 */
-	if (no > 10) 
+	if (no > 10)
 		return (-1);
 
 	if (linesw == NULL)
@@ -225,14 +225,14 @@ ttyldisc_add(disc, no)
 	/* Need a specific slot */
 	if (linesw[no] != NULL)
 		return (-1);
-	
+
 	linesw[no] = disc;
 	disc->l_no = no;
 
 	/* Define size of table */
 	if (no >= nlinesw)
 		nlinesw = no + 1;
-	
+
 	return (no);
 }
 
@@ -241,7 +241,7 @@ ttyldisc_add(disc, no)
  * discipline on success or NULL on failure.
  */
 struct linesw *
-ttyldisc_remove(name) 
+ttyldisc_remove(name)
 	char *name;
 {
 	struct linesw *disc;
@@ -254,7 +254,7 @@ ttyldisc_remove(name)
 		if (linesw[i] && (strcmp(name, linesw[i]->l_name) == 0)) {
 			disc = linesw[i];
 			linesw[i] = NULL;
-			
+
 			if (nlinesw == i + 1) {
 				/* Need to fix up array sizing */
 				while (i-- > 0 && linesw[i] == NULL)
@@ -290,7 +290,7 @@ ttyldisc_lookup(name)
 
 /*
  * Register the basic line disciplines.
- */	
+ */
 void
 ttyldisc_init()
 {
@@ -300,7 +300,7 @@ ttyldisc_init()
 		return;
 
 	slinesw = LSWITCHBRK;
-	linesw = malloc(slinesw * sizeof(struct linesw *), 
+	linesw = malloc(slinesw * sizeof(struct linesw *),
 	    M_TTYS, M_WAITOK);
 	memset(linesw, 0, slinesw * sizeof(struct linesw *));
 
@@ -308,7 +308,7 @@ ttyldisc_init()
 	/* Do we really need this one? */
 	TTYLDISCINIT(defunct_disc, 1);
 
-	/* 
+	/*
 	 * The following should really be moved to
 	 * initialization code for each module.
 	 */

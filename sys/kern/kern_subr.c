@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.108 2004/03/11 15:17:55 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.109 2004/03/23 13:22:33 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.108 2004/03/11 15:17:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.109 2004/03/23 13:22:33 junyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -114,24 +114,24 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.108 2004/03/11 15:17:55 christos Exp
 #include <net/if.h>
 
 /* XXX these should eventually move to subr_autoconf.c */
-static struct device *finddevice __P((const char *));
-static struct device *getdisk __P((char *, int, int, dev_t *, int));
-static struct device *parsedisk __P((char *, int, int, dev_t *));
+static struct device *finddevice(const char *);
+static struct device *getdisk(char *, int, int, dev_t *, int);
+static struct device *parsedisk(char *, int, int, dev_t *);
 
 /*
  * A generic linear hook.
  */
 struct hook_desc {
 	LIST_ENTRY(hook_desc) hk_list;
-	void	(*hk_fn) __P((void *));
+	void	(*hk_fn)(void *);
 	void	*hk_arg;
 };
 typedef LIST_HEAD(, hook_desc) hook_list_t;
 
-static void *hook_establish __P((hook_list_t *, void (*)(void *), void *));
-static void hook_disestablish __P((hook_list_t *, void *));
-static void hook_destroy __P((hook_list_t *));
-static void hook_proc_run __P((hook_list_t *, struct proc *));
+static void *hook_establish(hook_list_t *, void (*)(void *), void *);
+static void hook_disestablish(hook_list_t *, void *);
+static void hook_destroy(hook_list_t *);
+static void hook_proc_run(hook_list_t *, struct proc *);
 
 MALLOC_DEFINE(M_IOV, "iov", "large iov's");
 
@@ -385,7 +385,7 @@ hashdone(hashtbl, mtype)
 static void *
 hook_establish(list, fn, arg)
 	hook_list_t *list;
-	void (*fn) __P((void *));
+	void (*fn)(void *);
 	void *arg;
 {
 	struct hook_desc *hd;
@@ -441,7 +441,7 @@ hook_proc_run(list, p)
 	struct hook_desc *hd;
 
 	for (hd = LIST_FIRST(list); hd != NULL; hd = LIST_NEXT(hd, hk_list)) {
-		((void (*) __P((struct proc *, void *)))*hd->hk_fn)(p,
+		((void (*)(struct proc *, void *))*hd->hk_fn)(p,
 		    hd->hk_arg);
 	}
 }
@@ -461,7 +461,7 @@ hook_list_t shutdownhook_list;
 
 void *
 shutdownhook_establish(fn, arg)
-	void (*fn) __P((void *));
+	void (*fn)(void *);
 	void *arg;
 {
 	return hook_establish(&shutdownhook_list, fn, arg);
@@ -511,11 +511,10 @@ hook_list_t mountroothook_list;
 
 void *
 mountroothook_establish(fn, dev)
-	void (*fn) __P((struct device *));
+	void (*fn)(struct device *);
 	struct device *dev;
 {
-	return hook_establish(&mountroothook_list, (void (*)__P((void *)))fn,
-	    dev);
+	return hook_establish(&mountroothook_list, (void (*)(void *))fn, dev);
 }
 
 void
@@ -548,10 +547,10 @@ hook_list_t exechook_list;
 
 void *
 exechook_establish(fn, arg)
-	void (*fn) __P((struct proc *, void *));
+	void (*fn)(struct proc *, void *);
 	void *arg;
 {
-	return hook_establish(&exechook_list, (void (*) __P((void *)))fn, arg);
+	return hook_establish(&exechook_list, (void (*)(void *))fn, arg);
 }
 
 void
@@ -575,10 +574,10 @@ hook_list_t exithook_list;
 
 void *
 exithook_establish(fn, arg)
-	void (*fn) __P((struct proc *, void *));
+	void (*fn)(struct proc *, void *);
 	void *arg;
 {
-	return hook_establish(&exithook_list, (void (*) __P((void *)))fn, arg);
+	return hook_establish(&exithook_list, (void (*)(void *))fn, arg);
 }
 
 void
@@ -602,9 +601,9 @@ hook_list_t forkhook_list;
 
 void *
 forkhook_establish(fn)
-	void (*fn) __P((struct proc *, struct proc *));
+	void (*fn)(struct proc *, struct proc *);
 {
-	return hook_establish(&forkhook_list, (void (*) __P((void *)))fn, NULL);
+	return hook_establish(&forkhook_list, (void (*)(void *))fn, NULL);
 }
 
 void
@@ -624,7 +623,7 @@ doforkhooks(p2, p1)
 	struct hook_desc *hd;
 
 	LIST_FOREACH(hd, &forkhook_list, hk_list) {
-		((void (*) __P((struct proc *, struct proc *)))*hd->hk_fn)
+		((void (*)(struct proc *, struct proc *))*hd->hk_fn)
 		    (p2, p1);
 	}
 }
@@ -638,16 +637,16 @@ doforkhooks(p2, p1)
  */
 struct powerhook_desc {
 	CIRCLEQ_ENTRY(powerhook_desc) sfd_list;
-	void	(*sfd_fn) __P((int, void *));
+	void	(*sfd_fn)(int, void *);
 	void	*sfd_arg;
 };
 
-CIRCLEQ_HEAD(, powerhook_desc) powerhook_list = 
+CIRCLEQ_HEAD(, powerhook_desc) powerhook_list =
 	CIRCLEQ_HEAD_INITIALIZER(powerhook_list);
 
 void *
 powerhook_establish(fn, arg)
-	void (*fn) __P((int, void *));
+	void (*fn)(int, void *);
 	void *arg;
 {
 	struct powerhook_desc *ndp;
@@ -722,7 +721,7 @@ static struct device fakemdrootdev[NMD];
 
 #include "raid.h"
 #if NRAID == 1
-#define BOOT_FROM_RAID_HOOKS 1 
+#define BOOT_FROM_RAID_HOOKS 1
 #endif
 
 #ifdef BOOT_FROM_RAID_HOOKS
@@ -1205,7 +1204,7 @@ parsedisk(str, len, defpart, devp)
  * plus a possible `x' + suffix extension) fits into len bytes (including
  * the terminating NUL).
  * Returns the number of bytes stored in buf, or -1 if there was a problem.
- * E.g, given a len of 9 and a suffix of `B': 
+ * E.g, given a len of 9 and a suffix of `B':
  *	bytes		result
  *	-----		------
  *	99999		`99999 B'

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.49 2003/06/23 11:02:06 martin Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.50 2004/03/23 13:22:33 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.49 2003/06/23 11:02:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.50 2004/03/23 13:22:33 junyoung Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -105,12 +105,12 @@ simple_unlock(l)		((void)(l))
 #define	KMEM_IS_RUNNING			(1)
 #endif
 
-static	void extent_insert_and_optimize __P((struct extent *, u_long, u_long,
-	    int, struct extent_region *, struct extent_region *));
+static	void extent_insert_and_optimize(struct extent *, u_long, u_long,
+	    int, struct extent_region *, struct extent_region *);
 static	struct extent_region *extent_alloc_region_descriptor
-	    __P((struct extent *, int));
-static	void extent_free_region_descriptor __P((struct extent *,
-	    struct extent_region *));
+	   (struct extent *, int);
+static	void extent_free_region_descriptor(struct extent *,
+	    struct extent_region *);
 
 static struct pool expool;
 static struct simplelock expool_init_slock = SIMPLELOCK_INITIALIZER;
@@ -699,7 +699,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 				 * Calculate the next boundary after the start
 				 * of this region.
 				 */
-				dontcross = EXTENT_ALIGN(newstart+1, boundary, 
+				dontcross = EXTENT_ALIGN(newstart+1, boundary,
 				    (flags & EX_BOUNDZERO) ? 0 : ex->ex_start)
 				    - 1;
 
@@ -770,7 +770,7 @@ skip:
 			 */
 			goto fail;
 		}
-		
+
 		last = rp;
 	}
 
@@ -794,7 +794,7 @@ skip:
 			 * Calculate the next boundary after the start
 			 * of this region.
 			 */
-			dontcross = EXTENT_ALIGN(newstart+1, boundary, 
+			dontcross = EXTENT_ALIGN(newstart+1, boundary,
 			    (flags & EX_BOUNDZERO) ? 0 : ex->ex_start)
 			    - 1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.216 2004/02/14 00:00:56 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.217 2004/03/23 13:22:33 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.216 2004/02/14 00:00:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.217 2004/03/23 13:22:33 junyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -142,7 +142,7 @@ extern int dovfsusermount;	/* 1 => permit any user to mount filesystems */
 #define	bufremvn(bp) {							\
 	LIST_REMOVE(bp, b_vnbufs);					\
 	(bp)->b_vnbufs.le_next = NOLIST;				\
-}  
+}
 /* TAILQ_HEAD(freelst, vnode) vnode_free_list =	vnode free list (in vnode.h) */
 struct freelst vnode_free_list = TAILQ_HEAD_INITIALIZER(vnode_free_list);
 struct freelst vnode_hold_list = TAILQ_HEAD_INITIALIZER(vnode_hold_list);
@@ -177,20 +177,20 @@ MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
 /*
  * Local declarations.
  */
-void insmntque __P((struct vnode *, struct mount *));
-int getdevvp __P((dev_t, struct vnode **, enum vtype));
-void vgoneall __P((struct vnode *));
+void insmntque(struct vnode *, struct mount *);
+int getdevvp(dev_t, struct vnode **, enum vtype);
+void vgoneall(struct vnode *);
 
 void vclean(struct vnode *, int, struct proc *);
 
-static int vfs_hang_addrlist __P((struct mount *, struct netexport *,
-				  struct export_args *));
-static int vfs_free_netcred __P((struct radix_node *, void *));
-static void vfs_free_addrlist __P((struct netexport *));
-static struct vnode *getcleanvnode __P((struct proc *));
+static int vfs_hang_addrlist(struct mount *, struct netexport *,
+			     struct export_args *);
+static int vfs_free_netcred(struct radix_node *, void *);
+static void vfs_free_addrlist(struct netexport *);
+static struct vnode *getcleanvnode(struct proc *);
 
 #ifdef DEBUG
-void printlockedvnodes __P((void));
+void printlockedvnodes(void);
 #endif
 
 /*
@@ -301,7 +301,7 @@ vfs_busy(mp, flags, interlkp)
 
 	while (mp->mnt_iflag & IMNT_UNMOUNT) {
 		int gone;
-		
+
 		if (flags & LK_NOWAIT)
 			return (ENOENT);
 		if ((flags & LK_RECURSEFAIL) && mp->mnt_unmounter != NULL
@@ -322,7 +322,7 @@ vfs_busy(mp, flags, interlkp)
 		tsleep((caddr_t)mp, PVFS, "vfs_busy", 0);
 		mp->mnt_wcnt--;
 		gone = mp->mnt_iflag & IMNT_GONE;
-		
+
 		if (mp->mnt_wcnt == 0)
 			wakeup(&mp->mnt_wcnt);
 		if (interlkp)
@@ -493,7 +493,7 @@ vattr_null(vap)
 /*
  * Routines having to do with the management of the vnode table.
  */
-extern int (**dead_vnodeop_p) __P((void *));
+extern int (**dead_vnodeop_p)(void *);
 long numvnodes;
 
 /*
@@ -503,7 +503,7 @@ int
 getnewvnode(tag, mp, vops, vpp)
 	enum vtagtype tag;
 	struct mount *mp;
-	int (**vops) __P((void *));
+	int (**vops)(void *);
 	struct vnode **vpp;
 {
 	extern struct uvm_pagerops uvm_vnodeops;
@@ -638,7 +638,7 @@ ungetnewvnode(vp)
 	vp->v_type = VBAD;
 
 	simple_lock(&vp->v_interlock);
-	/* 
+	/*
 	 * Insert at head of LRU list
 	 */
 	simple_lock(&vnode_free_list_slock);
@@ -646,7 +646,7 @@ ungetnewvnode(vp)
 		TAILQ_INSERT_HEAD(&vnode_hold_list, vp, v_freelist);
 	else
 		TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
-	simple_unlock(&vnode_free_list_slock); 
+	simple_unlock(&vnode_free_list_slock);
 	simple_unlock(&vp->v_interlock);
 }
 
@@ -667,7 +667,7 @@ insmntque(vp, mp)
 		panic("insmntque into dying filesystem");
 	}
 #endif
-	
+
 	simple_lock(&mntvnode_slock);
 	/*
 	 * Delete from old mount point vnode list, if on one.
@@ -1692,11 +1692,11 @@ vclean(vp, flags, p)
  */
 int
 vrecycle(vp, inter_lkp, p)
-	struct vnode *vp; 
+	struct vnode *vp;
 	struct simplelock *inter_lkp;
 	struct proc *p;
-{             
-       
+{
+
 	simple_lock(&vp->v_interlock);
 	if (vp->v_usecount == 0) {
 		if (inter_lkp)
@@ -2514,7 +2514,7 @@ vaccess(type, file_mode, uid, gid, acc_mode, cred)
 	struct ucred *cred;
 {
 	mode_t mask;
-	
+
 	/*
 	 * Super-user always gets read/write access, but execute access depends
 	 * on at least one execute bit being set.
@@ -2525,9 +2525,9 @@ vaccess(type, file_mode, uid, gid, acc_mode, cred)
 			return (EACCES);
 		return (0);
 	}
-	
+
 	mask = 0;
-	
+
 	/* Otherwise, check the owner. */
 	if (cred->cr_uid == uid) {
 		if (acc_mode & VEXEC)
@@ -2538,7 +2538,7 @@ vaccess(type, file_mode, uid, gid, acc_mode, cred)
 			mask |= S_IWUSR;
 		return ((file_mode & mask) == mask ? 0 : EACCES);
 	}
-	
+
 	/* Otherwise, check the groups. */
 	if (cred->cr_gid == gid || groupmember(gid, cred)) {
 		if (acc_mode & VEXEC)
@@ -2549,7 +2549,7 @@ vaccess(type, file_mode, uid, gid, acc_mode, cred)
 			mask |= S_IWGRP;
 		return ((file_mode & mask) == mask ? 0 : EACCES);
 	}
-	
+
 	/* Otherwise, check everyone else. */
 	if (acc_mode & VEXEC)
 		mask |= S_IXOTH;
@@ -2910,7 +2910,7 @@ set_statfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 	struct statfs *sfs = &mp->mnt_stat;
 	int (*fun)(const void *, void *, size_t, size_t *);
 
-	(void)strncpy(mp->mnt_stat.f_fstypename, mp->mnt_op->vfs_name, 
+	(void)strncpy(mp->mnt_stat.f_fstypename, mp->mnt_op->vfs_name,
 	    sizeof(mp->mnt_stat.f_fstypename));
 
 	if (onp) {
@@ -2981,7 +2981,7 @@ void
 vfs_buf_print(bp, full, pr)
 	struct buf *bp;
 	int full;
-	void (*pr) __P((const char *, ...));
+	void (*pr)(const char *, ...);
 {
 	char buf[1024];
 
@@ -3035,7 +3035,7 @@ void
 vfs_vnode_print(vp, full, pr)
 	struct vnode *vp;
 	int full;
-	void (*pr) __P((const char *, ...));
+	void (*pr)(const char *, ...);
 {
 	char buf[256];
 	const char *vtype, *vtag;
@@ -3056,7 +3056,7 @@ vfs_vnode_print(vp, full, pr)
 	vtag = (vp->v_tag >= 0 &&
 		vp->v_tag < sizeof(vnode_tags) / sizeof(vnode_tags[0])) ?
 		vnode_tags[vp->v_tag] : "UNKNOWN";
-	
+
 	(*pr)("type %s(%d) tag %s(%d) mount %p typedata %p\n",
 	      vtype, vp->v_type, vtag, vp->v_tag,
 	      vp->v_mount, vp->v_mountedhere);
@@ -3082,7 +3082,7 @@ void
 vfs_mount_print(mp, full, pr)
 	struct mount *mp;
 	int full;
-	void (*pr) __P((const char *, ...));
+	void (*pr)(const char *, ...);
 {
 	char sbuf[256];
 

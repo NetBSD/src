@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.75 2004/02/06 13:46:27 christos Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.76 2004/03/23 13:22:33 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.75 2004/02/06 13:46:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.76 2004/03/23 13:22:33 junyoung Exp $");
 
 #define SYSVSHM
 
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.75 2004/02/06 13:46:27 christos Exp $
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
 
-struct shmid_ds *shm_find_segment_by_shmid __P((int, int));
+struct shmid_ds *shm_find_segment_by_shmid(int, int);
 
 static MALLOC_DEFINE(M_SHM, "shm", "SVID compatible shared memory segments");
 
@@ -130,17 +130,16 @@ struct shmmap_state {
 	SLIST_HEAD(, shmmap_entry) entries;
 };
 
-static int shm_find_segment_by_key __P((key_t));
-static void shm_deallocate_segment __P((struct shmid_ds *));
-static void shm_delete_mapping __P((struct vmspace *, struct shmmap_state *,
-				    struct shmmap_entry *));
-static int shmget_existing __P((struct proc *, struct sys_shmget_args *,
-				int, int, register_t *));
-static int shmget_allocate_segment __P((struct proc *, struct sys_shmget_args *,
-					int, register_t *));
-static struct shmmap_state *shmmap_getprivate __P((struct proc *));
-static struct shmmap_entry *
-  shm_find_mapping __P((struct shmmap_state *, vaddr_t));
+static int shm_find_segment_by_key(key_t);
+static void shm_deallocate_segment(struct shmid_ds *);
+static void shm_delete_mapping(struct vmspace *, struct shmmap_state *,
+			       struct shmmap_entry *);
+static int shmget_existing(struct proc *, struct sys_shmget_args *,
+			   int, int, register_t *);
+static int shmget_allocate_segment(struct proc *, struct sys_shmget_args *,
+				   int, register_t *);
+static struct shmmap_state *shmmap_getprivate(struct proc *);
+static struct shmmap_entry *shm_find_mapping(struct shmmap_state *, vaddr_t);
 
 static int
 shm_find_segment_by_key(key)
@@ -201,7 +200,7 @@ shm_delete_mapping(vm, shmmap_s, shmmap_se)
 	struct shmid_ds *shmseg;
 	int segnum;
 	size_t size;
-	
+
 	segnum = IPCID_TO_IX(shmmap_se->shmid);
 #ifdef DEBUG
 	if (segnum < 0 || segnum >= shminfo.shmmni)
@@ -375,7 +374,7 @@ shmat1(p, shmid, shmaddr, shmflg, attachp, findremoved)
 	flags = MAP_ANON | MAP_SHARED;
 	if (shmaddr) {
 		flags |= MAP_FIXED;
-		if (shmflg & SHM_RND) 
+		if (shmflg & SHM_RND)
 			attach_va =
 			    (vaddr_t)shmaddr & ~(SHMLBA-1);
 		else if (((vaddr_t)shmaddr & (SHMLBA-1)) == 0)
@@ -421,7 +420,7 @@ sys___shmctl13(l, v, retval)
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
 		syscallarg(struct shmid_ds *) buf;
-	} */ *uap = v;  
+	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct shmid_ds shmbuf;
 	int cmd, error;
@@ -547,7 +546,7 @@ shmget_allocate_segment(p, uap, mode, retval)
 	struct shmid_ds *shmseg;
 	struct shm_handle *shm_handle;
 	int error = 0;
-	
+
 	if (SCARG(uap, size) < shminfo.shmmin ||
 	    SCARG(uap, size) > shminfo.shmmax)
 		return EINVAL;
@@ -630,7 +629,7 @@ sys_shmget(l, v, retval)
 				goto again;
 			return error;
 		}
-		if ((SCARG(uap, shmflg) & IPC_CREAT) == 0) 
+		if ((SCARG(uap, shmflg) & IPC_CREAT) == 0)
 			return ENOENT;
 	}
 	return shmget_allocate_segment(p, uap, mode, retval);
