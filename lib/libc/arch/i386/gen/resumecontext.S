@@ -1,4 +1,4 @@
-/*	$NetBSD: resumecontext.S,v 1.3 2003/01/26 16:22:01 fvdl Exp $	*/
+/*	$NetBSD: resumecontext.S,v 1.4 2003/01/26 18:14:03 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: resumecontext.S,v 1.3 2003/01/26 16:22:01 fvdl Exp $")
+	RCSID("$NetBSD: resumecontext.S,v 1.4 2003/01/26 18:14:03 kleink Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
@@ -49,8 +49,9 @@
  */
 
 NENTRY(_resumecontext)	/* profiling prologue would clobber TOS */
-	subl	$(4 + 512),%esp
-	movl	%esp,%ecx
+	leal	-(4 + 776)(%esp),%ecx	/* retaddr + sizeof (ucontext_t) */
+	andl	$~(0xf),%ecx		/* align on _UC_UCONTEXT_ALIGN */
+	movl	%ecx,%esp
 	PIC_PROLOGUE
 	pushl	%ecx
 #ifdef PIC
@@ -60,7 +61,7 @@ NENTRY(_resumecontext)	/* profiling prologue would clobber TOS */
 #endif
 	addl	$4,%esp
 	PIC_EPILOGUE
-	movl	4(%esp),%ecx
+	movl	4(%esp),%ecx		/* uc_link */
 	PIC_PROLOGUE
 	pushl	%ecx
 #ifdef PIC
