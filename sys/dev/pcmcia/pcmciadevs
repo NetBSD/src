@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.16 1998/09/20 19:19:54 dbj Exp $
+$NetBSD: pcmciadevs,v 1.17 1998/10/07 01:08:37 jtk Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ product IBM HOME_AND_AWAY	0x002e IBM Home and Away Modem
 product IODATA PCLAT		0x2216 I-O DATA PCLA/T
 
 /* Linksys corporation */
-product LINKSYS ECARD		0x0265 Linksys EthernetCard
+product LINKSYS ECARD_1		0x0265 Linksys EthernetCard
 product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
 product LINKSYS TRUST_COMBO_ECARD 0x021b Trust (Linksys) Combo EthernetCard
 
@@ -140,3 +140,4 @@ product ACCTON EN2212		{ "ACCTON", "EN2212", NULL, NULL } Accton EN2212
 product YEDATA EXTERNAL_FDD	{ "Y-E&spDATA", "External&spFDD", NULL, NULL } Y-E DATA External FDD
 product DIGITAL DEPCMXX		{ "DIGITAL", "DEPCM-XX", NULL, NULL } DEC DEPCM-BA
 product TEAC IDECARDII		{ NULL, "NinjaATA-", NULL, NULL } TEAC IDE Card/II
+product LINKSYS ECARD_2	{ "LINKSYS", "E-CARD", NULL, NULL } Linksys E-Card
