@@ -104,11 +104,11 @@ beforeinstall:
 
 realinstall: beforeinstall
 	ranlib lib${LIB}.a
-	install -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} lib${LIB}.a \
+	install -c -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} lib${LIB}.a \
 	    ${DESTDIR}${LIBDIR}
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
 	ranlib lib${LIB}_p.a
-	install -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	install -c -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}_p.a ${DESTDIR}${LIBDIR}
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 #	install -c -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
