@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65 2004/07/02 17:00:31 drochner Exp $
+#	$NetBSD: Makefile,v 1.66 2004/08/18 12:19:30 drochner Exp $
 
 INCSDIR= /usr/include/sys
 
@@ -7,7 +7,7 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	callout.h cdefs.h cdefs_aout.h \
 	cdefs_elf.h cdio.h chio.h clockctl.h conf.h core.h \
 	device.h dir.h dirent.h disk.h disklabel.h disklabel_acorn.h \
-	dkbad.h dkio.h dkstat.h domain.h dvdio.h \
+	dkbad.h dkio.h dkstat.h domain.h drvctlio.h dvdio.h \
 	endian.h envsys.h errno.h event.h exec.h exec_aout.h \
 	exec_coff.h exec_ecoff.h exec_elf.h exec_script.h extent.h \
 	fcntl.h fdio.h featuretest.h file.h filedesc.h filio.h \

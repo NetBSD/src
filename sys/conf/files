@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.680 2004/08/12 04:23:02 thorpej Exp $
+#	$NetBSD: files,v 1.681 2004/08/18 12:19:29 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1073,6 +1073,10 @@ file	dev/verified_exec.c		verifiedexec		needs-flag
 
 # isochronous pseudo device for IEEE 1394, i.LINK or FireWire
 defpseudo fwiso:	ieee1394
+
+# driver attach / detach user interface
+defpseudo drvctl
+file	kern/kern_drvctl.c		drvctl
 
 #
 # File systems

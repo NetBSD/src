@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.10 2004/08/01 21:40:41 bouyer Exp $
+# $NetBSD: majors,v 1.11 2004/08/18 12:19:29 drochner Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -16,3 +16,4 @@ device-major	fss		char 163 block 163	fss
 device-major	pps		char 164		pps
 device-major	ptm		char 165		pty
 device-major	atabus		char 166		atabus
+device-major	drvctl		char 167		drvctl
