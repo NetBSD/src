@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.7 1999/11/29 20:00:04 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.8 1999/11/30 00:26:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.7 1999/11/29 20:00:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.8 1999/11/30 00:26:55 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -71,7 +71,7 @@ ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 	alpha_ipi_tbia,
 	alpha_ipi_tbiap,
 	pmap_do_tlb_shootdown,
-	alpha_pal_imb,
+	alpha_ipi_imb,
 	alpha_ipi_ast,
 };
 
@@ -148,6 +148,13 @@ alpha_ipi_tbiap()
 	/* Can't clear SHOOTDOWN here; might have PG_ASM mappings. */
 
 	ALPHA_TBIAP();
+}
+
+void
+alpha_ipi_imb()
+{
+
+	alpha_pal_imb();
 }
 
 void
