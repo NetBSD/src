@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.21 2003/10/26 07:25:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.22 2003/10/26 09:30:55 lukem Exp $
 
 .include <bsd.own.mk>
 
-CPPFLAGS+=	-DHAVE_CONFIG_H -I.
+CPPFLAGS+=	-I.
 
 WARNS?=	1
 PROG=	ksh
