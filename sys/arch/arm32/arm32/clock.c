@@ -1,7 +1,7 @@
-/* $NetBSD: clock.c,v 1.1 1996/01/31 23:15:25 mark Exp $ */
+/* $NetBSD: clock.c,v 1.2 1996/03/08 18:57:41 mark Exp $ */
 
 /*
- * Copyright (c) 1994 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -41,9 +41,6 @@
  * Timer related machine specific code
  *
  * Created      : 29/09/94
- * Last updated : 28/08/95
- *
- *    $Id: clock.c,v 1.1 1996/01/31 23:15:25 mark Exp $
  */
 
 /* Include header files */
@@ -97,7 +94,6 @@ int
 statclockhandler(frame)
 	struct clockframe *frame;
 {
-    
 	statclock(frame);
 	return(1);
 }
@@ -179,13 +175,6 @@ cpu_initclocks()
  * accurate to the microsecond.
  */
 
-/* ALERT ! This routine is screwed ! */
-
-/*
- * It's not so screwed now  .. I have fixed it but need to stare at it
- * some more to make sure it is behaving as required.
- */
- 
 void
 microtime(tvp)
 	struct timeval *tvp;
@@ -283,13 +272,15 @@ resettodr()
 	year = (sec / SECPER4YEARS) * 4;
 	sec %= SECPER4YEARS;
 
-/* year now hold the number of years rounded down 4 */
+	/* year now hold the number of years rounded down 4 */
+
 	while (sec > (yeartoday(EPOCHYEAR+year) * SECPERDAY)) {
 		sec -= yeartoday(EPOCHYEAR+year)*SECPERDAY;
 		year++;
 	}
 
-/* year is now a correct offset from the EPOCHYEAR */
+	/* year is now a correct offset from the EPOCHYEAR */
+
 	year+=EPOCHYEAR;
 	mon=0;
 	if (yeartoday(year) == 366)
@@ -317,9 +308,11 @@ resettodr()
 	rtc.rtc_centi =
 	rtc.rtc_micro = 0;
 
-/*	printf("resettod: %d/%d/%d%d %d:%d:%d\n", rtc.rtc_day,
+/*
+	printf("resettod: %d/%d/%d%d %d:%d:%d\n", rtc.rtc_day,
 	    rtc.rtc_mon, rtc.rtc_cen, rtc.rtc_year, rtc.rtc_hour,
-	    rtc.rtc_min, rtc.rtc_sec);*/
+	    rtc.rtc_min, rtc.rtc_sec);
+*/
 
 	s = splclock();
 	rtc_write(&rtc);
