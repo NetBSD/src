@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsfontload.8,v 1.11 2001/01/26 20:25:25 hubertf Exp $
+.\"	$NetBSD: wsfontload.8,v 1.12 2001/04/03 12:02:22 wiz Exp $
 .\"
 .Dd November 8, 2000
 .Os
@@ -93,11 +93,6 @@ utility will be executed in system startup by the
 script, controlled by the
 .Pa /etc/wscons.conf
 configuration file.
-.Pp
-No font files are provided with the wscons framework. The fonts installed by
-.Xr pcvt 4
-can be used instead, as can raw font files from other operating system
-distributions.
 .Sh EXAMPLES
 .Dl wsfontload -N myname -h 8 -e ibm /usr/share/wscons/fonts/vt220l.808
 .Pp
@@ -109,6 +104,7 @@ distribution. This (or another 8\(mu8-font) is necessary to use the
 displays.
 .Sh FILES
 .Pa /etc/wscons.conf
+.Pa /usr/share/wscons/fonts
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsconscfg 8 ,
