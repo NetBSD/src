@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.29 1998/03/18 19:02:50 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.30 1998/03/18 19:27:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,13 +101,6 @@ typedef struct pmap	*pmap_t;
 extern struct pmap	kernel_pmap_store;
 
 #define pmap_kernel()	(&kernel_pmap_store)
-#define	active_pmap(pm) \
-	((pm) == pmap_kernel()	\
-	|| curproc == NULL	\
-	|| (pm) == curproc->p_vmspace->vm_map.pmap)
-#define	active_user_pmap(pm) \
-	(curproc && \
-	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
