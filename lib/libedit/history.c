@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.17 2001/03/20 00:08:31 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.18 2001/09/29 17:52:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.17 2001/03/20 00:08:31 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.18 2001/09/29 17:52:10 jdolecek Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -410,7 +410,7 @@ history_def_enter(ptr_t p, HistEvent *ev, const char *str)
          * Always keep at least one entry.
          * This way we don't have to check for the empty list.
          */
-	while (h->cur - 1 > h->max)
+	while (h->cur > h->max && h->cur > 0)
 		history_def_delete(h, ev, h->list.prev);
 
 	return (0);
