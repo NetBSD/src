@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.7 1997/04/25 19:25:39 leo Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.7.8.1 1998/10/30 17:19:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -241,7 +241,7 @@ view_t *v;
 		return;
 	}
 	if (v->save_area == NULL)
-		v->save_area = malloc(SAVEBUF_SIZE, M_DEVBUF, M_WAITOK);
+		v->save_area = malloc(SAVEBUF_SIZE, M_DEVBUF, M_NOWAIT);
 
 	/*
 	 * Calculate the size of the copy
@@ -566,13 +566,19 @@ et_sv_reg_t		*regs;
 	 * XXX: This works for depth == 4. I need some better docs
 	 * to fix the other modes....
 	 */
-	vgaw(ba, VDAC_MASK, 0xff);
+	/*
+	 * What we need would be probe functions for RAMDAC/clock chip
+	 */
+	vgar(ba, VDAC_ADDRESS);		/* clear old state */
 	vgar(ba, VDAC_MASK);
 	vgar(ba, VDAC_MASK);
 	vgar(ba, VDAC_MASK);
 	vgar(ba, VDAC_MASK);
 
-	vgaw(ba, VDAC_MASK, 0);
+	vgaw(ba, VDAC_MASK, 0);		/* set to palette */
+	vgar(ba, VDAC_ADDRESS);		/* clear state */
+
+	vgaw(ba, VDAC_MASK, 0xff);
 	/*
 	 * End of depth stuff
 	 */
