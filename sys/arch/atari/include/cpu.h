@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 1997/04/09 19:46:04 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22 1997/06/02 12:06:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -129,6 +129,7 @@ extern int	want_resched;	/* resched() was called */
 #define ATARI_68020	(1L<<2)		/* 68020 CPU			*/
 #define ATARI_68030	(1L<<3)		/* 68030 CPU			*/
 #define ATARI_68040	(1L<<4)		/* 68040 CPU			*/
+#define ATARI_68060	(1L<<6)		/* 68060 CPU			*/
 #define	ATARI_TT	(1L<<11)
 #define	ATARI_FALCON	(1L<<12)
 #define	ATARI_HADES	(1L<<13)
@@ -136,7 +137,7 @@ extern int	want_resched;	/* resched() was called */
 #define	ATARI_CLKBROKEN	(1L<<16)
 
 #define	ATARI_ANYCPU	(ATARI_68000|ATARI_68010|ATARI_68020|ATARI_68030 \
-			|ATARI_68040)
+			|ATARI_68040|ATARI_68060)
 
 #define	ATARI_ANYMACH	(ATARI_TT|ATARI_FALCON|ATARI_HADES)
 
