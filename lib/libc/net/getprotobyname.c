@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotoent.c,v 1.9 2004/02/19 19:27:26 christos Exp $	*/
+/*	$NetBSD: getprotobyname.c,v 1.1 2004/02/19 19:27:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,36 +36,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getprotoent.c,v 1.9 2004/02/19 19:27:26 christos Exp $");
+__RCSID("$NetBSD: getprotobyname.c,v 1.1 2004/02/19 19:27:26 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include <assert.h>
 #include <netdb.h>
+#include <string.h>
 
 #ifdef __weak_alias
-__weak_alias(endprotoent,_endprotoent)
-__weak_alias(getprotoent,_getprotoent)
-__weak_alias(setprotoent,_setprotoent)
+__weak_alias(getprotobyname,_getprotobyname)
 #endif
 
-struct protoent_data _protoent_data;
-
-void
-setprotoent(int f)
-{
-	setprotoent_r(f, &_protoent_data);
-}
-
-void
-endprotoent(void)
-{
-	endprotoent_r(&_protoent_data);
-}
+extern struct protoent_data _protoent_data;
 
 struct protoent *
-getprotoent(void)
+getprotobyname(const char *name)
 {
-	return getprotoent_r(&_protoent_data.proto, &_protoent_data);
+	return getprotobyname_r(name, &_protoent_data.proto, &_protoent_data);
 }
