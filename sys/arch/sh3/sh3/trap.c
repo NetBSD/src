@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.14 2000/06/07 11:34:17 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.14.2.1 2000/08/18 10:47:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -454,7 +454,12 @@ syscall(frame)
 		 */
 		if (callp != sysent)
 			break;
-		code = frame->tf_r5; /* fuword(params + _QUAD_LOWWORD * sizeof(int)); */
+		/* fuword(params + _QUAD_LOWWORD * sizeof(int)); */
+#if _BYTE_ORDER == BIG_ENDIAN
+		code = frame->tf_r5;
+#else
+		code = frame->tf_r4;
+#endif
 		/* params += sizeof(quad_t); */
 		break;
 	default:
