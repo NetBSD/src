@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.8 1999/08/04 18:17:00 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.9 1999/08/04 18:39:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1012,7 +1012,7 @@ ntfs_lookup(ap)
 		}
 
 		if (lockparent && (cnp->cn_flags & ISLASTCN)) {
-			if (error = vn_lock(dvp, LK_EXCLUSIVE)) {
+			if ((error = vn_lock(dvp, LK_EXCLUSIVE))) {
 				vput( *(ap->a_vpp) );
 				return (error);
 			}
