@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.20.2.2 2004/04/07 06:57:42 jmc Exp $	*/
+/*	$NetBSD: ftree.c,v 1.20.2.3 2004/06/16 01:27:38 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -69,8 +69,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <sys/cdefs.h>
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.20.2.2 2004/04/07 06:57:42 jmc Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.20.2.3 2004/06/16 01:27:38 jmc Exp $");
 #endif
 #endif /* not lint */
 
