@@ -480,6 +480,7 @@
 ./usr/share/man/cat5/phones.0
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
+./usr/share/man/cat5/ranlib.0
 ./usr/share/man/cat5/rc.conf.0
 ./usr/share/man/cat5/rcsfile.0
 ./usr/share/man/cat5/remote.0
@@ -1504,6 +1505,7 @@
 ./usr/share/man/man5/phones.5
 ./usr/share/man/man5/printcap.5
 ./usr/share/man/man5/protocols.5
+./usr/share/man/man5/ranlib.5
 ./usr/share/man/man5/rc.conf.5
 ./usr/share/man/man5/rcsfile.5
 ./usr/share/man/man5/remote.5
