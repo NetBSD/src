@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
- *	$Id: stdlib.h,v 1.16 1994/05/21 09:42:29 cgd Exp $
+ *	$Id: stdlib.h,v 1.17 1994/06/16 05:45:35 mycroft Exp $
  */
 
 #ifndef _STDLIB_H_
@@ -142,7 +142,12 @@ extern	 char *suboptarg;		/* getsubopt(3) external variable */
 
 int	 heapsort __P((void *, size_t, size_t,
 	    int (*)(const void *, const void *)));
-int	 radixsort __P((const u_char **, int, const u_char *, u_char));
+int	 mergesort __P((void *, size_t, size_t,
+	    int (*)(const void *, const void *)));
+int	 radixsort __P((const unsigned char **, int, const unsigned char *,
+	    unsigned));
+int	 sradixsort __P((const unsigned char **, int, const unsigned char *,
+	    unsigned));
 
 char	*initstate __P((unsigned, char *, int));
 long	 random __P((void));
