@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.56 2004/05/27 23:47:23 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.57 2004/06/03 18:07:30 heas Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.56 2004/05/27 23:47:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.57 2004/06/03 18:07:30 heas Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -652,8 +652,8 @@ twe_reset(struct twe_softc *sc)
 	    TWE_CTL_DISABLE_INTRS);
 
 	/* Wait for attention... */
-	if (twe_status_wait(sc, TWE_STS_ATTN_INTR, 15)) {
-		printf("%s: no attention interrupt\n",
+	if (twe_status_wait(sc, TWE_STS_ATTN_INTR, 30)) {
+		printf("%s: timeout waiting for attention interrupt\n",
 		    sc->sc_dv.dv_xname);
 		return (-1);
 	}
