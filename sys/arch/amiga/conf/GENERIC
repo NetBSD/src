@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.156 2001/02/02 21:52:13 is Exp $
+#	$NetBSD: GENERIC,v 1.157 2001/03/10 23:55:31 is Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.156 $"
+#ident 		"GENERIC-$Revision: 1.157 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -299,10 +299,12 @@ hyper*		at zbus?		# zbus HyperCom3/3+/4/4+
 com*		at hyper? port ?	# Hypercom3/4 serial ports
 lpt*		at hyper? port ?	# Hypercom3+/4+ parallel port
 
-# not enabled yet... needs more testing and clock frequency autodetection
-#iobl*		at zbus?		# zbus IOBlix
-#com*		at iobl? port ?		# IOBlix serial ports
-#lpt*		at iobl? port ?		# IOBlix parallel ports
+#options IOBZCLOCK=22118400 		# default, uncomment the next line
+#options IOBZCLOCK=24000000		# if needed.
+
+iobl*		at zbus?		# zbus IOBlix
+com*		at iobl? port ?		# IOBlix serial ports
+lpt*		at iobl? port ?		# IOBlix parallel ports
 
 
 #

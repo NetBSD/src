@@ -1,4 +1,4 @@
-/* $NetBSD: ioblix_zbus.c,v 1.2 2001/03/08 19:21:53 is Exp $ */
+/* $NetBSD: ioblix_zbus.c,v 1.3 2001/03/10 23:55:29 is Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ struct iobz_devs {
 	unsigned off;
 	int arg;
 } iobzdevices[] = {
-	{ "com", 0x100, 24000000 },
+	{ "com", 0x100, 24000000 },	/* XXX see below */
 	{ "com", 0x108, 24000000 },
 	{ "com", 0x110, 24000000 },
 	{ "com", 0x118, 24000000 },
@@ -105,7 +105,10 @@ struct iobz_devs {
 	{ 0, 0, 0}
 };
 
-
+#ifndef IOBZCLOCK
+#define IOBZCLOCK 22118400;
+#endif
+int iobzclock = IOBZCLOCK;		/* patchable! */
 
 void
 iobzattach(parent, self, auxp)
@@ -137,7 +140,7 @@ iobzattach(parent, self, auxp)
 	while (iobzd->name) {
 		supa.supio_name = iobzd->name;
 		supa.supio_iobase = iobzd->off;
-		supa.supio_arg = iobzd->arg;
+		supa.supio_arg = iobzclock /* XXX iobzd->arg */;
 		config_found(self, &supa, iobzprint); /* XXX */
 		++iobzd;
 	}

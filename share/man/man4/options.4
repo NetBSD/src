@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.130 2001/03/05 02:35:22 mrg Exp $
+.\"	$NetBSD: options.4,v 1.131 2001/03/10 23:55:30 is Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1348,6 +1348,14 @@ You need this with
 .Tn ROM Ns s
 up to (at least) V40.xxx (OS3.1),
 when you boot via the bootblocks and don't have a DraCo.
+.It Cd options IOBZCLOCK=frequency
+The IOBlix boards come with two different serial master clocks: older ones
+use 24 MHz, newer ones use 22.1184 MHz. The driver normally assumes the latter.
+If your board uses 24 MHz, you can recompile your kernel with 
+options IOBZCLOCK=24000000
+or patch the kernel variable 
+.Tn iobzclock
+to the same value.
 .It Cd options LIMITMEM=value
 If there, limit the part of the first memory bank used by
 .Nx
