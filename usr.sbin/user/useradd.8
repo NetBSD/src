@@ -1,4 +1,4 @@
-.\" $NetBSD: useradd.8,v 1.6 2000/10/02 18:28:28 bjh21 Exp $ */
+.\" $NetBSD: useradd.8,v 1.7 2000/10/03 12:18:09 bjh21 Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -85,17 +85,23 @@ and default login shell can be provided in the
 .Pa /etc/usermgmt.conf
 file.
 .Pp
-The first format of the command shown above (utilising the -D option)
+The first format of the command shown above (utilising the
+.Fl D
+option)
 sets and displays the defaults for the
 .Nm
 utility.
 .Bl -tag -width Ds
 .It Fl D
-without any further options, -D will show the current defaults which
+without any further options,
+.Fl D
+will show the current defaults which
 will be used by the
 .Nm
 utility. Together with one of the options shown for the first version
-of the command, -D will set the default to be the new value.
+of the command,
+.Fl D
+will set the default to be the new value.
 .It Fl b Ar base-dir
 sets the base directory. This is the directory to which the user name
 is added, which will be created if the
@@ -107,7 +113,8 @@ option is specified.
 sets the time at which the current password will expire for this user.
 .It Fl f Ar inactive-secs
 sets the number of seconds after which, if no login has occurred for
-the user during that time, the login will be "locked".
+the user during that time, the login will be
+.Dq locked .
 .It Fl g Ar gid | groupname | Li =uid
 sets the default group for any user added using the
 .Nm
@@ -176,7 +183,8 @@ by using the
 field in the
 .Pa /etc/usermgmt.conf
 file - it has the format:
-.Bd -ragged -offset indent
+.br \" XXX This shouldn't be needed -- mdoc bug? --bjh21
+.Bd -ragged -offset indent -compact
 .Ic group
 .Ar gid | name | Li =uid
 .Ed
