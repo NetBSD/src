@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.101 2000/07/23 14:40:48 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.102 2000/07/26 13:53:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.101 2000/07/23 14:40:48 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.102 2000/07/26 13:53:34 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,6 +173,7 @@ int	sflag;
 int	stru;			/* avoid C keyword */
 int	mode;
 int	doutmp;			/* update utmp file */
+int	dowtmp;			/* update wtmp file */
 int	dropprivs;		/* if privileges should or have been dropped */
 int	mapped;			/* IPv4 connection on AF_INET6 socket */
 off_t	file_size;
@@ -241,7 +242,8 @@ main(int argc, char *argv[])
 	logging = 0;
 	pdata = -1;
 	sflag = 0;
-	doutmp = 0;
+	doutmp = 0;		/* default: don't log to utmp */
+	dowtmp = 1;		/* default: DO log to wtmp */
 	dropprivs = 0;
 	mapped = 0;
 	usedefault = 1;
@@ -251,7 +253,7 @@ main(int argc, char *argv[])
 	gidcount = 0;
 
 	version = FTPD_VERSION;
-	while ((ch = getopt(argc, argv, "a:c:C:dh:Hlrst:T:u:UvV:")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:C:dh:Hlrst:T:u:UvV:W")) != -1) {
 		switch (ch) {
 		case 'a':
 			anondir = optarg;
@@ -309,6 +311,10 @@ main(int argc, char *argv[])
 				version = NULL;
 			else
 				version = xstrdup(optarg);
+			break;
+
+		case 'W':
+			dowtmp = 0;
 			break;
 
 		default:
@@ -755,7 +761,8 @@ end_login(void)
 {
 
 	if (logged_in) {
-		logwtmp(ttyline, "", "");
+		if (dowtmp)
+			logwtmp(ttyline, "", "");
 		if (doutmp)
 			logout(utmp.ut_line);
 	}
@@ -883,7 +890,8 @@ pass(const char *passwd)
 	gidcount = getgroups(sizeof(gidlist), gidlist);
 
 			/* open wtmp before chroot */
-	logwtmp(ttyline, pw->pw_name, remotehost);
+	if (dowtmp)
+		logwtmp(ttyline, pw->pw_name, remotehost);
 
 			/* open utmp before chroot */
 	if (doutmp) {
@@ -2036,7 +2044,8 @@ dologout(int status)
 	transflag = 0;
 
 	if (logged_in) {
-		logwtmp(ttyline, "", "");
+		if (dowtmp)
+			logwtmp(ttyline, "", "");
 		if (doutmp)
 			logout(utmp.ut_line);
 #ifdef KERBEROS
