@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.41 2001/05/30 15:24:25 lukem Exp $ */
+/* $NetBSD: wskbd.c,v 1.42 2001/08/05 11:26:52 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.41 2001/05/30 15:24:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.42 2001/08/05 11:26:52 jdolecek Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -970,6 +970,9 @@ getkeyrepeat:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
 		umdp = (struct wskbd_map_data *)data;
+		if (umdp->maplen > WSKBDIO_MAXMAPLEN)
+			return (EINVAL);
+
 		len = umdp->maplen*sizeof(struct wscons_keymap);
 		buf = malloc(len, M_TEMP, M_WAITOK);
 		error = copyin(umdp->map, buf, len);
