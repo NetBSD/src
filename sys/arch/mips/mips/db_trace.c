@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.2 1998/01/05 07:03:02 perry Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.3 1998/02/02 12:49:15 jonathan Exp $	*/
 
 /* 
  * Mach Operating System
@@ -37,7 +37,6 @@
 #include <ddb/db_sym.h>
 
 extern int __start __P((void));	/* lowest kernel code address */
-extern vm_offset_t db_maxoff;
 extern vm_offset_t getreg_val __P((db_expr_t regno));
 
 #define REG_ARG(i)	(4+i)
