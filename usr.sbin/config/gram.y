@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.40 2003/01/23 15:05:45 gehenna Exp $	*/
+/*	$NetBSD: gram.y,v 1.41 2003/01/27 05:00:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -289,7 +289,8 @@ one_def:
 					{ defdevattach($5, $2, $4, $6); } |
 	MAXPARTITIONS NUMBER		{ maxpartitions = $2; } |
 	MAXUSERS NUMBER NUMBER NUMBER	{ setdefmaxusers($2, $3, $4); } |
-	DEFPSEUDO devbase attrs_opt { defdev($2, NULL, $3, 1); } |
+	DEFPSEUDO devbase interface_opt attrs_opt
+					{ defdev($2, $3, $4, 1); } |
 	MAJOR '{' majorlist '}';
 
 atlist:

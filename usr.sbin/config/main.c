@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.74 2002/10/11 02:02:24 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.75 2003/01/27 05:00:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -206,6 +206,7 @@ main(int argc, char **argv)
 	ident = NULL;
 	devbasetab = ht_new();
 	devatab = ht_new();
+	devitab = ht_new();
 	selecttab = ht_new();
 	needcnttab = ht_new();
 	opttab = ht_new();
@@ -885,6 +886,29 @@ int
 devbase_has_instances(struct devbase *dev, int unit)
 {
 	struct deva *da;
+
+	/*
+	 * Pseudo-devices are a little special.  We consider them
+	 * to have instances only if they are both:
+	 *
+	 *	1. Included in this kernel configuration.
+	 *
+	 *	2. Have one or more interface attributes.
+	 */
+	if (dev->d_ispseudo) {
+		struct nvlist *nv;
+		struct attr *a;
+
+		if (ht_lookup(devitab, dev->d_name) == NULL)
+			return (0);
+
+		for (nv = dev->d_attrs; nv != NULL; nv = nv->nv_next) {
+			a = nv->nv_ptr;
+			if (a->a_iattr)
+				return (1);
+		}
+		return (0);
+	}
 
 	for (da = dev->d_ahead; da != NULL; da = da->d_bsame)
 		if (deva_has_instances(da, unit))
