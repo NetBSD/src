@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.14 1996/01/24 22:40:20 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.15 1996/04/07 05:47:26 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -360,7 +360,8 @@ static void kd_putfb(tp)
 }
 
 /*
- * Our "interrupt" routine for input.
+ * Our "interrupt" routine for input. This is called by
+ * the keyboard driver (dev/sun/kbd.c) at spltty.
  */
 void
 kd_input(c)
