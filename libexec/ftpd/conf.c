@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 1998/06/03 13:21:42 mouse Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 1998/06/30 20:18:52 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.13 1998/06/03 13:21:42 mouse Exp $");
+__RCSID("$NetBSD: conf.c,v 1.14 1998/06/30 20:18:52 tv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -100,6 +100,7 @@ parse_conf(findclass)
 	curclass.maxtimeout =	7200;		/* 2 hours */
 	curclass.modify =	1;
 	REASSIGN(curclass.notify, NULL);
+	curclass.passive =	1;
 	curclass.timeout =	900;		/* 15 minutes */
 	curclass.umask =	027;
 
@@ -246,6 +247,12 @@ parse_conf(findclass)
 			else
 				arg = strdup(arg);
 			REASSIGN(curclass.notify, arg);
+		} else if (strcasecmp(word, "passive") == 0) {
+			if (none ||
+			    (!EMPTYSTR(arg) && strcasecmp(arg, "off") == 0))
+				curclass.passive = 0;
+			else
+				curclass.passive = 1;
 		} else if (strcasecmp(word, "timeout") == 0) {
 			if (none || EMPTYSTR(arg))
 				continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.19 1998/06/21 12:16:35 kleink Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.20 1998/06/30 20:18:52 tv Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.19 1998/06/21 12:16:35 kleink Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.20 1998/06/30 20:18:52 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,9 +174,13 @@ cmd
 			}
 			reply(200, "PORT command successful.");
 		}
-	| PASV CRLF
+	| PASV check_login CRLF
 		{
-			passive();
+			if (curclass.passive) {
+				passive();
+			} else {
+				reply(500, "PASV mode not available.");
+			}
 		}
 	| TYPE SP type_code CRLF
 		{
