@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.35 1997/01/30 09:18:56 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.36 1997/01/31 21:16:52 carrel Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -174,6 +174,7 @@ iteattach(parent, self, aux)
 			return;
 		}
 		bzero(ite->sc_data, sizeof(struct ite_data));
+		ite->sc_data->flags = ITE_ALIVE;
 	}
 
 	/*
