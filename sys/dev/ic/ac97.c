@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.41 2003/03/03 02:14:12 bsh Exp $ */
+/*      $NetBSD: ac97.c,v 1.42 2003/06/11 14:22:27 scw Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.41 2003/03/03 02:14:12 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.42 2003/06/11 14:22:27 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -715,6 +715,14 @@ ac97_restore_shadow(self)
 	for (idx = 0; idx < SOURCE_INFO_SIZE; idx++) {
 		si = &source_info[idx];
 		ac97_write(as, si->reg, as->shadow_reg[si->reg >> 1]);
+	}
+
+	if (as->ext_id & (AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_DRA
+			  | AC97_EXT_AUDIO_SPDIF | AC97_EXT_AUDIO_VRM
+			  | AC97_EXT_AUDIO_CDAC | AC97_EXT_AUDIO_SDAC
+			  | AC97_EXT_AUDIO_LDAC)) {
+		ac97_write(as, AC97_REG_EXT_AUDIO_CTRL,
+		    as->shadow_reg[AC97_REG_EXT_AUDIO_CTRL >> 1]);
 	}
 }
 
