@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.11 1998/08/12 23:23:29 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.12 1998/11/02 22:10:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -323,6 +323,12 @@ struct ifmedia_description {
 	{ IFM_FDDI|IFM_FDDI_MMF,	"MMF" },			\
 	{ IFM_FDDI|IFM_FDDI_UTP,	"UTP" },			\
 	{ IFM_FDDI|IFM_FDDI_UTP,	"CDDI" },			\
+									\
+	/*								\
+	 * Short-hand for common media+option combos.			\
+	 */								\
+	{ IFM_ETHER|IFM_10_T|IFM_FDX,	"10baseT-FDX" },		\
+	{ IFM_ETHER|IFM_100_TX|IFM_FDX,	"100baseTX-FDX" },		\
 									\
 	{ 0, NULL },							\
 }
