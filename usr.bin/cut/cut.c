@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.17 2005/02/17 17:35:47 xtraeme Exp $	*/
+/*	$NetBSD: cut.c,v 1.18 2005/03/22 21:56:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.17 2005/02/17 17:35:47 xtraeme Exp $");
+__RCSID("$NetBSD: cut.c,v 1.18 2005/03/22 21:56:28 yamt Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -222,19 +222,27 @@ f_cut(FILE *fp, const char *fname)
 	int ch, field, isdelim;
 	char *pos, *p, sep;
 	int output;
-	char lbuf[_POSIX2_LINE_MAX + 1];
+	size_t len;
+	char *lbuf, *tbuf;
 
-	for (sep = dchar; fgets(lbuf, sizeof(lbuf), fp);) {
+	for (sep = dchar, tbuf = NULL; (lbuf = fgetln(fp, &len));) {
 		output = 0;
+		if (lbuf[len - 1] != '\n') {
+			/* no newline at the end of the last line so add one */
+			if ((tbuf = (char *)malloc(len + 1)) == NULL)
+				err(1, NULL);
+			memcpy(tbuf, lbuf, len);
+			tbuf[len] = '\n';
+			lbuf = tbuf;
+		}
 		for (isdelim = 0, p = lbuf;; ++p) {
-			if (!(ch = *p))
-				errx(1, "%s: line too long.", fname);
+			ch = *p;
 			/* this should work if newline is delimiter */
 			if (ch == sep)
 				isdelim = 1;
 			if (ch == '\n') {
 				if (!isdelim && !sflag)
-					(void)printf("%s", lbuf);
+					(void)fwrite(lbuf, len, 1, stdout);
 				break;
 			}
 		}
@@ -266,6 +274,8 @@ f_cut(FILE *fp, const char *fname)
 		}
 		(void)putchar('\n');
 	}
+	if (tbuf)
+		free(tbuf);
 }
 
 void
