@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.8 1994/06/05 15:35:55 cgd Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.9 1995/01/20 18:48:50 christos Exp $";
 #endif /* not lint */
 
 /*
@@ -162,6 +162,7 @@ doit(fromp)
 	char *cp, sig, buf[BUFSIZ];
 	char cmdbuf[NCARGS+1], locuser[16], remuser[16];
 	char remotehost[2 * MAXHOSTNAMELEN + 1];
+	char hostnamebuf[2 * MAXHOSTNAMELEN + 1];
 
 
 	(void) signal(SIGINT, SIG_DFL);
@@ -301,11 +302,16 @@ doit(fromp)
 				}
 			}
 		}
+		hostname = strncpy(hostnamebuf, hostname,
+				   sizeof(hostnamebuf) - 1);
 	} else
-		errorhost = hostname = inet_ntoa(fromp->sin_addr);
+		errorhost = hostname = strncpy(hostnamebuf,
+					       inet_ntoa(fromp->sin_addr),
+					       sizeof(hostnamebuf) - 1);
 
-		getstr(remuser, sizeof(remuser), "remuser");
+	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
 
+	getstr(remuser, sizeof(remuser), "remuser");
 	getstr(locuser, sizeof(locuser), "locuser");
 	getstr(cmdbuf, sizeof(cmdbuf), "command");
 	setpwent();
