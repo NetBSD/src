@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 1996/10/15 23:27:27 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 1996/10/15 23:52:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -753,6 +753,12 @@ cpu_startup()
 	 * Configure the system.
 	 */
 	configure();
+
+	/*
+	 * Note that bootstrapping is finished, and set the HWRPB up
+	 * to do restarts.
+	 */
+	hwrbp_restart_setup();
 }
 
 void
