@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.27 1996/02/02 18:07:59 mycroft Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.28 1996/02/04 20:14:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -232,9 +232,33 @@ int (*pmax_hardware_intr) __P((u_int mask, u_int pc, u_int status,
 	( int (*) __P((u_int, u_int, u_int, u_int)) ) 0;
 
 extern volatile struct chiptime *Mach_clock_addr;
-extern u_long intrcnt[];
 extern u_long kernelfaults;
 u_long kernelfaults = 0;
+extern u_long intrcnt[];
+
+/*
+ * Index into intrcnt[], which is defined in locore
+ */
+typedef enum {
+	SOFTCLOCK_INTR =0,
+	SOFTNET_INTR	=1,
+	SERIAL0_INTR=2,
+	SERIAL1_INTR = 3,
+	SERIAL2_INTR = 4,
+	LANCE_INTR =5,
+	SCSI_INTR = 6,
+	ERROR_INTR=7,
+	HARDCLOCK = 8,
+  	FPU_INTR   =9,
+	SLOT0_INTR =10,
+	SLOT1_INTR =11,
+	SLOT2_INTR =12,
+	DTOP_INTR = 13, /* XXX */
+	ISDN_INTR = 14, /* XXX */
+	FLOPPY_INTR = 15,
+	STRAY_INTR = 16
+} decstation_intr_t;
+
 
 /*
  * Handle an exception.
@@ -836,7 +860,7 @@ interrupt(statusReg, causeReg, pc)
 	if (pmax_hardware_intr)
 		splx((*pmax_hardware_intr)(mask, pc, statusReg, causeReg));
 	if (mask & MACH_INT_MASK_5) {
-		intrcnt[7]++;
+		intrcnt[FPU_INTR]++;
 		if (!USERMODE(statusReg)) {
 #ifdef DEBUG
 			trapDump("fpintr");
@@ -853,7 +877,7 @@ interrupt(statusReg, causeReg, pc)
 	    netisr && (statusReg & MACH_SOFT_INT_MASK_1)) {
 		clearsoftnet();
 		cnt.v_soft++;
-		intrcnt[1]++;
+		intrcnt[SOFTNET_INTR]++;
 #ifdef INET
 		if (netisr & (1 << NETISR_ARP)) {
 			netisr &= ~(1 << NETISR_ARP);
@@ -886,7 +910,7 @@ interrupt(statusReg, causeReg, pc)
 
 	if (mask & MACH_SOFT_INT_MASK_0) {
 		clearsoftclock();
-		intrcnt[0]++;
+		intrcnt[SOFTCLOCK_INTR]++;
 		cnt.v_soft++;
 		softclock();
   	}
@@ -907,15 +931,15 @@ kn01_intr(mask, pc, statusReg, causeReg)
 	int temp;
 	extern struct cfdriver siicd;
 	extern struct cfdriver lecd;
+	extern struct cfdriver dccd;
 
 	/* handle clock interrupts ASAP */
 	if (mask & MACH_INT_MASK_3) {
-		intrcnt[6]++;
 		temp = c->regc;	/* XXX clear interrupt bits */
 		cf.pc = pc;
 		cf.sr = statusReg;
 		hardclock(&cf);
-		intrcnt[6]++;
+		intrcnt[HARDCLOCK]++;
 
 		/* keep clock interrupts enabled */
 		causeReg &= ~MACH_INT_MASK_3;
@@ -924,7 +948,7 @@ kn01_intr(mask, pc, statusReg, causeReg)
 	splx(MACH_INT_MASK_3 | MACH_SR_INT_ENA_CUR);
 #if NSII > 0
 	if (mask & MACH_INT_MASK_0) {
-		intrcnt[2]++;
+		intrcnt[SCSI_INTR]++;
 		siiintr(siicd.cd_devs[0]);
 	}
 #endif
@@ -937,19 +961,19 @@ kn01_intr(mask, pc, statusReg, causeReg)
 		 * manipulating if queues should have called splimp(),
 		 * which would mask out MACH_INT_MASK_1.
 		 */
-		intrcnt[3]++;
 		leintr(lecd.cd_devs[0]);
+		intrcnt[LANCE_INTR]++;
 	}
 #endif
 #if NDC > 0
 	if (mask & MACH_INT_MASK_2) {
-		intrcnt[4]++;
-		dcintr(0);
+		dcintr(dccd.cd_devs[0]);
+		intrcnt[SERIAL0_INTR]++;
 	}
 #endif
 	if (mask & MACH_INT_MASK_4) {
-		intrcnt[5]++;
 		pmax_errintr();
+		intrcnt[ERROR_INTR]++;
 	}
 	return ((statusReg & ~causeReg & MACH_HARD_INT_MASK) |
 		MACH_SR_INT_ENA_CUR);
@@ -983,13 +1007,12 @@ kn02_intr(mask, pc, statusReg, causeReg)
 			warned = 0;
 			printf("WARNING: power supply is OK again\n");
 		}
-		intrcnt[6]++;
 
 		temp = c->regc;	/* XXX clear interrupt bits */
 		cf.pc = pc;
 		cf.sr = statusReg;
 		hardclock(&cf);
-		intrcnt[6]++;
+		intrcnt[HARDCLOCK]++;
 
 		/* keep clock interrupts enabled */
 		causeReg &= ~MACH_INT_MASK_1;
@@ -997,7 +1020,11 @@ kn02_intr(mask, pc, statusReg, causeReg)
 	/* Re-enable clock interrupts */
 	splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
 	if (mask & MACH_INT_MASK_0) {
-		static int intr_map[8] = { 8, 9, 10, 11, 12, 4, 3, 2 };
+		static int intr_map[8] = { SLOT0_INTR, SLOT1_INTR, SLOT2_INTR,
+					   /* these two bits reserved */
+					   STRAY_INTR,  STRAY_INTR,
+					   SCSI_INTR, LANCE_INTR,
+					   SERIAL0_INTR };
 
 		csr = *(unsigned *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CSR);
 		m = csr & (csr >> KN02_CSR_IOINTEN_SHIFT) & KN02_CSR_IOINT;
@@ -1021,7 +1048,7 @@ kn02_intr(mask, pc, statusReg, causeReg)
 #endif
 	}
 	if (mask & MACH_INT_MASK_3) {
-		intrcnt[5]++;
+		intrcnt[ERROR_INTR]++;
 		kn02_errintr();
 	}
 
@@ -1083,29 +1110,37 @@ kmin_intr(mask, pc, statusReg, causeReg)
 			cf.pc = pc;
 			cf.sr = statusReg;
 			hardclock(&cf);
-			intrcnt[6]++;
+			intrcnt[HARDCLOCK]++;
 		}
 	
 		if ((intr & KMIN_INTR_SCC_0) &&
-			tc_slot_info[KMIN_SCC0_SLOT].intr)
+		    tc_slot_info[KMIN_SCC0_SLOT].intr) {
 			(*(tc_slot_info[KMIN_SCC0_SLOT].intr))
-			(tc_slot_info[KMIN_SCC0_SLOT].sc);
-	
+			  (tc_slot_info[KMIN_SCC0_SLOT].sc);
+			intrcnt[SERIAL0_INTR]++;
+		}
+
 		if ((intr & KMIN_INTR_SCC_1) &&
-			tc_slot_info[KMIN_SCC1_SLOT].intr)
+		    tc_slot_info[KMIN_SCC1_SLOT].intr) {
 			(*(tc_slot_info[KMIN_SCC1_SLOT].intr))
-			(tc_slot_info[KMIN_SCC1_SLOT].sc);
+			  (tc_slot_info[KMIN_SCC1_SLOT].sc);
+			intrcnt[SERIAL1_INTR]++;
+		}
 	
 		if ((intr & KMIN_INTR_SCSI) &&
-			tc_slot_info[KMIN_SCSI_SLOT].intr)
+		    tc_slot_info[KMIN_SCSI_SLOT].intr) {
 			(*(tc_slot_info[KMIN_SCSI_SLOT].intr))
-			(tc_slot_info[KMIN_SCSI_SLOT].sc);
-	
+			  (tc_slot_info[KMIN_SCSI_SLOT].sc);
+			intrcnt[SCSI_INTR]++;
+		}
+
 		if ((intr & KMIN_INTR_LANCE) &&
-			tc_slot_info[KMIN_LANCE_SLOT].intr)
+		    tc_slot_info[KMIN_LANCE_SLOT].intr) {
 			(*(tc_slot_info[KMIN_LANCE_SLOT].intr))
-			(tc_slot_info[KMIN_LANCE_SLOT].sc);
-	
+			  (tc_slot_info[KMIN_LANCE_SLOT].sc);
+			intrcnt[LANCE_INTR]++;
+		}
+		
 		if (user_warned && ((intr & KMIN_INTR_PSWARN) == 0)) {
 			printf("%s\n", "Power supply ok now.");
 			user_warned = 0;
@@ -1115,12 +1150,19 @@ kmin_intr(mask, pc, statusReg, causeReg)
 			printf("%s\n", "Power supply overheating");
 		}
 	}
-	if ((mask & MACH_INT_MASK_0) && tc_slot_info[0].intr)
+	if ((mask & MACH_INT_MASK_0) && tc_slot_info[0].intr) {
 		(*tc_slot_info[0].intr)(tc_slot_info[0].sc);
-	if ((mask & MACH_INT_MASK_1) && tc_slot_info[1].intr)
+		intrcnt[SLOT0_INTR]++;
+ 	}
+	
+	if ((mask & MACH_INT_MASK_1) && tc_slot_info[1].intr) {
 		(*tc_slot_info[1].intr)(tc_slot_info[1].sc);
-	if ((mask & MACH_INT_MASK_2) && tc_slot_info[2].intr)
+		intrcnt[SLOT1_INTR]++;
+	}
+	if ((mask & MACH_INT_MASK_2) && tc_slot_info[2].intr) {
 		(*tc_slot_info[2].intr)(tc_slot_info[2].sc);
+		intrcnt[SLOT2_INTR]++;
+	}
 
 #if 0 /*XXX*/
 	if (mask & (MACH_INT_MASK_2|MACH_INT_MASK_1|MACH_INT_MASK_0))
@@ -1165,7 +1207,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 		cf.pc = pc;
 		cf.sr = statusReg;
 		hardclock(&cf);
-		intrcnt[6]++;
+		intrcnt[HARDCLOCK]++;
 		causeReg &= ~MACH_INT_MASK_1;
 	}
 	/* reenable clock interrupts */
@@ -1182,6 +1224,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(tc_slot_info[XINE_SCC0_SLOT].sc);
 			else
 				printf ("can't handle scc interrupt\n");
+			intrcnt[SERIAL0_INTR]++;
 		}
 	
 		if (intr & XINE_INTR_SCSI_PTR_LOAD) {
@@ -1203,6 +1246,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(tc_slot_info[XINE_DTOP_SLOT].sc);
 			else
 				printf ("can't handle dtop interrupt\n");
+			intrcnt[DTOP_INTR]++;
 		}
 	
 		if (intr & XINE_INTR_FLOPPY) {
@@ -1211,6 +1255,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(tc_slot_info[XINE_FLOPPY_SLOT].sc);
 		else
 			printf ("can't handle floppy interrupt\n");
+			intrcnt[FLOPPY_INTR]++;
 		}
 	
 		if (intr & XINE_INTR_TC_0) {
@@ -1219,6 +1264,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(tc_slot_info[0].sc);
 			else
 				printf ("can't handle tc0 interrupt\n");
+			intrcnt[SLOT0_INTR]++;
 		}
 	
 		if (intr & XINE_INTR_TC_1) {
@@ -1227,6 +1273,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(tc_slot_info[1].sc);
 			else
 				printf ("can't handle tc1 interrupt\n");
+			intrcnt[SLOT1_INTR]++;
 		}
 	
 		if (intr & XINE_INTR_ISDN) {
@@ -1235,6 +1282,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(tc_slot_info[XINE_ISDN_SLOT].sc);
 			else
 				printf ("can't handle isdn interrupt\n");
+				intrcnt[ISDN_INTR]++;
 		}
 	
 		if (intr & XINE_INTR_SCSI) {
@@ -1243,6 +1291,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 				(tc_slot_info[XINE_SCSI_SLOT].sc);
 			else
 				printf ("can't handle scsi interrupt\n");
+			intrcnt[SCSI_INTR]++;
 		}
 	
 		if (intr & XINE_INTR_LANCE) {
@@ -1252,6 +1301,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 			else
 				printf ("can't handle lance interrupt\n");
 	
+			intrcnt[LANCE_INTR]++;
 		}
 	}
 	if (mask & MACH_INT_MASK_2)
@@ -1296,7 +1346,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
 		cf.sr = statusReg;
 		latched_cycle_cnt = *(u_long*)(IOASIC_REG_CTR(ioasic_base));
 		hardclock(&cf);
-		intrcnt[6]++;
+		intrcnt[HARDCLOCK]++;
 		old_buscycle = latched_cycle_cnt - old_buscycle;
 		causeReg &= ~MACH_INT_MASK_1;
 	}
@@ -1356,21 +1406,21 @@ kn03_intr(mask, pc, statusReg, causeReg)
 			tc_slot_info[KN03_SCC0_SLOT].intr) {
 			(*(tc_slot_info[KN03_SCC0_SLOT].intr))
 			(tc_slot_info[KN03_SCC0_SLOT].sc);
-			intrcnt[2]++;
+			intrcnt[SERIAL0_INTR]++;
 		}
 	
 		if ((intr & KN03_INTR_SCC_1) &&
 			tc_slot_info[KN03_SCC1_SLOT].intr) {
 			(*(tc_slot_info[KN03_SCC1_SLOT].intr))
 			(tc_slot_info[KN03_SCC1_SLOT].sc);
-			intrcnt[2]++;
+			intrcnt[SERIAL1_INTR]++;
 		}
 	
 		if ((intr & KN03_INTR_TC_0) &&
 			tc_slot_info[0].intr) {
 			(*(tc_slot_info[0].intr))
 			(tc_slot_info[0].sc);
-			intrcnt[8]++;
+			intrcnt[SLOT0_INTR]++;
 		}
 #ifdef DIAGNOSTIC
 		else if (intr & KN03_INTR_TC_0)
@@ -1381,7 +1431,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
 			tc_slot_info[1].intr) {
 			(*(tc_slot_info[1].intr))
 			(tc_slot_info[1].sc);
-			intrcnt[9]++;
+			intrcnt[SLOT1_INTR]++;
 		}
 #ifdef DIAGNOSTIC
 		else if (intr & KN03_INTR_TC_1)
@@ -1392,7 +1442,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
 			tc_slot_info[2].intr) {
 			(*(tc_slot_info[2].intr))
 			(tc_slot_info[2].sc);
-			intrcnt[10]++;
+			intrcnt[SLOT2_INTR]++;
 		}
 #ifdef DIAGNOSTIC
 		else if (intr & KN03_INTR_TC_2)
@@ -1403,14 +1453,14 @@ kn03_intr(mask, pc, statusReg, causeReg)
 			tc_slot_info[KN03_SCSI_SLOT].intr) {
 			(*(tc_slot_info[KN03_SCSI_SLOT].intr))
 			(tc_slot_info[KN03_SCSI_SLOT].sc);
-			intrcnt[4]++;
+			intrcnt[SCSI_INTR]++;
 		}
 	
 		if ((intr & KN03_INTR_LANCE) &&
 			tc_slot_info[KN03_LANCE_SLOT].intr) {
 			(*(tc_slot_info[KN03_LANCE_SLOT].intr))
 			(tc_slot_info[KN03_LANCE_SLOT].sc);
-			intrcnt[3]++;
+			intrcnt[LANCE_INTR]++;
 		}
 	
 		if (user_warned && ((intr & KN03_INTR_PSWARN) == 0)) {

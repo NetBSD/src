@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.17 1995/12/20 02:00:32 jonathan Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.18 1996/02/04 20:14:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -3161,22 +3161,25 @@ END(cpu_getregs)
 _C_LABEL(intrnames):
 	.asciiz	"softclock"
 	.asciiz	"softnet"
-	.asciiz	"dc"
+	.asciiz	"serial0"
+	.asciiz	"serial1"
+	.asciiz	"serial2"
 	.asciiz	"ether"
-	.asciiz	"disk"
+	.asciiz	"scsi"
 	.asciiz	"memory"
 	.asciiz	"clock"
-	.asciiz	"fp"
-	.asciiz	"tcslot0"		# Intrs 0 through 4 folded in here for now
+	.asciiz	"fpu"
+	.asciiz	"tcslot0"
 	.asciiz	"tcslot1"
 	.asciiz	"tcslot2"
-	.asciiz	"tcslot3"
-	.asciiz	"tcslot4"
+	.asciiz "dtop"
+	.asciiz "isdn"
+	.asciiz	"stray"
 	.asciiz	"nmi"
 _C_LABEL(eintrnames):
 	.align	2
 _C_LABEL(intrcnt):
-	.word	0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	.word	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0
 _C_LABEL(eintrcnt):
 	.word	0	# This shouldn't be needed but with 4.4bsd's as, the eintrcnt
 			#  label ends end up in a different section otherwise.
