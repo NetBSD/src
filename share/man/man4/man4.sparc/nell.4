@@ -1,4 +1,4 @@
-.\"	$NetBSD: nell.4,v 1.9 2004/01/07 20:17:51 martin Exp $
+.\"	$NetBSD: nell.4,v 1.10 2004/01/08 09:16:11 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,9 +61,9 @@ prefer the driver to use either the first (use flags value 0) or the second
 .Sh KERNEL THREAD
 Each
 .Nm
-instance creates a kernel thread, named like the instance. This thread is
-used to watch for card insertions and removals, and handling the attachment
-and initilization of the cards driver.
+instance creates a kernel thread, named like the instance.
+This thread is used to watch for card insertions and removals, and
+handling the attachment and initialization of the card's driver.
 .Sh SEE ALSO
 .Xr pcmcia 4 ,
 .Xr sbus 4
