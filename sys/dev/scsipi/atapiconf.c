@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.37 2001/03/20 22:39:51 augustss Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.38 2001/04/01 19:05:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -105,6 +105,8 @@ const struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	{{T_DIRECT, T_REMOV,		/* Panasonic MultiMediaCard */
 	  "04DA", "1B00", "0010"},		ADEV_BYTE5_ZERO |
 	 					ADEV_NO_FLEX_PAGE },
+	{{T_DIRECT, T_REMOV,		/* ZiO! MultiMediaCard */
+	  "eUSB", "MultiMediaCard", ""},	ADEV_NO_FLEX_PAGE },
 };
 
 int
