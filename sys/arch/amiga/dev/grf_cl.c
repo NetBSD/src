@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.21 1998/01/12 10:39:31 thorpej Exp $	*/
+/*	$NetBSD: grf_cl.c,v 1.22 1998/04/17 17:57:08 veego Exp $	*/
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -806,7 +806,7 @@ writeshifted(to, shiftx, shifty)
 	char    shiftx;
 	char    shifty;
 {
-	register char y;
+	int y;
 	unsigned long long *tptr, *iptr, *mptr, line;
 
 	tptr = (unsigned long long *) to;
