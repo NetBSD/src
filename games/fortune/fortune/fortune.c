@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.27 2001/02/19 22:41:45 cgd Exp $	*/
+/*	$NetBSD: fortune.c,v 1.28 2001/06/04 20:56:56 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.27 2001/02/19 22:41:45 cgd Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.28 2001/06/04 20:56:56 aymeric Exp $");
 #endif
 #endif /* not lint */
 
@@ -391,11 +391,11 @@ getargs(argc, argv)
 			pat = conv_pat(pat);
 		RE_INIT();
 		if (BAD_COMP(RE_COMP(pat))) {
-#ifdef HAVE_REGCMP
-			warnx("bad pattern: %s\n", pat);
-#else	/* !HAVE_REGCMP */
-			warnx("%s\n", pat);
-#endif	/* !HAVE_REGCMP */
+#if defined(HAVE_REGCMP) || defined(HAVE_REGCOMP)
+			errx(1, "bad pattern: %s", pat);
+#else	/* !HAVE_REGCMP && !HAVE_REGCOMP */
+			warnx("%s", pat);
+#endif	/* !HAVE_REGCMP && !HAVE_REGCOMP */
 			RE_FREE();
 		}
 	}
