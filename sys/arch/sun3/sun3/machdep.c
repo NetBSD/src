@@ -38,7 +38,7 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
- *	$Id: machdep.c,v 1.30 1994/05/27 14:58:32 gwr Exp $
+ *	$Id: machdep.c,v 1.31 1994/06/01 15:39:28 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -408,15 +408,10 @@ setregs(p, entry, stack, retval)
 	u_long stack;
 	int retval[2];
 {
-#if 0	/* XXX - old way */
-	p->p_md.md_regs[PC] = entry & ~1;
-	p->p_md.md_regs[SP] = stack;
-#else
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
 	frame->f_pc = entry & ~1;
 	frame->f_regs[SP] = stack;
-#endif
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
@@ -425,11 +420,7 @@ setregs(p, entry, stack, retval)
 #ifdef COMPAT_HPUX
 	if (p->p_flag & SHPUX) {
 
-#if 0	/* XXX - old way */
-		p->p_md.md_regs[A0] = 0;	/* not 68010 (bit 31), no FPA (30) */
-#else
 		frame->f_regs[A0] = 0; /* not 68010 (bit 31), no FPA (30) */
-#endif
 		retval[0] = 0;		/* no float card */
 #ifdef FPCOPROC
 		retval[1] = 1;		/* yes 68881 */
