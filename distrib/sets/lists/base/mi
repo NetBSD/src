@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.232 2001/03/07 07:08:25 garbled Exp $
+# $NetBSD: mi,v 1.233 2001/03/12 12:43:32 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1093,12 +1093,10 @@
 ./usr/share/man/COPYRIGHT			base-man-share
 ./usr/share/man/cat1			base-man-share
 ./usr/share/man/cat1/atari			base-man-share
-./usr/share/man/cat1/i386			base-man-share
 ./usr/share/man/cat1/x68k			base-man-share
 ./usr/share/man/cat2			base-man-share
 ./usr/share/man/cat3			base-man-share
 ./usr/share/man/cat3/atari			base-man-share
-./usr/share/man/cat3/i386			base-man-share
 ./usr/share/man/cat3f			base-man-share
 ./usr/share/man/cat4			base-man-share
 ./usr/share/man/cat4/alpha			base-man-share
@@ -1117,7 +1115,6 @@
 ./usr/share/man/cat4/vax			base-man-share
 ./usr/share/man/cat4/x68k			base-man-share
 ./usr/share/man/cat5			base-man-share
-./usr/share/man/cat5/i386			base-man-share
 ./usr/share/man/cat6			base-man-share
 ./usr/share/man/cat7			base-man-share
 ./usr/share/man/cat8			base-man-share
@@ -1160,12 +1157,10 @@
 ./usr/share/man/makewhatis.sed		base-man-share
 ./usr/share/man/man1		base-man-share
 ./usr/share/man/man1/atari		base-man-share
-./usr/share/man/man1/i386		base-man-share
 ./usr/share/man/man1/x68k		base-man-share
 ./usr/share/man/man2		base-man-share
 ./usr/share/man/man3		base-man-share
 ./usr/share/man/man3/atari		base-man-share
-./usr/share/man/man3/i386		base-man-share
 ./usr/share/man/man3f		base-man-share
 ./usr/share/man/man4		base-man-share
 ./usr/share/man/man4/alpha		base-man-share
@@ -1184,7 +1179,6 @@
 ./usr/share/man/man4/vax		base-man-share
 ./usr/share/man/man4/x68k		base-man-share
 ./usr/share/man/man5		base-man-share
-./usr/share/man/man5/i386		base-man-share
 ./usr/share/man/man6		base-man-share
 ./usr/share/man/man7		base-man-share
 ./usr/share/man/man8		base-man-share
@@ -1338,8 +1332,8 @@
 ./usr/share/sushi/util/logging			base-sysutil-share
 ./usr/share/sushi/util/logging/func		base-sysutil-share
 ./usr/share/sushi/system			base-sysutil-share
-./usr/share/sushi/system/index			base-sysutil-share
 ./usr/share/sushi/system/help			base-sysutil-share
+./usr/share/sushi/system/index			base-sysutil-share
 ./usr/share/sushi/system/rcconf			base-sysutil-share
 ./usr/share/sushi/system/rcconf/form		base-sysutil-share
 ./usr/share/sushi/system/rcconf/script		base-sysutil-share
@@ -2006,6 +2000,16 @@
 ./var/log/rdist			base-netutil-root
 ./var/mail			base-mail-root
 ./var/msgs			base-util-root
+./var/named			base-bind-root
+./var/named/dev			base-bind-root
+./var/named/etc			base-bind-root
+./var/named/etc/namedb		base-bind-root
+./var/named/etc/namedb/cache	base-bind-root
+./var/named/usr			base-bind-root
+./var/named/usr/libexec		base-bind-root
+./var/named/var			base-bind-root
+./var/named/var/run		base-bind-root
+./var/named/var/tmp		base-bind-root
 ./var/preserve			base-util-root
 ./var/quotas			base-util-root
 ./var/run			base-sys-root
