@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2003/07/30 12:11:43 yamt Exp $ */
+/*	$NetBSD: pmap.c,v 1.19 2003/10/21 02:22:21 fvdl Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.18 2003/07/30 12:11:43 yamt Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.19 2003/10/21 02:22:21 fvdl Exp $");
 #endif
 
 #include <string.h>
@@ -355,7 +355,7 @@ PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *kd,
 		}
 	}
 
-	A(vfs) = NULL;
+	A(vfs) = 0;
 
 	if (P(vp) != NULL && D(vp, vnode)->v_mount != NULL) {
 		P(vfs) = D(vp, vnode)->v_mount;
