@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.179 2002/02/07 02:52:14 ross Exp $
+#	$NetBSD: NetBSD.dist,v 1.180 2002/02/09 21:09:27 thorpej Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -155,6 +155,7 @@
 ./usr/sbin
 ./usr/share
 ./usr/share/calendar
+./usr/share/dhcpd
 ./usr/share/dict
 ./usr/share/dict/papers
 ./usr/share/dict/special
