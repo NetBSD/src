@@ -1,4 +1,4 @@
-	$NetBSD: hardware,v 1.12 1998/01/09 18:46:39 perry Exp $	
+	$NetBSD: hardware,v 1.13 1998/04/10 22:52:41 ender Exp $	
 
 NetBSD/mac68k _VER runs on several of the older Macintosh computers.
 About 4MB of RAM should be sufficient to boot, and the system can probably
@@ -75,3 +75,23 @@ What isn't supported, but often asked about:
 		http://www.mklinux.apple.com/.  In addition, there is
 		also a NetBSD-powerpc port.  For more information, please
 		see http://www.tools.de/~ws/NetBSD/powerpc.html.
+
+
+Known hardware issues with this release:
+
+	Real Time Clock:  Due to oddities of the Macintosh hardware
+		interrupt priority scheme, NetBSD/mac68k keeps very poor
+		time.  Under a high interrupt load (e.g. SCSI or serial
+		port activity) , a machine can lose several minutes per
+		hour.  A consequence of this problem is that attempting to
+		run xntpd is rather pointless unless you periodically call
+		ntpdate.
+	SCSI difficulties:  The NetBSD/mac68k SCSI drivers are not quite as
+		robust as their MacOS counterparts.  Symptoms of these
+		problems are that some SCSI disks will not work under
+		NetBSD that work fine under MacOS.  Other problems include
+		occasional filesystem corruption with some drives types of
+		drives and the general unreliability of removable SCSI
+		media.  Keep in mind that there are no clear patterns with
+		these problems, and they do not appear to affect the
+		majority of users.
