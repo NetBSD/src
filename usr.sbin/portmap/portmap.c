@@ -1,4 +1,4 @@
-/*	$NetBSD: portmap.c,v 1.18 1999/01/20 14:12:18 drochner Exp $	*/
+/*	$NetBSD: portmap.c,v 1.19 1999/03/12 18:06:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)portmap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: portmap.c,v 1.18 1999/01/20 14:12:18 drochner Exp $");
+__RCSID("$NetBSD: portmap.c,v 1.19 1999/03/12 18:06:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,7 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
 #include <rpc/rpc.h>
 #include <netdb.h>
 #include <pwd.h>
+#include <err.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -166,6 +167,7 @@ int		is_loopback __P((struct sockaddr_in *));
 
 struct pmaplist *pmaplist;
 int debugging = 0;
+int insecure = 0;
 int runasdaemon = 0;
 int verboselog = 0;
 
@@ -179,12 +181,17 @@ main(argc, argv)
 	struct sockaddr_in addr;
 	int len = sizeof(struct sockaddr_in);
 	struct pmaplist *pml;
+	extern char *__progname;
 
-	while ((c = getopt(argc, argv, "dls")) != -1) {
+	while ((c = getopt(argc, argv, "dils")) != -1) {
 		switch (c) {
 
 		case 'd':
 			debugging = 1;
+			break;
+
+		case 'i':
+			insecure = 1;
 			break;
 
 		case 'l':
@@ -196,17 +203,16 @@ main(argc, argv)
 			break;
 
 		default:
-			(void) fprintf(stderr, "usage: %s [-d]\n", argv[0]);
+			(void)fprintf(stderr, "Usage: %s [-dils]\n",
+			    __progname);
 			exit(1);
 		}
 	}
 
-	if (!debugging && daemon(0, 0)) {
-		(void) fprintf(stderr, "portmap: fork: %s", strerror(errno));
-		exit(1);
-	}
+	if (!debugging && daemon(0, 0))
+		err(1, "fork failed");
 
-	openlog("portmap", debugging ? LOG_PID | LOG_PERROR : LOG_PID,
+	openlog(__progname, debugging ? LOG_PID | LOG_PERROR : LOG_PID,
 	    LOG_DAEMON);
 
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
@@ -310,7 +316,7 @@ reg_service(rqstp, xprt)
 	caddr_t t;
 	
 	if (debugging)
-		(void) fprintf(stderr, "server: about to do a switch\n");
+		(void)fprintf(stderr, "server: about to do a switch\n");
 	switch (rqstp->rq_proc) {
 
 	case PMAPPROC_NULL:
@@ -333,7 +339,7 @@ reg_service(rqstp, xprt)
 			if (verboselog)
 				logit(log_severity, svc_getcaller(xprt),
 				      rqstp->rq_proc, reg.pm_prog, "");
-			if(!is_loopback(svc_getcaller(xprt))) {
+			if (!insecure && !is_loopback(svc_getcaller(xprt))) {
 				ans = 0;
 				goto done;
 			}
@@ -374,7 +380,7 @@ reg_service(rqstp, xprt)
 		done:
 			if ((!svc_sendreply(xprt, xdr_long, (caddr_t)&ans)) &&
 			    debugging) {
-				(void) fprintf(stderr, "svc_sendreply\n");
+				(void)fprintf(stderr, "svc_sendreply\n");
 				abort();
 			}
 		}
@@ -391,7 +397,7 @@ reg_service(rqstp, xprt)
 			if (verboselog)
 				logit(log_severity, svc_getcaller(xprt),
 				      rqstp->rq_proc, reg.pm_prog, "");
-			if(!is_loopback(svc_getcaller(xprt))) {
+			if (!insecure && !is_loopback(svc_getcaller(xprt))) {
 				goto done;
 			}
 
@@ -415,7 +421,7 @@ reg_service(rqstp, xprt)
 			}
 			if ((!svc_sendreply(xprt, xdr_long, (caddr_t)&ans)) &&
 			    debugging) {
-				(void) fprintf(stderr, "svc_sendreply\n");
+				(void)fprintf(stderr, "svc_sendreply\n");
 				abort();
 			}
 		}
@@ -440,7 +446,7 @@ reg_service(rqstp, xprt)
 			else
 				port = 0;
 			if ((!svc_sendreply(xprt, xdr_long, (caddr_t)&port)) && debugging) {
-				(void) fprintf(stderr, "svc_sendreply\n");
+				(void)fprintf(stderr, "svc_sendreply\n");
 				abort();
 			}
 		}
@@ -461,7 +467,7 @@ reg_service(rqstp, xprt)
 			 }
 
 			if ((!svc_sendreply(xprt, xdr_pmaplist, (caddr_t)&p)) && debugging) {
-				(void) fprintf(stderr, "svc_sendreply\n");
+				(void)fprintf(stderr, "svc_sendreply\n");
 				abort();
 			}
 		}
