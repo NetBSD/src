@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.12 2003/02/21 16:30:48 skrll Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.13 2003/02/22 12:42:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.12 2003/02/21 16:30:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.13 2003/02/22 12:42:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,7 +522,7 @@ sa_switch(struct lwp *l, int type)
 #ifdef DIAGNOSTIC
 			printf("sa_switch(%d.%d): "
 			    "couldn't allocate upcall data.\n",
-			    p->p_pid, l->l_lid, error);
+			    p->p_pid, l->l_lid);
 
 #endif
 			goto sa_upcall_failed;
