@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.4 2003/08/07 16:42:29 agc Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.5 2004/03/26 19:36:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -162,7 +162,7 @@ ENTRY_NOPROFILE(__sigtramp_sigcontext_1)
 	membar	#Sync
 
 	/* get registers back and set syscall # */
-	restore	%g0, SYS___sigreturn14, %g1
+	restore	%g0, SYS_compat_16___sigreturn14, %g1
 	add	%sp, BIAS + 128 + 8, %o0	/* compute scp */
 	t	ST_SYSCALL			/* call sigreturn */
 	mov	SYS_exit, %g1			/* exit with errno */
