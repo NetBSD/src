@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.35 1998/11/30 12:57:10 leo Exp $	*/
+/*	$NetBSD: isavar.h,v 1.36 1999/02/19 16:15:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -149,21 +149,10 @@ struct isa_attach_args {
 #define	MADDRUNK	ISACF_IOMEM_DEFAULT	/* shared memory address is unknown */
 
 /*
- * Per-device ISA variables
- */
-struct isadev {
-	struct  device *id_dev;		/* back pointer to generic */
-	TAILQ_ENTRY(isadev)
-		id_bchain;		/* bus chain */
-};
-
-/*
  * ISA master bus
  */
 struct isa_softc {
 	struct	device sc_dev;		/* base device */
-	TAILQ_HEAD(, isadev)
-		sc_subdevs;		/* list of all children */
 
 	bus_space_tag_t sc_iot;		/* isa io space tag */
 	bus_space_tag_t sc_memt;	/* isa mem space tag */
@@ -200,13 +189,6 @@ struct isa_softc {
 
 /* ISA interrupt sharing types */
 char	*isa_intr_typename __P((int type));
-
-#ifdef NEWCONFIG
-/*
- * Establish a device as being on the ISA bus (XXX NOT IMPLEMENTED).
- */
-void isa_establish __P((struct isadev *, struct device *));
-#endif
 
 /*
  * Some ISA devices (e.g. on a VLB) can perform 32-bit DMA.  This

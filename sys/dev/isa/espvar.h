@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.3 1998/01/14 12:17:14 drochner Exp $	*/
+/*	$NetBSD: espvar.h,v 1.4 1999/02/19 16:15:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Allen Briggs.
@@ -74,7 +74,6 @@ struct esp_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	void *sc_ih;
-	struct isadev sc_id;
 	int sc_irq;
 	int sc_drq;
 

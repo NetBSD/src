@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.105 1998/08/15 03:51:31 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.106 1999/02/19 16:15:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,8 +112,6 @@ isaattach(parent, self, aux)
 	 */
 	isa_dmainit(sc->sc_ic, sc->sc_iot, sc->sc_dmat, self);
 #endif
-
-	TAILQ_INIT(&sc->sc_subdevs);
 
 	config_search(isasearch, self, NULL);
 }

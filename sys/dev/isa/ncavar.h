@@ -1,4 +1,4 @@
-/*	$NetBSD: ncavar.h,v 1.2 1998/10/25 23:48:56 scottr Exp $	*/
+/*	$NetBSD: ncavar.h,v 1.3 1999/02/19 16:15:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c)  1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,6 @@ struct nca_softc {
         size_t          *sc_pdmalen;
 
         void *sc_ih;
-        struct isadev sc_id;
         int sc_irq;
         int sc_drq;
 	int sc_options;
