@@ -1,7 +1,7 @@
-/*	$NetBSD: s3c24x0_intr.h,v 1.2 2003/07/31 19:49:43 bsh Exp $ */
+/*	$NetBSD: s3c2410_intr.h,v 1.1 2003/07/31 19:49:42 bsh Exp $ */
 
 /*
- * Copyright (c) 2002, 2003  Genetec corporation.  All rights reserved.
+ * Copyright (c) 2003  Genetec corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec corporation.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,24 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _S3C24X0_INTR_H_
-#define	_S3C24X0_INTR_H_
+#ifndef _S3C2410_INTR_H_
+#define	_S3C2410_INTR_H_
 
-#ifndef _LOCORE
+#define	ARM_IRQ_HANDLER	_C_LABEL(s3c2410_irq_handler)
 
-#define	SI_TO_IRQBIT(si)  (1<<(si))
+#include <arm/s3c2xx0/s3c24x0_intr.h>
 
-#define	get_pending_softint()	(softint_pending & soft_intr_mask)
-#define	update_softintr_mask()	\
-	(soft_intr_mask = s3c24x0_soft_imask[current_spl_level])
-
-/* no room for softinterrupts in intr_mask. */
-extern int soft_intr_mask;
-extern int s3c24x0_soft_imask[];
-
-
-#include <arm/s3c2xx0/s3c2xx0_intr.h>
-
-#endif /* ! _LOCORE */
-
-#endif /* _S3C24X0_INTR_H_ */
+#endif /* _S3C2410_INTR_H_ */
