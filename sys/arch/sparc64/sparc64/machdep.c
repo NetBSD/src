@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.118 2002/03/20 17:59:25 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.119 2002/03/20 18:54:49 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -164,53 +164,6 @@ int   safepri = 0;
 void	dumpsys __P((void));
 void	stackdump __P((void));
 
-/* 
- * This is the table that tells us how to access different bus space types.
- */ 
-#define BUS_BYPASS_ACCESS_ENABLED 0
-#if BUS_BYPASS_ACCESS_ENABLED == 1
-/*
- * Bypass access 
- */
-int bus_type_asi[] = {
-	ASI_PHYS_NON_CACHED,			/* UPA */
-	ASI_PHYS_NON_CACHED,			/* SBUS */
-	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI configuration space */
-	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI memory space */
-	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI I/O space */
-	0
-};
-
-int bus_stream_asi[] = {
-	ASI_PHYS_NON_CACHED,			/* UPA */
-	ASI_PHYS_NON_CACHED,			/* SBUS */
-	ASI_PHYS_NON_CACHED,			/* PCI configuration space */
-	ASI_PHYS_NON_CACHED,			/* PCI memory space */
-	ASI_PHYS_NON_CACHED,			/* PCI I/O space */
-	0
-};
-#else
-/*
- * MMU access - we want to use the MMU for all this..
- */
-int bus_type_asi[] = {
-	ASI_PRIMARY,				/* UPA */
-	ASI_PRIMARY,				/* SBUS */
-	ASI_PHYS_NON_CACHED_LITTLE,		/* PCI configuration space */
-	ASI_PRIMARY,				/* PCI memory space */
-	ASI_PRIMARY,				/* PCI I/O space */
-	0
-};
-
-int bus_stream_asi[] = {
-	ASI_PRIMARY,				/* UPA */
-	ASI_PRIMARY,				/* SBUS */
-	ASI_PHYS_NON_CACHED,			/* PCI configuration space */
-	ASI_PRIMARY_LITTLE,			/* PCI memory space */
-	ASI_PRIMARY_LITTLE,			/* PCI I/O space */
-	0
-};
-#endif
 
 /*
  * Machine-dependent startup code
@@ -1811,11 +1764,13 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 		 * rather it will be accessed through MMU bypass ASI accesses.
 		 */
 		if (flags & BUS_SPACE_MAP_LINEAR) return (-1);
-		*hp = (bus_space_handle_t)addr;
+		hp->_ptr = addr;
+		hp->_asi = ASI_PHYS_NON_CACHED_LITTLE;
+		hp->_sasi = ASI_PHYS_NON_CACHED;
 		DPRINTF(BSDB_MAP, ("\nsparc_bus_map: type %x flags %x "
 			"addr %016llx size %016llx virt %llx paddr %016llx\n",
 			(int)t->type, (int) flags, (unsigned long long)addr,
-			(unsigned long long)size, (unsigned long long)*hp,
+			(unsigned long long)size, (unsigned long long)hp->_ptr,
 			(unsigned long long)pa));
 		return (0);
 		/* FALLTHROUGH */
@@ -1830,6 +1785,19 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 		break;
 	}
 
+#ifdef _LP64
+	/* If it's not LINEAR don't bother to map it.  Use phys accesses. */
+	if ((flags & BUS_SPACE_MAP_LINEAR) == 0) {
+		hp->_ptr = addr;
+		if (pm_flags & PMAP_LITTLE)
+			hp->_asi = ASI_PHYS_NON_CACHED_LITTLE;
+		else
+		hp->_asi = ASI_PHYS_NON_CACHED;
+		hp->_sasi = ASI_PHYS_NON_CACHED;
+		return (0);
+	}
+#endif
+
 	if (!(flags & BUS_SPACE_MAP_CACHEABLE)) pm_flags |= PMAP_NC;
 
 	if ((err = extent_alloc(io_space, size, NBPG,
@@ -1837,7 +1805,12 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 			panic("sparc_bus_map: cannot allocate io_space: %d\n", err);
 
 	/* note: preserve page offset */
-	*hp = (bus_space_handle_t)(v | ((u_long)addr & PGOFSET));
+	hp->_ptr = (v | ((u_long)addr & PGOFSET));
+	hp->_asi = ASI_PRIMARY;
+	if (pm_flags & PMAP_LITTLE)
+		hp->_sasi = ASI_PRIMARY_LITTLE;
+	else
+		hp->_sasi = ASI_PRIMARY;
 
 	pa = addr & ~PAGE_MASK; /* = trunc_page(addr); Will drop high bits */
 	if (!(flags&BUS_SPACE_MAP_READONLY)) pm_prot |= VM_PROT_WRITE;
@@ -1845,13 +1818,13 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 	DPRINTF(BSDB_MAP, ("\nsparc_bus_map: type %x flags %x "
 		"addr %016llx size %016llx virt %llx paddr %016llx\n",
 		(int)t->type, (int) flags, (unsigned long long)addr,
-		(unsigned long long)size, (unsigned long long)*hp,
+		(unsigned long long)size, (unsigned long long)hp->_ptr,
 		(unsigned long long)pa));
 
 	do {
 		DPRINTF(BSDB_MAP, ("sparc_bus_map: phys %llx virt %p hp %llx\n", 
 			(unsigned long long)pa, (char *)v,
-			(unsigned long long)*hp));
+			(unsigned long long)hp->_ptr));
 		pmap_enter(pmap_kernel(), v, pa | pm_flags, pm_prot,
 			pm_prot|PMAP_WIRED);
 		v += PAGE_SIZE;
@@ -1869,7 +1842,9 @@ sparc_bus_subregion(tag, handle, offset, size, nhandlep)
 	bus_size_t		size;
 	bus_space_handle_t	*nhandlep;
 {
-	*nhandlep = handle + offset;
+	nhandlep->_ptr = handle._ptr + offset;
+	nhandlep->_asi = handle._asi;
+	nhandlep->_sasi = handle._sasi;
 	return (0);
 }
 
@@ -1879,10 +1854,13 @@ sparc_bus_unmap(t, bh, size)
 	bus_size_t	size;
 	bus_space_handle_t bh;
 {
-	vaddr_t va = trunc_page((vaddr_t)bh);
+	vaddr_t va = trunc_page((vaddr_t)bh._ptr);
 	vaddr_t endva = va + round_page(size);
+	int error = 0;
 
-	int error = extent_free(io_space, va, size, EX_NOWAIT);
+	if (PHYS_ASI(bh._asi)) return (0);
+
+	error = extent_free(io_space, va, size, EX_NOWAIT);
 	if (error) printf("sparc_bus_unmap: extent free sez %d\n", error);
 
 	pmap_remove(pmap_kernel(), va, endva);

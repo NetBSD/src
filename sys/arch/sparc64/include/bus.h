@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.37 2002/03/15 07:06:23 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.38 2002/03/20 18:54:49 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -98,8 +98,6 @@ enum bus_type {
 	PCI_MEMORY_BUS_SPACE,
 	LAST_BUS_SPACE
 }; 
-extern int bus_type_asi[];
-extern int bus_stream_asi[];
 /* For backwards compatibility */
 #define SPARC_BUS_SPACE	UPA_BUS_SPACE
 
@@ -108,10 +106,25 @@ extern int bus_stream_asi[];
 /*
  * Bus address and size types
  */
-typedef	u_int64_t	bus_space_handle_t;
+typedef	struct _bus_space_handle {
+	uint64_t _ptr;
+	int8_t	 _asi;
+	int8_t	 _sasi;
+	char	 _virtual;
+} bus_space_handle_t;
 typedef enum bus_type	bus_type_t;
 typedef u_int64_t	bus_addr_t;
 typedef u_int64_t	bus_size_t;
+
+/*
+ * XXXX -- convert prom virtual address to bus_space_handle_t
+ */
+#define	sparc_promaddr_to_handle(tag, promaddr, hp)	\
+	do {						\
+		hp->_ptr = (uint64_t)promaddr;		\
+		hp->_asi = ASI_PRIMARY;			\
+		hp->_sasi = ASI_PRIMARY;		\
+	} while (0)
 
 /* For buses which have an iospace. */
 #define	BUS_ADDR_IOSPACE(x)	((x)>>32)
@@ -309,12 +322,9 @@ bus_intr_establish(t, p, l, f, h, a)
 	_BS_CALL(t, sparc_intr_establish)(t, p, l, f, h, a);
 }
 
-#if 1
 /* XXXX Things get complicated if we use unmapped register accesses. */
-#define	bus_space_vaddr(t, h)	(vaddr_t)(h)
-#else
-void * bus_space_vaddr __P((bus_space_tag_t space, bus_space_handle_t handle));
-#endif
+#define	bus_space_vaddr(t, h)	(PHYS_ASI((h)._asi) ? \
+			NULL : (void *)(vaddr_t)((h)._ptr))
 
 /* flags for bus space map functions */
 #define	BUS_SPACE_MAP_CACHEABLE		0x0001
@@ -369,51 +379,51 @@ bus_space_barrier(t, h, o, s, f)
  */
 #ifndef BUS_SPACE_DEBUG
 #define	bus_space_read_1(t, h, o)					\
-	    lduba((h) + (o), bus_type_asi[(t)->type])
+	    (0 ? (t)->type : lduba((h)._ptr + (o), (h)._asi))
 
 #define	bus_space_read_2(t, h, o)					\
-	    lduha((h) + (o), bus_type_asi[(t)->type])
+	    (0 ? (t)->type : lduha((h)._ptr + (o), (h)._asi))
 
 #define	bus_space_read_4(t, h, o)					\
-	    lda((h) + (o), bus_type_asi[(t)->type])
+	    (0 ? (t)->type : lda((h)._ptr + (o), (h)._asi))
 
 #define	bus_space_read_8(t, h, o)					\
-	    ldxa((h) + (o), bus_type_asi[(t)->type])
+	    (0 ? (t)->type : ldxa((h)._ptr + (o), (h)._asi))
 #else
 #define	bus_space_read_1(t, h, o) ({					\
 	unsigned char __bv =				      		\
-	    lduba((h) + (o), bus_type_asi[(t)->type]);			\
+	    lduba((h)._ptr + (o), (h)._asi);				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr1(%llx + %llx, %x) -> %x\n", (long long)(h),		\
+	printf("bsr1(%llx + %llx, %x) -> %x\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_type_asi[(t)->type], (unsigned int) __bv);		\
+		(h)._asi, (unsigned int) __bv);				\
 	__bv; })
 
 #define	bus_space_read_2(t, h, o) ({					\
 	unsigned short __bv =				      		\
-	    lduha((h) + (o), bus_type_asi[(t)->type]);			\
+	    lduha((h)._ptr + (o), (h)._asi);				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr2(%llx + %llx, %x) -> %x\n", (long long)(h),		\
+	printf("bsr2(%llx + %llx, %x) -> %x\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_type_asi[(t)->type], (unsigned int)__bv);		\
+		(h)._asi, (unsigned int)__bv);				\
 	__bv; })
 
 #define	bus_space_read_4(t, h, o) ({					\
 	unsigned int __bv =				      		\
-	    lda((h) + (o), bus_type_asi[(t)->type]);			\
+	    lda((h)._ptr + (o), (h)._asi);				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr4(%llx + %llx, %x) -> %x\n", (long long)(h),		\
+	printf("bsr4(%llx + %llx, %x) -> %x\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_type_asi[(t)->type], __bv);				\
+		(h)._asi, __bv);					\
 	__bv; })
 
 #define	bus_space_read_8(t, h, o) ({					\
 	u_int64_t __bv =				      		\
-	    ldxa((h) + (o), bus_type_asi[(t)->type]);			\
+	    ldxa((h)._ptr + (o), (h)._asi);				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr8(%llx + %llx, %x) -> %llx\n", (long long)(h),	\
+	printf("bsr8(%llx + %llx, %x) -> %llx\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_type_asi[(t)->type], (long long)__bv);		\
+		(h)._asi, (long long)__bv);				\
 	__bv; })
 #endif
 /*
@@ -463,44 +473,44 @@ bus_space_barrier(t, h, o, s, f)
  */
 #ifndef BUS_SPACE_DEBUG
 #define	bus_space_write_1(t, h, o, v)					\
-	((void)(stba((h) + (o), bus_type_asi[(t)->type], (v))))
+	(0 ? (t)->type : ((void)(stba((h)._ptr + (o), (h)._asi, (v)))))
 
 #define	bus_space_write_2(t, h, o, v)					\
-	((void)(stha((h) + (o), bus_type_asi[(t)->type], (v))))
+	(0 ? (t)->type : ((void)(stha((h)._ptr + (o), (h)._asi, (v)))))
 
 #define	bus_space_write_4(t, h, o, v)					\
-	((void)(sta((h) + (o), bus_type_asi[(t)->type], (v))))
+	(0 ? (t)->type : ((void)(sta((h)._ptr + (o), (h)._asi, (v)))))
 
 #define	bus_space_write_8(t, h, o, v)					\
-	((void)(stxa((h) + (o), bus_type_asi[(t)->type], (v))))
+	(0 ? (t)->type : ((void)(stxa((h)._ptr + (o), (h)._asi, (v)))))
 #else
 #define	bus_space_write_1(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw1(%llx + %llx, %x) <- %x\n", (long long)(h),		\
+	printf("bsw1(%llx + %llx, %x) <- %x\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_type_asi[(t)->type], (unsigned int) v);		\
-	((void)(stba((h) + (o), bus_type_asi[(t)->type], (v))));  })
+		(h)._asi, (unsigned int) v);				\
+	((void)(stba((h)._ptr + (o), (h)._asi, (v))));  })
 
 #define	bus_space_write_2(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw2(%llx + %llx, %x) <- %x\n", (long long)(h),		\
+	printf("bsw2(%llx + %llx, %x) <- %x\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_type_asi[(t)->type], (unsigned int) v);		\
-	((void)(stha((h) + (o), bus_type_asi[(t)->type], (v)))); })
+		(h)._asi, (unsigned int) v);				\
+	((void)(stha((h)._ptr + (o), (h)._asi, (v)))); })
 
 #define	bus_space_write_4(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw4(%llx + %llx, %x) <- %x\n", (long long)(h),		\
+	printf("bsw4(%llx + %llx, %x) <- %x\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_type_asi[(t)->type], (unsigned int) v);		\
-	((void)(sta((h) + (o), bus_type_asi[(t)->type], (v)))); })
+		(h)._asi, (unsigned int) v);				\
+	((void)(sta((h)._ptr + (o), (h)._asi, (v)))); })
 
 #define	bus_space_write_8(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw8(%llx + %llx, %x) <- %llx\n", (long long)(h),	\
+	printf("bsw8(%llx + %llx, %x) <- %llx\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_type_asi[(t)->type], (long long) v);		\
-	((void)(stxa((h) + (o), bus_type_asi[(t)->type], (v)))); })
+		(h)._asi, (long long) v);				\
+	((void)(stxa((h)._ptr + (o), (h)._asi, (v)))); })
 #endif
 /*
  *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
@@ -871,51 +881,51 @@ bus_space_copy_region_8(t, h1, o1, h2, o2, c)
  */
 #ifndef BUS_SPACE_DEBUG
 #define	bus_space_read_stream_1(t, h, o)				\
-	    lduba((h) + (o), bus_stream_asi[(t)->type])
+	    (0 ? (t)->type : lduba((h)._ptr + (o), (h)._sasi))
 
 #define	bus_space_read_stream_2(t, h, o)				\
-	    lduha((h) + (o), bus_stream_asi[(t)->type])
+	    (0 ? (t)->type : lduha((h)._ptr + (o), (h)._sasi))
 
 #define	bus_space_read_stream_4(t, h, o)				\
-	    lda((h) + (o), bus_stream_asi[(t)->type])
+	    (0 ? (t)->type : lda((h)._ptr + (o), (h)._sasi))
 
 #define	bus_space_read_stream_8(t, h, o)				\
-	    ldxa((h) + (o), bus_stream_asi[(t)->type])
+	    (0 ? (t)->type : ldxa((h)._ptr + (o), (h)._sasi))
 #else
 #define	bus_space_read_stream_1(t, h, o) ({				\
 	unsigned char __bv =				      		\
-	    lduba((h) + (o), bus_stream_asi[(t)->type]);		\
+	    lduba((h)._ptr + (o), (h)._sasi);				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr1(%llx + %llx, %x) -> %x\n", (long long)(h),		\
+	printf("bsr1(%llx + %llx, %x) -> %x\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_stream_asi[(t)->type], (unsigned int) __bv);	\
+		(h)._sasi, (unsigned int) __bv);			\
 	__bv; })
 
 #define	bus_space_read_stream_2(t, h, o) ({				\
 	unsigned short __bv =				      		\
-	    lduha((h) + (o), bus_stream_asi[(t)->type]);		\
+	    lduha((h)._ptr + (o), (h)._sasi);				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr2(%llx + %llx, %x) -> %x\n", (long long)(h),		\
+	printf("bsr2(%llx + %llx, %x) -> %x\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_stream_asi[(t)->type], (unsigned int)__bv);		\
+		(h)._sasi, (unsigned int)__bv);				\
 	__bv; })
 
 #define	bus_space_read_stream_4(t, h, o) ({				\
 	unsigned int __bv =				      		\
-	    lda((h) + (o), bus_stream_asi[(t)->type]);			\
+	    lda((h)._ptr + (o), (h)._sasi);				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr4(%llx + %llx, %x) -> %x\n", (long long)(h),		\
+	printf("bsr4(%llx + %llx, %x) -> %x\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_stream_asi[(t)->type], __bv);			\
+		(h)._sasi, __bv);					\
 	__bv; })
 
 #define	bus_space_read_stream_8(t, h, o) ({				\
 	u_int64_t __bv =				      		\
-	    ldxa((h) + (o), bus_stream_asi[(t)->type]);			\
+	    ldxa((h)._ptr + (o), (h)._sasi);				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsr8(%llx + %llx, %x) -> %llx\n", (long long)(h),	\
+	printf("bsr8(%llx + %llx, %x) -> %llx\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_stream_asi[(t)->type], (long long)__bv);		\
+		(h)._sasi, (long long)__bv);				\
 	__bv; })
 #endif
 /*
@@ -965,44 +975,44 @@ bus_space_copy_region_8(t, h1, o1, h2, o2, c)
  */
 #ifndef BUS_SPACE_DEBUG
 #define	bus_space_write_stream_1(t, h, o, v)				\
-	((void)(stba((h) + (o), bus_stream_asi[(t)->type], (v))))
+	(0 ? (t)->type : ((void)(stba((h)._ptr + (o), (h)._sasi, (v)))))
 
 #define	bus_space_write_stream_2(t, h, o, v)				\
-	((void)(stha((h) + (o), bus_stream_asi[(t)->type], (v))))
+	(0 ? (t)->type : ((void)(stha((h)._ptr + (o), (h)._sasi, (v)))))
 
 #define	bus_space_write_stream_4(t, h, o, v)				\
-	((void)(sta((h) + (o), bus_stream_asi[(t)->type], (v))))
+	(0 ? (t)->type : ((void)(sta((h)._ptr + (o), (h)._sasi, (v)))))
 
 #define	bus_space_write_stream_8(t, h, o, v)				\
-	((void)(stxa((h) + (o), bus_stream_asi[(t)->type], (v))))
+	(0 ? (t)->type : ((void)(stxa((h)._ptr + (o), (h)._sasi, (v)))))
 #else
 #define	bus_space_write_stream_1(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw1(%llx + %llx, %x) <- %x\n", (long long)(h),		\
+	printf("bsw1(%llx + %llx, %x) <- %x\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_stream_asi[(t)->type], (unsigned int) v);		\
-	((void)(stba((h) + (o), bus_stream_asi[(t)->type], (v))));  })
+		(h)._sasi, (unsigned int) v);				\
+	((void)(stba((h)._ptr + (o), (h)._sasi, (v))));  })
 
 #define	bus_space_write_stream_2(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw2(%llx + %llx, %x) <- %x\n", (long long)(h),		\
+	printf("bsw2(%llx + %llx, %x) <- %x\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_stream_asi[(t)->type], (unsigned int) v);		\
-	((void)(stha((h) + (o), bus_stream_asi[(t)->type], (v)))); })
+		(h)._sasi, (unsigned int) v);				\
+	((void)(stha((h)._ptr + (o), (h)._sasi, (v)))); })
 
 #define	bus_space_write_stream_4(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw4(%llx + %llx, %x) <- %x\n", (long long)(h),		\
+	printf("bsw4(%llx + %llx, %x) <- %x\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_stream_asi[(t)->type], (unsigned int) v);		\
-	((void)(sta((h) + (o), bus_stream_asi[(t)->type], (v)))); })
+		(h)._sasi, (unsigned int) v);				\
+	((void)(sta((h)._ptr + (o), (h)._sasi, (v)))); })
 
 #define	bus_space_write_stream_8(t, h, o, v) ({				\
 	if (bus_space_debug & BSDB_ACCESS)				\
-	printf("bsw8(%llx + %llx, %x) <- %llx\n", (long long)(h),	\
+	printf("bsw8(%llx + %llx, %x) <- %llx\n", (long long)(h)._ptr,	\
 		(long long)(o),						\
-		bus_stream_asi[(t)->type], (long long) v);		\
-	((void)(stxa((h) + (o), bus_stream_asi[(t)->type], (v)))); })
+		(h)._sasi, (long long) v);				\
+	((void)(stxa((h)._ptr + (o), (h)._sasi, (v)))); })
 #endif
 /*
  *	void bus_space_write_multi_stream_N __P((bus_space_tag_t tag,

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.11 2002/03/16 14:00:00 mrg Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.12 2002/03/20 18:54:46 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -127,8 +127,10 @@ com_ebus_attach(parent, self, aux)
 	 *
 	 * Use the prom address if there.
 	 */
+
 	if (ea->ea_nvaddr)
-		sc->sc_ioh = (bus_space_handle_t)ea->ea_vaddr[0];
+		sparc_promaddr_to_handle(sc->sc_iot, ea->ea_vaddr[0],
+			&sc->sc_ioh);
 	else if (bus_space_map(sc->sc_iot, EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
 		ea->ea_reg[0].size, 0, &sc->sc_ioh) != 0) {
 		printf(": can't map register space\n");

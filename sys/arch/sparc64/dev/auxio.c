@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.4 2002/03/16 14:00:00 mrg Exp $	*/
+/*	$NetBSD: auxio.c,v 1.5 2002/03/20 18:54:46 eeh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -164,26 +164,47 @@ auxio_ebus_attach(parent, self, aux)
 	struct auxio_softc *sc = (struct auxio_softc *)self;
 	struct ebus_attach_args *ea = aux;
 
-	if (ea->ea_nreg < 1 || ea->ea_nvaddr < 1) {
+	sc->sc_tag = ea->ea_bustag;
+
+	if (ea->ea_nreg < 1) {
 		printf(": no registers??\n");
 		return;
 	}
 
-	if (ea->ea_nreg != 5 || ea->ea_nvaddr != 5) {
+	if (ea->ea_nreg != 5) {
 		printf(": not 5 (%d) registers, only setting led",
 		    ea->ea_nreg);
 		sc->sc_flags = AUXIO_LEDONLY|AUXIO_EBUS;
+	} else if (ea->ea_nvaddr == 5) {
+		sc->sc_flags = AUXIO_EBUS;
+
+		sparc_promaddr_to_handle(sc->sc_tag, 
+			ea->ea_vaddr[1], &sc->sc_pci);
+		sparc_promaddr_to_handle(sc->sc_tag, 
+			ea->ea_vaddr[2], &sc->sc_freq);
+		sparc_promaddr_to_handle(sc->sc_tag, 
+			ea->ea_vaddr[3], &sc->sc_scsi);
+		sparc_promaddr_to_handle(sc->sc_tag, 
+			ea->ea_vaddr[4], &sc->sc_temp);
 	} else {
 		sc->sc_flags = AUXIO_EBUS;
-		sc->sc_pci = (bus_space_handle_t)(u_long)ea->ea_vaddr[1];
-		sc->sc_freq = (bus_space_handle_t)(u_long)ea->ea_vaddr[2];
-		sc->sc_scsi = (bus_space_handle_t)(u_long)ea->ea_vaddr[3];
-		sc->sc_temp = (bus_space_handle_t)(u_long)ea->ea_vaddr[4];
+		bus_space_map(sc->sc_tag, EBUS_ADDR_FROM_REG(&ea->ea_reg[1]),
+			ea->ea_reg[1].size, 0, &sc->sc_pci);
+		bus_space_map(sc->sc_tag, EBUS_ADDR_FROM_REG(&ea->ea_reg[2]),
+			ea->ea_reg[2].size, 0, &sc->sc_freq);
+		bus_space_map(sc->sc_tag, EBUS_ADDR_FROM_REG(&ea->ea_reg[3]),
+			ea->ea_reg[3].size, 0, &sc->sc_scsi);
+		bus_space_map(sc->sc_tag, EBUS_ADDR_FROM_REG(&ea->ea_reg[4]),
+			ea->ea_reg[4].size, 0, &sc->sc_temp);
 	}
-	sc->sc_led = (bus_space_handle_t)(u_long)ea->ea_vaddr[0];
-	
-	sc->sc_tag = ea->ea_bustag;
 
+	if (ea->ea_nvaddr > 0) {
+		sparc_promaddr_to_handle(sc->sc_tag, 
+			ea->ea_vaddr[0], &sc->sc_led);
+	} else {
+		bus_space_map(sc->sc_tag, EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
+			ea->ea_reg[0].size, 0, &sc->sc_led);
+	
 	auxio_attach_common(sc);
 }
 
@@ -206,12 +227,14 @@ auxio_sbus_attach(parent, self, aux)
 	struct auxio_softc *sc = (struct auxio_softc *)self;
 	struct sbus_attach_args *sa = aux;
 
-	if (sa->sa_nreg < 1 || sa->sa_npromvaddrs < 1) {
+	sc->sc_tag = sa->sa_bustag;
+
+	if (sa->sa_nreg < 1) {
 		printf(": no registers??\n");
 		return;
 	}
 
-	if (sa->sa_nreg != 1 || sa->sa_npromvaddrs != 1) {
+	if (sa->sa_nreg != 1) {
 		printf(": not 1 (%d/%d) registers??", sa->sa_nreg,
 		    sa->sa_npromvaddrs);
 		return;
@@ -219,9 +242,13 @@ auxio_sbus_attach(parent, self, aux)
 
 	/* sbus auxio only has one set of registers */
 	sc->sc_flags = AUXIO_LEDONLY|AUXIO_SBUS;
-	sc->sc_led = (bus_space_handle_t)(u_long)sa->sa_promvaddr;
-
-	sc->sc_tag = sa->sa_bustag;
+	if (sa->sa_npromvaddrs > 0) {
+		sbus_promaddr_to_handle(sc->sc_tag,
+			sa->sa_promvaddr, &sc->sc_led);
+	} else {
+		sbus_bus_map(sc->sc_tag, sa->sa_slot, sa->sa_offset,
+			sa->sa_size, 0, &sc->sc_led);
+	}
 
 	auxio_attach_common(sc);
 }
