@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.8 2001/01/08 07:38:00 itojun Exp $
+#	$NetBSD: Makefile,v 1.9 2001/01/08 07:49:01 mrg Exp $
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.8 2001/01/08 07:38:00 itojun Exp $
+#	$Id: Makefile,v 1.9 2001/01/08 07:49:01 mrg Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -30,19 +30,26 @@ SRCS+=	app_rand.c apps.c asn1pars.c ca.c ciphers.c crl.c crl2p7.c dgst.c \
 	s_client.c s_server.c s_socket.c s_time.c sess_id.c smime.c \
 	speed.c spkac.c verify.c version.c x509.c
 
-LDADD+=	-lssl -lcrypto
-DPADD+=	${LIBSSL} ${LIBCRYPTO}
-
 CPPFLAGS+= -DMONOLITH -DUSE_SSL
 
 # with normal OpenSSL, NO_{RC5,IDEA} changes ABI due to change in struct/union.
 # we nuked all of them in our header files and it is now safe.
 .if ${MKCRYPTO_RC5} == "no"
 CPPFLAGS+= -DNO_RC5
+.else
+LDADD+=	-lcrypto_rc5
+DPADD+=	${LIBCRYPTO_RC5}
 .endif
 .if ${MKCRYPTO_IDEA} == "no"
 CPPFLAGS+= -DNO_IDEA
+.else
+LDADD+=	-lcrypto_idea
+DPADD+=	${LIBCRYPTO_IDEA}
 .endif
+
+# this must be _after_ the libcrypto_rc5/libcrypto_idea entries.
+LDADD+=	-lssl -lcrypto
+DPADD+=	${LIBSSL} ${LIBCRYPTO}
 
 MKMAN=	no
 
