@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.1 2001/11/21 19:09:10 thorpej Exp $	*/
+/*	$NetBSD: disk.c,v 1.2 2001/11/21 23:33:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,8 +55,6 @@ extern const struct arcbios_fv *ARCBIOS;
 
 struct	disk_softc {
 	int	sc_fd;			/* PROM file id */
-	int	sc_ctlr;		/* controller number */
-	int	sc_unit;		/* disk unit number */
 	int	sc_part;		/* disk partition number */
 	struct	disklabel sc_label;	/* disk label for this disk */
 };
@@ -114,23 +112,31 @@ diskopen(struct open_file *f, ...)
 
 	struct disk_softc *sc;
 	struct disklabel *lp;
-	int i;
-	char *msg;
-	char buf[DEV_BSIZE];
-	int cnt;
+#ifdef arc
+	char *msg, buf[DEV_BSIZE];
+#endif
+	int i, cnt;
 	char *device;
 	va_list ap;
 
 	va_start(ap, f);
 
 	device = va_arg(ap, char *);
-	ctlr = 0;		/* XXX extract from filename */
-	unit = 1;
+
+	/*
+	 * For NetBSD/sgimips, since we use the SGI partition map directly,
+	 * we fake an in-core NetBSD disklabel with offset of 0.
+	 *
+	 * For NetBSD/arc, there is a MBR partition map on the disk, which we
+	 * then expect to find a NetBSD disklabel within the MBR partition.
+	 * We require that the kernel be located in first partition in the
+	 * NetBSD disklabel, because we have not other way to represent the
+	 * root partition.
+	 */
 	part = 0;
-	if (unit >= 16 || part >= 16)
+
+	if (part >= 16)
 		return (ENXIO);
-	printf("diskopen: %d,%d,%d %s\n", ctlr, unit, part, device);
-	/* NOTE: only support reads for now */
 
 	if (ARCBIOS->Open(device, 0, &i)) {
 		printf("open failed\n");
@@ -142,8 +148,6 @@ diskopen(struct open_file *f, ...)
 	f->f_devdata = (void *)sc;
 
 	sc->sc_fd = i;
-	sc->sc_ctlr = ctlr;
-	sc->sc_unit = unit;
 	sc->sc_part = part;
 
 	/* try to read disk label and partition table information */
@@ -154,19 +158,22 @@ diskopen(struct open_file *f, ...)
 	lp->d_partitions[part].p_offset = 0;
 	lp->d_partitions[part].p_size = 0x7fffffff;
 
-	i = diskstrategy(sc, F_READ, (daddr_t)LABELSECTOR, DEV_BSIZE, buf, &cnt);
+#ifdef arc
+	i = diskstrategy(sc, F_READ, (daddr_t)LABELSECTOR, DEV_BSIZE,
+	    buf, &cnt);
 	if (i || cnt != DEV_BSIZE) {
-		/* printf("disk%d: error reading disk label\n", unit); */
-		goto bad;
+		printf("%s: error reading disk label\n", device);
+		free(sc, sizeof(struct disk_softc));
+		return (ENXIO);
 	}
 	msg = getdisklabel(buf, lp);
 	if (msg) {
 		/* If no label, just assume 0 and return */
 		return (0);
 	}
+#endif
 
 	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0) {
-	bad:
 		free(sc, sizeof(struct disk_softc));
 		return (ENXIO);
 	}
