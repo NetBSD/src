@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.90 2003/10/08 00:28:42 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.91 2003/10/17 19:56:18 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.90 2003/10/08 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91 2003/10/17 19:56:18 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -487,6 +487,7 @@ setusr(vaddr_t uva, size_t *len_p)
 {
 	struct pcb *pcb = curpcb;
 	vaddr_t p;
+	KASSERT(pcb != NULL);
 	KASSERT(pcb->pcb_kmapsr == 0);
 	pcb->pcb_kmapsr = USER_SR;
 	pcb->pcb_umapsr = uva >> ADDR_SR_SHFT;
