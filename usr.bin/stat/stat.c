@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.7 2002/08/13 14:05:41 atatat Exp $ */
+/*	$NetBSD: stat.c,v 1.8 2002/08/13 20:15:06 atatat Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,15 +38,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stat.c,v 1.7 2002/08/13 14:05:41 atatat Exp $");
+__RCSID("$NetBSD: stat.c,v 1.8 2002/08/13 20:15:06 atatat Exp $");
 #endif
 
 #include <sys/stat.h>
-#include <sys/syslimits.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <grp.h>
+#include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
