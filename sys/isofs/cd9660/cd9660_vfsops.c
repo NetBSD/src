@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.48.2.2 2001/04/06 00:03:08 he Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.48.2.3 2002/06/06 20:07:53 he Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -389,6 +389,8 @@ iso_mountfs(devvp, mp, p, argp)
 		error = EINVAL;
 		goto out;
 	}
+
+	isomp->volume_space_size += sess;
 
 	pribp->b_flags |= B_AGE;
 	brelse(pribp);
