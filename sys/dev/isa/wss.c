@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.39 1997/10/19 07:42:47 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.39.2.1 1998/12/05 07:36:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -271,6 +271,10 @@ wssfind(parent, sc, ia)
     /* XXX reqdrq? */
     if (sc->wss_drq != -1 && isa_drq_isfree(parent, sc->wss_drq) == 0)
 	    goto bad;
+
+    if (sc->sc_ad1848.mode > 1 && ia->ia_drq2 != -1 && 
+        isa_drq_isfree(parent, ia->ia_drq2) == 0)
+    	goto bad;
 
 #ifdef NEWCONFIG
     /*
