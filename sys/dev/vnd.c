@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.111 2004/10/28 07:07:39 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.112 2005/03/30 19:23:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.111 2004/10/28 07:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.112 2005/03/30 19:23:08 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -143,6 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.111 2004/10/28 07:07:39 yamt Exp $");
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
+#include <sys/kthread.h>
 #include <sys/errno.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
@@ -190,10 +191,10 @@ struct vndbuf {
 	struct vndxfer	*vb_xfer;
 };
 
-#define	VND_GETXFER(vnd)	pool_get(&(vnd)->sc_vxpool, PR_NOWAIT)
+#define	VND_GETXFER(vnd)	pool_get(&(vnd)->sc_vxpool, PR_WAITOK)
 #define	VND_PUTXFER(vnd, vx)	pool_put(&(vnd)->sc_vxpool, (vx))
 
-#define	VND_GETBUF(vnd)		pool_get(&(vnd)->sc_vbpool, PR_NOWAIT)
+#define	VND_GETBUF(vnd)		pool_get(&(vnd)->sc_vbpool, PR_WAITOK)
 #define	VND_PUTBUF(vnd, vb)	pool_put(&(vnd)->sc_vbpool, (vb))
 
 struct vnd_softc *vnd_softc;
@@ -207,7 +208,6 @@ void	vndattach(int);
 int	vnddetach(void);
 
 static void	vndclear(struct vnd_softc *, int);
-static void	vndstart(struct vnd_softc *);
 static int	vndsetcred(struct vnd_softc *, struct ucred *);
 static void	vndthrottle(struct vnd_softc *, struct vnode *);
 static void	vndiodone(struct buf *);
@@ -220,6 +220,8 @@ static void	vndgetdisklabel(dev_t);
 
 static int	vndlock(struct vnd_softc *);
 static void	vndunlock(struct vnd_softc *);
+
+void vndthread(void *);
 
 static dev_type_open(vndopen);
 static dev_type_close(vndclose);
@@ -393,37 +395,23 @@ vndclose(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 /*
- * Break the request into bsize pieces and submit using VOP_BMAP/VOP_STRATEGY.
+ * Qeue the request, and wakeup the kernel thread to handle it.
  */
 static void
 vndstrategy(struct buf *bp)
 {
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd = &vnd_softc[unit];
-	struct vndxfer *vnx;
-	struct mount *mp;
-	int s, bsize, resid;
-	off_t bn;
-	caddr_t addr;
-	int sz, flags, error, wlabel;
-	struct disklabel *lp;
-	struct partition *pp;
+	struct disklabel *lp = vnd->sc_dkdev.dk_label;
+	int s = splbio();
 
-#ifdef DEBUG
-	if (vnddebug & VDB_FOLLOW)
-		printf("vndstrategy(%p): unit %d\n", bp, unit);
-#endif
+	bp->b_resid = bp->b_bcount;
+
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
 	}
-
-	/* If it's a nil transfer, wake up the top half now. */
-	if (bp->b_bcount == 0)
-		goto done;
-
-	lp = vnd->sc_dkdev.dk_label;
 
 	/*
 	 * The transfer must be a whole number of blocks.
@@ -435,15 +423,6 @@ vndstrategy(struct buf *bp)
 	}
 
 	/*
-	 * Do bounds checking and adjust transfer.  If there's an error,
-	 * the bounds check will flag that for us.
-	 */
-	wlabel = vnd->sc_flags & (VNF_WLABEL|VNF_LABELLING);
-	if (DISKPART(bp->b_dev) != RAW_PART)
-		if (bounds_check_with_label(&vnd->sc_dkdev, bp, wlabel) <= 0)
-			goto done;
-
-	/*
 	 * check if we're read-only.
 	 */
 	if ((vnd->sc_flags & VNF_READONLY) && !(bp->b_flags & B_READ)) {
@@ -452,193 +431,248 @@ vndstrategy(struct buf *bp)
 		goto done;
 	}
 
-	bp->b_resid = bp->b_bcount;
-
 	/*
-	 * Put the block number in terms of the logical blocksize
-	 * of the "device".
-	 */
-	bn = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
-
-	/*
-	 * Translate the partition-relative block number to an absolute.
+	 * Do bounds checking and adjust transfer.  If there's an error,
+	 * the bounds check will flag that for us.
 	 */
 	if (DISKPART(bp->b_dev) != RAW_PART) {
-		pp = &vnd->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
-		bn += pp->p_offset;
+		if (bounds_check_with_label(&vnd->sc_dkdev,
+		    bp, vnd->sc_flags & (VNF_WLABEL|VNF_LABELLING)) <= 0)
+			goto done;
 	}
 
-	/* ...and convert to a byte offset within the file. */
-	bn *= lp->d_secsize;
-
-	if (vnd->sc_vp->v_mount == NULL) {
-		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
+	/* If it's a nil transfer, wake up the top half now. */
+	if (bp->b_bcount == 0)
 		goto done;
-	}
- 	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
-	addr = bp->b_data;
-	flags = (bp->b_flags & (B_READ|B_ASYNC)) | B_CALL;
-
-	/* Allocate a header for this transfer and link it to the buffer */
-	s = splbio();
-	vnx = VND_GETXFER(vnd);
-	splx(s);
-	vnx->vx_flags = VX_BUSY;
-	vnx->vx_error = 0;
-	vnx->vx_pending = 0;
-	vnx->vx_bp = bp;
-
-	if ((flags & B_READ) == 0)
-		vn_start_write(vnd->sc_vp, &mp, V_WAIT);
-
-	for (resid = bp->b_resid; resid; resid -= sz) {
-		struct vndbuf *nbp;
-		struct vnode *vp;
-		daddr_t nbn;
-		int off, nra;
-
-		nra = 0;
-		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY | LK_CANRECURSE);
-		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
-		VOP_UNLOCK(vnd->sc_vp, 0);
-
-		if (error == 0 && (long)nbn == -1)
-			error = EIO;
-
-		/*
-		 * If there was an error or a hole in the file...punt.
-		 * Note that we may have to wait for any operations
-		 * that we have already fired off before releasing
-		 * the buffer.
-		 *
-		 * XXX we could deal with holes here but it would be
-		 * a hassle (in the write case).
-		 */
-		if (error) {
-			s = splbio();
-			vnx->vx_error = error;
-			goto out;
-		}
-
 #ifdef DEBUG
-		if (!dovndcluster)
-			nra = 0;
+	if (vnddebug & VDB_FOLLOW)
+		printf("vndstrategy(%p): unit %d\n", bp, unit);
 #endif
-
-		if ((off = bn % bsize) != 0)
-			sz = bsize - off;
-		else
-			sz = (1 + nra) * bsize;
-		if (resid < sz)
-			sz = resid;
-#ifdef DEBUG
-		if (vnddebug & VDB_IO)
-			printf("vndstrategy: vp %p/%p bn 0x%qx/0x%" PRIx64
-			       " sz 0x%x\n",
-			    vnd->sc_vp, vp, (long long)bn, nbn, sz);
-#endif
-
-		s = splbio();
-		nbp = VND_GETBUF(vnd);
-		splx(s);
-		BUF_INIT(&nbp->vb_buf);
-		nbp->vb_buf.b_flags = flags;
-		nbp->vb_buf.b_bcount = sz;
-		nbp->vb_buf.b_bufsize = round_page((ulong)addr + sz)
-		    - trunc_page((ulong) addr);
-		nbp->vb_buf.b_error = 0;
-		nbp->vb_buf.b_data = addr;
-		nbp->vb_buf.b_blkno = nbp->vb_buf.b_rawblkno = nbn + btodb(off);
-		nbp->vb_buf.b_proc = bp->b_proc;
-		nbp->vb_buf.b_iodone = vndiodone;
-		nbp->vb_buf.b_vp = vp;
-
-		nbp->vb_xfer = vnx;
-
-		BIO_COPYPRIO(&nbp->vb_buf, bp);
-
-		/*
-		 * Just sort by block number
-		 */
-		s = splbio();
-		if (vnx->vx_error != 0) {
-			VND_PUTBUF(vnd, nbp);
-			goto out;
-		}
-		vnx->vx_pending++;
-
-		BUFQ_PUT(&vnd->sc_tab, &nbp->vb_buf);
-		vndstart(vnd);
-		splx(s);
-		bn += sz;
-		addr += sz;
-	}
-
-	s = splbio();
-
-out: /* Arrive here at splbio */
-	if ((flags & B_READ) == 0)
-		vn_finished_write(mp, 0);
-	vnx->vx_flags &= ~VX_BUSY;
-	if (vnx->vx_pending == 0) {
-		if (vnx->vx_error != 0) {
-			bp->b_error = vnx->vx_error;
-			bp->b_flags |= B_ERROR;
-		}
-		VND_PUTXFER(vnd, vnx);
-		biodone(bp);
-	}
+	BUFQ_PUT(&vnd->sc_tab, bp);
+	wakeup(&vnd->sc_tab);
 	splx(s);
 	return;
-
- done:
+done:
 	biodone(bp);
+	splx(s);
 }
 
-/*
- * Feed requests sequentially.
- * We do it this way to keep from flooding NFS servers if we are connected
- * to an NFS file.  This places the burden on the client rather than the
- * server.
- */
-static void
-vndstart(struct vnd_softc *vnd)
+void
+vndthread(void *arg)
 {
-	struct buf	*bp;
+	struct vnd_softc *vnd = arg;
+	struct buf *bp;
+	struct vndxfer *vnx;
+	struct mount *mp;
+	int s, bsize, resid;
+	off_t bn;
+	caddr_t addr;
+	int sz, flags, error;
+	struct disklabel *lp;
+	struct partition *pp;
+
+	s = splbio();
+	vnd->sc_flags |= VNF_KTHREAD;
+	wakeup(&vnd->sc_kthread);
 
 	/*
-	 * Dequeue now since lower level strategy routine might
-	 * queue using same links
+	 * Dequeue requests, break them into bsize pieces and submit using
+	 * VOP_BMAP/VOP_STRATEGY.
 	 */
-
-	if ((vnd->sc_flags & VNF_BUSY) != 0)
-		return;
-
-	vnd->sc_flags |= VNF_BUSY;
-
-	while (vnd->sc_active < vnd->sc_maxactive) {
+	while ((vnd->sc_flags & VNF_VUNCONF) == 0) {
 		bp = BUFQ_GET(&vnd->sc_tab);
-		if (bp == NULL)
-			break;
-		vnd->sc_active++;
+		if (bp == NULL) {
+			tsleep(&vnd->sc_tab, PRIBIO, "vndbp", 0);
+			continue;
+		};
+		splx(s);
+
 #ifdef DEBUG
-		if (vnddebug & VDB_IO)
-			printf("vndstart(%ld): bp %p vp %p blkno 0x%" PRIx64
-				" flags %x addr %p cnt 0x%x\n",
-			    (long) (vnd-vnd_softc), bp, bp->b_vp, bp->b_blkno,
-			    bp->b_flags, bp->b_data, bp->b_bcount);
+		if (vnddebug & VDB_FOLLOW)
+			printf("vndthread(%p\n", bp);
+#endif
+		lp = vnd->sc_dkdev.dk_label;
+		bp->b_resid = bp->b_bcount;
+
+		/*
+		 * Put the block number in terms of the logical blocksize
+		 * of the "device".
+		 */
+		bn = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+
+		/*
+		 * Translate the partition-relative block number to an absolute.
+		 */
+		if (DISKPART(bp->b_dev) != RAW_PART) {
+			pp = &vnd->sc_dkdev.dk_label->d_partitions[
+			    DISKPART(bp->b_dev)];
+			bn += pp->p_offset;
+		}
+
+		/* ...and convert to a byte offset within the file. */
+		bn *= lp->d_secsize;
+
+		if (vnd->sc_vp->v_mount == NULL) {
+			bp->b_error = ENXIO;
+			bp->b_flags |= B_ERROR;
+			goto done;
+		}
+ 		bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
+		addr = bp->b_data;
+		flags = (bp->b_flags & (B_READ|B_ASYNC)) | B_CALL;
+
+		/*
+		 * Allocate a header for this transfer and link it to the
+		 * buffer
+		 */
+		s = splbio();
+		vnx = VND_GETXFER(vnd);
+		splx(s);
+		vnx->vx_flags = VX_BUSY;
+		vnx->vx_error = 0;
+		vnx->vx_pending = 0;
+		vnx->vx_bp = bp;
+
+		if ((flags & B_READ) == 0)
+			vn_start_write(vnd->sc_vp, &mp, V_WAIT);
+
+		/*
+		 * Feed requests sequentially.
+		 * We do it this way to keep from flooding NFS servers if we
+		 * are connected to an NFS file.  This places the burden on
+		 * the client rather than the server.
+		 */
+		for (resid = bp->b_resid; resid; resid -= sz) {
+			struct vndbuf *nbp;
+			struct vnode *vp;
+			daddr_t nbn;
+			int off, nra;
+
+			nra = 0;
+			vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY | LK_CANRECURSE);
+			error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
+			VOP_UNLOCK(vnd->sc_vp, 0);
+	
+			if (error == 0 && (long)nbn == -1)
+				error = EIO;
+
+			/*
+			 * If there was an error or a hole in the file...punt.
+			 * Note that we may have to wait for any operations
+			 * that we have already fired off before releasing
+			 * the buffer.
+			 *
+			 * XXX we could deal with holes here but it would be
+			 * a hassle (in the write case).
+			 */
+			if (error) {
+				s = splbio();
+				vnx->vx_error = error;
+				goto out;
+			}
+
+#ifdef DEBUG
+			if (!dovndcluster)
+				nra = 0;
 #endif
 
-		/* Instrumentation. */
-		disk_busy(&vnd->sc_dkdev);
+			if ((off = bn % bsize) != 0)
+				sz = bsize - off;
+			else
+				sz = (1 + nra) * bsize;
+			if (resid < sz)
+				sz = resid;
+#ifdef 	DEBUG
+			if (vnddebug & VDB_IO)
+				printf("vndstrategy: vp %p/%p bn 0x%qx/0x%" PRIx64
+				       " sz 0x%x\n",
+				    vnd->sc_vp, vp, (long long)bn, nbn, sz);
+#endif
 
-		if ((bp->b_flags & B_READ) == 0)
-			bp->b_vp->v_numoutput++;
-		VOP_STRATEGY(bp->b_vp, bp);
+			s = splbio();
+			while (vnd->sc_active >= vnd->sc_maxactive) {
+				tsleep(&vnd->sc_tab, PRIBIO, "vndac", 0);
+				if (vnd->sc_flags & VNF_VUNCONF)
+					goto kthread_end;
+			}
+			vnd->sc_active++;
+			nbp = VND_GETBUF(vnd);
+			splx(s);
+			BUF_INIT(&nbp->vb_buf);
+			nbp->vb_buf.b_flags = flags;
+			nbp->vb_buf.b_bcount = sz;
+			nbp->vb_buf.b_bufsize = round_page((ulong)addr + sz)
+			    - trunc_page((ulong) addr);
+			nbp->vb_buf.b_error = 0;
+			nbp->vb_buf.b_data = addr;
+			nbp->vb_buf.b_blkno = nbp->vb_buf.b_rawblkno = nbn + btodb(off);
+			nbp->vb_buf.b_proc = bp->b_proc;
+			nbp->vb_buf.b_iodone = vndiodone;
+			nbp->vb_buf.b_vp = vp;
+
+			nbp->vb_xfer = vnx;
+	
+			BIO_COPYPRIO(&nbp->vb_buf, bp);
+
+			/*
+			 * Just sort by block number
+			 */
+			s = splbio();
+			if (vnx->vx_error != 0) {
+				VND_PUTBUF(vnd, nbp);
+				goto out;
+			}
+			vnx->vx_pending++;
+#ifdef DEBUG
+			if (vnddebug & VDB_IO)
+				printf("vndstart(%ld): bp %p vp %p blkno "
+				    "0x%" PRIx64 " flags %x addr %p cnt 0x%x\n",
+				    (long) (vnd-vnd_softc), &nbp->vb_buf,
+				    nbp->vb_buf.b_vp, nbp->vb_buf.b_blkno,
+				    nbp->vb_buf.b_flags, nbp->vb_buf.b_data,
+				    nbp->vb_buf.b_bcount);
+#endif
+
+			/* Instrumentation. */
+			disk_busy(&vnd->sc_dkdev);
+
+			if ((nbp->vb_buf.b_flags & B_READ) == 0)
+				vp->v_numoutput++;
+			VOP_STRATEGY(vp, &nbp->vb_buf);
+	
+			splx(s);
+			bn += sz;
+			addr += sz;
+		}
+
+		s = splbio();
+
+out: /* Arrive here at splbio */
+		if ((flags & B_READ) == 0)
+			vn_finished_write(mp, 0);
+		vnx->vx_flags &= ~VX_BUSY;
+		if (vnx->vx_pending == 0) {
+			if (vnx->vx_error != 0) {
+				bp->b_error = vnx->vx_error;
+				bp->b_flags |= B_ERROR;
+			}
+			VND_PUTXFER(vnd, vnx);
+			biodone(bp);
+		}
+		continue;
+done:
+		biodone(bp);
+		s = splbio();
+		continue;
 	}
-	vnd->sc_flags &= ~VNF_BUSY;
+
+kthread_end:
+	vnd->sc_flags &= (~VNF_KTHREAD | VNF_VUNCONF);
+	wakeup(&vnd->sc_kthread);
+	splx(s);
+	kthread_exit(0);
 }
+
 
 static void
 vndiodone(struct buf *bp)
@@ -710,7 +744,7 @@ vndiodone(struct buf *bp)
 	}
 
 	vnd->sc_active--;
-	vndstart(vnd);
+	wakeup(&vnd->sc_tab);
 	splx(s);
 }
 
@@ -906,9 +940,23 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 		if ((error = vndsetcred(vnd, p->p_ucred)) != 0)
 			goto close_and_exit;
+
+		memset(vnd->sc_xname, 0, sizeof(vnd->sc_xname)); /* XXX */
+		snprintf(vnd->sc_xname, sizeof(vnd->sc_xname), "vnd%d", unit);
+
+
 		vndthrottle(vnd, vnd->sc_vp);
 		vio->vnd_size = dbtob(vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
+
+		/* create the kernel thread, wait for it to be up */
+		error = kthread_create1(vndthread, vnd, &vnd->sc_kthread,
+		    vnd->sc_xname);
+		if (error)
+			goto close_and_exit;
+		while ((vnd->sc_flags & VNF_KTHREAD) == 0) {
+			tsleep(&vnd->sc_kthread, PRIBIO, "vndthr", 0);
+		}
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
 			printf("vndioctl: SET vp %p size 0x%lx %d/%d/%d/%d\n",
@@ -920,8 +968,6 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 #endif
 
 		/* Attach the disk. */
-		memset(vnd->sc_xname, 0, sizeof(vnd->sc_xname)); /* XXX */
-		snprintf(vnd->sc_xname, sizeof(vnd->sc_xname), "vnd%d", unit);
 		vnd->sc_dkdev.dk_name = vnd->sc_xname;
 		disk_attach(&vnd->sc_dkdev);
 
@@ -1214,9 +1260,16 @@ vndclear(struct vnd_softc *vnd, int myminor)
 
 	if ((vnd->sc_flags & VNF_READONLY) == 0)
 		fflags |= FWRITE;
-	vnd->sc_flags &= ~(VNF_INITED | VNF_READONLY | VNF_VLABEL);
+
+	vnd->sc_flags |= VNF_VUNCONF;
+	wakeup(&vnd->sc_tab);
+	while (vnd->sc_flags & VNF_KTHREAD)
+		tsleep(&vnd->sc_kthread, PRIBIO, "vnthr", 0);
+
+	vnd->sc_flags &=
+	    ~(VNF_INITED | VNF_READONLY | VNF_VLABEL | VNF_VUNCONF);
 	if (vp == (struct vnode *)0)
-		panic("vndioctl: null vp");
+		panic("vndclear: null vp");
 	(void) vn_close(vp, fflags, vnd->sc_cred, p);
 	crfree(vnd->sc_cred);
 	vnd->sc_vp = (struct vnode *)0;
