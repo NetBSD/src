@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.47 2003/07/27 14:49:22 mrg Exp $
+#	$NetBSD: bsd.dep.mk,v 1.48 2003/07/28 08:59:52 lukem Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -17,98 +17,54 @@ MKDEP?=		mkdep
 .if defined(SRCS)
 __acpp_flags=	-traditional-cpp
 .NOPATH:	.depend
-.if empty(HOST_CYGWIN)
-.depend: ${SRCS} ${DPSRCS}
+SRCS_C=	${SRCS:M*.c} ${DPSRCS:M*.c}
+DEPS_C=	${SRCS_C:C/(.*)/\1.dep/g:S/^.dep$//}
+SRCS_M=	${SRCS:M*.m} ${DPSRCS:M*.m}
+DEPS_M=	${SRCS_M:C/(.*)/\1.dep/g:S/^.dep$//}
+SRCS_S=	${SRCS:M*.[sS]} ${DPSRCS:M*.[sS]}
+DEPS_S=	${SRCS_S:C/(.*)/\1.dep/g:S/^.dep$//}
+SRCS_X=	${SRCS:M*.C} ${DPSRCS:M*.C} \
+	${SRCS:M*.cc} ${DPSRCS:M*.cc} \
+	${SRCS:M*.cpp} ${DPSRCS:M*.cpp} \
+	${SRCS:M*.cxx} ${DPSRCS:M*.cxx}
+DEPS_X=	${SRCS_X:C/(.*)/\1.dep/g:S/^.dep$//}
+
+CLEANDEPEND+=${DEPS_C} ${DEPS_M} ${DEPS_S} ${DEPS_X}
+
+.depend: ${SRCS} ${DPSRCS} ${DEPS_C} ${DEPS_M} ${DEPS_S} ${DEPS_X}
 	@rm -f .depend
-	@files="${.ALLSRC:M*.s} ${.ALLSRC:M*.S}"; \
-	if [ "$$files" != " " ]; then \
-	  echo ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${AFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} ${__acpp_flags} ${AINC:Q} \
-	    $$files; \
-	  ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${AFLAGS:M-[ID]*} ${CPPFLAGS} ${__acpp_flags} ${AINC} $$files; \
-	fi
-	@files="${.ALLSRC:M*.c}"; \
-	if [ "$$files" != "" ]; then \
-	  echo ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${CFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} $$files; \
-	  ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${CFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
-	fi
-	@files="${.ALLSRC:M*.m}"; \
-	if [ "$$files" != "" ]; then \
-	  echo ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${OBJCFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} $$files; \
-	  ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${OBJCFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
-	fi
-	@files="${.ALLSRC:M*.cc} ${.ALLSRC:M*.C} ${.ALLSRC:M*.cxx} ${.ALLSRC:M*.cpp}"; \
-	if [ "$$files" != "   " ]; then \
-	  echo ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${CXXFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} $$files; \
-	  ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${CXXFLAGS:M-[ID]*} ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++} ${CPPFLAGS} $$files; \
-	fi
-.else
-#
-# Cygwin workarounds for limited environment & command line space
-#
+	cat ${.ALLSRC:M*.dep} > .depend
 
-SRCS_S = ${SRCS:M*.[sS]} ${DPSRCS:M*.[sS]}
-SRCS_C = ${SRCS:M*.c} ${DPSRCS:M*.c}
-SRCS_M = ${SRCS:M*.m} ${DPSRCS:M*.m}
-SRCS_X = ${SRCS:M*.C} ${DPSRCS:M*.C} \
-         ${SRCS:M*.cc} ${DPSRCS:M*.cc} \
-         ${SRCS:M*.cpp} ${DPSRCS:M*.cpp} \
-	 ${SRCS:M*.cxx} ${DPSRCS:M*.cxx}
-
-.depend: ${SRCS} ${DPSRCS} \
-	 ${SRCS_S:C/(.*)/\1.dep/g:S/^.dep$//g} \
-	 ${SRCS_C:C/(.*)/\1.dep/g:S/^.dep$//g} \
-	 ${SRCS_M:C/(.*)/\1.dep/g:S/^.dep$//g} \
-	 ${SRCS_X:C/(.*)/\1.dep/g:S/^.dep$//g}
-	@rm -f .depend
-	@cat ${.ALLSRC:M*.dep} > .depend
-
-.for F in ${SRCS_S:O:u}
-.NOPATH: ${F:C/(.*)/\1.dep/g}
-${F:C/(.*)/\1.dep/g}: ${F}
-	@echo ${MKDEP} -a -f $@ ${MKDEPFLAGS} \
-	    ${AFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} ${__acpp_flags} ${AINC:Q} \
-	    ${.ALLSRC}
-	@${MKDEP} -a -f $@ ${MKDEPFLAGS} ${AFLAGS:M-[ID]*} ${CPPFLAGS} \
-	    ${__acpp_flags} ${AINC} ${.ALLSRC}
+.for F in ${DEPS_C:O:u}
+.NOPATH: ${F}
+${F}: ${F:R}
+	${MKDEP} -a -f ${.TARGET} ${MKDEPFLAGS} ${CFLAGS:M-[ID]*} ${CPPFLAGS} \
+	    ${CPPFLAGS.${.ALLSRC:T}} ${.ALLSRC}
 .endfor
 
-.for F in ${SRCS_C:O:u}
-.NOPATH: ${F:C/(.*)/\1.dep/g}
-${F:C/(.*)/\1.dep/g}: ${F}
-	@echo ${MKDEP} -a -f $@ ${MKDEPFLAGS} ${CFLAGS:M-[ID]*:Q} \
-	    ${CPPFLAGS:Q} ${.ALLSRC}
-	@${MKDEP} -a -f $@ ${MKDEPFLAGS} ${CFLAGS:M-[ID]*} ${CPPFLAGS} \
-	    ${.ALLSRC}
+.for F in ${DEPS_M:O:u}
+.NOPATH: ${F}
+${F}: ${F:R}
+	${MKDEP} -a -f ${.TARGET} ${MKDEPFLAGS} ${OBJCFLAGS:M-[ID]*} \
+	    ${CPPFLAGS} ${CPPFLAGS.${.ALLSRC:T}} ${.ALLSRC}
 .endfor
 
-.for F in ${SRCS_M:O:u}
-.NOPATH: ${F:C/(.*)/\1.dep/g}
-${F:C/(.*)/\1.dep/g}: ${F}
-	@echo ${MKDEP} -a -f $@ ${MKDEPFLAGS} ${OBJCFLAGS:M-[ID]*:Q} \
-	    ${CPPFLAGS:Q} ${.ALLSRC}
-	@${MKDEP} -a -f $@ ${MKDEPFLAGS} ${OBJCFLAGS:M-[ID]*} ${CPPFLAGS} \
-	    ${.ALLSRC}
+.for F in ${DEPS_S:O:u}
+.NOPATH: ${F}
+${F}: ${F:R}
+	${MKDEP} -a -f ${.TARGET} ${MKDEPFLAGS} ${AFLAGS:M-[ID]*} ${CPPFLAGS} \
+	    ${CPPFLAGS.${.ALLSRC:T}} ${__acpp_flags} ${AINC} ${.ALLSRC}
 .endfor
 
-.for F in ${SRCS_X:O:u}
-.NOPATH: ${F:C/(.*)/\1.dep/g}
-${F:C/(.*)/\1.dep/g}: ${F}
-	@echo ${MKDEP} -a -f $@ ${MKDEPFLAGS} \
-	    ${CXXFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} ${.ALLSRC}
-	@${MKDEP} -a -f $@ ${MKDEPFLAGS} ${CXXFLAGS:M-[ID]*} \
+.for F in ${DEPS_X:O:u}
+.NOPATH: ${F}
+${F}: ${F:R}
+	${MKDEP} -a -f ${.TARGET} ${MKDEPFLAGS} ${CXXFLAGS:M-[ID]*} \
 	    ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} \
-	    ${DESTDIR}/usr/include/g++} ${CPPFLAGS} ${.ALLSRC}
+	    ${DESTDIR}/usr/include/g++} \
+	    ${CPPFLAGS} ${CPPFLAGS.${.ALLSRC:T}} ${.ALLSRC}
 .endfor
 
-.endif # Cygwin
 .endif # defined(SRCS)
 
 ##### Clean rules
