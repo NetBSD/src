@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.5 1995/03/26 05:15:18 glass Exp $	*/
+/*	$NetBSD: crc.c,v 1.6 1996/02/27 21:17:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,12 +40,14 @@
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 6/17/93";
 #else
-static char rcsid[] = "$NetBSD: crc.c,v 1.5 1995/03/26 05:15:18 glass Exp $";
+static char rcsid[] = "$NetBSD: crc.c,v 1.6 1996/02/27 21:17:25 cgd Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <unistd.h>
+
+#include "extern.h"
 
 static u_int32_t crctab[] = {
 	0x0,
