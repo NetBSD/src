@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390reg.h,v 1.2 1995/04/12 16:12:42 mycroft Exp $	*/
+/*	$NetBSD: dp8390reg.h,v 1.3 1997/04/29 04:32:08 scottr Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -518,7 +518,7 @@
 #define ED_RSR_DFR	0x80
 
 /*
- * receive ring discriptor
+ * receive ring descriptor
  *
  * The National Semiconductor DS8390 Network interface controller uses the
  * following receive ring headers.  The way this works is that the memory on
@@ -528,6 +528,16 @@
  * ring, one of these headers (4 bytes each) is tacked onto the front.   The
  * first byte is a copy of the receiver status register at the time the packet
  * was received.
+ */
+struct dp8390_ring	{
+	u_int8_t	rsr;		/* receiver status */
+	u_int8_t	next_packet;	/* pointer to next packet */
+	u_int16_t	count;		/* bytes in packet (length + 4) */
+};
+
+/*
+ * XXX For compatibility only!  This needs to die when all drivers have
+ * been converted to be front ends to the MI driver.
  */
 struct ed_ring	{
 #if BYTE_ORDER == BIG_ENDIAN
