@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.8 2002/01/18 19:47:38 thorpej Exp $
+#	$NetBSD: IQ80310,v 1.9 2002/01/27 13:23:15 jdolecek Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -117,6 +117,7 @@ options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	DDB_KEYCODE=0x40
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
 

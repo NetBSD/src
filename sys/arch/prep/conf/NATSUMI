@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.10 2001/12/28 17:37:05 augustss Exp $
+#	$NetBSD: NATSUMI,v 1.11 2002/01/27 13:23:25 jdolecek Exp $
 #
 #	for development
 #
@@ -24,6 +24,8 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	SHMMAXPGS=8192
 
 #options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.13 2002/01/19 18:45:08 oster Exp $
+#	$NetBSD: GENERIC.in,v 1.14 2002/01/27 13:23:13 jdolecek Exp $
 #
 # Generic atari
 #
@@ -157,6 +157,9 @@ options 	SYSVSEM			# System V semaphores
 #
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#else /* INSTALL_KERNEL */
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #endif
 
 # These options enable verbose messages for several subsystems.

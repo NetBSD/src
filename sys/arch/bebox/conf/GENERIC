@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.50 2002/01/19 18:45:08 oster Exp $
+# $NetBSD: GENERIC,v 1.51 2002/01/27 13:23:13 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/bebox/conf/std.bebox"
 
-#ident 		"GENERIC-$Revision: 1.50 $"
+#ident 		"GENERIC-$Revision: 1.51 $"
 
 maxusers	32
 
@@ -38,6 +38,7 @@ options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	KTRACE
 options 	NEWPMAP
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43
