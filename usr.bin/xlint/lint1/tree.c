@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.34 2002/10/22 22:50:11 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.35 2003/05/14 12:45:07 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.34 2002/10/22 22:50:11 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.35 2003/05/14 12:45:07 wiz Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3786,7 +3786,7 @@ chkcomp(op_t op, tnode_t *ln, tnode_t *rn)
  * Takes an expression an returns 0 if this expression can be used
  * for static initialisation, otherwise -1.
  *
- * Constant initialisation expressions must be costant or an address
+ * Constant initialisation expressions must be constant or an address
  * of a static object with an optional offset. In the first case,
  * the result is returned in *offsp. In the second case, the static
  * object is returned in *symp and the offset in *offsp.
