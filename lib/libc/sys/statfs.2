@@ -1,3 +1,5 @@
+.\"	$NetBSD: statfs.2,v 1.9 1995/02/27 10:43:23 cgd Exp $
+.\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -29,8 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)statfs.2	8.3 (Berkeley) 2/11/94
-.\"	$Id: statfs.2,v 1.8 1994/08/26 12:55:25 mycroft Exp $
+.\"	@(#)statfs.2	8.3 (Berkeley) 2/11/94
 .\"
 .Dd February 11, 1994
 .Dt STATFS 2
@@ -55,7 +56,7 @@ is a pointer to a
 .Fn statfs
 structure defined as follows:
 .Bd -literal
-typedef struct { long val[2]; } fsid_t;
+typedef struct { int32_t val[2]; } fsid_t;
 
 #define	MFSNAMELEN	15	/* length of fs type name, not inc. null */
 #define	MNAMELEN	90	/* length of buffer for returned name */
