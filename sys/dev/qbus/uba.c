@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.64 2003/01/01 00:10:24 thorpej Exp $	   */
+/*	$NetBSD: uba.c,v 1.65 2003/04/01 02:06:06 thorpej Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.64 2003/01/01 00:10:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.65 2003/04/01 02:06:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -156,7 +156,7 @@ ubmemalloc(struct uba_softc *uh, struct ubinfo *ui, int flags)
 	int waitok = (flags & UBA_CANTWAIT ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 	int error;
 
-	if ((error = bus_dmamem_alloc(uh->uh_dmat, ui->ui_size, NBPG, 0,
+	if ((error = bus_dmamem_alloc(uh->uh_dmat, ui->ui_size, PAGE_SIZE, 0,
 	    &ui->ui_seg, 1, &ui->ui_rseg, waitok)))
 		return error;
 	if ((error = bus_dmamem_map(uh->uh_dmat, &ui->ui_seg, ui->ui_rseg,

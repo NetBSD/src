@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.22 2001/11/13 07:11:24 lukem Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.23 2003/04/01 02:06:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.22 2001/11/13 07:11:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.23 2003/04/01 02:06:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.22 2001/11/13 07:11:24 lukem Exp $");
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 
@@ -95,7 +97,7 @@ if_ubaminit(struct ifubinfo *ifu, struct uba_softc *uh, int size,
 	 */
 	size = (size + UBA_PGOFSET) & ~UBA_PGOFSET;
 	totsz = size * nw;
-	if ((error = bus_dmamem_alloc(uh->uh_dmat, totsz, NBPG, 0,
+	if ((error = bus_dmamem_alloc(uh->uh_dmat, totsz, PAGE_SIZE, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)))
 		return error;
 	if ((error = bus_dmamem_map(uh->uh_dmat, &seg, rseg, totsz, &vaddr,
