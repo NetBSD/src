@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.13 2003/06/10 22:07:38 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.14 2003/06/24 00:13:29 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.13 2003/06/10 22:07:38 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.14 2003/06/24 00:13:29 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,6 +282,7 @@ igsfb_init_video(dc)
 	 * For now - hardcode to 1024x768/8bpp.  This is what Krups OFW uses.
 	 */
 	igsfb_hw_setup(dc);
+	delay(10000);		/* XXX: uwe */
 
 	dc->dc_width = 1024;
 	dc->dc_height = 768;
@@ -470,15 +471,17 @@ igsfb_init_wsdisplay(dc)
 	/* accelerated text cursor */
 	ri->ri_ops.cursor = igsfb_accel_cursor;
 
-	/* accelerated erase/copy */
-	ri->ri_ops.copycols = igsfb_accel_copycols;
-	ri->ri_ops.erasecols = igsfb_accel_erasecols;
-	ri->ri_ops.copyrows = igsfb_accel_copyrows;
-	ri->ri_ops.eraserows = igsfb_accel_eraserows;
+	if (dc->dc_id >= 0x2000) { /* XXX */
+	    /* accelerated erase/copy */
+	    ri->ri_ops.copycols = igsfb_accel_copycols;
+	    ri->ri_ops.erasecols = igsfb_accel_erasecols;
+	    ri->ri_ops.copyrows = igsfb_accel_copyrows;
+	    ri->ri_ops.eraserows = igsfb_accel_eraserows;
 
-	/* putchar hook to sync with the cop */
-	dc->dc_ri_putchar = ri->ri_ops.putchar;
-	ri->ri_ops.putchar = igsfb_accel_putchar;
+	    /* putchar hook to sync with the cop */
+	    dc->dc_ri_putchar = ri->ri_ops.putchar;
+	    ri->ri_ops.putchar = igsfb_accel_putchar;
+	}
 
 	igsfb_stdscreen.nrows = ri->ri_rows;
 	igsfb_stdscreen.ncols = ri->ri_cols;
