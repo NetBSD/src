@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.22 1997/03/15 18:12:26 is Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.23 1997/04/02 21:23:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -84,6 +84,18 @@
 extern struct ifqueue pkintrq;
 #endif
 
+#ifdef NETATALK
+#include <netatalk/at.h>
+#include <netatalk/at_var.h>
+#include <netatalk/at_extern.h>
+
+#define llc_snap_org_code llc_un.type_snap.org_code
+#define llc_snap_ether_type llc_un.type_snap.ether_type
+
+extern u_char	at_org_code[3];
+extern u_char	aarp_org_code[3];
+#endif /* NETATALK */
+
 u_char	etherbroadcastaddr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 #define senderr(e) { error = (e); goto bad;}
 
@@ -109,6 +121,9 @@ ether_output(ifp, m0, dst, rt0)
 	struct mbuf *mcopy = (struct mbuf *)0;
 	register struct ether_header *eh;
 	struct arphdr *ah;
+#ifdef NETATALK
+	struct at_ifaddr *aa;
+#endif /* NETATALK */
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -180,6 +195,44 @@ ether_output(ifp, m0, dst, rt0)
 
 		break;
 #endif
+#ifdef NETATALK
+    case AF_APPLETALK:
+		if (!aarpresolve(ifp, m, (struct sockaddr_at *)dst, edst)) {
+#ifdef NETATALKDEBUG
+			printf("aarpresolv failed\n");
+#endif /* NETATALKDEBUG */
+			return (0);
+		}
+		/*
+		 * ifaddr is the first thing in at_ifaddr
+		 */
+		aa = (struct at_ifaddr *) at_ifawithnet(
+		    (struct sockaddr_at *)dst, ifp->if_addrlist.tqh_first);
+		if (aa == NULL)
+		    goto bad;
+		
+		/*
+		 * In the phase 2 case, we need to prepend an mbuf for the
+		 * llc header.  Since we must preserve the value of m,
+		 * which is passed to us by value, we m_copy() the first
+		 * mbuf, and use it for our llc header.
+		 */
+		if (aa->aa_flags & AFA_PHASE2) {
+			struct llc llc;
+
+			M_PREPEND(m, sizeof(struct llc), M_WAIT);
+			llc.llc_dsap = llc.llc_ssap = LLC_SNAP_LSAP;
+			llc.llc_control = LLC_UI;
+			bcopy(at_org_code, llc.llc_snap_org_code,
+			    sizeof(llc.llc_snap_org_code));
+			llc.llc_snap_ether_type = htons(ETHERTYPE_AT);
+			bcopy(&llc, mtod(m, caddr_t), sizeof(struct llc));
+			etype = htons(m->m_pkthdr.len);
+		} else {
+			etype = htons(ETHERTYPE_AT);
+		}
+		break;
+#endif /* NETATALK */
 #ifdef NS
 	case AF_NS:
 		etype = htons(ETHERTYPE_NS);
@@ -347,7 +400,7 @@ ether_input(ifp, eh, m)
 	register struct ifqueue *inq;
 	u_int16_t etype;
 	int s;
-#if defined (ISO) || defined (LLC)
+#if defined (ISO) || defined (LLC) || defined(NETATALK)
 	register struct llc *l;
 #endif
 
@@ -391,12 +444,55 @@ ether_input(ifp, eh, m)
 		break;
 
 #endif
+#ifdef NETATALK
+        case ETHERTYPE_AT:
+                schednetisr(NETISR_ATALK);
+                inq = &atintrq1;
+                break;
+        case ETHERTYPE_AARP:
+		/* probably this should be done with a NETISR as well */
+                aarpinput(ifp, m); /* XXX */
+                return;
+#endif /* NETATALK */
 	default:
-#if defined (ISO) || defined (LLC)
+#if defined (ISO) || defined (LLC) || defined (NETATALK)
 		if (etype > ETHERMTU)
 			goto dropanyway;
 		l = mtod(m, struct llc *);
 		switch (l->llc_dsap) {
+#ifdef NETATALK
+		case LLC_SNAP_LSAP:
+			switch (l->llc_control) {
+			case LLC_UI:
+				if (l->llc_ssap != LLC_SNAP_LSAP) {
+					goto dropanyway;
+				}
+	    
+				if (Bcmp(&(l->llc_snap_org_code)[0],
+				    at_org_code, sizeof(at_org_code)) == 0 &&
+				    ntohs(l->llc_snap_ether_type) ==
+				    ETHERTYPE_AT) {
+					inq = &atintrq2;
+					m_adj(m, sizeof(struct llc));
+					schednetisr(NETISR_ATALK);
+					break;
+				}
+
+				if (Bcmp(&(l->llc_snap_org_code)[0],
+				    aarp_org_code,
+				    sizeof(aarp_org_code)) == 0 &&
+				    ntohs(l->llc_snap_ether_type) ==
+				    ETHERTYPE_AARP) {
+					m_adj( m, sizeof(struct llc));
+					aarpinput(ifp, m); /* XXX */
+				    return;
+				}
+		    
+			default:
+				goto dropanyway;
+			}
+			break;
+#endif /* NETATALK */
 #ifdef	ISO
 		case LLC_ISO_LSAP: 
 			switch (l->llc_control) {
@@ -492,10 +588,10 @@ ether_input(ifp, eh, m)
 			m_freem(m);
 			return;
 		}
-#else /* ISO || LLC */
+#else /* ISO || LLC  || NETATALK*/
 	    m_freem(m);
 	    return;
-#endif /* ISO || LLC */
+#endif /* ISO || LLC || NETATALK*/
 	}
 
 	s = splimp();

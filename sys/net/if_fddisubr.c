@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.12 1997/03/24 00:35:04 thorpej Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.13 1997/04/02 21:23:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -579,7 +579,7 @@ fddi_input(ifp, fh, m)
 			 sizeof(aarp_org_code)) == 0 &&
 			ntohs(l->llc_snap_ether_type) == ETHERTYPE_AARP) {
 		    m_adj( m, sizeof( struct llc ));
-		    aarpinput((struct arpcom *)ifp, m); /* XXX */
+		    aarpinput(ifp, m); /* XXX */
 		    return;
 		}
 #endif /* NETATALK */
@@ -600,7 +600,7 @@ fddi_input(ifp, fh, m)
 			inq = &arpintrq;
 			break;
 #else
-			arpinput((struct arpcom *)ifp, m);
+			arpinput(ifp, m);
 			return;
 #endif
 #endif
@@ -629,7 +629,7 @@ fddi_input(ifp, fh, m)
 			break;
 	        case ETHERTYPE_AARP:
 			/* probably this should be done with a NETISR as well */
-			aarpinput((struct arpcom *)ifp, m); /* XXX */
+			aarpinput(ifp, m); /* XXX */
 			return;
 #endif /* NETATALK */
 		default:
