@@ -1,4 +1,4 @@
-/*	$NetBSD: print-null.c,v 1.5 1997/10/03 19:55:33 christos Exp $	*/
+/*	$NetBSD: print-null.c,v 1.6 1999/07/02 11:31:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-null.c,v 1.24 97/05/28 12:52:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-null.c,v 1.5 1997/10/03 19:55:33 christos Exp $");
+__RCSID("$NetBSD: print-null.c,v 1.6 1999/07/02 11:31:34 itojun Exp $");
 #endif
 #endif
 
@@ -125,7 +125,14 @@ null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	if (eflag)
 		null_print(p, ip, length);
 
+#ifndef INET6
 	ip_print((const u_char *)ip, length);
+#else
+	if (ip->ip_v == IPVERSION)
+		ip_print((const u_char *)ip, length);
+	else if (ip->ip_v == 6)
+		ip6_print((const u_char *)ip, length);
+#endif /*INET6*/
 
 	if (xflag)
 		default_print((const u_char *)ip, caplen - NULL_HDRLEN);
