@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.37 2001/06/16 21:24:55 he Exp $
+.\"	$NetBSD: main,v 1.61.2.38 2001/06/16 21:44:11 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -126,7 +126,12 @@ required to install
 .Nx .
 The
 .Ic rawrite.exe
-MS-DOS program in the
+MS-DOS program
+or the
+.Ic Rawrite32.exe
+Windows32 program (inside
+.Pa rawrite32.zip )
+in the
 .Pa utilities/
 directory may be of help if writing a raw image is otherwise
 problematical.
