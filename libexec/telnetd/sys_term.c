@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.19 2000/11/19 20:17:39 christos Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.20 2000/12/09 00:50:21 assar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.19 2000/11/19 20:17:39 christos Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.20 2000/12/09 00:50:21 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -1882,33 +1882,50 @@ addarg(argv, val)
 /*
  * scrub_env()
  *
- * Remove a few things from the environment that
- * don't need to be there.
+ * We only accept the environment variables listed below.
  */
+
 void
 scrub_env()
 {
-	register char **cpp, **cpp2;
+	static const char *reject[] = {
+		"TERMCAP=/",
+		NULL
+	};
+
+	static const char *accept[] = {
+		"XAUTH=", "XAUTHORITY=", "DISPLAY=",
+		"TERM=",
+		"EDITOR=",
+		"PAGER=",
+		"LOGNAME=",
+		"POSIXLY_CORRECT=",
+		"TERMCAP=",
+		"PRINTER=",
+		NULL
+	};
+
+	char **cpp, **cpp2;
+	const char **p;
 
 	for (cpp2 = cpp = environ; *cpp; cpp++) {
-		if (strncmp(*cpp, "LD_", 3) &&
-		    strncmp(*cpp, "_RLD_", 5) &&
-		    strncmp(*cpp, "LIBPATH=", 8) &&
-		    strncmp(*cpp, "LOCALDOMAIN=", 12) &&
-		    strncmp(*cpp, "RES_OPTIONS=", 12) &&
-		    strncmp(*cpp, "TERMINFO=", 9) &&
-		    strncmp(*cpp, "TERMINFO_DIRS=", 14) &&
-		    /*
-		     * We dissallow TERMPATH and TERMCAP
-		     * entries that reference files.
-		     */
-		    strncmp(*cpp, "TERMPATH=", 9) &&
-		    strncmp(*cpp, "TERMCAP=/", 9) &&
-		    strncmp(*cpp, "ENV=", 4) &&
-		    strncmp(*cpp, "IFS=", 4))
+		int reject_it = 0;
+
+		for(p = reject; *p; p++)
+			if(strncmp(*cpp, *p, strlen(*p)) == 0) {
+				reject_it = 1;
+				break;
+			}
+		if (reject_it)
+			continue;
+
+		for(p = accept; *p; p++)
+			if(strncmp(*cpp, *p, strlen(*p)) == 0)
+				break;
+		if(*p != NULL)
 			*cpp2++ = *cpp;
 	}
-	*cpp2 = 0;
+	*cpp2 = NULL;
 }
 
 /*
