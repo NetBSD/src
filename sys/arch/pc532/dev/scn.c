@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.30 1996/10/23 07:52:35 matthias Exp $ */
+/*	$NetBSD: scn.c,v 1.31 1996/11/24 13:32:53 matthias Exp $ */
 
 /*
  * Copyright (c) 1996 Phil Budne.
@@ -49,11 +49,6 @@
 #include "scn.h"
 
 #if NSCN > 0
-/* use NSCN? (need "need-count" in files.pc532) */
-#ifndef NLINES
-#define NLINES 8		/* The pc532 has 4 duarts! */
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -68,6 +63,7 @@
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <dev/cons.h>
 
@@ -100,24 +96,26 @@ struct cfdriver scn_cd = {NULL, "scn", DV_TTY, NULL, 0};
 #define SCNDEF_CFLAG TTYDEF_CFLAG
 #endif
 
+#ifdef CPU30MHZ
+#define RECOVER()	do { di(); ei(); } while (0)
+#else
+#define RECOVER()
+#endif
+
 int     scnconsole = SCN_CONSOLE;
 int     scndefaultrate = TTYDEF_SPEED;
 int     scnconsrate = CONSOLE_SPEED;
 int     scnmajor;
 
-#define NDUARTS ((NLINES + 1) / 2)
-struct duart_info duart_info[NDUARTS];	/* ~SIGH~ */
-
 #define SOFTC(UNIT) scn_cd.cd_devs[(UNIT)]
 
-static void scnintr __P((int));
+static void scnintr __P((void *));
 static void scnrxintr __P((int));
 static void scnsoft __P((void *));
 
 /*
  * Keep timing info on latency of software interrupt used by
- * the ringbuf code to empty ring buffer.  Improved version of
- * "microtime()" in machdep.c.patch needed to get good resolution.
+ * the ringbuf code to empty ring buffer.
  * "getinfo" program reads data from /dev/kemm.
  */
 /* #define SCN_TIMING */
@@ -227,7 +225,7 @@ struct speedtab scnspeedtab[] = {
 	{50, SP_GRP0 + 0},
 	{75, SP_GRP1 + 0},
 	{110, SP_BOTH + 1},
-	{134, SP_BOTH + 2},	/* 134.5 */
+	{134, SP_BOTH + 2},		/* 134.5 */
 	{150, SP_GRP1 + 3},
 	{200, SP_GRP0 + 3},
 	{300, SP_BOTH + 4},
@@ -242,7 +240,7 @@ struct speedtab scnspeedtab[] = {
 	{9600, SP_BOTH + 11},
 	{19200, SP_GRP1 + 12},
 	{38400, SP_GRP0 + 12},
-/*	{ 115200, SP_BOTH + 14 },/* 11/4/95; dave says CLK/2 on IP4! */
+/*	{115200, SP_BOTH + 14 },	/* 11/4/95; dave says CLK/2 on IP4! */
 	{-1, -1}
 };
 /*
@@ -399,11 +397,15 @@ scn_config(unit, in_speed, out_speed, new_mr1, new_mr2)
 	 */
 	s = spltty();
 	sc->chbase[CH_CR] = CR_CMD_MR1;
+	RECOVER();
 	mr1_val = sc->chbase[CH_MR];
+	RECOVER();
 	mr2_val = sc->chbase[CH_MR];
 	if (mr1_val != new_mr1 || mr2_val != new_mr2) {
 		sc->chbase[CH_CR] = CR_CMD_MR1;
+		RECOVER();
 		sc->chbase[CH_MR] = new_mr1;
+		RECOVER();
 		sc->chbase[CH_MR] = new_mr2;
 	}
 	if (set_speed) {
@@ -417,6 +419,7 @@ scn_config(unit, in_speed, out_speed, new_mr1, new_mr2)
 				acr |= ACR_BRG;	/* yes; select alternate
 						 * group!! */
 			sc->duart->base[DU_ACR] = acr;
+			RECOVER();
 		}
 		sc->chbase[CH_CSR] = ((in_code & 0xf) << 4) | (out_code & 0xf);
 	}
@@ -433,14 +436,34 @@ scnprobe(parent, cf, aux)
 	void   *aux;
 {				/* system dependant data struct */
 	int     unit = ((struct cfdata *) cf)->cf_unit;
+	int	mr1;
+	register volatile u_char *ch_base;
 
-	if (unit >= NLINES) {
-		/* dev is "not working." */
-		return (0);
-	} else {
-		/* dev is "working." */
-		return (1);
-	}
+	/* The pc532 doesn't have more then 8 lines. */
+	if (unit >= 8) return(0);
+
+	/* Now some black magic that should detect a scc26x2 channel. */
+	ch_base = (volatile u_char *) SCN_FIRST_MAP_ADR + CH_SZ * unit;
+	ch_base[CH_CR] = CR_CMD_RESET_ERR;
+	RECOVER();
+	ch_base[CH_CR] = CR_CMD_RESET_BRK;
+	RECOVER();
+	ch_base[CH_CR] = CR_CMD_MR1;
+	RECOVER();
+	mr1 = ch_base[CH_MR] ^ 0x80;
+	RECOVER();
+	ch_base[CH_CR] = CR_CMD_MR1;
+	RECOVER();
+	ch_base[CH_MR] = mr1;
+	RECOVER();
+	ch_base[CH_CR] = CR_CMD_MR1;
+	RECOVER();
+	if (ch_base[CH_MR] != mr1)
+		return(0);
+	RECOVER();
+	if (ch_base[CH_MR] == mr1)
+		return(0);
+	return(1);
 }
 
 /*
@@ -533,7 +556,7 @@ scnattach(parent, self, aux)
 
 	if (channel == 0) {
 		/* Arg 0 is special, so we must pass "unit + 1" */
-		intr_establish(scnints[duart], (void (*) (void *)) scnintr,
+		intr_establish(scnints[duart], scnintr,
 		    (void *) (unit + 1), "scn", IPL_TTY, FALLING_EDGE);
 
 		/* print for both channels?? */
@@ -551,14 +574,15 @@ scnattach(parent, self, aux)
 	}
 	/* Record unit number, uart */
 	sc->unit = unit;
-	sc->duart = duart_info + duart;
-
-	/* only need to do this for channel 0 */
-	sc->duart->base = duart_base;
 	sc->chbase = ch_base;
 
 	/* Initialize modem/interrupt bit masks */
 	if (channel == 0) {
+		sc->duart = malloc(sizeof(struct duart_info), M_DEVBUF, M_NOWAIT);
+		if (sc->duart == NULL)
+			panic("scn%d: memory allocation for duart structure failed", unit);
+
+		sc->duart->base = duart_base;
 		sc->sc_op_rts = OP_RTSA;
 		sc->sc_op_dtr = OP_DTRA;
 		sc->sc_ip_cts = IP_CTSA;
@@ -566,6 +590,8 @@ scnattach(parent, self, aux)
 
 		sc->sc_tx_int = INT_TXA;
 	} else {
+		sc->duart = ((struct scn_softc *)SOFTC(unit - 1))->duart;
+
 		sc->sc_op_rts = OP_RTSB;
 		sc->sc_op_dtr = OP_DTRB;
 		sc->sc_ip_cts = IP_CTSB;
@@ -596,15 +622,23 @@ scnattach(parent, self, aux)
 	SCN_OP_BIC(sc, sc->sc_op_rts);	/* "istop" */
 
 	ch_base[CH_CR] = CR_DIS_RX | CR_DIS_TX;
+	RECOVER();
 	ch_base[CH_CR] = CR_CMD_RESET_RX;
+	RECOVER();
 	ch_base[CH_CR] = CR_CMD_RESET_TX;
+	RECOVER();
 	ch_base[CH_CR] = CR_CMD_RESET_ERR;
+	RECOVER();
 	ch_base[CH_CR] = CR_CMD_RESET_BRK;
+	RECOVER();
 	ch_base[CH_CR] = CR_CMD_MR1;
+	RECOVER();
 
 	/* No receiver control of RTS. */
 	ch_base[CH_MR] = 0;
+	RECOVER();
 	ch_base[CH_MR] = 0;
+	RECOVER();
 
 	/* Initialize the uart structure if this is channel A. */
 	if (channel == 0) {
@@ -951,9 +985,10 @@ scnoverrun(unit, ptime, what)
 }
 
 static void
-scnintr(line1)
-	int     line1;
-{				/* NOTE: line _ONE_ */
+scnintr(arg)
+	void *arg;
+{
+	int     line1 = (int)arg;	/* NOTE: line _ONE_ */
 	register struct scn_softc *sc0 = SOFTC(line1 - 1);
 	register struct scn_softc *sc1 = SOFTC(line1);
 
@@ -1007,10 +1042,10 @@ scnintr(line1)
 			rs_work = TRUE;
 			rs_ipcr = duart->base[DU_IPCR];
 
-			if (rs_ipcr & IPCR_DELTA_DCDA) {
+			if (rs_ipcr & IPCR_DELTA_DCDA && tp0 != NULL) {
 				dcd_int(sc0, tp0, rs_ipcr & IPCR_DCDA);
 			}
-			if (rs_ipcr & IPCR_DELTA_DCDB) {
+			if (rs_ipcr & IPCR_DELTA_DCDB && tp1 != NULL) {
 				dcd_int(sc1, tp1, rs_ipcr & IPCR_DCDB);
 			}
 		}
@@ -1086,45 +1121,61 @@ scnrxintr(line1)
 			break;
 		work++;
 		sc0->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc0->chbase[CH_DAT];
+		RECOVER();
 		sc0->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
+		RECOVER();
 		sr = sc0->chbase[CH_SR];
 		DB_CHECK(line0, sr, &sc0->chbase[CH_SR]);
 		if ((sr & SR_INPUT) == 0)
 			break;
 		sc0->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc0->chbase[CH_DAT];
+		RECOVER();
 		sc0->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
+		RECOVER();
 		sr = sc0->chbase[CH_SR];
 		DB_CHECK(line0, sr, &sc0->chbase[CH_SR]);
 		if ((sr & SR_INPUT) == 0 || work > 10)
 			break;
 		sc0->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc0->chbase[CH_DAT];
+		RECOVER();
 		sc0->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
 	}
 	sc0->sc_rbput = i;
 
-	i = sc1->sc_rbput;
-	while (1) {
-		sr = sc1->chbase[CH_SR];
-		DB_CHECK(line1, sr, &sc1->chbase[CH_SR]);
-		work++;
-		if ((sr & SR_INPUT) == 0)
-			break;
-		sc1->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc1->chbase[CH_DAT];
-		sc1->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
-		sr = sc1->chbase[CH_SR];
-		DB_CHECK(line1, sr, &sc1->chbase[CH_SR]);
-		if ((sr & SR_INPUT) == 0)
-			break;
-		sc1->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc1->chbase[CH_DAT];
-		sc1->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
-		sr = sc1->chbase[CH_SR];
-		DB_CHECK(line1, sr, &sc1->chbase[CH_SR]);
-		if ((sr & SR_INPUT) == 0 || work > 10)
-			break;
-		sc1->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc1->chbase[CH_DAT];
-		sc1->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
+#ifdef KGDB
+	if (line1 < scn_cd.cd_ndevs) {
+#endif
+		i = sc1->sc_rbput;
+		while (1) {
+			sr = sc1->chbase[CH_SR];
+			DB_CHECK(line1, sr, &sc1->chbase[CH_SR]);
+			if ((sr & SR_INPUT) == 0)
+				break;
+			work++;
+			sc1->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc1->chbase[CH_DAT];
+			RECOVER();
+			sc1->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
+			RECOVER();
+			sr = sc1->chbase[CH_SR];
+			DB_CHECK(line1, sr, &sc1->chbase[CH_SR]);
+			if ((sr & SR_INPUT) == 0)
+				break;
+			sc1->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc1->chbase[CH_DAT];
+			RECOVER();
+			sc1->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
+			RECOVER();
+			sr = sc1->chbase[CH_SR];
+			DB_CHECK(line1, sr, &sc1->chbase[CH_SR]);
+			if ((sr & SR_INPUT) == 0 || work > 10)
+				break;
+			sc1->sc_rbuf[i++ & SCN_RING_MASK] = (sr << 8) | sc1->chbase[CH_DAT];
+			RECOVER();
+			sc1->chbase[CH_CR] = CR_CMD_RESET_ERR;	/* resets break? */
+		}
+		sc1->sc_rbput = i;
+#ifdef KGDB
 	}
-	sc1->sc_rbput = i;
+#endif
 
 	if (work > 0) {
 		setsoftscn();	/* trigger s/w intr */
@@ -1484,6 +1535,7 @@ scnstart(tp)
 	if (sc->chbase[CH_SR] & SR_TX_RDY) {
 		c = getc(&tp->t_outq);
 		sc->chbase[CH_DAT] = c;
+		RECOVER();
 
 		/* Enable transmit interrupts. */
 		sc->duart->base[DU_IMR] = (sc->duart->imr_int_bits |= sc->sc_tx_int);
@@ -1583,7 +1635,8 @@ scncngetc(dev)
 	char    c;
 	int     s = spltty();
 
-	while ((ch_base[CH_SR] & SR_RX_RDY) == 0);
+	while ((ch_base[CH_SR] & SR_RX_RDY) == 0)
+		RECOVER();
 	c = ch_base[CH_DAT];
 
 	splx(s);
@@ -1613,9 +1666,11 @@ scncnputc(dev, c)
 	if (c == '\n')
 		scncnputc(dev, '\r');
 
-	while ((ch_base[CH_SR] & SR_TX_RDY) == 0);
+	while ((ch_base[CH_SR] & SR_TX_RDY) == 0)
+		RECOVER();
 	ch_base[CH_DAT] = c;
-	while ((ch_base[CH_SR] & SR_TX_RDY) == 0);
+	while ((ch_base[CH_SR] & SR_TX_RDY) == 0)
+		RECOVER();
 	du_base[DU_ISR];
 
 	splx(s);
