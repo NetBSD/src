@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.64 1998/09/16 13:39:48 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.65 1998/09/22 13:41:03 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,6 @@
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/clockreg.h>
-#include <sparc/sparc/intreg.h>
 #include <sparc/sparc/timerreg.h>
 #include "kbd.h"
 
