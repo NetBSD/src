@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.16 (Berkeley) 6/19/91
-#	$Id: Makefile,v 1.3 1993/08/27 20:31:07 jtc Exp $
+#	from: @(#)Makefile	8.2 (Berkeley) 1/25/94
+#	$Id: Makefile,v 1.4 1994/06/29 05:09:04 deraadt Exp $
 
 PROG=	mail
 CFLAGS+=-R -DUSE_OLD_TTY
@@ -11,11 +11,10 @@ EFILES=	mail.rc
 LINKS=	${BINDIR}/mail ${BINDIR}/Mail ${BINDIR}/mail ${BINDIR}/mailx
 MLINKS=	mail.1 Mail.1 mail.1 mailx.1
 
-
 beforeinstall:
 	cd ${.CURDIR}/misc; install -c -o ${BINOWN} -g ${BINGRP} \
 	    -m 444 ${SFILES} ${DESTDIR}/usr/share/misc
-	cd ${.CURDIR}/misc; install -c -o ${BINOWN} -g ${BINGRP} \
-	    -m 444 ${EFILES} ${DESTDIR}/etc
+	cd ${.CURDIR}/misc; install -c -o root -g wheel \
+	    -m 644 ${EFILES} ${DESTDIR}/etc
 
 .include <bsd.prog.mk>

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,28 +32,18 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cmdtab.c	5.11 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: cmdtab.c,v 1.2 1993/08/01 18:13:10 mycroft Exp $";
+static char sccsid[] = "from: @(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
+static char rcsid[] = "$Id: cmdtab.c,v 1.3 1994/06/29 05:09:13 deraadt Exp $";
 #endif /* not lint */
 
 #include "def.h"
+#include "extern.h"
 
 /*
  * Mail -- a mail program
  *
  * Define all of the command names and bindings.
  */
-
-extern int type(), preserve(), delete(), undelete(), next(), shell(), schdir();
-extern int save(), help(), headers(), pdot(), respond(), editor();
-extern int quitcmd(), rexit(), pcmdlist(), sendmail(), from(), copycmd();
-extern int messize(), psalloc(), deltype(), unset(), set(), source();
-extern int pversion(), group(), top(), core(), null(), stouch(), visual();
-extern int swrite(), dosh(), file(), echo(), Respond(), scroll(), ifcmd();
-extern int elsecmd(), endifcmd(), mboxit(), clobber(), alternates();
-extern int folders(), igfield(), Type(), retfield(), more(), More();
-extern int saveigfield(), saveretfield();
-extern int unread();	/* , Header(); */
 
 struct cmd cmdtab[] = {
 	"next",		next,		NDMLIST,	0,	MMNDEL,

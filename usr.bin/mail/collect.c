@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)collect.c	5.24 (Berkeley) 4/1/91";*/
-static char rcsid[] = "$Id: collect.c,v 1.2 1993/08/01 18:13:09 mycroft Exp $";
+static char sccsid[] = "from: @(#)collect.c	8.2 (Berkeley) 4/19/94";
+static char rcsid[] = "$Id: collect.c,v 1.3 1994/06/29 05:09:14 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -44,7 +44,7 @@ static char rcsid[] = "$Id: collect.c,v 1.2 1993/08/01 18:13:09 mycroft Exp $";
  */
 
 #include "rcv.h"
-#include <sys/stat.h>
+#include "extern.h"
 
 /*
  * Read a message from standard output and return a read file to it
@@ -72,6 +72,7 @@ static	jmp_buf	collabort;		/* To end collection with error */
 FILE *
 collect(hp, printheaders)
 	struct header *hp;
+	int printheaders;
 {
 	FILE *fbuf;
 	int lc, cc, escape, eofcount;
@@ -385,10 +386,11 @@ out:
 /*
  * Write a file, ex-like if f set.
  */
-
+int
 exwrite(name, fp, f)
 	char name[];
 	FILE *fp;
+	int f;
 {
 	register FILE *of;
 	register int c;
@@ -433,14 +435,16 @@ exwrite(name, fp, f)
  * Edit the message being collected on fp.
  * On return, make the edit file the new temp file.
  */
+void
 mesedit(fp, c)
 	FILE *fp;
+	int c;
 {
 	sig_t sigint = signal(SIGINT, SIG_IGN);
 	FILE *nf = run_editor(fp, (off_t)-1, c, 0);
 
 	if (nf != NULL) {
-		fseek(nf, (off_t)0, 2);
+		fseek(nf, 0L, 2);
 		collf = nf;
 		Fclose(fp);
 	}
@@ -453,6 +457,7 @@ mesedit(fp, c)
  * New message collected from stdout.
  * Sh -c must return 0 to accept the new message.
  */
+void
 mespipe(fp, cmd)
 	FILE *fp;
 	char cmd[];
@@ -460,6 +465,7 @@ mespipe(fp, cmd)
 	FILE *nf;
 	sig_t sigint = signal(SIGINT, SIG_IGN);
 	extern char tempEdit[];
+	char *shell;
 
 	if ((nf = Fopen(tempEdit, "w+")) == NULL) {
 		perror(tempEdit);
@@ -470,7 +476,10 @@ mespipe(fp, cmd)
 	 * stdin = current message.
 	 * stdout = new message.
 	 */
-	if (run_command(cmd, 0, fileno(fp), fileno(nf), NOSTR) < 0) {
+	if ((shell = value("SHELL")) == NOSTR)
+		shell = _PATH_CSHELL;
+	if (run_command(shell,
+	    0, fileno(fp), fileno(nf), "-c", cmd, NOSTR) < 0) {
 		(void) Fclose(nf);
 		goto out;
 	}
@@ -497,9 +506,11 @@ out:
  * the message temporary.  The flag argument is 'm' if we
  * should shift over and 'f' if not.
  */
+int
 forward(ms, fp, f)
 	char ms[];
 	FILE *fp;
+	int f;
 {
 	register int *msgvec;
 	extern char tempMail[];
@@ -545,6 +556,7 @@ forward(ms, fp, f)
 /*ARGSUSED*/
 void
 collstop(s)
+	int s;
 {
 	sig_t old_action = signal(s, SIG_DFL);
 
@@ -566,6 +578,7 @@ collstop(s)
 /*ARGSUSED*/
 void
 collint(s)
+	int s;
 {
 	/*
 	 * the control flow is subtle, because we can be called from ~q.
@@ -589,6 +602,7 @@ collint(s)
 /*ARGSUSED*/
 void
 collhup(s)
+	int s;
 {
 	rewind(collf);
 	savedeadletter(collf);
@@ -599,6 +613,7 @@ collhup(s)
 	exit(1);
 }
 
+void
 savedeadletter(fp)
 	register FILE *fp;
 {
