@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpal.c,v 1.2 2001/04/25 17:53:34 bouyer Exp $	*/
+/*	$NetBSD: sunscpal.c,v 1.3 2001/05/18 12:51:58 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -729,7 +729,7 @@ out:
  * (see comment in sunscpal_done)
  */
 void
-sunscpal_scsipi_reqyest(chan, req, arg)
+sunscpal_scsipi_request(chan, req, arg)
 	struct scsipi_channel *chan;
 	scsipi_adapter_req_t req;
 	void *arg;
@@ -1570,7 +1570,7 @@ sunscpal_data_xfer(sc, phase)
 	 * When aborting a command, disallow any data phase.
 	 */
 	if (sc->sc_state & SUNSCPAL_ABORTING) {
-		printf("%s: aborting, but phase=%s (reset)\n",
+		printf("%s: aborting, bus phase=%s (reset)\n",
 		    sc->sc_dev.dv_xname, phase_names[(phase >> 8) & 7]);
 		return ACT_RESET_BUS;	/* XXX */
 	}
@@ -1775,7 +1775,6 @@ next_phase:
 	sc->sc_prevphase = phase;
 
 do_actions:
-	__asm("_sunscpal_actions:");
 
 	if (act_flags & ACT_WAIT_DMA) {
 		act_flags &= ~ACT_WAIT_DMA;
@@ -1875,7 +1874,6 @@ do_actions:
 		SUNSCPAL_WRITE_2(sc, sunscpal_icr, 0);
 
 		if ((act_flags & ACT_CMD_DONE) == 0) {
-			__asm("_sunscpal_disconnected:");
 			SUNSCPAL_TRACE("machine: discon, cur=0x%x\n", (long)sr);
 		}
 
@@ -2058,24 +2056,6 @@ sunscpal_attach(sc, options)
 	struct sunscpal_softc *sc;
 	int options;
 {
-
-#ifdef SUNSCPAL_USE_BUS_DMA
-	int i;
-
-	/*
-	 * Allocate DMA handles.
-	 */
-	i = SUNSCPAL_OPENINGS * sizeof(struct sunscpal_dma_handle);
-	sc->sc_dma_handles = (sunscpal_dma_handle_t)
-		malloc(i, M_DEVBUF, M_WAITOK);
-	if (sc->sc_dma_handles == NULL)
-		panic("sunscpal: dma handles malloc failed\n");
-	for (i = 0; i < SUNSCPAL_OPENINGS; i++)
-		if (bus_dmamap_create(sc->sunscpal_dmat, SUNSCPAL_MAX_DMA_LEN, 
-				      1, SUNSCPAL_MAX_DMA_LEN, 
-				      0, BUS_DMA_WAITOK, &sc->sc_dma_handles[i].dh_dmamap) != 0)
-			panic("sunscpal: dma map create failed\n");
-#endif
 
 	/*
 	 * Handle our options.
