@@ -1,4 +1,4 @@
-/* $NetBSD: ciavar.h,v 1.7 1997/04/07 01:59:55 cgd Exp $ */
+/* $NetBSD: ciavar.h,v 1.7.2.1 1997/05/23 21:35:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,6 +29,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
+#include <alpha/pci/pci_dma_sgmap.h>
 
 /*
  * A 21171 chipset's configuration.
@@ -42,6 +43,11 @@ struct cia_config {
 	bus_space_tag_t cc_iot, cc_memt;
 	struct alpha_pci_chipset cc_pc;
 
+	struct alpha_bus_dma_tag cc_dmat_direct;
+	struct alpha_bus_dma_tag cc_dmat_sgmap;
+
+	struct alpha_pci_sgmap cc_sgmap;
+
 	u_int32_t cc_hae_mem;
 	u_int32_t cc_hae_io;
 
@@ -53,11 +59,11 @@ struct cia_softc {
 	struct	device sc_dev;
 
 	struct	cia_config *sc_ccp;
-	/* XXX SGMAP info */
 };
 
 void	cia_init __P((struct cia_config *, int));
 void	cia_pci_init __P((pci_chipset_tag_t, void *));
+void	cia_dma_init __P((struct cia_config *));
 
 bus_space_tag_t	cia_bus_io_init __P((void *));
 bus_space_tag_t	cia_bus_mem_init __P((void *));
