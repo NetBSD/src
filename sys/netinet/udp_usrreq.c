@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.118 2004/03/31 07:57:06 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.119 2004/04/18 23:35:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.118 2004/03/31 07:57:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.119 2004/04/18 23:35:56 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -145,19 +145,19 @@ struct	inpcbtable udbtable;
 struct	udpstat udpstat;
 
 #ifdef INET
-static void udp4_sendup __P((struct mbuf *, int, struct sockaddr *,
-	struct socket *));
-static int udp4_realinput __P((struct sockaddr_in *, struct sockaddr_in *,
-	struct mbuf *, int));
+static void udp4_sendup (struct mbuf *, int, struct sockaddr *,
+	struct socket *);
+static int udp4_realinput (struct sockaddr_in *, struct sockaddr_in *,
+	struct mbuf *, int);
 #endif
 #ifdef INET6
-static void udp6_sendup __P((struct mbuf *, int, struct sockaddr *,
-	struct socket *));
-static int udp6_realinput __P((int, struct sockaddr_in6 *,
-	struct sockaddr_in6 *, struct mbuf *, int));
+static void udp6_sendup (struct mbuf *, int, struct sockaddr *,
+	struct socket *);
+static int udp6_realinput (int, struct sockaddr_in6 *,
+	struct sockaddr_in6 *, struct mbuf *, int);
 #endif
 #ifdef INET
-static	void udp_notify __P((struct inpcb *, int));
+static	void udp_notify (struct inpcb *, int);
 #endif
 
 #ifndef UDBHASHSIZE
@@ -192,7 +192,7 @@ struct evcnt udp_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
 #endif /* UDP_CSUM_COUNTERS */
 
 void
-udp_init()
+udp_init(void)
 {
 
 	in_pcbinit(&udbtable, udbhashsize, udbhashsize);
@@ -211,13 +211,7 @@ udp_init()
 
 #ifdef INET
 void
-#if __STDC__
 udp_input(struct mbuf *m, ...)
-#else
-udp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	va_list ap;
 	struct sockaddr_in src, dst;
@@ -372,9 +366,7 @@ badcsum:
 
 #ifdef INET6
 int
-udp6_input(mp, offp, proto)
-	struct mbuf **mp;
-	int *offp, proto;
+udp6_input(struct mbuf **mp, int *offp, int proto)
 {
 	struct mbuf *m = *mp;
 	int off = *offp;
@@ -475,11 +467,8 @@ bad:
 
 #ifdef INET
 static void
-udp4_sendup(m, off, src, so)
-	struct mbuf *m;
-	int off;	/* offset of data portion */
-	struct sockaddr *src;
-	struct socket *so;
+udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
+	struct sockaddr *src, struct socket *so)
 {
 	struct mbuf *opts = NULL;
 	struct mbuf *n;
@@ -532,11 +521,8 @@ udp4_sendup(m, off, src, so)
 
 #ifdef INET6
 static void
-udp6_sendup(m, off, src, so)
-	struct mbuf *m;
-	int off;	/* offset of data portion */
-	struct sockaddr *src;
-	struct socket *so;
+udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
+	struct sockaddr *src, struct socket *so)
 {
 	struct mbuf *opts = NULL;
 	struct mbuf *n;
@@ -580,11 +566,8 @@ udp6_sendup(m, off, src, so)
 
 #ifdef INET
 static int
-udp4_realinput(src, dst, m, off)
-	struct sockaddr_in *src;
-	struct sockaddr_in *dst;
-	struct mbuf *m;
-	int off;	/* offset of udphdr */
+udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
+	struct mbuf *m, int off /* offset of udphdr */)
 {
 	u_int16_t *sport, *dport;
 	int rcvcnt;
@@ -684,12 +667,8 @@ bad:
 
 #ifdef INET6
 static int
-udp6_realinput(af, src, dst, m, off)
-	int af;		/* af on packet */
-	struct sockaddr_in6 *src;
-	struct sockaddr_in6 *dst;
-	struct mbuf *m;
-	int off;	/* offset of udphdr */
+udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
+	struct mbuf *m, int off)
 {
 	u_int16_t sport, dport;
 	int rcvcnt;
@@ -806,25 +785,19 @@ bad:
  * just wake up so that he can collect error status.
  */
 static void
-udp_notify(inp, errno)
-	struct inpcb *inp;
-	int errno;
+udp_notify(struct inpcb *inp, int errno)
 {
-
 	inp->inp_socket->so_error = errno;
 	sorwakeup(inp->inp_socket);
 	sowwakeup(inp->inp_socket);
 }
 
 void *
-udp_ctlinput(cmd, sa, v)
-	int cmd;
-	struct sockaddr *sa;
-	void *v;
+udp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
 	struct udphdr *uh;
-	void (*notify) __P((struct inpcb *, int)) = udp_notify;
+	void (*notify)(struct inpcb *, int) = udp_notify;
 	int errno;
 
 	if (sa->sa_family != AF_INET
@@ -852,13 +825,7 @@ udp_ctlinput(cmd, sa, v)
 }
 
 int
-#if __STDC__
 udp_output(struct mbuf *m, ...)
-#else
-udp_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct inpcb *inp;
 	struct udpiphdr *ui;
@@ -937,11 +904,8 @@ int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 
 /*ARGSUSED*/
 int
-udp_usrreq(so, req, m, nam, control, p)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct proc *p;
+udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+	struct mbuf *control, struct proc *p)
 {
 	struct inpcb *inp;
 	int s;
