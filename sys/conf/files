@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.187 1998/05/28 16:53:18 drochner Exp $
+#	$NetBSD: files,v 1.188 1998/06/02 01:29:42 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -173,6 +173,10 @@ file	dev/ic/i82586.c			i82586
 # SMC 91Cxx Ethernet Controller
 device	sm: arp, ether, ifnet
 file	dev/ic/smc91cxx.c		sm
+
+# SMC 83C170 EPIC/100 Fast Ethernet Controller
+device	epic: arp, ether, ifnet, miibus 
+file	dev/ic/smc83c170.c		epic
 
 # MB8696x Ethernet Controller
 define	mb86960
