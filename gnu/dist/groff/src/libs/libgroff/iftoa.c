@@ -1,6 +1,7 @@
-/*	$NetBSD: iftoa.c,v 1.1.1.2 2003/06/30 17:52:06 wiz Exp $	*/
+/*	$NetBSD: iftoa.c,v 1.1.1.3 2004/07/30 14:44:51 wiz Exp $	*/
 
-/* Copyright (C) 1989, 1990, 1991, 1992, 2000 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2004
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -21,8 +22,11 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #define INT_DIGITS 19		/* enough for 64-bit integer */
 
-char *if_to_a(i, decimal_point)
-     int i, decimal_point;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+char *if_to_a(int i, int decimal_point)
 {
   /* room for a -, INT_DIGITS digits, a decimal point, and a terminating '\0' */
   static char buf[INT_DIGITS + 3];			
@@ -65,3 +69,7 @@ char *if_to_a(i, decimal_point)
   }
   return p;
 }
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,7 +1,7 @@
-/*	$NetBSD: div.h,v 1.1.1.2 2003/06/30 17:52:07 wiz Exp $	*/
+/*	$NetBSD: div.h,v 1.1.1.3 2004/07/30 14:44:54 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2002
+/* Copyright (C) 1989, 1990, 1991, 1992, 2001, 2002, 2004
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -89,7 +89,7 @@ struct trap {
   trap(symbol, vunits, trap *);
 };
 
-struct output_file;
+class output_file;
 
 class top_level_diversion : public diversion {
   int page_number;
@@ -156,6 +156,5 @@ void continue_page_eject();
 void handle_first_page_transition();
 void blank_line();
 void begin_page();
-void end_diversions();
 
 extern void cleanup_and_exit(int);

@@ -1,7 +1,7 @@
-/*	$NetBSD: indxbib.cpp,v 1.1.1.1 2003/06/30 17:52:17 wiz Exp $	*/
+/*	$NetBSD: indxbib.cpp,v 1.1.1.2 2004/07/30 14:45:07 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989-1992, 2000, 2001, 2002, 2003
+/* Copyright (C) 1989-1992, 2000, 2001, 2002, 2003, 2004
    Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
   static char stderr_buf[BUFSIZ];
   setbuf(stderr, stderr_buf);
   
-  const char *basename = 0;
+  const char *base_name = 0;
   typedef int (*parser_t)(const char *);
   parser_t parser = do_file;
   const char *directory = 0;
@@ -166,7 +166,7 @@ int main(int argc, char **argv)
       check_integer_arg('n', optarg, 0, &n_ignore_words);
       break;
     case 'o':
-      basename = optarg;
+      base_name = optarg;
       break;
     case 't':
       check_integer_arg('t', optarg, 1, &truncate_len);
@@ -204,33 +204,33 @@ int main(int argc, char **argv)
   store_filename(ignore_fields);
   key_buffer = new char[truncate_len];
   read_common_words_file();
-  if (!basename)
-    basename = optind < argc ? argv[optind] : DEFAULT_INDEX_NAME;
-  const char *p = strrchr(basename, DIR_SEPS[0]), *p1;
+  if (!base_name)
+    base_name = optind < argc ? argv[optind] : DEFAULT_INDEX_NAME;
+  const char *p = strrchr(base_name, DIR_SEPS[0]), *p1;
   const char *sep = &DIR_SEPS[1];
   while (*sep) {
-    p1 = strrchr(basename, *sep);
+    p1 = strrchr(base_name, *sep);
     if (p1 && (!p || p1 > p))
       p = p1;
     sep++;
   }
   size_t name_max;
   if (p) {
-    char *dir = strsave(basename);
-    dir[p - basename] = '\0';
+    char *dir = strsave(base_name);
+    dir[p - base_name] = '\0';
     name_max = file_name_max(dir);
     a_delete dir;
   }
   else
     name_max = file_name_max(".");
-  const char *filename = p ? p + 1 : basename;
+  const char *filename = p ? p + 1 : base_name;
   if (strlen(filename) + sizeof(INDEX_SUFFIX) - 1 > name_max)
     fatal("`%1.%2' is too long for a filename", filename, INDEX_SUFFIX);
   if (p) {
     p++;
-    temp_index_file = new char[p - basename + sizeof(TEMP_INDEX_TEMPLATE)];
-    memcpy(temp_index_file, basename, p - basename);
-    strcpy(temp_index_file + (p - basename), TEMP_INDEX_TEMPLATE);
+    temp_index_file = new char[p - base_name + sizeof(TEMP_INDEX_TEMPLATE)];
+    memcpy(temp_index_file, base_name, p - base_name);
+    strcpy(temp_index_file + (p - base_name), TEMP_INDEX_TEMPLATE);
   }
   else {
     temp_index_file = strsave(TEMP_INDEX_TEMPLATE);
@@ -283,8 +283,8 @@ int main(int argc, char **argv)
   write_hash_table();
   if (fclose(indxfp) < 0)
     fatal("error closing temporary index file: %1", strerror(errno));
-  char *index_file = new char[strlen(basename) + sizeof(INDEX_SUFFIX)];    
-  strcpy(index_file, basename);
+  char *index_file = new char[strlen(base_name) + sizeof(INDEX_SUFFIX)];    
+  strcpy(index_file, base_name);
   strcat(index_file, INDEX_SUFFIX);
 #ifdef HAVE_RENAME
 #ifdef __EMX__
@@ -295,7 +295,7 @@ int main(int argc, char **argv)
 #ifdef __MSDOS__
     // RENAME could fail on plain MSDOS filesystems because
     // INDEX_FILE is an invalid filename, e.g. it has multiple dots.
-    char *fname = p ? index_file + (p - basename) : 0;
+    char *fname = p ? index_file + (p - base_name) : 0;
     char *dot = 0;
 
     // Replace the dot with an underscore and try again.

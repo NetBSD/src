@@ -1,5 +1,5 @@
 .ig
-Copyright (C) 1989-1995, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright (C) 1989-1995, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -17,17 +17,20 @@ translations approved by the Free Software Foundation instead of in
 the original English.
 ..
 .
+.do nr groff_font_C \n[.C]
+.cp 0
+.
 .de TQ
-.br
-.ns
-.TP \\$1
+.  br
+.  ns
+.  TP \\$1
 ..
 .
 .\" Like TP, but if specified indent is more than half
 .\" the current line-length - indent, use the default indent.
 .de Tp
-.ie \\n(.$=0:((0\\$1)*2u>(\\n(.lu-\\n(.iu)) .TP
-.el .TP "\\$1"
+.  ie \\n(.$=0:((0\\$1)*2u>(\\n(.lu-\\n(.iu)) .TP
+.  el .TP "\\$1"
 ..
 .
 .
@@ -100,7 +103,7 @@ The horizontal resolution is
 machine units.
 .
 .TP
-.BI paperheight\  n
+.BI paperlength\  n
 The physical vertical dimension of the output medium in machine units.
 .
 This isn't used by
@@ -626,6 +629,8 @@ of device
 .
 .BR groff_out (@MAN5EXT@),
 .BR @g@troff (@MAN1EXT@).
+.
+.cp \n[groff_font_C]
 .
 .\" Local Variables:
 .\" mode: nroff

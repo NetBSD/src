@@ -1,12 +1,12 @@
-/*	$NetBSD: color.cpp,v 1.1.1.1 2003/06/30 17:52:05 wiz Exp $	*/
+/*	$NetBSD: color.cpp,v 1.1.1.2 2004/07/30 14:44:51 wiz Exp $	*/
 
 // -*- C++ -*-
 
 /* <groff_src_dir>/src/libs/libgroff/color.cpp
 
-Last update: 13 Apr 2003
+Last update: 07 Jan 2004
 
-Copyright (C) 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright (C) 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
     Written by Gaius Mulley <gaius@glam.ac.uk>
 
 This file is part of groff.
@@ -75,6 +75,7 @@ void color::operator delete(void *p)
 
 color::color(const color * const c)
 {
+  nm = c->nm;
   scheme = c->scheme;
   components[0] = c->components[0];
   components[1] = c->components[1];

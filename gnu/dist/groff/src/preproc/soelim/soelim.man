@@ -80,7 +80,7 @@ even when followed by a character other than space or newline.
 This option may be used to specify a directory to search for
 files (both those on the command line and those named in
 .B \&.so
-lines).
+requests).
 The current directory is always searched first.
 This option may be specified more than once,
 the directories will be searched in the order specified.
