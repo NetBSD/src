@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.22 2002/08/09 02:39:27 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.23 2002/09/06 02:40:56 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -113,6 +113,7 @@
 #	cfs*	Coda file system device
 #	wsmux*	wscons event multiplexor
 #	systrace syscall tracer
+#	pci*	PCI bus access devices
 #
 
 dialin=0
@@ -153,6 +154,7 @@ all)
 	makedev music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev systrace
+	makedev pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	;;
 
 ramdisk|floppy)
@@ -680,6 +682,13 @@ systrace)
 	rm -f systrace
 	mknod systrace c 85 0
 	chmod 644 systrace
+	;;
+
+pci*)
+	unit=${i#pci}
+	rm -f pci$unit
+	mknod pci$unit c 88 $unit
+	chmod 644 pci$unit
 	;;
 
 local)
