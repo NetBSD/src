@@ -1,9 +1,10 @@
-/*	$NetBSD: ip_ecn.c,v 1.8 2000/01/06 07:31:08 itojun Exp $	*/
+/*	$NetBSD: ip_ecn.c,v 1.9 2000/10/02 03:55:41 itojun Exp $	*/
+/*	$KAME: ip_ecn.c,v 1.9 2000/10/01 12:44:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,7 +29,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * KAME Id: ip_ecn.c,v 1.2 1999/07/30 12:17:15 itojun Exp
  */
 /*
  * ECN consideration on tunnel ingress/egress operation.
@@ -43,16 +43,10 @@
 #include <sys/mbuf.h>
 #include <sys/errno.h>
 
-#ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#endif
-
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
 #include <netinet/ip6.h>
 #endif
 
