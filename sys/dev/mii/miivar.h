@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.16 2000/02/02 17:50:45 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -129,7 +129,8 @@ struct mii_softc {
 	int mii_flags;			/* misc. flags; see below */
 	int mii_capabilities;		/* capabilities from BMSR */
 	int mii_ticks;			/* MII_TICK counter */
-	int mii_active;			/* last active media */
+	int mii_media_active;		/* last active media */
+	int mii_media_status;		/* last active status */
 };
 typedef struct mii_softc mii_softc_t;
 
@@ -209,8 +210,11 @@ void	mii_phy_setmedia __P((struct mii_softc *));
 int	mii_phy_auto __P((struct mii_softc *, int));
 void	mii_phy_reset __P((struct mii_softc *));
 void	mii_phy_down __P((struct mii_softc *));
+int	mii_phy_tick __P((struct mii_softc *));
 
 void	mii_phy_status __P((struct mii_softc *));
+void	mii_phy_update __P((struct mii_softc *, int));
+void	mii_phy_statusmsg __P((struct mii_softc *));
 
 void	ukphy_status __P((struct mii_softc *));
 #endif /* _KERNEL */
