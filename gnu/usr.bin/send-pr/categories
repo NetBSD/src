@@ -1,7 +1,8 @@
-kern
-misc
-lib
 bin
+install
+kern
+lib
+misc
 pkg
 port-alpha
 port-amiga
