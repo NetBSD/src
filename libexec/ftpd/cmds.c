@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.10 2000/12/18 02:32:50 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.11 2001/01/09 05:06:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.10 2000/12/18 02:32:50 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.11 2001/01/09 05:06:14 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -797,13 +797,16 @@ replydirname(const char *name, const char *message)
 	p = npath;
 	ep = &npath[sizeof(npath) - 1];
 	while (*name) {
-		if (*name == '"' && ep - p >= 2) {
+		if (*name == '"') {
+			if (ep - p < 2)
+				break;
 			*p++ = *name++;
 			*p++ = '"';
-		} else if (ep - p >= 1)
+		} else {
+			if (ep - p < 1)
+				break;
 			*p++ = *name++;
-		else
-			break;
+		}
 	}
 	*p = '\0';
 	reply(257, "\"%s\" %s", npath, message);
