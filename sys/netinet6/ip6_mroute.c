@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.39 2002/11/02 07:30:57 perry Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.40 2002/11/09 03:12:05 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.39 2002/11/02 07:30:57 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.40 2002/11/09 03:12:05 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -76,6 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.39 2002/11/02 07:30:57 perry Exp $"
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#ifdef MULTICAST_PMTUD
+#include <netinet/icmp6.h>
+#endif
 
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
