@@ -1,5 +1,3 @@
-/*	$NetBSD: strcpy.S,v 1.4 1994/10/26 06:39:18 cgd Exp $	*/
-
 /*
  * Copyright (c) 1993,94 Winning Strategies, Inc.
  * All rights reserved.
@@ -28,14 +26,15 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *	$Id: strcpy.S,v 1.5 1995/02/05 15:06:52 mycroft Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$NetBSD: strcpy.S,v 1.4 1994/10/26 06:39:18 cgd Exp $"
-#endif
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS)
+	RCSID("$Id: strcpy.S,v 1.5 1995/02/05 15:06:52 mycroft Exp $")
+#endif
 
 /*
  * strcpy (dst, src)

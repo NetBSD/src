@@ -1,5 +1,3 @@
-/*	$NetBSD: htons.S,v 1.2 1994/10/26 06:39:09 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,19 +33,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)htons.s	5.2 (Berkeley) 12/17/90
+ *	from: @(#)htons.s	5.2 (Berkeley) 12/17/90
+ *	$Id: htons.S,v 1.3 1995/02/05 15:06:48 mycroft Exp $
  */
 
+#include <machine/asm.h>
+
 #if defined(LIBC_SCCS)
-	.text
-	.asciz "$NetBSD: htons.S,v 1.2 1994/10/26 06:39:09 cgd Exp $"
+RCSID("$Id: htons.S,v 1.3 1995/02/05 15:06:48 mycroft Exp $")
 #endif
 
 /* netorder = htons(hostorder) */
-
-#include "DEFS.h"
-
 ENTRY(htons)
 	movzwl	4(%esp),%eax
-	xchgb	%al,%ah
+	rorw	$8,%ax
 	ret
