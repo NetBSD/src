@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: bsd_fdintr.s,v 1.2 1995/03/02 20:47:11 pk Exp $
+ *	$NetBSD: bsd_fdintr.s,v 1.3 1995/04/07 19:49:30 pk Exp $
  */
 
 #ifndef FDC_C_HANDLER
@@ -90,6 +90,11 @@ _fdchwintr:
 	! load fdc, if it's NULL there's nothing to do: schedule soft interrupt
 	sethi	%hi(_fdciop), %l7
 	ld	[%l7 + %lo(_fdciop)], R_fdc
+
+	! tally interrupt
+	ld	[R_fdc + FDC_EVCNT], %l6
+	inc	%l6
+	st	%l6, [R_fdc + FDC_EVCNT]
 
 	! load chips register addresses
 	ld	[R_fdc + FDC_REG_MSR], R_msr	! get chip MSR reg addr

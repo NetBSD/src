@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.2 1995/02/22 21:37:15 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.3 1995/04/07 19:46:13 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -115,6 +115,7 @@ struct fdc_softc {
 #define sc_tc		sc_io.fdcio_tc
 #define sc_nstat	sc_io.fdcio_nstat
 #define sc_status	sc_io.fdcio_status
+#define sc_intrcnt	sc_io.fdcio_intrcnt
 };
 
 #ifndef FDC_C_HANDLER
@@ -364,6 +365,8 @@ fdcattach(parent, self, aux)
 		if (fdcresult(fdc) != 1)
 			printf(" CFGLOCK: unexpected response");
 	}
+
+	evcnt_attach(&fdc->sc_dk.dk_dev, "intr", &fdc->sc_intrcnt);
 
 	printf(" pri %d, softpri %d: chip %s\n", pri, PIL_FDSOFT,
 		(fdc->sc_flags & FDC_82077)?"82077":"82072");

@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.11 1995/02/22 21:17:53 pk Exp $ */
+/*	$NetBSD: genassym.c,v 1.12 1995/04/07 19:49:29 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -218,6 +218,7 @@ main()
 	off("FDC_NSTAT", struct fdcio, fdcio_nstat);
 	off("FDC_DATA", struct fdcio, fdcio_data);
 	off("FDC_TC", struct fdcio, fdcio_tc);
+	off("FDC_EVCNT", struct fdcio, fdcio_intrcnt.ev_count);
 
 	flush();
 
