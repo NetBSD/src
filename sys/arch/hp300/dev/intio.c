@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.17 2003/08/01 00:23:17 tsutsui Exp $	*/
+/*	$NetBSD: intio.c,v 1.18 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,15 +41,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.17 2003/08/01 00:23:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.18 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h> 
+#include <sys/device.h>
 
 #include <machine/hp300spu.h>
 
-#include <hp300/dev/intioreg.h> 
+#include <hp300/dev/intioreg.h>
 #include <hp300/dev/intiovar.h>
 
 struct intio_softc {

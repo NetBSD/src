@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_compat.c,v 1.10 2003/08/07 16:27:34 agc Exp $	*/
+/*	$NetBSD: rd_compat.c,v 1.11 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd_compat.c,v 1.10 2003/08/07 16:27:34 agc Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: rd_compat.c,v 1.11 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: rd_compat.c,v 1.10 2003/08/07 16:27:34 agc Exp $");
  * CS/80 partitions.  We reserve the first cylinder for a LIF
  * style boot directory (the 8k allowed in the BSD filesystem
  * is just way too small).  This boot area is outside of all but
- * the C partition.  This implies that you cannot use the C 
+ * the C partition.  This implies that you cannot use the C
  * partition on a bootable disk since the filesystem would overlay
  * the boot area.  You must use the A partition.
  *
@@ -304,7 +304,7 @@ rdmakedisklabel(unit, lp)
 	struct rdidentinfo *ri = &rdidentinfo[rs->sc_type];
 	struct partition *pi;
 	int dcount;
-	
+
 	lp->d_nsectors = ri->ri_nbpt;
 	lp->d_ntracks = ri->ri_ntpc;
 	lp->d_ncylinders = ri->ri_ncyl;

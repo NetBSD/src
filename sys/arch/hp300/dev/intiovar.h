@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.5 2001/11/17 23:33:22 gmcgarry Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.6 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ intio_device_readcmd(bus_space_tag_t bst, bus_space_handle_t bsh, int cmd,
 		*datap = bus_space_read_1(bst, bsh, INTIO_DEV_3xx_DATA);
 	} while (((status >> INTIO_DEV_SRSHIFT) & INTIO_DEV_SRMASK)
 		!= INTIO_DEV_SR_DATAAVAIL);
-	return (0);		
+	return (0);
 }
 
 static __inline int

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.61 2003/08/07 16:27:34 agc Exp $	*/
+/*	$NetBSD: rd.c,v 1.62 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.61 2003/08/07 16:27:34 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.62 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -458,7 +458,7 @@ rdident(parent, sc, ha)
 	hpibsend(ctlr, slave, C_CMD, cmd, sizeof(cmd));
 	hpibrecv(ctlr, slave, C_EXEC, desc, 37);
 	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
-	memset(name, 0, sizeof(name)); 
+	memset(name, 0, sizeof(name));
 	if (stat == 0) {
 		n = desc->d_name;
 		for (i = 5; i >= 0; i--) {
@@ -1260,7 +1260,7 @@ rdgetdefaultlabel(sc, lp)
 	lp->d_ncylinders = rdidentinfo[type].ri_ncyl;
 	lp->d_secperunit = rdidentinfo[type].ri_nblocks;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-	
+
 	strncpy(lp->d_typename, rdidentinfo[type].ri_desc, 16);
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_rpm = 3000;

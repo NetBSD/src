@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.62 2003/08/07 16:27:27 agc Exp $	*/
+/*	$NetBSD: dcm.c,v 1.63 2003/11/17 14:37:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.62 2003/08/07 16:27:27 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.63 2003/11/17 14:37:59 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 
@@ -345,16 +345,16 @@ static	int dcmconsinit;			/* has been initialized */
 /* static	int dcm_lastcnpri = CN_DEAD; */	/* XXX last priority */
 
 static struct consdev dcm_cons = {
-       NULL,
-       NULL,
-       dcmcngetc,
-       dcmcnputc,
-       nullcnpollc,
-       NULL,
-       NULL,
-       NULL,
-       NODEV,
-       CN_REMOTE
+	NULL,
+	NULL,
+	dcmcngetc,
+	dcmcnputc,
+	nullcnpollc,
+	NULL,
+	NULL,
+	NULL,
+	NODEV,
+	CN_REMOTE
 };
 int	dcmconscode;
 int	dcmdefaultrate = DEFAULT_BAUD_RATE;
@@ -617,7 +617,7 @@ dcmopen(dev, flag, mode, p)
  bad:
 	return (error);
 }
- 
+
 /*ARGSUSED*/
 int
 dcmclose(dev, flag, mode, p)
@@ -628,7 +628,7 @@ dcmclose(dev, flag, mode, p)
 	int s, unit, board, port;
 	struct dcm_softc *sc;
 	struct tty *tp;
- 
+
 	unit = DCMUNIT(dev);
 	board = DCMBOARD(unit);
 	port = DCMPORT(unit);
@@ -657,7 +657,7 @@ dcmclose(dev, flag, mode, p)
 #endif
 	return (0);
 }
- 
+
 int
 dcmread(dev, uio, flag)
 	dev_t dev;
@@ -677,7 +677,7 @@ dcmread(dev, uio, flag)
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
- 
+
 int
 dcmwrite(dev, uio, flag)
 	dev_t dev;
@@ -714,7 +714,7 @@ dcmpoll(dev, events, p)
 
 	sc = dcm_cd.cd_devs[board];
 	tp = sc->sc_tty[port];
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
@@ -733,7 +733,7 @@ dcmtty(dev)
 
 	return (sc->sc_tty[port]);
 }
- 
+
 int
 dcmintr(arg)
 	void *arg;
@@ -772,7 +772,7 @@ dcmintr(arg)
 	if (dcmdebug & DDB_INTR) {
 		printf("%s: dcmintr: iir %x pc %x/%x/%x/%x ",
 		       sc->sc_dev.dv_xname, code, pcnd[0], pcnd[1],
-		       pcnd[2], pcnd[3]); 
+		       pcnd[2], pcnd[3]);
 		printf("miir %x mc %x/%x/%x/%x\n",
 		       mcode, mcnd[0], mcnd[1], mcnd[2], mcnd[3]);
 	}
@@ -1044,7 +1044,7 @@ dcmioctl(dev, cmd, data, flag, p)
 	sc = dcm_cd.cd_devs[board];
 	dcm = sc->sc_dcm;
 	tp = sc->sc_tty[port];
- 
+
 #ifdef DEBUG
 	if (dcmdebug & DDB_IOCTL)
 		printf("%s port %d: dcmioctl: cmd %lx data %x flag %x\n",
@@ -1222,7 +1222,7 @@ dcmparam(tp, t)
 	DELAY(16 * DCM_USPERCH(tp->t_ospeed));
 	return (0);
 }
- 
+
 void
 dcmstart(tp)
 	struct tty *tp;
@@ -1349,7 +1349,7 @@ out:
 #endif
 	splx(s);
 }
- 
+
 /*
  * Stop output on a line.
  */
@@ -1368,7 +1368,7 @@ dcmstop(tp, flag)
 	}
 	splx(s);
 }
- 
+
 /*
  * Modem control
  */
@@ -1548,7 +1548,7 @@ dcmselftest(sc)
 	s = splhigh();
 	dcm->dcm_rsid = DCMRS;
 	DELAY(50000);	/* 5000 is not long enough */
-	dcm->dcm_rsid = 0; 
+	dcm->dcm_rsid = 0;
 	dcm->dcm_ic = IC_IE;
 	dcm->dcm_cr = CR_SELFT;
 	while ((dcm->dcm_ic & IC_IR) == 0) {
