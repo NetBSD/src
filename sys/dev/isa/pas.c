@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.46 1999/02/18 07:08:36 mycroft Exp $	*/
+/*	$NetBSD: pas.c,v 1.47 2000/04/28 08:51:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -389,7 +389,7 @@ pasfind(parent, sc, ia, probing)
 	    &sc->sc_sbdsp.sc_ioh)) {
 		printf("pas: can't map i/o space 0x%x/%d in probe\n",
 		    ia->ia_iobase, SBP_NPORT);
-		goto unmap;
+		goto unmap1;
 	}
 
 	if (sbdsp_reset(&sc->sc_sbdsp) < 0) {
