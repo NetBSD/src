@@ -1,4 +1,4 @@
-/*	$NetBSD: lprint.c,v 1.9 1997/10/19 08:13:38 mrg Exp $	*/
+/*	$NetBSD: lprint.c,v 1.10 1997/10/19 14:06:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID( "$NetBSD: lprint.c,v 1.9 1997/10/19 08:13:38 mrg Exp $");
+__RCSID( "$NetBSD: lprint.c,v 1.10 1997/10/19 14:06:28 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -200,7 +200,7 @@ no_gecos:
 			delta = gmtime(&w->idletime);
 			if (delta->tm_yday || delta->tm_hour || delta->tm_min) {
 				cpr += printf("%-*s idle ",
-				    maxlen - strlen(w->tty) + 1, ",");
+				    (int)(maxlen - strlen(w->tty) + 1), ",");
 				if (delta->tm_yday > 0) {
 					cpr += printf("%d day%s ",
 					   delta->tm_yday,
