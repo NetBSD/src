@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2002/04/29 04:40:00 sommerfeld Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2002/06/06 09:53:22 lukem Exp $
 #
 # Makefile for install
 
@@ -17,13 +17,28 @@ VER!=		sh ${VERDEP}
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DREL=\"${VER}\" -DMACH=\"${MACHINE}\"
 
+
+# Host to ftp from.  Default:
+#	"ftp.netbsd.org"
+#
 .if defined(SYSINST_FTP_HOST)
-CPPFLAGS+=	-DFTP_HOST="${SYSINST_FTP_HOST}"
+CPPFLAGS+=	-DSYSINST_FTP_HOST=\"${SYSINST_FTP_HOST}\"
 .endif
 
+# Top-level ftp directory.  Default:
+#	"pub/NetBSD/NetBSD-" + VER + "/" + MACH
+#
 .if defined(SYSINST_FTP_DIR)
-CPPFLAGS+=	-DFTP_DIR="${SYSINST_FTP_DIR}"
+CPPFLAGS+=	-DSYSINST_FTP_DIR=\"${SYSINST_FTP_DIR}\"
 .endif
+
+# Top-level CDROM directory.  Default:
+#	"/" + MACH
+#
+.if defined(SYSINST_CDROM_DIR)
+CPPFLAGS+=	-DSYSINST_CDROM_DIR=\"${SYSINST_CDROM_DIR}\"
+.endif
+
 
 WARNS=		1
 
