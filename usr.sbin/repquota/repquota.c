@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.21 2004/01/05 23:23:38 jmmv Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.22 2005/03/05 14:46:29 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,7 +224,10 @@ repquota(fs, type, qfpathname)
 		if (fup->fu_dqblk.dqb_curinodes == 0 &&
 		    fup->fu_dqblk.dqb_curblocks == 0)
 			continue;
-		printf("%-10s", fup->fu_name);
+		if (strlen(fup->fu_name) > 9)
+			printf("%s ", fup->fu_name);
+		else
+			printf("%-10s", fup->fu_name);
 		printf("%c%c%8d%8d%8d%7s",
 			fup->fu_dqblk.dqb_bsoftlimit && 
 			    fup->fu_dqblk.dqb_curblocks >= 
