@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 1999/03/18 12:27:07 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 1999/03/23 04:18:50 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -140,15 +140,8 @@ vm_map_t phys_map = NULL;
 vm_map_t buffer_map;
 #endif
 
-extern paddr_t avail_start;
-
-#ifdef EXTENDED_MEMORY
-extern int numranges;
-extern u_long low[8];
-extern u_long high[8];
-#else
-extern paddr_t avail_end;
-#endif
+extern paddr_t avail_start, avail_end;
+extern vaddr_t virtual_avail;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -192,6 +185,10 @@ void    initcpu __P((void));
 int	cpu_dumpsize __P((void));
 int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
 void	cpu_init_kcore_hdr __P((void));
+#ifdef EXTENDED_MEMORY
+static int mem_exists __P((caddr_t, u_long));
+static void setmemrange __P((void));
+#endif
 
 /* functions called from locore.s */
 void	dumpsys __P((void));
@@ -212,10 +209,6 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
 void
 consinit()
 {
-#ifdef EXTENDED_MEMORY
-	int i;
-#endif
-
 	/*
 	 * Set cpuspeed immediately since cninit() called routines
 	 * might use delay.  Note that we only set it if a custom value
@@ -250,31 +243,15 @@ consinit()
 	 * Tell the VM system about available physical memory.
 	 */
 #if defined(UVM)
-#ifdef EXTENDED_MEMORY
-	for (i = 0; i < numranges; i++) {
-		paddr_t startmem = i == 0 ? avail_start : low[i];
-
-		uvm_page_physload(atop(startmem), atop(high[i]),
-				atop(startmem), atop(high[i]),
-				VM_FREELIST_DEFAULT);
-	}
-#else
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 			atop(avail_start), atop(avail_end),
 			VM_FREELIST_DEFAULT);
-#endif
 #else	/* not UVM */
-#ifdef EXTENDED_MEMORY
-	for (i = 0; i < numranges; i++) {
-		paddr_t startmem = i == 0 ? avail_start : low[i];
-
-		vm_page_physload(atop(startmem), atop(high[i]),
-				atop(startmem), atop(high[i]));
-	}
-#else
 	vm_page_physload(atop(avail_start), atop(avail_end),
 			atop(avail_start), atop(avail_end));
 #endif
+#ifdef EXTENDED_MEMORY
+	setmemrange();
 #endif
 }
 
@@ -305,13 +282,8 @@ cpu_startup()
 	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-#ifdef EXTENDED_MEMORY
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
-		    high[numranges - 1] + i * NBPG, VM_PROT_ALL, TRUE);
-#else
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
 		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-#endif
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
@@ -853,8 +825,8 @@ cpu_init_kcore_hdr()
 	/*
 	 * X68k has multiple RAM segments on some models.
 	 */
-	m->ram_segs[0].start = ctob(lowram);
-	m->ram_segs[0].size  = mem_size;
+	m->ram_segs[0].start = lowram;
+	m->ram_segs[0].size = mem_size - lowram;
 	for (i = 1; i < vm_nphysseg; i++) {
 		m->ram_segs[i].start = ctob(vm_physmem[i].start);
 		m->ram_segs[i].size  = ctob(vm_physmem[i].end)
@@ -1415,3 +1387,213 @@ cpu_exec_aout_makecmds(p, epp)
 	return ENOEXEC;
 #endif
 }
+
+#ifdef EXTENDED_MEMORY
+static int em_debug = 1;
+#define DPRINTF(str) do{ if (em_debug) printf str; } while (0);
+
+static struct memlist {
+	caddr_t base;
+	psize_t min;
+	psize_t max;
+} memlist[] = {
+	(caddr_t)0x01000000, 0x01000000, 0x01000000, /* TS-6BE16 16MB memory */
+	(caddr_t)0x10000000, 0x00400000, 0x08000000, /* 060turbo SIMM slot (4--128MB) */
+};
+static vaddr_t mem_v, base_v;
+
+/*
+ * check memory existency
+ */
+static int
+mem_exists(mem, basemax)
+	caddr_t mem;
+	u_long basemax;
+{
+	/* most variables must be register! */
+	register volatile unsigned char *m, *b;
+	register unsigned char save_m, save_b;
+	register int baseismem;
+	register int exists = 0;
+	caddr_t base;
+	caddr_t begin_check, end_check;
+	label_t	faultbuf;
+
+	DPRINTF (("Enter mem_exists(%p, %x)\n", mem, basemax));
+	DPRINTF ((" pmap_enter(%p, %p) for target... ", mem_v, mem));
+	pmap_enter(pmap_kernel(), mem_v, (paddr_t)mem,
+		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+	DPRINTF ((" done.\n"));
+
+	/* only 24bits are significant on normal X680x0 systems */
+	base = (caddr_t)((u_long)mem & 0x00FFFFFF);
+	DPRINTF ((" pmap_enter(%p, %p) for shadow... ", base_v, base));
+	pmap_enter(pmap_kernel(), base_v, (paddr_t)base,
+		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+	DPRINTF ((" done.\n"));
+
+	m = (void*)mem_v;
+	b = (void*)base_v;
+
+	/* This is somewhat paranoid -- avoid overwriting myself */
+	asm("lea pc@(begin_check_mem),%0" : "=a"(begin_check));
+	asm("lea pc@(end_check_mem),%0" : "=a"(end_check));
+	if (base >= begin_check && base < end_check) {
+		size_t off = end_check - begin_check;
+
+		DPRINTF ((" Adjusting the testing area.\n"));
+		m -= off;
+		b -= off;
+	}
+
+	nofault = (int *) &faultbuf;
+	if (setjmp ((label_t *)nofault)) {
+		nofault = (int *) 0;
+		pmap_remove(pmap_kernel(), mem_v, mem_v+NBPG);
+		pmap_remove(pmap_kernel(), base_v, base_v+NBPG);
+		DPRINTF (("Fault!!! Returning 0.\n"));
+		return 0;
+	}
+
+	DPRINTF ((" Let's begin. mem=%p, base=%p, m=%p, b=%p\n",
+		  mem, base, m, b));
+
+	(void) *m; 
+	/*
+	 * Can't check by writing if the corresponding
+	 * base address isn't memory.
+	 *
+	 * I hope this would be no harm....
+	 */
+	baseismem = base < (caddr_t)basemax;
+
+	/* save original value (base must be saved first) */
+	if (baseismem)
+		save_b = *b;
+	save_m = *m;
+
+asm("begin_check_mem:");
+	/*
+	 * stack and other data segment variables are unusable
+	 * til end_check_mem, because they may be clobbered.
+	 */
+
+	/*
+	 * check memory by writing/reading
+	 */
+	if (baseismem)
+		*b = 0x55;
+	*m = 0xAA;
+	if ((baseismem && *b != 0x55) || *m != 0xAA)
+		goto out;
+
+	*m = 0x55;
+	if (baseismem)
+		*b = 0xAA;
+	if (*m != 0x55 || (baseismem && *b != 0xAA))
+		goto out;
+
+	exists = 1;
+out:
+	*m = save_m;
+	if (baseismem)
+		*b = save_b;
+
+asm("end_check_mem:");
+
+	nofault = (int *)0;
+	pmap_remove(pmap_kernel(), mem_v, mem_v+NBPG);
+	pmap_remove(pmap_kernel(), base_v, base_v+NBPG);
+
+	DPRINTF ((" End."));
+
+	DPRINTF (("Returning from mem_exists. result = %d\n", exists));
+
+	return exists;
+}
+
+static void
+setmemrange(void)
+{
+	int i;
+	psize_t s, min, max;
+	struct memlist *mlist = memlist;
+	int nranges;
+	u_long h;
+
+	/*
+	 * VM system is not started yet.  Use the first and second avalable
+	 * pages to map the (possible) target memory and its shadow.
+	 */
+	mem_v = virtual_avail;	/* target */
+	base_v = mem_v + NBPG;	/* shadow */
+
+	{	/* Turn off the processor cache. */
+		register int cacr;
+		PCIA();		/* cpusha dc */
+		switch (cputype) {
+		case CPU_68030:
+			cacr = CACHE_OFF;
+			break;
+		case CPU_68040:
+			cacr = CACHE40_OFF;
+			break;
+		case CPU_68060:
+			cacr = CACHE60_OFF;
+			break;
+		}
+		asm volatile ("movc %0,cacr"::"d"(cacr));
+	}
+
+	/* discover extended memory */
+	for (i = 0; i < sizeof(memlist) / sizeof(memlist[0]); i++) {
+		min = mlist[i].min;
+		max = mlist[i].max;
+		/*
+		 * Normally, x68k hardware is NOT 32bit-clean.
+		 * But some type of extended memory is in 32bit address space.
+		 * Check whether.
+		 */
+		if (!mem_exists(mlist[i].base, avail_end))
+			continue;
+		h = 0;
+		/* range check */
+		for (s = min; s <= max; s += 0x00100000) {
+			if (!mem_exists(mlist[i].base + s - 4, h))
+				break;
+			h = (u_long)(mlist[i].base + s);
+		}
+		if ((u_long)mlist[i].base < h) {
+#ifdef UVM
+			uvm_page_physload((vaddr_t)mlist[i].base, h,
+					  (vaddr_t)mlist[i].base, h,
+					  VM_FREELIST_DEFAULT);
+#else	/* not UVM */
+			vm_page_physload((vaddr_t)mlist[i].base, h,
+					 (vaddr_t)mlist[i].base, h);
+#endif
+			mem_size += h - (u_long) mlist[i].base;
+		}
+			
+	}
+
+	{	/* Re-enable the processor cache. */
+		register int cacr;
+		ICIA();
+		switch (cputype) {
+		case CPU_68030:
+			cacr = CACHE_ON;
+			break;
+		case CPU_68040:
+			cacr = CACHE40_ON;
+			break;
+		case CPU_68060:
+			cacr = CACHE60_ON;
+			break;
+		}
+		asm volatile ("movc %0,cacr"::"d"(cacr));
+	}
+
+	physmem = m68k_btop(mem_size);
+}
+#endif
