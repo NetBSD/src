@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.62 2003/10/18 07:41:26 wiz Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.63 2003/10/22 05:38:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.62 2003/10/18 07:41:26 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.63 2003/10/22 05:38:16 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,32 @@ Static usbd_status umass_init_shuttle(struct umass_softc *);
 Static void umass_fixup_sony(struct umass_softc *);
 
 Static const struct umass_quirk umass_quirks[] = {
+	/*
+	 * The following 3 In-System Design adapters use a non-standard ATA
+	 * over BBB protocol.  Force this protocol by quirk entries.
+	 */
+	{ { USB_VENDOR_INSYSTEM, USB_PRODUCT_INSYSTEM_ADAPTERV2 },
+	  UMASS_WPROTO_BBB, UMASS_CPROTO_ISD_ATA,
+	  0,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_INSYSTEM, USB_PRODUCT_INSYSTEM_ATAPI },
+	  UMASS_WPROTO_BBB, UMASS_CPROTO_ISD_ATA,
+	  0,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_INSYSTEM, USB_PRODUCT_INSYSTEM_DRIVEV2_5 },
+	  UMASS_WPROTO_BBB, UMASS_CPROTO_ISD_ATA,
+	  0,
+	  0,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
 	{ { USB_VENDOR_INSYSTEM, USB_PRODUCT_INSYSTEM_USBCABLE },
 	  UMASS_WPROTO_CBI, UMASS_CPROTO_ATAPI,
 	  0,
