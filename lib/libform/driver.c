@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.11 2001/12/31 01:04:46 thorpej Exp $	*/
+/*	$NetBSD: driver.c,v 1.12 2002/05/20 15:00:11 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -117,9 +117,9 @@ form_driver(FORM *form, int c)
 	status = E_OK;
 	
 	if (c < REQ_MIN_REQUEST) {
-		if (isprint(c)) {
+		if (isprint(c) || isblank(c)) {
 			do {
-				pos = fieldp->start_char + fieldp->cursor_xpos
+				pos = fieldp->start_char + fieldp->row_xpos
 	       + fieldp->lines[fieldp->start_line + fieldp->cursor_ypos].start;
 
 			      /* check if we are allowed to edit this field */
@@ -437,6 +437,7 @@ form_driver(FORM *form, int c)
 		fieldp = form->fields[form->cur_field];
 		fieldp->start_char = 0;
 		fieldp->start_line = 0;
+		fieldp->row_xpos = 0;
 		fieldp->cursor_xpos = 0;
 		fieldp->cursor_ypos = 0;
 	}
@@ -453,4 +454,3 @@ form_driver(FORM *form, int c)
 	pos_form_cursor(form);
 	return E_OK;
 }
-
