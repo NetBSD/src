@@ -1,6 +1,9 @@
-/*	$NetBSD: sigsuspend.S,v 1.5 1998/11/24 11:14:57 tsubai Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.6 1998/12/02 01:01:04 thorpej Exp $	*/
 
 #include "SYS.h"
+
+WARN_REFERENCES(sigsuspend, \
+    "warning: reference to compatibility sigsuspend(); include <signal.h> for correct reference")
 
 ENTRY(sigsuspend)
 	lwz	3,0(3)			# indirect to mask arg

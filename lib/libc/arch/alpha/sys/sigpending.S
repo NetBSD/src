@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.2 1998/09/29 03:01:38 thorpej Exp $	*/
+/*	$NetBSD: sigpending.S,v 1.3 1998/12/02 01:01:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,6 +28,9 @@
  */
 
 #include "SYS.h"
+
+WARN_REFERENCES(sigpending, \
+    "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
 
 LEAF(sigpending,0)			/* XXX # of args? */
 	CALLSYS_ERROR(compat_13_sigpending13)

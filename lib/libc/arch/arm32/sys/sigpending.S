@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.4 1998/09/29 20:23:26 thorpej Exp $	*/
+/*	$NetBSD: sigpending.S,v 1.5 1998/12/02 01:01:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,9 @@
  */
 
 #include "SYS.h"
+
+WARN_REFERENCES(sigpending, \
+    "warning: reference to compatibility sigpending(); include <signal.h> for correct reference")
 
 ENTRY(sigpending)
 	mov	r2, r0
