@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.55 2001/03/30 17:16:34 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.56 2001/03/30 17:59:46 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -355,3 +355,7 @@
 215	STD		{ int linux_sys_setfsuid(uid_t uid); }
 216	NOARGS		{ int linux_sys_getfsuid(void); }
 217	UNIMPL		pivot_root
+218	UNIMPL		mincore
+219	UNIMPL		madvise
+220	UNIMPL		getdents64
+221	UNIMPL		fcntl64
