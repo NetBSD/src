@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.6 2003/10/07 21:22:11 mycroft Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.7 2003/11/09 22:11:12 christos Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.6 2003/10/07 21:22:11 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.7 2003/11/09 22:11:12 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -283,7 +283,7 @@ cdnr_cballoc(top, type, input_func)
 	MALLOC(cb, struct cdnr_block *, size, M_DEVBUF, M_WAITOK);
 	if (cb == NULL)
 		return (NULL);
-	bzero(cb, size);
+	(void)memset(cb, 0, size);
 	
 	cb->cb_len = size;
 	cb->cb_type = type;
@@ -1145,7 +1145,7 @@ cdnrcmd_get_stats(ap)
 		return (EBADF);
 
 	/* copy action stats */
-	bcopy(top->tc_cnts, ap->cnts, sizeof(ap->cnts));
+	(void)memcpy(ap->cnts, top->tc_cnts, sizeof(ap->cnts));
 
 	/* stats for each element */
 	nelements = ap->nelements;
@@ -1161,7 +1161,7 @@ cdnrcmd_get_stats(ap)
 			continue;
 		}
 
-		bzero(&tce, sizeof(tce));
+		(void)memset(&tce, 0, sizeof(tce));
 		tce.tce_handle = cb->cb_handle;
 		tce.tce_type = cb->cb_type;
 		switch (cb->cb_type) {
