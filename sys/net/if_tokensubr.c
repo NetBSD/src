@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.15 2001/01/17 00:30:52 thorpej Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.16 2001/02/28 14:08:35 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -457,7 +457,7 @@ token_output(ifp, m0, dst, rt0)
 send:
 #endif
 
-	len = m->m_flags;
+	mflags = m->m_flags;
 	len = m->m_pkthdr.len;
 	s = splimp();
 	/*
