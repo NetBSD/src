@@ -1,4 +1,4 @@
-/*	$NetBSD: form.c,v 1.10 2001/07/08 13:02:29 blymn Exp $	*/
+/*	$NetBSD: form.c,v 1.11 2001/09/27 07:56:34 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -26,7 +26,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
-coda test.
  *
  */
 
