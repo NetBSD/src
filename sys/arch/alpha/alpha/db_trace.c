@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.10 2003/01/17 22:11:17 thorpej Exp $ */
+/* $NetBSD: db_trace.c,v 1.11 2003/10/23 10:05:53 ragge Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10 2003/01/17 22:11:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.11 2003/10/23 10:05:53 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ static struct special_symbol {
 	{ (vaddr_t)&XentSys,		"syscall" },
 	{ (vaddr_t)&XentUna,		"unaligned access fault" },
 	{ (vaddr_t)&XentRestart,	"console restart" },
-	{ NULL }
+	{ 0 }
 };
 
 /*
@@ -164,7 +164,7 @@ sym_is_trapsymbol(vaddr_t v)
 {
 	int i;
 
-	for (i = 0; special_symbols[i].ss_val != NULL; ++i)
+	for (i = 0; special_symbols[i].ss_val != 0; ++i)
 		if (v == special_symbols[i].ss_val)
 			return 1;
 	return 0;
@@ -288,7 +288,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		if (sym_is_trapsymbol(symval)) {
 			tf = (struct trapframe *)frame;
 
-			for (i = 0; special_symbols[i].ss_val != NULL; ++i)
+			for (i = 0; special_symbols[i].ss_val != 0; ++i)
 				if (symval == special_symbols[i].ss_val)
 					(*pr)("--- %s",
 					    special_symbols[i].ss_note);
