@@ -1,0 +1,31 @@
+# tested under HPUX 10.20 using HP's ANSI-C compiler
+
+CC	=	cc
+NAME	=	i4bmon
+DEST	=	/usr/local/bin
+MANDIR	=	/usr/local/man
+MANHPUX	=	man1
+CFLAGS	=	-g -z -Wc,-w1 -Ae -DDEBUG -lHcurses
+LFLAGS	=	-g -z -Wc,-w1 -Ae -lHcurses
+CFILES	=	main.c curses.c
+OFILES	=	main.o curses.o
+HFILES	=	monitor.h monprivate.h
+
+$(NAME):	$(OFILES)
+		$(CC) $(OFILES) $(LFLAGS) -o $(NAME)
+			
+$(OFILES):	$(HFILES)
+
+install:	$(NAME) $(MANFILE)
+		cp $(NAME) $(DEST)
+		strip $(DEST)/$(NAME)
+		chmod og-rw,a+x,u+rwx $(DEST)/$(NAME)
+		chown root $(DEST)/$(NAME)
+		chgrp bin $(DEST)/$(NAME)
+		cp $(MANFILE) $(MANDIR)/$(MANHPUX)
+		chmod a+r $(MANDIR)/$(MANHPUX)/$(MANFILE)
+
+clean:		
+		rm -f *.o $(NAME) trace core* lint.out
+
+#-------------------------- E O F ---------------------------------------------
