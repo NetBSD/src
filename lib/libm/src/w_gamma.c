@@ -10,8 +10,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: w_gamma.c,v 1.7 1995/11/20 22:06:43 jtc Exp $";
+__RCSID("$NetBSD: w_gamma.c,v 1.8 1997/10/09 11:34:48 lukem Exp $");
 #endif
 
 /* double gamma(double x)
