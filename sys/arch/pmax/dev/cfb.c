@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.26 1997/06/30 22:08:58 jonathan Exp $	*/
+/*	$NetBSD: cfb.c,v 1.27 1997/07/21 05:39:09 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -161,7 +161,7 @@ extern int pmax_boardtype;
  * code is completely gone.
  */
 
-int cfbmatch __P((struct device *, void *, void *));
+int cfbmatch __P((struct device *, struct cfdata *, void *));
 void cfbattach __P((struct device *, struct device *, void *));
 int cfb_intr __P((void *sc));
 
@@ -178,10 +178,9 @@ struct cfdriver cfb_cd = {
 int
 cfbmatch(parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
-	/*struct cfdata *cf = match;*/
 	struct tc_attach_args *ta = aux;
 
 #ifdef FBDRIVER_DOES_ATTACH

@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ioasic.c,v 1.5 1997/06/22 07:42:28 jonathan Exp $	*/
+/*	$NetBSD: dc_ioasic.c,v 1.6 1997/07/21 05:39:13 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -30,7 +30,7 @@
 /*
  * Autoconfig definition of driver front-end
  */
-int	dc_ioasic_match  __P((struct device * parent, void *cfdata, void *aux));
+int	dc_ioasic_match  __P((struct device *parent, struct cfdata *match, void *aux));
 void	dc_ioasic_attach __P((struct device *parent, struct device *self, void *aux));
 
 struct cfattach dc_ioasic_ca = {
@@ -64,7 +64,7 @@ dc_ioasic_consinit(dev)
 int
 dc_ioasic_match(parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
 	struct ioasicdev_attach_args *d = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.3 1997/06/22 07:42:34 jonathan Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.4 1997/07/21 05:39:26 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -32,7 +32,8 @@ extern struct cfdriver mainbus_cd;	/* XXX */
 /*
  * Autoconfig definition of driver front-end
  */
-int	sii_ds_match  __P((struct device * parent, void *cfdata, void *aux));
+int	sii_ds_match  __P((struct device* parent, struct cfdata *match,
+	    void *aux));
 void	sii_ds_attach __P((struct device *parent, struct device *self, void *aux));
 
 
@@ -52,7 +53,7 @@ struct cfattach sii_ds_ca = {
 int
 sii_ds_match(parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
 	struct confargs *ca = aux;
