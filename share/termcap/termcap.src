@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.81 2003/03/25 16:47:32 taca Exp $
+#	$NetBSD: termcap.src,v 1.82 2003/04/06 07:19:53 jdc Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -339,7 +339,7 @@ klone+color|color control for ansi.sys and ISO6429-compatible displays:\
 # default color pair,  but many `ANSI' terminals don't grok the <op> cap.
 ecma+color|color control for ECMA-48-compatible terminals:\
 	:Co#8:NC#3:pa#64:\
-	:Sb=\E[4%dm:Sf=\E[3%dm:op=\E[39;49m:
+	:AB=\E[4%dm:AF=\E[3%dm:op=\E[39;49m:
 
 # Attribute control for ECMA-48-compatible terminals
 ecma+sgr|attribute capabilities for true ECMA-48 terminals:\
