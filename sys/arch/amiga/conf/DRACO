@@ -1,4 +1,4 @@
-#	$NetBSD: DRACO,v 1.15 1997/08/27 19:32:48 is Exp $
+#	$NetBSD: DRACO,v 1.16 1997/09/12 08:13:26 mycroft Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
@@ -21,7 +21,6 @@ options		DRACO
 
 options		"M68060"	# support for 060
 options		"M060SP"	# MC68060 software support (Required for 060)
-options		FPCOPROC	# Support for MC6888[12] (Required)
 
 #
 # Networking options
