@@ -1,7 +1,7 @@
-/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.28 1999/12/07 05:44:57 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.29 2000/02/25 00:45:05 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -94,6 +94,9 @@ void		__C(CHIP,_io_unmap) __P((void *, bus_space_handle_t,
 		    bus_size_t, int));
 int		__C(CHIP,_io_subregion) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_size_t, bus_space_handle_t *));
+
+int		__C(CHIP,_io_translate) __P((void *, bus_addr_t, bus_size_t,
+		    int, struct alpha_bus_space_translation *));
 
 /* allocation/deallocation */
 int		__C(CHIP,_io_alloc) __P((void *, bus_addr_t, bus_addr_t,
@@ -196,10 +199,6 @@ void		__C(CHIP,_io_copy_region_4) __P((void *, bus_space_handle_t,
 void		__C(CHIP,_io_copy_region_8) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
 
-/* Internal */
-void		__C(CHIP,_io_mapit) __P((void *, bus_addr_t,
-		    bus_space_handle_t *));
-
 #ifndef	CHIP_IO_EX_STORE
 static long
     __C(CHIP,_io_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
@@ -233,6 +232,8 @@ __C(CHIP,_bus_io_init)(t, v)
 	t->abs_map =		__C(CHIP,_io_map);
 	t->abs_unmap =		__C(CHIP,_io_unmap);
 	t->abs_subregion =	__C(CHIP,_io_subregion);
+
+	t->abs_translate =	__C(CHIP,_io_translate);
 
 	/* allocation/deallocation */
 	t->abs_alloc =		__C(CHIP,_io_alloc);
@@ -324,42 +325,64 @@ __C(CHIP,_bus_io_init)(t, v)
 	CHIP_IO_EXTENT(v) = ex;
 }
 
-void
-__C(CHIP,_io_mapit)(v, ioaddr, iohp)
+int
+__C(CHIP,_io_translate)(v, ioaddr, iolen, flags, abst)
 	void *v;
 	bus_addr_t ioaddr;
-	bus_space_handle_t *iohp;
+	bus_size_t iolen;
+	int flags;
+	struct alpha_bus_space_translation *abst;
 {
+	bus_addr_t ioend = ioaddr + (iolen - 1);
+	int linear = flags & BUS_SPACE_MAP_LINEAR;
+
+	/*
+	 * Can't map i/o space linearly.
+	 */
+	if (linear)
+		return (EOPNOTSUPP);
 
 #ifdef CHIP_IO_W1_BUS_START
 	if (ioaddr >= CHIP_IO_W1_BUS_START(v) &&
-	    ioaddr <= CHIP_IO_W1_BUS_END(v)) {
-		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W1_SYS_START(v)) >>
-		    CHIP_ADDR_SHIFT) + (ioaddr - CHIP_IO_W1_BUS_START(v));
-	} else
+	    ioend <= CHIP_IO_W1_BUS_END(v)) {
+		abst->abst_bus_start = CHIP_IO_W1_BUS_START(v);
+		abst->abst_bus_end = CHIP_IO_W1_BUS_END(v);
+		abst->abst_sys_start = CHIP_IO_W1_SYS_START(v);
+		abst->abst_sys_end = CHIP_IO_W1_SYS_END(v);
+		abst->abst_addr_shift = CHIP_ADDR_SHIFT;
+		abst->abst_size_shift = CHIP_SIZE_SHIFT;
+		abst->abst_flags = 0;
+		return (0);
+	}
 #endif
 #ifdef CHIP_IO_W2_BUS_START
 	if (ioaddr >= CHIP_IO_W2_BUS_START(v) &&
-	    ioaddr <= CHIP_IO_W2_BUS_END(v)) {
-		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W2_SYS_START(v)) >>
-		    CHIP_ADDR_SHIFT) + (ioaddr - CHIP_IO_W2_BUS_START(v));
-	} else
+	    ioend <= CHIP_IO_W2_BUS_END(v)) {
+		abst->abst_bus_start = CHIP_IO_W2_BUS_START(v);
+		abst->abst_bus_end = CHIP_IO_W2_BUS_END(v);
+		abst->abst_sys_start = CHIP_IO_W2_SYS_START(v);
+		abst->abst_sys_end = CHIP_IO_W2_SYS_END(v);
+		abst->abst_addr_shift = CHIP_ADDR_SHIFT;
+		abst->abst_size_shift = CHIP_SIZE_SHIFT;
+		abst->abst_flags = 0;
+		return (0);
+	}
 #endif
-	{
-		printf("\n");
+#ifdef EXTENT_DEBUG
+	printf("\n");
 #ifdef CHIP_IO_W1_BUS_START
-		printf("%s: window[1]=0x%lx-0x%lx\n",
-		    __S(__C(CHIP,_io_map)), CHIP_IO_W1_BUS_START(v),
-		    CHIP_IO_W1_BUS_END(v));
+	printf("%s: window[1]=0x%lx-0x%lx\n",
+	    __S(__C(CHIP,_io_map)), CHIP_IO_W1_BUS_START(v),
+	    CHIP_IO_W1_BUS_END(v));
 #endif
 #ifdef CHIP_IO_W2_BUS_START
-		printf("%s: window[2]=0x%lx-0x%lx\n",
-		    __S(__C(CHIP,_io_map)), CHIP_IO_W2_BUS_START(v),
-		    CHIP_IO_W2_BUS_END(v));
+	printf("%s: window[2]=0x%lx-0x%lx\n",
+	    __S(__C(CHIP,_io_map)), CHIP_IO_W2_BUS_START(v),
+	    CHIP_IO_W2_BUS_END(v));
 #endif
-		panic("%s: don't know how to map %lx",
-		    __S(__C(CHIP,_io_mapit)), ioaddr);
-	}
+#endif /* EXTENT_DEBUG */
+	/* No translation. */
+	return (EINVAL);
 }
 
 int
@@ -371,25 +394,18 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp, acct)
 	bus_space_handle_t *iohp;
 	int acct;
 {
-	int linear = flags & BUS_SPACE_MAP_LINEAR;
+	struct alpha_bus_space_translation abst;
 	int error;
 
 	/*
-	 * Can't map i/o space linearly.
+	 * Get the translation for this address.
 	 */
-	if (linear)
-		return (EOPNOTSUPP);
+	error = __C(CHIP,_io_translate)(v, ioaddr, iosize, flags, &abst);
+	if (error)
+		return (error);
 
-	if (acct == 0) {
-		/*
-		 * XXX We should ensure that the region is actually
-		 * XXX mappable, but nothing should really be using
-		 * XXX this interface (only ISA PnP does, and only
-		 * XXX via a machine-dependent hook), so we don't
-		 * XXX bother.
-		 */
+	if (acct == 0)
 		goto mapit;
-	}
 
 #ifdef EXTENT_DEBUG
 	printf("io: allocating 0x%lx to 0x%lx\n", ioaddr, ioaddr + iosize - 1);
@@ -405,7 +421,8 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp, acct)
 	}
 
  mapit:
-	__C(CHIP,_io_mapit)(v, ioaddr, iohp);
+	*iohp = (ALPHA_PHYS_TO_K0SEG(abst.abst_sys_start) >>
+	    CHIP_ADDR_SHIFT) + (ioaddr - abst.abst_bus_start);
 
 	return (0);
 }
@@ -494,6 +511,7 @@ __C(CHIP,_io_alloc)(v, rstart, rend, size, align, boundary, flags,
 	int flags;
 	bus_space_handle_t *bshp;
 {
+	struct alpha_bus_space_translation abst;
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
 	bus_addr_t ioaddr;
 	int error;
@@ -526,8 +544,16 @@ __C(CHIP,_io_alloc)(v, rstart, rend, size, align, boundary, flags,
 	printf("io: allocated 0x%lx to 0x%lx\n", ioaddr, ioaddr + size - 1);
 #endif
 
+	error = __C(CHIP,_io_translate)(v, ioaddr, size, flags, &abst);
+	if (error) {
+		(void) extent_free(CHIP_IO_EXTENT(v), ioaddr, size,
+		    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+		return (error);
+	}
+
 	*addrp = ioaddr;
-	__C(CHIP,_io_mapit)(v, ioaddr, bshp);
+	*bshp = (ALPHA_PHYS_TO_K0SEG(abst.abst_sys_start) >>
+	    CHIP_ADDR_SHIFT) + (ioaddr - abst.abst_bus_start);
 
 	return (0);
 }
