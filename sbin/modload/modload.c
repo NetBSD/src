@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.35 2002/10/10 01:57:10 simonb Exp $	*/
+/*	$NetBSD: modload.c,v 1.36 2003/02/09 23:29:32 atatat Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.35 2002/10/10 01:57:10 simonb Exp $");
+__RCSID("$NetBSD: modload.c,v 1.36 2003/02/09 23:29:32 atatat Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -44,6 +44,8 @@ __RCSID("$NetBSD: modload.c,v 1.35 2002/10/10 01:57:10 simonb Exp $");
 #include <sys/lkm.h>
 #include <sys/stat.h>
 #include <sys/file.h>
+#include <sys/sysctl.h>
+#include <machine/cpu.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -242,7 +244,7 @@ int
 main(int argc, char **argv)
 {
 	int c;
-	char *kname = _PATH_UNIX;
+	char *kname = NULL;
 	char *entry = DFLT_ENTRY;
 	char *post = NULL;
 	char *ldscript = NULL;
@@ -348,6 +350,32 @@ main(int argc, char **argv)
 			    modobj);
 	}
 
+	/*
+	 * Determine name of kernel to use
+	 */
+	if (kname == NULL) {
+#ifdef CPU_BOOTED_KERNEL
+		/* 130 is 128 + '/' + '\0' */
+		static char booted_kernel[130];
+		int mib[2], rc;
+		size_t len;
+		struct stat st;
+
+		mib[0] = CTL_MACHDEP;
+		mib[1] = CPU_BOOTED_KERNEL;
+		booted_kernel[0] = '/';
+		booted_kernel[1] = '\0';
+		len = sizeof(booted_kernel) - 2;
+		rc = sysctl(&mib[0], 2, &booted_kernel[1], &len, NULL, 0);
+		booted_kernel[sizeof(booted_kernel) - 1] = '\0';
+		kname = (booted_kernel[1] == '/') ?
+		    &booted_kernel[1] : &booted_kernel[0];
+		if (rc != -1)
+			rc = stat(kname, &st);
+		if (rc == -1 || !S_ISREG(st.st_mode))
+#endif /* CPU_BOOTED_KERNEL */
+			kname = _PATH_UNIX;
+	}
 	/*
 	 * Prelink to get file size
 	 */
