@@ -1,4 +1,4 @@
-/*	$NetBSD: xlint.c,v 1.13 1999/05/03 15:45:01 christos Exp $	*/
+/*	$NetBSD: xlint.c,v 1.14 1999/09/06 06:45:20 jwise Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.13 1999/05/03 15:45:01 christos Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.14 1999/09/06 06:45:20 jwise Exp $");
 #endif
 
 #include <sys/param.h>
@@ -541,6 +541,15 @@ fname(name, last)
 	int is_stdin;
 	int	fd;
 
+	if (lseek(cppoutfd, SEEK_SET, (off_t)0) != 0) {
+		warn("lseek");
+		terminate(-1);
+	}
+	if (ftruncate(cppoutfd, (off_t)0) != 0) {
+		warn("ftruncate");
+		terminate(-1);
+	}
+	
 	is_stdin = (strcmp(name, "-") == 0);
 	bn = basename(name, '/');
 	suff = basename(bn, '.');
@@ -604,8 +613,6 @@ fname(name, last)
 	runchild(path, args, cppout, cppoutfd);
 	free(path);
 	freelst(&args);
-	if (cppoutfd != -1)
-		(void)close(cppoutfd);
 
 	/* run lint1 */
 
