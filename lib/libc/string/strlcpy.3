@@ -1,7 +1,7 @@
-.\"	$NetBSD: strlcpy.3,v 1.2 1999/09/08 22:56:56 lukem Exp $
-.\" from OpenBSD: strlcpy.3,v 1.6 1999/09/04 02:22:46 pjanzen Exp 
+.\"	$NetBSD: strlcpy.3,v 1.3 2000/11/24 16:19:05 itojun Exp $
+.\" from OpenBSD: strlcpy.3,v 1.11 2000/11/16 23:27:41 angelos Exp
 .\"
-.\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" Copyright (c) 1998, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 9, 1999
+.Dd June 22, 1998
 .Dt STRLCPY 3
 .Os
 .Sh NAME
@@ -44,7 +44,8 @@ The
 .Fn strlcpy
 and
 .Fn strlcat
-functions copy and concatenate strings respectively.  They are designed
+functions copy and concatenate strings respectively.
+They are designed
 to be safer, more consistent, and less error prone replacements for
 .Xr strncpy 3
 and
@@ -56,8 +57,29 @@ and
 take the full size of the buffer (not just the length) and guarantee to
 NUL-terminate the result (as long as
 .Fa size
-is larger than 0).  Note that you should include a byte for the NUL in
+is larger than 0 or, in the case of
+.Fn strlcat ,
+as long as there is at least one byte free in
+.Fa dst ) .
+Note that you should include a byte for the NUL in
 .Fa size .
+Also note that
+.Fn strlcpy  
+and
+.Fn strlcat
+only operate on true
+.Dq C
+strings.
+This means that for
+.Fn strlcpy
+.Fa src
+must be NUL-terminated and for
+.Fn strlcat
+both
+.Fa src
+and
+.Fa dst
+must be NUL-terminated.
 .Pp
 The
 .Fn strlcpy
@@ -83,8 +105,8 @@ The
 .Fn strlcpy
 and
 .Fn strlcat
-functions return the total length of the string they tried to
-create.  For
+functions return the total length of the string they tried to create.
+For
 .Fn strlcpy
 that means the length of
 .Fa src .
@@ -111,7 +133,7 @@ char *s, *p, buf[BUFSIZ];
 To detect truncation, perhaps while building a pathname, something
 like the following might be used:
 .Bd -literal -offset indent
-char *dir, *file, pname[MAXPATHNAMELEN];
+char *dir, *file, pname[MAXPATHLEN];
 
 \&...
 
@@ -122,9 +144,9 @@ if (strlcat(pname, file, sizeof(pname)) >= sizeof(pname))
 .Ed
 .Pp
 Since we know how many characters we copied the first time, we can
-speed things up a bit by using a copy instead on an append:
+speed things up a bit by using a copy instead of an append:
 .Bd -literal -offset indent
-char *dir, *file, pname[MAXPATHNAMELEN];
+char *dir, *file, pname[MAXPATHLEN];
 size_t n;
 
 \&...
