@@ -26,7 +26,8 @@ DDEESSCCRRIIPPTTIIOONN
        one.   In general, customizations specific to a particular
        computer should be done in the //eettcc//ddhhcclliieenntt..ccoonnff  script.
        If you find that you can't make such a customization with­
-       out customizing dhclient.conf, please submit a bug report.
+       out  customizing  dhclient-script,  please  submit  a  bug
+       report.
 
 OOPPEERRAATTIIOONN
        When  dhclient  needs  to  invoke the client configuration
@@ -57,7 +58,6 @@ PPRREEIINNIITT
        If  an  IP  alias  has been declared in dhclient.conf, its
        address will be passed in $alias_ip_address, and  that  ip
        alias should be deleted from the interface, along with any
-       routes to it.
 
 
 
@@ -70,6 +70,8 @@ PPRREEIINNIITT
 dhclient(8)                                           dhclient(8)
 
 
+       routes to it.
+
 AARRPPSSEENNDD
        The DHCP client is requesting that  an  address  that  has
        been  offered  to it be checked to see if somebody else is
@@ -81,7 +83,7 @@ AARRPPSSEENNDD
 
 AARRPPCCHHEECCKK
        The DHCP client wants to know if a  response  to  the  ARP
-       request  send  using  ARPCHECK has been received.   If one
+       request  send  using  ARPSEND  has been received.   If one
        has, the script should exit with a nonzero  status,  indi­
        cating that the offered address has already been requested
        and should be declined.   $new_ip_address  and  $interface
@@ -122,8 +124,6 @@ RREENNEEWW
        in  BOUND,  except  that  in addition to all the variables
        starting with $new_, there is  another  set  of  variables
        starting  with  $old_.   Persistent settings that may have
-       changed need to be deleted - for example, if a local route
-       to  the  bound  address is being configured, the old local
 
 
 
@@ -136,6 +136,8 @@ RREENNEEWW
 dhclient(8)                                           dhclient(8)
 
 
+       changed need to be deleted - for example, if a local route
+       to  the  bound  address is being configured, the old local
        route  should  be  deleted.   If  the  default  route  has
        changed,  the old default route should be deleted.  If the
        static  routes  have  changed,  the  old  ones  should  be
@@ -187,9 +189,7 @@ FFIILLEESS
        Each operating system should generally have its own script
        file, although the script files for similar operating sys­
        tems  may be similar or even identical.   The script files
-       included in the Internet Software Consortium DHCP  distri­
-       bution    appear    in   the   distribution   tree   under
-       client/scripts,  and  bear  the  names  of  the  operating
+       included  in  the  Internet   Software   Consortium   DHCP
 
 
 
@@ -202,7 +202,9 @@ FFIILLEESS
 dhclient(8)                                           dhclient(8)
 
 
-       systems on which they are intended to work.
+       distribution   appear   in  the  distribution  tree  under
+       client/scripts, and bear the names of the  operating  sys­
+       tems on which they are intended to work.
 
 BBUUGGSS
        If more than one interface is being used, there's no obvi­
@@ -226,8 +228,6 @@ AAUUTTHHOORR
        Internet  Software Consortium, see hhttttpp::////wwwwww..vviixx..ccoomm//iisscc..
        To   learn   more    about    Vixie    Enterprises,    see
        hhttttpp::////wwwwww..vviixx..ccoomm..
-
-
 
 
 

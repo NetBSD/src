@@ -42,13 +42,13 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.1.1.10 1999/02/24 04:11:07 mellon Exp $ Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.1.1.11 1999/03/05 17:43:47 mellon Exp $ Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
 #endif
 
 static char copyright[] =
 "Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
-static char message [] = "Internet Software Consortium DHCP Server V2.0b1pl15 ";
+static char message [] = "Internet Software Consortium DHCP Server V2.0b1pl18 ";
 static char contrib [] = "\nPlease contribute if you find this software useful.";
 static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
 
@@ -228,7 +228,7 @@ int main (argc, argv, envp)
 
 		/* If the previous server process is not still running,
 		   write a new pid file immediately. */
-		if (pid && kill (pid, 0) < 0) {
+		if (pid && (pid == getpid () || kill (pid, 0) < 0)) {
 			unlink (path_dhcpd_pid);
 			if ((i = open (path_dhcpd_pid,
 				       O_WRONLY | O_CREAT, 0640)) >= 0) {

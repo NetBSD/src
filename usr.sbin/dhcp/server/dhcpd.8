@@ -158,6 +158,18 @@ the
 .B -p
 flag may used.  It should be followed by the udp port number on which
 dhcpd should listen.  This is mostly useful for debugging purposes.
+If the
+.B -p
+flag is specified, the server will transmit responses to clients at a
+port number that is one greater than the one specified - i.e., if you
+specify
+.B -p
+67, then the server will listen on port 67 and transmit to port 68.
+Datagrams that must go through relay agents are sent to the port
+number specified with the
+.B -p
+flag - if you wish to use alternate port numbers, you must configure
+any relay agents you are using to use the same alternate port numbers.
 .PP
 To run dhcpd as a foreground process, rather than allowing it to run
 as a daemon in the background, the
