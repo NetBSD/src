@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.19 2000/06/26 14:21:15 mrg Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.20 2000/06/28 02:59:32 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -475,7 +475,6 @@ extern	void	m_copyback __P((struct mbuf *, int, int, caddr_t));
 # endif
 # if (BSD >= 199306) || defined(__FreeBSD__)
 #  if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105010000)
-#   include <vm/vm.h>
 #   include <uvm/uvm_extern.h>
 #  else
 #   include <vm/vm.h>
