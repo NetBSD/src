@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 1996/02/02 20:34:41 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.14 1996/05/11 16:13:39 mycroft Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -30,6 +30,10 @@ ${KERNLIB_PROF}:	.NOTMAIN __always_make_kernlib
 clean:: 		.NOTMAIN __always_make_kernlib
 	@echo cleaning the kern library objects
 	@${KERNMAKE} clean
+
+depend:: 		.NOTMAIN __always_make_kernlib
+	@echo depending the kern library objects
+	@${KERNMAKE} depend
 
 __always_make_kernlib:	.NOTMAIN
 	@mkdir -p ${KERNDST}

@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.30 1996/03/15 00:02:28 christos Exp $
+# 	$NetBSD: Makefile.sparc,v 1.31 1996/05/11 16:12:58 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -147,7 +147,7 @@ links:
 
 SRCS=	${SPARC}/sparc/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${SPARC}/sparc/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}

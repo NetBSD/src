@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pica,v 1.3 1996/03/31 04:34:20 jonathan Exp $
+#	$NetBSD: Makefile.pica,v 1.4 1996/05/11 16:12:42 mycroft Exp $
 
 #	@(#)Makefile.pica	8.2 (Berkeley) 2/16/94
 #
@@ -154,7 +154,7 @@ clock.o machdep.o autoconf.o conf.o: Makefile
 # depend on network configuration
 uipc_proto.o vfs_conf.o: Makefile
 
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore.S ${PMAX}/pica/fp.S
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
