@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.16 2000/04/30 18:52:15 dante Exp $	 */
+/* $NetBSD: adw.c,v 1.17 2000/05/03 18:58:37 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -174,6 +174,7 @@ adw_alloc_carriers(sc)
 	sc->sc_control->carriers = malloc(ADW_CARRIER_SIZE * ADW_MAX_CARRIER,
 			M_DEVBUF, M_WAITOK);
 	if(!sc->sc_control->carriers) {
+		error = ENOMEM;
 		printf("%s: malloc() failed in allocating carrier structures,"
 		       " error = %d\n", sc->sc_dev.dv_xname, error);
 		return (error);
@@ -481,6 +482,8 @@ adw_queue_ccb(sc, ccb, retry)
 
 	if(!retry)
 		TAILQ_INSERT_TAIL(&sc->sc_waiting_ccb, ccb, chain);
+
+	errcode = ADW_SUCCESS;
 
 	while ((ccb = sc->sc_waiting_ccb.tqh_first) != NULL) {
 
