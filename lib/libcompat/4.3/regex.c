@@ -46,12 +46,15 @@
 #if 0
 static char sccsid[] = "from: @(#)regex.c	5.1 (Berkeley) 3/29/92";*/
 #else
-__RCSID("$NetBSD: regex.c,v 1.8 1998/06/01 20:22:58 kleink Exp $");
+__RCSID("$NetBSD: regex.c,v 1.9 1999/05/04 17:11:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <stddef.h>
+#ifdef __lint__
+#define __compat_regerror __compat43_regerror
+#endif
 #include <regexp.h>
 #include <re_comp.h>
 #include <string.h>
