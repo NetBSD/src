@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.16 2002/05/31 20:10:45 kleink Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.17 2002/06/11 22:24:35 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -88,6 +88,7 @@ cpu_probe_cache(void)
 		assoc = 8;
 		break;
 	case MPC603e:
+	case MPC603ev:
 	case MPC604:
 		curcpu()->ci_ci.dcache_size = 16 K;
 		curcpu()->ci_ci.icache_size = 16 K;
