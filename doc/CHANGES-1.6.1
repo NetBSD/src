@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.39 2002/11/22 09:38:39 wiz Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.40 2002/11/22 17:19:48 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1420,3 +1420,24 @@ sys/dev/pci/pcidevs_data.h			regenerate
 
 	fix typos; "wiseman" is 82542, not 82452.
 	[yamt, ticket #925]
+
+sys/arch/sparc64/dev/pci_machdep.c		1.33
+
+	Set the PCI latency timer for bus master devices.
+
+	Slightly different to the patch suggested by Takeshi Nakayama in
+	PR 18451 (idea from FreeBSD). 
+
+	Additional input from Jason Thorpe: do not hard code the bus frequency,
+	instead get it from OpenFirmware.
+	[martin, ticket #875]
+
+syssrc/sys/arch/sparc64/sparc64/machdep.c	1.131,1.133 via patch
+
+	Fix typo: set _asi depending on requested endianess, not _sasi (the
+	streaming accessors take care of this themselfs). Fixes 32-bit
+	kernels on PCI machines. Since we now use pmap_kenter_pa, which
+	ignores PMAP_LITTLE, don't bother to pass that as flags. We've
+	already changed the ASIs used to access the mapped pages acordingly.
+	[martin, ticket #917]
+
