@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.41 2002/10/02 17:11:36 onoe Exp $	*/
+/*	$NetBSD: wireg.h,v 1.42 2002/10/21 11:57:25 soren Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -89,7 +89,6 @@
  * Size of Hermes & Prism2 I/O space.
  */
 #define WI_IOSIZE		0x40
-#define WI_PCI_CBMA		0x10	/* Configuration Base Memory Address */
 
 /*
  * Hermes & Prism2 register definitions 
