@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2001/11/08 16:52:20 tron Exp $
+#	$NetBSD: Makefile,v 1.32 2002/03/05 21:16:52 thorpej Exp $
 #
 # boot.fs is the image for disk 1 of the two-set floppy based installation
 # method.
@@ -31,9 +31,9 @@ MDSETIMAGE?=	mdsetimage
 OBJCOPY?=	objcopy
 
 LISTS=		${.CURDIR}/list
-RAMDISK!=	cd ${TOP}/ramdisk/; \
-		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" |\
-		${MAKE} -s -f-
+
+RAMDISKDIR!=	cd ${TOP}/ramdisk && ${PRINTOBJDIR}
+RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
 # Some reasonable values for the -i parameter to newfs are:
 #

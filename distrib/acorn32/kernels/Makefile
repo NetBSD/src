@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/01/25 15:28:44 reinoud Exp $
+#	$NetBSD: Makefile,v 1.2 2002/03/05 21:16:51 thorpej Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -10,9 +10,8 @@ KERNELS=	INSTALL
 
 STRIP?=		strip
 
-RAMDISK!=	cd $(.CURDIR)/../ramdisk/; \
-		    printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk-${REV}.fs\n" | \
-		    ${MAKE} -s -f-
+RAMDISKDIR!=	cd $(.CURDIR)/../ramdisk && ${PRINTOBJDIR}
+RAMDISK=	${RAMDISKDIR}/ramdisk-${REV}.fs
 
 CLEANFILES+=	netbsd.tmp ${KERNELS:C/^.*$/netbsd.&.gz/g}
 MDSETIMAGE?=	mdsetimage
