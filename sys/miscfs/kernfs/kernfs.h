@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.17 2003/08/07 16:32:37 agc Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.18 2003/09/08 06:51:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,36 +37,87 @@
 #define	_PATH_KERNFS	"/kern"		/* Default mountpoint */
 
 #ifdef _KERNEL
-struct kernfs_mount {
-	struct vnode	*kf_root;	/* Root node */
-};
+#include <sys/queue.h>
 
+/*
+ * The different types of node in a kernfs filesystem
+ */
+typedef enum {
+	Pkern,		/* the filesystem itself (.) */
+	Proot,		/* the filesystem root (..) */
+	Pnull,		/* none aplicable */
+	Ptime,		/* boottime */
+	Pint,		/* integer */
+	Pstring,	/* string */
+	Phostname,	/* hostname */
+	Pavenrun,	/* loadavg */
+	Pdevice,	/* device file (rootdev/rrootdev) */
+	Pmsgbuf,	/* msgbuf */
+	Pipsecsadir,	/* ipsec security association (top dir) */
+	Pipsecspdir,	/* ipsec security policy (top dir) */
+	Pipsecsa,	/* ipsec security association entry */
+	Pipsecsp,	/* ipsec security policy entry */
+} kfstype;
+
+/*
+ * control data for the kern file system.
+ */
 struct kern_target {
-	u_char kt_type;
-	u_char kt_namlen;
-	const char *kt_name;
-	void *kt_data;
-#define	KTT_NULL	 1
-#define	KTT_TIME	 5
-#define KTT_INT		17
-#define	KTT_STRING	31
-#define KTT_HOSTNAME	47
-#define KTT_AVENRUN	53
-#define KTT_DEVICE	71
-#define	KTT_MSGBUF	89
-	u_char kt_tag;
-	u_char kt_vtype;
-	mode_t kt_mode;
+	u_char		kt_type;
+	u_char		kt_namlen;
+	const char	*kt_name;
+	void		*kt_data;
+	kfstype		kt_tag;
+	u_char		kt_vtype;
+	mode_t		kt_mode;
 };
 
 struct kernfs_node {
-	const struct kern_target *kf_kt;
+	LIST_ENTRY(kernfs_node) kfs_hash; /* hash chain */
+	TAILQ_ENTRY(kernfs_node) kfs_list; /* flat list */
+	struct vnode	*kfs_vnode;	/* vnode associated with this pfsnode */
+	kfstype		kfs_type;	/* type of procfs node */
+	mode_t		kfs_mode;	/* mode bits for stat() */
+	long		kfs_fileno;	/* unique file id */
+	u_int32_t	kfs_value;	/* SA id or SP id (Pint) */
+	const struct kern_target *kfs_kt;
+	void		*kfs_v;		/* pointer to secasvar/secpolicy/mbuf */
+	long		kfs_cookie;	/* fileno cookie */
 };
 
-#define VFSTOKERNFS(mp)	((struct kernfs_mount *)((mp)->mnt_data))
-#define	VTOKERN(vp) ((struct kernfs_node *)(vp)->v_data)
+struct kernfs_mount {
+	TAILQ_HEAD(, kernfs_node) nodelist;
+	long fileno_cookie;
+};
 
+#define UIO_MX	32
+
+#define KERNFS_FILENO(kt, typ, cookie) \
+	((kt) ? 2 + ((kt) - &kern_targets[0]) \
+	      : (((cookie) << 6) | ((typ) + nkern_targets)))
+
+#define VFSTOKERNFS(mp)	((struct kernfs_mount *)((mp)->mnt_data))
+#define	VTOKERN(vp)	((struct kernfs_node *)(vp)->v_data)
+#define KERNFSTOV(kfs)	((kfs)->kfs_vnode)
+
+extern const struct kern_target kern_targets[];
+extern int nkern_targets;
 extern int (**kernfs_vnodeop_p) __P((void *));
 extern struct vfsops kernfs_vfsops;
 extern dev_t rrootdev;
+
+struct secasvar;
+struct secpolicy;
+
+int kernfs_root __P((struct mount *, struct vnode **));
+
+void kernfs_hashinit __P((void));
+void kernfs_hashreinit __P((void));
+void kernfs_hashdone __P((void));
+int kernfs_freevp __P((struct vnode *));
+int kernfs_allocvp __P((struct mount *, struct vnode **, kfstype,
+	const struct kern_target *, u_int32_t));
+
+void kernfs_revoke_sa __P((struct secasvar *));
+void kernfs_revoke_sp __P((struct secpolicy *));
 #endif /* _KERNEL */
