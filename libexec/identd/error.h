@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.4 1997/10/08 07:07:46 mrg Exp $	*/
+/*	$NetBSD: error.h,v 1.5 2003/09/14 22:38:23 christos Exp $	*/
 
 /*
 ** error.h                                               Error handling macros
@@ -24,6 +24,14 @@
       (printf("%d , %d : ERROR : UNKNOWN-ERROR\r\n", lport, fport), 0)), \
      fflush(stdout), fflush(stderr), exit(1), 0)
 
+
+#define WARNING1(fmt,v1) \
+    ((syslog_flag ? (syslog(LOG_INFO, fmt, v1),0) : 0), \
+     (debug_flag ? (fprintf(stderr, "%d , %d : WARNING : X-DBG : ", \
+			    lport, fport), \
+		    fprintf(stderr, fmt, v1), perror(": "), 0) : \
+      (printf("%d , %d : WARNING : UNKNOWN-WARNING\r\n", lport, fport), 0)), \
+     fflush(stdout), fflush(stderr), 0)
 
 #define ERROR1(fmt,v1) \
     ((syslog_flag ? (syslog(LOG_ERR, fmt, v1),0) : 0), \
