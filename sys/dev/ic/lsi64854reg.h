@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854reg.h,v 1.1 1998/08/29 21:42:04 pk Exp $ */
+/*	$NetBSD: lsi64854reg.h,v 1.2 1998/09/01 21:04:44 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,11 +67,11 @@
 #define L64854_EN_DMA	0x00000200	/* enable DMA transfers */
 
 #define L64854_BURST_SIZE	0x000c0000	/* Read/write burst size */
-#define  L64854_BURST_0	0x00080000	/*   no bursts (SCSI-only) */
+#define  L64854_BURST_0		0x00080000	/*   no bursts (SCSI-only) */
 #define  L64854_BURST_16	0x00000000	/*   16-byte bursts */
 #define  L64854_BURST_32    	0x00040000	/*   32-byte bursts */
 
-#define L64854_DEVID		0xc0000000	/* device ID bits */
+#define L64854_DEVID		0xf0000000	/* device ID bits */
 
 /*
  * SCSI DMA control bits.

@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.1 1998/08/29 21:42:03 pk Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.2 1998/09/01 21:04:43 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ lsi64854_attach(sc)
 	}
 
 	printf(": rev ");
-	sc->sc_rev = L64854_GCSR(sc) & D_DEV_ID;
+	sc->sc_rev = L64854_GCSR(sc) & L64854_DEVID;
 	switch (sc->sc_rev) {
 	case DMAREV_0:
 		printf("0");
