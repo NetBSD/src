@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.3 1997/03/15 18:11:00 is Exp $ */
+/*	$NetBSD: dma.c,v 1.4 1997/03/20 16:01:38 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -48,33 +48,15 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
+#include <dev/ic/ncr53c9xreg.h>
+#include <dev/ic/ncr53c9xvar.h>
+
 #include <sun3x/dev/dmareg.h>
 #include <sun3x/dev/dmavar.h>
-#include <sun3x/dev/espreg.h>
-#include <sun3x/dev/espvar.h>
-
-void dmaattach		__P((struct device *, struct device *, void *));
-void dma_reset		__P((struct dma_softc *));
-void dma_enintr		__P((struct dma_softc *));
-int dma_isintr		__P((struct dma_softc *));
-int espdmaintr		__P((struct dma_softc *));
-int dma_setup		__P((struct dma_softc *, caddr_t *, size_t *,
-			     int, size_t *));
-void dma_go		__P((struct dma_softc *));
-
-#if	0
-struct cfattach dma_ca = {
-	sizeof(struct dma_softc), dmamatch, dmaattach
-};
-
-struct cfdriver dma_cd = {
-	NULL, "dma", DV_DULL
-};
-#endif	/* 0 */
 
 /*
  * Pseudo-attach function.  Called from the esp driver during its
- * attach function.
+ * attach function.  This needs to be silent.
  */
 void
 dmaattach(parent, self, aux)
@@ -99,8 +81,25 @@ dmaattach(parent, self, aux)
 	 * Sun3x works ok (so far) without it.
 	 */
 
-	printf(": rev ");
 	sc->sc_rev = sc->sc_regs->csr & D_DEV_ID;
+
+#if 0
+	/* indirect functions */
+	sc->intr = espdmaintr;
+	sc->enintr = dma_enintr;
+	sc->isintr = dma_isintr;
+	sc->reset = dma_reset;
+	sc->setup = dma_setup;
+	sc->go = dma_go;
+#endif
+}
+
+void
+dma_print_rev(sc)
+	struct dma_softc *sc;
+{
+
+	printf("espdma: rev ");
 	switch (sc->sc_rev) {
 	case DMAREV_0:
 		printf("0");
@@ -121,15 +120,8 @@ dmaattach(parent, self, aux)
 		printf("unknown (0x%x)", sc->sc_rev);
 	}
 	printf("\n");
-
-	/* indirect functions */
-	sc->intr = espdmaintr;
-	sc->enintr = dma_enintr;
-	sc->isintr = dma_isintr;
-	sc->reset = dma_reset;
-	sc->setup = dma_setup;
-	sc->go = dma_go;
 }
+
 
 #define DMAWAIT(SC, COND, MSG, DONTPANIC) do if (COND) {		\
 	int count = 500000;						\
@@ -178,8 +170,6 @@ dma_reset(sc)
 	/*DMAWAIT1(sc); why was this here? */
 	DMACSR(sc) &= ~D_RESET;			/* de-assert reset line */
 	DMACSR(sc) |= D_INT_EN;			/* enable interrupts */
-	if (sc->sc_rev > DMAREV_1)		/* XXX - needed in 3x? */
-		DMACSR(sc) |= D_FASTER;
 
 	sc->sc_active = 0;			/* and of course we aren't */
 }
@@ -223,7 +213,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
-	ESP_DMA(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
+	NCR_DMA(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
 		*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
 
 	/*
@@ -234,7 +224,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 	*dmasize = sc->sc_dmasize =
 		min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 
-	ESP_DMA(("dma_setup: dmasize = %d\n", sc->sc_dmasize));
+	NCR_DMA(("dma_setup: dmasize = %d\n", sc->sc_dmasize));
 
 	/* Program the DMA address */
 	if (sc->sc_dmasize) {
@@ -243,7 +233,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 		 */
 		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
 		sc->sc_dvmakaddr = dvma_mapin(sc->sc_dvmaaddr,
-	     	                              sc->sc_dmasize, 0);
+					       sc->sc_dmasize, 0);
 		if (sc->sc_dvmakaddr == NULL)
 			panic("dma: cannot allocate DVMA address");
 		sc->sc_dmasaddr = dvma_kvtopa(sc->sc_dvmakaddr, BUS_OBIO);
@@ -292,14 +282,15 @@ int
 espdmaintr(sc)
 	struct dma_softc *sc;
 {
+	struct ncr53c9x_softc *nsc = sc->sc_esp;
 	char bits[64];
 	int trans, resid;
 	u_long csr;
 	csr = DMACSR(sc);
 
-	ESP_DMA(("%s: intr: addr %x, csr %s\n", sc->sc_dev.dv_xname,
-		 DMADDR(sc), bitmask_snprintf(csr, DMACSRBITS, bits,
-		 sizeof(bits))));
+	NCR_DMA(("%s: intr: addr %x, csr %s\n",
+		 sc->sc_dev.dv_xname, DMADDR(sc),
+		 bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits))));
 
 	if (csr & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
@@ -321,11 +312,11 @@ espdmaintr(sc)
 
 	if (sc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
-		ESP_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
-			ESP_READ_REG(sc->sc_esp, ESP_TCL) |
-				(ESP_READ_REG(sc->sc_esp, ESP_TCM) << 8),
-			ESP_READ_REG(sc->sc_esp, ESP_TCL),
-			ESP_READ_REG(sc->sc_esp, ESP_TCM)));
+		NCR_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
+			NCR_READ_REG(nsc, NCR_TCL) |
+				(NCR_READ_REG(nsc, NCR_TCM) << 8),
+			NCR_READ_REG(nsc, NCR_TCL),
+			NCR_READ_REG(nsc, NCR_TCM)));
 		return 0;
 	}
 
@@ -337,24 +328,24 @@ espdmaintr(sc)
 	 * bytes are clocked into the FIFO.
 	 */
 	if (!(csr & D_WRITE) &&
-	    (resid = (ESP_READ_REG(sc->sc_esp, ESP_FFLAG) & ESPFIFO_FF)) != 0) {
-		ESP_DMA(("dmaintr: empty esp FIFO of %d ", resid));
-		ESPCMD(sc->sc_esp, ESPCMD_FLUSH);
+	    (resid = (NCR_READ_REG(nsc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
+		NCR_DMA(("dmaintr: empty esp FIFO of %d ", resid));
+		NCRCMD(nsc, NCRCMD_FLUSH);
 	}
 
-	if ((sc->sc_esp->sc_espstat & ESPSTAT_TC) == 0) {
+	if ((nsc->sc_espstat & NCRSTAT_TC) == 0) {
 		/*
 		 * `Terminal count' is off, so read the residue
 		 * out of the ESP counter registers.
 		 */
-		resid += ( ESP_READ_REG(sc->sc_esp, ESP_TCL) |
-			  (ESP_READ_REG(sc->sc_esp, ESP_TCM) << 8) |
-			   ((sc->sc_esp->sc_cfg2 & ESPCFG2_FE)
-				? (ESP_READ_REG(sc->sc_esp, ESP_TCH) << 16)
+		resid += (NCR_READ_REG(nsc, NCR_TCL) |
+			  (NCR_READ_REG(nsc, NCR_TCM) << 8) |
+			   ((nsc->sc_cfg2 & NCRCFG2_FE)
+				? (NCR_READ_REG(nsc, NCR_TCH) << 16)
 				: 0));
 
 		if (resid == 0 && sc->sc_dmasize == 65536 &&
-		    (sc->sc_esp->sc_cfg2 & ESPCFG2_FE) == 0)
+		    (nsc->sc_cfg2 & NCRCFG2_FE) == 0)
 			/* A transfer of 64K is encoded as `TCL=TCM=0' */
 			resid = 65536;
 	}
@@ -366,11 +357,11 @@ espdmaintr(sc)
 		trans = sc->sc_dmasize;
 	}
 
-	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
-		ESP_READ_REG(sc->sc_esp, ESP_TCL),
-		ESP_READ_REG(sc->sc_esp, ESP_TCM),
-		(sc->sc_esp->sc_cfg2 & ESPCFG2_FE)
-			? ESP_READ_REG(sc->sc_esp, ESP_TCH) : 0,
+	NCR_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
+		NCR_READ_REG(nsc, NCR_TCL),
+		NCR_READ_REG(nsc, NCR_TCM),
+		(nsc->sc_cfg2 & NCRCFG2_FE)
+			? NCR_READ_REG(nsc, NCR_TCH) : 0,
 		trans, resid));
 
 #ifdef	SUN3X_470_EVENTUALLY
@@ -386,7 +377,7 @@ espdmaintr(sc)
 
 #if 0	/* this is not normal operation just yet */
 	if (*sc->sc_dmalen == 0 ||
-	    sc->sc_esp->sc_phase != sc->sc_esp->sc_prevphase)
+	    nsc->sc_phase != nsc->sc_prevphase)
 		return 0;
 
 	/* and again */
