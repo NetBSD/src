@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.149 2002/09/09 03:42:04 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.150 2002/09/13 01:27:46 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.149 2002/09/09 03:42:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.150 2002/09/13 01:27:46 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -362,9 +362,11 @@ static const struct pridtab cputab[] = {
 	  CPU_MIPS_NO_LLSC | CPU_MIPS_R4K_MMU,	"Toshiba R5900 CPU"	},
 
 	{ 0, MIPS_TX4900, MIPS_REV_TX4927, -1,	CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"Toshiba TX4927 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"Toshiba TX4927 CPU"	},
 	{ 0, MIPS_TX4900, -1, -1,		CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"Toshiba TX4900 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"Toshiba TX4900 CPU"	},
 
 #if 0 /* ID collisions : can we use a CU1 test or similar? */
 	{ 0, MIPS_R3SONY, -1, -1,		CPU_ARCH_MIPS1, -1,
@@ -780,7 +782,6 @@ mips_vector_init(void)
 		mycpu = ct;
 		cpu_arch = ct->cpu_isa;
 		mips_num_tlb_entries = ct->cpu_ntlb;
-
 		break;
 	}
 
