@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.672.2.5 2004/06/27 13:23:04 he Exp $
+# $NetBSD: mi,v 1.672.2.6 2004/07/14 09:07:38 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -693,6 +693,7 @@
 ./usr/share/man/cat4/cue.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cypide.0			man-sys-catman		.cat
+./usr/share/man/cat4/geodeide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cz.0			man-sys-catman		.cat
 ./usr/share/man/cat4/daic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ddb.0			man-sys-catman		.cat
@@ -2766,6 +2767,7 @@
 ./usr/share/man/man4/cue.4			man-sys-man		.man
 ./usr/share/man/man4/cy.4			man-sys-man		.man
 ./usr/share/man/man4/cypide.4			man-sys-man		.man
+./usr/share/man/man4/geodeide.4			man-sys-man		.man
 ./usr/share/man/man4/cz.4			man-sys-man		.man
 ./usr/share/man/man4/daic.4			man-sys-man		.man
 ./usr/share/man/man4/ddb.4			man-sys-man		.man
