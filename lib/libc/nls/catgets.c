@@ -11,14 +11,14 @@ __weak_reference(_catgets,catgets);
 
 #include <nl_types.h>
 
-extern char * _catgets __P((nl_catd, int, int, char *));
+extern __const char * _catgets __P((nl_catd, int, int, __const char *));
 
-char *
+__const char *
 catgets(catd, set_id, msg_id, s)
 	nl_catd catd;
 	int set_id;
 	int msg_id;
-	char *s;
+	__const char *s;
 {
 	return _catgets(catd, set_id, msg_id, s);
 }
