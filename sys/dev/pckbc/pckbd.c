@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.22 2000/03/06 21:40:08 thorpej Exp $ */
+/* $NetBSD: pckbd.c,v 1.23 2000/03/10 06:10:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -176,10 +176,10 @@ const struct wskbd_mapdata pckbd_keymapdata = {
  * Hackish support for a bell on the PC Keyboard; when a suitable feeper
  * is found, it attaches itself into the pckbd driver here.
  */
-void	(*pckbd_bell_fn) __P((void *, u_int, u_int, u_int));
+void	(*pckbd_bell_fn) __P((void *, u_int, u_int, u_int, int));
 void	*pckbd_bell_fn_arg;
 
-void	pckbd_bell __P((u_int, u_int, u_int));
+void	pckbd_bell __P((u_int, u_int, u_int, int));
 
 int	pckbd_set_xtscancode __P((pckbc_tag_t, pckbc_slot_t));
 int	pckbd_init __P((struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t,
@@ -587,7 +587,7 @@ pckbd_ioctl(v, cmd, data, flag, p)
 		 * Keyboard can't beep directly; we have an
 		 * externally-provided global hook to do this.
 		 */
-		pckbd_bell(d->pitch, d->period, d->volume);
+		pckbd_bell(d->pitch, d->period, d->volume, 0);
 #undef d
 		return (0);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -600,17 +600,19 @@ pckbd_ioctl(v, cmd, data, flag, p)
 }
 
 void
-pckbd_bell(pitch, period, volume)
+pckbd_bell(pitch, period, volume, poll)
 	u_int pitch, period, volume;
+	int poll;
 {
 
 	if (pckbd_bell_fn != NULL)
-		(*pckbd_bell_fn)(pckbd_bell_fn_arg, pitch, period, volume);
+		(*pckbd_bell_fn)(pckbd_bell_fn_arg, pitch, period,
+		    volume, poll);
 }
 
 void
 pckbd_hookup_bell(fn, arg)
-	void (*fn) __P((void *, u_int, u_int, u_int));
+	void (*fn) __P((void *, u_int, u_int, u_int, int));
 	void *arg;
 {
 
@@ -680,5 +682,5 @@ pckbd_cnbell(v, pitch, period, volume)
 	u_int pitch, period, volume;
 {
 
-	pckbd_bell(pitch, period, volume);
+	pckbd_bell(pitch, period, volume, 1);
 }

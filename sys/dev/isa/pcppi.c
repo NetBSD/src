@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.2 2000/03/06 21:40:08 thorpej Exp $ */
+/* $NetBSD: pcppi.c,v 1.3 2000/03/10 06:10:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -48,7 +48,7 @@
 #include <dev/ic/pckbcvar.h>
 #include <dev/pckbc/pckbdvar.h>
 
-void	pcppi_pckbd_bell __P((void *, u_int, u_int, u_int));
+void	pcppi_pckbd_bell __P((void *, u_int, u_int, u_int, int));
 #endif
 
 struct pcppi_softc {
@@ -248,14 +248,16 @@ pcppi_bell_stop(arg)
 
 #if NPCKBD > 0
 void
-pcppi_pckbd_bell(arg, pitch, period, volume)
+pcppi_pckbd_bell(arg, pitch, period, volume, poll)
 	void *arg;
 	u_int pitch, period, volume;
+	int poll;
 {
 
 	/*
 	 * Comes in as ms, goes out at ticks; volume ignored.
 	 */
-	pcppi_bell(arg, pitch, (period * hz) / 1000, PCPPI_BELL_POLL);
+	pcppi_bell(arg, pitch, (period * hz) / 1000,
+	    poll ? PCPPI_BELL_POLL : 0);
 }
 #endif /* NPCKBD > 0 */
