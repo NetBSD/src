@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.62 1995/03/23 11:43:13 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.63 1995/03/23 12:11:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -294,6 +294,15 @@ sdopen(dev, flag, fmt)
 		sdunlock(sd);
 	}
 
+#if 0
+	/* Check for read-only media. */
+	if ((flag & FWRITE) != 0 &&
+	    (sd->flags & SDF_WRITEPROT) != 0) {
+		error = EROFS;
+		goto bad;
+	}
+#endif
+
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
 	    (part >= sd->sc_dk.dk_label.d_npartitions ||
@@ -421,15 +430,6 @@ sdstrategy(bp)
 		bp->b_error = EIO;
 		goto bad;
 	}
-#if 0
-	/*
-	 * "soft" write protect check
-	 */
-	if ((sd->flags & SDF_WRITEPROT) && (bp->b_flags & B_READ) == 0) {
-		bp->b_error = EROFS;
-		goto bad;
-	}
-#endif
 	/*
 	 * If it's a null transfer, return immediatly
 	 */

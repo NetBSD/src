@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.61 1995/03/23 11:51:22 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.62 1995/03/23 12:11:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -288,6 +288,12 @@ cdopen(dev, flag, fmt)
 		cdunlock(cd);
 	}
 
+	/* Check for read-only media. */
+	if ((flag & FWRITE) != 0) {
+		error = EROFS;
+		goto bad;
+	}
+
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
 	    (part >= cd->sc_dk.dk_label.d_npartitions ||
@@ -415,13 +421,6 @@ cdstrategy(bp)
 	 */
 	if ((cd->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 		bp->b_error = EIO;
-		goto bad;
-	}
-	/*
-	 * can't ever write to a CD
-	 */
-	if ((bp->b_flags & B_READ) == 0) {
-		bp->b_error = EROFS;
 		goto bad;
 	}
 	/*
