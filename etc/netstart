@@ -1,20 +1,20 @@
 #!/bin/sh -
 #
 #	@(#)netstart	5.9 (Berkeley) 3/30/91
-#	$Id: netstart,v 1.18 1994/06/30 08:17:11 cgd Exp $
+#	$Id: netstart,v 1.19 1994/09/16 23:38:04 mycroft Exp $
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
 routed_flags=-q
 rarpd_flags=NO		# for 'normal' use: rarpd_flags="-a"
 bootparamd_flags=NO	# for 'normal' use: bootparamd_flags=""
 sendmail_flags=NO	# for 'normal' use: sendmail_flags="-bd -q30m"
+named_flags=NO		# for 'normal' use: named_flags=""
 timed_flags=
 
 # set the following to "YES" to turn them on
 rwhod=NO
 nfs_server=NO
 nfs_client=NO
-name_server=NO
 gated=NO
 kerberos_server=NO
 amd=NO
