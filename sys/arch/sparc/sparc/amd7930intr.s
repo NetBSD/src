@@ -1,3 +1,4 @@
+/*	$NetBSD: amd7930intr.s,v 1.10 1997/03/11 01:03:07 pk Exp $	*/
 /*
  * Copyright (c) 1995 Rolf Grossmann.
  * Copyright (c) 1992, 1993
