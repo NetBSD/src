@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.8 2003/08/07 11:25:17 agc Exp $	*/
+/*	$NetBSD: popen.c,v 1.9 2005/03/16 02:53:55 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -36,7 +36,7 @@
 static char rcsid[] = "Id: popen.c,v 1.5 1994/01/15 20:43:43 vixie Exp";
 static char sccsid[] = "@(#)popen.c	5.7 (Berkeley) 2/14/89";
 #else
-__RCSID("$NetBSD: popen.c,v 1.8 2003/08/07 11:25:17 agc Exp $");
+__RCSID("$NetBSD: popen.c,v 1.9 2005/03/16 02:53:55 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,8 +54,7 @@ static int fds;
 #define MAX_ARGS 1024
 
 FILE *
-cron_popen(program, type)
-	char *program, *type;
+cron_popen(char *program, const char *type)
 {
 	char *cp;
 	FILE *iop;
@@ -125,8 +124,7 @@ pfree:
 }
 
 int
-cron_pclose(iop)
-	FILE *iop;
+cron_pclose(FILE *iop)
 {
 	int fdes;
 	sigset_t oset, nset;

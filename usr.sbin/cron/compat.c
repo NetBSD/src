@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.3 1998/01/31 14:40:15 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.4 2005/03/16 02:53:55 xtraeme Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: compat.c,v 1.6 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: compat.c,v 1.3 1998/01/31 14:40:15 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.4 2005/03/16 02:53:55 xtraeme Exp $");
 #endif
 #endif
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: compat.c,v 1.3 1998/01/31 14:40:15 christos Exp $");
  */
 #ifdef NEED_VFORK
 PID_T
-vfork() {
+vfork(void) {
 	return (fork());
 }
 #endif
@@ -55,8 +55,7 @@ vfork() {
 
 #ifdef NEED_STRDUP
 char *
-strdup(str)
-	char	*str;
+strdup(char *str)
 {
 	char	*temp;
 
@@ -69,8 +68,7 @@ strdup(str)
 
 #ifdef NEED_STRERROR
 char *
-strerror(error)
-	int error;
+strerror(int error)
 {
 	extern char *sys_errlist[];
 	extern int sys_nerr;
@@ -88,9 +86,7 @@ strerror(error)
 
 #ifdef NEED_STRCASECMP
 int
-strcasecmp(left, right)
-	char	*left;
-	char	*right;
+strcasecmp(char *left, char *right)
 {
 	while (*left && (MkLower(*left) == MkLower(*right))) {
 		left++;
@@ -103,7 +99,7 @@ strcasecmp(left, right)
 
 #ifdef NEED_SETSID
 int
-setsid()
+setsid(void)
 {
 	int	newpgrp;
 # if defined(BSD)
@@ -132,7 +128,7 @@ setsid()
 
 #ifdef NEED_GETDTABLESIZE
 int
-getdtablesize() {
+getdtablesize(void) {
 #ifdef _SC_OPEN_MAX
 	return sysconf(_SC_OPEN_MAX);
 #else
@@ -183,9 +179,7 @@ getdtablesize() {
 /* this code has been reformatted by vixie */
 
 int
-flock(fd, operation)
-	int fd;
-	int operation;
+flock(int fd, int operation)
 {
 	int i;
 
@@ -220,9 +214,7 @@ flock(fd, operation)
 
 #ifdef NEED_SETENV
 int
-setenv(name, value, overwrite)
-	char *name, *value;
-	int overwrite;
+setenv(char *name, char *value, int overwrite)
 {
 	char *tmp;
 

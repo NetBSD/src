@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.5 2003/08/13 03:51:15 atatat Exp $	*/
+/*	$NetBSD: job.c,v 1.6 2005/03/16 02:53:55 xtraeme Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -28,7 +28,7 @@
 #if 0
 static char rcsid[] = "Id: job.c,v 1.6 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: job.c,v 1.5 2003/08/13 03:51:15 atatat Exp $");
+__RCSID("$NetBSD: job.c,v 1.6 2005/03/16 02:53:55 xtraeme Exp $");
 #endif
 #endif
 
@@ -47,13 +47,11 @@ typedef	struct _job {
 static job	*jhead = NULL, *jtail = NULL;
 
 
-static int okay_to_go __P((job *));
+static int okay_to_go(job *);
 
 
 void
-job_add(e, u)
-	entry *e;
-	user *u;
+job_add(entry *e, user *u)
 {
 	job *j;
 
@@ -79,7 +77,7 @@ job_add(e, u)
 
 
 int
-job_runqueue()
+job_runqueue(void)
 {
 	job	*j, *jn;
 	int	run = 0;
@@ -105,8 +103,7 @@ job_runqueue()
 
 
 static int
-okay_to_go(j)
-	job	*j;
+okay_to_go(job *j)
 {
 	char *within, *t;
 	int delta;
