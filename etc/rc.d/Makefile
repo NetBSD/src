@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2000/09/21 10:38:04 ad Exp $
+# $NetBSD: Makefile,v 1.14 2000/09/28 22:16:15 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -9,15 +9,11 @@ FILES=	DAEMON LOGIN NETWORK SERVERS accounting amd apmd bootparams \
 	mountcritremote mountd mrouted named network newsyslog nfsd \
 	nfslocking ntpd ntpdate rpcbind postfix ppp pwcheck quota \
 	raidframe rarpd rbootd root route6d routed rtadvd rtsold rwho \
-	savecore screenblank sendmail securelevel swap1 swap2 sysdb \
+	savecore screenblank sendmail securelevel sshd swap1 swap2 sysdb \
 	sysctl syslogd timed ttys virecover wscons xdm xfs ypbind \
 	yppasswdd ypserv
 FILESDIR=	/etc/rc.d
 FILESMODE=	${BINMODE}
-
-.if defined(SSHDIST)
-FILES+=	sshd
-.endif
 
 NOPROG= noprog
 
