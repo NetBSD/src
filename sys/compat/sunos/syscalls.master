@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.46 1998/06/25 22:19:12 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.47 1998/09/13 22:28:17 pk Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -177,7 +177,7 @@
 			    struct sigvec *osv); }
 109	NOARGS		{ int compat_43_sys_sigblock(int mask); }
 110	NOARGS		{ int compat_43_sys_sigsetmask(int mask); }
-111	NOARGS		{ int sys_sigsuspend(int mask); }
+111	STD		{ int sunos_sys_sigsuspend(int mask); }
 112	NOARGS		{ int compat_43_sys_sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); }
 113	NOARGS		{ int compat_43_sys_recvmsg(int s, \
