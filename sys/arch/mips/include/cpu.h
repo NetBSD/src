@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 1996/03/23 20:28:19 jonathan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 1997/06/15 17:28:46 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,7 +52,6 @@
  * referenced in generic code
  */
 #define	cpu_wait(p)			/* nothing */
-#define cpu_set_init_frame(p, fp)	/* nothing */
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
 
 /*

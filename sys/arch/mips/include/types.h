@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.12 1996/04/09 20:54:08 jonathan Exp $	*/
+/*	$NetBSD: types.h,v 1.13 1997/06/15 17:28:47 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,6 +73,5 @@ typedef	unsigned long long	u_int64_t;
 typedef int32_t			register_t;
 
 #define	__SWAP_BROKEN
-#define	__FORK_BRAINDAMAGE
 
 #endif	/* _MACHTYPES_H_ */
