@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 1996/04/22 02:50:24 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.63 1996/05/18 12:36:49 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -625,6 +625,8 @@ boot(howto)
 
 	if (cold) {
 		printf("halted\n\n");
+		if (CPU_ISSUN4COR4M)
+			*promvec->pv_synchook = NULL;
 		romhalt();
 	}
 
@@ -651,6 +653,8 @@ boot(howto)
 	if (howto & RB_HALT) {
 		doshutdownhooks();
 		printf("halted\n\n");
+		if (CPU_ISSUN4COR4M)
+			*promvec->pv_synchook = NULL;
 		romhalt();
 	}
 	if (howto & RB_DUMP)
@@ -668,6 +672,8 @@ boot(howto)
 		str[i] = 0;
 	} else
 		str[0] = 0;
+	if (CPU_ISSUN4COR4M)
+		*promvec->pv_synchook = NULL;
 	romboot(str);
 	/*NOTREACHED*/
 }
