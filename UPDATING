@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.94 2003/08/05 17:49:52 christos Exp $
+$NetBSD: UPDATING,v 1.95 2003/08/05 18:39:56 wiz Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -9,9 +9,9 @@ Recent changes:
 ^^^^^^^^^^^^^^^
 
 20030801:
-	With the new openssh, there is some header and library shuffling.
+	With the new openssl, there is some header and library shuffling.
 	rm -f /usr/include/des.h /usr/include/kerberosIV/* /lib/libdes* \
-	/usr/lib/libdes* befor building.
+	/usr/lib/libdes* before building.
 
 20030703:
 	Texinfo was updated to 4.6.  To avoid failures when trying to
