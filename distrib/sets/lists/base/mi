@@ -49,6 +49,7 @@
 ./mnt
 ./root
 ./sbin
+./sbin/atactl
 ./sbin/badsect
 ./sbin/ccdconfig
 ./sbin/clri
