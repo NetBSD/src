@@ -37,7 +37,10 @@
  *	/usr/bin/sup for exported version of sup.
  *
  * $Log: supfilesrv.c,v $
- * Revision 1.2  1993/05/24 17:57:31  brezak
+ * Revision 1.3  1993/06/05 21:32:17  cgd
+ * use daemon() to put supfilesrv into daemon mode...
+ *
+ * Revision 1.2  1993/05/24  17:57:31  brezak
  * Remove netcrypt.c. Remove unneeded files. Cleanup make.
  *
  * Revision 1.20  92/09/09  22:05:00  mrt
@@ -332,6 +335,12 @@ char **argv;
 	maxchildren = MAXCHILDREN;	/* defined in sup.h */
 
 	init (argc,argv);		/* process arguments */
+
+#ifdef HAS_DAEMON
+	if (!live)			/* if not debugging, turn into daemon */
+		daemon(0, 0);
+#endif
+
 	logopen ("supfile");
 	tloc = time ((long *)NULL);
 	loginfo ("SUP File Server Version %d.%d (%s) starting at %s",
