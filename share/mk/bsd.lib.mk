@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.198 2002/03/19 14:39:22 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.199 2002/03/19 22:17:23 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -346,7 +346,7 @@ __archivebuild: .USE
 
 __archiveinstall: .USE
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    ${UPDATE:U-a "${RANLIB} -t"} ${.ALLSRC} ${.TARGET}
+	    ${UPDATE:D:U-a "${RANLIB} -t"} ${.ALLSRC} ${.TARGET}
 
 __archivesymlinkpic: .USE
 	${INSTALL_SYMLINK} ${.ALLSRC} ${.TARGET}
