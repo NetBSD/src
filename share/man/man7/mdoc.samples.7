@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.15 1998/02/03 23:28:50 perry Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.16 1998/02/05 07:28:57 perry Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -586,6 +586,8 @@ The date should be written formally:
 .Pp
 .ne 5
 .Dl January 25, 1989
+.sp
+Note that the date must not be placed in quotes!
 .El
 .Sh MANUAL DOMAIN
 .Ss What's in a name...
@@ -1407,15 +1409,27 @@ The
 macro is parsed and is callable.
 .Ss NetBSD Macro
 .Dl Usage: .Nx [Version/release] ... \*(Pu
-.Bl -tag -width ".Nx 1.2 ) ," -compact -offset 14n
+.Bl -tag -width ".Nx 1.4 ) ," -compact -offset 14n
 .It Li ".Nx"
 .Nx
-.It Li ".Nx 1.2 ."
-.Nx 1.2 .
+.It Li ".Nx 1.4 ."
+.Nx 1.4 .
 .El
 .Pp
 The
 .Ql \&.Nx
+macro is parsed and is callable.
+.Ss FreeBSD Macro
+.Dl Usage: .Fx [Version/release] ... \*(Pu
+.Bl -tag -width ".Fx 2.2 ) ," -compact -offset 14n
+.It Li ".Fx"
+.Fx
+.It Li ".Fx 2.2 ."
+.Fx 2.2 .
+.El
+.Pp
+The
+.Ql \&.Fx
 macro is parsed and is callable.
 .Ss UNIX Macro
 .Dl Usage: .Ux ... \*(Pu
