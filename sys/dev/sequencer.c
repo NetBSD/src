@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.5 1998/08/13 00:13:56 augustss Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.6 1998/08/13 12:40:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -839,7 +839,7 @@ seq_do_sysex(sc, b)
 
 	for (i = 0; i < 6 && buf[i] != 0xff; i++)
 		;
-	midiout(md, &c, i, 0);
+	midiout(md, buf, i, 0);
 	if (i < 6 || (i > 0 && buf[i-1] == MIDI_SYSEX_END))
 		sc->doingsysex = 0;
 	return (0);
@@ -1300,7 +1300,7 @@ midiseq_loadpatch(md, sysex, uio)
 			break;
 	}
 	/* Any leftover data in uio is rubbish; 
-	 * the SYSEX should be one write ending in SYSXE_END. 
+	 * the SYSEX should be one write ending in SYSEX_END. 
 	 */
 	uio->uio_resid = 0;
 	c = MIDI_SYSEX_END;
