@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.86 2004/03/27 14:09:10 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.87 2004/03/27 14:49:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.86 2004/03/27 14:09:10 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.87 2004/03/27 14:49:13 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,6 +106,8 @@ static int   titlecmp(char *, char **);
 static void  doubleprintorsetwidth(VAR *, double, int, int);
 static void  intprintorsetwidth(VAR *, int, int);
 static void  strprintorsetwidth(VAR *, const char *, int);
+
+static time_t now;
 
 #define	min(a,b)	((a) <= (b) ? (a) : (b))
 
@@ -758,7 +760,6 @@ started(void *arg, VARENT *ve, int mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
-	static time_t now;
 	time_t startt;
 	struct tm *tp;
 	char buf[100], *cp;
@@ -773,7 +774,7 @@ started(void *arg, VARENT *ve, int mode)
 
 	startt = k->p_ustart_sec;
 	tp = localtime(&startt);
-	if (!now)
+	if (now == 0)
 		(void)time(&now);
 	if (now - k->p_ustart_sec < SECSPERDAY)
 		/* I *hate* SCCS... */
@@ -816,6 +817,99 @@ lstarted(void *arg, VARENT *ve, int mode)
 		(void)strftime(buf, sizeof(buf) -1, "%c",
 		    localtime(&startt));
 		strprintorsetwidth(v, buf, mode);
+	}
+}
+
+void
+elapsed(void *arg, VARENT *ve, int mode)
+{
+	struct kinfo_proc2 *k;
+	VAR *v;
+	int32_t origseconds, secs, mins, hours, days;
+	int fmtlen, printed_something;
+
+	k = arg;
+	v = ve->var;
+	if (k->p_uvalid == 0) {
+		origseconds = 0;
+	} else {
+		if (now == 0)
+			(void)time(&now);
+		origseconds = now - k->p_ustart_sec;
+		if (origseconds < 0) {
+			/*
+			 * Don't try to be fancy if the machine's
+			 * clock has been rewound to before the
+			 * process "started".
+			 */
+			origseconds = 0;
+		}
+	}
+
+	secs = origseconds;
+	mins = secs / SECSPERMIN;
+	secs %= SECSPERMIN;
+	hours = mins / MINSPERHOUR;
+	mins %= MINSPERHOUR;
+	days = hours / HOURSPERDAY;
+	hours %= HOURSPERDAY;
+
+	if (mode == WIDTHMODE) {
+		if (origseconds == 0)
+			/* non-zero so fmtlen is calculated at least once */
+			origseconds = 1;
+
+		if (origseconds > v->longestp) {
+			v->longestp = origseconds;
+
+			if (days > 0) {
+				/* +9 for "-hh:mm:ss" */
+				fmtlen = iwidth(days) + 9;
+			} else if (hours > 0) {
+				/* +6 for "mm:ss" */
+				fmtlen = iwidth(hours) + 6;
+			} else {
+				/* +3 for ":ss" */
+				fmtlen = iwidth(mins) + 3;
+			}
+
+			if (fmtlen > v->width)
+				v->width = fmtlen;
+		}
+	} else {
+		fmtlen = v->width;
+
+		if (days > 0) {
+			(void)printf("%*d", fmtlen - 9, days);
+			printed_something = 1;
+		} else if (fmtlen > 9) {
+			(void)printf("%*s", fmtlen - 9, "");
+		}
+		if (fmtlen > 9)
+			fmtlen = 9;
+
+		if (printed_something) {
+			(void)printf("-%.*d", fmtlen - 7, hours);
+			printed_something = 1;
+		} else if (hours > 0) {
+			(void)printf("%*d", fmtlen - 6, hours);
+			printed_something = 1;
+		} else if (fmtlen > 6) {
+			(void)printf("%*s", fmtlen - 6, "");
+		}
+		if (fmtlen > 6)
+			fmtlen = 6;
+
+		/* Don't need to set fmtlen or printed_something any more... */
+		if (printed_something) {
+			(void)printf(":%.*d", fmtlen - 4, mins);
+		} else if (mins > 0) {
+			(void)printf("%*d", fmtlen - 3, mins);
+		} else if (fmtlen > 3) {
+			(void)printf("%*s", fmtlen - 3, "0");
+		}
+
+		(void)printf(":%.2d", secs);
 	}
 }
 
@@ -1273,8 +1367,8 @@ putimeval(void *arg, VARENT *ve, int mode)
 	}
 
 	if (mode == WIDTHMODE) {
-		if (!secs)
-			/* zero doesn't give correct width... */
+		if (secs == 0)
+			/* non-zero so fmtlen is calculated at least once */
 			secs = 1;
 		if (secs > v->longestu) {
 			v->longestu = secs;
