@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.9 2003/06/13 11:57:30 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.10 2003/06/13 22:27:06 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,8 +91,6 @@
  */
 EXTERN	char *fdtype INIT("msdos");
 
-extern struct disklist *disklist;
-extern struct nativedisk_info *nativedisk;
 
 /*
  *  prototypes for MD code.
