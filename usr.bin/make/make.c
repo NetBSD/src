@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)make.c	5.3 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: make.c,v 1.5 1994/06/06 22:45:34 jtc Exp $";
+static char *rcsid = "$Id: make.c,v 1.6 1995/01/06 19:57:29 christos Exp $";
 #endif /* not lint */
 
 /*-
@@ -192,7 +192,13 @@ Make_OODate (gn)
 	if (DEBUG(MAKE)) {
 	    printf("library...");
 	}
-	oodate = Arch_LibOODate (gn);
+
+	/*
+	 * always out of date if no children and :: target
+	 */
+
+	oodate = Arch_LibOODate (gn) ||
+	    ((gn->cmtime == 0) && (gn->type & OP_DOUBLEDEP));
     } else if (gn->type & OP_JOIN) {
 	/*
 	 * A target with the .JOIN attribute is only considered
