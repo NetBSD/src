@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.163 2002/07/30 21:01:57 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.164 2002/08/10 16:33:23 toshii Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.163 2002/07/30 21:01:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.164 2002/08/10 16:33:23 toshii Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -3055,7 +3055,8 @@ sis_hostbr_match(pa)
 	   ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_645) ||
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_650) ||
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_730) ||
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_735)));
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_735) ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_745)));
 }
 
 void
