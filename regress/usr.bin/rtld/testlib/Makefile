@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2000/12/08 19:21:28 drochner Exp $
+# $NetBSD: Makefile,v 1.2 2002/04/14 21:44:22 wiz Exp $
 
 SRCS=	ccexc.cc construct.cc virt.cc
 
@@ -26,4 +26,4 @@ clean cleandir:
 regress:
 
 .include <bsd.obj.mk>
-.include <bsd.depall.mk>
+.include <bsd.dep.mk>
