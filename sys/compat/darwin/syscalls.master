@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.25 2004/07/28 21:30:00 manu Exp $
+	$NetBSD: syscalls.master,v 1.26 2004/07/28 22:24:06 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -543,3 +543,22 @@
 347	UNIMPL
 348	UNIMPL
 349	UNIMPL
+350	STD		{ int darwin_sys_audit(void *record, int len); }
+351	STD		{ int darwin_sys_auditon(int cmd, \
+			    void *data, int len); }
+352	UNIMPL
+353	STD		{ int darwin_sys_getauid(darwin_au_id_t *auid); }
+354	STD		{ int darwin_sys_setauid(darwin_au_id_t *auid); }
+355	STD		{ int darwin_sys_getauditinfo(struct \
+			    darwin_auditinfo *auditinfo); }
+356	STD		{ int darwin_sys_setauditinfo(struct \
+			    darwin_auditinfo *auditinfo); }
+357	STD		{ int darwin_sys_getaudit_addr(struct \
+			    darwin_auditinfo_addr *auditinfo_addr, int len); }
+358	STD		{ int darwin_sys_setaudit_addr(struct \
+			    darwin_auditinfo_addr *auditinfo_addr, int len); }
+359	STD		{ int darwin_sys_auditctl(char *path); }
+360	UNIMPL
+361	UNIMPL
+362	UNIMPL		kqueue
+363	UNIMPL		kevent

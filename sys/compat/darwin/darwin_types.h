@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_types.h,v 1.1 2003/09/06 11:50:00 manu Exp $ */
+/*	$NetBSD: darwin_types.h,v 1.2 2004/07/28 22:24:06 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -46,3 +46,4 @@
 #define darwin_to_native_dev(x) makedev(darwin_major(x),darwin_minor(x))
 
 #endif /* _DARWIN_TYPES_H_ */
+

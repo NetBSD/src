@@ -1,11 +1,11 @@
-/*	$NetBSD: darwin_unistd.c,v 1.4 2004/07/28 22:24:06 manu Exp $ */
+/*	$NetBSD: darwin_audit.h,v 1.1 2004/07/28 22:24:06 manu Exp $ */
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus.
+ * by Emmanuel Dreyfus
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,49 +36,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.4 2004/07/28 22:24:06 manu Exp $");
+#ifndef	_DARWIN_AUDIT_H_
+#define	_DARWIN_AUDIT_H_
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/mount.h>
-#include <sys/sa.h>
-#include <sys/endian.h>
-#include <sys/syscallargs.h>
+typedef uid_t darwin_au_id_t; 
+typedef pid_t darwin_au_asid_t;
 
-#include <compat/mach/mach_types.h>
-#include <compat/mach/mach_vm.h>
+struct darwin_au_mask {
+	unsigned int    am_success;
+	unsigned int    am_failure;
+};
 
-#include <compat/darwin/darwin_audit.h>
-#include <compat/darwin/darwin_syscallargs.h>
+struct darwin_au_tid {
+	dev_t port;
+	unsigned int machine;
+};
 
-int
-darwin_sys_lseek(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct darwin_sys_lseek_args *uap = v;
-	struct sys_lseek_args cup;
-	union {
-		off_t o;
-		u_long l[2];
-	} off;
+struct darwin_au_tid_addr {
+	dev_t at_port;
+	unsigned int at_type;
+	unsigned int at_addr[4];
+};
 
-	SCARG(&cup, fd) = SCARG(uap, fd);
-	SCARG(&cup, whence) = SCARG(uap, whence);
+struct darwin_auditinfo {
+	darwin_au_id_t	ai_auid;
+	struct darwin_au_mask ai_mask;
+	struct darwin_au_tid ai_termid;
+	darwin_au_asid_t ai_asid;
+};
 
-	/* 
-	 * NetBSD pads the syscallarg structure because of the 
-	 * off_t argument, Darwin does not. In order to get the off_t
-	 * argument going through our syscall machinery, we declare
-	 * it as two long arguments, and we reassemble them here.
-	 */
-	off.l[_QUAD_LOWWORD] = (u_long)SCARG(uap, off2);
-	off.l[_QUAD_HIGHWORD] = (u_long)SCARG(uap, off1);
+struct darwin_auditinfo_addr {
+	darwin_au_id_t	ai_auid;
+	struct darwin_au_mask ai_mask;
+	struct darwin_au_tid_addr ai_termid;
+	darwin_au_asid_t ai_asid;
+};
 
-	SCARG(&cup, offset) = off.o;
-
-	return sys_lseek(l, &cup, retval);
-}
+#endif /* _DARWIN_AUDIT_H_ */
