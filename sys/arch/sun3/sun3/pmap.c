@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.90 1997/11/21 22:13:20 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.91 1997/11/24 17:58:20 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1613,7 +1613,7 @@ pmap_bootstrap(nextva)
 	if (cpu_machine_id == SUN3_MACH_50) {
 		hole_start = m68k_trunc_page(OBMEM_BW50_ADDR);
 		hole_size  = m68k_round_page(OBMEM_BW2_SIZE);
-		if (avail_end > hole_start) {
+		if (avail_start > hole_start) {
 			mon_printf("kernel too large for Sun3/50\n");
 			sunmon_abort();
 		}
