@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.1 2001/05/28 16:22:21 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.2 2001/06/01 15:20:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,9 +38,8 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1 2001/05/28 16:22:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.2 2001/06/01 15:20:06 thorpej Exp $");
 
-#include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
 
@@ -58,10 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1 2001/05/28 16:22:21 thorpej Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#ifdef ALGOR_P4032
-#include <algor/algor/algor_p4032var.h>
-#endif
 
 #ifdef ALGOR_P5064
 #include <algor/algor/algor_p5064var.h>
@@ -124,11 +119,7 @@ pcib_bridge_callback(self)
 	memset(&iba, 0, sizeof(iba));
 
 	iba.iba_busname = "isa";
-#if defined(ALGOR_P4032)
-	    {
-		/* XXX */
-	    }
-#elif defined(ALGOR_P5064)
+#if defined(ALGOR_P5064)
 	    {
 		struct p5064_config *acp = &p5064_configuration;
 
