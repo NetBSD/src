@@ -1,4 +1,4 @@
-/* $NetBSD: xy.c,v 1.7 1996/03/04 20:25:32 chuck Exp $ */
+/* $NetBSD: xy.c,v 1.8 1996/03/08 06:17:35 mycroft Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.7 1996/03/04 20:25:32 chuck Exp $
+ * id: $NetBSD: xy.c,v 1.8 1996/03/08 06:17:35 mycroft Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -1126,11 +1126,11 @@ xyc_rqtopb(iorq, iopb, cmd, subfun)
 		iopb->cyl = block;
 	}
 	iopb->scnt = iorq->sectcnt;
-	dp = dvma_kvtopa((long)iorq->dbuf, BUS_VME16);
 	if (iorq->dbuf == NULL) {
 		iopb->dataa = 0;
 		iopb->datar = 0;
 	} else {
+		dp = dvma_kvtopa((long)iorq->dbuf, BUS_VME16);
 		iopb->dataa = (dp & 0xffff);
 		iopb->datar = ((dp & 0xff0000) >> 16);
 	}
