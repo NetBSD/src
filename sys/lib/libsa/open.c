@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.8 1995/09/14 23:45:33 pk Exp $	*/
+/*	$NetBSD: open.c,v 1.9 1995/09/19 09:16:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -101,7 +101,7 @@ fnd:
 		goto err;
 
 	/* see if we opened a raw device; otherwise, 'file' is the file name. */
-	if (file == (char *)0) {
+	if (file == (char *)0 || *file == '\0') {
 		f->f_flags |= F_RAW;
 		return (0);
 	}
