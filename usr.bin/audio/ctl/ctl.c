@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.3 1997/05/21 22:25:13 augustss Exp $	*/
+/*	$NetBSD: ctl.c,v 1.4 1997/07/15 18:00:12 veego Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -128,9 +128,9 @@ struct {
     { "adpcm", AUDIO_ENCODING_ADPCM },
     { "ADPCM", AUDIO_ENCODING_ADPCM },
     { "mulaw", AUDIO_ENCODING_ULAW },
-    { "linear_le", AUDIO_ENCODING_LINEAR_LE },
+    { "linear_le", AUDIO_ENCODING_SLINEAR_LE },
     { "ulinear_le", AUDIO_ENCODING_ULINEAR_LE },
-    { "linear_be", AUDIO_ENCODING_LINEAR_BE },
+    { "linear_be", AUDIO_ENCODING_SLINEAR_BE },
     { "ulinear_be", AUDIO_ENCODING_ULINEAR_BE },
     { 0 }
 };
