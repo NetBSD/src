@@ -1,4 +1,4 @@
-/* $NetBSD: sysarch.h,v 1.5 2000/06/08 03:10:06 thorpej Exp $ */
+/* $NetBSD: sysarch.h,v 1.6 2000/06/30 18:19:28 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,7 +98,8 @@ void	alpha_bus_unmapwindow(struct alpha_bus_window *);
 
 void	*alpha_pci_mem_map(bus_addr_t, bus_size_t, int,
 	    struct alpha_bus_space_translation *);
-void	alpha_pci_mem_unmap(void *addr, bus_size_t);
+void	alpha_pci_mem_unmap(struct alpha_bus_space_translation *,
+	    void *addr, bus_size_t);
 
 u_int32_t alpha_pci_conf_read(u_int, u_int, u_int, u_int);
 void	alpha_pci_conf_write(u_int, u_int, u_int, u_int, u_int32_t);
