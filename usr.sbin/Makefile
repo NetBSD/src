@@ -1,8 +1,5 @@
-#	$NetBSD: Makefile,v 1.139 2000/04/15 21:29:49 tsarna Exp $
+#	$NetBSD: Makefile,v 1.140 2000/04/30 21:49:26 perry Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
-
-# XXX Temporary for BUILD_POSTFIX
-.include <bsd.own.mk>
 
 SRCTOP=	..
 .include <bsd.crypto.mk>
@@ -30,10 +27,6 @@ SUBDIR+=faithd gifconfig ifmcstat mld6query mtrace6 ndp pim6dd pim6sd \
 
 # ATM PVC
 SUBDIR+=pvcsif pvctxctl
-
-.if defined(BUILD_POSTFIX)
-SUBDIR+=	postfix
-.endif
 
 .if defined(CRYPTOPATH)
 .sinclude "${CRYPTOPATH}/usr.sbin/Makefile.frag"
