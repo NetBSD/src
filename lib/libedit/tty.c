@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.16 2002/03/18 16:01:01 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.17 2003/06/19 15:55:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.16 2002/03/18 16:01:01 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.17 2003/06/19 15:55:06 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -568,7 +568,7 @@ tty_init(EditLine *el)
  */
 protected void
 /*ARGSUSED*/
-tty_end(EditLine *el)
+tty_end(EditLine *el __attribute__((__unused__)))
 {
 
 	/* XXX: Maybe reset to an initial state? */
@@ -1041,7 +1041,7 @@ tty_noquotemode(EditLine *el)
  */
 protected int
 /*ARGSUSED*/
-tty_stty(EditLine *el, int argc, const char **argv)
+tty_stty(EditLine *el, int argc __attribute__((__unused__)), const char **argv)
 {
 	const ttymodes_t *m;
 	char x;
