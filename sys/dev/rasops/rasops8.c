@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops8.c,v 1.6 1999/08/19 11:20:34 ad Exp $ */
+/* 	$NetBSD: rasops8.c,v 1.7 1999/10/23 23:14:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.6 1999/08/19 11:20:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.7 1999/10/23 23:14:14 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,11 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: rasops8.c,v 1.6 1999/08/19 11:20:34 ad Exp $");
 #include <dev/rasops/rasops.h>
 
 static void 	rasops8_putchar __P((void *, int, int, u_int, long attr));
+#ifndef RASOPS_SMALL
 static void 	rasops8_putchar8 __P((void *, int, int, u_int, long attr));
 static void 	rasops8_putchar12 __P((void *, int, int, u_int, long attr));
 static void 	rasops8_putchar16 __P((void *, int, int, u_int, long attr));
 static void	rasops8_makestamp __P((struct rasops_info *ri, long));
-void		rasops8_init __P((struct rasops_info *ri));
+#endif
 
 /* 
  * 4x1 stamp for optimized character blitting 
@@ -74,7 +75,6 @@ static int	stamp_mutex;	/* XXX see note in README */
 #define STAMP_MASK		(15 << 2)
 #define STAMP_READ(o)		(*(int32_t *)((caddr_t)stamp + (o)))
 
-
 /*
  * Initalize a 'rasops_info' descriptor for this depth.
  */
@@ -84,24 +84,22 @@ rasops8_init(ri)
 {
 	
 	switch (ri->ri_font->fontwidth) {
+#ifndef RASOPS_SMALL
 	case 8:
 		ri->ri_ops.putchar = rasops8_putchar8;
 		break;
-		
 	case 12:
 		ri->ri_ops.putchar = rasops8_putchar12;
 		break;
-		
 	case 16:
 		ri->ri_ops.putchar = rasops8_putchar16;
 		break;
-
+#endif /* !RASOPS_SMALL */
 	default:
 		ri->ri_ops.putchar = rasops8_putchar;
 		break;
 	}
 }
-
 
 /*
  * Put a single character.
@@ -113,9 +111,9 @@ rasops8_putchar(cookie, row, col, uc, attr)
 	u_int uc;
 	long attr;
 {
-	struct rasops_info *ri;
-	u_char *dp, *rp, *fr, clr[2];
 	int width, height, cnt, fs, fb;
+	u_char *dp, *rp, *fr, clr[2];
+	struct rasops_info *ri;
 	
 	ri = (struct rasops_info *)cookie;
 
@@ -161,7 +159,7 @@ rasops8_putchar(cookie, row, col, uc, attr)
 	}	
 
 	/* Do underline */
-	if (attr & 1) {
+	if ((attr & 1) != 0) {
 		rp -= (ri->ri_stride << 1);
 
 		while (width--)
@@ -169,7 +167,7 @@ rasops8_putchar(cookie, row, col, uc, attr)
 	}	
 }
 
-
+#ifndef RASOPS_SMALL
 /*
  * Recompute the 4x1 blitting stamp.
  */
@@ -178,8 +176,8 @@ rasops8_makestamp(ri, attr)
 	struct rasops_info *ri;
 	long attr;
 {
-	int i;
 	int32_t fg, bg;
+	int i;
 
 	fg = ri->ri_devcmap[(attr >> 24) & 15] & 0xff;
 	bg = ri->ri_devcmap[(attr >> 16) & 15] & 0xff;
@@ -199,7 +197,6 @@ rasops8_makestamp(ri, attr)
 #endif
 	}
 }
-
 
 /*
  * Put a single character. This is for 8-pixel wide fonts.
@@ -265,7 +262,7 @@ rasops8_putchar8(cookie, row, col, uc, attr)
 	}
 
 	/* Do underline */
-	if (attr & 1) {
+	if ((attr & 1) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);	
 		rp[0] = stamp[15];
 		rp[1] = stamp[15];
@@ -273,7 +270,6 @@ rasops8_putchar8(cookie, row, col, uc, attr)
 	
 	stamp_mutex--;	
 }
-
 
 /*
  * Put a single character. This is for 12-pixel wide fonts.
@@ -341,7 +337,7 @@ rasops8_putchar12(cookie, row, col, uc, attr)
 	}	
 
 	/* Do underline */
-	if (attr & 1) {
+	if ((attr & 1) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);	
 		rp[0] = stamp[15];
 		rp[1] = stamp[15];
@@ -350,7 +346,6 @@ rasops8_putchar12(cookie, row, col, uc, attr)
 	
 	stamp_mutex--;
 }
-
 
 /*
  * Put a single character. This is for 16-pixel wide fonts.
@@ -420,7 +415,7 @@ rasops8_putchar16(cookie, row, col, uc, attr)
 	}	
 
 	/* Do underline */
-	if (attr & 1) {
+	if ((attr & 1) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);	
 		rp[0] = stamp[15];
 		rp[1] = stamp[15];
@@ -430,3 +425,5 @@ rasops8_putchar16(cookie, row, col, uc, attr)
 	
 	stamp_mutex--;
 }
+
+#endif /* !RASOPS_SMALL */

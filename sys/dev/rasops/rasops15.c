@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.4 1999/05/18 21:51:59 ad Exp $ */
+/* 	$NetBSD: rasops15.c,v 1.5 1999/10/23 23:14:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.4 1999/05/18 21:51:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.5 1999/10/23 23:14:13 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,12 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.4 1999/05/18 21:51:59 ad Exp $");
 #include <dev/rasops/rasops.h>
 
 static void 	rasops15_putchar __P((void *, int, int, u_int, long attr));
+#ifndef RASOPS_SMALL
 static void 	rasops15_putchar8 __P((void *, int, int, u_int, long attr));
 static void 	rasops15_putchar12 __P((void *, int, int, u_int, long attr));
 static void 	rasops15_putchar16 __P((void *, int, int, u_int, long attr));
 static void	rasops15_makestamp __P((struct rasops_info *, long));
-
-void	rasops15_init __P((struct rasops_info *ri));
+#endif
 
 /* 
  * (2x2)x1 stamp for optimized character blitting 
@@ -76,7 +76,6 @@ static int	stamp_mutex;	/* XXX see note in readme */
 #define STAMP_MASK		(15 << 3)
 #define STAMP_READ(o)		(*(int32_t *)((caddr_t)stamp + (o)))
 
-
 /*
  * Initalize rasops_info struct for this colordepth.
  */
@@ -86,6 +85,7 @@ rasops15_init(ri)
 {
 
 	switch (ri->ri_font->fontwidth) {
+#ifndef RASOPS_SMALL
 	case 8:
 		ri->ri_ops.putchar = rasops15_putchar8;
 		break;
@@ -97,7 +97,7 @@ rasops15_init(ri)
 	case 16:
 		ri->ri_ops.putchar = rasops15_putchar16;
 		break;
-
+#endif	/* !RASOPS_SMALL */
 	default:
 		ri->ri_ops.putchar = rasops15_putchar;
 		break;
@@ -113,7 +113,6 @@ rasops15_init(ri)
 	}
 }
 
-
 /*
  * Paint a single character.
  */
@@ -124,8 +123,8 @@ rasops15_putchar(cookie, row, col, uc, attr)
 	u_int uc;
 	long attr;
 {
-	struct rasops_info *ri;
 	int fb, width, height, cnt, clr[2];
+	struct rasops_info *ri;
 	u_char *dp, *rp, *fr;
 	
 	ri = (struct rasops_info *)cookie;
@@ -175,7 +174,7 @@ rasops15_putchar(cookie, row, col, uc, attr)
 	}
 	
 	/* Do underline */
-	if (attr & 1) {
+	if ((attr & 1) != 0) {
 		rp -= ri->ri_stride << 1;
 
 		while (width--) {
@@ -185,7 +184,7 @@ rasops15_putchar(cookie, row, col, uc, attr)
 	}	
 }
 
-
+#ifndef RASOPS_SMALL
 /*
  * Recompute the (2x2)x1 blitting stamp.
  */
@@ -215,7 +214,6 @@ rasops15_makestamp(ri, attr)
 #endif
 	}
 }
-
 
 /*
  * Paint a single character. This is for 8-pixel wide fonts.
@@ -288,7 +286,7 @@ rasops15_putchar8(cookie, row, col, uc, attr)
 	}	
 
 	/* Do underline */
-	if (attr & 1) {
+	if ((attr & 1) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 		rp[0] = STAMP_READ(30);
 		rp[1] = STAMP_READ(30);
@@ -298,7 +296,6 @@ rasops15_putchar8(cookie, row, col, uc, attr)
 	
 	stamp_mutex--;
 }
-
 
 /*
  * Paint a single character. This is for 12-pixel wide fonts.
@@ -389,7 +386,6 @@ rasops15_putchar12(cookie, row, col, uc, attr)
 	
 	stamp_mutex--;
 }
-
 
 /*
  * Paint a single character. This is for 16-pixel wide fonts.
@@ -488,3 +484,4 @@ rasops15_putchar16(cookie, row, col, uc, attr)
 	
 	stamp_mutex--;
 }
+#endif	/* !RASOPS_SMALL */
