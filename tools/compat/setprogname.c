@@ -1,4 +1,4 @@
-/*	$NetBSD: setprogname.c,v 1.1 2001/12/11 21:18:00 tv Exp $	*/
+/*	$NetBSD: setprogname.c,v 1.2 2002/01/10 05:35:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,13 +41,23 @@
 #endif
 
 #ifndef HAVE_SETPROGNAME
+#include <string.h>
+
 static const char *__progname;
 
-void setprogname(const char *progname) {
-	__progname = progname;
+void
+setprogname(const char *progname)
+{
+	__progname = strrchr(progname, '/');
+	if (__progname == NULL)
+		__progname = progname;
+	else
+		__progname++;
 }
 
-const char *getprogname(void) {
+const char *
+getprogname(void)
+{
 	return __progname;
 }
 #endif
