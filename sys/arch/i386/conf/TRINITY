@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.59 1995/08/22 19:43:30 jtc Exp $
+#	$NetBSD: TRINITY,v 1.60 1996/02/27 00:07:11 cgd Exp $
 #
 #	TRINITY -- Mycroft's 386 box
 #
@@ -74,6 +74,7 @@ config		netbsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3 and wd0 and wd1
 #options	GENERIC
 
 isa0	at root
+#eisa0 at root
 #pci0	at root
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
@@ -105,7 +106,7 @@ lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 scsibus* at aha?
-#ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
+#ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 #scsibus* at ahb?
 #aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 #scsibus* at aic?

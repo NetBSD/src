@@ -1,4 +1,4 @@
-#	$NetBSD: PAIN,v 1.55 1996/02/02 09:09:39 mycroft Exp $
+#	$NetBSD: PAIN,v 1.56 1996/02/27 00:07:04 cgd Exp $
 #
 #	PAIN -- mail server and test machine
 #
@@ -73,6 +73,7 @@ config		netbsd	swap generic
 options		GENERIC
 
 isa0	at root
+eisa0	at root
 #pci0	at root
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
@@ -107,7 +108,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #scsibus* at aha?
-ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
+ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
 aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?

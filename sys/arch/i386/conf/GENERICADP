@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICADP,v 1.5 1996/01/13 02:05:26 thorpej Exp $
+#	$NetBSD: GENERICADP,v 1.6 1996/02/27 00:06:55 cgd Exp $
 #
 #	GENERICADP -- everything that's currently supported, except non-
 #                     Adaptec SCSI controllers.
@@ -78,6 +78,7 @@ config		netbsd	swap generic
 options		GENERIC
 
 isa0	at root
+eisa0	at root
 pci0	at root
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
@@ -111,7 +112,7 @@ mms1	at isa? port 0x238 irq 5
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 scsibus* at aha?
-ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
+ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
 ahc*	at pci? bus ? dev ?		# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
