@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.10 1999/11/11 17:08:37 thorpej Exp $	*/
+/*	$NetBSD: srt0.S,v 1.11 1999/12/14 20:57:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -343,3 +343,19 @@ ENTRY_NOPROFILE(romout)
 	movl	%sp@(8),%a0		/* string */
 	jsr	0x150			/* do it */
 	rts
+
+/*
+ * _transfer(entry, howto, opendev, conscode, lowram, esym)
+ *
+ *	Transfer control to the kernel.  We also set up registers
+ *	as older kernels expect.
+ */
+ENTRY_NOPROFILE(_transfer)
+	movl	%sp@(8),%d7		/* howto */
+	movl	%sp@(12),%d6		/* opendev (compat) */
+	movl	%sp@(16),%d5		/* conscode (compat) */
+	movl	%sp@(20),%a5		/* lowram */
+	movl	%sp@(24),%a4		/* esym (compat) */
+
+	movl	%sp@(4),%a0		/* load entry point */
+	jbsr	%a0@			/* GO! */

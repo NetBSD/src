@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 1999/12/14 19:14:49 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 1999/12/14 20:57:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -191,10 +191,18 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 	char *ssym, *esym; 
 {
 
-	/*
-	 * Adjust entry point and announce it.
-	 */
+	/* Adjust entry point. */
 	entry += (long)loadaddr;
+	transfer(entry, howto, opendev, cons_scode, loadaddr, esym);
+}
+
+void
+transfer(entry, howto, od, csc, lr, es)
+	char *entry;
+	int howto, od, csc;
+	char *lr, *es;
+{
+
 	printf("Entry point: 0x%lx\n", (u_long)entry);
 
 #ifdef EXEC_DEBUG
@@ -202,10 +210,5 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 	(void) getchar();
 #endif
 
-	__asm __volatile ("movl %0,%%d7" : : "m" (howto) : "%d7");
-	__asm __volatile ("movl %0,%%d6" : : "m" (opendev) : "%d6");
-	__asm __volatile ("movl %0,%%d5" : : "m" (cons_scode) : "%d5");
-	__asm __volatile ("movl %0,%%a5" : : "a" (loadaddr) : "%a5");
-	__asm __volatile ("movl %0,%%a4" : : "a" (esym) : "%a4");
-	(*((int (*)())entry))();
+	_transfer(entry, howto, od, csc, lr, es);
 }
