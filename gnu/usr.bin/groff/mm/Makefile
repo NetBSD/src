@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.11 1997/10/11 09:34:24 mycroft Exp $
+#	$NetBSD: Makefile,v 1.12 1997/10/18 05:59:18 lukem Exp $
 
 # XXX -- this depends on ../include/defs.h
 TMACDIR?=	/usr/share/tmac

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.tty	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile.tty,v 1.4 1993/08/01 05:42:07 mycroft Exp $
+#	$NetBSD: Makefile.tty,v 1.5 1997/10/18 05:58:30 lukem Exp $
 
 #Modified for Berkeley Unix by Donn Seeley, donn@okeeffe.berkeley.edu
 #

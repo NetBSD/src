@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 1997/05/31 21:21:34 cjs Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/18 05:59:06 lukem Exp $
 
 LIB=		bib
 SRCS=		common.cc index.cc linear.cc search.cc map.c
