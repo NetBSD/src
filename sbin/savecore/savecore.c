@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.38 1999/02/27 20:40:30 sommerfe Exp $	*/
+/*	$NetBSD: savecore.c,v 1.39 1999/07/01 08:53:35 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.38 1999/02/27 20:40:30 sommerfe Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.39 1999/07/01 08:53:35 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -422,7 +422,6 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 		(void)fprintf(fp, "%d\n", bounds + 1);
 		(void)fclose(fp);
 	}
-	(void)fclose(fp);
 
 	/* Create the core file. */
 	(void)snprintf(path, sizeof(path), "%s/netbsd.%d.core%s",
