@@ -1,7 +1,7 @@
-/* $NetBSD: selection.c,v 1.5 2003/08/06 23:58:40 jmmv Exp $ */
+/* $NetBSD: selection.c,v 1.6 2004/01/05 11:17:14 jmmv Exp $ */
 
 /*
- * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: selection.c,v 1.5 2003/08/06 23:58:40 jmmv Exp $");
+__RCSID("$NetBSD: selection.c,v 1.6 2004/01/05 11:17:14 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -318,7 +318,8 @@ selection_wscons_event(struct wscons_event evt)
 			selarea_hide();
 		cursor_hide();
 
-		open_tty(evt.value);
+		if (!Selmouse.sm_mouse->m_disabled)
+			open_tty(evt.value);
 
 		cursor_show();
 		if (Selmouse.sm_selecting)
@@ -377,12 +378,10 @@ open_tty(int ttyno)
 	if (Selmouse.sm_ttyfd >= 0)
 		(void)close(Selmouse.sm_ttyfd);
 
-	if (!Selmouse.sm_mouse->m_disabled) {
-		(void)snprintf(buf, sizeof(buf), _PATH_TTYPREFIX "%d", ttyno);
-		Selmouse.sm_ttyfd = open(buf, O_RDONLY | O_NONBLOCK);
-		if (Selmouse.sm_ttyfd < 0)
-			log_warnx("cannot open %s", buf);
-	}
+	(void)snprintf(buf, sizeof(buf), _PATH_TTYPREFIX "%d", ttyno);
+	Selmouse.sm_ttyfd = open(buf, O_RDONLY | O_NONBLOCK);
+	if (Selmouse.sm_ttyfd < 0)
+		log_warnx("cannot open %s", buf);
 }
 
 /* ---------------------------------------------------------------------- */
