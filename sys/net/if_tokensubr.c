@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.2 1999/03/22 23:01:38 bad Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.3 1999/03/22 23:14:14 bad Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)if_trsubr.c	8.1 (Berkeley) 6/10/93
- *	from: $NetBSD: if_tokensubr.c,v 1.2 1999/03/22 23:01:38 bad Exp $
+ *	from: $NetBSD: if_tokensubr.c,v 1.3 1999/03/22 23:14:14 bad Exp $
  */
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -289,9 +289,9 @@ token_output(ifp, m0, dst, rt0)
 		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
 			bcopy(LLADDR(sdl), (caddr_t)edst, sizeof(edst));
 		}
-		else if (error =
+		else if ((error =
 			    iso_snparesolve(ifp, (struct sockaddr_iso *)dst,
-					    (char *)edst, &snpalen))
+					    (char *)edst, &snpalen)))
 			goto bad; /* Not resolved */
 		/* If broadcasting on a simplex interface, loopback a copy. */
 		if (*edst & 1)
@@ -303,7 +303,7 @@ token_output(ifp, m0, dst, rt0)
 				trh = mtod(mcopy, struct token_header *);
 				bcopy((caddr_t)edst,
 				    (caddr_t)trh->token_dhost, sizeof (edst));
-				bcopy(LLADDR(ifp-if_sadl),
+				bcopy(LLADDR(ifp->if_sadl),
 				    (caddr_t)trh->token_shost, sizeof (edst));
 			}
 		}
@@ -314,6 +314,7 @@ token_output(ifp, m0, dst, rt0)
 		l = mtod(m, struct llc *);
 		l->llc_dsap = l->llc_ssap = LLC_ISO_LSAP;
 		l->llc_control = LLC_UI;
+#if defined(__FreeBSD__)
 		IFDEBUG(D_ETHER)
 			int i;
 			printf("token_output: sending pkt to: ");
@@ -321,6 +322,7 @@ token_output(ifp, m0, dst, rt0)
 				printf("%x ", edst[i] & 0xff);
 			printf("\n");
 		ENDDEBUG
+#endif
 		} break;
 #endif /* ISO */
 #ifdef	LLC
@@ -555,9 +557,11 @@ token_input(ifp, trh, m)
 				if (m == 0)
 					return;
 				*mtod(m, struct token_header *) = *trh;
+#if defined(__FreeBSD__)
 				IFDEBUG(D_ETHER)
 					printf("clnp packet");
 				ENDDEBUG
+#endif
 				schednetisr(NETISR_ISO);
 				inq = &clnlintrq;
 				break;
