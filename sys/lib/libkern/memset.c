@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.c,v 1.2 1994/10/26 06:40:00 cgd Exp $	*/
+/*	$NetBSD: memset.c,v 1.1 1996/03/11 03:19:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,10 +40,10 @@
 #ifdef notdef
 static char *sccsid = "@(#)memset.c	5.6 (Berkeley) 1/26/91";
 #endif
-static char *rcsid = "$NetBSD: memset.c,v 1.2 1994/10/26 06:40:00 cgd Exp $";
+static char *rcsid = "$NetBSD: memset.c,v 1.1 1996/03/11 03:19:37 thorpej Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/cdefs.h>
+#include <sys/types.h>
 #include <string.h>
 
 void *
