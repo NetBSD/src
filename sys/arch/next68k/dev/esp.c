@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.16 1999/02/02 12:46:13 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.17 1999/02/02 14:04:53 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -420,7 +420,13 @@ esp_dma_isintr(sc)
 		DPRINTF(("esp_dma_isintr = 0x%b\n",
 				(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS));
 
-		if (esp_dma_isactive(sc)) {
+		while (esp_dma_isactive(sc)) {
+
+#ifdef DIAGNOSTIC
+			r = (INTR_OCCURRED(NEXT_I_SCSI));
+			if (!r) panic("esp dma enabled but failed to flush");
+#endif
+
 			if (esc->sc_datain) {
 				NCR_WRITE_REG(sc, ESP_DCTL, 
 						ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD | ESPDCTL_FLUSH);
@@ -439,7 +445,6 @@ esp_dma_isintr(sc)
 					DPRINTF(("nextma_intr = %d\n",nr));
 				}
 			}
-			return 0;
 		}
 
 		/* Clear the DMAMOD bit in the DCTL register, since if this
@@ -511,6 +516,8 @@ esp_dma_intr(sc)
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	datain = esc->sc_datain;
+
+	panic("esp_dma_intr resetting dma\n");
 
 	DPRINTF(("esp_dma_intr resetting dma\n"));
 
@@ -661,9 +668,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 				(esc->sc_dmasize <= ESP_DMA_MAXTAIL)) {
  			slop_bgn_size = 0;
 			slop_end_size = esc->sc_dmasize;
-		} else {
-			panic("Chaining DMA interrupts are currently broken.\n");	/* @@@ */
-		}
+		} 
 
 		esc->sc_slop_bgn_addr = *esc->sc_dmaaddr;
 		esc->sc_slop_bgn_size = slop_bgn_size;
@@ -762,6 +767,16 @@ esp_dma_go(sc)
 	if (esc->sc_datain == 0) {
 		memcpy(esc->sc_tail,esc->sc_slop_end_addr,esc->sc_slop_end_size);
 	}
+
+#if defined(DIAGNOSTIC)
+	/* This would happen if we try to transfer unaligned buffers
+	 * that are greater than ESP_DMA_MAXTAIL.  Is that ever expected?
+	 */
+	if ((esc->sc_dmamap->dm_mapsize) &&
+			(esc->sc_tail_dmamap->dm_mapsize)) {
+		panic("combined regular and tail map is currently broken");
+	}
+#endif
 
 	nextdma_start(&esc->sc_scsi_dma, 
 			(esc->sc_datain ? DMACSR_READ : DMACSR_WRITE));
