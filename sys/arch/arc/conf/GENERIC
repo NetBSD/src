@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.85 2003/05/04 10:01:20 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.86 2003/05/22 17:16:19 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,12 +22,12 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.85 $"
+#ident		"GENERIC-$Revision: 1.86 $"
 
 maxusers	32		# estimated number of users
 
 # Platform support
-options 	PLATFORM_ACER_PICA_61		# Pica, NEC ImageRISCstation
+options 	PLATFORM_ACER_PICA_61		# PICA, NEC ImageRISCstation
 options 	PLATFORM_DESKTECH_ARCSTATION_I	# DESKstation rPC44
 options 	PLATFORM_DESKTECH_TYNE		# DESKstation Tyne
 options 	PLATFORM_MICROSOFT_JAZZ		# MIPS Magnum

@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.36 2002/09/18 02:43:55 lukem Exp $
+#	$NetBSD: PICA,v 1.37 2003/05/22 17:16:19 tsutsui Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -10,7 +10,7 @@ include		"arch/arc/conf/std.arc"
 maxusers	32		# estimated number of users
 
 # Platform support
-options 	PLATFORM_ACER_PICA_61		# Pica, NEC ImageRISCstation
+options 	PLATFORM_ACER_PICA_61		# PICA, NEC ImageRISCstation
 
 # Standard system options
 
