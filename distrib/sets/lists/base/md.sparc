@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.68 2003/12/12 22:19:21 martin Exp $
+# $NetBSD: md.sparc,v 1.69 2003/12/15 17:37:26 martin Exp $
 ./lib/libsparc_v8.so.0		base-sys-shlib
 ./lib/libsparc_v8.so.0.0	base-sys-shlib
 ./sbin/edlabel			base-sysutil-root
@@ -12,7 +12,7 @@
 ./usr/mdec/boot.388000		base-sysutil-bin
 ./usr/mdec/boot.net		base-sysutil-bin
 ./usr/mdec/bootblk		base-sysutil-bin
-./usr/mdec/bootjs.elf		base-sysutil-bin
+./usr/mdec/bootjs.net		base-sysutil-bin
 ./usr/mdec/bootxx		base-sysutil-bin
 ./usr/mdec/ofwboot		base-sysutil-bin
 ./usr/mdec/ofwboot.net		base-sysutil-bin
