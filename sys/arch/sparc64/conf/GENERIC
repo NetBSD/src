@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.49 2002/09/19 07:13:58 grant Exp $
+# $NetBSD: GENERIC,v 1.50 2003/02/12 08:19:02 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,17 +20,17 @@
 
 include 	"arch/sparc64/conf/GENERIC32"
 
-#ident 	"GENERIC-$Revision: 1.49 $"
+#ident 	"GENERIC-$Revision: 1.50 $"
 
 include 	"arch/sparc64/conf/std.sparc64-64"
 
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
 options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility
 
-# DEBUG options turned on:
+# DEBUG options
 
 #options 	LOCKDEBUG
 #options 	DIAGNOSTIC
-makeoptions	DEBUG="-g"
+#makeoptions	DEBUG="-g"
 #options 	DEBUG
 #options 	SYSCALL_DEBUG

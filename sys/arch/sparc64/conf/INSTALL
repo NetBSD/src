@@ -1,20 +1,20 @@
-# 	$NetBSD: INSTALL,v 1.13 2002/09/19 08:10:44 grant Exp $
+# 	$NetBSD: INSTALL,v 1.14 2003/02/12 08:19:02 martin Exp $
 
 include "arch/sparc64/conf/GENERIC32"
 
-#ident 		"INSTALL-$Revision: 1.13 $"
+#ident 		"INSTALL-$Revision: 1.14 $"
 
 include "arch/sparc64/conf/std.sparc64-64"
 
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
 options 	COMPAT_SVR4_32	# SunOS 5.x 32-bit binary compatibility
 
-# DEBUG options turned on:
+# DEBUG options
 
 #options 	LOCKDEBUG
-options 	DIAGNOSTIC
-makeoptions	DEBUG="-g"
-options 	DEBUG
+#options 	DIAGNOSTIC
+#makeoptions	DEBUG="-g"
+#options 	DEBUG
 #options 	SYSCALL_DEBUG
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
