@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.14 1999/05/28 18:56:41 ragge Exp $	*/
+/*	$NetBSD: dhu.c,v 1.15 1999/05/28 20:17:29 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -50,11 +50,14 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 
-#include <machine/trap.h>
+#include <machine/bus.h>
 #include <machine/scb.h>
 
-#include <vax/uba/ubavar.h>
-#include <vax/uba/dhureg.h>
+#include <dev/qbus/ubavar.h>
+
+#include <dev/qbus/dhureg.h>
+
+#include "ioconf.h"
 
 /* A DHU-11 has 16 ports while a DHV-11 has only 8. We use 16 by default */
 
@@ -65,8 +68,9 @@
 
 struct	dhu_softc {
 	struct	device	sc_dev;		/* Device struct used by config */
-	dhuregs *	sc_addr;	/* controller reg address */
 	int		sc_type;	/* controller type, DHU or DHV */
+	bus_space_tag_t	sc_iot;
+	bus_space_handle_t sc_ioh;
 	struct {
 		struct	tty *dhu_tty;	/* what we work on */
 		int	dhu_state;	/* to manage TX output status */
@@ -93,6 +97,16 @@ struct	dhu_softc {
 #define DML_RI		TIOCM_RI
 #define DML_DSR		TIOCM_DSR
 #define DML_BRK		0100000		/* no equivalent, we will mask */
+
+#define DHU_READ_WORD(reg) \
+	bus_space_read_2(sc->sc_iot, sc->sc_ioh, reg)
+#define DHU_WRITE_WORD(reg, val) \
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, reg, val)
+#define DHU_READ_BYTE(reg) \
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh, reg)
+#define DHU_WRITE_BYTE(reg, val) \
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, reg, val)
+
 
 /*  On a stock DHV, channel pairs (0/1, 2/3, etc.) must use */
 /* a baud rate from the same group.  So limiting to B is likely */
@@ -139,8 +153,6 @@ struct	cfattach dhu_ca = {
 	sizeof(struct dhu_softc), dhu_match, dhu_attach
 };
 
-extern struct cfdriver dhu_cd;
-
 /* Autoconfig handles: setup the controller to interrupt, */
 /* then complete the housecleaning for full operation */
 
@@ -151,21 +163,20 @@ dhu_match(parent, cf, aux)
         void *aux;
 {
 	struct uba_attach_args *ua = aux;
-	register dhuregs *dhuaddr;
 	register int n;
-
-	dhuaddr = (dhuregs *) ua->ua_addr;
 
 	/* Reset controller to initialize, enable TX/RX interrupts */
 	/* to catch floating vector info elsewhere when completed */
 
-	dhuaddr->dhu_csr = (DHU_CSR_MASTER_RESET | DHU_CSR_RXIE | DHU_CSR_TXIE);
+	bus_space_write_2(ua->ua_iot, ua->ua_ioh, DHU_UBA_CSR,
+	    DHU_CSR_MASTER_RESET | DHU_CSR_RXIE | DHU_CSR_TXIE);
 
 	/* Now wait up to 3 seconds for self-test to complete. */
 
 	for (n = 0; n < 300; n++) {
 		DELAY(10000);
-		if ((dhuaddr->dhu_csr & DHU_CSR_MASTER_RESET) == 0)
+		if ((bus_space_read_2(ua->ua_iot, ua->ua_ioh, DHU_UBA_CSR) &
+		    DHU_CSR_MASTER_RESET) == 0)
 			break;
 	}
 
@@ -177,7 +188,8 @@ dhu_match(parent, cf, aux)
 
 	/* Check whether diagnostic run has signalled a failure. */
 
-	if ((dhuaddr->dhu_csr & DHU_CSR_DIAG_FAIL) != 0)
+	if ((bus_space_read_2(ua->ua_iot, ua->ua_ioh, DHU_UBA_CSR) &
+	    DHU_CSR_DIAG_FAIL) != 0)
 		return 0;
 
 	/* Register the RX interrupt handler */
@@ -194,18 +206,17 @@ dhu_attach(parent, self, aux)
 {
 	register struct dhu_softc *sc = (void *)self;
 	register struct uba_attach_args *ua = aux;
-	register dhuregs *dhuaddr;
 	register unsigned c;
 	register int n;
 
-	dhuaddr = (dhuregs *) ua->ua_addr;
-
+	sc->sc_iot = ua->ua_iot;
+	sc->sc_ioh = ua->ua_ioh;
 	/* Process the 8 bytes of diagnostic info put into */
 	/* the FIFO following the master reset operation. */
 
 	printf("\n%s:", self->dv_xname);
 	for (n = 0; n < 8; n++) {
-		c = dhuaddr->dhu_rbuf;
+		c = DHU_READ_WORD(DHU_UBA_RBUF);
 
 		if ((c&DHU_DIAG_CODE) == DHU_DIAG_CODE) {
 			if ((c&0200) == 0000)
@@ -216,12 +227,11 @@ dhu_attach(parent, self, aux)
 					((c>>1)&01), ((c>>2)&07));
 		}
 	}
-	printf("\n");
 
-	c = dhuaddr->dhu_stat;	/* get flag to distinguish DHU from DHV */
+	c = DHU_READ_WORD(DHU_UBA_STAT);
 
-	sc->sc_addr = dhuaddr;
 	sc->sc_type = (c & DHU_STAT_DHU)? IS_DHU: IS_DHV;
+	printf("\n%s: DH%s-11\n", self->dv_xname, (c & DHU_STAT_DHU)?"U":"V");
 
 	/* Now stuff TX interrupt handler in place */
 	scb_vecalloc(ua->ua_cvec + 4, dhuxint, self->dv_unit, SCB_ISTACK);
@@ -234,15 +244,12 @@ dhurint(unit)
 	int unit;
 {
 	struct	dhu_softc *sc = dhu_cd.cd_devs[unit];
-	register dhuregs *dhuaddr;
 	register struct tty *tp;
 	register int cc, line;
 	register unsigned c, delta;
 	int overrun = 0;
 
-	dhuaddr = sc->sc_addr;
-
-	while ((c = dhuaddr->dhu_rbuf) & DHU_RBUF_DATA_VALID) {
+	while ((c = DHU_READ_WORD(DHU_UBA_RBUF)) & DHU_RBUF_DATA_VALID) {
 
 		/* Ignore diagnostic FIFO entries. */
 
@@ -301,7 +308,6 @@ dhurint(unit)
 
 		(*linesw[tp->t_line].l_rint)(cc, tp);
 	}
-	return;
 }
 
 /* Transmitter Interrupt */
@@ -311,13 +317,10 @@ dhuxint(unit)
 	int unit;
 {
 	register struct	dhu_softc *sc = dhu_cd.cd_devs[unit];
-	register dhuregs *dhuaddr;
 	register struct tty *tp;
 	register int line;
 
-	dhuaddr = sc->sc_addr;
-
-	line = DHU_LINE(dhuaddr->dhu_csr_hi);
+	line = DHU_LINE(DHU_READ_BYTE(DHU_UBA_CSR_HI));
 
 	tp = sc->sc_dhu[line].dhu_tty;
 
@@ -326,7 +329,8 @@ dhuxint(unit)
 		tp->t_state &= ~TS_FLUSH;
 	else {
 		if (sc->sc_dhu[line].dhu_state == STATE_DMA_STOPPED)
-			sc->sc_dhu[line].dhu_cc -= dhuaddr->dhu_tbufcnt;
+			sc->sc_dhu[line].dhu_cc -= 
+			DHU_READ_WORD(DHU_UBA_TBUFCNT);
 		ndflush(&tp->t_outq, sc->sc_dhu[line].dhu_cc);
 		sc->sc_dhu[line].dhu_cc = 0;
 	}
@@ -337,8 +341,6 @@ dhuxint(unit)
 		(*linesw[tp->t_line].l_start)(tp);
 	else
 		dhustart(tp);
-
-	return;
 }
 
 int
@@ -347,7 +349,6 @@ dhuopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register dhuregs *dhuaddr;
 	register struct tty *tp;
 	register int unit, line;
 	struct dhu_softc *sc;
@@ -377,11 +378,9 @@ dhuopen(dev, flag, mode, p)
 		    uballoc((struct uba_softc *)sc->sc_dev.dv_parent,
 		    tp->t_outq.c_cs, tp->t_outq.c_cn, 0);
 
-		dhuaddr = sc->sc_addr;
-
 		s = spltty();
-		dhuaddr->dhu_csr_lo = (DHU_CSR_RXIE | line);
-		sc->sc_dhu[line].dhu_modem = dhuaddr->dhu_stat;
+		DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE | line);
+		sc->sc_dhu[line].dhu_modem = DHU_READ_WORD(DHU_UBA_STAT);
 		(void) splx(s);
 	}
 
@@ -563,7 +562,6 @@ dhustop(tp, flag)
 	register struct tty *tp;
 {
 	register struct dhu_softc *sc;
-	register dhuregs *dhuaddr;
 	register int line;
 	int s;
 
@@ -578,9 +576,10 @@ dhustop(tp, flag)
 
 			sc->sc_dhu[line].dhu_state = STATE_DMA_STOPPED;
 
-			dhuaddr = sc->sc_addr;
-			dhuaddr->dhu_csr_lo = (DHU_CSR_RXIE | line);
-			dhuaddr->dhu_lnctrl |= DHU_LNCTRL_DMA_ABORT;
+			DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE | line);
+			DHU_WRITE_WORD(DHU_UBA_LNCTRL, 
+			    DHU_READ_WORD(DHU_UBA_LNCTRL) | 
+			    DHU_LNCTRL_DMA_ABORT);
 		}
 
 		if (!(tp->t_state & TS_TTSTOP))
@@ -594,7 +593,6 @@ dhustart(tp)
 	register struct tty *tp;
 {
 	register struct dhu_softc *sc;
-	register dhuregs *dhuaddr;
 	register int line, cc;
 	register int addr;
 	int s;
@@ -621,15 +619,16 @@ dhustart(tp)
 
 	line = DHU_LINE(minor(tp->t_dev));
 
-	dhuaddr = sc->sc_addr;
-	dhuaddr->dhu_csr_lo = (DHU_CSR_RXIE | line);
+	DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE | line);
 
 	sc->sc_dhu[line].dhu_cc = cc;
 
 	if (cc == 1) {
 
 		sc->sc_dhu[line].dhu_state = STATE_TX_ONE_CHAR;
-		dhuaddr->dhu_txchar = DHU_TXCHAR_DATA_VALID | *tp->t_outq.c_cf;
+		
+		DHU_WRITE_WORD(DHU_UBA_TXCHAR, 
+		    DHU_TXCHAR_DATA_VALID | *tp->t_outq.c_cf);
 
 	} else {
 
@@ -638,13 +637,14 @@ dhustart(tp)
 		addr = UBAI_ADDR(sc->sc_dhu[line].dhu_txaddr) +
 			(tp->t_outq.c_cf - tp->t_outq.c_cs);
 
-		dhuaddr->dhu_tbufcnt = cc;
-		dhuaddr->dhu_tbufad1 = (addr & 0xFFFF);
-		dhuaddr->dhu_tbufad2 = ((addr>>16) & 0x3F) |
-					DHU_TBUFAD2_TX_ENABLE;
-
-		dhuaddr->dhu_lnctrl &= ~DHU_LNCTRL_DMA_ABORT;
-		dhuaddr->dhu_tbufad2 |= DHU_TBUFAD2_DMA_START;
+		DHU_WRITE_WORD(DHU_UBA_TBUFCNT, cc);
+		DHU_WRITE_WORD(DHU_UBA_TBUFAD1, addr & 0xFFFF);
+		DHU_WRITE_WORD(DHU_UBA_TBUFAD2, ((addr>>16) & 0x3F) |
+		    DHU_TBUFAD2_TX_ENABLE);
+		DHU_WRITE_WORD(DHU_UBA_LNCTRL, 
+		    DHU_READ_WORD(DHU_UBA_LNCTRL) & ~DHU_LNCTRL_DMA_ABORT);
+		DHU_WRITE_WORD(DHU_UBA_TBUFAD2,
+		    DHU_READ_WORD(DHU_UBA_TBUFAD2) | DHU_TBUFAD2_DMA_START);
 	}
 out:
 	(void) splx(s);
@@ -657,7 +657,6 @@ dhuparam(tp, t)
 	register struct termios *t;
 {
 	struct dhu_softc *sc;
-	register dhuregs *dhuaddr;
 	register int cflag = t->c_cflag;
 	int ispeed = ttspeedtab(t->c_ispeed, dhuspeedtab);
 	int ospeed = ttspeedtab(t->c_ospeed, dhuspeedtab);
@@ -684,8 +683,7 @@ dhuparam(tp, t)
 	}
 
 	s = spltty();
-	dhuaddr = sc->sc_addr;
-	dhuaddr->dhu_csr_lo = (DHU_CSR_RXIE | line);
+	DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE | line);
 
 	lpr = ((ispeed&017)<<8) | ((ospeed&017)<<12) ;
 
@@ -715,11 +713,12 @@ dhuparam(tp, t)
 	if (cflag & CSTOPB)
 		lpr |= DHU_LPR_2_STOP;
 
-	dhuaddr->dhu_lpr = lpr;
+	DHU_WRITE_WORD(DHU_UBA_LPR, lpr);
 
-	dhuaddr->dhu_tbufad2 |= DHU_TBUFAD2_TX_ENABLE;
+	DHU_WRITE_WORD(DHU_UBA_TBUFAD2, 
+	    DHU_READ_WORD(DHU_UBA_TBUFAD2) | DHU_TBUFAD2_TX_ENABLE);
 
-	lnctrl = dhuaddr->dhu_lnctrl;
+	lnctrl = DHU_READ_WORD(DHU_UBA_LNCTRL);
 
 	/* Setting LINK.TYPE enables modem signal change interrupts. */
 
@@ -737,7 +736,7 @@ dhuparam(tp, t)
 	else
 		lnctrl &= ~DHU_LNCTRL_IAUTO;
 
-	dhuaddr->dhu_lnctrl = lnctrl;
+	DHU_WRITE_WORD(DHU_UBA_LNCTRL, lnctrl);
 
 	(void) splx(s);
 	return (0);
@@ -764,7 +763,6 @@ dhumctl(sc, line, bits, how)
 	struct dhu_softc *sc;
 	int line, bits, how;
 {
-	register dhuregs *dhuaddr;
 	register unsigned status;
 	register unsigned lnctrl;
 	register unsigned mbits;
@@ -772,14 +770,13 @@ dhumctl(sc, line, bits, how)
 
 	s = spltty();
 
-	dhuaddr = sc->sc_addr;
-	dhuaddr->dhu_csr_lo = (DHU_CSR_RXIE | line);
+	DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE | line);
 
 	mbits = 0;
 
 	/* external signals as seen from the port */
 
-	status = dhuaddr->dhu_stat;
+	status = DHU_READ_WORD(DHU_UBA_STAT);
 
 	if (status & DHU_STAT_CTS)
 		mbits |= DML_CTS;
@@ -795,7 +792,7 @@ dhumctl(sc, line, bits, how)
 
 	/* internal signals/state delivered to port */
 
-	lnctrl = dhuaddr->dhu_lnctrl;
+	lnctrl = DHU_READ_WORD(DHU_UBA_LNCTRL);
 
 	if (lnctrl & DHU_LNCTRL_RTS)
 		mbits |= DML_RTS;
@@ -840,7 +837,7 @@ dhumctl(sc, line, bits, how)
 	else
 		lnctrl &= ~DHU_LNCTRL_BREAK;
 
-	dhuaddr->dhu_lnctrl = lnctrl;
+	DHU_WRITE_WORD(DHU_UBA_LNCTRL, lnctrl);
 
 	(void) splx(s);
 	return (mbits);
