@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: bt742a.c,v 1.26 1994/05/05 05:36:28 cgd Exp $
+ *      $Id: bt742a.c,v 1.27 1994/05/24 13:39:15 mycroft Exp $
  */
 
 /*
@@ -149,7 +149,7 @@ struct bt_cmd_buf {
  * Mail box defs  etc.
  * these could be bigger but we need the bt_softc to fit on a single page..
  */
-#define BT_MBX_SIZE	16	/* mail box size  (MAX 255 MBxs) */
+#define BT_MBX_SIZE	32	/* mail box size  (MAX 255 MBxs) */
 				/* don't need that many really */
 #define BT_CCB_MAX	32	/* store up to 32CCBs at any one time */
 				/* in bt742a H/W ( Not MAX ? ) */
@@ -285,6 +285,15 @@ struct bt_ccb {
 #define BT_CCB_DUP	0x19	/* Duplicate CCB received */
 #define BT_INV_CCB	0x1a	/* Invalid CCB or segment list */
 #define BT_ABORTED	42	/* pseudo value from driver */
+
+struct bt_extended_inquire {
+	u_char	bus_type;	/* Type of bus connected to */
+#define	BT_BUS_TYPE_24BIT	'A'	/* ISA bus */
+#define	BT_BUS_TYPE_32BIT	'E'	/* EISA/VLB/PCI bus */
+#define	BT_BUS_TYPE_MCA		'M'	/* MicroChannel bus */
+	u_char	bios_address;	/* Address of adapter BIOS */
+	u_short	max_segment;	/* ? */
+};
 
 struct bt_boardID {
 	u_char  board_type;
@@ -1015,6 +1024,7 @@ bt_find(bt)
 {
 	u_char ad[4];
 	volatile int i, sts;
+	struct bt_extended_inquire info;
 	struct bt_config conf;
 
 	/*
@@ -1035,6 +1045,26 @@ bt_find(bt)
 		printf("bt_find: No answer from bt742a board\n");
 #endif
 		return ENXIO;
+	}
+
+	/*
+	 * Check that we actually know how to use this board.
+	 */
+	delay(1000);
+	bt_cmd(bt, 1, sizeof(info), 0, &info, BT_INQUIRE_EXTENDED, sizeof(info));
+	switch (info.bus_type) {
+	case BT_BUS_TYPE_24BIT:
+		/* Use the aha1542 driver. */
+		return EINVAL;
+	case BT_BUS_TYPE_32BIT:
+		break;
+	case BT_BUS_TYPE_MCA:
+		/* We don't grok MicroChannel (yet). */
+		return EINVAL;
+	default:
+		printf("%s: illegal bus type %c\n", bt->sc_dev.dv_xname,
+		    info.bus_type);
+		return EINVAL;
 	}
 
 	/*
@@ -1068,7 +1098,8 @@ bt_find(bt)
 		bt->bt_dma = 7;
 		break;
 	default:
-		printf("illegal dma setting %x\n", conf.chan);
+		printf("%s: illegal dma setting %x\n", bt->sc_dev.dv_xname,
+		    conf.chan);
 		return EIO;
 	}
 
@@ -1092,7 +1123,8 @@ bt_find(bt)
 		bt->bt_int = 15;
 		break;
 	default:
-		printf("illegal int setting %x\n", conf.intr);
+		printf("%s: illegal int setting %x\n", bt->sc_dev.dv_xname,
+		    conf.intr);
 		return EIO;
 	}
 
@@ -1115,10 +1147,10 @@ bt_init(bt)
 	/*
 	 * Initialize mail box 
 	 */
-	*((physaddr *) ad) = KVTOPHYS(&bt->bt_mbx);
+	*((physaddr *)ad) = KVTOPHYS(&bt->bt_mbx);
 
-	bt_cmd(bt, 5, 0, 0, 0, BT_MBX_INIT_EXTENDED,
-		BT_MBX_SIZE, ad[0], ad[1], ad[2], ad[3]);
+	bt_cmd(bt, 5, 0, 0, 0, BT_MBX_INIT_EXTENDED, BT_MBX_SIZE,
+	    ad[0], ad[1], ad[2], ad[3]);
 
 	/*
 	 * Set Pointer chain null for just in case
@@ -1127,7 +1159,7 @@ bt_init(bt)
 	 */
 	if (bt->bt_ccb_free) {
 		printf("%s: bt_ccb_free is NOT initialized but init here\n",
-			bt->sc_dev.dv_xname);
+		    bt->sc_dev.dv_xname);
 		bt->bt_ccb_free = NULL;
 	}
 	for (i = 0; i < BT_MBX_SIZE; i++) {
@@ -1140,47 +1172,46 @@ bt_init(bt)
 	 */
 	bt->bt_mbx.tmbo = &bt->bt_mbx.mbo[0];
 	bt->bt_mbx.tmbi = &bt->bt_mbx.mbi[0];
-	bt_inquire_setup_information(bt);
 
-	/* Enable round-robin scheme - appeared at firmware rev. 3.31 */
-	bt_cmd(bt, 1, 0, 0, 0, BT_ROUND_ROBIN, BT_ENABLE);
+	bt_inquire_setup_information(bt);
 }
 
 void
 bt_inquire_setup_information(bt)
 	struct bt_softc *bt;
 {
-	struct bt_setup setup;
 	struct bt_boardID bID;
+	char dummy[8];
+	struct bt_setup setup;
 	int i;
 
 	/* Inquire Board ID to Bt742 for firmware version */
 	bt_cmd(bt, 0, sizeof(bID), 0, &bID, BT_INQUIRE);
 	printf(": version %c.%c, ", bID.firm_revision, bID.firm_version);
 
+	if (bID.firm_revision != '2') {	/* XXXX */
+		/* Enable round-robin scheme - appeared at firmware rev. 3.31 */
+		bt_cmd(bt, 1, 0, 0, 0, BT_ROUND_ROBIN, BT_ENABLE);
+	}
+
+	/* Inquire Installed Devices (to force synchronous negotiation) */
+	bt_cmd(bt, 0, sizeof(dummy), 10, dummy, BT_DEV_GET);
+
 	/* Obtain setup information from Bt742. */
 	bt_cmd(bt, 1, sizeof(setup), 0, &setup, BT_SETUP_GET, sizeof(setup));
 
-	if (setup.sync_neg)
-		printf("sync, ");
-	else
-		printf("async, ");
-	if (setup.parity)
-		printf("parity, ");
-	else
-		printf("no parity, ");
-	printf("%d mbxs", setup.num_mbx);
+	printf("%s, %s, %d mbxs",
+	    setup.sync_neg ? "sync" : "async",
+	    setup.parity ? "parity" : "no parity",
+	    setup.num_mbx);
 
 	for (i = 0; i < 8; i++) {
-		if (!setup.sync[i].offset &&
-		    !setup.sync[i].period &&
-		    !setup.sync[i].valid)
+		if (!setup.sync[i].valid ||
+		    (!setup.sync[i].offset && !setup.sync[i].period))
 			continue;
-
-		printf("%s: dev%02d Offset=%d, Transfer period=%d, Synchronous? %s",
+		printf("%s targ %d: sync, offset %d, period %dnsec",
 		    bt->sc_dev.dv_xname, i,
-		    setup.sync[i].offset, setup.sync[i].period,
-		    setup.sync[i].valid ? "Yes" : "No");
+		    setup.sync[i].offset, setup.sync[i].period * 50 + 200);
 	}
 }
 
@@ -1406,7 +1437,7 @@ bt_poll(bt, xs, ccb)
 		 * accounting for the fact that the clock is not running yet
 		 * by taking out the clock queue entry it makes.
 		 */
-		bt_timeout((caddr_t)ccb);
+		bt_timeout(ccb);
 
 		/*
 		 * because we are polling, take out the timeout entry
@@ -1431,7 +1462,7 @@ bt_poll(bt, xs, ccb)
 			 * We timed out again...  This is bad.  Notice that
 			 * this time there is no clock queue entry to remove.
 			 */
-			bt_timeout((caddr_t)ccb);
+			bt_timeout(ccb);
 		}
 	}
 	if (xs->error)
@@ -1479,8 +1510,8 @@ bt_timeout(arg)
 		printf("\n");
 		bt_send_mbo(bt, ~SCSI_NOMASK, BT_MBO_ABORT, ccb);
 		/* 2 secs for the abort */
-		timeout(bt_timeout, ccb, 2 * hz);
 		ccb->flags = CCB_ABORTED;
+		timeout(bt_timeout, ccb, 2 * hz);
 	}
 	splx(s);
 }
