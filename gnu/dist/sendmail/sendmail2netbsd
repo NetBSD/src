@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: sendmail2netbsd,v 1.4 2000/10/31 14:43:52 itojun Exp $
+#	$NetBSD: sendmail2netbsd,v 1.5 2003/06/01 13:59:56 atatat Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,32 +37,103 @@
 # sendmail tree into netbsd.
 # works on current directory.
 
-### Remove the $'s around the RCSfile:
-find . -type f -print | grep -v CVS | grep -v sendmail2netbsd | while read f; do
-	sed -e ' s/\$\(RCSfile[^\$]*\) \$/\1/' < $f > /tmp/bind1f$$ && mv /tmp/bind1f$$ $f && \
-	echo removed RCSfile tag from $f
-done
+netbsdtag=$(echo @NetBSD@ | tr @ $)
 
-### Remove the $'s around the Id:
-find . -type f -print | grep -v CVS | grep -v sendmail2netbsd | while read f; do
-	sed -e ' s/\$\(Id[^\$]*\) \$/\1/' < $f > /tmp/bind1f$$ && mv /tmp/bind1f$$ $f && \
-	echo removed Id tag from $f
-done
+c_tag() {
+    tf=$1
+    cat -<<EOF $tf > $tf.2.$$ &&
+/* $netbsdtag */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$netbsdtag");
+#endif
 
-### Remove the $'s around the Date:
-find . -type f -print | grep -v CVS | grep -v sendmail2netbsd | while read f; do
-	sed -e ' s/\$\(Date[^\$]*\) \$/\1/' < $f > /tmp/bind1f$$ && mv /tmp/bind1f$$ $f && \
-	echo removed Date tag from $f
-done
+EOF
+	mv $tf.2.$$ $tf
+    if [ $? != 0 ]; then
+	echo "$f: retag error" 1>&2
+	exit 1
+    fi
+    echo "c style $netbsdtag added"
+}
 
-### Remove the $'s around the Revision:
-find . -type f -print | grep -v CVS | grep -v sendmail2netbsd | while read f; do
-	sed -e ' s/\$\(Revision[^\$]*\) \$/\1/' < $f > /tmp/bind1f$$ && mv /tmp/bind1f$$ $f && \
-	echo removed Revision tag from $f
-done
+h_tag() {
+    tf=$1
+    cat -<<EOF $tf > $tf.2.$$ &&
+/* $netbsdtag */
+EOF
+	mv $tf.2.$$ $tf
+    if [ $? != 0 ]; then
+	echo "$f: retag error" 1>&2
+	exit 1
+    fi
+    echo "h style $netbsdtag added"
+}
+
+retag() {
+    f=$1
+    doidtag='s/\$\(Id[^\$]*\) \$/\1/'
+    tagging=false
+
+    # skip some files entirely
+    case "$f" in
+	*/sendmail/helpfile|*.jpg|*.ps|"")
+	    echo "$f: skipping retag"
+	    return 0
+	    ;;
+	*.[ch]|*.cf)
+	    # we'll get these later (well...not the .cf files) 
+	    ;;
+	*)
+	    # add netbsd tag now
+	    tagging=true
+	    doidtag="h;${doidtag}p;g;"'s/\$\(Id[^\$]*\) \$/'$netbsdtag/
+	    ;;
+    esac
+
+    # now remove tags and maybe add ours
+    echo -n "$f: removing tags, "
+    sed -e 's/\$\(RCSfile[^\$]*\) \$/\1/' \
+	-e 's/\$\(Date[^\$]*\) \$/\1/' \
+	-e 's/\$\(Revision[^\$]*\) \$/\1/' \
+	-e "$doidtag" \
+	< $f > $f.1.$$ &&
+	mv $f.1.$$ $f
+    if [ $? != 0 ]; then
+	echo "$f: retag error"
+	exit 1
+    fi
+
+    if $tagging && fgrep -qs $netbsdtag $f; then
+	echo "generic $netbsdtag added"
+    else
+	# now add *our* tag
+	case "$f" in
+	    *.c)
+		c_tag $f
+		;;
+	    *.h)
+		h_tag $f
+		;;
+	    *)
+		echo "no $netbsdtag added"
+		;;
+	esac
+    fi
+}
 
 ### remove *.ps
 (cd doc/op; make clean)
+
+### Remove $'s around RCSfile, Id, Date, Revision, and maybe add a NetBSD tag
+find . -name CVS -type d -prune -o -type f -print | \
+    grep -v sendmail2netbsd | \
+    while read f; do
+	retag $f
+    done
+if [ $? != 0 ]; then
+    exit $?
+fi
 
 echo "please edit sendmail/helpfile by hand."
 exit 0
