@@ -1,0 +1,18 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_PREREQ(2.3)dnl
+AC_INIT(cesetup.c)
+
+CC=${CC-cc}
+AC_PROG_CC
+AC_EXEEXT
+
+AC_PROG_INSTALL
+
+AC_CONFIG_AUX_DIR(`cd $srcdir;pwd`/../..)
+AC_CANONICAL_SYSTEM
+AC_ARG_PROGRAM
+
+PROGS='cesetup$(EXEEXT)'
+AC_SUBST(PROGS)
+
+AC_OUTPUT(Makefile)
