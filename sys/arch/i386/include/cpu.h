@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51 1999/03/10 01:28:25 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52 1999/03/12 01:01:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -197,9 +197,8 @@ void	child_return __P((void *));
 #define	CPU_BIOSEXTMEM		3	/* int: bios-reported ext. mem (K) */
 #define	CPU_NKPDE		4	/* int: number of kernel PDEs */
 #define	CPU_BOOTED_KERNEL	5	/* string: booted kernel name */
-#define CPU_BIOS_DISKS		6	/* bios disk geometry information */
-#define CPU_NATIVE_DISKS	7	/* native disks with matching bios # */
-#define	CPU_MAXID		8	/* number of valid machdep ids */
+#define CPU_DISKINFO		6	/* disk geometry information */
+#define	CPU_MAXID		7	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -208,8 +207,35 @@ void	child_return __P((void *));
 	{ "biosextmem", CTLTYPE_INT }, \
 	{ "nkpde", CTLTYPE_INT }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "biosdisks", CTLTYPE_STRUCT }, \
-	{ "nativedisks", CTLTYPE_STRUCT }, \
+	{ "diskinfo", CTLTYPE_STRUCT }, \
 }
+
+
+/*
+ * Structure for CPU_DISKINFO sysctl call.
+ * XXX this should be somewhere else.
+ */
+#define MAX_BIOSDISKS	16
+
+struct disklist {
+	int dl_nbiosdisks;			   /* number of bios disks */
+	struct biosdisk_info {
+		int bi_dev;			   /* BIOS device # (0x80 ..) */
+		int bi_cyl;			   /* cylinders on disk */
+		int bi_head;			   /* heads per track */
+		int bi_sec;			   /* sectors per track */
+		u_int64_t bi_lbasecs;		   /* total sec. (iff ext13) */
+#define BIFLAG_INVALID		0x01
+#define BIFLAG_EXTINT13		0x02
+		int bi_flags;
+	} dl_biosdisks[MAX_BIOSDISKS];
+
+	int dl_nnativedisks;			   /* number of native disks */
+	struct nativedisk_info {
+		char ni_devname[16];		   /* native device name */
+		int ni_nmatches; 		   /* # of matches w/ BIOS */
+		int ni_biosmatches[MAX_BIOSDISKS]; /* indices in dl_biosdisks */
+	} dl_nativedisks[1];			   /* actually longer */
+};
 
 #endif /* !_I386_CPU_H_ */
