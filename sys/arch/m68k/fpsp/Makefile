@@ -66,17 +66,18 @@ PREFIX		= L_
 .SUFFIXES:	.o .s .sa .defs .h
 
 .sa.s:
-	sh ${.CURDIR}/asm2gas ${.CURDIR}/$*.sa >$*.s
+	sh ${.CURDIR}/asm2gas ${.IMPSRC} >${.TARGET}
 .h.defs:
-	sh ${.CURDIR}/asm2gas ${.CURDIR}/$*.h >$*.defs
+	sh ${.CURDIR}/asm2gas ${.IMPSRC} >${.TARGET}
 .s.o:
-	$(AS) -o $*.o $*.s
+	$(AS) -o ${.TARGET} ${.IMPSRC}
 
 H_FILES = \
 	fpsp.defs \
 	l_fpsp.defs
 
 O_FILES = \
+	copyright.o \
 	netbsd.o \
 	bindec.o \
 	binstr.o \
@@ -120,6 +121,7 @@ O_FILES = \
 	bugfix.o
 
 LIB_O_FILES	= \
+	l_copyright.o \
 	l_entry.o \
 	l_do_func.o \
 	l_round.o \
@@ -247,73 +249,76 @@ l_entry.sa: L_ENTRY.AWK L_LIST MONADIC.$(SYS) DYADIC.$(SYS) l_fpsp.h
 # the source code may cause this editing to break....
 #
 l_do_func.s: do_func.s 
-	$(LIB_FILTER) do_func.s >l_do_func.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 	echo '/global.*do_func/,/^	rts/d' >.SCRIPT
 	echo 'g/smovcr/d' >>.SCRIPT
 	echo 'g/tblpre/d' >>.SCRIPT
 	echo 'w' >>.SCRIPT
 	echo 'q' >>.SCRIPT
-	ed - l_do_func.s <.SCRIPT
+	ed - ${.TARGET} <.SCRIPT
 	rm .SCRIPT
 
 l_round.s: round.s 
-	$(LIB_FILTER) round.s >l_round.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 	echo '/^not_E3:/-6,/^not_E3:/d' >.SCRIPT
 	echo 'w' >>.SCRIPT
 	echo 'q' >>.SCRIPT
-	ed - l_round.s <.SCRIPT
+	ed - ${.TARGET} <.SCRIPT
 	rm .SCRIPT
 
+l_copyright.s: copyright.s 
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
+
 l_sacos.s: sacos.s 
-	$(LIB_FILTER) sacos.s >l_sacos.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_sasin.s: sasin.s 
-	$(LIB_FILTER) sasin.s >l_sasin.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_satan.s: satan.s 
-	$(LIB_FILTER) satan.s >l_satan.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_satanh.s: satanh.s 
-	$(LIB_FILTER) satanh.s >l_satanh.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_scale.s: scale.s 
-	$(LIB_FILTER) scale.s >l_scale.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_scosh.s: scosh.s 
-	$(LIB_FILTER) scosh.s >l_scosh.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_setox.s: setox.s 
-	$(LIB_FILTER) setox.s >l_setox.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_sgetem.s: sgetem.s 
-	$(LIB_FILTER) sgetem.s >l_sgetem.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_sint.s: sint.s 
-	$(LIB_FILTER) sint.s >l_sint.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_slog2.s: slog2.s 
-	$(LIB_FILTER) slog2.s >l_slog2.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_slogn.s: slogn.s 
-	$(LIB_FILTER) slogn.s >l_slogn.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_srem_mod.s: srem_mod.s 
-	$(LIB_FILTER) srem_mod.s >l_srem_mod.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_ssin.s: ssin.s 
-	$(LIB_FILTER) ssin.s >l_ssin.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_ssinh.s: ssinh.s 
-	$(LIB_FILTER) ssinh.s >l_ssinh.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_stan.s: stan.s 
-	$(LIB_FILTER) stan.s >l_stan.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_stanh.s: stanh.s 
-	$(LIB_FILTER) stanh.s >l_stanh.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 l_stwotox.s: stwotox.s 
-	$(LIB_FILTER) stwotox.s >l_stwotox.s
+	$(LIB_FILTER) ${.ALLSRC} >${.TARGET}
 
 #
 #	Extract all files from SCCS directory
