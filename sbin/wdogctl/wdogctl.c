@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.4 2001/01/11 01:34:28 lukem Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.5 2001/01/11 16:37:41 soren Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -151,7 +151,6 @@ enable_kernel(const char *name, u_int period)
 void
 enable_user(const char *name, u_int period)
 {
-	extern const char *__progname;
 	struct wdog_mode wm;  
 	struct timespec ts;
 	pid_t tickler;
