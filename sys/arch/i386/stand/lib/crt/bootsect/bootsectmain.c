@@ -1,4 +1,4 @@
-/*	$NetBSD: bootsectmain.c,v 1.1.1.1 1997/03/14 02:40:34 perry Exp $	*/
+/*	$NetBSD: bootsectmain.c,v 1.2 1999/03/08 00:09:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -62,7 +62,8 @@ int biosdev;
    * load sectors from bootdev
    */
   d.dev = biosdev;
-  set_geometry(&d);
+  set_geometry(&d, NULL);
+
 
   buf = (char*)(PRIM_LOADSZ * BIOSDISK_SECSIZE);
 

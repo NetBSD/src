@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.9 1999/01/29 18:45:12 christos Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.10 1999/03/08 00:09:25 fvdl Exp $	*/
 	
 /*
  * BIOS bootsector startup
@@ -146,6 +146,7 @@ hd:	/**** load sector 0 (DOSBBSECTOR) into the BOOTSEG ****/
 	data32
 	jb	read_error
 
+
 	/***# find the first NetBSD partition *****/
 	data32
 	movl	$PARTSTART, %ebx
@@ -234,6 +235,7 @@ found:
  *				4: segment:offset of buffer
  *				8: block number (8 bytes)
  */
+
 	pushl	%ss
 	popl	%ds
 	data32
@@ -257,6 +259,7 @@ found:
 	popl	%ds		/* but reestablish %ds */
 	data32
 	jb	read_error
+
 	data32
 	jmp	to_boot2
 
@@ -288,6 +291,7 @@ load:
 	jb	read_error
 
 to_boot2:
+
 	# ljmp to the second stage boot loader (boot2).
 	# After ljmp, %cs is BOOTSEG and boot1 (512 bytes) will be used
 	# as an internal buffer "intbuf".
@@ -352,6 +356,7 @@ done:
 
 eread:	.asciz		"Read error\r\n"
 enoboot: .asciz		"No bootable partition\r\n"
+efail: .asciz		"Boot failed, system halted\r\n"
 
 /* throw in a partition in case we are block0 as well */
 /* flag, head, sec, cyl, typ, ehead, esect, ecyl, start, len */
@@ -462,6 +467,11 @@ _C_LABEL(boot2):
 	pushl	%edx
 	call	_C_LABEL(bootsectmain)
 ENTRY(exit)
+	call	_C_LABEL(prot_to_real)
+	data32
+	movl	$efail, %esi
+	data32
+	call	message
 	cli
 	hlt
 
