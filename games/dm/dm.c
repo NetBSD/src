@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.16 2001/01/25 20:41:41 jdolecek Exp $	*/
+/*	$NetBSD: dm.c,v 1.17 2002/08/02 03:06:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.16 2001/01/25 20:41:41 jdolecek Exp $");
+__RCSID("$NetBSD: dm.c,v 1.17 2002/08/02 03:06:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,8 +61,8 @@ __RCSID("$NetBSD: dm.c,v 1.16 2001/01/25 20:41:41 jdolecek Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <utmp.h>
 
+#include "utmpentry.h"
 #include "pathnames.h"
 
 static time_t	now;			/* current time value */
@@ -256,16 +256,16 @@ load()
 int
 users()
 {
-	
-	int nusers, utmp;
-	struct utmp buf;
+	static struct utmpentry *ohead = NULL;	
+	struct utmpentry *ep;
+	int nusers;
 
-	if ((utmp = open(_PATH_UTMP, O_RDONLY, 0)) < 0)
-		err(1, "%s", _PATH_UTMP);
-	for (nusers = 0; read(utmp, (char *)&buf, sizeof(struct utmp)) > 0;)
-		if (buf.ut_name[0] != '\0')
-			++nusers;
-	return (nusers);
+	nusers = getutentries(NULL, &ep);
+	if (ep != ohead) {
+		freeutentries(ep);
+		ohead = ep;
+	}
+	return nusers;
 }
 
 void
