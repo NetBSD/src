@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.20 2005/02/13 20:20:24 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.21 2005/02/13 21:34:55 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -721,6 +721,11 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 			src/sys/arch/vax/conf/GENERIC.MP
 			src/sys/arch/x68k/conf/GENERIC
 			src/sys/arch/xen/conf/GENERIC
+
+		not tested at all:
+			.1Nmmeye*B
+			pdp10
+			playstation2
 
 
 # Other:
