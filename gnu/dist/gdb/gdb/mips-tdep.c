@@ -1613,7 +1613,7 @@ mips_addr_bits_remove (CORE_ADDR addr)
 {
   if (GDB_TARGET_IS_MIPS64)
     {
-      if (mips_mask_address_p () && (addr >> 32 == (CORE_ADDR) 0xffffffff))
+      if (mips_mask_address_p () && ((addr >> 16) >> 16 == (CORE_ADDR) 0xffffffff))
 	{
 	  /* This hack is a work-around for existing boards using
 	     PMON, the simulator, and any other 64-bit targets that
