@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.18 2002/05/26 14:48:19 wiz Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.19 2004/05/23 16:53:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.18 2002/05/26 14:48:19 wiz Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.19 2004/05/23 16:53:22 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: nsdispatch.c,v 1.18 2002/05/26 14:48:19 wiz Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <threadlib.h>
 
 extern	FILE 	*_nsyyin;
 extern	int	 _nsyyparse __P((void));
@@ -78,6 +79,15 @@ const ns_src __nsdefaultsrc[] = {
 
 static	int			 _nsmapsize = 0;
 static	ns_dbt			*_nsmap = NULL;
+#ifdef _REENTRANT
+static 	mutex_t			 _nsmutex = MUTEX_INITIALIZER;
+#define NSLOCK()		mutex_lock(&_nsmutex)
+#define NSUNLOCK()		mutex_unlock(&_nsmutex)
+#else
+#define NSLOCK()
+#define NSUNLOCK()
+#endif
+
 
 /*
  * size of dynamic array chunk for _nsmap and _nsmap[x].srclist
@@ -165,9 +175,10 @@ _nsdbtget(name)
 
 	dbt.name = name;
 
+	NSLOCK();
+	if (stat(_PATH_NS_CONF, &statbuf) == -1)
+		return (NULL);
 	if (confmod) {
-		if (stat(_PATH_NS_CONF, &statbuf) == -1)
-			return (NULL);
 		if (confmod < statbuf.st_mtime) {
 			int i, j;
 
@@ -194,16 +205,17 @@ _nsdbtget(name)
 		}
 	}
 	if (!confmod) {
-		if (stat(_PATH_NS_CONF, &statbuf) == -1)
-			return (NULL);
 		_nsyyin = fopen(_PATH_NS_CONF, "r");
-		if (_nsyyin == NULL)
+		if (_nsyyin == NULL) {
+			NSUNLOCK();
 			return (NULL);
+		}
 		_nsyyparse();
 		(void)fclose(_nsyyin);
 		qsort(_nsmap, (size_t)_nsmapsize, sizeof(ns_dbt), _nscmp);
 		confmod = statbuf.st_mtime;
 	}
+	NSUNLOCK();
 	return (bsearch(&dbt, _nsmap, (size_t)_nsmapsize, sizeof(ns_dbt),
 	    _nscmp));
 }
@@ -232,8 +244,10 @@ _nsdbtput(dbt)
 
 		new = (ns_dbt *)realloc(_nsmap,
 		    (_nsmapsize + NSELEMSPERCHUNK) * sizeof(ns_dbt));
-		if (new == NULL)
+		if (new == NULL) {
+			NSUNLOCK();
 			return (-1);
+		}
 		_nsmap = new;
 	}
 	memmove(&_nsmap[_nsmapsize++], dbt, sizeof(ns_dbt));
