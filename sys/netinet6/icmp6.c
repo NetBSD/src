@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.14 2000/01/02 16:31:18 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.15 2000/01/05 16:46:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2041,11 +2041,13 @@ icmp6_ctloutput(op, so, level, optname, mp)
 		  {
 			  struct icmp6_filter *p;
 
-			  p = mtod(m, struct icmp6_filter *);
-			  if (!p || !in6p->in6p_icmp6filt) {
+			  if (!in6p->in6p_icmp6filt) {
 				  error = EINVAL;
 				  break;
 			  }
+			  *mp = m = m_get(M_WAIT, MT_SOOPTS);
+			  m->m_len = sizeof(struct icmp6_filter);
+			  p = mtod(m, struct icmp6_filter *);
 			  bcopy(in6p->in6p_icmp6filt, p,
 				sizeof(struct icmp6_filter));
 			  error = 0;
