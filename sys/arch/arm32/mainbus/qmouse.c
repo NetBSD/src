@@ -1,4 +1,4 @@
-/* $NetBSD: qmouse.c,v 1.2 1996/03/06 23:26:23 mark Exp $ */
+/* $NetBSD: qmouse.c,v 1.3 1996/03/17 01:24:36 thorpej Exp $ */
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -89,9 +89,12 @@ int        strncmp __P((const char *, const char *, size_t));
 
 int quadmouseintr	(struct quadmouse_softc *);
 
+struct cfattach quadmouse_ca = {
+	sizeof(struct quadmouse_softc), quadmouseprobe, quadmouseattach
+};
 
-struct cfdriver	quadmousecd = {
-    NULL, "quadmouse", quadmouseprobe, quadmouseattach, DV_DULL, sizeof(struct quadmouse_softc)
+struct cfdriver	quadmouse_cd = {
+    NULL, "quadmouse", DV_DULL
 };
 
 
@@ -173,10 +176,10 @@ quadmouseopen(dev, flag, mode, p)
 	struct quadmouse_softc *sc;
 	int unit = minor(dev);
     
-	if (unit >= quadmousecd.cd_ndevs)
+	if (unit >= quadmouse_cd.cd_ndevs)
 		return(ENXIO);
 
-	sc = quadmousecd.cd_devs[unit];
+	sc = quadmouse_cd.cd_devs[unit];
     
 	if (!sc) return(ENXIO);
 
@@ -214,7 +217,7 @@ quadmouseclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	int unit = minor (dev);
-	struct quadmouse_softc *sc = quadmousecd.cd_devs[unit];
+	struct quadmouse_softc *sc = quadmouse_cd.cd_devs[unit];
     
 	if (irq_release(IRQ_TIMER1, &sc->sc_ih) != 0)
 		panic("Cannot release IRA\n");
@@ -234,7 +237,7 @@ quadmouseread(dev, uio, flag)
 	int flag;
 {
 	int unit = minor(dev);
-	struct quadmouse_softc *sc = quadmousecd.cd_devs[unit];
+	struct quadmouse_softc *sc = quadmouse_cd.cd_devs[unit];
 	int error;
 	int s;
 	int length;
@@ -298,7 +301,7 @@ quadmouseioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct quadmouse_softc *sc = quadmousecd.cd_devs[minor(dev)];
+	struct quadmouse_softc *sc = quadmouse_cd.cd_devs[minor(dev)];
 
 	switch (cmd) {
 	case QUADMOUSE_WRITEX:
@@ -418,7 +421,7 @@ quadmouseselect(dev, rw, p)
 	struct proc *p;
 {
 	int unit = minor(dev);
-	struct quadmouse_softc *sc = quadmousecd.cd_devs[unit];
+	struct quadmouse_softc *sc = quadmouse_cd.cd_devs[unit];
 	int s;
 
 	if(rw == FWRITE)

@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.1 1996/01/31 23:24:54 mark Exp $ */
+/* $NetBSD: mainbus.c,v 1.2 1996/03/17 01:24:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -40,8 +40,6 @@
  *
  * Created      : 15/12/94
  * Last updated : 03/07/95
- *
- *    $Id: mainbus.c,v 1.1 1996/01/31 23:24:54 mark Exp $
  */
 
 #include <sys/param.h>
@@ -57,9 +55,12 @@
 int mainbusmatch __P((struct device *, void *, void *));
 void mainbusattach __P((struct device *, struct device *, void *));
 
-struct cfdriver mainbuscd = {
-	NULL, "mainbus", mainbusmatch, mainbusattach, DV_DULL,
-	    sizeof(struct device), 1
+struct cfattach mainbus_ca = {
+	sizeof(struct device), mainbusmatch, mainbusattach
+};
+
+struct cfdriver mainbus_cd = {
+	NULL, "mainbus", DV_DULL, 1
 };
 
 int

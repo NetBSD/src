@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.2 1996/03/06 23:33:14 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.3 1996/03/17 01:24:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -584,10 +584,12 @@ poduleirqhandler()
 	return(1);      
 }
 
+struct cfattach posulebus_ca = {
+	sizeof(struct device), podulebusmatch, podulebusattach
+};
 
-struct cfdriver podulebuscd = {
-	NULL, "podulebus", podulebusmatch, podulebusattach, DV_DULL,
-	    sizeof(struct device), 1
+struct cfdriver podulebus_cd = {
+	NULL, "podulebus", DV_DULL, 1
 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 1996/02/22 10:11:19 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.10 1996/03/17 01:26:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,12 +73,15 @@
  * Resettodr restores the time of day hardware after a time change.
  */
 
-int	clockmatch __P((struct device *, struct cfdata *, void *));
+int	clockmatch __P((struct device *, void *, void *));
 void	clockattach __P((struct device *, struct device *, void *));
 
-struct cfdriver clockcd = {
-	NULL, "clock", (cfmatch_t)clockmatch, clockattach, 
-	DV_DULL, sizeof(struct device), NULL, 0
+struct cfattach clock_ca = {
+	sizeof(struct device), clockmatch, clockattach
+};
+
+struct cfdriver clock_cd = {
+	NULL, "clock", DV_DULL, NULL, 0
 };
 
 void statintr __P((struct clockframe *));
@@ -104,10 +107,9 @@ static int	clk2min;	/* current, from above choises		*/
 #endif
 
 int
-clockmatch(pdp, cfp, auxp)
+clockmatch(pdp, match, auxp)
 struct device *pdp;
-struct cfdata *cfp;
-void *auxp;
+void *match, *auxp;
 {
 	if(!strcmp("clock", auxp))
 		return(1);

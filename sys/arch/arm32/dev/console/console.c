@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.4 1996/03/16 00:17:52 thorpej Exp $ */
+/* $NetBSD: console.c,v 1.5 1996/03/17 01:24:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -90,7 +90,7 @@ struct vconsole *vconsole_master = &vconsole_master_store;
 struct vconsole *vconsole_current;
 struct vconsole *vconsole_head;
 struct vconsole *vconsole_default;
-struct cfdriver rpccd;
+struct cfdriver rpc_cd;
 extern struct vconsole *debug_vc;	/* rename this to vconsole_debug */
 int physcon_major=4;
 static char undefined_string[] = "UNDEFINED";
@@ -300,7 +300,7 @@ physconopen(dev, flag, mode, p)
 			return ENXIO;
 	}
 /*
-	if (unit >= rpccd.cd_ndevs || !rpccd.cd_devs[unit])
+	if (unit >= rpc_cd.cd_ndevs || !rpc_cd.cd_devs[unit])
 		return ENXIO;
 */
 
@@ -1183,12 +1183,20 @@ rpcattach(parent, self, aux)
 	vconsole_master->R_ATTACH(vconsole_master, parent, self, aux);
 }
 
-struct cfdriver rpccd = {
-	NULL, "rpc", rpcprobe, rpcattach, DV_TTY, sizeof(struct device)
+struct cfattach rpc_ca = {
+	sizeof(struct device), rpcprobe, rpcattach
 };
 
-struct cfdriver vtcd = {
-	NULL, "rpc", rpcprobe, rpcattach, DV_TTY, sizeof(struct device)
+struct cfdriver rpc_cd = {
+	NULL, "rpc", DV_TTY
+};
+
+struct cfattach vt_ca = {
+	sizeof(struct device), rpcprobe, rpcattach
+};
+
+struct cfdriver vt_cd = {
+	NULL, "rpc", DV_TTY
 };
 
 extern struct terminal_emulator vt220;

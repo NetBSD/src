@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.2 1996/03/06 23:31:01 mark Exp $	*/
+/*	$NetBSD: fd.c,v 1.3 1996/03/17 01:24:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -122,8 +122,12 @@ static fiqhandler_t fiqhandler;
 void floppy_read_fiq __P((void));
 void floppy_write_fiq __P((void));
 
-struct cfdriver fdccd = {
-	NULL, "fdc", fdcprobe, fdcattach, DV_DULL, sizeof(struct fdc_softc)
+struct cfattach fdc_ca = {
+	sizeof(struct fdc_softc), fdcprobe, fdcattach
+};
+
+struct cfdriver fdc_cd = {
+	NULL, "fdc", DV_DULL
 };
 
 /*
@@ -189,8 +193,12 @@ struct fd_softc {
 int fdprobe __P((struct device *, void *, void *));
 void fdattach __P((struct device *, struct device *, void *));
 
-struct cfdriver fdcd = {
-	NULL, "fd", fdprobe, fdattach, DV_DISK, sizeof(struct fd_softc)
+struct cfattach fd_ca = {
+	sizeof(struct fd_softc), fdprobe, fdattach
+};
+
+struct cfdriver fd_cd = {
+	NULL, "fd", DV_DISK
 };
 
 void fdgetdisklabel __P((struct fd_softc *));
@@ -488,8 +496,8 @@ fdstrategy(bp)
 /*	printf("fdstrategy: bp=%08x\n", bp);*/
 
 	/* Valid unit, controller, and request? */
-	if (unit >= fdcd.cd_ndevs ||
-	    (fd = fdcd.cd_devs[unit]) == 0 ||
+	if (unit >= fd_cd.cd_ndevs ||
+	    (fd = fd_cd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % FDC_BSIZE) != 0) {
 		bp->b_error = EINVAL;
@@ -727,9 +735,9 @@ Fdopen(dev, flags)
 	struct fd_type *type;
 
 	unit = FDUNIT(dev);
-	if (unit >= fdcd.cd_ndevs)
+	if (unit >= fd_cd.cd_ndevs)
 		return ENXIO;
-	fd = fdcd.cd_devs[unit];
+	fd = fd_cd.cd_devs[unit];
 	if (fd == 0)
 		return ENXIO;
 	type = fd_dev_to_type(fd, dev);
@@ -752,7 +760,7 @@ fdclose(dev, flags)
 	dev_t dev;
 	int flags;
 {
-	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 
 	fd->sc_flags &= ~FD_OPEN;
 	return 0;
@@ -1204,7 +1212,7 @@ fdioctl(dev, cmd, addr, flag)
 	caddr_t addr;
 	int flag;
 {
-	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct disklabel buffer;
 	int error;
 
