@@ -1,4 +1,4 @@
-.\"     $NetBSD: tmac.e,v 1.2 1997/07/07 19:19:37 phil Exp $
+.\"     $NetBSD: tmac.e,v 1.3 1997/07/07 20:08:02 phil Exp $
 .\"
 .nr _0 \n(.c
 .\" Copyright (c) 1988, 1993
@@ -65,7 +65,7 @@
 .\"		---	an internal macro.
 .\"
 .\" library directory for sourced files:
-.ds || /usr/old/lib/me
+.ds || /usr/share/me
 .if \n@>0 .ds || .
 .\"
 .if !\n(.V .tm You are using the wrong version of NROFF/TROFF!!
@@ -1172,7 +1172,7 @@
 .nr _L \n(.lu			\" line length of page
 .nr $c 1			\" current column number
 .nr $f 1 1			\" footnote number
-.ds * \*[1\*]\k*\"		\" footnote "name"
+.ds * \*{1\*}\k*\"		\" footnote "name"
 .nr $d 1 1			\" delayed text number
 .ds # [1]\k#\"			\" delayed text "name"
 .nr _M 1			\" chapter mode is chapter

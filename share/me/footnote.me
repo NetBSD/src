@@ -1,4 +1,4 @@
-.\"     $NetBSD: footnote.me,v 1.2 1997/07/07 19:19:27 phil Exp $
+.\"     $NetBSD: footnote.me,v 1.3 1997/07/07 20:08:00 phil Exp $
 .\"
 .nr _0 \n(c.
 .\" Copyright (c) 1988, 1993
@@ -92,8 +92,8 @@
 \{\
 .	if \\n* \
 .		nr $f +1
-.	ds * \\*[\\n($f\\*]\k*
-.	rr *
+.	ds * \\*{\\n($f\\*}\k*
+.	nr * 0
 .	in 0
 .	da
 .	ev
@@ -103,7 +103,7 @@
 .	ch @f -\\n(_bu
 .	if \\n(.p-\\n(_b<=\\n(nl \
 .		ch @f \\n(nlu+\n(.Vu
-.	nr dn _D
+.	nr dn \\n(_D
 .	rr _D
 .\}
 .el \
