@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.184 2005/03/09 04:23:33 simonb Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.185 2005/03/09 04:24:12 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.184 2005/03/09 04:23:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.185 2005/03/09 04:24:12 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1543,7 +1543,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 }
 
 /*
- * When a source quence is received, we are being notified of congestion.
+ * When a source quench is received, we are being notified of congestion.
  * Close the congestion window down to the Loss Window (one segment).
  * We will gradually open it again as we proceed.
  */
