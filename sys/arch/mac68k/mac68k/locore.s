@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.7 1994/01/30 01:01:08 briggs Exp $
+ *	$Id: locore.s,v 1.8 1994/02/03 21:25:57 briggs Exp $
  */
 
 #include "assym.s"
@@ -631,10 +631,11 @@ Lttimer1:
 Ltimer1:
 #endif /* PROFTIMER */
 	movl	a6@(8),a1		| get pointer to frame in via1_intr
-	movl	a1@(64),sp@-		| push padded PS
-	movl	a1@(68),sp@-		| push PC
+	movl	a1@(64),sp@-		| push ps
+	movl	a1@(68),sp@-		| push pc
+	movl	sp, sp@-		| push pointer to pc, ps
 	jbsr	_hardclock		| call generic clock int routine
-	addql	#8,sp			| pop params
+	lea	sp@(12), sp		| pop params
 	addql	#1,_intrcnt+28		| add another system clock interrupt
 #ifdef PROFTIMER
 Ltimend:
