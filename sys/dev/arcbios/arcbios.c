@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.4 2001/09/08 01:39:11 rafal Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.5 2001/11/13 12:53:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: arcbios.c,v 1.5 2001/11/13 12:53:24 lukem Exp $");
 
 #include <sys/param.h>
 
