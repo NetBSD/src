@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.20 2002/10/06 12:09:34 lukem Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.21 2002/10/08 00:28:36 lukem Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -176,6 +176,18 @@ int issetugid(void);
 
 #if !HAVE_ISBLANK && !defined(isblank)
 #define isblank(x) ((x) == ' ' || (x) == '\t')
+#endif
+
+#if !HAVE_LCHFLAGS
+int lchflags(const char *, u_long);
+#endif
+
+#if !HAVE_LCHMOD
+int lchmod(const char *, mode_t);
+#endif
+
+#if !HAVE_LCHOWN
+int lchown(const char *, uid_t, gid_t);
 #endif
 
 #if !HAVE_MACHINE_BSWAP_H
