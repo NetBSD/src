@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.75.2.3.2.1 2005/01/07 12:49:04 jdc Exp $
+#	$NetBSD: INSTALL,v 1.75.2.3.2.2 2005/04/02 21:28:32 he Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -100,6 +100,7 @@ hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* at pci? dev ? function ?	# Opti IDE controllers
 piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
+pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 satalink* at pci? dev ? function ?	# SiI SATALink controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
