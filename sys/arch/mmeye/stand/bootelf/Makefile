@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/05/02 18:35:02 wiz Exp $
+#	$NetBSD: Makefile,v 1.8 2002/05/02 18:54:32 wiz Exp $
 
 PROG= bootelf
 SRCS= boot.c byteorder.c loadfile.c loadfile_elf32.c
@@ -12,6 +12,8 @@ CPPFLAGS+= -I${LIBSA} -I${.OBJDIR}
 LDSTATIC?= -static
 
 CLEANFILES+=	machine
+
+realdepend realall: machine
 
 machine::
 	-rm -f $@
