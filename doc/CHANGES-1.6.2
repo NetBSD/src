@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.61 2003/06/24 09:22:06 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.62 2003/06/24 09:35:10 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -787,3 +787,17 @@ sys/arch/macppc/dev/wdc_obio.c			1.25
 	Fix wdc_obio_dma_init() confused WDC_DMA_LBA48 with WDC_DMA_READ.
 	This was tested by jtb@netbsd.org.
 	[hamajima, ticket #1328]
+
+sys/arch/sparc64/conf/files/files.sparc64	1.74
+sys/arch/sparc64/include/cpu.h			1.35 (via patch)
+sys/arch/sparc64/include/cpu_counter.h		1.1 (new)
+sys/arch/sparc64/sparc64/clock.c		1.55
+sys/arch/sparc64/sparc64/cpu.c			1.28 (via patch)
+sys/arch/sparc64/sparc64/locore.s		1.169
+sys/kern/kern_microtime.c			1.1 (new)
+
+	Switch to use cycle counter (%tick) based microtime().
+
+	This is derived from alpha/microtime.c and i386/tsc_microtime.c,
+	and will share with both ports.
+	[nakayama, ticket #1329]
