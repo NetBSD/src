@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.9 1998/07/08 05:01:56 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.10 1998/08/27 04:00:55 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -71,15 +71,6 @@
 #include <machine/ofw.h>
 #include <arm32/isa/isa_machdep.h>
 #include <arm32/shark/sequoia.h>
-
-/*
- *  Imported types
- */
-typedef	struct {
-        vm_offset_t physical;
-        vm_offset_t virtual;
-} pv_addr_t;
-
 
 /*
  *  Imported variables
