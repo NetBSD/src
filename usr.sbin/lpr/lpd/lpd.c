@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
+/*	$NetBSD: lpd.c,v 1.34 2002/07/09 01:12:35 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.34 2002/07/09 01:12:35 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,7 @@ main(int argc, char **argv)
 	name = argv[0];
 
 	errs = 0;
-	while ((i = getopt(argc, argv, "b:cdln:srw:W")) != -1)
+	while ((i = getopt(argc, argv, "b:dln:srw:W")) != -1)
 		switch (i) {
 		case 'b':
 			if (blist_addrs >= blist_size) {

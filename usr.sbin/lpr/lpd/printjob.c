@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.32 2002/06/08 23:40:12 itojun Exp $	*/
+/*	$NetBSD: printjob.c,v 1.33 2002/07/09 01:12:35 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.32 2002/06/08 23:40:12 itojun Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.33 2002/07/09 01:12:35 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ static int	child;		/* id of any filters */
 static int	lfd;		/* lock file descriptor */
 static int	ofd;		/* output filter file descriptor */
 static int	ofilter;	/* id of output filter, if any */
-static int	pfd;		/* prstatic inter file descriptor */
+static int	pfd;		/* printer file descriptor */
 static int	pid;		/* pid of lpd process */
 static int	prchild;	/* id of pr process */
 static char	title[80];	/* ``pr'' title */
@@ -1040,8 +1040,7 @@ scan_out(int scfd, char *scsp, int dlm)
 }
 
 static int
-dropit(c)
-	int c;
+dropit(int c)
 {
 	switch(c) {
 
@@ -1189,8 +1188,7 @@ dofork(int action)
  * Kill child processes to abort current job.
  */
 static void
-abortpr(signo)
-	int signo;
+abortpr(int signo)
 {
 	(void)unlink(tempfile);
 	kill(0, SIGINT);
