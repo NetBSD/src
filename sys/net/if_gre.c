@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.1 1998/09/13 20:27:47 hwr Exp $ */
+/*	$NetBSD: if_gre.c,v 1.2 1998/09/13 21:39:49 hwr Exp $ */
 /*
  * (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -246,11 +246,7 @@ gre_output(ifp, m, dst, rt)
 	if (sc->g_proto == IPPROTO_GRE){
 		/* we don't have any GRE flags for now */
 
-#if 0 		/* the world is not yet ready for this  as of 1.3.2 */
 		memset((void*)&gh->gi_g,0, sizeof(struct gre_h));
-#else
-		bzero((void*)&gh->gi_g, sizeof(struct gre_h));
-#endif
 		gh->gi_ptype=htons(etype);
 	}
 
@@ -434,11 +430,7 @@ void gre_compute_route(struct gre_softc *sc)
 
 	ro=&sc->route;
 	
-#if 0	/* the world is not yet ready for this as of 1.3.2 */
 	memset(ro,0,sizeof(struct route));
-#else
-	bzero(ro,sizeof(struct route));
-#endif
 	((struct sockaddr_in *)&ro->ro_dst)->sin_addr=sc->g_dst;
 	ro->ro_dst.sa_family=AF_INET;
 	ro->ro_dst.sa_len=sizeof(ro->ro_dst);
