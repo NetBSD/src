@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.6 2002/07/01 05:56:45 itojun Exp $	*/
+/*	$NetBSD: monitor.c,v 1.7 2002/07/01 06:17:12 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -442,7 +442,7 @@ mm_answer_sign(int socket, Buffer *m)
 	p = buffer_get_string(m, &datlen);
 
 	if (datlen != 20)
-		fatal("%s: data length incorrect: %d", __func__, datlen);
+		fatal("%s: data length incorrect: %u", __func__, datlen);
 
 	/* save session id, it will be passed on the first call */
 	if (session_id2_len == 0) {
@@ -456,7 +456,7 @@ mm_answer_sign(int socket, Buffer *m)
 	if (key_sign(key, &signature, &siglen, p, datlen) < 0)
 		fatal("%s: key_sign failed", __func__);
 
-	debug3("%s: signature %p(%d)", __func__, signature, siglen);
+	debug3("%s: signature %p(%u)", __func__, signature, siglen);
 
 	buffer_clear(m);
 	buffer_put_string(m, signature, siglen);
@@ -1422,7 +1422,7 @@ mm_zalloc(struct mm_master *mm, u_int ncount, u_int size)
 	int len = size * ncount;
 	void *address;
 
-	if (len <= 0)
+	if (len <= 0 || size > 65535 || ncount > 65535)
 		fatal("%s: mm_zalloc(%u, %u)", __func__, ncount, size);
 
 	address = mm_malloc(mm, len);

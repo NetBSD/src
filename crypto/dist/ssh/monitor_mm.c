@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_mm.c,v 1.1.1.2 2002/06/24 05:26:11 itojun Exp $	*/
+/*	$NetBSD: monitor_mm.c,v 1.2 2002/07/01 06:17:12 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_mm.c,v 1.6 2002/06/04 23:05:49 markus Exp $");
+RCSID("$OpenBSD: monitor_mm.c,v 1.7 2002/06/28 01:49:31 millert Exp $");
 
 #include <sys/mman.h>
 
@@ -37,7 +37,14 @@ RCSID("$OpenBSD: monitor_mm.c,v 1.6 2002/06/04 23:05:49 markus Exp $");
 static int
 mm_compare(struct mm_share *a, struct mm_share *b)
 {
-	return ((char *)a->address - (char *)b->address);
+	long diff = (char *)a->address - (char *)b->address;
+
+	if (diff == 0)
+		return (0);
+	else if (diff < 0)
+		return (-1);
+	else
+		return (1);
 }
 
 RB_GENERATE(mmtree, mm_share, next, mm_compare)

@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_fdpass.c,v 1.1.1.2 2002/06/24 05:26:11 itojun Exp $	*/
+/*	$NetBSD: monitor_fdpass.c,v 1.2 2002/07/01 06:17:12 itojun Exp $	*/
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_fdpass.c,v 1.3 2002/06/04 23:05:49 markus Exp $");
+RCSID("$OpenBSD: monitor_fdpass.c,v 1.4 2002/06/26 14:50:04 deraadt Exp $");
 
 #include <sys/uio.h>
 
@@ -40,7 +40,7 @@ mm_send_fd(int socket, int fd)
 	struct cmsghdr *cmsg;
 	struct iovec vec;
 	char ch = '\0';
-	int n;
+	ssize_t n;
 
 	memset(&msg, 0, sizeof(msg));
 	msg.msg_control = (caddr_t)tmp;
@@ -60,8 +60,8 @@ mm_send_fd(int socket, int fd)
 		fatal("%s: sendmsg(%d): %s", __func__, fd,
 		    strerror(errno));
 	if (n != 1)
-		fatal("%s: sendmsg: expected sent 1 got %d",
-		    __func__, n);
+		fatal("%s: sendmsg: expected sent 1 got %ld",
+		    __func__, (long)n);
 }
 
 int
@@ -71,8 +71,9 @@ mm_receive_fd(int socket)
 	char tmp[CMSG_SPACE(sizeof(int))];
 	struct cmsghdr *cmsg;
 	struct iovec vec;
+	ssize_t n;
 	char ch;
-	int fd, n;
+	int fd;
 
 	memset(&msg, 0, sizeof(msg));
 	vec.iov_base = &ch;
@@ -85,8 +86,8 @@ mm_receive_fd(int socket)
 	if ((n = recvmsg(socket, &msg, 0)) == -1)
 		fatal("%s: recvmsg: %s", __func__, strerror(errno));
 	if (n != 1)
-		fatal("%s: recvmsg: expected received 1 got %d",
-		    __func__, n);
+		fatal("%s: recvmsg: expected received 1 got %ld",
+		    __func__, (long)n);
 
 	cmsg = CMSG_FIRSTHDR(&msg);
 	if (cmsg->cmsg_type != SCM_RIGHTS)

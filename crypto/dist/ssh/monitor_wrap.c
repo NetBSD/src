@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.c,v 1.4 2002/06/24 05:48:31 itojun Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.5 2002/07/01 06:17:12 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_wrap.c,v 1.11 2002/06/19 18:01:00 markus Exp $");
+RCSID("$OpenBSD: monitor_wrap.c,v 1.14 2002/06/30 21:59:45 deraadt Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
@@ -63,8 +63,8 @@ extern Buffer input, output;
 void
 mm_request_send(int socket, enum monitor_reqtype type, Buffer *m)
 {
-	u_char buf[5];
 	u_int mlen = buffer_len(m);
+	u_char buf[5];
 
 	debug3("%s entering: type %d", __func__, type);
 
@@ -80,8 +80,8 @@ void
 mm_request_receive(int socket, Buffer *m)
 {
 	u_char buf[4];
-	ssize_t res;
 	u_int msg_len;
+	ssize_t res;
 
 	debug3("%s entering", __func__);
 
@@ -206,7 +206,7 @@ mm_getpwnamallow(const char *login)
 	return (pw);
 }
 
-char* mm_auth2_read_banner(void)
+char *mm_auth2_read_banner(void)
 {
 	Buffer m;
 	char *banner;
@@ -410,7 +410,7 @@ mm_newkeys_from_blob(u_char *blob, int blen)
 	enc->key = buffer_get_string(&b, &enc->key_len);
 	enc->iv = buffer_get_string(&b, &len);
 	if (len != enc->block_size)
-		fatal("%s: bad ivlen: expected %d != %d", __func__,
+		fatal("%s: bad ivlen: expected %u != %u", __func__,
 		    enc->block_size, len);
 
 	if (enc->name == NULL || cipher_by_name(enc->name) != enc->cipher)
@@ -424,7 +424,7 @@ mm_newkeys_from_blob(u_char *blob, int blen)
 	mac->enabled = buffer_get_int(&b);
 	mac->key = buffer_get_string(&b, &len);
 	if (len > mac->key_len)
-		fatal("%s: bad mac key length: %d > %d", __func__, len,
+		fatal("%s: bad mac key length: %u > %d", __func__, len,
 		    mac->key_len);
 	mac->key_len = len;
 
@@ -435,7 +435,7 @@ mm_newkeys_from_blob(u_char *blob, int blen)
 
 	len = buffer_len(&b);
 	if (len != 0)
-		error("newkeys_from_blob: remaining bytes in blob %d", len);
+		error("newkeys_from_blob: remaining bytes in blob %u", len);
 	buffer_free(&b);
 	return (newkey);
 }
@@ -687,7 +687,7 @@ mm_chall_setup(char **name, char **infotxt, u_int *numprompts,
 	*name = xstrdup("");
 	*infotxt = xstrdup("");
 	*numprompts = 1;
-	*prompts = xmalloc(*numprompts * sizeof(char*));
+	*prompts = xmalloc(*numprompts * sizeof(char *));
 	*echo_on = xmalloc(*numprompts * sizeof(u_int));
 	(*echo_on)[0] = 0;
 }

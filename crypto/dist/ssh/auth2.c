@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.17 2002/06/24 05:48:28 itojun Exp $	*/
+/*	$NetBSD: auth2.c,v 1.18 2002/07/01 06:17:11 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.93 2002/05/31 11:35:15 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.94 2002/06/30 21:54:16 deraadt Exp $");
 
 #include "ssh2.h"
 #include "xmalloc.h"
@@ -36,7 +36,6 @@ RCSID("$OpenBSD: auth2.c,v 1.93 2002/05/31 11:35:15 markus Exp $");
 #include "dispatch.h"
 #include "pathnames.h"
 #include "monitor_wrap.h"
-#include "atomicio.h"
 
 /* import */
 extern ServerOptions options;
@@ -100,7 +99,7 @@ input_service_request(int type, u_int32_t seq, void *ctxt)
 {
 	Authctxt *authctxt = ctxt;
 	u_int len;
-	int accept = 0;
+	int acceptit = 0;
 	char *service = packet_get_string(&len);
 	packet_check_eom();
 
@@ -109,14 +108,14 @@ input_service_request(int type, u_int32_t seq, void *ctxt)
 
 	if (strcmp(service, "ssh-userauth") == 0) {
 		if (!authctxt->success) {
-			accept = 1;
+			acceptit = 1;
 			/* now we can handle user-auth requests */
 			dispatch_set(SSH2_MSG_USERAUTH_REQUEST, &input_userauth_request);
 		}
 	}
 	/* XXX all other service requests are denied */
 
-	if (accept) {
+	if (acceptit) {
 		packet_start(SSH2_MSG_SERVICE_ACCEPT);
 		packet_put_cstring(service);
 		packet_send();

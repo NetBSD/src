@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.22 2002/06/24 05:48:38 itojun Exp $	*/
+/*	$NetBSD: ssh.c,v 1.23 2002/07/01 06:17:13 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.179 2002/06/12 01:09:52 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.180 2002/06/30 21:59:45 deraadt Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -540,7 +540,7 @@ again:
 	if (buffer_len(&command) == 0)
 		tty_flag = 1;
 
-	/* Force no tty*/
+	/* Force no tty */
 	if (no_tty_flag)
 		tty_flag = 0;
 	/* Do not allocate a tty if stdin is not a tty. */
@@ -614,7 +614,8 @@ again:
 	if (options.rhosts_rsa_authentication ||
 	    options.hostbased_authentication) {
 		sensitive_data.nkeys = 3;
-		sensitive_data.keys = xmalloc(sensitive_data.nkeys*sizeof(Key));
+		sensitive_data.keys = xmalloc(sensitive_data.nkeys *
+		    sizeof(Key));
 
 		PRIV_START;
 		sensitive_data.keys[0] = key_load_private_type(KEY_RSA1,

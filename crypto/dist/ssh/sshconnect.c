@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.19 2002/06/24 05:48:38 itojun Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.20 2002/07/01 06:17:13 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.126 2002/06/23 03:30:17 deraadt Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.127 2002/06/27 08:49:44 markus Exp $");
 
 #include <openssl/bn.h>
 
@@ -473,7 +473,7 @@ confirm(const char *prompt)
 		    (p[0] == '\0') || (p[0] == '\n') ||
 		    strncasecmp(p, "no", 2) == 0)
 			ret = 0;
-		if (strncasecmp(p, "yes", 3) == 0)
+		if (p && strncasecmp(p, "yes", 3) == 0)
 			ret = 1;
 		if (p)
 			xfree(p);

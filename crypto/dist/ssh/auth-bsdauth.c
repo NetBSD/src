@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bsdauth.c,v 1.4 2002/06/24 05:48:26 itojun Exp $	*/
+/*	$NetBSD: auth-bsdauth.c,v 1.5 2002/07/01 06:17:11 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: auth-bsdauth.c,v 1.4 2002/06/19 00:27:55 deraadt Exp $");
+RCSID("$OpenBSD: auth-bsdauth.c,v 1.5 2002/06/30 21:59:45 deraadt Exp $");
 
 #ifdef BSD_AUTH
 #include "xmalloc.h"
@@ -70,7 +70,7 @@ bsdauth_query(void *ctx, char **name, char **infotxt,
 	*name = xstrdup("");
 	*infotxt = xstrdup("");
 	*numprompts = 1;
-	*prompts = xmalloc(*numprompts * sizeof(char*));
+	*prompts = xmalloc(*numprompts * sizeof(char *));
 	*echo_on = xmalloc(*numprompts * sizeof(u_int));
 	(*echo_on)[0] = 0;
 	(*prompts)[0] = xstrdup(challenge);
