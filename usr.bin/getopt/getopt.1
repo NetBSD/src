@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt.1,v 1.15 2003/02/25 10:35:43 wiz Exp $
+.\"	$NetBSD: getopt.1,v 1.16 2003/05/10 17:02:04 jmmv Exp $
 .Dd November 9, 2000
 .Dt GETOPT 1
 .Os
@@ -45,7 +45,7 @@ which requires an argument.
 .Pp
 .Bd -literal -offset indent
 args=\`getopt abc: $*\`
-if [ $? != 0 ]; then
+if [ $? \-ne 0 ]; then
 	echo 'Usage: ...'
 	exit 2
 fi
