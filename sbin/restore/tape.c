@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.43 2001/01/24 23:14:04 enami Exp $	*/
+/*	$NetBSD: tape.c,v 1.44 2001/12/23 14:40:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.43 2001/01/24 23:14:04 enami Exp $");
+__RCSID("$NetBSD: tape.c,v 1.44 2001/12/23 14:40:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -402,8 +402,9 @@ gethdr:
 		goto again;
 	}
 	if (tmpbuf.c_date != dumpdate || tmpbuf.c_ddate != dumptime) {
+		time_t ttime = tmpbuf.c_date;
 		fprintf(stderr, "Wrong dump date\n\tgot: %s",
-			ctime(&tmpbuf.c_date));
+			ctime(&ttime));
 		fprintf(stderr, "\twanted: %s", ctime(&dumpdate));
 		volno = 0;
 		goto again;
@@ -505,9 +506,13 @@ setdumpnum()
 void
 printdumpinfo()
 {
-	fprintf(stdout, "Dump   date: %s", ctime(&spcl.c_date));
+	time_t ttime;
+
+	ttime = spcl.c_date;
+	fprintf(stdout, "Dump   date: %s", ctime(&ttime));
+	ttime = spcl.c_ddate;
 	fprintf(stdout, "Dumped from: %s",
-	    (spcl.c_ddate == 0) ? "the epoch\n" : ctime(&spcl.c_ddate));
+	    (spcl.c_ddate == 0) ? "the epoch\n" : ctime(&ttime));
 	fprintf(stderr, "Level %d dump of %s on %s:%s\n",
 		spcl.c_level, spcl.c_filesys, 
 		*spcl.c_host? spcl.c_host: "[unknown]", spcl.c_dev);
