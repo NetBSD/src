@@ -1,7 +1,16 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1997/07/24 21:22:43 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2000/11/20 00:16:18 wiz Exp $
 
-PROG= hlfsd
-SRCS=	stubs.c nfs_prot_svc.c homedir.c hlfsd.c 
-MAN+= hlfsd.8
+.include "${.CURDIR}/../Makefile.inc"
+
+PROG=	hlfsd
+
+DIST=	${IDIST}/hlfsd
+.PATH:	${DIST}
+
+SRCS=	hlfsd.c homedir.c nfs_prot_svc.c stubs.c
+MAN+=	hlfsd.8
+
+CPPFLAGS+=	-I${DIST}
+LDADD+=		${LIBAMU} -lrpcsvc
 
 .include <bsd.prog.mk>
