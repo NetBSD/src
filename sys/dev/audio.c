@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.78 1997/10/29 02:00:20 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.79 1997/10/29 02:11:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -206,8 +206,8 @@ audioprobe(parent, match, aux)
 {
 	struct audio_attach_args *sa = aux;
 
-	DPRINTF(("audioprobe: done=%d sa=%p hw=%p\n", 
-		 sa->audiodone, sa, sa->ahw));
+	DPRINTF(("audioprobe: type=%d sa=%p hw=%p\n", 
+                  sa->type, sa, sa->hwif));
 	return (sa->type == AUDIODEV_TYPE_AUDIO) ? 1 : 0;
 }
 
