@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.289 2004/08/13 04:10:49 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.290 2004/08/20 17:19:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.289 2004/08/13 04:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.290 2004/08/20 17:19:44 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -756,7 +756,7 @@ wddone(void *v)
 		errmsg = "error";
 		do_perror = 1;
 retry:		/* Just reset and retry. Can we do more ? */
-		wd->atabus->ata_reset_channel(wd->drvp, 0);
+		(*wd->atabus->ata_reset_drive)(wd->drvp, 0);
 retry2:
 		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
@@ -1458,7 +1458,8 @@ wddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	if (wddumprecalibrated == 0) {
 		wddumpmulti = wd->sc_multi;
 		wddumprecalibrated = 1;
-		wd->atabus->ata_reset_channel(wd->drvp, AT_POLL | AT_RST_EMERG);
+		(*wd->atabus->ata_reset_drive)(wd->drvp,
+					       AT_POLL | AT_RST_EMERG);
 		wd->drvp->state = RESET;
 	}
 
