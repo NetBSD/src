@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.9 2004/01/13 23:37:29 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.10 2004/04/30 23:58:05 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -33,9 +33,9 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.8 2003/09/14 22:32:18 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.9 2004/01/13 23:37:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.10 2004/04/30 23:58:05 dyoung Exp $");
 #endif
 
 /*
@@ -100,27 +100,14 @@ SYSCTL_INT(_debug, OID_AUTO, ieee80211, CTLFLAG_RW, &ieee80211_debug,
 static void ieee80211_set11gbasicrates(struct ieee80211_rateset *,
 		enum ieee80211_phymode);
 
-static const char *
-ieee80211_phymode_name(enum ieee80211_phymode mode)
-{
-	int i;
-	struct {
-		enum ieee80211_phymode mode;
-		const char *name;
-	} modenames[] = {
-		{ IEEE80211_MODE_AUTO,	"auto" },
-		{ IEEE80211_MODE_11A,	"11a" },
-		{ IEEE80211_MODE_11B,	"11b" },
-		{ IEEE80211_MODE_11G,	"11g" },
-		{ IEEE80211_MODE_FH,	"FH" },
-		{ IEEE80211_MODE_TURBO,  "turbo" }
-	};
-	for (i = 0; i < sizeof(modenames) / sizeof(modenames[0]); i++) {
-		if (mode == modenames[i].mode)
-			return modenames[i].name;
-	}
-	return "<unknown>";
-}
+static const char *ieee80211_phymode_name[] = {
+	"auto",		/* IEEE80211_MODE_AUTO */
+	"11a",		/* IEEE80211_MODE_11A */
+	"11b",		/* IEEE80211_MODE_11B */
+	"11g",		/* IEEE80211_MODE_11G */
+	"FH",		/* IEEE80211_MODE_FH */
+	"turbo",	/* IEEE80211_MODE_TURBO */
+};
 
 void
 ieee80211_ifattach(struct ifnet *ifp)
@@ -175,10 +162,10 @@ ieee80211_ifattach(struct ifnet *ifp)
 	/* validate ic->ic_curmode */
 	if ((ic->ic_modecaps & (1<<ic->ic_curmode)) == 0)
 		ic->ic_curmode = IEEE80211_MODE_AUTO;
+	ic->ic_des_chan = IEEE80211_CHAN_ANYC;	/* any channel is ok */
 
 	(void) ieee80211_setmode(ic, ic->ic_curmode);
 
-	ic->ic_des_chan = IEEE80211_CHAN_ANYC;	/* any channel is ok */
 	if (ic->ic_lintval == 0)
 		ic->ic_lintval = 100;		/* default sleep */
 	ic->ic_bmisstimeout = 7*ic->ic_lintval;	/* default 7 beacons */
@@ -331,7 +318,7 @@ ieee80211_media_init(struct ifnet *ifp,
 			ADD(ic, IFM_AUTO, mopt | IFM_IEEE80211_MONITOR);
 		if (mode == IEEE80211_MODE_AUTO)
 			continue;
-		if_printf(ifp, "%s rates: ", ieee80211_phymode_name(mode));
+		if_printf(ifp, "%s rates: ", ieee80211_phymode_name[mode]);
 		rs = &ic->ic_sup_rates[mode];
 		for (i = 0; i < rs->rs_nrates; i++) {
 			rate = rs->rs_rates[i];
@@ -702,7 +689,7 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	 * Verify at least one channel is present in the available
 	 * channel list before committing to the new mode.
 	 */
-	IASSERT(mode < N(chanflags), ("Unexpected mode %u\n", mode));
+	IASSERT(mode < N(chanflags), ("Unexpected mode %u", mode));
 	modeflags = chanflags[mode];
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
 		c = &ic->ic_channels[i];
@@ -864,22 +851,17 @@ ieee80211_rate2media(struct ieee80211com *ic, int rate, enum ieee80211_phymode m
 	case IEEE80211_MODE_FH:
 		mask |= IFM_IEEE80211_FH;
 		break;
+	case IEEE80211_MODE_AUTO:
+		/* NB: ic may be NULL for some drivers */
+		if (ic && ic->ic_phytype == IEEE80211_T_FH) {
+			mask |= IFM_IEEE80211_FH;
+			break;
+		}
+		/* NB: hack, 11g matches both 11b+11a rates */
+		/* fall thru... */
 	case IEEE80211_MODE_11G:
 		mask |= IFM_IEEE80211_11G;
 		break;
-	case IEEE80211_MODE_AUTO:
-		switch (ic->ic_phytype) {
-		case IEEE80211_T_FH:
-			mask |= IFM_IEEE80211_FH;
-			break;
-		case IEEE80211_T_DS:
-			mask |= IFM_IEEE80211_11B;
-			break;
-		case IEEE80211_T_OFDM:
-		case IEEE80211_T_TURBO:
-			mask |= IFM_IEEE80211_11G;
-			break;
-		}
 	}
 	for (i = 0; i < N(rates); i++)
 		if (rates[i].m == mask)
@@ -954,4 +936,5 @@ static moduledata_t ieee80211_mod = {
 DECLARE_MODULE(wlan, ieee80211_mod, SI_SUB_DRIVERS, SI_ORDER_FIRST);
 MODULE_VERSION(wlan, 1);
 MODULE_DEPEND(wlan, rc4, 1, 1, 1);
+MODULE_DEPEND(wlan, ether, 1, 1, 1);
 #endif
