@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2003/12/27 20:57:21 jmc Exp $
+#	$NetBSD: list,v 1.14 2004/03/26 17:19:15 jmc Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -59,5 +59,6 @@ SPECIAL	more		srcdir	distrib/utils/more
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
+SPECIAL gzip		srcdir	distrib/utils/x_gzip
 
 LIBS	libhack.o -lbz2 -ltermcap -lutil -lrmt -ll -lm -lz
