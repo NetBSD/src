@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.8 1999/03/24 05:51:19 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.9 1999/03/25 15:34:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -5112,8 +5112,6 @@ compat_sparc32_pwritev(p, v, retval)
 	    &offset, 0, retval));
 }
 
-
-
 int
 compat_13_compat_sparc32_sigprocmask(p, v, retval)
 	register struct proc *p;
@@ -5137,7 +5135,6 @@ compat_13_compat_sparc32_sigprocmask(p, v, retval)
 	*retval = oess;
 	return (0);
 }
-
 
 int
 compat_13_compat_sparc32_sigsuspend(p, v, retval)
