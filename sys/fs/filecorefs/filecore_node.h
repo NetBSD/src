@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.h,v 1.1 2002/12/23 17:30:40 jdolecek Exp $	*/
+/*	$NetBSD: filecore_node.h,v 1.1.4.1 2003/07/03 01:21:41 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -102,7 +102,7 @@ int	filecore_print		__P((void *));
 int	filecore_pathconf	__P((void *));
 int	filecore_blkatoff	__P((void *));
 
-struct	vnode *filecore_ihashget __P((dev_t, ino_t));
+struct	vnode *filecore_ihashget __P((dev_t, ino_t, struct lwp *));
 void	filecore_ihashins __P((struct filecore_node *));
 void	filecore_ihashrem __P((struct filecore_node *));
 

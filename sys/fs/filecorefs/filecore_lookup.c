@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.3.2.1 2003/07/02 15:26:29 darrenr Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.3.2.2 2003/07/03 01:21:41 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.3.2.1 2003/07/02 15:26:29 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.3.2.2 2003/07/03 01:21:41 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -269,7 +269,7 @@ found:
 		ino_t pin = filecore_getparent(dp);
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
-		error = VFS_VGET(vdp->v_mount, pin, &tdp);
+		error = VFS_VGET(vdp->v_mount, pin, &tdp, cnp->cn_lwp);
 		if (error) {
 			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
@@ -292,7 +292,7 @@ found:
 #endif
 		brelse(bp);
 		error = VFS_VGET(vdp->v_mount, dp->i_dirent.addr |
-		    (i << FILECORE_INO_INDEX), &tdp);
+		    (i << FILECORE_INO_INDEX), &tdp, cnp->cn_lwp);
 		if (error)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN)) {
