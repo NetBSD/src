@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.2 1999/01/10 17:19:01 christos Exp $	*/
+/*	$NetBSD: debug.h,v 1.3 1999/02/24 18:31:00 christos Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -51,9 +51,14 @@ extern void debug_printf(const char *, ...)
 extern int debug;
 
 #ifdef DEBUG /* { */
-#define dbg(format, args...)	debug_printf(format, ## args)
+#define dbg(format, args...)		debug_printf(format, ## args)
 #else /* } { */
-#define dbg(format, args...)	((void) 0)
+#define dbg(format, args...)		((void) 0)
 #endif /* } */
+#ifdef RTLD_DEBUG_RELOC
+#define rdbg(f, format, args...)	if (f) debug_printf(format, ## args)
+#else
+#define rdbg(f, format, args...)	((void) 0)
+#endif
 
 #endif /* } */
