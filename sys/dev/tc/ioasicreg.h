@@ -1,4 +1,4 @@
-/* $NetBSD: ioasicreg.h,v 1.3 2000/05/28 06:13:40 gmcgarry Exp $ */
+/* $NetBSD: ioasicreg.h,v 1.4 2000/07/17 01:28:16 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -186,7 +186,8 @@
     (reg) = (((val)<<IOASIC_DMAPTR_SHIFT)&IOASIC_DMAPTR_MASK)
 #define IOASIC_DMAPTR_GET(reg,val) \
     (val) = (((reg)&IOASIC_DMAPTR_MASK)>>IOASIC_DMAPTR_SHIFT)
-#define IOASIC_DMA_ADDR(p)		(((unsigned)p) << (5-2))
+#define	IOASIC_DMA_ADDR(p) \
+    ((((p) << 3) & ~0x1f) | (((p) >> 29) & 0x1f))
 
 /* For the LANCE DMA pointer register initialization the above suffices */
 
