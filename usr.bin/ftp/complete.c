@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.16 1998/08/08 07:51:30 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.17 1999/02/07 12:27:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.16 1998/08/08 07:51:30 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.17 1999/02/07 12:27:50 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -193,6 +193,18 @@ complete_local(word, list)
 			dir[file - word] = '\0';
 		}
 		file++;
+	}
+	if (dir[0] == '~') {
+		char *p;
+
+		p = dir;
+		if (!globulize(&p))
+			return (CC_ERROR);
+		if (p != dir) {
+			strncpy(dir, p, sizeof(dir));
+			dir[sizeof(dir)-1] = '\0';
+			free(p);
+		}
 	}
 
 	if ((dd = opendir(dir)) == NULL)
