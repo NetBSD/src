@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.45 1998/10/04 00:02:26 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.46 1999/01/08 11:59:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -118,8 +118,8 @@ linux_setregs(p, epp, stack)
 {
 	register struct pcb *pcb = &p->p_addr->u_pcb;
 
-	pcb->pcb_savefpu.sv_env.en_cw = __Linux_NPXCW__;
 	setregs(p, epp, stack);
+	pcb->pcb_savefpu.sv_env.en_cw = __Linux_NPXCW__;
 }
 
 /*
