@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.h,v 1.8 2004/02/27 02:55:17 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.h,v 1.9 2004/02/29 01:24:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,6 +48,11 @@ struct RF_RedFuncs_s {
 	char   *SimpleName;
 };
 
+typedef struct RF_FuncList_s {
+	RF_VoidFuncPtr fp;
+   	struct RF_FuncList_s *next;
+} RF_FuncList_t;
+
 extern const RF_RedFuncs_t rf_xorFuncs;
 extern const RF_RedFuncs_t rf_xorRecoveryFuncs;
 
@@ -70,6 +75,9 @@ void    rf_FreeDAGHeader(RF_DagHeader_t * dh);
 
 RF_DagList_t *rf_AllocDAGList(void);
 void rf_FreeDAGList(RF_DagList_t *);
+
+RF_FuncList_t *rf_AllocFuncList(void);
+void rf_FreeFuncList(RF_FuncList_t *);
 
 void   *rf_AllocBuffer(RF_Raid_t * raidPtr, RF_DagHeader_t * dag_h,
 		       RF_PhysDiskAddr_t * pda, 
