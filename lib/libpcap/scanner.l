@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scanner.l,v 1.12 2000/12/28 22:12:07 thorpej Exp $	*/
+/*	$NetBSD: scanner.l,v 1.13 2001/01/06 02:11:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: scanner.l,v 1.56 97/07/21 13:31:50 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: scanner.l,v 1.12 2000/12/28 22:12:07 thorpej Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.13 2001/01/06 02:11:19 christos Exp $");
 #endif
 #endif
 
@@ -80,7 +80,9 @@ static inline int xdtoi(int);
 #endif
 
 #define yylval pcap_lval
+#ifdef notdef
 extern YYSTYPE yylval;
+#endif
 
 static char *in_buffer;
 
