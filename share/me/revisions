@@ -1,3 +1,9 @@
+2.29	5 May 98
+-- Change superscript strings to \*{ and \*} so they work with groff.
+
+2.29	5 May 98
+-- Change superscript strings to \*{ and \*} so they work with groff.
+
 2.28	12 May 86
 -- Fix footnotes if no -rv flag specified
 
