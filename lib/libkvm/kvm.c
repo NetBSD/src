@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.45 1996/06/23 20:28:05 leo Exp $	*/
+/*	$NetBSD: kvm.c,v 1.46 1996/10/01 18:56:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$NetBSD: kvm.c,v 1.45 1996/06/23 20:28:05 leo Exp $";
+static char *rcsid = "$NetBSD: kvm.c,v 1.46 1996/10/01 18:56:14 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -765,14 +765,18 @@ kvm_nlist(kd, nl)
 	struct nlist *nl;
 {
 	register struct nlist *p;
-	register int nvalid;
+	register int nvalid, rv;
 
 	/*
 	 * If we can't use the data base, revert to the 
 	 * slow library call.
 	 */
-	if (kd->db == 0)
-		return (__fdnlist(kd->nlfd, nl));
+	if (kd->db == 0) {
+		rv = __fdnlist(kd->nlfd, nl);
+		if (rv == -1)
+			_kvm_err(kd, 0, "bad namelist");
+		return (rv);
+	}
 
 	/*
 	 * We can use the kvm data base.  Go through each nlist entry
