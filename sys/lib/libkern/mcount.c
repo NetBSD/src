@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.4 1996/06/12 04:16:53 cgd Exp $	*/
+/*	$NetBSD: mcount.c,v 1.5 1996/06/29 14:30:32 abrown Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: mcount.c,v 1.4 1996/06/12 04:16:53 cgd Exp $";
+static char rcsid[] = "$NetBSD: mcount.c,v 1.5 1996/06/29 14:30:32 abrown Exp $";
 #endif
 #endif
 
@@ -79,9 +79,8 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 		return;
 #ifdef _KERNEL
 	MCOUNT_ENTER;
-#else
-	p->state = GMON_PROF_BUSY;
 #endif
+	p->state = GMON_PROF_BUSY;
 	/*
 	 * check that frompcindex is a reasonable pc value.
 	 * for example:	signal catchers get called from the stack,
@@ -170,10 +169,9 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 		
 	}
 done:
+	p->state = GMON_PROF_ON;
 #ifdef _KERNEL
 	MCOUNT_EXIT;
-#else
-	p->state = GMON_PROF_ON;
 #endif
 	return;
 overflow:
