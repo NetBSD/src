@@ -1,4 +1,4 @@
-/*	$NetBSD: irframevar.h,v 1.1 2001/12/02 10:44:43 augustss Exp $	*/
+/*	$NetBSD: irframevar.h,v 1.2 2001/12/02 16:29:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,8 @@ struct irframe_methods {
 	int (*im_open)(void *h, int flag, int mode, struct proc *p);
 	int (*im_close)(void *h, int flag, int mode, struct proc *p);
 	int (*im_read)(void *h, struct uio *uio, int flag);
-	int (*im_write)(void *h, void *buf, size_t len);
+	int (*im_write)(void *h, struct uio *uio, int flag);
+	int (*im_poll)(void *h, int events, struct proc *p);
 	int (*im_set_params)(void *h, struct irda_params *params);
 	int (*im_reset_params)(void *h);
 	int (*im_get_speeds)(void *h, int *speeds);
@@ -57,8 +58,6 @@ struct irframe_softc {
 };
 
 void irframe_frame_available(struct device *);
-
-#define MAX_IRDA_FRAME 2000	/* XXX how big is it? */
 
 #define IRDA_DEFAULT_SPEED	9600
 #define IRDA_DEFAULT_EBOFS	10
