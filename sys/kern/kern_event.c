@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.4.2.3 2002/11/12 12:49:10 skrll Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.4.2.4 2002/11/12 20:46:28 nathanw Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -48,6 +48,7 @@
 #include <sys/uio.h>
 #include <sys/mount.h>
 #include <sys/filedesc.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 static int	kqueue_scan(struct file *fp, size_t maxevents,
