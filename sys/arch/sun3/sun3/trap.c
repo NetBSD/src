@@ -575,9 +575,20 @@ syscall(code, frame)
 	    panic("syscall: bad syscall emulation type");
 	}
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
-	if (code == 0) {			/* indir */
-		code = fuword(params);
-		params += sizeof(int);
+	switch (code) {
+	case SYS_syscall:
+	        code = fuword(params); /* indir */
+	        params += sizeof(int);
+	        break;
+        case SYS___syscall:
+#ifdef COMPAT_SUNOS
+		if (p->p_emul == EMUL_SUNOS)
+			break;
+#endif		
+	        code = fuword(params + QUAD_LOWWORD * sizeof(int)); /* indir */
+	        params += sizeof(quad_t);
+	        break;
+	default:
 	}
 	if (code >= numsys)
 		callp = &systab[0];		/* indir (illegal) */
