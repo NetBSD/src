@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1998/05/19 19:59:58 tv Exp $
+#	$NetBSD: Makefile,v 1.11 1998/05/22 03:26:28 tv Exp $
 
 LIB=	bfd
 
@@ -33,7 +33,7 @@ CPPFLAGS+= -I$(dist)/include
 # Have to ommit libbfd.c to avoid .c.so rule problem.
 BFD_SRCS= \
 	archive.c archures.c bfd.c cache.c coffgen.c corefile.c \
-	format.c init.c opncls.c reloc.c \
+	format.c init.c lib_bfd.c opncls.c reloc.c \
 	section.c syms.c targets.c hash.c linker.c \
 	elf.c srec.c binary.c tekhex.c ihex.c stabs.c stab-syms.c \
 	$(BFD_BACKENDS) $(BFD_MACHINES) netbsd-core.c
@@ -49,7 +49,6 @@ IBERTY_SRCS= argv.c basename.c choose-temp.c concat.c cplus-dem.c \
   insque.c vasprintf.c
 
 SRCS = $(BFD_SRCS) $(OPCODE_SRCS) $(IBERTY_SRCS)
-OBJS = misc.o
 .include <bsd.lib.mk>
 
 CC_o=	$(CC) $(CFLAGS) $(CPPFLAGS)
@@ -74,15 +73,7 @@ targets.so: $(dist)/bfd/targets.c
 	$(CC_so) $(TDEFAULTS) -c $(.IMPSRC) -o $@
 
 # Avoid the unwanted .c.a default rule
-.NOPATH: libbfd.a libbfd.o libbfd.so
-# XXX $#!%  Why do I STILL get this behaviour:
-# building standard bfd library
-# nm: .../bfd/libbfd.c: not object file or archive
-
-misc.o: $(dist)/bfd/libbfd.c
-	$(CC_o)  -c $(dist)/bfd/libbfd.c -o $@
-misc.so: $(dist)/bfd/libbfd.c
-	$(CC_so) -c $(dist)/bfd/libbfd.c -o $@
+.NOPATH: libbfd.a
 
 # Icky generated header files...
 CLEANFILES+= elf32-target.h elf64-target.h
