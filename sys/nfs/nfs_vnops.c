@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.178 2003/09/17 09:10:00 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.179 2003/09/25 23:10:58 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.178 2003/09/17 09:10:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.179 2003/09/25 23:10:58 enami Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1026,7 +1026,7 @@ dorpc:
 		 */
 		if (error == ENOENT && (cnp->cn_flags & MAKEENTRY) &&
 		    cnp->cn_nameiop != CREATE) {
-			if (timespecisset(&VTONFS(dvp)->n_nctime))
+			if (!timespecisset(&VTONFS(dvp)->n_nctime))
 				VTONFS(dvp)->n_nctime =
 				    VTONFS(dvp)->n_vattr->va_mtime;
 
