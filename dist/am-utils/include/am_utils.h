@@ -1,7 +1,7 @@
-/*	$NetBSD: am_utils.h,v 1.5 2002/11/29 23:14:04 christos Exp $	*/
+/*	$NetBSD: am_utils.h,v 1.6 2003/03/09 01:38:48 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: am_utils.h,v 1.40 2002/06/23 01:05:40 ib42 Exp
+ * Id: am_utils.h,v 1.45 2002/12/27 22:44:09 ezk Exp
  *
  */
 
@@ -209,6 +209,7 @@ extern int umount_fs(char *mntdir, const char *mnttabname);
 #define	AMF_ROOT	0x0002	/* This is a root node */
 #define AMF_AUTOFS	0x0004	/* This node is part of an autofs filesystem */
 #define AMF_REMOUNT	0x0008	/* This node needs to be remounted */
+#define AMF_SOFTLOOKUP	0x0010	/* This node returns EIO if server is down */
 
 /*
  * The following values can be tuned...
@@ -576,6 +577,7 @@ extern am_node *find_mf(mntfs *);
 extern am_node *next_map(int *);
 extern am_node *root_ap(char *, int);
 extern am_ops *ops_match(am_opts *, char *, char *, char *, char *, char *);
+extern am_ops *ops_search(char *);
 extern bool_t xdr_amq_string(XDR *xdrs, amq_string *objp);
 extern bool_t xdr_dirpath(XDR *xdrs, dirpath *objp);
 extern char **strsplit(char *, int, int);
@@ -720,6 +722,11 @@ extern int amu_svc_register(SVCXPRT *, u_long, u_long, void (*)(struct svc_req *
 extern int get_knetconfig(struct knetconfig **kncpp, struct netconfig *in_ncp, char *nc_protoname);
 extern struct netconfig *nfsncp;
 extern void free_knetconfig(struct knetconfig *kncp);
+
+#ifdef HAVE_FS_AUTOFS
+extern int register_autofs_service(char *autofs_conftype, void (*autofs_dispatch)(struct svc_req *, SVCXPRT *));
+extern int unregister_autofs_service(char *autofs_conftype);
+#endif /* HAVE_FS_AUTOFS */
 
 #else /* not HAVE_TRANSPORT_TYPE_TLI */
 
@@ -923,35 +930,33 @@ extern am_ops amfs_union_ops;	/* Union FS */
  */
 #ifdef DEBUG
 
-# define	D_ALL		(~(D_MTAB|D_HRTIME))
-# define	D_DAEMON	0x0001	/* Enter daemon mode */
+# define	D_ALL		(~(D_MTAB|D_HRTIME|D_DAEMON|D_FORK|D_AMQ))
+# define	D_DAEMON	0x0001	/* Don't enter daemon mode */
 # define	D_TRACE		0x0002	/* Do protocol trace */
 # define	D_FULL		0x0004	/* Do full trace */
 # define	D_MTAB		0x0008	/* Use local mtab */
-# define	D_AMQ		0x0010	/* Register amq program */
+# define	D_AMQ		0x0010	/* Don't register amq program */
 # define	D_STR		0x0020	/* Debug string munging */
-#  ifdef DEBUG_MEM
-# define	D_MEM		0x0040	/* Trace memory allocations */
-#  endif /* DEBUG_MEM */
-# define	D_FORK		0x0080	/* Fork server */
+# ifdef DEBUG_MEM
+#  define	D_MEM		0x0040	/* Trace memory allocations */
+# else
+#  define	D_MEM		0x0000	/* Dummy */
+# endif /* DEBUG_MEM */
+# define	D_FORK		0x0080	/* Don't fork server */
 		/* info service specific debugging (hesiod, nis, etc) */
 # define	D_INFO		0x0100
 # define	D_HRTIME	0x0200	/* Print high resolution time stamps */
 # define	D_XDRTRACE	0x0400	/* Trace xdr routines */
-# define	D_READDIR	0x0800	/* show browsable_dir progress */
+# define	D_READDIR	0x0800	/* Show browsable_dir progress */
 
 /*
- * Normally, don't enter daemon mode, don't register amq, and don't trace xdr
+ * Test mode is test mode: don't daemonize, don't register amq, don't fork,
+ * don't touch system mtab, etc.
  */
-#  ifdef DEBUG_MEM
-# define	D_TEST	(~(D_DAEMON|D_MEM|D_STR|D_XDRTRACE))
-#  else /* not DEBUG_MEM */
-# define	D_TEST	(~(D_DAEMON|D_STR|D_XDRTRACE))
-#  endif /* not DEBUG_MEM */
+# define	D_TEST	(~(D_MEM|D_STR|D_XDRTRACE))
 
-# define	amuDebug(x)	if (debug_flags & (x))
-# define	dlog		amuDebug(D_FULL) dplog
-# define	amuDebugNo(x)	if (!(debug_flags & (x)))
+# define	amuDebug(x)	(debug_flags & (x))
+# define	dlog		if (amuDebug(D_FULL)) dplog
 
 /* debugging mount-table file to use */
 # ifndef DEBUG_MNTTAB
@@ -986,9 +991,8 @@ extern int debug_option (char *opt);
  */
 #  define	XFREE(x) free(x)
 
-#define		amuDebug(x)	if (0)
+#define		amuDebug(x)	(0)
 #define		dlog		if (0) dplog
-#define		amuDebugNo(x)	if (0)
 
 #define		print_nfs_args(nap, nfs_version)
 #define		debug_option(x)	(1)
