@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.55 1994/03/04 03:43:48 mycroft Exp $
+ *	$Id: wd.c,v 1.56 1994/03/04 04:15:24 mycroft Exp $
  */
 
 #define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
@@ -217,6 +217,7 @@ wdattach(isa_dev)
 {
 	int unit, lunit;
 	struct disk *du;
+	int i, blank;
 
 	if (isa_dev->id_masunit == -1)
 		return 0;
@@ -238,49 +239,46 @@ wdattach(isa_dev)
 	bzero(&wdutab[lunit], sizeof(struct buf));
 	bzero(&rwdbuf[lunit], sizeof(struct buf));
 	wdxfer[lunit] = 0;
-	wdtimeout((caddr_t)du);
 	du->dk_ctrlr = isa_dev->id_masunit;
 	du->dk_unit = unit;
 	du->dk_lunit = lunit;
 	du->dk_port = wdcontroller[isa_dev->id_masunit].dkc_port;
 
-	if (wdgetctlr(du) == 0)  {
-		int i, blank;
-
-		printf("wd%d at wdc%d targ %d: ", isa_dev->id_unit,
-		    isa_dev->id_masunit, isa_dev->id_physid);
-		if (du->dk_params.wdp_heads == 0)
-			printf("(unknown size) <");
-		else
-			printf("%dMB %d cyl, %d head, %d sec <",
-			    du->dk_dd.d_ncylinders * du->dk_dd.d_secpercyl /
-			    (1048576 / DEV_BSIZE),
-			    du->dk_dd.d_ncylinders, du->dk_dd.d_ntracks,
-			    du->dk_dd.d_nsectors);
-		for (i = blank = 0; i < sizeof(du->dk_params.wdp_model); i++) {
-			char c = du->dk_params.wdp_model[i];
-			if (!c)
-				break;
-			if (blank && c == ' ')
-				continue;
-			if (blank && c != ' ') {
-				printf(" %c", c);
-				blank = 0;
-				continue;
-			} 
-			if (c == ' ')
-				blank = 1;
-			else
-				printf("%c", c);
-		}
-		printf(">\n");
-	} else {
+	if (wdgetctlr(du) != 0) {
 		/*printf("wd%d at wdc%d slave %d -- error\n", lunit,
 		    isa_dev->id_masunit, unit);*/
 		wddrives[lunit] = 0;
 		free(du, M_TEMP);
 		return 0;
 	}
+
+	printf("wd%d at wdc%d targ %d: ", isa_dev->id_unit,
+	    isa_dev->id_masunit, isa_dev->id_physid);
+	if (du->dk_params.wdp_heads == 0)
+		printf("(unknown size) <");
+	else
+		printf("%dMB %d cyl, %d head, %d sec <",
+		    du->dk_dd.d_ncylinders * du->dk_dd.d_secpercyl /
+		    (1048576 / DEV_BSIZE),
+		    du->dk_dd.d_ncylinders, du->dk_dd.d_ntracks,
+		    du->dk_dd.d_nsectors);
+	for (i = blank = 0; i < sizeof(du->dk_params.wdp_model); i++) {
+		char c = du->dk_params.wdp_model[i];
+		if (c == '\0')
+			break;
+		if (c != ' ') {
+			if (blank)
+				printf(" %c", c);
+			else
+				printf("%c", c);
+			blank = 0;
+		} else
+			blank = 1;
+	}
+	printf(">\n");
+
+	wdtimeout((caddr_t)du);
+
 	return 1;
 }
 
