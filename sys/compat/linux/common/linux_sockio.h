@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sockio.h,v 1.8 1998/10/04 00:02:44 fvdl Exp $	*/
+/*	$NetBSD: linux_sockio.h,v 1.8.6.1 2000/01/15 16:15:17 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,5 +47,6 @@
 #define	LINUX_SIOCGIFNETMASK	_LINUX_IO(0x89, 0x1b)
 #define LINUX_SIOCADDMULTI	_LINUX_IO(0x89, 0x31)
 #define LINUX_SIOCDELMULTI	_LINUX_IO(0x89, 0x32)
+#define LINUX_SIOCGIFHWADDR	_LINUX_IO(0x89, 0x27)
 
 #endif /* !_LINUX_SOCKIO_H */
