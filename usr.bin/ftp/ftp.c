@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.67 1999/09/27 23:09:44 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.68 1999/09/28 06:47:41 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.67 1999/09/27 23:09:44 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.68 1999/09/28 06:47:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,10 +182,10 @@ hookup(host, port)
 	}
 
 	if (res0->ai_canonname)
-		strncpy(hostnamebuf, res0->ai_canonname, sizeof(hostnamebuf));
+		(void)strlcpy(hostnamebuf, res0->ai_canonname,
+		    sizeof(hostnamebuf));
 	else
-		strncpy(hostnamebuf, host, sizeof(hostnamebuf));
-	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
+		(void)strlcpy(hostnamebuf, host, sizeof(hostnamebuf));
 	hostname = hostnamebuf;
 	
 	for (res = res0; res; res = res->ai_next) {
@@ -251,8 +251,7 @@ hookup(host, port)
 	else
 		sin.sin_port = sp->s_port;
 
-	strncpy(hostnamebuf, hp->h_name, sizeof(hostnamebuf));
-	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
+	(void)strlcpy(hostnamebuf, hp->h_name, sizeof(hostnamebuf));
 	hostname = hostnamebuf;
 
 	if (hp->h_length > sizeof(sin.sin_addr))
@@ -525,8 +524,7 @@ getreply(expecteof)
 			if (len > sizeof(reply_string))
 				len = sizeof(reply_string);
 
-			(void)strncpy(reply_string, current_line, len);
-			reply_string[len] = '\0';
+			(void)strlcpy(reply_string, current_line, len);
 		}
 		if (continuation && code != originalcode) {
 			if (originalcode == 0)
@@ -1819,10 +1817,9 @@ pswitch(flag)
 	}
 	ip->connect = connected;
 	connected = op->connect;
-	if (hostname) {
-		(void)strncpy(ip->name, hostname, sizeof(ip->name) - 1);
-		ip->name[sizeof(ip->name) - 1] = '\0';
-	} else
+	if (hostname)
+		(void)strlcpy(ip->name, hostname, sizeof(ip->name));
+	else
 		ip->name[0] = '\0';
 	hostname = op->name;
 	ip->hctl = hisctladdr;
@@ -1847,20 +1844,16 @@ pswitch(flag)
 	mcase = op->mcse;
 	ip->ntflg = ntflag;
 	ntflag = op->ntflg;
-	(void)strncpy(ip->nti, ntin, sizeof(ip->nti) - 1);
-	(ip->nti)[sizeof(ip->nti) - 1] = '\0';
-	(void)strcpy(ntin, op->nti);
-	(void)strncpy(ip->nto, ntout, sizeof(ip->nto) - 1);
-	(ip->nto)[sizeof(ip->nto) - 1] = '\0';
-	(void)strcpy(ntout, op->nto);
+	(void)strlcpy(ip->nti, ntin, sizeof(ip->nti));
+	(void)strlcpy(ntin, op->nti, sizeof(ntin));
+	(void)strlcpy(ip->nto, ntout, sizeof(ip->nto));
+	(void)strlcpy(ntout, op->nto, sizeof(ntout));
 	ip->mapflg = mapflag;
 	mapflag = op->mapflg;
-	(void)strncpy(ip->mi, mapin, sizeof(ip->mi) - 1);
-	(ip->mi)[sizeof(ip->mi) - 1] = '\0';
-	(void)strcpy(mapin, op->mi);
-	(void)strncpy(ip->mo, mapout, sizeof(ip->mo) - 1);
-	(ip->mo)[sizeof(ip->mo) - 1] = '\0';
-	(void)strcpy(mapout, op->mo);
+	(void)strlcpy(ip->mi, mapin, sizeof(ip->mi));
+	(void)strlcpy(mapin, op->mi, sizeof(mapin));
+	(void)strlcpy(ip->mo, mapout, sizeof(ip->mo));
+	(void)strlcpy(mapout, op->mo, sizeof(mapout));
 	(void)xsignal(SIGINT, oldintr);
 	if (abrtflag) {
 		abrtflag = 0;
@@ -2043,7 +2036,7 @@ gunique(local)
 {
 	static char new[MAXPATHLEN];
 	char *cp = strrchr(local, '/');
-	int d, count=0;
+	int d, count=0, len;
 	char ext = '1';
 
 	if (cp)
@@ -2055,9 +2048,9 @@ gunique(local)
 		warn("local: %s", local);
 		return (NULL);
 	}
-	(void)strcpy(new, local);
-	cp = new + strlen(new);
-	*cp++ = '.';
+	len = strlcpy(new, local, sizeof(new));
+	cp = &new[len];
+	*cp++ = '.';    
 	while (!d) {
 		if (++count == 100) {
 			fputs("runique: can't find unique file name.\n",
