@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.129 2003/03/29 07:58:16 bsh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.130 2003/04/01 23:19:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -144,7 +144,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.129 2003/03/29 07:58:16 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.130 2003/04/01 23:19:09 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -383,7 +383,7 @@ struct pv_page_info {
  * (note: won't work on systems where NPBG isn't a constant)
  */
 
-#define PVE_PER_PVPAGE ((NBPG - sizeof(struct pv_page_info)) / \
+#define PVE_PER_PVPAGE ((PAGE_SIZE - sizeof(struct pv_page_info)) / \
 			sizeof(struct pv_entry))
 
 /*
@@ -1091,7 +1091,7 @@ pmap_init(void)
 	 * the memory that is useable in a user process.
 	 */
 	avail_start = 0;
-	avail_end = physmem * NBPG;
+	avail_end = physmem * PAGE_SIZE;
 
 	/*
 	 * now we need to free enough pv_entry structures to allow us to get
@@ -1250,7 +1250,7 @@ pmap_alloc_l1pt(void)
 
 		pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE);
 
-		va += NBPG;
+		va += PAGE_SIZE;
 		m = m->pageq.tqe_next;
 	}
 
@@ -1586,7 +1586,7 @@ pmap_destroy(struct pmap *pmap)
 	
 	if (vector_page < KERNEL_BASE) {
 		/* Remove the vector page mapping */
-		pmap_remove(pmap, vector_page, vector_page + NBPG);
+		pmap_remove(pmap, vector_page, vector_page + PAGE_SIZE);
 		pmap_update(pmap);
 	}
 
@@ -1773,7 +1773,7 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
 		 * XXX not invalidate, too.  Investigate further.
 		 * XXX --thorpej@netbsd.org
 		 */
-		cpu_idcache_wbinv_range(page_to_clean, NBPG);
+		cpu_idcache_wbinv_range(page_to_clean, PAGE_SIZE);
 	} else if (cache_needs_cleaning) {
 		cpu_idcache_wbinv_all();
 		return (1);
@@ -1812,7 +1812,7 @@ pmap_zero_page_generic(paddr_t phys)
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
 	bzero_page(cdstp);
-	cpu_dcache_wbinv_range(cdstp, NBPG);
+	cpu_dcache_wbinv_range(cdstp, PAGE_SIZE);
 }
 #endif /* ARM_MMU_GENERIC == 1 */
 
@@ -1877,7 +1877,7 @@ pmap_pageidlezero(paddr_t phys)
 	cpu_cpwait();
 
 	for (i = 0, ptr = (int *)cdstp;
-			i < (NBPG / sizeof(int)); i++) {
+			i < (PAGE_SIZE / sizeof(int)); i++) {
 		if (sched_whichqs != 0) {
 			/*
 			 * A process has become ready.  Abort now,
@@ -1896,7 +1896,7 @@ pmap_pageidlezero(paddr_t phys)
 		 * if we aborted we'll rezero this page again later so don't
 		 * purge it unless we finished it
 		 */
-		cpu_dcache_wbinv_range(cdstp, NBPG);
+		cpu_dcache_wbinv_range(cdstp, PAGE_SIZE);
 	return (rv);
 }
  
@@ -1945,9 +1945,9 @@ pmap_copy_page_generic(paddr_t src, paddr_t dst)
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
 	bcopy_page(csrcp, cdstp);
-	cpu_dcache_inv_range(csrcp, NBPG);
+	cpu_dcache_inv_range(csrcp, PAGE_SIZE);
 	simple_unlock(&src_pg->mdpage.pvh_slock); /* cache is safe again */
-	cpu_dcache_wbinv_range(cdstp, NBPG);
+	cpu_dcache_wbinv_range(cdstp, PAGE_SIZE);
 }
 #endif /* ARM_MMU_GENERIC == 1 */
 
@@ -2265,7 +2265,7 @@ pmap_vac_me_user(struct pmap *pmap, struct vm_page *pg, pt_entry_t *ptes,
 				    (npv->pv_pmap == kpmap &&
 				    !clear_cache && kern_cacheable < 4)) {
 					cpu_idcache_wbinv_range(npv->pv_va,
-					    NBPG);
+					    PAGE_SIZE);
 					cpu_tlb_flushID_SE(npv->pv_va);
 				}
 			}
@@ -2450,7 +2450,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			}
 		} else if (pmap_active == 0)
 			PTE_FLUSH(pte);
-		sva += NBPG;
+		sva += PAGE_SIZE;
 		pte++;
 	}
 
@@ -2464,7 +2464,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		for (cnt = 0; cnt < cleanlist_idx; cnt++) {
 			if (pmap_active) {
 				cpu_idcache_wbinv_range(cleanlist[cnt].va,
-				    NBPG);
+				    PAGE_SIZE);
 				*cleanlist[cnt].pte = 0;
 				cpu_tlb_flushID_SE(cleanlist[cnt].va);
 				PTE_SYNC(cleanlist[cnt].pte);
@@ -2654,7 +2654,7 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		}
 
  next:
-		sva += NBPG;
+		sva += PAGE_SIZE;
 		pte++;
 	}
 	pmap_unmap_ptes(pmap);
@@ -2761,7 +2761,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			    (prot & VM_PROT_WRITE) == 0) {
 				/* Yup, flush the cache if current pmap. */
 				if (pmap_is_curpmap(pmap))
-					cpu_dcache_wb_range(va, NBPG);
+					cpu_dcache_wb_range(va, PAGE_SIZE);
 			}
 
 			/* Has the wiring changed ? */
@@ -2775,7 +2775,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			struct vm_page *opg;
 
 			/* We are replacing the page with a new one. */
-			cpu_idcache_wbinv_range(va, NBPG);
+			cpu_idcache_wbinv_range(va, PAGE_SIZE);
 
 			/*
 			 * If it is part of our managed memory then we
@@ -3286,7 +3286,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 				 * current if it is flush it,
 				 * otherwise it won't be in the cache
 				 */
-				cpu_idcache_wbinv_range(pv->pv_va, NBPG);
+				cpu_idcache_wbinv_range(pv->pv_va, PAGE_SIZE);
 			}
 
 			/* make the pte read only */
@@ -3304,12 +3304,12 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 				 */
 				if (npte & L2_S_PROT_W) {
 					cpu_idcache_wbinv_range(pv->pv_va,
-					    NBPG);
+					    PAGE_SIZE);
 				} else if ((npte & L2_TYPE_MASK)
 					   != L2_TYPE_INV) {
 					/* XXXJRT need idcache_inv_range */
 					cpu_idcache_wbinv_range(pv->pv_va,
-					    NBPG);
+					    PAGE_SIZE);
 				}
 			}
 
@@ -3843,7 +3843,7 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 	vsize_t resid;  
 	u_int i;
 
-	resid = (size + (NBPG - 1)) & ~(NBPG - 1);
+	resid = (size + (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1);
 
 	if (l1pt == 0)
 		panic("pmap_map_chunk: no L1 table provided");
@@ -3910,9 +3910,9 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 #endif
 		pte[(va >> PGSHIFT) & 0x3ff] = L2_S_PROTO | pa |
 		    L2_S_PROT(PTE_KERNEL, prot) | fl;
-		va += NBPG;
-		pa += NBPG;
-		resid -= NBPG;
+		va += PAGE_SIZE;
+		pa += PAGE_SIZE;
+		resid -= PAGE_SIZE;
 	}
 #ifdef VERBOSE_INIT_ARM
 	printf("\n");

@@ -1,4 +1,4 @@
-/* $Id: pxa2x0_lcd.c,v 1.1 2002/10/19 19:31:40 bsh Exp $ */
+/* $Id: pxa2x0_lcd.c,v 1.2 2003/04/01 23:19:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -42,6 +42,8 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>			/* for cold */
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h> 
 #include <dev/wscons/wsconsio.h>
@@ -413,11 +415,12 @@ pxa2x0_lcd_new_screen( struct pxa2x0_lcd_softc *sc,
 	}
 
 	buf_pa = scr->segs[0].ds_addr;
-	desc_pa = buf_pa + roundup(size, NBPG) - 3*sizeof *desc;
+	desc_pa = buf_pa + roundup(size, PAGE_SIZE) - 3*sizeof *desc;
 
 	/* make descriptors at the top of mapped memory */
 	desc = (struct lcd_dma_descriptor *)(
-		(caddr_t)(scr->buf_va) + roundup(size, NBPG) - 3*sizeof *desc);
+		(caddr_t)(scr->buf_va) + roundup(size, PAGE_SIZE) -
+			  3*sizeof *desc);
 
 	desc[0].fdadr = desc_pa;
 	desc[0].fsadr = buf_pa;
