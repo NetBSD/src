@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/gnu/usr.bin/lex/Attic/misc.c,v 1.4 1993/12/02 19:17:51 jtc Exp $ */
+/* $Header: /cvsroot/src/gnu/usr.bin/lex/Attic/misc.c,v 1.5 1993/12/06 19:29:27 jtc Exp $ */
 
 #include "flexdef.h"
 
@@ -41,7 +41,7 @@ int otoi PROTO((Char []));
 void add_action( new_text )
 char *new_text;
 	{
-	int len = strlen( new_text );
+	int len = yy_strlen( new_text );
 
 	while ( len + action_index >= action_size - 10 /* slop */ )
 		{
@@ -50,7 +50,7 @@ char *new_text;
 			reallocate_character_array( action_array, action_size );
 		}
 
-	strcpy( &action_array[action_index], new_text );
+	yy_strcpy( &action_array[action_index], new_text );
 
 	action_index += len;
 	}
@@ -501,7 +501,6 @@ Char myesc( array )
 Char array[];
 	{
 	Char c, esc_char;
-	register int sptr;
 
 	switch ( array[1] )
 		{
@@ -530,7 +529,7 @@ Char array[];
 		case '8':
 		case '9':
 			{ /* \<octal> */
-			sptr = 1;
+			int sptr = 1;
 
 			while ( isascii( array[sptr] ) &&
 				isdigit( array[sptr] ) )
@@ -737,6 +736,21 @@ int element_v, element_n;
 
 		datapos = 0;
 		}
+	}
+
+
+/* The following is only needed when building flex's parser using certain
+ * broken versions of bison.
+ */
+void *yy_flex_xmalloc( size )
+int size;
+	{
+	void *result = yy_flex_alloc( size );
+
+	if ( ! result  )
+		flexfatal( "memory allocation failed in yy_flex_xmalloc()" );
+
+	return result;
 	}
 
 

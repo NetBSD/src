@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/sym.c,v 1.4 1993/12/02 19:18:00 jtc Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/sym.c,v 1.5 1993/12/06 19:29:33 jtc Exp $ */
 
 #include "flexdef.h"
 
@@ -62,7 +62,7 @@ int table_size;
 
 	while ( sym_entry )
 		{
-		if ( ! strcmp( sym, sym_entry->name ) )
+		if ( ! yy_strcmp( sym, sym_entry->name ) )
 			{ /* entry already exists */
 			return -1;
 			}
@@ -134,14 +134,15 @@ int table_size;
 	{
 	static struct hash_entry empty_entry =
 		{
-		(struct hash_entry *) 0, (struct hash_entry *) 0, NULL, NULL, 0,
+		(struct hash_entry *) 0, (struct hash_entry *) 0,
+		(char *) 0, (char *) 0, 0,
 		} ;
 	register struct hash_entry *sym_entry =
 		table[hashfunct( sym, table_size )];
 
 	while ( sym_entry )
 		{
-		if ( ! strcmp( sym, sym_entry->name ) )
+		if ( ! yy_strcmp( sym, sym_entry->name ) )
 			return sym_entry;
 		sym_entry = sym_entry->next;
 		}
@@ -174,14 +175,15 @@ int hash_size;
 
 /* ndinstal - install a name definition */
 
-void ndinstal( nd, def )
-char nd[];
-Char def[];
+void ndinstal( name, definition )
+char name[];
+Char definition[];
 	{
 	char *copy_string();
 	Char *copy_unsigned_string();
 
-	if ( addsym( copy_string( nd ), (char *) copy_unsigned_string( def ), 0,
+	if ( addsym( copy_string( name ),
+			(char *) copy_unsigned_string( definition ), 0,
 			ndtbl, NAME_TABLE_HASH_SIZE ) )
 		synerr( "name defined twice" );
 	}
