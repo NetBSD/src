@@ -1,5 +1,5 @@
 #
-# $NetBSD: copyright.S,v 1.1 1996/05/15 21:06:21 is Exp $
+# $NetBSD: copyright.S,v 1.2 1996/05/16 15:37:49 is Exp $
 #
 
  .ascii "MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP\n"
@@ -10,7 +10,8 @@
  .ascii "1995, 1996 Motorola Inc.\n"
  .ascii "All rights reserved.\n"
  .ascii "\n"
- .ascii "THE SOFTWARE is provided on an "AS IS" basis and without warranty.\n"
+ .ascii "THE SOFTWARE is provided on an \"AS IS\" basis and without"
+ .ascii " warranty.\n"
  .ascii "To the maximum extent permitted by applicable law,\n"
  .ascii "MOTOROLA DISCLAIMS ALL WARRANTIES WHETHER EXPRESS OR IMPLIED,\n"
  .ascii "INCLUDING IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS\n"
@@ -38,6 +39,6 @@
  .ascii "versions are clearly identified as such.\n"
  .ascii "No licenses are granted by implication, estoppel or otherwise"
  .ascii " under any\n"
- .ascii "patents or trademarks of Motorola, Inc.
+ .ascii "patents or trademarks of Motorola, Inc.\n"
  .byte 0
  .even
