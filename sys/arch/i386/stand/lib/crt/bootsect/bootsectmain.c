@@ -1,4 +1,4 @@
-/*	$NetBSD: bootsectmain.c,v 1.2 1999/03/08 00:09:25 fvdl Exp $	*/
+/*	$NetBSD: bootsectmain.c,v 1.3 1999/04/14 10:57:59 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -45,45 +45,48 @@
 #include "bbinfo.h"
 
 int boot_biosdev; /* exported */
+void bootsectmain __P((int));
 
 extern struct fraglist fraglist;
 extern char edata[], end[];
 
 extern void main __P((void));
 
-void bootsectmain(biosdev)
-int biosdev;
+void
+bootsectmain(biosdev)
+	int biosdev;
 {
-  struct biosdisk_ll d;
-  int i;
-  char *buf;
+	struct biosdisk_ll d;
+	int i;
+	char *buf;
 
-  /*
-   * load sectors from bootdev
-   */
-  d.dev = biosdev;
-  set_geometry(&d, NULL);
+	/*
+	 * load sectors from bootdev
+	 */
+	d.dev = biosdev;
+	set_geometry(&d, NULL);
 
 
-  buf = (char*)(PRIM_LOADSZ * BIOSDISK_SECSIZE);
+	buf = (char*)(PRIM_LOADSZ * BIOSDISK_SECSIZE);
 
-  for(i = 0; i < fraglist.numentries; i++) {
-    int dblk, num;
+	for (i = 0; i < fraglist.numentries; i++) {
+		int dblk, num;
 
-    dblk = fraglist.entries[i].offset;
-    num = fraglist.entries[i].num;
+		dblk = fraglist.entries[i].offset;
+		num = fraglist.entries[i].num;
 
-    if(readsects(&d, dblk, num, buf, 1))
-      return; /* halts in start_bootsect.S */
+		if (readsects(&d, dblk, num, buf, 1))
+			return; /* halts in start_bootsect.S */
 
-    buf += num * BIOSDISK_SECSIZE;
-  }
+		buf += num * BIOSDISK_SECSIZE;
+	}
 
-  /* clear BSS */
-  buf = edata;
-  while(buf < end) *buf++ = 0;
+	/* clear BSS */
+	buf = edata;
+	while(buf < end)
+		*buf++ = 0;
 
-  /* call main() */
-  boot_biosdev = biosdev;
-  main();
+	/* call main() */
+	boot_biosdev = biosdev;
+	main();
 }
