@@ -1,6 +1,8 @@
+/*	$NetBSD: getpwent.c,v 1.12 1995/02/27 04:13:05 cgd Exp $	*/
+
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)getpwent.c	5.21 (Berkeley) 3/14/91";*/
-static char *rcsid = "$Id: getpwent.c,v 1.11 1994/03/09 10:10:29 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: getpwent.c,v 1.12 1995/02/27 04:13:05 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
