@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.22 2003/07/13 12:27:14 itojun Exp $       */
+/*      $NetBSD: catman.c,v 1.23 2004/05/10 19:23:48 kleink Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -417,7 +417,6 @@ scanmandir(catdir, mandir)
 				    sizeof(linkname));
 				len = readlink(manpage, buffer,
 				    sizeof(buffer) - 1);
-				buffer[PATH_MAX - 1] = '\0';
 				if (len == -1) {
 					warn("can't stat read symbolic link %s",
 					    manpage);
