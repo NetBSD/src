@@ -1,9 +1,9 @@
-#       $NetBSD: Makefile,v 1.12 1996/09/24 07:33:08 ghudson Exp $
+#       $NetBSD: Makefile,v 1.13 1996/11/25 22:06:04 pk Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	access.9 boot.9 copy.9 disk.9 doshutdownhooks.9 extent.9 fetch.9 \
-	malloc.9 physio.9 inittodr.9 pfil.9 psignal.9 resettodr.9 \
+MAN=	access.9 boot.9 copy.9 ctxsw.9 disk.9 doshutdownhooks.9 extent.9 \
+	fetch.9 malloc.9 physio.9 inittodr.9 pfil.9 psignal.9 resettodr.9 \
 	shutdownhook_establish.9 sleep.9 store.9 time.9 timeout.9 vslock.9 \
 	panic.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
@@ -28,5 +28,7 @@ MLINKS+=pfil.9 pfil_hook_get.9 pfil.9 pfil_add_hook.9 pfil.9 pfil_remove_hook.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
 MLINKS+=sleep.9 wakeup.9 sleep.9 tsleep.9
 MLINKS+=timeout.9 untimeout.9
+MLINKS+=ctxsw.9 mi_switch.9
+MLINKS+=ctxsw.9 cpu_switch.9
 
 .include <bsd.prog.mk>
