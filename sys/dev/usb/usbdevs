@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.215 2001/12/29 14:07:45 augustss Exp $
+$NetBSD: usbdevs,v 1.216 2001/12/30 05:09:50 gehenna Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -176,6 +176,7 @@ vendor DIGI		0x05c5	Digi International
 vendor QTRONIX		0x05c7	Qtronix
 vendor ELSA		0x05cc	ELSA
 vendor BRAINBOXES	0x05d1	Brainboxes Limited
+vebdor ULTIMA		0x05d8	Ultima
 vendor AXIOHM		0x05d9	Axiohm Transaction Solutions
 vendor MICROTEK		0x05da	Microtek
 vendor LEXAR		0x05dc	Lexar Media
@@ -385,8 +386,15 @@ product AGATE QDRIVE		0x0378	Q-Drive
 
 /* AGFA products */
 product AGFA SNAPSCAN1212U	0x0001	SnapScan 1212U
+product AGFA SNAPSCAN1236U	0x0002	SnapScan 1236U
 product AGFA SNAPSCANTOUCH	0x0100	SnapScan Touch
 product AGFA SNAPSCAN1212U2	0x2061	SnapScan 1212U
+product AGFA SNAPSCANE40	0x208d	SnapScan e40
+product AGFA SNAPSCANE50	0x208f	SnapScan e50
+product AGFA SNAPSCANE20	0x2091	SnapScan e20
+product AGFA SNAPSCANE25	0x2095	SnapScan e25
+product AGFA SNAPSCANE26	0x2097	SnapScan e26
+product AGFA SNAPSCANE52	0x20fd	SnapScan e52
 
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
@@ -680,12 +688,12 @@ product JATON EDA		0x5704	Ethernet Device Adapter
 product KAWATSU MH4000P		0x0003	MiniHub 4000P
 product KAWATSU KC180		0x0180	KC-180 IrDA
 
-/* Keisokugiken Corp. products */
-product KEISOKUGIKEN USBDAQ	0x0068	HKS-0200 USBDAQ
-
 /* Kawasaki products */
 product KLSI DUH3E10BT		0x0008	10BT Ethernet adapter, in the DU-H3E
 product KLSI DUH3E10BTN		0x0009	10BT Ethernet adapter, in the DU-H3E
+
+/* Keisokugiken products */
+product KEISOKUGIKEN USBDAQ	0x0068	HKS-0200 USBDAQ
 
 /* Kensington products */
 product KENSINGTON ORBIT	0x1003	Orbit USB/PS2 trackball
@@ -828,14 +836,18 @@ product MUSTEK 1200CU		0x0001	1200 CU scanner
 product MUSTEK 600CU		0x0002	600 CU scanner
 product MUSTEK 1200USB		0x0003	1200 USB scanner
 product MUSTEK 1200UB		0x0006	1200 UB scanner
+product MUSTEK 1200USBPLUS	0x0007	1200 USB Plus scanner
 product MUSTEK 1200CUPLUS	0x0008	1200 CU Plus scanner
+product MUSTEK BEARPAW1200F	0x0010	BearPaw 1200F scanner
+product MUSTEK 600USB		0x0873	600 USB scanner
 product MUSTEK MDC800		0xa800	MDC-800 digital camera
 
 /* M-Systems products */
 product MSYSTEMS DISKONKEY	0x0010	DiskOnKey
 
 /* National Semiconductor */
-product NATIONAL BEARPAW	0x1000	BearPaw 1200
+product NATIONAL BEARPAW1200	0x1000	BearPaw 1200
+product NATIONAL BEARPAW2400	0x1001	BearPaw 2400
 
 /* NEC products */
 product NEC HUB			0x55aa	hub
@@ -1056,6 +1068,9 @@ product	TODOS ARGOS_MINI	0x0002	Argos Mini Smartcard Reader
 
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive
+
+/* Ultima products */
+product ULTIMA 1200UBPLUS	0x4002	1200 UB Plus scanner
 
 /* UMAX products */
 product UMAX ASTRA1236U		0x0002	Astra 1236U Scanner
