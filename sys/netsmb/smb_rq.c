@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.6 2003/02/18 11:21:01 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.7 2003/02/21 19:52:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -182,15 +182,12 @@ smb_rq_enqueue(struct smb_rq *rqp)
 	for (;;) {
 		SMBS_ST_LOCK(ssp);
 		if (ssp->ss_flags & SMBS_RECONNECTING) {
-#ifdef __NetBSD__
-			ltsleep(&ssp->ss_vcgenid, PWAIT | PNORELOCK, "90trcn",
-				hz, SMBS_ST_LOCKPTR(ssp));
-#else
-			msleep(&ssp->ss_vcgenid, SMBS_ST_LOCKPTR(ssp),
-			    PWAIT | PDROP, "90trcn", hz);
-#endif
-			if (smb_proc_intr(rqp->sr_cred->scr_p))
-				return EINTR;
+			SMBS_ST_UNLOCK(ssp);
+			error = ltsleep(&ssp->ss_vcgenid,
+				PWAIT | PCATCH | PNORELOCK,
+				"90trcn", hz, SMBS_ST_LOCKPTR(ssp));
+			if (error && error != EWOULDBLOCK)
+				return (error);
 			continue;
 		}
 		if (smb_share_valid(ssp) || (ssp->ss_flags & SMBS_CONNECTED) == 0) {
