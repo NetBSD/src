@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.19 2005/03/23 11:12:47 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.20 2005/03/27 16:54:26 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -283,4 +283,45 @@ lib/libc/stdlib/tfind.c				1.5
 
 	Avoid lint warning after previous.
 	[kleink, ticket #54]
+
+sys/dev/mii/rgephy.c				1.6
+
+	rgephy(4)'s struct mii_phydesc array doesn't end with NULL.
+	Fix it. From Satoshi Suetake in PR 29770.
+	[wiz, ticket #55]
+
+distrib/evbppc/md-kernel/Makefile		1.2
+
+	One more place that needs $HOST_SH to run a script correctly.
+	[jmc, ticket #56]
+
+usr.bin/printf/printf.c				1.31
+
+	Remember to consume input bytes when processing '\0nnn' for %b formats
+	[dsl, ticket #57]
+
+sys/ufs/ext2fs/ext2fs_bmap.c			1.19
+
+	getblk() can return NULL if we are the pagedaemon. Check for this.
+	[bouyer, ticket #58]
+
+sys/dev/pci/pccbb.c				1.118
+
+	PR/29600: YAMAMOTO Takashi: cbb hangs on boot. From the PR:
+	It seems that we never get a power interrupt for 16 bit cards. The
+	tsleep has been changed to wait for 200ms maximum, before giving up
+	instead of waiting forever.
+	[christos, ticket #64]
+
+usr.bin/su/su_pam.c				1.6
+
+	Deal with signals and process groups (from FreeBSD)
+	Fixes issues with kill -STOP $$ in the su'd shell, and setting up
+	signals for the child process properly.
+	[christos, ticket #65]
+
+doc/CHANGES					patch
+
+	Mention re(4) tso support.
+	[yamt, ticket #66]
 
