@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.40 2000/12/03 15:38:30 scw Exp $
+#	$NetBSD: files.mvme68k,v 1.41 2000/12/03 15:40:06 scw Exp $
 
 # config file for mvme68k
 
@@ -135,6 +135,9 @@ file dev/cninit.c
 
 # Motorola 68060 support package
 include "arch/m68k/060sp/files.060sp"
+
+# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
+include "compat/aoutm68k/files.aoutm68k"
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
