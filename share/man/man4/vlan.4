@@ -1,4 +1,4 @@
-.\"	$NetBSD: vlan.4,v 1.5 2000/12/11 13:10:24 ad Exp $
+.\"	$NetBSD: vlan.4,v 1.6 2000/12/19 14:04:03 bouyer Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,6 +65,35 @@ subcommands, or
 and
 .Dv SIOCSIFVLAN
 ioctls.
+.Pp
+To be compatible with others 802.1Q devices, the
+.Nm
+interface shall support a 1500 bytes MTU, which means that the parent
+interface will have to handle frames that are 4 bytes larger than the
+ethernet MTU. Drivers supporting this incerased MTU are:
+.Bl -dash -compact indent
+.It
+drivers using the dp8390 core (
+.Xr ec 4 ,
+.Xr we 4 ,
+.Xr ne 4 ,
+possibly others)
+.It
+.Xr ex 4
+.It
+.Xr fxp 4
+.It
+.Xr le 4
+.It
+.Xr tulip 4
+.It
+.Xr epic 4
+.El
+.Nm
+can be used with devices not supporting the 802.1Q MTU, but then the MTU of the
+.Nm
+interface will be 4 bytes too small and will not interoperate properly with
+other 802.1Q devices, unless the MTU of the remote end is also lowered.
 .Sh SEE ALSO
 .Xr ifconfig 8
 .Sh HISTORY
