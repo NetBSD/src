@@ -1,4 +1,4 @@
-/*	$NetBSD: settimeofday.c,v 1.1 2001/09/16 07:41:58 manu Exp $ */
+/*	$NetBSD: settimeofday.c,v 1.2 2001/09/17 23:52:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -32,14 +32,17 @@
  */
 
 #include "namespace.h"
-#include <fcntl.h>
-#include <paths.h>
-#include <unistd.h>
-#include <time.h>
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/syscall.h>
 #include <sys/clockctl.h>
+
+#include <fcntl.h>
+#include <paths.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
  
 #ifdef __weak_alias
 __weak_alias(settimeofday,_settimeofday)
