@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.5 1999/08/02 23:39:29 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.6 1999/08/06 12:47:28 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -214,10 +214,9 @@ uvn_attach(arg, accessprot)
 	if ((accessprot & VM_PROT_WRITE) != 0 && 
 	    (uvn->u_flags & VDIRTY) == 0) {
 		simple_lock(&uvn_wl_lock);
+		uvn->u_flags |= VDIRTY;
 		LIST_INSERT_HEAD(&uvn_wlist, uvn, u_wlist);
 		simple_unlock(&uvn_wl_lock);
-		/* we are now on wlist! */
-		uvn->u_flags |= VDIRTY;
 	}
 #ifdef DIAGNOSTIC
 	if (vp->v_type != VREG) {
@@ -231,7 +230,7 @@ uvn_attach(arg, accessprot)
 	 */
 	if (uvn->u_size == VSIZENOTSET) {
 
-	uvn->u_flags = VXLOCK;
+	uvn->u_flags |= VXLOCK;
 	simple_unlock(&uvn->u_obj.vmobjlock); /* drop lock in case we sleep */
 		/* XXX: curproc? */
 	if (vp->v_type == VBLK) {
@@ -274,7 +273,7 @@ uvn_attach(arg, accessprot)
 
 	if (uvn->u_flags & VXWANT)
 		wakeup(uvn);
-	uvn->u_flags = 0;
+	uvn->u_flags &= ~(VXLOCK|VXWANT);
 
 	if (result != 0) {
 		simple_unlock(&uvn->u_obj.vmobjlock); /* drop lock */
@@ -394,7 +393,6 @@ uvn_releasepg(pg, nextpgp)
 	struct vm_page *pg;
 	struct vm_page **nextpgp;	/* OUT */
 {
-	struct uvm_vnode *uvn = (struct uvm_vnode *) pg->uobject;
 #ifdef DIAGNOSTIC
 	if ((pg->flags & PG_RELEASED) == 0)
 		panic("uvn_releasepg: page not released!");
@@ -411,37 +409,6 @@ uvn_releasepg(pg, nextpgp)
 	if (!nextpgp)
 		uvm_unlock_pageq();
 
-#if 1
-	/* XXX I'm sure we need to do something here. */
-	uvn = uvn;
-#else
-	/*
-	 * now see if we need to kill the object
-	 */
-	if (uvn->u_flags & UVM_VNODE_RELKILL) {
-		if (uvn->u_obj.uo_refs)
-			panic("uvn_releasepg: kill flag set on referenced "
-			    "object!");
-		if (uvn->u_obj.uo_npages == 0) {
-			if (uvn->u_flags & VDIRTY) {
-				simple_lock(&uvn_wl_lock);
-				LIST_REMOVE(uvn, u_wlist);
-				simple_unlock(&uvn_wl_lock);
-			}
-#ifdef DIAGNOSTIC
-			if (uvn->u_obj.memq.tqh_first)
-	panic("uvn_releasepg: pages in object with npages == 0");
-#endif
-			if (uvn->u_flags & VXWANT)
-				/* still holding object lock */
-				wakeup(uvn);
-
-			uvn->u_flags = 0;		/* DEAD! */
-			simple_unlock(&uvn->u_obj.vmobjlock);
-			return (FALSE);
-		}
-	}
-#endif
 	return (TRUE);
 }
 
