@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.35.4.1 2001/11/25 19:20:49 he Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.35.4.2 2001/11/25 19:23:27 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1617,15 +1617,17 @@ ffs_mapsearch(fs, cgp, bpref, allocsiz)
 	len = howmany(fs->fs_fpg, NBBY) - start;
 	ostart = start;
 	olen = len;
-	loc = scanc((u_int)len, (u_char *)&cg_blksfree(cgp, needswap)[start],
-		(u_char *)fragtbl[fs->fs_frag],
-		(u_char)(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
+	loc = scanc((u_int)len,
+		(const u_char *)&cg_blksfree(cgp, needswap)[start],
+		(const u_char *)fragtbl[fs->fs_frag],
+		(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
 	if (loc == 0) {
 		len = start + 1;
 		start = 0;
-		loc = scanc((u_int)len, (u_char *)&cg_blksfree(cgp, needswap)[0],
-			(u_char *)fragtbl[fs->fs_frag],
-			(u_char)(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
+		loc = scanc((u_int)len,
+			(const u_char *)&cg_blksfree(cgp, needswap)[0],
+			(const u_char *)fragtbl[fs->fs_frag],
+			(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
 		if (loc == 0) {
 			printf("start = %d, len = %d, fs = %s\n",
 			    ostart, olen, fs->fs_fsmnt);
