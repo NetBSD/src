@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.24 2002/01/07 21:47:13 thorpej Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.25 2002/04/19 05:27:04 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.24 2002/01/07 21:47:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.25 2002/04/19 05:27:04 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,8 @@ wdc_isa_probe(parent, match, aux)
 		return (0);
 	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
 		return (0);
+	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
+		ia->ia_ndrq = 0;
 
 	memset(&ch, 0, sizeof(ch));
 
