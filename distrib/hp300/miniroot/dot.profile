@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 1996/06/11 08:30:13 thorpej Exp $
+#	$NetBSD: dot.profile,v 1.2 1998/01/09 21:51:42 perry Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -34,6 +34,8 @@ PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
 TERM=hp300h
 export TERM
+HOME=/
+export HOME
 
 umask 022
 

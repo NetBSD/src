@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.3 1996/07/15 06:31:54 leo Exp $
+#	$NetBSD: dot.profile,v 1.4 1998/01/09 21:51:41 perry Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -34,6 +34,8 @@ PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
 TERM=vt220
 export TERM
+HOME=/
+export HOME
 
 umask 022
 
