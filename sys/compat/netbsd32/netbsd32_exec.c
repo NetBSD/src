@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.9 1998/09/09 23:46:31 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.10 1998/09/10 23:55:15 eeh Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -84,8 +84,8 @@ struct emul emul_sparc32 = {
 	0,
 	sparc32_copyargs,
 	sparc32_setregs,	/* XXX needs to be written?? */
-	sigcode,
-	esigcode,
+	sparc32_sigcode,
+	sparc32_esigcode,
 };
 
 /*
@@ -507,7 +507,6 @@ sparc32_copyargs(pack, arginfo, stack, argp)
 	char **cpp = stack;
 	char *dp, *sp;
 	size_t len;
-	void *nullp = NULL;
 	int argc = arginfo->ps_nargvstr;
 	int envc = arginfo->ps_nenvstr;
 
