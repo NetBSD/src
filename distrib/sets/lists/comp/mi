@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.429 2002/03/14 04:06:11 simonb Exp $
+#	$NetBSD: mi,v 1.430 2002/03/17 10:56:05 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -843,6 +843,7 @@
 ./usr/include/util.h			comp-c-include
 ./usr/include/utime.h			comp-c-include
 ./usr/include/utmp.h			comp-c-include
+./usr/include/utmpx.h			comp-c-include
 ./usr/include/uvm/uvm.h			comp-c-include
 ./usr/include/uvm/uvm_amap.h		comp-c-include
 ./usr/include/uvm/uvm_amap_i.h		comp-c-include
