@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.7 2003/02/05 15:38:14 briggs Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.8 2003/02/10 19:02:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.7 2003/02/05 15:38:14 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.8 2003/02/10 19:02:52 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -769,6 +769,10 @@ sa_upcall_userret(struct lwp *l)
 		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking\n",
 		    p->p_pid, l->l_lid));
 
+		l->l_flag &= ~L_SA;
+		sau = sadata_upcall_alloc(1);
+		l->l_flag |= L_SA;
+		
 		while (sa->sa_nstacks == 0) {
 			/*
 			 * This should be a transient condition, so we'll just
@@ -781,9 +785,9 @@ sa_upcall_userret(struct lwp *l)
 			 * LWP that was running before we were woken up from
 			 * the sleep that invoked the UNBLOCKED upcall.
 			 * If it was a running one, it is on the runqueue
-			 * and it will get to run again when the system
-			 * gets to it, just not this second. If it's idle,
-			 * it will remain idle, because we don't touch it.
+			 * and it will run again when the system gets to it,
+			 * just not this second. If it's idle, it will
+			 * remain idle, because we don't touch it.
 			 *
 			 * Ideally, tsleep() would have a variant that took
 			 * a LWP to switch to.
@@ -799,10 +803,6 @@ sa_upcall_userret(struct lwp *l)
 		}
 		l2 = sa_vp_repossess(l);
 
-		l->l_flag &= ~L_SA;
-		sau = sadata_upcall_alloc(1);
-		l->l_flag |= L_SA;
-		
 		KDASSERT(sa->sa_nstacks > 0);
 
 		st = sa->sa_stacks[--sa->sa_nstacks];
