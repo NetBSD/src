@@ -1,5 +1,4 @@
-
-/*	$NetBSD: siopreg.h,v 1.1 2000/04/21 17:56:59 bouyer Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.2 2000/04/25 16:27:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.

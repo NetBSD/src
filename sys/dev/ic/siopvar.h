@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.1 2000/04/21 17:56:59 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.2 2000/04/25 16:27:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -41,23 +41,24 @@ TAILQ_HEAD(cmd_list, siop_cmd);
 struct siop_softc {
 	struct device sc_dev;
 	struct scsipi_link sc_link;	/* link to upper level */
-	int	features;		/* chip's features */
-	u_int8_t maxburst;
-	u_int8_t maxoff;
-	u_int8_t clock_div;
+	int features;			/* chip's features */
+	int maxburst;
+	int maxoff;
+	int clock_div;
 	bus_space_tag_t sc_rt;		/* bus_space registers tag */
 	bus_space_handle_t sc_rh;	/* bus_space registers handle */
 	bus_addr_t sc_raddr;		/* register adresses */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	bus_dmamap_t  sc_scriptdma;	/* DMA map for script */
 	u_int32_t *sc_script;		/* script location in memory */
+	int sc_nshedslots;		/* number of sheduler slots */
+	struct siop_cmd *cmds;		/* commands array */
 	struct cmd_list free_list;	/* cmd descr free list */
 	struct cmd_list active_list[16]; /* per-target active cmds */
-	int current_target; 	/* current target */
 	u_int32_t sc_flags;
 };
 /* defs for sc_flags */
-#define SC_CTRL_ACTIVE	0x00000001 /* controller already running */
+/* none for now */
 
 /* features */
 #define SF_BUS_WIDE	0x00000001 /* wide bus */
