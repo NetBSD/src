@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 1996/10/23 20:04:40 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 1997/02/04 04:46:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -301,11 +301,7 @@ mach_init(argc, argv, code, cv)
 	/*
 	 * Look at arguments passed to us and compute boothowto.
 	 */
-#ifdef GENERIC
-	boothowto = RB_SINGLE | RB_ASKNAME;
-#else
 	boothowto = RB_SINGLE;
-#endif
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
