@@ -132,6 +132,14 @@ process ID contained in
 and then re-invoke dhcpd.  Because the DHCP server database is not as
 lightweight as a BOOTP database, dhcpd does not automatically restart
 itself when it sees a change to the dhcpd.conf file.
+.PP
+Note: We get a lot of complaints about this.   We realize that it would
+be nice if one could send a SIGHUP to the server and have it reload
+the database.   This is not technically impossible, but it would
+require a great deal of work, our resources are extremely limited, and
+they can be better spent elsewhere.   So please don't complain about
+this on the mailing list unless you're prepared to fund a project to
+implement this feature, or prepared to do it yourself.
 .SH COMMAND LINE
 .PP
 The names of the network interfaces on which dhcpd should listen for

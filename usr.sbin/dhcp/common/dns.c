@@ -48,7 +48,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.1.1.2 1997/06/03 02:49:25 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.1.1.3 1997/06/08 04:54:06 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -198,6 +198,9 @@ static int nslookup (id, qname, namelen, qtype, qclass)
 	int i, status;
 	struct sockaddr_in *server = pick_name_server ();
 	
+	if (!server)
+		return 0;
+
 	/* Construct a header... */
 	hdr = (HEADER *)query;
 	memset (hdr, 0, sizeof *hdr);
@@ -255,6 +258,9 @@ static int zonelookup (id, qname, namelen, qclass)
 	int i, status, count;
 	struct sockaddr_in *server = pick_name_server ();
 	
+	if (!server)
+		return 0;
+
 	/* Construct a header... */
 	hdr = (HEADER *)query;
 	memset (hdr, 0, sizeof *hdr);

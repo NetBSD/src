@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: resolv.c,v 1.1.1.1 1997/06/03 02:49:33 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: resolv.c,v 1.1.1.2 1997/06/08 04:54:25 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -66,8 +66,11 @@ void read_resolv_conf (parse_time)
 	new_parse (path_resolv_conf);
 
 	eol_token = 1;
-	if ((cfile = fopen (path_resolv_conf, "r")) == NULL)
-		error ("Can't open %s: %m", path_resolv_conf);
+	if ((cfile = fopen (path_resolv_conf, "r")) == NULL) {
+		warn ("Can't open %s: %m", path_resolv_conf);
+		return;
+	}
+
 	do {
 		token = next_token (&val, cfile);
 		if (token == EOF)
@@ -184,8 +187,10 @@ struct sockaddr_in *pick_name_server ()
 
 	/* Check /etc/resolv.conf and reload it if it's changed. */
 	if (cur_time > rcdate) {
-		if (stat (path_resolv_conf, &st) < 0)
-			error ("Can't stat %s", path_resolv_conf);
+		if (stat (path_resolv_conf, &st) < 0) {
+			warn ("Can't stat %s", path_resolv_conf);
+			return (struct sockaddr_in *)0;
+		}
 		if (st.st_mtime > rcdate) {
 			char rcbuf [512];
 			char *s, *t, *u;
