@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.63 1999/07/26 23:00:59 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.64 1999/09/15 21:54:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -368,8 +368,12 @@ tsleep(ident, priority, wmesg, timo)
 	s = splhigh();
 
 #ifdef DIAGNOSTIC
-	if (ident == NULL || p->p_stat != SRUN || p->p_back)
-		panic("tsleep");
+	if (ident == NULL)
+		panic("tsleep: ident == NULL");
+	if (p->p_stat != SRUN)
+		panic("tsleep: p_stat %d != SRUN", p->p_stat);
+	if (p->p_back != NULL)
+		panic("tsleep: p_back != NULL");
 #endif
 	p->p_wchan = ident;
 	p->p_wmesg = wmesg;
