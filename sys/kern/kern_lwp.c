@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.13 2002/07/12 03:08:32 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.14 2002/07/26 01:22:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -221,7 +221,6 @@ sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 	int target_lid;
 	struct proc *p = l->l_proc;
 	struct lwp *t;
-	int s;
 
 	target_lid = SCARG(uap, target);
 
@@ -231,21 +230,33 @@ sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 
 	if (t == NULL)
 		return (ESRCH);
-	
-	if (t->l_stat != LSSUSPENDED)
-		return (0);
-	
-	if (t->l_wchan == 0) { 
-		/* LWP was runnable before being suspended. */
-		SCHED_LOCK(s);
-		setrunnable(t);
-		SCHED_UNLOCK(s);
-	} else {
-		/* LWP was sleeping before being suspended */
-		t->l_stat = LSSLEEP;
-	}
+
+	lwp_continue(t);
 
 	return (0);
+}
+
+void
+lwp_continue(struct lwp *l)
+{
+	int s;
+
+	DPRINTF(("lwp_continue of %d.%d (%s), state %d, wchan %p\n",
+	    l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, l->l_stat,
+	    l->l_wchan));
+
+	if (l->l_stat != LSSUSPENDED)
+		return;
+
+	if (l->l_wchan == 0) { 
+		/* LWP was runnable before being suspended. */
+		SCHED_LOCK(s);
+		setrunnable(l);
+		SCHED_UNLOCK(s);
+	} else {
+		/* LWP was sleeping before being suspended. */
+		l->l_stat = LSSLEEP;
+	}
 }
 
 int sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
