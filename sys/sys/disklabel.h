@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.57 2000/03/16 05:16:20 enami Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.58 2000/04/05 04:03:21 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -241,6 +241,7 @@ static const char *const dktypenames[] = {
 #define	FS_EX2FS	17		/* Linux Extended 2 file system */
 #define	FS_NTFS		18		/* Windows/NT file system */
 #define	FS_RAID		19		/* RAIDframe component */
+#define	FS_CCD		20		/* concatenated disk component */
 
 #ifdef	FSTYPENAMES
 static const char *const fstypenames[] = {
@@ -264,6 +265,7 @@ static const char *const fstypenames[] = {
 	"Linux Ext2",
 	"NTFS",
 	"RAID",
+	"ccd",
 	NULL
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
@@ -292,6 +294,7 @@ static const char *const fscknames[] = {
 	"ext2fs",	/* Linux Ext2 */
 	"ntfs",		/* Windows/NT */
 	NULL,		/* RAID Component */
+	NULL,		/* concatenated disk component */
 	NULL		/* NULL */
 };
 #define FSMAXNAMES	(sizeof(fscknames) / sizeof(fscknames[0]) - 1)
