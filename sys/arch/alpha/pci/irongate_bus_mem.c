@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_bus_mem.c,v 1.2 2000/06/26 02:42:10 thorpej Exp $ */
+/* $NetBSD: irongate_bus_mem.c,v 1.3 2000/06/26 19:46:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.2 2000/06/26 02:42:10 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.3 2000/06/26 19:46:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,6 @@ __KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.2 2000/06/26 02:42:10 thorpej
 #define	CHIP_MEM_EXTENT(v)	(((struct irongate_config *)(v))->ic_mem_ex)
 
 #define	CHIP_MEM_SYS_START(v)	IRONGATE_MEM_BASE
-
-#define	CHIP_PHYSADDR(x)	IRONGATE_PHYSADDR(x)
 
 /* 
  * AMD 751 core logic appears on EV6.  We require at least EV56 
