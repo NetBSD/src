@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.14 2002/10/11 21:54:58 provos Exp $
+.\"	$NetBSD: systrace.1,v 1.15 2002/10/11 23:31:00 provos Exp $
 .\"	$OpenBSD: systrace.1,v 1.27 2002/08/05 23:27:53 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -235,7 +235,7 @@ in a policy to elevate the privileges for the matching system call:
 .Bd -literal -offset 4
 as user
 as user:group
-as group
+as :group
 .Ed
 .Pp
 The effective
