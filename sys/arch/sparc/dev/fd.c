@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.62 1998/07/04 22:18:38 jonathan Exp $	*/
+/*	$NetBSD: fd.c,v 1.63 1998/07/29 18:44:23 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -453,8 +453,8 @@ fdcattach_obio(parent, self, aux)
 
 	fdc->sc_bustag = sa->sa_bustag;
 
-	if (sa->sa_promvaddr != 0)
-		fdc->sc_reg = (caddr_t)sa->sa_promvaddr;
+	if (sa->sa_npromvaddrs != 0)
+		fdc->sc_reg = (caddr_t)sa->sa_promvaddrs[0];
 	else {
 		bus_space_handle_t bh;
 
