@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.2 1996/05/29 06:29:10 mhitch Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.3 1996/06/15 19:05:24 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -262,21 +262,37 @@ cpu_tcdesc(cpu)
     int cpu;
 {
 	if (cpu == DS_3MAXPLUS) {
+#ifdef DS5000_240
 		tc_enable_interrupt = kn03_enable_intr;
 		return &kn03_tc_desc;
+#else
+		return (0);
+#endif /* DS5000_240 */
 	} else if (cpu == DS_3MAX) {
+#ifdef DS5000_200
 		tc_enable_interrupt = kn02_enable_intr;
 		return &kn02_tc_desc;
+#else
+		return (0);
+#endif /* DS5000_240 */
 	} else if (cpu == DS_3MIN) {
+#ifdef DS5000_100
 		tc_enable_interrupt = kmin_enable_intr;
 		return &kmin_tc_desc;
+#else
+		return (0);
+#endif /*DS5000_100*/
 	} else if (cpu == DS_MAXINE) {
+#ifdef DS5000_25
 		tc_enable_interrupt = xine_enable_intr;
 		return &xine_tc_desc;
+#else
+		return (0):
+#endif /*DS5000_25*/
 	} else if (cpu == DS_PMAX) {
 #ifdef DIAGNOSTIC
 		printf("tcattach: PMAX, no turbochannel\n");
-#endif
+#endif /*DIAGNOSTIC*/
 		return NULL;
 	} else if (cpu == DS_MIPSFAIR) {
 		printf("tcattach: Mipsfair (5100), no turbochannel\n");
