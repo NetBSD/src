@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.3 1994/08/19 11:25:42 mycroft Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.4 1995/04/15 01:57:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -270,8 +270,8 @@ umap_getattr(ap)
 	uid_t uid;
 	gid_t gid;
 	int error, tmpid, nentries, gnentries;
-	uid_t (*mapdata)[2];
-	gid_t (*gmapdata)[2];
+	u_long (*mapdata)[2];
+	u_long (*gmapdata)[2];
 	struct vnode **vp1p;
 	struct vnodeop_desc *descp = ap->a_desc;
 

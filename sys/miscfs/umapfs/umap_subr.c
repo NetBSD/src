@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.4 1994/09/20 06:43:02 cgd Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.5 1995/04/15 01:57:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -390,8 +390,9 @@ umap_mapids(v_mount, credp)
 	struct ucred *credp;
 {
 	int i, unentries, gnentries;
-	uid_t uid, *usermap;
-	gid_t gid, *groupmap;
+	uid_t uid;
+	gid_t gid;
+	u_long *usermap, *groupmap;
 
 	unentries =  MOUNTTOUMAPMOUNT(v_mount)->info_nentries;
 	usermap =  &(MOUNTTOUMAPMOUNT(v_mount)->info_mapdata[0][0]);
