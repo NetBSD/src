@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.11 1993/11/06 00:12:04 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.12 1993/11/08 20:21:14 mycroft Exp $
  */
 
 /*
@@ -194,6 +194,7 @@ trap(frame)
 	    case T_SEGNPFLT|T_USER:
 	    case T_STKFLT|T_USER:
 	    case T_PROTFLT|T_USER:		/* protection fault */
+	    case T_ALIGNFLT|T_USER:
 		ucode = code + BUS_SEGM_FAULT ;
 		i = SIGBUS;
 		break;
