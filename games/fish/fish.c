@@ -1,4 +1,4 @@
-/*	$NetBSD: fish.c,v 1.7 1999/04/24 22:09:06 kristerw Exp $	*/
+/*	$NetBSD: fish.c,v 1.8 1999/07/14 17:30:21 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fish.c,v 1.7 1999/04/24 22:09:06 kristerw Exp $");
+__RCSID("$NetBSD: fish.c,v 1.8 1999/07/14 17:30:21 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,6 +103,8 @@ main(argc, argv)
 	char **argv;
 {
 	int ch, move;
+
+	setgid(getgid());
 
 	while ((ch = getopt(argc, argv, "p")) != -1)
 		switch(ch) {
@@ -450,6 +452,8 @@ instructions()
 {
 	int input;
 	pid_t pid;
+	int fd;
+	const char *pager;
 	int status;
 
 	(void)printf("Would you like instructions (y or n)? ");
@@ -460,10 +464,18 @@ instructions()
 
 	switch (pid = fork()) {
 	case 0: /* child */
-		(void)setuid(getuid());
-		(void)setgid(getgid());
-		(void)execl(_PATH_MORE, "more", _PATH_INSTR, NULL);
-		err(1, "%s %s", _PATH_MORE, _PATH_INSTR);
+		if (!isatty(1))
+			pager = "cat";
+		else {
+			if (!(pager = getenv("PAGER")) || (*pager == 0))
+				pager = _PATH_MORE;
+		}
+		if ((fd = open(_PATH_INSTR, O_RDONLY)) == -1)
+			err(1, "open %s", _PATH_INSTR);
+		if (dup2(fd, 0) == -1)
+			err(1, "dup2");
+		(void)execl("/bin/sh", "sh", "-c", pager, NULL);
+		err(1, "exec sh -c %s", pager);
 		/*NOTREACHED*/
 	case -1:
 		err(1, "fork");
