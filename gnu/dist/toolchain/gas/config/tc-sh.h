@@ -44,6 +44,9 @@ extern int sh_small;
 /* Don't try to break words.  */
 #define WORKING_DOT_WORD
 
+/* All SH instructions are multiples of 16 bits.  */
+#define DWARF2_LINE_MIN_INSN_LENGTH 2
+
 /* We require .long, et. al., to be aligned correctly.  */
 #define md_cons_align(nbytes) sh_cons_align (nbytes)
 extern void sh_cons_align PARAMS ((int));
@@ -53,6 +56,8 @@ extern void sh_cons_align PARAMS ((int));
 #define HANDLE_ALIGN(frag) sh_handle_align (frag)
 extern void sh_handle_align PARAMS ((fragS *));
 
+#define MAX_MEM_FOR_RS_ALIGN_CODE (1 + 2)
+
 /* We need to force out some relocations when relaxing.  */
 #define TC_FORCE_RELOCATION(fix) sh_force_relocation (fix)
 extern int sh_force_relocation ();
@@ -61,6 +66,10 @@ extern int sh_force_relocation ();
 #define obj_fix_adjustable(fixP) sh_fix_adjustable(fixP)
 struct fix;
 extern boolean sh_fix_adjustable PARAMS ((struct fix *));
+
+/* This arranges for gas/write.c to not apply a relocation if
+   obj_fix_adjustable() says it is not adjustable.  */
+#define TC_FIX_ADJUSTABLE(fixP) obj_fix_adjustable (fixP)
 #endif
 
 #define IGNORE_NONSTANDARD_ESCAPES
@@ -71,11 +80,6 @@ extern boolean sh_fix_adjustable PARAMS ((struct fix *));
 
 extern const struct relax_type md_relax_table[];
 #define TC_GENERIC_RELAX_TABLE md_relax_table
-
-/* We use a special alignment function to insert the correct nop
-   pattern.  */
-extern int sh_do_align PARAMS ((int, const char *, int, int));
-#define md_do_align(n,fill,len,max,l) if (sh_do_align (n,fill,len,max)) goto l
 
 /* We record, for each section, whether we have most recently output a
    CODE reloc or a DATA reloc.  */
@@ -158,6 +162,8 @@ extern int target_big_endian;
 
 #ifdef TE_NetBSD
 #define TARGET_FORMAT (shl ? "elf32-shl-unx" : "elf32-sh-unx")
+#elifdef TE_LINUX
+#define TARGET_FORMAT (shl ? "elf32-sh-linux" : "elf32-shbig-linux")
 #else
 #define TARGET_FORMAT (shl ? "elf32-shl" : "elf32-sh")
 #endif
@@ -165,6 +171,40 @@ extern int target_big_endian;
 #define elf_tc_final_processing sh_elf_final_processing
 extern void sh_elf_final_processing PARAMS ((void));
 
-#endif /* OBJ_ELF */
+#define DIFF_EXPR_OK		/* foo-. gets turned into PC relative relocs */
 
-/* end of tc-sh.h */
+#define GLOBAL_OFFSET_TABLE_NAME "_GLOBAL_OFFSET_TABLE_"
+
+/* This is the relocation type for direct references to
+   GLOBAL_OFFSET_TABLE.  It comes up in complicated expressions such
+   as _GLOBAL_OFFSET_TABLE_+[.-.L284], which cannot be expressed
+   normally with the regular expressions.  The fixup specified here
+   when used at runtime implies that we should add the address of the
+   GOT to the specified location, and as a result we have simplified
+   the expression into something we can use.  */
+#define TC_RELOC_GLOBAL_OFFSET_TABLE BFD_RELOC_SH_GOTPC
+
+/* This expression evaluates to false if the relocation is for a local object
+   for which we still want to do the relocation at runtime.  True if we
+   are willing to perform this relocation while building the .o file.
+   This is only used for pcrel relocations, so GOTOFF does not need to be
+   checked here.  I am not sure if some of the others are ever used with
+   pcrel, but it is easier to be safe than sorry.
+
+   We can't resolve references to the GOT or the PLT when creating the
+   object file, since these tables are only created by the linker.
+   Also, if the symbol is global, weak, common or not defined, the
+   assembler can't compute the appropriate reloc, since its location
+   can only be determined at link time.  */
+
+#define TC_RELOC_RTSYM_LOC_FIXUP(FIX)				\
+  ((FIX)->fx_r_type != BFD_RELOC_32_PLT_PCREL			\
+   && (FIX)->fx_r_type != BFD_RELOC_32_GOT_PCREL		\
+   && (FIX)->fx_r_type != BFD_RELOC_SH_GOTPC			\
+   && ((FIX)->fx_addsy == NULL					\
+       || (! S_IS_EXTERNAL ((FIX)->fx_addsy)			\
+	   && ! S_IS_WEAK ((FIX)->fx_addsy)			\
+	   && S_IS_DEFINED ((FIX)->fx_addsy)			\
+	   && ! S_IS_COMMON ((FIX)->fx_addsy))))
+
+#endif /* OBJ_ELF */
