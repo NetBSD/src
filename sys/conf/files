@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.657 2004/02/17 05:03:15 rtr Exp $
+#	$NetBSD: files,v 1.658 2004/03/12 11:37:17 jkunz Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -596,6 +596,11 @@ device	ntwoc: ifnet, hd64570
 #
 define	i82586
 file	dev/ic/i82586.c			i82586
+
+# Intel 82596 Ethernet Controller
+#
+define	i82596
+file	dev/ic/i82596.c			i82596
 
 # Intel 82557/82558/82559 Ethernet Controller
 #
