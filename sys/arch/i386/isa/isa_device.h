@@ -61,7 +61,7 @@ struct isa_device {
 	int	(*id_intr)();	/* interrupt interface routine */
 	int	id_unit;	/* unit number */
 	int	id_flags;	/* flags */
-	int	id_scsiid;	/* scsi id if needed */
+	int	id_physid;	/* eg. scsi id if needed */
 	int	id_alive;	/* device is present */
 };
 
