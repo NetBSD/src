@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.42 2000/01/21 23:29:00 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.43 2000/02/07 20:16:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -688,6 +688,8 @@ fdstrategy(bp)
 	 */
 	if (bp->b_bcount == 0)
 		goto done;
+
+	bp->b_rawblkno = bp->b_blkno;
 
 	/*
 	 * queue the buf and kick the low level code

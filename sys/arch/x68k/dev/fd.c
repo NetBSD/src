@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.29 2000/01/21 23:39:57 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.30 2000/02/07 20:16:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -670,6 +670,7 @@ fdstrategy(bp)
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
+	bp->b_rawblkno = bp->b_blkno;
  	bp->b_cylinder = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE)
 		/ (fd->sc_type->seccyl * (1 << (fd->sc_type->secsize - 2)));
 
