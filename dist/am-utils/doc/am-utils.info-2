@@ -1,0 +1,1373 @@
+This is Info file am-utils.info, produced by Makeinfo version 1.68 from
+the input file am-utils.texi.
+
+START-INFO-DIR-ENTRY
+* Am-utils: (am-utils).          The Amd automounter suite of utilities
+END-INFO-DIR-ENTRY
+
+
+File: am-utils.info,  Node: arch Selector Variable,  Next: autodir Selector Variable,  Prev: Selectors,  Up: Selectors
+
+arch Selector Variable
+......................
+
+   The machine architecture which was automatically determined at
+compile time.  The architecture type can be displayed by running the
+command `amd -v'.  *Note Supported Platforms::.
+
+
+File: am-utils.info,  Node: autodir Selector Variable,  Next: byte Selector Variable,  Prev: arch Selector Variable,  Up: Selectors
+
+autodir Selector Variable
+.........................
+
+   The default directory under which to mount filesystems.  This may be
+changed by the `-a' command line option.  *Note fs Option::.
+
+
+File: am-utils.info,  Node: byte Selector Variable,  Next: cluster Selector Variable,  Prev: autodir Selector Variable,  Up: Selectors
+
+byte Selector Variable
+......................
+
+   The machine's byte ordering.  This is either `little', indicating
+little-endian, or `big', indicating big-endian.  One possible use is to
+share `rwho' databases (*note rwho servers::.).  Another is to share
+ndbm databases, however this use can be considered a courageous
+juggling act.
+
+
+File: am-utils.info,  Node: cluster Selector Variable,  Next: domain Selector Variable,  Prev: byte Selector Variable,  Up: Selectors
+
+cluster Selector Variable
+.........................
+
+   This is provided as a hook for the name of the local cluster.  This
+can be used to decide which servers to use for copies of replicated
+filesystems.  `${cluster}' defaults to the value of `${domain}' unless
+a different value is set with the `-C' command line option.
+
+
+File: am-utils.info,  Node: domain Selector Variable,  Next: host Selector Variable,  Prev: cluster Selector Variable,  Up: Selectors
+
+domain Selector Variable
+........................
+
+   The local domain name as specified by the `-d' command line option.
+*Note host Selector Variable::.
+
+
+File: am-utils.info,  Node: host Selector Variable,  Next: hostd Selector Variable,  Prev: domain Selector Variable,  Up: Selectors
+
+host Selector Variable
+......................
+
+   The local hostname as determined by gethostname(2).  If no domain
+name was specified on the command line and the hostname contains a
+period `.' then the string before the period is used as the host name,
+and the string after the period is assigned to `${domain}'.  For
+example, if the hostname is `styx.doc.ic.ac.uk' then `host' would be
+`styx' and `domain' would be `doc.ic.ac.uk'.  `hostd' would be
+`styx.doc.ic.ac.uk'.
+
+
+File: am-utils.info,  Node: hostd Selector Variable,  Next: karch Selector Variable,  Prev: host Selector Variable,  Up: Selectors
+
+hostd Selector Variable
+.......................
+
+   This resolves to the `${host}' and `${domain}' concatenated with a
+`.' inserted between them if required.  If `${domain}' is an empty
+string then `${host}' and `${hostd}' will be identical.
+
+
+File: am-utils.info,  Node: karch Selector Variable,  Next: os Selector Variable,  Prev: hostd Selector Variable,  Up: Selectors
+
+karch Selector Variable
+.......................
+
+   This is provided as a hook for the kernel architecture.  This is
+used on SunOS 4 and SunOS 5, for example, to distinguish between
+different `/usr/kvm' volumes.  `${karch}' defaults to the "machine"
+value gotten from uname(2).  If the uname(2) system call is not
+available, the value of `${karch}' defaults to that of `${arch}'.
+Finally, a different value can be set with the `-k' command line option.
+
+
+File: am-utils.info,  Node: os Selector Variable,  Next: osver Selector Variable,  Prev: karch Selector Variable,  Up: Selectors
+
+os Selector Variable
+....................
+
+   The operating system.  Like the machine architecture, this is
+automatically determined at compile time.  The operating system name can
+be displayed by running the command `amd -v'.  *Note Supported
+Platforms::.
+
+
+File: am-utils.info,  Node: osver Selector Variable,  Next: full_os Selector Variable,  Prev: os Selector Variable,  Up: Selectors
+
+osver Selector Variable
+.......................
+
+   The operating system version.  Like the machine architecture, this is
+automatically determined at compile time.  The operating system name can
+be displayed by running the command `amd -v'.  *Note Supported
+Platforms::.
+
+
+File: am-utils.info,  Node: full_os Selector Variable,  Next: vendor Selector Variable,  Prev: osver Selector Variable,  Up: Selectors
+
+full_os Selector Variable
+.........................
+
+   The full name of the operating system, including its version.  This
+value is automatically determined at compile time.  The full operating
+system name and version can be displayed by running the command `amd
+-v'.  *Note Supported Platforms::.
+
+
+File: am-utils.info,  Node: vendor Selector Variable,  Next: key Selector Variable,  Prev: full_os Selector Variable,  Up: Selectors
+
+vendor Selector Variable
+........................
+
+   The name of the vendor of the operating system.  This value is
+automatically determined at compile time.  The name of the vendor can be
+displayed by running the command `amd -v'.  *Note Supported Platforms::.
+
+   The following selectors are also provided.  Unlike the other
+selectors, they vary for each lookup.  Note that when the name from the
+kernel is expanded prior to a map lookup, these selectors are all
+defined as empty strings.
+
+
+File: am-utils.info,  Node: key Selector Variable,  Next: map Selector Variable,  Prev: vendor Selector Variable,  Up: Selectors
+
+key Selector Variable
+.....................
+
+   The name being resolved.  For example, if `/home' is an automount
+point, then accessing `/home/foo' would set `${key}' to the string
+`foo'.  The key is prefixed by the PREF option set in the parent mount
+point.  The default prefix is an empty string.  If the prefix was
+`blah/' then `${key}' would be set to `blah/foo'.
+
+
+File: am-utils.info,  Node: map Selector Variable,  Next: netnumber Selector Variable,  Prev: key Selector Variable,  Up: Selectors
+
+map Selector Variable
+.....................
+
+   The name of the mount map being used.
+
+
+File: am-utils.info,  Node: netnumber Selector Variable,  Next: network Selector Variable,  Prev: map Selector Variable,  Up: Selectors
+
+netnumber Selector Variable
+...........................
+
+   This selector is identical to the `in_network' selector function,
+see *Note in_network Selector Function::.  It will match either the name
+or number of any network interface on which this host is connected to.
+The names and numbers of all attached interfaces are available from the
+output of `amd -v'.
+
+
+File: am-utils.info,  Node: network Selector Variable,  Next: path Selector Variable,  Prev: netnumber Selector Variable,  Up: Selectors
+
+network Selector Variable
+.........................
+
+   This selector is identical to the `in_network' selector function,
+see *Note in_network Selector Function::.  It will match either the name
+or number of any network interface on which this host is connected to.
+The names and numbers of all attached interfaces are available from the
+output of `amd -v'.
+
+
+File: am-utils.info,  Node: path Selector Variable,  Next: wire Selector Variable,  Prev: network Selector Variable,  Up: Selectors
+
+path Selector Variable
+......................
+
+   The full pathname of the name being resolved.  For example
+`/home/foo' in the example above.
+
+
+File: am-utils.info,  Node: wire Selector Variable,  Next: uid Selector Variable,  Prev: path Selector Variable,  Up: Selectors
+
+wire Selector Variable
+......................
+
+   This selector is identical to the `in_network' selector function,
+see *Note in_network Selector Function::.  It will match either the name
+or number of any network interface on which this host is connected to.
+The names and numbers of all attached interfaces are available from the
+output of `amd -v'.
+
+
+File: am-utils.info,  Node: uid Selector Variable,  Next: gid Selector Variable,  Prev: wire Selector Variable,  Up: Selectors
+
+uid Selector Variable
+.....................
+
+   This selector provides the numeric effective user ID (UID) of the
+user which last accessed an automounted path name.  This simple example
+shows how floppy mounting can be assigned only to machine owners:
+
+     floppy  -type:=pcfs \
+             uid==2301;host==shekel;dev:=/dev/floppy \
+             uid==6712;host==titan;dev=/dev/fd0 \
+             uid==0;dev:=/dev/fd0c \
+             type:=error
+
+   The example allows two machine owners to mount floppies on their
+designated workstations, allows the root user to mount on any host, and
+otherwise forces an error.
+
+
+File: am-utils.info,  Node: gid Selector Variable,  Next: exists Selector Function,  Prev: uid Selector Variable,  Up: Selectors
+
+gid Selector Variable
+.....................
+
+   This selector provides the numeric effective group ID (GID) of the
+user which last accessed an automounted path name.
+
+   The following boolean functions are selectors which take an argument
+ARG.  They return a value of true or false, and thus do not need to be
+compared with a value.  Each of these may be negated by prepending `!'
+to their name.
+
+
+File: am-utils.info,  Node: exists Selector Function,  Next: false Selector Function,  Prev: gid Selector Variable,  Up: Selectors
+
+exists Selector Function
+........................
+
+   If the file listed by ARG exists (via lstat(2)), this function
+evaluates to true.  Otherwise it evaluates to false.
+
+
+File: am-utils.info,  Node: false Selector Function,  Next: netgrp Selector Function,  Prev: exists Selector Function,  Up: Selectors
+
+false Selector Function
+.......................
+
+   Always evaluates to false.  ARG is ignored.
+
+
+File: am-utils.info,  Node: netgrp Selector Function,  Next: netgrpd Selector Function,  Prev: false Selector Function,  Up: Selectors
+
+netgrp Selector Function
+........................
+
+   If the current host as determined by the value of `${host}' (e.g.,
+short host name) is a member of the netgroup ARG, this selector
+evaluates to true.  Otherwise it evaluates to false.
+
+   For example, suppose you have a netgroup `ppp-hosts', and for
+reasons of performance, these have a local `/home' partition, while all
+other clients on the faster network can access a shared home directory.
+A common map to use for both might look like the following:
+
+     home/*  netgrp(ppp-hosts);type:=link;fs:=/local/${key} \
+             !netgrp(ppp-hosts);type:=nfs;rhost:=serv1;rfs:=/remote/${key}
+
+
+File: am-utils.info,  Node: netgrpd Selector Function,  Next: in_network Selector Function,  Prev: netgrp Selector Function,  Up: Selectors
+
+netgrpd Selector Function
+.........................
+
+   If the current host as determined by the value of `${hostd}' is a
+member of the netgroup ARG, this selector evaluates to true.  Otherwise
+it evaluates to false.
+
+   The `netgrpd' function uses fully-qualified host names (`${hostd}')
+to match netgroup names, while the `netgrp' function (*note netgrp
+Selector Function::.) uses short host names (`${host}').
+
+
+File: am-utils.info,  Node: in_network Selector Function,  Next: true Selector Function,  Prev: netgrpd Selector Function,  Up: Selectors
+
+in_network Selector Function
+............................
+
+   If the current host has any network interface that is locally
+attached to the network specified in ARG (either via name or number),
+this selector evaluates to true.  Otherwise it evaluates to false.
+
+   For example, suppose you have two servers that have an exportable
+`/opt' that smaller clients can NFS mount.  The two servers are say,
+`serv1' on network `foo-net.site.com' and `serv2' on network
+`123.4.5.0'.  You can write a map to be used by all clients that will
+attempt to mount the closest one as follows:
+
+     opt in_network(foo-net.site.com);rhost:=serv1;rfs:=/opt \
+         in_network(123.4.5.0);rhost:=serv2;rfs:=/opt \
+         rhost:=fallback-server
+
+
+File: am-utils.info,  Node: true Selector Function,  Prev: in_network Selector Function,  Up: Selectors
+
+true Selector Function
+......................
+
+   Always evaluates to true.  ARG is ignored.
+
+
+File: am-utils.info,  Node: Map Options,  Prev: Selectors,  Up: Location Format
+
+Map Options
+-----------
+
+   Options are parsed concurrently with selectors.  The difference is
+that when an option is seen the string following the `:=' is recorded
+for later use.  As a minimum the TYPE option must be specified.  Each
+filesystem type has other options which must also be specified.  *Note
+Filesystem Types::, for details on the filesystem specific options.
+
+   Superfluous option specifications are ignored and are not reported
+as errors.
+
+   The following options apply to more than one filesystem type.
+
+* Menu:
+
+* addopts Option::
+* delay Option::
+* fs Option::
+* opts Option::
+* remopts Option::
+* sublink Option::
+* type Option::
+
+
+File: am-utils.info,  Node: addopts Option,  Next: delay Option,  Prev: Map Options,  Up: Map Options
+
+addopts Option
+..............
+
+   This option adds additional options to default options normally
+specified in the `/defaults' entry or the defaults of the key entry
+being processed (*note opts Option::.).  Normally when you specify
+`opts' in both the `/defaults' and the map entry, the latter overrides
+the former completely.  But with `addopts' it will append the options
+and override any conflicting ones.
+
+   `addopts' also overrides the value of the `remopts' option (*note
+remopts Option::.), which unless specified defaults to the value of
+`opts'.
+
+   Options which start with `no' will override those with the same name
+that do not start with `no' and vice verse.  Special handling is given
+to inverted options such as `soft' and `hard', `bg' and `fg', `ro' and
+`rw', etc.
+
+   For example, if the default options specified were
+     opts:=rw,nosuid,intr,rsize=1024,wsize=1024,quota,posix
+
+   and the ones specified in a map entry were
+
+     addopts:=grpid,suid,ro,rsize=2048,quota,nointr
+
+   then the actual options used would be
+
+     wsize=1024,posix,grpid,suid,ro,rsize=2048,quota,nointr
+
+
+File: am-utils.info,  Node: delay Option,  Next: fs Option,  Prev: addopts Option,  Up: Map Options
+
+delay Option
+............
+
+   The delay, in seconds, before an attempt will be made to mount from
+the current location.  Auxiliary data, such as network address, file
+handles and so on are computed regardless of this value.
+
+   A delay can be used to implement the notion of primary and secondary
+file servers.  The secondary servers would have a delay of a few
+seconds, thus giving the primary servers a chance to respond first.
+
+
+File: am-utils.info,  Node: fs Option,  Next: opts Option,  Prev: delay Option,  Up: Map Options
+
+fs Option
+.........
+
+   The local mount point.  The semantics of this option vary between
+filesystems.
+
+   For NFS and UFS filesystems the value of `${fs}' is used as the
+local mount point.  For other filesystem types it has other meanings
+which are described in the section describing the respective filesystem
+type.  It is important that this string uniquely identifies the
+filesystem being mounted.  To satisfy this requirement, it should
+contain the name of the host on which the filesystem is resident and the
+pathname of the filesystem on the local or remote host.
+
+   The reason for requiring the hostname is clear if replicated
+filesystems are considered.  If a fileserver goes down and a
+replacement filesystem is mounted then the "local" mount point "must"
+be different from that of the filesystem which is hung.  Some encoding
+of the filesystem name is required if more than one filesystem is to be
+mounted from any given host.
+
+   If the hostname is first in the path then all mounts from a
+particular host will be gathered below a single directory.  If that
+server goes down then the hung mount points are less likely to be
+accidentally referenced, for example when getcwd(3) traverses the
+namespace to find the pathname of the current directory.
+
+   The `fs' option defaults to `${autodir}/${rhost}${rfs}'.  In
+addition, `rhost' defaults to the local host name (`${host}') and `rfs'
+defaults to the value of `${path}', which is the full path of the
+requested file; `/home/foo' in the example above (*note Selectors::.).
+`${autodir}' defaults to `/a' but may be changed with the `-a' command
+line option.  Sun's automounter defaults to `/tmp_mnt'.  Note that
+there is no `/' between the `${rhost}' and `${rfs}' since `${rfs}'
+begins with a `/'.
+
+
+File: am-utils.info,  Node: opts Option,  Next: remopts Option,  Prev: fs Option,  Up: Map Options
+
+opts Option
+...........
+
+   The options to pass to the mount system call.  A leading `-' is
+silently ignored.  The mount options supported generally correspond to
+those used by mount(8) and are listed below.  Some additional
+pseudo-options are interpreted by Amd and are also listed.
+
+   Unless specifically overridden, each of the system default mount
+options applies.  Any options not recognized are ignored.  If no
+options list is supplied the string `rw,defaults' is used and all the
+system default mount options apply.  Options which are not applicable
+for a particular operating system are silently ignored.  For example,
+only 4.4BSD is known to implement the `compress' and `spongy' options.
+
+`acdirmax=N'
+     Set the maximum directory attribute cache timeout to N.
+
+`acdirmin=N'
+     Set the minimum directory attribute cache timeout to N.
+
+`acregmax=N'
+     Set the maximum file attribute cache timeout to N.
+
+`acregmin=N'
+     Set the minimum file attribute cache timeout to N.
+
+`actimeo=N'
+     Set the overall attribute cache timeout to N.
+
+`auto'
+`ignore'
+     Ignore this mount by df(1).
+
+`cache'
+     Allow data to be cached from a remote server for this mount.
+
+`compress'
+     Use NFS compression protocol.
+
+`defperm'
+     Ignore the permission mode bits, and default file permissions to
+     0555, UID 0, and GID 0.  Useful for CD-ROMs formatted as ISO-9660.
+
+`dev'
+     Allow local special devices on this filesystem.
+
+`dumbtimr'
+     Turn off the dynamic retransmit timeout estimator.  This may be
+     useful for UDP mounts that exhibit high retry rates, since it is
+     possible that the dynamically estimated timeout interval is too
+     short.
+
+`extatt'
+     Enable extended attributes in ISO-9660 file systems.
+
+`fsid'
+     Set ID of filesystem.
+
+`gens'
+     Enable generations in ISO-9660 file systems.  Generations allow
+     you to see all versions of a given file.
+
+`grpid'
+     Use BSD directory group-id semantics.
+
+`int'
+`intr'
+     Allow keyboard interrupts on hard mounts.
+
+`multi'
+     Perform multi-component lookup on files.
+
+`maxgroups'
+     Set the maximum number of groups to allow for this mount.
+
+`nfsv3'
+     Use NFS Version 3 for this mount.
+
+`noac'
+     Turn off the attribute cache.
+
+`noauto'
+     This option is used by the mount command in `/etc/fstab' or
+     `/etc/vfstab' and means not to mount this file system when mount -a
+     is used.
+
+`nocache'
+     Do not allow data to be cached from a remote server for this mount.
+
+`noconn'
+     Don't make a connection on datagram transports.
+
+`nocto'
+     No close-to-open consistency.
+
+`nodefperm'
+     Do not ignore the permission mode bits.  Useful for CD-ROMS
+     formatted as ISO-9660.
+
+`nodev'
+`nodevs'
+     Don't allow local special devices on this filesystem.
+
+`noexec'
+     Don't allow program execution.
+
+`noint'
+     Do not allow keyboard interrupts for this mount
+
+`nomnttab'
+     This option is used internally to tell Amd that a Solaris 8 system
+     using mntfs is in use.
+
+`norrip'
+     Turn off using of the Rock Ridge Interchange Protocol (RRIP)
+     extensions to ISO-9660.
+
+`nosub'
+     Disallow mounts beneath this mount.
+
+`nosuid'
+     Don't allow set-uid or set-gid executables on this filesystem.
+
+`noversion'
+     Strip the extension `;#' from the version string of files recorded
+     on an ISO-9660 CD-ROM.
+
+`optionstr'
+     Under Solaris 8, provide the kernel a string of options to parse
+     and show as part of the special in-kernel mount file system.
+
+`overlay'
+     Overlay this mount on top of an existing mount, if any.
+
+`pgthresh=N'
+     Set the paging threshold to N kilobytes.
+
+`port=N'
+     Set the NFS port to N.
+
+`posix'
+     Turn on POSIX static pathconf for mounts.
+
+`proto=S'
+     Use transport protocol S for NFS (can be `"tcp"' or `"udp"').
+
+`quota'
+     Enable quota checking on this mount.
+
+`rdonly'
+`ro'
+     Mount this filesystem readonly.
+
+`resvport'
+     Use a reserved port (smaller than 1024) for remote NFS mounts.
+     Most systems assume that, but some allow for mounts to occur on
+     non-reserved ports.   This causes problems when such a system
+     tries to NFS mount one that requires reserved ports.  It is
+     recommended that this option always be on.
+
+`retrans=n'
+     The number of NFS retransmits made before a user error is
+     generated by a `soft' mounted filesystem, and before a `hard'
+     mounted filesystem reports `NFS server "yoyo" not responding still
+     trying'.
+
+`retry'
+     Set the NFS retry counter.
+
+`rrip'
+     Uses the Rock Ridge Interchange Protocol (RRIP) extensions to
+     ISO-9660.
+
+`rsize=N'
+     The NFS read packet size.  You may need to set this if you are
+     using NFS/UDP through a gateway or a slow link.
+
+`rw'
+     Allow reads and writes on this filesystem.
+
+`soft'
+     Give up after "retrans" retransmissions.
+
+`spongy'
+     Like `soft' for status requests, and `hard' for data transfers.
+
+`suid'
+     Allow set-uid programs on this mount.
+
+`symttl'
+     Turn of the symbolic link cache time-to-live.
+
+`sync'
+     Perform synchronous filesystem operations on this mount.
+
+`tcp'
+     Use TCP/IP instead of UDP/IP, ignored if the NFS implementation
+     does not support TCP/IP mounts.
+
+`timeo=N'
+     The NFS timeout, in tenth-seconds, before a request is
+     retransmitted.
+
+`vers=N'
+     Use NFS protocol version number N (can be 2 or 3).
+
+`wsize=N'
+     The NFS write packet size.  You may need to set this if you are
+     using NFS/UDP through a gateway or a slow link.
+
+   The following options are implemented by Amd, rather than being
+passed to the kernel.
+
+`nounmount'
+     Configures the mount so that its time-to-live will never expire.
+     This is also the default for some filesystem types.
+
+`ping=N'
+     The interval, in seconds, between keep-alive pings.  When four
+     consecutive pings have failed the mount point is marked as hung.
+     This interval defaults to 30 seconds.  If the ping interval is
+     less than zero, no pings are sent and the host is assumed to be
+     always up.  By default, pings are not sent for an NFS/TCP mount.
+
+`retry=N'
+     The number of times to retry the mount system call.
+
+`utimeout=N'
+     The interval, in seconds, by which the mount's time-to-live is
+     extended after an unmount attempt has failed.  In fact the
+     interval is extended before the unmount is attempted to avoid
+     thrashing.  The default value is 120 seconds (two minutes) or as
+     set by the `-w' command line option.
+
+
+File: am-utils.info,  Node: remopts Option,  Next: sublink Option,  Prev: opts Option,  Up: Map Options
+
+remopts Option
+..............
+
+   This option has the same use as `${opts}' but applies only when the
+remote host is on a non-local network.  For example, when using NFS
+across a gateway it is often necessary to use smaller values for the
+data read and write sizes.  This can simply be done by specifying the
+small values in REMOPTS.  When a non-local host is accessed, the
+smaller sizes will automatically be used.
+
+   Amd determines whether a host is local by examining the network
+interface configuration at startup.  Any interface changes made after
+Amd has been started will not be noticed.  The likely effect will be
+that a host may incorrectly be declared non-local.
+
+   Unless otherwise set, the value of `${remopts}' is the same as the
+value of `${opts}'.
+
+
+File: am-utils.info,  Node: sublink Option,  Next: type Option,  Prev: remopts Option,  Up: Map Options
+
+sublink Option
+..............
+
+   The subdirectory within the mounted filesystem to which the reference
+should point.  This can be used to prevent duplicate mounts in cases
+where multiple directories in the same mounted filesystem are used.
+
+
+File: am-utils.info,  Node: type Option,  Prev: sublink Option,  Up: Map Options
+
+type Option
+...........
+
+   The filesystem type to be used.  *Note Filesystem Types::, for a full
+description of each type.
+
+
+File: am-utils.info,  Node: Amd Command Line Options,  Next: Filesystem Types,  Prev: Mount Maps,  Up: Top
+
+Amd Command Line Options
+************************
+
+   Many of Amd's parameters can be set from the command line.  The
+command line is also used to specify automount points and maps.
+
+   The general format of a command line is
+
+     amd [options] [{ directory map-name [-map-options] } ...]
+
+   For each directory and map-name given or specified in the `amd.conf'
+file, Amd establishes an automount point.  The "map-options" may be any
+sequence of options or selectors--*note Location Format::..  The
+"map-options" apply only to Amd's mount point.
+
+   `type:=toplvl;cache:=mapdefault;fs:=${map}' is the default value for
+the map options.  Default options for a map are read from a special
+entry in the map whose key is the string `/defaults'.  When default
+options are given they are prepended to any options specified in the
+mount-map locations as explained in *Note Map Defaults::.
+
+   The "options" are any combination of those listed below.
+
+   Once the command line has been parsed, the automount points are
+mounted.  The mount points are created if they do not already exist, in
+which case they will be removed when Amd exits.  Finally, Amd
+disassociates itself from its controlling terminal and forks into the
+background.
+
+   Note: Even if Amd has been built with `-DDEBUG' (via `configure
+--enable-debug'), it will still background itself and disassociate
+itself from the controlling terminal.  To use a debugger it is
+necessary to specify `-D nodaemon' on the command line.  However, even
+with all of this, mounts and unmounts are performed in the background,
+and Amd will always fork before doing them.  Therefore, debugging what
+happens closely during un/mounts is more challenging.
+
+   *All* of Amd's command options (save `-F' and `-T') can be specified
+in the `amd.conf' file. *Note Amd Configuration File::.  If Amd is
+invoked without any command line options, it will default to using the
+configuration file `/etc/amd.conf', if one exists.
+
+* Menu:
+
+* -a Option::   Automount directory.
+* -c Option::   Cache timeout interval.
+* -d Option::   Domain name.
+* -k Option::   Kernel architecture.
+* -l Option::   Log file.
+* -n Option::   Hostname normalization.
+* -o Option::   Operating system version.
+* -p Option::   Output process id.
+* -r Option::   Restart existing mounts.
+* -t Option::   Kernel RPC timeout.
+* -v Option::   Version information.
+* -w Option::   Wait interval after failed unmount.
+* -x Option::   Log options.
+* -y Option::   NIS domain.
+* -C-Option::   Cluster name.
+* -D-Option::   Debug flags.
+* -F Option::   Amd configuration file.
+* -H Option::   Show brief help.
+* -O-Option::   Operating system name.
+* -S Option::   Lock executable pages in memory.
+* -T-Option::   Set tag for configuration file.
+
+
+File: am-utils.info,  Node: -a Option,  Next: -c Option,  Prev: Amd Command Line Options,  Up: Amd Command Line Options
+
+`-a' DIRECTORY
+==============
+
+   Specifies the default mount directory.  This option changes the
+variable `${autodir}' which otherwise defaults to `/a'.  For example,
+some sites prefer `/amd' or `/n'.
+
+     amd -a /amd ...
+
+
+File: am-utils.info,  Node: -c Option,  Next: -d Option,  Prev: -a Option,  Up: Amd Command Line Options
+
+`-c' CACHE-INTERVAL
+===================
+
+   Selects the period, in seconds, for which a name is cached by Amd.
+If no reference is made to the volume in this period, Amd discards the
+volume name to filesystem mapping.
+
+   Once the last reference to a filesystem has been removed, Amd
+attempts to unmount the filesystem.  If the unmount fails the interval
+is extended by a further period as specified by the `-w' command line
+option or by the `utimeout' mount option.
+
+   The default "cache-interval" is 300 seconds (five minutes).
+
+
+File: am-utils.info,  Node: -d Option,  Next: -k Option,  Prev: -c Option,  Up: Amd Command Line Options
+
+`-d' DOMAIN
+===========
+
+   Specifies the host's domain.  This sets the internal variable
+`${domain}' and affects the `${hostd}' variable.
+
+   If this option is not specified and the hostname already contains the
+local domain then that is used, otherwise the default value of
+`${domain}' is `unknown.domain'.
+
+   For example, if the local domain was `doc.ic.ac.uk', Amd could be
+started as follows:
+
+     amd -d doc.ic.ac.uk ...
+
+
+File: am-utils.info,  Node: -k Option,  Next: -l Option,  Prev: -d Option,  Up: Amd Command Line Options
+
+`-k' KERNEL-ARCHITECTURE
+========================
+
+   Specifies the kernel architecture of the system.  This is usually the
+output of `uname -m' (the "machine" value gotten from uname(2)).  If
+the uname(2) system call is not available, the value of `${karch}'
+defaults to that of `${arch}'.
+
+   The only effect of this option is to set the variable `${karch}'.
+
+   This option would be used as follows:
+
+     amd -k `arch -k` ...
+
+
+File: am-utils.info,  Node: -l Option,  Next: -n Option,  Prev: -k Option,  Up: Amd Command Line Options
+
+`-l' LOG-OPTION
+===============
+
+   Selects the form of logging to be made.  Several special
+"log-options" are recognized.
+
+  1. If "log-option" is the string `syslog', Amd will use the syslog(3)
+     mechanism.  If your system supports syslog facilities, then the
+     default facility used is `LOG_DAEMON'.
+
+  2. When using syslog, if you wish to change the facility, append its
+     name to the log option name, delimited by a single colon.  For
+     example, if "log-options" is the string `syslog:local7' then Amd
+     will log messages via syslog(3) using the `LOG_LOCAL7' facility.
+     If the facility name specified is not recognized, Amd will default
+     to `LOG_DAEMON'.  Note: while you can use any syslog facility
+     available on your system, it is generally a bad idea to use those
+     reserved for other services such as `kern', `lpr', `cron', etc.
+
+  3. If "log-option" is the string `/dev/stderr', Amd will use standard
+     error, which is also the default target for log messages.  To
+     implement this, Amd simulates the effect of the `/dev/fd' driver.
+
+   Any other string is taken as a filename to use for logging.  Log
+messages are appended to the file if it already exists, otherwise a new
+file is created.  The file is opened once and then held open, rather
+than being re-opened for each message.
+
+   Normally, when long-running daemons hold an open file descriptor on a
+log file, it is impossible to "rotate" the log file and compress older
+logs on a daily basis.  The daemon needs to be told to discard (via
+close(2)) its file handle, and re-open the log file.  This is done
+using `amq -l' log-option. *Note Amq -l option::.
+
+   If the `syslog' option is specified but the system does not support
+syslog or if the named file cannot be opened or created, Amd will use
+standard error.  Error messages generated before Amd has finished
+parsing the command line are printed on standard error.
+
+   Since Amd tends to generate a lot of logging information (especially
+if debugging was turned on), and due to it being an important program
+running on the system, it is usually best to log to a separate disk
+file.  In that case Amd would be started as follows:
+
+     amd -l /var/log/amd ...
+
+
+File: am-utils.info,  Node: -n Option,  Next: -o Option,  Prev: -l Option,  Up: Amd Command Line Options
+
+`-n'
+====
+
+   Normalizes the remote hostname before using it.  Normalization is
+done by replacing the value of `${rhost}' with the (generally fully
+qualified) primary name returned by a hostname lookup.
+
+   This option should be used if several names are used to refer to a
+single host in a mount map.
+
+
+File: am-utils.info,  Node: -o Option,  Next: -p Option,  Prev: -n Option,  Up: Amd Command Line Options
+
+`-o' OP-SYS-VER
+===============
+
+   Overrides the compiled-in version number of the operating system,
+with OP-SYS-VER.  Useful when the built-in version is not desired for
+backward compatibility reasons.  For example, if the built-in version is
+`2.5.1', you can override it to `5.5.1', and use older maps that were
+written with the latter in mind.
+
+
+File: am-utils.info,  Node: -p Option,  Next: -r Option,  Prev: -o Option,  Up: Amd Command Line Options
+
+`-p'
+====
+
+   Causes Amd's process id to be printed on standard output.  This can
+be redirected to a suitable file for use with kill:
+
+     amd -p > /var/run/amd.pid ...
+
+   This option only has an affect if Amd is running in daemon mode.  If
+Amd is started with the `-D nodaemon' debug flag, this option is
+ignored.
+
+
+File: am-utils.info,  Node: -r Option,  Next: -t Option,  Prev: -p Option,  Up: Amd Command Line Options
+
+`-r'
+====
+
+   Tells Amd to restart existing mounts (*note Inheritance
+Filesystem::.).
+
+
+File: am-utils.info,  Node: -t Option,  Next: -v Option,  Prev: -r Option,  Up: Amd Command Line Options
+
+`-t' TIMEOUT.RETRANSMIT
+=======================
+
+   Specifies the RPC "timeout" interval and the "retransmit" counter
+used by the kernel to communicate to Amd.  These are used to set the
+`timeo' and `retrans' mount options, respectively.  The default timeout
+is 0.8 seconds, and the default number of retransmissions is 11.
+
+   Amd relies on the kernel RPC retransmit mechanism to trigger mount
+retries.  The values of these parameters change the overall retry
+interval.  Too long an interval gives poor interactive response; too
+short an interval causes excessive retries.
+
+
+File: am-utils.info,  Node: -v Option,  Next: -w Option,  Prev: -t Option,  Up: Amd Command Line Options
+
+`-v'
+====
+
+   Print version information on standard error and then exit.  The
+output is of the form:
+
+     Copyright (c) 1997-1999 Erez Zadok
+     Copyright (c) 1990 Jan-Simon Pendry
+     Copyright (c) 1990 Imperial College of Science, Technology & Medicine
+     Copyright (c) 1990 The Regents of the University of California.
+     am-utils version 6.0a15 (build 61).
+     Built by ezk@cs.columbia.edu on date Wed Oct 22 15:21:03 EDT 1997.
+     cpu=sparc (big-endian), arch=sun4, karch=sun4u.
+     full_os=solaris2.5.1, os=sos5, osver=5.5.1, vendor=sun.
+     Map support for: root, passwd, union, nisplus, nis, ndbm, file, error.
+     AMFS: nfs, link, nfsx, nfsl, host, linkx, program, union, inherit,
+           ufs, lofs, hsfs, pcfs, auto, direct, toplvl, error.
+     FS: autofs, cachefs, cdfs, lofs, nfs, nfs3, pcfs, tfs, tmpfs, ufs.
+     Network 1: wire="mcl-lab-net.cs.columbia.edu" (netnumber=128.59.13).
+     Network 2: wire="14-net.cs.columbia.edu" (netnumber=128.59.14).
+     Network 3: wire="old-net.cs.columbia.edu" (netnumber=128.59.16).
+
+   The information includes the version number, number of times Amd was
+compiled on the local system, release date and name of the release.
+Following come the cpu type, byte ordering, and the architecture and
+kernel architecture as `${arch}' and `${karch}', respectively.  The
+next line lists the operating system full name, short name, version,
+and vendor.  These four values correspond to the variables
+`${full_os}', `${os}', `${osver}', and `${vendor}', respectively.
+*Note Supported Platforms::.
+
+   Then come a list of map types supported, filesystems internally
+supported by Amd (AMFS), and generic filesystems available (FS).
+Finally all known networks (if any) of this host are listed by name and
+number.  They are available via the variables `${wire}' or
+`${network}', and `${netnumber}' (*note Selectors::.) or the
+`in_network' selector function (*note in_network Selector Function::.).
+
+
+File: am-utils.info,  Node: -w Option,  Next: -x Option,  Prev: -v Option,  Up: Amd Command Line Options
+
+`-w' WAIT-TIMEOUT
+=================
+
+   Selects the interval in seconds between unmount attempts after the
+initial time-to-live has expired.
+
+   This defaults to 120 seconds (two minutes).
+
+
+File: am-utils.info,  Node: -x Option,  Next: -y Option,  Prev: -w Option,  Up: Amd Command Line Options
+
+`-x' OPTS
+=========
+
+   Specifies the type and verbosity of log messages.  "opts" is a comma
+separated list selected from the following options:
+
+`fatal'
+     Fatal errors
+
+`error'
+     Non-fatal errors
+
+`user'
+     Non-fatal user errors
+
+`warn'
+     Recoverable errors
+
+`warning'
+     Alias for `warn'
+
+`info'
+     Information messages
+
+`map'
+     Mount map usage
+
+`stats'
+     Additional statistics
+
+`all'
+     All of the above
+
+   Initially a set of default logging flags is enabled.  This is as if
+`-x all,nomap,nostats' had been selected.  The command line is parsed
+and logging is controlled by the `-x' option.  The very first set of
+logging flags is saved and can not be subsequently disabled using Amq.
+This default set of options is useful for general production use.
+
+   The `info' messages include details of what is mounted and unmounted
+and when filesystems have timed out.  If you want to have the default
+set of messages without the `info' messages then you simply need `-x
+noinfo'.  The messages given by `user' relate to errors in the mount
+maps, so these are useful when new maps are installed.  The following
+table lists the syslog priorities used for each of the message types.
+
+`fatal'
+     `LOG_CRIT'
+
+`error'
+     `LOG_ERR'
+
+`user'
+     `LOG_WARNING'
+
+`warning'
+     `LOG_WARNING'
+
+`info'
+     `LOG_INFO'
+
+`debug'
+     `LOG_DEBUG'
+
+`map'
+     `LOG_DEBUG'
+
+`stats'
+     `LOG_INFO'
+
+   The options can be prefixed by the string `no' to indicate that this
+option should be turned off.  For example, to obtain all but `info'
+messages the option `-x all,noinfo' would be used.
+
+   If Amd was built with debugging enabled the `debug' option is
+automatically enabled regardless of the command line options.
+
+
+File: am-utils.info,  Node: -y Option,  Next: -C-Option,  Prev: -x Option,  Up: Amd Command Line Options
+
+`-y' NIS-DOMAIN
+===============
+
+   Selects an alternate NIS domain.  This is useful for debugging and
+cross-domain shared mounting.  If this flag is specified, Amd
+immediately attempts to bind to a server for this domain.
+
+
+File: am-utils.info,  Node: -C-Option,  Next: -D-Option,  Prev: -y Option,  Up: Amd Command Line Options
+
+`-C' CLUSTER-NAME
+=================
+
+   Specifies the name of the cluster of which the local machine is a
+member.  The only effect is to set the variable `${cluster}'.  The
+"cluster-name" is will usually obtained by running another command
+which uses a database to map the local hostname into a cluster name.
+`${cluster}' can then be used as a selector to restrict mounting of
+replicated data.  If this option is not given, `${cluster}' has the
+same value as `${domain}'.  This would be used as follows:
+
+     amd -C `clustername` ...
+
+
+File: am-utils.info,  Node: -D-Option,  Next: -F Option,  Prev: -C-Option,  Up: Amd Command Line Options
+
+`-D' OPTS
+=========
+
+   Controls the verbosity and coverage of the debugging trace; "opts"
+is a comma separated list of debugging options.  The `-D' option is
+only available if Amd was compiled with `-DDEBUG', or configured with
+`configure --enable-debug'.  The memory debugging facilities (`mem')
+are only available if Amd was compiled with `-DDEBUG_MEM' (in addition
+to `-DDEBUG'), or configured with `configure --enable-debug=mem'.
+
+   The most common options to use are `-D trace' and `-D test' (which
+turns on all the useful debug options).  As usual, every option can be
+prefixed with `no' to turn it off.
+
+`all'
+     all options
+
+`amq'
+     register for amq
+
+`daemon'
+     enter daemon mode
+
+`fork'
+     fork server
+
+`full'
+     program trace
+
+`info'
+     info service specific debugging (hesiod, nis, etc.)  In the case of
+     hesiod maps, turns on the hesiod RES_DEBUG internal debugging
+     option.
+
+`mem'
+     trace memory allocations
+
+`mtab'
+     use local `./mtab' file
+
+`str'
+     debug string munging
+
+`test'
+     full debug but no daemon
+
+`trace'
+     trace RPC protocol and NFS mount arguments
+
+   You may also refer to the program source for a more detailed
+explanation of the available options.
+
+
+File: am-utils.info,  Node: -F Option,  Next: -H Option,  Prev: -D-Option,  Up: Amd Command Line Options
+
+`-F' CONF-FILE
+==============
+
+   Specify an Amd configuration file CONF-FILE to use.  For a
+description of the format and syntax, *note Amd Configuration File::..
+This configuration file is used to specify any options in lieu of typing
+many of them on the command line.  The `amd.conf' file includes
+directives for every command line option Amd has, and many more that
+are only available via the configuration file facility.  The
+configuration file specified by this option is processed after all other
+options had been processed, regardless of the actual location of this
+option on the command line.
+
+
+File: am-utils.info,  Node: -H Option,  Next: -O-Option,  Prev: -F Option,  Up: Amd Command Line Options
+
+`-H'
+====
+
+   Print a brief help and usage string.
+
+
+File: am-utils.info,  Node: -O-Option,  Next: -S Option,  Prev: -H Option,  Up: Amd Command Line Options
+
+`-O' OP-SYS-NAME
+================
+
+   Overrides the compiled-in name of the operating system, with
+OP-SYS-NAME.  Useful when the built-in name is not desired for backward
+compatibility reasons.  For example, if the build in name is `sunos5',
+you can override it to the old name `sos5', and use older maps which
+were written with the latter in mind.
+
+
+File: am-utils.info,  Node: -S Option,  Next: -T-Option,  Prev: -O-Option,  Up: Amd Command Line Options
+
+`-S'
+====
+
+   Do *not* lock the running executable pages of Amd into memory.  To
+improve Amd's performance, systems that support the plock(3) call lock
+the Amd process into memory.  This way there is less chance the
+operating system will schedule, page out, and swap the Amd process as
+needed.  This tends to improve Amd's performance, at the cost of
+reserving the memory used by the Amd process (making it unavailable for
+other processes).  If this behavior is not desired, use the `-S' option.
+
+
+File: am-utils.info,  Node: -T-Option,  Prev: -S Option,  Up: Amd Command Line Options
+
+`-T' TAG
+========
+
+   Specify a tag to use with `amd.conf'.  All map entries tagged with
+TAG will be processed.  Map entries that are not tagged are always
+processed.  Map entries that are tagged with a tag other than TAG will
+not be processed.
+
+
+File: am-utils.info,  Node: Filesystem Types,  Next: Amd Configuration File,  Prev: Amd Command Line Options,  Up: Top
+
+Filesystem Types
+****************
+
+   To mount a volume, Amd must be told the type of filesystem to be
+used.  Each filesystem type typically requires additional information
+such as the fileserver name for NFS.
+
+   From the point of view of Amd, a "filesystem" is anything that can
+resolve an incoming name lookup.  An important feature is support for
+multiple filesystem types.  Some of these filesystems are implemented
+in the local kernel and some on remote fileservers, whilst the others
+are implemented internally by Amd.
+
+   The two common filesystem types are UFS and NFS.  Four other user
+accessible filesystems (`link', `program', `auto' and `direct') are
+also implemented internally by Amd and these are described below.
+There are two additional filesystem types internal to Amd which are not
+directly accessible to the user (`inherit' and `error').  Their use is
+described since they may still have an effect visible to the user.
+
+* Menu:
+
+* Network Filesystem::          A single NFS filesystem.
+* Network Host Filesystem::     NFS mount a host's entire export tree.
+* Network Filesystem Group::    An atomic group of NFS filesystems.
+* Unix Filesystem::             Native disk filesystem.
+* Caching Filesystem::          Caching from remote server filesystem.
+* CD-ROM Filesystem::           ISO9660 CD ROM.
+* Loopback Filesystem::         Local loopback-mount filesystem.
+* Memory/RAM Filesystem::       A memory or RAM-based filesystem.
+* Null Filesystem::             4.4BSD's loopback-mount filesystem.
+* Floppy Filesystem::           MS-DOS Floppy filesystem.
+* Translucent Filesystem::      The directory merging filesystem.
+* Shared Memory+Swap Filesystem:: Sun's tmpfs filesystem.
+* User ID Mapping Filesystem::  4.4BSD's umapfs filesystem.
+* Program Filesystem::          Generic Program mounts.
+* Symbolic Link Filesystem::    Local link.
+* Symbolic Link Filesystem II:: Local link referencing existing filesystem.
+* NFS-Link Filesystem::         Link if path exists, NFS otherwise.
+* Automount Filesystem::
+* Direct Automount Filesystem::
+* Union Filesystem::
+* Error Filesystem::
+* Top-level Filesystem::
+* Autofs Filesystem::           Sun's kernel-based automounter filesystem.
+* Root Filesystem::
+* Inheritance Filesystem::
+
+
+File: am-utils.info,  Node: Network Filesystem,  Next: Network Host Filesystem,  Prev: Filesystem Types,  Up: Filesystem Types
+
+Network Filesystem (`nfs')
+==========================
+
+   The "nfs" (`type:=nfs') filesystem type provides access to Sun's NFS.
+
+The following options must be specified:
+
+`rhost'
+     the remote fileserver.  This must be an entry in the hosts
+     database.  IP addresses are not accepted.  The default value is
+     taken from the local host name (`${host}') if no other value is
+     specified.
+
+`rfs'
+     the remote filesystem.  If no value is specified for this option,
+     an internal default of `${path}' is used.
+
+   NFS mounts require a two stage process.  First, the "file handle" of
+the remote file system must be obtained from the server.  Then a mount
+system call must be done on the local system.  Amd keeps a cache of
+file handles for remote file systems.  The cache entries have a
+lifetime of a few minutes.
+
+   If a required file handle is not in the cache, Amd sends a request
+to the remote server to obtain it.  Amd "does not" wait for a response;
+it notes that one of the locations needs retrying, but continues with
+any remaining locations.  When the file handle becomes available, and
+assuming none of the other locations was successfully mounted, Amd will
+retry the mount.  This mechanism allows several NFS filesystems to be
+mounted in parallel.  The first one which responds with a valid file
+handle will be used.
+
+An NFS entry might be:
+
+     jsp  host!=charm;type:=nfs;rhost:=charm;rfs:=/home/charm;sublink:=jsp
+
+   The mount system call and any unmount attempts are always done in a
+new task to avoid the possibility of blocking Amd.
+
+
+File: am-utils.info,  Node: Network Host Filesystem,  Next: Network Filesystem Group,  Prev: Network Filesystem,  Up: Filesystem Types
+
+Network Host Filesystem (`host')
+================================
+
+   The "host" (`type:=host') filesystem allows access to the entire
+export tree of an NFS server.  The implementation is layered above the
+`nfs' implementation so keep-alives work in the same way.  The only
+option which needs to be specified is `rhost' which is the name of the
+fileserver to mount.
+
+   The `host' filesystem type works by querying the mount daemon on the
+given fileserver to obtain its export list.  Amd then obtains
+filehandles for each of the exported filesystems.  Any errors at this
+stage cause that particular filesystem to be ignored.  Finally each
+filesystem is mounted.  Again, errors are logged but ignored.  One
+common reason for mounts to fail is that the mount point does not exist.
+Although Amd attempts to automatically create the mount point, it may
+be on a remote filesystem to which Amd does not have write permission.
+
+   When an attempt to unmount a `host' filesystem mount fails, Amd
+remounts any filesystems which had successfully been unmounted.  To do
+this Amd queries the mount daemon again and obtains a fresh copy of the
+export list.  Amd then tries to mount any exported filesystems which
+are not currently mounted.
+
+   Sun's automounter provides a special `-hosts' map.  To achieve the
+same effect with Amd requires two steps.  First a mount map must be
+created as follows:
+
+     *       type:=host;rhost:=${key};fs:=${autodir}/${rhost}/root
+
+and then start Amd with the following command
+
+     amd /net net.map
+
+where `net.map' is the name of map described above.  Note that the
+value of `${fs}' is overridden in the map.  This is done to avoid a
+clash between the mount tree and any other filesystem already mounted
+from the same fileserver.
+
+   If different mount options are needed for different hosts then
+additional entries can be added to the map, for example
+
+     host2       opts:=ro,nosuid,soft
+
+would soft mount `host2' read-only.
+
