@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.676 2004/04/01 14:49:06 martin Exp $
+# $NetBSD: mi,v 1.677 2004/04/01 21:43:32 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -446,7 +446,7 @@
 ./usr/share/man/cat1/what.0			man-util-catman		.cat
 ./usr/share/man/cat1/whatis.0			man-util-catman		.cat
 ./usr/share/man/cat1/whereis.0			man-util-catman		.cat
-./usr/share/man/cat1/which.0			man-obsolete		obsolete
+./usr/share/man/cat1/which.0			man-util-catman		.cat
 ./usr/share/man/cat1/who.0			man-util-catman		.cat
 ./usr/share/man/cat1/whoami.0			man-util-catman		.cat
 ./usr/share/man/cat1/whois.0			man-netutil-catman	.cat
@@ -2523,7 +2523,7 @@
 ./usr/share/man/man1/what.1			man-util-man		.man
 ./usr/share/man/man1/whatis.1			man-util-man		.man
 ./usr/share/man/man1/whereis.1			man-util-man		.man
-./usr/share/man/man1/which.1			man-obsolete		obsolete
+./usr/share/man/man1/which.1			man-util-man		.man
 ./usr/share/man/man1/who.1			man-util-man		.man
 ./usr/share/man/man1/whoami.1			man-util-man		.man
 ./usr/share/man/man1/whois.1			man-netutil-man		.man
