@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.433.2.4 2002/06/11 16:21:24 lukem Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.433.2.5 2002/06/21 16:25:23 lukem Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1343,6 +1343,7 @@
 #define	PCI_PRODUCT_INTEL_82559ER	0x1209		/* 82559ER Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_82092AA	0x1222		/* 82092AA IDE controller */
 #define	PCI_PRODUCT_INTEL_SAA7116	0x1223		/* SAA7116 */
+#define	PCI_PRODUCT_INTEL_82452_PB	0x1225		/* 82452KX/GX Orion Extended Express Processor to PCI Bridge */
 #define	PCI_PRODUCT_INTEL_82596	0x1226		/* 82596 LAN Controller */
 #define	PCI_PRODUCT_INTEL_EEPRO100	0x1227		/* EE Pro 100 10/100 Fast Ethernet */
 #define	PCI_PRODUCT_INTEL_EEPRO100S	0x1228		/* EE Pro 100 Smart 10/100 Fast Ethernet */
