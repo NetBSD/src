@@ -1,5 +1,5 @@
-/*	$NetBSD: raw_ip6.c,v 1.20 2000/02/26 09:09:18 itojun Exp $	*/
-/*	$KAME: raw_ip6.c,v 1.23 2000/02/22 14:04:34 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.21 2000/02/28 16:10:52 itojun Exp $	*/
+/*	$KAME: raw_ip6.c,v 1.24 2000/02/28 15:44:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -238,13 +238,19 @@ rip6_ctlinput(cmd, sa, d)
 	register struct ip6_hdr *ip6;
 	struct mbuf *m;
 	int off;
+	void (*notify) __P((struct in6pcb *, int)) = in6_rtchange;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
 		return;
 
-	if (!PRC_IS_REDIRECT(cmd) &&
-	    ((unsigned)cmd >= PRC_NCMDS || inet6ctlerrmap[cmd] == 0))
+	if ((unsigned)cmd >= PRC_NCMDS)
+		return;
+	if (PRC_IS_REDIRECT(cmd))
+		notify = in6_rtchange, d = NULL;
+	else if (cmd == PRC_HOSTDEAD)
+		d = NULL;
+	else if (inet6ctlerrmap[cmd] == 0)
 		return;
 
 	/* if the parameter is from icmp6, decode it. */
@@ -276,10 +282,10 @@ rip6_ctlinput(cmd, sa, d)
 			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 
 		(void) in6_pcbnotify(&rawin6pcb, (struct sockaddr *)&sa6,
-					0, &s, 0, cmd, in6_rtchange);
+					0, &s, 0, cmd, notify);
 	} else {
 		(void) in6_pcbnotify(&rawin6pcb, (struct sockaddr *)&sa6, 0,
-					&zeroin6_addr, 0, cmd, in6_rtchange);
+					&zeroin6_addr, 0, cmd, notify);
 	}
 }
 
