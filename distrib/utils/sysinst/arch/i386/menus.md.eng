@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.2 1997/10/01 05:04:31 phil Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.3 1997/10/07 04:01:36 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,17 +61,18 @@ menu wdtype, title  "  Select type";
 
 menu dlgeom, title "  Choose an option";
 	display action { msg_display (MSG_dlgeom, diskdev, dlcyl, dlhead,
-				dlsec, diskgeom[0], diskgeom[1], diskgeom[2]);
+				dlsec, disk->geom[0], disk->geom[1],
+				disk->geom[2]);
 			};
 	option "Use real geometry", exit, action {
-			dlcyl  = diskgeom[0];
-			dlhead = diskgeom[1];
-			dlsec  = diskgeom[2];
+			dlcyl  = disk->geom[0];
+			dlhead = disk->geom[1];
+			dlsec  = disk->geom[2];
 		};
 	option "Use disklabel geometry", exit, action {
-			diskgeom[0] = dlcyl;
-			diskgeom[1] = dlhead;
-			diskgeom[2] = dlsec;
+			disk->geom[0] = dlcyl;
+			disk->geom[1] = dlhead;
+			disk->geom[2] = dlsec;
 		};
 
 menu biosgeom, title  "  Choose an option", y=16;

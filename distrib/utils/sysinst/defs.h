@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3 1997/10/01 05:04:24 phil Exp $	*/
+/*	$NetBSD: defs.h,v 1.4 1997/10/07 04:01:29 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,6 +50,7 @@
 /* constants */
 #define MEG 1048576
 #define STRSIZE 255
+#define SSTRSIZE 30
 
 /* For run.c: collect() */
 #define T_FILE 0
@@ -74,19 +75,23 @@ EXTERN char *multname;
 EXTERN char *doingwhat;
 
 /* Hardware variables */
-EXTERN int ramsize INIT(0);
-EXTERN int rammb   INIT(0);
-EXTERN int wd0[4]  INIT({0});
-EXTERN int wd1[4]  INIT({0});
-EXTERN int sd0[5]  INIT({0});
-EXTERN int sd1[5]  INIT({0});
+EXTERN long ramsize INIT(0);
+EXTERN int  rammb   INIT(0);
 
-EXTERN int *diskgeom;
+/* Disk descriptions */
+#define MAX_DISKS 15
+struct disk_desc {
+	char name[SSTRSIZE];
+	int  geom[5];
+};
+EXTERN struct disk_desc disks[MAX_DISKS];
+
+EXTERN struct disk_desc *disk;
 EXTERN int sectorsize;
 
-/* Actual name of the disk ... wd0/wd1/sd0/sd1 */
-EXTERN char diskdev[10];
-EXTERN char disknames[80];
+/* Actual name of the disk. */
+EXTERN char diskdev[SSTRSIZE];
+EXTERN char disknames[STRSIZE];
 EXTERN int  numdisks;
 EXTERN char *disktype;		/* ST506, SCSI, ... */
 
@@ -161,6 +166,7 @@ void	md_post_disklabel (void);
 void	md_post_newfs (void);
 void	md_copy_filesystem (void);
 void	md_make_bsd_partitions (void);
+int	md_update (void);
 
 /* from install.c */
 void	do_install (void);
@@ -180,7 +186,7 @@ int  get_via_ftp (void);
 void get_via_nfs (void);
 
 /* from disks.c */
-int	find_disks_and_mem_size(void);
+int	find_disks (void);
 void	disp_cur_part (int,int);
 void	disp_cur_fspart (int, int);
 void	scsi_fake (void);
@@ -191,6 +197,7 @@ void	make_fstab (void);
 int	fsck_disks(void);
 
 /* from util.c */
+void	get_ramsize (void);
 void	ask_sizemult (void);
 int	ask_ynquestion (char *quest, char def, ...);
 void	extract_dist (void);
