@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_adjtime.c,v 1.1 2001/09/16 07:41:58 manu Exp $ */
+/*	$NetBSD: ntp_adjtime.c,v 1.2 2001/09/17 23:42:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -32,14 +32,18 @@
  */
 
 #include "namespace.h"
-#include <fcntl.h>
-#include <paths.h>
-#include <unistd.h>
-#include <sys/timex.h>
+
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/timex.h>
 #include <sys/ioctl.h>
 #include <sys/syscall.h>
 #include <sys/clockctl.h>
+
+#include <fcntl.h>
+#include <paths.h>
+#include <string.h>
+#include <unistd.h>
  
 #ifdef __weak_alias
 __weak_alias(ntp_adjtime,_ntp_adjtime)
