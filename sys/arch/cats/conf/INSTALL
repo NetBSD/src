@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.32 2003/10/18 08:30:13 lukem Exp $
+#	$NetBSD: INSTALL,v 1.33 2003/10/21 08:03:16 skrll Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -321,7 +321,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
-#atapibus* at umass? channel ?
+#atapibus* at umass?
 #scsibus* at umass? channel ?
 
 # USB audio
