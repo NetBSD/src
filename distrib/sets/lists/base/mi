@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.199 2000/12/22 01:31:49 itojun Exp $
+# $NetBSD: mi,v 1.200 2000/12/29 02:41:55 itojun Exp $
 .
 ./altroot
 ./bin
@@ -685,6 +685,7 @@
 ./usr/sbin/quotacheck
 ./usr/sbin/quotaoff
 ./usr/sbin/quotaon
+./usr/sbin/racoon
 ./usr/sbin/rarpd
 ./usr/sbin/rbootd
 ./usr/sbin/rdate
