@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.86 2000/06/06 17:36:12 soren Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.87 2000/06/08 04:47:13 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.86 2000/06/06 17:36:12 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.87 2000/06/08 04:47:13 mhitch Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -1308,7 +1308,7 @@ loadfpregs(p)
 		"lwc1	$f29, 116(%0)	;"
 		"lwc1	$f30, 120(%0)	;"
 		"lwc1	$f31, 124(%0)	;"
-		".set reorder" : "=r"(fp));
+		".set reorder" :: "r"(fp));
 	/*
 	 * load FPCSR and stop CP1 again while enabling interrupts.
 	 */
