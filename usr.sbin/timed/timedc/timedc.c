@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.c,v 1.6 1997/10/18 07:13:35 lukem Exp $	*/
+/*	$NetBSD: timedc.c,v 1.7 2001/01/11 03:05:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,12 +44,12 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timedc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: timedc.c,v 1.6 1997/10/18 07:13:35 lukem Exp $");
+__RCSID("$NetBSD: timedc.c,v 1.7 2001/01/11 03:05:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.6 $"
+#ident "$Revision: 1.7 $"
 #endif
 
 #include "timedc.h"
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 {
 	register struct cmd *c;
 
-	openlog("timedc", LOG_ODELAY, LOG_AUTH);
+	openlog("timedc", 0, LOG_AUTH);
 
 	/*
 	 * security dictates!
