@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.29 1998/06/20 03:43:49 mrg Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.30 1998/08/09 20:37:55 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -378,7 +378,7 @@ stios2stio(ts, t)
 	t->c_cflag = ts->c_cflag;
 	t->c_lflag = ts->c_lflag;
 	t->c_line  = ts->c_line;
-	bcopy(ts->c_cc, t->c_cc, 8);
+	memcpy(t->c_cc, ts->c_cc, 8);
 }
 
 static void
@@ -391,7 +391,7 @@ stio2stios(t, ts)
 	ts->c_cflag = t->c_cflag;
 	ts->c_lflag = t->c_lflag;
 	ts->c_line  = t->c_line;
-	bcopy(t->c_cc, ts->c_cc, 8); /* don't touch the upper fields! */
+	memcpy(ts->c_cc, t->c_cc, 8); /* don't touch the upper fields! */
 }
 
 int
@@ -833,7 +833,7 @@ sunos_sys_ioctl(p, v, retval)
 			return (error);
 
 #define datageom	((struct sun_dkgeom *)SCARG(uap, data))
-		bzero(SCARG(uap, data), sizeof(*datageom));
+		memset(SCARG(uap, data), 0, sizeof(*datageom));
 
 		datageom->sdkc_ncylinders = dl.d_ncylinders;
 		datageom->sdkc_acylinders = dl.d_acylinders;
@@ -849,7 +849,7 @@ sunos_sys_ioctl(p, v, retval)
 
 	case DKIOCINFO:
 		/* Homey don't do DKIOCINFO */
-		bzero(SCARG(uap, data), sizeof(struct sun_dkctlr));
+		memset(SCARG(uap, data), 0, sizeof(struct sun_dkctlr));
 		break;
 
 	case DKIOCGPART:

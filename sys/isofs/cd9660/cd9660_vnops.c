@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.48 1998/08/03 14:19:58 kleink Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.49 1998/08/09 20:42:55 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -399,7 +399,7 @@ iso_shipdir(idp)
 	}
 	if (sl > 0) {
 		if (sl != cl
-		    || bcmp(sname,cname,sl)) {
+		    || memcmp(sname, cname, sl)) {
 			if (idp->assocent.d_namlen) {
 				error = iso_uiodir(idp, &idp->assocent,
 						   idp->assocoff);
@@ -419,10 +419,10 @@ iso_shipdir(idp)
 	idp->current.d_reclen = DIRENT_SIZE(&idp->current);
 	if (assoc) {
 		idp->assocoff = idp->curroff;
-		bcopy(&idp->current,&idp->assocent,idp->current.d_reclen);
+		memcpy(&idp->assocent, &idp->current, idp->current.d_reclen);
 	} else {
 		idp->saveoff = idp->curroff;
-		bcopy(&idp->current,&idp->saveent,idp->current.d_reclen);
+		memcpy(&idp->saveent, &idp->current, idp->current.d_reclen);
 	}
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.39 1998/02/10 17:45:06 kleink Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.40 1998/08/09 20:37:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -424,7 +424,7 @@ hpux_sys_utssys(p, v, retval)
 	switch (SCARG(uap, request)) {
 	/* uname */
 	case 0:
-		bzero(&ut, sizeof(ut));
+		memset(&ut, 0, sizeof(ut));
 
 		strncpy(ut.sysname, ostype, sizeof(ut.sysname));
 		ut.sysname[sizeof(ut.sysname) - 1] = '\0';
@@ -911,7 +911,7 @@ hpux_sys_ioctl(p, v, retval)
 		 * Zero the buffer so the user always
 		 * gets back something deterministic.
 		 */
-		bzero(dt, size);
+		memset(dt, 0, size);
 	else if (com&IOC_VOID)
 		*(caddr_t *)dt = SCARG(uap, data);
 

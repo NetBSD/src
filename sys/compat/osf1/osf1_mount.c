@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.7 1998/05/20 16:34:29 chs Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.8 1998/08/09 20:37:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -176,7 +176,7 @@ bsd2osf_statfs(bsfs, osfs)
 	struct osf1_statfs *osfs;
 {
 
-	bzero(osfs, sizeof (struct osf1_statfs));
+	memset(osfs, 0, sizeof (struct osf1_statfs));
 	if (!strncmp(MOUNT_FFS, bsfs->f_fstypename, MFSNAMELEN))
 		osfs->f_type = OSF1_MOUNT_UFS;
 	else if (!strncmp(MOUNT_NFS, bsfs->f_fstypename, MFSNAMELEN))
@@ -194,12 +194,12 @@ bsd2osf_statfs(bsfs, osfs)
 	osfs->f_bavail = bsfs->f_bavail;
 	osfs->f_files = bsfs->f_files;
 	osfs->f_ffree = bsfs->f_ffree;
-	bcopy(&bsfs->f_fsid, &osfs->f_fsid,
+	memcpy(&osfs->f_fsid, &bsfs->f_fsid,
 	    max(sizeof bsfs->f_fsid, sizeof osfs->f_fsid));
 	/* osfs->f_spare zeroed above */
-	bcopy(bsfs->f_mntonname, osfs->f_mntonname,
+	memcpy(osfs->f_mntonname, bsfs->f_mntonname,
 	    max(sizeof bsfs->f_mntonname, sizeof osfs->f_mntonname));
-	bcopy(bsfs->f_mntfromname, osfs->f_mntfromname,
+	memcpy(osfs->f_mntfromname, bsfs->f_mntfromname,
 	    max(sizeof bsfs->f_mntfromname, sizeof osfs->f_mntfromname));
 	/* XXX osfs->f_xxx should be filled in... */
 }
@@ -415,7 +415,7 @@ osf1_mount_mfs(p, osf_argp, bsd_argp)
 	if ((error = copyin(SCARG(osf_argp, data), &osf_ma, sizeof osf_ma)))
 		return error;
 
-	bzero(&bsd_ma, sizeof bsd_ma);
+	memset(&bsd_ma, 0, sizeof bsd_ma);
 	bsd_ma.fspec = osf_ma.name;
 	/* XXX export args */
 	bsd_ma.base = osf_ma.base;
@@ -448,7 +448,7 @@ osf1_mount_nfs(p, osf_argp, bsd_argp)
 	if ((error = copyin(SCARG(osf_argp, data), &osf_na, sizeof osf_na)))
 		return error;
 
-	bzero(&bsd_na, sizeof bsd_na);
+	memset(&bsd_na, 0, sizeof bsd_na);
 	bsd_na.addr = (struct sockaddr *)osf_na.addr;
 	bsd_na.addrlen = sizeof (struct sockaddr_in);
 	bsd_na.sotype = SOCK_DGRAM; 
