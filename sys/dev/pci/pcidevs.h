@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.120.2.12 2000/07/23 17:56:10 he Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.120.2.13 2000/09/11 20:09:04 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.113.2.10 2000/07/07 17:13:50 he Exp 
+ *	NetBSD: pcidevs,v 1.113.2.11 2000/07/23 17:55:47 he Exp 
  */
 
 /*
@@ -541,10 +541,12 @@
 
 /* 3COM Products */
 #define	PCI_PRODUCT_3COM_3C985	0x0001		/* 3c985 Gigabit Ethernet */
+#define	PCI_PRODUCT_3COM_3C450TX	0x4500		/* 3c450-TX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 Ethernet */
 #define	PCI_PRODUCT_3COM_3C595TX	0x5950		/* 3c595-TX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C595T4	0x5951		/* 3c595-T4 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C595MII	0x5952		/* 3c595-MII 10/100 Ethernet */
+#define	PCI_PRODUCT_3COM_3CSOHO100TX	0x7646		/* 3cSOHO100-TX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C900TPO	0x9000		/* 3c900-TPO Ethernet */
 #define	PCI_PRODUCT_3COM_3C900COMBO	0x9001		/* 3c900-COMBO Ethernet */
 #define	PCI_PRODUCT_3COM_3C905TX	0x9050		/* 3c905-TX 10/100 Ethernet */
