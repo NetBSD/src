@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.c,v 1.1.1.4 1999/04/06 05:30:37 mrg Exp $	*/
+/*	$NetBSD: regexp.c,v 1.1.1.5 2001/07/26 12:00:37 mrg Exp $	*/
 
 /*
  * regcomp and regexec -- regsub and regerror are elsewhere
@@ -26,14 +26,17 @@
  *
  * *** NOTE: this code has been altered slightly for use in Tcl. ***
  * Slightly modified by David MacKenzie to undo most of the changes for TCL.
+ * Added regexec2 with notbol parameter. -- 4/19/99 Mark Nudelman
  */
 
 #include "less.h"
 #if HAVE_STDIO_H
 #include <stdio.h>
 #endif
-#if STDC_HEADERS
+#if HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#if HAVE_STRING_H
 #include <string.h>
 #endif
 #include "regexp.h"
@@ -719,9 +722,10 @@ STATIC char *regprop();
  - regexec - match a regexp against a string
  */
 int
-regexec(prog, string)
+regexec2(prog, string, notbol)
 register regexp *prog;
 register char *string;
+int notbol;
 {
 	register char *s;
 
@@ -750,7 +754,10 @@ register char *string;
 	}
 
 	/* Mark beginning of line for ^ . */
-	regbol = string;
+	if (notbol)
+		regbol = NULL;
+	else
+		regbol = string;
 
 	/* Simplest case:  anchored match need be tried only once. */
 	if (prog->reganch)
@@ -774,6 +781,14 @@ register char *string;
 
 	/* Failure. */
 	return(0);
+}
+
+int
+regexec(prog, string)
+register regexp *prog;
+register char *string;
+{
+	return regexec2(prog, string, 0);
 }
 
 /*

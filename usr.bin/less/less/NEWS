@@ -7,8 +7,125 @@
       http://www.flash.net/~marknu/less
   You can also download the latest version of less from there.
 
-  The email address for questions about less 
-  has been changed to marknu@flash.net.
+  To report bugs, suggestions or comments, send email to 
+  bug-less@gnu.org or marknu@flash.net.
+
+======================================================================
+
+
+	Major changes between "less" versions 354 and 358
+
+* Add -J (--status-column) option to display a status column.
+
+* Add -# (--shift) option to set default horizontal shift distance.
+  Default horizontal shift distance is now one-half screen width.
+
+* Horizontal shifting does not shift line numbers if -N is in effect.
+
+* Horizontal shifting acts as though -S were set, to avoid confusion.
+
+======================================================================
+
+
+	Major changes between "less" versions 352 and 354
+
+* Allow space after numeric-valued command line options.
+
+* Fix problem with configuring terminal libraries on some systems.
+
+* Add support for PCRE regular expression library.
+
+* Add --with-regex option to configure to allow manually selecting
+  a regular expression library.
+
+* Fix bug compiling with SECURE = 1.
+
+======================================================================
+
+
+	Major changes between "less" versions 346 and 352
+
+* Enable UTF-8 if "UTF-8" appears in locale-related environment variables.
+
+* Add --with-editor option to configure script.
+
+* The -M prompt and = message now show the top and bottom line number.
+
+* Fix bug in running the editor on a file whose name contains quotes, etc.
+
+* Fix bug in horizontal scrolling of long lines.
+
+* Fix bug in doing :d on a file which contains marks.
+
+* Fix bug causing cleared lines to sometimes be filled with standout, 
+  bold, underline, etc. on certain terminals.
+
+* Fixes for MS-DOS (DJGPP) version.
+
+======================================================================
+
+
+	Major changes between "less" versions 340 and 346
+
+* The UTF-8 character set is now supported.
+
+* The default character set is now latin1 rather than ascii.
+
+* New option -R (--RAW-CONTROL-CHARS) is like -r but handles 
+  long (wrapped) lines correctly, as long as the input contains only 
+  normal text and ANSI color escape sequences.
+
+* New option -F (--quit-if-one-screen) quits if the text fits on
+  the first screen.
+
+* The -w option now highlights the target line of a g or p command.
+
+* A system-wide lesskey file is supported (LESSKEY_SYSTEM).
+
+* New escape for prompt strings: %c is replaced by column number.
+
+* New escape for prompt strings: %P is replaced by percentage into
+  file, based on line number rather than byte offset.
+
+* HOME and END keys now jump to beginning of file or end of file.
+
+======================================================================
+
+
+	Major changes between "less" versions 337 and 340
+
+* Command line options for less may now be given in either the old 
+  single-letter form, or a new long name form (--option-name).
+  See the less man page or "less --help" for the list of long option names.
+
+* Command line options for lesskey may now be given in a new long name
+  form.  See the lesskey man page for the list of long option names.
+
+* New command -- toggles an option using the long option name.
+
+* New command __ queries an option using the long option name.
+
+* The old -- command is renamed as -!.
+
+* If a ^P is entered between the dash and the option letter of the -
+  command, the message describing the new setting is suppressed.
+
+* Lesskey files may now contain \k escape sequences to represent the
+  "special" keys (arrows, PAGE-UP/PAGE-DOWN, HOME, END, INSERT, DELETE).
+
+* New command :d removes the current file from the list of files.
+
+* New option -~ (like -w before version 335)
+  suppresses tildes after end-of-file.
+
+* Less is now released under the GNU General Public License.
+
+======================================================================
+
+
+	Major changes between "less" versions 335 and 337
+
+* Fixed bugs in "make install".
 
 ======================================================================
 

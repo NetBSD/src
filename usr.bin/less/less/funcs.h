@@ -1,12 +1,13 @@
-/*	$NetBSD: funcs.h,v 1.1.1.4 1999/04/06 05:30:38 mrg Exp $	*/
+/*	$NetBSD: funcs.h,v 1.1.1.5 2001/07/26 12:00:29 mrg Exp $	*/
 
 	public char * save ();
 	public VOID_POINTER ecalloc ();
 	public char * skipsp ();
+	public int sprefix ();
 	public void quit ();
 	public void raw_mode ();
 	public void scrsize ();
-	public void get_editkeys ();
+	public char * special_key_str ();
 	public void get_term ();
 	public void init ();
 	public void deinit ();
@@ -73,8 +74,6 @@
 	public void init_cmds ();
 	public void add_fcmd_table ();
 	public void add_ecmd_table ();
-	public void add_var_table ();
-	public int cmd_search ();
 	public int fcmd_decode ();
 	public int ecmd_decode ();
 	public char * lgetenv ();
@@ -103,6 +102,8 @@
 	public char * fexpand ();
 	public char * fcomplete ();
 	public int bin_file ();
+	public char * esc_metachars ();
+	public char * esc_metachars ();
 	public char * lglob ();
 	public char * open_altfile ();
 	public void close_altfile ();
@@ -140,6 +141,7 @@
 	public void jump_percent ();
 	public void jump_line_loc ();
 	public void jump_loc ();
+	public void init_line ();
 	public void prewind ();
 	public void plinenum ();
 	public int pappend ();
@@ -162,6 +164,7 @@
 	public void lastmark ();
 	public void gomark ();
 	public POSITION markpos ();
+	public void unmark ();
 	public void opt_o ();
 	public void opt__O ();
 	public void opt_l ();
@@ -186,6 +189,7 @@
 	public int getnum ();
 	public void init_option ();
 	public struct option * findopt ();
+	public struct option * findopt_name ();
 	public int iread ();
 	public void intread ();
 	public long get_time ();

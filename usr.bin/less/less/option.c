@@ -1,29 +1,13 @@
-/*	$NetBSD: option.c,v 1.1.1.4 1999/04/06 05:30:36 mrg Exp $	*/
+/*	$NetBSD: option.c,v 1.1.1.5 2001/07/26 12:00:34 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2000  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -58,41 +42,64 @@ scan_option(s)
 	char *s;
 {
 	register struct option *o;
-	register int c;
+	register int optc;
+	char *optname;
+	char *printopt;
 	char *str;
 	int set_default;
+	int lc;
+	int err;
 	PARG parg;
 
 	if (s == NULL)
 		return;
 
 	/*
-	 * If we have a pending string-valued option, handle it now.
+	 * If we have a pending option which requires an argument,
+	 * handle it now.
 	 * This happens if the previous option was, for example, "-P"
 	 * without a following string.  In that case, the current
-	 * option is simply the string for the previous option.
+	 * option is simply the argument for the previous option.
 	 */
 	if (pendopt != NULL)
 	{
-		(*pendopt->ofunc)(INIT, s);
+		switch (pendopt->otype & OTYPE)
+		{
+		case STRING:
+			(*pendopt->ofunc)(INIT, s);
+			break;
+		case NUMBER:
+			printopt = propt(pendopt->oletter);
+			*(pendopt->ovar) = getnum(&s, printopt, (int*)NULL);
+			break;
+		}
 		pendopt = NULL;
 		return;
 	}
 
 	set_default = FALSE;
+	optname = NULL;
 
 	while (*s != '\0')
 	{
 		/*
 		 * Check some special cases first.
 		 */
-		switch (c = *s++)
+		switch (optc = *s++)
 		{
 		case ' ':
 		case '\t':
 		case END_OPTION_STRING:
 			continue;
 		case '-':
+			/*
+			 * "--" indicates an option name instead of a letter.
+			 */
+			if (*s == '-')
+			{
+				optname = ++s;
+				break;
+			}
 			/*
 			 * "-+" means set these options back to their defaults.
 			 * (They may have been set otherwise by previous 
@@ -115,7 +122,7 @@ scan_option(s)
 				every_first_cmd = save(++s);
 			else
 				ungetsc(s);
-			s = optstring(s, c);
+			s = optstring(s, propt('+'));
 			continue;
 		case '0':  case '1':  case '2':  case '3':  case '4':
 		case '5':  case '6':  case '7':  case '8':  case '9':
@@ -125,7 +132,7 @@ scan_option(s)
 			 * window size.
 			 */
 			s--;
-			c = 'z';
+			optc = 'z';
 			break;
 		}
 
@@ -133,17 +140,58 @@ scan_option(s)
 		 * Not a special case.
 		 * Look up the option letter in the option table.
 		 */
-		o = findopt(c);
+		err = 0;
+		if (optname == NULL)
+		{
+			printopt = propt(optc);
+			lc = SIMPLE_IS_LOWER(optc);
+			o = findopt(optc);
+		} else
+		{
+			printopt = optname;
+			lc = SIMPLE_IS_LOWER(optname[0]);
+			o = findopt_name(&optname, NULL, &err);
+			s = optname;
+			optname = NULL;
+			if (*s == '\0' || *s == ' ')
+			{
+				/*
+				 * The option name matches exactly.
+				 */
+				;
+			} else if (*s == '=')
+			{
+				/*
+				 * The option name is followed by "=value".
+				 */
+				if (o != NULL &&
+				    (o->otype & OTYPE) != STRING &&
+				    (o->otype & OTYPE) != NUMBER)
+				{
+					parg.p_string = printopt;
+					error("The %s option should not be followed by =",
+						&parg);
+					quit(QUIT_ERROR);
+				}
+				s++;
+			} else
+			{
+				/*
+				 * The specified name is longer than the
+				 * real option name.
+				 */
+				o = NULL;
+			}
+		}
 		if (o == NULL)
 		{
-			parg.p_string = propt(c);
-#if SHELL_META_QUEST
-			error("There is no %s option (\"less -\\?\" for help)",
-				&parg);
-#else
-			error("There is no %s option (\"less -?\" for help)",
-				&parg);
-#endif
+			parg.p_string = printopt;
+			if (err == OPT_AMBIG)
+				error("%s is an ambiguous abbreviation (\"less --help\" for help)",
+					&parg);
+			else
+				error("There is no %s option (\"less --help\" for help)",
+					&parg);
 			quit(QUIT_ERROR);
 		}
 
@@ -160,8 +208,7 @@ scan_option(s)
 			if (set_default)
 				*(o->ovar) = o->odefault;
 			else
-				*(o->ovar) = flip_triple(o->odefault,
-						(o->oletter == c));
+				*(o->ovar) = flip_triple(o->odefault, lc);
 			break;
 		case STRING:
 			if (*s == '\0')
@@ -180,10 +227,15 @@ scan_option(s)
 			 * the handling function.
 			 */
 			str = s;
-			s = optstring(s, c);
+			s = optstring(s, printopt);
 			break;
 		case NUMBER:
-			*(o->ovar) = getnum(&s, c, (int*)NULL);
+			if (*s == '\0')
+			{
+				pendopt = o;
+				return;
+			}
+			*(o->ovar) = getnum(&s, printopt, (int*)NULL);
 			break;
 		}
 		/*
@@ -211,8 +263,12 @@ toggle_option(c, s, how_toggle)
 {
 	register struct option *o;
 	register int num;
+	int no_prompt;
 	int err;
 	PARG parg;
+
+	no_prompt = (how_toggle & OPT_NO_PROMPT);
+	how_toggle &= ~OPT_NO_PROMPT;
 
 	/*
 	 * Look up the option letter in the option table.
@@ -295,14 +351,14 @@ toggle_option(c, s, how_toggle)
 			{
 			case OPT_TOGGLE:
 				*(o->ovar) = flip_triple(*(o->ovar), 
-						o->oletter == c);
+						islower(c));
 				break;
 			case OPT_UNSET:
 				*(o->ovar) = o->odefault;
 				break;
 			case OPT_SET:
 				*(o->ovar) = flip_triple(o->odefault,
-						o->oletter == c);
+						islower(c));
 				break;
 			}
 			break;
@@ -315,7 +371,7 @@ toggle_option(c, s, how_toggle)
 			{
 			case OPT_SET:
 			case OPT_UNSET:
-				error("Can't use \"-+\" or \"--\" for a string option",
+				error("Cannot use \"-+\" or \"--\" for a string option",
 					NULL_PARG);
 				return;
 			}
@@ -335,7 +391,7 @@ toggle_option(c, s, how_toggle)
 				*(o->ovar) = o->odefault;
 				break;
 			case OPT_SET:
-				error("Can't use \"--\" for a numeric option",
+				error("Can't use \"-!\" for a numeric option",
 					NULL_PARG);
 				return;
 			}
@@ -355,31 +411,34 @@ toggle_option(c, s, how_toggle)
 		chg_hilite();
 #endif
 
-	/*
-	 * Print a message describing the new setting.
-	 */
-	switch (o->otype & OTYPE)
+	if (!no_prompt)
 	{
-	case BOOL:
-	case TRIPLE:
 		/*
-		 * Print the odesc message.
+		 * Print a message describing the new setting.
 		 */
-		error(o->odesc[*(o->ovar)], NULL_PARG);
-		break;
-	case NUMBER:
-		/*
-		 * The message is in odesc[1] and has a %d for 
-		 * the value of the variable.
-		 */
-		parg.p_int = *(o->ovar);
-		error(o->odesc[1], &parg);
-		break;
-	case STRING:
-		/*
-		 * Message was already printed by the handling function.
-		 */
-		break;
+		switch (o->otype & OTYPE)
+		{
+		case BOOL:
+		case TRIPLE:
+			/*
+			 * Print the odesc message.
+			 */
+			error(o->odesc[*(o->ovar)], NULL_PARG);
+			break;
+		case NUMBER:
+			/*
+			 * The message is in odesc[1] and has a %d for 
+			 * the value of the variable.
+			 */
+			parg.p_int = *(o->ovar);
+			error(o->odesc[1], &parg);
+			break;
+		case STRING:
+			/*
+			 * Message was already printed by the handling function.
+			 */
+			break;
+		}
 	}
 
 	if (how_toggle != OPT_NO_TOGGLE && (o->otype & REPAINT))
@@ -463,12 +522,12 @@ isoptpending()
  * Print error message about missing string.
  */
 	static void
-nostring(c)
-	int c;
+nostring(printopt)
+	char *printopt;
 {
 	PARG parg;
-	parg.p_string = propt(c);
-	error("String is required after %s", &parg);
+	parg.p_string = printopt;
+	error("Value is required after %s", &parg);
 }
 
 /*
@@ -477,7 +536,7 @@ nostring(c)
 	public void
 nopendopt()
 {
-	nostring(pendopt->oletter);
+	nostring(propt(pendopt->oletter));
 }
 
 /*
@@ -486,15 +545,15 @@ nopendopt()
  * Return a pointer to the remainder of the string, if any.
  */
 	static char *
-optstring(s, c)
+optstring(s, printopt)
 	char *s;
-	int c;
+	char *printopt;
 {
 	register char *p;
 
 	if (*s == '\0')
 	{
-		nostring(c);
+		nostring(printopt);
 		quit(QUIT_ERROR);
 	}
 	for (p = s;  *p != '\0';  p++)
@@ -512,9 +571,9 @@ optstring(s, c)
  * the char * to point after the translated number.
  */
 	public int
-getnum(sp, c, errp)
+getnum(sp, printopt, errp)
 	char **sp;
-	int c;
+	char *printopt;
 	int *errp;
 {
 	register char *s;
@@ -536,7 +595,7 @@ getnum(sp, c, errp)
 			*errp = TRUE;
 			return (-1);
 		}
-		parg.p_string = propt(c);
+		parg.p_string = printopt;
 		error("Number is required after %s", &parg);
 		quit(QUIT_ERROR);
 	}
