@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.20 1999/02/01 09:15:35 mrg Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.21 1999/07/02 15:28:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,12 +42,12 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc.c,v 1.20 1999/02/01 09:15:35 mrg Exp $");
+__RCSID("$NetBSD: kvm_sparc.c,v 1.21 1999/07/02 15:28:51 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * Sparc machine dependent routines for kvm.  Hopefully, the forthcoming 
+ * Sparc machine dependent routines for kvm.  Hopefully, the forthcoming
  * vm code will one day obsolete this module.
  */
 
@@ -88,7 +88,7 @@ int _kvm_kvatop4u __P((kvm_t *, u_long, u_long *));
 
 /*
  * XXX
- * taken from /sys/arch/sparc64/include/kcore.h.  
+ * taken from /sys/arch/sparc64/include/kcore.h.
  * this is the same as the sparc one, except for the kphys addition,
  * so luckily we can use this here...
  */
@@ -151,7 +151,7 @@ _kvm_initvtop(kd)
 /*
  * Translate a kernel virtual address to a physical address using the
  * mapping information in kd->vm.  Returns the result in pa, and returns
- * the number of bytes that are contiguously available from this 
+ * the number of bytes that are contiguously available from this
  * physical address.  This routine is used only for crashdumps.
  */
 int
@@ -307,12 +307,12 @@ _kvm_kvatop4u(kd, va, pa)
 	if (va < kernbase)
 		goto err;
 
-	/* 
+	/*
 	 * Kernel layout:
 	 *
 	 * kernbase:
 	 *	4MB locked TLB (text+data+BSS)
-	 *	Random other stuff.	
+	 *	Random other stuff.
 	 */
 	if (va >= kernbase && va < kernbase + 4*1024*1024)
 		return (va - kernbase) + kphys;
@@ -353,9 +353,9 @@ err:
 }
 
 
-/*       
+/*
  * Translate a physical address to a file-offset in the crash-dump.
- */     
+ */
 off_t
 _kvm_pa2off(kd, pa)
 	kvm_t   *kd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_i386.c,v 1.14 1998/09/27 18:16:00 christos Exp $	*/
+/*	$NetBSD: kvm_i386.c,v 1.15 1999/07/02 15:28:50 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_i386.c,v 1.14 1998/09/27 18:16:00 christos Exp $");
+__RCSID("$NetBSD: kvm_i386.c,v 1.15 1999/07/02 15:28:50 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -166,7 +166,7 @@ _kvm_pa2off(kd, pa)
 	u_long pa;
 {
 	cpu_kcore_hdr_t *cpu_kh;
-	phys_ram_seg_t *ramsegs;  
+	phys_ram_seg_t *ramsegs;
 	off_t off;
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sun3x.c,v 1.5 1997/10/12 11:04:22 briggs Exp $	*/
+/*	$NetBSD: kvm_sun3x.c,v 1.6 1999/07/02 15:28:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sun3x.c,v 1.5 1997/10/12 11:04:22 briggs Exp $");
+__RCSID("$NetBSD: kvm_sun3x.c,v 1.6 1999/07/02 15:28:51 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -104,7 +104,7 @@ _kvm_sun3x_freevtop(kd)
 /*
  * Translate a kernel virtual address to a physical address using the
  * mapping information in kd->vm.  Returns the result in pa, and returns
- * the number of bytes that are contiguously available from this 
+ * the number of bytes that are contiguously available from this
  * physical address.  This routine is used only for crashdumps.
  */
 int

@@ -1,21 +1,21 @@
-/*	$NetBSD: kvm_alpha.c,v 1.14 1998/08/17 20:11:32 thorpej Exp $	*/
+/*	$NetBSD: kvm_alpha.c,v 1.15 1999/07/02 15:28:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -183,7 +183,7 @@ lose:
 /*
  * Translate a physical address to a file-offset in the crash-dump.
  */
-off_t   
+off_t
 _kvm_pa2off(kd, pa)
 	kvm_t *kd;
 	u_long pa;

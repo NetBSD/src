@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.63 1999/04/01 09:53:09 mycroft Exp $	*/
+/*	$NetBSD: kvm.c,v 1.64 1999/07/02 15:28:49 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.63 1999/04/01 09:53:09 mycroft Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.64 1999/07/02 15:28:49 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -308,7 +308,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 		 * not be opened, open the namelist argument so we
 		 * revert to slow nlist() calls.
 		 */
-		if ((ufgiven || kvm_dbopen(kd) < 0) && 
+		if ((ufgiven || kvm_dbopen(kd) < 0) &&
 		    (kd->nlfd = open(uf, O_RDONLY, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", uf);
 			goto failed;
@@ -326,7 +326,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 
 		/*
 		 * If there is no valid core header, fail silently here.
-		 * The address translations however will fail without 
+		 * The address translations however will fail without
 		 * header. Things can be made to run by calling
 		 * kvm_dump_mkheader() before doing any translation.
 		 */
@@ -353,7 +353,7 @@ failed:
  *    (opaque)    cpu_data; (size is cpu_hdr.c_size)
  *	  kcore_seg_t mem_hdr;
  *    (memory)    mem_data; (size is mem_hdr.c_size)
- *    
+ *
  * Note: khdr is padded to khdr.c_hdrsize;
  * cpu_hdr and mem_hdr are padded to khdr.c_seghdrsize
  */
@@ -703,7 +703,7 @@ kvm_close(kd)
 
 /*
  * Set up state necessary to do queries on the kernel namelist
- * data base.  If the data base is out-of-data/incompatible with 
+ * data base.  If the data base is out-of-data/incompatible with
  * given executable, set up things so we revert to standard nlist call.
  * Only called for live kernels.  Return 0 on success, -1 on failure.
  */
@@ -744,7 +744,7 @@ kvm_dbopen(kd)
 	if (rec.data == 0 || rec.size != sizeof(struct nlist))
 		goto close;
 	memcpy(&nitem, rec.data, sizeof(nitem));
-	if (kvm_read(kd, (u_long)nitem.n_value, kversion, dbversionlen) != 
+	if (kvm_read(kd, (u_long)nitem.n_value, kversion, dbversionlen) !=
 	    dbversionlen)
 		goto close;
 	/*
@@ -769,7 +769,7 @@ kvm_nlist(kd, nl)
 	int nvalid, rv;
 
 	/*
-	 * If we can't use the data base, revert to the 
+	 * If we can't use the data base, revert to the
 	 * slow library call.
 	 */
 	if (kd->db == 0) {
@@ -882,7 +882,7 @@ kvm_read(kd, kva, buf, len)
 		while (len > 0) {
 			u_long	pa;
 			off_t	foff;
-		
+
 			cc = _kvm_kvatop(kd, kva, &pa);
 			if (cc == 0)
 				return (-1);
