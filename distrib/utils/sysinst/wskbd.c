@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbd.c,v 1.1 2004/06/12 19:18:24 dsl Exp $	*/
+/*	$NetBSD: wskbd.c,v 1.2 2004/10/16 13:20:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -33,11 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wskbd.c,v 1.1 2004/06/12 19:18:24 dsl Exp $");
+__RCSID("$NetBSD: wskbd.c,v 1.2 2004/10/16 13:20:11 dsl Exp $");
 
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsksymdef.h>
 

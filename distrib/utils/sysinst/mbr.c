@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.64 2004/08/14 16:06:36 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.65 2004/10/16 13:20:11 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1513,7 +1513,10 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 	int fd, i, ret = 0;
 	struct mbr_partition *mbrp;
 	u_int32_t pstart, psize;
-	struct mbr_sector *mbrs, mbrsec;
+#ifdef BOOTSEL
+	struct mbr_sector *mbrs;
+#endif
+	struct mbr_sector mbrsec;
 	mbr_info_t *ext;
 	uint sector;
 
