@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.2 2005/03/09 22:39:21 bouyer Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.3 2005/03/17 15:31:17 bouyer Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.2 2005/03/09 22:39:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.3 2005/03/17 15:31:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -496,6 +496,7 @@ void ctrl_if_resume(void)
 
     ctrl_if_evtchn = xen_start_info.domain_controller_evtchn;
     ctrl_if_irq    = bind_evtchn_to_irq(ctrl_if_evtchn);
+    aprint_verbose("Domain controller: using irq %d\n", ctrl_if_irq);
 
     event_set_handler(ctrl_if_irq, &ctrl_if_interrupt, NULL, IPL_HIGH + 2);
     hypervisor_enable_irq(ctrl_if_irq);
