@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.20 1998/10/18 14:23:48 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.21 1998/11/11 19:37:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -118,7 +118,10 @@ typedef struct GNode {
     int             type;      	/* Its type (see the OP flags, below) */
     int		    order;	/* Its wait weight */
 
-    Boolean         make;      	/* TRUE if this target needs to be remade */
+    int             flags;
+#define REMAKE		0x1    	/* this target needs to be remade */
+#define	CHILDMADE	0x2	/* children of this target were made */
+#define FORCE		0x4	/* children don't exist, and we pretend made */
     enum {
 	UNMADE, BEINGMADE, MADE, UPTODATE, ERROR, ABORTED,
 	CYCLE, ENDCYCLE,
@@ -142,8 +145,6 @@ typedef struct GNode {
 				 *  	printed. Go back and unmark all its
 				 *  	members.
 				 */
-    Boolean 	    childMade; 	/* TRUE if one of this target's children was
-				 * made */
     int             unmade;    	/* The number of unmade children */
 
     time_t          mtime;     	/* Its modification time */
@@ -383,6 +384,7 @@ extern int debug;
 int Make_TimeStamp __P((GNode *, GNode *));
 Boolean Make_OODate __P((GNode *));
 Lst Make_ExpandUse __P((Lst));
+time_t Make_Recheck __P((GNode *));
 int Make_HandleUse __P((GNode *, GNode *));
 void Make_Update __P((GNode *));
 void Make_DoAllVar __P((GNode *));

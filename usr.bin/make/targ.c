@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.15 1998/02/04 14:47:39 christos Exp $	*/
+/*	$NetBSD: targ.c,v 1.16 1998/11/11 19:37:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: targ.c,v 1.15 1998/02/04 14:47:39 christos Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.16 1998/11/11 19:37:06 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.15 1998/02/04 14:47:39 christos Exp $");
+__RCSID("$NetBSD: targ.c,v 1.16 1998/11/11 19:37:06 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -198,9 +198,8 @@ Targ_NewGN (name)
 	gn->type = 0;
     }
     gn->unmade =    	0;
-    gn->make = 	    	FALSE;
     gn->made = 	    	UNMADE;
-    gn->childMade = 	FALSE;
+    gn->flags = 	0;
     gn->order =		0;
     gn->mtime = gn->cmtime = 0;
     gn->iParents =  	Lst_Init (FALSE);
