@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifmedia.4,v 1.7 2001/06/12 12:00:19 wiz Exp $
+.\"	$NetBSD: ifmedia.4,v 1.8 2001/06/24 14:22:43 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -107,33 +107,33 @@ Place the device into hardware loopback mode.  [loopback, hw-loopback, loop]
 The following media types are defined for Ethernet:
 .Bl -tag -offset indent -width IFM_1000_FX
 .It IFM_10_T
-10baseT, 10Mb/s over unshielded twisted pair, RJ45 connector.  [10baseT,
+10BASE-T, 10Mb/s over unshielded twisted pair, RJ45 connector.  [10baseT,
 UTP, 10UTP]
 .It IFM_10_2
-10base2, 10Mb/s over coaxial cable, BNC connector, also called Thinnet.
+10BASE2, 10Mb/s over coaxial cable, BNC connector, also called Thinnet.
 [10base2, BNC, 10BNC]
 .It IFM_10_5
-10base5, 10Mb/s over 15-wire cables, DB15 connector, also called AUI.
+10BASE5, 10Mb/s over 15-wire cables, DB15 connector, also called AUI.
 [10base5, AUI, 10AUI]
 .It IFM_100_TX
-100baseTX, 100Mb/s over unshielded twisted pair, RJ45 connector.  [100baseTX,
+100BASE-TX, 100Mb/s over unshielded twisted pair, RJ45 connector.  [100baseTX,
 100TX]
 .It IFM_100_FX
-100baseFX, 100Mb/s over fiber optic cables.  [100baseFX, 100FX]
+100BASE-FX, 100Mb/s over fiber optic cables.  [100baseFX, 100FX]
 .It IFM_100_T4
-100baseT4, 100Mb/s over 4-wire (category 3) unshielded twisted pair, RJ45
+100BASE-T4, 100Mb/s over 4-wire (category 3) unshielded twisted pair, RJ45
 connector.  [100baseT4, 100T4]
 .It IFM_100_VG
-100baseVG AnyLAN.  [100baseVG, 100VG]
+100VG-AnyLAN.  [100baseVG, 100VG]
 .It IFM_100_T2
-100baseT2.  [100baseT2, 100T2]
+100BASE-T2.  [100baseT2, 100T2]
 .It IFM_1000_FX
-1000baseFX, 1Gb/s over fiber optic cables.  [1000baseFX, 1000FX]
+1000BASE-FX, 1Gb/s over fiber optic cables.  [1000baseFX, 1000FX]
 .It IFM_10_STP
-10baseSTP, 10Mb/s over shielded twisted pair, DB9 connector.  [10baseSTP,
+10BASE-STP, 10Mb/s over shielded twisted pair, DB9 connector.  [10baseSTP,
 STP, 10STP]
 .It IFM_10_FL
-10baseFL, 10Mb/s over fiber optic cables.  [10baseFL, FL, 10FL]
+10BASE-FL, 10Mb/s over fiber optic cables.  [10baseFL, FL, 10FL]
 .El
 .Pp
 There are no link type-specific options defined for Ethernet.
