@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.41 1999/11/18 23:32:37 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.42 1999/11/20 00:57:10 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -101,6 +101,13 @@ struct usbd_bus {
 	struct usb_device_stats	stats;
 	int 			intr_context;
 	u_int			no_intrs;
+	int			usbrev;	/* USB revision */
+#define USBREV_UNKNOWN	0
+#define USBREV_PRE_1_0	1
+#define USBREV_1_0	2
+#define USBREV_1_1	3
+#define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1" }
+
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	bus_dma_tag_t		dmatag;	/* DMA tag */
 #endif
