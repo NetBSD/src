@@ -146,7 +146,15 @@ create_knlist(name, db)
 			rel_off = nbuf.n_value & ~KERNBASE;
 #endif
 #ifdef i386
-			rel_off = ((nbuf.n_value & ~KERNBASE) + CLBYTES);
+			/*
+			 * XXX: This is a KLUGE to handle the kernel being
+			 * loaded at a different address than KERNBASE.  Stupid
+			 * a.out format has no way of recording the text
+			 * address we gave ld.  It only works for multiples of
+			 * 1MB.
+			 */
+			rel_off = ((nbuf.n_value - (ebuf.a_entry & -0x100000))
+				  + CLBYTES);
 #endif
 			/*
 			 * When loaded, data is rounded to next page cluster
