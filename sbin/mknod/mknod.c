@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.30 2004/01/30 19:06:55 ross Exp $	*/
+/*	$NetBSD: mknod.c,v 1.31 2004/05/11 17:09:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.30 2004/01/30 19:06:55 ross Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.31 2004/05/11 17:09:58 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -281,7 +281,7 @@ static portdev_t
 callPack(pack_t *f, int n, u_long *numbers)
 {
 	portdev_t d;
-	char *error = NULL;
+	const char *error = NULL;
 
 	d = (*f)(n, numbers, &error);
 	if (error != NULL)
