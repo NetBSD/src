@@ -1,4 +1,4 @@
-/* $NetBSD: mkbootimage.c,v 1.2 1999/04/05 02:56:33 cgd Exp $ */
+/* $NetBSD: mkbootimage.c,v 1.3 1999/06/14 23:52:25 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -132,6 +132,7 @@ main(int argc, char **argv)
 	bb = (struct boot_block *)outbuf;
 	bb->bb_secsize = howmany(insb.st_size, BOOT_BLOCK_BLOCKSIZE);
 	bb->bb_secstart = 1;
+	bb->bb_flags = 0;
 	CHECKSUM_BOOT_BLOCK(bb, &bb->bb_cksum);
 
 	if (verbose) {
