@@ -1,4 +1,4 @@
-.\" $Id: krb5.conf.5,v 1.1.1.2 2000/08/02 19:59:31 assar Exp $
+.\" $Id: krb5.conf.5,v 1.2 2000/08/15 17:22:45 fvdl Exp $
 .\"
 .Dd April 11, 1999
 .Dt KRB5.CONF 5
@@ -195,8 +195,8 @@ What type of logging the kdc should use, see also [logging]/kdc.
 points to the configuration file to read.
 .Sh EXAMPLE
 .Bd -literal -offset indent
-[lib_defaults]
-	default_domain = FOO.SE
+[libdefaults]
+	default_realm = FOO.SE
 [domain_realm]
 	.foo.se = FOO.SE
 	.bar.se = FOO.SE
