@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.8 1998/11/24 11:16:11 tsubai Exp $
+#	$NetBSD: Makefile,v 1.9 1999/03/19 23:16:25 thorpej Exp $
 
 CPPFLAGS+=	-DLIBC_SCCS -DPIC -DDYNAMIC -DELFSIZE=32
 CPPFLAGS+=	-I${.CURDIR}/../../../libexec/ld.elf_so
 COPTS+=		-fPIC
+
+.PATH:		${.CURDIR}/../common_elf
 
 OBJS=		crt0.o gcrt0.o crtbegin.o crtend.o
 
