@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.29 1997/02/18 18:38:39 cgd Exp $
+#	$NetBSD: bsd.own.mk,v 1.30 1997/02/23 20:53:56 cgd Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -66,7 +66,7 @@ STRIP?=		-s
 # which don't support PIC.
 .if  (${MACHINE_ARCH} == "vax") || \
     ((${MACHINE_ARCH} == "mips") && defined(STATIC_TOOLCHAIN)) || \
-    ((${MACHINE_ARCH} == "alpha") && !defined(ELF_TOOLCHAIN))
+    ((${MACHINE_ARCH} == "alpha") && defined(ECOFF_TOOLCHAIN))
 NOPIC=
 .endif
 
