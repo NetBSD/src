@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.1 1995/10/20 01:16:02 cgd Exp $	*/
+/*	$NetBSD: bzero.S,v 1.2 1996/10/17 04:26:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -27,7 +27,7 @@
  * rights to redistribute these changes.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 LEAF(bzero,2)
 	ble	a1,bzero_done

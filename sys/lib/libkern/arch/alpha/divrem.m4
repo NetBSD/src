@@ -1,4 +1,4 @@
-/*	$NetBSD: divrem.m4,v 1.4 1996/09/26 23:04:31 cgd Exp $	*/
+/*	$NetBSD: divrem.m4,v 1.5 1996/10/17 04:26:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -54,7 +54,7 @@ define(CC, `t2')
 define(T_0, `t3')
 ifelse(S, `true', `define(NEG, `t4')')
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 LEAF(NAME, 0)					/* XXX */
 	lda	sp, -64(sp)
@@ -125,7 +125,7 @@ ifelse(WORDSIZE, `32', `
 	 * Find out how many bits of zeros are at the beginning of the divisor.
 	 */
 LBbits:
-	CONST(1, T_0)				/* I = 0; BIT = 1<<WORDSIZE-1 */
+	ldiq	T_0, 1				/* I = 0; BIT = 1<<WORDSIZE-1 */
 	mov	zero, I
 	sll	T_0, WORDSIZE-1, BIT
 LBloop:
@@ -138,7 +138,7 @@ LBloop:
 
 LAbits:
 	beq	I, Ldodiv			/* If I = 0, divide now.  */
-	CONST(1, T_0)				/* BIT = 1<<WORDSIZE-1 */
+	ldiq	T_0, 1				/* BIT = 1<<WORDSIZE-1 */
 	sll	T_0, WORDSIZE-1, BIT
 
 LAloop:
@@ -150,7 +150,7 @@ LAloop:
 
 Ldodiv:
 	sll	B, I, B				/* B <<= i */
-	CONST(1, T_0)
+	ldiq	T_0, 1
 	sll	T_0, I, BIT
 
 Ldivloop:
@@ -187,7 +187,7 @@ ifelse(S, `true',
 	ret	zero, (t9), 1
 
 Ldotrap:
-	CONST(-2, a0)			/* This is the signal to SIGFPE! */
+	ldiq	a0, -2			/* This is the signal to SIGFPE! */
 	call_pal PAL_gentrap
 ifelse(OP, `div',
 `', `	mov	zero, A			/* so that zero will be returned */
