@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.4 2003/08/21 16:08:05 jonathan Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.5 2003/08/22 05:07:26 itojun Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.4 2003/08/21 16:08:05 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.5 2003/08/22 05:07:26 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -778,7 +778,6 @@ cryptoselect(dev_t dev, int rw, struct proc *p)
 	return (0);
 }
 
-#define	CRYPTO_MAJOR	70		/* from openbsd */
 /*static*/
 struct cdevsw crypto_cdevsw = {
 	/* open */	cryptoopen,
