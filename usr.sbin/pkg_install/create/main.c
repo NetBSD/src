@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.17 2001/03/05 16:53:13 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2001/05/18 13:21:38 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.17 2001/03/05 16:53:13 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2001/05/18 13:21:38 agc Exp $");
 #endif
 #endif
 
@@ -24,7 +24,7 @@ __RCSID("$NetBSD: main.c,v 1.17 2001/03/05 16:53:13 wiz Exp $");
 #include "lib.h"
 #include "create.h"
 
-static char Options[] = "ORhlVvFf:p:P:C:c:d:i:k:L:r:t:X:D:m:s:S:b:B:";
+static char Options[] = "ORhlVvFf:p:P:C:c:d:i:k:L:r:t:X:D:m:s:S:b:B:U";
 
 char   *Prefix = NULL;
 char   *Comment = NULL;
@@ -45,6 +45,7 @@ char   *SizeAll = NULL;
 char   *SrcDir = NULL;
 char    PlayPen[FILENAME_MAX];
 size_t  PlayPenSize = sizeof(PlayPen);
+int	update_pkgdb = 1;
 int     Dereference = 0;
 int     PlistOnly = 0;
 int     RelativeLinks = 0;
@@ -55,7 +56,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "%s\n%s\n%s\n%s\n%s\n",
-	    "usage: pkg_create [-ORhlVv] [-P dpkgs] [-C cpkgs] [-p prefix] [-f contents]",
+	    "usage: pkg_create [-ORUhlVv] [-P dpkgs] [-C cpkgs] [-p prefix] [-f contents]",
 	    "                  [-i iscript] [-k dscript] [-r rscript] [-t template]",
 	    "                  [-X excludefile] [-D displayfile] [-m mtreefile]",
 	    "                  [-b build-version-file] [-B build-info-file]",
@@ -82,6 +83,10 @@ main(int argc, char **argv)
 
 		case 'R':
 			ReorderDirs = 1;
+			break;
+
+		case 'U':
+			update_pkgdb = 0;
 			break;
 
 		case 'p':
