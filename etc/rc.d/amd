@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: amd,v 1.5 2000/06/02 22:54:11 fvdl Exp $
+# $NetBSD: amd,v 1.5.2.1 2000/10/02 01:09:49 lukem Exp $
 #
 
 # PROVIDE: amd
@@ -9,6 +9,7 @@
 . /etc/rc.subr
 
 name="amd"
+rcvar=$name
 command="/usr/sbin/${name}"
 load_rc_config $name
 

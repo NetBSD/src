@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: xdm,v 1.4.4.1 2000/08/09 19:09:50 lukem Exp $
+# $NetBSD: xdm,v 1.4.4.2 2000/10/02 01:09:52 lukem Exp $
 #
 
 # PROVIDE: xdm
@@ -10,6 +10,7 @@
 . /etc/rc.subr
 
 name="xdm"
+rcvar=$name
 command="/usr/X11R6/bin/${name}"
 pidfile="/var/run/${name}.pid"
 required_files="/usr/X11R6/lib/X11/xdm/xdm-config"
