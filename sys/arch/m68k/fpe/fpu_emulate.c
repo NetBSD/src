@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.10 1996/10/13 03:19:12 christos Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.11 1996/10/16 06:27:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -50,8 +50,6 @@ static int fpu_emul_type1 __P((struct fpemu *fe, struct instruction *insn));
 static int fpu_emul_brcc __P((struct fpemu *fe, struct instruction *insn));
 static int test_cc __P((struct fpemu *fe, int pred));
 static struct fpn *fpu_cmp __P((struct fpemu *fe));
-
-int	fusword __P((void *));
 
 #if !defined(DL_DEFAULT)
 #  if defined(DEBUG_WITH_FPU)
