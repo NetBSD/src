@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.4 2000/03/06 21:36:09 thorpej Exp $ */
+/* $NetBSD: siotty.c,v 1.5 2000/11/02 00:37:57 eeh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.4 2000/03/06 21:36:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.5 2000/11/02 00:37:57 eeh Exp $");
 
 #include "opt_ddb.h"
 
@@ -182,7 +182,7 @@ siottyintr(chan)
 				return;
 			}
 #endif
-			(*linesw[tp->t_line].l_rint)(code, tp);
+			(*tp->t_linesw->l_rint)(code, tp);
 		} while ((rr = getsiocsr(sio)) & RR_RXRDY);
 	}
 	if (rr & RR_TXRDY) {
@@ -190,7 +190,7 @@ siottyintr(chan)
 		if (tp != NULL) {
 			tp->t_state &= ~(TS_BUSY|TS_FLUSH);
 			if (tp->t_line)
-				(*linesw[tp->t_line].l_start)(tp);
+				(*tp->t_linesw->l_start)(tp);
 			else
 				siostart(tp);
 		}
@@ -405,7 +405,7 @@ sioopen(dev, flag, mode, p)
 	error = ttyopen(tp, 0, (flag & O_NONBLOCK));
 	if (error > 0)
 		return error;
-	return (*linesw[tp->t_line].l_open)(dev, tp);
+	return (*tp->t_linesw->l_open)(dev, tp);
 }
  
 int
@@ -418,7 +418,7 @@ sioclose(dev, flag, mode, p)
 	struct tty *tp = sc->sc_tty;
 	int s;
 
-	(*linesw[tp->t_line].l_close)(tp, flag);
+	(*tp->t_linesw->l_close)(tp, flag);
 
 	s = spltty();
 	siomctl(sc, TIOCM_BREAK, DMBIC);
@@ -443,7 +443,7 @@ sioread(dev, uio, flag)
 	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return (*linesw[tp->t_line].l_read)(tp, uio, flag);
+	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
  
 int
@@ -455,7 +455,7 @@ siowrite(dev, uio, flag)
 	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return (*linesw[tp->t_line].l_write)(tp, uio, flag);
+	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
@@ -470,7 +470,7 @@ sioioctl(dev, cmd, data, flag, p)
 	struct tty *tp = sc->sc_tty;
 	int error;
 
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
 	error = ttioctl(tp, cmd, data, flag, p);
