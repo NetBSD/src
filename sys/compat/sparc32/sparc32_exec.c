@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32_exec.c,v 1.10 1998/09/10 23:55:15 eeh Exp $	*/
+/*	$NetBSD: sparc32_exec.c,v 1.11 1998/10/01 14:27:57 eeh Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -52,7 +52,7 @@
 #include <machine/frame.h>
 
 const char sparc32_emul_path[] = "/emul/sparc32";
-extern char sigcode[], esigcode[];
+extern char sparc32_sigcode[], sparc32_esigcode[];
 extern struct sysent sparc32_sysent[];
 #ifdef SYSCALL_DEBUG
 extern char *sparc32_syscallnames[];
@@ -61,6 +61,8 @@ void sparc32_sendsig __P((sig_t, int, int, u_long));
 void sparc32_setregs __P((struct proc *, struct exec_package *, u_long));
 void *sparc32_copyargs __P((struct exec_package *, struct ps_strings *,
 	void *, void *));
+int sparc32_copyinargs __P((struct ps_strings *, void *, size_t,
+			      const void *, const void *));
 
 static int sparc32_exec_aout_prep_zmagic __P((struct proc *,
 	struct exec_package *));
@@ -82,6 +84,7 @@ struct emul emul_sparc32 = {
 	NULL,
 #endif
 	0,
+	sparc32_copyinargs,
 	sparc32_copyargs,
 	sparc32_setregs,	/* XXX needs to be written?? */
 	sparc32_sigcode,
@@ -369,7 +372,7 @@ sparc32_sendsig(catcher, sig, mask, code)
 	register struct sigacts *psp = p->p_sigacts;
 	register struct sparc32_sigframe *fp;
 	register struct trapframe *tf;
-	register int addr, oonstack; 
+	register int addr, onstack; 
 	struct rwindow32 *kwin, *oldsp, *newsp;
 	struct sparc32_sigframe sf;
 	extern char sigcode[], esigcode[];
@@ -378,13 +381,11 @@ sparc32_sendsig(catcher, sig, mask, code)
 	tf = p->p_md.md_tf;
 	/* Need to attempt to zero extend this 32-bit pointer */
 	oldsp = (struct rwindow32 *)(u_long)(u_int)tf->tf_out[6];
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
-	/*
-	 * Compute new user stack addresses, subtract off
-	 * one signal frame, and align.
-	 */
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	if (onstack) {
 		fp = (struct sparc32_sigframe *)(psp->ps_sigstk.ss_sp +
 					 psp->ps_sigstk.ss_size);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
@@ -415,7 +416,7 @@ sparc32_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = oonstack;
+	sf.sf_sc.sc_onstack = onstack;
 	sf.sf_sc.sc_mask = mask;
 	sf.sf_sc.sc_sp = (long)oldsp;
 	sf.sf_sc.sc_pc = tf->tf_pc;
@@ -442,14 +443,6 @@ sparc32_sendsig(catcher, sig, mask, code)
 #endif
 	kwin = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
 	if (rwindow_save(p) || 
-	    suword(&oldsp->rw_in[0], tf->tf_in[0]) || suword(&oldsp->rw_in[1], tf->tf_in[1]) ||
-	    suword(&oldsp->rw_in[2], tf->tf_in[2]) || suword(&oldsp->rw_in[3], tf->tf_in[3]) ||
-	    suword(&oldsp->rw_in[4], tf->tf_in[4]) || suword(&oldsp->rw_in[5], tf->tf_in[5]) ||
-	    suword(&oldsp->rw_in[6], tf->tf_in[6]) || suword(&oldsp->rw_in[7], tf->tf_in[7]) ||
-	    suword(&oldsp->rw_local[0], (int)tf->tf_local[0]) || suword(&oldsp->rw_local[1], (int)tf->tf_local[1]) ||
-	    suword(&oldsp->rw_local[2], (int)tf->tf_local[2]) || suword(&oldsp->rw_local[3], (int)tf->tf_local[3]) ||
-	    suword(&oldsp->rw_local[4], (int)tf->tf_local[4]) || suword(&oldsp->rw_local[5], (int)tf->tf_local[5]) ||
-	    suword(&oldsp->rw_local[6], (int)tf->tf_local[6]) || suword(&oldsp->rw_local[7], (int)tf->tf_local[7]) ||
 	    copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
 	    suword(&(((union rwindow *)newsp)->v8.rw_in[6]), (u_long)oldsp)) {
 		/*
@@ -476,18 +469,16 @@ sparc32_sendsig(catcher, sig, mask, code)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-#ifdef COMPAT_SUNOS
-	if (psp->ps_usertramp & sigmask(sig)) {
-		addr = (long)catcher;	/* user does his own trampolining */
-	} else
-#endif
-	{
-		addr = (long)PS_STRINGS - szsigcode;
-		tf->tf_global[1] = (long)catcher;
-	}
+	addr = (long)PS_STRINGS - szsigcode;
+	tf->tf_global[1] = (long)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = (u_int64_t)(u_int)(u_long)newsp;
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sendsig: about to return to catcher %p thru %p\n", 
@@ -497,6 +488,9 @@ sparc32_sendsig(catcher, sig, mask, code)
 #endif
 }
 
+/*
+ * We need to copy out all pointers as 32-bit values.
+ */
 void *
 sparc32_copyargs(pack, arginfo, stack, argp)
 	struct exec_package *pack;
@@ -504,8 +498,10 @@ sparc32_copyargs(pack, arginfo, stack, argp)
 	void *stack;
 	void *argp;
 {
-	char **cpp = stack;
-	char *dp, *sp;
+	u_int32_t *cpp = stack;
+	u_int32_t dp;
+	u_int32_t nullp = 0;
+	char *sp;
 	size_t len;
 	int argc = arginfo->ps_nargvstr;
 	int envc = arginfo->ps_nenvstr;
@@ -513,29 +509,101 @@ sparc32_copyargs(pack, arginfo, stack, argp)
 	if (copyout(&argc, cpp++, sizeof(argc)))
 		return NULL;
 
-	dp = (char *) (cpp + argc + envc + 2 + pack->ep_emul->e_arglen);
+	dp = (u_long) (cpp + argc + envc + 2 + pack->ep_emul->e_arglen);
 	sp = argp;
 
 	/* XXX don't copy them out, remap them! */
-	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
+	arginfo->ps_argvstr = (caddr_t)(u_long)cpp; /* remember location of argv for later */
 
 	for (; --argc >= 0; sp += len, dp += len)
-		if (suword(cpp++, (long)dp) ||
-		    copyoutstr(sp, dp, ARG_MAX, &len))
+		if (copyout(&dp, cpp++, sizeof(dp)) ||
+		    copyoutstr(sp, (char *)(u_long)dp, ARG_MAX, &len))
 			return NULL;
 
-	if (suword(cpp++, 0))
+	if (copyout(&nullp, cpp++, sizeof(nullp)))
 		return NULL;
 
-	arginfo->ps_envstr = cpp; /* remember location of envp for later */
+	arginfo->ps_envstr = (caddr_t)(u_long)cpp; /* remember location of envp for later */
 
 	for (; --envc >= 0; sp += len, dp += len)
-		if (suword(cpp++, (long)dp) ||
-		    copyoutstr(sp, dp, ARG_MAX, &len))
+		if (copyout(&dp, cpp++, sizeof(dp)) ||
+		    copyoutstr(sp, (char *)(u_long)dp, ARG_MAX, &len))
 			return NULL;
 
-	if (suword(cpp++, NULL))
+	if (copyout(&nullp, cpp++, sizeof(nullp)))
 		return NULL;
 
 	return cpp;
+}
+
+/*
+ * Copy in args and env passed in by the exec syscall.
+ *
+ * Since this is a 32-bit emulation, pointers are 32-bits wide so this
+ * routine needs to copyin 32-bit pointers and convert them.
+ */
+int
+sparc32_copyinargs(arginfo, destp, len, argp, envp)
+	struct ps_strings *arginfo;
+	void *destp;
+	size_t len;
+	const void *argp;
+	const void *envp;
+{
+	char * const *cpp;
+	char *dp;
+	u_int32_t sp;
+	long argc, envc;
+	size_t l;
+	int error = 0;
+
+	dp = *(char **)destp;
+	argc = 0;
+	if ((cpp = argp) == NULL)
+		return EINVAL;
+
+	while (1) {
+		l = len;
+		if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
+			return (error);
+		if (!sp)
+			break;
+		if ((error = copyinstr((char *)(u_long)sp, dp, l, &l)) != 0) {
+			if (error == ENAMETOOLONG)
+				error = E2BIG;
+			return (error);
+		}
+		dp += l;
+		len -= l;
+		cpp++;
+		argc++;
+	}
+
+	envc = 0;
+	/* environment need not be there */
+	if ((cpp = envp) != NULL ) {
+		while (1) {
+			l = len;
+			if ((error = copyin(cpp, &sp, sizeof(sp))) != 0)
+				return (error);
+			if (!sp)
+				break;
+			if ((error = copyinstr((char *)(u_long)sp, dp, l, &l)) != 0) {
+				if (error == ENAMETOOLONG)
+					error = E2BIG;
+				return (error);
+			}
+			dp += l;
+			len -= l;
+			cpp++;
+			envc++;
+		}
+	}
+
+	/* adjust "active stack depth" for process VSZ */
+	*(char**)destp = dp;
+	arginfo->ps_nargvstr = argc;
+	arginfo->ps_nenvstr = envc;
+
+	return (error);
 }
