@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.1 1999/05/01 05:34:59 cgd Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.2 1999/05/04 02:12:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -245,4 +245,25 @@ osf1_sys_ftruncate(p, v, retval)
 	SCARG(&a, length) = SCARG(uap, length);
 
 	return sys_ftruncate(p, &a, retval);
+}
+
+int
+osf1_sys_fpathconf(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_fpathconf_args *uap = v;
+	struct sys_fpathconf_args a;
+	int error;
+
+	SCARG(&a, fd) = SCARG(uap, fd);
+
+	error = osf1_cvt_pathconf_name_to_native(SCARG(uap, name),
+	    &SCARG(&a, name));
+
+	if (error == 0)
+		error = sys_fpathconf(p, &a, retval);
+
+	return (error);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.h,v 1.3 1999/05/01 04:47:00 cgd Exp $ */
+/* $NetBSD: osf1_cvt.h,v 1.4 1999/05/04 02:12:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -47,6 +47,7 @@
 #define	osf1_cvt_dev_to_native(dev)					\
     makedev(osf1_major(dev), osf1_minor(dev))
 
+int	osf1_cvt_pathconf_name_to_native(int oname, int *bnamep);
 void	osf1_cvt_rusage_from_native(const struct rusage *nru,
 				    struct osf1_rusage *oru);
 void	osf1_cvt_sigaction_from_native(const struct sigaction *nsa,

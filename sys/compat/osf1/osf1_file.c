@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.2 1999/05/01 05:33:36 cgd Exp $ */
+/* $NetBSD: osf1_file.c,v 1.3 1999/05/04 02:12:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -319,6 +319,31 @@ osf1_sys_utimes(p, v, retval)
 
 	if (error == 0)
 		error = sys_utimes(p, &a, retval);
+
+	return (error);
+}
+
+int
+osf1_sys_pathconf(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_pathconf_args *uap = v;
+	struct sys_pathconf_args a;
+	caddr_t sg;
+	int error;
+
+	sg = stackgap_init(p->p_emul);
+
+	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	SCARG(&a, path) = SCARG(uap, path);
+
+	error = osf1_cvt_pathconf_name_to_native(SCARG(uap, name),
+	    &SCARG(&a, name));
+
+	if (error == 0)
+		error = sys_pathconf(p, &a, retval);
 
 	return (error);
 }
