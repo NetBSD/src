@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25 2002/08/28 08:57:00 gmcgarry Exp $
+#	$NetBSD: genassym.cf,v 1.26 2002/09/22 05:48:46 gmcgarry Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -48,7 +48,7 @@ include <sys/msgbuf.h>
 include <sys/syscall.h>
 include <sys/user.h>
 
-include <uvm/uvm_extern.h>
+include <uvm/uvm.h>
 
 ifdef COMPAT_SVR4
 include <compat/svr4/svr4_syscall.h>
@@ -170,6 +170,8 @@ define	SIZEOF_HI		sizeof(struct hp300_intr)
 
 # interrupt/fault metering
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
+
+define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # PSL values (should just include psl.h?)
 define	PSL_S			PSL_S
