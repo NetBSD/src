@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_isa.c,v 1.8 1998/01/14 12:14:47 drochner Exp $	*/
+/*	$NetBSD: cy_isa.c,v 1.9 1998/01/31 11:23:35 christos Exp $	*/
 
 /*
  * cy.c
@@ -54,9 +54,11 @@ cy_probe_isa(parent, match, aux)
 	sc.sc_memt = ia->ia_memt;
 	sc.sc_bustype = CY_BUSTYPE_ISA;
 
-	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	/* Disallow wildcarded memory address. */
+	if (ia->ia_maddr == ISACF_IOMEM_DEFAULT) {
+		printf("%s: memory addr not defined\n", sc.sc_dev.dv_xname);
 		return (0);
+	}
 
 	if (ia->ia_irq == IRQUNK) {
 		printf("%s: interrupt not defined\n", sc.sc_dev.dv_xname);
