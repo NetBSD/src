@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.2 1996/09/07 04:59:06 mycroft Exp $	*/
+/*	$NetBSD: ahb.c,v 1.3 1996/09/19 23:02:18 thorpej Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -104,9 +104,7 @@ struct ahb_softc {
 void ahb_send_mbox __P((struct ahb_softc *, int, struct ahb_ecb *));
 void ahb_send_immed __P((struct ahb_softc *, u_long, struct ahb_ecb *));
 int ahbintr __P((void *));
-void ahb_reset_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 void ahb_free_ecb __P((struct ahb_softc *, struct ahb_ecb *));
-void ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 struct ahb_ecb *ahb_get_ecb __P((struct ahb_softc *, int));
 struct ahb_ecb *ahb_ecb_phys_kv __P((struct ahb_softc *, physaddr));
 void ahb_done __P((struct ahb_softc *, struct ahb_ecb *));
@@ -116,6 +114,9 @@ void ahbminphys __P((struct buf *));
 int ahb_scsi_cmd __P((struct scsi_xfer *));
 int ahb_poll __P((struct ahb_softc *, struct scsi_xfer *, int));
 void ahb_timeout __P((void *));
+
+integrate void ahb_reset_ecb __P((struct ahb_softc *, struct ahb_ecb *));
+integrate void ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 
 struct scsi_adapter ahb_switch = {
 	ahb_scsi_cmd,
