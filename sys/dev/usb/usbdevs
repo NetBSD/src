@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.379 2004/10/11 15:26:53 jmmv Exp $
+$NetBSD: usbdevs,v 1.380 2004/10/21 21:00:31 rjs Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -672,6 +672,8 @@ product DALLAS USB_FOB_IBUTTON	0x2490	USB-FOB/iBUTTON
 
 /* Dell products */
 product DELL BC02		0x8000	Dell BC02 Bluetooth USB Adapter
+product DELL X3			0x4002	Dell Axim X3 PDA
+product DELL X30		0x4003	Dell Axim X30 PDA
 
 /* Diamond products */
 product DIAMOND RIO500USB	0x0001	Rio 500 USB
