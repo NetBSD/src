@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.98 1996/11/13 07:00:32 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.99 1996/11/27 19:53:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -714,8 +714,10 @@ fdcresult(fdc)
 				log(LOG_ERR, "fdcresult: overrun\n");
 				return -1;
 			}
-			fdc->sc_status[n++] = bus_space_read_1(iot, ioh, fddata);
+			fdc->sc_status[n++] =
+			    bus_space_read_1(iot, ioh, fddata);
 		}
+		delay(10);
 	}
 	log(LOG_ERR, "fdcresult: timeout\n");
 	return -1;
