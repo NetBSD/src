@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 1999/04/05 06:34:01 scottr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 1999/04/07 05:59:14 scottr Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@
  *	Bitwise and/or operations are significantly faster than bitfield
  *	references so we use them when accessing STE/PTEs in the pmap_pte_*
  *	macros.  Note also that the two are not always equivalent; e.g.:
- *		(*pte & PG_PROT)[4] != pte->pg_prot [1]
+ *		(*pte & PG_PROT)[4] != pte->pg_prot[1]
  *	and a couple of routines that deal with protection and wiring take
  *	some shortcuts that assume the and/or definitions.
  *
@@ -135,30 +135,28 @@ int pmapdebug = PDB_PARANOIA;
 #if defined(M68040)
 int dowriteback = 1;	/* 68040: enable writeback caching */
 int dokwriteback = 1;	/* 68040: enable writeback caching of kernel AS */
-
-extern vaddr_t pager_sva, pager_eva;
 #endif
 #else /* ! DEBUG */
 #define	PMAP_DPRINTF(l, x)	/* nothing */
-#endif
+#endif /* DEBUG */
 
 /*
  * Get STEs and PTEs for user/kernel address space
  */
 #if defined(M68040)
-#define pmap_ste1(m, v) \
+#define	pmap_ste1(m, v)	\
 	(&((m)->pm_stab[(vaddr_t)(v) >> SG4_SHIFT1]))
 /* XXX assumes physically contiguous ST pages (if more than one) */
 #define pmap_ste2(m, v) \
 	(&((m)->pm_stab[(st_entry_t *)(*(u_int *)pmap_ste1(m, v) & SG4_ADDR1) \
 			- (m)->pm_stpa + (((v) & SG4_MASK2) >> SG4_SHIFT2)]))
-#define pmap_ste(m, v) \
+#define	pmap_ste(m, v)	\
 	(&((m)->pm_stab[(vaddr_t)(v) \
 			>> (mmutype == MMU_68040 ? SG4_SHIFT1 : SG_ISHIFT)]))
 #define pmap_ste_v(m, v) \
-	(mmutype == MMU_68040			\
-	 ? ((*pmap_ste1(m, v) & SG_V) &&	\
-	    (*pmap_ste2(m, v) & SG_V))  	\
+	(mmutype == MMU_68040 \
+	 ? ((*pmap_ste1(m, v) & SG_V) && \
+	    (*pmap_ste2(m, v) & SG_V)) \
 	 : (*pmap_ste(m, v) & SG_V))
 #else
 #define	pmap_ste(m, v)	 (&((m)->pm_stab[(vaddr_t)(v) >> SG_ISHIFT]))
@@ -174,14 +172,12 @@ extern vaddr_t pager_sva, pager_eva;
 #define pmap_pte_prot(pte)	(*(pte) & PG_PROT)
 #define pmap_pte_v(pte)		(*(pte) & PG_V)
 
-#define pmap_pte_set_w(pte, v)	  \
+#define pmap_pte_set_w(pte, v) \
 	if (v) *(pte) |= PG_W; else *(pte) &= ~PG_W
 #define pmap_pte_set_prot(pte, v) \
 	if (v) *(pte) |= PG_PROT; else *(pte) &= ~PG_PROT
 #define pmap_pte_w_chg(pte, nw)		((nw) ^ pmap_pte_w(pte))
 #define pmap_pte_prot_chg(pte, np)	((np) ^ pmap_pte_prot(pte))
-
-int pmap_page_index(paddr_t pa);
 
 /*
  * Given a map and a machine independent protection code,
@@ -213,19 +209,15 @@ struct kpt_page *kpt_pages;
 st_entry_t	*Sysseg;
 pt_entry_t	*Sysmap, *Sysptmap;
 st_entry_t	*Segtabzero, *Segtabzeropa;
-vm_size_t	Sysptsize = VM_KERNEL_PT_PAGES;
+vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
 struct pmap	kernel_pmap_store;
 vm_map_t	st_map, pt_map;
 struct vm_map	st_map_store, pt_map_store;
 
-paddr_t	    	avail_start;	/* PA of first available physical page */
-paddr_t		avail_next;	/* Next available physical page		*/
-int		avail_remaining;/* Number of physical free pages left	*/
-int		avail_range;	/* Range avail_next is in		*/
-paddr_t		avail_end;	/* Set for ps and friends as		*/
-				/*       avail_start + avail_remaining. */
-vm_size_t	mem_size;	/* memory size in bytes */
+paddr_t		avail_start;	/* PA of first available physical page */
+paddr_t		avail_end;	/* PA of last available physical page */
+vsize_t		mem_size;	/* memory size in bytes */
 vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 int		page_cnt;	/* number of pages managed by VM system */
@@ -237,9 +229,6 @@ TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
 /* The following four variables are defined in pmap_bootstrap.c */
-extern int		numranges;
-extern unsigned long	low[8];
-extern unsigned long	high[8];
 extern int		vidlen;
 #define VIDMAPSIZE	btoc(vidlen)
 
@@ -257,8 +246,6 @@ struct pool	pmap_pmap_pool;	/* memory pool for pmap structures */
 struct pv_entry *pmap_alloc_pv __P((void));
 void	pmap_free_pv __P((struct pv_entry *));
 void	pmap_collect_pv __P((void));
-void	pmap_pinit __P((pmap_t));
-void	pmap_release __P((pmap_t));
 
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized &&			\
 				 vm_physseg_find(atop((pa)), NULL) != -1)
@@ -287,6 +274,8 @@ boolean_t pmap_testbit	__P((paddr_t, int));
 void	pmap_changebit	__P((paddr_t, int, int));
 void	pmap_enter_ptpage	__P((pmap_t, vaddr_t));
 void	pmap_collect1	__P((pmap_t, paddr_t, vaddr_t));
+void	pmap_pinit __P((pmap_t));
+void	pmap_release __P((pmap_t));
 
 #ifdef DEBUG
 void	pmap_pvdump          __P((paddr_t));
@@ -318,35 +307,40 @@ pmap_virtual_space(vstartp, vendp)
 }
 
 /*
- *	Routine:	pmap_procwr
+ * pmap_procwr:			[ INTERFACE ]
+ * 
+ *	Synchronize caches corresponding to [addr, addr+len) in p.
  *
- *	Function:
- *		Synchronize caches corresponding to [addr, addr+len) in
- *		p.
- *
- */
+ *	Note: no locking is necessary in this function.
+ */   
 void
 pmap_procwr(p, va, len)
-	struct proc	*p;
-	vm_offset_t	va;
-	u_long		len;
+	struct proc *p;
+	vaddr_t va;
+	u_long len;
 {
+
 	(void)cachectl1(0x80000004, va, len, p);
 }
 
 /*
- *	Initialize the pmap module.
- *	Called by vm_init, to initialize any structures that the pmap
- *	system needs to map virtual memory.
+ * pmap_init:			[ INTERFACE ]
+ *
+ *	Initialize the pmap module.  Called by vm_init(), to initialize any
+ *	structures that the pmap system needs to map virtual memory.
+ *
+ *	Note: no locking is necessary in this function.
  */
 void
 pmap_init()
 {
 	vaddr_t addr, addr2;
-	vm_size_t s;
-	struct pv_entry	*pv;
+	vsize_t s;
+	struct pv_entry *pv;
 	char *attr;
-	int rv, npages, bank;
+	int rv;
+	int npages;
+	int bank;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_init()\n"));
 
@@ -1098,10 +1092,9 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	/*
 	 * For user mapping, allocate kernel VM resources if necessary.
 	 */
-	if (pmap->pm_ptab == NULL) {
+	if (pmap->pm_ptab == NULL)
 		pmap->pm_ptab = (pt_entry_t *)
 		    uvm_km_valloc_wait(pt_map, MAC_MAX_PTSIZE);
-	}
 
 	/*
 	 * Segment table entry not valid, we need a new PT page
