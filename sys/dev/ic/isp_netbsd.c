@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.18 1999/10/17 01:23:21 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.19 1999/12/04 03:04:59 mjacob Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -68,11 +68,7 @@ isp_attach(isp)
 		/*
 		 * Give it another chance here to come alive...
 		 */
-		fcparam *fcp = isp->isp_param;
 		isp->isp_osinfo._adapter.scsipi_cmd = ispcmd;
-		if (fcp->isp_fwstate != FW_READY) {
-			(void) isp_control(isp, ISPCTL_FCLINK_TEST, NULL);
-		}
 		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_FC_TARG-1;
 #ifdef	ISP2100_SCCLUN
 		/*
@@ -82,8 +78,7 @@ isp_attach(isp)
 #else
 		isp->isp_osinfo._link.scsipi_scsi.max_lun = 15;
 #endif
-		isp->isp_osinfo._link.scsipi_scsi.adapter_target =
-			((fcparam *)isp->isp_param)->isp_loopid;
+		/* set below */
 	} else {
 		sdparam *sdp = isp->isp_param;
 		isp->isp_osinfo._adapter.scsipi_cmd = ispcmd_slow;
@@ -128,6 +123,35 @@ isp_attach(isp)
 			(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
 		}
 		SYS_DELAY(2*1000000);
+	} else {
+		int i, j;
+		fcparam *fcp = isp->isp_param;
+		delay(2 * 1000000);
+		for (j = 0; j < 5; j++) {
+			for (i = 0; i < 5; i++) {
+				if (isp_control(isp, ISPCTL_FCLINK_TEST, NULL))
+					continue;
+#ifdef	ISP2100_FABRIC
+				/*
+				 * Wait extra time to see if the f/w
+				 * eventually completed an FLOGI that
+				 * will allow us to know we're on a
+				 * fabric.
+				 */
+				if (fcp->isp_onfabric == 0) {
+					delay(1 * 1000000);
+					continue;
+				}
+#endif
+				break;
+			}
+			if (fcp->isp_fwstate == FW_READY &&
+			    fcp->isp_loopstate >= LOOP_PDB_RCVD) { 
+				break;
+			}
+		}
+		isp->isp_osinfo._link.scsipi_scsi.adapter_target =
+			fcp->isp_loopid;
 	}
 
 	/*
@@ -170,42 +194,83 @@ static int32_t
 ispcmd_slow(xs)
 	ISP_SCSI_XFER_T *xs;
 {
-	/*
-	 * Have we completed discovery for this adapter?
-	 */
-	if ((xs->xs_control & XS_CTL_DISCOVERY) == 0) {
-		struct ispsoftc *isp = XS_ISP(xs);
-		sdparam *sdp = isp->isp_param;
-		int s = splbio();
-		int chan = XS_CHANNEL(xs), chmax = IS_12X0(isp)? 2 : 1;
-		u_int16_t f = DPARM_DEFAULT;
+	sdparam *sdp;
+	int tgt, chan;
+	u_int16_t f;
+	struct ispsoftc *isp = XS_ISP(xs);
 
-		sdp += chan;
-		if (xs->sc_link->quirks & SDEV_NOSYNC) {
-			f ^= DPARM_SYNC;
-		}
-		if (xs->sc_link->quirks & SDEV_NOWIDE) {
-			f ^= DPARM_WIDE;
-		}
-		if (xs->sc_link->quirks & SDEV_NOTAG) {
-			f ^= DPARM_TQING;
-		}
-		sdp->isp_devparam[XS_TGT(xs)].dev_flags = f;
-		sdp->isp_devparam[XS_TGT(xs)].dev_update = 1;
-		isp->isp_osinfo.discovered[chan] |= (1 << XS_TGT(xs));
-		f = 0xffff ^ (1 << sdp->isp_initiator_id);
-		for (chan = 0; chan < chmax; chan++) {
-			if (isp->isp_osinfo.discovered[chan] == f)
-				break;
-		}
-		if (chan == chmax) {
-			isp->isp_osinfo._adapter.scsipi_cmd = ispcmd;
-			isp->isp_update = 1;
-			if (IS_12X0(isp))
-				isp->isp_update |= 2;
-		}
-		(void) splx(s);
+	/*
+	 * Have we completed discovery for this target on this adapter?
+	 */
+	sdp = isp->isp_param;
+	sdp += chan;
+	tgt = XS_TGT(xs);
+	chan = XS_CHANNEL(xs);
+	if ((xs->xs_control & XS_CTL_DISCOVERY) != 0 ||
+	    (isp->isp_osinfo.discovered[chan] & (1 << tgt)) != 0) {
+		return (ispcmd(xs));
 	}
+
+	f = DPARM_DEFAULT;
+	if (xs->sc_link->quirks & SDEV_NOSYNC) {
+		f ^= DPARM_SYNC;
+#ifdef	DEBUG
+	} else {
+		printf("%s: channel %d target %d can do SYNC xfers\n",
+		    isp->isp_name, chan, tgt);
+#endif
+	}
+	if (xs->sc_link->quirks & SDEV_NOWIDE) {
+		f ^= DPARM_WIDE;
+#ifdef	DEBUG
+	} else {
+		printf("%s: channel %d target %d can do WIDE xfers\n",
+		    isp->isp_name, chan, tgt);
+#endif
+	}
+	if (xs->sc_link->quirks & SDEV_NOTAG) {
+		f ^= DPARM_TQING;
+#ifdef	DEBUG
+	} else {
+		printf("%s: channel %d target %d can do TAGGED xfers\n",
+		    isp->isp_name, chan, tgt);
+#endif
+	}
+	/*
+	 * Okay, we know about this device now,
+	 * so mark parameters to be updated for it.
+	 */
+	sdp->isp_devparam[tgt].dev_flags = f;
+	sdp->isp_devparam[tgt].dev_update = 1;
+	isp->isp_update |= (1 << chan);
+
+	/*
+	 * Now check to see whether we can get out of this checking mode now.
+	 * XXX: WE CANNOT AS YET BECAUSE THERE IS NO MECHANISM TO TELL US
+	 * XXX: WHEN WE'RE DONE DISCOVERY BECAUSE WE NEED ONE COMMAND AFTER
+	 * XXX: DISCOVERY IS DONE FOR EACH TARGET TO TELL US THAT WE'RE DONE
+	 * XXX: AND THAT DOESN'T HAPPEN HERE. AT BEST WE CAN MARK OURSELVES
+	 * XXX: DONE WITH DISCOVERY FOR THIS TARGET AND SO SAVE MAYBE 20
+	 * XXX: LINES OF C CODE.
+	 */
+	isp->isp_osinfo.discovered[chan] |= (1 << tgt);
+	/* do not bother with these lines- they'll never execute correctly */
+#if	0
+	sdp = isp->isp_param;
+	for (chan = 0; chan < (IS_12X0(isp)? 2 : 1); chan++, sdp++) {
+		f = 0xffff & ~(1 << sdp->isp_initiator_id);
+		if (isp->isp_osinfo.discovered[chan] != f) {
+			break;
+		}
+	}
+	if (chan == (IS_12X0(isp)? 2 : 1)) {
+		CFGPRINTF("%s: allowing sync/wide negotiation and "
+		    "tag usage\n", isp->isp_name);
+		isp->isp_osinfo._adapter.scsipi_cmd = ispcmd;
+		if (IS_12X0(isp))
+			isp->isp_update |= 2;
+	}
+#endif
 	return (ispcmd(xs));
 }
 
@@ -555,11 +620,11 @@ isp_async(isp, cmd, arg)
 			break;
 		}
 		if (mhz) {
-			printf("%s: Bus %d Target %d at %dMHz Max "
+			CFGPRINTF("%s: Bus %d Target %d at %dMHz Max "
 			    "Offset %d%s", isp->isp_name, bus, tgt, mhz,
 			    sdp->isp_devparam[tgt].cur_offset, wt);
 		} else {
-			printf("%s: Bus %d Target %d Async Mode%s",
+			CFGPRINTF("%s: Bus %d Target %d Async Mode%s",
 			    isp->isp_name, bus, tgt, wt);
 		}
 		break;
