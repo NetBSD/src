@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)output.c	5.1 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: output.c,v 1.4 1993/08/01 18:58:03 mycroft Exp $";
+static char rcsid[] = "$Id: output.c,v 1.5 1993/09/05 17:32:08 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -71,7 +71,7 @@ static char rcsid[] = "$Id: output.c,v 1.4 1993/08/01 18:58:03 mycroft Exp $";
 
 
 struct output output = {NULL, 0, NULL, OUTBUFSIZ, 1, 0};
-struct output errout = {NULL, 0, NULL, 100, 2, 0};;
+struct output errout = {NULL, 0, NULL, 100, 2, 0};
 struct output memout = {NULL, 0, NULL, 0, MEM_OUT, 0};
 struct output *out1 = &output;
 struct output *out2 = &errout;
