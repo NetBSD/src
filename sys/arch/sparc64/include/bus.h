@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.42 2003/01/28 01:08:07 kent Exp $	*/
+/*	$NetBSD: bus.h,v 1.43 2003/01/30 13:32:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -1388,8 +1388,6 @@ bus_space_copy_region_stream_8(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_WRITE		0x400	/* mapping is memory -> device only */
 #define	BUS_DMA_NOCACHE		0x800	/* hint: map non-cached memory */
 
-
-#define	BUS_DMA_NOCACHE		BUS_DMA_BUS1
 #define	BUS_DMA_DVMA		BUS_DMA_BUS2	/* Don't bother with alignment */
 
 /* Forwards needed by prototypes below. */
