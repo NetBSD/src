@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.34 1997/04/21 01:17:58 lukem Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.35 1997/05/05 06:32:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.34 1997/04/21 01:17:58 lukem Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.35 1997/05/05 06:32:11 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ static char rcsid[] = "$NetBSD: ifconfig.c,v 1.34 1997/04/21 01:17:58 lukem Exp 
 #include <unistd.h>
 
 struct	ifreq		ifr, ridreq;
-struct	ifaliasreq	addreq;
+struct	ifaliasreq	addreq __attribute__((aligned(4)));
 struct	iso_aliasreq	iso_addreq;
 struct	sockaddr_in	netmask;
 struct	netrange	at_nr;		/* AppleTalk net range */
