@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.65 2003/09/02 05:37:13 mbw Exp $
+.\"	$NetBSD: sysinst,v 1.66 2003/09/06 23:47:47 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1052,7 +1052,8 @@ Now, you need to create file systems on the partitions that
 will be using.
 .Pp
 .Em "Do not modify any partitions labeled"
-.Pa HFS
+.Pa HFS ,
+.Pa UFS ,
 .Em or
 .Pa unknown .
 The partitions you will be using have their
