@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.6 1999/09/09 21:48:19 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.7 1999/09/14 00:55:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -192,6 +192,15 @@ struct tulip_txthresh_tab {
 };
 
 /*
+ * Description of 21040/21041 SIA media.
+ */
+struct tulip_21040_21041_sia_media {
+	u_int32_t	tsm_siaconn;	/* CSR13 value */
+	u_int32_t	tsm_siatxrx;	/* CSR14 value */
+	u_int32_t	tsm_siagen;	/* CSR15 value */
+};
+
+/*
  * Software state per device.
  */
 struct tulip_softc {
@@ -201,6 +210,11 @@ struct tulip_softc {
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
+
+	/*
+	 * Contents of the SROM.
+	 */
+	u_int8_t sc_srom[TULIP_MAX_ROM_SIZE];
 
 	/*
 	 * Media access functions for this chip.
@@ -362,6 +376,9 @@ do {									\
 	(TULIP_READ((sc), (reg)) & (mask))
 
 #ifdef _KERNEL
+extern const struct tulip_mediasw tlp_21040_mediasw;
+extern const struct tulip_mediasw tlp_21040_tp_mediasw;
+extern const struct tulip_mediasw tlp_21040_auibnc_mediasw;
 extern const struct tulip_mediasw tlp_sio_mii_mediasw;
 extern const struct tulip_mediasw tlp_pnic_mediasw;
 
@@ -369,6 +386,7 @@ void	tlp_attach __P((struct tulip_softc *, const char *, const u_int8_t *));
 int	tlp_intr __P((void *));
 void	tlp_read_srom __P((struct tulip_softc *, int, int, u_int16_t *));
 int	tlp_srom_crcok __P((u_int8_t *));
+int	tlp_parse_old_srom __P((struct tulip_softc *, u_int8_t *));
 
 int	tlp_mediachange __P((struct ifnet *));
 void	tlp_mediastatus __P((struct ifnet *, struct ifmediareq *));
