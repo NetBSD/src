@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.25 1993/11/11 01:53:55 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.26 1993/11/11 07:04:27 mycroft Exp $
  */
 
 
@@ -121,7 +121,10 @@ _KPTphys:	.long	0
 tmpstk:
 	.text
 	.globl	start
-start:	movw	$0x1234,0x472	# warm boot
+start:	jmp	1f
+	.space	0x500
+
+1:	movw	$0x1234,0x472	# warm boot
 
 	/*
 	 * pass parameters on stack (howto, bootdev, unit, cyloffset, esym)
