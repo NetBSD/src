@@ -1,4 +1,5 @@
-/*	$NetBSD: locore.s,v 1.171 1997/10/14 03:57:09 jtk Exp $	*/
+
+/*	$NetBSD: locore.s,v 1.172 1997/10/17 18:05:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -319,9 +320,26 @@ try486:	/* Try to toggle identification flag; does not exist on early 486s. */
 	testl	%eax,%eax
 	jnz	try586
 is486:	movl	$CPU_486,RELOC(_cpu)
-
 	/*
-	 * Check for Cyrix CPU by seeing if the flags change during a divide.
+	 * Check Cyrix CPU
+	 * Cyrix CPUs do not change the undefined flags following
+	 * execution of the divide instruction which divides 5 by 2.
+	 *
+	 * Note: CPUID is enabled on M2, so it passes another way.
+	 */
+	pushfl
+	movl	$0x5555, %eax
+	xorl	%edx, %edx
+	movl	$2, %ecx
+	clc
+	divl	%ecx
+	jnc		trycyrix486
+	popfl
+	jmp 2f
+trycyrix486:
+	movl	$CPU_6x86,RELOC(_cpu) 	# set CPU type
+	/*
+	 * Check for Cyrix 486 CPU by seeing if the flags change during a divide.
 	 * This is documented in the Cx486SLC/e SMM Programmer's Guide.
 	 */
 	xorl	%edx,%edx
@@ -335,8 +353,7 @@ is486:	movl	$CPU_486,RELOC(_cpu)
 	popl	%eax
 	xorl	%ecx,%eax		# are the flags different?
 	testl	$0x8d5,%eax		# only check C|PF|AF|Z|N|V
-	jne	2f			# yes; must not be Cyrix CPU
-
+	jne	2f			# yes; must be Cyrix 6x86 CPU
 	movl	$CPU_486DLC,RELOC(_cpu) 	# set CPU type
 
 #ifndef CYRIX_CACHE_WORKS

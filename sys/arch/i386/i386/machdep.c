@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.261 1997/10/16 02:58:31 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.262 1997/10/17 18:06:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -537,6 +537,7 @@ struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
 	{ CPUVENDOR_INTEL, "Intel", "486SX",	CPUCLASS_486 },	/* CPU_486SX */
 	{ CPUVENDOR_INTEL, "Intel", "486DX",	CPUCLASS_486 },	/* CPU_486   */
 	{ CPUVENDOR_CYRIX, "Cyrix", "486DLC",	CPUCLASS_486 },	/* CPU_486DLC */
+	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",		CPUCLASS_486 }, /* CPU_6x86 */
 	{ CPUVENDOR_NEXGEN,"NexGen","586",      CPUCLASS_386 }, /* CPU_NX586 */
 };
 
