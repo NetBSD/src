@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.9 2000/06/29 07:44:04 mrg Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.10 2001/01/22 08:18:06 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -182,7 +182,7 @@ exec_coff_prep_omagic(p, epp, fp, ap)
 		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-#ifdef	sh3
+#ifdef	__sh3__
 	if (ap->a_bsize > 0)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, ap->a_bsize,
 			  COFF_ROUND(ap->a_dstart + ap->a_dsize, COFF_LDPGSZ),
@@ -299,7 +299,7 @@ exec_coff_prep_zmagic(p, epp, fp, ap)
 	int error;
 	u_long offset;
 	long dsize;
-#ifndef	sh3
+#ifndef	__sh3__
 	long  baddr, bsize;
 #endif
 	struct coff_scnhdr sh;
@@ -357,7 +357,7 @@ exec_coff_prep_zmagic(p, epp, fp, ap)
 	epp->ep_daddr = COFF_ALIGN(sh.s_vaddr);
 	offset = sh.s_scnptr - (sh.s_vaddr - epp->ep_daddr);
 	dsize = sh.s_size + (sh.s_vaddr - epp->ep_daddr);
-#ifdef sh3
+#ifdef __sh3__
 	epp->ep_dsize = round_page(dsize) + ap->a_bsize;
 #else
 	epp->ep_dsize = dsize + ap->a_bsize;
@@ -376,7 +376,7 @@ exec_coff_prep_zmagic(p, epp, fp, ap)
 			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 	}
 
-#ifdef	sh3
+#ifdef	__sh3__
 	if (ap->a_bsize > 0) {
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, ap->a_bsize,
 			  COFF_ROUND(ap->a_dstart + ap->a_dsize, COFF_LDPGSZ),
