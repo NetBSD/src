@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 1996/09/17 19:41:52 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 1996/09/17 20:58:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -305,7 +305,7 @@ setroot()
 		for (;;) {
 			printf("swap device");
 			printf(" (default %s", rootdv->dv_xname);
-			if (->dv_class == DV_DISK)
+			if (dv->dv_class == DV_DISK)
 				printf("b");
 			printf(")");
 			printf(": ");
