@@ -42,7 +42,7 @@
  * 09 Aug 92	Christoph Robitschko	Correct minor number on com ports
  * 10 Feb 93	Jordan K. Hubbard	Added select code
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/dev/ic/com.c,v 1.4 1993/04/08 08:26:50 deraadt Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/dev/ic/com.c,v 1.5 1993/04/09 16:43:56 cgd Exp $";
 
 #include "com.h"
 #if NCOM > 0
@@ -128,7 +128,7 @@ struct isa_device *dev;
 	outb(dev->id_iobase+com_iir, 0);
 	DELAY(100);
 	if ((inb(dev->id_iobase+com_iir) & 0x38) == 0)
-		return(1);
+		return(8);
 	return(0);
 }
 
