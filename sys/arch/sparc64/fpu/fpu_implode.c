@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.2 1998/09/22 02:48:43 eeh Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.3 2000/04/06 12:08:34 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -276,7 +276,7 @@ fpu_ftoxi(fe, fp, res)
 		/* NB: the following includes exp < 0 cases */
 		if (fpu_shr(fp, FP_NMANT - 1 - exp) != 0)
 			fe->fe_cx |= FSR_NX;
-		i = (fp->fp_mant[2]<<32)|fp->fp_mant[3];
+		i = ((u_int64_t)fp->fp_mant[2]<<32)|fp->fp_mant[3];
 		if (i >= ((u_int64_t)0x8000000000000000LL + sign))
 			break;
 		return (sign ? -i : i);
