@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.24 1995/01/02 21:57:04 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.25 1995/01/02 22:01:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -351,7 +351,6 @@ sl_probe(sc, ia)
 	u_char c;
 
 	sc->sc_iobase = ia->ia_iobase;
-	sc->sc_maddr = ISA_HOLE_VADDR(ia->ia_maddr);
 
 	/* Need this for part of the probe. */
 	sc->reset_586 = sl_reset_586;
@@ -387,6 +386,7 @@ sl_probe(sc, ia)
 	/*
 	 * Divine memory size on-board the card.  Ususally 16k.
 	 */
+	sc->sc_maddr = ISA_HOLE_VADDR(ia->ia_maddr);
 	find_ie_mem_size(sc);
 
 	if (!sc->sc_msize) {
@@ -418,7 +418,6 @@ el_probe(sc, ia)
 	u_char signature[] = "*3COM*";
 
 	sc->sc_iobase = ia->ia_iobase;
-	sc->sc_maddr = ISA_HOLE_VADDR(ia->ia_maddr);
 
 	/* Need this for part of the probe. */
 	sc->reset_586 = el_reset_586;
@@ -481,6 +480,7 @@ el_probe(sc, ia)
 	/*
 	 * Divine memory size on-board the card.
 	 */
+	sc->sc_maddr = ISA_HOLE_VADDR(ia->ia_maddr);
 	find_ie_mem_size(sc);
 
 	if (!sc->sc_msize) {
