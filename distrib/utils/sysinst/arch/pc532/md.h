@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1.1.1.2.2 1997/11/10 19:24:00 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.1.1.1.2.3 1997/11/25 06:58:08 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,19 +54,17 @@ EXTERN	char *disk_names[]
 #define ISDISKSTART(dn)	(dn == 's')
 
 /* Definition of files to retreive from ftp. */
-EXTERN char ftp_prefix[STRSIZE] INIT("/binary/Tarfiles");
-EXTERN char dist_postfix[STRSIZE] INIT(".tar.gz");
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"base%s%s", 1, NULL, "Base         : "},
-    {"etc%s%s",  1, NULL, "System (/etc): "},
-    {"comp%s%s", 1, NULL, "Compiler     : "},
-    {"games%s%s", 1, NULL,"Games        : "},
-    {"man%s%s",  1, NULL, "Manuals      : "},
-    {"misc%s%s", 1, NULL, "Miscellaneous: "},
-    {"text%s%s", 1, NULL, "Text tools   : "},
-    {NULL, 0, NULL }
+    {"base",	1, NULL, "Base         : "},
+    {"etc",	1, NULL, "System (/etc): "},
+    {"comp",	1, NULL, "Compiler     : "},
+    {"games",	1, NULL, "Games        : "},
+    {"man",	1, NULL, "Manuals      : "},
+    {"misc",	1, NULL, "Miscellaneous: "},
+    {"text",	1, NULL, "Text tools   : "},
+    {NULL, 0, NULL, NULL }
 }
 #endif
 ;

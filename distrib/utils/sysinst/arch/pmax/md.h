@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3.2.3 1997/11/10 19:24:12 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.3.2.4 1997/11/25 06:58:09 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,26 +89,23 @@ EXTERN	char *disk_names[]
  *      base, etc, comp, games, man, misc, text,
  *      xbase, xfont, xserver, xcontrib, xcomp.
  */
-EXTERN char ftp_prefix[STRSIZE] INIT("/binary/Tarfiles");
-EXTERN char dist_postfix[STRSIZE] INIT(".tar.gz");
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"kern%s%s",    1, NULL, "Kernel       : "},
-    {"base%s%s",    1, NULL, "Base         : "},
-    {"etc%s%s",	    1, NULL, "System (/etc): "},
-    {"comp%s%s",    1, NULL, "Compiler     : "},
-    {"games%s%s",   1, NULL, "Games        : "},
-    {"man%s%s",     1, NULL, "Manuals      : "},
-    {"misc%s%s",    1, NULL, "Miscellaneous: "},
-    {"text%s%s",    1, NULL, "Text tools   : "},
-    {"xbase%s%s",   1, NULL, "X11 clients  : "},
-    {"xfont%s%s",   1, NULL, "X11 fonts    : "},
-    {"xserver%s%s", 1, NULL, "X11 servers  : "},
-    {"xcontrib%s%s",1, NULL, "X11 contrib  : "},
-    {"xcomp%s%s",   1, NULL, "X programming: "},
-
-    {NULL, 0, NULL }
+    {"kern",	1, NULL, "Kernel       : "},
+    {"base",	1, NULL, "Base         : "},
+    {"etc",	1, NULL, "System (/etc): "},
+    {"comp",	1, NULL, "Compiler     : "},
+    {"games",	1, NULL, "Games        : "},
+    {"man",	1, NULL, "Manuals      : "},
+    {"misc",	1, NULL, "Miscellaneous: "},
+    {"text",	1, NULL, "Text tools   : "},
+    {"xbase",	1, NULL, "X11 clients  : "},
+    {"xfont",	1, NULL, "X11 fonts    : "},
+    {"xserver",	1, NULL, "X11 servers  : "},
+    {"xcontrib",1, NULL, "X11 contrib  : "},
+    {"xcomp",	1, NULL, "X programming: "},
+    {NULL, 0, NULL, NULL }
 }
 #endif
 ;

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7.2.6 1997/11/11 00:47:27 phil Exp $	*/
+/*	$NetBSD: defs.h,v 1.7.2.7 1997/11/25 06:57:57 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -78,7 +78,6 @@ typedef struct distinfo {
 /* variables */
 
 EXTERN char rel[SSTRSIZE] INIT(REL);
-EXTERN char rels[SSTRSIZE] INIT(REL);
 EXTERN char machine[SSTRSIZE] INIT(MACH);
 
 EXTERN int yesno;
@@ -156,6 +155,7 @@ EXTERN int  clean_dist_dir INIT(0);
 EXTERN char ext_dir[STRSIZE] INIT("");
 EXTERN char ftp_host[STRSIZE] INIT("ftp.netbsd.org");
 EXTERN char ftp_dir[STRSIZE]  INIT("/pub/NetBSD/NetBSD-");
+EXTERN char ftp_prefix[STRSIZE] INIT("/binary/sets");
 EXTERN char ftp_user[STRSIZE] INIT("ftp");
 EXTERN char ftp_pass[STRSIZE] INIT("");
 
@@ -170,6 +170,8 @@ EXTERN char localfs_fs[SSTRSIZE] INIT("ffs");
 EXTERN char localfs_dir[STRSIZE] INIT("");
 
 EXTERN int  mnt2_mounted INIT(0);
+
+EXTERN char dist_postfix[STRSIZE] INIT(".tgz");
 
 /* Vars for runing commands ... */
 EXTERN char command[STRSIZE];
