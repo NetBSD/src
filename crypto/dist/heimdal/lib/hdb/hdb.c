@@ -33,7 +33,7 @@
 
 #include "hdb_locl.h"
 
-RCSID("$Id: hdb.c,v 1.1.1.2 2000/08/02 19:59:11 assar Exp $");
+RCSID("$Id: hdb.c,v 1.1.1.3 2001/02/11 13:51:40 assar Exp $");
 
 struct hdb_method {
     const char *prefix;
@@ -44,7 +44,7 @@ static struct hdb_method methods[] = {
 #ifdef HAVE_DB_H
     {"db:",	hdb_db_create},
 #endif
-#ifdef HAVE_NDBM_H
+#if defined(HAVE_NDBM_H) || defined(HAVE_GDBM_NDBM_H)
     {"ndbm:",	hdb_ndbm_create},
 #endif
 #ifdef OPENLDAP
@@ -62,7 +62,7 @@ static struct hdb_method methods[] = {
 
 krb5_error_code
 hdb_next_enctype2key(krb5_context context,
-		     hdb_entry *e,
+		     const hdb_entry *e,
 		     krb5_enctype enctype,
 		     Key **key)
 {
@@ -102,7 +102,8 @@ hdb_free_key(Key *key)
 krb5_error_code
 hdb_lock(int fd, int operation)
 {
-    int i, code;
+    int i, code = 0;
+
     for(i = 0; i < 3; i++){
 	code = flock(fd, (operation == HDB_RLOCK ? LOCK_SH : LOCK_EX) | LOCK_NB);
 	if(code == 0 || errno != EWOULDBLOCK)

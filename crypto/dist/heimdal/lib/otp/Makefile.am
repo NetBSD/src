@@ -1,18 +1,20 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 20:00:16 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:49 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
+
+INCLUDES += $(INCLUDE_krb4)
 
 noinst_PROGRAMS = otptest
 
 otptest_LDADD = libotp.la \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
 	$(LIB_roken) \
 	$(DBLIB)
 
 include_HEADERS = otp.h
 
 lib_LTLIBRARIES = libotp.la
-libotp_la_LDFLAGS = -version-info 1:1:1
+libotp_la_LDFLAGS = -version-info 1:2:1
 
 libotp_la_SOURCES = \
 	otp.c \

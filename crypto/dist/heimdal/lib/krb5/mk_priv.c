@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: mk_priv.c,v 1.1.1.2 2000/08/02 19:59:35 assar Exp $");
+RCSID("$Id: mk_priv.c,v 1.1.1.3 2001/02/11 13:51:45 assar Exp $");
 
 /*
  *
@@ -117,7 +117,11 @@ krb5_mk_priv(krb5_context context,
   s.enc_part.etype = key->keytype;
   s.enc_part.kvno = NULL;
 
-  krb5_crypto_init(context, key, 0, &crypto);
+  ret = krb5_crypto_init(context, key, 0, &crypto);
+  if (ret) {
+      free (buf);
+      return ret;
+  }
   ret = krb5_encrypt (context, 
 		      crypto,
 		      KRB5_KU_KRB_PRIV,

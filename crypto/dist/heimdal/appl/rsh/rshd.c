@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  */
 
 #include "rsh_locl.h"
-RCSID("$Id: rshd.c,v 1.1.1.2 2000/08/02 19:58:10 assar Exp $");
+RCSID("$Id: rshd.c,v 1.1.1.3 2001/02/11 13:51:12 assar Exp $");
 
 enum auth_method auth_method;
 
@@ -222,7 +222,7 @@ save_krb5_creds (int s,
     }
   
     krb5_cc_initialize(context,ccache,client);
-    ret = krb5_rd_cred(context, auth_context, ccache,&remote_cred);
+    ret = krb5_rd_cred2(context, auth_context, ccache, &remote_cred);
     krb5_data_free (&remote_cred);
     if (ret)
 	return 0;
@@ -363,6 +363,8 @@ recv_krb5_auth (int s, u_char *buf,
 	do_encrypt = 1;
 	memmove (cmd, cmd + 3, strlen(cmd) - 2);
     } else {
+	if(do_encrypt)
+	    fatal (s, "Encryption required");
 	do_encrypt = 0;
     }
 
@@ -403,6 +405,9 @@ loop (int from0, int to0,
     fd_set real_readset;
     int max_fd;
     int count = 2;
+
+    if(from0 >= FD_SETSIZE || from1 >= FD_SETSIZE || from2 >= FD_SETSIZE)
+	errx (1, "fd too large");
 
     FD_ZERO(&real_readset);
     FD_SET(from0, &real_readset);
@@ -581,7 +586,7 @@ doit (int do_kerberos, int check_rhosts)
     struct sockaddr *thataddr = (struct sockaddr *)&thataddr_ss;
     struct sockaddr_storage erraddr_ss;
     struct sockaddr *erraddr = (struct sockaddr *)&erraddr_ss;
-    int addrlen;
+    socklen_t addrlen;
     int port;
     int errsock = -1;
     char client_user[COMMAND_SZ], server_user[USERNAME_SZ];
@@ -685,7 +690,7 @@ doit (int do_kerberos, int check_rhosts)
     }
 
 #if defined(DCE) && defined(AIX)
-    setenv("AUTHSTATE", "DCE", 1);
+    esetenv("AUTHSTATE", "DCE", 1);
 #endif
 
     pwd = getpwnam (server_user);
@@ -734,7 +739,7 @@ doit (int do_kerberos, int check_rhosts)
 
 #if defined(DCE)
     if (kerberos_status) {
-	setenv("KRB5CCNAME", tkfile, 1);
+	esetenv("KRB5CCNAME", tkfile, 1);
 	dfspag = krb5_dfs_pag(context, kerberos_status, user_ticket->client, server_user);
     }
 #endif
@@ -866,7 +871,13 @@ main(int argc, char **argv)
     }
 
 #ifdef KRB5
-    krb5_init_context (&context);
+    {
+	krb5_error_code ret;
+
+	ret = krb5_init_context (&context);
+	if (ret)
+	    errx (1, "krb5_init_context failed: %d", ret);
+    }	
 #endif
 
     if(port_str) {

@@ -1,4 +1,4 @@
-# $Id: roken.awk,v 1.1.1.2 2000/08/02 19:59:55 assar Exp $
+# $Id: roken.awk,v 1.1.1.3 2001/02/11 13:51:46 assar Exp $
 
 BEGIN {
 	print "#include <stdio.h>"
@@ -18,7 +18,7 @@ END {
 	print "puts(\"#define ROKEN_VERSION \" VERSION );"
 	print "puts(\"\");"
 	print "puts(\"#endif /* __ROKEN_H__ */\");"
-	print "exit(0);"
+	print "return 0;"
 	print "}"
 }
 

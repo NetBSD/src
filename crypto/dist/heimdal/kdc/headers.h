@@ -32,7 +32,7 @@
  */
 
 /* 
- * $Id: headers.h,v 1.1.1.2 2000/08/02 19:58:54 assar Exp $ 
+ * $Id: headers.h,v 1.1.1.3 2001/02/11 13:51:31 assar Exp $ 
  */
 
 #ifndef __HEADERS_H__
@@ -73,6 +73,9 @@
 #endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+#ifdef HAVE_UTIL_H
+#include <util.h>
 #endif
 #include <err.h>
 #include <roken.h>

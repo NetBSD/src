@@ -1,11 +1,10 @@
-# $Id: Makefile.am,v 1.1.1.1 2000/08/02 19:59:45 assar Exp $
+# $Id: Makefile.am,v 1.1.1.2 2001/02/11 13:51:46 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 CLEANFILES		= print_version.h
 
-lib_LTLIBRARIES		= libvers.la
-libvers_la_LDFLAGS	= -version-info 1:0:0
+noinst_LTLIBRARIES	= libvers.la
 
 build_HEADERZ		= vers.h
 

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: resolve.h,v 1.1.1.2 2000/08/02 19:59:54 assar Exp $ */
+/* $Id: resolve.h,v 1.1.1.3 2001/02/11 13:51:46 assar Exp $ */
 
 #ifndef __RESOLVE_H__
 #define __RESOLVE_H__
@@ -96,7 +96,7 @@ struct sig_record {
     unsigned key_tag;
     char     *signer;
     unsigned sig_len;
-    u_char   sig_data[1];	/* also includes signer */
+    char     sig_data[1];	/* also includes signer */
 };
 
 struct cert_record {

@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:58:29 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:16 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -22,6 +22,6 @@ EXTRA_DIST = pfrom.in $(man_MANS)
 
 LDADD = $(LIB_krb5) \
 	$(LIB_krb4) \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
 	$(LIB_roken) \
 	$(LIB_hesiod)

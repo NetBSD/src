@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000, 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: appdefault.c,v 1.1.1.1 2000/08/02 19:59:24 assar Exp $");
+RCSID("$Id: appdefault.c,v 1.1.1.2 2001/02/11 13:51:43 assar Exp $");
 
 void
 krb5_appdefault_boolean(krb5_context context, const char *appname, 
@@ -75,7 +75,6 @@ krb5_appdefault_string(krb5_context context, const char *appname,
 		       krb5_realm realm, const char *option,
 		       const char *def_val, char **ret_val)
 {
-    
     if(appname == NULL)
 	appname = __progname;
     def_val = krb5_config_get_string_default(context, NULL, def_val, 
@@ -102,5 +101,23 @@ krb5_appdefault_string(krb5_context context, const char *appname,
 						     option, 
 						     NULL);
     }
-    *ret_val = strdup(def_val);
+    if(def_val != NULL)
+	*ret_val = strdup(def_val);
+    else
+	*ret_val = NULL;
+}
+
+void
+krb5_appdefault_time(krb5_context context, const char *appname,
+		     krb5_realm realm, const char *option,
+		     time_t def_val, time_t *ret_val)
+{
+    time_t t;
+    char tstr[32];
+    char *val;
+    snprintf(tstr, sizeof(tstr), "%ld", (long)def_val);
+    krb5_appdefault_string(context, appname, realm, option, tstr, &val);
+    t = parse_time (val, NULL);
+    free(val);
+    *ret_val = t;
 }

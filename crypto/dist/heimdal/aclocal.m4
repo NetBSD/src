@@ -10,7 +10,7 @@ dnl but WITHOUT ANY WARRANTY, to the extent permitted by law; without
 dnl even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 dnl PARTICULAR PURPOSE.
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl Only put things that for some reason can't live in the `cf'
 dnl directory in this file.
@@ -20,7 +20,7 @@ dnl $xId: misc.m4,v 1.1 1997/12/14 15:59:04 joda Exp $
 dnl
 define(upcase,`echo $1 | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ`)dnl
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 AC_DEFUN([upcase],[`echo $1 | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ`])dnl
 AC_DEFUN([rk_CONFIG_HEADER],[AH_TOP([#ifndef RCSID
@@ -376,7 +376,7 @@ AC_CHECK_PROGS(LEX, flex lex, [${am_missing_run}flex])
 AC_PROG_LEX
 AC_DECL_YYTEXT])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl
 dnl Better test for ln -s, ln or cp
@@ -405,7 +405,7 @@ AC_SUBST(LN_S)dnl
 ])
 
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl
 dnl Check for MIPS/IRIX ABI flags. Sets $abi and $abilibdirext to some
@@ -494,7 +494,7 @@ esac
 ])
 
 dnl
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 
 dnl
@@ -1236,7 +1236,7 @@ AC_DEFUN(AM_PROG_NM, [indir([AC_PROG_NM])])dnl
 dnl This is just to silence aclocal about the macro not being used
 ifelse([AC_DISABLE_FAST_INSTALL])dnl
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl set WFLAGS
 
@@ -1258,7 +1258,7 @@ AC_SUBST(WFLAGS_NOUNUSED)dnl
 AC_SUBST(WFLAGS_NOIMPLICITINT)dnl
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl tests for various db libraries
 dnl
@@ -1299,7 +1299,7 @@ AC_SUBST(DBLIB)dnl
 
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl
 dnl Look for function in any of the specified libraries
@@ -1361,7 +1361,7 @@ esac
 AC_SUBST(LIB_$1)
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl
 dnl Look for function in any of the specified libraries
@@ -1371,7 +1371,7 @@ dnl AC_FIND_FUNC_NO_LIBS(func, libraries, includes, arguments, extra libs, extra
 AC_DEFUN(AC_FIND_FUNC_NO_LIBS, [
 AC_FIND_FUNC_NO_LIBS2([$1], ["" $2], [$3], [$4], [$5], [$6])])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl some code to get roken working
 dnl
@@ -1382,8 +1382,8 @@ AC_DEFUN(rk_ROKEN, [
 AC_REQUIRE([rk_CONFIG_HEADER])
 
 DIR_roken=roken
-LIB_roken='$(top_builddir)/lib/roken/libroken.la'
-CPPFLAGS_roken='-I$(top_builddir)/lib/roken -I$(top_srcdir)/lib/roken'
+LIB_roken='$(top_builddir)/$1/libroken.la'
+INCLUDES_roken='-I$(top_builddir)/$1 -I$(top_srcdir)/$1'
 
 dnl Checks for programs
 AC_REQUIRE([AC_PROG_CC])
@@ -1428,13 +1428,17 @@ AC_CHECK_HEADERS([\
 	errno.h					\
 	err.h					\
 	fcntl.h					\
+	gdbm/ndbm.h				\
 	grp.h					\
+	ifaddrs.h				\
 	ndbm.h					\
+	net/if.h				\
 	netdb.h					\
 	netinet/in.h				\
 	netinet/in6.h				\
 	netinet/in_systm.h			\
 	netinet6/in6.h				\
+	netinet6/in6_var.h			\
 	paths.h					\
 	pwd.h					\
 	resolv.h				\
@@ -1446,6 +1450,7 @@ AC_CHECK_HEADERS([\
 	sys/proc.h				\
 	sys/resource.h				\
 	sys/socket.h				\
+	sys/sockio.h				\
 	sys/stat.h				\
 	sys/sysctl.h				\
 	sys/time.h				\
@@ -1459,6 +1464,8 @@ AC_CHECK_HEADERS([\
 	unistd.h				\
 	userconf.h				\
 	usersec.h				\
+	util.h					\
+	vis.h					\
 	winsock.h				\
 ])
 	
@@ -1466,6 +1473,8 @@ AC_REQUIRE([CHECK_NETINET_IP_AND_TCP])
 
 AM_CONDITIONAL(have_err_h, test "$ac_cv_header_err_h" = yes)
 AM_CONDITIONAL(have_fnmatch_h, test "$ac_cv_header_fnmatch_h" = yes)
+AM_CONDITIONAL(have_ifaddrs_h, test "$ac_cv_header_ifaddrs_h" = yes)
+AM_CONDITIONAL(have_vis_h, test "$ac_cv_header_vis_h" = yes)
 
 dnl Check for functions and libraries
 
@@ -1529,11 +1538,18 @@ AC_CHECK_FUNCS([				\
 	getconfattr				\
 	getrlimit				\
 	getspnam				\
+	strsvis					\
+	strunvis				\
+	strvis					\
+	strvisx					\
+	svis					\
 	sysconf					\
 	sysctl					\
 	uname					\
+	unvis					\
 	vasnprintf				\
 	vasprintf				\
+	vis					\
 ])
 
 if test "$ac_cv_func_cgetent" = no; then
@@ -1598,6 +1614,11 @@ AC_NEED_PROTO([
 vasnprintf)dnl
 fi
 
+AC_FIND_FUNC_NO_LIBS(pidfile,util,
+[#ifdef HAVE_UTIL_H
+#include <util.h>
+#endif],0)
+
 AC_BROKEN([					\
 	chown					\
 	copyhostent				\
@@ -1617,6 +1638,7 @@ AC_BROKEN([					\
 	geteuid					\
 	getgid					\
 	gethostname				\
+	getifaddrs				\
 	getipnodebyaddr				\
 	getipnodebyname				\
 	getnameinfo				\
@@ -1624,9 +1646,6 @@ AC_BROKEN([					\
 	gettimeofday				\
 	getuid					\
 	getusershell				\
-	inet_aton				\
-	inet_ntop				\
-	inet_pton				\
 	initgroups				\
 	innetgr					\
 	iruserok				\
@@ -1667,6 +1686,65 @@ AC_BROKEN([					\
 	warnx					\
 	writev					\
 ])
+
+AC_BROKEN2(inet_aton,
+[#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif],
+[0,0])
+
+AC_BROKEN2(inet_ntop,
+[#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif],
+[0, 0, 0, 0])
+
+AC_BROKEN2(inet_pton,
+[#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif],
+[0,0,0])
+
+dnl
+dnl Check for sa_len in struct sockaddr, 
+dnl needs to come before the getnameinfo test
+dnl
+AC_HAVE_STRUCT_FIELD(struct sockaddr, sa_len, [#include <sys/types.h>
+#include <sys/socket.h>])
+
+if test "$ac_cv_func_getnameinfo" = "yes"; then
+  rk_BROKEN_GETNAMEINFO
+  if test "$ac_cv_func_getnameinfo_broken" = yes; then
+    LIBOBJS="$LIBOBJS getnameinfo.o"
+  fi
+fi
 
 AC_NEED_PROTO([#include <stdlib.h>], setenv)
 AC_NEED_PROTO([#include <stdlib.h>], unsetenv)
@@ -1757,6 +1835,16 @@ AC_PROTO_COMPAT([
 getservbyname, struct servent *getservbyname(const char *, const char *))
 
 AC_PROTO_COMPAT([
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+],
+getsockname, int getsockname(int, struct sockaddr*, socklen_t*))
+
+AC_PROTO_COMPAT([
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
 #endif
@@ -1845,6 +1933,7 @@ AC_HAVE_TYPE([socklen_t],[#include <sys/socket.h>])
 AC_HAVE_TYPE([struct sockaddr], [#include <sys/socket.h>])
 AC_HAVE_TYPE([struct sockaddr_storage], [#include <sys/socket.h>])
 AC_HAVE_TYPE([struct addrinfo], [#include <netdb.h>])
+AC_HAVE_TYPE([struct ifaddrs], [#include <ifaddrs.h>])
 
 dnl
 dnl Check for struct winsize
@@ -1858,22 +1947,17 @@ dnl
 
 AC_KRB_STRUCT_SPWD
 
-dnl
-dnl Check for sa_len in struct sockaddr
-dnl
-
-AC_HAVE_STRUCT_FIELD(struct sockaddr, sa_len, [#include <sys/types.h>
-#include <sys/socket.h>])
-
-AC_CONFIG_FILES($1/Makefile) dnl breaks automake
+dnl won't work with automake
+dnl moved to AC_OUTPUT in configure.in
+dnl AC_CONFIG_FILES($1/Makefile)
 
 LIB_roken="${LIB_roken} \$(LIB_crypt) \$(LIB_dbopen)"
 
 AC_SUBST(DIR_roken)dnl
 AC_SUBST(LIB_roken)dnl
-AC_SUBST(CPPFLAGS_roken)dnl
+AC_SUBST(INCLUDES_roken)dnl
 ])
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl ac_check_type + extra headers
 
@@ -1897,7 +1981,7 @@ if test $ac_cv_type_$1 = no; then
 fi
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl check for existance of a type
 
@@ -1929,7 +2013,7 @@ fi
 ])
 
 dnl
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl Figure out return type of signal handlers, and define SIGRETURN macro
 dnl that can be used to return from one
@@ -1947,7 +2031,7 @@ AH_BOTTOM([#ifdef VOID_RETSIGTYPE
 #endif])
 ])
 dnl
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 
 dnl extra magic check for netinet/{ip.h,tcp.h} because on irix 6.5.3
@@ -1993,7 +2077,7 @@ else
   $1_FALSE=
 fi])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl test for IPv6
 dnl
@@ -2012,7 +2096,7 @@ AC_MSG_CHECKING([ipv6 stack type])
 for i in v6d toshiba kame inria zeta linux; do
 	case $i in
 	v6d)
-		AC_EGREP_CPP(yes, [dnl
+		AC_EGREP_CPP(yes, [
 #include </usr/local/v6/include/sys/types.h>
 #ifdef __V6D__
 yes
@@ -2022,7 +2106,7 @@ yes
 			CFLAGS="-I/usr/local/v6/include $CFLAGS"])
 		;;
 	toshiba)
-		AC_EGREP_CPP(yes, [dnl
+		AC_EGREP_CPP(yes, [
 #include <sys/param.h>
 #ifdef _TOSHIBA_INET6
 yes
@@ -2032,7 +2116,7 @@ yes
 			CFLAGS="-DINET6 $CFLAGS"])
 		;;
 	kame)
-		AC_EGREP_CPP(yes, [dnl
+		AC_EGREP_CPP(yes, [
 #include <netinet/in.h>
 #ifdef __KAME__
 yes
@@ -2042,7 +2126,7 @@ yes
 			CFLAGS="-DINET6 $CFLAGS"])
 		;;
 	inria)
-		AC_EGREP_CPP(yes, [dnl
+		AC_EGREP_CPP(yes, [
 #include <netinet/in.h>
 #ifdef IPV6_INRIA_VERSION
 yes
@@ -2050,7 +2134,7 @@ yes
 			[v6type=$i; CFLAGS="-DINET6 $CFLAGS"])
 		;;
 	zeta)
-		AC_EGREP_CPP(yes, [dnl
+		AC_EGREP_CPP(yes, [
 #include <sys/param.h>
 #ifdef _ZETA_MINAMI_INET6
 yes
@@ -2116,7 +2200,7 @@ if test "$ac_cv_lib_ipv6" = yes; then
 fi
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl AC_FIND_FUNC(func, libraries, includes, arguments)
 AC_DEFUN(AC_FIND_FUNC, [
@@ -2126,7 +2210,7 @@ if test -n "$LIB_$1"; then
 fi
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 AC_DEFUN(AC_BROKEN_SNPRINTF, [
 AC_CACHE_CHECK(for working snprintf,ac_cv_func_snprintf_working,
@@ -2185,7 +2269,7 @@ AC_NEED_PROTO([#include <stdio.h>],vsnprintf)
 fi
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl
 dnl Check if we need the prototype for a function
@@ -2211,7 +2295,7 @@ undefine([foo])
 fi
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl check for glob(3)
 dnl
@@ -2235,7 +2319,7 @@ fi
 ])
 
 dnl
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl test for POSIX (broken) getlogin
 dnl
@@ -2257,7 +2341,7 @@ fi
 fi
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl
 dnl Mix between AC_FIND_FUNC and AC_BROKEN
@@ -2271,7 +2355,7 @@ fi
 AC_SUBST(LIBOBJS)dnl
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl
 dnl Same as AC _REPLACE_FUNCS, just define HAVE_func if found in normal
@@ -2290,8 +2374,93 @@ done
 AC_SUBST(LIBOBJS)dnl
 ])
 
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl AC_BROKEN but with more arguments
+
+dnl AC_BROKEN2(func, includes, arguments)
+AC_DEFUN(AC_BROKEN2,
+[for ac_func in $1
+do
+AC_MSG_CHECKING([for $ac_func])
+AC_CACHE_VAL(ac_cv_func_$ac_func,
+[AC_TRY_LINK([$2],
+[
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_$1) || defined (__stub___$1)
+choke me
+#else
+$ac_func($3)
+#endif
+], [eval "ac_cv_func_$ac_func=yes"], [eval "ac_cv_func_$ac_func=no"])])
+if eval "test \"\${ac_cv_func_$ac_func}\" = yes"; then
+  ac_tr_func=HAVE_[]upcase($ac_func)
+  AC_DEFINE_UNQUOTED($ac_tr_func)
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+  LIBOBJS[]="$LIBOBJS ${ac_func}.o"
+fi
+done
+if false; then
+	AC_CHECK_FUNCS($1)
+fi
+AC_SUBST(LIBOBJS)dnl
+])
+
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
+dnl
+dnl check for fields in a structure
+dnl
+dnl AC_HAVE_STRUCT_FIELD(struct, field, headers)
+
+AC_DEFUN(AC_HAVE_STRUCT_FIELD, [
+define(cache_val, translit(ac_cv_type_$1_$2, [A-Z ], [a-z_]))
+AC_CACHE_CHECK([for $2 in $1], cache_val,[
+AC_TRY_COMPILE([$3],[$1 x; x.$2;],
+cache_val=yes,
+cache_val=no)])
+if test "$cache_val" = yes; then
+	define(foo, translit(HAVE_$1_$2, [a-z ], [A-Z_]))
+	AC_DEFINE(foo, 1, [Define if $1 has field $2.])
+	undefine([foo])
+fi
+undefine([cache_val])
+])
+
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
+dnl
+dnl test for broken AIX getnameinfo
+
+AC_DEFUN(rk_BROKEN_GETNAMEINFO,[
+AC_CACHE_CHECK([if getnameinfo is broken], ac_cv_func_getnameinfo_broken,
+AC_TRY_RUN([[#include <stdio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
+int
+main(int argc, char **argv)
+{
+  struct sockaddr_in sin;
+  char host[256];
+  memset(&sin, 0, sizeof(sin));
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
+  sin.sin_len = sizeof(sin);
+#endif
+  sin.sin_family = AF_INET;
+  sin.sin_addr.s_addr = 0xffffffff;
+  sin.sin_port = 0;
+  return getnameinfo((struct sockaddr*)&sin, sizeof(sin), host, sizeof(host),
+	      NULL, 0, 0);
+}
+]], ac_cv_func_getnameinfo_broken=no, ac_cv_func_getnameinfo_broken=yes))])
+
+dnl
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl Test for realloc that doesn't handle NULL as first parameter
 dnl
@@ -2317,7 +2486,7 @@ AH_BOTTOM([#ifdef BROKEN_REALLOC
 #endif])
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl
 dnl test for broken getcwd in (SunOS braindamage)
@@ -2360,7 +2529,7 @@ fi
 fi
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl
 dnl Check if the prototype of a function is compatible with another one
@@ -2382,7 +2551,7 @@ if test "$ac_cv_func_$2_proto_compat" = yes; then
 fi
 undefine([foo])
 ])
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl rk_CHECK_VAR(variable, includes)
 AC_DEFUN([rk_CHECK_VAR], [
@@ -2398,13 +2567,13 @@ AC_MSG_RESULT($ac_foo)
 if test "$ac_foo" = yes; then
 	AC_DEFINE_UNQUOTED(AC_TR_CPP(HAVE_[]$1), 1, 
 		[Define if you have the `]$1[' variable.])
-	ifval([$2], AC_CHECK_DECLARATION([$2],[$1]))
+	m4_ifval([$2], AC_CHECK_DECLARATION([$2],[$1]))
 fi
 ])
 
 AC_WARNING_ENABLE([obsolete])
 AU_DEFUN([AC_CHECK_VAR], [rk_CHECK_VAR([$2], [$1])], [foo])
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl
 dnl Check if we need the declaration of a variable
@@ -2430,27 +2599,7 @@ fi
 undefine([foo])
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
-dnl
-dnl check for fields in a structure
-dnl
-dnl AC_HAVE_STRUCT_FIELD(struct, field, headers)
-
-AC_DEFUN(AC_HAVE_STRUCT_FIELD, [
-define(cache_val, translit(ac_cv_type_$1_$2, [A-Z ], [a-z_]))
-AC_CACHE_CHECK([for $2 in $1], cache_val,[
-AC_TRY_COMPILE([$3],[$1 x; x.$2;],
-cache_val=yes,
-cache_val=no)])
-if test "$cache_val" = yes; then
-	define(foo, translit(HAVE_$1_$2, [a-z ], [A-Z_]))
-	AC_DEFINE(foo, 1, [Define if $1 has field $2.])
-	undefine([foo])
-fi
-undefine([cache_val])
-])
-
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl
 dnl Search for struct winsize
@@ -2478,7 +2627,7 @@ AC_EGREP_HEADER(ws_ypixel, termios.h,
 	AC_DEFINE(HAVE_WS_YPIXEL, 1, [define if struct winsize has ws_ypixel]))
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl Test for `struct spwd'
 
@@ -2501,7 +2650,7 @@ if test "$ac_cv_struct_spwd" = "yes"; then
 fi
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl AC_TEST_PACKAGE_NEW(package,headers,libraries,extra libs,default locations, conditional)
 
@@ -2577,7 +2726,7 @@ if test "$ires" -a "$lres" -a "$with_$1" != "no"; then
 	$1_libdir="$lres"
 	INCLUDE_$1="-I$$1_includedir"
 	LIB_$1="-L$$1_libdir $3"
-	ifval([$6],
+	m4_ifval([$6],
 		AC_DEFINE_UNQUOTED($6,1,[Define if you have the $1 package.]),
 		AC_DEFINE_UNQUOTED(upcase($1),1,[Define if you have the $1 package.]))
 	with_$1=yes
@@ -2588,14 +2737,14 @@ else
 	with_$1=no
 	AC_MSG_RESULT($with_$1)
 fi
-dnl ifval([$6],
+dnl m4_ifval([$6],
 dnl 	AM_CONDITIONAL($6, test "$with_$1" = yes)
 dnl 	AM_CONDITIONAL(upcase($1), test "$with_$1" = yes))
 AC_SUBST(INCLUDE_$1)
 AC_SUBST(LIB_$1)
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl enable OSF C2 stuff
 
@@ -2610,11 +2759,11 @@ fi
 AC_SUBST(LIB_security)
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl check how to format manual pages
 dnl
 
-AC_DEFUN(AC_CHECK_MAN,
+AC_DEFUN(rk_CHECK_MAN,
 [AC_PATH_PROG(NROFF, nroff)
 AC_PATH_PROG(GROFF, groff)
 AC_CACHE_CHECK(how to format man pages,ac_cv_sys_man_format,
@@ -2662,15 +2811,14 @@ else
 fi
 ])
 if test "$ac_cv_sys_catman_ext" = number; then
-	CATMANEXT='$$ext'
+	CATMANEXT='$$section'
 else
 	CATMANEXT=0
 fi
 AC_SUBST(CATMANEXT)
-
 ])
 dnl
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 
 dnl check if this computer is little or big-endian
@@ -2693,41 +2841,50 @@ krb_cv_c_bigendian_compile,
 #if !BYTE_ORDER || !BIG_ENDIAN || !LITTLE_ENDIAN
  bogus endian macros
 #endif], krb_cv_c_bigendian_compile=yes, krb_cv_c_bigendian_compile=no)])
-if test "$krb_cv_c_bigendian_compile" = "no"; then
-  AC_CACHE_CHECK(whether byte ordering is bigendian, krb_cv_c_bigendian,[
-  if test "$krb_cv_c_bigendian" = ""; then
-    krb_cv_c_bigendian=unknown
-  fi
-  AC_TRY_COMPILE([
+AC_CACHE_CHECK(whether byte ordering is bigendian, krb_cv_c_bigendian,[
+  if test "$krb_cv_c_bigendian_compile" = "yes"; then
+    AC_TRY_COMPILE([
 #include <sys/types.h>
 #include <sys/param.h>],[
 #if BYTE_ORDER != BIG_ENDIAN
   not big endian
 #endif], krb_cv_c_bigendian=yes, krb_cv_c_bigendian=no)
-  if test "$krb_cv_c_bigendian" = "unknown"; then
+  else
     AC_TRY_RUN([main () {
       /* Are we little or big endian?  From Harbison&Steele.  */
       union
       {
 	long l;
 	char c[sizeof (long)];
-      } u;
-      u.l = 1;
-      exit (u.c[sizeof (long) - 1] == 1);
-    }], krb_cv_c_bigendian=no, krb_cv_c_bigendian=yes,
-    AC_MSG_ERROR([specify either --enable-bigendian or --enable-littleendian]))
+    } u;
+    u.l = 1;
+    exit (u.c[sizeof (long) - 1] == 1);
+  }], krb_cv_c_bigendian=no, krb_cv_c_bigendian=yes,
+  AC_MSG_ERROR([specify either --enable-bigendian or --enable-littleendian]))
   fi
-  ])
-  if test "$krb_cv_c_bigendian" = "yes"; then
-    AC_DEFINE(WORDS_BIGENDIAN, 1, [define if target is big endian])dnl
-  fi
+])
+if test "$krb_cv_c_bigendian" = "yes"; then
+  AC_DEFINE(WORDS_BIGENDIAN, 1, [define if target is big endian])dnl
 fi
 if test "$krb_cv_c_bigendian_compile" = "yes"; then
   AC_DEFINE(ENDIANESS_IN_SYS_PARAM_H, 1, [define if sys/param.h defines the endiness])dnl
 fi
 ])
 
+dnl
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
+dnl
+
 AC_DEFUN(KRB_AIX,[
+aix=no
+case "$host" in 
+*-*-aix3*)
+	aix=3
+	;;
+*-*-aix4*)
+	aix=4
+	;;
+esac
 AM_CONDITIONAL(AIX, test "$aix" != no)dnl
 AM_CONDITIONAL(AIX4, test "$aix" = 4)
 aix_dynamic_afs=yes
@@ -2753,10 +2910,23 @@ AM_CONDITIONAL(HAVE_DLOPEN, test "$ac_cv_funclib_dlopen" != no)dnl
 AC_SUBST(AIX_EXTRA_KAFS)dnl
 
 ])
+dnl
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
+dnl
+
+dnl requires AC_CANONICAL_HOST
+AC_DEFUN(KRB_IRIX,[
+irix=no
+case "$host_os" in
+irix*) irix=yes ;;
+esac
+AM_CONDITIONAL(IRIX, test "$irix" != no)dnl
+])
+
 dnl 
 dnl See if there is any X11 present
 dnl
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 
 AC_DEFUN(KRB_CHECK_X,[
 AC_PATH_XTRA
@@ -2806,7 +2976,7 @@ if test "$no_x" != yes; then
 fi
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl check for Xau{Read,Write}Auth and XauFileName
 dnl
@@ -2866,7 +3036,7 @@ LDFLAGS=$save_LDFLAGS
 ])
 
 dnl
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 
 dnl
@@ -2880,7 +3050,7 @@ AC_CHECK_HEADERS(capability.h sys/capability.h)
 AC_CHECK_FUNCS(sgi_getcapabilitybyname cap_set_proc)
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl check for getpwnam_r, and if it's posix or not
 
@@ -2904,7 +3074,7 @@ if test "$ac_cv_func_getpwnam_r_posix" = yes; then
 fi
 fi
 ])
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 AC_DEFUN(AC_GROK_TYPE, [
 AC_CACHE_VAL(ac_cv_type_$1, 
@@ -2943,6 +3113,7 @@ for i in $1; do
 done
 ])
 
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl Tests for readline functions
 dnl
@@ -2972,9 +3143,9 @@ elif test "$ac_cv_func_readline" = yes; then
 	:
 elif test "$ac_cv_func_el_init" = yes; then
 	ac_foo=yes
-	LIB_readline="\$(top_builddir)/lib/editline/libel_compat.a $LIB_el_init"
+	LIB_readline="\$(top_builddir)/lib/editline/libel_compat.la $LIB_el_init"
 else
-	LIB_readline='$(top_builddir)/lib/editline/libeditline.a'
+	LIB_readline='$(top_builddir)/lib/editline/libeditline.la'
 fi
 AM_CONDITIONAL(el_compat, test "$ac_foo" = yes)
 if test "$readline_libdir"; then
@@ -2985,7 +3156,7 @@ AC_DEFINE(HAVE_READLINE, 1,
 	[Define if you have a readline compatible library.])dnl
 
 ])
-dnl $Id: aclocal.m4,v 1.1.1.2 2000/08/02 19:58:02 assar Exp $
+dnl $Id: aclocal.m4,v 1.1.1.3 2001/02/11 13:51:08 assar Exp $
 dnl
 dnl Figure what authentication modules should be built
 

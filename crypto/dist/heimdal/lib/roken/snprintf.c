@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: snprintf.c,v 1.1.1.2 2000/08/02 19:59:56 assar Exp $");
+RCSID("$Id: snprintf.c,v 1.1.1.3 2001/02/11 13:51:47 assar Exp $");
 #endif
 #include <stdio.h>
 #include <stdarg.h>
@@ -214,28 +214,31 @@ append_string (struct state *state,
 	       int prec,
 	       int flags)
 {
-  if(prec != -1)
-    width -= prec;
-  else
-    width -= strlen((char *)arg);
-  if(!(flags & minus_flag))
-    while(width-- > 0)
-      if((*state->append_char) (state, ' '))
-	return 1;
-  if (prec != -1) {
-    while (*arg && prec--)
-      if ((*state->append_char) (state, *arg++))
-	return 1;
-  } else {
-    while (*arg)
-      if ((*state->append_char) (state, *arg++))
-	return 1;
-  }
-  if(flags & minus_flag)
-    while(width-- > 0)
-      if((*state->append_char) (state, ' '))
-	return 1;
-  return 0;
+    if(arg == NULL)
+	arg = (unsigned char*)"(null)";
+
+    if(prec != -1)
+	width -= prec;
+    else
+	width -= strlen((char *)arg);
+    if(!(flags & minus_flag))
+	while(width-- > 0)
+	    if((*state->append_char) (state, ' '))
+		return 1;
+    if (prec != -1) {
+	while (*arg && prec--)
+	    if ((*state->append_char) (state, *arg++))
+		return 1;
+    } else {
+	while (*arg)
+	    if ((*state->append_char) (state, *arg++))
+		return 1;
+    }
+    if(flags & minus_flag)
+	while(width-- > 0)
+	    if((*state->append_char) (state, ' '))
+		return 1;
+    return 0;
 }
 
 static int
