@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.121 1999/05/07 00:57:46 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.122 1999/05/07 15:40:58 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.116 1999/05/07 00:56:46 matt Exp 
+ *	NetBSD: pcidevs,v 1.117 1999/05/07 15:38:40 drochner Exp 
  */
 
 /*
@@ -578,6 +578,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Bit3 Computer Corp.",
 	    "PCI-VME Interface Mod. 617",
+	},
+	{
+	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME618,
+	    0,
+	    "Bit3 Computer Corp.",
+	    "PCI-VME Interface Mod. 618",
 	},
 	{
 	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME2706,
@@ -2156,6 +2162,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "5597/5598 USB host controller",
+	},
+	{
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_LYNX_E,
+	    0,
+	    "Silicon Motion",
+	    "Lynx E",
 	},
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C665,
@@ -5539,6 +5551,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ESSTECH, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "ESS Technology Inc",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_SILMOTION, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Silicon Motion",
 	    NULL,
 	},
 	{
