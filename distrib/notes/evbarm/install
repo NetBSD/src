@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.2 2002/01/02 21:12:17 he Exp $
+.\"	$NetBSD: install,v 1.3 2002/03/29 03:29:10 thorpej Exp $
 .\"
-.\" Copyright (c) 2001 The NetBSD Foundation, Inc.     
+.\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.     
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -84,13 +84,14 @@ Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001
 Copyright (c) 1982, 1986, 1989, 1991, 1993
     The Regents of the University of California.  All rights reserved.
 
-NetBSD 1.5Y (IQ80310) #0: Fri Nov 30 11:23:26 PST 2001
-    thorpej@dr-evil:/u1/netbsd/src/sys/arch/evbarm/compile/IQ80310
+NetBSD 1.5ZC (IQ80310) #1: Thu Mar 28 18:20:34 PST 2002
+    root@tgm:/u1/netbsd/src/sys/arch/evbarm/compile/IQ80310
 total memory = 32768 KB
 avail memory = 25680 KB
 using 435 buffers containing 1740 KB of memory
 mainbus0 (root)
-cpu0 at mainbus0: i80200 rev 0 (XScale core) DC enabled IC enabled WB enabled LABT
+cpu0 at mainbus0: i80200 step A-0 (XScale core)
+cpu0: DC enabled IC enabled WB enabled LABT
 cpu0: 32KB/32B 32-way Instruction cache
 cpu0: 32KB/32B 32-way write-back-locking Data cache
 obio0 at mainbus0: board rev. F, CPLD rev. D, backplane present
@@ -105,7 +106,7 @@ ppb0 at pci0 dev 7 function 0: Digital Equipment DECchip 21154 PCI-PCI Bridge (r
 pci1 at ppb0 bus 2
 pci1: i/o space, memory space enabled
 fxp0 at pci1 dev 0 function 0: i82559S Ethernet, rev 9
-fxp0: interrupting at CPLD irq 1
+fxp0: interrupting at iq80310 irq 1
 fxp0: Ethernet address 00:80:4d:46:0b:b9
 inphy0 at fxp0 phy 1: i82555 10/100 media interface, rev. 4
 inphy0: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto
@@ -120,6 +121,94 @@ nfs_boot: my_addr=192.168.0.10
 nfs_boot: my_mask=255.255.255.0
 nfs_boot: gateway=192.168.0.254
 root on 192.168.0.1:/export/client/iq80310
+/etc/rc.conf is not configured.  Multiuser boot aborted.
+Enter pathname of shell or RETURN for sh: 
+.Ed
+.enum)
+.Ss2 Installation for the Intel IQ80321
+The following steps describe how to set up an NFS root environment
+for the IQ80321 and how to boot the IQ80321.
+.Pp
+.(enum
+Place the kernel into the TFTP server's download area.
+.Pp
+RedBoot only loads S-Records, so select a kernel with the
+.Dq .srec
+filename suffix.  In this example, we will boot the kernel
+hard-wired to use the on-board Ethernet as the root device.
+.Pp
+.Dl server# Ic cp netbsd-wm0.srec /tftpboot/netbsd-iq80321-wm0
+.It
+Unpack the distribution sets into the target's root directory.
+.Pp
+.Dl server# Ic cd /export/client/iq80321
+.Dl server# Ic gzcat .../base.tgz | tar xvpf -
+.Dl server# Ic gzcat .../etc.tgz | tar xvpf -
+.Dl [ repeat for all sets you wish to unpack ]
+.It
+Load the kernel from the TFTP server.
+.Pp
+.Bd -literal
+RedBoot\*> load netbsd-iq80321-wm0
+Entry point: 0x00200000, address range: 0x00200000-0x00396a40
+RedBoot\*>
+.Ed
+.It
+Start the kernel running.  The kernel will display boot message,
+probe for devices, and mount the root file system.  If you used
+a kernel hard-wired to use the on-board Ethernet, it will attempt
+to mount the root file system automatically.  Otherwise, it will
+prompt for the root device to use.
+.Pp
+Since the system's run-time environment has not yet been configured,
+the system should boot into single-user mode.
+.Pp
+.Bd -literal
+RedBoot\*> go
+
+NetBSD/evbarm (IQ80321) booting ...
+initarm: Configuring system ...
+physmemory: 32768 pages at 0xa0000000 -\*> 0xa7ffffff
+init subsystems: stacks vectors undefined pmap irq done.
+[ using 156468 bytes of netbsd ELF symbol table ]
+Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002
+    The NetBSD Foundation, Inc.  All rights reserved.
+Copyright (c) 1982, 1986, 1989, 1991, 1993
+    The Regents of the University of California.  All rights reserved.
+
+NetBSD 1.5ZC (IQ80321) #1: Thu Mar 28 18:20:34 PST 2002
+    root@tgm:/u1/netbsd/src/sys/arch/evbarm/compile/IQ80321
+total memory = 128 MB
+avail memory = 113 MB
+using 1228 buffers containing 6656 KB of memory
+mainbus0 (root)
+cpu0 at mainbus0: i80321 step A-0 (XScale core)
+cpu0: DC enabled IC enabled WB enabled LABT
+cpu0: 32KB/32B 32-way Instruction cache
+cpu0: 32KB/32B 32-way write-back-locking Data cache
+obio0 at mainbus0
+com0 at obio0 addr 0xfe800000: ns16550a, working fifo
+com0: console
+iopxs0 at mainbus0: i80321 I/O Processor, acting as PCI host
+iopxs0: configuring PCI bus
+pci0 at iopxs0 bus 0
+pci0: i/o space, memory space enabled, rd/line, rd/mult, wr/inv ok
+wm0 at pci0 dev 4 function 0: Intel i82544 1000BASE-T Ethernet, rev. 2
+wm0: interrupting at iop321 irq 27
+wm0: Ethernet address 00:07:e9:03:38:40
+makphy0 at wm0 phy 1: Marvell 88E1000 Gigabit PHY, rev. 0
+makphy0: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, 1000baseT, 1000baseT-FDX, auto
+clock: hz=100 stathz=0 profhz=0
+boot device: \*<unknown\*>
+root on wm0
+nfs_boot: trying DHCP/BOOTP
+nfs_boot: DHCP next-server: 192.168.0.1
+nfs_boot: my_name=iq80321.lab.wasabisystems.com
+nfs_boot: my_domain=wasabisystems.com
+nfs_boot: my_addr=192.168.0.11
+nfs_boot: my_mask=255.255.255.0
+nfs_boot: gateway=192.168.0.254
+root on 192.168.0.1:/export/client/iq80321
 /etc/rc.conf is not configured.  Multiuser boot aborted.
 Enter pathname of shell or RETURN for sh: 
 .Ed
