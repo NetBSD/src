@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 1995/08/18 15:28:26 chopps Exp $	*/
+/*	$NetBSD: pmap.h,v 1.15 1995/09/16 16:11:37 chopps Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -43,12 +43,13 @@
 #define	_MACHINE_PMAP_H_
 
 /*
- * Pmap stuff (in anticipation of '40 support)
+ * Pmap stuff
  */
 struct pmap {
 	u_int 	*pm_ptab;	/* KVA of page table */
 	u_int	*pm_stab;	/* KVA of segment table */
-	u_int	*pm_rtab;	/* KVA of 68040 root table */
+	int	pm_stfree;	/* 040: free lev2 blocks */
+	u_int	*pm_stpa;	/* 040: ST phys addr */
 	int	pm_stchanged;	/* ST changed */
 	short	pm_sref;	/* segment table ref count */
 	short	pm_count;	/* pmap reference count */
@@ -66,7 +67,7 @@ typedef struct pmap *pmap_t;
 	if ((pmapp) != NULL && (pmapp)->pm_stchanged) { \
 		(pcbp)->pcb_ustp = \
 		    amiga_btop(pmap_extract(pmap_kernel(), \
-		    (mmutype == MMU_68040) ? (vm_offset_t)(pmapp)->pm_rtab : \
+		    (mmutype == MMU_68040) ? (vm_offset_t)(pmapp)->pm_stpa : \
 		    (vm_offset_t)(pmapp)->pm_stab)); \
 		if (iscurproc) \
 			loadustp((pcbp)->pcb_ustp); \

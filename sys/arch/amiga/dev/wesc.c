@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.9 1995/08/18 15:28:16 chopps Exp $	*/
+/*	$NetBSD: wesc.c,v 1.10 1995/09/16 16:11:32 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -111,10 +111,10 @@ wescattach(pdp, dp, auxp)
 	sc->sc_siopp = rp = zap->va + 0x40000;
 
 	/*
-	 * DCNTL = 37.51->50.00MHZ / SCLK/2
 	 * CTEST7 = SC0, TT1
 	 */
-	sc->sc_clock_freq = 0x2200;
+	sc->sc_clock_freq = 50;		/* Clock = 50Mhz */
+	sc->sc_ctest7 = 0x22;		/* SC0 + TT1 */
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
@@ -172,3 +172,15 @@ wesc_dmaintr(sc)
 	siopintr(sc);
 	return(1);
 }
+
+#ifdef DEBUG
+void
+wesc_dump()
+{
+	int i;
+
+	for (i = 0; i < wesccd.cd_ndevs; ++i)
+		if (wesccd.cd_devs[i])
+			siop_dump(wesccd.cd_devs[i]);
+}
+#endif
