@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.1 1999/05/14 06:42:02 mrg Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.2 2000/03/19 12:50:43 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
@@ -142,9 +143,23 @@ kbd_zs_attach(parent, self, aux)
 	k->k_cs = cs;
 	k->k_write_data = kbd_zs_write_data;
 
-	if (args->hwflags & ZS_HWFLAG_CONSOLE) {
+	if ((args->hwflags & ZS_HWFLAG_CONSOLE_INPUT) != 0) {
+		/*
+		 * Hookup ourselves as the console input channel
+		 */
+		struct cons_channel *cc;
+
+		if ((cc = malloc(sizeof *cc, M_DEVBUF, M_NOWAIT)) == NULL)
+			return;
+
+		cc->cc_dev = self;
+		cc->cc_iopen = kbd_iopen;
+		cc->cc_iclose = kbd_iclose;
+		cc->cc_upstream = NULL;
+		cons_attach_input(cc);
+		k->k_cc = cc;
 		k->k_isconsole = 1;
-		printf(" (console)");
+		printf(" (console input)");
 	}
 	printf("\n");
 
@@ -173,9 +188,6 @@ kbd_zs_attach(parent, self, aux)
 	/* Magic sequence. */
 	k->k_magic1 = KBD_L1;
 	k->k_magic2 = KBD_A;
-
-	/* Now attach the (kd) pseudo-driver. */
-	kd_init(kbd_unit);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.22 1999/05/14 06:42:02 mrg Exp $	*/
+/*	$NetBSD: kbd.c,v 1.23 2000/03/19 12:50:43 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,7 +128,7 @@ kbdopen(dev, flags, mode, p)
 		return (EBUSY);
 	k->k_events.ev_io = p;
 
-	if ((error = kbd_iopen(unit)) != 0) {
+	if ((error = kbd_iopen(k->k_cc)) != 0) {
 		k->k_events.ev_io = NULL;
 		return (error);
 	}
@@ -213,7 +213,7 @@ int
 kbdioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
-	register caddr_t data;
+	caddr_t data;
 	int flag;
 	struct proc *p;
 {
@@ -498,8 +498,8 @@ kbd_xlate_init(ks)
  */
 int
 kbd_code_to_keysym(ks, c)
-	register struct kbd_state *ks;
-	register int c;
+	struct kbd_state *ks;
+	int c;
 {
 	u_short *km;
 	int keysym;
@@ -557,7 +557,7 @@ kbd_input_string(k, str)
 {
 
 	while (*str) {
-		kd_input(*str);
+		(*k->k_cc->cc_upstream)(*str);
 		str++;
 	}
 }
@@ -565,9 +565,9 @@ kbd_input_string(k, str)
 void
 kbd_input_funckey(k, keysym)
 	struct kbd_softc *k;
-	register int keysym;
+	int keysym;
 {
-	register int n;
+	int n;
 	char str[12];
 
 	/*
@@ -589,10 +589,10 @@ kbd_input_funckey(k, keysym)
 int
 kbd_input_keysym(k, keysym)
 	struct kbd_softc *k;
-	register int keysym;
+	int keysym;
 {
 	struct kbd_state *ks = &k->k_state;
-	register int data;
+	int data;
 
 	switch (KEYSYM_CLASS(keysym)) {
 
@@ -600,7 +600,7 @@ kbd_input_keysym(k, keysym)
 		data = KEYSYM_DATA(keysym);
 		if (ks->kbd_modbits & KBMOD_META_MASK)
 			data |= 0x80;
-		kd_input(data);
+		(*k->k_cc->cc_upstream)(data);
 		break;
 
 	case KEYSYM_STRING:
@@ -669,7 +669,7 @@ kbd_repeat(arg)
 void
 kbd_input_raw(k, c)
 	struct kbd_softc *k;
-	register int c;
+	int c;
 {
 	struct kbd_state *ks = &k->k_state;
 	struct firm_event *fe;
@@ -721,7 +721,7 @@ kbd_input_raw(k, c)
 	 * If /dev/kbd is not connected in event mode, 
 	 * translate and send upstream (to console).
 	 */
-	if (!k->k_evmode) {
+	if (!k->k_evmode && k->k_isconsole) {
 
 		/* Any input stops auto-repeat (i.e. key release). */
 		if (k->k_repeating) {
@@ -792,24 +792,21 @@ kbd_input_raw(k, c)
  * Called with user context.
  */
 int
-kbd_iopen(unit)
-	int unit;
+kbd_iopen(cc)
+	struct cons_channel *cc;
 {
-	struct kbd_softc *k;
+	struct kbd_softc *k = (struct kbd_softc *)cc->cc_dev;
 	struct kbd_state *ks;
 	int error, s;
 
-	if (unit >= kbd_cd.cd_ndevs)
-		return (ENXIO);
-	k = kbd_cd.cd_devs[unit];
 	if (k == NULL)
 		return (ENXIO);
+
 	ks = &k->k_state;
-	error = 0;
 
 	/* Tolerate extra calls. */
 	if (k->k_isopen)
-		return (error);
+		return (0);
 
 	s = spltty();
 
@@ -858,7 +855,14 @@ out:
 	if (error == 0)
 		k->k_isopen = 1;
 
-	return error;
+	return (error);
+}
+
+int
+kbd_iclose(cc)
+	struct cons_channel *cc;
+{
+	/* For now: */ return (0);
 }
 
 /*
@@ -1040,7 +1044,7 @@ kbd_update_leds(k)
     struct kbd_softc *k;
 {
 	struct kbd_state *ks = &k->k_state;
-	register char leds;
+	char leds;
 
 	leds = ks->kbd_leds;
 	leds &= ~(LED_CAPS_LOCK|LED_NUM_LOCK);
@@ -1052,4 +1056,3 @@ kbd_update_leds(k)
 
 	kbd_set_leds(k, leds);
 }
-
