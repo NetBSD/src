@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.60 2002/06/22 12:04:07 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.61 2002/06/22 12:27:09 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.60 2002/06/22 12:04:07 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.61 2002/06/22 12:27:09 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -355,6 +355,11 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		panic("ipsec4_getpolicybysock: unsupported address family\n");
 	}
 
+#ifdef DIAGNOSTIC
+	if (pcbsp == NULL)
+		panic("ipsec4_getpolicybysock: pcbsp is NULL.\n");
+#endif
+
 	/* if we have a cached entry, and if it is still valid, use it. */
 	ipsecstat.spdcachelookup++;
 	currsp = ipsec_checkpcbcache(m, pcbsp, dir);
@@ -363,10 +368,6 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		return currsp;
 	}
 	ipsecstat.spdcachemiss++;
-
-	/* sanity check */
-	if (pcbsp == NULL)
-		panic("ipsec4_getpolicybysock: pcbsp is NULL.\n");
 
 	switch (dir) {
 	case IPSEC_DIR_INBOUND:
@@ -557,6 +558,11 @@ ipsec6_getpolicybysock(m, dir, so, error)
 
 	pcbsp = sotoin6pcb(so)->in6p_sp;
 
+#ifdef DIAGNOSTIC
+	if (pcbsp == NULL)
+		panic("ipsec6_getpolicybysock: pcbsp is NULL.\n");
+#endif
+
 	/* if we have a cached entry, and if it is still valid, use it. */
 	ipsec6stat.spdcachelookup++;
 	currsp = ipsec_checkpcbcache(m, pcbsp, dir);
@@ -565,10 +571,6 @@ ipsec6_getpolicybysock(m, dir, so, error)
 		return currsp;
 	}
 	ipsec6stat.spdcachemiss++;
-
-	/* sanity check */
-	if (pcbsp == NULL)
-		panic("ipsec6_getpolicybysock: pcbsp is NULL.\n");
 
 	switch (dir) {
 	case IPSEC_DIR_INBOUND:
