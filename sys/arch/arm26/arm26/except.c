@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.32 2001/03/18 14:04:04 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.33 2001/06/02 11:17:32 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.32 2001/03/18 14:04:04 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.33 2001/06/02 11:17:32 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -452,6 +452,17 @@ do_fault(struct trapframe *tf, struct proc *p,
 
 	if (pmap_fault(map->pmap, va, atype))
 		return;
+#ifdef DEBUG
+	if (current_intr_depth > 0) {
+		printf("fault in interrupt context\n");
+		printregs(tf);
+		printf("pc -> ");
+		disassemble(tf->tf_r15 & R15_PC);
+#ifdef DDB
+		Debugger();
+#endif
+	}		
+#endif
 	for (;;) {
 		error = uvm_fault(map, va, 0, atype);
 		if (error != ENOMEM)
