@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.45 1998/04/25 17:41:01 matt Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.46 1998/06/13 04:28:46 tv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -127,22 +127,17 @@ nfs_boot_init(nd, procp)
 		printf("nfs_boot: trying BOOTP\n");
 #endif
 		error = nfs_bootdhcp(ifp, nd, procp);
-		if (!error)
-			goto ok;
 	}
 #endif
 #ifdef NFS_BOOT_BOOTPARAM
 	if (nfs_boot_bootparam) {
 		printf("nfs_boot: trying RARP (and RPC/bootparam)\n");
 		error = nfs_bootparam(ifp, nd, procp);
-		if (!error)
-			goto ok;
 	}
 #endif
-	if (0) goto ok; /* XXX stupid gcc */
-	return (error);
+	if (error)
+		return (error);
 
-ok:
 	/*
 	 * If the gateway address is set, add a default route.
 	 * (The mountd RPCs may go across a gateway.)
@@ -154,8 +149,6 @@ ok:
 	 * Now fetch the NFS file handles as appropriate.
 	 */
 	error = nfs_boot_getfh(&nd->nd_root);
-	if (error)
-		return (error);
 
 	return (error);
 }
