@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.5 1997/10/16 01:06:37 thorpej Exp $	*/
+/*	$NetBSD: com_supio.c,v 1.5.2.1 1997/11/12 01:35:15 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -70,9 +70,9 @@ int com_supio_match __P((struct device *, struct cfdata *, void *));
 void com_supio_attach __P((struct device *, struct device *, void *));
 void com_supio_cleanup __P((void *));
 
+#if 0
 static int      comconsaddr;
 static bus_space_handle_t comconsioh; 
-#if 0
 static int      comconsattached;
 static bus_space_tag_t comconstag;
 static int comconsrate; 
@@ -129,15 +129,13 @@ com_supio_attach(parent, self, aux)
 	 */
 	iobase = csc->sc_iobase = supa->supio_iobase;
 	iot = csc->sc_iot = supa->supio_iot;
-        if (iobase != comconsaddr) {
-                if (bus_space_map(iot, iobase, COM_NPORTS, 0, &csc->sc_ioh))
-			panic("comattach: io mapping failed");
-	} else
-                csc->sc_ioh = comconsioh;
+	printf(" port 0x%x ipl %d", iobase, supa->supio_ipl);
+
+	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &csc->sc_ioh))
+		panic("comattach: io mapping failed");
 
 	csc->sc_frequency = supa->supio_arg;
 
-	printf(" port 0x%x", iobase);
 	com_attach_subr(csc);
 
 	/* XXX this should be really in the interupt stuff */
