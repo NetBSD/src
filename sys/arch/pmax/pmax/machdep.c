@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 1996/01/31 08:46:53 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 1996/02/02 18:07:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,16 +95,16 @@
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/cons.h>
 
-#include <pm.h>
-#include <cfb.h>
-#include <mfb.h>
-#include <xcfb.h>
-#include <sfb.h>
-#include <dc.h>
-#include <dtop.h>
-#include <scc.h>
-#include <le.h>
-#include <asc.h>
+#include "pm.h"
+#include "cfb.h"
+#include "mfb.h"
+#include "xcfb.h"
+#include "sfb.h"
+#include "dc.h"
+#include "dtop.h"
+#include "scc.h"
+#include "le.h"
+#include "asc.h"
 
 #include <pmax/dev/sccvar.h>
 #include <pmax/dev/dcvar.h>

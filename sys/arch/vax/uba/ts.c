@@ -1,4 +1,4 @@
-/*      $NetBSD: ts.c,v 1.1 1996/01/06 16:43:46 ragge Exp $ */
+/*      $NetBSD: ts.c,v 1.2 1996/02/02 18:08:36 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -134,28 +134,28 @@ int tstrace = 1;
 #if NTS > 0
 
 
-#include "sys/param.h"
-#include "sys/systm.h" 
-#include "sys/kernel.h"
-#include "sys/buf.h" 
-#include "sys/conf.h"
-#include "sys/errno.h" 
-#include "sys/file.h"
-#include "sys/map.h"
-#include "sys/syslog.h"
-#include "sys/ioctl.h"
-#include "sys/mtio.h"
-#include "sys/uio.h"
-#include "sys/proc.h"
-#include "sys/tprintf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
+#include <sys/errno.h>
+#include <sys/file.h>
+#include <sys/map.h>
+#include <sys/syslog.h>
+#include <sys/ioctl.h>
+#include <sys/mtio.h>
+#include <sys/uio.h>
+#include <sys/proc.h>
+#include <sys/tprintf.h>
 
-#include "machine/pte.h"
-#include "machine/sid.h"
-#include "machine/cpu.h"
-#include "machine/mtpr.h"
+#include <machine/pte.h>
+#include <machine/sid.h>
+#include <machine/cpu.h>
+#include <machine/mtpr.h>
 
-#include "vax/uba/ubareg.h"
-#include "vax/uba/ubavar.h"
+#include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
 
 #include "tsreg.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.24 1996/02/01 02:37:15 phil Exp $ */
+/*	$NetBSD: scn.c,v 1.25 1996/02/02 18:06:57 mycroft Exp $ */
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -147,7 +147,7 @@ struct speedtab scnspeedtab[] = {
 extern	struct tty *constty;
 
 #ifdef KGDB
-#include "machine/remote-sl.h"
+#include <machine/remote-sl.h>
 
 extern int kgdb_dev;
 extern int kgdb_rate;

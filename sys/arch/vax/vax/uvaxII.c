@@ -1,4 +1,4 @@
-/*	$NetBSD: uvaxII.c,v 1.5 1996/01/28 11:45:07 ragge Exp $	*/
+/*	$NetBSD: uvaxII.c,v 1.6 1996/02/02 18:09:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,18 +35,18 @@
  *      @(#)ka630.c     7.8 (Berkeley) 5/9/91
  */
 
-#include "sys/param.h"
-#include "sys/types.h"
-#include "sys/device.h"
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/device.h>
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
 
-#include "machine/uvaxII.h"
-#include "machine/pte.h"
-#include "machine/mtpr.h"
-#include "machine/sid.h"
-#include "machine/pmap.h"
-#include "machine/nexus.h"
+#include <machine/uvaxII.h>
+#include <machine/pte.h>
+#include <machine/mtpr.h>
+#include <machine/sid.h>
+#include <machine/pmap.h>
+#include <machine/nexus.h>
 
 struct uvaxIIcpu *uvaxIIcpu_ptr;
 

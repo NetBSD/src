@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.3 1996/01/28 11:31:25 ragge Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.4 1996/02/02 18:08:50 mycroft Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 
-#include "vax/vax/db_disasm.h"
+#include <vax/vax/db_disasm.h>
 
 #ifdef VMS_MODE
 #define DEFERRED   '@'

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.9 1996/02/01 22:33:38 mycroft Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.10 1996/02/02 18:08:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -44,8 +44,8 @@
  * Each unibus device has a uba_device structure.
  */
 
-#include "sys/buf.h"
-#include "sys/device.h"
+#include <sys/buf.h>
+#include <sys/device.h>
 /*
  * Per-uba structure.
  *

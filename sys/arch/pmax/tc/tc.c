@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.8 1996/01/29 22:52:44 jonathan Exp $	*/
+/*	$NetBSD: tc.c,v 1.9 1996/02/02 18:08:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,9 +37,9 @@
 
 
 /* Which TC framebuffers have drivers, for configuring a console device. */
-#include <cfb.h>
-#include <mfb.h>
-#include <sfb.h>
+#include "cfb.h"
+#include "mfb.h"
+#include "sfb.h"
 
 extern int pmax_boardtype;
 

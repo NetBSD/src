@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.15 1996/01/28 12:24:33 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.16 1996/02/02 18:09:08 mycroft Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -34,23 +34,23 @@
 		
 
 
-#include "sys/types.h"
-#include "sys/param.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/syscall.h"
-#include "sys/systm.h"
-#include "sys/signalvar.h"
-#include "sys/exec.h"
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-#include "vax/include/mtpr.h"
-#include "vax/include/pte.h"
-#include "vax/include/pcb.h"
-#include "vax/include/trap.h"
-#include "vax/include/pmap.h"
-#include "kern/syscalls.c"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/syscall.h>
+#include <sys/systm.h>
+#include <sys/signalvar.h>
+#include <sys/exec.h>
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <machine/mtpr.h>
+#include <machine/pte.h>
+#include <machine/pcb.h>
+#include <machine/trap.h>
+#include <machine/pmap.h>
+#include <kern/syscalls.c>
 
 
 extern 	int want_resched,whichqs;

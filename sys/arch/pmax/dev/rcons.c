@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.6 1995/10/05 01:52:51 jonathan Exp $	*/
+/*	$NetBSD: rcons.c,v 1.7 1996/02/02 18:07:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -37,7 +37,7 @@
  *
  */
 
-#include <rasterconsole.h>
+#include "rasterconsole.h"
 #if NRASTERCONSOLE > 0
 
 #include <sys/param.h>

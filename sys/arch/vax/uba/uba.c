@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.12 1995/12/28 19:17:07 thorpej Exp $      */
+/*      $NetBSD: uba.c,v 1.13 1996/02/02 18:08:38 mycroft Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -37,31 +37,31 @@
  *      @(#)autoconf.c  7.20 (Berkeley) 5/9/91
  */
 
-#include "sys/param.h"
-#include "sys/types.h"
-#include "sys/time.h"
-#include "sys/systm.h"
-#include "sys/map.h"
-#include "sys/buf.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/conf.h"
-#include "sys/dkstat.h"
-#include "sys/kernel.h"
-#include "sys/malloc.h"
-#include "sys/device.h"
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/systm.h>
+#include <sys/map.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/conf.h>
+#include <sys/dkstat.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/device.h>
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
 
-#include "machine/pte.h"
-#include "machine/cpu.h"
-#include "machine/mtpr.h"
-#include "machine/nexus.h"
-#include "machine/sid.h"
-#include "machine/scb.h"
-#include "machine/trap.h"
-#include "machine/frame.h"
+#include <machine/pte.h>
+#include <machine/cpu.h>
+#include <machine/mtpr.h>
+#include <machine/nexus.h>
+#include <machine/sid.h>
+#include <machine/scb.h>
+#include <machine/trap.h>
+#include <machine/frame.h>
 
 #include "ubareg.h"
 #include "ubavar.h"

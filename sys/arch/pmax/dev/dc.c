@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.13 1996/01/29 22:52:16 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.14 1996/02/02 18:07:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  *	v 1.4 89/08/29 11:55:30 nelson Exp  SPRITE (DECWRL)";
  */
 
-#include <dc.h>
+#include "dc.h"
 #if NDC > 0
 /*
  * DC7085 (DZ-11 look alike) Driver

@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.6 1996/01/28 12:09:37 ragge Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.7 1996/02/02 18:09:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -38,18 +38,18 @@
 #include "uda.h"
 #include "hp.h"
 
-#include "sys/param.h"
-#include "sys/conf.h"
-#include "sys/buf.h"
-#include "sys/systm.h"
-#include "sys/reboot.h"
-#include "sys/device.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/systm.h>
+#include <sys/reboot.h>
+#include <sys/device.h>
 
-#include "machine/pte.h"
-#include "machine/mtpr.h"
+#include <machine/pte.h>
+#include <machine/mtpr.h>
 
-#include "../uba/ubareg.h"
-#include "../uba/ubavar.h"
+#include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
 
 /*
  * Generic configuration;  all in one

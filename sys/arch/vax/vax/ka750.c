@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.8 1995/12/13 18:50:34 ragge Exp $	*/
+/*	$NetBSD: ka750.c,v 1.9 1996/02/02 18:08:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -37,18 +37,18 @@
  *      @(#)autoconf.c  7.20 (Berkeley) 5/9/91
  */
 
-#include "sys/param.h"
-#include "sys/types.h"
-#include "sys/device.h"
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/device.h>
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
 
-#include "machine/ka750.h"
-#include "machine/pte.h"
-#include "machine/cpu.h"
-#include "machine/mtpr.h"
-#include "vax/uba/ubavar.h"
-#include "vax/uba/ubareg.h"
+#include <machine/ka750.h>
+#include <machine/pte.h>
+#include <machine/cpu.h>
+#include <machine/mtpr.h>
+#include <vax/uba/ubavar.h>
+#include <vax/uba/ubareg.h>
 
 /*
  * ka750_conf() is called by cpu_attach to do the cpu_specific setup.

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.4 1995/07/05 18:51:41 pk Exp $ */
+/*	$NetBSD: db_trace.c,v 1.5 1996/02/02 18:08:09 mycroft Exp $ */
 
 /* 
  * Mach Operating System
@@ -26,8 +26,8 @@
  * rights to redistribute these changes.
  */
 
-#include "param.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/proc.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>

@@ -1,5 +1,5 @@
 
-/*	$NetBSD: mba.c,v 1.1 1995/02/13 00:44:02 ragge Exp $ */
+/*	$NetBSD: mba.c,v 1.2 1996/02/02 18:08:31 mycroft Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,8 +38,8 @@
 
 #include "mba.h"
 #include "nexus.h"
-#include "vax/mba/mbavar.h"
-#include "vax/mba/mbareg.h"
+#include <vax/mba/mbavar.h>
+#include <vax/mba/mbareg.h>
 
 struct mba_ctrl mba_ctrl[NMBA];
 

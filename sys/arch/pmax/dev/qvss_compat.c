@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.2 1995/09/18 03:01:24 jonathan Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.3 1996/02/02 18:07:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -89,9 +89,9 @@
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 
-#include <dc.h>
-#include <scc.h>
-#include <dtop.h>
+#include "dc.h"
+#include "scc.h"
+#include "dtop.h"
 
 
 /*

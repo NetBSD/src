@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.10 1996/01/29 22:52:24 jonathan Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.11 1996/02/02 18:07:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,10 +80,10 @@
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
  */
 
-#include <fb.h>
+#include "fb.h"
 
-#include <xcfb.h>
-#include <dtop.h>
+#include "xcfb.h"
+#include "dtop.h"
 #if NXCFB > 0
 #if NDTOP == 0
 xcfb needs dtop device

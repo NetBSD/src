@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.14 1995/12/30 21:37:31 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.15 1996/02/02 18:08:25 mycroft Exp $    */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,8 +41,8 @@
 #ifndef _VAX_PARAM_H_
 #define _VAX_PARAM_H_
 
-#include "machine/macros.h"
-#include "machine/psl.h"
+#include <machine/macros.h>
+#include <machine/psl.h>
 
 /*
  * Machine dependent constants for VAX.

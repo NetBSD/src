@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.10 1995/12/13 19:02:47 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.11 1996/02/02 18:08:42 mycroft Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -85,35 +85,35 @@
 #define	STEP3MASK	ALLSTEPS
 #define	STEP3GOOD	UDA_STEP4
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "sys/conf.h"
-#include "sys/file.h"
-#include "sys/ioctl.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/map.h"
-#include "sys/device.h"
-#include "sys/dkstat.h"
-#include "sys/disklabel.h"
-#include "sys/syslog.h"
-#include "sys/stat.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/map.h>
+#include <sys/device.h>
+#include <sys/dkstat.h>
+#include <sys/disklabel.h>
+#include <sys/syslog.h>
+#include <sys/stat.h>
 
-#include "machine/pte.h"
-#include "machine/sid.h"
-#include "machine/cpu.h"
+#include <machine/pte.h>
+#include <machine/sid.h>
+#include <machine/cpu.h>
 
-#include "vax/uba/ubareg.h"
-#include "vax/uba/ubavar.h"
+#include <vax/uba/ubareg.h>
+#include <vax/uba/ubavar.h>
 
 #define	NRSP	(1 << NRSPL2)
 #define	NCMD	(1 << NCMDL2)
 
-#include "vax/uba/udareg.h"
-#include "vax/vax/mscp.h"
-#include "vax/vax/mscpvar.h"
-#include "machine/mtpr.h"
+#include <vax/uba/udareg.h>
+#include <vax/vax/mscp.h>
+#include <vax/vax/mscpvar.h>
+#include <machine/mtpr.h>
 
 extern int cold;
 

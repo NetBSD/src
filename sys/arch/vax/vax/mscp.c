@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.6 1995/11/30 00:59:37 jtc Exp $	*/
+/*	$NetBSD: mscp.c,v 1.7 1996/02/02 18:09:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -42,15 +42,15 @@
  * MSCP generic driver routines
  */
 
-#include "sys/param.h"
-#include "sys/buf.h"
-#include "sys/errno.h"
-#include "sys/dkstat.h"
-#include "sys/ioctl.h"
-#include "sys/disklabel.h"
-#include "sys/syslog.h"
+#include <sys/param.h>
+#include <sys/buf.h>
+#include <sys/errno.h>
+#include <sys/dkstat.h>
+#include <sys/ioctl.h>
+#include <sys/disklabel.h>
+#include <sys/syslog.h>
 
-#include "../uba/ubavar.h"
+#include <vax/uba/ubavar.h>
 
 #include "mscp.h"
 #include "mscpvar.h"

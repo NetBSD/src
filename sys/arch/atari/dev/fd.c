@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.13 1996/01/07 22:02:05 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.14 1996/02/02 18:05:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -48,25 +48,25 @@
  *   - Finish ioctl's
  */
 
-#include	<sys/param.h>
-#include	<sys/systm.h>
-#include	<sys/kernel.h>
-#include	<sys/malloc.h>
-#include	<sys/buf.h>
-#include	<sys/device.h>
-#include	<sys/ioctl.h>
-#include	<sys/fcntl.h>
-#include	<sys/conf.h>
-#include	<sys/disklabel.h>
-#include	<sys/disk.h>
-#include	<sys/dkbad.h>
-#include	<atari/atari/device.h>
-#include	<machine/disklabel.h>
-#include	<machine/iomap.h>
-#include	<machine/mfp.h>
-#include	<machine/dma.h>
-#include	<machine/video.h>
-#include	<atari/dev/fdreg.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/buf.h>
+#include <sys/device.h>
+#include <sys/ioctl.h>
+#include <sys/fcntl.h>
+#include <sys/conf.h>
+#include <sys/disklabel.h>
+#include <sys/disk.h>
+#include <sys/dkbad.h>
+#include <atari/atari/device.h>
+#include <machine/disklabel.h>
+#include <machine/iomap.h>
+#include <machine/mfp.h>
+#include <machine/dma.h>
+#include <machine/video.h>
+#include <atari/dev/fdreg.h>
 
 /*
  * Be verbose for debugging

@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.7 1996/01/28 12:11:57 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.8 1996/02/02 18:08:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -35,20 +35,20 @@
 
  /* All bugs are subject to removal without further notice */
 
-#include "sys/param.h"
-#include "sys/proc.h"
-#include "sys/systm.h"
-#include "sys/ioctl.h"
-#include "sys/tty.h"
-#include "sys/file.h"
-#include "sys/conf.h"
-#include "sys/device.h"
-#include "sys/reboot.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/file.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/reboot.h>
 
-#include "dev/cons.h"
+#include <dev/cons.h>
 
-#include "machine/mtpr.h"
-#include "machine/../vax/gencons.h"
+#include <machine/mtpr.h>
+#include <machine/../vax/gencons.h>
 
 struct	tty *gencn_tty[1];
 

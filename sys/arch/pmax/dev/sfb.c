@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.5 1996/01/31 02:53:39 jonathan Exp $	*/
+/*	$NetBSD: sfb.c,v 1.6 1996/02/02 18:07:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: sfb.c,v 1.5 1996/01/31 02:53:39 jonathan Exp $
+ *      $Id: sfb.c,v 1.6 1996/02/02 18:07:37 mycroft Exp $
  */
 
 /*
@@ -81,8 +81,8 @@
  * rights to redistribute these changes.
  */
 
-#include <fb.h>
-#include <sfb.h>
+#include "fb.h"
+#include "sfb.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>

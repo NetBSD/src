@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 1996/02/01 00:03:25 phil Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14 1996/02/02 18:07:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,8 +47,8 @@
  *   modified from 386 code for the pc532 by Phil Nelson (12/92)
  */
 
-#include "machine/psl.h"
-#include "machine/frame.h"
+#include <machine/psl.h>
+#include <machine/frame.h>
 
 /*
  * definitions of cpu-dependent requirements

@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.13 1995/12/13 18:57:57 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.14 1996/02/02 18:08:20 mycroft Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -32,9 +32,9 @@
 
  /* All bugs are subject to removal without further notice */
 
-#include "sys/cdefs.h"
-#include "machine/mtpr.h"
-#include "machine/pcb.h"
+#include <sys/cdefs.h>
+#include <machine/mtpr.h>
+#include <machine/pcb.h>
 
 #define enablertclock()
 #define	cpu_wait(p)

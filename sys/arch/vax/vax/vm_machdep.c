@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.19 1996/01/28 12:22:49 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.20 1996/02/02 18:09:11 mycroft Exp $       */
 
 #undef SWDEBUG
 /*
@@ -33,25 +33,25 @@
 
  /* All bugs are subject to removal without further notice */
 		
-#include "sys/types.h"
-#include "sys/param.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/exec.h"
-#include "sys/vnode.h"
-#include "sys/core.h"
-#include "sys/mount.h"
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-#include "machine/vmparam.h"
-#include "machine/mtpr.h"
-#include "machine/pmap.h"
-#include "machine/pte.h"
-#include "machine/macros.h"
-#include "machine/trap.h"
-#include "machine/pcb.h"
-#include "machine/frame.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/exec.h>
+#include <sys/vnode.h>
+#include <sys/core.h>
+#include <sys/mount.h>
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <machine/vmparam.h>
+#include <machine/mtpr.h>
+#include <machine/pmap.h>
+#include <machine/pte.h>
+#include <machine/macros.h>
+#include <machine/trap.h>
+#include <machine/pcb.h>
+#include <machine/frame.h>
 
 #include <sys/syscallargs.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.11 1996/01/28 12:18:06 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.12 1996/02/02 18:08:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,18 +33,18 @@
  /* All bugs are subject to removal without further notice */
 		
 
-#include "sys/param.h"
-#include "sys/types.h"
-#include "sys/reboot.h"
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/reboot.h>
 
-#include "vm/vm.h"
+#include <vm/vm.h>
 
-#include "machine/cpu.h"
-#include "machine/sid.h"
-#include "machine/uvaxII.h"
-#include "machine/param.h"
-#include "machine/vmparam.h"
-#include "machine/pcb.h"
+#include <machine/cpu.h>
+#include <machine/sid.h>
+#include <machine/uvaxII.h>
+#include <machine/param.h>
+#include <machine/vmparam.h>
+#include <machine/pcb.h>
 
 u_int	proc0paddr;
 int	cpunumber, *Sysmap, boothowto, cpu_type;

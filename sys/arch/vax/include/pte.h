@@ -1,4 +1,4 @@
-/*      $NetBSD: pte.h,v 1.7 1996/01/28 12:31:24 ragge Exp $      */
+/*      $NetBSD: pte.h,v 1.8 1996/02/02 18:08:28 mycroft Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "machine/param.h"
+#include <machine/param.h>
 
 #ifndef ASSEMBLER
 

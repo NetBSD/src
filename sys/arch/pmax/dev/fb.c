@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.9 1995/10/05 01:52:57 jonathan Exp $	*/
+/*	$NetBSD: fb.c,v 1.10 1996/02/02 18:07:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,11 +93,11 @@
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 
-#include <rasterconsole.h>
+#include "rasterconsole.h"
 
-#include <dc.h>
-#include <scc.h>
-#include <dtop.h>
+#include "dc.h"
+#include "scc.h"
+#include "dtop.h"
 
 /*
  * This framebuffer driver is a generic driver for all supported
@@ -163,7 +163,7 @@ u_short defCursor[32] = {
  */
 
 #include <sys/device.h>
-#include <fb.h>
+#include "fb.h"
 
 
 static struct {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp.c,v 1.8 1995/08/12 20:31:11 mycroft Exp $	*/
+/*	$NetBSD: dp.c,v 1.9 1996/02/02 18:06:54 mycroft Exp $	*/
 
 /* Written by Phil Nelson for the pc532.  Used source with the following
  * copyrights as a model.
@@ -66,7 +66,7 @@
 #include <machine/frame.h>
 #include <machine/icu.h>
 
-#include "device.h"
+#include <sys/device.h>
 #include "dpreg.h"
 
 #define DP_DEBUG 0
