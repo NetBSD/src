@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -142,7 +142,7 @@ opt_l(type, s)
 	{
 	case INIT:
 		t = s;
-		n = getnum(&t, 'l', &err);
+		n = getnum(&t, "l", &err);
 		if (err || n <= 0)
 		{
 			error("Line number is required after -l", NULL_PARG);
@@ -367,7 +367,7 @@ opt__V(type, s)
 		any_display = 1;
 		putstr("less ");
 		putstr(version);
-		putstr("\nCopyright (C) 2001 Mark Nudelman\n\n");
+		putstr("\nCopyright (C) 2002 Mark Nudelman\n\n");
 		putstr("less comes with NO WARRANTY, to the extent permitted by law.\n");
 		putstr("For information about the terms of redistribution,\n");
 		putstr("see the file named README in the less distribution.\n");
@@ -390,7 +390,7 @@ colordesc(s, fg_color, bg_color)
 	int fg, bg;
 	int err;
 	
-	fg = getnum(&s, 'D', &err);
+	fg = getnum(&s, "D", &err);
 	if (err)
 	{
 		error("Missing fg color in -D", NULL_PARG);
@@ -401,7 +401,7 @@ colordesc(s, fg_color, bg_color)
 	else
 	{
 		s++;
-		bg = getnum(&s, 'D', &err);
+		bg = getnum(&s, "D", &err);
 		if (err)
 		{
 			error("Missing fg color in -D", NULL_PARG);
