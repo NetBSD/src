@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)psl.h	7.2 (Berkeley) 5/4/91
- *	$Id: psl.h,v 1.2 1993/05/22 07:58:31 cgd Exp $
+ *	@(#)psl.h	8.1 (Berkeley) 6/10/93
  */
 
 #ifndef PSL_C
@@ -53,7 +52,9 @@
 #define	PSL_IPL5	0x0500		/* interrupt priority level 5 */
 #define	PSL_IPL6	0x0600		/* interrupt priority level 6 */
 #define	PSL_IPL7	0x0700		/* interrupt priority level 7 */
+#define	PSL_M		0x1000		/* master (kernel) sp vs intr sp */
 #define	PSL_S		0x2000		/* supervisor enable bit */
+/*	PSL_T0		0x4000		   ??? T0 on 68020, 8000 is T1 */
 #define	PSL_T		0x8000		/* trace enable bit */
 
 #define	PSL_LOWIPL	(PSL_S)
@@ -61,14 +62,10 @@
 #define PSL_IPL		(PSL_IPL7)
 #define	PSL_USER	(0)
 
-#define	PSL_MBZ		0x58E0		/* must be zero bits */
+#define	PSL_MBZ		0xFFFF58E0	/* must be zero bits */
 
 #define	PSL_USERSET	(0)
 #define	PSL_USERCLR	(PSL_S | PSL_IPL7 | PSL_MBZ)
 
-/*
- * Macros to decode processor status word.
- */
 #define	USERMODE(ps)	(((ps) & PSL_S) == 0)
-#define	BASEPRI(ps)	(((ps) & PSL_IPL7) == 0)
 #endif
