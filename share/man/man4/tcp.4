@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.8 2002/02/13 08:17:48 ross Exp $
+.\"	$NetBSD: tcp.4,v 1.8.2.1 2002/07/21 00:55:57 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -133,6 +133,20 @@ call is the protocol number for
 .Tn TCP ,
 available from
 .Xr getprotobyname 3 .
+In the
+.Bx
+historical
+.Tn TCP
+implementation, if the
+.Dv TCP_NODELAY
+option was set on a passive socket, the sockets returned by
+.Xr accept 2
+erroneously did not have the
+.Dv TCP_NODELAY
+option set; the behavior was corrected to inherit
+.Dv TCP_NODELAY
+in
+.Nx 1.6 .
 .Pp
 Options at the
 .Tn IP
