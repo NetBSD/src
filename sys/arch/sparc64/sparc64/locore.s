@@ -1,6 +1,6 @@
-/*	$NetBSD: locore.s,v 1.41 1999/06/05 21:58:18 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.42 1999/06/21 01:39:06 eeh Exp $	*/
 /*
- * Copyright (c) 1996, 1997, 1998 Eduardo Horvath
+ * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
  * Copyright (c) 1996
  * 	The President and Fellows of Harvard College. All rights reserved.
@@ -52,6 +52,7 @@
 
 #undef NO_VCACHE		/* Map w/D$ disabled */
 #undef TRAPTRACE		/* Keep history of all traps (may watchdog) */
+#define FLTRACE			/* Keep history of all page faults only */
 #define TRAPSTATS		/* Count traps */
 #undef TRAPS_USE_IG		/* Use Interrupt Globals for trap handling */
 #undef LOCKED_PCB		/* Lock current proc's PCB in MMU */
@@ -430,7 +431,11 @@ _C_LABEL(msgbuf) = KERNBASE
 #define TRACEWIN	TRACEME
 #define TRACERELOAD32
 #define TRACERELOAD64
+#ifdef FLTRACE
+#define TRACEFLT	sethi %hi(1f), %g1; ba,pt %icc,traceit; or %g1, %lo(1f), %g1; 1:
+#else
 #define TRACEFLT	TRACEME
+#endif
 #define	VTRAP(type, label) \
 	set KERNBASE+0x28, %g1; rdpr %tt, %g2; b label; stx %g2, [%g1]; NOTREACHED; TA8
 #endif
@@ -455,7 +460,11 @@ _C_LABEL(msgbuf) = KERNBASE
 #define TRACEWIN	TRACEME
 #define TRACERELOAD32
 #define TRACERELOAD64
+#ifdef FLTRACE
+#define TRACEFLT	sethi %hi(1f), %g1; ba,pt %icc,traceit; or %g1, %lo(1f), %g1; 1:
+#else
 #define TRACEFLT	TRACEME
+#endif
 #define	VTRAP(type, label) \
 	ba,a,pt	%icc,label; nop; NOTREACHED; TA8
 #endif
@@ -1381,7 +1390,7 @@ _C_LABEL(trap_trace):
 	.space	TRACESIZ
 _C_LABEL(trap_trace_end):
 	.space	0x20		! safety margin
-#ifdef	TRAPTRACE
+#if	defined(TRAPTRACE)||defined(FLTRACE)
 #define TRACEPTR	(_C_LABEL(trap_trace_ptr)-_C_LABEL(trap_trace))
 #define TRACEDIS	(_C_LABEL(trap_trace_dis)-_C_LABEL(trap_trace))
 traceit:
@@ -1401,13 +1410,13 @@ traceit:
 	brz,pn	%g6, 2f
 	 andncc	%g3, (TRACESIZ-1), %g0
 !	LDPTR	[%g6+P_PID], %g5	! Load PID
-2:
 	
 	set	_C_LABEL(cpcb), %g6	! Load up nsaved
 	LDPTR	[%g6], %g6
 	ldub	[%g6 + PCB_NSAVED], %g6
 	sllx	%g6, 9, %g6
 	or	%g6, %g4, %g4
+2:
 	
 	rdpr	%tstate, %g6
 	movnz	%icc, %g0, %g3
@@ -1420,6 +1429,10 @@ traceit:
 	inc	4, %g3
 	stw	%sp, [%g2+%g3]
 	inc	4, %g3
+	stw	%g7, [%g2+%g3]
+	inc	4, %g3
+	mov	TLB_TAG_ACCESS, %g7
+	ldxa	[%g7] ASI_DMMU, %g7
 	stw	%g7, [%g2+%g3]
 	inc	4, %g3
 1:	
@@ -1453,6 +1466,8 @@ traceitwin:
 	stw	%sp, [%l2+%l3]
 	inc	4, %l3
 	stw	%l7, [%l2+%l3]
+	inc	4, %l3
+	stw	%g0, [%l2+%l3]
 	inc	4, %l3
 	stw	%l3, [%l2+TRACEPTR]
 1:
@@ -2343,6 +2358,10 @@ winfixspill:
 	inc	4, %g3
 	stw	%g7, [%g2+%g3]
 	inc	4, %g3
+	mov	TLB_TAG_ACCESS, %g7
+	ldxa	[%g7] ASI_DMMU, %g7
+	stw	%g7, [%g2+%g3]
+	inc	4, %g3
 	stw	%g3, [%g2+TRACEPTR]
 1:
 	ba	datafault
@@ -2689,6 +2708,10 @@ winfixsave:
 	inc	4, %g3
 	stw	%sp, [%g2+%g3]
 	inc	4, %g3
+	stw	%g7, [%g2+%g3]
+	inc	4, %g3
+	mov	TLB_TAG_ACCESS, %g7
+	ldxa	[%g7] ASI_DMMU, %g7
 	stw	%g7, [%g2+%g3]
 	inc	4, %g3
 	stw	%g3, [%g2+TRACEPTR]
@@ -4316,6 +4339,10 @@ rft_kernel:
 	inc	4, %g3
 	stw	%g7, [%g2+%g3]
 	inc	4, %g3
+	mov	TLB_TAG_ACCESS, %g7
+	ldxa	[%g7] ASI_DMMU, %g7
+	stw	%g7, [%g2+%g3]
+	inc	4, %g3
 	stw	%g3, [%g2+TRACEPTR]
 1:	
 #endif
@@ -4633,6 +4660,10 @@ badregs:
 	inc	4, %g3
 	stw	%sp, [%g2+%g3]
 	inc	4, %g3
+	stw	%g7, [%g2+%g3]
+	inc	4, %g3
+	mov	TLB_TAG_ACCESS, %g7
+	ldxa	[%g7] ASI_DMMU, %g7
 	stw	%g7, [%g2+%g3]
 	inc	4, %g3
 	stw	%g3, [%g2+TRACEPTR]
@@ -7407,6 +7438,10 @@ Lsw_havectx:
 	inc	4, %o3
 	stw	%o7, [%o2+%o3]
 	inc	4, %o3
+	mov	TLB_TAG_ACCESS, %o4
+	ldxa	[%o4] ASI_DMMU, %o4
+	stw	%o4, [%o2+%o3]
+	inc	4, %o3
 	stw	%o3, [%o2+TRACEPTR]
 1:	
 #endif
@@ -7706,7 +7741,7 @@ ENTRY(probeget)
 	! %o0 = asi, %o1 = addr, %o2 = (1,2,4)
 	sethi	%hi(_C_LABEL(cpcb)), %o3
 	LDPTR	[%o3 + %lo(_C_LABEL(cpcb))], %o3	! cpcb->pcb_onfault = Lfserr;
-	set	Lfserr, %o5
+	set	_C_LABEL(Lfsbail), %o5
 	STPTR	%o5, [%o3 + PCB_ONFAULT]
 	btst	1, %o2
 	wr	%o0, 0, %asi
@@ -7757,7 +7792,7 @@ ENTRY(probeset)
 	! %o0 = asi, %o1 = addr, %o2 = (1,2,4), %o3 = val
 	sethi	%hi(_C_LABEL(cpcb)), %o4
 	LDPTR	[%o4 + %lo(_C_LABEL(cpcb))], %o4	! cpcb->pcb_onfault = Lfserr;
-	set	Lfserr, %o5
+	set	_C_LABEL(Lfsbail), %o5
 	STPTR	%o5, [%o4 + PCB_ONFAULT]
 	btst	1, %o2
 	wr	%o0, 0, %asi
