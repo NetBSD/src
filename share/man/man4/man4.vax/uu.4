@@ -1,4 +1,4 @@
-.\"	$NetBSD: uu.4,v 1.8 2001/08/18 14:37:49 wiz Exp $
+.\"	$NetBSD: uu.4,v 1.9 2003/04/06 19:29:42 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 .Sh NAME
 .Nm uu
 .Nd
-.Tn TU58 Ns / Tn DECtape II UNIBUS
+.Tn TU-58 Ns / Ns Tn DECtape II UNIBUS
 cassette interface
 .Sh SYNOPSIS
 .Cd "options UUDMA"
@@ -53,18 +53,18 @@ The
 .Nm uu
 device provides access to dual
 .Tn DEC
-.Tn TU58
+.Tn TU-58
 tape cartridge drives
 connected to the
 .Tn UNIBUS
 via a
-.Tn DL11-W
+.Tn DL-11W
 interface module.
 .Pp
 The interface supports only block
 .Tn I/O
 to the
-.Tn TU58
+.Tn TU-58
 cassettes (see
 .Xr physio 4 ) .
 The drives are normally manipulated with the
@@ -76,7 +76,7 @@ The driver provides for an optional write and verify
 ``a'' device.
 .Pp
 The
-.Tn TU58
+.Tn TU-58
 is treated as a single device by the system even
 though it has two separate drives,
 .Sq Li uu0
@@ -84,7 +84,7 @@ and
 .Sq Li uu1 .
 If there is
 more than one
-.Tn TU58
+.Tn TU-58
 unit on a system, the extra drives
 are named
 .Sq Li uu2 ,
@@ -118,7 +118,7 @@ count, and the block number on the cassette.
 .Pp
 .It uu%d: break received, transfer restarted.
 The
-.Tn TU58
+.Tn TU-58
 was sending a continuous break signal and had
 to be reset. This may indicate a hardware problem, but
 the driver will attempt to recover from the error.
