@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.host,v 1.1 2001/08/14 11:01:56 tv Exp $
+#	$NetBSD: Makefile.host,v 1.2 2001/10/13 06:09:25 jmc Exp $
 
 # Preload <bsd.obj.mk> to set up obj rules (with proper ${.CURDIR}).
 .include <bsd.obj.mk>
@@ -32,8 +32,21 @@ ${TIMESTAMP}:	${.CURDIR}/Makefile
 .include <bsd.hostprog.mk>
 
 # Install rule.
-realinstall: install.host
+realinstall: install.host install.files
 install.host:
 	mkdir -p ${HOST_BINDIR}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${BINMODE} \
 		${HOSTPROG} ${HOST_BINDIR}/${HOSTPROGNAME}
+
+.if defined(HOSTFILES)
+install.files:
+	mkdir -p ${HOST_FILESDIR}
+	for i in ${HOSTFILES}; \
+	do \
+		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE} \
+			${.CURDIR}/$$i ${HOST_FILESDIR}/$$i; \
+	done
+.else
+install.files:
+.endif
+
