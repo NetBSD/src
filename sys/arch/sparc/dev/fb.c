@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.40 1999/08/13 09:59:47 ad Exp $ */
+/*	$NetBSD: fb.c,v 1.41 1999/08/24 11:12:08 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -377,10 +377,8 @@ fbrcons_init(fb)
 	ri->ri_depth = fb->fb_type.fb_depth;
 	ri->ri_width = fb->fb_type.fb_width;
 	ri->ri_height = fb->fb_type.fb_height;
-
-	/* These'll be sanity checked by rasops... */
-	maxrow = 0;
-	maxcol = 0;
+	maxrow = 5000;
+	maxcol = 5000;
 
 #if !defined(RASTERCONS_FULLSCREEN)
 #if defined(SUN4)
@@ -404,14 +402,16 @@ fbrcons_init(fb)
 	}
 #endif /* !RASTERCONS_FULLSCREEN */
 	/* 
-	 * XXX until somebody actually sets the colormap after a call to 
-	 * rasops_init() with ri->ri_cmap, we can only do mono..
+	 * - force monochrome output
+	 * - eraserows() hack to clear the *entire* display
+	 * - cursor is currently enabled
+	 * - center output
 	 */
-	ri->ri_forcemono = 1;
+	ri->ri_flg = RI_FORCEMONO | RI_FULLCLEAR | RI_CURSOR | RI_CENTER;
 
 	/* Get operations set and connect to rcons */
-	if (rasops_init(ri, maxrow, maxcol, 0, 1))
-		panic("fbrcons_init: rasops_init failed");
+	if (rasops_init(ri, maxrow, maxcol))
+		panic("fbrcons_init: rasops_init failed!");
 		
 	/* PROM sets up colormap so black is index 0x00 and white is 0xff */
 	if (ri->ri_depth == 8) {
@@ -427,6 +427,9 @@ fbrcons_init(fb)
 		rc->rc_col = *col;
 	}
 #endif
+	ri->ri_crow = rc->rc_row;
+	ri->ri_ccol = rc->rc_col;
+
 	rc->rc_ops = &ri->ri_ops;
 	rc->rc_cookie = ri;
 	rc->rc_bell = fb_bell;
