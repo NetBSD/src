@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.13 1996/09/08 14:48:21 mycroft Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.14 1996/10/10 23:25:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -1320,7 +1320,7 @@ spp_usrreq(so, req, m, nam, control, p)
 		    (struct ifnet *)control, p));
 
 	s = splsoftnet();
-	nsp == sotonspcb(so);
+	nsp = sotonspcb(so);
 	if (nsp == 0 && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
@@ -1741,7 +1741,7 @@ spp_timers(cb, timer)
 	 * control block.
 	 */
 	case SPPT_2MSL:
-		printf("spp: SPPT_2MSL went off for no reason\n");
+		kprintf("spp: SPPT_2MSL went off for no reason\n");
 		cb->s_timer[timer] = 0;
 		break;
 

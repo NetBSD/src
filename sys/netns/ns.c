@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.12 1996/09/08 14:49:41 mycroft Exp $	*/
+/*	$NetBSD: ns.c,v 1.13 1996/10/10 23:25:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -74,7 +74,7 @@ ns_control(so, cmd, data, ifp, p)
 	register struct ns_ifaddr *ia = 0;
 	struct ns_aliasreq *ifra = (struct ns_aliasreq *)data;
 	struct sockaddr_ns oldaddr;
-	int error, dstIsNew, hostIsNew;
+	int error = 0, dstIsNew, hostIsNew;
 
 	/*
 	 * Find address for this interface, if it exists.
