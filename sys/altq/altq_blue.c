@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.9 2004/02/13 18:02:05 wiz Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.9.2.1 2004/06/27 13:25:27 he Exp $	*/
 /*	$KAME: altq_blue.c,v 1.8 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.9 2004/02/13 18:02:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.9.2.1 2004/06/27 13:25:27 he Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.9 2004/02/13 18:02:05 wiz Exp $");
 /*
  * Blue is proposed and implemented by Wu-chang Feng <wuchang@eecs.umich.edu>.
  * more information on Blue is available from
- * http://www.eecs.umich.edu/~wuchang/blue/
+ * http://www.thefengs.com/wuchang/work/blue/
  */
 
 /* fixed-point uses 12-bit decimal places */
