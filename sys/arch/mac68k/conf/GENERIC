@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.59 1997/03/15 18:35:47 scottr Exp $
+#	$NetBSD: GENERIC,v 1.60 1997/03/15 20:07:37 briggs Exp $
 #
 # GENERIC
 
@@ -76,9 +76,11 @@ config		netbsd	root on ? type ?
 
 asc0		at obio?			# ASC/EASC audio
 intvid0		at obio?			# Internal video hardware
+sn*		at obio?			# SONIC-based internal ethernet
 
 nubus0		at mainbus?
 ae*		at nubus?			# 8390-based Ethernet NIC
+sn*		at nubus?			# SONIC-based Ethernet NIC
 macvid*		at nubus?			# NuBus video card
 
 # Attach grf semantics to all video hardware as it is found
