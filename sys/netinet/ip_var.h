@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.64 2003/12/08 02:23:27 jonathan Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.65 2003/12/12 21:17:59 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -251,6 +251,7 @@ void	ipflow_init __P((void));
 struct	ipflow *ipflow_reap __P((int));
 void	ipflow_create __P((const struct route *, struct mbuf *));
 void	ipflow_slowtimo __P((void));
+void	ipflow_invalidate_all __P((void));
 
 extern uint16_t	ip_id;
 static __inline uint16_t ip_newid __P((void));
