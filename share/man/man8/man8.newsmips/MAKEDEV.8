@@ -1,0 +1,168 @@
+.\" *** ------------------------------------------------------------------
+.\" *** This file was generated automatically
+.\" *** from src/etc/etc.newsmips/MAKEDEV and
+.\" *** src/share/man/man8/MAKEDEV.8.template
+.\" ***
+.\" *** DO NOT EDIT - any changes will be lost!!!
+.\" *** ------------------------------------------------------------------
+.\"
+.\" $NetBSD: MAKEDEV.8,v 1.1 2001/06/08 14:32:12 wiz Exp $
+.\"
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Thomas Klausner.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd June 8, 2001
+.Dt MAKEDEV 8 newsmips
+.Os
+.Sh NAME
+.Nm MAKEDEV
+.Nd create system and device special files
+.Sh SYNOPSIS
+.Nm
+.Ar special Op Ar ...
+
+.Nm
+.Ar device Op Ar ...
+.Sh DESCRIPTION
+.Nm
+is used to create system and device special files.
+As arguments it takes the names of known devices, like
+.Ar sd0 ,
+or of special targets, like
+.Pa all
+or
+.Pa std ,
+which create a collection of device special files.
+.Pp
+The script is in
+.Pa /dev/MAKEDEV
+and must be called from the
+.Pa /dev
+directory.
+.Pp
+The special targets supported on
+.Nx Ns / Ns newsmips
+are:
+.Pp
+.\" @@@SPECIAL@@@
+.Bl -tag -width 01234567 -compact
+.It Ar std
+Standard devices
+.It Ar local
+Configuration specific devices
+.El
+.Pp
+Please note that any hash marks
+.Pq Dq #
+in the following list of supported device targets must be replaced by
+digits when calling
+.Nm "" :
+.Pp
+.\" @@@DEVICES@@@
+.Bl -tag -width 01
+.It Tapes:
+. Bl -tag -width 0123456789 -compact
+. It Ar st#
+? tape, see
+.Xr st 4
+. El
+.It Disks:
+. Bl -tag -width 0123456789 -compact
+. It Ar sd#
+SCSI disks, see
+.Xr sd 4
+. It Ar cd#
+SCSI cdrom drives, see
+.Xr cd 4
+. It Ar st#
+SCSI tape, see
+.Xr st 4
+. It Ar ch#
+SCSI changer, see
+.Xr ch 4
+. It Ar vnd#
+``file'' pseudo-disks, see
+.Xr vnd 4
+. It Ar ccd#
+Concatenated disk devices, see
+.Xr ccd 4
+. It Ar raid#
+RAIDframe disk devices, see
+.Xr raid 4
+. It Ar md#
+Memory pseudo-disk devices, see
+.Xr md 4
+. El
+.It Pseudo terminals:
+. Bl -tag -width 0123456789 -compact
+. It Ar pty#
+Set of 16 master and slave pseudo terminals, see
+.Xr pty 4
+. El
+.It Special purpose devices:
+. Bl -tag -width 0123456789 -compact
+. It Ar bpf#
+Packet filter, see
+.Xr bpf 4
+. It Ar lkm
+Loadable kernel modules interface, see
+.Xr lkm 4
+. It Ar tun#
+Network tunnel driver, see
+.Xr tun 4
+. It Ar ipl
+Ip filter
+. It Ar random
+Random number generator
+. It Ar scsibus#
+SCSI busses
+. El
+.El
+.Sh FILES
+.Bl -tag -width "/dev/MAKEDEV" -compact
+.It Pa /dev
+special device files directory
+.It Pa /dev/MAKEDEV
+script described in this man page
+.El
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr config 8 ,
+.Xr mknod 8
+.Sh BUGS
+This man page is generated automatically from the same sources
+as
+.Pa /dev/MAKEDEV ,
+in which the device files are not always sorted, which may result
+in an unusual (non-alphabetical) order.
