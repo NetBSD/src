@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.8.2.9 2000/02/24 23:02:49 he Exp $
+.\"	$NetBSD: contents,v 1.8.2.10 2000/03/01 14:06:34 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -424,7 +424,7 @@ everything described below.
 .if r_macppc .Em 11.1M gzipped, 30.5M uncompressed
 .if r_next68k .Em 12.9M gzipped, 40.1M uncompressed
 .if r_pc532 .Em 10.4M gzipped, 26.2M uncompressed
-.if r_pmax .Em 12.8M gzipped, 40.6M uncompressed
+.if r_pmax .Em 13.2M gzipped, 41.8M uncompressed
 .if r_sparc .Em 11.9M gzipped, 33.4M uncompressed
 .if r_vax .Em 10.1M gzipped, 24.8M uncompressed
 .if r_x68k .Em 10.2M gzipped, 28.8M uncompressed
@@ -450,7 +450,7 @@ system call and library manual pages.
 .if r_macppc .Em 8.5M gzipped, 32.3M uncompressed
 .if r_next68k .Em 13M gzipped, 50M uncompressed
 .if r_pc532 .Em 8.3M gzipped, 27.5M uncompressed
-.if r_pmax .Em 11.3M gzipped, 48.7M uncompressed
+.if r_pmax .Em 11.6M gzipped, 49.4M uncompressed
 .if r_sparc .Em 9.6M gzipped, 31.8M uncompressed
 .if r_vax .Em 8.1M gzipped, 27.3M uncompressed
 .if r_x68k .Em 8.1M gzipped, 27.3M uncompressed
@@ -478,7 +478,7 @@ upgrade your configuration files by hand.)
 .if r_macppc .Em 56K gzipped, 330K uncompressed
 .if r_next68k .Em 56K gzipped, 330K uncompressed
 .if r_pc532 .Em 56K gzipped, 330K uncompressed
-.if r_pmax .Em 58K gzipped, 340K uncompressed
+.if r_pmax .Em 59K gzipped, 380K uncompressed
 .if r_sparc .Em 60K gzipped, 350K uncompressed
 .if r_vax .Em 60K gzipped, 350K uncompressed
 .if r_x68k .Em 57K gzipped, 340K uncompressed
@@ -519,7 +519,7 @@ install this distribution set.
 .if r_macppc .Em 846k gzipped, 1.9M uncompressed
 .if r_next68k .Em 532k gzipped, 1.1M uncompressed
 .if r_pc532 .Em 457k gzipped, 910k uncompressed
-.if r_pmax .Em 792k gzipped, 2.1M uncompressed
+.if r_pmax .Em 817k gzipped, 2.1M uncompressed
 .if r_sparc .Em 2.9M gzipped, 6.7M uncompressed
 .if r_vax .Em 517k gzipped, 1M uncompressed
 .if r_x68k .Em 627k gzipped, 1.4M uncompressed
@@ -566,7 +566,7 @@ that are included in the other sets.
 .if r_macppc .Em 3.8M gzipped, 15.2M uncompressed
 .if r_next68k .Em 3.9M gzipped, 15.6M uncompressed
 .if r_pc532 .Em 4.1M gzipped, 16.8M uncompressed
-.if r_pmax .Em 4M gzipped, 15.9M uncompressed
+.if r_pmax .Em 4.1M gzipped, 16.4M uncompressed
 .if r_sparc .Em 4M gzipped, 16.0M uncompressed
 .if r_vax .Em 4.2M gzipped, 17.2M uncompressed
 .if r_x68k .Em 4M gzipped, 15.9M uncompressed
@@ -663,6 +663,7 @@ for updated information on this issue.
 .br
 .if r_alpha .Em 1M gzipped, 3M uncompressed
 .if r_i386 . Em 798K gzipped, 2.4M uncompressed
+.if r_pmax . Em 1M gzipped, 4.2M uncompressed
 .\}
 .
 .
@@ -721,7 +722,7 @@ Programs that were contributed to X.
 .if r_i386 .Em 184k gzipped, 600k uncompressed
 .if r_mac68k .Em 178k gzipped, 664k uncompressed
 .if r_macppc .Em 188k gzipped, 580k uncompressed
-.if r_pmax .Em 206k gzipped, 770k uncompressed
+.if r_pmax .Em 207k gzipped, 770k uncompressed
 .if r_sparc .Em 205k gzipped, 750k uncompressed
 .if r_x68k .Em 179k gzipped, 670k uncompressed
 .It Sy xfont
