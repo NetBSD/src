@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.18 1998/08/15 16:58:53 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.19 1998/08/15 17:04:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -1448,6 +1448,10 @@ static void tl_ticks(v)
 	tl_softc_t *sc = v;
 
 	tl_read_stats(sc);
+
+	/* Tick the MII. */
+	mii_tick(&sc->tl_mii);
+
 	if (sc->opkt > 0) {
 		if (sc->oerr_exesscoll > sc->opkt / 100) {
 			/* exess collisions */
