@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.17 2000/02/11 19:25:13 thorpej Exp $ */
+/* $NetBSD: vmparam.h,v 1.18 2000/05/22 17:13:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -121,14 +121,7 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)ALPHA_K1SEG_END)
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define _VM_PHYS_SIZE		(USRIOSIZE*NBPG)
-
-#ifndef	_KERNEL
-#define VM_PHYS_SIZE		_VM_PHYS_SIZE
-#else
-extern u_int32_t vm_phys_size;
-#define VM_PHYS_SIZE		vm_phys_size
-#endif /* _KERNEL */
+#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
 /* some Alpha-specific constants */
 #define	VPTBASE		((vaddr_t)0xfffffffc00000000)	/* Virt. pg table */
