@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.113 2000/06/06 05:40:47 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.114 2000/06/06 09:22:02 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -134,16 +134,17 @@ afterdepend: .depend
 .endif
 
 .if defined(PROG) && !target(proginstall)
-PROGNAME?= ${PROG}
+PROGNAME?=${PROG}
+
 proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
+.PRECIOUS: ${DESTDIR}${BINDIR}/${PROGNAME}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${BINDIR}/${PROGNAME}
 .endif
+
 .if !defined(BUILD) && !make(all) && !make(${PROG})
 ${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
 .endif
-
-.PRECIOUS: ${DESTDIR}${BINDIR}/${PROGNAME}
 ${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${STRIPFLAG} ${INSTPRIV} \
 	    -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${.ALLSRC} ${.TARGET}
@@ -160,10 +161,10 @@ SCRIPTSGRP?=${BINGRP}
 SCRIPTSMODE?=${BINMODE}
 
 scriptsinstall:: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
+.PRECIOUS: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
 .if !defined(UPDATE)
 .PHONY: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
 .endif
-.PRECIOUS: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
 
 .for S in ${SCRIPTS}
 .if !defined(BUILD) && !make(all) && !make(${S})
