@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.7 2001/10/30 01:11:54 lukem Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.8 2001/12/18 10:57:22 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.7 2001/10/30 01:11:54 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.8 2001/12/18 10:57:22 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -155,13 +155,14 @@ softdep_freefile(v)
 	panic("softdep_freefile called");
 }
 
-void 
-softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp)
+int
+softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp, isnewblk)
 	struct buf *bp;
 	struct inode *dp;
 	off_t diroffset;
 	long newinum;
 	struct buf *newdirbp;
+	int isnewblk;
 {
 
 	panic("softdep_setup_directory_add called");
@@ -240,4 +241,11 @@ softdep_sync_metadata(v)
 	void *v;
 {
 	return (0);
+}
+
+void
+softdep_releasefile(ip)
+	struct inode *ip;
+{
+	panic("softdep_releasefile called");
 }

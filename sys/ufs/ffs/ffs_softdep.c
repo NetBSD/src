@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.20 2001/11/08 04:51:05 chs Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.21 2001/12/18 10:57:22 fvdl Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.20 2001/11/08 04:51:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.21 2001/12/18 10:57:22 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -89,7 +89,8 @@ int softdep_lockedbufs;
 #define	D_DIRADD	11
 #define	D_MKDIR		12
 #define	D_DIRREM	13
-#define D_LAST		13
+#define D_NEWDIRBLK	14
+#define D_LAST		14
 /*
  * Names of softdep types.
  */
@@ -107,6 +108,7 @@ const char *softdep_typenames[] = {
 	"diradd",
 	"mkdir",
 	"dirrem",
+	"newdirblk",
 };
 #define TYPENAME(type) \
 	((unsigned)(type) < D_LAST ? softdep_typenames[type] : "???")
@@ -151,6 +153,7 @@ static	struct dirrem *newdirrem __P((struct buf *, struct inode *,
 	    struct inode *, int, struct dirrem **));
 static	void free_diradd __P((struct diradd *));
 static	void free_allocindir __P((struct allocindir *, struct inodedep *));
+static	void free_newdirblk __P((struct newdirblk *));
 static	int indir_trunc __P((struct inode *, ufs_daddr_t, int, ufs_lbn_t,
 	    long *));
 static	void deallocate_dependencies __P((struct buf *, struct inodedep *));
@@ -236,7 +239,7 @@ static struct lockit {
 #else /* DEBUG */
 static struct lockit {
 	int	lkt_spl;
-	pid_t	lkt_held;
+	volatile pid_t	lkt_held;
 } lk = { 0, -1 };
 static int lockcnt;
 
@@ -386,6 +389,7 @@ static struct pool freefile_pool;
 static struct pool diradd_pool;
 static struct pool mkdir_pool;
 static struct pool dirrem_pool;
+static struct pool newdirblk_pool;
 
 static __inline void
 softdep_free(struct worklist *item, int type)
@@ -438,6 +442,10 @@ softdep_free(struct worklist *item, int type)
 
 	case D_DIRREM:
 		pool_put(&dirrem_pool, item);
+		return;
+
+	case D_NEWDIRBLK:
+		pool_put(&newdirblk_pool, item);
 		return;
 
 	}
@@ -1080,6 +1088,9 @@ softdep_initialize()
 	pool_init(&dirrem_pool, sizeof(struct dirrem), 0, 0, 0,
 	    "dirrempl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
 	    M_DIRREM);
+	pool_init(&newdirblk_pool, sizeof (struct newdirblk), 0, 0, 0,
+	    "newdirblkpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
+	    M_NEWDIRBLK);
 }
 
 /*
@@ -1461,7 +1472,9 @@ allocdirect_merge(adphead, newadp, oldadp)
 	struct allocdirect *newadp;	/* allocdirect being added */
 	struct allocdirect *oldadp;	/* existing allocdirect being checked */
 {
+	struct worklist *wk;
 	struct freefrag *freefrag;
+	struct newdirblk *newdirblk;
 
 #ifdef DEBUG
 	if (lk.lkt_held == -1)
@@ -1470,9 +1483,12 @@ allocdirect_merge(adphead, newadp, oldadp)
 	if (newadp->ad_oldblkno != oldadp->ad_newblkno ||
 	    newadp->ad_oldsize != oldadp->ad_newsize ||
 	    newadp->ad_lbn >= NDADDR)
-		panic("allocdirect_check: old %d != new %d || lbn %d >= %d",
+		panic("allocdirect_merge: ob %d != nb %d || lbn %d >= %d ||\n"
+		      "osize %lu != nsize %lu\n",
 		    newadp->ad_oldblkno, oldadp->ad_newblkno,
-		    (int)newadp->ad_lbn, NDADDR);
+		    (int)newadp->ad_lbn, NDADDR,
+		    (unsigned long)newadp->ad_oldsize,
+		    (unsigned long)oldadp->ad_newsize);
 	newadp->ad_oldblkno = oldadp->ad_oldblkno;
 	newadp->ad_oldsize = oldadp->ad_oldsize;
 	/*
@@ -1495,6 +1511,17 @@ allocdirect_merge(adphead, newadp, oldadp)
 		freefrag = newadp->ad_freefrag;
 		newadp->ad_freefrag = oldadp->ad_freefrag;
 		oldadp->ad_freefrag = freefrag;
+	}
+	/*
+	 * If we are tracking a new directory-block allocation,
+	 * move it from the old allocdirect to the new allocdirect.
+	 */
+	if ((wk = LIST_FIRST(&oldadp->ad_newdirblk)) != NULL) {
+		newdirblk = WK_NEWDIRBLK(wk);
+		WORKLIST_REMOVE(&newdirblk->db_list);
+		if (LIST_FIRST(&oldadp->ad_newdirblk) != NULL)
+			panic("allocdirect_merge: extra newdirblk");
+		WORKLIST_INSERT(&newadp->ad_newdirblk, &newdirblk->db_list);
 	}
 	free_allocdirect(adphead, oldadp, 0);
 }
@@ -1841,6 +1868,13 @@ softdep_setup_freeblocks(ip, length)
 	ip->i_ffs_blocks = 0;
 	ip->i_ffs_size = 0;
 	/*
+	 * If the file was removed, then the space being freed was
+	 * accounted for then (see softdep_filereleased()). If the
+	 * file is merely being truncated, then we account for it now.
+	 */
+	if ((ip->i_flag & IN_SPACECOUNTED) == 0)
+		fs->fs_pendingblocks += freeblks->fb_chkcnt;
+	/*
 	 * Push the zero'ed inode to to its disk buffer so that we are free
 	 * to delete its dependencies below. Once the dependencies are gone
 	 * the buffer can be safely released.
@@ -2005,6 +2039,21 @@ deallocate_dependencies(bp, inodedep)
 					WORKLIST_INSERT(&inodedep->id_bufwait,
 					    &dirrem->dm_list);
 			}
+			if ((pagedep->pd_state & NEWBLOCK) != 0) {
+				LIST_FOREACH(wk, &inodedep->id_bufwait, wk_list)
+					if (wk->wk_type == D_NEWDIRBLK &&
+					    WK_NEWDIRBLK(wk)->db_pagedep ==
+					      pagedep)
+						break;
+				if (wk != NULL) {
+					WORKLIST_REMOVE(wk);
+					free_newdirblk(WK_NEWDIRBLK(wk));
+				} else {
+					FREE_LOCK(&lk);
+					panic("deallocate_dependencies: "
+					      "lost pagedep");
+				}
+			}
 			WORKLIST_REMOVE(&pagedep->pd_list);
 			LIST_REMOVE(pagedep, pd_hash);
 			WORKITEM_FREE(pagedep, D_PAGEDEP);
@@ -2038,6 +2087,8 @@ free_allocdirect(adphead, adp, delay)
 	struct allocdirect *adp;
 	int delay;
 {
+	struct newdirblk *newdirblk;
+	struct worklist *wk;
 
 #ifdef DEBUG
 	if (lk.lkt_held == -1)
@@ -2055,7 +2106,62 @@ free_allocdirect(adphead, adp, delay)
 		else
 			add_to_worklist(&adp->ad_freefrag->ff_list);
 	}
+	if ((wk = LIST_FIRST(&adp->ad_newdirblk)) != NULL) {
+		newdirblk = WK_NEWDIRBLK(wk);
+		WORKLIST_REMOVE(&newdirblk->db_list);
+		if (LIST_FIRST(&adp->ad_newdirblk) != NULL)
+			panic("free_allocdirect: extra newdirblk");
+		if (delay)
+			WORKLIST_INSERT(&adp->ad_inodedep->id_bufwait,
+			    &newdirblk->db_list);
+		else
+			free_newdirblk(newdirblk);
+	}
 	WORKITEM_FREE(adp, D_ALLOCDIRECT);
+}
+
+/*
+ * Free a newdirblk. Clear the NEWBLOCK flag on its associated pagedep.
+ * This routine must be called with splbio interrupts blocked.
+ */
+static void
+free_newdirblk(newdirblk)
+	struct newdirblk *newdirblk;
+{
+	struct pagedep *pagedep;
+	struct diradd *dap;
+	int i;
+
+#ifdef DEBUG
+	if (lk.lkt_held == -1)
+		panic("free_newdirblk: lock not held");
+#endif
+	/*
+	 * If the pagedep is still linked onto the directory buffer
+	 * dependency chain, then some of the entries on the
+	 * pd_pendinghd list may not be committed to disk yet. In
+	 * this case, we will simply clear the NEWBLOCK flag and
+	 * let the pd_pendinghd list be processed when the pagedep
+	 * is next written. If the pagedep is no longer on the buffer
+	 * dependency chain, then all the entries on the pd_pending
+	 * list are committed to disk and we can free them here.
+	 */
+	pagedep = newdirblk->db_pagedep;
+	pagedep->pd_state &= ~NEWBLOCK;
+	if ((pagedep->pd_state & ONWORKLIST) == 0)
+		while ((dap = LIST_FIRST(&pagedep->pd_pendinghd)) != NULL)
+			free_diradd(dap);
+	/*
+	 * If no dependencies remain, the pagedep will be freed.
+	 */
+	for (i = 0; i < DAHASHSZ; i++)
+		if (LIST_FIRST(&pagedep->pd_diraddhd[i]) != NULL)
+			break;
+	if (i == DAHASHSZ && (pagedep->pd_state & ONWORKLIST) == 0) {
+		LIST_REMOVE(pagedep, pd_hash);
+		WORKITEM_FREE(pagedep, D_PAGEDEP);
+	}
+	WORKITEM_FREE(newdirblk, D_NEWDIRBLK);
 }
 
 /*
@@ -2085,6 +2191,8 @@ softdep_freefile(v)
 	freefile->fx_oldinum = ap->a_ino;
 	freefile->fx_devvp = ip->i_devvp;
 	freefile->fx_fs = ip->i_fs;
+	if ((ip->i_flag & IN_SPACECOUNTED) == 0)
+		ip->i_fs->fs_pendinginodes += 1;
 
 	/*
 	 * If the inodedep does not exist, then the zero'ed inode has
@@ -2220,6 +2328,7 @@ handle_workitem_freeblocks(freeblks)
 		    baselbns[level], &blocksreleased)) == 0)
 			allerror = error;
 		ffs_blkfree(&tip, bn, fs->fs_bsize);
+		fs->fs_pendingblocks -= nblocks;
 		blocksreleased += nblocks;
 	}
 	/*
@@ -2230,6 +2339,7 @@ handle_workitem_freeblocks(freeblks)
 			continue;
 		bsize = blksize(fs, &tip, i);
 		ffs_blkfree(&tip, bn, bsize);
+		fs->fs_pendingblocks -= btodb(bsize);
 		blocksreleased += btodb(bsize);
 	}
 	lockmgr(&tip.i_gnode.g_glock, LK_RELEASE, NULL);
@@ -2317,6 +2427,7 @@ indir_trunc(ip, dbn, level, lbn, countp)
 				allerror = error;
 		}
 		ffs_blkfree(ip, nb, fs->fs_bsize);
+		fs->fs_pendingblocks -= nblocks;
 		*countp += nblocks;
 	}
 	bp->b_flags |= B_INVAL | B_NOCACHE;
@@ -2378,20 +2489,23 @@ free_allocindir(aip, inodedep)
  * count has been incremented, but before the directory entry's
  * pointer to the inode has been set.
  */
-void 
-softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp)
+int 
+softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp, isnewblk)
 	struct buf *bp;		/* buffer containing directory block */
 	struct inode *dp;	/* inode for directory */
 	off_t diroffset;	/* offset of new entry in directory */
 	long newinum;		/* inode referenced by new directory entry */
 	struct buf *newdirbp;	/* non-NULL => contents of new mkdir */
+	int isnewblk;		/* entry is in a newly allocated block */
 {
 	int offset;		/* offset of new entry within directory block */
 	ufs_lbn_t lbn;		/* block in directory containing new entry */
 	struct fs *fs;
 	struct diradd *dap;
+	struct allocdirect *adp;
 	struct pagedep *pagedep;
 	struct inodedep *inodedep;
+	struct newdirblk *newdirblk = 0;
 	struct mkdir *mkdir1 = NULL, *mkdir2 = NULL;
 
 	/*
@@ -2400,7 +2514,7 @@ softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp)
 	if (newinum == WINO) {
 		if (newdirbp != NULL)
 			bdwrite(newdirbp);
-		return;
+		return (0);
 	}
 
 	fs = dp->i_fs;
@@ -2409,9 +2523,14 @@ softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp)
 	dap = pool_get(&diradd_pool, PR_WAITOK);
 	bzero(dap, sizeof(struct diradd));
 	dap->da_list.wk_type = D_DIRADD;
-	dap->da_state = ATTACHED;
 	dap->da_offset = offset;
 	dap->da_newinum = newinum;
+	dap->da_state = ATTACHED;
+	if (isnewblk && lbn < NDADDR && fragoff(fs, diroffset) == 0) {
+		newdirblk = pool_get(&newdirblk_pool, PR_WAITOK);
+		newdirblk->db_list.wk_type = D_NEWDIRBLK;
+		newdirblk->db_state = 0;
+	}
 	if (newdirbp == NULL) {
 		dap->da_state |= DEPCOMPLETE;
 		ACQUIRE_LOCK(&lk);
@@ -2438,7 +2557,7 @@ softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp)
 		 * Dependency on link count increase for parent directory
 		 */
 		ACQUIRE_LOCK(&lk);
-		if (inodedep_lookup(dp->i_fs, dp->i_number, 0, &inodedep) == 0
+		if (inodedep_lookup(fs, dp->i_number, 0, &inodedep) == 0
 		    || (inodedep->id_state & ALLCOMPLETE) == ALLCOMPLETE) {
 			dap->da_state &= ~MKDIR_PARENT;
 			WORKITEM_FREE(mkdir2, D_MKDIR);
@@ -2465,7 +2584,56 @@ softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp)
 		diradd_inode_written(dap, inodedep);
 	else
 		WORKLIST_INSERT(&inodedep->id_bufwait, &dap->da_list);
+	if (isnewblk) {
+		/*
+		 * Directories growing into indirect blocks are rare
+		 * enough and the frequency of new block allocation
+		 * in those cases even more rare, that we choose not
+		 * to bother tracking them. Rather we simply force the
+		 * new directory entry to disk.
+		 */
+		if (lbn >= NDADDR) {
+			FREE_LOCK(&lk);
+			/*
+			 * We only have a new allocation when at the
+			 * beginning of a new block, not when we are
+			 * expanding into an existing block.
+			 */
+			if (blkoff(fs, diroffset) == 0)
+				return (1);
+			return (0);
+		}
+		/*
+		 * We only have a new allocation when at the beginning
+		 * of a new fragment, not when we are expanding into an
+		 * existing fragment. Also, there is nothing to do if we
+		 * are already tracking this block.
+		 */
+		if (fragoff(fs, diroffset) != 0) {
+			FREE_LOCK(&lk);
+			return (0);
+		}
+		if ((pagedep->pd_state & NEWBLOCK) != 0) {
+			WORKITEM_FREE(newdirblk, D_NEWDIRBLK);
+			FREE_LOCK(&lk);
+			return (0);
+		}
+		/*
+		 * Find our associated allocdirect and have it track us.
+		 */
+		if (inodedep_lookup(fs, dp->i_number, 0, &inodedep) == 0)
+			panic("softdep_setup_directory_add: lost inodedep");
+		adp = TAILQ_LAST(&inodedep->id_newinoupdt, allocdirectlst);
+		if (adp == NULL || adp->ad_lbn != lbn) {
+			FREE_LOCK(&lk);
+			panic("softdep_setup_directory_add: lost entry");
+		}
+		pagedep->pd_state |= NEWBLOCK;
+		newdirblk->db_pagedep = pagedep;
+		WORKLIST_INSERT(&adp->ad_newdirblk, &newdirblk->db_list);
+	}
 	FREE_LOCK(&lk);
+	return (0);
 }
 
 /*
@@ -2865,6 +3033,40 @@ softdep_change_linkcnt(ip)
 }
 
 /*
+ * Called when the effective link count and the reference count
+ * on an inode drops to zero. At this point there are no names
+ * referencing the file in the filesystem and no active file
+ * references. The space associated with the file will be freed
+ * as soon as the necessary soft dependencies are cleared.
+ */
+void
+softdep_releasefile(ip)
+	struct inode *ip;	/* inode with the zero effective link count */
+{
+	struct inodedep *inodedep;
+
+	if (ip->i_ffs_effnlink > 0)
+		panic("softdep_filerelease: file still referenced");
+	/*
+	 * We may be called several times as the real reference count
+	 * drops to zero. We only want to account for the space once.
+	 */
+	if (ip->i_flag & IN_SPACECOUNTED)
+		return;
+	/*
+	 * If we are tracking an nlinkdelta, we have to also remember
+	 * whether we accounted for the freed space yet.
+	 */
+	ACQUIRE_LOCK(&lk);
+	if ((inodedep_lookup(ip->i_fs, ip->i_number, 0, &inodedep)))
+		inodedep->id_state |= SPACECOUNTED;
+	FREE_LOCK(&lk);
+	ip->i_fs->fs_pendingblocks += ip->i_ffs_blocks;
+	ip->i_fs->fs_pendinginodes += 1;
+	ip->i_flag |= IN_SPACECOUNTED;
+}
+
+/*
  * This workitem decrements the inode's link count.
  * If the link count reaches zero, the file is removed.
  */
@@ -2983,6 +3185,7 @@ handle_workitem_freefile(freefile)
 	tip.i_devvp = freefile->fx_devvp;
 	tip.i_dev = freefile->fx_devvp->v_rdev;
 	tip.i_fs = freefile->fx_fs;
+	freefile->fx_fs->fs_pendinginodes -= 1;
 	vp.v_data = &tip;
 	vp.v_mount = freefile->fx_devvp->v_specmountpoint;
 	tip.i_vnode = &vp;
@@ -3654,6 +3857,10 @@ handle_written_inodeblock(inodedep, bp)
 			add_to_worklist(wk);
 			continue;
 
+		case D_NEWDIRBLK:
+			free_newdirblk(WK_NEWDIRBLK(wk));
+			continue;
+
 		default:
 			panic("handle_written_inodeblock: Unknown type %s",
 			    TYPENAME(wk->wk_type));
@@ -3760,9 +3967,12 @@ handle_written_filepage(pagedep, bp)
 	}
 	/*
 	 * Free any directory additions that have been committed.
+	 * If it is a newly allocated block, we have to wait until
+	 * the on-disk directory inode claims the new block.
 	 */
-	while ((dap = LIST_FIRST(&pagedep->pd_pendinghd)) != NULL) {
-		free_diradd(dap);
+	if ((pagedep->pd_state & NEWBLOCK) == 0)
+		while ((dap = LIST_FIRST(&pagedep->pd_pendinghd)) != NULL) {
+			free_diradd(dap);
 	}
 	/*
 	 * Uncommitted directory entries must be restored.
@@ -3800,23 +4010,20 @@ handle_written_filepage(pagedep, bp)
 		if ((bp->b_flags & B_DELWRI) == 0)
 			stat_dir_entry++;
 		bdirty(bp);
+		return (1);
 	}
 	/*
-	 * If no dependencies remain, the pagedep will be freed.
-	 * Otherwise it will remain to update the page before it
-	 * is written back to disk.
+	 * If no dependencies remain and we are not waiting for a
+	 * new directory block to be claimed by its inode, then the
+	 * pagedep will be freed. Otherwise it will remain to track
+	 * any new entries on the page in case they are fsync'ed.
 	 */
-	if (LIST_FIRST(&pagedep->pd_pendinghd) == 0) {
-		for (i = 0; i < DAHASHSZ; i++)
-			if (LIST_FIRST(&pagedep->pd_diraddhd[i]) != NULL)
-				break;
-		if (i == DAHASHSZ) {
-			LIST_REMOVE(pagedep, pd_hash);
-			WORKITEM_FREE(pagedep, D_PAGEDEP);
-			return (0);
-		}
+	if (LIST_FIRST(&pagedep->pd_pendinghd) == 0 &&
+	    (pagedep->pd_state & NEWBLOCK) == 0) {
+		LIST_REMOVE(pagedep, pd_hash);
+		WORKITEM_FREE(pagedep, D_PAGEDEP);
 	}
-	return (1);
+	return (0);
 }
 
 /*
@@ -3852,6 +4059,8 @@ softdep_load_inodeblock(ip)
 		return;
 	}
 	ip->i_ffs_effnlink -= inodedep->id_nlinkdelta;
+	if (inodedep->id_state & SPACECOUNTED)
+		ip->i_flag |= IN_SPACECOUNTED;
 	FREE_LOCK(&lk);
 }
 
@@ -4012,8 +4221,8 @@ softdep_fsync(vp)
 			    TYPENAME(wk->wk_type));
 		dap = WK_DIRADD(wk);
 		/*
-		 * Flush our parent if this directory entry
-		 * has a MKDIR_PARENT dependency.
+		 * Flush our parent if this directory entry has a MKDIR_PARENT
+		 * dependency or is contained in a newly allocated block.
 		 */
 		if (dap->da_state & DIRCHG)
 			pagedep = dap->da_previous->dm_pagedep;
@@ -4024,7 +4233,11 @@ softdep_fsync(vp)
 		lbn = pagedep->pd_lbn;
 		if ((dap->da_state & (MKDIR_BODY | COMPLETE)) != COMPLETE)
 			panic("softdep_fsync: dirty");
-		flushparent = dap->da_state & MKDIR_PARENT;
+		if ((dap->da_state & MKDIR_PARENT) ||
+		    (pagedep->pd_state & NEWBLOCK))
+			flushparent = 1;
+		else
+			flushparent = 0;
 		/*
 		 * If we are being fsync'ed as part of vgone'ing this vnode,
 		 * then we will not be able to release and recover the
@@ -4048,10 +4261,24 @@ softdep_fsync(vp)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		if (error != 0)
 			return (error);
+		/*
+		 * All MKDIR_PARENT dependencies and all the NEWBLOCK pagedeps
+		 * that are contained in direct blocks will be resolved by
+		 * doing a UFS_UPDATE. Pagedeps contained in indirect blocks
+		 * may require a complete sync'ing of the directory. So, we
+		 * try the cheap and fast UFS_UPDATE first, and if that fails,
+		 * then we do the slower VOP_FSYNC of the directory.
+		 */
 		if (flushparent) {
 			VTOI(pvp)->i_flag |= IN_MODIFIED;
 			error = VOP_UPDATE(pvp, NULL, NULL, UPDATE_WAIT);
 			if (error) {
+				vput(pvp);
+				return (error);
+			}
+			if ((pagedep->pd_state & NEWBLOCK) &&
+			    (error = VOP_FSYNC(pvp, p->p_ucred, FSYNC_WAIT,
+			      0, 0, p))) {
 				vput(pvp);
 				return (error);
 			}
