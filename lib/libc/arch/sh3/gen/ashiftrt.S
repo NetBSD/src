@@ -1,4 +1,4 @@
-/*	$NetBSD: ashiftrt.S,v 1.3 2001/02/14 21:04:17 msaitoh Exp $	*/
+/*	$NetBSD: ashiftrt.S,v 1.4 2003/09/22 01:57:16 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -31,7 +31,7 @@
 NENTRY(__ashiftrt_r4_31)
 	shll	r4
 	rts
-	subc	r4, r4
+	 subc	r4, r4
 
 ALTENTRY(__ashiftrt_r4_30)
 	shar	r4
@@ -55,7 +55,7 @@ ALTENTRY(__ashiftrt_r4_24)
 	shlr16	r4
 	shlr8	r4
 	rts
-	exts.b	r4, r4
+	 exts.b	r4, r4
 
 ALTENTRY(__ashiftrt_r4_23)
 	shar	r4
@@ -81,19 +81,19 @@ ALTENTRY(__ashiftrt_r4_17)
 ALTENTRY(__ashiftrt_r4_16)
 	shlr16	r4
 	rts
-	exts.w	r4, r4
+	 exts.w	r4, r4
 
 ALTENTRY(__ashiftrt_r4_15)
 	swap.w	r4, r4
 	cmp/pz	r4
 	bf/s	1f
-	exts.w	r4, r4
+	 exts.w	r4, r4
 	rts
-	shll	r4
+	 shll	r4
 1:
 	sett
 	rts
-	rotcl	r4
+	 rotcl	r4
 
 ALTENTRY(__ashiftrt_r4_14)
 	shar	r4
@@ -136,8 +136,8 @@ ALTENTRY(__ashiftrt_r4_2)
 
 ALTENTRY(__ashiftrt_r4_1)
 	rts
-	shar	r4
+	 shar	r4
 
 ALTENTRY(__ashiftrt_r4_0)
 	rts
-	nop
+	 nop
