@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.9 2003/01/01 02:10:08 thorpej Exp $	*/
+/*	$NetBSD: gio.c,v 1.10 2003/07/15 03:35:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.10 2003/07/15 03:35:52 lukem Exp $");
 
 #include "opt_ddb.h"
 

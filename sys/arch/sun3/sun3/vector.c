@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.c,v 1.21 1998/12/18 15:49:41 drochner Exp $	*/
+/*	$NetBSD: vector.c,v 1.22 2003/07/15 03:36:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * The interrupt vector table.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vector.c,v 1.22 2003/07/15 03:36:19 lukem Exp $");
 
 #include "opt_compat_netbsd.h"
 

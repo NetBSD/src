@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19 2003/04/02 02:34:13 thorpej Exp $ */
+/*	$NetBSD: mem.c,v 1.20 2003/07/15 02:59:33 lukem Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/mem.c
@@ -50,6 +50,9 @@
 /*
  * Memory special file
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.20 2003/07/15 02:59:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

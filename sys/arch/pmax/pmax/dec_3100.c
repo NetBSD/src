@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.35 2001/09/18 16:15:19 tsutsui Exp $ */
+/* $NetBSD: dec_3100.c,v 1.36 2003/07/15 02:54:40 lukem Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -70,6 +70,9 @@
  *
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.36 2003/07/15 02:54:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.6 2002/10/02 15:52:35 thorpej Exp $	*/
+/*	$NetBSD: shb.c,v 1.7 2003/07/15 03:35:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: shb.c,v 1.7 2003/07/15 03:35:55 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

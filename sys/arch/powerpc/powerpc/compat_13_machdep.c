@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.6 2003/02/03 21:48:02 matt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.7 2003/07/15 02:54:47 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.7 2003/07/15 02:54:47 lukem Exp $");
 
 #include "opt_ppcarch.h"
 

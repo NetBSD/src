@@ -1,4 +1,4 @@
-/*	$NetBSD: femi.c,v 1.8 2003/01/01 02:11:57 thorpej Exp $	*/
+/*	$NetBSD: femi.c,v 1.9 2003/07/15 03:35:58 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * SH-5 FEMI Bus Attachment Glue
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: femi.c,v 1.9 2003/07/15 03:35:58 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

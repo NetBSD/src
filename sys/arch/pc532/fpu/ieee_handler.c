@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.14 2003/04/02 02:24:15 thorpej Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.15 2003/07/15 02:54:33 lukem Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -50,6 +50,9 @@
  * 14-Dec-95  Ian Dall (Ian.Dall@dsto.defence.gov.au)
  *	First release.
  * */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ieee_handler.c,v 1.15 2003/07/15 02:54:33 lukem Exp $");
 
 #include <sys/types.h>
 #include "ieee_internal.h"

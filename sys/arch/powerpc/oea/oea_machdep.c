@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.8 2003/04/02 02:47:19 thorpej Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.9 2003/07/15 02:54:45 lukem Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -31,6 +31,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.9 2003/07/15 02:54:45 lukem Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.17 2002/10/02 16:02:25 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.18 2003/07/15 03:36:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * "Front end" glue for the ncr53c9x chip, formerly known as the
  * Emulex SCSI Processor (ESP) which is what we actually have.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.18 2003/07/15 03:36:14 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

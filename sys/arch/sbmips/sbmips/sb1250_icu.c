@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.3 2003/02/07 17:46:12 cgd Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.4 2003/07/15 03:35:51 lukem Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -31,6 +31,9 @@
  *    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  *    OR OTHERWISE), EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.4 2003/07/15 03:35:51 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

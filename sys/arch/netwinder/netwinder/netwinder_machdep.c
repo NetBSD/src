@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.55 2003/06/14 18:57:38 uwe Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.56 2003/07/15 02:59:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -38,6 +38,9 @@
  *
  * Created      : 24/11/97
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.56 2003/07/15 02:59:25 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"

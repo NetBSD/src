@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.10 2003/03/13 13:19:01 scw Exp $	*/
+/*	$NetBSD: scif.c,v 1.11 2003/07/15 03:35:58 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -108,6 +108,9 @@
  * The code needs some overhauling to make it truely MI so it can
  * be shared with SH-3.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.11 2003/07/15 03:35:58 lukem Exp $");
 
 #include "opt_kgdb.h"
 

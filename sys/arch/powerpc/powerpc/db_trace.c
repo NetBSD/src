@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.30 2003/07/10 02:06:11 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.31 2003/07/15 02:54:47 lukem Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie Mellon 
  * the rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.31 2003/07/15 02:54:47 lukem Exp $");
 
 #include "opt_ppcarch.h"
 

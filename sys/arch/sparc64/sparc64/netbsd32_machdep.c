@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.34 2003/06/29 22:29:02 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.35 2003/07/15 03:36:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.35 2003/07/15 03:36:09 lukem Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"

@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.38 2002/10/02 04:15:08 thorpej Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.39 2003/07/15 02:54:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -79,6 +79,9 @@
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devGraphics.c,
  *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.39 2003/07/15 02:54:39 lukem Exp $");
 
 #include "dtop.h"
 #if NDTOP == 0

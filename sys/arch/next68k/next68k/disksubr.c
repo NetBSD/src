@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 2003/05/10 23:12:36 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.13 2003/07/15 02:59:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)ufs_disksubr.c	8.5 (Berkeley) 1/21/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.13 2003/07/15 02:59:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

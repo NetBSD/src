@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.65 2003/05/17 01:49:59 nakayama Exp $	*/
+/*	$NetBSD: iommu.c,v 1.66 2003/07/15 03:36:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -32,6 +32,10 @@
 /*
  * UltraSPARC IOMMU support; used by both the sbus and pci code.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.66 2003/07/15 03:36:05 lukem Exp $");
+
 #include "opt_ddb.h"
 
 #include <sys/param.h>

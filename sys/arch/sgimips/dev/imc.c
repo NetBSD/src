@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.8 2003/01/01 02:10:08 thorpej Exp $	*/
+/*	$NetBSD: imc.c,v 1.9 2003/07/15 03:35:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.9 2003/07/15 03:35:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

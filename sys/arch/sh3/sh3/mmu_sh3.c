@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh3.c,v 1.5 2002/05/09 12:27:04 uch Exp $	*/
+/*	$NetBSD: mmu_sh3.c,v 1.6 2003/07/15 03:35:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh3.c,v 1.6 2003/07/15 03:35:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

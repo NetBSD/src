@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_sh.c,v 1.5 2003/03/13 13:44:17 scw Exp $	*/
+/*	$NetBSD: cpu_sh.c,v 1.6 2003/07/15 03:35:58 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * SH-5 CPU Module
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu_sh.c,v 1.6 2003/07/15 03:35:58 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

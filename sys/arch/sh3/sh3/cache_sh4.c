@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.8 2003/01/25 04:21:01 tsutsui Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.9 2003/07/15 03:35:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.9 2003/07/15 03:35:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

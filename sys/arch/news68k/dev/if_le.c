@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.7 2003/01/18 12:29:00 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.8 2003/07/15 02:59:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * news68k/dev/if_le.c - based on newsmips/dev/if_le.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.8 2003/07/15 02:59:26 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

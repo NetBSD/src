@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.17 2002/12/10 13:44:51 pk Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.18 2003/07/15 03:36:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,6 +31,9 @@
 /*
  * NS Super I/O PC87332VLJ "lpt" to ebus attachment
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt_ebus.c,v 1.18 2003/07/15 03:36:05 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

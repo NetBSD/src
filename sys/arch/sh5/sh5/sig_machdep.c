@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.14 2003/04/18 21:07:35 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15 2003/07/15 03:36:00 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,6 +35,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.15 2003/07/15 03:36:00 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

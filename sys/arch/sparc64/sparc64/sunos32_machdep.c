@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.10 2003/01/24 16:54:34 nakayama Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.11 2003/07/15 03:36:10 lukem Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -28,6 +28,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.11 2003/07/15 03:36:10 lukem Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.24 2002/10/02 04:18:58 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.25 2003/07/15 02:54:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,9 @@
  *	@(#)clock.c	7.2 (Berkeley) 5/12/91
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25 2003/07/15 02:54:34 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.12 2001/02/22 07:11:12 chs Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.13 2003/07/15 03:36:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.13 2003/07/15 03:36:19 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.18 2003/04/01 15:31:12 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.19 2003/07/15 03:36:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Machine-dependent functions used by ddb
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.19 2003/07/15 03:36:17 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

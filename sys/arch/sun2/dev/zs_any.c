@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_any.c,v 1.9 2002/10/02 16:02:23 thorpej Exp $	*/
+/*	$NetBSD: zs_any.c,v 1.10 2003/07/15 03:36:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * Plain tty/async lines use the zs_async slave.
  * Sun keyboard/mouse uses the zs_kbd/zs_ms slaves.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.10 2003/07/15 03:36:12 lukem Exp $");
 
 #include "opt_kgdb.h"
 

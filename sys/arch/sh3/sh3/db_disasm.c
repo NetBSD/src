@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.6 2002/05/10 15:27:05 uch Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.7 2003/07/15 03:35:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Internet Initiative Japan Inc.
@@ -27,6 +27,9 @@
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
  * DISCLAIMED.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.7 2003/07/15 03:35:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
