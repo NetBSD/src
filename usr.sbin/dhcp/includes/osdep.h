@@ -230,3 +230,36 @@
 #ifndef BPF_FORMAT
 # define BPF_FORMAT "/dev/bpf%d"
 #endif
+
+#if defined (IFF_POINTOPOINT) && !defined (HAVE_IFF_POINTOPOINT)
+# define HAVE_IFF_POINTOPOINT
+#endif
+
+#if defined (AF_LINK) && !defined (HAVE_AF_LINK)
+# define HAVE_AF_LINK
+#endif
+
+#if defined (ARPHRD_TUNNEL) && !defined (HAVE_ARPHRD_TUNNEL)
+# define HAVE_ARPHRD_TUNNEL
+#endif
+
+#if defined (ARPHRD_LOOPBACK) && !defined (HAVE_ARPHRD_LOOPBACK)
+# define HAVE_ARPHRD_LOOPBACK
+#endif
+
+#if defined (ARPHRD_METRICOM) && !defined (HAVE_ARPHRD_METRICOM)
+# define HAVE_ARPHRD_METRICOM
+#endif
+
+#if defined (SO_BINDTODEVICE) && !defined (HAVE_SO_BINDTODEVICE)
+# define HAVE_SO_BINDTODEVICE
+#endif
+
+#if defined (SIOCGIFHWADDR) && !defined (HAVE_SIOCGIFHWADDR)
+# define HAVE_SIOCGIFHWADDR
+#endif
+
+#if defined (AF_LINK) && !defined (HAVE_AF_LINK)
+# define HAVE_AF_LINK
+#endif
+
