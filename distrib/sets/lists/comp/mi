@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.585 2003/06/25 18:58:23 tshiozak Exp $
+#	$NetBSD: mi,v 1.586 2003/06/27 05:21:51 tshiozak Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -235,6 +235,7 @@
 ./usr/include/gssapi/gssapi.h		comp-krb5-include
 ./usr/include/hesiod.h			comp-c-include
 ./usr/include/histedit.h		comp-c-include
+./usr/include/iconv.h			comp-c-include
 ./usr/include/ifaddrs.h			comp-c-include
 ./usr/include/inttypes.h		comp-c-include
 ./usr/include/iso646.h			comp-c-include
