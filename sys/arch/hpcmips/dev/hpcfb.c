@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.25 2000/12/25 10:09:31 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.26 2000/12/25 10:27:28 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.25 2000/12/25 10:09:31 sato Exp $";
+    "$Id: hpcfb.c,v 1.26 2000/12/25 10:27:28 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1331,7 +1331,7 @@ hpcfb_do_scroll(v)
 	dc->dc_state |= HPCFB_DC_SCRTHREAD;	
 	if (dc->dc_state&(HPCFB_DC_DRAWING|HPCFB_DC_TDRAWING))
 		dc->dc_state |= HPCFB_DC_SCRDELAY;
-	else if (dc->dc_thread)
+	else if (dc->dc_sc->sc_thread)
 		wakeup(dc->dc_sc);
 	else if (!dc->dc_sc->sc_mapping)
 		hpcfb_scroll_update(v);
