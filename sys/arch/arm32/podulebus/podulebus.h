@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.8 1997/01/17 01:04:02 mark Exp $ */
+/* $NetBSD: podulebus.h,v 1.9 1997/07/31 00:40:56 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -119,6 +119,12 @@ struct podule_attach_args {
 #define EASI_CYCLE_TYPE_C	0x01
 #define set_easi_cycle_type(podule, type) \
 	WriteByte(IOMD_ECTCR, (ReadByte(IOMD_ECTCR) & ~(1 << podule)) | (1 << type))
+
+
+#define IS_PODULE(pa, man, prod)	\
+	(pa->pa_podule->manufacturer == man && pa->pa_podule->product == prod)
+
+
   
 #ifdef _KERNEL
 
