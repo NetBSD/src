@@ -1,7 +1,7 @@
-/*	$NetBSD: locore.s,v 1.11 1996/04/12 02:05:48 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.12 1996/04/12 06:07:28 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
