@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.136 1999/04/19 04:56:18 ross Exp $
+# $NetBSD: mi,v 1.137 1999/04/24 18:13:19 dbj Exp $
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
 ./usr/share/info/cpp.info
@@ -1767,6 +1767,7 @@
 ./usr/share/man/man8/lastlogin.8
 ./usr/share/man/man8/ldconfig.8
 ./usr/share/man/man8/lfs_cleanerd.8
+./usr/share/man/man8/lmcctl.8
 ./usr/share/man/man8/lockd.8
 ./usr/share/man/man8/lpc.8
 ./usr/share/man/man8/lpd.8
