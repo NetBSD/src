@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "inferior.h"
 #include "target.h"
 #include "gdbcore.h"
+
 #include <sys/param.h>
 #include <sys/ptrace.h>
 #include <machine/frame.h>
@@ -29,7 +30,30 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include <machine/pcb.h>
 
 static void
-fetch_core_registers PARAMS ((char *, unsigned int, int, CORE_ADDR));
+supply_regs (regs)
+     char *regs;
+{
+  int i;
+
+  for (i = 0; i < 32; i++)
+    supply_register (GP0_REGNUM + i, regs + (i * 4));
+
+  supply_register (LR_REGNUM,  regs + (32 * 4));
+  supply_register (CR_REGNUM,  regs + (33 * 4));
+  supply_register (XER_REGNUM, regs + (34 * 4));
+  supply_register (CTR_REGNUM, regs + (35 * 4));
+  supply_register (PC_REGNUM,  regs + (36 * 4));
+}
+
+static void
+supply_fpregs (fregs)
+     char *fregs;
+{
+  int i;
+
+  for (i = 0; i < 32; i++)
+    supply_register (FP0_REGNUM + i, fregs + (i * 8));
+}
 
 void
 fetch_inferior_registers (regno)
@@ -40,24 +64,11 @@ fetch_inferior_registers (regno)
 
   /* Integer registers */
   ptrace(PT_GETREGS, inferior_pid, (PTRACE_ARG3_TYPE) &infreg, 0);
-
-  memcpy(&registers[REGISTER_BYTE (GP0_REGNUM)], infreg.fixreg,
-	 sizeof(infreg.fixreg));
-  *(long *) &registers[REGISTER_BYTE (PC_REGNUM)] = infreg.pc;
-  *(long *) &registers[REGISTER_BYTE (PS_REGNUM)] = 0;		/* XXX */
-  *(long *) &registers[REGISTER_BYTE (CR_REGNUM)] = infreg.cr;
-  *(long *) &registers[REGISTER_BYTE (LR_REGNUM)] = infreg.lr;
-  *(long *) &registers[REGISTER_BYTE (CTR_REGNUM)] = infreg.ctr;
-  *(long *) &registers[REGISTER_BYTE (XER_REGNUM)] = infreg.xer;
-  *(long *) &registers[REGISTER_BYTE (MQ_REGNUM)] = 0;
+  supply_regs ((char *) &infreg);
 
   /* Floating point registers */
   ptrace(PT_GETFPREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inffpreg, 0);
-
-  memcpy(&registers[REGISTER_BYTE (FP0_REGNUM)], inffpreg.fpreg,
-	 sizeof(inffpreg.fpreg));
-
-  registers_fetched ();
+  supply_fpregs ((char *) &inffpreg);
 }
 
 void
@@ -68,13 +79,18 @@ store_inferior_registers (regno)
   struct fpreg inffpreg;
 
   /* Integer registers */
-  memcpy(infreg.fixreg, &registers[REGISTER_BYTE (GP0_REGNUM)],
-	 sizeof(infreg.fixreg));
-  infreg.pc = *(long *) &registers[REGISTER_BYTE (PC_REGNUM)];
-  infreg.cr = *(long *) &registers[REGISTER_BYTE (CR_REGNUM)];
-  infreg.lr = *(long *) &registers[REGISTER_BYTE (LR_REGNUM)];
-  infreg.ctr = *(long *) &registers[REGISTER_BYTE (CTR_REGNUM)];
-  infreg.xer = *(long *) &registers[REGISTER_BYTE (XER_REGNUM)];
+  memcpy (infreg.fixreg, &registers[REGISTER_BYTE (GP0_REGNUM)],
+	  sizeof (infreg.fixreg));
+  memcpy (&infreg.pc, &registers[REGISTER_BYTE (PC_REGNUM)],
+	  sizeof (infreg.pc));
+  memcpy (&infreg.cr, &registers[REGISTER_BYTE (CR_REGNUM)],
+	  sizeof (infreg.cr));
+  memcpy (&infreg.lr, &registers[REGISTER_BYTE (LR_REGNUM)],
+	  sizeof (infreg.lr));
+  memcpy (&infreg.ctr, &registers[REGISTER_BYTE (CTR_REGNUM)],
+	  sizeof (infreg.ctr));
+  memcpy (&infreg.xer, &registers[REGISTER_BYTE (XER_REGNUM)],
+	  sizeof (infreg.xer));
 
   ptrace(PT_SETREGS, inferior_pid, (PTRACE_ARG3_TYPE) &infreg, 0);
 
@@ -93,27 +109,42 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
      int which;
      CORE_ADDR ignore;
 {
-  struct md_coredump *core_reg;
-  struct trapframe *tf;
-  struct fpu *fs;
-  register int regnum;
-
-  core_reg = (struct md_coredump *)core_reg_sect;
-  tf = &core_reg->frame;
-  fs = &core_reg->fpstate;
+  struct md_coredump *core_reg = (struct md_coredump *) core_reg_sect;
 
   /* Integer registers */
-  for (regnum = 0; regnum < 32; regnum++)
-    *(long *) &registers[REGISTER_BYTE (regnum)] = tf->fixreg[regnum];
+  supply_regs ((char *) &core_reg->frame);
 
   /* Floating point registers */
-  memcpy (&registers[REGISTER_BYTE (FP0_REGNUM)], fs->fpr, sizeof(fs->fpr));
+  supply_regs ((char *) &core_reg->fpstate);
+}
 
-  /* Special registers (PC, LR) */
-  *(long *) &registers[REGISTER_BYTE (PC_REGNUM)] = tf->srr0;
-  *(long *) &registers[REGISTER_BYTE (LR_REGNUM)] = tf->lr;
+static void
+fetch_elfcore_registers (core_reg_sect, core_reg_size, which, ignore)
+     char *core_reg_sect;
+     unsigned core_reg_size;
+     int which;
+     CORE_ADDR ignore;
+{
+  switch (which)
+    {
+    case 0:  /* Integer registers */
+      if (core_reg_size != sizeof (struct reg))
+	warning ("Wrong size register set in core file.");
+      else
+	supply_regs (core_reg_sect);
+      break;
 
-  registers_fetched ();
+    case 2:  /* Floating point registers */
+      if (core_reg_size != sizeof (struct fpreg))
+	warning ("Wrong size FP register set in core file.");
+      else
+	supply_fpregs (core_reg_sect);
+      break;
+
+    default:
+      /* Don't know what kind of register request this is; just ignore it.  */
+      break;
+    }
 }
 
 
@@ -121,10 +152,19 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
 
 static struct core_fns ppcnbsd_core_fns =
 {
-  bfd_target_elf_flavour,		/* core_flavour */
+  bfd_target_unknown_flavour,		/* core_flavour */
   default_check_format,			/* check_format */
   default_core_sniffer,			/* core_sniffer */
   fetch_core_registers,			/* core_read_registers */
+  NULL					/* next */
+};
+
+static struct core_fns ppcnbsd_elfcore_fns =
+{
+  bfd_target_elf_flavour,		/* core_flavour */
+  default_check_format,			/* check_format */
+  default_core_sniffer,			/* core_sniffer */
+  fetch_elfcore_registers,		/* core_read_registers */
   NULL					/* next */
 };
 
@@ -132,14 +172,10 @@ void
 _initialize_core_ppcnbsd ()
 {
   add_core_fns (&ppcnbsd_core_fns);
+  add_core_fns (&ppcnbsd_elfcore_fns);
 }
 
 
-/*
- * kernel_u_size() is not helpful on NetBSD because
- * the "u" struct is NOT in the core dump file.
- */
-
 #ifdef	FETCH_KCORE_REGISTERS
 /*
  * Get registers from a kernel crash dump or live kernel.
@@ -165,8 +201,5 @@ fetch_kcore_registers (pcb)
   supply_register(CR_REGNUM, (char *)&sf.cr);
   for (regno = 13; regno < 32; regno++)
     supply_register(regno, (char *)&sf.fixreg[regno - 13]);
-
-  /* The kernel does not use the FPU, so ignore it. */
-  registers_fetched ();
 }
 #endif	/* FETCH_KCORE_REGISTERS */
