@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.22 2003/04/07 13:41:14 kleink Exp $	*/
+/*	$NetBSD: __unsetenv13.c,v 1.1 2003/04/07 13:41:14 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "from: @(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.22 2003/04/07 13:41:14 kleink Exp $");
+__RCSID("$NetBSD: __unsetenv13.c,v 1.1 2003/04/07 13:41:14 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,9 @@ __RCSID("$NetBSD: setenv.c,v 1.22 2003/04/07 13:41:14 kleink Exp $");
 #include "reentrant.h"
 
 #ifdef __weak_alias
-__weak_alias(setenv,_setenv)
+#ifdef __LIBC12_SOURCE__
+__weak_alias(unsetenv,_unsetenv)
+#endif
 #endif
 
 #ifdef _REENTRANT
@@ -62,75 +64,37 @@ extern rwlock_t __environ_lock;
 extern char **environ;
 
 /*
- * setenv --
- *	Set the value of the environmental variable "name" to be
- *	"value".  If rewrite is set, replace any current value.
+ * unsetenv(name) --
+ *	Delete environmental variable "name".
  */
+#ifdef __LIBC12_SOURCE__
+void
+#else
 int
-setenv(name, value, rewrite)
+#endif
+unsetenv(name)
 	const char *name;
-	const char *value;
-	int rewrite;
 {
-	static int alloced;			/* if allocated space before */
-	char *c;
-	const char *cc;
-	size_t l_value;
+	char **p;
 	int offset;
 
 	_DIAGASSERT(name != NULL);
-	_DIAGASSERT(value != NULL);
 
-	if (*value == '=')			/* no `=' in value */
-		++value;
-	l_value = strlen(value);
-	rwlock_wrlock(&__environ_lock);
-	/* find if already exists */
-	if ((c = __findenv(name, &offset)) != NULL) {
-		if (!rewrite) {
-			rwlock_unlock(&__environ_lock);
-			return (0);
-		}
-		if (strlen(c) >= l_value) {	/* old larger; copy over */
-			while ((*c++ = *value++) != '\0');
-			rwlock_unlock(&__environ_lock);
-			return (0);
-		}
-	} else {					/* create new slot */
-		int cnt;
-		char **p;
-
-		for (p = environ, cnt = 0; *p; ++p, ++cnt);
-		if (alloced) {			/* just increase size */
-			environ = realloc(environ,
-			    (size_t)(sizeof(char *) * (cnt + 2)));
-			if (!environ) {
-				rwlock_unlock(&__environ_lock);
-				return (-1);
-			}
-		}
-		else {				/* get new space */
-			alloced = 1;		/* copy old entries into it */
-			p = malloc((size_t)(sizeof(char *) * (cnt + 2)));
-			if (!p) {
-				rwlock_unlock(&__environ_lock);
-				return (-1);
-			}
-			memcpy(p, environ, cnt * sizeof(char *));
-			environ = p;
-		}
-		environ[cnt + 1] = NULL;
-		offset = cnt;
-	}
-	for (cc = name; *cc && *cc != '='; ++cc)/* no `=' in name */
-		continue;
-	if (!(environ[offset] =			/* name + `=' + value */
-	    malloc((size_t)((int)(cc - name) + l_value + 2)))) {
-		rwlock_unlock(&__environ_lock);
+#ifndef __LIBC12_SOURCE__
+	if (name == NULL || *name == '\0' || strchr(name, '=') != NULL) {
+		errno = EINVAL;
 		return (-1);
 	}
-	for (c = environ[offset]; (*c = *name++) && *c != '='; ++c);
-	for (*c++ = '='; (*c++ = *value++) != '\0'; );
+#endif
+
+	rwlock_wrlock(&__environ_lock);
+	while (__findenv(name, &offset))	/* if set multiple times */
+		for (p = &environ[offset];; ++p)
+			if (!(*p = *(p + 1)))
+				break;
 	rwlock_unlock(&__environ_lock);
+
+#ifndef __LIBC12_SOURCE__
 	return (0);
+#endif
 }

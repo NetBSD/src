@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.58 2003/03/01 15:59:02 bjh21 Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.59 2003/04/07 13:41:13 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -221,6 +221,21 @@ unsigned long long int
 #endif
 
 /*
+ * X/Open CAE Specification Issue 6; IEEE Std 1003.1-2001 (POSIX)
+ */
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (_POSIX_C_SOURCE - 0) >= 200112L || \
+    (_XOPEN_SOURCE - 0) >= 600
+int	 setenv __P((const char *, const char *, int));
+#ifdef __LIBC12_SOURCE__
+void	 unsetenv __P((const char *));
+int	 __unsetenv13 __P((const char *));
+#else
+int	 unsetenv __P((const char *))		__RENAME(__unsetenv13);
+#endif
+#endif
+
+/*
  * Implementation-defined extensions
  */
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
@@ -260,8 +275,6 @@ int	 radixsort __P((const unsigned char **, int, const unsigned char *,
 int	 sradixsort __P((const unsigned char **, int, const unsigned char *,
 	    unsigned));
 
-int	 setenv __P((const char *, const char *, int));
-void	 unsetenv __P((const char *));
 void	 setproctitle __P((const char *, ...))
 	    __attribute__((__format__(__printf__, 1, 2)));
 const char *getprogname __P((void)) __attribute__((__const__));
