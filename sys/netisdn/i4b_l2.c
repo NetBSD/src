@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.8 2002/03/25 12:07:34 martin Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.9 2002/03/25 16:39:57 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.8 2002/03/25 12:07:34 martin Exp $ 
+ *	$Id: i4b_l2.c,v 1.9 2002/03/25 16:39:57 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.8 2002/03/25 12:07:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.9 2002/03/25 16:39:57 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -364,5 +364,38 @@ void i4b_l2_channel_set_state(int bri, int b_chanid, int state)
 	l2_softc_t *sc = (l2_softc_t*)isdn_find_softc_by_bri(bri);
 	sc->bchan_state[b_chanid] = state;
 }
+
+/*---------------------------------------------------------------------------*
+ *	telephony silence detection
+ *---------------------------------------------------------------------------*/
+
+#define TEL_IDLE_MIN (BCH_MAX_DATALEN/2)
+
+int
+isdn_bchan_silence(unsigned char *data, int len)
+{
+	register int i = 0;
+	register int j = 0;
+
+	/* count idle bytes */
+	
+	for(;i < len; i++)
+	{
+		if((*data >= 0xaa) && (*data <= 0xac))
+			j++;
+		data++;
+	}
+
+#ifdef NOTDEF
+	printf("isic_hscx_silence: got %d silence bytes in frame\n", j);
+#endif
+	
+	if(j < (TEL_IDLE_MIN))
+		return(0);
+	else
+		return(1);
+
+}
+
 
 #endif /* NI4BQ921 > 0 */

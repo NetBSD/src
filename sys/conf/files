@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.505 2002/03/24 20:35:44 martin Exp $
+#	$NetBSD: files,v 1.506 2002/03/25 16:39:53 martin Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -842,10 +842,10 @@ define	passive_isdn	# files needed by passive cards (XXX - protocol
 device	isic: isdndev, passive_isdn
 
 file	dev/ic/isic.c			isic
-file	dev/ic/isac.c			isic
+file	dev/ic/isac.c			isic|ifpci
+file	dev/ic/isic_l1.c		isic|ifpci
+file	dev/ic/isic_l1fsm.c		isic|ifpci
 file	dev/ic/hscx.c			isic
-file	dev/ic/isic_l1.c		isic
-file	dev/ic/isic_l1fsm.c		isic
 file	dev/ic/isic_bchan.c		isic
 
 # (old) Diehl active ISDN cards
