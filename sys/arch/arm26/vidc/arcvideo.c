@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.5 2000/12/23 21:49:14 bjh21 Exp $ */
+/* $NetBSD: arcvideo.c,v 1.6 2000/12/27 22:13:42 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.5 2000/12/23 21:49:14 bjh21 Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.6 2000/12/27 22:13:42 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -148,10 +148,8 @@ arcvideo_attach(parent, self, aux)
 	const struct wsscreen_descr *screenp;
 	struct arcvideo_softc *sc = (void *)self;
 
-	printf(": ");
-
 	if (!arcvideo_isconsole) {
-		printf("Not console -- I can't cope with this!\n");
+		printf(": Not console -- I can't cope with this!\n");
 		return;
 	}
 
@@ -171,11 +169,12 @@ arcvideo_attach(parent, self, aux)
 		sc->sc_irq = ioc_irq_establish(sc->sc_ioc, IOC_IRQ_IR, IPL_TTY,
 					       arcvideo_intr, self);
 		if (bootverbose)
-			printf("VSYNC interrupts at %s",
+			printf(": VSYNC interrupts at %s",
 			    irq_string(sc->sc_irq));
 	} else
 #endif /* NIOC > 0 */
-		printf("no VSYNC sensing");
+		if (bootverbose)
+			printf(": no VSYNC sensing");
 
 	printf("\n");
 
@@ -344,11 +343,6 @@ arccons_init()
 	MEMC_WRITE(MEMC_SET_PTR(MEMC_VINIT, 0));
 	MEMC_WRITE(MEMC_SET_PTR(MEMC_VEND, 0x00080000));
 
-	/* Register video memory with UVM now we know how much we're using. */
-	uvm_page_physload(0, atop(MEMC_DMA_MAX),
-			  atop(round_page(bootconfig.screensize)),
-			  atop(MEMC_DMA_MAX), VM_FREELIST_LOW);
-
 	/* TODO: We should really set up the VIDC ourselves here. */
 
 	/* Set up arccons_ri */
@@ -362,6 +356,11 @@ arccons_init()
 
 	if (rasops_init(ri, 1000, 1000) < 0)
 		panic("rasops_init failed");
+
+	/* Register video memory with UVM now we know how much we're using. */
+	uvm_page_physload(0, atop(MEMC_DMA_MAX),
+			  atop(round_page(ri->ri_height * ri->ri_stride)),
+			  atop(MEMC_DMA_MAX), VM_FREELIST_LOW);
 
 	if (ri->ri_depth == 8)
 		arccons_8bpp_hack(&arccons_ri);
