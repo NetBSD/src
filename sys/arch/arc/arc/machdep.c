@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 2001/05/11 21:15:11 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 2001/05/17 14:53:54 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -1266,9 +1266,7 @@ cpu_reboot(howto, bootstr)
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
 
-#if 0
 	doshutdownhooks();
-#endif
 
 	if (howto & RB_HALT) {
 		printf("\n");
