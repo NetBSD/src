@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_core.c,v 1.19 2000/06/14 11:27:35 itojun Exp $	*/
-/*	$KAME: ah_core.c,v 1.35 2000/06/14 11:14:03 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.20 2000/07/18 14:56:42 itojun Exp $	*/
+/*	$KAME: ah_core.c,v 1.36 2000/07/15 16:07:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,8 +96,7 @@
 static int ah_sumsiz_1216 __P((struct secasvar *));
 static int ah_sumsiz_zero __P((struct secasvar *));
 static int ah_none_mature __P((struct secasvar *));
-static int ah_none_init __P((struct ah_algorithm_state *,
-	struct secasvar *));
+static int ah_none_init __P((struct ah_algorithm_state *, struct secasvar *));
 static void ah_none_loop __P((struct ah_algorithm_state *, caddr_t, size_t));
 static void ah_none_result __P((struct ah_algorithm_state *, caddr_t));
 static int ah_keyed_md5_mature __P((struct secasvar *));
@@ -125,24 +124,47 @@ static void ah_hmac_sha1_loop __P((struct ah_algorithm_state *, caddr_t,
 	size_t));
 static void ah_hmac_sha1_result __P((struct ah_algorithm_state *, caddr_t));
 
-static void ah_update_mbuf __P((struct mbuf *, int, int, struct ah_algorithm *,
-	struct ah_algorithm_state *));
+static void ah_update_mbuf __P((struct mbuf *, int, int,
+	const struct ah_algorithm *, struct ah_algorithm_state *));
 
-/* checksum algorithms */
-/* NOTE: The order depends on SADB_AALG_x in net/pfkeyv2.h */
-struct ah_algorithm ah_algorithms[] = {
-	{ 0, 0, 0, 0, 0, 0, },
-	{ ah_sumsiz_1216, ah_hmac_md5_mature, 128, 128, "hmac-md5",
-		ah_hmac_md5_init, ah_hmac_md5_loop, ah_hmac_md5_result, },
-	{ ah_sumsiz_1216, ah_hmac_sha1_mature, 160, 160, "hmac-sha1",
-		ah_hmac_sha1_init, ah_hmac_sha1_loop, ah_hmac_sha1_result, },
-	{ ah_sumsiz_1216, ah_keyed_md5_mature, 128, 128, "keyed-md5",
-		ah_keyed_md5_init, ah_keyed_md5_loop, ah_keyed_md5_result, },
-	{ ah_sumsiz_1216, ah_keyed_sha1_mature, 160, 160, "keyed-sha1",
-		ah_keyed_sha1_init, ah_keyed_sha1_loop, ah_keyed_sha1_result, },
-	{ ah_sumsiz_zero, ah_none_mature, 0, 2048, "none",
-		ah_none_init, ah_none_loop, ah_none_result, },
-};
+const struct ah_algorithm *
+ah_algorithm_lookup(idx)
+	int idx;
+{
+	/* checksum algorithms */
+	static struct ah_algorithm ah_algorithms[] = {
+		{ ah_sumsiz_1216, ah_hmac_md5_mature, 128, 128, "hmac-md5",
+			ah_hmac_md5_init, ah_hmac_md5_loop,
+			ah_hmac_md5_result, },
+		{ ah_sumsiz_1216, ah_hmac_sha1_mature, 160, 160, "hmac-sha1",
+			ah_hmac_sha1_init, ah_hmac_sha1_loop,
+			ah_hmac_sha1_result, },
+		{ ah_sumsiz_1216, ah_keyed_md5_mature, 128, 128, "keyed-md5",
+			ah_keyed_md5_init, ah_keyed_md5_loop,
+			ah_keyed_md5_result, },
+		{ ah_sumsiz_1216, ah_keyed_sha1_mature, 160, 160, "keyed-sha1",
+			ah_keyed_sha1_init, ah_keyed_sha1_loop,
+			ah_keyed_sha1_result, },
+		{ ah_sumsiz_zero, ah_none_mature, 0, 2048, "none",
+			ah_none_init, ah_none_loop, ah_none_result, },
+	};
+
+	switch (idx) {
+	case SADB_AALG_MD5HMAC:
+		return &ah_algorithms[0];
+	case SADB_AALG_SHA1HMAC:
+		return &ah_algorithms[1];
+	case SADB_X_AALG_MD5:
+		return &ah_algorithms[2];
+	case SADB_X_AALG_SHA:
+		return &ah_algorithms[3];
+	case SADB_X_AALG_NULL:
+		return &ah_algorithms[4];
+	default:
+		return NULL;
+	}
+}
+
 
 static int
 ah_sumsiz_1216(sav)
@@ -303,13 +325,19 @@ static int
 ah_keyed_sha1_mature(sav)
 	struct secasvar *sav;
 {
-	struct ah_algorithm *algo;
+	const struct ah_algorithm *algo;
 
 	if (!sav->key_auth) {
 		ipseclog((LOG_ERR, "ah_keyed_sha1_mature: no key is given.\n"));
 		return 1;
 	}
-	algo = &ah_algorithms[sav->alg_auth];
+
+	algo = ah_algorithm_lookup(sav->alg_auth);
+	if (!algo) {
+		ipseclog((LOG_ERR, "ah_keyed_sha1_mature: unsupported algorithm.\n"));
+		return 1;
+	}
+
 	if (sav->key_auth->sadb_key_bits < algo->keymin
 	 || algo->keymax < sav->key_auth->sadb_key_bits) {
 		ipseclog((LOG_ERR,
@@ -420,13 +448,19 @@ static int
 ah_hmac_md5_mature(sav)
 	struct secasvar *sav;
 {
-	struct ah_algorithm *algo;
+	const struct ah_algorithm *algo;
 
 	if (!sav->key_auth) {
 		ipseclog((LOG_ERR, "ah_hmac_md5_mature: no key is given.\n"));
 		return 1;
 	}
-	algo = &ah_algorithms[sav->alg_auth];
+
+	algo = ah_algorithm_lookup(sav->alg_auth);
+	if (!algo) {
+		ipseclog((LOG_ERR, "ah_hmac_md5_mature: unsupported algorithm.\n"));
+		return 1;
+	}
+
 	if (sav->key_auth->sadb_key_bits < algo->keymin
 	 || algo->keymax < sav->key_auth->sadb_key_bits) {
 		ipseclog((LOG_ERR,
@@ -538,13 +572,19 @@ static int
 ah_hmac_sha1_mature(sav)
 	struct secasvar *sav;
 {
-	struct ah_algorithm *algo;
+	const struct ah_algorithm *algo;
 
 	if (!sav->key_auth) {
 		ipseclog((LOG_ERR, "ah_hmac_sha1_mature: no key is given.\n"));
 		return 1;
 	}
-	algo = &ah_algorithms[sav->alg_auth];
+
+	algo = ah_algorithm_lookup(sav->alg_auth);
+	if (!algo) {
+		ipseclog((LOG_ERR, "ah_hmac_sha1_mature: unsupported algorithm.\n"));
+		return 1;
+	}
+
 	if (sav->key_auth->sadb_key_bits < algo->keymin
 	 || algo->keymax < sav->key_auth->sadb_key_bits) {
 		ipseclog((LOG_ERR,
@@ -664,7 +704,7 @@ ah_update_mbuf(m, off, len, algo, algos)
 	struct mbuf *m;
 	int off;
 	int len;
-	struct ah_algorithm *algo;
+	const struct ah_algorithm *algo;
 	struct ah_algorithm_state *algos;
 {
 	struct mbuf *n;
@@ -713,7 +753,7 @@ ah4_calccksum(m, ahdat, len, algo, sav)
 	struct mbuf *m;
 	caddr_t ahdat;
 	size_t len;
-	struct ah_algorithm *algo;
+	const struct ah_algorithm *algo;
 	struct secasvar *sav;
 {
 	int off;
@@ -933,7 +973,7 @@ ah6_calccksum(m, ahdat, len, algo, sav)
 	struct mbuf *m;
 	caddr_t ahdat;
 	size_t len;
-	struct ah_algorithm *algo;
+	const struct ah_algorithm *algo;
 	struct secasvar *sav;
 {
 	int newoff, off;

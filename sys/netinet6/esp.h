@@ -1,5 +1,5 @@
-/*	$NetBSD: esp.h,v 1.8 2000/06/14 11:27:36 itojun Exp $	*/
-/*	$KAME: esp.h,v 1.7 2000/06/14 10:41:17 itojun Exp $	*/
+/*	$NetBSD: esp.h,v 1.9 2000/07/18 14:56:42 itojun Exp $	*/
+/*	$KAME: esp.h,v 1.9 2000/07/15 16:07:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,7 +41,7 @@
 #include "opt_inet.h"
 #endif
 
-#include <netkey/keydb.h>		/* for struct secas */
+struct secasvar;
 
 struct esp {
 	u_int32_t	esp_spi;	/* ESP */
@@ -85,13 +85,13 @@ struct esp_algorithm {
 	const char *name;
 	int (*ivlen) __P((struct secasvar *));
 	int (*decrypt) __P((struct mbuf *, size_t,
-		struct secasvar *, struct esp_algorithm *, int));
+		struct secasvar *, const struct esp_algorithm *, int));
 	int (*encrypt) __P((struct mbuf *, size_t, size_t,
-		struct secasvar *, struct esp_algorithm *, int));
+		struct secasvar *, const struct esp_algorithm *, int));
 };
 
 #ifdef _KERNEL
-extern struct esp_algorithm esp_algorithms[];
+extern const struct esp_algorithm *esp_algorithm_lookup __P((int));
 
 /* crypt routines */
 extern int esp4_output __P((struct mbuf *, struct ipsecrequest *));
@@ -105,7 +105,6 @@ extern int esp6_input __P((struct mbuf **, int *, int));
 #endif /* INET6 */
 #endif /*_KERNEL*/
 
-struct secasvar;
 extern int esp_auth __P((struct mbuf *, size_t, size_t,
 	struct secasvar *, u_char *));
 
