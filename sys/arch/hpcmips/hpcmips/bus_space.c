@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.16 2001/11/22 14:22:30 takemura Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.17 2001/12/02 10:37:53 uch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -156,6 +156,13 @@ hpcmips_system_bus_space()
 {
 
 	return (__sys_bus_space_tag);
+}
+
+struct bus_space_tag_hpcmips *
+hpcmips_system_bus_space_hpcmips()
+{
+
+	return (&__sys_bus_space);
 }
 
 struct bus_space_tag_hpcmips *
