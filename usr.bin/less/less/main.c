@@ -91,14 +91,16 @@ main(argc, argv)
 	 * Process command line arguments and LESS environment arguments.
 	 * Command line arguments override environment arguments.
 	 */
+	if (strcmp(__progname, "more") == 0)
+		more_mode = 1;
+
 	get_term();
 	init_cmds();
 	init_prompt();
 	init_charset();
 	init_option();
 
-	if (strcmp(__progname, "more") == 0) {
-		more_mode = 1;
+	if (more_mode) {
 		scan_option("-E");
 		scan_option("-m");
 		scan_option(getenv("MORE"));
