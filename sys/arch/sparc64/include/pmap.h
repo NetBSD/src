@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27 2003/04/14 01:44:06 petrov Exp $	*/
+/*	$NetBSD: pmap.h,v 1.28 2003/08/10 02:30:51 chs Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -190,8 +190,6 @@ void pmap_bootstrap __P((u_long kernelstart, u_long kernelend, u_int numctx));
 
 #define	PMAP_GROWKERNEL         /* turn on pmap_growkernel interface */
 #define PMAP_NEED_PROCWR
-#define __HAVE_PMAP_PREDESTROY
-#define __HAVE_PMAP_ACTIVATE_KERNEL
 
 void pmap_procwr(struct proc *, vaddr_t, size_t);
 
