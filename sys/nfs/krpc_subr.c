@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.3 1994/06/29 06:42:02 cgd Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.4 1994/06/30 10:45:03 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon Ross, Adam Glass 
@@ -325,6 +325,10 @@ krpc_call(sa, prog, vers, func, data)
 				goto gotreply;	/* break two levels */
 		} /* while secs */
 	} /* forever send/receive */
+
+	error = ETIMEDOUT;
+	goto out;
+
  gotreply:
 
 	/*
@@ -348,12 +352,12 @@ krpc_call(sa, prog, vers, func, data)
 	 * Check RPC acceptance and status.
 	 */
 	if (reply->rp_astatus != 0) {
-		error = reply->rp_u.rpu_errno;
+		error = ntohl(reply->rp_u.rpu_errno);
 		printf("rpc denied, error=%d\n", error);
 		m_freem(m);
 		goto out;
 	}
-	if ((error = reply->rp_u.rpu_ok.rp_rstatus) != 0) {
+	if ((error = ntohl(reply->rp_u.rpu_ok.rp_rstatus)) != 0) {
 		printf("rpc status=%d\n", error);
 		m_freem(m);
 		goto out;
