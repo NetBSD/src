@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.10 2004/01/11 23:33:35 lukem Exp $
+# $NetBSD: mi,v 1.11 2004/01/12 00:06:07 lukem Exp $
 ./usr/X11R6/lib/X11/XftConfig-OBSOLETE
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-1.pcf.gz
 ./usr/X11R6/lib/X11/fonts/100dpi/UTBI__10-ISO8859-10.pcf.gz
@@ -3796,7 +3796,6 @@
 ./usr/X11R6/lib/X11/fonts/75dpi/timR24-ISO8859-4.pcf.gz
 ./usr/X11R6/lib/X11/fonts/75dpi/timR24-ISO8859-9.pcf.gz
 ./usr/X11R6/lib/X11/fonts/75dpi/timR24.pcf.gz
-./usr/X11R6/lib/X11/fonts/CID
 ./usr/X11R6/lib/X11/fonts/CID/encodings.dir
 ./usr/X11R6/lib/X11/fonts/CID/fonts.cache-1
 ./usr/X11R6/lib/X11/fonts/CID/fonts.dir
@@ -3813,7 +3812,6 @@
 ./usr/X11R6/lib/X11/fonts/Speedo/fonts.cache-1
 ./usr/X11R6/lib/X11/fonts/Speedo/fonts.dir
 ./usr/X11R6/lib/X11/fonts/Speedo/fonts.scale
-./usr/X11R6/lib/X11/fonts/TTF
 ./usr/X11R6/lib/X11/fonts/TTF/encodings.dir
 ./usr/X11R6/lib/X11/fonts/TTF/fonts.cache-1
 ./usr/X11R6/lib/X11/fonts/TTF/fonts.dir
@@ -3891,7 +3889,6 @@
 ./usr/X11R6/lib/X11/fonts/Type1/l049033t.pfa
 ./usr/X11R6/lib/X11/fonts/Type1/l049036t.afm
 ./usr/X11R6/lib/X11/fonts/Type1/l049036t.pfa
-./usr/X11R6/lib/X11/fonts/cyrillic
 ./usr/X11R6/lib/X11/fonts/cyrillic/crox1c.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/crox1cb.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/crox1cbo.pcf.gz
@@ -3978,7 +3975,6 @@
 ./usr/X11R6/lib/X11/fonts/cyrillic/proof9x16.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/screen8x16.pcf.gz
 ./usr/X11R6/lib/X11/fonts/cyrillic/screen8x16b.pcf.gz
-./usr/X11R6/lib/X11/fonts/encodings
 ./usr/X11R6/lib/X11/fonts/encodings/adobe-dingbats.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/adobe-standard.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/adobe-symbol.enc.gz
