@@ -70,9 +70,13 @@
 #define	N_DATOFF(ex) \
 	N_ALIGN(ex, N_TXTOFF(ex) + (ex).a_text)
 
+/* Relocation table offset. */
+#define N_RELOFF(ex) \
+	N_ALIGN(ex, N_DATOFF(ex) + (ex).a_data)
+
 /* Symbol table offset. */
 #define N_SYMOFF(ex) \
-	(N_DATOFF(ex) + (ex).a_data + (ex).a_trsize + (ex).a_drsize)
+	(N_RELOFF(ex) + (ex).a_trsize + (ex).a_drsize)
 
 /* String table offset. */
 #define	N_STROFF(ex) 	(N_SYMOFF(ex) + (ex).a_syms)
