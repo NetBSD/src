@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.93 2001/10/28 22:39:30 cgd Exp $
+$NetBSD: acronyms,v 1.94 2001/11/07 04:23:24 hubertf Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -65,6 +65,7 @@ IRL	in real life
 ISTM	it seems to me
 ISTR	I seem to recall
 ITYM	I think you mean
+IYSS	If you say so
 JIC	just in case
 JK	just kidding
 JMO	just my opinion
