@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.66 2003/12/30 12:33:24 pk Exp $	*/
+/*	$NetBSD: buf.h,v 1.67 2003/12/30 20:43:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -135,14 +135,14 @@ void	bufq_free(struct bufq_state *);
  * to each buffer.
  */
 struct bio_ops {
- 	void	(*io_start) __P((struct buf *));
- 	void	(*io_complete) __P((struct buf *));
- 	void	(*io_deallocate) __P((struct buf *));
- 	int	(*io_fsync) __P((struct vnode *));
- 	int	(*io_sync) __P((struct mount *));
-	void	(*io_movedeps) __P((struct buf *, struct buf *));
-	int	(*io_countdeps) __P((struct buf *, int));
-	void	(*io_pageiodone) __P((struct buf *));
+ 	void	(*io_start)(struct buf *);
+ 	void	(*io_complete)(struct buf *);
+ 	void	(*io_deallocate)(struct buf *);
+ 	int	(*io_fsync)(struct vnode *);
+ 	int	(*io_sync)(struct mount *);
+	void	(*io_movedeps)(struct buf *, struct buf *);
+	int	(*io_countdeps)(struct buf *, int);
+	void	(*io_pageiodone)(struct buf *);
 };
 
 /*
@@ -165,7 +165,7 @@ struct buf {
 	daddr_t	b_rawblkno;		/* Raw underlying physical block
 					   number (not partition relative) */
 					/* Function to call upon completion. */
-	void	(*b_iodone) __P((struct buf *));
+	void	(*b_iodone)(struct buf *);
 	struct  proc *b_proc;		/* Associated proc if B_PHYS set. */
 	struct	vnode *b_vp;		/* File vnode. */
 	struct  workhead b_dep;		/* List of filesystem dependencies. */
@@ -278,44 +278,43 @@ extern	u_int bufpages;		/* Number of memory pages in the buffer pool. */
 extern	struct pool bufpool;
 
 __BEGIN_DECLS
-void	allocbuf __P((struct buf *, int, int));
-void	bawrite __P((struct buf *));
-void	bdirty __P((struct buf *));
-void	bdwrite __P((struct buf *));
-void	biodone __P((struct buf *));
-int	biowait __P((struct buf *));
-int	bread __P((struct vnode *, daddr_t, int,
-		   struct ucred *, struct buf **));
-int	breada __P((struct vnode *, daddr_t, int, daddr_t, int,
-		    struct ucred *, struct buf **));
-int	breadn __P((struct vnode *, daddr_t, int, daddr_t *, int *, int,
-		    struct ucred *, struct buf **));
-void	brelse __P((struct buf *));
-void	bremfree __P((struct buf *));
-void	bufinit __P((void));
-int	bwrite __P((struct buf *));
-void	cluster_callback __P((struct buf *));
-int	cluster_read __P((struct vnode *, u_quad_t, daddr_t, long,
-			  struct ucred *, struct buf **));
-void	cluster_write __P((struct buf *, u_quad_t));
-struct buf *getblk __P((struct vnode *, daddr_t, int, int, int));
-struct buf *geteblk __P((int));
-struct buf *getnewbuf __P((int, int, int));
-struct buf *incore __P((struct vnode *, daddr_t));
+void	allocbuf(struct buf *, int, int);
+void	bawrite(struct buf *);
+void	bdirty(struct buf *);
+void	bdwrite(struct buf *);
+void	biodone(struct buf *);
+int	biowait(struct buf *);
+int	bread(struct vnode *, daddr_t, int, struct ucred *, struct buf **);
+int	breada(struct vnode *, daddr_t, int, daddr_t, int, struct ucred *,
+	       struct buf **);
+int	breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
+	       struct ucred *, struct buf **);
+void	brelse(struct buf *);
+void	bremfree(struct buf *);
+void	bufinit(void);
+int	bwrite(struct buf *);
+void	cluster_callback(struct buf *);
+int	cluster_read(struct vnode *, u_quad_t, daddr_t, long, struct ucred *,
+		     struct buf **);
+void	cluster_write(struct buf *, u_quad_t);
+struct buf *getblk(struct vnode *, daddr_t, int, int, int);
+struct buf *geteblk(int);
+struct buf *getnewbuf(int, int, int);
+struct buf *incore(struct vnode *, daddr_t);
 
-void	minphys __P((struct buf *));
-int	physio __P((void (*)(struct buf *), struct buf *, dev_t,
-		    int, void (*)(struct buf *), struct uio *));
+void	minphys(struct buf *);
+int	physio(void (*)(struct buf *), struct buf *, dev_t, int,
+	       void (*)(struct buf *), struct uio *);
 
-void	brelvp __P((struct buf *));
-void	reassignbuf __P((struct buf *, struct vnode *));
-void	bgetvp __P((struct vnode *, struct buf *));
-int	buf_syncwait __P((void));
-u_long	buf_memcalc __P((void));
-int	buf_drain __P((int));
-int	buf_setvalimit __P((vsize_t));
+void	brelvp(struct buf *);
+void	reassignbuf(struct buf *, struct vnode *);
+void	bgetvp(struct vnode *, struct buf *);
+int	buf_syncwait(void);
+u_long	buf_memcalc(void);
+int	buf_drain(int);
+int	buf_setvalimit(vsize_t);
 #ifdef DDB
-void	vfs_buf_print __P((struct buf *, int, void (*)(const char *, ...)));
+void	vfs_buf_print(struct buf *, int, void (*)(const char *, ...));
 #endif
 __END_DECLS
 #endif
