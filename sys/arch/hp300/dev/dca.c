@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dca.c	7.12 (Berkeley) 6/27/91
- *	$Id: dca.c,v 1.7 1993/07/07 11:12:26 deraadt Exp $
+ *	$Id: dca.c,v 1.8 1993/07/12 11:38:03 mycroft Exp $
  */
 
 #include "dca.h"
@@ -47,7 +47,6 @@
 #include "sys/proc.h"
 #include "sys/conf.h"
 #include "sys/file.h"
-#include "sys/malloc.h"
 #include "sys/uio.h"
 #include "sys/kernel.h"
 #include "sys/syslog.h"
@@ -197,11 +196,9 @@ dcaopen(dev, flag, mode, p)
 	unit = UNIT(dev);
 	if (unit >= NDCA || (dca_active & (1 << unit)) == 0)
 		return (ENXIO);
-	if(!dca_tty[unit]) {
-		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
-		bzero(tp, sizeof(struct tty));
-		dca_tty[unit] = tp;
-	} else
+	if(!dca_tty[unit])
+		tp = dca_tty[unit] = ttymalloc();
+	else
 		tp = dca_tty[unit];
 	tp->t_oproc = dcastart;
 	tp->t_param = dcaparam;
@@ -227,7 +224,7 @@ dcaopen(dev, flag, mode, p)
 	while ((flag&O_NONBLOCK) == 0 && (tp->t_cflag&CLOCAL) == 0 &&
 	       (tp->t_state & TS_CARR_ON) == 0) {
 		tp->t_state |= TS_WOPEN;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_raw, TTIPRI | PCATCH,
+		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
 		    ttopen, 0))
 			break;
 	}
@@ -261,7 +258,7 @@ dcaclose(dev, flag, mode, p)
 	    (tp->t_state&TS_ISOPEN) == 0)
 		(void) dcamctl(dev, 0, DMSET);
 	ttyclose(tp);
-	FREE(tp, M_TTYS);
+	ttyfree(tp);
 	dca_tty[unit] = (struct tty *)NULL;
 	return (0);
 }
@@ -552,22 +549,22 @@ dcastart(tp)
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_TTSTOP))
 		goto out;
-	if (RB_LEN(&tp->t_out) <= tp->t_lowat) {
+	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_out);
+			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
-	if (RB_LEN(&tp->t_out) == 0)
+	if (tp->t_outq.c_cc == 0)
 		goto out;
 	if (dca->dca_lsr & LSR_TXRDY) {
-		c = rbgetc(&tp->t_out);
+		c = getc(&tp->t_outq);
 		tp->t_state |= TS_BUSY;
 		dca->dca_data = c;
 		if (dca_hasfifo & (1 << unit)) {
-			for (c = 1; c < 16 && RB_LEN(&tp->t_out); ++c)
-				dca->dca_data = rbgetc(&tp->t_out);
+			for (c = 1; c < 16 && tp->t_outq.c_cc; ++c)
+				dca->dca_data = getc(&tp->t_outq);
 #ifdef DEBUG
 			if (c > 16)
 				fifoout[0]++;

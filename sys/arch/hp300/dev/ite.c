@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.1 90/07/09$
  *
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.7 1993/07/07 11:12:37 deraadt Exp $
+ *	$Id: ite.c,v 1.8 1993/07/12 11:38:13 mycroft Exp $
  */
 
 /*
@@ -60,7 +60,6 @@
 #include "ioctl.h"
 #include "tty.h"
 #include "systm.h"
-#include "malloc.h"
 
 #include "itevar.h"
 #include "iteioctl.h"
@@ -220,13 +219,10 @@ iteopen(dev, mode, devtype, p)
 	register int error;
 	int first = 0;
 
-	if(!ite_tty[unit]) {
-		MALLOC(tp, struct tty *, sizeof(struct tty), M_TTYS, M_WAITOK);
-		bzero(tp, sizeof(struct tty));
-		ite_tty[unit] = tp;
-	} else
+	if(!ite_tty[unit])
+		tp = ite_tty[unit] = ttymalloc();
+	else
 		tp = ite_tty[unit];
-
 	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
 	    && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
@@ -269,7 +265,7 @@ iteclose(dev, flag, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 	iteoff(dev, 0);
-	FREE(tp, M_TTYS);
+	ttyfree(tp);
 	ite_tty[UNIT(dev)] = (struct tty *)NULL;
 	return(0);
 }
@@ -324,7 +320,7 @@ itestart(tp)
 		return;
 	}
 	tp->t_state |= TS_BUSY;
-	cc = RB_LEN(&tp->t_out);
+	cc = tp->t_outq.c_cc;
 	if (cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
@@ -343,7 +339,7 @@ itestart(tp)
 	while (--cc >= 0) {
 		register int c;
 
-		c = rbgetc(&tp->t_out);
+		c = getc(&tp->t_outq);
 		/*
 		 * iteputchar() may take a long time and we don't want to
 		 * block all interrupts for long periods of time.  Since
