@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.17 2000/09/04 22:44:18 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.18 2000/09/08 19:48:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -753,20 +753,23 @@ tlb_handler(p1, p2, p3, p4, frame)
 	if (vm != NULL && (caddr_t)va >= vm->vm_maxsaddr
 	    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
 	    && map != kernel_map) {
-		nss = btoc(USRSTACK-(unsigned)va);
-		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-			rv = KERN_FAILURE;
-			goto nogo;
-		}
-	}
 #else
 	if ((caddr_t)va >= vm->vm_maxsaddr
 	    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
 	    && map != kernel_map) {
+#endif
 		nss = btoc(USRSTACK-(unsigned)va);
 		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-			rv = KERN_FAILURE;
-			goto nogo;
+			/*
+			 * We used to fail here. However, it may
+			 * just have been an mmap()ed page low
+			 * in the stack, which is legal. If it
+			 * wasn't, uvm_fault() will fail below.
+			 *
+			 * Set nss to 0, since this case is not
+			 * a "stack extension".
+			 */
+			nss = 0;
 		}
 	}
 #endif
