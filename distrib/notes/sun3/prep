@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.7 2000/10/29 14:08:11 lukem Exp $
+.\"	$NetBSD: prep,v 1.8 2002/06/30 13:01:50 lukem Exp $
 .
 Sun3 machines usually need little or no preparation before installing
 NetBSD, other than the usual, well advised precaution of
@@ -18,17 +18,18 @@ target 2 is
 etc.
 .Note)
 .Pp
-It might be a good time to run the diagnostics on your Sun3.  First,
-attach a terminal to the
+It might be a good time to run the diagnostics on your Sun3.
+First, attach a terminal to the
 .Li ttya
 serial port, then set the
 .Dq "Diag/Norm"
-switch to the Diagnostic position, and power-on the machine.  The
-Diag. switch setting forces console interaction to occur on ttya.
+switch to the Diagnostic position, and power-on the machine.
+The Diag. switch setting forces console interaction to occur on ttya.
 Note that the 3/80 has a
 .Dq "software"
 diag switch you can set at
-the PROM monitor prompt.  To turn on diag boot mode, do:
+the PROM monitor prompt.
+To turn on diag boot mode, do:
 .Ic q 70b 12
 To return to normal boot mode, do:
 .Ic q 70b 6 .
@@ -40,7 +41,8 @@ the PROM monitor by entering
 followed by a numeric value (or
 just a
 .Sq Li \&.
-if you don't want to change it).  Console values are:
+if you don't want to change it).
+Console values are:
 .(tag 00xxx -offset indent
 .It Li 00
 Default graphics display

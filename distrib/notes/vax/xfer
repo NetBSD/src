@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.9 2002/03/31 18:18:24 matt Exp $
+.\"	$NetBSD: xfer,v 1.10 2002/06/30 13:03:41 lukem Exp $
 .
 .so ../common/xfer
 .
@@ -45,8 +45,8 @@ run
 When you have booted the bootfs and completed the disk partitioning
 you will be prompted to
 .Ic select medium
-for install. At this point
-you will need to press
+for install.
+At this point you will need to press
 .Key CONTROL-Z
 to suspend the install tool, then
 .Pp
@@ -67,7 +67,8 @@ If your disk is small you will need to be careful about filling it up.
 If you are using any other OS to create bootable tapes, remember that
 the blocksize
 .Em must
-be 512 for the file to be bootable! Otherwise it just won't work.
+be 512 for the file to be bootable!
+Otherwise it just won't work.
 .
 .Ss2 Creating boot floppies
 .
@@ -77,15 +78,17 @@ Fetch the bootable bootfs image from
 .Pp
 and
 .Ic gunzip
-it. It is a 1.2MB bootable image that will boot from any
+it.
+It is a 1.2MB bootable image that will boot from any
 floppy of size 1.2MB and bigger.
 Note that you
 .Em cannot
-install from RX50 floppies due to the small size. This may change
-in the future.
+install from RX50 floppies due to the small size.
+This may change in the future.
 .Pp
 All floppies except RX50 use a standardized format for storing data
-so writing the bootfs to the floppy can be done on any PC. From
+so writing the bootfs to the floppy can be done on any PC.
+From
 .Tn MS-DOS
 the preferred way to do this is using
 .Ic rawrite.exe .
@@ -96,7 +99,8 @@ All VAXen that can boot over network uses MOP, a
 .Tn DEC
 protocol.
 To be able to use MOP, a MOP daemon must be present on one of
-the machines on the local network. The boot principle is:
+the machines on the local network.
+The boot principle is:
 .(bullet -compact -offset indent
 The VAX broadcast a wish to load an image.
 .It
@@ -111,21 +115,23 @@ The kernel is loaded and starts executing.
 If your machine has a disk and network connection, it may be
 convenient for you to install
 .Nx
-over the network. This
-involves temporarily booting your machine over NFS, just long enough
-so you can initialize its disk. This method requires that you have
-access to an NFS server on your network so you can configure it to
-support diskless boot for your machine. Configuring the NFS server
-is normally a task for a system administrator, and is not trivial.
+over the network.
+This involves temporarily booting your machine over NFS, just long enough
+so you can initialize its disk.
+This method requires that you have access to an NFS server on your network
+so you can configure it to support diskless boot for your machine.
+Configuring the NFS server is normally a task for a system administrator,
+and is not trivial.
 .Pp
 If you are using a
 .Nx
 system as the boot-server, have a look at
 the
 .Xr diskless 8
-manual page for guidelines on how to proceed with
-this. If the server runs another operating system, consult the
-documentation that came with it. (I.e.
+manual page for guidelines on how to proceed with this.
+If the server runs another operating system, consult the
+documentation that came with it.
+(I.e.
 .Xr add_client 8
 on
 .Tn SunOS . )
@@ -133,10 +139,12 @@ on
 There is also very useful documentation at
 .Lk http://www.netbsd.org/Documentation/network/netboot/
 .Pp
-You also must install a MOP loader. If you are booting from another
+You also must install a MOP loader.
+If you are booting from another
 .Nx
 machine, the MOP daemons are included in the distribution,
-otherwise you may have to install a MOP loader. A loader can be found at
+otherwise you may have to install a MOP loader.
+A loader can be found at
 .Lk ftp.stacken.kth.se:/pub/OS/NetBSD/mopd
 Fetch the latest and read the
 installation instructions.

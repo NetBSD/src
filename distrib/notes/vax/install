@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.12 2002/03/31 18:18:23 matt Exp $
+.\"	$NetBSD: install,v 1.13 2002/06/30 13:03:41 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -65,13 +65,16 @@ install media, as described earlier.
 Booting from install media
 .Pp
 The built-in console monitor understands a bunch of commands, dependent
-of which VAX you have. To just boot from a device, type
+of which VAX you have.
+To just boot from a device, type
 .Sq Ic B
 at the
 .Li \*>\*>\*>
-prompt. Device naming in the console monitor differs a lot from the
+prompt.
+Device naming in the console monitor differs a lot from the
 .Ux
-counterparts. A device looks like
+counterparts.
+A device looks like
 .Li "ddcu" , where
 .Sq Li dd
 is the device
@@ -79,8 +82,8 @@ type,
 .Sq Li c
 is the controller number and
 .Sq Li u
-is the device unit. Many console
-monitors also support the
+is the device unit.
+Many console monitors also support the
 .Ic SHOW DEV
 command, which shows available units to boot from.
 .Pp
@@ -101,8 +104,9 @@ first SGEC Ethernet controller on VAXstations.
 .tag)
 Other devices may be appropriate for your configuration.
 .Pp
-Then just proceed with the program sysinst. The install descriptions
-for sysinst that follows can be easily adopted to VAX.
+Then just proceed with the program
+.Ic sysinst .
+The install descriptions for sysinst that follows can be easily adopted to VAX.
 .Pp
 .\" Sad that the sysinst install instructions are so i386-specific.
 .so ../common/sysinst
