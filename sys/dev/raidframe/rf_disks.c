@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.8 1999/03/18 03:02:38 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.9 1999/06/04 01:50:01 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -692,10 +692,12 @@ rf_CheckLabels( raidPtr, cfgPtr )
 				/* we'll fail this component, as if there are
 				   other major errors, we arn't forcing things
 				   and we'll abort the config anyways */
-				raidPtr->Disks[hosed_row][hosed_column].status
-					= rf_ds_failed;
-				raidPtr->numFailures++;
-				raidPtr->status[hosed_row] = rf_rs_degraded;
+				if (raidPtr->Disks[hosed_row][hosed_column].status != rf_ds_failed) {
+					raidPtr->Disks[hosed_row][hosed_column].status
+						= rf_ds_failed;
+					raidPtr->numFailures++;
+					raidPtr->status[hosed_row] = rf_rs_degraded;
+				}
 			}
 		} else {
 			too_fatal = 1;
@@ -765,7 +767,11 @@ rf_CheckLabels( raidPtr, cfgPtr )
 	return(fatal_error);	
 }
 
-
+int config_disk_queue(RF_Raid_t *, RF_DiskQueue_t *, RF_RowCol_t, 
+		      RF_RowCol_t, RF_DiskQueueSW_t *,
+		      RF_SectorCount_t, dev_t, int, 
+		      RF_ShutdownList_t **,
+		      RF_AllocListElem_t *);
 int rf_add_hot_spare(RF_Raid_t *, RF_SingleComponent_t *);
 int
 rf_add_hot_spare(raidPtr, sparePtr)
@@ -773,6 +779,7 @@ rf_add_hot_spare(raidPtr, sparePtr)
 	RF_SingleComponent_t *sparePtr;
 {
 	RF_RaidDisk_t *disks;
+	RF_DiskQueue_t *spareQueues;
 	int ret;
 	unsigned int bs;
 	int spare_number;
@@ -783,7 +790,7 @@ rf_add_hot_spare(raidPtr, sparePtr)
 		RF_ERRORMSG1("Too many spares: %d\n", raidPtr->numSpare);
 		return(EINVAL);
 	}
-	
+
 	/* the beginning of the spares... */
 	disks = &raidPtr->Disks[0][raidPtr->numCol];
 
@@ -835,8 +842,18 @@ rf_add_hot_spare(raidPtr, sparePtr)
 		}
 	}
 
-	raidPtr->numSpare++;
+	spareQueues = &raidPtr->Queues[0][raidPtr->numCol];
+	ret = config_disk_queue( raidPtr, &spareQueues[spare_number],
+				 0, raidPtr->numCol + spare_number, 
+				 raidPtr->Queues[0][0].qPtr, /* XXX */
+				 raidPtr->sectorsPerDisk,
+				 raidPtr->Disks[0][raidPtr->numCol + spare_number].dev,
+				 raidPtr->Queues[0][0].maxOutstanding, /* XXX */
+				 &raidPtr->shutdownList,
+				 raidPtr->cleanupList);
+				 
 
+	raidPtr->numSpare++;
 	return (0);
 
 fail:
