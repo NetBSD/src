@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.21.18.1 2002/07/15 01:41:03 gehenna Exp $ */
+/*	$NetBSD: sbi.c,v 1.21.18.2 2002/08/31 14:52:49 gehenna Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -58,6 +58,10 @@ sbi_print(void *aux, const char *name)
 		switch (sa->sa_type) {
 		case NEX_MBA:
 			printf("mba at %s", name);
+			break;
+		case NEX_CI:
+			printf("ci at %s", name);
+			unsupp++;
 			break;
 		default:
 			printf("unknown device 0x%x at %s", sa->sa_type, name);

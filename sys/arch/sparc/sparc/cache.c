@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.61.8.1 2002/07/21 13:00:52 gehenna Exp $ */
+/*	$NetBSD: cache.c,v 1.61.8.2 2002/08/31 14:52:20 gehenna Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -324,7 +324,7 @@ turbosparc_cache_enable()
 
 	pcf = lda(SRMMU_PCFG, ASI_SRMMU);
 	if (pcf & TURBOSPARC_PCFG_SNP)
-		printf("DVMA coherent ");
+		printf(": DVMA coherent ");
 
 	CACHEINFO.c_enabled = 1;
 }

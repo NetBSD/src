@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.35.14.1 2002/05/17 15:40:48 gehenna Exp $	*/
+/*	$NetBSD: xy.c,v 1.35.14.2 2002/08/31 14:52:43 gehenna Exp $	*/
 
 /*
  *
@@ -519,7 +519,7 @@ xyattach(parent, self, aux)
 	xy->parent = xyc;
 
 	/* init queue of waiting bufs */
-	BUFQ_INIT(&xy->xyq);
+	bufq_alloc(&xy->xyq, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 	xy->xyrq = &xyc->reqs[xa->driveno];
 
 	xy->xy_drive = xa->driveno;
@@ -1050,7 +1050,7 @@ xystrategy(bp)
 
 	s = splbio();		/* protect the queues */
 
-	disksort_blkno(&xy->xyq, bp);	 /* XXX disksort_cylinder */
+	BUFQ_PUT(&xy->xyq, bp);	 /* XXX disksort_cylinder */
 
 	/* start 'em up */
 
@@ -1659,7 +1659,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 				/* Sun3: map/unmap regardless of B_PHYS */
 				dvma_mapout(iorq->dbufbase,
 				            iorq->buf->b_bcount);
-			    BUFQ_REMOVE(&iorq->xy->xyq, iorq->buf);
+			    (void)BUFQ_GET(&iorq->xy->xyq);
 			    disk_unbusy(&iorq->xy->sc_dk,
 					        (iorq->buf->b_bcount -
 					         iorq->buf->b_resid));
@@ -1705,9 +1705,9 @@ xyc_start(xycsc, iorq)
 	if (iorq == NULL) {
 		for (lcv = 0; lcv < XYC_MAXDEV ; lcv++) {
 			if ((xy = xycsc->sc_drives[lcv]) == NULL) continue;
-			if (BUFQ_FIRST(&xy->xyq) == NULL) continue;
+			if (BUFQ_PEEK(&xy->xyq) == NULL) continue;
 			if (xy->xyrq->mode != XY_SUB_FREE) continue;
-			xyc_startbuf(xycsc, xy, BUFQ_FIRST(&xy->xyq));
+			xyc_startbuf(xycsc, xy, BUFQ_PEEK(&xy->xyq));
 		}
 	}
 	xyc_submit_iorq(xycsc, iorq, XY_SUB_NOQ);
@@ -1837,7 +1837,7 @@ xyc_remove_iorq(xycsc)
 			/* Sun3: map/unmap regardless of B_PHYS */
 			dvma_mapout(iorq->dbufbase,
 					    iorq->buf->b_bcount);
-			BUFQ_REMOVE(&iorq->xy->xyq, bp);
+			(void)BUFQ_GET(&iorq->xy->xyq);
 			disk_unbusy(&iorq->xy->sc_dk,
 			    (bp->b_bcount - bp->b_resid));
 			iorq->mode = XY_SUB_FREE;

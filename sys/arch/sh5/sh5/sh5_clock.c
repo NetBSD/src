@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_clock.c,v 1.2.2.2 2002/07/16 00:41:22 gehenna Exp $	*/
+/*	$NetBSD: sh5_clock.c,v 1.2.2.3 2002/08/31 14:52:10 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -142,18 +142,22 @@ cpu_initclocks(void)
 	if (clock_args == NULL)
 		panic("cpu_initclocks: clock not configured");
 
+#if 0
 	if ((clock_args->ca_rate % hz) != 0)
 		panic("cpu_initclocks: Impossible clock rate: %dHz", hz);
+#endif
 
 	if (clock_args->ca_has_stat_clock) {
 		u_int minint, statint;
 
 		if (stathz == 0)
 			stathz = hz;
+#if 0
 		else
 		if ((clock_args->ca_rate % stathz) != 0)
 			panic("cpu_initclocks: Impossible statclock rate: %dHz",
 			    hz);
+#endif
 		profhz = stathz;
 
 		statint = clock_args->ca_rate / stathz;

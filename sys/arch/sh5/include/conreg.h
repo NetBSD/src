@@ -1,4 +1,4 @@
-/*	$NetBSD: conreg.h,v 1.1.2.2 2002/07/16 00:41:15 gehenna Exp $	*/
+/*	$NetBSD: conreg.h,v 1.1.2.3 2002/08/31 14:52:06 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
 #define	SH5_CONREG_SR_MMU		(1<<31)  /* MMU Enable flag */
 #define	SH5_CONREG_SR_MMU_SHIFT		31
 
-#define	SH5_CONREG_SR_INIT		(SH5_CONREG_SR_BL | SH5_CONREG_SR_MMU)
+#define	SH5_CONREG_SR_INIT		SH5_CONREG_SR_MMU
 
 /*
  * Bit definitions for USR register

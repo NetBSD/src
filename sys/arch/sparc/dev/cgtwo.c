@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.35.14.1 2002/05/17 15:40:51 gehenna Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.35.14.2 2002/08/31 14:52:14 gehenna Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -313,7 +313,7 @@ cgtwogetcmap(sc, cmap)
 	start = cmap->index;
 	count = cmap->count;
 	ecount = start + count;
-	if (start >= CG2_CMSIZE || ecount > CG2_CMSIZE)
+	if (start >= CG2_CMSIZE || count > CG2_CMSIZE - start)
 		return (EINVAL);
 
 	/* XXX - Wait for retrace? */
@@ -356,7 +356,7 @@ cgtwoputcmap(sc, cmap)
 	start = cmap->index;
 	count = cmap->count;
 	ecount = start + count;
-	if (start >= CG2_CMSIZE || ecount > CG2_CMSIZE)
+	if (start >= CG2_CMSIZE || count > CG2_CMSIZE - start)
 		return (EINVAL);
 
 	/* Copy from user space to local arrays. */

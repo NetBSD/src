@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.3 2001/11/20 08:43:40 lukem Exp $	*/
+/*	$NetBSD: consinit.c,v 1.3.8.1 2002/08/31 14:52:52 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -50,7 +50,7 @@
 
 #if (NCOM > 0)
 #ifndef CONADDR
-#define CONADDR UART0_BASE
+#define CONADDR IBM405GP_UART0_BASE
 #endif
 #ifndef CONSPEED
 #define CONSPEED B9600	/*  */
@@ -107,7 +107,7 @@ consinit(void)
 	initted = 1;
 
 #if (NCOM > 0)
-	tag = galaxy_make_bus_space_tag(0, 0);
+	tag = ibm4xx_make_bus_space_tag(0, 0);
 
 	if (comcnattach(tag, CONADDR, CONSPEED, COM_FREQ*6,
 	    comcnmode))
@@ -125,7 +125,7 @@ kgdb_port_init(void)
 {
 #if (NCOM > 0)
 	if(!strcmp(kgdb_devname, "com")) {
-		bus_space_tag_t tag = galaxy_make_bus_space_tag(0, 2);
+		bus_space_tag_t tag = ibm4xx_make_bus_space_tag(0, 2);
 		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ * 6,
 		    comkgdbmode);
 	}

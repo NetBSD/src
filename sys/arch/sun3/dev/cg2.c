@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.16.12.1 2002/05/17 15:40:49 gehenna Exp $	*/
+/*	$NetBSD: cg2.c,v 1.16.12.2 2002/08/31 14:52:42 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -314,7 +314,7 @@ static int cg2getcmap(fb, data)
 	start = cmap->index;
 	count = cmap->count;
 	ecount = start + count;
-	if (start >= CMSIZE || ecount > CMSIZE)
+	if (start >= CMSIZE || count > CMSIZE - start)
 		return (EINVAL);
 
 	/* XXX - Wait for retrace? */
@@ -357,7 +357,7 @@ static int cg2putcmap(fb, data)
 	start = cmap->index;
 	count = cmap->count;
 	ecount = start + count;
-	if (start >= CMSIZE || ecount > CMSIZE)
+	if (start >= CMSIZE || count > CMSIZE - start)
 		return (EINVAL);
 
 	/* Copy from user space to local arrays. */

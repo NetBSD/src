@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.96.4.2 2002/05/17 15:09:21 gehenna Exp $
+#	$NetBSD: files.vax,v 1.96.4.3 2002/08/31 14:52:46 gehenna Exp $
 #
 # new style config file for vax architecture
 #
@@ -212,17 +212,6 @@ file	arch/vax/uba/tm.c		te needs-flag
 device	mu: tape
 attach	mu at mba
 file	arch/vax/mba/mt.c		mu needs-flag
-
-# DMF32 on UBA
-device	dmf # XXX?
-attach	dmf at uba
-file	arch/vax/uba/dmf.c		dmf needs-flag
-file	arch/vax/uba/dmz.c		dmf needs-flag
-
-# DMZ32 on UBA
-device	dmz # XXX?
-attach	dmz at uba
-file	arch/vax/uba/dmx.c		dmz needs-flag
 
 # DN-11 on UBA
 device	dn # XXX?

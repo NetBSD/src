@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1.2.2 2002/07/16 00:41:12 gehenna Exp $	*/
+/*	$NetBSD: rtc.c,v 1.1.2.3 2002/08/31 14:52:05 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -91,7 +91,7 @@ static void
 rtcattach(struct device *parent, struct device *self, void *args)
 {
 	struct pbridge_attach_args *pa = args;
-	struct rtc_softc *sc;
+	struct rtc_softc *sc = (struct rtc_softc *)self;
 
 	sc->sc_bust = pa->pa_bust;
 	bus_space_map(sc->sc_bust, pa->pa_offset, RTC_REG_SIZE, 0,&sc->sc_bush);

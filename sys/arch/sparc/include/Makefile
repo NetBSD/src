@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.12.1 2002/05/19 08:31:29 gehenna Exp $
+#	$NetBSD: Makefile,v 1.20.12.2 2002/08/31 14:52:16 gehenna Exp $
 
 KDIR=	/sys/arch/sparc/include
 INCSDIR= /usr/include/sparc
@@ -15,7 +15,7 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h autoconf.h \
 	limits.h lock.h \
 	math.h \
 	oldmon.h openpromio.h \
-	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
+	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h reloc.h \
 	setjmp.h signal.h stdarg.h \
 	tctrl.h trap.h types.h \

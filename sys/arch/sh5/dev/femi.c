@@ -1,4 +1,4 @@
-/*	$NetBSD: femi.c,v 1.1.2.2 2002/07/16 00:41:12 gehenna Exp $	*/
+/*	$NetBSD: femi.c,v 1.1.2.3 2002/08/31 14:52:05 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,8 +117,8 @@ femiattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_bust = sa->sa_bust;
 	sc->sc_dmat = sa->sa_dmat;
-	sc->sc_base = SUPERHYWAY_VCR_BOT_MB(vcr) << 24;
-	sc->sc_top = SUPERHYWAY_VCR_TOP_MB(vcr) << 24;
+	sc->sc_base = 0;
+	sc->sc_top = 0x08000000;
 
 	printf(": Flash/External Memory Interface, Version 0x%x\n",
 	    (int)SUPERHYWAY_VCR_MOD_VERS(vcr));

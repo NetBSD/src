@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_any.c,v 1.5 2001/11/26 18:06:36 fredette Exp $	*/
+/*	$NetBSD: zs_any.c,v 1.5.8.1 2002/08/31 14:52:40 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/idprom.h>
 #include <machine/pmap.h>
-#include <dev/sun/cons.h>
+#include <sun2/dev/cons.h>
 #endif
 
 #include <sun2/sun2/machdep.h>
