@@ -1,13 +1,17 @@
-# $NetBSD: md.pmppc,v 1.5 2003/11/07 14:11:21 augustss Exp $
+# $NetBSD: md.pmppc,v 1.6 2003/12/29 03:13:26 lukem Exp $
 ./usr/include/ieeefp.h			comp-c-include
 ./usr/include/pmppc			comp-c-include
+./usr/include/pmppc/_G_config.h 	comp-obsolete	obsolete
 ./usr/include/pmppc/ansi.h		comp-c-include
 ./usr/include/pmppc/aout_machdep.h	comp-c-include
 ./usr/include/pmppc/asm.h		comp-c-include
 ./usr/include/pmppc/atomic.h		comp-c-include
 ./usr/include/pmppc/bswap.h		comp-c-include
+./usr/include/pmppc/bus.h       	comp-obsolete	obsolete
 ./usr/include/pmppc/cdefs.h		comp-c-include
 ./usr/include/pmppc/cpu.h		comp-c-include
+./usr/include/pmppc/cpufunc.h   	comp-obsolete	obsolete
+./usr/include/pmppc/db_machdep.h	comp-obsolete	obsolete
 ./usr/include/pmppc/disklabel.h		comp-c-include
 ./usr/include/pmppc/elf_machdep.h	comp-c-include
 ./usr/include/pmppc/endian.h		comp-c-include
@@ -23,15 +27,19 @@
 ./usr/include/pmppc/int_mwgwtypes.h	comp-c-include
 ./usr/include/pmppc/int_types.h		comp-c-include
 ./usr/include/pmppc/intr.h		comp-c-include
+./usr/include/pmppc/ipkdb.h     	comp-obsolete	obsolete
 ./usr/include/pmppc/kcore.h		comp-c-include
+./usr/include/pmppc/kgdb.h      	comp-obsolete	obsolete
 ./usr/include/pmppc/limits.h		comp-c-include
 ./usr/include/pmppc/lock.h		comp-c-include
 ./usr/include/pmppc/math.h		comp-c-include
 ./usr/include/pmppc/mcontext.h		comp-c-include
 ./usr/include/pmppc/param.h		comp-c-include
 ./usr/include/pmppc/pcb.h		comp-c-include
+./usr/include/pmppc/pio.h       	comp-obsolete	obsolete
 ./usr/include/pmppc/pmap.h		comp-c-include
 ./usr/include/pmppc/pmc.h		comp-c-include
+./usr/include/pmppc/powerpc.h   	comp-obsolete	obsolete
 ./usr/include/pmppc/proc.h		comp-c-include
 ./usr/include/pmppc/profile.h		comp-c-include
 ./usr/include/pmppc/psl.h		comp-c-include

@@ -1,71 +1,48 @@
 #!/bin/sh
 #
-# $NetBSD: listpkgs,v 1.6 2003/11/25 07:19:46 dyoung Exp $
+# $NetBSD: listpkgs,v 1.7 2003/12/29 03:13:25 lukem Exp $
 #
 # List all packages in the given pkgset by parsing the list files.
 #
 
-# set defaults
-. ./sets.defaults
-
-setd=`dirname $0`
-prefix=/
-
 . ./sets.subr
 
-usage() {
-exec 1>&2
+prefix=/
 
-echo "Usage: $0 [-a arch] [-m machine] [-s setsdir] [-p prefix] setname"
-echo "	-a arch		set arch (e.g, m68k, mips, powerpc)	[$machine_arch]"
-echo "	-m machine	set machine (e.g, amiga, i386, macppc)	[$machine]"
-echo "	-s setsdir	directory to find sets			[$setd]"
-echo "	setname set to list packages for"
-
-exit 1
+usage()
+{
+	cat 1>&2 <<USAGE
+Usage: ${0##*/} [-a arch] [-m machine] [-s setsdir] [-p prefix] setname
+	-a arch		set arch (e.g, m68k, mips, powerpc)	[$machine_arch]
+	-m machine	set machine (e.g, amiga, i386, macppc)	[$machine]
+	-s setsdir	directory to find sets			[$setsdir]
+	setname set to list packages for
+USAGE
+	exit 1
 }
 
 # handle args
-while : ; do
-	case $1 in
-	-a*)
-		machine_arch=$2; shift
+while getopts a:m:s: ch; do
+	case ${ch} in
+	a)
+		machine_arch=${OPTARG}
+		machine_cpu=$(arch_to_cpu ${OPTARG})
 		;;
-	-m*)
-		machine=$2; shift
+	m)
+		machine=${OPTARG}
 		;;
-	-s*)
-		setd=$2; shift
-		;;
-	-*)
-		usage
-		exit 1
+	s)
+		setsdir=${OPTARG}
 		;;
 	*)
-		break
+		usage
 		;;
 	esac
-	shift
 done
-if [ -n "$1" ]; then
-	setname="$1"
-else
+shift $((${OPTIND} - 1))
+if [ $# -ne 1 ]; then
 	usage
-	exit 1
 fi
+setname="$1"
 
-# Convert mipse[lb] to mips after processing command line arguments.
-machine_arch=`echo $machine_arch | sed s,^mipse.,mips, | sed s,^sh3e.,sh3,`
-
-# Compute toolchain  used on target cpu.
-if [ "$machine_arch" = "mips" -o "$machine" = "alpha" -o "$machine_arch" = "powerpc" -o "$machine_arch" = "sparc" -o "$machine_arch" = "sparc64" -o "$machine_arch" = "i386" -o "$machine_arch" = "arm" -o "$machine" = "mvme68k" -o "$machine" = "hp300" ]; then
-	shlib=elf
-else
-	if [ "$machine_arch" = "sh3" ]; then
-		shlib=
-	else
-		shlib=aout
-	fi
-fi
-
-list_set_files $setname | awk -- '/^[^#]/ {print $2}' | sort -u
+list_set_files $setname | awk '{print $2}' | sort -u

@@ -1,5 +1,0 @@
-# $NetBSD: obsolete.next68k,v 1.4 2003/10/24 18:32:16 mycroft Exp $
-./usr/include/next68k/_G_config.h
-./usr/include/next68k/svr4_machdep.h
-./usr/lib/c++rt0.o
-./usr/lib/scrt0.o

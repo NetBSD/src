@@ -1,5 +1,7 @@
-# $NetBSD: md.playstation2,v 1.4 2003/10/25 22:26:08 mycroft Exp $
+# $NetBSD: md.playstation2,v 1.5 2003/12/29 03:13:26 lukem Exp $
+./usr/include/ieeefp.h		comp-c-include
 ./usr/include/playstation2	comp-c-include
+./usr/include/playstation2/_G_config.h	comp-obsolete	obsolete
 ./usr/include/playstation2/ansi.h	comp-c-include
 ./usr/include/playstation2/aout_machdep.h	comp-c-include
 ./usr/include/playstation2/asm.h	comp-c-include
@@ -49,4 +51,3 @@
 ./usr/include/playstation2/types.h	comp-c-include
 ./usr/include/playstation2/varargs.h	comp-c-include
 ./usr/include/playstation2/vmparam.h	comp-c-include
-./usr/include/ieeefp.h		comp-c-include

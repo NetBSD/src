@@ -1,11 +1,13 @@
-# $NetBSD: md.amiga,v 1.49 2003/10/24 18:32:16 mycroft Exp $
+# $NetBSD: md.amiga,v 1.50 2003/12/29 03:13:26 lukem Exp $
 ./usr/include/amiga	comp-c-include
+./usr/include/amiga/_G_config.h 	comp-obsolete	obsolete
 ./usr/include/amiga/ansi.h	comp-c-include
 ./usr/include/amiga/aout_machdep.h	comp-c-include
 ./usr/include/amiga/asm.h	comp-c-include
 ./usr/include/amiga/bswap.h	comp-c-include
 ./usr/include/amiga/bus.h	comp-c-include
 ./usr/include/amiga/cdefs.h	comp-c-include
+./usr/include/amiga/conf.h      	comp-obsolete	obsolete
 ./usr/include/amiga/cpu.h	comp-c-include
 ./usr/include/amiga/cpufunc.h	comp-c-include
 ./usr/include/amiga/db_machdep.h	comp-c-include
@@ -13,6 +15,7 @@
 ./usr/include/amiga/elf_machdep.h	comp-c-include
 ./usr/include/amiga/endian.h	comp-c-include
 ./usr/include/amiga/endian_machdep.h	comp-c-include
+./usr/include/amiga/fbio.h      	comp-obsolete	obsolete
 ./usr/include/amiga/float.h	comp-c-include
 ./usr/include/amiga/frame.h	comp-c-include
 ./usr/include/amiga/ieee.h	comp-c-include
@@ -42,8 +45,11 @@
 ./usr/include/amiga/setjmp.h	comp-c-include
 ./usr/include/amiga/signal.h	comp-c-include
 ./usr/include/amiga/stdarg.h	comp-c-include
+./usr/include/amiga/svr4_machdep.h	comp-obsolete	obsolete
 ./usr/include/amiga/trap.h	comp-c-include
 ./usr/include/amiga/types.h	comp-c-include
 ./usr/include/amiga/varargs.h	comp-c-include
 ./usr/include/amiga/vmparam.h	comp-c-include
 ./usr/include/ieeefp.h		comp-c-include
+./usr/lib/c++rt0.o              	comp-obsolete	obsolete
+./usr/lib/scrt0.o               	comp-obsolete	obsolete

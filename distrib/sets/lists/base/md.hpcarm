@@ -1,4 +1,7 @@
-# $NetBSD: md.hpcarm,v 1.5 2002/10/09 01:22:39 thorpej Exp $
+# $NetBSD: md.hpcarm,v 1.6 2003/12/29 03:13:25 lukem Exp $
+./dev/mouse-qms0			base-obsolete	obsolete
+./dev/pms0				base-obsolete	obsolete
+./dev/qms0				base-obsolete	obsolete
 ./sbin/fdisk			base-sysutil-root
 ./usr/sbin/apm			base-sysutil-bin
 ./usr/sbin/tpctl		base-sysutil-bin

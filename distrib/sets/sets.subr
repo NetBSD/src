@@ -1,32 +1,160 @@
+#	$NetBSD: sets.subr,v 1.9 2003/12/29 03:13:25 lukem Exp $
 #
-# list_set_files setname
+
+#
+# Set environment variables containing defaults for sets.subr
+# functions and callers:
+#	setsdir			path to src/distrib/sets
+#	nlists			list of base sets
+#	xlists			list of x11 sets
+#	obsolete		controls if obsolete files are selected instead
+#	have_gcc3		<bsd.own.mk> ${HAVE_GCC3}
+#	lkm			if != "no", enable LKM sets
+#	machine			<bsd.own.mk> ${MACHINE}
+#	machine_arch		<bsd.own.mk> ${MACHINE_ARCH}
+#	machine_cpu		<bsd.own.mk> ${MACHINE_CPU}
+#	mkkerberos		<bsd.own.mk> ${MKKERBEROS}
+#	mkkerberos4		<bsd.own.mk> ${MKKERBEROS4}
+#	mklint			<bsd.own.mk> ${MKLINT}
+#	object_fmt		<bsd.own.mk> ${OBJECT_FMT}
+#	shlib			shared library format (a.out, elf, or "")
+#	stlib			static library format (a.out, elf)
+#	toolchain_missing	<bsd.own.mk> ${TOOLCHAIN_MISSING}
+#	use_tools_toolchain	<bsd.own.mk> ${USE_TOOLS_TOOLCHAIN}
+#	x11_version		version of XF86 (3 or 4)
+
+oIFS=$IFS
+IFS="
+"
+for x in $(
+${MAKE:-make} -B -f- all <<EOF
+.include <bsd.own.mk>
+all:
+	@echo have_gcc3=\${HAVE_GCC3}
+	@echo machine=\${MACHINE}
+	@echo machine_arch=\${MACHINE_ARCH}
+	@echo machine_cpu=\${MACHINE_CPU}
+	@echo mkkerberos4=\${MKKERBEROS4}
+	@echo mkkerberos=\${MKKERBEROS}
+	@echo mklint=\${MKLINT}
+	@echo object_fmt=\${OBJECT_FMT}
+	@echo toolchain_missing=\${TOOLCHAIN_MISSING}
+	@echo use_tools_toolchain=\${USE_TOOLS_TOOLCHAIN}
+.if defined(USE_XF86_4) && (\${USE_XF86_4} != no)
+	@echo x11_version=4
+.else
+	@echo x11_version=3
+.endif
+
+EOF
+); do
+	eval $x
+done
+IFS=$oIFS
+
+setsdir=$(dirname $0)
+nlists="base comp etc games man misc text"
+case $x11_version in
+3) xlists="xbase3 xcomp3 xcontrib3 xfont3 xmisc3 xserver3" ;;
+4) xlists="xbase4 xcomp4 xcontrib4 xfont4 xmisc4 xserver4" ;;
+*) xlists="xbase xcomp xcontrib xfont xmisc xserver" ;;
+esac
+obsolete=0
+lkm=yes
+if [ "$machine" = "evbppc" ]; then
+	lkm=no				# Turn off LKMs for some ports.
+fi
+# Determine lib type.
+if [ "$object_fmt" = "ELF" ]; then
+	shlib=elf
+else
+	shlib=aout
+fi
+stlib=$shlib
+if [ "$machine_cpu" = "sh3" -o "$machine_arch" = "m68000" ]; then
+	shlib=no			# Turn off shlibs for some ports.
+fi
+
+
+#
+# list_set_files setfile [...]
 # 
-# Produce a packing list for setname. Each record is a line
-# consisting of a path and a System Package name, separated by
-# whitespace. E.g.,
+# Produce a packing list for setfile(s).
+# In each file, a record consists of a path and a System Package name,
+# separated by whitespace. E.g.,
 #
-# ./bin/cp                base-util-root
+# 	# $NetBSD: sets.subr,v 1.9 2003/12/29 03:13:25 lukem Exp $
+# 	.			base-sys-root	[keyword[,...]]
+# 	./altroot		base-sys-root
+# 	./bin			base-sys-root
+# 	./bin/[			base-util-root
+# 	./bin/cat		base-util-root
+#		[...]
 #
-# Environment
+# A # in the first column marks a comment.
 #
-#	have_gcc3
-#	krb
-#	krb4
-# 	lintlibs
-# 	lkm
-# 	machine
-# 	machine_arch
-# 	machine_cpu
-# 	setd
-# 	shlib
-# 	stlib
-# 	toolchain_missing
+# If ${obsolete} != 0, only entries with an "obsolete" keyword will
+# be printed.
+#
+# The third field is an optional comma separated list of keywords to
+# control if a record is printed; every keyword listed must be enabled
+# for the record to be printed.  The following keywords are available:
+#	dummy			dummy entry (ignored)
+#	kerberos4		<bsd.own.mk> ${MKKERBEROS4} != no
+#	kerberos		<bsd.own.mk> ${MKKERBEROS} != no
+#	lint			<bsd.own.mk> ${MKLINT} != no
+#	obsolete		file is obsolete, and only printed if 
+#				${obsolete} != 0
 #
 list_set_files()
 {
 	for setname; do
 		list_set_lists $setname
-	done | xargs cat | grep -v '^#'
+	done | xargs cat | \
+	env \
+	    MKKERBEROS4=${mkkerberos4} \
+	    MKKERBEROS=${mkkerberos} \
+	    MKLINT=${mklint} \
+	    awk -v obsolete=${obsolete} '
+		BEGIN {
+			if (! obsolete) {
+				split("kerberos4 kerberos lint",
+				    needvars)
+				for (vi in needvars) {
+					nv = needvars[vi]
+					if (ENVIRON["MK" toupper(nv)] != "no")
+						wanted[nv] = 1 
+				}
+			}
+		}
+
+		/^#/ {
+			next;
+		}
+
+		NF > 2 && $3 != "-" {
+			split($3, keywords, ",")
+			show = 1
+			for (ki in keywords) {
+				kw = keywords[ki]
+				if (kw == "obsolete") {
+					if (obsolete)
+						print
+					next
+				}
+				if (! (kw in wanted))
+					show = 0
+			}
+			if (show)
+				print
+			next
+		}
+
+		{
+			if (! obsolete)
+				print
+		}'
+
 }
 
 #
@@ -38,172 +166,129 @@ list_set_files()
 # 	.../lists/base/mi
 # 	.../lists/base/rescue.mi
 # 	.../lists/base/md.i386
-# 	.
-# 	.
-# 	.
+#		[...]
 #
-# In each file, a record consists of a path and a System Package name,
-# separated by whitespace. E.g.,
+# For a given setname $set, the following files may be selected from
+# .../list/$set:
+#	mi
+#	ad.${machine_arch}
+# (or)	ad.${machine_cpu}
+#	ad.${machine_cpu}.shl
+#	md.${machine}.${machine_arch}
+# (or)	md.${machine}
+#	stl.mi
+#	stl.stlib
+#	shl.mi
+#	shl.shlib
+#	lkm.mi			if ${lkm} != no
+#	gcc.mi
+#	gcc.shl
+#	tc.mi
+#	tc.shl
+#	rescue.shl
+#	rescue.${machine}
+#	rescue.ad.${machine_arch}
+# (or)	rescue.ad.${machine_cpu}
 #
-# 	# $NetBSD: sets.subr,v 1.8 2003/12/26 06:05:27 lukem Exp $
-# 	.			base-sys-root
-# 	./altroot		base-sys-root
-# 	./bin			base-sys-root
-# 	./bin/[			base-util-root
-# 	./bin/cat		base-util-root
-# 	.
-# 	.
-# 	.
-#
-# A # in the first column marks a comment.
-#
-# Environment
-#
-#	have_gcc3
-#	krb
-#	krb4
-# 	lintlibs
-# 	lkm
-# 	machine
-# 	machine_arch
-# 	machine_cpu
-# 	setd
+# Environment:
 # 	shlib
 # 	stlib
-# 	toolchain_missing
 #
 list_set_lists()
 {
 	setname=$1
 
-	echo $setd/lists/$setname/mi
+	setdir=$setsdir/lists/$setname
+	echo $setdir/mi
 	if [ "$machine" != "$machine_arch" ]; then
 		# Prefer an ad.${machine_arch} over an ad.${machine_cpu},
 		# since the arch-specific one will be more specific than
 		# the cpu-specific one.
-		if [ -f $setd/lists/$setname/ad.${machine_arch} ]; then
-			echo $setd/lists/$setname/ad.${machine_arch}
-		elif [ -f $setd/lists/$setname/ad.${machine_cpu} ]; then
-			echo $setd/lists/$setname/ad.${machine_cpu}
+		if [ -f $setdir/ad.${machine_arch} ]; then
+			echo $setdir/ad.${machine_arch}
+		elif [ -f $setdir/ad.${machine_cpu} ]; then
+			echo $setdir/ad.${machine_cpu}
 		fi
 		if [ "$shlib" != "no" -a \
-		     -f $setd/lists/$setname/ad.${machine_cpu}.shl ]; then
-			echo $setd/lists/$setname/ad.${machine_cpu}.shl
+		     -f $setdir/ad.${machine_cpu}.shl ]; then
+			echo $setdir/ad.${machine_cpu}.shl
 		fi
 	fi
-	if [ -f $setd/lists/$setname/md.${machine}.${machine_arch} ]; then
-		echo $setd/lists/$setname/md.${machine}.${machine_arch}
-	elif [ -f $setd/lists/$setname/md.${machine} ]; then
-		echo $setd/lists/$setname/md.${machine}
+	if [ -f $setdir/md.${machine}.${machine_arch} ]; then
+		echo $setdir/md.${machine}.${machine_arch}
+	elif [ -f $setdir/md.${machine} ]; then
+		echo $setdir/md.${machine}
 	fi
-	if [ -f $setd/lists/$setname/stl.mi ]; then
-		echo $setd/lists/$setname/stl.mi
+	if [ -f $setdir/stl.mi ]; then
+		echo $setdir/stl.mi
 	fi
-	if [ -f $setd/lists/$setname/stl.${stlib} ]; then
-		echo $setd/lists/$setname/stl.${stlib}
+	if [ -f $setdir/stl.${stlib} ]; then
+		echo $setdir/stl.${stlib}
 	fi
 	if [ "$shlib" != "no" ]; then
-		if [ -f $setd/lists/$setname/shl.mi ]; then
-			echo $setd/lists/$setname/shl.mi
+		if [ -f $setdir/shl.mi ]; then
+			echo $setdir/shl.mi
 		fi
-		if [ -f $setd/lists/$setname/shl.${shlib} ]; then
-			echo $setd/lists/$setname/shl.${shlib}
+		if [ -f $setdir/shl.${shlib} ]; then
+			echo $setdir/shl.${shlib}
 		fi
-		if [ "$krb" != "no" -a \
-		     -f $setd/lists/$setname/krb.shl.${shlib} ]; then
-			echo $setd/lists/$setname/krb.shl.${shlib}
-		fi
-		if [ "$krb" != "no" -a "$krb4" != "no" -a \
-		     -f $setd/lists/$setname/krb4.shl.${shlib} ]; then
-			echo $setd/lists/$setname/krb4.shl.${shlib}
-		fi
-		if [ "$krb" != "no" -a -f $setd/lists/$setname/krb.shl.mi ]
-		then
-			echo $setd/lists/$setname/krb.shl.mi
-		fi
-		if [ "$krb" != "no" -a "$krb4" != "no" -a \
-		     -f $setd/lists/$setname/krb4.shl.mi ]
-		then
-			echo $setd/lists/$setname/krb4.shl.mi
-		fi
-	fi
-	if [ "$krb" != "no" -a -f $setd/lists/$setname/krb.mi ]; then
-		echo $setd/lists/$setname/krb.mi
-	fi
-	if [ "$krb" != "no" -a "$krb4" != "no" -a \
-	     -f $setd/lists/$setname/krb4.mi ]; then
-		echo $setd/lists/$setname/krb4.mi
 	fi
 	if [ "$lkm" != "no" ]; then
-		if [ -f $setd/lists/$setname/lkm.mi ]; then
-			echo $setd/lists/$setname/lkm.mi
-		fi
-	fi
-	if [ "$lintlibs" != no ]; then
-		if [ -f $setd/lists/$setname/lint.mi ]; then
-			echo $setd/lists/$setname/lint.mi
-		fi
-		if [ "$krb" != "no" -a "$krb4" != "no" -a \
-		     -f $setd/lists/$setname/krb4.lint.mi ]
-		then
-			echo $setd/lists/$setname/krb4.lint.mi
-		fi
-		if [ "$krb" != "no" -a -f $setd/lists/$setname/krb.lint.mi ]
-		then
-			echo $setd/lists/$setname/krb.lint.mi
+		if [ -f $setdir/lkm.mi ]; then
+			echo $setdir/lkm.mi
 		fi
 	fi
 	if [ "$toolchain_missing" != "yes" ]; then
 		if [ "$have_gcc3" = "yes" ]; then
-			if [ -f $setd/lists/$setname/gcc.mi ]; then
-				echo $setd/lists/$setname/gcc.mi
+			if [ -f $setdir/gcc.mi ]; then
+				echo $setdir/gcc.mi
 			fi
 			if [ "$shlib" != "no" ]; then
-				if [ -f $setd/lists/$setname/gcc.shl ]; then
-					echo $setd/lists/$setname/gcc.shl
+				if [ -f $setdir/gcc.shl ]; then
+					echo $setdir/gcc.shl
 				fi
 			fi
 		else
-			if [ -f $setd/lists/$setname/tc.mi ]; then
-				echo $setd/lists/$setname/tc.mi
+			if [ -f $setdir/tc.mi ]; then
+				echo $setdir/tc.mi
 			fi
 			if [ "$shlib" != "no" ]; then
-				if [ -f $setd/lists/$setname/tc.shl ]; then
-					echo $setd/lists/$setname/tc.shl
+				if [ -f $setdir/tc.shl ]; then
+					echo $setdir/tc.shl
 				fi
 			fi
 		fi
 	fi
 
-	if [ -f $setd/lists/$setname/rescue.mi ]; then
-		echo $setd/lists/$setname/rescue.mi
+	if [ -f $setdir/rescue.mi ]; then
+		echo $setdir/rescue.mi
 	fi
-	if [ -f $setd/lists/$setname/rescue.${machine} ]; then
-		echo $setd/lists/$setname/rescue.${machine}
+	if [ -f $setdir/rescue.${machine} ]; then
+		echo $setdir/rescue.${machine}
 	fi
 	if [ "$machine" != "$machine_arch" ]; then
 		# Prefer a rescue.ad.${machine_arch} over a
 		# rescue.ad.${machine_cpu}, since the arch-
 		# specific one will be more specific than the
 		# cpu-specific one.
-		if [ -f $setd/lists/$setname/rescue.ad.${machine_arch} ]; then
-			echo $setd/lists/$setname/rescue.ad.${machine_arch}
-		elif [ -f $setd/lists/$setname/rescue.ad.${machine_cpu} ]; then
-			echo $setd/lists/$setname/rescue.ad.${machine_cpu}
-		fi
-		if [ "$shlib" != "no" -a -f \
-		     $setd/lists/$setname/rescue.ad.${machine_cpu}.shl ]; then
-			echo $setd/lists/$setname/rescue.ad.${machine_cpu}.shl
+		if [ -f $setdir/rescue.ad.${machine_arch} ]; then
+			echo $setdir/rescue.ad.${machine_arch}
+		elif [ -f $setdir/rescue.ad.${machine_cpu} ]; then
+			echo $setdir/rescue.ad.${machine_cpu}
 		fi
 	fi
 }
 
+# arch_to_cpu mach
+#
+# Print the $MACHINE_CPU for $MACHINE_ARCH=mach,
+# as determined by <bsd.own.mk>.
+#
 arch_to_cpu()
 {
-MACHINE_ARCH=${1} ${MAKE:-make} -f- all <<EOF
+	MACHINE_ARCH=${1} ${MAKE:-make} -f- all <<EOF
 .include <bsd.own.mk>
 all:
 	@echo \${MACHINE_CPU}
 EOF
 }
-

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.248 2003/12/11 09:46:27 dyoung Exp $
+# $NetBSD: shl.mi,v 1.249 2003/12/29 03:13:26 lukem Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12.108			base-sys-shlib
 ./lib/libcrypt.so.0.1			base-sys-shlib
@@ -13,9 +13,9 @@
 ./lib/libutil.so.7.3			base-sys-shlib
 ./lib/libz.so.0.3			base-sys-shlib
 ./usr/lib/i18n/libBIG5.so.4.3		base-i18n-shlib
-./usr/lib/i18n/libGBK2K.so.4.3		base-i18n-shlib
 ./usr/lib/i18n/libEUC.so.4.3		base-i18n-shlib
 ./usr/lib/i18n/libEUCTW.so.4.3		base-i18n-shlib
+./usr/lib/i18n/libGBK2K.so.4.3		base-i18n-shlib
 ./usr/lib/i18n/libISO2022.so.4.3	base-i18n-shlib
 ./usr/lib/i18n/libMSKanji.so.4.3	base-i18n-shlib
 ./usr/lib/i18n/libUTF1632.so.4.3	base-i18n-shlib
@@ -29,10 +29,12 @@
 ./usr/lib/i18n/libmapper_std.so.4.3	base-i18n-shlib
 ./usr/lib/i18n/libmapper_zone.so.4.3	base-i18n-shlib
 ./usr/lib/libamu.so.2.1			base-amd-shlib
+./usr/lib/libasn1.so.6.1		base-krb5-shlib	kerberos
 ./usr/lib/libbsdmalloc.so.0.0		base-sys-shlib
 ./usr/lib/libbz2.so.1.0			base-sys-shlib
 ./usr/lib/libc.so.12.108		base-sys-shlib
 ./usr/lib/libcdk.so.1.0			base-sys-shlib
+./usr/lib/libcom_err.so.4.1		base-krb5-shlib	kerberos
 ./usr/lib/libcrypt.so.0.1		base-sys-shlib
 ./usr/lib/libcrypto.so.2.1		base-crypto-shlib
 ./usr/lib/libcurses.so.5.11		base-sys-shlib
@@ -41,8 +43,18 @@
 ./usr/lib/libevent.so.0.1		base-sys-shlib
 ./usr/lib/libform.so.3.1		base-sys-shlib
 ./usr/lib/libgnumalloc.so.0.0		base-sys-shlib
+./usr/lib/libgssapi.so.5.0		base-krb5-shlib	kerberos
+./usr/lib/libhdb.so.9.0			base-krb5-shlib	kerberos
 ./usr/lib/libintl.so.0.0		base-sys-shlib
 ./usr/lib/libipsec.so.2.0		base-net-shlib
+./usr/lib/libkadm.so.5.0		base-krb4-shlib	kerberos4
+./usr/lib/libkadm5clnt.so.8.0		base-krb5-shlib	kerberos
+./usr/lib/libkadm5srv.so.9.0		base-krb5-shlib	kerberos
+./usr/lib/libkafs.so.6.0		base-krb5-shlib	kerberos
+./usr/lib/libkdb.so.5.0			base-krb4-shlib	kerberos4
+./usr/lib/libkrb.so.6.0			base-krb4-shlib	kerberos4
+./usr/lib/libkrb5.so.19.0		base-krb5-shlib	kerberos
+./usr/lib/libkstream.so.2.0		base-krb4-shlib	kerberos4
 ./usr/lib/libkvm.so.5.2			base-sys-shlib
 ./usr/lib/libm.so.0.1			base-sys-shlib
 ./usr/lib/libmagic.so.0.1		base-sys-shlib
@@ -54,8 +66,11 @@
 ./usr/lib/libpthread.so.0.3		base-sys-shlib
 ./usr/lib/libpthread_dbg.so.0.0		base-sys-shlib
 ./usr/lib/libresolv.so.1.0		base-net-shlib
+./usr/lib/libroken.so.12.3		base-krb5-shlib	kerberos
 ./usr/lib/librt.so.0.0			base-sys-shlib
 ./usr/lib/libskey.so.1.0		base-sys-shlib
+./usr/lib/libsl.so.2.0			base-krb5-shlib	kerberos
+./usr/lib/libss.so.4.0			base-krb5-shlib	kerberos
 ./usr/lib/libssl.so.3.0			base-crypto-shlib
 ./usr/lib/libtermcap.so.0.5		base-sys-shlib
 ./usr/lib/libtermlib.so.0.5		base-sys-shlib

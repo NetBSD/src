@@ -1,12 +1,16 @@
-# $NetBSD: md.ofppc,v 1.4 2003/10/24 06:49:37 matt Exp $
+# $NetBSD: md.ofppc,v 1.5 2003/12/29 03:13:26 lukem Exp $
+./usr/include/ieeefp.h		comp-c-include
 ./usr/include/ofppc	comp-c-include
+./usr/include/ofppc/_G_config.h 	comp-obsolete	obsolete
 ./usr/include/ofppc/ansi.h	comp-c-include
 ./usr/include/ofppc/aout_machdep.h	comp-c-include
 ./usr/include/ofppc/asm.h	comp-c-include
 ./usr/include/ofppc/atomic.h	comp-c-include
+./usr/include/ofppc/bat.h       	comp-obsolete	obsolete
 ./usr/include/ofppc/bswap.h	comp-c-include
 ./usr/include/ofppc/cdefs.h	comp-c-include
 ./usr/include/ofppc/cpu.h	comp-c-include
+./usr/include/ofppc/db_machdep.h	comp-obsolete	obsolete
 ./usr/include/ofppc/disklabel.h	comp-c-include
 ./usr/include/ofppc/elf_machdep.h	comp-c-include
 ./usr/include/ofppc/endian.h	comp-c-include
@@ -22,6 +26,7 @@
 ./usr/include/ofppc/int_mwgwtypes.h	comp-c-include
 ./usr/include/ofppc/int_types.h	comp-c-include
 ./usr/include/ofppc/intr.h	comp-c-include
+./usr/include/ofppc/ipkdb.h     	comp-obsolete	obsolete
 ./usr/include/ofppc/kcore.h	comp-c-include
 ./usr/include/ofppc/limits.h	comp-c-include
 ./usr/include/ofppc/lock.h	comp-c-include
@@ -45,4 +50,3 @@
 ./usr/include/ofppc/types.h	comp-c-include
 ./usr/include/ofppc/varargs.h	comp-c-include
 ./usr/include/ofppc/vmparam.h	comp-c-include
-./usr/include/ieeefp.h		comp-c-include

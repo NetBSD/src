@@ -1,5 +1,6 @@
-# $NetBSD: md.hp300,v 1.49 2003/10/24 18:32:16 mycroft Exp $
+# $NetBSD: md.hp300,v 1.50 2003/12/29 03:13:26 lukem Exp $
 ./usr/include/hp300		comp-c-include
+./usr/include/hp300/_G_config.h 	comp-obsolete	obsolete
 ./usr/include/hp300/ansi.h		comp-c-include
 ./usr/include/hp300/aout_machdep.h		comp-c-include
 ./usr/include/hp300/asm.h		comp-c-include
@@ -43,6 +44,7 @@
 ./usr/include/hp300/setjmp.h		comp-c-include
 ./usr/include/hp300/signal.h		comp-c-include
 ./usr/include/hp300/stdarg.h		comp-c-include
+./usr/include/hp300/svr4_machdep.h	comp-obsolete	obsolete
 ./usr/include/hp300/trap.h		comp-c-include
 ./usr/include/hp300/types.h		comp-c-include
 ./usr/include/hp300/varargs.h		comp-c-include
