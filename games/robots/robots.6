@@ -1,4 +1,4 @@
-.\"	$NetBSD: robots.6,v 1.6 1997/10/12 14:10:03 lukem Exp $
+.\"	$NetBSD: robots.6,v 1.7 1999/05/15 23:56:36 christos Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd fight off villainous robots
 .Sh SYNOPSIS
 .Nm
-.Op Fl sjta
+.Op Fl Asjtan
 .Op Ar scorefile
 .Sh DESCRIPTION
 .Nm
@@ -138,9 +138,14 @@ This is a little disconcerting until you get used to it, and then it is
 very nice.
 .It Fl a
 Advance into the higher levels directly, skipping the lower, easier levels.
+.It Fl A
+Auto-bot mode. Let's the game play itself.
+.It Fl n
+Increase the number of games played by one.
 .El
 .Sh AUTHOR
 Ken Arnold
+Christos Zoulas	(autobot mode)
 .Sh FILES
 .Bl -tag -width /var/games/robots_roll -compact
 .It Pa /var/games/robots_roll
