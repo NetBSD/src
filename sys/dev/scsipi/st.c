@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.131 2000/11/03 10:46:18 pk Exp $ */
+/*	$NetBSD: st.c,v 1.132 2000/11/03 12:08:41 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2583,7 +2583,7 @@ st_touch_tape(st)
 			readsize = 1;
 			st->flags &= ~ST_FIXEDBLOCKS;
 		}
-		if ((error = st_mode_select(st, 0)) != 0) {
+		if ((error = st_mode_select(st, XS_CTL_SILENT)) != 0) {
 			/*
 			 * The device did not agree with the proposed
 			 * block size. If we exhausted our options,
