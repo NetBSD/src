@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.9 2001/09/05 23:53:24 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.10 2001/11/24 01:44:55 mrg Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,11 +83,15 @@ respectively. The second-stage program commonly resides in the root directory
 as
 .Pa /boot .
 For UltraSPARC machines, these files live in
-.Pa /usr/mdec/bootblk.sparc64
+.Pa /usr/mdec/bootblk
 and
-.Pa /usr/mdec/ofwboot.sparc64
+.Pa /usr/mdec/ofwboot
 respectively, and the second-stage program resides in the root directly as
 .Pa /ofwboot .
+The
+.Pa /usr/mdec/ofwboot.net
+file includes netboot support and currently must be used to boot a kernel
+over the network.
 The utility
 .Pa /usr/mdec/binstall
 can be used to properly copy the a second-stage bootprogram to its
@@ -145,6 +149,7 @@ on which the file system containing
 .Ar boot
 is mounted.
 .El
+.Pp
 The arguments for the UltraSPARC are:
 .Bl -tag -width bootblk
 .It Ar bootblk
@@ -155,14 +160,18 @@ is to be installed.
 .El
 .Sh EXAMPLES
 The following command will install the first-stage bootblocks in the
-root filesystem
+root filesystem of a SPARC
 .Pq assumed to be mounted on Dq sd0a
 using the file
 .Pa /boot
 as the second-level boot program:
 .Bd -literal -offset indent
-installboot /boot /usr/mdec/bootxx /dev/rsd0a
+/usr/mdec/installboot /boot /usr/mdec/bootxx /dev/rsd0a
 .Ed
+.Pp
+The following command will perform the same, but for an UltraSPARC machine.
+.Bd -literal -offset indent
+/usr/mdec/installboot /boot /usr/mdec/bootxx /dev/rsd0a
 .Sh BUGS
 .Nm
 requires simultaneous access to the mounted file system and
@@ -174,6 +183,23 @@ so
 .Nm installboot
 only works in single-user mode
 .Pq or insecure mode - see Xr init 8 .
+.Sh FILES
+.Bl -tag -width /usr/mdec/installboot -compact
+.It Pa /usr/mdec/installboot
+program to install first-stage boot blocks
+.It Pa /usr/mdec/binstall
+front-end script to installing boot blocks
+.It Pa /usr/mdec/bootxx
+SPARC first-stage boot block
+.It Pa /usr/mdec/bootblk
+UltraSPARC first-stage boot block
+.It Pa /usr/mdec/boot
+SPARC second-stage boot block
+.It Pa /usr/mdec/ofwboot
+UltraSPARC second-stage boot block
+.It Pa /usr/mdec/ofwboot.net
+UltraSPARC second-stage network boot block
+.El
 .Sh SEE ALSO
 .Xr disklabel 8 ,
 .Xr init 8
