@@ -26,7 +26,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpgw.c,v 1.5 1996/05/06 13:49:16 christos Exp $";
+static char rcsid[] = "$NetBSD: bootpgw.c,v 1.6 1997/10/18 04:36:58 lukem Exp $";
 #endif
 
 /*
