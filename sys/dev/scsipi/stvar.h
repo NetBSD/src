@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.9 2004/08/27 20:37:29 bouyer Exp $ */
+/*	$NetBSD: stvar.h,v 1.10 2005/01/31 21:13:16 reinoud Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,8 +112,8 @@ struct st_softc {
 	u_int8_t density;	/* present density                   */
 	u_int page_0_size;	/* size of page 0 data		     */
 	u_int last_dsty;	/* last density opened               */
-	short mt_resid;		/* last (short) resid                */
-	short mt_erreg;		/* last error (sense key) seen       */
+	int16_t mt_resid;		/* last (short) resid                */
+	int16_t mt_erreg;		/* last error (sense key) seen       */
 	/* relative to BOT location */
 	daddr_t fileno;
 	daddr_t blkno;
@@ -142,7 +142,7 @@ struct st_softc {
 #define BLKSIZE_SET_BY_USER	0x04
 #define BLKSIZE_SET_BY_QUIRK	0x08
 /*--------------------storage for sense data returned by the drive-----------*/
-	u_char sense_data[MAX_PAGE_0_SIZE];	/*
+	uint8_t sense_data[MAX_PAGE_0_SIZE];	/*
 						 * additional sense data needed
 						 * for mode sense/select.
 						 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.51 2004/10/30 18:10:06 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.52 2005/01/31 21:13:16 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.51 2004/10/30 18:10:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.52 2005/01/31 21:13:16 reinoud Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -233,7 +233,7 @@ static int	sc_set_all_multi __P((struct se_softc *, int));
 static void	se_stop __P((struct se_softc *));
 static __inline int se_scsipi_cmd __P((struct scsipi_periph *periph,
 			struct scsipi_generic *scsipi_cmd,
-			int cmdlen, u_char *data_addr, int datalen,
+			int cmdlen, uint8_t *data_addr, int datalen,
 			int retries, int timeout, struct buf *bp,
 			int flags));
 static void	se_delayed_ifstart __P((void *));
@@ -377,7 +377,7 @@ se_scsipi_cmd(periph, cmd, cmdlen, data_addr, datalen,
 	struct scsipi_periph *periph;
 	struct scsipi_generic *cmd;
 	int cmdlen;
-	u_char *data_addr;
+	uint8_t *data_addr;
 	int datalen;
 	int retries;
 	int timeout;
@@ -434,7 +434,7 @@ se_ifstart(ifp)
 	struct scsi_ctron_ether_generic send_cmd;
 	struct mbuf *m, *m0;
 	int len, error;
-	u_char *cp;
+	uint8_t *cp;
 
 	/* Don't transmit if interface is busy or not running */
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
@@ -462,7 +462,7 @@ se_ifstart(ifp)
 	/* Chain; copy into linear buffer we allocated at attach time. */
 	cp = sc->sc_tbuf;
 	for (m = m0; m != NULL; ) {
-		memcpy(cp, mtod(m, u_char *), m->m_len);
+		memcpy(cp, mtod(m, uint8_t *), m->m_len);
 		cp += m->m_len;
 		MFREE(m, m0);
 		m = m0;
@@ -471,7 +471,7 @@ se_ifstart(ifp)
 #ifdef SEDEBUG
 		if (sc->sc_debug)
 			printf("se: packet size %d (%d) < %d\n", len,
-			    cp - (u_char *)sc->sc_tbuf, SEMINSIZE);
+			    cp - (uint8_t *)sc->sc_tbuf, SEMINSIZE);
 #endif
 		memset(cp, 0, SEMINSIZE - len);
 		len = SEMINSIZE;
