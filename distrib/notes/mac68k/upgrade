@@ -1,8 +1,8 @@
-	$NetBSD: upgrade,v 1.4.2.5 1998/05/09 05:03:14 mycroft Exp $	
+	$NetBSD: upgrade,v 1.4.2.6 1998/05/29 03:42:46 mycroft Exp $	
 
 The upgrade to NetBSD _VER is a binary upgrade; it can be quite difficult
 to advance to a later version by recompiling from source due primarily
-to interdepencies in the various components.
+to interdependencies in the various components.
 
 No automated upgrade procedure exists for upgrading to release _VER for the
 NetBSD/mac68k architecture.  The current procedure is essentially to perform
