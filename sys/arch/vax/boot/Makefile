@@ -1,27 +1,28 @@
-#	$NetBSD: Makefile,v 1.9 1996/03/16 11:03:12 ragge Exp $
+#	$NetBSD: Makefile,v 1.10 1996/08/02 11:21:41 ragge Exp $
 #
 
 INCPATH=-I. -I../../.. -I../.. -I../../../lib/libsa
-.PATH:	${.CURDIR}/../../../lib/libkern
 
 CC=	cc
 AS=	as
 
 S=      ../../..
 RELOC=	100000
-CFLAGS+=-O ${INCPATH} -DSTANDALONE -DRELOC=0x${RELOC} -D_VAX_INLINE_
+XXRPB=	0F4240
+CFLAGS+=-O ${INCPATH} -DSTANDALONE -DRELOC=0x${RELOC} \
+	-D_VAX_INLINE_ -DXXRPB=0x$(XXRPB)
 
-DEVS=	autoconf.o hp.o ra.o tmscp.o ctu.o
-
-LIBKERN=libkern.a
-KERNOBJ=__main.o strlen.o strcmp.o strncmp.o strncpy.o min.o strcpy.o
+DEVS=	autoconf.o hp.o ra.o tmscp.o ctu.o mfm.o rom.o romread.o \
+	scsi_low.o scsi_hi.o sd.o
 
 .include "$S/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-all:	xxboot boot copy edlabel
+SVAX=	consio.o urem.o udiv.o str.o
 
-libsvax.a: consio.o urem.o udiv.o
+all:	${LIBSA} xxboot boot copy edlabel
+
+libsvax.a: ${SVAX}
 	ar crv $@ $?
 	ranlib $@
 
@@ -30,6 +31,9 @@ urem.o:	../vax/urem.s
 
 udiv.o:	../vax/udiv.s
 	${CC} -x assembler-with-cpp -E ../vax/udiv.s | as -o udiv.o
+
+str.o:	str.s
+	${CC} -x assembler-with-cpp -E str.s | as -o str.o
 
 # startups
 
@@ -41,29 +45,29 @@ srt0.o:	srt0.s
 
 # 
 
-xxboot:	start.o bootxx.o romread.o ${LIBSA} ${LIBKERN} libsvax.a 
+xxboot:	start.o bootxx.o romread.o libsvax.a 
 	ld -N -Ttext ${RELOC} -o a.out start.o bootxx.o romread.o \
-	${LIBSA} ${LIBKERN} libsvax.a
+	${LIBSA} libsvax.a
 	@strip a.out
 	@size a.out
 	@dd if=a.out of=xxboot bs=32 skip=1
 	@rm -f a.out
 
-boot:	boot.o srt0.o devopen.o conf.o ${DEVS} ${LIBKERN} ${LIBSA} libsvax.a
+boot:	boot.o srt0.o devopen.o conf.o ${DEVS} libsvax.a
 	ld -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o boot.o \
-	conf.o ${DEVS} ${LIBSA} ${LIBKERN} libsvax.a
+	conf.o ${DEVS} ${LIBSA} libsvax.a
 	@strip boot
 	@size boot
 
-edlabel: edlabel.o srt0.o devopen.o conf.o ${DEVS} ${LIBKERN} ${LIBSA} libsvax.a
+edlabel: edlabel.o srt0.o devopen.o conf.o ${DEVS} libsvax.a
 	ld -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o edlabel.o\
-	conf.o ${DEVS} ${LIBSA} ${LIBKERN} libsvax.a
+	conf.o ${DEVS} ${LIBSA} libsvax.a
 	@strip edlabel
 	@size edlabel
 
-copy:	copy.o srt0.o devopen.o conf.o ${DEVS} ${LIBKERN} ${LIBSA} libsvax.a
+copy:	copy.o srt0.o devopen.o conf.o ${DEVS} libsvax.a
 	ld -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o copy.o \
-	conf.o ${DEVS} ${LIBSA} ${LIBKERN} libsvax.a
+	conf.o ${DEVS} ${LIBSA} libsvax.a
 	@strip copy
 	@size copy
 
@@ -97,11 +101,6 @@ bootxx.o: bootxx.c
 	${CC} -c ${CFLAGS} $*.c
 
 #
-libkern.a: ${KERNOBJ}
-	@echo Creating standalone kern library
-	@ar rv libkern.a `lorder ${KERNOBJ} | tsort`
-
-#
 install: boot xxboot
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 boot ${DESTDIR}/
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 xxboot ${DESTDIR}/usr/mdec
@@ -114,5 +113,5 @@ clean::
 	rm -f start.o romread.o bootxx.o init.o xxboot boot racopy \
 	libsvax.a udiv.o urem.o consio.o ${DEVS} edlabel edlabel.o
 	rm -f conf.o boot.o rom.o racopy.o srt0.o devopen.o rootcopy.o \
-	copy copy.o
+	copy copy.o init.o
 
