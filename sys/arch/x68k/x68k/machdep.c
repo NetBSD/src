@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 1997/01/13 14:04:55 oki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 1997/02/04 11:43:30 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1040,9 +1040,8 @@ boot(howto, bootstr)
 
 	/* Finally, halt/reboot the system. */
 	if (howto & RB_HALT) {
-		printf("System halted.\n\n");
-		asm("	stop	#0x2700");
-		/* NOTREACHED */
+		printf("System halted.  Hit any key to reboot.\n\n");
+		(void)cngetc();
 	}
 
 	printf("rebooting...\n");
@@ -1530,10 +1529,6 @@ nmihand(frame)
 #endif /* PANICBUTTON */
 		return;
 	}
-#if 0
-	if (parityerror(&frame))
-		return;
-#endif
 	/* panic?? */
 	printf("unexpected level 7 interrupt ignored\n");
 }
