@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.35 2001/01/18 20:28:23 jdolecek Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.36 2001/01/21 02:33:52 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -212,7 +212,6 @@ Static void kue_reset(struct kue_softc *);
 Static usbd_status kue_ctl(struct kue_softc *, int, u_int8_t,
 			   u_int16_t, const void *, u_int32_t);
 Static usbd_status kue_setword(struct kue_softc *, u_int8_t, u_int16_t);
-Static int kue_is_warm(struct kue_softc *);
 Static int kue_load_fw(struct kue_softc *);
 
 #if defined(__FreeBSD__)
@@ -248,7 +247,7 @@ DRIVER_MODULE(if_kue, uhub, kue_driver, kue_devclass, usbd_driver_load, 0);
 
 #endif /* __FreeBSD__ */
 
-#define KUE_DO_REQUEST(dev, req, data)			\
+#define KUE_DO_REQUEST(dev, req, data) 			\
 	usbd_do_request_flags(dev, req, data, USBD_NO_TSLEEP, NULL)
 
 Static usbd_status
@@ -302,26 +301,9 @@ kue_ctl(struct kue_softc *sc, int rw, u_int8_t breq, u_int16_t val,
 }
 
 Static int
-kue_is_warm(struct kue_softc *sc)
-{
-	usbd_status		err;
-	usb_device_request_t	req;
-
-	/* Just issue some random command. */
-	req.bmRequestType = UT_READ_VENDOR_DEVICE;
-	req.bRequest = KUE_CMD_GET_ETHER_DESCRIPTOR;
-	USETW(req.wValue, 0);
-	USETW(req.wIndex, 0);
-	USETW(req.wLength, sizeof(sc->kue_desc));
-
-	err = usbd_do_request(sc->kue_udev, &req, &sc->kue_desc);
-
-	return (!err);
-}
-
-Static int
 kue_load_fw(struct kue_softc *sc)
 {
+	usb_device_descriptor_t dd;
 	usbd_status		err;
 
 	DPRINTFN(1,("%s: %s: enter\n", USBDEVNAME(sc->kue_dev), __FUNCTION__));
@@ -335,10 +317,14 @@ kue_load_fw(struct kue_softc *sc)
 	 * so we have to avoid this condition if we don't want
 	 * to look stupid.
 	 *
-	 * We can test this quickly by issuing a request that
-	 * is only valid after firmware download.
-	 */
-	if (kue_is_warm(sc)) {
+         * We can test this quickly by checking the bcdRevision
+         * code. The NIC will return a different revision code if
+         * it's probed while the firmware is still loaded and
+         * running.
+         */
+	if (usbd_get_device_desc(sc->kue_udev, &dd))
+		return (EIO);
+        if (UGETW(dd.bcdDevice) == KUE_WARM_REV) {
 		printf("%s: warm boot, no firmware download\n",
 		       USBDEVNAME(sc->kue_dev));
 		return (0);
