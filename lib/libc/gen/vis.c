@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.26 2003/08/07 16:43:00 agc Exp $	*/
+/*	$NetBSD: vis.c,v 1.27 2004/02/26 23:01:15 enami Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.26 2003/08/07 16:43:00 agc Exp $");
+__RCSID("$NetBSD: vis.c,v 1.27 2004/02/26 23:01:15 enami Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -100,23 +100,23 @@ __weak_alias(vis,_vis)
 #define issafe(c)	(c == '\b' || c == BELL || c == '\r')
 #define xtoa(c)		"0123456789abcdef"[c]
 
-#define MAXEXTRAS       5
+#define MAXEXTRAS	5
 
 
 #define MAKEEXTRALIST(flag, extra, orig)				      \
 do {									      \
 	const char *o = orig;						      \
-	char *e;						      	      \
+	char *e;							      \
 	while (*o++)							      \
 		continue;						      \
-	extra = alloca((size_t)((o - orig) + MAXEXTRAS));	      	      \
+	extra = alloca((size_t)((o - orig) + MAXEXTRAS));		      \
 	for (o = orig, e = extra; (*e++ = *o++) != '\0';)		      \
 		continue;						      \
 	e--;								      \
-	if (flag & VIS_SP) *e++ = ' ';				      	      \
+	if (flag & VIS_SP) *e++ = ' ';					      \
 	if (flag & VIS_TAB) *e++ = '\t';				      \
-	if (flag & VIS_NL) *e++ = '\n';				      	      \
-	if ((flag & VIS_NOSLASH) == 0) *e++ = '\\';		      	      \
+	if (flag & VIS_NL) *e++ = '\n';					      \
+	if ((flag & VIS_NOSLASH) == 0) *e++ = '\\';			      \
 	*e = '\0';							      \
 } while (/*CONSTCOND*/0)
 
@@ -125,7 +125,7 @@ do {									      \
  * This is HVIS, the macro of vis used to HTTP style (RFC 1808)
  */
 #define HVIS(dst, c, flag, nextc, extra)				      \
-do 									      \
+do									      \
 	if (!isascii(c) || !isalnum(c) || strchr("$-_.+!*'(),", c) != NULL) { \
 		*dst++ = '%';						      \
 		*dst++ = xtoa(((unsigned int)c >> 4) & 0xf);		      \
@@ -134,7 +134,7 @@ do 									      \
 		SVIS(dst, c, flag, nextc, extra);			      \
 	}								      \
 while (/*CONSTCOND*/0)
-	
+
 /*
  * This is SVIS, the central macro of vis.
  * dst:	      Pointer to the destination buffer
@@ -246,10 +246,10 @@ svis(dst, c, flag, nextc, extra)
  *	be encoded, too. These functions are useful e. g. to
  *	encode strings in such a way so that they are not interpreted
  *	by a shell.
- *	
+ *
  *	Dst must be 4 times the size of src to account for possible
  *	expansion.  The length of dst, not including the trailing NULL,
- *	is returned. 
+ *	is returned.
  *
  *	Strsvisx encodes exactly len bytes from src into dst.
  *	This is useful for encoding a block of data.
@@ -324,7 +324,7 @@ char *
 vis(dst, c, flag, nextc)
 	char *dst;
 	int c, flag, nextc;
-	
+
 {
 	char *extra;
 
@@ -332,9 +332,9 @@ vis(dst, c, flag, nextc)
 
 	MAKEEXTRALIST(flag, extra, "");
 	if (flag & VIS_HTTPSTYLE)
-	    HVIS(dst, c, flag, nextc, extra);
+		HVIS(dst, c, flag, nextc, extra);
 	else
-	    SVIS(dst, c, flag, nextc, extra);
+		SVIS(dst, c, flag, nextc, extra);
 	*dst = '\0';
 	return (dst);
 }
@@ -342,10 +342,10 @@ vis(dst, c, flag, nextc)
 
 /*
  * strvis, strvisx - visually encode characters from src into dst
- *	
+ *
  *	Dst must be 4 times the size of src to account for possible
  *	expansion.  The length of dst, not including the trailing NULL,
- *	is returned. 
+ *	is returned.
  *
  *	Strvisx encodes exactly len bytes from src into dst.
  *	This is useful for encoding a block of data.
