@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.c,v 1.11 1996/08/14 05:45:52 cgd Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.12 1996/08/14 05:47:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -236,7 +236,7 @@ kn20aa_pci_strayintr(irq)
 {
 
 	if (++kn20aa_pci_strayintrcnt[irq] <= PCI_STRAY_MAX)
-		log(LOG_ERR, "stray kn20aa interrupt %d%s\n", irq,
+		log(LOG_ERR, "stray kn20aa irq %d%s\n", irq,
 		    kn20aa_pci_strayintrcnt[irq] >= PCI_STRAY_MAX ?
 		    "; stopped logging" : "");
 }
