@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.58 2004/01/10 14:39:50 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.59 2004/02/17 11:36:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.58 2004/01/10 14:39:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.59 2004/02/17 11:36:01 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,12 +102,12 @@ void putphysbuf __P((struct buf *bp));
  * Comments in brackets are from Leffler, et al.'s pseudo-code implementation.
  */
 int
-physio(strategy, bp, dev, flags, minphys, uio)
+physio(strategy, bp, dev, flags, min_phys, uio)
 	void (*strategy) __P((struct buf *));
 	struct buf *bp;
 	dev_t dev;
 	int flags;
-	void (*minphys) __P((struct buf *));
+	void (*min_phys) __P((struct buf *));
 	struct uio *uio;
 {
 	struct iovec *iovp;
@@ -180,7 +180,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 * and remember the amount of data to transfer,
 			 * for later comparison.
 			 */
-			(*minphys)(bp);
+			(*min_phys)(bp);
 			todo = bp->b_bcount;
 #ifdef DIAGNOSTIC
 			if (todo <= 0)
