@@ -1,4 +1,4 @@
-/*	$NetBSD: getextmemx.c,v 1.2 1999/03/08 21:38:28 drochner Exp $	*/
+/*	$NetBSD: getextmemx.c,v 1.3 2003/01/23 21:22:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -43,12 +43,21 @@
 
 extern int getextmem2 __P((int *));
 extern int getmementry __P((int *, int *));
+extern int getextmemps2 __P((void *));
 
 int
 getextmemx()
 {
 	int buf[5], i;
 	int extmem = getextmem1();
+#ifdef SUPPORT_PS2
+	struct {
+		uint16_t len;
+		uint32_t dta[8];
+		/* pad to 64 bytes - without this, machine would reset */
+		uint8_t __pad[30];
+	} __attribute__((__packed__)) bufps2;
+#endif
 
 	if (!getextmem2(buf) && buf[0] <= 15 * 1024) {
 		int help = buf[0];
@@ -66,6 +75,17 @@ getextmemx()
 		    && extmem < buf[2] / 1024)
 			extmem = buf[2] / 1024;
 	} while (i);
+
+#ifdef SUPPORT_PS2
+	/* use local memory information from RETURN MEMORY-MAP INFORMATION */
+	if (!getextmemps2((void *) &bufps2)) {
+		int help = bufps2.dta[0];
+		if (help == 15 * 1024)
+			help += bufps2.dta[1];
+		if (extmem < help)
+			extmem = help;
+	}
+#endif
 
 	return (extmem);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2001/12/12 01:49:44 tv Exp $
+#	$NetBSD: Makefile,v 1.21 2003/01/23 21:22:25 jdolecek Exp $
 
 S?=	${.CURDIR}/../../../../
 
@@ -35,7 +35,7 @@ SRCS+= diskbuf.c
 SRCS+= biospci.c bios_pci.S isapnp.c isadma.c
 .endif
 .if (${I386_INCLUDE_PS2} == "yes")
-SRCS+= biosmca.S
+SRCS+= biosmca.S biosmemps2.S
 .endif
 
 .include <bsd.own.mk>
