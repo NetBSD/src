@@ -1,4 +1,4 @@
-/*	$NetBSD: at_extern.h,v 1.5 2000/02/02 23:28:09 thorpej Exp $	*/
+/*	$NetBSD: at_extern.h,v 1.6 2003/02/26 07:53:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -37,6 +37,9 @@ struct ifaddr;
 struct at_ifaddr;
 struct route;
 struct socket;
+
+extern struct mowner atalk_rx_mowner;
+extern struct mowner atalk_tx_mowner;
 
 void	atintr		__P((void));
 void	aarpprobe	__P((void *));
