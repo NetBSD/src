@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.256 2002/06/19 13:54:06 tshiozak Exp $
+$NetBSD: usbdevs,v 1.257 2002/06/20 09:20:36 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1210,6 +1210,7 @@ product DIAMOND2 SUPRAEXPRESS56K 0x07da	Supra Express 56K modem
 product DIAMOND2 SUPRA2890	0x0b4a	SupraMax 2890 56K Modem
 product DIAMOND2 RIO600USB	0x5001	Rio 600 USB
 product DIAMOND2 RIO800USB	0x5002	Rio 800 USB
+product DIAMOND2 PSAPLAY120	0x5003	Nike psa[play 120
 
 /* Tangtop products */
 product TANGTOP USBPS2		0x0001	USBPS2
