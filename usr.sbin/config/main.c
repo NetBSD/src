@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.89 2004/06/04 04:38:27 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.90 2004/06/04 07:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -251,6 +251,7 @@ main(int argc, char **argv)
 	needcnttab = ht_new();
 	opttab = ht_new();
 	mkopttab = ht_new();
+	condmkopttab = ht_new();
 	fsopttab = ht_new();
 	deffstab = ht_new();
 	defopttab = ht_new();
@@ -898,6 +899,27 @@ appendmkoption(const char *name, const char *value)
 	nv = newnv(name, value, NULL, 0, NULL);
 	*nextappmkopt = nv;
 	nextappmkopt = &nv->nv_next;
+}
+
+/*
+ * Add a conditional appending "make" option.
+ */
+void
+appendcondmkoption(const char *selname, const char *name, const char *value)
+{
+	struct nvlist *nv, *lnv;
+	const char *n;
+
+	n = strtolower(selname);
+	nv = newnv(name, value, NULL, 0, NULL);
+	if (ht_insert(condmkopttab, n, nv) == 0)
+		return;
+
+	if ((lnv = ht_lookup(condmkopttab, n)) == NULL)
+		panic("appendcondmkoption");
+	for (; lnv->nv_next != NULL; lnv = lnv->nv_next)
+		/* search for the last list element */;
+	lnv->nv_next = nv;
 }
 
 /*
