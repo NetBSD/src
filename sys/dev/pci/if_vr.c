@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.15 1999/02/05 08:42:03 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.16 1999/02/05 21:20:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -198,7 +198,7 @@ static void vr_rxeof		__P((struct vr_softc *));
 static void vr_rxeoc		__P((struct vr_softc *));
 static void vr_txeof		__P((struct vr_softc *));
 static void vr_txeoc		__P((struct vr_softc *));
-static void vr_intr		__P((void *));
+static int vr_intr		__P((void *));
 static void vr_start		__P((struct ifnet *));
 static int vr_ioctl		__P((struct ifnet *, u_long, caddr_t));
 static void vr_init		__P((void *));
@@ -872,21 +872,22 @@ vr_txeoc(sc)
 	}
 }
 
-static void
+static int
 vr_intr(arg)
 	void *arg;
 {
 	struct vr_softc *sc;
 	struct ifnet *ifp;
 	u_int16_t status;
+	int handled = 0;
 
 	sc = arg;
 	ifp = &sc->vr_ec.ec_if;
 
 	/* Supress unwanted interrupts. */
-	if (!(ifp->if_flags & IFF_UP)) {
+	if ((ifp->if_flags & IFF_UP) == 0) {
 		vr_stop(sc);
-		return;
+		return (0);
 	}
 
 	/* Disable interrupts. */
@@ -899,6 +900,8 @@ vr_intr(arg)
 
 		if ((status & VR_INTRS) == 0)
 			break;
+
+		handled = 1;
 
 		if (status & VR_ISR_RX_OK)
 			vr_rxeof(sc);
@@ -936,6 +939,8 @@ vr_intr(arg)
 	if (ifp->if_snd.ifq_head != NULL) {
 		vr_start(ifp);
 	}
+
+	return (handled);
 }
 
 /*
@@ -1521,7 +1526,7 @@ vr_attach(parent, self, aux)
 		}
 		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 		sc->vr_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
-						(void *)vr_intr, sc);
+						vr_intr, sc);
 		if (sc->vr_ih == NULL) {
 			printf("%s: couldn't establish interrupt",
 				sc->vr_dev.dv_xname);
