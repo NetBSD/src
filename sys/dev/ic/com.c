@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.69 1996/02/19 14:53:03 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.70 1996/02/19 15:09:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -833,7 +833,7 @@ comstart(tp)
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY))
-		goto busy;
+		goto out;
 	if (ISSET(tp->t_state, TS_TIMEOUT | TS_TTSTOP) ||
 	    sc->sc_halt > 0)
 		goto stopped;
@@ -850,6 +850,10 @@ comstart(tp)
 	}
 	SET(tp->t_state, TS_BUSY);
 
+	if (!ISSET(sc->sc_ier, IER_ETXRDY)) {
+		SET(sc->sc_ier, IER_ETXRDY);
+		outb(iobase + com_ier, sc->sc_ier);
+	}
 #ifdef COM_HAYESP
 	if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
 		u_char buffer[1024], *cp = buffer;
@@ -868,11 +872,7 @@ comstart(tp)
 		} while (--n);
 	} else
 		outb(iobase + com_data, getc(&tp->t_outq));
-busy:
-	if (!ISSET(sc->sc_ier, IER_ETXRDY)) {
-		SET(sc->sc_ier, IER_ETXRDY);
-		outb(iobase + com_ier, sc->sc_ier);
-	}
+out:
 	splx(s);
 	return;
 stopped:
