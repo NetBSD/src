@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.43 2001/11/24 01:26:24 thorpej Exp $
+#	$NetBSD: files.arm,v 1.44 2001/11/24 03:39:17 thorpej Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defopt	ARM32
@@ -13,7 +13,7 @@ defopt	opt_cputypes.h	CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 defopt	ARMFPE
 file	arch/arm/fpe-arm/armfpe_glue.S		armfpe
 file	arch/arm/fpe-arm/armfpe_init.c		armfpe
-file	arch/arm/fpe-arm/armfpe.s		armfpe
+file	arch/arm/fpe-arm/armfpe.S		armfpe
 
 # PMAP_DEBUG (heavily abused option)
 defopt	PMAP_DEBUG
