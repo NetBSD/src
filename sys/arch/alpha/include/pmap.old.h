@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.old.h,v 1.4 1995/11/23 02:36:25 cgd Exp $	*/
+/*	$NetBSD: pmap.old.h,v 1.5 1996/07/09 00:39:24 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -44,6 +44,8 @@
 #define	_PMAP_MACHINE_
 
 #include <machine/pte.h>
+
+extern vm_offset_t       vtophys(vm_offset_t);
 
 #define	ALPHA_PAGE_SIZE	NBPG
 #define	ALPHA_SEG_SIZE	NBSEG
