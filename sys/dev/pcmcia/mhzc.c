@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.17 2004/08/07 05:46:39 mycroft Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.18 2004/08/08 09:23:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.17 2004/08/07 05:46:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.18 2004/08/08 09:23:01 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -799,8 +799,6 @@ sm_mhzc_attach(parent, self, aux)
 
 	if ((*msc->sc_product->mp_enaddr)(msc, myla) != 1)
 		return;
-
-	aprint_normal("%s", sc->sc_dev.dv_xname);
 
 	/* Perform generic initialization. */
 	smc91cxx_attach(sc, myla);
