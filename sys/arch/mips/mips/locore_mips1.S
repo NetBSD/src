@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.42 2000/09/13 06:48:04 jeffs Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.43 2000/09/16 04:54:44 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -421,6 +421,7 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	nop
 	addu	k1, k1, USPACE - FRAME_SIZ
 	sw	AT, FRAME_AST(k1)
+	.set	at
 	sw	v0, FRAME_V0(k1)		# syscall #
 	sw	v1, FRAME_V1(k1)		# used by syscall()
 	mflo	v0
@@ -462,13 +463,12 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
-	.set	at
-	and	t0, a0, ~MIPS_SR_COP_1_BIT	# turn off the FPU
-	.set	noat
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a2
 	sw	ra, CALLFRAME_RA(sp)
 #endif
+	ori	t0, a0, MIPS_SR_INT_IE		# turn on IEc, enable intr.
+	and	t0, t0, ~MIPS_SR_COP_1_BIT	# turn off FPU
 /*
  * Call the system call handler.
  */
@@ -477,16 +477,18 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 /*
  * Restore user registers and return. NOTE: interrupts are enabled.
  */
+	.set	noat
 	addu	a1, sp, CALLFRAME_SIZ
 	lw	a0, FRAME_SR(a1)
 	lw	t0, FRAME_MULLO(a1)
 	lw	t1, FRAME_MULHI(a1)
-	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
+	mtc0	a0, MIPS_COP_0_STATUS		# IEc == 0, disable intr.
 	mtlo	t0
 	mthi	t1
 	move	k1, a1
 	lw	k0, FRAME_EPC(k1)		# might be changed in syscall()
 	lw	AT, FRAME_AST(k1)
+	.set	at
 	lw	v0, FRAME_V0(k1)
 	lw	v1, FRAME_V1(k1)
 	lw	a0, FRAME_A0(k1)
@@ -517,7 +519,6 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	lw	ra, FRAME_RA(k1)
 	j	k0				# return to syscall point
 	rfe
-	.set	at
 END(mips1_SystemCall)
 
 /*
@@ -961,126 +962,67 @@ END(mips1_TLBRead)
  *----------------------------------------------------------------------------
  */
 #ifndef ENABLE_MIPS_TX3900
-
-/*----------------------------------------------------------------------------
+/*
+ * Size MIPS1 direct mapped cache capacity.
  *
- * mips1_ConfigCache --
- *
- *	Size the caches.
- *	NOTE: should only be called from mach_init().
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The size of the data cache is stored into mips_L1DCacheSize and the
- *	size of instruction cache is stored into mips_L1ICacheSize.
- *
- *----------------------------------------------------------------------------
+ * Write marker values repeatedly at possible cache boundaries (256KB
+ * down to 512B).  Since the cache is designed direct mapped and
+ * address ranges have aliased with given cache size, whatever value
+ * is found at cache location zero indicates the cache size.
  */
-NESTED(mips1_ConfigCache, CALLFRAME_SIZ, ra)
-	subu	sp, sp, CALLFRAME_SIZ
-	sw	ra, CALLFRAME_RA(sp)		# Save return address.
-	.mask	0x80000000, -4
-	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts.
+LEAF(mips1_size_cache)
 	la	v0, 1f
-	or	v0, MIPS_KSEG1_START		# Run uncached.
-	j	v0
-	nop
+	or	v0, MIPS_KSEG1_START
+	j	v0				# run uncached
+	mfc0	v1, MIPS_COP_0_STATUS
 1:
+	mtc0	a0, MIPS_COP_0_STATUS		# disable interrupts,
+	nop					# isolating cache
+	nop
+	nop
+	nop
+
+	li	t1, 512				# minimum cache size
+	li	t2, 256*1024			# maximum cache size
+2:	sw	t2, MIPS_KSEG0_START(t2)
+	bne	t2, t1, 2b
+	srl	t2, 1				# BDSLOT
+	lw	v0, MIPS_KSEG0_START(zero)	# magic! cache size is there
+
+	li	t1, MIPS_KSEG0_START
+	addu	t2, t1,v0
+3:	sw	zero, 0(t1)			# clear parity
+	sw	zero, 4(t1)
+	sw	zero, 8(t1)
+	sw	zero, 12(t1)
+	sb	zero, 0(t1)			# invalidate
+	sb	zero, 4(t1)
+	sb	zero, 8(t1)
+	addu	t1, 16
+	bne	t1, t2, 3b
+	sb	zero, -4(t1)			# BDSLOT
+
+	jr	ra
+	mtc0	v1, MIPS_COP_0_STATUS
+	END(mips1_size_cache)
+
 /*
- * This works because jal doesn't change pc[31..28] and the
- * linker still thinks SizeCache is in the cached region so it computes
- * the correct address without complaining.
+ * int mips1_icsize()
  */
-	jal	_C_LABEL(mips1_SizeCache)	# Get the size of the d-cache.
+LEAF(mips1_icsize)
+	li	a0, MIPS1_ISOL_CACHES|MIPS1_SWAP_CACHES
+	j	_C_LABEL(mips1_size_cache)
 	nop
-	sw	v0, _C_LABEL(mips_L1DCacheSize)
-	nop					# Make sure sw out of pipe
-	nop
-	nop
-	nop
-	li	v0, MIPS_SR_SWAP_CACHES		# Swap caches
-	mtc0	v0, MIPS_COP_0_STATUS
-	nop					# Insure caches stable
-	nop
-	nop
-	nop
-	jal	_C_LABEL(mips1_SizeCache)	# Get the size of the i-cache.
-	nop
-	mtc0	zero, MIPS_COP_0_STATUS		# Swap back caches and enable.
-	nop
-	nop
-	nop
-	nop
-	sw	v0, _C_LABEL(mips_L1ICacheSize)
-	la	t0, 1f
-	j	t0				# Back to cached mode
-	nop
-1:
-	lw	ra, CALLFRAME_RA(sp)		# Restore return addr
-	addu	sp, sp, CALLFRAME_SIZ		# Restore sp.
-	j	ra
-	nop
-END(mips1_ConfigCache)
+	END(mips1_icsize)
 
-/*----------------------------------------------------------------------------
- *
- * mips1_SizeCache --
- *
- *	Get the size of the cache.
- *
- * Results:
- *	The size of the cache.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------------
- */
-LEAF(mips1_SizeCache)
-	mfc0	t0, MIPS_COP_0_STATUS		# Save the current status reg.
-	nop
-	or	v0, t0, MIPS_SR_ISOL_CACHES	# Isolate the caches.
-	nop					# Make sure no stores in pipe
-	mtc0	v0, MIPS_COP_0_STATUS
-	nop					# Make sure isolated
-	nop
-	nop
 /*
- * Clear cache size boundaries.
+ * int mips1_dcsize()
  */
-	li	v0, MIPS_MIN_CACHE_SIZE
-	li	v1, MIPS_KSEG0_START
-	li	t2, MIPS_MAX_CACHE_SIZE
-1:
-	addu	t1, v0, v1			# Compute address to clear
-	sw	zero, 0(t1)			# Clear cache memory
-	bne	v0, t2, 1b
-	sll	v0, v0, 1
-
-	li	v0, -1
-	sw	v0, 0(v1)			# Store marker in cache
-	li	v0, MIPS_MIN_CACHE_SIZE
-2:
-	addu	t1, v0, v1			# Compute address
-	lw	t3, 0(t1)			# Look for marker
+LEAF(mips1_dcsize)
+	li	a0, MIPS1_ISOL_CACHES
+	j	_C_LABEL(mips1_size_cache)
 	nop
-	bne	t3, zero, 3f			# Found marker.
-	nop
-	bne	v0, t2, 2b			# keep looking
-	sll	v0, v0, 1			# cache size * 2
-
-	move	v0, zero			# must be no cache
-3:
-	mtc0	t0, MIPS_COP_0_STATUS
-	nop					# Make sure unisolated
-	nop
-	nop
-	nop
-	j	ra
-	nop
-END(mips1_SizeCache)
+	END(mips1_dcsize)
 
 /*----------------------------------------------------------------------------
  *
