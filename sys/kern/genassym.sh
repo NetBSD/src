@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.sh,v 1.5 1997/02/26 23:44:24 thorpej Exp $
+#	$NetBSD: genassym.sh,v 1.6 1997/03/13 22:47:20 gwr Exp $
 
 #
 # Copyright (c) 1997 Matthias Pfaller.
@@ -33,7 +33,7 @@
 # If first argument is -c, create a temporary C file,
 # compile it and execute the result.
 
-AWK=awk
+awk=${AWK:-awk}
 
 if [ $1 = '-c' ] ; then
 	shift
@@ -44,7 +44,7 @@ fi
 
 trap "rm -f /tmp/$$.c /tmp/genassym.$$" 0 1 2 3 15
 
-$AWK '
+$awk '
 BEGIN {
 	printf("#ifndef _KERNEL\n#define _KERNEL\n#endif\n");
 	printf("#define	offsetof(type, member) ((size_t)(&((type *)0)->member))\n");
