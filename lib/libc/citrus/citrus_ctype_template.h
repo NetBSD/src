@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.9 2002/03/27 17:18:41 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.10 2002/03/27 17:54:40 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -91,7 +91,6 @@
  *           mbsrtowcs
  *           wcrtomb
  *           wcsrtombs
- *           wcstombs
  *           wctomb
  *     These need to be keeped in the encoding information structure,
  *     pointed by "ei".
@@ -574,14 +573,14 @@ _FUNCNAME(ctype_wcstombs)(void * __restrict cl, char * __restrict s,
 			  const wchar_t * __restrict pwcs, size_t n,
 			  size_t * __restrict nresult)
 {
+	_ENCODING_STATE state;
 	int err;
 
 	_DIAGASSERT(cl != NULL);
 
-	/* XXX: FIXME */
+	_FUNCNAME(init_state)(_CEI_TO_EI(_TO_CEI(cl)), &state);
 	err = _FUNCNAME(wcsrtombs_priv)(cl, s, &pwcs, n,
-					&_CEI_TO_STATE(_TO_CEI(cl), wcstombs),
-					nresult);
+					&state, nresult);
 
 	return err;
 }
