@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";*/
-static char rcsid[] = "$NetBSD: syslogd.c,v 1.9 1997/04/26 05:12:32 mrg Exp $";
+static char rcsid[] = "$NetBSD: syslogd.c,v 1.10 1997/05/17 20:31:15 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -369,7 +369,7 @@ main(argc, argv)
 				printline(cvthname(&frominet), line);
 			} else if (i < 0 && errno != EINTR)
 				logerror("recvfrom inet");
-		} 
+		}
 	}
 }
 
@@ -930,7 +930,7 @@ init(signo)
 		 */
 		for (p = cline; isspace(*p); ++p)
 			continue;
-		if (*p == NULL || *p == '#')
+		if (*p == '\0' || *p == '#')
 			continue;
 		for (p = strchr(cline, '\0'); isspace(*--p);)
 			continue;
