@@ -1,3 +1,4 @@
+// This may look like C code, but it is really -*- C++ -*-
 /* 
 Copyright (C) 1988 Free Software Foundation
     written by Dirk Grunwald (grunwald@cs.uiuc.edu)
@@ -14,21 +15,41 @@ You should have received a copy of the GNU Library General Public
 License along with this library; if not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
+#ifndef _Binomial_h
 #ifdef __GNUG__
-#pragma implementation
+#pragma interface
 #endif
-#include <builtin.h>
-#include <Random.h>
-#include <Binomial.h>
+#define _Binomial_h 1
 
-double Binomial::operator()()
-{
-    int s = 0;
-    for (int i = 0; i < pN; i++) {
-	if (pGenerator -> asDouble() < pU) {
-	    s++;
-	}
-    }
-    return(double(s));
+#include <Random.h>
+
+class Binomial: public Random {
+protected:
+    int pN;
+    double pU;
+public:
+    Binomial(int n, double u, RNG *gen);
+
+    int n();
+    int n(int xn);
+
+    double u();
+    double u(int xu);
+
+    virtual double operator()();
+
+};
+
+
+inline Binomial::Binomial(int n, double u, RNG *gen)
+: Random(gen){
+  pN = n; pU = u;
 }
 
+inline int Binomial::n() { return pN; }
+inline int Binomial::n(int xn) { int tmp = pN; pN = xn; return tmp; }
+
+inline double Binomial::u() { return pU; }
+inline double Binomial::u(int xu) { double tmp = pU; pU = xu; return tmp; }
+
+#endif

@@ -1,6 +1,7 @@
+// This may look like C code, but it is really -*- C++ -*-
 /* 
-Copyright (C) 1988 Free Software Foundation
-    written by Dirk Grunwald (grunwald@cs.uiuc.edu)
+Copyright (C) 1989 Free Software Foundation
+    written by Doug Lea (dl@rocky.oswego.edu)
 
 This file is part of the GNU C++ Library.  This library is free
 software; you can redistribute it and/or modify it under the terms of
@@ -14,21 +15,23 @@ You should have received a copy of the GNU Library General Public
 License along with this library; if not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
-#ifdef __GNUG__
-#pragma implementation
-#endif
-#include <builtin.h>
-#include <Random.h>
-#include <Binomial.h>
 
-double Binomial::operator()()
-{
-    int s = 0;
-    for (int i = 0; i < pN; i++) {
-	if (pGenerator -> asDouble() < pU) {
-	    s++;
-	}
-    }
-    return(double(s));
+/* Partly for systems that think signal.h is is sys/ */
+/* But note that some systems that use sys/signal.h to define signal.h. */
+
+#ifndef __libgxx_sys_signal_h
+#if defined(__sys_signal_h_recursive) || defined(__signal_h_recursive)
+#include_next <sys/signal.h>
+#else
+#define __sys_signal_h_recursive
+
+extern "C" {
+#define signal __hide_signal
+#include_next <sys/signal.h>
+#undef signal
 }
+
+#define __libgxx_sys_signal_h 1
+#endif
+#endif
 

@@ -1,6 +1,6 @@
 /* 
 Copyright (C) 1988 Free Software Foundation
-    written by Dirk Grunwald (grunwald@cs.uiuc.edu)
+    written by Doug Lea (dl@rocky.oswego.edu)
 
 This file is part of the GNU C++ Library.  This library is free
 software; you can redistribute it and/or modify it under the terms of
@@ -14,21 +14,45 @@ You should have received a copy of the GNU Library General Public
 License along with this library; if not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 */
+
 #ifdef __GNUG__
 #pragma implementation
 #endif
-#include <builtin.h>
-#include <Random.h>
-#include <Binomial.h>
+#include <SFile.h>
 
-double Binomial::operator()()
-{
-    int s = 0;
-    for (int i = 0; i < pN; i++) {
-	if (pGenerator -> asDouble() < pU) {
-	    s++;
-	}
-    }
-    return(double(s));
+SFile::SFile(const char *filename, int size, int mode, int prot)
+: fstream(filename, mode, prot)
+{ 
+  sz = size; 
 }
 
+SFile::SFile(int fd, int size)
+: fstream(fd)
+{ 
+  sz = size; 
+}
+
+void SFile::open(const char *name, int size, int mode, int prot)
+{
+    fstream::open(name, mode, prot);
+    sz = size;
+}
+
+SFile& SFile::get(void* x)
+{
+    read(x, sz);
+    return *this;
+}
+
+SFile& SFile::put(void* x)
+{
+    write(x, sz);
+    return *this;
+}
+
+SFile& SFile::operator[](long i)
+{
+    if (rdbuf()->seekoff(i * sz, ios::beg) == EOF)
+	set(ios::badbit);
+    return *this;
+}
