@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84reg.h,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
+/*	$NetBSD: m41st84reg.h,v 1.2 2004/01/20 19:12:54 briggs Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -84,6 +84,8 @@
 #define	M41ST84_AL_MONTH_ABE		0x20	/* alarm in b-backup mode en */
 #define	M41ST84_AL_MONTH_SQWE		0x40	/* square wave enable */
 #define	M41ST84_AL_MONTH_AFE		0x80	/* alarm flage enable */
+
+#define	M41ST84_AL_HOUR_HT		0x40	/* Halt Update Bit */
 
 #define	M41ST84_FLAGS_BL		0x10	/* battery low flag */
 #define	M41ST84_FLAGS_AF		0x40	/* alarm flag */
