@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.6 1997/03/17 03:44:51 thorpej Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.7 1997/03/19 02:37:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: devar.h,v 1.14 1997/03/15 17:28:19 thomas Exp
+ * Id: if_devar.h,v 1.16 1997/03/18 22:16:50 thomas Exp
  */
 
 #if !defined(_DEVAR_H)
@@ -422,6 +422,7 @@ typedef enum {
     TULIP_PROBE_INACTIVE,
     TULIP_PROBE_PHYRESET,
     TULIP_PROBE_PHYAUTONEG,
+    TULIP_PROBE_GPRTEST,
     TULIP_PROBE_MEDIATEST,
     TULIP_PROBE_FAILED
 } tulip_probe_state_t;
@@ -478,10 +479,11 @@ struct _tulip_softc_t {
     pci_chipset_tag_t tulip_pc;
     struct ethercom tulip_ec;
     u_int8_t tulip_enaddr[ETHER_ADDR_LEN];
-#else
-    struct arpcom tulip_ac;
 #endif
     struct ifmedia tulip_ifmedia;
+#if !defined(__NetBSD__)
+    struct arpcom tulip_ac;
+#endif
     tulip_regfile_t tulip_csrs;
     u_int32_t tulip_flags;
 #define	TULIP_WANTSETUP		0x00000001
@@ -833,14 +835,20 @@ extern struct cfattach de_ca;
 extern struct cfdriver de_cd;
 #define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) de_cd.cd_devs[unit])
 #define TULIP_IFP_TO_SOFTC(ifp)         ((tulip_softc_t *)((ifp)->if_softc))
-#define	tulip_xname			tulip_ec.ec_if.if_xname
 #define	tulip_unit			tulip_dev.dv_unit
+#define	tulip_xname			tulip_if.if_xname
+#define	TULIP_RAISESPL()		splnet()
+#define	TULIP_RAISESOFTSPL()		splsoftnet()
+#define	TULIP_RESTORESPL(s)		splx(s)
+#define	tulip_if			tulip_ec.ec_if
+#define	tulip_enaddr			tulip_enaddr
+#define	tulip_multicnt			tulip_ec.ec_multicnt
+#define	TULIP_ETHERCOM(sc)		(&(sc)->tulip_ec)
+#define	TULIP_ARP_IFINIT(sc, ifa)	arp_ifinit(&(sc)->tulip_if, (ifa))
+#define	TULIP_ETHER_IFATTACH(sc)	ether_ifattach(&(sc)->tulip_if, (sc)->tulip_enaddr)
 #define	loudprintf			printf
 #define	TULIP_PRINTF_FMT		"%s"
 #define	TULIP_PRINTF_ARGS		sc->tulip_xname
-#define	TULIP_ETHERCOM			sc->tulip_ec
-#define	TULIP_MULTICAST_CNT		sc->tulip_ec.ec_multicnt
-#define	TULIP_ARPINITPAR		ifp
 #if defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #define TULIP_KVATOPHYS(sc, va)		alpha_XXX_dmamap((vm_offset_t)(va))
@@ -858,36 +866,35 @@ extern struct cfdriver de_cd;
 #define	TULIP_BURSTSIZE(unit)		3
 #endif
 
-#ifndef TULIP_ETHERCOM
-#define	TULIP_ETHERCOM			sc->tulip_ac
-#endif
-
-#ifndef TULIP_MULTICAST_CNT
-#define	TULIP_MULTICAST_CNT		sc->tulip_ac.ac_multicnt
-#endif
-
-#ifndef TULIP_ARPINITPAR
-#define	TULIP_ARPINITPAR		&sc->tulip_ac
-#endif
-
-#if defined(__NetBSD__)
-#define	tulip_if	tulip_ec.ec_if
-#define	tulip_hwaddr	tulip_enaddr
-#define	tulip_bpf	tulip_ec.ec_if.if_bpf
-
-#else /* ! __NetBSD__ */
-
+#ifndef	tulip_if
 #define	tulip_if	tulip_ac.ac_if
-#ifndef tulip_unit
-#define	tulip_unit	tulip_ac.ac_if.if_unit
 #endif
-#define	tulip_name	tulip_ac.ac_if.if_name
-#define	tulip_hwaddr	tulip_ac.ac_enaddr
+#ifndef tulip_unit
+#define	tulip_unit	tulip_if.if_unit
+#endif
+#define	tulip_name	tulip_if.if_name
+#ifndef tulip_enaddr
+#define	tulip_enaddr	tulip_ac.ac_enaddr
+#endif
+#ifndef tulip_multicnt
+#define	tulip_multicnt	tulip_ac.ac_multicnt
+#endif
+
+#if !defined(TULIP_ETHERCOM)
+#define	TULIP_ETHERCOM(sc)		(&(sc)->tulip-ac))
+#endif
+
+#if !defined(TULIP_ARP_IFINIT)
+#define	TULIP_ARP_IFINIT(sc, ifa)	arp_ifinit(TULIP_ETHERCOM(sc), (ifa))
+#endif
+
+#if !defined(TULIP_ETHER_IFATTACH)
+#define	TULIP_ETHER_IFATTACH(sc)	ether_ifattach(&(sc)->tulip_if)
+#endif
 
 #if !defined(tulip_bpf) && (!defined(__bsdi__) || _BSDI_VERSION >= 199401)
-#define	tulip_bpf	tulip_ac.ac_if.if_bpf
+#define	tulip_bpf	tulip_if.if_bpf
 #endif
-#endif /* __NetBSD__ */
 
 #if !defined(tulip_intrfunc_t)
 #define	tulip_intrfunc_t	int
@@ -895,6 +902,16 @@ extern struct cfdriver de_cd;
 
 #if !defined(TULIP_KVATOPHYS)
 #define	TULIP_KVATOPHYS(sc, va)	vtophys(va)
+#endif
+
+#ifndef TULIP_RAISESPL
+#define	TULIP_RAISESPL()		splimp()
+#endif
+#ifndef TULIP_RAISESOFTSPL
+#define	TULIP_RAISESOFTSPL()		splnet()
+#endif
+#ifndef TULUP_RESTORESPL
+#define	TULIP_RESTORESPL(s)		splx(s)
 #endif
 
 /*
