@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.116 2005/02/04 02:10:45 perry Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.117 2005/02/27 00:27:33 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.116 2005/02/04 02:10:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.117 2005/02/27 00:27:33 perry Exp $");
 
 /*
 #define CBB_DEBUG
@@ -476,7 +476,7 @@ pccbbattach(parent, self, aux)
 		sc->sc_pwrmgt_offs = pwrmgt_offs;
 	}
 
-	/* 
+	/*
 	 * MAP socket registers and ExCA registers on memory-space
 	 * When no valid address is set on socket base registers (on pci
 	 * config space), get it not polite way.
@@ -514,7 +514,7 @@ pccbbattach(parent, self, aux)
 	sc->sc_mem_start = 0;	       /* XXX */
 	sc->sc_mem_end = 0xffffffff;   /* XXX */
 
-	/* 
+	/*
 	 * When interrupt isn't routed correctly, give up probing cbb and do
 	 * not kill pcic-compatible port.
 	 */
@@ -559,7 +559,7 @@ pccbbattach(parent, self, aux)
 	/* The RX5C47X-series requires writes to the PCI_LEGACY register. */
 	case CB_RX5C47X:
 #endif
-		/* 
+		/*
 		 * The legacy pcic io-port on Ricoh RX5C46X CardBus bridges
 		 * cannot be disabled by substituting 0 into PCI_LEGACY
 		 * register.  Ricoh CardBus bridges have special bits on Bridge
@@ -683,8 +683,8 @@ pccbb_pci_callback(self)
 		}
 	}
 
-	/* 
-	 * attach cardbus 
+	/*
+	 * attach cardbus
 	 */
 	{
 		pcireg_t busreg = pci_conf_read(pc, sc->sc_tag, PCI_BUSNUM);
@@ -764,7 +764,7 @@ pccbb_chipinit(sc)
 	bus_space_handle_t bmh = sc->sc_base_memh;
 	pcireg_t reg;
 
-	/* 
+	/*
 	 * Set PCI command reg.
 	 * Some laptop's BIOSes (i.e. TICO) do not enable CardBus chip.
 	 */
@@ -774,7 +774,7 @@ pccbb_chipinit(sc)
 	    PCI_COMMAND_MASTER_ENABLE);
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
 
-	/* 
+	/*
 	 * Set CardBus latency timer.
 	 */
 	reg = pci_conf_read(pc, tag, PCI_CB_LSCP_REG);
@@ -786,7 +786,7 @@ pccbb_chipinit(sc)
 	DPRINTF(("CardBus latency timer 0x%x (%x)\n",
 	    PCI_CB_LATENCY(reg), pci_conf_read(pc, tag, PCI_CB_LSCP_REG)));
 
-	/* 
+	/*
 	 * Set PCI latency timer.
 	 */
 	reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
@@ -1510,8 +1510,8 @@ STATIC int
 cb_reset(sc)
 	struct pccbb_softc *sc;
 {
-	/* 
-	 * Reset Assert at least 20 ms 
+	/*
+	 * Reset Assert at least 20 ms
 	 * Some machines request longer duration.
 	 */
 	int reset_duration =
@@ -1823,7 +1823,7 @@ pccbb_intr_establish(sc, irq, level, func, arg)
 		pccbb_intr_route(sc);
 	}
 
-	/* 
+	/*
 	 * Allocate a room for interrupt handler structure.
 	 */
 	if (NULL == (newpil =
@@ -2087,7 +2087,7 @@ pccbb_pcmcia_io_alloc(pch, start, size, align, pcihp)
 		--mask;
 	}
 
-	/* 
+	/*
 	 * Allocate some arbitrary I/O space.
 	 */
 
@@ -2612,7 +2612,7 @@ pccbb_pcmcia_mem_alloc(pch, size, pcmhp)
 	/* out of sc->memh, allocate as many pages as necessary */
 
 	/* convert size to PCIC pages */
-	/* 
+	/*
 	 * This is not enough; when the requested region is on the page
 	 * boundaries, this may calculate wrong result.
 	 */
@@ -2843,7 +2843,7 @@ pccbb_pcmcia_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 
 	busaddr = pcmhp->addr;
 
-	/* 
+	/*
 	 * compute the address offset to the pcmcia address space for the
 	 * pcic.  this is intentionally signed.  The masks and shifts below
 	 * will cause TRT to happen in the pcic registers.  Deal with making
@@ -2857,7 +2857,7 @@ pccbb_pcmcia_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	    "%lx\n", win, (u_long) busaddr, (u_long) * offsetp, (u_long) size,
 	    (u_long) card_addr));
 
-	/* 
+	/*
 	 * include the offset in the size, and decrement size by one, since
 	 * the hw wants start/stop
 	 */
@@ -2991,7 +2991,7 @@ pccbb_pcmcia_intr_establish(pch, pf, ipl, func, arg)
 			    "interrupt\n", sc->sc_dev.dv_xname));
 			return NULL;
 		}
-		/* 
+		/*
 		 * XXX Noooooo!  The interrupt flag must set properly!!
 		 * dumb pcmcia driver!!
 		 */
@@ -3399,7 +3399,7 @@ pccbb_powerhook(why, arg)
 		pci_conf_capture(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
 
 		/* ToDo: deactivate or suspend child devices */
-		
+
 	}
 
 	if (why == PWR_RESUME) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.127 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.128 2005/02/27 00:27:48 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.127 2005/02/21 00:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.128 2005/02/27 00:27:48 perry Exp $");
 
 #include "opt_scsi.h"
 
@@ -1145,7 +1145,7 @@ printf("inquire: addlen=%d, retrying\n", inqbuf->additional_length);
 printf("inquire: error=%d\n", error);
 #endif
 	}
-	
+
 #ifdef SCSI_OLD_NOINQUIRY
 	/*
 	 * Kludge for the Adaptec ACB-4000 SCSI->MFM translator.
@@ -1171,7 +1171,7 @@ printf("inquire: error=%d\n", error);
 	 * Kludge for the Emulex MT-02 SCSI->QIC translator.
 	 * This board gives an empty response to an INQUIRY command.
 	 */
-	else if (error == 0 && 
+	else if (error == 0 &&
 	    inqbuf->device == (SID_QUAL_LU_PRESENT | T_DIRECT) &&
 	    inqbuf->dev_qual2 == 0 &&
 	    inqbuf->version == 0 &&
@@ -1187,7 +1187,7 @@ printf("inquire: error=%d\n", error);
 	}
 #endif /* SCSI_OLD_NOINQUIRY */
 
-	return error; 
+	return error;
 }
 
 /*
@@ -1483,7 +1483,7 @@ scsipi_complete(struct scsipi_xfer *xs)
 
 	/*
 	 * If it's a user level request, bypass all usual completion
-	 * processing, let the user work it out..  
+	 * processing, let the user work it out..
 	 */
 	if ((xs->xs_control & XS_CTL_USERCMD) != 0) {
 		SC_DEBUG(periph, SCSIPI_DB3, ("calling user done()\n"));
@@ -1848,7 +1848,7 @@ scsipi_run_queue(struct scsipi_channel *chan)
 					/* We'll panic shortly... */
 				}
 				splx(s);
-				
+
 				/*
 				 * XXX: We should be able to note that
 				 * XXX: that resources are needed here!
@@ -2007,7 +2007,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 			    error);
 			panic("scsipi_execute_xs");
 		}
-		
+
 		scsipi_printaddr(periph);
 		printf("should have flushed queue?\n");
 		goto free_xs;
@@ -2046,7 +2046,7 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 		goto restarted;
 
 	/*
-	 * If it was meant to run async and we cleared aync ourselve, 
+	 * If it was meant to run async and we cleared aync ourselve,
 	 * don't return an error here. It has already been handled
 	 */
 	if (oasync)
@@ -2269,7 +2269,7 @@ scsipi_print_xfer_mode(struct scsipi_periph *periph)
 		if (periph->periph_mode & PERIPH_CAP_WIDE32)
 			speed *= 4;
 		else if (periph->periph_mode &
-		    (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT)) 
+		    (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT))
 			speed *= 2;
 		mbs = speed / 1000;
 		if (mbs > 0)

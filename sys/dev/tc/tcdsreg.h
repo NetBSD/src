@@ -1,21 +1,21 @@
-/* $NetBSD: tcdsreg.h,v 1.5 2005/02/04 02:10:48 perry Exp $ */
+/* $NetBSD: tcdsreg.h,v 1.6 2005/02/27 00:27:50 perry Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Authors: Keith Bostic, Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -135,7 +135,7 @@ void tcds_scsi_reset(int);
 /*
  * XXX
  * Start of MACH #defines, minimal changes to port to NetBSD.
- * 
+ *
  * The following register is the SCSI control interrupt register.  It
  * starts, stops and resets scsi DMA.  It takes over the SCSI funtions
  * that were handled by the ASIC on the 3min.

@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.18 2005/02/04 02:10:47 perry Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.19 2005/02/27 00:27:47 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.18 2005/02/04 02:10:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.19 2005/02/27 00:27:47 perry Exp $");
 
 #include "opt_rasops.h"
 
@@ -375,7 +375,7 @@ rasops24_putchar12(cookie, row, col, uc, attr)
 	if (uc == (u_int)-1) {
 		int32_t c = stamp[0];
 		while (height--) {
-			rp[0] = rp[1] = rp[2] = rp[3] = 
+			rp[0] = rp[1] = rp[2] = rp[3] =
 			rp[4] = rp[5] = rp[6] = rp[7] = rp[8] = c;
 			DELTA(rp, ri->ri_stride, int32_t *);
 		}
@@ -463,8 +463,8 @@ rasops24_putchar16(cookie, row, col, uc, attr)
 	if (uc == (u_int)-1) {
 		int32_t c = stamp[0];
 		while (height--) {
-			rp[0] = rp[1] = rp[2] = rp[3] = 
-			rp[4] = rp[5] = rp[6] = rp[7] = 
+			rp[0] = rp[1] = rp[2] = rp[3] =
+			rp[4] = rp[5] = rp[6] = rp[7] =
 			rp[8] = rp[9] = rp[10] = rp[11] = c;
 			DELTA(rp, ri->ri_stride, int32_t *);
 		}
@@ -504,8 +504,8 @@ rasops24_putchar16(cookie, row, col, uc, attr)
 		int32_t c = STAMP_READ(52);
 
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
-		rp[0] = rp[1] = rp[2] = rp[3] = 
-		rp[4] = rp[5] = rp[6] = rp[7] = 
+		rp[0] = rp[1] = rp[2] = rp[3] =
+		rp[4] = rp[5] = rp[6] = rp[7] =
 		rp[8] = rp[9] = rp[10] = rp[11] = c;
 	}
 

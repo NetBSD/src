@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.12 2004/08/02 19:14:28 mycroft Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.13 2005/02/27 00:26:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.12 2004/08/02 19:14:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.13 2005/02/27 00:26:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,11 +87,11 @@ fwohci_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 
 	if (CARDBUS_CLASS(ca->ca_class) == CARDBUS_CLASS_SERIALBUS &&
-	    CARDBUS_SUBCLASS(ca->ca_class) == 
+	    CARDBUS_SUBCLASS(ca->ca_class) ==
 	        CARDBUS_SUBCLASS_SERIALBUS_FIREWIRE &&
 	    CARDBUS_INTERFACE(ca->ca_class) == CARDBUS_INTERFACE_OHCI)
 		return 1;
- 
+
 	return 0;
 }
 
@@ -108,7 +108,7 @@ fwohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	const char *devname = self->dv_xname;
 
 	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo, 
+	printf(": %s (rev. 0x%02x)\n", devinfo,
 	       CARDBUS_REVISION(ca->ca_class));
 
 	/* Map I/O registers */
@@ -179,7 +179,7 @@ fwohci_cardbus_detach(struct device *self, int flags)
 	if (sc->sc_ih != NULL) {
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
 		sc->sc_ih = NULL;
-	} 
+	}
 	if (sc->sc_sc.sc_memsize) {
 		Cardbus_mapreg_unmap(ct, CARDBUS_OHCI_MAP_REGISTER,
 			sc->sc_sc.sc_memt, sc->sc_sc.sc_memh,

@@ -1,40 +1,40 @@
-/*	$NetBSD: tropic.c,v 1.23 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: tropic.c,v 1.24 2005/02/27 00:27:02 perry Exp $	*/
 
-/* 
+/*
  * Ported to NetBSD by Onno van der Linden
  * Many thanks to Larry Lile for sending me the IBM TROPIC documentation.
  *
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
- * Copyright (c) 1991 IBM Corporation 
+ * Copyright (c) 1991 IBM Corporation
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation,
- * and that the name IBM not be used in advertising or publicity 
+ * and that the name IBM not be used in advertising or publicity
  * pertaining to distribution of the software without specific, written
  * prior permission.
- * 
+ *
  * CARNEGIE MELLON AND IBM ALLOW FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON AND IBM DISCLAIM ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.23 2005/02/04 02:10:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.24 2005/02/27 00:27:02 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -338,7 +338,7 @@ tr_attach(sc)
 		return 1;
 
 	/*
-	 * init network-visible interface 
+	 * init network-visible interface
 	 */
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
@@ -500,7 +500,7 @@ struct tr_softc *sc;
 
 	sc->sc_srb = 0;
 
-	/* 
+	/*
 	 * Reset the card.
 	 */
 	/* latch on an unconditional adapter reset */
@@ -909,7 +909,7 @@ tr_intr(arg)
 						wakeup(&sc->tr_sleepevent);
 					}
 					else
-						tr_opensap(sc, LLC_SNAP_LSAP); 
+						tr_opensap(sc, LLC_SNAP_LSAP);
 				}
 				else {
 					printf("%s: open error = 0x%x\n",
@@ -1033,7 +1033,7 @@ tr_intr(arg)
 
 			command = ARB_INB(sc, arb, ARB_CMD);
 			switch (command) {
-			case DLC_STATUS:    /* DLC status change */	
+			case DLC_STATUS:    /* DLC status change */
 				printf("%s: ARB new DLC status = 0x%x\n",
 				    sc->sc_dev.dv_xname,
 				    ARB_INW(sc, arb, ARB_DLCSTAT_STATUS));
@@ -1090,7 +1090,7 @@ tr_intr(arg)
 			}
 
 			/* Clear this interrupt bit */
-			ACA_RSTB(sc, ACA_ISRP_o, ~(ARB_CMD_INT)); 
+			ACA_RSTB(sc, ACA_ISRP_o, ~(ARB_CMD_INT));
 
 			/* Tell adapter that ARB is now free */
 			ACA_SETB(sc, ACA_ISRA_o, ARB_FREE);
@@ -1381,7 +1381,7 @@ struct tr_softc *sc;
 			size = tr_mbcopy(sc, dhb, m0);
 			m_freem(m0);
 
-			ASB_OUTB(sc, asb, XMIT_CMD, XMIT_UI_FRM);  
+			ASB_OUTB(sc, asb, XMIT_CMD, XMIT_UI_FRM);
 			ASB_OUTB(sc, asb, XMIT_HDRLEN, hlen);
 
 			/* Set size of transmission frame in ASB. */
@@ -1485,7 +1485,7 @@ struct mbuf *
 tr_get(sc, totlen, ifp)
 struct tr_softc *sc;
 int totlen;
-struct ifnet *ifp;  
+struct ifnet *ifp;
 {
 	int len;
 	struct mbuf *m, *m0, *newm;
@@ -1514,7 +1514,7 @@ struct ifnet *ifp;
 		 */
 		if (m == m0) {
 			caddr_t newdata = (caddr_t)
-			   ALIGN(m->m_data + sizeof(struct token_header)) - 
+			   ALIGN(m->m_data + sizeof(struct token_header)) -
 			   sizeof(struct token_header);
 			len -= newdata - m->m_data;
 			m->m_data = newdata;
@@ -1629,7 +1629,7 @@ caddr_t data;
  *  tr_bcopy - like bcopy except that it knows about the structure of
  *	      adapter receive buffers.
  */
-void 
+void
 tr_bcopy(sc, dest, len)
 struct tr_softc *sc;	/* pointer to softc struct for this adapter */
 u_char *dest;		/* destination address */
@@ -1680,14 +1680,14 @@ int len;		/* number of bytes to copy */
  *  tr_opensap - open the token ring SAP interface
  */
 void
-tr_opensap(sc, type) 
+tr_opensap(sc, type)
 struct tr_softc *sc;
 u_char type;
 {
 	bus_size_t srb = sc->sc_srb;
 
 /************************************************************************
- ** To use the SAP level interface, we will have to execute a          ** 
+ ** To use the SAP level interface, we will have to execute a          **
  ** DLC.OPEN.SAP (pg.6-61 of the Token Ring Tech. Ref.) after we have  **
  ** received a good return code from the DIR.OPEN.ADAPTER command.     **
  ** We will open the IP SAP x'aa'.                                     **
@@ -1704,8 +1704,8 @@ u_char type;
 
 	ACA_RSTB(sc, ACA_ISRP_o, ~(SRB_RESP_INT));
 
-	SRB_OUTB(sc, srb, SRB_CMD, DLC_OPEN_SAP);  
-	SRB_OUTB(sc, srb, SRB_RETCODE, 0x00);  
+	SRB_OUTB(sc, srb, SRB_CMD, DLC_OPEN_SAP);
+	SRB_OUTB(sc, srb, SRB_RETCODE, 0x00);
 	SRB_OUTW(sc, srb, SRB_OPNSAP_STATIONID, 0x0000);
 	SRB_OUTB(sc, srb, SRB_OPNSAP_TIMERT1, 0x00);
 	SRB_OUTB(sc, srb, SRB_OPNSAP_TIMERT2, 0x00);
@@ -1715,8 +1715,8 @@ u_char type;
 	SRB_OUTB(sc, srb, SRB_OPNSAP_MAXOUTINCR, 0x00);
 	SRB_OUTB(sc, srb, SRB_OPNSAP_MAXRETRY, 0x00);
 	SRB_OUTB(sc, srb, SRB_OPNSAP_GSAPMAXMEMB, 0x00);
-	SRB_OUTW(sc, srb, SRB_OPNSAP_MAXIFIELD, 0x0088);  
-	SRB_OUTB(sc, srb, SRB_OPNSAP_SAPVALUE, type);     
+	SRB_OUTW(sc, srb, SRB_OPNSAP_MAXIFIELD, 0x0088);
+	SRB_OUTB(sc, srb, SRB_OPNSAP_SAPVALUE, type);
 	SRB_OUTB(sc, srb, SRB_OPNSAP_SAPOPTIONS, 0x24);
 	SRB_OUTB(sc, srb, SRB_OPNSAP_STATIONCNT, 0x01);
 	SRB_OUTB(sc, srb, SRB_OPNSAP_SAPGSAPMEMB, 0x00);
@@ -1754,19 +1754,19 @@ struct ifnet	*ifp;
 int
 tr_enable(sc)
 	struct tr_softc *sc;
-{       
+{
 	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
 		if ((*sc->sc_enable)(sc) != 0) {
 			printf("%s: device enable failed\n",
 				sc->sc_dev.dv_xname);
 			return (EIO);
-		} 
+		}
 	}
-        
+
 	sc->sc_enabled = 1;
 	return (0);
-}               
-        
+}
+
 void
 tr_disable(sc)
 	struct tr_softc *sc;
@@ -1774,11 +1774,11 @@ tr_disable(sc)
 	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
 		(*sc->sc_disable)(sc);
 		sc->sc_enabled = 0;
-	} 
-}       
+	}
+}
 
-int     
-tr_activate(self, act) 
+int
+tr_activate(self, act)
 	struct device *self;
 	enum devact act;
 {
@@ -1796,7 +1796,7 @@ tr_activate(self, act)
 		if_deactivate(ifp);
 		break;
 	}
-	splx(s);                      
+	splx(s);
 	return (rv);
 }
 

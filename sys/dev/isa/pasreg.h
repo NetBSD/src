@@ -1,14 +1,14 @@
-/*	$NetBSD: pasreg.h,v 1.2 1995/03/15 18:45:58 brezak Exp $	*/
+/*	$NetBSD: pasreg.h,v 1.3 2005/02/27 00:27:17 perry Exp $	*/
 
 /* Port addresses and bit fields for the Media Vision Pro AudioSpectrum
  * second generation sound cards.
- * 
+ *
  * Feel free to use this header file in any application you create that
  * has support for the Media Vision Pro AudioSpectrum second generation
  * sound cards. Other uses prohibited without prior permission.
- * 
+ *
  * - cmetz@thor.tjhsst.edu
- * 
+ *
  * Notes:
  *
  * -	All of these ports go into the MVD101 multimedia controller chip,
@@ -21,7 +21,7 @@
  * -	The PAS2 series cards are all really different at the hardware level,
  * 	though the MVD101 hides some of the incompatibilities, there still
  * 	are differences that need to be accounted for.
- * 
+ *
  *		Card		CD-ROM interface	PCM chip		Mixer chip		FM chip
  * 		PAS Plus	Sony proprietary	(Crystal?) 8-bit DAC	National 		OPL3
  * 		PAS 16		Zilog SCSI		MVA416 16-bit Codec	MVA508 			OPL3
@@ -50,7 +50,7 @@
 
 #define SYSTEM_CONFIGURATION_1		0x8388		/* R W	Control								*/
 	#define S_C_1_PCS_ENABLE	0x01		/* R W  PC speaker	1=enable, 0=disable PC speaker emulation	*/
-	#define S_C_1_PCM_CLOCK_SELECT	0x02		/* R W  PCM		1=14.31818Mhz/12, 0=28.224Mhz master clock	*/ 
+	#define S_C_1_PCM_CLOCK_SELECT	0x02		/* R W  PCM		1=14.31818Mhz/12, 0=28.224Mhz master clock	*/
 	#define S_C_1_FM_EMULATE_CLOCK	0x04		/* R W  FM		1=use 28.224Mhz/2, 0=use 14.31818Mhz clock	*/
 	#define S_C_1_PCS_STEREO	0x10 		/* R W  PC speaker	1=enable PC speaker stereo effect, 0=disable	*/
 	#define S_C_1_PCS_REALSOUND	0x20		/* R W  PC speaker	1=enable RealSound enhancement, 0=disable	*/
@@ -117,7 +117,7 @@
 	struct {					/* R W	Mixer		Filter translation				*/
 		unsigned int freq:24;
 		unsigned int value:8;
-	} F_F_FILTER_translate[] = 
+	} F_F_FILTER_translate[] =
 	{ { 73500, 0x01 },	/* 73500Hz - divide by  16 */
 	  { 65333, 0x02 },	/* 65333Hz - divide by  18 */
 	  { 49000, 0x09 },	/* 49000Hz - divide by  24 */
@@ -144,7 +144,7 @@
 	char I_C_2_PCM_DMA_translate[] = 		/* R W  PCM		PCM DMA channel value translations		*/
 			{ 4, 1, 2, 3, 0, 5, 6, 7 };
 	char I_C_3_PCM_IRQ_translate[] = 		/* R W	PCM		PCM IRQ level value translation			*/
-		{ 0,  0,  1,  2,  3,  4,  5,  6, 0,  0,  7,  8,  9,  0, 10, 11 };  
+		{ 0,  0,  1,  2,  3,  4,  5,  6, 0,  0,  7,  8,  9,  0, 10, 11 };
 	char E_C_MPU401_IRQ_translate[] = 		/* R W	MIDI		MPU401 emulation IRQ value translation		*/
 		{ 0x00, 0x00, 0x01, 0x02, 0x00, 0x03, 0x00, 0x04, 0x00, 0x00, 0x05, 0x06, 0x07 };
 	char E_C_SB_IRQ_translate[] = 			/* R W	PCM		SB emulation IRQ translate			*/
@@ -152,7 +152,7 @@
 	char E_C_SB_DMA_translate[] = 			/* R W	PCM		SB emulation DMA translate			*/
 		{ 0x00, 0x40, 0x80, 0xC0 };
 	char O_M_1_to_card[] = 				/* R W	Control		Translate (OM1 & 0x0f) to card type		*/
-		{ 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 4, 0, 2, 3 };   
+		{ 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 4, 0, 2, 3 };
 #else
 	extern char I_C_2_PCM_DMA_translate[];		/* R W  PCM		PCM DMA channel value translations		*/
 	extern char I_C_3_PCM_IRQ_translate[];		/* R W	PCM		PCM IRQ level value translation			*/

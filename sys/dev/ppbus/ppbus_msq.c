@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_msq.c,v 1.5 2004/01/25 00:28:01 bjh21 Exp $ */
+/* $NetBSD: ppbus_msq.c,v 1.6 2005/02/27 00:27:44 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_msq.c,v 1.5 2004/01/25 00:28:01 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_msq.c,v 1.6 2005/02/27 00:27:44 perry Exp $");
 
 #include <machine/stdarg.h>
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ppbus_msq.c,v 1.5 2004/01/25 00:28:01 bjh21 Exp $");
 #include "ppbus_if.h"
 */
 
-/* 
+/*
  * msq index (see PPBUS_MAX_XFER)
  * These are device modes
  */
@@ -59,14 +59,14 @@ __KERNEL_RCSID(0, "$NetBSD: ppbus_msq.c,v 1.5 2004/01/25 00:28:01 bjh21 Exp $");
 #define ECP_MSQ		0x5
 
 /* Function prototypes */
-static struct ppbus_xfer * mode2xfer(struct ppbus_softc *, 
+static struct ppbus_xfer * mode2xfer(struct ppbus_softc *,
 	struct ppbus_device_softc *, int);
-	
+
 /*
  * Device mode to submsq conversion
  */
 static struct ppbus_xfer *
-mode2xfer(struct ppbus_softc * bus, struct ppbus_device_softc * ppbdev, 
+mode2xfer(struct ppbus_softc * bus, struct ppbus_device_softc * ppbdev,
 	int opcode)
 {
 	int index;
@@ -127,11 +127,11 @@ mode2xfer(struct ppbus_softc * bus, struct ppbus_device_softc * ppbdev,
  *
  */
 int
-ppbus_MS_init(struct device * dev, struct device * ppbdev, 
+ppbus_MS_init(struct device * dev, struct device * ppbdev,
 	struct ppbus_microseq * loop, int opcode)
 {
 	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
-	struct ppbus_xfer *xfer = mode2xfer(bus, (struct ppbus_device_softc *) 
+	struct ppbus_xfer *xfer = mode2xfer(bus, (struct ppbus_device_softc *)
 		ppbdev, opcode);
 
 	xfer->loop = loop;
@@ -146,12 +146,12 @@ ppbus_MS_init(struct device * dev, struct device * ppbdev,
  *
  */
 int
-ppbus_MS_exec(struct device * ppb, struct device * dev, 
-	int opcode, union ppbus_insarg param1, union ppbus_insarg param2, 
+ppbus_MS_exec(struct device * ppb, struct device * dev,
+	int opcode, union ppbus_insarg param1, union ppbus_insarg param2,
 	union ppbus_insarg param3, int * ret)
 {
 	struct ppbus_microseq msq[] = {
-		{ MS_UNKNOWN, { { MS_UNKNOWN }, { MS_UNKNOWN }, 
+		{ MS_UNKNOWN, { { MS_UNKNOWN }, { MS_UNKNOWN },
 			{ MS_UNKNOWN } } },
 		MS_RET(0)
 	};
@@ -173,8 +173,8 @@ ppbus_MS_exec(struct device * ppb, struct device * dev,
  *
  */
 int
-ppbus_MS_loop(struct device * ppb, struct device * dev, 
-	struct ppbus_microseq * prolog, struct ppbus_microseq * body, 
+ppbus_MS_loop(struct device * ppb, struct device * dev,
+	struct ppbus_microseq * prolog, struct ppbus_microseq * body,
 	struct ppbus_microseq * epilog, int iter, int * ret)
 {
 	struct ppbus_microseq loop_microseq[] = {
@@ -203,7 +203,7 @@ ppbus_MS_loop(struct device * ppb, struct device * dev,
  * ppbus_MS_init_msq()
  *
  * Initialize a microsequence - see macros in ppbus_msq.h
- * KNF does not work here, since using '...' requires you use the 
+ * KNF does not work here, since using '...' requires you use the
  * standard C way of function definotion.
  *
  */
@@ -226,13 +226,13 @@ ppbus_MS_init_msq(struct ppbus_microseq * msq, int nbparam, ...)
 
 		/* check the instruction position */
 		if (arg >= PPBUS_MS_MAXARGS)
-			panic("%s: parameter out of range (0x%x)!", __func__, 
+			panic("%s: parameter out of range (0x%x)!", __func__,
 				param);
 
 #if 0
-		printf("%s: param = %d, ins = %d, arg = %d, type = %d\n", 
+		printf("%s: param = %d, ins = %d, arg = %d, type = %d\n",
 			__func__, param, ins, arg, type);
-		
+
 #endif
 
 		/* properly cast the parameter */
@@ -272,14 +272,14 @@ ppbus_MS_init_msq(struct ppbus_microseq * msq, int nbparam, ...)
  * level to avoid function call overhead between ppbus and the adapter
  */
 int
-ppbus_MS_microseq(struct device * dev, struct device * busdev, 
+ppbus_MS_microseq(struct device * dev, struct device * busdev,
 	struct ppbus_microseq * msq, int * ret)
 {
-	struct ppbus_device_softc * ppbdev = (struct ppbus_device_softc *) 
+	struct ppbus_device_softc * ppbdev = (struct ppbus_device_softc *)
 		busdev;
 	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
 	struct ppbus_microseq * mi;		/* current microinstruction */
-	size_t cnt; 
+	size_t cnt;
 	int error;
 
 	struct ppbus_xfer * xfer;
@@ -300,7 +300,7 @@ ppbus_MS_microseq(struct device * dev, struct device * busdev,
 	mi = msq;
 again:
 	for (;;) {
-		switch (mi->opcode) {                                           
+		switch (mi->opcode) {
 		case MS_OP_PUT:
 		case MS_OP_GET:
 
@@ -311,7 +311,7 @@ again:
 			if (!xfer->loop) {
 				if (mi->opcode == MS_OP_PUT) {
 					if ((error = ppbus_write(
-						&(bus->sc_dev), 
+						&(bus->sc_dev),
 						(char *)mi->arg[0].p,
 						mi->arg[1].i, 0, &cnt))) {
 						goto error;
@@ -358,10 +358,10 @@ again:
 			 * faster. This is the default if the microinstr
 			 * is unknown here
 			 */
-			if((error = 
+			if((error =
 				bus->ppbus_exec_microseq(
 				(struct device *)bus, &mi))) {
-				
+
 				goto error;
 			}
 			break;

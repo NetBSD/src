@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.31 2005/02/04 02:10:37 perry Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.32 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -49,7 +49,7 @@ typedef struct scr_table {
 
 /*
  * This structure interfaces the SCRIPT with the driver; it describes a full
- * transfer. 
+ * transfer.
  * If you change something here, don't forget to update offsets in {s,es}iop.ss
  */
 struct siop_common_xfer {

@@ -1,4 +1,4 @@
-/* $NetBSD: lptvar.h,v 1.6 2004/02/03 21:15:03 jdolecek Exp $ */
+/* $NetBSD: lptvar.h,v 1.7 2005/02/27 00:27:44 perry Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -42,18 +42,18 @@
 #include <machine/vmparam.h>
 #include <dev/ppbus/ppbus_device.h>
 
-/* #define LPINITRDY       4       wait up to 4 seconds for a ready 
+/* #define LPINITRDY       4       wait up to 4 seconds for a ready
 #define BUFSTATSIZE     32
-#define LPTOUTINITIAL   10       initial timeout to wait for ready 1/10 s 
+#define LPTOUTINITIAL   10       initial timeout to wait for ready 1/10 s
 #define LPTOUTMAX       1        maximal timeout 1 s */
 #define LPPRI           (PZERO+8)
-#define BUFSIZE		PAGE_SIZE 
+#define BUFSIZE		PAGE_SIZE
 
 #define	LPTUNIT(s)	(minor(s) & 0xff)
 #define	LPTCTL(s)	(minor(s) & 0x100)
 
 /* Wait up to 16 seconds for a ready */
-#define	LPT_TIMEOUT		((hz)*16)	
+#define	LPT_TIMEOUT		((hz)*16)
 #define LPT_STEP		((hz)/4)
 
 struct lpt_softc {

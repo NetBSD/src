@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.12 2002/12/10 06:18:07 hamajima Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.13 2005/02/27 00:26:59 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.12 2002/12/10 06:18:07 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.13 2005/02/27 00:26:59 perry Exp $");
 
 #define BTNMGRDEBUG
 
@@ -137,7 +137,7 @@ static const struct {
 	[CONFIG_HOOK_BUTTONEVENT_APP2] =	{ 1,  87, "Application 2" },
 	[CONFIG_HOOK_BUTTONEVENT_APP3] =	{ 1,  88, "Application 3" },
 };
-static const int n_button_config = 
+static const int n_button_config =
 	sizeof(button_config) / sizeof(*button_config);
 
 #define KC(n) KS_KEYCODE(n)
@@ -174,7 +174,7 @@ int
 btnmgrmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-    
+
 	if (strcmp(ma->ma_name, match->cf_name))
 		return 0;
 
@@ -229,12 +229,12 @@ btnmgr_hook(void *ctx, int type, long id, void *msg)
 			wskbd_rawinput(sc->sc_wskbddev, data, n);
 		} else
 #endif
-			wskbd_input(sc->sc_wskbddev, evtype, 
+			wskbd_input(sc->sc_wskbddev, evtype,
 			    button_config[id].keycode);
 	}
 
 	if (id == CONFIG_HOOK_BUTTONEVENT_POWER && msg)
-		config_hook_call(CONFIG_HOOK_PMEVENT, 
+		config_hook_call(CONFIG_HOOK_PMEVENT,
 		    CONFIG_HOOK_PMEVENT_SUSPENDREQ, NULL);
 	else if (id == CONFIG_HOOK_BUTTONEVENT_COVER)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.38 2004/10/29 12:57:16 yamt Exp $	*/
+/*	$NetBSD: midi.c,v 1.39 2005/02/27 00:26:58 perry Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.38 2004/10/29 12:57:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.39 2005/02/27 00:26:58 perry Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -125,7 +125,7 @@ midiprobe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct audio_attach_args *sa = aux;
 
-	DPRINTFN(6,("midiprobe: type=%d sa=%p hw=%p\n", 
+	DPRINTFN(6,("midiprobe: type=%d sa=%p hw=%p\n",
 		 sa->type, sa, sa->hwif));
 	return (sa->type == AUDIODEV_TYPE_MIDI);
 }
@@ -281,7 +281,7 @@ midi_in(void *addr, int data)
 	if (data == MIDI_ACK)
 		return;
 
-	DPRINTFN(3, ("midi_in: sc=%p data=0x%02x state=%d pos=%d\n", 
+	DPRINTFN(3, ("midi_in: sc=%p data=0x%02x state=%d pos=%d\n",
 		     sc, data, sc->in_state, sc->in_pos));
 
 	if (!(sc->flags & FREAD))
@@ -361,7 +361,7 @@ deliver:
 #endif
  deliver_raw:
 	if (mb->used + sc->in_pos > mb->usedhigh) {
-		DPRINTF(("midi_in: buffer full, discard data=0x%02x\n", 
+		DPRINTF(("midi_in: buffer full, discard data=0x%02x\n",
 			 sc->in_msg[0]));
 		return;
 	}
@@ -470,7 +470,7 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 	int used, cc, n, resid;
 	int s;
 
-	DPRINTF(("midiread: %p, count=%lu\n", sc, 
+	DPRINTF(("midiread: %p, count=%lu\n", sc,
 		 (unsigned long)uio->uio_resid));
 
 	if (sc->dying)
@@ -559,7 +559,7 @@ midi_start_output(struct midi_softc *sc, int intr)
 		midisave.buf[midicnt] = out;
 		midicnt = (midicnt + 1) % MIDI_SAVE_SIZE;
 #endif
-		DPRINTFN(4, ("midi_start_output: %p i=%d, data=0x%02x\n", 
+		DPRINTFN(4, ("midi_start_output: %p i=%d, data=0x%02x\n",
 			     sc, i, out));
 		error = sc->hw_if->output(sc->hw_hdl, out);
 		if ((sc->props & MIDI_PROP_OUT_INTR) && error!=EINPROGRESS)
@@ -597,7 +597,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 	int used, cc, n;
 	int s;
 
-	DPRINTFN(2, ("midiwrite: %p, unit=%d, count=%lu\n", sc, unit, 
+	DPRINTFN(2, ("midiwrite: %p, unit=%d, count=%lu\n", sc, unit,
 		     (unsigned long)uio->uio_resid));
 
 	if (sc->dying)
@@ -607,7 +607,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 	while (uio->uio_resid > 0 && !error) {
 		s = splaudio();
 		if (mb->used >= mb->usedhigh) {
-			DPRINTFN(3,("midi_write: sleep used=%d hiwat=%d\n", 
+			DPRINTFN(3,("midi_write: sleep used=%d hiwat=%d\n",
 				 mb->used, mb->usedhigh));
 			if (ioflag & IO_NDELAY) {
 				splx(s);
@@ -618,7 +618,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 				splx(s);
 				return error;
 			}
-		}			
+		}
 		used = mb->used;
 		inp = mb->inp;
 		splx(s);

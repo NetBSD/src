@@ -1,9 +1,9 @@
-/*	$NetBSD: iwic_bchan.c,v 1.2 2002/09/27 15:37:27 provos Exp $	*/
+/*	$NetBSD: iwic_bchan.c,v 1.3 2005/02/27 00:27:33 perry Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
  *
- * Copyright (c) 2000, 2001 Hellmuth Michaelis. All rights reserved. 
+ * Copyright (c) 2000, 2001 Hellmuth Michaelis. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_bchan.c,v 1.2 2002/09/27 15:37:27 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_bchan.c,v 1.3 2005/02/27 00:27:33 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,7 +85,7 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 	irq_stat = IWIC_READ(sc, chan->offset + B_EXIR);
 
 	NDBGL1(L1_H_IRQ, "irq_stat = 0x%x", irq_stat);
-	
+
 	if((irq_stat & (B_EXIR_RMR | B_EXIR_RME | B_EXIR_RDOV | B_EXIR_XFR | B_EXIR_XDUN)) == 0)
 	{
 		NDBGL1(L1_H_XFRERR, "spurious IRQ!");
@@ -104,7 +104,7 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 	}
 
 /* RX message end interrupt */
-	
+
 	if(irq_stat & B_EXIR_RME)
 	{
 		int error;
@@ -125,13 +125,13 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 		}
 
 		/* all error conditions checked, now decide and take action */
-		
+
 		if(error == 0)
 		{
 			register int fifo_data_len;
 			fifo_data_len = ((IWIC_READ(sc,chan->offset+B_RBCL)) &
 					((IWIC_BCHAN_FIFO_LEN)-1));
-		
+
 			if(fifo_data_len == 0)
 				fifo_data_len = IWIC_BCHAN_FIFO_LEN;
 
@@ -147,7 +147,7 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 			if((chan->in_len + fifo_data_len) <= BCH_MAX_DATALEN)
 			{
 				/* read data from fifo */
-	
+
 				NDBGL1(L1_H_IRQ, "B_EXIR_RME, rd fifo, len = %d", fifo_data_len);
 
 				IWIC_RDBFIFO(sc, chan, chan->in_cbptr, fifo_data_len);
@@ -155,12 +155,12 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 				cmd |= (B_CMDR_RACK | B_CMDR_RACT);
 				IWIC_WRITE(sc, chan->offset + B_CMDR, cmd);
 				cmd = 0;
-				
+
 		                chan->in_len += fifo_data_len;
 				chan->rxcount += fifo_data_len;
 
 				/* setup mbuf data length */
-					
+
 				chan->in_mbuf->m_len = chan->in_len;
 				chan->in_mbuf->m_pkthdr.len = chan->in_len;
 
@@ -177,9 +177,9 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 
 
 				activity = ACT_RX;
-				
+
 				/* mark buffer ptr as unused */
-					
+
 				chan->in_mbuf = NULL;
 				chan->in_cbptr = NULL;
 				chan->in_len = 0;
@@ -220,13 +220,13 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 		}
 
 		chan->rxcount += IWIC_BCHAN_FIFO_LEN;
-		
+
 		if((chan->in_len + IWIC_BCHAN_FIFO_LEN) <= BCH_MAX_DATALEN)
 		{
 			/* read data from fifo */
 
 			NDBGL1(L1_H_IRQ, "B_EXIR_RMR, rd fifo, len = max (64)");
-			
+
 			IWIC_RDBFIFO(sc, chan, chan->in_cbptr, IWIC_BCHAN_FIFO_LEN);
 
 			chan->in_cbptr += IWIC_BCHAN_FIFO_LEN;
@@ -237,7 +237,7 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 			if(chan->bprot == BPROT_NONE)
 			{
 				/* setup mbuf data length */
-				
+
 				chan->in_mbuf->m_len = chan->in_len;
 				chan->in_mbuf->m_pkthdr.len = chan->in_len;
 
@@ -251,7 +251,7 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 				}
 
 				/* silence detection */
-				
+
 				if(!(isdn_bchan_silence(chan->in_mbuf->m_data, chan->in_mbuf->m_len)))
 					activity = ACT_RX;
 
@@ -270,20 +270,20 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 				/* signal upper driver that data is available */
 
 				(*chan->l4_driver->bch_rx_data_ready)(chan->l4_driver_softc);
-				
+
 				/* alloc new buffer */
-				
+
 				if((chan->in_mbuf = i4b_Bgetmbuf(BCH_MAX_DATALEN)) == NULL)
 					panic("L1 iwic_bchan_irq: RMR, cannot allocate new mbuf!");
-	
+
 				/* setup new data ptr */
-				
+
 				chan->in_cbptr = chan->in_mbuf->m_data;
-	
+
 				/* read data from fifo */
-	
+
 				NDBGL1(L1_H_IRQ, "B_EXIR_RMR, rd fifo1, len = max (64)");
-				
+
 				IWIC_RDBFIFO(sc, chan, chan->in_cbptr, IWIC_BCHAN_FIFO_LEN);
 
 				chan->in_cbptr += IWIC_BCHAN_FIFO_LEN;
@@ -299,16 +299,16 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 				cmd |= (B_CMDR_RRST | B_CMDR_RACK);
 			}
 		}
-		
+
 		/* command to release fifo space */
-		
+
 		cmd |= B_CMDR_RACK;
 	}
 
 /* TX interrupt */
-	
+
 	if (irq_stat & B_EXIR_XFR)
-	{			
+	{
 		/* transmit fifo empty, new data can be written to fifo */
 
 		int activity = -1;
@@ -316,7 +316,7 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 		int nextlen;
 
 		NDBGL1(L1_H_IRQ, "B_EXIR_XFR");
-		
+
 		if(chan->out_mbuf_cur == NULL) 	/* last frame is transmitted */
 		{
 			IF_DEQUEUE(&chan->tx_queue, chan->out_mbuf_head);
@@ -353,7 +353,7 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 				}
 			}
 		}
-			
+
 		len = 0;
 
 		while(chan->out_mbuf_cur && len != IWIC_BCHAN_FIFO_LEN)
@@ -361,18 +361,18 @@ iwic_bchan_xirq(struct iwic_softc *sc, int chan_no)
 			nextlen = min(chan->out_mbuf_cur_len, IWIC_BCHAN_FIFO_LEN - len);
 
 			NDBGL1(L1_H_IRQ, "B_EXIR_XFR, wr fifo, len = %d", nextlen);
-			
+
 			IWIC_WRBFIFO(sc, chan, chan->out_mbuf_cur_ptr, nextlen);
 
 			cmd |= B_CMDR_XMS;
-	
+
 			len += nextlen;
 			chan->txcount += nextlen;
-	
+
 			chan->out_mbuf_cur_ptr += nextlen;
 			chan->out_mbuf_cur_len -= nextlen;
-			
-			if(chan->out_mbuf_cur_len == 0) 
+
+			if(chan->out_mbuf_cur_len == 0)
 			{
 				if((chan->out_mbuf_cur = chan->out_mbuf_cur->m_next) != NULL)
 				{
@@ -415,7 +415,7 @@ iwic_bchannel_setup(isdn_layer1token t, int chan_no, int bprot, int activate)
 	struct iwic_bchan *chan = &sc->sc_bchan[chan_no];
 
 	int s = splnet();
-	
+
 	NDBGL1(L1_BCHAN, "%s: chan %d, bprot %d, activate %d",
 	    sc->sc_dev.dv_xname, chan_no, bprot, activate);
 
@@ -429,7 +429,7 @@ iwic_bchannel_setup(isdn_layer1token t, int chan_no, int bprot, int activate)
 		/* deactivation */
 		iwic_bchan_init(sc, chan_no, activate);
 	}
-		
+
 	/* receiver part */
 
 	chan->rx_queue.ifq_maxlen = IFQ_MAXLEN;
@@ -442,33 +442,33 @@ iwic_bchannel_setup(isdn_layer1token t, int chan_no, int bprot, int activate)
 	i4b_Bcleanifq(&chan->rx_queue);	/* clean rx queue */
 
 	chan->rxcount = 0;		/* reset rx counter */
-	
+
 	i4b_Bfreembuf(chan->in_mbuf);	/* clean rx mbuf */
 
 	chan->in_mbuf = NULL;		/* reset mbuf ptr */
 	chan->in_cbptr = NULL;		/* reset mbuf curr ptr */
 	chan->in_len = 0;		/* reset mbuf data len */
-	
+
 	/* transmitter part */
 
 	chan->tx_queue.ifq_maxlen = IFQ_MAXLEN;
 
-#if defined (__FreeBSD__) && __FreeBSD__ > 4	
+#if defined (__FreeBSD__) && __FreeBSD__ > 4
 	if(!mtx_initialized(&chan->tx_queue.ifq_mtx))
 		mtx_init(&chan->tx_queue.ifq_mtx, "i4b_iwic_tx", NULL, MTX_DEF);
 #endif
 
 	i4b_Bcleanifq(&chan->tx_queue);	/* clean tx queue */
-	
+
 	chan->txcount = 0;		/* reset tx counter */
-	
+
 	i4b_Bfreembuf(chan->out_mbuf_head);	/* clean tx mbuf */
 
 	chan->out_mbuf_head = NULL;	/* reset head mbuf ptr */
-	chan->out_mbuf_cur = NULL;	/* reset current mbuf ptr */	
+	chan->out_mbuf_cur = NULL;	/* reset current mbuf ptr */
 	chan->out_mbuf_cur_ptr = NULL;	/* reset current mbuf data ptr */
 	chan->out_mbuf_cur_len = 0;	/* reset current mbuf data cnt */
-	
+
 	if(activate != 0)
 	{
 		/* activation */
@@ -512,12 +512,12 @@ iwic_bchan_init(struct iwic_softc *sc, int chan_no, int activate)
 	}
 	else
 	{
-		/* mask all irqs */		
+		/* mask all irqs */
 		IWIC_WRITE(sc, bchan->offset + B_EXIM, 0xff);
 
 		/* reset mode */
 		IWIC_WRITE(sc, bchan->offset + B_MODE, 0);
-		
+
 		/* Bring interface down */
 		IWIC_WRITE(sc, bchan->offset + B_CMDR, B_CMDR_RRST | B_CMDR_XRST);
 
@@ -552,9 +552,9 @@ iwic_bchannel_start(isdn_layer1token t,int h_chan)
 	}
 
 	/* get next mbuf from queue */
-	
+
 	IF_DEQUEUE(&chan->tx_queue, chan->out_mbuf_head);
-	
+
 	if(chan->out_mbuf_head == NULL)		/* queue empty ? */
 	{
 		splx(s);			/* leave critical section */
@@ -562,11 +562,11 @@ iwic_bchannel_start(isdn_layer1token t,int h_chan)
 	}
 
 	/* init current mbuf values */
-	
+
 	chan->out_mbuf_cur = chan->out_mbuf_head;
 	chan->out_mbuf_cur_len = chan->out_mbuf_cur->m_len;
-	chan->out_mbuf_cur_ptr = chan->out_mbuf_cur->m_data;	
-	
+	chan->out_mbuf_cur_ptr = chan->out_mbuf_cur->m_data;
+
 	/* activity indicator for timeout handling */
 
 	if(chan->bprot == BPROT_NONE)
@@ -600,14 +600,14 @@ iwic_bchannel_start(isdn_layer1token t,int h_chan)
 	 * is the last mbuf and we tell the chip that it has to send
 	 * CRC and closing flag
 	 */
-	 
+
 	while((len < IWIC_BCHAN_FIFO_LEN) && chan->out_mbuf_cur)
 	{
 		/*
 		 * put as much data into the fifo as is
 		 * available from the current mbuf
 		 */
-		 
+
 		if((len + chan->out_mbuf_cur_len) >= IWIC_BCHAN_FIFO_LEN)
 			next_len = IWIC_BCHAN_FIFO_LEN - len;
 		else
@@ -616,7 +616,7 @@ iwic_bchannel_start(isdn_layer1token t,int h_chan)
 		/* write what we have from current mbuf to fifo */
 
 		IWIC_WRBFIFO(sc, chan, chan->out_mbuf_cur_ptr, next_len);
-		
+
 		len += next_len;		/* update # of bytes written */
 		chan->txcount += next_len;	/* statistics */
 		chan->out_mbuf_cur_ptr += next_len;	/* data ptr */
@@ -628,7 +628,7 @@ iwic_bchannel_start(isdn_layer1token t,int h_chan)
 		 * mbuf in the chain. If there is one, get ptr to it
 		 * and update the data ptr and the length
 		 */
-		 
+
 		if((chan->out_mbuf_cur_len <= 0)	&&
 		  ((chan->out_mbuf_cur = chan->out_mbuf_cur->m_next) != NULL))
 		{
@@ -654,7 +654,7 @@ iwic_bchannel_start(isdn_layer1token t,int h_chan)
 	 * an XTF and an XME (message end) command which will then
 	 * send the CRC and the closing HDLC flag sequence
 	 */
-	 
+
 	if(chan->out_mbuf_cur && (chan->out_mbuf_cur_len > 0))
 	{
 		/*
@@ -662,28 +662,28 @@ iwic_bchannel_start(isdn_layer1token t,int h_chan)
 		 * next xfer to tx fifo is done in the
 		 * interrupt routine.
 		 */
-		 
+
 		cmd |= B_CMDR_XMS;
 	}
 	else
 	{
 		/* end of mbuf chain */
-	
+
 		if(chan->bprot == BPROT_NONE)
 			cmd |= B_CMDR_XMS;
 		else
 			cmd |= (B_CMDR_XMS | B_CMDR_XME);
-		
+
 		i4b_Bfreembuf(chan->out_mbuf_head);	/* free mbuf chain */
-		
+
 		chan->out_mbuf_head = NULL;
-		chan->out_mbuf_cur = NULL;			
+		chan->out_mbuf_cur = NULL;
 		chan->out_mbuf_cur_ptr = NULL;
 		chan->out_mbuf_cur_len = 0;
 	}
 
 	/* call timeout handling routine */
-	
+
 	if(activity == ACT_RX || activity == ACT_TX)
 		(*chan->l4_driver->bch_activity)(chan->l4_driver_softc, activity);
 
@@ -692,8 +692,8 @@ iwic_bchannel_start(isdn_layer1token t,int h_chan)
 		cmd |= B_CMDR_RACT;
 		IWIC_WRITE(sc, chan->offset + B_CMDR, cmd);
 	}
-		
-	splx(s);	
+
+	splx(s);
 }
 
 /*---------------------------------------------------------------------------*
@@ -732,10 +732,10 @@ iwic_init_linktab(struct iwic_softc *sc)
 	isdn_link_t *lt;
 
 	/* channel A */
-	
+
 	chan = &sc->sc_bchan[IWIC_BCH_A];
 	lt = &chan->iwic_isdn_linktab;
-	
+
 	lt->l1token = sc;
 	lt->channel = IWIC_BCH_A;
 	lt->bchannel_driver = &iwic_bchan_driver;
@@ -744,14 +744,14 @@ iwic_init_linktab(struct iwic_softc *sc)
 	/* used by non-HDLC data transfers, i.e. telephony drivers */
 	lt->rx_queue = &chan->rx_queue;
 
-	/* used by HDLC data transfers, i.e. ipr and isp drivers */	
-	lt->rx_mbuf = &chan->in_mbuf;	
-                                                
+	/* used by HDLC data transfers, i.e. ipr and isp drivers */
+	lt->rx_mbuf = &chan->in_mbuf;
+
 	/* channel B */
-	
+
 	chan = &sc->sc_bchan[IWIC_BCH_B];
 	lt = &chan->iwic_isdn_linktab;
-	
+
 	lt->l1token = sc;
 	lt->channel = IWIC_BCH_B;
 	lt->bchannel_driver = &iwic_bchan_driver;
@@ -760,6 +760,6 @@ iwic_init_linktab(struct iwic_softc *sc)
 	/* used by non-HDLC data transfers, i.e. telephony drivers */
 	lt->rx_queue = &chan->rx_queue;
 
-	/* used by HDLC data transfers, i.e. ipr and isp drivers */	
-	lt->rx_mbuf = &chan->in_mbuf;	
+	/* used by HDLC data transfers, i.e. ipr and isp drivers */
+	lt->rx_mbuf = &chan->in_mbuf;
 }

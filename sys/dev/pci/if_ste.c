@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.20 2004/10/30 18:09:22 thorpej Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.21 2005/02/27 00:27:33 perry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.20 2004/10/30 18:09:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.21 2005/02/27 00:27:33 perry Exp $");
 
 #include "bpfilter.h"
 
@@ -827,7 +827,7 @@ ste_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	default:
 		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) { 
+		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
@@ -868,7 +868,7 @@ ste_intr(void *arg)
 		isr = bus_space_read_2(sc->sc_st, sc->sc_sh, STE_IntStatusAck);
 		if ((isr & sc->sc_IntEnable) == 0)
 			break;
-		
+
 		/* Receive interrupts. */
 		if (isr & IE_RxDMAComplete)
 			ste_rxintr(sc);
@@ -1503,7 +1503,7 @@ ste_add_rxbuf(struct ste_softc *sc, int idx)
 	int error;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)  
+	if (m == NULL)
 		return (ENOBUFS);
 
 	MCLGET(m, M_DONTWAIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.24 2004/04/09 23:10:16 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.25 2005/02/27 00:27:44 perry Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.24 2004/04/09 23:10:16 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.25 2005/02/27 00:27:44 perry Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -75,17 +75,17 @@ __KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.24 2004/04/09 23:10:16 oster Exp $
  * the DAG creation routines to be replaced at this single point.
  */
 
-static 
+static
 RF_CREATE_DAG_FUNC_DECL(rf_CreateSimpleDegradedWriteDAG)
 {
 	rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp,
 	    flags, allocList, 1, rf_RecoveryXorFunc, RF_TRUE);
 }
 
-void 
+void
 rf_CreateDegradedWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
-			  RF_DagHeader_t *dag_h, void *bp, 
-			  RF_RaidAccessFlags_t flags, 
+			  RF_DagHeader_t *dag_h, void *bp,
+			  RF_RaidAccessFlags_t flags,
 			  RF_AllocListElem_t *allocList)
 {
 
@@ -151,8 +151,8 @@ rf_CreateDegradedWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
  * is used.
  *****************************************************************************/
 
-void 
-rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr, 
+void
+rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 				      RF_AccessStripeMap_t *asmap,
 				      RF_DagHeader_t *dag_h, void *bp,
 				      RF_RaidAccessFlags_t flags,
@@ -258,7 +258,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 		tmpNode->list_next = dag_h->nodes;
 		dag_h->nodes = tmpNode;
 	}
-	wndNodes = dag_h->nodes;	
+	wndNodes = dag_h->nodes;
 
 	for (i = 0; i < nRrdNodes; i++) {
 		tmpNode = rf_AllocDAGNode();
@@ -321,7 +321,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 		}
 	}
 	/* i now equals the number of stripe units accessed in new_asm_h[0] */
-	/* Note that for tmprrdNode, this means a continuation from above, so no need to 
+	/* Note that for tmprrdNode, this means a continuation from above, so no need to
 	   assign it anything.. */
 	if (new_asm_h[1]) {
 		for (j = 0, pda = new_asm_h[1]->stripeMap->physInfo;
@@ -568,7 +568,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
   pda_p->next = NULL; \
   RF_MallocAndAdd(pda_p->bufPtr,rf_RaidAddressToByte(raidPtr,num),(char *), allocList)
 #if (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_EVENODD > 0)
-void 
+void
 rf_WriteGenerateFailedAccessASMs(
     RF_Raid_t * raidPtr,
     RF_AccessStripeMap_t * asmap,
@@ -650,7 +650,7 @@ rf_WriteGenerateFailedAccessASMs(
 
 	/* allocate up our list of pda's */
 
-	RF_MallocAndAdd(pda_p, napdas * sizeof(RF_PhysDiskAddr_t), 
+	RF_MallocAndAdd(pda_p, napdas * sizeof(RF_PhysDiskAddr_t),
 			(RF_PhysDiskAddr_t *), allocList);
 	*pdap = pda_p;
 
@@ -710,7 +710,7 @@ rf_WriteGenerateFailedAccessASMs(
   (_node_).params[2].v = parityStripeID; \
   (_node_).params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru)
 
-void 
+void
 rf_DoubleDegSmallWrite(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		       RF_DagHeader_t *dag_h, void *bp,
 		       RF_RaidAccessFlags_t flags,
@@ -738,11 +738,11 @@ rf_DoubleDegSmallWrite(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	/* Hdr | ------Block- /  /         \   Rrd  Rrd ...  Rrd  Rp Rq \  \
 	 * /  -------PQ----- /   \   \ Wud   Wp  WQ	     \    |   /
 	 * --Unblock- | T
-	 * 
+	 *
 	 * Rrd = read recovery data  (potentially none) Wud = write user data
 	 * (not incl. failed disks) Wp = Write P (could be two) Wq = Write Q
 	 * (could be two)
-	 * 
+	 *
 	 */
 
 	rf_WriteGenerateFailedAccessASMs(raidPtr, asmap, &npdas, &nRrdNodes, &pqPDAs, &nPQNodes, allocList);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.9 2005/02/20 15:56:03 jdolecek Exp $ */
+/* $NetBSD: if_txp.c,v 1.10 2005/02/27 00:27:33 perry Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.9 2005/02/20 15:56:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.10 2005/02/27 00:27:33 perry Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -835,7 +835,7 @@ txp_rxbuf_reclaim(sc)
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxbufring_dma.dma_map,
 		    i * sizeof(struct txp_rxbuf_desc),
 		    sizeof(struct txp_rxbuf_desc), BUS_DMASYNC_POSTWRITE);
-		    
+
 		/* stash away pointer */
 		bcopy(&sd, (u_long *)&rbd->rb_vaddrlo, sizeof(sd));
 
@@ -1754,7 +1754,7 @@ txp_rsp_fixup(sc, rsp, dst)
 		sc->sc_rspring.lastwrite = ridx;
 		hv->hv_resp_read_idx = htole32(ridx);
 	}
-	
+
 	hv->hv_resp_read_idx = htole32(ridx);
 }
 

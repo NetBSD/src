@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_spc.h,v 1.1 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: scsi_spc.h,v 1.2 2005/02/27 00:27:48 perry Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,9 +41,9 @@
  *	Commands for all device types
  */
 
-/* 
+/*
  * Largely written by Julian Elischer (julian@tfs.com)
- * for TRW Financial Systems.   
+ * for TRW Financial Systems.
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
  * Mellon University, makes this software available to CMU to distribute
@@ -54,7 +54,7 @@
  * TFS supplies this software to be publicly redistributed
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
- *      
+ *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
 

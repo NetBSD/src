@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.17 2004/03/07 22:15:19 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.18 2005/02/27 00:27:45 perry Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.17 2004/03/07 22:15:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.18 2005/02/27 00:27:45 perry Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -52,13 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.17 2004/03/07 22:15:19 oster Exp $")
 
 static void rf_ShutdownMCPair(void *);
 
-static void 
+static void
 rf_ShutdownMCPair(void *ignored)
 {
 	pool_destroy(&rf_pools.mcpair);
 }
 
-int 
+int
 rf_ConfigureMCPair(RF_ShutdownList_t **listp)
 {
 
@@ -82,7 +82,7 @@ rf_AllocMCPair()
 	return (t);
 }
 
-void 
+void
 rf_FreeMCPair(RF_MCPair_t *t)
 {
 	pool_put(&rf_pools.mcpair, t);
@@ -90,7 +90,7 @@ rf_FreeMCPair(RF_MCPair_t *t)
 
 /* the callback function used to wake you up when you use an mcpair to
    wait for something */
-void 
+void
 rf_MCPairWakeupFunc(RF_MCPair_t *mcpair)
 {
 	RF_LOCK_MUTEX(mcpair->mutex);

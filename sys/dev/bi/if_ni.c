@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.24 2005/02/04 02:10:36 perry Exp $ */
+/*	$NetBSD: if_ni.c,v 1.25 2005/02/27 00:26:59 perry Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -12,7 +12,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed at Ludd, University of 
+ *	This product includes software developed at Ludd, University of
  *	Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.24 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.25 2005/02/27 00:26:59 perry Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -258,7 +258,7 @@ niattach(parent, self, aux)
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 		sc->sc_dev.dv_xname, "intr");
 
-	ni_getpgs(sc, sizeof(struct ni_gvppqb), (caddr_t *)&sc->sc_gvppqb, 
+	ni_getpgs(sc, sizeof(struct ni_gvppqb), (caddr_t *)&sc->sc_gvppqb,
 	    (paddr_t *)&sc->sc_pgvppqb);
 	ni_getpgs(sc, sizeof(struct ni_fqb), (caddr_t *)&sc->sc_fqb, 0);
 	ni_getpgs(sc, NBDESCS * sizeof(struct ni_bbd),
@@ -666,7 +666,7 @@ niintr(void *arg)
 					break;
 
 				default:
-					printf("Unkn resp %d\n", 
+					printf("Unkn resp %d\n",
 					    msg->nm_opcode2);
 					break;
 			}
@@ -779,7 +779,7 @@ niioctl(ifp, cmd, data)
  * Add a receive buffer to the indicated descriptor.
  */
 int
-ni_add_rxbuf(struct ni_softc *sc, struct ni_dg *data, int idx) 
+ni_add_rxbuf(struct ni_softc *sc, struct ni_dg *data, int idx)
 {
 	struct ni_bbd *bd = &bbd[idx];
 	struct mbuf *m;

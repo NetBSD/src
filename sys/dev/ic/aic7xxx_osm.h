@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.8 2005/02/21 00:29:07 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.9 2005/02/27 00:27:00 perry Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -145,7 +145,7 @@ typedef pcireg_t ahc_dev_softc_t;
  * to handle any unaligned residual.  The sequencer fetches SG elements
  * in cacheline sized chucks, so make the number per-transaction an even
  * multiple of 16 which should align us on even the largest of cacheline
- * boundaries. 
+ * boundaries.
  */
 #define AHC_NSEG (roundup(btoc(MAXPHYS) + 1, 16))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.66 2004/08/24 00:53:29 thorpej Exp $	*/
+/*	$NetBSD: am7990.c,v 1.67 2005/02/27 00:27:00 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,14 +72,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.66 2004/08/24 00:53:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.67 2005/02/27 00:27:00 perry Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h> 
+#include <sys/mbuf.h>
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>

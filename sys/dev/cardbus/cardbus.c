@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.60 2004/10/14 03:24:00 enami Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.61 2005/02/27 00:26:59 perry Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.60 2004/10/14 03:24:00 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.61 2005/02/27 00:26:59 perry Exp $");
 
 #include "opt_cardbus.h"
 
@@ -529,7 +529,7 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 		cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
 		bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
 		DPRINTF(("0x%08x\n", bhlc));
-		
+
 		if (CARDBUS_LATTIMER(bhlc) < 0x10) {
 			bhlc &= ~(CARDBUS_LATTIMER_MASK <<
 			    CARDBUS_LATTIMER_SHIFT);
@@ -1027,10 +1027,10 @@ cardbus_setpowerstate(const char *dvname, cardbus_devfunc_t ct, pcitag_t tag,
 	/* oldpwr < newpwr */
 	switch (oldpwr) {
 	case PCI_PWR_D3:
-		/* 
+		/*
 		 * XXX: This is because none of the devices do
 		 * the necessary song and dance for now to wakeup
-		 * Once this 
+		 * Once this
 		 */
 		printf("%s: cannot wake up from power state D%d\n",
 		    dvname, oldpwr);

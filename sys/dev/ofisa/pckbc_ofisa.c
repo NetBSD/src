@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_ofisa.c,v 1.8 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: pckbc_ofisa.c,v 1.9 2005/02/27 00:27:32 perry Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -28,21 +28,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.8 2004/03/24 17:26:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.9 2005/02/27 00:27:32 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h> 
+#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
 
 #include <machine/bus.h>
 
-#include <dev/isa/isareg.h>  
+#include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
 #include <dev/ofw/openfirm.h>

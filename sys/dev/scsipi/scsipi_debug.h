@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_debug.h,v 1.14 2001/05/30 11:46:34 mrg Exp $	*/
+/*	$NetBSD: scsipi_debug.h,v 1.15 2005/02/27 00:27:48 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  * Originally written by Julian Elischer (julian@tfs.com)
  */
 
-#define	SCSIPI_DB1	0x0001		/* scsi commands, errors, data */ 
+#define	SCSIPI_DB1	0x0001		/* scsi commands, errors, data */
 #define	SCSIPI_DB2	0x0002		/* routine flow tracking */
 #define	SCSIPI_DB3	0x0004		/* internal to routine flows */
 #define	SCSIPI_DB4	0x0008		/* level 4 debugging for this dev */

@@ -1,8 +1,8 @@
-/*	$NetBSD: ds1286reg.h,v 1.6 2005/02/04 02:10:36 perry Exp $ 	*/
+/*	$NetBSD: ds1286reg.h,v 1.7 2005/02/27 00:27:01 perry Exp $ 	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -31,17 +31,17 @@
  *
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -65,14 +65,14 @@
  * first eleven registers contain time-of-day and alarm data, the rest
  * contain various control bits and the watchdog timer functionality.
  *
- * Since the locations of these ports and the method used to access 
- * them can be machine-dependent, the low-level details of reading 
- * and writing the RTC's registers are handled by machine-specific 
+ * Since the locations of these ports and the method used to access
+ * them can be machine-dependent, the low-level details of reading
+ * and writing the RTC's registers are handled by machine-specific
  * functions.
  *
  * The DS1286/DS1386 chips always store time-of-day and alarm data in
  * BCD.  The "hour" time-of-year and alarm fields can either be stored
- * in AM/PM format, or in 24-hour format.  If AM/PM format is chosen, 
+ * in AM/PM format, or in 24-hour format.  If AM/PM format is chosen,
  * the hour fields can have the values: 1-12 (for AM) and 21-32 (for
  * PM).  If the 24-hour format is chosen, they can have the values 0
  * to 23.  The hour format is selectable separately for the time and
@@ -107,7 +107,7 @@
 
 #define	DS1286_CONTROL	0xB	/* Control register A */
 
-#define	 DS1286_TE	0x80	/* Update in progress (on == disable update) */ 
+#define	 DS1286_TE	0x80	/* Update in progress (on == disable update) */
 #define	 DS1286_INTSWAP	0x40	/* Swap INTA, INTB outputs */
 #define	 DS1286_INTBSRC	0x20	/* INTB source (on) or sink (off) current */
 #define	 DS1286_INTAPLS	0x10	/* INTA pulse (on) or level (off) mode */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.14 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.15 2005/02/27 00:27:17 perry Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.14 2005/02/04 02:10:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isa.c,v 1.15 2005/02/27 00:27:17 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ void	cs_isa_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(cs_isa, sizeof(struct cs_softc),
     cs_isa_probe, cs_isa_attach, NULL, NULL);
 
-int 
+int
 cs_isa_probe(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -215,7 +215,7 @@ cs_isa_probe(parent, cf, aux)
 	return (rv);
 }
 
-void 
+void
 cs_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;

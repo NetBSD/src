@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.5 2005/02/04 05:58:44 joff Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.6 2005/02/27 00:27:01 perry Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.5 2005/02/04 05:58:44 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.6 2005/02/27 00:27:01 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ hlcd_putchar(id, row, col, c, attr)
 	long attr;
 {
 	struct hlcd_screen *hdscr = id;
-	
+
 	c &= 0xff;
 	if (row > 0 && (hdscr->hlcd_sc->sc_flags & HD_MULTILINE))
 		hdscr->image[hdscr->hlcd_sc->sc_cols * row + col] = c;
@@ -184,7 +184,7 @@ hlcd_erasecols(id, row, startcol, ncols, fillattr)
 		ncols = hdscr->hlcd_sc->sc_cols - startcol;
 
 	if (row > 0 && (hdscr->hlcd_sc->sc_flags & HD_MULTILINE))
-		memset(&hdscr->image[hdscr->hlcd_sc->sc_cols * row + startcol], 
+		memset(&hdscr->image[hdscr->hlcd_sc->sc_cols * row + startcol],
 		    ' ', ncols);
 	else
 		memset(&hdscr->image[startcol], ' ', ncols);
@@ -198,7 +198,7 @@ hlcd_copyrows(id, srcrow, dstrow, nrows)
 {
 	struct hlcd_screen *hdscr = id;
 	int ncols = hdscr->hlcd_sc->sc_cols;
-	
+
 	if (!(hdscr->hlcd_sc->sc_flags & HD_MULTILINE))
 		return;
 	bcopy(&hdscr->image[srcrow * ncols], &hdscr->image[dstrow * ncols],
@@ -328,7 +328,7 @@ hlcd_redraw(arg)
 	struct hd44780_chip *sc = arg;
 	int len, crsridx, startidx, x, y;
 	u_char *img, *curimg;
-	
+
 	if (sc->sc_curscr == NULL)
 		return;
 
@@ -343,7 +343,7 @@ hlcd_redraw(arg)
 	    COORD_TO_IDX(sc->sc_screen.hlcd_curx, sc->sc_screen.hlcd_cury);
 	do {
 		if (img[crsridx] != curimg[crsridx]) {
-			hlcd_updatechar(sc, IDX_TO_DDADDR(crsridx), 
+			hlcd_updatechar(sc, IDX_TO_DDADDR(crsridx),
 			    curimg[crsridx]);
 			img[crsridx] = curimg[crsridx];
 		}
@@ -351,7 +351,7 @@ hlcd_redraw(arg)
 		if (crsridx == len)
 			crsridx = 0;
 	} while (crsridx != startidx);
-	
+
 	if (sc->sc_screen.hlcd_curx != sc->sc_curscr->hlcd_curx ||
 	    sc->sc_screen.hlcd_cury != sc->sc_curscr->hlcd_cury) {
 		x = sc->sc_screen.hlcd_curx = sc->sc_curscr->hlcd_curx;
@@ -391,7 +391,7 @@ hd44780_attach_subr(sc)
 		sc->sc_dev_ok = 0;
 
 	if (sc->sc_dev_ok) {
-		if ((sc->sc_flags & HD_UP) == 0) 
+		if ((sc->sc_flags & HD_UP) == 0)
 			err = hd44780_init(sc);
 		if (err != 0)
 			printf("%s: LCD not responding or unconnected\n", sc->sc_dev->dv_xname);
@@ -399,7 +399,7 @@ hd44780_attach_subr(sc)
 	}
 
 	sc->sc_screen.hlcd_sc = sc;
-	
+
 	sc->sc_screen.image = malloc(PAGE_SIZE, M_DEVBUF, M_WAITOK);
 	memset(sc->sc_screen.image, ' ', PAGE_SIZE);
 	sc->sc_curscr = NULL;
@@ -442,7 +442,7 @@ hd44780_init(sc)
 	if (sc->sc_flags & HD_TIMEDOUT) {
 		sc->sc_flags &= ~HD_UP;
 		return EIO;
-	} 
+	}
 
 	/* Turn display on and clear it. */
 	hd44780_ir_write(sc, cmd_clear());
@@ -492,7 +492,7 @@ hd44780_ioctl_subr(sc, cmd, data)
 		/* Move the cursor one position to the right. */
 		case HLCD_CURSOR_RIGHT:
 			hd44780_ir_write(sc, cmd_shift(0, 1));
-			break;	
+			break;
 
 		/* Control the LCD. */
 		case HLCD_DISPCTL:
@@ -559,7 +559,7 @@ hd44780_ioctl_subr(sc, cmd, data)
 		/* Write a string to the LCD virtual area. */
 		case HLCD_WRITE:
 			error = hd44780_ddram_io(sc, hd44780_io(), HD_DDRAM_WRITE);
-			break;	
+			break;
 
 		/* Read LCD virtual area. */
 		case HLCD_READ:
@@ -692,7 +692,7 @@ hd44780_writereg(sc, reg, cmd)
 		return;
 
 	if (reg == 0)
-		ioh = sc->sc_ioir; 
+		ioh = sc->sc_ioir;
 	else
 		ioh = sc->sc_iodr;
 
@@ -715,7 +715,7 @@ hd44780_readreg(sc, reg)
 		return;
 
 	if (reg == 0)
-		ioh = sc->sc_ioir; 
+		ioh = sc->sc_ioir;
 	else
 		ioh = sc->sc_iodr;
 
@@ -739,12 +739,12 @@ hd44780_writereg(sc, reg, cmd)
 		return;
 
 	if (reg == 0)
-		ioh = sc->sc_ioir; 
+		ioh = sc->sc_ioir;
 	else
 		ioh = sc->sc_iodr;
 
 	bus_space_write_1(iot, ioh, 0x00, hi_bits(cmd));
-	if (sc->sc_flags & HD_UP) 
+	if (sc->sc_flags & HD_UP)
 		bus_space_write_1(iot, ioh, 0x00, lo_bits(cmd));
 	delay(HD_TIMEOUT_NORMAL);
 }
@@ -765,7 +765,7 @@ hd44780_readreg(sc, reg)
 		return;
 
 	if (reg == 0)
-		ioh = sc->sc_ioir; 
+		ioh = sc->sc_ioir;
 	else
 		ioh = sc->sc_iodr;
 

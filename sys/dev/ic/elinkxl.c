@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.78 2005/02/06 09:33:23 skrll Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.79 2005/02/27 00:27:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.78 2005/02/06 09:33:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.79 2005/02/27 00:27:01 perry Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -230,7 +230,7 @@ ex_config(sc)
 	 * map for them.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    EX_NUPD * sizeof (struct ex_upd), PAGE_SIZE, 0, &sc->sc_useg, 1, 
+	    EX_NUPD * sizeof (struct ex_upd), PAGE_SIZE, 0, &sc->sc_useg, 1,
             &sc->sc_urseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error(
 		    "%s: can't allocate upload descriptors, error = %d\n",
@@ -278,7 +278,7 @@ ex_config(sc)
 	 * map for them.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    EX_NDPD * sizeof (struct ex_dpd), PAGE_SIZE, 0, &sc->sc_dseg, 1, 
+	    EX_NDPD * sizeof (struct ex_dpd), PAGE_SIZE, 0, &sc->sc_dseg, 1,
 	    &sc->sc_drseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error(
 		    "%s: can't allocate download descriptors, error = %d\n",
@@ -736,7 +736,7 @@ ex_set_mc(sc)
 		mask |= FIL_PROMISC;
 		goto allmulti;
 	}
-	
+
 	ETHER_FIRST_MULTI(estep, ec, enm);
 	if (enm == NULL)
 		goto nomulti;
@@ -848,7 +848,7 @@ ex_set_xcvr(sc, media)
 	if (media & ELINK_MEDIACAP_100BASETX)
 		icfg |= ELINKMEDIA_AUTO << (CONFIG_XCVR_SEL_SHIFT + 16);
 	if (media & ELINK_MEDIACAP_100BASEFX)
-		icfg |= ELINKMEDIA_100BASE_FX 
+		icfg |= ELINKMEDIA_100BASE_FX
 			<< (CONFIG_XCVR_SEL_SHIFT + 16);
 	bus_space_write_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG, icfg);
 }
@@ -1133,7 +1133,7 @@ ex_start(ifp)
 			prevdpd->dpd_nextptr = htole32(DPD_DMADDR(sc, txp));
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
 			    offset, sizeof (struct ex_dpd),
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); 
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 			sc->tx_tail->tx_next = txp;
 			sc->tx_tail = txp;
 		} else {
@@ -1273,7 +1273,7 @@ ex_intr(arg)
 			    rxmap->dm_mapsize,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_upd_dmamap,
-			    ((caddr_t)upd - (caddr_t)sc->sc_upd), 
+			    ((caddr_t)upd - (caddr_t)sc->sc_upd),
 			    sizeof (struct ex_upd),
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			pktstat = le32toh(upd->upd_pktstatus);
@@ -1583,7 +1583,7 @@ ex_stop(ifp, disable)
 	if (sc->ex_conf & EX_CONF_MII)
 		mii_down(&sc->ex_mii);
 
-	if (disable) 
+	if (disable)
 		ex_disable(sc);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -1908,7 +1908,7 @@ ex_mii_statchg(v)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int mctl;
- 
+
 	GO_WINDOW(3);
 	mctl = bus_space_read_2(iot, ioh, ELINK_W3_MAC_CONTROL);
 	if (sc->ex_mii.mii_media_active & IFM_FDX)
@@ -1919,7 +1919,7 @@ ex_mii_statchg(v)
 	GO_WINDOW(1);   /* back to operating window */
 }
 
-int 
+int
 ex_enable(sc)
 	struct ex_softc *sc;
 {
@@ -1934,7 +1934,7 @@ ex_enable(sc)
 	return (0);
 }
 
-void 
+void
 ex_disable(sc)
 	struct ex_softc *sc;
 {
@@ -1944,7 +1944,7 @@ ex_disable(sc)
 	}
 }
 
-void 
+void
 ex_power(why, arg)
 	int why;
 	void *arg;
@@ -1968,8 +1968,8 @@ ex_power(why, arg)
 			ex_init(ifp);
 		}
 		break;
-	case PWR_SOFTSUSPEND:		
-	case PWR_SOFTSTANDBY:		
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
 	case PWR_SOFTRESUME:
 		break;
 	}

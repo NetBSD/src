@@ -1,4 +1,4 @@
-/*      $NetBSD: sgecvar.h,v 1.4 2005/02/04 02:10:37 perry Exp $ */
+/*      $NetBSD: sgecvar.h,v 1.5 2005/02/27 00:27:02 perry Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -12,7 +12,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
+ *      This product includes software developed at Ludd, University of
  *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission

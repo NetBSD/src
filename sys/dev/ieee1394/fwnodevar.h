@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnodevar.h,v 1.5 2002/11/22 16:20:18 jmc Exp $	*/
+/*	$NetBSD: fwnodevar.h,v 1.6 2005/02/27 00:27:17 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,9 +41,9 @@
 
 struct fwnode_softc {
 	struct ieee1394_softc sc_sc1394;
-	
+
 	int sc_flags;
-	
+
 	struct p1212_rom *sc_configrom;
 
 	struct device **sc_children;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.10 2004/05/10 06:21:09 gendalia Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.11 2005/02/27 00:27:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.10 2004/05/10 06:21:09 gendalia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.11 2005/02/27 00:27:32 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ int	aac_pci_match(struct device *, struct cfdata *, void *);
 void	aac_pci_attach(struct device *, struct device *, void *);
 const struct	aac_ident *aac_find_ident(struct pci_attach_args *);
 
-/* i960Rx interface */    
+/* i960Rx interface */
 int	aac_rx_get_fwstatus(struct aac_softc *);
 void	aac_rx_qnotify(struct aac_softc *, int);
 int	aac_rx_get_istatus(struct aac_softc *);

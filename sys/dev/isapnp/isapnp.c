@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.44 2005/02/04 02:10:43 perry Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.45 2005/02/27 00:27:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.44 2005/02/04 02:10:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.45 2005/02/27 00:27:21 perry Exp $");
 
 #include "isadma.h"
 
@@ -484,7 +484,7 @@ isapnp_bestconfig(sc, ipa)
 				else {
 					if (n)
 						n->ipa_sibling = c;
-				
+
 					else
 						l = c;
 					n = c;
@@ -510,7 +510,7 @@ isapnp_id_to_vendor(v, id)
 {
 	static const char hex[] = "0123456789ABCDEF";
 	char *p = v;
-	
+
 	*p++ = 'A' + (id[0] >> 2) - 1;
 	*p++ = 'A' + ((id[0] & 3) << 3) + (id[1] >> 5) - 1;
 	*p++ = 'A' + (id[1] & 0x1f) - 1;
@@ -654,7 +654,7 @@ isapnp_isa_attach_hook(isa_sc)
 	struct isa_softc *isa_sc;
 {
 	struct isapnp_softc sc;
-	
+
 	sc.sc_iot = isa_sc->sc_iot;
 	sc.sc_ncards = 0;
 
@@ -673,7 +673,7 @@ isapnp_isa_attach_hook(isa_sc)
 	 * non-responsive state.
 	 * The read has to happen at this point in time (or earlier) so
 	 * it cannot be moved to the wss_isapnp.c driver.
-	 * (BTW, We're not alone in having problems with these chips: 
+	 * (BTW, We're not alone in having problems with these chips:
 	 * Windoze 98 couldn't detect the sound chip on a Dell when I tried.)
 	 *
 	 *     Lennart Augustsson <augustss@NetBSD.org>
@@ -788,7 +788,7 @@ isapnp_configure(sc, ipa)
 	for (i = 0; i < sizeof(isapnp_mem_range); i++) {
 		if (i < ipa->ipa_nmem)
 			r = &ipa->ipa_mem[i];
-		else 
+		else
 			r = &rz;
 
 		isapnp_write_reg(sc,
@@ -851,7 +851,7 @@ isapnp_configure(sc, ipa)
 	for (i = 0; i < sizeof(isapnp_mem32_range); i++) {
 		if (i < ipa->ipa_nmem32)
 			r = &ipa->ipa_mem32[i];
-		else 
+		else
 			r = &rz;
 
 		isapnp_write_reg(sc,

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.1 2004/07/03 12:46:57 uch Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.2 2005/02/27 00:26:59 perry Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.1 2004/07/03 12:46:57 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.2 2005/02/27 00:26:59 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -165,7 +165,7 @@ hpcapm_hook(void *ctx, int type, long id, void *msg)
 	sc = ctx;
 
 	if (type != CONFIG_HOOK_PMEVENT)
-		return 1; 
+		return 1;
 
 	if (CONFIG_HOOK_VALUEP(msg))
 		message = (int)msg;
@@ -189,7 +189,7 @@ hpcapm_hook(void *ctx, int type, long id, void *msg)
 			sc->events |= (1 << APM_NORMAL_RESUME);
 		}
 		break;
-	case CONFIG_HOOK_PMEVENT_BATTERY: 
+	case CONFIG_HOOK_PMEVENT_BATTERY:
 		switch (message) {
 		case CONFIG_HOOK_BATT_CRITICAL:
 			DPRINTF(("hpcapm: battery state critical\n"));
@@ -325,12 +325,12 @@ hpcapm_set_powstate(void *scx, u_int devid, u_int powstat)
 	case APM_SYS_STANDBY:
 		DPRINTF(("hpcapm: set power state STANDBY\n"));
 		s = splhigh();
-		config_hook_call(CONFIG_HOOK_PMEVENT, 
+		config_hook_call(CONFIG_HOOK_PMEVENT,
 				 CONFIG_HOOK_PMEVENT_HARDPOWER,
 				 (void *)PWR_STANDBY);
 		sc->power_state = APM_SYS_STANDBY;
 		machine_standby();
-		config_hook_call_reverse(CONFIG_HOOK_PMEVENT, 
+		config_hook_call_reverse(CONFIG_HOOK_PMEVENT,
 		    CONFIG_HOOK_PMEVENT_HARDPOWER,
 		    (void *)PWR_RESUME);
 		DPRINTF(("hpcapm: resume\n"));
@@ -339,12 +339,12 @@ hpcapm_set_powstate(void *scx, u_int devid, u_int powstat)
 	case APM_SYS_SUSPEND:
 		DPRINTF(("hpcapm: set power state SUSPEND...\n"));
 		s = splhigh();
-		config_hook_call(CONFIG_HOOK_PMEVENT, 
+		config_hook_call(CONFIG_HOOK_PMEVENT,
 		    CONFIG_HOOK_PMEVENT_HARDPOWER,
 		    (void *)PWR_SUSPEND);
 		sc->power_state = APM_SYS_SUSPEND;
 		machine_sleep();
-		config_hook_call_reverse(CONFIG_HOOK_PMEVENT, 
+		config_hook_call_reverse(CONFIG_HOOK_PMEVENT,
 				 CONFIG_HOOK_PMEVENT_HARDPOWER,
 				 (void *)PWR_RESUME);
 		DPRINTF(("hpcapm: resume\n"));

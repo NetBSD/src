@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.154 2004/12/22 19:36:13 joff Exp $	*/
+/*	$NetBSD: ohci.c,v 1.155 2005/02/27 00:27:51 perry Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.154 2004/12/22 19:36:13 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.155 2005/02/27 00:27:51 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1111,9 +1111,9 @@ ohci_intr(void *p)
 		DPRINTFN(16, ("ohci_intr: ignored interrupt while polling\n"));
 #endif
 		/* for level triggered intrs, should do something to ack */
-		OWRITE4(sc, OHCI_INTERRUPT_STATUS, 
+		OWRITE4(sc, OHCI_INTERRUPT_STATUS,
 			OREAD4(sc, OHCI_INTERRUPT_STATUS));
-		
+
 		return (0);
 	}
 

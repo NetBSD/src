@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.7 2005/02/04 02:10:41 perry Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.8 2005/02/27 00:27:17 perry Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.7 2005/02/04 02:10:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.8 2005/02/27 00:27:17 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,6 +327,6 @@ tms_streinfo(sme, info)
 #endif
 	/* XXX Not implemented */
 	info->validflags = 0;
-	
+
 	return (0);
 }

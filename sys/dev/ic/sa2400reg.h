@@ -1,4 +1,4 @@
-/* $NetBSD: sa2400reg.h,v 1.2 2004/12/12 06:37:59 dyoung Exp $ */
+/* $NetBSD: sa2400reg.h,v 1.3 2005/02/27 00:27:02 perry Exp $ */
 
 /*
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -257,6 +257,6 @@
 						 *        the result of
 						 *        calibration (VCOCAL).
 						 *        0 = highest
-						 *        frequencies 
+						 *        frequencies
 						 */
 #endif /* _DEV_IC_SA2400REG_H_ */

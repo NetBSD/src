@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.22 2005/02/18 17:56:57 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.23 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.22 2005/02/18 17:56:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.23 2005/02/27 00:27:02 perry Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -375,7 +375,7 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	int err, flags, s;
 
 	sc = (struct osiop_softc *)chan->chan_adapter->adapt_dev;
-	
+
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
@@ -482,7 +482,7 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			 * If we're not going to negotiate, send the
 			 * notification now, since it won't happen later.
 			 */
-			if (ti->state == NEG_DONE) 
+			if (ti->state == NEG_DONE)
 				osiop_update_xfer_mode(sc, xm->xm_target);
 
 			return;

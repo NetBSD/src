@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2reg.h,v 1.2 2003/11/02 11:07:46 wiz Exp $	*/
+/*	$NetBSD: tcic2reg.h,v 1.3 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -332,7 +332,7 @@
 	/*
 	 * If set, assume presence of an external buffer for MCS16:  operate
 	 * the driver as a totem-pole output.
-	 * 
+	 *
 	 * If clear, run in pseudo-ISA mode; output is open drain.  But note
 	 * that on the 082 the output buffers cannot drive a 300-ohm
 	 * load.
@@ -341,7 +341,7 @@
 	/*
 	 * If set, assume presence of an external buffer for IOCS16*; operate
 	 * the buffer as a totem-pole output.
-	 * 
+	 *
 	 * If clear, run in pseudo-ISA mode; output is open drain.  But note
 	 * that on the 082 the output buffers cannot drive a 300-ohm
 	 * load.
@@ -351,7 +351,7 @@
 	 * If set, disable the auto power-down sequencing.  The chip will
 	 * run card cycles somewhat more quickly (though perhaps not
 	 * significantly so); but it will dissipate significantly more power.
-	 * 
+	 *
 	 * If clear, the low-power operating modes are enabled.  This
 	 * causes the part to go into low-power mode automatically at
 	 * system reset.
@@ -418,27 +418,27 @@
 	 * then the busy light will be off, even if a socket is enabled.
 	 * If AUTOBUSY is clear, then the busy light will be on if either
 	 * socket is enabled.
-	 * 
+	 *
 	 * Note, that when in a programming mode, you should either clear this
 	 * bit (causing the busy light to be on whenever the socket is enabled)
 	 * or set both this bit and the ACC bit (causing the light to be on
 	 * all the time).
-	 * 
+	 *
 	 * On the '084 and '184, this bit is per-socket.
 	 */
 
-#define	TCIC_SYSCFG_ACC	(1<<15)	
+#define	TCIC_SYSCFG_ACC	(1<<15)
 	/*
 	 * This bit will be set automatically by the hardware whenever the CPU
 	 * accesses data on a card.  It can be cleared under software control.
-	 * 
+	 *
 	 * In AUTOBUSY mode, it has the additional effect of turning on the
 	 * busy light.
-	 * 
+	 *
 	 * Since we'll tristate the command lines as the card is going out of
 	 * the socket, and since the shared lines idle low, there's no real
 	 * danger if the busy light is off even though the socket is enabled.
-	 * 
+	 *
 	 * On the '084 and '184, this bit is per-socket.
 	 */
 
@@ -515,22 +515,22 @@
  *
  * In diagnostic mode, the high byte of the interlock register is defined
  * as the silicon identity byte.
- * 
+ *
  * In order to read this byte, the chip must be placed in diagnostic
  * mode by setting bit 15 of the TESTDIAG register.  (This may or may
  * not be enforced by the silicon.)
- * 
+ *
  * The layout is:
- * 
+ *
  * 	15 14 13 12 11 10 9 8    7 6 5 4 3 2 1 0
  * 	m  <-------ID------->	 <----ILOCK---->
- * 
+ *
  * The fields are:
- * 
+ *
  * m	Always reset.
- * 
+ *
  * ID	This field is one of the following:
- * 
+ *
  * 	0x02	the db86082
  * 	0x03	the db86082a
  * 	0x04	the db86084

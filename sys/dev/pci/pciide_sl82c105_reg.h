@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_sl82c105_reg.h,v 1.1 2002/04/03 17:02:21 thorpej Exp $	*/
+/*	$NetBSD: pciide_sl82c105_reg.h,v 1.2 2005/02/27 00:27:33 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct symph_cmdtime {
 	int	cmd_off;	/* cmd off time */
 };
 
-static const struct symph_cmdtime symph_pio_times[] 
+static const struct symph_cmdtime symph_pio_times[]
     __attribute__((__unused__)) = {
 /*        programmed               actual       */
 	{ 5, 13 },		/* 6, 14 */

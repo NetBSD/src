@@ -1,4 +1,4 @@
-/*	$NetBSD: aicasm.h,v 1.2 2003/04/19 19:26:10 fvdl Exp $	*/
+/*	$NetBSD: aicasm.h,v 1.3 2005/02/27 00:27:23 perry Exp $	*/
 
 /*
  * Assembler for the sequencer program downloaded to Aic7xxx SCSI host adapters
@@ -62,7 +62,7 @@ typedef struct path_entry {
 	SLIST_ENTRY(path_entry) links;
 } *path_entry_t;
 
-typedef enum {  
+typedef enum {
 	QUOTED_INCLUDE,
 	BRACKETED_INCLUDE,
 	SOURCE_FILE
