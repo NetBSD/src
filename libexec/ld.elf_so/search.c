@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.15 2002/10/05 11:59:04 mycroft Exp $	 */
+/*	$NetBSD: search.c,v 1.16 2002/11/14 21:07:46 nathanw Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -116,6 +116,7 @@ _rtld_load_library(name, refobj, mode)
 	const Obj_Entry *refobj;
 	int mode;
 {
+	char tmperror[512], *tmperrorp;
 	Search_Path *sp;
 	char *pathname;
 	int namelen;
@@ -133,26 +134,46 @@ _rtld_load_library(name, refobj, mode)
 	}
 	dbg((" Searching for \"%s\" (%p)", name, refobj));
 
+	tmperrorp = _rtld_dlerror();
+	if (tmperrorp != NULL) {
+		strncpy(tmperror, tmperrorp, sizeof tmperror);
+		tmperrorp = tmperror;
+	}
+	
 	namelen = strlen(name);
 
 	for (sp = _rtld_paths; sp != NULL; sp = sp->sp_next)
 		if ((obj = _rtld_search_library_path(name, namelen,
 		    sp->sp_path, sp->sp_pathlen, mode)) != NULL)
-			return obj;
+			goto pathfound;
 
 	if (refobj != NULL)
 		for (sp = refobj->rpaths; sp != NULL; sp = sp->sp_next)
 			if ((obj = _rtld_search_library_path(name,
 			    namelen, sp->sp_path, sp->sp_pathlen, mode)) != NULL)
-				return obj;
+				goto pathfound;
 
 	for (sp = _rtld_default_paths; sp != NULL; sp = sp->sp_next)
 		if ((obj = _rtld_search_library_path(name, namelen,
 		    sp->sp_path, sp->sp_pathlen, mode)) != NULL)
-			return obj;
+			goto pathfound;
 
 	_rtld_error("Shared object \"%s\" not found", name);
 	return NULL;
+
+pathfound:
+	/*
+	 * Successfully found a library; restore the dlerror state as it was
+	 * before _rtld_load_library() was called (any failed call to
+	 * _rtld_search_library_path() will set the dlerror state, but if the
+	 * library was eventually found, then the error state should not
+	 * change.
+	 */
+	if (tmperrorp)
+		_rtld_error("%s", tmperror);
+	else
+		(void)_rtld_dlerror();
+	return obj;
 
 found:
 	obj = _rtld_load_object(pathname, mode);
