@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kern_ktrace.c	7.15 (Berkeley) 6/21/91
+ *	from: @(#)kern_ktrace.c	7.15 (Berkeley) 6/21/91
+ *	$Id: kern_ktrace.c,v 1.3 1993/05/20 02:54:26 cgd Exp $
  */
 
 #include "param.h"

@@ -45,8 +45,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	$Id: subr_rlist.c,v 1.2 1993/05/20 02:55:01 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/subr_rlist.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
 
 #include "sys/param.h"
 #include "sys/cdefs.h"

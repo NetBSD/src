@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tty_tb.c	7.7 (Berkeley) 5/9/91
+ *	from: @(#)tty_tb.c	7.7 (Berkeley) 5/9/91
+ *	$Id: tty_tb.c,v 1.3 1993/05/20 02:55:15 cgd Exp $
  */
 
 #include "tb.h"
