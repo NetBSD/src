@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.36 2002/11/18 12:39:51 lukem Exp $
+.\"	$NetBSD: prep,v 1.37 2003/05/26 17:36:07 yyamano Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -134,9 +134,9 @@ The BootROM is what is first executed when you power on or reset your system.
 The BootROM then loads Open Firmware, which boots your operating system.
 .Pp
 Go to the
-.Sq "Apple Software Updates"
+.Sq "Apple Software Downloads"
 web site at
-.Lk http://asu.info.apple.com/
+.Lk http://www.info.apple.com/support/downloads.html
 and search for
 .Sq firmware
 and install the most recent version for your model.
