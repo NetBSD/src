@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.16 1999/11/01 17:39:26 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.17 2000/05/14 22:53:38 christos Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -45,9 +45,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: print.c,v 1.29 1999/10/31 22:23:04 christos Exp ")
+FILE_RCSID("@(#)Id: print.c,v 1.30 1999/11/28 20:02:29 christos Exp ")
 #else
-__RCSID("$NetBSD: print.c,v 1.16 1999/11/01 17:39:26 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.17 2000/05/14 22:53:38 christos Exp $");
 #endif
 #endif  /* lint */
 
@@ -75,8 +75,20 @@ struct magic *m;
 	(void) fprintf(stderr, " %s%s", (m->flag & UNSIGNED) ? "u" : "",
 		       /* Note: type is unsigned */
 		       (m->type < SZOF(typ)) ? typ[m->type] : "*bad*");
-	if (m->mask != ~((uint32)0))
-		(void) fprintf(stderr, " & %.8x", m->mask);
+	if (m->mask != ~((uint32)0)) {
+		if(STRING != m->type)
+			(void) fprintf(stderr, " & %.8x", m->mask);
+		else {
+			(void) fputc('/', stderr); 
+			if (m->mask & STRING_IGNORE_LOWERCASE) 
+				(void) fputc(CHAR_IGNORE_LOWERCASE, stderr);
+			if (m->mask & STRING_COMPACT_BLANK) 
+				(void) fputc(CHAR_COMPACT_BLANK, stderr);
+			if (m->mask & STRING_COMPACT_OPTIONAL_BLANK) 
+				(void) fputc(CHAR_COMPACT_OPTIONAL_BLANK,
+				stderr);
+		}
+	}
 
 	(void) fprintf(stderr, ",%c", m->reln);
 

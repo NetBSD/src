@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.5 1999/11/01 17:39:26 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.6 2000/05/14 22:53:38 christos Exp $	*/
 
 #include "file.h"
 
@@ -18,9 +18,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: readelf.c,v 1.11 1999/10/31 22:23:04 christos Exp ")
+FILE_RCSID("@(#)Id: readelf.c,v 1.12 2000/04/11 02:32:35 christos Exp ")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.5 1999/11/01 17:39:26 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.6 2000/05/14 22:53:38 christos Exp $");
 #endif
 #endif
 
@@ -257,7 +257,7 @@ dophn_core(class, swap, fd, off, num, size)
 			error("lseek failed (%s).\n", strerror(errno));
 		bufsize = read(fd, nbuf, BUFSIZ);
 		if (bufsize == -1)
-			error("read failed (%s).\n", strerror(errno));
+			error(": " "read failed (%s).\n", strerror(errno));
 		offset = 0;
 		for (;;) {
 			if (offset >= bufsize)
