@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.59 1996/10/12 23:06:02 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.60 1996/10/16 11:27:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -196,9 +196,9 @@ int	suiword __P((void *, long));
 
 int	fubyte __P((const void *));
 int	fuibyte __P((const void *));
-short	fusword __P((const void *));
-short	fuisword __P((const void *));
-short	fuswintr __P((const void *));
+int	fusword __P((const void *));
+int	fuisword __P((const void *));
+int	fuswintr __P((const void *));
 long	fuword __P((const void *));
 long	fuiword __P((const void *));
 
