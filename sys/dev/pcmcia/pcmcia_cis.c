@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.4 1998/03/09 21:54:13 christos Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.5 1998/05/29 16:21:28 msaitoh Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -486,6 +486,15 @@ pcmcia_print_cis(sc)
 			break;
 		case 7:
 			printf("auto incrementing mass storage");
+			break;
+		case 8:
+			printf("SCSI bridge");
+			break;
+		case 9:
+			printf("Security services");
+			break;
+		case 10:
+			printf("Instrument");
 			break;
 		default:
 			printf("unknown (%d)", pf->function);
