@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.67 1997/06/28 03:57:55 mhitch Exp $	*/
+/*	$NetBSD: trap.c,v 1.68 1997/06/30 14:42:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -363,7 +363,10 @@ extern void interrupt __P((unsigned status, unsigned cause, unsigned pc,
 			   struct frame *frame));
 extern void ast __P((unsigned pc));
 
-#ifdef DEBUG /* stack trace code, also useful to DDB one day */
+ /*
+  *  stack trace code, also useful to DDB one day
+  */
+#if defined(DEBUG) || defined(MDB)
 int	kdbpeek __P((vm_offset_t addr));
 extern void cpu_getregs __P((int *));
 extern void stacktrace __P((void)); /*XXX*/
@@ -377,7 +380,7 @@ extern void setsoftclock __P((void));
 extern int main __P((void*));
 extern void am7990_meminit __P((void*)); /* XXX */
 extern void savectx __P((struct user *));
-#endif	/* DEBUG */
+#endif	/* DEBUG || MDB */
 
 #ifdef MDB
 extern int mdb __P((int type, struct frame *frame));
@@ -1323,7 +1326,7 @@ mips_singlestep(p)
         return 0;
 }
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(MDB)
 int
 kdbpeek(addr)
 	vm_offset_t addr;
@@ -1699,7 +1702,8 @@ fn_name(unsigned addr)
 
 #ifdef MIPS3
 /*
- *	Dump TLB contents.
+ * Dump TLB contents on mips3 CPU.
+ * called by mips3 locore after in-kernel TLB miss.
  */
 void
 mips3_dump_tlb(first, last)
@@ -1736,7 +1740,8 @@ mips3_dump_tlb(first, last)
 #endif /* MIPS3 */
 
 /*
- *	Dump TLB contents.
+ * Dump mips1 TLB contents.
+ * called by mips3 locore after in-kernel TLB miss.
  */
 void
 mips1_dump_tlb(first, last)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.37 1997/06/28 03:55:05 mhitch Exp $	*/
+/*	$NetBSD: locore.S,v 1.38 1997/06/30 14:42:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1773,7 +1773,7 @@ END(mdbpanic)
 
 #endif	/* MDB */
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(MDB)
 /*
  * Stacktrace support hooks which use type punnign to access
  * the caller's registers.
