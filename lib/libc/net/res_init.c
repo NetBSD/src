@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.30 2000/04/25 08:51:39 itojun Exp $	*/
+/*	$NetBSD: res_init.c,v 1.31 2000/04/25 08:56:06 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.30 2000/04/25 08:51:39 itojun Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.31 2000/04/25 08:56:06 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -151,7 +151,7 @@ res_init()
 	_res.nsaddr.sin_addr.s_addr = INADDR_ANY;
 #endif
 #ifdef INET6
-	if (sizeof(_res_ext.nsaddr) >= sizeof(_res.nsaddr))
+	if (sizeof(_res_ext.nsaddr) >= _res.nsaddr.sin_len)
 		memcpy(&_res_ext.nsaddr, &_res.nsaddr, _res.nsaddr.sin_len);
 #endif
 	_res.nscount = 1;
