@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.h,v 1.2 1996/05/25 17:09:45 ws Exp $	*/
+/*	$NetBSD: dosfs.h,v 1.3 1996/05/28 19:51:20 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -78,7 +78,7 @@ struct fatEntry {
 	cl_t	next;			/* pointer to next cluster */
 	cl_t	head;			/* pointer to start of chain */
 	u_int32_t length;		/* number of clusters on chain */
-	struct dosDirEntry *dirp;	/* corresponding file name */
+	int	flags;			/* see below */
 };
 
 #define	CLUST_FREE	0		/* 0 means cluster is free */
@@ -87,6 +87,8 @@ struct fatEntry {
 #define	CLUST_BAD	0xfff7		/* a cluster with a defect */
 #define	CLUST_EOFS	0xfff8		/* start of EOF indicators */
 #define	CLUST_EOF	0xffff		/* standard value for last cluster */
+
+#define	FAT_USED	1		/* This fat chain is used in a file */
 
 #define	DOSLONGNAMELEN	256		/* long name maximal length */
 #define LRFIRST		0x40		/* first long name record */
