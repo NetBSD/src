@@ -1,9 +1,9 @@
-/*	$NetBSD: infinity.c,v 1.4 1998/11/14 19:31:01 christos Exp $	*/
+/*	$NetBSD: infinity.c,v 1.5 2000/09/13 22:32:25 msaitoh Exp $	*/
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: infinity.c,v 1.4 1998/11/14 19:31:01 christos Exp $");
-#endif /* not lint */
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: infinity.c,v 1.5 2000/09/13 22:32:25 msaitoh Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 /* infinity.c */
 

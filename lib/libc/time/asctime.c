@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.10 2000/01/22 22:19:21 mycroft Exp $	*/
+/*	$NetBSD: asctime.c,v 1.11 2000/09/13 22:32:28 msaitoh Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -6,15 +6,13 @@
 */
 
 #include <sys/cdefs.h>
-#ifndef lint
-#ifndef NOID
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char	elsieid[] = "@(#)asctime.c	7.9";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.10 2000/01/22 22:19:21 mycroft Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.11 2000/09/13 22:32:28 msaitoh Exp $");
 #endif
-#endif /* !defined NOID */
-#endif /* !defined lint */
+#endif /* LIBC_SCCS and not lint */
 
 /*LINTLIBRARY*/
 

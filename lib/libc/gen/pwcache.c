@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.14 2000/01/22 22:19:12 mycroft Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.15 2000/09/13 22:32:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -38,13 +38,13 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.14 2000/01/22 22:19:12 mycroft Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.15 2000/09/13 22:32:28 msaitoh Exp $");
 #endif
-#endif /* not lint */
+#endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
