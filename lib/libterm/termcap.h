@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.h,v 1.5 1999/08/14 13:56:48 tron Exp $	*/
+/*	$NetBSD: termcap.h,v 1.6 1999/08/15 10:59:01 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,6 +41,8 @@
 #ifndef _TERMCAP_H_
 #define _TERMCAP_H_
 
+struct tinfo;
+
 __BEGIN_DECLS
 int   tgetent	__P((char *, const char *));
 char *tgetstr	__P((const char *, char **));
@@ -48,6 +50,18 @@ int   tgetflag	__P((const char *));
 int   tgetnum	__P((const char *));
 char *tgoto	__P((const char *, int, int));
 void  tputs	__P((const char *, int, void (*)(int)));
+
+/*
+ * New interface
+ */
+int   t_getent	__P((struct tinfo **, const char *));
+int   t_getnum  __P((struct tinfo *, const char *));
+int   t_getflag __P((struct tinfo *, const char *));
+char *t_getstr  __P((struct tinfo *, const char *, char **, int *));
+int   t_goto    __P((struct tinfo *, const char *, int, int, char *, int));
+int   t_puts    __P((struct tinfo *, const char *, int,
+		     void (*)(char, void *), void *));
+void  t_freent  __P((struct tinfo *));
 
 extern	char PC;
 extern	char *BC;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.12 1999/07/02 15:46:05 simonb Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.13 1999/08/15 10:59:02 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tgoto.c,v 1.12 1999/07/02 15:46:05 simonb Exp $");
+__RCSID("$NetBSD: tgoto.c,v 1.13 1999/08/15 10:59:02 blymn Exp $");
 #endif
 #endif /* not lint */
 
+#include <errno.h>
 #include <string.h>
 #include <termcap.h>
 
@@ -82,27 +83,63 @@ tgoto(CM, destcol, destline)
 	int destcol, destline;
 {
 	static char result[MAXRETURNSIZE];
+
+        if (t_goto(NULL, CM, destcol, destline, result, MAXRETURNSIZE) >= 0)
+                return result;
+        else
+                return ("OOPS");
+}
+
+/*
+ * New interface.  Functionally the same as tgoto but uses the tinfo struct
+ * to set UP and BC.  The arg buffer is filled with the result string, limit
+ * defines the maximum number of chars allowed in buffer.  The function
+ * returns 0 on success, -1 otherwise.
+ */
+int
+t_goto(info, CM, destcol, destline, buffer, limit)
+	struct tinfo *info;
+        const char *CM;
+        int destcol;
+        int destline;
+        char *buffer;
+        int limit;
+{
 	static char added[10];
 	const char *cp = CM;
-	char *dp = result;
-	int c;
+	char *dp = buffer;
+        char *old_up = UP, *old_bc = BC;
+        char new_up[MAXRETURNSIZE], new_bc[MAXRETURNSIZE], *up_ptr, *bc_ptr;
+	int c, count = MAXRETURNSIZE;
 	int oncol = 0;
 	int which = destline;
 
+        if (info != NULL)
+        {
+                up_ptr = new_up;
+                bc_ptr = new_bc;
+                UP = t_getstr(info, "up", &up_ptr, &count);
+                count = MAXRETURNSIZE;
+                BC = t_getstr(info, "bc", &bc_ptr, &count);
+        }
+        
 	if (cp == 0) {
+                errno = EINVAL;
 toohard:
-		/*
-		 * ``We don't do that under BOZO's big top''
-		 */
-		return ("OOPS");
+                UP = old_up;
+                BC = old_bc;
+		return -1;
 	}
 	added[0] = '\0';
 	while ((c = *cp++) != '\0') {
 		if (c != '%') {
 copy:
 			*dp++ = c;
-			if (dp >= &result[MAXRETURNSIZE])
-				goto toohard;
+			if (dp >= &buffer[limit])
+                        {
+                                errno = E2BIG;
+                                goto toohard;
+                        }
 			continue;
 		}
 		switch (c = *cp++) {
@@ -122,23 +159,32 @@ copy:
 			/* FALLTHROUGH */
 
 		case '3':
-			if (which >= 1000)
-				goto toohard;
-			*dp++ = (which / 100) | '0';
-			if (dp >= &result[MAXRETURNSIZE])
-				goto toohard;
+			if (which >= 1000) {
+                                errno = E2BIG;
+                                goto toohard;
+                        }
+  			*dp++ = (which / 100) | '0';
+			if (dp >= &buffer[limit]) {
+                                errno = E2BIG;
+                                goto toohard;
+                        }
 			which %= 100;
 			/* FALLTHROUGH */
 
 		case '2':
 two:
 			*dp++ = which / 10 | '0';
-			if (dp >= &result[MAXRETURNSIZE])
-				goto toohard;
+			if (dp >= &buffer[limit]) {
+                                errno = E2BIG;
+                                goto toohard;
+                        }
 one:
 			*dp++ = which % 10 | '0';
-			if (dp >= &result[MAXRETURNSIZE])
-				goto toohard;
+			if (dp >= &buffer[limit]) {
+                                errno = E2BIG;
+                                goto toohard;
+                        }
+                        
 swap:
 			oncol = 1 - oncol;
 setwhich:
@@ -188,15 +234,22 @@ setwhich:
 					 */
 					do {
 						if (strlen(added) + strlen(add) >= sizeof(added))
-							goto toohard;
-						(void)strcat(added, add);
+                                                {
+                                                        errno = E2BIG;
+                                                        goto toohard;
+                                                }
+                                                
+                                                (void)strcat(added, add);
 						which++;
 					} while (which == '\n');
 				}
 			}
 			*dp++ = which;
-			if (dp >= &result[MAXRETURNSIZE])
-				goto toohard;
+			if (dp >= &buffer[limit])
+                        {
+                                errno = E2BIG;
+                                goto toohard;
+                        }
 			goto swap;
 
 		case 'r':
@@ -225,11 +278,18 @@ setwhich:
 #endif
 
 		default:
-			goto toohard;
+                        errno = EINVAL;
+                        goto toohard;
 		}
 	}
-	if (dp + strlen(added) >= &result[MAXRETURNSIZE])
-		goto toohard;
-	(void)strcpy(dp, added);
-	return (result);
+	if (dp + strlen(added) >= &buffer[limit])
+        {
+                errno = E2BIG;
+                goto toohard;
+        }
+        
+        (void)strcpy(dp, added);
+        UP = old_up;
+        BC = old_bc;
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.9 1999/02/02 12:34:56 christos Exp $	*/
+/*	$NetBSD: tputs.c,v 1.10 1999/08/15 10:59:02 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,13 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tputs.c,v 1.9 1999/02/02 12:34:56 christos Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.10 1999/08/15 10:59:02 blymn Exp $");
 #endif
 #endif /* not lint */
 
 #include <ctype.h>
 #include <termcap.h>
+#include <stdio.h>
 #undef ospeed
+
+/* internal functions */
+int _tputs_convert __P((const char **, int));
 
 /*
  * The following array gives the number of tens of milliseconds per
@@ -58,6 +62,43 @@ short	tmspc10[] = {
 
 short	ospeed;
 char	PC;
+
+int
+_tputs_convert(ptr, affcnt)
+	const char **ptr;
+        int affcnt;
+{
+        int i = 0;
+        
+          /*
+           * Convert the number representing the delay.
+           */
+	if (isdigit(*(*ptr))) {
+		do
+			i = i * 10 + *(*ptr)++ - '0';
+		while (isdigit(*(*ptr)));
+	}
+	i *= 10;
+	if (*(*ptr) == '.') {
+		(*ptr)++;
+		if (isdigit(*(*ptr)))
+			i += *(*ptr) - '0';
+		/*
+		 * Only one digit to the right of the decimal point.
+		 */
+		while (isdigit(*(*ptr)))
+			(*ptr)++;
+	}
+
+	/*
+	 * If the delay is followed by a `*', then
+	 * multiply by the affected lines count.
+	 */
+	if (*(*ptr) == '*')
+		(*ptr)++, i *= affcnt;
+
+        return i;
+}
 
 /*
  * Put the character string cp out, with padding.
@@ -76,33 +117,9 @@ tputs(cp, affcnt, outc)
 	if (cp == 0)
 		return;
 
-	/*
-	 * Convert the number representing the delay.
-	 */
-	if (isdigit(*cp)) {
-		do
-			i = i * 10 + *cp++ - '0';
-		while (isdigit(*cp));
-	}
-	i *= 10;
-	if (*cp == '.') {
-		cp++;
-		if (isdigit(*cp))
-			i += *cp - '0';
-		/*
-		 * Only one digit to the right of the decimal point.
-		 */
-		while (isdigit(*cp))
-			cp++;
-	}
-
-	/*
-	 * If the delay is followed by a `*', then
-	 * multiply by the affected lines count.
-	 */
-	if (*cp == '*')
-		cp++, i *= affcnt;
-
+          /* scan and convert delay digits (if any) */
+        i = _tputs_convert(&cp, affcnt);
+        
 	/*
 	 * The guts of the string.
 	 */
@@ -129,4 +146,67 @@ tputs(cp, affcnt, outc)
 	i += mspc10 / 2;
 	for (i /= mspc10; i > 0; i--)
 		(*outc)(PC);
+}
+
+
+int
+t_puts(info, cp, affcnt, outc, args)
+	struct tinfo *info;
+        const char *cp;
+        int affcnt;
+        void (*outc) __P((char, void *));
+        void *args;
+{
+	int i = 0, limit = 2;
+	int mspc10;
+        char pad[2], *pptr;
+
+        if (info != NULL)
+        {
+                  /*
+                   * if we have info then get the pad char from the
+                   * termcap entry if it exists, otherwise use the
+                   * default NUL char.
+                   */
+                pptr = pad;
+                if (t_getstr(info, "pc", &pptr, &limit) == NULL)
+                {
+                        pad[0] = '\0';
+                }
+        }
+        
+	if (cp == 0)
+		return -1;
+
+          /* scan and convert delay digits (if any) */
+        i = _tputs_convert(&cp, affcnt);
+        
+	/*
+	 * The guts of the string.
+	 */
+	while (*cp)
+		(*outc)(*cp++, args);
+
+	/*
+	 * If no delay needed, or output speed is
+	 * not comprehensible, then don't try to delay.
+	 */
+	if (i == 0)
+		return 0;
+	if (ospeed <= 0 || ospeed >= (sizeof tmspc10 / sizeof tmspc10[0]))
+		return 0;
+
+	/*
+	 * Round up by a half a character frame,
+	 * and then do the delay.
+	 * Too bad there are no user program accessible programmed delays.
+	 * Transmitting pad characters slows many
+	 * terminals down and also loads the system.
+	 */
+	mspc10 = tmspc10[ospeed];
+	i += mspc10 / 2;
+	for (i /= mspc10; i > 0; i--)
+		(*outc)(pad[0], args);
+
+        return 0;
 }

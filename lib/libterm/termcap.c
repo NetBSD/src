@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.17 1999/07/02 15:46:05 simonb Exp $	*/
+/*	$NetBSD: termcap.c,v 1.18 1999/08/15 10:59:01 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.17 1999/07/02 15:46:05 simonb Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.18 1999/08/15 10:59:01 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,16 @@ __RCSID("$NetBSD: termcap.c,v 1.17 1999/07/02 15:46:05 simonb Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <termcap.h>
+#include <errno.h>
 #include "pathnames.h"
+
+/* internal definition of tinfo structure - just a pointer to the malloc'ed
+ * buffer for now.
+ */
+struct tinfo
+{
+	char *info;
+};
 
 /*
  * termcap - routines for dealing with the terminal capability data base
@@ -67,18 +76,21 @@ __RCSID("$NetBSD: termcap.c,v 1.17 1999/07/02 15:46:05 simonb Exp $");
  */
 
 static	char *tbuf;	/* termcap buffer */
+static  struct tinfo *fbuf;     /* untruncated termcap buffer */
 
 /*
- * Get an entry for terminal name in buffer bp from the termcap file.
+ * Get an extended entry for the terminal name.  This differs from
+ * tgetent only in a) the buffer is malloc'ed for the caller and
+ * b) the termcap entry is not truncated to 1023 characters.
  */
+
 int
-tgetent(bp, name)
-	char *bp;
+t_getent(bp, name)
+	struct tinfo **bp;
 	const char *name;
 {
 	char  *p;
 	char  *cp;
-	char  *dummy;
 	char **fname;
 	char  *home;
 	int    i;
@@ -86,8 +98,9 @@ tgetent(bp, name)
 	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
 	char  *termpath;
 
+	if ((*bp = malloc(sizeof(struct tinfo))) == NULL) return 0;
+	
 	fname = pathvec;
-	tbuf = bp;
 	p = pathbuf;
 	cp = getenv("TERMCAP");
 	/*
@@ -143,29 +156,56 @@ tgetent(bp, name)
 	 * user had setup name to be built from a path they can not
 	 * normally read.
 	 */
-	dummy = NULL;
-	i = cgetent(&dummy, pathvec, name);
+ 	(*bp)->info = NULL;
+ 	i = cgetent(&((*bp)->info), pathvec, name);      
 
-	if (i == 0) {
-		/*
-		 * If the entry is too long, truncate to the last whole cap.
-		 */
-		strncpy(bp, dummy, 1024);
-		if (strlen(dummy) > 1023 && bp[1023] != ':' ) {
-			for (cp = bp+1022 ; cp > bp && *cp != ':' ; --cp)
-				;
-			if (cp > bp)
-				cp[1] = 0;
-		}
-		bp[1023] = '\0';
-	}
-
-	if (dummy)
-		free(dummy);
 	/* no tc reference loop return code in libterm XXX */
 	if (i == -3)
 		return (-1);
 	return (i + 1);
+}
+
+/*
+ * Get an entry for terminal name in buffer bp from the termcap file.
+ */
+int
+tgetent(bp, name)
+	char *bp;
+	const char *name;
+{
+	int i, plen, elen, c;
+        char *ptrbuf = NULL;
+	
+	i = t_getent(&fbuf, name);
+	
+	if (i == 1) {
+		  /* stash the full buffer pointer as the ZZ capability
+		     in the termcap buffer passed.
+		  */
+                plen = asprintf(&ptrbuf, ":ZZ=%p", fbuf->info);
+		strncpy(bp, fbuf->info, 1024);
+		bp[1023] = '\0';
+                elen = strlen(bp);
+		  /* backup over the entry if the addition of the full
+		     buffer pointer will overflow the buffer passed.  We
+		     want to truncate the termcap entry on a capability
+		     boundary.
+		  */
+                if ((elen + plen) > 1023) {
+			bp[1023 - plen] = '\0';
+			for (c = (elen - plen); c > 0; c--) {
+				if (bp[c] == ':') {
+					bp[c] = '\0';
+					break;
+				}
+			}
+		}
+		
+		strcat(bp, ptrbuf);
+                tbuf = bp;
+	}
+
+	return i;
 }
 
 /*
@@ -177,15 +217,24 @@ tgetent(bp, name)
  * Note that we handle octal numbers beginning with 0.
  */
 int
-tgetnum(id)
+
+t_getnum(info, id)
+	struct tinfo *info;
 	const char *id;
 {
 	long num;
 
-	if (cgetnum(tbuf, id, &num) == 0)
+	if (cgetnum(info->info, id, &num) == 0)
 		return (int)(num);
 	else
 		return (-1);
+}
+
+int
+tgetnum(id)
+	const char *id;
+{
+	return t_getnum(fbuf, id);
 }
 
 /*
@@ -194,11 +243,18 @@ tgetnum(id)
  * of the buffer.  Return 1 if we find the option, or 0 if it is
  * not given.
  */
+int t_getflag(info, id)
+	struct tinfo *info;
+	const char *id;
+{
+	return (cgetcap(info->info, id, ':') != NULL);
+}
+
 int
 tgetflag(id)
 	const char *id;
 {
-	return (cgetcap(tbuf, id, ':') != NULL);
+	return t_getflag(fbuf, id);
 }
 
 /*
@@ -207,12 +263,15 @@ tgetflag(id)
  *	cl=^Z
  * Much decoding is done on the strings, and the strings are
  * placed in area, which is a ref parameter which is updated.
- * No checking on area overflow.
+ * limit is the number of characters allowed to be put into
+ * area, this is updated.
  */
 char *
-tgetstr(id, area)
+t_getstr(info, id, area, limit)
+	struct tinfo *info;
 	const char *id;
 	char **area;
+	int *limit;
 {
 	char ids[3];
 	char *s;
@@ -227,10 +286,55 @@ tgetstr(id, area)
 	ids[1] = id[1];
 	ids[2] = '\0';
 
-	if ((i = cgetstr(tbuf, ids, &s)) < 0)
+	if ((i = cgetstr(info->info, ids, &s)) < 0) {
+		errno = ENOENT;
 		return NULL;
-
+	}
+	
+	  /* check if there is room for the new entry to be put into area */
+	if (limit != NULL && (*limit < i)) {
+		errno = E2BIG;
+		return NULL;
+	}
+  	
 	strcpy(*area, s);
 	*area += i + 1;
-	return (s);
+	if (limit != NULL) *limit -= i;
+	
+ 	return (s);
+}
+ 
+/*
+ * Get a string valued option.
+ * These are given as
+ *	cl=^Z
+ * Much decoding is done on the strings, and the strings are
+ * placed in area, which is a ref parameter which is updated.
+ * No checking on area overflow.
+ */
+char *
+tgetstr(id, area)
+	const char *id;
+	char **area;
+{
+	struct tinfo dummy;
+
+	if ((id[0] == 'Z') && (id[1] == 'Z')) {
+		dummy.info = tbuf;
+		return t_getstr(&dummy, id, area, NULL);
+	}
+	else
+		return t_getstr(fbuf, id, area, NULL);
+}
+
+/*
+ * Free the buffer allocated by t_getent
+ *
+ */
+void
+t_freent(info)
+	struct tinfo *info;
+{
+	free(info->info);
+	free(info);
 }
