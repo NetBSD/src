@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.18 2003/01/06 12:46:13 wiz Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.19 2003/09/03 20:48:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -129,3 +129,14 @@ struct spppdnsaddrs {
 };
 
 #define SPPPGETDNSADDRS		_IOWR('i', 131, struct spppdnsaddrs)
+
+/* set LCP keepalive/timeout options */
+struct spppkeepalivesettings {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	u_int	maxalive;		/* number of LCP echo req. w/o reply */
+	time_t	max_noreceive;		/* (sec.) grace period before we start
+					   sending LCP echo requests. */
+};
+#define	SPPPSETKEEPALIVE	_IOW('i', 132, struct spppdnssettings)
+#define	SPPPGETKEEPALIVE	_IOWR('i', 133, struct spppdnssettings)
+

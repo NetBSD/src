@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.67 2003/07/09 20:12:53 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.68 2003/09/03 20:48:46 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.67 2003/07/09 20:12:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.68 2003/09/03 20:48:46 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -98,8 +98,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.67 2003/07/09 20:12:53 martin Exp 
 #include <net/if_sppp.h>
 #include <net/if_spppvar.h>
 
-#define	LCP_KEEPALIVE_INTERVAL		10	/* seconds */
-#define MAXALIVECNT     		3	/* max. missed alive packets */
+#define	LCP_KEEPALIVE_INTERVAL		10	/* seconds between checks */
+#define LOOPALIVECNT     		3	/* loopback detection tries */
+#define DEFAULT_MAXALIVECNT    		3	/* max. missed alive packets */
+#define	DEFAULT_NORECV_TIME		15	/* before we get worried */
 #define DEFAULT_MAX_AUTH_FAILURES	5	/* max. auth. failures */
 
 /*
@@ -466,9 +468,12 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	struct sppp *sp = (struct sppp *)ifp;
 	int debug = ifp->if_flags & IFF_DEBUG;
 
-	if (ifp->if_flags & IFF_UP)
+	if (ifp->if_flags & IFF_UP) {
 		/* Count received bytes, add hardware framing */
 		ifp->if_ibytes += m->m_pkthdr.len + sp->pp_framebytes;
+		/* Note time of last receive */
+		sp->pp_last_receive = mono_time.tv_sec;
+	}
 
 	if (m->m_pkthdr.len <= PPP_HEADER_LEN) {
 		/* Too small packet, drop it. */
@@ -940,6 +945,9 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_loopcnt = 0;
 	sp->pp_alivecnt = 0;
 	sp->pp_last_activity = 0;
+	sp->pp_last_receive = 0;
+	sp->pp_maxalive = DEFAULT_MAXALIVECNT;
+	sp->pp_max_noreceive = DEFAULT_NORECV_TIME;
 	sp->pp_idle_timeout = 0;
 	memset(&sp->pp_seq[0], 0, sizeof(sp->pp_seq));
 	memset(&sp->pp_rseq[0], 0, sizeof(sp->pp_rseq));
@@ -1140,6 +1148,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPSETIDLETO:
 	case SPPPSETAUTHFAILURE:
 	case SPPPSETDNSOPTS:
+	case SPPPSETKEEPALIVE:
 	{
 		struct proc *p = curproc;		/* XXX */
 
@@ -1154,6 +1163,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPGETAUTHFAILURES:
 	case SPPPGETDNSOPTS:
 	case SPPPGETDNSADDRS:
+	case SPPPGETKEEPALIVE:
 		error = sppp_params(sp, cmd, data);
 		break;
 
@@ -1209,7 +1219,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 		if (sp->pp_seq[IDX_LCP] == sp->pp_rseq[IDX_LCP]) {
 			/* Local and remote sequence numbers are equal.
 			 * Probably, the line is in loopback mode. */
-			if (sp->pp_loopcnt >= MAXALIVECNT) {
+			if (sp->pp_loopcnt >= LOOPALIVECNT) {
 				printf ("%s: loopback\n",
 					ifp->if_xname);
 				sp->pp_loopcnt = 0;
@@ -2028,7 +2038,7 @@ sppp_lcp_up(struct sppp *sp)
 	STDDCL;
 
 	/* Initialize activity timestamp: opening a connection is an activity */
-	sp->pp_last_activity = mono_time.tv_sec;
+	sp->pp_last_receive = sp->pp_last_activity = mono_time.tv_sec;
 
 	/*
 	 * If this interface is passive or dial-on-demand, and we are
@@ -2232,7 +2242,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 			/*
 			 * Local and remote magics equal -- loopback?
 			 */
-			if (sp->pp_loopcnt >= MAXALIVECNT*5) {
+			if (sp->pp_loopcnt >= LOOPALIVECNT*5) {
 				printf ("%s: loopback\n",
 					ifp->if_xname);
 				sp->pp_loopcnt = 0;
@@ -4654,12 +4664,12 @@ sppp_keepalive(void *dummy)
 			continue;
 
 		/* No echo reply, but maybe user data passed through? */
-		if ((now - sp->pp_last_activity) < LCP_KEEPALIVE_INTERVAL) {
+		if ((now - sp->pp_last_receive) < sp->pp_max_noreceive) {
 			sp->pp_alivecnt = 0;
 			continue;
 		}
 
-		if (sp->pp_alivecnt == MAXALIVECNT) {
+		if (sp->pp_alivecnt >= sp->pp_maxalive) {
 			/* No keepalive packets got.  Stop the interface. */
 			if_down (ifp);
 			IF_PURGE(&sp->pp_cpq);
@@ -4680,7 +4690,7 @@ sppp_keepalive(void *dummy)
 				continue;
 			}
 		}
-		if (sp->pp_alivecnt <= MAXALIVECNT)
+		if (sp->pp_alivecnt < sp->pp_maxalive)
 			++sp->pp_alivecnt;
 		if (sp->pp_flags & PP_CISCO)
 			sppp_cisco_send(sp, CISCO_KEEPALIVE_REQ,
@@ -5171,6 +5181,22 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 	    {
 	    	struct spppdnsaddrs *addrs = (struct spppdnsaddrs *)data;
 	    	memcpy(&addrs->dns, &sp->dns_addrs, sizeof addrs->dns);
+	    }
+	    break;
+	case SPPPGETKEEPALIVE:
+	    {
+	    	struct spppkeepalivesettings *settings =
+		     (struct spppkeepalivesettings*)data;
+		settings->maxalive = sp->pp_maxalive;
+		settings->max_noreceive = sp->pp_max_noreceive;
+	    }
+	    break;
+	case SPPPSETKEEPALIVE:
+	    {
+	    	struct spppkeepalivesettings *settings =
+		     (struct spppkeepalivesettings*)data;
+		sp->pp_maxalive = settings->maxalive;
+		sp->pp_max_noreceive = settings->max_noreceive;
 	    }
 	    break;
 	default:
