@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.87 1998/09/23 21:07:47 perry Exp $
+#	$NetBSD: Makefile,v 1.88 1998/09/29 22:43:51 jonathan Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
 #					# and OBJECT_FMT definition
 
-SUBDIR=	apply apropos asa at audioctl banner basename bdes \
-	biff cal calendar cap_mkdb checknr chflags chpass \
+SUBDIR=	apply apropos asa at audioctl banner basename bdes biff \
+	bzip2 bzip2recover cal calendar cap_mkdb checknr chflags chpass \
 	cksum cmp col colcrt colrm column comm compress \
 	crontab crunch ctags cut dirname du eject env \
 	error expand false file find finger fmt fold fpr \
