@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.81 2003/11/21 21:20:25 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.82 2003/12/16 20:51:57 heas Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.81 2003/11/21 21:20:25 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.82 2003/12/16 20:51:57 heas Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ int	dobackup, docopy, dodir, dostrip, dolink, dopreserve, dorename,
 int	numberedbackup;
 int	mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char	pathbuf[MAXPATHLEN];
-id_t	uid, gid;
+id_t	uid = -1, gid = -1;
 char	*group, *owner, *fflags, *tags;
 FILE	*metafp;
 char	*metafile;
