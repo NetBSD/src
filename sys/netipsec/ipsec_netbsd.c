@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.10 2004/05/07 00:55:14 jonathan Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.11 2004/07/17 16:36:39 atatat Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.10 2004/05/07 00:55:14 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.11 2004/07/17 16:36:39 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -362,6 +362,8 @@ sysctl_fast_ipsec(SYSCTLFN_ARGS)
 /* XXX will need a different oid at parent */
 SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
 {
+	struct sysctlnode *_ipsec;
+	int ipproto_ipsec;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -374,20 +376,63 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, CTL_EOL);
 
+	/*
+	 * in numerical order:
+	 *
+	 * net.inet.ipip:	CTL_NET.PF_INET.IPPROTO_IPIP
+	 * net.inet.esp:	CTL_NET.PF_INET.IPPROTO_ESP
+	 * net.inet.ah:		CTL_NET.PF_INET.IPPROTO_AH
+	 * net.inet.ipcomp:	CTL_NET.PF_INET.IPPROTO_IPCOMP
+	 * net.inet.ipsec:	CTL_NET.PF_INET.CTL_CREATE
+	 *
+	 * this creates separate trees by name, but maintains that the
+	 * ipsec name leads to all the old leaves.
+	 */
+
+	/* create net.inet.ipip */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ipip", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_IPIP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_STRUCT, "ipip_stats", NULL,
+		       NULL, 0, &ipipstat, sizeof(ipipstat),
+		       CTL_NET, PF_INET, IPPROTO_IPIP,
+		       CTL_CREATE, CTL_EOL);
+
+	/* create net.inet.esp subtree under IPPROTO_ESP */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "esp", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_ESP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "trans_deflev", NULL,
+		       sysctl_fast_ipsec, 0, &ip4_esp_trans_deflev, 0,
+		       CTL_NET, PF_INET, IPPROTO_ESP,
+		       IPSECCTL_DEF_ESP_TRANSLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "net_deflev", NULL,
+		       sysctl_fast_ipsec, 0, &ip4_esp_net_deflev, 0,
+		       CTL_NET, PF_INET, IPPROTO_ESP,
+		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_STRUCT, "esp_stats", NULL,
+		       NULL, 0, &espstat, sizeof(espstat),
+		       CTL_NET, PF_INET, IPPROTO_ESP,
+		       CTL_CREATE, CTL_EOL);
+
 	/* create net.inet.ah subtree under IPPROTO_AH */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ah", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_AH, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-		       CTLTYPE_STRUCT, "stats", NULL,
-		       NULL, 0, &ahstat, sizeof(ahstat),
-		       CTL_NET, PF_INET, IPPROTO_AH,
-		       IPSECCTL_STATS, CTL_EOL);
-
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "cleartos", NULL,
@@ -404,41 +449,20 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "trans_deflev", NULL,
 		       sysctl_fast_ipsec, 0, &ip4_ah_trans_deflev, 0,
-		       CTL_NET, PF_INET, CTL_IPPROTO_IPSEC,
+		       CTL_NET, PF_INET, IPPROTO_AH,
 		       IPSECCTL_DEF_AH_TRANSLEV, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "net_deflev", NULL,
 		       sysctl_fast_ipsec, 0, &ip4_ah_net_deflev, 0,
-		       CTL_NET, PF_INET, CTL_IPPROTO_IPSEC,
+		       CTL_NET, PF_INET, IPPROTO_AH,
 		       IPSECCTL_DEF_AH_NETLEV, CTL_EOL);
-
-	/* create net.inet.esp subtree under IPPROTO_ESP */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "esp", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, PF_INET, IPPROTO_ESP, CTL_EOL);
-
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-		       CTLTYPE_STRUCT, "stats", NULL,
-		       NULL, 0, &espstat, sizeof(espstat),
-		       CTL_NET, PF_INET, IPPROTO_ESP,
-		       IPSECCTL_STATS, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "trans_deflev", NULL,
-		       sysctl_fast_ipsec, 0, &ip4_esp_trans_deflev, 0,
-		       CTL_NET, PF_INET, IPPROTO_ESP,
-		       IPSECCTL_DEF_ESP_TRANSLEV, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "net_deflev", NULL,
-		       sysctl_fast_ipsec, 0, &ip4_esp_net_deflev, 0,
-		       CTL_NET, PF_INET, IPPROTO_ESP,
-		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
+		       CTLTYPE_STRUCT, "ah_stats", NULL,
+		       NULL, 0, &ahstat, sizeof(ahstat),
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       CTL_CREATE, CTL_EOL);
 
 	/* create net.inet.ipcomp */
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -446,86 +470,91 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 		       CTLTYPE_NODE, "ipcomp", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_IPCOMP, CTL_EOL);
-
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-		       CTLTYPE_STRUCT, "stats", NULL,
+		       CTLTYPE_STRUCT, "ipcomp_stats", NULL,
 		       NULL, 0, &ipcompstat, sizeof(ipcompstat),
 		       CTL_NET, PF_INET, IPPROTO_IPCOMP,
-		       IPSECCTL_STATS, CTL_EOL);
+		       CTL_CREATE, CTL_EOL);
 
-	/* create net.inet.ipip */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ipip", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_NET, PF_INET, IPPROTO_IPIP, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-		       CTLTYPE_STRUCT, "stats", NULL,
-		       NULL, 0, &ipipstat, sizeof(ipipstat),
-		       CTL_NET, PF_INET, IPPROTO_IPIP,
-		       IPSECCTL_STATS, CTL_EOL);
-
-
-	/* create net.inet.ipsec subtree under CTL_IPPROTO_IPSEC */
-	sysctl_createv(clog, 0, NULL, NULL,
+	/* create net.inet.ipsec subtree under dynamic oid */
+	sysctl_createv(clog, 0, NULL, &_ipsec,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ipsec", NULL,
 		       NULL, 0, NULL, 0,
-		       CTL_NET, PF_INET, CTL_IPPROTO_IPSEC, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
-		       CTLTYPE_STRUCT, "stats", NULL,
-		       NULL, 0, &ipsecstat, sizeof(ipsecstat),
-		       CTL_NET, PF_INET, CTL_IPPROTO_IPSEC,
-		       IPSECCTL_STATS, CTL_EOL);
+		       CTL_NET, PF_INET, CTL_CREATE, CTL_EOL);
+	ipproto_ipsec = (_ipsec != NULL) ? _ipsec->sysctl_num : 0;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "def_policy", NULL,
 		       sysctl_fast_ipsec, 0, &ip4_def_policy.policy, 0,
-		       CTL_NET, PF_INET, CTL_IPPROTO_IPSEC,
+		       CTL_NET, PF_INET, ipproto_ipsec,
 		       IPSECCTL_DEF_POLICY, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "esp_trans_deflev", NULL,
+		       sysctl_fast_ipsec, 0, &ip4_esp_trans_deflev, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       IPSECCTL_DEF_ESP_TRANSLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "esp_net_deflev", NULL,
+		       sysctl_fast_ipsec, 0, &ip4_esp_net_deflev, 0,
+		       CTL_NET, PF_INET, IPPROTO_ESP,
+		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "esp_net_deflev", NULL,
+		       sysctl_fast_ipsec, 0, &ip4_esp_net_deflev, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_trans_deflev", NULL,
+		       sysctl_fast_ipsec, 0, &ip4_ah_trans_deflev, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       IPSECCTL_DEF_AH_TRANSLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_net_deflev", NULL,
+		       sysctl_fast_ipsec, 0, &ip4_ah_net_deflev, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       IPSECCTL_DEF_AH_NETLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_cleartos", NULL,
+		       NULL, 0, &/*ip4_*/ah_cleartos, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       IPSECCTL_AH_CLEARTOS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_offsetmask", NULL,
+		       NULL, 0, &ip4_ah_offsetmask, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       IPSECCTL_AH_OFFSETMASK, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "dfbit", NULL,
 		       NULL, 0, &ip4_ipsec_dfbit, 0,
-		       CTL_NET, PF_INET, CTL_IPPROTO_IPSEC,
+		       CTL_NET, PF_INET, ipproto_ipsec,
 		       IPSECCTL_DFBIT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "ecn", NULL,
 		       NULL, 0, &ip4_ipsec_ecn, 0,
-		       CTL_NET, PF_INET, CTL_IPPROTO_IPSEC,
+		       CTL_NET, PF_INET, ipproto_ipsec,
 		       IPSECCTL_ECN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "debug", NULL,
 		       NULL, 0, &ipsec_debug, 0,
-		       CTL_NET, PF_INET, CTL_IPPROTO_IPSEC,
+		       CTL_NET, PF_INET, ipproto_ipsec,
 		       IPSECCTL_DEBUG, CTL_EOL);
-
-#if 0
-	/*
-	 * "aliases" for the fast ipsec subtree
-	 */
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
-		       CTLTYPE_NODE, "fast_esp", NULL,
-		       NULL, IPPROTO_AH, NULL, 0,
-		       CTL_NET, PF_INET, IPPROTO_ESP, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
-		       CTLTYPE_NODE, "fast_ipcomp", NULL,
-		       NULL, IPPROTO_AH, NULL, 0,
-		       CTL_NET, PF_INET, IPPROTO_IPCOMP, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
-		       CTLTYPE_NODE, "fast_ah", NULL,
-		       NULL, IPPROTO_AH, NULL, 0,
-		       CTL_NET, PF_INET, CTL_CREATE, CTL_EOL);
-#endif
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_STRUCT, "ipsecstats", NULL,
+		       NULL, 0, &ipsecstat, sizeof(ipsecstat),
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       CTL_CREATE, CTL_EOL);
 }
