@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.4 1999/06/08 23:40:42 simonb Exp $	*/
+/*	$NetBSD: machdep.h,v 1.5 1999/06/09 07:33:29 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -33,20 +33,6 @@
 /* the following is used externally (sysctl_hw) */
 extern char machine[];
 extern char cpu_model[];
-
-/*
- * Interrupt-blocking functions defined in locore. These names aren't used
- * directly except here and in interrupt handlers.
- */
-
-/* Block out one hardware interrupt-enable bit. */
-int	Mach_spl0 __P((void)), Mach_spl1 __P((void));
-int	Mach_spl2 __P((void)), Mach_spl3 __P((void));
-
-/* Block out nested interrupt-enable bits. */
-int	cpu_spl0 __P((void)), cpu_spl1 __P((void));
-int	cpu_spl2 __P((void)), cpu_spl3 __P((void));
-int	splhigh __P((void));
 
 extern volatile struct chiptime *mcclock_addr;
 
