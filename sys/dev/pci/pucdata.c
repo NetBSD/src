@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.18 2001/03/13 17:23:52 bouyer Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.19 2001/07/04 22:39:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -576,6 +576,15 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Lava Computers DSerial PCI serial ports */
+	{   "Lava Computers serial port",
+	    {	0x1407,	0x0110,	0,	0	},
+	    {	0xffff,	0xfffc,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
 	},
 
