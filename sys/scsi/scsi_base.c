@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.14 1994/06/29 06:42:59 cgd Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.15 1994/06/29 23:32:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -761,7 +761,8 @@ show_scsi_xs(xs)
 }
 
 void
-show_scsi_cmd(struct scsi_xfer *xs)
+show_scsi_cmd(xs)
+	struct scsi_xfer *xs;
 {
 	u_char *b = (u_char *) xs->cmd;
 	int     i = 0;
