@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqreg.h,v 1.9 1998/05/21 20:44:03 matt Exp $	*/
+/*	$NetBSD: pdqreg.h,v 1.10 1998/05/25 21:24:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -364,6 +364,7 @@ typedef struct {
     pdq_consumer_block_t pdqdb_consumer;	/*   64;	0x1380..0x13BF */
     void *pdqdb_receive_buffers[256];		/* 1024/2048;	0x13C0..0x17BF 0x13C0..0x1BBF */
     void *pdqdb_host_smt_buffers[64];		/*  256/ 512;	0x17C0..0x18BF 0x1BC0..0x1DBF */
+    pdq_uint8_t pdqdb_tx_hdr[4];
     /*
      * The maximum command size is 512 so as long as thes
      * command is at least that long all will be fine.
@@ -373,7 +374,6 @@ typedef struct {
 #else
     pdq_uint32_t pdqdb_command_pool[463];
 #endif
-    pdq_uint8_t pdqdb_tx_hdr[4];
 } pdq_descriptor_block_t;
 
 #define	PDQ_SIZE_COMMAND_RESPONSE	512

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.15 1998/05/24 22:37:23 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.16 1998/05/25 21:24:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -1557,8 +1557,8 @@ pdq_initialize(
     }
     dbp = pdq->pdq_dbp;
 
-    pdq->pdq_command_info.ci_request_bufstart = (pdq_uint8_t *) dbp->pdqdb_command_pool;
-    pdq->pdq_command_info.ci_response_bufstart = (pdq_uint8_t *) dbp->pdqdb_command_pool + sizeof(dbp->pdqdb_command_pool) - PDQ_SIZE_COMMAND_RESPONSE;
+    pdq->pdq_command_info.ci_response_bufstart = (pdq_uint8_t *) dbp->pdqdb_command_pool;
+    pdq->pdq_command_info.ci_request_bufstart = (pdq_uint8_t *) dbp->pdqdb_command_pool + sizeof(dbp->pdqdb_command_pool) - PDQ_SIZE_COMMAND_RESPONSE;
     pdq->pdq_rx_info.rx_buffers = (void *) dbp->pdqdb_receive_buffers;
 
     pdq->pdq_host_smt_info.rx_buffers = (void *) dbp->pdqdb_host_smt_buffers;
@@ -1620,7 +1620,7 @@ pdq_initialize(
      */
     pdq->pdq_command_info.ci_pa_request_bufstart = PDQ_DB_BUSPA(pdq, pdq->pdq_command_info.ci_request_bufstart);
     pdq->pdq_command_info.ci_pa_request_descriptors = PDQ_DB_BUSPA(pdq, dbp->pdqdb_command_requests);
-    PDQ_PRINTF(("PDQ Command Buffer = " PDQ_OS_PTR_FMT " (PA=0x%x)\n",
+    PDQ_PRINTF(("PDQ Command Request Buffer = " PDQ_OS_PTR_FMT " (PA=0x%x)\n",
 		pdq->pdq_command_info.ci_request_bufstart,
 		pdq->pdq_command_info.ci_pa_request_bufstart));
     for (idx = 0; idx < sizeof(dbp->pdqdb_command_requests)/sizeof(dbp->pdqdb_command_requests[0]); idx++) {
@@ -1630,9 +1630,14 @@ pdq_initialize(
 	txd->txd_eop = txd->txd_sop = 1;
 	txd->txd_pa_hi = 0;
     }
+    PDQ_OS_DESC_PRESYNC(pdq, dbp->pdqdb_command_requests,
+			sizeof(dbp->pdqdb_command_requests));
 
     pdq->pdq_command_info.ci_pa_response_bufstart = PDQ_DB_BUSPA(pdq, pdq->pdq_command_info.ci_response_bufstart);
     pdq->pdq_command_info.ci_pa_response_descriptors = PDQ_DB_BUSPA(pdq, dbp->pdqdb_command_responses);
+    PDQ_PRINTF(("PDQ Command Response Buffer = " PDQ_OS_PTR_FMT " (PA=0x%x)\n",
+		pdq->pdq_command_info.ci_response_bufstart,
+		pdq->pdq_command_info.ci_pa_response_bufstart));
     for (idx = 0; idx < sizeof(dbp->pdqdb_command_responses)/sizeof(dbp->pdqdb_command_responses[0]); idx++) {
 	pdq_rxdesc_t *rxd = &dbp->pdqdb_command_responses[idx];
 
