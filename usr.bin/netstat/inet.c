@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.33 1998/07/20 21:03:37 sommerfe Exp $	*/
+/*	$NetBSD: inet.c,v 1.34 1998/08/25 20:59:39 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.33 1998/07/20 21:03:37 sommerfe Exp $");
+__RCSID("$NetBSD: inet.c,v 1.34 1998/08/25 20:59:39 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,11 +140,12 @@ protopr(off, name)
 				"Local Address", "Foreign Address", "(state)");
 			first = 0;
 		}
-		if (Aflag)
+		if (Aflag) {
 			if (istcp)
 				printf("%8lx ", (u_long) inpcb.inp_ppcb);
 			else
 				printf("%8lx ", (u_long) prev);
+		}
 		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc);
 		if (nflag) {

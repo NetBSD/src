@@ -1,4 +1,4 @@
-/*	$NetBSD: lcmd2.c,v 1.8 1997/11/21 08:36:05 lukem Exp $	*/
+/*	$NetBSD: lcmd2.c,v 1.9 1998/08/25 20:59:42 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lcmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lcmd2.c,v 1.8 1997/11/21 08:36:05 lukem Exp $");
+__RCSID("$NetBSD: lcmd2.c,v 1.9 1998/08/25 20:59:42 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -288,11 +288,12 @@ l_def_shell(v, a)
 			p_memerror();
 			break;
 		}
-	if ((default_shellfile = *default_shell))
+	if ((default_shellfile = *default_shell)) {
 		if ((*default_shell = strrchr(default_shellfile, '/')))
 			(*default_shell)++;
 		else
 			*default_shell = default_shellfile;
+	}
 }
 
 struct lcmd_arg arg_alias[] = {

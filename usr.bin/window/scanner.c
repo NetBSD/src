@@ -1,4 +1,4 @@
-/*	$NetBSD: scanner.c,v 1.4 1997/11/21 08:36:17 lukem Exp $	*/
+/*	$NetBSD: scanner.c,v 1.5 1998/08/25 20:59:43 ross Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)scanner.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: scanner.c,v 1.4 1997/11/21 08:36:17 lukem Exp $");
+__RCSID("$NetBSD: scanner.c,v 1.5 1998/08/25 20:59:43 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -317,12 +317,20 @@ loop:
 				    && buf[3] == 'i' && buf[4] == 'f'
 				    && buf[5] == 0)
 					cx.x_token = T_ENDIF;
-				else if (buf[1] == 'l' && buf[2] == 's')
-					if (buf[3] == 'i' && buf[4] == 'f'
-					    && buf[5] == 0)
-						cx.x_token = T_ELSIF;
-					else if (buf[3] == 'e' && buf[4] == 0)
-						cx.x_token = T_ELSE;
+				else {
+					if (buf[1] == 'l' && buf[2] == 's') {
+						if (buf[3] == 'i'
+						&&  buf[4] == 'f'
+						&&  buf[5] == 0)
+							cx.x_token = T_ELSIF;
+						else {
+							if (buf[3] == 'e'
+							&& buf[4] == 0)
+								cx.x_token =
+								    T_ELSE;
+						}
+					}
+				}
 				break;
 			}
 			if (cx.x_token == T_STR

@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.6 1997/10/19 03:17:25 lukem Exp $	*/
+/*	$NetBSD: lexi.c,v 1.7 1998/08/25 20:59:38 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lexi.c,v 1.6 1997/10/19 03:17:25 lukem Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.7 1998/08/25 20:59:38 ross Exp $");
 #endif
 #endif				/* not lint */
 
@@ -169,17 +169,20 @@ lexi()
 					CHECK_SIZE_TOKEN;
 					*e_token++ = *buf_ptr++;
 				}
-			} else
+			} else {
 				while (1) {
-					if (*buf_ptr == '.')
+					if (*buf_ptr == '.') {
 						if (seendot)
 							break;
 						else
 							seendot++;
+					}
 					CHECK_SIZE_TOKEN;
 					*e_token++ = *buf_ptr++;
-					if (!isdigit(*buf_ptr) && *buf_ptr != '.')
-						if ((*buf_ptr != 'E' && *buf_ptr != 'e') || seenexp)
+					if (!isdigit(*buf_ptr)
+					&& *buf_ptr != '.') {
+						if ((*buf_ptr != 'E'
+						&& *buf_ptr != 'e') || seenexp)
 							break;
 						else {
 							seenexp++;
@@ -189,7 +192,9 @@ lexi()
 							if (*buf_ptr == '+' || *buf_ptr == '-')
 								*e_token++ = *buf_ptr++;
 						}
+					}
 				}
+			}
 			if (*buf_ptr == 'L' || *buf_ptr == 'l')
 				*e_token++ = *buf_ptr++;
 		} else

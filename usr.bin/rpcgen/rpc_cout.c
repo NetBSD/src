@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.13 1997/10/18 10:53:44 lukem Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.14 1998/08/25 20:59:40 ross Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.13 1997/10/18 10:53:44 lukem Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.14 1998/08/25 20:59:40 ross Exp $");
 #endif
 #endif
 
@@ -497,7 +497,7 @@ emit_struct(def)
 				}
 
 			} else {
-				if (i > 0)
+				if (i > 0)  {
 					if (sizestr == NULL && size < doinline) {
 						/* don't expand into inline
 						 * code if size < doinline */
@@ -542,6 +542,7 @@ emit_struct(def)
 
 						f_print(fout, "\t\t}\n");
 					}
+				}
 				size = 0;
 				i = 0;
 				sizestr = NULL;
@@ -549,7 +550,7 @@ emit_struct(def)
 			}
 
 		}
-		if (i > 0)
+		if (i > 0) {
 			if (sizestr == NULL && size < doinline) {
 				/* don't expand into inline code if size <
 				 * doinline */
@@ -592,7 +593,7 @@ emit_struct(def)
 				f_print(fout, "\t\t}\n");
 
 			}
-
+		}
 		if (flag == PUT) {
 			flag = GET;
 			f_print(fout, "\t} else if (xdrs->x_op == XDR_DECODE) {\n");
