@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipfs,v 1.1 2002/02/11 10:19:55 martti Exp $
+# $NetBSD: ipfs,v 1.2 2002/02/11 13:39:14 martti Exp $
 #
 
 # PROVIDE: ipfs
@@ -34,4 +34,10 @@ ipfs_stop()
 }
 
 load_rc_config $name
-run_rc_command "$1"
+case "${ipfs}" in
+	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
+		run_rc_command "$1"
+		;;
+	*)
+		;;
+esac
