@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.2 1999/12/04 03:06:54 mjacob Exp $ */
+/* $NetBSD: isp_inline.h,v 1.3 1999/12/08 11:01:44 mjacob Exp $ */
 /*
  * Copyright (C) 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -41,73 +41,8 @@ static INLINE void
 isp_prtstst(sp)
 	ispstatusreq_t *sp;
 {
-	char buf[172], *p = buf;
-	sprintf(p, "states->");
-	if (sp->req_state_flags & RQSF_GOT_BUS) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "GOT_BUS ");
-	}
-	if (sp->req_state_flags & RQSF_GOT_TARGET) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "GOT_TGT ");
-	}
-	if (sp->req_state_flags & RQSF_SENT_CDB) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "SENT_CDB ");
-	}
-	if (sp->req_state_flags & RQSF_XFRD_DATA) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "XFRD_DATA ");
-	}
-	if (sp->req_state_flags & RQSF_GOT_STATUS) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "GOT_STS ");
-	}
-	if (sp->req_state_flags & RQSF_GOT_SENSE) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "GOT_SNS ");
-	}
-	if (sp->req_state_flags & RQSF_XFER_COMPLETE) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "XFR_CMPLT ");
-	}
-	p += strlen(p);
-	sprintf(p, "%s%s", buf, "\n");
-	p += strlen(p);
-	sprintf(p, "%s%s", buf, "status->");
-	if (sp->req_status_flags & RQSTF_DISCONNECT) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "Disconnect ");
-	}
-	if (sp->req_status_flags & RQSTF_SYNCHRONOUS) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "Sync_xfr ");
-	}
-	if (sp->req_status_flags & RQSTF_PARITY_ERROR) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "Parity ");
-	}
-	if (sp->req_status_flags & RQSTF_BUS_RESET) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "Bus_Reset ");
-	}
-	if (sp->req_status_flags & RQSTF_DEVICE_RESET) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "Device_Reset ");
-	}
-	if (sp->req_status_flags & RQSTF_ABORTED) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "Aborted ");
-	}
-	if (sp->req_status_flags & RQSTF_TIMEOUT) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "Timeout ");
-	}
-	if (sp->req_status_flags & RQSTF_NEGOTIATION) {
-		p += strlen(p);
-		sprintf(p, "%s%s", buf, "Negotiation ");
-	}
-	PRINTF(buf, "%s\n", buf);
+	sp = sp;
+	PRINTF("The Charles Hannum memorial function has been called\n");
 }
 
 static INLINE char *
