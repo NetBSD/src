@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.5 1998/02/04 05:12:52 thorpej Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.6 1998/02/11 01:41:14 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -240,7 +240,7 @@ _isa_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	/*
 	 * Allocate our cookie.
 	 */
-	if ((cookiestore = malloc(cookiesize, M_DEVBUF,
+	if ((cookiestore = malloc(cookiesize, M_DMAMAP,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL) {
 		error = ENOMEM;
 		goto out;
@@ -264,7 +264,7 @@ _isa_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
  out:
 	if (error) {
 		if (map->_dm_cookie != NULL)
-			free(map->_dm_cookie, M_DEVBUF);
+			free(map->_dm_cookie, M_DMAMAP);
 		_bus_dmamap_destroy(t, map);
 	}
 	return (error);
@@ -286,7 +286,7 @@ _isa_bus_dmamap_destroy(t, map)
 	if (cookie->id_flags & ID_HAS_BOUNCE)
 		_isa_dma_free_bouncebuf(t, map);
 
-	free(cookie, M_DEVBUF);
+	free(cookie, M_DMAMAP);
 	_bus_dmamap_destroy(t, map);
 }
 
