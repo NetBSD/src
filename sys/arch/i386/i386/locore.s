@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.228 2000/12/08 23:14:04 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.229 2000/12/09 13:20:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2360,7 +2360,10 @@ syscall1:
 #ifdef DIAGNOSTIC
 	movl	_C_LABEL(cpl),%ebx
 #endif /* DIAGNOSTIC */
-	call	_C_LABEL(syscall)
+	movl	_C_LABEL(curproc),%edx	# get pointer to curproc
+	movl	P_EMUL(%edx),%edx	# get pointer to emul struct
+	movl	E_SYSCALL(%edx),%edx	# get pointer to syscall() function
+	call	%edx			# call emulation's syscall()
 2:	/* Check for ASTs on exit to user mode. */
 	cli
 	cmpb	$0,_C_LABEL(astpending)
