@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.29 1997/03/27 21:01:47 veego Exp $	*/
+/*	$NetBSD: am7990.c,v 1.30 1997/04/04 22:35:36 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -105,27 +105,21 @@ void am7990_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 #define	ifp	(&sc->sc_ethercom.ec_if)
 
-static inline u_int16_t ether_cmp __P((void *, void *));
+static inline int ether_cmp __P((char *, char *));
 
 /*
  * Compare two Ether/802 addresses for equality, inlined and
- * unrolled for speed.  I'd love to have an inline assembler
- * version of this...   XXX: Who wanted that? mycroft?
- * I wrote one, but the following is just as efficient.
- * This expands to 10 short m68k instructions! -gwr
- * Note: use this like bcmp()
+ * unrolled for speed.
+ * Note: test last byte of ethernet address first, as it will
+ * likely have the most random distribution.
  */
-static inline u_short
-ether_cmp(one, two)
-	void *one, *two;
+static inline int
+ether_cmp(a, b)
+	char *a, *b;
 {
-	register u_int16_t *a = (u_short *) one;
-	register u_int16_t *b = (u_short *) two;
-	register u_int16_t diff;
 
-	diff = (a[0] - b[0]) | (a[1] - b[1]) | (a[2] - b[2]);
-
-	return (diff);
+	return ((a[5] != b[5]) || (a[4] != b[4]) || (a[3] != b[3]) ||
+		(a[2] != b[2]) || (a[1] != b[1]) || (a[0] != b[0]));
 }
 
 #define ETHER_CMP	ether_cmp
