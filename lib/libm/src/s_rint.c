@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_rint.c,v 1.4 1994/03/03 17:04:45 jtc Exp $";
+static char rcsid[] = "$Id: s_rint.c,v 1.5 1994/08/10 20:32:59 jtc Exp $";
 #endif
 
 /*
@@ -24,14 +24,8 @@ static char rcsid[] = "$Id: s_rint.c,v 1.4 1994/03/03 17:04:45 jtc Exp $";
  *	Inexact flag raised if x not equal to rint(x).
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double
@@ -53,9 +47,8 @@ TWO52[2]={
 	int i0,j0,sx;
 	unsigned i,i1;
 	double w,t;
-	i0 =  *(n0+(int*)&x);
+	EXTRACT_WORDS(i0,i1,x);
 	sx = (i0>>31)&1;
-	i1 =  *(1-n0+(int*)&x);
 	j0 = ((i0>>20)&0x7ff)-0x3ff;
 	if(j0<20) {
 	    if(j0<0) { 	
@@ -63,11 +56,11 @@ TWO52[2]={
 		i1 |= (i0&0x0fffff);
 		i0 &= 0xfffe0000;
 		i0 |= ((i1|-i1)>>12)&0x80000;
-		*(n0+(int*)&x)=i0;
+		SET_HIGH_WORD(x,i0);
 	        w = TWO52[sx]+x;
 	        t =  w-TWO52[sx];
-	        i0 = *(n0+(int*)&t);
-	        *(n0+(int*)&t) = (i0&0x7fffffff)|(sx<<31);
+		GET_HIGH_WORD(i0,t);
+		SET_HIGH_WORD(t,(i0&0x7fffffff)|(sx<<31));
 	        return t;
 	    } else {
 		i = (0x000fffff)>>j0;
@@ -87,8 +80,7 @@ TWO52[2]={
 	    i>>=1;
 	    if((i1&i)!=0) i1 = (i1&(~i))|((0x40000000)>>(j0-20));
 	}
-	*(n0+(int*)&x) = i0;
-	*(1-n0+(int*)&x) = i1;
+	INSERT_WORDS(x,i0,i1);
 	w = TWO52[sx]+x;
 	return w-TWO52[sx];
 }

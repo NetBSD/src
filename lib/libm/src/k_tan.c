@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: k_tan.c,v 1.4 1994/03/03 17:04:25 jtc Exp $";
+static char rcsid[] = "$Id: k_tan.c,v 1.5 1994/08/10 20:31:46 jtc Exp $";
 #endif
 
 /* __kernel_tan( x, y, k )
@@ -48,15 +48,8 @@ static char rcsid[] = "$Id: k_tan.c,v 1.4 1994/03/03 17:04:25 jtc Exp $";
  *		       = 1 - 2*(tan(y) - (tan(y)^2)/(1+tan(y)))
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
-
+#include "math.h"
+#include "math_private.h"
 #ifdef __STDC__
 static const double 
 #else
@@ -90,12 +83,13 @@ T[] =  {
 {
 	double z,r,v,w,s;
 	int ix,hx;
-
-	hx = *(n0+(int*)&x);	/* high word of x */
+	GET_HIGH_WORD(hx,x);
 	ix = hx&0x7fffffff;	/* high word of |x| */
 	if(ix<0x3e300000)			/* x < 2**-28 */
 	    {if((int)x==0) {			/* generate inexact */
-		if(((ix|*(1-n0+(int*)&x))|(iy+1))==0) return one/fabs(x);
+	        unsigned int low;
+		GET_LOW_WORD(low,x);
+		if(((ix|low)|(iy+1))==0) return one/fabs(x);
 		else return (iy==1)? x: -one/x;
 	    }
 	    }
@@ -127,10 +121,10 @@ T[] =  {
      /*  compute -1.0/(x+r) accurately */
 	    double a,t;
 	    z  = w;
-	    *(1-n0+(int*)&z) = 0;
+	    SET_LOW_WORD(z,0);
 	    v  = r-(z - x); 	/* z+v = r+x */
 	    t = a  = -1.0/w;	/* a = -1.0/w */
-	    *(1-n0+(int*)&t) = 0;
+	    SET_LOW_WORD(t,0);
 	    s  = 1.0+t*z;
 	    return t+a*(s+t*v);
 	}

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_j1.c,v 1.4 1994/03/03 17:04:15 jtc Exp $";
+static char rcsid[] = "$Id: e_j1.c,v 1.5 1994/08/10 20:31:01 jtc Exp $";
 #endif
 
 /* __ieee754_j1(x), __ieee754_y1(x)
@@ -59,13 +59,8 @@ static char rcsid[] = "$Id: e_j1.c,v 1.4 1994/03/03 17:04:15 jtc Exp $";
  *	   by method mentioned above.
  */
 
-#include <math.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static double pone(double), qone(double);
@@ -93,7 +88,11 @@ s03  =  1.17718464042623683263e-06, /* 0x3EB3BFF8, 0x333F8498 */
 s04  =  5.04636257076217042715e-09, /* 0x3E35AC88, 0xC97DFF2C */
 s05  =  1.23542274426137913908e-11; /* 0x3DAB2ACF, 0xCFB97ED8 */
 
+#ifdef __STDC__
+static const double zero    = 0.0;
+#else
 static double zero    = 0.0;
+#endif
 
 #ifdef __STDC__
 	double __ieee754_j1(double x) 
@@ -105,7 +104,7 @@ static double zero    = 0.0;
 	double z, s,c,ss,cc,r,u,v,y;
 	int hx,ix;
 
-	hx = *(n0+(int*)&x);
+	GET_HIGH_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x7ff00000) return one/x;
 	y = fabs(x);
@@ -174,9 +173,8 @@ static double V0[5] = {
 	double z, s,c,ss,cc,u,v;
 	int hx,ix,lx;
 
-        hx = *(n0+(int*)&x);
+	EXTRACT_WORDS(hx,lx,x);
         ix = 0x7fffffff&hx;
-        lx = *(1-n0+(int*)&x);
     /* if Y1(NaN) is NaN, Y1(-inf) is NaN, Y1(inf) is 0 */
 	if(ix>=0x7ff00000) return  one/(x+x*x); 
         if((ix|lx)==0) return -one/zero;
@@ -338,7 +336,8 @@ static double ps2[5] = {
 #endif
 	double z,r,s;
         int ix;
-        ix = 0x7fffffff&(*( (((*(int*)&one)>>29)^1) + (int*)&x));
+	GET_HIGH_WORD(ix,x);
+	ix &= 0x7fffffff;
         if(ix>=0x40200000)     {p = pr8; q= ps8;}
         else if(ix>=0x40122E8B){p = pr5; q= ps5;}
         else if(ix>=0x4006DB6D){p = pr3; q= ps3;}
@@ -474,7 +473,8 @@ static double qs2[6] = {
 #endif
 	double  s,r,z;
 	int ix;
-	ix = 0x7fffffff&(*( (((*(int*)&one)>>29)^1) + (int*)&x));
+	GET_HIGH_WORD(ix,x);
+	ix &= 0x7fffffff;
 	if(ix>=0x40200000)     {p = qr8; q= qs8;}
 	else if(ix>=0x40122E8B){p = qr5; q= qs5;}
 	else if(ix>=0x4006DB6D){p = qr3; q= qs3;}

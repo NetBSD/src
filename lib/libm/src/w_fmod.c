@@ -11,14 +11,15 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: w_fmod.c,v 1.3 1994/02/18 02:27:24 jtc Exp $";
+static char rcsid[] = "$Id: w_fmod.c,v 1.4 1994/08/10 20:34:05 jtc Exp $";
 #endif
 
 /* 
  * wrapper fmod(x,y)
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 
 #ifdef __STDC__

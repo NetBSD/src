@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_finite.c,v 1.4 1994/03/03 17:04:34 jtc Exp $";
+static char rcsid[] = "$Id: s_finite.c,v 1.5 1994/08/10 20:32:21 jtc Exp $";
 #endif
 
 /*
@@ -19,14 +19,8 @@ static char rcsid[] = "$Id: s_finite.c,v 1.4 1994/03/03 17:04:34 jtc Exp $";
  * no branching!
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 	int finite(double x)
@@ -35,7 +29,7 @@ static char rcsid[] = "$Id: s_finite.c,v 1.4 1994/03/03 17:04:34 jtc Exp $";
 	double x;
 #endif
 {
-	int hx; 
-	hx = *(n0+(int*)&x);
+	int hx;
+	GET_HIGH_WORD(hx,x);
 	return  (unsigned)((hx&0x7fffffff)-0x7ff00000)>>31;
 }

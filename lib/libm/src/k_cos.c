@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: k_cos.c,v 1.4 1994/03/03 17:04:23 jtc Exp $";
+static char rcsid[] = "$Id: k_cos.c,v 1.5 1994/08/10 20:31:34 jtc Exp $";
 #endif
 
 /*
@@ -49,14 +49,8 @@ static char rcsid[] = "$Id: k_cos.c,v 1.4 1994/03/03 17:04:23 jtc Exp $";
  *	   thus, reducing the rounding error in the subtraction.
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double 
@@ -80,7 +74,8 @@ C6  = -1.13596475577881948265e-11; /* 0xBDA8FAE9, 0xBE8838D4 */
 {
 	double a,hz,z,r,qx;
 	int ix;
-	ix = (*(n0+(int*)&x))&0x7fffffff;	/* ix = |x|'s high word*/
+	GET_HIGH_WORD(ix,x);
+	ix &= 0x7fffffff;			/* ix = |x|'s high word*/
 	if(ix<0x3e400000) {			/* if x < 2**27 */
 	    if(((int)x)==0) return one;		/* generate inexact */
 	}
@@ -92,8 +87,7 @@ C6  = -1.13596475577881948265e-11; /* 0xBDA8FAE9, 0xBE8838D4 */
 	    if(ix > 0x3fe90000) {		/* x > 0.78125 */
 		qx = 0.28125;
 	    } else {
-	        *(n0+(int*)&qx) = ix-0x00200000;	/* x/4 */
-	        *(1-n0+(int*)&qx) = 0;
+	        INSERT_WORDS(qx,ix-0x00200000,0);	/* x/4 */
 	    }
 	    hz = 0.5*z-qx;
 	    a  = one-qx;

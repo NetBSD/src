@@ -1,4 +1,4 @@
-/* @(#)e_gamma_r.c 5.1 93/09/24 */
+/* @(#)er_gamma.c 5.1 93/09/24 */
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_gamma_r.c,v 1.3 1994/02/18 02:25:13 jtc Exp $";
+static char rcsid[] = "$Id: e_gamma_r.c,v 1.4 1994/08/10 20:30:52 jtc Exp $";
 #endif
 
 /* __ieee754_gamma_r(x, signgamp)
@@ -21,7 +21,8 @@ static char rcsid[] = "$Id: e_gamma_r.c,v 1.3 1994/02/18 02:25:13 jtc Exp $";
  * Method: See __ieee754_lgamma_r
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 	double __ieee754_gamma_r(double x, int *signgamp)

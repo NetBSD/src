@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_fmod.c,v 1.4 1994/03/03 17:04:11 jtc Exp $";
+static char rcsid[] = "$Id: e_fmod.c,v 1.5 1994/08/10 20:30:47 jtc Exp $";
 #endif
 
 /* 
@@ -20,16 +20,8 @@ static char rcsid[] = "$Id: e_fmod.c,v 1.4 1994/03/03 17:04:11 jtc Exp $";
  * Method: shift and subtract
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#define n1	0
-#else
-#define n0	0
-#define n1	1
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double one = 1.0, Zero[] = {0.0, -0.0,};
@@ -45,13 +37,10 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 #endif
 {
 	int n,hx,hy,hz,ix,iy,sx,i;
-	int *px = (int*)&x, *py = (int*)&y;
 	unsigned lx,ly,lz;
 
-	hx = *( n0 + px);		/* high word of x */
-	lx = *( n1 + px);		/* low  word of x */
-	hy = *( n0 + py);		/* high word of y */
-	ly = *( n1 + py);		/* low  word of y */
+	EXTRACT_WORDS(hx,lx,x);
+	EXTRACT_WORDS(hy,ly,y);
 	sx = hx&0x80000000;		/* sign of x */
 	hx ^=sx;		/* |x| */
 	hy &= 0x7fffffff;	/* |y| */
@@ -133,8 +122,7 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 	}
 	if(iy>= -1022) {	/* normalize output */
 	    hx = ((hx-0x00100000)|((iy+1023)<<20));
-	    *(n0+px) = hx|sx;
-	    *(n1+px) = lx;
+	    INSERT_WORDS(x,hx|sx,lx);
 	} else {		/* subnormal output */
 	    n = -1022 - iy;
 	    if(n<=20) {
@@ -145,8 +133,7 @@ static double one = 1.0, Zero[] = {0.0, -0.0,};
 	    } else {
 		lx = hx>>(n-32); hx = sx;
 	    }
-	    *(n0+px) = hx|sx;
-	    *(n1+px) = lx;
+	    INSERT_WORDS(x,hx|sx,lx);
 	    x *= one;		/* create necessary signal */
 	}
 	return x;		/* exact output */

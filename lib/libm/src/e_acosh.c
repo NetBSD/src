@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_acosh.c,v 1.4 1994/03/03 17:04:05 jtc Exp $";
+static char rcsid[] = "$Id: e_acosh.c,v 1.5 1994/08/10 20:30:31 jtc Exp $";
 #endif
 
 /* __ieee754_acosh(x)
@@ -28,14 +28,8 @@ static char rcsid[] = "$Id: e_acosh.c,v 1.4 1994/03/03 17:04:05 jtc Exp $";
  *	acosh(NaN) is NaN without signal.
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double 
@@ -54,8 +48,8 @@ ln2	= 6.93147180559945286227e-01;  /* 0x3FE62E42, 0xFEFA39EF */
 {	
 	double t;
 	int hx;
-
-	hx = *(n0+(int*)&x);
+	unsigned int lx;
+	EXTRACT_WORDS(hx,lx,x);
 	if(hx<0x3ff00000) {		/* x < 1 */
 	    return (x-x)/(x-x);
 	} else if(hx >=0x41b00000) {	/* x > 2**28 */
@@ -63,7 +57,7 @@ ln2	= 6.93147180559945286227e-01;  /* 0x3FE62E42, 0xFEFA39EF */
 	        return x+x;
 	    } else 
 		return __ieee754_log(x)+ln2;	/* acosh(huge)=log(2x) */
-	} else if(((hx-0x3ff00000)|*(1-n0+(int*)&x))==0) {
+	} else if(((hx-0x3ff00000)|lx)==0) {
 	    return 0.0;			/* acosh(1) = 0 */
 	} else if (hx > 0x40000000) {	/* 2**28 > x > 2 */
 	    t=x*x;

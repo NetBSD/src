@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_rem_pio2.c,v 1.3 1994/02/18 02:25:42 jtc Exp $";
+static char rcsid[] = "$Id: e_rem_pio2.c,v 1.4 1994/08/10 20:31:21 jtc Exp $";
 #endif
 
 /* __ieee754_rem_pio2(x,y)
@@ -20,7 +20,8 @@ static char rcsid[] = "$Id: e_rem_pio2.c,v 1.3 1994/02/18 02:25:42 jtc Exp $";
  * use __kernel_rem_pio2()
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 /*
  * Table of constants for 2/pi, 396 Hex digits (476 decimal) of 2/pi 
@@ -91,10 +92,10 @@ pio2_3t =  8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 {
 	double z,w,t,r,fn;
 	double tx[3];
-	int e0,i,j,nx,n,ix,hx,i0;
+	int e0,i,j,nx,n,ix,hx;
+	unsigned int low;
 
-	i0 = ((*(int*)&two24)>>30)^1;	/* high word index */
-	hx = *(i0+(int*)&x);		/* high word of x */
+	GET_HIGH_WORD(hx,x);		/* high word of x */
 	ix = hx&0x7fffffff;
 	if(ix<=0x3fe921fb)   /* |x| ~<= pi/4 , no need for reduction */
 	    {y[0] = x; y[1] = 0; return 0;}
@@ -107,16 +108,19 @@ pio2_3t =  8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 	    if(n<32&&ix!=npio2_hw[n-1]) {	
 		y[0] = r-w;	/* quick check no cancellation */
 	    } else {
+	        unsigned int high;
 	        j  = ix>>20;
 	        y[0] = r-w; 
-	        i = j-(((*(i0+(int*)&y[0]))>>20)&0x7ff);
+		GET_HIGH_WORD(high,y[0]);
+	        i = j-((high>>20)&0x7ff);
 	        if(i>16) {  /* 2nd iteration needed, good to 118 */
 		    t  = r;
 		    w  = fn*pio2_2;	
 		    r  = t-w;
 		    w  = fn*pio2_2t-((t-r)-w);	
 		    y[0] = r-w;
-		    i = j-(((*(i0+(int*)&y[0]))>>20)&0x7ff);
+		    GET_HIGH_WORD(high,y[0]);
+		    i = j-((high>>20)&0x7ff);
 		    if(i>49)  {	/* 3rd iteration need, 151 bits acc */
 		    	t  = r;	/* will cover all possible cases */
 		    	w  = fn*pio2_3;	
@@ -137,9 +141,10 @@ pio2_3t =  8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 	    y[0]=y[1]=x-x; return 0;
 	}
     /* set z = scalbn(|x|,ilogb(x)-23) */
-	*(1-i0+(int*)&z) = *(1-i0+(int*)&x);
+	GET_LOW_WORD(low,x);
+	SET_LOW_WORD(z,low);
 	e0 	= (ix>>20)-1046;	/* e0 = ilogb(z)-23; */
-	*(i0+(int*)&z) = ix - (e0<<20);
+	SET_HIGH_WORD(z, ix - (e0<<20));
 	for(i=0;i<2;i++) {
 		tx[i] = (double)((int)(z));
 		z     = (z-tx[i])*two24;

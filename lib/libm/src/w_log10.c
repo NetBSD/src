@@ -11,14 +11,15 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: w_log10.c,v 1.3 1994/02/18 02:27:58 jtc Exp $";
+static char rcsid[] = "$Id: w_log10.c,v 1.4 1994/08/10 20:35:15 jtc Exp $";
 #endif
 
 /* 
  * wrapper log10(X)
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 
 #ifdef __STDC__

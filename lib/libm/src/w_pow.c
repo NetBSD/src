@@ -1,3 +1,5 @@
+
+
 /* @(#)w_pow.c 5.2 93/10/01 */
 /*
  * ====================================================
@@ -10,15 +12,12 @@
  * ====================================================
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: w_pow.c,v 1.3 1994/02/18 02:28:01 jtc Exp $";
-#endif
-
 /* 
  * wrapper pow(x,y) return x**y
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 
 #ifdef __STDC__
