@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1995/03/18 14:54:35 cgd Exp $
+#	$NetBSD: Makefile,v 1.16 1995/04/18 22:37:46 ragge Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -9,7 +9,7 @@ MAN=	disklabel.5 disklabel.8
 CFLAGS+= -D${MACHINE}
 .endif
 
-.if (${MACHINE} == "i386") || (${MACHINE} == "alpha")
+.if (${MACHINE} == "i386") || (${MACHINE} == "alpha") || (${MACHINE} == "vax")
 CFLAGS+= -DNUMBOOT=2
 .endif
 
