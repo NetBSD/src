@@ -256,7 +256,7 @@ CONFIGURATION
                  tree.  (However, multiple targets may share the same TOOLDIR;
                  the target-dependent files have unique names.)  If unset, a
                  default based on the uname(1) information of the host plat-
-                 form will be created in the .OBJDIR of src/tools.
+                 form will be created in the .OBJDIR of src.
 
                  Default: Unset.
 
