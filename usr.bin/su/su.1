@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	6.12 (Berkeley) 7/29/91
-.\"	$Id: su.1,v 1.6 1994/05/24 06:52:19 deraadt Exp $
+.\"	$Id: su.1,v 1.7 1994/09/05 00:27:10 mycroft Exp $
 .\"
 .Dd July 29, 1991
 .Dt SU 1
@@ -41,7 +41,7 @@
 .Sh SYNOPSIS
 .Nm su
 .Op Fl Kflm
-.Op Ar login
+.Op Ar login Op Ar "shell arguments"
 .Sh DESCRIPTION
 .Nm Su
 requests the Kerberos password for
@@ -50,7 +50,10 @@ requests the Kerberos password for
 .Dq Ar login Ns .root ,
 if no login is provided), and switches to
 that user and group ID after obtaining a Kerberos ticket granting ticket.
-A shell is then executed.
+A shell is then executed, and any additional
+.Ar "shell arguments"
+after the login name
+are passed to the shell.
 .Nm Su
 will resort to the local password file to find the password for
 .Ar login
