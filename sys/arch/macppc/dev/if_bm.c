@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.8 2000/04/07 14:35:58 tsubai Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.9 2000/06/16 14:18:55 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -849,9 +849,6 @@ bmac_mediastatus(ifp, ifmr)
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
 }
 
-#define MC_POLY_BE 0x04c11db7UL		/* mcast crc, big endian */
-#define MC_POLY_LE 0xedb88320UL		/* mcast crc, little endian */
-
 /*
  * Set up the logical address filter.
  */
@@ -862,10 +859,8 @@ bmac_setladrf(sc)
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	int i, j;
 	u_int32_t crc;
 	u_int16_t hash[4];
-	u_int8_t octet;
 
 	/*
 	 * Set up multicast address filter by passing all multicast addresses
@@ -875,15 +870,18 @@ bmac_setladrf(sc)
 	 * the word.
 	 */
 
-	if (ifp->if_flags & IFF_ALLMULTI)
-		goto allmulti;
-
 	if (ifp->if_flags & IFF_PROMISC) {
 		bmac_set_bits(sc, RXCFG, RxPromiscEnable);
-		goto allmulti;
+		return;
+	}
+
+	if (ifp->if_flags & IFF_ALLMULTI) {
+		hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
+		goto chipit;
 	}
 
 	hash[3] = hash[2] = hash[1] = hash[0] = 0;
+
 	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
@@ -895,23 +893,12 @@ bmac_setladrf(sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
-			goto allmulti;
+			hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto chipit;
 		}
 
-		crc = 0xffffffff;
-		for (i = 0; i < ETHER_ADDR_LEN; i++) {
-			octet = enm->enm_addrlo[i];
-
-			for (j = 0; j < 8; j++) {
-				if ((crc & 1) ^ (octet & 1)) {
-					crc >>= 1;
-					crc ^= MC_POLY_LE;
-				}
-				else
-					crc >>= 1;
-				octet >>= 1;
-			}
-		}
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
 
 		/* Just want the 6 most significant bits. */
 		crc >>= 26;
@@ -921,19 +908,15 @@ bmac_setladrf(sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
-	bmac_write_reg(sc, HASH3, hash[3]);
-	bmac_write_reg(sc, HASH2, hash[2]);
-	bmac_write_reg(sc, HASH1, hash[1]);
-	bmac_write_reg(sc, HASH0, hash[0]);
-	ifp->if_flags &= ~IFF_ALLMULTI;
-	return;
 
-allmulti:
-	ifp->if_flags |= IFF_ALLMULTI;
-	bmac_write_reg(sc, HASH3, 0xffff);
-	bmac_write_reg(sc, HASH2, 0xffff);
-	bmac_write_reg(sc, HASH1, 0xffff);
-	bmac_write_reg(sc, HASH0, 0xffff);
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+chipit:
+	bmac_write_reg(sc, HASH0, hash[0]);
+	bmac_write_reg(sc, HASH1, hash[1]);
+	bmac_write_reg(sc, HASH2, hash[2]);
+	bmac_write_reg(sc, HASH3, hash[3]);
+	/* bmac_set_bits(sc, RXCFG, RxHashFilterEnable); */
 }
 
 int
