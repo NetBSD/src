@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.94 2000/10/13 17:53:44 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.95 2000/10/17 02:57:02 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -371,13 +371,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	tcp_seq ack, seq;
 	int flags;
 {
-#ifndef INET6
-	struct route iproute;
-#else
-	struct route_in6 iproute;	/* sizeof(route_in6) > sizeof(route) */
-#endif
 	struct route *ro;
-	struct rtentry *rt;
 	int error, tlen, win = 0;
 	int hlen;
 	struct ip *ip;
@@ -621,14 +615,6 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	ipsec_setsocket(m, NULL);
 #endif /*IPSEC*/
 
-	/*
-	 * If we're doing Path MTU discovery, we need to set DF unless
-	 * the route's MTU is locked.  If we lack a route, we need to
-	 * look it up now.
-	 *
-	 * ip_output() could do this for us, but it's convenient to just
-	 * do it here unconditionally.
-	 */
 	if (tp != NULL && tp->t_inpcb != NULL) {
 		ro = &tp->t_inpcb->inp_route;
 #ifdef IPSEC
@@ -667,60 +653,14 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 #endif
 	}
 #endif
-	else {
-		ro = (struct route *)&iproute;
-		bzero(ro, sizeof(iproute));
-	}
-	if ((rt = ro->ro_rt) == NULL || (rt->rt_flags & RTF_UP) == 0) {
-		if (ro->ro_rt != NULL) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = NULL;
-		}
-		switch (family) {
-		case AF_INET:
-		    {
-			struct sockaddr_in *dst;
-			dst = satosin(&ro->ro_dst);
-			dst->sin_family = AF_INET;
-			dst->sin_len = sizeof(*dst);
-			dst->sin_addr = ip->ip_dst;
-			break;
-		    }
-#ifdef INET6
-		case AF_INET6:
-		    {
-			struct sockaddr_in6 *dst;
-			dst = satosin6(&ro->ro_dst);
-			bzero(dst, sizeof(*dst));
-			dst->sin6_family = AF_INET6;
-			dst->sin6_len = sizeof(*dst);
-			dst->sin6_addr = ip6->ip6_dst;
-			break;
-		    }
-#endif
-		}
-		rtalloc(ro);
-		if ((rt = ro->ro_rt) == NULL) {
-			m_freem(m);
-			switch (family) {
-			case AF_INET:
-				ipstat.ips_noroute++;
-				break;
-#ifdef INET6
-			case AF_INET6:
-				ip6stat.ip6s_noroute++;
-				break;
-#endif
-			}
-			return (EHOSTUNREACH);
-		}
-	}
+	else
+		ro = NULL;
+
 	switch (family) {
 	case AF_INET:
-		if (ip_mtudisc != 0 && (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
-			ip->ip_off |= IP_DF;
-
-		error = ip_output(m, NULL, ro, 0, NULL);
+		error = ip_output(m, NULL, ro,
+		    (ip_mtudisc ? IP_MTUDISC : 0),
+		    NULL);
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -731,11 +671,6 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	default:
 		error = EAFNOSUPPORT;
 		break;
-	}
-
-	if (ro == (struct route *)&iproute) {
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = NULL;
 	}
 
 	return (error);
