@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.y,v 1.6 1999/07/25 00:24:38 hubertf Exp $	*/
+/*	$NetBSD: grammar.y,v 1.7 1999/07/26 21:14:21 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)grammar.y	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: grammar.y,v 1.6 1999/07/25 00:24:38 hubertf Exp $");
+__RCSID("$NetBSD: grammar.y,v 1.7 1999/07/26 21:14:21 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -253,7 +253,6 @@ Apoint:
 		sp->airport[sp->num_airports].y = $3;
 		sp->airport[sp->num_airports].dir = dir;
 		check_point($2, $3);
-		check_adir($2, $3, dir);
 		sp->num_airports++;
 		}
 	;
@@ -375,12 +374,6 @@ check_edir(x, y, dir)
 	}
 	if (bad)
 		yyerror("Bad direction for entrance at exit.");
-}
-
-void
-check_adir(x, y, dir)
-	int x __attribute__((__unused__)), y __attribute__((__unused__)), dir __attribute__((__unused__));
-{
 }
 
 int
