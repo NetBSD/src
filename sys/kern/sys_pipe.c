@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.6 2001/07/17 06:05:28 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.7 2001/07/17 18:18:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -1128,8 +1128,8 @@ retry:
 		return (error);
 	}
 
-	uio->uio_offset += bcnt;
 	uio->uio_resid  -= bcnt;
+	/* uio_offset not updated, not set/uset for write(2) */
 
 	return (0);
 }
@@ -1222,7 +1222,7 @@ pipe_write(fp, offset, uio, cred, flags)
 		 * away on us.
 		 */
 		if ((uio->uio_iov[0].iov_len >= PIPE_MINDIRECT) &&
-		    (uio->uio_offset == 0) &&
+		    (uio->uio_resid == orig_resid) &&
 		    (fp->f_flag & FNONBLOCK) == 0 &&
 		    (wpipe->pipe_map.kva || (amountpipekva < limitpipekva))) {
 			error = pipe_direct_write(wpipe, uio);
