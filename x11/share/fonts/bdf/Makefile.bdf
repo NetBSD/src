@@ -1,0 +1,43 @@
+#	$NetBSD: Makefile.bdf,v 1.1.1.1 2003/09/11 18:55:44 lukem Exp $
+
+FILESDIR=	${X11FONTDIR}/${FONTSUBDIR}
+.PATH:  	${X11SRCDIR.xc}/fonts/bdf/${FONTSUBDIR}
+
+FONTSUFFIX=	.gz
+FONTGZIP=	| gzip ${GZIPLEVEL:U-9} -cf
+
+BDFTOPCFDIR!=	cd ${NETBSDSRCDIR}/x11/tools/bdftopcf && ${PRINTOBJDIR}
+BDFTOPCF=	${BDFTOPCFDIR}/bdftopcf
+
+UCS2ANYDIR!=	cd ${NETBSDSRCDIR}/x11/tools/ucs2any && ${PRINTOBJDIR}
+UCS2ANY=	${UCS2ANYDIR}/ucs2any
+
+
+.for _F _M in ${UCSFILES}						# {
+${_F}-${_M}.bdf: ${_F}.bdf
+	${UCS2ANY} ${.ALLSRC} ${DESTDIR}/${X11FONTDIR}/util/map-${_M} ${_M}
+
+CLEANFILES+=	${_F}-${_M}.bdf
+BDFFILES+=	${_F}-${_M}.bdf
+.endfor									# }
+
+.SUFFIXES: .bdf .pcf${FONTSUFFIX}
+
+.bdf.pcf${FONTSUFFIX}:
+	rm -f ${.TARGET}
+	${BDFTOPCF} -t ${.IMPSRC} ${FONTGZIP} > ${.TARGET}.tmp \
+	&& mv ${.TARGET}.tmp ${.TARGET}
+
+PCFFILES+=	${BDFFILES:S/.bdf$/.pcf${FONTSUFFIX}/}
+CLEANFILES+=	${PCFFILES}
+CLEANFILES+=	${BDFFILES:S/.bdf$/.pcf${FONTSUFFIX}.tmp/}
+
+FILES+=		${PCFFILES}
+.if exists(fonts.alias)
+FILES+=		fonts.alias
+.endif
+
+realall:	${PCFFILES}
+
+
+.include "../Makefile.mkfontdir"
