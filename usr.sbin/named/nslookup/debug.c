@@ -55,7 +55,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)debug.c	5.26 (Berkeley) 3/21/91";
-static char rcsid[] = "$Id: debug.c,v 1.2 1997/04/13 10:52:07 mrg Exp $";
+static char rcsid[] = "$Id: debug.c,v 1.3 1997/04/21 05:49:00 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -78,6 +78,7 @@ static char rcsid[] = "$Id: debug.c,v 1.2 1997/04/13 10:52:07 mrg Exp $";
 #include <resolv.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <string.h>
 #include "res.h"
 
 /*
