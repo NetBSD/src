@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.6 1996/10/25 18:30:52 scottr Exp $	*/
+/*	$NetBSD: iostat.c,v 1.7 1997/05/24 00:48:24 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: iostat.c,v 1.6 1996/10/25 18:30:52 scottr Exp $";
+static char rcsid[] = "$NetBSD: iostat.c,v 1.7 1997/05/24 00:48:24 jtc Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -132,7 +132,7 @@ numlabels(row)
 	int i, col, regions, ndrives;
 
 #define COLWIDTH	14
-#define DRIVESPERLINE	((wnd->maxx - INSET) / COLWIDTH)
+#define DRIVESPERLINE	((getmaxx(wnd) - INSET) / COLWIDTH)
 	for (ndrives = 0, i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i])
 			ndrives++;
@@ -140,7 +140,7 @@ numlabels(row)
 	/*
 	 * Deduct -regions for blank line after each scrolling region.
 	 */
-	linesperregion = (wnd->maxy - row - regions) / regions;
+	linesperregion = (getmaxy(wnd) - row - regions) / regions;
 	/*
 	 * Minimum region contains space for two
 	 * label lines and one line of statistics.
@@ -150,9 +150,9 @@ numlabels(row)
 	col = 0;
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-			if (col + COLWIDTH >= wnd->maxx - INSET) {
+			if (col + COLWIDTH >= getmaxx(wnd) - INSET) {
 				col = 0, row += linesperregion + 1;
-				if (row > wnd->maxy - (linesperregion + 1))
+				if (row > getmaxy(wnd) - (linesperregion + 1))
 					break;
 			}
 			mvwaddstr(wnd, row, col + 4, cur.dk_name[i]);
@@ -175,7 +175,7 @@ barlabels(row)
 	linesperregion = 2 + secs;
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-			if (row > wnd->maxy - linesperregion)
+			if (row > getmaxy(wnd) - linesperregion)
 				break;
 			mvwprintw(wnd, row++, 0, "%3.3s  KBps|", cur.dk_name[i]);
 			mvwaddstr(wnd, row++, 0, "      tps|");
@@ -214,7 +214,7 @@ showiostat()
 		row += 2;
 		for (i = 0; i < dk_ndrive; i++)
 			if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-				if (row > wnd->maxy - linesperregion)
+				if (row > getmaxy(wnd) - linesperregion)
 					break;
 				row = stats(row, INSET, i);
 			}
@@ -227,9 +227,9 @@ showiostat()
 	winsertln(wnd);
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-			if (col + COLWIDTH >= wnd->maxx) {
+			if (col + COLWIDTH >= getmaxx(wnd)) {
 				col = 0, row += linesperregion + 1;
-				if (row > wnd->maxy - (linesperregion + 1))
+				if (row > getmaxy(wnd) - (linesperregion + 1))
 					break;
 				wmove(wnd, row + linesperregion, 0);
 				wdeleteln(wnd);

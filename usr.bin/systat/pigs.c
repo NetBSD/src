@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.4 1996/12/13 19:26:22 scottr Exp $	*/
+/*	$NetBSD: pigs.c,v 1.5 1997/05/24 00:48:29 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-static char rcsid[] = "$NetBSD: pigs.c,v 1.4 1996/12/13 19:26:22 scottr Exp $";
+static char rcsid[] = "$NetBSD: pigs.c,v 1.5 1997/05/24 00:48:29 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -116,8 +116,8 @@ showpigs()
 	qsort(pt, nproc + 1, sizeof (struct p_times), compar);
 	y = 1;
 	i = nproc + 1;
-	if (i > wnd->maxy-1)
-		i = wnd->maxy-1;
+	if (i > getmaxy(wnd)-1)
+		i = getmaxy(wnd)-1;
 	for (k = 0; i > 0 && pt[k].pt_pctcpu > 0.01; i--, y++, k++) {
 		if (pt[k].pt_kp == NULL) {
 			uname = "";
