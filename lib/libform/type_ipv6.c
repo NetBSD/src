@@ -1,4 +1,4 @@
-/*	$NetBSD: type_ipv6.c,v 1.1 2001/02/10 14:51:32 blymn Exp $	*/
+/*	$NetBSD: type_ipv6.c,v 1.2 2001/02/11 12:15:30 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -75,7 +75,7 @@ ipv6_check_field(FIELD *field, char *args)
 	   */
 	buf = keeper;
 	v4_mode = FALSE;
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < ((has_dot == TRUE)? 10 : 8); i++) {
 		if (*buf == '\0')
 			goto FAIL;
 		if ((*buf == ':') && (*(buf + 1) == ':')) {
@@ -159,7 +159,7 @@ ipv6_check_field(FIELD *field, char *args)
 			i--;
 			if (i < 0)
 				goto FAIL;
-			if (!((*p == ':') && (*(p - 1) == ':')))
+			if ((*p == ':') && (*(p - 1) == ':'))
 				break;
 			*p = '\0';
 		} while (/* CONSTCOND */ 1);
@@ -172,9 +172,9 @@ ipv6_check_field(FIELD *field, char *args)
 	   * the cleaned up version.
 	   */
 	if (has_dot == TRUE)
-		i = 6;
+		i = 5;
 	else
-		i = 8;
+		i = 7;
 
 	p = cleaned;
 	compressed = FALSE;
@@ -182,6 +182,7 @@ ipv6_check_field(FIELD *field, char *args)
 	if (vals[0] != 0)
 		p += sprintf(p, "%x", (unsigned int) vals[0]);
 	else {
+		*(p++) = ':';
 		allow_compress = FALSE;
 		compressed = TRUE;
 	}
@@ -209,10 +210,13 @@ ipv6_check_field(FIELD *field, char *args)
 		p += sprintf(p, "%x:", (unsigned int) vals[j]);
 	}
 
-	  /* if the entire v6 part of the address was 0 then add a : */
-	if (compressed == TRUE) {
-		*(p++) = ':';
-		p = '\0';
+	if (vals[j] != 0) {
+		compressed = FALSE;
+		p += sprintf(p, "%x", (unsigned int) vals[j]);
+		if (has_dot == TRUE) {
+			*(p++) = ':';
+			*p = '\0';
+		}
 	}
 	
 	  /* tack on the ipv4 part if it was there before... */
@@ -222,7 +226,7 @@ ipv6_check_field(FIELD *field, char *args)
 			(unsigned int) vals[9]);
 
 	  /* re-set the field buffer to be the reformatted IPv6 address */
-	set_field_buffer(field, 0, buf);
+	set_field_buffer(field, 0, cleaned);
 
 	free(keeper);
 	return TRUE;
