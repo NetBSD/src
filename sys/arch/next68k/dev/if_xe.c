@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.9 2002/09/27 20:34:29 thorpej Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.10 2002/10/01 20:41:22 provos Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -564,7 +564,7 @@ xe_dma_tx_completed(map, arg)
 
 #ifdef DIAGNOSTIC
 	if (!xsc->sc_tx_loaded) {
-		panic("%s: tx completed never loaded ",sc->sc_dev.dv_xname);
+		panic("%s: tx completed never loaded",sc->sc_dev.dv_xname);
 	}
 	if (map != xsc->sc_tx_dmamap) {
 		panic("%s: unexpected tx completed map",sc->sc_dev.dv_xname);
@@ -585,7 +585,7 @@ xe_dma_tx_shutdown(arg)
 
 #ifdef DIAGNOSTIC
 	if (!xsc->sc_tx_loaded) {
-		panic("%s: tx shutdown never loaded ",sc->sc_dev.dv_xname);
+		panic("%s: tx shutdown never loaded",sc->sc_dev.dv_xname);
 	}
 #endif
 
