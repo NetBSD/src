@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.185 2003/10/19 08:15:45 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.186 2003/10/19 10:08:57 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2395,6 +2395,42 @@ distrib/sets/lists/xserver4/md.sparc		1.1
 	postinstall...
 	support XF4 on sparc.
 	Sync with .so additions.
-	sort
+	Sort.
 	[taca, ticket #1523]
+
+lib/libc/arch/sparc64/softfloat/qp.c		1.4-1.5
+
+	Correct unsigned to float conversions, add license, adjust style.
+	Make _Qp_qtoui return the right value for inputs that do not fit into
+	an int value, but are valid unsigned ints. This should fix PR 21414.
+	The same problem exists for _Qp_qtoux, but there is no similar trivial
+	solution to that (I could think of).
+	Pointed out by David Laight.
+	[nakayama, ticket #1517]
+
+distrib/notes/common/main			1.245
+
+	macppc Quick install notes section -- remove scsi-ext references (no 
+	such thing)
+	[mbw, ticket #1518]
+
+sys/kern/kern_allocsys.c			1.19
+
+	Avoid integer overflow during computation of nbuf.
+	[junyoung, ticket #1524]
+
+sys/netinet6/ip6_input.c			1.67
+
+	Fix endian bug in fragment header scanning.
+	[itojun, ticket #1525]
+
+gnu/dist/toolchain/gcc/config/m68k/m68k.c	1.4
+
+	Cast using HOST_WIDE_INT, not unsigned.
+	[matt, ticket #1526]
+
+gnu/dist/toolchain/gcc/config/m68k/m68k.c	1.5
+
+	Keep the unsigned, just add HOST_WIDE_INT.
+	[matt, ticket #1527]
 
