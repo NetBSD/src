@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.454 2001/08/17 00:48:29 thorpej Exp $
+#	$NetBSD: files,v 1.455 2001/09/01 23:50:43 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -122,6 +122,7 @@ defopt	VNODE_OP_NOINLINE
 
 # RAIDframe options
 defopt	RAID_AUTOCONFIG
+defopt	RAID_DIAGNOSTIC
 
 # buffer cache size options
 defopt	opt_bufcache.h	BUFCACHE BUFPAGES
