@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.1 2000/09/18 11:00:33 wdk Exp $
+#	$NetBSD: MAKEDEV,v 1.2 2000/09/29 11:43:48 wdk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -43,14 +43,15 @@
 ###########################################################################
 #
 # Device "make" file.  Valid arguments:
+#	all	all known devices, including local devices.
+#	minimal A minimal set of devices for install disks, etc.
 #	std	standard devices
 #	local	configuration specific devices
 # Tapes:
-#	st*	? tape
+#	st*	MI SCSI tape drives
 # Disks:
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
-#	st*	SCSI tape
 #	ch*	SCSI changer
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
@@ -85,9 +86,16 @@ all)
 	sh $0 lkm random local
 	;;
 
+minimal|ramdisk)
+	sh $0 std
+	sh $0 sd0 sd1 sd2 sd3 sd4 st0 st1 ch0 cd0 cd1 ccd0 ccd1
+	sh $0 md0 pty0 tty0 tty1
+	;;
+
 floppy)
 	sh $0 std sd0 sd1 cd0 st0 st1 pty0 tty0 tty1 md0
 	;;
+
 
 std)
 	rm -f console tty kmem mem null zero drum klog \
