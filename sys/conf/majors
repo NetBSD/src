@@ -1,6 +1,10 @@
-# $NetBSD: majors,v 1.1 2003/10/10 21:26:38 jdolecek Exp $
+# $NetBSD: majors,v 1.2 2003/10/10 22:41:39 jdolecek Exp $
 #
-# Device majors for Machine-Independent drivers. Majors below 192 are
-# reserved for machine-dependent drivers and for traditional machine-specific
-# major mapping.
-
+# Device majors for Machine-Independent drivers.
+#
+# Majors 0-143 are reserved for machine-dependent drivers and
+# for traditional machine-specific MI driver major mapping.
+#
+# Majors 144-159 are reserved for local/vendor use.
+#
+# Majors 160-255 are used for the MI drivers.
