@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.33 1998/06/02 02:14:21 scottr Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.34 1998/06/02 03:21:42 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -79,7 +79,7 @@ grfiv_match(parent, cf, aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	bus_space_handle_t bsh;
-	int found, sense;
+	int found;
 	u_int base;
 
 	found = 1;
