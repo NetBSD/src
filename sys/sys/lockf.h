@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.h,v 1.11 2003/03/05 18:28:23 mycroft Exp $	*/
+/*	$NetBSD: lockf.h,v 1.12 2003/05/01 12:49:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -75,27 +75,8 @@ struct lockf {
 #ifdef _KERNEL
 
 __BEGIN_DECLS
-void	 lf_addblock __P((struct lockf *, struct lockf *));
 int	 lf_advlock __P((struct vop_advlock_args *, struct lockf **, off_t));
-int	 lf_clearlock __P((struct lockf *));
-int	 lf_findoverlap __P((struct lockf *,
-	    struct lockf *, int, struct lockf ***, struct lockf **));
-struct lockf *
-	 lf_getblock __P((struct lockf *));
-int	 lf_getlock __P((struct lockf *, struct flock *));
-int	 lf_setlock __P((struct lockf *));
-void	 lf_split __P((struct lockf *, struct lockf *));
-void	 lf_wakelock __P((struct lockf *));
 __END_DECLS
-
-#ifdef LOCKF_DEBUG
-extern int lockf_debug;
-
-__BEGIN_DECLS
-void	lf_print __P((char *, struct lockf *));
-void	lf_printlist __P((char *, struct lockf *));
-__END_DECLS
-#endif /* LOCKF_DEBUG */
 
 #endif /* _KERNEL */
 
