@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.1 1995/02/21 04:15:03 brezak Exp $	*/
+/*	$NetBSD: pss.c,v 1.2 1995/03/21 14:05:28 brezak Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pss.c,v 1.1 1995/02/21 04:15:03 brezak Exp $
+ *	$Id: pss.c,v 1.2 1995/03/21 14:05:28 brezak Exp $
  */
 
 /*
@@ -240,7 +240,7 @@ static u_char wss_dma_bits[4] = {1, 2, 0, 3};
 #endif
 
 struct cfdriver psscd = {
-	NULL, "pss", pssprobe, pssattach, DV_DULL, sizeof(struct pss_softc)
+	NULL, "pss", pssprobe, pssattach, DV_DULL, sizeof(struct pss_softc), 1
 };
 
 struct cfdriver spcd = {
@@ -756,8 +756,8 @@ pss_found:
 	}
     }
     else {
-	if (pss_testirq(sc, (ffs(ia->ia_irq) - 1)) == 0) {
-	    printf("pss: configured IRQ unavailable (%d)\n", (ffs(ia->ia_irq) - 1));
+	if (pss_testirq(sc, ia->ia_irq) == 0) {
+	    printf("pss: configured IRQ unavailable (%d)\n", ia->ia_irq);
 	    return 0;
 	}
     }
@@ -771,7 +771,7 @@ pss_found:
     ia->ia_iosize = PSS_NPORT;
 
     /* Initialize PSS irq and dma */
-    pss_setint((ffs(ia->ia_irq) - 1), sc->sc_iobase+PSS_CONFIG);
+    pss_setint(ia->ia_irq, sc->sc_iobase+PSS_CONFIG);
     pss_setdma(sc->sc_drq, sc->sc_iobase+PSS_CONFIG);
 
 	
