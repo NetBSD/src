@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr_mp.S,v 1.4.8.2 2002/08/01 02:43:12 nathanw Exp $	*/
+/*	$NetBSD: trap_subr_mp.S,v 1.4.8.3 2002/08/06 22:47:12 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -664,13 +664,13 @@ s_trap:
 
 k_trap:
 	FRAME_SETUP(CI_TEMPSAVE)
+trapagain:
 /* Now we can recover interrupts again: */
 	mfmsr	7
 	ori	7,7,(PSL_EE|PSL_ME|PSL_RI)@l
 	mtmsr	7
 	isync
 /* Call C trap code: */
-trapagain:
 	addi	3,1,8
 	bl	_C_LABEL(trap)
 	.globl	trapexit
@@ -683,6 +683,56 @@ trapexit:
 	lwz	5,FRAME_SRR1+8(1)
 	mtcr	5
 	bc	4,17,1f			/* branch if PSL_PR is false */
+	GET_CPUINFO(3)
+	lwz	4,CI_ASTPENDING(3)
+	andi.	4,4,1
+	beq	1f
+	li	6,EXC_AST
+	stw	6,FRAME_EXC+8(1)
+	b	trapagain
+1:
+	FRAME_LEAVE(CI_TEMPSAVE)
+	rfi
+
+/* 
+ * Trap handler for syscalls (EXC_SC)
+ */
+
+	.globl	_C_LABEL(sctrap),_C_LABEL(scsize)
+_C_LABEL(sctrap):
+	mtsprg	1,1			/* save SP */
+	GET_CPUINFO(1)
+	stmw	28,CI_TEMPSAVE(1)	/* free r28-r31 */
+	mflr	28			/* save LR */
+	mfcr	29			/* save CR */
+	bla	s_sctrap
+	_C_LABEL(scsize) = .-_C_LABEL(sctrap)
+
+s_sctrap:
+	GET_CPUINFO(1)
+	lwz	1,CI_CURPCB(1)
+	addi	1,1,USPACE		/* stack is top of user struct */
+	RESTORE_KERN_SRS(30,31)		/* First enable KERNEL mapping */
+	CPU601_KERN_ENTRY(30,31)
+	FRAME_SETUP(CI_TEMPSAVE)
+/* Now we can recover interrupts again: */
+	mfmsr	7
+	ori	7,7,(PSL_EE|PSL_ME|PSL_RI)@l
+	mtmsr	7
+	isync
+	addi	3,1,8
+/* Call the appropriate syscall handler: */
+	GET_CPUINFO(4)
+	lwz	4,CI_CURLWP(4)
+	lwz	4,L_PROC(4)
+	lwz	4,P_MD_SYSCALL(4)
+	mtctr	4
+	bctrl
+/* Disable interrupts: */
+	mfmsr	3
+	andi.	3,3,~PSL_EE@l
+	mtmsr	3
+/* Test AST pending: */
 	GET_CPUINFO(3)
 	lwz	4,CI_ASTPENDING(3)
 	andi.	4,4,1
@@ -852,7 +902,7 @@ intr_exit:
 	CPU601_KERN_LEAVE(3,4)
 	GET_CPUINFO(4)
 	RESTORE_USER_SRS(3,4)
-	lwz	4,CI_ASTPENDING(4)	 /* Test AST pending */
+	lwz	4,CI_ASTPENDING(4)	/* Test AST pending */
 	andi.	4,4,1
 	beq	1f
 /* Setup for entry to realtrap: */

@@ -1,3 +1,5 @@
+/*	$NetBSD: spr.h,v 1.8.2.7 2002/08/06 22:47:09 nathanw Exp $	*/
+
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
 
@@ -5,7 +7,7 @@
 #define	mtspr(reg, val)							\
 	__asm __volatile("mtspr %0,%1" : : "K"(reg), "r"(val))
 #define	mfspr(reg)							\
-	( { u_int32_t val;						\
+	( { uint32_t val;						\
 	  __asm __volatile("mfspr %0,%1" : "=r"(val) : "K"(reg));	\
 	  val; } )
 #endif /* _LOCORE */
@@ -257,6 +259,16 @@
 #define	SPR_IAC2		0x3f5	/* 4.. Instruction Address Compare 2 */
 #define	SPR_DABR		0x3f5	/* .6. Data Address Breakpoint Register */
 #define	SPR_DAC1		0x3f6	/* 4.. Data Address Compare 1 */
+#define SPR_MSSCR0		0x3f6	/* .6. Memory SubSystem Control Register */
+#define   MSSCR0_SHDEN		  0x80000000 /* 0: Shared-state enable */
+#define   MSSCR0_SHDPEN3	  0x40000000 /* 1: ~SHD[01] signal enable in MEI mode */
+#define   MSSCR0_L1INTVEN	  0x38000000 /* 2-4: L1 data cache ~HIT intervention enable */
+#define   MSSCR0_L2INTVEN	  0x07000000 /* 5-7: L2 data cache ~HIT intervention enable*/
+#define   MSSCR0_DL1HWF		  0x00800000 /* 8: L1 data cache hardware flush */
+#define   MSSCR0_MBO		  0x00400000 /* 9: must be one */
+#define   MSSCR0_EMODE		  0x00200000 /* 10: MPX bus mode (read-only) */
+#define   MSSCR0_ABD		  0x00100000 /* 11: address bus driven (read-only) */
+#define   MSSCR0_MBZ		  0x000fffff /* 12-31: must be zero */
 #define	SPR_DAC2		0x3f7	/* 4.. Data Address Compare 2 */
 #define	SPR_L2PM		0x3f8	/* .6. L2 Private Memory Control Register */
 #define	SPR_L2CR		0x3f9	/* .6. L2 Control Register */
@@ -291,6 +303,11 @@
 #define   L2CR_L2SL		  0x00008000 /* 16: L2 DLL slow. */
 #define   L2CR_L2DF		  0x00004000 /* 17: L2 differential clock. */
 #define   L2CR_L2BYP		  0x00002000 /* 18: L2 DLL bypass. */
+#define   L2CR_L2FA		  0x00001000 /* 19: L2 flush assist (for software flush). */
+#define   L2CR_L2HWF		  0x00000800 /* 20: L2 hardware flush. */
+#define   L2CR_L2IO		  0x00000400 /* 21: L2 instruction-only. */
+#define   L2CR_L2CLKSTP		  0x00000200 /* 22: L2 clock stop. */
+#define   L2CR_L2DRO		  0x00000100 /* 23: L2DLL rollover checkstop enable. */
 #define   L2CR_L2IP		  0x00000001 /* 31: L2 global invalidate in */
 					     /*     progress (read only). */
 #define	SPR_L3CR		0x3fa	/* .6. L3 Control Register */

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3.2.3 2002/08/01 04:05:46 nathanw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3.2.4 2002/08/06 22:47:11 nathanw Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -53,6 +53,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <powerpc/userret.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 
@@ -87,7 +88,6 @@ syscall_plain(struct trapframe *frame)
 	int n;
 
 	curcpu()->ci_ev_scalls.ev_count++;
-	uvmexp.syscalls++;
 
 	code = frame->fixreg[0];
 	callp = p->p_emul->e_sysent;
@@ -164,6 +164,7 @@ syscall_bad:
 		frame->cr |= 0x10000000;
 		break;
 	}
+	userret(l, frame);
 }
 
 void
@@ -180,9 +181,7 @@ syscall_fancy(struct trapframe *frame)
 	int n;
 
 	KERNEL_PROC_LOCK(l);
-
 	curcpu()->ci_ev_scalls.ev_count++;
-	uvmexp.syscalls++;
 
 	code = frame->fixreg[0];
 	callp = p->p_emul->e_sysent;
@@ -253,6 +252,7 @@ syscall_bad:
 	}
 	KERNEL_PROC_UNLOCK(l);
 	trace_exit(l, code, params, rval, error);
+	userret(l, frame);
 }
 
 void
@@ -306,4 +306,3 @@ child_return(void *arg)
 	/* Profiling?							XXX */
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }
-

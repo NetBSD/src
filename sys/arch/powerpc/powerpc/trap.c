@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53.4.13 2002/08/06 19:33:11 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.4.14 2002/08/06 22:47:12 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,6 +58,7 @@
 #include <machine/trap.h>
 #include <powerpc/altivec.h>
 #include <powerpc/spr.h>
+#include <powerpc/userret.h>
 
 #ifndef MULTIPROCESSOR
 volatile int astpending;
@@ -227,9 +228,6 @@ trap(struct trapframe *frame)
 		trapsignal(l, SIGSEGV, EXC_ISI);
 		KERNEL_PROC_UNLOCK(l);
 		break;
-	case EXC_SC|EXC_USER:
-		(*p->p_md.md_syscall)(frame);
-		break;
 
 	case EXC_FPU|EXC_USER:
 		ci->ci_ev_fpu.ev_count++;
@@ -348,39 +346,7 @@ brain_damage2:
 #endif
 		panic("trap");
 	}
-
-	/* Take pending signals. */
-	{
-		int sig;
-
-		while ((sig = CURSIG(l)) != 0)
-			postsig(sig);
-	}
-
-	/*
-	 * If someone stole the fp or vector unit while we were away,
-	 * disable it
-	 */
-	if ((pcb->pcb_flags & PCB_FPU) &&
-	    (l != ci->ci_fpulwp || pcb->pcb_fpcpu != ci)) {
-		frame->srr1 &= ~PSL_FP;
-	}
-#ifdef ALTIVEC
-	if ((pcb->pcb_flags & PCB_ALTIVEC) &&
-	    (l != ci->ci_veclwp || pcb->pcb_veccpu != ci)) {
-		frame->srr1 &= ~PSL_VEC;
-	}
-	/*
-	 * If the new process isn't the current AltiVec process on this
-	 * cpu, we need to stop any data streams that are active (since
-	 * it will be a different address space).
-	 */
-	if (ci->ci_veclwp != NULL && ci->ci_veclwp != l) {
-		__asm __volatile("dssall;sync");
-	}
-#endif
-
-	ci->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
+	userret(l, frame);
 }
 
 static inline void
@@ -726,19 +692,7 @@ startlwp(arg)
 void
 upcallret(struct lwp *l)
 {
-	int sig;
+	struct trapframe *frame = trapframe(l);
 
-	/* Take pending signals. */
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (l->l_proc->p_userret)
-		(l->l_proc->p_userret)(l, l->l_proc->p_userret_arg);
-
-	/* Invoke any pending upcalls */
-	if (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
+	userret(l, frame);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc6xx_machdep.c,v 1.4.2.3 2002/08/01 04:03:52 nathanw Exp $	*/
+/*	$NetBSD: mpc6xx_machdep.c,v 1.4.2.4 2002/08/06 22:47:10 nathanw Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -105,6 +105,7 @@ void
 mpc6xx_init(void (*handler)(void))
 {
 	extern int trapcode, trapsize;
+	extern int sctrap, scsize;
 	extern int alitrap, alisize;
 	extern int dsitrap, dsisize;
 	extern int isitrap, isisize;
@@ -163,6 +164,10 @@ mpc6xx_init(void (*handler)(void))
 			 */
 			break;
 #endif
+		case EXC_SC:
+			size = (size_t)&scsize;
+			memcpy((void *)EXC_SC, &sctrap, size);
+			break;
 		case EXC_ALI:
 			size = (size_t)&alisize;
 			memcpy((void *)EXC_ALI, &alitrap, size);

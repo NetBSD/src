@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17.8.2 2002/04/17 00:03:42 nathanw Exp $	*/
+/*	$NetBSD: clock.c,v 1.17.8.3 2002/08/06 22:47:06 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -231,17 +231,6 @@ found:
 	asm volatile ("mftb %0" : "=r"(lasttb));
 	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 	asm volatile ("mtmsr %0" :: "r"(msr));
-}
-
-static __inline u_quad_t
-mftb(void)
-{
-	u_long scratch;
-	u_quad_t tb;
-	
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
-	    : "=r"(tb), "=r"(scratch));
-	return tb;
 }
 
 /*

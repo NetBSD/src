@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.24.6.4 2002/08/01 02:42:26 nathanw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.24.6.5 2002/08/06 22:47:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -55,6 +55,7 @@
 #include <machine/fpu.h>
 #include <machine/pcb.h>
 #include <machine/pio.h>
+#include <machine/trap.h>
 
 int cpumatch(struct device *, struct cfdata *, void *);
 void cpuattach(struct device *, struct device *, void *);
@@ -185,9 +186,13 @@ cpu_spinup(self, ci)
 	int i;
 	struct pcb *pcb;
 	struct pglist mlist;
+	int pvr, vers;
 	int error;
 	int size = 0;
 	char *cp;
+
+	pvr = mfpvr();
+	vers = pvr >> 16;
 
 	/*
 	 * Allocate some contiguous pages for the idle PCB and stack
@@ -238,8 +243,34 @@ cpu_spinup(self, ci)
 	asm volatile ("sync; isync");
 
 	if (openpic_base) {
-		/* XXX */
-		panic("cpu_spinup");
+		u_int kl_base = 0x80000000;	/* XXX */
+		u_int gpio = kl_base + 0x5c;	/* XXX */
+		uint64_t tb;
+
+		*(u_int *)EXC_RST =		/* ba cpu_spinup_trampoline */
+		    0x48000002 | (u_int)cpu_spinup_trampoline;
+		__syncicache((void *)EXC_RST, 0x100);
+
+		h->running = -1;
+
+		/* Start secondary cpu. */
+		out8(gpio, 4);
+		out8(gpio, 5);
+
+		/* Sync timebase. */
+		tb = mftb();
+		tb += 100000;  /* 3ms @ 33MHz */
+
+		h->tbu = tb >> 32;
+		h->tbl = tb & 0xffffffff;
+
+		while (tb > mftb())
+			;
+
+		asm volatile ("sync; isync");
+		h->running = 0;
+
+		delay(500000);
 	} else {
 		/* Start secondary cpu and stop timebase. */
 		out32(0xf2800000, (int)cpu_spinup_trampoline);
@@ -312,10 +343,15 @@ cpu_hatch()
 	     "mtdbatl 0,%0; mtdbatu 0,%1;"
 		:: "r"(battable[0].batl), "r"(battable[0].batu));
 
-	/* XXX obio (for now) */
-	asm ("mtibatl 1,%0; mtibatu 1,%1;"
-	     "mtdbatl 1,%0; mtdbatu 1,%1;"
-		:: "r"(battable[0xf].batl), "r"(battable[0xf].batu));
+	if (openpic_base) {
+		asm ("mtibatl 1,%0; mtibatu 1,%1;"
+		     "mtdbatl 1,%0; mtdbatu 1,%1;"
+			:: "r"(battable[0x8].batl), "r"(battable[0x8].batu));
+	} else {
+		asm ("mtibatl 1,%0; mtibatu 1,%1;"
+		     "mtdbatl 1,%0; mtdbatu 1,%1;"
+			:: "r"(battable[0xf].batl), "r"(battable[0xf].batu));
+	}
 
 	for (i = 0; i < 16; i++)
 		asm ("mtsrin %0,%1" :: "r"(h->sr[i]), "r"(i << ADDR_SR_SHFT));
@@ -329,9 +365,23 @@ cpu_hatch()
 	asm volatile ("mtmsr %0" :: "r"(msr));
 
 	asm volatile ("sync; isync");
-	h->running = 1;
+
+	if (openpic_base) {
+		/* Sync timebase. */
+		u_int tbu = h->tbu;
+		u_int tbl = h->tbl;
+		while (h->running == -1)
+			;
+		asm volatile ("sync; isync");
+		asm volatile ("mttbl %0" :: "r"(0));
+		asm volatile ("mttbu %0" :: "r"(tbu));
+		asm volatile ("mttbl %0" :: "r"(tbl));
+	}
 
 	cpu_setup(h->self, h->ci);
+
+	h->running = 1;
+	asm volatile ("sync; isync");
 
 	while (start_secondary_cpu == 0)
 		;
@@ -341,7 +391,9 @@ cpu_hatch()
 	printf("cpu%d: started\n", cpu_number());
 	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 
-	if (!openpic_base)
+	if (openpic_base)
+		openpic_set_priority(cpu_number(), 0);
+	else
 		out32(HH_INTR_SECONDARY, ~0);	/* Reset interrupt. */
 
 	curcpu()->ci_ipending = 0;
@@ -365,11 +417,11 @@ macppc_send_ipi(ci, mesg)
 {
 	int cpu_id = ci->ci_cpuid;
 
-	/* printf("send_ipi(%d,%d)\n", cpu_id, mesg); */
+	/* printf("send_ipi(%d, 0x%lx)\n", cpu_id, mesg); */
 	atomic_setbits_ulong(&IPI[cpu_id], mesg);
 
 	if (openpic_base) {
-		/* XXX */
+		openpic_write(OPENPIC_IPI(cpu_number(), 1), 1 << cpu_id);
 	} else {
 		switch (cpu_id) {
 		case 0:

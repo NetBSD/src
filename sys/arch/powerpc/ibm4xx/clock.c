@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2.4.3 2002/08/01 02:43:00 nathanw Exp $	*/
+/*	$NetBSD: clock.c,v 1.2.4.4 2002/08/06 22:47:08 nathanw Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -54,7 +54,6 @@ static volatile int tickspending;
 
 void decr_intr(struct clockframe *);	/* called from trap_subr.S */
 void stat_intr(struct clockframe *);	/* called from trap_subr.S */
-static inline u_quad_t mftb(void);
 
 #ifdef FAST_STAT_CLOCK
 /* Stat clock runs at ~ 1.5KHz */
@@ -131,8 +130,9 @@ decr_intr(struct clockframe *frame)
 void
 cpu_initclocks(void)
 {
+
 	ticks_per_intr = ticks_per_sec / hz;
-	stathz = profhz = ticks_per_sec / (1<<PERIOD_POWER);
+	stathz = profhz = ticks_per_sec / (1 << PERIOD_POWER);
 	printf("Setting PIT to %ld/%d = %ld\n", ticks_per_sec, hz, ticks_per_intr);
 	asm volatile ("mftb %0" : "=r"(lasttb));
 	mtspr(SPR_PIT, ticks_per_intr);
@@ -154,17 +154,6 @@ calc_delayconst(void)
 
 	/* Make sure that timers run at CPU frequency */
 	mtdcr(DCR_CPC0_CR1, mfdcr(DCR_CPC0_CR1) & ~CPC0_CR1_CETE);
-}
-
-static inline u_quad_t
-mftb(void)
-{
-	u_long scratch;
-	u_quad_t tb;
-
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
-	    : "=r"(tb), "=r"(scratch));
-	return tb;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.6.9 2002/08/01 04:03:21 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.6.10 2002/08/06 22:47:09 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -172,6 +172,40 @@ mtmsr(int msr)
 {
 
 	asm volatile ("mtmsr %0" : : "r"(msr));
+}
+
+static __inline uint32_t
+mftbl(void)
+{
+	uint32_t tbl;
+
+	asm volatile ("mftbl %0" : "=r"(tbl));
+	return tbl;
+}
+
+static __inline uint64_t
+mftb(void)
+{
+	uint64_t tb;
+	int tmp;
+
+	asm volatile ("
+1:	mftbu %0	\n\
+	mftb %0+1	\n\
+	mftbu %1	\n\
+	cmplw %0,%1	\n\
+	bne- 1b"
+	    : "=r"(tb), "=r"(tmp));
+	return tb;
+}
+
+static __inline uint32_t
+mfpvr(void)
+{
+	uint32_t pvr;
+
+	asm volatile ("mfpvr %0" : "=r"(pvr));
+	return (pvr);
 }
 
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
