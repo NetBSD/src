@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.27 1998/05/28 02:26:00 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.28 1998/06/26 17:53:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -53,7 +53,9 @@
 static void pci_conf_print_common __P((pci_chipset_tag_t, pcitag_t,
     const pcireg_t *regs));
 static void pci_conf_print_bar __P((pci_chipset_tag_t, pcitag_t, 
-    const pcireg_t *regs, int));
+    const pcireg_t *regs, int, const char *));
+static void pci_conf_print_regs __P((const pcireg_t *regs, int first,
+    int pastlast));
 static void pci_conf_print_type0 __P((pci_chipset_tag_t, pcitag_t,
     const pcireg_t *regs));
 static void pci_conf_print_type1 __P((pci_chipset_tag_t, pcitag_t,
@@ -450,11 +452,12 @@ pci_conf_print_common(pc, tag, regs)
 }
 
 static void
-pci_conf_print_bar(pc, tag, regs, reg)
+pci_conf_print_bar(pc, tag, regs, reg, name)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	const pcireg_t *regs;
 	int reg;
+	const char *name;
 {
 	int s;
 	pcireg_t mask, rval;
@@ -488,10 +491,16 @@ pci_conf_print_bar(pc, tag, regs, reg)
 	} else
 		mask = 0;
 
-	printf("    Base address register at 0x%02x: ", reg);
+	printf("    Base address register at 0x%02x", reg);
+	if (name)
+		printf(" (%s)", name);
+	printf("\n      ");
 	if (rval == 0) {
 		printf("not implemented(?)\n");
-	} else if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM) {
+		return;
+	}
+	printf("type: ");
+	if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM) {
 		const char *type, *cache;
 
 		switch (PCI_MAPREG_MEM_TYPE(rval)) {
@@ -513,16 +522,42 @@ pci_conf_print_bar(pc, tag, regs, reg)
 		else
 			cache = "non";
 		printf("%s %scacheable memory\n", type, cache);
-		printf("      base address: 0x%08x, size: 0x%08x\n",
+		printf("      base: 0x%08x, size: 0x%08x\n",
 		    PCI_MAPREG_MEM_ADDR(rval),
 		    PCI_MAPREG_MEM_SIZE(mask));
 	} else {
 		printf("i/o\n");
-		printf("      base address: 0x%08x, size: 0x%08x\n",
+		printf("      base: 0x%08x, size: 0x%08x\n",
 		    PCI_MAPREG_IO_ADDR(rval),
 		    PCI_MAPREG_IO_SIZE(mask));
 	}
 }
+
+static void
+pci_conf_print_regs(regs, first, pastlast)
+	const pcireg_t *regs;
+	int first, pastlast;
+{
+	int off, needaddr, neednl;
+
+	needaddr = 1;
+	neednl = 0;
+	for (off = first; off < pastlast; off += 4) {
+		if ((off % 16) == 0 || needaddr) {
+			printf("    0x%02x:", off);
+			needaddr = 0;
+		}
+		printf(" 0x%08x", regs[o2i(off)]);
+		neednl = 1;
+		if ((off % 16) == 12) {
+			printf("\n");
+			neednl = 0;
+		}
+	}
+	if (neednl)
+		printf("\n");
+}
+
 static void
 pci_conf_print_type0(pc, tag, regs)
 	pci_chipset_tag_t pc;
@@ -533,7 +568,7 @@ pci_conf_print_type0(pc, tag, regs)
 	pcireg_t rval;
 
 	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += 4)
-		pci_conf_print_bar(pc, tag, regs, off);
+		pci_conf_print_bar(pc, tag, regs, off, NULL);
 
 	printf("    Cardbus CIS Pointer: 0x%08x\n", regs[o2i(0x28)]);
 
@@ -593,7 +628,7 @@ pci_conf_print_type1(pc, tag, regs)
 	 */
 
 	for (off = 0x10; off < 0x18; off += 4)
-		pci_conf_print_bar(pc, tag, regs, off);
+		pci_conf_print_bar(pc, tag, regs, off, NULL);
 
 	printf("    Primary bus number: 0x%02x\n",
 	    (regs[o2i(0x18)] >> 0) & 0xff);
@@ -705,7 +740,6 @@ pci_conf_print_type2(pc, tag, regs)
 	pcitag_t tag;
 	const pcireg_t *regs;
 {
-	int off;
 	pcireg_t rval;
 
 	/*
@@ -717,8 +751,8 @@ pci_conf_print_type2(pc, tag, regs)
 	 * respect to various standards. (XXX)
 	 */
 
-	for (off = 0x10; off < 0x14; off += 4)
-		pci_conf_print_bar(pc, tag, regs, off);
+	pci_conf_print_bar(pc, tag, regs, 0x10,
+	    "CardBus socket/ExCA registers");
 
 	printf("    Reserved @ 0x14: 0x%04x\n",
 	    (regs[o2i(0x14)] >> 0) & 0xffff);
@@ -814,6 +848,12 @@ pci_conf_print_type2(pc, tag, regs)
 	onoff("Memory window 0 prefetchable", 0x0100);
 	onoff("Memory window 1 prefetchable", 0x0200);
 	onoff("Write posting enable", 0x0400);
+
+	rval = regs[o2i(0x40)];
+	printf("    Subsystem vendor ID: 0x%04x\n", PCI_VENDOR(rval));
+	printf("    Subsystem ID: 0x%04x\n", PCI_PRODUCT(rval));
+
+	pci_conf_print_bar(pc, tag, regs, 0x44, "legacy-mode registers");
 }
 
 void
@@ -823,7 +863,7 @@ pci_conf_print(pc, tag, printfn)
 	void (*printfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *);
 {
 	pcireg_t regs[o2i(256)];
-	int off, hdrtype;
+	int off, endoff, hdrtype;
 	const char *typename;
 	void (*typeprintfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *);
 
@@ -832,15 +872,10 @@ pci_conf_print(pc, tag, printfn)
 	for (off = 0; off < 256; off += 4)
 		regs[o2i(off)] = pci_conf_read(pc, tag, off);
 
-#define print16regs(offset)						\
-	printf("    0x%02x: 0x%08x 0x%08x 0x%08x 0x%08x\n", (offset),	\
-	    regs[o2i((offset))], regs[o2i((offset) + 4)],		\
-	    regs[o2i((offset) + 8)], regs[o2i((offset) + 12)]);
-
 	/* common header */
 	printf("  Common header:\n");
-	for (off = 0; off < 16; off += 16)
-		print16regs(off);
+	pci_conf_print_regs(regs, 0, 16);
+
 	printf("\n");
 	pci_conf_print_common(pc, tag, regs);
 	printf("\n");
@@ -852,27 +887,31 @@ pci_conf_print(pc, tag, printfn)
 		/* Standard device header */
 		typename = "\"normal\" device";
 		typeprintfn = &pci_conf_print_type0;
+		endoff = 64;
 		break;
 	case 1:
 		/* PCI-PCI bridge header */
 		typename = "PCI-PCI bridge";
 		typeprintfn = &pci_conf_print_type1;
+		endoff = 64;
 		break;
 	case 2:
 		/* PCI-CardBus bridge header */
 		typename = "PCI-CardBus bridge";
 		typeprintfn = &pci_conf_print_type2;
+		endoff = 72;
 		break;
 	default:
 		typename = NULL;
 		typeprintfn = 0;
+		endoff = 64;
+		break;
 	}
 	printf("  Type %d ", hdrtype);
 	if (typename != NULL)
 		printf("(%s) ", typename);
 	printf("header:\n");
-	for (off = 16; off < 64; off += 16)
-		print16regs(off);
+	pci_conf_print_regs(regs, 16, endoff);
 	printf("\n");
 	if (typeprintfn)
 		(*typeprintfn)(pc, tag, regs);
@@ -883,8 +922,7 @@ pci_conf_print(pc, tag, printfn)
 
 	/* device-dependent header */
 	printf("  Device-dependent header:\n");
-	for (off = 64; off < 256; off += 16)
-		print16regs(off);
+	pci_conf_print_regs(regs, endoff, 256);
 	printf("\n");
 	if (printfn)
 		(*printfn)(pc, tag, regs);
