@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.6 1996/08/11 04:16:28 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.6 1996/08/11 04:16:28 explorer Exp $";
 #endif /* not lint */
 
 /*
@@ -141,25 +141,15 @@ static struct nlist namelist[] = {
 	{ "_cnt" },
 #define X_TOTAL		2
 	{ "_total" },
-#define	X_DK_BUSY	3
-	{ "_dk_busy" },
-#define	X_DK_TIME	4
-	{ "_dk_time" },
-#define	X_DK_XFER	5
-	{ "_dk_xfer" },
-#define	X_DK_WDS	6
-	{ "_dk_wds" },
-#define	X_DK_SEEK	7
-	{ "_dk_seek" },
-#define	X_NCHSTATS	8
+#define	X_NCHSTATS	3
 	{ "_nchstats" },
-#define	X_INTRNAMES	9
+#define	X_INTRNAMES	4
 	{ "_intrnames" },
-#define	X_EINTRNAMES	10
+#define	X_EINTRNAMES	5
 	{ "_eintrnames" },
-#define	X_INTRCNT	11
+#define	X_INTRCNT	6
 	{ "_intrcnt" },
-#define	X_EINTRCNT	12
+#define	X_EINTRCNT	7
 	{ "_eintrcnt" },
 	{ "" },
 };
