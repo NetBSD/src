@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * 
- * $Id: print-tcp.c,v 1.1 1993/11/14 21:20:56 deraadt Exp $
+ * $Id: print-tcp.c,v 1.2 1994/04/03 05:17:11 mycroft Exp $
  */
 
 #ifndef lint
@@ -85,6 +85,7 @@ tcp_print(tp, length, ip)
 {
 	register u_char flags;
 	register int hlen;
+	u_short sport, dport;
 
 	if ((u_char *)(tp + 1)  > snapend) {
 		printf("[|tcp]");
@@ -95,25 +96,21 @@ tcp_print(tp, length, ip)
 		return;
 	}
 
-	NTOHS(tp->th_sport);
-	NTOHS(tp->th_dport);
-	NTOHL(tp->th_seq);
-	NTOHL(tp->th_ack);
-	NTOHS(tp->th_win);
-	NTOHS(tp->th_urp);
+	sport = ntohs(tp->th_sport);
+	dport = ntohs(tp->th_dport);
 
 	(void)printf("%s.%s > %s.%s: ",
-		ipaddr_string(&ip->ip_src), tcpport_string(tp->th_sport),
-		ipaddr_string(&ip->ip_dst), tcpport_string(tp->th_dport));
+		ipaddr_string(&ip->ip_src), tcpport_string(sport),
+		ipaddr_string(&ip->ip_dst), tcpport_string(dport));
 
 	if (!qflag) {
 #ifdef X10
 		register int be;
 
-		if ((be = (tp->th_sport == X_TCP_BI_PORT ||
-		    tp->th_dport == X_TCP_BI_PORT)) ||
-		    tp->th_sport == X_TCP_LI_PORT ||
-		    tp->th_dport == X_TCP_LI_PORT) {
+		if ((be = (sport == X_TCP_BI_PORT ||
+		    dport == X_TCP_BI_PORT)) ||
+		    sport == X_TCP_LI_PORT ||
+		    dport == X_TCP_LI_PORT) {
 			register XReq *xp = (XReq *)(tp + 1);
 
 			x10_print(xp, length - sizeof(struct tcphdr), be);
@@ -142,21 +139,24 @@ tcp_print(tp, length, ip)
 		register struct tcp_seq_hash *th;
 		register int rev;
 		struct tha tha;
+		tcp_seq seq = ntohl(tp->th_seq);
+		tcp_seq ack = ntohl(tp->th_ack);
+
 		/*
 		 * Find (or record) the initial sequence numbers for
 		 * this conversation.  (we pick an arbitrary
 		 * collating order so there's only one entry for
 		 * both directions).
 		 */
-		if (tp->th_sport < tp->th_dport ||
-		    (tp->th_sport == tp->th_dport &&
+		if (sport < dport ||
+		    (sport == dport &&
 		     ip->ip_src.s_addr < ip->ip_dst.s_addr)) {
 			tha.src = ip->ip_src, tha.dst = ip->ip_dst;
-			tha.port = tp->th_sport << 16 | tp->th_dport;
+			tha.port = sport << 16 | dport;
 			rev = 0;
 		} else {
 			tha.src = ip->ip_dst, tha.dst = ip->ip_src;
-			tha.port = tp->th_dport << 16 | tp->th_sport;
+			tha.port = dport << 16 | sport;
 			rev = 1;
 		}
 
@@ -173,28 +173,27 @@ tcp_print(tp, length, ip)
 					calloc(1, sizeof (*th));
 			th->addr = tha;
 			if (rev)
-				th->ack = tp->th_seq, th->seq = tp->th_ack - 1;
+				th->ack = seq, th->seq = ack - 1;
 			else
-				th->seq = tp->th_seq, th->ack = tp->th_ack - 1;
+				th->seq = seq, th->ack = ack - 1;
 		} else {
 			if (rev)
-				tp->th_seq -= th->ack, tp->th_ack -= th->seq;
+				seq -= th->ack, ack -= th->seq;
 			else
-				tp->th_seq -= th->seq, tp->th_ack -= th->ack;
+				seq -= th->seq, ack -= th->ack;
 		}
 	}
 	hlen = tp->th_off * 4;
 	length -= hlen;
 	if (length > 0 || flags & (TH_SYN | TH_FIN | TH_RST))
-		(void)printf(" %lu:%lu(%d)", tp->th_seq, tp->th_seq + length, 
-			     length);
+		(void)printf(" %lu:%lu(%d)", seq, seq + length, length);
 	if (flags & TH_ACK)
-		(void)printf(" ack %lu", tp->th_ack);
+		(void)printf(" ack %lu", ack);
 
-	(void)printf(" win %d", tp->th_win);
+	(void)printf(" win %d", ntohs(tp->th_win));
 
 	if (flags & TH_URG)
-		(void)printf(" urg %d", tp->th_urp);
+		(void)printf(" urg %d", ntohs(tp->th_urp));
 	/*
 	 * Handle any options.
 	 */
