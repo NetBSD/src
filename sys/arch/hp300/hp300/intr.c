@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.20 2001/12/08 04:00:22 gmcgarry Exp $	*/
+/*	$NetBSD: intr.c,v 1.21 2002/02/10 00:42:15 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -225,7 +225,7 @@ intr_establish(func, arg, ipl, priority)
 	 */
 
 	if (LIST_FIRST(&hp300_intr_list[ipl].hi_q) == NULL) {
-		hp300_intr_list[ipl].hi_q.lh_first = newih;		
+		LIST_INSERT_HEAD(&hp300_intr_list[ipl].hi_q, newih, ih_q);
 		goto compute;
 	}
 
