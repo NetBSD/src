@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.10 1999/06/15 21:34:05 ad Exp $ */
+/*	 $NetBSD: rasops.c,v 1.11 1999/06/15 22:34:45 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.10 1999/06/15 21:34:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.11 1999/06/15 22:34:45 ad Exp $");
 
 #include "rasops_glue.h"
 
@@ -53,6 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.10 1999/06/15 21:34:05 ad Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
+
+#ifndef _KERNEL
+#include <errno.h>
+#endif
 
 /* ANSI colormap (R,G,B). Upper 8 are high-intensity */
 u_char rasops_cmap[256*3] = {
@@ -255,11 +259,11 @@ rasops_setfont(ri, wantrows, wantcols, clear, center)
 	
 	if (ri->ri_depth < 8 || ri->ri_forcemono) {
 		ri->ri_ops.alloc_attr = rasops_alloc_mattr;
-		ri->ri_caps = WSATTR_UNDERLINE;
+		ri->ri_caps = WSATTR_UNDERLINE | WSATTR_REVERSE;
 	} else {
 		ri->ri_ops.alloc_attr = rasops_alloc_cattr;
 		ri->ri_caps = WSATTR_UNDERLINE | WSATTR_HILIT | 
-		    WSATTR_WSCOLORS;
+		    WSATTR_WSCOLORS | WSATTR_REVERSE;
 	}
 
 	switch (ri->ri_depth) {
@@ -402,7 +406,7 @@ rasops_alloc_mattr(cookie, fg, bg, flg, attr)
 	if (flg & WSATTR_BLINK)
 		return (EINVAL);
 		
-	if (!(flg & WSATTR_REVERSE) ^ !(flg & WSATTR_HILIT)) {
+	if ((flg & WSATTR_REVERSE) != 0) {
 		swap = fg;
 		fg = bg;
 		bg = swap;
