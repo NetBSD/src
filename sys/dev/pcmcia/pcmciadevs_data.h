@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.165 2002/04/30 13:13:49 uch Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.166 2002/05/06 22:28:18 chris Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.165 2002/04/30 13:12:33 uch Exp 
+ *	NetBSD: pcmciadevs,v 1.166 2002/05/06 22:26:48 chris Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -685,6 +685,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Netgear",
 	    "Netgear FA410TXC",	}
+	,
+	{
+	    PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA411,
+	    PCMCIA_CIS_NETGEAR_FA411,
+	    0,
+	    "Netgear",
+	    "Netgear FA411",	}
 	,
 	{
 	    PCMCIA_VENDOR_NI, PCMCIA_PRODUCT_NI_PCMCIA_GPIB,

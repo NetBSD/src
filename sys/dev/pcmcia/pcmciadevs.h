@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.165 2002/04/30 13:13:48 uch Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.166 2002/05/06 22:28:18 chris Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.165 2002/04/30 13:12:33 uch Exp 
+ *	NetBSD: pcmciadevs,v 1.166 2002/05/06 22:26:48 chris Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -453,6 +453,9 @@
 #define	PCMCIA_CIS_NETGEAR_FA410TXC	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NETGEAR_FA410TXC	0x4530
 #define	PCMCIA_STR_NETGEAR_FA410TXC	"Netgear FA410TXC"
+#define	PCMCIA_CIS_NETGEAR_FA411	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NETGEAR_FA411	0x0411
+#define	PCMCIA_STR_NETGEAR_FA411	"Netgear FA411"
 
 /* National Instruments */
 #define	PCMCIA_CIS_NI_PCMCIA_GPIB	{ NULL, NULL, NULL, NULL }
