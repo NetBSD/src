@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.32 2001/10/24 06:36:38 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.33 2001/10/24 09:37:00 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ struct ip6protosw inet6sw[] = {
 #ifdef INET	/* don't call initialization and timeout routines twice */
   0,		0,		0,		tcp_drain,
 #else
-  tcp_init,	tcp_fasttimo,	tcp_slowtimo,	tcp_drain,
+  tcp_init,	0,		tcp_slowtimo,	tcp_drain,
 #endif
   tcp_sysctl,
 },
