@@ -1,4 +1,4 @@
-/*	$NetBSD: vfslist.c,v 1.3 2000/11/01 04:10:02 enami Exp $	*/
+/*	$NetBSD: vfslist.h,v 1.1 2000/11/01 04:10:03 enami Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -33,68 +33,5 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)vfslist.c	8.1 (Berkeley) 5/8/95";
-#else
-__RCSID("$NetBSD: vfslist.c,v 1.3 2000/11/01 04:10:02 enami Exp $");
-#endif
-#endif /* not lint */
-
-#include <err.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#include "vfslist.h"
-
-static int	  skipvfs;
-
-int
-checkvfsname(vfsname, vfslist)
-	const char *vfsname;
-	const char **vfslist;
-{
-
-	if (vfslist == NULL)
-		return (0);
-	while (*vfslist != NULL) {
-		if (strcmp(vfsname, *vfslist) == 0)
-			return (skipvfs);
-		++vfslist;
-	}
-	return (!skipvfs);
-}
-
-const char **
-makevfslist(fslist)
-	char *fslist;
-{
-	const char **av;
-	int i;
-	char *nextcp;
-
-	if (fslist == NULL)
-		return (NULL);
-	if (fslist[0] == 'n' && fslist[1] == 'o') {
-		fslist += 2;
-		skipvfs = 1;
-	}
-	for (i = 0, nextcp = fslist; *nextcp; nextcp++)
-		if (*nextcp == ',')
-			i++;
-	if ((av = malloc((size_t)(i + 2) * sizeof(char *))) == NULL) {
-		warn("malloc");
-		return (NULL);
-	}
-	nextcp = fslist;
-	i = 0;
-	av[i++] = nextcp;
-	while ((nextcp = strchr(nextcp, ',')) != NULL) {
-		*nextcp++ = '\0';
-		av[i++] = nextcp;
-	}
-	av[i++] = NULL;
-	return (av);
-}
+int checkvfsname __P((const char *, const char **));
+const char **makevfslist __P((char *));
