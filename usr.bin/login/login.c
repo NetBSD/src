@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.60 2000/08/02 05:58:36 thorpej Exp $       */
+/*     $NetBSD: login.c,v 1.61 2000/08/02 16:51:17 thorpej Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.60 2000/08/02 05:58:36 thorpej Exp $");
+__RCSID("$NetBSD: login.c,v 1.61 2000/08/02 16:51:17 thorpej Exp $");
 #endif /* not lint */
 
 /*
@@ -298,8 +298,20 @@ main(argc, argv)
 #ifdef KERBEROS5
 	kerror = krb5_init_context(&kcontext);
 	if (kerror) {
-		syslog(LOG_NOTICE, "%s when initializing Kerberos context",
-		    error_message(kerror));
+		/*
+		 * If Kerberos is not configured, that is, we are
+		 * not using Kerberos, do not log the error message.
+		 * However, if Kerberos is configured,  and the
+		 * context init fails for some other reason, we need
+		 * to issue a no tickets warning to the user when the
+		 * login succeeds.
+		 */
+		if (kerror != ENXIO) {	/* XXX NetBSD-local Heimdal hack */
+			syslog(LOG_NOTICE,
+			    "%s when initializing Kerberos context",
+			    error_message(kerror));
+			krb5_configured = 1;
+		}
 		login_krb5_get_tickets = 0;
 	}
 #endif KERBEROS5
