@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1 2002/07/05 13:32:07 scw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.2 2002/07/05 14:05:58 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -330,7 +330,7 @@ syscall_fancy(struct proc *p, struct trapframe *tf)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, callp->sy_argsize, args);
+		ktrsyscall(p, code, args);
 #endif
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
