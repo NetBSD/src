@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.4 2001/11/09 19:04:23 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.5 2001/11/22 18:34:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -56,7 +56,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/frame.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/intr.h>

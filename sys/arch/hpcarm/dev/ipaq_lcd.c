@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcd.c,v 1.3 2001/07/22 09:56:40 takemura Exp $	*/
+/*	$NetBSD: ipaq_lcd.c,v 1.4 2001/11/22 18:34:35 thorpej Exp $	*/
 #define IPAQ_LCD_DEBUG
 
 /*
@@ -52,7 +52,7 @@
 #include <machine/bus.h>
 #include <machine/irqhandler.h>
 #include <machine/cpufunc.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 
 #include <hpcarm/sa11x0/sa11x0_reg.h> 
 #include <hpcarm/sa11x0/sa11x0_gpioreg.h>

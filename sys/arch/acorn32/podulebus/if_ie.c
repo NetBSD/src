@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.1 2001/10/05 22:27:56 reinoud Exp $ */
+/* $NetBSD: if_ie.c,v 1.2 2001/11/22 18:34:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -67,7 +67,7 @@
 #include <sys/device.h>
 #include <machine/io.h>
 #include <machine/irqhandler.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 #include <acorn32/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>
 

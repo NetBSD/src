@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.1 2001/10/05 22:27:54 reinoud Exp $	*/
+/*	$NetBSD: asc.c,v 1.2 2001/11/22 18:34:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -89,7 +89,7 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 
 #include <dev/podulebus/podules.h>
 #include <dev/podulebus/powerromreg.h>

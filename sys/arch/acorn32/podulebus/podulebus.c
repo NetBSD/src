@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.1 2001/10/05 22:27:56 reinoud Exp $ */
+/* $NetBSD: podulebus.c,v 1.2 2001/11/22 18:34:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 #include <sys/device.h>
 #include <uvm/uvm_extern.h>
 #include <machine/io.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 #include <machine/irqhandler.h>
 #include <machine/bootconfig.h>
 #include <machine/pte.h>

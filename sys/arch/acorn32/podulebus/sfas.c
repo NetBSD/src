@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.1 2001/10/05 22:27:59 reinoud Exp $	*/
+/*	$NetBSD: sfas.c,v 1.2 2001/11/22 18:34:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -65,7 +65,7 @@
 #include <machine/cpu.h>
 #include <machine/io.h>
 #include <machine/irqhandler.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 #include <acorn32/podulebus/podulebus.h>
 #include <acorn32/podulebus/sfasreg.h>
 #include <acorn32/podulebus/sfasvar.h>
