@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.19 1995/03/18 14:58:39 cgd Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.20 1995/03/21 01:28:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$NetBSD: mkfs.c,v 1.19 1995/03/18 14:58:39 cgd Exp $";
+static char rcsid[] = "$NetBSD: mkfs.c,v 1.20 1995/03/21 01:28:05 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -455,7 +455,7 @@ mkfs(pp, fsys, fi, fo)
 		sblock.fs_cpc = 0;
 		goto next;
 	}
-	postblsize = sblock.fs_nrpos * sblock.fs_cpc * sizeof(short);
+	postblsize = sblock.fs_nrpos * sblock.fs_cpc * sizeof(int16_t);
 	rotblsize = sblock.fs_cpc * sblock.fs_spc / NSPB(&sblock);
 	totalsbsize = sizeof(struct fs) + rotblsize;
 	if (sblock.fs_nrpos == 8 && sblock.fs_cpc <= 16) {
@@ -684,7 +684,7 @@ initcg(cylno, utime)
 	acg.cg_btotoff = &acg.cg_space[0] - (u_char *)(&acg.cg_firstfield);
 	acg.cg_boff = acg.cg_btotoff + sblock.fs_cpg * sizeof(int32_t);
 	acg.cg_iusedoff = acg.cg_boff + 
-		sblock.fs_cpg * sblock.fs_nrpos * sizeof(short);
+		sblock.fs_cpg * sblock.fs_nrpos * sizeof(int16_t);
 	acg.cg_freeoff = acg.cg_iusedoff + howmany(sblock.fs_ipg, NBBY);
 	if (sblock.fs_contigsumsize <= 0) {
 		acg.cg_nextfreeoff = acg.cg_freeoff +
