@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.42 1998/05/02 18:33:20 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.43 1998/06/25 21:17:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -40,6 +40,7 @@
  *	@(#)kern_fork.c	8.8 (Berkeley) 2/14/95
  */
 
+#include "opt_ktrace.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>
