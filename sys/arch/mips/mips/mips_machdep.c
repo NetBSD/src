@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.167 2003/10/05 17:31:09 tsutsui Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.168 2003/10/30 00:26:54 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.167 2003/10/05 17:31:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.168 2003/10/30 00:26:54 christos Exp $");
 
 #include "opt_cputype.h"
 
@@ -1753,6 +1753,11 @@ cpu_setmcontext(l, mcp, flags)
 		    sizeof (mcp->__fpregs));
 		/* XXX:  Do we restore here?? */
 	}
+
+	if (flags & _UC_SETSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	return (0);
 }
