@@ -23,41 +23,6 @@
  * any improvements or extensions that they make and grant Carnegie Mellon 
  * the rights to redistribute these changes.
  */
-/*
- * HISTORY
- * $Log: db_interface.c,v $
- * Revision 1.2  1993/08/10 08:42:52  glass
- * fixed problem that caused two consecutive segments to be using the same
- * pmeg unknowingly.  still too many printfs, not sure how many are actualy
- * in the machine dependent code.  reaches cpu_startup() where it stops
- * deliberately. next project: autoconfig(), maybe kgdb
- *
- * Revision 1.1  93/08/08  12:22:06  glass
- * lots of changes, too many printfs
- * 
- * Revision 2.6  92/01/03  20:31:01  dbg
- * 	Ignore RB_KDB - always enter DDB.
- * 	[91/11/06            dbg]
- * 
- * Revision 2.5  91/07/31  18:12:50  dbg
- * 	Stack switching support.
- * 	[91/07/12            dbg]
- * 
- * Revision 2.4  91/03/16  14:58:16  rpd
- * 	Replaced db_nofault with db_recover.
- * 	[91/03/14            rpd]
- * 
- * Revision 2.3  90/10/25  14:47:16  rwd
- * 	Added watchpoint support.
- * 	[90/10/16            rwd]
- * 
- * Revision 2.2  90/08/27  22:11:17  dbg
- * 	Reduce lint.
- * 	[90/08/07            dbg]
- * 	Created.
- * 	[90/07/25            dbg]
- * 
- */
 
 /*
  * Interface to new debugger.
@@ -75,7 +40,8 @@
 #include "machine/trap.h"
 #include "machine/mon.h"
 
-#define jmp_buf_t jmp_buf
+extern jmp_buf	db_jmpbuf;		/* XXX used in i386. ? */
+extern jmp_buf	*db_recover;
 
 int	db_active = 0;
 
@@ -95,9 +61,6 @@ kdb_kintr(regs)
 /*
  *  kdb_trap - field a TRACE or BPT trap
  */
-
-extern jmp_buf_t *db_recover;
-
 kdb_trap(type, regs)
 	int	type;
 	register struct mc68020_saved_state *regs;
@@ -180,8 +143,6 @@ kdbprinttrap(type, code)
  * Read bytes from kernel address space for debugger.
  */
 
-extern jmp_buf_t	db_jmpbuf;
-
 void
 db_read_bytes(addr, size, data)
 	vm_offset_t	addr;
@@ -214,8 +175,7 @@ db_write_bytes(addr, size, data)
 	if (addr >= VM_MIN_KERNEL_ADDRESS &&
 	    addr <= (vm_offset_t)&etext)
 	{
-	    mon_printf("stupid db_write_bytes\n");
-#ifdef 0
+#ifdef 0	/* XXX - needs to be cpu_dependent, probably */
 	    oldmap0 = getpgmap(addr);
 	    setpgmap(addr, (oldmap0 & ~PG_PROT) | PG_KW);
 
