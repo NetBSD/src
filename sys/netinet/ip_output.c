@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.89 2001/11/13 00:32:39 lukem Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.90 2001/11/21 06:28:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.89 2001/11/13 00:32:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.90 2001/11/21 06:28:08 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -536,7 +536,6 @@ sendit:
 		}
 		goto bad;
 	}
-    }
 
 	/* be sure to update variables that are affected by ipsec4_output() */
 	ip = mtod(m, struct ip *);
@@ -556,8 +555,10 @@ sendit:
 		}
 	} else {
 		/* nobody uses ia beyond here */
-		ifp = ro->ro_rt->rt_ifp;
+		if (state.encap)
+			ifp = ro->ro_rt->rt_ifp;
 	}
+    }
 
 skip_ipsec:
 #endif /*IPSEC*/
