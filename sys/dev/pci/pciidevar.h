@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.4 2000/04/01 14:32:24 bouyer Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.5 2000/06/06 17:34:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -51,6 +51,11 @@ struct pciide_softc {
 	bus_space_tag_t		sc_dma_iot;
 	bus_space_handle_t	sc_dma_ioh;
 	bus_dma_tag_t		sc_dmat;
+
+	/* For Cypress */
+	const struct cy82c693_handle *sc_cy_handle;
+	int sc_cy_compatchan;
+
 	/* Chip description */
 	const struct pciide_product_desc *sc_pp;
 	/* common definitions */
