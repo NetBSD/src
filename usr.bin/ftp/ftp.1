@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.58 1999/11/11 02:53:03 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.59 1999/11/12 02:50:38 lukem Exp $
 .\"
 .\" Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd November 11, 1999
+.Dd November 12, 1999
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -1203,12 +1203,11 @@ Defaults to
 Defaults to
 .Ev $PAGER .
 .It prompt
-Prompt to display when requesting input.
 Defaults to
-.Sq "ftp> ".
-Refer to
-.Sx COMMAND LINE PROMPT
-below for more information.
+.Ev $FTPPROMPT .
+.It rprompt
+Defaults to
+.Ev $FTPRPROMPT .
 .El
 .It Ic size Ar remote-file
 Return size of
@@ -1276,6 +1275,9 @@ is omitted, the current umask is printed.
 .It Ic unset Ar option
 Unset
 .Ar option .
+Refer to
+.Ic set
+for more information.
 .It Ic usage Ar command
 Print the usage message for
 .Ar command .
@@ -1556,9 +1558,7 @@ server's support for
 processing.
 If the remote server does not support the
 .Dv ABOR
-command, an
-.Ql ftp>
-prompt will not appear until the remote server has completed
+command, the prompt will not appear until the remote server has completed
 sending the requested file.
 .Pp
 If the terminal interrupt key sequence is used whilst
@@ -1799,10 +1799,15 @@ By default, this is bound to the TAB key.
 By default,
 .Nm
 displays a command line prompt of
-.Sq "ftp> "
+.Dq "ftp> "
 to the user.
 This can be changed with the
 .Ic "set prompt"
+command.
+.Pp
+A prompt can be displayed on the right side of the screen (after the
+command input) with the
+.Ic "set rprompt"
 command.
 .Pp
 The following formatting sequences are replaced by the given
@@ -1810,6 +1815,25 @@ information:
 .Bl -tag -width "%% " -offset indent
 .It %/
 The current remote working directory.
+.It %c[[0]\fIn\fR], %.[[0]\fIn\fR]
+The trailing component of the current remote working directory, or
+.Em n
+trailing components if a digit
+.Em n
+is given.
+If
+.Em n
+begins with
+.Sq 0 ,
+the number of skipped components precede the trailing component(s) in
+the format
+.Dq /\fI<skipped>\fRtrailing
+(for
+.Sq %c )
+or
+.Dq ...trailing
+(for
+.Sq %. ) .
 .It %M
 The remote host name.
 .It %m
@@ -1821,11 +1845,6 @@ The remote user name.
 A single
 .Sq % .
 .El
-.Pp
-If a sequence depends upon information only available during a
-connection, then
-.Sq -
-will be used if the connection isn't valid.
 .Sh ENVIRONMENT
 .Nm
 uses the following environment variables.
@@ -1853,6 +1872,20 @@ passive mode
 .Tn FTP
 only
 .El
+.It Ev FTPPROMPT
+Command-line prompt to use.
+Defaults to
+.Dq "ftp> " .
+Refer to
+.Sx COMMAND LINE PROMPT
+for more information.
+.It Ev FTPRPROMPT
+Command-line right side prompt to use.
+Defaults to
+.Dq "" .
+Refer to
+.Sx COMMAND LINE PROMPT
+for more information.
 .It Ev FTPSERVER
 Host to use as gate-ftp server when
 .Ic gate

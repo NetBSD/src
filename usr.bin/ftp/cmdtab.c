@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.33 1999/11/11 02:53:03 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.34 1999/11/12 02:50:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.33 1999/11/11 02:53:03 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.34 1999/11/12 02:50:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -281,5 +281,6 @@ struct option optiontab[] = {
 	{ "no_proxy",	NULL },
 	{ "pager",	NULL },
 	{ "prompt",	NULL },
+	{ "rprompt",	NULL },
 	{ 0 },
 };
