@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.4.4.1 2000/01/31 19:26:57 he Exp $ */
+/*	$NetBSD: ptrace.S,v 1.4.4.2 2000/01/31 19:40:02 he Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,11 +39,11 @@
 
 ENTRY(ptrace)
 #ifdef _REENTRANT
-	stmfd	sp!, {r0, r1, lr}
+	stmfd	sp!, {r0-r3, lr}
 	bl	_C_LABEL(__errno)
 	mov	r1, #0x00000000
 	str	r1, [r0]
-	ldmfd	sp!, {r0, r1, lr}
+	ldmfd	sp!, {r0-r3, lr}
 #else
 	stmfd	sp!, {r0, r1}
 #ifdef PIC
