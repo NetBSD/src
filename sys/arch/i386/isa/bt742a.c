@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: bt742a.c,v 1.28.2.1 1994/07/28 05:24:27 cgd Exp $
+ *      $Id: bt742a.c,v 1.28.2.2 1994/08/01 17:13:34 cgd Exp $
  */
 
 /*
@@ -1200,7 +1200,7 @@ bt_inquire_setup_information(bt)
 		if (!setup.sync[i].valid ||
 		    (!setup.sync[i].offset && !setup.sync[i].period))
 			continue;
-		printf("%s targ %d: sync, offset %d, period %dnsec",
+		printf("\n%s targ %d: sync, offset %d, period %dnsec",
 		    bt->sc_dev.dv_xname, i,
 		    setup.sync[i].offset, setup.sync[i].period * 50 + 200);
 	}
