@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.2 2001/02/23 04:31:19 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.3 2001/02/24 12:43:52 toshii Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -62,6 +62,10 @@ Lcurrent_intr_depth:
 Lspl_masks:
 	.word	_C_LABEL(spl_masks)
 
+	.globl	_C_LABEL(saipic_base)
+_C_LABEL(saipic_base):
+	.word	0x00000000
+
 #ifdef INTR_DEBUG
 Ldbg_str:
 	.asciz	"irq_entry %x %x\n"
@@ -84,8 +88,7 @@ ASENTRY_NP(irq_entry)
 
 	/* Load r8 with the SAIPIC interrupt requests */
 
- 	mov	r10, #(SAIPIC_BASE_0)
- 	add	r10, r10, #(SAIPIC_BASE_1)
+	ldr	r10, [pc, #_C_LABEL(saipic_base) - . - 8]
 	ldr	r8, [r10, #(SAIPIC_IP << 2)]	/* Load IRQ pending register */
 
 #ifdef INTR_DEBUG
@@ -333,8 +336,7 @@ ENTRY(irq_setmasks)
 	ldr	r2, [r2]
 	bic	r1, r1, r2
 
- 	mov	r0, #(SAIPIC_BASE_0)
- 	add	r0, r0, #(SAIPIC_BASE_1)
+	ldr	r0, [pc, #_C_LABEL(saipic_base) - . - 8]
 	str	r1, [r0, #(SAIPIC_MR << 2)]	/* Set mask register */
 
 	/* Restore old cpsr and exit */
