@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.8 1998/06/09 14:02:01 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.9 1998/06/20 18:46:19 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,6 +51,8 @@
 #include <machine/vsbus.h>
 #include <machine/ka43.h>
 #include <machine/clock.h>
+
+#include "smg.h"
 
 void	ka43_conf __P((struct device*, struct device*, void*));
 void	ka43_steal_pages __P((void));
@@ -374,6 +376,15 @@ ka43_steal_pages()
 	MAPPHYS(le_iomem, (NI_IOSIZE/NBPG), VM_PROT_READ|VM_PROT_WRITE);
 	pmap_map((vm_offset_t)le_iomem, LEMEM, LEMEM + NI_IOSIZE,
 	    VM_PROT_READ|VM_PROT_WRITE);
+
+#if NSMG > 0
+	if ((vax_confdata & 0x80) == 0) {
+		MAPVIRT(sm_addr, (SMSIZE / NBPG));
+		pmap_map((vm_offset_t)sm_addr, (vm_offset_t)SMADDR,
+		    (vm_offset_t)SMADDR + SMSIZE, VM_PROT_READ|VM_PROT_WRITE);
+		((struct vs_cpu *)VS_REGS)->vc_vdcorg = 0;
+	}
+#endif
 
 	/*
 	 * if LANCE\'s io-buffer is above 16 MB, then the appropriate flag
