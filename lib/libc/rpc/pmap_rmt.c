@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.14 1998/02/13 05:52:28 lukem Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.15 1998/05/23 13:37:26 tv Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.14 1998/02/13 05:52:28 lukem Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.15 1998/05/23 13:37:26 tv Exp $");
 #endif
 #endif
 
@@ -405,6 +405,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 			goto recv_again;
 		}
 	}
+	stat = RPC_TIMEDOUT;
 done_broad:
 	(void)close(sock);
 	AUTH_DESTROY(unix_auth);
