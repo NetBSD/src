@@ -1,4 +1,4 @@
-.\"	$NetBSD: dcm.4,v 1.6 2001/04/11 19:06:12 wiz Exp $
+.\"	$NetBSD: dcm.4,v 1.7 2001/09/11 06:30:03 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,10 +43,10 @@
 .Sh NAME
 .Nm dcm
 .Nd
-.Tn HP
-98642A serial communications multiplexer
+.Tn HP98642A
+serial communications multiplexer
 .Sh SYNOPSIS
-.Cd "dcm0 at scode? flags 0xe"
+.Cd "dcm* at dio? scode ? flags 0xe"
 .Sh DESCRIPTION
 The
 .Tn 98642A
@@ -94,6 +94,7 @@ The 3 character buffer in the uart has
 overflowed.
 .El
 .Sh SEE ALSO
+.Xr dio 4 ,
 .Xr tty 4
 .Sh BUGS
 Total throughput per card, all ports together, is limited to 76800 bits per

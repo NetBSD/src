@@ -1,4 +1,4 @@
-.\"	$NetBSD: grf.4,v 1.5 2001/09/11 00:08:34 wiz Exp $
+.\"	$NetBSD: grf.4,v 1.6 2001/09/11 06:30:04 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\"
 .\"     from: @(#)grf.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd September 10, 2001
 .Dt GRF 4 hp300
 .Os
 .Sh NAME
@@ -45,6 +45,12 @@
 .Nd
 .Tn HP
 graphics frame buffer device interface
+.Sh SYNOPSIS
+.Cd "grf* at dvbox?"
+.Cd "grf* at gbox?"
+.Cd "grf* at hyper?"
+.Cd "grf* at rbox?"
+.Cd "grf* at topcat?"
 .Sh DESCRIPTION
 This is a generic description of the frame buffer device interface.
 The devices to which this applies are the 98544, 98545 and 98547
@@ -204,8 +210,9 @@ Invalid ioctl specification.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr dv 4 ,
-.Xr gb 4 ,
-.Xr rb 4 ,
-.Xr tc 4 ,
+.Xr dvbox 4 ,
+.Xr gbox 4 ,
+.Xr hyper 4 ,
+.Xr rbox 4 ,
+.Xr topcat 4 ,
 .Xr hil 4
