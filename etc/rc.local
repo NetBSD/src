@@ -1,7 +1,8 @@
 #
 # site-specific startup actions, daemons
 #
-#	@(#)rc.local	5.4 (Berkeley) 12/14/90
+#	From: @(#)rc.local	5.4 (Berkeley) 12/14/90
+#	$Id: rc.local,v 1.4 1993/12/15 07:24:33 mycroft Exp $
 #
 
 T=/tmp/_motd
