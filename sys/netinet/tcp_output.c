@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp_output.c,v 1.20.2.2 1997/11/21 00:45:33 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.20.2.3 1998/01/29 10:24:04 mellon Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1988, 1990, 1993
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_output.c	8.3 (Berkeley) 12/30/93
+ *	@(#)tcp_output.c	8.4 (Berkeley) 5/24/95
  */
 
 #include <sys/param.h>
@@ -141,7 +141,7 @@ tcp_output(tp)
 		 * expected to clock out any data we send --
 		 * slow start to get ack "clock" running again.
 		 */
-		tp->snd_cwnd = txsegsize;
+		tp->snd_cwnd = TCP_INITIAL_WINDOW(txsegsize);
 again:
 	sendalot = 0;
 	off = tp->snd_nxt - tp->snd_una;
@@ -193,15 +193,18 @@ again:
 		 * but we haven't been called to retransmit,
 		 * len will be -1.  Otherwise, window shrank
 		 * after we sent into it.  If window shrank to 0,
-		 * cancel pending retransmit and pull snd_nxt
-		 * back to (closed) window.  We will enter persist
-		 * state below.  If the window didn't close completely,
-		 * just wait for an ACK.
+		 * cancel pending retransmit, pull snd_nxt back
+		 * to (closed) window, and set the persist timer
+		 * if it isn't already going.  If the window didn't
+		 * close completely, just wait for an ACK.
 		 */
 		len = 0;
 		if (win == 0) {
 			tp->t_timer[TCPT_REXMT] = 0;
+			tp->t_rxtshift = 0;
 			tp->snd_nxt = tp->snd_una;
+			if (tp->t_timer[TCPT_PERSIST] == 0)
+				tcp_setpersist(tp);
 		}
 	}
 	if (len > txsegsize) {
@@ -419,8 +422,11 @@ send:
 			m->m_len += len;
 		} else {
 			m->m_next = m_copy(so->so_snd.sb_mb, off, (int) len);
-			if (m->m_next == 0)
-				len = 0;
+			if (m->m_next == 0) {
+				(void) m_freem(m);
+				error = ENOBUFS;
+				goto out;
+			}
 		}
 #endif
 		/*
@@ -624,6 +630,8 @@ out:
 		return (error);
 	}
 	tcpstat.tcps_sndtotal++;
+	if (tp->t_flags & TF_DELACK)
+		tcpstat.tcps_delack++;
 
 	/*
 	 * Data sent (as far as we can tell).
@@ -634,7 +642,8 @@ out:
 	if (win > 0 && SEQ_GT(tp->rcv_nxt+win, tp->rcv_adv))
 		tp->rcv_adv = tp->rcv_nxt + win;
 	tp->last_ack_sent = tp->rcv_nxt;
-	tp->t_flags &= ~(TF_ACKNOW|TF_DELACK);
+	tp->t_flags &= ~TF_ACKNOW;
+	TCP_CLEAR_DELACK(tp);
 	if (sendalot)
 		goto again;
 	return (0);
