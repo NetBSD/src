@@ -1,4 +1,4 @@
-.\"	$NetBSD: skey.1,v 1.5 1996/09/19 19:44:32 thorpej Exp $
+.\"	$NetBSD: skey.1,v 1.6 1997/07/17 17:08:34 phil Exp $
 .\"
 .\"	from: @(#)skey.1	1.1 	10/28/93
 .\"
@@ -8,6 +8,13 @@
 .Sh NAME
 .Nm S/key
 .Nd a one time password system
+.Sh SYNOPSIS
+.Nm skey
+.Op Fl n Ar count
+.Op Fl p Ar password
+.Ar sequence#
+.Op /
+.Ar key
 .Sh DESCRIPTION
 .Nm S/key
 is a procedure for using one time passwords to authenticate access to
@@ -54,6 +61,19 @@ Password sequence numbers count backward from 99.
 You can enter the passwords using small letters, even though
 .Xr skey 1
 prints them capitalized.
+.Pp
+The
+.Fl n Ar count
+argument asks for 
+.Ar count
+password sequences to be printed out ending with the requested
+sequence number.
+.Pp
+The
+.Fl p Ar password
+allows the user to specify the 
+.Nm S/key
+password on the command line.
 .Sh SEE ALSO
 .Xr skeyinit 1 ,
 .Xr skeyinfo 1
