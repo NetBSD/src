@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.31 2003/10/08 04:25:46 lukem Exp $
+.\"	$NetBSD: installboot.8,v 1.32 2003/10/27 16:51:05 cl Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -137,6 +137,11 @@ already exists and the secondary bootstrap file is just being updated:
 and
 .Sy vax .
 .Pp
+The following platform do no require the first step since a single
+bootstrap file is used.  The single bootstrap is installed like the
+primary bootstrap on other platforms:
+.Sy next68k .
+.Pp
 .El
 .Pp
 The options and arguments recognized by
@@ -193,6 +198,7 @@ The following machines are currently supported by
 .Sy macppc ,
 .Sy news68k ,
 .Sy newsmips ,
+.Sy next68k ,
 .Sy pmax ,
 .Sy sparc ,
 .Sy sparc64 ,
@@ -434,6 +440,16 @@ is not found.
 .
 .El
 .
+.Ss NetBSD/next68k files
+.
+.Bl -tag -width /usr/mdec/bootxx_ustarfs
+.
+.It Pa /usr/mdec/boot
+.Nx Ns Tn /next68k
+bootstrap.
+.
+.El
+.
 .Ss NetBSD/sparc64 files
 .
 .Bl -tag -width /usr/mdec/bootxx_ustarfs
@@ -476,6 +492,13 @@ problem for a floppy disk)
 .Dl Ic gzip -9 < sys/arch/i386/compile/mykernel/netbsd > /mnt/netbsd.gz
 .Dl Ic umount /mnt
 .Dl Ic installboot -v /dev/rfd0a /usr/mdec/bootxx_ufs
+.
+.Ss NetBSD/next68k
+Install the bootstrap on to disk
+.Sq sd0 :
+.Dl Ic installboot /dev/rsd0c /usr/mdec/boot
+.Pp
+.
 .Ss NetBSD/pmax
 Install the Berkeley Fast File System primary bootstrap on to disk
 .Sq sd0 :
@@ -559,6 +582,7 @@ Ross Harvey (alpha),
 Michael Hitch (amiga),
 Paul Kranenburg (sparc),
 David Laight (i386),
+Christian Limpach (next68k),
 Luke Mewburn (macppc),
 Matt Thomas (vax),
 and
@@ -584,6 +608,10 @@ ones.
 The size of primary bootstrap programs is restricted to 8KB, even
 though some file systems (e.g., ISO 9660) are able to accommodate larger
 ones.
+.
+.Ss NetBSD/next68k
+The size of bootstrap programs is restricted to the free space before
+the file system at the beginning of the disk minus 8KB.
 .
 .Ss NetBSD/pmax
 The
