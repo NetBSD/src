@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.36 2002/03/05 09:40:41 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.37 2003/04/02 15:35:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -173,7 +173,7 @@ compat_label(dev, strat, lp, osdep)
 		lp->d_interleave = 1;
 		lp->d_flags = 0;
 		lp->d_bbsize = BBSIZE;
-		lp->d_sbsize = SBSIZE;
+		lp->d_sbsize = SBLOCKSIZE;
 		for (part = 0;
 		     part <((MAXPARTITIONS<DEC_NUM_DISK_PARTS) ?
 			    MAXPARTITIONS : DEC_NUM_DISK_PARTS);
