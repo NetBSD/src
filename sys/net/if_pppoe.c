@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.8 2001/11/13 00:49:35 lukem Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.9 2001/12/01 18:25:23 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.8 2001/11/13 00:49:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.9 2001/12/01 18:25:23 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -276,6 +276,9 @@ static struct pppoe_softc *
 pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, struct ifnet *rcvif)
 {
 	struct pppoe_softc *sc, *t;
+
+	if (LIST_EMPTY(&pppoe_softc_list)) return NULL;
+
 	if (len != sizeof sc) return NULL;
 	memcpy(&t, token, len);
 
