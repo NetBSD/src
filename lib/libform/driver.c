@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.2 2001/01/16 01:02:47 blymn Exp $	*/
+/*	$NetBSD: driver.c,v 1.3 2001/01/23 01:59:29 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -287,10 +287,53 @@ form_driver(FORM *form, int c)
 			  /* the following commands modify the buffer, check if
 			     this is allowed first before falling through. */
 			  /* FALLTHROUGH */
+		case REQ_DEL_PREV:
+			  /*
+			   * need to check for the overloading of this
+			   * request.  If overload flag set and we are
+			   * at the start of field this request turns
+			   * into a previous field request. Otherwise
+			   * fallthrough to the field handler.
+			   */
+			fieldp = form->fields[old_field];
+			if ((form->opts & O_BS_OVERLOAD) == O_BS_OVERLOAD) {
+				if ((fieldp->start_char == 0) &&
+				    (fieldp->start_line == 0) &&
+				    (fieldp->hscroll == 0) &&
+				    (fieldp->cursor_xpos == 0)) {
+					update_field =
+						_formi_manipulate_field(form,
+							REQ_PREV_FIELD);
+					break;
+				}
+			}
+
+			  /* FALLTHROUGH */
+		case REQ_NEW_LINE:
+			  /*
+			   * need to check for the overloading of this
+			   * request.  If overload flag set and we are
+			   * at the start of field this request turns
+			   * into a next field request. Otherwise
+			   * fallthrough to the field handler.
+			   */
+			fieldp = form->fields[old_field];
+			if ((form->opts & O_NL_OVERLOAD) == O_NL_OVERLOAD) {
+				if ((fieldp->start_char == 0) &&
+				    (fieldp->start_line == 0) &&
+				    (fieldp->hscroll == 0) &&
+				    (fieldp->cursor_xpos == 0)) {
+					update_field =
+						_formi_manipulate_field(form,
+							REQ_NEXT_FIELD);
+					break;
+				}
+			}
+
+			  /* FALLTHROUGH */
 		case REQ_INS_CHAR:
 		case REQ_INS_LINE:
 		case REQ_DEL_CHAR:
-		case REQ_DEL_PREV:
 		case REQ_DEL_LINE:
 		case REQ_DEL_WORD:
 		case REQ_CLR_EOL:
@@ -298,7 +341,6 @@ form_driver(FORM *form, int c)
 		case REQ_CLR_FIELD:
 		case REQ_OVL_MODE:
 		case REQ_INS_MODE:
-		case REQ_NEW_LINE:
 			  /* check if we are allowed to edit the field and fall
 			   * through if we are.
 			   */
