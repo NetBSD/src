@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.76 2000/06/09 00:00:18 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.77 2000/06/20 02:29:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1399,7 +1399,7 @@ void
 nfs_init()
 {
 
-#if !defined(alpha) && defined(DIAGNOSTIC)
+#if !defined(alpha) && !defined(_LP64) && defined(DIAGNOSTIC)
 	/*
 	 * Check to see if major data structures haven't bloated.
 	 */
