@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.35 1997/04/22 20:20:32 scottr Exp $	*/
+/*	$NetBSD: nubus.c,v 1.36 1997/04/23 13:37:43 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -204,6 +204,8 @@ nubus_attach(parent, self, aux)
 						(caddr_t) &slottype,
 						sizeof(nubus_type)) <= 0)
 					continue;
+
+				rsrcid = r;
 			}
 		}
 
