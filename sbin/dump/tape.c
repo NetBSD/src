@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.41 2003/08/07 10:04:14 agc Exp $	*/
+/*	$NetBSD: tape.c,v 1.42 2004/02/18 10:45:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.41 2003/08/07 10:04:14 agc Exp $");
+__RCSID("$NetBSD: tape.c,v 1.42 2004/02/18 10:45:21 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: tape.c,v 1.41 2003/08/07 10:04:14 agc Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -119,10 +118,6 @@ static int64_t tapea_volume;	/* value of spcl.c_tapea at volume start */
 int master;		/* pid of master, for sending error signals */
 int tenths;		/* length of tape used per block written */
 static int caught;	/* have we caught the signal to proceed? */
-static int ready;	/* have we reached the lock point without having */
-			/* received the SIGUSR2 signal from the prev slave? */
-static jmp_buf jmpbuf;	/* where to jump to if we are ready when the */
-			/* SIGUSR2 arrives from the previous slave */
 
 int
 alloctape(void)
@@ -748,9 +743,6 @@ Exit(int status)
 static void
 proceed(int signo)
 {
-
-	if (ready)
-		longjmp(jmpbuf, 1);
 	caught++;
 }
 
@@ -822,7 +814,7 @@ static void
 doslave(int cmd, int slave_number)
 {
 	int nread, nextslave, size, wrote, eot_count, werror;
-	sigset_t nsigset;
+	sigset_t nsigset, osigset;
 
 	/*
 	 * Need our own seek pointer.
@@ -857,13 +849,14 @@ doslave(int cmd, int slave_number)
 				       quit("master/slave protocol botched.\n");
 			}
 		}
-		if (setjmp(jmpbuf) == 0) {
-			ready = 1;
-			if (!caught)
-				(void) pause();
-		}
-		ready = 0;
+
+		sigemptyset(&nsigset);
+		sigaddset(&nsigset, SIGUSR2);
+		sigprocmask(SIG_BLOCK, &nsigset, &osigset);
+		while (!caught)
+			sigsuspend(&osigset);
 		caught = 0;
+		sigprocmask(SIG_SETMASK, &osigset, NULL);
 
 		/* Try to write the data... */
 		eot_count = 0;
