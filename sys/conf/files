@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.287 1999/05/05 23:57:31 thorpej Exp $
+#	$NetBSD: files,v 1.288 1999/05/06 15:31:42 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -83,6 +83,7 @@ defopt	opt_pmap_new.h	PMAP_NEW
 deffs	FFS EXT2FS
 deffs	fs_mfs.h MFS			# XXX
 deffs	fs_lfs.h LFS
+deffs	fs_ntfs.h NTFS
 deffs	CD9660
 deffs	ADOSFS
 deffs	MSDOSFS
@@ -789,6 +790,11 @@ file nfs/nfs_subs.c			nfsserver | nfs
 file nfs/nfs_syscalls.c			nfsserver | nfs
 file nfs/nfs_vfsops.c			nfs
 file nfs/nfs_vnops.c			nfs
+file ntfs/ntfs_compr.c			ntfs
+file ntfs/ntfs_ihash.c			ntfs
+file ntfs/ntfs_subr.c			ntfs
+file ntfs/ntfs_vfsops.c			ntfs
+file ntfs/ntfs_vnops.c			ntfs
 file ufs/ext2fs/ext2fs_alloc.c		ext2fs
 file ufs/ext2fs/ext2fs_balloc.c		ext2fs
 file ufs/ext2fs/ext2fs_bmap.c		ext2fs
