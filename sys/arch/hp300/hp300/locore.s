@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.66 1997/03/16 09:40:02 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.67 1997/03/16 10:49:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1140,21 +1140,9 @@ _esigcode:
 #include <machine/asm.h>
 
 /*
- * non-local gotos
+ * Use common m68k support routines.
  */
-ENTRY(setjmp)
-	movl	sp@(4),a0	| savearea pointer
-	moveml	#0xFCFC,a0@	| save d2-d7/a2-a7
-	movl	sp@,a0@(48)	| and return address
-	moveq	#0,d0		| return 0
-	rts
-
-ENTRY(longjmp)
-	movl	sp@(4),a0
-	moveml	a0@+,#0xFCFC
-	movl	a0@,sp@
-	moveq	#1,d0
-	rts
+#include <m68k/m68k/support.s>
 
 /*
  * The following primitives manipulate the run queues.  _whichqs tells which
@@ -1904,30 +1892,6 @@ ENTRY(spl0)
 	movw	#PSL_LOWIPL,sp@		| and new SR
 	jra	Lgotsir			| go handle it
 Lspldone:
-	rts
-
-ENTRY(_insque)
-	movw	sr,d0
-	movw	#PSL_HIGHIPL,sr		| atomic
-	movl	sp@(8),a0		| where to insert (after)
-	movl	sp@(4),a1		| element to insert (e)
-	movl	a0@,a1@			| e->next = after->next
-	movl	a0,a1@(4)		| e->prev = after
-	movl	a1,a0@			| after->next = e
-	movl	a1@,a0
-	movl	a1,a0@(4)		| e->next->prev = e
-	movw	d0,sr
-	rts
-
-ENTRY(_remque)
-	movw	sr,d0
-	movw	#PSL_HIGHIPL,sr		| atomic
-	movl	sp@(4),a0		| element to remove (e)
-	movl	a0@,a1
-	movl	a0@(4),a0
-	movl	a0,a1@(4)		| e->next->prev = e->prev
-	movl	a1,a0@			| e->prev->next = e->next
-	movw	d0,sr
 	rts
 
 /*
