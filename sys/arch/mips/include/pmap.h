@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.19 1998/07/26 10:15:36 simonb Exp $	*/
+/*	$NetBSD: pmap.h,v 1.20 1998/11/15 02:34:19 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -103,12 +103,7 @@ typedef struct pv_entry {
 } *pv_entry_t;
 
 #define	PV_UNCACHED	0x0001		/* page is mapped uncached */
-
-/*
- * Defines for pmap_attributes[phys_mach_page];
- */
-#define PMAP_ATTR_MOD	0x01	/* page has been modified */
-#define PMAP_ATTR_REF	0x02	/* page has been referenced */
+#define	PV_MODIFIED	0x0002		/* page has been modified */
 
 
 #ifdef	_KERNEL
@@ -124,6 +119,8 @@ struct pmap kernel_pmap_store;
  *	Bootstrap the system enough to run with virtual memory.
  */
 void	pmap_bootstrap __P((void));
+
+void	pmap_set_modified __P((vm_offset_t));
 
 /*
  * pmap_prefer()  helps reduce virtual-coherency exceptions in
