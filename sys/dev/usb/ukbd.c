@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.76 2001/12/29 02:53:41 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.77 2001/12/29 18:57:16 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.76 2001/12/29 02:53:41 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.77 2001/12/29 18:57:16 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,14 +454,6 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 	struct ukbd_softc *sc = (struct ukbd_softc *)addr;
 	struct ukbd_data *ud = &sc->sc_ndata;
 	int i;
-
-#if 0
-	if (len != ???) {
-		printf("%s: ukbd_intr bad len %d\n",
-		       USBDEVNAME(sc->sc_hdev.sc_dev), len);
-		return;
-	}
-#endif
 
 #ifdef UKBD_DEBUG
 	if (ukbddebug > 5) {
