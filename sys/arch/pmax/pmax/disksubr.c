@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 1998/08/29 16:21:20 mrg Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 1999/01/27 03:12:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -48,7 +48,7 @@
 #define	b_cylin	b_resid
 
 #ifdef COMPAT_ULTRIX
-#include <pmax/stand/dec_boot.h>
+#include <pmax/stand/libsa/dec_boot.h>
 
 extern char *
 compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
