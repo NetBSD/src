@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.3 1999/01/14 18:45:45 castor Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.4 1999/01/15 03:43:56 castor Exp $	*/
 
 /*
  * mips/setjmp.h: machine dependent setjmp-related information.
@@ -7,8 +7,6 @@
  * struct sigcontext to restore it.
  */
 
-#ifndef __JBLEN
-#include <machine/pubassym.h>
+#ifndef _JBLEN		/* Size in longs of jmp_buf */
+#include <machine/pubassym.h> 
 #endif
-
-#define _JBLEN __JBLEN	/* Size in longs of jmp_buf */
