@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.35 2000/12/28 08:11:52 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.36 2000/12/28 21:37:04 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -542,7 +542,7 @@ isp_command_requeue(arg)
 {
 	struct scsipi_xfer *xs = arg;
 	struct ispsoftc *isp = XS_ISP(xs);
-	ISP_LOCK(isp);
+	ISP_ILOCK(isp);
 	switch (ispcmd(xs)) {
 	case SUCCESSFULLY_QUEUED:
 		isp_prt(isp, ISP_LOGINFO,
@@ -566,7 +566,7 @@ isp_command_requeue(arg)
 		scsipi_done(xs);
 		break;
 	}
-	ISP_UNLOCK(isp);
+	ISP_IUNLOCK(isp);
 }
 
 /*
@@ -580,7 +580,7 @@ isp_internal_restart(arg)
 	struct ispsoftc *isp = arg;
 	int result, nrestarted = 0;
 
-	ISP_LOCK(isp);
+	ISP_ILOCK(isp);
 	if (isp->isp_osinfo.blocked == 0) {
 		struct scsipi_xfer *xs;
 		while ((xs = TAILQ_FIRST(&isp->isp_osinfo.waitq)) != NULL) {
@@ -603,7 +603,7 @@ isp_internal_restart(arg)
 		isp_prt(isp, ISP_LOGINFO,
 		    "isp_restart requeued %d commands", nrestarted);
 	}
-	ISP_UNLOCK(isp);
+	ISP_IUNLOCK(isp);
 }
 
 int
