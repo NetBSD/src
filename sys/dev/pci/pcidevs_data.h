@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.97 1998/11/29 01:54:16 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.98 1998/11/29 02:00:33 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.92 1998/11/29 01:54:02 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.93 1998/11/29 02:00:13 thorpej Exp 
  */
 
 /*
@@ -2350,10 +2350,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT83C572 USB Controller",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100,
 	    0,
 	    "VIA Technologies",
-	    "VIA Rhine 10/100 Ethernet",
+	    "VT86C100 (Rhine) 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
