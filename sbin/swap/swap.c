@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.2.2.1 1997/05/06 14:30:51 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2.2.2 1997/05/09 02:29:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -162,7 +162,6 @@ list_swap()
 {
 	int rnswap, nswap = swapon(SWAP_NSWAP, 0, 0);
 	struct swapent *sep;
-	struct swapinfo *sip;
 
 	if (nswap < 1)
 		errx(1, "no swap devices configured");
@@ -170,9 +169,8 @@ list_swap()
 #ifdef DEBUG_SWAPON
 	fprintf(stderr, "SWAP_NSWAP returned %d\n", nswap);
 #endif
-	sip = (struct swapinfo *)malloc(sizeof(int) + nswap * sizeof *sep);
-	sip->si_num = nswap;
-	rnswap = swapon(SWAP_STATS, (void *)sip, nswap);
+	sep = (struct swapent *)malloc(nswap * sizeof(*sep));
+	rnswap = swapon(SWAP_STATS, (void *)sep, nswap);
 #ifdef DEBUG_SWAPON
 	fprintf(stderr, "SWAPSTATS returned %d\n", rnswap);
 #endif
@@ -181,14 +179,12 @@ list_swap()
 	if (nswap != rnswap)
 		warnx("SWAP_STATS gave different value than SWAP_NSWAP");
 
-#if 0
 	/*
 	 * XXX write me.  use kflag and BLOCKSIZE to determine size??  how
 	 * does df do it?  it uses getbsize(3) ...
 	 */
-	for (sep = sip->si_ent; *sep; sep++)
-		printf("%s\n", sep->se_name);
-#endif
+	for (; rnswap-- > 0; sep++)
+		printf("0x%x\n", sep->se_dev);
 }
 
 /*
@@ -234,9 +230,9 @@ do_fstab()
 				pri = atol(s);
 			} else
 				priority = pri;
-			if (swapon(SWAP_ON, fp->fs_spec, (int)priority) < 0) {
+
+			if (swapon(SWAP_ON, fp->fs_spec, (int)priority) < 0)
 				warn("swap_on all: %s", path);
-			}
 		}
 	}
 }
