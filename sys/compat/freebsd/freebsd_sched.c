@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.1.2.2 2002/12/29 19:49:11 thorpej Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.1.2.3 2002/12/29 21:17:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.1.2.2 2002/12/29 19:49:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.1.2.3 2002/12/29 21:17:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -91,7 +91,7 @@ freebsd_sys_sched_setparam(l, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = cp->p_cred;
+		struct pcred *pc = l->l_proc->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -128,7 +128,7 @@ freebsd_sys_sched_getparam(l, v, retval)
 		return EINVAL;
 
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = cp->p_cred;
+		struct pcred *pc = l->l_proc->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -171,7 +171,7 @@ freebsd_sys_sched_setscheduler(l, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = cp->p_cred;
+		struct pcred *pc = l->l_proc->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -210,7 +210,7 @@ freebsd_sys_sched_getscheduler(l, v, retval)
 	 * We only check for valid parameters and return afterwards.
 	 */
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = cp->p_cred;
+		struct pcred *pc = l->l_proc->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
@@ -231,8 +231,8 @@ freebsd_sys_sched_getscheduler(l, v, retval)
 }
 
 int
-freebsd_sys_sched_yield(cp, v, retval)
-	struct proc *cp;
+freebsd_sys_sched_yield(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
