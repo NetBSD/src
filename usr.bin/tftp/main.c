@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12.8.2 2001/02/03 21:12:49 he Exp $	*/
+/*	$NetBSD: main.c,v 1.12.8.3 2004/04/07 22:19:43 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -40,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.12.8.2 2001/02/03 21:12:49 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.12.8.3 2004/04/07 22:19:43 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +51,7 @@ __RCSID("$NetBSD: main.c,v 1.12.8.2 2001/02/03 21:12:49 he Exp $");
 #include <netinet/in.h>
 
 #include <arpa/inet.h>
+#include <arpa/tftp.h>
 
 #include <ctype.h>
 #include <fcntl.h>
@@ -77,6 +74,10 @@ struct	sockaddr_storage peeraddr;
 int	f;
 int	trace;
 int	verbose;
+int	tsize=0;
+int	tout=0;
+int	def_blksize=SEGSIZE;
+int	blksize=SEGSIZE;
 int	connected;
 char	mode[32];
 char	line[LBUFLEN];
@@ -98,6 +99,9 @@ void	setrexmt __P((int, char **));
 void	settimeout __P((int, char **));
 void	settrace __P((int, char **));
 void	setverbose __P((int, char **));
+void	setblksize __P((int, char **));
+void	settsize __P((int, char **));
+void	settimeoutopt __P((int, char **));
 void	status __P((int, char **));
 char	*tail __P((char *));
 int	main __P((int, char *[]));
@@ -121,6 +125,9 @@ struct cmd {
 
 char	vhelp[] = "toggle verbose mode";
 char	thelp[] = "toggle packet tracing";
+char	tshelp[] = "toggle extended tsize option";
+char	tohelp[] = "toggle extended timeout option";
+char	blhelp[] = "set an alternative blocksize (def. 512)";
 char	chelp[] = "connect to remote tftp";
 char	qhelp[] = "exit tftp";
 char	hhelp[] = "print help information";
@@ -140,12 +147,15 @@ struct cmd cmdtab[] = {
 	{ "get",	rhelp,		get },
 	{ "quit",	qhelp,		quit },
 	{ "verbose",	vhelp,		setverbose },
+	{ "blksize",	blhelp,		setblksize },
+	{ "tsize",	tshelp,		settsize },
 	{ "trace",	thelp,		settrace },
 	{ "status",	sthelp,		status },
 	{ "binary",     bnhelp,         setbinary },
 	{ "ascii",      ashelp,         setascii },
 	{ "rexmt",	xhelp,		setrexmt },
 	{ "timeout",	ihelp,		settimeout },
+	{ "tout",	tohelp,		settimeoutopt },
 	{ "?",		hhelp,		help },
 	{ 0 }
 };
@@ -155,12 +165,35 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	int	c;
+
 	f = -1;
 	strcpy(mode, "netascii");
 	signal(SIGINT, intr);
-	if (argc > 1) {
+
+	setprogname(argv[0]);
+	while ((c = getopt(argc, argv, "e")) != -1) {
+		switch (c) {
+		case 'e':
+			blksize = MAXSEGSIZE;
+			strcpy(mode, "octet");
+			tsize = 1;
+			tout = 1;
+			break;
+		default:
+			printf("usage: %s [-e] host-name [port]\n",
+				getprogname());
+			exit(1);
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc >= 1) {
 		if (setjmp(toplevel) != 0)
 			exit(0);
+		argc++;
+		argv--;
 		setpeer(argc, argv);
 	}
 	if (setjmp(toplevel) != 0)
@@ -177,7 +210,7 @@ setpeer0(host, port)
 	char *port;
 {
 	struct addrinfo hints, *res0, *res;
-	int error;
+	int error, soopt;
 	struct sockaddr_storage ss;
 	char *cause = "unknown";
 
@@ -222,17 +255,32 @@ setpeer0(host, port)
 		break;
 	}
 
+	if (f >= 0) {
+		soopt = 65536;
+		if (setsockopt(f, SOL_SOCKET, SO_SNDBUF, &soopt, sizeof(soopt))
+		    < 0) {
+			close(f);
+			f = -1;
+			cause = "setsockopt SNDBUF";
+		}
+		if (setsockopt(f, SOL_SOCKET, SO_RCVBUF, &soopt, sizeof(soopt))
+		    < 0) {
+			close(f);
+			f = -1;
+			cause = "setsockopt RCVBUF";
+		}
+	}
+
 	if (f < 0)
 		warn("%s", cause);
 	else {
 		/* res->ai_addr <= sizeof(peeraddr) is guaranteed */
 		memcpy(&peeraddr, res->ai_addr, res->ai_addrlen);
 		if (res->ai_canonname) {
-			(void) strncpy(hostname, res->ai_canonname,
-				sizeof(hostname));
+			(void) strlcpy(hostname, res->ai_canonname,
+			    sizeof(hostname));
 		} else
-			(void) strncpy(hostname, host, sizeof(hostname));
-		hostname[sizeof(hostname)-1] = 0;
+			(void) strlcpy(hostname, host, sizeof(hostname));
 		connected = 1;
 	}
 
@@ -254,7 +302,7 @@ setpeer(argc, argv)
 		argv = margv;
 	}
 	if ((argc < 2) || (argc > 3)) {
-		printf("usage: %s host-name [port]\n", argv[0]);
+		printf("usage: %s [-e] host-name [port]\n", getprogname());
 		return;
 	}
 	if (argc == 2)
@@ -506,6 +554,33 @@ getusage(s)
 	printf("       %s file file ... file if connected\n", s);
 }
 
+void
+setblksize(argc, argv)
+	int argc;
+	char *argv[];
+{
+	int t;
+
+	if (argc < 2) {
+		strcpy(line, "blksize ");
+		printf("(blksize) ");
+		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
+		makeargv();
+		argc = margc;
+		argv = margv;
+	}
+	if (argc != 2) {
+		printf("usage: %s value\n", argv[0]);
+		return;
+	}
+	t = atoi(argv[1]);
+	if (t < 8 || t > 65464)
+		printf("%s: bad value\n", argv[1]);
+	else
+		blksize = t;
+}
+
+int	def_rexmtval = TIMEOUT;
 int	rexmtval = TIMEOUT;
 
 void
@@ -748,4 +823,22 @@ setverbose(argc, argv)
 {
 	verbose = !verbose;
 	printf("Verbose mode %s.\n", verbose ? "on" : "off");
+}
+
+void
+settsize(argc, argv)
+	int argc;
+	char **argv;
+{
+	tsize = !tsize;
+	printf("Tsize mode %s.\n", tsize ? "on" : "off");
+}
+
+void
+settimeoutopt(argc, argv)
+	int argc;
+	char **argv;
+{
+	tout = !tout;
+	printf("Timeout option %s.\n", tout ? "on" : "off");
 }
