@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.3 2003/05/15 14:02:00 fvdl Exp $
+# $NetBSD: INSTALL_ACPI,v 1.1 2003/05/15 14:02:00 fvdl Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.3 $"
+#ident 		"INSTALL-$Revision: 1.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -101,7 +101,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
-options 	NETATALK	# AppleTalk networking protocols
+#options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
@@ -161,7 +161,9 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
+options	MPACPI
 options MPBIOS
+acpi0 	at mainbus0
 cpu* 	at mainbus0
 ioapic* at mainbus0
 
@@ -248,11 +250,11 @@ com1	at isa? port 0x2f8 irq 3
 # Parallel Printer Interfaces
 
 # PCI parallel printer interfaces
-lpt*	at puc? port ?			# || ports on "universal" comm boards
+#lpt*	at puc? port ?			# || ports on "universal" comm boards
 
 # ISA parallel printer interfaces
-lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
-lpt1	at isa? port 0x278
+#lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+#lpt1	at isa? port 0x278
 
 # Hardware monitors
 
@@ -332,8 +334,8 @@ pciide* at pci? dev ? function ? flags 0x0000
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
 # fall back to 16bits I/O if 32bits I/O are not functional).
 # Some controllers pass the initial 32bit test, but will fail later.
-wdc0	at isa? port 0x1f0 irq 14 flags 0x00
-wdc1	at isa? port 0x170 irq 15 flags 0x00
+#wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+#wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -346,7 +348,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-wd*	at wdc? channel ? drive ? flags 0x0000
+#wd*	at wdc? channel ? drive ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
 
 # ATAPI bus support
@@ -487,10 +489,10 @@ ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
 # USB Generic HID devices
-uhid*	at uhidev? reportid ?
+#uhid*	at uhidev? reportid ?
 
 # USB Printer
-ulpt*	at uhub? port ? configuration ? interface ?
+#ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Modem
 umodem*	at uhub? port ? configuration ?
@@ -546,11 +548,11 @@ ucom*	at uvscom? portno ?
 #uyap* at uhub? port ?
 
 # D-Link DSB-R100 USB radio
-udsbr*	at uhub? port ?
-radio*	at udsbr?
+#udsbr*	at uhub? port ?
+#radio*	at udsbr?
 
 # USB Generic driver
-ugen*	at uhub? port ?
+#ugen*	at uhub? port ?
 
 
 # IrDA and Consumer Ir devices
@@ -559,7 +561,7 @@ ugen*	at uhub? port ?
 
 # Middle Digital, Inc. PCI-Weasel serial console board control
 # devices (watchdog timer, etc.)
-weasel* at pci?
+#weasel* at pci?
 
 # Pull in optional local configuration
 include	"arch/amd64/conf/GENERIC.local"
@@ -581,16 +583,16 @@ include	"arch/amd64/conf/GENERIC.local"
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	sl		2	# Serial Line IP
-pseudo-device	strip		2	# Starmode Radio IP (Metricom)
-pseudo-device	irframetty		# IrDA frame line discipline
+#pseudo-device	sl		2	# Serial Line IP
+#pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+#pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
@@ -604,10 +606,10 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
-pseudo-device	rnd			# /dev/random and in-kernel generator
+#pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
-pseudo-device	clockctl		# user control of clock subsystem
+#pseudo-device	clockctl		# user control of clock subsystem
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
-pseudo-device	wsfont
+#pseudo-device	wsfont
