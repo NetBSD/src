@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.2 1997/08/22 18:23:08 perry Exp $
+#	$NetBSD: dot.profile,v 1.2.2.1 1997/12/20 22:34:40 perry Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -57,9 +57,9 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	mount -t kernfs /kern /kern
 
 	# pull in the functions that people will use from the shell prompt.
-	. /.commonutils
-	. /.instutils
+	# . /.commonutils
+	# . /.instutils
 
 	# run the installation or upgrade script.
-	start
+	sysinst
 fi
