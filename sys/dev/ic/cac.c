@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.12 2000/09/08 12:16:17 ad Exp $	*/
+/*	$NetBSD: cac.c,v 1.13 2000/10/19 14:28:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 static struct	cac_ccb *cac_ccb_alloc(struct cac_softc *, int);
 static void	cac_ccb_done(struct cac_softc *, struct cac_ccb *);
 static void	cac_ccb_free(struct cac_softc *, struct cac_ccb *);
-static void	cac_ccb_poll(struct cac_softc *, struct cac_ccb *, int);
+static int	cac_ccb_poll(struct cac_softc *, struct cac_ccb *, int);
 static int	cac_ccb_start(struct cac_softc *, struct cac_ccb *);
 static int	cac_print(void *, const char *);
 static void	cac_shutdown(void *);
@@ -231,7 +231,7 @@ cac_submatch(struct device *parent, struct cfdata *cf, void *aux)
 
 	caca = (struct cac_attach_args *)aux;
 
-	if (cf->cacacf_unit != CACACF_UNIT_UNKNOWN &&
+	if (cf->cacacf_unit != CACCF_UNIT_DEFAULT &&
 	    cf->cacacf_unit != caca->caca_unit)
 		return (0);
 
@@ -280,7 +280,7 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 
 	if ((ccb = cac_ccb_alloc(sc, 0)) == NULL) {
 		printf("%s: unable to alloc CCB", sc->sc_dv.dv_xname);
-		return (1);
+		return (ENOMEM);
 	}
 
 	if ((flags & (CAC_CCB_DATA_IN | CAC_CCB_DATA_OUT)) != 0) {
@@ -331,9 +331,8 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 			ccb->ccb_flags |= CAC_CCB_ACTIVE;
 #endif
 			(*sc->sc_cl->cl_submit)(sc, ccb);
-			cac_ccb_poll(sc, ccb, 2000);
+			rv = cac_ccb_poll(sc, ccb, 2000);
 			cac_ccb_free(sc, ccb);
-			rv = 0;
 		}
 	} else {
 		memcpy(&ccb->ccb_context, context, sizeof(struct cac_context));
@@ -348,11 +347,11 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 /*
  * Wait for the specified CCB to complete.  Must be called at splbio.
  */
-static void
+static int
 cac_ccb_poll(struct cac_softc *sc, struct cac_ccb *wantccb, int timo)
 {
 	struct cac_ccb *ccb;
-	
+
 	timo *= 10;
 
 	do {
@@ -362,11 +361,14 @@ cac_ccb_poll(struct cac_softc *sc, struct cac_ccb *wantccb, int timo)
 			DELAY(100);
 		}
 
-		if (timo == 0)
-			panic("%s: cac_ccb_poll: timeout", sc->sc_dv.dv_xname);
-
+		if (timo == 0) {
+			printf("%s: timeout", sc->sc_dv.dv_xname);
+			return (EBUSY);
+		}
 		cac_ccb_done(sc, ccb);
 	} while (ccb != wantccb);
+
+	return (0);
 }
 
 /*
@@ -382,7 +384,7 @@ cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 
 	while ((ccb = SIMPLEQ_FIRST(&sc->sc_ccb_queue)) != NULL) {
 		if ((*sc->sc_cl->cl_fifo_full)(sc))
-			return (-1);
+			return (EBUSY);
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ccb, ccb_chain);
 #ifdef DIAGNOSTIC
 		ccb->ccb_flags |= CAC_CCB_ACTIVE;
@@ -474,24 +476,12 @@ cac_ccb_free(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 	int s;
 
-	s = splbio();
 	ccb->ccb_flags = 0;
+	s = splbio();
 	SIMPLEQ_INSERT_HEAD(&sc->sc_ccb_free, ccb, ccb_chain);
 	if (SIMPLEQ_NEXT(ccb, ccb_chain) == NULL)
 		wakeup_one(&sc->sc_ccb_free);
 	splx(s);
-}
-
-/*
- * Adjust the size of a transfer.
- */
-void
-cac_minphys(struct buf *bp)
-{
-
-	if (bp->b_bcount > CAC_MAX_XFER)
-		bp->b_bcount = CAC_MAX_XFER;
-	minphys(bp);
 }
 
 /*
