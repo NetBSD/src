@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.13 2002/08/14 23:23:06 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.14 2002/08/15 01:37:01 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -100,11 +100,11 @@ ENTRY(setrunqueue)
 #ifdef DIAGNOSTIC
 	ldr	r1, [r0, #(P_BACK)]
 	teq	r1, #0x00000000
-	bne	Lsetrunqueue_erg
+	bne	.Lsetrunqueue_erg
 
 	ldr	r1, [r0, #(P_WCHAN)]
 	teq	r1, #0x00000000
-	bne	Lsetrunqueue_erg
+	bne	.Lsetrunqueue_erg
 #endif
 
 	/* Get the priority of the queue */
@@ -130,7 +130,7 @@ ENTRY(setrunqueue)
 	str	r0, [r1, #(P_BACK)]
 #ifdef DIAGNOSTIC
 	teq	r2, #0x00000000
-	beq	Lsetrunqueue_erg
+	beq	.Lsetrunqueue_erg
 #endif
 	str	r0, [r2, #(P_FORW)]
 	str	r2, [r0, #(P_BACK)]
@@ -138,7 +138,7 @@ ENTRY(setrunqueue)
 	mov	pc, lr
 
 #ifdef DIAGNOSTIC
-Lsetrunqueue_erg:
+.Lsetrunqueue_erg:
 	mov	r2, r1
 	mov	r1, r0
 	add	r0, pc, #Ltext1 - . - 8
@@ -242,12 +242,12 @@ ASENTRY_NP(idle)
 
 	ldr	r3, Lcpufuncs
 	mov	r0, #0
-	add	lr, pc, #Lidle_slept - . - 8
+	add	lr, pc, #.Lidle_slept - . - 8
 	ldr	pc, [r3, #CF_SLEEP]
 
 	/* should also call the uvm pageidlezero stuff */
 
-Lidle_slept:
+.Lidle_slept:
 
 	/* Disable interrupts while we check for an active queue */
 	IRQdisable
@@ -259,7 +259,7 @@ Lidle_slept:
 	teq	r3, #0x00000000
 
 	beq	_ASM_LABEL(idle)
-	b	Lidle_ret
+	b	.Lidle_ret
 
 /*
  * Find a new process to run, save the current context and
@@ -319,7 +319,7 @@ ENTRY(cpu_switch)
 
 	/* rem: r5 = old proc */
 
-Lswitch_search:
+.Lswitch_search:
 	IRQdisable
 #if defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
@@ -332,7 +332,7 @@ Lswitch_search:
 	/* If not we must idle until we do. */
 	teq	r3, #0x00000000
 	beq	_ASM_LABEL(idle)
-Lidle_ret:
+.Lidle_ret:
 
 	/* put old proc back in r1 */
 	mov	r1, r5
@@ -460,7 +460,7 @@ Lidle_ret:
 	 * same as the proc removed from the queue we can jump to the exit.
 	 */
 	teq	r1, r6
-	beq	switch_return
+	beq	.Lswitch_return
 
 	/* Remember the old process in r0 */
 	mov	r0, r1
@@ -472,7 +472,7 @@ Lidle_ret:
 	 * straight to restoring the context for the new process.
 	 */
 	teq	r0, #0x00000000
-	beq	switch_exited
+	beq	.Lswitch_exited
 
 	/* rem: r0 = old proc */
 	/* rem: r6 = new process */
@@ -525,13 +525,13 @@ Lidle_ret:
 
 	stmfd	sp!, {r0-r3}
 	ldr	r1, Lcpufuncs
-	add	lr, pc, #Lcs_cache_purged - . - 8
+	add	lr, pc, #.Lcs_cache_purged - . - 8
 	ldr	pc, [r1, #CF_IDCACHE_WBINV_ALL]
 
-Lcs_cache_purged:
+.Lcs_cache_purged:
 	ldmfd	sp!, {r0-r3}
 
-Lcs_cache_purge_skipped:
+.Lcs_cache_purge_skipped:
 	/* At this point we need to kill IRQ's again. */
 	IRQdisable
 
@@ -550,10 +550,10 @@ Lcs_cache_purge_skipped:
 
 	/* Switch the memory to the new process */
 	ldr	r3, Lcpufuncs
-	add	lr, pc, #Lcs_context_switched - . - 8
+	add	lr, pc, #.Lcs_context_switched - . - 8
 	ldr	pc, [r3, #CF_CONTEXT_SWITCH]
        
-Lcs_context_switched:
+.Lcs_context_switched:
 	/*
 	 * This can be optimised... We know we want to go from SVC32
 	 * mode to UND32 mode
@@ -580,7 +580,7 @@ Lcs_context_switched:
 	/* We can enable interrupts again */
 	IRQenable
 
-switch_return:
+.Lswitch_return:
 
 	/* Get the spl level from the stack and update the current spl level */
 	ldr	r0, [sp], #0x0004
@@ -595,7 +595,7 @@ switch_return:
 	 */
 	ldmfd	sp!, {r4-r7, pc}
 
-switch_exited:
+.Lswitch_exited:
 	/*
 	 * We skip the cache purge because switch_exit() already did
 	 * it.  Load up registers the way Lcs_cache_purge_skipped
@@ -603,7 +603,7 @@ switch_exited:
 	 */
 	ldr	r3, Lblock_userspace_access
 	mov	r2, #0x00000000
-	b	Lcs_cache_purge_skipped
+	b	.Lcs_cache_purge_skipped
 
 Lproc0:
 	.word	_C_LABEL(proc0)
@@ -646,10 +646,10 @@ ENTRY(switch_exit)
 	stmfd	sp!, {r0-r3}
 
 	ldr	r0, Lcpufuncs
-	add	lr, pc, #Lse_cache_purged - . - 8
+	add	lr, pc, #.Lse_cache_purged - . - 8
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
-Lse_cache_purged:
+.Lse_cache_purged:
 	ldmfd	sp!, {r0-r3}
 
 	IRQdisable
@@ -659,10 +659,10 @@ Lse_cache_purged:
 
 	/* Switch the memory to the new process */
 	ldr	r4, Lcpufuncs
-	add	lr, pc, #Lse_context_switched - . - 8
+	add	lr, pc, #.Lse_context_switched - . - 8
 	ldr	pc, [r4, #CF_CONTEXT_SWITCH]
        
-Lse_context_switched:
+.Lse_context_switched:
 	/* Restore all the save registers */
 	add	r7, r2, #PCB_R8
 	ldmia	r7, {r8-r13}
@@ -688,7 +688,7 @@ Lse_context_switched:
 	str	r0, [r1]
 
 	mov	r5, #0x00000000		/* r5 = old proc = NULL */
-	b	Lswitch_search
+	b	.Lswitch_search
 
 /* LINTSTUB: Func: void savectx(struct pcb *pcb) */
 ENTRY(savectx)
@@ -707,12 +707,12 @@ ENTRY(savectx)
 	ldmfd	sp!, {r4-r7, pc}
 
 ENTRY(proc_trampoline)
-	add	lr, pc, #(trampoline_return - . - 8)
+	add	lr, pc, #(.Ltrampoline_return - . - 8)
 	mov	r0, r5
 	mov	r1, sp
 	mov	pc, r4
 
-trampoline_return:
+.Ltrampoline_return:
 	/* Kill irq's */
         mrs     r0, cpsr
         orr     r0, r0, #(I32_bit)
